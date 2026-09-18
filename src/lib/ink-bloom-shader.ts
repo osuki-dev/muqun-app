@@ -59,6 +59,28 @@ import { Skia, type Uniforms } from '@shopify/react-native-skia';
  * A runtime effect that declares a child must always be given one, so callers
  * bind a `<ColorShader>` when the cover is `'paper'`.
  *
+ * ## Where the hole starts -- `edge`
+ *
+ * By default the hole grows from a point, so its front is a circle of `front`
+ * around `centre` and every caller that says nothing gets exactly that.
+ *
+ * A caller that is opening a *picture* can instead hand in that picture's
+ * outline, and the front starts as the outline and grows outward from it. The
+ * shape arrives as a handful of scalars -- a rounded rectangle, or ten Fourier
+ * terms of its radius as a function of direction -- which is what lets the
+ * whole thing be uniforms and no second child shader, and lets it be evaluated
+ * without a texture read, an array index or a trigonometric call. See
+ * `launch-hero-edge.ts`, which is what measures one.
+ *
+ * `edgeAmount` scales the shape and is how it leaves again: driving it to zero
+ * over the first part of the travel relaxes the front back to the plain
+ * circular one, which is what a caller wants once the front is far enough away
+ * that the picture it came from can no longer be read in it.
+ *
+ * With no `edge` the arithmetic is the arithmetic it always was, down to the
+ * expression: the shape's contribution is a literal zero subtracted from the
+ * radius, and its slack a literal zero added to the early-out's.
+ *
  * Colours come out premultiplied, which is what Skia expects of a runtime
  * effect, and is why the compositing at the bottom of `main` is written the
  * way it is rather than as a chain of `mix`es.
@@ -91,6 +113,17 @@ uniform float4 uPaper;        // the cover's colour, and the field's ground
 uniform float4 uAccent;       // the bank of light along the edge
 uniform float4 uRimColor;     // the thin bright line on the edge
 uniform float4 uSurface;      // the field's second stop
+
+uniform float  uEdgeMode;     // 0 a point, 1 a rounded rectangle, 2 a fitted outline
+uniform float  uEdgeAmount;   // the shape's scale, and how much of it is left in the front
+uniform float  uEdgeSlack;    // how far the shape can pull the front in from the circle
+uniform float3 uEdgeBox;      // half width, half height and corner radius, for mode 1
+uniform float  uEdgeMean;     // the outline's mean radius, for mode 2
+uniform float4 uEdgeH0;       // and its harmonics, two per uniform: (a1, b1, a2, b2)
+uniform float4 uEdgeH1;
+uniform float4 uEdgeH2;
+uniform float4 uEdgeH3;
+uniform float4 uEdgeH4;
 
 // A hash with no trigonometry in it.
 //
@@ -151,6 +184,64 @@ float4 holeAt(float2 p) {
   return float4(0.0);
 }
 
+// Where a ray leaving the centre crosses a rounded rectangle.
+//
+// Kept exact rather than folded into the series below, because a rectangle is
+// the one shape whose straightness the reader can see: ten harmonics of a box
+// are a box with a ripple down each side.
+//
+// The sharp box is one division per axis. If that hit is past the straight run
+// on both axes at once the ray left through a corner instead, and the answer is
+// the positive root of the ray against the corner's circle.
+float edgeBoxRadius(float2 dir) {
+  float2 h = uEdgeBox.xy;
+  float c = min(uEdgeBox.z, min(h.x, h.y));
+  float2 inset = max(h - c, 0.0);
+  float2 a = abs(dir);
+  float tx = a.x > 1e-6 ? h.x / a.x : 1e9;
+  float ty = a.y > 1e-6 ? h.y / a.y : 1e9;
+  float t = min(tx, ty);
+  if (t * a.x - inset.x <= 0.0 || t * a.y - inset.y <= 0.0) return t;
+  float along = dot(a, inset);
+  float disc = along * along - (dot(inset, inset) - c * c);
+  return along + sqrt(max(disc, 0.0));
+}
+
+// One harmonic onward: (cos kt, sin kt) times (cos t, sin t).
+float2 edgeStep(float2 w, float2 dir) {
+  return float2(w.x * dir.x - w.y * dir.y, w.y * dir.x + w.x * dir.y);
+}
+
+// The fitted outline, with no trigonometry in it.
+//
+// dir is already (cos t, sin t), so the whole series is ten complex
+// multiplies and ten dot products -- and it is only ever evaluated inside the
+// edge band, which is the same handful of pixels that pay for the noise.
+float edgeSeriesRadius(float2 dir) {
+  float radius = uEdgeMean;
+  float2 w = dir;
+  radius += dot(uEdgeH0.xy, w); w = edgeStep(w, dir);
+  radius += dot(uEdgeH0.zw, w); w = edgeStep(w, dir);
+  radius += dot(uEdgeH1.xy, w); w = edgeStep(w, dir);
+  radius += dot(uEdgeH1.zw, w); w = edgeStep(w, dir);
+  radius += dot(uEdgeH2.xy, w); w = edgeStep(w, dir);
+  radius += dot(uEdgeH2.zw, w); w = edgeStep(w, dir);
+  radius += dot(uEdgeH3.xy, w); w = edgeStep(w, dir);
+  radius += dot(uEdgeH3.zw, w); w = edgeStep(w, dir);
+  radius += dot(uEdgeH4.xy, w); w = edgeStep(w, dir);
+  radius += dot(uEdgeH4.zw, w);
+  return max(radius, 0.0);
+}
+
+// How far the picture's own outline reaches in this direction, scaled by how
+// much of it is still in the front. Zero -- and free -- for a caller that gave
+// no shape, which is every caller that is opening from a point.
+float edgeRadius(float2 dir) {
+  if (uEdgeAmount <= 0.0) return 0.0;
+  if (uEdgeMode < 1.5) return edgeBoxRadius(dir) * uEdgeAmount;
+  return edgeSeriesRadius(dir) * uEdgeAmount;
+}
+
 half4 main(float2 p) {
   float2 d = p - uCentre;
   float r = length(d);
@@ -160,8 +251,14 @@ half4 main(float2 p) {
   // lives within uSlack of the front, so a pixel further from it than that is
   // already decided. Without this every frame pays the edge's price for the
   // whole screen, which is what made the first draft a slideshow.
+  //
+  // The shape's own slack is added to the outward test and not to the inward
+  // one, because the shape can only ever pull the front *in* towards the
+  // picture: a pixel further out than the circle plus the shape's reach is
+  // cover whatever direction it lies in, and a pixel inside the bare circle is
+  // hole for the same reason. Both are zero for a caller opening from a point.
   float dr0 = r - uFront;
-  if (dr0 > uSlack) return half4(coverAt(p));
+  if (dr0 > uSlack + uEdgeSlack) return half4(coverAt(p));
   if (dr0 < -uSlack) return half4(holeAt(p));
 
   float2 dir = r > 0.5 ? d / r : float2(1.0, 0.0);
@@ -170,7 +267,11 @@ half4 main(float2 p) {
   // what two separate fbms were doing at twice the price.
   float n = fbm(dir * 2.6 + float2(r / uResolution.y * 1.8, uTime));
   float front = uFront * (1.0 + (n - 0.5) * 2.0 * uWobble);
-  float dr = r - front;
+  // Distance from the picture's outline rather than from a point. The outline
+  // is a radius in this direction, so it comes straight off the radius -- and
+  // it is a literal zero for a caller that gave no shape, which is what keeps
+  // the circular case exactly the arithmetic it was.
+  float dr = r - edgeRadius(dir) - front;
 
   // Cover outside the front, hole inside it, one pixel of anti-aliasing between.
   float covered = smoothstep(-1.5, 1.5, dr);
@@ -256,6 +357,37 @@ export function inkBloomSlack(front: number): number {
 /** What the caller wants behind the hole. See the module note. */
 export type InkBloomHole = 'through' | 'field' | 'closed';
 
+/**
+ * The outline the hole starts from, when it starts from a picture rather than
+ * from a point. See the module note, and `launch-hero-edge.ts` for the measuring.
+ *
+ * Every length is in canvas points, measured from `centre`, and every field is
+ * a uniform: this type is the shader's shape arguments in the order it reads
+ * them, not a description that something else turns into uniforms.
+ */
+export type InkBloomEdge = {
+  /** 1 a rounded rectangle, 2 a fitted outline. */
+  mode: number;
+  /** Half width, half height and corner radius, for mode 1. */
+  box: number[];
+  /** The outline's mean radius, for mode 2. */
+  mean: number;
+  /**
+   * Its harmonics, as five groups of four: `(a1, b1, a2, b2)` and so on.
+   *
+   * Pre-grouped, and handed to the uniforms by reference, so that a front
+   * running at sixty frames a second copies five pointers rather than slicing
+   * five arrays out of one.
+   */
+  harmonics: number[][];
+  /** The furthest the outline reaches, which is what the early-out needs. */
+  max: number;
+};
+
+/** The shape uniforms of a caller that gave no shape. */
+const NO_EDGE_BOX = [0, 0, 0];
+const NO_EDGE_HARMONIC = [0, 0, 0, 0];
+
 /** What the caller wants the cover to be. See the module note. */
 export type InkBloomCover = 'paper' | 'image';
 
@@ -291,6 +423,17 @@ export type InkBloomInput = {
   rimOpacity?: number;
   /** 0..1 multiplier on the chromatic split, for fading it in with the rim. */
   chroma?: number;
+  /**
+   * The outline the front starts from. Omitted -- the usual case -- the front
+   * starts from `centre` as a circle, exactly as it always has.
+   */
+  edge?: InkBloomEdge | null;
+  /**
+   * How much of that outline is in the front, and at what scale. A caller
+   * driving this to zero as `front` grows relaxes the shape back to a circle.
+   * Defaults to 1, which is the shape at the size it was measured.
+   */
+  edgeAmount?: number;
 };
 
 const HOLE_CODE: Record<InkBloomHole, number> = { through: 0, field: 1, closed: 2 };
@@ -304,6 +447,11 @@ const HOLE_CODE: Record<InkBloomHole, number> = { through: 0, field: 1, closed: 
  */
 export function inkBloomUniforms(input: InkBloomInput): Uniforms {
   'worklet';
+  const edge = input.edge ?? null;
+  // One number carries both the shape's scale and its relaxation, so a caller
+  // animating it animates one uniform; zero is "no shape", which is what an
+  // absent edge and a fully relaxed one both mean to the program.
+  const edgeAmount = edge ? Math.max(0, input.edgeAmount ?? 1) : 0;
   return {
     uResolution: [input.resolution.width, input.resolution.height],
     uCentre: [input.centre.x, input.centre.y],
@@ -328,6 +476,16 @@ export function inkBloomUniforms(input: InkBloomInput): Uniforms {
       (input.rim[3] ?? 1) * (input.rimOpacity ?? 1),
     ],
     uSurface: input.surface,
+    uEdgeMode: edge ? edge.mode : 0,
+    uEdgeAmount: edgeAmount,
+    uEdgeSlack: edge ? edge.max * edgeAmount : 0,
+    uEdgeBox: edge ? edge.box : NO_EDGE_BOX,
+    uEdgeMean: edge ? edge.mean : 0,
+    uEdgeH0: edge?.harmonics[0] ?? NO_EDGE_HARMONIC,
+    uEdgeH1: edge?.harmonics[1] ?? NO_EDGE_HARMONIC,
+    uEdgeH2: edge?.harmonics[2] ?? NO_EDGE_HARMONIC,
+    uEdgeH3: edge?.harmonics[3] ?? NO_EDGE_HARMONIC,
+    uEdgeH4: edge?.harmonics[4] ?? NO_EDGE_HARMONIC,
   };
 }
 
