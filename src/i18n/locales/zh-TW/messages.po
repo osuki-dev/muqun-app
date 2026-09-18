@@ -1322,6 +1322,10 @@ msgstr "無法開啟這個主題"
 msgid "Could not open the file"
 msgstr "無法開啟檔案"
 
+#: src/app/settings.tsx
+msgid "Could not open the guide"
+msgstr "無法開啟指南"
+
 #: src/lib/attachments.ts
 msgid "Could not open the picker."
 msgstr "無法開啟選擇器"
@@ -1980,6 +1984,10 @@ msgctxt "agent slash command"
 msgid "Guided AGENTS.md setup"
 msgstr "引導式 AGENTS.md 設定"
 
+#: src/app/settings.tsx
+msgid "Guides for pairing, the terminal, OpenCode and themes"
+msgstr "配對、終端機、OpenCode 與主題的指南"
+
 #: src/components/settings-alerts.tsx
 msgid "Haptic feedback"
 msgstr "觸覺回饋"
@@ -2036,6 +2044,10 @@ msgstr "主機金鑰已改變"
 #: src/components/ssh-host-row.tsx
 msgid "Host key trusted"
 msgstr "主機金鑰已信任"
+
+#: src/app/settings.tsx
+msgid "How to use Muqun"
+msgstr "如何使用 Muqun"
 
 #: src/i18n/labels.ts
 msgid "Idle"
@@ -2536,6 +2548,10 @@ msgstr "沒有執行中的代理程式"
 #: src/components/open-web-service-sheet.tsx
 msgid "No app on this phone opens web pages."
 msgstr "這支手機上沒有可以開啟網頁的應用程式"
+
+#: src/app/settings.tsx
+msgid "No app on this phone opens web pages. The guide is at muqun.dev/support."
+msgstr "這支手機上沒有可以開啟網頁的應用程式。指南位於 muqun.dev/support"
 
 #: src/components/pairing-camera.tsx
 msgid "No camera to scan with"

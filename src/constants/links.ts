@@ -1,10 +1,11 @@
 /**
  * Every address the app hands to the outside world, in one file.
  *
- * These five values are the whole of Muqun's outbound surface: four links and
- * the source repository, all of them reachable from two screens. They used to
- * live as string constants next to the screens that opened them, which was fine
- * while nothing moved. Two things moved at once -- the site to `muqun.dev`, and
+ * These values are the whole of Muqun's outbound surface: the site and the
+ * pages under it, the install command, the issue tracker and the source
+ * repository, all of them reachable from two screens. They used to live as
+ * string constants next to the screens that opened them, which was fine while
+ * nothing moved. Two things moved at once -- the site to `muqun.dev`, and
  * the source to `github.com/osuki-dev/muqun-app` -- and a rename spread across
  * two files is a rename that gets half done.
  *
@@ -75,6 +76,20 @@
 export const PRIVACY_POLICY_URL = 'https://muqun.dev/privacy';
 
 /**
+ * The site itself, and the one place its address is written down.
+ *
+ * Three of the values below are pages on `muqun.dev`, and until this constant
+ * existed each of them spelled the host out again -- which is three edits the
+ * next time the site moves, and the file's whole argument is that a rename
+ * spread across several places is a rename that gets half done. The host moves
+ * here, once, and every page under it follows.
+ *
+ * The trailing slash is part of it: every value built from this appends a path,
+ * and a base without one produces `muqun.devsupport/`.
+ */
+export const MUQUN_SITE_URL = 'https://muqun.dev/';
+
+/**
  * Where a reader with no Gateway is sent, from the pairing screen.
  *
  * That screen used to be a dead end for exactly the person most likely to
@@ -87,7 +102,29 @@ export const PRIVACY_POLICY_URL = 'https://muqun.dev/privacy';
  * The site root rather than a deeper page: only `/` and `/privacy` are known
  * to answer, and a link that 404s in review is worse than no link at all.
  */
-export const GATEWAY_SETUP_URL = 'https://muqun.dev/';
+export const GATEWAY_SETUP_URL = MUQUN_SITE_URL;
+
+/**
+ * The guide, opened from Settings -> About.
+ *
+ * One page rather than a screen of them in the app: everything a reader needs
+ * to be told about pairing, the terminal, OpenCode and themes is prose that
+ * changes when the product does, and prose that ships in a binary is prose that
+ * is wrong by the next release. The row says the app has a manual and the
+ * manual lives where it can be corrected.
+ *
+ * ── THE ORDERING RULE AT THE TOP OF THIS FILE APPLIES HERE ──────────────────
+ * This page is being written as the row that opens it is built, so at the time
+ * of writing `muqun.dev/support/` has NOT been checked for a 200 the way `/` and
+ * `/privacy` were on 2026-09-03. Step 1 of that order is not done, and this must
+ * not ship in a store build until it is: a URL in a binary cannot be rolled
+ * back, and a 404 in front of App Review has already cost this app a release.
+ *
+ * The trailing slash is the shape the site serves, and the form the app has
+ * always sent for a directory page.
+ * ────────────────────────────────────────────────────────────────────────────
+ */
+export const SUPPORT_GUIDE_URL = `${MUQUN_SITE_URL}support/`;
 
 /**
  * The one command that installs the Gateway, printed on the pairing screen.

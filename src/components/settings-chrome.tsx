@@ -336,6 +336,7 @@ export function SettingsNavRow({
   onPress,
   disabled = false,
   busy = false,
+  accessibilityRole = 'button',
   testID,
 }: {
   icon?: LucideIcon;
@@ -345,6 +346,16 @@ export function SettingsNavRow({
   onPress: () => void;
   disabled?: boolean;
   busy?: boolean;
+  /**
+   * What the row *is*, for a reader who cannot see where it points.
+   *
+   * A button by default, because most rows on this page change something in the
+   * app. `link` for the ones that hand the reader to a browser: the trailing
+   * glyph says "this leaves Muqun" to everybody else, and a screen reader that
+   * announces "button" instead is the one audience the glyph does not reach.
+   * Sighted readers lose nothing either way -- the role draws nothing.
+   */
+  accessibilityRole?: 'button' | 'link';
   testID?: string;
 }) {
   const theme = useThemeTokens();
@@ -352,7 +363,7 @@ export function SettingsNavRow({
   useRenderTally('SettingsNavRow');
   return (
     <PressableScale
-      accessibilityRole="button"
+      accessibilityRole={accessibilityRole}
       accessibilityLabel={detail ? `${label}, ${detail}` : label}
       accessibilityState={{ disabled, busy }}
       disabled={disabled}

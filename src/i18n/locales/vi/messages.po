@@ -1322,6 +1322,10 @@ msgstr "Không thể mở giao diện đó"
 msgid "Could not open the file"
 msgstr "Không thể mở tệp"
 
+#: src/app/settings.tsx
+msgid "Could not open the guide"
+msgstr "Không mở được hướng dẫn"
+
 #: src/lib/attachments.ts
 msgid "Could not open the picker."
 msgstr "Không thể mở bộ chọn"
@@ -1980,6 +1984,10 @@ msgctxt "agent slash command"
 msgid "Guided AGENTS.md setup"
 msgstr "Thiết lập AGENTS.md có hướng dẫn"
 
+#: src/app/settings.tsx
+msgid "Guides for pairing, the terminal, OpenCode and themes"
+msgstr "Hướng dẫn ghép nối, terminal, OpenCode và chủ đề"
+
 #: src/components/settings-alerts.tsx
 msgid "Haptic feedback"
 msgstr "Phản hồi rung"
@@ -2036,6 +2044,10 @@ msgstr "Khóa host đã thay đổi"
 #: src/components/ssh-host-row.tsx
 msgid "Host key trusted"
 msgstr "Khóa host đã được tin cậy"
+
+#: src/app/settings.tsx
+msgid "How to use Muqun"
+msgstr "Cách dùng Muqun"
 
 #: src/i18n/labels.ts
 msgid "Idle"
@@ -2536,6 +2548,10 @@ msgstr "Không có tác tử nào đang chạy"
 #: src/components/open-web-service-sheet.tsx
 msgid "No app on this phone opens web pages."
 msgstr "Không có ứng dụng nào trên điện thoại này mở được trang web"
+
+#: src/app/settings.tsx
+msgid "No app on this phone opens web pages. The guide is at muqun.dev/support."
+msgstr "Không có ứng dụng nào trên điện thoại này mở được trang web. Hướng dẫn có tại muqun.dev/support"
 
 #: src/components/pairing-camera.tsx
 msgid "No camera to scan with"
