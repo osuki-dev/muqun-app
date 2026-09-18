@@ -73,6 +73,10 @@ const ALLOWED: Readonly<Record<string, Readonly<Record<string, string>>>> = {
     'screenNotice.title': "the app's own banner title",
     'statusNotice.label': "the app's own status wording",
   },
+  'agent-worktree-sheet.tsx': {
+    'rowError.message':
+      'a refusal from the remove route, shown on the row it belongs to: a one-line git message ("fatal: ...") rather than prose, and never authored as markdown',
+  },
 };
 
 /** The accessors engine- and model-authored text arrives on. */

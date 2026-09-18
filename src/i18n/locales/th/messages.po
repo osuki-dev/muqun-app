@@ -17,6 +17,11 @@ msgstr ""
 msgid "… truncated"
 msgstr "… ตัดข้อความบางส่วนแล้ว"
 
+#. placeholder {0}: worktreeDisplayName(directory)
+#: src/components/agent-worktree-sheet.tsx
+msgid "“{0}” has changes that have not been committed. Removing it throws them away."
+msgstr "“{0}” มีการเปลี่ยนแปลงที่ยังไม่ได้คอมมิต ถ้าลบออกจะหายไปทั้งหมด"
+
 #: src/components/agent-workbench.tsx
 msgid "“{args}” was not sent: a skill takes no arguments."
 msgstr "ไม่ได้ส่ง “{args}” เพราะสกิลไม่รับอาร์กิวเมนต์"
@@ -231,6 +236,10 @@ msgstr "{title} — ทำงานเสร็จตอนที่คุณไ
 msgid "+{overflow} more"
 msgstr "อีก +{overflow} รายการ"
 
+#: src/components/agent-worktree-sheet.tsx
+msgid "A branch or tag this repository already has."
+msgstr "สาขาหรือแท็กที่ที่เก็บโค้ดนี้มีอยู่แล้ว"
+
 #: src/components/agent-message-block.tsx
 msgid "a default model"
 msgstr "โมเดลเริ่มต้น"
@@ -243,6 +252,10 @@ msgstr "Gateway บนเครื่องที่คุณเชื่อม�
 #: src/components/server-terminal-workspace.tsx
 msgid "a new {0}"
 msgstr "{0} ใหม่"
+
+#: src/components/agent-worktree-sheet.tsx
+msgid "A second checkout of this repository"
+msgstr "สำเนาที่สองของที่เก็บโค้ดนี้"
 
 #: src/lib/release-notes.ts
 msgid "A server's key is remembered the first time and checked every time after, and a key that changed stops the connection until you say otherwise."
@@ -277,7 +290,9 @@ msgid "Act on this terminal, or send its agent a prompt"
 msgstr "สั่งงานเทอร์มินัลนี้ หรือส่งคำสั่งให้เอเจนต์ของมัน"
 
 #. placeholder {0}: sessionTitleOr(session, t`Untitled session`)
+#. placeholder {0}: worktreeDisplayName(directory)
 #: src/components/agent-sessions-sheet.tsx
+#: src/components/agent-worktree-sheet.tsx
 msgid "Actions for {0}"
 msgstr "การดำเนินการกับ {0}"
 
@@ -685,9 +700,17 @@ msgstr "สาขา"
 msgid "Branch and theme file came from the link. A branch can change later"
 msgstr "สาขาและไฟล์ธีมมาจากลิงก์ สาขาอาจเปลี่ยนได้ภายหลัง"
 
+#: src/components/agent-worktree-sheet.tsx
+msgid "Branch from"
+msgstr "แตกจากสาขา"
+
 #: src/components/theme-link-import.tsx
 msgid "Branch or commit (optional)"
 msgstr "สาขาหรือคอมมิต (ไม่บังคับ)"
+
+#: src/components/agent-worktree-sheet.tsx
+msgid "Branch to start from"
+msgstr "สาขาที่ใช้เป็นจุดเริ่ม"
 
 #: src/components/custom-theme-library.tsx
 #: src/components/theme-browse-sheet.tsx
@@ -725,6 +748,7 @@ msgstr "ต้องเข้าถึงกล้อง"
 #: src/components/agent-composer.tsx
 #: src/components/agent-context-sheet.tsx
 #: src/components/agent-sessions-sheet.tsx
+#: src/components/agent-worktree-sheet.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/row-action-menu.tsx
 #: src/components/session-map.tsx
@@ -1318,6 +1342,10 @@ msgstr "คัดลอกไม่ได้"
 msgid "Could not create session"
 msgstr "ไม่สามารถสร้างเซสชันได้"
 
+#: src/components/agent-worktree-sheet.tsx
+msgid "Could not create that worktree."
+msgstr "สร้างเวิร์กทรีนั้นไม่ได้"
+
 #: src/components/agent-workbench.tsx
 msgid "Could not delete"
 msgstr "ลบไม่ได้"
@@ -1357,6 +1385,10 @@ msgstr "โหลดเซสชันไม่สำเร็จ"
 #: src/components/session-map.tsx
 msgid "Could not load what is running."
 msgstr "โหลดรายการที่กำลังทำงานไม่ได้"
+
+#: src/components/agent-workbench.tsx
+msgid "Could not move this session"
+msgstr "ย้ายเซสชันนี้ไม่ได้"
 
 #: src/hooks/use-theme-file-open.ts
 msgid "Could not open that theme"
@@ -1431,6 +1463,10 @@ msgstr "อ่านไฟล์นี้ไม่ได้"
 #: src/components/ssh-host-form.tsx
 msgid "Could not remove host"
 msgstr "ลบโฮสต์ไม่ได้"
+
+#: src/components/agent-worktree-sheet.tsx
+msgid "Could not remove that worktree."
+msgstr "ลบเวิร์กทรีนั้นไม่ได้"
 
 #: src/components/agent-workbench.tsx
 msgid "Could not rename"
@@ -1536,6 +1572,10 @@ msgstr "อัปเดตเซสชันไม่ได้"
 #: src/lib/attachments.ts
 msgid "Could not upload the file."
 msgstr "อัปโหลดไฟล์ไม่ได้"
+
+#: src/components/agent-worktree-sheet.tsx
+msgid "Create and move"
+msgstr "สร้างแล้วย้ายไป"
 
 #: src/components/custom-theme-library.tsx
 msgid "Current"
@@ -2332,6 +2372,10 @@ msgstr "พบล่าสุดเมื่อสักครู่"
 msgid "Latest"
 msgstr "ล่าสุด"
 
+#: src/components/agent-worktree-sheet.tsx
+msgid "Leave it empty and OpenCode picks a name."
+msgstr "เว้นว่างไว้แล้ว OpenCode จะตั้งชื่อให้"
+
 #: src/components/new-task-sheet.tsx
 msgid "Leave it empty to start where the session already is."
 msgstr "เว้นว่างไว้เพื่อเริ่มในตำแหน่งปัจจุบันของเซสชัน"
@@ -2499,6 +2543,14 @@ msgstr "ย้ายตัวควบคุมตัวแก้ไข"
 msgid "Move the simulator controls"
 msgstr "ย้ายตัวควบคุมเครื่องจำลอง"
 
+#: src/components/agent-worktree-sheet.tsx
+msgid "Move to worktree"
+msgstr "ย้ายไปเวิร์กทรี"
+
+#: src/components/agent-sessions-sheet.tsx
+msgid "Move to worktree…"
+msgstr "ย้ายไปเวิร์กทรี…"
+
 #: src/components/app-drawer-content.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/pad-server-rail.tsx
@@ -2551,6 +2603,7 @@ msgid "My themes"
 msgstr "ธีมของฉัน"
 
 #: src/app/commands.tsx
+#: src/components/agent-worktree-sheet.tsx
 #: src/components/ssh-host-form.tsx
 msgid "Name"
 msgstr "ชื่อ"
@@ -2610,6 +2663,10 @@ msgstr "เทอร์มินัลใหม่"
 #: src/components/session-map.tsx
 msgid "New workspace"
 msgstr "พื้นที่ทำงานใหม่"
+
+#: src/components/agent-worktree-sheet.tsx
+msgid "New worktree…"
+msgstr "เวิร์กทรีใหม่…"
 
 #: src/components/agent-composer.tsx
 #: src/components/launch-intro.tsx
@@ -2758,6 +2815,10 @@ msgstr "ยังไม่มีเวิร์กสเปซที่นี่
 #: src/components/agent-workspace-sheet.tsx
 msgid "No workspaces match “{0}”."
 msgstr "ไม่มีเวิร์กสเปซที่ตรงกับ “{0}”"
+
+#: src/components/agent-worktree-sheet.tsx
+msgid "No worktrees yet. Make one below to work on a branch without disturbing this checkout."
+msgstr "ยังไม่มีเวิร์กทรี สร้างสักอันด้านล่างเพื่อทำงานบนสาขาโดยไม่รบกวนสำเนานี้"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Not available"
@@ -3236,6 +3297,10 @@ msgstr "คีย์ส่วนตัว"
 msgid "Private key (leave blank to keep the saved one)"
 msgstr "คีย์ส่วนตัว (เว้นว่างเพื่อเก็บคีย์เดิม)"
 
+#: src/components/agent-worktree-sheet.tsx
+msgid "Project"
+msgstr "โปรเจกต์"
+
 #: src/app/commands.tsx
 msgid "Prompt"
 msgstr "พรอมต์"
@@ -3325,6 +3390,10 @@ msgstr "กำลังอ่านธีม"
 msgid "Reading the theme link"
 msgstr "กำลังอ่านลิงก์ธีม"
 
+#: src/components/agent-worktree-sheet.tsx
+msgid "Reading this project’s worktrees…"
+msgstr "กำลังอ่านเวิร์กทรีของโปรเจกต์นี้…"
+
 #: src/components/collaboration-notice.tsx
 msgid "Ready for input"
 msgstr "พร้อมรับอินพุต"
@@ -3393,6 +3462,11 @@ msgstr "รีเฟรชไฟล์"
 msgid "Refresh output"
 msgstr "รีเฟรชเอาต์พุต"
 
+#: src/components/agent-worktree-sheet.tsx
+msgid "Refresh worktrees"
+msgstr "รีเฟรชเวิร์กทรี"
+
+#: src/components/agent-worktree-sheet.tsx
 #: src/components/collaboration-notice.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/settings-storage.tsx
@@ -3407,6 +3481,10 @@ msgstr "ลบ"
 #: src/components/ssh-host-form.tsx
 msgid "Remove {0}"
 msgstr "ลบ {0}"
+
+#: src/components/agent-worktree-sheet.tsx
+msgid "Remove anyway?"
+msgstr "ลบต่อไปหรือไม่?"
 
 #: src/components/collaboration-notice.tsx
 msgid "Remove from history?"
@@ -3423,6 +3501,14 @@ msgstr "ลบธีมนี้หรือไม่?"
 #: src/components/settings-storage.tsx
 msgid "Remove unused themes"
 msgstr "ลบธีมที่ไม่ได้ใช้"
+
+#: src/components/agent-worktree-sheet.tsx
+msgid "Remove worktree"
+msgstr "ลบเวิร์กทรี"
+
+#: src/components/agent-worktree-sheet.tsx
+msgid "Removing"
+msgstr "กำลังลบ"
 
 #: src/components/settings-storage.tsx
 msgid "Removing unused themes"
@@ -4512,6 +4598,10 @@ msgstr "การเชื่อมต่อกับเครื่องจำ
 msgid "The default agent. Executes tools."
 msgstr "เอเจนต์เริ่มต้น ทำงานตามเครื่องมือ"
 
+#: src/components/agent-worktree-sheet.tsx
+msgid "The host made a worktree but did not say where."
+msgstr "โฮสต์สร้างเวิร์กทรีแล้วแต่ไม่ได้บอกว่าอยู่ที่ไหน"
+
 #: src/components/settings-appearance.tsx
 msgid "The icon on your home screen."
 msgstr "ไอคอนบนหน้าจอหลักของคุณ"
@@ -4704,6 +4794,10 @@ msgstr "ต้องกรอกช่องนี้"
 #: src/components/git-diff-view.tsx
 msgid "This pane is not working inside a git repository, so there is nothing to compare."
 msgstr "พาเนลนี้ไม่ได้ทำงานอยู่ในที่เก็บโค้ด Git จึงไม่มีอะไรให้เปรียบเทียบ"
+
+#: src/components/agent-worktree-sheet.tsx
+msgid "This project"
+msgstr "โปรเจกต์นี้"
 
 #: src/app/explore.tsx
 msgid "This QR code is not valid."
@@ -5126,6 +5220,14 @@ msgstr "ไดเรกทอรีทำงาน"
 #: src/components/session-map.tsx
 msgid "Workspace"
 msgstr "พื้นที่ทำงาน"
+
+#: src/components/agent-worktree-sheet.tsx
+msgid "Worktree name"
+msgstr "ชื่อเวิร์กทรี"
+
+#: src/components/agent-worktree-sheet.tsx
+msgid "Worktrees"
+msgstr "เวิร์กทรี"
 
 #: src/i18n/labels.ts
 msgid "Write a file"

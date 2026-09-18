@@ -92,6 +92,15 @@ export interface AgentSheetSnapshot {
    */
   savedPermissionsRevision: number;
   /**
+   * Bumped whenever `agent.worktree.changed` says a project's inventory moved.
+   *
+   * The event carries no `asid` and is not replayable, and a route cannot
+   * subscribe to the workbench's stream -- so what travels is the fact that it
+   * arrived, and the worktree sheet re-lists when the number changes. The same
+   * shape as `savedPermissionsRevision` above, for the same reason.
+   */
+  worktreeRevision: number;
+  /**
    * Every model the host publishes.
    *
    * A `ModelRef` is three wire strings; the name a reader chose from --
@@ -121,6 +130,16 @@ export interface AgentSheetActions {
   selectModel: (model: ModelRef) => void;
   selectAgentMode: (agent: string) => void;
   selectWorkspace: (directory: string, project?: AgentProject) => void;
+  /**
+   * Point the open session at another directory -- one of its project's
+   * worktrees, or the project itself.
+   *
+   * Unlike `selectWorkspace` this starts nothing: the session, its transcript
+   * and whatever it is running all stay, and only the directory under them
+   * changes. The workbench owns it because `agent.session.updated` follows and
+   * the header and strip are its to keep in step.
+   */
+  moveSession: (directory: string) => void;
   toggleReasoning: () => void;
   toggleYolo: () => void;
   compactContext: () => void;
@@ -135,6 +154,7 @@ const NO_ACTIONS: AgentSheetActions = Object.freeze({
   selectModel: () => {},
   selectAgentMode: () => {},
   selectWorkspace: () => {},
+  moveSession: () => {},
   toggleReasoning: () => {},
   toggleYolo: () => {},
   compactContext: () => {},
@@ -170,6 +190,7 @@ const INITIAL: AgentSheetSnapshot = {
   contextUsage: null,
   commands: EMPTY_COMMANDS,
   savedPermissionsRevision: 0,
+  worktreeRevision: 0,
   models: EMPTY_MODELS,
 };
 

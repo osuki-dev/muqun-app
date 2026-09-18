@@ -467,6 +467,16 @@ function RootContent() {
                 'expandable'
               )}
             />
+            {/* The project's checkouts: a short list, a create form under
+                it, and a keyboard over both while the name is being typed.
+                Expandable, so the fields have somewhere to come up to. */}
+            <Stack.Screen
+              name="agent-worktree"
+              options={sheetPresentationOptions(
+                sheetRoutePresentations['agent-worktree'],
+                'expandable'
+              )}
+            />
             <Stack.Screen
               name="agent-context"
               options={sheetPresentationOptions(

@@ -2,7 +2,14 @@ import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, View, StyleSheet, ScrollView, TextInput } from 'react-native';
 import { Text, useThemeTokens } from '@osuki-dev/ui';
 import { useLingui } from '@lingui/react/macro';
-import { CornerUpLeft, GitFork, MoreHorizontal, PencilLine, Trash2 } from 'lucide-react-native';
+import {
+  CornerUpLeft,
+  GitBranch,
+  GitFork,
+  MoreHorizontal,
+  PencilLine,
+  Trash2,
+} from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import Animated from 'react-native-reanimated';
@@ -87,6 +94,16 @@ export interface AgentSessionsSheetProps {
   onRenameSession?: (asid: string, title: string) => void;
   /** Delete one session, after the confirmation this sheet asks for. */
   onDeleteSession?: (asid: string) => void;
+  /**
+   * Open the worktree sheet on one session.
+   *
+   * Offered on the session the workbench has open and on no other: the move
+   * route names a session, but the sheet behind it lists the *open* session's
+   * project and marks the *open* session's directory as current. Offering it
+   * on a row that is not the current one would show an inventory that has
+   * nothing to do with the row it was opened from.
+   */
+  onMoveSession?: (asid: string) => void;
   onClose: () => void;
 }
 
@@ -100,6 +117,7 @@ export const AgentSessionsSheet = memo(function AgentSessionsSheet({
   onSelectSession,
   onRenameSession,
   onDeleteSession,
+  onMoveSession,
   onClose,
 }: AgentSessionsSheetProps) {
   const { t } = useLingui();
@@ -390,6 +408,18 @@ export const AgentSessionsSheet = memo(function AgentSessionsSheet({
           onClose();
         },
         testID: `agent-session-open-parent-${session.asid}`,
+      });
+    }
+    if (onMoveSession && session.asid === activeAsid) {
+      items.push({
+        id: 'worktree',
+        label: t`Move to worktree…`,
+        Icon: GitBranch,
+        onPress: () => {
+          setMenuAsid(null);
+          onMoveSession(session.asid);
+        },
+        testID: `agent-session-worktree-${session.asid}`,
       });
     }
     items.push({

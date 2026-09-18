@@ -17,6 +17,11 @@ msgstr ""
 msgid "… truncated"
 msgstr "… truncado"
 
+#. placeholder {0}: worktreeDisplayName(directory)
+#: src/components/agent-worktree-sheet.tsx
+msgid "“{0}” has changes that have not been committed. Removing it throws them away."
+msgstr "“{0}” tem alterações por confirmar. Removê-lo descarta essas alterações"
+
 #: src/components/agent-workbench.tsx
 msgid "“{args}” was not sent: a skill takes no arguments."
 msgstr "“{args}” não foi enviado: uma habilidade não aceita argumentos"
@@ -231,6 +236,10 @@ msgstr "{title} — terminou enquanto você estava fora"
 msgid "+{overflow} more"
 msgstr "+{overflow} mais"
 
+#: src/components/agent-worktree-sheet.tsx
+msgid "A branch or tag this repository already has."
+msgstr "Um ramo ou etiqueta que este repositório já tem"
+
 #: src/components/agent-message-block.tsx
 msgid "a default model"
 msgstr "um modelo padrão"
@@ -243,6 +252,10 @@ msgstr "Um Gateway numa máquina em que você entra por SSH, mesmo um que só es
 #: src/components/server-terminal-workspace.tsx
 msgid "a new {0}"
 msgstr "um novo {0}"
+
+#: src/components/agent-worktree-sheet.tsx
+msgid "A second checkout of this repository"
+msgstr "Um segundo checkout deste repositório"
 
 #: src/lib/release-notes.ts
 msgid "A server's key is remembered the first time and checked every time after, and a key that changed stops the connection until you say otherwise."
@@ -277,7 +290,9 @@ msgid "Act on this terminal, or send its agent a prompt"
 msgstr "Age sobre este terminal, ou envia uma instrução ao seu agente"
 
 #. placeholder {0}: sessionTitleOr(session, t`Untitled session`)
+#. placeholder {0}: worktreeDisplayName(directory)
 #: src/components/agent-sessions-sheet.tsx
+#: src/components/agent-worktree-sheet.tsx
 msgid "Actions for {0}"
 msgstr "Ações para {0}"
 
@@ -685,9 +700,17 @@ msgstr "Ramo"
 msgid "Branch and theme file came from the link. A branch can change later"
 msgstr "A ramificação e o arquivo de tema vieram do link. Uma ramificação pode mudar depois"
 
+#: src/components/agent-worktree-sheet.tsx
+msgid "Branch from"
+msgstr "Ramo de partida"
+
 #: src/components/theme-link-import.tsx
 msgid "Branch or commit (optional)"
 msgstr "Branch ou commit (opcional)"
+
+#: src/components/agent-worktree-sheet.tsx
+msgid "Branch to start from"
+msgstr "Ramo a partir do qual começar"
 
 #: src/components/custom-theme-library.tsx
 #: src/components/theme-browse-sheet.tsx
@@ -725,6 +748,7 @@ msgstr "É preciso acesso à câmara"
 #: src/components/agent-composer.tsx
 #: src/components/agent-context-sheet.tsx
 #: src/components/agent-sessions-sheet.tsx
+#: src/components/agent-worktree-sheet.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/row-action-menu.tsx
 #: src/components/session-map.tsx
@@ -1318,6 +1342,10 @@ msgstr "Não foi possível copiar"
 msgid "Could not create session"
 msgstr "Não foi possível criar a sessão"
 
+#: src/components/agent-worktree-sheet.tsx
+msgid "Could not create that worktree."
+msgstr "Não foi possível criar esse worktree"
+
 #: src/components/agent-workbench.tsx
 msgid "Could not delete"
 msgstr "Não foi possível excluir"
@@ -1357,6 +1385,10 @@ msgstr "Não foi possível carregar a sessão"
 #: src/components/session-map.tsx
 msgid "Could not load what is running."
 msgstr "Não foi possível carregar o que está a correr"
+
+#: src/components/agent-workbench.tsx
+msgid "Could not move this session"
+msgstr "Não foi possível mover esta sessão"
 
 #: src/hooks/use-theme-file-open.ts
 msgid "Could not open that theme"
@@ -1431,6 +1463,10 @@ msgstr "Não foi possível ler este arquivo"
 #: src/components/ssh-host-form.tsx
 msgid "Could not remove host"
 msgstr "Não foi possível remover o host"
+
+#: src/components/agent-worktree-sheet.tsx
+msgid "Could not remove that worktree."
+msgstr "Não foi possível remover esse worktree"
 
 #: src/components/agent-workbench.tsx
 msgid "Could not rename"
@@ -1536,6 +1572,10 @@ msgstr "Não foi possível atualizar a sessão"
 #: src/lib/attachments.ts
 msgid "Could not upload the file."
 msgstr "Não foi possível carregar o ficheiro"
+
+#: src/components/agent-worktree-sheet.tsx
+msgid "Create and move"
+msgstr "Criar e mover"
 
 #: src/components/custom-theme-library.tsx
 msgid "Current"
@@ -2332,6 +2372,10 @@ msgstr "Visto agora mesmo"
 msgid "Latest"
 msgstr "Mais recente"
 
+#: src/components/agent-worktree-sheet.tsx
+msgid "Leave it empty and OpenCode picks a name."
+msgstr "Deixa vazio e o OpenCode escolhe um nome"
+
 #: src/components/new-task-sheet.tsx
 msgid "Leave it empty to start where the session already is."
 msgstr "Deixe vazio para começar onde a sessão já está"
@@ -2499,6 +2543,14 @@ msgstr "Mover os controlos do editor"
 msgid "Move the simulator controls"
 msgstr "Mover os controlos do simulador"
 
+#: src/components/agent-worktree-sheet.tsx
+msgid "Move to worktree"
+msgstr "Mover para um worktree"
+
+#: src/components/agent-sessions-sheet.tsx
+msgid "Move to worktree…"
+msgstr "Mover para um worktree…"
+
 #: src/components/app-drawer-content.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/pad-server-rail.tsx
@@ -2551,6 +2603,7 @@ msgid "My themes"
 msgstr "Meus temas"
 
 #: src/app/commands.tsx
+#: src/components/agent-worktree-sheet.tsx
 #: src/components/ssh-host-form.tsx
 msgid "Name"
 msgstr "Nome"
@@ -2610,6 +2663,10 @@ msgstr "Novo terminal"
 #: src/components/session-map.tsx
 msgid "New workspace"
 msgstr "Novo espaço de trabalho"
+
+#: src/components/agent-worktree-sheet.tsx
+msgid "New worktree…"
+msgstr "Novo worktree…"
 
 #: src/components/agent-composer.tsx
 #: src/components/launch-intro.tsx
@@ -2758,6 +2815,10 @@ msgstr "Ainda não há espaços de trabalho aqui. Escreve um caminho acima para 
 #: src/components/agent-workspace-sheet.tsx
 msgid "No workspaces match “{0}”."
 msgstr "Nenhum espaço de trabalho corresponde a “{0}”"
+
+#: src/components/agent-worktree-sheet.tsx
+msgid "No worktrees yet. Make one below to work on a branch without disturbing this checkout."
+msgstr "Ainda não há worktrees. Cria um abaixo para trabalhar num ramo sem mexer neste checkout"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Not available"
@@ -3236,6 +3297,10 @@ msgstr "Chave privada"
 msgid "Private key (leave blank to keep the saved one)"
 msgstr "Chave privada (deixe em branco para manter a guardada)"
 
+#: src/components/agent-worktree-sheet.tsx
+msgid "Project"
+msgstr "Projeto"
+
 #: src/app/commands.tsx
 msgid "Prompt"
 msgstr "Prompt"
@@ -3325,6 +3390,10 @@ msgstr "Lendo o tema"
 msgid "Reading the theme link"
 msgstr "Lendo o link do tema"
 
+#: src/components/agent-worktree-sheet.tsx
+msgid "Reading this project’s worktrees…"
+msgstr "A ler os worktrees deste projeto…"
+
 #: src/components/collaboration-notice.tsx
 msgid "Ready for input"
 msgstr "Aguardando entrada"
@@ -3393,6 +3462,11 @@ msgstr "Atualizar os ficheiros"
 msgid "Refresh output"
 msgstr "Atualizar saída"
 
+#: src/components/agent-worktree-sheet.tsx
+msgid "Refresh worktrees"
+msgstr "Atualizar worktrees"
+
+#: src/components/agent-worktree-sheet.tsx
 #: src/components/collaboration-notice.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/settings-storage.tsx
@@ -3407,6 +3481,10 @@ msgstr "Remover"
 #: src/components/ssh-host-form.tsx
 msgid "Remove {0}"
 msgstr "Remover {0}"
+
+#: src/components/agent-worktree-sheet.tsx
+msgid "Remove anyway?"
+msgstr "Remover mesmo assim?"
 
 #: src/components/collaboration-notice.tsx
 msgid "Remove from history?"
@@ -3423,6 +3501,14 @@ msgstr "Remover este tema?"
 #: src/components/settings-storage.tsx
 msgid "Remove unused themes"
 msgstr "Remover os temas não utilizados"
+
+#: src/components/agent-worktree-sheet.tsx
+msgid "Remove worktree"
+msgstr "Remover worktree"
+
+#: src/components/agent-worktree-sheet.tsx
+msgid "Removing"
+msgstr "A remover"
 
 #: src/components/settings-storage.tsx
 msgid "Removing unused themes"
@@ -4512,6 +4598,10 @@ msgstr "A ligação ao simulador foi abaixo"
 msgid "The default agent. Executes tools."
 msgstr "O agente padrão. Executa ferramentas"
 
+#: src/components/agent-worktree-sheet.tsx
+msgid "The host made a worktree but did not say where."
+msgstr "O host criou um worktree mas não disse onde"
+
 #: src/components/settings-appearance.tsx
 msgid "The icon on your home screen."
 msgstr "O ícone na sua tela inicial"
@@ -4704,6 +4794,10 @@ msgstr "Este campo é obrigatório"
 #: src/components/git-diff-view.tsx
 msgid "This pane is not working inside a git repository, so there is nothing to compare."
 msgstr "Este painel não está trabalhando dentro de um repositório git, portanto não há nada a comparar"
+
+#: src/components/agent-worktree-sheet.tsx
+msgid "This project"
+msgstr "Este projeto"
 
 #: src/app/explore.tsx
 msgid "This QR code is not valid."
@@ -5126,6 +5220,14 @@ msgstr "Diretório de trabalho"
 #: src/components/session-map.tsx
 msgid "Workspace"
 msgstr "Espaço de trabalho"
+
+#: src/components/agent-worktree-sheet.tsx
+msgid "Worktree name"
+msgstr "Nome do worktree"
+
+#: src/components/agent-worktree-sheet.tsx
+msgid "Worktrees"
+msgstr "Worktrees"
 
 #: src/i18n/labels.ts
 msgid "Write a file"

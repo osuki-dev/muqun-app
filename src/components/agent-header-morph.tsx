@@ -115,6 +115,7 @@ export function WorkspacePillContent({
   showSession,
   running = false,
   sessionTitle,
+  worktreeName,
   workspaceName,
   workspacePath,
 }: {
@@ -122,6 +123,21 @@ export function WorkspacePillContent({
   /** Only a working session's dot pulses; an idle one is still just there. */
   running?: boolean;
   sessionTitle?: string;
+  /**
+   * The worktree this session sits in, and nothing when it sits in the project.
+   *
+   * A second checkout of the same repository is the one fact about a session
+   * that changes what its work *means* and is invisible everywhere else: the
+   * title is the same, the model is the same, and the path is the one run the
+   * pill has never had room for. It is drawn under the title rather than
+   * beside it because the title is the thing being read and this qualifies it
+   * -- and quietly, in `textSubtle`, because a session in the project it
+   * belongs to says nothing at all and the two states must not swap sizes.
+   *
+   * The pill's height does not change either way: it is a 46pt control, and a
+   * title line plus this one is 30.
+   */
+  worktreeName?: string;
   workspaceName: string;
   workspacePath: string;
 }) {
@@ -192,6 +208,20 @@ export function WorkspacePillContent({
             style={styles.workspacePillName}>
             {sessionTitle}
           </Text>
+          {worktreeName ? (
+            // Keyed on the name, so a move fades the new worktree in where the
+            // old one was -- the same beat the title above it uses when an
+            // auto-title lands, and never an abrupt swap.
+            <Animated.View key={worktreeName} entering={fadeIn('short')}>
+              <Text
+                variant="caption"
+                numberOfLines={1}
+                color={theme.colors.textSubtle}
+                style={styles.workspacePillWorktree}>
+                {worktreeName}
+              </Text>
+            </Animated.View>
+          ) : null}
         </Animated.View>
         <ChevronDown size={13} color={theme.colors.textMuted} />
       </Animated.View>
@@ -230,6 +260,11 @@ const styles = StyleSheet.create({
   workspacePillTitle: {
     flexShrink: 1,
     minWidth: 0,
+  },
+  workspacePillWorktree: {
+    fontSize: AGENT_TYPE.micro.size,
+    lineHeight: AGENT_TYPE.micro.lineHeight,
+    includeFontPadding: false,
   },
   workspacePillName: {
     fontSize: AGENT_TYPE.meta.size,
