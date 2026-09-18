@@ -1,0 +1,127 @@
+/**
+ * What the launch opening reveals, and how the reveal falls back.
+ *
+ * The opening's one picture is the pack's world arriving. Three things have to
+ * be true for that to be drawn the intended way -- the runtime effect has to
+ * have compiled, the pack has to have painted a world, and Skia has to have
+ * decoded it -- and each of them can independently not be. This module is the
+ * decision, kept away from the drawing so it is a table a test can read rather
+ * than a chain of ternaries in a render.
+ *
+ * Free of every React, React Native and Skia import, so `bun test` can load it.
+ */
+
+/** What the front has behind it. */
+export type LaunchWorld =
+  /**
+   * The pack's painting, sampled by the runtime effect. `ready` is false while
+   * the decode is still out: the front idles as a breathing ring around the
+   * hero and the shader draws paper inside it, which is the frame the reader
+   * was already looking at rather than a new one.
+   */
+  | { kind: 'painted'; ready: boolean }
+  /** No painting to wait for: a field built from the pack's own three tones. */
+  | { kind: 'palette' }
+  /**
+   * The runtime effect is unavailable, or the decode did not arrive in time.
+   * A Reanimated circular iris over an ordinary image: a clean edge instead of
+   * an inked one, and no shader at all.
+   */
+  | { kind: 'iris' }
+  /**
+   * Nothing to reveal and nothing to reveal it with -- a palette pack on a
+   * device whose Skia would not compile the effect. The pack's paper, its
+   * hero and its prompt, and the cross-fade. Rare, and deliberately not an
+   * error: a launch that still shows the right colours and the right picture
+   * has lost an animation, not a screen.
+   */
+  | { kind: 'plain' };
+
+export type LaunchWorldInput = {
+  /** Whether the pack resolved a wallpaper slot to a file the app owns. */
+  hasArtwork: boolean;
+  /** Whether `Skia.RuntimeEffect.Make` returned a program at module load. */
+  shaderCompiled: boolean;
+  /** Whether Skia has handed back a decoded image for that file. */
+  imageReady: boolean;
+  /** Whether the front has waited as long as the budget allows. */
+  deadlinePassed: boolean;
+};
+
+/**
+ * Pick the reveal.
+ *
+ * The order matters and is the order of the things that can go wrong, worst
+ * first. Note that a pack with artwork whose decode is merely *late* still
+ * returns `painted`: the front has somewhere to idle, and switching to the
+ * iris the instant the image is not ready would throw away the good reveal
+ * over a decode that is usually a few frames out. Only the deadline gives up.
+ */
+export function chooseLaunchWorld(input: LaunchWorldInput): LaunchWorld {
+  if (!input.shaderCompiled) return input.hasArtwork ? { kind: 'iris' } : { kind: 'plain' };
+  if (!input.hasArtwork) return { kind: 'palette' };
+  if (input.imageReady) return { kind: 'painted', ready: true };
+  return input.deadlinePassed ? { kind: 'iris' } : { kind: 'painted', ready: false };
+}
+
+/** A rectangle in window points. */
+export type Box = { width: number; height: number };
+
+/** Where a fitted painting sits, in the units the shader samples in. */
+export type WorldFit = {
+  /** Multiply the image's own pixels by this to get points on screen. */
+  scale: number;
+  /** The fitted picture's top-left, in points. Negative under `cover`. */
+  x: number;
+  y: number;
+};
+
+/**
+ * Fit a painting to the screen the way Home fits it.
+ *
+ * `cover` fills and crops, `contain` fits inside and leaves paper, and `tile`
+ * is drawn as `contain` -- which is what `ThemeArtworkLayer`'s own call does,
+ * so the launch and Home agree rather than the launch having an opinion.
+ *
+ * The focal point is the author's, and it positions the picture inside
+ * whatever freedom the fit left: under `cover` the free space is negative and
+ * the focal point chooses which part of the painting survives the crop; under
+ * `contain` it is positive and chooses where the picture sits on the paper.
+ * Both are one multiplication, which is why they are one function.
+ */
+export function worldFit(
+  screen: Box,
+  image: Box,
+  fit: 'cover' | 'contain' | 'tile' | undefined,
+  focalPoint: { x: number; y: number } | undefined
+): WorldFit {
+  const safe = (value: number, fallback: number) =>
+    Number.isFinite(value) && value > 0 ? value : fallback;
+  const iw = safe(image.width, 1);
+  const ih = safe(image.height, 1);
+  const sw = safe(screen.width, 1);
+  const sh = safe(screen.height, 1);
+  const inside = fit === 'contain' || fit === 'tile';
+  const scale = inside ? Math.min(sw / iw, sh / ih) : Math.max(sw / iw, sh / ih);
+  const fx = focalPoint && Number.isFinite(focalPoint.x) ? focalPoint.x : 0.5;
+  const fy = focalPoint && Number.isFinite(focalPoint.y) ? focalPoint.y : 0.5;
+  return { scale, x: (sw - iw * scale) * fx, y: (sh - ih * scale) * fy };
+}
+
+/**
+ * The radius the front has to reach for the world to have covered the screen,
+ * measured from wherever the hero happens to be.
+ *
+ * The hero is centred at launch, so this is usually half the diagonal -- but
+ * on a landscape tablet, or once Home has published a hero band at the top of
+ * the page, the centre is not the centre, and the far corner is further than
+ * the near one by a good deal. Taking the largest of the four corners is what
+ * keeps the last corner from being reached a beat after the rest.
+ */
+export function bloomRadius(screen: Box, centre: { x: number; y: number }): number {
+  const xs = [centre.x, screen.width - centre.x];
+  const ys = [centre.y, screen.height - centre.y];
+  const dx = Math.max(Math.abs(xs[0] ?? 0), Math.abs(xs[1] ?? 0));
+  const dy = Math.max(Math.abs(ys[0] ?? 0), Math.abs(ys[1] ?? 0));
+  return Math.hypot(dx, dy);
+}
