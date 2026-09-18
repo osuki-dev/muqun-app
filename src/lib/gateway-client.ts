@@ -14,6 +14,7 @@ import {
   getApiSessionsBySessionIdAgents,
   getApiSessionsBySessionIdAgentsByTarget,
   getApiSessionsBySessionIdPanes,
+  getApiSessionsBySessionIdSnapshot,
   getApiSessionsBySessionIdPanesByPaneId,
   getApiSessionsBySessionIdPanesByPaneIdOutput,
   getApiSessionsBySessionIdPanesByPaneIdShortcuts,
@@ -146,6 +147,11 @@ import {
   transportKeyMaterial,
   type EncryptedEnvelope,
 } from './gateway-transport';
+import {
+  endpointIsAbsent,
+  sessionSnapshotFromAnswer,
+  type SessionSnapshot,
+} from '@/lib/session-snapshot';
 import { assertSupportedHerdr } from './herdr-compatibility';
 import { GatewayTunnelUnavailableError, directGatewayBaseUrl } from './ssh-tunnel';
 
@@ -585,11 +591,20 @@ export interface PaneOutputResponse {
 export interface GatewayTransport {
   loadHealth: () => Promise<HealthResponse>;
   loadSessions: () => Promise<SessionsResponse>;
+  loadSessionSnapshot: (sessionId: string) => Promise<SessionSnapshot | null>;
   loadWorkspaces: (sessionId: string) => Promise<HerdrEntity[]>;
   loadTabs: (sessionId: string) => Promise<HerdrEntity[]>;
   loadPanes: (sessionId: string) => Promise<HerdrEntity[]>;
   loadAgents: (sessionId: string) => Promise<HerdrEntity[]>;
 }
+
+/**
+ * The three lists that describe a session's shape, in one answer.
+ *
+ * Agents are deliberately not among them even though the endpoint returns a
+ * set: see `loadSessionSnapshot`.
+ */
+export type { SessionSnapshot } from '@/lib/session-snapshot';
 
 export interface DevicePushTokenRegistration {
   token: string;
@@ -2137,6 +2152,80 @@ export async function loadRecordSessions(record: GatewayRecord): Promise<Session
   });
 }
 
+/**
+ * Gateways that answered `/api/sessions/{id}/snapshot` with "no such route",
+ * by base URL.
+ *
+ * The batched endpoint is not in `/health`'s capability list, so there is no
+ * flag to read -- and guessing from `gatewayVersion` is exactly what `AGENTS.md`
+ * forbids. What is left is the strongest form of detection available: ask the
+ * endpoint. A gateway too old to have it says 404 once per launch and is
+ * remembered here; every later call takes the three-request path with no probe
+ * and no penalty.
+ *
+ * Keyed by base URL because the client is repointed per server, and this is a
+ * fact about a machine rather than about the app. Deliberately not persisted: a
+ * gateway upgraded under a running app gets its one 404 again on the next
+ * launch, which is the cheapest possible way to notice the upgrade.
+ */
+const snapshotEndpointMissing = new Set<string>();
+
+/**
+ * Workspaces, tabs and panes in one round trip.
+ *
+ * Three of the requests the workspace prewarm made were these, asked
+ * separately: `/workspaces`, `/tabs`, `/panes` against one session, in
+ * parallel, each paying its own round trip on a radio where the round trip is
+ * most of the cost. The gateway has answered all three at once since the
+ * batched route landed, and nothing in the app was calling it.
+ *
+ * ## Why the agents in that answer are not used
+ *
+ * The endpoint returns an `agents` array too, and it is not the array `/agents`
+ * returns. The gateway derives it from the panes (`agent_from_pane` in
+ * `backend/compat.rs`), so it carries `pane_id`, `workspace_id`, `tab_id`,
+ * `agent`, `display_agent` and `agent_status` -- and not `instance_id` or
+ * `target`, which the backend agent list does carry.
+ *
+ * Both of those are read off this very array. `instance_id` is the opaque agent
+ * instance identity a collaboration assignment is bound to, bound that way
+ * precisely so it is not bound to a reusable pane id
+ * (`components/server-terminal-workspace`, `lib/agent-collaboration`); an
+ * assignment built from a derived agent would carry an empty one and be dropped
+ * on the floor. `target` is the opaque send address the commands screen is
+ * handed. So the agents call stays, and this turns four requests into two
+ * rather than into one.
+ *
+ * (`state_change_seq` is the third field the derived shape omits, and it is
+ * read nowhere in the app, so it costs nothing either way.)
+ *
+ * Null means the gateway has no such route -- not that it failed. Any other
+ * failure is raised, because a session that genuinely cannot be read is not
+ * something to paper over with three more requests.
+ */
+export async function loadSessionSnapshot(sessionId: string): Promise<SessionSnapshot | null> {
+  if (isDemoActive()) return { workspaces: demoWorkspaces(), tabs: demoTabs(), panes: demoPanes() };
+  const base = currentBaseUrl;
+  if (snapshotEndpointMissing.has(base)) return null;
+  let answer: unknown;
+  try {
+    answer = await getApiSessionsBySessionIdSnapshot({ sessionId });
+  } catch (error) {
+    if (!endpointIsAbsent(error)) throw error;
+    snapshotEndpointMissing.add(base);
+    return null;
+  }
+  // The panes in this answer have been through the gateway's scrollback
+  // observe/amend pass exactly as `/panes` has, so a pane's `scroll` says the
+  // same thing here as there and pull-for-earlier is unaffected.
+  return sessionSnapshotFromAnswer(answer);
+}
+
+/** Test seam: the miss set is process-wide, so suites must be able to reset it. */
+export function forgetSnapshotEndpointSupport(): void {
+  snapshotEndpointMissing.clear();
+}
+
 export async function loadWorkspaces(sessionId: string): Promise<HerdrEntity[]> {
   if (isDemoActive()) return demoWorkspaces();
   return normalizeGatewayEntities(await getApiSessionsBySessionIdWorkspaces({ sessionId }), [
@@ -2751,6 +2840,7 @@ export async function sendTestNotification(data: TestNotificationRequest = {}): 
 export const gatewayTransport: GatewayTransport = {
   loadHealth,
   loadSessions,
+  loadSessionSnapshot,
   loadWorkspaces,
   loadTabs,
   loadPanes,

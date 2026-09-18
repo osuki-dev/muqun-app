@@ -4,6 +4,7 @@ import {
   INITIAL_PANE_OUTPUT_LINES,
   type HealthResponse,
   type PaneOutputSource,
+  type SessionSnapshot,
 } from '@/lib/gateway-client';
 import { initialSelection, reconcileSelection } from '@/lib/workspace-selection';
 
@@ -64,10 +65,8 @@ export async function loadWorkspaceSnapshot(
     choices.length ? choices : sessionChoices(sessions.sessions, true),
     preference
   );
-  const [workspaces, tabs, panes, agents] = await Promise.all([
-    gatewayTransport.loadWorkspaces(sessionId),
-    gatewayTransport.loadTabs(sessionId),
-    gatewayTransport.loadPanes(sessionId),
+  const [{ workspaces, tabs, panes }, agents] = await Promise.all([
+    sessionEntities(sessionId),
     gatewayTransport.loadAgents(sessionId),
   ]);
   if (!isCurrent()) return null;
@@ -75,17 +74,49 @@ export async function loadWorkspaceSnapshot(
 }
 
 /**
+ * The session's shape, batched where the gateway can batch it.
+ *
+ * One request against a gateway that has `/snapshot`, three against one that
+ * does not, and the caller cannot tell which it got. Which gateway this is gets
+ * decided once per launch by asking -- see `loadSessionSnapshot`, and note that
+ * a null from it is "no such route", never "the read failed": a real failure is
+ * raised from in there and is not retried as three requests.
+ */
+async function sessionEntities(sessionId: string): Promise<SessionSnapshot> {
+  const batched = await gatewayTransport.loadSessionSnapshot(sessionId);
+  if (batched) return batched;
+  const [workspaces, tabs, panes] = await Promise.all([
+    gatewayTransport.loadWorkspaces(sessionId),
+    gatewayTransport.loadTabs(sessionId),
+    gatewayTransport.loadPanes(sessionId),
+  ]);
+  return { workspaces, tabs, panes };
+}
+
+/**
  * Load the configured server's workspace ahead of anyone opening it.
  *
- * Only ever the server the app is already pointed at. The home screen now
- * probes up to `MAX_PROBED_SERVERS` for reachability, but warming is a
- * different weight of request -- a probe is one round trip and a warm is
- * seven: the six `loadWorkspaceSnapshot` makes, plus the landing pane's screen
- * read below. Eight against a gateway whose `/api/sessions` omits `connected`,
- * because `loadSessions` then asks `/health` a second time to fill it in. So
- * this stays at one server. Warming four on every return to the list is the
- * launch cost that fan-out was bounded to avoid in the first place
+ * Only ever the server the app is already pointed at. The home screen probes up
+ * to `MAX_PROBED_SERVERS` for reachability, but warming is a different weight
+ * of request, so this stays at one server. Warming four on every return to the
+ * list is the launch cost that fan-out was bounded to avoid in the first place
  * (`stores/server-reachability.ts`, `lib/server-agents.ts`).
+ *
+ * A probe is one round trip. A warm used to be seven on top of it -- health,
+ * sessions, workspaces, tabs, panes, agents, and the landing pane's screen read
+ * below -- and is now three:
+ *
+ *  * health is the probe's own answer, handed over rather than asked for again
+ *    (`knownHealth`);
+ *  * workspaces, tabs and panes are one batched request (`loadSessionSnapshot`),
+ *    against a gateway that has the route;
+ *  * sessions, agents and the pane read are unchanged, and the ordering between
+ *    them is inherent: the session has to be resolved before anything can be
+ *    asked about it, and the landing pane is not known until the panes are.
+ *
+ * Four against a gateway whose `/api/sessions` omits `connected`, because
+ * `loadSessions` then asks `/health` a second time to fill it in. Six against
+ * one with no batched route, which is the old shape minus the shared health.
  *
  * A failure is not reported. The screen still connects exactly as it did
  * before; the only thing lost is the head start.
