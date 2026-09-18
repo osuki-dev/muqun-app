@@ -84,6 +84,14 @@ export interface AgentSheetSnapshot {
   /** The host's own slash commands, from the catalog. */
   commands: readonly CommandInfo[];
   /**
+   * Bumped whenever an "Always allow" reply lands.
+   *
+   * The saved-rules list is read by the context sheet and by nothing else, so
+   * the list itself is not published here -- only the fact that it has changed,
+   * which is what tells an open sheet to read it again.
+   */
+  savedPermissionsRevision: number;
+  /**
    * Every model the host publishes.
    *
    * A `ModelRef` is three wire strings; the name a reader chose from --
@@ -103,6 +111,13 @@ export interface AgentSheetSnapshot {
 export interface AgentSheetActions {
   selectSession: (asid: string) => void;
   createSession: () => void;
+  /** Rename one session. Optimistic in the workbench, rolled back on refusal. */
+  renameSession: (asid: string, title: string) => void;
+  /**
+   * Delete one session. The confirmation belongs to the surface that asks --
+   * this is the call that follows a yes.
+   */
+  deleteSession: (asid: string) => void;
   selectModel: (model: ModelRef) => void;
   selectAgentMode: (agent: string) => void;
   selectWorkspace: (directory: string, project?: AgentProject) => void;
@@ -115,6 +130,8 @@ export interface AgentSheetActions {
 const NO_ACTIONS: AgentSheetActions = Object.freeze({
   selectSession: () => {},
   createSession: () => {},
+  renameSession: () => {},
+  deleteSession: () => {},
   selectModel: () => {},
   selectAgentMode: () => {},
   selectWorkspace: () => {},
@@ -152,6 +169,7 @@ const INITIAL: AgentSheetSnapshot = {
   compaction: null,
   contextUsage: null,
   commands: EMPTY_COMMANDS,
+  savedPermissionsRevision: 0,
   models: EMPTY_MODELS,
 };
 

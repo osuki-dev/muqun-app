@@ -12,6 +12,7 @@ import {
   isFreeModel,
   isNoticePart,
   isSessionUnread,
+  isSlashSkill,
   parseAgentCatalog,
   parseAgentContextUsage,
   parseAgentDomainEvent,
@@ -939,6 +940,30 @@ describe('catalog', () => {
     expect(parsed.commands[0]).toMatchObject({ name: 'review', agent: 'plan' });
     expect(parsed.defaults.agent).toBe('build');
     expect(parsed.defaults.model?.model_id).toBe('union-alpha');
+  });
+
+  test('a skill carries whether it is a slash line and whether it auto-invokes', () => {
+    const parsed = parseAgentCatalog({
+      skills: [
+        { id: 'commit-message', name: 'Commit message', description: 'd', slash: true },
+        { id: 'pdf', name: 'PDF', description: 'p', autoinvoke: true, slash: false },
+        { id: 'legacy', name: 'Legacy', description: 'l' },
+        { id: '', name: 'Nameless' },
+      ],
+    });
+    expect(parsed.skills.map((skill) => skill.id)).toEqual(['commit-message', 'pdf', 'legacy']);
+    expect(parsed.skills[0]).toEqual({
+      id: 'commit-message',
+      name: 'Commit message',
+      description: 'd',
+      slash: true,
+    });
+    expect(parsed.skills[1].autoinvoke).toBe(true);
+    // A catalog that predates the flag leaves it unset, which is not a yes.
+    expect(parsed.skills[2].slash).toBeUndefined();
+    expect(isSlashSkill(parsed.skills[0])).toBe(true);
+    expect(isSlashSkill(parsed.skills[1])).toBe(false);
+    expect(isSlashSkill(parsed.skills[2])).toBe(false);
   });
 
   test('a disabled provider and a disabled model are carried, not filtered', () => {

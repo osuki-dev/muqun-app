@@ -1,8 +1,9 @@
-import { memo, useState } from 'react';
-import { View, StyleSheet, ScrollView } from 'react-native';
-import { Text, useThemeTokens } from '@osuki-dev/ui';
+import { memo, useCallback, useEffect, useState } from 'react';
+import { ActivityIndicator, View, StyleSheet, ScrollView } from 'react-native';
+import { Text, useThemeTokens, useToast } from '@osuki-dev/ui';
 import { useLingui } from '@lingui/react/macro';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Animated from 'react-native-reanimated';
 
 import { PressableScale } from '@/components/pressable-scale';
 import {
@@ -18,11 +19,15 @@ import { Toggle } from '@/components/toggle';
 import { appChrome } from '@/constants/appearance';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { withAlpha } from '@/lib/color';
+import { fadeIn, fadeOut, listLayout } from '@/lib/motion';
 import {
   contextFillRatio,
   contextTokenTotal,
+  listSavedPermissions,
+  revokeSavedPermission,
   type AgentContextUsage,
   type AgentSessionInfo,
+  type SavedPermission,
   type TokensUsage,
 } from '@/lib/agent-session';
 import { AGENT_TYPE } from '@/constants/agent-type';
@@ -53,6 +58,12 @@ export interface AgentContextSheetProps {
   onToggleReasoning?: () => void;
   yoloMode?: boolean;
   onToggleYolo?: () => void;
+  /**
+   * Bumped by the workbench whenever an "Always allow" reply lands, so a rule
+   * agreed to a moment ago is in the list without the reader closing the sheet
+   * and opening it again.
+   */
+  savedPermissionsRevision?: number;
   onClose: () => void;
   onCompact?: () => void;
   onClear?: () => void;
@@ -73,6 +84,7 @@ export const AgentContextSheet = memo(function AgentContextSheet({
   onToggleReasoning,
   yoloMode = false,
   onToggleYolo,
+  savedPermissionsRevision = 0,
   onClose,
   onCompact,
   onClear,
@@ -81,7 +93,66 @@ export const AgentContextSheet = memo(function AgentContextSheet({
   const theme = useThemeTokens();
   const insets = useSafeAreaInsets();
   const surfaceBackground = useSurfaceBackground();
+  const { showToast } = useToast();
   const [confirmingYolo, setConfirmingYolo] = useState(false);
+
+  /**
+   * What "Always allow" has agreed to, for this session's project.
+   *
+   * Fetched here rather than published by the workbench: it is the one thing on
+   * this sheet nothing else on the screen reads, and a route is mounted only
+   * while it is open. It is re-read when a reply lands behind the sheet.
+   */
+  const asid = session?.asid;
+  const [savedRules, setSavedRules] = useState<readonly SavedPermission[]>([]);
+  const [loadingRules, setLoadingRules] = useState(false);
+
+  useEffect(() => {
+    if (!asid) {
+      setSavedRules([]);
+      return;
+    }
+    let active = true;
+    setLoadingRules(true);
+    listSavedPermissions(asid)
+      .then((items) => {
+        if (active) setSavedRules(items);
+      })
+      .finally(() => {
+        if (active) setLoadingRules(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [asid, savedPermissionsRevision]);
+
+  /**
+   * Take one back.
+   *
+   * A trailing control rather than a swipe: this list lives in a native form
+   * sheet, whose own pan is what dismisses it, and the Expo v57 router docs
+   * describe `formSheet` and its detents without offering any way to tell a
+   * row's horizontal swipe apart from the sheet's own gesture -- on Android the
+   * presentation falls back to a modal where the two would simply compete. A
+   * revoke that sometimes closes the sheet instead is worse than a button.
+   */
+  const revokeRule = useCallback(
+    (rule: SavedPermission) => {
+      if (!asid) return;
+      const previous = savedRules;
+      setSavedRules((rules) => rules.filter((entry) => entry.id !== rule.id));
+      revokeSavedPermission(asid, rule.id).catch((err) => {
+        console.warn('Failed to revoke saved permission:', err);
+        setSavedRules(previous);
+        showToast({
+          variant: 'danger',
+          title: t`Could not revoke`,
+          message: [rule.action, rule.resource].filter(Boolean).join(' · '),
+        });
+      });
+    },
+    [asid, savedRules, showToast, t]
+  );
 
   /**
    * Two different numbers, and the bar can only honestly be drawn from one.
@@ -327,6 +398,62 @@ export const AgentContextSheet = memo(function AgentContextSheet({
           </>
         ) : null}
 
+        {/*
+          What "Always allow" agreed to, and the way out of it.
+
+          `allow_always` is the only permission answer whose consequence
+          outlives the prompt, and until now there was nowhere in the app to see
+          what had been agreed to -- the reader had to go to the host.
+        */}
+        <SheetSceneGroupRule />
+        <SheetSceneGroupHeading
+          title={t`Always allowed`}
+          meta={
+            loadingRules ? (
+              <ActivityIndicator size="small" color={theme.colors.textMuted} />
+            ) : savedRules.length > 0 ? (
+              <Text variant="caption" color={theme.colors.textMuted}>
+                {savedRules.length}
+              </Text>
+            ) : null
+          }
+        />
+        {savedRules.length === 0 ? (
+          <Text variant="caption" color={theme.colors.textMuted} style={styles.rulesEmpty}>
+            {loadingRules
+              ? t`Reading the rules on the host…`
+              : t`Nothing yet — an “Always allow” reply lands here, for this project.`}
+          </Text>
+        ) : (
+          savedRules.map((rule) => (
+            <Animated.View
+              key={rule.id}
+              entering={fadeIn('short')}
+              exiting={fadeOut('micro')}
+              layout={listLayout('short')}>
+              <SheetSceneRow
+                testID={`agent-saved-permission-${rule.id}`}
+                title={rule.action || t`Permission`}
+                caption={rule.resource}
+                accessibilityLabel={[rule.action, rule.resource].filter(Boolean).join(' · ')}
+                meta={
+                  <PressableScale
+                    testID={`agent-saved-permission-revoke-${rule.id}`}
+                    accessibilityRole="button"
+                    accessibilityLabel={t`Revoke ${rule.action || t`this rule`}`}
+                    hitSlop={8}
+                    onPress={() => revokeRule(rule)}
+                    style={styles.revoke}>
+                    <Text variant="caption" weight="semibold" color={theme.colors.danger}>
+                      {t`Revoke`}
+                    </Text>
+                  </PressableScale>
+                }
+              />
+            </Animated.View>
+          ))
+        )}
+
         {onCompact || onClear ? (
           <View style={styles.actions}>
             {onCompact ? (
@@ -376,6 +503,8 @@ const styles = StyleSheet.create({
   capacityTrack: { height: 4, borderRadius: 2, overflow: 'hidden', alignSelf: 'stretch' },
   capacityFill: { height: '100%', borderRadius: 2 },
   metaWide: { maxWidth: 200 },
+  rulesEmpty: { paddingVertical: SHEET_LADDER.snug, lineHeight: AGENT_TYPE.mono.lineHeight },
+  revoke: { minHeight: 32, paddingHorizontal: 4, alignItems: 'center', justifyContent: 'center' },
   // Out to the sheet's own edge, like the selection rule: the tint is the
   // sheet's warning about the row, not a card around it.
   dangerRow: {

@@ -17,6 +17,14 @@ msgstr ""
 msgid "… truncated"
 msgstr "… truncated"
 
+#: src/components/agent-workbench.tsx
+msgid "“{args}” was not sent: a skill takes no arguments."
+msgstr "“{args}” was not sent: a skill takes no arguments"
+
+#: src/components/agent-sessions-sheet.tsx
+msgid "“{title}” and any subagent sessions under it are removed from the host. This cannot be undone."
+msgstr "“{title}” and any subagent sessions under it are removed from the host. This cannot be undone"
+
 #: src/lib/demo-gateway.ts
 msgid "[instructions]"
 msgstr "[instructions]"
@@ -43,6 +51,11 @@ msgstr "{0, plural, one {# day} other {# days}}"
 #: src/components/git-diff-view.tsx
 msgid "{0, plural, one {# file changed} other {# files changed}}"
 msgstr "{0, plural, one {# file changed} other {# files changed}}"
+
+#. placeholder {0}: files.length
+#: src/components/agent-revert-plate.tsx
+msgid "{0, plural, one {# file} other {# files}}"
+msgstr "{0, plural, one {# file} other {# files}}"
 
 #. placeholder {0}: diffs.length
 #. placeholder {1}: totals.additions
@@ -148,6 +161,10 @@ msgstr "{0}h ago"
 msgid "{0}m ago"
 msgstr "{0}m ago"
 
+#: src/components/agent-composer.tsx
+msgid "{agentName}: {title} — finished while you were away"
+msgstr "{agentName}: {title} — finished while you were away"
+
 #: src/components/away-digest-card.tsx
 msgid "{asked, plural, one {· asked once} other {· asked # times}}"
 msgstr "{asked, plural, one {· asked once} other {· asked # times}}"
@@ -189,6 +206,10 @@ msgstr "{label} is temporarily locked. Use the system fallback or try later"
 msgid "{language} code copied to clipboard"
 msgstr "{language} code copied to clipboard"
 
+#: src/components/agent-revert-plate.tsx
+msgid "{messages, plural, one {# message} other {# messages}}"
+msgstr "{messages, plural, one {# message} other {# messages}}"
+
 #: src/components/session-map.tsx
 msgid "{panelCount, plural, one {# running} other {# running}}"
 msgstr "{panelCount, plural, one {# running} other {# running}}"
@@ -201,6 +222,10 @@ msgstr "{removeLabel}: {label}"
 #: src/components/agent-background-tray.tsx
 msgid "{running} running of {0}"
 msgstr "{running} running of {0}"
+
+#: src/components/agent-sessions-sheet.tsx
+msgid "{title} — finished while you were away"
+msgstr "{title} — finished while you were away"
 
 #: src/lib/agent-widget-layout.tsx
 msgid "+{overflow} more"
@@ -250,6 +275,11 @@ msgstr "Act on this terminal, or send it a command"
 #: src/app/commands.tsx
 msgid "Act on this terminal, or send its agent a prompt"
 msgstr "Act on this terminal, or send its agent a prompt"
+
+#. placeholder {0}: sessionTitleOr(session, t`Untitled session`)
+#: src/components/agent-sessions-sheet.tsx
+msgid "Actions for {0}"
+msgstr "Actions for {0}"
 
 #: src/components/ssh-host-list.tsx
 msgid "Add a host"
@@ -404,6 +434,14 @@ msgstr "Alt Up arrow"
 #: src/i18n/labels.ts
 msgid "Always allow"
 msgstr "Always allow"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Always allowed"
+msgstr "Always allowed"
+
+#: src/components/agent-revert-plate.tsx
+msgid "and {rest} more"
+msgstr "and {rest} more"
 
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Answer"
@@ -688,7 +726,9 @@ msgstr "Camera access is off. Turn it on in Settings to take a photo"
 msgid "Camera access needed"
 msgstr "Camera access needed"
 
+#: src/components/agent-composer.tsx
 #: src/components/agent-context-sheet.tsx
+#: src/components/agent-sessions-sheet.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/row-action-menu.tsx
 #: src/components/session-map.tsx
@@ -701,11 +741,6 @@ msgstr "Camera access needed"
 #: src/lib/local-authentication.ts
 msgid "Cancel"
 msgstr "Cancel"
-
-#: src/i18n/labels.ts
-msgctxt "agent slash command"
-msgid "Cancel a staged rollback"
-msgstr "Cancel a staged rollback"
 
 #. placeholder {0}: record.label
 #: src/components/ssh-terminal-workspace.tsx
@@ -1236,6 +1271,10 @@ msgstr "Copies it, ready to paste into a terminal"
 msgid "Copy"
 msgstr "Copy"
 
+#: src/components/agent-message-block.tsx
+msgid "Copy message"
+msgstr "Copy message"
+
 #: src/components/ssh-host-form.tsx
 msgid "Copy public key"
 msgstr "Copy public key"
@@ -1263,6 +1302,10 @@ msgid "Could not add a file"
 msgstr "Could not add a file"
 
 #: src/components/agent-workbench.tsx
+msgid "Could not change delivery"
+msgstr "Could not change delivery"
+
+#: src/components/agent-workbench.tsx
 msgid "Could not compact"
 msgstr "Could not compact"
 
@@ -1283,6 +1326,10 @@ msgid "Could not create session"
 msgstr "Could not create session"
 
 #: src/components/agent-workbench.tsx
+msgid "Could not delete"
+msgstr "Could not delete"
+
+#: src/components/agent-workbench.tsx
 msgid "Could not detach"
 msgstr "Could not detach"
 
@@ -1293,6 +1340,10 @@ msgstr "Could not enable App Lock"
 #: src/components/ssh-host-form.tsx
 msgid "Could not generate a key"
 msgstr "Could not generate a key"
+
+#: src/components/agent-workbench.tsx
+msgid "Could not keep it"
+msgstr "Could not keep it"
 
 #: src/components/new-task-sheet.tsx
 msgid "Could not list this server's agents."
@@ -1384,17 +1435,21 @@ msgstr "Could not read the terminal"
 msgid "Could not read this file."
 msgstr "Could not read this file"
 
-#: src/components/agent-workbench.tsx
-msgid "Could not redo"
-msgstr "Could not redo"
-
 #: src/components/ssh-host-form.tsx
 msgid "Could not remove host"
 msgstr "Could not remove host"
 
 #: src/components/agent-workbench.tsx
+msgid "Could not rename"
+msgstr "Could not rename"
+
+#: src/components/agent-workbench.tsx
 msgid "Could not reply"
 msgstr "Could not reply"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Could not revoke"
+msgstr "Could not revoke"
 
 #: src/components/settings-servers.tsx
 msgid "Could not revoke device"
@@ -1403,6 +1458,10 @@ msgstr "Could not revoke device"
 #: src/components/agent-workbench.tsx
 msgid "Could not run that"
 msgstr "Could not run that"
+
+#: src/components/agent-workbench.tsx
+msgid "Could not run that skill"
+msgstr "Could not run that skill"
 
 #: src/components/settings-servers.tsx
 msgid "Could not save changes"
@@ -1439,6 +1498,10 @@ msgstr "Could not send key"
 #: src/app/commands.tsx
 msgid "Could not send shortcut."
 msgstr "Could not send shortcut"
+
+#: src/components/agent-workbench.tsx
+msgid "Could not stage the rollback"
+msgstr "Could not stage the rollback"
 
 #: src/components/agent-workbench.tsx
 msgid "Could not start a session"
@@ -1526,6 +1589,7 @@ msgstr "DEFAULT"
 msgid "Defaults to theme.json at the repository root"
 msgstr "Defaults to theme.json at the repository root"
 
+#: src/components/agent-sessions-sheet.tsx
 #: src/components/row-action-menu.tsx
 msgid "Delete"
 msgstr "Delete"
@@ -1537,6 +1601,10 @@ msgstr "Delete {name}"
 #: src/i18n/labels.ts
 msgid "Delete this line"
 msgstr "Delete this line"
+
+#: src/components/agent-sessions-sheet.tsx
+msgid "Delete this session?"
+msgstr "Delete this session?"
 
 #: src/i18n/labels.ts
 msgctxt "git file status"
@@ -2172,6 +2240,10 @@ msgstr "Jump to latest output"
 msgid "just now"
 msgstr "just now"
 
+#: src/components/agent-revert-plate.tsx
+msgid "Keep"
+msgstr "Keep"
+
 #: src/components/settings-servers.tsx
 msgid "Keep {label}"
 msgstr "Keep {label}"
@@ -2179,6 +2251,15 @@ msgstr "Keep {label}"
 #: src/components/settings-storage.tsx
 msgid "Keep cached files"
 msgstr "Keep cached files"
+
+#: src/components/agent-revert-plate.tsx
+msgid "Keep everything and drop the staged rollback"
+msgstr "Keep everything and drop the staged rollback"
+
+#: src/i18n/labels.ts
+msgctxt "agent slash command"
+msgid "Keep everything and drop the staged rollback"
+msgstr "Keep everything and drop the staged rollback"
 
 #: src/components/settings-storage.tsx
 msgid "Keep saved themes"
@@ -2533,6 +2614,7 @@ msgstr "New terminal"
 msgid "New workspace"
 msgstr "New workspace"
 
+#: src/components/agent-composer.tsx
 #: src/components/launch-intro.tsx
 msgid "Next"
 msgstr "Next"
@@ -2726,6 +2808,10 @@ msgstr "Nothing here yet. Files the session writes show up on their own"
 msgid "Nothing is running in the background — detach a long command from its tool card and it appears here"
 msgstr "Nothing is running in the background — detach a long command from its tool card and it appears here"
 
+#: src/components/agent-workbench.tsx
+msgid "Nothing staged"
+msgstr "Nothing staged"
+
 #: src/components/pane-chat-view.tsx
 msgid "Nothing to show yet."
 msgstr "Nothing to show yet"
@@ -2737,6 +2823,10 @@ msgstr "Nothing to undo"
 #: src/components/agent-vcs-diff-sheet.tsx
 msgid "Nothing uncommitted in this workspace."
 msgstr "Nothing uncommitted in this workspace"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Nothing yet — an “Always allow” reply lands here, for this project."
+msgstr "Nothing yet — an “Always allow” reply lands here, for this project"
 
 #: src/components/toggle.tsx
 msgid "Off"
@@ -2842,6 +2932,10 @@ msgstr "Open on-screen keyboard"
 #: src/components/new-task-action.tsx
 msgid "Open OpenCode Agent on {label}"
 msgstr "Open OpenCode Agent on {label}"
+
+#: src/components/agent-sessions-sheet.tsx
+msgid "Open parent"
+msgstr "Open parent"
 
 #: src/components/open-web-service-sheet.tsx
 msgid "Open port {recent}"
@@ -3048,6 +3142,10 @@ msgstr "Paste a public theme link or GitHub repository"
 msgid "Path"
 msgstr "Path"
 
+#: src/components/agent-context-sheet.tsx
+msgid "Permission"
+msgstr "Permission"
+
 #: src/components/agent-permission-card.tsx
 msgid "Permission required"
 msgstr "Permission required"
@@ -3166,6 +3264,11 @@ msgstr "Queued"
 msgid "queued to upload"
 msgstr "queued to upload"
 
+#. placeholder {0}: inboxItemText(item) || item.type
+#: src/components/agent-composer.tsx
+msgid "Queued: {0}"
+msgstr "Queued: {0}"
+
 #: src/app/commands.tsx
 msgid "Quick action settings"
 msgstr "Quick action settings"
@@ -3203,6 +3306,10 @@ msgstr "Read outside the workspace"
 #: src/components/agent-mode-sheet.tsx
 msgid "Read-only: symbol search, file discovery, dependency tracing."
 msgstr "Read-only: symbol search, file discovery, dependency tracing"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Reading the rules on the host…"
+msgstr "Reading the rules on the host…"
 
 #: src/app/+not-found.tsx
 #: src/components/custom-theme-library.tsx
@@ -3319,6 +3426,10 @@ msgstr "Removing unused themes"
 #: src/components/settings-storage.tsx
 msgid "Removing…"
 msgstr "Removing…"
+
+#: src/components/agent-sessions-sheet.tsx
+msgid "Rename"
+msgstr "Rename"
 
 #: src/components/row-action-menu.tsx
 msgid "Rename {label}"
@@ -3454,11 +3565,14 @@ msgstr "Review the failing test and fix it"
 msgid "Reviewing the changes and checking the tests…"
 msgstr "Reviewing the changes and checking the tests…"
 
+#: src/components/agent-context-sheet.tsx
 #: src/components/settings-servers.tsx
 msgid "Revoke"
 msgstr "Revoke"
 
 #. placeholder {0}: device.name
+#. placeholder {0}: rule.action || t`this rule`
+#: src/components/agent-context-sheet.tsx
 #: src/components/settings-servers.tsx
 msgid "Revoke {0}"
 msgstr "Revoke {0}"
@@ -3472,10 +3586,13 @@ msgstr "Revoking…"
 msgid "Right arrow"
 msgstr "Right arrow"
 
-#: src/i18n/labels.ts
-msgctxt "agent slash command"
-msgid "Roll back to before the last message"
-msgstr "Roll back to before the last message"
+#: src/components/agent-revert-plate.tsx
+msgid "Rolling back {summary}"
+msgstr "Rolling back {summary}"
+
+#: src/components/agent-revert-plate.tsx
+msgid "Rolling back to here"
+msgstr "Rolling back to here"
 
 #: src/i18n/labels.ts
 msgid "Run a command"
@@ -3507,6 +3624,7 @@ msgstr "Run relevant tests"
 msgid "Run the Gateway on your machine and scan the QR code it prints. The pairing stays on this device."
 msgstr "Run the Gateway on your machine and scan the QR code it prints. The pairing stays on this device"
 
+#: src/components/agent-sessions-sheet.tsx
 #: src/components/session-map.tsx
 #: src/components/settings-servers.tsx
 #: src/components/ssh-host-form.tsx
@@ -3535,6 +3653,10 @@ msgstr "Save host"
 #: src/app/commands.tsx
 msgid "Save shortcut"
 msgstr "Save shortcut"
+
+#: src/components/agent-sessions-sheet.tsx
+msgid "Save the new name"
+msgstr "Save the new name"
 
 #: src/components/custom-theme-library.tsx
 msgid "Save theme"
@@ -3668,6 +3790,10 @@ msgstr "Send a message, type / for commands, @ for files…"
 msgid "Send message"
 msgstr "Send message"
 
+#: src/components/agent-composer.tsx
+msgid "Send now"
+msgstr "Send now"
+
 #: src/components/simfarm-stage.tsx
 msgid "Send the text"
 msgstr "Send the text"
@@ -3679,6 +3805,11 @@ msgstr "Send this task to {assignmentLabel}"
 #: src/components/server-terminal-workspace.tsx
 msgid "Send to agent"
 msgstr "Send to agent"
+
+#. placeholder {0}: inboxItemText(item) || item.type
+#: src/components/agent-composer.tsx
+msgid "Sending next: {0}"
+msgstr "Sending next: {0}"
 
 #: src/components/agent-assignment-bar.tsx
 msgid "Sending to"
@@ -3715,6 +3846,10 @@ msgstr "Server unavailable"
 #: src/components/pad-server-rail.tsx
 msgid "Servers"
 msgstr "Servers"
+
+#: src/components/agent-sessions-sheet.tsx
+msgid "Session name"
+msgstr "Session name"
 
 #: src/components/agent-composer.tsx
 msgid "Session Tokens"
@@ -3874,6 +4009,11 @@ msgstr "Show thinking"
 msgid "Show what is running"
 msgstr "Show what is running"
 
+#: src/i18n/labels.ts
+msgctxt "agent slash command"
+msgid "Show what rolling back to the last message would undo"
+msgstr "Show what rolling back to the last message would undo"
+
 #: src/components/theme-browse-sheet.tsx
 msgid "Showing {shown} of {total}"
 msgstr "Showing {shown} of {total}"
@@ -3922,8 +4062,12 @@ msgstr "Size"
 
 #. placeholder {0}: part.name ?? part.skill
 #: src/components/agent-message-block.tsx
-msgid "Skill · {0}"
-msgstr "Skill · {0}"
+msgid "Skill loaded · {0}"
+msgstr "Skill loaded · {0}"
+
+#: src/components/agent-workbench.tsx
+msgid "Skill started"
+msgstr "Skill started"
 
 #: src/components/launch-intro.tsx
 msgid "Skip intro"
@@ -4481,6 +4625,10 @@ msgid "Themes published at muqun.dev. Nothing downloads until you open one."
 msgstr "Themes published at muqun.dev. Nothing downloads until you open one"
 
 #: src/components/agent-workbench.tsx
+msgid "There is no rollback waiting to be applied."
+msgstr "There is no rollback waiting to be applied"
+
+#: src/components/agent-workbench.tsx
 msgid "Thinking…"
 msgstr "Thinking…"
 
@@ -4551,6 +4699,10 @@ msgstr "This QR code is not valid"
 #: src/components/agent-form-card.tsx
 msgid "This question needs a newer app to answer."
 msgstr "This question needs a newer app to answer"
+
+#: src/components/agent-context-sheet.tsx
+msgid "this rule"
+msgstr "this rule"
 
 #: src/hooks/use-agent-command-delivery.ts
 msgid "This server cannot run that command yet."
@@ -4714,10 +4866,23 @@ msgstr "Type it, or use your keyboard's dictation key"
 msgid "Type on the simulator"
 msgstr "Type on the simulator"
 
+#: src/components/agent-revert-plate.tsx
 #: src/components/custom-theme-library.tsx
 #: src/i18n/labels.ts
 msgid "Undo"
 msgstr "Undo"
+
+#: src/components/agent-revert-plate.tsx
+msgid "Undo {summary}"
+msgstr "Undo {summary}"
+
+#: src/components/agent-revert-plate.tsx
+msgid "Undo back to the staged message"
+msgstr "Undo back to the staged message"
+
+#: src/components/agent-message-block.tsx
+msgid "Undo to here"
+msgstr "Undo to here"
 
 #: src/components/asset-viewer.tsx
 msgid "unknown"

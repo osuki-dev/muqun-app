@@ -25,6 +25,7 @@ import {
   Paperclip,
   Terminal,
   Square,
+  Trash2,
   Zap,
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
@@ -39,6 +40,9 @@ import Animated, {
 import { useKeyboardState, useReanimatedKeyboardAnimation } from 'react-native-keyboard-controller';
 
 import { PressableScale } from '@/components/pressable-scale';
+import { AgentActionMenu, type AgentActionMenuItem } from '@/components/agent-action-menu';
+import { AgentRevertPlate } from '@/components/agent-revert-plate';
+import { AgentUnreadDot } from '@/components/agent-unread-dot';
 import { TerminalComposer, composerStyles } from '@/components/terminal-composer';
 import { AttachmentMenu } from '@/components/attachment-menu';
 import { AgentModeMenu } from '@/components/agent-mode-menu';
@@ -61,7 +65,7 @@ import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { useAttachmentUploads } from '@/hooks/use-attachment-uploads';
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';
 import { pickAttachments, describePickerFailure, type AttachmentSource } from '@/lib/attachments';
-import { DURATION, fadeIn, fadeOut, fadeOutDown, timing } from '@/lib/motion';
+import { DURATION, fadeIn, fadeOut, fadeOutDown, listLayout, timing } from '@/lib/motion';
 import { appChrome } from '@/constants/appearance';
 import { withAlpha } from '@/lib/color';
 import type { SessionNode } from '@/lib/agent-session-tree';
@@ -76,6 +80,8 @@ import {
   contextTokenTotal,
   formatModelName,
   hasRealSessionTitle,
+  isSessionUnread,
+  isSlashSkill,
   listAgentFiles,
   inboxItemText,
   type AgentContextUsage,
@@ -85,6 +91,7 @@ import {
   type AgentProject,
   type AgentSessionInfo,
   type CompactionReason,
+  type FileDiffItem,
   type ModelRef,
   type SkillInfo,
   type TodoItem,
@@ -130,6 +137,9 @@ const SessionChip = memo(function SessionChip({
   // Untitled reads as untitled; the time is the caption a listing shows, not
   // the name a chip stands under.
   const title = titled ? session.title : t`Untitled session`;
+  // The gateway's two numbers, and nothing else: a chip never says "unread"
+  // because this app thought something had happened over there.
+  const unread = isSessionUnread(session);
 
   return (
     <View
@@ -153,7 +163,11 @@ const SessionChip = memo(function SessionChip({
         onPress={() => onPress(session.asid)}
         accessibilityRole="button"
         accessibilityState={{ selected: active }}
-        accessibilityLabel={`${agentName}: ${titled ? session.title : t`Untitled session`}`}
+        accessibilityLabel={
+          unread
+            ? t`${agentName}: ${title} — finished while you were away`
+            : `${agentName}: ${title}`
+        }
         style={[
           styles.sessionChip,
           active
@@ -164,6 +178,14 @@ const SessionChip = memo(function SessionChip({
                 borderWidth: StyleSheet.hairlineWidth,
               },
         ]}>
+        {/* On a lit chip the primary ink is the chip itself, so the dot takes
+            the ink that reads on it. */}
+        {unread ? (
+          <AgentUnreadDot
+            testID={`agent-composer-session-unread-${session.asid}`}
+            {...(active ? { tone: theme.colors.onPrimary } : {})}
+          />
+        ) : null}
         <Text
           variant="caption"
           weight="bold"
@@ -236,6 +258,17 @@ export interface AgentComposerProps {
    * Free" in the picker the reader chose it from.
    */
   modelName?: string;
+  /**
+   * A rollback that is staged and waiting to be confirmed.
+   *
+   * The plate above the dock is the whole of the preview: how many messages,
+   * which files, and the two words that decide it. `null` when nothing is
+   * staged, which is most of the time.
+   */
+  revert?: { messages: number; files: readonly FileDiffItem[] } | null;
+  onCommitRevert?: () => void;
+  onKeepRevert?: () => void;
+  revertBusy?: boolean;
   /** A compaction in flight, or one that failed and has not been read yet. */
   compaction?: { status: 'running' | 'failed'; reason: CompactionReason } | null;
   onDismissCompaction?: () => void;
@@ -270,11 +303,27 @@ export interface AgentComposerProps {
   commands?: readonly CommandInfo[];
   /** A command from that catalog: `POST …/command`, never a typed prompt. */
   onRunCommand?: (name: string, args: string) => void;
+  /**
+   * A skill from that catalog: `POST …/skill`, never a typed prompt either.
+   *
+   * Answers whether the engine took it, because the draft is cleared on the
+   * strength of that answer and comes back when it did not.
+   */
+  onInvokeSkill?: (skill: string, args: string) => Promise<boolean | void>;
   /** One of the app's own commands, dispatched by the screen that owns them. */
   onClientCommand?: (name: AgentClientCommandId) => void;
   /** What is waiting behind the current turn. */
   inbox?: readonly InboxItem[];
   onCancelInboxItem?: (inboxId: string) => void;
+  /**
+   * Move one queued prompt between the two deliveries.
+   *
+   * `steer` runs it at the next step boundary -- ahead of everything queued
+   * behind it -- and `queue` puts it back in line. `setAgentInboxDelivery` is
+   * the route; it existed with no caller, so a prompt's place in the queue was
+   * decided once, when it was sent, and could only be cancelled afterwards.
+   */
+  onSetInboxDelivery?: (inboxId: string, delivery: 'steer' | 'queue') => void;
   onPressTokens?: () => void;
   injectDraftRef?: React.MutableRefObject<((text: string) => void) | null>;
 }
@@ -299,6 +348,10 @@ export const AgentComposer = memo(function AgentComposer({
   contextUsage,
   contextLimit,
   modelName,
+  revert,
+  onCommitRevert,
+  onKeepRevert,
+  revertBusy = false,
   compaction,
   onDismissCompaction,
   cost,
@@ -318,9 +371,11 @@ export const AgentComposer = memo(function AgentComposer({
   onOpenBackgroundTray,
   commands = EMPTY_COMMANDS,
   onRunCommand,
+  onInvokeSkill,
   onClientCommand,
   inbox = EMPTY_INBOX,
   onCancelInboxItem,
+  onSetInboxDelivery,
   onPressTokens,
   injectDraftRef,
 }: AgentComposerProps) {
@@ -335,6 +390,8 @@ export const AgentComposer = memo(function AgentComposer({
   const [attachmentMenuOpen, setAttachmentMenuOpen] = useState(false);
   const [modeMenuOpen, setModeMenuOpen] = useState(false);
   const [inboxOpen, setInboxOpen] = useState(false);
+  /** Which queued prompt has its actions open, if any. */
+  const [inboxMenuId, setInboxMenuId] = useState<string | null>(null);
 
   /**
    * How full the model's context is, and how much the session has cost.
@@ -408,11 +465,22 @@ export const AgentComposer = memo(function AgentComposer({
     [commands, _]
   );
 
+  /**
+   * The host's skills, as the lines the reader may actually type.
+   *
+   * Only the ones the catalog marks `slash`: the rest are the agent's own to
+   * reach for, and listing every skill on the host under "/" buried the few
+   * that are meant to be asked for. Named like a host command -- its own name
+   * first, then what it does -- because that is what the row beside it does.
+   */
   const skillCommands: PaneSlashCommand[] = useMemo(
     () =>
-      (skills ?? []).map((s) => ({
-        name: `/${s.id}`,
-        description: s.description || s.name,
+      (skills ?? []).filter(isSlashSkill).map((skill) => ({
+        name: `/${skill.id}`,
+        description:
+          skill.name && skill.description && skill.name.toLowerCase() !== skill.id.toLowerCase()
+            ? `${skill.name} · ${skill.description}`
+            : skill.description || skill.name,
         argsHint: '',
         source: 'workspace' as const,
       })),
@@ -549,10 +617,24 @@ export const AgentComposer = memo(function AgentComposer({
     // A slash command is a command. It used to be sent as the literal text it
     // was typed as, and whatever the model made of it was the result.
     if (!hasAttachments) {
-      const parsed = readSlashCommand(trimmed, commands);
+      const parsed = readSlashCommand(trimmed, commands, skills);
       if (parsed?.kind === 'server' && onRunCommand) {
         onRunCommand(parsed.name, parsed.args);
         setText('');
+        return;
+      }
+      if (parsed?.kind === 'skill' && onInvokeSkill) {
+        // The draft stays put until the engine has taken it: a skill the
+        // gateway refused with the composer already emptied is a line the
+        // reader has to remember and retype.
+        setSending(true);
+        try {
+          const accepted = await onInvokeSkill(parsed.name, parsed.args);
+          if (accepted === false) return;
+          setText('');
+        } finally {
+          setSending(false);
+        }
         return;
       }
       if (parsed?.kind === 'client' && onClientCommand) {
@@ -600,9 +682,64 @@ export const AgentComposer = memo(function AgentComposer({
     running,
     deliveryMode,
     commands,
+    skills,
     onRunCommand,
+    onInvokeSkill,
     onClientCommand,
   ]);
+
+  /**
+   * What can be done to one queued prompt.
+   *
+   * "Send now" is `steer`: it runs at the next step boundary, in front of
+   * everything queued behind it. "Queue" is the way back, and is only offered
+   * when the prompt is not already in line -- an option that does nothing is an
+   * option the reader has to think about.
+   */
+  const inboxActions = useCallback(
+    (item: InboxItem): AgentActionMenuItem[] => {
+      const items: AgentActionMenuItem[] = [];
+      if (onSetInboxDelivery && item.delivery !== 'steer') {
+        items.push({
+          id: 'steer',
+          label: t`Send now`,
+          Icon: Zap,
+          onPress: () => {
+            setInboxMenuId(null);
+            onSetInboxDelivery(item.id, 'steer');
+          },
+          testID: `agent-composer-inbox-steer-${item.id}`,
+        });
+      }
+      if (onSetInboxDelivery && item.delivery === 'steer') {
+        items.push({
+          id: 'queue',
+          label: t`Queue`,
+          Icon: Inbox,
+          onPress: () => {
+            setInboxMenuId(null);
+            onSetInboxDelivery(item.id, 'queue');
+          },
+          testID: `agent-composer-inbox-queue-${item.id}`,
+        });
+      }
+      if (onCancelInboxItem) {
+        items.push({
+          id: 'cancel',
+          label: t`Cancel`,
+          Icon: Trash2,
+          tone: 'danger',
+          onPress: () => {
+            setInboxMenuId(null);
+            onCancelInboxItem(item.id);
+          },
+          testID: `agent-composer-inbox-drop-${item.id}`,
+        });
+      }
+      return items;
+    },
+    [onSetInboxDelivery, onCancelInboxItem, t]
+  );
 
   // Resolve available agents (workspace agents + defaults)
   const availableAgents =
@@ -712,6 +849,7 @@ export const AgentComposer = memo(function AgentComposer({
             setAttachmentMenuOpen(false);
             setModeMenuOpen(false);
             setInboxOpen(false);
+            setInboxMenuId(null);
           }}
         />
       ) : null}
@@ -750,46 +888,81 @@ export const AgentComposer = memo(function AgentComposer({
                 {t`Waiting to send`}
               </Text>
             </View>
-            {inbox.map((item) => (
-              <View
-                key={item.id}
-                style={[
-                  styles.inboxRow,
-                  { backgroundColor: surfaceBackground(withAlpha(theme.colors.text, 0.05)) },
-                ]}>
-                <Inbox size={13} color={theme.colors.primary} />
-                <Text
-                  variant="caption"
-                  numberOfLines={2}
-                  color={theme.colors.textMuted}
-                  style={styles.inboxText}>
-                  {inboxItemText(item) || item.type}
-                </Text>
-                {/* Queued is not sent, and the two used to look identical. */}
-                <View
-                  style={[
-                    styles.queuedChip,
-                    { backgroundColor: withAlpha(theme.colors.primary, 0.16) },
-                  ]}>
-                  <Text variant="caption" weight="bold" color={theme.colors.primary}>
-                    {t`Queued`}
-                  </Text>
-                </View>
-                {onCancelInboxItem ? (
+            {inbox.map((item) => {
+              const steering = item.delivery === 'steer';
+              return (
+                <Animated.View key={item.id} layout={listLayout('short')}>
+                  {/* The row is the control: tapping a queued prompt is how its
+                      actions are reached, which is the same gesture a session
+                      row answers in the sessions sheet. */}
                   <PressableScale
-                    testID={`agent-composer-inbox-cancel-${item.id}`}
+                    testID={`agent-composer-inbox-row-${item.id}`}
                     accessibilityRole="button"
-                    accessibilityLabel={t`Cancel this queued message`}
-                    hitSlop={8}
-                    onPress={() => onCancelInboxItem(item.id)}
-                    style={styles.inboxCancel}>
-                    <Text variant="caption" weight="bold" color={theme.colors.danger}>
-                      ×
+                    accessibilityState={{ expanded: inboxMenuId === item.id }}
+                    accessibilityLabel={
+                      steering
+                        ? t`Sending next: ${inboxItemText(item) || item.type}`
+                        : t`Queued: ${inboxItemText(item) || item.type}`
+                    }
+                    onPress={() =>
+                      setInboxMenuId((current) => (current === item.id ? null : item.id))
+                    }
+                    style={[
+                      styles.inboxRow,
+                      { backgroundColor: surfaceBackground(withAlpha(theme.colors.text, 0.05)) },
+                    ]}>
+                    <Inbox size={13} color={theme.colors.primary} />
+                    <Text
+                      variant="caption"
+                      numberOfLines={2}
+                      color={theme.colors.textMuted}
+                      style={styles.inboxText}>
+                      {inboxItemText(item) || item.type}
                     </Text>
+                    {/* Queued is not sent, and the two used to look identical.
+                        Nor is queued the same as steering, which the chip said
+                        it was: this is the item's own `delivery`. */}
+                    <View
+                      style={[
+                        styles.queuedChip,
+                        {
+                          backgroundColor: withAlpha(
+                            steering ? theme.colors.warning : theme.colors.primary,
+                            0.16
+                          ),
+                        },
+                      ]}>
+                      <Text
+                        variant="caption"
+                        weight="bold"
+                        color={steering ? theme.colors.warning : theme.colors.primary}>
+                        {steering ? t`Next` : t`Queued`}
+                      </Text>
+                    </View>
+                    {onCancelInboxItem ? (
+                      <PressableScale
+                        testID={`agent-composer-inbox-cancel-${item.id}`}
+                        accessibilityRole="button"
+                        accessibilityLabel={t`Cancel this queued message`}
+                        hitSlop={8}
+                        onPress={() => onCancelInboxItem(item.id)}
+                        style={styles.inboxCancel}>
+                        <Text variant="caption" weight="bold" color={theme.colors.danger}>
+                          ×
+                        </Text>
+                      </PressableScale>
+                    ) : null}
                   </PressableScale>
-                ) : null}
-              </View>
-            ))}
+                  {inboxMenuId === item.id ? (
+                    <AgentActionMenu
+                      testID={`agent-composer-inbox-menu-${item.id}`}
+                      surface="ground"
+                      items={inboxActions(item)}
+                    />
+                  ) : null}
+                </Animated.View>
+              );
+            })}
           </GlassChrome>
         </Animated.View>
       ) : null}
@@ -830,6 +1003,18 @@ export const AgentComposer = memo(function AgentComposer({
             testIDPrefix="slash-command"
           />
         </View>
+      ) : null}
+
+      {/* What a staged rollback would take, and the two words that decide it.
+          Above the dock, where the reader's hands already are. */}
+      {revert && onCommitRevert && onKeepRevert ? (
+        <AgentRevertPlate
+          messages={revert.messages}
+          files={revert.files}
+          onCommit={onCommitRevert}
+          onKeep={onKeepRevert}
+          busy={revertBusy}
+        />
       ) : null}
 
       {/* A compaction in flight. Transient, above the dock, and gone the

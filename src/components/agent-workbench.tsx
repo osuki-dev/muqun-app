@@ -3,6 +3,7 @@ import {
   View,
   StyleSheet,
   ActivityIndicator,
+  InteractionManager,
   NativeScrollEvent,
   NativeSyntheticEvent,
   RefreshControl,
@@ -52,14 +53,20 @@ import {
   getAgentTimelineDelta,
   backgroundAgentSession,
   compactAgentSession,
+  deleteAgentSession,
+  renameAgentSession,
+  invokeAgentSkill,
   getAgentContext,
   listAgentSessionChildren,
   listAgentShells,
   listAgentInbox,
+  markAgentSessionViewed,
   cancelAgentInboxItem,
+  setAgentInboxDelivery,
   clearAgentRevert,
+  commitAgentRevert,
+  stageAgentRevert,
   exportAgentSession,
-  revertAgentSession,
   sendAgentCommand,
   orderKeyAfter,
   sortTimeline,
@@ -70,7 +77,9 @@ import {
   type AgentDomainEvent,
   type AgentRunStatus,
   type AgentSessionInfo,
+  type AgentSessionRevert,
   type CommandInfo,
+  type FileDiffItem,
   type ShellInfo,
   type CompactionReason,
   type InboxItem,
@@ -85,8 +94,16 @@ import {
   type AgentProject,
 } from '@/lib/agent-session';
 import { dangerousPermissionReason, yoloDecision } from '@/lib/agent-permission-safety';
+import { removeTimelineItems, revertedMessageCount } from '@/lib/agent-revert';
 import { classifyTool, capText } from '@/lib/agent-tool-output';
 import type { AgentClientCommandId } from '@/lib/agent-commands';
+import {
+  advanceSeq,
+  askCatchUp,
+  CATCH_UP_START,
+  snapshotSettled,
+  type CatchUpState,
+} from '@/lib/agent-catch-up';
 import {
   buildSessionStrip,
   indexSessions,
@@ -144,6 +161,16 @@ import { appChrome } from '@/constants/appearance';
  * growing the rendered window downwards from the latest page.
  */
 const HISTORY_PAGE_SIZE = 40;
+
+/**
+ * How many root sessions one listing asks for.
+ *
+ * The strip draws a handful of chips and the sessions sheet lists them newest
+ * first, so a bound with `order: 'desc'` cuts the oldest rather than the ones
+ * anybody is looking at -- and this response is the largest single thing the
+ * agent screen fetches.
+ */
+const SESSION_LIST_LIMIT = 50;
 
 /**
  * How long the screen's own notice stays before it fades out by itself.
@@ -329,6 +356,23 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   useEffect(() => {
     activeAsidRef.current = activeAsid;
   }, [activeAsid]);
+  /**
+   * Whether the app is in front, for the stream handler.
+   *
+   * A ref rather than a dependency: taking `appActive` into `handleStreamEvent`
+   * would tear the SSE connection down and rebuild it every time the reader
+   * switched apps, which is the one moment a stream should be left alone.
+   */
+  const appActiveRef = useRef(true);
+  /** The workspace on screen, for the calls that are made outside a render. */
+  const activeDirectoryRef = useRef<string | undefined>(undefined);
+  /**
+   * The directory the open session said it was in.
+   *
+   * What tells "the reader switched workspace" from "the session we just opened
+   * told us where it lives" -- only the first is worth re-listing for.
+   */
+  const snapshotDirectoryRef = useRef<string | undefined>(undefined);
   const [permissions, setPermissions] = useState<PermissionRequest[]>([]);
   useEffect(() => {
     if (permissions.length > 0) {
@@ -342,15 +386,30 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   const [forms, setForms] = useState<FormRequest[]>([]);
   // What is waiting behind the current turn, as the gateway last stated it.
   const [inbox, setInbox] = useState<InboxItem[]>([]);
+  /**
+   * A rollback that is staged and not yet applied.
+   *
+   * `info.revert` on a cold open, `agent.revert.changed` while the screen is
+   * live. It is the plate above the composer, and it is the whole of what makes
+   * `/undo` answerable: the one-shot route it used to call rolled back on the
+   * spot, with no statement of what it had taken.
+   */
+  const [stagedRevert, setStagedRevert] = useState<AgentSessionRevert | null>(null);
+  const [revertBusy, setRevertBusy] = useState(false);
   // A compaction in flight, which is a pill above the composer rather than a
   // row: the row lands in the timeline when the boundary is reached.
   const [compaction, setCompaction] = useState<{
     status: 'running' | 'failed';
     reason: CompactionReason;
   } | null>(null);
-  // Highest timeline sequence seen; `after=`-style bookkeeping. A ref, never
-  // state: bumping it must not re-run the stream effect or re-render anything.
-  const lastSeqRef = useRef<number>(0);
+  /**
+   * Where this session is in the gateway's event sequence, and whether a
+   * catch-up is owed. See `lib/agent-catch-up.ts`: the marker is raised, never
+   * assigned, and a catch-up asked for before the first snapshot is remembered
+   * rather than dropped. A ref, never state: bumping it must not re-run the
+   * stream effect or re-render anything.
+   */
+  const syncRef = useRef<CatchUpState>(CATCH_UP_START);
   const [loading, setLoading] = useState(true);
   const [hasDiffs, setHasDiffs] = useState(false);
   const [isOffline, setIsOffline] = useState(false);
@@ -454,6 +513,9 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   const [shells, setShells] = useState<readonly ShellInfo[]>([]);
   const [knownProjects, setKnownProjects] = useState<AgentProject[]>([]);
   const [activeDirectory, setActiveDirectory] = useState<string | undefined>(undefined);
+  useEffect(() => {
+    activeDirectoryRef.current = activeDirectory;
+  }, [activeDirectory]);
 
   // Load workspace catalog (available agents, skills & models)
   useEffect(() => {
@@ -490,51 +552,92 @@ export const AgentWorkbench = memo(function AgentWorkbench({
 
   const initialCheckDoneRef = useRef(Boolean(initialAsid));
 
-  // Load available sessions if no activeAsid
-  const refreshSessions = useCallback(async () => {
-    try {
-      // Roots only, and scoped to the workspace on screen: a subagent session
-      // is a row in its parent's tree, never a sibling of it in the strip.
-      const list = await listAgentSessions(sessionId, {
-        roots: true,
-        ...(activeDirectory ? { directory: activeDirectory } : {}),
-      });
-      setIsOffline(false);
-      if (list) {
-        setSessions(list);
-        // Coming in from Home lands on the session the reader last worked in,
-        // not on whatever the engine listed first: newest activity wins.
-        const latest = latestSession(list);
-        if (latest && !activeAsid) {
-          setActiveAsid(latest.asid);
-          setSessionInfo(latest);
-          if (latest.model) {
-            applySelectedModel(latest.model);
+  /**
+   * The roots this host holds, listed once per scope.
+   *
+   * `activeAsid` used to be a dependency, and this function *sets* it -- so the
+   * effect that runs it re-declared the moment it picked a session and listed
+   * the whole thing a second time, twenty kilobytes for an answer the app
+   * already had. Whether a session has been picked is read from the ref that
+   * mirrors it instead, which is the same fact without the feedback loop.
+   */
+  const refreshSessions = useCallback(
+    async (directory = activeDirectoryRef.current) => {
+      try {
+        // Roots only, and scoped to the workspace on screen: a subagent session
+        // is a row in its parent's tree, never a sibling of it in the strip.
+        // Bounded, because the strip draws a handful of chips and every surface
+        // that reads this list sorts by recency: `desc` is newest first, so
+        // what the limit cuts is the oldest.
+        const list = await listAgentSessions(sessionId, {
+          roots: true,
+          limit: SESSION_LIST_LIMIT,
+          order: 'desc',
+          ...(directory ? { directory } : {}),
+        });
+        setIsOffline(false);
+        if (list) {
+          setSessions(list);
+          // Coming in from Home lands on the session the reader last worked in,
+          // not on whatever the engine listed first: newest activity wins.
+          const latest = latestSession(list);
+          if (latest && !activeAsidRef.current) {
+            setActiveAsid(latest.asid);
+            setSessionInfo(latest);
+            if (latest.model) {
+              applySelectedModel(latest.model);
+            }
+            if (latest.agent) setSelectedAgent(latest.agent);
+          } else if (list.length === 0) {
+            setLoading(false);
           }
-          if (latest.agent) setSelectedAgent(latest.agent);
-        } else if (list.length === 0) {
+        } else {
           setLoading(false);
         }
-      } else {
+      } catch (err) {
+        console.warn('Failed to list agent sessions:', err);
+        const errMsg = err instanceof Error ? err.message : String(err);
+        if (
+          errMsg.includes('502') ||
+          errMsg.includes('503') ||
+          errMsg.includes('agent_engine_error') ||
+          errMsg.includes('agent_unavailable') ||
+          errMsg.includes('Network error')
+        ) {
+          setIsOffline(true);
+        }
         setLoading(false);
+      } finally {
+        initialCheckDoneRef.current = true;
       }
-    } catch (err) {
-      console.warn('Failed to list agent sessions:', err);
-      const errMsg = err instanceof Error ? err.message : String(err);
-      if (
-        errMsg.includes('502') ||
-        errMsg.includes('503') ||
-        errMsg.includes('agent_engine_error') ||
-        errMsg.includes('agent_unavailable') ||
-        errMsg.includes('Network error')
-      ) {
-        setIsOffline(true);
+    },
+    [sessionId, applySelectedModel]
+  );
+
+  /**
+   * The listing, once per scope that is worth listing.
+   *
+   * The first read is unscoped, which is every root on the host; the session
+   * that opens then tells us its directory, and re-listing for *that* directory
+   * asks for a subset of what is already in hand. The scopes the reader chooses
+   * themselves -- switching workspace -- are the ones worth a request, and this
+   * is what tells the two apart.
+   */
+  const listedScopeRef = useRef<string | undefined>(undefined);
+  useEffect(() => {
+    const scope = activeDirectory ?? '';
+    if (listedScopeRef.current !== undefined) {
+      if (listedScopeRef.current === scope) return;
+      // A directory that arrived from the session we just opened is a directory
+      // the listing already covers.
+      if (scope && scope === snapshotDirectoryRef.current) {
+        listedScopeRef.current = scope;
+        return;
       }
-      setLoading(false);
-    } finally {
-      initialCheckDoneRef.current = true;
     }
-  }, [sessionId, activeAsid, activeDirectory, applySelectedModel]);
+    listedScopeRef.current = scope;
+    void refreshSessions(scope || undefined).catch(() => {});
+  }, [activeDirectory, refreshSessions]);
 
   const handleTimelineScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
@@ -555,11 +658,6 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     listRef.current?.scrollToEnd({ animated: true });
     setUnseenRows(0);
   }, []);
-
-  // Initial load
-  useEffect(() => {
-    void refreshSessions().catch(() => {});
-  }, [refreshSessions]);
 
   // YOLO answers every permission request itself: `allow` for anything the
   // safety list lets through, `deny` (with a report) for irreversibly
@@ -582,6 +680,37 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     },
     [activeAsid, sessionId, showToast, t]
   );
+
+  /**
+   * "Read, at this moment" -- the gateway's own answer, put where the dot is
+   * drawn from.
+   *
+   * Not a local guess: `…/view` answers with the millisecond it marked, and
+   * that is what goes into `time_viewed`. Without it the mark waits for
+   * `agent.session.updated` to come round, which is long enough for the dot to
+   * blink on after a turn the reader sat and watched end.
+   */
+  const applyViewed = useCallback((asid: string, viewed: number | undefined) => {
+    if (!viewed) return;
+    const stamp = (session: AgentSessionInfo): AgentSessionInfo =>
+      session.asid === asid && (session.time_viewed ?? 0) < viewed
+        ? { ...session, time_viewed: viewed }
+        : session;
+    setSessions((prev) => prev.map(stamp));
+    setChildrenByParent((prev) => {
+      let changed = false;
+      const next: Record<string, AgentSessionInfo[]> = {};
+      for (const [parent, children] of Object.entries(prev)) {
+        next[parent] = children.map((child) => {
+          const marked = stamp(child);
+          if (marked !== child) changed = true;
+          return marked;
+        });
+      }
+      return changed ? next : prev;
+    });
+    setSessionInfo((prev) => (prev ? stamp(prev) : prev));
+  }, []);
 
   const refreshShells = useCallback(async () => {
     setShells(await listAgentShells(activeDirectory));
@@ -629,6 +758,32 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     setContextUsage(usage);
   }, [activeAsid]);
 
+  /**
+   * The four reads that feed the composer's chips, reachable without being
+   * depended on.
+   *
+   * Each of them closes over `activeAsid` or `activeDirectory`, so taking them
+   * as dependencies of the snapshot loader gave that loader a new identity
+   * every time the snapshot set the directory -- and the effect that runs it
+   * then ran a second complete entry: another session snapshot, another
+   * context, another shells (now scoped), another inbox, another diff. That was
+   * most of the seventeen requests the screen opened with.
+   */
+  const sideLoadsRef = useRef({
+    context: refreshContext,
+    shells: refreshShells,
+    inbox: refreshInbox,
+    diffs: refreshDiffs,
+  });
+  useEffect(() => {
+    sideLoadsRef.current = {
+      context: refreshContext,
+      shells: refreshShells,
+      inbox: refreshInbox,
+      diffs: refreshDiffs,
+    };
+  }, [refreshContext, refreshShells, refreshInbox, refreshDiffs]);
+
   // Load full snapshot when activeAsid changes
   /**
    * Refetch the session, either as an arrival or as a correction.
@@ -649,7 +804,8 @@ export const AgentWorkbench = memo(function AgentWorkbench({
    */
   const loadSnapshot = useCallback(
     async (mode: 'enter' | 'silent' = 'enter') => {
-      if (!activeAsid) {
+      const asid = activeAsid;
+      if (!asid) {
         if (initialCheckDoneRef.current) {
           setLoading(false);
         }
@@ -657,13 +813,18 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       }
       if (mode === 'enter') setLoading(true);
       try {
-        const snap = await getAgentSessionSnapshot(sessionId, activeAsid);
+        const snap = await getAgentSessionSnapshot(sessionId, asid);
         const info = snap.info;
         if (info) {
           setSessionInfo(info);
-          if (info.directory) setActiveDirectory(info.directory);
+          if (info.directory) {
+            snapshotDirectoryRef.current = info.directory;
+            setActiveDirectory(info.directory);
+          }
         }
         setInbox(snap.inbox);
+        // A rollback staged before the app was opened is still staged.
+        setStagedRevert(info?.revert ?? null);
 
         if (mode === 'enter') {
           setTimeline(snap.timeline);
@@ -699,18 +860,57 @@ export const AgentWorkbench = memo(function AgentWorkbench({
           setPermissions(snap.permissions);
         }
         setForms(snap.forms);
-        lastSeqRef.current = snap.seq;
+        /**
+         * Raised to the snapshot's point, not assigned to it -- and a catch-up
+         * that was asked for before this landed is paid here rather than lost.
+         * See `lib/agent-catch-up.ts`.
+         */
+        const settled = snapshotSettled(syncRef.current, snap.seq);
+        syncRef.current = settled.state;
+        if (settled.from !== null) catchUpRef.current();
         if (info?.model) {
           applySelectedModel(info.model);
         }
         if (info?.agent) setSelectedAgent(info.agent);
 
-        // What the model can still see, which the snapshot does not carry.
-        void refreshContext();
-        void refreshShells();
-        void refreshInbox();
+        /**
+         * Reading it is what makes it read.
+         *
+         * `markAgentSessionViewed` existed in the client with no caller and
+         * `isSessionUnread` with no reader, so every session on the host was
+         * permanently unread and nothing drew the fact. The idle the session
+         * reached is what is acknowledged -- not "now" -- so a turn that ends
+         * between this call leaving and landing is still unread afterwards,
+         * which is the honest answer.
+         */
+        if (info) {
+          const idle = info.time_idle;
+          const viewedAsid = info.asid;
+          void (
+            idle === undefined
+              ? markAgentSessionViewed(viewedAsid)
+              : markAgentSessionViewed(viewedAsid, idle)
+          )
+            .then((viewed) => applyViewed(viewedAsid, viewed))
+            .catch(() => {});
+        }
 
-        void refreshDiffs();
+        /**
+         * The chips, after the transcript.
+         *
+         * None of these draws a word of the conversation: the token gauge, the
+         * background count and the changes dot are all composer furniture, and
+         * running them on the way in put three requests in front of the first
+         * frame. `snap.inbox` has already been applied above, so the inbox is
+         * not asked for again at all -- that read was answering a question the
+         * snapshot had just answered.
+         */
+        InteractionManager.runAfterInteractions(() => {
+          if (activeAsidRef.current !== asid) return;
+          void sideLoadsRef.current.context();
+          void sideLoadsRef.current.shells();
+          void sideLoadsRef.current.diffs();
+        });
       } catch (err) {
         console.warn('Failed to load snapshot:', err);
         if (
@@ -725,9 +925,11 @@ export const AgentWorkbench = memo(function AgentWorkbench({
           setForms([]);
           return;
         }
-        // Anything else is a session that exists and could not be read. This
-        // is also what pull-to-refresh lands on, and a pull that answers with
-        // nothing at all is a pull the reader will make again.
+        // Anything else is a session that exists and could not be read. The
+        // entry guard is released so this session can be opened again: a
+        // snapshot that failed once -- the gateway's address not hydrated yet,
+        // a dropped request -- must not leave the screen permanently empty.
+        openedAsidRef.current = undefined;
         showToast({
           variant: 'danger',
           title: t`Could not load the session`,
@@ -737,23 +939,29 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         if (mode === 'enter') setLoading(false);
       }
     },
-    [
-      sessionId,
-      activeAsid,
-      applySelectedModel,
-      handleAutoPermission,
-      refreshContext,
-      refreshShells,
-      refreshInbox,
-      refreshDiffs,
-      showToast,
-      t,
-    ]
+    [sessionId, activeAsid, applySelectedModel, applyViewed, handleAutoPermission, showToast, t]
   );
 
+  /**
+   * Entering a session is one snapshot, once.
+   *
+   * The effect used to depend on `loadSnapshot`, and `loadSnapshot` changed
+   * identity whenever anything it called did -- so opening the screen ran the
+   * whole entry twice. What the reader is entering is an `asid`, so that is
+   * what this is keyed on: the loader still re-declares when the session
+   * changes, and the ref says whether that session has already been opened.
+   */
+  const openedAsidRef = useRef<string | undefined>(undefined);
   useEffect(() => {
-    void loadSnapshot().catch(() => {});
-  }, [loadSnapshot]);
+    if (!activeAsid) {
+      openedAsidRef.current = undefined;
+      if (initialCheckDoneRef.current) setLoading(false);
+      return;
+    }
+    if (openedAsidRef.current === activeAsid) return;
+    openedAsidRef.current = activeAsid;
+    void loadSnapshot('enter').catch(() => {});
+  }, [activeAsid, loadSnapshot]);
 
   // Load known projects for workspace switcher
   useEffect(() => {
@@ -793,7 +1001,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     (event: AgentDomainEvent) => {
       // Every frame carries the sequence the gateway is at; a reconnect asks
       // for whatever landed after it rather than refetching the world.
-      if (event.seq > lastSeqRef.current) lastSeqRef.current = event.seq;
+      syncRef.current = advanceSeq(syncRef.current, event.seq);
 
       /**
        * Whether this event is about the session on screen.
@@ -819,11 +1027,18 @@ export const AgentWorkbench = memo(function AgentWorkbench({
           // stream tick and fight the reader's own gesture.
           break;
 
-        case 'agent.timeline.removed': {
-          const removedIds = new Set(event.ids);
-          setTimeline((prev) => prev.filter((it) => !removedIds.has(it.id)));
+        case 'agent.timeline.removed':
+          /**
+           * Rows the gateway says are gone. A committed rollback is the one
+           * that sends many at once: OpenCode deletes the boundary message and
+           * everything after it and has no event of its own for that.
+           *
+           * Nothing is scrolled and nothing is re-anchored. The rows leave from
+           * under the reader's eyes, which is what they asked for, and every
+           * group above them keeps its identity -- see `agent-revert.ts`.
+           */
+          setTimeline((prev) => removeTimelineItems(prev, event.ids));
           break;
-        }
 
         case 'agent.status.changed': {
           // The roots list and the subagent tree take every status, whoever it
@@ -846,6 +1061,14 @@ export const AgentWorkbench = memo(function AgentWorkbench({
           if (event.status === 'idle') {
             // Delivered: a queued row is now ordinary history.
             setTimeline((prev) => prev.map((it) => (it.queued ? { ...it, queued: false } : it)));
+            // A turn that ended under the reader's eyes has been read. The
+            // dot is for the sessions they were not looking at.
+            if (appActiveRef.current && event.asid) {
+              const viewedAsid = event.asid;
+              void markAgentSessionViewed(viewedAsid)
+                .then((viewed) => applyViewed(viewedAsid, viewed))
+                .catch(() => {});
+            }
             void refreshSessions();
             void refreshContext();
             void refreshShells();
@@ -884,6 +1107,10 @@ export const AgentWorkbench = memo(function AgentWorkbench({
             setSessionInfo((prev) =>
               prev && prev.asid !== info.asid ? prev : prev ? { ...prev, ...info } : info
             );
+            // A session update states the staged boundary when there is one.
+            // It never states its absence -- a field an event did not mention
+            // keeps its previous value -- so clearing is the revert event's job.
+            if (info.revert) setStagedRevert(info.revert);
           }
           setSessions((prev) =>
             prev.some((s) => s.asid === info.asid)
@@ -920,6 +1147,12 @@ export const AgentWorkbench = memo(function AgentWorkbench({
 
         case 'agent.form.resolved':
           setForms((prev) => prev.filter((f) => f.id !== event.form_id));
+          break;
+
+        case 'agent.revert.changed':
+          // A subagent's own rollback is not the plate above this composer.
+          if (!forActiveSession) break;
+          setStagedRevert(event.state === 'staged' ? event.revert : null);
           break;
 
         case 'agent.inbox.changed':
@@ -959,6 +1192,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       refreshContext,
       refreshShells,
       refreshDiffs,
+      applyViewed,
       handleAutoPermission,
     ]
   );
@@ -966,25 +1200,34 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   /**
    * Whatever the stream missed.
    *
-   * The sequence number was bookkept and never used: `lastSeqRef` was written
-   * on every frame and read by nothing, and the route that exists to fill a gap
-   * had no caller at all. So every event that landed during a reconnect -- the
-   * 400ms-to-5s window after a drop, or the whole time the app was in the
-   * background -- was lost for good, and the transcript silently disagreed with
-   * the engine until the reader left the screen and came back.
-   *
    * Asked for on every (re)connect and on every return to the foreground. A
    * `410` means the point asked for has fallen out of the gateway's ring
    * buffer, and then the snapshot is the only honest answer -- taken silently,
    * so a reader reading history is not thrown to the bottom by it.
+   *
+   * Asking before the first snapshot has landed -- which is the order entering
+   * a session actually takes, because the stream connects first -- used to be a
+   * silent no-op, and everything the gateway emitted in that window was lost
+   * until the reader left the screen and came back. The gate remembers the
+   * debt instead; see `lib/agent-catch-up.ts`.
    */
   const catchUpRef = useRef<() => void>(() => {});
   const catchUp = useCallback(() => {
-    const asid = activeAsid;
-    // Nothing to catch up to: a session that has never synced is told to
-    // resync by the gateway anyway, and it has just been snapshotted.
-    if (!asid || lastSeqRef.current <= 0) return;
-    void getAgentTimelineDelta(sessionId, asid, lastSeqRef.current)
+    const asid = activeAsidRef.current;
+    if (!asid) return;
+    // Nothing to catch up *from* yet -- the stream connects before the first
+    // snapshot answers, which is exactly when this used to be dropped. The gate
+    // remembers, and `openSession` pays it the moment the snapshot lands.
+    const asked = askCatchUp(syncRef.current);
+    syncRef.current = asked.state;
+    if (asked.from === null) {
+      // Nothing to catch up *from*, and no snapshot has landed for this
+      // session either -- the first one failed. A stream connect is a good
+      // moment to try again, and the reconnect backoff bounds how often.
+      if (openedAsidRef.current !== asid) void loadSnapshot('silent').catch(() => {});
+      return;
+    }
+    void getAgentTimelineDelta(sessionId, asid, asked.from)
       .then((delta) => {
         if (asid !== activeAsidRef.current) return;
         if (delta.resync) {
@@ -1000,10 +1243,10 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         if (nextStatus) {
           setSessionInfo((prev) => (prev ? { ...prev, status: nextStatus } : prev));
         }
-        if (delta.latest_seq > lastSeqRef.current) lastSeqRef.current = delta.latest_seq;
+        syncRef.current = advanceSeq(syncRef.current, delta.latest_seq);
       })
       .catch(() => {});
-  }, [sessionId, activeAsid, loadSnapshot]);
+  }, [sessionId, loadSnapshot]);
 
   useEffect(() => {
     catchUpRef.current = catchUp;
@@ -1013,13 +1256,48 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   // socket may have been held open by the OS and delivered nothing.
   const appActive = useAppActive();
   useEffect(() => {
+    appActiveRef.current = appActive;
     if (appActive) catchUpRef.current();
   }, [appActive]);
 
+  /**
+   * Coming back to a session that is already open is reading it again.
+   *
+   * The snapshot's own `…/view` covers arriving; this covers the app being
+   * brought *forward* onto a session that finished a turn in the background --
+   * the transition, not the state, or entering the screen would post it twice
+   * for the one arrival. No `idle` on this one: the reader is looking at it
+   * now, and "now" is what the route defaults to.
+   */
+  const wasForegroundRef = useRef(true);
+  useEffect(() => {
+    const returned = appActive && !wasForegroundRef.current;
+    wasForegroundRef.current = appActive;
+    if (!returned || !activeAsid) return;
+    const viewedAsid = activeAsid;
+    void markAgentSessionViewed(viewedAsid)
+      .then((viewed) => applyViewed(viewedAsid, viewed))
+      .catch(() => {});
+  }, [appActive, activeAsid, applyViewed]);
+
+  /**
+   * The stream handler, behind a ref for the same reason the sequence is.
+   *
+   * The effect below opens one SSE connection, and it used to depend on this
+   * handler -- whose own dependencies include `activeAsid` and `activeDirectory`.
+   * Entering a session changes both, so the live stream was aborted and
+   * reopened in the middle of the entry it was opened for, and the catch-up
+   * that follows a connect ran twice. The connection now depends on the two
+   * things that really identify it.
+   */
+  const handleStreamEventRef = useRef(handleStreamEvent);
+  useEffect(() => {
+    handleStreamEventRef.current = handleStreamEvent;
+  }, [handleStreamEvent]);
+
   // Real-time SSE stream — the only sync channel. Engine output arrives over
   // it; a dropped connection reconnects with a short backoff instead of being
-  // papered over by polling. `lastSeq` intentionally lives in a ref so events
-  // never re-declare this effect and tear the connection down mid-run.
+  // papered over by polling.
   useEffect(() => {
     if (!activeAsid) return;
     let mounted = true;
@@ -1058,7 +1336,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         onEvent: (event) => {
           if (!mounted) return;
           attempts = 0;
-          handleStreamEvent(event);
+          handleStreamEventRef.current(event);
         },
         onError: scheduleReconnect,
         onClose: scheduleReconnect,
@@ -1073,7 +1351,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       closeCurrent();
       if (reconnectTimer) clearTimeout(reconnectTimer);
     };
-  }, [sessionId, activeAsid, handleStreamEvent]);
+  }, [sessionId, activeAsid]);
 
   const handleSelectModel = useCallback(
     (model: ModelRef) => {
@@ -1147,6 +1425,41 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     [activeAsid, sessionInfo?.status, showToast, t]
   );
 
+  /**
+   * A skill from the host's catalog, run as one.
+   *
+   * The slash menu has listed skills as `/<id>` since it was written, and a
+   * picked one went out as a prompt -- so the model was handed the literal
+   * "/commit-message" and answered it as prose. `POST …/skill` is the route
+   * that exists for it; the failure lands on this screen's own notice and the
+   * draft comes back rather than being swallowed.
+   */
+  const handleInvokeSkill = useCallback(
+    async (skill: string, args: string): Promise<boolean> => {
+      if (!activeAsid) return false;
+      try {
+        await invokeAgentSkill(sessionId, activeAsid, { skill });
+        // A skill takes no arguments on the wire. Anything typed after it is
+        // said out loud rather than dropped in silence.
+        if (args) {
+          showScreenNotice(
+            t`Skill started`,
+            t`“${args}” was not sent: a skill takes no arguments.`
+          );
+        }
+        return true;
+      } catch (err) {
+        console.warn('Failed to run skill:', err);
+        showScreenNotice(
+          t`Could not run that skill`,
+          formatAgentErrorMessage(err, t`OpenCode service is offline`)
+        );
+        return false;
+      }
+    },
+    [activeAsid, sessionId, showScreenNotice, t]
+  );
+
   /** A failed compaction stays until the reader has seen it. */
   const dismissCompaction = useCallback(() => {
     setCompaction((current) => (current?.status === 'failed' ? null : current));
@@ -1165,6 +1478,31 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       });
     },
     [activeAsid, refreshInbox]
+  );
+
+  /**
+   * Move a queued prompt to the front of the turn, or back into line.
+   *
+   * `setAgentInboxDelivery` existed with no caller: a prompt's delivery was
+   * decided when it was sent and the only thing that could be done to it
+   * afterwards was to cancel it. Optimistic, then corrected --
+   * `agent.inbox.changed` carries the whole queue and is the state that counts.
+   */
+  const handleSetInboxDelivery = useCallback(
+    (inboxId: string, delivery: 'steer' | 'queue') => {
+      if (!activeAsid) return;
+      void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      setInbox((prev) => prev.map((item) => (item.id === inboxId ? { ...item, delivery } : item)));
+      setAgentInboxDelivery(activeAsid, inboxId, delivery).catch((err) => {
+        console.warn('Failed to change delivery:', err);
+        void refreshInbox();
+        showScreenNotice(
+          t`Could not change delivery`,
+          formatAgentErrorMessage(err, t`OpenCode service is offline`)
+        );
+      });
+    },
+    [activeAsid, refreshInbox, showScreenNotice, t]
   );
 
   const handleClearContext = useCallback(() => {
@@ -1251,7 +1589,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       id: `temp_usr_${Date.now()}`,
       message_id: `msg_${Date.now()}`,
       ordinal: 0,
-      seq: lastSeqRef.current + 1,
+      seq: syncRef.current.seq + 1,
       updated_ms: Date.now(),
       role: 'user',
       part: { type: 'text', text },
@@ -1356,11 +1694,22 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     [activeAsid, showToast, t]
   );
 
+  /**
+   * How many "Always allow" replies have landed.
+   *
+   * `allow_always` is the one answer whose consequence outlives the prompt, so
+   * the context sheet's list of saved rules has to be told that it has changed.
+   * The count rather than the list: the sheet is the only thing that reads the
+   * rules, and it reads them from the gateway.
+   */
+  const [savedPermissionsRevision, setSavedPermissionsRevision] = useState(0);
+
   const handlePermissionDecision = useCallback(
     async (permId: string, decision: PermissionDecision) => {
       if (!activeAsid) return;
       try {
         await replyAgentPermission(sessionId, activeAsid, permId, decision);
+        if (decision === 'allow_always') setSavedPermissionsRevision((count) => count + 1);
       } catch (err) {
         console.warn('Failed to reply permission:', err);
         showToast({
@@ -1425,7 +1774,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       setWindowStart(0);
       setPermissions([]);
       setForms([]);
-      lastSeqRef.current = 0;
+      syncRef.current = CATCH_UP_START;
       refreshSessions();
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       showScreenNotice(t`New session`, t`Started with a clean context.`);
@@ -1465,6 +1814,91 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     }
   }, [abortSessionRef, handleAbort]);
 
+  /**
+   * A new name for a session, everywhere it is shown, before the engine has
+   * answered -- and the old one back if it refuses.
+   *
+   * `renameAgentSession` existed with no caller: the only title a session could
+   * ever have was the one OpenCode auto-titled it with on its first turn. The
+   * rename lands in three places at once (the header pill, the strip's chip and
+   * the sheet's row), which is why it is written here rather than in the sheet:
+   * they all read the same lists.
+   */
+  const handleRenameSession = useCallback(
+    (asid: string, title: string) => {
+      const next = title.trim();
+      if (!asid || !next) return;
+      const previous =
+        sessions.find((session) => session.asid === asid)?.title ??
+        (sessionInfo?.asid === asid ? sessionInfo.title : undefined);
+      if (previous === next) return;
+
+      const apply = (value: string) => {
+        setSessions((prev) =>
+          prev.map((session) => (session.asid === asid ? { ...session, title: value } : session))
+        );
+        setChildrenByParent((prev) => applyChildTitle(prev, asid, value));
+        setSessionInfo((prev) => (prev && prev.asid === asid ? { ...prev, title: value } : prev));
+      };
+
+      apply(next);
+      renameAgentSession(asid, next).catch((err) => {
+        console.warn('Failed to rename session:', err);
+        // Back to what it was called, rather than leaving a name on screen that
+        // exists nowhere else.
+        if (previous !== undefined) apply(previous);
+        showScreenNotice(
+          t`Could not rename`,
+          formatAgentErrorMessage(err, t`OpenCode service is offline`)
+        );
+      });
+    },
+    [sessions, sessionInfo, showScreenNotice, t]
+  );
+
+  /**
+   * Delete a session, and go somewhere honest if it was the one on screen.
+   *
+   * The latest of what is left, or the empty state -- never a new session made
+   * on the reader's behalf: deleting one thing must not create another. The
+   * confirmation is the caller's; by the time this runs it has been given.
+   */
+  const handleDeleteSession = useCallback(
+    (asid: string) => {
+      if (!asid) return;
+      const previousSessions = sessions;
+      const previousChildren = childrenByParent;
+      const wasActive = asid === activeAsid;
+
+      const remaining = sessions.filter((session) => session.asid !== asid);
+      setSessions(remaining);
+      setChildrenByParent((prev) => dropSession(prev, asid));
+      if (wasActive) {
+        const next = latestSession(remaining);
+        setTimeline([]);
+        setWindowStart(0);
+        setPermissions([]);
+        setForms([]);
+        setInbox([]);
+        syncRef.current = CATCH_UP_START;
+        setActiveAsid(next?.asid);
+        setSessionInfo(next ?? null);
+      }
+
+      deleteAgentSession(asid).catch((err) => {
+        console.warn('Failed to delete session:', err);
+        setSessions(previousSessions);
+        setChildrenByParent(previousChildren);
+        if (wasActive) setActiveAsid(asid);
+        showScreenNotice(
+          t`Could not delete`,
+          formatAgentErrorMessage(err, t`OpenCode service is offline`)
+        );
+      });
+    },
+    [sessions, childrenByParent, activeAsid, showScreenNotice, t]
+  );
+
   const handleSelectWorkspace = useCallback(
     async (directory: string, project?: AgentProject) => {
       setActiveDirectory(directory);
@@ -1480,7 +1914,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         setWindowStart(0);
         setPermissions([]);
         setForms([]);
-        lastSeqRef.current = 0;
+        syncRef.current = CATCH_UP_START;
         refreshSessions();
       } catch (err) {
         console.warn('Failed to switch workspace session:', err);
@@ -1553,11 +1987,83 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   }, []);
 
   /**
+   * Stage a rollback to one message, and show what it would do.
+   *
+   * Never commit: `POST …/revert` is stage-and-apply in one call, which is what
+   * `/undo` used to be -- four characters typed and a turn's work gone, with no
+   * statement of what had been taken. This asks for the boundary *and the files
+   * it would put back*, and the plate above the composer is where the reader
+   * decides.
+   */
+  const handleStageRevert = useCallback(
+    (messageId: string) => {
+      if (!activeAsid || !messageId) return;
+      void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      stageAgentRevert(activeAsid, messageId)
+        .then((staged) => {
+          // The stream says the same thing a moment later; this is so the plate
+          // is up before it does.
+          if (staged) setStagedRevert(staged);
+        })
+        .catch((err) => {
+          console.warn('Failed to stage revert:', err);
+          showScreenNotice(
+            t`Could not stage the rollback`,
+            formatAgentErrorMessage(err, t`OpenCode service is offline`)
+          );
+        });
+    },
+    [activeAsid, showScreenNotice, t]
+  );
+
+  /** Apply what is staged. The rows it deletes arrive as `agent.timeline.removed`. */
+  const handleCommitRevert = useCallback(() => {
+    if (!activeAsid) return;
+    void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+    setRevertBusy(true);
+    commitAgentRevert(activeAsid)
+      .then(() => {
+        // `agent.revert.changed: committed` takes the plate down; clearing it
+        // here as well keeps the two from disagreeing on a slow stream.
+        setStagedRevert(null);
+      })
+      .catch((err) => {
+        console.warn('Failed to apply revert:', err);
+        showScreenNotice(
+          t`Could not undo`,
+          formatAgentErrorMessage(err, t`OpenCode service is offline`)
+        );
+      })
+      .finally(() => setRevertBusy(false));
+  }, [activeAsid, showScreenNotice, t]);
+
+  /**
+   * Withdraw it and keep everything.
+   *
+   * This is what `/redo` was misnamed for: there has never been a redo in v2,
+   * only a staging that can be cleared.
+   */
+  const handleKeepRevert = useCallback(() => {
+    if (!activeAsid) return;
+    const previous = stagedRevert;
+    setStagedRevert(null);
+    clearAgentRevert(activeAsid).catch((err) => {
+      console.warn('Failed to clear revert:', err);
+      setStagedRevert(previous);
+      showScreenNotice(
+        t`Could not keep it`,
+        formatAgentErrorMessage(err, t`OpenCode service is offline`)
+      );
+    });
+  }, [activeAsid, stagedRevert, showScreenNotice, t]);
+
+  /**
    * The app's own commands, dispatched where the routes and the session live.
    *
-   * `/undo` is `POST …/revert` to the last thing the reader said, and `/redo`
-   * clears the staged rollback -- which is what redo *is* in v2. Neither was
-   * reachable before: the client functions existed with no caller.
+   * `/undo` stages a rollback to the last thing the reader said and shows what
+   * it would take; `/keep` withdraws it. Neither was reachable before: the
+   * client functions existed with no caller, and the one `/undo` would have
+   * called applied the rollback without asking.
    */
   const handleClientCommand = useCallback(
     (name: AgentClientCommandId) => {
@@ -1591,26 +2097,19 @@ export const AgentWorkbench = memo(function AgentWorkbench({
             });
             return;
           }
-          revertAgentSession(sessionId, activeAsid, lastUser.message_id).catch((err) => {
-            console.warn('Failed to revert:', err);
-            showToast({
-              variant: 'danger',
-              title: t`Could not undo`,
-              message: formatAgentErrorMessage(err, t`OpenCode service is offline`),
-            });
-          });
+          handleStageRevert(lastUser.message_id);
           return;
         }
-        case 'redo': {
-          if (!activeAsid) return;
-          clearAgentRevert(activeAsid).catch((err) => {
-            console.warn('Failed to clear revert:', err);
+        case 'keep': {
+          if (!stagedRevert) {
             showToast({
-              variant: 'danger',
-              title: t`Could not redo`,
-              message: formatAgentErrorMessage(err, t`OpenCode service is offline`),
+              variant: 'info',
+              title: t`Nothing staged`,
+              message: t`There is no rollback waiting to be applied.`,
             });
-          });
+            return;
+          }
+          handleKeepRevert();
           return;
         }
         case 'export': {
@@ -1630,7 +2129,17 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         }
       }
     },
-    [activeAsid, sessionId, timeline, handleCompactContext, handleClearContext, showToast, t]
+    [
+      activeAsid,
+      timeline,
+      stagedRevert,
+      handleStageRevert,
+      handleKeepRevert,
+      handleCompactContext,
+      handleClearContext,
+      showToast,
+      t,
+    ]
   );
 
   const handleEditQueuedItem = useCallback((itemId: string, text: string) => {
@@ -1776,6 +2285,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
             onPreviewImage={setPreviewImageUri}
             onEditQueued={handleEditQueuedItem}
             onCancelQueued={handleCancelQueuedItem}
+            onUndoToHere={handleStageRevert}
             actions={toolActions}
           />
         );
@@ -1790,7 +2300,14 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         />
       );
     },
-    [showReasoning, markdownStyle, handleEditQueuedItem, handleCancelQueuedItem, toolActions]
+    [
+      showReasoning,
+      markdownStyle,
+      handleEditQueuedItem,
+      handleCancelQueuedItem,
+      handleStageRevert,
+      toolActions,
+    ]
   );
 
   const isRunning = isBusyStatus(sessionInfo?.status);
@@ -2100,14 +2617,20 @@ export const AgentWorkbench = memo(function AgentWorkbench({
    */
   const allSessions = useMemo(() => [...sessionIndex.values()], [sessionIndex]);
 
-  // The open root's tree, refetched when the root changes and whenever a turn
-  // ends -- which is when a subagent has finished and a new one may exist.
+  /**
+   * The open root's tree: once when the root changes, and again when a turn
+   * ends -- which is when a subagent has finished and a new one may exist.
+   *
+   * One effect, not two. There were two, both calling this on the same commit,
+   * so entering a session asked for the children twice; the second differed
+   * only in returning early while a turn was running, which is the guard this
+   * one carries.
+   */
+  const childrenRootRef = useRef<string | undefined>(undefined);
   useEffect(() => {
-    void refreshChildren(activeRootAsid).catch(() => {});
-  }, [refreshChildren, activeRootAsid]);
-
-  useEffect(() => {
-    if (isRunning) return;
+    const rootChanged = childrenRootRef.current !== activeRootAsid;
+    if (!rootChanged && isRunning) return;
+    childrenRootRef.current = activeRootAsid;
     void refreshChildren(activeRootAsid).catch(() => {});
   }, [refreshChildren, activeRootAsid, isRunning]);
 
@@ -2165,6 +2688,19 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     return runningShellCount(shells) + detachedTools;
   }, [shells, timeline]);
 
+  /**
+   * What the plate says: the messages counted off the transcript on screen, and
+   * the files the gateway worked out. Memoised so a stream tick that changes
+   * neither does not re-render the composer.
+   */
+  const revertPreview = useMemo(() => {
+    if (!stagedRevert) return null;
+    return {
+      messages: revertedMessageCount(timeline, stagedRevert.message_id),
+      files: stagedRevert.files ?? EMPTY_REVERT_FILES,
+    };
+  }, [stagedRevert, timeline]);
+
   const activeTodos = useMemo(() => {
     for (let i = timeline.length - 1; i >= 0; i--) {
       const it = timeline[i];
@@ -2207,6 +2743,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       compaction,
       contextUsage,
       commands,
+      savedPermissionsRevision,
       models: catalogModels,
     };
     useAgentSheetBridge.getState().publish(snapshot);
@@ -2230,6 +2767,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     compaction,
     contextUsage,
     commands,
+    savedPermissionsRevision,
     catalogModels,
   ]);
 
@@ -2239,6 +2777,8 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       createSession: () => {
         void handleCreateNewSession();
       },
+      renameSession: handleRenameSession,
+      deleteSession: handleDeleteSession,
       selectModel: handleSelectModel,
       selectAgentMode: handleSelectAgentMode,
       selectWorkspace: (directory, project) => {
@@ -2251,6 +2791,8 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     }),
     [
       handleCreateNewSession,
+      handleRenameSession,
+      handleDeleteSession,
       handleSelectModel,
       handleSelectAgentMode,
       handleSelectWorkspace,
@@ -2639,6 +3181,10 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         contextUsage={contextUsage}
         contextLimit={contextLimit}
         modelName={activeModelName}
+        revert={revertPreview}
+        onCommitRevert={handleCommitRevert}
+        onKeepRevert={handleKeepRevert}
+        revertBusy={revertBusy}
         compaction={compaction}
         onDismissCompaction={dismissCompaction}
         cost={sessionInfo?.cost}
@@ -2657,9 +3203,11 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         onOpenBackgroundTray={openBackgroundTray}
         commands={commands}
         onRunCommand={handleRunCommand}
+        onInvokeSkill={handleInvokeSkill}
         onClientCommand={handleClientCommand}
         inbox={inbox}
         onCancelInboxItem={handleCancelInboxItem}
+        onSetInboxDelivery={handleSetInboxDelivery}
         onPressTokens={openContextSheet}
         injectDraftRef={injectDraftRef}
       />
@@ -2770,6 +3318,24 @@ function dropSession(previous: ChildrenByParent, asid: string): ChildrenByParent
   return changed ? next : previous;
 }
 
+/** A rename, applied to whichever branch of the tree carries that id. */
+function applyChildTitle(
+  previous: ChildrenByParent,
+  asid: string,
+  title: string
+): ChildrenByParent {
+  let changed = false;
+  const next: Record<string, AgentSessionInfo[]> = {};
+  for (const [parent, children] of Object.entries(previous)) {
+    next[parent] = children.map((child) => {
+      if (child.asid !== asid || child.title === title) return child;
+      changed = true;
+      return { ...child, title };
+    });
+  }
+  return changed ? next : previous;
+}
+
 /** The same, for the whole info an `agent.session.updated` carries. */
 function applyChildInfo(previous: ChildrenByParent, info: AgentSessionInfo): ChildrenByParent {
   let changed = false;
@@ -2796,6 +3362,8 @@ function groupTypeOf(group: TimelineRenderGroup): string {
 function groupsAreEqual(previous: TimelineRenderGroup, next: TimelineRenderGroup): boolean {
   return previous === next;
 }
+
+const EMPTY_REVERT_FILES: readonly FileDiffItem[] = Object.freeze([]);
 
 /** Anchor on a change of data, not only on rows changing size. */
 const MAINTAIN_TIMELINE_POSITION = { data: true, size: true } as const;

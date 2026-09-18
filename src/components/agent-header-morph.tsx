@@ -10,7 +10,7 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { StatusDot } from '@/components/status-dot';
-import { PRESET, timing } from '@/lib/motion';
+import { fadeIn, PRESET, timing } from '@/lib/motion';
 import { AGENT_TYPE } from '@/constants/agent-type';
 
 /**
@@ -177,14 +177,22 @@ export function WorkspacePillContent({
           pulse={running}
           size={7}
         />
-        <Text
-          variant="bodySmall"
-          weight="bold"
-          numberOfLines={1}
-          color={theme.colors.text}
-          style={styles.workspacePillName}>
-          {sessionTitle}
-        </Text>
+        {/* Keyed on the title, so a rename -- or the auto-title landing on the
+            first turn -- fades in where the old name was rather than replacing
+            it between two frames. The same beat the strip's chips use. */}
+        <Animated.View
+          key={sessionTitle}
+          entering={fadeIn('short')}
+          style={styles.workspacePillTitle}>
+          <Text
+            variant="bodySmall"
+            weight="bold"
+            numberOfLines={1}
+            color={theme.colors.text}
+            style={styles.workspacePillName}>
+            {sessionTitle}
+          </Text>
+        </Animated.View>
         <ChevronDown size={13} color={theme.colors.textMuted} />
       </Animated.View>
     </View>
@@ -218,6 +226,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 12,
     gap: 6,
+  },
+  workspacePillTitle: {
+    flexShrink: 1,
+    minWidth: 0,
   },
   workspacePillName: {
     fontSize: AGENT_TYPE.meta.size,

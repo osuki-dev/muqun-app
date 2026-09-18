@@ -24,7 +24,7 @@ import { appChrome } from '@/constants/appearance';
 import { SheetFrame } from '@/components/sheet-ground';
 import { SheetHandle } from '@/components/sheet-route-frame';
 import { KeyboardInset } from '@/components/keyboard-inset';
-import { PRESET, timing } from '@/lib/motion';
+import { fadeIn, PRESET, timing } from '@/lib/motion';
 
 /**
  * The furniture every bottom sheet in Muqun is built from.
@@ -388,6 +388,7 @@ export function SheetSceneRow({
   accessibilityValue,
   testID,
   selectedTestID,
+  crossfadeTitle = false,
   style,
 }: {
   title: string;
@@ -451,6 +452,16 @@ export function SheetSceneRow({
    * waited on, which is what the language flow has always done.
    */
   selectedTestID?: string;
+  /**
+   * Whether a change of title is a change the reader made.
+   *
+   * Off by default: a row whose title changes because the list was refiltered
+   * has not renamed anything, and animating that is noise. On for the rows that
+   * can actually be renamed, where the new name fades in where the old one was
+   * rather than replacing it between two frames -- the same beat the strip's
+   * chips use when an auto-title lands.
+   */
+  crossfadeTitle?: boolean;
   style?: StyleProp<ViewStyle>;
 }) {
   const { colors } = useThemeTokens();
@@ -492,14 +503,30 @@ export function SheetSceneRow({
         style={styles.row}>
         {leading ? <View style={styles.rowLeading}>{leading}</View> : null}
         <View style={styles.rowCopy}>
-          <Text
-            variant="bodySmall"
-            weight={selected ? 'semibold' : 'regular'}
-            color={titleColor}
-            numberOfLines={1}
-            style={styles.rowTitle}>
-            {title}
-          </Text>
+          {/* Keyed on the title, so a rename fades in where the old name was.
+              Written as two branches rather than one spread: `key` is React's
+              own, and spreading an object that carries it is a warning. */}
+          {crossfadeTitle ? (
+            <Animated.View key={title} entering={fadeIn('short')}>
+              <Text
+                variant="bodySmall"
+                weight={selected ? 'semibold' : 'regular'}
+                color={titleColor}
+                numberOfLines={1}
+                style={styles.rowTitle}>
+                {title}
+              </Text>
+            </Animated.View>
+          ) : (
+            <Text
+              variant="bodySmall"
+              weight={selected ? 'semibold' : 'regular'}
+              color={titleColor}
+              numberOfLines={1}
+              style={styles.rowTitle}>
+              {title}
+            </Text>
+          )}
           {caption ? (
             <Text
               variant="caption"

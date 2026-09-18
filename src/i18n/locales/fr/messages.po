@@ -17,6 +17,14 @@ msgstr ""
 msgid "… truncated"
 msgstr "… tronqué"
 
+#: src/components/agent-workbench.tsx
+msgid "“{args}” was not sent: a skill takes no arguments."
+msgstr "« {args} » n’a pas été envoyé : une compétence ne prend pas d’arguments"
+
+#: src/components/agent-sessions-sheet.tsx
+msgid "“{title}” and any subagent sessions under it are removed from the host. This cannot be undone."
+msgstr "« {title} » et les sessions de sous-agent qu’elle contient sont supprimées de l’hôte. C’est irréversible"
+
 #: src/lib/demo-gateway.ts
 msgid "[instructions]"
 msgstr "[instructions]"
@@ -43,6 +51,11 @@ msgstr "{0, plural, one {# jour} other {# jours}}"
 #: src/components/git-diff-view.tsx
 msgid "{0, plural, one {# file changed} other {# files changed}}"
 msgstr "{0, plural, one {# fichier modifié} other {# fichiers modifiés}}"
+
+#. placeholder {0}: files.length
+#: src/components/agent-revert-plate.tsx
+msgid "{0, plural, one {# file} other {# files}}"
+msgstr "{0, plural, one {# fichier} other {# fichiers}}"
 
 #. placeholder {0}: diffs.length
 #. placeholder {1}: totals.additions
@@ -148,6 +161,10 @@ msgstr "il y a {0} h"
 msgid "{0}m ago"
 msgstr "il y a {0} min"
 
+#: src/components/agent-composer.tsx
+msgid "{agentName}: {title} — finished while you were away"
+msgstr "{agentName} : {title} — terminé pendant votre absence"
+
 #: src/components/away-digest-card.tsx
 msgid "{asked, plural, one {· asked once} other {· asked # times}}"
 msgstr "{asked, plural, one {· a demandé une fois} other {· a demandé # fois}}"
@@ -189,6 +206,10 @@ msgstr "{label} : accès temporairement verrouillé. Utilisez la solution de s
 msgid "{language} code copied to clipboard"
 msgstr "Code {language} copié dans le presse-papiers"
 
+#: src/components/agent-revert-plate.tsx
+msgid "{messages, plural, one {# message} other {# messages}}"
+msgstr "{messages, plural, one {# message} other {# messages}}"
+
 #: src/components/session-map.tsx
 msgid "{panelCount, plural, one {# running} other {# running}}"
 msgstr "{panelCount, plural, one {# actif} other {# actifs}}"
@@ -201,6 +222,10 @@ msgstr "{removeLabel} : {label}"
 #: src/components/agent-background-tray.tsx
 msgid "{running} running of {0}"
 msgstr "{running} sur {0} en cours"
+
+#: src/components/agent-sessions-sheet.tsx
+msgid "{title} — finished while you were away"
+msgstr "{title} — terminé pendant votre absence"
 
 #: src/lib/agent-widget-layout.tsx
 msgid "+{overflow} more"
@@ -250,6 +275,11 @@ msgstr "Agir sur ce terminal, ou lui envoyer une commande"
 #: src/app/commands.tsx
 msgid "Act on this terminal, or send its agent a prompt"
 msgstr "Agir sur ce terminal, ou envoyer une consigne à son agent"
+
+#. placeholder {0}: sessionTitleOr(session, t`Untitled session`)
+#: src/components/agent-sessions-sheet.tsx
+msgid "Actions for {0}"
+msgstr "Actions pour {0}"
 
 #: src/components/ssh-host-list.tsx
 msgid "Add a host"
@@ -404,6 +434,14 @@ msgstr "Alt Flèche haut"
 #: src/i18n/labels.ts
 msgid "Always allow"
 msgstr "Toujours autoriser"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Always allowed"
+msgstr "Toujours autorisé"
+
+#: src/components/agent-revert-plate.tsx
+msgid "and {rest} more"
+msgstr "et {rest} de plus"
 
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Answer"
@@ -688,7 +726,9 @@ msgstr "L’accès à la caméra est désactivé. Activez-le dans Réglages pour
 msgid "Camera access needed"
 msgstr "Accès à la caméra requis"
 
+#: src/components/agent-composer.tsx
 #: src/components/agent-context-sheet.tsx
+#: src/components/agent-sessions-sheet.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/row-action-menu.tsx
 #: src/components/session-map.tsx
@@ -701,11 +741,6 @@ msgstr "Accès à la caméra requis"
 #: src/lib/local-authentication.ts
 msgid "Cancel"
 msgstr "Annuler"
-
-#: src/i18n/labels.ts
-msgctxt "agent slash command"
-msgid "Cancel a staged rollback"
-msgstr "Annuler un retour en arrière préparé"
 
 #. placeholder {0}: record.label
 #: src/components/ssh-terminal-workspace.tsx
@@ -1236,6 +1271,10 @@ msgstr "La copie, prête à coller dans un terminal"
 msgid "Copy"
 msgstr "Copier"
 
+#: src/components/agent-message-block.tsx
+msgid "Copy message"
+msgstr "Copier le message"
+
 #: src/components/ssh-host-form.tsx
 msgid "Copy public key"
 msgstr "Copier la clé publique"
@@ -1263,6 +1302,10 @@ msgid "Could not add a file"
 msgstr "Impossible d’ajouter le fichier"
 
 #: src/components/agent-workbench.tsx
+msgid "Could not change delivery"
+msgstr "Impossible de changer la remise"
+
+#: src/components/agent-workbench.tsx
 msgid "Could not compact"
 msgstr "Compaction impossible"
 
@@ -1283,6 +1326,10 @@ msgid "Could not create session"
 msgstr "Impossible de créer la session"
 
 #: src/components/agent-workbench.tsx
+msgid "Could not delete"
+msgstr "Suppression impossible"
+
+#: src/components/agent-workbench.tsx
 msgid "Could not detach"
 msgstr "Impossible de détacher"
 
@@ -1293,6 +1340,10 @@ msgstr "Impossible d’activer le verrouillage de l’app"
 #: src/components/ssh-host-form.tsx
 msgid "Could not generate a key"
 msgstr "Impossible de générer une clé"
+
+#: src/components/agent-workbench.tsx
+msgid "Could not keep it"
+msgstr "Impossible de conserver"
 
 #: src/components/new-task-sheet.tsx
 msgid "Could not list this server's agents."
@@ -1384,17 +1435,21 @@ msgstr "Impossible de lire le terminal"
 msgid "Could not read this file."
 msgstr "Impossible de lire ce fichier"
 
-#: src/components/agent-workbench.tsx
-msgid "Could not redo"
-msgstr "Impossible de rétablir"
-
 #: src/components/ssh-host-form.tsx
 msgid "Could not remove host"
 msgstr "Impossible de supprimer l’hôte"
 
 #: src/components/agent-workbench.tsx
+msgid "Could not rename"
+msgstr "Renommage impossible"
+
+#: src/components/agent-workbench.tsx
 msgid "Could not reply"
 msgstr "Réponse impossible"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Could not revoke"
+msgstr "Révocation impossible"
 
 #: src/components/settings-servers.tsx
 msgid "Could not revoke device"
@@ -1403,6 +1458,10 @@ msgstr "Impossible de révoquer l’appareil"
 #: src/components/agent-workbench.tsx
 msgid "Could not run that"
 msgstr "Impossible de l'exécuter"
+
+#: src/components/agent-workbench.tsx
+msgid "Could not run that skill"
+msgstr "Impossible d’exécuter cette compétence"
 
 #: src/components/settings-servers.tsx
 msgid "Could not save changes"
@@ -1439,6 +1498,10 @@ msgstr "Impossible d’envoyer la touche"
 #: src/app/commands.tsx
 msgid "Could not send shortcut."
 msgstr "Impossible d’envoyer le raccourci"
+
+#: src/components/agent-workbench.tsx
+msgid "Could not stage the rollback"
+msgstr "Impossible de préparer le retour en arrière"
 
 #: src/components/agent-workbench.tsx
 msgid "Could not start a session"
@@ -1526,6 +1589,7 @@ msgstr "PAR DÉFAUT"
 msgid "Defaults to theme.json at the repository root"
 msgstr "Par défaut, theme.json à la racine du dépôt"
 
+#: src/components/agent-sessions-sheet.tsx
 #: src/components/row-action-menu.tsx
 msgid "Delete"
 msgstr "Supprimer"
@@ -1537,6 +1601,10 @@ msgstr "Supprimer {name}"
 #: src/i18n/labels.ts
 msgid "Delete this line"
 msgstr "Supprimer cette ligne"
+
+#: src/components/agent-sessions-sheet.tsx
+msgid "Delete this session?"
+msgstr "Supprimer cette session ?"
 
 #: src/i18n/labels.ts
 msgctxt "git file status"
@@ -2172,6 +2240,10 @@ msgstr "Aller à la dernière sortie"
 msgid "just now"
 msgstr "à l’instant"
 
+#: src/components/agent-revert-plate.tsx
+msgid "Keep"
+msgstr "Conserver"
+
 #: src/components/settings-servers.tsx
 msgid "Keep {label}"
 msgstr "Conserver {label}"
@@ -2179,6 +2251,15 @@ msgstr "Conserver {label}"
 #: src/components/settings-storage.tsx
 msgid "Keep cached files"
 msgstr "Conserver les fichiers en cache"
+
+#: src/components/agent-revert-plate.tsx
+msgid "Keep everything and drop the staged rollback"
+msgstr "Tout conserver et abandonner le retour en arrière préparé"
+
+#: src/i18n/labels.ts
+msgctxt "agent slash command"
+msgid "Keep everything and drop the staged rollback"
+msgstr "Tout conserver et abandonner le retour en arrière préparé"
 
 #: src/components/settings-storage.tsx
 msgid "Keep saved themes"
@@ -2533,6 +2614,7 @@ msgstr "Nouveau terminal"
 msgid "New workspace"
 msgstr "Nouvel espace de travail"
 
+#: src/components/agent-composer.tsx
 #: src/components/launch-intro.tsx
 msgid "Next"
 msgstr "Suivant"
@@ -2726,6 +2808,10 @@ msgstr "Rien ici pour l’instant. Les fichiers écrits par la session apparaiss
 msgid "Nothing is running in the background — detach a long command from its tool card and it appears here"
 msgstr "Rien ne tourne en arrière-plan. Détachez une commande longue depuis sa carte d'outil et elle apparaîtra ici"
 
+#: src/components/agent-workbench.tsx
+msgid "Nothing staged"
+msgstr "Rien de préparé"
+
 #: src/components/pane-chat-view.tsx
 msgid "Nothing to show yet."
 msgstr "Rien à afficher pour l’instant"
@@ -2737,6 +2823,10 @@ msgstr "Rien à annuler"
 #: src/components/agent-vcs-diff-sheet.tsx
 msgid "Nothing uncommitted in this workspace."
 msgstr "Rien de non validé dans cet espace de travail"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Nothing yet — an “Always allow” reply lands here, for this project."
+msgstr "Rien pour l’instant — une réponse « Toujours autoriser » atterrit ici, pour ce projet"
 
 #: src/components/toggle.tsx
 msgid "Off"
@@ -2842,6 +2932,10 @@ msgstr "Ouvrir le clavier à l’écran"
 #: src/components/new-task-action.tsx
 msgid "Open OpenCode Agent on {label}"
 msgstr "Ouvrir l'agent OpenCode sur {label}"
+
+#: src/components/agent-sessions-sheet.tsx
+msgid "Open parent"
+msgstr "Ouvrir la session parente"
 
 #: src/components/open-web-service-sheet.tsx
 msgid "Open port {recent}"
@@ -3048,6 +3142,10 @@ msgstr "Collez un lien de thème public ou l’URL d’un dépôt GitHub"
 msgid "Path"
 msgstr "Chemin"
 
+#: src/components/agent-context-sheet.tsx
+msgid "Permission"
+msgstr "Autorisation"
+
 #: src/components/agent-permission-card.tsx
 msgid "Permission required"
 msgstr "Autorisation requise"
@@ -3166,6 +3264,11 @@ msgstr "En attente"
 msgid "queued to upload"
 msgstr "en attente d’envoi"
 
+#. placeholder {0}: inboxItemText(item) || item.type
+#: src/components/agent-composer.tsx
+msgid "Queued: {0}"
+msgstr "En file d’attente : {0}"
+
 #: src/app/commands.tsx
 msgid "Quick action settings"
 msgstr "Réglages des actions rapides"
@@ -3203,6 +3306,10 @@ msgstr "Lire en dehors de l’espace de travail"
 #: src/components/agent-mode-sheet.tsx
 msgid "Read-only: symbol search, file discovery, dependency tracing."
 msgstr "Lecture seule : recherche de symboles, découverte de fichiers, suivi des dépendances"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Reading the rules on the host…"
+msgstr "Lecture des règles sur l’hôte…"
 
 #: src/app/+not-found.tsx
 #: src/components/custom-theme-library.tsx
@@ -3319,6 +3426,10 @@ msgstr "Suppression des thèmes inutilisés en cours"
 #: src/components/settings-storage.tsx
 msgid "Removing…"
 msgstr "Suppression…"
+
+#: src/components/agent-sessions-sheet.tsx
+msgid "Rename"
+msgstr "Renommer"
 
 #: src/components/row-action-menu.tsx
 msgid "Rename {label}"
@@ -3454,11 +3565,14 @@ msgstr "Regarde le test qui échoue et corrige-le"
 msgid "Reviewing the changes and checking the tests…"
 msgstr "Vérification des modifications et des tests…"
 
+#: src/components/agent-context-sheet.tsx
 #: src/components/settings-servers.tsx
 msgid "Revoke"
 msgstr "Révoquer"
 
 #. placeholder {0}: device.name
+#. placeholder {0}: rule.action || t`this rule`
+#: src/components/agent-context-sheet.tsx
 #: src/components/settings-servers.tsx
 msgid "Revoke {0}"
 msgstr "Révoquer {0}"
@@ -3472,10 +3586,13 @@ msgstr "Révocation…"
 msgid "Right arrow"
 msgstr "Flèche droite"
 
-#: src/i18n/labels.ts
-msgctxt "agent slash command"
-msgid "Roll back to before the last message"
-msgstr "Revenir à l'état d'avant le dernier message"
+#: src/components/agent-revert-plate.tsx
+msgid "Rolling back {summary}"
+msgstr "Retour en arrière sur {summary}"
+
+#: src/components/agent-revert-plate.tsx
+msgid "Rolling back to here"
+msgstr "Retour en arrière jusqu’ici"
 
 #: src/i18n/labels.ts
 msgid "Run a command"
@@ -3507,6 +3624,7 @@ msgstr "Lancer les tests concernés"
 msgid "Run the Gateway on your machine and scan the QR code it prints. The pairing stays on this device."
 msgstr "Lancez le Gateway sur votre machine et scannez le QR code qu’il affiche. L’appairage reste sur cet appareil"
 
+#: src/components/agent-sessions-sheet.tsx
 #: src/components/session-map.tsx
 #: src/components/settings-servers.tsx
 #: src/components/ssh-host-form.tsx
@@ -3535,6 +3653,10 @@ msgstr "Enregistrer l’hôte"
 #: src/app/commands.tsx
 msgid "Save shortcut"
 msgstr "Enregistrer le raccourci"
+
+#: src/components/agent-sessions-sheet.tsx
+msgid "Save the new name"
+msgstr "Enregistrer le nouveau nom"
 
 #: src/components/custom-theme-library.tsx
 msgid "Save theme"
@@ -3668,6 +3790,10 @@ msgstr "Envoyer un message, / pour les commandes, @ pour les fichiers…"
 msgid "Send message"
 msgstr "Envoyer le message"
 
+#: src/components/agent-composer.tsx
+msgid "Send now"
+msgstr "Envoyer maintenant"
+
 #: src/components/simfarm-stage.tsx
 msgid "Send the text"
 msgstr "Envoyer le texte"
@@ -3679,6 +3805,11 @@ msgstr "Envoyer cette tâche à {assignmentLabel}"
 #: src/components/server-terminal-workspace.tsx
 msgid "Send to agent"
 msgstr "Envoyer à l’agent"
+
+#. placeholder {0}: inboxItemText(item) || item.type
+#: src/components/agent-composer.tsx
+msgid "Sending next: {0}"
+msgstr "Envoi suivant : {0}"
 
 #: src/components/agent-assignment-bar.tsx
 msgid "Sending to"
@@ -3715,6 +3846,10 @@ msgstr "Serveur indisponible"
 #: src/components/pad-server-rail.tsx
 msgid "Servers"
 msgstr "Serveurs"
+
+#: src/components/agent-sessions-sheet.tsx
+msgid "Session name"
+msgstr "Nom de la session"
 
 #: src/components/agent-composer.tsx
 msgid "Session Tokens"
@@ -3874,6 +4009,11 @@ msgstr "Afficher le raisonnement"
 msgid "Show what is running"
 msgstr "Voir ce qui tourne"
 
+#: src/i18n/labels.ts
+msgctxt "agent slash command"
+msgid "Show what rolling back to the last message would undo"
+msgstr "Montrer ce qu’annulerait un retour jusqu’au dernier message"
+
 #: src/components/theme-browse-sheet.tsx
 msgid "Showing {shown} of {total}"
 msgstr "Affichage de {shown} sur {total}"
@@ -3922,8 +4062,12 @@ msgstr "Taille"
 
 #. placeholder {0}: part.name ?? part.skill
 #: src/components/agent-message-block.tsx
-msgid "Skill · {0}"
-msgstr "Compétence · {0}"
+msgid "Skill loaded · {0}"
+msgstr "Compétence chargée · {0}"
+
+#: src/components/agent-workbench.tsx
+msgid "Skill started"
+msgstr "Compétence lancée"
 
 #: src/components/launch-intro.tsx
 msgid "Skip intro"
@@ -4481,6 +4625,10 @@ msgid "Themes published at muqun.dev. Nothing downloads until you open one."
 msgstr "Thèmes publiés sur muqun.dev. Rien n’est téléchargé tant que vous n’en ouvrez pas un"
 
 #: src/components/agent-workbench.tsx
+msgid "There is no rollback waiting to be applied."
+msgstr "Aucun retour en arrière n’attend d’être appliqué"
+
+#: src/components/agent-workbench.tsx
 msgid "Thinking…"
 msgstr "Réflexion en cours…"
 
@@ -4551,6 +4699,10 @@ msgstr "Ce QR code n’est pas valide"
 #: src/components/agent-form-card.tsx
 msgid "This question needs a newer app to answer."
 msgstr "Cette question nécessite une version plus récente de l'application"
+
+#: src/components/agent-context-sheet.tsx
+msgid "this rule"
+msgstr "cette règle"
 
 #: src/hooks/use-agent-command-delivery.ts
 msgid "This server cannot run that command yet."
@@ -4714,10 +4866,23 @@ msgstr "Saisissez-le, ou utilisez la touche de dictée de votre clavier"
 msgid "Type on the simulator"
 msgstr "Saisir sur le simulateur"
 
+#: src/components/agent-revert-plate.tsx
 #: src/components/custom-theme-library.tsx
 #: src/i18n/labels.ts
 msgid "Undo"
 msgstr "Annuler"
+
+#: src/components/agent-revert-plate.tsx
+msgid "Undo {summary}"
+msgstr "Annuler {summary}"
+
+#: src/components/agent-revert-plate.tsx
+msgid "Undo back to the staged message"
+msgstr "Annuler jusqu’au message préparé"
+
+#: src/components/agent-message-block.tsx
+msgid "Undo to here"
+msgstr "Annuler jusqu’ici"
 
 #: src/components/asset-viewer.tsx
 msgid "unknown"

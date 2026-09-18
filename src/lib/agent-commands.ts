@@ -1,4 +1,4 @@
-import type { CommandInfo } from './agent-protocol';
+import { isSlashSkill, type CommandInfo, type SkillInfo } from './agent-protocol';
 
 /**
  * What a slash command is, and who runs it.
@@ -21,7 +21,7 @@ export type AgentClientCommandId =
   | 'models'
   | 'agents'
   | 'undo'
-  | 'redo'
+  | 'keep'
   | 'compact'
   | 'clear'
   | 'export';
@@ -38,7 +38,7 @@ export const AGENT_CLIENT_COMMANDS: readonly AgentClientCommand[] = Object.freez
   Object.freeze({ id: 'models' as const, name: '/models' }),
   Object.freeze({ id: 'agents' as const, name: '/agents' }),
   Object.freeze({ id: 'undo' as const, name: '/undo' }),
-  Object.freeze({ id: 'redo' as const, name: '/redo' }),
+  Object.freeze({ id: 'keep' as const, name: '/keep' }),
   Object.freeze({ id: 'compact' as const, name: '/compact' }),
   Object.freeze({ id: 'clear' as const, name: '/clear' }),
   Object.freeze({ id: 'export' as const, name: '/export' }),
@@ -51,7 +51,9 @@ export function commandKey(name: string): string {
 
 export type SlashCommand =
   | { kind: 'client'; name: AgentClientCommandId; args: string }
-  | { kind: 'server'; name: string; args: string };
+  | { kind: 'server'; name: string; args: string }
+  /** A catalog skill, run by `POST …/skill {skill}`. `name` is its id. */
+  | { kind: 'skill'; name: string; args: string };
 
 /**
  * What a typed line is, or `null` when it is an ordinary prompt.
@@ -60,10 +62,17 @@ export type SlashCommand =
  * own `/review` means that one; the app's entries are the fallback for the
  * names no catalog claims. A line that starts with a slash and matches nothing
  * is a prompt: a model is perfectly able to be asked about `/etc/hosts`.
+ *
+ * Skills sit between the two, and for the same reason commands sit above them:
+ * both come from the host, and a skill the host offers as a slash line is
+ * something the reader chose to install. Only the ones marked `slash` count --
+ * the rest are the agent's own to reach for, and a `/`-line naming one of them
+ * used to go out as prose, which is the whole of what this routing is for.
  */
 export function readSlashCommand(
   text: string,
-  serverCommands: readonly CommandInfo[]
+  serverCommands: readonly CommandInfo[],
+  skills: readonly SkillInfo[] = []
 ): SlashCommand | null {
   const trimmed = text.trim();
   if (!trimmed.startsWith('/')) return null;
@@ -78,6 +87,9 @@ export function readSlashCommand(
 
   const server = serverCommands.find((command) => commandKey(command.name) === key);
   if (server) return { kind: 'server', name: server.name, args };
+
+  const skill = skills.find((entry) => isSlashSkill(entry) && entry.id.toLowerCase() === key);
+  if (skill) return { kind: 'skill', name: skill.id, args };
 
   const client = AGENT_CLIENT_COMMANDS.find((command) => commandKey(command.name) === key);
   if (client) return { kind: 'client', name: client.id, args };

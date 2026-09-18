@@ -338,8 +338,14 @@ export const agentClientCommandDescription: Record<AgentClientCommandId, Message
   sessions: msg({ message: 'Sessions in this workspace', context: 'agent slash command' }),
   models: msg({ message: 'Switch language model', context: 'agent slash command' }),
   agents: msg({ message: 'Switch agent mode', context: 'agent slash command' }),
-  undo: msg({ message: 'Roll back to before the last message', context: 'agent slash command' }),
-  redo: msg({ message: 'Cancel a staged rollback', context: 'agent slash command' }),
+  undo: msg({
+    message: 'Show what rolling back to the last message would undo',
+    context: 'agent slash command',
+  }),
+  keep: msg({
+    message: 'Keep everything and drop the staged rollback',
+    context: 'agent slash command',
+  }),
   compact: msg({
     message: 'Summarise the history and keep working from the summary',
     context: 'agent slash command',

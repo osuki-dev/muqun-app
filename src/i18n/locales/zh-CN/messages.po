@@ -17,6 +17,14 @@ msgstr ""
 msgid "… truncated"
 msgstr "…已截断"
 
+#: src/components/agent-workbench.tsx
+msgid "“{args}” was not sent: a skill takes no arguments."
+msgstr "“{args}”未发送：技能不接受参数"
+
+#: src/components/agent-sessions-sheet.tsx
+msgid "“{title}” and any subagent sessions under it are removed from the host. This cannot be undone."
+msgstr "“{title}”及其下的子代理会话都会从主机移除，且无法撤销"
+
 #: src/lib/demo-gateway.ts
 msgid "[instructions]"
 msgstr "[指示]"
@@ -43,6 +51,11 @@ msgstr "{0, plural, other {# 天}}"
 #: src/components/git-diff-view.tsx
 msgid "{0, plural, one {# file changed} other {# files changed}}"
 msgstr "{0, plural, other {# 个文件有改动}}"
+
+#. placeholder {0}: files.length
+#: src/components/agent-revert-plate.tsx
+msgid "{0, plural, one {# file} other {# files}}"
+msgstr "{0, plural, other {# 个文件}}"
 
 #. placeholder {0}: diffs.length
 #. placeholder {1}: totals.additions
@@ -148,6 +161,10 @@ msgstr "{0} 小时前"
 msgid "{0}m ago"
 msgstr "{0} 分钟前"
 
+#: src/components/agent-composer.tsx
+msgid "{agentName}: {title} — finished while you were away"
+msgstr "{agentName}：{title} — 在你离开时完成"
+
 #: src/components/away-digest-card.tsx
 msgid "{asked, plural, one {· asked once} other {· asked # times}}"
 msgstr "{asked, plural, other {· 询问了 # 次}}"
@@ -189,6 +206,10 @@ msgstr "{label} 已暂时锁定。请改用系统备用方式，或稍后再试"
 msgid "{language} code copied to clipboard"
 msgstr "已复制 {language} 代码到剪贴板"
 
+#: src/components/agent-revert-plate.tsx
+msgid "{messages, plural, one {# message} other {# messages}}"
+msgstr "{messages, plural, other {# 条消息}}"
+
 #: src/components/session-map.tsx
 msgid "{panelCount, plural, one {# running} other {# running}}"
 msgstr "{panelCount, plural, one {# 个运行中} other {# 个运行中}}"
@@ -201,6 +222,10 @@ msgstr "{removeLabel}：{label}"
 #: src/components/agent-background-tray.tsx
 msgid "{running} running of {0}"
 msgstr "{0} 个中有 {running} 个正在运行"
+
+#: src/components/agent-sessions-sheet.tsx
+msgid "{title} — finished while you were away"
+msgstr "{title} — 在你离开时完成"
 
 #: src/lib/agent-widget-layout.tsx
 msgid "+{overflow} more"
@@ -250,6 +275,11 @@ msgstr "操作这个终端，或给它发一条命令"
 #: src/app/commands.tsx
 msgid "Act on this terminal, or send its agent a prompt"
 msgstr "操作这个终端，或给它的 Agent 下一条指令"
+
+#. placeholder {0}: sessionTitleOr(session, t`Untitled session`)
+#: src/components/agent-sessions-sheet.tsx
+msgid "Actions for {0}"
+msgstr "{0} 的操作"
 
 #: src/components/ssh-host-list.tsx
 msgid "Add a host"
@@ -404,6 +434,14 @@ msgstr "Alt 上箭头"
 #: src/i18n/labels.ts
 msgid "Always allow"
 msgstr "始终允许"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Always allowed"
+msgstr "始终允许"
+
+#: src/components/agent-revert-plate.tsx
+msgid "and {rest} more"
+msgstr "还有 {rest} 个"
 
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Answer"
@@ -688,7 +726,9 @@ msgstr "相机访问已关闭。请在“设置”中开启后再拍照"
 msgid "Camera access needed"
 msgstr "需要相机访问权限"
 
+#: src/components/agent-composer.tsx
 #: src/components/agent-context-sheet.tsx
+#: src/components/agent-sessions-sheet.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/row-action-menu.tsx
 #: src/components/session-map.tsx
@@ -701,11 +741,6 @@ msgstr "需要相机访问权限"
 #: src/lib/local-authentication.ts
 msgid "Cancel"
 msgstr "取消"
-
-#: src/i18n/labels.ts
-msgctxt "agent slash command"
-msgid "Cancel a staged rollback"
-msgstr "取消已暂存的回滚"
 
 #. placeholder {0}: record.label
 #: src/components/ssh-terminal-workspace.tsx
@@ -1236,6 +1271,10 @@ msgstr "复制命令，可直接粘贴到终端"
 msgid "Copy"
 msgstr "复制"
 
+#: src/components/agent-message-block.tsx
+msgid "Copy message"
+msgstr "复制消息"
+
 #: src/components/ssh-host-form.tsx
 msgid "Copy public key"
 msgstr "复制公钥"
@@ -1263,6 +1302,10 @@ msgid "Could not add a file"
 msgstr "无法添加文件"
 
 #: src/components/agent-workbench.tsx
+msgid "Could not change delivery"
+msgstr "无法更改发送方式"
+
+#: src/components/agent-workbench.tsx
 msgid "Could not compact"
 msgstr "无法压缩"
 
@@ -1283,6 +1326,10 @@ msgid "Could not create session"
 msgstr "无法创建会话"
 
 #: src/components/agent-workbench.tsx
+msgid "Could not delete"
+msgstr "无法删除"
+
+#: src/components/agent-workbench.tsx
 msgid "Could not detach"
 msgstr "无法转入后台"
 
@@ -1293,6 +1340,10 @@ msgstr "无法启用应用锁"
 #: src/components/ssh-host-form.tsx
 msgid "Could not generate a key"
 msgstr "无法生成密钥"
+
+#: src/components/agent-workbench.tsx
+msgid "Could not keep it"
+msgstr "无法保留"
 
 #: src/components/new-task-sheet.tsx
 msgid "Could not list this server's agents."
@@ -1384,17 +1435,21 @@ msgstr "无法读取终端"
 msgid "Could not read this file."
 msgstr "无法读取此文件"
 
-#: src/components/agent-workbench.tsx
-msgid "Could not redo"
-msgstr "无法重做"
-
 #: src/components/ssh-host-form.tsx
 msgid "Could not remove host"
 msgstr "无法移除主机"
 
 #: src/components/agent-workbench.tsx
+msgid "Could not rename"
+msgstr "无法重命名"
+
+#: src/components/agent-workbench.tsx
 msgid "Could not reply"
 msgstr "无法回复"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Could not revoke"
+msgstr "无法撤销授权"
 
 #: src/components/settings-servers.tsx
 msgid "Could not revoke device"
@@ -1403,6 +1458,10 @@ msgstr "无法吊销设备"
 #: src/components/agent-workbench.tsx
 msgid "Could not run that"
 msgstr "无法执行"
+
+#: src/components/agent-workbench.tsx
+msgid "Could not run that skill"
+msgstr "无法运行该技能"
 
 #: src/components/settings-servers.tsx
 msgid "Could not save changes"
@@ -1439,6 +1498,10 @@ msgstr "无法发送按键"
 #: src/app/commands.tsx
 msgid "Could not send shortcut."
 msgstr "无法发送快捷命令"
+
+#: src/components/agent-workbench.tsx
+msgid "Could not stage the rollback"
+msgstr "无法准备回滚"
 
 #: src/components/agent-workbench.tsx
 msgid "Could not start a session"
@@ -1526,6 +1589,7 @@ msgstr "默认"
 msgid "Defaults to theme.json at the repository root"
 msgstr "默认为仓库根目录下的 theme.json"
 
+#: src/components/agent-sessions-sheet.tsx
 #: src/components/row-action-menu.tsx
 msgid "Delete"
 msgstr "删除"
@@ -1537,6 +1601,10 @@ msgstr "删除 {name}"
 #: src/i18n/labels.ts
 msgid "Delete this line"
 msgstr "删除这一行"
+
+#: src/components/agent-sessions-sheet.tsx
+msgid "Delete this session?"
+msgstr "删除这个会话？"
 
 #: src/i18n/labels.ts
 msgctxt "git file status"
@@ -2172,6 +2240,10 @@ msgstr "跳到最新输出"
 msgid "just now"
 msgstr "刚刚"
 
+#: src/components/agent-revert-plate.tsx
+msgid "Keep"
+msgstr "保留"
+
 #: src/components/settings-servers.tsx
 msgid "Keep {label}"
 msgstr "保留 {label}"
@@ -2179,6 +2251,15 @@ msgstr "保留 {label}"
 #: src/components/settings-storage.tsx
 msgid "Keep cached files"
 msgstr "保留缓存文件"
+
+#: src/components/agent-revert-plate.tsx
+msgid "Keep everything and drop the staged rollback"
+msgstr "保留全部内容，放弃已准备的回滚"
+
+#: src/i18n/labels.ts
+msgctxt "agent slash command"
+msgid "Keep everything and drop the staged rollback"
+msgstr "保留全部内容，放弃已准备的回滚"
 
 #: src/components/settings-storage.tsx
 msgid "Keep saved themes"
@@ -2533,6 +2614,7 @@ msgstr "新建终端"
 msgid "New workspace"
 msgstr "新建工作区"
 
+#: src/components/agent-composer.tsx
 #: src/components/launch-intro.tsx
 msgid "Next"
 msgstr "下一步"
@@ -2726,6 +2808,10 @@ msgstr "这里还是空的。会话写出的文件会自动出现"
 msgid "Nothing is running in the background — detach a long command from its tool card and it appears here"
 msgstr "后台没有任何任务。从工具卡片里把长命令转入后台，它就会出现在这里"
 
+#: src/components/agent-workbench.tsx
+msgid "Nothing staged"
+msgstr "没有待处理的回滚"
+
 #: src/components/pane-chat-view.tsx
 msgid "Nothing to show yet."
 msgstr "目前还没有内容"
@@ -2737,6 +2823,10 @@ msgstr "没有可撤销的内容"
 #: src/components/agent-vcs-diff-sheet.tsx
 msgid "Nothing uncommitted in this workspace."
 msgstr "此工作区没有未提交的改动"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Nothing yet — an “Always allow” reply lands here, for this project."
+msgstr "还没有内容——选择“始终允许”后，规则会出现在这里，属于本项目"
 
 #: src/components/toggle.tsx
 msgid "Off"
@@ -2842,6 +2932,10 @@ msgstr "打开屏幕键盘"
 #: src/components/new-task-action.tsx
 msgid "Open OpenCode Agent on {label}"
 msgstr "在 {label} 上打开 OpenCode Agent"
+
+#: src/components/agent-sessions-sheet.tsx
+msgid "Open parent"
+msgstr "打开上级会话"
 
 #: src/components/open-web-service-sheet.tsx
 msgid "Open port {recent}"
@@ -3048,6 +3142,10 @@ msgstr "粘贴公开的主题链接或 GitHub 仓库链接"
 msgid "Path"
 msgstr "路径"
 
+#: src/components/agent-context-sheet.tsx
+msgid "Permission"
+msgstr "权限"
+
 #: src/components/agent-permission-card.tsx
 msgid "Permission required"
 msgstr "需要权限"
@@ -3166,6 +3264,11 @@ msgstr "排队中"
 msgid "queued to upload"
 msgstr "排队等待上传"
 
+#. placeholder {0}: inboxItemText(item) || item.type
+#: src/components/agent-composer.tsx
+msgid "Queued: {0}"
+msgstr "排队中：{0}"
+
 #: src/app/commands.tsx
 msgid "Quick action settings"
 msgstr "快捷操作设置"
@@ -3203,6 +3306,10 @@ msgstr "读取工作区之外的内容"
 #: src/components/agent-mode-sheet.tsx
 msgid "Read-only: symbol search, file discovery, dependency tracing."
 msgstr "只读：符号搜索、文件发现、依赖追踪"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Reading the rules on the host…"
+msgstr "正在读取主机上的规则…"
 
 #: src/app/+not-found.tsx
 #: src/components/custom-theme-library.tsx
@@ -3319,6 +3426,10 @@ msgstr "正在移除未使用的主题"
 #: src/components/settings-storage.tsx
 msgid "Removing…"
 msgstr "正在移除…"
+
+#: src/components/agent-sessions-sheet.tsx
+msgid "Rename"
+msgstr "重命名"
 
 #: src/components/row-action-menu.tsx
 msgid "Rename {label}"
@@ -3454,11 +3565,14 @@ msgstr "看一下失败的测试，然后修好它"
 msgid "Reviewing the changes and checking the tests…"
 msgstr "正在审查改动并检查测试…"
 
+#: src/components/agent-context-sheet.tsx
 #: src/components/settings-servers.tsx
 msgid "Revoke"
 msgstr "吊销"
 
 #. placeholder {0}: device.name
+#. placeholder {0}: rule.action || t`this rule`
+#: src/components/agent-context-sheet.tsx
 #: src/components/settings-servers.tsx
 msgid "Revoke {0}"
 msgstr "吊销 {0}"
@@ -3472,10 +3586,13 @@ msgstr "吊销中…"
 msgid "Right arrow"
 msgstr "向右键"
 
-#: src/i18n/labels.ts
-msgctxt "agent slash command"
-msgid "Roll back to before the last message"
-msgstr "回滚到上一条消息之前"
+#: src/components/agent-revert-plate.tsx
+msgid "Rolling back {summary}"
+msgstr "将回滚 {summary}"
+
+#: src/components/agent-revert-plate.tsx
+msgid "Rolling back to here"
+msgstr "将回滚到这里"
 
 #: src/i18n/labels.ts
 msgid "Run a command"
@@ -3507,6 +3624,7 @@ msgstr "运行相关测试"
 msgid "Run the Gateway on your machine and scan the QR code it prints. The pairing stays on this device."
 msgstr "在你的电脑上运行 Gateway，然后扫描它打印出的二维码。配对信息只保存在本设备上"
 
+#: src/components/agent-sessions-sheet.tsx
 #: src/components/session-map.tsx
 #: src/components/settings-servers.tsx
 #: src/components/ssh-host-form.tsx
@@ -3535,6 +3653,10 @@ msgstr "保存主机"
 #: src/app/commands.tsx
 msgid "Save shortcut"
 msgstr "保存快捷命令"
+
+#: src/components/agent-sessions-sheet.tsx
+msgid "Save the new name"
+msgstr "保存新名称"
 
 #: src/components/custom-theme-library.tsx
 msgid "Save theme"
@@ -3668,6 +3790,10 @@ msgstr "发送消息，输入 / 查看命令，@ 引用文件…"
 msgid "Send message"
 msgstr "发送消息"
 
+#: src/components/agent-composer.tsx
+msgid "Send now"
+msgstr "立即发送"
+
 #: src/components/simfarm-stage.tsx
 msgid "Send the text"
 msgstr "发送文字"
@@ -3679,6 +3805,11 @@ msgstr "把这个任务发给 {assignmentLabel}"
 #: src/components/server-terminal-workspace.tsx
 msgid "Send to agent"
 msgstr "发送给代理"
+
+#. placeholder {0}: inboxItemText(item) || item.type
+#: src/components/agent-composer.tsx
+msgid "Sending next: {0}"
+msgstr "下一个发送：{0}"
 
 #: src/components/agent-assignment-bar.tsx
 msgid "Sending to"
@@ -3715,6 +3846,10 @@ msgstr "服务器不可用"
 #: src/components/pad-server-rail.tsx
 msgid "Servers"
 msgstr "服务器"
+
+#: src/components/agent-sessions-sheet.tsx
+msgid "Session name"
+msgstr "会话名称"
 
 #: src/components/agent-composer.tsx
 msgid "Session Tokens"
@@ -3874,6 +4009,11 @@ msgstr "显示思考过程"
 msgid "Show what is running"
 msgstr "查看正在运行的项目"
 
+#: src/i18n/labels.ts
+msgctxt "agent slash command"
+msgid "Show what rolling back to the last message would undo"
+msgstr "查看回滚到上一条消息会撤销什么"
+
 #: src/components/theme-browse-sheet.tsx
 msgid "Showing {shown} of {total}"
 msgstr "已显示 {shown} / {total}"
@@ -3922,8 +4062,12 @@ msgstr "大小"
 
 #. placeholder {0}: part.name ?? part.skill
 #: src/components/agent-message-block.tsx
-msgid "Skill · {0}"
-msgstr "技能 · {0}"
+msgid "Skill loaded · {0}"
+msgstr "已加载技能 · {0}"
+
+#: src/components/agent-workbench.tsx
+msgid "Skill started"
+msgstr "技能已启动"
 
 #: src/components/launch-intro.tsx
 msgid "Skip intro"
@@ -4481,6 +4625,10 @@ msgid "Themes published at muqun.dev. Nothing downloads until you open one."
 msgstr "来自 muqun.dev 的已发布主题。打开某个主题前不会下载任何内容"
 
 #: src/components/agent-workbench.tsx
+msgid "There is no rollback waiting to be applied."
+msgstr "没有等待应用的回滚"
+
+#: src/components/agent-workbench.tsx
 msgid "Thinking…"
 msgstr "正在思考…"
 
@@ -4551,6 +4699,10 @@ msgstr "这个二维码无效"
 #: src/components/agent-form-card.tsx
 msgid "This question needs a newer app to answer."
 msgstr "回答这个问题需要更新版本的应用"
+
+#: src/components/agent-context-sheet.tsx
+msgid "this rule"
+msgstr "这条规则"
 
 #: src/hooks/use-agent-command-delivery.ts
 msgid "This server cannot run that command yet."
@@ -4714,10 +4866,23 @@ msgstr "可以直接打字，或使用键盘上的语音输入键"
 msgid "Type on the simulator"
 msgstr "在模拟器上输入"
 
+#: src/components/agent-revert-plate.tsx
 #: src/components/custom-theme-library.tsx
 #: src/i18n/labels.ts
 msgid "Undo"
 msgstr "撤销"
+
+#: src/components/agent-revert-plate.tsx
+msgid "Undo {summary}"
+msgstr "撤销 {summary}"
+
+#: src/components/agent-revert-plate.tsx
+msgid "Undo back to the staged message"
+msgstr "撤销到已准备的消息"
+
+#: src/components/agent-message-block.tsx
+msgid "Undo to here"
+msgstr "撤销到这里"
 
 #: src/components/asset-viewer.tsx
 msgid "unknown"

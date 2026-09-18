@@ -39,14 +39,37 @@ export function dedupeInFlight<T>(key: string, fn: () => Promise<T>): Promise<T>
   return promise;
 }
 
+/**
+ * What this app's parsers understand, stamped into every cache key.
+ *
+ * The cache holds *parsed* objects, and the conditional request that refreshes
+ * it is the host's ETag -- which says whether the catalog changed on the host,
+ * not whether this app has learned to read more of it. So a build whose parser
+ * grew a field (`skills[].slash`, say) asked with the old ETag, was told `304`,
+ * and went on handing out an object parsed by the previous version: the new
+ * field was missing until something changed on the host. Bumping this number
+ * retires every entry written by an older parser in one line.
+ */
+export const AGENT_CACHE_SCHEMA = 2;
+
 export function buildAgentCacheKey(
-  type: 'catalog' | 'projects',
+  type: 'catalog' | 'projects' | 'sessions',
   endpointKey?: string | null,
-  sessionId?: string | null
+  sessionId?: string | null,
+  /**
+   * What distinguishes two reads of the same route -- the sessions list's own
+   * query, which scopes it to a workspace and bounds it.
+   *
+   * Without it a scoped listing and an unscoped one share a key, so the second
+   * one's `If-None-Match` carries the first one's ETag and a `304` hands back
+   * the wrong list entirely.
+   */
+  variant?: string | null
 ): string {
   const ep = endpointKey ? endpointKey.replace(/\/$/, '') : 'default_gateway';
   const sid = sessionId || 'global';
-  return `${type}:${ep}:${sid}`;
+  const base = `${type}@${AGENT_CACHE_SCHEMA}:${ep}:${sid}`;
+  return variant ? `${base}:${variant}` : base;
 }
 
 export function getCachedEntry<T>(key: string): AgentCacheEntry<T> | null {
