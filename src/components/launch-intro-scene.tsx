@@ -12,13 +12,13 @@ import Animated, {
   useReducedMotion,
   useSharedValue,
   withDelay,
+  withSequence,
   withTiming,
 } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 
 import { brandMark } from '@/components/brand-mark';
 import { useAppliedCustomTheme } from '@/components/theme-candidate';
-import { ThemeArtworkLayer } from '@/components/theme-artwork';
 import { useLaunchBackground, useLaunchHeroArtwork } from '@/hooks/use-launch-artwork';
 import { LAUNCH_HERO_MAX_WIDTH, LAUNCH_HERO_WIDTH_FRACTION } from '@/hooks/use-launch-image-sync';
 import { subscribeLaunchHeroRect, type LaunchHeroRect } from '@/lib/launch-hero-rect';
@@ -179,7 +179,14 @@ export function LaunchSceneIntro({
           'shell.background'
         )
       : null;
-  const hasWallpaper = wallpaper !== null && Boolean(assets?.[wallpaper.asset]);
+  const wallpaperUri = wallpaper ? assets?.[wallpaper.asset] : undefined;
+  const hasWallpaper = Boolean(wallpaperUri?.startsWith('file:///'));
+
+  // Whether the painting is actually on the GPU yet. A pack with no wallpaper
+  // has nothing to wait for and is ready by definition.
+  const [worldReady, setWorldReady] = useState(!hasWallpaper);
+  const onWorldReady = useCallback(() => setWorldReady(true), []);
+  const covered = useRef(false);
 
   const wipe = useSharedValue(0);
   const hero = useSharedValue(0);
@@ -196,11 +203,35 @@ export function LaunchSceneIntro({
     onDone();
   }, [beats, onDone]);
 
+  const coverMs = beats.wipe.ms * WIPE_COVERED_AT;
+  const clearMs = beats.wipe.ms - coverMs;
+
+  // The cut clears once the world behind it exists, or once the stall cap says
+  // to stop waiting. Separate from the beat effect below because it is the one
+  // thing here driven by something other than the phase.
+  useEffect(() => {
+    if (phase !== 'visible' || reduced || !worldReady) return;
+    const elapsed = Date.now() - startedAt.current;
+    const remaining = Math.max(0, coverMs - elapsed);
+    // Cover the rest of the way at the speed it was going, then clear. Not a
+    // delay: a delay would freeze the plane mid-crossing while it waited.
+    wipe.value = withSequence(
+      withTiming(WIPE_COVERED_AT, timing(remaining)),
+      withTiming(1, timing(clearMs))
+    );
+    covered.current = true;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase, worldReady, reduced]);
+
   useEffect(() => {
     if (phase === 'visible') {
       startedAt.current = Date.now();
       if (!reduced) {
-        wipe.value = withTiming(1, timing(beats.wipe.ms));
+        // Cover, wait for the world up to the cap, then clear regardless.
+        wipe.value = withSequence(
+          withTiming(WIPE_COVERED_AT, timing(coverMs)),
+          withDelay(beats.wipeStallCapMs, withTiming(1, timing(clearMs)))
+        );
         hero.value = withDelay(beats.hero.at, withTiming(1, timing(beats.hero.ms)));
         rise.value = withDelay(beats.rise.at, withTiming(1, timing(beats.rise.ms)));
       } else {
@@ -297,13 +328,28 @@ export function LaunchSceneIntro({
 
       {/* The world: the pack's wallpaper, exactly as Home draws it. */}
       <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, worldStyle]}>
-        {hasWallpaper && pack && assets ? (
-          <ThemeArtworkLayer
-            assets={assets}
-            fallbackSlot="shell.background"
-            manifest={pack.manifest}
-            mode={resolvedMode}
-            slot="home.background"
+        {hasWallpaper && wallpaper && wallpaperUri ? (
+          // Drawn here rather than through `ThemeArtworkLayer` for one reason:
+          // the cut needs to know when the painting is ready, and the shared
+          // component has no way to say. Same slot pair, same fit, same focal
+          // point, same opacity -- so what lands is what Home draws.
+          <Image
+            accessible={false}
+            autoplay={false}
+            cachePolicy="memory"
+            contentFit={wallpaper.fit === 'tile' ? 'contain' : (wallpaper.fit ?? 'cover')}
+            contentPosition={
+              wallpaper.focalPoint
+                ? {
+                    left: `${wallpaper.focalPoint.x * 100}%`,
+                    top: `${wallpaper.focalPoint.y * 100}%`,
+                  }
+                : 'center'
+            }
+            onError={onWorldReady}
+            onLoad={onWorldReady}
+            source={{ uri: wallpaperUri }}
+            style={[StyleSheet.absoluteFill, { opacity: wallpaper.opacity ?? 1 }]}
           />
         ) : null}
         <PaletteStage

@@ -42,6 +42,20 @@ export type LaunchIntroTimeline = {
    * pack's world is behind it on the way out.
    */
   wipe: IntroBeat;
+  /**
+   * How long the cut will wait, covered, for the pack's wallpaper to decode.
+   *
+   * A pack's background is a full-screen painting read off disk, and on a cold
+   * start it is not ready in the quarter-second the cut takes to arrive. The
+   * cut exists to hide an exchange, so if the thing being exchanged in is not
+   * there yet the honest move is to stay covering rather than to clear onto
+   * bare paper and let the world appear afterwards -- which is what the first
+   * build of this did, and it read as the wallpaper popping in late.
+   *
+   * Capped, because a stall is a guess about a decode and the budget is a
+   * promise. When it runs out the cut clears regardless.
+   */
+  wipeStallCapMs: number;
   /** The hero swelling to fill the stage and then settling into Home's hero rect. */
   hero: IntroBeat;
   /** The veil over Home's content dropping away, so the page rises under the picture. */
@@ -87,6 +101,7 @@ export function launchIntroTimeline(d: MotionDurations): LaunchIntroTimeline {
   const holdUntil = d.long + d.long + d.short;
   return {
     wipe: { at: 0, ms: d.long + d.short },
+    wipeStallCapMs: d.short,
     hero: { at: d.medium, ms: d.long + d.short },
     rise: { at: d.long + d.short, ms: d.long },
     skipArmedAt: d.long,
@@ -114,6 +129,7 @@ export function reducedLaunchIntroTimeline(d: MotionDurations): LaunchIntroTimel
   const still: IntroBeat = { at: 0, ms: 0 };
   return {
     wipe: still,
+    wipeStallCapMs: 0,
     hero: still,
     rise: still,
     skipArmedAt: 0,

@@ -26,6 +26,15 @@ describe('launchIntroTimeline', () => {
     expect(beats.totalMs).toBe(1400);
   });
 
+  test('even a fully stalled cut cannot push the launch past the budget', () => {
+    // The cut waits, covered, for the pack's wallpaper to decode. That wait is
+    // the one thing here that depends on a disk read rather than on a clock,
+    // so the cap is what keeps the budget a promise rather than a hope.
+    const beats = launchIntroTimeline(DURATIONS);
+    expect(beats.wipeStallCapMs).toBeGreaterThan(0);
+    expect(beats.totalMs + beats.wipeStallCapMs).toBeLessThanOrEqual(LAUNCH_INTRO_BUDGET_MS);
+  });
+
   test('every moving beat has finished before the opening hands back', () => {
     const beats = launchIntroTimeline(DURATIONS);
     for (const beat of [beats.wipe, beats.hero, beats.rise]) {
