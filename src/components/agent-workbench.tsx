@@ -41,9 +41,18 @@ import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { usePaneChatMarkdownStyle } from '@/components/pane-chat-blocks';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { withAlpha } from '@/lib/color';
-import { DURATION, fadeIn, fadeInDown, fadeOut, fadeOutUp, listLayout, timing } from '@/lib/motion';
-import { TerminalNotice, terminalNoticeStyles } from '@/components/terminal-notice';
+import {
+  DURATION,
+  fadeIn,
+  fadeInDown,
+  fadeOut,
+  fadeOutUp,
+  listLayout,
+  riseIn,
+  timing,
+} from '@/lib/motion';
 import { StatusDot } from '@/components/status-dot';
+import { AgentTranscriptSkeleton } from '@/components/agent-transcript-skeleton';
 import {
   getAgentSessionSnapshot,
   listAgentSessions,
@@ -2897,14 +2906,17 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       {/* Main Content Stream, standing clear of whatever notice is up. */}
       <Animated.View style={[styles.transcriptArea, transcriptAreaStyle]}>
         {loading ? (
-          <View style={[styles.centerContainer, { paddingTop: topInset + 20 }]}>
-            <TerminalNotice>
-              <StatusDot color={theme.colors.primary} filled pulse size={7} />
-              <Text variant="caption" numberOfLines={1} style={terminalNoticeStyles.label}>
-                <Trans>Connecting to agent engine…</Trans>
-              </Text>
-            </TerminalNotice>
-          </View>
+          /*
+            The shape of what is coming, which is what every other surface in
+            this app answers a wait with. This branch is also the whole of the
+            switch: choosing another session or another workspace re-enters
+            `loadSnapshot`, which raises `loading` again, so the transcript
+            that was there fades out under the placeholder and the one that
+            arrives rises through it -- the same cross-fade the terminal
+            workspace does between panes, rather than one transcript being
+            replaced by another between two frames.
+          */
+          <AgentTranscriptSkeleton paddingTop={topInset + 20} />
         ) : timeline.length === 0 && permissions.length === 0 && forms.length === 0 ? (
           <View
             style={[
@@ -2912,7 +2924,8 @@ export const AgentWorkbench = memo(function AgentWorkbench({
               { paddingTop: topInset + 20, paddingBottom: bottomInset + 185 },
             ]}>
             <Animated.View
-              entering={fadeIn()}
+              entering={riseIn()}
+              exiting={fadeOut('short')}
               layout={listLayout()}
               style={[
                 styles.emptyContainer,
@@ -3049,12 +3062,25 @@ export const AgentWorkbench = memo(function AgentWorkbench({
             </Animated.View>
           </View>
         ) : (
-          <LegendList<TimelineRenderGroup>
-            ref={listRef}
-            data={renderGroups}
-            keyExtractor={keyOfGroup}
-            renderItem={renderTimelineItem}
-            /*
+          /*
+            The transcript rises in, once, through the placeholder it replaces.
+            On the container rather than on the rows: a preset on each cell
+            would re-run every time the list brought one back into the draw
+            distance, so scrolling would animate rows the reader has already
+            read, and the entrance of the screen would be indistinguishable
+            from the list doing its job. One rise, of the whole transcript, is
+            what the home cards and the terminal workspace do.
+          */
+          <Animated.View
+            entering={riseIn()}
+            exiting={fadeOut('short')}
+            style={styles.timelineScroll}>
+            <LegendList<TimelineRenderGroup>
+              ref={listRef}
+              data={renderGroups}
+              keyExtractor={keyOfGroup}
+              renderItem={renderTimelineItem}
+              /*
             Never, and this one is load-bearing rather than a preference. An
             assistant cell renders `EnrichedMarkdownText`, whose native view
             compares the incoming markdown against the last string it drew and
@@ -3063,23 +3089,23 @@ export const AgentWorkbench = memo(function AgentWorkbench({
             markdown parse on every cell of every scroll.
             See docs/git-diff-viewer.md:362-380.
           */
-            recycleItems={false}
-            /*
+              recycleItems={false}
+              /*
             The other half of the identity deal, stated to the list itself: a
             group whose object has not changed has not changed.
             `buildTimelineGroupsCached` guarantees exactly that, so the
             strictest comparison is also the correct one, and the cheapest.
           */
-            itemsAreEqual={groupsAreEqual}
-            /*
+              itemsAreEqual={groupsAreEqual}
+              /*
             A user bubble, an assistant card carrying six tool shells and a diff
             block are wildly different heights, and one flat average across all
             of them is what makes a virtualised list jump when content lands
             above the viewport. The role is already the right bucket, so the
             list learns a size per kind instead.
           */
-            getItemType={groupTypeOf}
-            /*
+              getItemType={groupTypeOf}
+              /*
             One allocation hint, measured rather than guessed. Legend List 3
             removed `getEstimatedItemSize`, so there is no per-kind estimate to
             give any more: this number only decides how many item containers
@@ -3089,8 +3115,8 @@ export const AgentWorkbench = memo(function AgentWorkbench({
             165dp, so every mount built containers for more than twice the rows
             a screen holds. See `lib/transcript-sizing.ts` for the measurement.
           */
-            estimatedItemSize={TRANSCRIPT_ESTIMATED_ITEM_SIZE}
-            /*
+              estimatedItemSize={TRANSCRIPT_ESTIMATED_ITEM_SIZE}
+              /*
             The dataset's identity, stated rather than inferred. Switching
             session replaces `data` wholesale, and without a `dataKey` the list
             reads that as the same list having changed enormously -- it keeps
@@ -3099,44 +3125,45 @@ export const AgentWorkbench = memo(function AgentWorkbench({
             switch: sizes and position start clean and the list is not
             remounted to say so.
           */
-            dataKey={activeAsid}
-            /*
+              dataKey={activeAsid}
+              /*
             A short transcript sits on the bottom of the viewport rather than
             hanging from the top of it, which is what the docs' chat guide
             prescribes in place of `inverted` -- and `inverted`, the same guide
             says, is what causes the animation and scroll-edge trouble this
             screen must not have.
           */
-            alignItemsAtEnd={true}
-            initialScrollAtEnd={true}
-            /*
+              alignItemsAtEnd={true}
+              initialScrollAtEnd={true}
+              /*
             The reader's place across a change of *data* -- which is what
             "Load earlier messages" is here: the window comes back longer at the
             top, and the message they were reading has to stay under their eyes.
             The default covers rows changing size and skips that case.
           */
-            maintainVisibleContentPosition={MAINTAIN_TIMELINE_POSITION}
-            /*
+              maintainVisibleContentPosition={MAINTAIN_TIMELINE_POSITION}
+              /*
             Follow the newest message, but only for a reader already at it --
             that is the threshold's job. New output must never move the viewport
             of someone who has scrolled up, which is also why there is no manual
             `scrollToEnd` on a stream tick.
           */
-            maintainScrollAtEnd={true}
-            maintainScrollAtEndThreshold={0.1}
-            onScroll={handleTimelineScroll}
-            /*
+              maintainScrollAtEnd={true}
+              maintainScrollAtEndThreshold={0.1}
+              onScroll={handleTimelineScroll}
+              /*
             The transcript says where the reader is with the jump-to-latest
             pill and the pull indicator, and with nothing else. A scrollbar
             over the artwork is a third answer to the same question, drawn in
             a colour the theme pack does not choose.
           */
-            showsVerticalScrollIndicator={false}
-            refreshControl={timelineRefresh}
-            ListFooterComponent={listFooter}
-            style={styles.timelineScroll}
-            contentContainerStyle={timelineContentStyle}
-          />
+              showsVerticalScrollIndicator={false}
+              refreshControl={timelineRefresh}
+              ListFooterComponent={listFooter}
+              style={styles.timelineScroll}
+              contentContainerStyle={timelineContentStyle}
+            />
+          </Animated.View>
         )}
       </Animated.View>
 
@@ -3489,13 +3516,6 @@ const styles = StyleSheet.create({
   root: {
     flex: 1,
     backgroundColor: 'transparent',
-  },
-  centerContainer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 30,
-    gap: 12,
   },
   transcriptArea: {
     flex: 1,
