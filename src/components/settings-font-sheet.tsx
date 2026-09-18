@@ -47,7 +47,7 @@ import {
   useSheetSceneInputStyle,
 } from '@/components/sheet-scene';
 import { ThemeImportProgress } from '@/components/theme-import-progress';
-import { useUserFontStatus } from '@/hooks/use-user-fonts';
+import { useMonoFontFamily, useUserFontStatus } from '@/hooks/use-user-fonts';
 import { formatAssetSize } from '@/lib/asset-display';
 import { feedback } from '@/lib/feedback';
 import { DURATION, fadeIn, fadeOut } from '@/lib/motion';
@@ -386,6 +386,7 @@ function FontSlotGroup({
   const { t } = useLingui();
   const { colors } = useThemeTokens();
   const inputStyle = useSheetSceneInputStyle();
+  const monoFontFamily = useMonoFontFamily();
   const busy = work !== null;
   const installed = slot.kind === 'file' ? slot : null;
   const bar = work ? fontInstallBar(work) : null;
@@ -646,7 +647,20 @@ function FontSlotGroup({
               placeholder="https://"
               placeholderTextColor={colors.textMuted}
               returnKeyType="go"
-              style={inputStyle}
+              /*
+               * A URL, so the monospace slot, layered over the sheet's own
+               * field style rather than replacing it.
+               *
+               * The rule the app now holds to: a sentence follows the
+               * interface face, a literal the reader types or checks
+               * character by character follows the mono one. This field is
+               * the second kind twice over -- it is read back against a link
+               * the reader copied from somewhere else, and one wrong
+               * character in a raw host is a download that fails for a reason
+               * nobody can see. The sheet's shared style supplies the size
+               * and the interface family; this names the family only.
+               */
+              style={[inputStyle, { fontFamily: monoFontFamily }]}
               testID={`font-url-${id}`}
               value={url}
             />

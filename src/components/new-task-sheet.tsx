@@ -9,6 +9,7 @@ import { AttachmentStrip } from '@/components/attachment-strip';
 import { ImagePreviewModal } from '@/components/image-preview-modal';
 import { LogoLoader } from '@/components/logo-loader';
 import { useAttachmentUploads } from '@/hooks/use-attachment-uploads';
+import { useInterfaceFontFamily, useMonoFontFamily } from '@/hooks/use-user-fonts';
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';
 import {
   pickAttachments,
@@ -86,6 +87,27 @@ export function NewTaskSheet({
   const { t } = useLingui();
   const theme = useThemeTokens();
   const inputStyle = useSheetSceneInputStyle();
+  /**
+   * Two fields, two faces, because they hold two different kinds of thing.
+   *
+   * The directory is a path: it will be handed to the host verbatim, the
+   * recent ones under it are compared against it character for character, and
+   * the placeholder is already an untranslated `~/code/muqun` for that reason.
+   * So it takes the monospace slot.
+   *
+   * The first prompt is a sentence -- "Review the failing test and fix it." --
+   * and it takes the interface face. That is not the face it had: the prompt
+   * is typed into `TerminalComposer`, which sets the monospace slot on its
+   * field because the thing it was built for is a shell line. The component is
+   * right and the reuse was what was wrong, so the correction belongs here, at
+   * the call site that borrowed a terminal's field for prose -- which is why
+   * the composer merges its own family *ahead* of `inputProps.style`.
+   *
+   * Both are a family and nothing more, layered last, so each field keeps the
+   * metrics of the field it is.
+   */
+  const monoFontFamily = useMonoFontFamily();
+  const interfaceFontFamily = useInterfaceFontFamily() ?? undefined;
   // The plate any text drawn straight onto the shell's wallpaper takes; empty
   // on every theme that has no picture there. Explicit, because this is the
   // component that renders the frame and so sits above its own tint provider:
@@ -277,7 +299,7 @@ export function NewTaskSheet({
                 // and a localized example would teach the wrong thing.
                 placeholder="~/code/muqun"
                 placeholderTextColor={theme.colors.textSubtle}
-                style={inputStyle}
+                style={[inputStyle, { fontFamily: monoFontFamily }]}
               />
             </SheetSceneField>
 
@@ -339,6 +361,7 @@ export function NewTaskSheet({
                     onChangeText: setPrompt,
                     editable: !starting,
                     placeholder: t`Review the failing test and fix it.`,
+                    style: { fontFamily: interfaceFontFamily },
                   }}
                   send={{
                     accessibilityLabel: starting ? t`Starting…` : t`Start task`,
