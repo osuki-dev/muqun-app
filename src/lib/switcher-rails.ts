@@ -106,7 +106,12 @@ export type SwitcherRails = {
   machines: MachineRailItem[];
   /** Empty unless the focused machine has a genuine choice of backend. */
   sessions: SessionRailItem[];
-  /** The focused machine, for the session rail's heading. */
+  /**
+   * The focused machine's name, and only when it is not the machine you are
+   * on. On your own machine the sheet's caption has already said which machine
+   * this is, one heading above; repeating it there is furniture. It earns its
+   * place exactly when the rail is about somewhere else.
+   */
   sessionsOn?: string;
   workspaces: WorkspaceRailItem[];
   groups: PaneGroup[];
@@ -234,7 +239,7 @@ export function switcherRails({
   return {
     machines: railMachines,
     sessions: railSessions,
-    ...(railSessions.length
+    ...(railSessions.length && focused !== serverId
       ? { sessionsOn: machines.find((machine) => machine.id === focused)?.label ?? focused }
       : {}),
     workspaces: railWorkspaces,

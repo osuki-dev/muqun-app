@@ -112,7 +112,19 @@ describe('the sessions rail', () => {
   });
 
   test('a machine the records do not have cannot focus the rail', () => {
-    expect(rails({ focusedId: 'gone' }).sessionsOn).toBe('osk');
+    expect(rails({ focusedId: 'gone' }).sessions.map((session) => session.id)).toEqual([
+      'default',
+      'shell',
+    ]);
+  });
+
+  test('it is named only when it is somewhere else', () => {
+    // The caption at the top of the sheet already says which machine you are
+    // on, one heading above the rail.
+    expect(rails().sessionsOn).toBeUndefined();
+    expect(rails({ serverId: 'mini', focusedId: 'osk', machines: [mini, osk] }).sessionsOn).toBe(
+      'osk'
+    );
   });
 });
 
