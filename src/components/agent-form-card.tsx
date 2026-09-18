@@ -4,9 +4,12 @@ import { Text, useThemeTokens } from '@osuki-dev/ui';
 import { Plural, Trans, useLingui } from '@lingui/react/macro';
 import { ExternalLink, FormInput, Send, Check } from 'lucide-react-native';
 import { PressableScale } from '@/components/pressable-scale';
+import { BoundedMarkdown } from '@/components/bounded-markdown';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
+import { useCompactMarkdownStyle } from '@/hooks/use-markdown-style';
 import { withAlpha } from '@/lib/color';
 import { isSafeExternalLink } from '@/lib/safe-link';
+import { plainFromMarkdown } from '@/lib/markdown-text';
 import {
   isFormFieldVisible,
   validateFormField,
@@ -31,6 +34,7 @@ export const AgentFormCard = memo(function AgentFormCard({
   const { t } = useLingui();
   const theme = useThemeTokens();
   const surfaceBackground = useSurfaceBackground();
+  const markdownStyle = useCompactMarkdownStyle('muted');
   const [submitting, setSubmitting] = useState(false);
 
   // Initialize form state
@@ -127,11 +131,44 @@ export const AgentFormCard = memo(function AgentFormCard({
     const text = violationText(fieldKey);
     if (!text) return null;
     return (
-      <Text variant="caption" color={theme.colors.danger} style={styles.fieldDesc}>
+      <Text variant="caption" color={theme.colors.danger} style={styles.fieldProblem}>
         {text}
       </Text>
     );
   };
+
+  /**
+   * The question, on one line.
+   *
+   * A title labels a control and has to stay one line beside it, so this is
+   * the one piece of engine text the card does not render: its block syntax is
+   * taken off instead, and what is left is the words. A title that arrived as
+   * `**Branch**` reads as "Branch" rather than as four asterisks.
+   */
+  const FieldTitle = ({ field }: { field: FormField }) => (
+    <Text variant="caption" color={theme.colors.text} style={styles.fieldTitle}>
+      {plainFromMarkdown(field.title)}
+      {field.required ? ' *' : ''}
+    </Text>
+  );
+
+  /**
+   * What the question means, as the engine wrote it.
+   *
+   * The description is the long half of a field and the half a model fills
+   * with a list of the values it will accept, a path in backticks, or a link
+   * to what it is about. It is outside every pressable, so nothing it draws
+   * can swallow a tap meant for the control under it.
+   */
+  const FieldDescription = ({ field }: { field: FormField }) =>
+    field.description ? (
+      <BoundedMarkdown
+        markdown={field.description}
+        markdownStyle={markdownStyle}
+        containerStyle={styles.fieldDesc}
+        openLinks={false}
+      />
+    ) : null;
 
   const renderField = (field: FormField) => {
     switch (field.type) {
@@ -140,14 +177,8 @@ export const AgentFormCard = memo(function AgentFormCard({
         if (field.options && field.options.length > 0) {
           return (
             <View key={field.key} style={styles.fieldRow}>
-              <Text variant="caption" color={theme.colors.text} style={styles.fieldTitle}>
-                {field.title} {field.required ? '*' : ''}
-              </Text>
-              {field.description ? (
-                <Text variant="caption" color={theme.colors.textMuted} style={styles.fieldDesc}>
-                  {field.description}
-                </Text>
-              ) : null}
+              <FieldTitle field={field} />
+              <FieldDescription field={field} />
               <View style={styles.optionsWrap}>
                 {field.options.map((opt) => {
                   const selected = currentVal === opt.value;
@@ -168,7 +199,7 @@ export const AgentFormCard = memo(function AgentFormCard({
                       <Text
                         variant="caption"
                         color={selected ? theme.colors.primary : theme.colors.text}>
-                        {opt.label}
+                        {plainFromMarkdown(opt.label)}
                       </Text>
                     </PressableScale>
                   );
@@ -181,14 +212,8 @@ export const AgentFormCard = memo(function AgentFormCard({
 
         return (
           <View key={field.key} style={styles.fieldRow}>
-            <Text variant="caption" color={theme.colors.text} style={styles.fieldTitle}>
-              {field.title} {field.required ? '*' : ''}
-            </Text>
-            {field.description ? (
-              <Text variant="caption" color={theme.colors.textMuted} style={styles.fieldDesc}>
-                {field.description}
-              </Text>
-            ) : null}
+            <FieldTitle field={field} />
+            <FieldDescription field={field} />
             <TextInput
               value={currentVal}
               onChangeText={(text) => setValue(field.key, text)}
@@ -214,14 +239,8 @@ export const AgentFormCard = memo(function AgentFormCard({
         return (
           <View key={field.key} style={[styles.fieldRow, styles.booleanRow]}>
             <View style={styles.flexOne}>
-              <Text variant="caption" color={theme.colors.text} style={styles.fieldTitle}>
-                {field.title}
-              </Text>
-              {field.description ? (
-                <Text variant="caption" color={theme.colors.textMuted} style={styles.fieldDesc}>
-                  {field.description}
-                </Text>
-              ) : null}
+              <FieldTitle field={field} />
+              <FieldDescription field={field} />
             </View>
             <Switch
               value={currentVal}
@@ -237,9 +256,7 @@ export const AgentFormCard = memo(function AgentFormCard({
         const currentVal = String(values[field.key] ?? '');
         return (
           <View key={field.key} style={styles.fieldRow}>
-            <Text variant="caption" color={theme.colors.text} style={styles.fieldTitle}>
-              {field.title} {field.required ? '*' : ''}
-            </Text>
+            <FieldTitle field={field} />
             <TextInput
               keyboardType="numeric"
               value={currentVal}
@@ -263,9 +280,7 @@ export const AgentFormCard = memo(function AgentFormCard({
         const selectedVals = new Set(currentVals);
         return (
           <View key={field.key} style={styles.fieldRow}>
-            <Text variant="caption" color={theme.colors.text} style={styles.fieldTitle}>
-              {field.title}
-            </Text>
+            <FieldTitle field={field} />
             <View style={styles.optionsWrap}>
               {field.options.map((opt) => {
                 const selected = selectedVals.has(opt.value);
@@ -295,7 +310,7 @@ export const AgentFormCard = memo(function AgentFormCard({
                     <Text
                       variant="caption"
                       color={selected ? theme.colors.primary : theme.colors.text}>
-                      {opt.label}
+                      {plainFromMarkdown(opt.label)}
                     </Text>
                   </PressableScale>
                 );
@@ -310,18 +325,12 @@ export const AgentFormCard = memo(function AgentFormCard({
         // form made only of these was a title and a Submit button.
         return (
           <View key={field.key} style={styles.fieldRow}>
-            <Text variant="caption" color={theme.colors.text} style={styles.fieldTitle}>
-              {field.title}
-            </Text>
-            {field.description ? (
-              <Text variant="caption" color={theme.colors.textMuted} style={styles.fieldDesc}>
-                {field.description}
-              </Text>
-            ) : null}
+            <FieldTitle field={field} />
+            <FieldDescription field={field} />
             <PressableScale
               testID={`agent-form-external-${field.key}`}
               accessibilityRole="link"
-              accessibilityLabel={field.title}
+              accessibilityLabel={plainFromMarkdown(field.title)}
               onPress={() => {
                 if (isSafeExternalLink(field.url)) void Linking.openURL(field.url);
               }}
@@ -346,10 +355,8 @@ export const AgentFormCard = memo(function AgentFormCard({
         // form that cannot be answered for a reason nobody stated.
         return (
           <View key={field.key} style={styles.fieldRow}>
-            <Text variant="caption" color={theme.colors.text} style={styles.fieldTitle}>
-              {field.title}
-            </Text>
-            <Text variant="caption" color={theme.colors.textMuted} style={styles.fieldDesc}>
+            <FieldTitle field={field} />
+            <Text variant="caption" color={theme.colors.textMuted} style={styles.fieldProblem}>
               <Trans>This question needs a newer app to answer.</Trans>
             </Text>
           </View>
@@ -450,6 +457,11 @@ const styles = StyleSheet.create({
     fontSize: AGENT_TYPE.meta.size,
   },
   fieldDesc: {
+    alignSelf: 'stretch',
+  },
+  // The app's own lines about a field -- why an answer was refused, and the
+  // one about a field type this build cannot draw. Never the engine's.
+  fieldProblem: {
     fontSize: AGENT_TYPE.micro.size,
   },
   textInput: {

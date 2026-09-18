@@ -31,6 +31,7 @@ import {
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import { PressableScale } from '@/components/pressable-scale';
+import { EngineFailureText } from '@/components/engine-failure-text';
 import { ThinkingIndicator } from '@/components/agent-thinking-indicator';
 import { usePaneChatColors } from '@/components/pane-chat-blocks';
 import { useTranscriptPlate } from '@/hooks/use-transcript-plate';
@@ -246,15 +247,12 @@ export const EmbeddedTerminalToolBlock = memo(function EmbeddedTerminalToolBlock
         </View>
       ) : null}
 
-      {/* OpenCode's own message, said as it was said. */}
+      {/* OpenCode's own message, said as it was said: one line when it is a
+          sentence, markdown when it arrived as a small document. */}
       {failed && error ? (
-        <Text
-          variant="caption"
-          selectable
-          color={theme.colors.danger}
-          style={[styles.errorText, styles.underTitle]}>
-          {error}
-        </Text>
+        <View style={styles.underTitle}>
+          <EngineFailureText message={error} />
+        </View>
       ) : null}
 
       {preview ? <View style={styles.underTitle}>{preview}</View> : null}
@@ -347,10 +345,6 @@ const styles = StyleSheet.create({
   badgeText: {
     fontSize: AGENT_TYPE.micro.size,
     fontWeight: '600',
-  },
-  errorText: {
-    fontSize: AGENT_TYPE.micro.size,
-    lineHeight: AGENT_TYPE.meta.lineHeight,
   },
   actionRow: {
     flexDirection: 'row',

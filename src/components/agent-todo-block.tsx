@@ -12,6 +12,9 @@ import {
 } from 'lucide-react-native';
 import Animated from 'react-native-reanimated';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
+import { useCompactMarkdownStyle } from '@/hooks/use-markdown-style';
+import { BoundedMarkdown } from '@/components/bounded-markdown';
+import { strikeMarkdown } from '@/lib/markdown-text';
 import { withAlpha } from '@/lib/color';
 import { fadeIn, fadeOut } from '@/lib/motion';
 import type { TodoItem } from '@/lib/agent-session';
@@ -31,6 +34,16 @@ export const AgentTodoBlock = memo(function AgentTodoBlock({
   const { t } = useLingui();
   const theme = useThemeTokens();
   const surfaceBackground = useSurfaceBackground();
+  // Three readings of one style, not three styles: an item is the body ink, a
+  // done one is muted and struck (`strikeMarkdown`, because `MarkdownStyle`
+  // has no text decoration), and the one being worked on is the same ink in
+  // the weight the list has always given it.
+  const itemStyle = useCompactMarkdownStyle('body');
+  const doneStyle = useCompactMarkdownStyle('muted');
+  const currentStyle = useMemo(
+    () => ({ ...itemStyle, paragraph: { ...itemStyle.paragraph, fontWeight: '600' } }),
+    [itemStyle]
+  );
 
   const total = items.length;
   const completedCount = useMemo(() => items.filter((it) => it.done).length, [items]);
@@ -132,23 +145,20 @@ export const AgentTodoBlock = memo(function AgentTodoBlock({
                   )}
                 </View>
 
-                <Text
-                  selectable
-                  variant="caption"
-                  color={
-                    isCompleted
-                      ? theme.colors.textMuted
-                      : isInProgress
-                        ? theme.colors.text
-                        : theme.colors.text
-                  }
-                  style={StyleSheet.flatten([
-                    styles.itemText,
-                    isCompleted && styles.itemDoneText,
-                    isInProgress && styles.itemInProgressText,
-                  ])}>
-                  {item.text}
-                </Text>
+                {/* The model writes a checklist the way it writes everything
+                    else -- `agent-tool-card.tsx`, a path, the odd emphasis --
+                    so an item is markdown, at the card's own size. Nothing
+                    here is pressable, so the native view swallows no tap. */}
+                <View style={styles.itemText}>
+                  <BoundedMarkdown
+                    markdown={isCompleted ? strikeMarkdown(item.text) : item.text}
+                    markdownStyle={
+                      isCompleted ? doneStyle : isInProgress ? currentStyle : itemStyle
+                    }
+                    containerStyle={styles.itemBody}
+                    openLinks={false}
+                  />
+                </View>
               </View>
             );
           })}
@@ -215,14 +225,12 @@ const styles = StyleSheet.create({
   },
   itemText: {
     flex: 1,
-    fontSize: AGENT_TYPE.meta.size,
-    lineHeight: AGENT_TYPE.meta.lineHeight,
+    minWidth: 0,
   },
-  itemDoneText: {
-    textDecorationLine: 'line-through',
-    opacity: 0.7,
-  },
-  itemInProgressText: {
-    fontWeight: '600',
+  itemBody: {
+    alignSelf: 'stretch',
+    // The last paragraph's own margin would otherwise be a gap under every
+    // item on top of the list's own.
+    marginBottom: -6,
   },
 });

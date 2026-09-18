@@ -6,9 +6,11 @@ import { useLingui } from '@lingui/react/macro';
 import { Check, ShieldAlert, ShieldCheck, XCircle } from 'lucide-react-native';
 
 import { PressableScale } from '@/components/pressable-scale';
+import { BoundedMarkdown } from '@/components/bounded-markdown';
 import { permissionActionPhrase, permissionDecisionLabel } from '@/i18n/labels';
 import { permissionSubject } from '@/lib/agent-engine-text';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
+import { useCompactMarkdownStyle } from '@/hooks/use-markdown-style';
 import { withAlpha } from '@/lib/color';
 import {
   DEFAULT_PERMISSION_DECISIONS,
@@ -69,6 +71,7 @@ export const AgentPermissionCard = memo(function AgentPermissionCard({
   const { _ } = useLinguiRuntime();
   const theme = useThemeTokens();
   const surfaceBackground = useSurfaceBackground();
+  const markdownStyle = useCompactMarkdownStyle('muted');
   const [submitting, setSubmitting] = useState<PermissionDecision | null>(null);
 
   const options: readonly PermissionOption[] = (
@@ -156,11 +159,16 @@ export const AgentPermissionCard = memo(function AgentPermissionCard({
             ))}
           </View>
         ) : null}
-        {/* The engine's own note about why it is asking. */}
+        {/* The engine's own note about why it is asking, in its own words and
+            in the markdown it wrote them in: a rule's note routinely names the
+            file in backticks and lists what the call would touch. */}
         {request.message ? (
-          <Text variant="caption" color={theme.colors.textMuted} style={styles.message}>
-            {request.message}
-          </Text>
+          <BoundedMarkdown
+            markdown={request.message}
+            markdownStyle={markdownStyle}
+            containerStyle={styles.message}
+            openLinks={false}
+          />
         ) : null}
       </View>
 
@@ -266,7 +274,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   message: {
-    fontSize: AGENT_TYPE.micro.size,
+    alignSelf: 'stretch',
     marginTop: 4,
   },
   resourcesBox: {
