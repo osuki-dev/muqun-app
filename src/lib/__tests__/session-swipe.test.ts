@@ -13,6 +13,8 @@ import {
   neighbourSession,
   SESSION_SWIPE,
   sessionNeighbours,
+  SESSION_SWIPE_ACTIONS,
+  sessionSwipeActionDirection,
   sessionSwipeDirection,
   sessionSwipeFollow,
 } from '../session-swipe';
@@ -140,5 +142,30 @@ describe('how far the pill follows the finger', () => {
     const resisted = sessionSwipeFollow(90, PILL, false);
     expect(resisted).toBeGreaterThan(0);
     expect(resisted).toBeLessThan(sessionSwipeFollow(90, PILL, true));
+  });
+});
+
+describe('the screen-reader actions', () => {
+  // The only route to this feature for a reader who cannot make the gesture,
+  // and a swap of the two would be invisible to everyone who can.
+
+  test('increment is the next session and decrement the previous one', () => {
+    expect(SESSION_SWIPE_ACTIONS.increment).toBe('next');
+    expect(SESSION_SWIPE_ACTIONS.decrement).toBe('previous');
+    expect(sessionSwipeActionDirection('increment')).toBe('next');
+    expect(sessionSwipeActionDirection('decrement')).toBe('previous');
+  });
+
+  test('any other action is not a session switch', () => {
+    expect(sessionSwipeActionDirection('activate')).toBeNull();
+    expect(sessionSwipeActionDirection('magicTap')).toBeNull();
+  });
+
+  test('both actions land where a swipe in the same direction would', () => {
+    for (const [action, direction] of Object.entries(SESSION_SWIPE_ACTIONS)) {
+      expect(neighbourSession(strip, 'ses_b', direction)).toBe(
+        neighbourSession(strip, 'ses_b', sessionSwipeActionDirection(action)!)
+      );
+    }
   });
 });

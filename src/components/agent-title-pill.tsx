@@ -27,6 +27,7 @@ import {
   neighbourSession,
   SESSION_SWIPE,
   sessionNeighbours,
+  sessionSwipeActionDirection,
   sessionSwipeDirection,
   sessionSwipeFollow,
   type SessionSwipeDirection,
@@ -299,8 +300,8 @@ export function AgentTitlePill({
 
   const onAccessibilityAction = useCallback(
     (event: AccessibilityActionEvent) => {
-      if (event.nativeEvent.actionName === 'increment') commit('next');
-      if (event.nativeEvent.actionName === 'decrement') commit('previous');
+      const direction = sessionSwipeActionDirection(event.nativeEvent.actionName);
+      if (direction) commit(direction);
     },
     [commit]
   );
@@ -349,6 +350,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flex: 1,
     minWidth: 0,
+    // The pill's content is drawn as two absolutely-positioned layers that
+    // cross-fade, so it measures nothing of its own. The pressable around it
+    // centres its children rather than stretching them, which leaves this
+    // wrapper -- and therefore those layers -- at zero height: the pill renders
+    // its icons and no name at all. Taking the pressable's height back is what
+    // makes inserting a slide between the two harmless.
+    height: '100%',
   },
   mark: {
     position: 'absolute',

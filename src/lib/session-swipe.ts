@@ -163,3 +163,28 @@ export function sessionSwipeFollow(
   const followed = translationX * SESSION_SWIPE.followRatio * (hasNeighbour ? 1 : 0.25);
   return Math.max(-limit, Math.min(limit, followed));
 }
+
+/**
+ * The screen-reader actions the pill offers, and the direction each means.
+ *
+ * `increment` / `decrement` rather than two custom action names: they are the
+ * platform's own vocabulary for "one step along", which both TalkBack and
+ * VoiceOver already announce and bind to a gesture the reader knows. A custom
+ * name would be read out verbatim and have to be learned.
+ *
+ * The mapping lives here so it is asserted by a test rather than only by
+ * inspecting a running app: the actions are the only route to this feature for
+ * someone who cannot make the gesture, and a swap of the two would be invisible
+ * to everyone who can.
+ */
+export const SESSION_SWIPE_ACTIONS = {
+  increment: 'next',
+  decrement: 'previous',
+} as const satisfies Record<string, SessionSwipeDirection>;
+
+/** The direction an accessibility action means, or `null` for any other. */
+export function sessionSwipeActionDirection(actionName: string): SessionSwipeDirection | null {
+  if (actionName === 'increment') return SESSION_SWIPE_ACTIONS.increment;
+  if (actionName === 'decrement') return SESSION_SWIPE_ACTIONS.decrement;
+  return null;
+}
