@@ -133,7 +133,18 @@ export function ApprovalBanner({
                 </Text>
               ) : null}
             </View>
-            {approval.tool ? <Tag variant="technical">{approval.tool}</Tag> : null}
+            {/* Capped here rather than by the kit, because the kit cannot.
+                `Tag` hugs -- `alignSelf: 'flex-start'` -- but it sets no
+                `maxWidth`, no `flexShrink`, and no `numberOfLines` on the
+                `Text` it draws inside itself (`tag.tsx:82-96`), and that
+                inner element is not reachable from out here. A caller's
+                `style` is applied last, so the width is ours to bound even
+                though the line count is not. */}
+            {approval.tool ? (
+              <Tag variant="technical" style={styles.toolTag}>
+                {approval.tool}
+              </Tag>
+            ) : null}
           </Stack>
 
           {error ? (
@@ -304,6 +315,32 @@ function ApprovalOptionRow({
 }
 
 const styles = StyleSheet.create({
+  /**
+   * The width the tool name is allowed, and why it needs one.
+   *
+   * This tag sits at the end of the row that carries `approval.prompt` -- the
+   * one sentence the reader has to read in order to answer. The tag's own
+   * width is the *host's* business: a tool is named something like
+   * `mcp__gitea__pull_request_read`, which in a wide face measures past
+   * 200pt before its padding. Uncapped, and with the copy column beside it on
+   * a flex basis of zero, every point of overflow came out of the prompt --
+   * the reader was being asked to approve something they could no longer
+   * read. A maximum is clamped before the shrink distribution rather than
+   * weighted inside it, which is why it is the part that actually holds.
+   *
+   * 140 leaves the prompt the majority of the row on a phone. `flexShrink`
+   * lets the tag give up more than that when the row is tighter still.
+   *
+   * What this cannot do is keep the tag to one line: the kit owns that
+   * `Text`. So a long tool name wraps inside the pill and the pill grows,
+   * which is the right way round -- a tag that takes a second line costs two
+   * lines of chrome, where a tag that takes the row costs the reader the
+   * thing they are answering.
+   */
+  toolTag: {
+    maxWidth: 140,
+    flexShrink: 1,
+  },
   // Sized to the glyph, so the spinner laid over it lands on top of it rather
   // than filling the row.
   decision: {

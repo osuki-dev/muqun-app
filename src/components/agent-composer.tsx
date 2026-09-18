@@ -187,9 +187,13 @@ const SessionChip = memo(function SessionChip({
             {...(active ? { tone: theme.colors.onPrimary } : {})}
           />
         ) : null}
+        {/* `agentName` is whatever the host called the agent, so it can be
+            `code-reviewer-specialist`. It gives way before the title does:
+            the title is what tells two sessions apart. */}
         <Text
           variant="caption"
           weight="semibold"
+          numberOfLines={1}
           color={active ? theme.colors.onPrimary : theme.colors.primary}
           style={styles.sessionChipAgentBadge}>
           {agentName}
@@ -202,7 +206,7 @@ const SessionChip = memo(function SessionChip({
         </Text>
         {/* Keyed on the title so the arriving auto-title fades in where the
             placeholder was, rather than replacing it between two frames. */}
-        <Animated.View key={title} entering={fadeIn('short')}>
+        <Animated.View key={title} entering={fadeIn('short')} style={styles.sessionChipTitleSlot}>
           <Text
             variant="caption"
             weight="medium"
@@ -1689,7 +1693,34 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    height: 32,
+    /**
+     * A cap, without which the `numberOfLines={1}` on the title below does
+     * nothing at all.
+     *
+     * The chip is a direct child of a horizontal `ScrollView`, which offers
+     * its children unbounded width. A single line that is never offered a
+     * constraint never reaches one, so it never ellipsises -- it just makes
+     * the chip wider. With a real session title in a wide face ("Fix the
+     * authentication redirect loop on iOS" at 0.61em) one chip measures wider
+     * than the phone, and since the strip scrolls the active chip into view,
+     * the reader sees exactly one session and no evidence the others exist.
+     * The row silently stops being a strip.
+     *
+     * 220 is not a new number: it is what `agent-assignment-bar.tsx` already
+     * caps the same kind of chip at. A measure cap on a pill, not a width
+     * fitted to the system font.
+     */
+    maxWidth: 220,
+    /**
+     * `minHeight`, not `height`.
+     *
+     * The text inside is vertically centred, so a fixed 32 clips the
+     * ascenders of a face whose ascent is taller than the one this was
+     * measured against. Every other chip in the app already says `minHeight`
+     * -- the assignment bar's, the attachment strip's, the terminal notice's
+     * -- and this was the odd one out.
+     */
+    minHeight: 32,
     paddingHorizontal: 12,
     borderRadius: 999,
     borderCurve: 'continuous',
@@ -1720,14 +1751,32 @@ const styles = StyleSheet.create({
   // font style, so putting the 700 back here would defeat the cap.
   sessionChipAgentBadge: {
     fontSize: AGENT_TYPE.meta.size,
+    // Shrinks first, and before the title: see the note at the badge itself.
+    flexShrink: 1,
+    minWidth: 0,
   },
   sessionChipDot: {
     fontSize: AGENT_TYPE.micro.size,
     opacity: 0.7,
   },
+  /**
+   * The animated wrapper the title fades in inside.
+   *
+   * The shrink path has to be unbroken from the chip down to the text, and
+   * this view sits in the middle of it: a wrapper with the default
+   * `flexShrink: 0` would hold its content's full width and hand the title a
+   * constraint it never has to honour, which is the cap above doing nothing
+   * one level down.
+   */
+  sessionChipTitleSlot: {
+    flexShrink: 1,
+    minWidth: 0,
+  },
   sessionChipTitle: {
     fontSize: AGENT_TYPE.meta.size,
     fontWeight: '500',
+    flexShrink: 1,
+    minWidth: 0,
   },
   actionRowViewport: {
     marginBottom: 8,
@@ -1764,7 +1813,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
-    height: 36,
+    // `minHeight` for the reason the session chip above gives: a fixed height
+    // around centred text clips a taller face's ascenders.
+    minHeight: 36,
     paddingHorizontal: 12,
     borderRadius: 999,
     borderCurve: 'continuous',

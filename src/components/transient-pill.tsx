@@ -78,7 +78,18 @@ const styles = StyleSheet.create({
   },
   indicator: {
     maxWidth: '80%',
-    height: 26,
+    /**
+     * `minHeight` and a little vertical padding, rather than a hard 26.
+     *
+     * 26 is a 12pt caption's 16.8pt line box plus about 4.6 each side --
+     * which is to say it is the system face measured once and then frozen
+     * into the pill. A face with a taller ascent overruns it and the tops of
+     * the digits are shaved by the pill's own bounds, so the reader's pinch
+     * indicator reads 100% with its numerals cut. Identical at the default
+     * face; it grows a point or two only under a face that needs it.
+     */
+    minHeight: 26,
+    paddingVertical: 4,
     paddingHorizontal: 12,
     borderCurve: 'continuous',
     alignItems: 'center',

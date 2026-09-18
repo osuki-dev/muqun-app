@@ -626,7 +626,17 @@ export function SheetSceneRow({
           ) : null}
         </View>
         {disabled && disabledCaption ? (
-          <Text variant="caption" color={colors.textSubtle} style={styles.rowMeta}>
+          /* Its own style, not `rowMeta`.
+             `disabledCaption` is a free-form string the gateway hands over --
+             a model's status, say -- so unlike the fixed, short things `meta`
+             carries it cannot be trusted to stay narrow. Borrowing `meta`'s
+             rigidity meant the row's title was the only thing left that could
+             give. */
+          <Text
+            variant="caption"
+            color={colors.textSubtle}
+            numberOfLines={2}
+            style={styles.rowDisabledMeta}>
             {disabledCaption}
           </Text>
         ) : meta ? (
@@ -906,7 +916,26 @@ const styles = StyleSheet.create({
   // instead of becoming a full-width slab -- which is the card again.
   rowCopy: { flexShrink: 1, minWidth: 0, gap: ROW_COPY_GAP },
   rowTitle: { includeFontPadding: false },
+  /**
+   * Rigid on purpose, and correct for what it holds.
+   *
+   * `meta` is a time, a token count, a diff stat: short, bounded, and written
+   * by this app. It should not be squeezed by a long title.
+   */
   rowMeta: { flexShrink: 0, marginLeft: 'auto' },
+  /**
+   * The disabled caption is the opposite case and needs the opposite rule.
+   *
+   * It is whatever the gateway says -- a model's status, for one -- so its
+   * width is not ours to predict. Held rigid, it took as much of the row as
+   * it liked and `rowCopy` beside it, the only other thing that can shrink,
+   * gave up the row's title: in a wide face the model names in the model
+   * sheet came down to a few characters each, in the one list a reader opens
+   * to tell models apart. It shrinks and wraps to two lines now, which is the
+   * same bargain the settings rows struck -- a floor for the title, and the
+   * value spending what is left.
+   */
+  rowDisabledMeta: { flexShrink: 1, minWidth: 0, marginLeft: 'auto', textAlign: 'right' },
   groupRule: { height: StyleSheet.hairlineWidth, marginTop: SHEET_LADDER.gap },
   field: { paddingTop: SHEET_LADDER.snug, gap: SHEET_LADDER.tight },
   fieldValue: {
@@ -919,7 +948,14 @@ const styles = StyleSheet.create({
   // The search field's face, for the same reason. No `lineHeight`: Android
   // clips a single-line input to it and the descenders go with it.
   fieldInput: { flex: 1, fontSize: AGENT_TYPE.prose.size, padding: 0, includeFontPadding: false },
-  fieldNote: { lineHeight: 16 },
+  /**
+   * No `lineHeight` here either, for the reason the field above it already
+   * gives: 16 is the scale's own 12x1.4 rounded down, and an explicit line
+   * box clips a taller face. This is the line that tells the reader what went
+   * wrong with what they just typed, and it wraps -- so it is the last place
+   * that should be losing its accents.
+   */
+  fieldNote: {},
   action: {
     height: 48,
     flexDirection: 'row',
