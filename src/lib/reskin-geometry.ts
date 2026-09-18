@@ -29,6 +29,32 @@ import type { ReskinPoint, ReskinSize } from './reskin-shaders';
 export const SNAPSHOT_BUDGET_MS = 120;
 
 /**
+ * What stands over the old interface while the new one settles.
+ *
+ * - `photograph`: a picture of the old screen itself (`makeImageFromView`).
+ * - `veil`: a sheet of the old theme's own paper, drawn by the app.
+ *
+ * iOS photographs, because there a view snapshot is a GPU copy that costs a
+ * few milliseconds. Android never does. Skia's Android snapshot re-draws the
+ * whole view tree in software on the calling thread, which blocks JavaScript
+ * for hundreds of milliseconds on a phone and for over a second on an
+ * emulator -- always past {@link SNAPSHOT_BUDGET_MS}, so every Android run was
+ * classified `slow` and played nothing, and after {@link SNAPSHOT_STRIKES} of
+ * them the effect retired for the session. The owner saw exactly that: the
+ * wash on iOS, and on Android a hard cut.
+ *
+ * A veil needs no picture. The old paper fades up over the old interface, the
+ * change lands underneath it, and the same front then takes the veil away. It
+ * costs one small offscreen draw, blocks nothing, and therefore plays on every
+ * Android device rather than on the ones fast enough to win a race.
+ */
+export type ReskinCoverSource = 'photograph' | 'veil';
+
+export function reskinCoverSource(platform: string): ReskinCoverSource {
+  return platform === 'android' ? 'veil' : 'photograph';
+}
+
+/**
  * How many over-budget snapshots a device gets before the app stops asking.
  *
  * This exists because of something measured rather than assumed, and it is the

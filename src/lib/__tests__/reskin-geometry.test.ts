@@ -1,4 +1,4 @@
-import { expect, test } from 'bun:test';
+import { describe, expect, test } from 'bun:test';
 
 import {
   FRONT_OVERSHOOT,
@@ -10,6 +10,7 @@ import {
   halftoneReach,
   normalizeOrigin,
   recordSnapshotCost,
+  reskinCoverSource,
   resolveOrigin,
   selectReskinPlay,
   shouldAttemptSnapshot,
@@ -263,4 +264,13 @@ test('a device that recovers keeps its transition', () => {
   strikes = recordSnapshotCost(strikes, 40);
   expect(strikes).toBe(0);
   expect(shouldAttemptSnapshot(strikes)).toBe(true);
+});
+
+describe('reskinCoverSource', () => {
+  test('Android never photographs: its snapshot blocks JavaScript past the budget', () => {
+    // The regression this pins: every Android run was classified `slow`, so
+    // the wash played on iOS and never once on Android.
+    expect(reskinCoverSource('android')).toBe('veil');
+    expect(reskinCoverSource('ios')).toBe('photograph');
+  });
 });

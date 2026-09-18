@@ -5,6 +5,8 @@ import {
   Image as SkiaImage,
   ImageShader,
   Shader,
+  Skia,
+  TileMode,
   makeImageFromView,
   type SkImage,
 } from '@shopify/react-native-skia';
@@ -19,7 +21,13 @@ import {
   type ReactNode,
   type RefObject,
 } from 'react';
-import { StyleSheet, View, type GestureResponderEvent, type LayoutChangeEvent } from 'react-native';
+import {
+  Platform,
+  StyleSheet,
+  View,
+  type GestureResponderEvent,
+  type LayoutChangeEvent,
+} from 'react-native';
 import Animated, {
   ReduceMotion,
   runOnJS,
@@ -40,6 +48,7 @@ import {
   halftoneReach,
   normalizeOrigin,
   recordSnapshotCost,
+  reskinCoverSource,
   resolveOrigin,
   selectReskinPlay,
   shouldAttemptSnapshot,
@@ -144,6 +153,11 @@ type ActiveRun = {
   wet: number[];
   cell: number;
   shots: ReadonlyMap<string, SkImage>;
+  /**
+   * Whether the cover has to arrive before it can leave. A photograph is the
+   * old screen and so is simply there; a veil is not, and fades up first.
+   */
+  veiled: boolean;
 };
 
 /** Where a reader last put a finger on a surface, and when. */
@@ -173,8 +187,56 @@ type ReskinContextValue = {
   run: (options: ReskinRunOptions) => Promise<void>;
   active: ActiveRun | null;
   progress: SharedValue<number>;
+  /** The cover's own opacity: 1 for a photograph, 0 -> 1 for a veil. */
+  veil: SharedValue<number>;
   register: (id: string, entry: SurfaceEntry) => () => void;
 };
+
+const COVER_SOURCE = reskinCoverSource(Platform.OS);
+
+/**
+ * A sheet of the old theme's paper, the size of one surface.
+ *
+ * The ground is the theme's background with its raised surface bleeding down
+ * from the top, which is the same two tones every screen in the app is built
+ * from -- so the veil reads as the old world with its furniture put away, not
+ * as a colour from nowhere. Drawn in points rather than pixels: there is no
+ * detail in it to lose, and a quarter-resolution target is a draw measured in
+ * microseconds.
+ *
+ * `makeNonTextureImage` because an offscreen surface lives on the context of
+ * the thread that made it, and the canvas that will draw this one is on
+ * another. Null on any failure, and a null veil is an apply with no effect.
+ */
+function makeVeilImage(size: ReskinSize, paper: string, raised: string): SkImage | null {
+  try {
+    const width = Math.max(1, Math.round(size.width));
+    const height = Math.max(1, Math.round(size.height));
+    const surface = Skia.Surface.MakeOffscreen(width, height) ?? Skia.Surface.Make(width, height);
+    if (!surface) return null;
+    const canvas = surface.getCanvas();
+    canvas.drawColor(Skia.Color(paper));
+    const wash = Skia.Paint();
+    wash.setShader(
+      Skia.Shader.MakeLinearGradient(
+        { x: 0, y: 0 },
+        { x: 0, y: height },
+        [Skia.Color(raised), Skia.Color(paper)],
+        [0, 1],
+        TileMode.Clamp
+      )
+    );
+    wash.setAlphaf(0.6);
+    canvas.drawRect({ x: 0, y: 0, width, height }, wash);
+    surface.flush();
+    const snapshot = surface.makeImageSnapshot();
+    const image = snapshot.makeNonTextureImage();
+    if (image !== snapshot) snapshot.dispose();
+    return image;
+  } catch {
+    return null;
+  }
+}
 
 const ReskinContext = createContext<ReskinContextValue | null>(null);
 
@@ -220,6 +282,7 @@ export function ReskinTransitionProvider({ children }: { children: ReactNode }) 
   const reduceMotion = useReducedMotion();
   const [active, setActive] = useState<ActiveRun | null>(null);
   const progress = useSharedValue(0);
+  const veil = useSharedValue(1);
   const surfaces = useRef(new Map<string, SurfaceEntry>());
   const nextId = useRef(0);
   const strikes = useRef(0);
@@ -241,10 +304,20 @@ export function ReskinTransitionProvider({ children }: { children: ReactNode }) 
 
   // A live copy of everything a run needs off the theme, so that `run` can
   // stay a stable callback and still read today's palette and type scale.
-  const paint = useRef({ primary: colors.primary, body: typography.body.fontSize });
+  const paint = useRef({
+    primary: colors.primary,
+    body: typography.body.fontSize,
+    paper: colors.background,
+    raised: colors.surfaceRaised,
+  });
   useEffect(() => {
-    paint.current = { primary: colors.primary, body: typography.body.fontSize };
-  }, [colors.primary, typography.body.fontSize]);
+    paint.current = {
+      primary: colors.primary,
+      body: typography.body.fontSize,
+      paper: colors.background,
+      raised: colors.surfaceRaised,
+    };
+  }, [colors.background, colors.primary, colors.surfaceRaised, typography.body.fontSize]);
 
   const finish = useCallback((id: number) => {
     const current = activeRef.current;
@@ -268,10 +341,115 @@ export function ReskinTransitionProvider({ children }: { children: ReactNode }) 
       const entries = [...surfaces.current.entries()].filter(
         ([, entry]) => entry.size.current.width > 0 && entry.size.current.height > 0
       );
+      if (entries.length === 0) {
+        await apply();
+        return;
+      }
+
+      const play = (size: ReskinSize) =>
+        selectReskinPlay({
+          kind,
+          reduceMotion,
+          effectReady: Boolean(kind === 'theme' ? THEME_WASH_EFFECT : FONT_HALFTONE_EFFECT),
+          snapshot: 'ok',
+          size,
+        });
+
+      /** Take the cover away: the same last beat for a photograph and a veil. */
+      const erase = (chosen: Exclude<ReskinPlay, 'none'>) => {
+        afterNextPaint(() => {
+          if (id !== nextId.current) return;
+          const config =
+            chosen === 'crossfade'
+              ? // The one animation in the app that must ignore the reduced-motion
+                // setting, because it *is* the accommodation. `ReduceMotion.System`
+                // would collapse it to a single frame, which is the hard cut this
+                // whole module exists to prevent -- and the cut between two entire
+                // colour schemes is the most violent thing it could do to a reader
+                // who has asked for less movement.
+                timing(DURATION.short, { reduceMotion: ReduceMotion.Never })
+              : timing(chosen === 'wash' ? RESKIN_MOTION.washMs : RESKIN_MOTION.halftoneMs);
+          progress.value = withTiming(1, config, (done) => {
+            'worklet';
+            if (done) runOnJS(finish)(id);
+          });
+        });
+      };
+
+      /** Where the reader last touched, as a fraction of that surface. */
+      const sniffOrigin = (): ReskinPoint | undefined => {
+        let sniffed: ReskinPoint | undefined;
+        let freshest = Date.now() - TOUCH_RECENCY_MS;
+        for (const [, entry] of entries) {
+          const touch = entry.touch.current;
+          if (touch && touch.at > freshest) {
+            freshest = touch.at;
+            sniffed = normalizeOrigin(touch.point, entry.size.current);
+          }
+        }
+        return sniffed;
+      };
+
+      if (COVER_SOURCE === 'veil') {
+        const chosen = play(entries[0]?.[1].size.current ?? { width: 0, height: 0 });
+        const shots = new Map<string, SkImage>();
+        if (chosen !== 'none') {
+          for (const [key, entry] of entries) {
+            const image = makeVeilImage(
+              entry.size.current,
+              paint.current.paper,
+              paint.current.raised
+            );
+            if (image) shots.set(key, image);
+          }
+        }
+        if (chosen === 'none' || shots.size === 0) {
+          release(shots.values());
+          await apply();
+          return;
+        }
+
+        const accent = colorVector(options.accent ?? paint.current.primary);
+        progress.value = 0;
+        veil.value = 0;
+        setActive({
+          id,
+          play: chosen,
+          origin: resolveOrigin(options.origin ?? sniffOrigin(), kind),
+          rim: accent,
+          wet: dampen(accent),
+          cell: halftoneCell(paint.current.body),
+          shots,
+          veiled: true,
+        });
+
+        // The veil comes up over the old interface, the change lands under it
+        // once it is opaque, and only then does the front take it away. The
+        // apply is awaited by the caller as it always was; it is simply a
+        // fifth of a second later than the tap, behind a cover that is
+        // already moving.
+        await new Promise<void>((resolve) => {
+          const covered = () => resolve();
+          afterNextPaint(() => {
+            veil.value = withTiming(
+              1,
+              timing(DURATION.short, { reduceMotion: ReduceMotion.Never }),
+              () => {
+                'worklet';
+                runOnJS(covered)();
+              }
+            );
+          });
+        });
+        await apply();
+        if (id === nextId.current) erase(chosen);
+        return;
+      }
+
       // A device that has already shown it cannot photograph itself in time is
       // not asked again: the picture is the expensive half, and taking one we
       // know we will discard would only make the setting slower to land.
-      if (entries.length === 0 || !shouldAttemptSnapshot(strikes.current)) {
+      if (!shouldAttemptSnapshot(strikes.current)) {
         await apply();
         return;
       }
@@ -296,17 +474,12 @@ export function ReskinTransitionProvider({ children }: { children: ReactNode }) 
       strikes.current = recordSnapshotCost(strikes.current, elapsed);
 
       const primarySurface = entries[0]?.[1].size.current ?? { width: 0, height: 0 };
-      const play = selectReskinPlay({
-        kind,
-        reduceMotion,
-        effectReady: Boolean(kind === 'theme' ? THEME_WASH_EFFECT : FONT_HALFTONE_EFFECT),
-        snapshot: snapshotOutcome(
-          raced.find((image) => Boolean(image)),
-          elapsed
-        ),
-        size: primarySurface,
-      });
-      if (play === 'none') {
+      const photographed = snapshotOutcome(
+        raced.find((image) => Boolean(image)),
+        elapsed
+      );
+      const chosen = photographed === 'ok' ? play(primarySurface) : 'none';
+      if (chosen === 'none') {
         release(raced);
         await apply();
         return;
@@ -323,54 +496,28 @@ export function ReskinTransitionProvider({ children }: { children: ReactNode }) 
         return;
       }
 
-      // Where the reader last touched, on whichever surface they touched, as a
-      // fraction of it. A caller may always state the origin instead; almost
-      // none need to, because a finger is a better record of what was tapped
-      // than a row component's idea of where it is.
-      let sniffed: ReskinPoint | undefined;
-      let freshest = Date.now() - TOUCH_RECENCY_MS;
-      for (const [, entry] of entries) {
-        const touch = entry.touch.current;
-        if (touch && touch.at > freshest) {
-          freshest = touch.at;
-          sniffed = normalizeOrigin(touch.point, entry.size.current);
-        }
-      }
-
       const accent = colorVector(options.accent ?? paint.current.primary);
       progress.value = 0;
+      veil.value = 1;
       // The cover goes up and the setting changes in the same React commit, so
       // there is no frame in which one has happened and the other has not.
+      // The origin is where the reader last touched, on whichever surface they
+      // touched: a finger is a better record of what was tapped than a row
+      // component's idea of where it is.
       setActive({
         id,
-        play,
-        origin: resolveOrigin(options.origin ?? sniffed, kind),
+        play: chosen,
+        origin: resolveOrigin(options.origin ?? sniffOrigin(), kind),
         rim: accent,
         wet: dampen(accent),
         cell: halftoneCell(paint.current.body),
         shots,
+        veiled: false,
       });
       await apply();
-
-      afterNextPaint(() => {
-        if (id !== nextId.current) return;
-        const config =
-          play === 'crossfade'
-            ? // The one animation in the app that must ignore the reduced-motion
-              // setting, because it *is* the accommodation. `ReduceMotion.System`
-              // would collapse it to a single frame, which is the hard cut this
-              // whole module exists to prevent -- and the cut between two entire
-              // colour schemes is the most violent thing it could do to a reader
-              // who has asked for less movement.
-              timing(DURATION.short, { reduceMotion: ReduceMotion.Never })
-            : timing(play === 'wash' ? RESKIN_MOTION.washMs : RESKIN_MOTION.halftoneMs);
-        progress.value = withTiming(1, config, (done) => {
-          'worklet';
-          if (done) runOnJS(finish)(id);
-        });
-      });
+      erase(chosen);
     },
-    [finish, progress, reduceMotion]
+    [finish, progress, reduceMotion, veil]
   );
 
   // A run still on screen when the tree goes away would otherwise take its
@@ -384,8 +531,8 @@ export function ReskinTransitionProvider({ children }: { children: ReactNode }) 
   );
 
   const value = useMemo<ReskinContextValue>(
-    () => ({ run, active, progress, register }),
-    [run, active, progress, register]
+    () => ({ run, active, progress, veil, register }),
+    [run, active, progress, veil, register]
   );
 
   return <ReskinContext.Provider value={value}>{children}</ReskinContext.Provider>;
@@ -469,6 +616,7 @@ export function ReskinSurface({ id, children }: { id: string; children: ReactNod
           progress={context.progress}
           run={active}
           size={measured}
+          veil={context.veil}
         />
       ) : null}
     </View>
@@ -506,16 +654,21 @@ function ReskinOverlay({
   progress,
   run,
   size,
+  veil,
 }: {
   image: SkImage;
   progress: SharedValue<number>;
   run: ActiveRun;
   size: ReskinSize;
+  veil: SharedValue<number>;
 }) {
   const origin = useMemo(() => denormalizeOrigin(run.origin, size), [run.origin, size]);
+  // A photograph is the old screen and is simply there. A veil has to arrive:
+  // composited opacity on the view, so its fade costs the shader nothing.
+  const arriving = useAnimatedStyle(() => ({ opacity: run.veiled ? veil.value : 1 }));
 
   return (
-    <View
+    <Animated.View
       // `importantForAccessibility` on this view alone, and deliberately not
       // `accessibilityViewIsModal` or `no-hide-descendants`: the live
       // interface underneath must stay in the accessibility tree throughout.
@@ -524,8 +677,8 @@ function ReskinOverlay({
       // instant a flow applies a theme.
       accessible={false}
       importantForAccessibility="no"
-      pointerEvents={overlayTouches(run.play)}
-      style={styles.cover}>
+      pointerEvents={run.veiled ? 'auto' : overlayTouches(run.play)}
+      style={[styles.cover, arriving]}>
       {run.play === 'wash' ? (
         <WashOverlay image={image} origin={origin} progress={progress} run={run} size={size} />
       ) : run.play === 'halftone' ? (
@@ -533,7 +686,7 @@ function ReskinOverlay({
       ) : (
         <CrossfadeOverlay image={image} progress={progress} size={size} />
       )}
-    </View>
+    </Animated.View>
   );
 }
 
