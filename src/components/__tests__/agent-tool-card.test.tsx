@@ -1,0 +1,161 @@
+import { describe, expect, test } from 'bun:test';
+import { readFileSync } from 'node:fs';
+
+import {
+  classifyTool,
+  diffFilesFromMetadata,
+  extractCaption,
+  extractTarget,
+  parsePatchSections,
+  parseToolQuestions,
+  questionAnswersFromMetadata,
+} from '@/lib/agent-tool-output';
+
+/**
+ * What each tool card puts on screen, from the payloads the engine actually
+ * sends.
+ *
+ * The card itself cannot be mounted here: it pulls in Reanimated, Expo Image
+ * and the native markdown and diff views, none of which parse outside Metro.
+ * What it *shows*, though, is decided by the pure readings in
+ * `agent-tool-output.ts` -- the title, the caption, the chips, which body --
+ * and those are exercised below on fixtures lifted from real
+ * `session.tool.success` events. The source assertions beside them hold the
+ * wiring: that the card reads the tool's own answer before it re-reads the
+ * request, and that nothing draws a body the fixtures say is empty.
+ */
+const CARD = readFileSync('src/components/agent-tool-card.tsx', 'utf8');
+
+// ---------------------------------------------------------------------------
+// question
+// ---------------------------------------------------------------------------
+
+describe('the question card', () => {
+  const INPUT = {
+    questions: [
+      {
+        question: 'How should the tool cards handle a patch?',
+        header: 'Patch rendering',
+        options: [
+          { label: 'metadata.files', description: 'What the tool applied' },
+          { label: 'input.patchText', description: 'What the tool was asked to apply' },
+        ],
+        multiple: false,
+      },
+    ],
+  };
+  const METADATA = { answers: [['metadata.files']] };
+
+  test('the header names the question, not the tool', () => {
+    expect(classifyTool('question')).toBe('question');
+    expect(extractTarget('question', INPUT)).toBe('Patch rendering');
+  });
+
+  test('the body has the question, its options and their descriptions', () => {
+    const [question] = parseToolQuestions(INPUT);
+    expect(question.question).toBe('How should the tool cards handle a patch?');
+    expect(question.options.map((option) => option.label)).toEqual([
+      'metadata.files',
+      'input.patchText',
+    ]);
+    expect(question.options[0].description).toBe('What the tool applied');
+    expect(question.multiple).toBe(false);
+  });
+
+  test('the answered option is the one the metadata names', () => {
+    const answers = questionAnswersFromMetadata(METADATA);
+    const [question] = parseToolQuestions(INPUT);
+    const marked = question.options.filter((option) => answers[0].includes(option.label));
+    expect(marked.map((option) => option.label)).toEqual(['metadata.files']);
+  });
+
+  test('the card draws the questions, and no longer the keys the tool never sends', () => {
+    expect(CARD).toContain('parseToolQuestions(part.input)');
+    expect(CARD).toContain('questionAnswersFromMetadata(part.metadata)');
+    expect(CARD).not.toContain('input?.question');
+    expect(CARD).not.toContain('input?.prompt');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// patch
+// ---------------------------------------------------------------------------
+
+describe('the patch card', () => {
+  // `metadata.files` is what the tool applied, in the same `FileDiff.Info`
+  // shape an `edit` answers with.
+  const METADATA = {
+    files: [
+      {
+        file: 'src/a.ts',
+        patch: '@@ -1,2 +1,2 @@\n-const a = 1;\n+const a = 2;\n const b = 3;',
+        status: 'modified',
+        additions: 1,
+        deletions: 1,
+      },
+    ],
+  };
+  // `input.patchText` is what it was *asked* to apply: `apply_patch`'s own
+  // format, which is not a unified diff.
+  const INPUT = {
+    patchText:
+      '*** Begin Patch\n*** Update File: src/a.ts\n-const a = 1;\n+const a = 2;\n*** End Patch',
+  };
+
+  test('the applied diff wins over the requested one', () => {
+    const files = diffFilesFromMetadata(METADATA);
+    expect(files.map((file) => file.path)).toEqual(['src/a.ts']);
+    expect(files[0].status).toBe('modified');
+    // The chips come off these, and used to come off nothing at all.
+    expect(files[0].additions).toBe(1);
+    expect(files[0].deletions).toBe(1);
+  });
+
+  test('the request is still read when the tool answered without metadata', () => {
+    expect(diffFilesFromMetadata({})).toEqual([]);
+    const sections = parsePatchSections(INPUT.patchText);
+    expect(sections.map((section) => section.path)).toEqual(['src/a.ts']);
+    expect(sections[0].action).toBe('update');
+    expect(extractTarget('patch', INPUT)).toBe('src/a.ts');
+  });
+
+  test('the card asks the metadata first and the patchText only after', () => {
+    expect(CARD).toContain("kind === 'patch' ? diffFilesFromMetadata(part.metadata) : []");
+    // The fallback parse does not even run when the tool answered.
+    expect(CARD).toContain("if (kind !== 'patch' || patchFiles.length > 0) return [];");
+    // The same per-file rows an edit draws, rather than a second diff body.
+    expect(CARD).toContain('files={args.patchFiles}');
+    // The chips count what was applied.
+    expect(CARD).toContain("const counted = kind === 'patch' ? patchFiles : editFiles;");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// the shapes that must never reach a renderer
+// ---------------------------------------------------------------------------
+
+describe('a payload no build has seen before', () => {
+  const HOSTILE: unknown[] = [
+    undefined,
+    null,
+    7,
+    'a string',
+    [],
+    {},
+    { questions: {} },
+    { files: [null] },
+    { patchText: 7 },
+  ];
+
+  test('every reading a card does takes it and answers something drawable', () => {
+    for (const value of HOSTILE) {
+      expect(() => parseToolQuestions(value)).not.toThrow();
+      expect(Array.isArray(parseToolQuestions(value))).toBe(true);
+      expect(() => extractTarget('patch', value)).not.toThrow();
+      expect(() => extractCaption('question', value)).not.toThrow();
+      const record = value && typeof value === 'object' ? (value as Record<string, unknown>) : {};
+      expect(() => diffFilesFromMetadata(record)).not.toThrow();
+      expect(() => questionAnswersFromMetadata(record)).not.toThrow();
+    }
+  });
+});

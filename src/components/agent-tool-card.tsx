@@ -29,6 +29,7 @@ import {
   basename,
   capLines,
   classifyTool,
+  diffFilesFromMetadata,
   dirname,
   editFilesFromMetadata,
   executeToolCalls,
@@ -362,11 +363,25 @@ export const AgentToolCard = memo(function AgentToolCard({
     () => (kind === 'edit' ? editFilesFromMetadata(part.metadata) : []),
     [kind, part.metadata]
   );
+  /**
+   * What a `patch` actually did, in preference to what it was asked to do.
+   *
+   * The tool answers with `metadata.files` -- real unified diffs, with the
+   * additions, the deletions and the status OpenCode counted -- and the card
+   * re-parsed `input.patchText` instead. That is the *request*: the
+   * `*** Update File:` format, which is not a unified diff, whose totals the
+   * card then had to guess at and got as two empty chips. `patchText` is still
+   * read, for an engine or an MCP tool that answered without metadata.
+   */
+  const patchFiles = useMemo(
+    () => (kind === 'patch' ? diffFilesFromMetadata(part.metadata) : []),
+    [kind, part.metadata]
+  );
   const patchSections = useMemo(() => {
-    if (kind !== 'patch') return [];
+    if (kind !== 'patch' || patchFiles.length > 0) return [];
     const text = input ? (input.patchText ?? input.patch_text ?? input.patch) : undefined;
     return typeof text === 'string' ? parsePatchSections(text) : [];
-  }, [kind, input]);
+  }, [kind, input, patchFiles]);
   const grepGroups = useMemo(
     () => (kind === 'grep' ? groupGrepMatches(outputText) : []),
     [kind, outputText]
@@ -409,9 +424,13 @@ export const AgentToolCard = memo(function AgentToolCard({
       );
     }
     if (kind === 'edit' || kind === 'patch') {
+      // The tool's own count when it made one -- `metadata.files` for both
+      // families -- and the before/after lengths only when it did not. A patch
+      // used to have no first case at all, so its chips were always empty.
+      const counted = kind === 'patch' ? patchFiles : editFiles;
       const totals =
-        editFiles.length > 0
-          ? diffTotals(editFiles)
+        counted.length > 0
+          ? diffTotals(counted)
           : {
               additions: newString ? newString.split('\n').length : 0,
               deletions: oldString ? oldString.split('\n').length : 0,
@@ -451,6 +470,7 @@ export const AgentToolCard = memo(function AgentToolCard({
     parsed.exitCode,
     colors,
     editFiles,
+    patchFiles,
     newString,
     oldString,
     writeContent,
@@ -574,6 +594,7 @@ export const AgentToolCard = memo(function AgentToolCard({
         files,
         editFiles,
         patchSections,
+        patchFiles,
         grepGroups,
         questions,
         answers,
@@ -595,6 +616,7 @@ export const AgentToolCard = memo(function AgentToolCard({
       files,
       editFiles,
       patchSections,
+      patchFiles,
       grepGroups,
       questions,
       answers,
@@ -700,6 +722,7 @@ interface ToolBodyArgs {
   files: readonly { uri: string; mime?: string; name?: string }[];
   editFiles: ReturnType<typeof editFilesFromMetadata>;
   patchSections: ReturnType<typeof parsePatchSections>;
+  patchFiles: ReturnType<typeof diffFilesFromMetadata>;
   grepGroups: ReturnType<typeof groupGrepMatches>;
   questions: readonly ToolQuestion[];
   answers: readonly string[][];
@@ -778,6 +801,16 @@ function renderToolBody(args: ToolBodyArgs): React.ReactNode {
       );
 
     case 'patch':
+      // What was applied, when the tool said: the same per-file rows an `edit`
+      // draws, so two tools that changed the same file read the same way.
+      if (args.patchFiles.length > 0) {
+        return (
+          <EditDiffs
+            files={args.patchFiles}
+            {...(args.onOpenFullDiff ? { onOpenFullDiff: args.onOpenFullDiff } : {})}
+          />
+        );
+      }
       return args.patchSections.length > 0 ? (
         <>
           {args.patchSections.map((section) => (
