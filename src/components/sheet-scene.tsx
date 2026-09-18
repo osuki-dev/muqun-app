@@ -845,6 +845,11 @@ const styles = StyleSheet.create({
     top: 0,
     bottom: 0,
     width: SELECTION_RULE_WIDTH,
+    // The confirmation swell grows from the sheet's edge inwards rather than
+    // from the rule's own centre: the scroller clips at exactly this left
+    // edge, so a centred swell would lose its outer half and land narrower
+    // and lopsided.
+    transformOrigin: 'left center',
   },
   row: {
     flexDirection: 'row',

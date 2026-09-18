@@ -125,13 +125,14 @@ export function SettingsFontSheet({ onClose }: { onClose: () => void }) {
    * this the fetch would run to completion against a screen nobody is looking
    * at, and land a font the reader had already changed their mind about.
    */
-  const abortRef = useRef<AbortController | null>(null);
+  const abortRef = useRef<Partial<Record<FontSlotId, AbortController>>>({});
   /** The timers holding a finished bar on screen; see `DONE_HOLD_MS`. */
   const settleRef = useRef<Partial<Record<FontSlotId, ReturnType<typeof setTimeout>>>>({});
   useEffect(() => {
     const timers = settleRef.current;
+    const controllers = abortRef.current;
     return () => {
-      abortRef.current?.abort();
+      for (const controller of Object.values(controllers)) controller?.abort();
       for (const timer of Object.values(timers)) clearTimeout(timer);
     };
   }, []);
@@ -189,7 +190,7 @@ export function SettingsFontSheet({ onClose }: { onClose: () => void }) {
     }
     await feedback('selection');
     const controller = new AbortController();
-    abortRef.current = controller;
+    abortRef.current[id] = controller;
     setSlotError(id, undefined);
     emit(id, { kind: 'start', mode: 'download' });
     try {
@@ -214,7 +215,11 @@ export function SettingsFontSheet({ onClose }: { onClose: () => void }) {
     } catch (error) {
       emit(id, { kind: reportFailure(id, error) ? 'cancelled' : 'failed' });
     } finally {
-      abortRef.current = null;
+      // Only if it is still ours. The other slot can start its own download
+      // while this one runs, and clearing the map wholesale would orphan that
+      // controller -- its Cancel would do nothing, and leaving the sheet would
+      // no longer stop it.
+      if (abortRef.current[id] === controller) delete abortRef.current[id];
     }
   }
 
@@ -226,11 +231,12 @@ export function SettingsFontSheet({ onClose }: { onClose: () => void }) {
    * still landing would be the app reporting something it had asked for
    * rather than something that had happened.
    */
-  function cancel() {
+  function cancel(id: FontSlotId) {
     void feedback('selection');
-    // One controller, because one slot can be busy at a time: every other
-    // control on the sheet is disabled while a slot is working.
-    abortRef.current?.abort();
+    // Per slot, because `busy` is per group: a download running in Interface
+    // does not disable Monospace's own rows, so both slots can be fetching at
+    // once and one Cancel must stop the row it was pressed on.
+    abortRef.current[id]?.abort();
   }
 
   async function importFile(id: FontSlotId) {
@@ -315,7 +321,7 @@ export function SettingsFontSheet({ onClose }: { onClose: () => void }) {
           onUrlChange={setUrl}
           onOpenUrl={() => openUrlField('interface')}
           onDownload={() => void download('interface')}
-          onCancel={cancel}
+          onCancel={() => cancel('interface')}
           onImport={() => void importFile('interface')}
           onUseSystem={() => void clearSlot('interface')}
         />
@@ -332,7 +338,7 @@ export function SettingsFontSheet({ onClose }: { onClose: () => void }) {
           onUrlChange={setUrl}
           onOpenUrl={() => openUrlField('mono')}
           onDownload={() => void download('mono')}
-          onCancel={cancel}
+          onCancel={() => cancel('mono')}
           onImport={() => void importFile('mono')}
           onUseSystem={() => void clearSlot('mono')}
         />

@@ -185,7 +185,7 @@ test('every phase the font row draws is a step the install actually takes', () =
   expect(accept.indexOf("onStep?.('checking')")).toBeLessThan(accept.indexOf('checkFontSize'));
   // And both ways in hand the callback down to them.
   expect(module).toContain(
-    'return acceptStagedFont(downloaded, slot, url.trim(), previous, onStep);'
+    'return acceptStagedFont(downloaded, slot, url.trim(), previous, onStep, signal);'
   );
   expect(module).toContain('return acceptStagedFont(staged, slot, source.name, previous, onStep);');
 
@@ -206,5 +206,10 @@ test('a cancelled download leaves nothing behind, in either place it can land', 
   // And the abort that arrives after it resolved, where nothing else would
   // ever have rejected and the `.part` file would have stayed on disk.
   expect(download).toContain('discard(downloaded);');
-  expect(download).toMatch(/if \(signal\?\.aborted\) \{\n\s*discard\(downloaded\);/u);
+  expect(download.split('discard(downloaded);')[0]).toContain('if (signal?.aborted) {');
+  // And the checks stop for an abort before anything is moved into place, so a
+  // reader who left the sheet during a slow parse does not come back to a font
+  // they had already changed their mind about.
+  const accept = module.split('async function acceptStagedFont')[1]?.split('\n}')[0] ?? '';
+  expect(accept).toContain("if (signal?.aborted) throw new UserFontError({ kind: 'cancelled' });");
 });

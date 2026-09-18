@@ -199,7 +199,8 @@ async function acceptStagedFont(
   slot: FontSlotId,
   source: string,
   previous: FontSlot | undefined,
-  onStep?: (step: FontInstallStep) => void
+  onStep?: (step: FontInstallStep) => void,
+  signal?: AbortSignal
 ): Promise<InstalledFontSlot> {
   try {
     // One name for the three tests below. They are one wait from outside, and
@@ -216,6 +217,12 @@ async function acceptStagedFont(
     // for the ratio today, and a face that Skia cannot open is no more welcome
     // there than in the terminal.
     const profile = await probeFont(staged.uri);
+
+    // The last place a cancel can still be honoured, and the reader has had
+    // time to reach it: the parse above is seconds on a large CJK face, and a
+    // reader who swiped the sheet away during it has asked for this not to
+    // happen. Before the move, so nothing has replaced anything yet.
+    if (signal?.aborted) throw new UserFontError({ kind: 'cancelled' });
 
     const relative = userFontRelativePath(slot, randomToken(), format);
     const destination = new File(Paths.document, relative);
@@ -304,7 +311,7 @@ export async function downloadUserFont({
     discard(downloaded);
     throw new UserFontError({ kind: 'cancelled' });
   }
-  return acceptStagedFont(downloaded, slot, url.trim(), previous, onStep);
+  return acceptStagedFont(downloaded, slot, url.trim(), previous, onStep, signal);
 }
 
 /**
