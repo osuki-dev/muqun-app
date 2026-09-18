@@ -214,9 +214,10 @@ float2 edgeStep(float2 w, float2 dir) {
 
 // The fitted outline, with no trigonometry in it.
 //
-// dir is already (cos t, sin t), so the whole series is ten complex
-// multiplies and ten dot products -- and it is only ever evaluated inside the
-// edge band, which is the same handful of pixels that pay for the noise.
+// dir is already (cos t, sin t), so the whole series is ten complex multiplies
+// and ten dot products -- and it is only evaluated for a pixel the cheap
+// early-out above could not decide, which is a ring around the picture rather
+// than a screen.
 float edgeSeriesRadius(float2 dir) {
   float radius = uEdgeMean;
   float2 w = dir;
