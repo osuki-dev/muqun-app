@@ -148,6 +148,15 @@ export const AgentModelSheet = memo(function AgentModelSheet({
     };
   }, [sessionId]);
 
+  /**
+   * Which rows the reader scrolls past, and nothing more.
+   *
+   * "Free only" is a view filter, not a policy: it hides paid rows from this
+   * list, it does not say the app may only run free models. So the model a new
+   * session starts on -- the one remembered from the reader's last pick, see
+   * `lib/agent-session-defaults.ts` -- is used whether or not it is free and
+   * whether or not this segment is on. The current row above says what that is.
+   */
   const filteredModels = useMemo(() => {
     let list = models;
     if (filterMode === 'free') list = list.filter((m) => isFreeModel(m));

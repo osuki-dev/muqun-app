@@ -110,6 +110,8 @@ import {
   type SkillInfo,
   type AgentProject,
 } from '@/lib/agent-session';
+import { loadRememberedAgentDefaults, rememberAgentChoice } from '@/lib/agent-model-memory';
+import { resolveNewSessionDefaults } from '@/lib/agent-session-defaults';
 import { dangerousPermissionReason, yoloDecision } from '@/lib/agent-permission-safety';
 import { removeTimelineItems, revertedMessageCount } from '@/lib/agent-revert';
 import { classifyTool, capText } from '@/lib/agent-tool-output';
@@ -491,14 +493,29 @@ export const AgentWorkbench = memo(function AgentWorkbench({
    * documented way to get the user's configured default, and a display
    * fallback sent as a real field is not a default -- it is this app
    * overriding the host.
+   *
+   * "Chose" used to mean "chose since this app was launched", which made a
+   * relaunch forget the model the reader had been working on all week. It now
+   * reaches the store as well: this run's pick, then what this workspace
+   * remembers, then what this server remembers, then nothing. The catalog on
+   * screen is what a remembered value is checked against, so a model the host
+   * no longer lists is dropped here rather than refused there. See
+   * `lib/agent-session-defaults.ts`.
    */
   const newSessionParams = useCallback(
     (directory?: string) => ({
-      ...(pickedAgentRef.current && selectedAgent ? { agent: selectedAgent } : {}),
-      ...(pickedModelRef.current && selectedModel ? { model: selectedModel } : {}),
+      ...resolveNewSessionDefaults({
+        picked: {
+          ...(pickedAgentRef.current && selectedAgent ? { agent: selectedAgent } : {}),
+          ...(pickedModelRef.current && selectedModel ? { model: selectedModel } : {}),
+        },
+        ...loadRememberedAgentDefaults(sessionId, directory),
+        models: catalogModels,
+        agents: availableAgents,
+      }),
       ...(directory ? { directory } : {}),
     }),
-    [selectedAgent, selectedModel]
+    [selectedAgent, selectedModel, sessionId, catalogModels, availableAgents]
   );
   const [showReasoning, setShowReasoning] = useState<boolean>(true);
   const [skills, setSkills] = useState<SkillInfo[]>([]);
@@ -569,6 +586,34 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       mounted = false;
     };
   }, [sessionId, applySelectedModel]);
+
+  /**
+   * The chips say what a new session is about to run, which is the remembered
+   * model rather than the host's default.
+   *
+   * Only while there is no session on screen. A session that exists has a model
+   * of its own and the screen shows that one -- `loadSnapshot` applies
+   * `info.model`, and this must never talk over it. So the moment `activeAsid`
+   * names a session, the memory stops having anything to say about the display;
+   * what it decided about the *create* is already in that session's own model.
+   *
+   * Runs again when the catalog lands and when the reader moves to another
+   * workspace, because both change the answer: the first is what makes a
+   * remembered model verifiable at all, and the second is which workspace's
+   * memory applies.
+   */
+  useEffect(() => {
+    if (activeAsid) return;
+    if (pickedModelRef.current && pickedAgentRef.current) return;
+    const remembered = resolveNewSessionDefaults({
+      picked: {},
+      ...loadRememberedAgentDefaults(sessionId, activeDirectory),
+      models: catalogModels,
+      agents: availableAgents,
+    });
+    if (!pickedModelRef.current && remembered.model) applySelectedModel(remembered.model);
+    if (!pickedAgentRef.current && remembered.agent) setSelectedAgent(remembered.agent);
+  }, [sessionId, activeAsid, activeDirectory, catalogModels, availableAgents, applySelectedModel]);
 
   const initialCheckDoneRef = useRef(Boolean(initialAsid));
 
@@ -1388,6 +1433,11 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     (model: ModelRef) => {
       pickedModelRef.current = true;
       applySelectedModel(model);
+      // Written because the *reader* chose it, which is the only thing the
+      // memory records: a default the app merely observed -- the catalog's, or
+      // the one a session came back carrying -- is the host's answer, not
+      // theirs. The next new session in this workspace starts here.
+      rememberAgentChoice(sessionId, activeDirectoryRef.current, { model });
       // The server owns the per-session model via this call; on next entry the
       // session's own model is restored from it (see loadSnapshot).
       if (activeAsid) {
@@ -1716,6 +1766,8 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     (agent: string) => {
       pickedAgentRef.current = true;
       setSelectedAgent(agent);
+      // The reader's own pick, remembered the same way the model is.
+      rememberAgentChoice(sessionId, activeDirectoryRef.current, { agent });
       if (!activeAsid) return;
       switchAgentMode(activeAsid, agent).catch((err) => {
         console.warn('Failed to switch agent:', err);
@@ -1726,7 +1778,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         });
       });
     },
-    [activeAsid, showToast, t]
+    [activeAsid, sessionId, showToast, t]
   );
 
   /**
