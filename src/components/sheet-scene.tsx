@@ -6,6 +6,7 @@ import {
   StyleSheet,
   TextInput,
   View,
+  type AccessibilityProps,
   type StyleProp,
   type TextStyle,
   type ViewStyle,
@@ -383,6 +384,7 @@ export function SheetSceneRow({
   onPress,
   onLongPress,
   accessibilityLabel,
+  accessibilityValue,
   testID,
   selectedTestID,
   style,
@@ -411,6 +413,16 @@ export function SheetSceneRow({
    */
   onLongPress?: () => void;
   accessibilityLabel?: string;
+  /**
+   * What the row is doing, for a reader who cannot see it doing it.
+   *
+   * The row's label replaces everything inside it, so a caption or a trailing
+   * run that changes -- an install's step, a count -- is drawn and never said.
+   * A value is the one slot a screen reader announces *after* the label
+   * without the caller having to build a sentence out of two translated
+   * strings, so that is where a row's live state goes.
+   */
+  accessibilityValue?: AccessibilityProps['accessibilityValue'];
   testID?: string;
   /**
    * An id that exists only while this row is the current one.
@@ -453,6 +465,7 @@ export function SheetSceneRow({
         accessibilityRole="button"
         accessibilityState={{ selected, disabled }}
         accessibilityLabel={accessibilityLabel ?? title}
+        accessibilityValue={accessibilityValue}
         disabled={disabled || !(onPress || onLongPress)}
         onPress={onPress}
         onLongPress={onLongPress}

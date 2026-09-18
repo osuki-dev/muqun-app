@@ -380,42 +380,23 @@ export function ThemeBrowseSheet({
     ) : null;
 
   /**
-   * The status line: what the install is doing, and what went wrong.
+   * The status line: what went wrong, and nothing else any more.
    *
-   * Pinned in the scene's header rather than left under the pressed row, so it
-   * cannot scroll out of sight mid-download, and it carries `listLayout` so the
-   * list below slides down to make room instead of jumping. The failure only
-   * appears here when there are rows -- with none, the empty component is
-   * already saying it.
+   * The install's progress used to be here too -- a full-width step name and
+   * bar pinned under the caption, while the row it was about sat at the bottom
+   * of the list wearing a spinner. Two places for one fact, and the owner named
+   * the problem exactly: "the animation at the top should be on the theme that
+   * is being downloaded". It is on it now; see `ThemeBrowseRow`.
+   *
+   * The failure stays pinned, because it is not about one row in the same way:
+   * the recovery is a `Try again` for the catalogue, the press that caused it
+   * may have been scrolled far away by then, and a retry button that has to be
+   * hunted for is not a recovery. It only appears here when there are rows --
+   * with none, the empty component is already saying it.
    */
   const status = (
     <Animated.View layout={listLayout('short')}>
-      {pending ? (
-        <Animated.View
-          key="progress"
-          entering={fadeIn('medium')}
-          exiting={fadeOut('short')}
-          style={styles.status}>
-          {/* Three waits, three names, one bar. `downloading` has nothing to
-              count and says so by not drawing one. */}
-          <ThemeImportProgress
-            testID="theme-browse-progress"
-            label={
-              progress?.phase === 'unpacking'
-                ? t`Unpacking…`
-                : progress?.phase === 'assets'
-                  ? t`Preparing images`
-                  : t`Downloading…`
-            }
-            phase={progress?.phase}
-            completed={counted?.completed}
-            total={counted?.total}
-            receivedBytes={progress?.phase === 'assets' ? progress.receivedBytes : undefined}
-          />
-        </Animated.View>
-      ) : failed && rows.length ? (
-        <View style={styles.status}>{failure}</View>
-      ) : null}
+      {failed && rows.length ? <View style={styles.status}>{failure}</View> : null}
     </Animated.View>
   );
 
@@ -457,6 +438,9 @@ export function ThemeBrowseSheet({
             cover={coverOf(item)}
             installed={installedIds.has(item.id)}
             pending={pending === item.id}
+            // Only the row it is about: a row that is not installing has
+            // nothing to draw and re-renders to the same markup.
+            progress={pending === item.id ? progress : null}
             dimmed={pending !== null && pending !== item.id}
             disabled={pending !== null}
             revealed={revealed}
@@ -515,12 +499,21 @@ const MINIMUM_PENDING_VISIBLE_MS = DURATION.short * 2;
  * author-provided and untrusted, so two different packs can claim one id --
  * which is why the badge never disables the row. Pressing still opens the
  * preview, and that is where a duplicate is resolved.
+ *
+ * And while it is the row installing, the size in that trailing slot becomes
+ * the name of the step -- `Unpacking…`, `4/11` -- with the bar underlining the
+ * row's own copy. The progress used to be a full-width block at the top of the
+ * sheet with a spinner down here standing in for it, which asked the reader to
+ * hold two places on one screen together and told them nothing about *which*
+ * theme the block was counting. One row, one fact, in the place the reader is
+ * already looking.
  */
 function ThemeBrowseRow({
   entry,
   cover,
   installed,
   pending,
+  progress,
   dimmed,
   disabled,
   revealed,
@@ -532,6 +525,8 @@ function ThemeBrowseRow({
   cover: string | null;
   installed: boolean;
   pending: boolean;
+  /** How far this row's own install has got, and null for every other row. */
+  progress: ThemeInstallProgress | null;
   dimmed: boolean;
   disabled: boolean;
   revealed: Set<string>;
@@ -565,6 +560,19 @@ function ThemeBrowseRow({
   // whole job is to let a reader compare names.
   const caption = [entry.author, entry.description].filter(Boolean).join(' · ');
 
+  // Three waits, three names -- the same three the pinned block used to say,
+  // said here instead. `downloading` has nothing to count and no bar, so its
+  // name is the whole of what this row can honestly show.
+  const stepLabel = !progress
+    ? ''
+    : progress.phase === 'unpacking'
+      ? t`Unpacking…`
+      : progress.phase === 'assets'
+        ? t`Preparing images`
+        : t`Downloading…`;
+  const measured = progress && progress.phase !== 'downloading' ? progress : null;
+  const stepCount = measured ? `${measured.completed}/${measured.total}` : '';
+
   return (
     // Two views, and the split is not cosmetic: a layout animation and an
     // animated `opacity` on one view make Reanimated warn that the layout
@@ -577,7 +585,6 @@ function ThemeBrowseRow({
           testID={`theme-browse-item:${entry.id}`}
           title={entry.name}
           caption={caption || undefined}
-          accessibilityLabel={entry.name}
           disabled={disabled}
           onPress={onPress}
           style={styles.row}
@@ -609,18 +616,62 @@ function ThemeBrowseRow({
               ) : null}
             </View>
           }
+          accessibilityLabel={entry.name}
+          // The row's label replaces what is inside it, so the step drawn in
+          // the trailing slot would otherwise be seen and never said.
+          accessibilityValue={
+            pending && stepLabel
+              ? { text: [stepLabel, stepCount].filter(Boolean).join(' ') }
+              : undefined
+          }
+          trailing={
+            pending ? (
+              <View style={styles.rowProgress} pointerEvents="none">
+                {/* Absolute, and that is the point: a bar that joined the
+                    row's flow would make the row taller the moment it was
+                    pressed and push the rest of the catalogue down. It sits in
+                    the padding the row already has under its copy, indented to
+                    the copy's own left edge so it underlines the name rather
+                    than the cover. */}
+                <ThemeImportProgress
+                  testID="theme-browse-progress"
+                  label={stepLabel}
+                  phase={progress?.phase}
+                  completed={measured?.completed}
+                  total={measured?.total}
+                  compact
+                />
+              </View>
+            ) : null
+          }
           meta={
             <View style={styles.trailing}>
               {/* One thing or the other, never both and never a jump: the size
-                  cross-fades out as the spinner comes in, which is the row
-                  acknowledging the tap. */}
+                  cross-fades out as the step comes in, which is the row
+                  acknowledging the tap and then reporting on itself. */}
               {pending ? (
                 <Animated.View
                   key="busy"
                   entering={fadeIn('short')}
                   exiting={fadeOut('short')}
-                  style={styles.trailingSlot}>
-                  <Spinner size="sm" color={theme.colors.primary} />
+                  style={styles.trailingStep}>
+                  <Text
+                    variant="caption"
+                    color={theme.colors.textMuted}
+                    numberOfLines={1}
+                    style={styles.stepName}>
+                    {stepLabel}
+                  </Text>
+                  {stepCount ? (
+                    <Text
+                      variant="caption"
+                      color={theme.colors.textMuted}
+                      // Tabular, so the counter does not reflow while the bar
+                      // under the row moves.
+                      style={styles.stepCount}>
+                      {stepCount}
+                    </Text>
+                  ) : null}
                 </Animated.View>
               ) : (
                 <Animated.View
@@ -678,6 +729,22 @@ const styles = StyleSheet.create({
   badgeTransparent: { backgroundColor: 'transparent' },
   trailing: { minWidth: 56, alignItems: 'flex-end', gap: SHEET_LADDER.tight },
   trailingSlot: { alignItems: 'flex-end', justifyContent: 'center' },
+  // Capped, because `Preparing images` is three times the width of `1.2 MB`
+  // and the trailing slot does not shrink: without a ceiling the step name
+  // would take the width out of the theme's own name.
+  trailingStep: { alignItems: 'flex-end', justifyContent: 'center', maxWidth: 108 },
+  stepName: { textAlign: 'right' },
+  stepCount: { fontVariant: ['tabular-nums'] },
+  // Under the copy, not under the cover: `COVER_WIDTH` plus the row's own
+  // column gap is exactly where `SheetSceneRow` starts its text. `bottom` sits
+  // the bar inside the padding the row already has, so nothing reflows when it
+  // appears -- see the note at the call site.
+  rowProgress: {
+    position: 'absolute',
+    left: COVER_WIDTH + SHEET_LADDER.snug,
+    right: 0,
+    bottom: SHEET_LADDER.tight,
+  },
   state: {
     paddingHorizontal: SHEET_LADDER.gutter,
     paddingTop: SHEET_LADDER.section,
