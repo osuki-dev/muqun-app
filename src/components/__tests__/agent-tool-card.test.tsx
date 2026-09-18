@@ -248,6 +248,27 @@ describe('the web cards', () => {
 });
 
 // ---------------------------------------------------------------------------
+// a call that runs detached
+// ---------------------------------------------------------------------------
+
+describe('the background badge', () => {
+  test('the agent can start a call detached, not only the reader', () => {
+    // `shell` and `subagent` both take it; the gateway's own flag is set when
+    // the reader presses "Run in background" instead.
+    expect(CARD).toContain(
+      "((kind === 'shell' || kind === 'subagent') && input?.background === true)"
+    );
+    expect(CARD).toContain('background={detached}');
+  });
+
+  test('a call that is already detached is not offered a way to detach it', () => {
+    expect(CARD).toContain("kind === 'shell' && pending && !detached && onRunInBackground");
+    // And the tray, which lists what is running, is offered for either way in.
+    expect(CARD).toContain('detached && pending && onOpenBackgroundTray');
+  });
+});
+
+// ---------------------------------------------------------------------------
 // the shapes that must never reach a renderer
 // ---------------------------------------------------------------------------
 

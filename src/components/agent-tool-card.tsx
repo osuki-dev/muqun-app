@@ -369,6 +369,19 @@ export const AgentToolCard = memo(function AgentToolCard({
   const files = useMemo(() => filesFromContent(part.content), [part.content]);
   const parsed = useMemo(() => parseToolOutput(part.output), [part.output]);
 
+  /**
+   * Detached, however it got that way.
+   *
+   * `part.background` is the gateway's flag, set when the reader pressed "Run
+   * in background". But `shell` and `subagent` both take `background: true` in
+   * their own input -- the agent deciding on its own that this one runs
+   * detached -- and a card started that way carried no badge at all, so a
+   * command that would never block the loop looked exactly like one that did.
+   */
+  const detached =
+    part.background === true ||
+    ((kind === 'shell' || kind === 'subagent') && input?.background === true);
+
   const pending = isToolPending(part.state);
   // Only while it is pending: once the call has run, the result is what the
   // card is about and its arguments are in the body.
@@ -526,7 +539,7 @@ export const AgentToolCard = memo(function AgentToolCard({
     const nodes: React.ReactNode[] = [];
     // `ctrl+b` in the TUI: detach the foreground tools blocking the loop. The
     // shell keeps running and stays readable in the tray.
-    if (kind === 'shell' && pending && !part.background && onRunInBackground) {
+    if (kind === 'shell' && pending && !detached && onRunInBackground) {
       nodes.push(
         <PressableScale
           key="bg"
@@ -545,7 +558,7 @@ export const AgentToolCard = memo(function AgentToolCard({
     // Only while it is still running: the tray lists what is running, and a
     // finished command that says "Background tasks" sends the reader to an
     // empty sheet.
-    if (part.background && pending && onOpenBackgroundTray) {
+    if (detached && pending && onOpenBackgroundTray) {
       nodes.push(
         <PressableScale
           key="tray"
@@ -594,7 +607,7 @@ export const AgentToolCard = memo(function AgentToolCard({
   }, [
     kind,
     pending,
-    part.background,
+    detached,
     part.child_session_id,
     onRunInBackground,
     onOpenBackgroundTray,
@@ -722,7 +735,7 @@ export const AgentToolCard = memo(function AgentToolCard({
       {...(durationMs === undefined ? {} : { durationMs })}
       truncated={truncated}
       {...(errorLine ? { error: errorLine } : {})}
-      background={part.background === true}
+      background={detached}
       chips={chips}
       actions={actions}
       // An edit's diff and a read's images are the content, not a detail
