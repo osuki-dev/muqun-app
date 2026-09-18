@@ -54,9 +54,13 @@ import { PRESET, timing } from '@/lib/motion';
 export const SHEET_LADDER = {
   /** The lead between a title and its caption, and inside a row's stack. */
   tight: 4,
-  /** Between the heading block and the first control. */
+  /**
+   * Between the heading block and the first control -- and a row's breathing
+   * room above and below. See `ROW_MIN_HEIGHT` for why a row takes the smaller
+   * of the two numbers rather than `snug`.
+   */
   gap: 8,
-  /** A row's breathing room above and below. */
+  /** The column gap across a row, and the lead over a form's first field. */
   snug: 14,
   /** The sheet's left and right margin. */
   gutter: 20,
@@ -64,8 +68,43 @@ export const SHEET_LADDER = {
   section: 24,
 } as const;
 
-/** Two lines of body/caption with the ladder's padding: the row floor. */
-const ROW_MIN_HEIGHT = 52;
+/**
+ * The row floor: a touch target, not a slab.
+ *
+ * A row is `padding + text`, and the padding used to be `snug` (14) on top of a
+ * 52 floor -- which is two numbers both sized for a *one-line* row, applied to
+ * a two-line one. The arithmetic, at the kit's own scale (`bodySmall` 14/21,
+ * `caption` 12/16.8, `rowCopy` gap 2):
+ *
+ * | Row | Text | Padding | Height |
+ * |---|---|---|---|
+ * | one line, before | 21 | 28 | 52 (the floor won) |
+ * | two lines, before | 40 | 28 | **68** |
+ * | one line, now | 21 | 16 | **44** (the floor wins) |
+ * | two lines, now | 40 | 16 | **56** |
+ *
+ * 68 dp of pitch for two lines of text is a card with air around it, which is
+ * the one thing this system is not -- the owner read the workspace list as a
+ * stack of cards for exactly that reason. So the floor drops to 44, which is
+ * the platform touch target and the whole job of a floor, and the padding drops
+ * to `gap`: a one-line row is still 44 tall and comfortable to hit, and a
+ * two-line row hugs its own two lines instead of being padded out to a third.
+ *
+ * Both numbers are in this one file because 14 sheets draw this row.
+ */
+const ROW_MIN_HEIGHT = 44;
+
+/** The row's own breathing room, above and below. See `ROW_MIN_HEIGHT`. */
+const ROW_PADDING_VERTICAL = SHEET_LADDER.gap;
+
+/**
+ * The lead between a row's title and its caption.
+ *
+ * Deliberately below the ladder's smallest rung: the two lines are one thought
+ * about one thing, and `tight` (4) between them made the caption read as a
+ * second row rather than as the first one's subtitle.
+ */
+const ROW_COPY_GAP = 2;
 
 /** The selection mark: a rule at the sheet's edge, not a box around the row. */
 const SELECTION_RULE_WIDTH = 2;
@@ -653,6 +692,12 @@ const styles = StyleSheet.create({
     padding: 0,
     includeFontPadding: false,
   },
+  // Still `section` above and `gap` below, unchanged by the tighter row: the
+  // heading's own margins are measured from the row's *edge*, and a row that
+  // lost 6 dp of padding at each end gives back 32 dp above a heading instead
+  // of 38 and 16 below instead of 22. The heading stays nearer the group it
+  // names than the group it follows, which is the only thing these two numbers
+  // are for.
   groupHeading: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -684,12 +729,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: SHEET_LADDER.snug,
     minHeight: ROW_MIN_HEIGHT,
-    paddingVertical: SHEET_LADDER.snug,
+    paddingVertical: ROW_PADDING_VERTICAL,
   },
   rowLeading: { alignItems: 'center', justifyContent: 'center' },
   // Shrink-to-fit rather than `flex: 1`, so the plate hugs the two lines
   // instead of becoming a full-width slab -- which is the card again.
-  rowCopy: { flexShrink: 1, minWidth: 0, gap: 2 },
+  rowCopy: { flexShrink: 1, minWidth: 0, gap: ROW_COPY_GAP },
   rowTitle: { includeFontPadding: false },
   rowMeta: { flexShrink: 0, marginLeft: 'auto' },
   groupRule: { height: StyleSheet.hairlineWidth, marginTop: SHEET_LADDER.gap },
