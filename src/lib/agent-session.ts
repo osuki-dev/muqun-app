@@ -21,6 +21,11 @@ import {
   touchCacheEntryTimestamp,
 } from './agent-cache';
 import {
+  agentCatalogCacheVariant,
+  agentCatalogPath,
+  normalizeCatalogDirectory,
+} from './agent-catalog-scope';
+import {
   asFiniteNumber,
   asRecord,
   EMPTY_CATALOG,
@@ -642,12 +647,31 @@ export async function getAgentVcsDiff(
   );
 }
 
+/**
+ * The catalog: models, agents, skills, commands and the host's own defaults.
+ *
+ * `directory` is what makes a *project's* agents, commands and skills appear.
+ * OpenCode scopes all three per project, so the answer to an unscoped read is
+ * the global set only -- a user's own agent under the workspace's
+ * `.opencode/agent` is simply not in it. The route takes `?directory=` for
+ * exactly this, and the directory is part of the read's identity: it goes into
+ * the cache key, so the ETag and the in-flight dedupe are per workspace and
+ * two workspaces on one host can never be handed each other's catalog.
+ *
+ * A caller with no directory keeps the behaviour and the cache entry it had.
+ */
 export async function getAgentCatalog(
   sessionId?: string,
   endpoint?: { url?: string; token?: string | null },
-  options?: { forceRefresh?: boolean }
+  options?: { directory?: string; forceRefresh?: boolean }
 ): Promise<AgentCatalog> {
-  const cacheKey = buildAgentCacheKey('catalog', endpoint?.url, sessionId);
+  const directory = normalizeCatalogDirectory(options?.directory);
+  const cacheKey = buildAgentCacheKey(
+    'catalog',
+    endpoint?.url,
+    sessionId,
+    agentCatalogCacheVariant(directory)
+  );
   const cached = getCachedEntry<AgentCatalog>(cacheKey);
   const isFresh = cached && Date.now() - cached.timestamp < CATALOG_TTL_MS;
 
@@ -661,11 +685,8 @@ export async function getAgentCatalog(
       if (!base && !isGatewayConfigured()) {
         return cached?.data ?? EMPTY_CATALOG;
       }
-      const url = base
-        ? `${base}${sessionId ? `/api/sessions/${encodeURIComponent(sessionId)}/agent-catalog` : '/api/agent-catalog'}`
-        : sessionId
-          ? gatewayUrl(`/api/sessions/${encodeURIComponent(sessionId)}/agent-catalog`)
-          : gatewayUrl('/api/agent-catalog');
+      const path = agentCatalogPath(sessionId, directory);
+      const url = base ? `${base}${path}` : gatewayUrl(path);
       const headers: Record<string, string> = endpoint?.url
         ? {
             ...activeLocaleHeaders(),
