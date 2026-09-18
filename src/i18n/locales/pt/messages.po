@@ -763,6 +763,7 @@ msgstr "É preciso acesso à câmara"
 #: src/components/custom-theme-library.tsx
 #: src/components/row-action-menu.tsx
 #: src/components/session-map.tsx
+#: src/components/settings-font-sheet.tsx
 #: src/components/settings-servers.tsx
 #: src/components/settings-storage.tsx
 #: src/components/skia-terminal.tsx
@@ -839,6 +840,7 @@ msgid "Checking system authentication…"
 msgstr "A verificar a autenticação do sistema…"
 
 #: src/components/open-web-service-sheet.tsx
+#: src/components/settings-font-sheet.tsx
 msgid "Checking…"
 msgstr "A verificar…"
 
@@ -1122,6 +1124,10 @@ msgstr "Conectando por SSH…"
 msgid "Connecting to {address}"
 msgstr "Conectando a {address}"
 
+#: src/components/settings-font-sheet.tsx
+msgid "Connecting…"
+msgstr "A ligar…"
+
 #: src/components/agent-context-sheet.tsx
 msgid "Context"
 msgstr "Contexto"
@@ -1321,6 +1327,10 @@ msgstr "Copiar o comando de instalação"
 #: src/components/ssh-host-form.tsx
 msgid "Copy the public key"
 msgstr "Copiar a chave pública"
+
+#: src/components/settings-font-sheet.tsx
+msgid "Copying…"
+msgstr "A copiar…"
 
 #: src/components/agent-composer.tsx
 #: src/components/new-task-sheet.tsx
@@ -2266,6 +2276,7 @@ msgstr "Instalar um pacote"
 msgid "Install command copied"
 msgstr "Comando de instalação copiado"
 
+#: src/components/settings-font-sheet.tsx
 #: src/components/theme-browse-sheet.tsx
 msgid "Installed"
 msgstr "Instalado"
@@ -2274,6 +2285,10 @@ msgstr "Instalado"
 #: src/components/custom-theme-library.tsx
 msgid "Installing images"
 msgstr "Instalando imagens"
+
+#: src/components/settings-font-sheet.tsx
+msgid "Installing…"
+msgstr "A instalar…"
 
 #: src/components/settings-font-sheet.tsx
 msgid "Interface"
@@ -4642,7 +4657,7 @@ msgstr "Esse é o shell de demonstração incluído, e o único host aqui. Adici
 
 #: src/components/settings-font-sheet.tsx
 msgid "That link opens a web page, not the font file. Use the file's direct download link."
-msgstr "Esse link abre uma página web, não o arquivo de fonte. Use o link de download direto do arquivo."
+msgstr "Esse link abre uma página web, não o arquivo de fonte. Use o link de download direto do arquivo"
 
 #: src/lib/release-notes.ts
 msgid "That shell is the terminal you already know: the same keyboard, the same key row, the same colours, and your phone's own keyboard for anything you would rather type."

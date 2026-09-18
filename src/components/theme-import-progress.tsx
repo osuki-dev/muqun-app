@@ -1,11 +1,18 @@
 import { Text, useThemeTokens } from '@osuki-dev/ui';
-import { useEffect } from 'react';
-import { View } from 'react-native';
-import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
+import { useEffect, useState } from 'react';
+import { View, type LayoutChangeEvent } from 'react-native';
+import Animated, {
+  cancelAnimation,
+  useAnimatedStyle,
+  useReducedMotion,
+  useSharedValue,
+  withRepeat,
+  withTiming,
+} from 'react-native-reanimated';
 
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { formatAssetSize } from '@/lib/asset-display';
-import { fadeIn, fadeOut, timing } from '@/lib/motion';
+import { fadeIn, fadeOut, timing, travelTiming } from '@/lib/motion';
 
 /**
  * The named step of a slow import, so waiting never looks like nothing.
@@ -34,6 +41,7 @@ export function ThemeImportProgress({
   completed,
   total,
   receivedBytes,
+  indeterminate = false,
   compact = false,
   testID,
 }: {
@@ -49,6 +57,24 @@ export function ThemeImportProgress({
   completed?: number;
   total?: number;
   receivedBytes?: number;
+  /**
+   * Draw a wait that has no fraction as a segment travelling the track.
+   *
+   * Off by default, and every caller that does not ask for it keeps exactly
+   * the behaviour it had: an unmeasured phase draws its name and no bar. That
+   * is right for an install whose *other* phases are measured -- the theme
+   * browser fetches one manifest and then counts twelve ZIP entries, so a
+   * missing bar for two seconds is a pause in a widget that is otherwise
+   * clearly working.
+   *
+   * It is wrong for a wait where nothing is ever measured, which is what a
+   * font download from a server that sends no `Content-Length` is from the
+   * first byte to the last. There the reader has a row that says a word and
+   * never moves, and the honest thing to draw is not a fraction the app does
+   * not have but the fact that something is still happening. Hence a mode
+   * rather than a second component: one bar, two ways of not knowing.
+   */
+  indeterminate?: boolean;
   /**
    * The bar alone, for a widget that lives inside a row.
    *
@@ -73,7 +99,20 @@ export function ThemeImportProgress({
     // Nothing at all rather than an empty strip: an unmeasured phase has no
     // fraction to draw, and the row's trailing step name is already saying
     // that the wait is real. Same reasoning as the full block's `measured`.
-    if (!measured) return null;
+    // Unless the caller has said that this wait is never measured, in which
+    // case a travelling segment is the only thing that can say it is alive.
+    if (!measured) {
+      if (!indeterminate) return null;
+      return (
+        <ThemeImportTravellingBar
+          testID={testID}
+          accessibilityLabel={label}
+          compact
+          track={surfaceBackground(colors.surfaceRaised)}
+          fill={colors.primary}
+        />
+      );
+    }
     return (
       <ThemeImportProgressBar
         // Keyed for the same reason as below: a new phase is a new
@@ -123,6 +162,12 @@ export function ThemeImportProgress({
           track={surfaceBackground(colors.surfaceRaised)}
           fill={colors.primary}
         />
+      ) : indeterminate ? (
+        <ThemeImportTravellingBar
+          accessibilityLabel={label}
+          track={surfaceBackground(colors.surfaceRaised)}
+          fill={colors.primary}
+        />
       ) : null}
       {transferred ? (
         <Text variant="caption" color={colors.textMuted}>
@@ -132,6 +177,25 @@ export function ThemeImportProgress({
     </View>
   );
 }
+
+/**
+ * How much of the track the travelling segment covers.
+ *
+ * A third: long enough to read as an object rather than a dot, short enough
+ * that there is visibly track on either side of it -- which is the difference
+ * between "still working" and "nearly full".
+ */
+const TRAVEL_SEGMENT = 0.34;
+
+/**
+ * The still segment's opacity, for a reader who has asked for reduced motion.
+ *
+ * Below the fill's own strength on purpose: a solid full-width bar at full
+ * opacity is what a *finished* determinate bar looks like, and this one is not
+ * finished, it is unknowable. A dimmed, charged track says waiting without
+ * claiming a fraction and without moving anything.
+ */
+const STILL_FILL_OPACITY = 0.45;
 
 /** A bar heading a sheet: thin enough to be a rule, thick enough to read. */
 const BAR_HEIGHT = 4;
@@ -193,6 +257,106 @@ function ThemeImportProgressBar({
         backgroundColor: track,
       }}>
       <Animated.View style={[{ height: '100%', backgroundColor: fill }, fillStyle]} />
+    </Animated.View>
+  );
+}
+
+/**
+ * The same groove, with a segment crossing it instead of a fill growing.
+ *
+ * For the wait that has no fraction at all. It is a sibling of the bar above
+ * rather than a mode inside it because the two share nothing but their
+ * geometry: one animates a width towards a number it is given, the other
+ * animates a position on a loop that no number controls.
+ *
+ * The loop is one `withRepeat`, and it is cancelled on unmount. An endless
+ * repeat outlives the view it drives -- `agent-thinking-indicator.tsx` carries
+ * the same note -- so a reader who leaves the sheet mid-download would leave a
+ * timer running against nothing for the rest of the session.
+ *
+ * The pass restarts rather than reversing, and the jump is invisible: the
+ * segment leaves the right-hand end completely (it travels the track's width
+ * *plus* its own) before the value wraps, and the parent clips. A reversing
+ * segment would be a thing bouncing between two walls, which reads as
+ * something stuck rather than something continuing.
+ *
+ * Under Reduce Motion nothing travels at all. Not a slower loop -- a loop is
+ * the one shape of animation the setting is most directly about -- so the
+ * track takes a dimmed fill across its whole width and stays there, and the
+ * busy state below is what tells a reader using a screen reader the same
+ * thing.
+ */
+function ThemeImportTravellingBar({
+  track,
+  fill,
+  compact = false,
+  accessibilityLabel,
+  testID,
+}: {
+  track: string;
+  fill: string;
+  compact?: boolean;
+  accessibilityLabel?: string;
+  testID?: string;
+}) {
+  const reduceMotion = useReducedMotion();
+  // The track's own width, because a percentage `translateX` is not something
+  // every platform under this app agrees about, and a segment that has to be
+  // clipped at both ends has to know where the ends are.
+  const [trackWidth, setTrackWidth] = useState(0);
+  const travel = useSharedValue(0);
+  const height = compact ? COMPACT_BAR_HEIGHT : BAR_HEIGHT;
+  const segmentWidth = trackWidth * TRAVEL_SEGMENT;
+
+  useEffect(() => {
+    if (reduceMotion || trackWidth === 0) return;
+    travel.value = 0;
+    travel.value = withRepeat(withTiming(1, travelTiming()), -1, false);
+    return () => cancelAnimation(travel);
+  }, [reduceMotion, trackWidth, travel]);
+
+  const travelStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: -segmentWidth + travel.value * (trackWidth + segmentWidth) }],
+  }));
+
+  function measure(event: LayoutChangeEvent) {
+    const next = Math.round(event.nativeEvent.layout.width);
+    setTrackWidth((current) => (current === next ? current : next));
+  }
+
+  return (
+    <Animated.View
+      testID={testID}
+      entering={fadeIn('micro')}
+      exiting={fadeOut('micro')}
+      onLayout={measure}
+      accessibilityRole="progressbar"
+      accessibilityLabel={accessibilityLabel}
+      // No `accessibilityValue`: there is no fraction, and inventing one is
+      // the fabricated progress the app is not allowed to show. `busy` is the
+      // true statement available here.
+      accessibilityState={{ busy: true }}
+      style={{
+        height,
+        borderRadius: height / 2,
+        overflow: 'hidden',
+        backgroundColor: track,
+      }}>
+      {reduceMotion ? (
+        <View style={{ height: '100%', backgroundColor: fill, opacity: STILL_FILL_OPACITY }} />
+      ) : (
+        <Animated.View
+          style={[
+            {
+              height: '100%',
+              width: segmentWidth,
+              borderRadius: height / 2,
+              backgroundColor: fill,
+            },
+            travelStyle,
+          ]}
+        />
+      )}
     </Animated.View>
   );
 }

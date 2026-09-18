@@ -763,6 +763,7 @@ msgstr "Нужен доступ к камере"
 #: src/components/custom-theme-library.tsx
 #: src/components/row-action-menu.tsx
 #: src/components/session-map.tsx
+#: src/components/settings-font-sheet.tsx
 #: src/components/settings-servers.tsx
 #: src/components/settings-storage.tsx
 #: src/components/skia-terminal.tsx
@@ -839,6 +840,7 @@ msgid "Checking system authentication…"
 msgstr "Проверяем системную аутентификацию…"
 
 #: src/components/open-web-service-sheet.tsx
+#: src/components/settings-font-sheet.tsx
 msgid "Checking…"
 msgstr "Проверка…"
 
@@ -1122,6 +1124,10 @@ msgstr "Подключаемся через SSH…"
 msgid "Connecting to {address}"
 msgstr "Подключаемся к {address}"
 
+#: src/components/settings-font-sheet.tsx
+msgid "Connecting…"
+msgstr "Подключение…"
+
 #: src/components/agent-context-sheet.tsx
 msgid "Context"
 msgstr "Контекст"
@@ -1321,6 +1327,10 @@ msgstr "Копировать команду установки"
 #: src/components/ssh-host-form.tsx
 msgid "Copy the public key"
 msgstr "Копировать открытый ключ"
+
+#: src/components/settings-font-sheet.tsx
+msgid "Copying…"
+msgstr "Копирование…"
 
 #: src/components/agent-composer.tsx
 #: src/components/new-task-sheet.tsx
@@ -2266,6 +2276,7 @@ msgstr "Установить пакет"
 msgid "Install command copied"
 msgstr "Команда установки скопирована"
 
+#: src/components/settings-font-sheet.tsx
 #: src/components/theme-browse-sheet.tsx
 msgid "Installed"
 msgstr "Установлена"
@@ -2274,6 +2285,10 @@ msgstr "Установлена"
 #: src/components/custom-theme-library.tsx
 msgid "Installing images"
 msgstr "Установка изображений"
+
+#: src/components/settings-font-sheet.tsx
+msgid "Installing…"
+msgstr "Установка…"
 
 #: src/components/settings-font-sheet.tsx
 msgid "Interface"
@@ -4642,7 +4657,7 @@ msgstr "Это встроенный демо-shell, и он здесь един�
 
 #: src/components/settings-font-sheet.tsx
 msgid "That link opens a web page, not the font file. Use the file's direct download link."
-msgstr "Эта ссылка открывает веб-страницу, а не файл шрифта. Используйте прямую ссылку на скачивание файла."
+msgstr "Эта ссылка открывает веб-страницу, а не файл шрифта. Используйте прямую ссылку на скачивание файла"
 
 #: src/lib/release-notes.ts
 msgid "That shell is the terminal you already know: the same keyboard, the same key row, the same colours, and your phone's own keyboard for anything you would rather type."

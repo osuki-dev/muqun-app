@@ -40,6 +40,7 @@ import {
   SheetSceneFooter,
   SheetSceneGroupHeading,
   SheetSceneGroupRule,
+  SheetSceneQuietAction,
   SheetSceneRow,
   SHEET_LADDER,
   sheetSceneStyles,
@@ -47,10 +48,19 @@ import {
 } from '@/components/sheet-scene';
 import { ThemeImportProgress } from '@/components/theme-import-progress';
 import { useUserFontStatus } from '@/hooks/use-user-fonts';
+import { formatAssetSize } from '@/lib/asset-display';
 import { feedback } from '@/lib/feedback';
-import { fadeIn, fadeOut } from '@/lib/motion';
+import { DURATION, fadeIn, fadeOut } from '@/lib/motion';
 import { useRenderTally } from '@/lib/render-tally';
 import { useAppSettings } from '@/stores/app-settings';
+import {
+  advanceFontInstall,
+  fontInstallBar,
+  fontInstallCancellable,
+  fontInstallPercent,
+  type FontInstallEvent,
+  type FontInstallState,
+} from '@/theme/font-install-phase';
 import {
   downloadUserFont,
   importUserFont,
@@ -60,7 +70,6 @@ import {
   SYSTEM_FONT_SLOT,
   UserFontError,
   USER_FONT_MAX_BYTES,
-  type FontDownloadProgress,
   type FontSlot,
   type FontSlotId,
   type UserFontProblem,
@@ -72,11 +81,15 @@ const KEYBOARD_BOTTOM_OFFSET = 96;
 /** Which setting each slot is stored under. */
 const SLOT_SETTING = { interface: 'interfaceFont', mono: 'monoFont' } as const;
 
-/** What a slot is doing right now, where that is not simply "nothing". */
-type SlotWork =
-  | { kind: 'idle' }
-  | { kind: 'downloading'; progress: FontDownloadProgress | null }
-  | { kind: 'importing' };
+/**
+ * How long the finished bar stays on screen before the row goes quiet.
+ *
+ * The fill animates on `short`, so anything less than that and the reader
+ * watches a bar begin to fill and then vanish -- which is what a *failed*
+ * install looks like. This is the fill plus a beat to see it full: the one
+ * moment in the whole sequence that says the waiting is over and it worked.
+ */
+const DONE_HOLD_MS = DURATION.short + DURATION.long;
 
 export function SettingsFontSheet({ onClose }: { onClose: () => void }) {
   // `t` from the hook, not the global `t` from `@lingui/core/macro` -- see the
@@ -91,9 +104,18 @@ export function SettingsFontSheet({ onClose }: { onClose: () => void }) {
   /** Which group has its URL field open, if any. At most one. */
   const [urlSlot, setUrlSlot] = useState<FontSlotId | null>(null);
   const [url, setUrl] = useState('');
-  const [work, setWork] = useState<Record<FontSlotId, SlotWork>>({
-    interface: { kind: 'idle' },
-    mono: { kind: 'idle' },
+  /**
+   * What each slot is doing, phase by phase. `null` is "nothing".
+   *
+   * The sequence itself is `theme/font-install-phase.ts`, which is where the
+   * rule that it never runs backwards lives: three different things push
+   * events at this -- the native download's progress callback, the checks
+   * inside `user-fonts.ts`, and the registration below -- and any of them can
+   * arrive late.
+   */
+  const [work, setWork] = useState<Record<FontSlotId, FontInstallState | null>>({
+    interface: null,
+    mono: null,
   });
   const [errors, setErrors] = useState<Partial<Record<FontSlotId, UserFontProblem>>>({});
   /**
@@ -103,16 +125,42 @@ export function SettingsFontSheet({ onClose }: { onClose: () => void }) {
    * this the fetch would run to completion against a screen nobody is looking
    * at, and land a font the reader had already changed their mind about.
    */
-  const abortRef = useRef<AbortController | null>(null);
-  useEffect(() => () => abortRef.current?.abort(), []);
+  const abortRef = useRef<Partial<Record<FontSlotId, AbortController>>>({});
+  /** The timers holding a finished bar on screen; see `DONE_HOLD_MS`. */
+  const settleRef = useRef<Partial<Record<FontSlotId, ReturnType<typeof setTimeout>>>>({});
+  useEffect(() => {
+    const timers = settleRef.current;
+    const controllers = abortRef.current;
+    return () => {
+      for (const controller of Object.values(controllers)) controller?.abort();
+      for (const timer of Object.values(timers)) clearTimeout(timer);
+    };
+  }, []);
 
   /** What launch registration could not do, until the reader fixes it. */
   const launchProblems = useUserFontStatus((state) => state.problems);
 
   const slots: Record<FontSlotId, FontSlot> = { interface: interfaceFont, mono: monoFont };
 
-  function setSlotWork(id: FontSlotId, next: SlotWork) {
-    setWork((current) => ({ ...current, [id]: next }));
+  /**
+   * One step of one slot's install.
+   *
+   * The reducer returns the state it was given when an event changes nothing,
+   * and that identity is passed straight on: a native progress callback fires
+   * far more often than the bar has anything new to say, and re-rendering the
+   * whole sheet for a repeated byte count is how a download makes a phone warm.
+   */
+  function emit(id: FontSlotId, event: FontInstallEvent) {
+    setWork((current) => {
+      const next = advanceFontInstall(current[id], event);
+      return next === current[id] ? current : { ...current, [id]: next };
+    });
+  }
+
+  /** Hold the filled bar for a beat, then let the row go quiet. */
+  function holdDone(id: FontSlotId) {
+    clearTimeout(settleRef.current[id]);
+    settleRef.current[id] = setTimeout(() => emit(id, { kind: 'settled' }), DONE_HOLD_MS);
   }
 
   function setSlotError(id: FontSlotId, problem: UserFontProblem | undefined) {
@@ -142,51 +190,90 @@ export function SettingsFontSheet({ onClose }: { onClose: () => void }) {
     }
     await feedback('selection');
     const controller = new AbortController();
-    abortRef.current = controller;
+    abortRef.current[id] = controller;
     setSlotError(id, undefined);
-    setSlotWork(id, { kind: 'downloading', progress: null });
+    emit(id, { kind: 'start', mode: 'download' });
     try {
       const installed = await downloadUserFont({
         slot: id,
         url: trimmed,
         previous: slots[id],
         signal: controller.signal,
-        onProgress: (progress) => setSlotWork(id, { kind: 'downloading', progress }),
+        onProgress: ({ bytesWritten, totalBytes }) =>
+          emit(id, { kind: 'bytes', bytesWritten, totalBytes }),
+        onStep: (phase) => emit(id, { kind: 'step', phase }),
       });
+      // The last step, and the one `user-fonts.ts` cannot report because it
+      // happens here: binding the face to its alias is what actually changes
+      // what the app draws with.
+      emit(id, { kind: 'step', phase: 'registering' });
       await apply(id, installed);
+      emit(id, { kind: 'done' });
+      holdDone(id);
       setUrl('');
       setUrlSlot(null);
     } catch (error) {
-      reportFailure(id, error);
+      emit(id, { kind: reportFailure(id, error) ? 'cancelled' : 'failed' });
     } finally {
-      abortRef.current = null;
-      setSlotWork(id, { kind: 'idle' });
+      // Only if it is still ours. The other slot can start its own download
+      // while this one runs, and clearing the map wholesale would orphan that
+      // controller -- its Cancel would do nothing, and leaving the sheet would
+      // no longer stop it.
+      if (abortRef.current[id] === controller) delete abortRef.current[id];
     }
+  }
+
+  /**
+   * Stop the transfer, and say nothing.
+   *
+   * The row is cleared by the rejection finding its way back through
+   * `download`, not from here: a row that said "Cancelled" while bytes were
+   * still landing would be the app reporting something it had asked for
+   * rather than something that had happened.
+   */
+  function cancel(id: FontSlotId) {
+    void feedback('selection');
+    // Per slot, because `busy` is per group: a download running in Interface
+    // does not disable Monospace's own rows, so both slots can be fetching at
+    // once and one Cancel must stop the row it was pressed on.
+    abortRef.current[id]?.abort();
   }
 
   async function importFile(id: FontSlotId) {
     await feedback('selection');
     setSlotError(id, undefined);
-    setSlotWork(id, { kind: 'importing' });
+    emit(id, { kind: 'start', mode: 'import' });
     try {
-      const installed = await importUserFont({ slot: id, previous: slots[id] });
+      const installed = await importUserFont({
+        slot: id,
+        previous: slots[id],
+        onStep: (phase) => emit(id, { kind: 'step', phase }),
+      });
       // `null` is the reader closing the picker, which is not a failure and
       // must not be drawn as one.
-      if (installed) await apply(id, installed);
+      if (!installed) {
+        emit(id, { kind: 'cancelled' });
+        return;
+      }
+      emit(id, { kind: 'step', phase: 'registering' });
+      await apply(id, installed);
+      emit(id, { kind: 'done' });
+      holdDone(id);
     } catch (error) {
-      reportFailure(id, error);
-    } finally {
-      setSlotWork(id, { kind: 'idle' });
+      emit(id, { kind: reportFailure(id, error) ? 'cancelled' : 'failed' });
     }
   }
 
-  function reportFailure(id: FontSlotId, error: unknown) {
+  /** Draws the failure, and answers whether it was the reader's own doing. */
+  function reportFailure(id: FontSlotId, error: unknown): boolean {
     const problem =
       error instanceof UserFontError ? error.problem : ({ kind: 'storage' } as UserFontProblem);
     // A cancel is the reader's own decision arriving back as an exception.
     // Saying "could not download" to somebody who pressed the back arrow is
     // the app arguing with them.
-    setSlotError(id, problem.kind === 'cancelled' ? undefined : problem);
+    const cancelled = problem.kind === 'cancelled';
+    setSlotError(id, cancelled ? undefined : problem);
+    return cancelled;
   }
 
   async function clearSlot(id: FontSlotId) {
@@ -234,6 +321,7 @@ export function SettingsFontSheet({ onClose }: { onClose: () => void }) {
           onUrlChange={setUrl}
           onOpenUrl={() => openUrlField('interface')}
           onDownload={() => void download('interface')}
+          onCancel={() => cancel('interface')}
           onImport={() => void importFile('interface')}
           onUseSystem={() => void clearSlot('interface')}
         />
@@ -250,6 +338,7 @@ export function SettingsFontSheet({ onClose }: { onClose: () => void }) {
           onUrlChange={setUrl}
           onOpenUrl={() => openUrlField('mono')}
           onDownload={() => void download('mono')}
+          onCancel={() => cancel('mono')}
           onImport={() => void importFile('mono')}
           onUseSystem={() => void clearSlot('mono')}
         />
@@ -273,6 +362,7 @@ function FontSlotGroup({
   onUrlChange,
   onOpenUrl,
   onDownload,
+  onCancel,
   onImport,
   onUseSystem,
 }: {
@@ -281,22 +371,66 @@ function FontSlotGroup({
   heading: string;
   description: string;
   slot: FontSlot;
-  work: SlotWork;
+  work: FontInstallState | null;
   problem: UserFontProblem | undefined;
   urlOpen: boolean;
   url: string;
   onUrlChange: (next: string) => void;
   onOpenUrl: () => void;
   onDownload: () => void;
+  onCancel: () => void;
   onImport: () => void;
   onUseSystem: () => void;
 }) {
   const { t } = useLingui();
   const { colors } = useThemeTokens();
   const inputStyle = useSheetSceneInputStyle();
-  const busy = work.kind !== 'idle';
+  const busy = work !== null;
   const installed = slot.kind === 'file' ? slot : null;
-  const progress = work.kind === 'downloading' ? work.progress : null;
+  const bar = work ? fontInstallBar(work) : null;
+
+  /**
+   * The step, as one word the reader can watch change.
+   *
+   * Each of them is a real wait: a request with no answer, bytes arriving, the
+   * file being read and parsed, the face being registered. None is a timer
+   * pretending to be work -- the sequence comes from `user-fonts.ts` doing the
+   * thing it names.
+   *
+   * Declared inside the component for the same reason `problemSentence` is:
+   * the Lingui macro transforms `t` where `useLingui()` lexically binds it.
+   */
+  function phaseLabel(state: FontInstallState): string {
+    switch (state.phase) {
+      case 'connecting':
+        return t`Connecting…`;
+      case 'downloading':
+        return t`Downloading`;
+      case 'copying':
+        return t`Copying…`;
+      case 'checking':
+        return t`Checking…`;
+      case 'registering':
+        return t`Installing…`;
+      case 'done':
+        return t`Installed`;
+    }
+  }
+
+  /**
+   * The number beside the step, and only while bytes are actually moving.
+   *
+   * A percentage where the server said how big the file is, and the running
+   * total where it did not -- "1.2 MB" is not a fraction, but it is evidence,
+   * and it is the only evidence an unmeasured transfer can produce. Nothing at
+   * all for the local steps: there is no honest number for them, and the app
+   * does not invent one.
+   */
+  function phaseMeasure(state: FontInstallState): string {
+    if (state.phase !== 'downloading') return '';
+    const percent = fontInstallPercent(state);
+    return percent === null ? formatAssetSize(state.receivedBytes) : `${percent}%`;
+  }
 
   /**
    * The quiet note under a monospace face whose glyphs are not all one width.
@@ -372,22 +506,86 @@ function FontSlotGroup({
         // finished downloading went on announcing "Downloading" for the rest of
         // the session. Found on device.
         accessibilityLabel={heading}
+        // The phase and not the percentage. A value that changed sixty times a
+        // second would be a row talking over itself; the step names are five
+        // announcements across a whole install, and the bar below carries the
+        // fraction for a reader who goes looking for it.
         accessibilityValue={{
-          text: busy ? t`Downloading` : installed ? installed.label : t`System font`,
+          text: work ? phaseLabel(work) : installed ? installed.label : t`System font`,
         }}
+        busy={busy}
+        // The title changes under the reader exactly once per install, and it
+        // is the thing they were waiting for: the new name fades in where
+        // "System font" was rather than replacing it between two frames.
+        crossfadeTitle
+        // And the rule takes a breath at the same moment, so the hand-off from
+        // "a bar was moving here" to "this row is the font now" is one beat
+        // and not two unrelated changes. Keyed on the file, so it fires on an
+        // install and on a return to the system font, and never on open.
+        confirmKey={installed ? installed.file : 'system'}
         testID={`font-current-${id}`}
         selectedTestID={`font-current-${id}-selected`}
+        meta={
+          work ? (
+            <View style={styles.meta}>
+              {/* The live region is the words only. A percentage ticking
+                  inside it would make Android read the row aloud on every
+                  frame, so the number is drawn and explicitly not announced. */}
+              <View accessibilityLiveRegion="polite">
+                {/* Keyed on the phase and not on the whole string, so the
+                    cross-fade runs when the step changes and not when the
+                    count does. The same beat as the reasoning block's label. */}
+                <Animated.View
+                  key={work.phase}
+                  entering={fadeIn('short')}
+                  exiting={fadeOut('micro')}>
+                  <Text variant="caption" color={colors.textMuted} testID={`font-phase-${id}`}>
+                    {phaseLabel(work)}
+                  </Text>
+                </Animated.View>
+              </View>
+              {phaseMeasure(work) ? (
+                <Text
+                  variant="caption"
+                  color={colors.textSubtle}
+                  importantForAccessibility="no-hide-descendants"
+                  accessibilityElementsHidden
+                  // Tabular, so a percentage does not reflow the row as it
+                  // counts up.
+                  style={styles.measure}
+                  testID={`font-measure-${id}`}>
+                  {phaseMeasure(work)}
+                </Text>
+              ) : null}
+            </View>
+          ) : undefined
+        }
         trailing={
           <View style={styles.underRow}>
-            {progress?.totalBytes ? (
+            {work && bar ? (
               <ThemeImportProgress
                 compact
-                label={t`Downloading`}
+                label={phaseLabel(work)}
+                // One key for the whole install, so the fill travels from
+                // where the transfer left it to full rather than being reborn
+                // at nought when the phase changes. The switch between the
+                // travelling segment and the fill is a change of component,
+                // which fades of its own accord.
                 phase={`font-${id}`}
-                completed={progress.bytesWritten}
-                total={progress.totalBytes}
+                indeterminate={bar.mode === 'indeterminate'}
+                completed={bar.mode === 'determinate' ? bar.completed : undefined}
+                total={bar.mode === 'determinate' ? bar.total : undefined}
                 testID={`font-progress-${id}`}
               />
+            ) : null}
+            {work && fontInstallCancellable(work) ? (
+              <Animated.View entering={fadeIn('short')} exiting={fadeOut('micro')}>
+                <SheetSceneQuietAction
+                  label={t`Cancel`}
+                  onPress={onCancel}
+                  testID={`font-cancel-${id}`}
+                />
+              </Animated.View>
             ) : null}
             {problem ? (
               <Animated.View entering={fadeIn('short')} exiting={fadeOut('micro')}>
@@ -442,7 +640,7 @@ function FontSlotGroup({
           </SheetSceneField>
           <SheetSceneAction
             label={t`Download`}
-            busy={work.kind === 'downloading'}
+            busy={work?.kind === 'download'}
             disabled={!isDownloadableFontUrl(url)}
             onPress={onDownload}
             testID={`font-download-${id}`}
@@ -475,6 +673,10 @@ function FontSlotGroup({
 }
 
 const styles = StyleSheet.create({
-  /** The progress bar, the error and the note, under the row they belong to. */
+  /** The progress bar, the Cancel, the error and the note, under the row. */
   underRow: { gap: SHEET_LADDER.tight, paddingBottom: SHEET_LADDER.tight },
+  /** The step and its number, at the end of the row: one line, never wrapped. */
+  meta: { flexDirection: 'row', alignItems: 'center', gap: SHEET_LADDER.tight },
+  /** A count that must not reflow the row as it changes. */
+  measure: { fontVariant: ['tabular-nums'] },
 });

@@ -35,6 +35,7 @@ import { Directory, File, Paths } from 'expo-file-system';
 import * as Font from 'expo-font';
 import QuickCrypto from 'react-native-quick-crypto';
 
+import { type FontInstallPhase } from '@/theme/font-install-phase';
 import {
   checkFontSize,
   directFontUrl,
@@ -84,6 +85,21 @@ export type FontDownloadProgress = {
   bytesWritten: number;
   totalBytes: number | null;
 };
+
+/**
+ * The steps of an install that are not bytes arriving, reported as they start.
+ *
+ * Every one of them is a real thing this module does and waits on, and each
+ * can be the whole of what the reader is looking at: `checking` is a 20 MB CJK
+ * face being parsed by Skia, which on an older phone is seconds with no bytes
+ * moving and nothing else to see. The row draws them; nothing here decides how.
+ *
+ * Deliberately not `downloading`, `registering` or `done`. The transfer
+ * already reports itself through `onProgress`, the registration happens in the
+ * caller (`loadUserFont`, after this module has handed back an installed
+ * slot), and `done` is the caller's word for its own work finishing.
+ */
+export type FontInstallStep = Extract<FontInstallPhase, 'connecting' | 'copying' | 'checking'>;
 
 /** The fonts directory, created if this is the first font the reader has added. */
 function fontsDirectory(): Directory {
@@ -182,9 +198,15 @@ async function acceptStagedFont(
   staged: File,
   slot: FontSlotId,
   source: string,
-  previous: FontSlot | undefined
+  previous: FontSlot | undefined,
+  onStep?: (step: FontInstallStep) => void,
+  signal?: AbortSignal
 ): Promise<InstalledFontSlot> {
   try {
+    // One name for the three tests below. They are one wait from outside, and
+    // the slowest of them -- the Skia parse -- is the reason this is announced
+    // at all: a large face spends longer being read than being fetched.
+    onStep?.('checking');
     const sizeProblem = checkFontSize(staged.size);
     if (sizeProblem) throw new UserFontError(sizeProblem);
 
@@ -195,6 +217,12 @@ async function acceptStagedFont(
     // for the ratio today, and a face that Skia cannot open is no more welcome
     // there than in the terminal.
     const profile = await probeFont(staged.uri);
+
+    // The last place a cancel can still be honoured, and the reader has had
+    // time to reach it: the parse above is seconds on a large CJK face, and a
+    // reader who swiped the sheet away during it has asked for this not to
+    // happen. Before the move, so nothing has replaced anything yet.
+    if (signal?.aborted) throw new UserFontError({ kind: 'cancelled' });
 
     const relative = userFontRelativePath(slot, randomToken(), format);
     const destination = new File(Paths.document, relative);
@@ -237,15 +265,21 @@ export async function downloadUserFont({
   previous,
   signal,
   onProgress,
+  onStep,
 }: {
   slot: FontSlotId;
   url: string;
   previous?: FontSlot;
   signal?: AbortSignal;
   onProgress?: (progress: FontDownloadProgress) => void;
+  onStep?: (step: FontInstallStep) => void;
 }): Promise<InstalledFontSlot> {
   const staged = stagingFile(slot);
   let downloaded: File;
+  // The request is away and nothing has come back. On a chunked response the
+  // first `onProgress` can be a second or more behind this, and that second is
+  // exactly the part of the wait that used to be drawn as an empty row.
+  onStep?.('connecting');
   try {
     downloaded = await File.downloadFileAsync(directFontUrl(url), staged, {
       // The staging name carries a fresh token every time, so there is nothing
@@ -268,7 +302,16 @@ export async function downloadUserFont({
     if (signal?.aborted) throw new UserFontError({ kind: 'cancelled' });
     throw downloadError(error);
   }
-  return acceptStagedFont(downloaded, slot, url.trim(), previous);
+  // A cancel that lands in the gap between the last byte and the first check.
+  // `downloadFileAsync` has already resolved, so nothing else will reject and
+  // without this the reader's Cancel would be answered by the font installing
+  // anyway -- and by a `.part` file left at the staging path, since the throw
+  // below is the only thing that discards it.
+  if (signal?.aborted) {
+    discard(downloaded);
+    throw new UserFontError({ kind: 'cancelled' });
+  }
+  return acceptStagedFont(downloaded, slot, url.trim(), previous, onStep, signal);
 }
 
 /**
@@ -307,9 +350,11 @@ function downloadError(error: unknown): UserFontError {
 export async function importUserFont({
   slot,
   previous,
+  onStep,
 }: {
   slot: FontSlotId;
   previous?: FontSlot;
+  onStep?: (step: FontInstallStep) => void;
 }): Promise<InstalledFontSlot | null> {
   const picked = await File.pickFileAsync({
     mimeTypes: ['font/ttf', 'font/otf', 'application/x-font-ttf', 'application/octet-stream'],
@@ -317,13 +362,17 @@ export async function importUserFont({
   if (picked.canceled) return null;
   const source = picked.result;
   const staged = stagingFile(slot);
+  // Only now: while the picker was up the reader was doing the waiting, and a
+  // row that said "Copying" over somebody else's file browser would be
+  // describing a step that had not started.
+  onStep?.('copying');
   try {
     await source.copy(staged);
   } catch (error) {
     discard(staged);
     throw error instanceof UserFontError ? error : new UserFontError({ kind: 'storage' });
   }
-  return acceptStagedFont(staged, slot, source.name, previous);
+  return acceptStagedFont(staged, slot, source.name, previous, onStep);
 }
 
 /**

@@ -1,6 +1,6 @@
 import { Text, useThemeTokens } from '@osuki-dev/ui';
 import { Search, X } from 'lucide-react-native';
-import { useEffect, type ReactNode } from 'react';
+import { useEffect, useRef, type ReactNode } from 'react';
 import {
   ActivityIndicator,
   StyleSheet,
@@ -15,6 +15,7 @@ import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withDelay,
+  withSequence,
   withTiming,
 } from 'react-native-reanimated';
 
@@ -109,6 +110,15 @@ const ROW_COPY_GAP = 2;
 
 /** The selection mark: a rule at the sheet's edge, not a box around the row. */
 const SELECTION_RULE_WIDTH = 2;
+
+/**
+ * How wide the rule goes at the top of a confirmation swell, as a multiple.
+ *
+ * Three, which is six points: enough to catch the eye of somebody who has been
+ * watching a progress bar a few lines below it, and small enough that the mark
+ * is still a rule at its widest rather than a block sliding out of the gutter.
+ */
+const RULE_CONFIRM_WIDTH = 3;
 
 /**
  * The scene: the ground, the grabber, the heading, and one column of content.
@@ -380,6 +390,7 @@ export function SheetSceneRow({
   selected = false,
   disabled = false,
   disabledCaption,
+  busy = false,
   leading,
   trailing,
   onPress,
@@ -389,6 +400,7 @@ export function SheetSceneRow({
   testID,
   selectedTestID,
   crossfadeTitle = false,
+  confirmKey,
   style,
 }: {
   title: string;
@@ -422,6 +434,15 @@ export function SheetSceneRow({
   disabled?: boolean;
   /** Why it is disabled, in the host's vocabulary: "Set up on the host". */
   disabledCaption?: string;
+  /**
+   * Work is happening on this row: a download, an install.
+   *
+   * Only reaches `accessibilityState`, because the drawing of it belongs to
+   * whatever the row is doing -- a progress bar in `trailing`, a step name in
+   * `meta`. What a screen reader cannot pick up from either of those is that
+   * the row is *mid-something*, which is the one thing `busy` says.
+   */
+  busy?: boolean;
   leading?: ReactNode;
   /** Under the row, and only when it is the selected one: variant chips. */
   trailing?: ReactNode;
@@ -462,6 +483,21 @@ export function SheetSceneRow({
    * chips use when an auto-title lands.
    */
   crossfadeTitle?: boolean;
+  /**
+   * A value that changes when the thing this row names has just been settled.
+   *
+   * The selection rule is already lit -- the row was the current one before and
+   * is the current one after -- so the arrival of, say, a font the reader has
+   * spent fifteen seconds waiting for lands on a row that looks exactly as it
+   * did. This is the beat that says it happened: the rule swells and comes
+   * back, once, at the moment the title cross-fades to the new name.
+   *
+   * A key rather than a boolean because it is an event, not a state; the row
+   * flashes when the value changes and does nothing on the first render, so a
+   * sheet that opens on an already-installed font does not congratulate the
+   * reader for something they did last week.
+   */
+  confirmKey?: string | number;
   style?: StyleProp<ViewStyle>;
 }) {
   const { colors } = useThemeTokens();
@@ -479,7 +515,30 @@ export function SheetSceneRow({
     }
   }, [selected, rule]);
 
-  const ruleStyle = useAnimatedStyle(() => ({ opacity: rule.value }));
+  /**
+   * The confirmation swell, kept apart from `rule` so the two cannot fight.
+   *
+   * `rule` answers selection and is where the mark lives the rest of the time;
+   * this one is a single out-and-back on top of it. It stays at nought except
+   * for the beat after `confirmKey` changes, so an unselected row can flash
+   * too (`opacity` takes whichever is higher) without the flash leaving the
+   * mark lit afterwards.
+   */
+  const confirm = useSharedValue(0);
+  const confirmSeen = useRef(confirmKey);
+  useEffect(() => {
+    if (confirmKey === undefined || confirmKey === confirmSeen.current) return;
+    confirmSeen.current = confirmKey;
+    confirm.value = withSequence(withTiming(1, timing('short')), withTiming(0, timing('long')));
+  }, [confirm, confirmKey]);
+
+  const ruleStyle = useAnimatedStyle(() => ({
+    opacity: Math.max(rule.value, confirm.value),
+    // Sideways from its own centre line, and never a change of length: the
+    // rule already spans the row's full height, so a swell along it would be
+    // the row appearing to grow. Widening is a mark that thickens and settles.
+    transform: [{ scaleX: 1 + confirm.value * (RULE_CONFIRM_WIDTH - 1) }],
+  }));
 
   const titleColor = disabled ? colors.textSubtle : selected ? colors.primary : colors.text;
 
@@ -493,7 +552,7 @@ export function SheetSceneRow({
       <PressableScale
         testID={testID}
         accessibilityRole="button"
-        accessibilityState={{ selected, disabled }}
+        accessibilityState={{ selected, disabled, busy }}
         accessibilityLabel={accessibilityLabel ?? title}
         accessibilityValue={accessibilityValue}
         disabled={disabled || !(onPress || onLongPress)}
@@ -786,6 +845,11 @@ const styles = StyleSheet.create({
     top: 0,
     bottom: 0,
     width: SELECTION_RULE_WIDTH,
+    // The confirmation swell grows from the sheet's edge inwards rather than
+    // from the rule's own centre: the scroller clips at exactly this left
+    // edge, so a centred swell would lose its outer half and land narrower
+    // and lopsided.
+    transformOrigin: 'left center',
   },
   row: {
     flexDirection: 'row',
