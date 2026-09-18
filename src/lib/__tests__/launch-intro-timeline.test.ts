@@ -23,7 +23,7 @@ describe('launchIntroTimeline', () => {
     expect(beats.totalMs).toBeLessThanOrEqual(LAUNCH_INTRO_BUDGET_MS);
     // And the budget is a limit rather than a description: an opening that has
     // grown to exactly fill it has grown too far to notice it did.
-    expect(beats.totalMs).toBe(1400);
+    expect(beats.totalMs).toBe(1300);
   });
 
   test('even a fully stalled cut cannot push the launch past the budget', () => {
@@ -76,7 +76,7 @@ describe('launchIntroTimeline', () => {
     // The point of stating the beats in tokens: nothing here carries a number
     // of its own that a global tuning pass would walk past.
     const doubled = launchIntroTimeline({ micro: 300, short: 400, medium: 600, long: 800 });
-    expect(doubled.totalMs).toBe(2800);
+    expect(doubled.totalMs).toBe(2600);
     expect(doubled.skipArmedAt).toBe(800);
   });
 });

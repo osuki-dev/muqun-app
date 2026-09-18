@@ -101,13 +101,13 @@ export function launchIntroTimeline(d: MotionDurations): LaunchIntroTimeline {
   const holdUntil = d.long + d.long + d.short;
   return {
     wipe: { at: 0, ms: d.long + d.short },
-    wipeStallCapMs: d.short,
+    wipeStallCapMs: d.medium,
     hero: { at: d.medium, ms: d.long + d.short },
     rise: { at: d.long + d.short, ms: d.long },
     skipArmedAt: d.long,
     holdUntil,
-    exit: { at: holdUntil, ms: d.long },
-    totalMs: holdUntil + d.long,
+    exit: { at: holdUntil, ms: d.medium },
+    totalMs: holdUntil + d.medium,
   };
 }
 
