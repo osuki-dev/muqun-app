@@ -161,6 +161,7 @@ import {
 } from '@/lib/session-snapshot';
 import { assertSupportedHerdr } from './herdr-compatibility';
 import { GatewayTunnelUnavailableError, directGatewayBaseUrl } from './ssh-tunnel';
+import { MAX_ASSET_TEXT_BYTES } from './text-preview';
 
 const REQUEST_TIMEOUT_MS = 8_000;
 // An attachment is orders of magnitude larger than a control call, and the
@@ -985,30 +986,6 @@ export const SESSION_ASSET_PAGE_LIMIT = 100;
  */
 export const MAX_SESSION_ASSET_LIMIT = 200;
 
-/**
- * Ceiling on a text-ish asset read, and the one number the viewer refuses at.
- *
- * It used to be 512 KiB, and the viewer refused to *draw* anything past 64 KiB
- * -- so a 100 KB file was fetched over the wire, held whole in the JS heap, and
- * then replaced with a sentence saying it was too large. There is no gate at
- * 64 KiB any more: a document is drawn a block at a time and a source file a
- * line at a time, so what the viewer can show is simply what the phone can
- * hold.
- *
- * Five MiB is what that turns out to be worth. A megabyte of text is 20 000
- * lines and a `bun.lock`; five is a limit nothing an agent writes has ever come
- * near. It is under the gateway's own 10 MiB asset ceiling
- * (`MAX_ASSET_CONTENT_BYTES`) and under what its encrypted transport will
- * buffer, so the app's refusal is the first one the reader meets and it is the
- * one that can explain itself. The cost is real and bounded: a JS string is
- * UTF-16, so five MiB of source is about ten of heap, held only while the file
- * is open.
- *
- * The gateway caps this too, but a phone is the side that runs out of memory,
- * so the app refuses oversized files before asking for them rather than after
- * receiving them.
- */
-export const MAX_ASSET_TEXT_BYTES = 5 * 1024 * 1024;
 /**
  * Reading a file is not a control call; it gets its own, longer budget.
  *

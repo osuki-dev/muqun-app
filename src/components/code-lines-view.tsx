@@ -12,7 +12,7 @@ import type { MarkdownStyle } from 'react-native-enriched-markdown';
 
 import { AGENT_TYPE } from '@/constants/agent-type';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
-import { clampLine, gutterDigits, lineContentWidth } from '@/lib/text-lines';
+import { clampLine, gutterDigits, lineContentWidth } from '@/lib/text-preview';
 
 /**
  * A file, one row per line, virtualized.

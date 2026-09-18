@@ -6,7 +6,7 @@ import {
   gutterDigits,
   indexTextLines,
   lineContentWidth,
-} from '../text-lines';
+} from '../text-preview';
 
 describe('indexTextLines', () => {
   test('an empty file has no lines at all', () => {

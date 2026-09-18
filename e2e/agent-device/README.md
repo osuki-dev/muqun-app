@@ -97,7 +97,13 @@ SSH, file mentions, attachments, artifacts, the git diff viewer, settings, away
 digest, slash commands, and responsive workspace navigation. The `git-diff` flow
 opens the demo checkout, expands its six-thousand-line file, pages it with
 `Show more`, and refreshes -- all against the bundled fixtures, so it proves the
-rows and the paging rather than anything about a real `git`. Pad-specific rail assertions execute when
+rows and the paging rather than anything about a real `git`. The
+`large-file-preview` flow opens the three demo fixtures that sit past the sizes
+the asset viewer routes on -- a 100 KB changelog, a 140 KB bundle with a
+six-thousand-character line in it, and an 8 MB log -- and asserts that the first
+draws headings rather than its own source, that the second draws numbered rows
+under the note saying why they are not coloured, and that only the third is
+refused, by a sentence naming both sizes. Pad-specific rail assertions execute when
 the persistent Servers rail is present. Run on a landscape tablet to verify
 those branches; passing a phone suite does not prove tablet coverage.
 

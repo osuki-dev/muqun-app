@@ -29,11 +29,10 @@ import {
   type AssetImageSource,
   type SessionAsset,
   readAssetBytes,
-  MAX_ASSET_TEXT_BYTES,
 } from '@/lib/gateway-client';
 import { CodeLinesView } from '@/components/code-lines-view';
 import { MarkdownDocumentView } from '@/components/markdown-document-view';
-import { indexTextLines } from '@/lib/text-lines';
+import { HIGHLIGHT_MAX_CHARS, MAX_ASSET_TEXT_BYTES, indexTextLines } from '@/lib/text-preview';
 import { describeGatewayFailure } from '@/lib/network-error';
 import { isSafeExternalLink } from '@/lib/safe-link';
 import { CustomThemeLibrary, type ThemePrimaryAction } from '@/components/custom-theme-library';
@@ -146,56 +145,6 @@ function EncryptedImageViewer({ asset, onClose }: { asset: SessionAsset; onClose
 
 /** How long the header's copy button stays a tick before it is a copy icon again. */
 const COPIED_FEEDBACK_MS = 1_600;
-
-/**
- * Where a file stops being highlighted and starts being drawn as lines.
- *
- * Not where it stops being drawn. There is no size at which this viewer refuses
- * a text file any more, short of `MAX_ASSET_TEXT_BYTES` -- what changes at this
- * number is which renderer draws it, and the reason is iOS.
- *
- * `react-native-enriched-markdown` parses and lays out natively -- the
- * tree-sitter highlighter never touches the JS thread -- but the layout still
- * lands in one uninterruptible pass before anything is on screen, and past a
- * point it stops being linear. Measured through this component on a warm app,
- * from the string being in hand to the renderer's first layout, one fenced
- * TypeScript block per file, each size a file the app had not opened before:
- *
- *   size        iOS simulator    Android emulator
- *    20 KiB            101 ms              185 ms
- *    60 KiB            806 ms              127 ms
- *    96 KiB          1_869 ms              249 ms
- *   128 KiB          3_746 ms              209 ms
- *   160 KiB          5_847 ms              390 ms
- *   200 KiB          7_920 ms              141 ms
- *
- * Android is flat and cheap at every size. iOS is quadratic, and at 200 KiB the
- * sheet shows its loading skeleton for eight seconds and then a screenful of
- * code. That is not a slow render, it is the reader waiting at a placeholder,
- * and it is the shape card #661 reported.
- *
- * 64 KiB is the last size on the flat part of that curve -- under a second --
- * so it stays, and every file under it is drawn exactly as it was: one fenced
- * block, highlighted natively, selectable, nothing changed. What is new is the
- * other side. A file above it goes to `CodeLinesView`, which is a virtualized
- * list of monospaced rows and costs the screenful on screen rather than the
- * file, so 170 KB and 2 MB open in the same time as 20 KB. It has no colour in
- * it, and the viewer says so.
- *
- * Highlighting the visible window instead was the alternative, and it loses.
- * The only highlighter in this app is inside the native fenced block; feeding
- * it a window at a time means a nested horizontal scroller per window, so
- * columns stop agreeing down the file, a height that cannot be predicted, so
- * the fixed row geometry that makes the list smooth goes with it, and a native
- * re-parse several times a second on a fling. Colour on the files an agent
- * writes, and a file that opens at all on the files it does not, is the better
- * half of that trade -- and it is strictly more than the refusal it replaces.
- *
- * Characters, not bytes, and deliberately: what the renderer measures is
- * glyphs. Real bytes are what `MAX_ASSET_TEXT_BYTES` gates on, one layer down,
- * where `asset.size` is a real file size.
- */
-const HIGHLIGHT_MAX_CHARS = 64 * 1024;
 
 /** Everything that is not an image: a document, some text, or a file we can only describe. */
 function AssetSheet({ asset, onClose }: { asset: SessionAsset; onClose: () => void }) {

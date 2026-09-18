@@ -5,6 +5,7 @@ import { createThemeStarter } from '@/theme/authoring';
 
 import { AGENT_SPAWN_CAPABILITY } from '@/lib/agent-spawn';
 import { GIT_DIFF_CAPABILITY, PANE_CONTEXT_CAPABILITY } from '@/lib/git-diff';
+import { DEMO_REFUSED_LOG_BYTES, demoBundleText, demoChangelogText } from '@/lib/demo-large-files';
 import { normalizeGatewayEntities, type GatewayEntity } from '@/lib/gateway-entities';
 import type { SessionAsset } from '@/lib/gateway-client';
 import type { GatewayRecord } from '@/lib/gateway-storage';
@@ -602,6 +603,14 @@ const DEMO_ASSET_TEXT: Record<string, string> = {
   ].join('\n'),
 };
 
+/**
+ * The three files the demo carries so that a viewer which no longer refuses
+ * anything can be seen not refusing it.
+ *
+ * The two that have contents are built in `demo-large-files`, which holds the
+ * builders and the reason they are builders. The third has no contents at all:
+ * its size is the whole fixture, because the viewer refuses it before asking.
+ */
 /** Minutes ago, so the list always reads as "just happened". */
 const DEMO_ASSET_AGE_MINUTES: Record<string, number> = {
   'as-demo-report': 2,
@@ -609,6 +618,9 @@ const DEMO_ASSET_AGE_MINUTES: Record<string, number> = {
   'as-demo-diff': 26,
   'as-demo-coverage': 74,
   'as-demo-spec': 1_500,
+  'as-demo-changelog': 1_800,
+  'as-demo-bundle': 2_100,
+  'as-demo-session-log': 2_400,
 };
 
 function demoAssetModifiedAt(id: string): number {
@@ -676,6 +688,46 @@ export function demoSessionAssets(): SessionAsset[] {
       modified_unix_ms: demoAssetModifiedAt('as-demo-spec'),
       origin,
       previewable: false,
+    },
+    {
+      // Markdown well past what one native view was ever handed: the document
+      // viewer cuts it on block boundaries and draws a cell at a time.
+      id: 'as-demo-changelog',
+      path: '~/code/muqun/CHANGELOG.md',
+      name: 'CHANGELOG.md',
+      kind: 'markdown',
+      mime: 'text/markdown',
+      size: demoAssetText('as-demo-changelog').length,
+      modified_unix_ms: demoAssetModifiedAt('as-demo-changelog'),
+      origin,
+      previewable: true,
+    },
+    {
+      // Code past the highlight ceiling: rows, numbered, and one line of six
+      // thousand characters to pan along.
+      id: 'as-demo-bundle',
+      path: '~/code/muqun/dist/app.bundle.js',
+      name: 'app.bundle.js',
+      kind: 'text',
+      mime: 'text/javascript',
+      size: demoAssetText('as-demo-bundle').length,
+      modified_unix_ms: demoAssetModifiedAt('as-demo-bundle'),
+      origin,
+      previewable: true,
+    },
+    {
+      // The one file that is still refused, and the only reason the refusal has
+      // a screen left to appear on. Nothing generates its bytes: the size is the
+      // whole fixture, because the viewer never asks for the rest.
+      id: 'as-demo-session-log',
+      path: '~/code/muqun/out/session.log',
+      name: 'session.log',
+      kind: 'text',
+      mime: 'text/plain',
+      size: DEMO_REFUSED_LOG_BYTES,
+      modified_unix_ms: demoAssetModifiedAt('as-demo-session-log'),
+      origin,
+      previewable: true,
     },
     {
       id: 'as-demo-theme',
@@ -861,6 +913,8 @@ export function demoPaneParts(paneId: string): Record<string, unknown> {
 }
 
 export function demoAssetText(assetId: string): string {
+  if (assetId === 'as-demo-bundle') return demoBundleText();
+  if (assetId === 'as-demo-changelog') return demoChangelogText();
   if (assetId === 'as-demo-theme') {
     const theme = createThemeStarter();
     theme.name = i18n._(msg`Theme`);
