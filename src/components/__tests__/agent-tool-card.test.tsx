@@ -5,12 +5,15 @@ import {
   classifyTool,
   diffFilesFromMetadata,
   executeErrored,
+  contentTypeFromMetadata,
   executeToolCalls,
   extractCaption,
   extractTarget,
   parsePatchSections,
   parseToolQuestions,
   questionAnswersFromMetadata,
+  searchProviderFromMetadata,
+  splitUrl,
   toolArgumentLine,
   toolInputRecord,
 } from '@/lib/agent-tool-output';
@@ -212,6 +215,35 @@ describe('the Code Mode card', () => {
     expect(CARD).toContain("kind === 'execute' && executeErrored(part.metadata)");
     // Bounded: a Code Mode run can call a tool in a loop.
     expect(CARD).toContain('calls.slice(0, EXECUTE_CALL_MAX)');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// webfetch and websearch
+// ---------------------------------------------------------------------------
+
+describe('the web cards', () => {
+  test('a fetch is headed by its host, with the page under it', () => {
+    const { host, path } = splitUrl('https://docs.expo.dev/versions/v57.0.0/config/');
+    expect(host).toBe('docs.expo.dev');
+    expect(path).toBe('/versions/v57.0.0/config/');
+    expect(contentTypeFromMetadata({ contentType: 'text/html; charset=utf-8' })).toBe('text/html');
+  });
+
+  test('a search keeps its query as the title and names its provider', () => {
+    // Not a URL, so the header falls through to the query the tool was given.
+    expect(splitUrl('expo sdk 57 release notes').host).toBe('');
+    expect(extractTarget('web', { query: 'expo sdk 57 release notes' })).toBe(
+      'expo sdk 57 release notes'
+    );
+    expect(searchProviderFromMetadata({ provider: 'brave' })).toBe('brave');
+  });
+
+  test('the card splits the URL and chips both readings of metadata', () => {
+    expect(CARD).toContain('const { host, path } = splitUrl(target);');
+    expect(CARD).toContain('if (host) return { headerTitle: host, headerCaption: path };');
+    expect(CARD).toContain('contentTypeFromMetadata(part.metadata)');
+    expect(CARD).toContain('searchProviderFromMetadata(part.metadata)');
   });
 });
 

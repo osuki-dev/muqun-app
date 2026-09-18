@@ -29,6 +29,7 @@ import {
   basename,
   capLines,
   classifyTool,
+  contentTypeFromMetadata,
   diffFilesFromMetadata,
   dirname,
   editFilesFromMetadata,
@@ -48,9 +49,11 @@ import {
   QUESTION_MAX,
   QUESTION_OPTION_MAX,
   resultCountFromMetadata,
+  searchProviderFromMetadata,
   shellExitFromMetadata,
   skillDirectoryFromMetadata,
   skillNameFromMetadata,
+  splitUrl,
   stripReadLineNumbers,
   stripSubagentEnvelope,
   subagentStatusFromMetadata,
@@ -483,6 +486,18 @@ export const AgentToolCard = memo(function AgentToolCard({
     if (kind === 'execute' && executeErrored(part.metadata)) {
       nodes.push(<Chip key="err" text={t`error`} color={colors.removed} />);
     }
+    if (kind === 'web') {
+      // What came back, and who answered: a fetch states its content type and
+      // a search states its provider, and neither reached the reader.
+      const contentType = contentTypeFromMetadata(part.metadata);
+      if (contentType) {
+        nodes.push(<Chip key="type" text={contentType} color={theme.colors.textMuted} />);
+      }
+      const provider = searchProviderFromMetadata(part.metadata);
+      if (provider) {
+        nodes.push(<Chip key="provider" text={provider} color={theme.colors.textMuted} />);
+      }
+    }
     if (kind === 'subagent') {
       const status = subagentStatusFromMetadata(part.metadata) ?? subagent?.state;
       if (status) {
@@ -612,6 +627,15 @@ export const AgentToolCard = memo(function AgentToolCard({
         headerTitle: name || target,
         headerCaption: skillDirectoryFromMetadata(part.metadata),
       };
+    }
+    if (kind === 'web') {
+      // A fetch is identified by where it went: the host is the fact and the
+      // path is which page of it. A whole URL in a clipped one-line header is
+      // `https://docs.expo.d…/config` -- neither of them.
+      const { host, path } = splitUrl(target);
+      if (host) return { headerTitle: host, headerCaption: path };
+      // A search: the query is the title, and there is no second line.
+      return { headerTitle: part.title ?? target, headerCaption: '' };
     }
     return { headerTitle: part.title ?? target, headerCaption: caption };
   }, [kind, target, caption, part.title, part.metadata, input]);
