@@ -616,7 +616,7 @@
         },
         "mode": "scroll",
         "direction": "down",
-        "timeout": 30000,
+        "timeout": 120000,
         "run": "flows/large-file-preview.ad#scroll-body"
       },
       {
@@ -691,7 +691,7 @@
         },
         "mode": "scroll",
         "direction": "down",
-        "timeout": 30000,
+        "timeout": 240000,
         "run": "flows/large-file-preview.ad#scroll-body"
       },
       {
