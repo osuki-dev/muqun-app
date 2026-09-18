@@ -1322,6 +1322,10 @@ msgstr "해당 테마를 열 수 없습니다"
 msgid "Could not open the file"
 msgstr "파일을 열지 못했습니다"
 
+#: src/app/settings.tsx
+msgid "Could not open the guide"
+msgstr "안내를 열 수 없습니다"
+
 #: src/lib/attachments.ts
 msgid "Could not open the picker."
 msgstr "선택기를 열지 못했습니다"
@@ -1980,6 +1984,10 @@ msgctxt "agent slash command"
 msgid "Guided AGENTS.md setup"
 msgstr "AGENTS.md 가이드 설정"
 
+#: src/app/settings.tsx
+msgid "Guides for pairing, the terminal, OpenCode and themes"
+msgstr "페어링, 터미널, OpenCode, 테마 안내"
+
 #: src/components/settings-alerts.tsx
 msgid "Haptic feedback"
 msgstr "햅틱 피드백"
@@ -2036,6 +2044,10 @@ msgstr "호스트 키가 바뀌었습니다"
 #: src/components/ssh-host-row.tsx
 msgid "Host key trusted"
 msgstr "호스트 키 신뢰됨"
+
+#: src/app/settings.tsx
+msgid "How to use Muqun"
+msgstr "Muqun 사용법"
 
 #: src/i18n/labels.ts
 msgid "Idle"
@@ -2536,6 +2548,10 @@ msgstr "실행 중인 에이전트 없음"
 #: src/components/open-web-service-sheet.tsx
 msgid "No app on this phone opens web pages."
 msgstr "이 휴대폰에는 웹 페이지를 열 수 있는 앱이 없습니다"
+
+#: src/app/settings.tsx
+msgid "No app on this phone opens web pages. The guide is at muqun.dev/support."
+msgstr "이 휴대폰에는 웹 페이지를 열 수 있는 앱이 없습니다. 안내는 muqun.dev/support 에 있습니다"
 
 #: src/components/pairing-camera.tsx
 msgid "No camera to scan with"

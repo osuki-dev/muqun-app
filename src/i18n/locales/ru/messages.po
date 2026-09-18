@@ -1322,6 +1322,10 @@ msgstr "Не удалось открыть эту тему"
 msgid "Could not open the file"
 msgstr "Не удалось открыть файл"
 
+#: src/app/settings.tsx
+msgid "Could not open the guide"
+msgstr "Не удалось открыть руководство"
+
 #: src/lib/attachments.ts
 msgid "Could not open the picker."
 msgstr "Не удалось открыть выбор"
@@ -1980,6 +1984,10 @@ msgctxt "agent slash command"
 msgid "Guided AGENTS.md setup"
 msgstr "Пошаговая настройка AGENTS.md"
 
+#: src/app/settings.tsx
+msgid "Guides for pairing, the terminal, OpenCode and themes"
+msgstr "Руководства по привязке, терминалу, OpenCode и темам"
+
 #: src/components/settings-alerts.tsx
 msgid "Haptic feedback"
 msgstr "Тактильный отклик"
@@ -2036,6 +2044,10 @@ msgstr "Ключ хоста изменился"
 #: src/components/ssh-host-row.tsx
 msgid "Host key trusted"
 msgstr "Ключ хоста доверенный"
+
+#: src/app/settings.tsx
+msgid "How to use Muqun"
+msgstr "Как пользоваться Muqun"
 
 #: src/i18n/labels.ts
 msgid "Idle"
@@ -2536,6 +2548,10 @@ msgstr "Нет запущенных агентов"
 #: src/components/open-web-service-sheet.tsx
 msgid "No app on this phone opens web pages."
 msgstr "На этом телефоне нет приложения, открывающего веб-страницы"
+
+#: src/app/settings.tsx
+msgid "No app on this phone opens web pages. The guide is at muqun.dev/support."
+msgstr "На этом телефоне нет приложения, открывающего веб-страницы. Руководство доступно на muqun.dev/support"
 
 #: src/components/pairing-camera.tsx
 msgid "No camera to scan with"

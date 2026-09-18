@@ -1322,6 +1322,10 @@ msgstr "そのテーマを開けませんでした"
 msgid "Could not open the file"
 msgstr "ファイルを開けませんでした"
 
+#: src/app/settings.tsx
+msgid "Could not open the guide"
+msgstr "ガイドを開けませんでした"
+
 #: src/lib/attachments.ts
 msgid "Could not open the picker."
 msgstr "ピッカーを開けませんでした"
@@ -1980,6 +1984,10 @@ msgctxt "agent slash command"
 msgid "Guided AGENTS.md setup"
 msgstr "AGENTS.md のガイド付きセットアップ"
 
+#: src/app/settings.tsx
+msgid "Guides for pairing, the terminal, OpenCode and themes"
+msgstr "ペアリング、ターミナル、OpenCode、テーマのガイド"
+
 #: src/components/settings-alerts.tsx
 msgid "Haptic feedback"
 msgstr "触覚フィードバック"
@@ -2036,6 +2044,10 @@ msgstr "ホスト鍵が変わりました"
 #: src/components/ssh-host-row.tsx
 msgid "Host key trusted"
 msgstr "ホスト鍵は信頼済み"
+
+#: src/app/settings.tsx
+msgid "How to use Muqun"
+msgstr "Muqun の使い方"
 
 #: src/i18n/labels.ts
 msgid "Idle"
@@ -2536,6 +2548,10 @@ msgstr "実行中のエージェントはありません"
 #: src/components/open-web-service-sheet.tsx
 msgid "No app on this phone opens web pages."
 msgstr "この端末にはウェブページを開けるアプリがありません"
+
+#: src/app/settings.tsx
+msgid "No app on this phone opens web pages. The guide is at muqun.dev/support."
+msgstr "この端末にはウェブページを開けるアプリがありません。ガイドは muqun.dev/support にあります"
 
 #: src/components/pairing-camera.tsx
 msgid "No camera to scan with"
