@@ -32,10 +32,10 @@ import { useGatewayRecord } from '@/hooks/use-gateway-record';
 import { useLaunchImageSync } from '@/hooks/use-launch-image-sync';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { useThemePack, useThemePalette } from '@/hooks/use-theme-pack';
+import { useUserFontsReady } from '@/hooks/use-user-fonts';
 import { useThemeLibrary } from '@/stores/theme-library';
 import { AppI18nProvider } from '@/i18n/provider';
 import { useGatewayPushRegistration, useNotificationObserver } from '@/lib/notifications';
-import { useAppSettings } from '@/stores/app-settings';
 import { useSshTunnelsStore } from '@/stores/ssh-tunnels';
 import { useThemeFileOpen } from '@/hooks/use-theme-file-open';
 
@@ -101,7 +101,24 @@ function ThemeFileOpener() {
 }
 
 export default function RootLayout() {
-  const hydrateSettings = useAppSettings((state) => state.hydrate);
+  /**
+   * The settings are read and the reader's fonts are registered before this
+   * returns true, and the router below does not mount until it does.
+   *
+   * Holding the tree rather than letting it paint and swapping the font in is
+   * the whole point, and on Android it is not a preference. A markdown view
+   * that asks `ReactFontManager` for `MuqunUserMono` before `Font.loadAsync`
+   * has run gets the system font, and `enriched-markdown` memoises that answer
+   * in a process-global cache with no invalidation -- so every code block in
+   * the app stays in the wrong face until the process is killed. See
+   * `use-user-fonts.ts`, which also caps the wait: a font that will not
+   * register opens the app on the system font rather than on a splash screen
+   * nobody can get past.
+   *
+   * Nothing is lost by waiting. `LaunchOverlay` is what the reader is looking
+   * at either way, and it holds for longer than the registration takes.
+   */
+  const fontsReady = useUserFontsReady();
 
   // The system bar overlays the app under edge-to-edge (targetSdk 36) and its
   // strip swallows every touch in it -- on a three-button device that strip sat
@@ -148,10 +165,6 @@ export default function RootLayout() {
   const pack = useThemePack();
   const theme = useThemePalette(pack);
 
-  useEffect(() => {
-    void hydrateSettings();
-  }, [hydrateSettings]);
-
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <KeyboardProvider>
@@ -175,7 +188,15 @@ export default function RootLayout() {
               the tree that cannot be translated.
             */}
             <AppI18nProvider>
-              <RootContent />
+              {/*
+                `null` until the fonts are registered, which keeps the native
+                launch screen up: `SplashScreen.preventAutoHide()` at module
+                scope holds it until `LaunchOverlay` paints, and the overlay is
+                inside `RootContent`. So the app's first painted frame is
+                already wearing the reader's typography -- there is no frame in
+                the system font for anything to cache.
+              */}
+              {fontsReady ? <RootContent /> : null}
             </AppI18nProvider>
           </AppErrorBoundary>
         </OsukiThemeProvider>
