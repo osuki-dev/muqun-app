@@ -133,6 +133,37 @@ export const RISE_DISTANCE = 6;
 export const PULSE_PERIOD = 2600;
 
 /**
+ * One pass of a segment travelling an indeterminate progress track.
+ *
+ * A period, like `PULSE_PERIOD` and `LogoLoader`'s breath -- not a transition
+ * between two states -- so it is longer than any token here and does not
+ * belong to one. It is the length of a wait that has no length: slow enough
+ * that the segment reads as one object crossing the row rather than a flicker,
+ * quick enough that a reader can tell in one glance that it is still moving.
+ */
+export const TRAVEL_PERIOD = 1100;
+
+/**
+ * The travelling segment's own timing: linear, and that is the point.
+ *
+ * Every other timing in this file is on the system ease-out, because every
+ * other one has somewhere to arrive. A loop does not. An ease-out applied to a
+ * pass would decelerate into the end of each one, so the segment would creep
+ * as it left the track and then reappear at speed -- which reads as the
+ * download stalling once a second rather than as a wait continuing.
+ *
+ * A worklet for the same reason `timing` is: see the note there.
+ */
+export function travelTiming(): WithTimingConfig {
+  'worklet';
+  return {
+    duration: TRAVEL_PERIOD,
+    easing: Easing.linear,
+    reduceMotion: ReduceMotion.System,
+  };
+}
+
+/**
  * How far a status dot overshoots when the fact behind it changes.
  *
  * Small on purpose: the design system forbids bounce, so this is a single
