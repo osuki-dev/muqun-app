@@ -709,6 +709,7 @@ msgstr "相机访问已关闭。请在“设置”中开启后再拍照"
 msgid "Camera access needed"
 msgstr "需要相机访问权限"
 
+#: src/components/agent-composer.tsx
 #: src/components/agent-context-sheet.tsx
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/custom-theme-library.tsx
@@ -1283,6 +1284,10 @@ msgstr "复制公钥"
 #: src/components/server-terminal-workspace.tsx
 msgid "Could not add a file"
 msgstr "无法添加文件"
+
+#: src/components/agent-workbench.tsx
+msgid "Could not change delivery"
+msgstr "无法更改发送方式"
 
 #: src/components/agent-workbench.tsx
 msgid "Could not compact"
@@ -2560,6 +2565,7 @@ msgstr "新建终端"
 msgid "New workspace"
 msgstr "新建工作区"
 
+#: src/components/agent-composer.tsx
 #: src/components/launch-intro.tsx
 msgid "Next"
 msgstr "下一步"
@@ -3193,6 +3199,11 @@ msgstr "排队中"
 msgid "queued to upload"
 msgstr "排队等待上传"
 
+#. placeholder {0}: inboxItemText(item) || item.type
+#: src/components/agent-composer.tsx
+msgid "Queued: {0}"
+msgstr "排队中：{0}"
+
 #: src/app/commands.tsx
 msgid "Quick action settings"
 msgstr "快捷操作设置"
@@ -3704,6 +3715,10 @@ msgstr "发送消息，输入 / 查看命令，@ 引用文件…"
 msgid "Send message"
 msgstr "发送消息"
 
+#: src/components/agent-composer.tsx
+msgid "Send now"
+msgstr "立即发送"
+
 #: src/components/simfarm-stage.tsx
 msgid "Send the text"
 msgstr "发送文字"
@@ -3715,6 +3730,11 @@ msgstr "把这个任务发给 {assignmentLabel}"
 #: src/components/server-terminal-workspace.tsx
 msgid "Send to agent"
 msgstr "发送给代理"
+
+#. placeholder {0}: inboxItemText(item) || item.type
+#: src/components/agent-composer.tsx
+msgid "Sending next: {0}"
+msgstr "下一个发送：{0}"
 
 #: src/components/agent-assignment-bar.tsx
 msgid "Sending to"

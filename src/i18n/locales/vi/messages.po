@@ -709,6 +709,7 @@ msgstr "Quyền truy cập camera đang tắt. Hãy bật trong Cài đặt đ�
 msgid "Camera access needed"
 msgstr "Cần quyền truy cập camera"
 
+#: src/components/agent-composer.tsx
 #: src/components/agent-context-sheet.tsx
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/custom-theme-library.tsx
@@ -1283,6 +1284,10 @@ msgstr "Sao chép khóa công khai"
 #: src/components/server-terminal-workspace.tsx
 msgid "Could not add a file"
 msgstr "Không thể thêm tệp"
+
+#: src/components/agent-workbench.tsx
+msgid "Could not change delivery"
+msgstr "Không thể đổi cách gửi"
 
 #: src/components/agent-workbench.tsx
 msgid "Could not compact"
@@ -2560,6 +2565,7 @@ msgstr "Terminal mới"
 msgid "New workspace"
 msgstr "Không gian làm việc mới"
 
+#: src/components/agent-composer.tsx
 #: src/components/launch-intro.tsx
 msgid "Next"
 msgstr "Tiếp theo"
@@ -3193,6 +3199,11 @@ msgstr "Đang chờ"
 msgid "queued to upload"
 msgstr "đang chờ tải lên"
 
+#. placeholder {0}: inboxItemText(item) || item.type
+#: src/components/agent-composer.tsx
+msgid "Queued: {0}"
+msgstr "Đang xếp hàng: {0}"
+
 #: src/app/commands.tsx
 msgid "Quick action settings"
 msgstr "Cài đặt thao tác nhanh"
@@ -3704,6 +3715,10 @@ msgstr "Gửi tin nhắn, gõ / để xem lệnh, @ để chọn tệp…"
 msgid "Send message"
 msgstr "Gửi tin nhắn"
 
+#: src/components/agent-composer.tsx
+msgid "Send now"
+msgstr "Gửi ngay"
+
 #: src/components/simfarm-stage.tsx
 msgid "Send the text"
 msgstr "Gửi văn bản"
@@ -3715,6 +3730,11 @@ msgstr "Gửi tác vụ này đến {assignmentLabel}"
 #: src/components/server-terminal-workspace.tsx
 msgid "Send to agent"
 msgstr "Gửi cho tác tử"
+
+#. placeholder {0}: inboxItemText(item) || item.type
+#: src/components/agent-composer.tsx
+msgid "Sending next: {0}"
+msgstr "Gửi tiếp theo: {0}"
 
 #: src/components/agent-assignment-bar.tsx
 msgid "Sending to"

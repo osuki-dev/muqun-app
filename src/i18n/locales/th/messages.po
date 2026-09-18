@@ -709,6 +709,7 @@ msgstr "ปิดการเข้าถึงกล้องอยู่ เ�
 msgid "Camera access needed"
 msgstr "ต้องเข้าถึงกล้อง"
 
+#: src/components/agent-composer.tsx
 #: src/components/agent-context-sheet.tsx
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/custom-theme-library.tsx
@@ -1283,6 +1284,10 @@ msgstr "คัดลอกคีย์สาธารณะ"
 #: src/components/server-terminal-workspace.tsx
 msgid "Could not add a file"
 msgstr "เพิ่มไฟล์ไม่ได้"
+
+#: src/components/agent-workbench.tsx
+msgid "Could not change delivery"
+msgstr "เปลี่ยนวิธีส่งไม่ได้"
 
 #: src/components/agent-workbench.tsx
 msgid "Could not compact"
@@ -2560,6 +2565,7 @@ msgstr "เทอร์มินัลใหม่"
 msgid "New workspace"
 msgstr "พื้นที่ทำงานใหม่"
 
+#: src/components/agent-composer.tsx
 #: src/components/launch-intro.tsx
 msgid "Next"
 msgstr "ถัดไป"
@@ -3193,6 +3199,11 @@ msgstr "อยู่ในคิว"
 msgid "queued to upload"
 msgstr "รออัปโหลด"
 
+#. placeholder {0}: inboxItemText(item) || item.type
+#: src/components/agent-composer.tsx
+msgid "Queued: {0}"
+msgstr "อยู่ในคิว: {0}"
+
 #: src/app/commands.tsx
 msgid "Quick action settings"
 msgstr "ตั้งค่าการทำงานด่วน"
@@ -3704,6 +3715,10 @@ msgstr "ส่งข้อความ พิมพ์ / เพื่อดู�
 msgid "Send message"
 msgstr "ส่งข้อความ"
 
+#: src/components/agent-composer.tsx
+msgid "Send now"
+msgstr "ส่งเดี๋ยวนี้"
+
 #: src/components/simfarm-stage.tsx
 msgid "Send the text"
 msgstr "ส่งข้อความ"
@@ -3715,6 +3730,11 @@ msgstr "ส่งงานนี้ให้ {assignmentLabel}"
 #: src/components/server-terminal-workspace.tsx
 msgid "Send to agent"
 msgstr "ส่งให้เอเจนต์"
+
+#. placeholder {0}: inboxItemText(item) || item.type
+#: src/components/agent-composer.tsx
+msgid "Sending next: {0}"
+msgstr "จะส่งถัดไป: {0}"
 
 #: src/components/agent-assignment-bar.tsx
 msgid "Sending to"

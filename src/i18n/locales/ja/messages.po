@@ -709,6 +709,7 @@ msgstr "カメラへのアクセスがオフです。写真を撮るには設定
 msgid "Camera access needed"
 msgstr "カメラへのアクセスが必要です"
 
+#: src/components/agent-composer.tsx
 #: src/components/agent-context-sheet.tsx
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/custom-theme-library.tsx
@@ -1283,6 +1284,10 @@ msgstr "公開鍵をコピーする"
 #: src/components/server-terminal-workspace.tsx
 msgid "Could not add a file"
 msgstr "ファイルを追加できませんでした"
+
+#: src/components/agent-workbench.tsx
+msgid "Could not change delivery"
+msgstr "配信方法を変更できませんでした"
 
 #: src/components/agent-workbench.tsx
 msgid "Could not compact"
@@ -2560,6 +2565,7 @@ msgstr "新しいターミナル"
 msgid "New workspace"
 msgstr "新規ワークスペース"
 
+#: src/components/agent-composer.tsx
 #: src/components/launch-intro.tsx
 msgid "Next"
 msgstr "次へ"
@@ -3193,6 +3199,11 @@ msgstr "待機中"
 msgid "queued to upload"
 msgstr "アップロード待ち"
 
+#. placeholder {0}: inboxItemText(item) || item.type
+#: src/components/agent-composer.tsx
+msgid "Queued: {0}"
+msgstr "待機中: {0}"
+
 #: src/app/commands.tsx
 msgid "Quick action settings"
 msgstr "クイックアクション設定"
@@ -3704,6 +3715,10 @@ msgstr "メッセージを送信、/でコマンド、@でファイル…"
 msgid "Send message"
 msgstr "メッセージを送信"
 
+#: src/components/agent-composer.tsx
+msgid "Send now"
+msgstr "今すぐ送信"
+
 #: src/components/simfarm-stage.tsx
 msgid "Send the text"
 msgstr "文字を送る"
@@ -3715,6 +3730,11 @@ msgstr "このタスクを {assignmentLabel} に送る"
 #: src/components/server-terminal-workspace.tsx
 msgid "Send to agent"
 msgstr "エージェントに送信"
+
+#. placeholder {0}: inboxItemText(item) || item.type
+#: src/components/agent-composer.tsx
+msgid "Sending next: {0}"
+msgstr "次に送信: {0}"
 
 #: src/components/agent-assignment-bar.tsx
 msgid "Sending to"

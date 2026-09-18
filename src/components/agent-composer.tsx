@@ -25,6 +25,7 @@ import {
   Paperclip,
   Terminal,
   Square,
+  Trash2,
   Zap,
 } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
@@ -39,6 +40,7 @@ import Animated, {
 import { useKeyboardState, useReanimatedKeyboardAnimation } from 'react-native-keyboard-controller';
 
 import { PressableScale } from '@/components/pressable-scale';
+import { AgentActionMenu, type AgentActionMenuItem } from '@/components/agent-action-menu';
 import { AgentUnreadDot } from '@/components/agent-unread-dot';
 import { TerminalComposer, composerStyles } from '@/components/terminal-composer';
 import { AttachmentMenu } from '@/components/attachment-menu';
@@ -62,7 +64,7 @@ import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { useAttachmentUploads } from '@/hooks/use-attachment-uploads';
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';
 import { pickAttachments, describePickerFailure, type AttachmentSource } from '@/lib/attachments';
-import { DURATION, fadeIn, fadeOut, fadeOutDown, timing } from '@/lib/motion';
+import { DURATION, fadeIn, fadeOut, fadeOutDown, listLayout, timing } from '@/lib/motion';
 import { appChrome } from '@/constants/appearance';
 import { withAlpha } from '@/lib/color';
 import type { SessionNode } from '@/lib/agent-session-tree';
@@ -300,6 +302,15 @@ export interface AgentComposerProps {
   /** What is waiting behind the current turn. */
   inbox?: readonly InboxItem[];
   onCancelInboxItem?: (inboxId: string) => void;
+  /**
+   * Move one queued prompt between the two deliveries.
+   *
+   * `steer` runs it at the next step boundary -- ahead of everything queued
+   * behind it -- and `queue` puts it back in line. `setAgentInboxDelivery` is
+   * the route; it existed with no caller, so a prompt's place in the queue was
+   * decided once, when it was sent, and could only be cancelled afterwards.
+   */
+  onSetInboxDelivery?: (inboxId: string, delivery: 'steer' | 'queue') => void;
   onPressTokens?: () => void;
   injectDraftRef?: React.MutableRefObject<((text: string) => void) | null>;
 }
@@ -347,6 +358,7 @@ export const AgentComposer = memo(function AgentComposer({
   onClientCommand,
   inbox = EMPTY_INBOX,
   onCancelInboxItem,
+  onSetInboxDelivery,
   onPressTokens,
   injectDraftRef,
 }: AgentComposerProps) {
@@ -361,6 +373,8 @@ export const AgentComposer = memo(function AgentComposer({
   const [attachmentMenuOpen, setAttachmentMenuOpen] = useState(false);
   const [modeMenuOpen, setModeMenuOpen] = useState(false);
   const [inboxOpen, setInboxOpen] = useState(false);
+  /** Which queued prompt has its actions open, if any. */
+  const [inboxMenuId, setInboxMenuId] = useState<string | null>(null);
 
   /**
    * How full the model's context is, and how much the session has cost.
@@ -657,6 +671,59 @@ export const AgentComposer = memo(function AgentComposer({
     onClientCommand,
   ]);
 
+  /**
+   * What can be done to one queued prompt.
+   *
+   * "Send now" is `steer`: it runs at the next step boundary, in front of
+   * everything queued behind it. "Queue" is the way back, and is only offered
+   * when the prompt is not already in line -- an option that does nothing is an
+   * option the reader has to think about.
+   */
+  const inboxActions = useCallback(
+    (item: InboxItem): AgentActionMenuItem[] => {
+      const items: AgentActionMenuItem[] = [];
+      if (onSetInboxDelivery && item.delivery !== 'steer') {
+        items.push({
+          id: 'steer',
+          label: t`Send now`,
+          Icon: Zap,
+          onPress: () => {
+            setInboxMenuId(null);
+            onSetInboxDelivery(item.id, 'steer');
+          },
+          testID: `agent-composer-inbox-steer-${item.id}`,
+        });
+      }
+      if (onSetInboxDelivery && item.delivery === 'steer') {
+        items.push({
+          id: 'queue',
+          label: t`Queue`,
+          Icon: Inbox,
+          onPress: () => {
+            setInboxMenuId(null);
+            onSetInboxDelivery(item.id, 'queue');
+          },
+          testID: `agent-composer-inbox-queue-${item.id}`,
+        });
+      }
+      if (onCancelInboxItem) {
+        items.push({
+          id: 'cancel',
+          label: t`Cancel`,
+          Icon: Trash2,
+          tone: 'danger',
+          onPress: () => {
+            setInboxMenuId(null);
+            onCancelInboxItem(item.id);
+          },
+          testID: `agent-composer-inbox-drop-${item.id}`,
+        });
+      }
+      return items;
+    },
+    [onSetInboxDelivery, onCancelInboxItem, t]
+  );
+
   // Resolve available agents (workspace agents + defaults)
   const availableAgents =
     availableAgentsProp && availableAgentsProp.length > 0
@@ -765,6 +832,7 @@ export const AgentComposer = memo(function AgentComposer({
             setAttachmentMenuOpen(false);
             setModeMenuOpen(false);
             setInboxOpen(false);
+            setInboxMenuId(null);
           }}
         />
       ) : null}
@@ -803,46 +871,81 @@ export const AgentComposer = memo(function AgentComposer({
                 {t`Waiting to send`}
               </Text>
             </View>
-            {inbox.map((item) => (
-              <View
-                key={item.id}
-                style={[
-                  styles.inboxRow,
-                  { backgroundColor: surfaceBackground(withAlpha(theme.colors.text, 0.05)) },
-                ]}>
-                <Inbox size={13} color={theme.colors.primary} />
-                <Text
-                  variant="caption"
-                  numberOfLines={2}
-                  color={theme.colors.textMuted}
-                  style={styles.inboxText}>
-                  {inboxItemText(item) || item.type}
-                </Text>
-                {/* Queued is not sent, and the two used to look identical. */}
-                <View
-                  style={[
-                    styles.queuedChip,
-                    { backgroundColor: withAlpha(theme.colors.primary, 0.16) },
-                  ]}>
-                  <Text variant="caption" weight="bold" color={theme.colors.primary}>
-                    {t`Queued`}
-                  </Text>
-                </View>
-                {onCancelInboxItem ? (
+            {inbox.map((item) => {
+              const steering = item.delivery === 'steer';
+              return (
+                <Animated.View key={item.id} layout={listLayout('short')}>
+                  {/* The row is the control: tapping a queued prompt is how its
+                      actions are reached, which is the same gesture a session
+                      row answers in the sessions sheet. */}
                   <PressableScale
-                    testID={`agent-composer-inbox-cancel-${item.id}`}
+                    testID={`agent-composer-inbox-row-${item.id}`}
                     accessibilityRole="button"
-                    accessibilityLabel={t`Cancel this queued message`}
-                    hitSlop={8}
-                    onPress={() => onCancelInboxItem(item.id)}
-                    style={styles.inboxCancel}>
-                    <Text variant="caption" weight="bold" color={theme.colors.danger}>
-                      ×
+                    accessibilityState={{ expanded: inboxMenuId === item.id }}
+                    accessibilityLabel={
+                      steering
+                        ? t`Sending next: ${inboxItemText(item) || item.type}`
+                        : t`Queued: ${inboxItemText(item) || item.type}`
+                    }
+                    onPress={() =>
+                      setInboxMenuId((current) => (current === item.id ? null : item.id))
+                    }
+                    style={[
+                      styles.inboxRow,
+                      { backgroundColor: surfaceBackground(withAlpha(theme.colors.text, 0.05)) },
+                    ]}>
+                    <Inbox size={13} color={theme.colors.primary} />
+                    <Text
+                      variant="caption"
+                      numberOfLines={2}
+                      color={theme.colors.textMuted}
+                      style={styles.inboxText}>
+                      {inboxItemText(item) || item.type}
                     </Text>
+                    {/* Queued is not sent, and the two used to look identical.
+                        Nor is queued the same as steering, which the chip said
+                        it was: this is the item's own `delivery`. */}
+                    <View
+                      style={[
+                        styles.queuedChip,
+                        {
+                          backgroundColor: withAlpha(
+                            steering ? theme.colors.warning : theme.colors.primary,
+                            0.16
+                          ),
+                        },
+                      ]}>
+                      <Text
+                        variant="caption"
+                        weight="bold"
+                        color={steering ? theme.colors.warning : theme.colors.primary}>
+                        {steering ? t`Next` : t`Queued`}
+                      </Text>
+                    </View>
+                    {onCancelInboxItem ? (
+                      <PressableScale
+                        testID={`agent-composer-inbox-cancel-${item.id}`}
+                        accessibilityRole="button"
+                        accessibilityLabel={t`Cancel this queued message`}
+                        hitSlop={8}
+                        onPress={() => onCancelInboxItem(item.id)}
+                        style={styles.inboxCancel}>
+                        <Text variant="caption" weight="bold" color={theme.colors.danger}>
+                          ×
+                        </Text>
+                      </PressableScale>
+                    ) : null}
                   </PressableScale>
-                ) : null}
-              </View>
-            ))}
+                  {inboxMenuId === item.id ? (
+                    <AgentActionMenu
+                      testID={`agent-composer-inbox-menu-${item.id}`}
+                      surface="ground"
+                      items={inboxActions(item)}
+                    />
+                  ) : null}
+                </Animated.View>
+              );
+            })}
           </GlassChrome>
         </Animated.View>
       ) : null}

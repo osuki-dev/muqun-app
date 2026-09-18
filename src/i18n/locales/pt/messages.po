@@ -709,6 +709,7 @@ msgstr "O acesso à câmara está desativado. Ative-o nas Definições para tira
 msgid "Camera access needed"
 msgstr "É preciso acesso à câmara"
 
+#: src/components/agent-composer.tsx
 #: src/components/agent-context-sheet.tsx
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/custom-theme-library.tsx
@@ -1283,6 +1284,10 @@ msgstr "Copiar a chave pública"
 #: src/components/server-terminal-workspace.tsx
 msgid "Could not add a file"
 msgstr "Não foi possível adicionar o ficheiro"
+
+#: src/components/agent-workbench.tsx
+msgid "Could not change delivery"
+msgstr "Não foi possível alterar a entrega"
 
 #: src/components/agent-workbench.tsx
 msgid "Could not compact"
@@ -2560,6 +2565,7 @@ msgstr "Novo terminal"
 msgid "New workspace"
 msgstr "Novo espaço de trabalho"
 
+#: src/components/agent-composer.tsx
 #: src/components/launch-intro.tsx
 msgid "Next"
 msgstr "Seguinte"
@@ -3193,6 +3199,11 @@ msgstr "Na fila"
 msgid "queued to upload"
 msgstr "na fila para carregar"
 
+#. placeholder {0}: inboxItemText(item) || item.type
+#: src/components/agent-composer.tsx
+msgid "Queued: {0}"
+msgstr "Na fila: {0}"
+
 #: src/app/commands.tsx
 msgid "Quick action settings"
 msgstr "Definições de ações rápidas"
@@ -3704,6 +3715,10 @@ msgstr "Enviar mensagem, / para comandos, @ para arquivos…"
 msgid "Send message"
 msgstr "Enviar mensagem"
 
+#: src/components/agent-composer.tsx
+msgid "Send now"
+msgstr "Enviar agora"
+
 #: src/components/simfarm-stage.tsx
 msgid "Send the text"
 msgstr "Enviar o texto"
@@ -3715,6 +3730,11 @@ msgstr "Enviar esta tarefa para {assignmentLabel}"
 #: src/components/server-terminal-workspace.tsx
 msgid "Send to agent"
 msgstr "Enviar ao agente"
+
+#. placeholder {0}: inboxItemText(item) || item.type
+#: src/components/agent-composer.tsx
+msgid "Sending next: {0}"
+msgstr "Envio a seguir: {0}"
 
 #: src/components/agent-assignment-bar.tsx
 msgid "Sending to"

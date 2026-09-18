@@ -709,6 +709,7 @@ msgstr "Camera access is off. Turn it on in Settings to take a photo"
 msgid "Camera access needed"
 msgstr "Camera access needed"
 
+#: src/components/agent-composer.tsx
 #: src/components/agent-context-sheet.tsx
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/custom-theme-library.tsx
@@ -1283,6 +1284,10 @@ msgstr "Copy the public key"
 #: src/components/server-terminal-workspace.tsx
 msgid "Could not add a file"
 msgstr "Could not add a file"
+
+#: src/components/agent-workbench.tsx
+msgid "Could not change delivery"
+msgstr "Could not change delivery"
 
 #: src/components/agent-workbench.tsx
 msgid "Could not compact"
@@ -2560,6 +2565,7 @@ msgstr "New terminal"
 msgid "New workspace"
 msgstr "New workspace"
 
+#: src/components/agent-composer.tsx
 #: src/components/launch-intro.tsx
 msgid "Next"
 msgstr "Next"
@@ -3193,6 +3199,11 @@ msgstr "Queued"
 msgid "queued to upload"
 msgstr "queued to upload"
 
+#. placeholder {0}: inboxItemText(item) || item.type
+#: src/components/agent-composer.tsx
+msgid "Queued: {0}"
+msgstr "Queued: {0}"
+
 #: src/app/commands.tsx
 msgid "Quick action settings"
 msgstr "Quick action settings"
@@ -3704,6 +3715,10 @@ msgstr "Send a message, type / for commands, @ for files…"
 msgid "Send message"
 msgstr "Send message"
 
+#: src/components/agent-composer.tsx
+msgid "Send now"
+msgstr "Send now"
+
 #: src/components/simfarm-stage.tsx
 msgid "Send the text"
 msgstr "Send the text"
@@ -3715,6 +3730,11 @@ msgstr "Send this task to {assignmentLabel}"
 #: src/components/server-terminal-workspace.tsx
 msgid "Send to agent"
 msgstr "Send to agent"
+
+#. placeholder {0}: inboxItemText(item) || item.type
+#: src/components/agent-composer.tsx
+msgid "Sending next: {0}"
+msgstr "Sending next: {0}"
 
 #: src/components/agent-assignment-bar.tsx
 msgid "Sending to"

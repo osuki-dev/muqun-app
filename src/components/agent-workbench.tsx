@@ -62,6 +62,7 @@ import {
   listAgentInbox,
   markAgentSessionViewed,
   cancelAgentInboxItem,
+  setAgentInboxDelivery,
   clearAgentRevert,
   exportAgentSession,
   revertAgentSession,
@@ -1391,6 +1392,31 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       });
     },
     [activeAsid, refreshInbox]
+  );
+
+  /**
+   * Move a queued prompt to the front of the turn, or back into line.
+   *
+   * `setAgentInboxDelivery` existed with no caller: a prompt's delivery was
+   * decided when it was sent and the only thing that could be done to it
+   * afterwards was to cancel it. Optimistic, then corrected --
+   * `agent.inbox.changed` carries the whole queue and is the state that counts.
+   */
+  const handleSetInboxDelivery = useCallback(
+    (inboxId: string, delivery: 'steer' | 'queue') => {
+      if (!activeAsid) return;
+      void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      setInbox((prev) => prev.map((item) => (item.id === inboxId ? { ...item, delivery } : item)));
+      setAgentInboxDelivery(activeAsid, inboxId, delivery).catch((err) => {
+        console.warn('Failed to change delivery:', err);
+        void refreshInbox();
+        showScreenNotice(
+          t`Could not change delivery`,
+          formatAgentErrorMessage(err, t`OpenCode service is offline`)
+        );
+      });
+    },
+    [activeAsid, refreshInbox, showScreenNotice, t]
   );
 
   const handleClearContext = useCallback(() => {
@@ -2982,6 +3008,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         onClientCommand={handleClientCommand}
         inbox={inbox}
         onCancelInboxItem={handleCancelInboxItem}
+        onSetInboxDelivery={handleSetInboxDelivery}
         onPressTokens={openContextSheet}
         injectDraftRef={injectDraftRef}
       />

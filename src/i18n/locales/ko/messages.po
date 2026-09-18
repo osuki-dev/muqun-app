@@ -709,6 +709,7 @@ msgstr "카메라 접근이 꺼져 있습니다. 사진을 찍으려면 설정�
 msgid "Camera access needed"
 msgstr "카메라 접근 권한 필요"
 
+#: src/components/agent-composer.tsx
 #: src/components/agent-context-sheet.tsx
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/custom-theme-library.tsx
@@ -1283,6 +1284,10 @@ msgstr "공개 키를 복사"
 #: src/components/server-terminal-workspace.tsx
 msgid "Could not add a file"
 msgstr "파일을 추가하지 못했습니다"
+
+#: src/components/agent-workbench.tsx
+msgid "Could not change delivery"
+msgstr "전달 방식을 바꿀 수 없습니다"
 
 #: src/components/agent-workbench.tsx
 msgid "Could not compact"
@@ -2560,6 +2565,7 @@ msgstr "새 터미널"
 msgid "New workspace"
 msgstr "새 워크스페이스"
 
+#: src/components/agent-composer.tsx
 #: src/components/launch-intro.tsx
 msgid "Next"
 msgstr "다음"
@@ -3193,6 +3199,11 @@ msgstr "대기 중"
 msgid "queued to upload"
 msgstr "업로드 대기 중"
 
+#. placeholder {0}: inboxItemText(item) || item.type
+#: src/components/agent-composer.tsx
+msgid "Queued: {0}"
+msgstr "대기 중: {0}"
+
 #: src/app/commands.tsx
 msgid "Quick action settings"
 msgstr "빠른 동작 설정"
@@ -3704,6 +3715,10 @@ msgstr "메시지 보내기, / 명령어, @ 파일…"
 msgid "Send message"
 msgstr "메시지 보내기"
 
+#: src/components/agent-composer.tsx
+msgid "Send now"
+msgstr "지금 보내기"
+
 #: src/components/simfarm-stage.tsx
 msgid "Send the text"
 msgstr "텍스트 보내기"
@@ -3715,6 +3730,11 @@ msgstr "이 작업을 {assignmentLabel}(으)로 보내기"
 #: src/components/server-terminal-workspace.tsx
 msgid "Send to agent"
 msgstr "에이전트에게 보내기"
+
+#. placeholder {0}: inboxItemText(item) || item.type
+#: src/components/agent-composer.tsx
+msgid "Sending next: {0}"
+msgstr "다음에 보냄: {0}"
 
 #: src/components/agent-assignment-bar.tsx
 msgid "Sending to"
