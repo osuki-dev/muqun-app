@@ -1269,6 +1269,7 @@ msgid "Conversational help and open-ended workspace questions."
 msgstr "对话式协助，以及关于工作区的开放式提问"
 
 #: src/components/agent-message-block.tsx
+#: src/components/asset-viewer.tsx
 #: src/components/bounded-markdown.tsx
 #: src/components/opencode-guide-sheet.tsx
 msgid "Copied"
@@ -1296,6 +1297,10 @@ msgstr "复制"
 #: src/components/agent-message-block.tsx
 msgid "Copy message"
 msgstr "复制消息"
+
+#: src/components/asset-viewer.tsx
+msgid "Copy path"
+msgstr "复制路径"
 
 #: src/components/ssh-host-form.tsx
 msgid "Copy public key"
@@ -4845,6 +4850,10 @@ msgid "This device has no camera available."
 msgstr "本设备没有可用的相机"
 
 #: src/components/asset-viewer.tsx
+msgid "This file is {size}. Muqun opens text files up to {ceiling}; larger ones stay on the server."
+msgstr "这个文件有 {size}。Muqun 最多能打开 {ceiling} 的文本文件，更大的会留在服务器上"
+
+#: src/components/asset-viewer.tsx
 #: src/components/settings-font-sheet.tsx
 msgid "This file is empty."
 msgstr "这个文件是空的"
@@ -4856,10 +4865,6 @@ msgstr "这个文件不是 TrueType 或 OpenType 字体"
 #: src/components/server-terminal-workspace.tsx
 msgid "This file is not among the session artifacts."
 msgstr "这个文件不在会话的产出中"
-
-#: src/components/asset-viewer.tsx
-msgid "This file is too large to display. Copy it to read it elsewhere."
-msgstr "这个文件太大，无法显示。请复制后在其他地方阅读"
 
 #: src/components/settings-font-sheet.tsx
 msgid "This file is too large."
@@ -5031,6 +5036,10 @@ msgstr "本次会话的 token"
 #: src/components/agent-composer.tsx
 msgid "Tokens usage and cost"
 msgstr "Token 用量与花费"
+
+#: src/components/asset-viewer.tsx
+msgid "Too large to highlight — showing plain text."
+msgstr "文件太大，无法着色，显示为纯文本"
 
 #: src/components/git-diff-view.tsx
 msgid "Too many changes to list. This is the start of them, not all of them."

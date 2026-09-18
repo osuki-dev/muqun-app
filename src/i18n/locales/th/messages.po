@@ -1269,6 +1269,7 @@ msgid "Conversational help and open-ended workspace questions."
 msgstr "ช่วยเหลือแบบสนทนา และคำถามปลายเปิดเกี่ยวกับเวิร์กสเปซ"
 
 #: src/components/agent-message-block.tsx
+#: src/components/asset-viewer.tsx
 #: src/components/bounded-markdown.tsx
 #: src/components/opencode-guide-sheet.tsx
 msgid "Copied"
@@ -1296,6 +1297,10 @@ msgstr "คัดลอก"
 #: src/components/agent-message-block.tsx
 msgid "Copy message"
 msgstr "คัดลอกข้อความ"
+
+#: src/components/asset-viewer.tsx
+msgid "Copy path"
+msgstr "คัดลอกพาธ"
 
 #: src/components/ssh-host-form.tsx
 msgid "Copy public key"
@@ -4845,6 +4850,10 @@ msgid "This device has no camera available."
 msgstr "อุปกรณ์นี้ไม่มีกล้องที่พร้อมใช้งาน"
 
 #: src/components/asset-viewer.tsx
+msgid "This file is {size}. Muqun opens text files up to {ceiling}; larger ones stay on the server."
+msgstr "ไฟล์นี้มีขนาด {size} Muqun เปิดไฟล์ข้อความได้ถึง {ceiling} ไฟล์ที่ใหญ่กว่านั้นจะอยู่บนเซิร์ฟเวอร์"
+
+#: src/components/asset-viewer.tsx
 #: src/components/settings-font-sheet.tsx
 msgid "This file is empty."
 msgstr "ไฟล์นี้ว่างเปล่า"
@@ -4856,10 +4865,6 @@ msgstr "ไฟล์นี้ไม่ใช่ฟอนต์ TrueType หร�
 #: src/components/server-terminal-workspace.tsx
 msgid "This file is not among the session artifacts."
 msgstr "ไฟล์นี้ไม่อยู่ในไฟล์ผลงานของเซสชัน"
-
-#: src/components/asset-viewer.tsx
-msgid "This file is too large to display. Copy it to read it elsewhere."
-msgstr "ไฟล์นี้ใหญ่เกินกว่าจะแสดงได้ คัดลอกไปอ่านที่อื่น"
 
 #: src/components/settings-font-sheet.tsx
 msgid "This file is too large."
@@ -5031,6 +5036,10 @@ msgstr "โทเค็นในเซสชันนี้"
 #: src/components/agent-composer.tsx
 msgid "Tokens usage and cost"
 msgstr "การใช้โทเค็นและค่าใช้จ่าย"
+
+#: src/components/asset-viewer.tsx
+msgid "Too large to highlight — showing plain text."
+msgstr "ใหญ่เกินกว่าจะไฮไลต์ — แสดงเป็นข้อความธรรมดา"
 
 #: src/components/git-diff-view.tsx
 msgid "Too many changes to list. This is the start of them, not all of them."

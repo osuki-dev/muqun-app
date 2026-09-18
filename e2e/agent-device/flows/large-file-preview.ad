@@ -1,0 +1,46 @@
+# Native agent-device action sections; suite.json composes guards and includes.
+# large-file-preview
+#
+# The viewer used to refuse anything past 64 KiB, so the only thing there was to
+# assert about a large file was the sentence that replaced it. This drives the
+# three demo fixtures that sit on the far side of the sizes it routes on -- a
+# 100 KB markdown document, a 140 KB source file with a six-thousand-character
+# line in it, and one file that is genuinely too large -- and checks that the
+# first two draw their contents and the third explains itself.
+
+# section open-files
+press "${TARGET}"
+
+# section settle
+wait stable 400 8000
+
+# section ready
+is visible "${TARGET}"
+
+# section open
+press "${TARGET}"
+
+# section visible
+is visible "${TARGET}"
+
+# section hidden
+is hidden "${TARGET}"
+
+# section scroll-body
+scroll down --pixels 600
+wait stable 300 4000
+
+# section shot-document
+screenshot "shots/70-large-document.png"
+
+# section shot-document-deep
+screenshot "shots/71-large-document-scrolled.png"
+
+# section shot-lines
+screenshot "shots/72-large-lines.png"
+
+# section shot-lines-deep
+screenshot "shots/73-large-lines-scrolled.png"
+
+# section shot-refusal
+screenshot "shots/74-refused.png"

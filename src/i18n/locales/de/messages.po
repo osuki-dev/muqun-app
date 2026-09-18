@@ -1269,6 +1269,7 @@ msgid "Conversational help and open-ended workspace questions."
 msgstr "Dialoghilfe und offene Fragen zum Arbeitsbereich"
 
 #: src/components/agent-message-block.tsx
+#: src/components/asset-viewer.tsx
 #: src/components/bounded-markdown.tsx
 #: src/components/opencode-guide-sheet.tsx
 msgid "Copied"
@@ -1296,6 +1297,10 @@ msgstr "Kopieren"
 #: src/components/agent-message-block.tsx
 msgid "Copy message"
 msgstr "Nachricht kopieren"
+
+#: src/components/asset-viewer.tsx
+msgid "Copy path"
+msgstr "Pfad kopieren"
 
 #: src/components/ssh-host-form.tsx
 msgid "Copy public key"
@@ -4845,6 +4850,10 @@ msgid "This device has no camera available."
 msgstr "Dieses Gerät hat keine verfügbare Kamera"
 
 #: src/components/asset-viewer.tsx
+msgid "This file is {size}. Muqun opens text files up to {ceiling}; larger ones stay on the server."
+msgstr "Diese Datei ist {size} groß. Muqun öffnet Textdateien bis {ceiling}; größere bleiben auf dem Server"
+
+#: src/components/asset-viewer.tsx
 #: src/components/settings-font-sheet.tsx
 msgid "This file is empty."
 msgstr "Diese Datei ist leer"
@@ -4856,10 +4865,6 @@ msgstr "Diese Datei ist keine TrueType- oder OpenType-Schrift"
 #: src/components/server-terminal-workspace.tsx
 msgid "This file is not among the session artifacts."
 msgstr "Diese Datei gehört nicht zu den Artefakten der Session"
-
-#: src/components/asset-viewer.tsx
-msgid "This file is too large to display. Copy it to read it elsewhere."
-msgstr "Diese Datei ist zu groß, um sie anzuzeigen. Kopiere sie, um sie woanders zu lesen"
 
 #: src/components/settings-font-sheet.tsx
 msgid "This file is too large."
@@ -5031,6 +5036,10 @@ msgstr "Tokens in dieser Sitzung"
 #: src/components/agent-composer.tsx
 msgid "Tokens usage and cost"
 msgstr "Token-Nutzung und Kosten"
+
+#: src/components/asset-viewer.tsx
+msgid "Too large to highlight — showing plain text."
+msgstr "Zu groß für Syntaxhervorhebung — als einfacher Text angezeigt"
 
 #: src/components/git-diff-view.tsx
 msgid "Too many changes to list. This is the start of them, not all of them."

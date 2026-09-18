@@ -62,6 +62,12 @@
       "platforms": ["ios", "android"]
     },
     {
+      "name": "large-file-preview",
+      "program": "flows/large-file-preview",
+      "tags": ["full"],
+      "platforms": ["ios", "android"]
+    },
+    {
       "name": "git-diff",
       "program": "flows/git-diff",
       "tags": ["full"],
@@ -536,6 +542,267 @@
       },
       {
         "run": "flows/agent-collaboration.ad"
+      }
+    ],
+    "flows/large-file-preview": [
+      {
+        "include": "subflows/open-demo"
+      },
+      {
+        "include": "subflows/dismiss-logbox"
+      },
+      {
+        "target": {
+          "text": "Open files"
+        },
+        "mode": "press",
+        "run": "flows/large-file-preview.ad#open-files"
+      },
+      {
+        "target": {
+          "text": "Refresh files"
+        },
+        "mode": "visible",
+        "timeout": 8000,
+        "run": "flows/large-file-preview.ad#ready"
+      },
+      {
+        "run": "flows/large-file-preview.ad#settle"
+      },
+      {
+        "target": {
+          "text": "Open CHANGELOG\\.md"
+        },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 30000,
+        "run": "flows/large-file-preview.ad#scroll-body"
+      },
+      {
+        "target": {
+          "text": "Open CHANGELOG\\.md"
+        },
+        "mode": "press",
+        "run": "flows/large-file-preview.ad#open"
+      },
+      {
+        "target": {
+          "text": "Close file"
+        },
+        "mode": "visible",
+        "timeout": 15000,
+        "run": "flows/large-file-preview.ad#visible"
+      },
+      {
+        "target": {
+          "text": "v0\\.120\\.0"
+        },
+        "mode": "visible",
+        "run": "flows/large-file-preview.ad#visible"
+      },
+      {
+        "target": {
+          "text": "## v0\\.120\\.0"
+        },
+        "mode": "hidden",
+        "run": "flows/large-file-preview.ad#hidden"
+      },
+      {
+        "run": "flows/large-file-preview.ad#shot-document"
+      },
+      {
+        "target": {
+          "text": "v0\\.100\\.0"
+        },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 30000,
+        "run": "flows/large-file-preview.ad#scroll-body"
+      },
+      {
+        "target": {
+          "text": "v0\\.100\\.0"
+        },
+        "mode": "visible",
+        "run": "flows/large-file-preview.ad#visible"
+      },
+      {
+        "run": "flows/large-file-preview.ad#shot-document-deep"
+      },
+      {
+        "target": {
+          "text": "Close file"
+        },
+        "mode": "press",
+        "run": "flows/large-file-preview.ad#open"
+      },
+      {
+        "target": {
+          "text": "Refresh files"
+        },
+        "mode": "visible",
+        "timeout": 8000,
+        "run": "flows/large-file-preview.ad#ready"
+      },
+      {
+        "target": {
+          "text": "Open app\\.bundle\\.js"
+        },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 30000,
+        "run": "flows/large-file-preview.ad#scroll-body"
+      },
+      {
+        "target": {
+          "text": "Open app\\.bundle\\.js"
+        },
+        "mode": "press",
+        "run": "flows/large-file-preview.ad#open"
+      },
+      {
+        "target": {
+          "text": "Close file"
+        },
+        "mode": "visible",
+        "timeout": 15000,
+        "run": "flows/large-file-preview.ad#visible"
+      },
+      {
+        "target": {
+          "text": "Too large to highlight — showing plain text"
+        },
+        "mode": "visible",
+        "run": "flows/large-file-preview.ad#visible"
+      },
+      {
+        "target": {
+          "text": "'use strict';"
+        },
+        "mode": "visible",
+        "run": "flows/large-file-preview.ad#visible"
+      },
+      {
+        "run": "flows/large-file-preview.ad#shot-lines"
+      },
+      {
+        "target": {
+          "text": "function render300\\(state, props\\) \\{"
+        },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 30000,
+        "run": "flows/large-file-preview.ad#scroll-body"
+      },
+      {
+        "target": {
+          "text": "function render300\\(state, props\\) \\{"
+        },
+        "mode": "visible",
+        "run": "flows/large-file-preview.ad#visible"
+      },
+      {
+        "run": "flows/large-file-preview.ad#shot-lines-deep"
+      },
+      {
+        "target": {
+          "text": "Copy"
+        },
+        "mode": "press",
+        "run": "flows/large-file-preview.ad#open"
+      },
+      {
+        "target": {
+          "text": "Close file"
+        },
+        "mode": "visible",
+        "timeout": 8000,
+        "run": "flows/large-file-preview.ad#visible"
+      },
+      {
+        "target": {
+          "text": "Close file"
+        },
+        "mode": "press",
+        "run": "flows/large-file-preview.ad#open"
+      },
+      {
+        "target": {
+          "text": "Refresh files"
+        },
+        "mode": "visible",
+        "timeout": 8000,
+        "run": "flows/large-file-preview.ad#ready"
+      },
+      {
+        "target": {
+          "text": "Open session\\.log"
+        },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 30000,
+        "run": "flows/large-file-preview.ad#scroll-body"
+      },
+      {
+        "target": {
+          "text": "Open session\\.log"
+        },
+        "mode": "press",
+        "run": "flows/large-file-preview.ad#open"
+      },
+      {
+        "target": {
+          "text": "Close file"
+        },
+        "mode": "visible",
+        "timeout": 15000,
+        "run": "flows/large-file-preview.ad#visible"
+      },
+      {
+        "target": {
+          "text": "This file is 8\\.0 MB\\. Muqun opens text files up to 5\\.0 MB; larger ones stay on the server"
+        },
+        "mode": "visible",
+        "run": "flows/large-file-preview.ad#visible"
+      },
+      {
+        "target": {
+          "text": "~/code/muqun/out/session\\.log"
+        },
+        "mode": "visible",
+        "run": "flows/large-file-preview.ad#visible"
+      },
+      {
+        "run": "flows/large-file-preview.ad#shot-refusal"
+      },
+      {
+        "target": {
+          "text": "Copy path"
+        },
+        "mode": "press",
+        "run": "flows/large-file-preview.ad#open"
+      },
+      {
+        "target": {
+          "text": "Copied"
+        },
+        "mode": "visible",
+        "run": "flows/large-file-preview.ad#visible"
+      },
+      {
+        "target": {
+          "text": "Close file"
+        },
+        "mode": "press",
+        "run": "flows/large-file-preview.ad#open"
+      },
+      {
+        "target": {
+          "text": "Refresh files"
+        },
+        "mode": "visible",
+        "timeout": 8000,
+        "run": "flows/large-file-preview.ad#ready"
       }
     ],
     "flows/artifacts": [

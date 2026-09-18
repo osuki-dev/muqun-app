@@ -1269,6 +1269,7 @@ msgid "Conversational help and open-ended workspace questions."
 msgstr "Trợ giúp dạng hội thoại và các câu hỏi mở về không gian làm việc"
 
 #: src/components/agent-message-block.tsx
+#: src/components/asset-viewer.tsx
 #: src/components/bounded-markdown.tsx
 #: src/components/opencode-guide-sheet.tsx
 msgid "Copied"
@@ -1296,6 +1297,10 @@ msgstr "Sao chép"
 #: src/components/agent-message-block.tsx
 msgid "Copy message"
 msgstr "Sao chép tin nhắn"
+
+#: src/components/asset-viewer.tsx
+msgid "Copy path"
+msgstr "Sao chép đường dẫn"
 
 #: src/components/ssh-host-form.tsx
 msgid "Copy public key"
@@ -4845,6 +4850,10 @@ msgid "This device has no camera available."
 msgstr "Thiết bị này không có camera khả dụng"
 
 #: src/components/asset-viewer.tsx
+msgid "This file is {size}. Muqun opens text files up to {ceiling}; larger ones stay on the server."
+msgstr "Tệp này nặng {size}. Muqun mở được tệp văn bản đến {ceiling}; tệp lớn hơn vẫn ở trên máy chủ"
+
+#: src/components/asset-viewer.tsx
 #: src/components/settings-font-sheet.tsx
 msgid "This file is empty."
 msgstr "Tệp này trống"
@@ -4856,10 +4865,6 @@ msgstr "Tệp này không phải phông TrueType hay OpenType"
 #: src/components/server-terminal-workspace.tsx
 msgid "This file is not among the session artifacts."
 msgstr "Tệp này không nằm trong các sản phẩm của phiên"
-
-#: src/components/asset-viewer.tsx
-msgid "This file is too large to display. Copy it to read it elsewhere."
-msgstr "Tệp này quá lớn để hiển thị. Hãy sao chép để đọc ở nơi khác"
 
 #: src/components/settings-font-sheet.tsx
 msgid "This file is too large."
@@ -5031,6 +5036,10 @@ msgstr "Token trong phiên này"
 #: src/components/agent-composer.tsx
 msgid "Tokens usage and cost"
 msgstr "Mức sử dụng mã token và chi phí"
+
+#: src/components/asset-viewer.tsx
+msgid "Too large to highlight — showing plain text."
+msgstr "Quá lớn để tô sáng cú pháp — hiển thị dưới dạng văn bản thuần"
 
 #: src/components/git-diff-view.tsx
 msgid "Too many changes to list. This is the start of them, not all of them."

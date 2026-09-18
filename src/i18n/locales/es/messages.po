@@ -1269,6 +1269,7 @@ msgid "Conversational help and open-ended workspace questions."
 msgstr "Ayuda conversacional y preguntas abiertas sobre el espacio de trabajo"
 
 #: src/components/agent-message-block.tsx
+#: src/components/asset-viewer.tsx
 #: src/components/bounded-markdown.tsx
 #: src/components/opencode-guide-sheet.tsx
 msgid "Copied"
@@ -1296,6 +1297,10 @@ msgstr "Copiar"
 #: src/components/agent-message-block.tsx
 msgid "Copy message"
 msgstr "Copiar mensaje"
+
+#: src/components/asset-viewer.tsx
+msgid "Copy path"
+msgstr "Copiar ruta"
 
 #: src/components/ssh-host-form.tsx
 msgid "Copy public key"
@@ -4845,6 +4850,10 @@ msgid "This device has no camera available."
 msgstr "Este dispositivo no tiene cámara disponible"
 
 #: src/components/asset-viewer.tsx
+msgid "This file is {size}. Muqun opens text files up to {ceiling}; larger ones stay on the server."
+msgstr "Este archivo ocupa {size}. Muqun abre archivos de texto de hasta {ceiling}; los más grandes se quedan en el servidor"
+
+#: src/components/asset-viewer.tsx
 #: src/components/settings-font-sheet.tsx
 msgid "This file is empty."
 msgstr "Este archivo está vacío"
@@ -4856,10 +4865,6 @@ msgstr "Este archivo no es una fuente TrueType ni OpenType"
 #: src/components/server-terminal-workspace.tsx
 msgid "This file is not among the session artifacts."
 msgstr "Este archivo no está entre los archivos generados por la sesión"
-
-#: src/components/asset-viewer.tsx
-msgid "This file is too large to display. Copy it to read it elsewhere."
-msgstr "Este archivo es demasiado grande para mostrarlo. Cópialo para leerlo en otro sitio"
 
 #: src/components/settings-font-sheet.tsx
 msgid "This file is too large."
@@ -5031,6 +5036,10 @@ msgstr "Tokens de esta sesión"
 #: src/components/agent-composer.tsx
 msgid "Tokens usage and cost"
 msgstr "Uso de tokens y costo"
+
+#: src/components/asset-viewer.tsx
+msgid "Too large to highlight — showing plain text."
+msgstr "Demasiado grande para resaltar — se muestra como texto sin formato"
 
 #: src/components/git-diff-view.tsx
 msgid "Too many changes to list. This is the start of them, not all of them."

@@ -92,6 +92,15 @@ export interface BoundedMarkdownProps {
   /** Links are opened by the caller's rule, never by this component's guess. */
   openLinks?: boolean;
   latexMath?: boolean;
+  /**
+   * The selection tint, when a surface wants its own.
+   *
+   * The transcript's is the accent at full strength, which is what a bubble on
+   * a dark card needs. A full-page document reads better under the subtle one,
+   * so the asset viewer keeps the tint it has always drawn rather than the
+   * transcript's.
+   */
+  selectionColor?: string;
   testID?: string;
 }
 
@@ -102,6 +111,7 @@ export const BoundedMarkdown = memo(function BoundedMarkdown({
   containerStyle,
   openLinks = true,
   latexMath = false,
+  selectionColor,
   testID,
 }: BoundedMarkdownProps) {
   const { t } = useLingui();
@@ -154,7 +164,7 @@ export const BoundedMarkdown = memo(function BoundedMarkdown({
         markdownStyle={markdownStyle}
         containerStyle={styles.stretch}
         selectable
-        selectionColor={theme.colors.primary}
+        selectionColor={selectionColor ?? theme.colors.primary}
         selectionHandleColor={theme.colors.primary}
         streamingAnimation={false}
         textBreakStrategy="simple"
