@@ -147,6 +147,7 @@ import {
   transportKeyMaterial,
   type EncryptedEnvelope,
 } from './gateway-transport';
+import { dedupeKey, withRequestDedupe } from '@/lib/request-dedupe';
 import {
   endpointIsAbsent,
   sessionSnapshotFromAnswer,
@@ -432,7 +433,43 @@ async function encryptedGatewayFetch(
 export const gatewayFetch: typeof globalThis.fetch = (input, init) =>
   gatewayFetchWithin(REQUEST_TIMEOUT_MS, input, init);
 
-async function gatewayFetchWithin(
+/**
+ * Identical GETs that are out right now, so a second asker joins rather than
+ * asks again. Emptied as each settles -- this is not a cache; see
+ * `lib/request-dedupe`.
+ */
+const inFlightGets = new Map<string, Promise<Response>>();
+
+/** Test seam: the map is process-wide, so suites must be able to reset it. */
+export function forgetInFlightGets(): void {
+  inFlightGets.clear();
+}
+
+/**
+ * The narrowest useful place for the dedupe: below every caller, above the
+ * transport.
+ *
+ * Both the generated client and every raw call in this file come through here,
+ * and neither knows what the other is doing -- which is the whole reason two
+ * screens can ask one gateway the same question twice in the same frame. Doing
+ * it here rather than in `api/http-request` also keeps the generated file
+ * generated.
+ *
+ * The key is built before the locale and the token are merged in, because those
+ * are module state and so identical for two calls that overlap in time. What a
+ * caller passed for itself *is* in the key.
+ */
+function gatewayFetchWithin(
+  timeoutMs: number,
+  input: RequestInfo | URL,
+  init?: RequestInit
+): Promise<Response> {
+  return withRequestDedupe(inFlightGets, dedupeKey(input, init, timeoutMs), () =>
+    sendGatewayRequest(timeoutMs, input, init)
+  );
+}
+
+async function sendGatewayRequest(
   timeoutMs: number,
   input: RequestInfo | URL,
   init?: RequestInit
