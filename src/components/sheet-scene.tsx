@@ -25,7 +25,6 @@ import { SheetFrame } from '@/components/sheet-ground';
 import { SheetHandle } from '@/components/sheet-route-frame';
 import { KeyboardInset } from '@/components/keyboard-inset';
 import { fadeIn, PRESET, timing } from '@/lib/motion';
-import { useSheetDetentOvershoot } from '@/hooks/use-sheet-detent-overshoot';
 
 /**
  * The furniture every bottom sheet in Muqun is built from.
@@ -150,17 +149,9 @@ export function SheetScene({
   contentSized?: boolean;
   children: ReactNode;
 }) {
-  // The column, not the scroller's content: shrinking this box by the part of
-  // the sheet that Android laid out below the screen edge pulls the `flex: 1`
-  // scroller's *viewport* up onto the sheet's visible bottom. See
-  // `useSheetDetentOvershoot`; zero on iOS and on a single-detent sheet.
-  const overshoot = useSheetDetentOvershoot();
   return (
     <SheetFrame testID={testID} tint="surface" frosted>
-      <Animated.View
-        collapsable={false}
-        onLayout={overshoot.onLayout}
-        style={contentSized ? undefined : [styles.scene, overshoot.style]}>
+      <View collapsable={false} style={contentSized ? undefined : styles.scene}>
         <View style={styles.fixedTop}>
           <SheetHandle />
           <SheetSceneHeading
@@ -172,7 +163,7 @@ export function SheetScene({
           {header}
         </View>
         {children}
-      </Animated.View>
+      </View>
     </SheetFrame>
   );
 }

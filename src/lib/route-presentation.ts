@@ -153,101 +153,140 @@ function detentHeights(detents: SheetDetents): readonly number[] | 'fitToContent
   return detents;
 }
 
+/** What a sheet holds, which is what decides its one Android height. */
+export type SheetContent = 'list' | 'short';
+
 /**
- * Every detent the route asked for, on both platforms.
+ * The sheets whose content is a list long enough to run past the sheet.
  *
- * This function used to drop all but the first detent on Android, and the
- * reason it did is still true of the native layout -- what changed is that
- * `sheetDetentOvershoot` now pays for it in JS, so the sheet can be dragged
- * again. The measurement, from react-native-screens 4.28.0:
+ * This decides one thing, and only on Android: which single detent the sheet
+ * gets (see `resolveDetents`). A list sheet opens at its **largest**, so the
+ * most rows fit; everything else keeps the height it opens at today.
  *
- * - `SheetDelegate.kt:216-225` gives `BottomSheetBehavior` `peekHeight =
- *   detents[0] * H` and `maxHeight = detents[last] * H`.
- * - Material's `BottomSheetBehavior.getChildMeasureSpec` then measures the
- *   child at `min(parentHeight, maxHeight)` -- the *largest* detent -- and
- *   `onLayoutChild` reaches the smaller one with `offsetTopAndBottom`.
- * - `Screen.kt:247-263` pushes that same largest-detent height into Yoga as
- *   `frameHeight`, and `RNSScreenComponentDescriptor.h:102-103` makes it the
- *   shadow node's size. Nothing shrinks it when the detent changes:
- *   `Screen.kt:563-566` sends the same `height` with only a new
- *   `contentOffsetY`, and `getContentOriginOffset` is documented at
- *   `LayoutableShadowNode.h:121-129` as applying to `getRelativeLayoutMetrics`
- *   and `findNodeAtPoint` alone -- measure and hit-testing, never a mounted
- *   view's position.
+ * Correctness does not depend on this table -- a single detent is reachable
+ * whichever detent it is, because the laid-out height and the visible height
+ * become the same number either way. It is a judgement about how tall a sheet
+ * should arrive, and the cost of getting an entry wrong is a sheet that opens
+ * taller or shorter than it wants, never a row nobody can reach.
+ */
+export const sheetRouteContent: Readonly<Record<string, SheetContent>> = {
+  // The quick actions: tiles, then a grouped list that grows with the machine.
+  commands: 'list',
+  // Machines, backends, workspaces and panels in one column -- "what is
+  // running", and the longest list in the app on a busy server. `sessions` is
+  // the same screen under its old deep link, so it takes the same height.
+  panels: 'list',
+  sessions: 'list',
+  // The files a session produced.
+  artifacts: 'list',
+  // A diff: one row per line, so it is a list by definition.
+  'git-diff': 'list',
+  'agent-vcs-diff': 'list',
+  // Thirty-two packs, and a catalogue that is longer.
+  'settings-theme': 'list',
+  'settings-theme-browse': 'list',
+  // The agent's long pickers. The model sheet is the one the owner reported:
+  // 126 models, and the last of them has to be reachable.
+  'agent-model': 'list',
+  'agent-workspace': 'list',
+  'agent-sessions': 'list',
+  'agent-worktree': 'list',
+  // What is still running after the agent moved on.
+  'agent-shells': 'list',
+  'agent-tasks': 'list',
+
+  // Everything below is a handful of rows or a form, and opens where it always
+  // has. A sheet that jumps to full height to ask for four options is louder
+  // than the question.
+  'agent-mode': 'short',
+  'agent-context': 'short',
+  'settings-font': 'short',
+  'settings-language': 'short',
+  'new-task': 'short',
+  explore: 'short',
+  'web-service': 'short',
+  'opencode-guide': 'short',
+};
+
+/**
+ * One detent on Android, and why the documentation leaves no alternative.
  *
- * So an Android sheet is always laid out at its largest detent, and at any
- * smaller one the bottom `(largest - current) / largest` of that layout is
- * below the screen edge. A `flex: 1` scroller is handed a viewport whose own
- * bottom is off-screen, and a scroller's travel is `content - viewport`, so the
- * last rows sit in a dead zone scrolling cannot enter. That is what the owner
- * found on the workspace switcher, and what dropping the second detent fixed --
- * at the price of the drag, which the owner then asked for back.
+ * react-native-screens lays an Android form sheet out at its **largest** detent
+ * whatever detent it is resting at, and reaches a smaller one by sliding the
+ * whole view down the screen. That is not an oversight to be worked around with
+ * a better arrangement of children -- it is the design, stated in the library:
  *
- * Yoga is never told which detent the sheet is at, so the fix is to tell it:
- * `SheetScene` subscribes to the `sheetDetentChange` navigation event, turns
- * the reported index into a fraction with `sheetDetentOvershoot`, and gives the
- * scroller's content that much extra bottom padding. The content then ends
- * where the *visible* sheet ends at every detent, and dragging up reveals more
- * rows rather than dead space. iOS needs none of it -- it resizes the presented
- * view per detent -- and `sheetDetentOvershoot` answers 0 there.
+ * > For Yoga we require the container height to be "stable" to avoid updating
+ * > content size in flight. If left as MATCH_PARENT, BottomSheetDialog
+ * > dynamically applies insets as padding when sheet overflows status bar or
+ * > display cutout. This causes Yoga to recalculate the layout, resulting in UI
+ * > flickering during the drag gesture.
+ * >   -- `gamma/modals/formsheet/FormSheetDimensionsCoordinator.kt:75-81`
+ *
+ * The consequence is that a `flex: 1` scroller inside a multi-detent Android
+ * sheet is handed a viewport `(largest - current) / largest` taller than the
+ * sheet anyone can see, and that excess hangs below the screen edge where no
+ * amount of scrolling reaches it -- a scroller's travel is `content - viewport`
+ * and it is the *viewport's* own bottom that is off-screen. The owner found it
+ * on the workspace switcher; for the model picker's `[0.6, 1]` it is 40%.
+ *
+ * Every documented escape was checked against 4.28.0, and this is why the
+ * answer is one detent rather than a restructure:
+ *
+ * - **Nesting is not the problem.** No first-child or direct-child rule exists
+ *   for a sheet's scroller. The package states such a rule only for
+ *   `scrollEdgeEffects` (`types.tsx:245`, iOS), tab scroll-to-top
+ *   (`TabsScreen.types.ts:72-74`), `HeaderConfig` (`ScreenStackItem.tsx:145`)
+ *   and `ScreenFooter` (`ScreenFooter.kt:29`). Material's own
+ *   `BottomSheetBehavior.findScrollingChild` is an unbounded recursive
+ *   depth-first search, re-run on every layout pass, so the scroller is found
+ *   at any depth. The heading and the ground above ours cost it nothing.
+ * - **`sheetExpandsWhenScrolledToEdge` does not exist on Android.** It is
+ *   `@platform ios` (`types.tsx:453-460`); the value is stored at
+ *   `Screen.kt:96`, assigned at `ScreenViewManager.kt:378`, and read nowhere.
+ *   The newer API says so outright: `// TODO: @t0maboro - implement later`
+ *   (`FormSheetHostViewManager.kt:106-111`).
+ * - **`sheetInitialDetentIndex` moves the sheet, not the layout.** It seeds the
+ *   behaviour's state only (`SheetDelegate.kt:34-42`); `maxAllowedHeight` is
+ *   still `heightAt(count - 1)` (`SheetDetents.kt:55`). Opening at `'last'`
+ *   would put the dead zone back the moment the reader dragged down.
+ * - **`sheetDefaultResizeAnimationEnabled` is unreachable** unless the sheet is
+ *   `fitToContents` (`Screen.kt:157-176`), which a list sheet is not.
+ * - **`unstable_sheetFooter` cannot size a viewport.** It is an overlay laid
+ *   out by hand against the live sheet offset, and React is told nothing about
+ *   it ("React has no clue about updates enforced in below method",
+ *   `ScreenFooter.kt:239-266`).
+ *
+ * So: one detent. `useSingleDetent` (`BottomSheetBehaviorExt.kt:19-34`) pins the
+ * sheet, the laid-out height and the visible height become the same number, and
+ * the overflow is nought -- which is what makes every row reachable, and what
+ * makes Expo's own promise for numeric detents true again: "your modal content
+ * can use `flex: 1` to fill the available space within the sheet".
+ *
+ * Which detent is `sheetRouteContent`'s call. A **list** sheet takes its
+ * largest, so it arrives tall and the most rows fit; everything else keeps the
+ * height it opens at today. What Android still loses is dragging a sheet
+ * taller. iOS keeps the whole array, because it resizes the presented view to
+ * each detent and has none of this.
  */
 export function resolveDetents(
-  detents: SheetDetents
+  detents: SheetDetents,
+  content: SheetContent = 'short',
+  platform: string | undefined = process.env.EXPO_OS
 ): NativeStackNavigationOptions['sheetAllowedDetents'] {
   const heights = detentHeights(detents);
-  return heights === 'fitToContents' ? 'fitToContents' : [...heights];
-}
-
-/**
- * The fraction of an Android sheet's laid-out height that is below the screen.
- *
- * `index` is the detent the sheet is resting at, as `sheetDetentChange` reports
- * it -- an index into the very array `resolveDetents` handed the native side.
- * The sheet is laid out at `largest * H` and its visible height is
- * `current * H`, so the part hanging off the bottom is
- *
- *     laidOutHeight * (1 - current / largest)
- *
- * which is why this answers a *fraction* rather than pixels: multiplied by the
- * scene's own measured height it needs no window height, no status-bar inset
- * and no display metrics, and so cannot disagree with the native side about any
- * of them. The scene root is a `flex: 1` child of the screen's content view
- * with no chrome between them, so its measured height *is* `largest * H`.
- *
- * Zero on iOS, where the presented view is resized to each detent and nothing
- * hangs anywhere; zero for `fitToContents`, which has no detent array to be at
- * an index of; and zero for a single-detent sheet, where largest is current.
- *
- * The platform is read from `process.env.EXPO_OS`, inlined per bundle, so the
- * branch costs nothing at runtime -- the same mechanism `sheet-route-frame.tsx`
- * uses for the grabber.
- */
-export function sheetDetentOvershoot(
-  detents: SheetDetents,
-  index: number,
-  platform: string | undefined = process.env.EXPO_OS
-): number {
-  if (platform !== 'android') return 0;
-  const heights = detentHeights(detents);
-  if (heights === 'fitToContents' || heights.length === 0) return 0;
-
-  // `highest` rather than `at(-1)`: the native side reads the array the same way
-  // (`sheetDetents.highest()`), so a table entry written out of order would put
-  // the two of them at odds rather than merely look odd.
-  const largest = Math.max(...heights);
-  const resting = heights[Math.min(Math.max(Math.trunc(index), 0), heights.length - 1)];
-  if (!Number.isFinite(largest) || largest <= 0 || resting === undefined) return 0;
-
-  // Clamped, because a detent taller than the largest is not a negative amount
-  // of padding -- it is a table that needs fixing, and meanwhile the sheet
-  // behaves exactly as it does today.
-  return Math.min(Math.max(1 - resting / largest, 0), 1);
+  if (heights === 'fitToContents') return 'fitToContents';
+  if (platform !== 'android' || heights.length <= 1) return [...heights];
+  // `Math.max` rather than the last entry, because that is how the native side
+  // reads the array too (`SheetDetents.highest()`).
+  return [content === 'list' ? Math.max(...heights) : heights[0]!];
 }
 
 /** Route presentation is explicit: browsing is a page; short actions are sheets. */
 export function sheetPresentationOptions(
   presentation: SheetPresentation,
-  detents: SheetDetents = 'full'
+  detents: SheetDetents = 'full',
+  content: SheetContent = 'short'
 ): NativeStackNavigationOptions {
   if (presentation === 'fullscreen')
     return {
@@ -257,7 +296,7 @@ export function sheetPresentationOptions(
     };
   return {
     presentation: 'formSheet',
-    sheetAllowedDetents: resolveDetents(detents),
+    sheetAllowedDetents: resolveDetents(detents, content),
     sheetGrabberVisible: true,
     // One radius for every sheet, on both platforms. Left unset the prop
     // defaults to -1, which iOS reads as "system default" (~10pt) and Android
@@ -278,6 +317,7 @@ export function sheetPresentationOptions(
 export function sheetRouteOptions(route: string): NativeStackNavigationOptions {
   return sheetPresentationOptions(
     sheetRoutePresentations[route] ?? 'sheet',
-    sheetRouteDetents[route] ?? 'full'
+    sheetRouteDetents[route] ?? 'full',
+    sheetRouteContent[route] ?? 'short'
   );
 }
