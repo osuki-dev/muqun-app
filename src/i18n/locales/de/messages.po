@@ -2759,6 +2759,10 @@ msgstr "Keine Kamera zum Scannen"
 msgid "No camera was found on this device."
 msgstr "Auf diesem Gerät wurde keine Kamera gefunden"
 
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "No changes"
+msgstr "Keine Änderungen"
+
 #: src/components/git-diff-view.tsx
 msgid "No changes. The working tree matches HEAD."
 msgstr "Keine Änderungen. Der Arbeitsbaum entspricht HEAD"

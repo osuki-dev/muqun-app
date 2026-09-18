@@ -2759,6 +2759,10 @@ msgstr "스캔할 카메라가 없습니다"
 msgid "No camera was found on this device."
 msgstr "이 기기에서 카메라를 찾지 못했습니다"
 
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "No changes"
+msgstr "변경 사항 없음"
+
 #: src/components/git-diff-view.tsx
 msgid "No changes. The working tree matches HEAD."
 msgstr "변경 사항이 없습니다. 작업 트리가 HEAD와 같습니다"

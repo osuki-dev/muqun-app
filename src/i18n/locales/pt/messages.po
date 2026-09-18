@@ -2759,6 +2759,10 @@ msgstr "Sem câmara para digitalizar"
 msgid "No camera was found on this device."
 msgstr "Não foi encontrada nenhuma câmara neste dispositivo"
 
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "No changes"
+msgstr "Sem alterações"
+
 #: src/components/git-diff-view.tsx
 msgid "No changes. The working tree matches HEAD."
 msgstr "Sem alterações. A árvore de trabalho corresponde a HEAD"

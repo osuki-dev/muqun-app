@@ -2759,6 +2759,10 @@ msgstr "Không có camera để quét"
 msgid "No camera was found on this device."
 msgstr "Không tìm thấy camera trên thiết bị này"
 
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "No changes"
+msgstr "Không có thay đổi"
+
 #: src/components/git-diff-view.tsx
 msgid "No changes. The working tree matches HEAD."
 msgstr "Không có thay đổi. Cây làm việc trùng với HEAD"

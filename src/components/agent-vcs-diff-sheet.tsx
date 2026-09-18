@@ -116,6 +116,17 @@ export const AgentVcsDiffSheet = memo(function AgentVcsDiffSheet({
    * nothing failed, and there is nothing for the reader to retry.
    */
   const empty = diffEmptyState({ loading, fileCount: diffs.length, reason: answer.reason });
+  // What the caption says: the summary when there are files, "No changes"
+  // when there are none, and while a tab is loading whatever the previous
+  // one said, so a reload never swaps the line for a blank or a third wording.
+  const summary =
+    diffs.length > 0
+      ? t`${plural(diffs.length, { one: '# file', other: '# files' })} · +${totals.additions} −${totals.deletions}`
+      : t`No changes`;
+  const [lastCaption, setLastCaption] = useState<string | null>(null);
+  useEffect(() => {
+    if (!loading) setLastCaption(summary);
+  }, [loading, summary]);
   const emptyText =
     empty === 'workspace-missing'
       ? t`Workspace folder is missing: ${answer.missing?.directory ?? ''}`
@@ -127,11 +138,12 @@ export const AgentVcsDiffSheet = memo(function AgentVcsDiffSheet({
     <SheetScene
       testID="agent-vcs-diff-sheet"
       title={t`Changes`}
-      caption={
-        diffs.length > 0
-          ? t`${plural(diffs.length, { one: '# file', other: '# files' })} · +${totals.additions} −${totals.deletions}`
-          : undefined
-      }
+      // The caption line is always there. It used to vanish for a tab with
+      // nothing in it and come back for the next, so the segmented control and
+      // the list under it jumped by a line on every switch; a tab with no
+      // changes says so on that same line, and a tab still loading keeps what
+      // the last one said rather than blinking to a third state.
+      caption={loading && lastCaption ? lastCaption : summary}
       header={
         <SettingsSegmented
           options={[

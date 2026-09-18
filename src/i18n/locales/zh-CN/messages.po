@@ -2759,6 +2759,10 @@ msgstr "没有可用于扫描的相机"
 msgid "No camera was found on this device."
 msgstr "在本设备上找不到相机"
 
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "No changes"
+msgstr "没有更改"
+
 #: src/components/git-diff-view.tsx
 msgid "No changes. The working tree matches HEAD."
 msgstr "没有改动。工作区与 HEAD 一致"
