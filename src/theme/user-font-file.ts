@@ -250,13 +250,23 @@ export function downloadStatusFrom(message: string): number | undefined {
 }
 
 /**
- * The name the reader reads, derived from where the font came from.
+ * The name the reader reads when the font will not say its own.
  *
- * A face's internal family name would be the better answer and is not available:
- * neither expo-font nor the Skia typeface exposes it, and parsing an sfnt `name`
- * table by hand to put one word on a row is not a trade worth making. So the
- * label comes from the file name, which is what a reader recognises anyway --
- * they are the one who chose the file.
+ * This used to be the only answer, on the argument that a face's internal
+ * family name is not available -- Skia's `SkTypeface` exposes `getGlyphIDs`
+ * and nothing else (`skia/types/Typeface/Typeface.ts`), and expo-font has no
+ * opinion about a file's contents at all. Both halves of that are still true
+ * and the conclusion was still wrong, because the name is not in the typeface
+ * API, it is in the file: see `fontFamilyNameFromNameTable` below.
+ *
+ * What is left for this function is the fallback, and it is a real one. A
+ * stripped or subset face can have no usable `name` table, and a reader can
+ * pick a file the platform will not name either -- on Android
+ * `File.pickFileAsync` hands back a `File` whose only name is
+ * `Paths.basename(uri)` (`expo-file-system/src/File.ts:172`), and for a
+ * Storage Access Framework document that URI ends in the provider's own
+ * document id. Which is how a reader who installed a font found the Font row
+ * calling it `msf:13397`.
  *
  * Query strings and fragments come off first, because a CDN URL carries a cache
  * key that is not part of anything's name. Separators become spaces, the
@@ -282,6 +292,309 @@ function decodeURIComponentSafe(value: string): string {
     // undecoded name is still the name the reader picked.
     return value;
   }
+}
+
+/**
+ * Where the font came from, in the few words a caption has room for.
+ *
+ * The row says two things: what the face calls itself, and where the reader
+ * got it. The second is this. A URL is reduced to its host, because the path
+ * is a hash and a version and four directories that say nothing about
+ * provenance and push the host off the end of the line; a picked file is its
+ * own name, decoded, which is the only thing about a local file a reader
+ * recognises.
+ *
+ * `null` when there is nothing worth saying -- an opaque content URI is not a
+ * place, and a caption reading `msf:13397` is worse than no caption.
+ */
+export function userFontSource(source: string): string | null {
+  const trimmed = source.trim();
+  if (!trimmed) return null;
+  try {
+    const url = new URL(trimmed);
+    if (url.protocol === 'http:' || url.protocol === 'https:') return url.host || null;
+  } catch {
+    // Not a URL. Fall through: it is a file name, or something shaped like one.
+  }
+  const name = decodeURIComponentSafe(trimmed.split('/').pop() ?? '');
+  // The document-id case. A provider's opaque handle has a scheme-like colon
+  // in it and no extension, and naming it tells the reader nothing at all.
+  if (!name || /^[a-z]+:[0-9]+$/iu.test(name)) return null;
+  return name.length > 48 ? `${name.slice(0, 47)}\u2026` : name;
+}
+
+/**
+ * Reading a font's own name out of the file, which is the only place it is.
+ *
+ * Every sfnt font carries a `name` table: a small, fixed, well-specified
+ * structure holding the strings the font calls itself by, one record per
+ * (platform, encoding, language, nameID). It is the table every font tool and
+ * every operating system reads to build a font menu, and it is a couple of
+ * dozen lines to walk. The app avoided it for a while on the grounds that
+ * hand-parsing a binary table to put one word on a row was not a trade worth
+ * making -- but the alternative turned out to be a row that calls the reader's
+ * font `msf:13397`, so it plainly was.
+ *
+ * The functions below are deliberately split at the point where bytes have to
+ * be fetched. `sfntTableCount` and `findSfntTable` work on the head of the
+ * file; `fontFamilyNameFromNameTable` works on one table. That split is what
+ * lets the caller read two small ranges out of a 20 MB CJK face instead of the
+ * whole thing, and it is what lets every one of them be tested against real
+ * fonts with no device and no filesystem.
+ */
+
+/** The sfnt header: a version tag, a table count, and three search hints. */
+export const SFNT_HEADER_BYTES = 12;
+
+/** One table directory entry: a four-byte tag, a checksum, an offset, a length. */
+export const SFNT_DIRECTORY_ENTRY_BYTES = 16;
+
+/**
+ * The most of a `name` table this will read, in bytes.
+ *
+ * A real one is one to twenty kilobytes: a few dozen records of a few dozen
+ * characters each, times the platforms and languages the foundry shipped. A
+ * quarter of a megabyte is far above any of them and is here so that a
+ * hand-edited header claiming a 2 GB `name` table cannot make the app allocate
+ * it. A face whose names genuinely will not fit falls back to the file name,
+ * which is the same place a face with no `name` table lands.
+ */
+export const FONT_NAME_TABLE_MAX_BYTES = 256 * 1024;
+
+function uint16(bytes: Uint8Array, at: number): number {
+  return ((bytes[at] ?? 0) << 8) | (bytes[at + 1] ?? 0);
+}
+
+function uint32(bytes: Uint8Array, at: number): number {
+  return (
+    (bytes[at] ?? 0) * 0x1000000 +
+    (((bytes[at + 1] ?? 0) << 16) | ((bytes[at + 2] ?? 0) << 8) | (bytes[at + 3] ?? 0))
+  );
+}
+
+/**
+ * How many tables the directory holds, or `null` if this is not an sfnt at all.
+ *
+ * Reads the count and nothing else, so a caller knows exactly how many more
+ * bytes the directory needs before asking for them.
+ */
+export function sfntTableCount(head: Uint8Array): number | null {
+  if (head.length < SFNT_HEADER_BYTES) return null;
+  if (!isSupportedFontFormat(sniffFontFormat(head))) return null;
+  const count = uint16(head, 4);
+  // A real face has between ten and thirty tables. The cap is the field's own
+  // ceiling and exists only so a nonsense count cannot size an allocation.
+  return count > 0 && count <= 512 ? count : null;
+}
+
+/** How many bytes the header and a directory of `count` entries occupy. */
+export function sfntDirectoryBytes(count: number): number {
+  return SFNT_HEADER_BYTES + count * SFNT_DIRECTORY_ENTRY_BYTES;
+}
+
+/**
+ * Where a named table lives in the file, from the header and directory.
+ *
+ * `directory` is the head of the file, at least `sfntDirectoryBytes(count)`
+ * long. Anything short, absent or implausible is `null` rather than a throw:
+ * this runs on a file a stranger's server sent us, and the caller's answer to
+ * every failure here is the same -- fall back to the file name.
+ */
+export function findSfntTable(
+  directory: Uint8Array,
+  tag: string
+): { offset: number; length: number } | null {
+  const count = sfntTableCount(directory);
+  if (count === null) return null;
+  if (directory.length < sfntDirectoryBytes(count)) return null;
+  for (let index = 0; index < count; index += 1) {
+    const at = SFNT_HEADER_BYTES + index * SFNT_DIRECTORY_ENTRY_BYTES;
+    let found = '';
+    for (let byte = 0; byte < 4; byte += 1) found += String.fromCharCode(directory[at + byte] ?? 0);
+    if (found !== tag) continue;
+    const offset = uint32(directory, at + 8);
+    const length = uint32(directory, at + 12);
+    if (length <= 0 || length > FONT_NAME_TABLE_MAX_BYTES) return null;
+    return { offset, length };
+  }
+  return null;
+}
+
+/**
+ * The `name` table's name IDs this cares about, best first.
+ *
+ * 16 is the typographic family: the name a foundry wants a font *menu* to
+ * show, and the one that says `Iosevka` where ID 1 is forced to say
+ * `Iosevka Term SemiBold Extended` because the old model could only carry four
+ * styles per family. 1 is the ordinary family name and is what almost every
+ * font has. 4 is the full name -- family plus style -- and is the last resort,
+ * because a face with neither of the other two is usually a subset or a
+ * conversion, and a long name is better than no name.
+ */
+const FAMILY_NAME_IDS = [16, 1, 4] as const;
+
+/**
+ * Mac Roman's upper half, which is the only part of it that is not ASCII.
+ *
+ * Platform 1 encoding 0 records are Mac Roman, and a foundry that shipped one
+ * in the 1990s is still shipping it now. Most such names are plain ASCII and
+ * would survive a naive decode; the ones that are not are exactly the names
+ * worth getting right, because a face called `Futura Condensed Extra Bold` is
+ * fine either way and one called `Helvetica Neue LT Std 87 Heavy Condensed
+ * Oblique` is not the interesting case -- an accented foundry name is.
+ */
+const MAC_ROMAN_HIGH =
+  '\u00C4\u00C5\u00C7\u00C9\u00D1\u00D6\u00DC\u00E1\u00E0\u00E2\u00E4\u00E3\u00E5\u00E7\u00E9\u00E8' +
+  '\u00EA\u00EB\u00ED\u00EC\u00EE\u00EF\u00F1\u00F3\u00F2\u00F4\u00F6\u00F5\u00FA\u00F9\u00FB\u00FC' +
+  '\u2020\u00B0\u00A2\u00A3\u00A7\u2022\u00B6\u00DF\u00AE\u00A9\u2122\u00B4\u00A8\u2260\u00C6\u00D8' +
+  '\u221E\u00B1\u2264\u2265\u00A5\u00B5\u2202\u2211\u220F\u03C0\u222B\u00AA\u00BA\u03A9\u00E6\u00F8' +
+  '\u00BF\u00A1\u00AC\u221A\u0192\u2248\u2206\u00AB\u00BB\u2026\u00A0\u00C0\u00C3\u00D5\u0152\u0153' +
+  '\u2013\u2014\u201C\u201D\u2018\u2019\u00F7\u25CA\u00FF\u0178\u2044\u20AC\u2039\u203A\uFB01\uFB02' +
+  '\u2021\u00B7\u201A\u201E\u2030\u00C2\u00CA\u00C1\u00CB\u00C8\u00CD\u00CE\u00CF\u00CC\u00D3\u00D4' +
+  '\uF8FF\u00D2\u00DA\u00DB\u00D9\u0131\u02C6\u02DC\u00AF\u02D8\u02D9\u02DA\u00B8\u02DD\u02DB\u02C7';
+
+function decodeMacRoman(bytes: Uint8Array): string {
+  let text = '';
+  for (const byte of bytes) {
+    text += byte < 0x80 ? String.fromCharCode(byte) : (MAC_ROMAN_HIGH[byte - 0x80] ?? '\uFFFD');
+  }
+  return text;
+}
+
+function decodeUtf16Be(bytes: Uint8Array): string {
+  // An odd length is a malformed record rather than a half character; the last
+  // stray byte is dropped and whatever decoded before it is still a name.
+  let text = '';
+  for (let at = 0; at + 1 < bytes.length; at += 2) text += String.fromCharCode(uint16(bytes, at));
+  return text;
+}
+
+/**
+ * How good a record is, as one number, so the best of them can be picked in a
+ * single pass.
+ *
+ * `null` means unreadable rather than merely worse: an encoding this cannot
+ * decode is not a name at a lower rank, it is bytes. The three terms are
+ * ranked in the order they matter -- which name is being asked for, then
+ * whether it can be decoded well, then whether it is in English -- and are
+ * spaced so that no amount of the later ones outranks the earlier.
+ */
+function nameRecordScore(
+  platform: number,
+  encoding: number,
+  language: number,
+  nameId: number
+): number | null {
+  const idRank = FAMILY_NAME_IDS.indexOf(nameId as (typeof FAMILY_NAME_IDS)[number]);
+  if (idRank < 0) return null;
+
+  let platformRank: number;
+  if (platform === 3 && (encoding === 1 || encoding === 10)) {
+    // Windows, UTF-16BE. What every font shipped this century carries, and the
+    // record a font menu on any platform reads first.
+    platformRank = 2;
+  } else if (platform === 0) {
+    // Unicode. Always UTF-16BE whatever the encoding id says.
+    platformRank = 1;
+  } else if (platform === 1 && encoding === 0) {
+    platformRank = 0;
+  } else {
+    // Platform 1 with a non-Roman script, or platform 2 (deprecated ISO), or
+    // something a specification does not describe. Not guessed at.
+    return null;
+  }
+
+  // English, in each platform's own way of saying it: 0x0409 is en-US in
+  // Windows' language ids, 0 is English in Macintosh's. A font with names in
+  // six languages and no English is read in whichever one sorts first here,
+  // which is still its own name.
+  const english = (platform === 3 && language === 0x0409) || (platform === 1 && language === 0);
+
+  return (FAMILY_NAME_IDS.length - idRank) * 100 + platformRank * 10 + (english ? 1 : 0);
+}
+
+/**
+ * The family name inside a `name` table, or `null` if it does not hold one.
+ *
+ * Format 0 and format 1 tables have the same header and the same record array;
+ * format 1's extra language-tag array sits after the records and is not needed
+ * to read a Windows or Macintosh record, so both are handled by reading the
+ * header and walking `count` records.
+ *
+ * Every bound is checked against the table's own length. A `name` table is
+ * three levels of offset -- table to string area, string area to record, record
+ * to its length -- and a file that lies about any of them is a file that would
+ * otherwise read whatever happened to be next in memory.
+ */
+export function fontFamilyNameFromNameTable(table: Uint8Array): string | null {
+  if (table.length < 6) return null;
+  const count = uint16(table, 2);
+  const stringOffset = uint16(table, 4);
+  const recordsEnd = 6 + count * 12;
+  if (count === 0 || recordsEnd > table.length) return null;
+
+  let best: { score: number; text: string } | null = null;
+  for (let index = 0; index < count; index += 1) {
+    const at = 6 + index * 12;
+    const score = nameRecordScore(
+      uint16(table, at),
+      uint16(table, at + 2),
+      uint16(table, at + 4),
+      uint16(table, at + 6)
+    );
+    if (score === null || (best && score <= best.score)) continue;
+
+    const length = uint16(table, at + 8);
+    const start = stringOffset + uint16(table, at + 10);
+    if (length === 0 || start + length > table.length) continue;
+
+    const bytes = table.subarray(start, start + length);
+    const platform = uint16(table, at);
+    const text = platform === 1 ? decodeMacRoman(bytes) : decodeUtf16Be(bytes);
+    const cleaned = cleanFamilyName(text);
+    if (cleaned) best = { score, text: cleaned };
+  }
+  return best?.text ?? null;
+}
+
+/**
+ * The name, tidied just enough to put on a row and no further.
+ *
+ * A `name` string can carry a trailing NUL, a byte-order mark from a converter
+ * that wrote UTF-16 the long way, or line breaks from a foundry that used the
+ * field as a notes column. None of those is part of the name. What is *not*
+ * done here is any attempt to improve the name -- no case fixing, no splitting
+ * a style off the end, no dropping a foundry prefix. It is what the font calls
+ * itself, and the reader chose this file.
+ */
+function cleanFamilyName(value: string): string | null {
+  const cleaned = value
+    .replace(/^\uFEFF/u, '')
+    // eslint-disable-next-line no-control-regex -- the exact bytes being stripped
+    .replace(/[\u0000-\u001f\u007f]+/gu, ' ')
+    .replace(/\s+/gu, ' ')
+    .trim();
+  if (!cleaned) return null;
+  // A name that decoded to replacement characters is a record this could not
+  // read rather than a font that is called that.
+  if (/^\uFFFD+$/u.test(cleaned)) return null;
+  return cleaned.length > 48 ? `${cleaned.slice(0, 47)}\u2026` : cleaned;
+}
+
+/**
+ * The family name of a whole font held in memory.
+ *
+ * The convenience form, for a caller that already has the bytes -- a test, or
+ * a file small enough that reading it twice would cost more than reading it
+ * once. The install path does not use it: it reads the header, then the
+ * directory, then the one table, which on a 20 MB face is three reads of a few
+ * kilobytes instead of twenty megabytes of allocation.
+ */
+export function fontFamilyName(bytes: Uint8Array): string | null {
+  const table = findSfntTable(bytes, 'name');
+  if (!table) return null;
+  if (table.offset + table.length > bytes.length) return null;
+  return fontFamilyNameFromNameTable(bytes.subarray(table.offset, table.offset + table.length));
 }
 
 /**

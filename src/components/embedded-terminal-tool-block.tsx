@@ -35,6 +35,7 @@ import { EngineFailureText } from '@/components/engine-failure-text';
 import { ThinkingIndicator } from '@/components/agent-thinking-indicator';
 import { usePaneChatColors } from '@/components/pane-chat-blocks';
 import { useTranscriptPlate } from '@/hooks/use-transcript-plate';
+import { useMonoFontFamily } from '@/hooks/use-user-fonts';
 import { fadeIn, fadeOut, timing } from '@/lib/motion';
 import type { ToolCallState } from '@/lib/agent-protocol';
 import type { ToolKind } from '@/lib/agent-tool-output';
@@ -134,6 +135,7 @@ export const EmbeddedTerminalToolBlock = memo(function EmbeddedTerminalToolBlock
   const colors = usePaneChatColors();
   const { t } = useLingui();
   const raised = useTranscriptPlate();
+  const mono = useMonoFontFamily();
   const [expanded, setExpanded] = useState(defaultExpanded);
 
   const pending = isToolPending(status);
@@ -193,7 +195,7 @@ export const EmbeddedTerminalToolBlock = memo(function EmbeddedTerminalToolBlock
                 // again.
                 ellipsizeMode="middle"
                 color={theme.colors.textMuted}
-                style={styles.target}>
+                style={[styles.target, { fontFamily: mono }]}>
                 {title}
               </Text>
             ) : null}
@@ -204,7 +206,7 @@ export const EmbeddedTerminalToolBlock = memo(function EmbeddedTerminalToolBlock
               numberOfLines={1}
               ellipsizeMode="head"
               color={theme.colors.textSubtle}
-              style={styles.caption}>
+              style={[styles.caption, { fontFamily: mono }]}>
               {caption}
             </Text>
           ) : null}
@@ -316,13 +318,18 @@ const styles = StyleSheet.create({
   toolName: {
     fontSize: AGENT_TYPE.meta.size,
   },
+  // The target is the file or the command the call is pointed at, and the
+  // caption under it is the folder it sits in: two literals, read the way a
+  // path is read, so both follow the mono slot. They used to name the literal
+  // `'monospace'`, which on iOS is not a family React Native can resolve at
+  // all and on Android is the platform's generic -- either way, never the face
+  // the reader installed. The family is merged in at the render site, because
+  // a `StyleSheet.create` object cannot call a hook.
   target: {
-    fontFamily: 'monospace',
     fontSize: AGENT_TYPE.micro.size,
     flexShrink: 1,
   },
   caption: {
-    fontFamily: 'monospace',
     fontSize: AGENT_TYPE.micro.size,
   },
   duration: {

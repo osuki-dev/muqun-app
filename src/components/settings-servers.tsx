@@ -20,6 +20,7 @@ import { SettingsSegmented } from '@/components/settings-segmented';
 import { GatewayTunnelBadge } from '@/components/gateway-tunnel-badge';
 import { StatusDot } from '@/components/status-dot';
 import { useGatewayRecord } from '@/hooks/use-gateway-record';
+import { useMonoFontFamily } from '@/hooks/use-user-fonts';
 import { GatewayStorageError } from '@/components/gateway-storage-error';
 import { reachabilityDescription, reachabilityLabel } from '@/i18n/labels';
 import { DEMO_SERVER_ID } from '@/lib/demo-gateway';
@@ -337,7 +338,11 @@ function ServerRow({
                   styles.usingChip,
                   { backgroundColor: surfaceBackground(theme.colors.primarySubtle) },
                 ]}>
-                <Text variant="caption" color={theme.colors.primary} style={styles.usingText}>
+                <Text
+                  variant="caption"
+                  weight="semibold"
+                  color={theme.colors.primary}
+                  style={styles.usingText}>
                   <Trans>Using</Trans>
                 </Text>
               </View>
@@ -488,6 +493,23 @@ function ServerEditForm({ server, onDone }: { server: GatewayRecord; onDone: () 
   const surfaceBackground = useSurfaceBackground();
   const { showToast } = useToast();
   const { editRecord } = useGatewayRecord();
+  /**
+   * The address field is monospaced; the name field above it is not.
+   *
+   * Both are the app's `Input`, which already resolves the reader's interface
+   * face out of the theme registry and hands it to the `TextInput` -- so the
+   * name, which is prose the reader made up, needs nothing said about it here.
+   * The address is the other kind of value: `http://100.x.x.x:23847` is read
+   * back digit by digit against whatever the machine is actually showing, and
+   * a proportional face is where a Tailscale address stops being checkable at
+   * a glance. It is also the one field on this screen where a single wrong
+   * character means the server is simply unreachable with no clue as to why.
+   *
+   * Only the family is overridden. `Input` composes `style` after its own
+   * resolved text style, so the size, the colour and the compact metrics all
+   * stay exactly as the rest of the form has them.
+   */
+  const monoFontFamily = useMonoFontFamily();
   // react-doctor-disable-next-line react-doctor/no-derived-useState -- intentional initial form state for server editing.
   const [label, setLabel] = useState(server.label);
   // react-doctor-disable-next-line react-doctor/no-derived-useState -- intentional initial form state for server editing.
@@ -563,6 +585,7 @@ function ServerEditForm({ server, onDone }: { server: GatewayRecord; onDone: () 
         error={urlError}
         variant="outline"
         size="compact"
+        style={{ fontFamily: monoFontFamily }}
       />
       <Text variant="caption" color={theme.colors.textMuted}>
         <Trans>
@@ -656,7 +679,10 @@ function UnpairAction({ label, onUnpair }: { label: string; onUnpair: () => Prom
         ) : (
           <Trash2 size={15} color={theme.colors.onPrimary} strokeWidth={2.2} />
         )}
-        <Text variant="caption" color={theme.colors.onPrimary} style={styles.armedText}>
+        {/* Semibold through the prop rather than a stylesheet `fontWeight: '700'`,
+            which on Android rounds past the only style `expo-font` registered and
+            lands on the system face. See `usingText`. */}
+        <Text variant="caption" weight="semibold" color={theme.colors.onPrimary}>
           {view.confirm.phase === 'working' ? <Trans>Unpairing…</Trans> : <Trans>Unpair</Trans>}
         </Text>
       </PressableScale>
@@ -818,7 +844,8 @@ function PairedDevices({ server }: { server: GatewayRecord }) {
               disabled={revoking !== null}
               onPress={() => void revoke(device)}
               style={[styles.revoke, { backgroundColor: surfaceBackground(theme.colors.danger) }]}>
-              <Text variant="caption" color={theme.colors.onPrimary} style={styles.armedText}>
+              {/* Semibold through the prop, for the Android reason at `usingText`. */}
+              <Text variant="caption" weight="semibold" color={theme.colors.onPrimary}>
                 <Trans>Revoke</Trans>
               </Text>
             </PressableScale>
@@ -862,7 +889,14 @@ const styles = StyleSheet.create({
     borderRadius: LADDER.gap,
     borderCurve: 'continuous',
   },
-  usingText: { letterSpacing: 0.9, fontWeight: '700' },
+  // Tracking only. The weight is asked for through the kit's prop instead,
+  // because `expo-font` files a reader's face under Typeface.NORMAL alone and
+  // Android rounds 700 and over up to BOLD, finds nothing, and resolves against
+  // the system font list, which does not contain the family. The prop is capped
+  // at semibold; a style `fontWeight` is applied after the kit's resolved font
+  // style and would defeat that cap. The armed labels below carry the same prop
+  // for the same reason.
+  usingText: { letterSpacing: 0.9 },
   statusLine: { flexDirection: 'row', alignItems: 'center', gap: LADDER.gap, paddingTop: 2 },
   statusText: { letterSpacing: 0.9 },
   // Under the status line rather than beside it: the dot already owns that
@@ -886,7 +920,6 @@ const styles = StyleSheet.create({
   armedRow: { flexDirection: 'row', gap: LADDER.gap },
   pendingAction: { opacity: 0.7 },
   armedButton: { flex: 1 },
-  armedText: { fontWeight: '700' },
   devices: { gap: LADDER.gap },
   deviceRow: { flexDirection: 'row', alignItems: 'center', gap: LADDER.snug },
   revoke: {

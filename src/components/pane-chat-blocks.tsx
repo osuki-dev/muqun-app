@@ -6,7 +6,7 @@ import { EnrichedMarkdownText, type MarkdownStyle } from 'react-native-enriched-
 import { memo, useMemo } from 'react';
 import { ActivityIndicator, Linking, ScrollView, StyleSheet, View } from 'react-native';
 
-import { useMarkdownFonts } from '@/hooks/use-user-fonts';
+import { useMarkdownFonts, useMonoFontFamily } from '@/hooks/use-user-fonts';
 import { createMarkdownStyle } from '@/lib/markdown-style';
 import { PressableScale } from '@/components/pressable-scale';
 import { InlineDiffRows } from '@/components/diff-rows';
@@ -224,6 +224,7 @@ export const PaneChatPartRow = memo(function PaneChatPartRow({
 }) {
   const surfaceBackground = useSurfaceBackground();
   const { t } = useLingui();
+  const mono = useMonoFontFamily();
   switch (part.type) {
     case 'text':
       return (
@@ -301,7 +302,7 @@ export const PaneChatPartRow = memo(function PaneChatPartRow({
       // has text to show.
       return (
         <View style={styles.agentAlign}>
-          <Text selectable style={[styles.mono, { color: colors.muted }]}>
+          <Text selectable style={[styles.mono, { color: colors.muted, fontFamily: mono }]}>
             {part.fallback_text}
           </Text>
         </View>
@@ -327,6 +328,7 @@ const PaneChatToolCard = memo(function PaneChatToolCard({
 }) {
   const surfaceBackground = useSurfaceBackground();
   const { t } = useLingui();
+  const mono = useMonoFontFamily();
   const summary = firstLine(block.input);
   const Chevron = open ? ChevronDown : ChevronRight;
 
@@ -356,13 +358,13 @@ const PaneChatToolCard = memo(function PaneChatToolCard({
       {open ? (
         <View style={[styles.toolBody, { borderTopColor: colors.border }]}>
           {block.input && block.input !== summary ? (
-            <Text selectable style={[styles.mono, { color: colors.muted }]}>
+            <Text selectable style={[styles.mono, { color: colors.muted, fontFamily: mono }]}>
               {block.input}
             </Text>
           ) : null}
           {block.result.length > 0 ? (
             <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              <Text selectable style={[styles.mono, { color: colors.text }]}>
+              <Text selectable style={[styles.mono, { color: colors.text, fontFamily: mono }]}>
                 {block.result.join('\n')}
               </Text>
             </ScrollView>
@@ -537,8 +539,13 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: 0,
   },
+  // A tool call's input and its captured output: both are payload, read the
+  // way a terminal is read, so both follow the mono slot. The family used to
+  // be the literal `'monospace'` here and therefore could never be the face
+  // the reader installed -- the fenced code in the markdown directly above
+  // these rows changed over, and these did not. Merged in at each render site,
+  // because a `StyleSheet.create` object cannot call a hook.
   mono: {
-    fontFamily: 'monospace',
     fontSize: 12,
     lineHeight: 17,
   },

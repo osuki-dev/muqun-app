@@ -67,6 +67,40 @@ const ROW_MIN_HEIGHT = 60;
 const CHIP_SIZE = 36;
 
 /**
+ * The share of a choice row the label column keeps, whatever the value says.
+ *
+ * A choice row is a label, an optional caption under it, and the current answer
+ * at the end. The answer's width is the *font's* business -- it is a theme's
+ * name or a family name the reader installed -- and without a floor the label
+ * column is whatever is left, which on a wide face is nothing: measured on the
+ * reader's own italic font, `rowCopy` was driven to zero and "Terminal colours
+ * follow the theme" wrapped one word per line down four rows while "Lanterns in
+ * the Overworld" sat beside it at full width.
+ *
+ * The arithmetic is why it collapses rather than sharing: `flex: 1` is a
+ * flex-basis of zero, and Yoga distributes shrink in proportion to basis, so a
+ * column with basis zero shrinks by zero and the value takes everything. A
+ * percentage floor is the one thing that survives that, because a minimum is
+ * clamped after the distribution rather than weighted inside it.
+ *
+ * 55%, not half: the label is the question and the value is the answer, and a
+ * question that cannot be read is worse than an answer that ellipsizes -- the
+ * answer is one tap from being shown in full.
+ */
+const CHOICE_LABEL_FLOOR = '55%';
+
+/**
+ * Trailing slack on a shrink-wrapped label, as a fraction of its own size.
+ *
+ * Not a point value: the slack has to grow with the type, with the reader's
+ * text-size setting, and with how far a face leans. Three-tenths of an em
+ * clears the overhang of an ordinary 12-degree oblique at any size with room
+ * to spare, and is small enough to read as the pill's padding rather than as a
+ * gap. See `SectionLabel` for what it is protecting against.
+ */
+const HUG_TRAILING_SLACK = 0.3;
+
+/**
  * The instrument label that names a group of rows -- the one this app draws
  * over every section it has, on every screen.
  *
@@ -134,6 +168,7 @@ export function SectionLabel({
   style?: TextStyle | TextStyle[];
 }) {
   const plate = useSheetGroundPlate();
+  const theme = useThemeTokens();
   /**
    * The label's text starts where the card's row text starts.
    *
@@ -149,6 +184,22 @@ export function SectionLabel({
    * plate appearing does not move the text it is protecting.
    */
   const indent = LADDER.gutter - (plate.paddingHorizontal ?? LADDER.tight);
+  /**
+   * Room on the trailing edge for a glyph that leans past its own advance.
+   *
+   * This label is shrink-wrapped -- `alignSelf: 'flex-start'` is the whole
+   * point of it -- so its width is exactly what the text measured. Android
+   * measures a line as the sum of its glyph advances, and an italic or oblique
+   * face draws its final letter beyond that sum, with nowhere for the overhang
+   * to go: the reader installed a wide italic face and the heading over this
+   * page's appearance rows read APPEARANC.
+   *
+   * Trailing only, and given back as margin, so the glyphs still begin on the
+   * same x as the rows the label names -- the alignment this whole file exists
+   * to hold. The plate grows rightward around the slack and nothing moves.
+   */
+  const slack = Math.ceil(theme.typeStyles.label.fontSize * HUG_TRAILING_SLACK);
+  const platePadding = plate.paddingHorizontal ?? LADDER.tight;
   return (
     <Text
       variant="label"
@@ -162,6 +213,7 @@ export function SectionLabel({
         plate,
         {
           marginLeft: indent,
+          paddingRight: platePadding + slack,
           // The right side only ever bleeds, and only when a plate is there.
           marginRight:
             plate.paddingHorizontal === undefined ? 0 : LADDER.tight - plate.paddingHorizontal,
@@ -293,7 +345,7 @@ export function SettingsToggleRow({
         <Text variant="bodySmall" color={labelColor} style={styles.rowLabel}>
           {label}
         </Text>
-        <Text variant="caption" color={detailColor} style={styles.rowDetail}>
+        <Text variant="caption" color={detailColor} numberOfLines={3} style={styles.rowDetail}>
           {detail}
         </Text>
       </View>
@@ -381,7 +433,11 @@ export function SettingsNavRow({
           {label}
         </Text>
         {detail ? (
-          <Text variant="caption" color={theme.colors.textMuted} style={styles.rowDetail}>
+          <Text
+            variant="caption"
+            color={theme.colors.textMuted}
+            numberOfLines={3}
+            style={styles.rowDetail}>
             {detail}
           </Text>
         ) : null}
@@ -440,12 +496,16 @@ export function SettingsChoiceRow({
       testID={testID}
       onPress={onPress}
       style={styles.row}>
-      <View style={styles.rowCopy}>
+      <View style={[styles.rowCopy, styles.rowCopyFloor]}>
         <Text variant="bodySmall" style={styles.rowLabel}>
           {label}
         </Text>
         {detail ? (
-          <Text variant="caption" color={theme.colors.textMuted} style={styles.rowDetail}>
+          <Text
+            variant="caption"
+            color={theme.colors.textMuted}
+            numberOfLines={3}
+            style={styles.rowDetail}>
             {detail}
           </Text>
         ) : null}
@@ -453,10 +513,23 @@ export function SettingsChoiceRow({
       {/* Muted, not accent. The decision area is the sheet; a coral value here
           would put the accent on the report of the choice as well as on the
           making of it. */}
+      {/*
+        Two lines, not one.
+
+        The value was briefly held to a single ellipsised line, which is the
+        right rule for a chip or a tab and the wrong one here: what should wrap
+        may wrap. "Lanterns in the Overworld" is a name a reader chose and an
+        answer they came to the row to read, and cutting it to "Lanterns in
+        the..." to keep the row 60 points tall is the app preferring its own
+        rhythm to their content. So it wraps, right-aligned, and the row grows
+        by a line. The floor on the column opposite is what makes that safe: a
+        long value now wraps inside its own half instead of taking the label's.
+      */}
       <Text
         variant="bodySmall"
         color={theme.colors.textMuted}
-        numberOfLines={1}
+        numberOfLines={2}
+        ellipsizeMode="tail"
         style={styles.choiceValue}>
         {value}
       </Text>
@@ -499,7 +572,12 @@ export function SettingsInfoRow({
         <Text variant="bodySmall" style={styles.rowLabel}>
           {label}
         </Text>
-        <Text selectable variant="caption" color={theme.colors.textMuted} style={styles.rowDetail}>
+        <Text
+          selectable
+          variant="caption"
+          color={theme.colors.textMuted}
+          numberOfLines={3}
+          style={styles.rowDetail}>
           {detail}
         </Text>
       </View>
@@ -559,12 +637,40 @@ const styles = StyleSheet.create({
     gap: LADDER.snug,
   },
   rowCopy: { flex: 1, minWidth: 0, gap: 2 },
+  /**
+   * The floor, applied only where there is something to be crushed by.
+   *
+   * A minimum rather than a basis: `flex: 1` above is a basis of zero, and Yoga
+   * hands shrink out in proportion to basis, so this column's share of the
+   * shrinking is zero and the value beside it takes the row. A minimum is
+   * clamped after that distribution instead of weighted inside it, which is why
+   * it is the one form that holds.
+   */
+  rowCopyFloor: { minWidth: CHOICE_LABEL_FLOOR },
   // Shrinks before the label does: a language written in its own script is
   // short, but "Muqun follows the language your phone is set to." is not, and
   // the chevron must not be pushed off the end by either of them.
-  choiceValue: { flexShrink: 1, textAlign: 'right' },
-  rowLabel: { lineHeight: 20, includeFontPadding: false },
-  rowDetail: { lineHeight: 17, includeFontPadding: false },
+  //
+  // `flexShrink` alone was not enough. Shrink is weighted by flex basis, and
+  // this one's basis is its own content, so on a wide face it was the only
+  // child with any weight and it took everything -- see `rowCopyFloor`. With
+  // the floor in place this is what spends the remainder: up to two lines,
+  // right-aligned, ending at the chevron.
+  choiceValue: { flexShrink: 1, minWidth: 0, textAlign: 'right' },
+  /**
+   * No `lineHeight` on either line, deliberately.
+   *
+   * These two carried 20 and 17, which are the kit's own 14x1.5 and 12x1.4
+   * rounded down -- numbers measured off the system face and then frozen. A
+   * face with taller ascenders than the one they were measured on has its
+   * accents clipped by them, and `includeFontPadding: false` removes the very
+   * padding Android would otherwise have used to absorb the difference. The
+   * ratio belongs to the type scale, so the type scale keeps it and these
+   * only turn off the Android padding that would make the two lines drift
+   * apart.
+   */
+  rowLabel: { includeFontPadding: false },
+  rowDetail: { includeFontPadding: false },
   chip: {
     width: CHIP_SIZE,
     height: CHIP_SIZE,

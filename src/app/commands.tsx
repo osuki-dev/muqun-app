@@ -87,8 +87,8 @@ import {
   SquareTerminal,
   Trash2,
 } from 'lucide-react-native';
-import { type ReactNode, useEffect, useState } from 'react';
-import { Platform, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { type ReactNode, useEffect, useMemo, useState } from 'react';
+import { StyleSheet, useWindowDimensions, View, type TextStyle } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -97,6 +97,7 @@ import { AgentCommandDeliveryPicker } from '@/components/agent-command-delivery-
 import { PressableScale } from '@/components/pressable-scale';
 import { LADDER, SettingsCard } from '@/components/settings-chrome';
 import { useAgentCommandDelivery } from '@/hooks/use-agent-command-delivery';
+import { useMonoFontFamily } from '@/hooks/use-user-fonts';
 import { appChrome } from '@/constants/appearance';
 import { withAlpha } from '@/lib/color';
 import { fadeIn, fadeOut, listLayout, riseIn, STAGGER } from '@/lib/motion';
@@ -141,21 +142,19 @@ import {
 import { quickCommandName } from '@/i18n/labels';
 
 /**
- * The face a value is set in when tapping the row types that value into the
- * pane. It is the one piece of the terminal's own vocabulary this sheet
- * borrows, and it is what tells a command apart from a description.
- */
-const MONO_FONT = Platform.OS === 'ios' ? 'Menlo' : 'monospace';
-
-/**
  * Spread into every style that carries the terminal's face.
  *
- * `Text` takes one flattened style rather than an array, so the three places
- * that need this compose it at module scope instead of stacking styles at the
- * call site.
+ * The face itself is no longer here. It was `Menlo`/`monospace`, written into
+ * this module-scope constant and from there into three `StyleSheet` entries --
+ * all of which are evaluated the instant this file is imported, which is long
+ * before the settings store knows what the reader chose. So a reader who had
+ * installed their own monospace saw it in the transcript, in a tool card and
+ * in a diff, and then opened this sheet and found every command, every key cap
+ * and every value line still in the platform's face. `useMonoFontFamily()` is
+ * merged in at each render site instead; what is left here is the part that is
+ * genuinely static.
  */
 const MONO_TEXT = {
-  fontFamily: MONO_FONT,
   // What is typed is typed exactly as it reads, so the instrument styles'
   // uppercasing would be a lie about what the pane receives.
   textTransform: 'none',
@@ -171,6 +170,15 @@ export default function QuickCommandsScreen() {
   // leaves the screen half-translated after a language switch.
   const { t } = useLingui();
   const { _ } = useLinguiRuntime();
+  // The editor's *value* field is the same taxonomy the saved rows below it
+  // are drawn by: `git branch --show-current` or `ctrl+c, esc` is typed into a
+  // pane character for character, so the field it is composed in is the mono
+  // slot too. It had no family at all, which for a `TextInput` means the
+  // system face for the typed text *and* for the placeholder -- so the two
+  // example commands the placeholders show were set in the one face the pane
+  // will never use. A saved *prompt* is prose and keeps the interface face
+  // `Input` already gives it.
+  const monoField = useMonoFieldStyle();
   const { bottom: bottomInset } = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const isPadLayout = responsiveWorkspaceLayout(width).mode === 'pad';
@@ -1048,6 +1056,7 @@ export default function QuickCommandsScreen() {
                           ? 'ctrl+c, esc'
                           : 'git branch --show-current'
                     }
+                    style={mode === 'agent' ? undefined : monoField}
                     variant="outline"
                   />
                 </View>
@@ -1189,6 +1198,17 @@ function ActionTile({
 }
 
 /**
+ * The reader's monospace slot as a style object, stable while the slot is.
+ *
+ * `Input` folds whatever it is handed into a `useMemo`, so a fresh literal
+ * every render would rebuild the field's style on every keystroke.
+ */
+function useMonoFieldStyle(): TextStyle {
+  const mono = useMonoFontFamily();
+  return useMemo(() => ({ fontFamily: mono }), [mono]);
+}
+
+/**
  * Every row on this sheet, in one shape: a name, and under it either prose or
  * something the pane is about to be sent.
  *
@@ -1245,6 +1265,11 @@ function ActionRow({
   trailing?: ReactNode;
 }) {
   const theme = useThemeTokens();
+  // The three lines below that are the terminal's vocabulary -- a mono row
+  // name, the `nameSuffix` beside it, and the `value` that gets typed into the
+  // pane -- all take the reader's monospace slot here rather than from the
+  // stylesheet, which cannot ask for it. See `MONO_TEXT`.
+  const mono = useMonoFontFamily();
   const body = (
     <View style={styles.row}>
       <View style={styles.rowCopy}>
@@ -1253,7 +1278,7 @@ function ActionRow({
             variant="bodySmall"
             color={nameColor}
             numberOfLines={1}
-            style={nameMono ? styles.rowNameMono : styles.rowName}>
+            style={nameMono ? [styles.rowNameMono, { fontFamily: mono }] : styles.rowName}>
             {name}
           </Text>
           {nameSuffix ? (
@@ -1261,7 +1286,7 @@ function ActionRow({
               variant="caption"
               color={theme.colors.textSubtle}
               numberOfLines={1}
-              style={styles.nameSuffix}>
+              style={[styles.nameSuffix, { fontFamily: mono }]}>
               {nameSuffix}
             </Text>
           ) : null}
@@ -1273,7 +1298,7 @@ function ActionRow({
             variant="caption"
             color={detailColor}
             numberOfLines={1}
-            style={styles.rowValue}>
+            style={[styles.rowValue, { fontFamily: mono }]}>
             {value}
           </Text>
         ) : null}
@@ -1328,6 +1353,14 @@ function ActionRow({
 function KeyCaps({ keys }: { keys: string[] }) {
   const surfaceBackground = useSurfaceBackground();
   const theme = useThemeTokens();
+  // A cap says `ctrl+c` or `esc`, which is a key and not a word, so it belongs
+  // to the mono slot for the same reason the terminal's key row does -- and it
+  // was the one part of this chip that had never been told so. The fill and the
+  // corner radius were copied from the on-screen key row to make a saved combo
+  // read as the same object as the key you would otherwise press; the face was
+  // not, so on a device with a reader's mono installed the two stopped matching
+  // the moment the setting was used.
+  const mono = useMonoFontFamily();
   const fill = withAlpha(theme.colors.text, appChrome.opacity.chromeControl);
   return (
     <View style={styles.keyCaps}>
@@ -1335,7 +1368,10 @@ function KeyCaps({ keys }: { keys: string[] }) {
         <View
           key={`key-${position}-${keyCap}`}
           style={[styles.keyCap, { backgroundColor: surfaceBackground(fill) }]}>
-          <Text variant="caption" color={theme.colors.text} style={styles.keyCapText}>
+          <Text
+            variant="caption"
+            color={theme.colors.text}
+            style={[styles.keyCapText, { fontFamily: mono }]}>
             {keyCap}
           </Text>
         </View>

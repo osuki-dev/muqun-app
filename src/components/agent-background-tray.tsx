@@ -18,6 +18,7 @@ import {
 } from '@/components/sheet-scene';
 import { StatusDot } from '@/components/status-dot';
 import { usePaneChatColors } from '@/components/pane-chat-blocks';
+import { useMonoFontFamily } from '@/hooks/use-user-fonts';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { fadeIn, listLayout, riseIn, STAGGER } from '@/lib/motion';
 import { capLines } from '@/lib/agent-tool-output';
@@ -93,6 +94,7 @@ export const AgentBackgroundTray = memo(function AgentBackgroundTray({
   const insets = useSafeAreaInsets();
   const surfaceBackground = useSurfaceBackground();
   const { showToast } = useToast();
+  const mono = useMonoFontFamily();
 
   const [shells, setShells] = useState<readonly ShellInfo[]>([]);
   const [loading, setLoading] = useState(true);
@@ -266,7 +268,9 @@ export const AgentBackgroundTray = memo(function AgentBackgroundTray({
                           styles.outputBox,
                           { backgroundColor: surfaceBackground(theme.colors.surface) },
                         ]}>
-                        <Text selectable style={[styles.outputText, { color: colors.muted }]}>
+                        <Text
+                          selectable
+                          style={[styles.outputText, { color: colors.muted, fontFamily: mono }]}>
                           {output || t`No output yet.`}
                         </Text>
                       </View>
@@ -315,8 +319,15 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     borderCurve: 'continuous',
   },
+  // The family is merged in at the render site from `useMonoFontFamily`. It
+  // used to be the literal `'monospace'`, which is Android's generic family and
+  // on iOS is not a family at all -- so a reader who had installed their own
+  // mono face saw every other mono surface in the app change and this one stay
+  // exactly as it was: a detached shell's stdout, the text most obviously
+  // meant to be read column by column, drawn in whatever the platform picked.
+  // A `StyleSheet.create` object cannot call a hook, so what stays here is
+  // everything that is not the family.
   outputText: {
-    fontFamily: 'monospace',
     fontSize: AGENT_TYPE.meta.size,
     lineHeight: AGENT_TYPE.meta.lineHeight,
   },

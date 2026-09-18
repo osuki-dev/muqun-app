@@ -1,4 +1,4 @@
-import { Text, useThemeTokens } from '@osuki-dev/ui';
+import { resolveFontStyle, Text, useThemeTokens, type ResolvedFontStyle } from '@osuki-dev/ui';
 import { Search, X } from 'lucide-react-native';
 import { useEffect, useRef, type ReactNode } from 'react';
 import {
@@ -231,6 +231,34 @@ export function SheetSceneHeading({
 }
 
 /**
+ * The face a sheet's own fields are drawn in -- the typed value and the
+ * placeholder alike.
+ *
+ * A `TextInput` is not a kit `Text`. It takes no variant, and it takes nothing
+ * from the theme on its own: React Native reads `fontFamily` off the input's
+ * own style, and that one declaration is what draws both the value and the
+ * placeholder. A field that sets no family gets the platform's UI face for
+ * both -- which is how every sheet in the app came to show its labels in the
+ * reader's chosen font and the fields directly under them in the system's, one
+ * line apart. The placeholder is where it was loudest, because a placeholder
+ * is the only text on an empty field and there is nothing beside it to
+ * excuse the mismatch.
+ *
+ * Asking `resolveFontStyle` for the `body` role is the same question the kit's
+ * `Text` asks for everything from `heading` to `bodySmall`, so the field and
+ * the caption above it land on one face by construction rather than by two
+ * files happening to agree. `'regular'` rather than anything heavier for the
+ * reason `interface-font-registry.ts` argues at length: a reader's font is one
+ * file carrying one weight, and asking Android for 700 of a family that
+ * registered only under `Typeface.NORMAL` falls through to a system lookup
+ * that has never heard of it.
+ */
+function useSheetSceneFieldFont(): ResolvedFontStyle {
+  const { fonts, typeStyles } = useThemeTokens();
+  return resolveFontStyle(fonts, typeStyles.body.fontFamily, 'regular');
+}
+
+/**
  * The search field: flush with the ground, one hairline under it.
  *
  * A boxed field on a sheet is a card inside a card. The underline is the whole
@@ -258,6 +286,7 @@ export function SheetSceneSearch({
   testID?: string;
 }) {
   const { colors } = useThemeTokens();
+  const fieldFont = useSheetSceneFieldFont();
   return (
     <View style={[styles.searchRow, { borderBottomColor: colors.border }]}>
       <Search size={16} color={colors.textSubtle} />
@@ -270,7 +299,7 @@ export function SheetSceneSearch({
         placeholderTextColor={colors.textSubtle}
         autoCapitalize="none"
         autoCorrect={false}
-        style={[styles.searchInput, { color: colors.text }]}
+        style={[styles.searchInput, fieldFont, { color: colors.text }]}
       />
       {clearAccessibilityLabel && value.length > 0 ? (
         <PressableScale
@@ -655,10 +684,24 @@ export function SheetSceneField({
   );
 }
 
-/** The text style a flush field's own `TextInput` takes. */
+/**
+ * The text style a flush field's own `TextInput` takes.
+ *
+ * The family comes from `useSheetSceneFieldFont`, which is most of the point
+ * of this hook existing: a dozen sheets pass whatever it returns straight into
+ * a `TextInput`, so the difference between the reader's font reaching those
+ * fields and not reaching them is this one line.
+ *
+ * It is the interface face, because what a flush field usually holds is
+ * prose -- a session name, a worktree name, a port. The handful that hold
+ * something the reader types character for character (a path, a git ref, a
+ * URL) layer `useMonoFontFamily()` over this at the call site; the literal is
+ * theirs to know about, not this hook's.
+ */
 export function useSheetSceneInputStyle(): StyleProp<TextStyle> {
   const { colors } = useThemeTokens();
-  return [styles.fieldInput, { color: colors.text }];
+  const fieldFont = useSheetSceneFieldFont();
+  return [styles.fieldInput, fieldFont, { color: colors.text }];
 }
 
 /**

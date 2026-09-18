@@ -15,6 +15,7 @@ import { permissionActionPhrase, permissionDecisionLabel } from '@/i18n/labels';
 import { permissionSubject } from '@/lib/agent-engine-text';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { useCompactMarkdownStyle } from '@/hooks/use-markdown-style';
+import { useMonoFontFamily } from '@/hooks/use-user-fonts';
 import { withAlpha } from '@/lib/color';
 import {
   DEFAULT_PERMISSION_DECISIONS,
@@ -77,6 +78,7 @@ export const AgentPermissionCard = memo(function AgentPermissionCard({
   const colors = usePaneChatColors();
   const surfaceBackground = useSurfaceBackground();
   const markdownStyle = useCompactMarkdownStyle('muted');
+  const mono = useMonoFontFamily();
   const [submitting, setSubmitting] = useState<PermissionDecision | null>(null);
 
   /**
@@ -156,7 +158,11 @@ export const AgentPermissionCard = memo(function AgentPermissionCard({
           <ShieldAlert size={16} color={theme.colors.warning} />
         </View>
         <View style={styles.headerText}>
-          <Text variant="bodySmall" color={theme.colors.text} style={styles.title}>
+          <Text
+            variant="bodySmall"
+            weight="semibold"
+            color={theme.colors.text}
+            style={styles.title}>
             {t`Permission required`}
           </Text>
           <Text variant="caption" color={theme.colors.textMuted}>
@@ -167,7 +173,7 @@ export const AgentPermissionCard = memo(function AgentPermissionCard({
 
       <View style={[styles.body, { backgroundColor: withAlpha(theme.colors.surface, 0.6) }]}>
         {subject ? (
-          <Text selectable style={[styles.subject, { color: theme.colors.text }]}>
+          <Text selectable style={[styles.subject, { color: theme.colors.text, fontFamily: mono }]}>
             {subject}
           </Text>
         ) : null}
@@ -177,7 +183,7 @@ export const AgentPermissionCard = memo(function AgentPermissionCard({
               <Text
                 key={res}
                 selectable
-                style={[styles.resourceText, { color: theme.colors.textMuted }]}>
+                style={[styles.resourceText, { color: theme.colors.textMuted, fontFamily: mono }]}>
                 • {res}
               </Text>
             ))}
@@ -298,12 +304,25 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: 0,
   },
+  // The weight moved to the kit `Text`'s own `weight` prop. As a style key it
+  // was `'700'`, and on Android that is the one number that throws the
+  // reader's interface font away: `expo-font` registers a loaded face under
+  // `Typeface.NORMAL` only, `ReactFontManager` rounds anything at or above 700
+  // to BOLD, finds no entry, and ends on `Typeface.create(family, style)` --
+  // a lookup against the *system* font list, which hands back the platform's
+  // bold. So "Permission required" was drawn in Roboto while the phrase
+  // directly under it was in the reader's face. The prop goes through the
+  // registry, which caps at 600 and therefore finds the registered typeface.
   title: {
-    fontWeight: '700',
     fontSize: AGENT_TYPE.meta.size,
   },
+  // The subject is the file path or the command the engine is asking about --
+  // the thing the reader has to read character for character before deciding
+  // whether to allow it -- so it follows the mono slot, merged in at the
+  // render site. The literal `'monospace'` that used to be here ignored a mono
+  // face the reader had installed, which is exactly the surface they installed
+  // it for.
   subject: {
-    fontFamily: 'monospace',
     fontSize: AGENT_TYPE.meta.size,
     lineHeight: AGENT_TYPE.meta.lineHeight,
   },
@@ -324,8 +343,9 @@ const styles = StyleSheet.create({
     alignSelf: 'stretch',
     marginBottom: 10,
   },
+  // Each extra resource is a path or a glob, read the same way as the subject
+  // above it; same reasoning, same slot, family merged at the render site.
   resourceText: {
-    fontFamily: 'monospace',
     fontSize: AGENT_TYPE.micro.size,
     marginTop: 2,
   },

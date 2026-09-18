@@ -2,10 +2,11 @@ import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { Spinner, useThemeTokens } from '@osuki-dev/ui';
 import { Send } from 'lucide-react-native';
 import { useEffect, type ComponentProps, type ReactNode, type Ref } from 'react';
-import { Platform, StyleSheet, TextInput, type TextInputProps } from 'react-native';
+import { StyleSheet, TextInput, type TextInputProps } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import { PressableScale } from '@/components/pressable-scale';
+import { useMonoFontFamily } from '@/hooks/use-user-fonts';
 import { ThemedSurfaceArtwork } from '@/components/themed-surface';
 import { ThemeIcon } from '@/components/theme-icon';
 import { appChrome } from '@/constants/appearance';
@@ -64,6 +65,24 @@ export function TerminalComposer({
 }: TerminalComposerProps) {
   const surfaceBackground = useSurfaceBackground();
   const theme = useThemeTokens();
+  // The monospace slot is this component's *default*, not its rule, because
+  // this component is two fields.
+  //
+  // Typed into the terminal it is a shell line: a literal, where alignment is
+  // part of what it says, and mono is the only right answer. Mounted by the
+  // agent composer it is a sentence addressed to a person-shaped thing, with a
+  // placeholder that reads "Send a message, type / for commands, @ for
+  // files..." -- prose, and the owner's report was precisely that it was not
+  // in the face they chose. So the agent composer passes the interface family
+  // through `inputProps.style`, which is layered after this and wins.
+  //
+  // Either way it has to be resolved here and not in `composerStyles` below.
+  // A `StyleSheet` is built once at module load, long before the settings
+  // store has been hydrated, so the family it baked in was the system face and
+  // stayed the system face for the life of the process. A reader who had
+  // installed their own mono watched every other mono surface in the app
+  // change and this one -- the field they type into -- keep the platform's.
+  const mono = useMonoFontFamily();
   const chromeText = theme.colors.text;
   const chromeGlass = withAlpha(theme.colors.text, appChrome.opacity.chromeControl);
   const chromeGlassQuiet = withAlpha(theme.colors.text, appChrome.opacity.chromeControlQuiet);
@@ -85,7 +104,13 @@ export function TerminalComposer({
         placeholderTextColor={placeholderText}
         selectionColor={theme.colors.primary}
         {...inputProps}
-        style={[composerStyles.input, { color: chromeText }, inputProps.style]}
+        // The family sits ahead of `inputProps.style` so a caller may still
+        // override it -- the agent composer does, with the interface face --
+        // and it covers the placeholder too: a `TextInput` draws both its
+        // typed text and its placeholder in whatever its own style names, and
+        // nothing else can reach either. Which is the whole of why the
+        // placeholder was in the wrong font: there was no other way in.
+        style={[composerStyles.input, { color: chromeText, fontFamily: mono }, inputProps.style]}
       />
       <ComposerSendButton
         accessibilityLabel={send.accessibilityLabel}
@@ -208,7 +233,8 @@ export const composerStyles = StyleSheet.create({
     maxHeight: 126,
     paddingHorizontal: 4,
     paddingVertical: 10,
-    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
+    // No `fontFamily` here on purpose -- see `TerminalComposer`, which merges
+    // the reader's monospace slot in at render time.
     fontSize: 14,
     lineHeight: 19,
     textAlignVertical: 'top',

@@ -1,5 +1,5 @@
 import { memo, useCallback, useMemo, useState } from 'react';
-import { Platform, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
+import { StyleSheet, View, type LayoutChangeEvent } from 'react-native';
 import Animated, {
   useAnimatedScrollHandler,
   useAnimatedStyle,
@@ -11,6 +11,7 @@ import { Text, useThemeTokens } from '@osuki-dev/ui';
 import type { MarkdownStyle } from 'react-native-enriched-markdown';
 
 import { AGENT_TYPE } from '@/constants/agent-type';
+import { useMonoFontFamily } from '@/hooks/use-user-fonts';
 import { clampLine, gutterDigits, lineContentWidth } from '@/lib/text-preview';
 
 /**
@@ -44,13 +45,6 @@ import { clampLine, gutterDigits, lineContentWidth } from '@/lib/text-preview';
  * hands anything larger to this, with a line saying why the colour went. A
  * plain, instant, complete file beats a coloured one that is refused.
  */
-
-// `monospace` is a real family on Android and not on iOS, where a React Native
-// text node falls back to the proportional system font -- and then no two lines
-// line up. Menlo is what the rest of the app names there (`diff-rows.tsx`,
-// `commands.tsx`). The reader's own mono font, when they have chosen one, is a
-// real family on both and is preferred over either.
-const MONO_FONT = Platform.OS === 'ios' ? 'Menlo' : 'monospace';
 
 /** Fifty `M`s in the row's own style: the one string measured to learn the advance. See `diff-rows`. */
 const RULER = 'M'.repeat(50);
@@ -121,12 +115,22 @@ export interface CodeLinesViewProps {
 export function CodeLinesView({ lines, longest, markdownStyle, note, testID }: CodeLinesViewProps) {
   const theme = useThemeTokens();
 
+  // The floor under the markdown theme's own answer.
+  //
+  // This file used to keep its own `const MONO_FONT = Platform.OS === 'ios' ?
+  // 'Menlo' : 'monospace'`, which was the pair a dozen surfaces had each
+  // written out for themselves, and which by construction could never be the
+  // face the reader had installed. `useMonoFontFamily` is that same pair when
+  // the reader has chosen nothing and their own family when they have, so the
+  // fallback path below no longer disagrees with the theme it is standing in
+  // for.
+  const mono = useMonoFontFamily();
+
   const code = markdownStyle.codeBlock;
   // The reader's mono font travels through the markdown theme, which is where
   // they set it. `'monospace'` is that theme's floor rather than a choice, and
   // it is the one value a text node cannot use on iOS.
-  const fontFamily =
-    code?.fontFamily && code.fontFamily !== 'monospace' ? code.fontFamily : MONO_FONT;
+  const fontFamily = code?.fontFamily && code.fontFamily !== 'monospace' ? code.fontFamily : mono;
   const fontSize = code?.fontSize ?? AGENT_TYPE.mono.size;
   const lineHeight = Math.round(code?.lineHeight ?? AGENT_TYPE.mono.lineHeight);
   const codeFill = code?.backgroundColor ?? theme.colors.surfaceRaised;

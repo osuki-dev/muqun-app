@@ -30,6 +30,7 @@ import {
   useSheetSceneInputStyle,
 } from '@/components/sheet-scene';
 import { AGENT_TYPE } from '@/constants/agent-type';
+import { useMonoFontFamily } from '@/hooks/use-user-fonts';
 import {
   DURATION,
   fadeIn,
@@ -106,6 +107,23 @@ export const AgentWorktreeSheet = memo(function AgentWorktreeSheet({
   const theme = useThemeTokens();
   const insets = useSafeAreaInsets();
   const inputStyle = useSheetSceneInputStyle();
+  /**
+   * Both fields on this sheet hold a literal, so both are monospaced.
+   *
+   * `useSheetSceneInputStyle` hands out the interface face, which is right for
+   * the sheets whose fields hold prose -- a session's name, a note. Neither of
+   * these is. One is a directory name that will exist on the host's filesystem
+   * exactly as it was typed, the other a ref that already exists in that
+   * repository; the file's own comment about not translating "probe" and
+   * "main" is the same argument one step earlier. What follows from it is the
+   * face: a literal is copied and compared character for character, and a
+   * proportional face is where `release-1.0` and `release-l.O` stop being
+   * distinguishable at 15pt on a phone.
+   *
+   * Layered as a family alone over `inputStyle`, so the field keeps the
+   * flush sheet field's size and padding and changes only the face.
+   */
+  const monoFontFamily = useMonoFontFamily();
 
   const [entries, setEntries] = useState<WorktreeDirectory[]>([]);
   /**
@@ -502,7 +520,7 @@ export const AgentWorktreeSheet = memo(function AgentWorktreeSheet({
                       // does not exist.
                       placeholder="probe"
                       placeholderTextColor={theme.colors.textSubtle}
-                      style={inputStyle}
+                      style={[inputStyle, { fontFamily: monoFontFamily }]}
                     />
                   </SheetSceneField>
                   <SheetSceneField
@@ -520,7 +538,7 @@ export const AgentWorktreeSheet = memo(function AgentWorktreeSheet({
                       onSubmitEditing={submitCreate}
                       placeholder="main"
                       placeholderTextColor={theme.colors.textSubtle}
-                      style={inputStyle}
+                      style={[inputStyle, { fontFamily: monoFontFamily }]}
                     />
                   </SheetSceneField>
                   <SheetSceneAction

@@ -52,6 +52,7 @@ import {
 import { AGENT_TYPE } from '@/constants/agent-type';
 import { GATEWAY_INSTALL_COMMAND, GATEWAY_SETUP_URL } from '@/constants/links';
 import { useGatewayRecord } from '@/hooks/use-gateway-record';
+import { useMonoFontFamily } from '@/hooks/use-user-fonts';
 import type { GatewayRecord } from '@/lib/gateway-storage';
 import { GATEWAY_DEFAULT_PORT } from '@/lib/ssh-tunnel';
 import { sortSshHosts, sshHostAddress } from '@/lib/ssh-hosts';
@@ -170,6 +171,19 @@ export default function PairModal() {
   const { t } = useLingui();
   const theme = useThemeTokens();
   const inputStyle = useSheetSceneInputStyle();
+  // Three of the four fields on this screen hold a literal -- a port, a gateway
+  // URL, a pairing code -- and the install command it prints is a fourth
+  // literal that is read rather than typed. A `TextInput` draws its typed text
+  // *and* its placeholder in whatever family its own style names and in nothing
+  // else, so `http://100.x.x.x:23847` and `••••-••••` were being shown in
+  // proportional type: a hint about a URL, set in the one kind of face a URL is
+  // never written in. `useSheetSceneInputStyle` supplies the interface face for
+  // the field that is prose; these three layer the mono slot over it, which is
+  // the arrangement that hook documents. The install command had the opposite
+  // fault -- a hard-coded `ui-monospace`/`monospace` in the stylesheet below,
+  // which is built at module load and so can never become the mono the reader
+  // installed afterwards.
+  const mono = useMonoFontFamily();
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { width: windowWidth } = useWindowDimensions();
@@ -707,7 +721,7 @@ export default function PairModal() {
                         keyboardType="number-pad"
                         placeholder={String(GATEWAY_DEFAULT_PORT)}
                         placeholderTextColor={theme.colors.textSubtle}
-                        style={inputStyle}
+                        style={[inputStyle, { fontFamily: mono }]}
                       />
                     </SheetSceneField>
                     <SheetSceneAction
@@ -744,7 +758,7 @@ export default function PairModal() {
                         placeholderTextColor={theme.colors.textSubtle}
                         returnKeyType="go"
                         onSubmitEditing={handleManualPair}
-                        style={inputStyle}
+                        style={[inputStyle, { fontFamily: mono }]}
                       />
                     </SheetSceneField>
                     <SheetSceneAction
@@ -964,7 +978,10 @@ export default function PairModal() {
                 fits is a command nobody can read off the screen. */}
                   <Text
                     numberOfLines={2}
-                    style={[styles.installCommand, { color: theme.colors.textMuted }]}>
+                    style={[
+                      styles.installCommand,
+                      { color: theme.colors.textMuted, fontFamily: mono },
+                    ]}>
                     {GATEWAY_INSTALL_COMMAND}
                   </Text>
                   {copiedInstall ? (
@@ -1007,6 +1024,10 @@ export default function PairModal() {
                     returnKeyType="next"
                     placeholder={t`Mac mini · Office`}
                     placeholderTextColor={theme.colors.textSubtle}
+                    // The one field here that is prose -- a server's name, which
+                    // the reader writes rather than transcribes -- so it keeps
+                    // the interface face `useSheetSceneInputStyle` already
+                    // resolves and layers nothing over it.
                     style={inputStyle}
                   />
                 </SheetSceneField>
@@ -1036,7 +1057,7 @@ export default function PairModal() {
                     // Shows the shape without looking like a code to copy;
                     // prose would not fit under the field's own tracking.
                     placeholder="••••-••••"
-                    style={[inputStyle, styles.codeInput]}
+                    style={[inputStyle, styles.codeInput, { fontFamily: mono }]}
                     testID="pairing-code-input"
                   />
                 </SheetSceneField>
@@ -1317,8 +1338,10 @@ const styles = StyleSheet.create({
     // reproduced character for character, so it gets a monospace face of its
     // own and no transform -- at the app's one monospace size, so a command
     // here and a command in an agent tool card are the same face at the same
-    // size rather than two numbers that agree today.
-    fontFamily: Platform.OS === 'ios' ? 'ui-monospace' : 'monospace',
+    // size rather than two numbers that agree today. The face itself is merged
+    // in at the render site from `useMonoFontFamily()`; it used to be
+    // `ui-monospace`/`monospace` written here, which a stylesheet built at
+    // module load can never revise once the reader picks their own.
     fontSize: AGENT_TYPE.mono.size,
     lineHeight: AGENT_TYPE.mono.lineHeight,
   },

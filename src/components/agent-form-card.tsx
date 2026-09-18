@@ -1,6 +1,6 @@
 import { memo, useCallback, useMemo, useState } from 'react';
 import { Linking, View, StyleSheet, TextInput, Switch, ActivityIndicator } from 'react-native';
-import { Text, useThemeTokens } from '@osuki-dev/ui';
+import { resolveFontStyle, Text, useThemeTokens } from '@osuki-dev/ui';
 import { Plural, Trans, useLingui } from '@lingui/react/macro';
 import { ExternalLink, FormInput, Send, Check } from 'lucide-react-native';
 import { PressableScale } from '@/components/pressable-scale';
@@ -35,6 +35,25 @@ export const AgentFormCard = memo(function AgentFormCard({
   const theme = useThemeTokens();
   const surfaceBackground = useSurfaceBackground();
   const markdownStyle = useCompactMarkdownStyle('muted');
+  /**
+   * The face the two text fields below are drawn in, value and placeholder
+   * alike.
+   *
+   * The card's own writing -- the field's title, its description, the line
+   * saying why an answer was refused -- is a kit `Text`, which takes its family
+   * out of the theme registry. The fields were not: a `TextInput` is given no
+   * family by the theme, it reads `fontFamily` off its own style, and with
+   * none set React Native draws the typed answer *and* the placeholder in the
+   * platform's UI face. On a card whose every other line follows the reader's
+   * chosen font, "Type here…" sitting in the system face directly under a
+   * title that is not is the most visible version of that mismatch the app
+   * has.
+   *
+   * `body` at `'regular'` is the same lookup `themed-input.tsx` does, so a
+   * field here and a field on a sheet cannot drift apart; the weight stays at
+   * regular for the Android reason in `interface-font-registry.ts`.
+   */
+  const inputFont = resolveFontStyle(theme.fonts, theme.typeStyles.body.fontFamily, 'regular');
   const [submitting, setSubmitting] = useState(false);
 
   // Initialize form state
@@ -222,6 +241,7 @@ export const AgentFormCard = memo(function AgentFormCard({
               onFocus={onFieldFocus}
               style={[
                 styles.textInput,
+                inputFont,
                 {
                   color: theme.colors.text,
                   borderColor: theme.colors.border,
@@ -263,6 +283,7 @@ export const AgentFormCard = memo(function AgentFormCard({
               onChangeText={(text) => setValue(field.key, Number(text) || 0)}
               style={[
                 styles.textInput,
+                inputFont,
                 {
                   color: theme.colors.text,
                   borderColor: theme.colors.border,
@@ -384,7 +405,7 @@ export const AgentFormCard = memo(function AgentFormCard({
           in every locale this app ships. The number of fields is the fact worth
           stating, and it is the one the reader can check.
         */}
-        <Text variant="bodySmall" color={theme.colors.text} style={styles.title}>
+        <Text variant="bodySmall" weight="semibold" color={theme.colors.text} style={styles.title}>
           <Plural value={visibleFields.length} one="Question" other="Questions" />
         </Text>
       </View>
@@ -402,7 +423,11 @@ export const AgentFormCard = memo(function AgentFormCard({
         ) : (
           <>
             <Send size={14} color={theme.colors.onPrimary} />
-            <Text variant="caption" color={theme.colors.onPrimary} style={styles.submitText}>
+            <Text
+              variant="caption"
+              weight="semibold"
+              color={theme.colors.onPrimary}
+              style={styles.submitText}>
               <Trans>Submit</Trans>
             </Text>
           </>
@@ -433,8 +458,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  // Size only. The weight comes from the kit's prop because `expo-font` files a
+  // reader's face under Typeface.NORMAL alone: Android rounds 700 and over up
+  // to BOLD, finds nothing there, and resolves against the system font list,
+  // which has never heard of the family. The prop is capped at semibold, under
+  // that threshold; a style `fontWeight` is applied afterwards and would undo
+  // the cap.
   title: {
-    fontWeight: '700',
     fontSize: AGENT_TYPE.meta.size,
   },
   fieldsContainer: {
@@ -504,8 +534,9 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     gap: 6,
   },
+  // Weightless for the reason `title` gives: on Android a 700 rounds past the
+  // one style `expo-font` registered and lands on the system face.
   submitText: {
-    fontWeight: '700',
     fontSize: AGENT_TYPE.meta.size,
   },
 });

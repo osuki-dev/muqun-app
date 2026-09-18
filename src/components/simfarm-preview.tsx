@@ -1,12 +1,13 @@
 import { Input } from '@/components/themed-input';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
+import { useMonoFontFamily } from '@/hooks/use-user-fonts';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { Spinner, Text, useThemeTokens } from '@osuki-dev/ui';
 import { Button } from '@/components/themed-button';
 import * as Clipboard from 'expo-clipboard';
 import { Check, Copy as CopyIcon, Lock, MonitorSmartphone, X } from 'lucide-react-native';
 import { type ReactNode, useCallback, useEffect, useRef, useState } from 'react';
-import { Platform, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -373,6 +374,7 @@ function RunCommand() {
   const surfaceBackground = useSurfaceBackground();
   const theme = useThemeTokens();
   const { t } = useLingui();
+  const mono = useMonoFontFamily();
   const [copied, setCopied] = useState(false);
   const resetTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -410,7 +412,7 @@ function RunCommand() {
       <Text
         selectable
         numberOfLines={2}
-        style={[styles.command, { color: theme.colors.textMuted }]}>
+        style={[styles.command, { color: theme.colors.textMuted, fontFamily: mono }]}>
         {SIMFARM_RUN_COMMAND}
       </Text>
       {copied ? (
@@ -495,7 +497,13 @@ const styles = StyleSheet.create({
     // tracking: a shell command that has been upper-cased is a shell command
     // that does not run. This is the one string here that has to be reproduced
     // character for character, so it gets a monospace face and no transform.
-    fontFamily: Platform.OS === 'ios' ? 'ui-monospace' : 'monospace',
+    //
+    // Which monospace face is the reader's to decide, so the family is merged
+    // in from `useMonoFontFamily()` at the render site rather than written out
+    // here. It used to be `Platform.OS === 'ios' ? 'ui-monospace' :
+    // 'monospace'`, and this line -- the one string on the screen the reader
+    // is being asked to retype into a terminal -- was the one the reader's own
+    // mono choice never reached.
     fontSize: 12,
     lineHeight: 17,
   },

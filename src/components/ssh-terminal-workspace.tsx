@@ -9,7 +9,6 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Keyboard,
   PixelRatio,
-  Platform,
   ScrollView,
   StyleSheet,
   View,
@@ -40,6 +39,7 @@ import { VirtualKeyboard } from '@/components/virtual-keyboard';
 import { appChrome } from '@/constants/appearance';
 import { useLatestRef, useLazyRef } from '@/hooks/use-render-refs';
 import { useDockMeasurement } from '@/hooks/use-settled-height';
+import { useMonoFontFamily } from '@/hooks/use-user-fonts';
 import { useTerminalTheme } from '@/hooks/use-theme-pack';
 import { editorActionDescription, terminalKeyDescription } from '@/i18n/labels';
 import { withAlpha } from '@/lib/color';
@@ -1361,6 +1361,15 @@ function TerminalKeyChip({
   const { t } = useLingui();
   const surfaceBackground = useSurfaceBackground();
   const theme = useThemeTokens();
+  // A cap is a key, not a word: `Ctrl C`, `:wq`, `␣ff`, `⌫`. The whole point of
+  // the mono slot is that these line up and that a glyph the reader chose their
+  // font for -- U+2423 for the leader, the box-drawing arrows -- is the one
+  // they see. The family used to be a `Menlo`/`monospace` literal in the
+  // stylesheet at the foot of this file, and a `StyleSheet` is built when the
+  // module is imported: there is no point at which it could learn that the
+  // reader had installed a mono, so the key row was the last surface on the
+  // screen still in the platform's face.
+  const mono = useMonoFontFamily();
   const [pressed, setPressed] = useState(false);
   useEffect(() => {
     if (disabled) setPressed(false);
@@ -1397,11 +1406,18 @@ function TerminalKeyChip({
       <Text
         variant="caption"
         color={pressed && !disabled ? theme.colors.onPrimary : textColor}
-        style={
-          item.emphasis
-            ? [styles.terminalKeyText, styles.terminalKeyEmphasisText]
-            : styles.terminalKeyText
-        }>
+        // Insert mode's Esc used to carry `fontWeight: '700'`, which on Android
+        // is the weight at which the reader's font quietly disappears:
+        // `expo-font` registers a loaded face under `Typeface.NORMAL` only,
+        // `ReactFontManager` rounds anything at or above 700 to BOLD, finds no
+        // entry for it and falls through to `Typeface.create(family, style)` --
+        // a lookup against the *system* font list, where the reader's family is
+        // not a name. So the one key on the row that was meant to stand out was
+        // the one key drawn in a different font from the rest of it. The kit's
+        // `weight` prop asks for semibold instead, which resolves to 600 and
+        // stays under the threshold.
+        weight={item.emphasis ? 'semibold' : undefined}
+        style={[styles.terminalKeyText, { fontFamily: mono }]}>
         {keyCap(item.key, item.cap)}
       </Text>
     </PressableScale>
@@ -1499,28 +1515,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  // No `fontFamily`: the reader's monospace slot is merged in by
+  // `TerminalKeyChip`, which can ask for it. See the comment there.
   terminalKeyText: {
-    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
     fontVariant: ['tabular-nums'],
   },
   terminalKeyEmphasis: {
     minWidth: 64,
     paddingHorizontal: 18,
     borderWidth: 2,
-  },
-  terminalKeyEmphasisText: {
-    fontWeight: '700',
-  },
-  fingerprints: {
-    gap: 12,
-  },
-  fingerprint: {
-    gap: 4,
-  },
-  mono: {
-    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
-  },
-  prompts: {
-    gap: 10,
   },
 });

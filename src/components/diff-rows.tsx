@@ -1,11 +1,5 @@
 import { memo, useCallback, useMemo, useState, type ReactNode } from 'react';
-import {
-  ActivityIndicator,
-  Platform,
-  StyleSheet,
-  View,
-  type LayoutChangeEvent,
-} from 'react-native';
+import { ActivityIndicator, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
 import Animated, {
   useAnimatedScrollHandler,
   useAnimatedStyle,
@@ -23,6 +17,7 @@ import { PressableScale } from '@/components/pressable-scale';
 // A type-only import, so this module never holds a runtime reference back to
 // `pane-chat-blocks` -- which imports `InlineDiffRows` from here.
 import type { PaneChatColors } from '@/components/pane-chat-blocks';
+import { useMonoFontFamily } from '@/hooks/use-user-fonts';
 import { gitFileStatusWord } from '@/i18n/labels';
 import { sideOfFile, type GitDiffRow, type GitDiffRowType } from '@/lib/git-diff';
 import {
@@ -82,11 +77,6 @@ const RULER = 'M'.repeat(50);
 
 export const LINE_FONT_SIZE = 11.5;
 export const LINE_ROW_HEIGHT = 18;
-// `monospace` is a real family on Android and not on iOS, where it falls back
-// to the proportional system font -- and then no two columns line up, which is
-// the one thing a diff exists to do. Menlo is what the rest of the app uses
-// there (`server-terminal-workspace.tsx`, `ssh-host-form.tsx`).
-export const MONO_FONT = Platform.OS === 'ios' ? 'Menlo' : 'monospace';
 const HUNK_ROW_HEIGHT = 26;
 const FILE_ROW_HEIGHT = 52;
 const MORE_ROW_HEIGHT = 44;
@@ -182,6 +172,7 @@ export const DiffListRow = memo(function DiffListRow({
   // recycled list mounts about forty rows and keeps them, so the hook is paid
   // for once and torn down by React rather than by hand.
   const pinned = usePinnedStyle(scrollX);
+  const mono = useMonoFontFamily();
 
   if (row.type === 'file') {
     return (
@@ -201,7 +192,11 @@ export const DiffListRow = memo(function DiffListRow({
     return (
       <View style={[styles.hunkRow, { width, backgroundColor: gutterFill }]}>
         <Animated.View style={[styles.pinned, pinned, { width: pinnedWidth }]}>
-          <Text variant="caption" color={colors.subtle} numberOfLines={1} style={styles.hunkText}>
+          <Text
+            variant="caption"
+            color={colors.subtle}
+            numberOfLines={1}
+            style={[styles.hunkText, { fontFamily: mono }]}>
             {row.header}
           </Text>
         </Animated.View>
@@ -238,6 +233,7 @@ const LineRow = memo(function LineRow({
   gutterFill: string;
   pinned: PinnedStyle;
 }) {
+  const mono = useMonoFontFamily();
   const added = row.kind === 'added';
   const removed = row.kind === 'removed';
   const tint = added ? colors.addedBackground : removed ? colors.removedBackground : 'transparent';
@@ -251,7 +247,10 @@ const LineRow = memo(function LineRow({
         style={[
           styles.lineText,
           styles.lineBody,
-          { color: added ? colors.added : removed ? colors.removed : colors.muted },
+          {
+            color: added ? colors.added : removed ? colors.removed : colors.muted,
+            fontFamily: mono,
+          },
         ]}>
         {row.text || ' '}
       </Text>
@@ -264,7 +263,7 @@ const LineRow = memo(function LineRow({
         </Text>
         <Text
           color={added ? colors.added : removed ? colors.removed : colors.subtle}
-          style={styles.gutterMarker}>
+          style={[styles.gutterMarker, { fontFamily: mono }]}>
           {added ? '+' : removed ? '−' : ' '}
         </Text>
       </Animated.View>
@@ -293,6 +292,7 @@ const FileRow = memo(function FileRow({
 }) {
   const { t } = useLingui();
   const { _ } = useLinguiRuntime();
+  const mono = useMonoFontFamily();
   // Closed points down, open points up: the same chevron rule as the rest of
   // the transcript.
   const Chevron = row.expanded ? ChevronUp : ChevronDown;
@@ -353,7 +353,7 @@ const FileRow = memo(function FileRow({
                 variant="caption"
                 color={colors.subtle}
                 accessibilityLabel={sideLabel}
-                style={styles.sideMark}>
+                style={[styles.sideMark, { fontFamily: mono }]}>
                 {sideMark}
               </Text>
             ) : null}
@@ -436,13 +436,17 @@ const DiffRuler = memo(function DiffRuler({
 }: {
   onLayout: (e: LayoutChangeEvent) => void;
 }) {
+  // The same family the rows are drawn in, or the measurement is of a face
+  // nothing uses: the advance this produces is what every column position in
+  // the diff is computed from.
+  const mono = useMonoFontFamily();
   return (
     <Text
       accessibilityElementsHidden
       importantForAccessibility="no-hide-descendants"
       numberOfLines={1}
       onLayout={onLayout}
-      style={[styles.lineText, styles.ruler]}>
+      style={[styles.lineText, styles.ruler, { fontFamily: mono }]}>
       {RULER}
     </Text>
   );
@@ -752,6 +756,19 @@ export function InlineDiffRows({
   );
 }
 
+/**
+ * The diff's own metrics, with the family left out on purpose.
+ *
+ * Until now every mono style here named an exported
+ * `MONO_FONT = Platform.OS === 'ios' ? 'Menlo' : 'monospace'`, and that
+ * constant was a statement about the *platform*, not about the reader: a
+ * reader who installed their own mono face in Settings > Font saw the markdown
+ * fences and the file viewer change over and every diff in the app -- the one
+ * surface whose entire argument is that columns line up -- stay on Menlo. The
+ * family now comes from `useMonoFontFamily()` at each render site, including
+ * the hidden ruler, so the measured advance and the rows it positions are the
+ * same face.
+ */
 const styles = StyleSheet.create({
   flexOne: {
     flex: 1,
@@ -824,7 +841,6 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   sideMark: {
-    fontFamily: MONO_FONT,
     letterSpacing: 1,
   },
   hunkRow: {
@@ -833,7 +849,6 @@ const styles = StyleSheet.create({
   },
   hunkText: {
     paddingHorizontal: LINE_PADDING,
-    fontFamily: MONO_FONT,
     fontSize: 10.5,
   },
   lineRow: {
@@ -841,7 +856,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   lineText: {
-    fontFamily: MONO_FONT,
     fontSize: LINE_FONT_SIZE,
     lineHeight: LINE_ROW_HEIGHT,
     includeFontPadding: false,
@@ -875,7 +889,6 @@ const styles = StyleSheet.create({
     lineHeight: LINE_ROW_HEIGHT,
     textAlign: 'center',
     includeFontPadding: false,
-    fontFamily: MONO_FONT,
   },
   moreRow: {
     height: MORE_ROW_HEIGHT,

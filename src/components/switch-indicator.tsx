@@ -1,9 +1,10 @@
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { Text, useThemeTokens } from '@osuki-dev/ui';
-import { Platform, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { appChrome } from '@/constants/appearance';
+import { useMonoFontFamily } from '@/hooks/use-user-fonts';
 import { fadeIn, fadeOut, listLayout } from '@/lib/motion';
 import { paneAddressText, type PaneAddress } from '@/lib/pane-address';
 
@@ -34,6 +35,7 @@ import { paneAddressText, type PaneAddress } from '@/lib/pane-address';
 export function SwitchIndicator({ address, testID }: { address: PaneAddress; testID?: string }) {
   const surfaceBackground = useSurfaceBackground();
   const theme = useThemeTokens();
+  const mono = useMonoFontFamily();
   return (
     <Animated.View
       pointerEvents="none"
@@ -53,7 +55,7 @@ export function SwitchIndicator({ address, testID }: { address: PaneAddress; tes
           variant="caption"
           color={theme.colors.onPrimary}
           testID={testID}
-          style={styles.address}>
+          style={[styles.address, { fontFamily: mono }]}>
           {paneAddressText(address)}
         </Text>
         <Text
@@ -67,9 +69,6 @@ export function SwitchIndicator({ address, testID }: { address: PaneAddress; tes
     </Animated.View>
   );
 }
-
-/** The same face the panels sheet sets its address column in. */
-const MONO_FONT = Platform.OS === 'ios' ? 'ui-monospace' : 'monospace';
 
 const styles = StyleSheet.create({
   // Centred in the stack rather than stretched across it: the pill is as wide
@@ -87,8 +86,15 @@ const styles = StyleSheet.create({
     borderCurve: 'continuous',
     boxShadow: appChrome.shadow.floatingPill,
   },
+  // A pane address is `2:3` -- numbers the reader compares against the pill in
+  // the header and against the panels sheet -- so it is a literal, and it now
+  // takes its face from the reader's mono slot at the render site. It used to
+  // name its own `MONO_FONT = Platform.OS === 'ios' ? 'ui-monospace' :
+  // 'monospace'`, which is a statement about the platform and not about the
+  // reader: a reader with their own mono face saw the panels sheet's address
+  // column change and this pill, which is quoting that same column back at
+  // them, stay behind.
   address: {
-    fontFamily: MONO_FONT,
     fontVariant: ['tabular-nums'],
   },
   title: {

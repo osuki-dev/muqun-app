@@ -31,7 +31,7 @@
  * import.
  */
 import { Skia } from '@shopify/react-native-skia';
-import { Directory, File, Paths } from 'expo-file-system';
+import { Directory, File, FileMode, Paths } from 'expo-file-system';
 import * as Font from 'expo-font';
 import QuickCrypto from 'react-native-quick-crypto';
 
@@ -40,11 +40,16 @@ import {
   checkFontSize,
   directFontUrl,
   downloadStatusFrom,
+  findSfntTable,
   fontAdvanceProfile,
+  fontFamilyNameFromNameTable,
   isUserFontRelativePath,
   joinDocumentUri,
   isSupportedFontFormat,
   MONO_PROBE_CHARACTERS,
+  sfntDirectoryBytes,
+  sfntTableCount,
+  SFNT_HEADER_BYTES,
   slotFontFamily,
   sniffFontFormat,
   USER_FONT_ALIAS,
@@ -187,6 +192,47 @@ async function probeFont(uri: string): Promise<FontAdvanceProfile | null> {
 }
 
 /**
+ * What the font calls itself, read out of its own `name` table.
+ *
+ * Three small reads rather than one big one, and that is the whole reason this
+ * is a file handle and not `file.bytes()`. A CJK face is ten to twenty
+ * megabytes; the answer is in about two hundred bytes of header and directory
+ * plus a table that is rarely past ten kilobytes, and its offset is in the
+ * directory. `FileHandle.offset` is settable, so the app seeks to it instead
+ * of reading past it.
+ *
+ * Every failure is `null` and none of them is an error the reader sees. A
+ * stripped face, a subset with the `name` table dropped, a font whose header
+ * disagrees with its own directory: the answer to all of them is the same, and
+ * it is the one the app had before -- call the font after the file it came in.
+ * Refusing to install a font because its metadata is untidy would be the app
+ * having an opinion about somebody else's typography.
+ */
+async function readFamilyName(file: File): Promise<string | null> {
+  try {
+    const handle = file.open(FileMode.ReadOnly);
+    try {
+      const count = sfntTableCount(handle.readBytes(SFNT_HEADER_BYTES));
+      if (count === null) return null;
+      // Back to the start: the directory the count describes begins at the
+      // header, and `findSfntTable` wants both together.
+      handle.offset = 0;
+      const table = findSfntTable(handle.readBytes(sfntDirectoryBytes(count)), 'name');
+      if (!table) return null;
+      handle.offset = table.offset;
+      return fontFamilyNameFromNameTable(handle.readBytes(table.length));
+    } finally {
+      handle.close();
+    }
+  } catch {
+    // A file that will not open here has already opened twice above, so this
+    // is a font with a directory pointing past its own end rather than a
+    // storage failure worth reporting.
+    return null;
+  }
+}
+
+/**
  * Check the staged bytes, move them into place, and describe the result.
  *
  * The one path every acquisition ends in, so a URL and a picked file cannot
@@ -219,6 +265,12 @@ async function acceptStagedFont(
     // there than in the terminal.
     const profile = await probeFont(staged.uri);
 
+    // Read here, while the bytes are still at the staging path and the file is
+    // known to be a font -- the sniff above has passed and Skia has opened it,
+    // so a `name` table that will not parse is the font's own business rather
+    // than a sign the download is broken.
+    const family = await readFamilyName(staged);
+
     // The last place a cancel can still be honoured, and the reader has had
     // time to reach it: the parse above is seconds on a large CJK face, and a
     // reader who swiped the sheet away during it has asked for this not to
@@ -241,7 +293,20 @@ async function acceptStagedFont(
       kind: 'file',
       source,
       file: relative,
-      label: userFontLabel(source) ?? slot,
+      /**
+       * What the font calls itself, and only then where it came from.
+       *
+       * The old order was the other way round because the family name was
+       * thought to be unavailable, and on Android that produced rows reading
+       * `msf:13397`: `File.pickFileAsync` returns a `File` whose only name is
+       * `Paths.basename(uri)`, and for a Storage Access Framework document
+       * that URI ends in the provider's opaque document id. There is no
+       * display name on the picked file to use instead -- expo-file-system
+       * does not carry one -- so the name had to come out of the file, and it
+       * does. Where it cannot, the file name is still the fallback, because a
+       * reader recognises the file they chose.
+       */
+      label: family ?? userFontLabel(source) ?? slot,
       ...(profile ? { advanceRatio: profile.advanceRatio, isMonospace: profile.isMonospace } : {}),
     };
   } catch (error) {

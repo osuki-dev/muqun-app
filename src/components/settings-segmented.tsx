@@ -20,9 +20,9 @@
  * is what the compound API is for -- so this cannot drift from `Tabs` when
  * `Tabs` changes.
  */
-import { Tabs, useThemeTokens } from '@osuki-dev/ui';
+import { Tabs, Text, useThemeTokens } from '@osuki-dev/ui';
 import { useEffect, useState } from 'react';
-import { Platform, StyleSheet, Text as NativeText } from 'react-native';
+import { StyleSheet } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import { ThemedSurfaceArtwork } from '@/components/themed-surface';
@@ -162,42 +162,39 @@ export function SettingsSegmented({
             // state in a test identifier, without changing spoken labels.
             testID={`settings-selection:${option.value === value ? 'on' : 'off'}:${testID ?? 'segment'}-${option.value}`}
             style={styles.trigger}>
-            {/[\u0e00-\u0e7f]/u.test(option.label) ? (
-              // Use the system's Thai shaping and metrics rather than the
-              // compact mono label's fitting pass, which clips final clusters.
-              // No additional font is bundled and other scripts keep kit labels.
-              <NativeText
+            {textCase === 'sentence' ? (
+              // The kit's own label style, with its `textTransform` turned off.
+              //
+              // This used to be React Native's `Text`, carrying the kit's font
+              // size and tracking copied out of `theme.typeStyles.label` by
+              // hand -- and not its family, because there is no family in a
+              // type style to copy. So the one control on the page where a
+              // reader picks their font was the one control on the page that
+              // never changed face: "the tabs' font did not change". The kit's
+              // `Text` reads the whole of the style, family included, through
+              // `resolveFontStyle`, and `transform` is the prop that says no to
+              // the uppercasing without forking anything.
+              //
+              // Thai came through here too. It had its own branch, pinned to
+              // Android's `sans-serif`, on the argument that the compact label's
+              // fitting pass clips final clusters -- which left a Thai reader
+              // who installed a Thai face looking at the system's. The line
+              // height below is the taller of the two the branches used, so the
+              // clusters have the room that branch was really after, and the
+              // face is the reader's in every script.
+              <Text
+                variant="label"
+                transform="none"
+                weight="semibold"
                 numberOfLines={1}
                 maxFontSizeMultiplier={1.18}
-                style={[
-                  styles.thaiLabel,
-                  {
-                    color: option.value === value ? theme.colors.text : theme.colors.textMuted,
-                    fontSize: theme.typeStyles.label.fontSize,
-                    lineHeight: Math.ceil(theme.typeStyles.label.fontSize * 1.6),
-                  },
-                ]}>
-                {option.label}
-              </NativeText>
-            ) : textCase === 'sentence' ? (
-              // The kit's own label metrics, with its `textTransform` left off.
-              // Written as a `Text` rather than by restyling `Tabs.Label`,
-              // because the transform lives in the type style the label reads
-              // and there is no prop on it to say no.
-              <NativeText
-                numberOfLines={1}
-                maxFontSizeMultiplier={1.18}
+                color={option.value === value ? theme.colors.text : theme.colors.textMuted}
                 style={[
                   styles.sentenceLabel,
-                  {
-                    color: option.value === value ? theme.colors.text : theme.colors.textMuted,
-                    fontSize: theme.typeStyles.label.fontSize,
-                    lineHeight: Math.ceil(theme.typeStyles.label.fontSize * 1.4),
-                    letterSpacing: theme.typeStyles.label.letterSpacing,
-                  },
+                  { lineHeight: Math.ceil(theme.typeStyles.label.fontSize * 1.6) },
                 ]}>
                 {option.label}
-              </NativeText>
+              </Text>
             ) : (
               <Tabs.Label>{option.label}</Tabs.Label>
             )}
@@ -209,17 +206,21 @@ export function SettingsSegmented({
 }
 
 const styles = StyleSheet.create({
+  /**
+   * No `fontWeight` and no `fontFamily`.
+   *
+   * Both used to be here. The family was never set, which is what kept this
+   * control on the system face; the weight was `'600'`, which on Android is
+   * the last weight below the threshold where the platform stops finding a
+   * registered typeface and answers with its own (see
+   * `theme/interface-font-registry.ts`). Neither belongs in a style: the
+   * `weight` prop above goes through the kit's registry, which is the one
+   * place that knows what the reader's file can actually serve.
+   *
+   * `includeFontPadding` is left on. A segment is a pill with a fixed height
+   * and a hostile face's ascenders have nowhere to go without it.
+   */
   sentenceLabel: {
-    fontWeight: '600',
-    includeFontPadding: false,
-    textAlign: 'center',
-    flexShrink: 1,
-  },
-  thaiLabel: {
-    fontFamily: Platform.OS === 'android' ? 'sans-serif' : undefined,
-    fontWeight: '400',
-    includeFontPadding: true,
-    letterSpacing: 0,
     textAlign: 'center',
     flexShrink: 1,
   },

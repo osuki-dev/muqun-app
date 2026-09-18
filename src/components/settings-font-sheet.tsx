@@ -47,7 +47,7 @@ import {
   useSheetSceneInputStyle,
 } from '@/components/sheet-scene';
 import { ThemeImportProgress } from '@/components/theme-import-progress';
-import { useUserFontStatus } from '@/hooks/use-user-fonts';
+import { useMonoFontFamily, useUserFontStatus } from '@/hooks/use-user-fonts';
 import { formatAssetSize } from '@/lib/asset-display';
 import { feedback } from '@/lib/feedback';
 import { DURATION, fadeIn, fadeOut } from '@/lib/motion';
@@ -69,6 +69,7 @@ import {
   removeUserFontFile,
   SYSTEM_FONT_SLOT,
   UserFontError,
+  userFontSource,
   USER_FONT_MAX_BYTES,
   type FontSlot,
   type FontSlotId,
@@ -385,6 +386,7 @@ function FontSlotGroup({
   const { t } = useLingui();
   const { colors } = useThemeTokens();
   const inputStyle = useSheetSceneInputStyle();
+  const monoFontFamily = useMonoFontFamily();
   const busy = work !== null;
   const installed = slot.kind === 'file' ? slot : null;
   const bar = work ? fontInstallBar(work) : null;
@@ -493,8 +495,20 @@ function FontSlotGroup({
       <SheetSceneGroupHeading title={heading} first={first} testID={`font-group-${id}`} />
       <SheetSceneRow
         title={installed ? installed.label : t`System font`}
-        caption={installed ? installed.source : description}
-        captionKind={installed ? 'path' : 'text'}
+        /*
+         * The title is what the face calls itself and the caption is where it
+         * came from, which is the order a reader asks the two questions in.
+         *
+         * The caption used to be `installed.source` raw, which is the string
+         * the app stores to recognise a re-paste of the same URL -- a whole
+         * CDN path with a cache key on the end, or on Android a Storage Access
+         * Framework document URI. Neither is a place. `userFontSource` reduces
+         * a URL to its host and a picked file to its own name, and answers
+         * `null` for an opaque handle, where the honest caption is the sentence
+         * about the slot rather than a document id dressed up as provenance.
+         */
+        caption={installed ? (userFontSource(installed.source) ?? description) : description}
+        captionKind={installed && userFontSource(installed.source) ? 'path' : 'text'}
         selected
         // The slot is the label and whatever is in it is the value, which is
         // the one arrangement that reads correctly in every state: "Interface,
@@ -633,7 +647,20 @@ function FontSlotGroup({
               placeholder="https://"
               placeholderTextColor={colors.textMuted}
               returnKeyType="go"
-              style={inputStyle}
+              /*
+               * A URL, so the monospace slot, layered over the sheet's own
+               * field style rather than replacing it.
+               *
+               * The rule the app now holds to: a sentence follows the
+               * interface face, a literal the reader types or checks
+               * character by character follows the mono one. This field is
+               * the second kind twice over -- it is read back against a link
+               * the reader copied from somewhere else, and one wrong
+               * character in a raw host is a download that fails for a reason
+               * nobody can see. The sheet's shared style supplies the size
+               * and the interface family; this names the family only.
+               */
+              style={[inputStyle, { fontFamily: monoFontFamily }]}
               testID={`font-url-${id}`}
               value={url}
             />

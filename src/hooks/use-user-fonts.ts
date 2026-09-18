@@ -25,6 +25,7 @@
  * said, next to the row it is about.
  */
 import { useEffect, useMemo, useState } from 'react';
+import { Platform } from 'react-native';
 import { create } from 'zustand';
 
 import type { MarkdownFonts } from '@/lib/markdown-style';
@@ -164,4 +165,64 @@ export function useMarkdownFonts(): MarkdownFonts {
     }),
     [interfaceFont, monoFont]
   );
+}
+
+/**
+ * The monospace face to fall back to when the reader has not supplied one.
+ *
+ * Not a taste decision and not a new one: this is the pair a dozen mono
+ * surfaces in this app had each written for themselves, as their own private
+ * `MONO_FONT` constant. `'monospace'` is Android's generic family; `'Menlo'`
+ * is the one iOS ships that React Native can resolve by name, and is what the
+ * diff and code views were already naming.
+ */
+export const SYSTEM_MONO_FAMILY = Platform.OS === 'ios' ? 'Menlo' : 'monospace';
+
+/**
+ * The family the app's own reading is set in, or `null` for the system face.
+ *
+ * One hook, so that no surface decides for itself what the reader's font is.
+ * `null` rather than a name is deliberate and is the whole of the system-font
+ * case: a `fontFamily` of `undefined` is React Native's own instruction to use
+ * the platform's UI face, and there is no string that says that on both
+ * platforms.
+ *
+ * Almost nothing should need this. Reader-facing text belongs in the kit's
+ * `Text`, which reads the same family out of the theme registry
+ * `constants/theme.ts` builds. What is left is the surfaces the kit has no
+ * component for -- a `TextInput`, whose typed text *and* placeholder both take
+ * their family off the input's own style -- and those are what this is for.
+ *
+ * One trap, and it is the reason this returns `null` rather than being spread
+ * blindly. `StyleSheet.flatten` assigns each style object over the last, and
+ * an explicit `null` or `undefined` assigns too: `[resolved, { fontFamily:
+ * useInterfaceFontFamily() }]` on a reader who has chosen nothing does not
+ * defer to `resolved`, it wipes it. Layer this on top of a style that already
+ * resolves a family only when it is non-null, or do not layer it at all --
+ * which for an input style that already came from the registry means not
+ * layering it, since the registry has already answered.
+ */
+export function useInterfaceFontFamily(): string | null {
+  const interfaceFont = useAppSettings((state) => state.interfaceFont);
+  return slotFontFamily(interfaceFont, 'interface');
+}
+
+/**
+ * The family a literal is set in: a key cap, a command, a path, a line of code.
+ *
+ * The rule this encodes is the one the app kept getting wrong in both
+ * directions. Anything the reader is meant to *type*, or to copy character for
+ * character, follows the monospace slot, because its alignment is part of what
+ * it says. Anything the reader is meant to *read* follows the interface slot.
+ * The terminal's key strip is keys, so it is this one; the sentence above the
+ * key strip is not, so it is not.
+ *
+ * Never `null`: unlike the interface face there is a right answer when the
+ * reader has chosen nothing, and `SYSTEM_MONO_FAMILY` is it. A mono surface
+ * that fell back to `undefined` would be drawn in the proportional UI face,
+ * which is the one thing it must never be.
+ */
+export function useMonoFontFamily(): string {
+  const monoFont = useAppSettings((state) => state.monoFont);
+  return slotFontFamily(monoFont, 'mono') ?? SYSTEM_MONO_FAMILY;
 }

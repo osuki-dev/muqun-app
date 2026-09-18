@@ -19,6 +19,7 @@ import { InlineDiffRows } from '@/components/diff-rows';
 import { usePaneChatColors, usePaneChatMarkdownStyle } from '@/components/pane-chat-blocks';
 import { useTranscriptPlate } from '@/hooks/use-transcript-plate';
 import { useCompactMarkdownStyle } from '@/hooks/use-markdown-style';
+import { useMonoFontFamily } from '@/hooks/use-user-fonts';
 import { isDeclinedByUser } from '@/lib/agent-engine-text';
 import { hasMarkdownMarks, plainFromMarkdown } from '@/lib/markdown-text';
 import { withAlpha } from '@/lib/color';
@@ -211,6 +212,7 @@ const OutputLines = memo(function OutputLines({ text }: { text: string }) {
   const { t } = useLingui();
   const theme = useThemeTokens();
   const colors = usePaneChatColors();
+  const mono = useMonoFontFamily();
   // "Show the rest" used to mean the whole 64 KiB, in one `<Text>`. It means
   // another four hundred lines now, and says so.
   const [budget, setBudget] = useState(0);
@@ -222,7 +224,7 @@ const OutputLines = memo(function OutputLines({ text }: { text: string }) {
   if (!text) return null;
   return (
     <View style={styles.stretch}>
-      <Text selectable style={[styles.mono, { color: theme.colors.textMuted }]}>
+      <Text selectable style={[styles.mono, { color: theme.colors.textMuted, fontFamily: mono }]}>
         {capped.text}
       </Text>
       {capped.hidden > 0 ? (
@@ -1045,8 +1047,9 @@ function syntheticPatch(path: string, oldString?: string, newString?: string): s
  */
 const StreamingArguments = memo(function StreamingArguments({ text }: { text: string }) {
   const colors = usePaneChatColors();
+  const mono = useMonoFontFamily();
   return (
-    <Text numberOfLines={2} style={[styles.mono, { color: colors.muted }]}>
+    <Text numberOfLines={2} style={[styles.mono, { color: colors.muted, fontFamily: mono }]}>
       {text}
     </Text>
   );
@@ -1054,8 +1057,11 @@ const StreamingArguments = memo(function StreamingArguments({ text }: { text: st
 
 const ShellCommand = memo(function ShellCommand({ command }: { command: string }) {
   const colors = usePaneChatColors();
+  const mono = useMonoFontFamily();
   return (
-    <Text selectable style={[styles.mono, styles.command, { color: colors.accent }]}>
+    <Text
+      selectable
+      style={[styles.mono, styles.command, { color: colors.accent, fontFamily: mono }]}>
       {command}
     </Text>
   );
@@ -1116,6 +1122,7 @@ const GlobFiles = memo(function GlobFiles({
 }) {
   const theme = useThemeTokens();
   const colors = usePaneChatColors();
+  const mono = useMonoFontFamily();
   const shown = groups.slice(0, GLOB_GROUP_MAX);
   return (
     <View style={styles.stretch}>
@@ -1129,7 +1136,7 @@ const GlobFiles = memo(function GlobFiles({
             // glob shares a prefix, so the head is what can be dropped.
             ellipsizeMode="head"
             color={theme.colors.textSubtle}
-            style={styles.globDirectory}>
+            style={[styles.globDirectory, { fontFamily: mono }]}>
             {group.directory || '/'}
           </Text>
           {group.files.slice(0, GLOB_FILE_MAX).map((name) => {
@@ -1147,7 +1154,11 @@ const GlobFiles = memo(function GlobFiles({
                 <Text
                   numberOfLines={1}
                   ellipsizeMode="middle"
-                  style={[styles.mono, styles.globName, { color: theme.colors.text }]}>
+                  style={[
+                    styles.mono,
+                    styles.globName,
+                    { color: theme.colors.text, fontFamily: mono },
+                  ]}>
                   {name}
                 </Text>
               </PressableScale>
@@ -1176,6 +1187,7 @@ const GrepMatches = memo(function GrepMatches({
 }) {
   const theme = useThemeTokens();
   const colors = usePaneChatColors();
+  const mono = useMonoFontFamily();
   // Bounded on both axes: a repository-wide grep is thousands of matches, and
   // a timeline cell is not a scroll container.
   const shown = groups.slice(0, 12);
@@ -1194,8 +1206,13 @@ const GrepMatches = memo(function GrepMatches({
           </Text>
           {group.lines.slice(0, 8).map((match, index) => (
             <View key={`${group.file}:${match.line ?? index}`} style={styles.grepLine}>
-              <Text style={[styles.grepNumber, { color: colors.subtle }]}>{match.line ?? ''}</Text>
-              <Text numberOfLines={1} selectable style={[styles.mono, { color: colors.muted }]}>
+              <Text style={[styles.grepNumber, { color: colors.subtle, fontFamily: mono }]}>
+                {match.line ?? ''}
+              </Text>
+              <Text
+                numberOfLines={1}
+                selectable
+                style={[styles.mono, { color: colors.muted, fontFamily: mono }]}>
                 {match.text}
               </Text>
             </View>
@@ -1383,6 +1400,7 @@ const ExecuteCalls = memo(function ExecuteCalls({
 }) {
   const theme = useThemeTokens();
   const colors = usePaneChatColors();
+  const mono = useMonoFontFamily();
   const calls = useMemo(() => executeToolCalls(metadata), [metadata]);
   if (calls.length === 0) return null;
   return (
@@ -1411,7 +1429,7 @@ const ExecuteCalls = memo(function ExecuteCalls({
           {call.input ? (
             <Text
               numberOfLines={1}
-              style={[styles.mono, styles.callInput, { color: colors.subtle }]}>
+              style={[styles.mono, styles.callInput, { color: colors.subtle, fontFamily: mono }]}>
               {call.input}
             </Text>
           ) : null}
@@ -1473,8 +1491,20 @@ const styles = StyleSheet.create({
   stretch: {
     alignSelf: 'stretch',
   },
+  /**
+   * Everything about a literal except which face draws it.
+   *
+   * The family used to be the string `'monospace'` right here, and that is the
+   * one thing this style could not state: `'monospace'` is Android's generic
+   * family and on iOS resolves to nothing in particular, so a reader who had
+   * installed their own mono face in Settings > Font watched the markdown
+   * fences and the diff change over while the tool cards -- a shell's output,
+   * a grep hit, the arguments of a call still being written -- stayed on the
+   * platform's. A `StyleSheet.create` object cannot call a hook, so each of
+   * the six components below merges `useMonoFontFamily()` in at its own render
+   * site and this keeps the metrics.
+   */
   mono: {
-    fontFamily: 'monospace',
     fontSize: AGENT_TYPE.meta.size,
     lineHeight: AGENT_TYPE.meta.lineHeight,
   },
@@ -1540,8 +1570,9 @@ const styles = StyleSheet.create({
     gap: 1,
     marginBottom: 4,
   },
+  // A directory is a path, read segment by segment; same slot as `mono` above
+  // and merged in the same way.
   globDirectory: {
-    fontFamily: 'monospace',
     fontSize: AGENT_TYPE.micro.size,
   },
   globRow: {
@@ -1568,8 +1599,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 6,
   },
+  // The line number column, whose whole job is to be a fixed width of digits
+  // beside the line it points at; the family comes from the mono slot at the
+  // render site.
   grepNumber: {
-    fontFamily: 'monospace',
     fontSize: AGENT_TYPE.micro.size,
     width: 34,
     textAlign: 'right',
