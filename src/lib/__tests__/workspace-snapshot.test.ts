@@ -6,8 +6,16 @@ type Call = { kind: string; sessionId?: string; paneId?: string };
 let calls: Call[] = [];
 let sessionList: { id: string; name?: string }[] = [];
 let failOn: string | null = null;
-/** Whether the fake gateway has the batched `/snapshot` route. */
-let batched = true;
+/**
+ * Which of the three gateways the fake is being this test.
+ *
+ *  * `announced` -- has the batched route and says so in `/health`, so its
+ *    agents are the real agent list and one request is the whole entity load.
+ *  * `unannounced` -- has the route but says nothing, so its agents are derived
+ *    from panes and `/agents` is asked beside it.
+ *  * `legacy` -- no batched route at all.
+ */
+let gateway: 'announced' | 'unannounced' | 'legacy' = 'announced';
 
 /**
  * The shape `normalizeGatewayEntities` produces, `raw` included.
@@ -42,23 +50,25 @@ mock.module('@/lib/gateway-client', () => ({
     loadHealth: async () => {
       calls.push({ kind: 'health' });
       if (failOn === 'health') throw new Error('gateway is away');
-      return { ok: true };
+      return health();
     },
     loadSessions: async () => {
       calls.push({ kind: 'sessions' });
       if (failOn === 'sessions') throw new Error('gateway is away');
       return { sessions: sessionList };
     },
-    // Workspaces, tabs and panes in one answer. `null` is how a gateway too old
-    // to have the batched route reports itself, and the three calls below are
-    // what happens then -- both paths are exercised by `batched` on/off.
-    loadSessionSnapshot: async (sessionId: string) => {
+    // The batched answer. `null` is how a gateway with no such route reports
+    // itself; `agents: null` is how one that has the route but does not
+    // announce it reports that its agents are derived and must not be used.
+    loadSessionSnapshot: async (sessionId: string, given: { capabilities?: string[] } | null) => {
       calls.push({ kind: 'snapshot', sessionId });
-      if (!batched) return null;
+      if (gateway === 'legacy') return null;
+      const serves = Boolean(given?.capabilities?.includes('session_snapshot'));
       return {
         workspaces: [entity(`w:${sessionId}`)],
         tabs: [entity(`t:${sessionId}`, { workspace_id: `w:${sessionId}` })],
         panes: [entity(`p:${sessionId}`, { tab_id: `t:${sessionId}` })],
+        agents: serves ? [entity(`a:${sessionId}`)] : null,
       };
     },
     loadWorkspaces: async (sessionId: string) => {
@@ -80,33 +90,47 @@ mock.module('@/lib/gateway-client', () => ({
   },
 }));
 
+/** The `/health` the fake gateway answers with, per gateway kind. */
+function health() {
+  return gateway === 'announced'
+    ? { ok: true, capabilities: ['session_snapshot'] }
+    : { ok: true, capabilities: [] };
+}
+
 const { loadWorkspaceSnapshot, warmConfiguredWorkspace } = await import('@/lib/workspace-snapshot');
 const { forgetWarmWorkspace, warmWorkspace } = await import('@/lib/server-warm-cache');
 
 beforeEach(() => {
   calls = [];
   failOn = null;
-  batched = true;
+  gateway = 'announced';
   sessionList = [{ id: 'alpha' }, { id: 'beta' }];
   forgetWarmWorkspace();
 });
 
-test('a preference that names a live session is honoured', () => {
-  return loadWorkspaceSnapshot('beta').then(({ snapshot }) => {
-    expect(snapshot.sessionId).toBe('beta');
-    // Every entity list is fetched for the session that was resolved, never for
-    // the preference as written.
-    for (const kind of ['snapshot', 'agents'])
-      expect(calls.find((call) => call.kind === kind)?.sessionId).toBe('beta');
-  });
+test('a preference that names a live session is honoured', async () => {
+  const { snapshot } = await loadWorkspaceSnapshot('beta');
+  expect(snapshot.sessionId).toBe('beta');
+  // Every entity read is for the session that was resolved, never for the
+  // preference as written -- on whichever gateway, since each asks a different
+  // set and all of them have to get this right.
+  for (const kind of ['announced', 'unannounced', 'legacy'] as const) {
+    calls = [];
+    gateway = kind;
+    forgetWarmWorkspace();
+    await loadWorkspaceSnapshot('beta');
+    const entityReads = calls.filter((call) => call.kind !== 'health' && call.kind !== 'sessions');
+    expect(entityReads.length).toBeGreaterThan(0);
+    for (const call of entityReads) expect(call.sessionId).toBe('beta');
+  }
 });
 
-test('a gateway with the batched route is asked twice, not four times', () => {
+test('a gateway announcing the capability answers the whole entity load at once', () => {
   return loadWorkspaceSnapshot('beta').then(({ snapshot }) => {
-    // Workspaces, tabs and panes arrive together; agents stay their own call
-    // because the batched answer derives them from panes and so carries no
-    // `instance_id` or `target`. See `loadSessionSnapshot`.
-    expect(calls.map((call) => call.kind)).toEqual(['health', 'sessions', 'snapshot', 'agents']);
+    // One request for all four lists. `/agents` is not asked at all, because
+    // this gateway's batched agents are the agent list -- same array, same
+    // backend call, `instance_id` and `target` included.
+    expect(calls.map((call) => call.kind)).toEqual(['health', 'sessions', 'snapshot']);
     expect(snapshot.workspaces.map((item) => item.id)).toEqual(['w:beta']);
     expect(snapshot.tabs.map((item) => item.id)).toEqual(['t:beta']);
     expect(snapshot.panes.map((item) => item.id)).toEqual(['p:beta']);
@@ -114,8 +138,19 @@ test('a gateway with the batched route is asked twice, not four times', () => {
   });
 });
 
-test('a gateway without the batched route still gets the three separate reads', async () => {
-  batched = false;
+test('a gateway with the route but no announcement still has its agents asked for', async () => {
+  gateway = 'unannounced';
+  const { snapshot } = await loadWorkspaceSnapshot('beta');
+  // The batched answer is used for the shape and its agents are refused: they
+  // are derived from panes there, so they carry no `instance_id` and no
+  // `target`, and an assignment built from one would be dropped on the floor.
+  expect(calls.map((call) => call.kind)).toEqual(['health', 'sessions', 'snapshot', 'agents']);
+  expect(snapshot.panes.map((item) => item.id)).toEqual(['p:beta']);
+  expect(snapshot.agents.map((item) => item.id)).toEqual(['a:beta']);
+});
+
+test('a gateway with no batched route at all still gets the separate reads', async () => {
+  gateway = 'legacy';
   const { snapshot } = await loadWorkspaceSnapshot('beta');
   expect(calls.map((call) => call.kind)).toEqual([
     'health',
@@ -126,11 +161,24 @@ test('a gateway without the batched route still gets the three separate reads', 
     'tabs',
     'panes',
   ]);
-  // And the result is indistinguishable from the batched one, which is the
-  // whole point: no caller may branch on which gateway answered.
+  // And all three results are indistinguishable, which is the whole point: no
+  // caller may branch on which gateway answered.
   expect(snapshot.workspaces.map((item) => item.id)).toEqual(['w:beta']);
   expect(snapshot.tabs.map((item) => item.id)).toEqual(['t:beta']);
   expect(snapshot.panes.map((item) => item.id)).toEqual(['p:beta']);
+  expect(snapshot.agents.map((item) => item.id)).toEqual(['a:beta']);
+});
+
+test('the batched route is asked once, never twice, whichever gateway it is', async () => {
+  // The announced path falls back when the announcement does not hold, and the
+  // fallback must not re-ask the route that just refused it.
+  for (const kind of ['announced', 'unannounced', 'legacy'] as const) {
+    calls = [];
+    gateway = kind;
+    forgetWarmWorkspace();
+    await loadWorkspaceSnapshot('beta');
+    expect(calls.filter((call) => call.kind === 'snapshot')).toHaveLength(1);
+  }
 });
 
 test('a preference naming a session that has gone falls through to the first', async () => {
