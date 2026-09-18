@@ -74,6 +74,12 @@
       "platforms": ["ios", "android"]
     },
     {
+      "name": "settings-guide",
+      "program": "flows/settings-guide",
+      "tags": ["full"],
+      "platforms": ["ios", "android"]
+    },
+    {
       "name": "away-digest",
       "program": "flows/away-digest",
       "tags": ["full"],
@@ -4199,6 +4205,55 @@
         "mode": "visible",
         "timeout": 8000,
         "run": "flows/settings.ad#s96"
+      }
+    ],
+    "flows/settings-guide": [
+      {
+        "include": "subflows/launch-home"
+      },
+      {
+        "target": {
+          "text": "Settings"
+        },
+        "mode": "press",
+        "run": "flows/settings-guide.ad#open-settings"
+      },
+      {
+        "target": {
+          "text": "SERVERS"
+        },
+        "mode": "visible",
+        "timeout": 8000,
+        "run": "flows/settings-guide.ad#settings-arrived"
+      },
+      {
+        "include": "subflows/dismiss-logbox"
+      },
+      {
+        "target": {
+          "text": "ABOUT"
+        },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 20000,
+        "run": "flows/settings-guide.ad#seek"
+      },
+      {
+        "target": {
+          "text": "How to use Muqun, .+"
+        },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 20000,
+        "run": "flows/settings-guide.ad#seek"
+      },
+      {
+        "target": {
+          "text": "How to use Muqun, Guides for pairing, the terminal, OpenCode and themes"
+        },
+        "mode": "visible",
+        "timeout": 8000,
+        "run": "flows/settings-guide.ad#row-visible"
       }
     ],
     "flows/slash-commands": [
