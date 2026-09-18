@@ -1096,10 +1096,6 @@ msgstr "正在通过 SSH 连接…"
 msgid "Connecting to {address}"
 msgstr "正在连接到 {address}"
 
-#: src/components/agent-workbench.tsx
-msgid "Connecting to agent engine…"
-msgstr "正在连接智能体引擎…"
-
 #: src/components/agent-context-sheet.tsx
 msgid "Context"
 msgstr "上下文"
@@ -2398,6 +2394,7 @@ msgstr "正在加载设置"
 msgid "Loading terminal"
 msgstr "正在加载终端"
 
+#: src/components/agent-transcript-skeleton.tsx
 #: src/components/pane-chat-view.tsx
 msgid "Loading the transcript"
 msgstr "正在加载对话记录"
@@ -2622,6 +2619,10 @@ msgstr "下一步"
 #: src/components/notice-deck.tsx
 msgid "Next notification"
 msgstr "下一条通知"
+
+#: src/components/agent-title-pill.tsx
+msgid "Next session"
+msgstr "下一个会话"
 
 #: src/lib/agent-widget-layout.tsx
 msgid "No agents running"
@@ -3214,6 +3215,10 @@ msgstr "预览并应用"
 #: src/components/theme-link-import.tsx
 msgid "Preview first. Your current theme stays unchanged"
 msgstr "先预览，当前主题保持不变"
+
+#: src/components/agent-title-pill.tsx
+msgid "Previous session"
+msgstr "上一个会话"
 
 #: src/components/agent-mode-sheet.tsx
 msgid "Primary"
@@ -4268,6 +4273,10 @@ msgstr "把历史总结成摘要，并基于摘要继续工作"
 #: src/i18n/labels.ts
 msgid "Suspend"
 msgstr "挂起"
+
+#: src/components/agent-title-pill.tsx
+msgid "Swipe left or right to switch session"
+msgstr "左右滑动以切换会话"
 
 #: src/components/workspace-title-switcher.tsx
 msgid "Swipe left or right to switch workspace"

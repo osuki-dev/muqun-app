@@ -1096,10 +1096,6 @@ msgstr "กำลังเชื่อมต่อผ่าน SSH…"
 msgid "Connecting to {address}"
 msgstr "กำลังเชื่อมต่อกับ {address}"
 
-#: src/components/agent-workbench.tsx
-msgid "Connecting to agent engine…"
-msgstr "กำลังเชื่อมต่อกับเอนจินเอเจนต์…"
-
 #: src/components/agent-context-sheet.tsx
 msgid "Context"
 msgstr "บริบท"
@@ -2398,6 +2394,7 @@ msgstr "กำลังโหลดการตั้งค่า"
 msgid "Loading terminal"
 msgstr "กำลังโหลดเทอร์มินัล"
 
+#: src/components/agent-transcript-skeleton.tsx
 #: src/components/pane-chat-view.tsx
 msgid "Loading the transcript"
 msgstr "กำลังโหลดบันทึกการสนทนา"
@@ -2622,6 +2619,10 @@ msgstr "ถัดไป"
 #: src/components/notice-deck.tsx
 msgid "Next notification"
 msgstr "การแจ้งเตือนถัดไป"
+
+#: src/components/agent-title-pill.tsx
+msgid "Next session"
+msgstr "เซสชันถัดไป"
 
 #: src/lib/agent-widget-layout.tsx
 msgid "No agents running"
@@ -3214,6 +3215,10 @@ msgstr "ดูตัวอย่างและใช้"
 #: src/components/theme-link-import.tsx
 msgid "Preview first. Your current theme stays unchanged"
 msgstr "ดูตัวอย่างก่อน ธีมปัจจุบันของคุณยังไม่เปลี่ยน"
+
+#: src/components/agent-title-pill.tsx
+msgid "Previous session"
+msgstr "เซสชันก่อนหน้า"
 
 #: src/components/agent-mode-sheet.tsx
 msgid "Primary"
@@ -4268,6 +4273,10 @@ msgstr "สรุปประวัติแล้วทำงานต่อจ
 #: src/i18n/labels.ts
 msgid "Suspend"
 msgstr "พักกระบวนการ"
+
+#: src/components/agent-title-pill.tsx
+msgid "Swipe left or right to switch session"
+msgstr "ปัดซ้ายหรือขวาเพื่อสลับเซสชัน"
 
 #: src/components/workspace-title-switcher.tsx
 msgid "Swipe left or right to switch workspace"

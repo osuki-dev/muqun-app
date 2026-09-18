@@ -1096,10 +1096,6 @@ msgstr "Conectando por SSH…"
 msgid "Connecting to {address}"
 msgstr "Conectando a {address}"
 
-#: src/components/agent-workbench.tsx
-msgid "Connecting to agent engine…"
-msgstr "Conectando al motor del agente…"
-
 #: src/components/agent-context-sheet.tsx
 msgid "Context"
 msgstr "Contexto"
@@ -2398,6 +2394,7 @@ msgstr "Cargando ajustes"
 msgid "Loading terminal"
 msgstr "Cargando terminal"
 
+#: src/components/agent-transcript-skeleton.tsx
 #: src/components/pane-chat-view.tsx
 msgid "Loading the transcript"
 msgstr "Cargando la transcripción"
@@ -2622,6 +2619,10 @@ msgstr "Siguiente"
 #: src/components/notice-deck.tsx
 msgid "Next notification"
 msgstr "Siguiente notificación"
+
+#: src/components/agent-title-pill.tsx
+msgid "Next session"
+msgstr "Sesión siguiente"
 
 #: src/lib/agent-widget-layout.tsx
 msgid "No agents running"
@@ -3214,6 +3215,10 @@ msgstr "Ver y aplicar"
 #: src/components/theme-link-import.tsx
 msgid "Preview first. Your current theme stays unchanged"
 msgstr "Revisa primero la vista previa. Tu tema actual no cambiará"
+
+#: src/components/agent-title-pill.tsx
+msgid "Previous session"
+msgstr "Sesión anterior"
 
 #: src/components/agent-mode-sheet.tsx
 msgid "Primary"
@@ -4268,6 +4273,10 @@ msgstr "Resumir el historial y seguir trabajando desde el resumen"
 #: src/i18n/labels.ts
 msgid "Suspend"
 msgstr "Suspender"
+
+#: src/components/agent-title-pill.tsx
+msgid "Swipe left or right to switch session"
+msgstr "Desliza a la izquierda o a la derecha para cambiar de sesión"
 
 #: src/components/workspace-title-switcher.tsx
 msgid "Swipe left or right to switch workspace"

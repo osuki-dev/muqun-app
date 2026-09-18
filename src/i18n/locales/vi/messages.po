@@ -1096,10 +1096,6 @@ msgstr "Đang kết nối qua SSH…"
 msgid "Connecting to {address}"
 msgstr "Đang kết nối đến {address}"
 
-#: src/components/agent-workbench.tsx
-msgid "Connecting to agent engine…"
-msgstr "Đang kết nối với công cụ tác vụ…"
-
 #: src/components/agent-context-sheet.tsx
 msgid "Context"
 msgstr "Ngữ cảnh"
@@ -2398,6 +2394,7 @@ msgstr "Đang tải cài đặt"
 msgid "Loading terminal"
 msgstr "Đang tải terminal"
 
+#: src/components/agent-transcript-skeleton.tsx
 #: src/components/pane-chat-view.tsx
 msgid "Loading the transcript"
 msgstr "Đang tải bản ghi"
@@ -2622,6 +2619,10 @@ msgstr "Tiếp theo"
 #: src/components/notice-deck.tsx
 msgid "Next notification"
 msgstr "Thông báo tiếp theo"
+
+#: src/components/agent-title-pill.tsx
+msgid "Next session"
+msgstr "Phiên tiếp theo"
 
 #: src/lib/agent-widget-layout.tsx
 msgid "No agents running"
@@ -3214,6 +3215,10 @@ msgstr "Xem trước và áp dụng"
 #: src/components/theme-link-import.tsx
 msgid "Preview first. Your current theme stays unchanged"
 msgstr "Xem trước đã. Giao diện hiện tại của bạn sẽ không thay đổi"
+
+#: src/components/agent-title-pill.tsx
+msgid "Previous session"
+msgstr "Phiên trước"
 
 #: src/components/agent-mode-sheet.tsx
 msgid "Primary"
@@ -4268,6 +4273,10 @@ msgstr "Tóm tắt lịch sử và làm việc tiếp từ bản tóm tắt"
 #: src/i18n/labels.ts
 msgid "Suspend"
 msgstr "Tạm dừng"
+
+#: src/components/agent-title-pill.tsx
+msgid "Swipe left or right to switch session"
+msgstr "Vuốt trái hoặc phải để chuyển phiên"
 
 #: src/components/workspace-title-switcher.tsx
 msgid "Swipe left or right to switch workspace"
