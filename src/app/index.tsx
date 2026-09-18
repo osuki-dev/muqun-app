@@ -1577,7 +1577,17 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 520,
   },
-  emptyDetail: { textAlign: 'center', lineHeight: 20 },
+  /**
+   * No `lineHeight`: 20 is the kit's own 14x1.5 rounded down.
+   *
+   * This is the centred paragraph on the first screen a new reader ever sees,
+   * and it already wraps to three or four lines -- more under a wide face,
+   * and every extra line is another chance for a clipped ascender against the
+   * line above. The ratio belongs to the type scale, which computes 21 for a
+   * `bodySmall`, and the scale is a better judge of it than a number measured
+   * once against the system font.
+   */
+  emptyDetail: { textAlign: 'center' },
   demoAction: {
     minHeight: 40,
     flexDirection: 'row',

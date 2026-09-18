@@ -919,7 +919,14 @@ const styles = StyleSheet.create({
   // The search field's face, for the same reason. No `lineHeight`: Android
   // clips a single-line input to it and the descenders go with it.
   fieldInput: { flex: 1, fontSize: AGENT_TYPE.prose.size, padding: 0, includeFontPadding: false },
-  fieldNote: { lineHeight: 16 },
+  /**
+   * No `lineHeight` here either, for the reason the field above it already
+   * gives: 16 is the scale's own 12x1.4 rounded down, and an explicit line
+   * box clips a taller face. This is the line that tells the reader what went
+   * wrong with what they just typed, and it wraps -- so it is the last place
+   * that should be losing its accents.
+   */
+  fieldNote: {},
   action: {
     height: 48,
     flexDirection: 'row',
