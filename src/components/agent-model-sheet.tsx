@@ -1,6 +1,7 @@
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
-import { Spinner, Text, useThemeTokens } from '@osuki-dev/ui';
+import { Spinner, useThemeTokens } from '@osuki-dev/ui';
+import { Text } from '@/components/text';
 import { useLingui } from '@lingui/react/macro';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated from 'react-native-reanimated';

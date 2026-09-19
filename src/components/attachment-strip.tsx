@@ -1,5 +1,6 @@
 import { useLingui } from '@lingui/react/macro';
-import { Icon, Spinner, Text, useThemeTokens } from '@osuki-dev/ui';
+import { Icon, Spinner, useThemeTokens } from '@osuki-dev/ui';
+import { Text } from '@/components/text';
 import { Image } from 'expo-image';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';

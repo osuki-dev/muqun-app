@@ -1,6 +1,6 @@
 import { memo, useEffect, useState, type ComponentProps } from 'react';
 import { StyleSheet, View, type LayoutChangeEvent } from 'react-native';
-import { Text } from '@osuki-dev/ui';
+import { Text } from '@/components/text';
 import Animated, {
   Easing,
   cancelAnimation,

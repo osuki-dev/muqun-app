@@ -26,7 +26,8 @@
  * Download buttons on one ground.
  */
 import { useLingui } from '@lingui/react/macro';
-import { Text, useThemeTokens } from '@osuki-dev/ui';
+import { useThemeTokens } from '@osuki-dev/ui';
+import { Text } from '@/components/text';
 import { useEffect, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';

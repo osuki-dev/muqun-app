@@ -1,5 +1,6 @@
 import { useLingui } from '@lingui/react/macro';
-import { Text, useThemeTokens } from '@osuki-dev/ui';
+import { useThemeTokens } from '@osuki-dev/ui';
+import { Text } from '@/components/text';
 
 import { Button } from '@/components/themed-button';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';

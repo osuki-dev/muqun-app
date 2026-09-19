@@ -1,4 +1,5 @@
-import { Tabs as BaseTabs, Text, useThemeTokens, type TabsProps } from '@osuki-dev/ui';
+import { Tabs as BaseTabs, useThemeTokens, type TabsProps } from '@osuki-dev/ui';
+import { Text } from '@/components/text';
 import { View } from 'react-native';
 
 import { useSurfaceBackground, useSurfaceBackgroundOpacity } from '@/hooks/use-surface-background';

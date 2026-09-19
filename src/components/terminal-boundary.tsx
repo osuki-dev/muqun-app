@@ -1,6 +1,6 @@
 import { t } from '@lingui/core/macro';
 import { Trans } from '@lingui/react/macro';
-import { Text } from '@osuki-dev/ui';
+import { Text } from '@/components/text';
 import { Component, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 

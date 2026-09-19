@@ -29,6 +29,7 @@ import { LaunchOverlay } from '@/components/launch-overlay';
 import { ReskinSurface, ReskinTransitionProvider } from '@/components/reskin-transition';
 import { AppErrorBoundary } from '@/components/app-error-boundary';
 import { AppLockGate } from '@/components/app-lock-gate';
+import { HugSlackProvider } from '@/components/text';
 import { SshConnectPromptGate } from '@/components/ssh-connect-prompt-gate';
 import { UpdateStatusBanner } from '@/components/update-status-banner';
 import { InAppNotificationHost } from '@/components/in-app-notification-host';
@@ -181,19 +182,29 @@ export default function RootLayout() {
           }}
           theme={theme}>
           {/*
-            Wraps everything except the theme provider the fallback's <Text>
-            needs, so a render throw in the toast host, lock gate, nav theme, or
-            update banner is caught too -- not just faults inside the router.
+            Outside the error boundary because the boundary's own fallback is
+            reader-facing copy like any other, and it is drawn in the reader's
+            face: the slack an oblique needs on its trailing edge is not a
+            thing to lose on the one screen that appears when something has
+            already gone wrong. It publishes a context and nothing else, so
+            there is no state here that could be the fault.
           */}
-          <AppErrorBoundary>
+          <HugSlackProvider>
             {/*
+              Wraps everything except the theme provider the fallback's <Text>
+              needs, so a render throw in the toast host, lock gate, nav theme,
+              or update banner is caught too -- not just faults inside the
+              router.
+            */}
+            <AppErrorBoundary>
+              {/*
               Inside the error boundary so a fault in locale resolution shows
               the fallback screen rather than a blank app, and outside
               everything else so the boundary's own copy is the only string in
               the tree that cannot be translated.
             */}
-            <AppI18nProvider>
-              {/*
+              <AppI18nProvider>
+                {/*
                 `null` until the fonts are registered, which keeps the native
                 launch screen up: `SplashScreen.preventAutoHide()` at module
                 scope holds it until `LaunchOverlay` paints, and the overlay is
@@ -201,9 +212,10 @@ export default function RootLayout() {
                 already wearing the reader's typography -- there is no frame in
                 the system font for anything to cache.
               */}
-              {fontsReady ? <RootContent /> : null}
-            </AppI18nProvider>
-          </AppErrorBoundary>
+                {fontsReady ? <RootContent /> : null}
+              </AppI18nProvider>
+            </AppErrorBoundary>
+          </HugSlackProvider>
         </OsukiThemeProvider>
       </KeyboardProvider>
     </GestureHandlerRootView>

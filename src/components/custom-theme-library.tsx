@@ -1,5 +1,6 @@
 import { useLingui } from '@lingui/react/macro';
-import { Tag, Text, useThemeTokens } from '@osuki-dev/ui';
+import { Tag, useThemeTokens } from '@osuki-dev/ui';
+import { Text } from '@/components/text';
 import { Button } from '@/components/themed-button';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';

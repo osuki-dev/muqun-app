@@ -7,7 +7,8 @@ import {
   type ReactNode,
 } from 'react';
 import { View, StyleSheet } from 'react-native';
-import { Text, useThemeTokens } from '@osuki-dev/ui';
+import { useThemeTokens } from '@osuki-dev/ui';
+import { Text } from '@/components/text';
 import { useLingui } from '@lingui/react/macro';
 import {
   AlertCircle,

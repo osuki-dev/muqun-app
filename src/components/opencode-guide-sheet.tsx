@@ -1,6 +1,7 @@
 import { memo, useState, useRef, useEffect, useCallback } from 'react';
 import { View, StyleSheet, ActivityIndicator } from 'react-native';
-import { Text, useThemeTokens } from '@osuki-dev/ui';
+import { useThemeTokens } from '@osuki-dev/ui';
+import { Text } from '@/components/text';
 import { useLingui } from '@lingui/react/macro';
 import { Check, Copy, RefreshCw, Terminal } from 'lucide-react-native';
 import * as Clipboard from 'expo-clipboard';

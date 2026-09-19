@@ -10,7 +10,7 @@ import { type LegendListRef, type LegendListRenderItemProps } from '@legendapp/l
 import { AnimatedLegendList } from '@legendapp/list/reanimated';
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { Plural, Trans, useLingui } from '@lingui/react/macro';
-import { Text } from '@osuki-dev/ui';
+import { Text } from '@/components/text';
 import { ChevronDown, ChevronUp } from 'lucide-react-native';
 
 import { PressableScale } from '@/components/pressable-scale';

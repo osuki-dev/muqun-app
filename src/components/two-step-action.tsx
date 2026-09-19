@@ -1,6 +1,7 @@
 import { memo, useCallback, useEffect, useRef, useState, type ComponentType } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { Text, useThemeTokens } from '@osuki-dev/ui';
+import { useThemeTokens } from '@osuki-dev/ui';
+import { Text } from '@/components/text';
 import Animated, {
   Easing,
   ReduceMotion,

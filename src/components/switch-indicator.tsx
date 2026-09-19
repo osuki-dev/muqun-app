@@ -1,5 +1,6 @@
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
-import { Text, useThemeTokens } from '@osuki-dev/ui';
+import { useThemeTokens } from '@osuki-dev/ui';
+import { Text } from '@/components/text';
 import { StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 

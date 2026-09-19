@@ -1,4 +1,5 @@
-import { resolveFontStyle, Text, useThemeTokens, type ResolvedFontStyle } from '@osuki-dev/ui';
+import { resolveFontStyle, useThemeTokens, type ResolvedFontStyle } from '@osuki-dev/ui';
+import { Text } from '@/components/text';
 import { Search, X } from 'lucide-react-native';
 import { useEffect, useRef, type ReactNode } from 'react';
 import {

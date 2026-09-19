@@ -22,7 +22,8 @@ import { useSurfaceBackground } from '@/hooks/use-surface-background';
  * path and not on `/`, and a check that blocked would be wrong more often than
  * it was right.
  */
-import { KeyboardToolbar, Text, useThemeTokens } from '@osuki-dev/ui';
+import { KeyboardToolbar, useThemeTokens } from '@osuki-dev/ui';
+import { Text } from '@/components/text';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { useEffect, useRef, useState } from 'react';
 import { Linking, StyleSheet, View } from 'react-native';

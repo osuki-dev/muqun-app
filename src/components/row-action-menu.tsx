@@ -1,6 +1,7 @@
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { useLingui } from '@lingui/react/macro';
-import { Text, useThemeTokens } from '@osuki-dev/ui';
+import { useThemeTokens } from '@osuki-dev/ui';
+import { Text } from '@/components/text';
 import { Pencil, Trash2, X } from 'lucide-react-native';
 import { type ReactNode, useEffect, useState } from 'react';
 import { StyleSheet } from 'react-native';

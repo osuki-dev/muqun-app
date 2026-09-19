@@ -1,7 +1,8 @@
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { type LegendListRef } from '@legendapp/list/react-native';
 import { Plural, Trans, useLingui } from '@lingui/react/macro';
-import { Text, useThemeTokens } from '@osuki-dev/ui';
+import { useThemeTokens } from '@osuki-dev/ui';
+import { Text } from '@/components/text';
 import { RefreshCw } from 'lucide-react-native';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, StyleSheet } from 'react-native';

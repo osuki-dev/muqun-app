@@ -19,7 +19,8 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
-import { Text, useThemeTokens, useToast } from '@osuki-dev/ui';
+import { useThemeTokens, useToast } from '@osuki-dev/ui';
+import { Text } from '@/components/text';
 import { Trans, useLingui } from '@lingui/react/macro';
 import {
   Bot,

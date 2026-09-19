@@ -1,9 +1,9 @@
 import {
   SegmentedControl as BaseSegmentedControl,
-  Text,
   useThemeTokens,
   type SegmentedControlProps,
 } from '@osuki-dev/ui';
+import { Text } from '@/components/text';
 import { View } from 'react-native';
 
 import { PressableScale } from '@/components/pressable-scale';

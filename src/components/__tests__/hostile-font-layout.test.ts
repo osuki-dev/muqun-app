@@ -118,19 +118,22 @@ test('row text takes its line height from the type scale, not from a measured nu
   expect(detail).toContain('includeFontPadding: false');
 });
 
-test('a hugging section label keeps trailing room for a leaning glyph', () => {
+test('a hugging section label does not fake trailing room with padding', () => {
   const source = chrome();
   // Shrink-wrapped text is exactly as wide as the sum of its advances, and an
   // italic face draws its last letter past that sum: APPEARANCE read APPEARANC.
-  // Scaled off the label's own size so it grows with the type rather than
-  // being a second measured number of the kind the test above forbids.
-  expect(/const HUG_TRAILING_SLACK = 0\.\d+;/u.test(source)).toBe(true);
+  // This label used to answer that with an extra `paddingRight`, which cannot
+  // work: `TextView` clips at `width - compoundPaddingRight` and Yoga has
+  // already put that padding into the width, so the clip sits on the advance
+  // edge whatever the padding is. Measured on the device at 0, 8 and 24 points
+  // of right padding, the ink stopped at the same pixel every time; all the
+  // padding bought was a lopsided plate.
+  expect(source).not.toContain('HUG_TRAILING_SLACK');
   const body = component(source, 'SectionLabel');
-  expect(body).toContain('theme.typeStyles.label.fontSize * HUG_TRAILING_SLACK');
-  expect(body).toContain('paddingRight: platePadding + slack');
-  // Trailing only. The glyphs still begin on the same x as the rows the label
-  // names, which is the alignment the whole file exists to hold.
-  expect(body).not.toContain('paddingLeft: platePadding + slack');
+  expect(body).not.toContain('paddingRight:');
+  // The real fix, one layer down: `components/text.tsx` makes the *line*
+  // longer than the glyphs, which is the only thing that moves the clip.
+  expect(source).toContain("from '@/components/text'");
 });
 
 /* ------------------------------------------------------------------ *

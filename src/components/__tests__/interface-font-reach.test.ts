@@ -87,13 +87,41 @@ test('no reader-facing copy is drawn with React Native’s Text', () => {
   expect(offenders).toEqual([]);
 });
 
+/**
+ * The one file allowed to reach the design system's `Text` directly, because
+ * it is the wrapper every other file goes through.
+ */
+const APP_TEXT = 'src/components/text.tsx';
+
+test('no copy is drawn with the kit’s Text instead of the app’s', () => {
+  /*
+   * `components/text.tsx` is the kit's `Text` plus the trailing slack an
+   * oblique face needs on Android, where a glyph that leans past its own
+   * advance is shaved by `TextView`'s clip. Importing the kit's `Text`
+   * directly is not a smaller version of that -- it is the bug, on whichever
+   * label the import was for. There is one behaviour and one door to it.
+   */
+  const offenders = FILES.filter((file) => {
+    if (file === APP_TEXT) return false;
+    const source = code(readFileSync(file, 'utf8'));
+    const kit = /import\s*\{([^}]*)\}\s*from\s*'@osuki-dev\/ui'/gu;
+    for (const match of source.matchAll(kit)) {
+      const names = (match[1] ?? '').split(',').map((name) => name.trim());
+      if (names.includes('Text')) return true;
+    }
+    return false;
+  });
+  expect(offenders).toEqual([]);
+});
+
 test('the settings segmented control draws its labels with the kit', () => {
   const source = readFileSync('src/components/settings-segmented.tsx', 'utf8');
   // The control where the reader picks a font must not be the control that
   // ignores it. It used to copy the kit's label size and tracking by hand out
   // of `theme.typeStyles.label` -- which carries no family, because a type
   // style has none to carry -- and so stayed on the system face for good.
-  expect(source).toContain("import { Tabs, Text, useThemeTokens } from '@osuki-dev/ui';");
+  expect(source).toContain("from '@/components/text'");
+  expect(source).toContain("import { Tabs, useThemeTokens } from '@osuki-dev/ui';");
   expect(code(source)).not.toContain('NativeText');
   expect(source).toContain('variant="label"');
   // `transform` is how the kit says no to the label role's uppercasing; a

@@ -1,6 +1,7 @@
 import { Fragment, memo, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
-import { Text, useThemeTokens, useToast } from '@osuki-dev/ui';
+import { useThemeTokens, useToast } from '@osuki-dev/ui';
+import { Text } from '@/components/text';
 import { Trans, useLingui } from '@lingui/react/macro';
 import {
   Bot,

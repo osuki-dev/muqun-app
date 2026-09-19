@@ -22,7 +22,8 @@
  * picks which half of it is showing -- then the mode, then the language.
  */
 import { useLingui } from '@lingui/react/macro';
-import { Text, useThemeMode, useThemeTokens } from '@osuki-dev/ui';
+import { useThemeMode, useThemeTokens } from '@osuki-dev/ui';
+import { Text } from '@/components/text';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { ScrollView, StyleSheet, View } from 'react-native';

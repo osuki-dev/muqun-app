@@ -33,7 +33,8 @@
  */
 import { plural } from '@lingui/core/macro';
 import { Trans, useLingui } from '@lingui/react/macro';
-import { Spinner, Text, useThemeTokens } from '@osuki-dev/ui';
+import { Spinner, useThemeTokens } from '@osuki-dev/ui';
+import { Text } from '@/components/text';
 import { Image } from 'expo-image';
 import { Directory, Paths } from 'expo-file-system';
 import { useFocusEffect } from 'expo-router';

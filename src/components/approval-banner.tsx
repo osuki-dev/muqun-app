@@ -7,10 +7,10 @@ import {
   Spinner,
   Stack,
   Tag,
-  Text,
   useThemeTokens,
   type IconName,
 } from '@osuki-dev/ui';
+import { Text } from '@/components/text';
 import { useEffect } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';

@@ -1,5 +1,5 @@
 import { Trans, useLingui } from '@lingui/react/macro';
-import { Text } from '@osuki-dev/ui';
+import { Text } from '@/components/text';
 import { Image } from 'expo-image';
 import { X } from 'lucide-react-native';
 import { useEffect, useState } from 'react';

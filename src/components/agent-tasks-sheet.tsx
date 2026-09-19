@@ -1,6 +1,7 @@
 import { memo } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
-import { Text, useThemeTokens } from '@osuki-dev/ui';
+import { useThemeTokens } from '@osuki-dev/ui';
+import { Text } from '@/components/text';
 import { useLingui } from '@lingui/react/macro';
 import { CheckCircle2, Circle, Clock } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';

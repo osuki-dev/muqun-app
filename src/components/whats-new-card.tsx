@@ -4,7 +4,8 @@ import { useSurfaceBackground } from '@/hooks/use-surface-background';
 // turns a `msg` descriptor into a sentence in the active locale.
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { useLingui } from '@lingui/react/macro';
-import { Text, useThemeTokens } from '@osuki-dev/ui';
+import { useThemeTokens } from '@osuki-dev/ui';
+import { Text } from '@/components/text';
 import * as SecureStore from 'expo-secure-store';
 import * as Updates from 'expo-updates';
 import { Check, Sparkles, X } from 'lucide-react-native';
