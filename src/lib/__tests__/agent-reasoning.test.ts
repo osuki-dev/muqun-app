@@ -1,7 +1,11 @@
 import { describe, expect, test } from 'bun:test';
 
 import type { AgentPart, TimelineItem } from '../agent-protocol';
-import { buildTimelineEntries, formatThoughtDuration } from '../agent-reasoning';
+import {
+  buildTimelineEntries,
+  formatThoughtDuration,
+  liveReasoningMessageId,
+} from '../agent-reasoning';
 
 function item(id: string, part: AgentPart): TimelineItem {
   return {
@@ -83,7 +87,7 @@ describe('buildTimelineEntries', () => {
   });
 
   test('an empty run at the end is the one still arriving, and is kept', () => {
-    const entries = buildTimelineEntries([item('t1', tool), item('r1', thinking(''))]);
+    const entries = buildTimelineEntries([item('t1', tool), item('r1', thinking(''))], true);
     expect(entries[1]).toMatchObject({ kind: 'reasoning', run: { pending: true, text: '' } });
   });
 
@@ -126,11 +130,10 @@ describe('buildTimelineEntries', () => {
   });
 
   test('a run of only-empty parts at the end is pending, not three pills', () => {
-    const entries = buildTimelineEntries([
-      item('r1', thinking('')),
-      item('r2', thinking('')),
-      item('r3', thinking('')),
-    ]);
+    const entries = buildTimelineEntries(
+      [item('r1', thinking('')), item('r2', thinking('')), item('r3', thinking(''))],
+      true
+    );
     expect(entries).toHaveLength(1);
     expect(entries[0]).toMatchObject({ key: 'r1', run: { pending: true } });
   });
@@ -150,5 +153,28 @@ describe('formatThoughtDuration', () => {
 
   test('zero is zero rather than blank', () => {
     expect(formatThoughtDuration(0)).toBe('0.0s');
+  });
+});
+
+describe('reasoning liveness', () => {
+  test('interrupted reasoning without a duration is settled', () => {
+    expect(buildTimelineEntries([item('r1', thinking('partial'))])[0]).toMatchObject({
+      run: { pending: false, text: 'partial' },
+    });
+    expect(buildTimelineEntries([item('r1', thinking(''))])).toEqual([]);
+  });
+
+  test('only the busy session tail can own the live indicator', () => {
+    const items = [item('r1', thinking('partial'))];
+    for (const status of ['idle', 'failed', 'interrupted', 'retry', 'unknown'] as const) {
+      expect(liveReasoningMessageId(items, status)).toBeUndefined();
+    }
+    expect(liveReasoningMessageId(items, 'busy')).toBe('msg_1');
+    const next = { ...item('r2', thinking('new')), message_id: 'msg_2' };
+    expect(liveReasoningMessageId([...items, next], 'busy')).toBe('msg_2');
+    expect(
+      liveReasoningMessageId([...items, item('answer', text('done'))], 'busy')
+    ).toBeUndefined();
+    expect(liveReasoningMessageId([], 'busy')).toBeUndefined();
   });
 });

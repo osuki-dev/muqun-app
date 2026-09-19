@@ -20,8 +20,10 @@
  *     user        81.0dp  (10 rows)
  *     system      68.5dp   (6 rows)
  *
- * So the average row was 165dp and the list was told 70 -- it was allocating
- * containers for well over twice the rows a screen can hold, on every mount.
+ * The weighted average is 165dp. Using that as the allocation hint proved too
+ * optimistic in live sessions: short rows exhausted the pool during scrolling.
+ * Reserve for the measured user-row height instead. Spare containers do not
+ * imply that the full contents of extra Markdown rows are rendered.
  *
  * The numbers are kept here rather than inline so the mix arithmetic is stated
  * once and tested once, and so the next person to re-measure has somewhere
@@ -77,11 +79,11 @@ export function blendedRowSize(counts: Partial<Record<TimelineRole, number>>): n
 }
 
 /**
- * The hint the transcript list is given.
+ * The container allocation hint, not an estimate of every message's height.
  *
  * A constant rather than a per-render count of the window: the value is read
  * once, when the list mounts and has nothing measured, and recomputing it on
  * every stream tick would be work spent on a number the list stops consulting
  * as soon as it has seen a row.
  */
-export const TRANSCRIPT_ESTIMATED_ITEM_SIZE = blendedRowSize(MEASURED_MIX);
+export const TRANSCRIPT_ESTIMATED_ITEM_SIZE = TRANSCRIPT_ROW_SIZE.user;

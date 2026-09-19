@@ -920,11 +920,10 @@ function ServerList({ width, layoutMode }: { width: number; layoutMode: 'compact
           ) : null}
 
           <View style={[styles.serverList, { gap: metrics.cardGap }]}>
-            {records.map((server, index) => (
+            {records.map((server) => (
               <ServerCard
                 key={server.serverId}
                 server={server}
-                index={index}
                 metrics={metrics}
                 selected={server.serverId === record?.serverId}
                 showAddress={addressNeeded.has(server.serverId)}
@@ -1046,7 +1045,6 @@ function HeaderButton({
  */
 function ServerCard({
   server,
-  index,
   metrics,
   selected,
   showAddress,
@@ -1056,7 +1054,6 @@ function ServerCard({
   onOpenAgent,
 }: {
   server: GatewayRecord;
-  index: number;
   /** Card geometry and row density for the current window and server count. */
   metrics: HomeServerListLayout;
   selected: boolean;
@@ -1088,13 +1085,14 @@ function ServerCard({
   // oxlint-disable-next-line react/purity -- deliberate: see above.
   const nowMs = Date.now();
   const statusColor = reachability === 'live' ? theme.colors.success : theme.colors.textSubtle;
-  // The card arrives, then its panes fill in under it. One sequence per machine,
-  // offset so two machines do not narrate at once.
-  const cardDelay = index * STAGGER.card;
 
   return (
-    <Animated.View entering={riseIn(cardDelay)} layout={listLayout()}>
+    // The header and asynchronously refreshed pane rows share one native
+    // layout. Do not animate their frames independently or flatten the hosts
+    // that establish the rows' offset below the identity block.
+    <View collapsable={false}>
       <ThemedSurface
+        collapsable={false}
         slot="cards.decoration"
         baseColor={theme.colors.surface}
         style={[
@@ -1105,7 +1103,7 @@ function ServerCard({
             overflow: 'hidden',
           },
         ]}>
-        <View style={styles.identityRow}>
+        <View collapsable={false} style={styles.identityRow}>
           {/* No long press, and no menu: renaming, editing the address and
               unpairing all moved to Settings > SERVERS once that screen could
               do everything a card's old `...` menu could -- see the note on
@@ -1215,14 +1213,13 @@ function ServerCard({
               without opening it first, which only makes sense from a list of
               servers. `NewTaskAction` renders nothing at all unless this
               gateway has told the app it can spawn one, so most cards spend
-              nothing on this slot. `listLayout` still carries the width
-              change between "nothing" and "a button" once capabilities
-              finish loading, rather than the slot popping into existence. */}
-          <Animated.View style={styles.serverTrailing} layout={listLayout()}>
+              nothing on this slot. When capabilities finish loading, the
+              action and identity are measured together by native flex layout. */}
+          <View style={styles.serverTrailing}>
             {reachability === 'live' || Boolean(server.sshTunnel) ? (
               <NewTaskAction server={server} serverId={server.serverId} label={server.label} />
             ) : null}
-          </Animated.View>
+          </View>
         </View>
 
         {/* `listGap` is the whole grouping device now, so it belongs to the
@@ -1234,12 +1231,11 @@ function ServerCard({
           snapshot={agents}
           reachability={reachability}
           rowMinHeight={metrics.rowMinHeight}
-          entranceDelay={cardDelay + STAGGER.row}
           nowMs={nowMs}
           onOpenAgent={onOpenAgent}
         />
       </ThemedSurface>
-    </Animated.View>
+    </View>
   );
 }
 

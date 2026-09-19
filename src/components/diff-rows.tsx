@@ -6,8 +6,11 @@ import Animated, {
   useSharedValue,
   type SharedValue,
 } from 'react-native-reanimated';
-import { type LegendListRef, type LegendListRenderItemProps } from '@legendapp/list/react-native';
-import { AnimatedLegendList } from '@legendapp/list/reanimated';
+import {
+  LegendList,
+  type LegendListRef,
+  type LegendListRenderItemProps,
+} from '@legendapp/list/react-native';
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { Plural, Trans, useLingui } from '@lingui/react/macro';
 import { Text } from '@/components/text';
@@ -104,6 +107,12 @@ export function typeOfDiffRow(row: GitDiffRow): GitDiffRowType {
 
 export function sizeOfDiffRow(row: GitDiffRow): number {
   return ROW_HEIGHT[row.type];
+}
+
+function fixedBodySizeOfDiffRow(row: GitDiffRow): number | undefined {
+  // Measure file headers so a collapsed prefix does not force LegendList's
+  // initial pool to use 52px rows. The 18px hint reserves room for an expansion.
+  return row.type === 'file' ? undefined : sizeOfDiffRow(row);
 }
 
 /**
@@ -551,6 +560,9 @@ export function DiffRowList({
   });
 
   const stickyIndices = useMemo(() => {
+    // A collapsed file list has no patch to label. Treating every entry as a
+    // sticky header drives header handoffs continuously during a plain scroll.
+    if (!rows.some((row) => row.type !== 'file')) return [];
     const indices: number[] = [];
     for (let index = 0; index < rows.length; index += 1) {
       if (rows[index].type === 'file') indices.push(index);
@@ -598,14 +610,14 @@ export function DiffRowList({
         style={[styles.scroller, { backgroundColor: surfaceFill }]}
         contentContainerStyle={styles.scrollerContent}>
         {rows.length > 0 ? (
-          <AnimatedLegendList
+          <LegendList
             ref={listRef}
             data={rows as GitDiffRow[]}
             keyExtractor={keyOfDiffRow}
             renderItem={renderRow}
-            // The whole point of a monospaced one-line row: an exact height per
-            // kind, so the list never re-measures and never jumps.
-            getFixedItemSize={sizeOfDiffRow}
+            // Code rows have exact geometry; file headers are measured so the
+            // initial container pool uses the short-row allocation hint.
+            getFixedItemSize={fixedBodySizeOfDiffRow}
             // So the pool never hands a file card's view to a code line.
             getItemType={typeOfDiffRow}
             estimatedItemSize={LINE_ROW_HEIGHT}
@@ -616,12 +628,9 @@ export function DiffRowList({
             // move because of it.
             showsVerticalScrollIndicator={false}
             maintainVisibleContentPosition={MAINTAIN_POSITION}
-            // The file being read is always named, however deep into its patch
-            // the reader has scrolled. Sticky headers need the list's Reanimated
-            // integration: the core list drives its scroll view with React
-            // Native's `Animated.event`, an object, and handing that to a
-            // Reanimated `ScrollView` through `renderScrollComponent` crashed the
-            // first fling with "Object is not a function".
+            // Use the core list's native Animated scroll view and sticky engine
+            // together. The Reanimated adapter passes web-only hook dependencies
+            // on native and logs on every recycled header render.
             stickyHeaderIndices={stickyIndices}
             style={{ width: contentWidth }}
             contentContainerStyle={styles.listContent}

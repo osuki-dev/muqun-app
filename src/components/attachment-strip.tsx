@@ -11,31 +11,6 @@ import { isImageAttachment, type PendingAttachment } from '@/lib/attachments';
 import { DURATION, fadeIn, fadeOut, listLayout, zoomIn, zoomOut } from '@/lib/motion';
 
 const TILE_SIZE = 62;
-/** A chip's own thumbnail: the tile's square, at a row's height. */
-const CHIP_THUMB_SIZE = 26;
-/**
- * The chip thumbnail's corner.
- *
- * It was `CHIP_THUMB_SIZE / 2` -- a circle, which crops a screenshot to its
- * middle and is the one shape in this app that means "a person". The transcript
- * draws the very same picture as a rounded rectangle a few seconds later, so
- * the reader watched their attachment change shape on its way to being sent.
- * Scaled from the transcript's 14 on its 160pt thumbnail.
- */
-const CHIP_THUMB_RADIUS = 7;
-
-/**
- * Two shapes for one strip.
- *
- * `tile` is the square grid the terminal composer and the task sheet use: a
- * picked photo is mostly a picture, and a picture is what identifies it.
- * `chip` is the row the agent composer uses, which is what the OpenCode TUI
- * prints -- a small mark, the file's name, and a way to take it off again --
- * because an agent prompt's attachments are usually source files, whose names
- * are the only thing that tells them apart.
- */
-export type AttachmentStripVariant = 'tile' | 'chip';
-
 /**
  * The files staged for the next message, above the input.
  *
@@ -50,14 +25,12 @@ export function AttachmentStrip({
   onRetry,
   onPreview,
   textColor,
-  variant = 'tile',
 }: {
   attachments: PendingAttachment[];
   onRemove: (id: string) => void;
   onRetry: (id: string) => void;
   onPreview: (id: string) => void;
   textColor: string;
-  variant?: AttachmentStripVariant;
 }) {
   const { t } = useLingui();
   const theme = useThemeTokens();
@@ -97,68 +70,6 @@ export function AttachmentStrip({
           : isImage
             ? t`Preview ${attachment.name}, ${status}`
             : `${attachment.name}, ${status}`;
-
-        if (variant === 'chip') {
-          return (
-            <Animated.View
-              key={attachment.id}
-              entering={zoomIn('short')}
-              exiting={zoomOut('micro')}
-              layout={listLayout('short')}>
-              <PressableScale
-                accessibilityLabel={label}
-                disabled={!failed && !isImage}
-                pressedScale={0.96}
-                onPress={() => (failed ? onRetry(attachment.id) : onPreview(attachment.id))}
-                style={[
-                  styles.chip,
-                  { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
-                  failed
-                    ? { borderColor: theme.colors.danger, borderWidth: StyleSheet.hairlineWidth }
-                    : null,
-                ]}>
-                {isImage ? (
-                  <Image
-                    source={{ uri: attachment.localUri }}
-                    style={styles.chipThumb}
-                    contentFit="cover"
-                    transition={DURATION.micro}
-                  />
-                ) : (
-                  <Icon name="FileText" size={14} color={theme.colors.textMuted} />
-                )}
-                <Text variant="caption" color={textColor} numberOfLines={1} style={styles.chipName}>
-                  {attachment.name}
-                </Text>
-                {/* The same four states, said in a row's worth of space -- and
-                    said, not only drawn: a bare green tick on a chip answers
-                    no question the reader was asking. */}
-                {attachment.status === 'pending' ? (
-                  <Icon name="Clock" size={12} color={theme.colors.textMuted} />
-                ) : attachment.status === 'uploading' ? (
-                  <Spinner size="sm" color={theme.colors.textMuted} />
-                ) : failed ? (
-                  <Icon name="RotateCcw" size={12} color={theme.colors.danger} />
-                ) : (
-                  <>
-                    <Icon name="Check" size={12} color={theme.colors.success} strokeWidth={3} />
-                    <Text variant="caption" color={theme.colors.success} style={styles.chipStatus}>
-                      {t`Uploaded`}
-                    </Text>
-                  </>
-                )}
-                <PressableScale
-                  accessibilityLabel={t`Remove ${attachment.name}`}
-                  hitSlop={8}
-                  pressedScale={0.9}
-                  onPress={() => onRemove(attachment.id)}
-                  style={styles.chipRemove}>
-                  <Icon name="X" size={12} color={theme.colors.textMuted} strokeWidth={2.6} />
-                </PressableScale>
-              </PressableScale>
-            </Animated.View>
-          );
-        }
 
         return (
           // A picked file used to be simply there, and a removed one simply
@@ -283,34 +194,6 @@ const styles = StyleSheet.create({
   tileWrap: {
     width: TILE_SIZE,
     height: TILE_SIZE,
-  },
-  chip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    minHeight: 34,
-    maxWidth: 220,
-    paddingLeft: 6,
-    paddingRight: 4,
-    borderRadius: 999,
-    borderCurve: 'continuous',
-  },
-  chipThumb: {
-    width: CHIP_THUMB_SIZE,
-    height: CHIP_THUMB_SIZE,
-    borderRadius: CHIP_THUMB_RADIUS,
-    borderCurve: 'continuous',
-  },
-  chipStatus: { flexShrink: 0 },
-  chipName: {
-    flexShrink: 1,
-    fontSize: 12,
-  },
-  chipRemove: {
-    width: 22,
-    height: 22,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   tile: {
     width: TILE_SIZE,

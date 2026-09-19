@@ -1,7 +1,12 @@
+import { useStore } from 'zustand';
+import { createAgentTranscriptStore } from '@/stores/agent-transcript';
+import { AgentTranscriptList } from '@/components/agent-transcript-list';
+import { useLatestRef } from '@/hooks/use-render-refs';
 import {
   memo,
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -11,7 +16,6 @@ import {
   View,
   StyleSheet,
   ActivityIndicator,
-  InteractionManager,
   NativeScrollEvent,
   NativeSyntheticEvent,
   RefreshControl,
@@ -31,8 +35,8 @@ import {
   ShieldAlert,
   X,
 } from 'lucide-react-native';
-import { type LegendListRenderItemProps, type LegendListRef } from '@legendapp/list/react-native';
-import { KeyboardAwareLegendList } from '@legendapp/list/keyboard';
+import { type LegendListRef } from '@legendapp/list/react-native';
+import { useKeyboardScrollToEnd } from '@legendapp/list/keyboard';
 import { PressableScale } from '@/components/pressable-scale';
 import { GlassChrome } from '@/components/glass-chrome';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
@@ -85,7 +89,6 @@ import {
   exportAgentSession,
   sendAgentCommand,
   orderKeyAfter,
-  sortTimeline,
   formatModelName,
   isBusyStatus,
   inboxItemText,
@@ -120,7 +123,7 @@ import { resolveNewSessionDefaults } from '@/lib/agent-session-defaults';
 import { engineFailureAction } from '@/lib/agent-engine-text';
 import { dangerousPermissionReason, yoloDecision } from '@/lib/agent-permission-safety';
 import { removeTimelineItems, revertedMessageCount } from '@/lib/agent-revert';
-import { classifyTool, capText } from '@/lib/agent-tool-output';
+import { capText } from '@/lib/agent-tool-output';
 import type { AgentClientCommandId } from '@/lib/agent-commands';
 import {
   advanceSeq,
@@ -137,6 +140,8 @@ import {
   sessionsInWorkspace,
   type ChildrenByParent,
 } from '@/lib/agent-session-tree';
+import { upsertTimelineItems } from '@/lib/agent-timeline-upsert';
+import { createAgentStreamBatch } from '@/lib/agent-stream-batch';
 import { useAgentSessionState } from '@/stores/agent-session-state';
 import { useAgentPermissionStore } from '@/stores/agent-permissions';
 import { useInAppNotifications } from '@/stores/in-app-notifications';
@@ -151,20 +156,10 @@ import {
 import { ImagePreviewModal, type PreviewImage } from '@/components/image-preview-modal';
 import { AssetViewer } from '@/components/asset-viewer';
 import { assetFromToolFile } from '@/lib/session-assets';
-import {
-  AgentAssistantMessage,
-  AgentUserMessage,
-  type AgentToolActions,
-} from './agent-message-block';
-import { type TranscriptMark } from '@/lib/transcript-scroll';
+import { type AgentToolActions } from './agent-message-block';
 import { createTranscriptFollow, type TranscriptFollow } from '@/lib/transcript-follow';
 import { TRANSCRIPT_ESTIMATED_ITEM_SIZE } from '@/lib/transcript-sizing';
-import {
-  buildTimelineGroupsCached,
-  createTimelineGroupCache,
-  reconcileShellParts,
-  type TimelineRenderGroup,
-} from '@/lib/agent-timeline-groups';
+
 import { AgentPermissionCard } from './agent-permission-card';
 import { AgentFormCard } from './agent-form-card';
 import { AgentComposer } from './agent-composer';
@@ -257,6 +252,9 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   const surfaceBackground = useSurfaceBackground();
   const markdownStyle = usePaneChatMarkdownStyle();
   const listRef = useRef<LegendListRef>(null);
+  const { freeze: freezeTimelineKeyboard, scrollMessageToEnd } = useKeyboardScrollToEnd({
+    listRef,
+  });
   const injectDraftRef = useRef<((text: string) => void) | null>(null);
 
   /**
@@ -394,7 +392,10 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   const [catalogDefaults, setCatalogDefaults] = useState<CatalogDefaults>(NO_CATALOG_DEFAULTS);
   const [activeAsid, setActiveAsid] = useState<string | undefined>(initialAsid);
   const [sessionInfo, setSessionInfo] = useState<AgentSessionInfo | null>(null);
-  const [timeline, setTimeline] = useState<TimelineItem[]>([]);
+  const [transcriptStore] = useState(createAgentTranscriptStore);
+  const setTimeline = transcriptStore.getState().setTimeline;
+  const timelineEmpty = useStore(transcriptStore, (state) => state.timeline.length === 0);
+  const toolIds = useStore(transcriptStore, (state) => state.toolIds);
   // Index into `timeline` where the rendered window starts; history above it is
   // paged in on demand so entering a session lands on the latest messages.
   const [windowStart, setWindowStart] = useState(0);
@@ -922,9 +923,13 @@ export const AgentWorkbench = memo(function AgentWorkbench({
 
   const handleJumpToLatest = useCallback(() => {
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    listRef.current?.scrollToEnd({ animated: true });
-    follow.reset();
-  }, [follow]);
+    // A jump can span many unmeasured Markdown cells. Move the virtual window
+    // directly to its destination instead of animating through estimated
+    // offsets while native measurement and keyboard reactions move the target.
+    // Only onScroll may mark the output as read: requesting a jump is not
+    // evidence that it reached the end (it can be interrupted or have no list).
+    void scrollMessageToEnd({ animated: false, closeKeyboard: false });
+  }, [scrollMessageToEnd]);
 
   // YOLO answers every permission request itself: `allow` for anything the
   // safety list lets through, `deny` (with a report) for irreversibly
@@ -1087,6 +1092,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       if (mode === 'enter') setLoading(true);
       try {
         const snap = await getAgentSessionSnapshot(sessionId, asid);
+        if (activeAsidRef.current !== asid) return;
         const info = snap.info;
         if (info) {
           setSessionInfo(info);
@@ -1178,12 +1184,15 @@ export const AgentWorkbench = memo(function AgentWorkbench({
          * not asked for again at all -- that read was answering a question the
          * snapshot had just answered.
          */
-        InteractionManager.runAfterInteractions(() => {
-          if (activeAsidRef.current !== asid) return;
-          void sideLoadsRef.current.context();
-          void sideLoadsRef.current.shells();
-          void sideLoadsRef.current.diffs();
-        });
+        requestIdleCallback(
+          () => {
+            if (activeAsidRef.current !== asid) return;
+            void sideLoadsRef.current.context();
+            void sideLoadsRef.current.shells();
+            void sideLoadsRef.current.diffs();
+          },
+          { timeout: 250 }
+        );
       } catch (err) {
         console.warn('Failed to load snapshot:', err);
         if (
@@ -1213,6 +1222,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       }
     },
     [
+      setTimeline,
       sessionId,
       activeAsid,
       applySelectedModel,
@@ -1477,6 +1487,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       }
     },
     [
+      setTimeline,
       activeAsid,
       loadSnapshot,
       refreshSessions,
@@ -1537,7 +1548,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         syncRef.current = advanceSeq(syncRef.current, delta.latest_seq);
       })
       .catch(() => {});
-  }, [sessionId, loadSnapshot]);
+  }, [setTimeline, sessionId, loadSnapshot]);
 
   useEffect(() => {
     catchUpRef.current = catchUp;
@@ -1595,6 +1606,10 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
     let attempts = 0;
 
+    const streamBatch = createAgentStreamBatch((event) => {
+      if (mounted) handleStreamEventRef.current(event);
+    });
+
     const connect = () => {
       /**
        * Try again, soon.
@@ -1608,6 +1623,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
        */
       const scheduleReconnect = () => {
         if (!mounted) return;
+        streamBatch.flush();
         // Quiet reconnect. Mobile streams drop often; keep the gap short so
         // a dropped connection costs at most a couple of seconds, not a poll.
         const delay = Math.min(400 * 2 ** attempts, 5000);
@@ -1627,7 +1643,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         onEvent: (event) => {
           if (!mounted) return;
           attempts = 0;
-          handleStreamEventRef.current(event);
+          streamBatch.push(event);
         },
         onError: scheduleReconnect,
         onClose: scheduleReconnect,
@@ -1639,6 +1655,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
 
     return () => {
       mounted = false;
+      streamBatch.cancel();
       closeCurrent();
       if (reconnectTimer) clearTimeout(reconnectTimer);
     };
@@ -1895,7 +1912,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       part: { type: 'text', text },
       attachments,
       queued: isQueued,
-      order: orderKeyAfter(timeline),
+      order: orderKeyAfter(transcriptStore.getState().timeline),
     };
     setTimeline((prev) => [...prev, tempUserItem]);
     // No manual scroll. Following the newest message is the list's
@@ -2100,6 +2117,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       });
     }
   }, [
+    setTimeline,
     isOffline,
     sessionId,
     newSessionParams,
@@ -2208,7 +2226,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         );
       });
     },
-    [sessions, childrenByParent, activeAsid, showScreenNotice, t]
+    [setTimeline, sessions, childrenByParent, activeAsid, showScreenNotice, t]
   );
 
   const handleSelectWorkspace = useCallback(
@@ -2242,7 +2260,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         });
       }
     },
-    [sessionId, newSessionParams, t, refreshSessions, showToast]
+    [setTimeline, sessionId, newSessionParams, t, refreshSessions, showToast]
   );
 
   /**
@@ -2478,7 +2496,9 @@ export const AgentWorkbench = memo(function AgentWorkbench({
           return;
         case 'undo': {
           if (!activeAsid) return;
-          const lastUser = [...timeline].reverse().find((item) => item.role === 'user');
+          const lastUser = [...transcriptStore.getState().timeline]
+            .reverse()
+            .find((item) => item.role === 'user');
           if (!lastUser) {
             showToast({
               variant: 'info',
@@ -2521,7 +2541,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     },
     [
       activeAsid,
-      timeline,
+      transcriptStore,
       stagedRevert,
       handleStageRevert,
       handleKeepRevert,
@@ -2532,11 +2552,25 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     ]
   );
 
-  const handleEditQueuedItem = useCallback((itemId: string, text: string) => {
-    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    injectDraftRef.current?.(text);
-    setTimeline((prev) => prev.filter((it) => it.id !== itemId));
-  }, []);
+  const sendPromptLatest = useLatestRef(handleSendPrompt);
+  const clientCommandLatest = useLatestRef(handleClientCommand);
+  const sendFromComposer = useCallback(
+    (...args: Parameters<typeof handleSendPrompt>) => sendPromptLatest.current(...args),
+    [sendPromptLatest]
+  );
+  const commandFromComposer = useCallback(
+    (name: AgentClientCommandId) => clientCommandLatest.current(name),
+    [clientCommandLatest]
+  );
+
+  const handleEditQueuedItem = useCallback(
+    (itemId: string, text: string) => {
+      void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      injectDraftRef.current?.(text);
+      setTimeline((prev) => prev.filter((it) => it.id !== itemId));
+    },
+    [setTimeline]
+  );
 
   /**
    * Cancelling a queued message cancels it on the engine too.
@@ -2550,13 +2584,13 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   const handleCancelQueuedItem = useCallback(
     (itemId: string) => {
       void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      const row = timeline.find((it) => it.id === itemId);
+      const row = transcriptStore.getState().timeline.find((it) => it.id === itemId);
       const text = row?.part.type === 'text' ? row.part.text.trim() : '';
       const queued = text ? inbox.find((item) => inboxItemText(item).trim() === text) : undefined;
       if (queued) handleCancelInboxItem(queued.id);
       setTimeline((prev) => prev.filter((it) => it.id !== itemId));
     },
-    [timeline, inbox, handleCancelInboxItem]
+    [setTimeline, transcriptStore, inbox, handleCancelInboxItem]
   );
 
   /**
@@ -2653,43 +2687,23 @@ export const AgentWorkbench = memo(function AgentWorkbench({
    * rendered window -- still has to be answerable, and the footer is where it
    * lands.
    */
-  const footerPermissions = useMemo(() => {
-    const toolIds = new Set<string>();
-    for (const item of timeline) {
-      if (item.part.type === 'tool') toolIds.add(item.part.id);
-    }
-    return permissions.filter(
-      (request) => !request.source_tool_call_id || !toolIds.has(request.source_tool_call_id)
-    );
-  }, [permissions, timeline]);
-
-  const renderTimelineItem = useCallback(
-    ({ item: group }: LegendListRenderItemProps<TimelineRenderGroup>) => {
-      if (group.role === 'user') {
-        return (
-          <AgentUserMessage
-            key={group.key}
-            group={group}
-            showReasoning={showReasoning}
-            markdownStyle={markdownStyle}
-            onPreviewImage={setPreviewImageUri}
-            onEditQueued={handleEditQueuedItem}
-            onCancelQueued={handleCancelQueuedItem}
-            onUndoToHere={handleStageRevert}
-            actions={toolActions}
-          />
-        );
-      }
-      return (
-        <AgentAssistantMessage
-          key={group.key}
-          group={group}
-          showReasoning={showReasoning}
-          markdownStyle={markdownStyle}
-          actions={toolActions}
-        />
-      );
-    },
+  const footerPermissions = useMemo(
+    () =>
+      permissions.filter(
+        (request) => !request.source_tool_call_id || !toolIds.has(request.source_tool_call_id)
+      ),
+    [permissions, toolIds]
+  );
+  const rowProps = useMemo(
+    () => ({
+      showReasoning,
+      markdownStyle,
+      onPreviewImage: setPreviewImageUri,
+      onEditQueued: handleEditQueuedItem,
+      onCancelQueued: handleCancelQueuedItem,
+      onUndoToHere: handleStageRevert,
+      actions: toolActions,
+    }),
     [
       showReasoning,
       markdownStyle,
@@ -2773,56 +2787,18 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     useAgentSessionState.getState().setWorkspace(activeDirectory, activeProject, activeWorktree);
   }, [activeDirectory, activeProject, activeWorktree]);
 
-  // Rendered window over the full timeline: entering a session shows the
-  // latest page; earlier pages are prepended on demand.
-  //
-  // A `shell` part that is the other side of a tool call in the same session
-  // is dropped here rather than drawn a second time, and a detached one takes
-  // its running state from the shell list the tray is drawn from.
-  //
-  // Over the whole timeline, not the window: the tool call a `shell` part
-  // mirrors is often hundreds of rows above it, outside the page being drawn,
-  // and a window-sized search would find nothing and draw the duplicate.
-  const reconciledTimeline = useMemo(
-    () => reconcileShellParts(timeline, shells),
-    [timeline, shells]
-  );
-  const visibleTimeline = useMemo(
-    () => (windowStart > 0 ? reconciledTimeline.slice(windowStart) : reconciledTimeline),
-    [reconciledTimeline, windowStart]
-  );
+  useLayoutEffect(() => {
+    transcriptStore.getState().configure({ shells, windowStart, status: sessionInfo?.status });
+  }, [transcriptStore, shells, windowStart, sessionInfo?.status]);
 
-  /**
-   * What arrived while the reader was up in the history.
-   *
-   * Measured against the transcript as it stood when they were last level with
-   * its end, so scrolling up to re-read something does not by itself put a
-   * button over the transcript -- and reaching the end again clears it without
-   * a tap. The mark carries the last row's sequence as well as the row count,
-   * because an answer streaming into a row already on screen adds no row and
-   * is still the thing the reader would want to go and see.
-   */
-  const transcriptMark = useMemo<TranscriptMark>(
-    () => ({ rows: timeline.length, seq: timeline[timeline.length - 1]?.seq ?? 0 }),
-    [timeline]
-  );
   useEffect(() => {
-    follow.setMark(transcriptMark);
-  }, [follow, transcriptMark]);
-
-  // Group the window back into whole messages, the shape OpenCode's own UI
-  // renders: reasoning and tool calls fold into the message they belong to.
-  //
-  // Through the cache, so a group whose items have not changed comes back as
-  // the *same object*. That is what `itemsAreEqual` below is asserting, and
-  // it is why one message streaming costs one cell re-render rather than the
-  // whole visible list. The builder was already written to do this; nothing
-  // was passing it the previous render's groups.
-  const groupCache = useMemo(() => createTimelineGroupCache(), []);
-  const renderGroups = useMemo(
-    () => buildTimelineGroupsCached(groupCache, visibleTimeline),
-    [groupCache, visibleTimeline]
-  );
+    const updateMark = () => {
+      const timeline = transcriptStore.getState().timeline;
+      follow.setMark({ rows: timeline.length, seq: timeline.at(-1)?.seq ?? 0 });
+    };
+    updateMark();
+    return transcriptStore.subscribe(updateMark);
+  }, [transcriptStore, follow]);
 
   /**
    * Earlier history is pulled for, not asked for with a button.
@@ -3224,40 +3200,22 @@ export const AgentWorkbench = memo(function AgentWorkbench({
    * has not finished -- a detached shell is both a shell and a tool row, and
    * counting it twice would make the pill say two for one command.
    */
-  const backgroundCount = useMemo(() => {
-    let detachedTools = 0;
-    for (const item of timeline) {
-      const part = item.part;
-      if (part.type !== 'tool' || !part.background) continue;
-      if (part.state === 'completed' || part.state === 'failed') continue;
-      if (classifyTool(part.name) === 'shell') continue;
-      detachedTools += 1;
-    }
-    return runningShellCount(shells) + detachedTools;
-  }, [shells, timeline]);
-
-  /**
-   * What the plate says: the messages counted off the transcript on screen, and
-   * the files the gateway worked out. Memoised so a stream tick that changes
-   * neither does not re-render the composer.
-   */
-  const revertPreview = useMemo(() => {
-    if (!stagedRevert) return null;
-    return {
-      messages: revertedMessageCount(timeline, stagedRevert.message_id),
-      files: stagedRevert.files ?? EMPTY_REVERT_FILES,
-    };
-  }, [stagedRevert, timeline]);
-
-  const activeTodos = useMemo(() => {
-    for (let i = timeline.length - 1; i >= 0; i--) {
-      const it = timeline[i];
-      if (it.part.type === 'todo' && it.part.items.length > 0) {
-        return it.part.items;
-      }
-    }
-    return undefined;
-  }, [timeline]);
+  const backgroundTools = useStore(transcriptStore, (state) => state.backgroundTools);
+  const backgroundCount = runningShellCount(shells) + backgroundTools;
+  const revertedMessages = useStore(transcriptStore, (state) =>
+    stagedRevert ? revertedMessageCount(state.timeline, stagedRevert.message_id) : 0
+  );
+  const revertPreview = useMemo(
+    () =>
+      stagedRevert
+        ? {
+            messages: revertedMessages,
+            files: stagedRevert.files ?? EMPTY_REVERT_FILES,
+          }
+        : null,
+    [stagedRevert, revertedMessages]
+  );
+  const activeTodos = useStore(transcriptStore, (state) => state.todos);
 
   /**
    * What the sheet routes read, published rather than passed.
@@ -3405,7 +3363,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
             replaced by another between two frames.
           */
           <AgentTranscriptSkeleton paddingTop={topInset + 20} />
-        ) : timeline.length === 0 && permissions.length === 0 && forms.length === 0 ? (
+        ) : timelineEmpty && permissions.length === 0 && forms.length === 0 ? (
           <Animated.View
             style={[
               styles.emptyScrollWrapper,
@@ -3562,51 +3520,22 @@ export const AgentWorkbench = memo(function AgentWorkbench({
               This moves the content with the keyboard on the UI thread, as an
               inset and an offset, and lays nothing out while it travels.
             */}
-            <KeyboardAwareLegendList<TimelineRenderGroup>
+            <AgentTranscriptList
+              store={transcriptStore}
+              rowProps={rowProps}
               ref={listRef}
+              freeze={freezeTimelineKeyboard}
               /*
             Lift only for a reader at the latest message. Someone who has
             scrolled up to read is not moved by a keyboard any more than by
             new output -- the same rule `maintainScrollAtEnd` keeps below.
           */
               keyboardLiftBehavior="whenAtEnd"
-              data={renderGroups}
-              keyExtractor={keyOfGroup}
-              renderItem={renderTimelineItem}
               /*
-            Never, and this one is load-bearing rather than a preference. An
-            assistant cell renders `EnrichedMarkdownText`, whose native view
-            compares the incoming markdown against the last string it drew and
-            re-parses when they differ -- which a recycle always makes them.
-            Turning this on for "performance" would silently put a native
-            markdown parse on every cell of every scroll.
-            See docs/git-diff-viewer.md:362-380.
-          */
-              recycleItems={false}
-              /*
-            The other half of the identity deal, stated to the list itself: a
-            group whose object has not changed has not changed.
-            `buildTimelineGroupsCached` guarantees exactly that, so the
-            strictest comparison is also the correct one, and the cheapest.
-          */
-              itemsAreEqual={groupsAreEqual}
-              /*
-            A user bubble, an assistant card carrying six tool shells and a diff
-            block are wildly different heights, and one flat average across all
-            of them is what makes a virtualised list jump when content lands
-            above the viewport. The role is already the right bucket, so the
-            list learns a size per kind instead.
-          */
-              getItemType={groupTypeOf}
-              /*
-            One allocation hint, measured rather than guessed. Legend List 3
-            removed `getEstimatedItemSize`, so there is no per-kind estimate to
-            give any more: this number only decides how many item containers
-            exist before anything has been measured, after which the list uses
-            what it measured and the per-type averages `getItemType` buckets
-            for it. The 70 that was here was less than half the real average of
-            165dp, so every mount built containers for more than twice the rows
-            a screen holds. See `lib/transcript-sizing.ts` for the measurement.
+            Reserve containers for short rows, not the assistant-heavy mean.
+            The 165dp mean under-allocated the pool in live use; the measured
+            81dp user-row size leaves room for short messages without creating
+            containers during the scroll. Actual row heights remain dynamic.
           */
               estimatedItemSize={TRANSCRIPT_ESTIMATED_ITEM_SIZE}
               /*
@@ -3820,7 +3749,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         onDismissCompaction={dismissCompaction}
         cost={sessionInfo?.cost}
         sessionTitle={sessionInfo?.title}
-        onSend={handleSendPrompt}
+        onSend={sendFromComposer}
         onAbort={handleAbort}
         onSelectSession={setActiveAsid}
         onSelectAgentMode={handleSelectAgentMode}
@@ -3835,7 +3764,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         commands={commands}
         onRunCommand={handleRunCommand}
         onInvokeSkill={handleInvokeSkill}
-        onClientCommand={handleClientCommand}
+        onClientCommand={commandFromComposer}
         inbox={inbox}
         onCancelInboxItem={handleCancelInboxItem}
         onSetInboxDelivery={handleSetInboxDelivery}
@@ -3912,61 +3841,6 @@ const JumpToLatestPill = memo(function JumpToLatestPill({
   );
 });
 
-/**
- * Rows are addressed by `id` -- upsert, do not append -- and the result is put
- * back in the timeline's own `(message_id, ordinal)` order.
- *
- * The one exception is the optimistic user row: it carries a `temp_` id that
- * the server has never seen, so it is matched on its text and replaced in
- * place. Without that the reader's own message appears twice for a moment.
- */
-function upsertTimelineItems(
-  previous: readonly TimelineItem[],
-  incoming: readonly TimelineItem[]
-): TimelineItem[] {
-  if (incoming.length === 0) return previous as TimelineItem[];
-  const next = [...previous];
-  let dirty = false;
-  for (const item of incoming) {
-    const existing = next.findIndex((it) => it.id === item.id);
-    if (existing >= 0) {
-      next[existing] = item;
-      dirty = true;
-      continue;
-    }
-    if (item.role === 'user' && item.part.type === 'text') {
-      const text = item.part.text.trim();
-      const optimistic = next.findIndex(
-        (it) =>
-          it.id.startsWith('temp_') &&
-          it.role === 'user' &&
-          it.part.type === 'text' &&
-          it.part.text.trim() === text
-      );
-      if (optimistic >= 0) {
-        // The acknowledged row takes the optimistic row's place, exactly: its
-        // own id would sort it somewhere else, and the reader would watch
-        // their own message move.
-        // And its key, for the same reason the order is inherited: the row is
-        // the one already on screen, so it keeps the identity it was measured
-        // and drawn under. Without this the list discards the height it
-        // measured and remounts the row the moment the send is acknowledged.
-        const { order, row_key: rowKey } = next[optimistic];
-        next[optimistic] = {
-          ...item,
-          ...(order === undefined ? {} : { order }),
-          row_key: rowKey ?? next[optimistic].id,
-        };
-        dirty = true;
-        continue;
-      }
-    }
-    next.push(item);
-    dirty = true;
-  }
-  return dirty ? sortTimeline(next) : (previous as TimelineItem[]);
-}
-
 /** A status event, applied to whichever branch of the tree carries that id. */
 function applyChildStatus(
   previous: ChildrenByParent,
@@ -4033,19 +3907,6 @@ function applyChildInfo(previous: ChildrenByParent, info: AgentSessionInfo): Chi
     });
   }
   return changed ? next : previous;
-}
-
-function keyOfGroup(group: TimelineRenderGroup): string {
-  return group.key;
-}
-
-/** The role is the size bucket: see `getItemType` above. */
-function groupTypeOf(group: TimelineRenderGroup): string {
-  return group.role;
-}
-
-function groupsAreEqual(previous: TimelineRenderGroup, next: TimelineRenderGroup): boolean {
-  return previous === next;
 }
 
 const EMPTY_REVERT_FILES: readonly FileDiffItem[] = Object.freeze([]);

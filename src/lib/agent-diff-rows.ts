@@ -117,19 +117,22 @@ export function oldPathFromPatch(patch: string): string | null {
 
 /** One agent-side file, in the shape the shared file row reads. */
 export function fileChangeFromDiffItem(item: FileDiffItem): GitFileChange {
-  const parsed = parseUnifiedPatch(item.patch);
+  // File summaries only need the patch preamble. Parsing hunks here made a
+  // collapsed repository listing allocate every changed line on each toggle.
+  const hunkStart = item.patch.search(/^@@ /m);
+  const header = hunkStart < 0 ? item.patch : item.patch.slice(0, hunkStart);
   return {
     path: item.path,
-    oldPath: oldPathFromPatch(item.patch),
+    oldPath: oldPathFromPatch(header),
     status:
       fileStatusFromWire(item.status) ??
-      fileStatusFromPatch(item.patch, item.additions, item.deletions),
+      fileStatusFromPatch(header, item.additions, item.deletions),
     // The agent's diff is the working tree against HEAD; there is no index
     // half to attribute it to, and claiming one would be a lie the `all` view's
     // S/U marks would then repeat.
     staged: false,
     unstaged: true,
-    binary: parsed.binary,
+    binary: /^(?:Binary files |GIT binary patch)/m.test(header),
     added: item.additions,
     removed: item.deletions,
   };

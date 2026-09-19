@@ -13,7 +13,7 @@ import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-na
 
 import { agentStatusWord } from '@/i18n/labels';
 import { feedback } from '@/lib/feedback';
-import { fadeIn, PRESS, STAGGER, timing } from '@/lib/motion';
+import { PRESS, timing } from '@/lib/motion';
 import {
   isServerAgentsStale,
   paneLocationCaption,
@@ -24,7 +24,6 @@ import {
 } from '@/lib/server-agents';
 import { agentStatusesAreCurrent, type ServerReachability } from '@/lib/server-reachability';
 import { useAppSettings } from '@/stores/app-settings';
-import { MarqueeText } from '@/components/marquee-text';
 
 /**
  * The rows start at the card's own edge.
@@ -71,7 +70,6 @@ export function ServerAgentRows({
   snapshot,
   reachability,
   rowMinHeight,
-  entranceDelay = 0,
   onOpenAgent,
   selectedPaneId,
   showsPressBackground = true,
@@ -91,8 +89,6 @@ export function ServerAgentRows({
    * this from `homeServerListLayout`, which is where density is decided.
    */
   rowMinHeight: number;
-  /** When the card holding these rows finishes arriving. */
-  entranceDelay?: number;
   /** Opens the agent's own pane. */
   onOpenAgent: (agent: ServerAgent) => void;
   /** Optional detail selection for persistent Pad rails. */
@@ -148,8 +144,8 @@ export function ServerAgentRows({
           : t`Seen ${age.value}d ago`;
 
   return (
-    <View style={[style, stale ? styles.stale : null]}>
-      {visibleAgents.map((agent, index) => {
+    <View collapsable={false} style={[style, stale ? styles.stale : null]}>
+      {visibleAgents.map((agent) => {
         const selected = Boolean(agent.paneId && agent.paneId === selectedPaneId);
         const status = _(agentStatusWord[agent.status ?? ''] ?? agentStatusWord.unknown);
         // Blocked is the one status that is asking for something -- everything
@@ -182,7 +178,6 @@ export function ServerAgentRows({
             accessibilityLabel={spokenCaption ? `${agent.name}, ${spokenCaption}` : agent.name}
             accessibilityHint={t`Opens this agent's terminal`}
             testID={`server-agent-${agent.paneId ?? agent.id}`}
-            delay={entranceDelay + index * STAGGER.row}
             minHeight={rowMinHeight}
             selected={selected}
             showsPressBackground={showsPressBackground}
@@ -196,16 +191,15 @@ export function ServerAgentRows({
               )}
             </View>
             <View style={styles.nameColumn}>
-              {/* One line, and a long one travels: a row that wraps is twice
-                  the height of its neighbours and the list stops being one the
-                  eye can run down, while an ellipsis throws away the end of the
-                  name -- the part that tells two sessions of one agent apart. */}
-              <MarqueeText
+              {/* Keep the title on one line; the full name remains in the
+                  row's accessibility label. Row placement is owned by Yoga. */}
+              <Text
                 variant="bodySmall"
                 weight={selected ? 'semibold' : undefined}
-                color={selected || agent.hasAgent ? theme.colors.primary : theme.colors.text}>
+                color={selected || agent.hasAgent ? theme.colors.primary : theme.colors.text}
+                numberOfLines={1}>
                 {agent.name}
-              </MarqueeText>
+              </Text>
               {visibleCaption ? (
                 <Text
                   variant="caption"
@@ -241,7 +235,6 @@ function AgentRow({
   accessibilityLabel,
   testID,
   children,
-  delay,
   minHeight,
   selected,
   showsPressBackground,
@@ -252,7 +245,6 @@ function AgentRow({
   accessibilityLabel: string;
   testID: string;
   children: React.ReactNode;
-  delay: number;
   minHeight: number;
   selected: boolean;
   showsPressBackground: boolean;
@@ -269,11 +261,10 @@ function AgentRow({
   }));
 
   return (
-    // A fade, not the old slide in from the left: that entrance existed because
-    // the rows were attached to a line and had to look like they came out of
-    // it. With no line to come out of, nine rows each sliding a different
-    // distance is motion narrating a structure that is no longer there.
-    <Animated.View entering={fadeIn('short').delay(delay)}>
+    // A stable native parent keeps row offsets relative to the pane list.
+    // Entrance/layout animations must not take ownership of these frames as
+    // a refreshed snapshot adds rows or changes their height under the header.
+    <View collapsable={false}>
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={accessibilityLabel}
@@ -308,7 +299,7 @@ function AgentRow({
           />
         </Animated.View>
       </Pressable>
-    </Animated.View>
+    </View>
   );
 }
 

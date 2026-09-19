@@ -15,8 +15,8 @@ import { useMarkdownFonts } from '@/hooks/use-user-fonts';
 import { createThoughtMarkdownStyle } from '@/lib/markdown-style';
 import { AGENT_TYPE } from '@/constants/agent-type';
 
-/** How often a live count updates. A tenth of a second reads as a stopwatch. */
-const TICK_MS = 100;
+/** A live status label needs whole seconds, not a ten-Hz stopwatch. */
+const TICK_MS = 1000;
 
 export interface AgentReasoningBlockProps {
   text: string;
@@ -68,7 +68,10 @@ export const AgentReasoningBlock = memo(function AgentReasoningBlock({
     // the time is a render whose result changes on its own.
     const from = startedAt.current ?? Date.now();
     startedAt.current = from;
-    const timer = setInterval(() => setElapsedMs(Date.now() - from), TICK_MS);
+    const timer = setInterval(
+      () => setElapsedMs(Math.floor((Date.now() - from) / TICK_MS) * TICK_MS),
+      TICK_MS
+    );
     return () => clearInterval(timer);
   }, [pending]);
 
@@ -83,7 +86,12 @@ export const AgentReasoningBlock = memo(function AgentReasoningBlock({
   // Settled beats live: the moment the engine reports a real duration, that
   // is what the block says.
   const shown = durationMs !== undefined ? durationMs : pending ? elapsedMs : null;
-  const durationStr = shown === null ? null : formatThoughtDuration(shown);
+  const durationStr =
+    shown === null
+      ? null
+      : pending && durationMs === undefined && shown < 60_000
+        ? `${Math.floor(shown / 1000)}s`
+        : formatThoughtDuration(shown);
   const label = durationStr ? t`Thought · ${durationStr}` : t`Thought`;
 
   // The body mounts into a virtualised row whose cached height predates it;
@@ -115,13 +123,11 @@ export const AgentReasoningBlock = memo(function AgentReasoningBlock({
             <ThinkingIndicator size={12} color={theme.colors.primary} />
           </Animated.View>
         ) : null}
-        {/* Keyed on the label so the settled duration fades in where the live
-            count was, rather than replacing it between two frames. */}
-        <Animated.View key={label} entering={fadeIn('micro')}>
-          <Text variant="caption" weight="medium" color={theme.colors.primary} style={styles.title}>
-            {label}
-          </Text>
-        </Animated.View>
+        {/* Update the same text node. Keying by the clock restarted the fade
+            before it could finish, making a running thought flash forever. */}
+        <Text variant="caption" weight="medium" color={theme.colors.primary} style={styles.title}>
+          {label}
+        </Text>
         {text ? (
           <Animated.View style={chevronStyle}>
             <ChevronDown size={12} color={theme.colors.primary} style={styles.chevron} />
@@ -169,6 +175,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: AGENT_TYPE.meta.size,
+    fontVariant: ['tabular-nums'],
   },
   chevron: {
     opacity: 0.75,

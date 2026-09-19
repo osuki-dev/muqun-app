@@ -48,7 +48,7 @@ export type AssignmentTarget =
   /** Hand it to this one, which is already running. */
   | { type: 'agent'; paneId: string; instanceId: string; name: string };
 
-export type AssignmentCommand = { name: string; description?: string; instructions?: string };
+export type AssignmentCommand = { name: string };
 
 export type AssignmentOutcome =
   | { status: 'sent'; task: CollaborationTask }
@@ -93,17 +93,11 @@ export function useComposerAssignment(context: {
       isCurrent: () => boolean
     ): Promise<AssignmentOutcome> => {
       if (!target) throw new Error('No assistant selected');
-      if (!prompt.trim() && !command?.instructions) throw new Error('Nothing to send');
+      if (!prompt.trim() && attachments.length === 0) throw new Error('Nothing to send');
       // Assembled before anything is sent, so a queue that has drifted to
       // another destination fails here -- with the text still in the composer --
       // rather than after an assistant has been created to receive it.
-      const text = attachmentCommandText(
-        prompt,
-        '',
-        command?.instructions,
-        attachments,
-        destination
-      );
+      const text = attachmentCommandText(prompt, '', undefined, attachments, destination);
       if (!isCurrent()) throw new Error('Destination changed');
 
       if (target.type === 'new') {

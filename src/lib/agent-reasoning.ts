@@ -1,4 +1,4 @@
-import type { TimelineItem } from './agent-protocol';
+import type { AgentRunStatus, TimelineItem } from './agent-protocol';
 
 /**
  * One message's thinking, as one block.
@@ -29,9 +29,8 @@ export interface ReasoningRun {
   /**
    * Whether this run is still being produced.
    *
-   * True for a run at the end of its message that has not reported a duration:
-   * a finished reasoning part always carries one, so "last and unfinished" is
-   * the honest reading of "the model is thinking right now".
+   * True only for the unfinished tail of the currently running message.
+   * Interrupted providers may never report a duration for historical parts.
    */
   pending: boolean;
 }
@@ -54,7 +53,20 @@ function reasoningOf(
  * before whatever tool or text followed the thinking -- which is where the
  * reader expects it, and where the first of the pills used to be.
  */
-export function buildTimelineEntries(items: readonly TimelineItem[]): TimelineEntry[] {
+export function liveReasoningMessageId(
+  items: readonly TimelineItem[],
+  status: AgentRunStatus | undefined
+): string | undefined {
+  const last = items.at(-1);
+  return status === 'busy' && last?.role === 'assistant' && last.part.type === 'reasoning'
+    ? last.message_id
+    : undefined;
+}
+
+export function buildTimelineEntries(
+  items: readonly TimelineItem[],
+  live = false
+): TimelineEntry[] {
   const entries: TimelineEntry[] = [];
   let index = 0;
 
@@ -85,7 +97,7 @@ export function buildTimelineEntries(items: readonly TimelineItem[]): TimelineEn
       key: first.id,
       text: texts.join('\n\n'),
       ...(durationMs === undefined ? {} : { durationMs }),
-      pending: endsTheMessage && durationMs === undefined,
+      pending: live && endsTheMessage && durationMs === undefined,
     };
 
     // Nothing to say and nothing still saying it: the protocol's own step

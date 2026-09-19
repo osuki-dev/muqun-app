@@ -258,7 +258,13 @@ export const EmbeddedTerminalToolBlock = memo(function EmbeddedTerminalToolBlock
         </View>
       ) : null}
 
-      {preview ? <View style={styles.underTitle}>{preview}</View> : null}
+      {preview ? (
+        // Diffs already carry a file header and a line-number gutter. Keeping
+        // the tool icon's indent here takes that width away from the code.
+        <View style={kind === 'edit' || kind === 'patch' ? undefined : styles.underTitle}>
+          {preview}
+        </View>
+      ) : null}
 
       {actions ? <View style={[styles.actionRow, styles.underTitle]}>{actions}</View> : null}
 

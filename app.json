@@ -41,7 +41,9 @@
         "NSPhotoLibraryUsageDescription": "Muqun sends photos you pick to the paired Gateway so an agent can read them.",
         "NSFaceIDUsageDescription": "Muqun uses Face ID to protect paired servers and terminal sessions.",
         "NSLocalNetworkUsageDescription": "Muqun connects to the Gateway running on your own computer, which may be on your local network.",
-        "UISupportedInterfaceOrientations": ["UIInterfaceOrientationPortrait"],
+        "UISupportedInterfaceOrientations": [
+          "UIInterfaceOrientationPortrait"
+        ],
         "UISupportedInterfaceOrientations~ipad": [
           "UIInterfaceOrientationPortrait",
           "UIInterfaceOrientationPortraitUpsideDown",
@@ -57,9 +59,13 @@
           {
             "UTTypeIdentifier": "dev.osuki.muqun.theme",
             "UTTypeDescription": "Muqun theme",
-            "UTTypeConformsTo": ["public.zip-archive"],
+            "UTTypeConformsTo": [
+              "public.zip-archive"
+            ],
             "UTTypeTagSpecification": {
-              "public.filename-extension": ["muqun-theme"]
+              "public.filename-extension": [
+                "muqun-theme"
+              ]
             }
           }
         ],
@@ -69,13 +75,17 @@
             "CFBundleTypeName": "Muqun theme",
             "CFBundleTypeRole": "Viewer",
             "LSHandlerRank": "Owner",
-            "LSItemContentTypes": ["dev.osuki.muqun.theme"]
+            "LSItemContentTypes": [
+              "dev.osuki.muqun.theme"
+            ]
           },
           {
             "CFBundleTypeName": "Muqun theme colours",
             "CFBundleTypeRole": "Viewer",
             "LSHandlerRank": "Alternate",
-            "LSItemContentTypes": ["public.json"]
+            "LSItemContentTypes": [
+              "public.json"
+            ]
           }
         ]
       },
@@ -86,11 +96,16 @@
         "NSPrivacyAccessedAPITypes": [
           {
             "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryUserDefaults",
-            "NSPrivacyAccessedAPITypeReasons": ["CA92.1", "1C8F.1"]
+            "NSPrivacyAccessedAPITypeReasons": [
+              "CA92.1",
+              "1C8F.1"
+            ]
           },
           {
             "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryFileTimestamp",
-            "NSPrivacyAccessedAPITypeReasons": ["C617.1"]
+            "NSPrivacyAccessedAPITypeReasons": [
+              "C617.1"
+            ]
           }
         ]
       }
@@ -98,7 +113,10 @@
     "android": {
       "package": "dev.osuki.muqun",
       "googleServicesFile": "./google-services.json",
-      "permissions": ["android.permission.CAMERA", "android.permission.POST_NOTIFICATIONS"],
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.POST_NOTIFICATIONS"
+      ],
       "blockedPermissions": [
         "android.permission.READ_MEDIA_IMAGES",
         "android.permission.READ_MEDIA_VIDEO"
@@ -112,7 +130,10 @@
       "intentFilters": [
         {
           "action": "VIEW",
-          "category": ["DEFAULT", "BROWSABLE"],
+          "category": [
+            "DEFAULT",
+            "BROWSABLE"
+          ],
           "data": [
             {
               "scheme": "content"
@@ -145,7 +166,10 @@
         },
         {
           "action": "VIEW",
-          "category": ["DEFAULT", "BROWSABLE"],
+          "category": [
+            "DEFAULT",
+            "BROWSABLE"
+          ],
           "data": [
             {
               "scheme": "content"
@@ -294,7 +318,9 @@
         "expo-build-properties",
         {
           "android": {
-            "buildArchs": ["arm64-v8a"],
+            "buildArchs": [
+              "arm64-v8a"
+            ],
             "useLegacyPackaging": true,
             "usesCleartextTraffic": true,
             "enableBundleCompression": true,
@@ -346,7 +372,8 @@
           "hidden": true
         }
       ],
-      "expo-web-browser"
+      "expo-web-browser",
+      "expo-sharing"
     ],
     "experiments": {
       "typedRoutes": true,

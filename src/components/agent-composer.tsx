@@ -48,6 +48,7 @@ import { TerminalComposer, composerStyles } from '@/components/terminal-composer
 import { AttachmentMenu } from '@/components/attachment-menu';
 import { AgentModeMenu } from '@/components/agent-mode-menu';
 import { AttachmentStrip } from '@/components/attachment-strip';
+import { ImagePreviewModal, type PreviewImage } from '@/components/image-preview-modal';
 import { GlassChrome } from '@/components/glass-chrome';
 import { EdgeFade } from '@/components/edge-fade';
 import { FileMentionPanel } from '@/components/file-mention-panel';
@@ -66,7 +67,12 @@ import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { useInterfaceFontFamily } from '@/hooks/use-user-fonts';
 import { useAttachmentUploads } from '@/hooks/use-attachment-uploads';
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';
-import { pickAttachments, describePickerFailure, type AttachmentSource } from '@/lib/attachments';
+import {
+  pickAttachments,
+  describePickerFailure,
+  isImageAttachment,
+  type AttachmentSource,
+} from '@/lib/attachments';
 import { DURATION, fadeIn, fadeOut, fadeOutDown, listLayout, timing } from '@/lib/motion';
 import { appChrome } from '@/constants/appearance';
 import { withAlpha } from '@/lib/color';
@@ -485,6 +491,21 @@ export const AgentComposer = memo(function AgentComposer({
 
   const record = useGatewayConnectionStore((state) => state.record);
   const attachmentUploads = useAttachmentUploads(record);
+
+  // Staged image preview, the same viewer the terminal dock uses: only images
+  // can open full screen, so the tapped chip's position is resolved within
+  // that subset.
+  const [previewAttachmentId, setPreviewAttachmentId] = useState<string | null>(null);
+  const previewImages = useMemo<PreviewImage[]>(
+    () =>
+      attachmentUploads.attachments
+        .filter((item) => isImageAttachment(item.mime))
+        .map((item) => ({ id: item.id, uri: item.localUri })),
+    [attachmentUploads.attachments]
+  );
+  const previewIndex = previewAttachmentId
+    ? previewImages.findIndex((item) => item.id === previewAttachmentId)
+    : -1;
 
   /**
    * The app's own commands, and the host's.
@@ -1449,11 +1470,10 @@ export const AgentComposer = memo(function AgentComposer({
                 exiting={fadeOutDown('short')}
                 style={styles.stripWrapper}>
                 <AttachmentStrip
-                  variant="chip"
                   attachments={attachmentUploads.attachments}
                   onRemove={attachmentUploads.removeAttachment}
                   onRetry={attachmentUploads.retryUpload}
-                  onPreview={() => {}}
+                  onPreview={setPreviewAttachmentId}
                   textColor={chromeText}
                 />
               </Animated.View>
@@ -1536,6 +1556,13 @@ export const AgentComposer = memo(function AgentComposer({
           </View>
         </GlassChrome>
       </View>
+      {previewIndex >= 0 ? (
+        <ImagePreviewModal
+          images={previewImages}
+          initialIndex={previewIndex}
+          onClose={() => setPreviewAttachmentId(null)}
+        />
+      ) : null}
     </Animated.View>
   );
 });

@@ -705,11 +705,25 @@ function renderTimelinePart(
       // run by `buildTimelineEntries` and drawn as a single block.
       return null;
     case 'tool':
-      return <ToolPartCard key={item.id} part={part} options={options} />;
+      return (
+        <ToolPartCard
+          key={item.id}
+          part={part}
+          markdownStyle={options.markdownStyle}
+          actions={options.actions}
+        />
+      );
     case 'shell':
       // A detached shell is a tool call that outlived its turn, and it reads
       // best as the card it was before it was detached.
-      return <ToolPartCard key={item.id} part={shellAsToolPart(part)} options={options} />;
+      return (
+        <ToolPartCard
+          key={item.id}
+          part={shellAsToolPart(part)}
+          markdownStyle={options.markdownStyle}
+          actions={options.actions}
+        />
+      );
     case 'diff':
       return (
         <AgentDiffBlock
@@ -762,12 +776,13 @@ function renderTimelinePart(
  */
 const ToolPartCard = memo(function ToolPartCard({
   part,
-  options,
+  markdownStyle,
+  actions,
 }: {
   part: ToolPart;
-  options: { markdownStyle: MarkdownStyle; actions: AgentToolActions };
+  markdownStyle: MarkdownStyle;
+  actions: AgentToolActions;
 }) {
-  const { actions } = options;
   const runInBackground = actions.onRunInBackground;
   const handleRunInBackground = useMemo(
     () => (runInBackground ? () => runInBackground(part.id) : undefined),
@@ -794,7 +809,7 @@ const ToolPartCard = memo(function ToolPartCard({
     <>
       <AgentToolCard
         part={part}
-        markdownStyle={options.markdownStyle}
+        markdownStyle={markdownStyle}
         {...(childStatus ? { childStatus } : {})}
         {...(actions.onOpenChildSession ? { onOpenChildSession: actions.onOpenChildSession } : {})}
         {...(handleRunInBackground ? { onRunInBackground: handleRunInBackground } : {})}
@@ -1052,10 +1067,12 @@ export const AgentUserMessage = memo(function AgentUserMessage({
 export const AgentAssistantMessage = memo(function AgentAssistantMessage({
   group,
   showReasoning,
+  reasoningLive = false,
   actions = NO_TOOL_ACTIONS,
 }: {
   group: TimelineRenderGroup;
   showReasoning: boolean;
+  reasoningLive?: boolean;
   markdownStyle: MarkdownStyle;
   actions?: AgentToolActions;
 }) {
@@ -1075,9 +1092,9 @@ export const AgentAssistantMessage = memo(function AgentAssistantMessage({
     const drawn = group.items.filter(
       (it) => it.part.type !== 'approval' && it.part.type !== 'form'
     );
-    const built = buildTimelineEntries(drawn);
+    const built = buildTimelineEntries(drawn, reasoningLive);
     return showReasoning ? built : built.filter((entry) => entry.kind !== 'reasoning');
-  }, [group.items, showReasoning]);
+  }, [group.items, showReasoning, reasoningLive]);
 
   if (entries.length === 0) return null;
 

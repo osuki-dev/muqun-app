@@ -318,3 +318,40 @@ describe('diffTotals', () => {
     expect(diffTotals([])).toEqual({ additions: 0, deletions: 0 });
   });
 });
+
+describe('large collapsed diffs', () => {
+  test('keeps only summaries until a file is expanded', () => {
+    const patch = '@@ -0,0 +1,220 @@\n' + '+added line\n'.repeat(220);
+    const files = Array.from({ length: 415 }, (_, i) => ({
+      path: `file-${i}.ts`,
+      patch,
+      additions: 220,
+      deletions: 0,
+    }));
+    const collapsed = diffRowsFromPatches(files, new Set());
+    expect(collapsed).toHaveLength(415);
+    expect(collapsed.every((row) => row.type === 'file')).toBe(true);
+    const expanded = diffRowsFromPatches(files, new Set(['file-200.ts']));
+    expect(expanded.filter((row) => row.type === 'line')).toHaveLength(220);
+    expect(expanded.filter((row) => row.type === 'file')).toHaveLength(415);
+  });
+
+  test('reads binary and rename metadata only before the first hunk', () => {
+    expect(
+      fileChangeFromDiffItem({
+        path: 'new.ts',
+        additions: 1,
+        deletions: 1,
+        patch: 'rename from old.ts\r\nrename to new.ts\r\n@@ -1 +1 @@\r\n-before\r\n+after\r\n',
+      })
+    ).toMatchObject({ status: 'renamed', oldPath: 'old.ts', binary: false });
+    expect(
+      fileChangeFromDiffItem({
+        path: 'image.png',
+        additions: 0,
+        deletions: 0,
+        patch: 'diff --git a/image.png b/image.png\nGIT binary patch\nliteral 3\nabc',
+      }).binary
+    ).toBe(true);
+  });
+});

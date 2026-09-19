@@ -42,10 +42,8 @@ describe('blendedRowSize', () => {
   });
 
   test('an empty or zeroed mix falls back to what was measured', () => {
-    expect(blendedRowSize({})).toBe(TRANSCRIPT_ESTIMATED_ITEM_SIZE);
-    expect(blendedRowSize({ assistant: 0, user: 0, system: 0 })).toBe(
-      TRANSCRIPT_ESTIMATED_ITEM_SIZE
-    );
+    expect(blendedRowSize({})).toBe(165);
+    expect(blendedRowSize({ assistant: 0, user: 0, system: 0 })).toBe(165);
   });
 
   test('a negative count is not allowed to drag the estimate down', () => {
@@ -58,11 +56,12 @@ describe('blendedRowSize', () => {
 });
 
 describe('TRANSCRIPT_ESTIMATED_ITEM_SIZE', () => {
-  test('is the measured average, not the 70 that was guessed', () => {
-    // Measured at 165dp across 104 rows on the QA emulator; the guess it
-    // replaces was less than half of it, which is what made the list allocate
-    // containers for more than twice the rows a screen holds.
-    expect(TRANSCRIPT_ESTIMATED_ITEM_SIZE).toBe(165);
+  test('reserves enough containers for a viewport of short user rows', () => {
+    const viewport = 800;
+    const allocated = Math.ceil(viewport / TRANSCRIPT_ESTIMATED_ITEM_SIZE);
+    const shortRows = Math.ceil(viewport / TRANSCRIPT_ROW_SIZE.user);
+    expect(allocated).toBeGreaterThanOrEqual(shortRows);
+    expect(TRANSCRIPT_ESTIMATED_ITEM_SIZE).toBeLessThan(blendedRowSize({}));
   });
 
   test('sits between the smallest and the largest kind', () => {

@@ -3258,7 +3258,7 @@ export function ServerTerminalWorkspace({
     const requestPaneId = selection.paneId;
     const hasAttachments = attachments.length > 0;
     if (connection.phase !== 'connected' || !ready || !requestPaneId || sending) return;
-    if (!draft.trim() && !hasAttachments && !assignment.command) return;
+    if (!draft.trim() && !hasAttachments) return;
     const sendToken = composerSendGuard.acquire();
     if (sendToken === null) return;
     const ownsDelivery = deliveryOwnership.capture();
@@ -3969,13 +3969,10 @@ export function ServerTerminalWorkspace({
           : selectedAgent
             ? t`Send to agent`
             : t`Run command`,
-        armed: Boolean((hasSendableContent || assignment.command) && selectedPane),
+        armed: Boolean(hasSendableContent && selectedPane),
         sending,
         disabled:
-          connection.phase !== 'connected' ||
-          !(hasSendableContent || assignment.command) ||
-          !selectedPane ||
-          sending,
+          connection.phase !== 'connected' || !hasSendableContent || !selectedPane || sending,
         onPress: () => void sendInput(),
       }}
     />

@@ -1,4 +1,3 @@
-import { agentCommandPresets } from '@/lib/agent-command-presets';
 import {
   collaborationPrompt,
   collaborationScope,
@@ -39,14 +38,6 @@ export function commandCollaborationDraft(
   if (command.mode !== 'agent' || command.delivery !== 'collaboration') {
     throw new Error('This shortcut does not use Agent collaboration');
   }
-  const preset =
-    !command.custom && command.instructionId
-      ? Object.hasOwn(agentCommandPresets, command.instructionId)
-        ? agentCommandPresets[command.instructionId]
-        : undefined
-      : undefined;
-  if (!command.custom && command.instructionId && !preset)
-    throw new Error('Unsupported bundled instruction');
   return {
     context: { ...context, commandId: command.id },
     prompt: command.value,
@@ -56,7 +47,6 @@ export function commandCollaborationDraft(
     recoveryPane: null,
     command: {
       name: command.label,
-      ...(preset ? { instructions: preset.build(), description: preset.description } : {}),
     },
   };
 }
