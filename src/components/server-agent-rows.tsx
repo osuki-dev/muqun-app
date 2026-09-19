@@ -23,6 +23,7 @@ import {
 } from '@/lib/server-agents';
 import { agentStatusesAreCurrent, type ServerReachability } from '@/lib/server-reachability';
 import { useAppSettings } from '@/stores/app-settings';
+import { MarqueeText } from '@/components/marquee-text';
 
 /**
  * The rows start at the card's own edge.
@@ -194,16 +195,16 @@ export function ServerAgentRows({
               )}
             </View>
             <View style={styles.nameColumn}>
-              {/* Two lines, not one: the name is the row's most informative
-                  element, and a long one clipped mid-word is the one thing
-                  here a reader cannot recover by looking harder. */}
-              <Text
+              {/* One line, and a long one travels: a row that wraps is twice
+                  the height of its neighbours and the list stops being one the
+                  eye can run down, while an ellipsis throws away the end of the
+                  name -- the part that tells two sessions of one agent apart. */}
+              <MarqueeText
                 variant="bodySmall"
                 weight={selected ? 'semibold' : undefined}
-                color={selected || agent.hasAgent ? theme.colors.primary : theme.colors.text}
-                numberOfLines={compactLabels ? 1 : 2}>
+                color={selected || agent.hasAgent ? theme.colors.primary : theme.colors.text}>
                 {agent.name}
-              </Text>
+              </MarqueeText>
               {visibleCaption ? (
                 <Text
                   variant="caption"

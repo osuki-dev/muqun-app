@@ -166,12 +166,21 @@ test('the sheets the owner reported are the ones that open tall', () => {
     'git-diff',
     'agent-vcs-diff',
     'settings-theme-browse',
+    // The owner's second round: long content opens tall, whether or not it is
+    // a list. Pairing and the context sheet were both found cut off at the
+    // first detent, and the rest are the same shape.
+    'explore',
+    'agent-context',
+    'agent-mode',
+    'settings-language',
+    'settings-font',
+    'opencode-guide',
   ]) {
     expect({ route, content: sheetRouteContent[route] }).toEqual({ route, content: 'list' });
   }
 
-  // And the short ones stay short, which is the other half of the judgement.
-  for (const route of ['agent-mode', 'agent-context', 'settings-language', 'settings-font']) {
+  // And a short form stays short, which is the other half of the judgement.
+  for (const route of ['new-task', 'web-service']) {
     expect({ route, content: sheetRouteContent[route] }).toEqual({ route, content: 'short' });
   }
 });

@@ -200,16 +200,23 @@ export const sheetRouteContent: Readonly<Record<string, SheetContent>> = {
   // say it was there, on the one screen a new reader has to get through.
   explore: 'list',
 
-  // Everything below is a handful of rows or a form, and opens where it always
-  // has. A sheet that jumps to full height to ask for four options is louder
-  // than the question.
-  'agent-mode': 'short',
-  'agent-context': 'short',
-  'settings-font': 'short',
-  'settings-language': 'short',
+  // Sheets that are not lists by nature but are as tall as one in practice. The
+  // owner's rule, after finding the context sheet cut off at "Behaviour": long
+  // content opens at the tallest detent. Context is a meter, nine figures and
+  // a group of switches; the font sheet is two slots of five rows each; the
+  // language sheet is twelve languages; the agent list grows with whatever the
+  // reader has defined under `.opencode/agent`; the guide is a page of prose.
+  'agent-context': 'list',
+  'agent-mode': 'list',
+  'settings-font': 'list',
+  'settings-language': 'list',
+  'opencode-guide': 'list',
+
+  // A short form and nothing else, which opens where it always has. A sheet
+  // that jumps to full height to ask for two fields is louder than the
+  // question.
   'new-task': 'short',
   'web-service': 'short',
-  'opencode-guide': 'short',
 };
 
 /**

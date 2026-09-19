@@ -156,6 +156,25 @@ export const RESKIN_MOTION = {
 } as const;
 
 /**
+ * A line too long for its row, read by travelling rather than by wrapping.
+ *
+ * `speed` is points per second, so a long title takes longer than a short one
+ * and both move at the pace of a finger tracing the line -- a fixed duration
+ * would make long titles race. The holds are what make it readable: the start
+ * of a title is what identifies it, so the line rests there longest.
+ *
+ * See `src/components/marquee-text.tsx`.
+ */
+export const MARQUEE_MOTION = {
+  /** Points per second. */
+  speed: 28,
+  /** At the start of the line, before it sets off. */
+  holdStartMs: 1800,
+  /** At the end, before it comes back. */
+  holdEndMs: 1200,
+} as const;
+
+/**
  * The two-step confirm: how long an armed action waits for its second tap.
  *
  * Long enough to read one sentence about what will be lost and decide, short
