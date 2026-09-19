@@ -223,7 +223,13 @@ export function WorkspacePillContent({
             </Animated.View>
           ) : null}
         </Animated.View>
-        <ChevronDown size={13} color={theme.colors.textMuted} />
+        {/* No chevron. It trailed the title, so it stood somewhere different
+            for every session name and jumped when an auto-title landed; the
+            owner's call was pin it or drop it, and pinned to the trailing edge
+            it would sit on the swipe mark that already lives there. The pill
+            is the only thing in the header that is not a round button, which
+            is affordance enough, and its accessibility label says what a tap
+            does. */}
       </Animated.View>
     </View>
   );
