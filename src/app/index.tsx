@@ -1078,7 +1078,11 @@ function ServerCard({
               {selected ? (
                 <SquareTerminal size={20} color={theme.colors.onPrimary} strokeWidth={2} />
               ) : (
-                <Server size={19} color={theme.colors.textMuted} strokeWidth={2} />
+                // The pack's primary, like every other glyph on this screen. The
+                // difference between the two tiles is the fill, not the ink: a
+                // grey glyph beside rows of accent-coloured ones read as a
+                // machine that was switched off, and this one is online.
+                <Server size={19} color={theme.colors.primary} strokeWidth={2} />
               )}
             </View>
 
