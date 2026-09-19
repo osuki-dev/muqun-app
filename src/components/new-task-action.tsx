@@ -3,7 +3,17 @@ import { useLingui } from '@lingui/react/macro';
 import { Text, useThemeTokens } from '@osuki-dev/ui';
 import { useRouter } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
-import Animated from 'react-native-reanimated';
+import Animated, {
+  Easing,
+  cancelAnimation,
+  useAnimatedStyle,
+  useReducedMotion,
+  useSharedValue,
+  withDelay,
+  withRepeat,
+  withSequence,
+  withTiming,
+} from 'react-native-reanimated';
 
 import { PressableScale } from '@/components/pressable-scale';
 import { OpenCodeIcon } from '@/components/opencode-icon';
@@ -21,7 +31,7 @@ import {
   getCachedAgentCatalogSync,
   getCachedAgentProjectsSync,
 } from '@/lib/agent-session';
-import { fadeIn, fadeOut, listLayout } from '@/lib/motion';
+import { INSTANT, SHEEN_MOTION, fadeIn, fadeOut, listLayout } from '@/lib/motion';
 
 /** How long the "OpenCode ready" label stays visible before settling to the compact icon. */
 const READY_ANNOUNCEMENT_MS = 3800;
@@ -65,6 +75,46 @@ export function NewTaskAction({
   });
   const [hasChecked, setHasChecked] = useState(false);
   const [showAnnouncement, setShowAnnouncement] = useState(false);
+
+  /**
+   * The live entry: a band of light crosses the button, the glyph swells a
+   * little as it passes, and then both rest.
+   *
+   * This button is the only thing on a server card that leads to something
+   * running on its own -- an agent that answers -- and it was drawn exactly
+   * like the inert controls beside it. One value drives both the band and the
+   * glyph, on the UI thread, and only while OpenCode has answered. Reduced
+   * motion gets the still button.
+   */
+  const reduceMotion = useReducedMotion();
+  const sheen = useSharedValue(0);
+  useEffect(() => {
+    cancelAnimation(sheen);
+    sheen.value = 0;
+    if (!isReady || reduceMotion) return;
+    sheen.value = withRepeat(
+      withSequence(
+        withDelay(
+          SHEEN_MOTION.restMs,
+          withTiming(1, { duration: SHEEN_MOTION.sweepMs, easing: Easing.inOut(Easing.quad) })
+        ),
+        withTiming(0, INSTANT)
+      ),
+      -1
+    );
+    return () => cancelAnimation(sheen);
+  }, [isReady, reduceMotion, sheen]);
+  const sheenStyle = useAnimatedStyle(() => ({
+    // From fully off the leading edge to fully off the trailing one, in units
+    // of the band's own width, so the pill and the square travel alike.
+    opacity: sheen.value === 0 ? 0 : 1,
+    transform: [{ translateX: -60 + sheen.value * 220 }, { rotate: '18deg' }],
+  }));
+  const glyphStyle = useAnimatedStyle(() => {
+    // A bump centred on the middle of the crossing: 0 at both ends, 1 half way.
+    const bump = 1 - Math.abs(sheen.value * 2 - 1);
+    return { transform: [{ scale: 1 + (SHEEN_MOTION.swell - 1) * bump }] };
+  });
   const announcementTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Probe OpenCode readiness on mount / config change
@@ -258,7 +308,18 @@ export function NewTaskAction({
             borderColor: surfaceBackground(theme.colors.border),
           },
         ]}>
-        <OpenCodeIcon size={18} color={theme.colors.primary} />
+        {/* The light first, so the glyph is drawn over it. */}
+        <Animated.View
+          pointerEvents="none"
+          style={[
+            styles.sheen,
+            { backgroundColor: withAlpha(theme.colors.primary, 0.22) },
+            sheenStyle,
+          ]}
+        />
+        <Animated.View style={glyphStyle}>
+          <OpenCodeIcon size={18} color={theme.colors.primary} />
+        </Animated.View>
         {showAnnouncement ? (
           <Animated.View
             entering={fadeIn()}
@@ -289,6 +350,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     flexDirection: 'row',
     borderWidth: StyleSheet.hairlineWidth,
+    // The sheen is wider than the button and must not be seen leaving it.
+    overflow: 'hidden',
+  },
+  sheen: {
+    position: 'absolute',
+    top: -12,
+    bottom: -12,
+    left: 0,
+    width: 22,
   },
   square: {
     width: 36,

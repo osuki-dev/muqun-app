@@ -156,6 +156,25 @@ export const RESKIN_MOTION = {
 } as const;
 
 /**
+ * A sheen crossing a control that leads somewhere alive.
+ *
+ * One pass of light, then a long rest: the pass says "this is live", the rest
+ * keeps it from becoming the thing on the screen that will not stop moving.
+ * The rest is several times the pass on purpose -- a control that shimmers
+ * continuously is an advertisement.
+ *
+ * See `src/components/new-task-action.tsx`.
+ */
+export const SHEEN_MOTION = {
+  /** One crossing, edge to edge. */
+  sweepMs: 1100,
+  /** Between crossings. */
+  restMs: 4200,
+  /** How far the glyph swells as the light crosses it, as a scale. */
+  swell: 1.08,
+} as const;
+
+/**
  * A line too long for its row, read by travelling rather than by wrapping.
  *
  * `speed` is points per second, so a long title takes longer than a short one
