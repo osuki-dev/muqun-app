@@ -251,7 +251,7 @@ export const AgentContextSheet = memo(function AgentContextSheet({
           }
         />
         <SheetSceneRow
-          title={t`Working directory`}
+          title={t`Project`}
           meta={
             <Text
               variant="caption"

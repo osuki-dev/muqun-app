@@ -227,7 +227,7 @@ export const AgentWorkspaceSheet = memo(function AgentWorkspaceSheet({
           {suggestions.length > 0 ? (
             <Animated.View layout={listLayout('short')}>
               <SheetSceneGroupRule />
-              <SheetSceneGroupHeading title={t`Directories`} />
+              <SheetSceneGroupHeading title={t`Folders`} />
               {suggestions.map((item) => (
                 <SheetSceneRow
                   key={item.path}

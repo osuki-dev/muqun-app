@@ -211,7 +211,7 @@ const AgentNoticeRow = memo(function AgentNoticeRow({ part }: { part: AgentPart 
             : t`Agent · ${part.agent}`,
         };
       case 'location_switched':
-        return { Icon: FolderGit2, text: t`Directory · ${part.directory}` };
+        return { Icon: FolderGit2, text: t`Project · ${part.directory}` };
       case 'skill':
         // "Skill · report" reads as a label on a thing; what the row is
         // announcing is that the agent has just picked the skill up.

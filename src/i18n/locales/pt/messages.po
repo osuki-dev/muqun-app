@@ -1719,18 +1719,9 @@ msgstr "Resumo do diff"
 msgid "Direct control for OpenCode autonomous coding. Follow real-time reasoning, inspect code diffs, review step-by-step todos, and guide tasks on the go."
 msgstr "Controle direto para agentes OpenCode. Acompanhe o raciocínio em tempo real, inspecione diffs de código, revise tarefas passo a passo e comande seus agentes de onde estiver"
 
-#: src/components/agent-workspace-sheet.tsx
-msgid "Directories"
-msgstr "Diretórios"
-
 #: src/components/new-task-sheet.tsx
 msgid "Directory"
 msgstr "Diretório"
-
-#. placeholder {0}: part.directory
-#: src/components/agent-message-block.tsx
-msgid "Directory · {0}"
-msgstr "Diretório · {0}"
 
 #. placeholder {0}: record.label
 #: src/components/ssh-terminal-workspace.tsx
@@ -2020,6 +2011,10 @@ msgstr "Recolher os passos de ferramentas"
 #: src/components/agent-workspace-sheet.tsx
 msgid "Folder is missing"
 msgstr "A pasta não existe"
+
+#: src/components/agent-workspace-sheet.tsx
+msgid "Folders"
+msgstr "Pastas"
 
 #: src/components/settings-language-sheet.tsx
 msgid "Follow the language your phone is set to"
@@ -3401,10 +3396,16 @@ msgid "Private key (leave blank to keep the saved one)"
 msgstr "Chave privada (deixe em branco para manter a guardada)"
 
 #: src/app/agent.tsx
+#: src/components/agent-context-sheet.tsx
 #: src/components/agent-worktree-sheet.tsx
 #: src/components/composer-popup.tsx
 msgid "Project"
 msgstr "Projeto"
+
+#. placeholder {0}: part.directory
+#: src/components/agent-message-block.tsx
+msgid "Project · {0}"
+msgstr "Projeto · {0}"
 
 #. placeholder {0}: answer.missing?.directory ?? ''
 #. placeholder {0}: gone.directory
@@ -5399,10 +5400,6 @@ msgstr "Enquanto você esteve fora"
 #: src/i18n/labels.ts
 msgid "Working"
 msgstr "A trabalhar"
-
-#: src/components/agent-context-sheet.tsx
-msgid "Working directory"
-msgstr "Diretório de trabalho"
 
 #: src/components/composer-popup.tsx
 #: src/components/session-map.tsx

@@ -1719,18 +1719,9 @@ msgstr "Diff 摘要"
 msgid "Direct control for OpenCode autonomous coding. Follow real-time reasoning, inspect code diffs, review step-by-step todos, and guide tasks on the go."
 msgstr "專為 OpenCode 自主編程打造。行動端即時追蹤思考歷程、審查程式碼變更、追蹤逐步任務，隨時掌控遠端代理"
 
-#: src/components/agent-workspace-sheet.tsx
-msgid "Directories"
-msgstr "目錄"
-
 #: src/components/new-task-sheet.tsx
 msgid "Directory"
 msgstr "目錄"
-
-#. placeholder {0}: part.directory
-#: src/components/agent-message-block.tsx
-msgid "Directory · {0}"
-msgstr "目錄 · {0}"
 
 #. placeholder {0}: record.label
 #: src/components/ssh-terminal-workspace.tsx
@@ -2020,6 +2011,10 @@ msgstr "收合工具步驟"
 #: src/components/agent-workspace-sheet.tsx
 msgid "Folder is missing"
 msgstr "資料夾已不存在"
+
+#: src/components/agent-workspace-sheet.tsx
+msgid "Folders"
+msgstr "資料夾"
 
 #: src/components/settings-language-sheet.tsx
 msgid "Follow the language your phone is set to"
@@ -3401,10 +3396,16 @@ msgid "Private key (leave blank to keep the saved one)"
 msgstr "私密金鑰（留空以保留已儲存的金鑰）"
 
 #: src/app/agent.tsx
+#: src/components/agent-context-sheet.tsx
 #: src/components/agent-worktree-sheet.tsx
 #: src/components/composer-popup.tsx
 msgid "Project"
 msgstr "專案"
+
+#. placeholder {0}: part.directory
+#: src/components/agent-message-block.tsx
+msgid "Project · {0}"
+msgstr "專案 · {0}"
 
 #. placeholder {0}: answer.missing?.directory ?? ''
 #. placeholder {0}: gone.directory
@@ -5399,10 +5400,6 @@ msgstr "離開期間"
 #: src/i18n/labels.ts
 msgid "Working"
 msgstr "工作中"
-
-#: src/components/agent-context-sheet.tsx
-msgid "Working directory"
-msgstr "工作目錄"
 
 #: src/components/composer-popup.tsx
 #: src/components/session-map.tsx
