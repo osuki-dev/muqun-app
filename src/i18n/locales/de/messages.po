@@ -265,6 +265,10 @@ msgstr "Ein Gateway auf einem Rechner, den du per SSH erreichst – auch eines, 
 msgid "a new {0}"
 msgstr "ein neuer {0}"
 
+#: src/components/settings-servers.tsx
+msgid "A plain shell on any machine you can reach. No Gateway needed."
+msgstr "Eine einfache Shell auf jedem erreichbaren Rechner. Kein Gateway nötig"
+
 #: src/components/agent-worktree-sheet.tsx
 msgid "A second checkout of this repository"
 msgstr "Ein zweiter Checkout dieses Repositorys"
@@ -3217,12 +3221,17 @@ msgstr "Ausgabe auf einem hardwarebeschleunigten Terminal-Raster mit sofort ansp
 #: src/app/index.tsx
 #: src/components/app-drawer-content.tsx
 #: src/components/pad-server-rail.tsx
+#: src/components/settings-servers.tsx
 msgid "Pair a server"
 msgstr "Server koppeln"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Pair again"
 msgstr "Erneut koppeln"
+
+#: src/components/settings-servers.tsx
+msgid "Pair one below."
+msgstr "Kopple unten einen"
 
 #: src/app/explore.tsx
 msgid "Pair server"
@@ -3905,6 +3914,10 @@ msgstr "Erneut scannen"
 msgid "Scan the Gateway QR."
 msgstr "Scanne den Gateway-QR-Code"
 
+#: src/components/settings-servers.tsx
+msgid "Scan the Gateway’s QR code, or enter its address."
+msgstr "Scanne den QR-Code des Gateways oder gib seine Adresse ein"
+
 #: src/components/launch-intro.tsx
 msgid "Scan the QR code of a Gateway running on your own computer. No account, no relay, end-to-end encrypted, and 32 handcrafted themes to make it yours."
 msgstr "Scannen Sie den QR-Code eines Gateways auf Ihrem eigenen Computer. Kein Account, kein Relay, Ende-zu-Ende-verschlüsselt und 32 handgefertigte Themes für Ihren eigenen Stil"
@@ -4333,6 +4346,7 @@ msgstr "SSH-Host"
 
 #: src/app/index.tsx
 #: src/components/pad-server-rail.tsx
+#: src/components/settings-servers.tsx
 msgid "SSH hosts"
 msgstr "SSH-Hosts"
 
@@ -5312,10 +5326,6 @@ msgstr "Sitzung {name} verwenden, {kind}"
 #: src/components/theme-link-import.tsx
 msgid "Use the repository URL, then enter its branch and theme file below"
 msgstr "Verwende die Repository-URL und gib unten den Branch und die Theme-Datei ein"
-
-#: src/components/settings-servers.tsx
-msgid "Use the scan button on the home screen to add one."
-msgstr "Füge einen über die Scan-Taste auf dem Startbildschirm hinzu"
 
 #: src/components/theme-appearance-settings.tsx
 msgid "Use theme defaults"

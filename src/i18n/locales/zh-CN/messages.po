@@ -265,6 +265,10 @@ msgstr "你能通过 SSH 登录的机器上的 Gateway，即使它只在自己�
 msgid "a new {0}"
 msgstr "新的 {0}"
 
+#: src/components/settings-servers.tsx
+msgid "A plain shell on any machine you can reach. No Gateway needed."
+msgstr "在任何你能连上的机器上开一个普通 shell，不需要 Gateway"
+
 #: src/components/agent-worktree-sheet.tsx
 msgid "A second checkout of this repository"
 msgstr "此仓库的第二份检出"
@@ -3217,12 +3221,17 @@ msgstr "硬件加速字符网格，保留真实色彩与排版，配合即按即
 #: src/app/index.tsx
 #: src/components/app-drawer-content.tsx
 #: src/components/pad-server-rail.tsx
+#: src/components/settings-servers.tsx
 msgid "Pair a server"
 msgstr "配对服务器"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Pair again"
 msgstr "重新配对"
+
+#: src/components/settings-servers.tsx
+msgid "Pair one below."
+msgstr "在下方配对一台"
 
 #: src/app/explore.tsx
 msgid "Pair server"
@@ -3905,6 +3914,10 @@ msgstr "重新扫描"
 msgid "Scan the Gateway QR."
 msgstr "扫描 Gateway 的二维码"
 
+#: src/components/settings-servers.tsx
+msgid "Scan the Gateway’s QR code, or enter its address."
+msgstr "扫描 Gateway 的二维码，或输入它的地址"
+
 #: src/components/launch-intro.tsx
 msgid "Scan the QR code of a Gateway running on your own computer. No account, no relay, end-to-end encrypted, and 32 handcrafted themes to make it yours."
 msgstr "扫描自己电脑上 Gateway 的二维码即可直连。无需注册账号，无任何云端中继，全链路端到端加密，并搭配 32 套专属赛博机械主题"
@@ -4333,6 +4346,7 @@ msgstr "SSH 主机"
 
 #: src/app/index.tsx
 #: src/components/pad-server-rail.tsx
+#: src/components/settings-servers.tsx
 msgid "SSH hosts"
 msgstr "SSH 主机"
 
@@ -5312,10 +5326,6 @@ msgstr "使用会话 {name}，{kind}"
 #: src/components/theme-link-import.tsx
 msgid "Use the repository URL, then enter its branch and theme file below"
 msgstr "请使用仓库链接，并在下方填写分支和主题文件"
-
-#: src/components/settings-servers.tsx
-msgid "Use the scan button on the home screen to add one."
-msgstr "使用主页上的扫描按钮来添加"
 
 #: src/components/theme-appearance-settings.tsx
 msgid "Use theme defaults"

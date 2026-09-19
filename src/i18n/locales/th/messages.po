@@ -265,6 +265,10 @@ msgstr "Gateway บนเครื่องที่คุณเชื่อม�
 msgid "a new {0}"
 msgstr "{0} ใหม่"
 
+#: src/components/settings-servers.tsx
+msgid "A plain shell on any machine you can reach. No Gateway needed."
+msgstr "เชลล์ธรรมดาบนเครื่องใดก็ได้ที่คุณเข้าถึงได้ ไม่ต้องใช้ Gateway"
+
 #: src/components/agent-worktree-sheet.tsx
 msgid "A second checkout of this repository"
 msgstr "สำเนาที่สองของที่เก็บโค้ดนี้"
@@ -3217,12 +3221,17 @@ msgstr "แสดงผลบนตารางเทอร์มินัลเ
 #: src/app/index.tsx
 #: src/components/app-drawer-content.tsx
 #: src/components/pad-server-rail.tsx
+#: src/components/settings-servers.tsx
 msgid "Pair a server"
 msgstr "จับคู่เซิร์ฟเวอร์"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Pair again"
 msgstr "จับคู่อีกครั้ง"
+
+#: src/components/settings-servers.tsx
+msgid "Pair one below."
+msgstr "จับคู่ได้ที่ด้านล่าง"
 
 #: src/app/explore.tsx
 msgid "Pair server"
@@ -3905,6 +3914,10 @@ msgstr "สแกนอีกครั้ง"
 msgid "Scan the Gateway QR."
 msgstr "สแกน QR ของ Gateway"
 
+#: src/components/settings-servers.tsx
+msgid "Scan the Gateway’s QR code, or enter its address."
+msgstr "สแกน QR code ของ Gateway หรือพิมพ์ที่อยู่"
+
 #: src/components/launch-intro.tsx
 msgid "Scan the QR code of a Gateway running on your own computer. No account, no relay, end-to-end encrypted, and 32 handcrafted themes to make it yours."
 msgstr "สแกนรหัส QR ของ Gateway ที่ทำงานบนคอมพิวเตอร์ของคุณเพื่อเชื่อมต่อโดยตรง ไม่มีบัญชี ไม่ต้องผ่านรีเลย์ เข้ารหัสแบบต้นทางถึงปลายทาง พร้อม 32 ธีมพิเศษ"
@@ -4333,6 +4346,7 @@ msgstr "โฮสต์ SSH"
 
 #: src/app/index.tsx
 #: src/components/pad-server-rail.tsx
+#: src/components/settings-servers.tsx
 msgid "SSH hosts"
 msgstr "โฮสต์ SSH"
 
@@ -5312,10 +5326,6 @@ msgstr "ใช้เซสชัน {name} {kind}"
 #: src/components/theme-link-import.tsx
 msgid "Use the repository URL, then enter its branch and theme file below"
 msgstr "ใช้ URL ที่เก็บโค้ด แล้วป้อนสาขาและไฟล์ธีมด้านล่าง"
-
-#: src/components/settings-servers.tsx
-msgid "Use the scan button on the home screen to add one."
-msgstr "ใช้ปุ่มสแกนที่หน้าแรกเพื่อเพิ่มเซิร์ฟเวอร์"
 
 #: src/components/theme-appearance-settings.tsx
 msgid "Use theme defaults"

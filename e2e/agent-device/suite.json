@@ -3580,7 +3580,7 @@
       },
       {
         "target": {
-          "text": "Use the scan button on the home screen to add one"
+          "text": "Pair one below"
         },
         "mode": "visible",
         "run": "flows/settings.ad#s4"

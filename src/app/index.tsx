@@ -134,6 +134,7 @@ function ServerList({ width, layoutMode }: { width: number; layoutMode: 'compact
   const { record, records, loading, hydrationError, retryHydration, selectRecord, enterDemo } =
     useGatewayRecord();
   const [refreshing, setRefreshing] = useState(false);
+  const hasPairedServer = records.some((server) => server.serverId !== DEMO_SERVER_ID);
   const appActive = useAppActive();
   const isFocused = useIsFocused();
   const scrollY = useSharedValue(0);
@@ -632,21 +633,30 @@ function ServerList({ width, layoutMode }: { width: number; layoutMode: 'compact
             state's one button; a coral control in the corner is exactly the
             batch4 `ADD` pill under a different icon. */}
                 <Animated.View style={[styles.headerActions, headerActionsStyle]}>
-                  {/* A plain shell on any machine with sshd, beside the gateway
+                  {/* Two doors that are only here until the first server is
+              paired. After that they are things done once a month, standing in
+              the most-used corner of the most-used screen; both live in
+              Settings permanently, which is where a reader looks to add
+              another machine. The demo server does not count as one. */}
+                  {hasPairedServer ? null : (
+                    <>
+                      {/* A plain shell on any machine with sshd, beside the gateway
               entries rather than among them: it pairs nothing and needs no
               herdr, so it is the one door here that is not about a gateway. */}
-                  <HeaderButton label={t`SSH`} onPress={() => router.push('/ssh')}>
-                    <SquareTerminal size={20} color={theme.colors.textMuted} strokeWidth={2} />
-                  </HeaderButton>
-                  <HeaderButton
-                    label={t`Scan a gateway QR`}
-                    onPress={() => router.push('/explore')}>
-                    {/* The same mark as the empty card's corner brackets, at a fifth of
+                      <HeaderButton label={t`SSH`} onPress={() => router.push('/ssh')}>
+                        <SquareTerminal size={20} color={theme.colors.textMuted} strokeWidth={2} />
+                      </HeaderButton>
+                      <HeaderButton
+                        label={t`Scan a gateway QR`}
+                        onPress={() => router.push('/explore')}>
+                        {/* The same mark as the empty card's corner brackets, at a fifth of
                 the size: the one productive gesture on this screen looks the
                 same whether it is a 64pt viewfinder in the middle of an empty
                 screen or a 20pt glyph in the corner of a full one. */}
-                    <ScanLine size={20} color={theme.colors.textMuted} strokeWidth={2} />
-                  </HeaderButton>
+                        <ScanLine size={20} color={theme.colors.textMuted} strokeWidth={2} />
+                      </HeaderButton>
+                    </>
+                  )}
                   <HeaderButton label={t`Settings`} onPress={() => router.push('/settings')}>
                     <Settings size={20} color={theme.colors.textMuted} strokeWidth={2} />
                   </HeaderButton>

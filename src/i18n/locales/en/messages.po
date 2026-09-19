@@ -265,6 +265,10 @@ msgstr "A Gateway on a machine you can SSH into, even one that only listens on i
 msgid "a new {0}"
 msgstr "a new {0}"
 
+#: src/components/settings-servers.tsx
+msgid "A plain shell on any machine you can reach. No Gateway needed."
+msgstr "A plain shell on any machine you can reach. No Gateway needed"
+
 #: src/components/agent-worktree-sheet.tsx
 msgid "A second checkout of this repository"
 msgstr "A second checkout of this repository"
@@ -3217,12 +3221,17 @@ msgstr "Output lands on a hardware-accelerated terminal grid with instant-respon
 #: src/app/index.tsx
 #: src/components/app-drawer-content.tsx
 #: src/components/pad-server-rail.tsx
+#: src/components/settings-servers.tsx
 msgid "Pair a server"
 msgstr "Pair a server"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Pair again"
 msgstr "Pair again"
+
+#: src/components/settings-servers.tsx
+msgid "Pair one below."
+msgstr "Pair one below"
 
 #: src/app/explore.tsx
 msgid "Pair server"
@@ -3905,6 +3914,10 @@ msgstr "Scan again"
 msgid "Scan the Gateway QR."
 msgstr "Scan the Gateway QR"
 
+#: src/components/settings-servers.tsx
+msgid "Scan the Gateway’s QR code, or enter its address."
+msgstr "Scan the Gateway’s QR code, or enter its address"
+
 #: src/components/launch-intro.tsx
 msgid "Scan the QR code of a Gateway running on your own computer. No account, no relay, end-to-end encrypted, and 32 handcrafted themes to make it yours."
 msgstr "Scan the QR code of a Gateway running on your own computer. No account, no relay, end-to-end encrypted, and 32 handcrafted themes to make it yours"
@@ -4333,6 +4346,7 @@ msgstr "SSH host"
 
 #: src/app/index.tsx
 #: src/components/pad-server-rail.tsx
+#: src/components/settings-servers.tsx
 msgid "SSH hosts"
 msgstr "SSH hosts"
 
@@ -5312,10 +5326,6 @@ msgstr "Use the {name} session, {kind}"
 #: src/components/theme-link-import.tsx
 msgid "Use the repository URL, then enter its branch and theme file below"
 msgstr "Use the repository URL, then enter its branch and theme file below"
-
-#: src/components/settings-servers.tsx
-msgid "Use the scan button on the home screen to add one."
-msgstr "Use the scan button on the home screen to add one"
 
 #: src/components/theme-appearance-settings.tsx
 msgid "Use theme defaults"

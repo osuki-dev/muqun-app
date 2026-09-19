@@ -265,6 +265,10 @@ msgstr "SSH で入れるマシン上の Gateway。自身のループバックだ
 msgid "a new {0}"
 msgstr "新しい {0}"
 
+#: src/components/settings-servers.tsx
+msgid "A plain shell on any machine you can reach. No Gateway needed."
+msgstr "接続できるどのマシンでも使える普通のシェル。Gateway は不要です"
+
 #: src/components/agent-worktree-sheet.tsx
 msgid "A second checkout of this repository"
 msgstr "このリポジトリの 2 つ目のチェックアウト"
@@ -3217,12 +3221,17 @@ msgstr "ハードウェアアクセラレーションによる正確なターミ
 #: src/app/index.tsx
 #: src/components/app-drawer-content.tsx
 #: src/components/pad-server-rail.tsx
+#: src/components/settings-servers.tsx
 msgid "Pair a server"
 msgstr "サーバーをペアリング"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Pair again"
 msgstr "再ペアリング"
+
+#: src/components/settings-servers.tsx
+msgid "Pair one below."
+msgstr "下でペアリングしてください"
 
 #: src/app/explore.tsx
 msgid "Pair server"
@@ -3905,6 +3914,10 @@ msgstr "もう一度スキャン"
 msgid "Scan the Gateway QR."
 msgstr "Gateway の QR コードをスキャンしてください"
 
+#: src/components/settings-servers.tsx
+msgid "Scan the Gateway’s QR code, or enter its address."
+msgstr "Gateway の QR コードをスキャンするか、アドレスを入力します"
+
 #: src/components/launch-intro.tsx
 msgid "Scan the QR code of a Gateway running on your own computer. No account, no relay, end-to-end encrypted, and 32 handcrafted themes to make it yours."
 msgstr "自前のコンピュータで動作する Gateway の QR コードをスキャンして直接接続。アカウントや中継サーバーは一切不要、エンドツーエンド暗号化と32種の美しいテーマを搭載"
@@ -4333,6 +4346,7 @@ msgstr "SSH ホスト"
 
 #: src/app/index.tsx
 #: src/components/pad-server-rail.tsx
+#: src/components/settings-servers.tsx
 msgid "SSH hosts"
 msgstr "SSH ホスト"
 
@@ -5312,10 +5326,6 @@ msgstr "セッション {name} を使用、{kind}"
 #: src/components/theme-link-import.tsx
 msgid "Use the repository URL, then enter its branch and theme file below"
 msgstr "リポジトリの URL を使い、そのブランチとテーマファイルを下に入力してください"
-
-#: src/components/settings-servers.tsx
-msgid "Use the scan button on the home screen to add one."
-msgstr "ホーム画面のスキャンボタンから追加してください"
 
 #: src/components/theme-appearance-settings.tsx
 msgid "Use theme defaults"

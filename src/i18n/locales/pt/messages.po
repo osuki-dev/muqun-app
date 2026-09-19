@@ -265,6 +265,10 @@ msgstr "Um Gateway numa máquina em que você entra por SSH, mesmo um que só es
 msgid "a new {0}"
 msgstr "um novo {0}"
 
+#: src/components/settings-servers.tsx
+msgid "A plain shell on any machine you can reach. No Gateway needed."
+msgstr "Uma shell simples em qualquer máquina a que chegue. Não precisa de Gateway"
+
 #: src/components/agent-worktree-sheet.tsx
 msgid "A second checkout of this repository"
 msgstr "Um segundo checkout deste repositório"
@@ -3217,12 +3221,17 @@ msgstr "Saída em uma grade de terminal acelerada por hardware com teclas de res
 #: src/app/index.tsx
 #: src/components/app-drawer-content.tsx
 #: src/components/pad-server-rail.tsx
+#: src/components/settings-servers.tsx
 msgid "Pair a server"
 msgstr "Emparelhar um servidor"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Pair again"
 msgstr "Emparelhar novamente"
+
+#: src/components/settings-servers.tsx
+msgid "Pair one below."
+msgstr "Emparelhe um abaixo"
 
 #: src/app/explore.tsx
 msgid "Pair server"
@@ -3905,6 +3914,10 @@ msgstr "Ler novamente"
 msgid "Scan the Gateway QR."
 msgstr "Leia o código QR do Gateway"
 
+#: src/components/settings-servers.tsx
+msgid "Scan the Gateway’s QR code, or enter its address."
+msgstr "Leia o código QR do Gateway ou escreva o endereço"
+
 #: src/components/launch-intro.tsx
 msgid "Scan the QR code of a Gateway running on your own computer. No account, no relay, end-to-end encrypted, and 32 handcrafted themes to make it yours."
 msgstr "Escaneie o código QR do Gateway no seu computador. Sem conta, sem servidores de relay, criptografado de ponta a ponta e com 32 temas artesanais"
@@ -4333,6 +4346,7 @@ msgstr "Host SSH"
 
 #: src/app/index.tsx
 #: src/components/pad-server-rail.tsx
+#: src/components/settings-servers.tsx
 msgid "SSH hosts"
 msgstr "Hosts SSH"
 
@@ -5312,10 +5326,6 @@ msgstr "Usar a sessão {name}, {kind}"
 #: src/components/theme-link-import.tsx
 msgid "Use the repository URL, then enter its branch and theme file below"
 msgstr "Use a URL do repositório e informe abaixo a branch e o arquivo do tema"
-
-#: src/components/settings-servers.tsx
-msgid "Use the scan button on the home screen to add one."
-msgstr "Adicione um com o botão de leitura no ecrã principal"
 
 #: src/components/theme-appearance-settings.tsx
 msgid "Use theme defaults"

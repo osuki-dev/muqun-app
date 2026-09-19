@@ -3,7 +3,7 @@ import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { Spinner, Text, useThemeTokens, useToast } from '@osuki-dev/ui';
-import { useFocusEffect } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { Check, ChevronDown, Pencil, Trash2 } from 'lucide-react-native';
 import { Fragment, useCallback, useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -13,6 +13,7 @@ import { PressableScale } from '@/components/pressable-scale';
 import {
   LADDER,
   SettingsBlock,
+  SettingsChoiceRow,
   SettingsSection,
   SettingsSeparator,
 } from '@/components/settings-chrome';
@@ -78,6 +79,7 @@ export function SettingsServers({ title }: { title: string }) {
   // note at the top of the settings screen for why.
   const { t } = useLingui();
   useRenderTally('SettingsServers');
+  const router = useRouter();
 
   const theme = useThemeTokens();
   const { showToast } = useToast();
@@ -161,7 +163,7 @@ export function SettingsServers({ title }: { title: string }) {
             <Trans>No servers paired yet</Trans>
           </Text>
           <Text variant="caption" color={theme.colors.textMuted}>
-            <Trans>Use the scan button on the home screen to add one.</Trans>
+            <Trans>Pair one below.</Trans>
           </Text>
         </View>
       ) : (
@@ -195,6 +197,31 @@ export function SettingsServers({ title }: { title: string }) {
           })}
         </View>
       )}
+
+      {/* The two ways onto a machine, always here. Home carries them as header
+          buttons only until the first server is paired: after that they are
+          things done once a month in a corner used every minute, and this is
+          the page a reader goes to for "add another". Unconditional, so there
+          is one place that never moves. */}
+      <SettingsSeparator />
+      <SettingsChoiceRow
+        label={t`Pair a server`}
+        value=""
+        detail={t`Scan the Gateway’s QR code, or enter its address.`}
+        accessibilityLabel={t`Pair a server`}
+        testID="settings-pair-row"
+        onPress={() => router.push('/explore')}
+      />
+      <SettingsSeparator />
+      <SettingsChoiceRow
+        label={t`SSH hosts`}
+        value=""
+        detail={t`A plain shell on any machine you can reach. No Gateway needed.`}
+        accessibilityLabel={t`SSH hosts`}
+        testID="settings-ssh-row"
+        onPress={() => router.push('/ssh')}
+      />
+      <SettingsSeparator />
 
       {/* The preference that governs how the home screen draws this same list,
           under the list it is about rather than in a one-row section of its

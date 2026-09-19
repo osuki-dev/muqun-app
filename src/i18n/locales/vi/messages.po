@@ -265,6 +265,10 @@ msgstr "Một Gateway trên máy bạn có thể SSH vào, kể cả máy chỉ 
 msgid "a new {0}"
 msgstr "một {0} mới"
 
+#: src/components/settings-servers.tsx
+msgid "A plain shell on any machine you can reach. No Gateway needed."
+msgstr "Một shell thường trên bất kỳ máy nào bạn kết nối được. Không cần Gateway"
+
 #: src/components/agent-worktree-sheet.tsx
 msgid "A second checkout of this repository"
 msgstr "Một bản checkout thứ hai của kho mã này"
@@ -3217,12 +3221,17 @@ msgstr "Hiển thị trên lưới terminal tăng tốc phần cứng với hàn
 #: src/app/index.tsx
 #: src/components/app-drawer-content.tsx
 #: src/components/pad-server-rail.tsx
+#: src/components/settings-servers.tsx
 msgid "Pair a server"
 msgstr "Ghép nối máy chủ"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Pair again"
 msgstr "Ghép nối lại"
+
+#: src/components/settings-servers.tsx
+msgid "Pair one below."
+msgstr "Ghép nối ở bên dưới"
 
 #: src/app/explore.tsx
 msgid "Pair server"
@@ -3905,6 +3914,10 @@ msgstr "Quét lại"
 msgid "Scan the Gateway QR."
 msgstr "Quét mã QR của Gateway"
 
+#: src/components/settings-servers.tsx
+msgid "Scan the Gateway’s QR code, or enter its address."
+msgstr "Quét mã QR của Gateway hoặc nhập địa chỉ"
+
 #: src/components/launch-intro.tsx
 msgid "Scan the QR code of a Gateway running on your own computer. No account, no relay, end-to-end encrypted, and 32 handcrafted themes to make it yours."
 msgstr "Quét mã QR Gateway đang chạy trên máy tính của bạn để kết nối trực tiếp. Không tài khoản, không máy chủ trung gian, mã hóa đầu cuối và 32 chủ đề tinh tế"
@@ -4333,6 +4346,7 @@ msgstr "Host SSH"
 
 #: src/app/index.tsx
 #: src/components/pad-server-rail.tsx
+#: src/components/settings-servers.tsx
 msgid "SSH hosts"
 msgstr "Host SSH"
 
@@ -5312,10 +5326,6 @@ msgstr "Dùng phiên {name}, {kind}"
 #: src/components/theme-link-import.tsx
 msgid "Use the repository URL, then enter its branch and theme file below"
 msgstr "Dùng URL kho mã, rồi nhập nhánh và tệp giao diện bên dưới"
-
-#: src/components/settings-servers.tsx
-msgid "Use the scan button on the home screen to add one."
-msgstr "Dùng nút quét trên màn hình chính để thêm"
 
 #: src/components/theme-appearance-settings.tsx
 msgid "Use theme defaults"
