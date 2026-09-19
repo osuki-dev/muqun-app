@@ -121,7 +121,9 @@ export function TerminalComposer({
           text={inputProps.placeholder}
           visible={!inputProps.value}
           color={placeholderText}
-          style={[composerStyles.inputText, fieldFont, inputFamily]}
+          // The family only: the colour is the placeholder's own tint, and the
+          // field's text colour in this array would paint over it.
+          style={[composerStyles.inputText, { fontFamily: mono }, inputFamily]}
         />
       </View>
       <ComposerSendButton
