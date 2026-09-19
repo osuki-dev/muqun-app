@@ -293,34 +293,14 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     []
   );
 
-  /**
-   * How much of the top of the screen a notice is standing on.
-   *
-   * A notice is an overlay, and an overlay over a transcript is a lid on the
-   * row the reader was reading -- the permission card's own title, in the case
-   * that made this worth fixing. Padding the *content* would not have helped:
-   * the notice sits at a fixed place on the screen, not at the top of the
-   * scroll. So the transcript's viewport gives the notice its room and takes
-   * it back, which is a move the reader can follow rather than a row that was
-   * simply covered.
-   *
-   * Two sources, one gap: this screen's own notice, and the app-wide deck
-   * (`InAppNotificationHost`) that an approval push lands in. They stand in
-   * the same place, so the room they need is the larger of the two.
-   */
+  // Only screen-owned conditions reserve space. Global notifications float
+  // independently and must not resize the transcript or move its viewport.
   const [screenNoticeHeight, setScreenNoticeHeight] = useState(0);
-  const inAppNoticeHeight = useInAppNotifications((state) =>
-    state.items.length > 0 ? state.overlayHeight : 0
-  );
   const noticeReserve = useSharedValue(0);
-  // How far down the screen a notice reaches, not how tall it is: each one
-  // starts below the chrome, and the room to leave is the bottom edge.
-  const reserved = Math.max(
+  const reserved =
     screenNotice || workspaceMissing
       ? Math.max(0, topInset - SCREEN_NOTICE_HEADER_GAP) + screenNoticeHeight
-      : 0,
-    inAppNoticeHeight
-  );
+      : 0;
   const reservedWithGap = reserved > 0 ? reserved + NOTICE_RESERVE_GAP : 0;
   useEffect(() => {
     noticeReserve.value = withTiming(reservedWithGap, timing('dropdown'));

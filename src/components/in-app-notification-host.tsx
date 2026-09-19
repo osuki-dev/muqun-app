@@ -1,4 +1,3 @@
-import { plural } from '@lingui/core/macro';
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { useLingui } from '@lingui/react/macro';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
@@ -8,13 +7,7 @@ import { Text } from '@/components/text';
 import { router, type Href } from 'expo-router';
 import { Bell } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
-import {
-  AppState,
-  StyleSheet,
-  View,
-  type AccessibilityActionEvent,
-  type LayoutChangeEvent,
-} from 'react-native';
+import { AppState, StyleSheet, View, type AccessibilityActionEvent } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   cancelAnimation,
@@ -31,7 +24,7 @@ import { permissionActionPhrase } from '@/i18n/labels';
 import { readApprovalBody } from '@/lib/agent-engine-text';
 import { feedback } from '@/lib/feedback';
 import { noticeTitleParts } from '@/lib/in-app-notifications';
-import { fadeInDown, fadeOutUp, settleTo } from '@/lib/motion';
+import { fadeInDown, settleTo } from '@/lib/motion';
 import { noticeDragOffset, noticeSwipeEnd } from '@/lib/notice-swipe';
 import { AGENT_TYPE } from '@/constants/agent-type';
 import { useAppSettings } from '@/stores/app-settings';
@@ -100,7 +93,10 @@ export function InAppNotificationHost() {
   useEffect(() => {
     if (!enabled) useInAppNotifications.getState().clear();
   }, [enabled]);
-  const notice = items[0];
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const selectedIndex = items.findIndex((item) => item.id === selectedId);
+  const position = selectedIndex < 0 ? 0 : selectedIndex;
+  const notice = items[position];
   const visible = Boolean(enabled && active && notice);
 
   /**
@@ -132,23 +128,6 @@ export function InAppNotificationHost() {
     [dragX, dragY]
   );
 
-  /*
-    Nothing on screen takes no room. A screen that leaves space for the deck
-    reads the height from the store, and a stale one would leave a hole at the
-    top of a transcript with no notice in it.
-  */
-  useEffect(() => {
-    if (!visible) useInAppNotifications.getState().setOverlayHeight(0);
-  }, [visible]);
-  /*
-    How far down the screen the deck reaches, not how tall the card is: a
-    screen leaving room for it has to clear the safe-area inset and the nav
-    chrome the deck sits below as well. The outer view carries both in its
-    padding, so its own height is the answer.
-  */
-  const measure = (event: LayoutChangeEvent) =>
-    useInAppNotifications.getState().setOverlayHeight(Math.round(event.nativeEvent.layout.height));
-
   const dragStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: dragX.value }, { translateY: dragY.value }],
   }));
@@ -174,14 +153,7 @@ export function InAppNotificationHost() {
   /** How many notices are waiting behind this one. */
   const waiting = items.length - 1;
   const dismiss = () => useInAppNotifications.getState().dismiss(notice.id);
-  /**
-   * The end of a flight, once the plate has actually left.
-   *
-   * Safe to close over this notice's id rather than re-reading the deck: the
-   * queue keeps whatever is at the front stable while new events arrive behind
-   * it, so between the finger lifting and the plate landing the only thing
-   * that can take this notice off the front is this call itself.
-   */
+  // Dismiss the card captured by this gesture, even if new notices arrive.
   const swept = () => {
     void feedback('selection');
     useInAppNotifications.getState().dismiss(notice.id);
@@ -236,7 +208,6 @@ export function InAppNotificationHost() {
   return (
     <View
       pointerEvents="box-none"
-      onLayout={measure}
       style={[styles.overlay, { paddingTop: insets.top + NOTICE_TOP_GAP }]}>
       <View pointerEvents="box-none" style={styles.deck}>
         {[2, 1].map((depth) =>
@@ -248,7 +219,6 @@ export function InAppNotificationHost() {
               style={[
                 styles.backPage,
                 {
-                  // Solid, like the plate in front of it: see the card's fill.
                   backgroundColor: colors.surfaceRaised,
                   borderColor: colors.border,
                   transform: [{ translateY: depth * 6 }, { scaleX: 1 - depth * 0.035 }],
@@ -262,7 +232,6 @@ export function InAppNotificationHost() {
             <Animated.View
               key={notice.id}
               entering={fadeInDown('short')}
-              exiting={fadeOutUp('short')}
               accessibilityLiveRegion="polite"
               onLayout={(event) => {
                 plateWidth.value = event.nativeEvent.layout.width;
@@ -311,24 +280,21 @@ export function InAppNotificationHost() {
                 ) : null}
               </View>
               <View style={[styles.trailing, waiting > 0 ? styles.trailingStacked : null]}>
-                {/* How many are behind this one, not how many there are: the
-                    plate in front is the one being read. The peeking edges
-                    stop at two, so the number is what makes five honest. */}
+                {/* One shared card surface; the page counter turns the deck. */}
                 {waiting > 0 ? (
-                  <View
+                  <PressableScale
+                    testID="in-app-notification-next"
+                    accessibilityRole="button"
+                    onPress={() => setSelectedId(items[(position + 1) % items.length]!.id)}
                     style={[
                       styles.pill,
                       { backgroundColor: surfaceBackground(colors.primarySubtle) },
                     ]}
-                    accessible
-                    accessibilityLabel={t`${plural(waiting, {
-                      one: '# more notification',
-                      other: '# more notifications',
-                    })}`}>
+                    accessibilityLabel={t`Next notification`}>
                     <Text variant="caption" color={colors.textMuted} style={styles.count}>
-                      +{waiting}
+                      {position + 1} / {items.length}
                     </Text>
-                  </View>
+                  </PressableScale>
                 ) : null}
                 {notice.route ? (
                   <PressableScale
@@ -373,8 +339,6 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    // A hairline, not a frame: it is the only thing that tells a waiting page
-    // apart from the plate standing on it, both being the same surface.
     borderWidth: StyleSheet.hairlineWidth,
     borderRadius: appChrome.radius.noticeBanner,
     borderCurve: 'continuous',
@@ -399,7 +363,8 @@ const styles = StyleSheet.create({
   trailingStacked: { alignSelf: 'stretch', justifyContent: 'space-between' },
   pill: {
     paddingHorizontal: 7,
-    paddingVertical: 1,
+    minHeight: 44,
+    justifyContent: 'center',
     borderRadius: appAppearanceConfig.radius.pill,
   },
   action: { minHeight: 44, justifyContent: 'center', paddingLeft: 10 },
