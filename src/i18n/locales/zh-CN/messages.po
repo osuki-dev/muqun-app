@@ -2627,13 +2627,10 @@ msgstr "移动编辑器控件"
 msgid "Move the simulator controls"
 msgstr "移动模拟器控件"
 
+#: src/components/agent-sessions-sheet.tsx
 #: src/components/agent-worktree-sheet.tsx
 msgid "Move to worktree"
 msgstr "移动到工作树"
-
-#: src/components/agent-sessions-sheet.tsx
-msgid "Move to worktree…"
-msgstr "移动到工作树…"
 
 #: src/components/app-drawer-content.tsx
 #: src/components/in-app-notification-host.tsx

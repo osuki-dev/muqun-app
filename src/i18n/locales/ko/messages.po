@@ -2627,13 +2627,10 @@ msgstr "편집기 컨트롤 이동"
 msgid "Move the simulator controls"
 msgstr "시뮬레이터 컨트롤 이동"
 
+#: src/components/agent-sessions-sheet.tsx
 #: src/components/agent-worktree-sheet.tsx
 msgid "Move to worktree"
 msgstr "워크트리로 이동"
-
-#: src/components/agent-sessions-sheet.tsx
-msgid "Move to worktree…"
-msgstr "워크트리로 이동…"
 
 #: src/components/app-drawer-content.tsx
 #: src/components/in-app-notification-host.tsx

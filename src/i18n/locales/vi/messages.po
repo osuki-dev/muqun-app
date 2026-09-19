@@ -2627,13 +2627,10 @@ msgstr "Di chuyển các nút điều khiển trình soạn thảo"
 msgid "Move the simulator controls"
 msgstr "Di chuyển các nút điều khiển trình giả lập"
 
+#: src/components/agent-sessions-sheet.tsx
 #: src/components/agent-worktree-sheet.tsx
 msgid "Move to worktree"
 msgstr "Chuyển sang worktree"
-
-#: src/components/agent-sessions-sheet.tsx
-msgid "Move to worktree…"
-msgstr "Chuyển sang worktree…"
 
 #: src/components/app-drawer-content.tsx
 #: src/components/in-app-notification-host.tsx

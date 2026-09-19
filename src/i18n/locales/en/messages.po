@@ -2627,13 +2627,10 @@ msgstr "Move the editor controls"
 msgid "Move the simulator controls"
 msgstr "Move the simulator controls"
 
+#: src/components/agent-sessions-sheet.tsx
 #: src/components/agent-worktree-sheet.tsx
 msgid "Move to worktree"
 msgstr "Move to worktree"
-
-#: src/components/agent-sessions-sheet.tsx
-msgid "Move to worktree…"
-msgstr "Move to worktree…"
 
 #: src/components/app-drawer-content.tsx
 #: src/components/in-app-notification-host.tsx

@@ -398,7 +398,11 @@ export const AgentSessionsSheet = memo(function AgentSessionsSheet({
     if (onMoveSession) {
       items.push({
         id: 'worktree',
-        label: t`Move to worktree…`,
+        // No trailing ellipsis. It is the desktop convention for "this opens
+        // something that asks for more", and in a reader's monospace face the
+        // glyph takes a whole cell, so the label grew a gap and three dots that
+        // the two items beside it do not have.
+        label: t`Move to worktree`,
         Icon: GitBranch,
         onPress: () => {
           setMenuAsid(null);

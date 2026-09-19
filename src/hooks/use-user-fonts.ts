@@ -33,6 +33,7 @@ import { useAppSettings } from '@/stores/app-settings';
 import {
   FONT_SLOT_IDS,
   registerUserFonts,
+  literalFontFamily,
   slotFontFamily,
   type FontSlotId,
   type UserFontProblem,
@@ -224,5 +225,6 @@ export function useInterfaceFontFamily(): string | null {
  */
 export function useMonoFontFamily(): string {
   const monoFont = useAppSettings((state) => state.monoFont);
-  return slotFontFamily(monoFont, 'mono') ?? SYSTEM_MONO_FAMILY;
+  const interfaceFont = useAppSettings((state) => state.interfaceFont);
+  return literalFontFamily(monoFont, interfaceFont) ?? SYSTEM_MONO_FAMILY;
 }

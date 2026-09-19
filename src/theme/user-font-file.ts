@@ -831,6 +831,31 @@ export function slotFontFamily(slot: FontSlot, id: FontSlotId): string | null {
 }
 
 /**
+ * The family a literal is set in, given both slots.
+ *
+ * The reader's monospace face when they chose one. When they did not, and the
+ * interface face they chose is itself monospaced, that one: a reader who set
+ * the whole app in a mono face and then found the install command, the key
+ * strip and every path still in the platform's mono read it as the font not
+ * having been applied, and they were right -- "I chose nothing for mono" is
+ * not a request for a second typeface on the same screen.
+ *
+ * Only a face that *measured* monospaced qualifies. Diff rows, code and
+ * columns of paths rely on equal advances, so a proportional interface face
+ * never reaches them, and neither does one that was installed before the
+ * measurement existed. `null` means the platform's mono.
+ *
+ * The terminal does not come through here: it opens the mono slot's file
+ * itself, and keeps its own face.
+ */
+export function literalFontFamily(mono: FontSlot, face: FontSlot): string | null {
+  const chosen = slotFontFamily(mono, 'mono');
+  if (chosen) return chosen;
+  if (face.kind === 'file' && face.isMonospace === true) return slotFontFamily(face, 'interface');
+  return null;
+}
+
+/**
  * The part of a stored font's name that is its own: `fonts/mono-1a2b3c.ttf` ->
  * `1a2b3c`.
  *

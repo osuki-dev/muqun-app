@@ -2627,13 +2627,10 @@ msgstr "エディタの操作パネルを移動"
 msgid "Move the simulator controls"
 msgstr "シミュレータの操作ボタンを移動"
 
+#: src/components/agent-sessions-sheet.tsx
 #: src/components/agent-worktree-sheet.tsx
 msgid "Move to worktree"
 msgstr "ワークツリーへ移動"
-
-#: src/components/agent-sessions-sheet.tsx
-msgid "Move to worktree…"
-msgstr "ワークツリーへ移動…"
 
 #: src/components/app-drawer-content.tsx
 #: src/components/in-app-notification-host.tsx
