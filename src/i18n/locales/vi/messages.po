@@ -5439,11 +5439,11 @@ msgstr "Hôm qua"
 
 #: src/components/agent-workbench.tsx
 msgid "YOLO mode"
-msgstr ""
+msgstr "Chế độ YOLO"
 
 #: src/components/agent-workbench.tsx
 msgid "YOLO mode is on — tap to turn it off"
-msgstr ""
+msgstr "Chế độ YOLO đang bật — chạm để tắt"
 
 #: src/components/agent-message-block.tsx
 msgid "You"

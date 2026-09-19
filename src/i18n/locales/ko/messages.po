@@ -5439,11 +5439,11 @@ msgstr "어제"
 
 #: src/components/agent-workbench.tsx
 msgid "YOLO mode"
-msgstr ""
+msgstr "YOLO 모드"
 
 #: src/components/agent-workbench.tsx
 msgid "YOLO mode is on — tap to turn it off"
-msgstr ""
+msgstr "YOLO 모드가 켜져 있습니다 — 탭하여 끄기"
 
 #: src/components/agent-message-block.tsx
 msgid "You"

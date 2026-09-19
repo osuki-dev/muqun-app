@@ -5439,11 +5439,11 @@ msgstr "Ontem"
 
 #: src/components/agent-workbench.tsx
 msgid "YOLO mode"
-msgstr ""
+msgstr "Modo YOLO"
 
 #: src/components/agent-workbench.tsx
 msgid "YOLO mode is on — tap to turn it off"
-msgstr ""
+msgstr "O modo YOLO está ativado — toque para desativá-lo"
 
 #: src/components/agent-message-block.tsx
 msgid "You"

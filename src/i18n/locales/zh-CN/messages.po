@@ -5439,11 +5439,11 @@ msgstr "昨天"
 
 #: src/components/agent-workbench.tsx
 msgid "YOLO mode"
-msgstr ""
+msgstr "YOLO 模式"
 
 #: src/components/agent-workbench.tsx
 msgid "YOLO mode is on — tap to turn it off"
-msgstr ""
+msgstr "YOLO 模式已开启 — 点按可关闭"
 
 #: src/components/agent-message-block.tsx
 msgid "You"
