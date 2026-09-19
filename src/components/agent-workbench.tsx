@@ -30,11 +30,8 @@ import {
   ShieldAlert,
   X,
 } from 'lucide-react-native';
-import {
-  LegendList,
-  type LegendListRenderItemProps,
-  type LegendListRef,
-} from '@legendapp/list/react-native';
+import { type LegendListRenderItemProps, type LegendListRef } from '@legendapp/list/react-native';
+import { KeyboardAwareLegendList } from '@legendapp/list/keyboard';
 import { PressableScale } from '@/components/pressable-scale';
 import { GlassChrome } from '@/components/glass-chrome';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
@@ -173,7 +170,6 @@ import { AgentComposer } from './agent-composer';
 import { runningShellCount } from '@/components/agent-background-tray';
 import { ThinkingIndicator } from './agent-thinking-indicator';
 import { AGENT_TYPE } from '@/constants/agent-type';
-import { KeyboardInset } from '@/components/keyboard-inset';
 import { gatewayAuthHeaders, gatewayUrl } from '@/lib/gateway-client';
 import { appChrome } from '@/constants/appearance';
 
@@ -801,6 +797,8 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   ]);
 
   const initialCheckDoneRef = useRef(Boolean(initialAsid));
+  /** Whether the unscoped listing came back whole, i.e. under its own limit. */
+  const hostListCompleteRef = useRef(false);
 
   /**
    * The roots this host holds, listed once per scope.
@@ -827,6 +825,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         });
         setIsOffline(false);
         if (list) {
+          if (!directory) hostListCompleteRef.current = list.length < SESSION_LIST_LIMIT;
           setSessions(list);
           // Coming in from Home lands on the session the reader last opened,
           // and only falls back to newest activity when there is no such
@@ -882,8 +881,19 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     if (listedScopeRef.current !== undefined) {
       if (listedScopeRef.current === scope) return;
       // A directory that arrived from the session we just opened is a directory
-      // the listing already covers.
-      if (scope && scope === snapshotDirectoryRef.current) {
+      // the listing already covers -- but only when the listing in hand is the
+      // host's, and all of it. Skipping on the directory alone was wrong twice:
+      // after the reader had been in project A the list in hand was A's, so
+      // opening a session of project B from "All projects" left the strip
+      // filtering A's sessions for B's directory and drawing one chip; and a
+      // host-wide list cut at its limit does not hold every session of B
+      // either.
+      if (
+        scope &&
+        scope === snapshotDirectoryRef.current &&
+        listedScopeRef.current === '' &&
+        hostListCompleteRef.current
+      ) {
         listedScopeRef.current = scope;
         return;
       }
@@ -2942,7 +2952,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
 
   const listFooter = useMemo(() => {
     const hasFormsOrPerms = footerPermissions.length > 0 || forms.length > 0;
-    if (!hasFormsOrPerms && !isRunning && !statusNotice) return <KeyboardInset />;
+    if (!hasFormsOrPerms && !isRunning && !statusNotice) return null;
     /*
       A turn blocked on a question is still `running`, and the footer said
       "Thinking…" over a form whose only blocker was the reader. The agent is
@@ -3038,7 +3048,6 @@ export const AgentWorkbench = memo(function AgentWorkbench({
             onFieldFocus={scrollFooterAboveKeyboard}
           />
         ))}
-        <KeyboardInset />
       </View>
     );
   }, [
@@ -3529,8 +3538,26 @@ export const AgentWorkbench = memo(function AgentWorkbench({
             entering={riseIn()}
             exiting={fadeOut('short')}
             style={styles.timelineScroll}>
-            <LegendList<TimelineRenderGroup>
+            {/*
+              The list that knows about the keyboard, from Legend List's own
+              `keyboard` entry point over keyboard-controller's chat scroll
+              view. What stood here before was a plain list with a footer whose
+              *height* followed the keyboard frame by frame: a layout change on
+              every frame of the keyboard's travel, inside a virtualised list
+              that re-measures its footer, re-runs its end-alignment and
+              re-decides whether to follow the end each time. The owner saw
+              exactly that -- the transcript stuttering as the keyboard rose.
+              This moves the content with the keyboard on the UI thread, as an
+              inset and an offset, and lays nothing out while it travels.
+            */}
+            <KeyboardAwareLegendList<TimelineRenderGroup>
               ref={listRef}
+              /*
+            Lift only for a reader at the latest message. Someone who has
+            scrolled up to read is not moved by a keyboard any more than by
+            new output -- the same rule `maintainScrollAtEnd` keeps below.
+          */
+              keyboardLiftBehavior="whenAtEnd"
               data={renderGroups}
               keyExtractor={keyOfGroup}
               renderItem={renderTimelineItem}
