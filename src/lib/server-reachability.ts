@@ -20,6 +20,12 @@
  */
 export type ServerReachability = 'live' | 'offline' | 'unknown';
 
+/** The connection state for the one gateway currently owned by a workspace. */
+export type ActiveServerConnection = {
+  serverId: string;
+  phase: 'connecting' | 'connected' | 'reconnecting' | 'offline';
+};
+
 /** The result of one probe, held in memory for the life of the launch. */
 export type ReachabilityProbe = {
   serverId: string;
@@ -131,6 +137,31 @@ export function reachabilityFromProbe(
   if (!probe) return 'unknown';
   if (nowMs - probe.checkedAtMs > REACHABILITY_FRESH_MS) return 'unknown';
   return probe.ok ? 'live' : 'offline';
+}
+
+/**
+ * Resolve the status for one server using the strongest scoped evidence.
+ *
+ * A connected workspace is immediate positive evidence for its own server.
+ * An offline channel is weaker than a fresh health probe: the channel may be
+ * stale after a restart while the gateway is already answering again. Other
+ * servers, and transitional workspace states, continue to use the same
+ * freshness-bounded probe as Home.
+ */
+export function resolveServerReachability(
+  serverId: string,
+  probe: ReachabilityProbe | undefined,
+  activeConnection?: ActiveServerConnection,
+  nowMs: number = Date.now()
+): ServerReachability {
+  const probedReachability = reachabilityFromProbe(probe, nowMs);
+  if (activeConnection?.serverId === serverId) {
+    if (activeConnection.phase === 'connected') return 'live';
+    if (activeConnection.phase === 'offline' && probedReachability === 'unknown') {
+      return 'offline';
+    }
+  }
+  return probedReachability;
 }
 
 /**

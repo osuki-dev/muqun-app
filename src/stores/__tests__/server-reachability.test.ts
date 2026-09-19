@@ -77,7 +77,7 @@ test('one unreachable server does not strand the rest', () => {
 test('the home screen asks through the bounded list, never the raw records', () => {
   // `refreshMany` has no ceiling of its own by design -- the caller picks the
   // set. So the ceiling only exists if the caller actually applies it.
-  const home = readFileSync('src/app/index.tsx', 'utf8');
+  const home = readFileSync('src/components/home-overview.tsx', 'utf8');
   expect(home).toContain('serversToProbe(');
   const targets = home.match(/const probeTargets = useMemo\([\s\S]*?\n {2}\);/)?.[0] ?? '';
   expect(targets).toContain('DEMO_SERVER_ID');
@@ -93,7 +93,7 @@ test('the home screen warms behind the probe, and not at all when it says offlin
   // sitting out the full timeout, for a card the list has already drawn as
   // down. The rule itself is pure and tested in
   // `lib/__tests__/server-reachability.test.ts`; this is the wiring.
-  const home = readFileSync('src/app/index.tsx', 'utf8');
+  const home = readFileSync('src/components/home-overview.tsx', 'utf8');
   const warm =
     home.match(/await useServerSession\.getState\(\)\.hydrate\(\);[\s\S]*?\n {6}\}\)\(\);/)?.[0] ??
     '';

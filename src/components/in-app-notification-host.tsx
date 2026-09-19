@@ -15,7 +15,6 @@ import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withTiming,
-  Easing,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -26,7 +25,7 @@ import { permissionActionPhrase } from '@/i18n/labels';
 import { readApprovalBody } from '@/lib/agent-engine-text';
 import { feedback } from '@/lib/feedback';
 import { noticeTitleParts, type InAppNotice } from '@/lib/in-app-notifications';
-import { fadeInDown, settleTo } from '@/lib/motion';
+import { fadeInDown, settleTo, timing } from '@/lib/motion';
 import { noticeDragOffset, noticeSwipeEnd } from '@/lib/notice-swipe';
 import { AGENT_TYPE } from '@/constants/agent-type';
 import { useAppSettings } from '@/stores/app-settings';
@@ -198,7 +197,7 @@ export function InAppNotificationHost() {
       // A short glide and fade replaces the full-screen throw. Ignore release
       // velocity here so a fast flick cannot launch the card into the status bar.
       dismissing.value = true;
-      const config = { duration: 160, easing: Easing.out(Easing.cubic) };
+      const config = timing('short');
       dragX.value = withTiming(end.x, config);
       dragY.value = withTiming(end.y, config);
       dragOpacity.value = withTiming(0, config, (finished) => {

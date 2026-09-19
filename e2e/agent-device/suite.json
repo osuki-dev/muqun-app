@@ -92,6 +92,12 @@
       "platforms": ["ios", "android"]
     },
     {
+      "name": "settings-home-layout",
+      "program": "flows/settings-home-layout",
+      "tags": ["full"],
+      "platforms": ["ios", "android"]
+    },
+    {
       "name": "away-digest",
       "program": "flows/away-digest",
       "tags": ["full"],
@@ -4539,6 +4545,277 @@
         "run": "flows/settings-font.ad#back-on-settings"
       }
     ],
+    "flows/settings-home-layout": [
+      {
+        "run": "subflows/launch-home.ad#s1"
+      },
+      {
+        "run": "subflows/launch-home.ad#s8"
+      },
+      {
+        "target": {
+          "text": "(?i)skip intro"
+        },
+        "mode": "press",
+        "optional": true,
+        "run": "subflows/launch-home.ad#s9"
+      },
+      {
+        "target": {
+          "text": "Got it"
+        },
+        "mode": "press",
+        "optional": true,
+        "run": "subflows/launch-home.ad#s9"
+      },
+      {
+        "when": {
+          "target": {
+            "text": "(?i).*don.?t allow.*"
+          },
+          "absent": false
+        },
+        "steps": [
+          {
+            "target": {
+              "text": "(?i).*don.?t allow.*"
+            },
+            "mode": "press",
+            "run": "subflows/launch-home.ad#s10"
+          }
+        ]
+      },
+      {
+        "when": {
+          "target": {
+            "text": "Dismiss what's new"
+          },
+          "absent": false
+        },
+        "steps": [
+          {
+            "target": {
+              "text": "Dismiss what's new"
+            },
+            "mode": "press",
+            "run": "subflows/launch-home.ad#s11"
+          }
+        ]
+      },
+      {
+        "include": "subflows/dismiss-logbox"
+      },
+      {
+        "run": "flows/settings-home-layout.ad#home-ready"
+      },
+      {
+        "target": {
+          "text": "(?i)settings"
+        },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 20000,
+        "run": "flows/settings-home-layout.ad#seek-down"
+      },
+      {
+        "target": {
+          "text": "(?i)settings"
+        },
+        "mode": "press",
+        "run": "flows/settings-home-layout.ad#open-settings"
+      },
+      {
+        "target": {
+          "text": "SERVERS"
+        },
+        "mode": "visible",
+        "timeout": 8000,
+        "run": "flows/settings-home-layout.ad#settings-arrived"
+      },
+      {
+        "include": "subflows/dismiss-logbox"
+      },
+      {
+        "target": {
+          "id": "settings-home-layout-row"
+        },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 20000,
+        "run": "flows/settings-home-layout.ad#seek-down"
+      },
+      {
+        "target": {
+          "id": "settings-home-layout-row"
+        },
+        "mode": "press",
+        "run": "flows/settings-home-layout.ad#open-row"
+      },
+      {
+        "when": {
+          "target": {
+            "id": "settings-selection:on:home-layout-classic"
+          },
+          "absent": false
+        },
+        "steps": [
+          {
+            "target": {
+              "id": "settings-selection:on:home-layout-classic"
+            },
+            "mode": "press",
+            "run": "flows/settings-home-layout.ad#reset-classic"
+          }
+        ]
+      },
+      {
+        "when": {
+          "target": {
+            "id": "settings-selection:off:home-layout-classic"
+          },
+          "absent": false
+        },
+        "steps": [
+          {
+            "target": {
+              "id": "settings-selection:off:home-layout-classic"
+            },
+            "mode": "press",
+            "run": "flows/settings-home-layout.ad#reset-classic"
+          }
+        ]
+      },
+      {
+        "target": {
+          "id": "settings-home-layout-row"
+        },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 20000,
+        "run": "flows/settings-home-layout.ad#seek-down"
+      },
+      {
+        "target": {
+          "id": "settings-home-layout-row"
+        },
+        "mode": "press",
+        "run": "flows/settings-home-layout.ad#open-row-again"
+      },
+      {
+        "target": {
+          "id": "settings-selection:off:home-layout-editorial"
+        },
+        "mode": "press",
+        "run": "flows/settings-home-layout.ad#choose-editorial"
+      },
+      {
+        "target": {
+          "text": "Home layout, Editorial"
+        },
+        "mode": "visible",
+        "timeout": 8000,
+        "run": "flows/settings-home-layout.ad#editorial-selected"
+      },
+      {
+        "target": {
+          "text": "Go back"
+        },
+        "mode": "press",
+        "run": "flows/settings-home-layout.ad#leave-settings"
+      },
+      {
+        "target": {
+          "id": "home-editorial-layout"
+        },
+        "mode": "visible",
+        "timeout": 8000,
+        "run": "flows/settings-home-layout.ad#editorial-home"
+      },
+      {
+        "run": "flows/settings-home-layout.ad#relaunch-editorial"
+      },
+      {
+        "target": {
+          "id": "home-editorial-layout"
+        },
+        "mode": "visible",
+        "timeout": 10000,
+        "run": "flows/settings-home-layout.ad#editorial-relaunched"
+      },
+      {
+        "target": {
+          "text": "(?i)settings"
+        },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 20000,
+        "run": "flows/settings-home-layout.ad#seek-down"
+      },
+      {
+        "target": {
+          "text": "(?i)settings"
+        },
+        "mode": "press",
+        "run": "flows/settings-home-layout.ad#reopen-settings"
+      },
+      {
+        "target": {
+          "text": "SERVERS"
+        },
+        "mode": "visible",
+        "timeout": 8000,
+        "run": "flows/settings-home-layout.ad#settings-again"
+      },
+      {
+        "include": "subflows/dismiss-logbox"
+      },
+      {
+        "target": {
+          "id": "settings-home-layout-row"
+        },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 20000,
+        "run": "flows/settings-home-layout.ad#seek-down"
+      },
+      {
+        "target": {
+          "id": "settings-home-layout-row"
+        },
+        "mode": "press",
+        "run": "flows/settings-home-layout.ad#open-row-again"
+      },
+      {
+        "target": {
+          "id": "settings-selection:off:home-layout-classic"
+        },
+        "mode": "press",
+        "run": "flows/settings-home-layout.ad#choose-classic"
+      },
+      {
+        "target": {
+          "text": "Home layout, Classic"
+        },
+        "mode": "visible",
+        "timeout": 8000,
+        "run": "flows/settings-home-layout.ad#classic-selected"
+      },
+      {
+        "target": {
+          "text": "Go back"
+        },
+        "mode": "press",
+        "run": "flows/settings-home-layout.ad#leave-classic-settings"
+      },
+      {
+        "target": {
+          "id": "home-editorial-layout"
+        },
+        "mode": "hidden",
+        "timeout": 8000,
+        "run": "flows/settings-home-layout.ad#classic-home"
+      }
+    ],
     "flows/settings-guide": [
       {
         "include": "subflows/launch-home"
@@ -5003,7 +5280,7 @@
       },
       {
         "target": {
-          "text": "SSH"
+          "id": "home-open-ssh"
         },
         "mode": "press",
         "run": "flows/ssh.ad#s1"
@@ -5206,7 +5483,7 @@
       },
       {
         "target": {
-          "text": "SSH"
+          "id": "home-open-ssh"
         },
         "mode": "visible",
         "timeout": 8000,

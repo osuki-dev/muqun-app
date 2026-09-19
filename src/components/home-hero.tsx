@@ -1,4 +1,3 @@
-import { useThemeMode } from '@osuki-dev/ui';
 import {
   Blur,
   Canvas,
@@ -16,14 +15,13 @@ import Animated, {
   type SharedValue,
 } from 'react-native-reanimated';
 
-import { useEffectiveCustomTheme } from '@/components/theme-candidate';
 import { heroFeatherGeometry } from '@/lib/hero-feather';
 import { publishLaunchHeroRect } from '@/lib/launch-hero-rect';
 import { fadeIn, listLayout } from '@/lib/motion';
-import { homeHeroMaxHeight, THEME_ARTWORK_REGULAR_MIN_WIDTH } from '@/lib/responsive-layout';
-import { resolveHomeHero } from '@/theme/home-hero';
-import { homeHeroPreference } from '@/theme/repository';
-import { useThemeLibrary } from '@/stores/theme-library';
+import { homeHeroMaxHeight } from '@/lib/responsive-layout';
+import type { ResolvedHomeHero, ResolvedHomeHeroAsset } from '@/theme/home-hero';
+
+export type { ResolvedHomeHeroAsset } from '@/theme/home-hero';
 
 /**
  * The pack's own picture at the top of Home, when there is one to show.
@@ -85,33 +83,27 @@ import { useThemeLibrary } from '@/stores/theme-library';
  * Entrance, layout and scroll fading use ordinary Reanimated styles. There is
  * no exit retention: changing themes must immediately release the old picture.
  */
-export function HomeHero({ scrollY }: { scrollY: SharedValue<number> }) {
-  const { resolvedMode } = useThemeMode();
+export function HomeHero({
+  scrollY,
+  resolution,
+  onAvailabilityChange,
+}: {
+  scrollY: SharedValue<number>;
+  resolution: ResolvedHomeHeroAsset;
+  onAvailabilityChange?: (available: boolean) => void;
+}) {
   const { width } = useWindowDimensions();
   const band = homeHeroMaxHeight(width);
-  const { theme, assets } = useEffectiveCustomTheme();
-  const installationId = theme?.installationId;
-  const preference = useThemeLibrary((state) => {
-    const installed = state.library.themes.find((entry) => entry.id === installationId);
-    return installed ? homeHeroPreference(installed) : 'theme';
-  });
-  const resolved = resolveHomeHero({
-    manifest: theme?.manifest,
-    mode: resolvedMode,
-    width: width >= THEME_ARTWORK_REGULAR_MIN_WIDTH ? 'regular' : 'compact',
-    preference,
-  });
-  const uri = resolved ? assets?.[resolved.image.asset] : undefined;
-  if (!resolved || !uri?.startsWith('file:///')) return null;
-  // A theme/mode/source change owns a new decoder. Skia's asynchronous loader
-  // otherwise keeps the previous image alive until the next URI has decoded.
+  // A source change owns a new decoder. Skia's asynchronous loader otherwise
+  // keeps the previous image alive until the next URI has decoded.
   return (
     <HomeHeroImage
-      key={`${installationId}:${resolvedMode}:${uri}`}
-      resolved={resolved}
-      source={uri}
+      key={resolution.source}
+      resolved={resolution.resolved}
+      source={resolution.source}
       band={band}
       scrollY={scrollY}
+      onAvailabilityChange={onAvailabilityChange}
     />
   );
 }
@@ -121,11 +113,13 @@ function HomeHeroImage({
   source,
   band,
   scrollY,
+  onAvailabilityChange,
 }: {
-  resolved: NonNullable<ReturnType<typeof resolveHomeHero>>;
+  resolved: ResolvedHomeHero;
   source: string;
   band: number;
   scrollY: SharedValue<number>;
+  onAvailabilityChange?: (available: boolean) => void;
 }) {
   const scrollStyle = useAnimatedStyle(() => ({
     opacity: interpolate(scrollY.value, [0, band], [1, 0], Extrapolation.CLAMP),
@@ -140,7 +134,10 @@ function HomeHeroImage({
   const focalX = resolved?.image.focalPoint?.x;
   const focalY = resolved?.image.focalPoint?.y;
 
-  const onError = useCallback(() => setFailed(source ?? null), [source]);
+  const onError = useCallback(() => {
+    setFailed(source);
+    onAvailabilityChange?.(false);
+  }, [onAvailabilityChange, source]);
   const image = useImage(source, onError);
   // The band in window coordinates, for the launch opening to land in. The
   // layout event carries the box in the scroll content's coordinates, which is

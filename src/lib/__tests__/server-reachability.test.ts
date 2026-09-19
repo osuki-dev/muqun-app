@@ -15,6 +15,7 @@ import {
   reachabilityFromProbe,
   REACHABILITY_FRESH_MS,
   REACHABILITY_RECHECK_MS,
+  resolveServerReachability,
   serversToProbe,
   type ReachabilityProbe,
 } from '../server-reachability';
@@ -73,6 +74,51 @@ describe('when the list asks again', () => {
     // between the answer expiring and the next probe being allowed.
     expect(REACHABILITY_RECHECK_MS).toBeLessThan(REACHABILITY_FRESH_MS);
     expect(needsReachabilityProbe(probe(true, NOW), NOW + REACHABILITY_RECHECK_MS)).toBe(true);
+  });
+});
+
+describe('when a workspace owns one server', () => {
+  test('a connected workspace is live for its exact server', () => {
+    expect(
+      resolveServerReachability('s1', probe(false), { serverId: 's1', phase: 'connected' }, NOW)
+    ).toBe('live');
+  });
+
+  test('a fresh successful probe outranks an offline workspace channel', () => {
+    expect(
+      resolveServerReachability('s1', probe(true), { serverId: 's1', phase: 'offline' }, NOW)
+    ).toBe('live');
+  });
+
+  test('an offline workspace falls back to offline without fresh probe evidence', () => {
+    expect(
+      resolveServerReachability('s1', undefined, { serverId: 's1', phase: 'offline' }, NOW)
+    ).toBe('offline');
+    expect(
+      resolveServerReachability(
+        's1',
+        probe(true, NOW - REACHABILITY_FRESH_MS - 1),
+        { serverId: 's1', phase: 'offline' },
+        NOW
+      )
+    ).toBe('offline');
+  });
+
+  test('a different server still uses its probe', () => {
+    expect(
+      resolveServerReachability('s2', probe(true), { serverId: 's1', phase: 'offline' }, NOW)
+    ).toBe('live');
+  });
+
+  test('a reconnecting workspace falls back to probe freshness', () => {
+    expect(
+      resolveServerReachability(
+        's1',
+        probe(true, NOW - REACHABILITY_FRESH_MS - 1),
+        { serverId: 's1', phase: 'reconnecting' },
+        NOW
+      )
+    ).toBe('unknown');
   });
 });
 

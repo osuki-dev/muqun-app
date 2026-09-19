@@ -8,14 +8,12 @@ press "${TARGET}"
 is visible "${TARGET}"
 
 # section seek
-# The row is in ABOUT, which is the last card on the page and below the fold on
-# every phone -- and the page does not even build ABOUT until it has been idle
-# once (`deep` in `settings.tsx`), so the first flick is also what proves the
-# deferred half of the screen arrived at all. A flick rather than a pan: the
-# target is a full two-line row, so an overshoot still leaves it in the tree for
-# the scroll-to-visible loop to come back to. The 13pt instrument labels in
-# `flows/settings.ad` are the case that needs `gesture pan`; this is not one.
-scroll down --pixels 320
+# The row is in ABOUT, the last card on the page and below the fold on every
+# phone. The page does not build ABOUT until it has been idle once (`deep` in
+# `settings.tsx`), so reaching the bottom also proves the deferred half arrived.
+# A bottom anchor keeps this seek deterministic as rows are added above ABOUT;
+# unlike a fixed number of flicks, it does not stop at the Storage card.
+scroll bottom
 
 # section row-visible
 # Asserted and not pressed. The row hands the reader to a browser, and a flow

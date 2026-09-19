@@ -8,6 +8,7 @@ import {
   type PaneViewMode,
   type StoredAgentViewSettings,
 } from '@/lib/pane-view-mode';
+import { isHomeLayout, resolveHomeLayout, type HomeLayout } from '@/lib/home-layout';
 import type { TerminalTextSize } from '@/lib/terminal-text-size';
 import { parseFontSlot, SYSTEM_FONT_SLOT, type FontSlot } from '@/theme/user-font-file';
 
@@ -32,12 +33,15 @@ export type ServerCardPanes = 'agents' | 'all';
 // is: a settings screen asking for the shape of a setting should not have to
 // know which half of the font module defines it.
 export type { FontSlot };
+export type { HomeLayout };
 
 type PersistedSettings = {
   agentDefaultView: PaneViewMode;
   androidWidgetEnabled: boolean;
   appLockEnabled: boolean;
   hapticsEnabled: boolean;
+  // Home composition is a device preference, independent of the active theme.
+  homeLayout: HomeLayout;
   /**
    * The face the app's own text is set in, and the face its code is set in.
    *
@@ -66,6 +70,7 @@ type PersistedSettings = {
 type AppSettingsState = PersistedSettings & {
   hydrated: boolean;
   hydrate: () => Promise<void>;
+  setHomeLayout: (layout: HomeLayout) => Promise<void>;
   update: (patch: Partial<PersistedSettings>) => Promise<void>;
 };
 
@@ -85,6 +90,7 @@ const defaults: PersistedSettings = {
   androidWidgetEnabled: false,
   appLockEnabled: false,
   hapticsEnabled: true,
+  homeLayout: 'classic',
   // The system font, which is the absence of a choice rather than a third
   // option. The app offers no fonts of its own, so until a reader brings one
   // there is nothing to choose between.
@@ -116,27 +122,66 @@ const defaults: PersistedSettings = {
   themePack: DEFAULT_THEME_PACK_ID,
 };
 
+let hydrationFlight: Promise<void> | null = null;
+let pendingHydrationPatch: Partial<PersistedSettings> = {};
+let saveQueue: Promise<void> = Promise.resolve();
+
 export const useAppSettings = create<AppSettingsState>((set, get) => ({
   ...defaults,
   hydrated: false,
 
-  async hydrate() {
-    if (get().hydrated) return;
-    try {
-      const value = await SecureStore.getItemAsync(STORAGE_KEY);
-      const stored = value ? parseSettings(value) : {};
-      set({ ...defaults, ...stored, hydrated: true });
-    } catch {
-      set({ hydrated: true });
-    }
+  hydrate() {
+    if (get().hydrated) return Promise.resolve();
+    if (hydrationFlight) return hydrationFlight;
+
+    hydrationFlight = (async () => {
+      let stored: Partial<PersistedSettings> = {};
+      try {
+        const value = await SecureStore.getItemAsync(STORAGE_KEY);
+        stored = value ? parseSettings(value) : {};
+      } catch {
+        const pending = pendingHydrationPatch;
+        pendingHydrationPatch = {};
+        set({ hydrated: true });
+        // An update made before a failed read still deserves the same write
+        // path as any other update. There is no stored blob to merge in this
+        // case, so the current state is the only recoverable value.
+        if (Object.keys(pending).length > 0) {
+          await enqueueSave(pickPersisted(get()));
+        }
+        return;
+      }
+
+      const pending = pendingHydrationPatch;
+      pendingHydrationPatch = {};
+      set({ ...defaults, ...stored, ...pending, hydrated: true });
+
+      // An update that arrived while the read was in flight must be written
+      // after the stored blob has been merged, or it could erase unrelated
+      // preferences from that blob.
+      if (Object.keys(pending).length > 0) {
+        await enqueueSave(pickPersisted(get()));
+      }
+    })().finally(() => {
+      hydrationFlight = null;
+    });
+
+    return hydrationFlight;
   },
 
   async update(patch) {
     const next = { ...pickPersisted(get()), ...patch };
     set(next);
-    await SecureStore.setItemAsync(STORAGE_KEY, JSON.stringify(next), {
-      keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
-    });
+    if (!get().hydrated) {
+      pendingHydrationPatch = { ...pendingHydrationPatch, ...patch };
+      await get().hydrate();
+      return;
+    }
+    await enqueueSave(next);
+  },
+
+  setHomeLayout(layout) {
+    return get().update({ homeLayout: resolveHomeLayout(layout) });
   },
 }));
 
@@ -160,6 +205,7 @@ function parseSettings(value: string): Partial<PersistedSettings> {
       ...(typeof parsed.hapticsEnabled === 'boolean'
         ? { hapticsEnabled: parsed.hapticsEnabled }
         : {}),
+      ...(isHomeLayout(parsed.homeLayout) ? { homeLayout: parsed.homeLayout } : {}),
       // Every field of a stored slot is checked, and a slot that fails any of
       // them reads as no slot at all -- back to the system font, which is the
       // state the app can always be in. The guard is not a formality: the file
@@ -222,6 +268,7 @@ function pickPersisted(state: AppSettingsState): PersistedSettings {
     androidWidgetEnabled: state.androidWidgetEnabled,
     appLockEnabled: state.appLockEnabled,
     hapticsEnabled: state.hapticsEnabled,
+    homeLayout: state.homeLayout,
     interfaceFont: state.interfaceFont,
     language: state.language,
     liveActivityEnabled: state.liveActivityEnabled,
@@ -232,4 +279,16 @@ function pickPersisted(state: AppSettingsState): PersistedSettings {
     terminalTextSize: state.terminalTextSize,
     themePack: state.themePack,
   };
+}
+
+function enqueueSave(value: PersistedSettings): Promise<void> {
+  const write = saveQueue.then(() =>
+    SecureStore.setItemAsync(STORAGE_KEY, JSON.stringify(value), {
+      keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
+    })
+  );
+  // Keep the queue usable after a failed write while preserving the rejection
+  // for the caller that initiated that write.
+  saveQueue = write.catch(() => {});
+  return write;
 }

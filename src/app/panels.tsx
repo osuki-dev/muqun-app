@@ -4,8 +4,10 @@ import { useEffect, useRef, useState } from 'react';
 
 import { SessionMap } from '@/components/session-map';
 import { useGatewayRecord } from '@/hooks/use-gateway-record';
+import { useLatestRef } from '@/hooks/use-render-refs';
 import { loadRecordSessions } from '@/lib/gateway-client';
 import { inspectMachine } from '@/lib/machine-switcher';
+import { panelPickerDestination } from '@/lib/panel-picker-navigation';
 import { parseSessionChoices, sessionChoices } from '@/lib/session-switcher';
 import type { MachineChoice } from '@/lib/switcher-rails';
 import { usePanelPickerStore } from '@/stores/panel-picker';
@@ -50,6 +52,7 @@ export default function PanelPickerScreen() {
     paneId?: string;
     label?: string;
     sessions?: string;
+    intent?: string;
     embedded?: string;
   }>();
   const [loaded, setLoaded] = useState<Record<string, Pick<MachineChoice, 'sessions' | 'error'>>>(
@@ -59,12 +62,14 @@ export default function PanelPickerScreen() {
   // A closed sheet must never switch machines when a slow request finally resolves.
   const generation = useRef(0);
   const busy = useRef(false);
-  useEffect(
-    () => () => {
+  const routeKey = JSON.stringify([params.serverId, params.sessionId, params.intent ?? '']);
+  const latestRouteKey = useLatestRef(routeKey);
+  useEffect(() => {
+    generation.current += 1;
+    return () => {
       generation.current += 1;
-    },
-    []
-  );
+    };
+  }, [routeKey]);
   const saved =
     record && !records.some((item) => item.serverId === record.serverId)
       ? [record, ...records]
@@ -83,8 +88,24 @@ export default function PanelPickerScreen() {
     if (serverId !== params.serverId && !(await selectRecord(serverId)))
       throw new Error('Machine unavailable');
     if (request !== generation.current) return;
+    const destination = panelPickerDestination({
+      newTerminal: params.intent === 'new-terminal',
+      embedded: params.embedded === '1',
+      choice: 'session',
+      sameServer: serverId === params.serverId,
+    });
+    if (destination === 'picker') {
+      router.setParams({
+        serverId,
+        sessionId,
+        paneId: '',
+        label: saved.find((server) => server.serverId === serverId)?.label ?? params.label,
+        sessions: '',
+      });
+      return;
+    }
     chooseSession({ serverId, sessionId });
-    if (serverId === params.serverId || params.embedded === '1') router.back();
+    if (destination === 'previous') router.back();
     else
       router.dismissTo({
         pathname: '/servers/[serverId]',
@@ -128,15 +149,32 @@ export default function PanelPickerScreen() {
     }
   }
 
+  function openPane(paneId: string) {
+    if (latestRouteKey.current !== routeKey) return;
+    const destination = panelPickerDestination({
+      newTerminal: params.intent === 'new-terminal',
+      embedded: params.embedded === '1',
+      choice: 'pane',
+      sameServer: true,
+    });
+    if (params.intent === 'new-terminal')
+      chooseSession({ serverId: params.serverId, sessionId: params.sessionId || 'default' });
+    choosePanel({ serverId: params.serverId, paneId });
+    if (destination === 'workspace') {
+      router.replace({
+        pathname: '/servers/[serverId]',
+        params: { serverId: params.serverId, sessionId: params.sessionId || 'default', paneId },
+      } as Href);
+    } else router.back();
+  }
+
   return (
     <SessionMap
       sessionId={params.sessionId || 'default'}
       label={params.label || record?.label || t`Server`}
       activePaneId={params.paneId}
-      onChoosePane={(paneId) => {
-        choosePanel({ serverId: params.serverId, paneId });
-        router.back();
-      }}
+      onChoosePane={openPane}
+      onCreatedPane={params.intent === 'new-terminal' ? openPane : undefined}
       machines={machines}
       serverId={params.serverId}
       pendingId={pendingId}

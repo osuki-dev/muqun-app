@@ -71,8 +71,11 @@ If supplying SHA-256, compute it from the actual file bytes.
   and dark. Use "original" only for a mark whose colours are fixed; a plain arrow in
   fixed black disappears in dark mode. A glyph is never required: whatever is absent
   stays the built-in icon.
-- Keep default home name/logo unless asked. Hide either independently; hiding name also hides
-  tagline, hiding both removes the block. This never renames the launcher app.
+- Custom themes hide the Home logo and text by default when homeIdentity.logo/name are omitted.
+  Preserve explicit user or existing theme choices: custom uses the supplied asset/text, default
+  explicitly shows Muqun branding, and hidden hides that element. Do not inject default branding
+  unless requested. Hiding name also hides the tagline; hiding both removes the block. Saved user
+  switches override the theme independently. This never renames the launcher app.
 - materials selects auto, solid, or glass per supported role. Auto uses platform defaults
   except artwork-backed chrome; glass falls back to solid when unsupported.
 - Per-mode surfaces.backgroundOpacity and terminal.backgroundOpacity are independent 0..1

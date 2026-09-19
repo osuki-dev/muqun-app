@@ -60,8 +60,16 @@ test('the choice row gives its label column a floor of more than half the row', 
   // into the shrink distribution and collapse exactly as `flex: 1` does.
   expect(source).toContain('rowCopyFloor: { minWidth: CHOICE_LABEL_FLOOR }');
   expect(component(source, 'SettingsChoiceRow')).toContain(
-    'style={[styles.rowCopy, styles.rowCopyFloor]}'
+    "style={[styles.rowCopy, valuePosition === 'trailing' && styles.rowCopyFloor]}"
   );
+});
+
+test('a below-positioned choice uses the full label column for long theme names', () => {
+  const body = component(chrome(), 'SettingsChoiceRow');
+  expect(body).toContain("valuePosition = 'trailing'");
+  expect(body).toContain("valuePosition === 'below'");
+  expect(body).toContain('style={styles.choiceValueBelow}');
+  expect(body).toContain("valuePosition === 'trailing'");
 });
 
 test('the choice row value wraps to two right-aligned lines, then ellipsises', () => {

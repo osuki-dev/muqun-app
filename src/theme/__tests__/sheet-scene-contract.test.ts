@@ -51,6 +51,7 @@ const SHEET_FRAMES = [
   'src/components/opencode-guide-sheet.tsx',
   'src/components/settings-theme-sheet.tsx',
   'src/components/settings-font-sheet.tsx',
+  'src/components/settings-home-layout-sheet.tsx',
   'src/app/explore.tsx',
 ];
 

@@ -402,6 +402,10 @@ function RootContent() {
                   name="settings-language"
                   options={sheetRouteOptions('settings-language')}
                 />
+                <Stack.Screen
+                  name="settings-home-layout"
+                  options={sheetRouteOptions('settings-home-layout')}
+                />
                 <Stack.Screen name="new-task" options={sheetRouteOptions('new-task')} />
                 <Stack.Screen name="web-service" options={sheetRouteOptions('web-service')} />
                 {/*

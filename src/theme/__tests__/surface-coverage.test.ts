@@ -21,8 +21,8 @@ const consumers = {
     // the picture in the first place.
     'src/components/sheet-ground.tsx',
   ],
-  'home.background': 'src/app/index.tsx',
-  'home.decoration': 'src/app/index.tsx',
+  'home.background': 'src/components/home-overview.tsx',
+  'home.decoration': 'src/components/home-overview.tsx',
   'navigation.background': 'src/components/glass-chrome.tsx',
   'composer.background': 'src/components/glass-chrome.tsx',
   'actions.background': 'src/components/glass-chrome.tsx',
@@ -33,7 +33,7 @@ const consumers = {
   // `SettingsSegmented` now, which is every tabbed control in the app.
   'tabs.background': 'src/components/settings-segmented.tsx',
   'emptyState.illustration': [
-    'src/app/index.tsx',
+    'src/components/home-overview.tsx',
     'src/theme/launch-artwork.ts',
     // Reachable from Home as well, but only through an explicit reader choice.
     'src/theme/home-hero.ts',
@@ -62,18 +62,21 @@ test('every supported artwork slot has a named runtime consumer', () => {
   }
 });
 
-test('Home mounts the hero above its list and the empty card keeps its own picture', () => {
-  const home = readFileSync('src/app/index.tsx', 'utf8');
-  // Mounted, and mounted where the contract says: after the brand block and the
-  // `home.decoration` banner, before anything that draws a server.
+test('Home mounts a resolved hero above its list and the empty card keeps its own picture', () => {
+  const home = readFileSync('src/components/home-overview.tsx', 'utf8');
+  // The editorial masthead reserves its artwork band from the shared resolver's
+  // answer, after the `home.decoration` banner and before anything that draws a
+  // server.
   expect(home).toContain('<HomeHero ');
   const heroAt = home.indexOf('<HomeHero ');
   expect(heroAt).toBeGreaterThan(home.indexOf('slot="home.decoration"'));
   expect(heroAt).toBeLessThan(home.indexOf('<ServerCard'));
-  // And not while the empty state is up. Both pictures on one otherwise empty
-  // screen is a gallery rather than an invitation, and the card's illustration
-  // was composed for the card.
-  expect(/records\.length > 0 \? \(\s*<HomeHero/.test(home)).toBe(true);
+  expect(home).toContain('artworkAvailable={hasHeroArtwork}');
+  expect(home).toContain('resolveHomeHeroAsset');
+  // The hero is omitted while the empty state is up. Both pictures on one
+  // otherwise empty screen is a gallery rather than an invitation, and the
+  // card's illustration was composed for the card.
+  expect(home).toContain('records.length > 0 && heroResolution');
   expect(home).toContain('<ThemeArtwork slot="emptyState.illustration" />');
 
   // The iPad rail deliberately does not draw it. The rail is a persistent index

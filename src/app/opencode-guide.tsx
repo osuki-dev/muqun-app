@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
@@ -6,25 +7,63 @@ import { StyleSheet, View } from 'react-native';
 
 import { OpenCodeGuideSheet } from '@/components/opencode-guide-sheet';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
-import { useOpenCodeGuideStore } from '@/stores/opencode-guide';
+import { checkOpenCodeServer, type OpenCodeReadiness } from '@/lib/home-opencode-readiness';
+import { useGatewayConnectionStore } from '@/stores/gateway-connection';
+import { useServerCapabilities } from '@/stores/server-capabilities';
 
 /**
- * The OpenCode setup sheet's route: which server, and nothing else.
- *
- * "Check again" has to re-run the probe the server card owns -- it is that
- * card's readiness state the answer changes -- and "open the agent" has to
- * leave this sheet and land on a screen. Neither travels as a route param, so
- * both go through `stores/opencode-guide.ts`; see that file for why.
+ * The OpenCode setup sheet's route owns the re-check. That keeps Editorial's
+ * command path independent from whichever server card happens to be mounted
+ * and lets a successful check replace this route with the exact server and
+ * original new-session intent.
  */
 export default function OpenCodeGuideScreen() {
   const router = useRouter();
   const { t } = useLingui();
   const theme = useThemeTokens();
   const surfaceBackground = useSurfaceBackground();
-  const params = useLocalSearchParams<{ serverId?: string; label?: string }>();
+  const params = useLocalSearchParams<{
+    serverId?: string;
+    label?: string;
+    directory?: string;
+    intent?: string;
+    status?: string;
+  }>();
   const serverId = params.serverId;
-  const probe = useOpenCodeGuideStore((state) => (serverId ? state.probes[serverId] : undefined));
-  const requestOpenAgent = useOpenCodeGuideStore((state) => state.requestOpenAgent);
+  const selectedRecord = useGatewayConnectionStore((state) => state.record);
+  const records = useGatewayConnectionStore((state) => state.records);
+  const server =
+    serverId && selectedRecord?.serverId === serverId
+      ? selectedRecord
+      : serverId
+        ? records.find((record) => record.serverId === serverId)
+        : undefined;
+  const [readiness, setReadiness] = useState<OpenCodeReadiness>(() =>
+    params.status === 'unsupported'
+      ? { status: 'unsupported', capabilities: [] }
+      : { status: 'offline', capabilities: [], cause: 'health' }
+  );
+
+  const checkAgain = async (): Promise<OpenCodeReadiness> => {
+    const result = await checkOpenCodeServer(server);
+    setReadiness(result);
+    if (serverId && result.capabilities.length > 0) {
+      void useServerCapabilities.getState().record(serverId, result.capabilities);
+    }
+    return result;
+  };
+
+  const openAgent = () => {
+    if (!serverId) return;
+    router.replace({
+      pathname: '/agent',
+      params: {
+        server: serverId,
+        ...(params.directory ? { directory: params.directory } : {}),
+        ...(params.intent === 'new' ? { intent: 'new' } : {}),
+      },
+    });
+  };
 
   if (!serverId) {
     return (
@@ -40,10 +79,9 @@ export default function OpenCodeGuideScreen() {
     <OpenCodeGuideSheet
       serverLabel={params.label || t`Server`}
       onClose={() => router.back()}
-      // No probe registered means the card that raised this sheet is gone, so
-      // there is nothing to re-check and the sheet says so rather than throwing.
-      onCheckAgain={async () => (probe ? await probe() : false)}
-      onOpenAgent={() => requestOpenAgent(serverId)}
+      readiness={readiness}
+      onCheckAgain={checkAgain}
+      onOpenAgent={openAgent}
     />
   );
 }

@@ -11,11 +11,13 @@ import { PressableScale } from '@/components/pressable-scale';
 import { SheetScene, SHEET_LADDER } from '@/components/sheet-scene';
 import { appChrome } from '@/constants/appearance';
 import { feedback } from '@/lib/feedback';
+import type { OpenCodeReadiness } from '@/lib/home-opencode-readiness';
 
 export interface OpenCodeGuideSheetProps {
   serverLabel: string;
   onClose: () => void;
-  onCheckAgain: () => Promise<boolean>;
+  readiness: OpenCodeReadiness;
+  onCheckAgain: () => Promise<OpenCodeReadiness>;
   onOpenAgent?: () => void;
 }
 
@@ -32,6 +34,7 @@ const COPIED_HOLD_MS = 2000;
 export const OpenCodeGuideSheet = memo(function OpenCodeGuideSheet({
   serverLabel,
   onClose,
+  readiness,
   onCheckAgain,
   onOpenAgent,
 }: OpenCodeGuideSheetProps) {
@@ -62,14 +65,19 @@ export const OpenCodeGuideSheet = memo(function OpenCodeGuideSheet({
     setChecking(true);
     setStatusMessage(null);
     try {
-      if (await onCheckAgain()) {
+      const result = await onCheckAgain();
+      if (result.status === 'ready') {
         void feedback('success');
-        onClose();
-        onOpenAgent?.();
+        if (onOpenAgent) onOpenAgent();
+        else onClose();
         return;
       }
       void feedback('warning');
-      setStatusMessage(t`Still not answering. Check the service is running on the host.`);
+      setStatusMessage(
+        result.status === 'unsupported'
+          ? t`This gateway does not advertise OpenCode sessions.`
+          : t`Still not answering. Check the service is running on the host.`
+      );
     } catch {
       void feedback('warning');
       setStatusMessage(t`Still not answering. Check the service is running on the host.`);
@@ -87,39 +95,45 @@ export const OpenCodeGuideSheet = memo(function OpenCodeGuideSheet({
       <View
         style={[styles.column, { paddingBottom: Math.max(insets.bottom, SHEET_LADDER.section) }]}>
         <Text variant="caption" color={theme.colors.textMuted} style={styles.blurb}>
-          {t`The OpenCode daemon is not running on this host. Run this and it will be.`}
+          {readiness.status === 'unsupported'
+            ? t`This gateway does not advertise OpenCode sessions.`
+            : t`The OpenCode daemon is not running on this host. Run this and it will be.`}
         </Text>
 
-        <PressableScale
-          testID="opencode-guide-copy-cmd"
-          accessibilityRole="button"
-          accessibilityLabel={copied ? t`Copied` : t`Copy the command`}
-          onPress={handleCopy}
-          style={[styles.command, { borderColor: theme.colors.border }]}>
-          <Text variant="caption" color={theme.colors.primary} weight="bold">
-            $
-          </Text>
-          <Text
-            selectable
-            variant="bodySmall"
-            weight="semibold"
-            color={theme.colors.text}
-            style={styles.commandText}>
-            {OPENCODE_COMMAND}
-          </Text>
-          {copied ? (
-            <Check size={14} color={theme.colors.success} strokeWidth={2.5} />
-          ) : (
-            <Copy size={14} color={theme.colors.textSubtle} strokeWidth={2} />
-          )}
-        </PressableScale>
+        {readiness.status === 'offline' ? (
+          <>
+            <PressableScale
+              testID="opencode-guide-copy-cmd"
+              accessibilityRole="button"
+              accessibilityLabel={copied ? t`Copied` : t`Copy the command`}
+              onPress={handleCopy}
+              style={[styles.command, { borderColor: theme.colors.border }]}>
+              <Text variant="caption" color={theme.colors.primary} weight="bold">
+                $
+              </Text>
+              <Text
+                selectable
+                variant="bodySmall"
+                weight="semibold"
+                color={theme.colors.text}
+                style={styles.commandText}>
+                {OPENCODE_COMMAND}
+              </Text>
+              {copied ? (
+                <Check size={14} color={theme.colors.success} strokeWidth={2.5} />
+              ) : (
+                <Copy size={14} color={theme.colors.textSubtle} strokeWidth={2} />
+              )}
+            </PressableScale>
 
-        <View style={styles.tip}>
-          <Terminal size={13} color={theme.colors.textSubtle} />
-          <Text variant="caption" color={theme.colors.textSubtle} style={styles.tipText}>
-            {t`Run it under systemd or tmux to keep it up after you log out.`}
-          </Text>
-        </View>
+            <View style={styles.tip}>
+              <Terminal size={13} color={theme.colors.textSubtle} />
+              <Text variant="caption" color={theme.colors.textSubtle} style={styles.tipText}>
+                {t`Run it under systemd or tmux to keep it up after you log out.`}
+              </Text>
+            </View>
+          </>
+        ) : null}
 
         {statusMessage ? (
           <Text variant="caption" color={theme.colors.danger} style={styles.status}>

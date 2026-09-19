@@ -21,7 +21,7 @@ import {
   RefreshControl,
   Share,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useIsFocused, useNavigation, usePathname, useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { useThemeTokens, useToast } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
@@ -145,6 +145,10 @@ import { createAgentStreamBatch } from '@/lib/agent-stream-batch';
 import { useAgentSessionState } from '@/stores/agent-session-state';
 import { useAgentPermissionStore } from '@/stores/agent-permissions';
 import { useInAppNotifications } from '@/stores/in-app-notifications';
+import { useHomeAttention } from '@/stores/home-attention';
+import { useHomeRecentsStore } from '@/stores/home-recents';
+import { useGatewayConnectionStore } from '@/stores/gateway-connection';
+import type { HomeTarget } from '@/lib/home-recents';
 import { useAppActive } from '@/hooks/use-app-active';
 import type { SessionAsset } from '@/lib/session-assets';
 import {
@@ -169,6 +173,20 @@ import { AGENT_TYPE } from '@/constants/agent-type';
 import { gatewayAuthHeaders, gatewayUrl } from '@/lib/gateway-client';
 import { appChrome } from '@/constants/appearance';
 import { useTranscriptPlate } from '@/hooks/use-transcript-plate';
+import {
+  claimAgentWorkbenchGlobalOwner,
+  agentWorkbenchNavigationScope,
+  ownsAgentWorkbenchGlobalOwner,
+  releaseAgentWorkbenchGlobalOwner,
+  type AgentWorkbenchGlobalOwner,
+} from '@/lib/agent-workbench-global-owner';
+import {
+  advanceAgentWorkbenchOwnerAfterCreate,
+  agentWorkbenchOwnerMatches,
+  agentWorkbenchRouteMatches,
+  shouldPreserveNewSessionDraft,
+  type AgentWorkbenchOwner,
+} from '@/lib/agent-workbench-ownership';
 
 /**
  * How many history timeline items the workbench reveals per page. The gateway
@@ -228,8 +246,16 @@ function formatAgentErrorMessage(err: unknown, fallback: string): string {
 }
 
 export interface AgentWorkbenchProps {
+  /** Explicit paired server identity; never infer it from a global selection. */
+  serverId: string;
   sessionId: string;
   initialAsid?: string;
+  /** Directory supplied by Home's explicit new-session intent. */
+  initialDirectory?: string;
+  /** A route intent is consumed by this screen; opening `/agent` alone resumes. */
+  initialIntent?: 'new';
+  /** A retained task under the Home overview is mounted, but is not being read. */
+  visible?: boolean;
   topInset?: number;
   bottomInset?: number;
   createNewSessionRef?: React.MutableRefObject<(() => void) | null>;
@@ -238,15 +264,87 @@ export interface AgentWorkbenchProps {
 }
 
 export const AgentWorkbench = memo(function AgentWorkbench({
+  serverId,
   sessionId,
   initialAsid,
+  initialDirectory,
+  initialIntent,
+  visible = true,
   topInset = 0,
   bottomInset = 0,
   createNewSessionRef,
   abortSessionRef,
 }: AgentWorkbenchProps) {
+  const mountedRef = useRef(true);
+  const ownerGenerationRef = useRef(0);
+  useEffect(() => {
+    mountedRef.current = true;
+    ownerGenerationRef.current += 1;
+    return () => {
+      mountedRef.current = false;
+      ownerGenerationRef.current += 1;
+    };
+  }, [serverId, sessionId]);
   const { t } = useLingui();
   const router = useRouter();
+  const rootNavigation = useNavigation('/');
+  const routeFocused = useIsFocused();
+  const pathname = usePathname();
+  const rootNavigationState = rootNavigation.getState();
+  const rootRouteName = rootNavigationState
+    ? rootNavigationState.routes[rootNavigationState.index]?.name
+    : undefined;
+  const globalOwnerRef = useRef<AgentWorkbenchGlobalOwner | null>(null);
+  const [globalOwnerEpoch, setGlobalOwnerEpoch] = useState(0);
+  const isGlobalOwner = useCallback(
+    () => ownsAgentWorkbenchGlobalOwner(globalOwnerRef.current),
+    []
+  );
+  const releaseGlobalOwner = useCallback(() => {
+    const owner = globalOwnerRef.current;
+    if (!owner) return;
+    if (releaseAgentWorkbenchGlobalOwner(owner)) {
+      useAgentPermissionStore.getState().reset();
+      useAgentSheetBridge.getState().reset();
+      useAgentSessionState.getState().setSessionStatus({ running: false, title: undefined });
+      useAgentSessionState.getState().setWorkspace(undefined, undefined, undefined);
+      useAgentSessionState.getState().setSessionRouting({
+        sessionOrder: [],
+        activeAsid: undefined,
+        switching: false,
+        switchSession: () => {},
+      });
+    }
+    globalOwnerRef.current = null;
+  }, []);
+  useEffect(() => {
+    const currentOwner = globalOwnerRef.current;
+    const ownsCurrentScope =
+      currentOwner !== null &&
+      currentOwner.serverId === serverId &&
+      currentOwner.sessionId === sessionId &&
+      ownsAgentWorkbenchGlobalOwner(currentOwner);
+    const navigationScope = agentWorkbenchNavigationScope({
+      pathname,
+      rootRouteName,
+      routeFocused,
+      visible,
+    });
+    if (navigationScope === 'focused') {
+      if (!ownsCurrentScope) {
+        releaseGlobalOwner();
+        globalOwnerRef.current = claimAgentWorkbenchGlobalOwner({ serverId, sessionId });
+        setGlobalOwnerEpoch((value) => value + 1);
+      }
+      return;
+    }
+    // A presented agent sheet keeps the focused workbench's existing owner.
+    // A buried workbench has no token here, so it cannot steal the sheet's
+    // bridge merely because every route observes the same pathname.
+    if (navigationScope === 'owned-overlay' && ownsCurrentScope) return;
+    releaseGlobalOwner();
+  }, [pathname, releaseGlobalOwner, rootRouteName, routeFocused, serverId, sessionId, visible]);
+  useEffect(() => () => releaseGlobalOwner(), [releaseGlobalOwner]);
   const theme = useThemeTokens();
   const { showToast } = useToast();
   const surfaceBackground = useSurfaceBackground();
@@ -354,6 +452,8 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   useEffect(() => {
     sessionsRef.current = sessions;
   }, [sessions]);
+  const sessionListRequestRef = useRef(0);
+  const workspaceSelectionRef = useRef(0);
   const [availableAgents, setAvailableAgents] = useState<AgentInfo[]>([]);
   /**
    * Every model the host publishes, kept for the two things a `ModelRef`
@@ -371,6 +471,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
    */
   const [catalogDefaults, setCatalogDefaults] = useState<CatalogDefaults>(NO_CATALOG_DEFAULTS);
   const [activeAsid, setActiveAsid] = useState<string | undefined>(initialAsid);
+  const newSessionCreationRef = useRef(false);
   const [sessionInfo, setSessionInfo] = useState<AgentSessionInfo | null>(null);
   const [transcriptStore] = useState(createAgentTranscriptStore);
   const setTimeline = transcriptStore.getState().setTimeline;
@@ -400,10 +501,14 @@ export const AgentWorkbench = memo(function AgentWorkbench({
    * longer on screen, and applying it would splice one session's rows into
    * another's.
    */
-  const activeAsidRef = useRef<string | undefined>(undefined);
+  const activeAsidRef = useRef<string | undefined>(initialAsid);
   useEffect(() => {
     activeAsidRef.current = activeAsid;
   }, [activeAsid]);
+  const selectAsid = useCallback((nextAsid: string | undefined) => {
+    activeAsidRef.current = nextAsid;
+    setActiveAsid(nextAsid);
+  }, []);
   /**
    * Whether the app is in front, for the stream handler.
    *
@@ -413,7 +518,45 @@ export const AgentWorkbench = memo(function AgentWorkbench({
    */
   const appActiveRef = useRef(true);
   /** The workspace on screen, for the calls that are made outside a render. */
-  const activeDirectoryRef = useRef<string | undefined>(undefined);
+  const activeDirectoryRef = useRef<string | undefined>(initialDirectory);
+  const captureWorkbenchOwner = useCallback(
+    (asid: string | undefined, directory: string | undefined): AgentWorkbenchOwner => ({
+      serverId,
+      sessionId,
+      generation: ownerGenerationRef.current,
+      asid,
+      directory,
+    }),
+    [serverId, sessionId]
+  );
+  const ownsWorkbench = useCallback(
+    (captured: AgentWorkbenchOwner): boolean =>
+      mountedRef.current &&
+      agentWorkbenchOwnerMatches(
+        captured,
+        captureWorkbenchOwner(activeAsidRef.current, activeDirectoryRef.current)
+      ) &&
+      useGatewayConnectionStore.getState().record?.serverId === captured.serverId,
+    [captureWorkbenchOwner]
+  );
+  const homeTargetFor = useCallback(
+    (
+      asid: string | undefined,
+      directory: string | undefined
+    ): Extract<HomeTarget, { kind: 'opencode-session' }> | null => {
+      if (
+        !serverId ||
+        !sessionId ||
+        !asid ||
+        !directory ||
+        useGatewayConnectionStore.getState().record?.serverId !== serverId
+      ) {
+        return null;
+      }
+      return { kind: 'opencode-session', serverId, sessionId, directory, asid };
+    },
+    [serverId, sessionId]
+  );
   /**
    * The directory the open session said it was in.
    *
@@ -422,6 +565,9 @@ export const AgentWorkbench = memo(function AgentWorkbench({
    */
   const snapshotDirectoryRef = useRef<string | undefined>(undefined);
   const [permissions, setPermissions] = useState<PermissionRequest[]>([]);
+  const permissionTargetsRef = useRef(
+    new Map<string, Extract<HomeTarget, { kind: 'opencode-session' }>>()
+  );
   useEffect(() => {
     if (permissions.length > 0) {
       wasWaitingRef.current = true;
@@ -592,7 +738,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   /** Ignore a slower shell response that belongs to an older workspace. */
   const shellRequestRef = useRef(0);
   const [knownProjects, setKnownProjects] = useState<AgentProject[]>([]);
-  const [activeDirectory, setActiveDirectory] = useState<string | undefined>(undefined);
+  const [activeDirectory, setActiveDirectory] = useState<string | undefined>(initialDirectory);
   useEffect(() => {
     activeDirectoryRef.current = activeDirectory;
   }, [activeDirectory]);
@@ -796,6 +942,18 @@ export const AgentWorkbench = memo(function AgentWorkbench({
    */
   const refreshSessions = useCallback(
     async (directory = activeDirectoryRef.current) => {
+      const request = ++sessionListRequestRef.current;
+      const capturedOwner: AgentWorkbenchOwner = {
+        serverId,
+        sessionId,
+        generation: ownerGenerationRef.current,
+        asid: activeAsidRef.current,
+        directory,
+        matchAsid: false,
+      };
+      const ownsList = () =>
+        request === sessionListRequestRef.current && ownsWorkbench(capturedOwner);
+      if (!ownsList()) return;
       try {
         // Roots only, and scoped to the workspace on screen: a subagent session
         // is a row in its parent's tree, never a sibling of it in the strip.
@@ -808,6 +966,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
           order: 'desc',
           ...(directory ? { directory } : {}),
         });
+        if (!ownsList()) return;
         setIsOffline(false);
         if (list) {
           if (!directory) hostListCompleteRef.current = list.length < SESSION_LIST_LIMIT;
@@ -817,21 +976,26 @@ export const AgentWorkbench = memo(function AgentWorkbench({
           // session any more. Newest activity alone meant an agent finishing a
           // turn elsewhere could take the screen away from the session the
           // reader had chosen -- see `agent-session-pick.ts`.
-          const opening = pickSessionToOpen(list, loadRememberedAgentSession(sessionId, directory));
+          const opening =
+            initialIntent === 'new'
+              ? null
+              : pickSessionToOpen(list, loadRememberedAgentSession(sessionId, directory));
           if (opening && !activeAsidRef.current) {
+            activeAsidRef.current = opening.asid;
             setActiveAsid(opening.asid);
             setSessionInfo(opening);
             if (opening.model) {
               applySelectedModel(opening.model);
             }
             if (opening.agent) setSelectedAgent(opening.agent);
-          } else if (list.length === 0) {
+          } else if (list.length === 0 || initialIntent === 'new') {
             setLoading(false);
           }
         } else {
           setLoading(false);
         }
       } catch (err) {
+        if (!ownsList()) return;
         console.warn('Failed to list agent sessions:', err);
         const errMsg = err instanceof Error ? err.message : String(err);
         if (
@@ -845,10 +1009,10 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         }
         setLoading(false);
       } finally {
-        initialCheckDoneRef.current = true;
+        if (ownsList()) initialCheckDoneRef.current = true;
       }
     },
-    [sessionId, applySelectedModel]
+    [applySelectedModel, initialIntent, ownsWorkbench, serverId, sessionId]
   );
 
   /**
@@ -918,11 +1082,29 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   // destructive commands — this is the only honesty YOLO mode has.
   const handleAutoPermission = useCallback(
     (req: PermissionRequest) => {
-      if (!activeAsid) return;
+      const asid = req.asid;
+      if (!asid) return;
+      const sourceAsid = activeAsidRef.current;
+      const directory = activeDirectoryRef.current;
+      const capturedOwner = captureWorkbenchOwner(sourceAsid, directory);
+      if (!sourceAsid || !ownsWorkbench(capturedOwner)) return;
+      // A child request still belongs to its child and must be answered on that
+      // asid, but its attention summary belongs nowhere on the active root card.
+      const target = asid === sourceAsid ? homeTargetFor(asid, directory) : null;
       const decision = yoloDecision(req);
-      void replyAgentPermission(sessionId, activeAsid, req.id, decision).catch((err) => {
-        console.warn('YOLO permission reply failed:', err);
-      });
+      void replyAgentPermission(sessionId, asid, req.id, decision)
+        .then(() => {
+          // A confirmed answer resolves the exact captured source even after
+          // the reader leaves it. Child requests intentionally have no Home
+          // summary rather than being attributed to the root.
+          if (target) {
+            useHomeAttention.getState().resolve(target, req.id);
+            permissionTargetsRef.current.delete(req.id);
+          }
+        })
+        .catch((err) => {
+          console.warn('YOLO permission reply failed:', err);
+        });
       const danger = dangerousPermissionReason(req);
       if (danger) {
         showToast({
@@ -932,7 +1114,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         });
       }
     },
-    [activeAsid, sessionId, showToast, t]
+    [captureWorkbenchOwner, homeTargetFor, ownsWorkbench, sessionId, showToast, t]
   );
 
   /**
@@ -1077,21 +1259,57 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         }
         return;
       }
+      const ownerGeneration = ownerGenerationRef.current;
+      const ownsSnapshot = () =>
+        mountedRef.current &&
+        ownerGenerationRef.current === ownerGeneration &&
+        activeAsidRef.current === asid &&
+        useGatewayConnectionStore.getState().record?.serverId === serverId;
+      if (!ownsSnapshot()) return;
       if (mode === 'enter') setLoading(true);
+      const snapshotTicket = useHomeAttention.getState().reserve();
       try {
         const snap = await getAgentSessionSnapshot(sessionId, asid);
-        if (activeAsidRef.current !== asid) return;
+        if (!ownsSnapshot()) return;
         const info = snap.info;
         if (info) {
           setSessionInfo(info);
           if (info.directory) {
             snapshotDirectoryRef.current = info.directory;
+            activeDirectoryRef.current = info.directory;
             setActiveDirectory(info.directory);
           }
         }
         setInbox(snap.inbox);
         // A rollback staged before the app was opened is still staged.
         setStagedRevert(info?.revert ?? null);
+
+        if (ownsSnapshot() && info?.asid === asid && !info.deleted && info.directory) {
+          const target = homeTargetFor(asid, info.directory);
+          if (target) {
+            const observedAt = Date.now();
+            // This is the only entry visit publisher: silent resyncs and
+            // output effects never turn background activity into a recent row.
+            if (mode === 'enter' && appActiveRef.current) {
+              void useHomeRecentsStore.getState().visit(target, info.title, observedAt);
+            }
+            // Permission ids are the complete summary. The prompt and
+            // resources remain in the source workbench only.
+            for (const permission of snap.permissions) {
+              if (!permission.asid || permission.asid === asid) {
+                permissionTargetsRef.current.set(permission.id, target);
+              }
+            }
+            useHomeAttention.getState().observe(
+              target,
+              snap.permissions
+                .filter((permission) => !permission.asid || permission.asid === asid)
+                .map((permission) => permission.id),
+              observedAt,
+              snapshotTicket
+            );
+          }
+        }
 
         if (mode === 'enter') {
           // Publish the new dataset and its window together; otherwise the list
@@ -1152,7 +1370,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
          * between this call leaving and landing is still unread afterwards,
          * which is the honest answer.
          */
-        if (info) {
+        if (info && appActiveRef.current) {
           const idle = info.time_idle;
           const viewedAsid = info.asid;
           void (
@@ -1176,7 +1394,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
          */
         requestIdleCallback(
           () => {
-            if (activeAsidRef.current !== asid) return;
+            if (!ownsSnapshot() || !appActiveRef.current) return;
             void sideLoadsRef.current.context();
             void sideLoadsRef.current.shells();
             void sideLoadsRef.current.diffs();
@@ -1184,12 +1402,19 @@ export const AgentWorkbench = memo(function AgentWorkbench({
           { timeout: 250 }
         );
       } catch (err) {
-        if (activeAsidRef.current !== asid) return;
+        if (!ownsSnapshot()) return;
         console.warn('Failed to load snapshot:', err);
         if (
           err instanceof Error &&
           (err.message.includes('404') || err.message.includes('session_not_found'))
         ) {
+          const target = homeTargetFor(asid, activeDirectoryRef.current);
+          if (target) {
+            void useHomeRecentsStore.getState().remove(target);
+            useHomeAttention.getState().observe(target, [], Date.now(), snapshotTicket);
+          }
+          setLoading(false);
+          activeAsidRef.current = undefined;
           setActiveAsid(undefined);
           setSessionInfo(null);
           setTimeline([]);
@@ -1209,7 +1434,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
           message: formatAgentErrorMessage(err, t`OpenCode service is offline`),
         });
       } finally {
-        if (mode === 'enter' && activeAsidRef.current === asid) setLoading(false);
+        if (mode === 'enter' && ownsSnapshot()) setLoading(false);
       }
     },
     [
@@ -1220,6 +1445,8 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       applyViewed,
       follow,
       handleAutoPermission,
+      homeTargetFor,
+      serverId,
       showToast,
       t,
     ]
@@ -1375,6 +1602,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
             setSessions((prev) => prev.filter((session) => session.asid !== info.asid));
             setChildrenByParent((prev) => dropSession(prev, info.asid));
             if (info.asid === activeAsid) {
+              activeAsidRef.current = undefined;
               setActiveAsid(undefined);
               setSessionInfo(null);
               setTimeline([]);
@@ -1408,7 +1636,17 @@ export const AgentWorkbench = memo(function AgentWorkbench({
           break;
         }
 
-        case 'agent.permission.pending':
+        case 'agent.permission.pending': {
+          if (!mountedRef.current) break;
+          const eventAsid = event.asid || activeAsid;
+          const target =
+            forActiveSession && eventAsid === activeAsidRef.current
+              ? homeTargetFor(eventAsid, activeDirectoryRef.current)
+              : null;
+          if (target) {
+            permissionTargetsRef.current.set(event.request.id, target);
+            useHomeAttention.getState().pending(target, event.request.id, Date.now());
+          }
           if (yoloModeRef.current) {
             handleAutoPermission(event.request);
           } else {
@@ -1417,10 +1655,18 @@ export const AgentWorkbench = memo(function AgentWorkbench({
             );
           }
           break;
+        }
 
-        case 'agent.permission.resolved':
+        case 'agent.permission.resolved': {
+          if (!mountedRef.current) break;
+          const target = permissionTargetsRef.current.get(event.request_id);
+          permissionTargetsRef.current.delete(event.request_id);
+          if (target) {
+            useHomeAttention.getState().resolve(target, event.request_id, Date.now());
+          }
           setPermissions((prev) => prev.filter((p) => p.id !== event.request_id));
           break;
+        }
 
         case 'agent.form.pending':
           setForms((prev) =>
@@ -1487,6 +1733,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       refreshDiffs,
       applyViewed,
       handleAutoPermission,
+      homeTargetFor,
     ]
   );
 
@@ -1547,7 +1794,8 @@ export const AgentWorkbench = memo(function AgentWorkbench({
 
   // Returning to the foreground is a reconnect the stream cannot see: the
   // socket may have been held open by the OS and delivered nothing.
-  const appActive = useAppActive();
+  const applicationActive = useAppActive();
+  const appActive = applicationActive && visible;
   useEffect(() => {
     appActiveRef.current = appActive;
     if (appActive) catchUpRef.current();
@@ -1859,26 +2107,55 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     attachments?: string[],
     delivery?: 'steer' | 'queue'
   ): Promise<boolean> => {
-    let currentAsid = activeAsid;
+    const sourceAsid = activeAsid;
+    const directory = activeDirectoryRef.current ?? sessionInfo?.directory;
+    let requestOwner = captureWorkbenchOwner(sourceAsid, directory);
+    const ownsRoute = () =>
+      mountedRef.current &&
+      agentWorkbenchRouteMatches(
+        requestOwner,
+        captureWorkbenchOwner(activeAsidRef.current, activeDirectoryRef.current)
+      ) &&
+      useGatewayConnectionStore.getState().record?.serverId === requestOwner.serverId &&
+      activeDirectoryRef.current === directory;
+    const ownsSource = () => ownsRoute() && activeAsidRef.current === sourceAsid;
+    let currentAsid = sourceAsid;
     if (!currentAsid) {
-      try {
-        const created = await createAgentSession(
-          sessionId,
-          newSessionParams(activeDirectory ?? sessionInfo?.directory)
-        );
-        currentAsid = created.asid;
-        setActiveAsid(created.asid);
-        setSessionInfo(created);
-      } catch (err) {
-        console.warn('Failed to create session on prompt send:', err);
-        showToast({
-          variant: 'danger',
-          title: t`Could not start a session`,
-          message: formatAgentErrorMessage(err, t`OpenCode service is offline`),
-        });
+      if (newSessionCreationRef.current) return false;
+      newSessionCreationRef.current = true;
+      const params = newSessionParams(directory);
+      if (!ownsSource()) {
+        newSessionCreationRef.current = false;
         return false;
       }
+      try {
+        const created = await createAgentSession(sessionId, params);
+        if (!ownsSource()) return false;
+        const advancedOwner = advanceAgentWorkbenchOwnerAfterCreate(
+          requestOwner,
+          captureWorkbenchOwner(activeAsidRef.current, activeDirectoryRef.current),
+          created.asid
+        );
+        if (!advancedOwner) return false;
+        currentAsid = created.asid;
+        activeAsidRef.current = created.asid;
+        setActiveAsid(created.asid);
+        setSessionInfo(created);
+        requestOwner = advancedOwner;
+      } catch (err) {
+        console.warn('Failed to create session on prompt send:', err);
+        if (ownsSource())
+          showToast({
+            variant: 'danger',
+            title: t`Could not start a session`,
+            message: formatAgentErrorMessage(err, t`OpenCode service is offline`),
+          });
+        return false;
+      } finally {
+        newSessionCreationRef.current = false;
+      }
     }
+    if (!currentAsid || !ownsRoute() || activeAsidRef.current !== currentAsid) return false;
 
     const isQueued = isBusyStatus(sessionInfo?.status) && delivery === 'queue';
 
@@ -1922,14 +2199,19 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     }
 
     try {
+      // Selection can change between the optimistic row and the network call.
+      // Do not send a newly-created prompt through the newly-selected gateway.
+      if (!ownsRoute() || activeAsidRef.current !== currentAsid) return false;
       await sendAgentPrompt(sessionId, currentAsid, {
         text,
         attachments,
         delivery,
       });
+      if (!ownsRoute() || activeAsidRef.current !== currentAsid) return false;
       return true;
     } catch (err) {
       console.warn('Failed to send prompt:', err);
+      if (!ownsRoute() || activeAsidRef.current !== currentAsid) return false;
       // The row goes with the failure. A message that was never delivered has
       // no business sitting in the transcript, and the draft comes back so the
       // reader can try again rather than retype it.
@@ -2026,22 +2308,39 @@ export const AgentWorkbench = memo(function AgentWorkbench({
 
   const handlePermissionDecision = useCallback(
     async (permId: string, decision: PermissionDecision) => {
-      if (!activeAsid) return;
+      const request = permissions.find((permission) => permission.id === permId);
+      const asid = request?.asid || activeAsidRef.current;
+      if (!asid) return;
+      const capturedTarget = permissionTargetsRef.current.get(permId);
+      const directory = activeDirectoryRef.current;
+      const sourceAsid = capturedTarget?.asid ?? activeAsidRef.current;
+      const target =
+        capturedTarget ?? (sourceAsid === asid ? homeTargetFor(asid, directory) : null);
+      const capturedOwner = captureWorkbenchOwner(sourceAsid, directory);
+      if (!ownsWorkbench(capturedOwner)) return;
       try {
-        await replyAgentPermission(sessionId, activeAsid, permId, decision);
-        if (decision === 'allow_always') setSavedPermissionsRevision((count) => count + 1);
+        await replyAgentPermission(sessionId, asid, permId, decision);
       } catch (err) {
         console.warn('Failed to reply permission:', err);
-        showToast({
-          variant: 'danger',
-          title: t`Could not reply`,
-          message: formatAgentErrorMessage(err, t`OpenCode service is offline`),
-        });
+        if (ownsWorkbench(capturedOwner))
+          showToast({
+            variant: 'danger',
+            title: t`Could not reply`,
+            message: formatAgentErrorMessage(err, t`OpenCode service is offline`),
+          });
         return;
       }
+      // The gateway confirmed this exact request. Its Home summary is allowed
+      // to settle after navigation, while the visible workbench is not.
+      if (target) {
+        useHomeAttention.getState().resolve(target, permId);
+        permissionTargetsRef.current.delete(permId);
+      }
+      if (!ownsWorkbench(capturedOwner)) return;
+      if (decision === 'allow_always') setSavedPermissionsRevision((count) => count + 1);
       setPermissions((prev) => prev.filter((p) => p.id !== permId));
     },
-    [activeAsid, sessionId, showToast, t]
+    [captureWorkbenchOwner, homeTargetFor, ownsWorkbench, permissions, sessionId, showToast, t]
   );
 
   const handleToggleYoloMode = useCallback(() => {
@@ -2068,6 +2367,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   );
 
   const handleCreateNewSession = useCallback(async () => {
+    if (newSessionCreationRef.current) return;
     if (isOffline) {
       showToast({
         variant: 'danger',
@@ -2076,11 +2376,20 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       });
       return;
     }
+    newSessionCreationRef.current = true;
+    const directory = activeDirectoryRef.current ?? sessionInfo?.directory;
+    const sourceAsid = activeAsidRef.current;
+    const capturedOwner = captureWorkbenchOwner(sourceAsid, directory);
+    const params = newSessionParams(directory);
+    const ownsCreate = () => ownsWorkbench(capturedOwner) && activeAsidRef.current === sourceAsid;
+    if (!ownsCreate()) {
+      newSessionCreationRef.current = false;
+      return;
+    }
     try {
-      const created = await createAgentSession(
-        sessionId,
-        newSessionParams(activeDirectory ?? sessionInfo?.directory)
-      );
+      const created = await createAgentSession(sessionId, params);
+      if (!ownsCreate()) return;
+      activeAsidRef.current = created.asid;
       setActiveAsid(created.asid);
       setSessionInfo(created);
       setTimeline([]);
@@ -2093,20 +2402,25 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       showScreenNotice(t`New session`, t`Started with a clean context.`);
     } catch (err) {
       console.warn('Failed to create session:', err);
-      setIsOffline(true);
-      showToast({
-        variant: 'danger',
-        title: t`Could not create session`,
-        message: formatAgentErrorMessage(err, t`Failed to create agent session`),
-      });
+      if (ownsCreate()) {
+        setIsOffline(true);
+        showToast({
+          variant: 'danger',
+          title: t`Could not create session`,
+          message: formatAgentErrorMessage(err, t`Failed to create agent session`),
+        });
+      }
+    } finally {
+      newSessionCreationRef.current = false;
     }
   }, [
     setTimeline,
     isOffline,
     sessionId,
     newSessionParams,
-    activeDirectory,
     sessionInfo,
+    captureWorkbenchOwner,
+    ownsWorkbench,
     t,
     refreshSessions,
     showToast,
@@ -2195,6 +2509,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         setForms([]);
         setInbox([]);
         syncRef.current = CATCH_UP_START;
+        activeAsidRef.current = next?.asid;
         setActiveAsid(next?.asid);
         setSessionInfo(next ?? null);
       }
@@ -2203,7 +2518,10 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         console.warn('Failed to delete session:', err);
         setSessions(previousSessions);
         setChildrenByParent(previousChildren);
-        if (wasActive) setActiveAsid(asid);
+        if (wasActive) {
+          activeAsidRef.current = asid;
+          setActiveAsid(asid);
+        }
         showScreenNotice(
           t`Could not delete`,
           formatAgentErrorMessage(err, t`OpenCode service is offline`)
@@ -2215,17 +2533,45 @@ export const AgentWorkbench = memo(function AgentWorkbench({
 
   const handleSelectWorkspace = useCallback(
     async (directory: string, project?: AgentProject) => {
+      const selection = ++workspaceSelectionRef.current;
+      const capturedOwner: AgentWorkbenchOwner = {
+        serverId,
+        sessionId,
+        generation: ownerGenerationRef.current,
+        asid: activeAsidRef.current,
+        directory: activeDirectoryRef.current,
+        // This command intentionally changes the workspace after it is
+        // accepted; selectionRef still invalidates an older picker result.
+        matchDirectory: false,
+      };
+      const ownsSelection = () =>
+        selection === workspaceSelectionRef.current && ownsWorkbench(capturedOwner);
+      if (!ownsSelection()) return;
+      activeDirectoryRef.current = directory;
       setActiveDirectory(directory);
+      // Home's explicit new-session intent has no backend session yet. Keep
+      // this draft on the chosen directory; the first prompt is the operation
+      // that creates the session. Calling list/create here would silently
+      // replace the fresh draft with an existing or empty project session.
+      if (shouldPreserveNewSessionDraft(initialIntent, activeAsidRef.current)) return;
+      const params = newSessionParams(directory);
       try {
         // A workspace that already has sessions opens on the one the reader
         // last had open there, or on its most recent one; only an empty
         // workspace gets a new session made for it.
         const existing = await listAgentSessions(sessionId, { roots: true, directory });
+        if (!ownsSelection()) return;
         const opening = existing
           ? pickSessionToOpen(existing, loadRememberedAgentSession(sessionId, directory))
           : null;
-        const target =
-          opening ?? (await createAgentSession(sessionId, newSessionParams(directory)));
+        let target = opening;
+        if (!target) {
+          if (!ownsSelection()) return;
+          target = await createAgentSession(sessionId, params);
+          if (!ownsSelection()) return;
+        }
+        if (!ownsSelection()) return;
+        activeAsidRef.current = target.asid;
         setActiveAsid(target.asid);
         setSessionInfo(target);
         setTimeline([]);
@@ -2236,15 +2582,27 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         refreshSessions();
       } catch (err) {
         console.warn('Failed to switch workspace session:', err);
-        setIsOffline(true);
-        showToast({
-          variant: 'danger',
-          title: t`Could not create session`,
-          message: formatAgentErrorMessage(err, t`Failed to switch project`),
-        });
+        if (ownsSelection()) {
+          setIsOffline(true);
+          showToast({
+            variant: 'danger',
+            title: t`Could not create session`,
+            message: formatAgentErrorMessage(err, t`Failed to switch project`),
+          });
+        }
       }
     },
-    [setTimeline, sessionId, newSessionParams, t, refreshSessions, showToast]
+    [
+      setTimeline,
+      newSessionParams,
+      ownsWorkbench,
+      refreshSessions,
+      initialIntent,
+      serverId,
+      sessionId,
+      showToast,
+      t,
+    ]
   );
 
   /**
@@ -2268,6 +2626,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       if (!asid) return;
       try {
         const moved = await moveAgentSession(asid, directory);
+        activeDirectoryRef.current = directory;
         setActiveDirectory(directory);
         if (moved) {
           setSessionInfo((prev) =>
@@ -2635,24 +2994,18 @@ export const AgentWorkbench = memo(function AgentWorkbench({
    * every card the pending list meant one arriving re-rendered all of them.
    */
   useEffect(() => {
+    if (!isGlobalOwner()) return;
     useAgentPermissionStore.getState().publish(permissions);
-  }, [permissions]);
+  }, [globalOwnerEpoch, isGlobalOwner, permissions]);
 
   useEffect(() => {
+    if (!isGlobalOwner()) return;
     useAgentPermissionStore.getState().setDecider(handlePermissionDecision);
-  }, [handlePermissionDecision]);
-
-  // A card outliving the workbench would be holding a decider for a session
-  // that is gone.
-  useEffect(() => {
-    return () => {
-      useAgentPermissionStore.getState().reset();
-    };
-  }, []);
+  }, [globalOwnerEpoch, handlePermissionDecision, isGlobalOwner]);
 
   const toolActions = useMemo<AgentToolActions>(
     () => ({
-      onOpenChildSession: setActiveAsid,
+      onOpenChildSession: selectAsid,
       onRunInBackground: handleRunInBackground,
       onPreviewImage: setPreviewImageUri,
       onOpenFile: handleOpenToolFile,
@@ -2660,7 +3013,14 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       onOpenFullDiff: openDiffSheet,
       childStatuses,
     }),
-    [handleRunInBackground, handleOpenToolFile, openBackgroundTray, openDiffSheet, childStatuses]
+    [
+      handleRunInBackground,
+      handleOpenToolFile,
+      openBackgroundTray,
+      openDiffSheet,
+      childStatuses,
+      selectAsid,
+    ]
   );
 
   /**
@@ -2704,11 +3064,12 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   // it without the workbench owning the header's render. A store write, not a
   // prop callback: both sides read the same value.
   useEffect(() => {
+    if (!isGlobalOwner()) return;
     useAgentSessionState.getState().setSessionStatus({
       running: isRunning,
       title: sessionInfo?.title,
     });
-  }, [isRunning, sessionInfo?.title]);
+  }, [globalOwnerEpoch, isGlobalOwner, isRunning, sessionInfo?.title]);
 
   const activeProject = useMemo(() => {
     if (!activeDirectory) return undefined;
@@ -2768,8 +3129,9 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   }, [activeDirectory, worktreeEntries]);
 
   useEffect(() => {
+    if (!isGlobalOwner()) return;
     useAgentSessionState.getState().setWorkspace(activeDirectory, activeProject, activeWorktree);
-  }, [activeDirectory, activeProject, activeWorktree]);
+  }, [activeDirectory, activeProject, activeWorktree, globalOwnerEpoch, isGlobalOwner]);
 
   useLayoutEffect(() => {
     transcriptStore.getState().configure({ shells, windowStart, status: sessionInfo?.status });
@@ -3101,33 +3463,20 @@ export const AgentWorkbench = memo(function AgentWorkbench({
    * order and nothing else, so it is published rather than recomputed -- a
    * second answer to "what is next" is a second answer that can be wrong.
    *
-   * `setActiveAsid` travels with it for the same reason the sheet bridge
+   * `selectAsid` travels with it for the same reason the sheet bridge
    * carries it: a committed swipe must be the same act as tapping a chip, not
    * a parallel route into the same state.
    */
   const sessionOrder = useMemo(() => sessionStrip.map((node) => node.session), [sessionStrip]);
   useEffect(() => {
+    if (!isGlobalOwner()) return;
     useAgentSessionState.getState().setSessionRouting({
       sessionOrder,
       activeAsid,
       switching: loading,
-      switchSession: setActiveAsid,
+      switchSession: selectAsid,
     });
-  }, [sessionOrder, activeAsid, loading]);
-  // Leaving the screen takes the order with it, so a header mounted over a
-  // different session cannot draw a mark for a neighbour that is no longer on
-  // the other side of it.
-  useEffect(
-    () => () => {
-      useAgentSessionState.getState().setSessionRouting({
-        sessionOrder: [],
-        activeAsid: undefined,
-        switching: false,
-        switchSession: () => {},
-      });
-    },
-    []
-  );
+  }, [globalOwnerEpoch, isGlobalOwner, sessionOrder, activeAsid, loading, selectAsid]);
 
   /**
    * Every session in hand, for the surfaces that want one list.
@@ -3226,6 +3575,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
    * the workbench either. Each sheet route selects only the fields it reads.
    */
   useEffect(() => {
+    if (!isGlobalOwner()) return;
     const snapshot: Partial<AgentSheetSnapshot> = {
       sessionId,
       activeAsid,
@@ -3275,11 +3625,13 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     savedPermissionsRevision,
     worktreeRevision,
     catalogModels,
+    globalOwnerEpoch,
+    isGlobalOwner,
   ]);
 
   const sheetActions = useMemo<AgentSheetActions>(
     () => ({
-      selectSession: setActiveAsid,
+      selectSession: selectAsid,
       createSession: () => {
         void handleCreateNewSession();
       },
@@ -3310,21 +3662,14 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       handleToggleYoloMode,
       handleCompactContext,
       handleClearContext,
+      selectAsid,
     ]
   );
 
   useEffect(() => {
+    if (!isGlobalOwner()) return;
     useAgentSheetBridge.getState().setActions(sheetActions);
-  }, [sheetActions]);
-
-  // A sheet outliving the workbench would be holding a closure over a session
-  // that is gone. Emptying the bridge on unmount makes every handler a no-op
-  // again rather than a stale one.
-  useEffect(() => {
-    return () => {
-      useAgentSheetBridge.getState().reset();
-    };
-  }, []);
+  }, [globalOwnerEpoch, isGlobalOwner, sheetActions]);
 
   /**
    * The one image the reader tapped, in the shape the shared lightbox takes.
@@ -3750,7 +4095,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         sessionTitle={sessionInfo?.title}
         onSend={sendFromComposer}
         onAbort={handleAbort}
-        onSelectSession={setActiveAsid}
+        onSelectSession={selectAsid}
         onSelectAgentMode={handleSelectAgentMode}
         onCreateNewSession={handleCreateNewSession}
         onOpenModeSheet={openModeSheet}

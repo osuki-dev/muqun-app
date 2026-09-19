@@ -1,7 +1,13 @@
 import { useEffect, useRef } from 'react';
 import { useLingui } from '@lingui/react/macro';
 import { useThemeMode, useThemeTokens } from '@osuki-dev/ui';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import {
+  useIsFocused,
+  useLocalSearchParams,
+  useNavigation,
+  usePathname,
+  useRouter,
+} from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -23,6 +29,11 @@ import { LogoLoader } from '@/components/logo-loader';
 import { workspaceDisplayName } from '@/lib/agent-protocol';
 import { useAgentSessionState } from '@/stores/agent-session-state';
 import { hasRealSessionTitle } from '@/lib/agent-session';
+import { consumeNewOpenCodeIntent } from '@/lib/home-commands';
+import {
+  isAgentWorkbenchOwnedOverlayPath,
+  isAgentWorkbenchOwnedRootRoute,
+} from '@/lib/agent-workbench-global-owner';
 
 /**
  * The header's height above the content, with generous clearance so the glass pill
@@ -43,11 +54,24 @@ const HEADER_INSET = NAV_HEADER_TOP_GAP + NAV_HEADER_CONTROL_SIZE + 24;
 export default function AgentScreen() {
   const { t } = useLingui();
   const router = useRouter();
+  const routeFocused = useIsFocused();
+  const pathname = usePathname();
+  const rootNavigation = useNavigation('/');
+  const rootNavigationState = rootNavigation.getState();
+  const rootRouteName = rootNavigationState
+    ? rootNavigationState.routes[rootNavigationState.index]?.name
+    : undefined;
   const theme = useThemeTokens();
   const { resolvedMode } = useThemeMode();
   const insets = useSafeAreaInsets();
   const surfaceBackground = useSurfaceBackground();
-  const params = useLocalSearchParams<{ sessionId?: string; asid?: string; server?: string }>();
+  const params = useLocalSearchParams<{
+    sessionId?: string;
+    asid?: string;
+    server?: string;
+    directory?: string;
+    intent?: string;
+  }>();
 
   const sessionId = params.sessionId || 'herdr';
 
@@ -63,6 +87,11 @@ export default function AgentScreen() {
   const { record, selectRecord } = useGatewayRecord();
   const wantedServer = typeof params.server === 'string' && params.server ? params.server : null;
   const serverReady = !wantedServer || record?.serverId === wantedServer;
+  const newSessionIntent = params.intent === 'new';
+  useEffect(() => {
+    if (!newSessionIntent || !wantedServer) return;
+    consumeNewOpenCodeIntent(wantedServer, params.directory);
+  }, [newSessionIntent, params.directory, wantedServer]);
   useEffect(() => {
     if (!wantedServer || serverReady) return;
     void selectRecord(wantedServer);
@@ -72,6 +101,10 @@ export default function AgentScreen() {
   const activeDirectory = useAgentSessionState((s) => s.directory);
   const activeProject = useAgentSessionState((s) => s.project);
   const activeWorktree = useAgentSessionState((s) => s.worktree);
+  const workbenchVisible =
+    routeFocused ||
+    isAgentWorkbenchOwnedRootRoute(rootRouteName) ||
+    isAgentWorkbenchOwnedOverlayPath(pathname);
 
   const createNewSessionRef = useRef<(() => void) | null>(null);
   const abortSessionRef = useRef<(() => void) | null>(null);
@@ -111,9 +144,19 @@ export default function AgentScreen() {
         <AgentWorkbench
           // Keyed on the server: switching servers is a new workbench, not
           // the old one told to look elsewhere.
-          key={record?.serverId ?? 'none'}
+          key={JSON.stringify([
+            record?.serverId ?? 'none',
+            newSessionIntent ? 'new' : 'existing',
+            params.sessionId ?? '',
+            params.asid ?? '',
+            params.directory ?? '',
+          ])}
+          serverId={wantedServer ?? record?.serverId ?? ''}
           sessionId={sessionId}
-          initialAsid={params.asid}
+          initialAsid={newSessionIntent ? undefined : params.asid}
+          initialDirectory={params.directory}
+          initialIntent={newSessionIntent ? 'new' : undefined}
+          visible={workbenchVisible}
           topInset={insets.top + HEADER_INSET}
           bottomInset={insets.bottom}
           createNewSessionRef={createNewSessionRef}

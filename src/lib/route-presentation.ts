@@ -43,6 +43,7 @@ export const sheetRoutePresentations: Readonly<Record<string, SheetPresentation>
   artifacts: 'sheet',
   'git-diff': 'sheet',
   'settings-language': 'sheet',
+  'settings-home-layout': 'sheet',
   'web-service': 'sheet',
   'settings-theme': 'sheet',
   'settings-font': 'sheet',
@@ -104,6 +105,9 @@ export const sheetRouteDetents: Readonly<Record<string, SheetDetents>> = {
   'settings-font': 'expandable',
   // One short list of languages: as tall as it is, and no taller.
   'settings-language': 'fitToContents',
+  // Two layout previews and their descriptions, with enough room to compare
+  // them without making a two-choice preference a full-screen page.
+  'settings-home-layout': 'expandable',
   // Full height leaves room for the composer and keyboard.
   'new-task': 'expandable',
   // Open a web service (card #829). One field with a row of shortcuts over it:
@@ -210,6 +214,7 @@ export const sheetRouteContent: Readonly<Record<string, SheetContent>> = {
   'agent-mode': 'list',
   'settings-font': 'list',
   'settings-language': 'list',
+  'settings-home-layout': 'list',
   'opencode-guide': 'list',
 
   // A short form and nothing else, which opens where it always has. A sheet

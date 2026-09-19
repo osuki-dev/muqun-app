@@ -4,7 +4,15 @@ import { Plural, Trans, useLingui } from '@lingui/react/macro';
 import { useThemeTokens } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
 import { Bot, Plus, RefreshCw, SquareTerminal } from 'lucide-react-native';
-import { type ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
+import {
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from 'react';
 import { RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import Animated, {
   useAnimatedStyle,
@@ -33,6 +41,7 @@ import {
 } from '@/components/sheet-scene';
 import { Skeleton } from '@/components/themed-skeleton';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
+import { useLatestRef, useLazyRef } from '@/hooks/use-render-refs';
 import { fadeIn, fadeOut, listLayout, PULSE_PERIOD, riseIn, STAGGER, timing } from '@/lib/motion';
 import {
   createTab,
@@ -54,6 +63,19 @@ import {
   type MachineReach,
   type SessionRailItem,
 } from '@/lib/switcher-rails';
+import {
+  beginSessionMapOperation,
+  clearSessionMapOutcome,
+  finishSessionMapOperation,
+  hasSessionMapOutcome,
+  markSessionMapOutcomeUnknown,
+  ownsSessionMapGateway,
+  ownsSessionMapOperation,
+  subscribeSessionMapOutcome,
+  type SessionMapOperation,
+  type SessionMapOperationScope,
+} from '@/lib/session-map-operations';
+import { useGatewayConnectionStore } from '@/stores/gateway-connection';
 
 /**
  * The session map: every panel in the current workspace, grouped under the tab
@@ -152,6 +174,7 @@ export function SessionMap({
   label,
   activePaneId,
   onChoosePane,
+  onCreatedPane,
   machines,
   serverId,
   pendingId,
@@ -166,6 +189,8 @@ export function SessionMap({
   /** The panel the terminal is showing, so the sheet opens on "where am I". */
   activePaneId?: string;
   onChoosePane: (paneId: string) => void;
+  /** Completes Home's explicit new-terminal intent with the pane the API made. */
+  onCreatedPane?: (paneId: string) => void;
   /** Every machine this phone is paired with, the current one included. */
   machines: readonly MachineChoice[];
   /** The machine the terminal underneath the sheet is on. */
@@ -291,6 +316,86 @@ export function SessionMap({
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const scopeKey = JSON.stringify([serverId, sessionId]);
+  const latestScopeKey = useLatestRef(scopeKey);
+  const unknownCreateOutcome = useSyncExternalStore(
+    useCallback((listener) => subscribeSessionMapOutcome(scopeKey, listener), [scopeKey]),
+    useCallback(() => hasSessionMapOutcome({ scope: scopeKey, generation: 0 }), [scopeKey]),
+    useCallback(() => hasSessionMapOutcome({ scope: scopeKey, generation: 0 }), [scopeKey])
+  );
+  const mounted = useRef(true);
+  const generation = useRef(0);
+  const loadRequest = useRef(0);
+  const structuralOperation = useRef<SessionMapOperation | null>(null);
+  const gatewayOwnsServer = useCallback(
+    () => ownsSessionMapGateway(serverId, useGatewayConnectionStore.getState().record?.serverId),
+    [serverId]
+  );
+
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+      generation.current += 1;
+      structuralOperation.current = null;
+    };
+  }, []);
+
+  // A route target can change while this sheet remains mounted. Invalidate
+  // pending reads and release only the local UI ownership before the new target
+  // is rendered as actionable. The process-level mutation slot stays occupied
+  // until the request settles, so a remounted picker cannot retry an ambiguous
+  // POST.
+  useEffect(() => {
+    generation.current += 1;
+    if (structuralOperation.current && structuralOperation.current.scope !== scopeKey) {
+      structuralOperation.current = null;
+      if (mounted.current) setBusy(false);
+    }
+    if (mounted.current) setRefreshing(false);
+  }, [scopeKey]);
+
+  const currentScope = useLazyRef(() => (): SessionMapOperationScope => ({
+    scope: latestScopeKey.current,
+    generation: generation.current,
+  })).current;
+
+  const isCurrentScope = useLazyRef(
+    () =>
+      (token: SessionMapOperationScope): boolean =>
+        mounted.current &&
+        token.scope === latestScopeKey.current &&
+        token.generation === generation.current
+  ).current;
+
+  function owns(operation: SessionMapOperation): boolean {
+    return (
+      isCurrentScope(operation) &&
+      gatewayOwnsServer() &&
+      structuralOperation.current === operation &&
+      ownsSessionMapOperation(operation, currentScope())
+    );
+  }
+
+  function beginStructuralOperation(
+    kind: 'structural' | 'create' = 'structural'
+  ): SessionMapOperation | null {
+    if (!gatewayOwnsServer()) return null;
+    const operation = beginSessionMapOperation(currentScope(), kind);
+    if (!operation) return null;
+    structuralOperation.current = operation;
+    setBusy(true);
+    return operation;
+  }
+
+  function finishStructuralOperation(operation: SessionMapOperation): void {
+    finishSessionMapOperation(operation);
+    if (structuralOperation.current === operation) {
+      structuralOperation.current = null;
+      if (mounted.current) setBusy(false);
+    }
+  }
+
   // Rename is an inline field rather than Alert.prompt, which exists only on
   // iOS and would silently do nothing on Android.
   const [renaming, setRenaming] = useState<{
@@ -310,7 +415,10 @@ export function SessionMap({
     label: string;
   } | null>(null);
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (): Promise<boolean> => {
+    const token = currentScope();
+    const request = ++loadRequest.current;
+    if (!mounted.current || !gatewayOwnsServer()) return false;
     setLoading(true);
     try {
       const [nextWorkspaces, nextTabs, nextPanes, nextAgents] = await Promise.all([
@@ -319,6 +427,8 @@ export function SessionMap({
         gatewayTransport.loadPanes(sessionId),
         gatewayTransport.loadAgents(sessionId),
       ]);
+      if (request !== loadRequest.current || !isCurrentScope(token) || !gatewayOwnsServer())
+        return false;
       setWorkspaces(nextWorkspaces);
       setTabs(nextTabs);
       setPanes(nextPanes);
@@ -334,16 +444,20 @@ export function SessionMap({
               nextWorkspaces[0]?.id ??
               '')
       );
+      return true;
     } catch (failure) {
-      setError(describeGatewayFailure(failure, t`Could not load what is running.`).message);
+      if (request === loadRequest.current && isCurrentScope(token) && gatewayOwnsServer())
+        setError(describeGatewayFailure(failure, t`Could not load what is running.`).message);
+      return false;
     } finally {
-      setLoading(false);
+      if (request === loadRequest.current && isCurrentScope(token) && gatewayOwnsServer())
+        setLoading(false);
     }
-  }, [activePaneId, sessionId, t]);
+  }, [activePaneId, currentScope, gatewayOwnsServer, isCurrentScope, sessionId, t]);
 
   useEffect(() => {
     void load();
-  }, [load, t]);
+  }, [load, scopeKey, t]);
 
   /**
    * All four rails, in one pass, from `switcherRails`.
@@ -400,42 +514,78 @@ export function SessionMap({
    * slash commands live in Quick actions for the same reason in reverse.
    */
   async function runStructuralAction(action: () => Promise<unknown>) {
-    if (busy) return;
-    setBusy(true);
+    const operation = beginStructuralOperation();
+    if (!operation) return;
     setError(null);
     try {
       await action();
-      await load();
+      if (owns(operation)) await load();
     } catch (failure) {
-      setError(describeGatewayFailure(failure, t`Could not update the session.`).message);
+      if (owns(operation))
+        setError(describeGatewayFailure(failure, t`Could not update the session.`).message);
     } finally {
-      setBusy(false);
+      finishStructuralOperation(operation);
     }
+  }
+
+  async function reconcileUnknownCreate(operation: SessionMapOperation): Promise<void> {
+    markSessionMapOutcomeUnknown(operation);
+    if (!owns(operation)) return;
+    await load();
+    if (owns(operation))
+      setError(
+        t`The terminal request may have succeeded. Refresh the list and check it before trying again.`
+      );
   }
 
   // Creating focuses the new container in the sheet, so the sheet shows what was
   // just made rather than a refresh landing back on the old focused workspace.
   async function createAndSelect(action: () => Promise<{ workspaceId: string; paneId: string }>) {
-    if (busy) return;
-    setBusy(true);
+    const operation = beginStructuralOperation('create');
+    if (!operation) return;
     setError(null);
     try {
       const created = await action();
-      await load();
+      if (!created.paneId) {
+        await reconcileUnknownCreate(operation);
+        return;
+      }
+      if (!owns(operation)) return;
       if (created.workspaceId) setWorkspaceId(created.workspaceId);
+
+      // The POST response is the authoritative success signal. Refreshing the
+      // sheet is useful, but a refresh failure must not discard a pane we already
+      // know the gateway created.
+      await load();
+      if (!owns(operation)) return;
+      if (onCreatedPane) {
+        try {
+          onCreatedPane(created.paneId);
+        } catch {
+          // Selection is recorded before routing, so the known target remains
+          // recoverable in the picker store even when navigation itself fails.
+          if (owns(operation)) setError(t`The new terminal was created, but could not open it.`);
+        }
+      }
     } catch (failure) {
-      setError(describeGatewayFailure(failure, t`Could not update the session.`).message);
+      const described = describeGatewayFailure(failure, t`Could not update the session.`);
+      if (described.retryable) await reconcileUnknownCreate(operation);
+      else if (owns(operation)) setError(described.message);
     } finally {
-      setBusy(false);
+      finishStructuralOperation(operation);
     }
   }
 
   async function refresh() {
+    const token = currentScope();
     setRefreshing(true);
     try {
-      await load();
+      const refreshed = await load();
+      if (refreshed && isCurrentScope(token)) {
+        clearSessionMapOutcome(token);
+      }
     } finally {
-      setRefreshing(false);
+      if (isCurrentScope(token)) setRefreshing(false);
     }
   }
 
@@ -512,7 +662,7 @@ export function SessionMap({
           testID="panels-refresh"
           accessibilityLabel={t`Refresh`}
           busy={loading}
-          onPress={() => void load()}>
+          onPress={() => void refresh()}>
           <RefreshCw size={17} color={theme.colors.textMuted} />
         </SheetSceneQuietControl>
       }>
@@ -551,9 +701,10 @@ export function SessionMap({
           </View>
         ) : null}
 
-        {error ? (
+        {error || unknownCreateOutcome ? (
           <Text selectable variant="caption" color={theme.colors.danger} style={styles.errorLine}>
-            {error}
+            {error ??
+              t`The terminal request may have succeeded. Refresh the list and check it before trying again.`}
           </Text>
         ) : null}
 
@@ -705,7 +856,7 @@ export function SessionMap({
             })}
             <PressableScale
               accessibilityLabel={t`New workspace`}
-              disabled={busy}
+              disabled={busy || unknownCreateOutcome}
               onPress={() =>
                 void createAndSelect(() => createWorkspace(sessionId, { focus: false }))
               }
@@ -821,7 +972,7 @@ export function SessionMap({
         <SheetSceneRow
           title={t`New terminal`}
           accessibilityLabel={t`New terminal`}
-          disabled={busy || !workspaceId}
+          disabled={busy || unknownCreateOutcome || !workspaceId}
           leading={<Plus size={17} color={theme.colors.textMuted} />}
           onPress={() =>
             void createAndSelect(() =>

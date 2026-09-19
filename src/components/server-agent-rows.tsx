@@ -13,16 +13,10 @@ import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-na
 
 import { agentStatusWord } from '@/i18n/labels';
 import { feedback } from '@/lib/feedback';
+import { homeServerModel } from '@/lib/home-server-model';
 import { PRESS, timing } from '@/lib/motion';
-import {
-  isServerAgentsStale,
-  paneLocationCaption,
-  serverAgentsAgeParts,
-  visibleServerAgents,
-  type ServerAgent,
-  type ServerAgentsSnapshot,
-} from '@/lib/server-agents';
-import { agentStatusesAreCurrent, type ServerReachability } from '@/lib/server-reachability';
+import type { ServerAgent, ServerAgentsSnapshot } from '@/lib/server-agents';
+import type { ServerReachability } from '@/lib/server-reachability';
 import { useAppSettings } from '@/stores/app-settings';
 
 /**
@@ -67,6 +61,7 @@ const ROW_BLEED = 8;
  * not coming.
  */
 export function ServerAgentRows({
+  serverId,
   snapshot,
   reachability,
   rowMinHeight,
@@ -81,6 +76,7 @@ export function ServerAgentRows({
   // oxlint-disable-next-line react/purity -- deliberate: see above.
   nowMs = Date.now(),
 }: {
+  serverId: string;
   snapshot: ServerAgentsSnapshot | undefined;
   reachability: ServerReachability;
   /**
@@ -123,17 +119,21 @@ export function ServerAgentRows({
   // read that turns "agents" mode from a promise into what actually renders.
   const serverCardPanes = useAppSettings((state) => state.serverCardPanes);
 
-  const visibleAgents = snapshot && visibleServerAgents(snapshot.agents, serverCardPanes);
+  const presentation = homeServerModel({
+    serverId,
+    snapshot,
+    reachability,
+    paneMode: serverCardPanes,
+    nowMs,
+  });
 
-  if (!snapshot || !visibleAgents || visibleAgents.length === 0) return null;
-
-  const stale = isServerAgentsStale(snapshot, nowMs);
-  const current = agentStatusesAreCurrent(reachability, stale);
+  if (presentation.rows.length === 0) return null;
+  if (!presentation.age) return null;
 
   // One message per unit rather than a template with a unit letter in a hole:
   // "5m ago" is English's abbreviation, and a translator needs the whole
   // sentence to write their own.
-  const age = serverAgentsAgeParts(snapshot, nowMs);
+  const age = presentation.age;
   const seenLabel =
     age.unit === 'now'
       ? t`Seen just now`
@@ -144,8 +144,9 @@ export function ServerAgentRows({
           : t`Seen ${age.value}d ago`;
 
   return (
-    <View collapsable={false} style={[style, stale ? styles.stale : null]}>
-      {visibleAgents.map((agent) => {
+    <View collapsable={false} style={[style, presentation.stale ? styles.stale : null]}>
+      {presentation.rows.map((row) => {
+        const { agent } = row;
         const selected = Boolean(agent.paneId && agent.paneId === selectedPaneId);
         const status = _(agentStatusWord[agent.status ?? ''] ?? agentStatusWord.unknown);
         // Blocked is the one status that is asking for something -- everything
@@ -155,21 +156,31 @@ export function ServerAgentRows({
         // only status that still earns a word, and that word moves under the
         // name as a caption rather than sitting beside it competing for the
         // row's width.
-        const showStatusCaption = current && agent.status === 'blocked';
+        const showStatusCaption = row.caption?.kind === 'status';
         // A plain pane has no status worth a word -- it is not blocked on
         // anything, and "Unknown" under a shell's name would read as a fault
         // rather than as the honest answer "there is no agent here". Where it
         // sits is what identifies it instead, and only when its name has not
         // already said so -- see `paneLocationCaption`.
-        const caption = showStatusCaption ? status : paneLocationCaption(agent.name, agent.cwd);
+        const caption =
+          row.caption?.kind === 'status'
+            ? status
+            : row.caption?.kind === 'location'
+              ? row.caption.text
+              : undefined;
         const visibleCaption = showStatusCaption || !compactLabels ? caption : undefined;
         // Compact rails remove the visual status word, not its meaning. A
         // screen reader cannot infer Working or Done from the dot's colour, so
         // recognised agents keep their current status in the spoken label.
-        const spokenCaption = agent.hasAgent && current ? status : caption;
+        const spokenCaption =
+          row.spokenCaption?.kind === 'status'
+            ? status
+            : row.spokenCaption?.kind === 'location'
+              ? row.spokenCaption.text
+              : undefined;
         return (
           <AgentRow
-            key={agent.id}
+            key={row.key}
             // Not a sentence: a name and a caption, both already in the active
             // locale, joined the way a list reads them out. The caption stays
             // in the accessibility label even where it has no line on screen
@@ -213,7 +224,7 @@ export function ServerAgentRows({
         );
       })}
 
-      {stale ? (
+      {presentation.stale ? (
         <Text variant="caption" color={theme.colors.textSubtle} style={styles.age}>
           {seenLabel}
         </Text>

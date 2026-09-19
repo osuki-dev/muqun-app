@@ -185,6 +185,10 @@ msgstr "{commandName} · 送信先"
 msgid "{count, plural, one {# result} other {# results}}"
 msgstr "{count, plural, other {# 件の結果}}"
 
+#: src/components/home-attention.tsx
+msgid "{count} requests last observed"
+msgstr "{count} 件のリクエストを最後に確認"
+
 #. placeholder {0}: items.length
 #: src/components/agent-tasks-sheet.tsx
 msgid "{done} of {0} done"
@@ -256,6 +260,10 @@ msgstr ".ttf または .otf ファイルへの直接リンク"
 msgid "A Gateway on a machine you can SSH into, even one that only listens on its own loopback."
 msgstr "SSH で入れるマシン上の Gateway。自身のループバックだけで待ち受けているものでも構いません"
 
+#: src/components/settings-home-layout-sheet.tsx
+msgid "A magazine-style Home with attention and recent sessions."
+msgstr "注意事項と最近のセッションを備えた雑誌風のホーム"
+
 #. placeholder {0}: assignment.target.kind
 #: src/components/server-terminal-workspace.tsx
 msgid "a new {0}"
@@ -307,6 +315,10 @@ msgstr "このターミナルを操作するか、エージェントに指示を
 #: src/components/agent-worktree-sheet.tsx
 msgid "Actions for {0}"
 msgstr "{0} の操作"
+
+#: src/components/home-connections.tsx
+msgid "Add a gateway or an SSH host to start working."
+msgstr "Gateway または SSH ホストを追加して作業を始めましょう"
 
 #: src/components/ssh-host-list.tsx
 msgid "Add a host"
@@ -596,6 +608,10 @@ msgstr "ファイルを添付"
 msgid "Attachment"
 msgstr "添付ファイル"
 
+#: src/components/home-editorial-layout.tsx
+msgid "Attention"
+msgstr "要対応"
+
 #: src/components/app-lock-gate.tsx
 msgid "Authenticate with {authLabel} to continue."
 msgstr "続けるには {authLabel} で認証してください"
@@ -837,10 +853,22 @@ msgstr "システム認証を確認中…"
 msgid "Checking…"
 msgstr "確認中…"
 
+#: src/components/home-launch-actions.tsx
+msgid "Choose a gateway"
+msgstr "Gateway を選択"
+
+#: src/components/home-launch-actions.tsx
+msgid "Choose a gateway first"
+msgstr "先に Gateway を選択"
+
 #: src/components/agent-model-sheet.tsx
 #: src/components/agent-workbench.tsx
 msgid "Choose a model"
 msgstr "モデルを選ぶ"
+
+#: src/components/home-launch-actions.tsx
+msgid "Choose a saved host"
+msgstr "保存済みホストを選択"
 
 #: src/components/simfarm-stage.tsx
 msgid "Choose a simulator"
@@ -862,9 +890,17 @@ msgstr "アシスタントを選択"
 msgid "Choose an SSH host."
 msgstr "SSH ホストを選んでください"
 
+#: src/components/server-terminal-workspace.tsx
+msgid "Choose another terminal"
+msgstr "別のターミナルを選択"
+
 #: src/components/attachment-menu.tsx
 msgid "Choose files"
 msgstr "ファイルを選択"
+
+#: src/components/settings-servers.tsx
+msgid "Choose how Home is arranged."
+msgstr "ホームの配置を選択"
 
 #: src/components/agent-workbench.tsx
 msgid "Choose project"
@@ -875,6 +911,8 @@ msgid "Choose which simulator to show"
 msgstr "表示するシミュレータを選ぶ"
 
 #: src/components/settings-appearance.tsx
+#: src/components/settings-home-layout-sheet.tsx
+#: src/components/settings-servers.tsx
 msgid "Classic"
 msgstr "クラシック"
 
@@ -1121,6 +1159,10 @@ msgstr "{address} に接続しています"
 msgid "Connecting…"
 msgstr "接続中…"
 
+#: src/components/home-editorial-layout.tsx
+msgid "Connections"
+msgstr "接続"
+
 #: src/components/agent-context-sheet.tsx
 msgid "Context"
 msgstr "コンテキスト"
@@ -1143,6 +1185,7 @@ msgid "Context used"
 msgstr "コンテキスト使用量"
 
 #: src/app/explore.tsx
+#: src/components/home-editorial-layout.tsx
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Continue"
 msgstr "続行"
@@ -1262,6 +1305,10 @@ msgstr "コントロール Y、ペースト"
 #: src/i18n/labels.ts
 msgid "Control Z, suspend"
 msgstr "コントロール Z、一時停止"
+
+#: src/components/home-editorial-layout.tsx
+msgid "Controls"
+msgstr "操作"
 
 #: src/components/agent-mode-sheet.tsx
 msgid "Conversational help and open-ended project questions."
@@ -1400,6 +1447,10 @@ msgstr "以前の出力を読み込めませんでした"
 msgid "Could not load files."
 msgstr "ファイルを読み込めませんでした"
 
+#: src/components/agent-model-sheet.tsx
+msgid "Could not load models"
+msgstr "モデルを読み込めませんでした"
+
 #: src/components/agent-workbench.tsx
 msgid "Could not load the session"
 msgstr "セッションを読み込めませんでした"
@@ -1411,6 +1462,10 @@ msgstr "実行中のものを読み込めませんでした"
 #: src/components/agent-workbench.tsx
 msgid "Could not move this session"
 msgstr "このセッションを移動できませんでした"
+
+#: src/hooks/use-home-commands.ts
+msgid "Could not open destination"
+msgstr "目的地を開けませんでした"
 
 #: src/hooks/use-theme-file-open.ts
 msgid "Could not open that theme"
@@ -1518,6 +1573,10 @@ msgstr "そのスキルを実行できませんでした"
 msgid "Could not save changes"
 msgstr "変更を保存できませんでした"
 
+#: src/components/settings-home-layout-sheet.tsx
+msgid "Could not save Home layout"
+msgstr "ホームのレイアウトを保存できませんでした"
+
 #: src/components/ssh-host-form.tsx
 msgid "Could not save host"
 msgstr "ホストを保存できませんでした"
@@ -1614,6 +1673,10 @@ msgstr "現在のマシン"
 #: src/i18n/labels.ts
 msgid "Current path"
 msgstr "現在のパス"
+
+#: src/components/pad-server-rail.tsx
+msgid "Current task"
+msgstr "現在のタスク"
 
 #: src/components/custom-theme-library.tsx
 msgid "Current theme"
@@ -1834,6 +1897,11 @@ msgstr "SSH ホストを編集"
 msgid "Edit this server"
 msgstr "このサーバーを編集"
 
+#: src/components/settings-home-layout-sheet.tsx
+#: src/components/settings-servers.tsx
+msgid "Editorial"
+msgstr "エディトリアル"
+
 #: src/i18n/labels.ts
 msgid "Enter"
 msgstr "エンター"
@@ -1935,6 +2003,10 @@ msgstr "エージェントセッションの作成に失敗しました"
 #: src/components/agent-workbench.tsx
 msgid "Failed to switch project"
 msgstr "プロジェクトを切り替えられませんでした"
+
+#: src/components/settings-home-layout-sheet.tsx
+msgid "Familiar server cards and quick actions."
+msgstr "おなじみのサーバーカードとクイックアクション"
 
 #: src/components/agent-composer.tsx
 msgid "Fast agent specialized for exploring codebases."
@@ -2183,6 +2255,23 @@ msgstr "シミュレータを隠す"
 msgid "Home"
 msgstr "ホーム"
 
+#: src/components/home-editorial-layout.tsx
+msgid "Home / Editorial"
+msgstr "ホーム / エディトリアル"
+
+#: src/components/settings-home-layout-sheet.tsx
+#: src/components/settings-servers.tsx
+msgid "Home layout"
+msgstr "ホームのレイアウト"
+
+#: src/components/settings-home-layout-sheet.tsx
+msgid "Home layout changed for this session, but could not be saved on this device. Try again."
+msgstr "ホームのレイアウトはこのセッションで変更されましたが、このデバイスに保存できませんでした。もう一度お試しください"
+
+#: src/components/settings-servers.tsx
+msgid "Home layout, {homeLayoutLabel}"
+msgstr "ホームのレイアウト：{homeLayoutLabel}"
+
 #: src/components/settings-alerts.tsx
 msgid "Home screen widget"
 msgstr "ホーム画面ウィジェット"
@@ -2390,6 +2479,10 @@ msgstr "言語、{languageName}"
 msgid "Large"
 msgstr "大"
 
+#: src/components/home-attention.tsx
+msgid "Last checked {when}"
+msgstr "最終確認 {when}"
+
 #: src/components/settings-servers.tsx
 #: src/components/ssh-host-row.tsx
 msgid "Last connected {days}d ago"
@@ -2484,7 +2577,12 @@ msgstr "コマンドを読み込み中"
 msgid "Loading paired devices…"
 msgstr "ペアリング済みデバイスを読み込み中…"
 
-#: src/app/index.tsx
+#: src/components/home-recent-sessions.tsx
+msgid "Loading recent sessions…"
+msgstr "最近のセッションを読み込み中…"
+
+#: src/app/servers/[serverId].tsx
+#: src/components/home-overview.tsx
 #: src/components/settings-servers.tsx
 msgid "Loading servers"
 msgstr "サーバーを読み込み中"
@@ -2531,15 +2629,19 @@ msgstr "Mac mini · オフィス"
 msgid "Machines"
 msgstr "マシン"
 
-#: src/app/index.tsx
+#: src/components/home-overview.tsx
 msgid "Manage"
 msgstr "管理"
+
+#: src/components/home-connections.tsx
+msgid "Manage connections"
+msgstr "接続を管理"
 
 #: src/components/session-map.tsx
 msgid "Manage machines"
 msgstr "マシンを管理"
 
-#: src/app/index.tsx
+#: src/components/home-overview.tsx
 msgid "Manage SSH hosts"
 msgstr "SSH ホストを管理"
 
@@ -2697,6 +2799,10 @@ msgstr "新しいグループ"
 msgid "New host key"
 msgstr "新しいホスト鍵"
 
+#: src/components/home-launch-actions.tsx
+msgid "New OpenCode"
+msgstr "新しい OpenCode"
+
 #: src/components/collaboration-notice.tsx
 msgid "New output available · refresh"
 msgstr "新しい出力があります · 更新"
@@ -2720,6 +2826,7 @@ msgid "New task"
 msgstr "新規タスク"
 
 #: src/app/commands.tsx
+#: src/components/home-launch-actions.tsx
 #: src/components/session-map.tsx
 msgid "New terminal"
 msgstr "新しいターミナル"
@@ -2877,6 +2984,10 @@ msgstr "静止画に非対応"
 msgid "No tasks in this session yet."
 msgstr "このセッションにはまだタスクがありません"
 
+#: src/hooks/use-home-commands.ts
+msgid "No terminal session is available on this server."
+msgstr "このサーバーに利用できるターミナルセッションはありません"
+
 #: src/components/diff-rows.tsx
 msgid "No textual change"
 msgstr "テキストの変更なし"
@@ -3003,8 +3114,8 @@ msgstr "開く"
 #. placeholder {0}: asset.name
 #. placeholder {0}: file.name ?? basename(file.uri)
 #. placeholder {0}: part.fallback_text || part.asset_id
-#: src/app/index.tsx
 #: src/components/agent-tool-card.tsx
+#: src/components/home-overview.tsx
 #: src/components/pane-chat-blocks.tsx
 #: src/components/session-artifacts.tsx
 msgid "Open {0}"
@@ -3013,6 +3124,10 @@ msgstr "{0} を開く"
 #: src/components/session-map.tsx
 msgid "Open {title}. Long press to close."
 msgstr "{title} を開く。長押しで閉じる"
+
+#: src/components/home-attention.tsx
+msgid "Open a session to check its requests."
+msgstr "セッションを開いてリクエストを確認"
 
 #: src/components/open-web-service-sheet.tsx
 msgid "Open anyway"
@@ -3119,6 +3234,10 @@ msgstr "この差分を変更ビューアで開く"
 msgid "Open this path"
 msgstr "このパスを開く"
 
+#: src/components/home-attention.tsx
+msgid "Open to check the current state"
+msgstr "開いて現在の状態を確認"
+
 #. placeholder {0}: workspace.title
 #: src/components/session-map.tsx
 msgid "Open workspace {0}, {panelCount, plural, one {# running} other {# running}}. Long press to close."
@@ -3150,6 +3269,14 @@ msgstr "OpenCodeサービスがオフラインです"
 msgid "OpenCode service offline. Tap for setup instructions"
 msgstr "OpenCode サービスがオフラインです。タップして起動手順を表示"
 
+#: src/components/home-recent-sessions.tsx
+msgid "OpenCode session"
+msgstr "OpenCode セッション"
+
+#: src/components/new-task-action.tsx
+msgid "OpenCode sessions are not supported. Tap for details"
+msgstr "OpenCode セッションはサポートされていません。詳細を確認"
+
 #: src/app/+not-found.tsx
 msgid "Opening"
 msgstr "開いています"
@@ -3166,6 +3293,11 @@ msgstr "サーバーを開いています"
 #: src/app/explore.tsx
 msgid "Opening tunnel"
 msgstr "トンネルを開いています"
+
+#: src/components/home-launch-actions.tsx
+#: src/components/server-terminal-workspace.tsx
+msgid "Opening…"
+msgstr "開いています…"
 
 #: src/components/editor-controls.tsx
 msgid "Opens the keyboard, the editor keys and the composer over this editor. Drag to move."
@@ -3200,8 +3332,13 @@ msgstr "出力"
 msgid "Output lands on a hardware-accelerated terminal grid with instant-response keys and full tmux control. nvim, less and REPLs behave."
 msgstr "ハードウェアアクセラレーションによる正確なターミナル描画。即座に応答する専用キー列と tmux マルチセッション対応で、nvim や REPL も快適に動作します"
 
-#: src/app/index.tsx
+#: src/components/home-launch-actions.tsx
+#: src/components/home-overview.tsx
+msgid "Pair a gateway"
+msgstr "Gateway をペアリング"
+
 #: src/components/app-drawer-content.tsx
+#: src/components/home-overview.tsx
 #: src/components/pad-server-rail.tsx
 #: src/components/settings-servers.tsx
 msgid "Pair a server"
@@ -3236,7 +3373,7 @@ msgstr "{0} 経由でペアリング"
 msgid "Pair through an SSH host"
 msgstr "SSH ホスト経由でペアリング"
 
-#: src/app/index.tsx
+#: src/components/home-overview.tsx
 msgid "Pair your first server"
 msgstr "最初のサーバーをペアリング"
 
@@ -3532,6 +3669,10 @@ msgstr "最近のコミット"
 msgid "Recent output"
 msgstr "最近の出力"
 
+#: src/components/agent-model-sheet.tsx
+msgid "Recently used"
+msgstr "最近使用したモデル"
+
 #: src/components/theme-appearance-settings.tsx
 msgid "Recommended minimum for readable text: {minimumPercent}%"
 msgstr "文字が読める推奨の下限:{minimumPercent}%"
@@ -3590,6 +3731,10 @@ msgstr "削除"
 #: src/components/ssh-host-form.tsx
 msgid "Remove {0}"
 msgstr "{0} を取り除く"
+
+#: src/components/home-recent-sessions.tsx
+msgid "Remove {title} from recents"
+msgstr "最近の項目から {title} を削除"
 
 #: src/components/agent-worktree-sheet.tsx
 msgid "Remove anyway"
@@ -3721,6 +3866,11 @@ msgstr "再試行しています…"
 msgid "Return"
 msgstr "リターンキー"
 
+#: src/components/home-overview.tsx
+msgid "Return to task"
+msgstr "タスクに戻る"
+
+#: src/app/servers/[serverId].tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Return to the server list and pair again."
 msgstr "サーバー一覧に戻って、もう一度ペアリングしてください"
@@ -3822,7 +3972,7 @@ msgstr "ログアウト後も動かし続けるには systemd か tmux の下で
 msgid "Run relevant tests"
 msgstr "関連するテストを実行"
 
-#: src/app/index.tsx
+#: src/components/home-overview.tsx
 msgid "Run the Gateway on your machine and scan the QR code it prints. The pairing stays on this device."
 msgstr "自分のマシンで Gateway を起動し、表示された QR コードをスキャンします。ペアリング情報はこのデバイスの中だけに残ります"
 
@@ -3876,14 +4026,18 @@ msgstr "保存したコマンド"
 msgid "Saved prompts"
 msgstr "保存した指示"
 
+#: src/components/home-connections.tsx
+msgid "Saved SSH host"
+msgstr "保存済み SSH ホスト"
+
 #: src/components/settings-servers.tsx
 #: src/components/ssh-host-form.tsx
 msgid "Saving…"
 msgstr "保存中…"
 
 #: src/app/explore.tsx
-#: src/app/index.tsx
 #: src/components/app-drawer-content.tsx
+#: src/components/home-overview.tsx
 #: src/components/pad-server-rail.tsx
 msgid "Scan a gateway QR"
 msgstr "Gateway の QR をスキャン"
@@ -4035,6 +4189,7 @@ msgstr "サーバー"
 msgid "Server name"
 msgstr "サーバー名"
 
+#: src/app/servers/[serverId].tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Server not found"
 msgstr "サーバーが見つかりません"
@@ -4070,6 +4225,10 @@ msgstr "セッション"
 msgctxt "agent slash command"
 msgid "Sessions in this workspace"
 msgstr "このワークスペースのセッション"
+
+#: src/components/home-recent-sessions.tsx
+msgid "Sessions you open will appear here."
+msgstr "開いたセッションがここに表示されます"
 
 #. placeholder {0}: sessionTitle ?? ''
 #: src/app/agent.tsx
@@ -4111,9 +4270,9 @@ msgstr "自分のパソコンに Gateway を用意する"
 msgid "Set up on the host"
 msgstr "ホスト側で設定してください"
 
-#: src/app/index.tsx
 #: src/app/settings.tsx
 #: src/components/app-drawer-content.tsx
+#: src/components/home-overview.tsx
 #: src/components/pad-server-rail.tsx
 msgid "Settings"
 msgstr "設定"
@@ -4158,6 +4317,10 @@ msgstr "{0} を表示"
 msgid "Show agents and their status on the home screen. Updates while Muqun is open."
 msgstr "ホーム画面にエージェントとその状態を表示します。牧群（ぼくぐん）を開いている間は更新され続けます"
 
+#: src/components/home-recent-sessions.tsx
+msgid "Show all recent sessions"
+msgstr "最近のセッションをすべて表示"
+
 #: src/components/pairing-camera.tsx
 msgid "Show camera details"
 msgstr "カメラの詳細を表示"
@@ -4181,6 +4344,10 @@ msgstr "ホームのテキストを表示"
 #: src/components/theme-appearance-settings.tsx
 msgid "Show illustration on Home"
 msgstr "ホームにイラストを表示"
+
+#: src/components/home-recent-sessions.tsx
+msgid "Show less"
+msgstr "表示を減らす"
 
 #: src/components/agent-tool-card.tsx
 #: src/components/bounded-markdown.tsx
@@ -4314,19 +4481,24 @@ msgstr "ソースコード"
 msgid "Space"
 msgstr "スペース"
 
-#: src/app/index.tsx
+#: src/components/home-overview.tsx
 #: src/components/pad-server-rail.tsx
 #: src/components/ssh-host-list.tsx
 #: src/components/ssh-terminal-workspace.tsx
 msgid "SSH"
 msgstr "SSH"
 
+#: src/components/home-launch-actions.tsx
+msgid "SSH connection"
+msgstr "SSH 接続"
+
 #: src/app/explore.tsx
 #: src/components/gateway-tunnel-badge.tsx
+#: src/components/home-recent-sessions.tsx
 msgid "SSH host"
 msgstr "SSH ホスト"
 
-#: src/app/index.tsx
+#: src/components/home-overview.tsx
 #: src/components/pad-server-rail.tsx
 #: src/components/settings-servers.tsx
 msgid "SSH hosts"
@@ -4348,6 +4520,10 @@ msgstr "ステージ済みと未ステージ"
 #: src/lib/agent-widget-layout.tsx
 msgid "stale · {age}"
 msgstr "古い情報 · {age}"
+
+#: src/components/home-editorial-layout.tsx
+msgid "Start"
+msgstr "開始"
 
 #. placeholder {0}: profile.kind
 #: src/components/agent-assignment-bar.tsx
@@ -4622,6 +4798,7 @@ msgstr "一時ファイル"
 
 #: src/app/commands.tsx
 #: src/app/settings.tsx
+#: src/components/home-recent-sessions.tsx
 #: src/i18n/labels.ts
 msgid "Terminal"
 msgstr "ターミナル"
@@ -4647,6 +4824,10 @@ msgstr "ターミナルのコマンドとキーの組み合わせ"
 msgid "Terminal key row"
 msgstr "ターミナルキー行"
 
+#: src/components/server-terminal-workspace.tsx
+msgid "Terminal unavailable"
+msgstr "ターミナルを利用できません"
+
 #: src/components/settings-terminal.tsx
 msgid "Text size"
 msgstr "文字サイズ"
@@ -4666,6 +4847,10 @@ msgstr "そのアシスタントはこのターミナルにはもういません
 #: src/app/explore.tsx
 msgid "That code was refused. Hold still for a new one."
 msgstr "そのコードは拒否されました。そのまま構えて新しいコードを読み取ってください"
+
+#: src/hooks/use-home-commands.ts
+msgid "That destination is no longer available."
+msgstr "その目的地は利用できなくなりました"
 
 #: src/components/agent-form-card.tsx
 msgid "That does not match the expected format."
@@ -4740,6 +4925,10 @@ msgstr "シミュレータとの接続が切れました"
 msgid "The default agent. Executes tools."
 msgstr "デフォルトのエージェント。ツールを実行します"
 
+#: src/hooks/use-home-commands.ts
+msgid "The destination could not be opened."
+msgstr "その目的地を開けませんでした"
+
 #: src/components/settings-font-sheet.tsx
 msgid "The font file is missing. Add it again."
 msgstr "フォントファイルが見つかりません。もう一度追加してください"
@@ -4760,6 +4949,10 @@ msgstr "ホーム画面に表示されるアイコンです。Android では適�
 #: src/components/ssh-host-form.tsx
 msgid "The key could not be read ({0}). Check the key and its passphrase."
 msgstr "鍵を読み取れませんでした（{0}）。鍵とパスフレーズを確認してください"
+
+#: src/components/session-map.tsx
+msgid "The new terminal was created, but could not open it."
+msgstr "新しいターミナルは作成されましたが、開けませんでした"
 
 #: src/components/opencode-guide-sheet.tsx
 msgid "The OpenCode daemon is not running on this host. Run this and it will be."
@@ -4828,6 +5021,10 @@ msgstr "シミュレータが時間内にシャットダウンしませんでし
 #: src/app/commands.tsx
 msgid "The SSH tunnel carries the Gateway's port and no other, so the simulator and the browser cannot be reached from here. Connect over the local network or Tailscale."
 msgstr "SSH トンネルが運ぶのは Gateway のポートだけで、他のポートは通しません。そのためここからはシミュレータにもブラウザーにも届きません。ローカルネットワークか Tailscale で接続してください"
+
+#: src/components/session-map.tsx
+msgid "The terminal request may have succeeded. Refresh the list and check it before trying again."
+msgstr "ターミナルの作成が成功している可能性があります。再試行する前に一覧を更新して確認してください"
 
 #: src/components/settings-font-sheet.tsx
 msgid "The terminal, and code in a reply."
@@ -4917,6 +5114,10 @@ msgstr "このファイルは大きすぎます"
 #: src/components/settings-font-sheet.tsx
 msgid "This font could not be read."
 msgstr "このフォントを読み込めませんでした"
+
+#: src/components/opencode-guide-sheet.tsx
+msgid "This gateway does not advertise OpenCode sessions."
+msgstr "この Gateway は OpenCode セッションを提供していません"
 
 #: src/lib/network-error.ts
 msgid "This Gateway does not answer to that address."
@@ -5042,6 +5243,14 @@ msgstr "このターミナルは描画できませんでした"
 msgid "This terminal is no longer available."
 msgstr "このターミナルはもう利用できません"
 
+#: src/components/server-terminal-workspace.tsx
+msgid "This terminal is no longer available. Choose another terminal."
+msgstr "このターミナルは利用できなくなりました。別のターミナルを選択してください"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "This terminal was removed. Choose another terminal to continue."
+msgstr "このターミナルは削除されました。続行するには別のターミナルを選択してください"
+
 #: src/components/custom-theme-library.tsx
 msgid "This theme contains images that must be installed before applying"
 msgstr "このテーマには画像が含まれています。適用する前に画像をインストールしてください"
@@ -5107,7 +5316,8 @@ msgstr "もう一度試す"
 msgid "Try again once the gateway responds."
 msgstr "Gateway が応答したらもう一度試してください"
 
-#: src/app/index.tsx
+#: src/components/home-launch-actions.tsx
+#: src/components/home-overview.tsx
 msgid "Try the demo"
 msgstr "デモを試す"
 
@@ -5380,6 +5590,11 @@ msgstr "エージェントが確認を求めて停止したとき、通知がロ
 msgid "While you were away"
 msgstr "離席中の変化"
 
+#: src/components/home-editorial-layout.tsx
+#: src/components/pad-server-rail.tsx
+msgid "Workbench"
+msgstr "ワークベンチ"
+
 #: src/components/agent-vcs-diff-sheet.tsx
 #: src/components/collaboration-notice.tsx
 #: src/i18n/labels.ts
@@ -5449,8 +5664,8 @@ msgstr "YOLOモードがオンです — タップしてオフにする"
 msgid "You"
 msgstr "あなた"
 
-#: src/app/index.tsx
 #: src/components/app-drawer-content.tsx
+#: src/components/home-overview.tsx
 #: src/components/pad-server-rail.tsx
 msgid "Your agents, anywhere."
 msgstr "どこでも、エージェントと"
@@ -5466,11 +5681,3 @@ msgstr "あなたのメッセージ"
 #: src/components/app-drawer-content.tsx
 msgid "Your paired gateways"
 msgstr "ペアリング済みの Gateway"
-
-#: src/components/agent-model-sheet.tsx
-msgid "Recently used"
-msgstr "最近使用したモデル"
-
-#: src/components/agent-model-sheet.tsx
-msgid "Could not load models"
-msgstr "モデルを読み込めませんでした"

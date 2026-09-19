@@ -89,6 +89,7 @@ import { useAppSettings } from '@/stores/app-settings';
 import { TERMINAL_ADVANCE_RATIO } from '@/terminal/text-scale';
 import { slotAdvanceRatio } from '@/theme/user-fonts';
 import { useSshHostsStore } from '@/stores/ssh-hosts';
+import { useHomeRecentsStore } from '@/stores/home-recents';
 import type { TerminalFrame } from '@/terminal/types';
 
 /**
@@ -212,6 +213,7 @@ export function SshTerminalWorkspace({ hostId }: { hostId: string }) {
   // The trusted key can change under a live connect (the reader just accepted
   // one), and the connect effect must see the latest without re-running.
   const recordRef = useLatestRef(record);
+  const recordedHomeVisit = useRef<string | null>(null);
   // The copy the connect effect may need, translated on the render that has
   // the hook's `t` and read off a ref so a language switch does not re-run
   // the effect and tear the session down. The macro only expands a `t` it
@@ -769,7 +771,17 @@ export function SshTerminalWorkspace({ hostId }: { hostId: string }) {
         shell.resize(latest.cols, latest.rows);
       }
       setStatus({ phase: 'connected' });
-      if (!isDemoSshHost(current)) void markConnected(current.id);
+      if (!isDemoSshHost(current)) {
+        void markConnected(current.id);
+        // Automatic reconnects keep their place; only entering this host's
+        // workspace records a visit in the Home recent index.
+        if (recordedHomeVisit.current !== current.id) {
+          recordedHomeVisit.current = current.id;
+          void useHomeRecentsStore
+            .getState()
+            .visit({ kind: 'ssh-host', hostId: current.id }, current.label);
+        }
+      }
     })().catch((error: unknown) => {
       if (cancelled) return;
       const failure = describeSshFailure(error);

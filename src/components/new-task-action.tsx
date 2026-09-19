@@ -18,27 +18,16 @@ import Animated, {
 
 import { PressableScale } from '@/components/pressable-scale';
 import { OpenCodeIcon } from '@/components/opencode-icon';
+import { useHomeCommands } from '@/hooks/use-home-commands';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
-import { useOpenCodeGuideStore } from '@/stores/opencode-guide';
 import { useServerCapabilities } from '@/stores/server-capabilities';
-import { useGatewayRecord } from '@/hooks/use-gateway-record';
-import { effectiveGatewayBaseUrl } from '@/lib/gateway-client';
 import type { GatewayRecord } from '@/lib/gateway-storage';
 import { withAlpha } from '@/lib/color';
-import {
-  buildAgentCacheKey,
-  getAgentCatalog,
-  getAgentProjects,
-  getCachedAgentCatalogSync,
-  getCachedAgentProjectsSync,
-} from '@/lib/agent-session';
+import { checkOpenCodeServer, type OpenCodeReadiness } from '@/lib/home-opencode-readiness';
 import { INSTANT, SHEEN_MOTION, fadeIn, fadeOut, listLayout } from '@/lib/motion';
 
 /** How long the "OpenCode ready" label stays visible before settling to the compact icon. */
 const READY_ANNOUNCEMENT_MS = 3800;
-
-/** Probe timeout for determining whether OpenCode service is reachable. */
-const PROBE_TIMEOUT_MS = 5000;
 
 /** Set of servers that have already completed their "ready" announcement this session. */
 const announcedServers = new Set<string>();
@@ -56,24 +45,11 @@ export function NewTaskAction({
   const theme = useThemeTokens();
   const surfaceBackground = useSurfaceBackground();
   const router = useRouter();
-  const { selectRecord, selectRecordNow } = useGatewayRecord();
+  const { openOpenCode } = useHomeCommands();
   const capabilities = useServerCapabilities((s) => s.byServer[serverId]);
 
-  const endpointUrl = server ? effectiveGatewayBaseUrl(server) : undefined;
-  const endpointToken = server?.token;
-
-  const [isReady, setIsReady] = useState(() => {
-    if (!capabilities?.includes('agent_sessions')) return false;
-    const cacheKeyCat = buildAgentCacheKey('catalog', endpointUrl);
-    const cacheKeyProj = buildAgentCacheKey('projects', endpointUrl);
-    const cachedCat = getCachedAgentCatalogSync(cacheKeyCat);
-    const cachedProj = getCachedAgentProjectsSync(cacheKeyProj);
-    return Boolean(
-      (Array.isArray(cachedCat?.models) && cachedCat.models.length > 0) ||
-      (Array.isArray(cachedCat?.agents) && cachedCat.agents.length > 0) ||
-      (Array.isArray(cachedProj) && cachedProj.length > 0)
-    );
-  });
+  const [isReady, setIsReady] = useState(false);
+  const [readiness, setReadiness] = useState<OpenCodeReadiness | null>(null);
   const [hasChecked, setHasChecked] = useState(false);
   const [showAnnouncement, setShowAnnouncement] = useState(false);
 
@@ -118,9 +94,9 @@ export function NewTaskAction({
   });
   const announcementTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Probe OpenCode readiness on mount / config change
-  const checkReadyRef = useRef<(isRetry?: boolean) => Promise<boolean>>(async () => false);
-
+  // Readiness is shared with Editorial's New OpenCode command and the guide
+  // route. The card only renders the result; it does not register a probe for
+  // another component to call later.
   // react-doctor-disable-next-line react-doctor/effect-needs-cleanup -- retryTimer and announcementTimer are cleared on unmount in cleanup below.
   useEffect(() => {
     if (!capabilities?.includes('agent_sessions')) {
@@ -132,70 +108,38 @@ export function NewTaskAction({
     let announcementTimer: ReturnType<typeof setTimeout> | null = null;
 
     const checkReady = async (isRetry = false): Promise<boolean> => {
-      try {
-        const endpoint = endpointUrl ? { url: endpointUrl, token: endpointToken } : undefined;
-        const probePromise = Promise.all([
-          getAgentCatalog(undefined, endpoint),
-          getAgentProjects(undefined, endpoint),
-        ]);
-        const timeoutPromise = new Promise<null>((resolve) =>
-          setTimeout(() => resolve(null), PROBE_TIMEOUT_MS)
-        );
+      const result = await checkOpenCodeServer(server);
+      if (cancelled) return result.status === 'ready';
 
-        const result = await Promise.race([probePromise, timeoutPromise]);
-        if (cancelled) return false;
-
-        if (!result) {
-          // Timeout reached
-          setHasChecked(true);
-          setIsReady(false);
-          return false;
-        }
-
-        const [catalog, projects] = result;
-        const ready =
-          (Array.isArray(catalog?.models) && catalog.models.length > 0) ||
-          (Array.isArray(catalog?.agents) && catalog.agents.length > 0) ||
-          (Array.isArray(projects) && projects.length > 0);
-
-        setHasChecked(true);
-        if (ready) {
-          setIsReady(true);
-          if (!announcedServers.has(serverId)) {
-            announcedServers.add(serverId);
-            setShowAnnouncement(true);
-            if (announcementTimer) clearTimeout(announcementTimer);
-            if (announcementTimerRef.current) clearTimeout(announcementTimerRef.current);
-            announcementTimer = setTimeout(() => {
-              setShowAnnouncement(false);
-            }, READY_ANNOUNCEMENT_MS);
-            announcementTimerRef.current = announcementTimer;
-          }
-          return true;
-        } else {
-          setIsReady(false);
-          if (!isRetry && !cancelled) {
-            retryTimer = setTimeout(() => {
-              void checkReady(true);
-            }, 10000);
-          }
-          return false;
-        }
-      } catch {
-        if (!cancelled) {
-          setHasChecked(true);
-          setIsReady(false);
-          if (!isRetry) {
-            retryTimer = setTimeout(() => {
-              void checkReady(true);
-            }, 10000);
-          }
-        }
-        return false;
+      setReadiness(result);
+      setHasChecked(true);
+      setIsReady(result.status === 'ready');
+      if (result.capabilities.length > 0) {
+        void useServerCapabilities.getState().record(serverId, result.capabilities);
       }
+
+      if (result.status === 'ready') {
+        if (!announcedServers.has(serverId)) {
+          announcedServers.add(serverId);
+          setShowAnnouncement(true);
+          if (announcementTimer) clearTimeout(announcementTimer);
+          if (announcementTimerRef.current) clearTimeout(announcementTimerRef.current);
+          announcementTimer = setTimeout(() => {
+            setShowAnnouncement(false);
+          }, READY_ANNOUNCEMENT_MS);
+          announcementTimerRef.current = announcementTimer;
+        }
+        return true;
+      }
+
+      if (!isRetry && !cancelled) {
+        retryTimer = setTimeout(() => {
+          void checkReady(true);
+        }, 10000);
+      }
+      return false;
     };
 
-    checkReadyRef.current = checkReady;
     void checkReady();
 
     return () => {
@@ -204,7 +148,7 @@ export function NewTaskAction({
       if (announcementTimer) clearTimeout(announcementTimer);
       if (announcementTimerRef.current) clearTimeout(announcementTimerRef.current);
     };
-  }, [capabilities, endpointUrl, endpointToken, serverId]);
+  }, [capabilities, server, serverId]);
 
   // The card belongs to one server, and the screen it opens must be that
   // server's. This used to fire the selection and push the route in the same
@@ -213,45 +157,10 @@ export function NewTaskAction({
   // second server's OpenCode. The switch is awaited, and the route carries the
   // server id so the screen can refuse to mount on any other.
   const handlePress = useCallback(() => {
-    // The card only exists once this server's OpenCode answered, so its record
-    // is already in memory: the switch is made in this tick and the screen
-    // opens on it in the same one. The awaited path is for a record that is
-    // somehow not loaded any more, and a screen that never opens is the
-    // right outcome when even that fails.
-    if (selectRecordNow(serverId)) {
-      router.push({ pathname: '/agent', params: { server: serverId } });
-      return;
-    }
-    void (async () => {
-      const selected = await selectRecord(serverId);
-      if (!selected) return;
-      router.push({ pathname: '/agent', params: { server: serverId } });
-    })();
-  }, [selectRecordNow, selectRecord, serverId, router]);
-
-  /**
-   * The setup sheet is a route now, so "check again" runs over there and this
-   * card's probe has to be reachable from it. Registered per server -- several
-   * cards are on screen at once -- and cleared when this one goes away, so a
-   * dismissed card can never answer for a live one.
-   */
-  useEffect(() => {
-    const store = useOpenCodeGuideStore.getState();
-    store.registerProbe(serverId, () => checkReadyRef.current(true));
-    return () => {
-      useOpenCodeGuideStore.getState().clearProbe(serverId);
-    };
-  }, [serverId]);
-
-  // The sheet cannot dismiss itself and land on the agent screen in one
-  // gesture, so it writes where the reader asked to go; this reads it and
-  // clears it, the way the server screen reads a panel pick.
-  const openAgentFor = useOpenCodeGuideStore((state) => state.openAgentFor);
-  useEffect(() => {
-    if (openAgentFor !== serverId) return;
-    useOpenCodeGuideStore.getState().clearOpenAgent();
-    handlePress();
-  }, [openAgentFor, serverId, handlePress]);
+    // Opening the existing entry is intentionally separate from the genuine
+    // new-session command. The workbench resumes its remembered session.
+    void openOpenCode(serverId);
+  }, [openOpenCode, serverId]);
 
   if (!capabilities?.includes('agent_sessions')) {
     return null;
@@ -267,13 +176,24 @@ export function NewTaskAction({
           <PressableScale
             testID="server-opencode-offline-action"
             accessibilityRole="button"
-            accessibilityLabel={t`OpenCode service offline. Tap for setup instructions`}
+            accessibilityLabel={
+              readiness?.status === 'unsupported'
+                ? t`OpenCode sessions are not supported. Tap for details`
+                : t`OpenCode service offline. Tap for setup instructions`
+            }
             onPress={() =>
-              router.push({ pathname: '/opencode-guide', params: { serverId, label } })
+              router.push({
+                pathname: '/opencode-guide',
+                params: {
+                  serverId,
+                  label,
+                  status: readiness?.status === 'unsupported' ? 'unsupported' : 'offline',
+                  intent: 'existing',
+                },
+              })
             }
             style={[
               styles.button,
-              styles.square,
               {
                 backgroundColor: surfaceBackground(withAlpha(theme.colors.warning, 0.12)),
                 borderColor: withAlpha(theme.colors.warning, 0.4),
@@ -296,55 +216,63 @@ export function NewTaskAction({
 
   return (
     <Animated.View layout={listLayout()} entering={fadeIn()} exiting={fadeOut()}>
-      <PressableScale
-        testID="server-opencode-action"
-        accessibilityRole="button"
-        accessibilityLabel={actionLabel}
-        onPress={handlePress}
-        style={[
-          styles.button,
-          showAnnouncement ? styles.pill : styles.square,
-          {
-            backgroundColor: surfaceBackground(theme.colors.primarySubtle),
-            borderColor: surfaceBackground(theme.colors.border),
-          },
-        ]}>
-        {/* The light first, so the glyph is drawn over it. */}
-        <Animated.View
-          pointerEvents="none"
+      <View style={styles.actionRow}>
+        <PressableScale
+          testID="server-opencode-action"
+          accessibilityRole="button"
+          accessibilityLabel={actionLabel}
+          onPress={handlePress}
           style={[
-            styles.sheen,
-            { backgroundColor: withAlpha(theme.colors.primary, 0.22) },
-            sheenStyle,
-          ]}
-        />
-        <Animated.View style={glyphStyle}>
-          <OpenCodeIcon size={18} color={theme.colors.primary} />
-        </Animated.View>
+            styles.button,
+            {
+              backgroundColor: surfaceBackground(theme.colors.primarySubtle),
+              borderColor: surfaceBackground(theme.colors.border),
+            },
+          ]}>
+          {/* The light first, so the glyph is drawn over it. */}
+          <Animated.View
+            pointerEvents="none"
+            style={[
+              styles.sheen,
+              { backgroundColor: withAlpha(theme.colors.primary, 0.22) },
+              sheenStyle,
+            ]}
+          />
+          <Animated.View style={glyphStyle}>
+            <OpenCodeIcon size={18} color={theme.colors.primary} />
+          </Animated.View>
+        </PressableScale>
         {showAnnouncement ? (
           <Animated.View
             entering={fadeIn()}
             exiting={fadeOut()}
             layout={listLayout()}
-            style={styles.announcementContainer}>
+            style={styles.announcementLane}>
             <Text
               variant="caption"
               weight="semibold"
               color={theme.colors.primary}
-              numberOfLines={1}
+              numberOfLines={2}
               style={styles.announcementText}>
               {t`OpenCode ready`}
             </Text>
           </Animated.View>
         ) : null}
-      </PressableScale>
+      </View>
     </Animated.View>
   );
 }
 
 const styles = StyleSheet.create({
+  actionRow: {
+    width: 44,
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: 4,
+  },
   button: {
-    height: 36,
+    width: 44,
+    height: 44,
     borderRadius: 12,
     borderCurve: 'continuous',
     alignItems: 'center',
@@ -361,13 +289,6 @@ const styles = StyleSheet.create({
     left: 0,
     width: 22,
   },
-  square: {
-    width: 36,
-  },
-  pill: {
-    paddingHorizontal: 10,
-    gap: 6,
-  },
   offlineIconWrapper: {
     position: 'relative',
     alignItems: 'center',
@@ -381,11 +302,12 @@ const styles = StyleSheet.create({
     height: 6,
     borderRadius: 3,
   },
-  announcementContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  announcementLane: {
+    width: 44,
+    maxWidth: 44,
   },
   announcementText: {
     letterSpacing: 0.2,
+    textAlign: 'center',
   },
 });

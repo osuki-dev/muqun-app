@@ -185,6 +185,10 @@ msgstr "{commandName}·傳送給"
 msgid "{count, plural, one {# result} other {# results}}"
 msgstr "{count, plural, other {# 個結果}}"
 
+#: src/components/home-attention.tsx
+msgid "{count} requests last observed"
+msgstr "最近觀察到 {count} 個請求"
+
 #. placeholder {0}: items.length
 #: src/components/agent-tasks-sheet.tsx
 msgid "{done} of {0} done"
@@ -256,6 +260,10 @@ msgstr "指向 .ttf 或 .otf 檔案的直接連結"
 msgid "A Gateway on a machine you can SSH into, even one that only listens on its own loopback."
 msgstr "你能以 SSH 登入的機器上的 Gateway，即使它只在自己的 loopback 上監聽也可以"
 
+#: src/components/settings-home-layout-sheet.tsx
+msgid "A magazine-style Home with attention and recent sessions."
+msgstr "雜誌風格的首頁，顯示注意事項與最近工作階段"
+
 #. placeholder {0}: assignment.target.kind
 #: src/components/server-terminal-workspace.tsx
 msgid "a new {0}"
@@ -307,6 +315,10 @@ msgstr "操作這個終端機，或給它的 Agent 下一條指令"
 #: src/components/agent-worktree-sheet.tsx
 msgid "Actions for {0}"
 msgstr "{0} 的操作"
+
+#: src/components/home-connections.tsx
+msgid "Add a gateway or an SSH host to start working."
+msgstr "新增 Gateway 或 SSH 主機即可開始工作"
 
 #: src/components/ssh-host-list.tsx
 msgid "Add a host"
@@ -596,6 +608,10 @@ msgstr "附加檔案"
 msgid "Attachment"
 msgstr "附件"
 
+#: src/components/home-editorial-layout.tsx
+msgid "Attention"
+msgstr "需要處理"
+
 #: src/components/app-lock-gate.tsx
 msgid "Authenticate with {authLabel} to continue."
 msgstr "請使用 {authLabel} 驗證以繼續"
@@ -837,10 +853,22 @@ msgstr "正在檢查系統驗證…"
 msgid "Checking…"
 msgstr "檢查中…"
 
+#: src/components/home-launch-actions.tsx
+msgid "Choose a gateway"
+msgstr "選擇 Gateway"
+
+#: src/components/home-launch-actions.tsx
+msgid "Choose a gateway first"
+msgstr "請先選擇 Gateway"
+
 #: src/components/agent-model-sheet.tsx
 #: src/components/agent-workbench.tsx
 msgid "Choose a model"
 msgstr "選擇模型"
+
+#: src/components/home-launch-actions.tsx
+msgid "Choose a saved host"
+msgstr "選擇已儲存的主機"
 
 #: src/components/simfarm-stage.tsx
 msgid "Choose a simulator"
@@ -862,9 +890,17 @@ msgstr "選擇助理"
 msgid "Choose an SSH host."
 msgstr "請選擇 SSH 主機"
 
+#: src/components/server-terminal-workspace.tsx
+msgid "Choose another terminal"
+msgstr "選擇其他終端"
+
 #: src/components/attachment-menu.tsx
 msgid "Choose files"
 msgstr "選擇檔案"
+
+#: src/components/settings-servers.tsx
+msgid "Choose how Home is arranged."
+msgstr "選擇首頁的版面"
 
 #: src/components/agent-workbench.tsx
 msgid "Choose project"
@@ -875,6 +911,8 @@ msgid "Choose which simulator to show"
 msgstr "選擇要顯示的模擬器"
 
 #: src/components/settings-appearance.tsx
+#: src/components/settings-home-layout-sheet.tsx
+#: src/components/settings-servers.tsx
 msgid "Classic"
 msgstr "經典"
 
@@ -1121,6 +1159,10 @@ msgstr "正在連線至 {address}"
 msgid "Connecting…"
 msgstr "連線中…"
 
+#: src/components/home-editorial-layout.tsx
+msgid "Connections"
+msgstr "連線"
+
 #: src/components/agent-context-sheet.tsx
 msgid "Context"
 msgstr "上下文"
@@ -1143,6 +1185,7 @@ msgid "Context used"
 msgstr "上下文佔用"
 
 #: src/app/explore.tsx
+#: src/components/home-editorial-layout.tsx
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Continue"
 msgstr "繼續"
@@ -1262,6 +1305,10 @@ msgstr "Ctrl Y 鍵，貼上"
 #: src/i18n/labels.ts
 msgid "Control Z, suspend"
 msgstr "Ctrl Z 鍵，暫停"
+
+#: src/components/home-editorial-layout.tsx
+msgid "Controls"
+msgstr "控制"
 
 #: src/components/agent-mode-sheet.tsx
 msgid "Conversational help and open-ended project questions."
@@ -1400,6 +1447,10 @@ msgstr "無法載入先前的輸出"
 msgid "Could not load files."
 msgstr "無法載入檔案"
 
+#: src/components/agent-model-sheet.tsx
+msgid "Could not load models"
+msgstr "無法載入模型"
+
 #: src/components/agent-workbench.tsx
 msgid "Could not load the session"
 msgstr "無法載入工作階段"
@@ -1411,6 +1462,10 @@ msgstr "無法載入正在執行的項目"
 #: src/components/agent-workbench.tsx
 msgid "Could not move this session"
 msgstr "無法移動此會話"
+
+#: src/hooks/use-home-commands.ts
+msgid "Could not open destination"
+msgstr "無法開啟目的地"
 
 #: src/hooks/use-theme-file-open.ts
 msgid "Could not open that theme"
@@ -1518,6 +1573,10 @@ msgstr "無法執行該技能"
 msgid "Could not save changes"
 msgstr "無法儲存變更"
 
+#: src/components/settings-home-layout-sheet.tsx
+msgid "Could not save Home layout"
+msgstr "無法儲存首頁版面"
+
 #: src/components/ssh-host-form.tsx
 msgid "Could not save host"
 msgstr "無法儲存主機"
@@ -1614,6 +1673,10 @@ msgstr "目前機器"
 #: src/i18n/labels.ts
 msgid "Current path"
 msgstr "目前路徑"
+
+#: src/components/pad-server-rail.tsx
+msgid "Current task"
+msgstr "目前工作"
 
 #: src/components/custom-theme-library.tsx
 msgid "Current theme"
@@ -1834,6 +1897,11 @@ msgstr "編輯 SSH 主機"
 msgid "Edit this server"
 msgstr "編輯這台伺服器"
 
+#: src/components/settings-home-layout-sheet.tsx
+#: src/components/settings-servers.tsx
+msgid "Editorial"
+msgstr "日系雜誌"
+
 #: src/i18n/labels.ts
 msgid "Enter"
 msgstr "Enter 鍵"
@@ -1935,6 +2003,10 @@ msgstr "建立 Agent 會話失敗"
 #: src/components/agent-workbench.tsx
 msgid "Failed to switch project"
 msgstr "切換專案失敗"
+
+#: src/components/settings-home-layout-sheet.tsx
+msgid "Familiar server cards and quick actions."
+msgstr "熟悉的伺服器卡片與快速操作"
 
 #: src/components/agent-composer.tsx
 msgid "Fast agent specialized for exploring codebases."
@@ -2183,6 +2255,23 @@ msgstr "隱藏模擬器"
 msgid "Home"
 msgstr "主畫面"
 
+#: src/components/home-editorial-layout.tsx
+msgid "Home / Editorial"
+msgstr "首頁 / 編輯"
+
+#: src/components/settings-home-layout-sheet.tsx
+#: src/components/settings-servers.tsx
+msgid "Home layout"
+msgstr "首頁版面"
+
+#: src/components/settings-home-layout-sheet.tsx
+msgid "Home layout changed for this session, but could not be saved on this device. Try again."
+msgstr "首頁版面已在此工作階段中變更，但無法儲存到此裝置。請再試一次"
+
+#: src/components/settings-servers.tsx
+msgid "Home layout, {homeLayoutLabel}"
+msgstr "首頁版面：{homeLayoutLabel}"
+
 #: src/components/settings-alerts.tsx
 msgid "Home screen widget"
 msgstr "主畫面小工具"
@@ -2390,6 +2479,10 @@ msgstr "語言，{languageName}"
 msgid "Large"
 msgstr "大"
 
+#: src/components/home-attention.tsx
+msgid "Last checked {when}"
+msgstr "上次檢查時間：{when}"
+
 #: src/components/settings-servers.tsx
 #: src/components/ssh-host-row.tsx
 msgid "Last connected {days}d ago"
@@ -2484,7 +2577,12 @@ msgstr "正在載入指令"
 msgid "Loading paired devices…"
 msgstr "正在載入已配對的裝置…"
 
-#: src/app/index.tsx
+#: src/components/home-recent-sessions.tsx
+msgid "Loading recent sessions…"
+msgstr "正在載入最近的工作階段…"
+
+#: src/app/servers/[serverId].tsx
+#: src/components/home-overview.tsx
 #: src/components/settings-servers.tsx
 msgid "Loading servers"
 msgstr "正在載入伺服器"
@@ -2531,15 +2629,19 @@ msgstr "Mac mini · 辦公室"
 msgid "Machines"
 msgstr "機器"
 
-#: src/app/index.tsx
+#: src/components/home-overview.tsx
 msgid "Manage"
 msgstr "管理"
+
+#: src/components/home-connections.tsx
+msgid "Manage connections"
+msgstr "管理連線"
 
 #: src/components/session-map.tsx
 msgid "Manage machines"
 msgstr "管理機器"
 
-#: src/app/index.tsx
+#: src/components/home-overview.tsx
 msgid "Manage SSH hosts"
 msgstr "管理 SSH 主機"
 
@@ -2697,6 +2799,10 @@ msgstr "新增群組"
 msgid "New host key"
 msgstr "新的主機金鑰"
 
+#: src/components/home-launch-actions.tsx
+msgid "New OpenCode"
+msgstr "新增 OpenCode"
+
 #: src/components/collaboration-notice.tsx
 msgid "New output available · refresh"
 msgstr "有新輸出 · 點擊重新整理"
@@ -2720,6 +2826,7 @@ msgid "New task"
 msgstr "新增任務"
 
 #: src/app/commands.tsx
+#: src/components/home-launch-actions.tsx
 #: src/components/session-map.tsx
 msgid "New terminal"
 msgstr "新增終端機"
@@ -2877,6 +2984,10 @@ msgstr "不支援靜態畫面"
 msgid "No tasks in this session yet."
 msgstr "此工作階段還沒有任務"
 
+#: src/hooks/use-home-commands.ts
+msgid "No terminal session is available on this server."
+msgstr "此伺服器沒有可用的終端機工作階段"
+
 #: src/components/diff-rows.tsx
 msgid "No textual change"
 msgstr "沒有文字變更"
@@ -3003,8 +3114,8 @@ msgstr "開啟"
 #. placeholder {0}: asset.name
 #. placeholder {0}: file.name ?? basename(file.uri)
 #. placeholder {0}: part.fallback_text || part.asset_id
-#: src/app/index.tsx
 #: src/components/agent-tool-card.tsx
+#: src/components/home-overview.tsx
 #: src/components/pane-chat-blocks.tsx
 #: src/components/session-artifacts.tsx
 msgid "Open {0}"
@@ -3013,6 +3124,10 @@ msgstr "開啟 {0}"
 #: src/components/session-map.tsx
 msgid "Open {title}. Long press to close."
 msgstr "開啟 {title}。長按可關閉"
+
+#: src/components/home-attention.tsx
+msgid "Open a session to check its requests."
+msgstr "開啟工作階段以檢查其請求"
 
 #: src/components/open-web-service-sheet.tsx
 msgid "Open anyway"
@@ -3119,6 +3234,10 @@ msgstr "在變更檢視器中開啟這個差異"
 msgid "Open this path"
 msgstr "開啟此路徑"
 
+#: src/components/home-attention.tsx
+msgid "Open to check the current state"
+msgstr "開啟以檢查目前狀態"
+
 #. placeholder {0}: workspace.title
 #: src/components/session-map.tsx
 msgid "Open workspace {0}, {panelCount, plural, one {# running} other {# running}}. Long press to close."
@@ -3150,6 +3269,14 @@ msgstr "OpenCode 服務離線"
 msgid "OpenCode service offline. Tap for setup instructions"
 msgstr "OpenCode 服務離線。輕觸查看啟動指引"
 
+#: src/components/home-recent-sessions.tsx
+msgid "OpenCode session"
+msgstr "OpenCode 工作階段"
+
+#: src/components/new-task-action.tsx
+msgid "OpenCode sessions are not supported. Tap for details"
+msgstr "不支援 OpenCode 工作階段。點選以查看詳細資訊"
+
 #: src/app/+not-found.tsx
 msgid "Opening"
 msgstr "正在開啟"
@@ -3166,6 +3293,11 @@ msgstr "正在開啟伺服器"
 #: src/app/explore.tsx
 msgid "Opening tunnel"
 msgstr "正在開啟通道"
+
+#: src/components/home-launch-actions.tsx
+#: src/components/server-terminal-workspace.tsx
+msgid "Opening…"
+msgstr "正在開啟…"
 
 #: src/components/editor-controls.tsx
 msgid "Opens the keyboard, the editor keys and the composer over this editor. Drag to move."
@@ -3200,8 +3332,13 @@ msgstr "輸出"
 msgid "Output lands on a hardware-accelerated terminal grid with instant-response keys and full tmux control. nvim, less and REPLs behave."
 msgstr "硬體加速字元網格，保留真實色彩與排版，配合即按即發的專業按鍵列與多工作階段 tmux 管理，nvim、less 和 REPL 運轉如初"
 
-#: src/app/index.tsx
+#: src/components/home-launch-actions.tsx
+#: src/components/home-overview.tsx
+msgid "Pair a gateway"
+msgstr "配對 Gateway"
+
 #: src/components/app-drawer-content.tsx
+#: src/components/home-overview.tsx
 #: src/components/pad-server-rail.tsx
 #: src/components/settings-servers.tsx
 msgid "Pair a server"
@@ -3236,7 +3373,7 @@ msgstr "透過 {0} 配對"
 msgid "Pair through an SSH host"
 msgstr "透過 SSH 主機配對"
 
-#: src/app/index.tsx
+#: src/components/home-overview.tsx
 msgid "Pair your first server"
 msgstr "配對你的第一台伺服器"
 
@@ -3532,6 +3669,10 @@ msgstr "最近的提交"
 msgid "Recent output"
 msgstr "查看輸出"
 
+#: src/components/agent-model-sheet.tsx
+msgid "Recently used"
+msgstr "最近使用"
+
 #: src/components/theme-appearance-settings.tsx
 msgid "Recommended minimum for readable text: {minimumPercent}%"
 msgstr "文字清晰的建議最低值:{minimumPercent}%"
@@ -3590,6 +3731,10 @@ msgstr "移除"
 #: src/components/ssh-host-form.tsx
 msgid "Remove {0}"
 msgstr "移除 {0}"
+
+#: src/components/home-recent-sessions.tsx
+msgid "Remove {title} from recents"
+msgstr "從最近項目移除 {title}"
 
 #: src/components/agent-worktree-sheet.tsx
 msgid "Remove anyway"
@@ -3721,6 +3866,11 @@ msgstr "正在重試…"
 msgid "Return"
 msgstr "Enter 鍵"
 
+#: src/components/home-overview.tsx
+msgid "Return to task"
+msgstr "返回工作"
+
+#: src/app/servers/[serverId].tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Return to the server list and pair again."
 msgstr "請回到伺服器列表重新配對"
@@ -3822,7 +3972,7 @@ msgstr "用 systemd 或 tmux 執行，登出後它才會繼續跑"
 msgid "Run relevant tests"
 msgstr "執行相關測試"
 
-#: src/app/index.tsx
+#: src/components/home-overview.tsx
 msgid "Run the Gateway on your machine and scan the QR code it prints. The pairing stays on this device."
 msgstr "在你的電腦上執行 Gateway，然後掃描它印出的 QR code。配對資料只留在這台裝置上"
 
@@ -3876,14 +4026,18 @@ msgstr "已儲存的指令"
 msgid "Saved prompts"
 msgstr "已儲存的指令"
 
+#: src/components/home-connections.tsx
+msgid "Saved SSH host"
+msgstr "已儲存的 SSH 主機"
+
 #: src/components/settings-servers.tsx
 #: src/components/ssh-host-form.tsx
 msgid "Saving…"
 msgstr "儲存中…"
 
 #: src/app/explore.tsx
-#: src/app/index.tsx
 #: src/components/app-drawer-content.tsx
+#: src/components/home-overview.tsx
 #: src/components/pad-server-rail.tsx
 msgid "Scan a gateway QR"
 msgstr "掃描 Gateway QR code"
@@ -4035,6 +4189,7 @@ msgstr "伺服器"
 msgid "Server name"
 msgstr "伺服器名稱"
 
+#: src/app/servers/[serverId].tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Server not found"
 msgstr "找不到伺服器"
@@ -4070,6 +4225,10 @@ msgstr "工作階段"
 msgctxt "agent slash command"
 msgid "Sessions in this workspace"
 msgstr "本工作區中的工作階段"
+
+#: src/components/home-recent-sessions.tsx
+msgid "Sessions you open will appear here."
+msgstr "您開啟的工作階段會顯示在這裡"
 
 #. placeholder {0}: sessionTitle ?? ''
 #: src/app/agent.tsx
@@ -4111,9 +4270,9 @@ msgstr "在你的電腦上裝一個 Gateway"
 msgid "Set up on the host"
 msgstr "請在主機上設定"
 
-#: src/app/index.tsx
 #: src/app/settings.tsx
 #: src/components/app-drawer-content.tsx
+#: src/components/home-overview.tsx
 #: src/components/pad-server-rail.tsx
 msgid "Settings"
 msgstr "設定"
@@ -4158,6 +4317,10 @@ msgstr "顯示 {0}"
 msgid "Show agents and their status on the home screen. Updates while Muqun is open."
 msgstr "在主畫面顯示代理程式與其狀態。牧群開啟時會持續更新"
 
+#: src/components/home-recent-sessions.tsx
+msgid "Show all recent sessions"
+msgstr "顯示所有最近的工作階段"
+
 #: src/components/pairing-camera.tsx
 msgid "Show camera details"
 msgstr "顯示相機詳細資訊"
@@ -4181,6 +4344,10 @@ msgstr "顯示首頁文字"
 #: src/components/theme-appearance-settings.tsx
 msgid "Show illustration on Home"
 msgstr "在首頁顯示插圖"
+
+#: src/components/home-recent-sessions.tsx
+msgid "Show less"
+msgstr "顯示較少"
 
 #: src/components/agent-tool-card.tsx
 #: src/components/bounded-markdown.tsx
@@ -4314,19 +4481,24 @@ msgstr "原始碼"
 msgid "Space"
 msgstr "空白鍵"
 
-#: src/app/index.tsx
+#: src/components/home-overview.tsx
 #: src/components/pad-server-rail.tsx
 #: src/components/ssh-host-list.tsx
 #: src/components/ssh-terminal-workspace.tsx
 msgid "SSH"
 msgstr "SSH"
 
+#: src/components/home-launch-actions.tsx
+msgid "SSH connection"
+msgstr "SSH 連線"
+
 #: src/app/explore.tsx
 #: src/components/gateway-tunnel-badge.tsx
+#: src/components/home-recent-sessions.tsx
 msgid "SSH host"
 msgstr "SSH 主機"
 
-#: src/app/index.tsx
+#: src/components/home-overview.tsx
 #: src/components/pad-server-rail.tsx
 #: src/components/settings-servers.tsx
 msgid "SSH hosts"
@@ -4348,6 +4520,10 @@ msgstr "已暫存和未暫存"
 #: src/lib/agent-widget-layout.tsx
 msgid "stale · {age}"
 msgstr "資料過舊 · {age}"
+
+#: src/components/home-editorial-layout.tsx
+msgid "Start"
+msgstr "開始"
 
 #. placeholder {0}: profile.kind
 #: src/components/agent-assignment-bar.tsx
@@ -4622,6 +4798,7 @@ msgstr "暫存檔案"
 
 #: src/app/commands.tsx
 #: src/app/settings.tsx
+#: src/components/home-recent-sessions.tsx
 #: src/i18n/labels.ts
 msgid "Terminal"
 msgstr "終端機"
@@ -4647,6 +4824,10 @@ msgstr "終端機指令與組合鍵"
 msgid "Terminal key row"
 msgstr "終端機按鍵列"
 
+#: src/components/server-terminal-workspace.tsx
+msgid "Terminal unavailable"
+msgstr "終端機無法使用"
+
 #: src/components/settings-terminal.tsx
 msgid "Text size"
 msgstr "文字大小"
@@ -4666,6 +4847,10 @@ msgstr "那個助理已經不在這個終端機裡了。重新開啟後再試"
 #: src/app/explore.tsx
 msgid "That code was refused. Hold still for a new one."
 msgstr "這組代碼被拒絕了，請保持穩定以讀取新的代碼"
+
+#: src/hooks/use-home-commands.ts
+msgid "That destination is no longer available."
+msgstr "該目的地已無法使用"
 
 #: src/components/agent-form-card.tsx
 msgid "That does not match the expected format."
@@ -4740,6 +4925,10 @@ msgstr "與模擬器的連線中斷了"
 msgid "The default agent. Executes tools."
 msgstr "預設智慧體，執行工具"
 
+#: src/hooks/use-home-commands.ts
+msgid "The destination could not be opened."
+msgstr "無法開啟該目的地"
+
 #: src/components/settings-font-sheet.tsx
 msgid "The font file is missing. Add it again."
 msgstr "找不到字型檔案。請重新加入"
@@ -4760,6 +4949,10 @@ msgstr "顯示在主畫面上的圖示。Android 會關閉 App 以套用變更"
 #: src/components/ssh-host-form.tsx
 msgid "The key could not be read ({0}). Check the key and its passphrase."
 msgstr "無法讀取金鑰（{0}）。請檢查金鑰及其通行密語"
+
+#: src/components/session-map.tsx
+msgid "The new terminal was created, but could not open it."
+msgstr "已建立新的終端機，但無法開啟"
 
 #: src/components/opencode-guide-sheet.tsx
 msgid "The OpenCode daemon is not running on this host. Run this and it will be."
@@ -4828,6 +5021,10 @@ msgstr "模擬器未在時間內關閉"
 #: src/app/commands.tsx
 msgid "The SSH tunnel carries the Gateway's port and no other, so the simulator and the browser cannot be reached from here. Connect over the local network or Tailscale."
 msgstr "SSH 通道只帶 Gateway 這一個連接埠，不含其他，所以從這裡碰不到模擬器和瀏覽器。改用區域網路或 Tailscale 連線"
+
+#: src/components/session-map.tsx
+msgid "The terminal request may have succeeded. Refresh the list and check it before trying again."
+msgstr "終端機請求可能已成功。請重新整理列表並確認後再試"
 
 #: src/components/settings-font-sheet.tsx
 msgid "The terminal, and code in a reply."
@@ -4917,6 +5114,10 @@ msgstr "這個檔案太大了"
 #: src/components/settings-font-sheet.tsx
 msgid "This font could not be read."
 msgstr "無法讀取這個字型"
+
+#: src/components/opencode-guide-sheet.tsx
+msgid "This gateway does not advertise OpenCode sessions."
+msgstr "此 Gateway 未提供 OpenCode 工作階段"
 
 #: src/lib/network-error.ts
 msgid "This Gateway does not answer to that address."
@@ -5042,6 +5243,14 @@ msgstr "無法繪製這個終端機"
 msgid "This terminal is no longer available."
 msgstr "這個終端機已經不存在"
 
+#: src/components/server-terminal-workspace.tsx
+msgid "This terminal is no longer available. Choose another terminal."
+msgstr "此終端機已無法使用。請選擇其他終端機"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "This terminal was removed. Choose another terminal to continue."
+msgstr "此終端機已被移除。請選擇其他終端機以繼續"
+
 #: src/components/custom-theme-library.tsx
 msgid "This theme contains images that must be installed before applying"
 msgstr "此主題包含圖片，套用前需要先安裝圖片"
@@ -5107,7 +5316,8 @@ msgstr "再試一次"
 msgid "Try again once the gateway responds."
 msgstr "等 Gateway 回應後再試一次"
 
-#: src/app/index.tsx
+#: src/components/home-launch-actions.tsx
+#: src/components/home-overview.tsx
 msgid "Try the demo"
 msgstr "試用示範"
 
@@ -5380,6 +5590,11 @@ msgstr "當代理暫停請求權限時，通知直達鎖定畫面。一鍵核准
 msgid "While you were away"
 msgstr "離開期間"
 
+#: src/components/home-editorial-layout.tsx
+#: src/components/pad-server-rail.tsx
+msgid "Workbench"
+msgstr "工作台"
+
 #: src/components/agent-vcs-diff-sheet.tsx
 #: src/components/collaboration-notice.tsx
 #: src/i18n/labels.ts
@@ -5449,8 +5664,8 @@ msgstr "YOLO 模式已開啟 — 點按即可關閉"
 msgid "You"
 msgstr "你"
 
-#: src/app/index.tsx
 #: src/components/app-drawer-content.tsx
+#: src/components/home-overview.tsx
 #: src/components/pad-server-rail.tsx
 msgid "Your agents, anywhere."
 msgstr "你的代理程式，隨時隨地"
@@ -5466,11 +5681,3 @@ msgstr "你的訊息"
 #: src/components/app-drawer-content.tsx
 msgid "Your paired gateways"
 msgstr "你已配對的 Gateway"
-
-#: src/components/agent-model-sheet.tsx
-msgid "Recently used"
-msgstr "最近使用"
-
-#: src/components/agent-model-sheet.tsx
-msgid "Could not load models"
-msgstr "無法載入模型"
