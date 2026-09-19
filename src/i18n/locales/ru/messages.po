@@ -117,6 +117,11 @@ msgstr "{0} (это устройство)"
 msgid "{0} messages in context"
 msgstr "Сообщений в контексте: {0}"
 
+#. placeholder {0}: paged.total - paged.shown
+#: src/components/agent-model-sheet.tsx
+msgid "{0} more models"
+msgstr "Ещё моделей: {0}"
+
 #. placeholder {0}: compact(inContext)
 #: src/components/agent-context-sheet.tsx
 msgid "{0} of {limitLabel} tokens the model can hold"
@@ -1663,10 +1668,6 @@ msgstr "Удалить {name}"
 #: src/i18n/labels.ts
 msgid "Delete this line"
 msgstr "Удалить эту строку"
-
-#: src/components/agent-sessions-sheet.tsx
-msgid "Delete this session?"
-msgstr "Удалить эту сессию?"
 
 #: src/i18n/labels.ts
 msgctxt "git file status"
@@ -4192,6 +4193,10 @@ msgstr "Показывать иллюстрацию на главной"
 msgid "Show more"
 msgstr "Показать ещё"
 
+#: src/components/agent-model-sheet.tsx
+msgid "Show more models"
+msgstr "Показать больше моделей"
+
 #: src/components/diff-rows.tsx
 msgid "Show more of this diff"
 msgstr "Показать больше этих различий"
@@ -4555,6 +4560,10 @@ msgstr "Tab"
 #: src/components/attachment-menu.tsx
 msgid "Take photo"
 msgstr "Сделать фото"
+
+#: src/components/agent-sessions-sheet.tsx
+msgid "Tap again to delete"
+msgstr "Нажмите ещё раз, чтобы удалить"
 
 #: src/components/ssh-host-form.tsx
 msgid "Tap again to remove"

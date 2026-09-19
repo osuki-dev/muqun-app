@@ -117,6 +117,11 @@ msgstr "{0} (이 기기)"
 msgid "{0} messages in context"
 msgstr "컨텍스트에 있는 메시지 {0}개"
 
+#. placeholder {0}: paged.total - paged.shown
+#: src/components/agent-model-sheet.tsx
+msgid "{0} more models"
+msgstr "모델 {0}개 더"
+
 #. placeholder {0}: compact(inContext)
 #: src/components/agent-context-sheet.tsx
 msgid "{0} of {limitLabel} tokens the model can hold"
@@ -1663,10 +1668,6 @@ msgstr "{name} 삭제"
 #: src/i18n/labels.ts
 msgid "Delete this line"
 msgstr "이 줄 삭제"
-
-#: src/components/agent-sessions-sheet.tsx
-msgid "Delete this session?"
-msgstr "이 세션을 삭제할까요?"
 
 #: src/i18n/labels.ts
 msgctxt "git file status"
@@ -4192,6 +4193,10 @@ msgstr "홈에 일러스트 표시"
 msgid "Show more"
 msgstr "더 보기"
 
+#: src/components/agent-model-sheet.tsx
+msgid "Show more models"
+msgstr "모델 더 보기"
+
 #: src/components/diff-rows.tsx
 msgid "Show more of this diff"
 msgstr "이 diff 더 보기"
@@ -4555,6 +4560,10 @@ msgstr "탭"
 #: src/components/attachment-menu.tsx
 msgid "Take photo"
 msgstr "사진 찍기"
+
+#: src/components/agent-sessions-sheet.tsx
+msgid "Tap again to delete"
+msgstr "한 번 더 눌러 삭제"
 
 #: src/components/ssh-host-form.tsx
 msgid "Tap again to remove"

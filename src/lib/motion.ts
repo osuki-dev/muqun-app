@@ -156,6 +156,19 @@ export const RESKIN_MOTION = {
 } as const;
 
 /**
+ * The two-step confirm: how long an armed action waits for its second tap.
+ *
+ * Long enough to read one sentence about what will be lost and decide, short
+ * enough that an armed Delete is not still lying in wait when the reader comes
+ * back to the list a minute later. The bar that drains across the row is this
+ * same number drawn, which is why it lives here and not in the component: a
+ * window is a duration the reader watches.
+ *
+ * See `src/components/two-step-action.tsx`.
+ */
+export const CONFIRM_WINDOW_MS = 4000;
+
+/**
  * How far a revealing element travels, in points.
  *
  * A short local arrival, kept small so text does not travel across the page.

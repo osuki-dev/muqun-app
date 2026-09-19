@@ -79,8 +79,21 @@ export default function AgentSessionsScreen() {
       models={models}
       onSelectSession={actions.selectSession}
       onCreateNewSession={actions.createSession}
-      onRenameSession={actions.renameSession}
-      onDeleteSession={actions.deleteSession}
+      // The host-wide rows are this route's own copy, so what the reader does
+      // to one has to land on the copy too: a deleted session from another
+      // project stayed on screen until the sheet was reopened, because only
+      // the workbench's list heard about it.
+      onRenameSession={(asid, title) => {
+        setHostSessions((rows) => rows.map((row) => (row.asid === asid ? { ...row, title } : row)));
+        actions.renameSession(asid, title);
+      }}
+      onDeleteSession={(asid) => {
+        // The session and everything under it: OpenCode removes the children.
+        setHostSessions((rows) =>
+          rows.filter((row) => row.asid !== asid && row.parent_id !== asid)
+        );
+        actions.deleteSession(asid);
+      }}
       // Replaces rather than stacks: two form sheets deep is two grabbers and
       // one question, and the reader asked to go from this list to that one.
       onMoveSession={() => router.replace('/agent-worktree')}

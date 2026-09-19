@@ -117,6 +117,11 @@ msgstr "{0}（這台裝置）"
 msgid "{0} messages in context"
 msgstr "上下文中有 {0} 則訊息"
 
+#. placeholder {0}: paged.total - paged.shown
+#: src/components/agent-model-sheet.tsx
+msgid "{0} more models"
+msgstr "還有 {0} 個模型"
+
 #. placeholder {0}: compact(inContext)
 #: src/components/agent-context-sheet.tsx
 msgid "{0} of {limitLabel} tokens the model can hold"
@@ -1663,10 +1668,6 @@ msgstr "刪除 {name}"
 #: src/i18n/labels.ts
 msgid "Delete this line"
 msgstr "刪除這一行"
-
-#: src/components/agent-sessions-sheet.tsx
-msgid "Delete this session?"
-msgstr "刪除這個工作階段？"
 
 #: src/i18n/labels.ts
 msgctxt "git file status"
@@ -4192,6 +4193,10 @@ msgstr "在首頁顯示插圖"
 msgid "Show more"
 msgstr "顯示更多"
 
+#: src/components/agent-model-sheet.tsx
+msgid "Show more models"
+msgstr "顯示更多模型"
+
 #: src/components/diff-rows.tsx
 msgid "Show more of this diff"
 msgstr "顯示更多差異內容"
@@ -4555,6 +4560,10 @@ msgstr "Tab 鍵"
 #: src/components/attachment-menu.tsx
 msgid "Take photo"
 msgstr "拍照"
+
+#: src/components/agent-sessions-sheet.tsx
+msgid "Tap again to delete"
+msgstr "再點一次即刪除"
 
 #: src/components/ssh-host-form.tsx
 msgid "Tap again to remove"

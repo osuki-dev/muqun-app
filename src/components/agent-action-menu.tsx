@@ -4,6 +4,7 @@ import { Text, useThemeTokens } from '@osuki-dev/ui';
 import Animated from 'react-native-reanimated';
 
 import { PressableScale } from '@/components/pressable-scale';
+import { TwoStepAction } from '@/components/two-step-action';
 import { appChrome } from '@/constants/appearance';
 import { AGENT_TYPE } from '@/constants/agent-type';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
@@ -32,6 +33,12 @@ export interface AgentActionMenuItem {
   /** `danger` for the one that throws something away. */
   tone?: 'default' | 'danger';
   onPress: () => void;
+  /**
+   * Ask twice, in the row, before `onPress` runs. For the item that throws
+   * something away: the first tap arms it and says what is lost, the second
+   * does it. See `two-step-action.tsx`.
+   */
+  confirm?: { label: string; detail?: string };
   testID?: string;
 }
 
@@ -64,6 +71,19 @@ export const AgentActionMenu = memo(function AgentActionMenu({
           : styles.ground,
       ]}>
       {items.map((item) => {
+        if (item.confirm) {
+          return (
+            <TwoStepAction
+              key={item.id}
+              testID={item.testID}
+              label={item.label}
+              confirmLabel={item.confirm.label}
+              detail={item.confirm.detail}
+              Icon={item.Icon}
+              onConfirm={item.onPress}
+            />
+          );
+        }
         const danger = item.tone === 'danger';
         const ink = danger ? theme.colors.danger : theme.colors.text;
         return (

@@ -1,5 +1,5 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Alert, View, StyleSheet, ScrollView } from 'react-native';
+import { View, StyleSheet, ScrollView } from 'react-native';
 import { Text, useThemeTokens } from '@osuki-dev/ui';
 import { useLingui } from '@lingui/react/macro';
 import {
@@ -364,33 +364,8 @@ export const AgentSessionsSheet = memo(function AgentSessionsSheet({
     [renameDraft, onRenameSession]
   );
 
-  /**
-   * The one destructive thing on this sheet, asked natively.
-   *
-   * A row that deletes on a tap is a row that deletes by accident, and what
-   * goes with it is not only this session: OpenCode removes its children too.
-   */
-  const confirmDelete = useCallback(
-    (session: AgentSessionInfo) => {
-      const title = sessionTitleOr(session, t`Untitled session`);
-      setMenuAsid(null);
-      Alert.alert(
-        t`Delete this session?`,
-        t`“${title}” and any subagent sessions under it are removed from the host. This cannot be undone.`,
-        [
-          { text: t`Cancel`, style: 'cancel' },
-          {
-            text: t`Delete`,
-            style: 'destructive',
-            onPress: () => onDeleteSession?.(session.asid),
-          },
-        ]
-      );
-    },
-    [onDeleteSession, t]
-  );
-
   const menuItems = (session: AgentSessionInfo): AgentActionMenuItem[] => {
+    const title = sessionTitleOr(session, t`Untitled session`);
     const items: AgentActionMenuItem[] = [
       {
         id: 'rename',
@@ -437,7 +412,17 @@ export const AgentSessionsSheet = memo(function AgentSessionsSheet({
       label: t`Delete`,
       Icon: Trash2,
       tone: 'danger',
-      onPress: () => confirmDelete(session),
+      // The one destructive thing on this sheet, asked in the row. A row that
+      // deletes on one tap is a row that deletes by accident, and what goes
+      // with it is not only this session: OpenCode removes its children too.
+      confirm: {
+        label: t`Tap again to delete`,
+        detail: t`“${title}” and any subagent sessions under it are removed from the host. This cannot be undone.`,
+      },
+      onPress: () => {
+        setMenuAsid(null);
+        onDeleteSession?.(session.asid);
+      },
       testID: `agent-session-delete-${session.asid}`,
     });
     return items;

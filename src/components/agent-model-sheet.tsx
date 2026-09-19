@@ -1,4 +1,4 @@
-import { memo, useEffect, useMemo, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
 import { Spinner, Text, useThemeTokens } from '@osuki-dev/ui';
 import { useLingui } from '@lingui/react/macro';
@@ -20,6 +20,7 @@ import {
 import { appChrome } from '@/constants/appearance';
 import { withAlpha } from '@/lib/color';
 import { fadeIn, listLayout, riseIn, STAGGER } from '@/lib/motion';
+import { SECTION_PAGE_SIZE, nearListEnd, pageSections } from '@/lib/paged-sections';
 import {
   formatModelName,
   getAgentCatalog,
@@ -233,6 +234,25 @@ export const AgentModelSheet = memo(function AgentModelSheet({
     return result;
   }, [filteredModels]);
 
+  /**
+   * How many rows are drawn. A host can publish hundreds of models, so the
+   * sheet draws a page and asks for the next as the reader nears the end of
+   * it -- see `paged-sections.ts`. The catalogue itself is already whole: this
+   * bounds what is *mounted*, not what is fetched, and search still looks
+   * through every model.
+   */
+  const [rowLimit, setRowLimit] = useState(SECTION_PAGE_SIZE);
+  const paged = useMemo(() => pageSections(sections, rowLimit), [sections, rowLimit]);
+  const hasMore = paged.shown < paged.total;
+  // A new search or filter is a new list: it starts from its first page, or a
+  // reader who had scrolled deep would mount every match of the next query.
+  useEffect(() => {
+    setRowLimit(SECTION_PAGE_SIZE);
+  }, [searchQuery, filterMode]);
+  const loadMore = useCallback(() => {
+    setRowLimit((limit) => (limit < paged.total ? limit + SECTION_PAGE_SIZE : limit));
+  }, [paged.total]);
+
   /** Which providers the host has switched off. */
   const disabledProviders = useMemo(() => {
     const off = new Set<string>();
@@ -315,7 +335,23 @@ export const AgentModelSheet = memo(function AgentModelSheet({
           style={sheetSceneStyles.scroller}
           contentContainerStyle={sheetSceneStyles.scrollerContent}
           keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}>
+          showsVerticalScrollIndicator={false}
+          scrollEventThrottle={64}
+          onScroll={
+            hasMore
+              ? ({ nativeEvent }) => {
+                  if (
+                    nearListEnd({
+                      offset: nativeEvent.contentOffset.y,
+                      viewport: nativeEvent.layoutMeasurement.height,
+                      content: nativeEvent.contentSize.height,
+                    })
+                  ) {
+                    loadMore();
+                  }
+                }
+              : undefined
+          }>
           {sections.length === 0 || filteredModels.length === 0 ? (
             <Animated.View entering={fadeIn('short')} style={styles.empty}>
               <Text variant="caption" color={theme.colors.textMuted}>
@@ -342,7 +378,7 @@ export const AgentModelSheet = memo(function AgentModelSheet({
               ) : null}
             </Animated.View>
           ) : (
-            sections.map((section, sectionIndex) => (
+            paged.sections.map((section, sectionIndex) => (
               <Animated.View key={section.title} layout={listLayout('short')}>
                 {sectionIndex > 0 ? <SheetSceneGroupRule /> : null}
                 <SheetSceneGroupHeading title={section.title} first={sectionIndex === 0} />
@@ -448,6 +484,20 @@ export const AgentModelSheet = memo(function AgentModelSheet({
               </Animated.View>
             ))
           )}
+          {hasMore ? (
+            // Scrolling loads the next page on its own; the row is for a
+            // reader who cannot scroll, and it says how much is left.
+            <PressableScale
+              testID="agent-model-more"
+              accessibilityRole="button"
+              accessibilityLabel={t`Show more models`}
+              onPress={loadMore}
+              style={styles.more}>
+              <Text variant="caption" color={theme.colors.textMuted}>
+                {t`${paged.total - paged.shown} more models`}
+              </Text>
+            </PressableScale>
+          ) : null}
           <SheetSceneFooter bottomInset={insets.bottom} />
         </ScrollView>
       )}
@@ -456,6 +506,7 @@ export const AgentModelSheet = memo(function AgentModelSheet({
 });
 
 const styles = StyleSheet.create({
+  more: { minHeight: 44, alignItems: 'center', justifyContent: 'center' },
   loading: { padding: 40, alignItems: 'center', justifyContent: 'center' },
   empty: {
     paddingVertical: 40,
