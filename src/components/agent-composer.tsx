@@ -314,7 +314,7 @@ export interface AgentComposerProps {
   disabled?: boolean;
   onOpenSessionsSheet?: () => void;
   onOpenTasksSheet?: () => void;
-  /** How many detached tools and shells are still running. */
+  /** How many running shells the Background tasks sheet can show. */
   backgroundCount?: number;
   onOpenBackgroundTray?: () => void;
   /** The host's own slash commands, from `GET /api/agent-catalog`. */

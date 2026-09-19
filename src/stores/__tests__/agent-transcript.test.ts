@@ -15,6 +15,72 @@ const item = (id: string, extra: Partial<TimelineItem> = {}): TimelineItem => ({
 });
 
 describe('agent transcript ownership', () => {
+  test('session replacement publishes its window and rows in one notification', () => {
+    const store = createAgentTranscriptStore();
+    store.getState().setTimeline(
+      Array.from({ length: 100 }, (_, i) => item(`old-${i}`)),
+      60
+    );
+    const observed: string[][] = [];
+    const stop = store.subscribe((state) => observed.push([...state.keys]));
+    store.getState().setTimeline([item('new-first'), item('new-last')], 0);
+    stop();
+    expect(observed).toEqual([['grp_new-first', 'grp_new-last']]);
+    expect(store.getState().config.windowStart).toBe(0);
+  });
+
+  test('a latest page made of duplicate shells still shows the latest real messages', () => {
+    const store = createAgentTranscriptStore();
+    const tools = Array.from({ length: 60 }, (_, i) =>
+      item(`tool-${i}`, {
+        part: {
+          type: 'tool',
+          id: `call-${i}`,
+          name: 'shell',
+          input: { command: `echo ${i}` },
+          content: [],
+          metadata: {},
+          state: 'completed',
+        },
+      })
+    );
+    const shells = Array.from({ length: 60 }, (_, i) =>
+      item(`shell-${i}`, {
+        part: { type: 'shell', shell_id: `shell-${i}`, command: `echo ${i}`, status: 'exited' },
+      })
+    );
+    store.getState().setTimeline([...tools, ...shells]);
+    store.getState().configure({ shells: [], windowStart: 80, status: 'idle' });
+    expect(store.getState().keys).toHaveLength(40);
+    expect(store.getState().keys.at(-1)).toBe('grp_tool-59');
+    store.getState().configure({ shells: [], windowStart: 0, status: 'idle' });
+    expect(store.getState().keys).toHaveLength(60);
+  });
+
+  test('filtering before the window preserves its original timeline anchor', () => {
+    const store = createAgentTranscriptStore();
+    store.getState().setTimeline([
+      item('tool', {
+        part: {
+          type: 'tool',
+          id: 'call',
+          name: 'shell',
+          input: { command: 'pwd' },
+          content: [],
+          metadata: {},
+          state: 'completed',
+        },
+      }),
+      item('duplicate', {
+        part: { type: 'shell', shell_id: 'shell', command: 'pwd', status: 'exited' },
+      }),
+      item('anchor'),
+      item('last'),
+    ]);
+    store.getState().configure({ shells: [], windowStart: 2, status: 'idle' });
+    expect(store.getState().keys).toEqual(['grp_anchor', 'grp_last']);
+  });
+
   test('200 streamed revisions invalidate only their row, not list keys or workbench summaries', () => {
     const store = createAgentTranscriptStore();
     store.getState().setTimeline(Array.from({ length: 500 }, (_, i) => item(String(i))));

@@ -231,10 +231,6 @@ msgstr "{running} trong {0} đang chạy"
 msgid "{title} — finished while you were away"
 msgstr "{title} — đã xong khi bạn đi vắng"
 
-#: src/components/in-app-notification-host.tsx
-msgid "{waiting, plural, one {# more notification} other {# more notifications}}"
-msgstr "{waiting, plural, other {# thông báo nữa}}"
-
 #: src/lib/agent-widget-layout.tsx
 msgid "+{overflow} more"
 msgstr "+{overflow} nữa"
@@ -627,18 +623,6 @@ msgstr "Không thể xác thực. Hãy thử lại hoặc kiểm tra cài đặt
 #: src/components/agent-context-sheet.tsx
 msgid "Auto-approve every action"
 msgstr "Tự động duyệt mọi hành động"
-
-#: src/components/agent-workbench.tsx
-msgid "Auto-approve is on"
-msgstr "Tự động duyệt đang bật"
-
-#: src/components/agent-workbench.tsx
-msgid "Auto-approve is on — tap to turn it off"
-msgstr "Tự động duyệt đang bật — chạm để tắt"
-
-#: src/components/agent-workbench.tsx
-msgid "Auto-approving every action"
-msgstr "Đang tự động duyệt mọi hành động"
 
 #: src/components/agent-mode-sheet.tsx
 msgid "Autonomous software engineering: edits files, runs commands, tests."
@@ -2753,6 +2737,7 @@ msgstr "Worktree mới…"
 msgid "Next"
 msgstr "Tiếp theo"
 
+#: src/components/in-app-notification-host.tsx
 #: src/components/notice-deck.tsx
 msgid "Next notification"
 msgstr "Thông báo tiếp theo"
@@ -4727,10 +4712,6 @@ msgstr "Tác tử giờ đang hỏi điều khác"
 msgid "The agent is no longer waiting."
 msgstr "Tác tử không còn chờ nữa"
 
-#: src/components/agent-workbench.tsx
-msgid "The agent stops asking; dangerous commands stay blocked."
-msgstr "Tác nhân sẽ thôi hỏi; các lệnh nguy hiểm vẫn bị chặn"
-
 #: src/components/agent-context-sheet.tsx
 msgid "The agent stops asking; irreversibly destructive commands stay blocked"
 msgstr "Tác nhân sẽ thôi hỏi; các lệnh phá huỷ không thể hoàn tác vẫn bị chặn"
@@ -5297,10 +5278,6 @@ msgid "uploaded"
 msgstr "đã tải lên"
 
 #: src/components/attachment-strip.tsx
-msgid "Uploaded"
-msgstr "Đã tải lên"
-
-#: src/components/attachment-strip.tsx
 msgid "uploading"
 msgstr "đang tải lên"
 
@@ -5459,6 +5436,14 @@ msgstr "Sao chép dòng này"
 #: src/i18n/labels.ts
 msgid "Yesterday"
 msgstr "Hôm qua"
+
+#: src/components/agent-workbench.tsx
+msgid "YOLO mode"
+msgstr ""
+
+#: src/components/agent-workbench.tsx
+msgid "YOLO mode is on — tap to turn it off"
+msgstr ""
 
 #: src/components/agent-message-block.tsx
 msgid "You"

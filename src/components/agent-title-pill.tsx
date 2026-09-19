@@ -92,7 +92,7 @@ function EdgeMark({ side, present }: { side: 'left' | 'right'; present: boolean 
   const shown = useSharedValue(present ? MARK_OPACITY : 0);
 
   useEffect(() => {
-    shown.value = withTiming(present ? MARK_OPACITY : 0, timing('short'));
+    shown.set(withTiming(present ? MARK_OPACITY : 0, timing('short')));
   }, [present, shown]);
 
   const style = useAnimatedStyle(() => ({ opacity: shown.value }));
@@ -141,7 +141,7 @@ export function AgentTitlePill({
   const onLayout = useCallback(
     (event: LayoutChangeEvent) => {
       const width = event.nativeEvent.layout.width;
-      pillWidth.value = width;
+      pillWidth.set(width);
       setMeasured(width);
     },
     [pillWidth]
@@ -171,17 +171,19 @@ export function AgentTitlePill({
     (direction: SessionSwipeDirection) => {
       const out = timing('dropdown');
       const back = timing('short');
-      fade.value = withSequence(withTiming(0, out), withTiming(1, back));
+      fade.set(withSequence(withTiming(0, out), withTiming(1, back)));
       if (reduceMotion) {
-        slide.value = withTiming(0, out);
+        slide.set(withTiming(0, out));
         return;
       }
       const away = direction === 'next' ? -SLIDE_DISTANCE : SLIDE_DISTANCE;
-      slide.value = withSequence(
-        withTiming(away, out),
-        // The jump to the far side happens while the title is invisible.
-        withTiming(-away, INSTANT),
-        withTiming(0, back)
+      slide.set(
+        withSequence(
+          withTiming(away, out),
+          // The jump to the far side happens while the title is invisible.
+          withTiming(-away, INSTANT),
+          withTiming(0, back)
+        )
       );
     },
     [fade, reduceMotion, slide]
@@ -225,8 +227,8 @@ export function AgentTitlePill({
   const hasPrevious = useSharedValue(false);
   const hasNext = useSharedValue(false);
   useEffect(() => {
-    hasPrevious.value = neighbours.previous !== undefined;
-    hasNext.value = neighbours.next !== undefined;
+    hasPrevious.set(neighbours.previous !== undefined);
+    hasNext.set(neighbours.next !== undefined);
   }, [hasNext, hasPrevious, neighbours]);
 
   const gesture = useMemo(

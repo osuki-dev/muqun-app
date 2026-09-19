@@ -106,11 +106,15 @@ export const AgentBackgroundTray = memo(function AgentBackgroundTray({
   const [openShellId, setOpenShellId] = useState<string | null>(initialShellId ?? null);
   const [output, setOutput] = useState('');
   const [killing, setKilling] = useState<string | null>(null);
+  /** Ignore a slower response from a directory the sheet no longer shows. */
+  const shellRequestRef = useRef(0);
   /** Where the last page ended, so the next one asks for what came after it. */
   const cursorRef = useRef(0);
 
   const refreshShells = useCallback(async () => {
+    const request = ++shellRequestRef.current;
     const list = await listAgentShells(directory);
+    if (request !== shellRequestRef.current) return;
     setShells(list);
     setLoading(false);
   }, [directory]);

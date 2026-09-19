@@ -231,10 +231,6 @@ msgstr "{running} de {0} em execução"
 msgid "{title} — finished while you were away"
 msgstr "{title} — terminou enquanto você estava fora"
 
-#: src/components/in-app-notification-host.tsx
-msgid "{waiting, plural, one {# more notification} other {# more notifications}}"
-msgstr "{waiting, plural, one {mais # notificação} other {mais # notificações}}"
-
 #: src/lib/agent-widget-layout.tsx
 msgid "+{overflow} more"
 msgstr "+{overflow} mais"
@@ -627,18 +623,6 @@ msgstr "A autenticação está indisponível. Tente novamente ou verifique as de
 #: src/components/agent-context-sheet.tsx
 msgid "Auto-approve every action"
 msgstr "Aprovar automaticamente todas as ações"
-
-#: src/components/agent-workbench.tsx
-msgid "Auto-approve is on"
-msgstr "A aprovação automática está ativada"
-
-#: src/components/agent-workbench.tsx
-msgid "Auto-approve is on — tap to turn it off"
-msgstr "A aprovação automática está ativada — toca para desativar"
-
-#: src/components/agent-workbench.tsx
-msgid "Auto-approving every action"
-msgstr "A aprovar todas as ações automaticamente"
 
 #: src/components/agent-mode-sheet.tsx
 msgid "Autonomous software engineering: edits files, runs commands, tests."
@@ -2753,6 +2737,7 @@ msgstr "Novo worktree…"
 msgid "Next"
 msgstr "Seguinte"
 
+#: src/components/in-app-notification-host.tsx
 #: src/components/notice-deck.tsx
 msgid "Next notification"
 msgstr "Próxima notificação"
@@ -4727,10 +4712,6 @@ msgstr "O agente está agora a perguntar outra coisa"
 msgid "The agent is no longer waiting."
 msgstr "O agente já não está à espera"
 
-#: src/components/agent-workbench.tsx
-msgid "The agent stops asking; dangerous commands stay blocked."
-msgstr "O agente deixa de perguntar; os comandos perigosos continuam bloqueados"
-
 #: src/components/agent-context-sheet.tsx
 msgid "The agent stops asking; irreversibly destructive commands stay blocked"
 msgstr "O agente deixa de perguntar; os comandos destrutivos irreversíveis continuam bloqueados"
@@ -5297,10 +5278,6 @@ msgid "uploaded"
 msgstr "carregado"
 
 #: src/components/attachment-strip.tsx
-msgid "Uploaded"
-msgstr "Carregado"
-
-#: src/components/attachment-strip.tsx
 msgid "uploading"
 msgstr "a carregar"
 
@@ -5459,6 +5436,14 @@ msgstr "Copiar esta linha"
 #: src/i18n/labels.ts
 msgid "Yesterday"
 msgstr "Ontem"
+
+#: src/components/agent-workbench.tsx
+msgid "YOLO mode"
+msgstr ""
+
+#: src/components/agent-workbench.tsx
+msgid "YOLO mode is on — tap to turn it off"
+msgstr ""
 
 #: src/components/agent-message-block.tsx
 msgid "You"

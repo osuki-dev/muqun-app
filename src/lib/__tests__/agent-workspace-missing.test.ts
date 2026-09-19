@@ -99,6 +99,23 @@ describe('parseAgentVcsDiff', () => {
     expect(answer.files).toHaveLength(1);
     expect(answer.reason).toBeUndefined();
   });
+
+  test('does not list empty file entries, but keeps stat-only and binary diffs', () => {
+    const answer = parseAgentVcsDiff({
+      files: [
+        { path: 'empty.ts', patch: '', additions: 0, deletions: 0 },
+        { path: 'stats.ts', patch: '', additions: 2, deletions: 1 },
+        {
+          path: 'image.png',
+          patch: 'Binary files a/image.png and b/image.png differ',
+          additions: 0,
+          deletions: 0,
+        },
+      ],
+      vcs: 'git',
+    });
+    expect(answer.files.map((file) => file.path)).toEqual(['stats.ts', 'image.png']);
+  });
 });
 
 describe('workspaceMissingState', () => {

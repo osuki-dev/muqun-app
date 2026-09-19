@@ -1848,7 +1848,14 @@ export interface AgentVcsDiff {
  * files are the half of it that can be shown.
  */
 export function parseAgentVcsDiff(value: unknown): AgentVcsDiff {
-  const files = parseFileDiffItems(value);
+  // Some OpenCode versions include a file entry whose status changed but whose
+  // returned patch is empty. It cannot produce a file row with anything to
+  // inspect, so the Changes sheet should match a patch result and omit it.
+  // Keep entries with stats or a binary patch: those are real changes even
+  // when there are no textual hunks.
+  const files = parseFileDiffItems(value).filter(
+    (file) => file.patch.trim().length > 0 || file.additions > 0 || file.deletions > 0
+  );
   const rec = Array.isArray(value) ? null : asRecord(value);
   const vcs: 'git' | null = !rec || !('vcs' in rec) || asString(rec.vcs) === 'git' ? 'git' : null;
   if (files.length > 0) return { files, vcs };

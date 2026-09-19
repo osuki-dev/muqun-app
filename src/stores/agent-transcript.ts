@@ -10,7 +10,20 @@ export function createAgentTranscriptStore() {
   return createStore<AgentTranscriptState>((set, get) => {
     const rebuild = (timeline: TimelineItem[], config = get().config) => {
       const previous = get();
-      const visible = reconcileShellParts(timeline, config.shells).slice(config.windowStart);
+      const reconciled = reconcileShellParts(timeline, config.shells);
+      // windowStart indexes the canonical timeline, not the deduplicated list.
+      // Shell copies can occupy the entire newest page; keep a real page visible
+      // instead of slicing beyond the end after those copies are removed.
+      const start = Math.max(0, Math.min(config.windowStart, timeline.length));
+      let visible = reconciled;
+      if (start > 0) {
+        const windowIds = new Set(timeline.slice(start).map((item) => item.id));
+        const anchor = reconciled.findIndex((item) => windowIds.has(item.id));
+        const pageSize = Math.max(1, timeline.length - start);
+        visible = reconciled.slice(
+          anchor >= 0 ? anchor : Math.max(0, reconciled.length - pageSize)
+        );
+      }
       const nextRows: Record<string, TimelineRenderGroup> = {};
       const keys: string[] = [];
       let preceding: TimelineItem | undefined;
@@ -88,10 +101,12 @@ export function createAgentTranscriptStore() {
       todos: undefined,
       reasoningKey: undefined,
       config: { shells: EMPTY_SHELLS, windowStart: 0, status: undefined },
-      setTimeline: (update) => {
+      setTimeline: (update, windowStart) => {
         const current = get().timeline;
         const next = typeof update === 'function' ? update(current) : update;
-        if (next !== current) rebuild(next);
+        const config = get().config;
+        if (next !== current || (windowStart !== undefined && windowStart !== config.windowStart))
+          rebuild(next, windowStart === undefined ? config : { ...config, windowStart });
       },
       configure: (config) => {
         const current = get().config;
@@ -120,7 +135,10 @@ export interface AgentTranscriptState {
   toolIds: ReadonlySet<string>;
   backgroundTools: number;
   todos: Extract<TimelineItem['part'], { type: 'todo' }>['items'] | undefined;
-  setTimeline: (update: TimelineItem[] | ((previous: TimelineItem[]) => TimelineItem[])) => void;
+  setTimeline: (
+    update: TimelineItem[] | ((previous: TimelineItem[]) => TimelineItem[]),
+    windowStart?: number
+  ) => void;
   configure: (config: TranscriptConfig) => void;
 }
 export type AgentTranscriptStore = ReturnType<typeof createAgentTranscriptStore>;

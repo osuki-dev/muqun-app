@@ -589,6 +589,8 @@ export const AgentWorkbench = memo(function AgentWorkbench({
    * something was detached.
    */
   const [shells, setShells] = useState<readonly ShellInfo[]>([]);
+  /** Ignore a slower shell response that belongs to an older workspace. */
+  const shellRequestRef = useRef(0);
   const [knownProjects, setKnownProjects] = useState<AgentProject[]>([]);
   const [activeDirectory, setActiveDirectory] = useState<string | undefined>(undefined);
   useEffect(() => {
@@ -965,11 +967,17 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   }, []);
 
   const refreshShells = useCallback(async () => {
+    const request = ++shellRequestRef.current;
+    const directory = activeDirectory;
     if (!badgeLoads) {
-      setShells([]);
+      if (request === shellRequestRef.current) setShells([]);
       return;
     }
-    setShells(await listAgentShells(activeDirectory));
+    const list = await listAgentShells(directory);
+    // Workspace changes can start another read before this one answers. Do not
+    // let the old response put its shells back under the new directory.
+    if (request !== shellRequestRef.current || directory !== activeDirectoryRef.current) return;
+    setShells(list);
   }, [activeDirectory, badgeLoads]);
 
   /**
@@ -1086,10 +1094,12 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         setStagedRevert(info?.revert ?? null);
 
         if (mode === 'enter') {
-          setTimeline(snap.timeline);
-          // Enter every session on its latest page: only the newest slice is
-          // rendered at first and older history loads on demand from the top.
-          setWindowStart(Math.max(0, snap.timeline.length - HISTORY_PAGE_SIZE));
+          // Publish the new dataset and its window together; otherwise the list
+          // briefly sees the previous session's offset against the new rows.
+          const nextWindow = Math.max(0, snap.timeline.length - HISTORY_PAGE_SIZE);
+          windowStartRef.current = nextWindow;
+          setTimeline(snap.timeline, nextWindow);
+          setWindowStart(nextWindow);
           follow.reset();
         } else {
           // Hold the reader's place across the correction. The row that was at
@@ -1174,6 +1184,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
           { timeout: 250 }
         );
       } catch (err) {
+        if (activeAsidRef.current !== asid) return;
         console.warn('Failed to load snapshot:', err);
         if (
           err instanceof Error &&
@@ -1198,7 +1209,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
           message: formatAgentErrorMessage(err, t`OpenCode service is offline`),
         });
       } finally {
-        if (mode === 'enter') setLoading(false);
+        if (mode === 'enter' && activeAsidRef.current === asid) setLoading(false);
       }
     },
     [
@@ -2034,15 +2045,8 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   );
 
   const handleToggleYoloMode = useCallback(() => {
-    const next = !yoloModeRef.current;
-    setYoloMode(next);
-    if (next) {
-      showScreenNotice(
-        t`Auto-approve is on`,
-        t`The agent stops asking; dangerous commands stay blocked.`
-      );
-    }
-  }, [setYoloMode, showScreenNotice, t]);
+    setYoloMode(!yoloModeRef.current);
+  }, [setYoloMode]);
 
   const handleFormSubmit = useCallback(
     async (formId: string, answers: Record<string, unknown>) => {
@@ -2880,9 +2884,22 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     change, which is to say almost never.
   */
   const timelineContentStyle = useMemo(
-    () => [styles.timelineContent, { paddingTop: topInset + 10, paddingBottom: bottomInset + 185 }],
-    [topInset, bottomInset]
+    () => [
+      styles.timelineContent,
+      {
+        paddingTop: topInset + 10,
+        // The composer is an absolute dock and grows with session chips,
+        // controls, approvals and the input row. A fixed 185pt reserve left
+        // the last tool/image row underneath it on a tall dock.
+        paddingBottom: Math.max(bottomInset + 185, dockHeight + 16),
+      },
+    ],
+    [topInset, bottomInset, dockHeight]
   );
+
+  // Keep floating actions above the measured dock rather than above a guessed
+  // height. The minimum preserves the old position before the first layout.
+  const latestBottom = Math.max(bottomInset + 196, dockHeight + 10);
 
   const timelineRefresh = useMemo(
     () => (
@@ -3174,14 +3191,15 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   const contextLimit = sessionInfo?.limit?.context ?? activeModelInfo?.limit?.context;
 
   /**
-   * How many things are still running out of sight.
+   * How many things the Background tasks sheet can actually show.
    *
-   * Running shells, plus any *other* tool the gateway marked `background` that
-   * has not finished -- a detached shell is both a shell and a tool row, and
-   * counting it twice would make the pill say two for one command.
+   * The route currently lists `/api/agent-shells`. A non-shell tool marked
+   * `background` lives in the transcript, not that endpoint, so including it
+   * here made the pill say "1" while opening an empty shell list. Keep this
+   * count bound to the sheet's source until the UI has a route for other
+   * background work too.
    */
-  const backgroundTools = useStore(transcriptStore, (state) => state.backgroundTools);
-  const backgroundCount = runningShellCount(shells) + backgroundTools;
+  const backgroundCount = runningShellCount(shells);
   const revertedMessages = useStore(transcriptStore, (state) =>
     stagedRevert ? revertedMessageCount(state.timeline, stagedRevert.message_id) : 0
   );
@@ -3663,20 +3681,21 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       <JumpToLatestPill
         follow={follow}
         enabled={!loading}
-        bottom={bottomInset + 196}
+        bottom={latestBottom}
         onPress={handleJumpToLatest}
       />
 
-      {/* YOLO mode indicator — tap to switch auto-approval off again */}
+      {/* YOLO mode indicator — fixed directly above the Latest action. */}
       {!loading && yoloMode ? (
         <Animated.View
           entering={fadeIn('micro')}
           exiting={fadeOut('micro')}
-          style={[styles.yoloBannerWrap, { bottom: bottomInset + 196 }]}>
+          style={[styles.yoloBannerWrap, { bottom: latestBottom + 42 }]}
+          pointerEvents="box-none">
           <PressableScale
             testID="agent-yolo-indicator"
             accessibilityRole="button"
-            accessibilityLabel={t`Auto-approve is on — tap to turn it off`}
+            accessibilityLabel={t`YOLO mode is on — tap to turn it off`}
             onPress={() => setYoloMode(false)}
             style={[
               styles.yoloBanner,
@@ -3692,7 +3711,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
               color={theme.colors.danger}
               numberOfLines={1}
               style={styles.yoloBannerHint}>
-              <Trans>Auto-approving every action</Trans>
+              <Trans>YOLO mode</Trans>
             </Text>
           </PressableScale>
         </Animated.View>
@@ -4085,7 +4104,7 @@ const styles = StyleSheet.create({
   },
   yoloBannerWrap: {
     position: 'absolute',
-    left: 14,
+    right: 14,
     zIndex: 5,
   },
   yoloBanner: {

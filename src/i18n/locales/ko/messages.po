@@ -231,10 +231,6 @@ msgstr "{0}개 중 {running}개 실행 중"
 msgid "{title} — finished while you were away"
 msgstr "{title} — 자리를 비운 사이에 끝났습니다"
 
-#: src/components/in-app-notification-host.tsx
-msgid "{waiting, plural, one {# more notification} other {# more notifications}}"
-msgstr "{waiting, plural, other {알림 #개 더}}"
-
 #: src/lib/agent-widget-layout.tsx
 msgid "+{overflow} more"
 msgstr "외 {overflow}개"
@@ -627,18 +623,6 @@ msgstr "지금은 인증을 사용할 수 없습니다. 다시 시도하거나 �
 #: src/components/agent-context-sheet.tsx
 msgid "Auto-approve every action"
 msgstr "모든 작업 자동 승인"
-
-#: src/components/agent-workbench.tsx
-msgid "Auto-approve is on"
-msgstr "자동 승인이 켜져 있습니다"
-
-#: src/components/agent-workbench.tsx
-msgid "Auto-approve is on — tap to turn it off"
-msgstr "자동 승인이 켜져 있습니다 — 탭하면 끕니다"
-
-#: src/components/agent-workbench.tsx
-msgid "Auto-approving every action"
-msgstr "모든 작업을 자동 승인하는 중"
 
 #: src/components/agent-mode-sheet.tsx
 msgid "Autonomous software engineering: edits files, runs commands, tests."
@@ -2753,6 +2737,7 @@ msgstr "새 워크트리…"
 msgid "Next"
 msgstr "다음"
 
+#: src/components/in-app-notification-host.tsx
 #: src/components/notice-deck.tsx
 msgid "Next notification"
 msgstr "다음 알림"
@@ -4727,10 +4712,6 @@ msgstr "에이전트가 지금은 다른 것을 묻고 있습니다"
 msgid "The agent is no longer waiting."
 msgstr "에이전트가 더 이상 기다리지 않습니다"
 
-#: src/components/agent-workbench.tsx
-msgid "The agent stops asking; dangerous commands stay blocked."
-msgstr "에이전트가 더 이상 묻지 않습니다. 위험한 명령은 계속 차단됩니다"
-
 #: src/components/agent-context-sheet.tsx
 msgid "The agent stops asking; irreversibly destructive commands stay blocked"
 msgstr "에이전트가 더 이상 묻지 않습니다. 되돌릴 수 없는 파괴적인 명령은 계속 차단됩니다"
@@ -5297,10 +5278,6 @@ msgid "uploaded"
 msgstr "업로드됨"
 
 #: src/components/attachment-strip.tsx
-msgid "Uploaded"
-msgstr "업로드됨"
-
-#: src/components/attachment-strip.tsx
 msgid "uploading"
 msgstr "업로드 중"
 
@@ -5459,6 +5436,14 @@ msgstr "이 줄 복사"
 #: src/i18n/labels.ts
 msgid "Yesterday"
 msgstr "어제"
+
+#: src/components/agent-workbench.tsx
+msgid "YOLO mode"
+msgstr ""
+
+#: src/components/agent-workbench.tsx
+msgid "YOLO mode is on — tap to turn it off"
+msgstr ""
 
 #: src/components/agent-message-block.tsx
 msgid "You"

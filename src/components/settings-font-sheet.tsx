@@ -495,7 +495,8 @@ function FontSlotGroup({
       case 'download':
         return problem.status === undefined
           ? t`Could not download. Check the link and your connection.`
-          : t`Could not download: ${problem.status}`;
+          : // react-doctor-disable-next-line react-hooks-js/todo -- Lingui expands this macro before React Compiler runs.
+            t`Could not download: ${problem.status}`;
       case 'storage':
         return t`The font file is missing. Add it again.`;
       case 'cancelled':
@@ -689,7 +690,10 @@ function FontSlotGroup({
 
       <SheetSceneRow
         title={t`Import a file…`}
-        caption={t`A .ttf or .otf up to ${Math.round(USER_FONT_MAX_BYTES / (1024 * 1024))} MB.`}
+        caption={
+          // react-doctor-disable-next-line react-hooks-js/todo -- Lingui expands this macro before React Compiler runs.
+          t`A .ttf or .otf up to ${Math.round(USER_FONT_MAX_BYTES / (1024 * 1024))} MB.`
+        }
         disabled={busy}
         onPress={onImport}
         testID={`font-import-${id}`}

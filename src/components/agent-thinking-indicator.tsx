@@ -70,18 +70,20 @@ function Square({
   useEffect(() => {
     if (!run) {
       cancelAnimation(glow);
-      glow.value = withTiming(0.55, timing('micro'));
+      glow.set(withTiming(0.55, timing('micro')));
       return;
     }
-    glow.value = withDelay(
-      index * BEAT_MS,
-      withRepeat(
-        withSequence(
-          withTiming(1, timing('short')),
-          withTiming(0.2, timing('medium')),
-          withTiming(0.2, timing('long'))
-        ),
-        -1
+    glow.set(
+      withDelay(
+        index * BEAT_MS,
+        withRepeat(
+          withSequence(
+            withTiming(1, timing('short')),
+            withTiming(0.2, timing('medium')),
+            withTiming(0.2, timing('long'))
+          ),
+          -1
+        )
       )
     );
     return () => cancelAnimation(glow);

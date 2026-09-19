@@ -231,10 +231,6 @@ msgstr "{running} из {0} выполняется"
 msgid "{title} — finished while you were away"
 msgstr "{title} — завершилось, пока вас не было"
 
-#: src/components/in-app-notification-host.tsx
-msgid "{waiting, plural, one {# more notification} other {# more notifications}}"
-msgstr "{waiting, plural, one {ещё # уведомление} few {ещё # уведомления} many {ещё # уведомлений} other {ещё # уведомления}}"
-
 #: src/lib/agent-widget-layout.tsx
 msgid "+{overflow} more"
 msgstr "Ещё {overflow}"
@@ -627,18 +623,6 @@ msgstr "Проверка недоступна. Попробуйте ещё ра�
 #: src/components/agent-context-sheet.tsx
 msgid "Auto-approve every action"
 msgstr "Автоматически одобрять любое действие"
-
-#: src/components/agent-workbench.tsx
-msgid "Auto-approve is on"
-msgstr "Автоодобрение включено"
-
-#: src/components/agent-workbench.tsx
-msgid "Auto-approve is on — tap to turn it off"
-msgstr "Автоодобрение включено — нажмите, чтобы выключить"
-
-#: src/components/agent-workbench.tsx
-msgid "Auto-approving every action"
-msgstr "Автоматически одобряет любое действие"
 
 #: src/components/agent-mode-sheet.tsx
 msgid "Autonomous software engineering: edits files, runs commands, tests."
@@ -2753,6 +2737,7 @@ msgstr "Новый worktree…"
 msgid "Next"
 msgstr "Далее"
 
+#: src/components/in-app-notification-host.tsx
 #: src/components/notice-deck.tsx
 msgid "Next notification"
 msgstr "Следующее уведомление"
@@ -4727,10 +4712,6 @@ msgstr "Агент теперь спрашивает о другом"
 msgid "The agent is no longer waiting."
 msgstr "Агент больше не ждёт"
 
-#: src/components/agent-workbench.tsx
-msgid "The agent stops asking; dangerous commands stay blocked."
-msgstr "Агент перестанет спрашивать; опасные команды по-прежнему блокируются"
-
 #: src/components/agent-context-sheet.tsx
 msgid "The agent stops asking; irreversibly destructive commands stay blocked"
 msgstr "Агент перестанет спрашивать; необратимо разрушительные команды по-прежнему блокируются"
@@ -5297,10 +5278,6 @@ msgid "uploaded"
 msgstr "загружено"
 
 #: src/components/attachment-strip.tsx
-msgid "Uploaded"
-msgstr "Загружено"
-
-#: src/components/attachment-strip.tsx
 msgid "uploading"
 msgstr "загружается"
 
@@ -5459,6 +5436,14 @@ msgstr "Скопировать эту строку"
 #: src/i18n/labels.ts
 msgid "Yesterday"
 msgstr "Вчера"
+
+#: src/components/agent-workbench.tsx
+msgid "YOLO mode"
+msgstr ""
+
+#: src/components/agent-workbench.tsx
+msgid "YOLO mode is on — tap to turn it off"
+msgstr ""
 
 #: src/components/agent-message-block.tsx
 msgid "You"

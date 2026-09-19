@@ -231,10 +231,6 @@ msgstr "{running} von {0} laufen"
 msgid "{title} — finished while you were away"
 msgstr "{title} – wurde fertig, während Sie weg waren"
 
-#: src/components/in-app-notification-host.tsx
-msgid "{waiting, plural, one {# more notification} other {# more notifications}}"
-msgstr "{waiting, plural, one {# weitere Benachrichtigung} other {# weitere Benachrichtigungen}}"
-
 #: src/lib/agent-widget-layout.tsx
 msgid "+{overflow} more"
 msgstr "+{overflow} weitere"
@@ -627,18 +623,6 @@ msgstr "Authentifizierung ist nicht verfügbar. Versuche es erneut oder prüfe d
 #: src/components/agent-context-sheet.tsx
 msgid "Auto-approve every action"
 msgstr "Jede Aktion automatisch genehmigen"
-
-#: src/components/agent-workbench.tsx
-msgid "Auto-approve is on"
-msgstr "Automatische Genehmigung ist an"
-
-#: src/components/agent-workbench.tsx
-msgid "Auto-approve is on — tap to turn it off"
-msgstr "Automatische Genehmigung ist an – zum Ausschalten tippen"
-
-#: src/components/agent-workbench.tsx
-msgid "Auto-approving every action"
-msgstr "Genehmigt jede Aktion automatisch"
 
 #: src/components/agent-mode-sheet.tsx
 msgid "Autonomous software engineering: edits files, runs commands, tests."
@@ -2753,6 +2737,7 @@ msgstr "Neuer Worktree…"
 msgid "Next"
 msgstr "Weiter"
 
+#: src/components/in-app-notification-host.tsx
 #: src/components/notice-deck.tsx
 msgid "Next notification"
 msgstr "Nächste Benachrichtigung"
@@ -4727,10 +4712,6 @@ msgstr "Der Agent fragt inzwischen etwas anderes"
 msgid "The agent is no longer waiting."
 msgstr "Der Agent wartet nicht mehr"
 
-#: src/components/agent-workbench.tsx
-msgid "The agent stops asking; dangerous commands stay blocked."
-msgstr "Der Agent fragt nicht mehr nach; gefährliche Befehle bleiben blockiert"
-
 #: src/components/agent-context-sheet.tsx
 msgid "The agent stops asking; irreversibly destructive commands stay blocked"
 msgstr "Der Agent fragt nicht mehr nach; unwiderruflich zerstörerische Befehle bleiben blockiert"
@@ -5297,10 +5278,6 @@ msgid "uploaded"
 msgstr "hochgeladen"
 
 #: src/components/attachment-strip.tsx
-msgid "Uploaded"
-msgstr "Hochgeladen"
-
-#: src/components/attachment-strip.tsx
 msgid "uploading"
 msgstr "wird hochgeladen"
 
@@ -5459,6 +5436,14 @@ msgstr "Diese Zeile kopieren"
 #: src/i18n/labels.ts
 msgid "Yesterday"
 msgstr "Gestern"
+
+#: src/components/agent-workbench.tsx
+msgid "YOLO mode"
+msgstr ""
+
+#: src/components/agent-workbench.tsx
+msgid "YOLO mode is on — tap to turn it off"
+msgstr ""
 
 #: src/components/agent-message-block.tsx
 msgid "You"

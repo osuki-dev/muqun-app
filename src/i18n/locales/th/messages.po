@@ -231,10 +231,6 @@ msgstr "กำลังทำงาน {running} จาก {0}"
 msgid "{title} — finished while you were away"
 msgstr "{title} — ทำงานเสร็จตอนที่คุณไม่อยู่"
 
-#: src/components/in-app-notification-host.tsx
-msgid "{waiting, plural, one {# more notification} other {# more notifications}}"
-msgstr "{waiting, plural, other {การแจ้งเตือนอีก # รายการ}}"
-
 #: src/lib/agent-widget-layout.tsx
 msgid "+{overflow} more"
 msgstr "อีก +{overflow} รายการ"
@@ -627,18 +623,6 @@ msgstr "การยืนยันตัวตนไม่พร้อมใช
 #: src/components/agent-context-sheet.tsx
 msgid "Auto-approve every action"
 msgstr "อนุมัติทุกการกระทำอัตโนมัติ"
-
-#: src/components/agent-workbench.tsx
-msgid "Auto-approve is on"
-msgstr "เปิดการอนุมัติอัตโนมัติอยู่"
-
-#: src/components/agent-workbench.tsx
-msgid "Auto-approve is on — tap to turn it off"
-msgstr "เปิดการอนุมัติอัตโนมัติอยู่ — แตะเพื่อปิด"
-
-#: src/components/agent-workbench.tsx
-msgid "Auto-approving every action"
-msgstr "กำลังอนุมัติทุกการกระทำอัตโนมัติ"
 
 #: src/components/agent-mode-sheet.tsx
 msgid "Autonomous software engineering: edits files, runs commands, tests."
@@ -2753,6 +2737,7 @@ msgstr "เวิร์กทรีใหม่…"
 msgid "Next"
 msgstr "ถัดไป"
 
+#: src/components/in-app-notification-host.tsx
 #: src/components/notice-deck.tsx
 msgid "Next notification"
 msgstr "การแจ้งเตือนถัดไป"
@@ -4727,10 +4712,6 @@ msgstr "ตอนนี้เอเจนต์กำลังถามเรื
 msgid "The agent is no longer waiting."
 msgstr "เอเจนต์ไม่ได้รอแล้ว"
 
-#: src/components/agent-workbench.tsx
-msgid "The agent stops asking; dangerous commands stay blocked."
-msgstr "เอเจนต์จะเลิกถาม แต่คำสั่งอันตรายยังถูกบล็อกอยู่"
-
 #: src/components/agent-context-sheet.tsx
 msgid "The agent stops asking; irreversibly destructive commands stay blocked"
 msgstr "เอเจนต์จะเลิกถาม แต่คำสั่งที่ทำลายอย่างกู้คืนไม่ได้ยังถูกบล็อกอยู่"
@@ -5297,10 +5278,6 @@ msgid "uploaded"
 msgstr "อัปโหลดแล้ว"
 
 #: src/components/attachment-strip.tsx
-msgid "Uploaded"
-msgstr "อัปโหลดแล้ว"
-
-#: src/components/attachment-strip.tsx
 msgid "uploading"
 msgstr "กำลังอัปโหลด"
 
@@ -5459,6 +5436,14 @@ msgstr "คัดลอกบรรทัดนี้"
 #: src/i18n/labels.ts
 msgid "Yesterday"
 msgstr "เมื่อวาน"
+
+#: src/components/agent-workbench.tsx
+msgid "YOLO mode"
+msgstr ""
+
+#: src/components/agent-workbench.tsx
+msgid "YOLO mode is on — tap to turn it off"
+msgstr ""
 
 #: src/components/agent-message-block.tsx
 msgid "You"

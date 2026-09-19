@@ -121,7 +121,10 @@ export function SettingsAppearance({ title }: { title: string }) {
         label={t`Font`}
         value={fontValue}
         detail={t`Use your own font for the app and the terminal.`}
-        accessibilityLabel={t`Font, ${fontValue}`}
+        accessibilityLabel={
+          // react-doctor-disable-next-line react-hooks-js/todo -- Lingui expands this macro before React Compiler runs.
+          t`Font, ${fontValue}`
+        }
         testID="settings-font-row"
         onPress={() => router.push('/settings-font')}
       />

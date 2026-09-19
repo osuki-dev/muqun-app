@@ -231,10 +231,6 @@ msgstr "{running} running of {0}"
 msgid "{title} — finished while you were away"
 msgstr "{title} — finished while you were away"
 
-#: src/components/in-app-notification-host.tsx
-msgid "{waiting, plural, one {# more notification} other {# more notifications}}"
-msgstr "{waiting, plural, one {# more notification} other {# more notifications}}"
-
 #: src/lib/agent-widget-layout.tsx
 msgid "+{overflow} more"
 msgstr "+{overflow} more"
@@ -627,18 +623,6 @@ msgstr "Authentication is unavailable. Try again or check system settings"
 #: src/components/agent-context-sheet.tsx
 msgid "Auto-approve every action"
 msgstr "Auto-approve every action"
-
-#: src/components/agent-workbench.tsx
-msgid "Auto-approve is on"
-msgstr "Auto-approve is on"
-
-#: src/components/agent-workbench.tsx
-msgid "Auto-approve is on — tap to turn it off"
-msgstr "Auto-approve is on — tap to turn it off"
-
-#: src/components/agent-workbench.tsx
-msgid "Auto-approving every action"
-msgstr "Auto-approving every action"
 
 #: src/components/agent-mode-sheet.tsx
 msgid "Autonomous software engineering: edits files, runs commands, tests."
@@ -2753,6 +2737,7 @@ msgstr "New worktree…"
 msgid "Next"
 msgstr "Next"
 
+#: src/components/in-app-notification-host.tsx
 #: src/components/notice-deck.tsx
 msgid "Next notification"
 msgstr "Next notification"
@@ -4727,10 +4712,6 @@ msgstr "The agent is asking something else now"
 msgid "The agent is no longer waiting."
 msgstr "The agent is no longer waiting"
 
-#: src/components/agent-workbench.tsx
-msgid "The agent stops asking; dangerous commands stay blocked."
-msgstr "The agent stops asking; dangerous commands stay blocked"
-
 #: src/components/agent-context-sheet.tsx
 msgid "The agent stops asking; irreversibly destructive commands stay blocked"
 msgstr "The agent stops asking; irreversibly destructive commands stay blocked"
@@ -5297,10 +5278,6 @@ msgid "uploaded"
 msgstr "uploaded"
 
 #: src/components/attachment-strip.tsx
-msgid "Uploaded"
-msgstr "Uploaded"
-
-#: src/components/attachment-strip.tsx
 msgid "uploading"
 msgstr "uploading"
 
@@ -5459,6 +5436,14 @@ msgstr "Yank this line"
 #: src/i18n/labels.ts
 msgid "Yesterday"
 msgstr "Yesterday"
+
+#: src/components/agent-workbench.tsx
+msgid "YOLO mode"
+msgstr "YOLO mode"
+
+#: src/components/agent-workbench.tsx
+msgid "YOLO mode is on — tap to turn it off"
+msgstr "YOLO mode is on — tap to turn it off"
 
 #: src/components/agent-message-block.tsx
 msgid "You"

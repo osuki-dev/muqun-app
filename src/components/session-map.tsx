@@ -583,7 +583,10 @@ export function SessionMap({
                   testID={`machine-chip-${machine.id}`}
                   title={name}
                   caption={state}
-                  accessibilityLabel={t`Switch to ${name}, ${state}`}
+                  accessibilityLabel={
+                    // react-doctor-disable-next-line react-hooks-js/todo -- Lingui expands this macro before React Compiler runs.
+                    t`Switch to ${name}, ${state}`
+                  }
                   selected={machine.current}
                   disabled={machine.disabled}
                   busy={machine.busy}
@@ -644,7 +647,10 @@ export function SessionMap({
                       key={session.id}
                       testID={`session-chip-${session.id}`}
                       session={session}
-                      accessibilityLabel={t`Use the ${name} session, ${kind}`}
+                      accessibilityLabel={
+                        // react-doctor-disable-next-line react-hooks-js/todo -- Lingui expands this macro before React Compiler runs.
+                        t`Use the ${name} session, ${kind}`
+                      }
                       onPress={() => onChooseSession(focusedId ?? serverId, session.id)}
                     />
                   );
@@ -680,7 +686,10 @@ export function SessionMap({
                   // far as VoiceOver, or a test, is concerned. Android happens to
                   // expose the children anyway, which is why the count read as
                   // present until this ran on a phone that does not.
-                  accessibilityLabel={t`Open workspace ${workspace.title}, ${plural(panelCount, { one: '# running', other: '# running' })}. Long press to close.`}
+                  accessibilityLabel={
+                    // react-doctor-disable-next-line react-hooks-js/todo -- Lingui expands this macro before React Compiler runs.
+                    t`Open workspace ${workspace.title}, ${plural(panelCount, { one: '# running', other: '# running' })}. Long press to close.`
+                  }
                   /* One ICU message rather than a ternary over two strings: which
                    forms a language needs is the language's business, and Chinese
                    needs one where English needs two. */

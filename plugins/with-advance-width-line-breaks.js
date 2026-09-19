@@ -18,10 +18,13 @@
 // names it, so one item on `AppTheme` restores the pre-35 rule for every
 // `TextView` the app creates, which is what the measurers were written
 // against. No third-party module is patched. Older platforms ignore the item.
+// react-doctor-disable-next-line eslint/no-undef -- Expo config plugins are loaded as CommonJS.
+// react-doctor-disable-next-line typescript/no-require-imports -- Expo config plugins are loaded as CommonJS.
 const { withAndroidStyles, AndroidConfig } = require('expo/config-plugins');
 
 const ITEM = 'android:useBoundsForWidth';
 
+// react-doctor-disable-next-line eslint/no-undef -- Expo config plugins are loaded as CommonJS.
 module.exports = function withAdvanceWidthLineBreaks(config) {
   return withAndroidStyles(config, (mod) => {
     mod.modResults = AndroidConfig.Styles.assignStylesValue(mod.modResults, {

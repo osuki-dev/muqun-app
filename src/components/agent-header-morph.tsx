@@ -64,11 +64,11 @@ export function SessionActionIcon({ running }: { running: boolean }) {
     // Asymmetric on purpose: whichever glyph is leaving goes out on the
     // shorter preset, and the one arriving starts only once it has gone.
     if (running) {
-      plus.value = withTiming(0, timing('dropdown'));
-      stop.value = withDelay(PRESET.dropdown, withTiming(1, timing('short')));
+      plus.set(withTiming(0, timing('dropdown')));
+      stop.set(withDelay(PRESET.dropdown, withTiming(1, timing('short'))));
     } else {
-      stop.value = withTiming(0, timing('dropdown'));
-      plus.value = withDelay(PRESET.dropdown, withTiming(1, timing('short')));
+      stop.set(withTiming(0, timing('dropdown')));
+      plus.set(withDelay(PRESET.dropdown, withTiming(1, timing('short'))));
     }
   }, [running, plus, stop]);
 
@@ -148,11 +148,11 @@ export function WorkspacePillContent({
 
   useEffect(() => {
     if (showSession) {
-      workspace.value = withTiming(0, timing('dropdown'));
-      session.value = withDelay(PRESET.dropdown, withTiming(1, timing('short')));
+      workspace.set(withTiming(0, timing('dropdown')));
+      session.set(withDelay(PRESET.dropdown, withTiming(1, timing('short'))));
     } else {
-      session.value = withTiming(0, timing('dropdown'));
-      workspace.value = withDelay(PRESET.dropdown, withTiming(1, timing('short')));
+      session.set(withTiming(0, timing('dropdown')));
+      workspace.set(withDelay(PRESET.dropdown, withTiming(1, timing('short'))));
     }
   }, [showSession, workspace, session]);
 

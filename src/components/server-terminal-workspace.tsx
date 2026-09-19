@@ -4335,7 +4335,14 @@ export function ServerTerminalWorkspace({
                 {chatViewShown ? (
                   supportsAgentSessions && isOpenCodeAgent ? (
                     <AgentWorkbench
-                      key={selection.paneId}
+                      // The home route mounts this workspace from its warm or
+                      // placeholder data first. `data.sessionId` can change
+                      // from the placeholder to the real gateway session
+                      // after the first snapshot arrives. A pane-only key
+                      // kept the AgentWorkbench's old transcript store alive
+                      // across that identity change, so the header could show
+                      // the real session while its message list stayed empty.
+                      key={`${data.sessionId}:${selection.paneId}`}
                       sessionId={data.sessionId}
                       topInset={insets.top + NAV_HEADER_TOP_GAP + 54}
                       bottomInset={insets.bottom}

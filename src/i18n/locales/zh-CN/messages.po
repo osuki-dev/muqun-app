@@ -231,10 +231,6 @@ msgstr "{0} 个中有 {running} 个正在运行"
 msgid "{title} — finished while you were away"
 msgstr "{title} — 在你离开时完成"
 
-#: src/components/in-app-notification-host.tsx
-msgid "{waiting, plural, one {# more notification} other {# more notifications}}"
-msgstr "{waiting, plural, other {还有 # 条通知}}"
-
 #: src/lib/agent-widget-layout.tsx
 msgid "+{overflow} more"
 msgstr "还有 {overflow} 个"
@@ -627,18 +623,6 @@ msgstr "目前无法验证。请重试，或检查系统设置"
 #: src/components/agent-context-sheet.tsx
 msgid "Auto-approve every action"
 msgstr "自动批准所有操作"
-
-#: src/components/agent-workbench.tsx
-msgid "Auto-approve is on"
-msgstr "自动批准已开启"
-
-#: src/components/agent-workbench.tsx
-msgid "Auto-approve is on — tap to turn it off"
-msgstr "自动批准已开启 — 点按可关闭"
-
-#: src/components/agent-workbench.tsx
-msgid "Auto-approving every action"
-msgstr "正在自动批准所有操作"
 
 #: src/components/agent-mode-sheet.tsx
 msgid "Autonomous software engineering: edits files, runs commands, tests."
@@ -2753,6 +2737,7 @@ msgstr "新建工作树…"
 msgid "Next"
 msgstr "下一步"
 
+#: src/components/in-app-notification-host.tsx
 #: src/components/notice-deck.tsx
 msgid "Next notification"
 msgstr "下一条通知"
@@ -4727,10 +4712,6 @@ msgstr "代理现在问的是别的问题"
 msgid "The agent is no longer waiting."
 msgstr "代理已经不再等待了"
 
-#: src/components/agent-workbench.tsx
-msgid "The agent stops asking; dangerous commands stay blocked."
-msgstr "代理将不再询问；危险命令仍会被拦截"
-
 #: src/components/agent-context-sheet.tsx
 msgid "The agent stops asking; irreversibly destructive commands stay blocked"
 msgstr "代理将不再询问；不可逆的破坏性命令仍会被拦截"
@@ -5297,10 +5278,6 @@ msgid "uploaded"
 msgstr "已上传"
 
 #: src/components/attachment-strip.tsx
-msgid "Uploaded"
-msgstr "已上传"
-
-#: src/components/attachment-strip.tsx
 msgid "uploading"
 msgstr "上传中"
 
@@ -5459,6 +5436,14 @@ msgstr "复制这一行"
 #: src/i18n/labels.ts
 msgid "Yesterday"
 msgstr "昨天"
+
+#: src/components/agent-workbench.tsx
+msgid "YOLO mode"
+msgstr ""
+
+#: src/components/agent-workbench.tsx
+msgid "YOLO mode is on — tap to turn it off"
+msgstr ""
 
 #: src/components/agent-message-block.tsx
 msgid "You"

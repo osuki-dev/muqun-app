@@ -1042,7 +1042,8 @@ export default function PairModal() {
                       ? undefined
                       : codeExpired
                         ? t`Code expired`
-                        : t`Expires in ${Math.floor(secondsRemaining / 60)}:${String(secondsRemaining % 60).padStart(2, '0')}`
+                        : // react-doctor-disable-next-line react-hooks-js/todo -- Lingui expands this macro before React Compiler runs.
+                          t`Expires in ${Math.floor(secondsRemaining / 60)}:${String(secondsRemaining % 60).padStart(2, '0')}`
                   }>
                   {/* Do not set native maxLength here. Android truncates pasted
                       text before onChangeText, so a leading space would consume

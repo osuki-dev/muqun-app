@@ -37,7 +37,7 @@ export interface ComposerChipState {
   canOpenTasks: boolean;
   /** How many messages are waiting behind the current turn. */
   inboxCount: number;
-  /** How many shells and detached tools are still running. */
+  /** How many running shells the Background tasks sheet can show. */
   backgroundCount: number;
   /** The background tray, when the screen offers it. */
   canOpenBackground: boolean;

@@ -577,6 +577,7 @@ function AssetBody({
       <AssetBodyLayer id="too-large">
         <View style={styles.centerState}>
           <Text variant="bodySmall" color={theme.colors.textMuted} style={styles.centerText}>
+            {/* react-doctor-disable-next-line react-hooks-js/todo -- Lingui expands this macro before React Compiler runs. */}
             {t`This file is ${size}. Muqun opens text files up to ${ceiling}; larger ones stay on the server.`}
           </Text>
           <Text variant="caption" color={theme.colors.textMuted} selectable>
