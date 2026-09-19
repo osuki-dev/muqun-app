@@ -21,6 +21,13 @@ import { fadeIn, fadeOut, timing, travelTiming } from '@/lib/motion';
  * alone rather than a bar that cannot move. Fetching a manifest and installing
  * images are both single opaque waits, and a bar stuck at zero reads as failure.
  *
+ * A compact bar -- the one drawn under a row of a native form sheet -- has no
+ * exit animation. An exiting view is lifted out of the layout while it fades,
+ * and under a row that means over the next row: a failed font download left
+ * the bar, its label and its Cancel lying across "Paste a URL..." with the
+ * error drawn through them. What replaces a compact bar fades *in*, which is
+ * the softness the row needs without anything being out of flow.
+ *
  * Nothing here swaps. The label cross-fades, so a changed string is not glyphs
  * replaced mid-sentence; the bar container fades in and out, because `measured`
  * flips at least twice in one install; and the fill slides, because `3/12` to
@@ -241,7 +248,7 @@ function ThemeImportProgressBar({
     <Animated.View
       testID={testID}
       entering={fadeIn('micro')}
-      exiting={fadeOut('micro')}
+      exiting={compact ? undefined : fadeOut('micro')}
       accessibilityRole="progressbar"
       accessibilityLabel={accessibilityLabel}
       accessibilityValue={{ min: 0, max: total, now: completed }}
@@ -328,7 +335,7 @@ function ThemeImportTravellingBar({
     <Animated.View
       testID={testID}
       entering={fadeIn('micro')}
-      exiting={fadeOut('micro')}
+      exiting={compact ? undefined : fadeOut('micro')}
       onLayout={measure}
       accessibilityRole="progressbar"
       accessibilityLabel={accessibilityLabel}

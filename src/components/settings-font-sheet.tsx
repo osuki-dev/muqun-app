@@ -561,10 +561,9 @@ function FontSlotGroup({
                 {/* Keyed on the phase and not on the whole string, so the
                     cross-fade runs when the step changes and not when the
                     count does. The same beat as the reasoning block's label. */}
-                <Animated.View
-                  key={work.phase}
-                  entering={fadeIn('short')}
-                  exiting={fadeOut('micro')}>
+                {/* No exit: an exiting view leaves the layout while it fades, and
+                    a failed download laid this label across the error. */}
+                <Animated.View key={work.phase} entering={fadeIn('short')}>
                   <Text variant="caption" color={colors.textMuted} testID={`font-phase-${id}`}>
                     {phaseLabel(work)}
                   </Text>
@@ -605,7 +604,7 @@ function FontSlotGroup({
               />
             ) : null}
             {work && fontInstallCancellable(work) ? (
-              <Animated.View entering={fadeIn('short')} exiting={fadeOut('micro')}>
+              <Animated.View entering={fadeIn('short')}>
                 <SheetSceneQuietAction
                   label={t`Cancel`}
                   onPress={onCancel}
@@ -614,7 +613,7 @@ function FontSlotGroup({
               </Animated.View>
             ) : null}
             {problem ? (
-              <Animated.View entering={fadeIn('short')} exiting={fadeOut('micro')}>
+              <Animated.View entering={fadeIn('short')}>
                 <Text
                   variant="caption"
                   color={colors.danger}
