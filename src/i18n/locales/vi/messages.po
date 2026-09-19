@@ -1984,6 +1984,10 @@ msgstr "Tệp"
 msgid "Files in this project"
 msgstr "Tệp trong dự án này"
 
+#: src/components/file-mention-panel.tsx
+msgid "Files in this workspace"
+msgstr "Tệp trong không gian làm việc này"
+
 #: src/components/agent-workspace-sheet.tsx
 msgid "Filter projects or type a path"
 msgstr "Lọc dự án hoặc nhập đường dẫn"
@@ -5383,6 +5387,7 @@ msgstr "Đang làm việc"
 msgid "Working directory"
 msgstr "Thư mục làm việc"
 
+#: src/components/composer-popup.tsx
 #: src/components/session-map.tsx
 msgid "Workspace"
 msgstr "Không gian làm việc"

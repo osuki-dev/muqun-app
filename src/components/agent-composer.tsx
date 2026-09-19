@@ -1028,6 +1028,7 @@ export const AgentComposer = memo(function AgentComposer({
             hits={mentionHits}
             query={mentionTrigger.query}
             onSelect={chooseMention}
+            scope="project"
           />
         </View>
       ) : null}
@@ -1040,6 +1041,7 @@ export const AgentComposer = memo(function AgentComposer({
             onPick={slashPopup.pick}
             maxHeight={popupMaxHeight}
             testIDPrefix="slash-command"
+            scope="project"
           />
         </View>
       ) : null}

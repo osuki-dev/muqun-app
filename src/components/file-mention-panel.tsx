@@ -22,6 +22,8 @@ import { FILE_MENTION_VISIBLE_ROWS, type FileMentionHit } from '@/lib/file-menti
 const ROW_HEIGHT = 52;
 
 interface FileMentionPanelProps {
+  /** Which screen this is on: the terminal says workspace, OpenCode says project. */
+  scope?: 'workspace' | 'project';
   hits: FileMentionHit[];
   /** What was typed after the `@`. Empty means this is the opening screen. */
   query: string;
@@ -54,6 +56,7 @@ export function FileMentionPanel({
   query,
   visibleRows = FILE_MENTION_VISIBLE_ROWS,
   onSelect,
+  scope = 'workspace',
 }: FileMentionPanelProps) {
   const { t } = useLingui();
   const theme = useThemeTokens();
@@ -74,7 +77,13 @@ export function FileMentionPanel({
         // opened", so this says what it actually answers -- the files nearest
         // the workspace root -- rather than claiming a recency it does not have.
         <Text variant="caption" color={theme.colors.textMuted} style={styles.heading}>
-          <Trans>Files in this project</Trans>
+          {/* The terminal's files are its Herdr workspace's; OpenCode's are its
+              project's. One panel, and each screen's own word for where it is. */}
+          {scope === 'project' ? (
+            <Trans>Files in this project</Trans>
+          ) : (
+            <Trans>Files in this workspace</Trans>
+          )}
         </Text>
       )}
       <ScrollView

@@ -1984,6 +1984,10 @@ msgstr "檔案"
 msgid "Files in this project"
 msgstr "此專案的檔案"
 
+#: src/components/file-mention-panel.tsx
+msgid "Files in this workspace"
+msgstr "此工作區的檔案"
+
 #: src/components/agent-workspace-sheet.tsx
 msgid "Filter projects or type a path"
 msgstr "篩選專案或輸入路徑"
@@ -5383,6 +5387,7 @@ msgstr "工作中"
 msgid "Working directory"
 msgstr "工作目錄"
 
+#: src/components/composer-popup.tsx
 #: src/components/session-map.tsx
 msgid "Workspace"
 msgstr "工作區"

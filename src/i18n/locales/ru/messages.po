@@ -1984,6 +1984,10 @@ msgstr "Файлы"
 msgid "Files in this project"
 msgstr "Файлы этого проекта"
 
+#: src/components/file-mention-panel.tsx
+msgid "Files in this workspace"
+msgstr "Файлы этого пространства"
+
 #: src/components/agent-workspace-sheet.tsx
 msgid "Filter projects or type a path"
 msgstr "Отфильтруйте проекты или введите путь"
@@ -5383,6 +5387,7 @@ msgstr "Работает"
 msgid "Working directory"
 msgstr "Рабочий каталог"
 
+#: src/components/composer-popup.tsx
 #: src/components/session-map.tsx
 msgid "Workspace"
 msgstr "Пространство"

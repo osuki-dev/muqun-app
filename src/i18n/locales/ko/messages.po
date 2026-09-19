@@ -1984,6 +1984,10 @@ msgstr "파일"
 msgid "Files in this project"
 msgstr "이 프로젝트의 파일"
 
+#: src/components/file-mention-panel.tsx
+msgid "Files in this workspace"
+msgstr "이 워크스페이스의 파일"
+
 #: src/components/agent-workspace-sheet.tsx
 msgid "Filter projects or type a path"
 msgstr "프로젝트를 필터링하거나 경로 입력"
@@ -5383,6 +5387,7 @@ msgstr "작업 중"
 msgid "Working directory"
 msgstr "작업 디렉터리"
 
+#: src/components/composer-popup.tsx
 #: src/components/session-map.tsx
 msgid "Workspace"
 msgstr "워크스페이스"

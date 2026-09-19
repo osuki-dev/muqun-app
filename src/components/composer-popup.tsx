@@ -44,6 +44,11 @@ const ROW_GAP = 4;
 const CARD_PADDING = 16;
 
 export interface ComposerPopupProps {
+  /**
+   * Whose commands a `workspace` badge names: the terminal's come from its
+   * Herdr workspace, OpenCode's from its project. One badge, each screen's word.
+   */
+  scope?: 'workspace' | 'project';
   rows: readonly ComposerPopupRow[];
   onPick: (row: ComposerPopupRow) => void;
   /**
@@ -64,6 +69,7 @@ export function ComposerPopup({
   onPick,
   maxHeight,
   testIDPrefix = 'composer-popup',
+  scope = 'workspace',
 }: ComposerPopupProps) {
   const { t } = useLingui();
   const theme = useThemeTokens();
@@ -190,7 +196,11 @@ export function ComposerPopup({
                           transform="none"
                           color={theme.colors.textMuted}
                           numberOfLines={1}>
-                          {row.badge === 'workspace' ? t`Project` : row.badge}
+                          {row.badge === 'workspace'
+                            ? scope === 'project'
+                              ? t`Project`
+                              : t`Workspace`
+                            : row.badge}
                         </Text>
                       </View>
                     ) : null}
