@@ -29,6 +29,9 @@ import { FieldPlaceholder } from '@/components/field-placeholder';
  * on each other without either file knowing the other's numbers.
  */
 
+/** A single line's box as a multiple of its type size: room for a tall face's ascent and descent. */
+const PLACEHOLDER_LINE_RATIO = 1.35;
+
 const PLACEMENT_KEYS = [
   'flex',
   'flexGrow',
@@ -140,9 +143,31 @@ export const FontedTextInput = forwardRef<TextInput, TextInputProps>(function Fo
   );
   const empty = (value ?? typed).length === 0;
   const parts = splitFieldStyle(style);
+  /*
+   * The placeholder's line box, and room for it.
+   *
+   * A kit `Text` brings its variant's line height with it; a bare `TextInput`
+   * has none, and with `includeFontPadding: false` it is only as tall as its
+   * glyphs. So on a field that named no line height the drawn placeholder stood
+   * taller than the box it lay over, and whatever was under the field painted
+   * over its descenders -- the project sheet's "Filter projects, or type a path"
+   * lost its lower third to the list below it. The placeholder now takes the
+   * field's own line height, or one derived from its size, and a single-line
+   * field is never shorter than that line.
+   */
+  const fieldSize =
+    typeof parts.placeholder.fontSize === 'number' ? parts.placeholder.fontSize : 14;
+  const lineHeight =
+    typeof parts.placeholder.lineHeight === 'number'
+      ? parts.placeholder.lineHeight
+      : Math.ceil(fieldSize * PLACEHOLDER_LINE_RATIO);
+  const placeholderStyle = { ...parts.placeholder, lineHeight };
+  const wrapperStyle = multiline
+    ? parts.wrapper
+    : [parts.wrapper, { minHeight: lineHeight, justifyContent: 'center' as const }];
 
   return (
-    <View style={parts.wrapper}>
+    <View style={wrapperStyle}>
       <TextInput
         ref={ref}
         {...rest}
@@ -163,7 +188,7 @@ export const FontedTextInput = forwardRef<TextInput, TextInputProps>(function Fo
           text={placeholder}
           visible={empty}
           color={typeof placeholderTextColor === 'string' ? placeholderTextColor : undefined}
-          style={parts.placeholder}
+          style={placeholderStyle}
         />
       </View>
     </View>

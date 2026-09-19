@@ -4,7 +4,9 @@ import { useThemeTokens } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
 import { useLingui } from '@lingui/react/macro';
 import {
+  ChevronRight,
   CornerUpLeft,
+  FolderGit2,
   GitBranch,
   GitFork,
   MoreHorizontal,
@@ -111,6 +113,8 @@ export interface AgentSessionsSheetProps {
    * first is the same guarantee with nothing hidden.
    */
   onMoveSession?: (asid: string) => void;
+  /** Open the project sheet, where the reader switches project or opens a path. */
+  onOpenProjects?: () => void;
   onClose: () => void;
 }
 
@@ -125,6 +129,7 @@ export const AgentSessionsSheet = memo(function AgentSessionsSheet({
   onRenameSession,
   onDeleteSession,
   onMoveSession,
+  onOpenProjects,
   onClose,
 }: AgentSessionsSheetProps) {
   const { t } = useLingui();
@@ -260,6 +265,11 @@ export const AgentSessionsSheet = memo(function AgentSessionsSheet({
     activeDirectory,
     t`This project`
   );
+  // Named `displayWorkspaceName` because Lingui names a placeholder after its
+  // variable, and this is the message the header used to carry: the same id
+  // keeps the translations that already exist.
+  const displayWorkspaceName = currentWorkspaceName;
+  const switchProjectLabel = t`Switch project: ${displayWorkspaceName}`;
   const segments = useMemo(() => {
     const options: { label: string; value: string }[] = [];
     // Named for what it filters to, not for the project: "app | All projects"
@@ -512,13 +522,24 @@ export const AgentSessionsSheet = memo(function AgentSessionsSheet({
     <SheetScene
       testID="agent-sessions-sheet"
       title={t`Sessions`}
-      caption={
-        activeDirectory
-          ? t`${currentWorkspaceName} · ${sessions.length} on this host`
-          : t`${sessions.length} on this host`
-      }
+      caption={t`${sessions.length} on this host`}
       header={
         <>
+          {/* Where the reader is, and the way to somewhere else. This sheet is
+              the one thing the header's dropdown opens, so it is also the one
+              place projects are reached from. */}
+          {onOpenProjects ? (
+            <SheetSceneRow
+              testID="agent-sessions-project"
+              title={currentWorkspaceName}
+              caption={activeDirectory ?? t`Switch project`}
+              captionKind={activeDirectory ? 'path' : 'text'}
+              leading={<FolderGit2 size={17} color={theme.colors.primary} />}
+              meta={<ChevronRight size={16} color={theme.colors.textMuted} />}
+              accessibilityLabel={switchProjectLabel}
+              onPress={onOpenProjects}
+            />
+          ) : null}
           <SheetSceneSearch
             testID="agent-sessions-search"
             accessibilityLabel={t`Search sessions`}

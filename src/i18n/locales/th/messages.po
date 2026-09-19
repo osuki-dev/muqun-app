@@ -185,11 +185,6 @@ msgstr "{commandName} · กำลังส่งไปยัง"
 msgid "{count, plural, one {# result} other {# results}}"
 msgstr "{count, plural, other {# รายการ}}"
 
-#. placeholder {0}: sessions.length
-#: src/components/agent-sessions-sheet.tsx
-msgid "{currentWorkspaceName} · {0} on this host"
-msgstr "{currentWorkspaceName} · {0} รายการบนโฮสต์นี้"
-
 #. placeholder {0}: items.length
 #: src/components/agent-tasks-sheet.tsx
 msgid "{done} of {0} done"
@@ -4531,11 +4526,12 @@ msgctxt "agent slash command"
 msgid "Switch language model"
 msgstr "สลับโมเดลภาษา"
 
+#: src/components/agent-sessions-sheet.tsx
 #: src/components/agent-workspace-sheet.tsx
 msgid "Switch project"
 msgstr "สลับโปรเจกต์"
 
-#: src/app/agent.tsx
+#: src/components/agent-sessions-sheet.tsx
 msgid "Switch project: {displayWorkspaceName}"
 msgstr "สลับโปรเจกต์: {displayWorkspaceName}"
 

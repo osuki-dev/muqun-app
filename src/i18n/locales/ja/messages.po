@@ -185,11 +185,6 @@ msgstr "{commandName} · 送信先"
 msgid "{count, plural, one {# result} other {# results}}"
 msgstr "{count, plural, other {# 件の結果}}"
 
-#. placeholder {0}: sessions.length
-#: src/components/agent-sessions-sheet.tsx
-msgid "{currentWorkspaceName} · {0} on this host"
-msgstr "{currentWorkspaceName} · このホストに {0} 件"
-
 #. placeholder {0}: items.length
 #: src/components/agent-tasks-sheet.tsx
 msgid "{done} of {0} done"
@@ -4531,11 +4526,12 @@ msgctxt "agent slash command"
 msgid "Switch language model"
 msgstr "言語モデルを切り替える"
 
+#: src/components/agent-sessions-sheet.tsx
 #: src/components/agent-workspace-sheet.tsx
 msgid "Switch project"
 msgstr "プロジェクトを切り替え"
 
-#: src/app/agent.tsx
+#: src/components/agent-sessions-sheet.tsx
 msgid "Switch project: {displayWorkspaceName}"
 msgstr "プロジェクトを切り替え: {displayWorkspaceName}"
 

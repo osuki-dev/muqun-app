@@ -100,8 +100,6 @@ export default function AgentScreen() {
    * another is worse than either.
    */
   // react-doctor-disable-next-line react-hooks-js/todo -- lingui t macro; the lingui babel plugin compiles the template away before the compiler sees it
-  const switchWorkspaceLabel = t`Switch project: ${displayWorkspaceName}`;
-  // react-doctor-disable-next-line react-hooks-js/todo -- lingui t macro; the lingui babel plugin compiles the template away before the compiler sees it
   const openSessionsLabel = t`Sessions: ${sessionTitle ?? ''}`;
 
   return (
@@ -147,12 +145,14 @@ export default function AgentScreen() {
                   which session is next. */}
               <AgentTitlePill
                 testID="agent-header-workspace-pill"
-                onPress={() =>
-                  showSessionTitle
-                    ? router.push('/agent-sessions')
-                    : router.push({ pathname: '/agent-workspace', params: { sessionId } })
-                }
-                accessibilityLabel={showSessionTitle ? openSessionsLabel : switchWorkspaceLabel}
+                // One dropdown, one sheet. It used to open the Sessions sheet
+                // when a session's title was showing and the project sheet when
+                // it was not, so the same control in the same place answered
+                // with two different lists and the owner could not tell why.
+                // Projects are reached from the first row of the Sessions
+                // sheet, which also says which project this is.
+                onPress={() => router.push('/agent-sessions')}
+                accessibilityLabel={openSessionsLabel}
                 style={styles.workspaceHeaderPillInner}>
                 <WorkspacePillContent
                   showSession={showSessionTitle}

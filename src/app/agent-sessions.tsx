@@ -97,6 +97,7 @@ export default function AgentSessionsScreen() {
       // Replaces rather than stacks: two form sheets deep is two grabbers and
       // one question, and the reader asked to go from this list to that one.
       onMoveSession={() => router.replace('/agent-worktree')}
+      onOpenProjects={() => router.replace({ pathname: '/agent-workspace', params: { sessionId } })}
       onClose={() => router.back()}
     />
   );

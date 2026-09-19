@@ -185,11 +185,6 @@ msgstr "{commandName}·发送给"
 msgid "{count, plural, one {# result} other {# results}}"
 msgstr "{count, plural, other {# 个结果}}"
 
-#. placeholder {0}: sessions.length
-#: src/components/agent-sessions-sheet.tsx
-msgid "{currentWorkspaceName} · {0} on this host"
-msgstr "{currentWorkspaceName} · 此主机上共 {0} 个"
-
 #. placeholder {0}: items.length
 #: src/components/agent-tasks-sheet.tsx
 msgid "{done} of {0} done"
@@ -4531,11 +4526,12 @@ msgctxt "agent slash command"
 msgid "Switch language model"
 msgstr "切换语言模型"
 
+#: src/components/agent-sessions-sheet.tsx
 #: src/components/agent-workspace-sheet.tsx
 msgid "Switch project"
 msgstr "切换项目"
 
-#: src/app/agent.tsx
+#: src/components/agent-sessions-sheet.tsx
 msgid "Switch project: {displayWorkspaceName}"
 msgstr "切换项目：{displayWorkspaceName}"
 
