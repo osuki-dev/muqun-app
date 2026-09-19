@@ -57,8 +57,9 @@ function effect(
   runInNewContext(script, {
     DEMO_SERVER_ID: DEMO_PAIRING_SERVER_ID,
     record: serverId === null ? null : { serverId },
-    useAppSettings: (selector: (state: { notificationsEnabled: boolean }) => unknown) =>
-      selector({ notificationsEnabled: enabled }),
+    useAppSettings: (
+      selector: (state: { notificationsEnabled: boolean; language: string | null }) => unknown
+    ) => selector({ notificationsEnabled: enabled, language: null }),
     useEffect: (body: () => (() => void) | undefined) => {
       cleanup = body();
     },
@@ -71,6 +72,8 @@ function effect(
       if (options.refuse) throw new Error('gateway refused the token');
     },
     Application: { nativeApplicationVersion: '3.0.0', nativeBuildVersion: '41' },
+    // The language the registration names, and remembers having named.
+    getActiveLocale: () => 'en',
     PUSH_TOKEN_MAX_AGE_MS,
     registeredPushToken: (id: string) => store.get(id) ?? null,
     // Stamped the way the real store stamps it, so the age half of the rule is

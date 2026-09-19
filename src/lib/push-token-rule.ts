@@ -56,6 +56,17 @@ export interface RegisteredPushToken {
   build: string;
   /** When the gateway confirmed it, ms since epoch -- see rule 4. */
   atMs: number;
+  /**
+   * The language the gateway was told to write this device's notifications in.
+   *
+   * The gateway writes the push itself -- "Agent done", "claude finished
+   * running." -- in the locale recorded with the token, so the token is only
+   * half of what was registered. Without this, a reader who switched to Thai
+   * went on receiving Chinese banners for up to a week: the token had not
+   * changed, so nothing was owed. Absent on entries written before this field
+   * existed, which reads as "unknown" and is sent again once.
+   */
+  locale?: string;
 }
 
 /**
@@ -69,11 +80,15 @@ export function pushTokenNeedsSending(
   stored: RegisteredPushToken | null,
   token: string,
   build: string,
-  nowMs: number = Date.now()
+  nowMs: number = Date.now(),
+  locale?: string
 ): boolean {
   if (!token) return false;
   if (!stored) return true;
   if (stored.token !== token || stored.build !== build) return true;
+  // Only compared when the caller names one, so an older caller keeps the
+  // behaviour it was written against.
+  if (locale !== undefined && stored.locale !== locale) return true;
   // Rule 4. Written as "is this age inside the window" rather than "is it past
   // it" so that a negative age -- a clock moved back, a restored backup -- is
   // overdue rather than a week of credit.

@@ -118,12 +118,15 @@ const SessionChip = memo(function SessionChip({
   node,
   active,
   fallbackAgent,
+  nameOfAgent,
   onPress,
   onMeasure,
 }: {
   node: SessionNode;
   active: boolean;
   fallbackAgent?: string;
+  /** An agent's id to the name the host gave it: `plan` to `Plan`. */
+  nameOfAgent: (id: string) => string;
   onPress: (asid: string) => void;
   /** Where this chip sits in the strip, so the strip can bring it into view. */
   onMeasure?: (asid: string, x: number, width: number) => void;
@@ -134,7 +137,10 @@ const SessionChip = memo(function SessionChip({
 
   const session = node.session;
   const child = node.depth > 0;
-  const agentName = session.agent || (child ? t`subagent` : (fallbackAgent ?? 'build'));
+  // The name the host publishes, which is what the agent sheet lists. The chip
+  // drew the id, so the same agent read "Plan" in the list and "plan" here.
+  const agentId = session.agent || (child ? '' : (fallbackAgent ?? 'build'));
+  const agentName = agentId ? nameOfAgent(agentId) : t`subagent`;
   const titled = hasRealSessionTitle(session);
   // Untitled reads as untitled; the time is the caption a listing shows, not
   // the name a chip stands under.
@@ -425,6 +431,16 @@ export const AgentComposer = memo(function AgentComposer({
    */
   const interfaceFontFamily = useInterfaceFontFamily() ?? undefined;
   const [text, setText] = useState('');
+  /**
+   * One answer to "what is this agent called", for the chip strip and the
+   * action row alike. The catalogue's name when the host publishes one, the id
+   * otherwise -- a reader's own agent under `.opencode/agent` often has no
+   * other name, and an id is still the truth about it.
+   */
+  const nameOfAgent = useCallback(
+    (id: string) => availableAgentsProp?.find((agent) => agent.id === id)?.name || id,
+    [availableAgentsProp]
+  );
   const [sending, setSending] = useState(false);
   const [deliveryMode, setDeliveryMode] = useState<'steer' | 'queue'>('steer');
   const [attachmentMenuOpen, setAttachmentMenuOpen] = useState(false);
@@ -1111,6 +1127,7 @@ export const AgentComposer = memo(function AgentComposer({
                     node={node}
                     active={node.session.asid === activeAsid}
                     {...(selectedAgent ? { fallbackAgent: selectedAgent } : {})}
+                    nameOfAgent={nameOfAgent}
                     onPress={handleSelectSession}
                     onMeasure={measureChip}
                   />
@@ -1164,7 +1181,7 @@ export const AgentComposer = memo(function AgentComposer({
                     { backgroundColor: surfaceBackground(chromeGlass) },
                   ]}>
                   <Text variant="caption" color={theme.colors.text} style={styles.actionBtnLabel}>
-                    {selectedAgent ?? 'build'}
+                    {nameOfAgent(selectedAgent ?? 'build')}
                   </Text>
                   {/* One affordance for one behaviour: a chip that opens a sheet
                   wears the chevron, and only the model chip used to. */}

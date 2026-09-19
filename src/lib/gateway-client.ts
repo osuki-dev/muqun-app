@@ -675,6 +675,8 @@ export interface DevicePushTokenRegistration {
   token: string;
   platform: 'ios' | 'android';
   device_name?: string;
+  /** The language the gateway writes this device's notifications in. */
+  locale?: string;
 }
 
 export interface TestNotificationRequest {

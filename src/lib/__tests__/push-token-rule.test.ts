@@ -123,3 +123,22 @@ describe('the weekly re-assert', () => {
     expect(PUSH_TOKEN_MAX_AGE_MS).toBe(7 * 24 * 60 * 60 * 1000);
   });
 });
+
+test('a language the gateway was not told about is a post that is owed', () => {
+  // The gateway writes the push in the locale recorded with the token, so a
+  // reader who switches to Thai must be re-registered at once -- not in a week.
+  const at = 1_000_000;
+  const stored = {
+    token: 'ExponentPushToken[aaa]',
+    build: '3.0.0 (41)',
+    atMs: at,
+    locale: 'zh-TW',
+  };
+  expect(pushTokenNeedsSending(stored, stored.token, stored.build, at + 1, 'zh-TW')).toBe(false);
+  expect(pushTokenNeedsSending(stored, stored.token, stored.build, at + 1, 'th')).toBe(true);
+  // An entry written before the field existed is unknown, and is sent once.
+  const legacy = { token: stored.token, build: stored.build, atMs: at };
+  expect(pushTokenNeedsSending(legacy, stored.token, stored.build, at + 1, 'th')).toBe(true);
+  // A caller that names no language keeps the rule it was written against.
+  expect(pushTokenNeedsSending(legacy, stored.token, stored.build, at + 1)).toBe(false);
+});

@@ -39,6 +39,7 @@ import { useGatewayConnectionStore } from '@/stores/gateway-connection';
 import { noticeFromPush, noticePresentation } from '@/lib/in-app-notifications';
 import { useInAppNotifications } from '@/stores/in-app-notifications';
 import { isDemoRecord } from '@/lib/demo-gateway';
+import { getActiveLocale } from '@/i18n/active-locale';
 
 Notifications.setNotificationHandler({
   handleNotification: async (notification) => {
@@ -166,6 +167,9 @@ export function useNotificationObserver() {
 
 export function useGatewayPushRegistration(record: GatewayRecord | null) {
   const notificationsEnabled = useAppSettings((state) => state.notificationsEnabled);
+  // A dependency of the effect below, so choosing a language re-registers at
+  // once instead of at the next foreground.
+  const language = useAppSettings((state) => state.language);
 
   useEffect(() => {
     // Demo is offline, including when notifications are disabled. Neither
@@ -191,16 +195,28 @@ export function useGatewayPushRegistration(record: GatewayRecord | null) {
         // renaming a server re-posted a token the gateway already had. The rule
         // for when a post is owed is in `lib/push-token-registry`.
         const build = appBuildIdentity();
-        if (!pushTokenNeedsSending(registeredPushToken(serverId), token, build)) return;
+        // Read at the moment of the post, not captured by the effect: the
+        // language can change between the effect running and the token
+        // arriving, and what is sent has to be what is remembered.
+        const locale = getActiveLocale();
+        if (
+          !pushTokenNeedsSending(registeredPushToken(serverId), token, build, Date.now(), locale)
+        ) {
+          return;
+        }
         await registerDevicePushToken({
           token,
           platform: Platform.OS === 'ios' ? 'ios' : 'android',
           device_name: Device.deviceName ?? Device.modelName ?? undefined,
+          // Named in the body rather than left to the request's headers: the
+          // gateway prefers a body that names a language, and this is the one
+          // request whose whole point is to tell it which.
+          locale,
         });
         if (cancelled) return;
         // Written only now: a post that failed has told the gateway nothing,
         // and must be retried on the next foreground rather than remembered.
-        rememberRegisteredPushToken(serverId, { token, build });
+        rememberRegisteredPushToken(serverId, { token, build, locale });
       } catch (error) {
         // Registration is retried when the app next enters the foreground.
         if (__DEV__) console.warn('Push notification registration failed.', error);
@@ -216,7 +232,10 @@ export function useGatewayPushRegistration(record: GatewayRecord | null) {
       cancelled = true;
       appStateSubscription.remove();
     };
-  }, [notificationsEnabled, record]);
+    // `language` is read inside through `getActiveLocale()`; it is listed so that
+    // choosing a language runs this again.
+    // oxlint-disable-next-line react-hooks/exhaustive-deps -- a trigger, not an input
+  }, [notificationsEnabled, record, language]);
 }
 
 async function unregisterPushNotificationsAsync(removeFromGateway: boolean): Promise<void> {
