@@ -4765,7 +4765,11 @@ export function ServerTerminalWorkspace({
                                 styles.keyRowToggle,
                                 { backgroundColor: surfaceBackground(chromeGlass) },
                               ]}>
-                              <KeyboardIcon size={16} color={chromeText} />
+                              {/* The pack's primary, like the four entries beside it: it
+                                  opens a surface, as they do. It was the text
+                                  colour, which is what the key caps after it
+                                  wear, and read as a dead button in a lit row. */}
+                              <KeyboardIcon size={16} color={theme.colors.primary} />
                             </PressableScale>
                             {assignmentToggle}
                             {terminalKeyButtons}
