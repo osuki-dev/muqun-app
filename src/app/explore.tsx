@@ -40,7 +40,6 @@ import {
   SheetSceneAction,
   SheetSceneField,
   SheetSceneFooter,
-  SheetSceneGroupHeading,
   SheetSceneGroupRule,
   SheetSceneQuietAction,
   SheetSceneRow,
@@ -928,24 +927,28 @@ export default function PairModal() {
               and below the toggle: it is the answer to "I do not have one of
               those yet", not a third way to pair. */}
               <View style={styles.setupGroup}>
-                {/* The sheet's own group label, with the link in the heading's
-                    meta slot: the same rule every other sheet labels a group
-                    by, rather than a caption and a coloured tail of its own. */}
                 <SheetSceneGroupRule />
-                <SheetSceneGroupHeading
-                  title={t`No Gateway yet?`}
-                  meta={
-                    <PressableScale
-                      accessibilityRole="link"
-                      accessibilityLabel={t`Set up a Gateway on your computer`}
-                      onPress={() => void Linking.openURL(GATEWAY_SETUP_URL)}
-                      style={styles.setupLink}>
-                      <Text variant="caption" weight="semibold" color={theme.colors.primary}>
-                        {t`Set one up on your computer`}
-                      </Text>
-                    </PressableScale>
-                  }
-                />
+                {/* A row on the same plate as the two ways in above it. It was a
+                    bare heading with a coloured link in its meta slot, which on
+                    an artwork pack was two pieces of text floating on a
+                    painting between two filled rows -- the one line on the
+                    sheet with nothing under it. */}
+                <PressableScale
+                  accessibilityRole="link"
+                  accessibilityLabel={t`Set up a Gateway on your computer`}
+                  onPress={() => void Linking.openURL(GATEWAY_SETUP_URL)}
+                  style={[
+                    styles.manualToggle,
+                    styles.setupRow,
+                    { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
+                  ]}>
+                  <Text variant="bodySmall" color={theme.colors.textMuted} style={styles.setupAsk}>
+                    {t`No Gateway yet?`}
+                  </Text>
+                  <Text variant="bodySmall" weight="semibold" color={theme.colors.primary}>
+                    {t`Set one up on your computer`}
+                  </Text>
+                </PressableScale>
 
                 {/* The command itself, under the link that would otherwise be the
               only answer.
@@ -1358,6 +1361,16 @@ const styles = StyleSheet.create({
   },
   setupGroup: {
     gap: 4,
+  },
+  // The question and the answer on one row when they fit, and on two when a
+  // wide face or a long language means they do not.
+  setupRow: {
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    marginTop: SHEET_LADDER.gap,
+  },
+  setupAsk: {
+    flexShrink: 1,
   },
   manualToggle: {
     alignSelf: 'stretch',

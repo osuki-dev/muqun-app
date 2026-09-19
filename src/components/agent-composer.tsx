@@ -1742,32 +1742,31 @@ const styles = StyleSheet.create({
   // font style, so putting the 700 back here would defeat the cap.
   sessionChipAgentBadge: {
     fontSize: AGENT_TYPE.meta.size,
-    // Shrinks first, and before the title: see the note at the badge itself.
-    flexShrink: 1,
-    minWidth: 0,
+    // Never shrinks: see `sessionChipTitleSlot`.
+    flexShrink: 0,
   },
   sessionChipDot: {
     fontSize: AGENT_TYPE.micro.size,
     opacity: 0.7,
   },
   /**
-   * The animated wrapper the title fades in inside.
+   * The title, at its own width, always.
    *
-   * The shrink path has to be unbroken from the chip down to the text, and
-   * this view sits in the middle of it: a wrapper with the default
-   * `flexShrink: 0` would hold its content's full width and hand the title a
-   * constraint it never has to honour, which is the cap above doing nothing
-   * one level down.
+   * The owner's rule for a session strip is no ellipsis: the end of a title is
+   * usually what tells two sessions of one agent apart, and the strip scrolls,
+   * so a long chip costs a swipe and nothing else. Every level from the chip
+   * down therefore refuses to shrink. It used to be the opposite -- an unbroken
+   * shrink path, so that a width cap could ellipsise the title -- and with the
+   * cap gone that path still ellipsised whenever the strip itself was narrower
+   * than one chip.
    */
   sessionChipTitleSlot: {
-    flexShrink: 1,
-    minWidth: 0,
+    flexShrink: 0,
   },
   sessionChipTitle: {
     fontSize: AGENT_TYPE.meta.size,
     fontWeight: '500',
-    flexShrink: 1,
-    minWidth: 0,
+    flexShrink: 0,
   },
   actionRowViewport: {
     marginBottom: 8,

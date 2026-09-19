@@ -173,14 +173,15 @@ test('a session chip follows its title and never clips a taller face', () => {
   expect(/\n\s+height:/u.test(chip)).toBe(false);
   expect(style(source, 'actionBtnWithLabel')).toContain('minHeight:');
 
-  // The shrink path has to be unbroken from the chip down to the text: a
-  // wrapper left at the default `flexShrink: 0` holds its content's full
-  // width and the cap above stops meaning anything one level down.
+  // Nothing on the chip shrinks. With the cap gone, an unbroken shrink path
+  // still ellipsised the title whenever the strip was narrower than one chip;
+  // the owner's rule is that a session strip never ellipsises, so every level
+  // keeps its own width and the strip scrolls.
   expect(source).toContain('style={styles.sessionChipTitleSlot}');
   for (const name of ['sessionChipTitleSlot', 'sessionChipTitle', 'sessionChipAgentBadge']) {
-    expect(`${name}:${style(source, name)}`).toContain('flexShrink: 1');
+    expect(`${name}:${style(source, name)}`).toContain('flexShrink: 0');
   }
-  // The badge is host-supplied and gives way before the title does.
+  // The badge is host-supplied; it stays one line.
   expect(source).toContain('weight="semibold"\n          numberOfLines={1}');
 });
 
