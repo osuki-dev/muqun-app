@@ -693,7 +693,7 @@ export async function getAgentVcsDiff(
 export async function getAgentCatalog(
   sessionId?: string,
   endpoint?: { url?: string; token?: string | null },
-  options?: { directory?: string; forceRefresh?: boolean }
+  options?: { directory?: string; forceRefresh?: boolean; requireFresh?: boolean }
 ): Promise<AgentCatalog> {
   const directory = normalizeCatalogDirectory(options?.directory);
   const cacheKey = buildAgentCacheKey(
@@ -705,14 +705,15 @@ export async function getAgentCatalog(
   const cached = getCachedEntry<AgentCatalog>(cacheKey);
   const isFresh = cached && Date.now() - cached.timestamp < CATALOG_TTL_MS;
 
-  if (isFresh && !options?.forceRefresh) {
+  if (isFresh && !options?.forceRefresh && !options?.requireFresh) {
     return cached.data;
   }
 
-  return dedupeInFlight(cacheKey, async () => {
+  return dedupeInFlight(options?.requireFresh ? `${cacheKey}:fresh` : cacheKey, async () => {
     try {
       const base = endpoint?.url ? endpoint.url.replace(/\/$/, '') : null;
       if (!base && !isGatewayConfigured()) {
+        if (options?.requireFresh) throw new Error('Gateway is not connected');
         return cached?.data ?? EMPTY_CATALOG;
       }
       const path = agentCatalogPath(sessionId, directory);
@@ -736,6 +737,7 @@ export async function getAgentCatalog(
       }
 
       if (!res.ok) {
+        if (options?.requireFresh) throw new Error(`Catalog request failed (${res.status})`);
         return cached?.data ?? EMPTY_CATALOG;
       }
 
@@ -747,10 +749,12 @@ export async function getAgentCatalog(
       // remembered -- and answered with whatever this workspace last really
       // had, because a catalog that went empty for a moment is not a host that
       // lost its models. See `isEmptyAgentCatalog`.
-      if (isEmptyAgentCatalog(catalog)) return cached?.data ?? catalog;
+      if (isEmptyAgentCatalog(catalog))
+        return options?.requireFresh ? catalog : (cached?.data ?? catalog);
       setCachedEntry(cacheKey, catalog, etag);
       return catalog;
     } catch (err) {
+      if (options?.requireFresh) throw err;
       console.warn('Failed to get agent catalog:', err);
       return cached?.data ?? EMPTY_CATALOG;
     }

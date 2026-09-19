@@ -5466,3 +5466,11 @@ msgstr "내 메시지"
 #: src/components/app-drawer-content.tsx
 msgid "Your paired gateways"
 msgstr "페어링된 Gateway"
+
+#: src/components/agent-model-sheet.tsx
+msgid "Recently used"
+msgstr "최근 사용"
+
+#: src/components/agent-model-sheet.tsx
+msgid "Could not load models"
+msgstr "모델을 불러올 수 없습니다"

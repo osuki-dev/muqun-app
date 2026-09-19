@@ -1460,7 +1460,6 @@ export const AgentComposer = memo(function AgentComposer({
                   </PressableScale>
                 ) : null}
               </ScrollView>
-              <EdgeFade edge="right" color={theme.colors.surface} style={styles.actionRowFade} />
             </View>
 
             {/* Attachment staged preview strip */}
@@ -1653,7 +1652,6 @@ const POPUP_HEADER_GAP = 16;
 const ATTACHMENT_MENU_GAP = 8;
 
 /** How wide the chips row's right-hand fade is, and its content's right padding. */
-const ACTION_ROW_FADE_WIDTH = 28;
 
 /** How much of the strip stays visible to the left of the chip brought into view. */
 const SESSION_CHIP_REVEAL_MARGIN = 24;
@@ -1824,16 +1822,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 6,
     paddingVertical: 2,
-    // Under the fade, so the chip beneath it is still whole.
-    paddingRight: ACTION_ROW_FADE_WIDTH,
-  },
-  actionRowFade: {
-    position: 'absolute',
-    top: 0,
-    bottom: 0,
-    right: 0,
-    width: ACTION_ROW_FADE_WIDTH,
-    pointerEvents: 'none',
+    paddingRight: 8,
   },
   actionBtn: {
     alignItems: 'center',

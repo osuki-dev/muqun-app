@@ -17,9 +17,7 @@
  * not a once-per-install decision, and a segmented control that is one tap from
  * the page should not become two.
  *
- * The order is unchanged and still argued: theme first because it is the larger
- * choice -- the pack picks which light/dark pair is in play, the mode only
- * picks which half of it is showing -- then the mode, then the language.
+ * Theme and colour mode stay together, followed by font, app icon, and language.
  */
 import { useLingui } from '@lingui/react/macro';
 import { useThemeMode, useThemeTokens } from '@osuki-dev/ui';
@@ -103,30 +101,11 @@ export function SettingsAppearance({ title }: { title: string }) {
       <SettingsChoiceRow
         label={t`Theme`}
         value={pack.label}
+        valuePosition="below"
         detail={t`Terminal colours follow the theme.`}
         accessibilityLabel={t`Theme, ${pack.label}`}
         testID="settings-theme-row"
         onPress={() => router.push('/settings-theme')}
-      />
-
-      {/*
-          Directly under Theme and above Colour mode, because it is the same
-          kind of decision one rung down: the pack decides what the app is
-          coloured with, this decides what it is set in, and the mode only
-          decides which half of the pack is showing. The value is the family
-          the reader installed, so the row answers "what am I reading in"
-          without being opened.
-      */}
-      <SettingsChoiceRow
-        label={t`Font`}
-        value={fontValue}
-        detail={t`Use your own font for the app and the terminal.`}
-        accessibilityLabel={
-          // react-doctor-disable-next-line react-hooks-js/todo -- Lingui expands this macro before React Compiler runs.
-          t`Font, ${fontValue}`
-        }
-        testID="settings-font-row"
-        onPress={() => router.push('/settings-font')}
       />
 
       <SettingsBlock label={t`Colour mode`}>
@@ -140,6 +119,18 @@ export function SettingsAppearance({ title }: { title: string }) {
           onChange={(value) => chooseMode(value as 'system' | 'light' | 'dark')}
         />
       </SettingsBlock>
+
+      <SettingsChoiceRow
+        label={t`Font`}
+        value={fontValue}
+        detail={t`Use your own font for the app and the terminal.`}
+        accessibilityLabel={
+          // react-doctor-disable-next-line react-hooks-js/todo -- Lingui expands this macro before React Compiler runs.
+          t`Font, ${fontValue}`
+        }
+        testID="settings-font-row"
+        onPress={() => router.push('/settings-font')}
+      />
 
       <AppIconPicker />
 

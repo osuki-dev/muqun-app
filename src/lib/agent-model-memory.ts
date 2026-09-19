@@ -47,6 +47,7 @@ interface StoredChoice extends RememberedAgentChoice {
 }
 
 interface StoredServerMemory {
+  recent?: ModelRef[];
   /** The last pick on this server, whichever workspace it was made in. */
   last?: StoredChoice;
   /** The last pick in each workspace directory. */
@@ -101,7 +102,15 @@ function readServerMemory(serverId: string): StoredServerMemory {
       }
     }
     const last = parseChoice(rec.last);
-    return { ...(last ? { last } : {}), workspaces };
+    const recent = Array.isArray(rec.recent)
+      ? rec.recent
+          .map(parseModelRef)
+          .filter((ref): ref is ModelRef => Boolean(ref))
+          .slice(0, 12)
+      : last?.model
+        ? [last.model]
+        : [];
+    return { ...(last ? { last } : {}), workspaces, recent };
   } catch {
     // Unreadable is the same as unwritten: the reader loses the memory, not the
     // screen. Nothing here is worth telling them about.
@@ -161,6 +170,16 @@ export function rememberAgentChoice(
     workspaces[directory] = mergeChoice(workspaces[directory], choice, atMs);
   }
   writeServerMemory(serverId, {
+    recent: choice.model
+      ? [
+          choice.model,
+          ...(memory.recent ?? []).filter(
+            (ref) =>
+              ref.provider_id !== choice.model!.provider_id ||
+              ref.model_id !== choice.model!.model_id
+          ),
+        ].slice(0, 12)
+      : memory.recent,
     last: mergeChoice(memory.last, choice, atMs),
     workspaces: prune(workspaces),
   });
@@ -210,4 +229,9 @@ function choiceOf(stored: StoredChoice): RememberedAgentChoice {
     ...(stored.model ? { model: stored.model } : {}),
     ...(stored.agent ? { agent: stored.agent } : {}),
   };
+}
+
+/** References only: names, prices and capabilities always come from the live catalog. */
+export function loadRecentAgentModels(serverId: string): ModelRef[] {
+  return serverId ? (readServerMemory(serverId).recent ?? []) : [];
 }

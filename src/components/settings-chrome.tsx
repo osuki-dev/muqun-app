@@ -445,11 +445,8 @@ export function SettingsNavRow({
  * rows are switches. Here the answer is stated, in the value column, and the
  * question is one tap away.
  *
- * The value sits *beside* the label rather than under it, which is the one
- * place this row departs from `SettingsNavRow`. A navigation row's second line
- * describes where the row goes; this one's is the current answer, and an answer
- * belongs at the end of the sentence its label starts. `detail` keeps its usual
- * job underneath -- what the choice means, not what it is.
+ * Values normally sit beside the label. Long names can use `valuePosition="below"`
+ * to occupy a third line beneath the description.
  *
  * `accessibilityLabel` is passed explicitly here, and it is the one row on this
  * page that does. `SettingsNavRow` deliberately lets React Native concatenate
@@ -462,6 +459,7 @@ export function SettingsNavRow({
 export function SettingsChoiceRow({
   label,
   value,
+  valuePosition = 'trailing',
   detail,
   accessibilityLabel,
   testID,
@@ -470,6 +468,8 @@ export function SettingsChoiceRow({
   label: string;
   /** The current answer, written the way the sheet writes it. */
   value: string;
+  /** Long names can occupy a third line beneath the description. */
+  valuePosition?: 'trailing' | 'below';
   detail?: string;
   accessibilityLabel: string;
   testID?: string;
@@ -484,7 +484,7 @@ export function SettingsChoiceRow({
       testID={testID}
       onPress={onPress}
       style={styles.row}>
-      <View style={[styles.rowCopy, styles.rowCopyFloor]}>
+      <View style={[styles.rowCopy, valuePosition === 'trailing' && styles.rowCopyFloor]}>
         <Text variant="bodySmall" style={styles.rowLabel}>
           {label}
         </Text>
@@ -497,30 +497,27 @@ export function SettingsChoiceRow({
             {detail}
           </Text>
         ) : null}
+        {valuePosition === 'below' ? (
+          <Text
+            variant="bodySmall"
+            color={theme.colors.textMuted}
+            numberOfLines={1}
+            ellipsizeMode="tail"
+            style={styles.choiceValueBelow}>
+            {value}
+          </Text>
+        ) : null}
       </View>
-      {/* Muted, not accent. The decision area is the sheet; a coral value here
-          would put the accent on the report of the choice as well as on the
-          making of it. */}
-      {/*
-        Two lines, not one.
-
-        The value was briefly held to a single ellipsised line, which is the
-        right rule for a chip or a tab and the wrong one here: what should wrap
-        may wrap. "Lanterns in the Overworld" is a name a reader chose and an
-        answer they came to the row to read, and cutting it to "Lanterns in
-        the..." to keep the row 60 points tall is the app preferring its own
-        rhythm to their content. So it wraps, right-aligned, and the row grows
-        by a line. The floor on the column opposite is what makes that safe: a
-        long value now wraps inside its own half instead of taking the label's.
-      */}
-      <Text
-        variant="bodySmall"
-        color={theme.colors.textMuted}
-        numberOfLines={2}
-        ellipsizeMode="tail"
-        style={styles.choiceValue}>
-        {value}
-      </Text>
+      {valuePosition === 'trailing' ? (
+        <Text
+          variant="bodySmall"
+          color={theme.colors.textMuted}
+          numberOfLines={2}
+          ellipsizeMode="tail"
+          style={styles.choiceValue}>
+          {value}
+        </Text>
+      ) : null}
       <ChevronRight size={18} color={theme.colors.textMuted} strokeWidth={2} />
     </PressableScale>
   );
@@ -645,6 +642,7 @@ const styles = StyleSheet.create({
   // the floor in place this is what spends the remainder: up to two lines,
   // right-aligned, ending at the chevron.
   choiceValue: { flexShrink: 1, minWidth: 0, textAlign: 'right' },
+  choiceValueBelow: { marginTop: 6, includeFontPadding: false },
   /**
    * No `lineHeight` on either line, deliberately.
    *

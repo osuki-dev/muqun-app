@@ -5466,3 +5466,11 @@ msgstr "你的訊息"
 #: src/components/app-drawer-content.tsx
 msgid "Your paired gateways"
 msgstr "你已配對的 Gateway"
+
+#: src/components/agent-model-sheet.tsx
+msgid "Recently used"
+msgstr "最近使用"
+
+#: src/components/agent-model-sheet.tsx
+msgid "Could not load models"
+msgstr "無法載入模型"

@@ -18,6 +18,8 @@ import {
   SHEET_LADDER,
   sheetSceneStyles,
 } from '@/components/sheet-scene';
+import { loadRecentAgentModels, rememberAgentModel } from '@/lib/agent-model-memory';
+import { recentCatalogModels } from '@/lib/recent-agent-models';
 import { appChrome } from '@/constants/appearance';
 import { withAlpha } from '@/lib/color';
 import { fadeIn, listLayout, riseIn, STAGGER } from '@/lib/motion';
@@ -129,6 +131,15 @@ export const AgentModelSheet = memo(function AgentModelSheet({
    * answered.
    */
   const [loading, setLoading] = useState(true);
+  const [loadFailed, setLoadFailed] = useState(false);
+  const [recentRefs, setRecentRefs] = useState(() => loadRecentAgentModels(sessionId ?? ''));
+  const selectModel = (model: ModelRef) => {
+    if (sessionId) {
+      rememberAgentModel(sessionId, directory, model);
+      setRecentRefs(loadRecentAgentModels(sessionId));
+    }
+    onSelectModel(model);
+  };
   const [models, setModels] = useState<ModelInfo[]>([]);
   /**
    * The providers, for their `activation`, and the catalog's own defaults.
@@ -155,12 +166,14 @@ export const AgentModelSheet = memo(function AgentModelSheet({
   useEffect(() => {
     let active = true;
     setLoading(true);
+    setLoadFailed(false);
+    setModels([]);
+    setRecentRefs(loadRecentAgentModels(sessionId ?? ''));
     getAgentCatalog(sessionId, undefined, {
       ...(directory ? { directory } : {}),
-      // A retry that reads the cached answer again is not a retry. Only the
-      // reader's own tap gets here: the first read of an opening is allowed to
-      // be instant.
-      ...(reloadToken > 0 ? { forceRefresh: true } : {}),
+      // Revalidate on every opening so history never supplies stale model metadata.
+      forceRefresh: true,
+      requireFresh: true,
     })
       .then((cat: AgentCatalog) => {
         if (!active) return;
@@ -169,6 +182,7 @@ export const AgentModelSheet = memo(function AgentModelSheet({
         setDefaults(cat?.defaults ?? {});
       })
       .catch((err: unknown) => {
+        if (active) setLoadFailed(true);
         console.warn('Failed to load model catalog:', err);
       })
       .finally(() => {
@@ -201,18 +215,12 @@ export const AgentModelSheet = memo(function AgentModelSheet({
     );
   }, [models, searchQuery, filterMode]);
 
-  /**
-   * One group per provider, and nothing else.
-   *
-   * There used to be a synthetic "Free and unlimited" group above these, which
-   * listed the same models a second time -- and because two providers publish a
-   * model of the same name, it put two rows reading "Union Alpha Free" next to
-   * each other with nothing to tell them apart. The provider heading is what
-   * distinguishes them, and the "Free only" segment is what the synthetic group
-   * was really for.
-   */
+  // Recent rows resolve against the same catalog and filters as provider groups.
   const sections = useMemo(() => {
-    const result: { title: string; models: ModelInfo[] }[] = [];
+    const recent = recentCatalogModels(recentRefs, filteredModels, providers);
+    const result: { title: string; models: ModelInfo[]; recent?: boolean }[] = recent.length
+      ? [{ title: t`Recently used`, models: recent, recent: true }]
+      : [];
     const byProvider = new Map<string, ModelInfo[]>();
     for (const model of filteredModels) {
       const provider = model.provider_id || 'other';
@@ -233,7 +241,7 @@ export const AgentModelSheet = memo(function AgentModelSheet({
       result.push({ title: providerName(provider), models: byProvider.get(provider) ?? [] });
     }
     return result;
-  }, [filteredModels]);
+  }, [filteredModels, recentRefs, providers, t]);
 
   /**
    * How many rows are drawn. A host can publish hundreds of models, so the
@@ -356,13 +364,15 @@ export const AgentModelSheet = memo(function AgentModelSheet({
           {sections.length === 0 || filteredModels.length === 0 ? (
             <Animated.View entering={fadeIn('short')} style={styles.empty}>
               <Text variant="caption" color={theme.colors.textMuted}>
-                {emptyReason === 'search'
-                  ? t`No models match “${searchQuery.trim()}”.`
-                  : emptyReason === 'free-filter'
-                    ? t`No free models on this host.`
-                    : t`No models on this host.`}
+                {loadFailed
+                  ? t`Could not load models`
+                  : emptyReason === 'search'
+                    ? t`No models match “${searchQuery.trim()}”.`
+                    : emptyReason === 'free-filter'
+                      ? t`No free models on this host.`
+                      : t`No models on this host.`}
               </Text>
-              {emptyReason === 'nothing' ? (
+              {loadFailed || emptyReason === 'nothing' ? (
                 <PressableScale
                   testID="agent-model-retry"
                   accessibilityRole="button"
@@ -405,7 +415,13 @@ export const AgentModelSheet = memo(function AgentModelSheet({
                       <SheetSceneRow
                         testID={`agent-model-row-${model.id}`}
                         title={model.name || model.id}
-                        caption={modelCaption(model)}
+                        caption={
+                          section.recent
+                            ? [providerName(model.provider_id), modelCaption(model)]
+                                .filter(Boolean)
+                                .join(' · ')
+                            : modelCaption(model)
+                        }
                         selected={isSelected && !unavailable}
                         disabled={unavailable}
                         disabledCaption={model.status || t`Set up on the host`}
@@ -431,7 +447,7 @@ export const AgentModelSheet = memo(function AgentModelSheet({
                             }
                           : {})}
                         onPress={() =>
-                          onSelectModel({
+                          selectModel({
                             provider_id: model.provider_id,
                             model_id: model.id,
                             variant: isSelected
@@ -451,7 +467,7 @@ export const AgentModelSheet = memo(function AgentModelSheet({
                                     accessibilityState={{ selected: active }}
                                     accessibilityLabel={variant.id}
                                     onPress={() =>
-                                      onSelectModel({
+                                      selectModel({
                                         provider_id: model.provider_id,
                                         model_id: model.id,
                                         variant: variant.id,

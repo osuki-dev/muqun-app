@@ -5466,3 +5466,11 @@ msgstr "Tin nhắn của bạn"
 #: src/components/app-drawer-content.tsx
 msgid "Your paired gateways"
 msgstr "Các gateway đã ghép nối của bạn"
+
+#: src/components/agent-model-sheet.tsx
+msgid "Recently used"
+msgstr "Đã dùng gần đây"
+
+#: src/components/agent-model-sheet.tsx
+msgid "Could not load models"
+msgstr "Không thể tải mô hình"

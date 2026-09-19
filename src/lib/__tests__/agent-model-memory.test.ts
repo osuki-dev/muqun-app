@@ -136,3 +136,16 @@ describe('bounds', () => {
     });
   });
 });
+
+test('recent model choices survive reads, deduplicate variants and stay isolated per server', async () => {
+  const { loadRecentAgentModels } = await import('../agent-model-memory');
+  rememberAgentModel('one', '/app', alpha);
+  rememberAgentModel('one', '/app', nemotron);
+  rememberAgentModel('one', '/app', { ...alpha, variant: 'high' });
+  rememberAgentMode('one', '/app', 'plan');
+  expect(loadRecentAgentModels('one')).toEqual([{ ...alpha, variant: 'high' }, nemotron]);
+  expect(loadRecentAgentModels('two')).toEqual([]);
+  for (let i = 0; i < 20; i++)
+    rememberAgentModel('one', '/app', { provider_id: 'p', model_id: String(i) });
+  expect(loadRecentAgentModels('one')).toHaveLength(12);
+});

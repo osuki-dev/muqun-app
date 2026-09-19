@@ -5466,3 +5466,11 @@ msgstr "あなたのメッセージ"
 #: src/components/app-drawer-content.tsx
 msgid "Your paired gateways"
 msgstr "ペアリング済みの Gateway"
+
+#: src/components/agent-model-sheet.tsx
+msgid "Recently used"
+msgstr "最近使用したモデル"
+
+#: src/components/agent-model-sheet.tsx
+msgid "Could not load models"
+msgstr "モデルを読み込めませんでした"

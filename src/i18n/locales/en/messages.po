@@ -5466,3 +5466,11 @@ msgstr "Your message"
 #: src/components/app-drawer-content.tsx
 msgid "Your paired gateways"
 msgstr "Your paired gateways"
+
+#: src/components/agent-model-sheet.tsx
+msgid "Recently used"
+msgstr "Recently used"
+
+#: src/components/agent-model-sheet.tsx
+msgid "Could not load models"
+msgstr "Could not load models"

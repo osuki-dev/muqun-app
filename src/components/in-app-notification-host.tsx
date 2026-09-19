@@ -14,6 +14,8 @@ import Animated, {
   runOnJS,
   useAnimatedStyle,
   useSharedValue,
+  withTiming,
+  Easing,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -23,7 +25,7 @@ import { NAV_HEADER_TOP_GAP } from '@/constants/nav-header';
 import { permissionActionPhrase } from '@/i18n/labels';
 import { readApprovalBody } from '@/lib/agent-engine-text';
 import { feedback } from '@/lib/feedback';
-import { noticeTitleParts } from '@/lib/in-app-notifications';
+import { noticeTitleParts, type InAppNotice } from '@/lib/in-app-notifications';
 import { fadeInDown, settleTo } from '@/lib/motion';
 import { noticeDragOffset, noticeSwipeEnd } from '@/lib/notice-swipe';
 import { AGENT_TYPE } from '@/constants/agent-type';
@@ -53,7 +55,7 @@ const NOTICE_SIDE_MARGIN = 16;
  * downward entry at all, so a drag that starts by going down is never this
  * gesture -- it belongs to whatever is under the plate.
  */
-const DRAG_SLOP = 12;
+const DRAG_SLOP = 6;
 
 /**
  * The foreground notification banner: one plate, one row, one way out.
@@ -110,53 +112,51 @@ export function InAppNotificationHost() {
    */
   const dragX = useSharedValue(0);
   const dragY = useSharedValue(0);
+  const dragOpacity = useSharedValue(1);
+  const dismissing = useSharedValue(false);
   /** The plate's own size, for the sideways threshold and the flight distance. */
-  const plateWidth = useSharedValue(0);
   const plateHeight = useSharedValue(0);
   const noticeId = notice?.id ?? '';
   useEffect(() => {
     cancelAnimation(dragX);
     cancelAnimation(dragY);
+    cancelAnimation(dragOpacity);
+    dragOpacity.value = 1;
+    dismissing.value = false;
     dragX.value = 0;
     dragY.value = 0;
-  }, [noticeId, dragX, dragY]);
+  }, [noticeId, dragX, dragY, dragOpacity, dismissing]);
   useEffect(
     () => () => {
       cancelAnimation(dragX);
       cancelAnimation(dragY);
+      cancelAnimation(dragOpacity);
     },
-    [dragX, dragY]
+    [dragX, dragY, dragOpacity]
   );
 
   const dragStyle = useAnimatedStyle(() => ({
+    opacity: dragOpacity.value,
     transform: [{ translateX: dragX.value }, { translateY: dragY.value }],
+  }));
+
+  const backSizeStyle = useAnimatedStyle(() => ({
+    height: plateHeight.value + 8,
+    opacity: plateHeight.value > 0 ? 1 : 0,
   }));
 
   if (!visible || !notice) return null;
 
-  /*
-    An approval is the one notice the app can say better than the gateway can.
-    The push arrives titled "APPROVAL REQUIRED" -- a sign, not a sentence --
-    with a body of `external_directory: /etc/*`, which is the rule key the
-    permission card already translates. Same words here as on the card.
-  */
-  const approval = notice.kind === 'approval' ? readApprovalBody(notice.body) : null;
-  const approvalPhrase =
-    approval && approval.action && permissionActionPhrase[approval.action]
-      ? _(permissionActionPhrase[approval.action]!)
-      : '';
-  const { lead, suffix } = noticeTitleParts(
-    approval ? t`Approval required` : notice.title || t`Muqun`
-  );
-  const body = approval ? approvalPhrase : notice.body;
-  const detail = approval ? approval.subject : '';
   /** How many notices are waiting behind this one. */
   const waiting = items.length - 1;
-  const dismiss = () => useInAppNotifications.getState().dismiss(notice.id);
+  const dismiss = () => {
+    setSelectedId(items[(position + 1) % items.length]?.id ?? null);
+    useInAppNotifications.getState().dismiss(notice.id);
+  };
   // Dismiss the card captured by this gesture, even if new notices arrive.
   const swept = () => {
     void feedback('selection');
-    useInAppNotifications.getState().dismiss(notice.id);
+    dismiss();
   };
   const open = () => {
     if (!notice.route) return;
@@ -180,15 +180,14 @@ export function InAppNotificationHost() {
     .activeOffsetY(-DRAG_SLOP)
     .failOffsetY(DRAG_SLOP)
     .onUpdate((event) => {
+      if (dismissing.value) return;
       const offset = noticeDragOffset(event);
       dragX.value = offset.x;
       dragY.value = offset.y;
     })
     .onEnd((event) => {
-      const end = noticeSwipeEnd(event, {
-        width: plateWidth.value,
-        height: plateHeight.value,
-      });
+      if (dismissing.value) return;
+      const end = noticeSwipeEnd(event);
       if (!end.dismissed) {
         // Under the threshold the plate goes back where it was, carrying the
         // finger's own velocity into a critically damped landing.
@@ -196,14 +195,124 @@ export function InAppNotificationHost() {
         settleTo(dragY, 0, event.velocityY);
         return;
       }
-      // Past it, the plate leaves the way it was going and the store hears
-      // about it when the flight lands -- not before, or the card would be
-      // unmounted out from under its own animation.
-      settleTo(dragX, end.x, event.velocityX);
-      settleTo(dragY, end.y, event.velocityY, (finished) => {
+      // A short glide and fade replaces the full-screen throw. Ignore release
+      // velocity here so a fast flick cannot launch the card into the status bar.
+      dismissing.value = true;
+      const config = { duration: 160, easing: Easing.out(Easing.cubic) };
+      dragX.value = withTiming(end.x, config);
+      dragY.value = withTiming(end.y, config);
+      dragOpacity.value = withTiming(0, config, (finished) => {
         if (finished) runOnJS(swept)();
       });
     });
+
+  // Render real queued content with exactly the same presentation as the front.
+  const renderCard = (entry: InAppNotice, page: number, front: boolean) => {
+    /*
+    An approval is the one notice the app can say better than the gateway can.
+    The push arrives titled "APPROVAL REQUIRED" -- a sign, not a sentence --
+    with a body of `external_directory: /etc/*`, which is the rule key the
+    permission card already translates. Same words here as on the card.
+  */
+    const approval = entry.kind === 'approval' ? readApprovalBody(entry.body) : null;
+    const approvalPhrase =
+      approval && approval.action && permissionActionPhrase[approval.action]
+        ? _(permissionActionPhrase[approval.action]!)
+        : '';
+    const { lead, suffix } = noticeTitleParts(
+      approval ? t`Approval required` : entry.title || t`Muqun`
+    );
+    const body = approval ? approvalPhrase : entry.body;
+    const detail = approval ? approval.subject : '';
+    return (
+      <Animated.View
+        key={entry.id}
+        entering={front ? fadeInDown('short') : undefined}
+        accessibilityLiveRegion={front ? 'polite' : 'none'}
+        onLayout={
+          front
+            ? (event) => {
+                plateHeight.value = event.nativeEvent.layout.height;
+              }
+            : undefined
+        }
+        // Solid, not the theme's translucent surface. A notice floats over
+        // whatever screen is up -- header buttons, a transcript, the pages
+        // waiting behind it -- and a see-through plate let all of that
+        // show through its text. It is read for two seconds; it has to be
+        // readable for all of them.
+        style={[styles.card, { backgroundColor: colors.surfaceRaised }]}
+        testID={front ? 'in-app-notification' : 'in-app-notification-back'}>
+        {/* The glyph alone. A tinted circle around it is a second
+                  surface on a plate that is already one surface. */}
+        <Bell size={18} color={colors.primary} style={styles.glyph} />
+        <View
+          style={styles.content}
+          accessible
+          accessibilityActions={dismissAction}
+          onAccessibilityAction={onAccessibilityAction}>
+          <Text variant="bodySmall" weight="semibold" numberOfLines={1}>
+            {lead}
+            {suffix ? (
+              <Text variant="bodySmall" color={colors.textMuted}>
+                {' \u00b7 '}
+                {suffix}
+              </Text>
+            ) : null}
+          </Text>
+          {body ? (
+            <Text selectable variant="caption" color={colors.textMuted} numberOfLines={2}>
+              {body}
+            </Text>
+          ) : null}
+          {/* The path or the command, once, in the face the card gives
+                    it: an approval that does not name its subject is not an
+                    approval the reader can answer. */}
+          {detail ? (
+            <Text
+              selectable
+              color={colors.text}
+              numberOfLines={1}
+              style={[styles.detail, { fontFamily: mono }]}>
+              {detail}
+            </Text>
+          ) : null}
+        </View>
+        <View style={[styles.trailing, waiting > 0 ? styles.trailingStacked : null]}>
+          {/* One shared card surface; the page counter turns the deck. */}
+          {waiting > 0 ? (
+            <PressableScale
+              testID="in-app-notification-next"
+              accessibilityRole="button"
+              onPress={() => setSelectedId(items[(position + 1) % items.length]!.id)}
+              style={[styles.pill, { backgroundColor: surfaceBackground(colors.primarySubtle) }]}
+              accessibilityLabel={t`Next notification`}>
+              <Text variant="caption" color={colors.textMuted} style={styles.count}>
+                {page + 1} / {items.length}
+              </Text>
+            </PressableScale>
+          ) : null}
+          {entry.route ? (
+            <PressableScale
+              onPress={open}
+              accessibilityRole="button"
+              accessibilityLabel={t`Open`}
+              accessibilityActions={dismissAction}
+              onAccessibilityAction={onAccessibilityAction}
+              testID="in-app-notification-open"
+              style={styles.action}>
+              {/* Sentence case, and `caption` rather than the kit's
+                        `label`: `label` is uppercase, and this is a word the
+                        reader is asked to read, not a sign. */}
+              <Text variant="caption" weight="semibold" color={colors.primary}>
+                {t`Open`}
+              </Text>
+            </PressableScale>
+          ) : null}
+        </View>
+      </Animated.View>
+    );
+  };
 
   return (
     <View
@@ -212,110 +321,29 @@ export function InAppNotificationHost() {
       <View pointerEvents="box-none" style={styles.deck}>
         {[2, 1].map((depth) =>
           items.length > depth ? (
-            <View
+            <Animated.View
               key={depth}
               pointerEvents="none"
               accessible={false}
+              accessibilityElementsHidden
+              importantForAccessibility="no-hide-descendants"
               style={[
                 styles.backPage,
+                backSizeStyle,
                 {
-                  backgroundColor: colors.surfaceRaised,
-                  borderColor: colors.border,
                   transform: [{ translateY: depth * 6 }, { scaleX: 1 - depth * 0.035 }],
                 },
-              ]}
-            />
+              ]}>
+              {renderCard(
+                items[(position + depth) % items.length]!,
+                (position + depth) % items.length,
+                false
+              )}
+            </Animated.View>
           ) : null
         )}
         <GestureDetector gesture={swipe}>
-          <Animated.View style={dragStyle}>
-            <Animated.View
-              key={notice.id}
-              entering={fadeInDown('short')}
-              accessibilityLiveRegion="polite"
-              onLayout={(event) => {
-                plateWidth.value = event.nativeEvent.layout.width;
-                plateHeight.value = event.nativeEvent.layout.height;
-              }}
-              // Solid, not the theme's translucent surface. A notice floats over
-              // whatever screen is up -- header buttons, a transcript, the pages
-              // waiting behind it -- and a see-through plate let all of that
-              // show through its text. It is read for two seconds; it has to be
-              // readable for all of them.
-              style={[styles.card, { backgroundColor: colors.surfaceRaised }]}
-              testID="in-app-notification">
-              {/* The glyph alone. A tinted circle around it is a second
-                  surface on a plate that is already one surface. */}
-              <Bell size={18} color={colors.primary} style={styles.glyph} />
-              <View
-                style={styles.content}
-                accessible
-                accessibilityActions={dismissAction}
-                onAccessibilityAction={onAccessibilityAction}>
-                <Text variant="bodySmall" weight="semibold" numberOfLines={1}>
-                  {lead}
-                  {suffix ? (
-                    <Text variant="bodySmall" color={colors.textMuted}>
-                      {' \u00b7 '}
-                      {suffix}
-                    </Text>
-                  ) : null}
-                </Text>
-                {body ? (
-                  <Text selectable variant="caption" color={colors.textMuted} numberOfLines={2}>
-                    {body}
-                  </Text>
-                ) : null}
-                {/* The path or the command, once, in the face the card gives
-                    it: an approval that does not name its subject is not an
-                    approval the reader can answer. */}
-                {detail ? (
-                  <Text
-                    selectable
-                    color={colors.text}
-                    numberOfLines={1}
-                    style={[styles.detail, { fontFamily: mono }]}>
-                    {detail}
-                  </Text>
-                ) : null}
-              </View>
-              <View style={[styles.trailing, waiting > 0 ? styles.trailingStacked : null]}>
-                {/* One shared card surface; the page counter turns the deck. */}
-                {waiting > 0 ? (
-                  <PressableScale
-                    testID="in-app-notification-next"
-                    accessibilityRole="button"
-                    onPress={() => setSelectedId(items[(position + 1) % items.length]!.id)}
-                    style={[
-                      styles.pill,
-                      { backgroundColor: surfaceBackground(colors.primarySubtle) },
-                    ]}
-                    accessibilityLabel={t`Next notification`}>
-                    <Text variant="caption" color={colors.textMuted} style={styles.count}>
-                      {position + 1} / {items.length}
-                    </Text>
-                  </PressableScale>
-                ) : null}
-                {notice.route ? (
-                  <PressableScale
-                    onPress={open}
-                    accessibilityRole="button"
-                    accessibilityLabel={t`Open`}
-                    accessibilityActions={dismissAction}
-                    onAccessibilityAction={onAccessibilityAction}
-                    testID="in-app-notification-open"
-                    style={styles.action}>
-                    {/* Sentence case, and `caption` rather than the kit's
-                        `label`: `label` is uppercase, and this is a word the
-                        reader is asked to read, not a sign. */}
-                    <Text variant="caption" weight="semibold" color={colors.primary}>
-                      {t`Open`}
-                    </Text>
-                  </PressableScale>
-                ) : null}
-              </View>
-            </Animated.View>
-          </Animated.View>
+          <Animated.View style={dragStyle}>{renderCard(notice, position, true)}</Animated.View>
         </GestureDetector>
       </View>
     </View>
@@ -335,11 +363,10 @@ const styles = StyleSheet.create({
   deck: { width: '100%', maxWidth: 480 },
   backPage: {
     position: 'absolute',
-    top: 8,
-    bottom: 0,
+    top: 0,
     left: 0,
     right: 0,
-    borderWidth: StyleSheet.hairlineWidth,
+    overflow: 'hidden',
     borderRadius: appChrome.radius.noticeBanner,
     borderCurve: 'continuous',
   },

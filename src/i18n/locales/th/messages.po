@@ -5466,3 +5466,11 @@ msgstr "ข้อความของคุณ"
 #: src/components/app-drawer-content.tsx
 msgid "Your paired gateways"
 msgstr "Gateway ที่คุณจับคู่ไว้"
+
+#: src/components/agent-model-sheet.tsx
+msgid "Recently used"
+msgstr "ใช้ล่าสุด"
+
+#: src/components/agent-model-sheet.tsx
+msgid "Could not load models"
+msgstr "ไม่สามารถโหลดโมเดลได้"
