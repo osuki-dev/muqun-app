@@ -172,6 +172,7 @@ import { ThinkingIndicator } from './agent-thinking-indicator';
 import { AGENT_TYPE } from '@/constants/agent-type';
 import { gatewayAuthHeaders, gatewayUrl } from '@/lib/gateway-client';
 import { appChrome } from '@/constants/appearance';
+import { useTranscriptPlate } from '@/hooks/use-transcript-plate';
 
 /**
  * How many history timeline items the workbench reveals per page. The gateway
@@ -2855,6 +2856,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
    * offered a switch to a model id (`opencode/union-alpha`) that appears
    * nowhere else in this app or in any catalog it fetches.
    */
+  const statusPlate = useTranscriptPlate();
   const statusNotice = useMemo(() => {
     const status = sessionInfo?.status;
     if (status === 'failed') {
@@ -2994,10 +2996,18 @@ export const AgentWorkbench = memo(function AgentWorkbench({
             }}
             style={[
               styles.statusNotice,
-              {
-                backgroundColor: surfaceBackground(withAlpha(statusNotice.tone, 0.1)),
-                borderColor: withAlpha(statusNotice.tone, 0.35),
-              },
+              // The transcript's own plate, like every other line in it. This
+              // was a tenth-strength wash of the status colour, which over an
+              // artwork pack is a wash of nothing: "The turn failed" was dark
+              // text on a painting, in a bar that matched no other element on
+              // the screen. The status is still said in colour -- by the dot
+              // and by the hairline -- and the words stand on a plate that is
+              // proven against the pack's text.
+              statusPlate,
+              { borderColor: withAlpha(statusNotice.tone, 0.45) },
+              // A bare label hugs, like the model and thought pills above it; a
+              // notice carrying OpenCode's sentence, or a button, is a block.
+              statusNotice.detail || statusNotice.action ? null : styles.statusNoticeHug,
             ]}>
             <StatusDot color={statusNotice.tone} filled size={7} />
             <View style={styles.statusNoticeText}>
@@ -3060,6 +3070,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     handlePermissionDecision,
     handleFormSubmit,
     scrollFooterAboveKeyboard,
+    statusPlate,
     surfaceBackground,
     t,
     theme.colors,
@@ -4156,8 +4167,14 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     marginVertical: 4,
   },
+  statusNoticeHug: {
+    alignSelf: 'flex-start',
+    maxWidth: '100%',
+  },
+  // Shrinks, never grows: inside a plate that hugs, a `flex: 1` column measures
+  // to nothing and the row collapses to its dot.
   statusNoticeText: {
-    flex: 1,
+    flexShrink: 1,
     minWidth: 0,
     gap: 2,
   },

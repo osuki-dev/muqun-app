@@ -261,10 +261,14 @@ export const AgentSessionsSheet = memo(function AgentSessionsSheet({
   );
   const segments = useMemo(() => {
     const options: { label: string; value: string }[] = [];
-    if (activeDirectory) options.push({ label: currentWorkspaceName, value: CURRENT_WORKSPACE });
+    // Named for what it filters to, not for the project: "app | All projects"
+    // read as two unrelated things, and a reader who did not already know that
+    // `app` was a project name had no way to tell what the first segment did.
+    // The project's name is in the caption above, where a name belongs.
+    if (activeDirectory) options.push({ label: t`This project`, value: CURRENT_WORKSPACE });
     options.push({ label: t`All projects`, value: ALL_WORKSPACES });
     return options;
-  }, [activeDirectory, currentWorkspaceName, t]);
+  }, [activeDirectory, t]);
 
   /**
    * The model a session runs, named the way the reader chose it.
@@ -503,7 +507,11 @@ export const AgentSessionsSheet = memo(function AgentSessionsSheet({
     <SheetScene
       testID="agent-sessions-sheet"
       title={t`Sessions`}
-      caption={t`${sessions.length} on this host`}
+      caption={
+        activeDirectory
+          ? t`${currentWorkspaceName} · ${sessions.length} on this host`
+          : t`${sessions.length} on this host`
+      }
       header={
         <>
           <SheetSceneSearch

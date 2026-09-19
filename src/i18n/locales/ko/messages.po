@@ -185,6 +185,11 @@ msgstr "{commandName} · 보내는 대상"
 msgid "{count, plural, one {# result} other {# results}}"
 msgstr "{count, plural, other {결과 #개}}"
 
+#. placeholder {0}: sessions.length
+#: src/components/agent-sessions-sheet.tsx
+msgid "{currentWorkspaceName} · {0} on this host"
+msgstr "{currentWorkspaceName} · 이 호스트에 {0}개"
+
 #. placeholder {0}: items.length
 #: src/components/agent-tasks-sheet.tsx
 msgid "{done} of {0} done"

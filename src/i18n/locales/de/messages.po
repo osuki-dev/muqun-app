@@ -185,6 +185,11 @@ msgstr "{commandName} · senden an"
 msgid "{count, plural, one {# result} other {# results}}"
 msgstr "{count, plural, one {# Ergebnis} other {# Ergebnisse}}"
 
+#. placeholder {0}: sessions.length
+#: src/components/agent-sessions-sheet.tsx
+msgid "{currentWorkspaceName} · {0} on this host"
+msgstr "{currentWorkspaceName} · {0} auf diesem Host"
+
 #. placeholder {0}: items.length
 #: src/components/agent-tasks-sheet.tsx
 msgid "{done} of {0} done"
