@@ -104,12 +104,107 @@ export const STAGGER = {
   row: 18,
 } as const;
 
-/** Muqun navigation: stable text, a brief reveal, and a small title arrival. */
+/** Muqun navigation: fluid cyber-mechanical transitions, depth reveals, and responsive header arrival. */
 export const NAVIGATION_MOTION = {
-  pageMs: 180,
-  headerMs: 160,
+  pageMs: 240,
+  pageScale: 1.04,
+  depthScale: 0.975,
+  terminalScale: 0.985,
+  agentScale: 0.97,
+  headerMs: 180,
   headerDistance: 4,
+  modalMs: 260,
 } as const;
+
+/**
+ * The two re-skin transitions, which are longer than anything else the app
+ * animates and are allowed to be.
+ *
+ * `long` is 400 ms, the length of a page transition -- a screen replacing
+ * another screen. These replace the *skin of every screen at once*, behind a
+ * photograph of the old one, and the whole reason they exist is that the
+ * reader should be able to watch the change happen rather than find it has
+ * happened. At 400 ms a front crossing a phone is moving fast enough to read
+ * as a wipe; the extra beats are what make it a wash.
+ *
+ * They are the app's own numbers for the same reason `NAVIGATION_MOTION`'s
+ * are, and they are here rather than at the call site for the same reason
+ * too: the two transitions are one family and retuning them should be one
+ * edit. The reduced-motion fallback is not here because it has a token --
+ * `DURATION.short` -- and a dissolve with no travel in it is exactly what that
+ * token is for.
+ *
+ * See `src/components/reskin-transition.tsx`.
+ */
+export const RESKIN_MOTION = {
+  /** The theme wash, from the near edge to past the far corner. */
+  washMs: 700,
+  /**
+   * How far the snapshot is carried away as the wash takes it, as a scale.
+   *
+   * A composited transform on the canvas, not a matrix inside the sampler --
+   * the launch opening's performance lesson, applied before it had to be
+   * learned twice. Two percent: enough that the old screen is perceptibly
+   * receding rather than sitting still while a hole is cut in it, small
+   * enough that nothing about the frozen interface looks wrong.
+   */
+  washParallax: 1.02,
+  /** How far the wash's watercolour edge evolves as it travels, in noise units. */
+  washDrift: 0.3,
+  /** The font halftone, from the tapped row out past the last corner. */
+  halftoneMs: 600,
+} as const;
+
+/**
+ * A sheen crossing a control that leads somewhere alive.
+ *
+ * One pass of light, then a long rest: the pass says "this is live", the rest
+ * keeps it from becoming the thing on the screen that will not stop moving.
+ * The rest is several times the pass on purpose -- a control that shimmers
+ * continuously is an advertisement.
+ *
+ * See `src/components/new-task-action.tsx`.
+ */
+export const SHEEN_MOTION = {
+  /** One crossing, edge to edge. */
+  sweepMs: 1100,
+  /** Between crossings. */
+  restMs: 4200,
+  /** How far the glyph swells as the light crosses it, as a scale. */
+  swell: 1.08,
+} as const;
+
+/**
+ * A line too long for its row, read by travelling rather than by wrapping.
+ *
+ * `speed` is points per second, so a long title takes longer than a short one
+ * and both move at the pace of a finger tracing the line -- a fixed duration
+ * would make long titles race. The holds are what make it readable: the start
+ * of a title is what identifies it, so the line rests there longest.
+ *
+ * See `src/components/marquee-text.tsx`.
+ */
+export const MARQUEE_MOTION = {
+  /** Points per second. */
+  speed: 28,
+  /** At the start of the line, before it sets off. */
+  holdStartMs: 1800,
+  /** At the end, before it comes back. */
+  holdEndMs: 1200,
+} as const;
+
+/**
+ * The two-step confirm: how long an armed action waits for its second tap.
+ *
+ * Long enough to read one sentence about what will be lost and decide, short
+ * enough that an armed Delete is not still lying in wait when the reader comes
+ * back to the list a minute later. The bar that drains across the row is this
+ * same number drawn, which is why it lives here and not in the component: a
+ * window is a duration the reader watches.
+ *
+ * See `src/components/two-step-action.tsx`.
+ */
+export const CONFIRM_WINDOW_MS = 4000;
 
 /**
  * How far a revealing element travels, in points.
@@ -126,6 +221,37 @@ export const RISE_DISTANCE = 6;
  * a heartbeat at the edge of vision, not as something asking to be watched.
  */
 export const PULSE_PERIOD = 2600;
+
+/**
+ * One pass of a segment travelling an indeterminate progress track.
+ *
+ * A period, like `PULSE_PERIOD` and `LogoLoader`'s breath -- not a transition
+ * between two states -- so it is longer than any token here and does not
+ * belong to one. It is the length of a wait that has no length: slow enough
+ * that the segment reads as one object crossing the row rather than a flicker,
+ * quick enough that a reader can tell in one glance that it is still moving.
+ */
+export const TRAVEL_PERIOD = 1100;
+
+/**
+ * The travelling segment's own timing: linear, and that is the point.
+ *
+ * Every other timing in this file is on the system ease-out, because every
+ * other one has somewhere to arrive. A loop does not. An ease-out applied to a
+ * pass would decelerate into the end of each one, so the segment would creep
+ * as it left the track and then reappear at speed -- which reads as the
+ * download stalling once a second rather than as a wait continuing.
+ *
+ * A worklet for the same reason `timing` is: see the note there.
+ */
+export function travelTiming(): WithTimingConfig {
+  'worklet';
+  return {
+    duration: TRAVEL_PERIOD,
+    easing: Easing.linear,
+    reduceMotion: ReduceMotion.System,
+  };
+}
 
 /**
  * How far a status dot overshoots when the fact behind it changes.
@@ -248,10 +374,24 @@ export const SETTLE: WithSpringConfig = {
  * A worklet, because the only place it is ever called from is a pan gesture's
  * `onEnd` -- see the note on `timing` for what happens to a plain function
  * captured by one.
+ *
+ * `onRest` is for the throw that ends in something other than a rest: the
+ * notification banner flung off the top of the screen is gone once it lands,
+ * and the store only hears about it when the flight is over. It runs on the UI
+ * runtime with the spring, so a caller that needs the JS side wraps its own
+ * work in `runOnJS`. `finished` is false when something interrupted the
+ * spring -- a second drag, an unmount -- and a caller that removes the thing
+ * being animated must check it, or a cancelled flight dismisses a notice the
+ * reader caught and put back.
  */
-export function settleTo(value: SharedValue<number>, to: number, velocity = 0) {
+export function settleTo(
+  value: SharedValue<number>,
+  to: number,
+  velocity = 0,
+  onRest?: (finished?: boolean) => void
+) {
   'worklet';
-  value.value = withSpring(to, { ...SETTLE, velocity });
+  value.value = withSpring(to, { ...SETTLE, velocity }, onRest);
 }
 
 /** Compatibility with @osuki-dev/ui 1.0.1 Button, not a general spring preset. */
@@ -337,3 +477,63 @@ export const listLayout = (duration: DurationToken | PresetToken | number = 'sho
   LinearTransition.duration(resolveDuration(duration))
     .easing(EASE_OUT)
     .reduceMotion(ReduceMotion.System);
+
+/**
+ * Route scene archetypes for targeted cyber-mechanical navigation:
+ * - 'terminal': preserves text grid geometry with micro optical depth (scale 0.985 -> 1.0, opacity 0.3 -> 1.0)
+ * - 'agent': neural telemetry aperture reveal (scale 0.97 -> 1.0, translateY 4 -> 0, opacity 0.2 -> 1.0)
+ * - 'modal': cassette tray upward dock (translateY 16 -> 0, opacity 0.2 -> 1.0)
+ * - 'plain': crisp optical aperture focus (scale 0.975 -> 1.0, opacity 0.25 -> 1.0)
+ */
+export type RouteSceneType = 'terminal' | 'agent' | 'modal' | 'plain';
+
+export const routeSceneEnter = (sceneType: RouteSceneType | number = 'plain', delay = 0) => {
+  const resolvedType: RouteSceneType = typeof sceneType === 'number' ? 'plain' : sceneType;
+  const resolvedDelay = typeof sceneType === 'number' ? sceneType : delay;
+
+  if (resolvedType === 'terminal') {
+    return ZoomIn.duration(NAVIGATION_MOTION.pageMs)
+      .delay(resolvedDelay)
+      .easing(EASE_OUT)
+      .reduceMotion(ReduceMotion.System)
+      .withInitialValues({
+        transform: [{ scale: NAVIGATION_MOTION.terminalScale }],
+      });
+  }
+
+  if (resolvedType === 'agent') {
+    return FadeInDown.duration(NAVIGATION_MOTION.pageMs)
+      .delay(resolvedDelay)
+      .easing(EASE_OUT)
+      .reduceMotion(ReduceMotion.System)
+      .withInitialValues({
+        opacity: 0.2,
+        transform: [{ translateY: 4 }],
+      });
+  }
+
+  if (resolvedType === 'modal') {
+    return FadeInDown.duration(NAVIGATION_MOTION.modalMs)
+      .delay(resolvedDelay)
+      .easing(EASE_OUT)
+      .reduceMotion(ReduceMotion.System)
+      .withInitialValues({
+        opacity: 0.2,
+        transform: [{ translateY: 16 }],
+      });
+  }
+
+  return ZoomIn.duration(NAVIGATION_MOTION.pageMs)
+    .delay(resolvedDelay)
+    .easing(EASE_OUT)
+    .reduceMotion(ReduceMotion.System)
+    .withInitialValues({
+      transform: [{ scale: NAVIGATION_MOTION.depthScale }],
+    });
+};
+
+/**
+ * Modal scene entrance layout animation for fullScreenModal tools.
+ * Elegant upward slide with the design system ease-out.
+ */
+export const modalSceneEnter = (delay = 0) => routeSceneEnter('modal', delay);

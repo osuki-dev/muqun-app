@@ -1,13 +1,17 @@
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { Trans, useLingui } from '@lingui/react/macro';
-import { Text, useThemeTokens } from '@osuki-dev/ui';
+import { useThemeTokens } from '@osuki-dev/ui';
+import { Text } from '@/components/text';
 import { ChevronDown, ChevronRight, FileText } from 'lucide-react-native';
 import { EnrichedMarkdownText, type MarkdownStyle } from 'react-native-enriched-markdown';
 import { memo, useMemo } from 'react';
 import { ActivityIndicator, Linking, ScrollView, StyleSheet, View } from 'react-native';
 
+import { useMarkdownFonts, useMonoFontFamily } from '@/hooks/use-user-fonts';
 import { createMarkdownStyle } from '@/lib/markdown-style';
 import { PressableScale } from '@/components/pressable-scale';
+import { InlineDiffRows } from '@/components/diff-rows';
+import { diffRowsForFence } from '@/lib/agent-diff-rows';
 import { firstLine, type PaneChatItem, type PaneChatToolBlock } from '@/lib/pane-chat';
 import type { PanePart, PanePartStatus } from '@/lib/pane-parts';
 import { isSafeExternalLink } from '@/lib/safe-link';
@@ -94,13 +98,14 @@ export function usePaneChatColors(): PaneChatColors {
  */
 export function usePaneChatMarkdownStyle(): MarkdownStyle {
   const theme = useThemeTokens();
+  const fonts = useMarkdownFonts();
   return useMemo(() => {
-    const base = createMarkdownStyle(theme.colors);
+    const base = createMarkdownStyle(theme.colors, fonts);
     return {
       ...base,
       thematicBreak: { color: 'transparent', height: 0, marginTop: 0, marginBottom: 0 },
     };
-  }, [theme.colors]);
+  }, [theme.colors, fonts]);
 }
 
 /** What the user said, on the right, as a bubble. */
@@ -220,6 +225,7 @@ export const PaneChatPartRow = memo(function PaneChatPartRow({
 }) {
   const surfaceBackground = useSurfaceBackground();
   const { t } = useLingui();
+  const mono = useMonoFontFamily();
   switch (part.type) {
     case 'text':
       return (
@@ -297,7 +303,7 @@ export const PaneChatPartRow = memo(function PaneChatPartRow({
       // has text to show.
       return (
         <View style={styles.agentAlign}>
-          <Text selectable style={[styles.mono, { color: colors.muted }]}>
+          <Text selectable style={[styles.mono, { color: colors.muted, fontFamily: mono }]}>
             {part.fallback_text}
           </Text>
         </View>
@@ -323,6 +329,7 @@ const PaneChatToolCard = memo(function PaneChatToolCard({
 }) {
   const surfaceBackground = useSurfaceBackground();
   const { t } = useLingui();
+  const mono = useMonoFontFamily();
   const summary = firstLine(block.input);
   const Chevron = open ? ChevronDown : ChevronRight;
 
@@ -352,13 +359,13 @@ const PaneChatToolCard = memo(function PaneChatToolCard({
       {open ? (
         <View style={[styles.toolBody, { borderTopColor: colors.border }]}>
           {block.input && block.input !== summary ? (
-            <Text selectable style={[styles.mono, { color: colors.muted }]}>
+            <Text selectable style={[styles.mono, { color: colors.muted, fontFamily: mono }]}>
               {block.input}
             </Text>
           ) : null}
           {block.result.length > 0 ? (
             <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              <Text selectable style={[styles.mono, { color: colors.text }]}>
+              <Text selectable style={[styles.mono, { color: colors.text, fontFamily: mono }]}>
                 {block.result.join('\n')}
               </Text>
             </ScrollView>
@@ -405,8 +412,8 @@ const TodoCard = memo(function TodoCard({
         styles.agentAlign,
         { backgroundColor: surfaceBackground(colors.surfaceRaised) },
       ]}>
-      {part.items.map((item, index) => (
-        <View key={`${index}-${item.text}`} style={styles.todoItem}>
+      {part.items.map((item, itemPosition) => (
+        <View key={`todo-${itemPosition}-${item.text}`} style={styles.todoItem}>
           <View
             style={[
               styles.todoBox,
@@ -437,8 +444,12 @@ const DiffRow = memo(function DiffRow({
   part: Extract<PanePart, { type: 'diff' }>;
   colors: PaneChatColors;
 }) {
+  const theme = useThemeTokens();
   const surfaceBackground = useSurfaceBackground();
-  const lines = useMemo(() => part.hunks.flatMap((hunk) => hunk.split('\n')), [part.hunks]);
+  // The fourth hand-rolled patch painter in this tree is gone: the terminal
+  // transcript draws the same rows, with the same gutter and the same greens
+  // and reds, as the changes sheet and the agent timeline.
+  const rows = useMemo(() => diffRowsForFence(part.hunks.join('\n')), [part.hunks]);
 
   return (
     <View
@@ -454,33 +465,12 @@ const DiffRow = memo(function DiffRow({
       ) : null}
       {/* Never wrapped: a re-wrapped diff line no longer lines up with the one
           above it, which is the only thing a diff is read for. */}
-      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-        <View>
-          {lines.map((line, index) => {
-            const marker = line.charAt(0);
-            const added = marker === '+';
-            const removed = marker === '-';
-            return (
-              <Text
-                key={`${index}-${line}`}
-                selectable
-                style={[
-                  styles.diffLine,
-                  {
-                    color: added ? colors.added : removed ? colors.removed : colors.muted,
-                    backgroundColor: added
-                      ? colors.addedBackground
-                      : removed
-                        ? colors.removedBackground
-                        : 'transparent',
-                  },
-                ]}>
-                {line || ' '}
-              </Text>
-            );
-          })}
-        </View>
-      </ScrollView>
+      <InlineDiffRows
+        rows={rows}
+        colors={colors}
+        gutterFill={theme.colors.surface}
+        headerFill={theme.colors.surfaceRaised}
+      />
     </View>
   );
 });
@@ -550,8 +540,13 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: 0,
   },
+  // A tool call's input and its captured output: both are payload, read the
+  // way a terminal is read, so both follow the mono slot. The family used to
+  // be the literal `'monospace'` here and therefore could never be the face
+  // the reader installed -- the fenced code in the markdown directly above
+  // these rows changed over, and these did not. Merged in at each render site,
+  // because a `StyleSheet.create` object cannot call a hook.
   mono: {
-    fontFamily: 'monospace',
     fontSize: 12,
     lineHeight: 17,
   },
@@ -665,12 +660,6 @@ const styles = StyleSheet.create({
   diffFile: {
     paddingHorizontal: 12,
     paddingBottom: 4,
-  },
-  diffLine: {
-    fontFamily: 'monospace',
-    fontSize: 11.5,
-    lineHeight: 17,
-    paddingHorizontal: 12,
   },
   tableCard: {
     borderRadius: 14,

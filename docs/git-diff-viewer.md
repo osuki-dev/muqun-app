@@ -371,11 +371,13 @@ language)` at `cpp/highlight/CodeBlockHighlighter.cpp:171`, which returns bare
    `requestHeightUpdate` → `YGNodeMarkDirty` a frame after mount, so a row
    self-resizes asynchronously: with `getFixedItemSize` that is a visible jump, and
    without it the list re-measures constantly. **How large a block is safe**: our
-   own measurements through this component (`src/components/asset-viewer.tsx:129-176`)
-   show the iOS path is quadratic — 101 ms at 20 KiB, 806 ms at 60 KiB, 3 746 ms at
-   128 KiB — and that is why the asset viewer gates at
-   `RENDER_MAX_BYTES = 64 * 1024`. A hunk is typically well under 4 KiB, so _one_
-   is cheap; the cost is that a screenful is five or ten of them, each re-parsing
+   own measurements through this component (the note above `HIGHLIGHT_MAX_CHARS` in
+   `src/components/asset-viewer.tsx`) show the iOS path is quadratic — 101 ms at
+   20 KiB, 806 ms at 60 KiB, 3 746 ms at 128 KiB — and that is why the asset viewer
+   stops handing whole files to this renderer at `HIGHLIGHT_MAX_CHARS = 64 * 1024`
+   and draws larger ones as virtualized monospace rows instead
+   (`src/components/code-lines-view.tsx`). A hunk is typically well under 4 KiB, so
+   _one_ is cheap; the cost is that a screenful is five or ten of them, each re-parsing
    on every recycle, against a shared 512-entry measurement cache. Safe ceiling if
    this route were ever taken: ~8 KiB per block, non-recycled, with a hard cap on
    simultaneously mounted blocks — which is most of a virtualized list's job done

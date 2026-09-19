@@ -1,0 +1,26 @@
+# Native agent-device action sections; suite.json composes guards and includes.
+# settings-guide
+
+# section open-settings
+press "${TARGET}"
+
+# section settings-arrived
+is visible "${TARGET}"
+
+# section seek
+# The row is in ABOUT, which is the last card on the page and below the fold on
+# every phone -- and the page does not even build ABOUT until it has been idle
+# once (`deep` in `settings.tsx`), so the first flick is also what proves the
+# deferred half of the screen arrived at all. A flick rather than a pan: the
+# target is a full two-line row, so an overshoot still leaves it in the tree for
+# the scroll-to-visible loop to come back to. The 13pt instrument labels in
+# `flows/settings.ad` are the case that needs `gesture pan`; this is not one.
+scroll down --pixels 320
+
+# section row-visible
+# Asserted and not pressed. The row hands the reader to a browser, and a flow
+# that taps it leaves the app under test -- on a shared QA device, with no way
+# back that does not depend on whatever browser the image happens to have.
+# What this flow owns is that Settings offers the guide; that the address is an
+# https page on muqun.dev is `src/constants/__tests__/links.test.ts`.
+is visible "${TARGET}"

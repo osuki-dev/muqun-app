@@ -24,6 +24,7 @@ import { useThemeTokens, useToast } from '@osuki-dev/ui';
 import { useHasThemeArtwork } from '@/components/theme-artwork';
 import { Button } from '@/components/themed-button';
 import { Trans, useLingui } from '@lingui/react/macro';
+import { ChevronUp } from 'lucide-react-native';
 
 import { LogoLoader } from '@/components/logo-loader';
 import { Asset } from 'expo-asset';
@@ -105,7 +106,11 @@ import {
 } from '@/terminal/touch-input';
 import { readTerminalSurface } from '@/terminal/surface';
 import { useTerminalTheme, useThemePack } from '@/hooks/use-theme-pack';
+import { useUserFontProblem } from '@/hooks/use-user-fonts';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
+import { glyphMetrics, renderingIdentity } from '@/terminal/glyph-cache';
+import { useAppSettings } from '@/stores/app-settings';
+import { slotFontFamily, userFontUri } from '@/theme/user-fonts';
 import {
   paintsCellBackground,
   blendedTerminalFill,
@@ -491,10 +496,62 @@ export function SkiaTerminal({
   // from rather than only the one the app is wearing.
   const terminalTheme = useTerminalTheme();
   const themePack = useThemePack();
-  const [fontUri, setFontUri] = useState<string | null>(null);
+  /**
+   * The reader's monospace face, where they have one that registered cleanly.
+   *
+   * `userFontUri` rejoins the stored relative path with today's documents
+   * directory; the launch registration has already checked the file is there,
+   * and a slot it could not register is skipped here rather than handed to
+   * `useFont` as a URI to nothing.
+   *
+   * The bundled JetBrains Mono is never removed and is never merely a default:
+   * it is the floor this falls back to when there is no slot, when the slot
+   * failed to register, and when Skia rejects the reader's file at load time.
+   * A terminal with no typeface draws nothing at all.
+   */
+  const monoFontSlot = useAppSettings((state) => state.monoFont);
+  const monoFontProblem = useUserFontProblem('mono');
+  /**
+   * The family the canvas's two React Native runs are set in.
+   *
+   * `terminalFontFamily` is a key into the Skia `TypefaceFontProvider` below
+   * and is not a name React Native can resolve -- nothing registers
+   * `'JetBrainsMono Nerd Font Mono'` with the platform's font manager, so the
+   * font-error line and the "jump to latest" pill have been quietly falling
+   * back to the system face since they were written. `MuqunUserMono` *is* a
+   * registered name, because that is what `Font.loadAsync` was given, so the
+   * reader's face reaches these two; without one they take `'monospace'`,
+   * which is what they meant all along.
+   */
+  const chromeFontFamily = monoFontProblem
+    ? 'monospace'
+    : (slotFontFamily(monoFontSlot, 'mono') ?? 'monospace');
+  const monoFontUri = useMemo(
+    () => (monoFontProblem ? null : userFontUri(monoFontSlot)),
+    [monoFontProblem, monoFontSlot]
+  );
+  const [monoFontRejected, setMonoFontRejected] = useState(false);
+  // A different file is a fresh chance: a rejection belongs to the URI that
+  // earned it, not to the slot for the rest of the session.
+  useEffect(() => setMonoFontRejected(false), [monoFontUri]);
+  const [bundledFontUri, setBundledFontUri] = useState<string | null>(null);
+  const userFontUriInUse = monoFontRejected ? null : monoFontUri;
+  const fontUri = userFontUriInUse ?? bundledFontUri;
   const [fontError, setFontError] = useState<string | null>(null);
   const [following, setFollowing] = useState(true);
-  const loadedFont = useFont(fontUri, fontSize, (error) => setFontError(error.message));
+  const loadedFont = useFont(fontUri, fontSize, (error) => {
+    // A face the reader installed that Skia will not load here -- it passed the
+    // probe at install time, so this is a file that has since been corrupted or
+    // a build whose Skia disagrees -- drops back to the bundled font instead of
+    // leaving the reader with a blank canvas and a message. The error surfaces
+    // only when the *bundled* font is the one that failed, which is a broken
+    // app rather than a bad choice.
+    if (userFontUriInUse && fontUri === userFontUriInUse) {
+      setMonoFontRejected(true);
+      return;
+    }
+    setFontError(error.message);
+  });
   // Every measurement in this file -- the cell advance, each glyph's advance --
   // has to be the font's *real* advance, not the hinted one. An SkFont reports
   // integer-rounded advances unless linear metrics are on, and rounding a 0.6em
@@ -760,6 +817,7 @@ export function SkiaTerminal({
       // earlier output.
       const top = verticalPadding + (plan.startRow - plan.overhang) * lineHeight;
       return {
+        id: `chunk-${plan.index}-${plan.key}`,
         picture,
         transform: [{ translateY: top }],
         // Group clips apply after the group's own transform (saveCTM concats the
@@ -824,6 +882,12 @@ export function SkiaTerminal({
       sweepFrame.current = chunkCache.retiredCount > 0 ? requestAnimationFrame(sweep) : null;
     };
     sweepFrame.current = requestAnimationFrame(sweep);
+    return () => {
+      if (sweepFrame.current !== null) {
+        cancelAnimationFrame(sweepFrame.current);
+        sweepFrame.current = null;
+      }
+    };
   }, [chunkCache, chunkFrame, headBox]);
 
   // Same native-memory story for the font provider: a font-size change rebuilds
@@ -1092,7 +1156,7 @@ export function SkiaTerminal({
       .then((asset) => {
         const uri = asset.localUri;
         if (!uri) throw new Error('The bundled terminal font has no local URI.');
-        if (active) setFontUri(uri);
+        if (active) setBundledFontUri(uri);
       })
       .catch((error: unknown) => {
         if (active) {
@@ -2927,7 +2991,7 @@ export function SkiaTerminal({
         <Canvas opaque={canvasIsOpaque} style={styles.canvas}>
           <Fill color={canvasFill} />
           <Group transform={contentTransform}>
-            {chunkDraws.map((chunk, index) => (
+            {chunkDraws.map((chunk) => (
               // A block records its rows from its own first row down and is
               // placed by this transform, which is what lets a recording outlive
               // the rows underneath it scrolling: a streaming pane re-draws the
@@ -2939,7 +3003,7 @@ export function SkiaTerminal({
               // The key is positional on purpose: these are interchangeable
               // siblings, and keying by content would collide the moment two
               // blocks held the same rows.
-              <Group key={index} clip={chunk.clip} transform={chunk.transform}>
+              <Group key={chunk.id} clip={chunk.clip} transform={chunk.transform}>
                 <Picture picture={chunk.picture} />
               </Group>
             ))}
@@ -2950,9 +3014,9 @@ export function SkiaTerminal({
               the text it is describing stays readable through it -- the reader
               is checking what they grabbed.
             */}
-            {highlightRects.map((highlight, index) => (
+            {highlightRects.map((highlight) => (
               <Rect
-                key={index}
+                key={`hl-${highlight.x}-${highlight.y}-${highlight.width}-${highlight.height}`}
                 x={highlight.x}
                 y={highlight.y}
                 width={highlight.width}
@@ -2994,10 +3058,15 @@ export function SkiaTerminal({
             },
             pullIndicatorStyle,
           ]}>
-          {loadingEarlier ? <ActivityIndicator size={12} color={theme.colors.primary} /> : null}
-          <Text style={[styles.historyIndicatorText, { color: theme.colors.textMuted }]}>
-            {loadingEarlier ? t`Loading earlier output…` : t`Pull for earlier output`}
-          </Text>
+          {/* The gesture explains itself: the reader is already pulling, and
+              a pill that says "pull for earlier output" while they are pulling
+              is a caption on their own hand. What is worth showing is that the
+              pull was heard, which is the mark alone. */}
+          {loadingEarlier ? (
+            <ActivityIndicator size={12} color={theme.colors.primary} />
+          ) : (
+            <ChevronUp size={13} color={theme.colors.textMuted} />
+          )}
         </Animated.View>
       ) : null}
       {/*
@@ -3066,7 +3135,11 @@ export function SkiaTerminal({
                 borderColor: theme.colors.border,
               },
             ]}>
-            <Text style={[styles.latestButtonText, { color: theme.colors.text }]}>
+            <Text
+              style={[
+                styles.latestButtonText,
+                { color: theme.colors.text, fontFamily: chromeFontFamily },
+              ]}>
               ↓ <Trans>Latest</Trans>
             </Text>
           </PressableScale>
@@ -3084,7 +3157,13 @@ export function SkiaTerminal({
       */}
       {!nerdFont && fontError ? (
         <View pointerEvents="none" style={styles.empty}>
-          <Text style={[styles.emptyText, { color: theme.colors.textSubtle }]}>{fontError}</Text>
+          <Text
+            style={[
+              styles.emptyText,
+              { color: theme.colors.textSubtle, fontFamily: chromeFontFamily },
+            ]}>
+            {fontError}
+          </Text>
         </View>
       ) : !nerdFont || !hasOutput ? (
         <Animated.View pointerEvents="none" exiting={fadeOut('short')} style={styles.loading}>
@@ -3133,6 +3212,7 @@ function resetTwoFingers(tracking: TwoFingerTracking) {
 }
 
 type TerminalChunkDraw = {
+  id: string;
   picture: SkPicture;
   transform: { translateY: number }[];
   clip: SkRect | undefined;
@@ -3150,26 +3230,6 @@ type TerminalChunkFrame = {
 };
 
 const noChunkFrame: TerminalChunkFrame = { draws: [], keys: [], head: undefined };
-
-/**
- * Stable ids for values whose identity, not their contents, decides whether a
- * recorded block is still valid: the palette (a fresh object per theme change)
- * and the loaded font. Comparing a whole palette on every refresh costs more
- * than tagging the object once.
- */
-const renderingIdentities = new WeakMap<object, number>();
-let nextRenderingIdentity = 1;
-
-function renderingIdentity(value: object | null): number {
-  if (!value) return 0;
-  let identity = renderingIdentities.get(value);
-  if (identity === undefined) {
-    identity = nextRenderingIdentity;
-    nextRenderingIdentity += 1;
-    renderingIdentities.set(value, identity);
-  }
-  return identity;
-}
 
 /**
  * Splits the frame's links across the planned blocks.
@@ -3470,7 +3530,13 @@ function drawRunCells({
       shaped.paragraph.dispose();
       continue;
     }
-    const key = `${item.text}|${color}|${run.style.bold ? 'b' : ''}${run.style.italic ? 'i' : ''}|${fontSize}|${lineHeight}`;
+    // The font provider leads the key for the same reason the glyph cache is
+    // keyed on the typeface: a shaped paragraph's strut resolves through
+    // `terminalFontFamilies`, whose first entry is whatever typeface is
+    // registered in *this* provider, so a paragraph shaped before a font swap
+    // carries the old face's ascent and descent. The provider is rebuilt from
+    // the loaded font and never outlives it, so its identity stands for both.
+    const key = `${renderingIdentity(fontManager)}|${item.text}|${color}|${run.style.bold ? 'b' : ''}${run.style.italic ? 'i' : ''}|${fontSize}|${lineHeight}`;
     let shaped = fallbackParagraphCache.get(key);
     if (!shaped) {
       shaped = buildFallbackParagraph(
@@ -3581,7 +3647,8 @@ const FALLBACK_PARAGRAPH_CACHE_LIMIT = 1024;
  * A shaped fallback glyph, with the width it actually came out.
  *
  * The width is cached alongside the paragraph rather than read per draw for the
- * same reason `glyphCache` exists: `getLongestLine` is a JSI host call, and the
+ * same reason the glyph cache in `terminal/glyph-cache.ts` exists:
+ * `getLongestLine` is a JSI host call, and the
  * fit has to be computed for every fallback glyph on every repaint. It is a
  * property of the shaping, and the cache key already spans everything that
  * changes the shaping, so measuring once per paragraph is measuring exactly as
@@ -3692,42 +3759,6 @@ function buildFallbackParagraph(
 }
 
 /**
- * Glyph id and advance for one grapheme, cached for the lifetime of the process.
- *
- * `getGlyphIDs` and `getGlyphWidths` are JSI host calls: each one crosses into
- * C++ and marshals an array both ways. Called per visible cell per repaint they
- * dominate the renderer -- a 240-line pane is tens of thousands of crossings
- * every refresh, which is most of what makes the phone warm. A terminal draws
- * from a small alphabet, so after the first frame this is a map hit.
- *
- * Keyed by size as well as grapheme because the advance is in pixels. The
- * typeface never changes: one font ships with the app.
- *
- * The advance stored here is the linear one, because the font handed in has
- * linear metrics on from the moment it is loaded. It has to match the rule
- * `measureCellWidth` used: the centring term below is the difference between the
- * cell and the advance, so measuring the two under different rounding would turn
- * a term that should be a fixed sub-pixel nudge into a per-glyph shift.
- */
-const glyphCache = new Map<string, { id: number; advance: number }>();
-
-function glyphMetrics(
-  grapheme: string,
-  fontSize: number,
-  font: SkFont | null,
-  cellWidth: number
-): { id: number; advance: number } {
-  const key = `${fontSize}|${grapheme}`;
-  const cached = glyphCache.get(key);
-  if (cached) return cached;
-  const id = font?.getGlyphIDs(grapheme)[0] ?? 0;
-  const advance = id === 0 ? cellWidth : (font?.getGlyphWidths([id])[0] ?? cellWidth);
-  const metrics = { id, advance };
-  glyphCache.set(key, metrics);
-  return metrics;
-}
-
-/**
  * The width of one cell, in points.
  *
  * Two rules, and they are the whole of the grid's horizontal geometry:
@@ -3810,25 +3841,24 @@ const styles = StyleSheet.create({
     paddingLeft: 12,
     paddingBottom: 12,
   },
+  // No `fontFamily` here: it is passed at the call site, because the name this
+  // run should carry depends on whether the reader has installed a face. The
+  // literal that used to sit here was the Skia provider's key, which React
+  // Native cannot resolve at all.
   emptyText: {
-    fontFamily: terminalFontFamily,
     fontSize: 13,
   },
   historyIndicator: {
     position: 'absolute',
     alignSelf: 'center',
-    minHeight: 28,
+    width: 28,
+    height: 28,
     borderWidth: StyleSheet.hairlineWidth,
     borderRadius: 14,
-    paddingHorizontal: 10,
-    flexDirection: 'row',
+    borderCurve: 'continuous',
     alignItems: 'center',
-    gap: 6,
+    justifyContent: 'center',
     boxShadow: '0 4px 14px rgba(0, 0, 0, 0.16)',
-  },
-  historyIndicatorText: {
-    fontFamily: terminalFontFamily,
-    fontSize: 11,
   },
   selectionBar: {
     position: 'absolute',
@@ -3868,9 +3898,21 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     boxShadow: '0 4px 14px rgba(0, 0, 0, 0.16)',
   },
+  /**
+   * See `emptyText` for why the family is not stated here.
+   *
+   * 600 rather than 700, and the reason is the same one that moved every
+   * other weight in the app down a step. This pill draws in
+   * `chromeFontFamily`, which is `MuqunUserMono` once the reader has
+   * installed a monospace face -- and `expo-font` registers a loaded face
+   * under `Typeface.NORMAL` only. `ReactFontManager.getTypeface` rounds 700
+   * up to `Typeface.BOLD`, finds no entry, and falls through to
+   * `Typeface.create(familyName, style)`, a system lookup that has never
+   * heard of this family. So at 700 the one pill that is supposed to be in
+   * the reader's terminal face was the one drawn in the platform's.
+   */
   latestButtonText: {
-    fontFamily: terminalFontFamily,
     fontSize: 11,
-    fontWeight: '700',
+    fontWeight: '600',
   },
 });

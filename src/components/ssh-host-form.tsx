@@ -2,14 +2,16 @@ import { Input } from '@/components/themed-input';
 import { Textarea } from '@/components/themed-textarea';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { Trans, useLingui } from '@lingui/react/macro';
-import { Text, useThemeTokens, useToast } from '@osuki-dev/ui';
+import { useThemeTokens, useToast } from '@osuki-dev/ui';
+import { Text } from '@/components/text';
 import { SegmentedControl } from '@/components/themed-segmented-control';
 import * as Clipboard from 'expo-clipboard';
-import { useState } from 'react';
-import { Platform, StyleSheet, View } from 'react-native';
+import { useMemo, useState } from 'react';
+import { StyleSheet, View, type TextStyle } from 'react-native';
 
 import { PressableScale } from '@/components/pressable-scale';
 import { appChrome } from '@/constants/appearance';
+import { useMonoFontFamily } from '@/hooks/use-user-fonts';
 import { feedback } from '@/lib/feedback';
 import { describeSshFailure, generateSshKeyPair, inspectSshPrivateKey } from '@/lib/ssh-client';
 import { sshFailureLine } from '@/lib/ssh-server-text';
@@ -48,6 +50,18 @@ export function SshHostForm({
   const theme = useThemeTokens();
   const surfaceBackground = useSurfaceBackground();
   const { showToast } = useToast();
+  // A PEM block and an `authorized_keys` line are base64 the reader pastes in
+  // and copies out character for character, so both follow the mono slot. The
+  // family used to be a literal `Menlo`/`monospace` in the stylesheet at the
+  // foot of this file, which is built once when the module loads -- before the
+  // settings store has been hydrated, and with no way to be told about it
+  // afterwards -- so a reader's installed mono never reached either of them.
+  //
+  // Held as its own memoised object because `Textarea` takes a single
+  // `TextStyle` and folds it into a `useMemo`: a fresh literal on every render
+  // would rebuild the input's whole style on every keystroke of a 400-character
+  // key.
+  const monoText = useMonoStyle();
   const addHost = useSshHostsStore((state) => state.addHost);
   const updateHost = useSshHostsStore((state) => state.updateHost);
   const removeHost = useSshHostsStore((state) => state.removeHost);
@@ -293,7 +307,7 @@ export function SshHostForm({
             minRows={4}
             maxRows={8}
             error={errors.privateKey}
-            style={styles.mono}
+            style={monoText}
             testID="ssh-private-key-input"
           />
           <Input
@@ -328,7 +342,7 @@ export function SshHostForm({
               <Text variant="caption" color={theme.colors.textMuted}>
                 <Trans>Add this line to ~/.ssh/authorized_keys on the server:</Trans>
               </Text>
-              <Text selectable variant="caption" style={styles.mono}>
+              <Text selectable variant="caption" style={monoText}>
                 {publicKey}
               </Text>
               <PressableScale
@@ -447,6 +461,12 @@ export function SshHostForm({
   );
 }
 
+/** The reader's monospace slot as a style, stable while the slot does not change. */
+function useMonoStyle(): TextStyle {
+  const mono = useMonoFontFamily();
+  return useMemo(() => ({ fontFamily: mono }), [mono]);
+}
+
 const styles = StyleSheet.create({
   card: {
     gap: 14,
@@ -466,9 +486,6 @@ const styles = StyleSheet.create({
   },
   field: {
     gap: 8,
-  },
-  mono: {
-    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
   },
   publicKey: {
     gap: 8,

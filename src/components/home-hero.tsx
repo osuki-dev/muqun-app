@@ -7,8 +7,8 @@ import {
   useImage,
   Image as SkiaImage,
 } from '@shopify/react-native-skia';
-import { useCallback, useMemo, useState } from 'react';
-import { StyleSheet, useWindowDimensions, type LayoutChangeEvent } from 'react-native';
+import { useCallback, useMemo, useRef, useState } from 'react';
+import { StyleSheet, useWindowDimensions, View, type LayoutChangeEvent } from 'react-native';
 import Animated, {
   Extrapolation,
   interpolate,
@@ -18,6 +18,7 @@ import Animated, {
 
 import { useEffectiveCustomTheme } from '@/components/theme-candidate';
 import { heroFeatherGeometry } from '@/lib/hero-feather';
+import { publishLaunchHeroRect } from '@/lib/launch-hero-rect';
 import { fadeIn, listLayout } from '@/lib/motion';
 import { homeHeroMaxHeight, THEME_ARTWORK_REGULAR_MIN_WIDTH } from '@/lib/responsive-layout';
 import { resolveHomeHero } from '@/theme/home-hero';
@@ -141,6 +142,12 @@ function HomeHeroImage({
 
   const onError = useCallback(() => setFailed(source ?? null), [source]);
   const image = useImage(source, onError);
+  // The band in window coordinates, for the launch opening to land in. The
+  // layout event carries the box in the scroll content's coordinates, which is
+  // not where the overlay draws -- it sits above the router with the whole
+  // window to itself -- so the position has to be measured against the window
+  // rather than derived from a header height the overlay cannot see.
+  const view = useRef<View | null>(null);
   const onLayout = useCallback((event: LayoutChangeEvent) => {
     const { width: measuredWidth, height: measuredHeight } = event.nativeEvent.layout;
     setBox((previous) =>
@@ -148,6 +155,14 @@ function HomeHeroImage({
         ? previous
         : { width: measuredWidth, height: measuredHeight }
     );
+    view.current?.measureInWindow((x, y, measuredInWindowWidth, measuredInWindowHeight) => {
+      publishLaunchHeroRect({
+        x,
+        y,
+        width: measuredInWindowWidth,
+        height: measuredInWindowHeight,
+      });
+    });
   }, []);
 
   const geometry = useMemo(() => {
@@ -174,50 +189,61 @@ function HomeHeroImage({
       entering={fadeIn('medium')}
       layout={listLayout('medium')}
       onLayout={onLayout}
-      style={[styles.hero, { height: band }, scrollStyle]}>
-      {image && geometry ? (
-        <Canvas style={StyleSheet.absoluteFill}>
-          <Mask
-            mode="alpha"
-            mask={
-              // One blurred rounded rectangle, not four edge gradients and four
-              // corner ones: gradients meeting at a corner either double up into
-              // a dark notch or leave a square one, while a rounded rect has
-              // already turned away from the corner before either side begins to
-              // fade. `heroFeatherGeometry` owns every number here -- the inset
-              // is already in the rect, and the sigmas are what make each blurred
-              // edge exactly as wide as its axis asked for.
-              //
-              // An image-filter `Blur` rather than a `BlurMask`: only this one
-              // takes a vector, and the top and bottom are softened harder than
-              // the left and right. `decal` so the blur falls to nothing outside
-              // the shape instead of smearing its edge outwards.
-              <RoundedRect
-                x={geometry.mask.x}
-                y={geometry.mask.y}
-                width={geometry.mask.width}
-                height={geometry.mask.height}
-                r={geometry.radius}
-                color="white">
-                <Blur blur={geometry.blur} mode="decal" />
-              </RoundedRect>
-            }>
-            <SkiaImage
-              image={image}
-              x={geometry.image.x}
-              y={geometry.image.y}
-              width={geometry.image.width}
-              height={geometry.image.height}
-              // The rect already *is* the contain-fit result, focal point and
-              // all, so there is nothing left to fit. Letting Skia fit it again
-              // would be a second opinion about the same rectangle, and the
-              // mask is aligned to this one.
-              fit="fill"
-              opacity={resolved.image.opacity ?? 1}
-            />
-          </Mask>
-        </Canvas>
-      ) : null}
+      ref={view}
+      style={[styles.hero, { height: band }]}>
+      {/*
+        The scroll fade is a node inside the animated one, never the same node.
+        Reanimated says so itself -- `Property "opacity" of
+        AnimatedComponent(View) may be overwritten by a layout animation` on
+        every launch and every theme change -- and it is right: the entering
+        and layout animations own this view's opacity while they run, and the
+        scroll position owns it the rest of the time. Two owners, one property.
+      */}
+      <Animated.View style={[StyleSheet.absoluteFill, scrollStyle]}>
+        {image && geometry ? (
+          <Canvas style={StyleSheet.absoluteFill}>
+            <Mask
+              mode="alpha"
+              mask={
+                // One blurred rounded rectangle, not four edge gradients and four
+                // corner ones: gradients meeting at a corner either double up into
+                // a dark notch or leave a square one, while a rounded rect has
+                // already turned away from the corner before either side begins to
+                // fade. `heroFeatherGeometry` owns every number here -- the inset
+                // is already in the rect, and the sigmas are what make each blurred
+                // edge exactly as wide as its axis asked for.
+                //
+                // An image-filter `Blur` rather than a `BlurMask`: only this one
+                // takes a vector, and the top and bottom are softened harder than
+                // the left and right. `decal` so the blur falls to nothing outside
+                // the shape instead of smearing its edge outwards.
+                <RoundedRect
+                  x={geometry.mask.x}
+                  y={geometry.mask.y}
+                  width={geometry.mask.width}
+                  height={geometry.mask.height}
+                  r={geometry.radius}
+                  color="white">
+                  <Blur blur={geometry.blur} mode="decal" />
+                </RoundedRect>
+              }>
+              <SkiaImage
+                image={image}
+                x={geometry.image.x}
+                y={geometry.image.y}
+                width={geometry.image.width}
+                height={geometry.image.height}
+                // The rect already *is* the contain-fit result, focal point and
+                // all, so there is nothing left to fit. Letting Skia fit it again
+                // would be a second opinion about the same rectangle, and the
+                // mask is aligned to this one.
+                fit="fill"
+                opacity={resolved.image.opacity ?? 1}
+              />
+            </Mask>
+          </Canvas>
+        ) : null}
+      </Animated.View>
     </Animated.View>
   );
 }

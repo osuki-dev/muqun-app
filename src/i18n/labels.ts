@@ -20,6 +20,7 @@
 import { msg } from '@lingui/core/macro';
 import type { MessageDescriptor } from '@lingui/core';
 
+import type { AgentClientCommandId } from '@/lib/agent-commands';
 import type { GitFileStatus } from '@/lib/git-diff';
 import type { NamedApprovalDecision } from '@/lib/pane-approval';
 import type { PaneViewMode } from '@/lib/pane-view-mode';
@@ -98,7 +99,7 @@ export const quickCommandName: Record<string, MessageDescriptor> = {
   'terminal-ctrl-z': msg`Suspend`,
   'terminal-escape': msg`Escape`,
   'terminal-clear-line': msg`Clear line`,
-  'agent-summary': msg`Summarize progress`,
+  'agent-summary': msg`Summarise progress`,
   'agent-tests': msg`Run relevant tests`,
   'agent-continue': msg`Continue task`,
   'agent-commit': msg`Commit`,
@@ -119,14 +120,53 @@ export const agentStatusWord: Record<string, MessageDescriptor> = {
 };
 
 /**
+ * What a permission is asking for, said as a phrase rather than a wire key.
+ *
+ * OpenCode names a permission by the rule it tripped -- `external_directory`,
+ * `bash`, `webfetch` -- and the card printed that key, so the reader was asked
+ * to approve "external_directory · read". These are the same keys as sentences;
+ * anything not in the table is spelled out from the key itself, which is still
+ * better than the key.
+ */
+export const permissionActionPhrase: Record<string, MessageDescriptor> = {
+  external_directory: msg`Read outside the workspace`,
+  external_write: msg`Write outside the workspace`,
+  bash: msg`Run a command`,
+  shell: msg`Run a command`,
+  command: msg`Run a command`,
+  read: msg`Read a file`,
+  write: msg`Write a file`,
+  edit: msg`Edit a file`,
+  patch: msg`Apply a patch`,
+  webfetch: msg`Fetch a web page`,
+  network: msg`Reach the network`,
+  install: msg`Install a package`,
+  task: msg`Start a subagent`,
+  question: msg`Ask you a question`,
+};
+
+/**
+ * The three answers to a permission, in one vocabulary.
+ *
+ * The card said "Allow Once / Always Allow / Reject", the push notification
+ * said "Approve / Deny", and the engine's own refusal text says "declined" --
+ * three words for one act across three surfaces. These are the app's.
+ */
+export const permissionDecisionLabel: Record<NamedApprovalDecision, MessageDescriptor> = {
+  allow: msg`Allow`,
+  allow_always: msg`Always allow`,
+  deny: msg`Deny`,
+};
+
+/**
  * The buttons on an approval push notification, by the decision each answers
  * with. `approval-notifications` registers these against the OS category at
  * startup and again whenever push registration re-runs, which is also what
  * refreshes them after a language switch.
  */
 export const approvalActionTitle: Record<NamedApprovalDecision, MessageDescriptor> = {
-  allow: msg`Approve`,
-  allow_always: msg`Approve and don't ask again`,
+  allow: msg`Allow`,
+  allow_always: msg`Always allow`,
   deny: msg`Deny`,
 };
 
@@ -283,3 +323,47 @@ export const terminalKeyDescription: Record<string, MessageDescriptor> = {
 export function paneViewModeFallback(mode: PaneViewMode): PaneViewMode {
   return mode in paneViewModeLabel ? mode : 'terminal';
 }
+
+/**
+ * What each of the app's own slash commands does.
+ *
+ * The list itself is in `@/lib/agent-commands`, which is pure and tested and
+ * therefore cannot hold a macro. It is here for the second reason in this
+ * file's header as well: the composer's menu is rebuilt on every keystroke,
+ * and a `t` call there is exactly the kind React Compiler memoizes past a
+ * locale change.
+ */
+export const agentClientCommandDescription: Record<AgentClientCommandId, MessageDescriptor> = {
+  new: msg({ message: 'Start a session with a clean context', context: 'agent slash command' }),
+  sessions: msg({ message: 'Sessions in this workspace', context: 'agent slash command' }),
+  models: msg({ message: 'Switch language model', context: 'agent slash command' }),
+  agents: msg({ message: 'Switch agent mode', context: 'agent slash command' }),
+  undo: msg({
+    message: 'Show what rolling back to the last message would undo',
+    context: 'agent slash command',
+  }),
+  keep: msg({
+    message: 'Keep everything and drop the staged rollback',
+    context: 'agent slash command',
+  }),
+  compact: msg({
+    message: 'Summarise the history and keep working from the summary',
+    context: 'agent slash command',
+  }),
+  clear: msg({ message: 'Clear context and start fresh', context: 'agent slash command' }),
+  export: msg({ message: "Share this session's transcript", context: 'agent slash command' }),
+};
+
+/**
+ * What one of the *host's* commands does, where this app can say it better.
+ *
+ * The catalogue's descriptions are the engine's, and they are shown as they
+ * were written -- except for the handful OpenCode ships with every install,
+ * whose wording is English written for a terminal and sits in a menu where
+ * every other line is a sentence. `init` is the one that shows: it arrives as
+ * "guided AGENTS.md setup", lower case, beside "Start a session with a clean
+ * context". Keyed without the leading slash, as the catalogue names them.
+ */
+export const agentHostCommandDescription: Record<string, MessageDescriptor> = {
+  init: msg({ message: 'Guided AGENTS.md setup', context: 'agent slash command' }),
+};

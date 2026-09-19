@@ -1,15 +1,9 @@
 import { Trans, useLingui } from '@lingui/react/macro';
+import { Text } from '@/components/text';
 import { Image } from 'expo-image';
 import { X } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
-import {
-  ActivityIndicator,
-  Modal,
-  StyleSheet,
-  Text,
-  useWindowDimensions,
-  View,
-} from 'react-native';
+import { ActivityIndicator, Modal, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
@@ -323,7 +317,11 @@ function PreviewPage({
           exiting={fadeOut('micro')}
           style={styles.pageState}
           pointerEvents="none">
-          <Text style={styles.pageStateText}>
+          {/* The kit's `Text`, not React Native's: this is a sentence the
+              reader reads, so it is set in the face they chose. The colour
+              stays hard-coded because this one is read against the viewer's
+              own black backdrop rather than against a theme surface. */}
+          <Text variant="bodySmall" style={styles.pageStateText}>
             <Trans>This image could not be loaded.</Trans>
           </Text>
         </Animated.View>
@@ -364,7 +362,6 @@ const styles = StyleSheet.create({
   },
   pageStateText: {
     color: 'rgba(255, 255, 255, 0.72)',
-    fontSize: 14,
     textAlign: 'center',
   },
   close: {

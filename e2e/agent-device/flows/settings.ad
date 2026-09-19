@@ -29,13 +29,14 @@ press "${TARGET}"
 scroll up --pixels 320
 
 # section reset-theme
-# Selected by testID, not by role. The tile declares
-# `accessibilityRole="radio"`, and the two runtimes report that differently:
-# iOS surfaces it as a cell, Android as `android.widget.RadioButton`. A flow
-# that names either one passes on that platform and fails on the other, which
+# Selected by testID, not by role. A pack used to be a tile declaring
+# `accessibilityRole="radio"`, and the two runtimes reported that differently:
+# iOS surfaced it as a cell, Android as `android.widget.RadioButton`. A flow
+# that named either one passed on that platform and failed on the other, which
 # is exactly what `role=cell` did here -- green on iOS for as long as nobody
-# ran it on Android. The id carries the selection state, so the manifest
-# matches it with the same `(on|off)` pattern the scroll steps already use.
+# ran it on Android. The picker is a column of scene rows now and a row is a
+# button on both, but the id is still what this matches: it carries the
+# selection state, with the same `(on|off)` pattern the scroll steps use.
 press "${TARGET}"
 wait stable 400 5000
 
@@ -65,10 +66,6 @@ is visible "${TARGET}"
 
 # section s16
 scroll down --pixels 320
-
-# section reset-color-mode
-press label="SYSTEM"
-wait stable 400 5000
 
 # section reset-color-mode-control
 press "${TARGET}"
@@ -449,10 +446,15 @@ press "${TARGET}"
 is visible "${TARGET}"
 
 # section s92
+# The caption under the title, which is what a sheet with no close button has
+# instead of a second thing to point at. The sheets lost their X circles when
+# the app went to one sheet system: on a form sheet the grabber and the swipe
+# are the close, so there is no "Close quick actions" control left to press.
 is visible "${TARGET}"
 
 # section s93
-press "${TARGET}"
+# Android's back dismisses a form sheet, which is the same gesture a reader has.
+back --system
 
 # section s94
 is visible "${TARGET}"

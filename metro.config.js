@@ -20,7 +20,7 @@
 // into the APK as `res/raw/...materialsymbols_400regular.ttf`, 0.41 MiB of the
 // download, for glyphs nothing can draw: Material Symbols are rendered only by
 // `NativeTabs`, and this app has no native tabs. Its navigation is a drawer over
-// a stack (`src/app/_layout.tsx`, `src/app/(drawer)/_layout.tsx`).
+// a stack (`src/app/_layout.tsx`, `src/app/index.tsx`).
 //
 // The font is safe to cut rather than merely unused because nothing dereferences
 // it at import time. `expo-symbols/build/utils.js` exports `getFont()`, and its

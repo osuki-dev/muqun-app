@@ -12,12 +12,12 @@ import {
   Button as BaseButton,
   useThemeTokens,
   useThemeMode,
-  Text,
   useHaptics,
   Icon,
   Spinner,
   type ButtonProps,
 } from '@osuki-dev/ui';
+import { Text } from '@/components/text';
 import { ThemeArtworkLayer } from '@/components/theme-artwork';
 import { useEffectiveCustomTheme } from '@/components/theme-candidate';
 import { resolveThemeImage } from '@/theme/resolve';

@@ -204,18 +204,26 @@ function Header({
   snapshot: AgentWidgetSnapshot | null;
   nowMs: number;
 }) {
+  const hasBlocked = snapshot?.agents.some((a) => a.status === 'blocked' || a.isBlocked);
+
   return (
     <FlexWidget
       style={{ width: 'match_parent', flexDirection: 'row', alignItems: 'center', flexGap: 6 }}>
       {/* `flex` is a container property in this renderer, so anything that has
           to take the remaining width is wrapped rather than styled directly. */}
-      <FlexWidget style={{ flex: 1 }}>
+      <FlexWidget style={{ flex: 1, flexDirection: 'row', alignItems: 'center', flexGap: 6 }}>
         <TextWidget
           text={snapshot?.serverLabel || 'Muqun'}
           style={{ fontSize: 12, fontWeight: '600', color: palette.text }}
           maxLines={1}
           truncate="END"
         />
+        {hasBlocked ? (
+          <TextWidget
+            text={i18n._(agentStatusWord.blocked)}
+            style={{ fontSize: 9, fontWeight: '700', color: '#FF5A4A' }}
+          />
+        ) : null}
       </FlexWidget>
       <TextWidget
         text={freshness(snapshot, nowMs)}
@@ -234,6 +242,13 @@ function AgentRow({
   palette: Palette;
   snapshot: AgentWidgetSnapshot;
 }) {
+  const isBlocked = Boolean(agent.isBlocked || agent.status === 'blocked');
+  const stepInfo = agent.todoProgress
+    ? `${agent.todoProgress.done}/${agent.todoProgress.total}`
+    : undefined;
+  const engineTag =
+    agent.engine === 'opencode' ? 'OpenCode' : agent.engine === 'tmux' ? 'tmux' : undefined;
+
   return (
     <FlexWidget
       clickAction="OPEN_URI"
@@ -241,23 +256,63 @@ function AgentRow({
       accessibilityLabel={agentLabel(agent)}
       style={{
         width: 'match_parent',
-        flexDirection: 'row',
-        alignItems: 'center',
-        flexGap: 8,
-        backgroundColor: palette.surface,
+        flexDirection: 'column',
+        backgroundColor: isBlocked ? '#2A1212' : palette.surface,
         borderRadius: 12,
         paddingHorizontal: 8,
-        paddingVertical: 6,
+        paddingVertical: 5,
+        flexGap: 2,
       }}>
-      <StatusDot status={agent.status} />
-      <FlexWidget style={{ flex: 1 }}>
+      <FlexWidget
+        style={{
+          width: 'match_parent',
+          flexDirection: 'row',
+          alignItems: 'center',
+          flexGap: 8,
+        }}>
+        <StatusDot status={agent.status} isBlocked={isBlocked} />
+        <FlexWidget style={{ flex: 1 }}>
+          <TextWidget
+            text={agent.name}
+            style={{
+              fontSize: 12,
+              fontWeight: isBlocked ? '600' : 'normal',
+              color: isBlocked ? '#FF8E85' : palette.text,
+            }}
+            maxLines={1}
+            truncate="END"
+          />
+        </FlexWidget>
+        {stepInfo ? (
+          <TextWidget
+            text={stepInfo}
+            style={{
+              fontSize: 10,
+              color: isBlocked ? '#FF8E85' : palette.accent,
+              fontWeight: '600',
+            }}
+          />
+        ) : engineTag ? (
+          <TextWidget
+            text={engineTag}
+            style={{
+              fontSize: 9,
+              color: palette.muted,
+            }}
+          />
+        ) : null}
+      </FlexWidget>
+      {agent.action || isBlocked ? (
         <TextWidget
-          text={agent.name}
-          style={{ fontSize: 12, color: palette.text }}
+          text={agent.action || i18n._(agentStatusWord.blocked)}
+          style={{
+            fontSize: 10,
+            color: isBlocked ? '#FFB4AB' : palette.muted,
+          }}
           maxLines={1}
           truncate="END"
         />
-      </FlexWidget>
+      ) : null}
     </FlexWidget>
   );
 }
@@ -271,6 +326,11 @@ function AgentChip({
   palette: Palette;
   snapshot: AgentWidgetSnapshot;
 }) {
+  const isBlocked = Boolean(agent.isBlocked || agent.status === 'blocked');
+  const badge = agent.todoProgress
+    ? `${agent.todoProgress.done}/${agent.todoProgress.total}`
+    : undefined;
+
   return (
     <FlexWidget
       clickAction="OPEN_URI"
@@ -281,16 +341,20 @@ function AgentChip({
         flexDirection: 'row',
         alignItems: 'center',
         flexGap: 6,
-        backgroundColor: palette.surface,
+        backgroundColor: isBlocked ? '#2A1212' : palette.surface,
         borderRadius: 11,
         paddingHorizontal: 8,
         paddingVertical: 5,
       }}>
-      <StatusDot status={agent.status} />
+      <StatusDot status={agent.status} isBlocked={isBlocked} />
       <FlexWidget style={{ flex: 1 }}>
         <TextWidget
-          text={agent.name}
-          style={{ fontSize: 11, color: palette.text }}
+          text={badge ? `${agent.name} (${badge})` : agent.name}
+          style={{
+            fontSize: 11,
+            fontWeight: isBlocked ? '600' : 'normal',
+            color: isBlocked ? '#FF8E85' : palette.text,
+          }}
           maxLines={1}
           truncate="END"
         />
@@ -303,12 +367,15 @@ function AgentChip({
  * RemoteViews has no circle primitive worth the trouble, so the dot is an empty
  * box with a radius equal to half its side.
  */
-function StatusDot({ status }: { status: AgentWidgetEntry['status'] }) {
-  return (
-    <FlexWidget
-      style={{ height: 8, width: 8, borderRadius: 4, backgroundColor: statusColor(status) }}
-    />
-  );
+function StatusDot({
+  status,
+  isBlocked,
+}: {
+  status: AgentWidgetEntry['status'];
+  isBlocked?: boolean;
+}) {
+  const color = isBlocked ? '#FF5A4A' : statusColor(status);
+  return <FlexWidget style={{ height: 8, width: 8, borderRadius: 4, backgroundColor: color }} />;
 }
 
 function EmptyState({ palette, connected }: { palette: Palette; connected: boolean }) {

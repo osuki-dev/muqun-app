@@ -36,7 +36,13 @@ export function useThemePack(): ThemeAppearance {
  * theme changes and not once more.
  */
 export function useThemePalette(pack: ThemeAppearance): ThemeOverride {
-  return useMemo(() => buildTheme(pack), [pack]);
+  // The reader's interface font is part of the palette the provider is handed,
+  // so it is part of what the memo watches. Without it here a font installed
+  // while the app is running would be written to the store, re-render every
+  // consumer of the setting, and change nothing: the provider would hand out
+  // the tokens it built the last time the *pack* changed.
+  const interfaceFont = useAppSettings((state) => state.interfaceFont);
+  return useMemo(() => buildTheme(pack, interfaceFont), [pack, interfaceFont]);
 }
 
 /**

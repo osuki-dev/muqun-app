@@ -50,7 +50,16 @@ is visible "${TARGET}"
 is hidden "${TARGET}"
 
 # section s17
-press "${TARGET}"
+# The search field is flush on the sheet's ground now, with a hairline under it
+# and nothing else -- no "Clear search" button, because a boxed field with a
+# control inside it is the card kit this sheet left behind.
+#
+# So the flow drops the query the way a reader does, by leaving: the sheet is a
+# route, and the query is its state. `type` appends rather than replaces, and
+# `fill` will not take an empty string, so neither of those can clear a field
+# that has no clear button. The manifest reopens the sheet on the next step.
+back --system
+wait stable 400 5000
 
 # section s18
 wait stable 400 5000
@@ -197,7 +206,9 @@ is visible "${TARGET}"
 scroll up --pixels 320
 
 # section s66
-press "${TARGET}"
+# A form sheet has no X circle any more: the grabber and the swipe are the
+# close. The manifest's next step asserts the terminal underneath is back.
+back --system
 
 # section s67
 is visible "${TARGET}"

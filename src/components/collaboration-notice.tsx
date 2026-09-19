@@ -1,10 +1,11 @@
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { useLingui } from '@lingui/react/macro';
-import { Spinner, Text, useThemeTokens } from '@osuki-dev/ui';
+import { Spinner, useThemeTokens } from '@osuki-dev/ui';
+import { Text } from '@/components/text';
 import { Button } from '@/components/themed-button';
 import { ChevronDown, ChevronUp } from 'lucide-react-native';
 import { useState } from 'react';
-import { ScrollView, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { PressableScale } from '@/components/pressable-scale';
 import { TerminalTranscript } from '@/components/terminal-transcript';
 import { appChrome } from '@/constants/appearance';
@@ -84,19 +85,14 @@ export function CollaborationNotice({
     <View
       testID="collaboration-notice"
       style={{
-        marginHorizontal: 12,
-        padding: 12,
-        gap: 8,
+        marginHorizontal: 8,
+        padding: 10,
+        gap: 6,
         borderRadius: appChrome.radius.control,
         backgroundColor: surfaceBackground(theme.colors.surface),
-        boxShadow: appChrome.shadow.ambientCard,
+        borderWidth: StyleSheet.hairlineWidth,
+        borderColor: theme.colors.border,
       }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-        <Text variant="caption" colorKey="textMuted" style={{ flex: 1 }}>
-          {t`Agent collaboration`}
-          {current.length > 1 ? ` · ${current.length}` : ''}
-        </Text>
-      </View>
       <PressableScale
         testID="collaboration-notice-expand"
         accessibilityRole="button"
@@ -106,27 +102,62 @@ export function CollaborationNotice({
           setExpandedId(expanded ? null : task.id);
           setError(null);
         }}
-        style={{ gap: 4 }}>
+        style={{ gap: 6, minHeight: 44 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-          <Text variant="bodySmall" numberOfLines={1} style={{ flex: 1 }}>
-            {task.agentName}
-          </Text>
           <Text
             variant="caption"
-            color={
-              agent?.status === 'blocked' && connected
-                ? theme.colors.warning
-                : theme.colors.textMuted
-            }>
-            {status}
+            colorKey="textMuted"
+            numberOfLines={1}
+            style={{ flex: 1, minWidth: 0 }}>
+            {t`Agent collaboration`}
+            {current.length > 1 ? ` · ${current.length}` : ''}
           </Text>
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 5,
+              flexShrink: 1,
+              borderRadius: 8,
+              paddingHorizontal: 7,
+              paddingVertical: 3,
+              backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
+            }}>
+            <View
+              style={{
+                width: 5,
+                height: 5,
+                borderRadius: 3,
+                backgroundColor:
+                  connected && agent?.status === 'blocked'
+                    ? theme.colors.warning
+                    : connected && agent?.status === 'working'
+                      ? theme.colors.primary
+                      : theme.colors.textMuted,
+              }}
+            />
+            <Text
+              variant="caption"
+              numberOfLines={1}
+              style={{ flexShrink: 1 }}
+              color={
+                connected && agent?.status === 'blocked'
+                  ? theme.colors.warning
+                  : theme.colors.textMuted
+              }>
+              {status}
+            </Text>
+          </View>
           {expanded ? (
             <ChevronUp size={16} color={theme.colors.textMuted} />
           ) : (
             <ChevronDown size={16} color={theme.colors.textMuted} />
           )}
         </View>
-        <Text variant="caption" numberOfLines={1} colorKey="textMuted">
+        <Text variant="bodySmall" numberOfLines={1} style={{ fontWeight: '600' }}>
+          {task.agentName}
+        </Text>
+        <Text variant="caption" numberOfLines={expanded ? 3 : 1} colorKey="textMuted">
           {task.prompt}
         </Text>
       </PressableScale>

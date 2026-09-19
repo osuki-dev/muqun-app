@@ -14,7 +14,8 @@ import { useGatewayTunnel } from '@/hooks/use-gateway-tunnel';
  * Firing the picker off against whichever server was selected last would ask
  * the wrong machine what it can run -- and then start an agent on it.
  */
-import { Text, useThemeTokens } from '@osuki-dev/ui';
+import { useThemeTokens } from '@osuki-dev/ui';
+import { Text } from '@/components/text';
 import { LogoLoader } from '@/components/logo-loader';
 import { useLingui } from '@lingui/react/macro';
 import { useLocalSearchParams, useRouter, type Href } from 'expo-router';

@@ -40,8 +40,8 @@ export function useCoalescedValue<T>(value: T, resetKey: unknown, intervalMs = 1
     setDisplayed(value);
   }
 
+  // react-doctor-disable-next-line react-doctor/effect-needs-cleanup -- timer is intentionally preserved across updates and cleared on unmount below.
   useEffect(() => {
-    if (value === displayed) return;
     const elapsed = Date.now() - lastEmitRef.current;
     if (elapsed >= intervalMs) {
       // Leading edge, or the window already elapsed: show it now.

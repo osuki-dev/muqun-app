@@ -1,6 +1,7 @@
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { useLingui } from '@lingui/react/macro';
-import { Text, useThemeTokens } from '@osuki-dev/ui';
+import { useThemeTokens } from '@osuki-dev/ui';
+import { Text } from '@/components/text';
 import { useRouter, type Href } from 'expo-router';
 import { GitCompare } from 'lucide-react-native';
 import { Keyboard, StyleSheet, View } from 'react-native';
@@ -121,7 +122,11 @@ export function GitDiffButton({
             compact && styles.compactBadge,
             { backgroundColor: surfaceBackground(theme.colors.primary) },
           ]}>
-          <Text variant="caption" color={theme.colors.onPrimary} style={styles.badgeText}>
+          <Text
+            variant="caption"
+            hugSlack={false}
+            color={theme.colors.onPrimary}
+            style={styles.badgeText}>
             {count}
           </Text>
         </View>
@@ -181,6 +186,7 @@ const styles = StyleSheet.create({
     fontSize: 9,
     lineHeight: 11,
     includeFontPadding: false,
+    textAlign: 'center',
     fontVariant: ['tabular-nums'],
   },
 });

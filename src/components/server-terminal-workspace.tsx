@@ -2,7 +2,8 @@ import { TerminalNotice, terminalNoticeStyles } from '@/components/terminal-noti
 import { NoticeDeck } from '@/components/notice-deck';
 import { ThemeIcon } from '@/components/theme-icon';
 import { ComposerSendGuard } from '@/lib/composer-send-guard';
-import { Spinner, Text, useThemeMode, useThemeTokens, useToast } from '@osuki-dev/ui';
+import { Spinner, useThemeMode, useThemeTokens, useToast } from '@osuki-dev/ui';
+import { Text } from '@/components/text';
 import { resolvePanelPick } from '@/lib/resolve-panel-pick';
 import {
   type Href,
@@ -17,7 +18,6 @@ import { StatusBar } from 'expo-status-bar';
 import {
   Bot,
   Keyboard as KeyboardIcon,
-  Monitor,
   Paperclip,
   PenLine,
   SquareTerminal,
@@ -29,7 +29,6 @@ import {
   AppState,
   Keyboard,
   type LayoutChangeEvent,
-  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -68,6 +67,9 @@ import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { ImagePreviewModal, type PreviewImage } from '@/components/image-preview-modal';
 import { navHeaderButtonStyle } from '@/components/nav-header';
 import { PaneChatView } from '@/components/pane-chat-view';
+
+import { AgentWorkbench } from '@/components/agent-workbench';
+import { gatewaySupportsAgentSessions } from '@/lib/agent-session';
 import { PadServerRail } from '@/components/pad-server-rail';
 import { GatewayTunnelBadge } from '@/components/gateway-tunnel-badge';
 import { PressableScale } from '@/components/pressable-scale';
@@ -112,6 +114,7 @@ import { usePaneApproval } from '@/hooks/use-pane-approval';
 import { usePaneEvents } from '@/hooks/use-pane-events';
 import { useLatestRef, useLazyRef, useResetSignal } from '@/hooks/use-render-refs';
 import { useSettledHeight } from '@/hooks/use-settled-height';
+import { useMonoFontFamily } from '@/hooks/use-user-fonts';
 import { useTabSwipe } from '@/hooks/use-tab-swipe';
 import { usePaneViewMode } from '@/hooks/use-pane-view-mode';
 import {
@@ -242,7 +245,6 @@ import {
   resolveSessionId,
   sameSessionChoices,
   type SessionChoice,
-  shouldShowSessionSwitcher,
 } from '@/lib/session-switcher';
 import { loadWorkspaceSnapshot } from '@/lib/workspace-snapshot';
 import { initialSelection, reconcileSelection, type Selection } from '@/lib/workspace-selection';
@@ -1355,23 +1357,47 @@ export function ServerTerminalWorkspace({
     () => data.agents.find((item) => field(item, 'pane_id') === selection.paneId),
     [data.agents, selection.paneId]
   );
+  const agentKind = useMemo(() => {
+    if (!selectedAgent) return '';
+    return (
+      field(selectedAgent, 'kind') ||
+      field(selectedAgent, 'agent') ||
+      selectedAgent.title ||
+      ''
+    ).toLowerCase();
+  }, [selectedAgent]);
+  const isOpenCodeAgent = agentKind.includes('opencode') || agentKind.includes('open-code');
+
   // Which of the two readings of this pane is on screen: the conversation or
   // the raw grid. The hook owns the whole decision -- the setting, this pane's
   // own last choice, and what the pane can actually show -- so the screen only
   // has to say what each mode draws.
   const agentPane = Boolean(selectedAgent);
+  const supportsAgentSessions = gatewaySupportsAgentSessions(data.health?.capabilities);
   const partsForPane = partsState.paneId === selection.paneId ? partsState : initialPartsState;
   const paneView = usePaneViewMode({
     serverId,
     paneId: selection.paneId,
     agent: agentPane,
     parts: partsForPane.supported,
+    agentSessions: supportsAgentSessions && isOpenCodeAgent,
   });
   const chatViewChosen = paneView.mode === 'chat';
   // What the user asked for and what can actually be drawn are two different
   // things: a failed read falls back to the terminal without forgetting the
   // choice, so the view returns by itself once the gateway answers again.
-  const chatViewShown = chatViewChosen && !partsForPane.failed;
+  const chatViewShown =
+    chatViewChosen && ((supportsAgentSessions && isOpenCodeAgent) || !partsForPane.failed);
+  const hideTerminalDock = chatViewShown && supportsAgentSessions && isOpenCodeAgent;
+  if (__DEV__) {
+    console.log('[DEBUG AgentSessions]', {
+      paneViewMode: paneView.mode,
+      supportsAgentSessions,
+      chatViewShown,
+      chatViewChosen,
+      hideTerminalDock,
+    });
+  }
   // New content for this pane, however it was noticed: the gateway's revision
   // where there is one, and otherwise the output itself, which `setOutput`
   // leaves untouched when nothing changed.
@@ -3232,7 +3258,7 @@ export function ServerTerminalWorkspace({
     const requestPaneId = selection.paneId;
     const hasAttachments = attachments.length > 0;
     if (connection.phase !== 'connected' || !ready || !requestPaneId || sending) return;
-    if (!draft.trim() && !hasAttachments && !assignment.command) return;
+    if (!draft.trim() && !hasAttachments) return;
     const sendToken = composerSendGuard.acquire();
     if (sendToken === null) return;
     const ownsDelivery = deliveryOwnership.capture();
@@ -3629,25 +3655,21 @@ export function ServerTerminalWorkspace({
     [openMatchingAsset]
   );
 
-  function openSessionSwitcher() {
-    Keyboard.dismiss();
-    useServerSession.getState().rememberPane(serverId, data.sessionId, selection.paneId);
-    router.push({
-      pathname: '/sessions',
-      params: {
-        serverId,
-        sessionId: data.sessionId,
-        embedded: providedServerId === undefined ? '0' : '1',
-        // The list the header just decided from, rather than a second read the
-        // sheet makes for itself: a sheet sized to its contents that grows a
-        // row while it opens is a worse answer than one that is right at once.
-        sessions: encodeSessionChoices(sessions),
-      },
-    } as Href);
-  }
-
+  /**
+   * The header's one button: everything that is running, and everywhere it
+   * could be running instead.
+   *
+   * It used to be two buttons in this corner -- a monitor for the machines and
+   * their backends, a panels glyph for the workspaces and panes inside one of
+   * them -- which is one address asked in two places. The machines are a rail
+   * at the top of this sheet now, so the monitor has gone and what it knew
+   * travels here: the pane the reader is leaving, so returning to this machine
+   * lands where they were, and the backend list the header has already decided
+   * from, so the rail does not grow a chip while the sheet is opening.
+   */
   function openPanelPicker() {
     Keyboard.dismiss();
+    useServerSession.getState().rememberPane(serverId, data.sessionId, selection.paneId);
     router.push({
       pathname: '/panels',
       params: {
@@ -3655,6 +3677,8 @@ export function ServerTerminalWorkspace({
         sessionId: data.sessionId,
         paneId: selection.paneId,
         label: routeRecord?.label ?? record?.label ?? t`Server`,
+        embedded: providedServerId === undefined ? '0' : '1',
+        sessions: encodeSessionChoices(sessions),
       },
     } as Href);
   }
@@ -3945,13 +3969,10 @@ export function ServerTerminalWorkspace({
           : selectedAgent
             ? t`Send to agent`
             : t`Run command`,
-        armed: Boolean((hasSendableContent || assignment.command) && selectedPane),
+        armed: Boolean(hasSendableContent && selectedPane),
         sending,
         disabled:
-          connection.phase !== 'connected' ||
-          !(hasSendableContent || assignment.command) ||
-          !selectedPane ||
-          sending,
+          connection.phase !== 'connected' || !hasSendableContent || !selectedPane || sending,
         onPress: () => void sendInput(),
       }}
     />
@@ -4181,18 +4202,11 @@ export function ServerTerminalWorkspace({
         close and nothing else the header could mean by it.
       */
       detailAccessory={[
-        // Only actual alternatives justify a switch button; stopped backends
-        // remain configured without appearing here as live choices.
-        shouldShowSessionSwitcher(sessions, railServers.length) ? (
-          <PressableScale
-            key="session"
-            accessibilityLabel={t`Switch machine or session`}
-            testID="machine-session-switcher"
-            onPress={openSessionSwitcher}
-            style={navHeaderButtonStyle}>
-            <Monitor size={18} color={theme.colors.text} strokeWidth={2} />
-          </PressableScale>
-        ) : null,
+        // No machine button beside the panels one. Two glyphs in this corner
+        // were two halves of one question -- which machine, which backend,
+        // which workspace, which panel -- and a reader had to know which half
+        // theirs was in before they could press anything. `onDetailAction`
+        // above is the one button, and the whole address is inside it.
         simfarmSplit.previewWidth > 0 ? (
           <PressableScale
             key="simulator"
@@ -4319,24 +4333,40 @@ export function ServerTerminalWorkspace({
               {/* Keep the canvas mounted and stationary across pane changes. */}
               <Animated.View style={styles.terminalSwipeArea}>
                 {chatViewShown ? (
-                  <PaneChatView
-                    // Remounted per pane: the follow-the-latest position and which
-                    // tool runs are open belong to the transcript being read.
-                    key={selection.paneId}
-                    parts={partsForPane.parts}
-                    detail={paneView.detail}
-                    // `answered` is the gateway having said *something* about
-                    // this pane. Until it has, an empty transcript is a question
-                    // in flight rather than an empty pane.
-                    awaitingFirstParts={!partsForPane.answered}
-                    topInset={insets.top + NAV_HEADER_TOP_GAP + 54}
-                    bottomInset={composerVisible ? composerHeight : 0}
-                    canLoadEarlier={canLoadEarlierParts}
-                    loadingEarlier={loadingEarlierParts}
-                    onLoadEarlier={loadEarlierParts}
-                    onOpenAsset={openAssetById}
-                    onToggleDetail={paneView.toggleDetail}
-                  />
+                  supportsAgentSessions && isOpenCodeAgent ? (
+                    <AgentWorkbench
+                      // The home route mounts this workspace from its warm or
+                      // placeholder data first. `data.sessionId` can change
+                      // from the placeholder to the real gateway session
+                      // after the first snapshot arrives. A pane-only key
+                      // kept the AgentWorkbench's old transcript store alive
+                      // across that identity change, so the header could show
+                      // the real session while its message list stayed empty.
+                      key={`${data.sessionId}:${selection.paneId}`}
+                      sessionId={data.sessionId}
+                      topInset={insets.top + NAV_HEADER_TOP_GAP + 54}
+                      bottomInset={insets.bottom}
+                    />
+                  ) : (
+                    <PaneChatView
+                      // Remounted per pane: the follow-the-latest position and which
+                      // tool runs are open belong to the transcript being read.
+                      key={selection.paneId}
+                      parts={partsForPane.parts}
+                      detail={paneView.detail}
+                      // `answered` is the gateway having said *something* about
+                      // this pane. Until it has, an empty transcript is a question
+                      // in flight rather than an empty pane.
+                      awaitingFirstParts={!partsForPane.answered}
+                      topInset={insets.top + NAV_HEADER_TOP_GAP + 54}
+                      bottomInset={composerVisible ? composerHeight : 0}
+                      canLoadEarlier={canLoadEarlierParts}
+                      loadingEarlier={loadingEarlierParts}
+                      onLoadEarlier={loadEarlierParts}
+                      onOpenAsset={openAssetById}
+                      onToggleDetail={paneView.toggleDetail}
+                    />
+                  )
                 ) : (
                   <TerminalBoundary
                     resetKey={selection.paneId}
@@ -4500,7 +4530,7 @@ export function ServerTerminalWorkspace({
           here should close the menu, the way a tap anywhere else on the pane
           does.
         */}
-          {composerVisible && dock.floatingActions && !isPadLayout ? (
+          {composerVisible && dock.floatingActions && !isPadLayout && !hideTerminalDock ? (
             <Animated.View
               // The band across from it belongs to the pill, and a full-width
               // invisible parent lying over it would have taken the pill's taps.
@@ -4549,7 +4579,7 @@ export function ServerTerminalWorkspace({
             </EditorControls>
           ) : null}
 
-          {composerVisible && !dock.editorMode ? (
+          {composerVisible && !dock.editorMode && !hideTerminalDock ? (
             <Animated.View
               style={[
                 styles.composerOverlay,
@@ -4740,7 +4770,11 @@ export function ServerTerminalWorkspace({
                                 styles.keyRowToggle,
                                 { backgroundColor: surfaceBackground(chromeGlass) },
                               ]}>
-                              <KeyboardIcon size={16} color={chromeText} />
+                              {/* The pack's primary, like the four entries beside it: it
+                                  opens a surface, as they do. It was the text
+                                  colour, which is what the key caps after it
+                                  wear, and read as a dead button in a lit row. */}
+                              <KeyboardIcon size={16} color={theme.colors.primary} />
                             </PressableScale>
                             {assignmentToggle}
                             {terminalKeyButtons}
@@ -4942,6 +4976,14 @@ function TerminalKeyButton({
 }) {
   const { t } = useLingui();
   const surfaceBackground = useSurfaceBackground();
+  // A cap is a key, not a word: `Ctrl C`, `:wq`, `␣ff`, `⌫`. The mono slot is
+  // what makes the row line up and what puts the glyphs the reader picked their
+  // font for -- U+2423 for the leader, the arrows -- on the caps. The family
+  // used to be a `Menlo`/`monospace` literal in the stylesheet at the foot of
+  // this file, and a `StyleSheet` is built the moment the module is imported:
+  // it never had a chance to learn that the reader had installed a mono, so the
+  // key row stayed in the platform's face while the pane above it changed.
+  const mono = useMonoFontFamily();
   const { _ } = useLinguiRuntime();
   // vim's vocabulary is the same in every language, so the cap is left alone;
   // what a screen reader says about it is not.
@@ -5037,11 +5079,18 @@ function TerminalKeyButton({
         <Text
           variant="caption"
           color={textColor}
-          style={
-            item.emphasis
-              ? [styles.terminalKeyText, styles.terminalKeyEmphasisText]
-              : styles.terminalKeyText
-          }>
+          // Insert mode's Esc used to carry `fontWeight: '700'`, and 700 is the
+          // weight at which a reader's font silently leaves the screen on
+          // Android: `expo-font` registers a loaded face under
+          // `Typeface.NORMAL` only, `ReactFontManager` rounds anything from 700
+          // up to BOLD, finds no entry, and falls through to
+          // `Typeface.create(family, style)` -- a lookup against the *system*
+          // font list, which does not know the reader's family by name. The one
+          // key meant to stand out was the one key in a different font from the
+          // rest of the row. `weight="semibold"` resolves to 600, under the
+          // threshold, so the registered face is still found.
+          weight={item.emphasis ? 'semibold' : undefined}
+          style={[styles.terminalKeyText, { fontFamily: mono }]}>
           {cap}
         </Text>
       </Animated.View>
@@ -5051,11 +5100,10 @@ function TerminalKeyButton({
         <Text
           variant="caption"
           color={activeText}
-          style={
-            item.emphasis
-              ? [styles.terminalKeyText, styles.terminalKeyEmphasisText]
-              : styles.terminalKeyText
-          }>
+          // The sending copy is drawn exactly over the resting one, so anything
+          // that changes its metrics moves the label. Same weight, same family.
+          weight={item.emphasis ? 'semibold' : undefined}
+          style={[styles.terminalKeyText, { fontFamily: mono }]}>
           {cap}
         </Text>
       </Animated.View>
@@ -5533,7 +5581,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 6,
     height: PANE_CHIP_HEIGHT,
-    maxWidth: 200,
+    // No width cap: a chip is as wide as its title. The strip scrolls, so a
+    // long title costs a swipe; an ellipsis cost the reader the part of the
+    // title that tells two sessions of the same agent apart.
     flexShrink: 0,
     overflow: 'hidden',
     paddingHorizontal: 12,
@@ -5552,9 +5602,7 @@ const styles = StyleSheet.create({
     height: 13,
   },
   paneChipLabel: {
-    flexShrink: 1,
-    minWidth: 0,
-    overflow: 'hidden',
+    flexShrink: 0,
   },
   terminalKeyList: {
     gap: 6,
@@ -5582,20 +5630,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  // No `fontFamily`: the reader's monospace slot is merged in by
+  // `TerminalKeyButton`, which can ask for it. See the comment there.
   terminalKeyText: {
-    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
     fontVariant: ['tabular-nums'],
   },
   // Insert mode's Esc. Wider and bordered rather than a louder fill, so it
   // stays legible against both theme packs without needing a colour of its
-  // own -- the border already reuses `activeBackground`, which is themed.
+  // own -- the border already reuses `activeBackground`, which is themed. Its
+  // extra weight is the kit's `weight` prop on the label, not a style here;
+  // see `TerminalKeyButton`.
   terminalKeyEmphasis: {
     minWidth: 64,
     paddingHorizontal: 18,
     borderWidth: 2,
-  },
-  terminalKeyEmphasisText: {
-    fontWeight: '700',
   },
   viewToggle: {
     width: 46,

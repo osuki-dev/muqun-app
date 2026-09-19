@@ -1,10 +1,7 @@
-import { Input } from '@/components/themed-input';
-import { Card } from '@/components/themed-card';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
-import { ThemeArtwork } from '@/components/theme-artwork';
 import { Trans, useLingui } from '@lingui/react/macro';
-import { Text, useThemeTokens } from '@osuki-dev/ui';
-import { Button } from '@/components/themed-button';
+import { useThemeTokens } from '@osuki-dev/ui';
+import { Text } from '@/components/text';
 import * as Clipboard from 'expo-clipboard';
 import * as Device from 'expo-device';
 import { type Href, useRouter } from 'expo-router';
@@ -14,7 +11,6 @@ import {
   Keyboard as KeyboardIcon,
   ScanLine,
   Waypoints,
-  X,
 } from 'lucide-react-native';
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import {
@@ -27,6 +23,7 @@ import {
   View,
 } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
   cancelAnimation,
   useAnimatedStyle,
@@ -35,13 +32,26 @@ import Animated, {
   withRepeat,
   withTiming,
 } from 'react-native-reanimated';
-import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { LogoLoader } from '@/components/logo-loader';
 import { SshConnectPromptGate } from '@/components/ssh-connect-prompt-gate';
 import { PressableScale } from '@/components/pressable-scale';
+import {
+  SheetScene,
+  SheetSceneAction,
+  SheetSceneField,
+  SheetSceneFooter,
+  SheetSceneGroupRule,
+  SheetSceneQuietAction,
+  SheetSceneRow,
+  SHEET_LADDER,
+  sheetSceneStyles,
+  useSheetSceneInputStyle,
+} from '@/components/sheet-scene';
+import { AGENT_TYPE } from '@/constants/agent-type';
 import { GATEWAY_INSTALL_COMMAND, GATEWAY_SETUP_URL } from '@/constants/links';
 import { useGatewayRecord } from '@/hooks/use-gateway-record';
+import { useMonoFontFamily } from '@/hooks/use-user-fonts';
 import type { GatewayRecord } from '@/lib/gateway-storage';
 import { GATEWAY_DEFAULT_PORT } from '@/lib/ssh-tunnel';
 import { sortSshHosts, sshHostAddress } from '@/lib/ssh-hosts';
@@ -79,6 +89,7 @@ import {
   SCAN_REJECT_HOLD_MS,
   type ScanReading,
 } from '@/lib/pairing-scan';
+import { FontedTextInput } from '@/components/fonted-text-input';
 
 type Step = 'scan' | 'confirm' | 'success';
 
@@ -112,8 +123,17 @@ type Step = 'scan' | 'confirm' | 'success';
  */
 const ROUTE_MEASURE = 560;
 
-/** The route's horizontal inset, shared by the scroll content and the frame. */
-const ROUTE_GUTTER = 20;
+/**
+ * The route's horizontal inset, shared by the scroll content and the frame.
+ *
+ * The sheet's own gutter, taken from the scene rather than restated: the
+ * heading above the aperture is pinned by `SheetScene` at that gutter, and the
+ * aperture is squared against the column left under it.
+ */
+const ROUTE_GUTTER = SHEET_LADDER.gutter;
+
+/** The focused field's clearance above the keyboard: the URL and code fields. */
+const KEYBOARD_BOTTOM_OFFSET = 88;
 
 const PairingCamera = lazy(() => import('@/components/pairing-camera'));
 
@@ -150,6 +170,21 @@ export default function PairModal() {
   // has no way to know the result also depends on the active locale.
   const { t } = useLingui();
   const theme = useThemeTokens();
+  const inputStyle = useSheetSceneInputStyle();
+  // Three of the four fields on this screen hold a literal -- a port, a gateway
+  // URL, a pairing code -- and the install command it prints is a fourth
+  // literal that is read rather than typed. A `TextInput` draws its typed text
+  // *and* its placeholder in whatever family its own style names and in nothing
+  // else, so `http://100.x.x.x:23847` and `••••-••••` were being shown in
+  // proportional type: a hint about a URL, set in the one kind of face a URL is
+  // never written in. `useSheetSceneInputStyle` supplies the interface face for
+  // the field that is prose; these three layer the mono slot over it, which is
+  // the arrangement that hook documents. The install command had the opposite
+  // fault -- a hard-coded `ui-monospace`/`monospace` in the stylesheet below,
+  // which is built at module load and so can never become the mono the reader
+  // installed afterwards.
+  const mono = useMonoFontFamily();
+  const insets = useSafeAreaInsets();
   const router = useRouter();
   const { width: windowWidth } = useWindowDimensions();
   const { setRecord, enterDemo } = useGatewayRecord();
@@ -287,11 +322,6 @@ export default function PairModal() {
 
   const secondsRemaining = expiresAt ? Math.max(0, Math.ceil((expiresAt - clock) / 1000)) : null;
   const codeExpired = secondsRemaining === 0;
-
-  function close() {
-    if (router.canGoBack()) router.back();
-    else router.replace('/');
-  }
 
   /**
    * `fromScan` is what tells the failure path whether there is a QR still being
@@ -553,60 +583,51 @@ export default function PairModal() {
         : fadeInRight('short');
   const stepExiting = fadeOut('short');
 
+  /**
+   * The title says where the reader is; the line under it says what to do.
+   *
+   * They never repeat each other and they never disagree -- which is what
+   * "Scan the Gateway QR." printed above "no camera to scan with" was doing on
+   * every device without a rear lens. Both are the scene's heading now rather
+   * than a header this route drew for itself, so pairing announces itself the
+   * way every sheet in this app does.
+   */
+  const title =
+    step === 'scan' ? t`Pair server` : step === 'confirm' ? t`Confirm pairing` : t`Connected`;
+  const caption =
+    step === 'scan'
+      ? sshOpen
+        ? t`A Gateway on a machine you can SSH into, even one that only listens on its own loopback.`
+        : manualOpen
+          ? t`The address the Gateway prints when it starts.`
+          : scan.reading === 'unavailable'
+            ? t`Enter the Gateway's address instead.`
+            : scan.reading === 'permission'
+              ? t`Allow the camera, or enter the address instead.`
+              : scan.reading === 'claiming'
+                ? t`Asking the Gateway about that code.`
+                : t`Scan the Gateway QR.`
+      : step === 'confirm'
+        ? t`Name it, then enter the code shown by the Gateway.`
+        : t`Opening the server.`;
+
   return (
-    <SafeAreaView
-      edges={['top']}
-      style={[styles.safeArea, { backgroundColor: surfaceBackground(theme.colors.background) }]}>
-      <ThemeArtwork slot="shell.background" />
+    /*
+      A form sheet, like every other question this app asks. It was a
+      `fullScreenModal` with a hand-drawn X circle in the corner, which is the
+      chrome the sheet system replaced with the grabber and the swipe -- and
+      the reason the theme picker next door ended up with no way out at all
+      when that X went. The ground, the frost and the heading are the scene's.
+    */
+    <SheetScene testID="pairing-sheet" title={title} caption={caption} captionLines={2}>
       <KeyboardAwareScrollView
-        bottomOffset={24}
+        bottomOffset={KEYBOARD_BOTTOM_OFFSET}
+        style={sheetSceneStyles.scroller}
         contentContainerStyle={styles.content}
         keyboardDismissMode="interactive"
         keyboardShouldPersistTaps="handled"
         mode="insets"
         showsVerticalScrollIndicator={false}>
-        <View style={styles.modalHeader}>
-          <View style={styles.headerCopy}>
-            <Text variant="heading" style={styles.title}>
-              {step === 'scan'
-                ? t`Pair server`
-                : step === 'confirm'
-                  ? t`Confirm pairing`
-                  : t`Connected`}
-            </Text>
-            {/* The header says what to do; the aperture says why. They never
-              repeat each other, and they never disagree -- which is what
-              "Scan the Gateway QR." printed above "no camera to scan with"
-              was doing on every device without a rear lens. */}
-            <Text variant="bodySmall" color={theme.colors.textMuted}>
-              {step === 'scan'
-                ? sshOpen
-                  ? t`A Gateway on a machine you can SSH into, even one that only listens on its own loopback.`
-                  : manualOpen
-                    ? t`The address the Gateway prints when it starts.`
-                    : scan.reading === 'unavailable'
-                      ? t`Enter the Gateway's address instead.`
-                      : scan.reading === 'permission'
-                        ? t`Allow the camera, or enter the address instead.`
-                        : scan.reading === 'claiming'
-                          ? t`Asking the Gateway about that code.`
-                          : t`Scan the Gateway QR.`
-                : step === 'confirm'
-                  ? t`Name it, then enter the code shown by the Gateway.`
-                  : t`Opening the server.`}
-            </Text>
-          </View>
-          <PressableScale
-            accessibilityLabel={t`Close pairing`}
-            onPress={close}
-            style={[
-              styles.closeButton,
-              { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
-            ]}>
-            <X size={20} color={theme.colors.text} />
-          </PressableScale>
-        </View>
-
         {/* Slack, split unevenly, so the instrument settles a little above the
           middle of the space it has instead of hanging off the header with a
           screen of nothing under it. Both collapse the moment a keyboard or a
@@ -655,7 +676,7 @@ export default function PairModal() {
                     entering={fadeIn('short')}
                     exiting={fadeOut('micro')}
                     style={styles.manualPanel}>
-                    <Text variant="label" color={theme.colors.textMuted}>
+                    <Text variant="caption" color={theme.colors.textMuted}>
                       {t`SSH host`}
                     </Text>
                     {sshHosts.length === 0 ? (
@@ -672,61 +693,43 @@ export default function PairModal() {
                         </Text>
                       </PressableScale>
                     ) : (
-                      <View style={styles.sshHostList}>
-                        {sortSshHosts(sshHosts).map((host) => {
-                          const selected = host.id === sshHostId;
-                          return (
-                            <PressableScale
-                              key={host.id}
-                              accessibilityRole="radio"
-                              accessibilityState={{ selected }}
-                              accessibilityLabel={t`Pair through ${host.label}`}
-                              testID={`pairing-ssh-host-${host.id}`}
-                              onPress={() => setSshHostId(host.id)}
-                              style={[
-                                styles.sshHostRow,
-                                {
-                                  backgroundColor: surfaceBackground(
-                                    selected ? theme.colors.primarySubtle : theme.colors.surface
-                                  ),
-                                  borderColor: selected
-                                    ? theme.colors.primary
-                                    : theme.colors.border,
-                                },
-                              ]}>
-                              <Text
-                                variant="bodySmall"
-                                numberOfLines={1}
-                                style={styles.sshHostLabel}>
-                                {host.label}
-                              </Text>
-                              <Text
-                                variant="caption"
-                                color={theme.colors.textMuted}
-                                numberOfLines={1}>
-                                {sshHostAddress(host)}
-                              </Text>
-                            </PressableScale>
-                          );
-                        })}
+                      // Scene rows, so the chosen host carries the same left
+                      // rule every other picker in this app marks its choice
+                      // with. It was a stack of filled, outlined cards -- a
+                      // second and a third surface inside a frame that is
+                      // already one.
+                      <View>
+                        {sortSshHosts(sshHosts).map((host) => (
+                          <SheetSceneRow
+                            key={host.id}
+                            title={host.label}
+                            caption={sshHostAddress(host)}
+                            selected={host.id === sshHostId}
+                            accessibilityLabel={t`Pair through ${host.label}`}
+                            testID={`pairing-ssh-host-${host.id}`}
+                            onPress={() => setSshHostId(host.id)}
+                          />
+                        ))}
                       </View>
                     )}
-                    <Input
-                      label={t`Gateway port on that host`}
-                      value={sshPort}
-                      onChangeText={setSshPort}
-                      keyboardType="number-pad"
-                      placeholder={String(GATEWAY_DEFAULT_PORT)}
-                      variant="underline"
-                      testID="pairing-ssh-port"
-                    />
-                    <Button
+                    <SheetSceneField label={t`Gateway port on that host`}>
+                      <FontedTextInput
+                        accessibilityLabel={t`Gateway port on that host`}
+                        testID="pairing-ssh-port"
+                        value={sshPort}
+                        onChangeText={setSshPort}
+                        keyboardType="number-pad"
+                        placeholder={String(GATEWAY_DEFAULT_PORT)}
+                        placeholderTextColor={theme.colors.textSubtle}
+                        style={[inputStyle, { fontFamily: mono }]}
+                      />
+                    </SheetSceneField>
+                    <SheetSceneAction
+                      label={busy ? t`Opening tunnel` : t`Continue`}
+                      busy={busy}
                       onPress={() => void handleSshPair()}
-                      loading={busy}
-                      loadingLabel={t`Opening tunnel`}
-                      testID="pairing-ssh-continue">
-                      {t`Continue`}
-                    </Button>
+                      testID="pairing-ssh-continue"
+                    />
                   </Animated.View>
                 ) : manualOpen ? (
                   <Animated.View
@@ -735,25 +738,35 @@ export default function PairModal() {
                     entering={fadeIn('short')}
                     exiting={fadeOut('micro')}
                     style={styles.manualPanel}>
-                    <Input
-                      label={t`Gateway URL`}
-                      value={manualUrl}
-                      onChangeText={setManualUrl}
-                      onBlur={() => setManualUrl((value) => value.trim())}
-                      autoCapitalize="none"
-                      autoCorrect={false}
-                      keyboardType="url"
-                      placeholder="http://100.x.x.x:23847"
-                      // Underline, not outline: the design system's `outline`
-                      // variant fills with `surfaceRaised` and draws no border
-                      // width at all, which on the aperture's own `surfaceRaised`
-                      // ground left the field with no edge anywhere -- a label and
-                      // a placeholder floating in a box with nothing to tap at.
-                      variant="underline"
+                    {/* A scene field: the label above the value, the value
+                        flush with the ground under one hairline. A boxed input
+                        on a sheet is a card inside a card, and on the
+                        aperture's own `surfaceRaised` the kit's outline variant
+                        drew no edge at all -- a label and a placeholder
+                        floating in a box with nothing to tap at. */}
+                    <SheetSceneField label={t`Gateway URL`}>
+                      <FontedTextInput
+                        accessibilityLabel={t`Gateway URL`}
+                        testID="pairing-manual-url"
+                        value={manualUrl}
+                        onChangeText={setManualUrl}
+                        onBlur={() => setManualUrl((value) => value.trim())}
+                        autoCapitalize="none"
+                        autoCorrect={false}
+                        keyboardType="url"
+                        placeholder="http://100.x.x.x:23847"
+                        placeholderTextColor={theme.colors.textSubtle}
+                        returnKeyType="go"
+                        onSubmitEditing={handleManualPair}
+                        style={[inputStyle, { fontFamily: mono }]}
+                      />
+                    </SheetSceneField>
+                    <SheetSceneAction
+                      label={busy ? t`Connecting` : t`Continue`}
+                      busy={busy}
+                      onPress={handleManualPair}
+                      testID="pairing-manual-continue"
                     />
-                    <Button onPress={handleManualPair} loading={busy} loadingLabel={t`Connecting`}>
-                      {t`Continue`}
-                    </Button>
                   </Animated.View>
                 ) : (
                   <Animated.View
@@ -815,7 +828,7 @@ export default function PairModal() {
                         exiting={fadeOut('micro')}
                         style={styles.waiting}>
                         <LogoLoader accessibilityLabel={t`Reaching the Gateway`} size={44} />
-                        <Text variant="label" color={theme.colors.textMuted}>
+                        <Text variant="caption" color={theme.colors.textMuted}>
                           {t`Reaching the Gateway`}
                         </Text>
                       </Animated.View>
@@ -841,11 +854,7 @@ export default function PairModal() {
               work -- same control, same words, more weight -- so a reader on a
               device with no lens is not left choosing between a dead frame and
               a caption. */}
-              <View
-                style={[
-                  styles.alternatives,
-                  { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
-                ]}>
+              <View style={styles.alternatives}>
                 <PressableScale
                   accessibilityRole="button"
                   accessibilityLabel={manualOpen ? t`Scan a gateway QR` : t`Enter URL manually`}
@@ -918,19 +927,26 @@ export default function PairModal() {
               which is everyone opening this screen for the first time. Quiet,
               and below the toggle: it is the answer to "I do not have one of
               those yet", not a third way to pair. */}
-              <View style={[styles.setupGroup, { borderColor: theme.colors.border }]}>
+              <View style={styles.setupGroup}>
+                <SheetSceneGroupRule />
+                {/* A row on the same plate as the two ways in above it. It was a
+                    bare heading with a coloured link in its meta slot, which on
+                    an artwork pack was two pieces of text floating on a
+                    painting between two filled rows -- the one line on the
+                    sheet with nothing under it. */}
                 <PressableScale
                   accessibilityRole="link"
                   accessibilityLabel={t`Set up a Gateway on your computer`}
                   onPress={() => void Linking.openURL(GATEWAY_SETUP_URL)}
-                  style={styles.setupLink}>
-                  {/* The gap is laid out, not typed. A literal space inside the Text
-                becomes part of the node's own text, so every matcher -- and the
-                screen reader -- sees "No Gateway yet? " with a tail on it. */}
-                  <Text variant="caption" color={theme.colors.textMuted}>
+                  style={[
+                    styles.manualToggle,
+                    styles.setupRow,
+                    { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
+                  ]}>
+                  <Text variant="bodySmall" color={theme.colors.textMuted} style={styles.setupAsk}>
                     {t`No Gateway yet?`}
                   </Text>
-                  <Text variant="caption" color={theme.colors.primary}>
+                  <Text variant="bodySmall" weight="semibold" color={theme.colors.primary}>
                     {t`Set one up on your computer`}
                   </Text>
                 </PressableScale>
@@ -966,7 +982,10 @@ export default function PairModal() {
                 fits is a command nobody can read off the screen. */}
                   <Text
                     numberOfLines={2}
-                    style={[styles.installCommand, { color: theme.colors.textMuted }]}>
+                    style={[
+                      styles.installCommand,
+                      { color: theme.colors.textMuted, fontFamily: mono },
+                    ]}>
                     {GATEWAY_INSTALL_COMMAND}
                   </Text>
                   {copiedInstall ? (
@@ -979,9 +998,13 @@ export default function PairModal() {
             </Animated.View>
           ) : step === 'confirm' ? (
             <Animated.View key="confirm" entering={stepEntering} exiting={stepExiting}>
-              <Card variant="raised" padding="lg" style={styles.confirmCard}>
+              {/* Two fields and one action on the sheet's own ground. It was a
+                  raised Card holding two boxed inputs and two stacked buttons,
+                  which is three surfaces and two equal decisions for a step
+                  with one of each. */}
+              <View style={styles.confirmColumn}>
                 <View style={styles.confirmCopy}>
-                  <Text variant="label">
+                  <Text variant="caption" weight="semibold">
                     {/* The product's name for the daemon, kept as a name in every
                   locale -- but routed through the catalog so a language that
                   wants an article or a particle around it can have one. */}
@@ -995,56 +1018,66 @@ export default function PairModal() {
                     {offer?.url}
                   </Text>
                 </View>
-                <Input
-                  label={t`Server name`}
-                  value={serverName}
-                  onChangeText={(value) => setServerName(value.slice(0, 48))}
-                  autoCapitalize="words"
-                  autoCorrect={false}
-                  returnKeyType="next"
-                  placeholder={t`Mac mini · Office`}
-                  variant="outline"
-                />
-                {/* Do not set native maxLength here. Android truncates pasted text
-              before onChangeText, so a leading space would consume one slot
-              and discard the final real code character before normalization. */}
-                <Input
+                <SheetSceneField label={t`Server name`}>
+                  <FontedTextInput
+                    accessibilityLabel={t`Server name`}
+                    value={serverName}
+                    onChangeText={(value) => setServerName(value.slice(0, 48))}
+                    autoCapitalize="words"
+                    autoCorrect={false}
+                    returnKeyType="next"
+                    placeholder={t`Mac mini · Office`}
+                    placeholderTextColor={theme.colors.textSubtle}
+                    // The one field here that is prose -- a server's name, which
+                    // the reader writes rather than transcribes -- so it keeps
+                    // the interface face `useSheetSceneInputStyle` already
+                    // resolves and layers nothing over it.
+                    style={inputStyle}
+                  />
+                </SheetSceneField>
+                <SheetSceneField
                   label={t`Pairing code`}
-                  value={code}
-                  onChangeText={(value) => setCode(normalizePairingCode(value))}
-                  autoCapitalize="characters"
-                  autoCorrect={false}
-                  keyboardType={Platform.OS === 'ios' ? 'ascii-capable' : 'visible-password'}
-                  returnKeyType="done"
-                  textContentType="oneTimeCode"
-                  onSubmitEditing={() => void handleClaim()}
-                  // Shows the shape without looking like a code to copy. Prose does
-                  // not fit: this input is 26pt with 6pt letter spacing.
-                  placeholder="••••-••••"
-                  variant="outline"
-                  style={styles.codeInput}
-                  testID="pairing-code-input"
-                />
-                {secondsRemaining !== null ? (
-                  <Text
-                    variant="caption"
-                    color={secondsRemaining <= 15 ? theme.colors.danger : theme.colors.textMuted}>
-                    {codeExpired
-                      ? t`Code expired`
-                      : t`Expires in ${Math.floor(secondsRemaining / 60)}:${String(secondsRemaining % 60).padStart(2, '0')}`}
-                  </Text>
-                ) : null}
-                <Button
+                  hint={
+                    secondsRemaining === null
+                      ? undefined
+                      : codeExpired
+                        ? t`Code expired`
+                        : // react-doctor-disable-next-line react-hooks-js/todo -- Lingui expands this macro before React Compiler runs.
+                          t`Expires in ${Math.floor(secondsRemaining / 60)}:${String(secondsRemaining % 60).padStart(2, '0')}`
+                  }>
+                  {/* Do not set native maxLength here. Android truncates pasted
+                      text before onChangeText, so a leading space would consume
+                      one slot and discard the final real code character before
+                      normalization. */}
+                  <FontedTextInput
+                    accessibilityLabel={t`Pairing code`}
+                    value={code}
+                    onChangeText={(value) => setCode(normalizePairingCode(value))}
+                    autoCapitalize="characters"
+                    autoCorrect={false}
+                    keyboardType={Platform.OS === 'ios' ? 'ascii-capable' : 'visible-password'}
+                    returnKeyType="done"
+                    textContentType="oneTimeCode"
+                    onSubmitEditing={() => void handleClaim()}
+                    // Shows the shape without looking like a code to copy;
+                    // prose would not fit under the field's own tracking.
+                    placeholder="••••-••••"
+                    style={[inputStyle, styles.codeInput, { fontFamily: mono }]}
+                    testID="pairing-code-input"
+                  />
+                </SheetSceneField>
+                <SheetSceneAction
+                  label={busy ? t`Pairing` : t`Pair server`}
+                  busy={busy}
                   disabled={codeExpired}
                   onPress={handleClaim}
-                  loading={busy}
-                  loadingLabel={t`Pairing`}>
-                  {t`Pair server`}
-                </Button>
-                <Button onPress={reset} variant="ghost">
-                  {t`Scan again`}
-                </Button>
-              </Card>
+                  testID="pairing-claim"
+                />
+                {/* A line of text under the primary action, never a second
+                    button: a step that offers two equal buttons has not decided
+                    what it is for. */}
+                <SheetSceneQuietAction label={t`Scan again`} onPress={reset} />
+              </View>
             </Animated.View>
           ) : pairedServer ? (
             <Animated.View
@@ -1097,14 +1130,15 @@ export default function PairModal() {
         ) : null}
 
         <View style={styles.slackBelow} />
+        <SheetSceneFooter bottomInset={insets.bottom} />
       </KeyboardAwareScrollView>
 
-      {/* This screen is presented as a native modal, and the gate near the
+      {/* This screen is presented as a native sheet, and the gate near the
           navigation root cannot draw a dialog over one on iOS. Pairing through
           an SSH host asks about the host key from right here, so it mounts its
           own gate; being the innermost one, it is the one that draws. */}
       <SshConnectPromptGate />
-    </SafeAreaView>
+    </SheetScene>
   );
 }
 
@@ -1180,16 +1214,12 @@ function ReticleCorners({ color }: { color: string }) {
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-  },
   content: {
     flexGrow: 1,
     width: '100%',
     maxWidth: ROUTE_MEASURE,
     alignSelf: 'center',
-    padding: ROUTE_GUTTER,
-    paddingBottom: 32,
+    paddingHorizontal: ROUTE_GUTTER,
     gap: 18,
   },
   slackAbove: {
@@ -1201,28 +1231,6 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     flexShrink: 1,
     flexBasis: 0,
-  },
-  modalHeader: {
-    minHeight: 56,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 16,
-  },
-  headerCopy: {
-    flex: 1,
-    gap: 4,
-  },
-  title: {
-    fontSize: 28,
-    lineHeight: 34,
-    letterSpacing: -0.5,
-  },
-  closeButton: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   // The slot both modes live in. No fill of its own here: the surface token is
   // applied at the call site, and it is the one thing on this screen that must
@@ -1333,30 +1341,38 @@ const styles = StyleSheet.create({
     // tracking: a shell command that has been upper-cased is a shell command
     // that does not run. This is the one string on the screen that has to be
     // reproduced character for character, so it gets a monospace face of its
-    // own and no transform.
-    fontFamily: Platform.OS === 'ios' ? 'ui-monospace' : 'monospace',
-    fontSize: 12,
-    lineHeight: 17,
+    // own and no transform -- at the app's one monospace size, so a command
+    // here and a command in an agent tool card are the same face at the same
+    // size rather than two numbers that agree today. The face itself is merged
+    // in at the render site from `useMonoFontFamily()`; it used to be
+    // `ui-monospace`/`monospace` written here, which a stylesheet built at
+    // module load can never revise once the reader picks their own.
+    fontSize: AGENT_TYPE.mono.size,
+    lineHeight: AGENT_TYPE.mono.lineHeight,
   },
+  // A link in a heading's meta slot: its own touch height, no width of its own.
   setupLink: {
-    alignSelf: 'stretch',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'flex-start',
-    flexWrap: 'wrap',
-    gap: 5,
-    minHeight: 34,
-    paddingHorizontal: 0,
+    minHeight: 32,
+    justifyContent: 'center',
   },
+  // No fill of its own any more: a rounded `surfaceRaised` slab holding two
+  // pills is the card the sheet system removed everywhere else, and on a
+  // frosted ground it was the one box left on the screen.
   alternatives: {
-    borderRadius: 16,
-    padding: 6,
     gap: 2,
   },
   setupGroup: {
-    borderTopWidth: StyleSheet.hairlineWidth,
-    paddingTop: 12,
     gap: 4,
+  },
+  // The question and the answer on one row when they fit, and on two when a
+  // wide face or a long language means they do not.
+  setupRow: {
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    marginTop: SHEET_LADDER.gap,
+  },
+  setupAsk: {
+    flexShrink: 1,
   },
   manualToggle: {
     alignSelf: 'stretch',
@@ -1369,44 +1385,28 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 10,
   },
-  // The form, on the aperture's own ground, centred in the square rather than
-  // sizing it. It was a Card inside the step and the step was already a
-  // surface, so the address field sat two fills deep.
-  sshHostList: {
-    gap: 8,
-    width: '100%',
-  },
-  sshHostRow: {
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    borderRadius: 12,
-    borderWidth: StyleSheet.hairlineWidth,
-    gap: 2,
-  },
-  sshHostLabel: {
-    flexShrink: 1,
-  },
   sshEmpty: {
     alignItems: 'center',
     gap: 4,
     paddingVertical: 8,
   },
+  // The form, on the aperture's own ground, centred in the square rather than
+  // sizing it. `SHEET_LADDER.gutter` across, so a field inside the frame keeps
+  // the same left edge as the rows and the heading outside it.
   manualPanel: {
     ...StyleSheet.absoluteFill,
     justifyContent: 'center',
-    padding: 24,
-    gap: 16,
+    paddingHorizontal: SHEET_LADDER.gutter,
+    paddingVertical: SHEET_LADDER.snug,
+    gap: SHEET_LADDER.gap,
   },
-  confirmCard: {
-    gap: 16,
+  confirmColumn: {
+    gap: SHEET_LADDER.gap,
   },
   confirmCopy: {
-    gap: 6,
+    gap: SHEET_LADDER.tight,
   },
   codeInput: {
-    fontSize: 26,
-    height: 36,
-    lineHeight: 34,
     letterSpacing: 6,
     // Left aligned: centring re-lays out the text on every keystroke, so the
     // code visibly jumps around while it is being typed.
@@ -1432,9 +1432,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 7,
   },
+  // The kit's `heading` role and nothing added: the size belongs to the type
+  // scale, not to this screen.
   successTitle: {
-    fontSize: 24,
-    lineHeight: 30,
     textAlign: 'center',
   },
   message: {

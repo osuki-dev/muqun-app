@@ -1,8 +1,10 @@
 import { Card } from '@/components/themed-card';
 import { useSurfaceBackground, useSurfaceBackgroundOpacity } from '@/hooks/use-surface-background';
 import { useLingui } from '@lingui/react/macro';
-import { PressableCard, Stack, Tag, Text, useThemeTokens } from '@osuki-dev/ui';
-import { ScrollView, View } from 'react-native';
+import { PressableCard, Stack, useThemeTokens } from '@osuki-dev/ui';
+import { Text } from '@/components/text';
+import { useState } from 'react';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import type { ComposerPopupRow } from '@/lib/composer-popup';
@@ -37,10 +39,28 @@ export const COMPOSER_POPUP_VISIBLE_ROWS = 5;
  * under-estimate leaves a half row peeking out of the bottom of the panel.
  */
 const ROW_HEIGHT = 54;
+/** `Stack gap="xs"` between rows, which the cap has to count too. */
+const ROW_GAP = 4;
+/** The card's own padding above and below the scroller. */
+const CARD_PADDING = 16;
 
 export interface ComposerPopupProps {
+  /**
+   * Whose commands a `workspace` badge names: the terminal's come from its
+   * Herdr workspace, OpenCode's from its project. One badge, each screen's word.
+   */
+  scope?: 'workspace' | 'project';
   rows: readonly ComposerPopupRow[];
   onPick: (row: ComposerPopupRow) => void;
+  /**
+   * The most room the panel has above the dock, when the screen it is on knows.
+   *
+   * Without one the panel took its five rows wherever they landed, which with
+   * the keyboard up meant growing through the header and off the top of the
+   * screen -- and the row that ran out of screen was cut in half, which reads
+   * as a list that has been truncated rather than one that scrolls.
+   */
+  maxHeight?: number;
   /** Prefix for row test IDs, so two triggers can be told apart in a flow. */
   testIDPrefix?: string;
 }
@@ -48,15 +68,33 @@ export interface ComposerPopupProps {
 export function ComposerPopup({
   rows,
   onPick,
+  maxHeight,
   testIDPrefix = 'composer-popup',
+  scope = 'workspace',
 }: ComposerPopupProps) {
   const { t } = useLingui();
   const theme = useThemeTokens();
   const surfaceBackground = useSurfaceBackground();
   const surfaceOpacity = useSurfaceBackgroundOpacity();
+  /**
+   * A row's real height, measured rather than assumed.
+   *
+   * `ROW_HEIGHT` is the estimate the cap was built from, and an estimate that
+   * is a point or two short leaves a sliver of the next row peeking out of the
+   * bottom. The first row that lays out says what a row costs, and the cap is
+   * a whole number of those.
+   */
+  const [rowHeight, setRowHeight] = useState(ROW_HEIGHT);
   if (rows.length === 0) return null;
 
-  const visibleRows = Math.min(rows.length, COMPOSER_POPUP_VISIBLE_ROWS);
+  const step = rowHeight + ROW_GAP;
+  const wanted = Math.min(rows.length, COMPOSER_POPUP_VISIBLE_ROWS) * step - ROW_GAP;
+  // Whole rows only, so the last one visible is a whole one.
+  const room =
+    maxHeight === undefined
+      ? wanted
+      : Math.max(rowHeight, Math.floor((maxHeight - CARD_PADDING) / step) * step - ROW_GAP);
+  const listHeight = Math.min(wanted, room);
 
   return (
     <Animated.View
@@ -68,7 +106,7 @@ export function ComposerPopup({
           keyboardShouldPersistTaps="always"
           keyboardDismissMode="none"
           showsVerticalScrollIndicator={false}
-          style={{ maxHeight: visibleRows * ROW_HEIGHT }}>
+          style={{ maxHeight: listHeight }}>
           <Stack gap="xs">
             {rows.map((row) => (
               // The panel re-ranks under the caret: every character typed drops
@@ -83,7 +121,11 @@ export function ComposerPopup({
                 key={row.id}
                 layout={listLayout('micro')}
                 entering={fadeIn('micro')}
-                exiting={fadeOut('micro')}>
+                exiting={fadeOut('micro')}
+                onLayout={(event) => {
+                  const height = event.nativeEvent.layout.height;
+                  if (height > 0) setRowHeight((current) => Math.max(current, height));
+                }}>
                 <PressableCard
                   variant="flat"
                   style={{
@@ -129,24 +171,39 @@ export function ComposerPopup({
                       say: `/review` shipped with the agent and `/review` written
                       into this repo do different work. */}
                     {row.badge ? (
-                      // `Tag` paints an opaque `surfaceRaised` and the app's
-                      // style is merged after the kit's. Painting it through
-                      // the hook instead would put a second fill at the
-                      // reader's alpha directly on top of the row card's own,
+                      // The kit's `Tag` would do this, and it types its label
+                      // in capitals -- WORKSPACE beside a sentence-case name
+                      // and a sentence-case description, in an app that had
+                      // already stopped shouting everywhere else. It is the
+                      // same pill written out, in one case.
+                      //
+                      // The fill is the row card's own: painting an opaque
+                      // `surfaceRaised` through the hook instead would put a
+                      // second fill at the reader's alpha on top of the card's,
                       // and the badge would show the wallpaper at (1 - a)
                       // squared where the rest of the row shows it at (1 - a)
                       // -- the stacking `themed-tabs.tsx` takes apart. One
-                      // layer per pixel, and the row card is already that
-                      // layer, so under a custom theme the badge gives up its
-                      // fill and keeps its uppercase muted label. A default
-                      // theme has no alpha to honour and keeps the kit's pill.
-                      <Tag
-                        variant="pill"
-                        style={
-                          surfaceOpacity === 1 ? undefined : { backgroundColor: 'transparent' }
-                        }>
-                        {row.badge}
-                      </Tag>
+                      // layer per pixel, so under a custom theme the badge
+                      // gives up its fill and keeps its muted label.
+                      <View
+                        style={[
+                          styles.badge,
+                          surfaceOpacity === 1
+                            ? { backgroundColor: theme.colors.surfaceRaised }
+                            : null,
+                        ]}>
+                        <Text
+                          variant="caption"
+                          transform="none"
+                          color={theme.colors.textMuted}
+                          numberOfLines={1}>
+                          {row.badge === 'workspace'
+                            ? scope === 'project'
+                              ? t`Project`
+                              : t`Workspace`
+                            : row.badge}
+                        </Text>
+                      </View>
                     ) : null}
                   </Stack>
                 </PressableCard>
@@ -158,3 +215,12 @@ export function ComposerPopup({
     </Animated.View>
   );
 }
+
+const styles = StyleSheet.create({
+  badge: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 999,
+    borderCurve: 'continuous',
+  },
+});

@@ -104,3 +104,53 @@ describe('terminalGridChanged', () => {
     expect(TERMINAL_GRID_DEFAULT).toEqual({ cols: 80, rows: 24 });
   });
 });
+
+describe('the advance ratio a reader brought with their font', () => {
+  test('sizes the estimate, so the first frame is about the loaded face', () => {
+    // Only read until the canvas reports a measured cell -- but the first
+    // frame is the one the shell draws its prompt into, and everything it
+    // printed before the resize landed is already wrapped to that width.
+    const wide = terminalGridFor({ width: 402, height: 600, fontSize: 13, advanceRatio: 1 });
+    const bundled = terminalGridFor({ width: 402, height: 600, fontSize: 13 });
+    const narrow = terminalGridFor({ width: 402, height: 600, fontSize: 13, advanceRatio: 0.5 });
+
+    // A full-width Han mono face at 1.0 fits a little over half the columns
+    // the bundled font's 0.6 would have opened the PTY at.
+    expect(wide.cols).toBeLessThan(bundled.cols);
+    expect(narrow.cols).toBeGreaterThan(bundled.cols);
+  });
+
+  test('leaves every existing caller exactly where it was', () => {
+    // The parameter defaults to the bundled font's own 0.6, which is what
+    // every call site passed implicitly before the monospace slot existed.
+    expect(terminalGridFor({ width: 402, height: 600, fontSize: 13 })).toEqual(
+      terminalGridFor({
+        width: 402,
+        height: 600,
+        fontSize: 13,
+        advanceRatio: TERMINAL_ADVANCE_RATIO,
+      })
+    );
+    expect(fallbackTerminalCellWidth(13, 3)).toBe(
+      fallbackTerminalCellWidth(13, 3, TERMINAL_ADVANCE_RATIO)
+    );
+  });
+
+  test('ignores a ratio that is not one, rather than dividing by it', () => {
+    // A slot from a build that stored nonsense, or a face that reported a zero
+    // advance: the bundled font's number is the safe answer, not a grid of one
+    // column or of infinity.
+    const sane = fallbackTerminalCellWidth(13, 3);
+    for (const ratio of [0, -1, Number.NaN, Number.POSITIVE_INFINITY]) {
+      expect(fallbackTerminalCellWidth(13, 3, ratio)).toBe(sane);
+    }
+  });
+
+  test('is ignored entirely once the canvas has measured a real cell', () => {
+    // The estimate is a stand-in, never a correction applied on top of the
+    // measurement: a measured advance wins whatever the stored ratio says.
+    expect(
+      terminalGridFor({ width: 402, height: 600, fontSize: 13, cellWidth: 7.8, advanceRatio: 1 })
+    ).toEqual(terminalGridFor({ width: 402, height: 600, fontSize: 13, cellWidth: 7.8 }));
+  });
+});

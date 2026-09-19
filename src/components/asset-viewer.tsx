@@ -1,6 +1,7 @@
 import * as Clipboard from 'expo-clipboard';
 import { Trans, useLingui } from '@lingui/react/macro';
-import { Text, useThemeTokens } from '@osuki-dev/ui';
+import { useThemeTokens } from '@osuki-dev/ui';
+import { Text } from '@/components/text';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { Button } from '@/components/themed-button';
 import { Skeleton } from '@/components/themed-skeleton';
@@ -9,10 +10,13 @@ import { EnrichedMarkdownText } from 'react-native-enriched-markdown';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Linking, Modal, ScrollView, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
+import { KeyboardStickyView } from 'react-native-keyboard-controller';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { useMarkdownFonts } from '@/hooks/use-user-fonts';
 import { createMarkdownStyle } from '@/lib/markdown-style';
 import { ImagePreviewModal } from '@/components/image-preview-modal';
+import { SheetFrame } from '@/components/sheet-ground';
 import { PressableScale } from '@/components/pressable-scale';
 import { formatAssetSize } from '@/lib/asset-display';
 import { fenceLanguageForFile, fencedFile } from '@/lib/code-language';
@@ -27,9 +31,13 @@ import {
   type SessionAsset,
   readAssetBytes,
 } from '@/lib/gateway-client';
+import { CodeLinesView } from '@/components/code-lines-view';
+import { MarkdownDocumentView } from '@/components/markdown-document-view';
+import { HIGHLIGHT_MAX_CHARS, MAX_ASSET_TEXT_BYTES, indexTextLines } from '@/lib/text-preview';
 import { describeGatewayFailure } from '@/lib/network-error';
 import { isSafeExternalLink } from '@/lib/safe-link';
-import { CustomThemeLibrary } from '@/components/custom-theme-library';
+import { CustomThemeLibrary, type ThemePrimaryAction } from '@/components/custom-theme-library';
+import { SheetSceneAction } from '@/components/sheet-scene';
 import { ThemeImportProgress } from '@/components/theme-import-progress';
 import { prepareThemeAssets, type PreparedThemeAssets } from '@/theme/assets';
 import { ThemeImportRequest } from '@/theme/import-request';
@@ -44,9 +52,10 @@ import { themeFromDocument } from '@/theme/file-preview';
  * Every kind is displayed straight from the gateway rather than copied to a
  * cache file first: an image is fetched by the image library, which sends the
  * bearer token itself and owns the decode and the disk cache, and text is read
- * into a string because that is what the renderer wants anyway. Nothing here
+ * into a string because that is what the renderers want anyway. Nothing here
  * holds a whole file in the JS heap except text, which is size-capped by
- * `readAssetText`.
+ * `readAssetText` -- and that cap is now the only one: what arrives is drawn,
+ * a block or a line at a time.
  */
 export function AssetViewer({ asset, onClose }: { asset: SessionAsset; onClose: () => void }) {
   if (asset.kind === 'image' && asset.previewable) {
@@ -138,47 +147,6 @@ function EncryptedImageViewer({ asset, onClose }: { asset: SessionAsset; onClose
 /** How long the header's copy button stays a tick before it is a copy icon again. */
 const COPIED_FEEDBACK_MS = 1_600;
 
-/**
- * Where a file stops being drawn and starts being described.
- *
- * There is one renderer now, so there is one gate, and it is iOS that sets it.
- *
- * `react-native-enriched-markdown` parses and lays out natively -- the
- * tree-sitter highlighter never touches the JS thread -- but the layout still
- * lands in one uninterruptible pass before anything is on screen, and past a
- * point it stops being linear. Measured through this component on a warm app,
- * from the string being in hand to the renderer's first layout, one fenced
- * TypeScript block per file, each size a file the app had not opened before:
- *
- *   size        iOS simulator    Android emulator
- *    20 KiB            101 ms              185 ms
- *    60 KiB            806 ms              127 ms
- *    96 KiB          1_869 ms              249 ms
- *   128 KiB          3_746 ms              209 ms
- *   160 KiB          5_847 ms              390 ms
- *   200 KiB          7_920 ms              141 ms
- *
- * Android is flat and cheap at every size -- a 200 KiB block is on screen in
- * under half a second, confirmed end to end with a stopwatch around the tap and
- * not only from `onLayout`. iOS is quadratic, and at 200 KiB the sheet shows its
- * loading skeleton for eight seconds and then a screenful of code. That is not a
- * slow render, it is the reader waiting at a placeholder, and it is the same
- * shape card #661 reported.
- *
- * 64 KiB is the last size on the flat part of the iOS curve -- under a second --
- * and it is the number the markdown gate this replaces already used, arrived at
- * from the same cliff on the same simulator. It is comfortably above every file
- * an agent actually writes.
- *
- * Above it the file is not drawn at all. That is a real loss against the
- * virtualized viewer card #661 built, which would show a 200 KiB file a
- * screenful at a time -- and it is the trade: one renderer with a gate, rather
- * than two renderers and a tokenizer to keep in step with each other. The file
- * is loaded by then, so the header's copy action still works, which is what the
- * message points at.
- */
-const RENDER_MAX_BYTES = 64 * 1024;
-
 /** Everything that is not an image: a document, some text, or a file we can only describe. */
 function AssetSheet({ asset, onClose }: { asset: SessionAsset; onClose: () => void }) {
   const surfaceBackground = useSurfaceBackground();
@@ -195,13 +163,41 @@ function AssetSheet({ asset, onClose }: { asset: SessionAsset; onClose: () => vo
 
   const theme = useThemeTokens();
   const insets = useSafeAreaInsets();
-  const markdownStyle = useMemo(() => createMarkdownStyle(theme.colors), [theme.colors]);
-  const readable = asset.previewable && (asset.kind === 'markdown' || asset.kind === 'text');
+  const markdownFonts = useMarkdownFonts();
+  const markdownStyle = useMemo(
+    () => createMarkdownStyle(theme.colors, markdownFonts),
+    [theme.colors, markdownFonts]
+  );
+  const textual = asset.previewable && (asset.kind === 'markdown' || asset.kind === 'text');
+  /**
+   * The one ceiling left, and it is about the phone rather than the renderer.
+   *
+   * `asset.size` is a real file size in real bytes, which is what this has to
+   * be measured in -- the renderers' own limits are in characters, because
+   * glyphs are what they lay out. Above this the file is not asked for at all:
+   * refusing after downloading five megabytes into a component that will not
+   * draw them is what the viewer used to do at a tenth of the size.
+   */
+  const tooLarge = textual && asset.size > MAX_ASSET_TEXT_BYTES;
+  const readable = textual && !tooLarge;
   const [content, setContent] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   /** Bumped by "Try again"; the only thing that re-runs the read. */
   const [attempt, setAttempt] = useState(0);
   const [previewedThemeDocument, setPreviewedThemeDocument] = useState<string | null>(null);
+  /**
+   * The one decision a previewed theme offers, pinned rather than scrolled to.
+   *
+   * The library drew its own Apply between the preview and the appearance
+   * settings, and the settings are several screens long on a phone: the device
+   * run had to scroll 900px to reach the confirm on a theme it had just opened.
+   * Taking the action (`onPrimaryActionChange`) moves it to the bottom bar
+   * below, where the viewer's other permanent controls already are, and stops
+   * the library drawing the inline one. `setPrimary` is a `useState` setter, so
+   * its identity is stable and the library reports again only when the action
+   * itself changes; the same contract the detail route has used since #834.
+   */
+  const [primary, setPrimary] = useState<ThemePrimaryAction | null>(null);
   const themeDocumentIdentity = `${asset.id}:${asset.modified_unix_ms}`;
   const themeManifest = useMemo(
     () => themeFromDocument(asset.name, content),
@@ -349,13 +345,22 @@ function AssetSheet({ asset, onClose }: { asset: SessionAsset; onClose: () => vo
       onRequestClose={onClose}>
       {/* Both insets are paid here rather than per body: the fill is on this
           view, so padding it keeps the colour edge to edge while the content
-          stays clear of the status bar and the gesture bar. */}
-      <View
-        style={[
-          styles.sheet,
-          { backgroundColor: theme.colors.background, paddingBottom: insets.bottom },
-        ]}>
-        {/* SafeAreaView reports zero insets inside a native Modal, so pad from
+          stays clear of the status bar and the gesture bar.
+
+          `SheetFrame` rather than a flat `colors.background`: this is the one
+          themed surface in the app that was painting its own floor, so a pack
+          with a `shell.background` had a wallpaper everywhere except here. It
+          stays a `Modal` and not a route because it is opened from *inside* the
+          files form sheet, where it would be a third subview of a layout that
+          lays out two -- the constraint `session-artifacts.tsx:701` records.
+          And it keeps square corners and no grabber, for the same reason
+          `SheetHandle` draws nothing inside a fullscreen frame: this is a
+          full-bleed viewer, not a sheet that can be dragged away, and rounding
+          the top of something that fills the screen is a corner over nothing. */}
+      <View style={styles.sheet}>
+        <SheetFrame tint="background">
+          <View style={[styles.sheetColumn, { paddingBottom: insets.bottom }]}>
+            {/* SafeAreaView reports zero insets inside a native Modal, so pad from
             the root provider's insets instead.
 
             `zIndex` and `elevation` are not decoration: the way out of this
@@ -363,100 +368,129 @@ function AssetSheet({ asset, onClose }: { asset: SessionAsset; onClose: () => vo
             whatever the body puts on the screen -- including a loading state
             that fills the rest of it. A viewer you cannot leave while it is
             loading is worse than one that fails. */}
-        <View style={[styles.headerLayer, { paddingTop: insets.top }]}>
-          <View style={styles.header}>
-            <View style={styles.headerText}>
-              <Text variant="bodySmall" numberOfLines={1}>
-                {asset.name}
-              </Text>
-              <Text variant="caption" color={theme.colors.textMuted} numberOfLines={1}>
-                {subtitle}
-              </Text>
-            </View>
-            {content ? (
-              <PressableScale
-                accessibilityLabel={t`Copy`}
-                onPress={copy}
-                style={[
-                  styles.close,
-                  { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
-                ]}>
-                {copied ? (
-                  <Check size={18} color={theme.colors.success} />
-                ) : (
-                  <Copy size={18} color={theme.colors.text} />
-                )}
-              </PressableScale>
-            ) : null}
-            <PressableScale
-              accessibilityLabel={t`Close file`}
-              onPress={onClose}
-              style={[
-                styles.close,
-                { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
-              ]}>
-              <X size={18} color={theme.colors.text} />
-            </PressableScale>
-          </View>
-        </View>
-
-        {pack ? (
-          <ScrollView contentContainerStyle={{ padding: 20, gap: 16 }}>
-            <CustomThemeLibrary
-              key={`${themeDocumentIdentity}:pack`}
-              initialCandidate={pack}
-              detail
-              // The prepared artwork belongs to this screen, which disposes it
-              // when the reader closes the file.
-              ownsPreparedAssets={false}
-              onClosePreview={() => setPack(null)}
-            />
-          </ScrollView>
-        ) : previewedThemeDocument === themeDocumentIdentity && themeManifest ? (
-          <ScrollView contentContainerStyle={{ padding: 20, gap: 16 }}>
-            <CustomThemeLibrary
-              key={themeDocumentIdentity}
-              initialManifest={themeManifest}
-              detail
-              onClosePreview={() => setPreviewedThemeDocument(null)}
-            />
-          </ScrollView>
-        ) : (
-          <>
-            {themeManifest ? (
-              <View style={{ paddingHorizontal: 20, paddingVertical: 12 }}>
-                <Button
-                  testID="asset-preview-theme"
-                  onPress={() =>
-                    setPreviewedThemeDocument(themeDocumentIdentity)
-                  }>{t`Preview`}</Button>
-              </View>
-            ) : packaged ? (
-              <View style={{ paddingHorizontal: 20, paddingVertical: 12, gap: 8 }}>
-                <Button
-                  testID="asset-open-theme-package"
-                  disabled={Boolean(packProgress)}
-                  onPress={() => void openPackagedTheme()}>{t`Preview`}</Button>
-                {packProgress ? (
-                  <ThemeImportProgress
-                    label={t`Downloading theme`}
-                    receivedBytes={packProgress.done}
-                    completed={packProgress.done}
-                    total={packProgress.total ?? undefined}
-                  />
+            <View style={[styles.headerLayer, { paddingTop: insets.top }]}>
+              <View style={styles.header}>
+                <View style={styles.headerText}>
+                  <Text variant="bodySmall" numberOfLines={1}>
+                    {asset.name}
+                  </Text>
+                  <Text variant="caption" color={theme.colors.textMuted} numberOfLines={1}>
+                    {subtitle}
+                  </Text>
+                </View>
+                {content ? (
+                  <PressableScale
+                    accessibilityLabel={t`Copy`}
+                    onPress={copy}
+                    style={[
+                      styles.close,
+                      { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
+                    ]}>
+                    {copied ? (
+                      <Check size={18} color={theme.colors.success} />
+                    ) : (
+                      <Copy size={18} color={theme.colors.text} />
+                    )}
+                  </PressableScale>
                 ) : null}
+                <PressableScale
+                  accessibilityLabel={t`Close file`}
+                  onPress={onClose}
+                  style={[
+                    styles.close,
+                    { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
+                  ]}>
+                  <X size={18} color={theme.colors.text} />
+                </PressableScale>
               </View>
+            </View>
+
+            {pack ? (
+              <ScrollView contentContainerStyle={{ padding: 20, gap: 16 }}>
+                <CustomThemeLibrary
+                  key={`${themeDocumentIdentity}:pack`}
+                  initialCandidate={pack}
+                  detail
+                  // The prepared artwork belongs to this screen, which disposes it
+                  // when the reader closes the file.
+                  ownsPreparedAssets={false}
+                  onClosePreview={() => setPack(null)}
+                  onPrimaryActionChange={setPrimary}
+                />
+              </ScrollView>
+            ) : previewedThemeDocument === themeDocumentIdentity && themeManifest ? (
+              <ScrollView contentContainerStyle={{ padding: 20, gap: 16 }}>
+                <CustomThemeLibrary
+                  key={themeDocumentIdentity}
+                  initialManifest={themeManifest}
+                  detail
+                  onClosePreview={() => setPreviewedThemeDocument(null)}
+                  onPrimaryActionChange={setPrimary}
+                />
+              </ScrollView>
+            ) : (
+              <>
+                {themeManifest ? (
+                  <View style={{ paddingHorizontal: 20, paddingVertical: 12 }}>
+                    <Button
+                      testID="asset-preview-theme"
+                      onPress={() =>
+                        setPreviewedThemeDocument(themeDocumentIdentity)
+                      }>{t`Preview`}</Button>
+                  </View>
+                ) : packaged ? (
+                  <View style={{ paddingHorizontal: 20, paddingVertical: 12, gap: 8 }}>
+                    <Button
+                      testID="asset-open-theme-package"
+                      disabled={Boolean(packProgress)}
+                      onPress={() => void openPackagedTheme()}>{t`Preview`}</Button>
+                    {packProgress ? (
+                      <ThemeImportProgress
+                        label={t`Downloading theme`}
+                        receivedBytes={packProgress.done}
+                        completed={packProgress.done}
+                        total={packProgress.total ?? undefined}
+                      />
+                    ) : null}
+                  </View>
+                ) : null}
+                <AssetBody
+                  asset={asset}
+                  readable={readable}
+                  tooLarge={tooLarge}
+                  content={content}
+                  error={error}
+                  markdownStyle={markdownStyle}
+                  onRetry={() => setAttempt((previous) => previous + 1)}
+                />
+              </>
+            )}
+
+            {/* Pinned, for the same reason the detail route pins its own: the
+                confirm for a theme sits under a preview and a column of
+                appearance settings, and one you have to go looking for is one
+                the reader has already decided against. `KeyboardStickyView`
+                rather than a plain bar because this viewer is the one place a
+                theme is read next to a file: nothing here opens a keyboard
+                today, and if something does the button rides above it instead
+                of underneath. The column already pays the bottom inset. */}
+            {primary ? (
+              <KeyboardStickyView offset={{ closed: 0, opened: -insets.bottom }}>
+                <View style={styles.themeAction}>
+                  <SheetSceneAction
+                    // The id belongs to the apply: `theme-document` looks for it
+                    // on a theme that is not the current one, and
+                    // `custom-themes` presses it and then checks it has gone.
+                    testID={primary.applies ? 'theme-apply' : undefined}
+                    label={primary.applies ? t`Apply theme` : t`Done`}
+                    disabled={primary.disabled}
+                    onPress={primary.run}
+                  />
+                </View>
+              </KeyboardStickyView>
             ) : null}
-            <AssetBody
-              asset={asset}
-              readable={readable}
-              content={content}
-              error={error}
-              markdownStyle={markdownStyle}
-              onRetry={() => setAttempt((previous) => previous + 1)}
-            />
-          </>
-        )}
+          </View>
+        </SheetFrame>
       </View>
     </Modal>
   );
@@ -465,6 +499,7 @@ function AssetSheet({ asset, onClose }: { asset: SessionAsset; onClose: () => vo
 function AssetBody({
   asset,
   readable,
+  tooLarge,
   content,
   error,
   markdownStyle,
@@ -472,6 +507,8 @@ function AssetBody({
 }: {
   asset: SessionAsset;
   readable: boolean;
+  /** Text, but past the size the app will hold; nothing was read. */
+  tooLarge: boolean;
   content: string | null;
   error: string | null;
   markdownStyle: ReturnType<typeof createMarkdownStyle>;
@@ -482,26 +519,87 @@ function AssetBody({
 
   const theme = useThemeTokens();
 
+  /** A markdown file is a document; everything else is code, whatever it is called. */
+  const document = asset.kind === 'markdown';
+
   /**
-   * What the renderer is handed.
+   * What the highlighted renderer is handed, when it is the one drawing.
    *
-   * A markdown file is its own source and goes through as it is. Everything
-   * else -- source, config, a log, a diff, a `.txt` -- is wrapped in one fenced
-   * block named after its extension, and the renderer highlights it natively.
-   * That is the whole of the second path: there is no JavaScript tokenizer here
-   * any more, and no second viewer to keep in step with this one.
+   * Source, config, a log, a diff, a `.txt` -- wrapped in one fenced block
+   * named after its extension, and highlighted natively. There is no JavaScript
+   * tokenizer here and never was: this is the only path in the app that
+   * colours code, and above `HIGHLIGHT_MAX_CHARS` it is not the path taken.
    */
   const source = useMemo(() => {
-    if (content === null) return '';
-    if (asset.kind === 'markdown') return content;
+    if (content === null || document || content.length > HIGHLIGHT_MAX_CHARS) return '';
     return fencedFile(content, fenceLanguageForFile(asset.name));
-  }, [asset.kind, asset.name, content]);
+  }, [asset.name, content, document]);
+
+  /**
+   * The same file as rows, when it is past the size one native pass can lay
+   * out. Built once per file rather than per render: a megabyte is split on
+   * newlines exactly once, and `CodeLinesView` reads the result.
+   */
+  const index = useMemo(() => {
+    if (content === null || document || content.length <= HIGHLIGHT_MAX_CHARS) return null;
+    return indexTextLines(content);
+  }, [content, document]);
+
+  /**
+   * The path, for a file the reader has to go and open somewhere else.
+   *
+   * The header's copy action needs the file's text and a refused file has none,
+   * so the one thing worth carrying away is where it is. Same feedback as the
+   * header: a word, for as long as a tick lasts there.
+   */
+  const [pathCopied, setPathCopied] = useState(false);
+  const copyPath = useCallback(() => {
+    void Clipboard.setStringAsync(asset.path).then(() => setPathCopied(true));
+  }, [asset.path]);
+  useEffect(() => {
+    if (!pathCopied) return;
+    const timer = setTimeout(() => setPathCopied(false), COPIED_FEEDBACK_MS);
+    return () => clearTimeout(timer);
+  }, [pathCopied]);
 
   // The states of one viewer, and they used to be bare returns: the spinner
   // ceased to exist and a full page of markdown existed, on the same frame. Each branch is now a layer of its own, keyed so React tears the old
   // one down rather than reusing it, and the two overlap for the length of a
   // short fade -- which is what makes a document read as having arrived rather
   // than as having replaced something.
+  if (tooLarge) {
+    // The one refusal left, and the only one that says a number. It is reached
+    // before a byte is read, so what it offers is the way to the file rather
+    // than the file: nothing here has the text to put on the clipboard.
+    const size = formatAssetSize(asset.size);
+    const ceiling = formatAssetSize(MAX_ASSET_TEXT_BYTES);
+    return (
+      <AssetBodyLayer id="too-large">
+        <View style={styles.centerState}>
+          <Text variant="bodySmall" color={theme.colors.textMuted} style={styles.centerText}>
+            {/* react-doctor-disable-next-line react-hooks-js/todo -- Lingui expands this macro before React Compiler runs. */}
+            {t`This file is ${size}. Muqun opens text files up to ${ceiling}; larger ones stay on the server.`}
+          </Text>
+          <Text variant="caption" color={theme.colors.textMuted} selectable>
+            {asset.path}
+          </Text>
+          <PressableScale
+            testID="asset-copy-path"
+            accessibilityLabel={t`Copy path`}
+            onPress={copyPath}
+            style={[
+              styles.retry,
+              { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
+            ]}>
+            <Text variant="caption" color={theme.colors.primary}>
+              {pathCopied ? t`Copied` : t`Copy path`}
+            </Text>
+          </PressableScale>
+        </View>
+      </AssetBodyLayer>
+    );
+  }
+
   if (!readable) {
     return (
       <AssetBodyLayer id="details">
@@ -574,20 +672,39 @@ function AssetBody({
     );
   }
 
-  if (content.length > RENDER_MAX_BYTES) {
+  if (document) {
+    // A document of any length, a block at a time. A README is one cell; a
+    // 300 KB changelog is eighty, and only the ones near the viewport exist.
     return (
-      <AssetBodyLayer id="too-large">
-        <View style={styles.centerState}>
-          <Text variant="bodySmall" color={theme.colors.textMuted}>
-            <Trans>This file is too large to display. Copy it to read it elsewhere.</Trans>
-          </Text>
-        </View>
+      <AssetBodyLayer id="document">
+        <MarkdownDocumentView
+          testID="asset-document"
+          markdown={content}
+          markdownStyle={markdownStyle}
+          selectionColor={theme.colors.primarySubtle}
+        />
+      </AssetBodyLayer>
+    );
+  }
+
+  if (index) {
+    // Past the size one native layout pass stays linear at. Rows, numbered,
+    // pannable, and on screen in the time it takes to split a string.
+    return (
+      <AssetBodyLayer id="lines">
+        <CodeLinesView
+          testID="asset-lines"
+          lines={index.lines}
+          longest={index.longest}
+          markdownStyle={markdownStyle}
+          note={t`Too large to highlight — showing plain text.`}
+        />
       </AssetBodyLayer>
     );
   }
 
   return (
-    <AssetBodyLayer id="document">
+    <AssetBodyLayer id="code">
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={styles.documentContent}
@@ -682,12 +799,24 @@ const styles = StyleSheet.create({
   sheet: {
     flex: 1,
   },
+  // The ground fills the sheet; the column inside it pays the bottom inset, so
+  // the wallpaper still reaches the gesture bar.
+  sheetColumn: {
+    flex: 1,
+  },
   // Both properties, because they are two different platforms' answer to the
   // same question: `zIndex` orders the layer on iOS, `elevation` is what
   // Android actually draws and hit-tests by.
   headerLayer: {
     zIndex: 1,
     elevation: 1,
+  },
+  // The bar the theme confirm sits in: the viewer's own gutter, and enough room
+  // above the column's bottom inset that the button is not on the edge.
+  themeAction: {
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    paddingBottom: 12,
   },
   header: {
     flexDirection: 'row',
@@ -745,6 +874,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 6,
     padding: 24,
+  },
+  // The refusal is a sentence with two numbers in it, not a label: it wraps,
+  // and it reads as prose centred under nothing rather than as a ragged column.
+  centerText: {
+    textAlign: 'center',
   },
   // The same padding the markdown body uses, so the placeholder lines sit where
   // the paragraphs replacing them will.

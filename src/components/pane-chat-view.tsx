@@ -1,7 +1,8 @@
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { LegendList, type LegendListRenderItemProps } from '@legendapp/list/react-native';
-import { Text, useThemeTokens } from '@osuki-dev/ui';
+import { useThemeTokens } from '@osuki-dev/ui';
+import { Text } from '@/components/text';
 import { ChevronsDownUp, ChevronsUpDown } from 'lucide-react-native';
 import { memo, useCallback, useMemo, useRef, useState } from 'react';
 import { RefreshControl, StyleSheet, View } from 'react-native';

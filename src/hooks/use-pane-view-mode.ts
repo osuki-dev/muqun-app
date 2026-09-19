@@ -18,6 +18,8 @@ export interface PaneViewModeInput {
   agent: boolean;
   /** The gateway says it can normalize this pane into parts. */
   parts: boolean;
+  /** The gateway supports modern agent sessions. */
+  agentSessions?: boolean;
 }
 
 export interface PaneViewModeControls {
@@ -47,6 +49,7 @@ export function usePaneViewMode({
   paneId,
   agent,
   parts,
+  agentSessions,
 }: PaneViewModeInput): PaneViewModeControls {
   const defaultMode = useAppSettings((state) => state.agentDefaultView);
   const choices = usePaneViewChoices((state) => state.choices);
@@ -54,12 +57,23 @@ export function usePaneViewMode({
 
   const key = paneViewKey(serverId, paneId);
   const choice = choices[key];
-  const available = useMemo(() => availablePaneViewModes({ agent, parts }), [agent, parts]);
+  const available = useMemo(
+    () => availablePaneViewModes({ agent, parts, agentSessions }),
+    [agent, parts, agentSessions]
+  );
   const preferred = choice?.mode ?? defaultMode;
   const mode = resolvePaneViewMode(preferred, available);
   const detail = choice?.detail ?? 'simplified';
 
   const cycle = useCallback(() => {
+    if (__DEV__) {
+      console.log('[DEBUG usePaneViewMode cycle called]', {
+        key,
+        mode,
+        available,
+        next: nextPaneViewMode(mode, available),
+      });
+    }
     // Cycling from what is on screen, not from what was asked for: pressing the
     // button has to move the view the user is looking at.
     choose(key, { mode: nextPaneViewMode(mode, available) });

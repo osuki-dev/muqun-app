@@ -11,6 +11,7 @@ export function useGatewayRecord() {
   const hydrate = useGatewayConnectionStore((state) => state.hydrate);
   const setRecord = useGatewayConnectionStore((state) => state.setRecord);
   const selectGatewayRecord = useGatewayConnectionStore((state) => state.selectRecord);
+  const selectGatewayRecordNow = useGatewayConnectionStore((state) => state.selectRecordNow);
   const disconnectGateway = useGatewayConnectionStore((state) => state.disconnect);
   const enterDemo = useGatewayConnectionStore((state) => state.enterDemo);
   const renameRecord = useGatewayConnectionStore((state) => state.renameRecord);
@@ -36,6 +37,15 @@ export function useGatewayRecord() {
     [resetSessionControl, selectGatewayRecord]
   );
 
+  const selectRecordNow = useCallback(
+    (serverId: string) => {
+      const selected = selectGatewayRecordNow(serverId);
+      if (selected) resetSessionControl();
+      return selected;
+    },
+    [resetSessionControl, selectGatewayRecordNow]
+  );
+
   const removeRecord = useCallback(
     async (serverId: string) => {
       await removeRecordFromStore(serverId);
@@ -52,6 +62,7 @@ export function useGatewayRecord() {
     retryHydration: hydrate,
     setRecord,
     selectRecord,
+    selectRecordNow,
     enterDemo,
     renameRecord,
     editRecord,

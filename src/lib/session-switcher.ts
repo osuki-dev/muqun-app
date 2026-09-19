@@ -72,13 +72,6 @@ export function withSessionAvailability(
   };
 }
 
-export function shouldShowSessionSwitcher(
-  choices: readonly SessionChoice[],
-  machineCount = 1
-): boolean {
-  return choices.length > 1 || machineCount > 1;
-}
-
 /**
  * The same list, read back from a route param.
  *

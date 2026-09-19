@@ -27,7 +27,7 @@ Use personality on the shell and home screen while keeping content and actions l
 | `src/components/settings-theme-sheet.tsx` | Theme library and previews using representative components, not a live terminal per tile           |
 | `src/lib/quick-commands.ts`               | Versioned built-in agent skill, compatible with existing commands and hide/restore behavior        |
 | `src/app/commands.tsx`                    | Compose a skill draft with optional attachments rather than pasting immediately into a shell       |
-| `src/app/(drawer)/index.tsx`              | One home identity configuration for expanded and collapsed headers                                 |
+| `src/app/index.tsx`                       | One home identity configuration for expanded and collapsed headers                                 |
 | `src/app/_layout.tsx`                     | Update theme providers atomically and audit navigation backgrounds for default-color leaks         |
 
 Use `src/theme/` for schema, compilation, repository, assets, import/export, and agent instruction assembly. Components consume validated, stable resolved values; components do not parse manifests or fetch author URLs independently.

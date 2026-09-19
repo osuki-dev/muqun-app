@@ -17,6 +17,19 @@ msgstr ""
 msgid "… truncated"
 msgstr "…이후 생략"
 
+#. placeholder {0}: worktreeDisplayName(directory)
+#: src/components/agent-worktree-sheet.tsx
+msgid "“{0}” has changes that have not been committed. Removing it throws them away."
+msgstr "“{0}”에 커밋하지 않은 변경이 있습니다. 제거하면 사라집니다"
+
+#: src/components/agent-workbench.tsx
+msgid "“{args}” was not sent: a skill takes no arguments."
+msgstr "“{args}”은(는) 전송되지 않았습니다. 스킬은 인자를 받지 않습니다"
+
+#: src/components/agent-sessions-sheet.tsx
+msgid "“{title}” and any subagent sessions under it are removed from the host. This cannot be undone."
+msgstr "“{title}”과(와) 그 아래의 서브에이전트 세션이 호스트에서 제거됩니다. 되돌릴 수 없습니다"
+
 #: src/lib/demo-gateway.ts
 msgid "[instructions]"
 msgstr "[지시]"
@@ -29,6 +42,11 @@ msgstr "[모델]"
 msgid "[pr number]"
 msgstr "[PR 번호]"
 
+#. placeholder {0}: capped.hidden
+#: src/components/bounded-markdown.tsx
+msgid "{0, plural, one {# character not shown} other {# characters not shown}}"
+msgstr "{0, plural, other {#자 표시되지 않음}}"
+
 #. placeholder {0}: away.value
 #: src/components/away-digest-card.tsx
 msgid "{0, plural, one {# day} other {# days}}"
@@ -38,6 +56,18 @@ msgstr "{0, plural, other {#일}}"
 #: src/components/git-diff-view.tsx
 msgid "{0, plural, one {# file changed} other {# files changed}}"
 msgstr "{0, plural, other {파일 #개 변경됨}}"
+
+#. placeholder {0}: files.length
+#: src/components/agent-revert-plate.tsx
+msgid "{0, plural, one {# file} other {# files}}"
+msgstr "{0, plural, other {파일 #개}}"
+
+#. placeholder {0}: diffs.length
+#. placeholder {1}: totals.additions
+#. placeholder {2}: totals.deletions
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "{0, plural, one {# file} other {# files}} · +{1} −{2}"
+msgstr "{0, plural, other {파일 #개}} · +{1} −{2}"
 
 #. placeholder {0}: away.value
 #: src/components/away-digest-card.tsx
@@ -49,8 +79,10 @@ msgstr "{0, plural, other {#시간}}"
 msgid "{0, plural, one {# minute} other {# minutes}}"
 msgstr "{0, plural, other {#분}}"
 
+#. placeholder {0}: capped.hidden
 #. placeholder {0}: row.remaining
-#: src/components/git-diff-view.tsx
+#: src/components/agent-tool-card.tsx
+#: src/components/diff-rows.tsx
 msgid "{0, plural, one {# more line} other {# more lines}}"
 msgstr "{0, plural, other {#줄 더 있음}}"
 
@@ -65,6 +97,11 @@ msgstr "{0, plural, other {테마 #개}} · {1}"
 msgid "{0, plural, one {and # more agent} other {and # more agents}}"
 msgstr "{0, plural, other {외 #개 에이전트}}"
 
+#. placeholder {0}: visibleFields.length
+#: src/components/agent-form-card.tsx
+msgid "{0, plural, one {Question} other {Questions}}"
+msgstr "{0, plural, other {질문}}"
+
 #. placeholder {0}: formatCacheSize(totals.other)
 #: src/components/settings-storage.tsx
 msgid "{0} · Managed by the system. Clear cache leaves it alone."
@@ -75,16 +112,40 @@ msgstr "{0} · 시스템이 관리하므로 캐시를 비워도 지워지지 않
 msgid "{0} (this device)"
 msgstr "{0} (이 기기)"
 
+#. placeholder {0}: contextUsage.messages
+#: src/components/agent-context-sheet.tsx
+msgid "{0} messages in context"
+msgstr "컨텍스트에 있는 메시지 {0}개"
+
+#. placeholder {0}: paged.total - paged.shown
+#: src/components/agent-model-sheet.tsx
+msgid "{0} more models"
+msgstr "모델 {0}개 더"
+
+#. placeholder {0}: compact(inContext)
+#: src/components/agent-context-sheet.tsx
+msgid "{0} of {limitLabel} tokens the model can hold"
+msgstr "모델이 담을 수 있는 {limitLabel} 토큰 중 {0}"
+
+#. placeholder {0}: sessions.length
+#: src/components/agent-sessions-sheet.tsx
+msgid "{0} on this host"
+msgstr "이 호스트에 {0}개"
+
+#. placeholder {0}: inbox.length
+#: src/components/agent-composer.tsx
+msgid "{0} queued"
+msgstr "{0}개 대기 중"
+
+#. placeholder {0}: compact(inContext)
+#: src/components/agent-context-sheet.tsx
+msgid "{0} tokens the model last read"
+msgstr "모델이 마지막으로 읽은 토큰 {0}개"
+
 #. placeholder {0}: profile.kind
 #: src/components/new-task-sheet.tsx
 msgid "{0}, not found on this server's PATH"
 msgstr "{0}, 이 서버의 PATH에서 찾을 수 없음"
-
-#. placeholder {0}: machine.label
-#. placeholder {1}: session.label
-#: src/components/machine-switcher-sheet.tsx
-msgid "{0}, session {1}"
-msgstr "{0}, 세션 {1}"
 
 #. placeholder {0}: parts.value
 #: src/hooks/use-relative-time.ts
@@ -104,13 +165,34 @@ msgstr "{0}시간 전"
 msgid "{0}m ago"
 msgstr "{0}분 전"
 
+#: src/components/agent-composer.tsx
+msgid "{agentName}: {title} — finished while you were away"
+msgstr "{agentName}: {title} — 자리를 비운 사이에 끝났습니다"
+
 #: src/components/away-digest-card.tsx
 msgid "{asked, plural, one {· asked once} other {· asked # times}}"
 msgstr "{asked, plural, other {· #번 확인 요청}}"
 
+#: src/components/agent-composer.tsx
+msgid "{backgroundCount} running in the background"
+msgstr "백그라운드에서 {backgroundCount}개 실행 중"
+
 #: src/components/agent-assignment-bar.tsx
 msgid "{commandName} · sending to"
 msgstr "{commandName} · 보내는 대상"
+
+#: src/components/agent-tool-card.tsx
+msgid "{count, plural, one {# result} other {# results}}"
+msgstr "{count, plural, other {결과 #개}}"
+
+#. placeholder {0}: items.length
+#: src/components/agent-tasks-sheet.tsx
+msgid "{done} of {0} done"
+msgstr "{0}개 중 {done}개 완료"
+
+#: src/components/bounded-markdown.tsx
+msgid "{hiddenKb} KB not shown"
+msgstr "{hiddenKb} KB 표시되지 않음"
 
 #: src/components/ssh-host-key-dialog.tsx
 msgid "{host} presented a different key from the one saved for it. This happens after a reinstall, and it also happens when something is intercepting the connection. Do not replace it unless you know why it changed."
@@ -124,6 +206,14 @@ msgstr "{host}이(가) 이 앱이 처음 보는 키를 제시했습니다. 신�
 msgid "{label} is temporarily locked. Use the system fallback or try later."
 msgstr "{label}이(가) 일시적으로 잠겼습니다. 시스템 대체 수단을 쓰거나 나중에 다시 시도하세요"
 
+#: src/components/bounded-markdown.tsx
+msgid "{language} code copied to clipboard"
+msgstr "{language} 코드를 클립보드에 복사했습니다"
+
+#: src/components/agent-revert-plate.tsx
+msgid "{messages, plural, one {# message} other {# messages}}"
+msgstr "{messages, plural, other {메시지 #개}}"
+
 #: src/components/session-map.tsx
 msgid "{panelCount, plural, one {# running} other {# running}}"
 msgstr "{panelCount, plural, one {# 실행 중} other {# 실행 중}}"
@@ -132,9 +222,35 @@ msgstr "{panelCount, plural, one {# 실행 중} other {# 실행 중}}"
 msgid "{removeLabel}: {label}"
 msgstr "{removeLabel}: {label}"
 
+#. placeholder {0}: shells.length
+#: src/components/agent-background-tray.tsx
+msgid "{running} running of {0}"
+msgstr "{0}개 중 {running}개 실행 중"
+
+#: src/components/agent-sessions-sheet.tsx
+msgid "{title} — finished while you were away"
+msgstr "{title} — 자리를 비운 사이에 끝났습니다"
+
 #: src/lib/agent-widget-layout.tsx
 msgid "+{overflow} more"
 msgstr "외 {overflow}개"
+
+#. placeholder {0}: Math.round(USER_FONT_MAX_BYTES / (1024 * 1024))
+#: src/components/settings-font-sheet.tsx
+msgid "A .ttf or .otf up to {0} MB."
+msgstr "{0} MB 이하의 .ttf 또는 .otf"
+
+#: src/components/agent-worktree-sheet.tsx
+msgid "A branch or tag this repository already has."
+msgstr "이 저장소에 이미 있는 브랜치나 태그"
+
+#: src/components/agent-message-block.tsx
+msgid "a default model"
+msgstr "기본 모델"
+
+#: src/components/settings-font-sheet.tsx
+msgid "A direct link to a .ttf or .otf file."
+msgstr ".ttf 또는 .otf 파일의 직접 링크"
 
 #: src/app/explore.tsx
 msgid "A Gateway on a machine you can SSH into, even one that only listens on its own loopback."
@@ -144,6 +260,14 @@ msgstr "SSH로 들어갈 수 있는 머신의 Gateway. 자기 루프백에서만
 #: src/components/server-terminal-workspace.tsx
 msgid "a new {0}"
 msgstr "새 {0}"
+
+#: src/components/settings-servers.tsx
+msgid "A plain shell on any machine you can reach. No Gateway needed."
+msgstr "접속할 수 있는 어떤 기기에서든 쓰는 일반 셸입니다. Gateway가 필요 없습니다"
+
+#: src/components/agent-worktree-sheet.tsx
+msgid "A second checkout of this repository"
+msgstr "이 저장소의 두 번째 체크아웃"
 
 #: src/lib/release-notes.ts
 msgid "A server's key is remembered the first time and checked every time after, and a key that changed stops the connection until you say otherwise."
@@ -170,12 +294,19 @@ msgid "About"
 msgstr "정보"
 
 #: src/app/commands.tsx
-msgid "Act on this terminal, or send it a command."
-msgstr "이 터미널을 조작하거나 명령을 보냅니다"
+msgid "Act on this terminal, or send it a command"
+msgstr "이 터미널을 조작하거나 명령을 보내기"
 
 #: src/app/commands.tsx
-msgid "Act on this terminal, or send its agent a prompt."
-msgstr "이 터미널을 조작하거나 에이전트에 프롬프트를 보냅니다"
+msgid "Act on this terminal, or send its agent a prompt"
+msgstr "이 터미널을 조작하거나 에이전트에게 지시 보내기"
+
+#. placeholder {0}: sessionTitleOr(session, t`Untitled session`)
+#. placeholder {0}: worktreeDisplayName(directory)
+#: src/components/agent-sessions-sheet.tsx
+#: src/components/agent-worktree-sheet.tsx
+msgid "Actions for {0}"
+msgstr "{0} 작업"
 
 #: src/components/ssh-host-list.tsx
 msgid "Add a host"
@@ -194,7 +325,7 @@ msgstr "첨부 파일 추가"
 msgid "Add commands and custom key combinations."
 msgstr "명령과 사용자 지정 조합 키를 추가합니다"
 
-#: src/components/machine-switcher-sheet.tsx
+#: src/components/session-map.tsx
 msgid "Add machine"
 msgstr "머신 추가"
 
@@ -212,8 +343,19 @@ msgid "Added"
 msgstr "추가됨"
 
 #: src/components/new-task-sheet.tsx
-msgid "AGENT"
+msgid "Agent"
 msgstr "에이전트"
+
+#. placeholder {0}: part.agent
+#: src/components/agent-message-block.tsx
+msgid "Agent · {0}"
+msgstr "에이전트 · {0}"
+
+#. placeholder {0}: part.previous
+#. placeholder {1}: part.agent
+#: src/components/agent-message-block.tsx
+msgid "Agent · {0} → {1}"
+msgstr "에이전트 · {0} → {1}"
 
 #: src/app/commands.tsx
 #: src/components/agent-command-delivery-picker.tsx
@@ -222,7 +364,7 @@ msgid "Agent collaboration"
 msgstr "에이전트 협업"
 
 #: src/app/commands.tsx
-msgid "AGENT COMMANDS"
+msgid "Agent commands"
 msgstr "에이전트 명령"
 
 #: src/components/collaboration-notice.tsx
@@ -237,6 +379,14 @@ msgstr "에이전트 패널 기본 보기"
 #: src/components/settings-servers.tsx
 msgid "Agents"
 msgstr "에이전트"
+
+#: src/components/agent-mode-sheet.tsx
+msgid "Agents on this host"
+msgstr "이 호스트의 에이전트"
+
+#: src/components/app-drawer-content.tsx
+msgid "AI coding assistant"
+msgstr "AI 코딩 어시스턴트"
 
 #: src/app/settings.tsx
 msgid "Alerts"
@@ -255,9 +405,25 @@ msgstr "전체"
 msgid "All commands"
 msgstr "모든 명령"
 
+#: src/components/agent-model-sheet.tsx
+msgid "All models"
+msgstr "전체 모델"
+
 #: src/components/settings-servers.tsx
 msgid "All panes"
 msgstr "모든 패널"
+
+#: src/components/agent-sessions-sheet.tsx
+msgid "All projects"
+msgstr "모든 프로젝트"
+
+#: src/components/agent-composer.tsx
+msgid "All sessions"
+msgstr "모든 세션"
+
+#: src/i18n/labels.ts
+msgid "Allow"
+msgstr "허용"
 
 #: src/components/pairing-camera.tsx
 msgid "Allow camera"
@@ -266,6 +432,15 @@ msgstr "카메라 허용"
 #: src/app/explore.tsx
 msgid "Allow the camera, or enter the address instead."
 msgstr "카메라를 허용하거나 주소를 입력하세요"
+
+#: src/components/settings-font-sheet.tsx
+msgid "Already on"
+msgstr "사용 중"
+
+#. placeholder {0}: request.save.join(' · ')
+#: src/components/agent-permission-card.tsx
+msgid "Also allow {0} from now on"
+msgstr "앞으로 {0}도 허용"
 
 #: src/components/virtual-keyboard.tsx
 msgid "Alt"
@@ -287,6 +462,18 @@ msgstr "Alt 오른쪽 화살표"
 msgid "Alt Up arrow"
 msgstr "Alt 위쪽 화살표"
 
+#: src/i18n/labels.ts
+msgid "Always allow"
+msgstr "항상 허용"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Always allowed"
+msgstr "항상 허용"
+
+#: src/components/agent-revert-plate.tsx
+msgid "and {rest} more"
+msgstr "외 {rest}개"
+
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Answer"
 msgstr "답변"
@@ -295,10 +482,6 @@ msgstr "답변"
 #: src/components/approval-banner.tsx
 msgid "Answer: {0}"
 msgstr "응답: {0}"
-
-#: src/components/open-web-service-sheet.tsx
-msgid "Anything {label} is serving on a port — a dev server, a preview, a dashboard."
-msgstr "{label}이 포트로 제공하는 모든 것 — 개발 서버, 미리보기, 대시보드"
 
 #: src/components/settings-appearance.tsx
 msgid "App icon"
@@ -330,7 +513,12 @@ msgstr "외관"
 msgid "Appearance, terminal, security"
 msgstr "외관, 터미널, 보안"
 
+#: src/i18n/labels.ts
+msgid "Apply a patch"
+msgstr "패치 적용"
+
 #: src/app/custom-theme.tsx
+#: src/components/asset-viewer.tsx
 #: src/components/custom-theme-library.tsx
 msgid "Apply theme"
 msgstr "테마 적용"
@@ -339,17 +527,25 @@ msgstr "테마 적용"
 msgid "Applying…"
 msgstr "적용 중…"
 
-#: src/i18n/labels.ts
-msgid "Approve"
-msgstr "승인"
+#: src/components/in-app-notification-host.tsx
+msgid "Approval required"
+msgstr "승인 필요"
 
-#: src/i18n/labels.ts
-msgid "Approve and don't ask again"
-msgstr "승인하고 다시 묻지 않기"
+#: src/components/agent-mode-sheet.tsx
+msgid "Architecture, design proposals, step-by-step roadmaps."
+msgstr "아키텍처, 설계 제안, 단계별 로드맵"
 
 #: src/components/ssh-host-form.tsx
 msgid "Ask each time"
 msgstr "매번 묻기"
+
+#: src/components/agent-workbench.tsx
+msgid "Ask questions, inspect files, or run commands in your project."
+msgstr "프로젝트에서 질문하고, 파일을 살펴보고, 명령을 실행하세요"
+
+#: src/i18n/labels.ts
+msgid "Ask you a question"
+msgstr "사용자에게 질문하기"
 
 #: src/app/explore.tsx
 msgid "Asking the Gateway about that code."
@@ -371,9 +567,34 @@ msgstr "작업을 맡길 수 없습니다"
 msgid "Assistant started"
 msgstr "어시스턴트를 시작했습니다"
 
+#. placeholder {0}: violation.limit
+#: src/components/agent-form-card.tsx
+msgid "At least {0} characters."
+msgstr "{0}자 이상이어야 합니다"
+
+#. placeholder {0}: violation.limit
+#: src/components/agent-form-card.tsx
+msgid "At least {0}."
+msgstr "{0} 이상이어야 합니다"
+
+#. placeholder {0}: violation.limit
+#: src/components/agent-form-card.tsx
+msgid "At most {0} characters."
+msgstr "{0}자 이하여야 합니다"
+
+#. placeholder {0}: violation.limit
+#: src/components/agent-form-card.tsx
+msgid "At most {0}."
+msgstr "{0} 이하여야 합니다"
+
+#: src/components/agent-composer.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Attach a file"
 msgstr "파일 첨부"
+
+#: src/components/agent-message-block.tsx
+msgid "Attachment"
+msgstr "첨부 파일"
 
 #: src/components/app-lock-gate.tsx
 msgid "Authenticate with {authLabel} to continue."
@@ -399,6 +620,14 @@ msgstr "인증에 실패했습니다. 다시 시도하세요"
 msgid "Authentication is unavailable. Try again or check system settings."
 msgstr "지금은 인증을 사용할 수 없습니다. 다시 시도하거나 시스템 설정을 확인하세요"
 
+#: src/components/agent-context-sheet.tsx
+msgid "Auto-approve every action"
+msgstr "모든 작업 자동 승인"
+
+#: src/components/agent-mode-sheet.tsx
+msgid "Autonomous software engineering: edits files, runs commands, tests."
+msgstr "자율 소프트웨어 엔지니어링: 파일 편집, 명령 실행, 테스트"
+
 #: src/components/simfarm-stage.tsx
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Back"
@@ -421,20 +650,37 @@ msgstr "SSH 호스트 목록으로"
 msgid "Back to the on-screen keyboard"
 msgstr "화면 키보드로 돌아가기"
 
+#: src/components/agent-composer.tsx
+msgid "Back to the parent session"
+msgstr "상위 세션으로 돌아가기"
+
+#: src/components/embedded-terminal-tool-block.tsx
+msgid "Background"
+msgstr "백그라운드"
+
+#: src/components/agent-background-tray.tsx
+#: src/components/agent-tool-card.tsx
+msgid "Background tasks"
+msgstr "백그라운드 작업"
+
 #: src/components/virtual-keyboard.tsx
 #: src/i18n/labels.ts
 msgid "Backspace"
 msgstr "백스페이스"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Behaviour"
+msgstr "동작"
 
 #: src/components/theme-appearance-settings.tsx
 msgid "Below {minimumPercent}%, text is no longer guaranteed to stay readable"
 msgstr "{minimumPercent}% 아래에서는 글자의 가독성이 보장되지 않습니다"
 
 #: src/components/theme-appearance-settings.tsx
-msgid "Between the header and your servers. Shown also borrows the theme's empty-state picture when it has no Home illustration of its own."
-msgstr "헤더와 서버 목록 사이에 표시됩니다. ‘표시’를 선택하면 테마에 홈 일러스트가 없을 때 빈 상태 이미지를 대신 사용합니다"
+msgid "Between the header and your servers. Home also borrows the theme's empty-state picture when the theme has no Home illustration of its own."
+msgstr "헤더와 서버 사이에 표시됩니다. 테마에 홈 전용 일러스트가 없으면 홈은 테마의 빈 상태 그림도 함께 사용합니다"
 
-#: src/components/git-diff-view.tsx
+#: src/components/diff-rows.tsx
 msgid "Binary file"
 msgstr "바이너리 파일"
 
@@ -446,13 +692,29 @@ msgstr "생체 인식"
 msgid "Blocked"
 msgstr "응답 대기"
 
+#: src/components/agent-workbench.tsx
+msgid "Blocked by agent safety"
+msgstr "에이전트 안전 기능이 차단함"
+
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "Branch"
+msgstr "브랜치"
+
 #: src/components/theme-link-import.tsx
 msgid "Branch and theme file came from the link. A branch can change later"
 msgstr "브랜치와 테마 파일은 링크에서 가져왔습니다. 브랜치는 나중에 바뀔 수 있습니다"
 
+#: src/components/agent-worktree-sheet.tsx
+msgid "Branch from"
+msgstr "분기할 브랜치"
+
 #: src/components/theme-link-import.tsx
 msgid "Branch or commit (optional)"
 msgstr "브랜치 또는 커밋 (선택 사항)"
+
+#: src/components/agent-worktree-sheet.tsx
+msgid "Branch to start from"
+msgstr "시작점으로 삼을 브랜치"
 
 #: src/components/custom-theme-library.tsx
 #: src/components/theme-browse-sheet.tsx
@@ -463,9 +725,17 @@ msgstr "테마 둘러보기"
 msgid "Browser"
 msgstr "브라우저"
 
+#: src/components/agent-mode-sheet.tsx
+msgid "Build"
+msgstr "빌드 (Build)"
+
 #: src/components/custom-theme-library.tsx
 msgid "Built-in"
 msgstr "기본 제공"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Cache read"
+msgstr "캐시 읽기"
 
 #: src/components/settings-storage.tsx
 msgid "Calculating…"
@@ -479,9 +749,14 @@ msgstr "카메라 접근이 꺼져 있습니다. 사진을 찍으려면 설정�
 msgid "Camera access needed"
 msgstr "카메라 접근 권한 필요"
 
+#: src/components/agent-composer.tsx
+#: src/components/agent-context-sheet.tsx
+#: src/components/agent-sessions-sheet.tsx
+#: src/components/agent-worktree-sheet.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/row-action-menu.tsx
 #: src/components/session-map.tsx
+#: src/components/settings-font-sheet.tsx
 #: src/components/settings-servers.tsx
 #: src/components/settings-storage.tsx
 #: src/components/skia-terminal.tsx
@@ -502,6 +777,14 @@ msgstr "{0} 연결 취소"
 msgid "Cancel editing {0}"
 msgstr "{0} 편집 취소"
 
+#: src/components/agent-message-block.tsx
+msgid "Cancel queued message"
+msgstr "대기 중인 메시지 취소"
+
+#: src/components/agent-composer.tsx
+msgid "Cancel this queued message"
+msgstr "대기 중인 이 메시지 취소"
+
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Cancelled"
 msgstr "취소됨"
@@ -511,17 +794,23 @@ msgctxt "git file status"
 msgid "Changed"
 msgstr "변경됨"
 
+#: src/components/agent-vcs-diff-sheet.tsx
 #: src/components/git-diff-view.tsx
 msgid "Changes"
 msgstr "변경 사항"
 
 #: src/components/theme-appearance-settings.tsx
-msgid "Changes colored backgrounds, not text, icons or artwork"
+msgid "Changes coloured backgrounds, not text, icons or artwork"
 msgstr "텍스트, 아이콘, 장식 이미지는 그대로 두고 배경색만 변경"
 
 #: src/i18n/labels.ts
 msgid "Chat"
 msgstr "대화"
+
+#: src/components/agent-workbench.tsx
+#: src/components/opencode-guide-sheet.tsx
+msgid "Check again"
+msgstr "다시 확인"
 
 #: src/components/settings-security.tsx
 msgid "Check device authentication settings and try again."
@@ -544,8 +833,14 @@ msgid "Checking system authentication…"
 msgstr "시스템 인증 확인 중…"
 
 #: src/components/open-web-service-sheet.tsx
+#: src/components/settings-font-sheet.tsx
 msgid "Checking…"
 msgstr "확인 중…"
+
+#: src/components/agent-model-sheet.tsx
+#: src/components/agent-workbench.tsx
+msgid "Choose a model"
+msgstr "모델 선택"
 
 #: src/components/simfarm-stage.tsx
 msgid "Choose a simulator"
@@ -554,6 +849,10 @@ msgstr "시뮬레이터 선택"
 #: src/components/simfarm-stage.tsx
 msgid "Choose a simulator from the menu."
 msgstr "메뉴에서 시뮬레이터를 선택하세요"
+
+#: src/components/agent-mode-sheet.tsx
+msgid "Choose an agent"
+msgstr "에이전트 선택"
 
 #: src/components/agent-assignment-bar.tsx
 msgid "Choose an assistant"
@@ -567,13 +866,9 @@ msgstr "SSH 호스트를 선택하세요"
 msgid "Choose files"
 msgstr "파일 선택"
 
-#: src/components/launch-intro.tsx
-msgid "Choose from a collection of beautifully illustrated official themes that repaint the paper, the terminal and the artwork together, or create a theme of your own."
-msgstr "아름답게 그려진 공식 테마 컬렉션에서 골라 종이, 터미널, 아트워크를 한 번에 다시 칠하거나, 나만의 테마를 직접 만들어 보세요"
-
-#: src/components/machine-switcher-sheet.tsx
-msgid "Choose where to work"
-msgstr "작업할 위치 선택"
+#: src/components/agent-workbench.tsx
+msgid "Choose project"
+msgstr "프로젝트 선택"
 
 #: src/components/simfarm-stage.tsx
 msgid "Choose which simulator to show"
@@ -592,12 +887,25 @@ msgid "Clear cache"
 msgstr "캐시 비우기"
 
 #: src/i18n/labels.ts
+msgctxt "agent slash command"
+msgid "Clear context and start fresh"
+msgstr "컨텍스트를 비우고 새로 시작"
+
+#: src/i18n/labels.ts
 msgid "Clear line"
 msgstr "줄 지우기"
 
 #: src/i18n/labels.ts
 msgid "Clear terminal"
 msgstr "터미널 지우기"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Clear the conversation"
+msgstr "대화 비우기"
+
+#: src/components/agent-model-sheet.tsx
+msgid "Clear the search"
+msgstr "검색어 지우기"
 
 #: src/components/settings-storage.tsx
 msgid "Clearing cache"
@@ -607,36 +915,13 @@ msgstr "캐시를 비우는 중"
 msgid "Clearing…"
 msgstr "비우는 중…"
 
-#: src/components/in-app-notification-host.tsx
-#: src/components/open-web-service-sheet.tsx
-#: src/components/session-map.tsx
-msgid "Close"
-msgstr "닫기"
-
-#: src/components/git-diff-view.tsx
-msgid "Close changes"
-msgstr "변경 사항 닫기"
-
 #: src/components/asset-viewer.tsx
 msgid "Close file"
 msgstr "파일 닫기"
 
-#: src/components/session-artifacts.tsx
-msgid "Close files"
-msgstr "파일 목록 닫기"
-
-#: src/components/settings-language-sheet.tsx
-msgid "Close language picker"
-msgstr "언어 목록 닫기"
-
 #: src/app/new-task.tsx
-#: src/components/new-task-sheet.tsx
 msgid "Close new task"
 msgstr "새 작업 닫기"
-
-#: src/app/explore.tsx
-msgid "Close pairing"
-msgstr "페어링 닫기"
 
 #: src/components/asset-viewer.tsx
 #: src/components/custom-theme-library.tsx
@@ -644,14 +929,7 @@ msgstr "페어링 닫기"
 msgid "Close preview"
 msgstr "미리보기 닫기"
 
-#: src/app/commands.tsx
-msgid "Close quick actions"
-msgstr "빠른 동작 닫기"
-
-#: src/components/machine-switcher-sheet.tsx
-msgid "Close session picker"
-msgstr "세션 목록 닫기"
-
+#: src/components/agent-composer.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Close the attachment menu"
 msgstr "첨부 메뉴 닫기"
@@ -673,17 +951,13 @@ msgstr "메뉴 닫기"
 msgid "Close the simulator"
 msgstr "시뮬레이터 닫기"
 
-#: src/components/theme-browse-sheet.tsx
-msgid "Close theme catalogue"
-msgstr "테마 카탈로그 닫기"
-
-#: src/components/settings-theme-sheet.tsx
-msgid "Close theme picker"
-msgstr "테마 목록 닫기"
-
 #: src/components/session-artifacts.tsx
 msgid "Code"
 msgstr "코드"
+
+#: src/components/bounded-markdown.tsx
+msgid "Code copied to clipboard"
+msgstr "코드를 클립보드에 복사했습니다"
 
 #: src/app/explore.tsx
 msgid "Code expired"
@@ -698,8 +972,20 @@ msgstr "코드를 찾았습니다. Gateway에 연결하는 중입니다"
 msgid "Collapse {0}"
 msgstr "{0} 접기"
 
+#: src/components/agent-reasoning-block.tsx
+msgid "Collapse reasoning"
+msgstr "추론 접기"
+
+#: src/components/agent-todo-block.tsx
+msgid "Collapse tasks"
+msgstr "작업 접기"
+
+#: src/components/embedded-terminal-tool-block.tsx
+msgid "Collapse tool call"
+msgstr "도구 호출 접기"
+
 #: src/components/settings-appearance.tsx
-msgid "Color mode"
+msgid "Colour mode"
 msgstr "색상 모드"
 
 #: src/app/commands.tsx
@@ -722,9 +1008,35 @@ msgstr "커밋"
 msgid "Commit & push"
 msgstr "커밋 후 푸시"
 
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "Committed"
+msgstr "커밋됨"
+
 #: src/components/settings-terminal.tsx
 msgid "Compact"
 msgstr "작게"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Compact context"
+msgstr "컨텍스트 압축"
+
+#: src/components/agent-composer.tsx
+msgid "Compacting context automatically…"
+msgstr "컨텍스트를 자동으로 압축하는 중…"
+
+#: src/components/agent-composer.tsx
+#: src/components/agent-message-block.tsx
+msgid "Compacting context…"
+msgstr "컨텍스트를 압축하는 중…"
+
+#: src/components/agent-composer.tsx
+#: src/components/agent-message-block.tsx
+msgid "Compaction failed"
+msgstr "압축에 실패했습니다"
+
+#: src/components/agent-composer.tsx
+msgid "Compaction failed — tap to dismiss"
+msgstr "압축에 실패했습니다 — 탭하여 닫기"
 
 #: src/components/settings-storage.tsx
 msgid "Confirm clear cache"
@@ -769,14 +1081,9 @@ msgstr "충돌"
 msgid "Connect"
 msgstr "연결"
 
-#. placeholder {0}: machine.label
-#: src/components/machine-switcher-sheet.tsx
-msgid "Connect to {0}"
-msgstr "{0}에 연결"
-
 #: src/app/explore.tsx
-#: src/components/machine-switcher-sheet.tsx
 #: src/components/server-terminal-workspace.tsx
+#: src/components/session-map.tsx
 msgid "Connected"
 msgstr "연결됨"
 
@@ -788,9 +1095,12 @@ msgstr "SSH 호스트 {host}을(를) 통해 연결됨"
 msgid "Connected to {address}"
 msgstr "{address}에 연결됨"
 
+#: src/app/agent.tsx
 #: src/app/explore.tsx
 #: src/app/new-task.tsx
+#: src/components/agent-transcript-skeleton.tsx
 #: src/components/server-terminal-workspace.tsx
+#: src/components/session-map.tsx
 #: src/components/simfarm-stage.tsx
 msgid "Connecting"
 msgstr "연결 중"
@@ -806,6 +1116,31 @@ msgstr "SSH를 통해 연결하는 중…"
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Connecting to {address}"
 msgstr "{address}에 연결하는 중"
+
+#: src/components/settings-font-sheet.tsx
+msgid "Connecting…"
+msgstr "연결 중…"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Context"
+msgstr "컨텍스트"
+
+#. placeholder {0}: Math.round(contextPill.ratio * 100)
+#: src/components/agent-composer.tsx
+msgid "Context {0}% full"
+msgstr "컨텍스트 {0}% 사용"
+
+#: src/components/agent-message-block.tsx
+msgid "Context compacted · auto"
+msgstr "컨텍스트 압축됨 · 자동"
+
+#: src/components/agent-message-block.tsx
+msgid "Context compacted · manual"
+msgstr "컨텍스트 압축됨 · 수동"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Context used"
+msgstr "사용한 컨텍스트"
 
 #: src/app/explore.tsx
 #: src/components/ssh-host-key-dialog.tsx
@@ -928,6 +1263,17 @@ msgstr "컨트롤 Y, 붙여넣기"
 msgid "Control Z, suspend"
 msgstr "컨트롤 Z, 일시 중단"
 
+#: src/components/agent-mode-sheet.tsx
+msgid "Conversational help and open-ended project questions."
+msgstr "대화형 도움말과 프로젝트에 대한 자유로운 질문"
+
+#: src/components/agent-message-block.tsx
+#: src/components/asset-viewer.tsx
+#: src/components/bounded-markdown.tsx
+#: src/components/opencode-guide-sheet.tsx
+msgid "Copied"
+msgstr "복사됨"
+
 #: src/i18n/labels.ts
 msgctxt "git file status"
 msgid "Copied"
@@ -947,9 +1293,21 @@ msgstr "복사합니다. 터미널에 바로 붙여넣을 수 있습니다"
 msgid "Copy"
 msgstr "복사"
 
+#: src/components/agent-message-block.tsx
+msgid "Copy message"
+msgstr "메시지 복사"
+
+#: src/components/asset-viewer.tsx
+msgid "Copy path"
+msgstr "경로 복사"
+
 #: src/components/ssh-host-form.tsx
 msgid "Copy public key"
 msgstr "공개 키 복사"
+
+#: src/components/opencode-guide-sheet.tsx
+msgid "Copy the command"
+msgstr "명령 복사"
 
 #: src/components/simfarm-preview.tsx
 msgid "Copy the command that starts simfarm"
@@ -963,22 +1321,60 @@ msgstr "설치 명령어 복사"
 msgid "Copy the public key"
 msgstr "공개 키를 복사"
 
+#: src/components/settings-font-sheet.tsx
+msgid "Copying…"
+msgstr "복사 중…"
+
+#: src/components/agent-composer.tsx
 #: src/components/new-task-sheet.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Could not add a file"
 msgstr "파일을 추가하지 못했습니다"
 
+#: src/components/agent-workbench.tsx
+msgid "Could not change delivery"
+msgstr "전달 방식을 바꿀 수 없습니다"
+
+#: src/components/agent-workbench.tsx
+msgid "Could not compact"
+msgstr "압축하지 못했습니다"
+
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Could not connect"
 msgstr "연결할 수 없습니다"
 
-#: src/app/sessions.tsx
+#: src/app/panels.tsx
 msgid "Could not connect to this machine — tap to retry"
 msgstr "이 머신에 연결할 수 없음 — 눌러서 다시 시도"
 
 #: src/components/skia-terminal.tsx
 msgid "Could not copy that"
 msgstr "복사하지 못했습니다"
+
+#: src/components/agent-workbench.tsx
+msgid "Could not create session"
+msgstr "세션을 생성할 수 없습니다"
+
+#: src/components/agent-worktree-sheet.tsx
+msgid "Could not create that worktree."
+msgstr "워크트리를 생성할 수 없습니다"
+
+#: src/components/agent-workbench.tsx
+msgid "Could not delete"
+msgstr "삭제할 수 없습니다"
+
+#: src/components/agent-workbench.tsx
+msgid "Could not detach"
+msgstr "분리하지 못했습니다"
+
+#. placeholder {0}: problem.status
+#: src/components/settings-font-sheet.tsx
+msgid "Could not download: {0}"
+msgstr "다운로드하지 못했습니다: {0}"
+
+#: src/components/settings-font-sheet.tsx
+msgid "Could not download. Check the link and your connection."
+msgstr "다운로드하지 못했습니다. 링크와 연결을 확인하세요"
 
 #: src/components/settings-security.tsx
 msgid "Could not enable App Lock"
@@ -987,6 +1383,10 @@ msgstr "앱 잠금을 켜지 못했습니다"
 #: src/components/ssh-host-form.tsx
 msgid "Could not generate a key"
 msgstr "키를 생성할 수 없습니다"
+
+#: src/components/agent-workbench.tsx
+msgid "Could not keep it"
+msgstr "유지할 수 없습니다"
 
 #: src/components/new-task-sheet.tsx
 msgid "Could not list this server's agents."
@@ -1000,9 +1400,17 @@ msgstr "이전 출력을 불러오지 못했습니다"
 msgid "Could not load files."
 msgstr "파일을 불러오지 못했습니다"
 
+#: src/components/agent-workbench.tsx
+msgid "Could not load the session"
+msgstr "세션을 불러오지 못했습니다"
+
 #: src/components/session-map.tsx
 msgid "Could not load what is running."
 msgstr "실행 중인 것을 불러오지 못했습니다"
+
+#: src/components/agent-workbench.tsx
+msgid "Could not move this session"
+msgstr "이 세션을 옮길 수 없습니다"
 
 #: src/hooks/use-theme-file-open.ts
 msgid "Could not open that theme"
@@ -1011,6 +1419,10 @@ msgstr "해당 테마를 열 수 없습니다"
 #: src/components/server-terminal-workspace.tsx
 msgid "Could not open the file"
 msgstr "파일을 열지 못했습니다"
+
+#: src/app/settings.tsx
+msgid "Could not open the guide"
+msgstr "안내를 열 수 없습니다"
 
 #: src/lib/attachments.ts
 msgid "Could not open the picker."
@@ -1074,9 +1486,33 @@ msgstr "이 파일을 읽을 수 없습니다"
 msgid "Could not remove host"
 msgstr "호스트를 제거할 수 없습니다"
 
+#: src/components/agent-worktree-sheet.tsx
+msgid "Could not remove that worktree."
+msgstr "워크트리를 제거할 수 없습니다"
+
+#: src/components/agent-workbench.tsx
+msgid "Could not rename"
+msgstr "이름을 바꿀 수 없습니다"
+
+#: src/components/agent-workbench.tsx
+msgid "Could not reply"
+msgstr "응답할 수 없습니다"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Could not revoke"
+msgstr "해제할 수 없습니다"
+
 #: src/components/settings-servers.tsx
 msgid "Could not revoke device"
 msgstr "기기를 해제하지 못했습니다"
+
+#: src/components/agent-workbench.tsx
+msgid "Could not run that"
+msgstr "실행하지 못했습니다"
+
+#: src/components/agent-workbench.tsx
+msgid "Could not run that skill"
+msgstr "해당 스킬을 실행할 수 없습니다"
 
 #: src/components/settings-servers.tsx
 msgid "Could not save changes"
@@ -1114,6 +1550,14 @@ msgstr "키를 보내지 못했습니다"
 msgid "Could not send shortcut."
 msgstr "단축 명령을 보내지 못했습니다"
 
+#: src/components/agent-workbench.tsx
+msgid "Could not stage the rollback"
+msgstr "롤백을 준비할 수 없습니다"
+
+#: src/components/agent-workbench.tsx
+msgid "Could not start a session"
+msgstr "세션을 시작하지 못했습니다"
+
 #: src/app/commands.tsx
 msgid "Could not start a terminal."
 msgstr "터미널을 시작하지 못했습니다"
@@ -1122,9 +1566,22 @@ msgstr "터미널을 시작하지 못했습니다"
 msgid "Could not start the task."
 msgstr "작업을 시작하지 못했습니다"
 
+#: src/components/agent-background-tray.tsx
+#: src/components/agent-workbench.tsx
+msgid "Could not stop it"
+msgstr "중지하지 못했습니다"
+
 #: src/app/commands.tsx
 msgid "Could not stop this agent."
 msgstr "이 에이전트를 중지하지 못했습니다"
+
+#: src/components/agent-workbench.tsx
+msgid "Could not switch agent"
+msgstr "에이전트를 전환하지 못했습니다"
+
+#: src/components/agent-workbench.tsx
+msgid "Could not undo"
+msgstr "실행 취소하지 못했습니다"
 
 #: src/components/settings-servers.tsx
 msgid "Could not unpair server"
@@ -1138,6 +1595,10 @@ msgstr "세션을 업데이트하지 못했습니다"
 msgid "Could not upload the file."
 msgstr "파일을 업로드하지 못했습니다"
 
+#: src/components/agent-worktree-sheet.tsx
+msgid "Create and move"
+msgstr "생성하고 이동"
+
 #: src/components/custom-theme-library.tsx
 msgid "Current"
 msgstr "사용 중"
@@ -1146,7 +1607,7 @@ msgstr "사용 중"
 msgid "Current agent"
 msgstr "현재 에이전트"
 
-#: src/components/machine-switcher-sheet.tsx
+#: src/components/session-map.tsx
 msgid "Current machine"
 msgstr "현재 머신"
 
@@ -1158,14 +1619,18 @@ msgstr "현재 경로"
 msgid "Current theme"
 msgstr "현재 테마"
 
-#: src/app/commands.tsx
-msgid "Customize terminal commands and key combinations."
-msgstr "터미널 명령과 키 조합을 사용자 지정합니다"
+#: src/components/agent-mode-sheet.tsx
+msgid "Custom"
+msgstr "사용자 지정"
 
 #: src/components/custom-theme-preview.tsx
 #: src/components/settings-appearance.tsx
 msgid "Dark"
 msgstr "다크"
+
+#: src/components/agent-model-sheet.tsx
+msgid "default"
+msgstr "기본값"
 
 #: src/components/settings-terminal.tsx
 msgid "Default"
@@ -1179,6 +1644,7 @@ msgstr "기본"
 msgid "Defaults to theme.json at the repository root"
 msgstr "기본값은 저장소 루트의 theme.json입니다"
 
+#: src/components/agent-sessions-sheet.tsx
 #: src/components/row-action-menu.tsx
 msgid "Delete"
 msgstr "삭제"
@@ -1196,6 +1662,14 @@ msgctxt "git file status"
 msgid "Deleted"
 msgstr "삭제됨"
 
+#: src/components/agent-composer.tsx
+msgid "Delivery mode: Queue. Tap to switch to Steer."
+msgstr "전송 모드: 대기열. 탭하여 실시간 개입(Steer)으로 전환"
+
+#: src/components/agent-composer.tsx
+msgid "Delivery mode: Steer (real-time). Tap to switch to Queue."
+msgstr "전송 모드: 실시간 개입(Steer). 탭하여 대기열로 전환"
+
 #: src/components/server-terminal-workspace.tsx
 msgid "Delivery not confirmed"
 msgstr "전달이 확인되지 않음"
@@ -1207,6 +1681,10 @@ msgstr "데모 셸"
 #: src/lib/demo-gateway.ts
 msgid "Demo workspace"
 msgstr "데모 워크스페이스"
+
+#: src/components/agent-tool-card.tsx
+msgid "Denied by you"
+msgstr "사용자가 거부함"
 
 #: src/i18n/labels.ts
 msgid "Deny"
@@ -1225,8 +1703,12 @@ msgstr "기기 인증"
 msgid "Diff summary"
 msgstr "변경 요약"
 
+#: src/components/launch-intro.tsx
+msgid "Direct control for OpenCode autonomous coding. Follow real-time reasoning, inspect code diffs, review step-by-step todos, and guide tasks on the go."
+msgstr "OpenCode 자율 코딩 에이전트를 모바일에서 직접 제어하세요. 실시간 추론 스트림, 코드 변경 사항, 작업 체크리스트를 확인하고 관리합니다"
+
 #: src/components/new-task-sheet.tsx
-msgid "DIRECTORY"
+msgid "Directory"
 msgstr "디렉터리"
 
 #. placeholder {0}: record.label
@@ -1243,9 +1725,18 @@ msgstr "연결 끊김 · {0}"
 msgid "Disconnected."
 msgstr "연결이 끊겼습니다"
 
+#: src/components/in-app-notification-host.tsx
+msgid "Dismiss"
+msgstr "닫기"
+
 #: src/components/approval-banner.tsx
 msgid "Dismiss the approval error"
 msgstr "승인 오류 닫기"
+
+#. placeholder {0}: screenNotice.title
+#: src/components/agent-workbench.tsx
+msgid "Dismiss the notice: {0}"
+msgstr "알림 닫기: {0}"
 
 #: src/components/terminal-theme-drop.tsx
 msgid "Dismiss this theme"
@@ -1259,11 +1750,8 @@ msgstr "자리를 비운 사이의 변화 닫기"
 msgid "Dismiss what's new"
 msgstr "새로운 기능 닫기"
 
-#: src/components/session-artifacts.tsx
-msgid "Docs"
-msgstr "문서"
-
 #: src/app/custom-theme.tsx
+#: src/components/asset-viewer.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/open-web-service-sheet.tsx
 #: src/i18n/labels.ts
@@ -1279,9 +1767,17 @@ msgstr "단축 명령 편집 마치기"
 msgid "Down arrow"
 msgstr "아래쪽 화살표"
 
+#: src/components/settings-font-sheet.tsx
+msgid "Download"
+msgstr "다운로드"
+
 #: src/components/theme-link-import.tsx
 msgid "Download and preview"
 msgstr "다운로드 후 미리 보기"
+
+#: src/components/settings-font-sheet.tsx
+msgid "Downloading"
+msgstr "다운로드 중"
 
 #. placeholder {0}: formatBytes(state.received)
 #: src/components/terminal-theme-drop.tsx
@@ -1317,6 +1813,14 @@ msgstr "각 기기는 {0}의 토큰을 따로 보관합니다"
 #: src/components/ssh-host-row.tsx
 msgid "Edit {0}"
 msgstr "{0} 편집"
+
+#: src/i18n/labels.ts
+msgid "Edit a file"
+msgstr "파일 편집"
+
+#: src/components/agent-message-block.tsx
+msgid "Edit queued message"
+msgstr "대기 중인 메시지 편집"
 
 #: src/app/commands.tsx
 msgid "Edit shortcuts"
@@ -1359,6 +1863,10 @@ msgstr "그 호스트의 Gateway 포트를 입력하세요"
 msgid "Enter URL manually"
 msgstr "URL 직접 입력"
 
+#: src/components/agent-tool-card.tsx
+msgid "error"
+msgstr "오류"
+
 #: src/components/server-terminal-workspace.tsx
 #: src/i18n/labels.ts
 msgid "Escape"
@@ -1368,10 +1876,34 @@ msgstr "이스케이프"
 msgid "Escape twice"
 msgstr "Escape 두 번"
 
+#: src/components/agent-context-sheet.tsx
+msgid "Estimated cost"
+msgstr "예상 비용"
+
+#: src/components/settings-font-sheet.tsx
+msgid "Every screen in the app."
+msgstr "앱의 모든 화면"
+
 #. placeholder {0}: block.tool
 #: src/components/pane-chat-blocks.tsx
 msgid "Expand {0}"
 msgstr "{0} 펼치기"
+
+#: src/components/agent-reasoning-block.tsx
+msgid "Expand reasoning"
+msgstr "추론 펼치기"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Expand reasoning in the timeline"
+msgstr "타임라인에서 추론 과정 펼치기"
+
+#: src/components/agent-todo-block.tsx
+msgid "Expand tasks"
+msgstr "작업 펼치기"
+
+#: src/components/embedded-terminal-tool-block.tsx
+msgid "Expand tool call"
+msgstr "도구 호출 펼치기"
 
 #. placeholder {0}: Math.floor(secondsRemaining / 60)
 #. placeholder {1}: String(secondsRemaining % 60).padStart(2, '0')
@@ -1379,8 +1911,12 @@ msgstr "{0} 펼치기"
 msgid "Expires in {0}:{1}"
 msgstr "{0}:{1} 후 만료"
 
+#: src/components/agent-mode-sheet.tsx
+msgid "Explore"
+msgstr "탐색 (Explore)"
+
 #: src/components/custom-theme-library.tsx
-msgid "Export colors"
+msgid "Export colours"
 msgstr "색상 내보내기"
 
 #: src/components/custom-theme-library.tsx
@@ -1391,6 +1927,22 @@ msgstr "테마 내보내기"
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Failed · {0}"
 msgstr "실패 · {0}"
+
+#: src/components/agent-workbench.tsx
+msgid "Failed to create agent session"
+msgstr "에이전트 세션 생성 실패"
+
+#: src/components/agent-workbench.tsx
+msgid "Failed to switch project"
+msgstr "프로젝트를 전환하지 못했습니다"
+
+#: src/components/agent-composer.tsx
+msgid "Fast agent specialized for exploring codebases."
+msgstr "코드베이스 탐색에 특화된 빠른 에이전트"
+
+#: src/i18n/labels.ts
+msgid "Fetch a web page"
+msgstr "웹 페이지 가져오기"
 
 #: src/components/file-mention-panel.tsx
 msgid "File mentions"
@@ -1409,8 +1961,20 @@ msgid "Files"
 msgstr "파일"
 
 #: src/components/file-mention-panel.tsx
+msgid "Files in this project"
+msgstr "이 프로젝트의 파일"
+
+#: src/components/file-mention-panel.tsx
 msgid "Files in this workspace"
 msgstr "이 워크스페이스의 파일"
+
+#: src/components/agent-workspace-sheet.tsx
+msgid "Filter projects or type a path"
+msgstr "프로젝트를 필터링하거나 경로 입력"
+
+#: src/components/agent-workspace-sheet.tsx
+msgid "Filter projects, or type a path"
+msgstr "프로젝트를 필터링하거나, 경로 입력"
 
 #: src/i18n/labels.ts
 msgid "Find a file by name"
@@ -1421,8 +1985,8 @@ msgid "Fingerprint"
 msgstr "지문"
 
 #: src/components/new-task-sheet.tsx
-msgid "FIRST PROMPT"
-msgstr "첫 프롬프트"
+msgid "First prompt"
+msgstr "첫 지시"
 
 #: src/components/custom-theme-library.tsx
 msgid "Fix text contrast before applying this theme"
@@ -1432,9 +1996,48 @@ msgstr "이 테마를 적용하기 전에 텍스트 대비를 조정하세요"
 msgid "Fold the tool steps away"
 msgstr "도구 단계 접기"
 
+#: src/components/agent-workspace-sheet.tsx
+msgid "Folder is missing"
+msgstr "폴더가 없습니다"
+
+#: src/components/agent-workspace-sheet.tsx
+msgid "Folders"
+msgstr "폴더"
+
+#: src/components/settings-language-sheet.tsx
+msgid "Follow the language your phone is set to"
+msgstr "휴대폰 언어를 따르기"
+
+#: src/components/settings-language-sheet.tsx
+msgid "Following your phone"
+msgstr "휴대폰을 따름"
+
+#: src/components/settings-appearance.tsx
+#: src/components/settings-font-sheet.tsx
+msgid "Font"
+msgstr "글꼴"
+
+#: src/components/settings-font-sheet.tsx
+msgid "Font file address"
+msgstr "글꼴 파일 주소"
+
+#: src/components/settings-appearance.tsx
+msgid "Font, {fontValue}"
+msgstr "글꼴, {fontValue}"
+
 #: src/i18n/labels.ts
 msgid "Forward one word"
 msgstr "한 단어 앞으로"
+
+#: src/components/agent-composer.tsx
+#: src/components/agent-context-sheet.tsx
+#: src/components/agent-model-sheet.tsx
+msgid "Free"
+msgstr "무료"
+
+#: src/components/agent-model-sheet.tsx
+msgid "Free only"
+msgstr "무료만"
 
 #: src/lib/demo-gateway.ts
 msgid "Free up context by summarizing the conversation so far"
@@ -1486,6 +2089,14 @@ msgstr "Gateway URL이 올바르지 않습니다"
 msgid "Gateways reached through this host"
 msgstr "이 호스트를 통해 연결하는 Gateway"
 
+#: src/components/agent-mode-sheet.tsx
+msgid "General"
+msgstr "일반 (General)"
+
+#: src/components/agent-composer.tsx
+msgid "General-purpose agent for researching complex tasks."
+msgstr "복잡한 작업 연구를 위한 범용 에이전트"
+
 #: src/components/ssh-host-form.tsx
 msgid "Generate an Ed25519 key"
 msgstr "Ed25519 키 생성"
@@ -1523,6 +2134,15 @@ msgstr "그룹"
 msgid "Group {0}. Long press for actions."
 msgstr "그룹 {0}. 길게 눌러 작업 보기"
 
+#: src/i18n/labels.ts
+msgctxt "agent slash command"
+msgid "Guided AGENTS.md setup"
+msgstr "AGENTS.md 가이드 설정"
+
+#: src/app/settings.tsx
+msgid "Guides for pairing, the terminal, OpenCode and themes"
+msgstr "페어링, 터미널, OpenCode, 테마 안내"
+
 #: src/components/settings-alerts.tsx
 msgid "Haptic feedback"
 msgstr "햅틱 피드백"
@@ -1533,7 +2153,7 @@ msgstr "숨김"
 
 #. placeholder {0}: item.summary
 #. placeholder {0}: row.path
-#: src/components/git-diff-view.tsx
+#: src/components/diff-rows.tsx
 #: src/components/pane-chat-blocks.tsx
 msgid "Hide {0}"
 msgstr "{0} 숨기기"
@@ -1580,6 +2200,10 @@ msgstr "호스트 키가 바뀌었습니다"
 msgid "Host key trusted"
 msgstr "호스트 키 신뢰됨"
 
+#: src/app/settings.tsx
+msgid "How to use Muqun"
+msgstr "Muqun 사용법"
+
 #: src/i18n/labels.ts
 msgid "Idle"
 msgstr "대기"
@@ -1601,6 +2225,10 @@ msgstr "이미지 다운로드 출처"
 msgid "Import"
 msgstr "가져오기"
 
+#: src/components/settings-font-sheet.tsx
+msgid "Import a file…"
+msgstr "파일에서 가져오기…"
+
 #: src/components/custom-theme-library.tsx
 msgid "Import file"
 msgstr "파일 가져오기"
@@ -1608,6 +2236,10 @@ msgstr "파일 가져오기"
 #: src/components/custom-theme-library.tsx
 msgid "Import link"
 msgstr "링크로 가져오기"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Input"
+msgstr "입력"
 
 #. placeholder {0}: row.label
 #: src/components/composer-popup.tsx
@@ -1624,10 +2256,15 @@ msgstr "{0} {1} 삽입"
 msgid "Insert mode"
 msgstr "입력 모드"
 
+#: src/i18n/labels.ts
+msgid "Install a package"
+msgstr "패키지 설치"
+
 #: src/app/explore.tsx
 msgid "Install command copied"
 msgstr "설치 명령어를 복사했습니다"
 
+#: src/components/settings-font-sheet.tsx
 #: src/components/theme-browse-sheet.tsx
 msgid "Installed"
 msgstr "설치됨"
@@ -1636,6 +2273,14 @@ msgstr "설치됨"
 #: src/components/custom-theme-library.tsx
 msgid "Installing images"
 msgstr "이미지 설치 중"
+
+#: src/components/settings-font-sheet.tsx
+msgid "Installing…"
+msgstr "설치 중…"
+
+#: src/components/settings-font-sheet.tsx
+msgid "Interface"
+msgstr "인터페이스"
 
 #: src/components/theme-appearance-settings.tsx
 msgid "Interface background opacity"
@@ -1689,10 +2334,15 @@ msgstr "사용 중인 서버가 되면 페어링된 기기가 목록에 표시�
 msgid "Jump to latest output"
 msgstr "최신 출력으로 이동"
 
+#: src/components/agent-sessions-sheet.tsx
 #: src/hooks/use-relative-time.ts
 #: src/lib/agent-widget-layout.tsx
 msgid "just now"
 msgstr "방금"
+
+#: src/components/agent-revert-plate.tsx
+msgid "Keep"
+msgstr "유지"
 
 #: src/components/settings-servers.tsx
 msgid "Keep {label}"
@@ -1701,6 +2351,15 @@ msgstr "{label} 유지"
 #: src/components/settings-storage.tsx
 msgid "Keep cached files"
 msgstr "캐시 파일 유지"
+
+#: src/components/agent-revert-plate.tsx
+msgid "Keep everything and drop the staged rollback"
+msgstr "모두 유지하고 준비된 롤백을 버리기"
+
+#: src/i18n/labels.ts
+msgctxt "agent slash command"
+msgid "Keep everything and drop the staged rollback"
+msgstr "모두 유지하고 준비된 롤백을 버리기"
 
 #: src/components/settings-storage.tsx
 msgid "Keep saved themes"
@@ -1767,9 +2426,14 @@ msgstr "마지막 확인: {minutes}분 전"
 msgid "Last seen just now"
 msgstr "마지막 확인: 방금"
 
+#: src/components/agent-workbench.tsx
 #: src/components/skia-terminal.tsx
 msgid "Latest"
 msgstr "최신"
+
+#: src/components/agent-worktree-sheet.tsx
+msgid "Leave it empty and OpenCode picks a name."
+msgstr "비워 두면 OpenCode가 이름을 정합니다"
 
 #: src/components/new-task-sheet.tsx
 msgid "Leave it empty to start where the session already is."
@@ -1816,15 +2480,11 @@ msgstr "불러오는 중"
 msgid "Loading commands"
 msgstr "명령 불러오는 중"
 
-#: src/components/skia-terminal.tsx
-msgid "Loading earlier output…"
-msgstr "이전 출력 불러오는 중…"
-
 #: src/components/settings-servers.tsx
 msgid "Loading paired devices…"
 msgstr "페어링된 기기를 불러오는 중…"
 
-#: src/app/(drawer)/index.tsx
+#: src/app/index.tsx
 #: src/components/settings-servers.tsx
 msgid "Loading servers"
 msgstr "서버 불러오는 중"
@@ -1867,23 +2527,19 @@ msgstr "시뮬레이터를 찾는 중"
 msgid "Mac mini · Office"
 msgstr "Mac mini · 사무실"
 
-#: src/components/machine-switcher-sheet.tsx
-msgid "Machines and sessions"
-msgstr "머신 및 세션"
+#: src/components/session-map.tsx
+msgid "Machines"
+msgstr "머신"
 
-#: src/components/launch-intro.tsx
-msgid "Make it yours"
-msgstr "나만의 앱으로"
-
-#: src/app/(drawer)/index.tsx
+#: src/app/index.tsx
 msgid "Manage"
 msgstr "관리"
 
-#: src/components/machine-switcher-sheet.tsx
+#: src/components/session-map.tsx
 msgid "Manage machines"
 msgstr "머신 관리"
 
-#: src/app/(drawer)/index.tsx
+#: src/app/index.tsx
 msgid "Manage SSH hosts"
 msgstr "SSH 호스트 관리"
 
@@ -1900,6 +2556,27 @@ msgstr "마스코트"
 msgid "Mention {0}"
 msgstr "{0} 멘션"
 
+#: src/components/agent-message-block.tsx
+msgid "Message copied to clipboard"
+msgstr "메시지가 클립보드에 복사되었습니다"
+
+#: src/components/agent-workbench.tsx
+msgid "Message not sent"
+msgstr "메시지를 보내지 못했습니다"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Model"
+msgstr "모델"
+
+#. placeholder {0}: formatModelName(part.previous)
+#: src/components/agent-message-block.tsx
+msgid "Model · {0} → {next}"
+msgstr "모델 · {0} → {next}"
+
+#: src/components/agent-message-block.tsx
+msgid "Model · {next}"
+msgstr "모델 · {next}"
+
 #: src/components/asset-viewer.tsx
 msgid "Modified"
 msgstr "수정일"
@@ -1908,6 +2585,10 @@ msgstr "수정일"
 msgctxt "git file status"
 msgid "Modified"
 msgstr "수정됨"
+
+#: src/components/settings-font-sheet.tsx
+msgid "Monospace"
+msgstr "고정폭"
 
 #: src/components/custom-theme-library.tsx
 msgid "More actions"
@@ -1925,7 +2606,11 @@ msgstr "편집기 컨트롤 이동"
 msgid "Move the simulator controls"
 msgstr "시뮬레이터 컨트롤 이동"
 
-#: src/app/(drawer)/_layout.tsx
+#: src/components/agent-sessions-sheet.tsx
+#: src/components/agent-worktree-sheet.tsx
+msgid "Move to worktree"
+msgstr "워크트리로 이동"
+
 #: src/components/app-drawer-content.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/pad-server-rail.tsx
@@ -1941,9 +2626,12 @@ msgid "Muqun could not verify your identity. Try again."
 msgstr "Muqun이 본인 확인에 실패했습니다. 다시 시도하세요"
 
 #: src/components/settings-appearance.tsx
-#: src/components/settings-language-sheet.tsx
 msgid "Muqun follows the language your phone is set to."
 msgstr "Muqun이 휴대폰에 설정된 언어를 따릅니다"
+
+#: src/components/settings-font-sheet.tsx
+msgid "Muqun has no fonts of its own. Add one and it is kept on this device."
+msgstr "Muqun에는 자체 글꼴이 없습니다. 추가하면 이 기기에 보관됩니다"
 
 #: src/components/app-lock-gate.tsx
 msgid "Muqun is locked"
@@ -1966,7 +2654,6 @@ msgid "Muqun speaks SSH. Save a host, tap it on the home screen, and you are in 
 msgstr "Muqun이 SSH를 말합니다. 호스트를 저장하고 홈 화면에서 누르면 진짜 셸로 들어갑니다 — 비밀번호, 키, 또는 인증 앱의 코드로"
 
 #: src/components/settings-appearance.tsx
-#: src/components/settings-language-sheet.tsx
 msgid "Muqun stays in this language whatever the phone is set to."
 msgstr "휴대폰 설정과 상관없이 Muqun은 이 언어를 유지합니다"
 
@@ -1980,6 +2667,7 @@ msgid "My themes"
 msgstr "내 테마"
 
 #: src/app/commands.tsx
+#: src/components/agent-worktree-sheet.tsx
 #: src/components/ssh-host-form.tsx
 msgid "Name"
 msgstr "이름"
@@ -2013,9 +2701,14 @@ msgstr "새 호스트 키"
 msgid "New output available · refresh"
 msgstr "새 출력 있음 · 새로 고침"
 
+#: src/app/agent.tsx
+#: src/components/agent-workbench.tsx
+msgid "New session"
+msgstr "새 세션"
+
 #: src/app/commands.tsx
-msgid "NEW SHORTCUT"
-msgstr "새 단축 명령"
+msgid "New shortcut"
+msgstr "새 단축키"
 
 #: src/components/ssh-host-list.tsx
 msgid "New SSH host"
@@ -2026,10 +2719,6 @@ msgstr "새 SSH 호스트"
 msgid "New task"
 msgstr "새 작업"
 
-#: src/components/new-task-action.tsx
-msgid "New task on {label}"
-msgstr "{label}에서 새 작업"
-
 #: src/app/commands.tsx
 #: src/components/session-map.tsx
 msgid "New terminal"
@@ -2039,13 +2728,23 @@ msgstr "새 터미널"
 msgid "New workspace"
 msgstr "새 워크스페이스"
 
+#: src/components/agent-worktree-sheet.tsx
+msgid "New worktree…"
+msgstr "새 워크트리…"
+
+#: src/components/agent-composer.tsx
 #: src/components/launch-intro.tsx
 msgid "Next"
 msgstr "다음"
 
+#: src/components/in-app-notification-host.tsx
 #: src/components/notice-deck.tsx
 msgid "Next notification"
 msgstr "다음 알림"
+
+#: src/components/agent-title-pill.tsx
+msgid "Next session"
+msgstr "다음 세션"
 
 #: src/lib/agent-widget-layout.tsx
 msgid "No agents running"
@@ -2055,6 +2754,10 @@ msgstr "실행 중인 에이전트 없음"
 msgid "No app on this phone opens web pages."
 msgstr "이 휴대폰에는 웹 페이지를 열 수 있는 앱이 없습니다"
 
+#: src/app/settings.tsx
+msgid "No app on this phone opens web pages. The guide is at muqun.dev/support."
+msgstr "이 휴대폰에는 웹 페이지를 열 수 있는 앱이 없습니다. 안내는 muqun.dev/support 에 있습니다"
+
 #: src/components/pairing-camera.tsx
 msgid "No camera to scan with"
 msgstr "스캔할 카메라가 없습니다"
@@ -2062,6 +2765,10 @@ msgstr "스캔할 카메라가 없습니다"
 #: src/components/pairing-camera.tsx
 msgid "No camera was found on this device."
 msgstr "이 기기에서 카메라를 찾지 못했습니다"
+
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "No changes"
+msgstr "변경 사항 없음"
 
 #: src/components/git-diff-view.tsx
 msgid "No changes. The working tree matches HEAD."
@@ -2071,6 +2778,10 @@ msgstr "변경 사항이 없습니다. 작업 트리가 HEAD와 같습니다"
 msgid "No files match."
 msgstr "일치하는 파일이 없습니다"
 
+#: src/components/agent-model-sheet.tsx
+msgid "No free models on this host."
+msgstr "이 호스트에는 무료 모델이 없습니다"
+
 #: src/app/explore.tsx
 msgid "No Gateway yet?"
 msgstr "아직 Gateway가 없나요?"
@@ -2079,9 +2790,22 @@ msgstr "아직 Gateway가 없나요?"
 msgid "No matching commands. Try another word."
 msgstr "일치하는 명령이 없습니다. 다른 단어로 검색하세요"
 
+#. placeholder {0}: searchQuery.trim()
+#: src/components/agent-model-sheet.tsx
+msgid "No models match “{0}”."
+msgstr "“{0}”과 일치하는 모델이 없습니다"
+
+#: src/components/agent-model-sheet.tsx
+msgid "No models on this host."
+msgstr "이 호스트에는 모델이 없습니다"
+
 #: src/components/agent-assignment-bar.tsx
 msgid "No other assistants in this session yet."
 msgstr "이 세션에 아직 다른 어시스턴트가 없습니다"
+
+#: src/components/agent-background-tray.tsx
+msgid "No output yet."
+msgstr "아직 출력이 없습니다"
 
 #: src/components/pane-chat-blocks.tsx
 msgid "No output."
@@ -2103,6 +2827,15 @@ msgstr "이 형식의 파일은 미리 볼 수 없습니다. 파일은 서버에
 msgid "No preview on this connection"
 msgstr "이 연결에서는 미리 볼 수 없습니다"
 
+#: src/components/agent-workspace-sheet.tsx
+msgid "No projects here yet. Type a path above to open one."
+msgstr "아직 프로젝트가 없습니다. 위에 경로를 입력해 열어 보세요"
+
+#. placeholder {0}: searchQuery.trim()
+#: src/components/agent-workspace-sheet.tsx
+msgid "No projects match “{0}”."
+msgstr "“{0}”와 일치하는 프로젝트가 없습니다"
+
 #: src/app/new-task.tsx
 msgid "No server to start a task on."
 msgstr "작업을 시작할 서버가 없습니다"
@@ -2111,6 +2844,14 @@ msgstr "작업을 시작할 서버가 없습니다"
 #: src/components/settings-servers.tsx
 msgid "No servers paired yet"
 msgstr "아직 페어링된 서버가 없습니다"
+
+#: src/components/agent-sessions-sheet.tsx
+msgid "No sessions in this project yet. Start one from the + button."
+msgstr "이 프로젝트에는 아직 세션이 없습니다. + 버튼으로 시작하세요"
+
+#: src/components/agent-sessions-sheet.tsx
+msgid "No sessions match “{searchQuery}”."
+msgstr "“{searchQuery}”과 일치하는 세션이 없습니다"
 
 #: src/components/simfarm-preview.tsx
 msgid "No simulator on port {port}"
@@ -2132,13 +2873,29 @@ msgstr "아직 SSH 호스트가 없습니다. 하나 추가하면 닿을 수 있
 msgid "No still frames"
 msgstr "정지 화면 없음"
 
-#: src/components/git-diff-view.tsx
+#: src/components/agent-tasks-sheet.tsx
+msgid "No tasks in this session yet."
+msgstr "이 세션에는 아직 작업이 없습니다"
+
+#: src/components/diff-rows.tsx
 msgid "No textual change"
 msgstr "텍스트 변경 없음"
 
 #: src/components/theme-browse-sheet.tsx
 msgid "No themes are published yet"
 msgstr "아직 공개된 테마가 없습니다"
+
+#: src/components/agent-context-sheet.tsx
+msgid "no window reported for this model"
+msgstr "이 모델의 창 크기가 보고되지 않았습니다"
+
+#: src/components/agent-worktree-sheet.tsx
+msgid "No worktrees yet. Make one below to work on a branch without disturbing this checkout."
+msgstr "아직 워크트리가 없습니다. 아래에서 하나 만들면 이 체크아웃을 건드리지 않고 브랜치에서 작업할 수 있습니다"
+
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "Not a git repository"
+msgstr "Git 저장소가 아닙니다"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Not available"
@@ -2161,9 +2918,17 @@ msgstr "연결 안 됨"
 msgid "Not found"
 msgstr "찾을 수 없음"
 
+#: src/components/settings-font-sheet.tsx
+msgid "Not monospace — the terminal may look uneven"
+msgstr "고정폭이 아닙니다 — 터미널이 고르지 않게 보일 수 있습니다"
+
 #: src/components/simfarm-stage.tsx
 msgid "Not running"
 msgstr "실행 중이 아님"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Not set"
+msgstr "설정 안 됨"
 
 #: src/components/ssh-host-form.tsx
 msgid "Not valid."
@@ -2182,9 +2947,29 @@ msgstr "포트 {port}에서 응답이 없습니다. 아무것도 수신 대기�
 msgid "Nothing here yet. Files the session writes show up on their own."
 msgstr "아직 아무것도 없습니다. 세션이 쓴 파일은 저절로 나타납니다"
 
+#: src/components/agent-background-tray.tsx
+msgid "Nothing is running in the background — detach a long command from its tool card and it appears here"
+msgstr "백그라운드에서 실행 중인 것이 없습니다. 도구 카드에서 긴 명령을 분리하면 여기에 나타납니다"
+
+#: src/components/agent-workbench.tsx
+msgid "Nothing staged"
+msgstr "준비된 것이 없습니다"
+
 #: src/components/pane-chat-view.tsx
 msgid "Nothing to show yet."
 msgstr "아직 표시할 내용이 없습니다"
+
+#: src/components/agent-workbench.tsx
+msgid "Nothing to undo"
+msgstr "실행 취소할 것이 없습니다"
+
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "Nothing uncommitted in this project."
+msgstr "이 프로젝트에 커밋되지 않은 변경이 없습니다"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Nothing yet — an “Always allow” reply lands here, for this project."
+msgstr "아직 없습니다 — “항상 허용” 응답이 이 프로젝트의 규칙으로 여기에 쌓입니다"
 
 #: src/components/toggle.tsx
 msgid "Off"
@@ -2216,9 +3001,10 @@ msgid "Open"
 msgstr "열기"
 
 #. placeholder {0}: asset.name
+#. placeholder {0}: file.name ?? basename(file.uri)
 #. placeholder {0}: part.fallback_text || part.asset_id
-#. placeholder {0}: server.label
-#: src/app/(drawer)/index.tsx
+#: src/app/index.tsx
+#: src/components/agent-tool-card.tsx
 #: src/components/pane-chat-blocks.tsx
 #: src/components/session-artifacts.tsx
 msgid "Open {0}"
@@ -2232,6 +3018,18 @@ msgstr "{title} 열기. 길게 눌러 닫기"
 msgid "Open anyway"
 msgstr "그래도 열기"
 
+#: src/components/agent-workspace-sheet.tsx
+msgid "Open as a project"
+msgstr "프로젝트로 열기"
+
+#: src/components/agent-message-block.tsx
+msgid "Open attachment"
+msgstr "첨부 파일 열기"
+
+#: src/components/agent-tool-card.tsx
+msgid "Open background tasks"
+msgstr "백그라운드 작업 열기"
+
 #: src/components/git-diff-button.tsx
 msgid "Open changes"
 msgstr "변경 사항 열기"
@@ -2239,6 +3037,18 @@ msgstr "변경 사항 열기"
 #: src/components/artifacts-button.tsx
 msgid "Open files"
 msgstr "파일 목록 열기"
+
+#: src/components/agent-tool-card.tsx
+msgid "Open image"
+msgstr "이미지 열기"
+
+#: src/components/diff-rows.tsx
+msgid "Open in changes"
+msgstr "변경 사항에서 열기"
+
+#: src/components/agent-tool-card.tsx
+msgid "Open in viewer"
+msgstr "뷰어에서 열기"
 
 #: src/app/commands.tsx
 #: src/components/open-web-service-sheet.tsx
@@ -2262,6 +3072,14 @@ msgstr "Muqun을 열어 연결하세요"
 msgid "Open on-screen keyboard"
 msgstr "화면 키보드 열기"
 
+#: src/components/new-task-action.tsx
+msgid "Open OpenCode Agent on {label}"
+msgstr "{label}에서 OpenCode 에이전트 열기"
+
+#: src/components/agent-sessions-sheet.tsx
+msgid "Open parent"
+msgstr "상위 세션 열기"
+
 #: src/components/open-web-service-sheet.tsx
 msgid "Open port {recent}"
 msgstr "포트 {recent} 열기"
@@ -2269,6 +3087,10 @@ msgstr "포트 {recent} 열기"
 #: src/components/server-terminal-workspace.tsx
 msgid "Open quick actions"
 msgstr "빠른 동작 열기"
+
+#: src/components/agent-tool-card.tsx
+msgid "Open session"
+msgstr "세션 열기"
 
 #. placeholder {0}: host.label
 #. placeholder {0}: record.label
@@ -2285,11 +3107,48 @@ msgstr "터미널 보기"
 msgid "Open the file explorer"
 msgstr "파일 탐색기 열기"
 
+#: src/components/agent-tool-card.tsx
+msgid "Open the subagent's session"
+msgstr "서브에이전트 세션 열기"
+
+#: src/components/diff-rows.tsx
+msgid "Open this diff in the changes viewer"
+msgstr "이 diff를 변경 사항 뷰어에서 열기"
+
+#: src/components/agent-workspace-sheet.tsx
+msgid "Open this path"
+msgstr "이 경로 열기"
+
 #. placeholder {0}: workspace.title
-#. placeholder {1}: inventory.panels
 #: src/components/session-map.tsx
-msgid "Open workspace {0}, {1, plural, one {# running} other {# running}}. Long press to close."
-msgstr "작업 공간 {0} 열기, {1, plural, one {# 실행 중} other {# 실행 중}}. 길게 눌러 닫기"
+msgid "Open workspace {0}, {panelCount, plural, one {# running} other {# running}}. Long press to close."
+msgstr "작업 공간 {0} 열기, {panelCount, plural, one {# 실행 중} other {# 실행 중}}. 길게 눌러 닫기"
+
+#: src/components/app-drawer-content.tsx
+#: src/components/launch-intro.tsx
+msgid "OpenCode Agent"
+msgstr "OpenCode 에이전트"
+
+#: src/components/agent-workbench.tsx
+msgid "OpenCode agent daemon is not running on this host. Run `opencode serve --service` to start it."
+msgstr "이 호스트에서 OpenCode 데몬이 실행 중이지 않습니다. `opencode serve --service`를 실행하여 시작하세요"
+
+#: src/components/new-task-action.tsx
+msgid "OpenCode ready"
+msgstr "OpenCode 준비 완료"
+
+#: src/components/agent-workbench.tsx
+msgid "OpenCode service is offline"
+msgstr "OpenCode 서비스가 오프라인입니다"
+
+#: src/components/agent-composer.tsx
+#: src/components/agent-workbench.tsx
+msgid "OpenCode service offline"
+msgstr "OpenCode 서비스 오프라인"
+
+#: src/components/new-task-action.tsx
+msgid "OpenCode service offline. Tap for setup instructions"
+msgstr "OpenCode 서비스 오프라인. 탭하여 설정 안내 확인"
 
 #: src/app/+not-found.tsx
 msgid "Opening"
@@ -2333,19 +3192,28 @@ msgstr "{0} 옵션"
 msgid "Other"
 msgstr "기타"
 
-#: src/components/launch-intro.tsx
-msgid "Output lands on a terminal grid in the program's own colours, with a key row that sends the moment you press it. nvim, less and REPLs behave."
-msgstr "출력은 프로그램 본연의 색으로 터미널 그리드에 그려지고, 키 줄은 누르는 순간 전송됩니다. nvim, less, REPL 모두 그대로 동작합니다"
+#: src/components/agent-context-sheet.tsx
+msgid "Output"
+msgstr "출력"
 
-#: src/app/(drawer)/index.tsx
+#: src/components/launch-intro.tsx
+msgid "Output lands on a hardware-accelerated terminal grid with instant-response keys and full tmux control. nvim, less and REPLs behave."
+msgstr "하드웨어 가속 터미널 그리드와 즉각 반응하는 키보드 바, 강력한 tmux 세션 관리를 제공합니다. nvim, less 및 REPL이 완벽하게 작동합니다"
+
+#: src/app/index.tsx
 #: src/components/app-drawer-content.tsx
 #: src/components/pad-server-rail.tsx
+#: src/components/settings-servers.tsx
 msgid "Pair a server"
 msgstr "서버 페어링"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Pair again"
 msgstr "다시 페어링"
+
+#: src/components/settings-servers.tsx
+msgid "Pair one below."
+msgstr "아래에서 페어링하세요"
 
 #: src/app/explore.tsx
 msgid "Pair server"
@@ -2368,7 +3236,7 @@ msgstr "{0}을(를) 통해 페어링"
 msgid "Pair through an SSH host"
 msgstr "SSH 호스트를 통해 페어링"
 
-#: src/app/(drawer)/index.tsx
+#: src/app/index.tsx
 msgid "Pair your first server"
 msgstr "첫 서버 페어링하기"
 
@@ -2416,10 +3284,22 @@ msgstr "붙여넣기"
 msgid "Paste a public theme link or GitHub repository"
 msgstr "공개 테마 링크 또는 GitHub 저장소 URL을 붙여넣으세요"
 
+#: src/components/settings-font-sheet.tsx
+msgid "Paste a URL…"
+msgstr "URL 붙여넣기…"
+
 #: src/components/asset-viewer.tsx
 #: src/components/new-task-sheet.tsx
 msgid "Path"
 msgstr "경로"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Permission"
+msgstr "권한"
+
+#: src/components/agent-permission-card.tsx
+msgid "Permission required"
+msgstr "권한 필요"
 
 #: src/components/attachment-menu.tsx
 msgid "Photo library"
@@ -2429,14 +3309,22 @@ msgstr "사진 보관함"
 msgid "Pinned commit"
 msgstr "고정된 커밋"
 
+#: src/components/agent-mode-sheet.tsx
+msgid "Plan"
+msgstr "계획 (Plan)"
+
+#: src/components/agent-composer.tsx
+msgid "Please retry or remove failed attachments."
+msgstr "실패한 첨부파일을 다시 시도하거나 삭제하세요"
+
+#: src/components/agent-workbench.tsx
+msgid "Please start OpenCode on the server: opencode serve --service"
+msgstr "서버에서 OpenCode를 시작하세요: opencode serve --service"
+
 #: src/components/open-web-service-sheet.tsx
 #: src/components/simfarm-preview.tsx
 #: src/components/ssh-host-form.tsx
 msgid "Port"
-msgstr "포트"
-
-#: src/components/open-web-service-sheet.tsx
-msgid "PORT"
 msgstr "포트"
 
 #: src/components/theme-browse-sheet.tsx
@@ -2478,6 +3366,14 @@ msgstr "미리 보고 적용"
 msgid "Preview first. Your current theme stays unchanged"
 msgstr "먼저 미리 보세요. 현재 테마는 변경되지 않습니다"
 
+#: src/components/agent-title-pill.tsx
+msgid "Previous session"
+msgstr "이전 세션"
+
+#: src/components/agent-mode-sheet.tsx
+msgid "Primary"
+msgstr "기본"
+
 #: src/app/settings.tsx
 msgid "Privacy policy"
 msgstr "개인정보 처리방침"
@@ -2489,6 +3385,31 @@ msgstr "개인 키"
 #: src/components/ssh-host-form.tsx
 msgid "Private key (leave blank to keep the saved one)"
 msgstr "개인 키(비워 두면 저장된 값 유지)"
+
+#: src/app/agent.tsx
+#: src/components/agent-context-sheet.tsx
+#: src/components/agent-worktree-sheet.tsx
+#: src/components/composer-popup.tsx
+msgid "Project"
+msgstr "프로젝트"
+
+#. placeholder {0}: part.directory
+#: src/components/agent-message-block.tsx
+msgid "Project · {0}"
+msgstr "프로젝트 · {0}"
+
+#. placeholder {0}: answer.missing?.directory ?? ''
+#. placeholder {0}: gone.directory
+#. placeholder {0}: missing.directory
+#: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/agent-workbench.tsx
+#: src/components/agent-worktree-sheet.tsx
+msgid "Project folder is missing: {0}"
+msgstr "프로젝트 폴더가 없습니다: {0}"
+
+#: src/components/agent-workspace-sheet.tsx
+msgid "Projects"
+msgstr "프로젝트"
 
 #: src/app/commands.tsx
 msgid "Prompt"
@@ -2506,13 +3427,27 @@ msgstr "공개 키를 복사했습니다"
 msgid "Pull"
 msgstr "풀"
 
-#: src/components/skia-terminal.tsx
-msgid "Pull for earlier output"
-msgstr "당겨서 이전 출력 불러오기"
+#: src/components/agent-composer.tsx
+msgid "Queue"
+msgstr "대기열"
+
+#: src/components/agent-composer.tsx
+msgid "Queue message for agent"
+msgstr "에이전트를 위해 대기열에 메시지 추가"
+
+#: src/components/agent-composer.tsx
+#: src/components/agent-message-block.tsx
+msgid "Queued"
+msgstr "대기 중"
 
 #: src/components/attachment-strip.tsx
 msgid "queued to upload"
 msgstr "업로드 대기 중"
+
+#. placeholder {0}: inboxItemText(item) || item.type
+#: src/components/agent-composer.tsx
+msgid "Queued: {0}"
+msgstr "대기 중: {0}"
 
 #: src/app/commands.tsx
 msgid "Quick action settings"
@@ -2528,6 +3463,10 @@ msgstr "빠른 동작"
 msgid "Quit"
 msgstr "종료"
 
+#: src/i18n/labels.ts
+msgid "Reach the network"
+msgstr "네트워크에 접속"
+
 #: src/components/gateway-tunnel-badge.tsx
 msgid "Reached through SSH host {host}"
 msgstr "SSH 호스트 {host}을(를) 통해 연결"
@@ -2535,6 +3474,22 @@ msgstr "SSH 호스트 {host}을(를) 통해 연결"
 #: src/app/explore.tsx
 msgid "Reaching the Gateway"
 msgstr "Gateway에 연결하는 중"
+
+#: src/i18n/labels.ts
+msgid "Read a file"
+msgstr "파일 읽기"
+
+#: src/i18n/labels.ts
+msgid "Read outside the workspace"
+msgstr "워크스페이스 밖의 파일 읽기"
+
+#: src/components/agent-mode-sheet.tsx
+msgid "Read-only: symbol search, file discovery, dependency tracing."
+msgstr "읽기 전용: 심볼 검색, 파일 탐색, 의존성 추적"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Reading the rules on the host…"
+msgstr "호스트의 규칙을 읽는 중…"
 
 #: src/app/+not-found.tsx
 #: src/components/custom-theme-library.tsx
@@ -2545,6 +3500,10 @@ msgstr "테마를 읽는 중"
 msgid "Reading the theme link"
 msgstr "테마 링크 읽는 중"
 
+#: src/components/agent-worktree-sheet.tsx
+msgid "Reading this project’s worktrees…"
+msgstr "이 프로젝트의 워크트리를 읽는 중…"
+
 #: src/components/collaboration-notice.tsx
 msgid "Ready for input"
 msgstr "입력 대기 중"
@@ -2553,9 +3512,17 @@ msgstr "입력 대기 중"
 msgid "Ready to preview. Nothing is applied until you say so."
 msgstr "미리 볼 준비가 됐습니다. 직접 결정하기 전에는 아무것도 적용하지 않습니다"
 
+#: src/components/agent-context-sheet.tsx
+msgid "Reasoning"
+msgstr "추론 과정"
+
 #: src/components/settings-alerts.tsx
 msgid "Receive agent blocks and gateway updates."
 msgstr "에이전트의 응답 대기 알림과 Gateway 소식을 받습니다"
+
+#: src/components/agent-sessions-sheet.tsx
+msgid "Recent"
+msgstr "최근"
 
 #: src/i18n/labels.ts
 msgid "Recent commits"
@@ -2588,6 +3555,7 @@ msgstr "{0}에 다시 연결"
 msgid "Reconnecting · {0}"
 msgstr "다시 연결 중 · {0}"
 
+#: src/components/agent-background-tray.tsx
 #: src/components/session-map.tsx
 msgid "Refresh"
 msgstr "새로고침"
@@ -2604,6 +3572,10 @@ msgstr "파일 새로 고침"
 msgid "Refresh output"
 msgstr "출력 새로 고침"
 
+#: src/components/agent-worktree-sheet.tsx
+msgid "Refresh worktrees"
+msgstr "워크트리 새로고침"
+
 #: src/components/collaboration-notice.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/settings-storage.tsx
@@ -2618,6 +3590,10 @@ msgstr "제거"
 #: src/components/ssh-host-form.tsx
 msgid "Remove {0}"
 msgstr "{0} 제거"
+
+#: src/components/agent-worktree-sheet.tsx
+msgid "Remove anyway"
+msgstr "그래도 제거"
 
 #: src/components/collaboration-notice.tsx
 msgid "Remove from history?"
@@ -2635,6 +3611,14 @@ msgstr "이 테마를 삭제할까요?"
 msgid "Remove unused themes"
 msgstr "사용하지 않는 테마 제거"
 
+#: src/components/agent-worktree-sheet.tsx
+msgid "Remove worktree"
+msgstr "워크트리 제거"
+
+#: src/components/agent-worktree-sheet.tsx
+msgid "Removing"
+msgstr "제거하는 중"
+
 #: src/components/settings-storage.tsx
 msgid "Removing unused themes"
 msgstr "사용하지 않는 테마를 제거하는 중"
@@ -2642,6 +3626,10 @@ msgstr "사용하지 않는 테마를 제거하는 중"
 #: src/components/settings-storage.tsx
 msgid "Removing…"
 msgstr "제거하는 중…"
+
+#: src/components/agent-sessions-sheet.tsx
+msgid "Rename"
+msgstr "이름 바꾸기"
 
 #: src/components/row-action-menu.tsx
 msgid "Rename {label}"
@@ -2700,6 +3688,8 @@ msgstr "숨긴 기본 명령 복원"
 msgid "Restore hidden defaults"
 msgstr "숨긴 기본 항목 복원"
 
+#: src/components/agent-model-sheet.tsx
+#: src/components/agent-workspace-sheet.tsx
 #: src/components/gateway-storage-error.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/components/terminal-boundary.tsx
@@ -2722,6 +3712,10 @@ msgstr "빨간색으로 표시된 항목을 다시 시도하거나 삭제한 뒤
 #: src/components/attachment-strip.tsx
 msgid "Retry uploading {0}"
 msgstr "{0} 업로드 다시 시도"
+
+#: src/components/agent-workbench.tsx
+msgid "Retrying…"
+msgstr "다시 시도하는 중…"
 
 #: src/components/virtual-keyboard.tsx
 msgid "Return"
@@ -2773,11 +3767,14 @@ msgstr "실패한 테스트를 살펴보고 고쳐 줘"
 msgid "Reviewing the changes and checking the tests…"
 msgstr "변경 사항과 테스트를 확인하는 중…"
 
+#: src/components/agent-context-sheet.tsx
 #: src/components/settings-servers.tsx
 msgid "Revoke"
 msgstr "해제"
 
 #. placeholder {0}: device.name
+#. placeholder {0}: rule.action || t`this rule`
+#: src/components/agent-context-sheet.tsx
 #: src/components/settings-servers.tsx
 msgid "Revoke {0}"
 msgstr "{0} 해제"
@@ -2791,6 +3788,18 @@ msgstr "해제 중…"
 msgid "Right arrow"
 msgstr "오른쪽 화살표"
 
+#: src/components/agent-revert-plate.tsx
+msgid "Rolling back {summary}"
+msgstr "{summary}을(를) 되돌립니다"
+
+#: src/components/agent-revert-plate.tsx
+msgid "Rolling back to here"
+msgstr "여기까지 되돌립니다"
+
+#: src/i18n/labels.ts
+msgid "Run a command"
+msgstr "명령 실행"
+
 #: src/components/server-terminal-workspace.tsx
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Run a terminal command"
@@ -2801,14 +3810,23 @@ msgstr "터미널 명령 실행"
 msgid "Run command"
 msgstr "명령 실행"
 
+#: src/components/agent-tool-card.tsx
+msgid "Run in background"
+msgstr "백그라운드에서 실행"
+
+#: src/components/opencode-guide-sheet.tsx
+msgid "Run it under systemd or tmux to keep it up after you log out."
+msgstr "로그아웃 뒤에도 계속 돌리려면 systemd나 tmux 아래에서 실행하세요"
+
 #: src/i18n/labels.ts
 msgid "Run relevant tests"
 msgstr "관련 테스트 실행"
 
-#: src/app/(drawer)/index.tsx
+#: src/app/index.tsx
 msgid "Run the Gateway on your machine and scan the QR code it prints. The pairing stays on this device."
 msgstr "내 컴퓨터에서 Gateway를 실행하고 화면에 출력된 QR 코드를 스캔하세요. 페어링 정보는 이 기기에만 남습니다"
 
+#: src/components/agent-sessions-sheet.tsx
 #: src/components/session-map.tsx
 #: src/components/settings-servers.tsx
 #: src/components/ssh-host-form.tsx
@@ -2838,6 +3856,10 @@ msgstr "호스트 저장"
 msgid "Save shortcut"
 msgstr "단축 명령 저장"
 
+#: src/components/agent-sessions-sheet.tsx
+msgid "Save the new name"
+msgstr "새 이름 저장"
+
 #: src/components/custom-theme-library.tsx
 msgid "Save theme"
 msgstr "테마 저장"
@@ -2847,20 +3869,20 @@ msgid "Saved"
 msgstr "저장됨"
 
 #: src/app/commands.tsx
-msgid "SAVED COMMANDS"
-msgstr "저장한 명령어"
+msgid "Saved commands"
+msgstr "저장한 명령"
 
 #: src/app/commands.tsx
-msgid "SAVED PROMPTS"
-msgstr "저장한 프롬프트"
+msgid "Saved prompts"
+msgstr "저장한 지시"
 
 #: src/components/settings-servers.tsx
 #: src/components/ssh-host-form.tsx
 msgid "Saving…"
 msgstr "저장 중…"
 
-#: src/app/(drawer)/index.tsx
 #: src/app/explore.tsx
+#: src/app/index.tsx
 #: src/components/app-drawer-content.tsx
 #: src/components/pad-server-rail.tsx
 msgid "Scan a gateway QR"
@@ -2874,13 +3896,21 @@ msgstr "다시 스캔"
 msgid "Scan the Gateway QR."
 msgstr "Gateway QR 코드를 스캔하세요"
 
+#: src/components/settings-servers.tsx
+msgid "Scan the Gateway’s QR code, or enter its address."
+msgstr "Gateway의 QR 코드를 스캔하거나 주소를 입력하세요"
+
 #: src/components/launch-intro.tsx
-msgid "Scan the QR code of a Gateway running on your own computer. No account, no relay, and nothing of yours passes through a server of ours."
-msgstr "내 컴퓨터에서 실행 중인 Gateway의 QR 코드를 스캔하세요. 계정도 중계 서버도 없고, 당신의 데이터는 저희 서버를 거치지 않습니다"
+msgid "Scan the QR code of a Gateway running on your own computer. No account, no relay, end-to-end encrypted, and 32 handcrafted themes to make it yours."
+msgstr "내 컴퓨터에서 실행 중인 Gateway의 QR 코드를 스캔하여 직접 연결하세요. 계정도, 클라우드 중계도 없으며, 종단간 암호화와 32가지 전용 테마를 제공합니다"
 
 #: src/components/pairing-camera.tsx
 msgid "Scanning needs a camera, which this browser does not offer."
 msgstr "스캔하려면 카메라가 필요하지만 이 브라우저에서는 쓸 수 없습니다"
+
+#: src/components/agent-workbench.tsx
+msgid "Scroll to latest message"
+msgstr "최신 메시지로 이동"
 
 #: src/i18n/labels.ts
 msgid "Search"
@@ -2893,6 +3923,18 @@ msgstr "작업 및 명령 검색"
 #: src/components/session-artifacts.tsx
 msgid "Search files"
 msgstr "파일 검색"
+
+#: src/components/agent-model-sheet.tsx
+msgid "Search models"
+msgstr "모델 검색"
+
+#: src/components/agent-model-sheet.tsx
+msgid "Search models or providers"
+msgstr "모델이나 제공자 검색"
+
+#: src/components/agent-sessions-sheet.tsx
+msgid "Search sessions"
+msgstr "세션 검색"
 
 #: src/i18n/labels.ts
 msgid "Search the whole project"
@@ -2921,9 +3963,17 @@ msgstr "확인: {0}분 전"
 msgid "Seen just now"
 msgstr "확인: 방금"
 
+#: src/components/agent-composer.tsx
+msgid "Select agent mode"
+msgstr "에이전트 모드 선택"
+
 #: src/components/skia-terminal.tsx
 msgid "Select all"
 msgstr "모두 선택"
+
+#: src/components/agent-composer.tsx
+msgid "Select model: {modelDisplayName}"
+msgstr "모델 선택: {modelDisplayName}"
 
 #: src/components/custom-theme-library.tsx
 msgid "Selected"
@@ -2938,6 +3988,18 @@ msgstr "{spoken} 보내기"
 msgid "Send a message"
 msgstr "메시지 보내기"
 
+#: src/components/agent-composer.tsx
+msgid "Send a message, type / for commands, @ for files…"
+msgstr "메시지 보내기, / 명령어, @ 파일…"
+
+#: src/components/agent-composer.tsx
+msgid "Send message"
+msgstr "메시지 보내기"
+
+#: src/components/agent-composer.tsx
+msgid "Send now"
+msgstr "지금 보내기"
+
 #: src/components/simfarm-stage.tsx
 msgid "Send the text"
 msgstr "텍스트 보내기"
@@ -2950,12 +4012,18 @@ msgstr "이 작업을 {assignmentLabel}(으)로 보내기"
 msgid "Send to agent"
 msgstr "에이전트에게 보내기"
 
+#. placeholder {0}: inboxItemText(item) || item.type
+#: src/components/agent-composer.tsx
+msgid "Sending next: {0}"
+msgstr "다음에 보냄: {0}"
+
 #: src/components/agent-assignment-bar.tsx
 msgid "Sending to"
 msgstr "보내는 대상"
 
 #: src/app/artifacts.tsx
 #: src/app/git-diff.tsx
+#: src/app/opencode-guide.tsx
 #: src/app/panels.tsx
 #: src/components/app-drawer.tsx
 #: src/components/server-terminal-workspace.tsx
@@ -2984,6 +4052,29 @@ msgstr "서버를 사용할 수 없습니다"
 #: src/components/pad-server-rail.tsx
 msgid "Servers"
 msgstr "서버"
+
+#: src/components/agent-sessions-sheet.tsx
+msgid "Session name"
+msgstr "세션 이름"
+
+#: src/components/agent-composer.tsx
+msgid "Session Tokens"
+msgstr "세션 토큰"
+
+#: src/components/agent-sessions-sheet.tsx
+#: src/components/session-map.tsx
+msgid "Sessions"
+msgstr "세션"
+
+#: src/i18n/labels.ts
+msgctxt "agent slash command"
+msgid "Sessions in this workspace"
+msgstr "이 워크스페이스의 세션"
+
+#. placeholder {0}: sessionTitle ?? ''
+#: src/app/agent.tsx
+msgid "Sessions: {0}"
+msgstr "세션: {0}"
 
 #: src/components/app-lock-gate.tsx
 msgid "Set a device passcode before using App Lock."
@@ -3016,12 +4107,29 @@ msgstr "먼저 시스템 설정에서 {label}을(를) 설정하세요"
 msgid "Set up a Gateway on your computer"
 msgstr "내 컴퓨터에 Gateway 설치하기"
 
-#: src/app/(drawer)/index.tsx
+#: src/components/agent-model-sheet.tsx
+msgid "Set up on the host"
+msgstr "호스트에서 설정하세요"
+
+#: src/app/index.tsx
 #: src/app/settings.tsx
 #: src/components/app-drawer-content.tsx
 #: src/components/pad-server-rail.tsx
 msgid "Settings"
 msgstr "설정"
+
+#: src/components/agent-tool-card.tsx
+msgid "Several answers"
+msgstr "복수 응답"
+
+#: src/i18n/labels.ts
+msgctxt "agent slash command"
+msgid "Share this session's transcript"
+msgstr "이 세션의 기록 공유"
+
+#: src/components/agent-background-tray.tsx
+msgid "Shells"
+msgstr "셸"
 
 #: src/components/virtual-keyboard.tsx
 msgid "Shift"
@@ -3041,7 +4149,7 @@ msgstr "시프트 탭, 모드 전환"
 
 #. placeholder {0}: item.summary
 #. placeholder {0}: row.path
-#: src/components/git-diff-view.tsx
+#: src/components/diff-rows.tsx
 #: src/components/pane-chat-blocks.tsx
 msgid "Show {0}"
 msgstr "{0} 표시"
@@ -3050,21 +4158,9 @@ msgstr "{0} 표시"
 msgid "Show agents and their status on the home screen. Updates while Muqun is open."
 msgstr "홈 화면에 에이전트와 상태를 표시합니다. Muqun이 열려 있는 동안 갱신됩니다"
 
-#: src/components/session-artifacts.tsx
-msgid "Show all files"
-msgstr "모든 파일 표시"
-
 #: src/components/pairing-camera.tsx
 msgid "Show camera details"
 msgstr "카메라 세부 정보 표시"
-
-#: src/components/session-artifacts.tsx
-msgid "Show code"
-msgstr "코드 표시"
-
-#: src/components/session-artifacts.tsx
-msgid "Show documents"
-msgstr "문서 표시"
 
 #: src/components/settings-terminal.tsx
 msgid "Show Esc, Tab, Ctrl and navigation keys above input."
@@ -3086,13 +4182,19 @@ msgstr "홈 텍스트 표시"
 msgid "Show illustration on Home"
 msgstr "홈에 일러스트 표시"
 
-#: src/components/session-artifacts.tsx
-msgid "Show images"
-msgstr "이미지 표시"
-
-#: src/components/git-diff-view.tsx
+#: src/components/agent-tool-card.tsx
+#: src/components/bounded-markdown.tsx
+#: src/components/diff-rows.tsx
 msgid "Show more"
 msgstr "더 보기"
+
+#: src/components/agent-model-sheet.tsx
+msgid "Show more models"
+msgstr "모델 더 보기"
+
+#: src/components/diff-rows.tsx
+msgid "Show more of this diff"
+msgstr "이 diff 더 보기"
 
 #: src/components/theme-appearance-settings.tsx
 msgid "Show the app background behind terminal text"
@@ -3106,13 +4208,26 @@ msgstr "편집기 키보드 표시"
 msgid "Show the newer list of changes"
 msgstr "최신 변경 목록 보기"
 
+#: src/components/agent-tool-card.tsx
+msgid "Show the rest of this output"
+msgstr "이 출력의 나머지 보기"
+
 #: src/components/app-drawer.tsx
 msgid "Show the server list"
 msgstr "서버 목록 표시"
 
+#: src/components/agent-context-sheet.tsx
+msgid "Show thinking"
+msgstr "추론 과정 표시"
+
 #: src/components/app-drawer.tsx
 msgid "Show what is running"
 msgstr "실행 중인 것 보기"
+
+#: src/i18n/labels.ts
+msgctxt "agent slash command"
+msgid "Show what rolling back to the last message would undo"
+msgstr "마지막 메시지까지 되돌리면 무엇이 취소되는지 보기"
 
 #: src/components/theme-browse-sheet.tsx
 msgid "Showing {shown} of {total}"
@@ -3160,6 +4275,15 @@ msgstr "시뮬레이터 컨트롤"
 msgid "Size"
 msgstr "크기"
 
+#. placeholder {0}: part.name ?? part.skill
+#: src/components/agent-message-block.tsx
+msgid "Skill loaded · {0}"
+msgstr "스킬 불러옴 · {0}"
+
+#: src/components/agent-workbench.tsx
+msgid "Skill started"
+msgstr "스킬을 시작했습니다"
+
 #: src/components/launch-intro.tsx
 msgid "Skip intro"
 msgstr "소개 건너뛰기"
@@ -3190,7 +4314,7 @@ msgstr "소스 코드"
 msgid "Space"
 msgstr "스페이스"
 
-#: src/app/(drawer)/index.tsx
+#: src/app/index.tsx
 #: src/components/pad-server-rail.tsx
 #: src/components/ssh-host-list.tsx
 #: src/components/ssh-terminal-workspace.tsx
@@ -3202,8 +4326,9 @@ msgstr "SSH"
 msgid "SSH host"
 msgstr "SSH 호스트"
 
-#: src/app/(drawer)/index.tsx
+#: src/app/index.tsx
 #: src/components/pad-server-rail.tsx
+#: src/components/settings-servers.tsx
 msgid "SSH hosts"
 msgstr "SSH 호스트"
 
@@ -3211,11 +4336,12 @@ msgstr "SSH 호스트"
 msgid "SSH tunnel through {host} is down"
 msgstr "{host}을(를) 통한 SSH 터널이 끊어졌습니다"
 
+#: src/components/diff-rows.tsx
 #: src/components/git-diff-view.tsx
 msgid "Staged"
 msgstr "스테이징됨"
 
-#: src/components/git-diff-view.tsx
+#: src/components/diff-rows.tsx
 msgid "Staged and unstaged"
 msgstr "스테이징됨 및 안 됨"
 
@@ -3232,14 +4358,34 @@ msgstr "새 {0} 시작"
 msgid "Start a new session with empty context"
 msgstr "컨텍스트를 비우고 새 세션을 시작합니다"
 
-#: src/app/commands.tsx
+#: src/i18n/labels.ts
+msgctxt "agent slash command"
+msgid "Start a session with a clean context"
+msgstr "빈 컨텍스트로 새 세션을 시작합니다"
+
+#: src/i18n/labels.ts
+msgid "Start a subagent"
+msgstr "서브에이전트 시작"
+
 #: src/components/new-task-sheet.tsx
+msgid "Start an agent and send it the first thing to do"
+msgstr "에이전트를 시작하고 첫 할 일을 보내기"
+
+#: src/app/commands.tsx
 msgid "Start an agent and send it the first thing to do."
 msgstr "에이전트를 시작하고 가장 먼저 할 일을 보냅니다"
+
+#: src/components/opencode-guide-sheet.tsx
+msgid "Start OpenCode"
+msgstr "OpenCode 시작"
 
 #: src/components/new-task-sheet.tsx
 msgid "Start task"
 msgstr "작업 시작"
+
+#: src/components/agent-workbench.tsx
+msgid "Started with a clean context."
+msgstr "빈 컨텍스트로 시작했습니다"
 
 #: src/components/simfarm-stage.tsx
 msgid "Starting {name}"
@@ -3259,17 +4405,39 @@ msgstr "시작하는 중…"
 msgid "Status unavailable"
 msgstr "상태를 확인할 수 없음"
 
+#: src/components/agent-workbench.tsx
 #: src/components/collaboration-notice.tsx
 msgid "Status unknown"
 msgstr "알 수 없는 상태"
+
+#: src/components/agent-composer.tsx
+msgid "Steer"
+msgstr "개입 (Steer)"
+
+#: src/components/agent-composer.tsx
+msgid "Steer running agent"
+msgstr "실행 중인 에이전트에 실시간 개입"
+
+#: src/components/opencode-guide-sheet.tsx
+msgid "Still not answering. Check the service is running on the host."
+msgstr "여전히 응답이 없습니다. 호스트에서 서비스가 도는지 확인하세요"
 
 #: src/components/pane-chat-blocks.tsx
 msgid "Still running…"
 msgstr "아직 실행 중…"
 
 #: src/app/commands.tsx
+#: src/components/agent-composer.tsx
 msgid "Stop"
 msgstr "중지"
+
+#: src/app/agent.tsx
+msgid "Stop agent"
+msgstr "에이전트 중지"
+
+#: src/components/agent-composer.tsx
+msgid "Stop agent execution"
+msgstr "에이전트 실행 중지"
 
 #: src/components/agent-assignment-bar.tsx
 #: src/components/server-terminal-workspace.tsx
@@ -3280,21 +4448,55 @@ msgstr "작업 할당 중지"
 msgid "Stop this agent"
 msgstr "이 에이전트 중지"
 
+#: src/components/agent-background-tray.tsx
+msgid "Stop this command"
+msgstr "이 명령 중지"
+
+#: src/components/agent-workbench.tsx
+msgid "Stopped"
+msgstr "중지됨"
+
 #: src/app/settings.tsx
 msgid "Storage"
 msgstr "저장 공간"
 
+#: src/components/agent-composer.tsx
+msgid "subagent"
+msgstr "서브에이전트"
+
+#: src/components/agent-mode-sheet.tsx
+msgid "Subagent"
+msgstr "서브에이전트"
+
+#: src/components/agent-form-card.tsx
+msgid "Submit"
+msgstr "제출"
+
 #: src/i18n/labels.ts
-msgid "Summarize progress"
+msgid "Summarise progress"
 msgstr "진행 상황 요약"
+
+#: src/i18n/labels.ts
+msgctxt "agent slash command"
+msgid "Summarise the history and keep working from the summary"
+msgstr "기록을 요약하고 그 요약으로 작업을 이어갑니다"
 
 #: src/i18n/labels.ts
 msgid "Suspend"
 msgstr "일시 중단"
 
+#: src/components/agent-title-pill.tsx
+msgid "Swipe left or right to switch session"
+msgstr "좌우로 쓸어넘겨 세션을 전환합니다"
+
 #: src/components/workspace-title-switcher.tsx
 msgid "Swipe left or right to switch workspace"
 msgstr "좌우로 쓸어넘겨 워크스페이스를 전환합니다"
+
+#: src/i18n/labels.ts
+msgctxt "agent slash command"
+msgid "Switch agent mode"
+msgstr "에이전트 모드 전환"
 
 #: src/components/simfarm-stage.tsx
 msgid "Switch apps"
@@ -3304,14 +4506,28 @@ msgstr "앱 전환"
 msgid "Switch between open files"
 msgstr "열려 있는 파일 전환"
 
-#: src/components/server-terminal-workspace.tsx
-msgid "Switch machine or session"
-msgstr "머신 또는 세션 전환"
+#: src/i18n/labels.ts
+msgctxt "agent slash command"
+msgid "Switch language model"
+msgstr "언어 모델 전환"
+
+#: src/components/agent-sessions-sheet.tsx
+#: src/components/agent-workspace-sheet.tsx
+msgid "Switch project"
+msgstr "프로젝트 전환"
+
+#: src/components/agent-sessions-sheet.tsx
+msgid "Switch project: {displayWorkspaceName}"
+msgstr "프로젝트 전환: {displayWorkspaceName}"
 
 #. placeholder {0}: panelTitle(pane, paneAgent)
 #: src/components/server-terminal-workspace.tsx
 msgid "Switch to {0}"
 msgstr "{0}(으)로 전환"
+
+#: src/components/session-map.tsx
+msgid "Switch to {name}, {state}"
+msgstr "{name}(으)로 전환, {state}"
 
 #: src/i18n/labels.ts
 msgid "Switch to the chat view"
@@ -3330,6 +4546,10 @@ msgstr "기호"
 msgid "System"
 msgstr "시스템"
 
+#: src/components/settings-font-sheet.tsx
+msgid "System font"
+msgstr "시스템 글꼴"
+
 #: src/i18n/labels.ts
 msgid "Tab"
 msgstr "탭"
@@ -3338,17 +4558,38 @@ msgstr "탭"
 msgid "Take photo"
 msgstr "사진 찍기"
 
+#: src/components/agent-context-sheet.tsx
+msgid "Tap again to clear"
+msgstr "한 번 더 눌러 지우기"
+
+#: src/components/agent-sessions-sheet.tsx
+msgid "Tap again to delete"
+msgstr "한 번 더 눌러 삭제"
+
+#: src/components/agent-worktree-sheet.tsx
 #: src/components/ssh-host-form.tsx
 msgid "Tap again to remove"
 msgstr "한 번 더 탭하면 제거"
 
-#: src/components/machine-switcher-sheet.tsx
+#: src/components/agent-worktree-sheet.tsx
+msgid "Tap again to remove anyway"
+msgstr "한 번 더 눌러 강제로 제거"
+
+#: src/components/session-map.tsx
 msgid "Tap to connect"
 msgstr "눌러서 연결"
 
 #: src/components/custom-theme-library.tsx
 msgid "Tap to preview and adjust"
 msgstr "미리보기 및 조정하려면 탭하세요"
+
+#: src/components/agent-workbench.tsx
+msgid "Tap to refresh this session."
+msgstr "탭하여 이 세션을 새로 고칩니다"
+
+#: src/components/session-map.tsx
+msgid "Tap to retry"
+msgstr "눌러서 다시 시도"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Task for {assignmentLabel}"
@@ -3358,6 +4599,22 @@ msgstr "{assignmentLabel}에게 줄 작업"
 #: src/components/server-terminal-workspace.tsx
 msgid "Task for a new {0}"
 msgstr "새 {0}에게 줄 작업"
+
+#: src/components/agent-composer.tsx
+#: src/components/agent-tasks-sheet.tsx
+#: src/components/agent-todo-block.tsx
+msgid "Tasks"
+msgstr "작업"
+
+#. placeholder {0}: tasks.filter((t) => t.done).length
+#. placeholder {1}: tasks.length
+#: src/components/agent-composer.tsx
+msgid "Tasks ({0}/{1})"
+msgstr "작업 ({0}/{1})"
+
+#: src/components/agent-composer.tsx
+msgid "Tasks progress"
+msgstr "작업 진행률"
 
 #: src/components/settings-storage.tsx
 msgid "Temporary files"
@@ -3379,8 +4636,12 @@ msgid "Terminal colours follow the theme."
 msgstr "터미널 색상은 테마를 따릅니다"
 
 #: src/app/commands.tsx
-msgid "TERMINAL COMMANDS"
-msgstr "터미널 명령어"
+msgid "Terminal commands"
+msgstr "터미널 명령"
+
+#: src/app/commands.tsx
+msgid "Terminal commands and key combinations"
+msgstr "터미널 명령과 키 조합"
 
 #: src/components/settings-terminal.tsx
 msgid "Terminal key row"
@@ -3406,13 +4667,26 @@ msgstr "그 어시스턴트는 이 터미널에 더 이상 없습니다. 다시 
 msgid "That code was refused. Hold still for a new one."
 msgstr "해당 코드가 거부되었습니다. 그대로 두면 새 코드를 읽습니다"
 
+#: src/components/agent-form-card.tsx
+msgid "That does not match the expected format."
+msgstr "예상한 형식과 맞지 않습니다"
+
 #: src/hooks/use-theme-file-open.ts
 msgid "That file is not a Muqun theme"
 msgstr "이 파일은 Muqun 테마가 아닙니다"
 
+#. placeholder {0}: violation.format
+#: src/components/agent-form-card.tsx
+msgid "That is not a valid {0}."
+msgstr "올바른 {0}이(가) 아닙니다"
+
 #: src/components/ssh-host-list.tsx
 msgid "That is the bundled demo shell, and the only host here. Add one of your own to open a shell on any machine you can reach."
 msgstr "이것은 함께 제공되는 데모 셸이며, 여기 있는 유일한 호스트입니다. 직접 하나 추가하면 닿을 수 있는 어떤 컴퓨터에서든 셸을 열 수 있습니다"
+
+#: src/components/settings-font-sheet.tsx
+msgid "That link opens a web page, not the font file. Use the file's direct download link."
+msgstr "이 링크는 글꼴 파일이 아니라 웹 페이지를 엽니다. 파일의 직접 다운로드 링크를 사용하세요"
 
 #: src/lib/release-notes.ts
 msgid "That shell is the terminal you already know: the same keyboard, the same key row, the same colours, and your phone's own keyboard for anything you would rather type."
@@ -3438,6 +4712,14 @@ msgstr "에이전트가 지금은 다른 것을 묻고 있습니다"
 msgid "The agent is no longer waiting."
 msgstr "에이전트가 더 이상 기다리지 않습니다"
 
+#: src/components/agent-context-sheet.tsx
+msgid "The agent stops asking; irreversibly destructive commands stay blocked"
+msgstr "에이전트가 더 이상 묻지 않습니다. 되돌릴 수 없는 파괴적인 명령은 계속 차단됩니다"
+
+#: src/components/agent-context-sheet.tsx
+msgid "The agent will act without asking each time. Irreversibly destructive commands are still blocked."
+msgstr "에이전트가 매번 묻지 않고 실행합니다. 되돌릴 수 없는 파괴적인 명령은 계속 차단됩니다"
+
 #: src/components/pairing-camera.tsx
 msgid "The camera did not start"
 msgstr "카메라가 시작되지 않았습니다"
@@ -3454,6 +4736,18 @@ msgstr "연결이 끊어졌습니다"
 msgid "The connection to the simulator stopped."
 msgstr "시뮬레이터 연결이 끊겼습니다"
 
+#: src/components/agent-composer.tsx
+msgid "The default agent. Executes tools."
+msgstr "기본 에이전트. 도구를 실행합니다"
+
+#: src/components/settings-font-sheet.tsx
+msgid "The font file is missing. Add it again."
+msgstr "글꼴 파일이 없습니다. 다시 추가하세요"
+
+#: src/components/agent-worktree-sheet.tsx
+msgid "The host made a worktree but did not say where."
+msgstr "호스트가 워크트리를 만들었지만 위치를 알려주지 않았습니다"
+
 #: src/components/settings-appearance.tsx
 msgid "The icon on your home screen."
 msgstr "홈 화면에 표시되는 아이콘입니다"
@@ -3466,6 +4760,10 @@ msgstr "홈 화면에 표시되는 아이콘입니다. Android에서는 적용�
 #: src/components/ssh-host-form.tsx
 msgid "The key could not be read ({0}). Check the key and its passphrase."
 msgstr "키를 읽을 수 없습니다({0}). 키와 암호 문구를 확인하세요"
+
+#: src/components/opencode-guide-sheet.tsx
+msgid "The OpenCode daemon is not running on this host. Run this and it will be."
+msgstr "이 호스트에서 OpenCode 데몬이 돌고 있지 않습니다. 이것을 실행하면 시작됩니다"
 
 #: src/components/launch-intro.tsx
 msgid "The question comes to you"
@@ -3531,6 +4829,10 @@ msgstr "시뮬레이터가 제때 종료되지 않았습니다"
 msgid "The SSH tunnel carries the Gateway's port and no other, so the simulator and the browser cannot be reached from here. Connect over the local network or Tailscale."
 msgstr "SSH 터널은 게이트웨이의 포트 하나만 전달하고 다른 포트는 전달하지 않아, 여기서는 시뮬레이터와 브라우저에 닿을 수 없습니다. 로컬 네트워크나 Tailscale로 연결하세요"
 
+#: src/components/settings-font-sheet.tsx
+msgid "The terminal, and code in a reply."
+msgstr "터미널과 답변 속 코드"
+
 #: src/components/custom-theme-library.tsx
 msgid "The theme will be removed from this device"
 msgstr "이 기기에서 테마가 삭제됩니다"
@@ -3538,6 +4840,10 @@ msgstr "이 기기에서 테마가 삭제됩니다"
 #: src/i18n/labels.ts
 msgid "The transcript as a conversation, with tool steps folded away."
 msgstr "기록을 대화 형태로 보여 주고 도구 단계는 접어 둡니다"
+
+#: src/components/agent-workbench.tsx
+msgid "The turn failed"
+msgstr "이번 턴이 실패했습니다"
 
 #: src/app/custom-theme.tsx
 #: src/components/settings-appearance.tsx
@@ -3571,6 +4877,14 @@ msgstr "테마, {0}"
 msgid "Themes published at muqun.dev. Nothing downloads until you open one."
 msgstr "muqun.dev에 공개된 테마입니다. 열기 전까지는 아무것도 내려받지 않습니다"
 
+#: src/components/agent-workbench.tsx
+msgid "There is no rollback waiting to be applied."
+msgstr "적용을 기다리는 롤백이 없습니다"
+
+#: src/components/agent-workbench.tsx
+msgid "Thinking…"
+msgstr "생각 중…"
+
 #: src/i18n/labels.ts
 msgid "This agent did not offer that answer."
 msgstr "이 에이전트는 그 답변을 제시하지 않았습니다"
@@ -3580,16 +4894,29 @@ msgid "This device has no camera available."
 msgstr "이 기기에는 사용할 수 있는 카메라가 없습니다"
 
 #: src/components/asset-viewer.tsx
+msgid "This file is {size}. Muqun opens text files up to {ceiling}; larger ones stay on the server."
+msgstr "이 파일은 {size}입니다. Muqun은 {ceiling}까지의 텍스트 파일을 열 수 있고, 더 큰 파일은 서버에 그대로 남습니다"
+
+#: src/components/asset-viewer.tsx
+#: src/components/settings-font-sheet.tsx
 msgid "This file is empty."
 msgstr "이 파일은 비어 있습니다"
+
+#: src/components/settings-font-sheet.tsx
+msgid "This file is not a TrueType or OpenType font."
+msgstr "이 파일은 TrueType이나 OpenType 글꼴이 아닙니다"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "This file is not among the session artifacts."
 msgstr "이 파일은 세션 산출물에 없습니다"
 
-#: src/components/asset-viewer.tsx
-msgid "This file is too large to display. Copy it to read it elsewhere."
-msgstr "이 파일은 너무 커서 표시할 수 없습니다. 복사해서 다른 곳에서 읽어 보세요"
+#: src/components/settings-font-sheet.tsx
+msgid "This file is too large."
+msgstr "이 파일은 너무 큽니다"
+
+#: src/components/settings-font-sheet.tsx
+msgid "This font could not be read."
+msgstr "이 글꼴을 읽을 수 없습니다"
 
 #: src/lib/network-error.ts
 msgid "This Gateway does not answer to that address."
@@ -3619,17 +4946,42 @@ msgstr "이 이미지를 불러오지 못했습니다"
 msgid "This is a bundled transcript, not a real server."
 msgstr "이것은 번들된 기록이며 실제 서버가 아닙니다"
 
+#: src/components/settings-font-sheet.tsx
+msgid "This is a font collection. Muqun needs a single font file."
+msgstr "글꼴 모음입니다. Muqun에는 하나의 글꼴 파일이 필요합니다"
+
+#: src/components/settings-font-sheet.tsx
+msgid "This is a web font. Muqun needs a .ttf or .otf file."
+msgstr "웹 글꼴입니다. Muqun에는 .ttf 또는 .otf 파일이 필요합니다"
+
 #: src/app/+not-found.tsx
 msgid "This link goes nowhere"
 msgstr "이 링크는 아무 데도 연결되지 않습니다"
+
+#: src/components/agent-form-card.tsx
+msgid "This one is required."
+msgstr "이 항목은 필수입니다"
 
 #: src/components/git-diff-view.tsx
 msgid "This pane is not working inside a git repository, so there is nothing to compare."
 msgstr "이 패널은 git 저장소 안에서 작업하고 있지 않아 비교할 것이 없습니다"
 
+#: src/components/agent-sessions-sheet.tsx
+#: src/components/agent-worktree-sheet.tsx
+msgid "This project"
+msgstr "이 프로젝트"
+
 #: src/app/explore.tsx
 msgid "This QR code is not valid."
 msgstr "이 QR 코드는 올바르지 않습니다"
+
+#: src/components/agent-form-card.tsx
+msgid "This question needs a newer app to answer."
+msgstr "이 질문에 답하려면 더 새로운 앱이 필요합니다"
+
+#: src/components/agent-context-sheet.tsx
+msgid "this rule"
+msgstr "이 규칙"
 
 #: src/hooks/use-agent-command-delivery.ts
 msgid "This server cannot run that command yet."
@@ -3660,6 +5012,7 @@ msgid "This server has no session to start an agent in."
 msgstr "이 서버에는 에이전트를 시작할 세션이 없습니다"
 
 #: src/app/new-task.tsx
+#: src/app/opencode-guide.tsx
 #: src/app/simfarm.tsx
 #: src/app/web-service.tsx
 msgid "This server is no longer paired."
@@ -3672,6 +5025,14 @@ msgstr "이 서버는 더 이상 이 기기를 알아보지 못합니다. 다시
 #: src/lib/network-error.ts
 msgid "This server refused the request."
 msgstr "이 서버가 요청을 거부했습니다"
+
+#: src/components/agent-context-sheet.tsx
+msgid "This session"
+msgstr "이 세션"
+
+#: src/components/agent-workbench.tsx
+msgid "This session has no message to roll back to."
+msgstr "이 세션에는 되돌아갈 메시지가 없습니다"
 
 #: src/components/terminal-boundary.tsx
 msgid "This terminal could not be drawn."
@@ -3689,17 +5050,46 @@ msgstr "이 테마에는 이미지가 포함되어 있어 적용 전에 이미�
 msgid "This workspace has no groups yet."
 msgstr "이 작업 공간에는 아직 그룹이 없습니다"
 
+#: src/components/agent-reasoning-block.tsx
+msgid "Thought"
+msgstr "생각"
+
+#: src/components/agent-reasoning-block.tsx
+msgid "Thought · {durationStr}"
+msgstr "생각 · {durationStr}"
+
 #: src/components/gateway-tunnel-badge.tsx
 msgid "Through {host}"
 msgstr "{host} 경유"
+
+#: src/components/agent-tool-card.tsx
+msgid "timed out"
+msgstr "시간 초과"
 
 #: src/i18n/labels.ts
 msgid "Today"
 msgstr "오늘"
 
+#: src/components/agent-context-sheet.tsx
+msgid "Tokens this session"
+msgstr "이 세션의 토큰"
+
+#: src/components/agent-composer.tsx
+msgid "Tokens usage and cost"
+msgstr "토큰 사용량 및 비용"
+
+#: src/components/asset-viewer.tsx
+msgid "Too large to highlight — showing plain text."
+msgstr "너무 커서 구문 강조 없이 일반 텍스트로 표시합니다"
+
 #: src/components/git-diff-view.tsx
 msgid "Too many changes to list. This is the start of them, not all of them."
 msgstr "변경 사항이 너무 많아 모두 나열할 수 없습니다. 전체가 아니라 앞부분입니다"
+
+#: src/components/bounded-markdown.tsx
+#: src/components/embedded-terminal-tool-block.tsx
+msgid "Truncated"
+msgstr "잘림"
 
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Trust"
@@ -3717,13 +5107,17 @@ msgstr "다시 시도"
 msgid "Try again once the gateway responds."
 msgstr "Gateway가 응답하면 다시 시도하세요"
 
-#: src/app/(drawer)/index.tsx
+#: src/app/index.tsx
 msgid "Try the demo"
 msgstr "데모 사용해 보기"
 
 #: src/components/gateway-tunnel-badge.tsx
 msgid "Tunnel down"
 msgstr "터널 끊김"
+
+#: src/components/agent-context-sheet.tsx
+msgid "Turn it on"
+msgstr "켜기"
 
 #: src/components/asset-viewer.tsx
 msgid "Type"
@@ -3738,6 +5132,10 @@ msgctxt "git file status"
 msgid "Type changed"
 msgstr "형식 변경됨"
 
+#: src/components/agent-form-card.tsx
+msgid "Type here…"
+msgstr "여기에 입력…"
+
 #: src/components/server-terminal-workspace.tsx
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Type into this editor"
@@ -3751,10 +5149,23 @@ msgstr "직접 입력하거나 키보드의 받아쓰기 키를 사용하세요"
 msgid "Type on the simulator"
 msgstr "시뮬레이터에 입력"
 
+#: src/components/agent-revert-plate.tsx
 #: src/components/custom-theme-library.tsx
 #: src/i18n/labels.ts
 msgid "Undo"
 msgstr "실행 취소"
+
+#: src/components/agent-revert-plate.tsx
+msgid "Undo {summary}"
+msgstr "{summary} 되돌리기"
+
+#: src/components/agent-revert-plate.tsx
+msgid "Undo back to the staged message"
+msgstr "준비된 메시지까지 되돌리기"
+
+#: src/components/agent-message-block.tsx
+msgid "Undo to here"
+msgstr "여기까지 되돌리기"
 
 #: src/components/asset-viewer.tsx
 msgid "unknown"
@@ -3763,6 +5174,10 @@ msgstr "알 수 없음"
 #: src/i18n/labels.ts
 msgid "Unknown"
 msgstr "알 수 없음"
+
+#: src/components/agent-workbench.tsx
+msgid "Unknown command"
+msgstr "알 수 없는 명령"
 
 #: src/i18n/labels.ts
 msgid "Unknown date"
@@ -3805,9 +5220,20 @@ msgstr "{label} 페어링 해제 중"
 msgid "Unpairing…"
 msgstr "해제하는 중…"
 
+#: src/components/diff-rows.tsx
 #: src/components/git-diff-view.tsx
 msgid "Unstaged"
 msgstr "스테이징 안 됨"
+
+#. placeholder {0}: part.raw_type
+#: src/components/agent-message-block.tsx
+msgid "Unsupported item ({0})"
+msgstr "지원하지 않는 항목 ({0})"
+
+#: src/components/agent-composer.tsx
+#: src/components/agent-sessions-sheet.tsx
+msgid "Untitled session"
+msgstr "제목 없는 세션"
 
 #: src/i18n/labels.ts
 msgctxt "git file status"
@@ -3843,6 +5269,10 @@ msgstr "Muqun 업데이트 중…"
 msgid "upload failed"
 msgstr "업로드 실패"
 
+#: src/components/agent-composer.tsx
+msgid "Upload failed"
+msgstr "업로드 실패"
+
 #: src/components/attachment-strip.tsx
 msgid "uploaded"
 msgstr "업로드됨"
@@ -3860,13 +5290,17 @@ msgstr "{0} 사용"
 msgid "Use device passcode"
 msgstr "기기 암호 사용"
 
+#: src/components/settings-font-sheet.tsx
+msgid "Use system font"
+msgstr "시스템 글꼴 사용"
+
+#: src/components/session-map.tsx
+msgid "Use the {name} session, {kind}"
+msgstr "{name} 세션 사용, {kind}"
+
 #: src/components/theme-link-import.tsx
 msgid "Use the repository URL, then enter its branch and theme file below"
 msgstr "저장소 URL을 사용하고 아래에 브랜치와 테마 파일을 입력하세요"
-
-#: src/components/settings-servers.tsx
-msgid "Use the scan button on the home screen to add one."
-msgstr "홈 화면의 스캔 버튼으로 추가하세요"
 
 #: src/components/theme-appearance-settings.tsx
 msgid "Use theme defaults"
@@ -3876,12 +5310,16 @@ msgstr "테마 기본값 사용"
 msgid "Use this server"
 msgstr "이 서버 사용"
 
+#: src/components/settings-appearance.tsx
+msgid "Use your own font for the app and the terminal."
+msgstr "앱과 터미널에 원하는 글꼴을 사용하세요"
+
 #: src/components/ssh-host-form.tsx
 msgid "Username"
 msgstr "사용자 이름"
 
 #: src/components/settings-servers.tsx
-msgid "USING"
+msgid "Using"
 msgstr "사용 중"
 
 #. placeholder {0}: build ? ` (${build})` : ''
@@ -3889,12 +5327,16 @@ msgstr "사용 중"
 msgid "Version {version}{0}"
 msgstr "버전 {version}{0}"
 
+#: src/components/agent-composer.tsx
+msgid "View file changes"
+msgstr "파일 변경 사항 보기"
+
 #: src/i18n/labels.ts
 msgid "Visual mode"
 msgstr "비주얼 모드"
 
 #: src/lib/demo-gateway.ts
-msgid "Visualize current context usage as a colored grid"
+msgid "Visualise current context usage as a coloured grid"
 msgstr "현재 컨텍스트 사용량을 색상 격자로 보여 줍니다"
 
 #: src/components/skia-terminal.web.tsx
@@ -3905,9 +5347,22 @@ msgstr "출력을 기다리는 중…"
 msgid "Waiting for the network."
 msgstr "네트워크를 기다리는 중입니다"
 
+#: src/components/agent-composer.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Waiting for uploads to finish…"
 msgstr "업로드가 끝나기를 기다리는 중…"
+
+#: src/components/agent-workbench.tsx
+msgid "Waiting for your answer"
+msgstr "답변을 기다리는 중"
+
+#: src/components/agent-composer.tsx
+msgid "Waiting to send"
+msgstr "전송 대기 중"
+
+#: src/components/agent-workbench.tsx
+msgid "Welcome to OpenCode Agent"
+msgstr "OpenCode 에이전트에 오신 것을 환영합니다"
 
 #: src/components/session-map.tsx
 msgid "What is running"
@@ -3918,21 +5373,39 @@ msgid "What's new"
 msgstr "새로운 기능"
 
 #: src/components/launch-intro.tsx
-msgid "When an agent stops to ask permission, the prompt arrives as a push. Approve, approve always, or deny from the Lock Screen."
-msgstr "에이전트가 권한을 묻기 위해 멈추면 그 요청이 푸시로 도착합니다. 잠금 화면에서 바로 승인, 항상 승인 또는 거부하세요"
+msgid "When an agent halts for confirmation, the prompt arrives as a push. Approve or deny from the Lock Screen, and track live progress on Dynamic Island and widgets."
+msgstr "에이전트가 승인을 요청하면 알림이 잠금 화면으로 바로 전달됩니다. 탭 한 번으로 승인 또는 거부하고, 라이브 액티비티와 위젯으로 실시간 진행 상황을 확인하세요"
 
 #: src/components/away-digest-card.tsx
 msgid "While you were away"
 msgstr "자리를 비운 사이"
 
+#: src/components/agent-vcs-diff-sheet.tsx
 #: src/components/collaboration-notice.tsx
 #: src/i18n/labels.ts
 msgid "Working"
 msgstr "작업 중"
 
+#: src/components/composer-popup.tsx
 #: src/components/session-map.tsx
 msgid "Workspace"
 msgstr "워크스페이스"
+
+#: src/components/session-map.tsx
+msgid "Workspaces"
+msgstr "워크스페이스"
+
+#: src/components/agent-worktree-sheet.tsx
+msgid "Worktree name"
+msgstr "워크트리 이름"
+
+#: src/components/agent-worktree-sheet.tsx
+msgid "Worktrees"
+msgstr "워크트리"
+
+#: src/i18n/labels.ts
+msgid "Write a file"
+msgstr "파일 쓰기"
 
 #: src/components/server-terminal-workspace.tsx
 #: src/components/ssh-terminal-workspace.tsx
@@ -3942,6 +5415,10 @@ msgstr "한 줄 입력"
 #: src/lib/demo-gateway.ts
 msgid "Write and quit"
 msgstr "저장 후 종료"
+
+#: src/i18n/labels.ts
+msgid "Write outside the workspace"
+msgstr "워크스페이스 밖에 쓰기"
 
 #: src/i18n/labels.ts
 #: src/lib/demo-gateway.ts
@@ -3960,7 +5437,19 @@ msgstr "이 줄 복사"
 msgid "Yesterday"
 msgstr "어제"
 
-#: src/app/(drawer)/index.tsx
+#: src/components/agent-workbench.tsx
+msgid "YOLO mode"
+msgstr "YOLO 모드"
+
+#: src/components/agent-workbench.tsx
+msgid "YOLO mode is on — tap to turn it off"
+msgstr "YOLO 모드가 켜져 있습니다 — 탭하여 끄기"
+
+#: src/components/agent-message-block.tsx
+msgid "You"
+msgstr "나"
+
+#: src/app/index.tsx
 #: src/components/app-drawer-content.tsx
 #: src/components/pad-server-rail.tsx
 msgid "Your agents, anywhere."
@@ -3970,6 +5459,18 @@ msgstr "어디서나, 내 에이전트와 함께"
 msgid "Your machine, your rules"
 msgstr "내 컴퓨터, 내 규칙"
 
+#: src/components/agent-message-block.tsx
+msgid "Your message"
+msgstr "내 메시지"
+
 #: src/components/app-drawer-content.tsx
 msgid "Your paired gateways"
 msgstr "페어링된 Gateway"
+
+#: src/components/agent-model-sheet.tsx
+msgid "Recently used"
+msgstr "최근 사용"
+
+#: src/components/agent-model-sheet.tsx
+msgid "Could not load models"
+msgstr "모델을 불러올 수 없습니다"

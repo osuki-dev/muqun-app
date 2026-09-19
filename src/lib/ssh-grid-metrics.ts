@@ -15,6 +15,16 @@
  * `measureCellWidth`); the screen passes it in here. Without one the advance
  * ratio stands in, which is the same fallback the canvas itself uses when a
  * font fails to report a width.
+ *
+ * That estimate used to be a constant, and it was the bundled JetBrains Mono's
+ * own 0.6. A reader who puts their own face in the monospace slot has changed
+ * the number it is an estimate *of* -- Iosevka advances 0.5, a Han mono face
+ * 1.0 -- so `advanceRatio` is a parameter now, fed from the measurement taken
+ * when the font was installed. It only decides the first frame, before the
+ * canvas has measured a real cell, but the first frame is the one the shell
+ * draws its prompt into: getting it wrong at 1.0 against an assumed 0.6 opens
+ * the PTY at nearly twice the columns that fit, and everything the shell
+ * printed before the resize landed is already wrapped to the wrong width.
  */
 import {
   TERMINAL_ADVANCE_RATIO,
@@ -36,6 +46,14 @@ export interface TerminalGridInput {
   lineHeight?: number;
   /** `PixelRatio.get()`, for the fallback advance's device-pixel snap. */
   pixelRatio?: number;
+  /**
+   * The advance of the font's `M` as a fraction of the em, for the estimate.
+   *
+   * Only read when `cellWidth` is absent. The bundled font's 0.6 by default,
+   * which is what every caller passed implicitly before the monospace slot
+   * existed.
+   */
+  advanceRatio?: number;
 }
 
 export interface TerminalGrid {
@@ -51,8 +69,14 @@ export const TERMINAL_GRID_MIN_ROWS = 4;
 export const TERMINAL_GRID_DEFAULT: TerminalGrid = { cols: 80, rows: 24 };
 
 /** The cell advance the canvas falls back to when the font reports nothing. */
-export function fallbackTerminalCellWidth(fontSize: number, pixelRatio = 1): number {
-  return snapToDevicePixel(Math.max(7, fontSize * TERMINAL_ADVANCE_RATIO), pixelRatio);
+export function fallbackTerminalCellWidth(
+  fontSize: number,
+  pixelRatio = 1,
+  advanceRatio: number = TERMINAL_ADVANCE_RATIO
+): number {
+  const ratio =
+    Number.isFinite(advanceRatio) && advanceRatio > 0 ? advanceRatio : TERMINAL_ADVANCE_RATIO;
+  return snapToDevicePixel(Math.max(7, fontSize * ratio), pixelRatio);
 }
 
 export function terminalGridFor({
@@ -62,11 +86,12 @@ export function terminalGridFor({
   cellWidth,
   lineHeight,
   pixelRatio = 1,
+  advanceRatio,
 }: TerminalGridInput): TerminalGrid {
   const advance =
     cellWidth !== undefined && Number.isFinite(cellWidth) && cellWidth > 0
       ? cellWidth
-      : fallbackTerminalCellWidth(fontSize, pixelRatio);
+      : fallbackTerminalCellWidth(fontSize, pixelRatio, advanceRatio);
   const pitch =
     lineHeight !== undefined && Number.isFinite(lineHeight) && lineHeight > 0
       ? lineHeight

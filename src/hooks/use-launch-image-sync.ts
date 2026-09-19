@@ -16,7 +16,7 @@ import { useLaunchHeroArtwork } from '@/hooks/use-launch-artwork';
  * when JavaScript takes over. Without this, a themed install showed the app's
  * own mark for half a second on every launch and then cross-faded.
  *
- * The same picture `LaunchBrand` would cross-fade to: the pack's `home.hero`,
+ * The same picture `LaunchSceneIntro` would cross-fade to: the pack's `home.hero`,
  * else its empty-state illustration, else its Home logo. No pack, or a pack
  * without a picture, clears the override and the compiled assets are back.
  *
@@ -26,9 +26,26 @@ import { useLaunchHeroArtwork } from '@/hooks/use-launch-artwork';
  * in when it decides.
  */
 
-/** The box the picture is drawn in, shared with `LaunchBrand`. */
+/** The box the picture is drawn in, shared with `LaunchSceneIntro`. */
 export const LAUNCH_HERO_WIDTH_FRACTION = 0.74;
 export const LAUNCH_HERO_MAX_WIDTH = 560;
+
+/**
+ * The launch box is square, because every picture that can land in it is.
+ *
+ * It was 2:1 for the `home.hero` slot, on the reasoning that a hero is a wide
+ * band on Home. The band is wide; the artwork in it is not. Every `home.hero`
+ * the collection ships is a square file -- 768 or 1024 on a side -- and so is
+ * every empty-state illustration and every Home logo, because those are the
+ * shapes the theme format asks authors for. Contained in a 2:1 box, a square
+ * picture is drawn at half the box's width and floats in the middle of it with
+ * a quarter of the screen of dead paper on either side, which is most of why
+ * the launch read as a small mark on an empty page.
+ *
+ * Square is not a guess about any one pack: it is the box the drawn picture
+ * already fills, so `contain` now has nothing left to shrink.
+ */
+export const LAUNCH_BOX_ASPECT = 1;
 
 export function useLaunchImageSync(): void {
   const artwork = useLaunchHeroArtwork();
@@ -51,8 +68,7 @@ export function useLaunchImageSync(): void {
       darkBackgroundColor: dark,
       widthFraction: LAUNCH_HERO_WIDTH_FRACTION,
       maxWidth: LAUNCH_HERO_MAX_WIDTH,
-      // A hero is a wide band; the illustration and logo slots are square.
-      aspectRatio: kind === 'hero' ? 2 : 1,
+      aspectRatio: LAUNCH_BOX_ASPECT,
     });
   }, [uri, kind, light, dark, resolvedMode]);
 }

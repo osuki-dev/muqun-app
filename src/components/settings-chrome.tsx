@@ -16,9 +16,10 @@ import { useSurfaceBackground } from '@/hooks/use-surface-background';
  * two transitions telling the same story. Motion on this screen is spent only
  * where a state changes under the finger.
  */
-import { Text, useThemeTokens } from '@osuki-dev/ui';
+import { useThemeTokens } from '@osuki-dev/ui';
+import { Text } from '@/components/text';
 import { ChevronRight, type LucideIcon } from 'lucide-react-native';
-import { Children, Fragment, type ReactNode } from 'react';
+import { Children, Fragment, isValidElement, type ReactNode } from 'react';
 import { StyleSheet, type TextStyle, View } from 'react-native';
 
 import { PressableScale } from '@/components/pressable-scale';
@@ -65,6 +66,29 @@ const ROW_MIN_HEIGHT = 60;
  * agree on how big a row's affordance is.
  */
 const CHIP_SIZE = 36;
+
+/**
+ * The share of a choice row the label column keeps, whatever the value says.
+ *
+ * A choice row is a label, an optional caption under it, and the current answer
+ * at the end. The answer's width is the *font's* business -- it is a theme's
+ * name or a family name the reader installed -- and without a floor the label
+ * column is whatever is left, which on a wide face is nothing: measured on the
+ * reader's own italic font, `rowCopy` was driven to zero and "Terminal colours
+ * follow the theme" wrapped one word per line down four rows while "Lanterns in
+ * the Overworld" sat beside it at full width.
+ *
+ * The arithmetic is why it collapses rather than sharing: `flex: 1` is a
+ * flex-basis of zero, and Yoga distributes shrink in proportion to basis, so a
+ * column with basis zero shrinks by zero and the value takes everything. A
+ * percentage floor is the one thing that survives that, because a minimum is
+ * clamped after the distribution rather than weighted inside it.
+ *
+ * 55%, not half: the label is the question and the value is the answer, and a
+ * question that cannot be read is worse than an answer that ellipsizes -- the
+ * answer is one tap from being shown in full.
+ */
+const CHOICE_LABEL_FLOOR = '55%';
 
 /**
  * The instrument label that names a group of rows -- the one this app draws
@@ -134,6 +158,37 @@ export function SectionLabel({
   style?: TextStyle | TextStyle[];
 }) {
   const plate = useSheetGroundPlate();
+  /**
+   * The label's text starts where the card's row text starts.
+   *
+   * It used to start at the card's outer edge, so "Servers" sat twelve points
+   * to the left of the `osk` row it names -- two left edges on a page whose
+   * whole argument is that there is one. The card insets its rows by
+   * `LADDER.gutter`, so the label is pushed in by the same amount, less
+   * whatever horizontal padding it is already carrying.
+   *
+   * Computed from the plate rather than branched on it, which is what keeps
+   * the bleed working: with a plate the padding is the plate's, without one it
+   * is the bare label's, and the glyphs land on the same x either way -- so a
+   * plate appearing does not move the text it is protecting.
+   */
+  const indent = LADDER.gutter - (plate.paddingHorizontal ?? LADDER.tight);
+  /*
+   * This label used to carry its own trailing slack here -- an extra
+   * `paddingRight` of 0.3em, added when a reader's italic face made this
+   * heading read APPEARANC. It is gone, and it is worth saying why rather than
+   * just deleting it, because it is the fix everybody reaches for first.
+   *
+   * It never worked. `TextView` clips its drawing to `width -
+   * compoundPaddingRight`, and Yoga has already added that same padding to the
+   * width, so the clip lands on the advance edge whatever the padding is.
+   * Measured on the device against a 0, an 8 and a 24 point right padding: the
+   * ink stopped at the identical pixel in all three. What the padding did do
+   * was make the plate lopsided, which is what it was really being judged on.
+   *
+   * The clip is fixed where it can be, in `components/text.tsx`, by making the
+   * line itself longer than the glyphs. The plate is symmetrical again.
+   */
   return (
     <Text
       variant="label"
@@ -145,11 +200,12 @@ export function SectionLabel({
         // Android letter tracking clips Thai combining clusters in compact labels.
         typeof title === 'string' && /[\u0e00-\u0e7f]/u.test(title) ? { letterSpacing: 0 } : {},
         plate,
-        // Only when there is a plate, and only ever a negative number: the
-        // plate's own padding, less the indent the bare label already carries.
-        plate.paddingHorizontal === undefined
-          ? {}
-          : { marginHorizontal: LADDER.tight - plate.paddingHorizontal },
+        {
+          marginLeft: indent,
+          // The right side only ever bleeds, and only when a plate is there.
+          marginRight:
+            plate.paddingHorizontal === undefined ? 0 : LADDER.tight - plate.paddingHorizontal,
+        },
         // Spread rather than nested, because the kit's `Text` takes a flat
         // `TextStyle[]` and nothing narrower.
         ...(style ? (Array.isArray(style) ? style : [style]) : []),
@@ -181,17 +237,46 @@ export function SettingsSection({ title, children }: { title: string; children: 
  * same word twice. A section is this card plus its label; nothing about the
  * card is re-decided in the sheet.
  */
-export function SettingsCard({ children }: { children: ReactNode }) {
+export function SettingsCard({
+  children,
+  flush = false,
+}: {
+  children: ReactNode;
+  /**
+   * No surface of its own: the rows sit straight on the ground with their
+   * hairlines and nothing else.
+   *
+   * For a sheet. A card inside a frosted sheet is the second layer of paint
+   * `sheet-scene.tsx` exists to remove, but the interleaved separators and the
+   * row insets are the same list either way -- so the shape stays here and only
+   * the fill goes. The settings page keeps its cards; a page is not a sheet.
+   */
+  flush?: boolean;
+}) {
   const theme = useThemeTokens();
   const rows = Children.toArray(children);
+  if (flush) {
+    return (
+      <View style={styles.sectionBodyFlush}>
+        {rows.map((row, position) => (
+          <Fragment
+            key={isValidElement(row) && row.key != null ? row.key : `settings-row-${position}`}>
+            {position > 0 ? <SettingsSeparator /> : null}
+            {row}
+          </Fragment>
+        ))}
+      </View>
+    );
+  }
   return (
     <ThemedSurface
       slot="cards.decoration"
       baseColor={theme.colors.surface}
       style={styles.sectionBody}>
-      {rows.map((row, index) => (
-        <Fragment key={index}>
-          {index > 0 ? <SettingsSeparator /> : null}
+      {rows.map((row, position) => (
+        <Fragment
+          key={isValidElement(row) && row.key != null ? row.key : `settings-row-${position}`}>
+          {position > 0 ? <SettingsSeparator /> : null}
           {row}
         </Fragment>
       ))}
@@ -248,7 +333,7 @@ export function SettingsToggleRow({
         <Text variant="bodySmall" color={labelColor} style={styles.rowLabel}>
           {label}
         </Text>
-        <Text variant="caption" color={detailColor} style={styles.rowDetail}>
+        <Text variant="caption" color={detailColor} numberOfLines={3} style={styles.rowDetail}>
           {detail}
         </Text>
       </View>
@@ -291,6 +376,7 @@ export function SettingsNavRow({
   onPress,
   disabled = false,
   busy = false,
+  accessibilityRole = 'button',
   testID,
 }: {
   icon?: LucideIcon;
@@ -300,6 +386,16 @@ export function SettingsNavRow({
   onPress: () => void;
   disabled?: boolean;
   busy?: boolean;
+  /**
+   * What the row *is*, for a reader who cannot see where it points.
+   *
+   * A button by default, because most rows on this page change something in the
+   * app. `link` for the ones that hand the reader to a browser: the trailing
+   * glyph says "this leaves Muqun" to everybody else, and a screen reader that
+   * announces "button" instead is the one audience the glyph does not reach.
+   * Sighted readers lose nothing either way -- the role draws nothing.
+   */
+  accessibilityRole?: 'button' | 'link';
   testID?: string;
 }) {
   const theme = useThemeTokens();
@@ -307,7 +403,7 @@ export function SettingsNavRow({
   useRenderTally('SettingsNavRow');
   return (
     <PressableScale
-      accessibilityRole="button"
+      accessibilityRole={accessibilityRole}
       accessibilityLabel={detail ? `${label}, ${detail}` : label}
       accessibilityState={{ disabled, busy }}
       disabled={disabled}
@@ -325,7 +421,11 @@ export function SettingsNavRow({
           {label}
         </Text>
         {detail ? (
-          <Text variant="caption" color={theme.colors.textMuted} style={styles.rowDetail}>
+          <Text
+            variant="caption"
+            color={theme.colors.textMuted}
+            numberOfLines={3}
+            style={styles.rowDetail}>
             {detail}
           </Text>
         ) : null}
@@ -345,11 +445,8 @@ export function SettingsNavRow({
  * rows are switches. Here the answer is stated, in the value column, and the
  * question is one tap away.
  *
- * The value sits *beside* the label rather than under it, which is the one
- * place this row departs from `SettingsNavRow`. A navigation row's second line
- * describes where the row goes; this one's is the current answer, and an answer
- * belongs at the end of the sentence its label starts. `detail` keeps its usual
- * job underneath -- what the choice means, not what it is.
+ * Values normally sit beside the label. Long names can use `valuePosition="below"`
+ * to occupy a third line beneath the description.
  *
  * `accessibilityLabel` is passed explicitly here, and it is the one row on this
  * page that does. `SettingsNavRow` deliberately lets React Native concatenate
@@ -362,6 +459,7 @@ export function SettingsNavRow({
 export function SettingsChoiceRow({
   label,
   value,
+  valuePosition = 'trailing',
   detail,
   accessibilityLabel,
   testID,
@@ -370,6 +468,8 @@ export function SettingsChoiceRow({
   label: string;
   /** The current answer, written the way the sheet writes it. */
   value: string;
+  /** Long names can occupy a third line beneath the description. */
+  valuePosition?: 'trailing' | 'below';
   detail?: string;
   accessibilityLabel: string;
   testID?: string;
@@ -384,26 +484,40 @@ export function SettingsChoiceRow({
       testID={testID}
       onPress={onPress}
       style={styles.row}>
-      <View style={styles.rowCopy}>
+      <View style={[styles.rowCopy, valuePosition === 'trailing' && styles.rowCopyFloor]}>
         <Text variant="bodySmall" style={styles.rowLabel}>
           {label}
         </Text>
         {detail ? (
-          <Text variant="caption" color={theme.colors.textMuted} style={styles.rowDetail}>
+          <Text
+            variant="caption"
+            color={theme.colors.textMuted}
+            numberOfLines={3}
+            style={styles.rowDetail}>
             {detail}
           </Text>
         ) : null}
+        {valuePosition === 'below' ? (
+          <Text
+            variant="bodySmall"
+            color={theme.colors.textMuted}
+            numberOfLines={1}
+            ellipsizeMode="tail"
+            style={styles.choiceValueBelow}>
+            {value}
+          </Text>
+        ) : null}
       </View>
-      {/* Muted, not accent. The decision area is the sheet; a coral value here
-          would put the accent on the report of the choice as well as on the
-          making of it. */}
-      <Text
-        variant="bodySmall"
-        color={theme.colors.textMuted}
-        numberOfLines={1}
-        style={styles.choiceValue}>
-        {value}
-      </Text>
+      {valuePosition === 'trailing' ? (
+        <Text
+          variant="bodySmall"
+          color={theme.colors.textMuted}
+          numberOfLines={2}
+          ellipsizeMode="tail"
+          style={styles.choiceValue}>
+          {value}
+        </Text>
+      ) : null}
       <ChevronRight size={18} color={theme.colors.textMuted} strokeWidth={2} />
     </PressableScale>
   );
@@ -443,7 +557,12 @@ export function SettingsInfoRow({
         <Text variant="bodySmall" style={styles.rowLabel}>
           {label}
         </Text>
-        <Text selectable variant="caption" color={theme.colors.textMuted} style={styles.rowDetail}>
+        <Text
+          selectable
+          variant="caption"
+          color={theme.colors.textMuted}
+          numberOfLines={3}
+          style={styles.rowDetail}>
           {detail}
         </Text>
       </View>
@@ -486,6 +605,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: LADDER.tight,
     letterSpacing: 0.8,
   },
+  sectionBodyFlush: { overflow: 'hidden' },
   sectionBody: {
     borderRadius: appChrome.radius.popover,
     borderCurve: 'continuous',
@@ -502,12 +622,41 @@ const styles = StyleSheet.create({
     gap: LADDER.snug,
   },
   rowCopy: { flex: 1, minWidth: 0, gap: 2 },
+  /**
+   * The floor, applied only where there is something to be crushed by.
+   *
+   * A minimum rather than a basis: `flex: 1` above is a basis of zero, and Yoga
+   * hands shrink out in proportion to basis, so this column's share of the
+   * shrinking is zero and the value beside it takes the row. A minimum is
+   * clamped after that distribution instead of weighted inside it, which is why
+   * it is the one form that holds.
+   */
+  rowCopyFloor: { minWidth: CHOICE_LABEL_FLOOR },
   // Shrinks before the label does: a language written in its own script is
   // short, but "Muqun follows the language your phone is set to." is not, and
   // the chevron must not be pushed off the end by either of them.
-  choiceValue: { flexShrink: 1, textAlign: 'right' },
-  rowLabel: { lineHeight: 20, includeFontPadding: false },
-  rowDetail: { lineHeight: 17, includeFontPadding: false },
+  //
+  // `flexShrink` alone was not enough. Shrink is weighted by flex basis, and
+  // this one's basis is its own content, so on a wide face it was the only
+  // child with any weight and it took everything -- see `rowCopyFloor`. With
+  // the floor in place this is what spends the remainder: up to two lines,
+  // right-aligned, ending at the chevron.
+  choiceValue: { flexShrink: 1, minWidth: 0, textAlign: 'right' },
+  choiceValueBelow: { marginTop: 6, includeFontPadding: false },
+  /**
+   * No `lineHeight` on either line, deliberately.
+   *
+   * These two carried 20 and 17, which are the kit's own 14x1.5 and 12x1.4
+   * rounded down -- numbers measured off the system face and then frozen. A
+   * face with taller ascenders than the one they were measured on has its
+   * accents clipped by them, and `includeFontPadding: false` removes the very
+   * padding Android would otherwise have used to absorb the difference. The
+   * ratio belongs to the type scale, so the type scale keeps it and these
+   * only turn off the Android padding that would make the two lines drift
+   * apart.
+   */
+  rowLabel: { includeFontPadding: false },
+  rowDetail: { includeFontPadding: false },
   chip: {
     width: CHIP_SIZE,
     height: CHIP_SIZE,

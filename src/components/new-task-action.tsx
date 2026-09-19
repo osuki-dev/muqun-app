@@ -1,68 +1,391 @@
-import { useSurfaceBackground } from '@/hooks/use-surface-background';
-/**
- * New Task, on a home-screen server card's `...` menu.
- *
- * Home mounts this only for a currently reachable server. This component then
- * checks the advertised capability; a saved capability alone is not evidence
- * that the server can be reached now.
- *
- * "Nothing at all" is the common case and the correct one. A gateway too old to
- * spawn, and a server this device has never opened (so has never heard the
- * answer from), both get no button. A greyed one would promise a feature the
- * machine does not have; an enabled one would fail on tap.
- */
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens } from '@osuki-dev/ui';
-import { useRouter, type Href } from 'expo-router';
-import { Sparkles } from 'lucide-react-native';
-import { useEffect } from 'react';
-import { StyleSheet } from 'react-native';
+import { Text } from '@/components/text';
+import { useRouter } from 'expo-router';
+import { StyleSheet, View } from 'react-native';
+import Animated, {
+  Easing,
+  cancelAnimation,
+  useAnimatedStyle,
+  useReducedMotion,
+  useSharedValue,
+  withDelay,
+  withRepeat,
+  withSequence,
+  withTiming,
+} from 'react-native-reanimated';
 
 import { PressableScale } from '@/components/pressable-scale';
-import { gatewaySupportsAgentSpawn } from '@/lib/gateway-client';
+import { OpenCodeIcon } from '@/components/opencode-icon';
+import { useSurfaceBackground } from '@/hooks/use-surface-background';
+import { useOpenCodeGuideStore } from '@/stores/opencode-guide';
 import { useServerCapabilities } from '@/stores/server-capabilities';
+import { useGatewayRecord } from '@/hooks/use-gateway-record';
+import { effectiveGatewayBaseUrl } from '@/lib/gateway-client';
+import type { GatewayRecord } from '@/lib/gateway-storage';
+import { withAlpha } from '@/lib/color';
+import {
+  buildAgentCacheKey,
+  getAgentCatalog,
+  getAgentProjects,
+  getCachedAgentCatalogSync,
+  getCachedAgentProjectsSync,
+} from '@/lib/agent-session';
+import { INSTANT, SHEEN_MOTION, fadeIn, fadeOut, listLayout } from '@/lib/motion';
 
-export function NewTaskAction({ serverId, label }: { serverId: string; label: string }) {
+/** How long the "OpenCode ready" label stays visible before settling to the compact icon. */
+const READY_ANNOUNCEMENT_MS = 3800;
+
+/** Probe timeout for determining whether OpenCode service is reachable. */
+const PROBE_TIMEOUT_MS = 5000;
+
+/** Set of servers that have already completed their "ready" announcement this session. */
+const announcedServers = new Set<string>();
+
+export function NewTaskAction({
+  server,
+  serverId,
+  label,
+}: {
+  server?: GatewayRecord;
+  serverId: string;
+  label: string;
+}) {
   const { t } = useLingui();
   const theme = useThemeTokens();
   const surfaceBackground = useSurfaceBackground();
   const router = useRouter();
+  const { selectRecord, selectRecordNow } = useGatewayRecord();
+  const capabilities = useServerCapabilities((s) => s.byServer[serverId]);
 
-  // Hydrated from here rather than from the screen, so the home list does not
-  // have to know this mirror exists. The store claims the flag before it reads,
-  // so several cards mounting together still make one read.
-  const hydrate = useServerCapabilities((state) => state.hydrate);
-  const capabilities = useServerCapabilities((state) => state.byServer[serverId]);
+  const endpointUrl = server ? effectiveGatewayBaseUrl(server) : undefined;
+  const endpointToken = server?.token;
+
+  const [isReady, setIsReady] = useState(() => {
+    if (!capabilities?.includes('agent_sessions')) return false;
+    const cacheKeyCat = buildAgentCacheKey('catalog', endpointUrl);
+    const cacheKeyProj = buildAgentCacheKey('projects', endpointUrl);
+    const cachedCat = getCachedAgentCatalogSync(cacheKeyCat);
+    const cachedProj = getCachedAgentProjectsSync(cacheKeyProj);
+    return Boolean(
+      (Array.isArray(cachedCat?.models) && cachedCat.models.length > 0) ||
+      (Array.isArray(cachedCat?.agents) && cachedCat.agents.length > 0) ||
+      (Array.isArray(cachedProj) && cachedProj.length > 0)
+    );
+  });
+  const [hasChecked, setHasChecked] = useState(false);
+  const [showAnnouncement, setShowAnnouncement] = useState(false);
+
+  /**
+   * The live entry: a band of light crosses the button, the glyph swells a
+   * little as it passes, and then both rest.
+   *
+   * This button is the only thing on a server card that leads to something
+   * running on its own -- an agent that answers -- and it was drawn exactly
+   * like the inert controls beside it. One value drives both the band and the
+   * glyph, on the UI thread, and only while OpenCode has answered. Reduced
+   * motion gets the still button.
+   */
+  const reduceMotion = useReducedMotion();
+  const sheen = useSharedValue(0);
   useEffect(() => {
-    void hydrate();
-  }, [hydrate]);
+    cancelAnimation(sheen);
+    sheen.value = 0;
+    if (!isReady || reduceMotion) return;
+    sheen.value = withRepeat(
+      withSequence(
+        withDelay(
+          SHEEN_MOTION.restMs,
+          withTiming(1, { duration: SHEEN_MOTION.sweepMs, easing: Easing.inOut(Easing.quad) })
+        ),
+        withTiming(0, INSTANT)
+      ),
+      -1
+    );
+    return () => cancelAnimation(sheen);
+  }, [isReady, reduceMotion, sheen]);
+  const sheenStyle = useAnimatedStyle(() => ({
+    // From fully off the leading edge to fully off the trailing one, in units
+    // of the band's own width, so the pill and the square travel alike.
+    opacity: sheen.value === 0 ? 0 : 1,
+    transform: [{ translateX: -60 + sheen.value * 220 }, { rotate: '18deg' }],
+  }));
+  const glyphStyle = useAnimatedStyle(() => {
+    // A bump centred on the middle of the crossing: 0 at both ends, 1 half way.
+    const bump = 1 - Math.abs(sheen.value * 2 - 1);
+    return { transform: [{ scale: 1 + (SHEEN_MOTION.swell - 1) * bump }] };
+  });
+  const announcementTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  if (!gatewaySupportsAgentSpawn(capabilities)) return null;
+  // Probe OpenCode readiness on mount / config change
+  const checkReadyRef = useRef<(isRetry?: boolean) => Promise<boolean>>(async () => false);
+
+  // react-doctor-disable-next-line react-doctor/effect-needs-cleanup -- retryTimer and announcementTimer are cleared on unmount in cleanup below.
+  useEffect(() => {
+    if (!capabilities?.includes('agent_sessions')) {
+      return () => {};
+    }
+
+    let cancelled = false;
+    let retryTimer: ReturnType<typeof setTimeout> | null = null;
+    let announcementTimer: ReturnType<typeof setTimeout> | null = null;
+
+    const checkReady = async (isRetry = false): Promise<boolean> => {
+      try {
+        const endpoint = endpointUrl ? { url: endpointUrl, token: endpointToken } : undefined;
+        const probePromise = Promise.all([
+          getAgentCatalog(undefined, endpoint),
+          getAgentProjects(undefined, endpoint),
+        ]);
+        const timeoutPromise = new Promise<null>((resolve) =>
+          setTimeout(() => resolve(null), PROBE_TIMEOUT_MS)
+        );
+
+        const result = await Promise.race([probePromise, timeoutPromise]);
+        if (cancelled) return false;
+
+        if (!result) {
+          // Timeout reached
+          setHasChecked(true);
+          setIsReady(false);
+          return false;
+        }
+
+        const [catalog, projects] = result;
+        const ready =
+          (Array.isArray(catalog?.models) && catalog.models.length > 0) ||
+          (Array.isArray(catalog?.agents) && catalog.agents.length > 0) ||
+          (Array.isArray(projects) && projects.length > 0);
+
+        setHasChecked(true);
+        if (ready) {
+          setIsReady(true);
+          if (!announcedServers.has(serverId)) {
+            announcedServers.add(serverId);
+            setShowAnnouncement(true);
+            if (announcementTimer) clearTimeout(announcementTimer);
+            if (announcementTimerRef.current) clearTimeout(announcementTimerRef.current);
+            announcementTimer = setTimeout(() => {
+              setShowAnnouncement(false);
+            }, READY_ANNOUNCEMENT_MS);
+            announcementTimerRef.current = announcementTimer;
+          }
+          return true;
+        } else {
+          setIsReady(false);
+          if (!isRetry && !cancelled) {
+            retryTimer = setTimeout(() => {
+              void checkReady(true);
+            }, 10000);
+          }
+          return false;
+        }
+      } catch {
+        if (!cancelled) {
+          setHasChecked(true);
+          setIsReady(false);
+          if (!isRetry) {
+            retryTimer = setTimeout(() => {
+              void checkReady(true);
+            }, 10000);
+          }
+        }
+        return false;
+      }
+    };
+
+    checkReadyRef.current = checkReady;
+    void checkReady();
+
+    return () => {
+      cancelled = true;
+      if (retryTimer) clearTimeout(retryTimer);
+      if (announcementTimer) clearTimeout(announcementTimer);
+      if (announcementTimerRef.current) clearTimeout(announcementTimerRef.current);
+    };
+  }, [capabilities, endpointUrl, endpointToken, serverId]);
+
+  // The card belongs to one server, and the screen it opens must be that
+  // server's. This used to fire the selection and push the route in the same
+  // tick, so the agent screen mounted on whichever server was selected a
+  // moment ago -- with two servers on Home, the first card's button opened the
+  // second server's OpenCode. The switch is awaited, and the route carries the
+  // server id so the screen can refuse to mount on any other.
+  const handlePress = useCallback(() => {
+    // The card only exists once this server's OpenCode answered, so its record
+    // is already in memory: the switch is made in this tick and the screen
+    // opens on it in the same one. The awaited path is for a record that is
+    // somehow not loaded any more, and a screen that never opens is the
+    // right outcome when even that fails.
+    if (selectRecordNow(serverId)) {
+      router.push({ pathname: '/agent', params: { server: serverId } });
+      return;
+    }
+    void (async () => {
+      const selected = await selectRecord(serverId);
+      if (!selected) return;
+      router.push({ pathname: '/agent', params: { server: serverId } });
+    })();
+  }, [selectRecordNow, selectRecord, serverId, router]);
+
+  /**
+   * The setup sheet is a route now, so "check again" runs over there and this
+   * card's probe has to be reachable from it. Registered per server -- several
+   * cards are on screen at once -- and cleared when this one goes away, so a
+   * dismissed card can never answer for a live one.
+   */
+  useEffect(() => {
+    const store = useOpenCodeGuideStore.getState();
+    store.registerProbe(serverId, () => checkReadyRef.current(true));
+    return () => {
+      useOpenCodeGuideStore.getState().clearProbe(serverId);
+    };
+  }, [serverId]);
+
+  // The sheet cannot dismiss itself and land on the agent screen in one
+  // gesture, so it writes where the reader asked to go; this reads it and
+  // clears it, the way the server screen reads a panel pick.
+  const openAgentFor = useOpenCodeGuideStore((state) => state.openAgentFor);
+  useEffect(() => {
+    if (openAgentFor !== serverId) return;
+    useOpenCodeGuideStore.getState().clearOpenAgent();
+    handlePress();
+  }, [openAgentFor, serverId, handlePress]);
+
+  if (!capabilities?.includes('agent_sessions')) {
+    return null;
+  }
+
+  // If probe completed and OpenCode service is offline / timed out:
+  // Render warning button opening the guide sheet
+  if (!isReady) {
+    if (!hasChecked) return null;
+    return (
+      <>
+        <Animated.View layout={listLayout()} entering={fadeIn()} exiting={fadeOut()}>
+          <PressableScale
+            testID="server-opencode-offline-action"
+            accessibilityRole="button"
+            accessibilityLabel={t`OpenCode service offline. Tap for setup instructions`}
+            onPress={() =>
+              router.push({ pathname: '/opencode-guide', params: { serverId, label } })
+            }
+            style={[
+              styles.button,
+              styles.square,
+              {
+                backgroundColor: surfaceBackground(withAlpha(theme.colors.warning, 0.12)),
+                borderColor: withAlpha(theme.colors.warning, 0.4),
+              },
+            ]}>
+            <View style={styles.offlineIconWrapper}>
+              <OpenCodeIcon size={16} color={theme.colors.warning} />
+              <View style={[styles.offlineDot, { backgroundColor: theme.colors.warning }]} />
+            </View>
+          </PressableScale>
+        </Animated.View>
+      </>
+    );
+  }
+
+  // react-doctor-disable-next-line react-hooks-js/todo -- lingui t macro; the lingui babel plugin compiles the template away
+  const openAgentLabel = t`Open OpenCode Agent on ${label}`;
+  const readyLabel = t`OpenCode ready`;
+  const actionLabel = showAnnouncement ? `${readyLabel}. ${openAgentLabel}` : openAgentLabel;
 
   return (
-    <PressableScale
-      accessibilityRole="button"
-      accessibilityLabel={t`New task on ${label}`}
-      onPress={() =>
-        // No session id and no tab: the home screen knows neither, and the
-        // sheet resolves the session itself once it has selected this server.
-        router.push({ pathname: '/new-task', params: { serverId, origin: 'home' } } as Href)
-      }
-      style={[styles.button, { backgroundColor: surfaceBackground(theme.colors.primarySubtle) }]}>
-      <Sparkles size={16} color={theme.colors.primary} strokeWidth={2} />
-    </PressableScale>
+    <Animated.View layout={listLayout()} entering={fadeIn()} exiting={fadeOut()}>
+      <PressableScale
+        testID="server-opencode-action"
+        accessibilityRole="button"
+        accessibilityLabel={actionLabel}
+        onPress={handlePress}
+        style={[
+          styles.button,
+          showAnnouncement ? styles.pill : styles.square,
+          {
+            backgroundColor: surfaceBackground(theme.colors.primarySubtle),
+            borderColor: surfaceBackground(theme.colors.border),
+          },
+        ]}>
+        {/* The light first, so the glyph is drawn over it. */}
+        <Animated.View
+          pointerEvents="none"
+          style={[
+            styles.sheen,
+            { backgroundColor: withAlpha(theme.colors.primary, 0.22) },
+            sheenStyle,
+          ]}
+        />
+        <Animated.View style={glyphStyle}>
+          <OpenCodeIcon size={18} color={theme.colors.primary} />
+        </Animated.View>
+        {showAnnouncement ? (
+          <Animated.View
+            entering={fadeIn()}
+            exiting={fadeOut()}
+            layout={listLayout()}
+            style={styles.announcementContainer}>
+            <Text
+              variant="caption"
+              weight="semibold"
+              color={theme.colors.primary}
+              numberOfLines={1}
+              style={styles.announcementText}>
+              {t`OpenCode ready`}
+            </Text>
+          </Animated.View>
+        ) : null}
+      </PressableScale>
+    </Animated.View>
   );
 }
 
 const styles = StyleSheet.create({
-  // The row menu's own button chassis, so this sits in the line of three
-  // without being the odd one.
   button: {
-    width: 36,
     height: 36,
     borderRadius: 12,
     borderCurve: 'continuous',
     alignItems: 'center',
     justifyContent: 'center',
+    flexDirection: 'row',
+    borderWidth: StyleSheet.hairlineWidth,
+    // The sheen is wider than the button and must not be seen leaving it.
+    overflow: 'hidden',
+  },
+  sheen: {
+    position: 'absolute',
+    top: -12,
+    bottom: -12,
+    left: 0,
+    width: 22,
+  },
+  square: {
+    width: 36,
+  },
+  pill: {
+    paddingHorizontal: 10,
+    gap: 6,
+  },
+  offlineIconWrapper: {
+    position: 'relative',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  offlineDot: {
+    position: 'absolute',
+    top: -2,
+    right: -4,
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  announcementContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  announcementText: {
+    letterSpacing: 0.2,
   },
 });

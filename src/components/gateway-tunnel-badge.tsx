@@ -1,6 +1,7 @@
 import { TerminalNotice, terminalNoticeStyles } from '@/components/terminal-notice';
 import { Trans, useLingui } from '@lingui/react/macro';
-import { Text, useThemeTokens } from '@osuki-dev/ui';
+import { useThemeTokens } from '@osuki-dev/ui';
+import { Text } from '@/components/text';
 import { Waypoints } from 'lucide-react-native';
 import { StyleSheet, View } from 'react-native';
 

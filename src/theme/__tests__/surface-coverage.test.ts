@@ -21,16 +21,19 @@ const consumers = {
     // the picture in the first place.
     'src/components/sheet-ground.tsx',
   ],
-  'home.background': 'src/app/(drawer)/index.tsx',
-  'home.decoration': 'src/app/(drawer)/index.tsx',
+  'home.background': 'src/app/index.tsx',
+  'home.decoration': 'src/app/index.tsx',
   'navigation.background': 'src/components/glass-chrome.tsx',
   'composer.background': 'src/components/glass-chrome.tsx',
   'actions.background': 'src/components/glass-chrome.tsx',
   'cards.decoration': 'src/components/settings-chrome.tsx',
   'buttons.primary.background': 'src/components/themed-button.tsx',
-  'tabs.background': 'src/app/commands.tsx',
+  // The control, not a screen. The commands sheet used to paint its own tab
+  // strip, so the slot lived or died with that one screen; it is on
+  // `SettingsSegmented` now, which is every tabbed control in the app.
+  'tabs.background': 'src/components/settings-segmented.tsx',
   'emptyState.illustration': [
-    'src/app/(drawer)/index.tsx',
+    'src/app/index.tsx',
     'src/theme/launch-artwork.ts',
     // Reachable from Home as well, but only through an explicit reader choice.
     'src/theme/home-hero.ts',
@@ -60,7 +63,7 @@ test('every supported artwork slot has a named runtime consumer', () => {
 });
 
 test('Home mounts the hero above its list and the empty card keeps its own picture', () => {
-  const home = readFileSync('src/app/(drawer)/index.tsx', 'utf8');
+  const home = readFileSync('src/app/index.tsx', 'utf8');
   // Mounted, and mounted where the contract says: after the brand block and the
   // `home.decoration` banner, before anything that draws a server.
   expect(home).toContain('<HomeHero ');
@@ -87,13 +90,20 @@ test('both launch surfaces take their mark from the shared fallback chain', () =
   // screen grows a second opinion: a lock screen that resolved the slot itself
   // could drift from the overlay, and the two are the first and last thing a
   // reader sees in a session.
-  const launch = readFileSync('src/components/launch-brand.tsx', 'utf8');
-  expect(launch).toContain("from '@/hooks/use-launch-artwork'");
-  expect(launch).toContain('useLaunchHeroArtwork()');
-  // The bundled mascot when a pack offers neither picture nor logo is the
-  // compiled launch asset itself, so the launch takes it from the mirror.
+  // The launch overlay does not resolve the mark at all any more: its picture
+  // *is* the frame the OS drew, handed over by the splash mirror, because the
+  // opening's first rule is that nothing ever replaces the artwork the reader
+  // is already looking at. The chain still decides which picture that is --
+  // one launch earlier, in `use-launch-image-sync`, which is the only place
+  // allowed to tell native what to draw. So the rule is not "the overlay calls
+  // the chain" but "exactly one surface does, and the overlay mirrors it".
+  const launch = readFileSync('src/components/launch-intro-scene.tsx', 'utf8');
   expect(launch).toContain('useSplashMirror()');
-  expect(launch).toContain("kind === 'default'");
+  expect(launch).not.toContain('useLaunchHeroArtwork()');
+  const sync = readFileSync('src/hooks/use-launch-image-sync.ts', 'utf8');
+  expect(sync).toContain("from '@/hooks/use-launch-artwork'");
+  expect(sync).toContain('useLaunchHeroArtwork()');
+  expect(sync).toContain("kind === 'default'");
 
   const lock = readFileSync('src/components/app-lock-gate.tsx', 'utf8');
   expect(lock).toContain("from '@/hooks/use-launch-artwork'");

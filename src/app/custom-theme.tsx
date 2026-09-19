@@ -1,5 +1,6 @@
 import { useLingui } from '@lingui/react/macro';
-import { Text, useThemeTokens } from '@osuki-dev/ui';
+import { useThemeTokens } from '@osuki-dev/ui';
+import { Text } from '@/components/text';
 
 import { Button } from '@/components/themed-button';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
@@ -31,6 +32,30 @@ import type { InstalledTheme } from '@/theme/repository';
  * screen it always was, with nothing in it that knows it is a preview. The two
  * preview cards keep painting themselves from the manifest: they show light and
  * dark at once, and only one of those can be the screen's own mode.
+ *
+ * ## Why this one is not a sheet
+ *
+ * Every other route shaped like a panel in this app is a native form sheet now,
+ * including the two this one is opened from. This is the exception, and the
+ * first paragraph is the whole of the reason: a sheet is a panel laid over the
+ * scene the reader is leaving, and what this route does is *be* the scene. Its
+ * floor, its wallpaper and its header glass are the candidate's; a sheet would
+ * put a 380pt window of the new theme over a full screen of the old one and ask
+ * the reader to judge the first from inside the second, which is the two
+ * postage stamps this route was built to stop being.
+ *
+ * The gestures say the same thing from the other side. The editor is several
+ * screens of column on a phone, its appearance controls are sliders, and the
+ * flow that drives it pans vertically to reach the foot of the page -- a
+ * vertical drag is exactly what a form sheet reads as dismiss, so every one of
+ * those would be a coin toss between scrolling and losing the draft.
+ *
+ * So it stays full-screen, and the way out is drawn rather than gestured:
+ * `ScreenHeader`'s back arrow (`Go back`) at the top, and the pinned button at
+ * the foot that is Done until there is a theme to apply. Neither scrolls away.
+ * `sheetRoutePresentations` carries this route as `fullscreen` and
+ * `sheet-scene-contract.test.ts` holds that list to two entries, so this is an
+ * allowlisted exception with a reason rather than a route nobody converted.
  */
 export default function CustomThemeScreen() {
   const { draft } = useLocalSearchParams<{ draft?: string }>();

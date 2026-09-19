@@ -1,82 +1,12 @@
 import { describe, expect, test } from 'bun:test';
-import { createCipheriv, createDecipheriv, createHmac } from 'node:crypto';
+import { createCipheriv } from 'node:crypto';
 
 import {
   ENCRYPTED_SSE_EVENT,
   EncryptedEventStreamDecryptor,
   streamRecordNonce,
-  type SseRecordCrypto,
 } from '../sse-record';
-
-/**
- * Plain node primitives standing in for quick-crypto. HKDF is spelled out via
- * HMAC rather than `hkdfSync` so the test pins the construction itself, not a
- * runtime's implementation of it.
- */
-function hkdfSha256(ikm: Uint8Array, salt: string, info: string): Uint8Array {
-  const prk = createHmac('sha256', Buffer.from(salt, 'utf8')).update(Buffer.from(ikm)).digest();
-  const okm = createHmac('sha256', prk)
-    .update(Buffer.concat([Buffer.from(info, 'utf8'), Buffer.from([1])]))
-    .digest();
-  return new Uint8Array(okm);
-}
-
-const testCrypto: SseRecordCrypto = {
-  hkdf: (material, salt, info) => hkdfSha256(material, salt, info),
-  open(key, nonce, aad, sealed) {
-    const ciphertext = sealed.subarray(0, sealed.length - 16);
-    const tag = sealed.subarray(sealed.length - 16);
-    const decipher = createDecipheriv('aes-256-gcm', Buffer.from(key), Buffer.from(nonce));
-    decipher.setAAD(Buffer.from(aad, 'utf8'));
-    decipher.setAuthTag(Buffer.from(tag));
-    return new Uint8Array(
-      Buffer.concat([decipher.update(Buffer.from(ciphertext)), decipher.final()])
-    );
-  },
-  fromBase64Url: (value) => new Uint8Array(Buffer.from(value, 'base64url')),
-};
-
-/** The gateway's `EventStreamSealer`, reproduced for the tests to seal with. */
-function sealRecord(
-  material: Uint8Array,
-  options: {
-    sid: string;
-    requestNonce: string;
-    requestAad: string;
-    seq: number;
-    event: string;
-    data: string;
-    /** Overrides for hostile records; defaults spell the honest gateway. */
-    aad?: string;
-    nonceSeq?: number;
-  }
-): string {
-  const key = hkdfSha256(
-    material,
-    'muqun-transport-v1',
-    `muqun-transport-v1/sse/${options.sid}/${options.requestNonce}`
-  );
-  const aad = options.aad ?? `${options.requestAad}\n${options.sid}\n${options.seq}`;
-  const cipher = createCipheriv(
-    'aes-256-gcm',
-    Buffer.from(key),
-    Buffer.from(streamRecordNonce(options.nonceSeq ?? options.seq))
-  );
-  cipher.setAAD(Buffer.from(aad, 'utf8'));
-  const sealed = Buffer.concat([
-    cipher.update(
-      Buffer.from(JSON.stringify({ event: options.event, data: options.data }), 'utf8')
-    ),
-    cipher.final(),
-    cipher.getAuthTag(),
-  ]);
-  return JSON.stringify({
-    v: 1,
-    sid: options.sid,
-    seq: options.seq,
-    ciphertext: sealed.toString('base64url'),
-  });
-}
+import { hkdfSha256, sealRecord, testCrypto } from './stream-seal';
 
 const material = new Uint8Array(Array.from({ length: 32 }, (_, index) => index + 1));
 const requestAad = 'GET /api/sessions/main/events?types=pane_updated';

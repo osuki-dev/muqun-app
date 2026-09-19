@@ -5,7 +5,8 @@ import type { MessageDescriptor } from '@lingui/core';
 // turns a `msg` descriptor into a sentence in the active locale.
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { useLingui } from '@lingui/react/macro';
-import { Text, useThemeTokens } from '@osuki-dev/ui';
+import { useThemeTokens } from '@osuki-dev/ui';
+import { Text } from '@/components/text';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { ArrowBigUp, Delete, Keyboard as KeyboardIcon } from 'lucide-react-native';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
@@ -20,6 +21,7 @@ import {
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import { appChrome } from '@/constants/appearance';
+import { useMonoFontFamily } from '@/hooks/use-user-fonts';
 import { withAlpha } from '@/lib/color';
 import { feedback } from '@/lib/feedback';
 import { timing } from '@/lib/motion';
@@ -129,6 +131,7 @@ export function VirtualKeyboard({
   const { _ } = useLinguiRuntime();
   const theme = useThemeTokens();
   const surfaceBackground = useSurfaceBackground();
+  const mono = useMonoFontFamily();
   const [layout, setLayout] = useState({ symbols: false, moreSymbols: false, shift: false });
   const { symbols, moreSymbols, shift } = layout;
   /**
@@ -233,15 +236,16 @@ export function VirtualKeyboard({
         </VirtualKey>
       </View>
 
-      {rows.map((row, index) => {
-        const last = index === rows.length - 1;
+      {rows.map((row, rowIndex) => {
+        const last = rowIndex === rows.length - 1;
+        const rowId = row.slice(0, 3).join('') || `row-${rowIndex}`;
         // A middle row is centred under the row above it: half a key on each
         // side for the letters, none at all for the symbol pages, which are ten
         // wide. Stated as what the stagger *is* rather than as a padding that
         // happens to look right on one screen.
         const lead = last ? 0 : (ROW_UNITS - row.length) / 2;
         return (
-          <View key={`row-${index}`} style={styles.row}>
+          <View key={`row-${rowId}`} style={styles.row}>
             {lead > 0 ? <View style={{ flex: lead }} /> : null}
             {last ? (
               <ShiftKey
@@ -267,7 +271,7 @@ export function VirtualKeyboard({
                   <Text
                     variant="bodySmall"
                     color={pressed ? activeText : keyText}
-                    style={styles.keyText}>
+                    style={[styles.keyText, { fontFamily: mono }]}>
                     {!symbols && shift ? char.toUpperCase() : char}
                   </Text>
                 )}
@@ -297,7 +301,10 @@ export function VirtualKeyboard({
           onPress={() => setLayout((value) => changeKeyboardLayout(value, 'symbols'))}
           style={[styles.key, styles.pageKey, { backgroundColor: keyFill }]}>
           {({ pressed }) => (
-            <Text variant="caption" color={pressed ? activeText : keyText} style={styles.keyText}>
+            <Text
+              variant="caption"
+              color={pressed ? activeText : keyText}
+              style={[styles.keyText, { fontFamily: mono }]}>
               {symbols ? 'abc' : '123'}
             </Text>
           )}
@@ -308,7 +315,10 @@ export function VirtualKeyboard({
           onPress={() => pressInput(' ', 'character')}
           style={[styles.key, styles.spaceKey, { backgroundColor: keyFill }]}>
           {({ pressed }) => (
-            <Text variant="caption" color={pressed ? activeText : keyText} style={styles.keyText}>
+            <Text
+              variant="caption"
+              color={pressed ? activeText : keyText}
+              style={[styles.keyText, { fontFamily: mono }]}>
               space
             </Text>
           )}
@@ -329,7 +339,7 @@ export function VirtualKeyboard({
                 <Text
                   variant="caption"
                   color={pressed ? activeText : keyText}
-                  style={styles.keyText}>
+                  style={styles.keyGlyph}>
                   {arrow.label}
                 </Text>
               )}
@@ -342,7 +352,7 @@ export function VirtualKeyboard({
           onPress={() => pressInput('enter', 'key')}
           style={[styles.key, styles.returnKey, { backgroundColor: keyFill }]}>
           {({ pressed }) => (
-            <Text variant="caption" color={pressed ? activeText : keyText} style={styles.keyText}>
+            <Text variant="caption" color={pressed ? activeText : keyText} style={styles.keyGlyph}>
               ↵
             </Text>
           )}
@@ -378,6 +388,7 @@ function ShiftKey({
   onPress: () => void;
 }) {
   const { t } = useLingui();
+  const mono = useMonoFontFamily();
   const held = useSharedValue(shift ? 1 : 0);
   useEffect(() => {
     held.value = withTiming(shift ? 1 : 0, timing('toggle'));
@@ -409,7 +420,10 @@ function ShiftKey({
           own colour, so neither leaves the UI thread anything to drive. */}
           <Animated.View style={[StyleSheet.absoluteFill, styles.keyFace, restingStyle]}>
             {symbols ? (
-              <Text variant="caption" color={pressed ? activeText : keyText} style={styles.keyText}>
+              <Text
+                variant="caption"
+                color={pressed ? activeText : keyText}
+                style={[styles.keyText, { fontFamily: mono }]}>
                 #+=
               </Text>
             ) : (
@@ -418,7 +432,10 @@ function ShiftKey({
           </Animated.View>
           <Animated.View style={[StyleSheet.absoluteFill, styles.keyFace, heldStyle]}>
             {symbols ? (
-              <Text variant="caption" color={activeText} style={styles.keyText}>
+              <Text
+                variant="caption"
+                color={activeText}
+                style={[styles.keyText, { fontFamily: mono }]}>
                 123
               </Text>
             ) : (
@@ -453,6 +470,7 @@ function FunctionKey({
   selected?: boolean;
 }) {
   const theme = useThemeTokens();
+  const mono = useMonoFontFamily();
   return (
     <VirtualKey
       testID={`virtual-key-${label}`}
@@ -466,7 +484,7 @@ function FunctionKey({
         <Text
           variant="caption"
           color={pressed ? theme.colors.onPrimary : color}
-          style={styles.keyText}>
+          style={[styles.keyText, { fontFamily: mono }]}>
           {`${label}${selected ? ' ✓' : ''}`}
         </Text>
       )}
@@ -625,7 +643,41 @@ const styles = StyleSheet.create({
   returnKey: {
     flex: 1.5,
   },
+  /**
+   * A key cap, in the reader's monospace face.
+   *
+   * These are keys. `q`, `#+=`, `esc`, `ctrl`, `space` -- what a cap says is
+   * the character or the key name that pressing it sends, so by the rule the
+   * font slots are split on (`use-user-fonts.ts`) they follow the mono slot
+   * rather than the interface one. The family is merged in from
+   * `useMonoFontFamily()` at each render site; what was here was `'System'`,
+   * which is neither slot and which no setting could reach.
+   *
+   * The `✓` a held modifier appends is the one glyph in this group that a
+   * reader-supplied mono file may not carry, and on Android a `Typeface`
+   * created from a single file has no system fallback chain behind it, so a
+   * missing glyph is a tofu box rather than a substituted tick. It is accepted
+   * here: a held ctrl or alt is already saying so with a filled key and an
+   * inverted colour, and the tick is the third and smallest of three signals.
+   * The glyph-only caps below are a different matter.
+   */
   keyText: {
+    includeFontPadding: false,
+  },
+  /**
+   * The caps that are pictures rather than characters: `←↓↑→` and `↵`.
+   *
+   * These stay on the platform UI face on purpose, and it is the same Android
+   * fallback rule that decides it. What these keys send is `left`, `down`,
+   * `up`, `right` and `enter` -- the glyph is a picture of the key, not a
+   * character the reader is typing -- so the rule that sends a literal to the
+   * mono slot does not reach them. And the downside is not symmetric: U+2190
+   * through U+2193 and U+21B5 sit well outside the Latin range a mono file is
+   * guaranteed to cover, a font with no glyph for one of them draws a box, and
+   * a boxed arrow key is a key whose meaning is gone rather than a key in the
+   * wrong font. The system face carries all five on both platforms.
+   */
+  keyGlyph: {
     fontFamily: 'System',
     includeFontPadding: false,
   },

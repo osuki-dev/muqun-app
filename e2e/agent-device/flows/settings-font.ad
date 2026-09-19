@@ -1,0 +1,41 @@
+# Native agent-device action sections; suite.json composes guards and includes.
+# settings-font
+
+# section open-settings
+press "${TARGET}"
+
+# section settings-arrived
+is visible "${TARGET}"
+
+# section open-font
+# The Font row is in APPEARANCE, the second card on the page, so it is on
+# screen when Settings arrives and needs no seek. It is also above the `deep`
+# fold (`settings.tsx`), which is why this flow can reach it on the frame the
+# push finishes rather than waiting for the idle callback the ABOUT rows need.
+press "${TARGET}"
+
+# section sheet-arrived
+wait stable 400 5000
+
+# section group-visible
+# Both group headings, which is the whole shape of the sheet: two slots that
+# answer different questions. A sheet that lost one of them would still open,
+# still show a current face, and silently have stopped offering the other half
+# of the feature -- so the headings are what is asserted rather than the rows.
+is visible "${TARGET}"
+
+# section row-visible
+# The way back to the platform's own face, in both groups. It is the one
+# control on this sheet that must never be missing: everything else here adds
+# a font, and this is the only thing that undoes it. Asserted and not pressed,
+# because the flow runs on a shared QA device in demo mode with no font
+# installed -- there is nothing to undo, and the row says so by being disabled.
+is visible "${TARGET}"
+
+# section leave
+# Android's back dismisses a form sheet, which is the same gesture a reader
+# has. The grabber and the swipe are the close; there is no X to press.
+back --system
+
+# section back-on-settings
+is visible "${TARGET}"

@@ -254,6 +254,18 @@ for (const flow of flows) {
       await invoke(['close']);
     },
   });
+  // A repeated capture is evidence, not noise: write it beside the step
+  // records so a report shows the app was slow to appear rather than leaving
+  // a step that merely looks long.
+  if (runner.appContentRetries.length) {
+    await writeFile(
+      path.join(artifacts, 'retries.json'),
+      JSON.stringify(runner.appContentRetries, null, 2)
+    );
+    console.error(
+      `e2e: ${flow.name} repeated ${runner.appContentRetries.length} capture(s) while the app was still arriving`
+    );
+  }
   if (failure) console.error(`e2e: FAILED ${flow.name}: ${failure}`);
   results.push({
     name: flow.name,

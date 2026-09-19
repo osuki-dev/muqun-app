@@ -1,5 +1,5 @@
 import { useLingui } from '@lingui/react/macro';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 
 import { GitDiffView } from '@/components/git-diff-view';
 
@@ -12,10 +12,12 @@ import { GitDiffView } from '@/components/git-diff-view';
  * A route of its own rather than a section of the files sheet. What a session
  * wrote out and what it changed in place are different questions, and the
  * second one needs a surface wide enough to be a diff.
+ *
+ * No `onClose` to hand down: the sheet has no close button, because the grabber
+ * and the swipe are the close.
  */
 export default function GitDiffScreen() {
   const { t } = useLingui();
-  const router = useRouter();
   const params = useLocalSearchParams<{
     sessionId: string;
     paneId?: string;
@@ -29,7 +31,6 @@ export default function GitDiffScreen() {
       paneId={params.paneId || ''}
       label={params.label || t`Server`}
       branch={params.branch || ''}
-      onClose={() => router.back()}
     />
   );
 }

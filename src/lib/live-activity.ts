@@ -10,6 +10,10 @@ export type AgentActivitySnapshot = {
   agentName: string;
   status: AgentActivityStatus;
   detail: string;
+  todoDone?: number;
+  todoTotal?: number;
+  action?: string;
+  engine?: string;
 };
 
 const KNOWN_STATUSES: readonly AgentActivityStatus[] = [
@@ -189,6 +193,9 @@ function toProps(snapshot: AgentActivitySnapshot, startedAtMs: number): AgentAct
     status: snapshot.status,
     detail: snapshot.detail,
     startedAtMs,
+    ...(snapshot.todoDone !== undefined && { todoDone: snapshot.todoDone }),
+    ...(snapshot.todoTotal !== undefined && { todoTotal: snapshot.todoTotal }),
+    ...(snapshot.engine !== undefined && { engine: snapshot.engine }),
   };
 }
 

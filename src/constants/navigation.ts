@@ -6,17 +6,12 @@
  * two are now a single tap away in the home header, so the drawer was a gesture
  * and a hamburger spent on nothing.
  *
- * Off rather than deleted, and this constant is the whole switch: the navigator,
- * the `(drawer)` route group and `AppDrawerContent` all stay exactly as they
- * were, so a fourth top-level place -- one that genuinely does not fit in a
- * header -- flips this to `true` and gets its drawer back. Deleting the
- * navigator would also mean re-parenting `index` and `settings` out of the
- * group, which rewrites every route these screens are pushed from for no gain.
+ * Off and retired: the drawer navigator has been removed and the home screen
+ * moved to `src/app/index.tsx`. The drawer held rows that are now single taps
+ * in the top header.
  *
- * It also governs the >=900pt "permanent drawer" layout, which is why it lives
- * here rather than in the layout file: three components ask whether the drawer
- * is on, and a shared constant is what stops two of them drifting into a state
- * where a permanent panel is drawn beside a screen that has no way to open it.
+ * `HOME_DRAWER_ENABLED` remains false and governs the tablet permanent drawer
+ * fallback logic.
  */
 export const HOME_DRAWER_ENABLED = false;
 
