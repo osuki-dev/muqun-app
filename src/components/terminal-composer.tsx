@@ -2,10 +2,9 @@ import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { Spinner, useThemeTokens } from '@osuki-dev/ui';
 import { Send } from 'lucide-react-native';
 import { useEffect, type ComponentProps, type ReactNode, type Ref } from 'react';
-import { StyleSheet, TextInput, View, type TextInputProps } from 'react-native';
+import { StyleSheet, TextInput, type TextInputProps } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
-import { FieldPlaceholder } from '@/components/field-placeholder';
 import { PressableScale } from '@/components/pressable-scale';
 import { useMonoFontFamily } from '@/hooks/use-user-fonts';
 import { ThemedSurfaceArtwork } from '@/components/themed-surface';
@@ -13,6 +12,7 @@ import { ThemeIcon } from '@/components/theme-icon';
 import { appChrome } from '@/constants/appearance';
 import { withAlpha } from '@/lib/color';
 import { timing } from '@/lib/motion';
+import { FontedTextInput } from '@/components/fonted-text-input';
 
 /**
  * The line field at the bottom of a terminal: the app's only raw `TextInput`,
@@ -91,10 +91,6 @@ export function TerminalComposer({
   // here rather than naming a colour is what keeps the two from drifting apart.
   const placeholderText = theme.colors[theme.components.Input.placeholder];
   const fieldFont = { color: chromeText, fontFamily: mono };
-  // Only the family of a caller's style reaches the drawn placeholder: its
-  // colour is the placeholder's own, and nothing else is the caller's to set.
-  const callerFontFamily = StyleSheet.flatten(inputProps.style)?.fontFamily;
-  const inputFamily = callerFontFamily ? { fontFamily: callerFontFamily } : null;
 
   return (
     <Animated.View
@@ -103,29 +99,17 @@ export function TerminalComposer({
       layout={layout}
       style={[composerStyles.composer, { backgroundColor: surfaceBackground(chromeGlassQuiet) }]}>
       {leading}
-      <View style={composerStyles.field}>
-        <TextInput
-          ref={inputRef}
-          multiline
-          autoCorrect={false}
-          selectionColor={theme.colors.primary}
-          {...inputProps}
-          // The hint is kept for the screen reader and for the height it gives
-          // an empty field, and drawn by `FieldPlaceholder` instead: see there.
-          placeholderTextColor="transparent"
-          // The family sits ahead of `inputProps.style` so a caller may still
-          // override it -- the agent composer does, with the interface face.
-          style={[composerStyles.input, fieldFont, inputProps.style]}
-        />
-        <FieldPlaceholder
-          text={inputProps.placeholder}
-          visible={!inputProps.value}
-          color={placeholderText}
-          // The family only: the colour is the placeholder's own tint, and the
-          // field's text colour in this array would paint over it.
-          style={[composerStyles.inputText, { fontFamily: mono }, inputFamily]}
-        />
-      </View>
+      <FontedTextInput
+        ref={inputRef}
+        multiline
+        autoCorrect={false}
+        placeholderTextColor={placeholderText}
+        selectionColor={theme.colors.primary}
+        {...inputProps}
+        // The family sits ahead of `inputProps.style` so a caller may still
+        // override it -- the agent composer does, with the interface face.
+        style={[composerStyles.input, fieldFont, inputProps.style]}
+      />
       <ComposerSendButton
         accessibilityLabel={send.accessibilityLabel}
         armed={send.armed}
@@ -241,18 +225,8 @@ export const composerStyles = StyleSheet.create({
     gap: 8,
     // The faint fill is supplied at render time from the active pack.
   },
-  field: {
-    flex: 1,
-  },
-  // The field's text box, without its flex: what the drawn placeholder shares
-  // with the input so that the two lines land on each other.
-  inputText: {
-    paddingHorizontal: 4,
-    paddingVertical: 10,
-    fontSize: 14,
-    lineHeight: 19,
-  },
   input: {
+    flex: 1,
     minHeight: 40,
     maxHeight: 126,
     paddingHorizontal: 4,

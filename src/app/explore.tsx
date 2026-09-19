@@ -18,7 +18,6 @@ import {
   Linking,
   Platform,
   StyleSheet,
-  TextInput,
   useWindowDimensions,
   View,
 } from 'react-native';
@@ -90,6 +89,7 @@ import {
   SCAN_REJECT_HOLD_MS,
   type ScanReading,
 } from '@/lib/pairing-scan';
+import { FontedTextInput } from '@/components/fonted-text-input';
 
 type Step = 'scan' | 'confirm' | 'success';
 
@@ -713,7 +713,7 @@ export default function PairModal() {
                       </View>
                     )}
                     <SheetSceneField label={t`Gateway port on that host`}>
-                      <TextInput
+                      <FontedTextInput
                         accessibilityLabel={t`Gateway port on that host`}
                         testID="pairing-ssh-port"
                         value={sshPort}
@@ -745,7 +745,7 @@ export default function PairModal() {
                         drew no edge at all -- a label and a placeholder
                         floating in a box with nothing to tap at. */}
                     <SheetSceneField label={t`Gateway URL`}>
-                      <TextInput
+                      <FontedTextInput
                         accessibilityLabel={t`Gateway URL`}
                         testID="pairing-manual-url"
                         value={manualUrl}
@@ -1015,7 +1015,7 @@ export default function PairModal() {
                   </Text>
                 </View>
                 <SheetSceneField label={t`Server name`}>
-                  <TextInput
+                  <FontedTextInput
                     accessibilityLabel={t`Server name`}
                     value={serverName}
                     onChangeText={(value) => setServerName(value.slice(0, 48))}
@@ -1044,7 +1044,7 @@ export default function PairModal() {
                       text before onChangeText, so a leading space would consume
                       one slot and discard the final real code character before
                       normalization. */}
-                  <TextInput
+                  <FontedTextInput
                     accessibilityLabel={t`Pairing code`}
                     value={code}
                     onChangeText={(value) => setCode(normalizePairingCode(value))}

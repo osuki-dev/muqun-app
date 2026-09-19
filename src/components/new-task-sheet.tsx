@@ -20,7 +20,7 @@ import {
 import { Trans, useLingui } from '@lingui/react/macro';
 import { Bot, Check, FolderOpen, Paperclip } from 'lucide-react-native';
 import { useEffect, useRef, useState } from 'react';
-import { ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import Animated from 'react-native-reanimated';
 
@@ -46,6 +46,7 @@ import {
 import { listLayout, riseIn, STAGGER } from '@/lib/motion';
 import { describeGatewayFailure } from '@/lib/network-error';
 import { useRenderTally } from '@/lib/render-tally';
+import { FontedTextInput } from '@/components/fonted-text-input';
 
 /**
  * How many recent directories the sheet will draw.
@@ -288,7 +289,7 @@ export function NewTaskSheet({
             <SheetSceneField
               label={t`Directory`}
               hint={t`Leave it empty to start where the session already is.`}>
-              <TextInput
+              <FontedTextInput
                 accessibilityLabel={t`Path`}
                 editable={!starting}
                 value={cwd}

@@ -1,5 +1,5 @@
 import { memo, useCallback, useMemo, useState } from 'react';
-import { Linking, View, StyleSheet, TextInput, Switch, ActivityIndicator } from 'react-native';
+import { Linking, View, StyleSheet, Switch, ActivityIndicator } from 'react-native';
 import { resolveFontStyle, Text, useThemeTokens } from '@osuki-dev/ui';
 import { Plural, Trans, useLingui } from '@lingui/react/macro';
 import { ExternalLink, FormInput, Send, Check } from 'lucide-react-native';
@@ -18,6 +18,7 @@ import {
   type FormRequest,
 } from '@/lib/agent-session';
 import { AGENT_TYPE } from '@/constants/agent-type';
+import { FontedTextInput } from '@/components/fonted-text-input';
 
 export interface AgentFormCardProps {
   request: FormRequest;
@@ -233,7 +234,7 @@ export const AgentFormCard = memo(function AgentFormCard({
           <View key={field.key} style={styles.fieldRow}>
             <FieldTitle field={field} />
             <FieldDescription field={field} />
-            <TextInput
+            <FontedTextInput
               value={currentVal}
               onChangeText={(text) => setValue(field.key, text)}
               placeholder={field.placeholder ?? t`Type here…`}
@@ -277,7 +278,7 @@ export const AgentFormCard = memo(function AgentFormCard({
         return (
           <View key={field.key} style={styles.fieldRow}>
             <FieldTitle field={field} />
-            <TextInput
+            <FontedTextInput
               keyboardType="numeric"
               value={currentVal}
               onChangeText={(text) => setValue(field.key, Number(text) || 0)}

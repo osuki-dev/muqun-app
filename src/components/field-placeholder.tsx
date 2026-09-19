@@ -1,4 +1,4 @@
-import { Text } from '@osuki-dev/ui';
+import { Text, useThemeTokens } from '@osuki-dev/ui';
 import { StyleSheet, type StyleProp, type TextStyle } from 'react-native';
 
 /**
@@ -30,17 +30,19 @@ export function FieldPlaceholder({
 }: {
   text: string | undefined;
   visible: boolean;
-  color: string;
+  /** The placeholder tint; the theme's subtle text when a field names none. */
+  color: string | undefined;
   /** The field's own text metrics and padding, so the two lines coincide. */
   style: StyleProp<TextStyle>;
 }) {
+  const { colors } = useThemeTokens();
   if (!visible || !text) return null;
   return (
     <Text
       accessible={false}
       importantForAccessibility="no"
       pointerEvents="none"
-      color={color}
+      color={color ?? colors.textSubtle}
       style={StyleSheet.flatten([styles.placeholder, style])}>
       {text}
     </Text>
@@ -48,10 +50,9 @@ export function FieldPlaceholder({
 }
 
 const styles = StyleSheet.create({
+  // In flow inside the overlay that the field lays over itself, so the
+  // overlay's own alignment decides where the line sits.
   placeholder: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    left: 0,
+    alignSelf: 'stretch',
   },
 });

@@ -4,7 +4,6 @@ import { useEffect, useRef, type ReactNode } from 'react';
 import {
   ActivityIndicator,
   StyleSheet,
-  TextInput,
   View,
   type AccessibilityProps,
   type StyleProp,
@@ -19,7 +18,6 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
-import { FieldPlaceholder } from '@/components/field-placeholder';
 import { PressableScale } from '@/components/pressable-scale';
 import { AGENT_TYPE } from '@/constants/agent-type';
 import { appChrome } from '@/constants/appearance';
@@ -27,6 +25,7 @@ import { SheetFrame } from '@/components/sheet-ground';
 import { SheetHandle } from '@/components/sheet-route-frame';
 import { KeyboardInset } from '@/components/keyboard-inset';
 import { fadeIn, PRESET, timing } from '@/lib/motion';
+import { FontedTextInput } from '@/components/fonted-text-input';
 
 /**
  * The furniture every bottom sheet in Muqun is built from.
@@ -291,26 +290,17 @@ export function SheetSceneSearch({
   return (
     <View style={[styles.searchRow, { borderBottomColor: colors.border }]}>
       <Search size={16} color={colors.textSubtle} />
-      <View style={styles.searchField}>
-        <TextInput
-          testID={testID}
-          accessibilityLabel={accessibilityLabel}
-          value={value}
-          onChangeText={onChangeText}
-          placeholder={placeholder}
-          // Drawn by `FieldPlaceholder`; the hint stays for the screen reader.
-          placeholderTextColor="transparent"
-          autoCapitalize="none"
-          autoCorrect={false}
-          style={[styles.searchInput, fieldFont, { color: colors.text }]}
-        />
-        <FieldPlaceholder
-          text={placeholder}
-          visible={value.length === 0}
-          color={colors.textSubtle}
-          style={[styles.searchPlaceholder, fieldFont]}
-        />
-      </View>
+      <FontedTextInput
+        testID={testID}
+        accessibilityLabel={accessibilityLabel}
+        value={value}
+        onChangeText={onChangeText}
+        placeholder={placeholder}
+        placeholderTextColor={colors.textSubtle}
+        autoCapitalize="none"
+        autoCorrect={false}
+        style={[styles.searchInput, fieldFont, { color: colors.text }]}
+      />
       {clearAccessibilityLabel && value.length > 0 ? (
         <PressableScale
           testID={testID ? `${testID}-clear` : undefined}
@@ -866,14 +856,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  searchField: {
-    flex: 1,
-    justifyContent: 'center',
-  },
-  searchPlaceholder: {
-    fontSize: AGENT_TYPE.prose.size,
-  },
   searchInput: {
+    flex: 1,
     // A `TextInput` is not a kit `Text` and cannot take a variant, so the one
     // number it needs comes from the type scale rather than from this file: a
     // field holds what the reader wrote, which is what `prose` sizes. It was a

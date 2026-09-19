@@ -1,5 +1,5 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Alert, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { Alert, ScrollView, StyleSheet, View } from 'react-native';
 import { Text, useThemeTokens } from '@osuki-dev/ui';
 import { useLingui } from '@lingui/react/macro';
 import {
@@ -52,6 +52,7 @@ import {
   type WorkspaceMissing,
   type WorktreeDirectory,
 } from '@/lib/agent-session';
+import { FontedTextInput } from '@/components/fonted-text-input';
 
 const STAGGERED_ROWS = 8;
 
@@ -505,7 +506,7 @@ export const AgentWorktreeSheet = memo(function AgentWorktreeSheet({
                   <SheetSceneField
                     label={t`Name`}
                     hint={t`Leave it empty and OpenCode picks a name.`}>
-                    <TextInput
+                    <FontedTextInput
                       testID="agent-worktree-name-input"
                       accessibilityLabel={t`Worktree name`}
                       value={nameDraft}
@@ -527,7 +528,7 @@ export const AgentWorktreeSheet = memo(function AgentWorktreeSheet({
                     label={t`Branch from`}
                     hint={t`A branch or tag this repository already has.`}
                     error={createError ?? undefined}>
-                    <TextInput
+                    <FontedTextInput
                       testID="agent-worktree-branch-input"
                       accessibilityLabel={t`Branch to start from`}
                       value={branchDraft}

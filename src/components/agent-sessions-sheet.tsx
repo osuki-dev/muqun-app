@@ -1,5 +1,5 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Alert, View, StyleSheet, ScrollView, TextInput } from 'react-native';
+import { Alert, View, StyleSheet, ScrollView } from 'react-native';
 import { Text, useThemeTokens } from '@osuki-dev/ui';
 import { useLingui } from '@lingui/react/macro';
 import {
@@ -53,6 +53,7 @@ import {
   type ModelRef,
 } from '@/lib/agent-session';
 import { AGENT_TYPE } from '@/constants/agent-type';
+import { FontedTextInput } from '@/components/fonted-text-input';
 
 const STAGGERED_ROWS = 8;
 
@@ -465,7 +466,7 @@ export const AgentSessionsSheet = memo(function AgentSessionsSheet({
           exiting={fadeOutDown('micro')}
           style={styles.rename}>
           <SheetSceneField label={t`Session name`}>
-            <TextInput
+            <FontedTextInput
               testID={`agent-session-rename-input-${session.asid}`}
               accessibilityLabel={t`Session name`}
               value={renameDraft}

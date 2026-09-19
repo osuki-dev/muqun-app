@@ -25,7 +25,7 @@ import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { KeyboardToolbar, Text, useThemeTokens } from '@osuki-dev/ui';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { useEffect, useRef, useState } from 'react';
-import { Linking, StyleSheet, TextInput, View } from 'react-native';
+import { Linking, StyleSheet, View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import Animated from 'react-native-reanimated';
 
@@ -45,6 +45,7 @@ import { describeWebServiceUrl, parsePort, webServiceUrl } from '@/lib/web-servi
 import { probeWebService } from '@/lib/web-service-probe';
 import { useRenderTally } from '@/lib/render-tally';
 import { useServerWebPorts } from '@/stores/server-web-ports';
+import { FontedTextInput } from '@/components/fonted-text-input';
 
 /** The focused field's clearance above the keyboard and its toolbar. */
 const KEYBOARD_BOTTOM_OFFSET = 88;
@@ -172,7 +173,7 @@ export function OpenWebServiceSheet({
               label={t`Port`}
               hint={target ? describeWebServiceUrl(target) : undefined}
               error={error ?? undefined}>
-              <TextInput
+              <FontedTextInput
                 accessibilityLabel={t`Port`}
                 testID="open-web-service-port"
                 value={portText}

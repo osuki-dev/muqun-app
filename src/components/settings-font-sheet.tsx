@@ -28,7 +28,7 @@
 import { useLingui } from '@lingui/react/macro';
 import { Text, useThemeTokens } from '@osuki-dev/ui';
 import { useEffect, useRef, useState } from 'react';
-import { StyleSheet, TextInput, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -76,6 +76,7 @@ import {
   type FontSlotId,
   type UserFontProblem,
 } from '@/theme/user-fonts';
+import { FontedTextInput } from '@/components/fonted-text-input';
 
 /** The focused field's clearance above the keyboard: the URL field. */
 const KEYBOARD_BOTTOM_OFFSET = 96;
@@ -647,7 +648,7 @@ function FontSlotGroup({
           <SheetSceneField
             label={t`Font file address`}
             hint={t`A direct link to a .ttf or .otf file.`}>
-            <TextInput
+            <FontedTextInput
               autoCapitalize="none"
               autoCorrect={false}
               autoFocus
