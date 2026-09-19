@@ -1,4 +1,5 @@
-import { Text, useThemeTokens } from '@osuki-dev/ui';
+import { useThemeTokens } from '@osuki-dev/ui';
+import { Text } from '@/components/text';
 import { StyleSheet, type StyleProp, type TextStyle } from 'react-native';
 
 /**

@@ -1,7 +1,8 @@
 import { Children, useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
-import { Text, useThemeTokens } from '@osuki-dev/ui';
+import { useThemeTokens } from '@osuki-dev/ui';
+import { Text } from '@/components/text';
 import { useLingui } from '@lingui/react/macro';
 import { ChevronRight } from 'lucide-react-native';
 import { PressableScale } from '@/components/pressable-scale';

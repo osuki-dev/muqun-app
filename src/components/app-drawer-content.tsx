@@ -1,6 +1,7 @@
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { Trans, useLingui } from '@lingui/react/macro';
-import { Text, useThemeTokens } from '@osuki-dev/ui';
+import { useThemeTokens } from '@osuki-dev/ui';
+import { Text } from '@/components/text';
 import type { DrawerContentComponentProps } from 'expo-router/drawer';
 import { type Href, usePathname, useRouter } from 'expo-router';
 import { Bot, ChevronRight, LayoutGrid, ScanLine, Settings } from 'lucide-react-native';

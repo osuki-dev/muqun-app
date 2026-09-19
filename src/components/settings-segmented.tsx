@@ -20,7 +20,8 @@
  * is what the compound API is for -- so this cannot drift from `Tabs` when
  * `Tabs` changes.
  */
-import { Tabs, Text, useThemeTokens } from '@osuki-dev/ui';
+import { Tabs, useThemeTokens } from '@osuki-dev/ui';
+import { Text } from '@/components/text';
 import { useEffect, useState } from 'react';
 import { StyleSheet } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';

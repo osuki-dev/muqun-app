@@ -1,7 +1,8 @@
 import { LegendList, type LegendListRenderItemProps } from '@legendapp/list/react-native';
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { Trans, useLingui } from '@lingui/react/macro';
-import { Text, useThemeTokens } from '@osuki-dev/ui';
+import { useThemeTokens } from '@osuki-dev/ui';
+import { Text } from '@/components/text';
 import { Image } from 'expo-image';
 import {
   File as FileIcon,

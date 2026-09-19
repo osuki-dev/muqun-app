@@ -2,7 +2,8 @@ import { TerminalNotice, terminalNoticeStyles } from '@/components/terminal-noti
 import { ThemeArtwork, useHasThemeArtwork } from '@/components/theme-artwork';
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { Trans, useLingui } from '@lingui/react/macro';
-import { Text, useThemeTokens, useToast } from '@osuki-dev/ui';
+import { useThemeTokens, useToast } from '@osuki-dev/ui';
+import { Text } from '@/components/text';
 import { useRouter } from 'expo-router';
 import { Keyboard as KeyboardIcon, PenLine, RefreshCw, Unplug, X } from 'lucide-react-native';
 import { useEffect, useMemo, useRef, useState } from 'react';

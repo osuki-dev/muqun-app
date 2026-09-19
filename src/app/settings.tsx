@@ -1,7 +1,8 @@
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { ThemeArtwork, useHasThemeArtwork } from '@/components/theme-artwork';
 import { brandMark } from '@/components/brand-mark';
-import { Text, useThemeMode, useThemeTokens, useToast } from '@osuki-dev/ui';
+import { useThemeMode, useThemeTokens, useToast } from '@osuki-dev/ui';
+import { Text } from '@/components/text';
 import * as Application from 'expo-application';
 import Constants from 'expo-constants';
 import { Image } from 'expo-image';

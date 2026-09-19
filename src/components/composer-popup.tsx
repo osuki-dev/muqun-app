@@ -1,7 +1,8 @@
 import { Card } from '@/components/themed-card';
 import { useSurfaceBackground, useSurfaceBackgroundOpacity } from '@/hooks/use-surface-background';
 import { useLingui } from '@lingui/react/macro';
-import { PressableCard, Stack, Text, useThemeTokens } from '@osuki-dev/ui';
+import { PressableCard, Stack, useThemeTokens } from '@osuki-dev/ui';
+import { Text } from '@/components/text';
 import { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';

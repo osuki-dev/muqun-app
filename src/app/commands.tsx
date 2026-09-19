@@ -68,7 +68,8 @@ import {
  * whole reading it switched to, because this sheet was the only way in. See
  * `src/lib/pane-view-mode.ts`.
  */
-import { Spinner, Text, useThemeTokens } from '@osuki-dev/ui';
+import { Spinner, useThemeTokens } from '@osuki-dev/ui';
+import { Text } from '@/components/text';
 import { Tabs } from '@/components/themed-tabs';
 import { Button } from '@/components/themed-button';
 import { Skeleton } from '@/components/themed-skeleton';

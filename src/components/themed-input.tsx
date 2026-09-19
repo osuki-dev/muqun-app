@@ -10,7 +10,8 @@ import Animated, {
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
-import { resolveFontStyle, Text, useThemeTokens } from '@osuki-dev/ui';
+import { resolveFontStyle, useThemeTokens } from '@osuki-dev/ui';
+import { Text } from '@/components/text';
 import { FontedTextInput } from '@/components/fonted-text-input';
 
 export type InputVariant = 'underline' | 'outline';

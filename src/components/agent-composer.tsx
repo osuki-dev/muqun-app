@@ -9,7 +9,8 @@ import {
   useWindowDimensions,
   View,
 } from 'react-native';
-import { Spinner, Text, useThemeTokens, useToast } from '@osuki-dev/ui';
+import { Spinner, useThemeTokens, useToast } from '@osuki-dev/ui';
+import { Text } from '@/components/text';
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { Trans, useLingui } from '@lingui/react/macro';
 import {

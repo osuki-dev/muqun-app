@@ -7,7 +7,8 @@ import Animated, {
   type SharedValue,
 } from 'react-native-reanimated';
 import { LegendList, type LegendListRenderItemProps } from '@legendapp/list/react-native';
-import { Text, useThemeTokens } from '@osuki-dev/ui';
+import { useThemeTokens } from '@osuki-dev/ui';
+import { Text } from '@/components/text';
 import type { MarkdownStyle } from 'react-native-enriched-markdown';
 
 import { AGENT_TYPE } from '@/constants/agent-type';

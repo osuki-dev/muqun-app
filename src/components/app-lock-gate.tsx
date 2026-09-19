@@ -1,5 +1,6 @@
 import { Trans, useLingui } from '@lingui/react/macro';
-import { Text, useThemeTokens } from '@osuki-dev/ui';
+import { useThemeTokens } from '@osuki-dev/ui';
+import { Text } from '@/components/text';
 import { Image } from 'expo-image';
 import * as ScreenCapture from 'expo-screen-capture';
 import { Fingerprint, LockKeyhole, ScanFace } from 'lucide-react-native';

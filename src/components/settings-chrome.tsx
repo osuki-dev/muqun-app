@@ -16,7 +16,8 @@ import { useSurfaceBackground } from '@/hooks/use-surface-background';
  * two transitions telling the same story. Motion on this screen is spent only
  * where a state changes under the finger.
  */
-import { Text, useThemeTokens } from '@osuki-dev/ui';
+import { useThemeTokens } from '@osuki-dev/ui';
+import { Text } from '@/components/text';
 import { ChevronRight, type LucideIcon } from 'lucide-react-native';
 import { Children, Fragment, isValidElement, type ReactNode } from 'react';
 import { StyleSheet, type TextStyle, View } from 'react-native';
@@ -90,17 +91,6 @@ const CHIP_SIZE = 36;
 const CHOICE_LABEL_FLOOR = '55%';
 
 /**
- * Trailing slack on a shrink-wrapped label, as a fraction of its own size.
- *
- * Not a point value: the slack has to grow with the type, with the reader's
- * text-size setting, and with how far a face leans. Three-tenths of an em
- * clears the overhang of an ordinary 12-degree oblique at any size with room
- * to spare, and is small enough to read as the pill's padding rather than as a
- * gap. See `SectionLabel` for what it is protecting against.
- */
-const HUG_TRAILING_SLACK = 0.3;
-
-/**
  * The instrument label that names a group of rows -- the one this app draws
  * over every section it has, on every screen.
  *
@@ -168,7 +158,6 @@ export function SectionLabel({
   style?: TextStyle | TextStyle[];
 }) {
   const plate = useSheetGroundPlate();
-  const theme = useThemeTokens();
   /**
    * The label's text starts where the card's row text starts.
    *
@@ -184,22 +173,22 @@ export function SectionLabel({
    * plate appearing does not move the text it is protecting.
    */
   const indent = LADDER.gutter - (plate.paddingHorizontal ?? LADDER.tight);
-  /**
-   * Room on the trailing edge for a glyph that leans past its own advance.
+  /*
+   * This label used to carry its own trailing slack here -- an extra
+   * `paddingRight` of 0.3em, added when a reader's italic face made this
+   * heading read APPEARANC. It is gone, and it is worth saying why rather than
+   * just deleting it, because it is the fix everybody reaches for first.
    *
-   * This label is shrink-wrapped -- `alignSelf: 'flex-start'` is the whole
-   * point of it -- so its width is exactly what the text measured. Android
-   * measures a line as the sum of its glyph advances, and an italic or oblique
-   * face draws its final letter beyond that sum, with nowhere for the overhang
-   * to go: the reader installed a wide italic face and the heading over this
-   * page's appearance rows read APPEARANC.
+   * It never worked. `TextView` clips its drawing to `width -
+   * compoundPaddingRight`, and Yoga has already added that same padding to the
+   * width, so the clip lands on the advance edge whatever the padding is.
+   * Measured on the device against a 0, an 8 and a 24 point right padding: the
+   * ink stopped at the identical pixel in all three. What the padding did do
+   * was make the plate lopsided, which is what it was really being judged on.
    *
-   * Trailing only, and given back as margin, so the glyphs still begin on the
-   * same x as the rows the label names -- the alignment this whole file exists
-   * to hold. The plate grows rightward around the slack and nothing moves.
+   * The clip is fixed where it can be, in `components/text.tsx`, by making the
+   * line itself longer than the glyphs. The plate is symmetrical again.
    */
-  const slack = Math.ceil(theme.typeStyles.label.fontSize * HUG_TRAILING_SLACK);
-  const platePadding = plate.paddingHorizontal ?? LADDER.tight;
   return (
     <Text
       variant="label"
@@ -213,7 +202,6 @@ export function SectionLabel({
         plate,
         {
           marginLeft: indent,
-          paddingRight: platePadding + slack,
           // The right side only ever bleeds, and only when a plate is there.
           marginRight:
             plate.paddingHorizontal === undefined ? 0 : LADDER.tight - plate.paddingHorizontal,

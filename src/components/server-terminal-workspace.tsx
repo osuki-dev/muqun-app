@@ -2,7 +2,8 @@ import { TerminalNotice, terminalNoticeStyles } from '@/components/terminal-noti
 import { NoticeDeck } from '@/components/notice-deck';
 import { ThemeIcon } from '@/components/theme-icon';
 import { ComposerSendGuard } from '@/lib/composer-send-guard';
-import { Spinner, Text, useThemeMode, useThemeTokens, useToast } from '@osuki-dev/ui';
+import { Spinner, useThemeMode, useThemeTokens, useToast } from '@osuki-dev/ui';
+import { Text } from '@/components/text';
 import { resolvePanelPick } from '@/lib/resolve-panel-pick';
 import {
   type Href,

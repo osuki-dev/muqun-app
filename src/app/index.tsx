@@ -1,6 +1,7 @@
 import { useAppActive } from '@/hooks/use-app-active';
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';
-import { Text, useThemeTokens } from '@osuki-dev/ui';
+import { useThemeTokens } from '@osuki-dev/ui';
+import { Text } from '@/components/text';
 import { Card } from '@/components/themed-card';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { Button } from '@/components/themed-button';
