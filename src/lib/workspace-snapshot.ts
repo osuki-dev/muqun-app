@@ -12,6 +12,8 @@ import { initialSelection, reconcileSelection } from '@/lib/workspace-selection'
 import { resolveSessionId, sessionChoices, type SessionChoice } from '@/lib/session-switcher';
 import { snapshotServesAgents } from '@/lib/session-snapshot';
 import { rememberWarmWorkspace, warmWorkspace, type WarmWorkspace } from '@/lib/server-warm-cache';
+import { mirroredServerPanes } from '@/lib/server-agents';
+import { useServerAgents } from '@/stores/server-agents';
 
 /**
  * The one shape this prefetch reads. A pane that turns out to be read another
@@ -207,6 +209,20 @@ export async function warmConfiguredWorkspace(
     // A terminal mounted during this prefetch may already have fresher data.
     if (warmWorkspace(serverId)) return;
     rememberWarmWorkspace(serverId, { ...snapshot, firstPane });
+    // And the card Home draws for this server. Its rows were written only by
+    // the terminal screen, so a pane closed elsewhere stayed on Home until the
+    // reader went into the server and came back -- even across a pull to
+    // refresh, which asked the gateway whether it was up and never what it was
+    // running. The warm has just read exactly that list; it costs no request
+    // to hand it over. (A demo record never gets here: every caller returns
+    // before the warm for one.)
+    {
+      void useServerAgents.getState().record({
+        serverId,
+        checkedAtMs: Date.now(),
+        agents: mirroredServerPanes(snapshot.panes, snapshot.agents),
+      });
+    }
   } catch {
     // Deliberately silent: see above.
   }

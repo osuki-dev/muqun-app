@@ -86,6 +86,7 @@ import { ThemedSurface, ThemedSurfaceArtwork } from '@/components/themed-surface
 import { useBrandMark } from '@/components/brand-mark';
 import { slotFontFamily } from '@/theme/user-font-file';
 import { useAppSettings } from '@/stores/app-settings';
+import { forgetWarmWorkspace } from '@/lib/server-warm-cache';
 
 /**
  * Home, rebuilt when the reader's fonts change.
@@ -350,6 +351,24 @@ function ServerList({ width, layoutMode }: { width: number; layoutMode: 'compact
         force: true,
         shouldContinue: () => AppState.currentState === 'active',
       });
+      // The rows under the selected server, re-read. A pull used to refresh the
+      // dots and leave the lists as they were, so an agent the reader had
+      // closed stayed on its card until they opened the server and came back.
+      // The warm cache is dropped first because a pull is someone asking: the
+      // warm would otherwise answer from what it read a moment ago.
+      const selected = useGatewayConnectionStore.getState().record;
+      if (selected && !isDemoRecord(selected) && !selected.sshTunnel) {
+        const gate = serverPrewarmGate(selected.serverId);
+        if (gate.warm) {
+          forgetWarmWorkspace(selected.serverId);
+          await warmConfiguredWorkspace(
+            selected.serverId,
+            useServerSession.getState().byServer[selected.serverId],
+            () => AppState.currentState === 'active',
+            gate.health
+          );
+        }
+      }
     } finally {
       setRefreshing(false);
     }
