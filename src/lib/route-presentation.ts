@@ -194,6 +194,11 @@ export const sheetRouteContent: Readonly<Record<string, SheetContent>> = {
   // What is still running after the agent moved on.
   'agent-shells': 'list',
   'agent-tasks': 'list',
+  // Pairing is not a list, but it is as tall as one: a camera the size of the
+  // sheet's width, two other ways in, and the install command under them. At
+  // its first detent the last of those was below the fold with nothing to
+  // say it was there, on the one screen a new reader has to get through.
+  explore: 'list',
 
   // Everything below is a handful of rows or a form, and opens where it always
   // has. A sheet that jumps to full height to ask for four options is louder
@@ -203,7 +208,6 @@ export const sheetRouteContent: Readonly<Record<string, SheetContent>> = {
   'settings-font': 'short',
   'settings-language': 'short',
   'new-task': 'short',
-  explore: 'short',
   'web-service': 'short',
   'opencode-guide': 'short',
 };

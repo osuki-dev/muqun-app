@@ -3584,7 +3584,6 @@ msgstr "Atualizar saída"
 msgid "Refresh worktrees"
 msgstr "Atualizar worktrees"
 
-#: src/components/agent-worktree-sheet.tsx
 #: src/components/collaboration-notice.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/settings-storage.tsx
@@ -3601,8 +3600,8 @@ msgid "Remove {0}"
 msgstr "Remover {0}"
 
 #: src/components/agent-worktree-sheet.tsx
-msgid "Remove anyway?"
-msgstr "Remover mesmo assim?"
+msgid "Remove anyway"
+msgstr "Remover mesmo assim"
 
 #: src/components/collaboration-notice.tsx
 msgid "Remove from history?"
@@ -4561,13 +4560,22 @@ msgstr "Tab"
 msgid "Take photo"
 msgstr "Tirar foto"
 
+#: src/components/agent-context-sheet.tsx
+msgid "Tap again to clear"
+msgstr "Toque novamente para limpar"
+
 #: src/components/agent-sessions-sheet.tsx
 msgid "Tap again to delete"
 msgstr "Toque novamente para eliminar"
 
+#: src/components/agent-worktree-sheet.tsx
 #: src/components/ssh-host-form.tsx
 msgid "Tap again to remove"
 msgstr "Toque de novo para remover"
+
+#: src/components/agent-worktree-sheet.tsx
+msgid "Tap again to remove anyway"
+msgstr "Toque novamente para remover mesmo assim"
 
 #: src/components/session-map.tsx
 msgid "Tap to connect"

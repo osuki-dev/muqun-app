@@ -1,5 +1,5 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Alert, ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { Text, useThemeTokens } from '@osuki-dev/ui';
 import { useLingui } from '@lingui/react/macro';
 import {
@@ -141,6 +141,8 @@ export const AgentWorktreeSheet = memo(function AgentWorktreeSheet({
 
   /** The row whose actions are open, and the row that is busy going away. */
   const [menuDirectory, setMenuDirectory] = useState<string | null>(null);
+  /** The worktree that refused without `force`, and is waiting to be asked again. */
+  const [forceFor, setForceFor] = useState<string | null>(null);
   const [removing, setRemoving] = useState<string | null>(null);
   /** A refusal, kept on the row it belongs to rather than anywhere else. */
   const [rowError, setRowError] = useState<{ directory: string; message: string } | null>(null);
@@ -221,6 +223,7 @@ export const AgentWorktreeSheet = memo(function AgentWorktreeSheet({
   const openMenu = useCallback((directory: string) => {
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setRowError(null);
+    setForceFor(null);
     setMenuDirectory((current) => (current === directory ? null : directory));
   }, []);
 
@@ -243,20 +246,10 @@ export const AgentWorktreeSheet = memo(function AgentWorktreeSheet({
         await load();
       } catch (err) {
         if (!force && isWorktreeForceRequired(err)) {
-          Alert.alert(
-            t`Remove anyway?`,
-            t`“${worktreeDisplayName(directory)}” has changes that have not been committed. Removing it throws them away.`,
-            [
-              { text: t`Cancel`, style: 'cancel' },
-              {
-                text: t`Remove`,
-                style: 'destructive',
-                onPress: () => {
-                  void remove(directory, true).catch(() => {});
-                },
-              },
-            ]
-          );
+          // Asked in the row, not in a native alert: the menu reopens on this
+          // worktree with one item, and that item takes two taps.
+          setForceFor(directory);
+          setMenuDirectory(directory);
         } else {
           setRowError({
             directory,
@@ -326,11 +319,23 @@ export const AgentWorktreeSheet = memo(function AgentWorktreeSheet({
   const menuItems = (directory: string): AgentActionMenuItem[] => [
     {
       id: 'remove',
-      label: t`Remove worktree`,
+      label: forceFor === directory ? t`Remove anyway` : t`Remove worktree`,
       Icon: Trash2,
       tone: 'danger',
+      // Two taps either way. The first pass is a plain removal, which git
+      // refuses when there is uncommitted work; the second says what that
+      // work is about to become, which is the one question worth asking.
+      confirm:
+        forceFor === directory
+          ? {
+              label: t`Tap again to remove anyway`,
+              detail: t`“${worktreeDisplayName(directory)}” has changes that have not been committed. Removing it throws them away.`,
+            }
+          : { label: t`Tap again to remove` },
       onPress: () => {
-        void remove(directory, false).catch(() => {});
+        const force = forceFor === directory;
+        setForceFor(null);
+        void remove(directory, force).catch(() => {});
       },
       testID: `agent-worktree-remove-${worktreeDisplayName(directory)}`,
     },

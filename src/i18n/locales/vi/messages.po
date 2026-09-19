@@ -3584,7 +3584,6 @@ msgstr "Làm mới đầu ra"
 msgid "Refresh worktrees"
 msgstr "Làm mới worktree"
 
-#: src/components/agent-worktree-sheet.tsx
 #: src/components/collaboration-notice.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/settings-storage.tsx
@@ -3601,8 +3600,8 @@ msgid "Remove {0}"
 msgstr "Gỡ {0}"
 
 #: src/components/agent-worktree-sheet.tsx
-msgid "Remove anyway?"
-msgstr "Vẫn xóa?"
+msgid "Remove anyway"
+msgstr "Vẫn gỡ bỏ"
 
 #: src/components/collaboration-notice.tsx
 msgid "Remove from history?"
@@ -4561,13 +4560,22 @@ msgstr "Tab"
 msgid "Take photo"
 msgstr "Chụp ảnh"
 
+#: src/components/agent-context-sheet.tsx
+msgid "Tap again to clear"
+msgstr "Chạm lần nữa để xóa sạch"
+
 #: src/components/agent-sessions-sheet.tsx
 msgid "Tap again to delete"
 msgstr "Chạm lần nữa để xóa"
 
+#: src/components/agent-worktree-sheet.tsx
 #: src/components/ssh-host-form.tsx
 msgid "Tap again to remove"
 msgstr "Chạm lần nữa để gỡ"
+
+#: src/components/agent-worktree-sheet.tsx
+msgid "Tap again to remove anyway"
+msgstr "Chạm lần nữa để vẫn gỡ bỏ"
 
 #: src/components/session-map.tsx
 msgid "Tap to connect"

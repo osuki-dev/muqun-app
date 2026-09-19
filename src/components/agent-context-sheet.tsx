@@ -31,6 +31,7 @@ import {
   type TokensUsage,
 } from '@/lib/agent-session';
 import { AGENT_TYPE } from '@/constants/agent-type';
+import { TwoStepAction } from '@/components/two-step-action';
 
 /**
  * The session's context and spend, as a native form sheet route.
@@ -471,18 +472,17 @@ export const AgentContextSheet = memo(function AgentContextSheet({
               </PressableScale>
             ) : null}
             {onClear ? (
-              <PressableScale
+              // Asked twice, in place: it ends the conversation the reader is
+              // in, and it sat one stray tap away from "Compact context".
+              <TwoStepAction
                 testID="agent-context-clear-btn"
-                accessibilityRole="button"
-                onPress={() => {
+                label={t`Clear the conversation`}
+                confirmLabel={t`Tap again to clear`}
+                onConfirm={() => {
                   onClose();
                   onClear();
                 }}
-                style={styles.quietAction}>
-                <Text variant="caption" weight="semibold" color={theme.colors.danger}>
-                  {t`Clear the conversation`}
-                </Text>
-              </PressableScale>
+              />
             ) : null}
           </View>
         ) : null}

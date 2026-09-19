@@ -3584,7 +3584,6 @@ msgstr "출력 새로 고침"
 msgid "Refresh worktrees"
 msgstr "워크트리 새로고침"
 
-#: src/components/agent-worktree-sheet.tsx
 #: src/components/collaboration-notice.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/settings-storage.tsx
@@ -3601,8 +3600,8 @@ msgid "Remove {0}"
 msgstr "{0} 제거"
 
 #: src/components/agent-worktree-sheet.tsx
-msgid "Remove anyway?"
-msgstr "그래도 제거할까요?"
+msgid "Remove anyway"
+msgstr "그래도 제거"
 
 #: src/components/collaboration-notice.tsx
 msgid "Remove from history?"
@@ -4561,13 +4560,22 @@ msgstr "탭"
 msgid "Take photo"
 msgstr "사진 찍기"
 
+#: src/components/agent-context-sheet.tsx
+msgid "Tap again to clear"
+msgstr "한 번 더 눌러 지우기"
+
 #: src/components/agent-sessions-sheet.tsx
 msgid "Tap again to delete"
 msgstr "한 번 더 눌러 삭제"
 
+#: src/components/agent-worktree-sheet.tsx
 #: src/components/ssh-host-form.tsx
 msgid "Tap again to remove"
 msgstr "한 번 더 탭하면 제거"
+
+#: src/components/agent-worktree-sheet.tsx
+msgid "Tap again to remove anyway"
+msgstr "한 번 더 눌러 강제로 제거"
 
 #: src/components/session-map.tsx
 msgid "Tap to connect"

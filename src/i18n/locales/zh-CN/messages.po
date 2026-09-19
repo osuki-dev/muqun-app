@@ -3584,7 +3584,6 @@ msgstr "刷新输出"
 msgid "Refresh worktrees"
 msgstr "刷新工作树"
 
-#: src/components/agent-worktree-sheet.tsx
 #: src/components/collaboration-notice.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/settings-storage.tsx
@@ -3601,8 +3600,8 @@ msgid "Remove {0}"
 msgstr "移除 {0}"
 
 #: src/components/agent-worktree-sheet.tsx
-msgid "Remove anyway?"
-msgstr "仍要移除？"
+msgid "Remove anyway"
+msgstr "仍然移除"
 
 #: src/components/collaboration-notice.tsx
 msgid "Remove from history?"
@@ -4561,13 +4560,22 @@ msgstr "Tab 键"
 msgid "Take photo"
 msgstr "拍照"
 
+#: src/components/agent-context-sheet.tsx
+msgid "Tap again to clear"
+msgstr "再点一次即清除"
+
 #: src/components/agent-sessions-sheet.tsx
 msgid "Tap again to delete"
 msgstr "再点一次即删除"
 
+#: src/components/agent-worktree-sheet.tsx
 #: src/components/ssh-host-form.tsx
 msgid "Tap again to remove"
 msgstr "再点一次以移除"
+
+#: src/components/agent-worktree-sheet.tsx
+msgid "Tap again to remove anyway"
+msgstr "再点一次即强制移除"
 
 #: src/components/session-map.tsx
 msgid "Tap to connect"
