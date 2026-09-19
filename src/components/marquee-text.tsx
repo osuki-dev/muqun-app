@@ -33,6 +33,9 @@ import { MARQUEE_MOTION } from '@/lib/motion';
  * With reduced motion the line does not travel. It falls back to the ellipsis,
  * which is the honest still version of the same thing.
  */
+/** Wider than any line on any device this runs on; it is never drawn, only laid out. */
+const MARQUEE_TRACK_WIDTH = 4096;
+
 type TextProps = ComponentProps<typeof Text>;
 
 export interface MarqueeTextProps extends Omit<TextProps, 'numberOfLines' | 'children'> {
@@ -92,9 +95,13 @@ export const MarqueeText = memo(function MarqueeText({
 
   return (
     <View style={styles.box} onLayout={onBox}>
-      {/* A row, and a line that will not shrink: inside one, a `Text` takes its
-          natural single-line width even when that is wider than the box, which
-          is the measurement the whole component turns on. */}
+      {/* A track far wider than any screen, and a line that hugs inside it.
+          A row with a `flexShrink: 0` child was not enough: on Android the text
+          was still measured against the box, so a long name was ellipsised at
+          the box's width, its measured width equalled the box, and nothing ever
+          travelled -- the owner saw "…" on exactly the rows this exists for.
+          Inside a track with room to spare the line takes its natural width,
+          which is the measurement the whole component turns on. */}
       <Animated.View style={[styles.track, travel]}>
         <Text
           {...text}
@@ -110,6 +117,6 @@ export const MarqueeText = memo(function MarqueeText({
 
 const styles = StyleSheet.create({
   box: { alignSelf: 'stretch', overflow: 'hidden' },
-  track: { flexDirection: 'row' },
-  line: { flexShrink: 0 },
+  track: { flexDirection: 'row', width: MARQUEE_TRACK_WIDTH },
+  line: { flexShrink: 0, flexGrow: 0, alignSelf: 'flex-start' },
 });

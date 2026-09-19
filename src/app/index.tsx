@@ -84,8 +84,36 @@ import { resolveHomeIdentity } from '@/theme/resolve';
 import { ThemeArtwork, useHasThemeArtwork } from '@/components/theme-artwork';
 import { ThemedSurface, ThemedSurfaceArtwork } from '@/components/themed-surface';
 import { useBrandMark } from '@/components/brand-mark';
+import { slotFontFamily } from '@/theme/user-font-file';
+import { useAppSettings } from '@/stores/app-settings';
 
+/**
+ * Home, rebuilt when the reader's fonts change.
+ *
+ * Home is the one screen that is *frozen* when a font changes: the font sheet
+ * is two levels up -- Home, Settings, the sheet -- and the navigator freezes a
+ * screen that is not the top one or the one directly under a sheet
+ * (`freezeOnBlur`). Settings is drawn the moment the font lands; Home is told
+ * about it only when it thaws, and what the owner saw on a phone was Home a
+ * beat behind: still in the old face after the first change, and in the
+ * *previous* choice after the second, while every screen that had been visible
+ * was right.
+ *
+ * A font change is rare, global and already behind a full-screen transition,
+ * so Home does not try to repair a thaw: it takes the families as its key and
+ * mounts fresh in the new face. The list's scroll position is the only thing
+ * lost, on the one occasion the reader has just come back from Settings.
+ */
 export default function HomeScreen() {
+  const interfaceFont = useAppSettings((state) => state.interfaceFont);
+  const monoFont = useAppSettings((state) => state.monoFont);
+  const faces = `${slotFontFamily(interfaceFont, 'interface') ?? 'system'}|${
+    slotFontFamily(monoFont, 'mono') ?? 'system'
+  }`;
+  return <HomeScreenContent key={faces} />;
+}
+
+function HomeScreenContent() {
   const { width } = useWindowDimensions();
   const { record, loading } = useGatewayRecord();
   const workspaceLayout = responsiveWorkspaceLayout(width);
