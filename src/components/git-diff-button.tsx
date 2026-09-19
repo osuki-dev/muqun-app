@@ -122,7 +122,11 @@ export function GitDiffButton({
             compact && styles.compactBadge,
             { backgroundColor: surfaceBackground(theme.colors.primary) },
           ]}>
-          <Text variant="caption" color={theme.colors.onPrimary} style={styles.badgeText}>
+          <Text
+            variant="caption"
+            hugSlack={false}
+            color={theme.colors.onPrimary}
+            style={styles.badgeText}>
             {count}
           </Text>
         </View>
@@ -182,6 +186,7 @@ const styles = StyleSheet.create({
     fontSize: 9,
     lineHeight: 11,
     includeFontPadding: false,
+    textAlign: 'center',
     fontVariant: ['tabular-nums'],
   },
 });

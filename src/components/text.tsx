@@ -132,7 +132,18 @@ function hasContent(children: ReactNode): boolean {
  * leans past its own advance. See the file comment for why that is needed and
  * for the four things that do not provide it.
  */
-export function Text({ children, ...props }: TextProps) {
+export type AppTextProps = TextProps & {
+  /**
+   * `false` for a glyph set in a box of its own size: a count in a round badge,
+   * a digit in a key cap. The slack is a character, and a character has width:
+   * in a 14pt circle it turned the circle into an oval and pushed the digit off
+   * its centre. Such a box is sized by the app, not by the text, so there is no
+   * advance edge for the overhang to be clipped at.
+   */
+  hugSlack?: boolean;
+};
+
+export function Text({ children, hugSlack = true, ...props }: AppTextProps) {
   const slack = useContext(HugSlackContext);
   /*
    * `selectable` is the one exemption, and it is not about layout. The reader
@@ -141,7 +152,7 @@ export function Text({ children, ...props }: TextProps) {
    * breaks whatever it is pasted into. A selectable string is also, for that
    * reason, one the app has already given room to.
    */
-  if (!slack || props.selectable || !hasContent(children)) {
+  if (!slack || !hugSlack || props.selectable || !hasContent(children)) {
     return <KitText {...props}>{children}</KitText>;
   }
   return (
