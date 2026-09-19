@@ -408,13 +408,13 @@ msgstr "All models"
 msgid "All panes"
 msgstr "All panes"
 
+#: src/components/agent-sessions-sheet.tsx
+msgid "All projects"
+msgstr "All projects"
+
 #: src/components/agent-composer.tsx
 msgid "All sessions"
 msgstr "All sessions"
-
-#: src/components/agent-sessions-sheet.tsx
-msgid "All workspaces"
-msgstr "All workspaces"
 
 #: src/i18n/labels.ts
 msgid "Allow"
@@ -535,8 +535,8 @@ msgid "Ask each time"
 msgstr "Ask each time"
 
 #: src/components/agent-workbench.tsx
-msgid "Ask questions, inspect files, or run commands in your workspace."
-msgstr "Ask questions, inspect files, or run commands in your workspace"
+msgid "Ask questions, inspect files, or run commands in your project."
+msgstr "Ask questions, inspect files, or run commands in your project"
 
 #: src/i18n/labels.ts
 msgid "Ask you a question"
@@ -873,13 +873,13 @@ msgstr "Choose an SSH host"
 msgid "Choose files"
 msgstr "Choose files"
 
+#: src/components/agent-workbench.tsx
+msgid "Choose project"
+msgstr "Choose project"
+
 #: src/components/simfarm-stage.tsx
 msgid "Choose which simulator to show"
 msgstr "Choose which simulator to show"
-
-#: src/components/agent-workbench.tsx
-msgid "Choose workspace"
-msgstr "Choose workspace"
 
 #: src/components/settings-appearance.tsx
 msgid "Classic"
@@ -1271,8 +1271,8 @@ msgid "Control Z, suspend"
 msgstr "Control Z, suspend"
 
 #: src/components/agent-mode-sheet.tsx
-msgid "Conversational help and open-ended workspace questions."
-msgstr "Conversational help and open-ended workspace questions"
+msgid "Conversational help and open-ended project questions."
+msgstr "Conversational help and open-ended project questions"
 
 #: src/components/agent-message-block.tsx
 #: src/components/asset-viewer.tsx
@@ -1953,8 +1953,8 @@ msgid "Failed to create agent session"
 msgstr "Failed to create agent session"
 
 #: src/components/agent-workbench.tsx
-msgid "Failed to switch workspace session"
-msgstr "Failed to switch workspace session"
+msgid "Failed to switch project"
+msgstr "Failed to switch project"
 
 #: src/components/agent-composer.tsx
 msgid "Fast agent specialized for exploring codebases."
@@ -1981,16 +1981,16 @@ msgid "Files"
 msgstr "Files"
 
 #: src/components/file-mention-panel.tsx
-msgid "Files in this workspace"
-msgstr "Files in this workspace"
+msgid "Files in this project"
+msgstr "Files in this project"
 
 #: src/components/agent-workspace-sheet.tsx
-msgid "Filter workspaces or type a path"
-msgstr "Filter workspaces or type a path"
+msgid "Filter projects or type a path"
+msgstr "Filter projects or type a path"
 
 #: src/components/agent-workspace-sheet.tsx
-msgid "Filter workspaces, or type a path"
-msgstr "Filter workspaces, or type a path"
+msgid "Filter projects, or type a path"
+msgstr "Filter projects, or type a path"
 
 #: src/i18n/labels.ts
 msgid "Find a file by name"
@@ -2388,10 +2388,6 @@ msgstr "Keys"
 #: src/lib/release-notes.ts
 msgid "Keys are generated on the device and never leave it."
 msgstr "Keys are generated on the device and never leave it"
-
-#: src/components/agent-workspace-sheet.tsx
-msgid "Known workspaces"
-msgstr "Known workspaces"
 
 #: src/components/settings-appearance.tsx
 #: src/components/settings-language-sheet.tsx
@@ -2845,6 +2841,15 @@ msgstr "No preview for this kind of file. It stays on the server"
 msgid "No preview on this connection"
 msgstr "No preview on this connection"
 
+#: src/components/agent-workspace-sheet.tsx
+msgid "No projects here yet. Type a path above to open one."
+msgstr "No projects here yet. Type a path above to open one"
+
+#. placeholder {0}: searchQuery.trim()
+#: src/components/agent-workspace-sheet.tsx
+msgid "No projects match “{0}”."
+msgstr "No projects match “{0}”"
+
 #: src/app/new-task.tsx
 msgid "No server to start a task on."
 msgstr "No server to start a task on"
@@ -2855,8 +2860,8 @@ msgid "No servers paired yet"
 msgstr "No servers paired yet"
 
 #: src/components/agent-sessions-sheet.tsx
-msgid "No sessions in this workspace yet. Start one from the + button."
-msgstr "No sessions in this workspace yet. Start one from the + button"
+msgid "No sessions in this project yet. Start one from the + button."
+msgstr "No sessions in this project yet. Start one from the + button"
 
 #: src/components/agent-sessions-sheet.tsx
 msgid "No sessions match “{searchQuery}”."
@@ -2897,15 +2902,6 @@ msgstr "No themes are published yet"
 #: src/components/agent-context-sheet.tsx
 msgid "no window reported for this model"
 msgstr "no window reported for this model"
-
-#: src/components/agent-workspace-sheet.tsx
-msgid "No workspaces here yet. Type a path above to open one."
-msgstr "No workspaces here yet. Type a path above to open one"
-
-#. placeholder {0}: searchQuery.trim()
-#: src/components/agent-workspace-sheet.tsx
-msgid "No workspaces match “{0}”."
-msgstr "No workspaces match “{0}”"
 
 #: src/components/agent-worktree-sheet.tsx
 msgid "No worktrees yet. Make one below to work on a branch without disturbing this checkout."
@@ -2982,8 +2978,8 @@ msgid "Nothing to undo"
 msgstr "Nothing to undo"
 
 #: src/components/agent-vcs-diff-sheet.tsx
-msgid "Nothing uncommitted in this workspace."
-msgstr "Nothing uncommitted in this workspace"
+msgid "Nothing uncommitted in this project."
+msgstr "Nothing uncommitted in this project"
 
 #: src/components/agent-context-sheet.tsx
 msgid "Nothing yet — an “Always allow” reply lands here, for this project."
@@ -3037,8 +3033,8 @@ msgid "Open anyway"
 msgstr "Open anyway"
 
 #: src/components/agent-workspace-sheet.tsx
-msgid "Open as a workspace"
-msgstr "Open as a workspace"
+msgid "Open as a project"
+msgstr "Open as a project"
 
 #: src/components/agent-message-block.tsx
 msgid "Open attachment"
@@ -3399,9 +3395,24 @@ msgstr "Private key"
 msgid "Private key (leave blank to keep the saved one)"
 msgstr "Private key (leave blank to keep the saved one)"
 
+#: src/app/agent.tsx
 #: src/components/agent-worktree-sheet.tsx
+#: src/components/composer-popup.tsx
 msgid "Project"
 msgstr "Project"
+
+#. placeholder {0}: answer.missing?.directory ?? ''
+#. placeholder {0}: gone.directory
+#. placeholder {0}: missing.directory
+#: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/agent-workbench.tsx
+#: src/components/agent-worktree-sheet.tsx
+msgid "Project folder is missing: {0}"
+msgstr "Project folder is missing: {0}"
+
+#: src/components/agent-workspace-sheet.tsx
+msgid "Projects"
+msgstr "Projects"
 
 #: src/app/commands.tsx
 msgid "Prompt"
@@ -4495,6 +4506,14 @@ msgctxt "agent slash command"
 msgid "Switch language model"
 msgstr "Switch language model"
 
+#: src/components/agent-workspace-sheet.tsx
+msgid "Switch project"
+msgstr "Switch project"
+
+#: src/app/agent.tsx
+msgid "Switch project: {displayWorkspaceName}"
+msgstr "Switch project: {displayWorkspaceName}"
+
 #. placeholder {0}: panelTitle(pane, paneAgent)
 #: src/components/server-terminal-workspace.tsx
 msgid "Switch to {0}"
@@ -4511,14 +4530,6 @@ msgstr "Switch to the chat view"
 #: src/i18n/labels.ts
 msgid "Switch to the terminal view"
 msgstr "Switch to the terminal view"
-
-#: src/components/agent-workspace-sheet.tsx
-msgid "Switch workspace"
-msgstr "Switch workspace"
-
-#: src/app/agent.tsx
-msgid "Switch workspace: {displayWorkspaceName}"
-msgstr "Switch workspace: {displayWorkspaceName}"
 
 #: src/components/virtual-keyboard.tsx
 msgid "Symbols"
@@ -4940,6 +4951,7 @@ msgstr "This one is required"
 msgid "This pane is not working inside a git repository, so there is nothing to compare."
 msgstr "This pane is not working inside a git repository, so there is nothing to compare"
 
+#: src/components/agent-sessions-sheet.tsx
 #: src/components/agent-worktree-sheet.tsx
 msgid "This project"
 msgstr "This project"
@@ -5018,10 +5030,6 @@ msgstr "This terminal is no longer available"
 #: src/components/custom-theme-library.tsx
 msgid "This theme contains images that must be installed before applying"
 msgstr "This theme contains images that must be installed before applying"
-
-#: src/components/agent-sessions-sheet.tsx
-msgid "This workspace"
-msgstr "This workspace"
 
 #: src/components/session-map.tsx
 msgid "This workspace has no groups yet."
@@ -5375,20 +5383,9 @@ msgstr "Working"
 msgid "Working directory"
 msgstr "Working directory"
 
-#: src/app/agent.tsx
-#: src/components/composer-popup.tsx
 #: src/components/session-map.tsx
 msgid "Workspace"
 msgstr "Workspace"
-
-#. placeholder {0}: answer.missing?.directory ?? ''
-#. placeholder {0}: gone.directory
-#. placeholder {0}: missing.directory
-#: src/components/agent-vcs-diff-sheet.tsx
-#: src/components/agent-workbench.tsx
-#: src/components/agent-worktree-sheet.tsx
-msgid "Workspace folder is missing: {0}"
-msgstr "Workspace folder is missing: {0}"
 
 #: src/components/session-map.tsx
 msgid "Workspaces"

@@ -190,13 +190,13 @@ export const AgentWorkspaceSheet = memo(function AgentWorkspaceSheet({
   return (
     <SheetScene
       testID="agent-workspace-sheet"
-      title={t`Switch workspace`}
+      title={t`Switch project`}
       caption={activeDirectory}
       header={
         <SheetSceneSearch
           testID="agent-workspace-search-input"
-          accessibilityLabel={t`Filter workspaces or type a path`}
-          placeholder={t`Filter workspaces, or type a path`}
+          accessibilityLabel={t`Filter projects or type a path`}
+          placeholder={t`Filter projects, or type a path`}
           value={searchQuery}
           onChangeText={setSearchQuery}
         />
@@ -217,7 +217,7 @@ export const AgentWorkspaceSheet = memo(function AgentWorkspaceSheet({
               <SheetSceneRow
                 testID="agent-workspace-custom-path-btn"
                 title={typedPath}
-                caption={t`Open as a workspace`}
+                caption={t`Open as a project`}
                 leading={<FolderGit2 size={17} color={theme.colors.primary} />}
                 onPress={() => choose(typedPath)}
               />
@@ -244,15 +244,15 @@ export const AgentWorkspaceSheet = memo(function AgentWorkspaceSheet({
           <Animated.View layout={listLayout('short')}>
             {showTypedPath || suggestions.length > 0 ? <SheetSceneGroupRule /> : null}
             <SheetSceneGroupHeading
-              title={t`Known workspaces`}
+              title={t`Projects`}
               first={!showTypedPath && suggestions.length === 0}
             />
             {filtered.length === 0 ? (
               <View style={styles.empty}>
                 <Text variant="caption" color={theme.colors.textMuted} style={styles.emptyText}>
                   {searchQuery.trim()
-                    ? t`No workspaces match “${searchQuery.trim()}”.`
-                    : t`No workspaces here yet. Type a path above to open one.`}
+                    ? t`No projects match “${searchQuery.trim()}”.`
+                    : t`No projects here yet. Type a path above to open one.`}
                 </Text>
                 {searchQuery.trim() ? null : (
                   // A host that answered with nothing and a host that has

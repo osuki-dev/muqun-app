@@ -408,13 +408,13 @@ msgstr "Tous les modèles"
 msgid "All panes"
 msgstr "Tous les panneaux"
 
+#: src/components/agent-sessions-sheet.tsx
+msgid "All projects"
+msgstr "Tous les projets"
+
 #: src/components/agent-composer.tsx
 msgid "All sessions"
 msgstr "Toutes les sessions"
-
-#: src/components/agent-sessions-sheet.tsx
-msgid "All workspaces"
-msgstr "Tous les espaces de travail"
 
 #: src/i18n/labels.ts
 msgid "Allow"
@@ -535,8 +535,8 @@ msgid "Ask each time"
 msgstr "Demander à chaque fois"
 
 #: src/components/agent-workbench.tsx
-msgid "Ask questions, inspect files, or run commands in your workspace."
-msgstr "Posez des questions, inspectez des fichiers ou exécutez des commandes dans votre espace de travail"
+msgid "Ask questions, inspect files, or run commands in your project."
+msgstr "Posez des questions, inspectez des fichiers ou lancez des commandes dans votre projet"
 
 #: src/i18n/labels.ts
 msgid "Ask you a question"
@@ -873,13 +873,13 @@ msgstr "Choisissez un hôte SSH"
 msgid "Choose files"
 msgstr "Choisir des fichiers"
 
+#: src/components/agent-workbench.tsx
+msgid "Choose project"
+msgstr "Choisir un projet"
+
 #: src/components/simfarm-stage.tsx
 msgid "Choose which simulator to show"
 msgstr "Choisir le simulateur à afficher"
-
-#: src/components/agent-workbench.tsx
-msgid "Choose workspace"
-msgstr "Choisir un espace de travail"
 
 #: src/components/settings-appearance.tsx
 msgid "Classic"
@@ -1271,8 +1271,8 @@ msgid "Control Z, suspend"
 msgstr "Ctrl Z, suspendre"
 
 #: src/components/agent-mode-sheet.tsx
-msgid "Conversational help and open-ended workspace questions."
-msgstr "Aide conversationnelle et questions ouvertes sur l’espace de travail"
+msgid "Conversational help and open-ended project questions."
+msgstr "Aide conversationnelle et questions ouvertes sur le projet"
 
 #: src/components/agent-message-block.tsx
 #: src/components/asset-viewer.tsx
@@ -1953,8 +1953,8 @@ msgid "Failed to create agent session"
 msgstr "Échec de création de la session d agent"
 
 #: src/components/agent-workbench.tsx
-msgid "Failed to switch workspace session"
-msgstr "Échec du changement de session d espace de travail"
+msgid "Failed to switch project"
+msgstr "Impossible de changer de projet"
 
 #: src/components/agent-composer.tsx
 msgid "Fast agent specialized for exploring codebases."
@@ -1981,16 +1981,16 @@ msgid "Files"
 msgstr "Fichiers"
 
 #: src/components/file-mention-panel.tsx
-msgid "Files in this workspace"
-msgstr "Fichiers de cet espace de travail"
+msgid "Files in this project"
+msgstr "Fichiers de ce projet"
 
 #: src/components/agent-workspace-sheet.tsx
-msgid "Filter workspaces or type a path"
-msgstr "Filtrer les espaces de travail ou saisir un chemin"
+msgid "Filter projects or type a path"
+msgstr "Filtrer les projets ou saisir un chemin"
 
 #: src/components/agent-workspace-sheet.tsx
-msgid "Filter workspaces, or type a path"
-msgstr "Filtrer les espaces de travail, ou saisir un chemin"
+msgid "Filter projects, or type a path"
+msgstr "Filtrer les projets, ou saisir un chemin"
 
 #: src/i18n/labels.ts
 msgid "Find a file by name"
@@ -2388,10 +2388,6 @@ msgstr "Touches"
 #: src/lib/release-notes.ts
 msgid "Keys are generated on the device and never leave it."
 msgstr "Les clés sont générées sur l’appareil et n’en sortent jamais"
-
-#: src/components/agent-workspace-sheet.tsx
-msgid "Known workspaces"
-msgstr "Espaces de travail connus"
 
 #: src/components/settings-appearance.tsx
 #: src/components/settings-language-sheet.tsx
@@ -2845,6 +2841,15 @@ msgstr "Aucun aperçu pour ce type de fichier. Il reste sur le serveur"
 msgid "No preview on this connection"
 msgstr "Pas d’aperçu sur cette connexion"
 
+#: src/components/agent-workspace-sheet.tsx
+msgid "No projects here yet. Type a path above to open one."
+msgstr "Aucun projet ici pour l’instant. Saisissez un chemin ci-dessus pour en ouvrir un"
+
+#. placeholder {0}: searchQuery.trim()
+#: src/components/agent-workspace-sheet.tsx
+msgid "No projects match “{0}”."
+msgstr "Aucun projet ne correspond à « {0} »"
+
 #: src/app/new-task.tsx
 msgid "No server to start a task on."
 msgstr "Aucun serveur sur lequel démarrer une tâche"
@@ -2855,8 +2860,8 @@ msgid "No servers paired yet"
 msgstr "Aucun serveur appairé pour l’instant"
 
 #: src/components/agent-sessions-sheet.tsx
-msgid "No sessions in this workspace yet. Start one from the + button."
-msgstr "Aucune session dans cet espace de travail. Démarre-en une avec le bouton +"
+msgid "No sessions in this project yet. Start one from the + button."
+msgstr "Aucune session dans ce projet pour l’instant. Lancez-en une avec le bouton +"
 
 #: src/components/agent-sessions-sheet.tsx
 msgid "No sessions match “{searchQuery}”."
@@ -2897,15 +2902,6 @@ msgstr "Aucun thème n’est encore publié"
 #: src/components/agent-context-sheet.tsx
 msgid "no window reported for this model"
 msgstr "aucune fenêtre indiquée pour ce modèle"
-
-#: src/components/agent-workspace-sheet.tsx
-msgid "No workspaces here yet. Type a path above to open one."
-msgstr "Aucun espace de travail ici pour l’instant. Saisis un chemin ci-dessus pour en ouvrir un"
-
-#. placeholder {0}: searchQuery.trim()
-#: src/components/agent-workspace-sheet.tsx
-msgid "No workspaces match “{0}”."
-msgstr "Aucun espace de travail ne correspond à « {0} »"
 
 #: src/components/agent-worktree-sheet.tsx
 msgid "No worktrees yet. Make one below to work on a branch without disturbing this checkout."
@@ -2982,8 +2978,8 @@ msgid "Nothing to undo"
 msgstr "Rien à annuler"
 
 #: src/components/agent-vcs-diff-sheet.tsx
-msgid "Nothing uncommitted in this workspace."
-msgstr "Rien de non validé dans cet espace de travail"
+msgid "Nothing uncommitted in this project."
+msgstr "Aucune modification non validée dans ce projet"
 
 #: src/components/agent-context-sheet.tsx
 msgid "Nothing yet — an “Always allow” reply lands here, for this project."
@@ -3037,8 +3033,8 @@ msgid "Open anyway"
 msgstr "Ouvrir quand même"
 
 #: src/components/agent-workspace-sheet.tsx
-msgid "Open as a workspace"
-msgstr "Ouvrir comme espace de travail"
+msgid "Open as a project"
+msgstr "Ouvrir comme projet"
 
 #: src/components/agent-message-block.tsx
 msgid "Open attachment"
@@ -3399,9 +3395,24 @@ msgstr "Clé privée"
 msgid "Private key (leave blank to keep the saved one)"
 msgstr "Clé privée (laisser vide pour garder celle enregistrée)"
 
+#: src/app/agent.tsx
 #: src/components/agent-worktree-sheet.tsx
+#: src/components/composer-popup.tsx
 msgid "Project"
 msgstr "Projet"
+
+#. placeholder {0}: answer.missing?.directory ?? ''
+#. placeholder {0}: gone.directory
+#. placeholder {0}: missing.directory
+#: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/agent-workbench.tsx
+#: src/components/agent-worktree-sheet.tsx
+msgid "Project folder is missing: {0}"
+msgstr "Le dossier du projet est introuvable : {0}"
+
+#: src/components/agent-workspace-sheet.tsx
+msgid "Projects"
+msgstr "Projets"
 
 #: src/app/commands.tsx
 msgid "Prompt"
@@ -4495,6 +4506,14 @@ msgctxt "agent slash command"
 msgid "Switch language model"
 msgstr "Changer de modèle de langage"
 
+#: src/components/agent-workspace-sheet.tsx
+msgid "Switch project"
+msgstr "Changer de projet"
+
+#: src/app/agent.tsx
+msgid "Switch project: {displayWorkspaceName}"
+msgstr "Changer de projet : {displayWorkspaceName}"
+
 #. placeholder {0}: panelTitle(pane, paneAgent)
 #: src/components/server-terminal-workspace.tsx
 msgid "Switch to {0}"
@@ -4511,14 +4530,6 @@ msgstr "Basculer vers la vue conversation"
 #: src/i18n/labels.ts
 msgid "Switch to the terminal view"
 msgstr "Basculer vers la vue terminal"
-
-#: src/components/agent-workspace-sheet.tsx
-msgid "Switch workspace"
-msgstr "Changer d’espace de travail"
-
-#: src/app/agent.tsx
-msgid "Switch workspace: {displayWorkspaceName}"
-msgstr "Changer d’espace de travail : {displayWorkspaceName}"
 
 #: src/components/virtual-keyboard.tsx
 msgid "Symbols"
@@ -4940,6 +4951,7 @@ msgstr "Ce champ est obligatoire"
 msgid "This pane is not working inside a git repository, so there is nothing to compare."
 msgstr "Ce panneau ne travaille pas dans un dépôt git, il n’y a donc rien à comparer"
 
+#: src/components/agent-sessions-sheet.tsx
 #: src/components/agent-worktree-sheet.tsx
 msgid "This project"
 msgstr "Ce projet"
@@ -5018,10 +5030,6 @@ msgstr "Ce terminal n'est plus disponible"
 #: src/components/custom-theme-library.tsx
 msgid "This theme contains images that must be installed before applying"
 msgstr "Ce thème contient des images à installer avant de l’appliquer"
-
-#: src/components/agent-sessions-sheet.tsx
-msgid "This workspace"
-msgstr "Cet espace de travail"
 
 #: src/components/session-map.tsx
 msgid "This workspace has no groups yet."
@@ -5375,20 +5383,9 @@ msgstr "En cours"
 msgid "Working directory"
 msgstr "Répertoire de travail"
 
-#: src/app/agent.tsx
-#: src/components/composer-popup.tsx
 #: src/components/session-map.tsx
 msgid "Workspace"
 msgstr "Espace de travail"
-
-#. placeholder {0}: answer.missing?.directory ?? ''
-#. placeholder {0}: gone.directory
-#. placeholder {0}: missing.directory
-#: src/components/agent-vcs-diff-sheet.tsx
-#: src/components/agent-workbench.tsx
-#: src/components/agent-worktree-sheet.tsx
-msgid "Workspace folder is missing: {0}"
-msgstr "Dossier de l’espace de travail introuvable : {0}"
 
 #: src/components/session-map.tsx
 msgid "Workspaces"

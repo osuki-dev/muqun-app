@@ -76,7 +76,7 @@ export default function AgentScreen() {
   const createNewSessionRef = useRef<(() => void) | null>(null);
   const abortSessionRef = useRef<(() => void) | null>(null);
 
-  const displayWorkspaceName = workspaceDisplayName(activeProject, activeDirectory, t`Workspace`);
+  const displayWorkspaceName = workspaceDisplayName(activeProject, activeDirectory, t`Project`);
   const displayWorkspacePath = activeDirectory || activeProject?.canonical || '~/';
   /**
    * The title, whenever there is one.
@@ -100,7 +100,7 @@ export default function AgentScreen() {
    * another is worse than either.
    */
   // react-doctor-disable-next-line react-hooks-js/todo -- lingui t macro; the lingui babel plugin compiles the template away before the compiler sees it
-  const switchWorkspaceLabel = t`Switch workspace: ${displayWorkspaceName}`;
+  const switchWorkspaceLabel = t`Switch project: ${displayWorkspaceName}`;
   // react-doctor-disable-next-line react-hooks-js/todo -- lingui t macro; the lingui babel plugin compiles the template away before the compiler sees it
   const openSessionsLabel = t`Sessions: ${sessionTitle ?? ''}`;
 

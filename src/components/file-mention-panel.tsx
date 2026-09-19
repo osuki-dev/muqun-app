@@ -74,7 +74,7 @@ export function FileMentionPanel({
         // opened", so this says what it actually answers -- the files nearest
         // the workspace root -- rather than claiming a recency it does not have.
         <Text variant="caption" color={theme.colors.textMuted} style={styles.heading}>
-          <Trans>Files in this workspace</Trans>
+          <Trans>Files in this project</Trans>
         </Text>
       )}
       <ScrollView

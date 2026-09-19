@@ -408,13 +408,13 @@ msgstr "全部模型"
 msgid "All panes"
 msgstr "所有面板"
 
+#: src/components/agent-sessions-sheet.tsx
+msgid "All projects"
+msgstr "全部项目"
+
 #: src/components/agent-composer.tsx
 msgid "All sessions"
 msgstr "全部会话"
-
-#: src/components/agent-sessions-sheet.tsx
-msgid "All workspaces"
-msgstr "全部工作区"
 
 #: src/i18n/labels.ts
 msgid "Allow"
@@ -535,8 +535,8 @@ msgid "Ask each time"
 msgstr "每次询问"
 
 #: src/components/agent-workbench.tsx
-msgid "Ask questions, inspect files, or run commands in your workspace."
-msgstr "在工作区中提问、查看文件或运行命令"
+msgid "Ask questions, inspect files, or run commands in your project."
+msgstr "在你的项目里提问、查看文件或运行命令"
 
 #: src/i18n/labels.ts
 msgid "Ask you a question"
@@ -873,13 +873,13 @@ msgstr "请选择 SSH 主机"
 msgid "Choose files"
 msgstr "选择文件"
 
+#: src/components/agent-workbench.tsx
+msgid "Choose project"
+msgstr "选择项目"
+
 #: src/components/simfarm-stage.tsx
 msgid "Choose which simulator to show"
 msgstr "选择要显示的模拟器"
-
-#: src/components/agent-workbench.tsx
-msgid "Choose workspace"
-msgstr "选择工作区"
 
 #: src/components/settings-appearance.tsx
 msgid "Classic"
@@ -1271,8 +1271,8 @@ msgid "Control Z, suspend"
 msgstr "Ctrl Z 键，挂起"
 
 #: src/components/agent-mode-sheet.tsx
-msgid "Conversational help and open-ended workspace questions."
-msgstr "对话式协助，以及关于工作区的开放式提问"
+msgid "Conversational help and open-ended project questions."
+msgstr "对话式帮助，以及关于项目的开放式问题"
 
 #: src/components/agent-message-block.tsx
 #: src/components/asset-viewer.tsx
@@ -1953,8 +1953,8 @@ msgid "Failed to create agent session"
 msgstr "创建 Agent 会话失败"
 
 #: src/components/agent-workbench.tsx
-msgid "Failed to switch workspace session"
-msgstr "切换工作区会话失败"
+msgid "Failed to switch project"
+msgstr "切换项目失败"
 
 #: src/components/agent-composer.tsx
 msgid "Fast agent specialized for exploring codebases."
@@ -1981,16 +1981,16 @@ msgid "Files"
 msgstr "文件"
 
 #: src/components/file-mention-panel.tsx
-msgid "Files in this workspace"
-msgstr "此工作区的文件"
+msgid "Files in this project"
+msgstr "本项目的文件"
 
 #: src/components/agent-workspace-sheet.tsx
-msgid "Filter workspaces or type a path"
-msgstr "筛选工作区，或输入路径"
+msgid "Filter projects or type a path"
+msgstr "筛选项目或输入路径"
 
 #: src/components/agent-workspace-sheet.tsx
-msgid "Filter workspaces, or type a path"
-msgstr "筛选工作区，或输入路径"
+msgid "Filter projects, or type a path"
+msgstr "筛选项目，或输入路径"
 
 #: src/i18n/labels.ts
 msgid "Find a file by name"
@@ -2388,10 +2388,6 @@ msgstr "按键"
 #: src/lib/release-notes.ts
 msgid "Keys are generated on the device and never leave it."
 msgstr "密钥在设备上生成，绝不外传"
-
-#: src/components/agent-workspace-sheet.tsx
-msgid "Known workspaces"
-msgstr "已知的工作区"
 
 #: src/components/settings-appearance.tsx
 #: src/components/settings-language-sheet.tsx
@@ -2845,6 +2841,15 @@ msgstr "这种文件无法预览，它会留在服务器上"
 msgid "No preview on this connection"
 msgstr "此连接不提供预览"
 
+#: src/components/agent-workspace-sheet.tsx
+msgid "No projects here yet. Type a path above to open one."
+msgstr "这里还没有项目。在上方输入路径即可打开一个"
+
+#. placeholder {0}: searchQuery.trim()
+#: src/components/agent-workspace-sheet.tsx
+msgid "No projects match “{0}”."
+msgstr "没有匹配“{0}”的项目"
+
 #: src/app/new-task.tsx
 msgid "No server to start a task on."
 msgstr "没有可以开始任务的服务器"
@@ -2855,8 +2860,8 @@ msgid "No servers paired yet"
 msgstr "尚未配对任何服务器"
 
 #: src/components/agent-sessions-sheet.tsx
-msgid "No sessions in this workspace yet. Start one from the + button."
-msgstr "此工作区还没有会话。用 + 按钮开一个"
+msgid "No sessions in this project yet. Start one from the + button."
+msgstr "本项目还没有会话。点 + 按钮新建一个"
 
 #: src/components/agent-sessions-sheet.tsx
 msgid "No sessions match “{searchQuery}”."
@@ -2897,15 +2902,6 @@ msgstr "还没有已发布的主题"
 #: src/components/agent-context-sheet.tsx
 msgid "no window reported for this model"
 msgstr "该模型未提供上下文窗口"
-
-#: src/components/agent-workspace-sheet.tsx
-msgid "No workspaces here yet. Type a path above to open one."
-msgstr "这里还没有工作区。在上面输入路径即可打开一个"
-
-#. placeholder {0}: searchQuery.trim()
-#: src/components/agent-workspace-sheet.tsx
-msgid "No workspaces match “{0}”."
-msgstr "没有与“{0}”匹配的工作区"
 
 #: src/components/agent-worktree-sheet.tsx
 msgid "No worktrees yet. Make one below to work on a branch without disturbing this checkout."
@@ -2982,8 +2978,8 @@ msgid "Nothing to undo"
 msgstr "没有可撤销的内容"
 
 #: src/components/agent-vcs-diff-sheet.tsx
-msgid "Nothing uncommitted in this workspace."
-msgstr "此工作区没有未提交的改动"
+msgid "Nothing uncommitted in this project."
+msgstr "本项目没有未提交的改动"
 
 #: src/components/agent-context-sheet.tsx
 msgid "Nothing yet — an “Always allow” reply lands here, for this project."
@@ -3037,8 +3033,8 @@ msgid "Open anyway"
 msgstr "仍要打开"
 
 #: src/components/agent-workspace-sheet.tsx
-msgid "Open as a workspace"
-msgstr "作为工作区打开"
+msgid "Open as a project"
+msgstr "作为项目打开"
 
 #: src/components/agent-message-block.tsx
 msgid "Open attachment"
@@ -3399,8 +3395,23 @@ msgstr "私钥"
 msgid "Private key (leave blank to keep the saved one)"
 msgstr "私钥（留空以保留已保存的密钥）"
 
+#: src/app/agent.tsx
 #: src/components/agent-worktree-sheet.tsx
+#: src/components/composer-popup.tsx
 msgid "Project"
+msgstr "项目"
+
+#. placeholder {0}: answer.missing?.directory ?? ''
+#. placeholder {0}: gone.directory
+#. placeholder {0}: missing.directory
+#: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/agent-workbench.tsx
+#: src/components/agent-worktree-sheet.tsx
+msgid "Project folder is missing: {0}"
+msgstr "项目文件夹不存在：{0}"
+
+#: src/components/agent-workspace-sheet.tsx
+msgid "Projects"
 msgstr "项目"
 
 #: src/app/commands.tsx
@@ -4495,6 +4506,14 @@ msgctxt "agent slash command"
 msgid "Switch language model"
 msgstr "切换语言模型"
 
+#: src/components/agent-workspace-sheet.tsx
+msgid "Switch project"
+msgstr "切换项目"
+
+#: src/app/agent.tsx
+msgid "Switch project: {displayWorkspaceName}"
+msgstr "切换项目：{displayWorkspaceName}"
+
 #. placeholder {0}: panelTitle(pane, paneAgent)
 #: src/components/server-terminal-workspace.tsx
 msgid "Switch to {0}"
@@ -4511,14 +4530,6 @@ msgstr "切换到聊天视图"
 #: src/i18n/labels.ts
 msgid "Switch to the terminal view"
 msgstr "切换到终端视图"
-
-#: src/components/agent-workspace-sheet.tsx
-msgid "Switch workspace"
-msgstr "切换工作区"
-
-#: src/app/agent.tsx
-msgid "Switch workspace: {displayWorkspaceName}"
-msgstr "切换工作区：{displayWorkspaceName}"
 
 #: src/components/virtual-keyboard.tsx
 msgid "Symbols"
@@ -4940,6 +4951,7 @@ msgstr "此项为必填"
 msgid "This pane is not working inside a git repository, so there is nothing to compare."
 msgstr "此面板不在 git 仓库中工作，因此没有可比较的内容"
 
+#: src/components/agent-sessions-sheet.tsx
 #: src/components/agent-worktree-sheet.tsx
 msgid "This project"
 msgstr "本项目"
@@ -5018,10 +5030,6 @@ msgstr "这个终端已不存在"
 #: src/components/custom-theme-library.tsx
 msgid "This theme contains images that must be installed before applying"
 msgstr "此主题包含图片，应用前需要先安装图片"
-
-#: src/components/agent-sessions-sheet.tsx
-msgid "This workspace"
-msgstr "本工作区"
 
 #: src/components/session-map.tsx
 msgid "This workspace has no groups yet."
@@ -5375,20 +5383,9 @@ msgstr "工作中"
 msgid "Working directory"
 msgstr "工作目录"
 
-#: src/app/agent.tsx
-#: src/components/composer-popup.tsx
 #: src/components/session-map.tsx
 msgid "Workspace"
 msgstr "工作区"
-
-#. placeholder {0}: answer.missing?.directory ?? ''
-#. placeholder {0}: gone.directory
-#. placeholder {0}: missing.directory
-#: src/components/agent-vcs-diff-sheet.tsx
-#: src/components/agent-workbench.tsx
-#: src/components/agent-worktree-sheet.tsx
-msgid "Workspace folder is missing: {0}"
-msgstr "工作区文件夹不存在：{0}"
 
 #: src/components/session-map.tsx
 msgid "Workspaces"

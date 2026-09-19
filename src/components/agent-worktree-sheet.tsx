@@ -429,7 +429,7 @@ export const AgentWorktreeSheet = memo(function AgentWorktreeSheet({
                 {loading
                   ? t`Reading this project’s worktrees…`
                   : missing
-                    ? t`Workspace folder is missing: ${missing.directory}`
+                    ? t`Project folder is missing: ${missing.directory}`
                     : t`No worktrees yet. Make one below to work on a branch without disturbing this checkout.`}
               </Text>
             </View>

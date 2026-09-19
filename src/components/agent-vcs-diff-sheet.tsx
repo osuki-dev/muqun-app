@@ -129,10 +129,10 @@ export const AgentVcsDiffSheet = memo(function AgentVcsDiffSheet({
   }, [loading, summary]);
   const emptyText =
     empty === 'workspace-missing'
-      ? t`Workspace folder is missing: ${answer.missing?.directory ?? ''}`
+      ? t`Project folder is missing: ${answer.missing?.directory ?? ''}`
       : empty === 'not-a-repository'
         ? t`Not a git repository`
-        : t`Nothing uncommitted in this workspace.`;
+        : t`Nothing uncommitted in this project.`;
 
   return (
     <SheetScene

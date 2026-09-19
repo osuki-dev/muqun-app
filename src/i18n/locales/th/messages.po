@@ -408,13 +408,13 @@ msgstr "ทุกโมเดล"
 msgid "All panes"
 msgstr "พาเนลทั้งหมด"
 
+#: src/components/agent-sessions-sheet.tsx
+msgid "All projects"
+msgstr "ทุกโปรเจกต์"
+
 #: src/components/agent-composer.tsx
 msgid "All sessions"
 msgstr "เซสชันทั้งหมด"
-
-#: src/components/agent-sessions-sheet.tsx
-msgid "All workspaces"
-msgstr "ทุกพื้นที่ทำงาน"
 
 #: src/i18n/labels.ts
 msgid "Allow"
@@ -535,8 +535,8 @@ msgid "Ask each time"
 msgstr "ถามทุกครั้ง"
 
 #: src/components/agent-workbench.tsx
-msgid "Ask questions, inspect files, or run commands in your workspace."
-msgstr "ถามคำถาม ตรวจสอบไฟล์ หรือเรียกใช้คำสั่งในพื้นที่ทำงานของคุณ"
+msgid "Ask questions, inspect files, or run commands in your project."
+msgstr "ถามคำถาม ดูไฟล์ หรือรันคำสั่งในโปรเจกต์ของคุณ"
 
 #: src/i18n/labels.ts
 msgid "Ask you a question"
@@ -873,13 +873,13 @@ msgstr "เลือกโฮสต์ SSH"
 msgid "Choose files"
 msgstr "เลือกไฟล์"
 
+#: src/components/agent-workbench.tsx
+msgid "Choose project"
+msgstr "เลือกโปรเจกต์"
+
 #: src/components/simfarm-stage.tsx
 msgid "Choose which simulator to show"
 msgstr "เลือกเครื่องจำลองที่จะแสดง"
-
-#: src/components/agent-workbench.tsx
-msgid "Choose workspace"
-msgstr "เลือกพื้นที่ทำงาน"
 
 #: src/components/settings-appearance.tsx
 msgid "Classic"
@@ -1271,8 +1271,8 @@ msgid "Control Z, suspend"
 msgstr "Control Z พักกระบวนการ"
 
 #: src/components/agent-mode-sheet.tsx
-msgid "Conversational help and open-ended workspace questions."
-msgstr "ช่วยเหลือแบบสนทนา และคำถามปลายเปิดเกี่ยวกับเวิร์กสเปซ"
+msgid "Conversational help and open-ended project questions."
+msgstr "ความช่วยเหลือแบบสนทนาและคำถามปลายเปิดเกี่ยวกับโปรเจกต์"
 
 #: src/components/agent-message-block.tsx
 #: src/components/asset-viewer.tsx
@@ -1953,8 +1953,8 @@ msgid "Failed to create agent session"
 msgstr "สร้างเซสชันเอเจนต์ไม่สำเร็จ"
 
 #: src/components/agent-workbench.tsx
-msgid "Failed to switch workspace session"
-msgstr "สลับเซสชันพื้นที่ทำงานไม่สำเร็จ"
+msgid "Failed to switch project"
+msgstr "สลับโปรเจกต์ไม่สำเร็จ"
 
 #: src/components/agent-composer.tsx
 msgid "Fast agent specialized for exploring codebases."
@@ -1981,16 +1981,16 @@ msgid "Files"
 msgstr "ไฟล์"
 
 #: src/components/file-mention-panel.tsx
-msgid "Files in this workspace"
-msgstr "ไฟล์ในพื้นที่ทำงานนี้"
+msgid "Files in this project"
+msgstr "ไฟล์ในโปรเจกต์นี้"
 
 #: src/components/agent-workspace-sheet.tsx
-msgid "Filter workspaces or type a path"
-msgstr "กรองเวิร์กสเปซ หรือพิมพ์พาธ"
+msgid "Filter projects or type a path"
+msgstr "กรองโปรเจกต์หรือพิมพ์พาธ"
 
 #: src/components/agent-workspace-sheet.tsx
-msgid "Filter workspaces, or type a path"
-msgstr "กรองเวิร์กสเปซ หรือพิมพ์พาธ"
+msgid "Filter projects, or type a path"
+msgstr "กรองโปรเจกต์ หรือพิมพ์พาธ"
 
 #: src/i18n/labels.ts
 msgid "Find a file by name"
@@ -2388,10 +2388,6 @@ msgstr "ปุ่ม"
 #: src/lib/release-notes.ts
 msgid "Keys are generated on the device and never leave it."
 msgstr "คีย์สร้างขึ้นบนอุปกรณ์และไม่ออกจากอุปกรณ์"
-
-#: src/components/agent-workspace-sheet.tsx
-msgid "Known workspaces"
-msgstr "พื้นที่ทำงานที่รู้จัก"
 
 #: src/components/settings-appearance.tsx
 #: src/components/settings-language-sheet.tsx
@@ -2845,6 +2841,15 @@ msgstr "ไม่มีตัวอย่างสำหรับไฟล์ป
 msgid "No preview on this connection"
 msgstr "ดูตัวอย่างผ่านการเชื่อมต่อนี้ไม่ได้"
 
+#: src/components/agent-workspace-sheet.tsx
+msgid "No projects here yet. Type a path above to open one."
+msgstr "ยังไม่มีโปรเจกต์ที่นี่ พิมพ์พาธด้านบนเพื่อเปิด"
+
+#. placeholder {0}: searchQuery.trim()
+#: src/components/agent-workspace-sheet.tsx
+msgid "No projects match “{0}”."
+msgstr "ไม่มีโปรเจกต์ที่ตรงกับ “{0}”"
+
 #: src/app/new-task.tsx
 msgid "No server to start a task on."
 msgstr "ไม่มีเซิร์ฟเวอร์ให้เริ่มงาน"
@@ -2855,8 +2860,8 @@ msgid "No servers paired yet"
 msgstr "ยังไม่ได้จับคู่เซิร์ฟเวอร์"
 
 #: src/components/agent-sessions-sheet.tsx
-msgid "No sessions in this workspace yet. Start one from the + button."
-msgstr "ยังไม่มีเซสชันในเวิร์กสเปซนี้ เริ่มได้จากปุ่ม +"
+msgid "No sessions in this project yet. Start one from the + button."
+msgstr "โปรเจกต์นี้ยังไม่มีเซสชัน เริ่มได้จากปุ่ม +"
 
 #: src/components/agent-sessions-sheet.tsx
 msgid "No sessions match “{searchQuery}”."
@@ -2897,15 +2902,6 @@ msgstr "ยังไม่มีธีมที่เผยแพร่"
 #: src/components/agent-context-sheet.tsx
 msgid "no window reported for this model"
 msgstr "ไม่มีการระบุขนาดหน้าต่างของโมเดลนี้"
-
-#: src/components/agent-workspace-sheet.tsx
-msgid "No workspaces here yet. Type a path above to open one."
-msgstr "ยังไม่มีเวิร์กสเปซที่นี่ พิมพ์พาธด้านบนเพื่อเปิดสักอัน"
-
-#. placeholder {0}: searchQuery.trim()
-#: src/components/agent-workspace-sheet.tsx
-msgid "No workspaces match “{0}”."
-msgstr "ไม่มีเวิร์กสเปซที่ตรงกับ “{0}”"
 
 #: src/components/agent-worktree-sheet.tsx
 msgid "No worktrees yet. Make one below to work on a branch without disturbing this checkout."
@@ -2982,8 +2978,8 @@ msgid "Nothing to undo"
 msgstr "ไม่มีอะไรให้ย้อนกลับ"
 
 #: src/components/agent-vcs-diff-sheet.tsx
-msgid "Nothing uncommitted in this workspace."
-msgstr "ไม่มีอะไรที่ยังไม่ได้คอมมิตในเวิร์กสเปซนี้"
+msgid "Nothing uncommitted in this project."
+msgstr "ไม่มีการเปลี่ยนแปลงที่ยังไม่ได้คอมมิตในโปรเจกต์นี้"
 
 #: src/components/agent-context-sheet.tsx
 msgid "Nothing yet — an “Always allow” reply lands here, for this project."
@@ -3037,8 +3033,8 @@ msgid "Open anyway"
 msgstr "เปิดต่อไป"
 
 #: src/components/agent-workspace-sheet.tsx
-msgid "Open as a workspace"
-msgstr "เปิดเป็นเวิร์กสเปซ"
+msgid "Open as a project"
+msgstr "เปิดเป็นโปรเจกต์"
 
 #: src/components/agent-message-block.tsx
 msgid "Open attachment"
@@ -3399,8 +3395,23 @@ msgstr "คีย์ส่วนตัว"
 msgid "Private key (leave blank to keep the saved one)"
 msgstr "คีย์ส่วนตัว (เว้นว่างเพื่อเก็บคีย์เดิม)"
 
+#: src/app/agent.tsx
 #: src/components/agent-worktree-sheet.tsx
+#: src/components/composer-popup.tsx
 msgid "Project"
+msgstr "โปรเจกต์"
+
+#. placeholder {0}: answer.missing?.directory ?? ''
+#. placeholder {0}: gone.directory
+#. placeholder {0}: missing.directory
+#: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/agent-workbench.tsx
+#: src/components/agent-worktree-sheet.tsx
+msgid "Project folder is missing: {0}"
+msgstr "ไม่พบโฟลเดอร์ของโปรเจกต์: {0}"
+
+#: src/components/agent-workspace-sheet.tsx
+msgid "Projects"
 msgstr "โปรเจกต์"
 
 #: src/app/commands.tsx
@@ -4495,6 +4506,14 @@ msgctxt "agent slash command"
 msgid "Switch language model"
 msgstr "สลับโมเดลภาษา"
 
+#: src/components/agent-workspace-sheet.tsx
+msgid "Switch project"
+msgstr "สลับโปรเจกต์"
+
+#: src/app/agent.tsx
+msgid "Switch project: {displayWorkspaceName}"
+msgstr "สลับโปรเจกต์: {displayWorkspaceName}"
+
 #. placeholder {0}: panelTitle(pane, paneAgent)
 #: src/components/server-terminal-workspace.tsx
 msgid "Switch to {0}"
@@ -4511,14 +4530,6 @@ msgstr "สลับไปยังมุมมองแชต"
 #: src/i18n/labels.ts
 msgid "Switch to the terminal view"
 msgstr "สลับไปยังมุมมองเทอร์มินัล"
-
-#: src/components/agent-workspace-sheet.tsx
-msgid "Switch workspace"
-msgstr "สลับเวิร์กสเปซ"
-
-#: src/app/agent.tsx
-msgid "Switch workspace: {displayWorkspaceName}"
-msgstr "เปลี่ยนพื้นที่ทำงาน: {displayWorkspaceName}"
 
 #: src/components/virtual-keyboard.tsx
 msgid "Symbols"
@@ -4940,6 +4951,7 @@ msgstr "ต้องกรอกช่องนี้"
 msgid "This pane is not working inside a git repository, so there is nothing to compare."
 msgstr "พาเนลนี้ไม่ได้ทำงานอยู่ในที่เก็บโค้ด Git จึงไม่มีอะไรให้เปรียบเทียบ"
 
+#: src/components/agent-sessions-sheet.tsx
 #: src/components/agent-worktree-sheet.tsx
 msgid "This project"
 msgstr "โปรเจกต์นี้"
@@ -5018,10 +5030,6 @@ msgstr "เทอร์มินัลนี้ไม่พร้อมใช้
 #: src/components/custom-theme-library.tsx
 msgid "This theme contains images that must be installed before applying"
 msgstr "ธีมนี้มีรูปภาพที่ต้องติดตั้งก่อนใช้งาน"
-
-#: src/components/agent-sessions-sheet.tsx
-msgid "This workspace"
-msgstr "พื้นที่ทำงานนี้"
 
 #: src/components/session-map.tsx
 msgid "This workspace has no groups yet."
@@ -5375,20 +5383,9 @@ msgstr "กำลังทำงาน"
 msgid "Working directory"
 msgstr "ไดเรกทอรีทำงาน"
 
-#: src/app/agent.tsx
-#: src/components/composer-popup.tsx
 #: src/components/session-map.tsx
 msgid "Workspace"
 msgstr "พื้นที่ทำงาน"
-
-#. placeholder {0}: answer.missing?.directory ?? ''
-#. placeholder {0}: gone.directory
-#. placeholder {0}: missing.directory
-#: src/components/agent-vcs-diff-sheet.tsx
-#: src/components/agent-workbench.tsx
-#: src/components/agent-worktree-sheet.tsx
-msgid "Workspace folder is missing: {0}"
-msgstr "ไม่พบโฟลเดอร์เวิร์กสเปซ: {0}"
 
 #: src/components/session-map.tsx
 msgid "Workspaces"

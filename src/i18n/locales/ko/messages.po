@@ -408,13 +408,13 @@ msgstr "전체 모델"
 msgid "All panes"
 msgstr "모든 패널"
 
+#: src/components/agent-sessions-sheet.tsx
+msgid "All projects"
+msgstr "모든 프로젝트"
+
 #: src/components/agent-composer.tsx
 msgid "All sessions"
 msgstr "모든 세션"
-
-#: src/components/agent-sessions-sheet.tsx
-msgid "All workspaces"
-msgstr "모든 워크스페이스"
 
 #: src/i18n/labels.ts
 msgid "Allow"
@@ -535,8 +535,8 @@ msgid "Ask each time"
 msgstr "매번 묻기"
 
 #: src/components/agent-workbench.tsx
-msgid "Ask questions, inspect files, or run commands in your workspace."
-msgstr "작업 공간에서 질문하고, 파일을 검사하거나, 명령을 실행하세요"
+msgid "Ask questions, inspect files, or run commands in your project."
+msgstr "프로젝트에서 질문하고, 파일을 살펴보고, 명령을 실행하세요"
 
 #: src/i18n/labels.ts
 msgid "Ask you a question"
@@ -873,13 +873,13 @@ msgstr "SSH 호스트를 선택하세요"
 msgid "Choose files"
 msgstr "파일 선택"
 
+#: src/components/agent-workbench.tsx
+msgid "Choose project"
+msgstr "프로젝트 선택"
+
 #: src/components/simfarm-stage.tsx
 msgid "Choose which simulator to show"
 msgstr "표시할 시뮬레이터 선택"
-
-#: src/components/agent-workbench.tsx
-msgid "Choose workspace"
-msgstr "워크스페이스 선택"
 
 #: src/components/settings-appearance.tsx
 msgid "Classic"
@@ -1271,8 +1271,8 @@ msgid "Control Z, suspend"
 msgstr "컨트롤 Z, 일시 중단"
 
 #: src/components/agent-mode-sheet.tsx
-msgid "Conversational help and open-ended workspace questions."
-msgstr "대화형 도움말과 작업 공간에 대한 자유로운 질문"
+msgid "Conversational help and open-ended project questions."
+msgstr "대화형 도움말과 프로젝트에 대한 자유로운 질문"
 
 #: src/components/agent-message-block.tsx
 #: src/components/asset-viewer.tsx
@@ -1953,8 +1953,8 @@ msgid "Failed to create agent session"
 msgstr "에이전트 세션 생성 실패"
 
 #: src/components/agent-workbench.tsx
-msgid "Failed to switch workspace session"
-msgstr "워크스페이스 세션 전환 실패"
+msgid "Failed to switch project"
+msgstr "프로젝트를 전환하지 못했습니다"
 
 #: src/components/agent-composer.tsx
 msgid "Fast agent specialized for exploring codebases."
@@ -1981,16 +1981,16 @@ msgid "Files"
 msgstr "파일"
 
 #: src/components/file-mention-panel.tsx
-msgid "Files in this workspace"
-msgstr "이 워크스페이스의 파일"
+msgid "Files in this project"
+msgstr "이 프로젝트의 파일"
 
 #: src/components/agent-workspace-sheet.tsx
-msgid "Filter workspaces or type a path"
-msgstr "워크스페이스를 걸러내거나 경로를 입력"
+msgid "Filter projects or type a path"
+msgstr "프로젝트를 필터링하거나 경로 입력"
 
 #: src/components/agent-workspace-sheet.tsx
-msgid "Filter workspaces, or type a path"
-msgstr "워크스페이스를 걸러내거나 경로를 입력"
+msgid "Filter projects, or type a path"
+msgstr "프로젝트를 필터링하거나, 경로 입력"
 
 #: src/i18n/labels.ts
 msgid "Find a file by name"
@@ -2388,10 +2388,6 @@ msgstr "키"
 #: src/lib/release-notes.ts
 msgid "Keys are generated on the device and never leave it."
 msgstr "키는 기기에서 생성되며 기기를 떠나지 않습니다"
-
-#: src/components/agent-workspace-sheet.tsx
-msgid "Known workspaces"
-msgstr "알려진 워크스페이스"
 
 #: src/components/settings-appearance.tsx
 #: src/components/settings-language-sheet.tsx
@@ -2845,6 +2841,15 @@ msgstr "이 형식의 파일은 미리 볼 수 없습니다. 파일은 서버에
 msgid "No preview on this connection"
 msgstr "이 연결에서는 미리 볼 수 없습니다"
 
+#: src/components/agent-workspace-sheet.tsx
+msgid "No projects here yet. Type a path above to open one."
+msgstr "아직 프로젝트가 없습니다. 위에 경로를 입력해 열어 보세요"
+
+#. placeholder {0}: searchQuery.trim()
+#: src/components/agent-workspace-sheet.tsx
+msgid "No projects match “{0}”."
+msgstr "“{0}”와 일치하는 프로젝트가 없습니다"
+
 #: src/app/new-task.tsx
 msgid "No server to start a task on."
 msgstr "작업을 시작할 서버가 없습니다"
@@ -2855,8 +2860,8 @@ msgid "No servers paired yet"
 msgstr "아직 페어링된 서버가 없습니다"
 
 #: src/components/agent-sessions-sheet.tsx
-msgid "No sessions in this workspace yet. Start one from the + button."
-msgstr "이 작업 공간에는 아직 세션이 없습니다. + 버튼으로 시작하세요"
+msgid "No sessions in this project yet. Start one from the + button."
+msgstr "이 프로젝트에는 아직 세션이 없습니다. + 버튼으로 시작하세요"
 
 #: src/components/agent-sessions-sheet.tsx
 msgid "No sessions match “{searchQuery}”."
@@ -2897,15 +2902,6 @@ msgstr "아직 공개된 테마가 없습니다"
 #: src/components/agent-context-sheet.tsx
 msgid "no window reported for this model"
 msgstr "이 모델의 창 크기가 보고되지 않았습니다"
-
-#: src/components/agent-workspace-sheet.tsx
-msgid "No workspaces here yet. Type a path above to open one."
-msgstr "아직 워크스페이스가 없습니다. 위에 경로를 입력하면 열 수 있습니다"
-
-#. placeholder {0}: searchQuery.trim()
-#: src/components/agent-workspace-sheet.tsx
-msgid "No workspaces match “{0}”."
-msgstr "“{0}”과 일치하는 워크스페이스가 없습니다"
 
 #: src/components/agent-worktree-sheet.tsx
 msgid "No worktrees yet. Make one below to work on a branch without disturbing this checkout."
@@ -2982,8 +2978,8 @@ msgid "Nothing to undo"
 msgstr "실행 취소할 것이 없습니다"
 
 #: src/components/agent-vcs-diff-sheet.tsx
-msgid "Nothing uncommitted in this workspace."
-msgstr "이 작업 공간에 커밋되지 않은 변경이 없습니다"
+msgid "Nothing uncommitted in this project."
+msgstr "이 프로젝트에 커밋되지 않은 변경이 없습니다"
 
 #: src/components/agent-context-sheet.tsx
 msgid "Nothing yet — an “Always allow” reply lands here, for this project."
@@ -3037,8 +3033,8 @@ msgid "Open anyway"
 msgstr "그래도 열기"
 
 #: src/components/agent-workspace-sheet.tsx
-msgid "Open as a workspace"
-msgstr "워크스페이스로 열기"
+msgid "Open as a project"
+msgstr "프로젝트로 열기"
 
 #: src/components/agent-message-block.tsx
 msgid "Open attachment"
@@ -3399,8 +3395,23 @@ msgstr "개인 키"
 msgid "Private key (leave blank to keep the saved one)"
 msgstr "개인 키(비워 두면 저장된 값 유지)"
 
+#: src/app/agent.tsx
 #: src/components/agent-worktree-sheet.tsx
+#: src/components/composer-popup.tsx
 msgid "Project"
+msgstr "프로젝트"
+
+#. placeholder {0}: answer.missing?.directory ?? ''
+#. placeholder {0}: gone.directory
+#. placeholder {0}: missing.directory
+#: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/agent-workbench.tsx
+#: src/components/agent-worktree-sheet.tsx
+msgid "Project folder is missing: {0}"
+msgstr "프로젝트 폴더가 없습니다: {0}"
+
+#: src/components/agent-workspace-sheet.tsx
+msgid "Projects"
 msgstr "프로젝트"
 
 #: src/app/commands.tsx
@@ -4495,6 +4506,14 @@ msgctxt "agent slash command"
 msgid "Switch language model"
 msgstr "언어 모델 전환"
 
+#: src/components/agent-workspace-sheet.tsx
+msgid "Switch project"
+msgstr "프로젝트 전환"
+
+#: src/app/agent.tsx
+msgid "Switch project: {displayWorkspaceName}"
+msgstr "프로젝트 전환: {displayWorkspaceName}"
+
 #. placeholder {0}: panelTitle(pane, paneAgent)
 #: src/components/server-terminal-workspace.tsx
 msgid "Switch to {0}"
@@ -4511,14 +4530,6 @@ msgstr "대화 보기로 전환"
 #: src/i18n/labels.ts
 msgid "Switch to the terminal view"
 msgstr "터미널 보기로 전환"
-
-#: src/components/agent-workspace-sheet.tsx
-msgid "Switch workspace"
-msgstr "작업 공간 전환"
-
-#: src/app/agent.tsx
-msgid "Switch workspace: {displayWorkspaceName}"
-msgstr "워크스페이스 전환: {displayWorkspaceName}"
 
 #: src/components/virtual-keyboard.tsx
 msgid "Symbols"
@@ -4940,6 +4951,7 @@ msgstr "이 항목은 필수입니다"
 msgid "This pane is not working inside a git repository, so there is nothing to compare."
 msgstr "이 패널은 git 저장소 안에서 작업하고 있지 않아 비교할 것이 없습니다"
 
+#: src/components/agent-sessions-sheet.tsx
 #: src/components/agent-worktree-sheet.tsx
 msgid "This project"
 msgstr "이 프로젝트"
@@ -5018,10 +5030,6 @@ msgstr "이 터미널은 더 이상 사용할 수 없습니다"
 #: src/components/custom-theme-library.tsx
 msgid "This theme contains images that must be installed before applying"
 msgstr "이 테마에는 이미지가 포함되어 있어 적용 전에 이미지를 설치해야 해요"
-
-#: src/components/agent-sessions-sheet.tsx
-msgid "This workspace"
-msgstr "이 워크스페이스"
 
 #: src/components/session-map.tsx
 msgid "This workspace has no groups yet."
@@ -5375,20 +5383,9 @@ msgstr "작업 중"
 msgid "Working directory"
 msgstr "작업 디렉터리"
 
-#: src/app/agent.tsx
-#: src/components/composer-popup.tsx
 #: src/components/session-map.tsx
 msgid "Workspace"
 msgstr "워크스페이스"
-
-#. placeholder {0}: answer.missing?.directory ?? ''
-#. placeholder {0}: gone.directory
-#. placeholder {0}: missing.directory
-#: src/components/agent-vcs-diff-sheet.tsx
-#: src/components/agent-workbench.tsx
-#: src/components/agent-worktree-sheet.tsx
-msgid "Workspace folder is missing: {0}"
-msgstr "작업 공간 폴더가 없습니다: {0}"
 
 #: src/components/session-map.tsx
 msgid "Workspaces"

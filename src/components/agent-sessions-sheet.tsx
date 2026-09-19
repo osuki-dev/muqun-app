@@ -257,12 +257,12 @@ export const AgentSessionsSheet = memo(function AgentSessionsSheet({
   const currentWorkspaceName = workspaceDisplayName(
     activeProject,
     activeDirectory,
-    t`This workspace`
+    t`This project`
   );
   const segments = useMemo(() => {
     const options: { label: string; value: string }[] = [];
     if (activeDirectory) options.push({ label: currentWorkspaceName, value: CURRENT_WORKSPACE });
-    options.push({ label: t`All workspaces`, value: ALL_WORKSPACES });
+    options.push({ label: t`All projects`, value: ALL_WORKSPACES });
     return options;
   }, [activeDirectory, currentWorkspaceName, t]);
 
@@ -549,7 +549,7 @@ export const AgentSessionsSheet = memo(function AgentSessionsSheet({
             <Text variant="caption" color={theme.colors.textMuted} style={styles.emptyText}>
               {searchQuery
                 ? t`No sessions match “${searchQuery}”.`
-                : t`No sessions in this workspace yet. Start one from the + button.`}
+                : t`No sessions in this project yet. Start one from the + button.`}
             </Text>
           </View>
         ) : (

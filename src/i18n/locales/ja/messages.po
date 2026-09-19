@@ -408,13 +408,13 @@ msgstr "すべてのモデル"
 msgid "All panes"
 msgstr "すべてのパネル"
 
+#: src/components/agent-sessions-sheet.tsx
+msgid "All projects"
+msgstr "すべてのプロジェクト"
+
 #: src/components/agent-composer.tsx
 msgid "All sessions"
 msgstr "すべてのセッション"
-
-#: src/components/agent-sessions-sheet.tsx
-msgid "All workspaces"
-msgstr "すべてのワークスペース"
 
 #: src/i18n/labels.ts
 msgid "Allow"
@@ -535,8 +535,8 @@ msgid "Ask each time"
 msgstr "毎回たずねる"
 
 #: src/components/agent-workbench.tsx
-msgid "Ask questions, inspect files, or run commands in your workspace."
-msgstr "ワークスペース内で質問したり、ファイルを確認したり、コマンドを実行できます"
+msgid "Ask questions, inspect files, or run commands in your project."
+msgstr "プロジェクトについて質問したり、ファイルを確認したり、コマンドを実行したりできます"
 
 #: src/i18n/labels.ts
 msgid "Ask you a question"
@@ -873,13 +873,13 @@ msgstr "SSH ホストを選んでください"
 msgid "Choose files"
 msgstr "ファイルを選択"
 
+#: src/components/agent-workbench.tsx
+msgid "Choose project"
+msgstr "プロジェクトを選択"
+
 #: src/components/simfarm-stage.tsx
 msgid "Choose which simulator to show"
 msgstr "表示するシミュレータを選ぶ"
-
-#: src/components/agent-workbench.tsx
-msgid "Choose workspace"
-msgstr "ワークスペースを選択"
 
 #: src/components/settings-appearance.tsx
 msgid "Classic"
@@ -1271,8 +1271,8 @@ msgid "Control Z, suspend"
 msgstr "コントロール Z、一時停止"
 
 #: src/components/agent-mode-sheet.tsx
-msgid "Conversational help and open-ended workspace questions."
-msgstr "対話形式の相談と、ワークスペースについての自由な質問"
+msgid "Conversational help and open-ended project questions."
+msgstr "対話形式のヘルプと、プロジェクトに関する自由な質問"
 
 #: src/components/agent-message-block.tsx
 #: src/components/asset-viewer.tsx
@@ -1953,8 +1953,8 @@ msgid "Failed to create agent session"
 msgstr "エージェントセッションの作成に失敗しました"
 
 #: src/components/agent-workbench.tsx
-msgid "Failed to switch workspace session"
-msgstr "ワークスペースセッションの切り替えに失敗しました"
+msgid "Failed to switch project"
+msgstr "プロジェクトを切り替えられませんでした"
 
 #: src/components/agent-composer.tsx
 msgid "Fast agent specialized for exploring codebases."
@@ -1981,16 +1981,16 @@ msgid "Files"
 msgstr "ファイル"
 
 #: src/components/file-mention-panel.tsx
-msgid "Files in this workspace"
-msgstr "このワークスペースのファイル"
+msgid "Files in this project"
+msgstr "このプロジェクトのファイル"
 
 #: src/components/agent-workspace-sheet.tsx
-msgid "Filter workspaces or type a path"
-msgstr "ワークスペースを絞り込む、またはパスを入力"
+msgid "Filter projects or type a path"
+msgstr "プロジェクトを絞り込むかパスを入力"
 
 #: src/components/agent-workspace-sheet.tsx
-msgid "Filter workspaces, or type a path"
-msgstr "ワークスペースを絞り込む、またはパスを入力"
+msgid "Filter projects, or type a path"
+msgstr "プロジェクトを絞り込むか、パスを入力"
 
 #: src/i18n/labels.ts
 msgid "Find a file by name"
@@ -2388,10 +2388,6 @@ msgstr "キー"
 #: src/lib/release-notes.ts
 msgid "Keys are generated on the device and never leave it."
 msgstr "鍵は端末上で生成され、外に出ることはありません"
-
-#: src/components/agent-workspace-sheet.tsx
-msgid "Known workspaces"
-msgstr "既知のワークスペース"
 
 #: src/components/settings-appearance.tsx
 #: src/components/settings-language-sheet.tsx
@@ -2845,6 +2841,15 @@ msgstr "この種類のファイルはプレビューできません。ファイ
 msgid "No preview on this connection"
 msgstr "この接続ではプレビューできません"
 
+#: src/components/agent-workspace-sheet.tsx
+msgid "No projects here yet. Type a path above to open one."
+msgstr "まだプロジェクトがありません。上にパスを入力して開いてください"
+
+#. placeholder {0}: searchQuery.trim()
+#: src/components/agent-workspace-sheet.tsx
+msgid "No projects match “{0}”."
+msgstr "「{0}」に一致するプロジェクトはありません"
+
 #: src/app/new-task.tsx
 msgid "No server to start a task on."
 msgstr "タスクを開始できるサーバーがありません"
@@ -2855,8 +2860,8 @@ msgid "No servers paired yet"
 msgstr "ペアリング済みのサーバーはまだありません"
 
 #: src/components/agent-sessions-sheet.tsx
-msgid "No sessions in this workspace yet. Start one from the + button."
-msgstr "このワークスペースにはまだセッションがありません。+ ボタンから始められます"
+msgid "No sessions in this project yet. Start one from the + button."
+msgstr "このプロジェクトにはまだセッションがありません。+ ボタンから開始してください"
 
 #: src/components/agent-sessions-sheet.tsx
 msgid "No sessions match “{searchQuery}”."
@@ -2897,15 +2902,6 @@ msgstr "公開されているテーマはまだありません"
 #: src/components/agent-context-sheet.tsx
 msgid "no window reported for this model"
 msgstr "このモデルのウィンドウは不明です"
-
-#: src/components/agent-workspace-sheet.tsx
-msgid "No workspaces here yet. Type a path above to open one."
-msgstr "ここにはまだワークスペースがありません。上にパスを入力すると開けます"
-
-#. placeholder {0}: searchQuery.trim()
-#: src/components/agent-workspace-sheet.tsx
-msgid "No workspaces match “{0}”."
-msgstr "「{0}」に一致するワークスペースはありません"
 
 #: src/components/agent-worktree-sheet.tsx
 msgid "No worktrees yet. Make one below to work on a branch without disturbing this checkout."
@@ -2982,8 +2978,8 @@ msgid "Nothing to undo"
 msgstr "元に戻せるものがありません"
 
 #: src/components/agent-vcs-diff-sheet.tsx
-msgid "Nothing uncommitted in this workspace."
-msgstr "このワークスペースに未コミットの変更はありません"
+msgid "Nothing uncommitted in this project."
+msgstr "このプロジェクトに未コミットの変更はありません"
 
 #: src/components/agent-context-sheet.tsx
 msgid "Nothing yet — an “Always allow” reply lands here, for this project."
@@ -3037,8 +3033,8 @@ msgid "Open anyway"
 msgstr "それでも開く"
 
 #: src/components/agent-workspace-sheet.tsx
-msgid "Open as a workspace"
-msgstr "ワークスペースとして開く"
+msgid "Open as a project"
+msgstr "プロジェクトとして開く"
 
 #: src/components/agent-message-block.tsx
 msgid "Open attachment"
@@ -3399,8 +3395,23 @@ msgstr "秘密鍵"
 msgid "Private key (leave blank to keep the saved one)"
 msgstr "秘密鍵（空欄なら保存済みのものを維持）"
 
+#: src/app/agent.tsx
 #: src/components/agent-worktree-sheet.tsx
+#: src/components/composer-popup.tsx
 msgid "Project"
+msgstr "プロジェクト"
+
+#. placeholder {0}: answer.missing?.directory ?? ''
+#. placeholder {0}: gone.directory
+#. placeholder {0}: missing.directory
+#: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/agent-workbench.tsx
+#: src/components/agent-worktree-sheet.tsx
+msgid "Project folder is missing: {0}"
+msgstr "プロジェクトのフォルダが見つかりません: {0}"
+
+#: src/components/agent-workspace-sheet.tsx
+msgid "Projects"
 msgstr "プロジェクト"
 
 #: src/app/commands.tsx
@@ -4495,6 +4506,14 @@ msgctxt "agent slash command"
 msgid "Switch language model"
 msgstr "言語モデルを切り替える"
 
+#: src/components/agent-workspace-sheet.tsx
+msgid "Switch project"
+msgstr "プロジェクトを切り替え"
+
+#: src/app/agent.tsx
+msgid "Switch project: {displayWorkspaceName}"
+msgstr "プロジェクトを切り替え: {displayWorkspaceName}"
+
 #. placeholder {0}: panelTitle(pane, paneAgent)
 #: src/components/server-terminal-workspace.tsx
 msgid "Switch to {0}"
@@ -4511,14 +4530,6 @@ msgstr "チャット表示に切り替える"
 #: src/i18n/labels.ts
 msgid "Switch to the terminal view"
 msgstr "ターミナル表示に切り替える"
-
-#: src/components/agent-workspace-sheet.tsx
-msgid "Switch workspace"
-msgstr "ワークスペースを切り替え"
-
-#: src/app/agent.tsx
-msgid "Switch workspace: {displayWorkspaceName}"
-msgstr "ワークスペースを切り替え: {displayWorkspaceName}"
 
 #: src/components/virtual-keyboard.tsx
 msgid "Symbols"
@@ -4940,6 +4951,7 @@ msgstr "この項目は必須です"
 msgid "This pane is not working inside a git repository, so there is nothing to compare."
 msgstr "このパネルは git リポジトリの中で作業していないため、比較するものがありません"
 
+#: src/components/agent-sessions-sheet.tsx
 #: src/components/agent-worktree-sheet.tsx
 msgid "This project"
 msgstr "このプロジェクト"
@@ -5018,10 +5030,6 @@ msgstr "このターミナルはもう利用できません"
 #: src/components/custom-theme-library.tsx
 msgid "This theme contains images that must be installed before applying"
 msgstr "このテーマには画像が含まれています。適用する前に画像をインストールしてください"
-
-#: src/components/agent-sessions-sheet.tsx
-msgid "This workspace"
-msgstr "このワークスペース"
 
 #: src/components/session-map.tsx
 msgid "This workspace has no groups yet."
@@ -5375,20 +5383,9 @@ msgstr "作業中"
 msgid "Working directory"
 msgstr "作業ディレクトリ"
 
-#: src/app/agent.tsx
-#: src/components/composer-popup.tsx
 #: src/components/session-map.tsx
 msgid "Workspace"
 msgstr "ワークスペース"
-
-#. placeholder {0}: answer.missing?.directory ?? ''
-#. placeholder {0}: gone.directory
-#. placeholder {0}: missing.directory
-#: src/components/agent-vcs-diff-sheet.tsx
-#: src/components/agent-workbench.tsx
-#: src/components/agent-worktree-sheet.tsx
-msgid "Workspace folder is missing: {0}"
-msgstr "ワークスペースのフォルダーがありません: {0}"
 
 #: src/components/session-map.tsx
 msgid "Workspaces"

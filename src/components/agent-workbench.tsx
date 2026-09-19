@@ -2226,7 +2226,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         showToast({
           variant: 'danger',
           title: t`Could not create session`,
-          message: formatAgentErrorMessage(err, t`Failed to switch workspace session`),
+          message: formatAgentErrorMessage(err, t`Failed to switch project`),
         });
       }
     },
@@ -2277,7 +2277,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         showScreenNotice(
           t`Could not move this session`,
           gone
-            ? t`Workspace folder is missing: ${gone.directory}`
+            ? t`Project folder is missing: ${gone.directory}`
             : formatAgentErrorMessage(err, t`OpenCode service is offline`)
         );
       }
@@ -3467,7 +3467,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
                     variant="caption"
                     color={theme.colors.textMuted}
                     style={styles.emptySubtitle}>
-                    <Trans>Ask questions, inspect files, or run commands in your workspace.</Trans>
+                    <Trans>Ask questions, inspect files, or run commands in your project.</Trans>
                   </Text>
                   <View style={styles.emptyActionsRow}>
                     <PressableScale
@@ -3507,7 +3507,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
                         weight="semibold"
                         color={theme.colors.text}
                         style={styles.emptyNewBtnText}>
-                        <Trans>Choose workspace</Trans>
+                        <Trans>Choose project</Trans>
                       </Text>
                     </PressableScale>
                   </View>
@@ -3651,7 +3651,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
                 <StatusDot color={theme.colors.warning} filled size={7} />
                 <View style={styles.screenNoticeText}>
                   <Text variant="caption" weight="bold" color={theme.colors.text} numberOfLines={2}>
-                    {t`Workspace folder is missing: ${workspaceMissing.directory}`}
+                    {t`Project folder is missing: ${workspaceMissing.directory}`}
                   </Text>
                 </View>
                 {/*
@@ -3662,11 +3662,11 @@ export const AgentWorkbench = memo(function AgentWorkbench({
                 <PressableScale
                   testID="agent-workspace-missing-choose"
                   accessibilityRole="button"
-                  accessibilityLabel={t`Choose workspace`}
+                  accessibilityLabel={t`Choose project`}
                   onPress={openWorkspaceSheet}
                   style={styles.screenNoticeAction}>
                   <Text variant="caption" weight="bold" color={theme.colors.primary}>
-                    {t`Choose workspace`}
+                    {t`Choose project`}
                   </Text>
                 </PressableScale>
               </View>

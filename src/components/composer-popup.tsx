@@ -190,7 +190,7 @@ export function ComposerPopup({
                           transform="none"
                           color={theme.colors.textMuted}
                           numberOfLines={1}>
-                          {row.badge === 'workspace' ? t`Workspace` : row.badge}
+                          {row.badge === 'workspace' ? t`Project` : row.badge}
                         </Text>
                       </View>
                     ) : null}

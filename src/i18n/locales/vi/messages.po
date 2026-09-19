@@ -408,13 +408,13 @@ msgstr "Tất cả mô hình"
 msgid "All panes"
 msgstr "Tất cả các ngăn"
 
+#: src/components/agent-sessions-sheet.tsx
+msgid "All projects"
+msgstr "Mọi dự án"
+
 #: src/components/agent-composer.tsx
 msgid "All sessions"
 msgstr "Tất cả các phiên"
-
-#: src/components/agent-sessions-sheet.tsx
-msgid "All workspaces"
-msgstr "Mọi không gian làm việc"
 
 #: src/i18n/labels.ts
 msgid "Allow"
@@ -535,8 +535,8 @@ msgid "Ask each time"
 msgstr "Hỏi mỗi lần"
 
 #: src/components/agent-workbench.tsx
-msgid "Ask questions, inspect files, or run commands in your workspace."
-msgstr "Đặt câu hỏi, kiểm tra tệp hoặc chạy lệnh trong không gian làm việc của bạn"
+msgid "Ask questions, inspect files, or run commands in your project."
+msgstr "Đặt câu hỏi, xem tệp hoặc chạy lệnh trong dự án của bạn"
 
 #: src/i18n/labels.ts
 msgid "Ask you a question"
@@ -873,13 +873,13 @@ msgstr "Chọn một host SSH"
 msgid "Choose files"
 msgstr "Chọn tệp"
 
+#: src/components/agent-workbench.tsx
+msgid "Choose project"
+msgstr "Chọn dự án"
+
 #: src/components/simfarm-stage.tsx
 msgid "Choose which simulator to show"
 msgstr "Chọn trình giả lập để hiển thị"
-
-#: src/components/agent-workbench.tsx
-msgid "Choose workspace"
-msgstr "Chọn không gian làm việc"
 
 #: src/components/settings-appearance.tsx
 msgid "Classic"
@@ -1271,8 +1271,8 @@ msgid "Control Z, suspend"
 msgstr "Ctrl Z, tạm dừng"
 
 #: src/components/agent-mode-sheet.tsx
-msgid "Conversational help and open-ended workspace questions."
-msgstr "Trợ giúp dạng hội thoại và các câu hỏi mở về không gian làm việc"
+msgid "Conversational help and open-ended project questions."
+msgstr "Trợ giúp dạng hội thoại và các câu hỏi mở về dự án"
 
 #: src/components/agent-message-block.tsx
 #: src/components/asset-viewer.tsx
@@ -1953,8 +1953,8 @@ msgid "Failed to create agent session"
 msgstr "Không thể tạo phiên tác nhân"
 
 #: src/components/agent-workbench.tsx
-msgid "Failed to switch workspace session"
-msgstr "Không thể chuyển phiên không gian làm việc"
+msgid "Failed to switch project"
+msgstr "Không chuyển được dự án"
 
 #: src/components/agent-composer.tsx
 msgid "Fast agent specialized for exploring codebases."
@@ -1981,16 +1981,16 @@ msgid "Files"
 msgstr "Tệp"
 
 #: src/components/file-mention-panel.tsx
-msgid "Files in this workspace"
-msgstr "Tệp trong không gian làm việc này"
+msgid "Files in this project"
+msgstr "Tệp trong dự án này"
 
 #: src/components/agent-workspace-sheet.tsx
-msgid "Filter workspaces or type a path"
-msgstr "Lọc không gian làm việc hoặc nhập đường dẫn"
+msgid "Filter projects or type a path"
+msgstr "Lọc dự án hoặc nhập đường dẫn"
 
 #: src/components/agent-workspace-sheet.tsx
-msgid "Filter workspaces, or type a path"
-msgstr "Lọc không gian làm việc, hoặc nhập đường dẫn"
+msgid "Filter projects, or type a path"
+msgstr "Lọc dự án, hoặc nhập đường dẫn"
 
 #: src/i18n/labels.ts
 msgid "Find a file by name"
@@ -2388,10 +2388,6 @@ msgstr "Phím"
 #: src/lib/release-notes.ts
 msgid "Keys are generated on the device and never leave it."
 msgstr "Khóa được tạo trên thiết bị và không bao giờ rời khỏi đó"
-
-#: src/components/agent-workspace-sheet.tsx
-msgid "Known workspaces"
-msgstr "Không gian làm việc đã biết"
 
 #: src/components/settings-appearance.tsx
 #: src/components/settings-language-sheet.tsx
@@ -2845,6 +2841,15 @@ msgstr "Không có bản xem trước cho loại tệp này. Nó vẫn ở trên
 msgid "No preview on this connection"
 msgstr "Không có bản xem trước trên kết nối này"
 
+#: src/components/agent-workspace-sheet.tsx
+msgid "No projects here yet. Type a path above to open one."
+msgstr "Chưa có dự án nào ở đây. Nhập đường dẫn ở trên để mở"
+
+#. placeholder {0}: searchQuery.trim()
+#: src/components/agent-workspace-sheet.tsx
+msgid "No projects match “{0}”."
+msgstr "Không có dự án nào khớp “{0}”"
+
 #: src/app/new-task.tsx
 msgid "No server to start a task on."
 msgstr "Không có máy chủ để bắt đầu tác vụ"
@@ -2855,8 +2860,8 @@ msgid "No servers paired yet"
 msgstr "Chưa ghép nối máy chủ nào"
 
 #: src/components/agent-sessions-sheet.tsx
-msgid "No sessions in this workspace yet. Start one from the + button."
-msgstr "Chưa có phiên nào trong không gian làm việc này. Bắt đầu bằng nút +"
+msgid "No sessions in this project yet. Start one from the + button."
+msgstr "Dự án này chưa có phiên nào. Bắt đầu bằng nút +"
 
 #: src/components/agent-sessions-sheet.tsx
 msgid "No sessions match “{searchQuery}”."
@@ -2897,15 +2902,6 @@ msgstr "Chưa có giao diện nào được công bố"
 #: src/components/agent-context-sheet.tsx
 msgid "no window reported for this model"
 msgstr "không có cửa sổ nào được báo cho mô hình này"
-
-#: src/components/agent-workspace-sheet.tsx
-msgid "No workspaces here yet. Type a path above to open one."
-msgstr "Chưa có không gian làm việc nào ở đây. Nhập một đường dẫn ở trên để mở"
-
-#. placeholder {0}: searchQuery.trim()
-#: src/components/agent-workspace-sheet.tsx
-msgid "No workspaces match “{0}”."
-msgstr "Không có không gian làm việc nào khớp với “{0}”"
 
 #: src/components/agent-worktree-sheet.tsx
 msgid "No worktrees yet. Make one below to work on a branch without disturbing this checkout."
@@ -2982,8 +2978,8 @@ msgid "Nothing to undo"
 msgstr "Không có gì để hoàn tác"
 
 #: src/components/agent-vcs-diff-sheet.tsx
-msgid "Nothing uncommitted in this workspace."
-msgstr "Không có thay đổi chưa commit trong không gian làm việc này"
+msgid "Nothing uncommitted in this project."
+msgstr "Không có thay đổi chưa commit trong dự án này"
 
 #: src/components/agent-context-sheet.tsx
 msgid "Nothing yet — an “Always allow” reply lands here, for this project."
@@ -3037,8 +3033,8 @@ msgid "Open anyway"
 msgstr "Vẫn mở"
 
 #: src/components/agent-workspace-sheet.tsx
-msgid "Open as a workspace"
-msgstr "Mở làm không gian làm việc"
+msgid "Open as a project"
+msgstr "Mở làm dự án"
 
 #: src/components/agent-message-block.tsx
 msgid "Open attachment"
@@ -3399,8 +3395,23 @@ msgstr "Khóa riêng"
 msgid "Private key (leave blank to keep the saved one)"
 msgstr "Khóa riêng (để trống để giữ khóa đã lưu)"
 
+#: src/app/agent.tsx
 #: src/components/agent-worktree-sheet.tsx
+#: src/components/composer-popup.tsx
 msgid "Project"
+msgstr "Dự án"
+
+#. placeholder {0}: answer.missing?.directory ?? ''
+#. placeholder {0}: gone.directory
+#. placeholder {0}: missing.directory
+#: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/agent-workbench.tsx
+#: src/components/agent-worktree-sheet.tsx
+msgid "Project folder is missing: {0}"
+msgstr "Thiếu thư mục dự án: {0}"
+
+#: src/components/agent-workspace-sheet.tsx
+msgid "Projects"
 msgstr "Dự án"
 
 #: src/app/commands.tsx
@@ -4495,6 +4506,14 @@ msgctxt "agent slash command"
 msgid "Switch language model"
 msgstr "Đổi mô hình ngôn ngữ"
 
+#: src/components/agent-workspace-sheet.tsx
+msgid "Switch project"
+msgstr "Chuyển dự án"
+
+#: src/app/agent.tsx
+msgid "Switch project: {displayWorkspaceName}"
+msgstr "Chuyển dự án: {displayWorkspaceName}"
+
 #. placeholder {0}: panelTitle(pane, paneAgent)
 #: src/components/server-terminal-workspace.tsx
 msgid "Switch to {0}"
@@ -4511,14 +4530,6 @@ msgstr "Chuyển sang chế độ xem trò chuyện"
 #: src/i18n/labels.ts
 msgid "Switch to the terminal view"
 msgstr "Chuyển sang chế độ xem terminal"
-
-#: src/components/agent-workspace-sheet.tsx
-msgid "Switch workspace"
-msgstr "Đổi không gian làm việc"
-
-#: src/app/agent.tsx
-msgid "Switch workspace: {displayWorkspaceName}"
-msgstr "Chuyển không gian làm việc: {displayWorkspaceName}"
 
 #: src/components/virtual-keyboard.tsx
 msgid "Symbols"
@@ -4940,6 +4951,7 @@ msgstr "Mục này là bắt buộc"
 msgid "This pane is not working inside a git repository, so there is nothing to compare."
 msgstr "Ngăn này không làm việc trong một kho git, nên không có gì để so sánh"
 
+#: src/components/agent-sessions-sheet.tsx
 #: src/components/agent-worktree-sheet.tsx
 msgid "This project"
 msgstr "Dự án này"
@@ -5018,10 +5030,6 @@ msgstr "Terminal này không còn khả dụng"
 #: src/components/custom-theme-library.tsx
 msgid "This theme contains images that must be installed before applying"
 msgstr "Giao diện này chứa hình ảnh cần được cài đặt trước khi áp dụng"
-
-#: src/components/agent-sessions-sheet.tsx
-msgid "This workspace"
-msgstr "Không gian làm việc này"
 
 #: src/components/session-map.tsx
 msgid "This workspace has no groups yet."
@@ -5375,20 +5383,9 @@ msgstr "Đang làm việc"
 msgid "Working directory"
 msgstr "Thư mục làm việc"
 
-#: src/app/agent.tsx
-#: src/components/composer-popup.tsx
 #: src/components/session-map.tsx
 msgid "Workspace"
 msgstr "Không gian làm việc"
-
-#. placeholder {0}: answer.missing?.directory ?? ''
-#. placeholder {0}: gone.directory
-#. placeholder {0}: missing.directory
-#: src/components/agent-vcs-diff-sheet.tsx
-#: src/components/agent-workbench.tsx
-#: src/components/agent-worktree-sheet.tsx
-msgid "Workspace folder is missing: {0}"
-msgstr "Không tìm thấy thư mục không gian làm việc: {0}"
 
 #: src/components/session-map.tsx
 msgid "Workspaces"

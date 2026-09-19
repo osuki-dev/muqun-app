@@ -103,7 +103,7 @@ export const AgentModeSheet = memo(function AgentModeSheet({
       {
         id: 'general',
         name: t`General`,
-        description: t`Conversational help and open-ended workspace questions.`,
+        description: t`Conversational help and open-ended project questions.`,
         mode: 'primary',
       },
     ],
