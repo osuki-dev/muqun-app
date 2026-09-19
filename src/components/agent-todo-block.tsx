@@ -16,7 +16,7 @@ import { useCompactMarkdownStyle } from '@/hooks/use-markdown-style';
 import { BoundedMarkdown } from '@/components/bounded-markdown';
 import { strikeMarkdown } from '@/lib/markdown-text';
 import { withAlpha } from '@/lib/color';
-import { fadeIn, fadeOut } from '@/lib/motion';
+import { fadeIn } from '@/lib/motion';
 import type { TodoItem } from '@/lib/agent-session';
 import { AGENT_TYPE } from '@/constants/agent-type';
 
@@ -128,7 +128,9 @@ export const AgentTodoBlock = memo(function AgentTodoBlock({
       </View>
 
       {expanded ? (
-        <Animated.View entering={fadeIn()} exiting={fadeOut()} style={styles.body}>
+        // No exit: see `embedded-terminal-tool-block.tsx`. An exiting body is out of
+        // the layout while it fades, which inside the transcript is a flicker.
+        <Animated.View entering={fadeIn()} style={styles.body}>
           {items.map((item, idx) => {
             const isCompleted = item.done;
             const isInProgress = !isCompleted && idx === firstPendingIdx;

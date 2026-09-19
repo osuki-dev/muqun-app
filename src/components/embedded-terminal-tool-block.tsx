@@ -36,7 +36,7 @@ import { ThinkingIndicator } from '@/components/agent-thinking-indicator';
 import { usePaneChatColors } from '@/components/pane-chat-blocks';
 import { useTranscriptPlate } from '@/hooks/use-transcript-plate';
 import { useMonoFontFamily } from '@/hooks/use-user-fonts';
-import { fadeIn, fadeOut, timing } from '@/lib/motion';
+import { fadeIn, timing } from '@/lib/motion';
 import type { ToolCallState } from '@/lib/agent-protocol';
 import type { ToolKind } from '@/lib/agent-tool-output';
 import { AGENT_TYPE } from '@/constants/agent-type';
@@ -262,9 +262,15 @@ export const EmbeddedTerminalToolBlock = memo(function EmbeddedTerminalToolBlock
       {actions ? <View style={[styles.actionRow, styles.underTitle]}>{actions}</View> : null}
 
       {expanded && hasBody ? (
+        // Fades in, and leaves without an exit -- as the thought block's body
+        // does, which is why that one never flickered and this one did. An
+        // exiting view is lifted out of the layout while it fades, so the row
+        // collapsed to its header at once with the old body still painted over
+        // the rows below it; inside a virtualised list that also re-measures
+        // the row twice. The collapse is the row getting shorter, which the
+        // list already animates the neighbours for.
         <Animated.View
           entering={fadeIn('micro')}
-          exiting={fadeOut('micro')}
           style={[styles.body, styles.underTitle, { borderLeftColor: theme.colors.border }]}>
           {children}
         </Animated.View>
