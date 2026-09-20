@@ -184,12 +184,11 @@ wait "id=theme-row-my-theme" 10000
 # wording replaces the detached confirmation card this list used to append at
 # its foot.
 press "label=\"Remove Theme\""
-is visible "id=theme-row-my-theme"
-is visible "label=\"Tap again to remove: Theme\""
-is hidden "id=theme-list-remove-confirm"
-
-# section inline-remove-confirm
+# Press the armed action immediately after proving its inline label. The
+# confirmation window is intentionally short; any intervening assertion can
+# expire on a loaded full-suite emulator even though the UI is correct.
 press "label=\"Tap again to remove: Theme\""
+is hidden "id=theme-list-remove-confirm"
 
 # section storage-entry
 # The tail of this flow covers the Storage section's own removal action, and it

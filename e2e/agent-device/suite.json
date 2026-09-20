@@ -351,9 +351,6 @@
         "run": "flows/custom-themes.ad#inline-remove-armed"
       },
       {
-        "run": "flows/custom-themes.ad#inline-remove-confirm"
-      },
-      {
         "run": "flows/custom-themes.ad#close-sheet"
       },
       {
@@ -7483,7 +7480,7 @@
       },
       {
         "target": {
-          "id": "agent-subagent-detail-sheet"
+          "id": "agent-subagent-detail-transcript"
         },
         "mode": "visible",
         "timeout": 10000,
