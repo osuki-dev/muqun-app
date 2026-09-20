@@ -13,6 +13,39 @@ import type { Colors } from '@osuki-dev/ui';
 import { StyleSheet } from 'react-native';
 import type { MarkdownStyle } from 'react-native-enriched-markdown';
 
+import { AGENT_TYPE } from '@/constants/agent-type';
+
+/**
+ * The two faces a markdown block can be set in, where the reader supplied them.
+ *
+ * `null` or absent in either is the system font, which is what this file did
+ * before there was anything to choose: prose in whatever the platform draws
+ * text in, code in `'monospace'`.
+ *
+ * Aliases, never a face's own family name -- `MuqunUserInterface` and
+ * `MuqunUserMono` are what `expo-font` registered the reader's files under, so
+ * the style below never changes when the file behind one of them does. See
+ * `theme/user-font-file.ts`.
+ */
+export interface MarkdownFonts {
+  /** Prose: paragraphs, headings, lists, quotes, tables. */
+  prose?: string | null;
+  /** Code: an inline span, and a fenced block. */
+  mono?: string | null;
+}
+
+/**
+ * The monospace family a style's code is set in.
+ *
+ * `'monospace'` is the floor and is never given up. It is Android's generic
+ * family name and the system's own answer to "draw this as code"; on iOS the
+ * renderer resolves it to the system monospace face the same way. A reader with
+ * no font in the mono slot gets exactly what this file has always drawn.
+ */
+function codeFamily(fonts: MarkdownFonts | undefined): string {
+  return fonts?.mono ?? 'monospace';
+}
+
 /**
  * The code palette, from the app's palette.
  *
@@ -50,29 +83,123 @@ function syntaxColors(colors: Colors): NonNullable<MarkdownStyle['codeBlock']>['
  * The app's one markdown theme. Shared with the asset viewer so a document read
  * from a file looks the same as the transcript it was mentioned in.
  */
-export function createMarkdownStyle(colors: Colors): MarkdownStyle {
+/**
+ * The answer's markdown, at the size the surface's chrome is set in.
+ *
+ * Everything in the transcript that is neither the answer nor a terminal reads
+ * through this: a thought, a notice, a skill's text, a permission's note, a
+ * form's description, a checklist item. All of it is markdown for the same
+ * reason the answer is -- a model numbers its plans and backticks its
+ * identifiers wherever it is writing -- and all of it is set at the meta size
+ * so it stays chrome beside the answer rather than a second answer.
+ *
+ * `ink` is the one thing that varies, and it comes from the palette at the call
+ * site: muted for a note, the body colour for something that is content in its
+ * own right, danger for a failure. Every block that carries its own colour goes
+ * with it; code and quote fills stay the answer's, they are what make a
+ * fragment legible. There is no thematic break: a rule drawn across a card is
+ * the card's own edge again.
+ */
+export function createCompactMarkdownStyle(
+  colors: Colors,
+  ink: string,
+  fonts?: MarkdownFonts
+): MarkdownStyle {
+  const base = createMarkdownStyle(colors, fonts);
+  const size = AGENT_TYPE.meta.size;
+  const lineHeight = AGENT_TYPE.mono.lineHeight;
+  const quiet = { color: ink, fontSize: size, lineHeight, marginBottom: 6 };
+  return {
+    ...base,
+    paragraph: { ...base.paragraph, ...quiet },
+    h1: { ...base.h1, ...quiet, fontSize: size + 1, lineHeight: lineHeight + 1 },
+    h2: { ...base.h2, ...quiet },
+    h3: { ...base.h3, ...quiet },
+    h4: { ...base.h4, ...quiet },
+    h5: { ...base.h5, ...quiet },
+    h6: { ...base.h6, ...quiet },
+    strong: { color: ink },
+    em: { color: ink },
+    strikethrough: { color: ink },
+    list: { ...base.list, ...quiet },
+    blockquote: { ...base.blockquote, ...quiet },
+    code: { ...base.code, color: ink, fontSize: AGENT_TYPE.micro.size },
+    codeBlock: {
+      ...base.codeBlock,
+      color: ink,
+      fontSize: AGENT_TYPE.micro.size,
+      lineHeight: AGENT_TYPE.micro.lineHeight,
+      marginBottom: 8,
+    },
+    table: { ...base.table, ...quiet, headerTextColor: ink },
+    thematicBreak: { color: 'transparent', height: 0, marginTop: 0, marginBottom: 0 },
+  };
+}
+
+/**
+ * The style a thought block reads its reasoning in: the compact style, muted.
+ *
+ * Named because a thought is the one of these the reader knows by name, and
+ * because `agent-reasoning-block.tsx` asks for the thought's ink rather than
+ * for a colour.
+ */
+export function createThoughtMarkdownStyle(colors: Colors, fonts?: MarkdownFonts): MarkdownStyle {
+  return createCompactMarkdownStyle(colors, colors.textMuted, fonts);
+}
+
+export function createMarkdownStyle(colors: Colors, fonts?: MarkdownFonts): MarkdownStyle {
   const text = colors.text;
   const muted = colors.textMuted;
   const border = colors.border;
   const codeBackground = colors.surfaceRaised;
   const quoteBackground = colors.primarySubtle;
   const link = colors.info;
+  const mono = codeFamily(fonts);
+  /**
+   * Every prose block is built from this, which is why the family goes on it
+   * and nowhere else.
+   *
+   * Paragraphs, all six headings, lists, quotes and tables spread `base`, so
+   * one line here sets the face for the whole of the reading -- and the three
+   * inline styles (`strong`, `em`, `link`) are deliberately left without one:
+   * `enriched-markdown` inherits a span's family from the block it is in, and
+   * naming it again on each of them would be three more places for the app to
+   * disagree with itself. `undefined` where the reader has chosen nothing,
+   * which is the same object this produced before the slot existed.
+   */
   const base = {
     color: text,
-    fontSize: 14,
-    lineHeight: 21,
+    ...(fonts?.prose ? { fontFamily: fonts.prose } : {}),
+    fontSize: AGENT_TYPE.prose.size,
+    lineHeight: AGENT_TYPE.prose.lineHeight,
     marginTop: 0,
     marginBottom: 10,
   };
 
   return {
     paragraph: base,
-    h1: { ...base, fontSize: 22, lineHeight: 28, fontWeight: '700', marginTop: 8 },
-    h2: { ...base, fontSize: 19, lineHeight: 25, fontWeight: '700', marginTop: 8 },
-    h3: { ...base, fontSize: 16, lineHeight: 22, fontWeight: '700', marginTop: 6 },
-    h4: { ...base, fontWeight: '700', marginTop: 4 },
-    h5: { ...base, fontWeight: '700', marginTop: 4 },
-    h6: { ...base, color: muted, fontWeight: '700', marginTop: 4 },
+    // Headings step by one point from the prose size, never a display size:
+    // a reply's "## Objective" is a paragraph heading, not a page title.
+    h1: {
+      ...base,
+      fontSize: AGENT_TYPE.prose.size + 2,
+      lineHeight: AGENT_TYPE.prose.lineHeight + 2,
+      fontWeight: '700',
+      marginTop: 12,
+      marginBottom: 6,
+    },
+    h2: {
+      ...base,
+      fontSize: AGENT_TYPE.prose.size + 1,
+      lineHeight: AGENT_TYPE.prose.lineHeight + 1,
+      fontWeight: '700',
+      marginTop: 10,
+      marginBottom: 4,
+    },
+    h3: { ...base, fontWeight: '700', marginTop: 8, marginBottom: 4 },
+    h4: { ...base, fontWeight: '600', marginTop: 6, marginBottom: 4 },
+    h5: { ...base, fontWeight: '600', marginTop: 6, marginBottom: 4 },
+    h6: { ...base, color: muted, fontWeight: '600', marginTop: 6, marginBottom: 4 },
     strong: { color: text },
     em: { color: text },
     link: { color: link, underline: false },
@@ -92,24 +219,28 @@ export function createMarkdownStyle(colors: Colors): MarkdownStyle {
       gapWidth: 10,
       backgroundColor: quoteBackground,
     },
+    // Inline code is the body ink in the monospace face and nothing more: no
+    // chip, no border. Models backtick file names, numbers and half their
+    // nouns, and a tinted box behind every one of them turned a paragraph
+    // into confetti.
     code: {
-      fontFamily: 'monospace',
-      fontSize: 13,
-      color: link,
-      backgroundColor: codeBackground,
-      borderColor: border,
+      fontFamily: mono,
+      fontSize: AGENT_TYPE.mono.size,
+      color: text,
+      backgroundColor: 'transparent',
+      borderColor: 'transparent',
     },
     codeBlock: {
       color: text,
-      fontFamily: 'monospace',
-      fontSize: 12.5,
-      lineHeight: 18,
+      fontFamily: mono,
+      fontSize: AGENT_TYPE.mono.size,
+      lineHeight: AGENT_TYPE.mono.lineHeight,
       backgroundColor: codeBackground,
       borderColor: border,
       borderWidth: StyleSheet.hairlineWidth,
-      borderRadius: 10,
+      borderRadius: 14,
       padding: 12,
-      marginTop: 2,
+      marginTop: 4,
       marginBottom: 12,
       syntaxColors: syntaxColors(colors),
     },
@@ -138,6 +269,10 @@ export function createMarkdownStyle(colors: Colors): MarkdownStyle {
       rowOddBackgroundColor: colors.surface,
       cellPaddingHorizontal: 12,
       cellPaddingVertical: 8,
+      // A wide table scrolls, and it scrolls to the edge of the screen rather
+      // than inside the plate's 12pt padding: a phone-width column of a
+      // four-column table is unreadable with a gutter on each side of it.
+      horizontalOverflow: 12,
     },
     taskList: {
       checkedColor: link,

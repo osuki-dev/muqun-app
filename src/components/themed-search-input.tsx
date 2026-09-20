@@ -5,7 +5,6 @@ import React, { useMemo } from 'react';
 import {
   Platform,
   Pressable,
-  TextInput,
   type TextInputProps,
   type TextStyle,
   type ViewStyle,
@@ -17,6 +16,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { Icon, resolveFontStyle, useThemeTokens } from '@osuki-dev/ui';
+import { FontedTextInput } from '@/components/fonted-text-input';
 
 export interface SearchInputProps extends Omit<TextInputProps, 'style'> {
   value: string;
@@ -117,7 +117,7 @@ export const SearchInput: React.FC<SearchInputProps> = ({
       testID={testID ? `${testID}-container` : undefined}
       style={[containerStyles, animatedContainerStyle, containerStyle]}>
       <Icon name="Search" size={18} color={theme.colors.textMuted} />
-      <TextInput
+      <FontedTextInput
         testID={testID}
         value={value}
         onChangeText={onChangeText}

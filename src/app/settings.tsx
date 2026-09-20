@@ -1,13 +1,21 @@
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { ThemeArtwork, useHasThemeArtwork } from '@/components/theme-artwork';
 import { brandMark } from '@/components/brand-mark';
-import { Text, useThemeMode, useThemeTokens } from '@osuki-dev/ui';
+import { useThemeMode, useThemeTokens, useToast } from '@osuki-dev/ui';
+import { Text } from '@/components/text';
 import * as Application from 'expo-application';
 import Constants from 'expo-constants';
 import { Image } from 'expo-image';
 import { StatusBar } from 'expo-status-bar';
 import { openBrowserAsync, WebBrowserPresentationStyle } from 'expo-web-browser';
-import { Code, ExternalLink, MessageSquare, Settings2, ShieldCheck } from 'lucide-react-native';
+import {
+  BookOpen,
+  Code,
+  ExternalLink,
+  MessageSquare,
+  Settings2,
+  ShieldCheck,
+} from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -23,7 +31,7 @@ import { SettingsSecurity } from '@/components/settings-security';
 import { SettingsServers } from '@/components/settings-servers';
 import { SettingsStorage } from '@/components/settings-storage';
 import { SettingsTerminal } from '@/components/settings-terminal';
-import { FEEDBACK_URL, PRIVACY_POLICY_URL, SOURCE_URL } from '@/constants/links';
+import { FEEDBACK_URL, PRIVACY_POLICY_URL, SOURCE_URL, SUPPORT_GUIDE_URL } from '@/constants/links';
 import { NAV_HEADER_TOP_GAP } from '@/constants/nav-header';
 import { feedback } from '@/lib/feedback';
 import { RenderTally, useRenderTally } from '@/lib/render-tally';
@@ -94,6 +102,7 @@ export default function SettingsScreen() {
   const { resolvedMode } = useThemeMode();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
+  const { showToast } = useToast();
   const isPadLayout = responsiveWorkspaceLayout(width).mode === 'pad';
   // The hugging plate `SettingsSection` already gives its instrument labels,
   // for the two bare strings at the end of the page that have no card of their
@@ -143,6 +152,30 @@ export default function SettingsScreen() {
 
   const version = Constants.expoConfig?.version ?? Application.nativeApplicationVersion ?? '1.1.0';
   const build = Application.nativeBuildVersion;
+
+  /**
+   * The manual, and the one row on this page that can fail in the reader's hand.
+   *
+   * The three rows under it open with the same call and do not guard it, which
+   * is a gap rather than a precedent -- but this is the row a reader reaches
+   * *because* something is already not working, and a rejected promise on that
+   * row is a tap that does nothing and says nothing. The toast is the app's
+   * existing one; it never throws, and the row stays where it was.
+   */
+  async function openGuide() {
+    await feedback('selection');
+    try {
+      await openBrowserAsync(SUPPORT_GUIDE_URL, {
+        presentationStyle: WebBrowserPresentationStyle.AUTOMATIC,
+      });
+    } catch {
+      showToast({
+        variant: 'warning',
+        title: t`Could not open the guide`,
+        message: t`No app on this phone opens web pages. The guide is at muqun.dev/support.`,
+      });
+    }
+  }
 
   async function openPrivacyPolicy() {
     await feedback('selection');
@@ -220,6 +253,20 @@ export default function SettingsScreen() {
                     quote the build. */}
                 <View style={[styles.deepSection, isPadLayout && styles.deepSectionPad]}>
                   <SettingsSection title={t`About`}>
+                    {/* First in the group, and above "report a bug" on purpose:
+                        a reader who cannot work something out should meet the
+                        manual before they meet the issue tracker. It carries a
+                        glyph like every other row in this card, so the four
+                        labels keep one left edge. */}
+                    <SettingsNavRow
+                      icon={BookOpen}
+                      trailing={ExternalLink}
+                      accessibilityRole="link"
+                      label={t`How to use Muqun`}
+                      detail={t`Guides for pairing, the terminal, OpenCode and themes`}
+                      testID="settings-guide-row"
+                      onPress={() => void openGuide()}
+                    />
                     <SettingsNavRow
                       icon={MessageSquare}
                       trailing={ExternalLink}

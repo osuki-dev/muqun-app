@@ -14,7 +14,12 @@ export function githubThemeRevisionResolver(
     async resolve(input, { signal }) {
       throwIfThemeAborted(signal);
       const request = parseGitThemeRequest(input.repository, input);
-      const path = new URL(request.repository).pathname;
+      let path: string;
+      try {
+        path = new URL(request.repository).pathname;
+      } catch {
+        throw new Error('Invalid repository URL');
+      }
       const endpoint = new URL(`https://api.github.com/repos${path}/commits`);
       endpoint.searchParams.set('per_page', '1');
       if (request.revision) endpoint.searchParams.set('sha', request.revision);

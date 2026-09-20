@@ -25,6 +25,8 @@ export type TerminalRun = {
 };
 
 export type TerminalLine = {
+  /** Number of columns before autowrap; absent for a hard newline. */
+  wrapsToNext?: number;
   cells: TerminalCell[];
   runs: TerminalRun[];
   /**

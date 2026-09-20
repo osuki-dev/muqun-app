@@ -2,7 +2,11 @@
 // what it leaves as plain text. A wrong file link opens the wrong artifact, so
 // the negative cases below are the point of this file.
 import { describe, expect, test } from 'bun:test';
-import { parseTerminalSnapshot, terminalFrameLinks } from '@/terminal/terminal-core';
+import {
+  TerminalEmulator,
+  parseTerminalSnapshot,
+  terminalFrameLinks,
+} from '@/terminal/terminal-core';
 import type { TerminalLink } from '@/terminal/types';
 
 function linksOf(text: string): TerminalLink[] {
@@ -164,4 +168,72 @@ describe('file path links — what must NOT match', () => {
   test('a bare file name with no directory is not a link', () => {
     expect(linksOf('see report.md for details')).toEqual([]);
   });
+});
+
+describe('remote file links across terminal formats', () => {
+  test('Unicode paths retain their full name and wide-cell tap range', () => {
+    const [link] = linksOf('/home/ryu/设计稿/首页.webp');
+    expect(link).toMatchObject({
+      uri: '/home/ryu/设计稿/首页.webp',
+      kind: 'file',
+      startColumn: 0,
+      endColumn: 26,
+    });
+  });
+  test('quoted spaces and encoded file URIs open the remote path', () => {
+    expect(urisOf('saved "/home/ryu/My images/首页.png"', 'file')).toEqual([
+      '/home/ryu/My images/首页.png',
+    ]);
+    const [link] = linksOf('file:///home/ryu/My%20images/chart.png');
+    expect(link).toMatchObject({
+      uri: '/home/ryu/My images/chart.png',
+      kind: 'file',
+      startColumn: 0,
+      endColumn: 38,
+    });
+    expect(urisOf('~/themes/summer.muqun-theme', 'file')).toEqual(['~/themes/summer.muqun-theme']);
+  });
+  test('OSC 8 file labels use Gateway instead of the system URL opener', () => {
+    const [link] = linksOf('\x1b]8;;file:///home/ryu/My%20images/chart.png\x07设计稿\x1b]8;;\x07');
+    expect(link).toMatchObject({
+      uri: '/home/ryu/My images/chart.png',
+      kind: 'file',
+      startColumn: 0,
+      endColumn: 6,
+    });
+  });
+  test('every autowrapped segment opens the full path, including scrollback', () => {
+    const term = new TerminalEmulator({ columns: 16, rows: 2, scrollback: 20, convertEol: true });
+    const path = '/home/ryu/.codex/generated_images/design-preview.png';
+    term.write(path);
+    const links = terminalFrameLinks(term.frame());
+    expect(links).toHaveLength(4);
+    expect(links.map((link) => link.uri)).toEqual(Array(4).fill(path));
+    expect(links.map((link) => link.row)).toEqual([0, 1, 2, 3]);
+  });
+  test('hard newlines never join unrelated paths', () => {
+    const term = new TerminalEmulator({ columns: 16, rows: 4, convertEol: true });
+    term.write('/home/ryu/longxx/\nother.png');
+    expect(terminalFrameLinks(term.frame())).toEqual([]);
+  });
+  test('recycled rows do not retain an old wrap boundary', () => {
+    const term = new TerminalEmulator({ columns: 16, rows: 2, scrollback: 0, convertEol: true });
+    term.write('/home/ryu/longxx/old.png\n\n/home/ryu/longxx/\nother.png');
+    expect(terminalFrameLinks(term.frame())).toEqual([]);
+  });
+  test('invalid file URIs and control bytes never become file targets', () => {
+    for (const uri of ['file:///tmp/a%00.png', 'file:///tmp/a%ZZ.png', 'file://other/tmp/a.png']) {
+      expect(urisOf(uri, 'file')).toEqual([]);
+    }
+  });
+});
+
+test('autowrap preserves quoted spaces and does not invent spaces before wide glyphs', () => {
+  for (const path of ['/home/ryu/my folder/chart.png', '/home/ryu/图像/首页.png']) {
+    const term = new TerminalEmulator({ columns: 13, rows: 8, convertEol: true });
+    term.write(`"${path}"`);
+    const links = terminalFrameLinks(term.frame());
+    expect(links.length).toBeGreaterThan(1);
+    expect(new Set(links.map((link) => link.uri))).toEqual(new Set([path]));
+  }
 });

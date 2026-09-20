@@ -23,13 +23,23 @@ export type AgentWidgetName = (typeof AGENT_WIDGET_NAMES)[number];
 
 export type AgentWidgetStatus = 'working' | 'blocked' | 'idle' | 'done' | 'unknown';
 
+export type AgentEngineType = 'opencode' | 'tmux' | 'herdr';
+
 export type AgentWidgetEntry = {
-  /** Gateway agent id. Opaque; used only to key the row. */
+  /** Gateway agent id or session id. Opaque; used only to key the row. */
   id: string;
   name: string;
   status: AgentWidgetStatus;
   /** Pane the agent runs in, so a tap lands on the panel rather than the app. */
   paneId: string;
+  /** Subsystem engine behind this entry (OpenCode AI agent, tmux session/pane, or herdr daemon). */
+  engine?: AgentEngineType;
+  /** Milestone step progress for long tasks, e.g. OpenCode Todo list { done: 3, total: 5 }. */
+  todoProgress?: { done: number; total: number };
+  /** Current active action or phase, e.g. "Editing auth.ts", "cargo build", "Awaiting approval". */
+  action?: string;
+  /** Urgent permission or decision blocking the agent run. */
+  isBlocked?: boolean;
 };
 
 export type AgentWidgetSnapshot = {
@@ -41,6 +51,10 @@ export type AgentWidgetSnapshot = {
   /** When the app last confirmed these statuses with the gateway. */
   checkedAtMs: number;
   agents: AgentWidgetEntry[];
+  /** Aggregate count of active panes across all tmux sessions. */
+  activePanesCount?: number;
+  /** Overall summary status prioritizing urgent blocked states. */
+  summaryStatus?: AgentWidgetStatus;
 };
 
 const STORAGE_KEY = 'muqun.agent-widget.v1';
@@ -142,12 +156,44 @@ export async function clearAgentWidget(): Promise<void> {
 }
 
 /**
- * Deep link for a tap. Panels are addressed the same way a notification
- * addresses them, so the widget reuses the route the app already handles.
+ * Orders widget entries by urgency so developer-critical events (blocked approvals, active tasks)
+ * are never squeezed out by inactive idle cards on a 2x2 or 4x1 home screen tile.
+ */
+export function sortAgentWidgetEntries(entries: AgentWidgetEntry[]): AgentWidgetEntry[] {
+  const statusWeight: Record<AgentWidgetStatus, number> = {
+    blocked: 1, // Highest urgency: requires user confirmation / approval
+    working: 2, // Active: working/thinking/running
+    done: 3, // Completed
+    idle: 4, // Inactive
+    unknown: 5,
+  };
+  return [...entries].sort((a, b) => {
+    const wa = a.isBlocked ? 0 : (statusWeight[a.status] ?? 99);
+    const wb = b.isBlocked ? 0 : (statusWeight[b.status] ?? 99);
+    if (wa !== wb) return wa - wb;
+    return a.name.localeCompare(b.name);
+  });
+}
+
+/** Computes aggregate summary status across all active entries. */
+export function computeSummaryStatus(entries: AgentWidgetEntry[]): AgentWidgetStatus {
+  if (entries.some((e) => e.status === 'blocked' || e.isBlocked)) return 'blocked';
+  if (entries.some((e) => e.status === 'working')) return 'working';
+  if (entries.some((e) => e.status === 'done')) return 'done';
+  if (entries.some((e) => e.status === 'idle')) return 'idle';
+  return 'unknown';
+}
+
+/**
+ * Deep link for a tap. Panels and agents are addressed cleanly so a tap on an
+ * OpenCode agent opens the agent workbench, while a tmux pane opens the terminal workspace.
  */
 export function agentWidgetUri(snapshot: AgentWidgetSnapshot, entry?: AgentWidgetEntry): string {
-  // Built by hand rather than with `URLSearchParams`: React Native's polyfill
-  // does not implement `toString`, and this runs inside the widget task too.
+  if (entry?.engine === 'opencode') {
+    const query = [`asid=${encodeURIComponent(entry.id)}`];
+    if (entry.paneId) query.push(`paneId=${encodeURIComponent(entry.paneId)}`);
+    return `muqun://agent?${query.join('&')}`;
+  }
   const query = [`sessionId=${encodeURIComponent(snapshot.sessionId)}`];
   if (entry?.paneId) query.push(`paneId=${encodeURIComponent(entry.paneId)}`);
   return `muqun://servers/${encodeURIComponent(snapshot.serverId)}?${query.join('&')}`;
@@ -196,6 +242,8 @@ function sameContent(a: AgentWidgetSnapshot, b: AgentWidgetSnapshot): boolean {
   if (a.serverId !== b.serverId) return false;
   if (a.serverLabel !== b.serverLabel) return false;
   if (a.sessionId !== b.sessionId) return false;
+  if (a.activePanesCount !== b.activePanesCount) return false;
+  if (a.summaryStatus !== b.summaryStatus) return false;
   if (a.agents.length !== b.agents.length) return false;
   return a.agents.every((agent, index) => {
     const other = b.agents[index];
@@ -203,20 +251,36 @@ function sameContent(a: AgentWidgetSnapshot, b: AgentWidgetSnapshot): boolean {
       agent.id === other.id &&
       agent.name === other.name &&
       agent.status === other.status &&
-      agent.paneId === other.paneId
+      agent.paneId === other.paneId &&
+      agent.engine === other.engine &&
+      agent.action === other.action &&
+      agent.isBlocked === other.isBlocked &&
+      agent.todoProgress?.done === other.todoProgress?.done &&
+      agent.todoProgress?.total === other.todoProgress?.total
     );
   });
 }
 
 function normalizeSnapshot(snapshot: AgentWidgetSnapshot): AgentWidgetSnapshot {
+  const sorted = sortAgentWidgetEntries(snapshot.agents);
   return {
     ...snapshot,
     version: 1,
-    agents: snapshot.agents.slice(0, MAX_AGENTS).map((agent) => ({
+    summaryStatus: snapshot.summaryStatus ?? computeSummaryStatus(sorted),
+    agents: sorted.slice(0, MAX_AGENTS).map((agent) => ({
       id: agent.id,
       name: agent.name.slice(0, MAX_NAME_LENGTH),
       status: agent.status,
       paneId: agent.paneId,
+      ...(agent.engine && { engine: agent.engine }),
+      ...(agent.action && { action: agent.action.slice(0, MAX_NAME_LENGTH) }),
+      ...(agent.isBlocked !== undefined && { isBlocked: agent.isBlocked }),
+      ...(agent.todoProgress && {
+        todoProgress: {
+          done: Math.max(0, agent.todoProgress.done),
+          total: Math.max(0, agent.todoProgress.total),
+        },
+      }),
     })),
   };
 }
@@ -242,10 +306,20 @@ function parseSnapshot(value: string): AgentWidgetSnapshot | null {
       serverLabel: typeof record.serverLabel === 'string' ? record.serverLabel : 'Muqun',
       sessionId: record.sessionId,
       checkedAtMs: record.checkedAtMs,
+      ...(typeof record.activePanesCount === 'number' && {
+        activePanesCount: record.activePanesCount,
+      }),
+      ...(typeof record.summaryStatus === 'string' && {
+        summaryStatus: asAgentWidgetStatus(record.summaryStatus),
+      }),
       agents: record.agents.flatMap((item) => {
         if (typeof item !== 'object' || item === null) return [];
         const agent = item as Record<string, unknown>;
         if (typeof agent.id !== 'string' || typeof agent.name !== 'string') return [];
+        const todo =
+          typeof agent.todoProgress === 'object' && agent.todoProgress !== null
+            ? (agent.todoProgress as Record<string, unknown>)
+            : undefined;
         return [
           {
             id: agent.id,
@@ -254,6 +328,20 @@ function parseSnapshot(value: string): AgentWidgetSnapshot | null {
               typeof agent.status === 'string' ? agent.status : undefined
             ),
             paneId: typeof agent.paneId === 'string' ? agent.paneId : '',
+            ...(typeof agent.engine === 'string' && {
+              engine: agent.engine as AgentEngineType,
+            }),
+            ...(typeof agent.action === 'string' && {
+              action: agent.action,
+            }),
+            ...(typeof agent.isBlocked === 'boolean' && {
+              isBlocked: agent.isBlocked,
+            }),
+            ...(todo &&
+              typeof todo.done === 'number' &&
+              typeof todo.total === 'number' && {
+                todoProgress: { done: todo.done, total: todo.total },
+              }),
           },
         ];
       }),

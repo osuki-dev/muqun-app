@@ -1,4 +1,5 @@
-import { Text, useThemeTokens } from '@osuki-dev/ui';
+import { useThemeTokens } from '@osuki-dev/ui';
+import { Text } from '@/components/text';
 import { useLingui } from '@lingui/react/macro';
 import { Bot, Plus, X } from 'lucide-react-native';
 import { ScrollView, StyleSheet, View } from 'react-native';

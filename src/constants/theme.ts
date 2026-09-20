@@ -22,6 +22,8 @@ import {
   resolveThemePack,
   type ThemeAppearance,
 } from '@/constants/theme-packs';
+import { userFontRegistry } from '@/theme/interface-font-registry';
+import { slotFontFamily, SYSTEM_FONT_SLOT, type FontSlot } from '@/theme/user-font-file';
 
 /**
  * The shape of the app, independent of its colours: density, corner radius and
@@ -29,7 +31,23 @@ import {
  * with, never how tightly it is packed -- otherwise picking Tokyo Night would
  * silently re-lay-out every screen.
  */
-export function buildTheme(pack: ThemeAppearance): ThemeOverride {
+export function buildTheme(
+  pack: ThemeAppearance,
+  /**
+   * The face the app's own text is set in, where the reader has supplied one.
+   *
+   * A second argument rather than a second lookup inside this function, because
+   * this is also what the theme preview route builds its nested provider with:
+   * a preview is the app wearing another palette, and it has to be wearing the
+   * reader's font while it does it or it is previewing a different app.
+   *
+   * Independent of the pack on purpose. A pack is colour -- `theme/schema.ts`
+   * has no font field and the authoring skill forbids one -- so a font survives
+   * every theme change, which is the only behaviour that makes sense for a
+   * reader who chose a face because they can read it.
+   */
+  interfaceFont: FontSlot = SYSTEM_FONT_SLOT
+): ThemeOverride {
   const preset = createThemePreset({
     name: `muqun-${pack.id}`,
     tone: 'commerce',
@@ -39,9 +57,29 @@ export function buildTheme(pack: ThemeAppearance): ThemeOverride {
     dark: pack.dark.colors,
   });
 
+  /**
+   * Every role the kit has, including `label`.
+   *
+   * `display` and `body` are the app's *reading*: a title, a row, a caption, a
+   * message. `label` is the 11pt all-caps instrument style the section
+   * headings are set in -- SERVERS, APPEARANCE, TERMINAL -- and it was left on
+   * the system face for a while on the argument that it is chrome rather than
+   * content. It reads as two fonts in one line, so it follows the reader now:
+   * the instrument style (size, tracking, case) is the role's, the face is
+   * theirs. These three are the whole of `typeStyles`, so covering them covers
+   * every variant the kit can draw -- `hero` and `display` from `display`,
+   * `heading` through `bodySmall` from `body`, and `caption`, `label`,
+   * `data`, `dataLarge` and `button` from `label`.
+   */
+  const interfaceFamily = slotFontFamily(interfaceFont, 'interface');
+  const fonts = interfaceFamily
+    ? { ...preset.fonts, ...userFontRegistry(interfaceFamily) }
+    : preset.fonts;
+
   return {
     ...preset,
     ...appThemeAppearanceOverride,
+    ...(fonts ? { fonts } : {}),
     components: {
       ...preset.components,
       Input: {

@@ -3,21 +3,16 @@ import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { timing, fadeInDown, listLayout } from '@/lib/motion';
 /** Adapted from @osuki-dev/ui 1.0.1: preserve input behavior; theme only control fills. */
 import React, { useEffect, useMemo } from 'react';
-import {
-  Platform,
-  TextInput,
-  View,
-  type TextInputProps,
-  type ViewStyle,
-  type TextStyle,
-} from 'react-native';
+import { Platform, View, type TextInputProps, type ViewStyle, type TextStyle } from 'react-native';
 import Animated, {
   interpolateColor,
   useAnimatedStyle,
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
-import { resolveFontStyle, Text, useThemeTokens } from '@osuki-dev/ui';
+import { resolveFontStyle, useThemeTokens } from '@osuki-dev/ui';
+import { Text } from '@/components/text';
+import { FontedTextInput } from '@/components/fonted-text-input';
 
 export type InputVariant = 'underline' | 'outline';
 export type InputSize = 'default' | 'compact';
@@ -167,7 +162,7 @@ export const Input: React.FC<InputProps> = ({
       <Animated.View
         testID={textInputProps.testID ? `${textInputProps.testID}-control` : undefined}
         style={[inputContainerStyles, animatedInputContainerStyle]}>
-        <TextInput
+        <FontedTextInput
           style={[inputStyles, style]}
           placeholderTextColor={theme.colors[input.placeholder]}
           onFocus={handleFocus}

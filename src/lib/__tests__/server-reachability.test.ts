@@ -11,9 +11,11 @@ import {
   agentStatusesAreCurrent,
   MAX_PROBED_SERVERS,
   needsReachabilityProbe,
+  prewarmGate,
   reachabilityFromProbe,
   REACHABILITY_FRESH_MS,
   REACHABILITY_RECHECK_MS,
+  resolveServerReachability,
   serversToProbe,
   type ReachabilityProbe,
 } from '../server-reachability';
@@ -72,6 +74,51 @@ describe('when the list asks again', () => {
     // between the answer expiring and the next probe being allowed.
     expect(REACHABILITY_RECHECK_MS).toBeLessThan(REACHABILITY_FRESH_MS);
     expect(needsReachabilityProbe(probe(true, NOW), NOW + REACHABILITY_RECHECK_MS)).toBe(true);
+  });
+});
+
+describe('when a workspace owns one server', () => {
+  test('a connected workspace is live for its exact server', () => {
+    expect(
+      resolveServerReachability('s1', probe(false), { serverId: 's1', phase: 'connected' }, NOW)
+    ).toBe('live');
+  });
+
+  test('a fresh successful probe outranks an offline workspace channel', () => {
+    expect(
+      resolveServerReachability('s1', probe(true), { serverId: 's1', phase: 'offline' }, NOW)
+    ).toBe('live');
+  });
+
+  test('an offline workspace falls back to offline without fresh probe evidence', () => {
+    expect(
+      resolveServerReachability('s1', undefined, { serverId: 's1', phase: 'offline' }, NOW)
+    ).toBe('offline');
+    expect(
+      resolveServerReachability(
+        's1',
+        probe(true, NOW - REACHABILITY_FRESH_MS - 1),
+        { serverId: 's1', phase: 'offline' },
+        NOW
+      )
+    ).toBe('offline');
+  });
+
+  test('a different server still uses its probe', () => {
+    expect(
+      resolveServerReachability('s2', probe(true), { serverId: 's1', phase: 'offline' }, NOW)
+    ).toBe('live');
+  });
+
+  test('a reconnecting workspace falls back to probe freshness', () => {
+    expect(
+      resolveServerReachability(
+        's1',
+        probe(true, NOW - REACHABILITY_FRESH_MS - 1),
+        { serverId: 's1', phase: 'reconnecting' },
+        NOW
+      )
+    ).toBe('unknown');
   });
 });
 
@@ -160,5 +207,57 @@ describe('which servers the list is willing to ask', () => {
     const input = [...records];
     serversToProbe(input, { d: 9 });
     expect(ids(input)).toEqual(['a', 'b', 'c', 'd']);
+  });
+});
+
+describe('what the probe tells the workspace prewarm', () => {
+  const now = 1_000_000;
+  const probe = (over: Partial<ReachabilityProbe>): ReachabilityProbe => ({
+    serverId: 's1',
+    ok: true,
+    checkedAtMs: now,
+    ...over,
+  });
+
+  test('a fresh green probe hands its health over so the warm skips /health', () => {
+    const health = { ok: true, gatewayVersion: '1.2.3' };
+    expect(prewarmGate(probe({ health }), now)).toEqual({ warm: true, health });
+  });
+
+  test('a server that just failed to answer is not warmed at all', () => {
+    // Six requests at a machine the list has already drawn as offline is six
+    // full timeouts, on the screen the reader is looking at right now.
+    expect(prewarmGate(probe({ ok: false }), now)).toEqual({ warm: false, health: null });
+  });
+
+  test('never having asked is not evidence, so the warm goes ahead as before', () => {
+    expect(prewarmGate(undefined, now)).toEqual({ warm: true, health: null });
+  });
+
+  test('a probe too old to colour the dot is too old to seed the warm', () => {
+    // The two have to expire on the same tick. A health body that no longer
+    // backs a green light cannot be the one a snapshot is built on -- and an
+    // offline answer that old is no longer a reason to refuse either.
+    const stale = probe({ ok: false, checkedAtMs: now - REACHABILITY_FRESH_MS - 1 });
+    expect(prewarmGate(stale, now)).toEqual({ warm: true, health: null });
+    const staleGreen = probe({
+      ok: true,
+      health: { ok: true },
+      checkedAtMs: now - REACHABILITY_FRESH_MS - 1,
+    });
+    expect(prewarmGate(staleGreen, now)).toEqual({ warm: true, health: null });
+  });
+
+  test('a green probe that brought no usable health still warms, the slow way', () => {
+    // `health` is null when the body was unreadable or failed the Herdr check.
+    // The warm then asks for its own and gets the real error; what it must not
+    // do is skip.
+    expect(prewarmGate(probe({ health: null }), now)).toEqual({ warm: true, health: null });
+  });
+
+  test('the warm never re-runs more often than the probe it waits on', () => {
+    // The expensive path is gated by the cheap one, so the cheap one has to be
+    // the more frequent of the two. See `WARM_WORKSPACE_TTL_MS`.
+    expect(REACHABILITY_FRESH_MS).toBeGreaterThanOrEqual(REACHABILITY_RECHECK_MS);
   });
 });

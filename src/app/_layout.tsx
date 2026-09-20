@@ -1,6 +1,9 @@
 import { RouteScene } from '@/components/route-scene';
-import { sheetPresentationOptions, sheetRoutePresentations } from '@/lib/route-presentation';
-import { FullscreenSheetFrame } from '@/components/sheet-route-frame';
+import {
+  sheetPresentationOptions,
+  sheetRouteOptions,
+  sheetRoutePresentations,
+} from '@/lib/route-presentation';
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import * as Device from 'expo-device';
 import * as ScreenOrientation from 'expo-screen-orientation';
@@ -23,8 +26,10 @@ import { NAVIGATION_MOTION } from '@/lib/motion';
 import { SplashScreen } from '@osuki-dev/react-native-splash';
 
 import { LaunchOverlay } from '@/components/launch-overlay';
+import { ReskinSurface, ReskinTransitionProvider } from '@/components/reskin-transition';
 import { AppErrorBoundary } from '@/components/app-error-boundary';
 import { AppLockGate } from '@/components/app-lock-gate';
+import { HugSlackProvider } from '@/components/text';
 import { SshConnectPromptGate } from '@/components/ssh-connect-prompt-gate';
 import { UpdateStatusBanner } from '@/components/update-status-banner';
 import { InAppNotificationHost } from '@/components/in-app-notification-host';
@@ -33,10 +38,10 @@ import { useGatewayRecord } from '@/hooks/use-gateway-record';
 import { useLaunchImageSync } from '@/hooks/use-launch-image-sync';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { useThemePack, useThemePalette } from '@/hooks/use-theme-pack';
+import { useUserFontsReady } from '@/hooks/use-user-fonts';
 import { useThemeLibrary } from '@/stores/theme-library';
 import { AppI18nProvider } from '@/i18n/provider';
 import { useGatewayPushRegistration, useNotificationObserver } from '@/lib/notifications';
-import { useAppSettings } from '@/stores/app-settings';
 import { useSshTunnelsStore } from '@/stores/ssh-tunnels';
 import { useThemeFileOpen } from '@/hooks/use-theme-file-open';
 
@@ -102,7 +107,24 @@ function ThemeFileOpener() {
 }
 
 export default function RootLayout() {
-  const hydrateSettings = useAppSettings((state) => state.hydrate);
+  /**
+   * The settings are read and the reader's fonts are registered before this
+   * returns true, and the router below does not mount until it does.
+   *
+   * Holding the tree rather than letting it paint and swapping the font in is
+   * the whole point, and on Android it is not a preference. A markdown view
+   * that asks `ReactFontManager` for `MuqunUserMono` before `Font.loadAsync`
+   * has run gets the system font, and `enriched-markdown` memoises that answer
+   * in a process-global cache with no invalidation -- so every code block in
+   * the app stays in the wrong face until the process is killed. See
+   * `use-user-fonts.ts`, which also caps the wait: a font that will not
+   * register opens the app on the system font rather than on a splash screen
+   * nobody can get past.
+   *
+   * Nothing is lost by waiting. `LaunchOverlay` is what the reader is looking
+   * at either way, and it holds for longer than the registration takes.
+   */
+  const fontsReady = useUserFontsReady();
 
   // The system bar overlays the app under edge-to-edge (targetSdk 36) and its
   // strip swallows every touch in it -- on a three-button device that strip sat
@@ -149,10 +171,6 @@ export default function RootLayout() {
   const pack = useThemePack();
   const theme = useThemePalette(pack);
 
-  useEffect(() => {
-    void hydrateSettings();
-  }, [hydrateSettings]);
-
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <KeyboardProvider>
@@ -164,21 +182,40 @@ export default function RootLayout() {
           }}
           theme={theme}>
           {/*
-            Wraps everything except the theme provider the fallback's <Text>
-            needs, so a render throw in the toast host, lock gate, nav theme, or
-            update banner is caught too -- not just faults inside the router.
+            Outside the error boundary because the boundary's own fallback is
+            reader-facing copy like any other, and it is drawn in the reader's
+            face: the slack an oblique needs on its trailing edge is not a
+            thing to lose on the one screen that appears when something has
+            already gone wrong. It publishes a context and nothing else, so
+            there is no state here that could be the fault.
           */}
-          <AppErrorBoundary>
+          <HugSlackProvider>
             {/*
+              Wraps everything except the theme provider the fallback's <Text>
+              needs, so a render throw in the toast host, lock gate, nav theme,
+              or update banner is caught too -- not just faults inside the
+              router.
+            */}
+            <AppErrorBoundary>
+              {/*
               Inside the error boundary so a fault in locale resolution shows
               the fallback screen rather than a blank app, and outside
               everything else so the boundary's own copy is the only string in
               the tree that cannot be translated.
             */}
-            <AppI18nProvider>
-              <RootContent />
-            </AppI18nProvider>
-          </AppErrorBoundary>
+              <AppI18nProvider>
+                {/*
+                `null` until the fonts are registered, which keeps the native
+                launch screen up: `SplashScreen.preventAutoHide()` at module
+                scope holds it until `LaunchOverlay` paints, and the overlay is
+                inside `RootContent`. So the app's first painted frame is
+                already wearing the reader's typography -- there is no frame in
+                the system font for anything to cache.
+              */}
+                {fontsReady ? <RootContent /> : null}
+              </AppI18nProvider>
+            </AppErrorBoundary>
+          </HugSlackProvider>
         </OsukiThemeProvider>
       </KeyboardProvider>
     </GestureHandlerRootView>
@@ -239,129 +276,140 @@ function RootContent() {
       <ToastProvider
         maxWidth={480}
         toastStyle={{ backgroundColor: surfaceBackground(colors.surface) }}>
-        <StatusBar animated style={resolvedMode === 'dark' ? 'light' : 'dark'} />
-        <LaunchOverlay />
-        <ThemeFileOpener />
-        <AppLockGate>
-          <Stack
-            screenLayout={({ children, options, route }) =>
-              options.presentation === 'formSheet' ? (
-                <>{children}</>
-              ) : (
-                <RouteScene modal={options.presentation === 'fullScreenModal'}>
-                  {sheetRoutePresentations[route.name] === 'fullscreen' ? (
-                    <FullscreenSheetFrame
-                      tint={route.name === 'commands' ? 'background' : 'surface'}>
-                      {children}
-                    </FullscreenSheetFrame>
+        {/*
+          The re-skin transitions live here, inside the toast provider and
+          around everything the reader can see, because a theme or a font
+          change repaints all of it at once and the photograph that hides the
+          repaint has to be a photograph of all of it. The surface is the root
+          window's; the font sheet mounts a second one of its own, for the
+          reason set out in `reskin-transition.tsx`.
+        */}
+        <ReskinTransitionProvider>
+          <ReskinSurface id="root">
+            <StatusBar animated style={resolvedMode === 'dark' ? 'light' : 'dark'} />
+            <LaunchOverlay />
+            <ThemeFileOpener />
+            <AppLockGate>
+              <Stack
+                screenLayout={({ children, options, route }) =>
+                  options.presentation === 'formSheet' ? (
+                    <>{children}</>
                   ) : (
-                    children
-                  )}
-                </RouteScene>
-              )
-            }
-            screenOptions={{
-              headerShown: false,
-              animation: 'fade',
-              animationDuration: reduceMotion ? 0 : NAVIGATION_MOTION.pageMs,
-              contentStyle: { backgroundColor: screenBackground },
-              // A screen nobody is looking at should not be rendering. Home
-              // sits under the terminal for as long as the terminal is open,
-              // and without this its artwork layers and its one pulse per live
-              // server card keep the UI thread at vsync the whole time. Work
-              // that must outlive a blur already lives in a store rather than
-              // in a screen, so nothing here depends on rendering while hidden.
-              freezeOnBlur: true,
-            }}>
-            <Stack.Screen name="(drawer)" />
-            {/* Pages share a depth reveal; native sheets retain their layout contract. */}
-            <Stack.Screen name="settings" options={{ animation: 'fade' }} />
-            {/*
+                    <RouteScene
+                      modal={options.presentation === 'fullScreenModal'}
+                      sceneType={
+                        options.presentation === 'fullScreenModal'
+                          ? 'modal'
+                          : route.name === 'agent'
+                            ? 'agent'
+                            : route.name.startsWith('servers') || route.name.startsWith('ssh')
+                              ? 'terminal'
+                              : 'plain'
+                      }
+                      animated={route.name !== 'index'}>
+                      {children}
+                    </RouteScene>
+                  )
+                }
+                screenOptions={{
+                  headerShown: false,
+                  animation: 'fade',
+                  animationDuration: reduceMotion ? 0 : NAVIGATION_MOTION.pageMs,
+                  contentStyle: { backgroundColor: screenBackground },
+                  // A screen nobody is looking at should not be rendering. Home
+                  // sits under the terminal for as long as the terminal is open,
+                  // and without this its artwork layers and its one pulse per live
+                  // server card keep the UI thread at vsync the whole time. Work
+                  // that must outlive a blur already lives in a store rather than
+                  // in a screen, so nothing here depends on rendering while hidden.
+                  freezeOnBlur: true,
+                }}>
+                <Stack.Screen
+                  name="index"
+                  options={{
+                    animation: 'fade',
+                    animationDuration: reduceMotion ? 0 : NAVIGATION_MOTION.pageMs,
+                  }}
+                />
+                {/* Pages share a depth reveal; native sheets retain their layout contract. */}
+                <Stack.Screen
+                  name="agent"
+                  options={{
+                    animation: 'fade',
+                    animationDuration: reduceMotion ? 0 : NAVIGATION_MOTION.pageMs,
+                  }}
+                />
+                <Stack.Screen
+                  name="settings"
+                  options={{
+                    animation: 'fade',
+                    animationDuration: reduceMotion ? 0 : NAVIGATION_MOTION.pageMs,
+                  }}
+                />
+                {/*
               The terminal lives on the root stack rather than in the drawer:
               drawer screens swap without a transition, and its edge-swipe
               gesture fights the terminal's own horizontal panning.
             */}
-            <Stack.Screen
-              name="servers/[serverId]"
-              options={{ gestureEnabled: false, animation: 'fade' }}
-            />
-            <Stack.Screen name="ssh" options={{ animation: 'fade' }} />
-            <Stack.Screen
-              name="ssh/[hostId]"
-              options={{ gestureEnabled: false, animation: 'fade' }}
-            />
-            <Stack.Screen
-              name="commands"
-              options={sheetPresentationOptions(sheetRoutePresentations['commands'], false, true)}
-            />
-            <Stack.Screen
-              name="panels"
-              options={sheetPresentationOptions(sheetRoutePresentations['panels'], false, true)}
-            />
-            {/*
-              The session switcher. Content-sized like the language
-              picker, and for the same reason: it is a short closed list, one
-              row per backend the gateway runs, and a full-height sheet for two
-              rows would be the app implying the question is bigger than it is.
-              It is also only ever reachable from a gateway that has more than
-              one session to offer.
+                <Stack.Screen
+                  name="servers/[serverId]"
+                  options={{
+                    gestureEnabled: false,
+                    animation: 'fade',
+                    animationDuration: reduceMotion ? 0 : NAVIGATION_MOTION.pageMs,
+                  }}
+                />
+                <Stack.Screen
+                  name="ssh"
+                  options={{
+                    animation: 'fade',
+                    animationDuration: reduceMotion ? 0 : NAVIGATION_MOTION.pageMs,
+                  }}
+                />
+                <Stack.Screen
+                  name="ssh/[hostId]"
+                  options={{
+                    gestureEnabled: false,
+                    animation: 'fade',
+                    animationDuration: reduceMotion ? 0 : NAVIGATION_MOTION.pageMs,
+                  }}
+                />
+                <Stack.Screen name="commands" options={sheetRouteOptions('commands')} />
+                <Stack.Screen name="panels" options={sheetRouteOptions('panels')} />
+                <Stack.Screen name="sessions" options={sheetRouteOptions('sessions')} />
+                <Stack.Screen name="artifacts" options={sheetRouteOptions('artifacts')} />
+                <Stack.Screen name="git-diff" options={sheetRouteOptions('git-diff')} />
+                <Stack.Screen name="settings-theme" options={sheetRouteOptions('settings-theme')} />
+                <Stack.Screen
+                  name="settings-theme-browse"
+                  options={sheetRouteOptions('settings-theme-browse')}
+                />
+                <Stack.Screen name="settings-font" options={sheetRouteOptions('settings-font')} />
+                {/*
+              The one route that is a whole screen wearing a theme rather than a
+              panel over one. See `sheetRoutePresentations` for why it stays
+              full-screen; the way out is the header's back arrow and the
+              pinned Done, not a grabber.
             */}
-            <Stack.Screen
-              name="sessions"
-              options={{
-                presentation: 'formSheet',
-                sheetAllowedDetents: 'fitToContents',
-                sheetGrabberVisible: true,
-                contentStyle: { backgroundColor: 'transparent' },
-              }}
-            />
-            <Stack.Screen
-              name="artifacts"
-              options={sheetPresentationOptions(sheetRoutePresentations['artifacts'], false, true)}
-            />
-            <Stack.Screen
-              name="git-diff"
-              options={sheetPresentationOptions(sheetRoutePresentations['git-diff'], false, true)}
-            />
-            <Stack.Screen
-              name="settings-theme"
-              options={sheetPresentationOptions(sheetRoutePresentations['settings-theme'])}
-            />
-            <Stack.Screen
-              name="settings-theme-browse"
-              options={sheetPresentationOptions('fullscreen')}
-            />
-            <Stack.Screen name="custom-theme" options={{ presentation: 'fullScreenModal' }} />
-            <Stack.Screen
-              name="settings-language"
-              options={{
-                presentation: 'formSheet',
-                sheetAllowedDetents: 'fitToContents',
-                sheetGrabberVisible: true,
-                contentStyle: { backgroundColor: 'transparent' },
-              }}
-            />
-            {/* Full height leaves room for the composer and keyboard. */}
-            <Stack.Screen
-              name="new-task"
-              options={sheetPresentationOptions(sheetRoutePresentations['new-task'], false, true)}
-            />
-            {/*
-              Open a web service (card #829). Content-sized, and
-              for less reason than any of them: this is one field with a row of
-              shortcuts over it. A full-height sheet for a port number would be
-              the app implying the task is bigger than typing four digits.
-            */}
-            <Stack.Screen
-              name="web-service"
-              options={{
-                presentation: 'formSheet',
-                sheetAllowedDetents: 'fitToContents',
-                sheetGrabberVisible: true,
-                contentStyle: { backgroundColor: 'transparent' },
-              }}
-            />
-            {/*
+                <Stack.Screen
+                  name="custom-theme"
+                  options={{
+                    ...sheetPresentationOptions(sheetRoutePresentations['custom-theme']),
+                    animationDuration: reduceMotion ? 0 : NAVIGATION_MOTION.modalMs,
+                  }}
+                />
+                <Stack.Screen
+                  name="settings-language"
+                  options={sheetRouteOptions('settings-language')}
+                />
+                <Stack.Screen
+                  name="settings-home-layout"
+                  options={sheetRouteOptions('settings-home-layout')}
+                />
+                <Stack.Screen name="new-task" options={sheetRouteOptions('new-task')} />
+                <Stack.Screen name="home-target" options={sheetRouteOptions('home-target')} />
+                <Stack.Screen name="web-service" options={sheetRouteOptions('web-service')} />
+                {/*
               A full-screen modal, not a sheet, and the route file says why at
               length: a sheet's one-finger dismiss fought the device's
               one-finger drags, and its transparent content let the terminal
@@ -372,21 +420,43 @@ function RootContent() {
               it; `gestureEnabled: false` is for iOS, where the close button is
               the only way and a swipe is the device's.
             */}
-            <Stack.Screen
-              name="simfarm"
-              options={{
-                presentation: 'fullScreenModal',
-                animation: 'fade',
-                gestureEnabled: false,
-              }}
-            />
-            <Stack.Screen name="explore" options={sheetPresentationOptions('fullscreen')} />
-          </Stack>
-          <InAppNotificationHost />
-        </AppLockGate>
-        <SshConnectPromptGate />
-        <UpdateStatusBanner />
-        <WhatsNewCard />
+                <Stack.Screen
+                  name="simfarm"
+                  options={{
+                    ...sheetPresentationOptions(sheetRoutePresentations['simfarm']),
+                    animationDuration: reduceMotion ? 0 : NAVIGATION_MOTION.modalMs,
+                  }}
+                />
+                <Stack.Screen name="explore" options={sheetRouteOptions('explore')} />
+                {/*
+              The agent surface's pickers. They were `<Modal transparent>`
+              components mounted inside the workbench, each with its own
+              backdrop, its own hand-drawn grabber and its own corner radius;
+              as routes they get the one sheet ground, the hardware back
+              button, a real dismissal gesture and `freezeOnBlur` for free.
+              How tall each one opens, and why, is in `sheetRouteDetents`.
+            */}
+                <Stack.Screen name="agent-sessions" options={sheetRouteOptions('agent-sessions')} />
+                <Stack.Screen name="agent-model" options={sheetRouteOptions('agent-model')} />
+                <Stack.Screen name="agent-mode" options={sheetRouteOptions('agent-mode')} />
+                <Stack.Screen
+                  name="agent-workspace"
+                  options={sheetRouteOptions('agent-workspace')}
+                />
+                <Stack.Screen name="agent-worktree" options={sheetRouteOptions('agent-worktree')} />
+                <Stack.Screen name="agent-context" options={sheetRouteOptions('agent-context')} />
+                <Stack.Screen name="agent-vcs-diff" options={sheetRouteOptions('agent-vcs-diff')} />
+                <Stack.Screen name="agent-tasks" options={sheetRouteOptions('agent-tasks')} />
+                <Stack.Screen name="agent-shells" options={sheetRouteOptions('agent-shells')} />
+                <Stack.Screen name="opencode-guide" options={sheetRouteOptions('opencode-guide')} />
+              </Stack>
+              <InAppNotificationHost />
+            </AppLockGate>
+            <SshConnectPromptGate />
+            <UpdateStatusBanner />
+            <WhatsNewCard />
+          </ReskinSurface>
+        </ReskinTransitionProvider>
       </ToastProvider>
     </ThemeProvider>
   );

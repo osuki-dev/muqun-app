@@ -9,7 +9,8 @@ import { useSurfaceBackground } from '@/hooks/use-surface-background';
  * connect to and nothing to wait for. All a route knows here is which server
  * was meant.
  */
-import { Text, useThemeTokens } from '@osuki-dev/ui';
+import { useThemeTokens } from '@osuki-dev/ui';
+import { Text } from '@/components/text';
 import { useLingui } from '@lingui/react/macro';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { StyleSheet, View } from 'react-native';

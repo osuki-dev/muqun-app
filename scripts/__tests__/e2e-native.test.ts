@@ -952,9 +952,13 @@ describe('native end-to-end gate', () => {
       {}
     );
     expect((await runner.locate({ text: 'Done' }))?.label).toBe('Done');
-    expect(calls[1]).toEqual(['press', 'role="button" label="不允许"']);
-    expect(calls[2]).toEqual(['wait', 'stable', '300', '5000']);
-    expect(calls[3]).toEqual(['snapshot']);
+    // The dialog is let settle and re-read before its button is pressed, so
+    // the press never carries the geometry of a frame the dialog has left.
+    expect(calls[1]).toEqual(['wait', 'stable', '300', '5000']);
+    expect(calls[2]).toEqual(['snapshot']);
+    expect(calls[3]).toEqual(['press', 'role="button" label="不允许"']);
+    expect(calls[4]).toEqual(['wait', 'stable', '300', '5000']);
+    expect(calls[5]).toEqual(['snapshot']);
   });
   test('unknown alerts block even negative and optional app assertions', async () => {
     const runner = new NativeRunner(
@@ -985,6 +989,152 @@ describe('native end-to-end gate', () => {
       {}
     );
     await expect(runner.readySnapshot()).rejects.toThrow('did not dismiss');
-    expect(presses).toBe(1);
+    // Two presses at most: one may race the dialog's last frame, a second
+    // that also fails is a real blocker, not a timing accident.
+    expect(presses).toBe(2);
   });
+});
+
+describe('a foreground the app has not filled yet', () => {
+  const sections = [
+    '# section launch',
+    'open "dev.osuki.muqun" --relaunch',
+    '',
+    '# section probe',
+    'wait stable 400 5000',
+    '',
+    '# section late',
+    'open "dev.osuki.muqun" --relaunch',
+    'wait stable 400 5000',
+    'wait stable 400 5000',
+    'wait stable 400 5000',
+    'wait stable 400 5000',
+    'wait stable 400 5000',
+    'wait stable 400 5000',
+    'wait stable 400 5000',
+    '',
+  ].join('\n');
+  const blank = () =>
+    new NativeCommandError({
+      code: 'COMMAND_FAILED',
+      message: 'Android snapshot helper returned insufficient foreground app content',
+      retriable: true,
+      details: { helperApplicationWindowRootCount: 0, helperSystemUiNodeCount: 34 },
+    });
+  const harness = async () => {
+    const base = await mkdtemp(path.join(tmpdir(), 'e2e-retry-'));
+    await writeFile(path.join(base, 'probe.ad'), sections);
+    return base;
+  };
+
+  test('a capture that finds no app yet is repeated until the app arrives', async () => {
+    const base = await harness();
+    try {
+      let attempts = 0;
+      const runner = new NativeRunner(
+        suite,
+        base,
+        '/unused',
+        async (args) => {
+          if (args[0] !== 'wait') return {};
+          attempts++;
+          if (attempts <= 2) throw blank();
+          return {};
+        },
+        {}
+      );
+      await runner.runSection('probe.ad#launch', {});
+      await runner.runSection('probe.ad#probe', {});
+      expect(attempts).toBe(3);
+      expect(runner.appContentRetries.map((retry) => retry.attempt)).toEqual([1, 2]);
+      expect(runner.appContentRetries.every((retry) => retry.command === 'wait')).toBe(true);
+    } finally {
+      await rm(base, { recursive: true, force: true });
+    }
+  }, 20000);
+
+  test('an app that never arrives fails with the error it actually gave', async () => {
+    const base = await harness();
+    try {
+      let attempts = 0;
+      const runner = new NativeRunner(
+        suite,
+        base,
+        '/unused',
+        async (args) => {
+          if (args[0] !== 'wait') return {};
+          attempts++;
+          throw blank();
+        },
+        {}
+      );
+      await runner.runSection('probe.ad#launch', {});
+      const failure = await runner.runSection('probe.ad#probe', {}).catch((error) => error);
+      expect(failure instanceof NativeCommandError).toBe(true);
+      expect((failure as NativeCommandError).details.message).toContain(
+        'insufficient foreground app content'
+      );
+      // The first try plus the whole backoff, and not one attempt more.
+      expect(attempts).toBe(6);
+      expect(runner.appContentRetries).toHaveLength(5);
+    } finally {
+      await rm(base, { recursive: true, force: true });
+    }
+  }, 30000);
+
+  test('a COMMAND_FAILED that is not retriable is never repeated', async () => {
+    const base = await harness();
+    try {
+      let attempts = 0;
+      const runner = new NativeRunner(
+        suite,
+        base,
+        '/unused',
+        async (args) => {
+          if (args[0] !== 'wait') return {};
+          attempts++;
+          throw new NativeCommandError({
+            code: 'COMMAND_FAILED',
+            message: 'Selector did not match: role="button" id="launch-scene-skip"',
+            details: { reason: 'selector_not_found' },
+          });
+        },
+        {}
+      );
+      await runner.runSection('probe.ad#launch', {});
+      const failure = await runner.runSection('probe.ad#probe', {}).catch((error) => error);
+      expect(failure instanceof NativeCommandError).toBe(true);
+      expect(attempts).toBe(1);
+      expect(runner.appContentRetries).toHaveLength(0);
+    } finally {
+      await rm(base, { recursive: true, force: true });
+    }
+  });
+
+  test('a blank foreground past the launch window is the flow failing, not the app arriving', async () => {
+    const base = await harness();
+    try {
+      let attempts = 0;
+      const runner = new NativeRunner(
+        suite,
+        base,
+        '/unused',
+        async (args) => {
+          if (args[0] !== 'wait') return {};
+          attempts++;
+          // Only the seventh step finds nothing, and by then the window
+          // -- six steps -- has closed behind it.
+          if (attempts >= 7) throw blank();
+          return {};
+        },
+        {}
+      );
+      const failure = await runner.runSection('probe.ad#late', {}).catch((error) => error);
+      expect(failure instanceof NativeCommandError).toBe(true);
+      expect(attempts).toBe(7);
+      expect(runner.appContentRetries).toHaveLength(0);
+    } finally {
+      await rm(base, { recursive: true, force: true });
+    }
+  }, 20000);
 });

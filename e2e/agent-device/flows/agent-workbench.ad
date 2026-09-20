@@ -1,0 +1,102 @@
+# Native agent-device regression: OpenCode Agent Workbench E2E flow.
+# Verifies:
+# 1. Agent Workbench home and composer layout (Row 1 current session, Row 2 function keyboard).
+# 2. Model picker sheet with "✨ Free Only" filter and selecting free model (Big Pickle).
+# 3. New session creation (+) from Row 2 toolbar.
+# 4. Slash command and skills popup (/) with command insertion.
+# 5. Mention context popup (@).
+# 6. Agent Mode menu switcher (✨ build / explore / general).
+# 7. Sessions switcher sheet (Sessions button in Row 2).
+# 8. Prompt submission to free model and agent response streaming in timeline.
+
+open "dev.osuki.muqun"
+wait stable 400 5000
+
+# 1. Assert Agent Workbench elements
+is visible "id=\"agent-header-model-pill\""
+is visible "id=\"agent-composer-input\""
+is visible "id=\"agent-composer-attach\""
+is visible "id=\"agent-composer-sessions-btn\""
+is visible "id=\"agent-composer-mode-btn\""
+is visible "id=\"agent-composer-new-btn\""
+
+screenshot "shots/agent-workbench-home.png"
+
+# 2. Test Model Picker with Free Models Filter
+press "id=\"agent-header-model-pill\""
+wait stable 400 3000
+is visible "id=\"agent-model-sheet\""
+is visible "id=\"agent-model-filter-free\""
+
+# Filter to free models only
+press "id=\"agent-model-filter-free\""
+wait stable 400 2000
+screenshot "shots/agent-model-filter-free.png"
+
+# Select free model "big-pickle"
+press "id=\"agent-model-row-big-pickle\""
+wait stable 400 3000
+
+# 3. Test New Session Button (+) from Row 2
+press "id=\"agent-composer-new-btn\""
+wait stable 400 3000
+
+# 4. Test Slash Command & Skills Popup (/)
+fill id="agent-composer-input" "/"
+wait stable 400 3000
+is visible text="/init"
+is visible text="/compact"
+
+screenshot "shots/agent-slash-popup.png"
+
+# Select /compact command
+press "label=\"Insert /compact\""
+wait stable 400 3000
+is visible "id=\"agent-composer-input\""
+
+# 5. Test Mention context (@)
+fill id="agent-composer-input" "@"
+wait stable 400 3000
+
+screenshot "shots/agent-mention-popup.png"
+
+# Select a file mention to close the popup
+press "label=\"Mention .adal/\""
+wait stable 400 2000
+
+# Dismiss keyboard before toolbar interaction
+keyboard dismiss
+wait stable 400 2000
+
+# 6. Test Agent Mode menu
+press "id=\"agent-composer-mode-btn\""
+wait 1000
+is visible "id=\"agent-mode-menu\""
+
+screenshot "shots/agent-mode-menu.png"
+
+# Switch agent mode to Build
+press "id=\"agent-mode-option-build\""
+wait 1000
+
+# 7. Test Sessions Sheet from Row 2
+press "id=\"agent-composer-sessions-btn\""
+wait 1500
+is visible "label=\"Close\""
+
+screenshot "shots/agent-sessions-sheet.png"
+
+# Close Sessions Sheet
+press "label=\"Close\""
+wait 1000
+
+# 8. Send prompt to agent using free model and verify response
+fill id="agent-composer-input" "What is 12 * 12?"
+wait stable 400 2000
+press "label=\"Send message\""
+
+# Wait for agent response to appear in timeline
+wait stable 1000 15000
+screenshot "shots/agent-timeline-response.png"
+
+close

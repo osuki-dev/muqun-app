@@ -2,7 +2,8 @@
 press "label=\"Open quick actions\""
 wait "label=\"New task\"" 10000
 press "label=\"New task\""
-wait "label=\"Close new task\"" 10000
+# The sheet itself, not a close button: form sheets carry no X any more.
+wait "id=new-task-sheet" 10000
 is visible "id=new-task-agents"
 scroll down 0.5
 wait "id=new-task-prompt" 10000
@@ -16,5 +17,9 @@ is visible "id=new-task-prompt value=\"QA attachment draft\""
 is visible "label=\"Start task\""
 keyboard dismiss
 scroll top
-press "label=\"Close new task\""
+# Dismissal is the system back or a swipe. The keyboard is already down, so
+# back reaches the sheet rather than the keyboard.
+back --system
+wait stable 400 5000
+is hidden "id=\"new-task-sheet\""
 wait "id=terminal-composer-input" 10000

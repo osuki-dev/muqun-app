@@ -2,7 +2,8 @@ import { TerminalNotice, terminalNoticeStyles } from '@/components/terminal-noti
 import { NoticeDeck } from '@/components/notice-deck';
 import { ThemeIcon } from '@/components/theme-icon';
 import { ComposerSendGuard } from '@/lib/composer-send-guard';
-import { Spinner, Text, useThemeMode, useThemeTokens, useToast } from '@osuki-dev/ui';
+import { Spinner, useThemeMode, useThemeTokens, useToast } from '@osuki-dev/ui';
+import { Text } from '@/components/text';
 import { resolvePanelPick } from '@/lib/resolve-panel-pick';
 import {
   type Href,
@@ -17,19 +18,25 @@ import { StatusBar } from 'expo-status-bar';
 import {
   Bot,
   Keyboard as KeyboardIcon,
-  Monitor,
   Paperclip,
   PenLine,
   SquareTerminal,
   X,
   Zap,
 } from 'lucide-react-native';
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from 'react';
 import {
   AppState,
   Keyboard,
   type LayoutChangeEvent,
-  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -52,6 +59,7 @@ import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { Trans, useLingui } from '@lingui/react/macro';
 
 import AppDrawer from '@/components/app-drawer';
+import { HomeOverview } from '@/components/home-overview';
 import { ApprovalBanner } from '@/components/approval-banner';
 import { ArtifactsButton } from '@/components/artifacts-button';
 import { GitDiffButton } from '@/components/git-diff-button';
@@ -68,6 +76,9 @@ import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { ImagePreviewModal, type PreviewImage } from '@/components/image-preview-modal';
 import { navHeaderButtonStyle } from '@/components/nav-header';
 import { PaneChatView } from '@/components/pane-chat-view';
+
+import { AgentWorkbench } from '@/components/agent-workbench';
+import { gatewaySupportsAgentSessions } from '@/lib/agent-session';
 import { PadServerRail } from '@/components/pad-server-rail';
 import { GatewayTunnelBadge } from '@/components/gateway-tunnel-badge';
 import { PressableScale } from '@/components/pressable-scale';
@@ -112,6 +123,7 @@ import { usePaneApproval } from '@/hooks/use-pane-approval';
 import { usePaneEvents } from '@/hooks/use-pane-events';
 import { useLatestRef, useLazyRef, useResetSignal } from '@/hooks/use-render-refs';
 import { useSettledHeight } from '@/hooks/use-settled-height';
+import { useMonoFontFamily } from '@/hooks/use-user-fonts';
 import { useTabSwipe } from '@/hooks/use-tab-swipe';
 import { usePaneViewMode } from '@/hooks/use-pane-view-mode';
 import {
@@ -168,6 +180,7 @@ import { slashCommandTrigger, type PaneSlashCommand } from '@/lib/pane-composer'
 import { asAgentWidgetStatus, syncAgentWidget } from '@/lib/agent-widget';
 import { describeGatewayFailure, type GatewayFailure } from '@/lib/network-error';
 import { DEMO_SERVER_ID, demoRecord, isDemoRecord } from '@/lib/demo-gateway';
+import type { HomeServerEntry } from '@/lib/home-commands';
 import { demoSshHost } from '@/lib/demo-ssh';
 import {
   field,
@@ -213,7 +226,7 @@ import {
 } from '@/lib/motion';
 import { mirroredServerAgents, mirroredServerPanes } from '@/lib/server-agents';
 import type { ServerAgent } from '@/lib/server-agents';
-import { reachabilityFromProbe, type ServerReachability } from '@/lib/server-reachability';
+import { resolveServerReachability, type ServerReachability } from '@/lib/server-reachability';
 import { responsiveWorkspaceLayout } from '@/lib/responsive-layout';
 import { loadUsage, orderByUsage, recordUsage, usageScope } from '@/lib/shortcut-usage';
 import {
@@ -242,16 +255,23 @@ import {
   resolveSessionId,
   sameSessionChoices,
   type SessionChoice,
-  shouldShowSessionSwitcher,
 } from '@/lib/session-switcher';
 import { loadWorkspaceSnapshot } from '@/lib/workspace-snapshot';
 import { initialSelection, reconcileSelection, type Selection } from '@/lib/workspace-selection';
 import { useAppActive } from '@/hooks/use-app-active';
 import { useServerAgents } from '@/stores/server-agents';
+import { useHomeRecentsStore } from '@/stores/home-recents';
+import { homeTargetKey, type HomeTarget } from '@/lib/home-recents';
+import {
+  classifyHomeTargetAvailability,
+  isHomeTargetReady,
+  type HomeTargetAvailability,
+} from '@/lib/home-target-availability';
 import { useServerCapabilities } from '@/stores/server-capabilities';
 import { useServerReachability } from '@/stores/server-reachability';
 import { useServerSession } from '@/stores/server-session';
 import { useSshHostsStore } from '@/stores/ssh-hosts';
+import { homeWorkspaceHandoffStore } from '@/lib/home-workspace-handoff';
 import {
   type TerminalKey,
   INSERT_MODE_KEYS,
@@ -319,6 +339,20 @@ type ConnectionStatus = {
 };
 
 type RefreshResult = { ok: true; data: ServerData } | { ok: false; failure: GatewayFailure } | null;
+
+type StrictHomeTarget = {
+  serverId: string;
+  sessionId?: string;
+  workspaceId?: string;
+  tabId?: string;
+  paneId?: string;
+  afterGeneration: number;
+};
+
+type MissingHomeTarget = Extract<
+  HomeTargetAvailability,
+  { kind: 'missing-session' | 'missing-pane' }
+>;
 
 /**
  * What is known about the structured view of the selected pane.
@@ -586,7 +620,13 @@ export type ServerTerminalWorkspaceProps = {
   serverId?: string;
   sessionId?: string;
   paneId?: string;
+  workspaceId?: string;
+  tabId?: string;
   notificationId?: string;
+  /** Stable Home route liveness, independent of this server owner subtree. */
+  sourceRouteActive?: () => boolean;
+  /** This workspace is the `/servers/[serverId]` route owner, not Home's root host. */
+  routeBound?: boolean;
 };
 
 /**
@@ -598,7 +638,11 @@ export function ServerTerminalWorkspace({
   serverId: providedServerId,
   sessionId: providedSessionId,
   paneId: providedPaneId,
+  workspaceId: providedWorkspaceId,
+  tabId: providedTabId,
   notificationId: providedNotificationId,
+  sourceRouteActive,
+  routeBound = false,
 }: ServerTerminalWorkspaceProps = {}) {
   // `t` from the hook, not the global `t` from `@lingui/core/macro`.
   //
@@ -615,16 +659,48 @@ export function ServerTerminalWorkspace({
     serverId: string;
     sessionId?: string;
     paneId?: string;
+    workspaceId?: string;
+    tabId?: string;
     notificationId?: string;
   }>();
   const serverId = providedServerId ?? routeParams.serverId ?? '';
+  const routeSessionId = providedSessionId ?? routeParams.sessionId;
+  const routePaneId = providedPaneId ?? routeParams.paneId;
+  const routeWorkspaceId = providedWorkspaceId ?? routeParams.workspaceId;
+  const routeTabId = providedTabId ?? routeParams.tabId;
+  const routeTargetKey = [
+    serverId,
+    routeSessionId ?? '',
+    routeWorkspaceId ?? '',
+    routeTabId ?? '',
+    routePaneId ?? '',
+  ].join('\u0000');
   const [padRequestedPaneId, setPadRequestedPaneId] = useState<string | undefined>();
-  const requestedSessionId = providedSessionId ?? routeParams.sessionId;
+  const [strictTarget, setStrictTarget] = useState<StrictHomeTarget | null>(() =>
+    routeSessionId || routeWorkspaceId || routeTabId || routePaneId
+      ? {
+          serverId,
+          sessionId: routeSessionId,
+          workspaceId: routeWorkspaceId,
+          tabId: routeTabId,
+          paneId: routePaneId,
+          afterGeneration: 1,
+        }
+      : null
+  );
+  const routeTargetKeyRef = useRef<string | null>(null);
+  const activeStrictTarget = strictTarget?.serverId === serverId ? strictTarget : null;
+  const requestedSessionId = activeStrictTarget?.sessionId ?? routeSessionId;
   const rememberedPaneId = useServerSession(
     (state) => state.panesByServer[serverId]?.[requestedSessionId ?? state.byServer[serverId] ?? '']
   );
-  const requestedPaneId =
-    providedPaneId ?? padRequestedPaneId ?? routeParams.paneId ?? rememberedPaneId;
+  // Keep the legacy route effect's request unscoped. Explicit Home targets are
+  // checked by the strict effect below, so that effect cannot reconcile them
+  // to a fallback before the authoritative availability result arrives.
+  const requestedPaneId = activeStrictTarget ? undefined : (padRequestedPaneId ?? rememberedPaneId);
+  const strictRequestedWorkspaceId = activeStrictTarget?.workspaceId;
+  const strictRequestedTabId = activeStrictTarget?.tabId;
+  const strictRequestedPaneId = activeStrictTarget?.paneId;
   const notificationId = providedNotificationId ?? routeParams.notificationId;
   const router = useRouter();
   const isFocused = useIsFocused();
@@ -641,6 +717,14 @@ export function ServerTerminalWorkspace({
   const toggleSimfarmSplit = useSimfarmSplit((state) => state.toggle);
   const workspaceLayout = responsiveWorkspaceLayout(windowWidth, previewOpen);
   const isPadLayout = workspaceLayout.mode === 'pad';
+  const [overviewVisible, setOverviewVisible] = useState(false);
+  const [overviewWidth, setOverviewWidth] = useState(0);
+  const overviewTargetRequest = useRef(0);
+  const workspaceHandoff = useSyncExternalStore(
+    homeWorkspaceHandoffStore.subscribe,
+    () => homeWorkspaceHandoffStore.getState().handoff,
+    () => homeWorkspaceHandoffStore.getState().handoff
+  );
   const simfarmPorts = useServerSimfarm((state) => state.byServer);
   const hydrateSimfarmPorts = useServerSimfarm((state) => state.hydrate);
   const rememberSimfarmPortForServer = useServerSimfarm((state) => state.remember);
@@ -720,6 +804,74 @@ export function ServerTerminalWorkspace({
   // spelling out `Connecting`. The snapshot only decides the first frame: the
   // poller below runs immediately and corrects or confirms it.
   const [data, setData] = useState<ServerData>(() => warmWorkspace(serverId) ?? initialData);
+  const [snapshotGeneration, setSnapshotGeneration] = useState(0);
+  const snapshotGenerationRef = useRef(0);
+  const [missingRequestedTarget, setMissingRequestedTarget] = useState<MissingHomeTarget | null>(
+    null
+  );
+  const strictTargetAvailability =
+    activeStrictTarget && data.health && snapshotGeneration >= activeStrictTarget.afterGeneration
+      ? classifyHomeTargetAvailability({
+          explicit: true,
+          snapshot: 'confirmed',
+          targetSessionId: requestedSessionId,
+          targetPaneId: strictRequestedPaneId,
+          currentSessionId: data.sessionId,
+          availableSessionIds: sessions.map((session) => session.id),
+          availablePaneIds: data.panes.map((pane) => pane.id),
+        })
+      : null;
+  const strictWorkspaceMissing = Boolean(
+    strictRequestedWorkspaceId &&
+    !data.workspaces.some((workspace) => workspace.id === strictRequestedWorkspaceId)
+  );
+  const strictTabMissing = Boolean(
+    strictRequestedTabId &&
+    !data.tabs.some(
+      (tab) =>
+        tab.id === strictRequestedTabId &&
+        (!strictRequestedWorkspaceId || field(tab, 'workspace_id') === strictRequestedWorkspaceId)
+    )
+  );
+  const strictPaneContextMismatch = Boolean(
+    strictRequestedPaneId &&
+    data.panes.some(
+      (pane) =>
+        pane.id === strictRequestedPaneId &&
+        ((strictRequestedWorkspaceId &&
+          field(pane, 'workspace_id') !== strictRequestedWorkspaceId) ||
+          (strictRequestedTabId && field(pane, 'tab_id') !== strictRequestedTabId))
+    )
+  );
+  const strictTargetStructureUnavailable = Boolean(
+    activeStrictTarget &&
+    data.health &&
+    snapshotGeneration >= activeStrictTarget.afterGeneration &&
+    (strictWorkspaceMissing || strictTabMissing || strictPaneContextMismatch)
+  );
+  const targetUnavailable =
+    missingRequestedTarget !== null ||
+    strictTargetStructureUnavailable ||
+    strictTargetAvailability?.kind === 'missing-pane' ||
+    strictTargetAvailability?.kind === 'missing-session';
+
+  useEffect(() => {
+    if (routeTargetKeyRef.current === routeTargetKey) return;
+    routeTargetKeyRef.current = routeTargetKey;
+    if (routeSessionId || routeWorkspaceId || routeTabId || routePaneId) {
+      setStrictTarget({
+        serverId,
+        sessionId: routeSessionId,
+        workspaceId: routeWorkspaceId,
+        tabId: routeTabId,
+        paneId: routePaneId,
+        afterGeneration: snapshotGenerationRef.current + 1,
+      });
+    } else {
+      setStrictTarget(null);
+    }
+    setMissingRequestedTarget(null);
+  }, [routePaneId, routeSessionId, routeTabId, routeTargetKey, routeWorkspaceId, serverId]);
   const [deliveryOwnership] = useState(() => new DeliveryOwnership());
   const [selectionOwner] = useState(
     () => new DeliverySelection(initialSelection, sameSelection, deliveryOwnership)
@@ -731,6 +883,23 @@ export function ServerTerminalWorkspace({
     },
     [selectionOwner]
   );
+  const targetReady =
+    !strictTargetStructureUnavailable &&
+    isHomeTargetReady({
+      explicit: Boolean(activeStrictTarget),
+      availability:
+        strictTargetAvailability ??
+        (activeStrictTarget
+          ? { kind: 'pending', sessionId: activeStrictTarget.sessionId ?? data.sessionId }
+          : { kind: 'unscoped' }),
+      targetSessionId: requestedSessionId,
+      targetPaneId: strictRequestedPaneId,
+      currentSessionId: data.sessionId,
+      selectedPaneId: selection.paneId,
+    }) &&
+    (!strictRequestedWorkspaceId || selection.workspaceId === strictRequestedWorkspaceId) &&
+    (!strictRequestedTabId || selection.tabId === strictRequestedTabId);
+  const targetPending = Boolean(activeStrictTarget) && !targetUnavailable && !targetReady;
   // Gives the in-memory Demo mirror one stable freshness boundary for this
   // mounted workspace. Real servers continue to use their persisted mirror.
   const [demoRailCheckedAtMs] = useState(() => Date.now());
@@ -1028,7 +1197,7 @@ export function ServerTerminalWorkspace({
   const tunnel = useGatewayTunnel(record, selectedServer);
   const tunnelReady = !tunnel.tunnelled || tunnel.phase === 'open';
   const appActive = useAppActive();
-  const ready = isFocused && selectedServer && tunnelReady;
+  const ready = !overviewVisible && isFocused && selectedServer && tunnelReady;
   /**
    * Whether the reader can still see this screen -- which is not whether it is
    * focused.
@@ -1107,11 +1276,14 @@ export function ServerTerminalWorkspace({
     setPartsState(initialPartsState);
     setPaneRevision(-1);
     setData(initialData);
+    snapshotGenerationRef.current = 0;
+    setSnapshotGeneration(0);
     setSelection(initialSelection);
     setOutput('');
     setDraft('');
     setCaret(0);
     setError(null);
+    setMissingRequestedTarget(null);
     setLoadingData(true);
     healthRef.current = null;
     workspaceMemoryRef.current = {};
@@ -1167,7 +1339,9 @@ export function ServerTerminalWorkspace({
       const requestId = ++dataRequestIdRef.current;
       const requestServerId = serverId;
       const isCurrentRequest = () =>
-        activeServerRef.current === requestServerId && dataRequestIdRef.current === requestId;
+        activeServerRef.current === requestServerId &&
+        dataRequestIdRef.current === requestId &&
+        useGatewayConnectionStore.getState().record?.serverId === requestServerId;
       if (showLoading) setLoadingData(true);
       try {
         // Health costs a herdr round-trip and is only read as a "have we loaded
@@ -1190,8 +1364,41 @@ export function ServerTerminalWorkspace({
         resolvedSessionRef.current = { serverId, preference: preferredSessionId, sessionId };
         healthRef.current = next.health;
         rememberWarmWorkspace(serverId, next);
+        // Only a confirmed, still-owned request may refresh Home's mirror.
+        // Initial/reset data and a cached first frame are not new observations.
+        if (!isDemoRecord(record)) {
+          void useServerAgents.getState().record({
+            serverId,
+            checkedAtMs: Date.now(),
+            agents: mirroredServerPanes(next.panes, next.agents),
+          });
+        }
+        const nextSnapshotGeneration = snapshotGenerationRef.current + 1;
+        snapshotGenerationRef.current = nextSnapshotGeneration;
+        setSnapshotGeneration(nextSnapshotGeneration);
         setData((current) => (sameServerData(current, next) ? current : next));
+        const strictTargetAtRequest = activeStrictTarget;
         setSelection((current) => {
+          if (
+            strictTargetAtRequest?.serverId === serverId &&
+            ((strictTargetAtRequest.sessionId &&
+              next.sessionId !== strictTargetAtRequest.sessionId) ||
+              (strictTargetAtRequest.workspaceId &&
+                !next.workspaces.some(
+                  (workspace) => workspace.id === strictTargetAtRequest.workspaceId
+                )) ||
+              (strictTargetAtRequest.tabId &&
+                !next.tabs.some(
+                  (tab) =>
+                    tab.id === strictTargetAtRequest.tabId &&
+                    (!strictTargetAtRequest.workspaceId ||
+                      field(tab, 'workspace_id') === strictTargetAtRequest.workspaceId)
+                )) ||
+              (strictTargetAtRequest.paneId &&
+                !next.panes.some((pane) => pane.id === strictTargetAtRequest.paneId)))
+          ) {
+            return current;
+          }
           const reconciled = reconcileSelection(next, current);
           return sameSelection(current, reconciled) ? current : reconciled;
         });
@@ -1204,7 +1411,7 @@ export function ServerTerminalWorkspace({
         if (isCurrentRequest()) setLoadingData(false);
       }
     },
-    [preferredSessionId, ready, serverId, t, setSelection]
+    [activeStrictTarget, preferredSessionId, ready, record, serverId, t, setSelection]
   );
 
   useEffect(() => {
@@ -1300,8 +1507,15 @@ export function ServerTerminalWorkspace({
   // session already open costs nothing.
   useEffect(() => {
     if (!sessionPick || sessionPick.serverId !== serverId) return;
+    setOverviewVisible(false);
     resolvedSessionRef.current = null;
     clearSessionPick();
+    setMissingRequestedTarget(null);
+    setStrictTarget({
+      serverId,
+      sessionId: sessionPick.sessionId,
+      afterGeneration: snapshotGenerationRef.current + 1,
+    });
     setChosenSessionId(sessionPick.sessionId);
   }, [clearSessionPick, serverId, sessionPick]);
 
@@ -1355,23 +1569,80 @@ export function ServerTerminalWorkspace({
     () => data.agents.find((item) => field(item, 'pane_id') === selection.paneId),
     [data.agents, selection.paneId]
   );
+  const lastHomeVisit = useRef<string | null>(null);
+  useEffect(() => {
+    if (!isFocused || overviewVisible) {
+      lastHomeVisit.current = null;
+      return;
+    }
+    if (demoMode || !selectedServer || !selectedPane || !data.sessionId) return;
+    if (!targetReady) return;
+    if (connection.phase !== 'connected') return;
+    const observed = resolvedSessionRef.current;
+    if (observed?.serverId !== serverId || observed.sessionId !== data.sessionId) return;
+    const target: HomeTarget = {
+      kind: 'gateway-terminal',
+      serverId,
+      sessionId: data.sessionId,
+      paneId: selectedPane.id,
+    };
+    const key = homeTargetKey(target);
+    if (lastHomeVisit.current === key) return;
+    lastHomeVisit.current = key;
+    void useHomeRecentsStore.getState().visit(target, panelTitle(selectedPane, selectedAgent));
+  }, [
+    connection.phase,
+    data.sessionId,
+    demoMode,
+    isFocused,
+    overviewVisible,
+    selectedAgent,
+    selectedPane,
+    selectedServer,
+    serverId,
+    targetReady,
+  ]);
+  const agentKind = useMemo(() => {
+    if (!selectedAgent) return '';
+    return (
+      field(selectedAgent, 'kind') ||
+      field(selectedAgent, 'agent') ||
+      selectedAgent.title ||
+      ''
+    ).toLowerCase();
+  }, [selectedAgent]);
+  const isOpenCodeAgent = agentKind.includes('opencode') || agentKind.includes('open-code');
+
   // Which of the two readings of this pane is on screen: the conversation or
   // the raw grid. The hook owns the whole decision -- the setting, this pane's
   // own last choice, and what the pane can actually show -- so the screen only
   // has to say what each mode draws.
   const agentPane = Boolean(selectedAgent);
+  const supportsAgentSessions = gatewaySupportsAgentSessions(data.health?.capabilities);
   const partsForPane = partsState.paneId === selection.paneId ? partsState : initialPartsState;
   const paneView = usePaneViewMode({
     serverId,
     paneId: selection.paneId,
     agent: agentPane,
     parts: partsForPane.supported,
+    agentSessions: supportsAgentSessions && isOpenCodeAgent,
   });
   const chatViewChosen = paneView.mode === 'chat';
   // What the user asked for and what can actually be drawn are two different
   // things: a failed read falls back to the terminal without forgetting the
   // choice, so the view returns by itself once the gateway answers again.
-  const chatViewShown = chatViewChosen && !partsForPane.failed;
+  const chatViewShown =
+    chatViewChosen && ((supportsAgentSessions && isOpenCodeAgent) || !partsForPane.failed);
+  const hideTerminalDock = chatViewShown && supportsAgentSessions && isOpenCodeAgent;
+  if (__DEV__) {
+    console.log('[DEBUG AgentSessions]', {
+      paneViewMode: paneView.mode,
+      supportsAgentSessions,
+      chatViewShown,
+      chatViewChosen,
+      hideTerminalDock,
+    });
+  }
   // New content for this pane, however it was noticed: the gateway's revision
   // where there is one, and otherwise the output itself, which `setOutput`
   // leaves untouched when nothing changed.
@@ -1579,43 +1850,17 @@ export function ServerTerminalWorkspace({
     });
   }, [androidWidgetEnabled, data.agents, data.panes, data.sessionId, record, selectedServer]);
 
-  // The same list, written down for the server list to draw. Only one gateway
-  // connection is open at a time, so the home screen cannot ask the other
-  // servers what they are running; what it can do is show what this screen last
-  // saw, which is exactly this.
-  //
-  // Named through `mirroredServerPanes`, which resolves each row's pane and
-  // titles it the way every other surface titles it. Copying `agent.title`
-  // here was why a renamed panel kept its old name on the home screen: a
-  // rename sets the *pane's* label, and the agents endpoint never hears
-  // about it.
-  //
-  // Always the full-pane shape, not a branch on `serverCardPanes` (Settings'
-  // "Panes on server cards") -- seeing `data.panes` written unconditionally is
-  // by design, not a leak of a setting this screen does not otherwise care
-  // about. The setting answers a *display* question, and the mirror is not
-  // the display: `ServerAgentRows` filters `hasAgent` at render time against
-  // whatever the setting currently says, so a change made in Settings is
-  // visible on the home screen immediately rather than only after this screen
-  // next writes the mirror in the newly-chosen shape. See the module doc on
-  // `mirroredServerPanes` (`lib/server-agents.ts`) for the cost of that.
+  // The rail reads the same cached mirror as Classic Home. Successful refreshes
+  // above record all panes with their resolved titles; initial/reset state and
+  // cached first frames do not become new observations. The shared Home model
+  // applies the reader's agent-only filter without rewriting stored snapshots.
   const agentsByServer = useServerAgents((state) => state.byServer);
   const hydrateServerAgents = useServerAgents((state) => state.hydrate);
-  const recordServerAgents = useServerAgents((state) => state.record);
   const reachabilityProbes = useServerReachability((state) => state.probes);
 
   useEffect(() => {
     void hydrateServerAgents();
   }, [hydrateServerAgents]);
-
-  useEffect(() => {
-    if (!selectedServer || !record || isDemoRecord(record)) return;
-    void recordServerAgents({
-      serverId: record.serverId,
-      checkedAtMs: Date.now(),
-      agents: mirroredServerPanes(data.panes, data.agents),
-    });
-  }, [data.agents, data.panes, record, recordServerAgents, selectedServer]);
 
   // And the same trick for what this gateway can do. The home card's `...` menu
   // has to decide whether to offer New Task about a server it is not connected
@@ -1925,7 +2170,7 @@ export function ServerTerminalWorkspace({
   // `onScreen`, not `ready`: a sheet sliding up over the composer must not also
   // unmount it, or it is seen to blink out from under the sheet -- and every
   // layout inset below is derived from this. See `onScreen`.
-  const composerVisible = onScreen && !loadingData && Boolean(selectedPane);
+  const composerVisible = onScreen && !loadingData && Boolean(selectedPane) && targetReady;
   // Attachments are the gateway's own upload endpoint, which the bundled demo
   // data has no counterpart for.
   const attachmentsAvailable = composerVisible && !demoMode;
@@ -2271,6 +2516,59 @@ export function ServerTerminalWorkspace({
     }
   }, [data, notificationId, requestedPaneId, requestedSessionId, serverId, t, setSelection]);
 
+  useEffect(() => {
+    if (!activeStrictTarget || !data.health) return;
+    if (snapshotGeneration < activeStrictTarget.afterGeneration) return;
+    if (
+      !strictRequestedWorkspaceId &&
+      !strictRequestedTabId &&
+      !strictRequestedPaneId &&
+      !activeStrictTarget.sessionId
+    )
+      return;
+    const availability = classifyHomeTargetAvailability({
+      explicit: true,
+      snapshot: 'confirmed',
+      targetSessionId: requestedSessionId,
+      targetPaneId: strictRequestedPaneId,
+      currentSessionId: data.sessionId,
+      availableSessionIds: sessions.map((session) => session.id),
+      availablePaneIds: data.panes.map((pane) => pane.id),
+    });
+    if (availability.kind === 'pending') return;
+    if (availability.kind === 'missing-pane' || availability.kind === 'missing-session') {
+      appliedNotificationTargetRef.current = null;
+      setMissingRequestedTarget(availability);
+      setError(t`This terminal is no longer available. Choose another terminal.`);
+      return;
+    }
+    if (strictRequestedPaneId) {
+      const target = selectionForPane(data, strictRequestedPaneId);
+      if (target.paneId !== strictRequestedPaneId) return;
+      setSelection(target);
+    } else if (strictRequestedWorkspaceId || strictRequestedTabId) {
+      const target = selectionForStrictTarget(data, {
+        workspaceId: strictRequestedWorkspaceId,
+        tabId: strictRequestedTabId,
+      });
+      if (!target.workspaceId || !target.tabId) return;
+      setSelection(target);
+    }
+    setMissingRequestedTarget(null);
+    setError(null);
+  }, [
+    activeStrictTarget,
+    data,
+    requestedSessionId,
+    sessions,
+    snapshotGeneration,
+    strictRequestedTabId,
+    strictRequestedWorkspaceId,
+    strictRequestedPaneId,
+    t,
+    setSelection,
+  ]);
+
   // The panel picker is a sheet route, so it hands its choice back through the
   // store rather than through navigation params.
   //
@@ -2281,10 +2579,30 @@ export function ServerTerminalWorkspace({
   // refreshes before it is called missing, instead of being thrown away on the
   // one frame where it was guaranteed to look wrong.
   useEffect(() => {
+    if (panelPick?.serverId !== serverId) return;
+    setOverviewVisible(false);
+    setMissingRequestedTarget(null);
+    setStrictTarget({
+      serverId,
+      sessionId: data.sessionId,
+      paneId: panelPick.paneId,
+      afterGeneration: snapshotGenerationRef.current + 1,
+    });
+  }, [data.sessionId, panelPick, serverId]);
+
+  useEffect(() => {
     if (!panelPick || panelPick.serverId !== serverId) return;
     const target = selectionForPane(data, panelPick.paneId);
     if (target.paneId === panelPick.paneId) {
+      setOverviewVisible(false);
       clearPanelPick();
+      setMissingRequestedTarget(null);
+      setStrictTarget({
+        serverId,
+        sessionId: data.sessionId,
+        paneId: panelPick.paneId,
+        afterGeneration: snapshotGenerationRef.current,
+      });
       setSelection(target);
       setError(null);
     }
@@ -2296,18 +2614,28 @@ export function ServerTerminalWorkspace({
   useEffect(() => {
     if (!ready || !panelPick || panelPick.serverId !== serverId) return;
     let disposed = false;
+    let resolvedSessionId = data.sessionId;
     const cancelled = () => disposed || usePanelPickerStore.getState().pick !== panelPick;
     void resolvePanelPick(async () => {
       const result = await refreshData();
       if (result && !result.ok) throw new Error(result.failure.message);
       if (!result) return null;
+      resolvedSessionId = result.data.sessionId;
       const target = selectionForPane(result.data, panelPick.paneId);
       return target.paneId === panelPick.paneId ? target : null;
     }, cancelled)
       .then((target) => {
         if (cancelled()) return;
+        setOverviewVisible(false);
         clearPanelPick();
         if (target) {
+          setMissingRequestedTarget(null);
+          setStrictTarget({
+            serverId,
+            sessionId: resolvedSessionId,
+            paneId: panelPick.paneId,
+            afterGeneration: snapshotGenerationRef.current,
+          });
           setSelection(target);
           setError(null);
         } else setError(t`This terminal is no longer available.`);
@@ -2320,7 +2648,7 @@ export function ServerTerminalWorkspace({
     return () => {
       disposed = true;
     };
-  }, [clearPanelPick, panelPick, ready, refreshData, serverId, t, setSelection]);
+  }, [clearPanelPick, data.sessionId, panelPick, ready, refreshData, serverId, t, setSelection]);
 
   // Which keys and slash commands this pane responds to is the gateway's
   // answer, so a newly supported agent needs a gateway update rather than an
@@ -3136,12 +3464,88 @@ export function ServerTerminalWorkspace({
   });
 
   function choosePane(pane: HerdrEntity) {
+    setMissingRequestedTarget(null);
+    setStrictTarget({
+      serverId,
+      sessionId: data.sessionId,
+      paneId: pane.id,
+      afterGeneration: snapshotGenerationRef.current,
+    });
     setSelection({
       workspaceId: field(pane, 'workspace_id') || selection.workspaceId,
       tabId: field(pane, 'tab_id') || selection.tabId,
       paneId: pane.id,
     });
   }
+
+  const openTaskTarget = useCallback(
+    (target: HomeServerEntry) => {
+      const request = ++overviewTargetRequest.current;
+      setOverviewVisible(false);
+      setMissingRequestedTarget(null);
+      setStrictTarget({
+        serverId: target.serverId,
+        sessionId: target.sessionId,
+        workspaceId: target.workspaceId,
+        tabId: target.tabId,
+        paneId: target.paneId,
+        afterGeneration: snapshotGenerationRef.current + 1,
+      });
+      setPadRequestedPaneId(target.paneId);
+      const sessionStore = useServerSession.getState();
+      sessionStore.clearPick();
+      if (target.sessionId) {
+        sessionStore.chooseSession({ serverId: target.serverId, sessionId: target.sessionId });
+      }
+      const panelStore = usePanelPickerStore.getState();
+      panelStore.clearPick();
+      if (target.paneId) {
+        panelStore.choosePanel({ serverId: target.serverId, paneId: target.paneId });
+      }
+      if (target.serverId !== serverId) {
+        void selectRecord(target.serverId).then((selected) => {
+          if (!selected || request !== overviewTargetRequest.current) return;
+          if (providedServerId === undefined) {
+            router.replace({
+              pathname: '/servers/[serverId]',
+              params: {
+                serverId: target.serverId,
+                ...(target.sessionId ? { sessionId: target.sessionId } : {}),
+                ...(target.workspaceId ? { workspaceId: target.workspaceId } : {}),
+                ...(target.tabId ? { tabId: target.tabId } : {}),
+                ...(target.paneId ? { paneId: target.paneId } : {}),
+              },
+            } as Href);
+          }
+        });
+        return;
+      }
+      if (target.serverId === serverId) {
+        if (target.sessionId) setChosenSessionId(target.sessionId);
+        if (target.paneId && (!target.sessionId || target.sessionId === data.sessionId)) {
+          const paneSelection = selectionForPane(data, target.paneId);
+          if (paneSelection.paneId === target.paneId) setSelection(paneSelection);
+        }
+      }
+    },
+    [data, providedServerId, router, selectRecord, serverId, setSelection]
+  );
+
+  useEffect(() => {
+    if (!selectedServer || !workspaceHandoff) return;
+    if (workspaceHandoff.target.serverId !== serverId) {
+      // A Pad rail publishes before changing the selected record. Its source
+      // owner must leave this handoff for the new keyed owner to consume.
+      // Handoffs from another source are an outside identity change and can be
+      // retired here instead of retargeting a later visit to this machine.
+      if (workspaceHandoff.sourceServerId === serverId) return;
+      homeWorkspaceHandoffStore.getState().clear();
+      return;
+    }
+    if (!isFocused) return;
+    const handoff = homeWorkspaceHandoffStore.getState().consume(workspaceHandoff.id);
+    if (handoff) openTaskTarget(handoff.target);
+  }, [isFocused, openTaskTarget, selectedServer, serverId, workspaceHandoff]);
 
   // The saved SSH hosts, for the rail's own group under the servers. Hydrated
   // here as well as on the home list, since on a Pad this screen *is* the
@@ -3179,18 +3583,29 @@ export function ServerTerminalWorkspace({
     () =>
       Object.fromEntries(
         railServers.map((server) => {
-          if (server.serverId === serverId && selectedServer) {
-            if (connection.phase === 'connected') return [server.serverId, 'live'];
-            if (connection.phase === 'offline') return [server.serverId, 'offline'];
-          }
-          return [server.serverId, reachabilityFromProbe(reachabilityProbes[server.serverId])];
+          const activeConnection = selectedServer
+            ? { serverId, phase: connection.phase }
+            : undefined;
+          return [
+            server.serverId,
+            resolveServerReachability(
+              server.serverId,
+              reachabilityProbes[server.serverId],
+              activeConnection
+            ),
+          ];
         })
       ),
     [connection.phase, railServers, reachabilityProbes, selectedServer, serverId]
   );
 
   function selectPadServer(server: GatewayRecord) {
+    ++overviewTargetRequest.current;
+    setOverviewVisible(false);
+    homeWorkspaceHandoffStore.getState().clear();
     setPadRequestedPaneId(undefined);
+    setStrictTarget(null);
+    setMissingRequestedTarget(null);
     if (server.serverId === serverId) return;
     void selectRecord(server.serverId);
 
@@ -3206,19 +3621,40 @@ export function ServerTerminalWorkspace({
   }
 
   function selectPadAgent(server: GatewayRecord, agent: ServerAgent) {
+    setOverviewVisible(false);
     if (!agent.paneId) {
       selectPadServer(server);
       return;
     }
 
-    setPadRequestedPaneId(agent.paneId);
+    const request = ++overviewTargetRequest.current;
+
     if (server.serverId === serverId) {
+      setPadRequestedPaneId(agent.paneId);
+      setMissingRequestedTarget(null);
+      setStrictTarget({
+        serverId: server.serverId,
+        paneId: agent.paneId,
+        afterGeneration: snapshotGenerationRef.current,
+      });
       const pane = data.panes.find((item) => item.id === agent.paneId);
       if (pane) choosePane(pane);
       return;
     }
 
-    void selectRecord(server.serverId);
+    const target: HomeServerEntry = {
+      kind: 'gateway-terminal',
+      serverId: server.serverId,
+      paneId: agent.paneId,
+    };
+    const handoffId = homeWorkspaceHandoffStore
+      .getState()
+      .publish(target, () => request === overviewTargetRequest.current, serverId);
+    void selectRecord(server.serverId).then((selected) => {
+      if (request !== overviewTargetRequest.current || selected) return;
+      const pending = homeWorkspaceHandoffStore.getState().handoff;
+      if (pending?.id === handoffId) homeWorkspaceHandoffStore.getState().clear();
+    });
     if (providedServerId === undefined) {
       router.replace({
         pathname: '/servers/[serverId]',
@@ -3231,8 +3667,9 @@ export function ServerTerminalWorkspace({
     const requestServerId = serverId;
     const requestPaneId = selection.paneId;
     const hasAttachments = attachments.length > 0;
-    if (connection.phase !== 'connected' || !ready || !requestPaneId || sending) return;
-    if (!draft.trim() && !hasAttachments && !assignment.command) return;
+    if (!targetReady || connection.phase !== 'connected' || !ready || !requestPaneId || sending)
+      return;
+    if (!draft.trim() && !hasAttachments) return;
     const sendToken = composerSendGuard.acquire();
     if (sendToken === null) return;
     const ownsDelivery = deliveryOwnership.capture();
@@ -3388,7 +3825,7 @@ export function ServerTerminalWorkspace({
   // without waiting on the event stream.
   function typeKey(key: string) {
     const requestPaneId = selection.paneId;
-    if (connection.phase !== 'connected' || !ready || !requestPaneId) return;
+    if (!targetReady || connection.phase !== 'connected' || !ready || !requestPaneId) return;
     void sendPaneKeys(data.sessionId, requestPaneId, [key])
       .then(() => refreshOutputRef.current())
       .catch(() => {});
@@ -3396,7 +3833,7 @@ export function ServerTerminalWorkspace({
 
   function typeText(text: string) {
     const requestPaneId = selection.paneId;
-    if (connection.phase !== 'connected' || !ready || !requestPaneId) return;
+    if (!targetReady || connection.phase !== 'connected' || !ready || !requestPaneId) return;
     void sendPaneCharacters(requestPaneId, text, 'virtual-key')
       .then(() => refreshOutputRef.current())
       .catch(() => {});
@@ -3405,7 +3842,8 @@ export function ServerTerminalWorkspace({
   async function sendTerminalKey(item: TerminalKey) {
     const requestServerId = serverId;
     const requestPaneId = selection.paneId;
-    if (connection.phase !== 'connected' || !ready || !requestPaneId || sendingKey) return;
+    if (!targetReady || connection.phase !== 'connected' || !ready || !requestPaneId || sendingKey)
+      return;
     setSendingKey(item.key);
     setError(null);
     if (keyScope) recordUsage(keyScope, item.key);
@@ -3434,7 +3872,7 @@ export function ServerTerminalWorkspace({
   }
 
   function openQuickActions() {
-    if (!selection.paneId) return;
+    if (!targetReady || !selection.paneId) return;
     Keyboard.dismiss();
     router.push({
       pathname: '/commands',
@@ -3629,25 +4067,21 @@ export function ServerTerminalWorkspace({
     [openMatchingAsset]
   );
 
-  function openSessionSwitcher() {
-    Keyboard.dismiss();
-    useServerSession.getState().rememberPane(serverId, data.sessionId, selection.paneId);
-    router.push({
-      pathname: '/sessions',
-      params: {
-        serverId,
-        sessionId: data.sessionId,
-        embedded: providedServerId === undefined ? '0' : '1',
-        // The list the header just decided from, rather than a second read the
-        // sheet makes for itself: a sheet sized to its contents that grows a
-        // row while it opens is a worse answer than one that is right at once.
-        sessions: encodeSessionChoices(sessions),
-      },
-    } as Href);
-  }
-
+  /**
+   * The header's one button: everything that is running, and everywhere it
+   * could be running instead.
+   *
+   * It used to be two buttons in this corner -- a monitor for the machines and
+   * their backends, a panels glyph for the workspaces and panes inside one of
+   * them -- which is one address asked in two places. The machines are a rail
+   * at the top of this sheet now, so the monitor has gone and what it knew
+   * travels here: the pane the reader is leaving, so returning to this machine
+   * lands where they were, and the backend list the header has already decided
+   * from, so the rail does not grow a chip while the sheet is opening.
+   */
   function openPanelPicker() {
     Keyboard.dismiss();
+    useServerSession.getState().rememberPane(serverId, data.sessionId, selection.paneId);
     router.push({
       pathname: '/panels',
       params: {
@@ -3655,6 +4089,8 @@ export function ServerTerminalWorkspace({
         sessionId: data.sessionId,
         paneId: selection.paneId,
         label: routeRecord?.label ?? record?.label ?? t`Server`,
+        embedded: providedServerId === undefined ? '0' : '1',
+        sessions: encodeSessionChoices(sessions),
       },
     } as Href);
   }
@@ -3706,7 +4142,9 @@ export function ServerTerminalWorkspace({
         key={item.key}
         item={item}
         sending={sendingKey === item.key}
-        disabled={connection.phase !== 'connected' || !selectedPane || Boolean(sendingKey)}
+        disabled={
+          !targetReady || connection.phase !== 'connected' || !selectedPane || Boolean(sendingKey)
+        }
         onPress={() => void sendTerminalKey(item)}
         textColor={chromeText}
         background={chromeGlass}
@@ -3765,7 +4203,7 @@ export function ServerTerminalWorkspace({
       }
       feedback="selection"
       pressedScale={0.9}
-      disabled={!selectedPane || sending}
+      disabled={!targetReady || !selectedPane || sending}
       onPress={() => {
         if (assignment.open) {
           assignment.close();
@@ -3851,7 +4289,7 @@ export function ServerTerminalWorkspace({
         target={assignment.target}
         onChoose={assignment.choose}
         onClose={assignment.close}
-        disabled={sending}
+        disabled={!targetReady || sending}
         commandName={assignment.command?.name}
         upgrade={assignmentStrip.upgrade}
       />
@@ -3882,7 +4320,7 @@ export function ServerTerminalWorkspace({
             }
             // A file picked now would join a message that is already on
             // its way out, so the menu closes for the length of the send.
-            disabled={!selectedPane || sending}
+            disabled={!targetReady || !selectedPane || sending}
             onPress={() => setAttachmentMenuOpen((open) => !open)}
             style={[
               composerStyles.button,
@@ -3914,7 +4352,8 @@ export function ServerTerminalWorkspace({
           slashPopup.inputProps.onSelectionChange(event);
           setCaret(event.nativeEvent.selection.start);
         },
-        editable: connection.phase === 'connected' && Boolean(selectedPane) && !sending,
+        editable:
+          targetReady && connection.phase === 'connected' && Boolean(selectedPane) && !sending,
         maxLength: 64 * 1024,
         // Summoned into the editor panel, the field arrives *instead of* the
         // app's keyboard rather than on top of it, so a reader who still had
@@ -3945,11 +4384,12 @@ export function ServerTerminalWorkspace({
           : selectedAgent
             ? t`Send to agent`
             : t`Run command`,
-        armed: Boolean((hasSendableContent || assignment.command) && selectedPane),
+        armed: Boolean(hasSendableContent && selectedPane),
         sending,
         disabled:
+          !targetReady ||
           connection.phase !== 'connected' ||
-          !(hasSendableContent || assignment.command) ||
+          !hasSendableContent ||
           !selectedPane ||
           sending,
         onPress: () => void sendInput(),
@@ -3976,7 +4416,7 @@ export function ServerTerminalWorkspace({
       {dock.virtualKeyboard ? (
         <VirtualKeyboard
           key={`${serverId}:${data.sessionId}:${selection.paneId}`}
-          disabled={connection.phase !== 'connected' || !selectedPane}
+          disabled={!targetReady || connection.phase !== 'connected' || !selectedPane}
           onText={typeText}
           onKey={typeKey}
           onClose={() => setKeyboardMode(false)}
@@ -4037,7 +4477,7 @@ export function ServerTerminalWorkspace({
         accessibilityLabel={t`Open quick actions`}
         feedback="selection"
         pressedScale={0.9}
-        disabled={!selectedPane}
+        disabled={!targetReady || !selectedPane}
         onPress={openQuickActions}
         style={[
           styles.keyRowToggle,
@@ -4053,7 +4493,7 @@ export function ServerTerminalWorkspace({
         sessionId={data.sessionId}
         tabId={selection.tabId}
         label={routeRecord?.label ?? record?.label ?? t`Server`}
-        disabled={!selectedPane}
+        disabled={!targetReady || !selectedPane}
         background={fill}
         compact={isPadLayout}
       />
@@ -4066,7 +4506,7 @@ export function ServerTerminalWorkspace({
         cwd={field(selectedPane, 'cwd')}
         label={routeRecord?.label ?? record?.label ?? t`Server`}
         capabilities={data.health?.capabilities}
-        disabled={!selectedPane}
+        disabled={!targetReady || !selectedPane}
         background={fill}
         compact={isPadLayout}
       />
@@ -4144,6 +4584,8 @@ export function ServerTerminalWorkspace({
           reachabilityByServer={railReachabilityByServer}
           selectedServerId={record?.serverId ?? null}
           selectedPaneId={selection.paneId || null}
+          workbenchSelected={overviewVisible}
+          onOpenWorkbench={() => setOverviewVisible(true)}
           onSelectAgent={selectPadAgent}
           onPairServer={() => router.push('/explore')}
           onOpenSettings={() => router.push('/settings')}
@@ -4154,22 +4596,24 @@ export function ServerTerminalWorkspace({
           onSelectSshHost={(host) => router.navigate(`/ssh/${host.id}`)}
         />
       }
-      detailTitle={detailTitle}
-      onDetailBack={demoMode ? leaveDetail : undefined}
+      detailTitle={overviewVisible ? undefined : detailTitle}
+      onDetailBack={!overviewVisible && demoMode ? leaveDetail : undefined}
       detailFadeColor={terminalBackground}
       detailTitleSlot={
-        // The title carries the workspace switch, so it replaces the header's
-        // plain pill. It draws the same pill either way -- with one workspace
-        // the gesture is simply off.
-        <WorkspaceTitleSwitcher
-          title={detailTitle}
-          workspaces={data.workspaces}
-          workspaceId={selection.workspaceId}
-          onCycle={selectWorkspace}
-          onIndicator={announceWorkspaceSwitch}
-        />
+        overviewVisible ? undefined : (
+          // The title carries the workspace switch, so it replaces the header's
+          // plain pill. It draws the same pill either way -- with one workspace
+          // the gesture is simply off.
+          <WorkspaceTitleSwitcher
+            title={detailTitle}
+            workspaces={data.workspaces}
+            workspaceId={selection.workspaceId}
+            onCycle={selectWorkspace}
+            onIndicator={announceWorkspaceSwitch}
+          />
+        )
       }
-      onDetailAction={hasLoadedData ? openPanelPicker : undefined}
+      onDetailAction={!overviewVisible && hasLoadedData ? openPanelPicker : undefined}
       /*
         The way out of the split, beside the control that arranges panes.
 
@@ -4180,29 +4624,26 @@ export function ServerTerminalWorkspace({
         alone, because it appears exactly when there is a simulator on screen to
         close and nothing else the header could mean by it.
       */
-      detailAccessory={[
-        // Only actual alternatives justify a switch button; stopped backends
-        // remain configured without appearing here as live choices.
-        shouldShowSessionSwitcher(sessions, railServers.length) ? (
-          <PressableScale
-            key="session"
-            accessibilityLabel={t`Switch machine or session`}
-            testID="machine-session-switcher"
-            onPress={openSessionSwitcher}
-            style={navHeaderButtonStyle}>
-            <Monitor size={18} color={theme.colors.text} strokeWidth={2} />
-          </PressableScale>
-        ) : null,
-        simfarmSplit.previewWidth > 0 ? (
-          <PressableScale
-            key="simulator"
-            accessibilityLabel={t`Hide the simulator`}
-            onPress={() => toggleSimfarmSplit(serverId)}
-            style={navHeaderButtonStyle}>
-            <X size={18} color={theme.colors.text} strokeWidth={2} />
-          </PressableScale>
-        ) : null,
-      ]}>
+      detailAccessory={
+        overviewVisible
+          ? []
+          : [
+              // No machine button beside the panels one. Two glyphs in this corner
+              // were two halves of one question -- which machine, which backend,
+              // which workspace, which panel -- and a reader had to know which half
+              // theirs was in before they could press anything. `onDetailAction`
+              // above is the one button, and the whole address is inside it.
+              simfarmSplit.previewWidth > 0 ? (
+                <PressableScale
+                  key="simulator"
+                  accessibilityLabel={t`Hide the simulator`}
+                  onPress={() => toggleSimfarmSplit(serverId)}
+                  style={navHeaderButtonStyle}>
+                  <X size={18} color={theme.colors.text} strokeWidth={2} />
+                </PressableScale>
+              ) : null,
+            ]
+      }>
       {/* The terminal and, beside it, the simulator it is changing.
 
           A row rather than a third column of the drawer's own: the rail belongs
@@ -4210,8 +4651,14 @@ export function ServerTerminalWorkspace({
           screen split in half. `previewWidth` is 0 whenever the preview is off
           or the window is too narrow to keep both halves usable, so this is a
           row of one for the whole of the compact layout and most of the Pad. */}
-      <View style={styles.workspaceSplit}>
-        {/* No background and no wallpaper of its own. `AppDrawer` wraps this
+      <View style={styles.workspaceHost}>
+        <View
+          pointerEvents={overviewVisible ? 'none' : 'auto'}
+          accessibilityElementsHidden={overviewVisible}
+          importantForAccessibility={overviewVisible ? 'no-hide-descendants' : 'auto'}
+          style={[StyleSheet.absoluteFill, { opacity: overviewVisible ? 0 : 1 }]}>
+          <View style={styles.workspaceSplit}>
+            {/* No background and no wallpaper of its own. `AppDrawer` wraps this
             screen and already paints both, and painting them again here drew a
             second full-screen image that nothing could ever see: the opaque
             fill on this view covered the drawer's copy, and HWUI does no
@@ -4223,9 +4670,9 @@ export function ServerTerminalWorkspace({
             `surfaceBackground(colors.background)`, which at the default alpha of
             1 is `colors.background` exactly -- the same pixels as before -- and
             below 1 is the translucency that was being asked for and ignored. */}
-        <View style={styles.page}>
-          <StatusBar animated style={resolvedMode === 'dark' ? 'light' : 'dark'} />
-          {/*
+            <View style={styles.page}>
+              <StatusBar animated style={resolvedMode === 'dark' ? 'light' : 'dark'} />
+              {/*
           One column for every notice that floats over the terminal.
 
           They used to be three independently absolute views pinned to the same
@@ -4236,252 +4683,302 @@ export function ServerTerminalWorkspace({
           `box-none` so the terminal underneath still takes taps everywhere the
           notices are not.
         */}
-          <View
-            pointerEvents="box-none"
-            style={[styles.noticeStack, { top: insets.top + NAV_HEADER_TOP_GAP + 58 }]}>
-            <NoticeDeck>
-              {/* A dead pairing outranks whatever action happened to fail first.
+              <View
+                pointerEvents="box-none"
+                style={[styles.noticeStack, { top: insets.top + NAV_HEADER_TOP_GAP + 58 }]}>
+                <NoticeDeck>
+                  {/* A dead pairing outranks whatever action happened to fail first.
               Every request fails once this server has no record of this device,
               so the pane read that lost the race writes its own sentence into
               the error bar -- and the bar has no button on it, which used to
               hide the one control that can end the situation. The notice wins
               here, because it is the thing carrying the way out. */}
-              {error && !connection.needsPairing ? (
-                <Animated.View
-                  entering={fadeIn('micro')}
-                  exiting={fadeOut('micro')}
-                  layout={listLayout('short')}
-                  style={[
-                    styles.errorBar,
-                    { backgroundColor: surfaceBackground(theme.colors.dangerSubtle) },
-                  ]}>
-                  <Text selectable variant="caption" color={theme.colors.danger}>
-                    {error}
-                  </Text>
-                </Animated.View>
-              ) : null}
-              {/* The tunnel's own status, above the gateway connection notice: a
+                  {error && !connection.needsPairing ? (
+                    <Animated.View
+                      entering={fadeIn('micro')}
+                      exiting={fadeOut('micro')}
+                      layout={listLayout('short')}
+                      style={[
+                        styles.errorBar,
+                        { backgroundColor: surfaceBackground(theme.colors.dangerSubtle) },
+                      ]}>
+                      <Text selectable variant="caption" color={theme.colors.danger}>
+                        {error}
+                      </Text>
+                    </Animated.View>
+                  ) : null}
+                  {/* The tunnel's own status, above the gateway connection notice: a
                 tunnelled gateway cannot connect until its SSH forward is up, so
                 while it is connecting or down this is the news, and the gateway
                 notice below stays quiet (it would only say "Connecting"). */}
-              {tunnel.tunnelled && tunnel.phase !== 'open' ? (
-                <Animated.View
-                  entering={fadeIn('micro')}
-                  exiting={fadeOut('micro')}
-                  layout={listLayout('short')}>
-                  <GatewayTunnelBadge record={record} variant="notice" />
-                </Animated.View>
-              ) : null}
-              {tunnelReady && (!error || connection.needsPairing) ? (
-                <ConnectionNotice
-                  status={connection}
-                  onRetry={() => setRetryNonce((value) => value + 1)}
-                  onPairAgain={() => router.push('/explore')}
-                />
-              ) : null}
+                  {tunnel.tunnelled && tunnel.phase !== 'open' ? (
+                    <Animated.View
+                      entering={fadeIn('micro')}
+                      exiting={fadeOut('micro')}
+                      layout={listLayout('short')}>
+                      <GatewayTunnelBadge record={record} variant="notice" />
+                    </Animated.View>
+                  ) : null}
+                  {tunnelReady && (!error || connection.needsPairing) ? (
+                    <ConnectionNotice
+                      status={connection}
+                      onRetry={() => setRetryNonce((value) => value + 1)}
+                      onPairAgain={() => router.push('/explore')}
+                    />
+                  ) : null}
 
-              {/* What happened while nobody was looking. Above the switch pill and
+                  {/* What happened while nobody was looking. Above the switch pill and
               below the standing conditions: it is news rather than a state, but
               it is news the user came back for, so a transient answer to a
               gesture queues underneath it rather than the other way round. */}
-              {featureFlags.terminalAwayDigest && away.digest ? (
-                <AwayDigestCard digest={away.digest} onDismiss={away.dismiss} />
-              ) : null}
-              <CollaborationNotice
-                context={{
-                  serverId,
-                  sessionId: data.sessionId,
-                  paneId: selection.paneId,
-                  workspaceId: selection.workspaceId,
-                  tabId: selection.tabId,
-                  cwd: field(selectedPane, 'cwd'),
-                }}
-                agents={data.agents}
-                connected={ready && connection.phase === 'connected'}
-                active={isFocused}
-              />
+                  {featureFlags.terminalAwayDigest && away.digest ? (
+                    <AwayDigestCard digest={away.digest} onDismiss={away.dismiss} />
+                  ) : null}
+                  <CollaborationNotice
+                    context={{
+                      serverId,
+                      sessionId: data.sessionId,
+                      paneId: selection.paneId,
+                      workspaceId: selection.workspaceId,
+                      tabId: selection.tabId,
+                      cwd: field(selectedPane, 'cwd'),
+                    }}
+                    agents={data.agents}
+                    connected={ready && targetReady && connection.phase === 'connected'}
+                    active={isFocused}
+                  />
 
-              {/* Last in the stack on purpose. An error bar and a connection notice
+                  {/* Last in the stack on purpose. An error bar and a connection notice
               are standing conditions and keep the top of the column; this is a
               transient answer to a gesture and clears itself, so it queues
               underneath rather than pushing a condition out of the way. */}
-              {switchPill ? (
-                <SwitchIndicator address={switchPill.address} testID={switchPill.testID} />
-              ) : null}
-            </NoticeDeck>
-          </View>
+                  {switchPill ? (
+                    <SwitchIndicator address={switchPill.address} testID={switchPill.testID} />
+                  ) : null}
+                </NoticeDeck>
+              </View>
 
-          <View style={styles.terminalArea}>
-            {/* The two-finger tab swipe is recognised by the canvas itself, as one
+              <View style={styles.terminalArea}>
+                {/* The two-finger tab swipe is recognised by the canvas itself, as one
               more gesture simultaneous with its pan and pinch -- React Native's
               touches never see it. See `useTabSwipe` for the measurements. */}
-            <View style={[styles.terminalSwipeArea, { overflow: 'hidden' }]}>
-              {/* Keep the canvas mounted and stationary across pane changes. */}
-              <Animated.View style={styles.terminalSwipeArea}>
-                {chatViewShown ? (
-                  <PaneChatView
-                    // Remounted per pane: the follow-the-latest position and which
-                    // tool runs are open belong to the transcript being read.
-                    key={selection.paneId}
-                    parts={partsForPane.parts}
-                    detail={paneView.detail}
-                    // `answered` is the gateway having said *something* about
-                    // this pane. Until it has, an empty transcript is a question
-                    // in flight rather than an empty pane.
-                    awaitingFirstParts={!partsForPane.answered}
-                    topInset={insets.top + NAV_HEADER_TOP_GAP + 54}
-                    bottomInset={composerVisible ? composerHeight : 0}
-                    canLoadEarlier={canLoadEarlierParts}
-                    loadingEarlier={loadingEarlierParts}
-                    onLoadEarlier={loadEarlierParts}
-                    onOpenAsset={openAssetById}
-                    onToggleDetail={paneView.toggleDetail}
-                  />
-                ) : (
-                  <TerminalBoundary
-                    resetKey={selection.paneId}
-                    background={terminalBackground}
-                    textColor={chromeText}>
-                    <TerminalPanel
-                      sessionId={data.sessionId}
-                      paneId={selection.paneId}
-                      output={output}
-                      // The whole composer reserves space, key row included: anything
-                      // it covers is unreachable, and the "jump to latest" pill sits
-                      // against this inset too.
-                      //
-                      // Zero on an editor, because there is no composer there to
-                      // reserve for. What floats over an editor is deliberately
-                      // *not* measured into this: reserving height for it would
-                      // hand the pane back the problem the dock was taken away to
-                      // solve, and would move the terminal every time the panel
-                      // opened.
-                      bottomInset={composerVisible && !dock.editorMode ? composerHeight : 0}
-                      // Only a program that owns the screen gets one, and it is
-                      // the same clearance the reading view above uses, so the two
-                      // surfaces clear the same chrome by the same amount. Keyed
-                      // on the surface rather than on "is an editor": an agent
-                      // paints the whole screen too, and keying this on the editor
-                      // predicate is what slid an agent's output under the pill.
-                      topInset={paneOwnsScreen ? insets.top + NAV_HEADER_TOP_GAP + 54 : 0}
-                      // How many rows of the window are the live screen, so the
-                      // grid can rest an editor on the screen rather than on the
-                      // oldest frame of the ring-buffer history above it.
-                      screenRows={selectedPaneScreenRows}
-                      // Deliberately the *editor* predicate, not `paneOwnsScreen`,
-                      // even though the two describe the same alternate screen.
-                      //
-                      // This one decides whether the grid stops resolving a
-                      // truecolour scheme's defaults against the app theme (see
-                      // `terminalPaneTheme`). An editor owns its whole surface and
-                      // is unreadable resolved against the wrong side, which is
-                      // what card #685 measured. An agent is different in practice:
-                      // it paints some of its own colours and leaves the rest at
-                      // the default, and the owner reads it beside light app
-                      // chrome. Giving it its own surface turned the pane fully
-                      // dark inside a light app -- correct by the rule, wrong on
-                      // the screen, and reverted here on that evidence.
-                      //
-                      // The cost is stated rather than hidden: an agent that paints
-                      // a dark box of its own (codex's composer) still shows that
-                      // box against the app's paper. That is a narrower defect than
-                      // a whole pane in the wrong mode, and it wants its own fix.
-                      //
-                      // The tablet branch reached this same line independently, from
-                      // the other end of the same problem: forcing the terminal
-                      // theme turned a light Pad workspace into one large dark
-                      // rectangle. Two surfaces, two readers, one answer.
-                      ownsScreen={fullScreenPane}
-                      keyboardOffset={keyboardOffset}
-                      // The setting, not a point size: how big that is belongs to
-                      // `@/lib/terminal-text-size`, which is also where the rule
-                      // that the pinch never outlives this screen is written.
-                      textSize={terminalTextSize}
-                      // An editor pane's own read is always `history_size: 0`
-                      // (measured live, card #795) -- there is nothing earlier
-                      // for a pull to reach, so the affordance is refused
-                      // outright rather than trusted to the scroll-metric
-                      // fallback `hasEarlierTerminalOutput` already computes
-                      // (belt and suspenders: that fallback already lands on
-                      // `false` here, but a screen-owning pane must never be
-                      // able to arm this gesture on the strength of a metric
-                      // alone).
-                      canLoadEarlier={fullScreenPane ? false : canLoadEarlierOutput}
-                      historyRevision={historyRevision}
-                      loadingEarlier={loadingEarlierOutput}
-                      onLoadEarlier={loadEarlierOutput}
-                      onViewportReady={refreshOutput}
-                      historyIndicatorTopInset={insets.top + NAV_HEADER_TOP_GAP + 62}
-                      stickBottomNonce={stickBottomNonce}
-                      onFileLink={openFileLink}
-                      onTwoFingerSwipe={tabSwipe.onSwipe}
-                      screenFocused={isFocused}
-                      paneColumns={selectedPaneColumns}
-                      paneRows={selectedPaneRows}
-                      paneCursorColumn={selectedPaneCursorColumn}
-                      paneCursorRow={selectedPaneCursorRow}
-                    />
-                  </TerminalBoundary>
-                )}
-                {themeDrop ? (
-                  <TerminalThemeDrop
-                    state={themeDrop}
-                    bottomInset={composerVisible ? composerHeight : 0}
-                    onApply={() => {
-                      const candidate = themeCandidateRef.current;
-                      if (!candidate || themeDrop.phase !== 'ready') return;
-                      setThemeDrop({ ...themeDrop, applying: true });
-                      // The editor owns the preview from here: it is the one
-                      // surface that shows both variants, the contrast verdict
-                      // and the opacity floors, and a theme arriving from
-                      // another machine is exactly as unreviewed as one picked
-                      // by hand. The card's job was to get it here.
-                      openThemeEditor(candidate);
-                      themeCandidateRef.current = null;
-                      setThemeDrop(null);
-                    }}
-                    onDismiss={() => {
-                      // Dismissing during the download has to stop it as well as
-                      // clear the card: the staging it would otherwise finish
-                      // has nowhere left to be shown, and would sit in the cache
-                      // directory until the screen itself went away.
-                      themeRequestRef.current?.cancel();
-                      themeRequestRef.current = null;
-                      themeCandidateRef.current?.prepared?.dispose();
-                      themeCandidateRef.current = null;
-                      setThemeDrop(null);
-                    }}
-                  />
-                ) : null}
-              </Animated.View>
-            </View>
-          </View>
+                <View style={[styles.terminalSwipeArea, { overflow: 'hidden' }]}>
+                  {/* Keep the canvas mounted and stationary across pane changes. */}
+                  <Animated.View style={styles.terminalSwipeArea}>
+                    {targetUnavailable ? (
+                      <View style={styles.missingTargetState}>
+                        <Text variant="heading">
+                          <Trans>Terminal unavailable</Trans>
+                        </Text>
+                        <Text variant="bodySmall" color={theme.colors.textMuted}>
+                          <Trans>
+                            This terminal was removed. Choose another terminal to continue.
+                          </Trans>
+                        </Text>
+                        <PressableScale
+                          accessibilityRole="button"
+                          accessibilityLabel={t`Choose another terminal`}
+                          disabled={!hasLoadedData || sessions.length === 0}
+                          onPress={openPanelPicker}
+                          style={[
+                            styles.missingTargetButton,
+                            { backgroundColor: surfaceBackground(theme.colors.primarySubtle) },
+                          ]}>
+                          <SquareTerminal size={16} color={theme.colors.primary} />
+                          <Text variant="label" color={theme.colors.primary}>
+                            <Trans>Choose another terminal</Trans>
+                          </Text>
+                        </PressableScale>
+                      </View>
+                    ) : targetPending ? (
+                      <View style={styles.missingTargetState}>
+                        <Spinner size="sm" color={theme.colors.textMuted} />
+                        <Text variant="bodySmall" color={theme.colors.textMuted}>
+                          <Trans>Opening…</Trans>
+                        </Text>
+                      </View>
+                    ) : chatViewShown ? (
+                      supportsAgentSessions && isOpenCodeAgent ? (
+                        <AgentWorkbench
+                          // The home route mounts this workspace from its warm or
+                          // placeholder data first. `data.sessionId` can change
+                          // from the placeholder to the real gateway session
+                          // after the first snapshot arrives. A pane-only key
+                          // kept the AgentWorkbench's old transcript store alive
+                          // across that identity change, so the header could show
+                          // the real session while its message list stayed empty.
+                          key={JSON.stringify([serverId, data.sessionId, selection.paneId])}
+                          serverId={serverId}
+                          sessionId={data.sessionId}
+                          visible={!overviewVisible}
+                          topInset={insets.top + NAV_HEADER_TOP_GAP + 54}
+                          bottomInset={insets.bottom}
+                        />
+                      ) : (
+                        <PaneChatView
+                          // Remounted per pane: the follow-the-latest position and which
+                          // tool runs are open belong to the transcript being read.
+                          key={selection.paneId}
+                          parts={partsForPane.parts}
+                          detail={paneView.detail}
+                          // `answered` is the gateway having said *something* about
+                          // this pane. Until it has, an empty transcript is a question
+                          // in flight rather than an empty pane.
+                          awaitingFirstParts={!partsForPane.answered}
+                          topInset={insets.top + NAV_HEADER_TOP_GAP + 54}
+                          bottomInset={composerVisible ? composerHeight : 0}
+                          canLoadEarlier={canLoadEarlierParts}
+                          loadingEarlier={loadingEarlierParts}
+                          onLoadEarlier={loadEarlierParts}
+                          onOpenAsset={openAssetById}
+                          onToggleDetail={paneView.toggleDetail}
+                        />
+                      )
+                    ) : (
+                      <TerminalBoundary
+                        resetKey={selection.paneId}
+                        background={terminalBackground}
+                        textColor={chromeText}>
+                        <TerminalPanel
+                          sessionId={data.sessionId}
+                          paneId={selection.paneId}
+                          output={output}
+                          // The whole composer reserves space, key row included: anything
+                          // it covers is unreachable, and the "jump to latest" pill sits
+                          // against this inset too.
+                          //
+                          // Zero on an editor, because there is no composer there to
+                          // reserve for. What floats over an editor is deliberately
+                          // *not* measured into this: reserving height for it would
+                          // hand the pane back the problem the dock was taken away to
+                          // solve, and would move the terminal every time the panel
+                          // opened.
+                          bottomInset={composerVisible && !dock.editorMode ? composerHeight : 0}
+                          // Only a program that owns the screen gets one, and it is
+                          // the same clearance the reading view above uses, so the two
+                          // surfaces clear the same chrome by the same amount. Keyed
+                          // on the surface rather than on "is an editor": an agent
+                          // paints the whole screen too, and keying this on the editor
+                          // predicate is what slid an agent's output under the pill.
+                          topInset={paneOwnsScreen ? insets.top + NAV_HEADER_TOP_GAP + 54 : 0}
+                          // How many rows of the window are the live screen, so the
+                          // grid can rest an editor on the screen rather than on the
+                          // oldest frame of the ring-buffer history above it.
+                          screenRows={selectedPaneScreenRows}
+                          // Deliberately the *editor* predicate, not `paneOwnsScreen`,
+                          // even though the two describe the same alternate screen.
+                          //
+                          // This one decides whether the grid stops resolving a
+                          // truecolour scheme's defaults against the app theme (see
+                          // `terminalPaneTheme`). An editor owns its whole surface and
+                          // is unreadable resolved against the wrong side, which is
+                          // what card #685 measured. An agent is different in practice:
+                          // it paints some of its own colours and leaves the rest at
+                          // the default, and the owner reads it beside light app
+                          // chrome. Giving it its own surface turned the pane fully
+                          // dark inside a light app -- correct by the rule, wrong on
+                          // the screen, and reverted here on that evidence.
+                          //
+                          // The cost is stated rather than hidden: an agent that paints
+                          // a dark box of its own (codex's composer) still shows that
+                          // box against the app's paper. That is a narrower defect than
+                          // a whole pane in the wrong mode, and it wants its own fix.
+                          //
+                          // The tablet branch reached this same line independently, from
+                          // the other end of the same problem: forcing the terminal
+                          // theme turned a light Pad workspace into one large dark
+                          // rectangle. Two surfaces, two readers, one answer.
+                          ownsScreen={fullScreenPane}
+                          keyboardOffset={keyboardOffset}
+                          // The setting, not a point size: how big that is belongs to
+                          // `@/lib/terminal-text-size`, which is also where the rule
+                          // that the pinch never outlives this screen is written.
+                          textSize={terminalTextSize}
+                          // An editor pane's own read is always `history_size: 0`
+                          // (measured live, card #795) -- there is nothing earlier
+                          // for a pull to reach, so the affordance is refused
+                          // outright rather than trusted to the scroll-metric
+                          // fallback `hasEarlierTerminalOutput` already computes
+                          // (belt and suspenders: that fallback already lands on
+                          // `false` here, but a screen-owning pane must never be
+                          // able to arm this gesture on the strength of a metric
+                          // alone).
+                          canLoadEarlier={fullScreenPane ? false : canLoadEarlierOutput}
+                          historyRevision={historyRevision}
+                          loadingEarlier={loadingEarlierOutput}
+                          onLoadEarlier={loadEarlierOutput}
+                          onViewportReady={refreshOutput}
+                          historyIndicatorTopInset={insets.top + NAV_HEADER_TOP_GAP + 62}
+                          stickBottomNonce={stickBottomNonce}
+                          onFileLink={openFileLink}
+                          onTwoFingerSwipe={tabSwipe.onSwipe}
+                          screenFocused={isFocused}
+                          paneColumns={selectedPaneColumns}
+                          paneRows={selectedPaneRows}
+                          paneCursorColumn={selectedPaneCursorColumn}
+                          paneCursorRow={selectedPaneCursorRow}
+                        />
+                      </TerminalBoundary>
+                    )}
+                    {themeDrop ? (
+                      <TerminalThemeDrop
+                        state={themeDrop}
+                        bottomInset={composerVisible ? composerHeight : 0}
+                        onApply={() => {
+                          const candidate = themeCandidateRef.current;
+                          if (!candidate || themeDrop.phase !== 'ready') return;
+                          setThemeDrop({ ...themeDrop, applying: true });
+                          // The editor owns the preview from here: it is the one
+                          // surface that shows both variants, the contrast verdict
+                          // and the opacity floors, and a theme arriving from
+                          // another machine is exactly as unreviewed as one picked
+                          // by hand. The card's job was to get it here.
+                          openThemeEditor(candidate);
+                          themeCandidateRef.current = null;
+                          setThemeDrop(null);
+                        }}
+                        onDismiss={() => {
+                          // Dismissing during the download has to stop it as well as
+                          // clear the card: the staging it would otherwise finish
+                          // has nowhere left to be shown, and would sit in the cache
+                          // directory until the screen itself went away.
+                          themeRequestRef.current?.cancel();
+                          themeRequestRef.current = null;
+                          themeCandidateRef.current?.prepared?.dispose();
+                          themeCandidateRef.current = null;
+                          setThemeDrop(null);
+                        }}
+                      />
+                    ) : null}
+                  </Animated.View>
+                </View>
+              </View>
 
-          {attachmentMenuOpen && dock.attachEntry ? (
-            <Animated.View style={[styles.menuBackdrop, menuBackdropStyle]}>
-              <Pressable
-                accessibilityLabel={t`Close the attachment menu`}
-                onPress={() => setAttachmentMenuOpen(false)}
-                style={StyleSheet.absoluteFill}
-              />
-            </Animated.View>
-          ) : null}
+              {attachmentMenuOpen && dock.attachEntry ? (
+                <Animated.View style={[styles.menuBackdrop, menuBackdropStyle]}>
+                  <Pressable
+                    accessibilityLabel={t`Close the attachment menu`}
+                    onPress={() => setAttachmentMenuOpen(false)}
+                    style={StyleSheet.absoluteFill}
+                  />
+                </Animated.View>
+              ) : null}
 
-          {/* Tap-outside, the half of dismissal a key press cannot cover on a
+              {/* Tap-outside, the half of dismissal a key press cannot cover on a
             phone. Under the composer overlay in the stack, so the panel's own
             rows still take their taps -- and bounded to the pane above it, so
             that the element a tap is aimed at is the one that gets it. */}
-          {slashPopup.open ? (
-            <Animated.View style={[styles.menuBackdrop, menuBackdropStyle]}>
-              <Pressable
-                accessibilityLabel={t`Close the command list`}
-                onPress={slashPopup.dismiss}
-                style={StyleSheet.absoluteFill}
-              />
-            </Animated.View>
-          ) : null}
+              {slashPopup.open ? (
+                <Animated.View style={[styles.menuBackdrop, menuBackdropStyle]}>
+                  <Pressable
+                    accessibilityLabel={t`Close the command list`}
+                    onPress={slashPopup.dismiss}
+                    style={StyleSheet.absoluteFill}
+                  />
+                </Animated.View>
+              ) : null}
 
-          {/*
+              {/*
           The key row switched off, so its two entries come out here: bottom
           left, on the line the "jump to latest" pill keeps on the right, both
           of them 14 above the dock. The pane gets back the line the row was
@@ -4500,110 +4997,110 @@ export function ServerTerminalWorkspace({
           here should close the menu, the way a tap anywhere else on the pane
           does.
         */}
-          {composerVisible && dock.floatingActions && !isPadLayout ? (
-            <Animated.View
-              // The band across from it belongs to the pill, and a full-width
-              // invisible parent lying over it would have taken the pill's taps.
-              pointerEvents="box-none"
-              entering={fadeIn('micro')}
-              exiting={fadeOutDown('short')}
-              style={[
-                styles.floatingEntries,
-                { bottom: composerHeight + 14 },
-                composerKeyboardStyle,
-              ]}>
-              <View
-                style={[
-                  styles.floatingEntriesTray,
-                  {
-                    backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
-                  },
-                ]}>
-                {paneEntries('transparent')}
-              </View>
-            </Animated.View>
-          ) : null}
+              {composerVisible && dock.floatingActions && !isPadLayout && !hideTerminalDock ? (
+                <Animated.View
+                  // The band across from it belongs to the pill, and a full-width
+                  // invisible parent lying over it would have taken the pill's taps.
+                  pointerEvents="box-none"
+                  entering={fadeIn('micro')}
+                  exiting={fadeOutDown('short')}
+                  style={[
+                    styles.floatingEntries,
+                    { bottom: composerHeight + 14 },
+                    composerKeyboardStyle,
+                  ]}>
+                  <View
+                    style={[
+                      styles.floatingEntriesTray,
+                      {
+                        backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
+                      },
+                    ]}>
+                    {paneEntries('transparent')}
+                  </View>
+                </Animated.View>
+              ) : null}
 
-          {/*
+              {/*
             The editor's own controls, which are the dock's replacement and not
             a smaller dock. Absolutely positioned over the pane and measured into
             nothing, so opening and closing the panel cannot move the terminal --
             see `EditorControls` for why that constraint is the whole design.
           */}
-          {dock.editorMode ? (
-            <EditorControls
-              expanded={dock.editorPanel}
-              onExpand={() => {
-                Keyboard.dismiss();
-                setKeyboardMode(true);
-              }}
-              offsetX={editorHandleX}
-              offsetY={editorHandleY}
-              keyboardOffset={keyboardOffset}
-              // The floating header is chrome the cluster must not disappear
-              // behind: the same clearance the grid itself takes above.
-              topInset={insets.top + NAV_HEADER_TOP_GAP + 54}
-              bottomInset={insets.bottom}
-              disabled={connection.phase !== 'connected' || !selectedPane}>
-              {editorPanelBody}
-            </EditorControls>
-          ) : null}
-
-          {composerVisible && !dock.editorMode ? (
-            <Animated.View
-              style={[
-                styles.composerOverlay,
-                isPadLayout && styles.padComposerOverlay,
-                composerKeyboardStyle,
-              ]}>
-              <EdgeFade edge="bottom" color={terminalBackground} style={styles.composerFade} />
-              {/* Both of these hang off the caret in an input that is not on screen
-              while a question is standing, so both go with it. */}
-              {mentionTrigger && dock.composer ? (
-                <View
-                  style={[
-                    styles.composerFloatingContent,
-                    isPadLayout && styles.padComposerFloatingContent,
-                  ]}>
-                  <FileMentionPanel
-                    hits={mentionHits}
-                    query={mentionTrigger.query}
-                    visibleRows={isPadLayout ? 3 : undefined}
-                    onSelect={chooseMention}
-                  />
-                </View>
+              {dock.editorMode ? (
+                <EditorControls
+                  expanded={dock.editorPanel}
+                  onExpand={() => {
+                    Keyboard.dismiss();
+                    setKeyboardMode(true);
+                  }}
+                  offsetX={editorHandleX}
+                  offsetY={editorHandleY}
+                  keyboardOffset={keyboardOffset}
+                  // The floating header is chrome the cluster must not disappear
+                  // behind: the same clearance the grid itself takes above.
+                  topInset={insets.top + NAV_HEADER_TOP_GAP + 54}
+                  bottomInset={insets.bottom}
+                  disabled={!targetReady || connection.phase !== 'connected' || !selectedPane}>
+                  {editorPanelBody}
+                </EditorControls>
               ) : null}
-              {/* The pane's own command surface, above the dock so the keyboard
+
+              {composerVisible && !dock.editorMode && !hideTerminalDock ? (
+                <Animated.View
+                  style={[
+                    styles.composerOverlay,
+                    isPadLayout && styles.padComposerOverlay,
+                    composerKeyboardStyle,
+                  ]}>
+                  <EdgeFade edge="bottom" color={terminalBackground} style={styles.composerFade} />
+                  {/* Both of these hang off the caret in an input that is not on screen
+              while a question is standing, so both go with it. */}
+                  {mentionTrigger && dock.composer ? (
+                    <View
+                      style={[
+                        styles.composerFloatingContent,
+                        isPadLayout && styles.padComposerFloatingContent,
+                      ]}>
+                      <FileMentionPanel
+                        hits={mentionHits}
+                        query={mentionTrigger.query}
+                        visibleRows={isPadLayout ? 3 : undefined}
+                        onSelect={chooseMention}
+                      />
+                    </View>
+                  ) : null}
+                  {/* The pane's own command surface, above the dock so the keyboard
                 never has to come down to read it. Everything about when it
                 opens, what it shows and what a tap inserts lives in
                 `composer-popup.ts`; this is only where it is hung. */}
-              {dock.composer ? (
-                <View style={[styles.composerPopup, isPadLayout && styles.padComposerPopup]}>
-                  <ComposerPopup
-                    rows={slashPopup.rows}
-                    onPick={slashPopup.pick}
-                    testIDPrefix="slash-command"
-                  />
-                </View>
-              ) : null}
-              {attachmentMenuOpen && dock.attachEntry ? (
-                <View
-                  style={[
-                    styles.composerFloatingContent,
-                    isPadLayout && styles.padComposerFloatingContent,
-                  ]}>
-                  <AttachmentMenu onSelect={chooseAttachmentSource} textColor={chromeText} />
-                </View>
-              ) : null}
-              {/*
+                  {dock.composer ? (
+                    <View style={[styles.composerPopup, isPadLayout && styles.padComposerPopup]}>
+                      <ComposerPopup
+                        rows={slashPopup.rows}
+                        onPick={slashPopup.pick}
+                        testIDPrefix="slash-command"
+                      />
+                    </View>
+                  ) : null}
+                  {attachmentMenuOpen && dock.attachEntry ? (
+                    <View
+                      style={[
+                        styles.composerFloatingContent,
+                        isPadLayout && styles.padComposerFloatingContent,
+                      ]}>
+                      <AttachmentMenu onSelect={chooseAttachmentSource} textColor={chromeText} />
+                    </View>
+                  ) : null}
+                  {/*
               The key row and the input share one blurred dock, so output fades
               out under a single surface instead of passing behind two floating
               pieces with a gap between them.
             */}
-              <GlassChrome
-                surface="composer"
-                style={[styles.composerDock, isPadLayout && styles.padComposerDock]}>
-                {/*
+                  <GlassChrome
+                    surface="composer"
+                    style={[styles.composerDock, isPadLayout && styles.padComposerDock]}>
+                    {/*
               The dock's own height is a moving thing: an approval banner, the
               pane strip, the upload-wait row and a growing multiline input all
               live in here, and each of them used to change the dock's height
@@ -4613,88 +5110,95 @@ export function ServerTerminalWorkspace({
               surface covering it move together instead of the terminal snapping
               a beat after the dock.
             */}
-                <Animated.View
-                  layout={dockRowLayout}
-                  onLayout={(event: LayoutChangeEvent) => {
-                    measureComposerHeight(Math.ceil(event.nativeEvent.layout.height));
-                  }}
-                  style={[
-                    styles.composerSafeArea,
-                    isPadLayout && styles.padComposerSafeArea,
-                    dockClearanceStyle,
-                  ]}>
-                  {/* Inside the dock rather than floating over the pane: the dock is
+                    <Animated.View
+                      layout={dockRowLayout}
+                      onLayout={(event: LayoutChangeEvent) => {
+                        measureComposerHeight(Math.ceil(event.nativeEvent.layout.height));
+                      }}
+                      style={[
+                        styles.composerSafeArea,
+                        isPadLayout && styles.padComposerSafeArea,
+                        dockClearanceStyle,
+                      ]}>
+                      {/* Inside the dock rather than floating over the pane: the dock is
                 measured into `composerHeight`, so the terminal reserves room
                 for the banner instead of having its last lines covered by it --
                 the same lesson the quick-actions pill taught. */}
-                  <ApprovalBanner
-                    approval={approval.state.approval}
-                    answeringIndex={approval.state.answeringIndex}
-                    error={approval.state.error}
-                    onAnswer={approval.answer}
-                    onDismissError={approval.dismissError}
-                    // The way out of the question, for exactly as long as the key row
-                    // that normally carries it is standing down for the banner.
-                    onEscape={dock.bannerEscape ? () => void sendTerminalKey(escapeKey) : undefined}
-                    escapeDisabled={
-                      connection.phase !== 'connected' || !selectedPane || Boolean(sendingKey)
-                    }
-                    escapeSending={sendingKey === escapeKey.key}
-                  />
-                  {dock.paneChips && !isPadLayout ? (
-                    <Animated.ScrollView
-                      ref={paneStripRef}
-                      horizontal
-                      keyboardShouldPersistTaps="always"
-                      showsHorizontalScrollIndicator={false}
-                      scrollEventThrottle={32}
-                      onScroll={(event) => {
-                        paneStripOffsetRef.current = event.nativeEvent.contentOffset.x;
-                      }}
-                      onLayout={(event: LayoutChangeEvent) => {
-                        paneStripViewportRef.current = event.nativeEvent.layout.width;
-                        revealActivePaneChip();
-                      }}
-                      // The strip appears when a tab grows a second pane and leaves
-                      // when the on-screen keyboard takes the dock, or when an
-                      // approval clears the dock down to its own question. All three
-                      // used to be hard cuts, and the exit matters more than the
-                      // entrance: it is what the dock's height travels behind.
-                      entering={fadeIn('micro')}
-                      exiting={fadeOutDown('short')}
-                      style={styles.phonePaneStripViewport}
-                      contentContainerStyle={styles.paneStrip}>
-                      {paneChips}
-                    </Animated.ScrollView>
-                  ) : null}
-                  {dock.virtualKeyboard ? (
-                    // Rises out of the dock the way a keyboard does, and leaves the
-                    // same way: this swap replaces the whole key row, and a control
-                    // this large appearing between two frames read as a glitch.
-                    <Animated.View entering={riseIn()} exiting={fadeOutDown('short')}>
-                      <VirtualKeyboard
-                        key={`${serverId}:${data.sessionId}:${selection.paneId}`}
-                        disabled={connection.phase !== 'connected' || !selectedPane}
-                        onText={typeText}
-                        onKey={typeKey}
-                        onClose={() => setKeyboardMode(false)}
-                        shortcuts={keyboardShortcuts}
+                      <ApprovalBanner
+                        approval={approval.state.approval}
+                        answeringIndex={approval.state.answeringIndex}
+                        error={approval.state.error}
+                        onAnswer={approval.answer}
+                        onDismissError={approval.dismissError}
+                        // The way out of the question, for exactly as long as the key row
+                        // that normally carries it is standing down for the banner.
+                        onEscape={
+                          dock.bannerEscape ? () => void sendTerminalKey(escapeKey) : undefined
+                        }
+                        escapeDisabled={
+                          !targetReady ||
+                          connection.phase !== 'connected' ||
+                          !selectedPane ||
+                          Boolean(sendingKey)
+                        }
+                        escapeSending={sendingKey === escapeKey.key}
                       />
-                    </Animated.View>
-                  ) : null}
-                  {!dock.virtualKeyboard ? (
-                    <>
-                      {isPadLayout && composerVisible && !dock.keyRow && dock.composer ? (
-                        <Animated.View
-                          entering={fadeInDown('short')}
+                      {dock.paneChips && !isPadLayout ? (
+                        <Animated.ScrollView
+                          ref={paneStripRef}
+                          horizontal
+                          keyboardShouldPersistTaps="always"
+                          showsHorizontalScrollIndicator={false}
+                          scrollEventThrottle={32}
+                          onScroll={(event) => {
+                            paneStripOffsetRef.current = event.nativeEvent.contentOffset.x;
+                          }}
+                          onLayout={(event: LayoutChangeEvent) => {
+                            paneStripViewportRef.current = event.nativeEvent.layout.width;
+                            revealActivePaneChip();
+                          }}
+                          // The strip appears when a tab grows a second pane and leaves
+                          // when the on-screen keyboard takes the dock, or when an
+                          // approval clears the dock down to its own question. All three
+                          // used to be hard cuts, and the exit matters more than the
+                          // entrance: it is what the dock's height travels behind.
+                          entering={fadeIn('micro')}
                           exiting={fadeOutDown('short')}
-                          layout={dockRowLayout}
-                          style={styles.keyRowWrap}>
-                          {padPaneSwitcher}
-                          {paneEntries(chromeGlass)}
+                          style={styles.phonePaneStripViewport}
+                          contentContainerStyle={styles.paneStrip}>
+                          {paneChips}
+                        </Animated.ScrollView>
+                      ) : null}
+                      {dock.virtualKeyboard ? (
+                        // Rises out of the dock the way a keyboard does, and leaves the
+                        // same way: this swap replaces the whole key row, and a control
+                        // this large appearing between two frames read as a glitch.
+                        <Animated.View entering={riseIn()} exiting={fadeOutDown('short')}>
+                          <VirtualKeyboard
+                            key={`${serverId}:${data.sessionId}:${selection.paneId}`}
+                            disabled={
+                              !targetReady || connection.phase !== 'connected' || !selectedPane
+                            }
+                            onText={typeText}
+                            onKey={typeKey}
+                            onClose={() => setKeyboardMode(false)}
+                            shortcuts={keyboardShortcuts}
+                          />
                         </Animated.View>
                       ) : null}
-                      {/* The row exists to carry the terminal keys, so switching them off
+                      {!dock.virtualKeyboard ? (
+                        <>
+                          {isPadLayout && composerVisible && !dock.keyRow && dock.composer ? (
+                            <Animated.View
+                              entering={fadeInDown('short')}
+                              exiting={fadeOutDown('short')}
+                              layout={dockRowLayout}
+                              style={styles.keyRowWrap}>
+                              {padPaneSwitcher}
+                              {paneEntries(chromeGlass)}
+                            </Animated.View>
+                          ) : null}
+                          {/* The row exists to carry the terminal keys, so switching them off
                 takes the row with them and its two entries go and float in the
                 corner instead (see `floatingActions` below) -- a full-width
                 line of the pane is too much rent for two circles.
@@ -4706,118 +5210,142 @@ export function ServerTerminalWorkspace({
                 than vanishing, and the dock's own `listLayout` above carries
                 the height change into the terminal's bottom inset, so the
                 output falls in behind them instead of jumping a beat later. */}
-                      {composerVisible && dock.keyRow ? (
-                        <Animated.View
-                          entering={fadeInDown('short')}
-                          exiting={fadeOutDown('short')}
-                          layout={dockRowLayout}
-                          style={styles.keyRowWrap}>
-                          {/* The Pad's pane switcher keeps its own scroller --
+                          {composerVisible && dock.keyRow ? (
+                            <Animated.View
+                              entering={fadeInDown('short')}
+                              exiting={fadeOutDown('short')}
+                              layout={dockRowLayout}
+                              style={styles.keyRowWrap}>
+                              {/* The Pad's pane switcher keeps its own scroller --
                               nesting two horizontal ScrollViews would leave
                               neither able to say which one a drag belongs to. */}
-                          {isPadLayout ? padPaneSwitcher : null}
-                          {/* Everything else scrolls as one row. The entries
+                              {isPadLayout ? padPaneSwitcher : null}
+                              {/* Everything else scrolls as one row. The entries
                               used to be pinned to the left while only the keys
                               moved, which fixed the row's budget at whatever
                               four circles and the keys could fit -- so a fifth
                               control had nowhere to go, and on a narrow phone
                               the keys were already losing their tail. */}
-                          <ScrollView
-                            horizontal
-                            keyboardShouldPersistTaps="always"
-                            showsHorizontalScrollIndicator={false}
-                            contentContainerStyle={styles.keyRowScroller}>
-                            {paneEntries(chromeGlass)}
-                            <PressableScale
-                              accessibilityLabel={t`Open on-screen keyboard`}
-                              feedback="selection"
-                              pressedScale={0.9}
-                              onPress={() => {
-                                Keyboard.dismiss();
-                                setKeyboardMode(true);
-                              }}
-                              style={[
-                                styles.keyRowToggle,
-                                { backgroundColor: surfaceBackground(chromeGlass) },
-                              ]}>
-                              <KeyboardIcon size={16} color={chromeText} />
-                            </PressableScale>
-                            {assignmentToggle}
-                            {terminalKeyButtons}
-                          </ScrollView>
-                        </Animated.View>
-                      ) : null}
-                      {/* The files staged for the next message. They are not lost while
+                              <ScrollView
+                                horizontal
+                                keyboardShouldPersistTaps="always"
+                                showsHorizontalScrollIndicator={false}
+                                contentContainerStyle={styles.keyRowScroller}>
+                                {paneEntries(chromeGlass)}
+                                <PressableScale
+                                  accessibilityLabel={t`Open on-screen keyboard`}
+                                  feedback="selection"
+                                  pressedScale={0.9}
+                                  onPress={() => {
+                                    Keyboard.dismiss();
+                                    setKeyboardMode(true);
+                                  }}
+                                  style={[
+                                    styles.keyRowToggle,
+                                    { backgroundColor: surfaceBackground(chromeGlass) },
+                                  ]}>
+                                  {/* The pack's primary, like the four entries beside it: it
+                                  opens a surface, as they do. It was the text
+                                  colour, which is what the key caps after it
+                                  wear, and read as a dead button in a lit row. */}
+                                  <KeyboardIcon size={16} color={theme.colors.primary} />
+                                </PressableScale>
+                                {assignmentToggle}
+                                {terminalKeyButtons}
+                              </ScrollView>
+                            </Animated.View>
+                          ) : null}
+                          {/* The files staged for the next message. They are not lost while
                 the dock is cleared -- nothing is unstaged, no upload is
                 cancelled -- they are simply not on screen for as long as the
                 pane is asking about something else. */}
-                      {dock.attachmentStrip ? (
-                        <Animated.View
-                          entering={fadeIn('micro')}
-                          exiting={fadeOutDown('short')}
-                          layout={dockRowLayout}>
-                          <AttachmentStrip
-                            attachments={attachments}
-                            onRemove={removeAttachment}
-                            onRetry={retryUpload}
-                            onPreview={setPreviewAttachmentId}
-                            textColor={chromeText}
-                          />
-                        </Animated.View>
-                      ) : null}
-                      {/* Send tapped while a photo is still going up. Without this the
+                          {dock.attachmentStrip ? (
+                            <Animated.View
+                              entering={fadeIn('micro')}
+                              exiting={fadeOutDown('short')}
+                              layout={dockRowLayout}>
+                              <AttachmentStrip
+                                attachments={attachments}
+                                onRemove={removeAttachment}
+                                onRetry={retryUpload}
+                                onPreview={setPreviewAttachmentId}
+                                textColor={chromeText}
+                              />
+                            </Animated.View>
+                          ) : null}
+                          {/* Send tapped while a photo is still going up. Without this the
                 spinner on the button is indistinguishable from a slow gateway,
                 and the wait looks like a hang rather than a queue. */}
-                      {dock.composer && sending && attachmentsUploading ? (
-                        <Animated.View
-                          // It used to appear between two frames and shove the composer
-                          // down with it. The dock's own `listLayout` below takes the
-                          // height change; this takes the row.
-                          entering={fadeIn('micro')}
-                          exiting={fadeOut('micro')}
-                          layout={dockRowLayout}
-                          style={styles.uploadWait}>
-                          <Spinner size="sm" color={theme.colors.textMuted} />
-                          <Text variant="caption" color={theme.colors.textMuted}>
-                            <Trans>Waiting for uploads to finish…</Trans>
-                          </Text>
-                        </Animated.View>
+                          {dock.composer && sending && attachmentsUploading ? (
+                            <Animated.View
+                              // It used to appear between two frames and shove the composer
+                              // down with it. The dock's own `listLayout` below takes the
+                              // height change; this takes the row.
+                              entering={fadeIn('micro')}
+                              exiting={fadeOut('micro')}
+                              layout={dockRowLayout}
+                              style={styles.uploadWait}>
+                              <Spinner size="sm" color={theme.colors.textMuted} />
+                              <Text variant="caption" color={theme.colors.textMuted}>
+                                <Trans>Waiting for uploads to finish…</Trans>
+                              </Text>
+                            </Animated.View>
+                          ) : null}
+                        </>
                       ) : null}
-                    </>
-                  ) : null}
-                  {/* Written once, above: on an editor the same field floats in
+                      {/* Written once, above: on an editor the same field floats in
                 the panel instead. `dock.composer` is what decides in both
                 places, and it accounts for the approval, the keyboard and the
                 editor alike. */}
-                  {assignmentBar}
-                  {dock.composer ? composerField : null}
+                      {assignmentBar}
+                      {dock.composer ? composerField : null}
+                    </Animated.View>
+                  </GlassChrome>
                 </Animated.View>
-              </GlassChrome>
-            </Animated.View>
-          ) : null}
+              ) : null}
 
-          {previewIndex >= 0 ? (
-            <ImagePreviewModal
-              images={previewImages}
-              initialIndex={previewIndex}
-              onClose={() => setPreviewAttachmentId(null)}
-            />
-          ) : null}
+              {previewIndex >= 0 ? (
+                <ImagePreviewModal
+                  images={previewImages}
+                  initialIndex={previewIndex}
+                  onClose={() => setPreviewAttachmentId(null)}
+                />
+              ) : null}
 
-          {openAsset ? <AssetViewer asset={openAsset} onClose={() => setOpenAsset(null)} /> : null}
+              {openAsset ? (
+                <AssetViewer asset={openAsset} onClose={() => setOpenAsset(null)} />
+              ) : null}
+            </View>
+            {simfarmSplit.previewWidth > 0 ? (
+              <View
+                style={[
+                  styles.previewColumn,
+                  { width: simfarmSplit.previewWidth, borderLeftColor: theme.colors.border },
+                ]}>
+                <SimfarmPreview
+                  embedded
+                  gatewayUrl={record?.url}
+                  allowed={simfarmSplit.allowed}
+                  initialPort={simfarmPorts[record?.serverId ?? '']}
+                  onPortFound={rememberSimfarmPort}
+                />
+              </View>
+            ) : null}
+          </View>
         </View>
-        {simfarmSplit.previewWidth > 0 ? (
+        {overviewVisible ? (
           <View
-            style={[
-              styles.previewColumn,
-              { width: simfarmSplit.previewWidth, borderLeftColor: theme.colors.border },
-            ]}>
-            <SimfarmPreview
+            testID="home-overview-overlay"
+            style={styles.overviewLayer}
+            onLayout={(event) => setOverviewWidth(event.nativeEvent.layout.width)}>
+            <HomeOverview
+              width={overviewWidth || workspaceLayout.terminalWidth}
+              layoutMode={workspaceLayout.mode}
               embedded
-              gatewayUrl={record?.url}
-              allowed={simfarmSplit.allowed}
-              initialPort={simfarmPorts[record?.serverId ?? '']}
-              onPortFound={rememberSimfarmPort}
+              routeBound={routeBound}
+              sourceRouteActive={sourceRouteActive}
+              activeConnection={{ serverId, phase: connection.phase }}
+              onExitOverview={() => setOverviewVisible(false)}
             />
           </View>
         ) : null}
@@ -4942,6 +5470,14 @@ function TerminalKeyButton({
 }) {
   const { t } = useLingui();
   const surfaceBackground = useSurfaceBackground();
+  // A cap is a key, not a word: `Ctrl C`, `:wq`, `␣ff`, `⌫`. The mono slot is
+  // what makes the row line up and what puts the glyphs the reader picked their
+  // font for -- U+2423 for the leader, the arrows -- on the caps. The family
+  // used to be a `Menlo`/`monospace` literal in the stylesheet at the foot of
+  // this file, and a `StyleSheet` is built the moment the module is imported:
+  // it never had a chance to learn that the reader had installed a mono, so the
+  // key row stayed in the platform's face while the pane above it changed.
+  const mono = useMonoFontFamily();
   const { _ } = useLinguiRuntime();
   // vim's vocabulary is the same in every language, so the cap is left alone;
   // what a screen reader says about it is not.
@@ -5037,11 +5573,18 @@ function TerminalKeyButton({
         <Text
           variant="caption"
           color={textColor}
-          style={
-            item.emphasis
-              ? [styles.terminalKeyText, styles.terminalKeyEmphasisText]
-              : styles.terminalKeyText
-          }>
+          // Insert mode's Esc used to carry `fontWeight: '700'`, and 700 is the
+          // weight at which a reader's font silently leaves the screen on
+          // Android: `expo-font` registers a loaded face under
+          // `Typeface.NORMAL` only, `ReactFontManager` rounds anything from 700
+          // up to BOLD, finds no entry, and falls through to
+          // `Typeface.create(family, style)` -- a lookup against the *system*
+          // font list, which does not know the reader's family by name. The one
+          // key meant to stand out was the one key in a different font from the
+          // rest of the row. `weight="semibold"` resolves to 600, under the
+          // threshold, so the registered face is still found.
+          weight={item.emphasis ? 'semibold' : undefined}
+          style={[styles.terminalKeyText, { fontFamily: mono }]}>
           {cap}
         </Text>
       </Animated.View>
@@ -5051,11 +5594,10 @@ function TerminalKeyButton({
         <Text
           variant="caption"
           color={activeText}
-          style={
-            item.emphasis
-              ? [styles.terminalKeyText, styles.terminalKeyEmphasisText]
-              : styles.terminalKeyText
-          }>
+          // The sending copy is drawn exactly over the resting one, so anything
+          // that changes its metrics moves the label. Same weight, same family.
+          weight={item.emphasis ? 'semibold' : undefined}
+          style={[styles.terminalKeyText, { fontFamily: mono }]}>
           {cap}
         </Text>
       </Animated.View>
@@ -5284,6 +5826,26 @@ function selectionForPane(data: ServerData, paneId: string): Selection {
   return reconcileSelection(data, { workspaceId, tabId, paneId });
 }
 
+function selectionForStrictTarget(
+  data: ServerData,
+  target: Pick<StrictHomeTarget, 'workspaceId' | 'tabId'>
+): Selection {
+  const tab = target.tabId ? data.tabs.find((item) => item.id === target.tabId) : undefined;
+  if (target.tabId && !tab) return initialSelection;
+  const workspace = target.workspaceId
+    ? data.workspaces.find((item) => item.id === target.workspaceId)
+    : tab
+      ? data.workspaces.find((item) => item.id === field(tab, 'workspace_id'))
+      : undefined;
+  if (!workspace) return initialSelection;
+  if (tab && field(tab, 'workspace_id') !== workspace.id) return initialSelection;
+  return reconcileSelection(data, {
+    workspaceId: workspace.id,
+    tabId: tab?.id ?? '',
+    paneId: '',
+  });
+}
+
 const styles = StyleSheet.create({
   page: {
     flex: 1,
@@ -5292,6 +5854,15 @@ const styles = StyleSheet.create({
   workspaceSplit: {
     flex: 1,
     flexDirection: 'row',
+  },
+  workspaceHost: {
+    flex: 1,
+    position: 'relative',
+  },
+  overviewLayer: {
+    ...StyleSheet.absoluteFill,
+    zIndex: 20,
+    elevation: 20,
   },
   previewColumn: {
     // A hairline is the whole of the seam. The two halves are one machine's
@@ -5305,6 +5876,22 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 8,
     padding: 24,
+  },
+  missingTargetState: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    padding: 24,
+  },
+  missingTargetButton: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: appChrome.radius.control,
   },
   noticeStack: {
     position: 'absolute',
@@ -5533,7 +6120,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 6,
     height: PANE_CHIP_HEIGHT,
-    maxWidth: 200,
+    // No width cap: a chip is as wide as its title. The strip scrolls, so a
+    // long title costs a swipe; an ellipsis cost the reader the part of the
+    // title that tells two sessions of the same agent apart.
     flexShrink: 0,
     overflow: 'hidden',
     paddingHorizontal: 12,
@@ -5552,9 +6141,7 @@ const styles = StyleSheet.create({
     height: 13,
   },
   paneChipLabel: {
-    flexShrink: 1,
-    minWidth: 0,
-    overflow: 'hidden',
+    flexShrink: 0,
   },
   terminalKeyList: {
     gap: 6,
@@ -5582,20 +6169,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  // No `fontFamily`: the reader's monospace slot is merged in by
+  // `TerminalKeyButton`, which can ask for it. See the comment there.
   terminalKeyText: {
-    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
     fontVariant: ['tabular-nums'],
   },
   // Insert mode's Esc. Wider and bordered rather than a louder fill, so it
   // stays legible against both theme packs without needing a colour of its
-  // own -- the border already reuses `activeBackground`, which is themed.
+  // own -- the border already reuses `activeBackground`, which is themed. Its
+  // extra weight is the kit's `weight` prop on the label, not a style here;
+  // see `TerminalKeyButton`.
   terminalKeyEmphasis: {
     minWidth: 64,
     paddingHorizontal: 18,
     borderWidth: 2,
-  },
-  terminalKeyEmphasisText: {
-    fontWeight: '700',
   },
   viewToggle: {
     width: 46,

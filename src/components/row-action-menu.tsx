@@ -1,12 +1,14 @@
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { useLingui } from '@lingui/react/macro';
-import { Text, useThemeTokens } from '@osuki-dev/ui';
+import { useThemeTokens } from '@osuki-dev/ui';
+import { Text } from '@/components/text';
 import { Pencil, Trash2, X } from 'lucide-react-native';
 import { type ReactNode, useEffect, useState } from 'react';
 import { StyleSheet } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import { PressableScale } from '@/components/pressable-scale';
+import { appChrome } from '@/constants/appearance';
 import { fadeIn, fadeOut, listLayout, timing } from '@/lib/motion';
 
 /**
@@ -134,7 +136,17 @@ export function RowActionMenu({
               it spilling out of the shrinking pill on the way back. */}
           {armed ? (
             <Animated.View entering={fadeIn('short')} exiting={fadeOut('micro')}>
-              <Text variant="caption" color={theme.colors.onPrimary} style={styles.confirmText}>
+              {/* `weight`, not the `fontWeight: '700'` this used to carry in
+                  its own style. On Android 700 is the one value that
+                  throws the reader's interface font away: `expo-font`
+                  registers a loaded face under `Typeface.NORMAL` only,
+                  `ReactFontManager` rounds 700 up to BOLD, finds no entry for
+                  it, and falls through to `Typeface.create(family, style)`,
+                  which resolves against the *system* font list and hands back
+                  Roboto. The confirm word sat inside a red pill in a font
+                  belonging to no other word on the screen. The prop goes
+                  through the kit's registry, which caps at 600. */}
+              <Text variant="caption" weight="semibold" color={theme.colors.onPrimary}>
                 {removeLabel}
               </Text>
             </Animated.View>
@@ -163,7 +175,7 @@ const styles = StyleSheet.create({
   },
   button: {
     height: 36,
-    borderRadius: 12,
+    borderRadius: appChrome.radius.control,
     borderCurve: 'continuous',
     flexDirection: 'row',
     alignItems: 'center',
@@ -189,8 +201,5 @@ const styles = StyleSheet.create({
     left: 0,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  confirmText: {
-    fontWeight: '700',
   },
 });

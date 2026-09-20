@@ -1,10 +1,13 @@
 import { create } from 'zustand';
 
-import { probeGatewayReachable } from '@/lib/gateway-client';
+import { probeGatewayReachable, type HealthResponse } from '@/lib/gateway-client';
+import { assertSupportedHerdr } from '@/lib/herdr-compatibility';
 import { directGatewayBaseUrl } from '@/lib/ssh-tunnel';
 import type { GatewayRecord } from '@/lib/gateway-storage';
+import { useServerCapabilities } from '@/stores/server-capabilities';
 import {
   needsReachabilityProbe,
+  prewarmGate,
   REACHABILITY_TIMEOUT_MS,
   type ReachabilityProbe,
 } from '@/lib/server-reachability';
@@ -76,8 +79,15 @@ export type ReachabilityEndpoint = Pick<
 /**
  * One flight per server. Two screens mounting together, or a focus event
  * arriving while a probe is still out, must not each open a connection.
+ *
+ * The promise is kept, not just the fact of it, so a second caller *joins* the
+ * flight instead of returning to a store that has not been written yet. That
+ * matters now the warm path waits on this: the home screen's dot probe and its
+ * workspace prewarm both want the same `/health`, they start on the same focus,
+ * and whichever loses the race has to be able to await the winner rather than
+ * conclude there is no answer and ask again.
  */
-const inFlight = new Set<string>();
+const inFlight = new Map<string, Promise<void>>();
 
 export const useServerReachability = create<ServerReachabilityState>((set, get) => ({
   probes: {},
@@ -94,16 +104,42 @@ export const useServerReachability = create<ServerReachabilityState>((set, get) 
     // its tunnel badge instead.
     if (!directGatewayBaseUrl(endpoint)) return;
     // Still one flight per server even when forced: two pulls in a second are
-    // one question, and the second would only race the first.
-    if (inFlight.has(serverId)) return;
+    // one question, and the second would only race the first. Awaited rather
+    // than skipped so the loser of the race sees the answer -- see `inFlight`.
+    const pending = inFlight.get(serverId);
+    if (pending) return pending;
     if (!options?.force && !needsReachabilityProbe(get().probes[serverId])) return;
 
-    inFlight.add(serverId);
-    try {
-      const ok = await probeGatewayReachable(endpoint, REACHABILITY_TIMEOUT_MS);
+    const flight = (async () => {
+      let health: HealthResponse | null = null;
+      const ok = await probeGatewayReachable(endpoint, REACHABILITY_TIMEOUT_MS, (body) => {
+        const answer = body as HealthResponse & Parameters<typeof assertSupportedHerdr>[0];
+        if (answer?.capabilities) {
+          void useServerCapabilities.getState().record(serverId, answer.capabilities);
+        }
+        // Kept for the warm only once it passes the same gate `loadHealth`
+        // applies. A gateway whose terminal backend is down is reachable -- the
+        // dot stays green and that is correct -- but its health must not become
+        // a licence for the prewarm to go on and ask for workspaces. Leaving
+        // `health` null there sends the warm back through `loadHealth`, which
+        // raises the real reason and is caught where it always was.
+        try {
+          assertSupportedHerdr(answer);
+          health = answer;
+        } catch {
+          health = null;
+        }
+      });
       set((state) => ({
-        probes: { ...state.probes, [serverId]: { serverId, ok, checkedAtMs: Date.now() } },
+        probes: {
+          ...state.probes,
+          [serverId]: { serverId, ok, checkedAtMs: Date.now(), health: ok ? health : null },
+        },
       }));
+    })();
+    inFlight.set(serverId, flight);
+    try {
+      await flight;
     } finally {
       inFlight.delete(serverId);
     }
@@ -133,3 +169,19 @@ export const useServerReachability = create<ServerReachabilityState>((set, get) 
     set({ probes });
   },
 }));
+
+/**
+ * What this store can tell the workspace prewarm about one server.
+ *
+ * The rule itself is pure and lives in `lib/server-reachability`; this is the
+ * one place that may say the body is a `HealthResponse`, because this is where
+ * it was read off the wire and put through `assertSupportedHerdr`. Callers get
+ * a typed answer instead of each casting an `unknown` for themselves.
+ */
+export function serverPrewarmGate(
+  serverId: string,
+  nowMs: number = Date.now()
+): { warm: boolean; health: HealthResponse | null } {
+  const gate = prewarmGate(useServerReachability.getState().probes[serverId], nowMs);
+  return { warm: gate.warm, health: (gate.health ?? null) as HealthResponse | null };
+}

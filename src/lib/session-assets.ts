@@ -200,3 +200,46 @@ function fileNameFromContentDisposition(value: string | null | undefined): strin
 function fileNameOf(path: string): string {
   return path.slice(path.lastIndexOf('/') + 1);
 }
+
+/**
+ * A file a tool returned, as the asset the shared viewer opens.
+ *
+ * `Tool.FileContent` is `{uri, mime?, name?}` and nothing else: no size, no
+ * mtime, no id. The viewer reads the bytes from the gateway by path, so the
+ * path is the only field that has to be right -- a `file://` URI is stripped
+ * back to the absolute path the gateway host knows it by, and anything that is
+ * not a local path (an `http:` result from a browser tool, say) is not an
+ * asset this viewer can open and comes back `null` rather than as a chip that
+ * opens an empty sheet.
+ */
+export function assetFromToolFile(
+  file: { uri: string; mime?: string; name?: string },
+  sessionId?: string
+): SessionAsset | null {
+  const uri = file.uri ?? '';
+  const path = uri.startsWith('file://') ? decodeURI(uri.slice('file://'.length)) : uri;
+  if (!path.startsWith('/')) return null;
+  const mime = file.mime ?? '';
+  const kind: AssetKind = mime.startsWith('image/')
+    ? 'image'
+    : mime === 'application/pdf'
+      ? 'pdf'
+      : mime === 'text/markdown'
+        ? 'markdown'
+        : mime.startsWith('text/')
+          ? 'text'
+          : 'binary';
+  return {
+    id: path,
+    path,
+    name: file.name ?? path.split('/').filter(Boolean).pop() ?? path,
+    kind,
+    mime: mime || 'application/octet-stream',
+    // Unknown, and stated as unknown rather than guessed: the viewer shows the
+    // bytes it reads, and a fabricated size would appear in its header.
+    size: 0,
+    modified_unix_ms: 0,
+    ...(sessionId ? { origin: { session_id: sessionId } } : {}),
+    previewable: kind !== 'binary',
+  };
+}

@@ -19,8 +19,9 @@
  *    (notifications), 4/10/11 (palette) and everything else are swallowed.
  *  - A title is plain text: control characters are stripped and it is cut
  *    at `TERMINAL_TITLE_LIMIT`. A hyperlink is kept only when it is an
- *    `http(s)` URI no longer than `TERMINAL_LINK_LIMIT` with nothing but
- *    printable characters in it; a link is never opened by this module --
+ *    `http(s)` URI or a previewable remote file path no longer than
+ *    `TERMINAL_LINK_LIMIT`, without control characters. Remote files go to
+ *    the Gateway viewer, never the OS. A link is not opened by this module --
  *    `SkiaTerminal` opens one on a tap, and checks it again first.
  *  - DCS, APC and PM strings are consumed whole and ignored.
  *  - Every count and position a sequence carries is parsed as an unsigned
@@ -504,7 +505,7 @@ export class TerminalEmulator {
       const uriSeparator = parametersAndUri.indexOf(';');
       if (uriSeparator >= 0) {
         const uri = parametersAndUri.slice(uriSeparator + 1);
-        this.style.link = isSupportedTerminalUri(uri) ? uri : null;
+        this.style.link = isSupportedTerminalUri(uri) ? uri : terminalFilePath(uri);
       }
     }
   }
@@ -570,13 +571,13 @@ export class TerminalEmulator {
     }
     if (this.pendingWrap && this.autoWrap) {
       this.active.cursorX = 0;
-      this.lineFeed();
+      this.lineFeed(this.columns);
     }
     const buffer = this.active;
     if (width === 2 && buffer.cursorX === this.columns - 1) {
       if (!this.autoWrap) return;
       buffer.cursorX = 0;
-      this.lineFeed();
+      this.lineFeed(this.columns - 1);
     }
     const row = buffer.cursorY;
     this.clearWideCell(row, buffer.cursorX);
@@ -633,9 +634,10 @@ export class TerminalEmulator {
     if (width === 2 && column + 1 < this.columns) grid.blankCell(row, column + 1, this.style);
   }
 
-  private lineFeed(): void {
+  private lineFeed(wrapped = 0): void {
     this.pendingWrap = false;
     const buffer = this.active;
+    buffer.grid.setWrapped(buffer.cursorY, wrapped);
     if (buffer.cursorY === buffer.scrollBottom) this.scrollUp(1);
     else buffer.cursorY = Math.min(this.rows - 1, buffer.cursorY + 1);
   }
@@ -1134,7 +1136,9 @@ export function terminalFrameText(frame: TerminalFrame): string {
  * end in a known extension (checked by `isPreviewableFilePath`). Prose like
  * "see /etc/hosts" or "3/4 done" therefore stays plain text.
  */
-const TERMINAL_FILE_PATH_PATTERN = /(^|[\s"'`([{<>|=,:])(~?(?:\/[\w.~@+-]+)+)/gu;
+const TERMINAL_FILE_PATH_PATTERN =
+  /(^|[\s"'`([{<>|=,:（【])((?:file:\/\/\/|~?\/)[\p{L}\p{N}\p{M}_.~@+%/-]+)/gu;
+const QUOTED_FILE_PATH_PATTERN = /(["'`])((?:file:\/\/\/|~?\/)[^\r\n]*?)\1/gu;
 
 /**
  * Extensions worth turning into a tap target: the ones the gateway's content
@@ -1143,6 +1147,7 @@ const TERMINAL_FILE_PATH_PATTERN = /(^|[\s"'`([{<>|=,:])(~?(?:\/[\w.~@+-]+)+)/gu
  * and archives are left out on purpose.
  */
 const PREVIEWABLE_FILE_EXTENSIONS = new Set([
+  'muqun-theme',
   'png',
   'jpg',
   'jpeg',
@@ -1197,6 +1202,22 @@ function isPreviewableFilePath(path: string): boolean {
   return PREVIEWABLE_FILE_EXTENSIONS.has(name.slice(dot + 1).toLowerCase());
 }
 
+/** Remote paths are resolved by Gateway, never passed to the device's URL opener. */
+function terminalFilePath(printed: string): string | null {
+  if (printed.length > TERMINAL_LINK_LIMIT) return null;
+  let path = printed;
+  if (printed.startsWith('file:///')) {
+    try {
+      path = decodeURIComponent(printed.slice('file://'.length));
+    } catch {
+      return null;
+    }
+  }
+  if (path.startsWith('//')) return null;
+  if (!/^(?:\/|~\/)/u.test(path) || /[\x00-\x1f\x7f-\x9f]/u.test(path)) return null;
+  return isPreviewableFilePath(path) ? path : null;
+}
+
 export function terminalFrameLinks(frame: TerminalFrame): TerminalLink[] {
   const links: TerminalLink[] = [];
 
@@ -1205,7 +1226,7 @@ export function terminalFrameLinks(frame: TerminalFrame): TerminalLink[] {
       if (!run.style.link) continue;
       links.push({
         uri: run.style.link,
-        kind: 'url',
+        kind: isSupportedTerminalUri(run.style.link) ? 'url' : 'file',
         row,
         startColumn: run.startColumn,
         endColumn: run.endColumn,
@@ -1224,17 +1245,43 @@ export function terminalFrameLinks(frame: TerminalFrame): TerminalLink[] {
       if (!uri || !isSupportedTerminalUri(uri)) continue;
       addTextLink(links, spans, row, match.index, uri, 'url');
     }
-
-    // Runs after the URL pass on purpose: the path inside an already-matched
-    // URL ("https://host/report.md") overlaps that link and is dropped, so a
-    // remote document is never mistaken for a local artifact.
-    for (const match of text.matchAll(TERMINAL_FILE_PATH_PATTERN)) {
-      if (match.index === undefined) continue;
-      const path = trimTrailingPunctuation(match[2] ?? '');
-      if (!isPreviewableFilePath(path)) continue;
-      addTextLink(links, spans, row, match.index + (match[1]?.length ?? 0), path, 'file');
-    }
   });
+
+  // Join only known autowrap boundaries. A hard newline is never evidence that
+  // two unrelated lines belong to the same path.
+  for (let row = 0; row < frame.lines.length; row += 1) {
+    const parts: { row: number; offset: number; text: string; spans: TerminalTextSpan[] }[] = [];
+    let text = '';
+    do {
+      const line = frame.lines[row];
+      const part = terminalLineTextSpans(line);
+      // Frame rows omit trailing blanks; preserve real spaces inside quoted
+      // paths, but not the unused cell before a wrapped wide glyph.
+      const padding = Math.max(0, (line.wrapsToNext ?? 0) - line.cells.length);
+      part.text += ' '.repeat(padding);
+      parts.push({ row, offset: text.length, ...part });
+      text += part.text;
+      if (!frame.lines[row].wrapsToNext || row + 1 >= frame.lines.length) break;
+      row += 1;
+    } while (row < frame.lines.length);
+    for (const pattern of [QUOTED_FILE_PATH_PATTERN, TERMINAL_FILE_PATH_PATTERN]) {
+      for (const match of text.matchAll(pattern)) {
+        const printed =
+          pattern === QUOTED_FILE_PATH_PATTERN ? match[2] : trimTrailingPunctuation(match[2]);
+        const path = terminalFilePath(printed);
+        if (!path) continue;
+        const start = match.index + match[1].length;
+        const end = start + printed.length;
+        for (const part of parts) {
+          const from = Math.max(start, part.offset);
+          const to = Math.min(end, part.offset + (part.spans.at(-1)?.endIndex ?? 0));
+          if (from < to)
+            addTextLink(links, part.spans, part.row, from - part.offset, path, 'file', to - from);
+        }
+      }
+    }
+  }
+  links.sort((a, b) => a.row - b.row || a.startColumn - b.startColumn);
 
   return links;
 }
@@ -1249,9 +1296,10 @@ function addTextLink(
   row: number,
   startIndex: number,
   uri: string,
-  kind: TerminalLinkKind
+  kind: TerminalLinkKind,
+  printedLength = uri.length
 ): void {
-  const endIndex = startIndex + uri.length;
+  const endIndex = startIndex + printedLength;
   const startSpan = spans.find(
     (span) => startIndex >= span.startIndex && startIndex < span.endIndex
   );

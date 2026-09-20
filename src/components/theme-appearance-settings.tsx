@@ -1,7 +1,8 @@
 import { useLingui } from '@lingui/react/macro';
 
 import { resolveHomeIdentity } from '@/theme/resolve';
-import { Text, useThemeMode, useThemeTokens } from '@osuki-dev/ui';
+import { useThemeMode, useThemeTokens } from '@osuki-dev/ui';
+import { Text } from '@/components/text';
 import { useState } from 'react';
 import { View } from 'react-native';
 
@@ -78,7 +79,7 @@ export function ThemeAppearanceSettings({
       ) : null}
       <OpacityControl
         label={t`Interface background opacity`}
-        detail={t`Changes colored backgrounds, not text, icons or artwork`}
+        detail={t`Changes coloured backgrounds, not text, icons or artwork`}
         value={surfaceBackgroundOpacity(variant.surfaces?.backgroundOpacity)}
         minimum={surfaceMinimum}
         disabled={disabled}
@@ -131,7 +132,7 @@ export function ThemeAppearanceSettings({
           variant="caption"
           color={
             colors.textMuted
-          }>{t`Between the header and your servers. Shown also borrows the theme's empty-state picture when it has no Home illustration of its own.`}</Text>
+          }>{t`Between the header and your servers. Home also borrows the theme's empty-state picture when the theme has no Home illustration of its own.`}</Text>
         <SettingsSegmented
           testID="theme-home-hero"
           options={[

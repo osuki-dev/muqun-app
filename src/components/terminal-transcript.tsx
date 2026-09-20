@@ -49,10 +49,10 @@ export function TerminalTranscript({
   return (
     <Text testID={testID} selectable style={[styles.block, { color: theme.foreground }]}>
       {lines.map((line, row) => (
-        <Text key={row}>
-          {line.runs.map((run, index) => (
+        <Text key={`line-${row}`}>
+          {line.runs.map((run, runIndex) => (
             <Text
-              key={index}
+              key={`run-${row}-${runIndex}-${run.text.slice(0, 8)}`}
               style={{
                 // `inverse` is how an agent marks a selection or a header bar,
                 // and swapping the pair is the whole of what it means.

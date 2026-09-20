@@ -175,6 +175,30 @@
               "pathPattern": ".*\\\\..*\\\\..*\\\\.muqun-theme\\\\.json"
             }
           ]
+        },
+        {
+          "action": "VIEW",
+          "category": ["DEFAULT", "BROWSABLE"],
+          "data": [
+            {
+              "scheme": "content"
+            },
+            {
+              "mimeType": "application/zip"
+            },
+            {
+              "mimeType": "application/x-zip-compressed"
+            },
+            {
+              "mimeType": "application/octet-stream"
+            },
+            {
+              "mimeType": "application/json"
+            },
+            {
+              "mimeType": "application/vnd.muqun.theme"
+            }
+          ]
         }
       ]
     },
@@ -187,6 +211,7 @@
       "expo-router",
       "expo-screen-orientation",
       "./plugins/with-native-locales.js",
+      "./plugins/with-advance-width-line-breaks.js",
       [
         "expo-secure-store",
         {
@@ -345,7 +370,8 @@
           "hidden": true
         }
       ],
-      "expo-web-browser"
+      "expo-web-browser",
+      "expo-sharing"
     ],
     "experiments": {
       "typedRoutes": true,

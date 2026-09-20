@@ -1,6 +1,7 @@
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { Trans, useLingui } from '@lingui/react/macro';
-import { Text, useThemeTokens } from '@osuki-dev/ui';
+import { useThemeTokens } from '@osuki-dev/ui';
+import { Text } from '@/components/text';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { Image, type ImageSource } from 'expo-image';
 import {
@@ -8,6 +9,7 @@ import {
   Fingerprint,
   KeyRound,
   Lock,
+  PanelsTopLeft,
   ScanLine,
   Server,
   Settings,
@@ -43,6 +45,10 @@ export type PadServerRailProps = {
   reachabilityByServer: Readonly<Record<string, ServerReachability | undefined>>;
   selectedServerId: string | null;
   selectedPaneId?: string | null;
+  /** Whether the retained task owner is currently showing its overview. */
+  workbenchSelected?: boolean;
+  /** Opens the retained task owner's overview surface. */
+  onOpenWorkbench?: () => void;
   onSelectAgent: (server: GatewayRecord, agent: ServerAgent) => void;
   onPairServer: () => void;
   onOpenSettings: () => void;
@@ -95,6 +101,8 @@ export function PadServerRail({
   reachabilityByServer,
   selectedServerId,
   selectedPaneId,
+  workbenchSelected = false,
+  onOpenWorkbench,
   onSelectAgent,
   onPairServer,
   onOpenSettings,
@@ -175,6 +183,39 @@ export function PadServerRail({
       <View style={styles.heading}>
         <SectionLabel title={<Trans>Servers</Trans>} color={theme.colors.textMuted} />
       </View>
+
+      {onOpenWorkbench ? (
+        <Pressable
+          testID={`${testID}-workbench`}
+          accessibilityRole="button"
+          accessibilityLabel={t`Workbench`}
+          accessibilityState={{ selected: workbenchSelected }}
+          onPress={onOpenWorkbench}
+          style={({ pressed }) => [
+            styles.serverPill,
+            {
+              backgroundColor: background(
+                workbenchSelected || pressed ? theme.colors.primarySubtle : 'transparent'
+              ),
+            },
+          ]}>
+          <View
+            style={[
+              styles.serverIcon,
+              { backgroundColor: background(theme.colors.surfaceRaised) },
+            ]}>
+            <PanelsTopLeft size={17} color={theme.colors.primary} strokeWidth={2} />
+          </View>
+          <View style={styles.serverCopy}>
+            <Text variant="bodySmall" numberOfLines={1}>
+              <Trans>Workbench</Trans>
+            </Text>
+            <Text variant="caption" color={theme.colors.textMuted} numberOfLines={1}>
+              <Trans>Current task</Trans>
+            </Text>
+          </View>
+        </Pressable>
+      ) : null}
 
       <ScrollView
         style={styles.scroll}
@@ -420,6 +461,7 @@ function ServerGroup({
       </View>
 
       <ServerAgentRows
+        serverId={server.serverId}
         snapshot={snapshot}
         reachability={reachability}
         rowMinHeight={RAIL_ROW_HEIGHT}

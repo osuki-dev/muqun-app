@@ -28,7 +28,7 @@ const STORE_ID = 'muqun.launch';
 const STORAGE_KEY = 'muqun.launch-intro.seen';
 
 /** Bump when the intro's content changes enough that returning readers should see it. */
-export const LAUNCH_INTRO_VERSION = 1;
+export const LAUNCH_INTRO_VERSION = 2;
 
 function openStore(): KeyValueStore {
   try {

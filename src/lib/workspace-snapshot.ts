@@ -3,12 +3,17 @@ import {
   readPaneOutput,
   INITIAL_PANE_OUTPUT_LINES,
   type HealthResponse,
+  type HerdrEntity,
   type PaneOutputSource,
+  type SessionSnapshot,
 } from '@/lib/gateway-client';
 import { initialSelection, reconcileSelection } from '@/lib/workspace-selection';
 
 import { resolveSessionId, sessionChoices, type SessionChoice } from '@/lib/session-switcher';
+import { snapshotServesAgents } from '@/lib/session-snapshot';
 import { rememberWarmWorkspace, warmWorkspace, type WarmWorkspace } from '@/lib/server-warm-cache';
+import { mirroredServerPanes } from '@/lib/server-agents';
+import { useServerAgents } from '@/stores/server-agents';
 
 /**
  * The one shape this prefetch reads. A pane that turns out to be read another
@@ -64,28 +69,112 @@ export async function loadWorkspaceSnapshot(
     choices.length ? choices : sessionChoices(sessions.sessions, true),
     preference
   );
-  const [workspaces, tabs, panes, agents] = await Promise.all([
+  const { workspaces, tabs, panes, agents } = await sessionEntities(sessionId, health);
+  if (!isCurrent()) return null;
+  return { snapshot: { health, sessionId, workspaces, tabs, panes, agents }, choices };
+}
+
+/** Every list the snapshot needs, with the agents settled one way or another. */
+type SessionEntities = Omit<SessionSnapshot, 'agents'> & { agents: HerdrEntity[] };
+
+/**
+ * The session's shape, batched as far as this gateway can batch it.
+ *
+ * Three shapes, and no caller can tell which one it got:
+ *
+ *  * **One request.** A gateway announcing `session_snapshot` answers the four
+ *    lists at once, agents included and complete, so nothing else is asked.
+ *  * **Two.** A gateway with the route but no announcement derives its agents
+ *    from the panes, so `/agents` is asked beside it -- started together, not
+ *    after, because neither answer depends on the other.
+ *  * **Four.** A gateway with no batched route at all: the original three, plus
+ *    agents, all in parallel.
+ *
+ * The one-request path is the only one that has to be sequential, and it is not
+ * really: there is simply nothing to run beside it.
+ *
+ * A null from `loadSessionSnapshot` is "no such route", never "the read
+ * failed" -- a real failure is raised from in there rather than retried as
+ * three more requests. An announcement that does not hold lands here as a null
+ * too, and falls through to the four-request path, which is the honest answer
+ * to a gateway whose `/health` and whose router disagree.
+ */
+async function sessionEntities(
+  sessionId: string,
+  health: HealthResponse | null
+): Promise<SessionEntities> {
+  if (snapshotServesAgents(health)) {
+    const batched = await gatewayTransport.loadSessionSnapshot(sessionId, health);
+    // Announced, so `agents` is an array whenever the answer came back at all.
+    if (batched) return { ...batched, agents: batched.agents ?? [] };
+    // The announcement did not hold. Whatever is in front of this gateway does
+    // not serve the route, so the three separate reads are taken directly --
+    // asking `/snapshot` a second time here would only collect a second 404.
+    return withAgents(sessionId, separateSessionShape(sessionId));
+  }
+  // No announcement: the route is probed alongside the agents call, because
+  // neither answer depends on the other and a gateway that has the route still
+  // saves two requests by it.
+  return withAgents(sessionId, probedSessionShape(sessionId, health));
+}
+
+async function withAgents(
+  sessionId: string,
+  shape: Promise<Omit<SessionSnapshot, 'agents'>>
+): Promise<SessionEntities> {
+  const [entities, agents] = await Promise.all([shape, gatewayTransport.loadAgents(sessionId)]);
+  return { ...entities, agents };
+}
+
+/** Try the batched route once; fall back to the three reads if it is not there. */
+async function probedSessionShape(
+  sessionId: string,
+  health: HealthResponse | null
+): Promise<Omit<SessionSnapshot, 'agents'>> {
+  return (
+    (await gatewayTransport.loadSessionSnapshot(sessionId, health)) ??
+    separateSessionShape(sessionId)
+  );
+}
+
+/** Workspaces, tabs and panes the original way, with no batched route involved. */
+async function separateSessionShape(sessionId: string): Promise<Omit<SessionSnapshot, 'agents'>> {
+  const [workspaces, tabs, panes] = await Promise.all([
     gatewayTransport.loadWorkspaces(sessionId),
     gatewayTransport.loadTabs(sessionId),
     gatewayTransport.loadPanes(sessionId),
-    gatewayTransport.loadAgents(sessionId),
   ]);
-  if (!isCurrent()) return null;
-  return { snapshot: { health, sessionId, workspaces, tabs, panes, agents }, choices };
+  return { workspaces, tabs, panes };
 }
 
 /**
  * Load the configured server's workspace ahead of anyone opening it.
  *
- * Only ever the server the app is already pointed at. The home screen now
- * probes up to `MAX_PROBED_SERVERS` for reachability, but warming is a
- * different weight of request -- a probe is one round trip and a warm is
- * seven: the six `loadWorkspaceSnapshot` makes, plus the landing pane's screen
- * read below. Eight against a gateway whose `/api/sessions` omits `connected`,
- * because `loadSessions` then asks `/health` a second time to fill it in. So
- * this stays at one server. Warming four on every return to the list is the
- * launch cost that fan-out was bounded to avoid in the first place
+ * Only ever the server the app is already pointed at. The home screen probes up
+ * to `MAX_PROBED_SERVERS` for reachability, but warming is a different weight
+ * of request, so this stays at one server. Warming four on every return to the
+ * list is the launch cost that fan-out was bounded to avoid in the first place
  * (`stores/server-reachability.ts`, `lib/server-agents.ts`).
+ *
+ * A probe is one round trip. A warm used to be seven on top of it -- health,
+ * sessions, workspaces, tabs, panes, agents, and the landing pane's screen read
+ * below. Against a current gateway it is now three:
+ *
+ *  * health is the probe's own answer, handed over rather than asked for again
+ *    (`knownHealth`);
+ *  * workspaces, tabs, panes *and* agents are one batched request, on a gateway
+ *    announcing `session_snapshot` (`lib/session-snapshot`);
+ *  * sessions and the landing pane's screen are unchanged, and the ordering
+ *    between the three is inherent: the session has to be resolved before
+ *    anything can be asked about it, and the landing pane is not known until
+ *    the panes are.
+ *
+ * Four against a gateway that has the batched route but does not announce it,
+ * whose batched agents are derived from panes and so cannot be used. Six
+ * against one with no batched route at all, which is the original shape minus
+ * the shared health. One more than any of those against a gateway whose
+ * `/api/sessions` omits `connected`, because `loadSessions` then asks
+ * `/health` a second time to fill it in.
  *
  * A failure is not reported. The screen still connects exactly as it did
  * before; the only thing lost is the head start.
@@ -93,11 +182,26 @@ export async function loadWorkspaceSnapshot(
 export async function warmConfiguredWorkspace(
   serverId: string,
   preference: string | undefined,
-  isCurrent: () => boolean = () => true
+  isCurrent: () => boolean = () => true,
+  /**
+   * `/health` the caller already has, when it has one worth reusing.
+   *
+   * The home screen's status dot asks this very gateway for `/health` on the
+   * same focus that starts this warm, and used to throw the body away -- so the
+   * warm's first act was to ask again, and the reader paid for the same answer
+   * twice. Passing it here is the whole of that fix. Undefined is still valid
+   * and still correct: it means nobody has an answer to share, and the warm
+   * fetches its own exactly as before.
+   *
+   * It must already have passed `assertSupportedHerdr`, because skipping
+   * `loadHealth` skips that check too. `stores/server-reachability` is the one
+   * producer and applies it there; nothing else may hand a body in here.
+   */
+  knownHealth?: HealthResponse | null
 ): Promise<void> {
   if (!serverId || !isCurrent() || warmWorkspace(serverId)) return;
   try {
-    const result = await loadWorkspaceSnapshot(preference, undefined, isCurrent);
+    const result = await loadWorkspaceSnapshot(preference, knownHealth, isCurrent);
     if (!result || !isCurrent()) return;
     const { snapshot } = result;
     const firstPane = await firstPaneScreen(snapshot);
@@ -105,6 +209,20 @@ export async function warmConfiguredWorkspace(
     // A terminal mounted during this prefetch may already have fresher data.
     if (warmWorkspace(serverId)) return;
     rememberWarmWorkspace(serverId, { ...snapshot, firstPane });
+    // And the card Home draws for this server. Its rows were written only by
+    // the terminal screen, so a pane closed elsewhere stayed on Home until the
+    // reader went into the server and came back -- even across a pull to
+    // refresh, which asked the gateway whether it was up and never what it was
+    // running. The warm has just read exactly that list; it costs no request
+    // to hand it over. (A demo record never gets here: every caller returns
+    // before the warm for one.)
+    {
+      void useServerAgents.getState().record({
+        serverId,
+        checkedAtMs: Date.now(),
+        agents: mirroredServerPanes(snapshot.panes, snapshot.agents),
+      });
+    }
   } catch {
     // Deliberately silent: see above.
   }

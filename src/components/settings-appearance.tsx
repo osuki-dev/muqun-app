@@ -17,18 +17,18 @@
  * not a once-per-install decision, and a segmented control that is one tap from
  * the page should not become two.
  *
- * The order is unchanged and still argued: theme first because it is the larger
- * choice -- the pack picks which light/dark pair is in play, the mode only
- * picks which half of it is showing -- then the mode, then the language.
+ * Theme and colour mode stay together, followed by font, app icon, and language.
  */
 import { useLingui } from '@lingui/react/macro';
-import { Text, useThemeMode, useThemeTokens } from '@osuki-dev/ui';
+import { useThemeMode, useThemeTokens } from '@osuki-dev/ui';
+import { Text } from '@/components/text';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { Appearance, ScrollView, StyleSheet, View } from 'react-native';
 
 import { SettingsBlock, SettingsChoiceRow, SettingsSection } from '@/components/settings-chrome';
 import { PressableScale } from '@/components/pressable-scale';
+import { useReskinTransition } from '@/components/reskin-transition';
 import { SettingsSegmented } from '@/components/settings-segmented';
 import { appChrome } from '@/constants/appearance';
 import { useAppIcon } from '@/hooks/use-app-icon';
@@ -37,33 +37,91 @@ import { useThemePack } from '@/hooks/use-theme-pack';
 import { LOCALE_LABELS } from '@/i18n/locale';
 import { useRenderTally } from '@/lib/render-tally';
 import { useAppSettings } from '@/stores/app-settings';
+import { themeVariant } from '@/constants/theme-packs';
 
 export function SettingsAppearance({ title }: { title: string }) {
   // `t` from the hook, not the global `t` from `@lingui/core/macro` -- see the
   // note at the top of the settings screen for why.
   const { t } = useLingui();
   const router = useRouter();
-  const { mode, setMode } = useThemeMode();
+  const { mode, setMode, resolvedMode } = useThemeMode();
+  const reskin = useReskinTransition();
   useRenderTally('SettingsAppearance');
 
   const language = useAppSettings((state) => state.language);
+  const homeLayout = useAppSettings((state) => state.homeLayout);
+  const homeLayoutLabel = homeLayout === 'editorial' ? t`Editorial` : t`Classic`;
   const pack = useThemePack();
+
+  /**
+   * Light to dark is the largest re-skin the app does -- every pixel, and the
+   * wallpaper with them -- and it was the one that still cut. It takes the
+   * same wash a pack change does, lit in the primary of the half that is
+   * arriving.
+   *
+   * Only when something will actually change. "System" on a phone that is
+   * already dark, chosen from "Dark", alters the setting and not one colour;
+   * a wash over an interface that does not move would be an animation with no
+   * event behind it.
+   */
+  function chooseMode(next: 'system' | 'light' | 'dark') {
+    const system = Appearance.getColorScheme() === 'dark' ? 'dark' : 'light';
+    const arriving = next === 'system' ? system : next;
+    if (arriving === resolvedMode) {
+      setMode(next);
+      return;
+    }
+    void reskin.run({
+      kind: 'theme',
+      accent: themeVariant(pack, arriving).colors.primary,
+      apply: () => setMode(next),
+    });
+  }
   // "System" is a description rather than a name, so it is the one entry in the
   // language list that is translated. Every language is written in itself.
   const languageName = language ? LOCALE_LABELS[language] : t`System`;
 
+  /**
+   * What the Font row says it is set to.
+   *
+   * Two slots, one row. Naming both where they differ is the only honest
+   * summary -- a reader who set a Han face for the app and left the terminal
+   * alone should not read one name and wonder why their terminal looks the
+   * same -- and where they are the same, or both untouched, one name says it.
+   * `System` is translated for the reason it is in the language list: it is a
+   * description rather than a name.
+   */
+  const interfaceFont = useAppSettings((state) => state.interfaceFont);
+  const monoFont = useAppSettings((state) => state.monoFont);
+  const system = t`System`;
+  const interfaceName = interfaceFont.kind === 'file' ? interfaceFont.label : system;
+  const monoName = monoFont.kind === 'file' ? monoFont.label : system;
+  const fontValue = interfaceName === monoName ? interfaceName : interfaceName + ' / ' + monoName;
+
   return (
     <SettingsSection title={title}>
       <SettingsChoiceRow
+        label={t`Home layout`}
+        value={homeLayoutLabel}
+        detail={t`Choose how Home is arranged.`}
+        accessibilityLabel={
+          // react-doctor-disable-next-line react-hooks-js/todo -- Lingui expands this macro before React Compiler runs.
+          t`Home layout, ${homeLayoutLabel}`
+        }
+        testID="settings-home-layout-row"
+        onPress={() => router.push('/settings-home-layout')}
+      />
+      <SettingsChoiceRow
         label={t`Theme`}
         value={pack.label}
+        valuePosition="below"
         detail={t`Terminal colours follow the theme.`}
         accessibilityLabel={t`Theme, ${pack.label}`}
         testID="settings-theme-row"
         onPress={() => router.push('/settings-theme')}
       />
 
-      <SettingsBlock label={t`Color mode`}>
+      <SettingsBlock label={t`Colour mode`}>
         <SettingsSegmented
           options={[
             { label: t`System`, value: 'system' },
@@ -71,9 +129,21 @@ export function SettingsAppearance({ title }: { title: string }) {
             { label: t`Dark`, value: 'dark' },
           ]}
           value={mode}
-          onChange={(value) => setMode(value as 'system' | 'light' | 'dark')}
+          onChange={(value) => chooseMode(value as 'system' | 'light' | 'dark')}
         />
       </SettingsBlock>
+
+      <SettingsChoiceRow
+        label={t`Font`}
+        value={fontValue}
+        detail={t`Use your own font for the app and the terminal.`}
+        accessibilityLabel={
+          // react-doctor-disable-next-line react-hooks-js/todo -- Lingui expands this macro before React Compiler runs.
+          t`Font, ${fontValue}`
+        }
+        testID="settings-font-row"
+        onPress={() => router.push('/settings-font')}
+      />
 
       <AppIconPicker />
 

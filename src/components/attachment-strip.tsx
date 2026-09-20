@@ -1,5 +1,6 @@
 import { useLingui } from '@lingui/react/macro';
-import { Icon, Spinner, Text, useThemeTokens } from '@osuki-dev/ui';
+import { Icon, Spinner, useThemeTokens } from '@osuki-dev/ui';
+import { Text } from '@/components/text';
 import { Image } from 'expo-image';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
@@ -10,7 +11,6 @@ import { isImageAttachment, type PendingAttachment } from '@/lib/attachments';
 import { DURATION, fadeIn, fadeOut, listLayout, zoomIn, zoomOut } from '@/lib/motion';
 
 const TILE_SIZE = 62;
-
 /**
  * The files staged for the next message, above the input.
  *
@@ -215,8 +215,19 @@ const styles = StyleSheet.create({
   },
   fileName: {
     textAlign: 'center',
+    /**
+     * The optical size stays; the line box goes.
+     *
+     * 11 over 9 is a ratio of 1.22, tighter than anything on the app's type
+     * scale -- the loosest small one, `caption`, is 1.4. An explicit
+     * `lineHeight` clamps the line box on Android whether or not font padding
+     * is switched off, so a face whose ascent is taller than the one this was
+     * measured against has the tops of its second line cut, inside a 62pt
+     * tile that also clips its overflow. The kit already computes a line box
+     * from the ratio; letting it do that is the fix, and two lines plus the
+     * glyph still fit the tile.
+     */
     fontSize: 9,
-    lineHeight: 11,
   },
   overlay: {
     position: 'absolute',

@@ -8,7 +8,8 @@
  */
 import { useLingui } from '@lingui/react/macro';
 import { useLingui as useLinguiRuntime } from '@lingui/react';
-import { Text, useThemeTokens } from '@osuki-dev/ui';
+import { useThemeTokens } from '@osuki-dev/ui';
+import { Text } from '@/components/text';
 import { type Href, useRouter } from 'expo-router';
 import { ChevronRight } from 'lucide-react-native';
 

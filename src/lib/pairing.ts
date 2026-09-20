@@ -177,11 +177,7 @@ export function validateClaimedPairing(
   if (!/^[A-Za-z0-9_-]{43,128}$/.test(payload.token)) {
     throw new Error('Pairing response contains an invalid access token.');
   }
-  if (
-    offer.transportRequired ||
-    payload.transport !== undefined ||
-    payload.transport_key !== undefined
-  ) {
+  if (payload.transport !== undefined || payload.transport_key !== undefined) {
     if (payload.transport !== 'muqun-aes-256-gcm-v1') {
       throw new Error('Gateway did not enable encrypted transport.');
     }
@@ -191,6 +187,8 @@ export function validateClaimedPairing(
     if (!payload.transport_key || !/^[A-Za-z0-9_-]{43}$/.test(payload.transport_key)) {
       throw new Error('Pairing response contains an invalid device encryption key.');
     }
+  } else if (offer.transportRequired) {
+    throw new Error('Gateway did not enable encrypted transport.');
   }
   if (
     !payload.label.trim() ||

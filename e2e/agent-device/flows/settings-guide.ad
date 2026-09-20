@@ -1,0 +1,24 @@
+# Native agent-device action sections; suite.json composes guards and includes.
+# settings-guide
+
+# section open-settings
+press "${TARGET}"
+
+# section settings-arrived
+is visible "${TARGET}"
+
+# section seek
+# The row is in ABOUT, the last card on the page and below the fold on every
+# phone. The page does not build ABOUT until it has been idle once (`deep` in
+# `settings.tsx`), so reaching the bottom also proves the deferred half arrived.
+# A bottom anchor keeps this seek deterministic as rows are added above ABOUT;
+# unlike a fixed number of flicks, it does not stop at the Storage card.
+scroll bottom
+
+# section row-visible
+# Asserted and not pressed. The row hands the reader to a browser, and a flow
+# that taps it leaves the app under test -- on a shared QA device, with no way
+# back that does not depend on whatever browser the image happens to have.
+# What this flow owns is that Settings offers the guide; that the address is an
+# https page on muqun.dev is `src/constants/__tests__/links.test.ts`.
+is visible "${TARGET}"

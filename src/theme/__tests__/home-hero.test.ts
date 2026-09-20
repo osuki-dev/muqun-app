@@ -4,7 +4,9 @@ import { createThemeStarter } from '@/theme/authoring';
 import {
   HOME_HERO_FALLBACK_SLOT,
   HOME_HERO_SLOT,
+  isHomeHeroAvailable,
   isHomeHeroPreference,
+  resolveHomeHeroAsset,
   resolveHomeHero,
   type HomeHeroPreference,
 } from '@/theme/home-hero';
@@ -103,6 +105,45 @@ describe('the Home hero', () => {
 
   test('"shown" on a pack with neither picture is still nothing', () => {
     expect(resolve(pack(), 'shown')).toBeNull();
+  });
+
+  test('drawable presence requires the resolved theme asset file', () => {
+    const manifest = pack({ hero: true });
+    const drawable = resolveHomeHeroAsset({
+      manifest,
+      assets: { crest: 'file:///themes/crest.png' },
+      mode: 'light',
+      width: 'compact',
+    });
+    expect(drawable).toEqual({
+      resolved: {
+        slot: HOME_HERO_SLOT,
+        image: { asset: 'crest', fit: 'contain' },
+      },
+      source: 'file:///themes/crest.png',
+    });
+    expect(isHomeHeroAvailable(drawable)).toBe(true);
+    expect(isHomeHeroAvailable(drawable, 'file:///themes/crest.png')).toBe(false);
+    expect(
+      resolveHomeHeroAsset({ manifest, assets: {}, mode: 'light', width: 'compact' })
+    ).toBeNull();
+    expect(isHomeHeroAvailable(null)).toBe(false);
+    expect(
+      resolveHomeHeroAsset({
+        manifest,
+        assets: { crest: 'https://example.test/crest.png' },
+        mode: 'light',
+        width: 'compact',
+      })
+    ).toBeNull();
+    expect(
+      resolveHomeHeroAsset({
+        manifest: pack({ hero: true, authored: 'hidden' }),
+        assets: { crest: 'file:///themes/crest.png' },
+        mode: 'light',
+        width: 'compact',
+      })
+    ).toBeNull();
   });
 
   test('per-mode and per-width overrides apply exactly as they do to any slot', () => {

@@ -37,11 +37,17 @@ press "text=\"Open muqun.muqun-theme.json\""
 wait "id=asset-preview-theme" 15000
 press "id=asset-preview-theme"
 wait "id=custom-theme-preview" 15000
+# Same fold as `theme-document`: the confirm sits under the appearance
+# settings in the asset viewer.
+scroll down --pixels 900
 press "id=theme-apply"
 wait stable 400 5000
 press "label=\"Close file\""
-wait "label=\"Close files\"" 10000
-press "label=\"Close files\""
+# The files sheet has no X circle any more -- the grabber and the swipe are the
+# close -- so the header anchor is its refresh, and the dismissal is the
+# gesture a reader has.
+wait "label=\"Refresh files\"" 10000
+back --system
 wait stable 400 5000
 
 # section install-back
@@ -99,7 +105,12 @@ is visible "id=theme-browse"
 wait "id=theme-browse-empty" 40000
 is visible "id=theme-browse-retry"
 screenshot dist/theme-browse-offline.png
-press "label=\"Close theme catalogue\""
+# The catalogue is a form sheet now, so there is no "Close theme catalogue" to
+# press: the grabber and the swipe are the close. System back is the same
+# gesture a reader has, and it is what the settings flow already dismisses a
+# form sheet with. What it lands on is the theme picker, which is the sheet
+# this one was opened from.
+back --system
 wait stable 400 5000
 is visible "id=theme-browse"
 
@@ -147,7 +158,12 @@ gesture pan 200 620 0 -150 400
 wait stable 400 5000
 press "id=theme-show-home-text"
 wait stable 400 5000
-is visible "id=theme-appearance-reset"
+# The reset control appears once a preference is custom, but it sits under the
+# hero segmented control and below this route's pinned DONE bar -- a bare
+# visibility check here has been failing on an off-screen node since long
+# before the sheet redesign. The manifest's next step is a bounded
+# scroll-to-visible for the same id, which proves it appeared and leaves it
+# reachable for `opacity-reset` to press.
 
 # section home-hero-row
 # The row only, not a round trip through it. The demo document declares no

@@ -114,8 +114,11 @@ export function usePaneEvents(
     handlersRef.current = handlers;
   });
 
+  // react-doctor-disable-next-line react-doctor/effect-needs-cleanup -- retryTimer is cleared on unmount in the effect cleanup below.
   useEffect(() => {
-    if (!enabled || !gatewayUrl || !token || !sessionId) return;
+    if (!enabled || !gatewayUrl || !token || !sessionId) {
+      return () => {};
+    }
 
     const types = [...OUTPUT_EVENTS, ...STRUCTURE_EVENTS, ...APPROVAL_EVENTS].join(',');
     const base = gatewayUrl.replace(/\/$/, '');
@@ -276,7 +279,7 @@ export function usePaneEvents(
 
     return () => {
       cancelled = true;
-      if (retryTimer) clearTimeout(retryTimer);
+      clearTimeout(retryTimer);
       controller?.abort();
     };
   }, [enabled, gatewayUrl, restartKey, sessionId, streamPaneId, token]);

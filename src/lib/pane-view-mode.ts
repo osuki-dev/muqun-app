@@ -27,6 +27,8 @@ export interface PaneViewCapabilities {
   agent: boolean;
   /** The gateway declared `capabilities.parts` for this pane. */
   parts: boolean;
+  /** The gateway declared `capabilities.agent_sessions` */
+  agentSessions?: boolean;
 }
 
 /**
@@ -42,7 +44,7 @@ export const PANE_VIEW_MODE_ORDER: readonly PaneViewMode[] = ['chat', 'terminal'
  * yet). Flip to true to bring it back everywhere at once -- the cycle, the
  * settings option, the header control -- with nothing else changing.
  */
-export const CHAT_VIEW_ENABLED = false;
+export const CHAT_VIEW_ENABLED = true;
 
 /**
  * Whether Settings offers "Agent panes open in", hidden as of 2026-07-27
@@ -71,6 +73,7 @@ export function availablePaneViewModes(capabilities: PaneViewCapabilities): Pane
   return PANE_VIEW_MODE_ORDER.filter((mode) => {
     if (mode === 'chat' && !CHAT_VIEW_ENABLED) return false;
     if (mode === 'terminal') return true;
+    if (capabilities.agentSessions) return true;
     return capabilities.agent && capabilities.parts;
   });
 }

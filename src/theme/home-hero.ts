@@ -27,6 +27,24 @@ export type ResolvedHomeHero = {
 };
 
 /**
+ * A resolved hero is drawable only when its app-owned asset is present too.
+ * Keeping that answer beside `resolveHomeHero` lets a composition decide
+ * whether to reserve a masthead band without inspecting a React element.
+ */
+export type ResolvedHomeHeroAsset = {
+  resolved: ResolvedHomeHero;
+  source: string;
+};
+
+/** Keep a failed source from reserving a masthead band on its next render. */
+export function isHomeHeroAvailable(
+  resolution: ResolvedHomeHeroAsset | null,
+  failedSource?: string | null
+): resolution is ResolvedHomeHeroAsset {
+  return resolution !== null && resolution.source !== failedSource;
+}
+
+/**
  * What Home draws between its header and its server list, if anything.
  *
  * Two decisions, in this order, and keeping them apart is the whole point of
@@ -84,4 +102,26 @@ export function resolveHomeHero({
     decorationsEnabled
   );
   return fallback ? { slot: HOME_HERO_FALLBACK_SLOT, image: fallback } : null;
+}
+
+/** Resolve the hero and its installed file as one drawable presence decision. */
+export function resolveHomeHeroAsset({
+  manifest,
+  assets,
+  mode,
+  width,
+  preference = 'theme',
+  decorationsEnabled = true,
+}: {
+  manifest: ThemeManifest | undefined;
+  assets: Record<string, string> | undefined;
+  mode: 'light' | 'dark';
+  width: 'compact' | 'regular';
+  preference?: HomeHeroPreference;
+  decorationsEnabled?: boolean;
+}): ResolvedHomeHeroAsset | null {
+  const resolved = resolveHomeHero({ manifest, mode, width, preference, decorationsEnabled });
+  if (!resolved) return null;
+  const source = assets?.[resolved.image.asset];
+  return source?.startsWith('file:///') ? { resolved, source } : null;
 }

@@ -16,15 +16,23 @@ notification handler to that store.
 
 - New events wait behind the currently visible notice instead of replacing it
 - Open navigates only after an explicit press, then dismisses the notice
-- Close dismisses without navigating or answering an agent approval
+- A swipe dismisses without navigating or answering an agent approval: up and
+  off the top edge, or sideways in either direction, past a distance or velocity
+  threshold. A shorter stroke springs the plate back. A downward stroke does
+  nothing and passes the touch through to whatever is under the plate
+- The same dismissal is available as a `dismiss` accessibility action, on the
+  notice text and on the Open action, for a reader who cannot make the gesture
 - Notices without a destination have no Open action
-- The pending count includes the currently visible notice
+- The count on the plate is how many notices are waiting behind the visible one,
+  drawn as `+N`; the visible notice is not counted
 - There is no automatic dismissal timer, task progress percentage, or automatic
   terminal navigation
-- The card uses existing color tokens, a top safe area, 44-point action targets,
-  and a maximum width of 480 points for larger displays
+- The plate uses existing color tokens and the theme's surface opacity, a top
+  safe area, 44-point action targets, and a maximum width of 480 points for
+  larger displays. It carries no border; the waiting pages behind it are told
+  apart by a hairline
 
-The title is limited to two visible lines and the body to four. The body is
+The title is limited to one visible line and the body to two. The body is
 selectable; the notice is not a full transcript viewer. Opening the destination
 is the way to inspect the relevant workspace.
 
@@ -76,7 +84,8 @@ history, dismissal, malformed content, Unicode limits, route conversion, and the
 foreground/background presentation matrix.
 
 Native checks are still required for foreground receipt, no duplicate OS banner,
-explicit Open/Close behavior, keyboard overlap, accessibility announcements,
+explicit Open behavior, swipe dismissal in each accepted direction and the
+refusal of a downward stroke, the `dismiss` accessibility action, keyboard overlap, accessibility announcements,
 rotation and iPad sizing, background/resume, app lock/unlock, and disabled settings.
 A root React Native sibling with a high z-index does not establish visibility
 above native iOS modal or form-sheet presentations. Verify those routes on device

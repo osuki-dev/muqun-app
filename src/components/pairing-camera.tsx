@@ -1,5 +1,6 @@
 import { useLingui } from '@lingui/react/macro';
-import { Text, useThemeTokens } from '@osuki-dev/ui';
+import { useThemeTokens } from '@osuki-dev/ui';
+import { Text } from '@/components/text';
 import { Button } from '@/components/themed-button';
 import { CameraOff, ScanLine } from 'lucide-react-native';
 import { type ReactNode, useEffect, useRef, useState } from 'react';
@@ -244,10 +245,11 @@ export default function PairingCamera({
    * emulator taking over four seconds to resolve it, long enough that a clock
    * tuned to the enumeration flashed a dead end before recovering.
    */
+  // react-doctor-disable-next-line react-doctor/effect-needs-cleanup -- publish timer is cleared on unmount in cleanup below.
   useEffect(() => {
-    if (Platform.OS === 'web') return;
+    if (Platform.OS === 'web') return () => {};
     let cancelled = false;
-    let publish: ReturnType<typeof setTimeout>;
+    let publish: ReturnType<typeof setTimeout> | undefined;
     const enumerated = () => {
       // The factory awaited here is not the instance `useCameraDevices` reads,
       // so its answer can land a beat before that store publishes. Without this

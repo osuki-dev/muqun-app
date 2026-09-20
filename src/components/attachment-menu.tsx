@@ -2,7 +2,8 @@ import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import type { MessageDescriptor } from '@lingui/core';
 import { msg } from '@lingui/core/macro';
 import { useLingui } from '@lingui/react';
-import { Text, useThemeTokens } from '@osuki-dev/ui';
+import { useThemeTokens } from '@osuki-dev/ui';
+import { Text } from '@/components/text';
 import { Camera, FileUp, Images } from 'lucide-react-native';
 import { StyleSheet } from 'react-native';
 import Animated from 'react-native-reanimated';
@@ -78,6 +79,7 @@ export function AttachmentMenu({
         return (
           <PressableScale
             key={source}
+            accessibilityRole="button"
             accessibilityLabel={name}
             onPress={() => onSelect(source)}
             style={styles.option}>

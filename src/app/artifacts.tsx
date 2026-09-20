@@ -1,5 +1,5 @@
 import { useLingui } from '@lingui/react/macro';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 
 import { SessionArtifacts } from '@/components/session-artifacts';
 
@@ -11,10 +11,12 @@ import { SessionArtifacts } from '@/components/session-artifacts';
  * A route of its own rather than a section of the panels sheet. Switching
  * panels and reading what the session wrote are different questions, and the
  * second one deserves a surface it can be a browser on.
+ *
+ * No `onClose` to hand down: the sheet has no close button, because the grabber
+ * and the swipe are the close.
  */
 export default function ArtifactsScreen() {
   const { t } = useLingui();
-  const router = useRouter();
   const params = useLocalSearchParams<{
     sessionId: string;
     tabId?: string;
@@ -26,7 +28,6 @@ export default function ArtifactsScreen() {
       sessionId={params.sessionId || 'default'}
       tabId={params.tabId || ''}
       label={params.label || t`Server`}
-      onClose={() => router.back()}
     />
   );
 }

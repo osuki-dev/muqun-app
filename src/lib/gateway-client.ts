@@ -14,6 +14,7 @@ import {
   getApiSessionsBySessionIdAgents,
   getApiSessionsBySessionIdAgentsByTarget,
   getApiSessionsBySessionIdPanes,
+  getApiSessionsBySessionIdSnapshot,
   getApiSessionsBySessionIdPanesByPaneId,
   getApiSessionsBySessionIdPanesByPaneIdOutput,
   getApiSessionsBySessionIdPanesByPaneIdShortcuts,
@@ -53,6 +54,11 @@ import {
   type GatewayEntity,
 } from './gateway-entities';
 import { GatewayTransportRefusalError } from './gateway-refusal';
+import {
+  decodeSealedBody,
+  ENVELOPE_ACCEPT_ENCODINGS,
+  ENVELOPE_ACCEPT_HEADER,
+} from './envelope-encoding';
 import {
   encodeMultipart,
   multipartBoundary,
@@ -146,8 +152,16 @@ import {
   transportKeyMaterial,
   type EncryptedEnvelope,
 } from './gateway-transport';
+import { dedupeKey, withRequestDedupe } from '@/lib/request-dedupe';
+import {
+  endpointIsAbsent,
+  sessionSnapshotFromAnswer,
+  snapshotServesAgents,
+  type SessionSnapshot,
+} from '@/lib/session-snapshot';
 import { assertSupportedHerdr } from './herdr-compatibility';
 import { GatewayTunnelUnavailableError, directGatewayBaseUrl } from './ssh-tunnel';
+import { MAX_ASSET_TEXT_BYTES } from './text-preview';
 
 const REQUEST_TIMEOUT_MS = 8_000;
 // An attachment is orders of magnitude larger than a control call, and the
@@ -216,6 +230,12 @@ interface EncryptedResponsePayload {
   status: number;
   headers: Record<string, string>;
   body: string;
+  /**
+   * Set when the gateway took up `X-Muqun-Envelope-Accept` and compressed the
+   * body before sealing it. Optional in both directions; see
+   * `envelope-encoding`, which also reads the header-map spellings of it.
+   */
+  content_encoding?: string;
 }
 
 function base64Url(value: Uint8Array): string {
@@ -237,7 +257,16 @@ function requestAad(input: RequestInfo | URL, method: string): string {
   return `${method.toUpperCase()} ${url.pathname}${url.search}`;
 }
 
+export function isGatewayEncryptionDisabled(): boolean {
+  if (!__DEV__) return false;
+  return (
+    process.env.EXPO_PUBLIC_DISABLE_GATEWAY_ENCRYPTION === 'true' ||
+    process.env.EXPO_PUBLIC_DISABLE_GATEWAY_ENCRYPTION === '1'
+  );
+}
+
 function shouldEncryptGatewayRequest(input: RequestInfo | URL): boolean {
+  if (isGatewayEncryptionDisabled()) return false;
   if (
     !currentToken ||
     !currentDeviceId ||
@@ -365,6 +394,14 @@ async function encryptedGatewayFetch(
       'Content-Type': 'application/json',
       'X-Muqun-Transport': '1',
       'X-Muqun-Device': deviceId,
+      // Compression cannot happen outside the envelope -- the body on the wire
+      // is ciphertext, and ciphertext does not compress -- so it is offered
+      // for the inside of it. A gateway that has never heard of this header
+      // answers exactly as it always did. Deliberately not `Accept-Encoding`:
+      // Cronet and NSURLSession own that one and decompress transparently, and
+      // setting it by hand is how an app ends up holding a body the platform
+      // has stopped decoding for it.
+      [ENVELOPE_ACCEPT_HEADER]: ENVELOPE_ACCEPT_ENCODINGS,
       ...(bodylessMethod
         ? { 'X-Muqun-Envelope': base64Url(QuickCrypto.Buffer.from(envelopeJson, 'utf8')) }
         : {}),
@@ -400,7 +437,11 @@ async function encryptedGatewayFetch(
   ) {
     throw new Error('Gateway returned an invalid encrypted response.');
   }
-  const bytes = fromBase64Url(payload.body);
+  // Inflated before the response is rebuilt, so every caller above reads the
+  // body the gateway meant to send and no one downstream has to know whether
+  // this connection compressed anything. `headers` comes back describing the
+  // bytes that come back with it.
+  const { bytes, headers: answerHeaders } = decodeSealedBody(fromBase64Url(payload.body), payload);
   const noBody = answerHasNoBody(method, payload.status);
   // Use the same response implementation as the request transport. React
   // Native's global Response treats a QuickCrypto Buffer as a string-like body
@@ -409,15 +450,51 @@ async function encryptedGatewayFetch(
   // UTF-8 and binary asset bodies.
   return new NitroResponse(noBody ? null : (bytes as unknown as BodyInit), {
     status: payload.status,
-    headers: payload.headers,
+    headers: answerHeaders,
   }) as unknown as Response;
 }
 
 /** Every gateway call the generated client and this file make, on one budget. */
-const gatewayFetch: typeof globalThis.fetch = (input, init) =>
+export const gatewayFetch: typeof globalThis.fetch = (input, init) =>
   gatewayFetchWithin(REQUEST_TIMEOUT_MS, input, init);
 
-async function gatewayFetchWithin(
+/**
+ * Identical GETs that are out right now, so a second asker joins rather than
+ * asks again. Emptied as each settles -- this is not a cache; see
+ * `lib/request-dedupe`.
+ */
+const inFlightGets = new Map<string, Promise<Response>>();
+
+/** Test seam: the map is process-wide, so suites must be able to reset it. */
+export function forgetInFlightGets(): void {
+  inFlightGets.clear();
+}
+
+/**
+ * The narrowest useful place for the dedupe: below every caller, above the
+ * transport.
+ *
+ * Both the generated client and every raw call in this file come through here,
+ * and neither knows what the other is doing -- which is the whole reason two
+ * screens can ask one gateway the same question twice in the same frame. Doing
+ * it here rather than in `api/http-request` also keeps the generated file
+ * generated.
+ *
+ * The key is built before the locale and the token are merged in, because those
+ * are module state and so identical for two calls that overlap in time. What a
+ * caller passed for itself *is* in the key.
+ */
+function gatewayFetchWithin(
+  timeoutMs: number,
+  input: RequestInfo | URL,
+  init?: RequestInit
+): Promise<Response> {
+  return withRequestDedupe(inFlightGets, dedupeKey(input, init, timeoutMs), () =>
+    sendGatewayRequest(timeoutMs, input, init)
+  );
+}
+
+async function sendGatewayRequest(
   timeoutMs: number,
   input: RequestInfo | URL,
   init?: RequestInit
@@ -428,7 +505,11 @@ async function gatewayFetchWithin(
   // to ask for a different language keeps it -- and read per call rather than
   // captured once, so switching language in Settings takes effect on the very
   // next request without reconfiguring anything.
-  const headers = { ...activeLocaleHeaders(), ...headerRecord(init?.headers) };
+  const headers = {
+    ...activeLocaleHeaders(),
+    ...(currentToken ? { Authorization: `Bearer ${currentToken}` } : {}),
+    ...headerRecord(init?.headers),
+  };
   if (shouldEncryptGatewayRequest(input)) {
     return encryptedGatewayFetch(input, { ...init, headers }, timeoutMs);
   }
@@ -572,16 +653,30 @@ export interface PaneOutputResponse {
 export interface GatewayTransport {
   loadHealth: () => Promise<HealthResponse>;
   loadSessions: () => Promise<SessionsResponse>;
+  loadSessionSnapshot: (
+    sessionId: string,
+    health: HealthResponse | null | undefined
+  ) => Promise<SessionSnapshot | null>;
   loadWorkspaces: (sessionId: string) => Promise<HerdrEntity[]>;
   loadTabs: (sessionId: string) => Promise<HerdrEntity[]>;
   loadPanes: (sessionId: string) => Promise<HerdrEntity[]>;
   loadAgents: (sessionId: string) => Promise<HerdrEntity[]>;
 }
 
+/**
+ * The three lists that describe a session's shape, in one answer.
+ *
+ * Agents are deliberately not among them even though the endpoint returns a
+ * set: see `loadSessionSnapshot`.
+ */
+export type { SessionSnapshot } from '@/lib/session-snapshot';
+
 export interface DevicePushTokenRegistration {
   token: string;
   platform: 'ios' | 'android';
   device_name?: string;
+  /** The language the gateway writes this device's notifications in. */
+  locale?: string;
 }
 
 export interface TestNotificationRequest {
@@ -596,6 +691,7 @@ export interface PairingRequestResponse {
   server_label: string;
   status: 'pending';
   expires_in_ms?: number;
+  transport_encryption?: 'required' | 'disabled';
 }
 
 // Kept alongside the generated client's config so raw requests to endpoints the
@@ -893,12 +989,6 @@ export const SESSION_ASSET_PAGE_LIMIT = 100;
 export const MAX_SESSION_ASSET_LIMIT = 200;
 
 /**
- * Ceiling on a text-ish asset read. The gateway caps this too, but a phone is
- * the side that runs out of memory, so the app refuses oversized files before
- * asking for them rather than after receiving them.
- */
-export const MAX_ASSET_TEXT_BYTES = 512 * 1024;
-/**
  * Reading a file is not a control call; it gets its own, longer budget.
  *
  * The budget covers the WHOLE read -- the response headers and the body after
@@ -910,13 +1000,35 @@ export const MAX_ASSET_TEXT_BYTES = 512 * 1024;
  */
 export const ASSET_CONTENT_TIMEOUT_MS = 15_000;
 
-function gatewayUrl(path: string): string {
+/**
+ * That budget, widened for the file actually being asked for.
+ *
+ * 15 seconds was chosen when nothing larger than 512 KiB could be asked for. A
+ * flat budget over a ceiling ten times higher is not a stall guard any more, it
+ * is a size limit wearing a clock: five MiB over a phone's uplink is a minute's
+ * honest work, and cutting it off at fifteen seconds would refuse the file
+ * while blaming the network. So the allowance grows with the file and the floor
+ * stays where it is -- a small file that stalls still fails fast, which is the
+ * case the budget exists for.
+ */
+export function assetTextTimeoutMs(bytes: number): number {
+  const megabytes = Math.ceil(Math.max(0, bytes) / (1024 * 1024));
+  return Math.min(90_000, ASSET_CONTENT_TIMEOUT_MS + megabytes * 10_000);
+}
+
+export function isGatewayConfigured(): boolean {
+  return Boolean(currentBaseUrl && currentBaseUrl.trim().length > 0);
+}
+
+export function gatewayUrl(path: string): string {
   const baseUrl = currentBaseUrl.replace(/\/$/, '');
-  if (!baseUrl) throw new Error('Not connected to a server.');
+  if (!baseUrl) {
+    return path.startsWith('/') ? path : `/${path}`;
+  }
   return `${baseUrl}${path}`;
 }
 
-function gatewayAuthHeaders(): Record<string, string> {
+export function gatewayAuthHeaders(): Record<string, string> {
   // Carries the locale as well as the token, so the handful of calls that reach
   // for `nitroFetch` directly -- to get their own timeout -- are localized too
   // without each one having to remember.
@@ -948,9 +1060,9 @@ export async function listSessionAssets(
 ): Promise<SessionAsset[]> {
   if (isDemoActive()) {
     const assets = demoSessionAssets();
-    return options.kind?.length
-      ? assets.filter((asset) => options.kind?.includes(asset.kind))
-      : assets;
+    if (!options.kind?.length) return assets;
+    const kindSet = new Set(options.kind);
+    return assets.filter((asset) => kindSet.has(asset.kind));
   }
 
   const limit = Math.max(
@@ -1114,6 +1226,54 @@ export function assetImageSource(asset: SessionAsset): AssetImageSource | null {
   };
 }
 
+/** The folder the gateway keeps uploaded attachments in, as it appears in a host path. */
+const UPLOADS_SEGMENT = '/muqun-gateway/uploads/';
+
+/**
+ * The name the gateway serves an uploaded attachment under, or null when the
+ * path is not one of ours. A timeline item carries the host path OpenCode
+ * received (`/home/…/muqun-gateway/uploads/<uuid>.webp`); the phone cannot
+ * open that, but `GET /api/uploads/<name>` streams the same bytes back.
+ */
+export function uploadNameFromPath(path: string): string | null {
+  const index = path.indexOf(UPLOADS_SEGMENT);
+  if (index < 0) return null;
+  const name = path.slice(index + UPLOADS_SEGMENT.length).split(/[/?#]/)[0] ?? '';
+  return name.length > 0 ? name : null;
+}
+
+export function uploadContentUrl(name: string): string {
+  return gatewayUrl(`/api/uploads/${encodeURIComponent(name)}`);
+}
+
+/** Like `assetImageSource`, for a file the reader attached themselves. */
+export function uploadImageSource(name: string): AssetImageSource | null {
+  if (currentTransport === GATEWAY_TRANSPORT) return null;
+  return { uri: uploadContentUrl(name), headers: gatewayAuthHeaders(), cacheKey: `upload:${name}` };
+}
+
+/** The encrypted-transport path: bytes are authenticated here and decoded from a data URI. */
+export async function readUploadImageSource(
+  name: string,
+  options: { signal?: AbortSignal } = {}
+): Promise<AssetImageSource> {
+  const direct = uploadImageSource(name);
+  if (direct) return direct;
+  const response = await encryptedGatewayFetch(
+    uploadContentUrl(name),
+    { headers: gatewayAuthHeaders(), signal: options.signal },
+    ASSET_CONTENT_TIMEOUT_MS
+  );
+  if (!response.ok) throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+  const mime = response.headers.get('content-type')?.split(';')[0] || 'application/octet-stream';
+  if (!mime.startsWith('image/')) throw new Error('Gateway did not return an image.');
+  const bytes = QuickCrypto.Buffer.from(await response.arrayBuffer());
+  return {
+    uri: `data:${mime};base64,${bytes.toString('base64')}`,
+    cacheKey: `upload:${name}:encrypted`,
+  };
+}
+
 /** Download and authenticate image bytes before handing a data URI to the decoder. */
 export async function readAssetImageSource(
   asset: SessionAsset,
@@ -1158,10 +1318,11 @@ export async function readAssetText(
   // to completion into a component that is gone.
   const url = assetContentUrl(asset.id);
   const init = { headers: gatewayAuthHeaders(), signal: options.signal };
+  const budget = assetTextTimeoutMs(asset.size);
   const response =
     currentTransport === GATEWAY_TRANSPORT
-      ? await encryptedGatewayFetch(url, init, ASSET_CONTENT_TIMEOUT_MS)
-      : await fetchWithin(ASSET_CONTENT_TIMEOUT_MS, 'Timed out reading the file.', url, init);
+      ? await encryptedGatewayFetch(url, init, budget)
+      : await fetchWithin(budget, 'Timed out reading the file.', url, init);
   if (!response.ok) {
     throw new Error(`HTTP ${response.status}: ${await response.text()}`);
   }
@@ -1769,7 +1930,9 @@ export function configureGateway(record: GatewayRecord | null): void {
     record?.token ?? null,
     record?.deviceId ?? null,
     record?.transportKey ?? null,
-    record?.transport === GATEWAY_TRANSPORT ? record.transport : null
+    record?.transport === GATEWAY_TRANSPORT && !isGatewayEncryptionDisabled()
+      ? record.transport
+      : null
   );
 }
 
@@ -1780,6 +1943,7 @@ export function configureGateway(record: GatewayRecord | null): void {
  * and `sse-record.ts`.
  */
 export function gatewayUsesEncryptedTransport(token: string | null): boolean {
+  if (isGatewayEncryptionDisabled()) return false;
   return Boolean(
     token &&
     token === currentToken &&
@@ -1789,7 +1953,7 @@ export function gatewayUsesEncryptedTransport(token: string | null): boolean {
   );
 }
 
-/** Everything `use-pane-events` needs to open an encrypted event stream. */
+/** Everything a caller needs to open an encrypted event stream and read it. */
 export interface EncryptedStreamRequest {
   /** Sent instead of Authorization: the token travels inside the envelope. */
   headers: Record<string, string>;
@@ -1802,8 +1966,14 @@ export interface EncryptedStreamRequest {
 }
 
 /**
- * Seal the request that opens `/api/sessions/{id}/events` for an encrypted
- * record, and hand back what the stream decryptor needs to open its records.
+ * Seal the request that opens an event stream for an encrypted record, and
+ * hand back what the stream decryptor needs to open its records.
+ *
+ * Both streams go through here: the device-wide `/api/sessions/{id}/events`
+ * that `use-pane-events` opens, and the per-session
+ * `/api/agent-sessions/{asid}/stream` that `openAgentSessionStream` does. The
+ * AAD is built from the path, so the two are sealed under different keys
+ * without this needing to know which is which.
  *
  * The gateway authenticates this exactly like any other encrypted GET -- the
  * envelope rides `X-Muqun-Envelope`, replay-cached and clock-checked -- but
@@ -1964,16 +2134,31 @@ export async function claimPairing(
  * unauthorised -- is reported the same way, as "not answering": the list has no
  * use for the distinction, and every failure resolves to the same grey dot.
  *
- * The one request here that does not go through `fetchWithin`, and it is safe
- * only because it reads no body: `response.ok` is answered by the headers, so
- * there is nothing left on the wire that could stall. Anyone who adds a
- * `.json()` below has to move this onto the budget with the rest of them --
- * clearing an abort timer the moment the headers land is exactly the mistake
- * `request-budget` exists to have stopped making.
+ * The one request here that does not go through `fetchWithin`. It does read a
+ * body, so the deadline has to cover the body -- and it does: the abort signal
+ * is the fetch's own, and `clearTimeout` sits in a `finally` that runs after
+ * the `json()` below has settled, not the moment the headers land. Clearing it
+ * early is exactly the mistake `request-budget` exists to have stopped making,
+ * so anyone reordering this has to keep the clear behind the last `await`.
+ *
+ * ## Why the body is read at all
+ *
+ * `/health` is the same answer the workspace prewarm needs, and the dot was
+ * already paying for it. Throwing it away meant the home screen asked one
+ * gateway for `/health` twice within a few hundred milliseconds -- once for the
+ * dot, once for the warm. So `onHealth` hands the parsed body straight back to
+ * the caller, which files the capabilities *and* keeps the health for the warm
+ * to reuse (`stores/server-reachability`, `lib/workspace-snapshot`).
+ *
+ * The body is passed up unvalidated on purpose: this function knows a gateway
+ * answered, not that it answered with something this app version understands.
+ * Deciding that is `assertSupportedHerdr`'s job, and the reachability store
+ * runs it before recording a health anyone may build on.
  */
 export async function probeGatewayReachable(
   endpoint: GatewayEndpoint,
-  timeoutMs: number
+  timeoutMs: number,
+  onHealth?: (health: unknown) => void
 ): Promise<boolean> {
   const base = endpoint.url.replace(/\/$/, '');
   if (!base) return false;
@@ -1996,6 +2181,14 @@ export async function probeGatewayReachable(
             },
             signal: controller.signal,
           });
+    if (response.ok && onHealth) {
+      try {
+        onHealth(await response.json());
+      } catch {
+        // A gateway that answers 200 with something unreadable is still
+        // reachable, which is the only question this function was asked.
+      }
+    }
     return response.ok;
   } catch {
     return false;
@@ -2041,6 +2234,95 @@ export async function loadRecordSessions(record: GatewayRecord): Promise<Session
       ? withSessionAvailability(sessions, (await read('/health')) as HealthResponse)
       : sessions;
   });
+}
+
+/**
+ * Gateways that answered `/api/sessions/{id}/snapshot` with "no such route",
+ * by base URL.
+ *
+ * The batched endpoint is not in `/health`'s capability list, so there is no
+ * flag to read -- and guessing from `gatewayVersion` is exactly what `AGENTS.md`
+ * forbids. What is left is the strongest form of detection available: ask the
+ * endpoint. A gateway too old to have it says 404 once per launch and is
+ * remembered here; every later call takes the three-request path with no probe
+ * and no penalty.
+ *
+ * Keyed by base URL because the client is repointed per server, and this is a
+ * fact about a machine rather than about the app. Deliberately not persisted: a
+ * gateway upgraded under a running app gets its one 404 again on the next
+ * launch, which is the cheapest possible way to notice the upgrade.
+ */
+const snapshotEndpointMissing = new Set<string>();
+
+/**
+ * Workspaces, tabs and panes in one round trip.
+ *
+ * Three of the requests the workspace prewarm made were these, asked
+ * separately: `/workspaces`, `/tabs`, `/panes` against one session, in
+ * parallel, each paying its own round trip on a radio where the round trip is
+ * most of the cost. The gateway has answered all three at once since the
+ * batched route landed, and nothing in the app was calling it.
+ *
+ * ## Whether the agents in that answer are used
+ *
+ * That depends on the gateway, and it asks rather than guesses --
+ * `snapshotServesAgents` on the `/health` this call is handed. A gateway
+ * announcing `session_snapshot` returns the same agent array `/agents` returns,
+ * so the answer is complete and the entity load is one request. One that does
+ * not announce it derives its agents from the panes and omits `instance_id` and
+ * `target`, both of which are read straight off this array, so its agents come
+ * back null and the caller asks `/agents` beside this. `lib/session-snapshot`
+ * has the full reasoning.
+ *
+ * ## Asking versus probing for the route itself
+ *
+ * A gateway that announces the capability has the route by definition, so the
+ * "have we 404'd here before" memory is neither consulted nor needed for it.
+ * The probe is what is left for a gateway whose `/health` says nothing: those
+ * are tried once, and a 404 is remembered per base URL so the three-call path
+ * costs nothing extra afterwards.
+ *
+ * An announcement that does not hold -- a 404 from a gateway that claimed the
+ * route, which means a proxy in front of it rather than the gateway itself --
+ * is still remembered and still degrades to the old path, because the reader
+ * losing their head start is not an acceptable answer to somebody's reverse
+ * proxy.
+ *
+ * Null means the gateway has no such route -- not that it failed. Any other
+ * failure is raised, because a session that genuinely cannot be read is not
+ * something to paper over with three more requests.
+ */
+export async function loadSessionSnapshot(
+  sessionId: string,
+  health: HealthResponse | null | undefined
+): Promise<SessionSnapshot | null> {
+  const servesAgents = snapshotServesAgents(health);
+  if (isDemoActive())
+    return {
+      workspaces: demoWorkspaces(),
+      tabs: demoTabs(),
+      panes: demoPanes(),
+      agents: servesAgents ? demoAgents() : null,
+    };
+  const base = currentBaseUrl;
+  if (!servesAgents && snapshotEndpointMissing.has(base)) return null;
+  let answer: unknown;
+  try {
+    answer = await getApiSessionsBySessionIdSnapshot({ sessionId });
+  } catch (error) {
+    if (!endpointIsAbsent(error)) throw error;
+    snapshotEndpointMissing.add(base);
+    return null;
+  }
+  // The panes in this answer have been through the gateway's scrollback
+  // observe/amend pass exactly as `/panes` has, so a pane's `scroll` says the
+  // same thing here as there and pull-for-earlier is unaffected.
+  return sessionSnapshotFromAnswer(answer, servesAgents);
+}
+
+/** Test seam: the miss set is process-wide, so suites must be able to reset it. */
+export function forgetSnapshotEndpointSupport(): void {
+  snapshotEndpointMissing.clear();
 }
 
 export async function loadWorkspaces(sessionId: string): Promise<HerdrEntity[]> {
@@ -2657,6 +2939,7 @@ export async function sendTestNotification(data: TestNotificationRequest = {}): 
 export const gatewayTransport: GatewayTransport = {
   loadHealth,
   loadSessions,
+  loadSessionSnapshot,
   loadWorkspaces,
   loadTabs,
   loadPanes,

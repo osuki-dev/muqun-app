@@ -16,7 +16,7 @@
  * 3. **The wallpaper**, `shell.background`, at the strength the pack asked for.
  *
  * The bug this component exists to end is that 2 and 3 were the other way
- * round. `settings-sheet.tsx` and the two sheets that copied it painted the
+ * round. The settings sheet (since retired) and the two that copied it painted the
  * picture first and the tint over it, and `surfaceBackgroundFill` returns the
  * colour unchanged at alpha 1 -- which is the default and what every reader who
  * has never touched the slider has. So the sheets mounted a full-screen
@@ -44,6 +44,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { ThemeArtwork, useHasThemeArtwork } from '@/components/theme-artwork';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
+import { withAlpha } from '@/lib/color';
 
 /**
  * Which token the sheet's tint is mixed from.
@@ -72,23 +73,43 @@ export type SheetGroundTint = 'surface' | 'background';
  */
 const SheetGroundTintContext = createContext<SheetGroundTint>('background');
 
-/** The fullscreen route paints one continuous backdrop outside its safe area. */
-export const SheetGroundProvidedContext = createContext(false);
-export function useSheetGroundProvided() {
-  return useContext(SheetGroundProvidedContext);
-}
+/**
+ * How much of the sheet's own surface stands between the wallpaper and a row.
+ *
+ * A sheet is a reading surface laid over live content, and the picture is
+ * decoration on it -- so the picture gets the remaining 18%, which is enough
+ * for it to read as texture and not enough for it to read as a photograph
+ * behind text. This is the frosted material the navigation pills already have,
+ * arrived at by fill rather than by blur so both platforms land in the same
+ * place: `GlassChrome`'s own Android fallback is a fill at 0.94 for the same
+ * reason.
+ *
+ * It is a floor, not the reader's slider. The slider moves the tint *under* the
+ * artwork, which is what it was always for; this layer is above the artwork and
+ * is the app promising that a sheet is legible whatever pack is applied.
+ */
+export const SHEET_FROST_ALPHA = 0.82;
 
 export function SheetGround({
   testID,
   tint = 'surface',
+  frosted = false,
 }: {
   /** Kept so existing flows can still find the scene they already anchor on. */
   testID?: string;
   tint?: SheetGroundTint;
+  /**
+   * Whether the wallpaper is veiled to a reading surface.
+   *
+   * On for every sheet built on `sheet-scene.tsx`, which is what lets its rows
+   * be plain text on the ground instead of each one carrying a plate -- a
+   * scatter of pills is busier than the cards it replaced.
+   */
+  frosted?: boolean;
 }) {
   const theme = useThemeTokens();
   const surfaceBackground = useSurfaceBackground();
-  const provided = useSheetGroundProvided();
+  const hasShell = useHasThemeArtwork('shell.background');
   return (
     <View
       testID={testID}
@@ -96,18 +117,27 @@ export function SheetGround({
       accessible={false}
       importantForAccessibility="no-hide-descendants"
       style={StyleSheet.absoluteFill}>
-      {provided ? null : (
-        <>
-          <View style={[StyleSheet.absoluteFill, { backgroundColor: theme.colors.background }]} />
-          <View
-            style={[
-              StyleSheet.absoluteFill,
-              { backgroundColor: surfaceBackground(sheetGroundTintColor(theme.colors, tint)) },
-            ]}
-          />
-          <ThemeArtwork slot="shell.background" />
-        </>
-      )}
+      <View style={[StyleSheet.absoluteFill, { backgroundColor: theme.colors.background }]} />
+      <View
+        style={[
+          StyleSheet.absoluteFill,
+          { backgroundColor: surfaceBackground(sheetGroundTintColor(theme.colors, tint)) },
+        ]}
+      />
+      <ThemeArtwork slot="shell.background" />
+      {frosted && hasShell ? (
+        <View
+          style={[
+            StyleSheet.absoluteFill,
+            {
+              backgroundColor: withAlpha(
+                sheetGroundTintColor(theme.colors, tint),
+                SHEET_FROST_ALPHA
+              ),
+            },
+          ]}
+        />
+      ) : null}
     </View>
   );
 }
@@ -140,26 +170,29 @@ export type SheetGroundPlate = {
  * the only thing the sheet measures, which is what `fitToContents` needs.
  *
  * Sheets differ in where that pair sits. A sheet whose root is the scroller
- * itself (`SettingsSheet`, the two keyboard forms) puts the frame *inside* the
- * scroll view, over a content container with no padding of its own, so the
- * ground reaches the sheet's edges rather than stopping at the form's gutter. A
- * sheet with a pinned header (the catalogue, the files list, the patch) puts
- * the frame at its root and its header and list inside one column. Both shapes
- * are already shipping; what they now share is this component, so the ground is
- * changed in one place for all of them.
+ * itself (the content-sized keyboard forms) puts the frame *inside* the scroll
+ * view, over a content container with no padding of its own, so the ground
+ * reaches the sheet's edges rather than stopping at the form's gutter. A sheet
+ * with a pinned header (the theme picker, the catalogue, the files list, the
+ * patch) puts the frame at its root and its heading and list inside one column.
+ * Both shapes are already shipping; what they share is this component, so the
+ * ground is changed in one place for all of them.
  */
 export function SheetFrame({
   testID,
   tint,
+  frosted,
   children,
 }: {
   testID?: string;
   tint?: SheetGroundTint;
+  /** See `SheetGround`: the wallpaper veiled to a reading surface. */
+  frosted?: boolean;
   children: ReactNode;
 }) {
   return (
     <SheetGroundTintContext.Provider value={tint ?? 'surface'}>
-      <SheetGround testID={testID} tint={tint} />
+      <SheetGround testID={testID} tint={tint} frosted={frosted} />
       {children}
     </SheetGroundTintContext.Provider>
   );

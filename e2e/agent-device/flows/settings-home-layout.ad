@@ -1,0 +1,64 @@
+# Native agent-device action sections; suite.json composes guards and includes.
+# settings-home-layout
+
+# section open-settings
+press "${TARGET}"
+
+# section home-ready
+wait stable 400 5000
+
+# section settings-arrived
+is visible "${TARGET}"
+
+# section open-row
+press "${TARGET}"
+
+# section reset-classic
+press "${TARGET}"
+wait stable 300 5000
+
+# section choose-editorial
+press "${TARGET}"
+
+# section editorial-selected
+is visible "${TARGET}"
+
+# section leave-settings
+press "${TARGET}"
+
+# section editorial-home
+is visible "${TARGET}"
+
+# section relaunch-editorial
+open "dev.osuki.muqun" --relaunch
+wait stable 400 8000
+
+# section editorial-relaunched
+is visible "${TARGET}"
+
+# section reopen-settings
+press "${TARGET}"
+
+# section settings-again
+is visible "${TARGET}"
+
+# section seek-row-again
+press "${TARGET}"
+
+# section open-row-again
+press "${TARGET}"
+
+# section choose-classic
+press "${TARGET}"
+
+# section classic-selected
+is visible "${TARGET}"
+
+# section leave-classic-settings
+press "${TARGET}"
+
+# section classic-home
+is visible "${TARGET}"
+
+# section seek-down
+scroll down 500

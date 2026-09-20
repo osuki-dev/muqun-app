@@ -33,7 +33,8 @@
  */
 import { plural } from '@lingui/core/macro';
 import { Trans, useLingui } from '@lingui/react/macro';
-import { Spinner, Text, useThemeTokens } from '@osuki-dev/ui';
+import { Spinner, useThemeTokens } from '@osuki-dev/ui';
+import { Text } from '@/components/text';
 import { Image } from 'expo-image';
 import { Directory, Paths } from 'expo-file-system';
 import { useFocusEffect } from 'expo-router';
@@ -393,7 +394,13 @@ export function SettingsStorage({ title }: { title: string }) {
             ) : (
               <Trash2 size={15} color={theme.colors.onPrimary} strokeWidth={2.2} />
             )}
-            <Text variant="caption" color={theme.colors.onPrimary} style={styles.armedText}>
+            {/* The weight is the kit's prop, not a `fontWeight: '700'` in the
+                stylesheet. `expo-font` registers a reader's interface face under
+                Typeface.NORMAL only, so Android rounds 700 and over up to BOLD,
+                misses, and falls back to a system lookup that does not know the
+                family -- leaving the armed label as the one word on the sheet in
+                the platform's own bold. The kit caps the prop at semibold. */}
+            <Text variant="caption" weight="semibold" color={theme.colors.onPrimary}>
               {clearing ? <Trans>Clearing…</Trans> : <Trans>Clear</Trans>}
             </Text>
           </PressableScale>
@@ -453,7 +460,9 @@ export function SettingsStorage({ title }: { title: string }) {
             ) : (
               <Trash2 size={15} color={theme.colors.onPrimary} strokeWidth={2.2} />
             )}
-            <Text variant="caption" color={theme.colors.onPrimary} style={styles.armedText}>
+            {/* Semibold through the prop, for the Android reason spelled out at
+                the Clear button above. */}
+            <Text variant="caption" weight="semibold" color={theme.colors.onPrimary}>
               {removing ? <Trans>Removing…</Trans> : <Trans>Remove</Trans>}
             </Text>
           </PressableScale>
@@ -514,6 +523,5 @@ const styles = StyleSheet.create({
     gap: LADDER.gap,
   },
   armedButton: { flex: 1 },
-  armedText: { fontWeight: '700' },
   pendingAction: { opacity: 0.7 },
 });

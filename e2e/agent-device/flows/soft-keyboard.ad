@@ -2,6 +2,8 @@
 wait "label=\"Open on-screen keyboard\"" 10000
 press "label=\"Open on-screen keyboard\""
 wait "label=\"Hide keyboard\"" 10000
+# The old dock row exits while the in-app keyboard is already visible.
+wait stable 400 5000
 is visible "label=\"Control\""
 is visible "label=\"Alt\""
 is visible "label=\"Return\""
@@ -50,6 +52,8 @@ press "label=\"Switch to nvim\""
 wait "label=\"Show the editor keyboard\"" 10000
 press "label=\"Show the editor keyboard\""
 wait "label=\"Hide keyboard\"" 10000
+# Let the outgoing dock controls finish their exit animation before checking absence.
+wait stable 400 5000
 is visible "label=\"Send Search\""
 is visible "label=\"Send Command mode\""
 is visible "label=\"Send Write the file\""

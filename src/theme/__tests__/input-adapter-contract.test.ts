@@ -36,9 +36,16 @@ test('input adapters retain the installed kit public props and native TextInput 
     expect(fragments(local, ts.isInterfaceDeclaration)).toEqual(
       fragments(kit, ts.isInterfaceDeclaration)
     );
+    // The app's fields are `FontedTextInput`: the same native input with its
+    // placeholder drawn as text, so it follows a reader-installed font. It
+    // takes `TextInputProps` unchanged, so the attribute contract with the kit
+    // is compared under the kit's name for the element.
     const nativeInput = (node: ts.Node) =>
-      ts.isJsxSelfClosingElement(node) && ['TextInput', 'Input'].includes(node.tagName.getText());
-    expect(fragments(local, nativeInput)).toEqual(fragments(kit, nativeInput));
+      ts.isJsxSelfClosingElement(node) &&
+      ['TextInput', 'FontedTextInput', 'Input'].includes(node.tagName.getText());
+    const asKit = (parts: string[]) =>
+      parts.map((part) => part.replace('<FontedTextInput', '<TextInput'));
+    expect(asKit(fragments(local, nativeInput))).toEqual(fragments(kit, nativeInput));
   }
 });
 

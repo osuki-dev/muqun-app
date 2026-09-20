@@ -62,6 +62,12 @@
       "platforms": ["ios", "android"]
     },
     {
+      "name": "large-file-preview",
+      "program": "flows/large-file-preview",
+      "tags": ["full"],
+      "platforms": ["ios", "android"]
+    },
+    {
       "name": "git-diff",
       "program": "flows/git-diff",
       "tags": ["full"],
@@ -70,6 +76,24 @@
     {
       "name": "settings",
       "program": "flows/settings",
+      "tags": ["full"],
+      "platforms": ["ios", "android"]
+    },
+    {
+      "name": "settings-guide",
+      "program": "flows/settings-guide",
+      "tags": ["full"],
+      "platforms": ["ios", "android"]
+    },
+    {
+      "name": "settings-font",
+      "program": "flows/settings-font",
+      "tags": ["full"],
+      "platforms": ["ios", "android"]
+    },
+    {
+      "name": "settings-home-layout",
+      "program": "flows/settings-home-layout",
       "tags": ["full"],
       "platforms": ["ios", "android"]
     },
@@ -147,8 +171,8 @@
       "platforms": ["ios", "android"]
     },
     {
-      "name": "machine-switcher",
-      "program": "flows/machine-switcher",
+      "name": "switcher-sheet",
+      "program": "flows/switcher-sheet",
       "tags": ["full"],
       "platforms": ["ios", "android"]
     },
@@ -526,6 +550,267 @@
         "run": "flows/agent-collaboration.ad"
       }
     ],
+    "flows/large-file-preview": [
+      {
+        "include": "subflows/open-demo"
+      },
+      {
+        "include": "subflows/dismiss-logbox"
+      },
+      {
+        "target": {
+          "text": "Open files"
+        },
+        "mode": "press",
+        "run": "flows/large-file-preview.ad#open-files"
+      },
+      {
+        "target": {
+          "text": "Refresh files"
+        },
+        "mode": "visible",
+        "timeout": 8000,
+        "run": "flows/large-file-preview.ad#ready"
+      },
+      {
+        "run": "flows/large-file-preview.ad#settle"
+      },
+      {
+        "target": {
+          "text": "Open CHANGELOG\\.md"
+        },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 30000,
+        "run": "flows/large-file-preview.ad#scroll-body"
+      },
+      {
+        "target": {
+          "text": "Open CHANGELOG\\.md"
+        },
+        "mode": "press",
+        "run": "flows/large-file-preview.ad#open"
+      },
+      {
+        "target": {
+          "text": "Close file"
+        },
+        "mode": "visible",
+        "timeout": 15000,
+        "run": "flows/large-file-preview.ad#visible"
+      },
+      {
+        "target": {
+          "text": "v0\\.120\\.0"
+        },
+        "mode": "visible",
+        "run": "flows/large-file-preview.ad#visible"
+      },
+      {
+        "target": {
+          "text": "## v0\\.120\\.0"
+        },
+        "mode": "hidden",
+        "run": "flows/large-file-preview.ad#hidden"
+      },
+      {
+        "run": "flows/large-file-preview.ad#shot-document"
+      },
+      {
+        "target": {
+          "text": "v0\\.114\\.0"
+        },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 60000,
+        "run": "flows/large-file-preview.ad#scroll-body"
+      },
+      {
+        "target": {
+          "text": "v0\\.114\\.0"
+        },
+        "mode": "visible",
+        "run": "flows/large-file-preview.ad#visible"
+      },
+      {
+        "run": "flows/large-file-preview.ad#shot-document-deep"
+      },
+      {
+        "target": {
+          "text": "Close file"
+        },
+        "mode": "press",
+        "run": "flows/large-file-preview.ad#open"
+      },
+      {
+        "target": {
+          "text": "Refresh files"
+        },
+        "mode": "visible",
+        "timeout": 8000,
+        "run": "flows/large-file-preview.ad#ready"
+      },
+      {
+        "target": {
+          "text": "Open app\\.bundle\\.js"
+        },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 30000,
+        "run": "flows/large-file-preview.ad#scroll-body"
+      },
+      {
+        "target": {
+          "text": "Open app\\.bundle\\.js"
+        },
+        "mode": "press",
+        "run": "flows/large-file-preview.ad#open"
+      },
+      {
+        "target": {
+          "text": "Close file"
+        },
+        "mode": "visible",
+        "timeout": 15000,
+        "run": "flows/large-file-preview.ad#visible"
+      },
+      {
+        "target": {
+          "text": "Too large to highlight — showing plain text"
+        },
+        "mode": "visible",
+        "run": "flows/large-file-preview.ad#visible"
+      },
+      {
+        "target": {
+          "text": "'use strict';"
+        },
+        "mode": "visible",
+        "run": "flows/large-file-preview.ad#visible"
+      },
+      {
+        "run": "flows/large-file-preview.ad#shot-lines"
+      },
+      {
+        "target": {
+          "text": "function render80\\(state, props\\) \\{"
+        },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 90000,
+        "run": "flows/large-file-preview.ad#scroll-body"
+      },
+      {
+        "target": {
+          "text": "function render80\\(state, props\\) \\{"
+        },
+        "mode": "visible",
+        "run": "flows/large-file-preview.ad#visible"
+      },
+      {
+        "run": "flows/large-file-preview.ad#shot-lines-deep"
+      },
+      {
+        "target": {
+          "text": "Copy"
+        },
+        "mode": "press",
+        "run": "flows/large-file-preview.ad#open"
+      },
+      {
+        "target": {
+          "text": "Close file"
+        },
+        "mode": "visible",
+        "timeout": 8000,
+        "run": "flows/large-file-preview.ad#visible"
+      },
+      {
+        "target": {
+          "text": "Close file"
+        },
+        "mode": "press",
+        "run": "flows/large-file-preview.ad#open"
+      },
+      {
+        "target": {
+          "text": "Refresh files"
+        },
+        "mode": "visible",
+        "timeout": 8000,
+        "run": "flows/large-file-preview.ad#ready"
+      },
+      {
+        "target": {
+          "text": "Open session\\.log"
+        },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 30000,
+        "run": "flows/large-file-preview.ad#scroll-body"
+      },
+      {
+        "target": {
+          "text": "Open session\\.log"
+        },
+        "mode": "press",
+        "run": "flows/large-file-preview.ad#open"
+      },
+      {
+        "target": {
+          "text": "Close file"
+        },
+        "mode": "visible",
+        "timeout": 15000,
+        "run": "flows/large-file-preview.ad#visible"
+      },
+      {
+        "target": {
+          "text": "This file is 8\\.0 MB\\. Muqun opens text files up to 5\\.0 MB; larger ones stay on the server"
+        },
+        "mode": "visible",
+        "run": "flows/large-file-preview.ad#visible"
+      },
+      {
+        "target": {
+          "text": "~/code/muqun/out/session\\.log"
+        },
+        "mode": "visible",
+        "run": "flows/large-file-preview.ad#visible"
+      },
+      {
+        "run": "flows/large-file-preview.ad#shot-refusal"
+      },
+      {
+        "target": {
+          "text": "Copy path"
+        },
+        "mode": "press",
+        "run": "flows/large-file-preview.ad#open"
+      },
+      {
+        "target": {
+          "text": "Copied"
+        },
+        "mode": "visible",
+        "run": "flows/large-file-preview.ad#visible"
+      },
+      {
+        "target": {
+          "text": "Close file"
+        },
+        "mode": "press",
+        "run": "flows/large-file-preview.ad#open"
+      },
+      {
+        "target": {
+          "text": "Refresh files"
+        },
+        "mode": "visible",
+        "timeout": 8000,
+        "run": "flows/large-file-preview.ad#ready"
+      }
+    ],
     "flows/artifacts": [
       {
         "include": "subflows/open-demo"
@@ -542,7 +827,7 @@
       },
       {
         "target": {
-          "text": "Close files"
+          "text": "Refresh files"
         },
         "mode": "visible",
         "timeout": 8000,
@@ -644,11 +929,22 @@
         "run": "flows/artifacts.ad#s16"
       },
       {
+        "run": "flows/artifacts.ad#s17"
+      },
+      {
         "target": {
-          "text": "Clear search"
+          "text": "Open files"
         },
         "mode": "press",
-        "run": "flows/artifacts.ad#s17"
+        "run": "flows/artifacts.ad#s1"
+      },
+      {
+        "target": {
+          "text": "Refresh files"
+        },
+        "mode": "visible",
+        "timeout": 8000,
+        "run": "flows/artifacts.ad#s2"
       },
       {
         "run": "flows/artifacts.ad#s18"
@@ -662,7 +958,7 @@
       },
       {
         "target": {
-          "text": "Show images"
+          "id": "settings-selection:(on|off):artifact-kind-image"
         },
         "mode": "press",
         "run": "flows/artifacts.ad#s20"
@@ -686,7 +982,7 @@
       },
       {
         "target": {
-          "text": "Show all files"
+          "id": "settings-selection:(on|off):artifact-kind-all"
         },
         "mode": "press",
         "run": "flows/artifacts.ad#s24"
@@ -759,7 +1055,7 @@
       },
       {
         "target": {
-          "text": "Close files"
+          "text": "Refresh files"
         },
         "mode": "visible",
         "timeout": 8000,
@@ -811,7 +1107,7 @@
       },
       {
         "target": {
-          "text": "Close files"
+          "text": "Refresh files"
         },
         "mode": "visible",
         "timeout": 8000,
@@ -863,7 +1159,7 @@
       },
       {
         "target": {
-          "text": "Close files"
+          "text": "Refresh files"
         },
         "mode": "visible",
         "timeout": 8000,
@@ -947,7 +1243,7 @@
       },
       {
         "target": {
-          "text": "Close files"
+          "text": "Refresh files"
         },
         "mode": "visible",
         "timeout": 8000,
@@ -955,7 +1251,7 @@
       },
       {
         "target": {
-          "text": "Close files"
+          "text": "Refresh files"
         },
         "mode": "scroll",
         "direction": "up",
@@ -963,10 +1259,6 @@
         "run": "flows/artifacts.ad#s65"
       },
       {
-        "target": {
-          "text": "Close files"
-        },
-        "mode": "press",
         "run": "flows/artifacts.ad#s66"
       },
       {
@@ -994,7 +1286,7 @@
       },
       {
         "target": {
-          "text": "Close changes"
+          "text": "Refresh changes"
         },
         "mode": "visible",
         "timeout": 8000,
@@ -1016,7 +1308,7 @@
       },
       {
         "target": {
-          "text": "STAGED"
+          "id": "settings-selection:(on|off):git-diff-side-staged"
         },
         "mode": "press",
         "run": "flows/git-diff.ad#s22"
@@ -1038,7 +1330,7 @@
       },
       {
         "target": {
-          "text": "ALL"
+          "id": "settings-selection:(on|off):git-diff-side-all"
         },
         "mode": "press",
         "run": "flows/git-diff.ad#s25"
@@ -1127,10 +1419,6 @@
         "run": "flows/git-diff.ad#s19"
       },
       {
-        "target": {
-          "text": "Close changes"
-        },
-        "mode": "press",
         "run": "flows/git-diff.ad#s20"
       },
       {
@@ -1496,7 +1784,7 @@
       },
       {
         "target": {
-          "text": "Close quick actions"
+          "text": "Quick actions"
         },
         "mode": "visible",
         "timeout": 8000,
@@ -1512,15 +1800,11 @@
         "run": "flows/demo-tour.ad#s9"
       },
       {
-        "target": {
-          "text": "Close quick actions"
-        },
-        "mode": "press",
         "run": "flows/demo-tour.ad#s10"
       },
       {
         "target": {
-          "text": "Close quick actions"
+          "text": "Quick actions"
         },
         "mode": "hidden",
         "timeout": 8000
@@ -1540,7 +1824,7 @@
       },
       {
         "target": {
-          "text": "Close"
+          "text": "Refresh"
         },
         "mode": "visible",
         "timeout": 8000,
@@ -1577,7 +1861,7 @@
       },
       {
         "target": {
-          "text": "Close"
+          "text": "Refresh"
         },
         "mode": "scroll",
         "direction": "up",
@@ -1585,10 +1869,6 @@
         "run": "flows/demo-tour.ad#s19"
       },
       {
-        "target": {
-          "text": "Close"
-        },
-        "mode": "press",
         "run": "flows/demo-tour.ad#s20"
       },
       {
@@ -1606,7 +1886,7 @@
       },
       {
         "target": {
-          "text": "Close files"
+          "text": "Refresh files"
         },
         "mode": "visible",
         "timeout": 8000,
@@ -1626,10 +1906,6 @@
         "run": "flows/demo-tour.ad#s26"
       },
       {
-        "target": {
-          "text": "Close files"
-        },
-        "mode": "press",
         "run": "flows/demo-tour.ad#s27"
       },
       {
@@ -1682,7 +1958,7 @@
       },
       {
         "target": {
-          "text": "Color mode"
+          "text": "Colour mode"
         },
         "mode": "visible",
         "timeout": 8000,
@@ -1791,21 +2067,24 @@
       },
       {
         "target": {
-          "text": "Close quick actions"
+          "text": "Quick actions"
         },
         "mode": "visible",
         "timeout": 8000,
         "run": "flows/demo-tour.ad#s49"
       },
       {
-        "target": {
-          "text": "Close quick actions"
-        },
-        "mode": "press",
         "run": "flows/demo-tour.ad#s50"
       },
       {
         "run": "flows/demo-tour.ad#s51"
+      },
+      {
+        "target": {
+          "text": "Quick actions"
+        },
+        "mode": "hidden",
+        "timeout": 8000
       },
       {
         "include": "subflows/restore-key-row"
@@ -2065,7 +2344,7 @@
       },
       {
         "target": {
-          "text": "^(Color mode|色彩模式)$"
+          "text": "^(Colour mode|色彩模式)$"
         },
         "mode": "visible",
         "timeout": 10000,
@@ -2086,7 +2365,7 @@
       },
       {
         "target": {
-          "text": "Color mode"
+          "text": "Colour mode"
         },
         "mode": "visible",
         "timeout": 10000,
@@ -2231,7 +2510,7 @@
       },
       {
         "target": {
-          "text": "Color mode"
+          "text": "Colour mode"
         },
         "mode": "visible",
         "timeout": 10000,
@@ -2496,7 +2775,7 @@
       },
       {
         "target": {
-          "text": "Color mode"
+          "text": "Colour mode"
         },
         "mode": "visible",
         "timeout": 10000,
@@ -2645,10 +2924,6 @@
         "run": "flows/light-shots.ad#s36"
       },
       {
-        "target": {
-          "text": "Close files"
-        },
-        "mode": "press",
         "run": "flows/light-shots.ad#s37"
       },
       {
@@ -3204,7 +3479,7 @@
       },
       {
         "target": {
-          "text": "GATEWAY URL"
+          "text": "Gateway URL"
         },
         "mode": "visible",
         "run": "flows/pairing-manual.ad#s7"
@@ -3246,7 +3521,7 @@
       },
       {
         "target": {
-          "text": "GATEWAY URL"
+          "text": "Gateway URL"
         },
         "mode": "visible",
         "run": "flows/pairing-manual.ad#s13"
@@ -3311,7 +3586,7 @@
       },
       {
         "target": {
-          "text": "Use the scan button on the home screen to add one"
+          "text": "Pair one below"
         },
         "mode": "visible",
         "run": "flows/settings.ad#s4"
@@ -3452,7 +3727,7 @@
       },
       {
         "target": {
-          "text": "Color mode"
+          "text": "Colour mode"
         },
         "mode": "scroll",
         "direction": "down",
@@ -3468,15 +3743,14 @@
       },
       {
         "target": {
-          "text": "SYSTEM",
-          "selected": true
+          "id": "settings-selection:on:segment-system"
         },
         "mode": "visible",
         "run": "flows/settings.ad#s17"
       },
       {
         "target": {
-          "text": "DARK"
+          "id": "settings-selection:(on|off):segment-dark"
         },
         "mode": "press",
         "run": "flows/settings.ad#s18"
@@ -3486,23 +3760,21 @@
       },
       {
         "target": {
-          "text": "DARK",
-          "selected": true
+          "id": "settings-selection:on:segment-dark"
         },
         "mode": "visible",
         "run": "flows/settings.ad#s20"
       },
       {
         "target": {
-          "text": "SYSTEM",
-          "selected": false
+          "id": "settings-selection:off:segment-system"
         },
         "mode": "visible",
         "run": "flows/settings.ad#s21"
       },
       {
         "target": {
-          "text": "SYSTEM"
+          "id": "settings-selection:(on|off):segment-system"
         },
         "mode": "press",
         "run": "flows/settings.ad#s22"
@@ -3512,16 +3784,14 @@
       },
       {
         "target": {
-          "text": "SYSTEM",
-          "selected": true
+          "id": "settings-selection:on:segment-system"
         },
         "mode": "visible",
         "run": "flows/settings.ad#s24"
       },
       {
         "target": {
-          "text": "DARK",
-          "selected": false
+          "id": "settings-selection:off:segment-dark"
         },
         "mode": "visible",
         "run": "flows/settings.ad#s25"
@@ -3688,7 +3958,7 @@
       },
       {
         "target": {
-          "text": "DEFAULT"
+          "id": "settings-selection:(on|off):segment-default"
         },
         "mode": "scroll",
         "direction": "down",
@@ -3697,7 +3967,7 @@
       },
       {
         "target": {
-          "text": "DEFAULT"
+          "id": "settings-selection:(on|off):segment-default"
         },
         "mode": "press",
         "run": "flows/settings.ad#s48"
@@ -3707,7 +3977,7 @@
       },
       {
         "target": {
-          "text": "COMPACT"
+          "id": "settings-selection:(on|off):segment-compact"
         },
         "mode": "scroll",
         "direction": "down",
@@ -3716,15 +3986,14 @@
       },
       {
         "target": {
-          "text": "DEFAULT",
-          "selected": true
+          "id": "settings-selection:on:segment-default"
         },
         "mode": "visible",
         "run": "flows/settings.ad#s51"
       },
       {
         "target": {
-          "text": "COMPACT"
+          "id": "settings-selection:(on|off):segment-compact"
         },
         "mode": "press",
         "run": "flows/settings.ad#s52"
@@ -3734,16 +4003,14 @@
       },
       {
         "target": {
-          "text": "COMPACT",
-          "selected": true
+          "id": "settings-selection:on:segment-compact"
         },
         "mode": "visible",
         "run": "flows/settings.ad#s54"
       },
       {
         "target": {
-          "text": "DEFAULT",
-          "selected": false
+          "id": "settings-selection:off:segment-default"
         },
         "mode": "visible",
         "run": "flows/settings.ad#s55"
@@ -4102,7 +4369,7 @@
       },
       {
         "target": {
-          "text": "COMPACT"
+          "id": "settings-selection:(on|off):segment-compact"
         },
         "mode": "scroll",
         "direction": "down",
@@ -4111,15 +4378,14 @@
       },
       {
         "target": {
-          "text": "COMPACT",
-          "selected": true
+          "id": "settings-selection:on:segment-compact"
         },
         "mode": "visible",
         "run": "flows/settings.ad#s85"
       },
       {
         "target": {
-          "text": "DEFAULT"
+          "id": "settings-selection:(on|off):segment-default"
         },
         "mode": "press",
         "run": "flows/settings.ad#s86"
@@ -4129,8 +4395,7 @@
       },
       {
         "target": {
-          "text": "DEFAULT",
-          "selected": true
+          "id": "settings-selection:on:segment-default"
         },
         "mode": "visible",
         "run": "flows/settings.ad#s88"
@@ -4189,16 +4454,12 @@
       },
       {
         "target": {
-          "text": "Close quick actions"
+          "text": "Terminal commands and key combinations"
         },
         "mode": "visible",
         "run": "flows/settings.ad#s92"
       },
       {
-        "target": {
-          "text": "Close quick actions"
-        },
-        "mode": "press",
         "run": "flows/settings.ad#s93"
       },
       {
@@ -4223,6 +4484,385 @@
         "mode": "visible",
         "timeout": 8000,
         "run": "flows/settings.ad#s96"
+      }
+    ],
+    "flows/settings-font": [
+      { "include": "subflows/launch-home" },
+      {
+        "target": { "text": "Settings" },
+        "mode": "press",
+        "run": "flows/settings-font.ad#open-settings"
+      },
+      {
+        "target": { "text": "SERVERS" },
+        "mode": "visible",
+        "timeout": 8000,
+        "run": "flows/settings-font.ad#settings-arrived"
+      },
+      { "include": "subflows/dismiss-logbox" },
+      {
+        "target": { "text": "Font, .+" },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 20000,
+        "run": "flows/settings-font.ad#open-settings"
+      },
+      {
+        "target": { "text": "Font, .+" },
+        "mode": "press",
+        "run": "flows/settings-font.ad#open-font"
+      },
+      { "run": "flows/settings-font.ad#sheet-arrived" },
+      {
+        "target": { "text": "Interface" },
+        "mode": "visible",
+        "timeout": 8000,
+        "run": "flows/settings-font.ad#group-visible"
+      },
+      {
+        "target": { "text": "Monospace" },
+        "mode": "visible",
+        "timeout": 8000,
+        "run": "flows/settings-font.ad#group-visible"
+      },
+      {
+        "target": { "text": "Use system font" },
+        "mode": "visible",
+        "timeout": 8000,
+        "run": "flows/settings-font.ad#row-visible"
+      },
+      {
+        "target": { "text": "Paste a URL\u2026" },
+        "mode": "visible",
+        "timeout": 8000,
+        "run": "flows/settings-font.ad#row-visible"
+      },
+      { "run": "flows/settings-font.ad#leave" },
+      {
+        "target": { "text": "SERVERS" },
+        "mode": "visible",
+        "timeout": 8000,
+        "run": "flows/settings-font.ad#back-on-settings"
+      }
+    ],
+    "flows/settings-home-layout": [
+      {
+        "run": "subflows/launch-home.ad#s1"
+      },
+      {
+        "run": "subflows/launch-home.ad#s8"
+      },
+      {
+        "target": {
+          "text": "(?i)skip intro"
+        },
+        "mode": "press",
+        "optional": true,
+        "run": "subflows/launch-home.ad#s9"
+      },
+      {
+        "target": {
+          "text": "Got it"
+        },
+        "mode": "press",
+        "optional": true,
+        "run": "subflows/launch-home.ad#s9"
+      },
+      {
+        "when": {
+          "target": {
+            "text": "(?i).*don.?t allow.*"
+          },
+          "absent": false
+        },
+        "steps": [
+          {
+            "target": {
+              "text": "(?i).*don.?t allow.*"
+            },
+            "mode": "press",
+            "run": "subflows/launch-home.ad#s10"
+          }
+        ]
+      },
+      {
+        "when": {
+          "target": {
+            "text": "Dismiss what's new"
+          },
+          "absent": false
+        },
+        "steps": [
+          {
+            "target": {
+              "text": "Dismiss what's new"
+            },
+            "mode": "press",
+            "run": "subflows/launch-home.ad#s11"
+          }
+        ]
+      },
+      {
+        "include": "subflows/dismiss-logbox"
+      },
+      {
+        "run": "flows/settings-home-layout.ad#home-ready"
+      },
+      {
+        "target": {
+          "text": "(?i)settings"
+        },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 20000,
+        "run": "flows/settings-home-layout.ad#seek-down"
+      },
+      {
+        "target": {
+          "text": "(?i)settings"
+        },
+        "mode": "press",
+        "run": "flows/settings-home-layout.ad#open-settings"
+      },
+      {
+        "target": {
+          "text": "SERVERS"
+        },
+        "mode": "visible",
+        "timeout": 8000,
+        "run": "flows/settings-home-layout.ad#settings-arrived"
+      },
+      {
+        "include": "subflows/dismiss-logbox"
+      },
+      {
+        "target": {
+          "id": "settings-home-layout-row"
+        },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 20000,
+        "run": "flows/settings-home-layout.ad#seek-down"
+      },
+      {
+        "target": {
+          "id": "settings-home-layout-row"
+        },
+        "mode": "press",
+        "run": "flows/settings-home-layout.ad#open-row"
+      },
+      {
+        "when": {
+          "target": {
+            "id": "settings-selection:on:home-layout-classic"
+          },
+          "absent": false
+        },
+        "steps": [
+          {
+            "target": {
+              "id": "settings-selection:on:home-layout-classic"
+            },
+            "mode": "press",
+            "run": "flows/settings-home-layout.ad#reset-classic"
+          }
+        ]
+      },
+      {
+        "when": {
+          "target": {
+            "id": "settings-selection:off:home-layout-classic"
+          },
+          "absent": false
+        },
+        "steps": [
+          {
+            "target": {
+              "id": "settings-selection:off:home-layout-classic"
+            },
+            "mode": "press",
+            "run": "flows/settings-home-layout.ad#reset-classic"
+          }
+        ]
+      },
+      {
+        "target": {
+          "id": "settings-home-layout-row"
+        },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 20000,
+        "run": "flows/settings-home-layout.ad#seek-down"
+      },
+      {
+        "target": {
+          "id": "settings-home-layout-row"
+        },
+        "mode": "press",
+        "run": "flows/settings-home-layout.ad#open-row-again"
+      },
+      {
+        "target": {
+          "id": "settings-selection:off:home-layout-editorial"
+        },
+        "mode": "press",
+        "run": "flows/settings-home-layout.ad#choose-editorial"
+      },
+      {
+        "target": {
+          "text": "Home layout, Editorial"
+        },
+        "mode": "visible",
+        "timeout": 8000,
+        "run": "flows/settings-home-layout.ad#editorial-selected"
+      },
+      {
+        "target": {
+          "text": "Go back"
+        },
+        "mode": "press",
+        "run": "flows/settings-home-layout.ad#leave-settings"
+      },
+      {
+        "target": {
+          "id": "home-editorial-layout"
+        },
+        "mode": "visible",
+        "timeout": 8000,
+        "run": "flows/settings-home-layout.ad#editorial-home"
+      },
+      {
+        "run": "flows/settings-home-layout.ad#relaunch-editorial"
+      },
+      {
+        "target": {
+          "id": "home-editorial-layout"
+        },
+        "mode": "visible",
+        "timeout": 10000,
+        "run": "flows/settings-home-layout.ad#editorial-relaunched"
+      },
+      {
+        "target": {
+          "text": "(?i)settings"
+        },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 20000,
+        "run": "flows/settings-home-layout.ad#seek-down"
+      },
+      {
+        "target": {
+          "text": "(?i)settings"
+        },
+        "mode": "press",
+        "run": "flows/settings-home-layout.ad#reopen-settings"
+      },
+      {
+        "target": {
+          "text": "SERVERS"
+        },
+        "mode": "visible",
+        "timeout": 8000,
+        "run": "flows/settings-home-layout.ad#settings-again"
+      },
+      {
+        "include": "subflows/dismiss-logbox"
+      },
+      {
+        "target": {
+          "id": "settings-home-layout-row"
+        },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 20000,
+        "run": "flows/settings-home-layout.ad#seek-down"
+      },
+      {
+        "target": {
+          "id": "settings-home-layout-row"
+        },
+        "mode": "press",
+        "run": "flows/settings-home-layout.ad#open-row-again"
+      },
+      {
+        "target": {
+          "id": "settings-selection:off:home-layout-classic"
+        },
+        "mode": "press",
+        "run": "flows/settings-home-layout.ad#choose-classic"
+      },
+      {
+        "target": {
+          "text": "Home layout, Classic"
+        },
+        "mode": "visible",
+        "timeout": 8000,
+        "run": "flows/settings-home-layout.ad#classic-selected"
+      },
+      {
+        "target": {
+          "text": "Go back"
+        },
+        "mode": "press",
+        "run": "flows/settings-home-layout.ad#leave-classic-settings"
+      },
+      {
+        "target": {
+          "id": "home-editorial-layout"
+        },
+        "mode": "hidden",
+        "timeout": 8000,
+        "run": "flows/settings-home-layout.ad#classic-home"
+      }
+    ],
+    "flows/settings-guide": [
+      {
+        "include": "subflows/launch-home"
+      },
+      {
+        "target": {
+          "text": "Settings"
+        },
+        "mode": "press",
+        "run": "flows/settings-guide.ad#open-settings"
+      },
+      {
+        "target": {
+          "text": "SERVERS"
+        },
+        "mode": "visible",
+        "timeout": 8000,
+        "run": "flows/settings-guide.ad#settings-arrived"
+      },
+      {
+        "include": "subflows/dismiss-logbox"
+      },
+      {
+        "target": {
+          "text": "ABOUT"
+        },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 20000,
+        "run": "flows/settings-guide.ad#seek"
+      },
+      {
+        "target": {
+          "text": "How to use Muqun, .+"
+        },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 20000,
+        "run": "flows/settings-guide.ad#seek"
+      },
+      {
+        "target": {
+          "text": "How to use Muqun, Guides for pairing, the terminal, OpenCode and themes"
+        },
+        "mode": "visible",
+        "timeout": 8000,
+        "run": "flows/settings-guide.ad#row-visible"
       }
     ],
     "flows/slash-commands": [
@@ -4640,7 +5280,7 @@
       },
       {
         "target": {
-          "text": "SSH"
+          "id": "home-open-ssh"
         },
         "mode": "press",
         "run": "flows/ssh.ad#s1"
@@ -4843,7 +5483,7 @@
       },
       {
         "target": {
-          "text": "SSH"
+          "id": "home-open-ssh"
         },
         "mode": "visible",
         "timeout": 8000,
@@ -5251,7 +5891,7 @@
       },
       {
         "target": {
-          "text": "LARGE"
+          "id": "settings-selection:(on|off):segment-large"
         },
         "mode": "scroll",
         "direction": "down",
@@ -5260,7 +5900,7 @@
       },
       {
         "target": {
-          "text": "LARGE"
+          "id": "settings-selection:(on|off):segment-large"
         },
         "mode": "press",
         "run": "flows/terminal-interactions.ad#s38"
@@ -5864,7 +6504,7 @@
       },
       {
         "target": {
-          "text": "Color mode"
+          "text": "Colour mode"
         },
         "mode": "visible",
         "timeout": 10000,
@@ -6035,7 +6675,7 @@
       },
       {
         "target": {
-          "text": "Color mode"
+          "text": "Colour mode"
         },
         "mode": "visible",
         "timeout": 10000,
@@ -6561,11 +7201,6 @@
         "run": "subflows/motion-p2-capture.ad#s37"
       },
       {
-        "target": {
-          "text": "Close"
-        },
-        "mode": "press",
-        "optional": true,
         "run": "subflows/motion-p2-capture.ad#s38"
       },
       {
@@ -6760,22 +7395,18 @@
         "run": "flows/agent-shortcuts.ad#pre-done"
       },
       {
-        "target": {
-          "text": "Close quick actions"
-        },
-        "mode": "press",
         "run": "flows/agent-shortcuts.ad#pre-close"
       },
       {
         "run": "flows/agent-shortcuts.ad"
       }
     ],
-    "flows/machine-switcher": [
+    "flows/switcher-sheet": [
       {
         "include": "subflows/open-demo"
       },
       {
-        "run": "flows/machine-switcher.ad"
+        "run": "flows/switcher-sheet.ad"
       }
     ],
     "flows/soft-keyboard": [

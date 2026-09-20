@@ -208,7 +208,7 @@ test('strict hydration rejects unavailable keys and corrupt encrypted data inste
   }
 });
 test('Home cache pruning is disabled on hydration error, including after its spinner stops', () => {
-  const path = 'src/app/(drawer)/index.tsx';
+  const path = 'src/components/home-overview.tsx';
   const source = ts.createSourceFile(
     path,
     readFileSync(path, 'utf8'),
@@ -242,7 +242,7 @@ test('Home cache pruning is disabled on hydration error, including after its spi
 });
 
 test('storage errors take precedence over empty and not-found UI, with only explicit retry', () => {
-  const home = readFileSync('src/app/(drawer)/index.tsx', 'utf8');
+  const home = readFileSync('src/components/home-overview.tsx', 'utf8');
   const settings = readFileSync('src/components/settings-servers.tsx', 'utf8');
   const terminal = readFileSync('src/components/server-terminal-workspace.tsx', 'utf8');
   expect(home).toContain('!loading && !hydrationError && records.length === 0');

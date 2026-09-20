@@ -8,7 +8,9 @@ import {
   type PaneViewMode,
   type StoredAgentViewSettings,
 } from '@/lib/pane-view-mode';
+import { isHomeLayout, resolveHomeLayout, type HomeLayout } from '@/lib/home-layout';
 import type { TerminalTextSize } from '@/lib/terminal-text-size';
+import { parseFontSlot, SYSTEM_FONT_SLOT, type FontSlot } from '@/theme/user-font-file';
 
 // Declared with the rule that reads it rather than here, because the setting is
 // only half the answer to "how big is the terminal text": the other half is the
@@ -27,13 +29,37 @@ export type { TerminalTextSize };
  */
 export type ServerCardPanes = 'agents' | 'all';
 
+// Re-exported from the store the screens already read, the way `TerminalTextSize`
+// is: a settings screen asking for the shape of a setting should not have to
+// know which half of the font module defines it.
+export type { FontSlot };
+export type { HomeLayout };
+
 type PersistedSettings = {
   agentDefaultView: PaneViewMode;
   androidWidgetEnabled: boolean;
   appLockEnabled: boolean;
   hapticsEnabled: boolean;
+  // Home composition is a device preference, independent of the active theme.
+  homeLayout: HomeLayout;
+  /**
+   * The face the app's own text is set in, and the face its code is set in.
+   *
+   * Two slots rather than one, because they answer different questions: a
+   * reader who wants a Han face that reads well at 14pt on their phone wants it
+   * in the interface, and a reader who wants ligatures and a zero with a slash
+   * wants that in the terminal. Nobody wants the same file in both.
+   *
+   * Global, and deliberately not part of a theme pack. A pack is colour -- the
+   * pack format has no font field and the authoring skill forbids one -- and a
+   * font that arrived with a palette would be un-chosen every time the reader
+   * tried a different theme.
+   */
+  interfaceFont: FontSlot;
   language: LocalePreference;
   liveActivityEnabled: boolean;
+  /** The face the terminal and every code span are drawn in. See `interfaceFont`. */
+  monoFont: FontSlot;
   notificationsEnabled: boolean;
   serverCardPanes: ServerCardPanes;
   showTerminalKeyRow: boolean;
@@ -44,6 +70,7 @@ type PersistedSettings = {
 type AppSettingsState = PersistedSettings & {
   hydrated: boolean;
   hydrate: () => Promise<void>;
+  setHomeLayout: (layout: HomeLayout) => Promise<void>;
   update: (patch: Partial<PersistedSettings>) => Promise<void>;
 };
 
@@ -63,6 +90,11 @@ const defaults: PersistedSettings = {
   androidWidgetEnabled: false,
   appLockEnabled: false,
   hapticsEnabled: true,
+  homeLayout: 'classic',
+  // The system font, which is the absence of a choice rather than a third
+  // option. The app offers no fonts of its own, so until a reader brings one
+  // there is nothing to choose between.
+  interfaceFont: SYSTEM_FONT_SLOT,
   // `null` is "follow the system", which is what an app should do until it is
   // told otherwise. It is a distinct state from picking English: a device that
   // later switches to Chinese should follow, and only an explicit choice here
@@ -71,6 +103,7 @@ const defaults: PersistedSettings = {
   // A Lock Screen card names the agent and the panel it runs in, so it stays
   // off until the user asks for it.
   liveActivityEnabled: false,
+  monoFont: SYSTEM_FONT_SLOT,
   notificationsEnabled: true,
   // What is happening on my machines? is the question the home screen exists
   // for, and a card that lists only agent panes has been answering it wrong:
@@ -89,27 +122,66 @@ const defaults: PersistedSettings = {
   themePack: DEFAULT_THEME_PACK_ID,
 };
 
+let hydrationFlight: Promise<void> | null = null;
+let pendingHydrationPatch: Partial<PersistedSettings> = {};
+let saveQueue: Promise<void> = Promise.resolve();
+
 export const useAppSettings = create<AppSettingsState>((set, get) => ({
   ...defaults,
   hydrated: false,
 
-  async hydrate() {
-    if (get().hydrated) return;
-    try {
-      const value = await SecureStore.getItemAsync(STORAGE_KEY);
-      const stored = value ? parseSettings(value) : {};
-      set({ ...defaults, ...stored, hydrated: true });
-    } catch {
-      set({ hydrated: true });
-    }
+  hydrate() {
+    if (get().hydrated) return Promise.resolve();
+    if (hydrationFlight) return hydrationFlight;
+
+    hydrationFlight = (async () => {
+      let stored: Partial<PersistedSettings> = {};
+      try {
+        const value = await SecureStore.getItemAsync(STORAGE_KEY);
+        stored = value ? parseSettings(value) : {};
+      } catch {
+        const pending = pendingHydrationPatch;
+        pendingHydrationPatch = {};
+        set({ hydrated: true });
+        // An update made before a failed read still deserves the same write
+        // path as any other update. There is no stored blob to merge in this
+        // case, so the current state is the only recoverable value.
+        if (Object.keys(pending).length > 0) {
+          await enqueueSave(pickPersisted(get()));
+        }
+        return;
+      }
+
+      const pending = pendingHydrationPatch;
+      pendingHydrationPatch = {};
+      set({ ...defaults, ...stored, ...pending, hydrated: true });
+
+      // An update that arrived while the read was in flight must be written
+      // after the stored blob has been merged, or it could erase unrelated
+      // preferences from that blob.
+      if (Object.keys(pending).length > 0) {
+        await enqueueSave(pickPersisted(get()));
+      }
+    })().finally(() => {
+      hydrationFlight = null;
+    });
+
+    return hydrationFlight;
   },
 
   async update(patch) {
     const next = { ...pickPersisted(get()), ...patch };
     set(next);
-    await SecureStore.setItemAsync(STORAGE_KEY, JSON.stringify(next), {
-      keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
-    });
+    if (!get().hydrated) {
+      pendingHydrationPatch = { ...pendingHydrationPatch, ...patch };
+      await get().hydrate();
+      return;
+    }
+    await enqueueSave(next);
+  },
+
+  setHomeLayout(layout) {
+    return get().update({ homeLayout: resolveHomeLayout(layout) });
   },
 }));
 
@@ -133,6 +205,13 @@ function parseSettings(value: string): Partial<PersistedSettings> {
       ...(typeof parsed.hapticsEnabled === 'boolean'
         ? { hapticsEnabled: parsed.hapticsEnabled }
         : {}),
+      ...(isHomeLayout(parsed.homeLayout) ? { homeLayout: parsed.homeLayout } : {}),
+      // Every field of a stored slot is checked, and a slot that fails any of
+      // them reads as no slot at all -- back to the system font, which is the
+      // state the app can always be in. The guard is not a formality: the file
+      // path inside a slot reaches `new File(...)`, so an unchecked one is a
+      // path traversal with a font on the end of it. See `parseFontSlot`.
+      ...slotPatch('interfaceFont', parsed.interfaceFont),
       // Anything unrecognised -- a locale we dropped, a hand-edited file, a
       // build that shipped a code we no longer have a catalog for -- falls
       // through to the default and the app follows the system again.
@@ -140,6 +219,7 @@ function parseSettings(value: string): Partial<PersistedSettings> {
       ...(typeof parsed.liveActivityEnabled === 'boolean'
         ? { liveActivityEnabled: parsed.liveActivityEnabled }
         : {}),
+      ...slotPatch('monoFont', parsed.monoFont),
       ...(typeof parsed.notificationsEnabled === 'boolean'
         ? { notificationsEnabled: parsed.notificationsEnabled }
         : {}),
@@ -170,18 +250,45 @@ function parseSettings(value: string): Partial<PersistedSettings> {
   }
 }
 
+/**
+ * One slot, checked, or nothing at all.
+ *
+ * A helper rather than a spread at each call site, because the two slots are
+ * the same sentence and a copy of it is a second place for one of them to stop
+ * being guarded.
+ */
+function slotPatch(key: 'interfaceFont' | 'monoFont', value: unknown): Partial<PersistedSettings> {
+  const slot = parseFontSlot(value);
+  return slot ? { [key]: slot } : {};
+}
+
 function pickPersisted(state: AppSettingsState): PersistedSettings {
   return {
     agentDefaultView: state.agentDefaultView,
     androidWidgetEnabled: state.androidWidgetEnabled,
     appLockEnabled: state.appLockEnabled,
     hapticsEnabled: state.hapticsEnabled,
+    homeLayout: state.homeLayout,
+    interfaceFont: state.interfaceFont,
     language: state.language,
     liveActivityEnabled: state.liveActivityEnabled,
+    monoFont: state.monoFont,
     notificationsEnabled: state.notificationsEnabled,
     serverCardPanes: state.serverCardPanes,
     showTerminalKeyRow: state.showTerminalKeyRow,
     terminalTextSize: state.terminalTextSize,
     themePack: state.themePack,
   };
+}
+
+function enqueueSave(value: PersistedSettings): Promise<void> {
+  const write = saveQueue.then(() =>
+    SecureStore.setItemAsync(STORAGE_KEY, JSON.stringify(value), {
+      keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
+    })
+  );
+  // Keep the queue usable after a failed write while preserving the rejection
+  // for the caller that initiated that write.
+  saveQueue = write.catch(() => {});
+  return write;
 }

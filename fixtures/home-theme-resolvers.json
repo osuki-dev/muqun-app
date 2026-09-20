@@ -1,0 +1,547 @@
+{
+  "format": "muqun-home-theme-resolvers",
+  "fixtureVersion": 1,
+  "themeSchemaVersion": 1,
+  "sources": {
+    "app": [
+      {
+        "path": "src/theme/resolve.ts",
+        "sha256": "a852b1be5fb719aa4caddd537afac60bfc073c2a6e27a095f6922da90b5de290"
+      },
+      {
+        "path": "src/theme/home-hero.ts",
+        "sha256": "ff1462660c84e0f5a5f20bfa51dcea03047f0c4c83d658915a15a10057561a17"
+      },
+      {
+        "path": "src/theme/schema.ts",
+        "sha256": "8452fa9c68ff967b8aaba4540f4545677b1d07e4b25560081508e2dfb3c44591"
+      }
+    ]
+  },
+  "cases": [
+    {
+      "id": "no-custom-theme",
+      "manifest": null,
+      "queries": [
+        {
+          "id": "theme-light-compact",
+          "mode": "light",
+          "width": "compact"
+        },
+        {
+          "id": "shown-dark-regular",
+          "mode": "dark",
+          "width": "regular",
+          "preference": "shown"
+        }
+      ],
+      "expectedIdentity": {
+        "name": "Muqun",
+        "logo": {
+          "mode": "default"
+        },
+        "showBrand": true
+      },
+      "expected": [
+        {
+          "id": "theme-light-compact",
+          "hero": null,
+          "directImage": null
+        },
+        {
+          "id": "shown-dark-regular",
+          "hero": null,
+          "directImage": null
+        }
+      ]
+    },
+    {
+      "id": "omitted-identity",
+      "manifest": {
+        "format": "muqun-theme",
+        "schemaVersion": 1,
+        "id": "omitted-identity",
+        "name": "omitted-identity",
+        "version": "1.0.0",
+        "decoration": {
+          "home.hero": {
+            "asset": "hero",
+            "fit": "contain"
+          }
+        }
+      },
+      "queries": [
+        {
+          "id": "theme-light-compact",
+          "mode": "light",
+          "width": "compact"
+        },
+        {
+          "id": "theme-dark-regular",
+          "mode": "dark",
+          "width": "regular"
+        }
+      ],
+      "expectedIdentity": {
+        "name": null,
+        "logo": null,
+        "showBrand": false
+      },
+      "expected": [
+        {
+          "id": "theme-light-compact",
+          "hero": {
+            "slot": "home.hero",
+            "image": {
+              "asset": "hero",
+              "fit": "contain"
+            }
+          },
+          "directImage": {
+            "asset": "hero",
+            "fit": "contain"
+          }
+        },
+        {
+          "id": "theme-dark-regular",
+          "hero": {
+            "slot": "home.hero",
+            "image": {
+              "asset": "hero",
+              "fit": "contain"
+            }
+          },
+          "directImage": {
+            "asset": "hero",
+            "fit": "contain"
+          }
+        }
+      ]
+    },
+    {
+      "id": "custom-identity-and-mode",
+      "manifest": {
+        "format": "muqun-theme",
+        "schemaVersion": 1,
+        "id": "custom-identity-and-mode",
+        "name": "custom-identity-and-mode",
+        "version": "1.0.0",
+        "homeIdentity": {
+          "name": {
+            "mode": "custom",
+            "text": "Muqun Lab"
+          },
+          "logo": {
+            "mode": "custom",
+            "asset": "brand"
+          },
+          "hero": {
+            "mode": "default"
+          }
+        },
+        "decoration": {
+          "home.hero": {
+            "asset": "hero-light",
+            "fit": "contain",
+            "regular": {
+              "asset": "hero-light-regular",
+              "opacity": 0.8
+            }
+          }
+        },
+        "variantDecorations": {
+          "dark": {
+            "home.hero": {
+              "asset": "hero-dark",
+              "fit": "cover",
+              "regular": {
+                "asset": "hero-dark-regular"
+              }
+            }
+          }
+        }
+      },
+      "queries": [
+        {
+          "id": "light-compact",
+          "mode": "light",
+          "width": "compact"
+        },
+        {
+          "id": "light-regular",
+          "mode": "light",
+          "width": "regular"
+        },
+        {
+          "id": "dark-compact",
+          "mode": "dark",
+          "width": "compact"
+        },
+        {
+          "id": "dark-regular",
+          "mode": "dark",
+          "width": "regular"
+        }
+      ],
+      "expectedIdentity": {
+        "name": "Muqun Lab",
+        "logo": {
+          "mode": "custom",
+          "asset": "brand"
+        },
+        "showBrand": true
+      },
+      "expected": [
+        {
+          "id": "light-compact",
+          "hero": {
+            "slot": "home.hero",
+            "image": {
+              "asset": "hero-light",
+              "fit": "contain"
+            }
+          },
+          "directImage": {
+            "asset": "hero-light",
+            "fit": "contain"
+          }
+        },
+        {
+          "id": "light-regular",
+          "hero": {
+            "slot": "home.hero",
+            "image": {
+              "asset": "hero-light-regular",
+              "opacity": 0.8
+            }
+          },
+          "directImage": {
+            "asset": "hero-light-regular",
+            "opacity": 0.8
+          }
+        },
+        {
+          "id": "dark-compact",
+          "hero": {
+            "slot": "home.hero",
+            "image": {
+              "asset": "hero-dark",
+              "fit": "cover"
+            }
+          },
+          "directImage": {
+            "asset": "hero-dark",
+            "fit": "cover"
+          }
+        },
+        {
+          "id": "dark-regular",
+          "hero": {
+            "slot": "home.hero",
+            "image": {
+              "asset": "hero-dark-regular"
+            }
+          },
+          "directImage": {
+            "asset": "hero-dark-regular"
+          }
+        }
+      ]
+    },
+    {
+      "id": "default-identity",
+      "manifest": {
+        "format": "muqun-theme",
+        "schemaVersion": 1,
+        "id": "default-identity",
+        "name": "default-identity",
+        "version": "1.0.0",
+        "homeIdentity": {
+          "name": {
+            "mode": "default"
+          },
+          "logo": {
+            "mode": "default"
+          },
+          "hero": {
+            "mode": "default"
+          }
+        },
+        "decoration": {
+          "home.hero": {
+            "asset": "hero"
+          }
+        }
+      },
+      "queries": [
+        {
+          "id": "theme-light-compact",
+          "mode": "light",
+          "width": "compact"
+        }
+      ],
+      "expectedIdentity": {
+        "name": "Muqun",
+        "logo": {
+          "mode": "default"
+        },
+        "showBrand": true
+      },
+      "expected": [
+        {
+          "id": "theme-light-compact",
+          "hero": {
+            "slot": "home.hero",
+            "image": {
+              "asset": "hero"
+            }
+          },
+          "directImage": {
+            "asset": "hero"
+          }
+        }
+      ]
+    },
+    {
+      "id": "hidden-identity-reader-override",
+      "manifest": {
+        "format": "muqun-theme",
+        "schemaVersion": 1,
+        "id": "hidden-identity-reader-override",
+        "name": "hidden-identity-reader-override",
+        "version": "1.0.0",
+        "homeIdentity": {
+          "name": {
+            "mode": "hidden"
+          },
+          "logo": {
+            "mode": "hidden"
+          },
+          "hero": {
+            "mode": "hidden"
+          }
+        },
+        "decoration": {
+          "home.hero": {
+            "asset": "hero"
+          }
+        }
+      },
+      "queries": [
+        {
+          "id": "theme",
+          "mode": "light",
+          "width": "compact"
+        },
+        {
+          "id": "shown",
+          "mode": "light",
+          "width": "compact",
+          "preference": "shown"
+        },
+        {
+          "id": "hidden",
+          "mode": "light",
+          "width": "compact",
+          "preference": "hidden"
+        }
+      ],
+      "expectedIdentity": {
+        "name": null,
+        "logo": null,
+        "showBrand": false
+      },
+      "expected": [
+        {
+          "id": "theme",
+          "hero": null,
+          "directImage": {
+            "asset": "hero"
+          }
+        },
+        {
+          "id": "shown",
+          "hero": {
+            "slot": "home.hero",
+            "image": {
+              "asset": "hero"
+            }
+          },
+          "directImage": {
+            "asset": "hero"
+          }
+        },
+        {
+          "id": "hidden",
+          "hero": null,
+          "directImage": {
+            "asset": "hero"
+          }
+        }
+      ]
+    },
+    {
+      "id": "explicit-fallback",
+      "manifest": {
+        "format": "muqun-theme",
+        "schemaVersion": 1,
+        "id": "explicit-fallback",
+        "name": "explicit-fallback",
+        "version": "1.0.0",
+        "decoration": {
+          "emptyState.illustration": {
+            "asset": "empty",
+            "fit": "contain"
+          }
+        }
+      },
+      "queries": [
+        {
+          "id": "theme-no-fallback",
+          "mode": "light",
+          "width": "compact"
+        },
+        {
+          "id": "shown-fallback",
+          "mode": "light",
+          "width": "compact",
+          "preference": "shown",
+          "directFallbackSlot": "emptyState.illustration"
+        },
+        {
+          "id": "shown-fallback-regular",
+          "mode": "dark",
+          "width": "regular",
+          "preference": "shown",
+          "directFallbackSlot": "emptyState.illustration"
+        }
+      ],
+      "expectedIdentity": {
+        "name": null,
+        "logo": null,
+        "showBrand": false
+      },
+      "expected": [
+        {
+          "id": "theme-no-fallback",
+          "hero": null,
+          "directImage": null
+        },
+        {
+          "id": "shown-fallback",
+          "hero": {
+            "slot": "emptyState.illustration",
+            "image": {
+              "asset": "empty",
+              "fit": "contain"
+            }
+          },
+          "directImage": {
+            "asset": "empty",
+            "fit": "contain"
+          }
+        },
+        {
+          "id": "shown-fallback-regular",
+          "hero": {
+            "slot": "emptyState.illustration",
+            "image": {
+              "asset": "empty",
+              "fit": "contain"
+            }
+          },
+          "directImage": {
+            "asset": "empty",
+            "fit": "contain"
+          }
+        }
+      ]
+    },
+    {
+      "id": "responsive-null-and-disabled",
+      "manifest": {
+        "format": "muqun-theme",
+        "schemaVersion": 1,
+        "id": "responsive-null-and-disabled",
+        "name": "responsive-null-and-disabled",
+        "version": "1.0.0",
+        "decoration": {
+          "home.hero": {
+            "asset": "hero-base",
+            "compact": null,
+            "regular": {
+              "asset": "hero-regular"
+            }
+          },
+          "emptyState.illustration": {
+            "asset": "empty"
+          }
+        },
+        "variantDecorations": {
+          "dark": {
+            "home.hero": null
+          }
+        }
+      },
+      "queries": [
+        {
+          "id": "light-compact-null",
+          "mode": "light",
+          "width": "compact"
+        },
+        {
+          "id": "light-regular-object",
+          "mode": "light",
+          "width": "regular"
+        },
+        {
+          "id": "dark-compact-explicit-null",
+          "mode": "dark",
+          "width": "compact",
+          "directFallbackSlot": "emptyState.illustration"
+        },
+        {
+          "id": "decorations-disabled",
+          "mode": "light",
+          "width": "regular",
+          "decorationsEnabled": false,
+          "directFallbackSlot": "emptyState.illustration"
+        }
+      ],
+      "expectedIdentity": {
+        "name": null,
+        "logo": null,
+        "showBrand": false
+      },
+      "expected": [
+        {
+          "id": "light-compact-null",
+          "hero": null,
+          "directImage": null
+        },
+        {
+          "id": "light-regular-object",
+          "hero": {
+            "slot": "home.hero",
+            "image": {
+              "asset": "hero-regular"
+            }
+          },
+          "directImage": {
+            "asset": "hero-regular"
+          }
+        },
+        {
+          "id": "dark-compact-explicit-null",
+          "hero": null,
+          "directImage": null
+        },
+        {
+          "id": "decorations-disabled",
+          "hero": null,
+          "directImage": null
+        }
+      ]
+    }
+  ]
+}
