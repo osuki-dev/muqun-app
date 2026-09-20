@@ -855,10 +855,6 @@ msgstr "확인 중…"
 msgid "Choose a gateway"
 msgstr "Gateway 선택"
 
-#: src/components/home-launch-actions.tsx
-msgid "Choose a gateway first"
-msgstr "먼저 Gateway를 선택하세요"
-
 #: src/components/agent-model-sheet.tsx
 #: src/components/agent-workbench.tsx
 msgid "Choose a model"
@@ -1448,6 +1444,7 @@ msgstr "파일을 불러오지 못했습니다"
 msgid "Could not load models"
 msgstr "모델을 불러올 수 없습니다"
 
+#: src/components/agent-subagent-detail-sheet.tsx
 #: src/components/agent-workbench.tsx
 msgid "Could not load the session"
 msgstr "세션을 불러오지 못했습니다"
@@ -2291,6 +2288,7 @@ msgid "How to use Muqun"
 msgstr "Muqun 사용법"
 
 #: src/components/agent-session-tree-sheet.tsx
+#: src/components/home-recent-sessions.tsx
 #: src/i18n/labels.ts
 msgid "Idle"
 msgstr "대기"
@@ -2801,16 +2799,13 @@ msgstr "새 그룹"
 msgid "New host key"
 msgstr "새 호스트 키"
 
-#: src/components/home-launch-actions.tsx
-msgid "New OpenCode"
-msgstr "새 OpenCode"
-
 #: src/components/collaboration-notice.tsx
 msgid "New output available · refresh"
 msgstr "새 출력 있음 · 새로 고침"
 
 #: src/app/agent.tsx
 #: src/components/agent-workbench.tsx
+#: src/components/home-launch-actions.tsx
 msgid "New session"
 msgstr "새 세션"
 
@@ -2913,6 +2908,7 @@ msgid "No other assistants in this session yet."
 msgstr "이 세션에 아직 다른 어시스턴트가 없습니다"
 
 #: src/components/agent-background-tray.tsx
+#: src/components/agent-subagent-detail-sheet.tsx
 msgid "No output yet."
 msgstr "아직 출력이 없습니다"
 
@@ -3703,6 +3699,7 @@ msgid "Reconnecting · {0}"
 msgstr "다시 연결 중 · {0}"
 
 #: src/components/agent-background-tray.tsx
+#: src/components/agent-subagent-detail-sheet.tsx
 #: src/components/session-map.tsx
 msgid "Refresh"
 msgstr "새로고침"
@@ -3862,6 +3859,7 @@ msgstr "{0} 업로드 다시 시도"
 
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-workbench.tsx
+#: src/components/home-recent-sessions.tsx
 msgid "Retrying…"
 msgstr "다시 시도하는 중…"
 
@@ -3980,6 +3978,7 @@ msgid "Run the Gateway on your machine and scan the QR code it prints. The pairi
 msgstr "내 컴퓨터에서 Gateway를 실행하고 화면에 출력된 QR 코드를 스캔하세요. 페어링 정보는 이 기기에만 남습니다"
 
 #: src/components/agent-session-tree-sheet.tsx
+#: src/components/home-recent-sessions.tsx
 msgid "Running"
 msgstr "실행 중"
 
@@ -4232,10 +4231,12 @@ msgid "Session tree"
 msgstr "세션 트리"
 
 #: src/components/agent-session-tree-sheet.tsx
+#: src/components/agent-subagent-detail-sheet.tsx
 msgid "Session unavailable"
 msgstr "세션을 사용할 수 없음"
 
 #: src/components/agent-sessions-sheet.tsx
+#: src/components/home-launch-actions.tsx
 #: src/components/home-recent-sessions.tsx
 #: src/components/session-map.tsx
 msgid "Sessions"
@@ -4590,6 +4591,7 @@ msgstr "상태를 확인할 수 없음"
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-workbench.tsx
 #: src/components/collaboration-notice.tsx
+#: src/components/home-recent-sessions.tsx
 msgid "Status unknown"
 msgstr "알 수 없는 상태"
 
@@ -4637,6 +4639,7 @@ msgstr "이 명령 중지"
 
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-workbench.tsx
+#: src/components/home-recent-sessions.tsx
 msgid "Stopped"
 msgstr "중지됨"
 
@@ -4649,6 +4652,7 @@ msgid "subagent"
 msgstr "서브에이전트"
 
 #: src/components/agent-mode-sheet.tsx
+#: src/components/agent-subagent-detail-sheet.tsx
 msgid "Subagent"
 msgstr "서브에이전트"
 
@@ -5049,6 +5053,7 @@ msgstr "기록을 대화 형태로 보여 주고 도구 단계는 접어 둡니�
 
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-workbench.tsx
+#: src/components/home-recent-sessions.tsx
 msgid "The turn failed"
 msgstr "이번 턴이 실패했습니다"
 
@@ -5315,6 +5320,7 @@ msgid "Trust"
 msgstr "신뢰"
 
 #: src/app/new-task.tsx
+#: src/components/agent-subagent-detail-sheet.tsx
 #: src/components/app-error-boundary.tsx
 #: src/components/asset-viewer.tsx
 #: src/components/git-diff-view.tsx
@@ -5453,6 +5459,7 @@ msgstr "지원하지 않는 항목 ({0})"
 #: src/components/agent-composer.tsx
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-sessions-sheet.tsx
+#: src/components/agent-subagent-detail-sheet.tsx
 msgid "Untitled session"
 msgstr "제목 없는 세션"
 

@@ -855,10 +855,6 @@ msgstr "Wird geprüft…"
 msgid "Choose a gateway"
 msgstr "Gateway auswählen"
 
-#: src/components/home-launch-actions.tsx
-msgid "Choose a gateway first"
-msgstr "Wähle zuerst ein Gateway"
-
 #: src/components/agent-model-sheet.tsx
 #: src/components/agent-workbench.tsx
 msgid "Choose a model"
@@ -1448,6 +1444,7 @@ msgstr "Dateien konnten nicht geladen werden"
 msgid "Could not load models"
 msgstr "Modelle konnten nicht geladen werden"
 
+#: src/components/agent-subagent-detail-sheet.tsx
 #: src/components/agent-workbench.tsx
 msgid "Could not load the session"
 msgstr "Sitzung konnte nicht geladen werden"
@@ -2291,6 +2288,7 @@ msgid "How to use Muqun"
 msgstr "Muqun verwenden"
 
 #: src/components/agent-session-tree-sheet.tsx
+#: src/components/home-recent-sessions.tsx
 #: src/i18n/labels.ts
 msgid "Idle"
 msgstr "Inaktiv"
@@ -2801,16 +2799,13 @@ msgstr "Neue Gruppe"
 msgid "New host key"
 msgstr "Neuer Host-Schlüssel"
 
-#: src/components/home-launch-actions.tsx
-msgid "New OpenCode"
-msgstr "Neues OpenCode"
-
 #: src/components/collaboration-notice.tsx
 msgid "New output available · refresh"
 msgstr "Neue Ausgabe verfügbar · aktualisieren"
 
 #: src/app/agent.tsx
 #: src/components/agent-workbench.tsx
+#: src/components/home-launch-actions.tsx
 msgid "New session"
 msgstr "Neue Sitzung"
 
@@ -2913,6 +2908,7 @@ msgid "No other assistants in this session yet."
 msgstr "In dieser Sitzung gibt es noch keine weiteren Assistenten"
 
 #: src/components/agent-background-tray.tsx
+#: src/components/agent-subagent-detail-sheet.tsx
 msgid "No output yet."
 msgstr "Noch keine Ausgabe"
 
@@ -3703,6 +3699,7 @@ msgid "Reconnecting · {0}"
 msgstr "Neuer Verbindungsversuch · {0}"
 
 #: src/components/agent-background-tray.tsx
+#: src/components/agent-subagent-detail-sheet.tsx
 #: src/components/session-map.tsx
 msgid "Refresh"
 msgstr "Aktualisieren"
@@ -3862,6 +3859,7 @@ msgstr "Upload von {0} wiederholen"
 
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-workbench.tsx
+#: src/components/home-recent-sessions.tsx
 msgid "Retrying…"
 msgstr "Erneuter Versuch…"
 
@@ -3980,6 +3978,7 @@ msgid "Run the Gateway on your machine and scan the QR code it prints. The pairi
 msgstr "Starte das Gateway auf deinem Rechner und scanne den QR-Code, den es ausgibt. Die Kopplung bleibt auf diesem Gerät"
 
 #: src/components/agent-session-tree-sheet.tsx
+#: src/components/home-recent-sessions.tsx
 msgid "Running"
 msgstr "Läuft"
 
@@ -4232,10 +4231,12 @@ msgid "Session tree"
 msgstr "Sitzungsbaum"
 
 #: src/components/agent-session-tree-sheet.tsx
+#: src/components/agent-subagent-detail-sheet.tsx
 msgid "Session unavailable"
 msgstr "Sitzung nicht verfügbar"
 
 #: src/components/agent-sessions-sheet.tsx
+#: src/components/home-launch-actions.tsx
 #: src/components/home-recent-sessions.tsx
 #: src/components/session-map.tsx
 msgid "Sessions"
@@ -4590,6 +4591,7 @@ msgstr "Status nicht verfügbar"
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-workbench.tsx
 #: src/components/collaboration-notice.tsx
+#: src/components/home-recent-sessions.tsx
 msgid "Status unknown"
 msgstr "Status unbekannt"
 
@@ -4637,6 +4639,7 @@ msgstr "Diesen Befehl stoppen"
 
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-workbench.tsx
+#: src/components/home-recent-sessions.tsx
 msgid "Stopped"
 msgstr "Gestoppt"
 
@@ -4649,6 +4652,7 @@ msgid "subagent"
 msgstr "Subagent"
 
 #: src/components/agent-mode-sheet.tsx
+#: src/components/agent-subagent-detail-sheet.tsx
 msgid "Subagent"
 msgstr "Subagent"
 
@@ -5049,6 +5053,7 @@ msgstr "Das Protokoll als Unterhaltung, mit eingeklappten Tool-Schritten"
 
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-workbench.tsx
+#: src/components/home-recent-sessions.tsx
 msgid "The turn failed"
 msgstr "Der Durchlauf ist fehlgeschlagen"
 
@@ -5315,6 +5320,7 @@ msgid "Trust"
 msgstr "Vertrauen"
 
 #: src/app/new-task.tsx
+#: src/components/agent-subagent-detail-sheet.tsx
 #: src/components/app-error-boundary.tsx
 #: src/components/asset-viewer.tsx
 #: src/components/git-diff-view.tsx
@@ -5453,6 +5459,7 @@ msgstr "Nicht unterstütztes Element ({0})"
 #: src/components/agent-composer.tsx
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-sessions-sheet.tsx
+#: src/components/agent-subagent-detail-sheet.tsx
 msgid "Untitled session"
 msgstr "Sitzung ohne Titel"
 

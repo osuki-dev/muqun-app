@@ -855,10 +855,6 @@ msgstr "检查中…"
 msgid "Choose a gateway"
 msgstr "选择 Gateway"
 
-#: src/components/home-launch-actions.tsx
-msgid "Choose a gateway first"
-msgstr "请先选择 Gateway"
-
 #: src/components/agent-model-sheet.tsx
 #: src/components/agent-workbench.tsx
 msgid "Choose a model"
@@ -1448,6 +1444,7 @@ msgstr "无法加载文件"
 msgid "Could not load models"
 msgstr "无法加载模型"
 
+#: src/components/agent-subagent-detail-sheet.tsx
 #: src/components/agent-workbench.tsx
 msgid "Could not load the session"
 msgstr "无法加载会话"
@@ -2291,6 +2288,7 @@ msgid "How to use Muqun"
 msgstr "如何使用 Muqun"
 
 #: src/components/agent-session-tree-sheet.tsx
+#: src/components/home-recent-sessions.tsx
 #: src/i18n/labels.ts
 msgid "Idle"
 msgstr "空闲"
@@ -2801,16 +2799,13 @@ msgstr "新建分组"
 msgid "New host key"
 msgstr "新的主机密钥"
 
-#: src/components/home-launch-actions.tsx
-msgid "New OpenCode"
-msgstr "新建 OpenCode"
-
 #: src/components/collaboration-notice.tsx
 msgid "New output available · refresh"
 msgstr "有新输出 · 点击刷新"
 
 #: src/app/agent.tsx
 #: src/components/agent-workbench.tsx
+#: src/components/home-launch-actions.tsx
 msgid "New session"
 msgstr "新建会话"
 
@@ -2913,6 +2908,7 @@ msgid "No other assistants in this session yet."
 msgstr "这个会话里还没有其他助手"
 
 #: src/components/agent-background-tray.tsx
+#: src/components/agent-subagent-detail-sheet.tsx
 msgid "No output yet."
 msgstr "还没有输出"
 
@@ -3703,6 +3699,7 @@ msgid "Reconnecting · {0}"
 msgstr "重新连接中 · {0}"
 
 #: src/components/agent-background-tray.tsx
+#: src/components/agent-subagent-detail-sheet.tsx
 #: src/components/session-map.tsx
 msgid "Refresh"
 msgstr "刷新"
@@ -3862,6 +3859,7 @@ msgstr "重试上传 {0}"
 
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-workbench.tsx
+#: src/components/home-recent-sessions.tsx
 msgid "Retrying…"
 msgstr "正在重试…"
 
@@ -3980,6 +3978,7 @@ msgid "Run the Gateway on your machine and scan the QR code it prints. The pairi
 msgstr "在你的电脑上运行 Gateway，然后扫描它打印出的二维码。配对信息只保存在本设备上"
 
 #: src/components/agent-session-tree-sheet.tsx
+#: src/components/home-recent-sessions.tsx
 msgid "Running"
 msgstr "运行中"
 
@@ -4232,10 +4231,12 @@ msgid "Session tree"
 msgstr "会话树"
 
 #: src/components/agent-session-tree-sheet.tsx
+#: src/components/agent-subagent-detail-sheet.tsx
 msgid "Session unavailable"
 msgstr "会话不可用"
 
 #: src/components/agent-sessions-sheet.tsx
+#: src/components/home-launch-actions.tsx
 #: src/components/home-recent-sessions.tsx
 #: src/components/session-map.tsx
 msgid "Sessions"
@@ -4590,6 +4591,7 @@ msgstr "暂时无法获取状态"
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-workbench.tsx
 #: src/components/collaboration-notice.tsx
+#: src/components/home-recent-sessions.tsx
 msgid "Status unknown"
 msgstr "状态未知"
 
@@ -4637,6 +4639,7 @@ msgstr "停止这条命令"
 
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-workbench.tsx
+#: src/components/home-recent-sessions.tsx
 msgid "Stopped"
 msgstr "已停止"
 
@@ -4649,6 +4652,7 @@ msgid "subagent"
 msgstr "子智能体"
 
 #: src/components/agent-mode-sheet.tsx
+#: src/components/agent-subagent-detail-sheet.tsx
 msgid "Subagent"
 msgstr "子代理"
 
@@ -5049,6 +5053,7 @@ msgstr "把对话记录当成聊天呈现，并收起工具步骤"
 
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-workbench.tsx
+#: src/components/home-recent-sessions.tsx
 msgid "The turn failed"
 msgstr "这一轮执行失败"
 
@@ -5315,6 +5320,7 @@ msgid "Trust"
 msgstr "信任"
 
 #: src/app/new-task.tsx
+#: src/components/agent-subagent-detail-sheet.tsx
 #: src/components/app-error-boundary.tsx
 #: src/components/asset-viewer.tsx
 #: src/components/git-diff-view.tsx
@@ -5453,6 +5459,7 @@ msgstr "暂不支持的内容（{0}）"
 #: src/components/agent-composer.tsx
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-sessions-sheet.tsx
+#: src/components/agent-subagent-detail-sheet.tsx
 msgid "Untitled session"
 msgstr "未命名会话"
 

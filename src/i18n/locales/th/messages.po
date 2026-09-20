@@ -855,10 +855,6 @@ msgstr "กำลังตรวจสอบ…"
 msgid "Choose a gateway"
 msgstr "เลือก Gateway"
 
-#: src/components/home-launch-actions.tsx
-msgid "Choose a gateway first"
-msgstr "เลือก Gateway ก่อน"
-
 #: src/components/agent-model-sheet.tsx
 #: src/components/agent-workbench.tsx
 msgid "Choose a model"
@@ -1448,6 +1444,7 @@ msgstr "โหลดไฟล์ไม่ได้"
 msgid "Could not load models"
 msgstr "ไม่สามารถโหลดโมเดลได้"
 
+#: src/components/agent-subagent-detail-sheet.tsx
 #: src/components/agent-workbench.tsx
 msgid "Could not load the session"
 msgstr "โหลดเซสชันไม่สำเร็จ"
@@ -2291,6 +2288,7 @@ msgid "How to use Muqun"
 msgstr "วิธีใช้ Muqun"
 
 #: src/components/agent-session-tree-sheet.tsx
+#: src/components/home-recent-sessions.tsx
 #: src/i18n/labels.ts
 msgid "Idle"
 msgstr "ว่าง"
@@ -2801,16 +2799,13 @@ msgstr "กลุ่มใหม่"
 msgid "New host key"
 msgstr "คีย์โฮสต์ใหม่"
 
-#: src/components/home-launch-actions.tsx
-msgid "New OpenCode"
-msgstr "OpenCode ใหม่"
-
 #: src/components/collaboration-notice.tsx
 msgid "New output available · refresh"
 msgstr "มีเอาต์พุตใหม่ · รีเฟรช"
 
 #: src/app/agent.tsx
 #: src/components/agent-workbench.tsx
+#: src/components/home-launch-actions.tsx
 msgid "New session"
 msgstr "เซสชันใหม่"
 
@@ -2913,6 +2908,7 @@ msgid "No other assistants in this session yet."
 msgstr "ยังไม่มีผู้ช่วยอื่นในเซสชันนี้"
 
 #: src/components/agent-background-tray.tsx
+#: src/components/agent-subagent-detail-sheet.tsx
 msgid "No output yet."
 msgstr "ยังไม่มีผลลัพธ์"
 
@@ -3703,6 +3699,7 @@ msgid "Reconnecting · {0}"
 msgstr "กำลังเชื่อมต่อใหม่ · {0}"
 
 #: src/components/agent-background-tray.tsx
+#: src/components/agent-subagent-detail-sheet.tsx
 #: src/components/session-map.tsx
 msgid "Refresh"
 msgstr "รีเฟรช"
@@ -3862,6 +3859,7 @@ msgstr "ลองอัปโหลด {0} อีกครั้ง"
 
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-workbench.tsx
+#: src/components/home-recent-sessions.tsx
 msgid "Retrying…"
 msgstr "กำลังลองใหม่…"
 
@@ -3980,6 +3978,7 @@ msgid "Run the Gateway on your machine and scan the QR code it prints. The pairi
 msgstr "เรียกใช้ Gateway บนเครื่องของคุณแล้วสแกน QR ที่แสดง การจับคู่จะเก็บอยู่บนอุปกรณ์นี้"
 
 #: src/components/agent-session-tree-sheet.tsx
+#: src/components/home-recent-sessions.tsx
 msgid "Running"
 msgstr "กำลังทำงาน"
 
@@ -4232,10 +4231,12 @@ msgid "Session tree"
 msgstr "แผนผังเซสชัน"
 
 #: src/components/agent-session-tree-sheet.tsx
+#: src/components/agent-subagent-detail-sheet.tsx
 msgid "Session unavailable"
 msgstr "เซสชันไม่พร้อมใช้งาน"
 
 #: src/components/agent-sessions-sheet.tsx
+#: src/components/home-launch-actions.tsx
 #: src/components/home-recent-sessions.tsx
 #: src/components/session-map.tsx
 msgid "Sessions"
@@ -4590,6 +4591,7 @@ msgstr "สถานะไม่พร้อมใช้งาน"
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-workbench.tsx
 #: src/components/collaboration-notice.tsx
+#: src/components/home-recent-sessions.tsx
 msgid "Status unknown"
 msgstr "ไม่ทราบสถานะ"
 
@@ -4637,6 +4639,7 @@ msgstr "หยุดคำสั่งนี้"
 
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-workbench.tsx
+#: src/components/home-recent-sessions.tsx
 msgid "Stopped"
 msgstr "หยุดแล้ว"
 
@@ -4649,6 +4652,7 @@ msgid "subagent"
 msgstr "ซับเอเจนต์"
 
 #: src/components/agent-mode-sheet.tsx
+#: src/components/agent-subagent-detail-sheet.tsx
 msgid "Subagent"
 msgstr "เอเจนต์ย่อย"
 
@@ -5049,6 +5053,7 @@ msgstr "บันทึกในรูปแบบบทสนทนา โด�
 
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-workbench.tsx
+#: src/components/home-recent-sessions.tsx
 msgid "The turn failed"
 msgstr "รอบนี้ล้มเหลว"
 
@@ -5315,6 +5320,7 @@ msgid "Trust"
 msgstr "เชื่อถือ"
 
 #: src/app/new-task.tsx
+#: src/components/agent-subagent-detail-sheet.tsx
 #: src/components/app-error-boundary.tsx
 #: src/components/asset-viewer.tsx
 #: src/components/git-diff-view.tsx
@@ -5453,6 +5459,7 @@ msgstr "รายการที่ยังไม่รองรับ ({0})"
 #: src/components/agent-composer.tsx
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-sessions-sheet.tsx
+#: src/components/agent-subagent-detail-sheet.tsx
 msgid "Untitled session"
 msgstr "เซสชันไม่มีชื่อ"
 

@@ -855,10 +855,6 @@ msgstr "確認中…"
 msgid "Choose a gateway"
 msgstr "Gateway を選択"
 
-#: src/components/home-launch-actions.tsx
-msgid "Choose a gateway first"
-msgstr "先に Gateway を選択"
-
 #: src/components/agent-model-sheet.tsx
 #: src/components/agent-workbench.tsx
 msgid "Choose a model"
@@ -1448,6 +1444,7 @@ msgstr "ファイルを読み込めませんでした"
 msgid "Could not load models"
 msgstr "モデルを読み込めませんでした"
 
+#: src/components/agent-subagent-detail-sheet.tsx
 #: src/components/agent-workbench.tsx
 msgid "Could not load the session"
 msgstr "セッションを読み込めませんでした"
@@ -2291,6 +2288,7 @@ msgid "How to use Muqun"
 msgstr "Muqun の使い方"
 
 #: src/components/agent-session-tree-sheet.tsx
+#: src/components/home-recent-sessions.tsx
 #: src/i18n/labels.ts
 msgid "Idle"
 msgstr "待機"
@@ -2801,16 +2799,13 @@ msgstr "新しいグループ"
 msgid "New host key"
 msgstr "新しいホスト鍵"
 
-#: src/components/home-launch-actions.tsx
-msgid "New OpenCode"
-msgstr "新しい OpenCode"
-
 #: src/components/collaboration-notice.tsx
 msgid "New output available · refresh"
 msgstr "新しい出力があります · 更新"
 
 #: src/app/agent.tsx
 #: src/components/agent-workbench.tsx
+#: src/components/home-launch-actions.tsx
 msgid "New session"
 msgstr "新規セッション"
 
@@ -2913,6 +2908,7 @@ msgid "No other assistants in this session yet."
 msgstr "このセッションには他のアシスタントがまだいません"
 
 #: src/components/agent-background-tray.tsx
+#: src/components/agent-subagent-detail-sheet.tsx
 msgid "No output yet."
 msgstr "まだ出力はありません"
 
@@ -3703,6 +3699,7 @@ msgid "Reconnecting · {0}"
 msgstr "再接続中 · {0}"
 
 #: src/components/agent-background-tray.tsx
+#: src/components/agent-subagent-detail-sheet.tsx
 #: src/components/session-map.tsx
 msgid "Refresh"
 msgstr "更新"
@@ -3862,6 +3859,7 @@ msgstr "{0} のアップロードを再試行"
 
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-workbench.tsx
+#: src/components/home-recent-sessions.tsx
 msgid "Retrying…"
 msgstr "再試行しています…"
 
@@ -3980,6 +3978,7 @@ msgid "Run the Gateway on your machine and scan the QR code it prints. The pairi
 msgstr "自分のマシンで Gateway を起動し、表示された QR コードをスキャンします。ペアリング情報はこのデバイスの中だけに残ります"
 
 #: src/components/agent-session-tree-sheet.tsx
+#: src/components/home-recent-sessions.tsx
 msgid "Running"
 msgstr "実行中"
 
@@ -4232,10 +4231,12 @@ msgid "Session tree"
 msgstr "セッションツリー"
 
 #: src/components/agent-session-tree-sheet.tsx
+#: src/components/agent-subagent-detail-sheet.tsx
 msgid "Session unavailable"
 msgstr "セッションを利用できません"
 
 #: src/components/agent-sessions-sheet.tsx
+#: src/components/home-launch-actions.tsx
 #: src/components/home-recent-sessions.tsx
 #: src/components/session-map.tsx
 msgid "Sessions"
@@ -4590,6 +4591,7 @@ msgstr "状態を取得できません"
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-workbench.tsx
 #: src/components/collaboration-notice.tsx
+#: src/components/home-recent-sessions.tsx
 msgid "Status unknown"
 msgstr "状態不明"
 
@@ -4637,6 +4639,7 @@ msgstr "このコマンドを停止"
 
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-workbench.tsx
+#: src/components/home-recent-sessions.tsx
 msgid "Stopped"
 msgstr "停止しました"
 
@@ -4649,6 +4652,7 @@ msgid "subagent"
 msgstr "サブエージェント"
 
 #: src/components/agent-mode-sheet.tsx
+#: src/components/agent-subagent-detail-sheet.tsx
 msgid "Subagent"
 msgstr "サブエージェント"
 
@@ -5049,6 +5053,7 @@ msgstr "やり取りを会話として表示し、ツールの手順は折りた
 
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-workbench.tsx
+#: src/components/home-recent-sessions.tsx
 msgid "The turn failed"
 msgstr "この処理は失敗しました"
 
@@ -5315,6 +5320,7 @@ msgid "Trust"
 msgstr "信頼する"
 
 #: src/app/new-task.tsx
+#: src/components/agent-subagent-detail-sheet.tsx
 #: src/components/app-error-boundary.tsx
 #: src/components/asset-viewer.tsx
 #: src/components/git-diff-view.tsx
@@ -5453,6 +5459,7 @@ msgstr "未対応の項目 ({0})"
 #: src/components/agent-composer.tsx
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-sessions-sheet.tsx
+#: src/components/agent-subagent-detail-sheet.tsx
 msgid "Untitled session"
 msgstr "タイトルなしのセッション"
 

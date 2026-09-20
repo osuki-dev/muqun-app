@@ -633,7 +633,9 @@ export function HomeOverview({
                     selectedServerId={record?.serverId}
                     reachabilityByServer={padReachabilityByServer}
                     onNewOpenCode={commands.newOpenCode}
+                    onOpenOpenCode={commands.openOpenCode}
                     onNewTerminal={commands.newTerminal}
+                    onOpenTerminal={commands.openServer}
                     onSsh={commands.openSsh}
                     onPair={commands.pairGateway}
                     onDemo={!loading && !hydrationError && !hasPairedServer ? openDemo : undefined}

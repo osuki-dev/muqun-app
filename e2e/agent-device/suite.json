@@ -4738,6 +4738,35 @@
         "run": "flows/settings-home-layout.ad#editorial-home"
       },
       {
+        "target": {
+          "id": "home-open-opencode"
+        },
+        "mode": "visible",
+        "timeout": 8000,
+        "run": "flows/settings-home-layout.ad#rail-visible"
+      },
+      {
+        "point": [0.8, 0.34],
+        "delta": [-0.55, 0],
+        "run": "flows/settings-home-layout.ad#rail-swipe"
+      },
+      {
+        "target": {
+          "id": "home-open-terminal"
+        },
+        "mode": "visible",
+        "timeout": 8000,
+        "run": "flows/settings-home-layout.ad#rail-end-visible"
+      },
+      {
+        "target": {
+          "id": "home-open-ssh"
+        },
+        "mode": "visible",
+        "timeout": 8000,
+        "run": "flows/settings-home-layout.ad#rail-end-visible"
+      },
+      {
         "run": "flows/settings-home-layout.ad#relaunch-editorial"
       },
       {

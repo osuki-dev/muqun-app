@@ -855,10 +855,6 @@ msgstr "Đang kiểm tra…"
 msgid "Choose a gateway"
 msgstr "Chọn Gateway"
 
-#: src/components/home-launch-actions.tsx
-msgid "Choose a gateway first"
-msgstr "Trước tiên hãy chọn Gateway"
-
 #: src/components/agent-model-sheet.tsx
 #: src/components/agent-workbench.tsx
 msgid "Choose a model"
@@ -1448,6 +1444,7 @@ msgstr "Không thể tải tệp"
 msgid "Could not load models"
 msgstr "Không thể tải mô hình"
 
+#: src/components/agent-subagent-detail-sheet.tsx
 #: src/components/agent-workbench.tsx
 msgid "Could not load the session"
 msgstr "Không thể tải phiên"
@@ -2291,6 +2288,7 @@ msgid "How to use Muqun"
 msgstr "Cách dùng Muqun"
 
 #: src/components/agent-session-tree-sheet.tsx
+#: src/components/home-recent-sessions.tsx
 #: src/i18n/labels.ts
 msgid "Idle"
 msgstr "Rảnh"
@@ -2801,16 +2799,13 @@ msgstr "Nhóm mới"
 msgid "New host key"
 msgstr "Khóa host mới"
 
-#: src/components/home-launch-actions.tsx
-msgid "New OpenCode"
-msgstr "OpenCode mới"
-
 #: src/components/collaboration-notice.tsx
 msgid "New output available · refresh"
 msgstr "Có đầu ra mới · làm mới"
 
 #: src/app/agent.tsx
 #: src/components/agent-workbench.tsx
+#: src/components/home-launch-actions.tsx
 msgid "New session"
 msgstr "Phiên mới"
 
@@ -2913,6 +2908,7 @@ msgid "No other assistants in this session yet."
 msgstr "Phiên này chưa có trợ lý nào khác"
 
 #: src/components/agent-background-tray.tsx
+#: src/components/agent-subagent-detail-sheet.tsx
 msgid "No output yet."
 msgstr "Chưa có kết quả nào"
 
@@ -3703,6 +3699,7 @@ msgid "Reconnecting · {0}"
 msgstr "Đang kết nối lại · {0}"
 
 #: src/components/agent-background-tray.tsx
+#: src/components/agent-subagent-detail-sheet.tsx
 #: src/components/session-map.tsx
 msgid "Refresh"
 msgstr "Làm mới"
@@ -3862,6 +3859,7 @@ msgstr "Thử tải lên lại {0}"
 
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-workbench.tsx
+#: src/components/home-recent-sessions.tsx
 msgid "Retrying…"
 msgstr "Đang thử lại…"
 
@@ -3980,6 +3978,7 @@ msgid "Run the Gateway on your machine and scan the QR code it prints. The pairi
 msgstr "Chạy Gateway trên máy của bạn và quét mã QR nó in ra. Việc ghép nối ở lại trên thiết bị này"
 
 #: src/components/agent-session-tree-sheet.tsx
+#: src/components/home-recent-sessions.tsx
 msgid "Running"
 msgstr "Đang chạy"
 
@@ -4232,10 +4231,12 @@ msgid "Session tree"
 msgstr "Cây phiên"
 
 #: src/components/agent-session-tree-sheet.tsx
+#: src/components/agent-subagent-detail-sheet.tsx
 msgid "Session unavailable"
 msgstr "Phiên không khả dụng"
 
 #: src/components/agent-sessions-sheet.tsx
+#: src/components/home-launch-actions.tsx
 #: src/components/home-recent-sessions.tsx
 #: src/components/session-map.tsx
 msgid "Sessions"
@@ -4590,6 +4591,7 @@ msgstr "Không lấy được trạng thái"
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-workbench.tsx
 #: src/components/collaboration-notice.tsx
+#: src/components/home-recent-sessions.tsx
 msgid "Status unknown"
 msgstr "Chưa rõ trạng thái"
 
@@ -4637,6 +4639,7 @@ msgstr "Dừng lệnh này"
 
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-workbench.tsx
+#: src/components/home-recent-sessions.tsx
 msgid "Stopped"
 msgstr "Đã dừng"
 
@@ -4649,6 +4652,7 @@ msgid "subagent"
 msgstr "tác nhân con"
 
 #: src/components/agent-mode-sheet.tsx
+#: src/components/agent-subagent-detail-sheet.tsx
 msgid "Subagent"
 msgstr "Tác nhân phụ"
 
@@ -5049,6 +5053,7 @@ msgstr "Bản ghi dưới dạng cuộc trò chuyện, với các bước công 
 
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-workbench.tsx
+#: src/components/home-recent-sessions.tsx
 msgid "The turn failed"
 msgstr "Lượt này đã thất bại"
 
@@ -5315,6 +5320,7 @@ msgid "Trust"
 msgstr "Tin cậy"
 
 #: src/app/new-task.tsx
+#: src/components/agent-subagent-detail-sheet.tsx
 #: src/components/app-error-boundary.tsx
 #: src/components/asset-viewer.tsx
 #: src/components/git-diff-view.tsx
@@ -5453,6 +5459,7 @@ msgstr "Mục chưa được hỗ trợ ({0})"
 #: src/components/agent-composer.tsx
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-sessions-sheet.tsx
+#: src/components/agent-subagent-detail-sheet.tsx
 msgid "Untitled session"
 msgstr "Phiên chưa có tên"
 
