@@ -133,6 +133,35 @@ describe('home recents domain', () => {
     ]);
     expect(store.getState().entries[0]?.atMs).toBe(100);
   });
+
+  test('updates a title in place without creating or reordering a recent visit', async () => {
+    const saved: string[] = [];
+    const store = createHomeRecentsStore({
+      load: async () => null,
+      save: async (value) => {
+        saved.push(value);
+      },
+    });
+    await store.getState().hydrate();
+    await store.getState().visit(terminal('first'), 'ses_first', 10);
+    await store.getState().visit(terminal('second'), 'Second', 20);
+
+    await store.getState().updateTitle(terminal('first'), '  Real\u0000 title  ');
+
+    expect(store.getState().entries.map((item) => item.title)).toEqual(['Second', 'Real title']);
+    expect(store.getState().entries[1]).toMatchObject({
+      key: homeTargetKey(terminal('first')),
+      target: terminal('first'),
+      atMs: 10,
+    });
+    await store.getState().updateTitle(terminal('missing'), 'Should not appear');
+    expect(store.getState().entries).toHaveLength(2);
+    expect(JSON.parse(saved.at(-1) as string).entries[1]).toMatchObject({
+      target: terminal('first'),
+      title: 'Real title',
+      atMs: 10,
+    });
+  });
 });
 
 describe('home recents state', () => {
@@ -208,6 +237,59 @@ describe('home recents state', () => {
     load.resolve(serializeHomeRecents([entry(terminal('removed'), 'Gone', 3)]));
     await Promise.all([hydrating, removing]);
     expect(store.getState().entries).toEqual([]);
+  });
+
+  test('a title update cannot revive a row removed during hydration', async () => {
+    const load = deferred<string | null>();
+    const saved: string[] = [];
+    const store = createHomeRecentsStore({
+      load: () => load.promise,
+      save: async (value) => {
+        saved.push(value);
+      },
+    });
+    const target = terminal('removed-title');
+    const hydrating = store.getState().hydrate();
+    const removing = store.getState().remove(target);
+    const updating = store.getState().updateTitle(target, 'New title');
+    load.resolve(serializeHomeRecents([entry(target, 'Old title', 3)]));
+
+    await Promise.all([hydrating, removing, updating]);
+
+    expect(store.getState().entries).toEqual([]);
+    expect(JSON.parse(saved.at(-1) as string).entries).toEqual([]);
+  });
+
+  test('a title update made during hydration keeps the current order and timestamp', async () => {
+    const load = deferred<string | null>();
+    const saved: string[] = [];
+    const store = createHomeRecentsStore({
+      load: () => load.promise,
+      save: async (value) => {
+        saved.push(value);
+      },
+    });
+    const target = terminal('renamed-title');
+    const hydrating = store.getState().hydrate();
+    const visiting = store.getState().visit(target, 'ses_renamed-title', 8);
+    const updating = store.getState().updateTitle(target, 'Real title');
+    load.resolve(
+      serializeHomeRecents([entry(target, 'Old title', 2), entry(ssh('other'), 'Other')])
+    );
+
+    await Promise.all([hydrating, visiting, updating]);
+
+    expect(store.getState().entries[0]).toMatchObject({
+      target,
+      title: 'Real title',
+      atMs: 8,
+    });
+    expect(store.getState().entries[1]?.target).toEqual(ssh('other'));
+    expect(JSON.parse(saved.at(-1) as string).entries[0]).toMatchObject({
+      target,
+      title: 'Real title',
+      atMs: 8,
+    });
   });
 
   test('read failure still hydrates and later writes recover after a save error', async () => {

@@ -596,6 +596,7 @@ export function HomeOverview({
                   <HomeHero
                     resolution={heroResolution}
                     scrollY={scrollY}
+                    maxHeight={isPad ? 180 : 150}
                     onAvailabilityChange={(available) => {
                       if (!available) setFailedHeroSource(heroResolution.source);
                     }}
@@ -614,7 +615,9 @@ export function HomeOverview({
                       />
                     ) : null}
                     {identity.name ? (
-                      <Text variant="heading" style={{ flex: 1, minWidth: 0 }}>
+                      <Text
+                        variant="heading"
+                        style={{ flex: 1, minWidth: 0, fontSize: 28, lineHeight: 36 }}>
                         {identity.name}
                       </Text>
                     ) : null}
@@ -628,6 +631,7 @@ export function HomeOverview({
                   <HomeLaunchActions
                     servers={records}
                     selectedServerId={record?.serverId}
+                    reachabilityByServer={padReachabilityByServer}
                     onNewOpenCode={commands.newOpenCode}
                     onNewTerminal={commands.newTerminal}
                     onSsh={commands.openSsh}
@@ -641,6 +645,9 @@ export function HomeOverview({
                   <HomeRecentSessions
                     servers={records}
                     hosts={sshRows}
+                    onOpenPane={(serverId, paneId) => {
+                      void commands.openServer(serverId, paneId);
+                    }}
                     onOpen={(target) => {
                       void commands.resumeTarget(target);
                     }}
@@ -675,15 +682,19 @@ export function HomeOverview({
                 ) : undefined
               }
               headerAction={
-                <Button
-                  accessibilityLabel={t`Settings`}
-                  onPress={() => void commands.manageConnections()}>
-                  {t`Settings`}
-                </Button>
-              }
-              controls={
-                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 16 }}>
-                  <Button onPress={() => void commands.pairGateway()}>{t`Pair a gateway`}</Button>
+                <View style={{ flexDirection: 'row', gap: 8 }}>
+                  <HeaderButton
+                    editorial
+                    label={t`Scan a gateway QR`}
+                    onPress={() => void commands.pairGateway()}>
+                    <ScanLine size={20} color={theme.colors.text} strokeWidth={1.8} />
+                  </HeaderButton>
+                  <HeaderButton
+                    editorial
+                    label={t`Settings`}
+                    onPress={() => void commands.manageConnections()}>
+                    <Settings size={20} color={theme.colors.text} strokeWidth={1.8} />
+                  </HeaderButton>
                 </View>
               }
             />
@@ -1135,11 +1146,13 @@ function HeaderButton({
   label,
   onPress,
   children,
+  editorial = false,
 }: {
   testID?: string;
   label: string;
   onPress: () => void;
   children: ReactNode;
+  editorial?: boolean;
 }) {
   const theme = useThemeTokens();
   const background = useSurfaceBackground();
@@ -1153,6 +1166,13 @@ function HeaderButton({
       style={[
         styles.headerButton,
         { backgroundColor: background(theme.colors.surface), overflow: 'hidden' },
+        editorial && {
+          width: 44,
+          height: 44,
+          borderRadius: 5,
+          borderWidth: StyleSheet.hairlineWidth,
+          borderColor: theme.colors.borderStrong,
+        },
       ]}>
       <ThemedSurfaceArtwork slot="navigation.background" baseColor={theme.colors.surface} />
       {children}

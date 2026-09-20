@@ -27,6 +27,8 @@ export type HomeRecentsState = {
   hydrate: () => Promise<void>;
   /** Records a user-selected destination. Token/output activity never calls this. */
   visit: (target: HomeTarget, title?: string, atMs?: number) => Promise<void>;
+  /** Updates display metadata in place without creating or reordering a visit. */
+  updateTitle: (target: HomeTarget, title: string) => Promise<void>;
   /** Removes references to unpaired servers and deleted SSH hosts. */
   keepOnly: (allowlist: HomeRecentsAllowlist) => Promise<void>;
   remove: (target: HomeTarget) => Promise<void>;
@@ -161,6 +163,31 @@ export function createHomeRecentsState(
       else await requestWrite();
     };
 
+    const updateTitle = async (target: HomeTarget, title: string): Promise<void> => {
+      const normalized = createHomeRecentEntry(target, title, 0);
+      if (!normalized) return;
+      if (allowed && !isHomeRecentEntryAllowed(normalized, allowed)) return;
+
+      const before = get().entries;
+      const index = before.findIndex((item) => item.key === normalized.key);
+      if (index < 0) return;
+      const current = before[index];
+      if (!current || current.title === normalized.title) {
+        await hydrate();
+        return;
+      }
+
+      const titleWasDuringHydration = !hydrated;
+      if (titleWasDuringHydration) changedDuringHydration.add(normalized.key);
+      const next = before.slice();
+      next[index] = { ...current, title: normalized.title };
+      set({ entries: next });
+
+      await hydrate();
+      if (titleWasDuringHydration) await writeDrain;
+      else await requestWrite();
+    };
+
     const remove = async (target: HomeTarget): Promise<void> => {
       const normalized = createHomeRecentEntry(target, '', 0);
       if (!normalized) return;
@@ -197,6 +224,7 @@ export function createHomeRecentsState(
       entries: [],
       hydrate,
       visit,
+      updateTitle,
       keepOnly,
       remove,
     };

@@ -407,6 +407,7 @@ function RootContent() {
                   options={sheetRouteOptions('settings-home-layout')}
                 />
                 <Stack.Screen name="new-task" options={sheetRouteOptions('new-task')} />
+                <Stack.Screen name="home-target" options={sheetRouteOptions('home-target')} />
                 <Stack.Screen name="web-service" options={sheetRouteOptions('web-service')} />
                 {/*
               A full-screen modal, not a sheet, and the route file says why at

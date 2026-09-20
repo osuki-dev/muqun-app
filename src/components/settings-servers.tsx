@@ -88,10 +88,8 @@ export function SettingsServers({ title }: { title: string }) {
     useGatewayRecord();
   const probes = useServerReachability((state) => state.probes);
   const refreshReachability = useServerReachability((state) => state.refresh);
-  const homeLayout = useAppSettings((state) => state.homeLayout);
   const serverCardPanes = useAppSettings((state) => state.serverCardPanes);
   const update = useAppSettings((state) => state.update);
-  const homeLayoutLabel = homeLayout === 'editorial' ? t`Editorial` : t`Classic`;
   // The one piece of history a record the app is not attached to still has:
   // the last time `/servers/[serverId]` actually heard back from it, mirrored
   // to disk for the home screen's agent chips (`stores/server-agents.ts`).
@@ -254,17 +252,6 @@ export function SettingsServers({ title }: { title: string }) {
           onChange={(value) => void update({ serverCardPanes: value as ServerCardPanes })}
         />
       </SettingsBlock>
-      <SettingsChoiceRow
-        label={t`Home layout`}
-        value={homeLayoutLabel}
-        detail={t`Choose how Home is arranged.`}
-        accessibilityLabel={
-          // react-doctor-disable-next-line react-hooks-js/todo -- Lingui expands this macro before React Compiler runs.
-          t`Home layout, ${homeLayoutLabel}`
-        }
-        testID="settings-home-layout-row"
-        onPress={() => router.push('/settings-home-layout')}
-      />
     </SettingsSection>
   );
 }

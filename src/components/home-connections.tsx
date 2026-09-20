@@ -6,6 +6,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { PressableScale } from '@/components/pressable-scale';
 import { Text } from '@/components/text';
+import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { reachabilityDescription } from '@/i18n/labels';
 import type { GatewayRecord } from '@/lib/gateway-storage';
 import { serverIdsNeedingAddress } from '@/lib/server-address';
@@ -33,6 +34,7 @@ export function HomeConnections({
 }) {
   const { t } = useLingui();
   const theme = useThemeTokens();
+  const background = useSurfaceBackground();
   const addresses = serverIdsNeedingAddress(servers);
   return (
     <View testID="home-connections" style={styles.list}>
@@ -53,7 +55,13 @@ export function HomeConnections({
           accessibilityRole="button"
           accessibilityLabel={`${host.label}, ${t`Saved SSH host`}`}
           onPress={() => onOpenHost(host.id)}
-          style={[styles.row, { borderBottomColor: theme.colors.border }]}>
+          style={[
+            styles.row,
+            {
+              borderBottomColor: theme.colors.border,
+              backgroundColor: background(theme.colors.surface),
+            },
+          ]}>
           <SquareTerminal size={21} color={theme.colors.primary} />
           <View style={styles.copy}>
             <Text weight="semibold" variant="bodySmall" numberOfLines={2}>
@@ -101,6 +109,7 @@ function GatewayConnectionRow({
 }) {
   const { _ } = useLinguiRuntime();
   const theme = useThemeTokens();
+  const background = useSurfaceBackground();
   const probe = useServerReachability((state) => state.probes[server.serverId]);
   const reachability = resolveServerReachability(server.serverId, probe, activeConnection, nowMs);
   const status = _(reachabilityDescription[reachability]);
@@ -110,7 +119,13 @@ function GatewayConnectionRow({
       accessibilityRole="button"
       accessibilityLabel={`${server.label}, ${status}`}
       onPress={() => onOpen(server.serverId)}
-      style={[styles.row, { borderBottomColor: theme.colors.border }]}>
+      style={[
+        styles.row,
+        {
+          borderBottomColor: theme.colors.border,
+          backgroundColor: background(theme.colors.surface),
+        },
+      ]}>
       <Server size={21} color={theme.colors.primary} />
       <View style={styles.copy}>
         <Text weight="semibold" variant="bodySmall" numberOfLines={2}>
@@ -138,6 +153,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
     paddingVertical: 12,
+    paddingHorizontal: 12,
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
   copy: { flex: 1, minWidth: 0, gap: 4 },

@@ -87,13 +87,20 @@ export function HomeHero({
   scrollY,
   resolution,
   onAvailabilityChange,
+  maxHeight,
 }: {
   scrollY: SharedValue<number>;
   resolution: ResolvedHomeHeroAsset;
   onAvailabilityChange?: (available: boolean) => void;
+  /** A composition may use a smaller illustration without changing the theme asset. */
+  maxHeight?: number;
 }) {
   const { width } = useWindowDimensions();
-  const band = homeHeroMaxHeight(width);
+  const defaultBand = homeHeroMaxHeight(width);
+  const band =
+    maxHeight !== undefined && Number.isFinite(maxHeight) && maxHeight > 0
+      ? Math.min(defaultBand, maxHeight)
+      : defaultBand;
   // A source change owns a new decoder. Skia's asynchronous loader otherwise
   // keeps the previous image alive until the next URI has decoded.
   return (

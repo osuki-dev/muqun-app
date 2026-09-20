@@ -90,6 +90,8 @@ import {
   sendAgentCommand,
   orderKeyAfter,
   formatModelName,
+  hasRealSessionTitle,
+  sessionTitleOr,
   isBusyStatus,
   inboxItemText,
   type WorkspaceMissing,
@@ -558,6 +560,24 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     [serverId, sessionId]
   );
   /**
+   * An auto-title or explicit rename changes display metadata only. Updating a
+   * recent row must never count as another visit, because doing so would move
+   * it ahead of targets the reader opened later.
+   */
+  const syncHomeRecentTitle = useCallback(
+    (asid: string, title: string, directory?: string) => {
+      if (!hasRealSessionTitle({ asid, title })) return;
+      const knownDirectory =
+        directory ??
+        (asid === activeAsidRef.current
+          ? activeDirectoryRef.current
+          : sessionsRef.current.find((session) => session.asid === asid)?.directory);
+      const target = homeTargetFor(asid, knownDirectory);
+      if (target) void useHomeRecentsStore.getState().updateTitle(target, title);
+    },
+    [homeTargetFor]
+  );
+  /**
    * The directory the open session said it was in.
    *
    * What tells "the reader switched workspace" from "the session we just opened
@@ -971,6 +991,9 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         if (list) {
           if (!directory) hostListCompleteRef.current = list.length < SESSION_LIST_LIMIT;
           setSessions(list);
+          for (const info of list) {
+            syncHomeRecentTitle(info.asid, info.title, info.directory);
+          }
           // Coming in from Home lands on the session the reader last opened,
           // and only falls back to newest activity when there is no such
           // session any more. Newest activity alone meant an agent finishing a
@@ -1012,7 +1035,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         if (ownsList()) initialCheckDoneRef.current = true;
       }
     },
-    [applySelectedModel, initialIntent, ownsWorkbench, serverId, sessionId]
+    [applySelectedModel, initialIntent, ownsWorkbench, serverId, sessionId, syncHomeRecentTitle]
   );
 
   /**
@@ -1274,6 +1297,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         const info = snap.info;
         if (info) {
           setSessionInfo(info);
+          syncHomeRecentTitle(info.asid, info.title, info.directory);
           if (info.directory) {
             snapshotDirectoryRef.current = info.directory;
             activeDirectoryRef.current = info.directory;
@@ -1291,7 +1315,9 @@ export const AgentWorkbench = memo(function AgentWorkbench({
             // This is the only entry visit publisher: silent resyncs and
             // output effects never turn background activity into a recent row.
             if (mode === 'enter' && appActiveRef.current) {
-              void useHomeRecentsStore.getState().visit(target, info.title, observedAt);
+              void useHomeRecentsStore
+                .getState()
+                .visit(target, sessionTitleOr(info, ''), observedAt);
             }
             // Permission ids are the complete summary. The prompt and
             // resources remain in the source workbench only.
@@ -1446,6 +1472,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       follow,
       handleAutoPermission,
       homeTargetFor,
+      syncHomeRecentTitle,
       serverId,
       showToast,
       t,
@@ -1599,6 +1626,11 @@ export const AgentWorkbench = memo(function AgentWorkbench({
            * empty transcript. OpenCode announces each one.
            */
           if (info.deleted) {
+            const deletedTarget = homeTargetFor(info.asid, info.directory);
+            if (deletedTarget) {
+              void useHomeRecentsStore.getState().remove(deletedTarget);
+              useHomeAttention.getState().observe(deletedTarget, [], Date.now());
+            }
             setSessions((prev) => prev.filter((session) => session.asid !== info.asid));
             setChildrenByParent((prev) => dropSession(prev, info.asid));
             if (info.asid === activeAsid) {
@@ -1613,6 +1645,8 @@ export const AgentWorkbench = memo(function AgentWorkbench({
             }
             break;
           }
+
+          syncHomeRecentTitle(info.asid, info.title, info.directory);
 
           if (forActiveSession) {
             setSessionInfo((prev) =>
@@ -1734,6 +1768,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       applyViewed,
       handleAutoPermission,
       homeTargetFor,
+      syncHomeRecentTitle,
     ]
   );
 
@@ -2460,6 +2495,12 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         sessions.find((session) => session.asid === asid)?.title ??
         (sessionInfo?.asid === asid ? sessionInfo.title : undefined);
       if (previous === next) return;
+      const renameDirectory =
+        asid === activeAsidRef.current
+          ? (activeDirectoryRef.current ??
+            (sessionInfo?.asid === asid ? sessionInfo.directory : undefined))
+          : sessions.find((session) => session.asid === asid)?.directory;
+      const renameTarget = homeTargetFor(asid, renameDirectory);
 
       const apply = (value: string) => {
         setSessions((prev) =>
@@ -2470,18 +2511,24 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       };
 
       apply(next);
-      renameAgentSession(asid, next).catch((err) => {
-        console.warn('Failed to rename session:', err);
-        // Back to what it was called, rather than leaving a name on screen that
-        // exists nowhere else.
-        if (previous !== undefined) apply(previous);
-        showScreenNotice(
-          t`Could not rename`,
-          formatAgentErrorMessage(err, t`OpenCode service is offline`)
-        );
-      });
+      renameAgentSession(asid, next)
+        .then(() => {
+          if (renameTarget) {
+            void useHomeRecentsStore.getState().updateTitle(renameTarget, next);
+          }
+        })
+        .catch((err) => {
+          console.warn('Failed to rename session:', err);
+          // Back to what it was called, rather than leaving a name on screen that
+          // exists nowhere else.
+          if (previous !== undefined) apply(previous);
+          showScreenNotice(
+            t`Could not rename`,
+            formatAgentErrorMessage(err, t`OpenCode service is offline`)
+          );
+        });
     },
-    [sessions, sessionInfo, showScreenNotice, t]
+    [homeTargetFor, sessions, sessionInfo, showScreenNotice, t]
   );
 
   /**
@@ -2497,6 +2544,13 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       const previousSessions = sessions;
       const previousChildren = childrenByParent;
       const wasActive = asid === activeAsid;
+      const deletedInfo =
+        sessions.find((session) => session.asid === asid) ??
+        Object.values(childrenByParent)
+          .flat()
+          .find((session) => session.asid === asid);
+      // Capture identity before the optimistic navigation changes the active session.
+      const deletedTarget = homeTargetFor(asid, deletedInfo?.directory);
 
       const remaining = sessions.filter((session) => session.asid !== asid);
       setSessions(remaining);
@@ -2514,21 +2568,28 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         setSessionInfo(next ?? null);
       }
 
-      deleteAgentSession(asid).catch((err) => {
-        console.warn('Failed to delete session:', err);
-        setSessions(previousSessions);
-        setChildrenByParent(previousChildren);
-        if (wasActive) {
-          activeAsidRef.current = asid;
-          setActiveAsid(asid);
-        }
-        showScreenNotice(
-          t`Could not delete`,
-          formatAgentErrorMessage(err, t`OpenCode service is offline`)
-        );
-      });
+      deleteAgentSession(asid)
+        .then(() => {
+          if (deletedTarget) {
+            void useHomeRecentsStore.getState().remove(deletedTarget);
+            useHomeAttention.getState().observe(deletedTarget, [], Date.now());
+          }
+        })
+        .catch((err) => {
+          console.warn('Failed to delete session:', err);
+          setSessions(previousSessions);
+          setChildrenByParent(previousChildren);
+          if (wasActive) {
+            activeAsidRef.current = asid;
+            setActiveAsid(asid);
+          }
+          showScreenNotice(
+            t`Could not delete`,
+            formatAgentErrorMessage(err, t`OpenCode service is offline`)
+          );
+        });
     },
-    [setTimeline, sessions, childrenByParent, activeAsid, showScreenNotice, t]
+    [setTimeline, sessions, childrenByParent, activeAsid, homeTargetFor, showScreenNotice, t]
   );
 
   const handleSelectWorkspace = useCallback(

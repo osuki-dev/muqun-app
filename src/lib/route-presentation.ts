@@ -58,6 +58,7 @@ export const sheetRoutePresentations: Readonly<Record<string, SheetPresentation>
   // The Skia farm: a canvas that takes every touch on it, edge to edge.
   simfarm: 'fullscreen',
   'new-task': 'sheet',
+  'home-target': 'sheet',
   // The agent's pickers. Every one of them is a destination -- pick a model,
   // pick a workspace, read a diff -- so every one is a route rather than a
   // `<Modal>` the workbench keeps mounted whether it is open or not.
@@ -110,6 +111,7 @@ export const sheetRouteDetents: Readonly<Record<string, SheetDetents>> = {
   'settings-home-layout': 'expandable',
   // Full height leaves room for the composer and keyboard.
   'new-task': 'expandable',
+  'home-target': 'expandable',
   // Open a web service (card #829). One field with a row of shortcuts over it:
   // a full-height sheet for a port number would be the app implying the task is
   // bigger than typing four digits.
@@ -221,6 +223,7 @@ export const sheetRouteContent: Readonly<Record<string, SheetContent>> = {
   // that jumps to full height to ask for two fields is louder than the
   // question.
   'new-task': 'short',
+  'home-target': 'list',
   'web-service': 'short',
 };
 

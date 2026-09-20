@@ -6,6 +6,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { PressableScale } from '@/components/pressable-scale';
 import { Text } from '@/components/text';
+import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import type { GatewayRecord } from '@/lib/gateway-storage';
 import type { HomeTarget } from '@/lib/home-recents';
 import { useHomeAttention } from '@/stores/home-attention';
@@ -28,6 +29,7 @@ export function HomeAttention({
   const { t } = useLingui();
   const { i18n } = useLinguiRuntime();
   const theme = useThemeTokens();
+  const background = useSurfaceBackground();
   const observations = useHomeAttention((state) => state.byTarget);
   const pending = Object.entries(observations).filter(
     ([, snapshot]) =>
@@ -35,11 +37,7 @@ export function HomeAttention({
       servers.some((server) => server.serverId === snapshot.target.serverId)
   );
   if (pending.length === 0) {
-    return (
-      <Text variant="caption" color={theme.colors.textMuted}>
-        {t`Open a session to check its requests.`}
-      </Text>
-    );
+    return null;
   }
   return (
     <View testID="home-attention" style={styles.list}>
@@ -56,7 +54,14 @@ export function HomeAttention({
             testID="home-attention-open"
             accessibilityRole="button"
             onPress={() => onOpen(snapshot.target)}
-            style={[styles.row, { borderColor: theme.colors.borderStrong }]}>
+            style={[
+              styles.row,
+              {
+                backgroundColor: background(theme.colors.surface),
+                borderColor: theme.colors.borderStrong,
+                borderLeftColor: theme.colors.warning,
+              },
+            ]}>
             <CircleAlert size={20} color={theme.colors.warning} />
             <View style={styles.copy}>
               <Text weight="semibold" variant="bodySmall">
@@ -81,7 +86,7 @@ export function HomeAttention({
 }
 
 const styles = StyleSheet.create({
-  list: { gap: 12, minWidth: 0 },
+  list: { gap: 12, minWidth: 0, marginTop: 16, marginBottom: 8 },
   row: {
     minHeight: 64,
     padding: 14,
@@ -89,7 +94,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: 8,
+    borderLeftWidth: 4,
+    borderRadius: 4,
   },
   copy: { flex: 1, minWidth: 0, gap: 4 },
 });

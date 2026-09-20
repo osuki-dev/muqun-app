@@ -11,13 +11,16 @@ import {
 
 import { Text } from '@/components/text';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
+import { useHasThemeArtwork } from '@/components/theme-artwork';
 
 import { getEditorialLayoutGeometry } from '@/lib/home-editorial-layout';
 export {
+  EDITORIAL_MASTHEAD_MIN_WIDTH,
   EDITORIAL_TWO_COLUMN_MIN_WIDTH,
   getEditorialLayoutGeometry,
   type EditorialLayoutGeometry,
   type EditorialLayoutMode,
+  type EditorialMastheadMode,
 } from '@/lib/home-editorial-layout';
 
 export type HomeEditorialLayoutProps = {
@@ -30,7 +33,7 @@ export type HomeEditorialLayoutProps = {
   /** Optional bounded artwork. The caller supplies the shared resolver's presence answer. */
   artwork?: ReactNode;
   artworkAvailable: boolean;
-  /** A native action kept beside the masthead copy. */
+  /** Native actions kept in the compact masthead utility row. */
   headerAction?: ReactNode;
   /** Start-new-work actions, already wired by the parent. */
   launches?: ReactNode;
@@ -46,59 +49,50 @@ export type HomeEditorialLayoutProps = {
 };
 
 type EditorialSectionProps = {
-  number: string;
   title: ReactNode;
   children: ReactNode;
   borderColor: string;
-  numberColor: string;
   textColor: string;
-  mutedColor: string;
-  surfaceColor: string;
   spacing: {
     md: number;
-    xl: number;
-    '2xl': number;
+    lg: number;
   };
+  first?: boolean;
 };
 
 function EditorialSection({
-  number,
   title,
   children,
   borderColor,
-  numberColor,
   textColor,
-  mutedColor,
-  surfaceColor,
   spacing,
+  first = false,
 }: EditorialSectionProps) {
+  const background = useSurfaceBackground();
+  const theme = useThemeTokens();
+  const hasScene = useHasThemeArtwork('home.background', 'shell.background');
   return (
-    <View style={[styles.section, { marginBottom: spacing['2xl'] }]}>
+    <View style={[styles.section, { marginTop: first ? 0 : spacing.lg, marginBottom: 0 }]}>
       <View style={[styles.sectionHeader, { borderBottomColor: borderColor }]}>
-        <Text variant="label" color={numberColor} hugSlack={false}>
-          {number}
-        </Text>
         <Text
           variant="heading"
           color={textColor}
-          style={styles.sectionTitle}
-          accessibilityRole="header">
+          accessibilityRole="header"
+          style={
+            hasScene
+              ? {
+                  alignSelf: 'flex-start',
+                  backgroundColor: background(theme.colors.surface),
+                  paddingHorizontal: 8,
+                  paddingVertical: 4,
+                  borderRadius: 4,
+                }
+              : undefined
+          }>
           {title}
         </Text>
       </View>
-      <View
-        style={[
-          styles.sectionBody,
-          {
-            backgroundColor: surfaceColor,
-            borderBottomColor: borderColor,
-            paddingTop: spacing.md,
-            paddingBottom: spacing.xl,
-          },
-        ]}>
-        <View style={styles.slotContent}>{children}</View>
-        <View style={[styles.sectionAsideRule, { backgroundColor: mutedColor }]} />
-      </View>
+      <View style={[styles.sectionContent, { marginTop: 8 }]}>{children}</View>
     </View>
   );
 }
@@ -138,60 +132,62 @@ export function HomeEditorialLayout({
 }: HomeEditorialLayoutProps) {
   const { t } = useLingui();
   const theme = useThemeTokens();
-  const surfaceBackground = useSurfaceBackground();
   const { fontScale: windowFontScale } = useWindowDimensions();
   const fontScale = fontScaleProp ?? windowFontScale;
   const hasAside = hasSlot(attention) || hasSlot(connections);
   const geometry = getEditorialLayoutGeometry(contentWidth, fontScale, hasAside);
-  const mastheadWide = geometry.mode === 'two-column' && artworkAvailable;
-  const backgroundColor = surfaceBackground(theme.colors.background);
-  const surfaceColor = surfaceBackground(theme.colors.surface);
-
-  const sectionProps = {
-    borderColor: theme.colors.border,
-    numberColor: theme.colors.primary,
-    textColor: theme.colors.text,
-    mutedColor: theme.colors.textSubtle,
-    surfaceColor,
-    spacing: theme.spacing,
-  };
+  const hasArtwork = artworkAvailable && hasSlot(artwork);
+  const mastheadWide = geometry.mastheadMode === 'side-by-side' && hasArtwork;
+  const hasHeaderAction = hasSlot(headerAction);
+  const mastheadText = (
+    <View style={styles.mastheadText}>
+      {hasSlot(identity) ? <View style={styles.identity}>{identity}</View> : null}
+      <View style={styles.kicker}>
+        <View style={[styles.kickerRule, { backgroundColor: theme.colors.primary }]} />
+        <Text variant="label" color={theme.colors.textMuted}>
+          {t`Home / Editorial`}
+        </Text>
+      </View>
+      {!hasSlot(identity) ? (
+        <Text
+          variant="heading"
+          color={theme.colors.text}
+          style={styles.title}
+          accessibilityRole="header">
+          {t`Workbench`}
+        </Text>
+      ) : null}
+    </View>
+  );
 
   return (
     <View
       testID="home-editorial-layout"
-      style={[styles.root, { backgroundColor, paddingHorizontal: geometry.gutter }, style]}>
-      <View style={[styles.masthead, mastheadWide && styles.mastheadWide]}>
-        <View style={[styles.mastheadCopy, mastheadWide && styles.mastheadCopyWide]}>
-          <View style={styles.mastheadTop}>
-            <View style={styles.mastheadText}>
-              {hasSlot(identity) ? <View style={styles.identity}>{identity}</View> : null}
-              <View style={styles.kicker}>
-                <View style={[styles.kickerRule, { backgroundColor: theme.colors.primary }]} />
-                <Text variant="label" color={theme.colors.textMuted}>
-                  {t`Home / Editorial`}
-                </Text>
+      style={[styles.root, { paddingHorizontal: geometry.gutter }, style]}>
+      <View style={styles.masthead}>
+        {hasArtwork ? (
+          <>
+            {hasHeaderAction ? (
+              <View style={styles.mastheadActionRow}>
+                <View style={styles.headerAction}>{headerAction}</View>
               </View>
-              <Text
-                variant="display"
-                color={theme.colors.text}
-                style={styles.title}
-                accessibilityRole="header">
-                {t`Workbench`}
-              </Text>
+            ) : null}
+            <View style={[styles.mastheadBody, mastheadWide && styles.mastheadWide]}>
+              <View style={[styles.mastheadCopy, mastheadWide && styles.mastheadCopyWide]}>
+                {mastheadText}
+              </View>
+              <View
+                style={[styles.artwork, mastheadWide ? styles.artworkWide : styles.artworkStacked]}>
+                {artwork}
+              </View>
             </View>
-            {hasSlot(headerAction) ? <View style={styles.headerAction}>{headerAction}</View> : null}
+          </>
+        ) : (
+          <View style={[styles.mastheadBody, hasHeaderAction && styles.mastheadNoArtRow]}>
+            <View style={styles.mastheadCopy}>{mastheadText}</View>
+            {hasHeaderAction ? <View style={styles.headerAction}>{headerAction}</View> : null}
           </View>
-        </View>
-        {artworkAvailable ? (
-          <View
-            style={[
-              styles.artwork,
-              { backgroundColor: surfaceColor, borderColor: theme.colors.border },
-              mastheadWide ? styles.artworkWide : styles.artworkStacked,
-            ]}>
-            {artwork}
-          </View>
-        ) : null}
+        )}
       </View>
 
       <View
@@ -207,23 +203,23 @@ export function HomeEditorialLayout({
             styles.main,
             geometry.mode === 'two-column' ? { width: geometry.mainWidth } : styles.fullWidth,
           ]}>
-          {hasSlot(launches) ? (
-            <EditorialSection {...sectionProps} number="01" title={t`Start`}>
-              {launches}
-            </EditorialSection>
-          ) : null}
+          {hasSlot(launches) ? <View style={styles.launches}>{launches}</View> : null}
+          {geometry.mode === 'one-column' && hasSlot(attention) ? attention : null}
           {hasSlot(recent) ? (
-            <EditorialSection {...sectionProps} number="02" title={t`Continue`}>
+            <EditorialSection
+              borderColor={theme.colors.border}
+              textColor={theme.colors.text}
+              spacing={theme.spacing}
+              title={t`Continue`}>
               {recent}
             </EditorialSection>
           ) : null}
-          {geometry.mode === 'one-column' && hasSlot(attention) ? (
-            <EditorialSection {...sectionProps} number="03" title={t`Attention`}>
-              {attention}
-            </EditorialSection>
-          ) : null}
           {geometry.mode === 'one-column' && hasSlot(connections) ? (
-            <EditorialSection {...sectionProps} number="04" title={t`Connections`}>
+            <EditorialSection
+              borderColor={theme.colors.border}
+              textColor={theme.colors.text}
+              spacing={theme.spacing}
+              title={t`Connections`}>
               {connections}
             </EditorialSection>
           ) : null}
@@ -231,13 +227,14 @@ export function HomeEditorialLayout({
 
         {geometry.mode === 'two-column' ? (
           <View style={[styles.aside, { width: geometry.asideWidth }]}>
-            {hasSlot(attention) ? (
-              <EditorialSection {...sectionProps} number="03" title={t`Attention`}>
-                {attention}
-              </EditorialSection>
-            ) : null}
+            {hasSlot(attention) ? attention : null}
             {hasSlot(connections) ? (
-              <EditorialSection {...sectionProps} number="04" title={t`Connections`}>
+              <EditorialSection
+                borderColor={theme.colors.border}
+                textColor={theme.colors.text}
+                spacing={theme.spacing}
+                first
+                title={t`Connections`}>
                 {connections}
               </EditorialSection>
             ) : null}
@@ -265,29 +262,38 @@ const styles = StyleSheet.create({
   root: {
     alignSelf: 'stretch',
     minWidth: 0,
-    paddingTop: 24,
+    paddingTop: 12,
     paddingBottom: 32,
   },
   masthead: {
     minWidth: 0,
-    marginBottom: 40,
+    marginBottom: 16,
+  },
+  mastheadActionRow: {
+    minWidth: 0,
+    minHeight: 0,
+    alignItems: 'flex-end',
+    marginBottom: 12,
+  },
+  mastheadBody: {
+    minWidth: 0,
+  },
+  mastheadNoArtRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    columnGap: 12,
   },
   mastheadWide: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    columnGap: 24,
+    columnGap: 20,
   },
   mastheadCopy: {
     minWidth: 0,
+    flex: 1,
   },
   mastheadCopyWide: {
     flex: 1,
-  },
-  mastheadTop: {
-    minWidth: 0,
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    columnGap: 16,
   },
   mastheadText: {
     flex: 1,
@@ -295,17 +301,18 @@ const styles = StyleSheet.create({
   },
   headerAction: {
     flexShrink: 0,
+    maxWidth: '100%',
   },
   identity: {
     minWidth: 0,
-    marginBottom: 24,
+    marginBottom: 12,
   },
   kicker: {
     minWidth: 0,
     flexDirection: 'row',
     alignItems: 'center',
     columnGap: 8,
-    marginBottom: 12,
+    marginBottom: 8,
   },
   kickerRule: {
     width: 24,
@@ -313,23 +320,25 @@ const styles = StyleSheet.create({
   },
   title: {
     flexShrink: 1,
-    letterSpacing: -0.8,
+    letterSpacing: -0.2,
   },
   artwork: {
     minWidth: 0,
     overflow: 'hidden',
-    borderWidth: StyleSheet.hairlineWidth,
   },
   artworkWide: {
     flex: 1,
   },
   artworkStacked: {
     width: '100%',
-    marginTop: 24,
+    marginTop: 16,
   },
   content: {
     minWidth: 0,
     flexDirection: 'column',
+  },
+  launches: {
+    minWidth: 0,
   },
   main: {
     minWidth: 0,
@@ -347,26 +356,11 @@ const styles = StyleSheet.create({
     minWidth: 0,
     flexDirection: 'row',
     alignItems: 'baseline',
-    columnGap: 12,
     borderBottomWidth: StyleSheet.hairlineWidth,
     paddingBottom: 8,
   },
-  sectionTitle: {
-    flexShrink: 1,
-  },
-  sectionBody: {
+  sectionContent: {
     minWidth: 0,
-    position: 'relative',
-    borderBottomWidth: StyleSheet.hairlineWidth,
-  },
-  slotContent: {
-    minWidth: 0,
-  },
-  sectionAsideRule: {
-    width: 24,
-    height: StyleSheet.hairlineWidth,
-    marginTop: 16,
-    opacity: 0.5,
   },
   controls: {
     minWidth: 0,

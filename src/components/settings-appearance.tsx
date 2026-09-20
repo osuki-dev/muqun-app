@@ -49,6 +49,8 @@ export function SettingsAppearance({ title }: { title: string }) {
   useRenderTally('SettingsAppearance');
 
   const language = useAppSettings((state) => state.language);
+  const homeLayout = useAppSettings((state) => state.homeLayout);
+  const homeLayoutLabel = homeLayout === 'editorial' ? t`Editorial` : t`Classic`;
   const pack = useThemePack();
 
   /**
@@ -98,6 +100,17 @@ export function SettingsAppearance({ title }: { title: string }) {
 
   return (
     <SettingsSection title={title}>
+      <SettingsChoiceRow
+        label={t`Home layout`}
+        value={homeLayoutLabel}
+        detail={t`Choose how Home is arranged.`}
+        accessibilityLabel={
+          // react-doctor-disable-next-line react-hooks-js/todo -- Lingui expands this macro before React Compiler runs.
+          t`Home layout, ${homeLayoutLabel}`
+        }
+        testID="settings-home-layout-row"
+        onPress={() => router.push('/settings-home-layout')}
+      />
       <SettingsChoiceRow
         label={t`Theme`}
         value={pack.label}
