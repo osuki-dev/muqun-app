@@ -150,6 +150,7 @@ export class TerminalGrid {
   // rows -- including everything in scrollback -- are handed back by reference,
   // so a frame allocates only for the rows that actually moved.
   private readonly lineCache: (TerminalLine | null)[];
+  private readonly wrapped = new Map<number, number>();
   // Screen rows written since the last takeDirtyRows(). Only useful to a caller
   // that keeps one emulator alive across refreshes; the renderer does not (see
   // takeDirtyRows) and tracks changes through `TerminalLine.signature` instead.
@@ -170,6 +171,13 @@ export class TerminalGrid {
       this.fillSlot(index, 0, 0, 0);
     }
     for (let index = rows; index < this.capacity; index += 1) this.freeStack.push(index);
+  }
+
+  setWrapped(row: number, columns: number): void {
+    const slot = this.screenSlot(row);
+    if (columns > 0) this.wrapped.set(slot, columns);
+    else this.wrapped.delete(slot);
+    this.lineCache[slot] = null;
   }
 
   scrollbackCount(): number {
@@ -352,6 +360,7 @@ export class TerminalGrid {
   }
 
   eraseCells(row: number, start: number, end: number, style: TerminalStyle): void {
+    if (end >= this.columns - 1) this.setWrapped(row, 0);
     for (let col = start; col <= end; col += 1) this.blankCell(row, col, style);
   }
 
@@ -535,6 +544,9 @@ export class TerminalGrid {
       const last = to + (target.columns - 1) * WORDS_PER_CELL;
       if ((target.words[last] & WIDTH_MASK) >>> WIDTH_SHIFT === 2) target.words[last] = SPACE_WORD0;
     }
+    if (this.columns === target.columns && this.wrapped.has(sourceSlot)) {
+      target.wrapped.set(targetSlot, this.wrapped.get(sourceSlot)!);
+    }
     target.lineCache[targetSlot] = null;
   }
 
@@ -591,6 +603,7 @@ export class TerminalGrid {
   }
 
   private fillSlot(slot: number, attrs: number, fg: number, bg: number): void {
+    this.wrapped.delete(slot);
     const stride = this.rowStride;
     const rowBase = slot * stride;
     for (let offset = 0; offset < stride; offset += WORDS_PER_CELL) {
@@ -669,6 +682,7 @@ export class TerminalGrid {
     return {
       cells,
       runs,
+      ...(this.wrapped.has(slot) ? { wrapsToNext: this.wrapped.get(slot) } : {}),
       signature: Math.imul(signature ^ (lastColumn + 1), SIGNATURE_PRIME) >>> 0,
     };
   }
