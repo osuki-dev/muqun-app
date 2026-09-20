@@ -41,17 +41,18 @@ export function HomeConnections({
     <View testID="home-connections" style={styles.list}>
       {hasConnections ? (
         <View style={styles.connectionGroup}>
-          {servers.map((server) => (
+          {servers.map((server, index) => (
             <GatewayConnectionRow
               key={server.serverId}
               server={server}
               showAddress={addresses.has(server.serverId)}
+              hasSeparator={index < servers.length + hosts.length - 1}
               onOpen={onOpenServer}
               activeConnection={activeConnection}
               nowMs={nowMs}
             />
           ))}
-          {hosts.map((host) => (
+          {hosts.map((host, index) => (
             <PressableScale
               key={host.id}
               testID={`home-connection-ssh-${host.id}`}
@@ -61,6 +62,10 @@ export function HomeConnections({
               pressedScale={1}
               style={[
                 styles.row,
+                index < hosts.length - 1 && {
+                  borderBottomColor: theme.colors.border,
+                  borderBottomWidth: StyleSheet.hairlineWidth,
+                },
                 {
                   backgroundColor: background(theme.colors.surface),
                 },
@@ -101,12 +106,14 @@ export function HomeConnections({
 function GatewayConnectionRow({
   server,
   showAddress,
+  hasSeparator,
   onOpen,
   activeConnection,
   nowMs,
 }: {
   server: GatewayRecord;
   showAddress: boolean;
+  hasSeparator: boolean;
   onOpen: (serverId: string) => void;
   activeConnection?: ActiveServerConnection;
   nowMs?: number;
@@ -126,6 +133,10 @@ function GatewayConnectionRow({
       pressedScale={1}
       style={[
         styles.row,
+        hasSeparator && {
+          borderBottomColor: theme.colors.border,
+          borderBottomWidth: StyleSheet.hairlineWidth,
+        },
         {
           backgroundColor: background(theme.colors.surface),
         },

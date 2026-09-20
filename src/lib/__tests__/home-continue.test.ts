@@ -82,15 +82,15 @@ test('OpenCode recents show only current Gateway observations and keep honest ag
     stale: false,
   });
 
-  const offline = homeContinueEntries({
-    ...input,
-    snapshots: {},
-    recents: [recent],
-    reachabilityByServer: { a: 'offline' },
-    nowMs: 70_000,
-  })[0]?.observation;
-  expect(offline).toMatchObject({ kind: 'opencode-session', stale: false });
-  expect(offline?.status).toBeUndefined();
+  expect(
+    homeContinueEntries({
+      ...input,
+      snapshots: {},
+      recents: [recent],
+      reachabilityByServer: { a: 'offline' },
+      nowMs: 70_000,
+    })
+  ).toEqual([]);
 
   const stale = homeContinueEntries({
     ...input,
@@ -141,7 +141,7 @@ test('one server cannot supply another server panes', () => {
   ).toEqual([]);
 });
 
-test('Continue uses the shared freshness and reachability policy for status', () => {
+test('Continue hides every gateway-owned entry while its gateway is offline', () => {
   const blocked = {
     ...input,
     snapshots: {
@@ -161,13 +161,89 @@ test('Continue uses the shared freshness and reachability policy for status', ()
   };
 
   expect(homeContinueEntries(blocked)[0]?.observation?.status).toBe('blocked');
-  expect(
-    homeContinueEntries({ ...blocked, reachabilityByServer: { a: 'offline' } })[0]?.observation
-      ?.status
-  ).toBeUndefined();
+  expect(homeContinueEntries({ ...blocked, reachabilityByServer: { a: 'offline' } })).toEqual([]);
   expect(
     homeContinueEntries({ ...blocked, nowMs: 1_000_000 })[0]?.observation?.status
   ).toBeUndefined();
+});
+
+test('offline filtering is gateway-scoped, retains unknown and SSH entries, and recovers', () => {
+  const offlineOpenCode: HomeRecentEntry = {
+    key: 'offline-opencode',
+    title: 'Offline OpenCode',
+    atMs: 50,
+    target: {
+      kind: 'opencode-session',
+      serverId: 'c',
+      sessionId: 'routing',
+      directory: '/workspace',
+      asid: 'root',
+    },
+  };
+  const offlineHistory: HomeRecentEntry = {
+    key: 'offline-history',
+    title: 'Offline terminal',
+    atMs: 40,
+    target: { kind: 'gateway-terminal', serverId: 'c', sessionId: 'routing', paneId: 'old' },
+  };
+  const liveHistory: HomeRecentEntry = {
+    key: 'live-history',
+    title: 'Live terminal',
+    atMs: 30,
+    target: { kind: 'gateway-terminal', serverId: 'b', sessionId: 'routing', paneId: 'live' },
+  };
+  const ssh: HomeRecentEntry = {
+    key: 'ssh',
+    title: 'Standalone SSH',
+    atMs: 20,
+    target: { kind: 'ssh-host', hostId: 'host' },
+  };
+  const multiGatewayInput = {
+    ...input,
+    serverIds: ['a', 'b', 'c'],
+    hostIds: ['host'],
+    snapshots: {
+      a: snapshots.a,
+      b: {
+        serverId: 'b',
+        checkedAtMs: 1,
+        agents: [
+          { id: 'live', paneId: 'live', name: 'Live agent', hasAgent: true, status: 'idle' },
+        ],
+      },
+    } satisfies ServerAgentsIndex,
+    recents: [offlineOpenCode, offlineHistory, liveHistory, ssh],
+  };
+
+  const offlineRows = homeContinueEntries({
+    ...multiGatewayInput,
+    reachabilityByServer: { a: 'offline', b: 'live', c: 'offline' },
+  });
+  expect(offlineRows.map((row) => row.title)).toEqual(['Live agent', 'Standalone SSH']);
+  expect(
+    offlineRows.some(
+      (row) =>
+        row.destination.type === 'recent' && row.destination.target === offlineOpenCode.target
+    )
+  ).toBe(false);
+  expect(
+    offlineRows.some(
+      (row) => row.destination.type === 'recent' && row.destination.target === offlineHistory.target
+    )
+  ).toBe(false);
+
+  const recoveredRows = homeContinueEntries({
+    ...multiGatewayInput,
+    reachabilityByServer: { a: 'unknown', b: 'live' },
+  });
+  expect(recoveredRows.map((row) => row.title)).toEqual([
+    'Offline OpenCode',
+    'Offline terminal',
+    'Live agent',
+    'Standalone SSH',
+    'Current agent title',
+    'Shell',
+  ]);
 });
 
 test('plain panes and history-only entries never receive agent status', () => {

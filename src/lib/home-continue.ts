@@ -60,6 +60,7 @@ export function homeContinueEntries({
 }): HomeContinueEntry[] {
   const rows: HomeContinueEntry[] = [];
   for (const serverId of serverIds) {
+    if (reachabilityByServer[serverId] === 'offline') continue;
     const model = homeServerModel({
       serverId,
       snapshot: snapshots[serverId],
@@ -99,6 +100,7 @@ export function homeContinueEntries({
         : !serverIds.includes(target.serverId)
     )
       continue;
+    if (target.kind !== 'ssh-host' && reachabilityByServer[target.serverId] === 'offline') continue;
     // Once the shared snapshot exists, its inventory and pane filter win over history.
     if (
       target.kind === 'gateway-terminal' &&

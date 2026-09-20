@@ -9,7 +9,10 @@ test('Editorial Home presents wide quick actions as one horizontal rail with SSH
   expect(actions).toContain('testID="home-launch-actions-scroll"');
   expect(actions).toContain('width: 124');
   expect(actions).toContain('primaryTile: { width: 148');
-  expect(actions).toContain('stackedActions: { width: 132');
+  expect(actions).toContain("actions: { flexDirection: 'row', alignItems: 'flex-start', gap: 4");
+  expect(actions).toContain('stackedActions: { width: 164, gap: 4 }');
+  expect(actions).toContain('minHeight: 92');
+  expect(actions).toContain('minHeight: 44');
   expect(actions).toContain('marker="01"');
   expect(actions).toContain('marker="05"');
   expect(actions).not.toContain('numberOfLines=');

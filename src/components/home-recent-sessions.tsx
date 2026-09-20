@@ -133,13 +133,15 @@ export function HomeRecentSessions({
     paneMode,
     nowMs: observationNowMs,
   });
+  const displayed = available.slice(0, expanded ? available.length : 3);
   return (
     <View testID="home-recent-sessions" style={styles.list}>
-      {available.slice(0, expanded ? available.length : 3).map((entry, index) => (
+      {displayed.map((entry, index) => (
         <RecentSessionRow
           key={entry.key}
           entry={entry}
           number={index + 1}
+          hasSeparator={index < displayed.length - 1}
           serverLabel={
             servers.find(
               (server) =>
@@ -180,11 +182,13 @@ export function HomeRecentSessions({
 function RecentSessionRow({
   entry,
   number,
+  hasSeparator,
   serverLabel,
   onOpen,
 }: {
   entry: HomeContinueEntry;
   number: number;
+  hasSeparator: boolean;
   serverLabel?: string;
   onOpen: () => void;
 }) {
@@ -252,6 +256,10 @@ function RecentSessionRow({
       onPress={onOpen}
       style={[
         styles.row,
+        hasSeparator && {
+          borderBottomColor: theme.colors.border,
+          borderBottomWidth: StyleSheet.hairlineWidth,
+        },
         {
           backgroundColor: background(theme.colors.surface),
         },

@@ -384,8 +384,8 @@ const styles = StyleSheet.create({
   },
   demoLabel: { minWidth: 0, flexShrink: 1 },
   rail: { width: '100%', minWidth: 0 },
-  actions: { flexDirection: 'row', alignItems: 'flex-start', gap: 8, paddingRight: 2 },
-  stackedActions: { width: 132, gap: 4 },
+  actions: { flexDirection: 'row', alignItems: 'flex-start', gap: 4, paddingRight: 2 },
+  stackedActions: { width: 164, gap: 4 },
   tile: {
     width: 124,
     minHeight: 92,
