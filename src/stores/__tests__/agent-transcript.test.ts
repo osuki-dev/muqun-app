@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import { createAgentTranscriptStore } from '../agent-transcript';
+import { windowStartForSnapshot } from '@/lib/agent-timeline-window';
 import type { TimelineItem } from '@/lib/agent-protocol';
 import { upsertTimelineItems } from '@/lib/agent-timeline-upsert';
 
@@ -27,6 +28,20 @@ describe('agent transcript ownership', () => {
     stop();
     expect(observed).toEqual([['grp_new-first', 'grp_new-last']]);
     expect(store.getState().config.windowStart).toBe(0);
+  });
+
+  test('snapshot replacement publishes its moved window and rows in one notification', () => {
+    const store = createAgentTranscriptStore();
+    store.getState().setTimeline([item('old'), item('anchor'), item('last')], 1);
+    const observed: { windowStart: number; keys: string[] }[] = [];
+    const stop = store.subscribe((state) =>
+      observed.push({ windowStart: state.config.windowStart, keys: [...state.keys] })
+    );
+    const snapshot = [item('new-first'), item('anchor'), item('last')];
+    const nextWindow = windowStartForSnapshot(store.getState().timeline, 1, snapshot, 40);
+    store.getState().setTimeline(snapshot, nextWindow);
+    stop();
+    expect(observed).toEqual([{ windowStart: 1, keys: ['grp_anchor', 'grp_last'] }]);
   });
 
   test('a latest page made of duplicate shells still shows the latest real messages', () => {

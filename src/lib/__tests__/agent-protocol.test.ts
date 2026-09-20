@@ -1258,6 +1258,20 @@ describe('titles and model names', () => {
     expect(
       formatModelName({ provider_id: 'x', model_id: 'some-new-model', variant: 'xhigh' })
     ).toBe('Some NEW Model · Max');
+    expect(
+      formatModelName(
+        { provider_id: 'openai', model_id: 'gpt-6-astra', variant: 'high' },
+        'Model',
+        'GPT-6 Astra'
+      )
+    ).toBe('GPT-6 Astra · High');
+    expect(
+      formatModelName(
+        { provider_id: 'openai', model_id: 'gpt-6-astra', variant: 'high' },
+        'Model',
+        'GPT-6 Astra · High'
+      )
+    ).toBe('GPT-6 Astra · High');
     expect(formatModelName(null)).toBe('Model');
     expect(formatModelName(undefined, 'Pick one')).toBe('Pick one');
   });

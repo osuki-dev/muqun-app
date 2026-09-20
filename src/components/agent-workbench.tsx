@@ -147,6 +147,7 @@ import {
   type ChildrenByParent,
 } from '@/lib/agent-session-tree';
 import { upsertTimelineItems } from '@/lib/agent-timeline-upsert';
+import { windowStartForSnapshot } from '@/lib/agent-timeline-window';
 import { createAgentStreamBatch } from '@/lib/agent-stream-batch';
 import { useAgentSessionState } from '@/stores/agent-session-state';
 import { useAgentPermissionStore } from '@/stores/agent-permissions';
@@ -1407,16 +1408,15 @@ export const AgentWorkbench = memo(function AgentWorkbench({
           // Hold the reader's place across the correction. The row that was at
           // the top of the window is the anchor: its index has moved, because
           // that is what a resync means, so the window start moves with it.
-          setTimeline((previous) => {
-            const anchorId = previous[windowStartRef.current]?.id;
-            const anchorIndex = anchorId
-              ? snap.timeline.findIndex((item) => item.id === anchorId)
-              : -1;
-            setWindowStart(
-              anchorIndex >= 0 ? anchorIndex : Math.max(0, snap.timeline.length - HISTORY_PAGE_SIZE)
-            );
-            return snap.timeline;
-          });
+          const nextWindow = windowStartForSnapshot(
+            transcriptStore.getState().timeline,
+            windowStartRef.current,
+            snap.timeline,
+            HISTORY_PAGE_SIZE
+          );
+          windowStartRef.current = nextWindow;
+          setTimeline(snap.timeline, nextWindow);
+          setWindowStart(nextWindow);
         }
 
         if (yoloModeRef.current) {
@@ -1523,6 +1523,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     },
     [
       setTimeline,
+      transcriptStore,
       sessionId,
       activeAsid,
       applySelectedModel,
@@ -3713,7 +3714,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   }, [catalogModels, activeModelRef]);
 
   /** The catalogue's name for it, which is the one the reader chose from. */
-  const activeModelName = activeModelInfo?.name || formatModelName(activeModelRef, '');
+  const activeModelName = formatModelName(activeModelRef, '', activeModelInfo?.name);
 
   /**
    * The window the context gauge measures against.
@@ -3773,7 +3774,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       sessionInfo: sessionInfo ?? undefined,
       tokens: activeTokens,
       cost: sessionInfo?.cost,
-      selectedModel,
+      selectedModel: activeModelRef,
       selectedModelName: activeModelName,
       contextLimit,
       selectedAgent,
@@ -3799,7 +3800,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     activeProject,
     sessionInfo,
     activeTokens,
-    selectedModel,
+    activeModelRef,
     activeModelName,
     contextLimit,
     selectedAgent,
@@ -4265,7 +4266,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         activeDirectory={activeDirectory}
         activeProject={activeProject}
         selectedAgent={selectedAgent}
-        selectedModel={selectedModel}
+        selectedModel={activeModelRef}
         hasDiffs={hasDiffs}
         bottomInset={bottomInset}
         topInset={topInset}

@@ -53,14 +53,17 @@ export interface ComposerChipState {
 export function composerChipIds(state: ComposerChipState): ComposerChipId[] {
   const ids: ComposerChipId[] = [];
   if (state.canOpenSessions) ids.push('sessions');
-  if (state.inboxCount > 0) ids.push('inbox');
-  if (state.backgroundCount > 0 && state.canOpenBackground) ids.push('background');
-  if (state.canOpenTasks || state.taskCount > 0) ids.push('tasks');
-  if (state.running) ids.push('delivery', 'stop');
-  if (state.hasContextPill) ids.push('context');
-  if (state.hasDiffs) ids.push('diff');
+  // The two choices that define a new turn come before its live state.
   // The agent chip is unconditional: it is what the session is running.
   ids.push('mode');
   if (state.canOpenModel) ids.push('model');
+  if (state.inboxCount > 0) ids.push('inbox');
+  if (state.backgroundCount > 0 && state.canOpenBackground) ids.push('background');
+  if (state.canOpenTasks || state.taskCount > 0) ids.push('tasks');
+  if (state.running) ids.push('delivery');
+  if (state.hasContextPill) ids.push('context');
+  if (state.hasDiffs) ids.push('diff');
+  // Keep the destructive action beyond the everyday controls.
+  if (state.running) ids.push('stop');
   return ids;
 }

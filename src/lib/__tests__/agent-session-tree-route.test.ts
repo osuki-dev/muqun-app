@@ -61,15 +61,15 @@ test('native toolbar and accessibility traversal follow the same exact chip orde
   const toolbar = composer.slice(composer.indexOf("chipIds.has('sessions')"));
   const markers = [
     "chipIds.has('sessions')",
+    'testID="agent-composer-mode-btn"',
+    "chipIds.has('model')",
     "chipIds.has('inbox')",
     "chipIds.has('background')",
     "chipIds.has('tasks')",
     "chipIds.has('delivery')",
-    "chipIds.has('stop')",
     "chipIds.has('context')",
     "chipIds.has('diff')",
-    'testID="agent-composer-mode-btn"',
-    "chipIds.has('model')",
+    "chipIds.has('stop')",
   ];
   const positions = markers.map((marker) => toolbar.indexOf(marker));
   expect(positions.every((position) => position >= 0)).toBe(true);

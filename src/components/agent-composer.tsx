@@ -1193,6 +1193,51 @@ export const AgentComposer = memo(function AgentComposer({
                   </PressableScale>
                 ) : null}
 
+                {/* Quick Agent Mode Popover Button */}
+                {chipIds.has('mode') ? (
+                  <PressableScale
+                    testID="agent-composer-mode-btn"
+                    onPress={() => {
+                      setAttachmentMenuOpen(false);
+                      setModeMenuOpen(false);
+                      if (onOpenModeSheet) {
+                        onOpenModeSheet();
+                      } else {
+                        setModeMenuOpen((prev) => !prev);
+                      }
+                    }}
+                    accessibilityRole="button"
+                    accessibilityLabel={t`Select agent mode`}
+                    style={[
+                      styles.actionBtnWithLabel,
+                      modeMenuOpen && { borderColor: theme.colors.primary, borderWidth: 1 },
+                      { backgroundColor: surfaceBackground(chromeGlass) },
+                    ]}>
+                    <Text variant="caption" color={theme.colors.text} style={styles.actionBtnLabel}>
+                      {nameOfAgent(selectedAgent ?? 'build')}
+                    </Text>
+                    <ChevronDown size={12} color={theme.colors.textMuted} />
+                  </PressableScale>
+                ) : null}
+
+                {/* Quick Model Selector Button */}
+                {chipIds.has('model') ? (
+                  <PressableScale
+                    testID="agent-composer-model-btn"
+                    onPress={onOpenModelSheet}
+                    accessibilityRole="button"
+                    accessibilityLabel={t`Select model: ${modelDisplayName}`}
+                    style={[
+                      styles.actionBtnWithLabel,
+                      { backgroundColor: surfaceBackground(chromeGlass) },
+                    ]}>
+                    <Text variant="caption" color={theme.colors.text} style={styles.actionBtnLabel}>
+                      {modelDisplayName}
+                    </Text>
+                    <ChevronDown size={12} color={theme.colors.textMuted} />
+                  </PressableScale>
+                ) : null}
+
                 {/* The queue, as the gateway last stated it */}
                 {chipIds.has('inbox') ? (
                   <PressableScale
@@ -1321,25 +1366,6 @@ export const AgentComposer = memo(function AgentComposer({
                   </PressableScale>
                 ) : null}
 
-                {chipIds.has('stop') ? (
-                  <PressableScale
-                    onPress={onAbort}
-                    accessibilityRole="button"
-                    accessibilityLabel={t`Stop agent execution`}
-                    style={[
-                      styles.actionBtnWithLabel,
-                      styles.stopActionBtn,
-                      { backgroundColor: theme.colors.danger },
-                    ]}>
-                    <Square size={12} color={theme.colors.onPrimary} />
-                    <Text
-                      variant="caption"
-                      color={theme.colors.onPrimary}
-                      style={styles.actionBtnLabel}>
-                      <Trans>Stop</Trans>
-                    </Text>
-                  </PressableScale>
-                ) : null}
                 {/* Context window, token spend and cost, in one pill */}
                 {chipIds.has('context') && contextPill ? (
                   <PressableScale
@@ -1418,46 +1444,23 @@ export const AgentComposer = memo(function AgentComposer({
                   </PressableScale>
                 ) : null}
 
-                {/* Quick Agent Mode Popover Button */}
-                <PressableScale
-                  testID="agent-composer-mode-btn"
-                  onPress={() => {
-                    setAttachmentMenuOpen(false);
-                    setModeMenuOpen(false);
-                    if (onOpenModeSheet) {
-                      onOpenModeSheet();
-                    } else {
-                      setModeMenuOpen((prev) => !prev);
-                    }
-                  }}
-                  accessibilityRole="button"
-                  accessibilityLabel={t`Select agent mode`}
-                  style={[
-                    styles.actionBtnWithLabel,
-                    modeMenuOpen && { borderColor: theme.colors.primary, borderWidth: 1 },
-                    { backgroundColor: surfaceBackground(chromeGlass) },
-                  ]}>
-                  <Text variant="caption" color={theme.colors.text} style={styles.actionBtnLabel}>
-                    {nameOfAgent(selectedAgent ?? 'build')}
-                  </Text>
-                  <ChevronDown size={12} color={theme.colors.textMuted} />
-                </PressableScale>
-
-                {/* Quick Model Selector Button */}
-                {chipIds.has('model') ? (
+                {chipIds.has('stop') ? (
                   <PressableScale
-                    testID="agent-composer-model-btn"
-                    onPress={onOpenModelSheet}
+                    onPress={onAbort}
                     accessibilityRole="button"
-                    accessibilityLabel={t`Select model: ${modelDisplayName}`}
+                    accessibilityLabel={t`Stop agent execution`}
                     style={[
                       styles.actionBtnWithLabel,
-                      { backgroundColor: surfaceBackground(chromeGlass) },
+                      styles.stopActionBtn,
+                      { backgroundColor: theme.colors.danger },
                     ]}>
-                    <Text variant="caption" color={theme.colors.text} style={styles.actionBtnLabel}>
-                      {modelDisplayName}
+                    <Square size={12} color={theme.colors.onPrimary} />
+                    <Text
+                      variant="caption"
+                      color={theme.colors.onPrimary}
+                      style={styles.actionBtnLabel}>
+                      <Trans>Stop</Trans>
                     </Text>
-                    <ChevronDown size={12} color={theme.colors.textMuted} />
                   </PressableScale>
                 ) : null}
               </ScrollView>

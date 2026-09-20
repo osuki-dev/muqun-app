@@ -2503,10 +2503,15 @@ export function workspaceDisplayName(
   return leaf || project?.name?.trim() || fallback;
 }
 
-export function formatModelName(model?: ModelRef | null, fallback = 'Model'): string {
+export function formatModelName(
+  model?: ModelRef | null,
+  fallback = 'Model',
+  catalogName?: string
+): string {
   if (!model?.model_id) return fallback;
   const modelId = model.model_id;
   const baseName =
+    catalogName?.trim() ||
     KNOWN_MODEL_NAMES[modelId] ||
     modelId
       .split(/[-_]/)
@@ -2520,6 +2525,22 @@ export function formatModelName(model?: ModelRef | null, fallback = 'Model'): st
       model.variant === 'xhigh'
         ? 'Max'
         : model.variant.charAt(0).toUpperCase() + model.variant.slice(1);
+    // Catalogues occasionally include the active reasoning level in the name.
+    // The chip must state it once, whether the name came from that catalogue or
+    // from our readable-id fallback.
+    const lowerBaseName = baseName.toLowerCase();
+    const lowerVariant = varLabel.toLowerCase();
+    if (
+      [
+        ` ${lowerVariant}`,
+        ` · ${lowerVariant}`,
+        ` • ${lowerVariant}`,
+        ` / ${lowerVariant}`,
+        ` - ${lowerVariant}`,
+      ].some((suffix) => lowerBaseName.endsWith(suffix))
+    ) {
+      return baseName;
+    }
     return `${baseName} · ${varLabel}`;
   }
   return baseName;

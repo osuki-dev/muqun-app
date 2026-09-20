@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'bun:test';
+import { readFileSync } from 'node:fs';
 
 import { composerChipIds, type ComposerChipState } from '../agent-composer-chips';
 
@@ -51,16 +52,48 @@ describe('composerChipIds', () => {
       })
     ).toEqual([
       'sessions',
+      'mode',
+      'model',
       'inbox',
       'background',
       'tasks',
       'delivery',
-      'stop',
       'context',
       'diff',
-      'mode',
-      'model',
+      'stop',
     ]);
+  });
+
+  test('the rendered controls follow the chip order, with Stop last in native traversal', () => {
+    const source = readFileSync(
+      new URL('../../components/agent-composer.tsx', import.meta.url),
+      'utf8'
+    );
+    const renderedOrder = Array.from(
+      source.matchAll(/chipIds\.has\('([^']+)'\)/g),
+      (match) => match[1]
+    );
+    expect(renderedOrder).toEqual(
+      composerChipIds({
+        ...quiet,
+        canOpenTasks: true,
+        inboxCount: 1,
+        backgroundCount: 1,
+        hasContextPill: true,
+        hasDiffs: true,
+        running: true,
+      })
+    );
+  });
+
+  test('Stop stays last with either or both trailing status controls absent', () => {
+    for (const hasContextPill of [false, true]) {
+      for (const hasDiffs of [false, true]) {
+        const chips = composerChipIds({ ...quiet, running: true, hasContextPill, hasDiffs });
+        expect(chips.at(-1)).toBe('stop');
+        expect(chips.filter((id) => id === 'stop')).toHaveLength(1);
+      }
+    }
   });
 
   test('tasks appear for a published list even with no sheet behind them', () => {
@@ -76,10 +109,10 @@ describe('composerChipIds', () => {
   test('steering and stopping belong to a turn in flight', () => {
     expect(composerChipIds({ ...quiet, running: true })).toEqual([
       'sessions',
-      'delivery',
-      'stop',
       'mode',
       'model',
+      'delivery',
+      'stop',
     ]);
   });
 });
