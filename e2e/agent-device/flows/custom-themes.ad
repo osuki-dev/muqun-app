@@ -173,8 +173,23 @@ wait stable 400 5000
 # the illustration is on this page at all.
 is visible "id=theme-home-hero"
 
-# section confirm-remove
-press "id=theme-confirm-remove"
+# section back-to-library
+# List deletion confirms beside the theme it will remove, so return from the
+# detail editor before exercising that separate path.
+back --system
+wait "id=theme-row-my-theme" 10000
+
+# section inline-remove-armed
+# The first tap is only an arm: the installed theme remains and the second-tap
+# wording replaces the detached confirmation card this list used to append at
+# its foot.
+press "label=\"Remove Theme\""
+is visible "id=theme-row-my-theme"
+is visible "label=\"Tap again to remove: Theme\""
+is hidden "id=theme-list-remove-confirm"
+
+# section inline-remove-confirm
+press "label=\"Tap again to remove: Theme\""
 
 # section storage-entry
 # The tail of this flow covers the Storage section's own removal action, and it

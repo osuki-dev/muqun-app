@@ -345,23 +345,13 @@
         "run": "flows/custom-themes.ad#opacity-reset"
       },
       {
-        "target": {
-          "id": "theme-remove-previewed"
-        },
-        "mode": "scroll",
-        "direction": "down",
-        "timeout": 10000,
-        "run": "flows/custom-themes.ad#scroll"
+        "run": "flows/custom-themes.ad#back-to-library"
       },
       {
-        "target": {
-          "id": "theme-remove-previewed"
-        },
-        "mode": "press",
-        "run": "flows/custom-themes.ad#press"
+        "run": "flows/custom-themes.ad#inline-remove-armed"
       },
       {
-        "run": "flows/custom-themes.ad#confirm-remove"
+        "run": "flows/custom-themes.ad#inline-remove-confirm"
       },
       {
         "run": "flows/custom-themes.ad#close-sheet"

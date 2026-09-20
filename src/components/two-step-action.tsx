@@ -55,6 +55,14 @@ export interface TwoStepActionProps {
   onConfirm: () => void;
   /** Told when the row arms or disarms, so a parent can disarm its siblings. */
   onArmedChange?: (armed: boolean) => void;
+  /** When supplied, the parent owns whether this action is armed. */
+  armed?: boolean;
+  disabled?: boolean;
+  /** A compact icon action that expands only for its second, destructive tap. */
+  presentation?: 'default' | 'compact';
+  /** The spoken name can be more specific than the visible label. */
+  accessibilityLabel?: string;
+  confirmAccessibilityLabel?: string;
   testID?: string;
 }
 
@@ -65,37 +73,47 @@ export const TwoStepAction = memo(function TwoStepAction({
   Icon,
   onConfirm,
   onArmedChange,
+  armed: controlledArmed,
+  disabled = false,
+  presentation = 'default',
+  accessibilityLabel,
+  confirmAccessibilityLabel,
   testID,
 }: TwoStepActionProps) {
   const theme = useThemeTokens();
   const surfaceBackground = useSurfaceBackground();
-  const [armed, setArmed] = useState(false);
+  const [uncontrolledArmed, setUncontrolledArmed] = useState(false);
+  const armed = controlledArmed ?? uncontrolledArmed;
+  const controlled = controlledArmed !== undefined;
   const arm = useSharedValue(0);
   const drain = useSharedValue(1);
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const onArmedChangeRef = useRef(onArmedChange);
 
-  const disarm = useCallback(() => {
-    clearTimeout(timer.current);
-    timer.current = undefined;
-    cancelAnimation(drain);
-    arm.value = withTiming(0, timing('toggle'));
-    setArmed(false);
-    onArmedChange?.(false);
-  }, [arm, drain, onArmedChange]);
+  useEffect(() => {
+    onArmedChangeRef.current = onArmedChange;
+  }, [onArmedChange]);
+
+  const setArmed = useCallback(
+    (next: boolean) => {
+      if (!controlled) setUncontrolledArmed(next);
+      onArmedChangeRef.current?.(next);
+    },
+    [controlled]
+  );
 
   useEffect(() => () => clearTimeout(timer.current), []);
 
-  const handlePress = useCallback(() => {
-    if (armed) {
-      clearTimeout(timer.current);
-      timer.current = undefined;
-      void feedback('warning');
-      onConfirm();
+  useEffect(() => {
+    clearTimeout(timer.current);
+    timer.current = undefined;
+    cancelAnimation(drain);
+    if (!armed || disabled) {
+      arm.value = withTiming(0, timing('toggle'));
+      if (armed && disabled) setArmed(false);
       return;
     }
-    void feedback('selection');
-    setArmed(true);
-    onArmedChange?.(true);
+
     arm.value = withTiming(1, timing('toggle'));
     // Linear, and exempt from reduced motion's collapse only in the sense that
     // it has nothing to collapse to: a drained line is the window having shut,
@@ -106,8 +124,21 @@ export const TwoStepAction = memo(function TwoStepAction({
       easing: Easing.linear,
       reduceMotion: ReduceMotion.Never,
     });
-    timer.current = setTimeout(disarm, CONFIRM_WINDOW_MS);
-  }, [arm, armed, disarm, drain, onArmedChange, onConfirm]);
+    timer.current = setTimeout(() => setArmed(false), CONFIRM_WINDOW_MS);
+    return () => clearTimeout(timer.current);
+  }, [arm, armed, disabled, drain, setArmed]);
+
+  const handlePress = useCallback(() => {
+    if (disabled) return;
+    if (armed) {
+      void feedback('warning');
+      setArmed(false);
+      onConfirm();
+      return;
+    }
+    void feedback('selection');
+    setArmed(true);
+  }, [armed, disabled, onConfirm, setArmed]);
 
   const fillStyle = useAnimatedStyle(() => ({ opacity: arm.value }));
   const restStyle = useAnimatedStyle(() => ({ opacity: 1 - arm.value }));
@@ -121,11 +152,14 @@ export const TwoStepAction = memo(function TwoStepAction({
     <PressableScale
       testID={testID}
       accessibilityRole="button"
-      accessibilityLabel={armed ? confirmLabel : label}
+      accessibilityLabel={
+        armed ? (confirmAccessibilityLabel ?? confirmLabel) : (accessibilityLabel ?? label)
+      }
       accessibilityHint={armed ? detail : undefined}
-      accessibilityState={{ expanded: armed }}
+      accessibilityState={{ disabled, expanded: armed }}
+      disabled={disabled}
       onPress={handlePress}
-      style={styles.action}>
+      style={[styles.action, presentation === 'compact' ? styles.actionCompact : null]}>
       <Animated.View
         pointerEvents="none"
         style={[
@@ -135,7 +169,7 @@ export const TwoStepAction = memo(function TwoStepAction({
           fillStyle,
         ]}
       />
-      <View style={styles.line}>
+      <View style={[styles.line, presentation === 'compact' ? styles.lineCompact : null]}>
         {Icon ? (
           <View style={styles.icon}>
             <Icon size={16} color={theme.colors.danger} />
@@ -144,20 +178,22 @@ export const TwoStepAction = memo(function TwoStepAction({
         {/* Two labels on one spot, cross-faded, so the row never reflows
             sideways under the finger that is about to tap it again. The wider
             of the two sets the width; the other lies over it. */}
-        <View style={styles.labels} accessibilityLiveRegion="polite">
-          <Animated.View style={armed ? styles.over : null}>
-            <Animated.View style={restStyle}>
-              <Text variant="bodySmall" color={theme.colors.danger} style={styles.label}>
-                {label}
+        {presentation === 'compact' && !armed ? null : (
+          <View style={styles.labels} accessibilityLiveRegion="polite">
+            <Animated.View style={armed ? styles.over : null}>
+              <Animated.View style={restStyle}>
+                <Text variant="bodySmall" color={theme.colors.danger} style={styles.label}>
+                  {label}
+                </Text>
+              </Animated.View>
+            </Animated.View>
+            <Animated.View style={[armed ? null : styles.over, armedStyle]}>
+              <Text variant="bodySmall" color={theme.colors.danger} style={styles.labelArmed}>
+                {confirmLabel}
               </Text>
             </Animated.View>
-          </Animated.View>
-          <Animated.View style={[armed ? null : styles.over, armedStyle]}>
-            <Text variant="bodySmall" color={theme.colors.danger} style={styles.labelArmed}>
-              {confirmLabel}
-            </Text>
-          </Animated.View>
-        </View>
+          </View>
+        )}
       </View>
       {armed && detail ? (
         <Animated.View entering={fadeIn('short')} style={styles.detail}>
@@ -185,6 +221,12 @@ const styles = StyleSheet.create({
     borderCurve: 'continuous',
     overflow: 'hidden',
   },
+  actionCompact: {
+    alignSelf: 'center',
+    minHeight: 44,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
   fill: {
     borderRadius: 12,
     borderCurve: 'continuous',
@@ -194,6 +236,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
   },
+  lineCompact: { gap: 8 },
   icon: { width: 16, alignItems: 'center' },
   labels: { flexShrink: 1 },
   over: { position: 'absolute', top: 0, left: 0 },

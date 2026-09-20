@@ -14,6 +14,7 @@ import { SettingsSegmented } from '@/components/settings-segmented';
 import { ThemeLinkImport } from '@/components/theme-link-import';
 import { ThemeImportProgress } from '@/components/theme-import-progress';
 import { ThemeAppearanceSettings } from '@/components/theme-appearance-settings';
+import { TwoStepAction } from '@/components/two-step-action';
 import { useSurfaceBackground, useSurfaceBackgroundOpacity } from '@/hooks/use-surface-background';
 import {
   DURATION,
@@ -400,6 +401,7 @@ export function CustomThemeLibrary({
   useEffect(() => () => onPrimaryActionChange?.(null), [onPrimaryActionChange]);
 
   function chooseTab(next: ThemeTab) {
+    setPendingRemoval(null);
     setTab(next);
     saveThemeTab(next);
   }
@@ -513,6 +515,7 @@ export function CustomThemeLibrary({
               else setCandidate(next);
               setError(null);
               setNotice(null);
+              setPendingRemoval(null);
               setActionsOpen(false);
               setImportOpen(false);
             }}
@@ -568,51 +571,31 @@ export function CustomThemeLibrary({
             </View>
             <ChevronRight size={18} color={colors.textMuted} />
           </PressableScale>
-          <PressableScale
-            accessibilityRole="button"
-            accessibilityLabel={t`Remove ${installed.manifest.name}`}
+          <TwoStepAction
             testID={`theme-remove-${installed.id}`}
+            presentation="compact"
+            label={t`Remove`}
+            confirmLabel={t`Tap again to remove`}
+            accessibilityLabel={t`Remove ${installed.manifest.name}`}
+            confirmAccessibilityLabel={`${t`Tap again to remove`}: ${installed.manifest.name}`}
+            Icon={Trash2}
+            armed={pendingRemoval === installed.id}
             disabled={busy}
-            onPress={() => {
-              setPendingRemoval(installed.id);
+            onArmedChange={(armed) => {
+              setPendingRemoval((current) =>
+                armed ? installed.id : current === installed.id ? null : current
+              );
               setError(null);
               setNotice(null);
             }}
-            style={{ padding: 12 }}>
-            <Trash2 size={18} color={colors.textMuted} />
-          </PressableScale>
+            onConfirm={() =>
+              void perform(() => {
+                useThemeLibrary.getState().remove(installed.id);
+              })
+            }
+          />
         </View>
       ))}
-      {pendingRemoval ? (
-        <View
-          testID="theme-list-remove-confirm"
-          style={{
-            gap: 8,
-            padding: 12,
-            borderRadius: 16,
-            backgroundColor: background(colors.surfaceRaised),
-          }}>
-          <Text>{t`Remove this theme?`}</Text>
-          <Text
-            variant="bodySmall"
-            color={colors.textMuted}>{t`The theme will be removed from this device`}</Text>
-          <View style={{ flexDirection: 'row', gap: 8 }}>
-            <Button
-              disabled={busy}
-              testID="theme-list-confirm-remove"
-              onPress={() =>
-                void perform(() => {
-                  useThemeLibrary.getState().remove(pendingRemoval);
-                  setPendingRemoval(null);
-                })
-              }>{t`Remove`}</Button>
-            <Button
-              disabled={busy}
-              variant="ghost"
-              onPress={() => setPendingRemoval(null)}>{t`Cancel`}</Button>
-          </View>
-        </View>
-      ) : null}
     </View>
   );
 
