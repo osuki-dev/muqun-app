@@ -85,7 +85,7 @@ function EditorialSection({
                   backgroundColor: background(theme.colors.surface),
                   paddingHorizontal: 8,
                   paddingVertical: 4,
-                  borderRadius: 4,
+                  borderRadius: 6,
                 }
               : undefined
           }>

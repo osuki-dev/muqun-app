@@ -119,7 +119,6 @@ export function HomeLaunchActions({
         style={[
           styles.target,
           {
-            borderColor: theme.colors.borderStrong,
             backgroundColor: background(theme.colors.surface),
           },
         ]}>
@@ -240,11 +239,13 @@ function LaunchTile({
         primary ? styles.primaryTile : styles.secondaryTile,
         {
           backgroundColor: background(primary ? theme.colors.primary : theme.colors.surface),
-          borderColor: primary ? background(theme.colors.primary) : theme.colors.borderStrong,
           opacity: disabled ? 0.6 : 1,
         },
       ]}>
-      <View style={styles.tileIcon}>{icon}</View>
+      <View style={styles.tileTopRow}>
+        <View style={styles.tileIcon}>{icon}</View>
+        <ArrowUpRight size={18} color={ink} />
+      </View>
       <Text
         variant={primary ? 'heading' : 'bodySmall'}
         weight="semibold"
@@ -258,7 +259,6 @@ function LaunchTile({
         style={styles.tileCaption}>
         {caption}
       </Text>
-      <ArrowUpRight size={18} color={ink} style={styles.tileArrow} />
     </PressableScale>
   );
 }
@@ -272,7 +272,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     alignSelf: 'flex-start',
-    borderWidth: StyleSheet.hairlineWidth,
     borderRadius: 6,
     gap: 12,
     paddingHorizontal: 12,
@@ -305,18 +304,22 @@ const styles = StyleSheet.create({
     flex: 1,
     width: '100%',
     minWidth: 0,
-    borderWidth: StyleSheet.hairlineWidth,
     borderRadius: 6,
     padding: 10,
     gap: 8,
     justifyContent: 'flex-start',
   },
+  tileTopRow: {
+    minWidth: 0,
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+  },
   tileIcon: { alignSelf: 'flex-start' },
   tileTitle: { minWidth: 0, flexShrink: 1 },
-  primaryTile: { padding: 16 },
+  primaryTile: { padding: 12 },
   secondaryTile: { padding: 10 },
   primaryTileTitle: { fontSize: 18, lineHeight: 24 },
   secondaryTileTitle: { fontSize: 14, lineHeight: 20 },
   tileCaption: { minWidth: 0, flexShrink: 1 },
-  tileArrow: { alignSelf: 'flex-end', marginTop: 'auto' },
 });

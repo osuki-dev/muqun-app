@@ -437,6 +437,15 @@ function RootContent() {
               How tall each one opens, and why, is in `sheetRouteDetents`.
             */}
                 <Stack.Screen name="agent-sessions" options={sheetRouteOptions('agent-sessions')} />
+                <Stack.Screen
+                  name="agent-session-tree"
+                  options={sheetRouteOptions('agent-session-tree')}
+                />
+                <Stack.Screen
+                  name="agent-subagent-detail"
+                  dangerouslySingular
+                  options={sheetRouteOptions('agent-subagent-detail')}
+                />
                 <Stack.Screen name="agent-model" options={sheetRouteOptions('agent-model')} />
                 <Stack.Screen name="agent-mode" options={sheetRouteOptions('agent-mode')} />
                 <Stack.Screen

@@ -95,7 +95,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderWidth: StyleSheet.hairlineWidth,
     borderLeftWidth: 4,
-    borderRadius: 4,
+    borderRadius: 6,
   },
   copy: { flex: 1, minWidth: 0, gap: 4 },
 });

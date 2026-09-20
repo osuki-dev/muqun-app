@@ -53,15 +53,14 @@ export interface ComposerChipState {
 export function composerChipIds(state: ComposerChipState): ComposerChipId[] {
   const ids: ComposerChipId[] = [];
   if (state.canOpenSessions) ids.push('sessions');
-  // The agent chip is unconditional: it is what the session is running, and a
-  // session is always running something.
-  ids.push('mode');
-  if (state.canOpenModel) ids.push('model');
-  if (state.canOpenTasks || state.taskCount > 0) ids.push('tasks');
   if (state.inboxCount > 0) ids.push('inbox');
   if (state.backgroundCount > 0 && state.canOpenBackground) ids.push('background');
+  if (state.canOpenTasks || state.taskCount > 0) ids.push('tasks');
+  if (state.running) ids.push('delivery', 'stop');
   if (state.hasContextPill) ids.push('context');
   if (state.hasDiffs) ids.push('diff');
-  if (state.running) ids.push('delivery', 'stop');
+  // The agent chip is unconditional: it is what the session is running.
+  ids.push('mode');
+  if (state.canOpenModel) ids.push('model');
   return ids;
 }

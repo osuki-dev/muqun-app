@@ -36,49 +36,53 @@ export function HomeConnections({
   const theme = useThemeTokens();
   const background = useSurfaceBackground();
   const addresses = serverIdsNeedingAddress(servers);
+  const hasConnections = servers.length > 0 || hosts.length > 0;
   return (
     <View testID="home-connections" style={styles.list}>
-      {servers.map((server) => (
-        <GatewayConnectionRow
-          key={server.serverId}
-          server={server}
-          showAddress={addresses.has(server.serverId)}
-          onOpen={onOpenServer}
-          activeConnection={activeConnection}
-          nowMs={nowMs}
-        />
-      ))}
-      {hosts.map((host) => (
-        <PressableScale
-          key={host.id}
-          testID={`home-connection-ssh-${host.id}`}
-          accessibilityRole="button"
-          accessibilityLabel={`${host.label}, ${t`Saved SSH host`}`}
-          onPress={() => onOpenHost(host.id)}
-          style={[
-            styles.row,
-            {
-              borderBottomColor: theme.colors.border,
-              backgroundColor: background(theme.colors.surface),
-            },
-          ]}>
-          <SquareTerminal size={21} color={theme.colors.primary} />
-          <View style={styles.copy}>
-            <Text weight="semibold" variant="bodySmall" numberOfLines={2}>
-              {host.label}
-            </Text>
-            <Text variant="caption" color={theme.colors.textMuted}>
-              {t`Saved SSH host`}
-            </Text>
-          </View>
-          <ChevronRight size={16} color={theme.colors.textMuted} />
-        </PressableScale>
-      ))}
-      {servers.length === 0 && hosts.length === 0 ? (
+      {hasConnections ? (
+        <View style={styles.connectionGroup}>
+          {servers.map((server) => (
+            <GatewayConnectionRow
+              key={server.serverId}
+              server={server}
+              showAddress={addresses.has(server.serverId)}
+              onOpen={onOpenServer}
+              activeConnection={activeConnection}
+              nowMs={nowMs}
+            />
+          ))}
+          {hosts.map((host) => (
+            <PressableScale
+              key={host.id}
+              testID={`home-connection-ssh-${host.id}`}
+              accessibilityRole="button"
+              accessibilityLabel={`${host.label}, ${t`Saved SSH host`}`}
+              onPress={() => onOpenHost(host.id)}
+              pressedScale={1}
+              style={[
+                styles.row,
+                {
+                  backgroundColor: background(theme.colors.surface),
+                },
+              ]}>
+              <SquareTerminal size={21} color={theme.colors.primary} />
+              <View style={styles.copy}>
+                <Text weight="semibold" variant="bodySmall" numberOfLines={2}>
+                  {host.label}
+                </Text>
+                <Text variant="caption" color={theme.colors.textMuted}>
+                  {t`Saved SSH host`}
+                </Text>
+              </View>
+              <ChevronRight size={16} color={theme.colors.textMuted} />
+            </PressableScale>
+          ))}
+        </View>
+      ) : (
         <Text variant="bodySmall" color={theme.colors.textMuted}>
           {t`Add a gateway or an SSH host to start working.`}
         </Text>
-      ) : null}
+      )}
       <PressableScale
         testID="home-manage-connections"
         accessibilityRole="button"
@@ -119,10 +123,10 @@ function GatewayConnectionRow({
       accessibilityRole="button"
       accessibilityLabel={`${server.label}, ${status}`}
       onPress={() => onOpen(server.serverId)}
+      pressedScale={1}
       style={[
         styles.row,
         {
-          borderBottomColor: theme.colors.border,
           backgroundColor: background(theme.colors.surface),
         },
       ]}>
@@ -146,7 +150,8 @@ function GatewayConnectionRow({
 }
 
 const styles = StyleSheet.create({
-  list: { minWidth: 0, gap: 8 },
+  list: { minWidth: 0 },
+  connectionGroup: { minWidth: 0, borderRadius: 6, overflow: 'hidden' },
   row: {
     minHeight: 64,
     flexDirection: 'row',
@@ -154,8 +159,14 @@ const styles = StyleSheet.create({
     gap: 12,
     paddingVertical: 12,
     paddingHorizontal: 12,
-    borderBottomWidth: StyleSheet.hairlineWidth,
   },
   copy: { flex: 1, minWidth: 0, gap: 4 },
-  manage: { minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' },
+  manage: {
+    minHeight: 44,
+    marginTop: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    flexWrap: 'wrap',
+  },
 });

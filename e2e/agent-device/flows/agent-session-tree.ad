@@ -1,0 +1,31 @@
+# Recursive OpenCode session tree, reached through the bundled demo fixture.
+
+# section open
+open "muqun://agent-session-tree?rootAsid=demo-tree-root"
+
+# section visible
+is visible "${TARGET}"
+
+# section scroll
+scroll down 1
+
+# section open-detail
+press "${TARGET}"
+
+# section detail-visible
+is visible "${TARGET}"
+
+# section detail-output
+is visible "${TARGET}"
+
+# section close-detail
+back --system
+
+# section tree-restored
+is visible "${TARGET}"
+
+# section close-tree
+back --system
+
+# section closed
+is hidden "${TARGET}"

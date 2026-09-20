@@ -10,6 +10,7 @@ import {
   serializeHomeRecents,
   type HomeRecentEntry,
   type HomeRecentsAllowlist,
+  type HomeSessionObservation,
   type HomeTarget,
 } from './home-recents';
 
@@ -26,9 +27,16 @@ export type HomeRecentsState = {
   entries: HomeRecentEntry[];
   hydrate: () => Promise<void>;
   /** Records a user-selected destination. Token/output activity never calls this. */
-  visit: (target: HomeTarget, title?: string, atMs?: number) => Promise<void>;
+  visit: (
+    target: HomeTarget,
+    title?: string,
+    atMs?: number,
+    sessionObservation?: HomeSessionObservation
+  ) => Promise<void>;
   /** Updates display metadata in place without creating or reordering a visit. */
   updateTitle: (target: HomeTarget, title: string) => Promise<void>;
+  /** Updates observed OpenCode status without creating or reordering a visit. */
+  observeSession: (target: HomeTarget, observation: HomeSessionObservation) => Promise<void>;
   /** Removes references to unpaired servers and deleted SSH hosts. */
   keepOnly: (allowlist: HomeRecentsAllowlist) => Promise<void>;
   remove: (target: HomeTarget) => Promise<void>;
@@ -142,8 +150,13 @@ export function createHomeRecentsState(
       return hydrationPromise;
     };
 
-    const visit = async (target: HomeTarget, title = '', atMs?: number): Promise<void> => {
-      const entry = createHomeRecentEntry(target, title, atMs);
+    const visit = async (
+      target: HomeTarget,
+      title = '',
+      atMs?: number,
+      sessionObservation?: HomeSessionObservation
+    ): Promise<void> => {
+      const entry = createHomeRecentEntry(target, title, atMs, sessionObservation);
       if (!entry) return;
       if (allowed && !isHomeRecentEntryAllowed(entry, allowed)) return;
 
@@ -160,6 +173,46 @@ export function createHomeRecentsState(
 
       await hydrate();
       if (visitWasDuringHydration) await writeDrain;
+      else await requestWrite();
+    };
+
+    const observeSession = async (
+      target: HomeTarget,
+      observation: HomeSessionObservation
+    ): Promise<void> => {
+      const normalized = createHomeRecentEntry(target, '', 0, observation);
+      if (!normalized?.sessionObservation) return;
+      if (allowed && !isHomeRecentEntryAllowed(normalized, allowed)) return;
+
+      let before = get().entries;
+      let index = before.findIndex((item) => item.key === normalized.key);
+      if (index < 0) {
+        await hydrate();
+        if (allowed && !isHomeRecentEntryAllowed(normalized, allowed)) return;
+        before = get().entries;
+        index = before.findIndex((item) => item.key === normalized.key);
+        if (index < 0) return;
+      }
+      const current = before[index];
+      const previous = current?.sessionObservation;
+      if (
+        !current ||
+        (previous && previous.observedAtMs > normalized.sessionObservation.observedAtMs) ||
+        (previous?.status === normalized.sessionObservation.status &&
+          previous.observedAtMs === normalized.sessionObservation.observedAtMs)
+      ) {
+        await hydrate();
+        return;
+      }
+
+      const observationWasDuringHydration = !hydrated;
+      if (observationWasDuringHydration) changedDuringHydration.add(normalized.key);
+      const next = before.slice();
+      next[index] = { ...current, sessionObservation: normalized.sessionObservation };
+      set({ entries: next });
+
+      await hydrate();
+      if (observationWasDuringHydration) await writeDrain;
       else await requestWrite();
     };
 
@@ -225,6 +278,7 @@ export function createHomeRecentsState(
       hydrate,
       visit,
       updateTitle,
+      observeSession,
       keepOnly,
       remove,
     };
@@ -289,6 +343,8 @@ function sameHomeRecentEntries(
       entry.key === other.key &&
       entry.title === other.title &&
       entry.atMs === other.atMs &&
+      entry.sessionObservation?.status === other.sessionObservation?.status &&
+      entry.sessionObservation?.observedAtMs === other.sessionObservation?.observedAtMs &&
       homeTargetKey(entry.target) === homeTargetKey(other.target)
     );
   });

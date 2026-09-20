@@ -231,6 +231,7 @@ msgstr "{removeLabel}: {label}"
 msgid "{running} running of {0}"
 msgstr "{running} trong {0} đang chạy"
 
+#: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-sessions-sheet.tsx
 msgid "{title} — finished while you were away"
 msgstr "{title} — đã xong khi bạn đi vắng"
@@ -608,10 +609,6 @@ msgstr "Đính kèm tệp"
 msgid "Attachment"
 msgstr "Tệp đính kèm"
 
-#: src/components/home-editorial-layout.tsx
-msgid "Attention"
-msgstr "Cần chú ý"
-
 #: src/components/app-lock-gate.tsx
 msgid "Authenticate with {authLabel} to continue."
 msgstr "Xác thực bằng {authLabel} để tiếp tục"
@@ -854,6 +851,7 @@ msgid "Checking…"
 msgstr "Đang kiểm tra…"
 
 #: src/components/home-launch-actions.tsx
+#: src/components/home-target-sheet.tsx
 msgid "Choose a gateway"
 msgstr "Chọn Gateway"
 
@@ -865,10 +863,6 @@ msgstr "Trước tiên hãy chọn Gateway"
 #: src/components/agent-workbench.tsx
 msgid "Choose a model"
 msgstr "Chọn mô hình"
-
-#: src/components/home-launch-actions.tsx
-msgid "Choose a saved host"
-msgstr "Chọn host đã lưu"
 
 #: src/components/simfarm-stage.tsx
 msgid "Choose a simulator"
@@ -898,7 +892,7 @@ msgstr "Chọn terminal khác"
 msgid "Choose files"
 msgstr "Chọn tệp"
 
-#: src/components/settings-servers.tsx
+#: src/components/settings-appearance.tsx
 msgid "Choose how Home is arranged."
 msgstr "Chọn cách sắp xếp Home"
 
@@ -912,7 +906,6 @@ msgstr "Chọn trình giả lập để hiển thị"
 
 #: src/components/settings-appearance.tsx
 #: src/components/settings-home-layout-sheet.tsx
-#: src/components/settings-servers.tsx
 msgid "Classic"
 msgstr "Cổ điển"
 
@@ -1162,6 +1155,10 @@ msgstr "Đang kết nối…"
 #: src/components/home-editorial-layout.tsx
 msgid "Connections"
 msgstr "Kết nối"
+
+#: src/components/agent-composer.tsx
+msgid "Contains subagent sessions"
+msgstr "Chứa các phiên tác nhân phụ"
 
 #: src/components/agent-context-sheet.tsx
 msgid "Context"
@@ -1897,8 +1894,8 @@ msgstr "Sửa host SSH"
 msgid "Edit this server"
 msgstr "Sửa máy chủ này"
 
+#: src/components/settings-appearance.tsx
 #: src/components/settings-home-layout-sheet.tsx
-#: src/components/settings-servers.tsx
 msgid "Editorial"
 msgstr "Biên tập"
 
@@ -2259,8 +2256,8 @@ msgstr "Trang chủ"
 msgid "Home / Editorial"
 msgstr "Trang chủ / Biên tập"
 
+#: src/components/settings-appearance.tsx
 #: src/components/settings-home-layout-sheet.tsx
-#: src/components/settings-servers.tsx
 msgid "Home layout"
 msgstr "Bố cục Home"
 
@@ -2268,7 +2265,7 @@ msgstr "Bố cục Home"
 msgid "Home layout changed for this session, but could not be saved on this device. Try again."
 msgstr "Bố cục Home đã thay đổi trong phiên này nhưng không thể lưu trên thiết bị. Hãy thử lại"
 
-#: src/components/settings-servers.tsx
+#: src/components/settings-appearance.tsx
 msgid "Home layout, {homeLayoutLabel}"
 msgstr "Bố cục Home: {homeLayoutLabel}"
 
@@ -2293,6 +2290,7 @@ msgstr "Khóa host đã được tin cậy"
 msgid "How to use Muqun"
 msgstr "Cách dùng Muqun"
 
+#: src/components/agent-session-tree-sheet.tsx
 #: src/i18n/labels.ts
 msgid "Idle"
 msgstr "Rảnh"
@@ -2540,6 +2538,10 @@ msgstr "Mũi tên trái"
 #: src/components/virtual-keyboard.tsx
 msgid "Letters"
 msgstr "Chữ cái"
+
+#: src/components/agent-session-tree-sheet.tsx
+msgid "Level {depth}"
+msgstr "Cấp {depth}"
 
 #: src/components/custom-theme-preview.tsx
 #: src/components/settings-appearance.tsx
@@ -3066,6 +3068,7 @@ msgstr "Không có gì đang chạy nền. Tách một lệnh dài khỏi thẻ 
 msgid "Nothing staged"
 msgstr "Chưa chuẩn bị gì"
 
+#: src/components/home-recent-sessions.tsx
 #: src/components/pane-chat-view.tsx
 msgid "Nothing to show yet."
 msgstr "Chưa có gì để hiển thị"
@@ -3124,10 +3127,6 @@ msgstr "Mở {0}"
 #: src/components/session-map.tsx
 msgid "Open {title}. Long press to close."
 msgstr "Mở {title}. Nhấn giữ để đóng"
-
-#: src/components/home-attention.tsx
-msgid "Open a session to check its requests."
-msgstr "Mở phiên để kiểm tra các yêu cầu"
 
 #: src/components/open-web-service-sheet.tsx
 msgid "Open anyway"
@@ -3206,6 +3205,10 @@ msgstr "Mở thao tác nhanh"
 #: src/components/agent-tool-card.tsx
 msgid "Open session"
 msgstr "Mở phiên"
+
+#: src/components/agent-composer.tsx
+msgid "Open session tree"
+msgstr "Mở cây phiên"
 
 #. placeholder {0}: host.label
 #. placeholder {0}: record.label
@@ -3333,7 +3336,6 @@ msgid "Output lands on a hardware-accelerated terminal grid with instant-respons
 msgstr "Hiển thị trên lưới terminal tăng tốc phần cứng với hàng phím phản hồi tức thì và quản lý tmux đầy đủ. nvim, less và REPL hoạt động mượt mà"
 
 #: src/components/home-launch-actions.tsx
-#: src/components/home-overview.tsx
 msgid "Pair a gateway"
 msgstr "Ghép nối Gateway"
 
@@ -3396,6 +3398,10 @@ msgstr "Ghép nối thất bại"
 #: src/components/settings-servers.tsx
 msgid "Panes on server cards"
 msgstr "Ngăn trên thẻ máy chủ"
+
+#: src/components/agent-session-tree-sheet.tsx
+msgid "Parent: {parentTitle}"
+msgstr "Phiên cha: {parentTitle}"
 
 #: src/components/ssh-host-form.tsx
 msgid "Passphrase (optional)"
@@ -3732,10 +3738,6 @@ msgstr "Xóa"
 msgid "Remove {0}"
 msgstr "Gỡ {0}"
 
-#: src/components/home-recent-sessions.tsx
-msgid "Remove {title} from recents"
-msgstr "Xóa {title} khỏi các phiên gần đây"
-
 #: src/components/agent-worktree-sheet.tsx
 msgid "Remove anyway"
 msgstr "Vẫn gỡ bỏ"
@@ -3858,6 +3860,7 @@ msgstr "Thử lại những mục đánh dấu đỏ, hoặc gỡ chúng, rồi 
 msgid "Retry uploading {0}"
 msgstr "Thử tải lên lại {0}"
 
+#: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-workbench.tsx
 msgid "Retrying…"
 msgstr "Đang thử lại…"
@@ -3975,6 +3978,10 @@ msgstr "Chạy các kiểm thử liên quan"
 #: src/components/home-overview.tsx
 msgid "Run the Gateway on your machine and scan the QR code it prints. The pairing stays on this device."
 msgstr "Chạy Gateway trên máy của bạn và quét mã QR nó in ra. Việc ghép nối ở lại trên thiết bị này"
+
+#: src/components/agent-session-tree-sheet.tsx
+msgid "Running"
+msgstr "Đang chạy"
 
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/session-map.tsx
@@ -4099,20 +4106,24 @@ msgid "Security"
 msgstr "Bảo mật"
 
 #. placeholder {0}: age.value
+#: src/components/home-recent-sessions.tsx
 #: src/components/server-agent-rows.tsx
 msgid "Seen {0}d ago"
 msgstr "Đã thấy {0} ngày trước"
 
 #. placeholder {0}: age.value
+#: src/components/home-recent-sessions.tsx
 #: src/components/server-agent-rows.tsx
 msgid "Seen {0}h ago"
 msgstr "Đã thấy {0} giờ trước"
 
 #. placeholder {0}: age.value
+#: src/components/home-recent-sessions.tsx
 #: src/components/server-agent-rows.tsx
 msgid "Seen {0}m ago"
 msgstr "Đã thấy {0} phút trước"
 
+#: src/components/home-recent-sessions.tsx
 #: src/components/server-agent-rows.tsx
 msgid "Seen just now"
 msgstr "Đã thấy vừa xong"
@@ -4216,7 +4227,16 @@ msgstr "Tên phiên"
 msgid "Session Tokens"
 msgstr "Token phiên"
 
+#: src/components/agent-session-tree-sheet.tsx
+msgid "Session tree"
+msgstr "Cây phiên"
+
+#: src/components/agent-session-tree-sheet.tsx
+msgid "Session unavailable"
+msgstr "Phiên không khả dụng"
+
 #: src/components/agent-sessions-sheet.tsx
+#: src/components/home-recent-sessions.tsx
 #: src/components/session-map.tsx
 msgid "Sessions"
 msgstr "Phiên"
@@ -4225,10 +4245,6 @@ msgstr "Phiên"
 msgctxt "agent slash command"
 msgid "Sessions in this workspace"
 msgstr "Các phiên trong không gian làm việc này"
-
-#: src/components/home-recent-sessions.tsx
-msgid "Sessions you open will appear here."
-msgstr "Các phiên bạn mở sẽ xuất hiện ở đây"
 
 #. placeholder {0}: sessionTitle ?? ''
 #: src/app/agent.tsx
@@ -4316,10 +4332,6 @@ msgstr "Hiện {0}"
 #: src/components/settings-alerts.tsx
 msgid "Show agents and their status on the home screen. Updates while Muqun is open."
 msgstr "Hiện các tác tử và trạng thái của chúng trên màn hình chính. Cập nhật khi Muqun đang mở"
-
-#: src/components/home-recent-sessions.tsx
-msgid "Show all recent sessions"
-msgstr "Hiện tất cả phiên gần đây"
 
 #: src/components/pairing-camera.tsx
 msgid "Show camera details"
@@ -4481,6 +4493,7 @@ msgstr "Mã nguồn"
 msgid "Space"
 msgstr "Space"
 
+#: src/components/home-launch-actions.tsx
 #: src/components/home-overview.tsx
 #: src/components/pad-server-rail.tsx
 #: src/components/ssh-host-list.tsx
@@ -4488,16 +4501,13 @@ msgstr "Space"
 msgid "SSH"
 msgstr "SSH"
 
-#: src/components/home-launch-actions.tsx
-msgid "SSH connection"
-msgstr "Kết nối SSH"
-
 #: src/app/explore.tsx
 #: src/components/gateway-tunnel-badge.tsx
 #: src/components/home-recent-sessions.tsx
 msgid "SSH host"
 msgstr "Host SSH"
 
+#: src/components/home-launch-actions.tsx
 #: src/components/home-overview.tsx
 #: src/components/pad-server-rail.tsx
 #: src/components/settings-servers.tsx
@@ -4520,10 +4530,6 @@ msgstr "Đã staged và chưa staged"
 #: src/lib/agent-widget-layout.tsx
 msgid "stale · {age}"
 msgstr "cũ · {age}"
-
-#: src/components/home-editorial-layout.tsx
-msgid "Start"
-msgstr "Bắt đầu"
 
 #. placeholder {0}: profile.kind
 #: src/components/agent-assignment-bar.tsx
@@ -4581,6 +4587,7 @@ msgstr "Đang bắt đầu…"
 msgid "Status unavailable"
 msgstr "Không lấy được trạng thái"
 
+#: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-workbench.tsx
 #: src/components/collaboration-notice.tsx
 msgid "Status unknown"
@@ -4628,6 +4635,7 @@ msgstr "Dừng tác tử này"
 msgid "Stop this command"
 msgstr "Dừng lệnh này"
 
+#: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-workbench.tsx
 msgid "Stopped"
 msgstr "Đã dừng"
@@ -4798,6 +4806,7 @@ msgstr "Tệp tạm"
 
 #: src/app/commands.tsx
 #: src/app/settings.tsx
+#: src/components/home-launch-actions.tsx
 #: src/components/home-recent-sessions.tsx
 #: src/i18n/labels.ts
 msgid "Terminal"
@@ -5038,6 +5047,7 @@ msgstr "Giao diện sẽ bị xóa khỏi thiết bị này"
 msgid "The transcript as a conversation, with tool steps folded away."
 msgstr "Bản ghi dưới dạng cuộc trò chuyện, với các bước công cụ được thu gọn"
 
+#: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-workbench.tsx
 msgid "The turn failed"
 msgstr "Lượt này đã thất bại"
@@ -5441,6 +5451,7 @@ msgid "Unsupported item ({0})"
 msgstr "Mục chưa được hỗ trợ ({0})"
 
 #: src/components/agent-composer.tsx
+#: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-sessions-sheet.tsx
 msgid "Untitled session"
 msgstr "Phiên chưa có tên"

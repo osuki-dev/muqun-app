@@ -696,6 +696,7 @@ function renderTimelinePart(
     markdownStyle: MarkdownStyle;
     prevItem?: TimelineItem;
     actions: AgentToolActions;
+    readOnly: boolean;
   }
 ): ReactNode {
   const part = item.part;
@@ -711,6 +712,7 @@ function renderTimelinePart(
           part={part}
           markdownStyle={options.markdownStyle}
           actions={options.actions}
+          readOnly={options.readOnly}
         />
       );
     case 'shell':
@@ -722,6 +724,7 @@ function renderTimelinePart(
           part={shellAsToolPart(part)}
           markdownStyle={options.markdownStyle}
           actions={options.actions}
+          readOnly={options.readOnly}
         />
       );
     case 'diff':
@@ -778,10 +781,12 @@ const ToolPartCard = memo(function ToolPartCard({
   part,
   markdownStyle,
   actions,
+  readOnly,
 }: {
   part: ToolPart;
   markdownStyle: MarkdownStyle;
   actions: AgentToolActions;
+  readOnly: boolean;
 }) {
   const runInBackground = actions.onRunInBackground;
   const handleRunInBackground = useMemo(
@@ -795,8 +800,8 @@ const ToolPartCard = memo(function ToolPartCard({
   // Subscribed by call id rather than searched out of a list handed to every
   // card: one pending permission used to change the object every memoised tool
   // card compared against, so a single prompt re-rendered the whole transcript.
-  const attachedPermission = usePermissionForToolCall(part.id);
-  const decide = usePermissionDecider();
+  const attachedPermission = usePermissionForToolCall(part.id, !readOnly);
+  const decide = usePermissionDecider(!readOnly);
   const handleDecision = useMemo(
     () =>
       decide && attachedPermission
@@ -875,6 +880,7 @@ export const AgentUserMessage = memo(function AgentUserMessage({
   onCancelQueued,
   onUndoToHere,
   actions = NO_TOOL_ACTIONS,
+  readOnly = false,
 }: {
   group: TimelineRenderGroup;
   showReasoning: boolean;
@@ -890,6 +896,8 @@ export const AgentUserMessage = memo(function AgentUserMessage({
    */
   onUndoToHere?: (messageId: string) => void;
   actions?: AgentToolActions;
+  /** Historical/peek surfaces show content without session mutation controls. */
+  readOnly?: boolean;
 }) {
   const { t } = useLingui();
   // Live theme style, see AgentToolCard: a memoised cell must still repaint
@@ -1007,22 +1015,26 @@ export const AgentUserMessage = memo(function AgentUserMessage({
                 <Trans>Queued</Trans>
               </Text>
             </View>
-            <PressableScale
-              testID={`queued-edit-${queued.id}`}
-              accessibilityRole="button"
-              accessibilityLabel={t`Edit queued message`}
-              onPress={() => onEditQueued(queued.id, text)}
-              style={styles.queuedActionBtn}>
-              <Edit3 size={13} color={theme.colors.primary} />
-            </PressableScale>
-            <PressableScale
-              testID={`queued-cancel-${queued.id}`}
-              accessibilityRole="button"
-              accessibilityLabel={t`Cancel queued message`}
-              onPress={() => onCancelQueued(queued.id)}
-              style={styles.queuedActionBtn}>
-              <Trash2 size={13} color={theme.colors.danger} />
-            </PressableScale>
+            {!readOnly ? (
+              <>
+                <PressableScale
+                  testID={`queued-edit-${queued.id}`}
+                  accessibilityRole="button"
+                  accessibilityLabel={t`Edit queued message`}
+                  onPress={() => onEditQueued(queued.id, text)}
+                  style={styles.queuedActionBtn}>
+                  <Edit3 size={13} color={theme.colors.primary} />
+                </PressableScale>
+                <PressableScale
+                  testID={`queued-cancel-${queued.id}`}
+                  accessibilityRole="button"
+                  accessibilityLabel={t`Cancel queued message`}
+                  onPress={() => onCancelQueued(queued.id)}
+                  style={styles.queuedActionBtn}>
+                  <Trash2 size={13} color={theme.colors.danger} />
+                </PressableScale>
+              </>
+            ) : null}
           </>
         ) : null}
       </View>
@@ -1038,6 +1050,7 @@ export const AgentUserMessage = memo(function AgentUserMessage({
             markdownStyle,
             prevItem: previousItemAt(entries, index) ?? group.prevItem,
             actions,
+            readOnly,
           })
         )
       )}
@@ -1069,12 +1082,15 @@ export const AgentAssistantMessage = memo(function AgentAssistantMessage({
   showReasoning,
   reasoningLive = false,
   actions = NO_TOOL_ACTIONS,
+  readOnly = false,
 }: {
   group: TimelineRenderGroup;
   showReasoning: boolean;
   reasoningLive?: boolean;
   markdownStyle: MarkdownStyle;
   actions?: AgentToolActions;
+  /** Historical/peek surfaces show content without permission controls. */
+  readOnly?: boolean;
 }) {
   const plate = useTranscriptPlate();
   const markdownStyle = usePaneChatMarkdownStyle();
@@ -1130,6 +1146,7 @@ export const AgentAssistantMessage = memo(function AgentAssistantMessage({
       markdownStyle,
       prevItem: previousItemAt(entries, index) ?? group.prevItem,
       actions,
+      readOnly,
     });
     if (drawn === null) return;
     if (STANDALONE_PART_TYPES.has(entry.item.part.type)) {

@@ -645,6 +645,9 @@ export function HomeOverview({
                   <HomeRecentSessions
                     servers={records}
                     hosts={sshRows}
+                    reachabilityByServer={padReachabilityByServer}
+                    activeConnection={activeConnection}
+                    nowMs={nowMs}
                     onOpenPane={(serverId, paneId) => {
                       void commands.openServer(serverId, paneId);
                     }}
@@ -1170,8 +1173,6 @@ function HeaderButton({
           width: 44,
           height: 44,
           borderRadius: 5,
-          borderWidth: StyleSheet.hairlineWidth,
-          borderColor: theme.colors.borderStrong,
         },
       ]}>
       <ThemedSurfaceArtwork slot="navigation.background" baseColor={theme.colors.surface} />

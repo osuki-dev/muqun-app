@@ -231,6 +231,7 @@ msgstr "{removeLabel}: {label}"
 msgid "{running} running of {0}"
 msgstr "กำลังทำงาน {running} จาก {0}"
 
+#: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-sessions-sheet.tsx
 msgid "{title} — finished while you were away"
 msgstr "{title} — ทำงานเสร็จตอนที่คุณไม่อยู่"
@@ -608,10 +609,6 @@ msgstr "แนบไฟล์"
 msgid "Attachment"
 msgstr "ไฟล์แนบ"
 
-#: src/components/home-editorial-layout.tsx
-msgid "Attention"
-msgstr "ต้องดำเนินการ"
-
 #: src/components/app-lock-gate.tsx
 msgid "Authenticate with {authLabel} to continue."
 msgstr "ยืนยันตัวตนด้วย {authLabel} เพื่อดำเนินการต่อ"
@@ -854,6 +851,7 @@ msgid "Checking…"
 msgstr "กำลังตรวจสอบ…"
 
 #: src/components/home-launch-actions.tsx
+#: src/components/home-target-sheet.tsx
 msgid "Choose a gateway"
 msgstr "เลือก Gateway"
 
@@ -865,10 +863,6 @@ msgstr "เลือก Gateway ก่อน"
 #: src/components/agent-workbench.tsx
 msgid "Choose a model"
 msgstr "เลือกโมเดล"
-
-#: src/components/home-launch-actions.tsx
-msgid "Choose a saved host"
-msgstr "เลือกโฮสต์ที่บันทึกไว้"
 
 #: src/components/simfarm-stage.tsx
 msgid "Choose a simulator"
@@ -898,7 +892,7 @@ msgstr "เลือกเทอร์มินัลอื่น"
 msgid "Choose files"
 msgstr "เลือกไฟล์"
 
-#: src/components/settings-servers.tsx
+#: src/components/settings-appearance.tsx
 msgid "Choose how Home is arranged."
 msgstr "เลือกการจัดวาง Home"
 
@@ -912,7 +906,6 @@ msgstr "เลือกเครื่องจำลองที่จะแส
 
 #: src/components/settings-appearance.tsx
 #: src/components/settings-home-layout-sheet.tsx
-#: src/components/settings-servers.tsx
 msgid "Classic"
 msgstr "คลาสสิก"
 
@@ -1162,6 +1155,10 @@ msgstr "กำลังเชื่อมต่อ…"
 #: src/components/home-editorial-layout.tsx
 msgid "Connections"
 msgstr "การเชื่อมต่อ"
+
+#: src/components/agent-composer.tsx
+msgid "Contains subagent sessions"
+msgstr "มีเซสชันของเอเจนต์ย่อย"
 
 #: src/components/agent-context-sheet.tsx
 msgid "Context"
@@ -1897,8 +1894,8 @@ msgstr "แก้ไขโฮสต์ SSH"
 msgid "Edit this server"
 msgstr "แก้ไขเซิร์ฟเวอร์นี้"
 
+#: src/components/settings-appearance.tsx
 #: src/components/settings-home-layout-sheet.tsx
-#: src/components/settings-servers.tsx
 msgid "Editorial"
 msgstr "บทบรรณาธิการ"
 
@@ -2259,8 +2256,8 @@ msgstr "หน้าแรก"
 msgid "Home / Editorial"
 msgstr "หน้าหลัก / บทบรรณาธิการ"
 
+#: src/components/settings-appearance.tsx
 #: src/components/settings-home-layout-sheet.tsx
-#: src/components/settings-servers.tsx
 msgid "Home layout"
 msgstr "เลย์เอาต์ Home"
 
@@ -2268,7 +2265,7 @@ msgstr "เลย์เอาต์ Home"
 msgid "Home layout changed for this session, but could not be saved on this device. Try again."
 msgstr "เลย์เอาต์ Home เปลี่ยนแปลงสำหรับเซสชันนี้แล้ว แต่บันทึกลงในอุปกรณ์นี้ไม่ได้ ลองอีกครั้ง"
 
-#: src/components/settings-servers.tsx
+#: src/components/settings-appearance.tsx
 msgid "Home layout, {homeLayoutLabel}"
 msgstr "เลย์เอาต์ Home: {homeLayoutLabel}"
 
@@ -2293,6 +2290,7 @@ msgstr "เชื่อถือคีย์โฮสต์แล้ว"
 msgid "How to use Muqun"
 msgstr "วิธีใช้ Muqun"
 
+#: src/components/agent-session-tree-sheet.tsx
 #: src/i18n/labels.ts
 msgid "Idle"
 msgstr "ว่าง"
@@ -2540,6 +2538,10 @@ msgstr "ลูกศรซ้าย"
 #: src/components/virtual-keyboard.tsx
 msgid "Letters"
 msgstr "ตัวอักษร"
+
+#: src/components/agent-session-tree-sheet.tsx
+msgid "Level {depth}"
+msgstr "ระดับ {depth}"
 
 #: src/components/custom-theme-preview.tsx
 #: src/components/settings-appearance.tsx
@@ -3066,6 +3068,7 @@ msgstr "ยังไม่มีอะไรทำงานเบื้องห
 msgid "Nothing staged"
 msgstr "ไม่มีอะไรที่เตรียมไว้"
 
+#: src/components/home-recent-sessions.tsx
 #: src/components/pane-chat-view.tsx
 msgid "Nothing to show yet."
 msgstr "ยังไม่มีอะไรให้แสดง"
@@ -3124,10 +3127,6 @@ msgstr "เปิด {0}"
 #: src/components/session-map.tsx
 msgid "Open {title}. Long press to close."
 msgstr "เปิด {title} กดค้างเพื่อปิด"
-
-#: src/components/home-attention.tsx
-msgid "Open a session to check its requests."
-msgstr "เปิดเซสชันเพื่อตรวจสอบคำขอ"
 
 #: src/components/open-web-service-sheet.tsx
 msgid "Open anyway"
@@ -3206,6 +3205,10 @@ msgstr "เปิดการทำงานด่วน"
 #: src/components/agent-tool-card.tsx
 msgid "Open session"
 msgstr "เปิดเซสชัน"
+
+#: src/components/agent-composer.tsx
+msgid "Open session tree"
+msgstr "เปิดแผนผังเซสชัน"
 
 #. placeholder {0}: host.label
 #. placeholder {0}: record.label
@@ -3333,7 +3336,6 @@ msgid "Output lands on a hardware-accelerated terminal grid with instant-respons
 msgstr "แสดงผลบนตารางเทอร์มินัลเร่งความเร็วด้วยฮาร์ดแวร์ พร้อมแถวคีย์ที่ตอบสนองทันทีและการควบคุม tmux สำหรับ nvim, less และ REPL"
 
 #: src/components/home-launch-actions.tsx
-#: src/components/home-overview.tsx
 msgid "Pair a gateway"
 msgstr "จับคู่ Gateway"
 
@@ -3396,6 +3398,10 @@ msgstr "จับคู่ไม่สำเร็จ"
 #: src/components/settings-servers.tsx
 msgid "Panes on server cards"
 msgstr "พาเนลบนการ์ดเซิร์ฟเวอร์"
+
+#: src/components/agent-session-tree-sheet.tsx
+msgid "Parent: {parentTitle}"
+msgstr "เซสชันแม่: {parentTitle}"
 
 #: src/components/ssh-host-form.tsx
 msgid "Passphrase (optional)"
@@ -3732,10 +3738,6 @@ msgstr "ลบ"
 msgid "Remove {0}"
 msgstr "ลบ {0}"
 
-#: src/components/home-recent-sessions.tsx
-msgid "Remove {title} from recents"
-msgstr "นำ {title} ออกจากเซสชันล่าสุด"
-
 #: src/components/agent-worktree-sheet.tsx
 msgid "Remove anyway"
 msgstr "ลบอยู่ดี"
@@ -3858,6 +3860,7 @@ msgstr "ลองอัปโหลดรายการสีแดงอีก
 msgid "Retry uploading {0}"
 msgstr "ลองอัปโหลด {0} อีกครั้ง"
 
+#: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-workbench.tsx
 msgid "Retrying…"
 msgstr "กำลังลองใหม่…"
@@ -3975,6 +3978,10 @@ msgstr "เรียกใช้การทดสอบที่เกี่ย
 #: src/components/home-overview.tsx
 msgid "Run the Gateway on your machine and scan the QR code it prints. The pairing stays on this device."
 msgstr "เรียกใช้ Gateway บนเครื่องของคุณแล้วสแกน QR ที่แสดง การจับคู่จะเก็บอยู่บนอุปกรณ์นี้"
+
+#: src/components/agent-session-tree-sheet.tsx
+msgid "Running"
+msgstr "กำลังทำงาน"
 
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/session-map.tsx
@@ -4099,20 +4106,24 @@ msgid "Security"
 msgstr "ความปลอดภัย"
 
 #. placeholder {0}: age.value
+#: src/components/home-recent-sessions.tsx
 #: src/components/server-agent-rows.tsx
 msgid "Seen {0}d ago"
 msgstr "พบเมื่อ {0} วันที่แล้ว"
 
 #. placeholder {0}: age.value
+#: src/components/home-recent-sessions.tsx
 #: src/components/server-agent-rows.tsx
 msgid "Seen {0}h ago"
 msgstr "พบเมื่อ {0} ชั่วโมงที่แล้ว"
 
 #. placeholder {0}: age.value
+#: src/components/home-recent-sessions.tsx
 #: src/components/server-agent-rows.tsx
 msgid "Seen {0}m ago"
 msgstr "พบเมื่อ {0} นาทีที่แล้ว"
 
+#: src/components/home-recent-sessions.tsx
 #: src/components/server-agent-rows.tsx
 msgid "Seen just now"
 msgstr "พบเมื่อสักครู่"
@@ -4216,7 +4227,16 @@ msgstr "ชื่อเซสชัน"
 msgid "Session Tokens"
 msgstr "โทเค็นเซสชัน"
 
+#: src/components/agent-session-tree-sheet.tsx
+msgid "Session tree"
+msgstr "แผนผังเซสชัน"
+
+#: src/components/agent-session-tree-sheet.tsx
+msgid "Session unavailable"
+msgstr "เซสชันไม่พร้อมใช้งาน"
+
 #: src/components/agent-sessions-sheet.tsx
+#: src/components/home-recent-sessions.tsx
 #: src/components/session-map.tsx
 msgid "Sessions"
 msgstr "เซสชัน"
@@ -4225,10 +4245,6 @@ msgstr "เซสชัน"
 msgctxt "agent slash command"
 msgid "Sessions in this workspace"
 msgstr "เซสชันในพื้นที่ทำงานนี้"
-
-#: src/components/home-recent-sessions.tsx
-msgid "Sessions you open will appear here."
-msgstr "เซสชันที่คุณเปิดจะปรากฏที่นี่"
 
 #. placeholder {0}: sessionTitle ?? ''
 #: src/app/agent.tsx
@@ -4316,10 +4332,6 @@ msgstr "แสดง {0}"
 #: src/components/settings-alerts.tsx
 msgid "Show agents and their status on the home screen. Updates while Muqun is open."
 msgstr "แสดงเอเจนต์และสถานะบนหน้าจอหลัก อัปเดตขณะ Muqun เปิดอยู่"
-
-#: src/components/home-recent-sessions.tsx
-msgid "Show all recent sessions"
-msgstr "แสดงเซสชันล่าสุดทั้งหมด"
 
 #: src/components/pairing-camera.tsx
 msgid "Show camera details"
@@ -4481,6 +4493,7 @@ msgstr "ซอร์สโค้ด"
 msgid "Space"
 msgstr "Space"
 
+#: src/components/home-launch-actions.tsx
 #: src/components/home-overview.tsx
 #: src/components/pad-server-rail.tsx
 #: src/components/ssh-host-list.tsx
@@ -4488,16 +4501,13 @@ msgstr "Space"
 msgid "SSH"
 msgstr "SSH"
 
-#: src/components/home-launch-actions.tsx
-msgid "SSH connection"
-msgstr "การเชื่อมต่อ SSH"
-
 #: src/app/explore.tsx
 #: src/components/gateway-tunnel-badge.tsx
 #: src/components/home-recent-sessions.tsx
 msgid "SSH host"
 msgstr "โฮสต์ SSH"
 
+#: src/components/home-launch-actions.tsx
 #: src/components/home-overview.tsx
 #: src/components/pad-server-rail.tsx
 #: src/components/settings-servers.tsx
@@ -4520,10 +4530,6 @@ msgstr "เตรียมคอมมิตแล้วและยังไม
 #: src/lib/agent-widget-layout.tsx
 msgid "stale · {age}"
 msgstr "ข้อมูลเก่า · {age}"
-
-#: src/components/home-editorial-layout.tsx
-msgid "Start"
-msgstr "เริ่ม"
 
 #. placeholder {0}: profile.kind
 #: src/components/agent-assignment-bar.tsx
@@ -4581,6 +4587,7 @@ msgstr "กำลังเริ่ม…"
 msgid "Status unavailable"
 msgstr "สถานะไม่พร้อมใช้งาน"
 
+#: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-workbench.tsx
 #: src/components/collaboration-notice.tsx
 msgid "Status unknown"
@@ -4628,6 +4635,7 @@ msgstr "หยุดเอเจนต์นี้"
 msgid "Stop this command"
 msgstr "หยุดคำสั่งนี้"
 
+#: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-workbench.tsx
 msgid "Stopped"
 msgstr "หยุดแล้ว"
@@ -4798,6 +4806,7 @@ msgstr "ไฟล์ชั่วคราว"
 
 #: src/app/commands.tsx
 #: src/app/settings.tsx
+#: src/components/home-launch-actions.tsx
 #: src/components/home-recent-sessions.tsx
 #: src/i18n/labels.ts
 msgid "Terminal"
@@ -5038,6 +5047,7 @@ msgstr "ธีมจะถูกลบจากอุปกรณ์นี้"
 msgid "The transcript as a conversation, with tool steps folded away."
 msgstr "บันทึกในรูปแบบบทสนทนา โดยซ่อนขั้นตอนการใช้เครื่องมือ"
 
+#: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-workbench.tsx
 msgid "The turn failed"
 msgstr "รอบนี้ล้มเหลว"
@@ -5441,6 +5451,7 @@ msgid "Unsupported item ({0})"
 msgstr "รายการที่ยังไม่รองรับ ({0})"
 
 #: src/components/agent-composer.tsx
+#: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-sessions-sheet.tsx
 msgid "Untitled session"
 msgstr "เซสชันไม่มีชื่อ"

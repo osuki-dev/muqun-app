@@ -231,6 +231,7 @@ msgstr "{removeLabel}：{label}"
 msgid "{running} running of {0}"
 msgstr "{0} 个中有 {running} 个正在运行"
 
+#: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-sessions-sheet.tsx
 msgid "{title} — finished while you were away"
 msgstr "{title} — 在你离开时完成"
@@ -608,10 +609,6 @@ msgstr "附加文件"
 msgid "Attachment"
 msgstr "附件"
 
-#: src/components/home-editorial-layout.tsx
-msgid "Attention"
-msgstr "需要处理"
-
 #: src/components/app-lock-gate.tsx
 msgid "Authenticate with {authLabel} to continue."
 msgstr "请使用 {authLabel} 验证以继续"
@@ -854,6 +851,7 @@ msgid "Checking…"
 msgstr "检查中…"
 
 #: src/components/home-launch-actions.tsx
+#: src/components/home-target-sheet.tsx
 msgid "Choose a gateway"
 msgstr "选择 Gateway"
 
@@ -865,10 +863,6 @@ msgstr "请先选择 Gateway"
 #: src/components/agent-workbench.tsx
 msgid "Choose a model"
 msgstr "选择模型"
-
-#: src/components/home-launch-actions.tsx
-msgid "Choose a saved host"
-msgstr "选择已保存的主机"
 
 #: src/components/simfarm-stage.tsx
 msgid "Choose a simulator"
@@ -898,7 +892,7 @@ msgstr "选择其他终端"
 msgid "Choose files"
 msgstr "选择文件"
 
-#: src/components/settings-servers.tsx
+#: src/components/settings-appearance.tsx
 msgid "Choose how Home is arranged."
 msgstr "选择首页的布局"
 
@@ -912,7 +906,6 @@ msgstr "选择要显示的模拟器"
 
 #: src/components/settings-appearance.tsx
 #: src/components/settings-home-layout-sheet.tsx
-#: src/components/settings-servers.tsx
 msgid "Classic"
 msgstr "经典"
 
@@ -1162,6 +1155,10 @@ msgstr "连接中…"
 #: src/components/home-editorial-layout.tsx
 msgid "Connections"
 msgstr "连接"
+
+#: src/components/agent-composer.tsx
+msgid "Contains subagent sessions"
+msgstr "包含子智能体会话"
 
 #: src/components/agent-context-sheet.tsx
 msgid "Context"
@@ -1897,8 +1894,8 @@ msgstr "编辑 SSH 主机"
 msgid "Edit this server"
 msgstr "编辑这台服务器"
 
+#: src/components/settings-appearance.tsx
 #: src/components/settings-home-layout-sheet.tsx
-#: src/components/settings-servers.tsx
 msgid "Editorial"
 msgstr "日系杂志"
 
@@ -2259,8 +2256,8 @@ msgstr "主页"
 msgid "Home / Editorial"
 msgstr "首页 / 编辑"
 
+#: src/components/settings-appearance.tsx
 #: src/components/settings-home-layout-sheet.tsx
-#: src/components/settings-servers.tsx
 msgid "Home layout"
 msgstr "首页布局"
 
@@ -2268,7 +2265,7 @@ msgstr "首页布局"
 msgid "Home layout changed for this session, but could not be saved on this device. Try again."
 msgstr "首页布局已在本次会话中更改，但无法保存到此设备。请重试"
 
-#: src/components/settings-servers.tsx
+#: src/components/settings-appearance.tsx
 msgid "Home layout, {homeLayoutLabel}"
 msgstr "首页布局：{homeLayoutLabel}"
 
@@ -2293,6 +2290,7 @@ msgstr "主机密钥已信任"
 msgid "How to use Muqun"
 msgstr "如何使用 Muqun"
 
+#: src/components/agent-session-tree-sheet.tsx
 #: src/i18n/labels.ts
 msgid "Idle"
 msgstr "空闲"
@@ -2540,6 +2538,10 @@ msgstr "向左键"
 #: src/components/virtual-keyboard.tsx
 msgid "Letters"
 msgstr "字母"
+
+#: src/components/agent-session-tree-sheet.tsx
+msgid "Level {depth}"
+msgstr "第 {depth} 层"
 
 #: src/components/custom-theme-preview.tsx
 #: src/components/settings-appearance.tsx
@@ -3066,6 +3068,7 @@ msgstr "后台没有任何任务。从工具卡片里把长命令转入后台，
 msgid "Nothing staged"
 msgstr "没有待处理的回滚"
 
+#: src/components/home-recent-sessions.tsx
 #: src/components/pane-chat-view.tsx
 msgid "Nothing to show yet."
 msgstr "目前还没有内容"
@@ -3124,10 +3127,6 @@ msgstr "打开 {0}"
 #: src/components/session-map.tsx
 msgid "Open {title}. Long press to close."
 msgstr "打开 {title}。长按可关闭"
-
-#: src/components/home-attention.tsx
-msgid "Open a session to check its requests."
-msgstr "打开会话以检查其请求"
 
 #: src/components/open-web-service-sheet.tsx
 msgid "Open anyway"
@@ -3206,6 +3205,10 @@ msgstr "打开快捷操作"
 #: src/components/agent-tool-card.tsx
 msgid "Open session"
 msgstr "打开会话"
+
+#: src/components/agent-composer.tsx
+msgid "Open session tree"
+msgstr "打开会话树"
 
 #. placeholder {0}: host.label
 #. placeholder {0}: record.label
@@ -3333,7 +3336,6 @@ msgid "Output lands on a hardware-accelerated terminal grid with instant-respons
 msgstr "硬件加速字符网格，保留真实色彩与排版，配合即按即发的专业按键行与多会话 tmux 管理，nvim、less 和 REPL 运转如初"
 
 #: src/components/home-launch-actions.tsx
-#: src/components/home-overview.tsx
 msgid "Pair a gateway"
 msgstr "配对 Gateway"
 
@@ -3396,6 +3398,10 @@ msgstr "配对失败"
 #: src/components/settings-servers.tsx
 msgid "Panes on server cards"
 msgstr "服务器卡片上的面板"
+
+#: src/components/agent-session-tree-sheet.tsx
+msgid "Parent: {parentTitle}"
+msgstr "父会话：{parentTitle}"
 
 #: src/components/ssh-host-form.tsx
 msgid "Passphrase (optional)"
@@ -3732,10 +3738,6 @@ msgstr "移除"
 msgid "Remove {0}"
 msgstr "移除 {0}"
 
-#: src/components/home-recent-sessions.tsx
-msgid "Remove {title} from recents"
-msgstr "从最近记录中移除 {title}"
-
 #: src/components/agent-worktree-sheet.tsx
 msgid "Remove anyway"
 msgstr "仍然移除"
@@ -3858,6 +3860,7 @@ msgstr "请重试标为红色的项目，或移除它们后再发送"
 msgid "Retry uploading {0}"
 msgstr "重试上传 {0}"
 
+#: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-workbench.tsx
 msgid "Retrying…"
 msgstr "正在重试…"
@@ -3975,6 +3978,10 @@ msgstr "运行相关测试"
 #: src/components/home-overview.tsx
 msgid "Run the Gateway on your machine and scan the QR code it prints. The pairing stays on this device."
 msgstr "在你的电脑上运行 Gateway，然后扫描它打印出的二维码。配对信息只保存在本设备上"
+
+#: src/components/agent-session-tree-sheet.tsx
+msgid "Running"
+msgstr "运行中"
 
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/session-map.tsx
@@ -4099,20 +4106,24 @@ msgid "Security"
 msgstr "安全"
 
 #. placeholder {0}: age.value
+#: src/components/home-recent-sessions.tsx
 #: src/components/server-agent-rows.tsx
 msgid "Seen {0}d ago"
 msgstr "{0} 天前确认过"
 
 #. placeholder {0}: age.value
+#: src/components/home-recent-sessions.tsx
 #: src/components/server-agent-rows.tsx
 msgid "Seen {0}h ago"
 msgstr "{0} 小时前确认过"
 
 #. placeholder {0}: age.value
+#: src/components/home-recent-sessions.tsx
 #: src/components/server-agent-rows.tsx
 msgid "Seen {0}m ago"
 msgstr "{0} 分钟前确认过"
 
+#: src/components/home-recent-sessions.tsx
 #: src/components/server-agent-rows.tsx
 msgid "Seen just now"
 msgstr "刚刚确认过"
@@ -4216,7 +4227,16 @@ msgstr "会话名称"
 msgid "Session Tokens"
 msgstr "会话 Token"
 
+#: src/components/agent-session-tree-sheet.tsx
+msgid "Session tree"
+msgstr "会话树"
+
+#: src/components/agent-session-tree-sheet.tsx
+msgid "Session unavailable"
+msgstr "会话不可用"
+
 #: src/components/agent-sessions-sheet.tsx
+#: src/components/home-recent-sessions.tsx
 #: src/components/session-map.tsx
 msgid "Sessions"
 msgstr "会话"
@@ -4225,10 +4245,6 @@ msgstr "会话"
 msgctxt "agent slash command"
 msgid "Sessions in this workspace"
 msgstr "本工作区中的会话"
-
-#: src/components/home-recent-sessions.tsx
-msgid "Sessions you open will appear here."
-msgstr "你打开的会话会显示在这里"
 
 #. placeholder {0}: sessionTitle ?? ''
 #: src/app/agent.tsx
@@ -4316,10 +4332,6 @@ msgstr "显示 {0}"
 #: src/components/settings-alerts.tsx
 msgid "Show agents and their status on the home screen. Updates while Muqun is open."
 msgstr "在主屏幕上显示代理及其状态。牧群打开时会持续更新"
-
-#: src/components/home-recent-sessions.tsx
-msgid "Show all recent sessions"
-msgstr "显示所有最近会话"
 
 #: src/components/pairing-camera.tsx
 msgid "Show camera details"
@@ -4481,6 +4493,7 @@ msgstr "源代码"
 msgid "Space"
 msgstr "空格键"
 
+#: src/components/home-launch-actions.tsx
 #: src/components/home-overview.tsx
 #: src/components/pad-server-rail.tsx
 #: src/components/ssh-host-list.tsx
@@ -4488,16 +4501,13 @@ msgstr "空格键"
 msgid "SSH"
 msgstr "SSH"
 
-#: src/components/home-launch-actions.tsx
-msgid "SSH connection"
-msgstr "SSH 连接"
-
 #: src/app/explore.tsx
 #: src/components/gateway-tunnel-badge.tsx
 #: src/components/home-recent-sessions.tsx
 msgid "SSH host"
 msgstr "SSH 主机"
 
+#: src/components/home-launch-actions.tsx
 #: src/components/home-overview.tsx
 #: src/components/pad-server-rail.tsx
 #: src/components/settings-servers.tsx
@@ -4520,10 +4530,6 @@ msgstr "已暂存和未暂存"
 #: src/lib/agent-widget-layout.tsx
 msgid "stale · {age}"
 msgstr "数据过旧 · {age}"
-
-#: src/components/home-editorial-layout.tsx
-msgid "Start"
-msgstr "开始"
 
 #. placeholder {0}: profile.kind
 #: src/components/agent-assignment-bar.tsx
@@ -4581,6 +4587,7 @@ msgstr "启动中…"
 msgid "Status unavailable"
 msgstr "暂时无法获取状态"
 
+#: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-workbench.tsx
 #: src/components/collaboration-notice.tsx
 msgid "Status unknown"
@@ -4628,6 +4635,7 @@ msgstr "停止这个代理"
 msgid "Stop this command"
 msgstr "停止这条命令"
 
+#: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-workbench.tsx
 msgid "Stopped"
 msgstr "已停止"
@@ -4798,6 +4806,7 @@ msgstr "临时文件"
 
 #: src/app/commands.tsx
 #: src/app/settings.tsx
+#: src/components/home-launch-actions.tsx
 #: src/components/home-recent-sessions.tsx
 #: src/i18n/labels.ts
 msgid "Terminal"
@@ -5038,6 +5047,7 @@ msgstr "此主题将从当前设备移除"
 msgid "The transcript as a conversation, with tool steps folded away."
 msgstr "把对话记录当成聊天呈现，并收起工具步骤"
 
+#: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-workbench.tsx
 msgid "The turn failed"
 msgstr "这一轮执行失败"
@@ -5441,6 +5451,7 @@ msgid "Unsupported item ({0})"
 msgstr "暂不支持的内容（{0}）"
 
 #: src/components/agent-composer.tsx
+#: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-sessions-sheet.tsx
 msgid "Untitled session"
 msgstr "未命名会话"

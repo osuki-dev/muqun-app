@@ -20,6 +20,7 @@ import {
   ChevronDown,
   Cpu,
   GitCompare,
+  GitFork,
   Inbox,
   Layers,
   Loader,
@@ -108,32 +109,29 @@ import {
 import { AGENT_TYPE } from '@/constants/agent-type';
 
 /**
- * One chip in Row 1: a root, or a subagent under the open one.
- *
- * The strip used to be a flat `FlatList` of roots with, under whichever root
- * happened to be active, its immediate children as sibling chips -- no indent,
- * no connector, and nothing that said a chip was a child rather than a
- * sibling. It also returned a bare `<Fragment>` as the list item's root, so
- * React had no key to keep chip identity stable across a reorder.
- *
- * An untitled session shows "Untitled session" and its relative time, never
- * the raw `ses_…` the engine bookkeeps with, and cross-fades to the real title
- * when the auto-title lands on the first turn.
+ * One root in Row 1. An inactive root selects; the root already on screen opens
+ * its known descendants. Untitled sessions never show their raw id, and titles
+ * cross-fade when they arrive.
  */
 const SessionChip = memo(function SessionChip({
   node,
   active,
+  current,
   fallbackAgent,
   nameOfAgent,
   onPress,
+  onOpenTree,
   onMeasure,
 }: {
   node: SessionNode;
   active: boolean;
+  /** This root is the session on screen, not merely a highlighted ancestor. */
+  current: boolean;
   fallbackAgent?: string;
   /** An agent's id to the name the host gave it: `plan` to `Plan`. */
   nameOfAgent: (id: string) => string;
   onPress: (asid: string) => void;
+  onOpenTree?: (asid: string) => void;
   /** Where this chip sits in the strip, so the strip can bring it into view. */
   onMeasure?: (asid: string, x: number, width: number) => void;
 }) {
@@ -142,10 +140,9 @@ const SessionChip = memo(function SessionChip({
   const surfaceBackground = useSurfaceBackground();
 
   const session = node.session;
-  const child = node.depth > 0;
   // The name the host publishes, which is what the agent sheet lists. The chip
   // drew the id, so the same agent read "Plan" in the list and "plan" here.
-  const agentId = session.agent || (child ? '' : (fallbackAgent ?? 'build'));
+  const agentId = session.agent || fallbackAgent || 'build';
   const agentName = agentId ? nameOfAgent(agentId) : t`subagent`;
   const titled = hasRealSessionTitle(session);
   // Untitled reads as untitled; the time is the caption a listing shows, not
@@ -154,6 +151,13 @@ const SessionChip = memo(function SessionChip({
   // The gateway's two numbers, and nothing else: a chip never says "unread"
   // because this app thought something had happened over there.
   const unread = isSessionUnread(session);
+  const pressSession = () => {
+    if (current && node.hasChildren && onOpenTree) {
+      onOpenTree(session.asid);
+    } else {
+      onPress(session.asid);
+    }
+  };
 
   return (
     <View
@@ -162,21 +166,20 @@ const SessionChip = memo(function SessionChip({
         const { x, width } = event.nativeEvent.layout;
         onMeasure?.(session.asid, x, width);
       }}>
-      {/* The connector: one segment per level in, so a child reads as hanging
-          off the chip before it rather than sitting beside it. */}
-      {child ? (
-        <View
-          style={[
-            styles.chipConnector,
-            { backgroundColor: theme.colors.border, width: node.depth * 10 + 6 },
-          ]}
-        />
-      ) : null}
       <PressableScale
         testID={`agent-composer-session-chip-${session.asid}`}
-        onPress={() => onPress(session.asid)}
+        onPress={pressSession}
         accessibilityRole="button"
         accessibilityState={{ selected: active }}
+        accessibilityHint={node.hasChildren ? t`Contains subagent sessions` : undefined}
+        accessibilityActions={
+          node.hasChildren && onOpenTree
+            ? [{ name: 'openSessionTree', label: t`Open session tree` }]
+            : undefined
+        }
+        onAccessibilityAction={(event) => {
+          if (event.nativeEvent.actionName === 'openSessionTree') onOpenTree?.(session.asid);
+        }}
         accessibilityLabel={
           unread
             ? t`${agentName}: ${title} — finished while you were away`
@@ -231,6 +234,9 @@ const SessionChip = memo(function SessionChip({
             {title}
           </Text>
         </Animated.View>
+        {node.hasChildren ? (
+          <GitFork size={13} color={active ? theme.colors.onPrimary : theme.colors.primary} />
+        ) : null}
       </PressableScale>
     </View>
   );
@@ -238,8 +244,10 @@ const SessionChip = memo(function SessionChip({
 
 export interface AgentComposerProps {
   running: boolean;
-  /** Row 1: the workspace's roots, and the open root's subagent tree. */
+  /** Row 1 contains roots only. Descendants belong in the tree sheet. */
   sessionStrip?: readonly SessionNode[];
+  selectedRootAsid?: string;
+  onOpenSessionTree?: (asid: string) => void;
   /** The session above the one on screen, for the way back out of a subagent. */
   parentSession?: AgentSessionInfo;
   availableAgents?: AgentInfo[];
@@ -359,6 +367,8 @@ export interface AgentComposerProps {
 export const AgentComposer = memo(function AgentComposer({
   running,
   sessionStrip = EMPTY_STRIP,
+  selectedRootAsid,
+  onOpenSessionTree,
   parentSession,
   availableAgents: availableAgentsProp,
   skills = [],
@@ -860,12 +870,12 @@ export const AgentComposer = memo(function AgentComposer({
   }, []);
 
   useEffect(() => {
-    if (!activeAsid) return;
+    if (!selectedRootAsid) return;
     // One frame after the chips have laid out: a session opened from a sheet
     // arrives with the strip rebuilding under it, and the chip's offset is not
     // known until it has.
     const timer = setTimeout(() => {
-      const offset = chipOffsetsRef.current[activeAsid];
+      const offset = chipOffsetsRef.current[selectedRootAsid];
       if (!offset) return;
       sessionStripRef.current?.scrollTo({
         x: Math.max(0, offset.x - SESSION_CHIP_REVEAL_MARGIN),
@@ -873,7 +883,7 @@ export const AgentComposer = memo(function AgentComposer({
       });
     }, DURATION.short);
     return () => clearTimeout(timer);
-  }, [activeAsid, sessionStrip]);
+  }, [selectedRootAsid, sessionStrip]);
 
   const { height: keyboardOffset } = useReanimatedKeyboardAnimation();
   const composerKeyboardStyle = useAnimatedStyle(() => ({
@@ -1116,7 +1126,7 @@ export const AgentComposer = memo(function AgentComposer({
         }}>
         <GlassChrome surface="composer" style={styles.composerDock}>
           <View style={[styles.composerInner, { paddingBottom: dockBottomPadding }]}>
-            {/* Row 1: the workspace's sessions, and the open one's subagents */}
+            {/* Row 1: roots only. Tapping the current root opens its tree. */}
             {sessionStrip.length > 0 ? (
               <ScrollView
                 ref={sessionStripRef}
@@ -1124,8 +1134,7 @@ export const AgentComposer = memo(function AgentComposer({
                 showsHorizontalScrollIndicator={false}
                 contentContainerStyle={styles.sessionStripContent}
                 style={styles.sessionStripViewport}>
-                {/* The way back out of a subagent. A child is opened by tapping
-                  its chip, and a strip with no way up is a one-way door. */}
+                {/* Keep the direct way back out of the selected subagent. */}
                 {parentSession ? (
                   <PressableScale
                     testID="agent-composer-session-back"
@@ -1146,10 +1155,12 @@ export const AgentComposer = memo(function AgentComposer({
                   <SessionChip
                     key={node.session.asid}
                     node={node}
-                    active={node.session.asid === activeAsid}
+                    active={node.session.asid === selectedRootAsid}
+                    current={node.session.asid === activeAsid}
                     {...(selectedAgent ? { fallbackAgent: selectedAgent } : {})}
                     nameOfAgent={nameOfAgent}
                     onPress={handleSelectSession}
+                    onOpenTree={onOpenSessionTree}
                     onMeasure={measureChip}
                   />
                 ))}
@@ -1179,79 +1190,6 @@ export const AgentComposer = memo(function AgentComposer({
                     accessibilityLabel={t`All sessions`}
                     style={[styles.actionBtn, { backgroundColor: surfaceBackground(chromeGlass) }]}>
                     <Layers size={16} color={chromeText} />
-                  </PressableScale>
-                ) : null}
-
-                {/* Quick Agent Mode Popover Button */}
-                <PressableScale
-                  testID="agent-composer-mode-btn"
-                  onPress={() => {
-                    setAttachmentMenuOpen(false);
-                    setModeMenuOpen(false);
-                    if (onOpenModeSheet) {
-                      onOpenModeSheet();
-                    } else {
-                      setModeMenuOpen((prev) => !prev);
-                    }
-                  }}
-                  accessibilityRole="button"
-                  accessibilityLabel={t`Select agent mode`}
-                  style={[
-                    styles.actionBtnWithLabel,
-                    modeMenuOpen && { borderColor: theme.colors.primary, borderWidth: 1 },
-                    { backgroundColor: surfaceBackground(chromeGlass) },
-                  ]}>
-                  <Text variant="caption" color={theme.colors.text} style={styles.actionBtnLabel}>
-                    {nameOfAgent(selectedAgent ?? 'build')}
-                  </Text>
-                  {/* One affordance for one behaviour: a chip that opens a sheet
-                  wears the chevron, and only the model chip used to. */}
-                  <ChevronDown size={12} color={theme.colors.textMuted} />
-                </PressableScale>
-
-                {/* Quick Model Selector Button (placed right after agent mode, displayed in full) */}
-                {chipIds.has('model') ? (
-                  <PressableScale
-                    testID="agent-composer-model-btn"
-                    onPress={onOpenModelSheet}
-                    accessibilityRole="button"
-                    accessibilityLabel={t`Select model: ${modelDisplayName}`}
-                    style={[
-                      styles.actionBtnWithLabel,
-                      { backgroundColor: surfaceBackground(chromeGlass) },
-                    ]}>
-                    <Text variant="caption" color={theme.colors.text} style={styles.actionBtnLabel}>
-                      {modelDisplayName}
-                    </Text>
-                    <ChevronDown size={12} color={theme.colors.textMuted} />
-                  </PressableScale>
-                ) : null}
-
-                {/* OpenCode Tasks Button */}
-                {chipIds.has('tasks') ? (
-                  <PressableScale
-                    testID="agent-composer-tasks-btn"
-                    onPress={onOpenTasksSheet}
-                    accessibilityRole="button"
-                    accessibilityLabel={t`Tasks progress`}
-                    style={[
-                      styles.actionBtnWithLabel,
-                      { backgroundColor: surfaceBackground(chromeGlass) },
-                    ]}>
-                    <CheckSquare
-                      size={14}
-                      color={
-                        tasks && tasks.length > 0 && tasks.every((t) => t.done)
-                          ? theme.colors.success
-                          : theme.colors.primary
-                      }
-                    />
-                    <Text variant="caption" color={theme.colors.text} style={styles.actionBtnLabel}>
-                      {tasks && tasks.length > 0
-                        ? t`Tasks (${tasks.filter((t) => t.done).length}/${tasks.length})`
-                        : t`Tasks`}
-                    </Text>
-                    <ChevronDown size={12} color={theme.colors.textMuted} />
                   </PressableScale>
                 ) : null}
 
@@ -1302,88 +1240,31 @@ export const AgentComposer = memo(function AgentComposer({
                   </PressableScale>
                 ) : null}
 
-                {/* Context window, token spend and cost, in one pill */}
-                {chipIds.has('context') && contextPill ? (
+                {/* OpenCode Tasks Button */}
+                {chipIds.has('tasks') ? (
                   <PressableScale
-                    testID="agent-composer-tokens-pill"
-                    onPress={() => {
-                      if (onPressTokens) {
-                        onPressTokens();
-                      } else if (tokens) {
-                        showToast({
-                          variant: 'info',
-                          title: t`Session Tokens`,
-                          message: `Input: ${tokens.input.toLocaleString()} • Output: ${tokens.output.toLocaleString()}${tokens.reasoning ? ` • Reasoning: ${tokens.reasoning.toLocaleString()}` : ''}`,
-                        });
-                      }
-                    }}
+                    testID="agent-composer-tasks-btn"
+                    onPress={onOpenTasksSheet}
                     accessibilityRole="button"
-                    accessibilityLabel={
-                      contextPill.ratio === null
-                        ? t`Tokens usage and cost`
-                        : t`Context ${Math.round(contextPill.ratio * 100)}% full`
-                    }
+                    accessibilityLabel={t`Tasks progress`}
                     style={[
                       styles.actionBtnWithLabel,
                       { backgroundColor: surfaceBackground(chromeGlass) },
                     ]}>
-                    <Cpu size={13} color={chromeText} />
-                    <Text
-                      variant="caption"
-                      color={theme.colors.textMuted}
-                      style={styles.actionBtnLabel}>
-                      {contextPill.label}
-                    </Text>
-                    {/* The gauge, only when the engine stated a window to measure
-                    against. A bar with no limit behind it is a decoration. */}
-                    {contextPill.ratio !== null ? (
-                      <View
-                        style={[
-                          styles.contextTrack,
-                          { backgroundColor: withAlpha(theme.colors.text, 0.12) },
-                        ]}>
-                        <View
-                          style={[
-                            styles.contextFill,
-                            {
-                              width: `${Math.max(3, Math.round(contextPill.ratio * 100))}%`,
-                              backgroundColor:
-                                contextPill.ratio > 0.9
-                                  ? theme.colors.danger
-                                  : contextPill.ratio > 0.7
-                                    ? theme.colors.warning
-                                    : theme.colors.primary,
-                            },
-                          ]}
-                        />
-                      </View>
-                    ) : null}
-                    <ChevronDown size={12} color={theme.colors.textMuted} />
-                  </PressableScale>
-                ) : null}
-
-                {/* The changes on disk. Independent of every chip before it:
-                    it used to be last in a chain of conditions and went
-                    missing on the sessions that had actually written
-                    something. */}
-                {chipIds.has('diff') ? (
-                  <PressableScale
-                    onPress={onOpenDiffSheet}
-                    accessibilityRole="button"
-                    accessibilityLabel={t`View file changes`}
-                    style={[
-                      styles.actionBtn,
-                      {
-                        backgroundColor: withAlpha(theme.colors.primary, 0.18),
-                      },
-                    ]}>
-                    {/* The same glyph the terminal's own changes button uses
-                    (`git-diff-button.tsx`). A commit dot is not a diff, and
-                    the two buttons open the same kind of thing. */}
-                    <GitCompare size={15} color={theme.colors.primary} />
-                    <View
-                      style={[styles.diffIndicator, { backgroundColor: theme.colors.primary }]}
+                    <CheckSquare
+                      size={14}
+                      color={
+                        tasks && tasks.length > 0 && tasks.every((t) => t.done)
+                          ? theme.colors.success
+                          : theme.colors.primary
+                      }
                     />
+                    <Text variant="caption" color={theme.colors.text} style={styles.actionBtnLabel}>
+                      {tasks && tasks.length > 0
+                        ? t`Tasks (${tasks.filter((t) => t.done).length}/${tasks.length})`
+                        : t`Tasks`}
+                    </Text>
+                    <ChevronDown size={12} color={theme.colors.textMuted} />
                   </PressableScale>
                 ) : null}
 
@@ -1457,6 +1338,126 @@ export const AgentComposer = memo(function AgentComposer({
                       style={styles.actionBtnLabel}>
                       <Trans>Stop</Trans>
                     </Text>
+                  </PressableScale>
+                ) : null}
+                {/* Context window, token spend and cost, in one pill */}
+                {chipIds.has('context') && contextPill ? (
+                  <PressableScale
+                    testID="agent-composer-tokens-pill"
+                    onPress={() => {
+                      if (onPressTokens) {
+                        onPressTokens();
+                      } else if (tokens) {
+                        showToast({
+                          variant: 'info',
+                          title: t`Session Tokens`,
+                          message: `Input: ${tokens.input.toLocaleString()} • Output: ${tokens.output.toLocaleString()}${tokens.reasoning ? ` • Reasoning: ${tokens.reasoning.toLocaleString()}` : ''}`,
+                        });
+                      }
+                    }}
+                    accessibilityRole="button"
+                    accessibilityLabel={
+                      contextPill.ratio === null
+                        ? t`Tokens usage and cost`
+                        : t`Context ${Math.round(contextPill.ratio * 100)}% full`
+                    }
+                    style={[
+                      styles.actionBtnWithLabel,
+                      { backgroundColor: surfaceBackground(chromeGlass) },
+                    ]}>
+                    <Cpu size={13} color={chromeText} />
+                    <Text
+                      variant="caption"
+                      color={theme.colors.textMuted}
+                      style={styles.actionBtnLabel}>
+                      {contextPill.label}
+                    </Text>
+                    {/* A gauge only when the engine stated a window to measure. */}
+                    {contextPill.ratio !== null ? (
+                      <View
+                        style={[
+                          styles.contextTrack,
+                          { backgroundColor: withAlpha(theme.colors.text, 0.12) },
+                        ]}>
+                        <View
+                          style={[
+                            styles.contextFill,
+                            {
+                              width: `${Math.max(3, Math.round(contextPill.ratio * 100))}%`,
+                              backgroundColor:
+                                contextPill.ratio > 0.9
+                                  ? theme.colors.danger
+                                  : contextPill.ratio > 0.7
+                                    ? theme.colors.warning
+                                    : theme.colors.primary,
+                            },
+                          ]}
+                        />
+                      </View>
+                    ) : null}
+                    <ChevronDown size={12} color={theme.colors.textMuted} />
+                  </PressableScale>
+                ) : null}
+
+                {/* Changes stay independent of the context pill. */}
+                {chipIds.has('diff') ? (
+                  <PressableScale
+                    onPress={onOpenDiffSheet}
+                    accessibilityRole="button"
+                    accessibilityLabel={t`View file changes`}
+                    style={[
+                      styles.actionBtn,
+                      {
+                        backgroundColor: withAlpha(theme.colors.primary, 0.18),
+                      },
+                    ]}>
+                    <GitCompare size={15} color={theme.colors.primary} />
+                    <View
+                      style={[styles.diffIndicator, { backgroundColor: theme.colors.primary }]}
+                    />
+                  </PressableScale>
+                ) : null}
+
+                {/* Quick Agent Mode Popover Button */}
+                <PressableScale
+                  testID="agent-composer-mode-btn"
+                  onPress={() => {
+                    setAttachmentMenuOpen(false);
+                    setModeMenuOpen(false);
+                    if (onOpenModeSheet) {
+                      onOpenModeSheet();
+                    } else {
+                      setModeMenuOpen((prev) => !prev);
+                    }
+                  }}
+                  accessibilityRole="button"
+                  accessibilityLabel={t`Select agent mode`}
+                  style={[
+                    styles.actionBtnWithLabel,
+                    modeMenuOpen && { borderColor: theme.colors.primary, borderWidth: 1 },
+                    { backgroundColor: surfaceBackground(chromeGlass) },
+                  ]}>
+                  <Text variant="caption" color={theme.colors.text} style={styles.actionBtnLabel}>
+                    {nameOfAgent(selectedAgent ?? 'build')}
+                  </Text>
+                  <ChevronDown size={12} color={theme.colors.textMuted} />
+                </PressableScale>
+
+                {/* Quick Model Selector Button */}
+                {chipIds.has('model') ? (
+                  <PressableScale
+                    testID="agent-composer-model-btn"
+                    onPress={onOpenModelSheet}
+                    accessibilityRole="button"
+                    accessibilityLabel={t`Select model: ${modelDisplayName}`}
+                    style={[
+                      styles.actionBtnWithLabel,
+                      { backgroundColor: surfaceBackground(chromeGlass) },
+                    ]}>
+                    <Text variant="caption" color={theme.colors.text} style={styles.actionBtnLabel}>
+                      {modelDisplayName}
+                    </Text>
+                    <ChevronDown size={12} color={theme.colors.textMuted} />
                   </PressableScale>
                 ) : null}
               </ScrollView>
@@ -1762,10 +1763,6 @@ const styles = StyleSheet.create({
   chipRow: {
     flexDirection: 'row',
     alignItems: 'center',
-  },
-  /** One segment per level in: a child hangs off the chip before it. */
-  chipConnector: {
-    height: StyleSheet.hairlineWidth,
   },
   backChip: {
     alignItems: 'center',

@@ -51,15 +51,15 @@ describe('composerChipIds', () => {
       })
     ).toEqual([
       'sessions',
-      'mode',
-      'model',
-      'tasks',
       'inbox',
       'background',
-      'context',
-      'diff',
+      'tasks',
       'delivery',
       'stop',
+      'context',
+      'diff',
+      'mode',
+      'model',
     ]);
   });
 
@@ -76,10 +76,10 @@ describe('composerChipIds', () => {
   test('steering and stopping belong to a turn in flight', () => {
     expect(composerChipIds({ ...quiet, running: true })).toEqual([
       'sessions',
-      'mode',
-      'model',
       'delivery',
       'stop',
+      'mode',
+      'model',
     ]);
   });
 });

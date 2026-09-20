@@ -231,6 +231,7 @@ msgstr "{removeLabel}: {label}"
 msgid "{running} running of {0}"
 msgstr "{running} из {0} выполняется"
 
+#: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-sessions-sheet.tsx
 msgid "{title} — finished while you were away"
 msgstr "{title} — завершилось, пока вас не было"
@@ -608,10 +609,6 @@ msgstr "Прикрепить файл"
 msgid "Attachment"
 msgstr "Вложение"
 
-#: src/components/home-editorial-layout.tsx
-msgid "Attention"
-msgstr "Внимание"
-
 #: src/components/app-lock-gate.tsx
 msgid "Authenticate with {authLabel} to continue."
 msgstr "Пройдите проверку через {authLabel}, чтобы продолжить"
@@ -854,6 +851,7 @@ msgid "Checking…"
 msgstr "Проверка…"
 
 #: src/components/home-launch-actions.tsx
+#: src/components/home-target-sheet.tsx
 msgid "Choose a gateway"
 msgstr "Выберите Gateway"
 
@@ -865,10 +863,6 @@ msgstr "Сначала выберите Gateway"
 #: src/components/agent-workbench.tsx
 msgid "Choose a model"
 msgstr "Выбрать модель"
-
-#: src/components/home-launch-actions.tsx
-msgid "Choose a saved host"
-msgstr "Выберите сохранённый хост"
 
 #: src/components/simfarm-stage.tsx
 msgid "Choose a simulator"
@@ -898,7 +892,7 @@ msgstr "Выбрать другой терминал"
 msgid "Choose files"
 msgstr "Выбрать файлы"
 
-#: src/components/settings-servers.tsx
+#: src/components/settings-appearance.tsx
 msgid "Choose how Home is arranged."
 msgstr "Выберите расположение Home"
 
@@ -912,7 +906,6 @@ msgstr "Выбрать, какой симулятор показывать"
 
 #: src/components/settings-appearance.tsx
 #: src/components/settings-home-layout-sheet.tsx
-#: src/components/settings-servers.tsx
 msgid "Classic"
 msgstr "Классический"
 
@@ -1162,6 +1155,10 @@ msgstr "Подключение…"
 #: src/components/home-editorial-layout.tsx
 msgid "Connections"
 msgstr "Подключения"
+
+#: src/components/agent-composer.tsx
+msgid "Contains subagent sessions"
+msgstr "Содержит сеансы субагентов"
 
 #: src/components/agent-context-sheet.tsx
 msgid "Context"
@@ -1897,8 +1894,8 @@ msgstr "Изменить SSH-хост"
 msgid "Edit this server"
 msgstr "Изменить этот сервер"
 
+#: src/components/settings-appearance.tsx
 #: src/components/settings-home-layout-sheet.tsx
-#: src/components/settings-servers.tsx
 msgid "Editorial"
 msgstr "Журнальный"
 
@@ -2259,8 +2256,8 @@ msgstr "Главная"
 msgid "Home / Editorial"
 msgstr "Главная / Редакционное"
 
+#: src/components/settings-appearance.tsx
 #: src/components/settings-home-layout-sheet.tsx
-#: src/components/settings-servers.tsx
 msgid "Home layout"
 msgstr "Макет Home"
 
@@ -2268,7 +2265,7 @@ msgstr "Макет Home"
 msgid "Home layout changed for this session, but could not be saved on this device. Try again."
 msgstr "Макет Home изменён в этом сеансе, но сохранить его на этом устройстве не удалось. Повторите попытку"
 
-#: src/components/settings-servers.tsx
+#: src/components/settings-appearance.tsx
 msgid "Home layout, {homeLayoutLabel}"
 msgstr "Макет Home: {homeLayoutLabel}"
 
@@ -2293,6 +2290,7 @@ msgstr "Ключ хоста доверенный"
 msgid "How to use Muqun"
 msgstr "Как пользоваться Muqun"
 
+#: src/components/agent-session-tree-sheet.tsx
 #: src/i18n/labels.ts
 msgid "Idle"
 msgstr "Простаивает"
@@ -2540,6 +2538,10 @@ msgstr "Стрелка влево"
 #: src/components/virtual-keyboard.tsx
 msgid "Letters"
 msgstr "Буквы"
+
+#: src/components/agent-session-tree-sheet.tsx
+msgid "Level {depth}"
+msgstr "Уровень {depth}"
 
 #: src/components/custom-theme-preview.tsx
 #: src/components/settings-appearance.tsx
@@ -3066,6 +3068,7 @@ msgstr "В фоне ничего не выполняется. Отсоедини
 msgid "Nothing staged"
 msgstr "Ничего не подготовлено"
 
+#: src/components/home-recent-sessions.tsx
 #: src/components/pane-chat-view.tsx
 msgid "Nothing to show yet."
 msgstr "Пока нечего показать"
@@ -3124,10 +3127,6 @@ msgstr "Открыть {0}"
 #: src/components/session-map.tsx
 msgid "Open {title}. Long press to close."
 msgstr "Открыть {title}. Удерживайте, чтобы закрыть"
-
-#: src/components/home-attention.tsx
-msgid "Open a session to check its requests."
-msgstr "Откройте сеанс, чтобы проверить его запросы"
 
 #: src/components/open-web-service-sheet.tsx
 msgid "Open anyway"
@@ -3206,6 +3205,10 @@ msgstr "Открыть быстрые действия"
 #: src/components/agent-tool-card.tsx
 msgid "Open session"
 msgstr "Открыть сессию"
+
+#: src/components/agent-composer.tsx
+msgid "Open session tree"
+msgstr "Открыть дерево сеансов"
 
 #. placeholder {0}: host.label
 #. placeholder {0}: record.label
@@ -3333,7 +3336,6 @@ msgid "Output lands on a hardware-accelerated terminal grid with instant-respons
 msgstr "Аппаратно ускоренная сетка терминала с мгновенным откликом клавиш и управлением сессиями tmux. nvim, less и REPL работают безупречно"
 
 #: src/components/home-launch-actions.tsx
-#: src/components/home-overview.tsx
 msgid "Pair a gateway"
 msgstr "Привязать Gateway"
 
@@ -3396,6 +3398,10 @@ msgstr "Привязка не удалась"
 #: src/components/settings-servers.tsx
 msgid "Panes on server cards"
 msgstr "Панели на карточках серверов"
+
+#: src/components/agent-session-tree-sheet.tsx
+msgid "Parent: {parentTitle}"
+msgstr "Родительский сеанс: {parentTitle}"
 
 #: src/components/ssh-host-form.tsx
 msgid "Passphrase (optional)"
@@ -3732,10 +3738,6 @@ msgstr "Удалить"
 msgid "Remove {0}"
 msgstr "Удалить {0}"
 
-#: src/components/home-recent-sessions.tsx
-msgid "Remove {title} from recents"
-msgstr "Удалить {title} из последних сеансов"
-
 #: src/components/agent-worktree-sheet.tsx
 msgid "Remove anyway"
 msgstr "Всё равно удалить"
@@ -3858,6 +3860,7 @@ msgstr "Повторите отмеченные красным или удали
 msgid "Retry uploading {0}"
 msgstr "Повторить загрузку {0}"
 
+#: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-workbench.tsx
 msgid "Retrying…"
 msgstr "Повторная попытка…"
@@ -3975,6 +3978,10 @@ msgstr "Запустить нужные тесты"
 #: src/components/home-overview.tsx
 msgid "Run the Gateway on your machine and scan the QR code it prints. The pairing stays on this device."
 msgstr "Запустите Gateway на своём компьютере и отсканируйте QR-код, который он выводит. Привязка остаётся на этом устройстве"
+
+#: src/components/agent-session-tree-sheet.tsx
+msgid "Running"
+msgstr "Выполняется"
 
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/session-map.tsx
@@ -4099,20 +4106,24 @@ msgid "Security"
 msgstr "Безопасность"
 
 #. placeholder {0}: age.value
+#: src/components/home-recent-sessions.tsx
 #: src/components/server-agent-rows.tsx
 msgid "Seen {0}d ago"
 msgstr "Проверен {0} д. назад"
 
 #. placeholder {0}: age.value
+#: src/components/home-recent-sessions.tsx
 #: src/components/server-agent-rows.tsx
 msgid "Seen {0}h ago"
 msgstr "Проверен {0} ч. назад"
 
 #. placeholder {0}: age.value
+#: src/components/home-recent-sessions.tsx
 #: src/components/server-agent-rows.tsx
 msgid "Seen {0}m ago"
 msgstr "Проверен {0} мин. назад"
 
+#: src/components/home-recent-sessions.tsx
 #: src/components/server-agent-rows.tsx
 msgid "Seen just now"
 msgstr "Проверен только что"
@@ -4216,7 +4227,16 @@ msgstr "Имя сессии"
 msgid "Session Tokens"
 msgstr "Токены сессии"
 
+#: src/components/agent-session-tree-sheet.tsx
+msgid "Session tree"
+msgstr "Дерево сеансов"
+
+#: src/components/agent-session-tree-sheet.tsx
+msgid "Session unavailable"
+msgstr "Сеанс недоступен"
+
 #: src/components/agent-sessions-sheet.tsx
+#: src/components/home-recent-sessions.tsx
 #: src/components/session-map.tsx
 msgid "Sessions"
 msgstr "Сессии"
@@ -4225,10 +4245,6 @@ msgstr "Сессии"
 msgctxt "agent slash command"
 msgid "Sessions in this workspace"
 msgstr "Сессии в этом пространстве"
-
-#: src/components/home-recent-sessions.tsx
-msgid "Sessions you open will appear here."
-msgstr "Открытые вами сеансы появятся здесь"
 
 #. placeholder {0}: sessionTitle ?? ''
 #: src/app/agent.tsx
@@ -4316,10 +4332,6 @@ msgstr "Показать {0}"
 #: src/components/settings-alerts.tsx
 msgid "Show agents and their status on the home screen. Updates while Muqun is open."
 msgstr "Показывать агентов и их статус на экране «Домой». Обновляется, пока Muqun открыт"
-
-#: src/components/home-recent-sessions.tsx
-msgid "Show all recent sessions"
-msgstr "Показать все последние сеансы"
 
 #: src/components/pairing-camera.tsx
 msgid "Show camera details"
@@ -4481,6 +4493,7 @@ msgstr "Исходный код"
 msgid "Space"
 msgstr "Пробел"
 
+#: src/components/home-launch-actions.tsx
 #: src/components/home-overview.tsx
 #: src/components/pad-server-rail.tsx
 #: src/components/ssh-host-list.tsx
@@ -4488,16 +4501,13 @@ msgstr "Пробел"
 msgid "SSH"
 msgstr "SSH"
 
-#: src/components/home-launch-actions.tsx
-msgid "SSH connection"
-msgstr "SSH-соединение"
-
 #: src/app/explore.tsx
 #: src/components/gateway-tunnel-badge.tsx
 #: src/components/home-recent-sessions.tsx
 msgid "SSH host"
 msgstr "SSH-хост"
 
+#: src/components/home-launch-actions.tsx
 #: src/components/home-overview.tsx
 #: src/components/pad-server-rail.tsx
 #: src/components/settings-servers.tsx
@@ -4520,10 +4530,6 @@ msgstr "В индексе и не в индексе"
 #: src/lib/agent-widget-layout.tsx
 msgid "stale · {age}"
 msgstr "устарело · {age}"
-
-#: src/components/home-editorial-layout.tsx
-msgid "Start"
-msgstr "Начать"
 
 #. placeholder {0}: profile.kind
 #: src/components/agent-assignment-bar.tsx
@@ -4581,6 +4587,7 @@ msgstr "Запуск…"
 msgid "Status unavailable"
 msgstr "Состояние недоступно"
 
+#: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-workbench.tsx
 #: src/components/collaboration-notice.tsx
 msgid "Status unknown"
@@ -4628,6 +4635,7 @@ msgstr "Остановить этого агента"
 msgid "Stop this command"
 msgstr "Остановить эту команду"
 
+#: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-workbench.tsx
 msgid "Stopped"
 msgstr "Остановлено"
@@ -4798,6 +4806,7 @@ msgstr "Временные файлы"
 
 #: src/app/commands.tsx
 #: src/app/settings.tsx
+#: src/components/home-launch-actions.tsx
 #: src/components/home-recent-sessions.tsx
 #: src/i18n/labels.ts
 msgid "Terminal"
@@ -5038,6 +5047,7 @@ msgstr "Тема будет удалена с этого устройства"
 msgid "The transcript as a conversation, with tool steps folded away."
 msgstr "Транскрипт в виде беседы, шаги инструментов свёрнуты"
 
+#: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-workbench.tsx
 msgid "The turn failed"
 msgstr "Ход завершился ошибкой"
@@ -5441,6 +5451,7 @@ msgid "Unsupported item ({0})"
 msgstr "Неподдерживаемый элемент ({0})"
 
 #: src/components/agent-composer.tsx
+#: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-sessions-sheet.tsx
 msgid "Untitled session"
 msgstr "Сессия без названия"

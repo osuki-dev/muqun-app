@@ -25,6 +25,7 @@ const input = {
   hostIds: [],
   snapshots,
   recents: [],
+  reachabilityByServer: { a: 'unknown' as const },
   paneMode: 'all' as const,
   nowMs: 100,
 };
@@ -46,6 +47,63 @@ test('first Home visit shows the same pane inventory as Classic without recent h
     paneId: 'p1',
     cwd: undefined,
   });
+  expect(rows[0].observation).toEqual({
+    kind: 'gateway-agent',
+    status: 'idle',
+    age: { unit: 'now', value: 0 },
+    stale: false,
+  });
+});
+
+test('OpenCode recents show only current Gateway observations and keep honest age', () => {
+  const recent: HomeRecentEntry = {
+    key: 'opencode',
+    title: 'Build release',
+    atMs: 20,
+    target: {
+      kind: 'opencode-session',
+      serverId: 'a',
+      sessionId: 'routing',
+      directory: '/workspace',
+      asid: 'root',
+    },
+    sessionObservation: { status: 'busy', observedAtMs: 10_000 },
+  };
+  const current = homeContinueEntries({
+    ...input,
+    snapshots: {},
+    recents: [recent],
+    nowMs: 70_000,
+  })[0]?.observation;
+  expect(current).toEqual({
+    kind: 'opencode-session',
+    status: 'busy',
+    age: { unit: 'now', value: 0 },
+    stale: false,
+  });
+
+  const offline = homeContinueEntries({
+    ...input,
+    snapshots: {},
+    recents: [recent],
+    reachabilityByServer: { a: 'offline' },
+    nowMs: 70_000,
+  })[0]?.observation;
+  expect(offline).toMatchObject({ kind: 'opencode-session', stale: false });
+  expect(offline?.status).toBeUndefined();
+
+  const stale = homeContinueEntries({
+    ...input,
+    snapshots: {},
+    recents: [recent],
+    nowMs: 400_001,
+  })[0]?.observation;
+  expect(stale).toMatchObject({
+    kind: 'opencode-session',
+    age: { unit: 'minute', value: 6 },
+    stale: true,
+  });
+  expect(stale?.status).toBeUndefined();
 });
 
 test('history changes ranking without duplicating panes or replacing authoritative names', () => {
@@ -81,4 +139,41 @@ test('one server cannot supply another server panes', () => {
   expect(
     homeContinueEntries({ ...input, snapshots: { a: { ...snapshots.a, serverId: 'b' } } })
   ).toEqual([]);
+});
+
+test('Continue uses the shared freshness and reachability policy for status', () => {
+  const blocked = {
+    ...input,
+    snapshots: {
+      a: {
+        ...snapshots.a,
+        agents: [
+          {
+            id: 'agent',
+            paneId: 'p1',
+            name: 'Needs approval',
+            hasAgent: true,
+            status: 'blocked' as const,
+          },
+        ],
+      },
+    },
+  };
+
+  expect(homeContinueEntries(blocked)[0]?.observation?.status).toBe('blocked');
+  expect(
+    homeContinueEntries({ ...blocked, reachabilityByServer: { a: 'offline' } })[0]?.observation
+      ?.status
+  ).toBeUndefined();
+  expect(
+    homeContinueEntries({ ...blocked, nowMs: 1_000_000 })[0]?.observation?.status
+  ).toBeUndefined();
+});
+
+test('plain panes and history-only entries never receive agent status', () => {
+  const paneRows = homeContinueEntries(input);
+  expect(paneRows[1]?.observation).toBeUndefined();
+  expect(
+    homeContinueEntries({ ...input, snapshots: {}, recents: [history] })[0]?.observation
+  ).toBeUndefined();
 });

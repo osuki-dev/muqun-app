@@ -9,6 +9,7 @@ import { DEMO_REFUSED_LOG_BYTES, demoBundleText, demoChangelogText } from '@/lib
 import { normalizeGatewayEntities, type GatewayEntity } from '@/lib/gateway-entities';
 import type { SessionAsset } from '@/lib/gateway-client';
 import type { GatewayRecord } from '@/lib/gateway-storage';
+import type { AgentSessionInfo, AgentSessionSnapshot, TimelineItem } from '@/lib/agent-protocol';
 import { DEMO_PAIRING_SERVER_ID } from '@/lib/pairing';
 import {
   buildDemoTerminalRows,
@@ -103,6 +104,89 @@ export function isDemoActive(): boolean {
 
 export function isDemoRecord(record: GatewayRecord | null): boolean {
   return record?.serverId === DEMO_SERVER_ID;
+}
+
+/** Native E2E fixture for the recursive session-tree sheet; never used by live gateways. */
+export function demoAgentSessionTree(): {
+  root: AgentSessionInfo;
+  childrenByParent: Readonly<Record<string, readonly AgentSessionInfo[]>>;
+} {
+  const session = (asid: string, parent_id?: string, title = ''): AgentSessionInfo => ({
+    asid,
+    backend_session_id: asid,
+    title,
+    agent: 'build',
+    model: null,
+    status: 'idle',
+    directory: '/demo/muqun',
+    ...(parent_id ? { parent_id } : {}),
+    updated_ms: 1,
+  });
+  const root = session('demo-tree-root', undefined, 'Root session');
+  const branch = session('demo-tree-branch', root.asid, 'Research branch');
+  const nested = session('demo-tree-nested', branch.asid, 'Nested investigation');
+  const leaves = Array.from({ length: 24 }, (_, index) =>
+    session(`demo-tree-leaf-${index + 1}`, nested.asid, `Leaf ${index + 1}`)
+  );
+  return {
+    root,
+    childrenByParent: {
+      [root.asid]: [branch],
+      [branch.asid]: [nested],
+      [nested.asid]: leaves,
+    },
+  };
+}
+
+/** Read-only transcript fixture for the detail sheet reached from the tree above. */
+export function demoAgentSessionSnapshot(asid: string): AgentSessionSnapshot | null {
+  const tree = demoAgentSessionTree();
+  const sessions = [tree.root, ...Object.values(tree.childrenByParent).flat()];
+  const info = sessions.find((session) => session.asid === asid);
+  if (!info) return null;
+  const child = tree.childrenByParent[asid]?.[0];
+  const timeline: TimelineItem[] = [
+    {
+      id: `${asid}-user`,
+      message_id: `${asid}-message-user`,
+      role: 'user',
+      ordinal: 0,
+      part: { type: 'text', text: `Inspect ${asid}.` },
+      seq: 1,
+      updated_ms: 1,
+    },
+    {
+      id: `${asid}-assistant`,
+      message_id: `${asid}-message-assistant`,
+      role: 'assistant',
+      ordinal: 0,
+      part: { type: 'text', text: `Snapshot output for ${asid}.` },
+      seq: 2,
+      updated_ms: 2,
+    },
+  ];
+  if (child) {
+    timeline.push({
+      id: `${asid}-child-tool`,
+      message_id: `${asid}-message-assistant`,
+      role: 'assistant',
+      ordinal: 1,
+      part: {
+        type: 'tool',
+        id: `${asid}-child-call`,
+        name: 'subagent',
+        input: { description: `Continue in ${child.asid}` },
+        output: '',
+        content: [],
+        metadata: { status: 'completed' },
+        state: 'completed',
+        child_session_id: child.asid,
+      },
+      seq: 3,
+      updated_ms: 3,
+    });
+  }
+  return { info, timeline, permissions: [], forms: [], inbox: [], seq: timeline.length };
 }
 
 const SESSION_ID = 'demo';

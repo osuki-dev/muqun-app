@@ -20,6 +20,12 @@
       "platforms": ["ios", "android"]
     },
     {
+      "name": "agent-session-tree",
+      "program": "flows/agent-session-tree",
+      "tags": ["full"],
+      "platforms": ["ios", "android"]
+    },
+    {
       "name": "demo-tour",
       "program": "flows/demo-tour",
       "tags": ["smoke", "full"],
@@ -7423,6 +7429,75 @@
       },
       {
         "run": "flows/personal-workspace.ad"
+      }
+    ],
+    "flows/agent-session-tree": [
+      {
+        "include": "subflows/open-demo"
+      },
+      {
+        "run": "flows/agent-session-tree.ad#open"
+      },
+      {
+        "target": {
+          "text": "Session tree"
+        },
+        "mode": "visible",
+        "timeout": 10000,
+        "run": "flows/agent-session-tree.ad#visible"
+      },
+      {
+        "target": {
+          "id": "agent-session-tree-row-demo-tree-leaf-24"
+        },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 20000,
+        "run": "flows/agent-session-tree.ad#scroll"
+      },
+      {
+        "target": {
+          "id": "agent-session-tree-row-demo-tree-leaf-24"
+        },
+        "mode": "press",
+        "run": "flows/agent-session-tree.ad#open-detail"
+      },
+      {
+        "target": {
+          "id": "agent-subagent-detail-sheet"
+        },
+        "mode": "visible",
+        "timeout": 10000,
+        "run": "flows/agent-session-tree.ad#detail-visible"
+      },
+      {
+        "target": {
+          "text": "Snapshot output for demo-tree-leaf-24."
+        },
+        "mode": "visible",
+        "timeout": 10000,
+        "run": "flows/agent-session-tree.ad#detail-output"
+      },
+      {
+        "run": "flows/agent-session-tree.ad#close-detail"
+      },
+      {
+        "target": {
+          "id": "agent-session-tree-row-demo-tree-leaf-24"
+        },
+        "mode": "visible",
+        "timeout": 10000,
+        "run": "flows/agent-session-tree.ad#tree-restored"
+      },
+      {
+        "run": "flows/agent-session-tree.ad#close-tree"
+      },
+      {
+        "target": {
+          "text": "Session tree"
+        },
+        "mode": "hidden",
+        "run": "flows/agent-session-tree.ad#closed"
       }
     ],
     "flows/thai-language": [

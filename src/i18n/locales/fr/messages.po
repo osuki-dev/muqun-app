@@ -231,6 +231,7 @@ msgstr "{removeLabel} : {label}"
 msgid "{running} running of {0}"
 msgstr "{running} sur {0} en cours"
 
+#: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-sessions-sheet.tsx
 msgid "{title} — finished while you were away"
 msgstr "{title} — terminé pendant votre absence"
@@ -608,10 +609,6 @@ msgstr "Joindre un fichier"
 msgid "Attachment"
 msgstr "Pièce jointe"
 
-#: src/components/home-editorial-layout.tsx
-msgid "Attention"
-msgstr "À traiter"
-
 #: src/components/app-lock-gate.tsx
 msgid "Authenticate with {authLabel} to continue."
 msgstr "Vérifiez votre identité avec {authLabel} pour continuer"
@@ -854,6 +851,7 @@ msgid "Checking…"
 msgstr "Vérification…"
 
 #: src/components/home-launch-actions.tsx
+#: src/components/home-target-sheet.tsx
 msgid "Choose a gateway"
 msgstr "Choisir une passerelle"
 
@@ -865,10 +863,6 @@ msgstr "Choisissez d’abord une passerelle"
 #: src/components/agent-workbench.tsx
 msgid "Choose a model"
 msgstr "Choisir un modèle"
-
-#: src/components/home-launch-actions.tsx
-msgid "Choose a saved host"
-msgstr "Choisir un hôte enregistré"
 
 #: src/components/simfarm-stage.tsx
 msgid "Choose a simulator"
@@ -898,7 +892,7 @@ msgstr "Choisir un autre terminal"
 msgid "Choose files"
 msgstr "Choisir des fichiers"
 
-#: src/components/settings-servers.tsx
+#: src/components/settings-appearance.tsx
 msgid "Choose how Home is arranged."
 msgstr "Choisissez l’organisation de Home"
 
@@ -912,7 +906,6 @@ msgstr "Choisir le simulateur à afficher"
 
 #: src/components/settings-appearance.tsx
 #: src/components/settings-home-layout-sheet.tsx
-#: src/components/settings-servers.tsx
 msgid "Classic"
 msgstr "Classique"
 
@@ -1162,6 +1155,10 @@ msgstr "Connexion…"
 #: src/components/home-editorial-layout.tsx
 msgid "Connections"
 msgstr "Connexions"
+
+#: src/components/agent-composer.tsx
+msgid "Contains subagent sessions"
+msgstr "Contient des sessions de sous-agents"
 
 #: src/components/agent-context-sheet.tsx
 msgid "Context"
@@ -1897,8 +1894,8 @@ msgstr "Modifier l’hôte SSH"
 msgid "Edit this server"
 msgstr "Modifier ce serveur"
 
+#: src/components/settings-appearance.tsx
 #: src/components/settings-home-layout-sheet.tsx
-#: src/components/settings-servers.tsx
 msgid "Editorial"
 msgstr "Magazine"
 
@@ -2259,8 +2256,8 @@ msgstr "Accueil"
 msgid "Home / Editorial"
 msgstr "Accueil / Éditorial"
 
+#: src/components/settings-appearance.tsx
 #: src/components/settings-home-layout-sheet.tsx
-#: src/components/settings-servers.tsx
 msgid "Home layout"
 msgstr "Mise en page de Home"
 
@@ -2268,7 +2265,7 @@ msgstr "Mise en page de Home"
 msgid "Home layout changed for this session, but could not be saved on this device. Try again."
 msgstr "La mise en page de Home a changé pour cette session, mais n’a pas pu être enregistrée sur cet appareil. Réessayez"
 
-#: src/components/settings-servers.tsx
+#: src/components/settings-appearance.tsx
 msgid "Home layout, {homeLayoutLabel}"
 msgstr "Mise en page de Home : {homeLayoutLabel}"
 
@@ -2293,6 +2290,7 @@ msgstr "Clé d’hôte approuvée"
 msgid "How to use Muqun"
 msgstr "Comment utiliser Muqun"
 
+#: src/components/agent-session-tree-sheet.tsx
 #: src/i18n/labels.ts
 msgid "Idle"
 msgstr "Inactif"
@@ -2540,6 +2538,10 @@ msgstr "Flèche gauche"
 #: src/components/virtual-keyboard.tsx
 msgid "Letters"
 msgstr "Lettres"
+
+#: src/components/agent-session-tree-sheet.tsx
+msgid "Level {depth}"
+msgstr "Niveau {depth}"
 
 #: src/components/custom-theme-preview.tsx
 #: src/components/settings-appearance.tsx
@@ -3066,6 +3068,7 @@ msgstr "Rien ne tourne en arrière-plan. Détachez une commande longue depuis sa
 msgid "Nothing staged"
 msgstr "Rien de préparé"
 
+#: src/components/home-recent-sessions.tsx
 #: src/components/pane-chat-view.tsx
 msgid "Nothing to show yet."
 msgstr "Rien à afficher pour l’instant"
@@ -3124,10 +3127,6 @@ msgstr "Ouvrir {0}"
 #: src/components/session-map.tsx
 msgid "Open {title}. Long press to close."
 msgstr "Ouvrir {title}. Appui long pour fermer"
-
-#: src/components/home-attention.tsx
-msgid "Open a session to check its requests."
-msgstr "Ouvrez une session pour vérifier ses requêtes"
 
 #: src/components/open-web-service-sheet.tsx
 msgid "Open anyway"
@@ -3206,6 +3205,10 @@ msgstr "Ouvrir les actions rapides"
 #: src/components/agent-tool-card.tsx
 msgid "Open session"
 msgstr "Ouvrir la session"
+
+#: src/components/agent-composer.tsx
+msgid "Open session tree"
+msgstr "Ouvrir l’arborescence des sessions"
 
 #. placeholder {0}: host.label
 #. placeholder {0}: record.label
@@ -3333,7 +3336,6 @@ msgid "Output lands on a hardware-accelerated terminal grid with instant-respons
 msgstr "Affichage sur une grille de terminal accélérée par le matériel avec touches réactives et contrôle tmux. nvim, less et les REPLs fonctionnent parfaitement"
 
 #: src/components/home-launch-actions.tsx
-#: src/components/home-overview.tsx
 msgid "Pair a gateway"
 msgstr "Associer une passerelle"
 
@@ -3396,6 +3398,10 @@ msgstr "Échec de l’appairage"
 #: src/components/settings-servers.tsx
 msgid "Panes on server cards"
 msgstr "Panneaux sur les fiches serveur"
+
+#: src/components/agent-session-tree-sheet.tsx
+msgid "Parent: {parentTitle}"
+msgstr "Session parente : {parentTitle}"
 
 #: src/components/ssh-host-form.tsx
 msgid "Passphrase (optional)"
@@ -3732,10 +3738,6 @@ msgstr "Supprimer"
 msgid "Remove {0}"
 msgstr "Retirer {0}"
 
-#: src/components/home-recent-sessions.tsx
-msgid "Remove {title} from recents"
-msgstr "Supprimer {title} des sessions récentes"
-
 #: src/components/agent-worktree-sheet.tsx
 msgid "Remove anyway"
 msgstr "Supprimer quand même"
@@ -3858,6 +3860,7 @@ msgstr "Réessayez les fichiers marqués en rouge, ou retirez-les, puis renvoyez
 msgid "Retry uploading {0}"
 msgstr "Réessayer d’envoyer {0}"
 
+#: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-workbench.tsx
 msgid "Retrying…"
 msgstr "Nouvelle tentative…"
@@ -3975,6 +3978,10 @@ msgstr "Lancer les tests concernés"
 #: src/components/home-overview.tsx
 msgid "Run the Gateway on your machine and scan the QR code it prints. The pairing stays on this device."
 msgstr "Lancez le Gateway sur votre machine et scannez le QR code qu’il affiche. L’appairage reste sur cet appareil"
+
+#: src/components/agent-session-tree-sheet.tsx
+msgid "Running"
+msgstr "En cours"
 
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/session-map.tsx
@@ -4099,20 +4106,24 @@ msgid "Security"
 msgstr "Sécurité"
 
 #. placeholder {0}: age.value
+#: src/components/home-recent-sessions.tsx
 #: src/components/server-agent-rows.tsx
 msgid "Seen {0}d ago"
 msgstr "Vu il y a {0} j"
 
 #. placeholder {0}: age.value
+#: src/components/home-recent-sessions.tsx
 #: src/components/server-agent-rows.tsx
 msgid "Seen {0}h ago"
 msgstr "Vu il y a {0} h"
 
 #. placeholder {0}: age.value
+#: src/components/home-recent-sessions.tsx
 #: src/components/server-agent-rows.tsx
 msgid "Seen {0}m ago"
 msgstr "Vu il y a {0} min"
 
+#: src/components/home-recent-sessions.tsx
 #: src/components/server-agent-rows.tsx
 msgid "Seen just now"
 msgstr "Vu à l’instant"
@@ -4216,7 +4227,16 @@ msgstr "Nom de la session"
 msgid "Session Tokens"
 msgstr "Jetons de session"
 
+#: src/components/agent-session-tree-sheet.tsx
+msgid "Session tree"
+msgstr "Arborescence des sessions"
+
+#: src/components/agent-session-tree-sheet.tsx
+msgid "Session unavailable"
+msgstr "Session indisponible"
+
 #: src/components/agent-sessions-sheet.tsx
+#: src/components/home-recent-sessions.tsx
 #: src/components/session-map.tsx
 msgid "Sessions"
 msgstr "Sessions"
@@ -4225,10 +4245,6 @@ msgstr "Sessions"
 msgctxt "agent slash command"
 msgid "Sessions in this workspace"
 msgstr "Sessions dans cet espace de travail"
-
-#: src/components/home-recent-sessions.tsx
-msgid "Sessions you open will appear here."
-msgstr "Les sessions que vous ouvrez apparaîtront ici"
 
 #. placeholder {0}: sessionTitle ?? ''
 #: src/app/agent.tsx
@@ -4316,10 +4332,6 @@ msgstr "Afficher {0}"
 #: src/components/settings-alerts.tsx
 msgid "Show agents and their status on the home screen. Updates while Muqun is open."
 msgstr "Affiche les agents et leur statut sur l’écran d’accueil. Se met à jour tant que Muqun est ouvert"
-
-#: src/components/home-recent-sessions.tsx
-msgid "Show all recent sessions"
-msgstr "Afficher toutes les sessions récentes"
 
 #: src/components/pairing-camera.tsx
 msgid "Show camera details"
@@ -4481,6 +4493,7 @@ msgstr "Code source"
 msgid "Space"
 msgstr "Espace"
 
+#: src/components/home-launch-actions.tsx
 #: src/components/home-overview.tsx
 #: src/components/pad-server-rail.tsx
 #: src/components/ssh-host-list.tsx
@@ -4488,16 +4501,13 @@ msgstr "Espace"
 msgid "SSH"
 msgstr "SSH"
 
-#: src/components/home-launch-actions.tsx
-msgid "SSH connection"
-msgstr "Connexion SSH"
-
 #: src/app/explore.tsx
 #: src/components/gateway-tunnel-badge.tsx
 #: src/components/home-recent-sessions.tsx
 msgid "SSH host"
 msgstr "Hôte SSH"
 
+#: src/components/home-launch-actions.tsx
 #: src/components/home-overview.tsx
 #: src/components/pad-server-rail.tsx
 #: src/components/settings-servers.tsx
@@ -4520,10 +4530,6 @@ msgstr "Indexé et non indexé"
 #: src/lib/agent-widget-layout.tsx
 msgid "stale · {age}"
 msgstr "obsolète · {age}"
-
-#: src/components/home-editorial-layout.tsx
-msgid "Start"
-msgstr "Démarrer"
 
 #. placeholder {0}: profile.kind
 #: src/components/agent-assignment-bar.tsx
@@ -4581,6 +4587,7 @@ msgstr "Démarrage…"
 msgid "Status unavailable"
 msgstr "État indisponible"
 
+#: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-workbench.tsx
 #: src/components/collaboration-notice.tsx
 msgid "Status unknown"
@@ -4628,6 +4635,7 @@ msgstr "Arrêter cet agent"
 msgid "Stop this command"
 msgstr "Arrêter cette commande"
 
+#: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-workbench.tsx
 msgid "Stopped"
 msgstr "Arrêté"
@@ -4798,6 +4806,7 @@ msgstr "Fichiers temporaires"
 
 #: src/app/commands.tsx
 #: src/app/settings.tsx
+#: src/components/home-launch-actions.tsx
 #: src/components/home-recent-sessions.tsx
 #: src/i18n/labels.ts
 msgid "Terminal"
@@ -5038,6 +5047,7 @@ msgstr "Le thème sera supprimé de cet appareil"
 msgid "The transcript as a conversation, with tool steps folded away."
 msgstr "La transcription sous forme de conversation, avec les étapes d’outils repliées"
 
+#: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-workbench.tsx
 msgid "The turn failed"
 msgstr "Le tour a échoué"
@@ -5441,6 +5451,7 @@ msgid "Unsupported item ({0})"
 msgstr "Élément non pris en charge ({0})"
 
 #: src/components/agent-composer.tsx
+#: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-sessions-sheet.tsx
 msgid "Untitled session"
 msgstr "Session sans titre"

@@ -231,6 +231,7 @@ msgstr "{removeLabel}: {label}"
 msgid "{running} running of {0}"
 msgstr "{running} running of {0}"
 
+#: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-sessions-sheet.tsx
 msgid "{title} — finished while you were away"
 msgstr "{title} — finished while you were away"
@@ -608,10 +609,6 @@ msgstr "Attach a file"
 msgid "Attachment"
 msgstr "Attachment"
 
-#: src/components/home-editorial-layout.tsx
-msgid "Attention"
-msgstr "Attention"
-
 #: src/components/app-lock-gate.tsx
 msgid "Authenticate with {authLabel} to continue."
 msgstr "Authenticate with {authLabel} to continue"
@@ -854,6 +851,7 @@ msgid "Checking…"
 msgstr "Checking…"
 
 #: src/components/home-launch-actions.tsx
+#: src/components/home-target-sheet.tsx
 msgid "Choose a gateway"
 msgstr "Choose a gateway"
 
@@ -865,10 +863,6 @@ msgstr "Choose a gateway first"
 #: src/components/agent-workbench.tsx
 msgid "Choose a model"
 msgstr "Choose a model"
-
-#: src/components/home-launch-actions.tsx
-msgid "Choose a saved host"
-msgstr "Choose a saved host"
 
 #: src/components/simfarm-stage.tsx
 msgid "Choose a simulator"
@@ -898,7 +892,7 @@ msgstr "Choose another terminal"
 msgid "Choose files"
 msgstr "Choose files"
 
-#: src/components/settings-servers.tsx
+#: src/components/settings-appearance.tsx
 msgid "Choose how Home is arranged."
 msgstr "Choose how Home is arranged"
 
@@ -912,7 +906,6 @@ msgstr "Choose which simulator to show"
 
 #: src/components/settings-appearance.tsx
 #: src/components/settings-home-layout-sheet.tsx
-#: src/components/settings-servers.tsx
 msgid "Classic"
 msgstr "Classic"
 
@@ -1162,6 +1155,10 @@ msgstr "Connecting…"
 #: src/components/home-editorial-layout.tsx
 msgid "Connections"
 msgstr "Connections"
+
+#: src/components/agent-composer.tsx
+msgid "Contains subagent sessions"
+msgstr "Contains subagent sessions"
 
 #: src/components/agent-context-sheet.tsx
 msgid "Context"
@@ -1897,8 +1894,8 @@ msgstr "Edit SSH host"
 msgid "Edit this server"
 msgstr "Edit this server"
 
+#: src/components/settings-appearance.tsx
 #: src/components/settings-home-layout-sheet.tsx
-#: src/components/settings-servers.tsx
 msgid "Editorial"
 msgstr "Editorial"
 
@@ -2259,8 +2256,8 @@ msgstr "Home"
 msgid "Home / Editorial"
 msgstr "Home / Editorial"
 
+#: src/components/settings-appearance.tsx
 #: src/components/settings-home-layout-sheet.tsx
-#: src/components/settings-servers.tsx
 msgid "Home layout"
 msgstr "Home layout"
 
@@ -2268,7 +2265,7 @@ msgstr "Home layout"
 msgid "Home layout changed for this session, but could not be saved on this device. Try again."
 msgstr "Home layout changed for this session, but could not be saved on this device. Try again"
 
-#: src/components/settings-servers.tsx
+#: src/components/settings-appearance.tsx
 msgid "Home layout, {homeLayoutLabel}"
 msgstr "Home layout, {homeLayoutLabel}"
 
@@ -2293,6 +2290,7 @@ msgstr "Host key trusted"
 msgid "How to use Muqun"
 msgstr "How to use Muqun"
 
+#: src/components/agent-session-tree-sheet.tsx
 #: src/i18n/labels.ts
 msgid "Idle"
 msgstr "Idle"
@@ -2540,6 +2538,10 @@ msgstr "Left arrow"
 #: src/components/virtual-keyboard.tsx
 msgid "Letters"
 msgstr "Letters"
+
+#: src/components/agent-session-tree-sheet.tsx
+msgid "Level {depth}"
+msgstr "Level {depth}"
 
 #: src/components/custom-theme-preview.tsx
 #: src/components/settings-appearance.tsx
@@ -3066,6 +3068,7 @@ msgstr "Nothing is running in the background — detach a long command from its 
 msgid "Nothing staged"
 msgstr "Nothing staged"
 
+#: src/components/home-recent-sessions.tsx
 #: src/components/pane-chat-view.tsx
 msgid "Nothing to show yet."
 msgstr "Nothing to show yet"
@@ -3124,10 +3127,6 @@ msgstr "Open {0}"
 #: src/components/session-map.tsx
 msgid "Open {title}. Long press to close."
 msgstr "Open {title}. Long press to close"
-
-#: src/components/home-attention.tsx
-msgid "Open a session to check its requests."
-msgstr "Open a session to check its requests"
 
 #: src/components/open-web-service-sheet.tsx
 msgid "Open anyway"
@@ -3206,6 +3205,10 @@ msgstr "Open quick actions"
 #: src/components/agent-tool-card.tsx
 msgid "Open session"
 msgstr "Open session"
+
+#: src/components/agent-composer.tsx
+msgid "Open session tree"
+msgstr "Open session tree"
 
 #. placeholder {0}: host.label
 #. placeholder {0}: record.label
@@ -3333,7 +3336,6 @@ msgid "Output lands on a hardware-accelerated terminal grid with instant-respons
 msgstr "Output lands on a hardware-accelerated terminal grid with instant-response keys and full tmux control. nvim, less and REPLs behave"
 
 #: src/components/home-launch-actions.tsx
-#: src/components/home-overview.tsx
 msgid "Pair a gateway"
 msgstr "Pair a gateway"
 
@@ -3396,6 +3398,10 @@ msgstr "Pairing failed"
 #: src/components/settings-servers.tsx
 msgid "Panes on server cards"
 msgstr "Panes on server cards"
+
+#: src/components/agent-session-tree-sheet.tsx
+msgid "Parent: {parentTitle}"
+msgstr "Parent: {parentTitle}"
 
 #: src/components/ssh-host-form.tsx
 msgid "Passphrase (optional)"
@@ -3732,10 +3738,6 @@ msgstr "Remove"
 msgid "Remove {0}"
 msgstr "Remove {0}"
 
-#: src/components/home-recent-sessions.tsx
-msgid "Remove {title} from recents"
-msgstr "Remove {title} from recents"
-
 #: src/components/agent-worktree-sheet.tsx
 msgid "Remove anyway"
 msgstr "Remove anyway"
@@ -3858,6 +3860,7 @@ msgstr "Retry the ones marked in red, or remove them, then send again"
 msgid "Retry uploading {0}"
 msgstr "Retry uploading {0}"
 
+#: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-workbench.tsx
 msgid "Retrying…"
 msgstr "Retrying…"
@@ -3975,6 +3978,10 @@ msgstr "Run relevant tests"
 #: src/components/home-overview.tsx
 msgid "Run the Gateway on your machine and scan the QR code it prints. The pairing stays on this device."
 msgstr "Run the Gateway on your machine and scan the QR code it prints. The pairing stays on this device"
+
+#: src/components/agent-session-tree-sheet.tsx
+msgid "Running"
+msgstr "Running"
 
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/session-map.tsx
@@ -4099,20 +4106,24 @@ msgid "Security"
 msgstr "Security"
 
 #. placeholder {0}: age.value
+#: src/components/home-recent-sessions.tsx
 #: src/components/server-agent-rows.tsx
 msgid "Seen {0}d ago"
 msgstr "Seen {0}d ago"
 
 #. placeholder {0}: age.value
+#: src/components/home-recent-sessions.tsx
 #: src/components/server-agent-rows.tsx
 msgid "Seen {0}h ago"
 msgstr "Seen {0}h ago"
 
 #. placeholder {0}: age.value
+#: src/components/home-recent-sessions.tsx
 #: src/components/server-agent-rows.tsx
 msgid "Seen {0}m ago"
 msgstr "Seen {0}m ago"
 
+#: src/components/home-recent-sessions.tsx
 #: src/components/server-agent-rows.tsx
 msgid "Seen just now"
 msgstr "Seen just now"
@@ -4216,7 +4227,16 @@ msgstr "Session name"
 msgid "Session Tokens"
 msgstr "Session Tokens"
 
+#: src/components/agent-session-tree-sheet.tsx
+msgid "Session tree"
+msgstr "Session tree"
+
+#: src/components/agent-session-tree-sheet.tsx
+msgid "Session unavailable"
+msgstr "Session unavailable"
+
 #: src/components/agent-sessions-sheet.tsx
+#: src/components/home-recent-sessions.tsx
 #: src/components/session-map.tsx
 msgid "Sessions"
 msgstr "Sessions"
@@ -4225,10 +4245,6 @@ msgstr "Sessions"
 msgctxt "agent slash command"
 msgid "Sessions in this workspace"
 msgstr "Sessions in this workspace"
-
-#: src/components/home-recent-sessions.tsx
-msgid "Sessions you open will appear here."
-msgstr "Sessions you open will appear here"
 
 #. placeholder {0}: sessionTitle ?? ''
 #: src/app/agent.tsx
@@ -4316,10 +4332,6 @@ msgstr "Show {0}"
 #: src/components/settings-alerts.tsx
 msgid "Show agents and their status on the home screen. Updates while Muqun is open."
 msgstr "Show agents and their status on the home screen. Updates while Muqun is open"
-
-#: src/components/home-recent-sessions.tsx
-msgid "Show all recent sessions"
-msgstr "Show all recent sessions"
 
 #: src/components/pairing-camera.tsx
 msgid "Show camera details"
@@ -4481,6 +4493,7 @@ msgstr "Source code"
 msgid "Space"
 msgstr "Space"
 
+#: src/components/home-launch-actions.tsx
 #: src/components/home-overview.tsx
 #: src/components/pad-server-rail.tsx
 #: src/components/ssh-host-list.tsx
@@ -4488,16 +4501,13 @@ msgstr "Space"
 msgid "SSH"
 msgstr "SSH"
 
-#: src/components/home-launch-actions.tsx
-msgid "SSH connection"
-msgstr "SSH connection"
-
 #: src/app/explore.tsx
 #: src/components/gateway-tunnel-badge.tsx
 #: src/components/home-recent-sessions.tsx
 msgid "SSH host"
 msgstr "SSH host"
 
+#: src/components/home-launch-actions.tsx
 #: src/components/home-overview.tsx
 #: src/components/pad-server-rail.tsx
 #: src/components/settings-servers.tsx
@@ -4520,10 +4530,6 @@ msgstr "Staged and unstaged"
 #: src/lib/agent-widget-layout.tsx
 msgid "stale · {age}"
 msgstr "stale · {age}"
-
-#: src/components/home-editorial-layout.tsx
-msgid "Start"
-msgstr "Start"
 
 #. placeholder {0}: profile.kind
 #: src/components/agent-assignment-bar.tsx
@@ -4581,6 +4587,7 @@ msgstr "Starting…"
 msgid "Status unavailable"
 msgstr "Status unavailable"
 
+#: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-workbench.tsx
 #: src/components/collaboration-notice.tsx
 msgid "Status unknown"
@@ -4628,6 +4635,7 @@ msgstr "Stop this agent"
 msgid "Stop this command"
 msgstr "Stop this command"
 
+#: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-workbench.tsx
 msgid "Stopped"
 msgstr "Stopped"
@@ -4798,6 +4806,7 @@ msgstr "Temporary files"
 
 #: src/app/commands.tsx
 #: src/app/settings.tsx
+#: src/components/home-launch-actions.tsx
 #: src/components/home-recent-sessions.tsx
 #: src/i18n/labels.ts
 msgid "Terminal"
@@ -5038,6 +5047,7 @@ msgstr "The theme will be removed from this device"
 msgid "The transcript as a conversation, with tool steps folded away."
 msgstr "The transcript as a conversation, with tool steps folded away"
 
+#: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-workbench.tsx
 msgid "The turn failed"
 msgstr "The turn failed"
@@ -5441,6 +5451,7 @@ msgid "Unsupported item ({0})"
 msgstr "Unsupported item ({0})"
 
 #: src/components/agent-composer.tsx
+#: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-sessions-sheet.tsx
 msgid "Untitled session"
 msgstr "Untitled session"

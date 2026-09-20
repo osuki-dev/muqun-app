@@ -63,6 +63,8 @@ export const sheetRoutePresentations: Readonly<Record<string, SheetPresentation>
   // pick a workspace, read a diff -- so every one is a route rather than a
   // `<Modal>` the workbench keeps mounted whether it is open or not.
   'agent-sessions': 'sheet',
+  'agent-session-tree': 'sheet',
+  'agent-subagent-detail': 'sheet',
   'agent-model': 'sheet',
   'agent-mode': 'sheet',
   'agent-workspace': 'sheet',
@@ -119,6 +121,10 @@ export const sheetRouteDetents: Readonly<Record<string, SheetDetents>> = {
   // Pairing: a viewfinder, two fields and a way in.
   explore: 'expandable',
   'agent-sessions': 'expandable',
+  'agent-session-tree': 'full',
+  // A contextual transcript above the tree or workbench. It is always the
+  // largest sheet and replaces its target in place rather than stacking peers.
+  'agent-subagent-detail': 'full',
   // A model list is usually browsed and sometimes filtered to two rows. At the
   // expandable detent those two rows sat at the top of a sheet that was 82% of
   // the screen, and the rest was ground. It opens at just over half and drags to
@@ -196,6 +202,8 @@ export const sheetRouteContent: Readonly<Record<string, SheetContent>> = {
   'agent-model': 'list',
   'agent-workspace': 'list',
   'agent-sessions': 'list',
+  'agent-session-tree': 'list',
+  'agent-subagent-detail': 'list',
   'agent-worktree': 'list',
   // What is still running after the agent moved on.
   'agent-shells': 'list',
