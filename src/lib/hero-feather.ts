@@ -126,6 +126,33 @@ export function containedImageRect(
   };
 }
 
+/** The rectangle a cover-fit image occupies, preserving the theme focal point. */
+export function coveredImageRect(
+  container: FeatherSize,
+  intrinsic?: FeatherSize,
+  align?: { x?: number; y?: number }
+): FeatherRect {
+  const width = positive(container.width);
+  const height = positive(container.height);
+  const whole = { x: 0, y: 0, width, height };
+  const sourceWidth = positive(intrinsic?.width);
+  const sourceHeight = positive(intrinsic?.height);
+  if (!width || !height || !sourceWidth || !sourceHeight) return whole;
+  const scale = Math.max(width / sourceWidth, height / sourceHeight);
+  const drawnWidth = sourceWidth * scale;
+  const drawnHeight = sourceHeight * scale;
+  const alignedOffset = (slack: number, focal: number | undefined) => {
+    const position = clamp01(focal);
+    return position === 0 ? 0 : slack * position;
+  };
+  return {
+    x: alignedOffset(width - drawnWidth, align?.x),
+    y: alignedOffset(height - drawnHeight, align?.y),
+    width: drawnWidth,
+    height: drawnHeight,
+  };
+}
+
 /**
  * The drawn rectangle, and the blurred rounded rectangle that feathers it.
  *

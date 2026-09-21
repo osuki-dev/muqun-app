@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { createThemeStarter } from '@/theme/authoring';
+import { createThemeStarter } from '@/theme/starter';
 import type { InstalledTheme } from '@/theme/repository';
 
 import { planUnusedThemes, type ThemeAssetFile } from '../theme-storage';

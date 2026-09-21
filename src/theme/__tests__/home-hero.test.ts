@@ -1,11 +1,14 @@
 import { describe, expect, test } from 'bun:test';
 
-import { createThemeStarter } from '@/theme/authoring';
+import { createThemeStarter } from '@/theme/starter';
 import {
+  HOME_EDITORIAL_ARTWORK_SLOT,
   HOME_HERO_FALLBACK_SLOT,
   HOME_HERO_SLOT,
   isHomeHeroAvailable,
   isHomeHeroPreference,
+  resolveEditorialHomeArtwork,
+  resolveEditorialHomeArtworkAsset,
   resolveHomeHeroAsset,
   resolveHomeHero,
   type HomeHeroPreference,
@@ -18,10 +21,12 @@ import type { ThemeManifest } from '@/theme/schema';
  * one an author would actually be handed.
  */
 function pack({
+  decoration,
   hero,
   illustration,
   authored,
 }: {
+  decoration?: boolean;
   hero?: boolean;
   illustration?: boolean;
   authored?: 'default' | 'hidden';
@@ -29,10 +34,14 @@ function pack({
   const manifest: ThemeManifest = {
     ...createThemeStarter(),
     assets: {
+      ...(decoration ? { cover: { path: 'assets/cover.png' as const } } : {}),
       ...(hero ? { crest: { path: 'assets/crest.png' as const } } : {}),
       ...(illustration ? { empty: { path: 'assets/empty.png' as const } } : {}),
     },
     decoration: {
+      ...(decoration
+        ? { [HOME_EDITORIAL_ARTWORK_SLOT]: { asset: 'cover', fit: 'cover' as const } }
+        : {}),
       ...(hero ? { [HOME_HERO_SLOT]: { asset: 'crest', fit: 'contain' as const } } : {}),
       ...(illustration
         ? { [HOME_HERO_FALLBACK_SLOT]: { asset: 'empty', fit: 'contain' as const } }
@@ -202,5 +211,65 @@ describe('the Home hero', () => {
       expect(isHomeHeroPreference(value)).toBe(true);
     for (const value of ['default', '', null, undefined, 0, true])
       expect(isHomeHeroPreference(value)).toBe(false);
+  });
+});
+
+describe('Editorial Home artwork', () => {
+  const resolveEditorial = (
+    manifest: ThemeManifest | undefined,
+    preference: HomeHeroPreference = 'theme'
+  ) => resolveEditorialHomeArtwork({ manifest, mode: 'light', width: 'compact', preference });
+
+  test('prefers Home decoration without changing Classic hero resolution', () => {
+    const manifest = pack({ decoration: true, hero: true });
+    expect(resolveEditorial(manifest)).toEqual({
+      slot: HOME_EDITORIAL_ARTWORK_SLOT,
+      image: { asset: 'cover', fit: 'cover' },
+    });
+    expect(resolve(manifest, 'theme')?.slot).toBe(HOME_HERO_SLOT);
+  });
+
+  test('falls back through hero and explicit-show illustration for older themes', () => {
+    expect(resolveEditorial(pack({ hero: true }))?.slot).toBe(HOME_HERO_SLOT);
+    expect(resolveEditorial(pack({ illustration: true }), 'theme')).toBeNull();
+    expect(resolveEditorial(pack({ illustration: true }), 'shown')?.slot).toBe(
+      HOME_HERO_FALLBACK_SLOT
+    );
+  });
+
+  test('the existing hidden preference suppresses every Editorial artwork source', () => {
+    for (const manifest of [
+      pack({ decoration: true }),
+      pack({ hero: true }),
+      pack({ illustration: true }),
+    ]) {
+      expect(resolveEditorial(manifest, 'hidden')).toBeNull();
+    }
+  });
+
+  test('following the theme also honors its authored hidden default', () => {
+    const manifest = pack({ decoration: true, hero: true, authored: 'hidden' });
+    expect(resolveEditorial(manifest, 'theme')).toBeNull();
+    expect(resolveEditorial(manifest, 'shown')?.slot).toBe(HOME_EDITORIAL_ARTWORK_SLOT);
+  });
+
+  test('drawable Editorial artwork still requires an installed local asset', () => {
+    const manifest = pack({ decoration: true });
+    expect(
+      resolveEditorialHomeArtworkAsset({
+        manifest,
+        assets: { cover: 'file:///themes/cover.png' },
+        mode: 'light',
+        width: 'compact',
+      })
+    ).toMatchObject({ source: 'file:///themes/cover.png' });
+    expect(
+      resolveEditorialHomeArtworkAsset({
+        manifest,
+        assets: { cover: 'https://example.test/cover.png' },
+        mode: 'light',
+        width: 'compact',
+      })
+    ).toBeNull();
   });
 });

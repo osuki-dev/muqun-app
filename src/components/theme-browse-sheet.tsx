@@ -85,9 +85,9 @@ const THEME_BROWSE_PAGE = 20;
 const THEME_BROWSE_STAGGER_CAP = 8;
 
 /**
- * The cover, as a thumbnail rather than a poster: 8:5, the shape
- * `skills/muqun-theme` asks every cover to be published in, at the size a
- * scene row can carry without becoming a card. Narrower than the 112 it was:
+ * The cover, as a thumbnail rather than a poster: 8:5, the gallery contract's
+ * preview shape, at the size a scene row can carry without becoming a card.
+ * Narrower than the 112 it was:
  * a row on the sheet's own gutter has less to give than a card with its own
  * padding did.
  */

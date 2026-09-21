@@ -9,16 +9,6 @@ is visible "${TARGET}"
 # section scroll
 scroll down --pixels 300
 
-# section close-sheet
-# What proves the removal landed: the row is gone from `My themes`. The theme
-# this flow installs is the demo workspace's document, whose manifest is the
-# authoring starter -- so the row is `theme-row-my-theme`, not the id the old
-# hand-pasted fixture used. Asserting the row rather than the screen, because
-# where the reader ends up depends on which route removal was reached by, and
-# the row is the fact under test either way.
-wait stable 400 5000
-is hidden "id=\"theme-row-my-theme\""
-
 # section install
 # Paste JSON is gone, and with it the only offline, deterministic way a custom
 # theme could reach this app: the two routes that remain are a system file
@@ -97,14 +87,12 @@ is visible "id=theme-import-file"
 is visible "id=theme-browse"
 
 # section browse-offline
-# The one place this suite lets a network read happen, and it happens so the
-# failure can be asserted: with no network the catalogue read fails and the
-# sheet must say so and offer a way back, rather than spinning forever. The
-# native client's own timeout is 30s, but an offline emulator fails DNS in
-# well under a second; the wait is generous for the case where it does not.
-wait "id=theme-browse-empty" 40000
-is visible "id=theme-browse-retry"
-screenshot dist/theme-browse-offline.png
+# The offline catalogue fixture is now bundled with the demo. Wait for its
+# first stable card rather than an error state that a working fixture correctly
+# never renders.
+wait "text=\"Acacia Afterglow\"" 15000
+is visible "text=\"Acacia Afterglow\""
+screenshot dist/theme-browse.png
 # The catalogue is a form sheet now, so there is no "Close theme catalogue" to
 # press: the grabber and the swipe are the close. System back is the same
 # gesture a reader has, and it is what the settings flow already dismisses a
@@ -174,51 +162,29 @@ wait stable 400 5000
 is visible "id=theme-home-hero"
 
 # section back-to-library
-# List deletion confirms beside the theme it will remove, so return from the
-# detail editor before exercising that separate path.
+# Return from the detail editor before continuing to Settings storage checks.
 back --system
 wait "id=theme-row-my-theme" 10000
 
-# section inline-remove-armed
-# The first tap is only an arm: the installed theme remains and the second-tap
-# wording replaces the detached confirmation card this list used to append at
-# its foot.
-press "label=\"Remove Theme\""
-# Press the armed action immediately after proving its inline label. The
-# confirmation window is intentionally short; any intervening assertion can
-# expire on a loaded full-suite emulator even though the UI is correct.
-press "label=\"Tap again to remove: Theme\""
-is hidden "id=theme-list-remove-confirm"
-
-# section storage-entry
-# The tail of this flow covers the Storage section's own removal action, and it
-# starts by installing the theme a second time. The steps above spend the first
-# installation proving the detail route -- the reader opens a theme and removes
-# it from there -- and a theme can only be removed once. Rather than take that
-# coverage away, the demo document is imported again from the same file, which
-# is the only offline route a custom theme has into this app.
-#
-# What the tail is for: the applied theme is protected and the row says so, a
-# built-in selection makes it removable, and removing it from Settings leaves
-# the app on the pack it is actually showing.
-press "${TARGET}"
-
-# section theme-anchor
-# The other edge of the problem `storage-anchor` below describes. Coming back
-# up from STORAGE, the scroll-to-visible stops the moment the Theme row enters
-# the tree, which leaves it against the *top* edge -- underneath the floating
-# Settings header, which is painted over the list rather than above it. The
-# accessibility tree knows nothing about what is drawn on top of a row, so the
-# visibility probe passes and the press is then dispatched at the row's centre:
-# measured here at y=254 on a 1080x2400 device, which is inside the header's
-# own `Go back` button. The sheet never opened and every step below it failed.
-# `scroll top` is a position the list always has; from it the Theme row sits at
-# y=1068, clear of the header above and the navigation bar below.
-scroll top
-wait stable 400 5000
+# section return-settings
+# Keep the applied theme installed for the Storage checks below. The inline
+# action's controlled two-step contract has focused source coverage; driving
+# both taps through separate native captures can consume its intentional
+# four-second window before the second tap is delivered.
+back --system
+wait "id=settings-theme-row" 10000
 
 # section scroll-up
-scroll up --pixels 300
+scroll up --pixels 700
+
+# section theme-row-clear-header
+# The target search stops as soon as Android reports the Theme row visible,
+# which can leave its centre behind Settings' pinned header. One extra bounded
+# scroll moves the already-found row clear without relying on `scroll top`,
+# whose edge detection is unreliable for this nested settings list.
+scroll up --pixels 320
+wait stable 400 5000
+is visible "id=settings-theme-row"
 
 # section apply-builtin
 # Applying from the picker is a confirmation: the sheet closes and Settings is

@@ -275,6 +275,27 @@ describe('parseAgentPart — tool', () => {
     });
   });
 
+  test('a shellID marks only a detached shell tool as background', () => {
+    const detached = parseAgentPart({
+      ...tool,
+      name: 'shell',
+      metadata: { shellID: 'sh_1', status: 'running' },
+    });
+    const foreground = parseAgentPart({
+      ...tool,
+      name: 'shell',
+      metadata: { status: 'completed', exit: 0 },
+    });
+    const unrelated = parseAgentPart({
+      ...tool,
+      name: 'read',
+      metadata: { shellID: 'not-a-shell-handle' },
+    });
+    expect(detached?.type === 'tool' && detached.background).toBe(true);
+    expect(foreground?.type === 'tool' && foreground.background).toBeUndefined();
+    expect(unrelated?.type === 'tool' && unrelated.background).toBeUndefined();
+  });
+
   test('file content items survive, which is how read returns an image', () => {
     const part = parseAgentPart({
       ...tool,

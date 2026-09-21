@@ -1,7 +1,7 @@
 import { i18n } from '@lingui/core';
 import { msg } from '@lingui/core/macro';
 import { Image } from 'react-native';
-import { createThemeStarter } from '@/theme/authoring';
+import { createThemeStarter } from '@/theme/starter';
 
 import { AGENT_SPAWN_CAPABILITY } from '@/lib/agent-spawn';
 import { GIT_DIFF_CAPABILITY, PANE_CONTEXT_CAPABILITY } from '@/lib/git-diff';

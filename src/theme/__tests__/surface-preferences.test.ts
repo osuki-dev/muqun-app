@@ -1,5 +1,5 @@
 import { expect, test } from 'bun:test';
-import { createThemeStarter } from '../authoring';
+import { createThemeStarter } from '../starter';
 import { resolveHomeIdentity } from '../resolve';
 import {
   effectiveThemeManifest,

@@ -13,8 +13,8 @@ test('notification geometry follows every homeLayout profile from one contract',
 });
 
 test('stacked notification pages can reuse geometry without multiplying the shadow', () => {
-  expect(notificationSurfaceStyle(appearanceProfiles.mechanical, false)).toEqual({
-    borderRadius: appearanceProfiles.mechanical.chrome.overlay,
+  expect(notificationSurfaceStyle(appearanceProfiles.editorial, false)).toEqual({
+    borderRadius: appearanceProfiles.editorial.chrome.overlay,
     borderCurve: 'continuous',
   });
 });

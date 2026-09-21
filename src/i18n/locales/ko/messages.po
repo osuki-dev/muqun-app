@@ -488,10 +488,6 @@ msgstr "항상 허용"
 msgid "Always allowed"
 msgstr "항상 허용"
 
-#: src/components/settings-home-layout-sheet.tsx
-msgid "An instrument-panel Home with compact, angular controls."
-msgstr "간결하고 각진 컨트롤을 갖춘 계기판 스타일 홈"
-
 #: src/components/agent-revert-plate.tsx
 msgid "and {rest} more"
 msgstr "외 {rest}개"
@@ -697,10 +693,6 @@ msgstr "동작"
 #: src/components/theme-appearance-settings.tsx
 msgid "Below {minimumPercent}%, text is no longer guaranteed to stay readable"
 msgstr "{minimumPercent}% 아래에서는 글자의 가독성이 보장되지 않습니다"
-
-#: src/components/theme-appearance-settings.tsx
-msgid "Between the header and your servers. Home also borrows the theme's empty-state picture when the theme has no Home illustration of its own."
-msgstr "헤더와 서버 사이에 표시됩니다. 테마에 홈 전용 일러스트가 없으면 홈은 테마의 빈 상태 그림도 함께 사용합니다"
 
 #: src/components/diff-rows.tsx
 msgid "Binary file"
@@ -1158,7 +1150,6 @@ msgid "Connecting…"
 msgstr "연결 중…"
 
 #: src/components/home-editorial-layout.tsx
-#: src/components/home-mechanical-layout.tsx
 msgid "Connections"
 msgstr "연결"
 
@@ -1189,7 +1180,6 @@ msgstr "사용한 컨텍스트"
 
 #: src/app/explore.tsx
 #: src/components/home-editorial-layout.tsx
-#: src/components/home-mechanical-layout.tsx
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Continue"
 msgstr "계속"
@@ -2660,11 +2650,6 @@ msgstr "확인 완료로 표시"
 #: src/components/settings-appearance.tsx
 msgid "Mascot"
 msgstr "마스코트"
-
-#: src/components/settings-appearance.tsx
-#: src/components/settings-home-layout-sheet.tsx
-msgid "Mechanical"
-msgstr "메커니컬"
 
 #. placeholder {0}: hit.path
 #: src/components/file-mention-panel.tsx
@@ -4375,6 +4360,10 @@ msgstr "{0} 표시"
 msgid "Show agents and their status on the home screen. Updates while Muqun is open."
 msgstr "홈 화면에 에이전트와 상태를 표시합니다. Muqun이 열려 있는 동안 갱신됩니다"
 
+#: src/components/theme-appearance-settings.tsx
+msgid "Show artwork on Home"
+msgstr "홈에 아트워크 표시"
+
 #: src/components/pairing-camera.tsx
 msgid "Show camera details"
 msgstr "카메라 세부 정보 표시"
@@ -4394,10 +4383,6 @@ msgstr "홈 로고 표시"
 #: src/components/theme-appearance-settings.tsx
 msgid "Show Home text"
 msgstr "홈 텍스트 표시"
-
-#: src/components/theme-appearance-settings.tsx
-msgid "Show illustration on Home"
-msgstr "홈에 일러스트 표시"
 
 #: src/components/home-recent-sessions.tsx
 msgid "Show less"
@@ -5583,6 +5568,10 @@ msgstr "앱과 터미널에 원하는 글꼴을 사용하세요"
 #: src/components/ssh-host-form.tsx
 msgid "Username"
 msgstr "사용자 이름"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Uses the theme's Home artwork in the position chosen by your Home layout. When needed, it falls back to the theme's empty-state illustration."
+msgstr "홈 레이아웃이 정한 위치에 테마의 홈 아트워크를 표시합니다. 필요한 경우 테마의 빈 상태 일러스트레이션을 사용합니다"
 
 #: src/components/settings-servers.tsx
 msgid "Using"

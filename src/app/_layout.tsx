@@ -17,7 +17,7 @@ import {
 import * as NavigationBar from 'expo-navigation-bar';
 import * as SecureStore from 'expo-secure-store';
 import { useEffect } from 'react';
-import { AppState, LogBox, Platform } from 'react-native';
+import { AppState, LogBox, Platform, StyleSheet } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { useReducedMotion } from 'react-native-reanimated';
@@ -290,7 +290,10 @@ function RootContent() {
         maxWidth={480}
         toastStyle={[
           notificationSurfaceStyle,
-          { backgroundColor: surfaceBackground(colors.surface) },
+          {
+            backgroundColor: surfaceBackground(colors.surface),
+            borderWidth: StyleSheet.hairlineWidth,
+          },
         ]}>
         {/*
           The re-skin transitions live here, inside the toast provider and

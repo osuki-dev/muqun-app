@@ -1,4 +1,4 @@
-import type { AgentSessionInfo } from './agent-protocol';
+import { isBusyStatus, type AgentSessionInfo } from './agent-protocol';
 
 /** Separate projections for the root strip, nested sheet and legacy header swipe window. */
 
@@ -18,6 +18,19 @@ export const SESSION_TREE_MAX_DEPTH = 2;
 export const SESSION_STRIP_MAX_NODES = 60;
 
 export type ChildrenByParent = Readonly<Record<string, readonly AgentSessionInfo[]>>;
+
+/**
+ * Keep live subagents visible before historical siblings without changing the
+ * Gateway's order within either group. `idle` is not a completion signal.
+ */
+export function activeFirstSessionChildren(
+  children: readonly AgentSessionInfo[]
+): AgentSessionInfo[] {
+  return [
+    ...children.filter((child) => isBusyStatus(child.status)),
+    ...children.filter((child) => !isBusyStatus(child.status)),
+  ];
+}
 
 /** Every session in hand, by id: roots and whatever children were fetched. */
 export function indexSessions(
@@ -118,7 +131,7 @@ export function flattenSessionTree(
     const node = pending.pop();
     if (!node || node.session.deleted || seen.has(node.session.asid)) continue;
     seen.add(node.session.asid);
-    const children = childrenByParent[node.session.asid] ?? [];
+    const children = activeFirstSessionChildren(childrenByParent[node.session.asid] ?? []);
     nodes.push({
       ...node,
       hasChildren: children.some((child) => !child.deleted && !seen.has(child.asid)),

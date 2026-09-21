@@ -104,12 +104,6 @@
       "platforms": ["ios", "android"]
     },
     {
-      "name": "appearance-profiles",
-      "program": "flows/appearance-profiles",
-      "tags": ["full"],
-      "platforms": ["ios", "android"]
-    },
-    {
       "name": "away-digest",
       "program": "flows/away-digest",
       "tags": ["full"],
@@ -208,36 +202,6 @@
     }
   ],
   "programs": {
-    "flows/appearance-profiles": [
-      { "include": "subflows/launch-home" },
-      {
-        "target": { "text": "(?i)settings" },
-        "mode": "press",
-        "run": "flows/appearance-profiles.ad#press"
-      },
-      {
-        "target": { "id": "settings-home-layout-row" },
-        "mode": "scroll",
-        "direction": "down",
-        "timeout": 20000,
-        "run": "flows/appearance-profiles.ad#seek"
-      },
-      { "run": "flows/appearance-profiles.ad#choose-mechanical" },
-      { "run": "flows/appearance-profiles.ad#relaunch" },
-      {
-        "target": { "text": "(?i)settings" },
-        "mode": "press",
-        "run": "flows/appearance-profiles.ad#press"
-      },
-      {
-        "target": { "id": "settings-home-layout-row" },
-        "mode": "scroll",
-        "direction": "down",
-        "timeout": 20000,
-        "run": "flows/appearance-profiles.ad#seek"
-      },
-      { "run": "flows/appearance-profiles.ad#restore" }
-    ],
     "flows/theme-document": [
       {
         "include": "subflows/open-demo"
@@ -384,31 +348,7 @@
         "run": "flows/custom-themes.ad#back-to-library"
       },
       {
-        "run": "flows/custom-themes.ad#inline-remove-armed"
-      },
-      {
-        "run": "flows/custom-themes.ad#close-sheet"
-      },
-      {
-        "include": "subflows/open-demo"
-      },
-      {
-        "run": "flows/custom-themes.ad#install"
-      },
-      {
-        "target": {
-          "text": "Back to servers"
-        },
-        "mode": "press",
-        "optional": true,
-        "run": "flows/custom-themes.ad#install-back"
-      },
-      {
-        "target": {
-          "text": "Settings"
-        },
-        "mode": "press",
-        "run": "flows/custom-themes.ad#storage-entry"
+        "run": "flows/custom-themes.ad#return-settings"
       },
       {
         "target": {
@@ -437,9 +377,6 @@
         "run": "flows/custom-themes.ad#storage-visible"
       },
       {
-        "run": "flows/custom-themes.ad#theme-anchor"
-      },
-      {
         "target": {
           "id": "settings-theme-row"
         },
@@ -447,6 +384,9 @@
         "direction": "up",
         "timeout": 20000,
         "run": "flows/custom-themes.ad#scroll-up"
+      },
+      {
+        "run": "flows/custom-themes.ad#theme-row-clear-header"
       },
       {
         "target": {
@@ -557,9 +497,6 @@
         "mode": "visible",
         "timeout": 20000,
         "run": "flows/custom-themes.ad#storage-visible"
-      },
-      {
-        "run": "flows/custom-themes.ad#theme-anchor"
       },
       {
         "target": {
@@ -5337,15 +5274,19 @@
         "include": "subflows/dismiss-logbox"
       },
       {
-        "point": [0.8, 0.34],
-        "delta": [-0.55, 0],
-        "run": "flows/ssh.ad#reveal-ssh"
+        "target": {
+          "text": "(?i)settings"
+        },
+        "mode": "press",
+        "timeout": 8000,
+        "run": "flows/ssh.ad#s1"
       },
       {
         "target": {
-          "id": "home-open-ssh"
+          "id": "settings-ssh-row"
         },
         "mode": "press",
+        "timeout": 8000,
         "run": "flows/ssh.ad#s1"
       },
       {
@@ -5546,7 +5487,7 @@
       },
       {
         "target": {
-          "id": "home-open-ssh"
+          "id": "settings-ssh-row"
         },
         "mode": "visible",
         "timeout": 8000,
@@ -5770,7 +5711,7 @@
       },
       {
         "target": {
-          "text": "Claude Code"
+          "id": "terminal-composer-input"
         },
         "mode": "visible",
         "run": "flows/terminal-interactions.ad#s10"
@@ -6000,7 +5941,7 @@
       },
       {
         "target": {
-          "text": "Claude Code"
+          "id": "terminal-composer-input"
         },
         "mode": "visible",
         "timeout": 15000,
@@ -6036,7 +5977,7 @@
       },
       {
         "target": {
-          "text": "Claude Code"
+          "id": "terminal-composer-input"
         },
         "mode": "visible",
         "run": "flows/terminal-interactions.ad#s48"
@@ -7308,7 +7249,7 @@
       },
       {
         "target": {
-          "text": "Claude Code"
+          "id": "terminal-composer-input"
         },
         "mode": "visible",
         "timeout": 15000,

@@ -1,11 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { readFileSync } from 'node:fs';
 
-import {
-  createThemeAuthoringPrompt,
-  createThemeStarter,
-  THEME_SKILL_VERSION,
-} from '@/theme/authoring';
 import { compileTheme, resolveHomeIdentity, resolveThemeImage } from '@/theme/resolve';
 import {
   parseThemeManifest,
@@ -16,6 +10,7 @@ import {
 
 import { auditThemeContrast } from '@/theme/contrast';
 import { themeOpacityPolicy } from '@/theme/opacity-policy';
+import { createThemeStarter } from '@/theme/starter';
 
 const parse = (value: unknown) => parseThemeManifest(JSON.stringify(value));
 
@@ -221,39 +216,6 @@ describe('theme v1 contract', () => {
       ])
     );
     expect(() => parse({ ...createThemeStarter(), assets })).toThrow('32 assets');
-  });
-
-  test('skill carries the exact current schema and a parseable complete template', () => {
-    const prompt = createThemeAuthoringPrompt();
-    // Headroom, not a hard edge: the delivered task is capped at 64 KiB
-    // (`collaborationTaskText`), and this prompt is only one part of it -- the
-    // reader's own words, the terminal context and any reference JSON share
-    // that budget. The prompt is 13,419 bytes at this commit; 18 KiB still
-    // leaves the delivered task more than two thirds of the cap, and matches
-    // the ceiling `quick-command-collaboration.test.ts` puts on the task text
-    // this prompt is embedded in, so the two cannot disagree about the budget.
-    expect(new TextEncoder().encode(prompt).length).toBeLessThan(18 * 1024);
-    expect(prompt).toContain(JSON.stringify(themeJsonSchema()));
-    const template = prompt.split('```muqun-theme\n')[1].split('\n```')[0];
-    expect(parseThemeManifest(template)).toEqual(createThemeStarter());
-    expect(/[\p{Script=Han}]/u.test(prompt)).toBe(false);
-  });
-
-  test('generated skill and command carry the same complete contract and starter', () => {
-    const skill = readFileSync(
-      new URL('../../../skills/muqun-theme/SKILL.md', import.meta.url),
-      'utf8'
-    );
-    expect(skill).toContain(`version: ${THEME_SKILL_VERSION}`);
-    expect(JSON.parse(skill.split('```json\n')[1].split('\n```')[0])).toEqual(themeJsonSchema());
-    expect(parseThemeManifest(skill.split('```muqun-theme\n')[1].split('\n```')[0])).toEqual(
-      createThemeStarter()
-    );
-    for (const content of [skill, createThemeAuthoringPrompt()]) {
-      expect(content).toContain('Public HTTPS images download after link review');
-      expect(content).toContain('Do not auto-apply');
-      expect(content).toContain('Report only checks actually run');
-    }
   });
 
   test('compact schema references resolve locally without dropping the shared variant contract', () => {

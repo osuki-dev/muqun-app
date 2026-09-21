@@ -3,6 +3,7 @@ import { describe, expect, test } from 'bun:test';
 import type { AgentSessionInfo } from '../agent-protocol';
 import {
   ancestorPath,
+  activeFirstSessionChildren,
   buildRootSessionStrip,
   buildSessionStrip,
   flattenSessionTree,
@@ -70,6 +71,29 @@ describe('root-only strip and uncapped sheet projection', () => {
       ['ses_a2', 1],
     ]);
     expect(nodes[1]?.session).toBe(CHILD_A1);
+  });
+
+  test('running descendants sort ahead of history, preserving Gateway order within each group', () => {
+    const idleFirst = session('idle-first', { parent_id: ROOT_A.asid, status: 'idle' });
+    const runningFirst = session('running-first', { parent_id: ROOT_A.asid, status: 'busy' });
+    const completed = session('completed', { parent_id: ROOT_A.asid, status: 'failed' });
+    const retrying = session('retrying', { parent_id: ROOT_A.asid, status: 'retry' });
+    const idleLast = session('idle-last', { parent_id: ROOT_A.asid, status: 'idle' });
+    const children = [idleFirst, runningFirst, completed, retrying, idleLast];
+
+    const ordered = activeFirstSessionChildren(children);
+    expect(ordered.map((child) => child.asid)).toEqual([
+      'running-first',
+      'retrying',
+      'idle-first',
+      'completed',
+      'idle-last',
+    ]);
+    expect(ordered[0]).toBe(runningFirst);
+    expect(ordered[1]).toBe(retrying);
+    expect(
+      flattenSessionTree(ROOT_A, { [ROOT_A.asid]: children }).map((node) => node.session.asid)
+    ).toEqual([ROOT_A.asid, 'running-first', 'retrying', 'idle-first', 'completed', 'idle-last']);
   });
 
   test('more than 60 nodes and more than two levels are never truncated', () => {

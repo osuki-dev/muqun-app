@@ -1,6 +1,6 @@
 import { expect, test } from 'bun:test';
 
-import { createThemeStarter } from '@/theme/authoring';
+import { createThemeStarter } from '@/theme/starter';
 import { auditThemeContrast, contrastRatio } from '@/theme/contrast';
 import { ThemeRepository } from '@/theme/repository';
 import { parseThemeManifest } from '@/theme/schema';

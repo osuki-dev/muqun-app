@@ -1,6 +1,6 @@
 import { expect, test } from 'bun:test';
 
-import { createThemeStarter } from '@/theme/authoring';
+import { createThemeStarter } from '@/theme/starter';
 import { resolveLaunchArtwork, resolveLaunchBackground } from '@/theme/launch-artwork';
 import { effectiveThemeManifest } from '@/theme/repository';
 import { compileTheme } from '@/theme/resolve';

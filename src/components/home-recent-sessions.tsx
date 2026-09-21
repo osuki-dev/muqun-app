@@ -226,6 +226,7 @@ function RecentSessionRow({
         ? t`Terminal`
         : t`SSH host`;
   const title = entry.title || kind;
+  const metadataKind = entry.agentLabel ? `${kind} · ${entry.agentLabel}` : kind;
   const observation = entry.observation;
   const status = observation?.status;
   const statusLabel = status
@@ -271,7 +272,7 @@ function RecentSessionRow({
     <PressableScale
       testID="home-recent-open"
       accessibilityRole="button"
-      accessibilityLabel={`${title}, ${kind}${serverLabel ? `, ${serverLabel}` : ''}${observationLabel ? `, ${observationLabel}` : ''}`}
+      accessibilityLabel={`${title}, ${metadataKind}${serverLabel ? `, ${serverLabel}` : ''}${observationLabel ? `, ${observationLabel}` : ''}`}
       onPress={onOpen}
       style={[
         styles.row,
@@ -292,7 +293,7 @@ function RecentSessionRow({
             {title}
           </Text>
           <Text variant="caption" color={theme.colors.textMuted} numberOfLines={2}>
-            {kind}
+            {metadataKind}
             {serverLabel ? ` · ${serverLabel}` : ''}
           </Text>
           {cwd ? (

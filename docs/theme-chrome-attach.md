@@ -63,20 +63,7 @@ occurrence goes through `ThemeIcon` with the same name.
 Wherever it draws the send glyph through the theme, draw the attach glyph the
 same way, so an author sees all three replaced glyphs in the preview.
 
-### 4. Authoring contract and skill
-
-`src/theme/authoring.ts` (around line 50) lists the known icon names in the
-prose the skill is generated from:
-
-> icons replaces a chrome glyph. Known names are chrome.back and chrome.send; …
-
-Add `chrome.attach`, with one clause on what it is (the composer's attachment
-control, drawn at 17pt in the primary colour by default). Then bump
-`THEME_SKILL_VERSION` and regenerate the skill:
-
-```sh
-bun scripts/export-theme-skill.ts
-```
+### 4. Theme contract
 
 `docs/theme-contract.md` line 140 says "Icon names. 2 today"; make it 3.
 
@@ -95,14 +82,12 @@ and unknown names. Add:
 - A pack with `"icons": { "chrome.attach": { "asset": "clip" } }` and a matching
   asset shows that image, tinted with `colors.primary`, wherever the paperclip
   is drawn; without the entry the built-in paperclip is unchanged.
-- `THEME_ICONS` lists three names; the regenerated skill names all three; the
-  contract document says 3.
+- `THEME_ICONS` lists three names and the contract document says 3.
 - No `schemaVersion` change; existing packs are unaffected.
 
 ## Downstream (not part of this change, listed so nothing is forgotten)
 
 - **CLI** (`osuki-dev/muqun-theme-cli`): `src/schema.ts` is a byte-identical
-  copy of the app's and `skills/muqun-theme/SKILL.md` is the regenerated skill;
-  both are pinned by tests. Copy both over and release a minor.
+  copy of the app's and is pinned by tests. Copy it over and release a minor.
 - **Website** (`osuki-dev/muqun-website`): the device mock-ups draw the
   paperclip from the theme once the name exists (`src/components/themes/device-mock.tsx`).

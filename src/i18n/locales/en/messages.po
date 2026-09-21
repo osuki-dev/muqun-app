@@ -488,10 +488,6 @@ msgstr "Always allow"
 msgid "Always allowed"
 msgstr "Always allowed"
 
-#: src/components/settings-home-layout-sheet.tsx
-msgid "An instrument-panel Home with compact, angular controls."
-msgstr "An instrument-panel Home with compact, angular controls"
-
 #: src/components/agent-revert-plate.tsx
 msgid "and {rest} more"
 msgstr "and {rest} more"
@@ -697,10 +693,6 @@ msgstr "Behaviour"
 #: src/components/theme-appearance-settings.tsx
 msgid "Below {minimumPercent}%, text is no longer guaranteed to stay readable"
 msgstr "Below {minimumPercent}%, text is no longer guaranteed to stay readable"
-
-#: src/components/theme-appearance-settings.tsx
-msgid "Between the header and your servers. Home also borrows the theme's empty-state picture when the theme has no Home illustration of its own."
-msgstr "Between the header and your servers. Home also borrows the theme's empty-state picture when the theme has no Home illustration of its own"
 
 #: src/components/diff-rows.tsx
 msgid "Binary file"
@@ -1158,7 +1150,6 @@ msgid "Connecting…"
 msgstr "Connecting…"
 
 #: src/components/home-editorial-layout.tsx
-#: src/components/home-mechanical-layout.tsx
 msgid "Connections"
 msgstr "Connections"
 
@@ -1189,7 +1180,6 @@ msgstr "Context used"
 
 #: src/app/explore.tsx
 #: src/components/home-editorial-layout.tsx
-#: src/components/home-mechanical-layout.tsx
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Continue"
 msgstr "Continue"
@@ -2660,11 +2650,6 @@ msgstr "Mark reviewed"
 #: src/components/settings-appearance.tsx
 msgid "Mascot"
 msgstr "Mascot"
-
-#: src/components/settings-appearance.tsx
-#: src/components/settings-home-layout-sheet.tsx
-msgid "Mechanical"
-msgstr "Mechanical"
 
 #. placeholder {0}: hit.path
 #: src/components/file-mention-panel.tsx
@@ -4375,6 +4360,10 @@ msgstr "Show {0}"
 msgid "Show agents and their status on the home screen. Updates while Muqun is open."
 msgstr "Show agents and their status on the home screen. Updates while Muqun is open"
 
+#: src/components/theme-appearance-settings.tsx
+msgid "Show artwork on Home"
+msgstr "Show artwork on Home"
+
 #: src/components/pairing-camera.tsx
 msgid "Show camera details"
 msgstr "Show camera details"
@@ -4394,10 +4383,6 @@ msgstr "Show Home logo"
 #: src/components/theme-appearance-settings.tsx
 msgid "Show Home text"
 msgstr "Show Home text"
-
-#: src/components/theme-appearance-settings.tsx
-msgid "Show illustration on Home"
-msgstr "Show illustration on Home"
 
 #: src/components/home-recent-sessions.tsx
 msgid "Show less"
@@ -5583,6 +5568,10 @@ msgstr "Use your own font for the app and the terminal"
 #: src/components/ssh-host-form.tsx
 msgid "Username"
 msgstr "Username"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Uses the theme's Home artwork in the position chosen by your Home layout. When needed, it falls back to the theme's empty-state illustration."
+msgstr "Uses the theme's Home artwork in the position chosen by your Home layout. When needed, it falls back to the theme's empty-state illustration"
 
 #: src/components/settings-servers.tsx
 msgid "Using"

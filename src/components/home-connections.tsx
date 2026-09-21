@@ -5,6 +5,7 @@ import { ChevronRight, Server, SquareTerminal } from 'lucide-react-native';
 import { StyleSheet, View } from 'react-native';
 
 import { PressableScale } from '@/components/pressable-scale';
+import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { Text } from '@/components/text';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { reachabilityDescription } from '@/i18n/labels';
@@ -33,6 +34,7 @@ export function HomeConnections({
   nowMs?: number;
 }) {
   const { t } = useLingui();
+  const profile = useAppearanceProfile();
   const theme = useThemeTokens();
   const background = useSurfaceBackground();
   const addresses = serverIdsNeedingAddress(servers);
@@ -40,7 +42,7 @@ export function HomeConnections({
   return (
     <View testID="home-connections" style={styles.list}>
       {hasConnections ? (
-        <View style={styles.connectionGroup}>
+        <View style={[styles.connectionGroup, { borderRadius: profile.chrome.surface }]}>
           {servers.map((server, index) => (
             <GatewayConnectionRow
               key={server.serverId}
@@ -160,7 +162,7 @@ function GatewayConnectionRow({
 
 const styles = StyleSheet.create({
   list: { minWidth: 0 },
-  connectionGroup: { minWidth: 0, borderRadius: 6, overflow: 'hidden' },
+  connectionGroup: { minWidth: 0, overflow: 'hidden' },
   row: {
     minHeight: 64,
     flexDirection: 'row',

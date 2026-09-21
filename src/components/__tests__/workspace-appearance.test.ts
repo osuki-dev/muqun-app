@@ -103,3 +103,169 @@ describe('workspace chrome follows the appearance profile', () => {
     expect(styleBlock(read('update-status-banner'), 'icon')).toContain('borderRadius: 18');
   });
 });
+
+describe('shared primitives use quiet borders without changing emphasis', () => {
+  test('local surface outlines and input underlines use the shared hairline', () => {
+    for (const name of [
+      'themed-input',
+      'themed-search-input',
+      'themed-button',
+      'themed-card',
+      'notice-deck',
+      'agent-mode-menu',
+      'app-error-boundary',
+      'settings-home-layout-sheet',
+    ]) {
+      const source = read(name);
+      expect(source).toContain('StyleSheet.hairlineWidth');
+      expect(source.match(/border(?:Top|Bottom|Left|Right)?Width:\s*1\b/)).toBeNull();
+      expect(source).not.toContain('profile.id');
+    }
+    // Outline inputs are fill-only today; do not introduce an outline while
+    // thinning their underline sibling.
+    expect(read('themed-input').match(/\bborderWidth:/)).toBeNull();
+    expect(read('themed-input')).toContain('borderBottomWidth: StyleSheet.hairlineWidth');
+  });
+
+  test('delegated cards and both button paths preserve borderless variants and caller emphasis', () => {
+    const card = read('themed-card');
+    expect(card).toContain("border = 'none'");
+    expect(card).toContain('border={border}');
+    expect(
+      card.match(
+        /\(border === 'subtle' \|\| Boolean\(theme.components.Card\[variant\].border\)\) && \{\s*borderWidth: StyleSheet.hairlineWidth,\s*\},\s*style,/
+      )
+    ).not.toBeNull();
+    const button = read('themed-button');
+    expect(button).toContain('variantTokens.border &&');
+    expect(button.match(/borderWidth: StyleSheet.hairlineWidth/g)?.length).toBe(2);
+    expect(
+      button.match(
+        /<BaseButton[\s\S]*?variantTokens.border && \{ borderWidth: StyleSheet.hairlineWidth \}\),\s*\.\.\.style,/
+      )
+    ).not.toBeNull();
+    expect(button.match(/style=\{\[\s*buttonStyle,\s*animatedStyle,\s*style,/)).not.toBeNull();
+  });
+
+  test('kit alerts, toast cards and ordinary option cards receive supported style overrides', () => {
+    const approval = read('approval-banner');
+    expect(approval).toContain("import { Card } from '@/components/themed-card'");
+    expect(approval.match(/<Alert[^>]*style=\{styles.alert\}/g)?.length).toBe(2);
+    expect(approval).toContain('alert: { borderWidth: StyleSheet.hairlineWidth }');
+    for (const name of ['approval-banner', 'composer-popup']) {
+      const source = read(name);
+      expect(source).toContain(
+        'borderWidth: theme.components.Card.flat.border ? StyleSheet.hairlineWidth : 0'
+      );
+      // These lists have card perimeters, not bottom separators on every row.
+      expect(source).not.toContain('borderBottomWidth');
+    }
+    const root = readFileSync('src/app/_layout.tsx', 'utf8');
+    expect(
+      root.match(/toastStyle=\{\[[\s\S]*?borderWidth: StyleSheet.hairlineWidth/)
+    ).not.toBeNull();
+  });
+
+  test('selection rings and the Escape keycap retain their emphasis', () => {
+    expect(styleBlock(read('settings-home-layout-sheet'), 'radio')).toContain('borderWidth: 2');
+    expect(styleBlock(read('approval-banner'), 'escape')).not.toContain('borderWidth');
+    // Layout choices and mode options have no trailing row divider to thin.
+    expect(styleBlock(read('settings-home-layout-sheet'), 'option')).not.toContain('border');
+    expect(styleBlock(read('agent-mode-menu'), 'option')).not.toContain('borderBottomWidth');
+  });
+});
+
+describe('route-owned chrome follows the appearance profile', () => {
+  const commands = readFileSync('src/app/commands.tsx', 'utf8');
+  const pairing = readFileSync('src/app/explore.tsx', 'utf8');
+
+  test('quick actions, Home panels, task rows and pairing notices consume semantic roles', () => {
+    const seams = [
+      [commands, ['profile.chrome.control', 'profile.chrome.popover']],
+      [read('home-connections'), ['profile.chrome.surface']],
+      [read('home-attention'), ['profile.chrome.noticeCard']],
+      [read('new-task-sheet'), ['profile.chrome.control']],
+      [pairing, ['profile.chrome.control', 'profile.chrome.noticeBanner']],
+    ] as const;
+    for (const [source, tokens] of seams) {
+      expect(source).toContain('useAppearanceProfile()');
+      expect(source).not.toContain('profile.id');
+      // AgentProfile.kind is the existing agent identity, not an appearance key.
+      expect(source).not.toContain('key={profile}');
+      for (const token of tokens) expect(source).toContain(`borderRadius: ${token}`);
+    }
+    for (const name of ['tile', 'group', 'deleteButton']) {
+      expect(styleBlock(commands, name)).not.toContain('Radius:');
+    }
+    for (const name of ['manualToggle', 'installRow', 'successCard', 'message']) {
+      expect(styleBlock(pairing, name)).not.toContain('Radius:');
+    }
+    expect(styleBlock(read('home-attention'), 'row')).not.toContain('Radius:');
+    expect(styleBlock(read('new-task-sheet'), 'recentRow')).not.toContain('Radius:');
+    expect(read('home-connections')).toContain(
+      'styles.connectionGroup, { borderRadius: profile.chrome.surface }'
+    );
+  });
+
+  test('Home separators are hairlines between items, including mixed Gateway and SSH lists', () => {
+    const connections = read('home-connections');
+    expect(connections).toContain('hasSeparator={index < servers.length + hosts.length - 1}');
+    expect(
+      /index < hosts.length - 1 && \{\s*borderBottomColor: theme.colors.border,\s*borderBottomWidth: StyleSheet.hairlineWidth/.test(
+        connections
+      )
+    ).toBe(true);
+    expect(
+      /hasSeparator && \{\s*borderBottomColor: theme.colors.border,\s*borderBottomWidth: StyleSheet.hairlineWidth/.test(
+        connections
+      )
+    ).toBe(true);
+    expect(styleBlock(connections, 'row')).not.toContain('border');
+    const attention = read('home-attention');
+    expect(styleBlock(attention, 'row')).toContain('borderWidth: StyleSheet.hairlineWidth');
+    expect(styleBlock(attention, 'row')).toContain('borderLeftWidth: 4');
+    // These lists use spacing rather than bottom borders. Attention cards retain
+    // their perimeter, and the scanner's bottom strokes are not list dividers.
+    for (const name of ['row', 'group']) {
+      expect(styleBlock(commands, name)).not.toContain('borderBottom');
+    }
+    expect(styleBlock(read('new-task-sheet'), 'recentRow')).not.toContain('borderBottom');
+    expect(styleBlock(pairing, 'manualToggle')).not.toContain('borderBottom');
+    expect(styleBlock(pairing, 'installRow')).not.toContain('borderBottom');
+
+    const diffRows = read('diff-rows');
+    expect(diffRows).toContain('hasSeparator={index < rows.length - 1}');
+    expect(diffRows).toContain('hasSeparator={index < capped.rows.length - 1}');
+    expect(diffRows).toContain('borderBottomWidth: hasSeparator ? StyleSheet.hairlineWidth : 0');
+    expect(styleBlock(diffRows, 'fileRow')).not.toContain('borderBottomWidth');
+  });
+
+  test('scanner geometry, keycaps, pills and selection emphasis remain content-owned', () => {
+    expect(styleBlock(pairing, 'aperture')).toContain('borderRadius: 24');
+    expect(styleBlock(pairing, 'aperture')).toContain('borderWidth: StyleSheet.hairlineWidth');
+    expect(styleBlock(pairing, 'scanFrame')).toContain('width: 214');
+    expect(styleBlock(pairing, 'scanFrame')).toContain('height: 214');
+    for (const [corner, radius] of [
+      ['cornerTopLeft', 'borderTopLeftRadius'],
+      ['cornerTopRight', 'borderTopRightRadius'],
+      ['cornerBottomLeft', 'borderBottomLeftRadius'],
+      ['cornerBottomRight', 'borderBottomRightRadius'],
+    ]) {
+      expect(styleBlock(pairing, corner)).toContain(`${radius}: 14`);
+    }
+    expect(styleBlock(pairing, 'successIcon')).toContain('borderRadius: 32');
+    expect(styleBlock(commands, 'keyCap')).toContain('borderRadius: 8');
+    const task = read('new-task-sheet');
+    expect(styleBlock(task, 'pill')).toContain('borderRadius: 12');
+    expect(styleBlock(task, 'pill')).toContain('borderWidth: 1');
+    expect(task).toContain("borderColor: selected ? theme.colors.primary : 'transparent'");
+    expect(task).toContain('agentSpawnRequest({ agent, cwd, tabId, prompt: firstPrompt })');
+    expect(task).toContain(
+      'if (!mounted.current || useGatewayConnectionStore.getState().record !== owner) return;'
+    );
+    expect(commands).toContain(
+      'await sendPaneText(params.sessionId, params.paneId, command.value)'
+    );
+    expect(commands).toContain('await agentDelivery.send(command.value)');
+  });
+});

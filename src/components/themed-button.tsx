@@ -29,7 +29,7 @@ import { useSurfaceBackground, useSurfaceBackgroundOpacity } from '@/hooks/use-s
 export type { ButtonProps, ButtonVariant } from '@osuki-dev/ui';
 
 // Preserve @osuki-dev/ui 1.0.1's control behavior; only the in-control artwork
-// plane is added. Unskinned controls delegate to the original Button unchanged.
+// plane is added. Both paths share quiet borders; caller emphasis widths win.
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 export function Button(props: ButtonProps) {
@@ -88,7 +88,7 @@ export function Button(props: ButtonProps) {
         ? theme.shadow.pill
         : {}),
       ...(variantTokens.border && {
-        borderWidth: 1,
+        borderWidth: StyleSheet.hairlineWidth,
         borderColor: theme.colors[variantTokens.border],
       }),
     };
@@ -141,7 +141,15 @@ export function Button(props: ButtonProps) {
   };
 
   if (!hasImage && backgroundOpacity === 1 && !protectsTransparentLabel)
-    return <BaseButton {...props} />;
+    return (
+      <BaseButton
+        {...props}
+        style={{
+          ...(variantTokens.border && { borderWidth: StyleSheet.hairlineWidth }),
+          ...style,
+        }}
+      />
+    );
   return (
     <AnimatedPressable
       style={[

@@ -55,6 +55,37 @@ test('first Home visit shows the same pane inventory as Classic without recent h
   });
 });
 
+test('Terminal metadata uses the structured gateway agent label and never guesses from a title', () => {
+  const rows = homeContinueEntries({
+    ...input,
+    snapshots: {
+      a: {
+        ...snapshots.a,
+        agents: [
+          {
+            id: 'known',
+            paneId: 'known-pane',
+            name: 'Release notes',
+            agentLabel: 'Claude Code',
+            hasAgent: true,
+            status: 'idle',
+          },
+          {
+            id: 'unknown',
+            paneId: 'unknown-pane',
+            name: 'Codex-looking title',
+            hasAgent: true,
+            status: 'idle',
+          },
+        ],
+      },
+    },
+  });
+
+  expect(rows.find((row) => row.title === 'Release notes')?.agentLabel).toBe('Claude Code');
+  expect(rows.find((row) => row.title === 'Codex-looking title')?.agentLabel).toBeUndefined();
+});
+
 test('OpenCode recents show only current Gateway observations and keep honest age', () => {
   const recent: HomeRecentEntry = {
     key: 'opencode',

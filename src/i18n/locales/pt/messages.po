@@ -488,10 +488,6 @@ msgstr "Permitir sempre"
 msgid "Always allowed"
 msgstr "Sempre permitido"
 
-#: src/components/settings-home-layout-sheet.tsx
-msgid "An instrument-panel Home with compact, angular controls."
-msgstr "Um início em painel de instrumentos com controlos compactos e angulares"
-
 #: src/components/agent-revert-plate.tsx
 msgid "and {rest} more"
 msgstr "e mais {rest}"
@@ -697,10 +693,6 @@ msgstr "Comportamento"
 #: src/components/theme-appearance-settings.tsx
 msgid "Below {minimumPercent}%, text is no longer guaranteed to stay readable"
 msgstr "Abaixo de {minimumPercent}%, a legibilidade do texto deixa de ser garantida"
-
-#: src/components/theme-appearance-settings.tsx
-msgid "Between the header and your servers. Home also borrows the theme's empty-state picture when the theme has no Home illustration of its own."
-msgstr "Entre o cabeçalho e os teus servidores. O Início também usa a imagem de estado vazio do tema quando o tema não tem uma ilustração própria para o Início"
 
 #: src/components/diff-rows.tsx
 msgid "Binary file"
@@ -1158,7 +1150,6 @@ msgid "Connecting…"
 msgstr "A ligar…"
 
 #: src/components/home-editorial-layout.tsx
-#: src/components/home-mechanical-layout.tsx
 msgid "Connections"
 msgstr "Conexões"
 
@@ -1189,7 +1180,6 @@ msgstr "Contexto usado"
 
 #: src/app/explore.tsx
 #: src/components/home-editorial-layout.tsx
-#: src/components/home-mechanical-layout.tsx
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Continue"
 msgstr "Continuar"
@@ -2660,11 +2650,6 @@ msgstr "Marcar como revisado"
 #: src/components/settings-appearance.tsx
 msgid "Mascot"
 msgstr "Mascote"
-
-#: src/components/settings-appearance.tsx
-#: src/components/settings-home-layout-sheet.tsx
-msgid "Mechanical"
-msgstr "Mecânico"
 
 #. placeholder {0}: hit.path
 #: src/components/file-mention-panel.tsx
@@ -4375,6 +4360,10 @@ msgstr "Mostrar {0}"
 msgid "Show agents and their status on the home screen. Updates while Muqun is open."
 msgstr "Mostra os agentes e o respetivo estado no ecrã principal. Atualiza enquanto o Muqun estiver aberto"
 
+#: src/components/theme-appearance-settings.tsx
+msgid "Show artwork on Home"
+msgstr "Mostrar arte na página inicial"
+
 #: src/components/pairing-camera.tsx
 msgid "Show camera details"
 msgstr "Mostrar detalhes da câmara"
@@ -4394,10 +4383,6 @@ msgstr "Mostrar o logótipo no início"
 #: src/components/theme-appearance-settings.tsx
 msgid "Show Home text"
 msgstr "Mostrar o texto no início"
-
-#: src/components/theme-appearance-settings.tsx
-msgid "Show illustration on Home"
-msgstr "Mostrar a ilustração no início"
 
 #: src/components/home-recent-sessions.tsx
 msgid "Show less"
@@ -5583,6 +5568,10 @@ msgstr "Use o seu próprio tipo de letra na app e no terminal"
 #: src/components/ssh-host-form.tsx
 msgid "Username"
 msgstr "Nome de usuário"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Uses the theme's Home artwork in the position chosen by your Home layout. When needed, it falls back to the theme's empty-state illustration."
+msgstr "Usa a arte da página inicial do tema na posição definida pelo layout da página inicial. Quando necessário, usa a ilustração de estado vazio do tema"
 
 #: src/components/settings-servers.tsx
 msgid "Using"

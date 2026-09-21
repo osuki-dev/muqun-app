@@ -100,7 +100,7 @@ const styles = StyleSheet.create({
     maxWidth: 300,
     paddingVertical: 5,
     borderRadius: appChrome.radius.popover,
-    borderWidth: 1,
+    borderWidth: StyleSheet.hairlineWidth,
     boxShadow: appChrome.shadow.popover,
   },
   option: {

@@ -1,3 +1,4 @@
+import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { memo, useCallback, useEffect, useRef, useState, type ComponentType } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useThemeTokens } from '@osuki-dev/ui';
@@ -80,6 +81,7 @@ export const TwoStepAction = memo(function TwoStepAction({
   confirmAccessibilityLabel,
   testID,
 }: TwoStepActionProps) {
+  const profile = useAppearanceProfile();
   const theme = useThemeTokens();
   const surfaceBackground = useSurfaceBackground();
   const [uncontrolledArmed, setUncontrolledArmed] = useState(false);
@@ -159,12 +161,17 @@ export const TwoStepAction = memo(function TwoStepAction({
       accessibilityState={{ disabled, expanded: armed }}
       disabled={disabled}
       onPress={handlePress}
-      style={[styles.action, presentation === 'compact' ? styles.actionCompact : null]}>
+      style={[
+        styles.action,
+        { borderRadius: profile.chrome.control },
+        presentation === 'compact' ? styles.actionCompact : null,
+      ]}>
       <Animated.View
         pointerEvents="none"
         style={[
           StyleSheet.absoluteFill,
           styles.fill,
+          { borderRadius: profile.chrome.control },
           { backgroundColor: surfaceBackground(theme.colors.dangerSubtle) },
           fillStyle,
         ]}
@@ -217,7 +224,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 14,
     paddingVertical: 10,
-    borderRadius: 12,
     borderCurve: 'continuous',
     overflow: 'hidden',
   },
@@ -228,7 +234,6 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   fill: {
-    borderRadius: 12,
     borderCurve: 'continuous',
   },
   line: {

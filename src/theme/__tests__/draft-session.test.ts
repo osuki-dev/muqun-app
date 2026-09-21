@@ -1,5 +1,5 @@
 import { expect, test } from 'bun:test';
-import { createThemeStarter } from '../authoring';
+import { createThemeStarter } from '../starter';
 import { createThemeDraftSessions } from '../draft-session';
 
 test('editor handoffs retain original draft without placing content in route parameters', () => {

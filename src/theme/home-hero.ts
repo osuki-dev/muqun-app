@@ -4,6 +4,7 @@ import type { ThemeImage, ThemeManifest, ThemeSlot } from '@/theme/schema';
 /** The pack's own picture, and the slot the app falls back to when it asked for one. */
 export const HOME_HERO_SLOT: ThemeSlot = 'home.hero';
 export const HOME_HERO_FALLBACK_SLOT: ThemeSlot = 'emptyState.illustration';
+export const HOME_EDITORIAL_ARTWORK_SLOT: ThemeSlot = 'home.decoration';
 
 /**
  * The reader's answer for this installation, on top of the author's.
@@ -121,6 +122,66 @@ export function resolveHomeHeroAsset({
   decorationsEnabled?: boolean;
 }): ResolvedHomeHeroAsset | null {
   const resolved = resolveHomeHero({ manifest, mode, width, preference, decorationsEnabled });
+  if (!resolved) return null;
+  const source = assets?.[resolved.image.asset];
+  return source?.startsWith('file:///') ? { resolved, source } : null;
+}
+
+/**
+ * Editorial's top artwork uses the same reader preference without changing
+ * Classic's hero contract. A theme-authored decoration wins; older packs that
+ * only know `home.hero` retain their picture and explicit `shown` retains the
+ * existing empty-state fallback.
+ */
+export function resolveEditorialHomeArtwork({
+  manifest,
+  mode,
+  width,
+  preference = 'theme',
+  decorationsEnabled = true,
+}: {
+  manifest: ThemeManifest | undefined;
+  mode: 'light' | 'dark';
+  width: 'compact' | 'regular';
+  preference?: HomeHeroPreference;
+  decorationsEnabled?: boolean;
+}): ResolvedHomeHero | null {
+  if (!manifest || preference === 'hidden') return null;
+  if (preference === 'theme' && manifest.homeIdentity?.hero?.mode === 'hidden') return null;
+  const decoration = resolveThemeImage(
+    manifest,
+    HOME_EDITORIAL_ARTWORK_SLOT,
+    mode,
+    width,
+    decorationsEnabled
+  );
+  if (decoration) return { slot: HOME_EDITORIAL_ARTWORK_SLOT, image: decoration };
+  return resolveHomeHero({ manifest, mode, width, preference, decorationsEnabled });
+}
+
+/** Resolve Editorial artwork and its installed local file as one decision. */
+export function resolveEditorialHomeArtworkAsset({
+  manifest,
+  assets,
+  mode,
+  width,
+  preference = 'theme',
+  decorationsEnabled = true,
+}: {
+  manifest: ThemeManifest | undefined;
+  assets: Record<string, string> | undefined;
+  mode: 'light' | 'dark';
+  width: 'compact' | 'regular';
+  preference?: HomeHeroPreference;
+  decorationsEnabled?: boolean;
+}): ResolvedHomeHeroAsset | null {
+  const resolved = resolveEditorialHomeArtwork({
+    manifest,
+    mode,
+    width,
+    preference,
+    decorationsEnabled,
+  });
   if (!resolved) return null;
   const source = assets?.[resolved.image.asset];
   return source?.startsWith('file:///') ? { resolved, source } : null;

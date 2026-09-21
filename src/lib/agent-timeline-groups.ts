@@ -1,5 +1,4 @@
-import type { ShellInfo, TimelineItem, TimelineRole } from './agent-session';
-import { classifyTool, extractTarget, shellIdFromMetadata } from './agent-tool-output';
+import type { TimelineItem, TimelineRole } from './agent-session';
 
 /**
  * One rendered message: the timeline's flat per-part items grouped back into
@@ -115,53 +114,6 @@ export function createTimelineGroupCache(): TimelineGroupCache {
   return { last: [] };
 }
 
-const SHELL_MATCH_SLOP_MS = 2_000;
-const SHELL_ID_MATCH_WINDOW_MS = 30_000;
-
-/** Creation time encoded in an OpenCode ascending id (`kind_<12 hex>…`). */
-function openCodeIdTimestamp(id: string): number | undefined {
-  const separator = id.indexOf('_');
-  const hex = separator >= 0 ? id.slice(separator + 1, separator + 13) : '';
-  if (!/^[0-9a-f]{12}$/i.test(hex)) return undefined;
-  return Number(BigInt(`0x${hex}`) / BigInt(0x1000));
-}
-
-/** Match confidence for a shell event and tool part from one OpenCode execution. */
-function shellToolMatchScore(shell: TimelineItem, tool: TimelineItem): number | undefined {
-  if (shell.part.type !== 'shell' || tool.part.type !== 'tool') return undefined;
-  if (classifyTool(tool.part.name) !== 'shell' || tool.part.background) return undefined;
-
-  const toolShellId = shellIdFromMetadata(tool.part.metadata);
-  if (toolShellId) return toolShellId === shell.part.shell_id ? 0 : undefined;
-  if (extractTarget('shell', tool.part.input).trim() !== shell.part.command.trim())
-    return undefined;
-
-  // OpenCode's ordinary shell tool does not currently put its shell id in
-  // metadata. It does return complete per-tool timing, while shell.created and
-  // shell.exited carry that execution's start/completion time as updated_ms.
-  // That overlap is identity; equal command text from another turn is not.
-  const times = [tool.part.time?.created, tool.part.time?.ran, tool.part.time?.completed].filter(
-    (value): value is number => typeof value === 'number' && value > 0
-  );
-  if (shell.updated_ms > 0 && times.length > 0) {
-    const start = Math.min(...times) - SHELL_MATCH_SLOP_MS;
-    const end = Math.max(...times) + SHELL_MATCH_SLOP_MS;
-    if (shell.updated_ms >= start && shell.updated_ms <= end) {
-      return Math.min(...times.map((time) => Math.abs(shell.updated_ms - time)));
-    }
-  }
-
-  // The gateway's shell row may have updated_ms=0 because shell.created uses a
-  // different time field. The ids still carry OpenCode's ascending creation
-  // clock. Pair each shell with the nearest preceding same-command message;
-  // the bounded gap prevents a historical equal command from claiming it.
-  const shellCreated = openCodeIdTimestamp(shell.part.shell_id);
-  const messageCreated = openCodeIdTimestamp(tool.message_id);
-  if (shellCreated === undefined || messageCreated === undefined) return undefined;
-  const gap = shellCreated - messageCreated;
-  return gap >= 0 && gap <= SHELL_ID_MATCH_WINDOW_MS ? SHELL_MATCH_SLOP_MS + gap : undefined;
-}
-
 /**
  * Group the timeline, reusing every group the last call produced that has not
  * changed.
@@ -182,111 +134,33 @@ export function buildTimelineGroupsCached(
 }
 
 /**
- * One card per shell.
+ * Remove Gateway event mirrors without guessing which command they belong to.
  *
- * The gateway maps OpenCode's `Shell` message into a `shell` timeline part, and
- * the tool call that started the shell arrives as a `tool` part of its own. So
- * every `ls -la` the model ran was drawn twice: once in place, correctly, and
- * once more in a group of `shell` parts that -- sorting after every `msg_` id
- * -- piled up at the bottom of the transcript and grew for the life of the
- * session. Each of those copies wore a `Background` chip and a "Background
- * tasks" button whether or not anything had been detached, and one of them was
- * still spinning half an hour after the turn it belonged to was interrupted.
+ * OpenCode exposes ordinary model shell calls as `tool` parts. Its process
+ * service also emits `shell.created`, and the Gateway currently mirrors every
+ * one of those events into a synthetic timeline family addressed as
+ * `shell_${shell_id}`. Those are not OpenCode `Session.Message.Shell` records:
+ * they duplicate the tool card and, because `shell_` sorts after every `msg_`,
+ * collect at the end of the transcript. A newly sent `msg_` then lands before
+ * the old mirror tail, making the old shells look as though they moved below
+ * the new prompt and forcing the reader to scroll through them to reach the
+ * reply.
  *
- * A `shell` part whose identity matches a tool call is that tool call, seen
- * from the other side, and it is dropped. OpenCode's current foreground-shell
- * tool has no shell id, so its complete per-tool timing -- or the ascending
- * creation clocks encoded in the shell and message ids when the event omitted
- * its time -- is correlated instead. Matches are one-to-one. Old records use a
- * deliberately narrow adjacent-command fallback. A command match from
- * elsewhere in the session is not identity: the same command may be run again.
- * What survives is a shell with no call behind it -- one detached by
- * `POST …/background`, or one `/api/agent-shells` is reporting that this
- * transcript never started -- and that is drawn once, in place, as the
- * background card it actually is.
+ * The mirror has a deterministic identity assigned by the Gateway itself:
+ * `id === message_id === shell_${part.shell_id}`. Remove that exact family and
+ * nothing else. In particular, keep genuine OpenCode `Session.Message.Shell`
+ * rows, whose schema requires a `msg_` message id. Command text, timestamps,
+ * adjacency and the current shell inventory are deliberately not used as
+ * identity; all four can be absent, repeated or stale.
  *
- * The shell list is the authority on what is still running: a detached shell
- * the tray no longer lists has finished, whatever the snapshot that carried the
- * part said. That is the same fact the tray's own counter is drawn from, so the
- * card and the tray cannot disagree.
- *
- * Returns the array it was given when nothing changed -- the memoised cells
- * downstream compare by reference.
+ * Returns the input reference when there are no mirrors, preserving downstream
+ * memoisation.
  */
-export function reconcileShellParts(
-  items: TimelineItem[],
-  shells: readonly ShellInfo[]
-): TimelineItem[] {
-  const shellTools: TimelineItem[] = [];
-  let shellParts = 0;
-  for (const item of items) {
-    const part = item.part;
-    if (part.type === 'shell') {
-      shellParts += 1;
-      continue;
-    }
-    if (part.type !== 'tool' || classifyTool(part.name) !== 'shell') continue;
-    shellTools.push(item);
-  }
-  if (shellParts === 0) return items;
-
-  const matchedShells = new Set<string>();
-  const consumedTools = new Set<number>();
-  for (const shell of items) {
-    if (shell.part.type !== 'shell') continue;
-    let bestIndex = -1;
-    let bestScore = Number.POSITIVE_INFINITY;
-    for (let index = 0; index < shellTools.length; index++) {
-      if (consumedTools.has(index)) continue;
-      const score = shellToolMatchScore(shell, shellTools[index]);
-      if (score === undefined || score >= bestScore) continue;
-      bestIndex = index;
-      bestScore = score;
-    }
-    if (bestIndex >= 0) {
-      consumedTools.add(bestIndex);
-      matchedShells.add(shell.id);
-    }
-  }
-
-  const byId = new Map(shells.map((shell) => [shell.id, shell]));
-  const next: TimelineItem[] = [];
-  let changed = false;
-  for (let index = 0; index < items.length; index++) {
-    const item = items[index];
-    const part = item.part;
-    if (part.type !== 'shell') {
-      next.push(item);
-      continue;
-    }
-    if (matchedShells.has(item.id)) {
-      changed = true;
-      continue;
-    }
-    const listed = byId.get(part.shell_id);
-    const previousPart = items[index - 1]?.part;
-    const isLegacyAdjacentEcho =
-      !listed &&
-      previousPart?.type === 'tool' &&
-      classifyTool(previousPart.name) === 'shell' &&
-      !shellIdFromMetadata(previousPart.metadata) &&
-      !previousPart.time?.created &&
-      !previousPart.time?.ran &&
-      !previousPart.time?.completed &&
-      openCodeIdTimestamp(items[index - 1]?.message_id ?? '') === undefined &&
-      openCodeIdTimestamp(part.shell_id) === undefined &&
-      extractTarget('shell', previousPart.input).trim() === part.command.trim();
-    if (isLegacyAdjacentEcho) {
-      changed = true;
-      continue;
-    }
-    const status = listed ? listed.status : part.status === 'running' ? 'exited' : part.status;
-    if (status === part.status) {
-      next.push(item);
-      continue;
-    }
-    changed = true;
-    next.push({ ...item, part: { ...part, status } });
-  }
-  return changed ? next : items;
+export function reconcileShellParts(items: TimelineItem[]): TimelineItem[] {
+  const next = items.filter((item) => {
+    if (item.part.type !== 'shell') return true;
+    const mirrorId = `shell_${item.part.shell_id}`;
+    return item.id !== mirrorId || item.message_id !== mirrorId;
+  });
+  return next.length === items.length ? items : next;
 }

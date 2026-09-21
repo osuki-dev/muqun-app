@@ -1,3 +1,4 @@
+import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { useLingui } from '@lingui/react/macro';
 
 import { resolveHomeIdentity } from '@/theme/resolve';
@@ -41,6 +42,7 @@ export function ThemeAppearanceSettings({
   onHeroChange: (value: HomeHeroPreference) => void;
   onReset: () => void;
 }) {
+  const profile = useAppearanceProfile();
   const { t } = useLingui();
   const { colors } = useThemeTokens();
   const { resolvedMode } = useThemeMode();
@@ -67,7 +69,7 @@ export function ThemeAppearanceSettings({
       style={{
         gap: 12,
         padding: 12,
-        borderRadius: 16,
+        borderRadius: profile.chrome.card,
         backgroundColor: background(colors.surfaceRaised),
       }}>
       {policies.some(
@@ -127,12 +129,12 @@ export function ThemeAppearanceSettings({
           who turns it on for a theme that drew no hero deserves to know why
           something appeared. */}
       <View style={{ gap: 6 }}>
-        <Text>{t`Show illustration on Home`}</Text>
+        <Text>{t`Show artwork on Home`}</Text>
         <Text
           variant="caption"
           color={
             colors.textMuted
-          }>{t`Between the header and your servers. Home also borrows the theme's empty-state picture when the theme has no Home illustration of its own.`}</Text>
+          }>{t`Uses the theme's Home artwork in the position chosen by your Home layout. When needed, it falls back to the theme's empty-state illustration.`}</Text>
         <SettingsSegmented
           testID="theme-home-hero"
           options={[

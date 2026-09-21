@@ -32,7 +32,6 @@ import { createAgentTranscriptStore } from '@/stores/agent-transcript';
 import { useAgentSheetBridge } from '@/stores/agent-sheet-bridge';
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';
 
-const EMPTY_SHELLS = Object.freeze([]);
 const doNothing = () => {};
 
 interface LoadedDetail {
@@ -100,7 +99,6 @@ export function AgentSubagentDetailSheet({
       if (!current()) return;
       const transcript = store.getState();
       transcript.configure({
-        shells: EMPTY_SHELLS,
         windowStart: 0,
         status: snapshot.info?.status,
       });
@@ -188,7 +186,7 @@ export function AgentSubagentDetailSheet({
           rowProps={rowProps}
           dataKey={asid}
           alignItemsAtEnd={false}
-          initialScrollAtEnd={false}
+          initialScrollAtEnd
           maintainScrollAtEnd={false}
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={

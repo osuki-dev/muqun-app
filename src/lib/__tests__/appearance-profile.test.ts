@@ -12,7 +12,7 @@ import { reconcileHomeWorkspaceOwner } from '../home-workspace-owner';
 import { appChrome } from '../../constants/appearance';
 
 test('released home layouts resolve to one stable, immutable profile, never a second preference', () => {
-  for (const id of ['classic', 'editorial', 'mechanical'] as const) {
+  for (const id of ['classic', 'editorial'] as const) {
     const profile = resolveAppearanceProfile(id);
     expect(resolveHomeLayout(id)).toBe(id);
     expect(profile).toBe(appearanceProfiles[id]);
@@ -45,6 +45,20 @@ test('Classic semantic geometry is encoded in the profile rather than component 
   expect(chrome.segmentedOption).toBe(appChrome.radius.segmentedOption);
   expect(chrome.sheet).toBe(appChrome.radius.sheet);
   expect(chrome.transcriptPlate).toBe(appChrome.radius.transcriptPlate);
+});
+
+test('Editorial keeps its magazine layout with the compact corner treatment', () => {
+  const { radius, chrome } = appearanceProfiles.editorial;
+  expect(radius).toEqual({ none: 0, xs: 0, sm: 2, md: 4, lg: 8, pill: 999 });
+  expect(chrome).toMatchObject({
+    card: 4,
+    control: 4,
+    popover: 6,
+    noticeCard: 6,
+    composerDock: 8,
+    sheet: 8,
+    surface: 4,
+  });
 });
 
 test('profile native motion stays short, disables animation for reduced motion, and never overrides gestures', () => {
@@ -101,11 +115,8 @@ test('profile wiring keeps route and workspace identities and the shared Home ac
   const home = read('components/home-overview.tsx');
   expect(home).toContain('onMomentumScrollEnd={rememberScroll}');
   expect(home).toContain('onContentSizeChange={restoreScroll}');
-  expect(home).toContain('<HomeMechanicalLayout');
+  expect(home).toContain('<HomeEditorialLayout');
   expect(read('app/index.tsx')).toContain('key={nextWorkspaceOwner}');
-  const mechanical = read('components/home-mechanical-layout.tsx');
-  expect(mechanical).toContain('getEditorialLayoutGeometry');
-  expect(mechanical).not.toContain('react-native-svg');
   expect(read('components/home-launch-actions.tsx')).toContain(
     'showsHorizontalScrollIndicator={false}'
   );
@@ -114,7 +125,7 @@ test('profile wiring keeps route and workspace identities and the shared Home ac
 test('shared surface seams consume semantic profile geometry without profile-ID branches', () => {
   const read = (path: string) => readFileSync(`src/${path}`, 'utf8');
   const seams = {
-    'components/settings-chrome.tsx': ['profile.chrome.popover', 'profile.chrome.control'],
+    'components/settings-chrome.tsx': ['profile.chrome.surface', 'profile.chrome.control'],
     'hooks/use-transcript-plate.ts': ['profile.chrome.transcriptPlate', 'profile.chrome.control'],
     'components/pad-server-rail.tsx': [
       'profile.chrome.workspaceRail',

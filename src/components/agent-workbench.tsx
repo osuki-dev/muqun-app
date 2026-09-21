@@ -3333,8 +3333,8 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   }, [activeDirectory, activeProject, activeWorktree, globalOwnerEpoch, isGlobalOwner]);
 
   useLayoutEffect(() => {
-    transcriptStore.getState().configure({ shells, windowStart, status: sessionInfo?.status });
-  }, [transcriptStore, shells, windowStart, sessionInfo?.status]);
+    transcriptStore.getState().configure({ windowStart, status: sessionInfo?.status });
+  }, [transcriptStore, windowStart, sessionInfo?.status]);
 
   useEffect(() => {
     const updateMark = () => {
@@ -3653,7 +3653,10 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     () => buildSessionStrip(workspaceRoots, childrenByParent, activeAsid),
     [workspaceRoots, childrenByParent, activeAsid]
   );
-  const rootStrip = buildRootSessionStrip(workspaceRoots, childrenByParent, activeAsid);
+  const rootStrip = useMemo(
+    () => buildRootSessionStrip(workspaceRoots, childrenByParent, activeAsid),
+    [workspaceRoots, childrenByParent, activeAsid]
+  );
   const activeParent = useMemo(
     () => parentOf(activeAsid, sessionIndex),
     [activeAsid, sessionIndex]

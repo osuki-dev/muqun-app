@@ -488,10 +488,6 @@ msgstr "Luôn cho phép"
 msgid "Always allowed"
 msgstr "Luôn cho phép"
 
-#: src/components/settings-home-layout-sheet.tsx
-msgid "An instrument-panel Home with compact, angular controls."
-msgstr "Trang chủ kiểu bảng điều khiển với các nút gọn gàng, góc cạnh"
-
 #: src/components/agent-revert-plate.tsx
 msgid "and {rest} more"
 msgstr "và {rest} nữa"
@@ -697,10 +693,6 @@ msgstr "Hành vi"
 #: src/components/theme-appearance-settings.tsx
 msgid "Below {minimumPercent}%, text is no longer guaranteed to stay readable"
 msgstr "Dưới {minimumPercent}%, chữ không còn được bảo đảm dễ đọc"
-
-#: src/components/theme-appearance-settings.tsx
-msgid "Between the header and your servers. Home also borrows the theme's empty-state picture when the theme has no Home illustration of its own."
-msgstr "Giữa phần đầu trang và danh sách máy chủ. Trang chủ cũng mượn ảnh trạng thái trống của chủ đề khi chủ đề không có hình minh hoạ riêng cho trang chủ"
 
 #: src/components/diff-rows.tsx
 msgid "Binary file"
@@ -1158,7 +1150,6 @@ msgid "Connecting…"
 msgstr "Đang kết nối…"
 
 #: src/components/home-editorial-layout.tsx
-#: src/components/home-mechanical-layout.tsx
 msgid "Connections"
 msgstr "Kết nối"
 
@@ -1189,7 +1180,6 @@ msgstr "Ngữ cảnh đã dùng"
 
 #: src/app/explore.tsx
 #: src/components/home-editorial-layout.tsx
-#: src/components/home-mechanical-layout.tsx
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Continue"
 msgstr "Tiếp tục"
@@ -2660,11 +2650,6 @@ msgstr "Đánh dấu đã xem"
 #: src/components/settings-appearance.tsx
 msgid "Mascot"
 msgstr "Linh vật"
-
-#: src/components/settings-appearance.tsx
-#: src/components/settings-home-layout-sheet.tsx
-msgid "Mechanical"
-msgstr "Cơ khí"
 
 #. placeholder {0}: hit.path
 #: src/components/file-mention-panel.tsx
@@ -4375,6 +4360,10 @@ msgstr "Hiện {0}"
 msgid "Show agents and their status on the home screen. Updates while Muqun is open."
 msgstr "Hiện các tác tử và trạng thái của chúng trên màn hình chính. Cập nhật khi Muqun đang mở"
 
+#: src/components/theme-appearance-settings.tsx
+msgid "Show artwork on Home"
+msgstr "Hiển thị hình ảnh trên Trang chủ"
+
 #: src/components/pairing-camera.tsx
 msgid "Show camera details"
 msgstr "Hiện chi tiết camera"
@@ -4394,10 +4383,6 @@ msgstr "Hiển thị logo trên trang chủ"
 #: src/components/theme-appearance-settings.tsx
 msgid "Show Home text"
 msgstr "Hiển thị chữ trên trang chủ"
-
-#: src/components/theme-appearance-settings.tsx
-msgid "Show illustration on Home"
-msgstr "Hiển thị hình minh hoạ trên trang chủ"
 
 #: src/components/home-recent-sessions.tsx
 msgid "Show less"
@@ -5583,6 +5568,10 @@ msgstr "Dùng phông chữ của riêng bạn cho ứng dụng và terminal"
 #: src/components/ssh-host-form.tsx
 msgid "Username"
 msgstr "Tên người dùng"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Uses the theme's Home artwork in the position chosen by your Home layout. When needed, it falls back to the theme's empty-state illustration."
+msgstr "Dùng hình trang chủ của chủ đề ở vị trí do bố cục Trang chủ chọn. Khi cần, ứng dụng dùng hình minh họa trạng thái trống của chủ đề"
 
 #: src/components/settings-servers.tsx
 msgid "Using"

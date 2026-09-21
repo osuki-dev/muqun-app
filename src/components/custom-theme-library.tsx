@@ -1,3 +1,4 @@
+import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { useLingui } from '@lingui/react/macro';
 import { Tag, useThemeTokens } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
@@ -162,6 +163,7 @@ export function CustomThemeLibrary({
   tabs?: boolean;
   children?: ReactNode;
 } = {}) {
+  const profile = useAppearanceProfile();
   const { t } = useLingui();
   const { colors } = useThemeTokens();
   const reskin = useReskinTransition();
@@ -442,7 +444,7 @@ export function CustomThemeLibrary({
         style={{
           gap: 8,
           padding: 12,
-          borderRadius: 16,
+          borderRadius: profile.chrome.card,
           backgroundColor: background(colors.surfaceRaised),
         }}>
         <Button
@@ -526,7 +528,7 @@ export function CustomThemeLibrary({
               alignItems: 'center',
               gap: 12,
               padding: 12,
-              borderRadius: 12,
+              borderRadius: profile.chrome.control,
               backgroundColor: background(colors.surfaceRaised),
             }}>
             <ThemeCover
@@ -701,7 +703,7 @@ export function CustomThemeLibrary({
           testID="theme-status-message"
           style={{
             padding: 12,
-            borderRadius: 12,
+            borderRadius: profile.chrome.surface,
             backgroundColor: background(colors.surfaceRaised),
           }}>
           {error ? (
@@ -874,7 +876,7 @@ export function CustomThemeLibrary({
               style={{
                 gap: 8,
                 padding: 12,
-                borderRadius: 16,
+                borderRadius: profile.chrome.card,
                 backgroundColor: background(colors.surfaceRaised),
               }}>
               <Text>{t`Remove this theme?`}</Text>
@@ -897,7 +899,7 @@ export function CustomThemeLibrary({
               style={{
                 gap: 4,
                 padding: 8,
-                borderRadius: 16,
+                borderRadius: profile.chrome.card,
                 backgroundColor: background(colors.surfaceRaised),
               }}>
               {/* Not where a host draws the primary action. On the detail

@@ -62,16 +62,20 @@ test('every supported artwork slot has a named runtime consumer', () => {
   }
 });
 
-test('Home mounts a resolved hero above its list and the empty card keeps its own picture', () => {
+test('Home mounts profile-specific top artwork and the empty card keeps its own picture', () => {
   const home = readFileSync('src/components/home-overview.tsx', 'utf8');
-  // The editorial masthead reserves its artwork band from the shared resolver's
-  // answer, after the `home.decoration` banner and before anything that draws a
-  // server.
+  expect(home).toContain('resolveEditorialHomeArtworkAsset');
+  expect(home).toContain('<HomeEditorialArtwork');
+  expect(home.indexOf('<HomeEditorialArtwork')).toBeLessThan(home.indexOf('<HomeEditorialLayout'));
+  const editorialArtwork = readFileSync('src/components/home-editorial-artwork.tsx', 'utf8');
+  expect(editorialArtwork).toContain("colors={['white', 'white', 'transparent']}");
+  expect(editorialArtwork).toContain("root: { width: '100%'");
+  expect(editorialArtwork).not.toContain('RoundedRect');
+  // Classic keeps its existing contained decoration followed by its hero.
   expect(home).toContain('<HomeHero ');
   const heroAt = home.indexOf('<HomeHero ');
   expect(heroAt).toBeGreaterThan(home.indexOf('slot="home.decoration"'));
   expect(heroAt).toBeLessThan(home.indexOf('<ServerCard'));
-  expect(home).toContain('artworkAvailable={hasHeroArtwork}');
   expect(home).toContain('resolveHomeHeroAsset');
   // The hero is omitted while the empty state is up. Both pictures on one
   // otherwise empty screen is a gallery rather than an invitation, and the

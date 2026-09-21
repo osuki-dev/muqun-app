@@ -38,11 +38,6 @@ export function SettingsHomeLayoutSheet({ onClose }: { onClose: () => void }) {
       title: t`Editorial`,
       detail: t`A magazine-style Home with attention and recent sessions.`,
     },
-    {
-      id: 'mechanical',
-      title: t`Mechanical`,
-      detail: t`An instrument-panel Home with compact, angular controls.`,
-    },
   ];
 
   async function choose(next: HomeLayout) {
@@ -147,24 +142,6 @@ function HomeLayoutPreview({ layout }: { layout: HomeLayout }) {
           <View style={[styles.classicCard, { backgroundColor: colors.surface }]} />
           <View style={[styles.classicCard, { backgroundColor: colors.surface }]} />
         </View>
-      ) : layout === 'mechanical' ? (
-        <View style={styles.mechanicalPreview}>
-          <View style={[styles.mechanicalRail, { backgroundColor: colors.primary }]} />
-          <View style={styles.editorialPreview}>
-            <View
-              style={[
-                styles.mechanicalPanel,
-                { backgroundColor: colors.surface, borderColor: colors.border },
-              ]}
-            />
-            <View
-              style={[
-                styles.mechanicalPanel,
-                { backgroundColor: colors.surfaceRaised, borderColor: colors.border },
-              ]}
-            />
-          </View>
-        </View>
       ) : (
         <View style={styles.editorialPreview}>
           <View style={[styles.editorialLead, { backgroundColor: colors.surface }]} />
@@ -202,9 +179,6 @@ const styles = StyleSheet.create({
   editorialLead: { flex: 1.25, borderRadius: 4 },
   editorialRail: { flex: 0.75, gap: 4 },
   editorialCard: { flex: 1, borderRadius: 3 },
-  mechanicalPreview: { flex: 1, gap: 4 },
-  mechanicalRail: { height: 9 },
-  mechanicalPanel: { flex: 1, borderWidth: 1, borderRadius: 1 },
   copy: { flex: 1, minWidth: 0, gap: 3 },
   radio: {
     width: 22,

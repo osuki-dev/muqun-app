@@ -4,7 +4,7 @@ import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 
 /** Keep the kit's layout and palette; profiles own the shared surface geometry. */
-export function Card({ style, variant = 'default', ...props }: CardProps) {
+export function Card({ style, variant = 'default', border = 'none', ...props }: CardProps) {
   const profile = useAppearanceProfile();
   const theme = useThemeTokens();
   const background = useSurfaceBackground();
@@ -17,7 +17,15 @@ export function Card({ style, variant = 'default', ...props }: CardProps) {
     <BaseCard
       {...props}
       variant={variant}
-      style={[style, { backgroundColor: background(base) }, { borderRadius: profile.chrome.card }]}
+      border={border}
+      style={[
+        (border === 'subtle' || Boolean(theme.components.Card[variant].border)) && {
+          borderWidth: StyleSheet.hairlineWidth,
+        },
+        style,
+        { backgroundColor: background(base) },
+        { borderRadius: profile.chrome.card },
+      ]}
     />
   );
 }

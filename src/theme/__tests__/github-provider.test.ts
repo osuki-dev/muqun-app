@@ -1,6 +1,6 @@
 import { afterAll, expect, test } from 'bun:test';
 import { readFileSync } from 'node:fs';
-import { createThemeStarter } from '../authoring';
+import { createThemeStarter } from '../starter';
 import { inspectGithubTheme } from '../github-provider';
 import type { PublicThemeTransport } from '../remote-import';
 import { createGitFixture } from './git-fixture';

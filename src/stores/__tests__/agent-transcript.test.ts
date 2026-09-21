@@ -60,12 +60,13 @@ describe('agent transcript ownership', () => {
       })
     );
     const shells = Array.from({ length: 60 }, (_, i) =>
-      item(`shell-${i}`, {
+      item(`shell_shell-${i}`, {
+        message_id: `shell_shell-${i}`,
         part: { type: 'shell', shell_id: `shell-${i}`, command: `echo ${i}`, status: 'exited' },
       })
     );
     store.getState().setTimeline([...tools, ...shells]);
-    store.getState().configure({ shells: [], windowStart: 80, status: 'idle' });
+    store.getState().configure({ windowStart: 80, status: 'idle' });
     expect(store.getState().keys).toHaveLength(40);
     expect(store.getState().keys.at(-1)).toBe('grp_tool-59');
     const historyKeys = [...store.getState().keys];
@@ -80,7 +81,7 @@ describe('agent transcript ownership', () => {
     store.getState().setTimeline((timeline) => [...timeline, optimistic]);
     expect(store.getState().keys).toEqual([...historyKeys, 'grp_temp_user']);
 
-    store.getState().configure({ shells: [], windowStart: 80, status: 'busy' });
+    store.getState().configure({ windowStart: 80, status: 'busy' });
     expect(store.getState().keys).toEqual([...historyKeys, 'grp_temp_user']);
 
     store.getState().setTimeline((timeline) =>
@@ -102,7 +103,7 @@ describe('agent transcript ownership', () => {
       );
     expect(store.getState().keys).toEqual([...historyKeys, 'grp_temp_user', 'grp_answer']);
 
-    store.getState().configure({ shells: [], windowStart: 0, status: 'idle' });
+    store.getState().configure({ windowStart: 0, status: 'idle' });
     expect(store.getState().keys).toHaveLength(62);
   });
 
@@ -120,13 +121,14 @@ describe('agent transcript ownership', () => {
           state: 'completed',
         },
       }),
-      item('duplicate', {
+      item('shell_shell', {
+        message_id: 'shell_shell',
         part: { type: 'shell', shell_id: 'shell', command: 'pwd', status: 'exited' },
       }),
       item('anchor'),
       item('last'),
     ]);
-    store.getState().configure({ shells: [], windowStart: 2, status: 'idle' });
+    store.getState().configure({ windowStart: 2, status: 'idle' });
     expect(store.getState().keys).toEqual(['grp_anchor', 'grp_last']);
   });
 
@@ -206,13 +208,13 @@ describe('agent transcript ownership', () => {
     store.getState().setTimeline([r1, r2]);
     const row = store.getState().rows.grp_r1;
     expect(row.items).toHaveLength(2);
-    store.getState().configure({ shells: [], windowStart: 0, status: 'busy' });
+    store.getState().configure({ windowStart: 0, status: 'busy' });
     expect(store.getState().reasoningKey).toBe('grp_r1');
-    store.getState().configure({ shells: [], windowStart: 0, status: 'interrupted' });
+    store.getState().configure({ windowStart: 0, status: 'interrupted' });
     expect(store.getState().reasoningKey).toBeUndefined();
     expect(store.getState().rows.grp_r1).toBe(row);
     store.getState().setTimeline([r1, r2, item('answer')]);
-    store.getState().configure({ shells: [], windowStart: 0, status: 'busy' });
+    store.getState().configure({ windowStart: 0, status: 'busy' });
     expect(store.getState().reasoningKey).toBeUndefined();
   });
 
@@ -248,10 +250,10 @@ describe('agent transcript ownership', () => {
         item('reasoning', { part: { type: 'reasoning', text: 'thought' } }),
         item('answer'),
       ]);
-    store.getState().configure({ shells: [], windowStart: 1, status: 'idle' });
+    store.getState().configure({ windowStart: 1, status: 'idle' });
     expect(store.getState().keys).toEqual(['grp_tool', 'grp_reasoning', 'grp_answer']);
     expect(store.getState().rows.grp_answer.prevItem).toBe(tool);
-    store.getState().configure({ shells: [], windowStart: 0, status: 'idle' });
+    store.getState().configure({ windowStart: 0, status: 'idle' });
     expect(store.getState().keys[0]).toBe('grp_older');
   });
 });

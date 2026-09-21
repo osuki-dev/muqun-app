@@ -56,15 +56,6 @@ function reset(stored?: unknown) {
 beforeEach(() => reset());
 
 describe('home layout persistence', () => {
-  test('Mechanical survives hydration and theme changes without a second appearance key', async () => {
-    await store.getState().setHomeLayout('mechanical');
-    await store.getState().update({ themePack: 'catppuccin' });
-    store.setState({ ...initial, hydrated: false });
-    await store.getState().hydrate();
-    expect(store.getState().homeLayout).toBe('mechanical');
-    expect(store.getState().themePack).toBe('catppuccin');
-    expect(JSON.parse(vault[STORAGE_KEY]).appearanceProfile).toBeUndefined();
-  });
   test('uses classic when nothing is stored', async () => {
     await store.getState().hydrate();
     expect(store.getState().homeLayout).toBe(DEFAULT_HOME_LAYOUT);

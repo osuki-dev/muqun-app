@@ -1,7 +1,7 @@
 import { expect, test } from 'bun:test';
 import { readFileSync } from 'node:fs';
 
-import { createThemeStarter } from '@/theme/authoring';
+import { createThemeStarter } from '@/theme/starter';
 import { parseThemeManifest, THEME_ICONS } from '@/theme/schema';
 
 const base = createThemeStarter();

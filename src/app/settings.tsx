@@ -1,3 +1,4 @@
+import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { ThemeArtwork, useHasThemeArtwork } from '@/components/theme-artwork';
 import { brandMark } from '@/components/brand-mark';
@@ -83,6 +84,7 @@ const HEADER_INSET = NAV_HEADER_TOP_GAP + NAV_HEADER_CONTROL_SIZE + 8 + LADDER.g
  * Nothing was dropped. Every control the old page could reach, this one can.
  */
 export default function SettingsScreen() {
+  const profile = useAppearanceProfile();
   const surfaceBackground = useSurfaceBackground();
   // Loose text on this page -- the two lines below the last card -- has no card
   // under it, so against a pack's wallpaper it is read on whatever the picture
@@ -114,7 +116,7 @@ export default function SettingsScreen() {
         backgroundColor: surfaceBackground(theme.colors.background),
         paddingHorizontal: LADDER.gap,
         paddingVertical: LADDER.tight,
-        borderRadius: 8,
+        borderRadius: profile.radius.sm,
         overflow: 'hidden' as const,
       }
     : null;

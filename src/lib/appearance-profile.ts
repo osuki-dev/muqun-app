@@ -33,6 +33,7 @@ export type AppearanceProfile = Readonly<{
     overlay: number;
     surface: number;
   }>;
+  settingsRowPaddingVertical: number;
   navigation: Readonly<Pick<NativeStackNavigationOptions, 'animation'>>;
   motion: Readonly<{
     pageMs: number;
@@ -70,6 +71,7 @@ const classic: AppearanceProfile = {
     overlay: appChrome.radius.noticeBanner,
     surface: appChrome.radius.transcriptPlate,
   },
+  settingsRowPaddingVertical: 12,
   navigation: { animation: 'fade' },
   motion: { pageMs: 240, modalMs: 260, revealMs: 240, revealDistance: 8, pressedScale: 0.985 },
   rowPaddingVertical: 8,
@@ -79,37 +81,6 @@ const editorial: AppearanceProfile = {
   id: 'editorial',
   density: 'compact',
   shape: 'soft',
-  radius: { none: 0, xs: 2, sm: 5, md: 8, lg: 12, pill: 999 },
-  chrome: {
-    card: 10,
-    control: 8,
-    popover: 12,
-    controlTray: 10,
-    noticeCard: 12,
-    navigationPill: 10,
-    noticeBanner: 12,
-    composerField: 10,
-    composerDock: 16,
-    workspaceRail: 12,
-    railGlyph: 8,
-    railAction: 8,
-    railItem: 8,
-    segmentedTrack: 8,
-    segmentedOption: 5,
-    sheet: 16,
-    transcriptPlate: 10,
-    overlay: 12,
-    surface: 10,
-  },
-  navigation: { animation: 'fade' },
-  motion: { pageMs: 200, modalMs: 220, revealMs: 200, revealDistance: 4, pressedScale: 0.99 },
-  rowPaddingVertical: 10,
-};
-
-const mechanical: AppearanceProfile = {
-  id: 'mechanical',
-  density: 'compact',
-  shape: 'sharp',
   radius: { none: 0, xs: 0, sm: 2, md: 4, lg: 8, pill: 999 },
   chrome: {
     card: 4,
@@ -132,15 +103,15 @@ const mechanical: AppearanceProfile = {
     overlay: 6,
     surface: 4,
   },
-  navigation: { animation: 'simple_push' },
-  motion: { pageMs: 160, modalMs: 180, revealMs: 160, revealDistance: 0, pressedScale: 0.995 },
-  rowPaddingVertical: 8,
+  settingsRowPaddingVertical: 10,
+  navigation: { animation: 'fade' },
+  motion: { pageMs: 200, modalMs: 220, revealMs: 200, revealDistance: 4, pressedScale: 0.99 },
+  rowPaddingVertical: 10,
 };
 
 export const appearanceProfiles: Readonly<Record<AppearanceProfileId, AppearanceProfile>> = {
   classic,
   editorial,
-  mechanical,
 };
 
 // Profile changes are rare. Stable, immutable objects can cross context/native

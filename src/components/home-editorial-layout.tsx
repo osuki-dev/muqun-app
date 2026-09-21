@@ -15,12 +15,10 @@ import { useHasThemeArtwork } from '@/components/theme-artwork';
 
 import { getEditorialLayoutGeometry } from '@/lib/home-editorial-layout';
 export {
-  EDITORIAL_MASTHEAD_MIN_WIDTH,
   EDITORIAL_TWO_COLUMN_MIN_WIDTH,
   getEditorialLayoutGeometry,
   type EditorialLayoutGeometry,
   type EditorialLayoutMode,
-  type EditorialMastheadMode,
 } from '@/lib/home-editorial-layout';
 
 export type HomeEditorialLayoutProps = {
@@ -30,9 +28,6 @@ export type HomeEditorialLayoutProps = {
   fontScale?: number;
   /** The existing identity block supplied by Home data/theme composition. */
   identity?: ReactNode;
-  /** Optional bounded artwork. The caller supplies the shared resolver's presence answer. */
-  artwork?: ReactNode;
-  artworkAvailable: boolean;
   /** Native actions kept in the compact masthead utility row. */
   headerAction?: ReactNode;
   /** Current Gateway control aligned opposite the masthead actions. */
@@ -107,9 +102,7 @@ function EditorialSection({
  * ```tsx
  * <HomeEditorialLayout
  *   contentWidth={measuredRemainingWidth}
- *   artworkAvailable={heroResolution !== null}
  *   identity={<HomeIdentity />}
- *   artwork={homeArtwork}
  *   launches={<HomeLaunches />}
  *   recent={<HomeRecent />}
  *   attention={<HomeAttention />}
@@ -122,8 +115,6 @@ export function HomeEditorialLayout({
   contentWidth,
   fontScale: fontScaleProp,
   identity,
-  artwork,
-  artworkAvailable,
   headerAction,
   headerLeading,
   launches,
@@ -139,9 +130,7 @@ export function HomeEditorialLayout({
   const fontScale = fontScaleProp ?? windowFontScale;
   const hasAside = hasSlot(attention) || hasSlot(connections);
   const geometry = getEditorialLayoutGeometry(contentWidth, fontScale, hasAside);
-  const hasArtwork = artworkAvailable && hasSlot(artwork);
   const hasIdentity = hasSlot(identity);
-  const mastheadWide = geometry.mastheadMode === 'side-by-side' && hasArtwork && hasIdentity;
   const hasHeaderAction = hasSlot(headerAction);
   const hasHeaderLeading = hasSlot(headerLeading);
   const hasHeaderRow = hasHeaderLeading || hasHeaderAction;
@@ -162,19 +151,7 @@ export function HomeEditorialLayout({
             {hasHeaderAction ? <View style={styles.headerAction}>{headerAction}</View> : null}
           </View>
         ) : null}
-        {hasArtwork ? (
-          <View style={[styles.mastheadBody, mastheadWide && styles.mastheadWide]}>
-            {hasIdentity ? (
-              <View style={[styles.mastheadCopy, mastheadWide && styles.mastheadCopyWide]}>
-                {mastheadText}
-              </View>
-            ) : null}
-            <View
-              style={[styles.artwork, mastheadWide ? styles.artworkWide : styles.artworkStacked]}>
-              {artwork}
-            </View>
-          </View>
-        ) : hasIdentity ? (
+        {hasIdentity ? (
           <View style={styles.mastheadBody}>
             <View style={styles.mastheadCopy}>{mastheadText}</View>
           </View>
@@ -272,16 +249,8 @@ const styles = StyleSheet.create({
   mastheadBody: {
     minWidth: 0,
   },
-  mastheadWide: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    columnGap: 20,
-  },
   mastheadCopy: {
     minWidth: 0,
-    flex: 1,
-  },
-  mastheadCopyWide: {
     flex: 1,
   },
   mastheadText: {
@@ -301,17 +270,6 @@ const styles = StyleSheet.create({
   identity: {
     minWidth: 0,
     marginBottom: 12,
-  },
-  artwork: {
-    minWidth: 0,
-    overflow: 'hidden',
-  },
-  artworkWide: {
-    flex: 1,
-  },
-  artworkStacked: {
-    width: '100%',
-    marginTop: 16,
   },
   content: {
     minWidth: 0,

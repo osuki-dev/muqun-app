@@ -1044,9 +1044,17 @@ function parseToolPart(rec: Record<string, unknown>): ToolPart | null {
     pickString(rec, ['child_session_id', 'childSessionID']) ??
     pickString(metadata, ['sessionID', 'session_id']);
   if (childSessionId) part.child_session_id = childSessionId;
-  // OpenCode 2.0.1 has no flag of its own, so the gateway sets one and reads
-  // `metadata.background` in case a later version starts sending it.
-  if (rec.background === true || metadata.background === true) part.background = true;
+  // A shell detached through `POST …/background` comes back with its stable
+  // `shellID` in metadata. OpenCode 2.0.1 does not also emit a background flag,
+  // so that explicit handle is the durable signal; ordinary foreground shell
+  // calls carry only exit/status metadata and must not be labelled Background.
+  const shellId = pickString(metadata, ['shellID', 'shell_id']);
+  if (
+    rec.background === true ||
+    metadata.background === true ||
+    ((name === 'shell' || name === 'bash') && shellId !== undefined)
+  )
+    part.background = true;
   if (rec.truncated === true || metadata.truncated === true) part.truncated = true;
   const time = parseToolTiming(rec.time);
   if (time) part.time = time;

@@ -162,6 +162,7 @@ export const DiffListRow = memo(function DiffListRow({
   onToggle,
   onShowMore,
   showSide,
+  hasSeparator,
 }: {
   row: GitDiffRow;
   /** The laid-out width of every row: the panning content. */
@@ -176,6 +177,8 @@ export const DiffListRow = memo(function DiffListRow({
   onShowMore: (path: string) => void;
   /** In the `all` view a file says which side it is on; in a half it need not. */
   showSide: boolean;
+  /** Draw a list rule only when another rendered row follows this one. */
+  hasSeparator: boolean;
 }) {
   // One per mounted row rather than one object shared by all of them: a
   // recycled list mounts about forty rows and keeps them, so the hook is paid
@@ -194,6 +197,7 @@ export const DiffListRow = memo(function DiffListRow({
         pinned={pinned}
         onToggle={onToggle}
         showSide={showSide}
+        hasSeparator={hasSeparator}
       />
     );
   }
@@ -289,6 +293,7 @@ const FileRow = memo(function FileRow({
   pinned,
   onToggle,
   showSide,
+  hasSeparator,
 }: {
   row: Extract<GitDiffRow, { type: 'file' }>;
   width: number;
@@ -298,6 +303,7 @@ const FileRow = memo(function FileRow({
   pinned: PinnedStyle;
   onToggle: (path: string) => void;
   showSide: boolean;
+  hasSeparator: boolean;
 }) {
   const { t } = useLingui();
   const { _ } = useLinguiRuntime();
@@ -333,6 +339,7 @@ const FileRow = memo(function FileRow({
           width,
           backgroundColor: row.expanded ? fill : 'transparent',
           borderBottomColor: colors.border,
+          borderBottomWidth: hasSeparator ? StyleSheet.hairlineWidth : 0,
         },
       ]}>
       <Animated.View style={[styles.pinned, styles.fileBody, pinned, { width: pinnedWidth }]}>
@@ -571,7 +578,7 @@ export function DiffRowList({
   }, [rows]);
 
   const renderRow = useCallback(
-    ({ item }: LegendListRenderItemProps<GitDiffRow>) => (
+    ({ item, index }: LegendListRenderItemProps<GitDiffRow>) => (
       <DiffListRow
         row={item}
         width={contentWidth}
@@ -583,6 +590,7 @@ export function DiffRowList({
         onToggle={onToggleFile}
         onShowMore={onShowMore}
         showSide={showSide}
+        hasSeparator={index < rows.length - 1}
       />
     ),
     [
@@ -593,6 +601,7 @@ export function DiffRowList({
       onShowMore,
       onToggleFile,
       pinnedWidth,
+      rows.length,
       scrollX,
       showSide,
     ]
@@ -719,7 +728,7 @@ export function InlineDiffRows({
         onLayout={onViewportLayout}
         contentContainerStyle={styles.scrollerContent}>
         <View style={{ width: contentWidth }}>
-          {capped.rows.map((row) => (
+          {capped.rows.map((row, index) => (
             <DiffListRow
               key={row.key}
               row={row}
@@ -732,6 +741,7 @@ export function InlineDiffRows({
               onToggle={onToggleFile ?? noop}
               onShowMore={noop}
               showSide={false}
+              hasSeparator={index < capped.rows.length - 1}
             />
           ))}
         </View>
@@ -840,7 +850,6 @@ const styles = StyleSheet.create({
   fileRow: {
     height: FILE_ROW_HEIGHT,
     justifyContent: 'center',
-    borderBottomWidth: StyleSheet.hairlineWidth,
   },
   fileBody: {
     gap: 10,

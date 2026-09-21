@@ -49,7 +49,8 @@ test('detail replaces nested targets in place and cannot form a deeper native st
   expect(route).not.toContain('router.push(');
   const detail = source('components/agent-subagent-detail-sheet.tsx');
   expect(detail).toContain('readOnly: true');
-  expect(detail).toContain('initialScrollAtEnd={false}');
+  expect(detail).toContain('initialScrollAtEnd');
+  expect(detail).not.toContain('initialScrollAtEnd={false}');
   expect(detail).toContain('maintainScrollAtEnd={false}');
   const messages = source('components/agent-message-block.tsx');
   expect(messages).toContain('usePermissionForToolCall(part.id, !readOnly)');
@@ -95,6 +96,20 @@ test('current root opens its tree on one tap and keeps the explicit screen-reade
   expect(workbench).toContain('sessionStrip={rootStrip.nodes}');
   expect(workbench).toContain('buildSessionStrip(workspaceRoots, childrenByParent, activeAsid)');
   expect(workbench).toContain('onOpenChildSession: openSubagentDetail');
+});
+
+test('streaming output cannot re-anchor the horizontal root-session strip', () => {
+  const workbench = source('components/agent-workbench.tsx');
+  expect(workbench).toContain(
+    'const rootStrip = useMemo(\n    () => buildRootSessionStrip(workspaceRoots, childrenByParent, activeAsid),'
+  );
+
+  const composer = source('components/agent-composer.tsx');
+  const revealStart = composer.indexOf('const sessionStripRef = useRef<ScrollView>(null);');
+  const revealEnd = composer.indexOf('const { height: keyboardOffset }', revealStart);
+  const reveal = composer.slice(revealStart, revealEnd);
+  expect(reveal).toContain('}, [selectedRootAsid]);');
+  expect(reveal).not.toContain('[selectedRootAsid, sessionStrip]');
 });
 
 test('child inventory transport captures the full Gateway endpoint instead of deduping by path', () => {

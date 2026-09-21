@@ -885,7 +885,7 @@ export const AgentComposer = memo(function AgentComposer({
       });
     }, DURATION.short);
     return () => clearTimeout(timer);
-  }, [selectedRootAsid, sessionStrip]);
+  }, [selectedRootAsid]);
 
   const { height: keyboardOffset } = useReanimatedKeyboardAnimation();
   const composerKeyboardStyle = useAnimatedStyle(() => ({

@@ -30,7 +30,7 @@ const NOW = 1_700_000_000_000;
 
 function snapshot(
   serverId: string,
-  agents: { id: string; name: string; status?: string; hasAgent?: boolean }[],
+  agents: { id: string; name: string; status?: string; hasAgent?: boolean; agentLabel?: string }[],
   checkedAtMs = NOW
 ): ServerAgentsSnapshot {
   return {
@@ -41,6 +41,7 @@ function snapshot(
       name: agent.name,
       status: (agent.status ?? 'idle') as ServerAgentsSnapshot['agents'][number]['status'],
       hasAgent: agent.hasAgent ?? true,
+      ...(agent.agentLabel ? { agentLabel: agent.agentLabel } : {}),
     })),
   };
 }
@@ -65,6 +66,26 @@ describe('mirroredServerAgents', () => {
     expect(mirroredServerAgents(agents, panes)).toEqual([
       { id: 'agent-1', name: 'Release notes', status: 'unknown', hasAgent: true, paneId: 'pane-1' },
     ]);
+  });
+
+  test('keeps the structured display agent separate from a renamed pane title', () => {
+    const agents = [
+      entity('agent-1', 'Release notes', {
+        raw: { pane_id: 'pane-1', display_agent: 'Claude Code', agent: 'claude' },
+      }),
+    ];
+    const panes = [entity('pane-1', 'zsh', { label: 'Release notes' })];
+
+    expect(mirroredServerAgents(agents, panes)[0]).toMatchObject({
+      name: 'Release notes',
+      agentLabel: 'Claude Code',
+    });
+  });
+
+  test('does not invent an agent label from an agent title', () => {
+    const [agent] = mirroredServerAgents([entity('agent-1', 'Codex-looking title')], []);
+
+    expect(agent.agentLabel).toBeUndefined();
   });
 
   test('an unrenamed pane leaves the agent called what the agent is called', () => {
@@ -235,6 +256,13 @@ describe('sameServerAgents', () => {
     expect(sameServerAgents(before, after)).toBe(false);
   });
 
+  test('a structured agent label change is worth persisting', () => {
+    const before = snapshot('s1', [{ id: 'a', name: 'task', agentLabel: 'Claude Code' }]);
+    const after = snapshot('s1', [{ id: 'a', name: 'task', agentLabel: 'Codex' }]);
+
+    expect(sameServerAgents(before, after)).toBe(false);
+  });
+
   test('an agent appearing or leaving is a change', () => {
     const one = snapshot('s1', [{ id: 'a', name: 'claude' }]);
     const two = snapshot('s1', [
@@ -356,6 +384,14 @@ describe('parseServerAgentsIndex', () => {
       s1: snapshot('s1', [{ id: 'a', name: 'claude', status: 'working' }]),
     };
     expect(parseServerAgentsIndex(JSON.stringify(index))).toEqual(index);
+  });
+
+  test('retains a structured agent label in an offline snapshot', () => {
+    const index: ServerAgentsIndex = {
+      s1: snapshot('s1', [{ id: 'a', name: 'release', agentLabel: 'OpenCode' }]),
+    };
+
+    expect(parseServerAgentsIndex(JSON.stringify(index)).s1.agents[0]?.agentLabel).toBe('OpenCode');
   });
 
   test('narrows a status it does not recognise', () => {

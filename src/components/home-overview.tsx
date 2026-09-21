@@ -49,11 +49,8 @@ import { SectionLabel } from '@/components/settings-chrome';
 import { ServerAgentRows } from '@/components/server-agent-rows';
 import { GatewayTunnelBadge } from '@/components/gateway-tunnel-badge';
 import { HomeHero } from '@/components/home-hero';
-import {
-  HomeEditorialLayout,
-  type HomeEditorialLayoutProps,
-} from '@/components/home-editorial-layout';
-import { HomeMechanicalLayout } from '@/components/home-mechanical-layout';
+import { HomeEditorialArtwork } from '@/components/home-editorial-artwork';
+import { HomeEditorialLayout } from '@/components/home-editorial-layout';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { HomeConnections } from '@/components/home-connections';
 import { HomeAttention } from '@/components/home-attention';
@@ -101,7 +98,11 @@ import { useServerLastViewed } from '@/stores/server-last-viewed';
 import { useSshHostsStore } from '@/stores/ssh-hosts';
 import { useThemeLibrary } from '@/stores/theme-library';
 import { resolveHomeIdentity } from '@/theme/resolve';
-import { isHomeHeroAvailable, resolveHomeHeroAsset } from '@/theme/home-hero';
+import {
+  isHomeHeroAvailable,
+  resolveEditorialHomeArtworkAsset,
+  resolveHomeHeroAsset,
+} from '@/theme/home-hero';
 import { homeHeroPreference } from '@/theme/repository';
 import { ThemeArtwork, useHasThemeArtwork } from '@/components/theme-artwork';
 import { ThemedSurface, ThemedSurfaceArtwork } from '@/components/themed-surface';
@@ -171,7 +172,9 @@ export function HomeOverview({
   const reduceMotion = useReducedMotion();
   const editorialReveal = useSharedValue(0);
   const [editorialWidth, setEditorialWidth] = useState(0);
-  const [failedHeroSource, setFailedHeroSource] = useState<string | null>(null);
+  const [failedEditorialArtworkSource, setFailedEditorialArtworkSource] = useState<string | null>(
+    null
+  );
   const { resolvedMode } = useThemeMode();
   const homeHeroPreferenceValue = useThemeLibrary((state) => {
     const installed = state.library.themes.find(
@@ -179,15 +182,25 @@ export function HomeOverview({
     );
     return installed ? homeHeroPreference(installed) : 'theme';
   });
+  const artworkWidth = width >= THEME_ARTWORK_REGULAR_MIN_WIDTH ? 'regular' : 'compact';
   const heroResolution = resolveHomeHeroAsset({
     manifest: customTheme?.manifest,
     assets: customAssets,
     mode: resolvedMode,
-    width: width >= THEME_ARTWORK_REGULAR_MIN_WIDTH ? 'regular' : 'compact',
+    width: artworkWidth,
     preference: homeHeroPreferenceValue,
   });
-  const hasHeroArtwork =
-    !loading && !hydrationError && isHomeHeroAvailable(heroResolution, failedHeroSource);
+  const editorialArtworkResolution = resolveEditorialHomeArtworkAsset({
+    manifest: customTheme?.manifest,
+    assets: customAssets,
+    mode: resolvedMode,
+    width: artworkWidth,
+    preference: homeHeroPreferenceValue,
+  });
+  const hasEditorialArtwork =
+    !loading &&
+    !hydrationError &&
+    isHomeHeroAvailable(editorialArtworkResolution, failedEditorialArtworkSource);
   const hasPairedServer = records.some((server) => server.serverId !== DEMO_SERVER_ID);
   const appActive = useAppActive();
   const isFocused = useIsFocused();
@@ -627,7 +640,7 @@ export function HomeOverview({
   if (homeLayout !== 'classic') {
     const editorialContent = (
       <View
-        testID={homeLayout === 'mechanical' ? 'home-mechanical' : 'home-editorial'}
+        testID="home-editorial"
         onLayout={(event) => setEditorialWidth(event.nativeEvent.layout.width)}
         style={[styles.page, { backgroundColor: background(theme.colors.background) }]}>
         <ThemeArtwork slot="home.background" fallbackSlot="shell.background" />
@@ -640,6 +653,7 @@ export function HomeOverview({
             contentContainerStyle={{ paddingBottom: 24 }}
             onScroll={onScroll}
             scrollEventThrottle={16}
+            showsVerticalScrollIndicator={false}
             refreshControl={
               <RefreshControl
                 refreshing={refreshing}
@@ -647,27 +661,22 @@ export function HomeOverview({
                 tintColor={theme.colors.primary}
               />
             }>
+            {hasEditorialArtwork && editorialArtworkResolution ? (
+              <HomeEditorialArtwork
+                resolution={editorialArtworkResolution}
+                onAvailabilityChange={(available) => {
+                  if (!available)
+                    setFailedEditorialArtworkSource(editorialArtworkResolution.source);
+                }}
+              />
+            ) : null}
             {returnToTask ? <View style={styles.embeddedReturnRow}>{returnToTask}</View> : null}
             {hydrationError ? (
               <GatewayStorageError busy={loading} onRetry={retryHydration} />
             ) : null}
-            <ThemeArtwork slot="home.decoration" banner />
             <Animated.View style={editorialRevealStyle}>
-              <ComposedHomeLayout
+              <HomeEditorialLayout
                 contentWidth={editorialWidth || width}
-                artworkAvailable={hasHeroArtwork}
-                artwork={
-                  hasHeroArtwork && heroResolution ? (
-                    <HomeHero
-                      resolution={heroResolution}
-                      scrollY={scrollY}
-                      maxHeight={isPad ? 180 : 150}
-                      onAvailabilityChange={(available) => {
-                        if (!available) setFailedHeroSource(heroResolution.source);
-                      }}
-                    />
-                  ) : undefined
-                }
                 identity={
                   identity.showBrand ? (
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
@@ -1254,15 +1263,6 @@ function HeaderButton({
       <ThemedSurfaceArtwork slot="navigation.background" baseColor={theme.colors.surface} />
       {children}
     </PressableScale>
-  );
-}
-
-function ComposedHomeLayout(props: HomeEditorialLayoutProps) {
-  const profile = useAppearanceProfile();
-  return profile.id === 'mechanical' ? (
-    <HomeMechanicalLayout {...props} />
-  ) : (
-    <HomeEditorialLayout {...props} />
   );
 }
 

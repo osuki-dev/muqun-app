@@ -115,7 +115,13 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   front: { alignSelf: 'center', maxWidth: '100%' },
-  back: { position: 'absolute', top: 0, alignSelf: 'center', bottom: 0, borderWidth: 1 },
+  back: {
+    position: 'absolute',
+    top: 0,
+    alignSelf: 'center',
+    bottom: 0,
+    borderWidth: StyleSheet.hairlineWidth,
+  },
   measuring: { position: 'absolute', top: 0, left: 0, right: 0, opacity: 0 },
   next: {
     alignSelf: 'flex-end',

@@ -33,6 +33,8 @@ export type HomeContinueEntry = {
   key: string;
   title: string;
   atMs: number;
+  /** Structured gateway agent identity, if the pane snapshot reported one. */
+  agentLabel?: string;
   /** Latest gateway observation; this is never inferred from visit history. */
   observation?: HomeContinueObservation;
   destination:
@@ -93,6 +95,7 @@ export function homeContinueEntries({
         key,
         title: agent.name,
         atMs: visited?.atMs ?? 0,
+        ...(agent.agentLabel ? { agentLabel: agent.agentLabel } : {}),
         observation:
           agent.hasAgent && model.age
             ? {

@@ -1,16 +1,14 @@
 import { createStore } from 'zustand/vanilla';
-import type { AgentRunStatus, ShellInfo, TimelineItem } from '@/lib/agent-protocol';
+import type { AgentRunStatus, TimelineItem } from '@/lib/agent-protocol';
 import { reconcileShellParts, type TimelineRenderGroup } from '@/lib/agent-timeline-groups';
 import { classifyTool } from '@/lib/agent-tool-output';
-
-const EMPTY_SHELLS: readonly ShellInfo[] = [];
 
 /** One canonical timeline per mounted workbench; rows are derived, never mirrored back. */
 export function createAgentTranscriptStore() {
   return createStore<AgentTranscriptState>((set, get) => {
     const rebuild = (timeline: TimelineItem[], config = get().config) => {
       const previous = get();
-      const reconciled = reconcileShellParts(timeline, config.shells);
+      const reconciled = reconcileShellParts(timeline);
       // windowStart indexes the canonical timeline, not the deduplicated list.
       // Shell copies can occupy the entire newest page; keep a real page visible
       // instead of slicing beyond the end after those copies are removed.
@@ -104,7 +102,7 @@ export function createAgentTranscriptStore() {
       backgroundTools: 0,
       todos: undefined,
       reasoningKey: undefined,
-      config: { shells: EMPTY_SHELLS, windowStart: 0, status: undefined },
+      config: { windowStart: 0, status: undefined },
       setTimeline: (update, windowStart) => {
         const current = get().timeline;
         const next = typeof update === 'function' ? update(current) : update;
@@ -114,11 +112,7 @@ export function createAgentTranscriptStore() {
       },
       configure: (config) => {
         const current = get().config;
-        if (
-          current.shells !== config.shells ||
-          current.windowStart !== config.windowStart ||
-          current.status !== config.status
-        )
+        if (current.windowStart !== config.windowStart || current.status !== config.status)
           rebuild(get().timeline, config);
       },
     };
@@ -126,7 +120,6 @@ export function createAgentTranscriptStore() {
 }
 
 interface TranscriptConfig {
-  shells: readonly ShellInfo[];
   windowStart: number;
   status: AgentRunStatus | undefined;
 }

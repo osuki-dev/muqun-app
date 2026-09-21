@@ -2,7 +2,7 @@ import { expect, test } from 'bun:test';
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { stageThemeAssetStream, type ThemeAssetStagePort } from '@/theme/asset-stream';
-import { createThemeStarter } from '@/theme/authoring';
+import { createThemeStarter } from '@/theme/starter';
 import { assetInstallProgress, type ThemeInstallProgress } from '@/theme/install-progress';
 import { packTheme } from '@/theme/package';
 import {
