@@ -3,8 +3,10 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { useThemeTokens, useToast } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
 import { Trans, useLingui } from '@lingui/react/macro';
+import { plural } from '@lingui/core/macro';
 import {
   Bot,
+  Check,
   ChevronDown,
   Clock,
   Copy,
@@ -67,6 +69,7 @@ import {
 } from '@/lib/agent-session';
 import { usePermissionDecider, usePermissionForToolCall } from '@/stores/agent-permissions';
 import type { TimelineRenderGroup } from '@/lib/agent-timeline-groups';
+import { groupRoutineToolEntries, type RoutineToolEntry } from '@/lib/agent-tool-groups';
 import { AGENT_TYPE } from '@/constants/agent-type';
 
 const IMAGE_DATA_URI_PREFIX = 'data:image/';
@@ -839,6 +842,79 @@ const ToolPartCard = memo(function ToolPartCard({
   );
 });
 
+/** Several quiet, completed calls behind one disclosure row. */
+const AgentToolGroup = memo(function AgentToolGroup({
+  entries,
+  markdownStyle,
+  actions,
+  readOnly,
+}: {
+  entries: readonly RoutineToolEntry[];
+  markdownStyle: MarkdownStyle;
+  actions: AgentToolActions;
+  readOnly: boolean;
+}) {
+  const { t } = useLingui();
+  const theme = useThemeTokens();
+  const plate = useTranscriptPlate();
+  const [expanded, setExpanded] = useState(false);
+  const toolNames = useMemo(
+    () => [...new Set(entries.map((entry) => entry.item.part.name))].join(' · '),
+    [entries]
+  );
+  const title = t`${plural(entries.length, { one: '# operation', other: '# operations' })}`;
+  const chevronProgress = useSharedValue(expanded ? 1 : 0);
+  useEffect(() => {
+    chevronProgress.value = withTiming(expanded ? 1 : 0, timing('micro'));
+  }, [expanded, chevronProgress]);
+  const chevronStyle = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${chevronProgress.value * 180}deg` }],
+  }));
+
+  return (
+    <View style={styles.toolGroup}>
+      <PressableScale
+        testID={`agent-tool-group-${entries[0].item.id}`}
+        accessibilityRole="button"
+        accessibilityState={{ expanded }}
+        accessibilityLabel={[title, toolNames].filter(Boolean).join(', ')}
+        onPress={() => setExpanded((previous) => !previous)}
+        style={[styles.toolGroupHeader, plate]}>
+        <Layers size={13} color={theme.colors.textMuted} />
+        <View style={styles.toolGroupCopy}>
+          <Text variant="caption" weight="semibold" color={theme.colors.text}>
+            {title}
+          </Text>
+          <Text
+            variant="caption"
+            color={theme.colors.textSubtle}
+            numberOfLines={1}
+            style={styles.toolGroupNames}>
+            {toolNames}
+          </Text>
+        </View>
+        <Check size={12} color={theme.colors.success} />
+        <Animated.View style={chevronStyle}>
+          <ChevronDown size={12} color={theme.colors.textMuted} />
+        </Animated.View>
+      </PressableScale>
+      {expanded ? (
+        <Animated.View entering={fadeIn('micro')} style={styles.toolGroupItems}>
+          {entries.map((entry) => (
+            <ToolPartCard
+              key={entry.item.id}
+              part={entry.item.part}
+              markdownStyle={markdownStyle}
+              actions={actions}
+              readOnly={readOnly}
+            />
+          ))}
+        </Animated.View>
+      ) : null}
+    </View>
+  );
+});
+
 /**
  * One message's thinking, as one block.
  *
@@ -1118,6 +1194,7 @@ export const AgentAssistantMessage = memo(function AgentAssistantMessage({
     const built = buildTimelineEntries(drawn, reasoningLive);
     return showReasoning ? built : built.filter((entry) => entry.kind !== 'reasoning');
   }, [group.items, showReasoning, reasoningLive]);
+  const displayEntries = useMemo(() => groupRoutineToolEntries(entries), [entries]);
 
   if (entries.length === 0) return null;
 
@@ -1138,7 +1215,22 @@ export const AgentAssistantMessage = memo(function AgentAssistantMessage({
     );
     run = [];
   };
-  entries.forEach((entry, index) => {
+  displayEntries.forEach((displayEntry) => {
+    if (displayEntry.kind === 'tool-group') {
+      flush();
+      rows.push(
+        <View key={displayEntry.key} style={styles.standaloneRow}>
+          <AgentToolGroup
+            entries={displayEntry.entries}
+            markdownStyle={markdownStyle}
+            actions={actions}
+            readOnly={readOnly}
+          />
+        </View>
+      );
+      return;
+    }
+    const { entry, sourceIndex } = displayEntry;
     if (entry.kind === 'reasoning') {
       flush();
       rows.push(
@@ -1151,7 +1243,7 @@ export const AgentAssistantMessage = memo(function AgentAssistantMessage({
     const drawn = renderTimelinePart(entry.item, {
       showReasoning,
       markdownStyle,
-      prevItem: previousItemAt(entries, index) ?? group.prevItem,
+      prevItem: previousItemAt(entries, sourceIndex) ?? group.prevItem,
       actions,
       readOnly,
     });
@@ -1228,6 +1320,18 @@ const styles = StyleSheet.create({
     width: '100%',
     marginVertical: TRANSCRIPT_ROW_GAP / 2,
   },
+  toolGroup: { gap: TRANSCRIPT_ROW_GAP },
+  toolGroupHeader: {
+    minHeight: 44,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 7,
+  },
+  toolGroupCopy: { flex: 1, minWidth: 0, gap: 1 },
+  toolGroupNames: { fontSize: AGENT_TYPE.micro.size },
+  toolGroupItems: { gap: TRANSCRIPT_ROW_GAP },
   roleRow: {
     flexDirection: 'row',
     alignItems: 'center',

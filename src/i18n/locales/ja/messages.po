@@ -86,6 +86,11 @@ msgstr "{0, plural, other {# 分}}"
 msgid "{0, plural, one {# more line} other {# more lines}}"
 msgstr "{0, plural, other {残り # 行}}"
 
+#. placeholder {0}: entries.length
+#: src/components/agent-message-block.tsx
+msgid "{0, plural, one {# operation} other {# operations}}"
+msgstr "{0, plural, other {# 件の操作}}"
+
 #. placeholder {0}: unused.count
 #. placeholder {1}: formatCacheSize(unused.reclaimableBytes)
 #: src/components/settings-storage.tsx
@@ -482,6 +487,10 @@ msgstr "常に許可"
 #: src/components/agent-context-sheet.tsx
 msgid "Always allowed"
 msgstr "常に許可"
+
+#: src/components/settings-home-layout-sheet.tsx
+msgid "An instrument-panel Home with compact, angular controls."
+msgstr "コンパクトで角張った操作部を備えた計器盤風のホーム"
 
 #: src/components/agent-revert-plate.tsx
 msgid "and {rest} more"
@@ -889,8 +898,8 @@ msgid "Choose files"
 msgstr "ファイルを選択"
 
 #: src/components/settings-appearance.tsx
-msgid "Choose how Home is arranged."
-msgstr "ホームの配置を選択"
+msgid "Choose Home and app chrome. Colours stay with your theme."
+msgstr "ホームとアプリの外観を選びます。配色はテーマに従います"
 
 #: src/components/agent-workbench.tsx
 msgid "Choose project"
@@ -1149,6 +1158,7 @@ msgid "Connecting…"
 msgstr "接続中…"
 
 #: src/components/home-editorial-layout.tsx
+#: src/components/home-mechanical-layout.tsx
 msgid "Connections"
 msgstr "接続"
 
@@ -1179,6 +1189,7 @@ msgstr "コンテキスト使用量"
 
 #: src/app/explore.tsx
 #: src/components/home-editorial-layout.tsx
+#: src/components/home-mechanical-layout.tsx
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Continue"
 msgstr "続行"
@@ -2649,6 +2660,11 @@ msgstr "確認済みにする"
 #: src/components/settings-appearance.tsx
 msgid "Mascot"
 msgstr "マスコット"
+
+#: src/components/settings-appearance.tsx
+#: src/components/settings-home-layout-sheet.tsx
+msgid "Mechanical"
+msgstr "メカニカル"
 
 #. placeholder {0}: hit.path
 #: src/components/file-mention-panel.tsx

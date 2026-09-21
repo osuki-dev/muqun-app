@@ -104,8 +104,8 @@ export type HomeCommandPorts = {
   sourceRouteActive?: () => boolean;
   /** Read the existing server/session API needed by the panels picker. */
   loadTerminalSelection: (serverId: string) => Promise<HomeTerminalSelection | null>;
-  /** Validate a persisted, fully-scoped target before routing to it. */
-  validateTarget?: (target: HomeTarget) => Promise<boolean>;
+  /** Validate persisted terminal and SSH targets before routing to them. */
+  validateTarget?: (target: Exclude<HomeTarget, { kind: 'opencode-session' }>) => Promise<boolean>;
   /** An adapter owns actual route calls and any transport warm ordering. */
   navigate: (destination: HomeNavigation) => void;
   /** Optional shared capability/setup gate for creating a new OpenCode session. */
@@ -231,11 +231,12 @@ export function createHomeCommandController(ports: HomeCommandPorts) {
     operation: PendingOperation,
     serverId: string
   ): Promise<HomeCommandResult | null> {
-    if (!serverId || !ports.hasServer(serverId)) return missing(operation, serverId || 'server');
+    if (!serverId) return missing(operation, 'server');
 
     // Selecting an in-memory record is synchronous and still goes through the
-    // same operation guard. The async branch is only for a stale/not-yet-live
-    // record; it never reads a newly selected global record implicitly.
+    // same operation guard. A stale/not-yet-live rendered record can still be
+    // selected from keychain storage, so always try that fallback before
+    // treating the destination as missing.
     if (ports.selectServerNow(serverId)) return null;
     const selected = await ports.selectServer(serverId);
     if (!current(operation)) return superseded(operation);
@@ -297,13 +298,11 @@ export function createHomeCommandController(ports: HomeCommandPorts) {
             finish(operation);
             return { status: 'dispatched', operationId: operation.id };
           }
-          if (!target.serverId || !ports.hasServer(target.serverId))
-            return missing(operation, target.serverId || 'server');
           const selection = await selectBeforeNavigate(operation, target.serverId);
           if (selection) return selection;
           const ownership = selectedServerStillOwns(operation, target.serverId);
           if (ownership) return ownership;
-          if (ports.validateTarget) {
+          if (target.kind === 'gateway-terminal' && ports.validateTarget) {
             const valid = await ports.validateTarget(target);
             if (!current(operation)) return superseded(operation);
             if (!valid) return missing(operation, homeTargetKey(target));

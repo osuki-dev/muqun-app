@@ -36,6 +36,7 @@ import { readFileSync } from 'node:fs';
  * survive, and a value that spends what is left and then ellipsises.
  */
 const CHROME = 'src/components/settings-chrome.tsx';
+const APPEARANCE = 'src/components/settings-appearance.tsx';
 
 function chrome(): string {
   return readFileSync(CHROME, 'utf8');
@@ -47,6 +48,14 @@ function component(source: string, name: string): string {
   expect(start).toBeGreaterThan(-1);
   const next = source.indexOf('\nexport function ', start + 1);
   return source.slice(start, next === -1 ? source.length : next);
+}
+
+function choiceRow(source: string, testID: string): string {
+  const end = source.indexOf(`testID="${testID}"`);
+  expect(end).toBeGreaterThan(-1);
+  const start = source.lastIndexOf('<SettingsChoiceRow', end);
+  expect(start).toBeGreaterThan(-1);
+  return source.slice(start, end);
 }
 
 test('the choice row gives its label column a floor of more than half the row', () => {
@@ -70,6 +79,13 @@ test('a below-positioned choice uses the full label column for long theme names'
   expect(body).toContain("valuePosition === 'below'");
   expect(body).toContain('style={styles.choiceValueBelow}');
   expect(body).toContain("valuePosition === 'trailing'");
+});
+
+test('appearance choices keep their answers on a third line', () => {
+  const source = readFileSync(APPEARANCE, 'utf8');
+  for (const testID of ['settings-home-layout-row', 'settings-theme-row', 'settings-font-row']) {
+    expect(choiceRow(source, testID)).toContain('valuePosition="below"');
+  }
 });
 
 test('the choice row value wraps to two right-aligned lines, then ellipsises', () => {

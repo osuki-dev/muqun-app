@@ -86,6 +86,11 @@ msgstr "{0, plural, one {# minuto} other {# minutos}}"
 msgid "{0, plural, one {# more line} other {# more lines}}"
 msgstr "{0, plural, one {# linha a mais} other {# linhas a mais}}"
 
+#. placeholder {0}: entries.length
+#: src/components/agent-message-block.tsx
+msgid "{0, plural, one {# operation} other {# operations}}"
+msgstr "{0, plural, one {# operação} other {# operações}}"
+
 #. placeholder {0}: unused.count
 #. placeholder {1}: formatCacheSize(unused.reclaimableBytes)
 #: src/components/settings-storage.tsx
@@ -482,6 +487,10 @@ msgstr "Permitir sempre"
 #: src/components/agent-context-sheet.tsx
 msgid "Always allowed"
 msgstr "Sempre permitido"
+
+#: src/components/settings-home-layout-sheet.tsx
+msgid "An instrument-panel Home with compact, angular controls."
+msgstr "Um início em painel de instrumentos com controlos compactos e angulares"
 
 #: src/components/agent-revert-plate.tsx
 msgid "and {rest} more"
@@ -889,8 +898,8 @@ msgid "Choose files"
 msgstr "Escolher ficheiros"
 
 #: src/components/settings-appearance.tsx
-msgid "Choose how Home is arranged."
-msgstr "Escolha como o Home é organizado"
+msgid "Choose Home and app chrome. Colours stay with your theme."
+msgstr "Escolha o início e o estilo da interface. As cores continuam a seguir o tema"
 
 #: src/components/agent-workbench.tsx
 msgid "Choose project"
@@ -1149,6 +1158,7 @@ msgid "Connecting…"
 msgstr "A ligar…"
 
 #: src/components/home-editorial-layout.tsx
+#: src/components/home-mechanical-layout.tsx
 msgid "Connections"
 msgstr "Conexões"
 
@@ -1179,6 +1189,7 @@ msgstr "Contexto usado"
 
 #: src/app/explore.tsx
 #: src/components/home-editorial-layout.tsx
+#: src/components/home-mechanical-layout.tsx
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Continue"
 msgstr "Continuar"
@@ -2649,6 +2660,11 @@ msgstr "Marcar como revisado"
 #: src/components/settings-appearance.tsx
 msgid "Mascot"
 msgstr "Mascote"
+
+#: src/components/settings-appearance.tsx
+#: src/components/settings-home-layout-sheet.tsx
+msgid "Mechanical"
+msgstr "Mecânico"
 
 #. placeholder {0}: hit.path
 #: src/components/file-mention-panel.tsx

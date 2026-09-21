@@ -1,6 +1,7 @@
 import type { NativeStackNavigationOptions } from 'expo-router';
 
 import { appChrome } from '@/constants/appearance';
+import type { AppearanceProfile } from '@/lib/appearance-profile';
 
 export type SheetPresentation = 'sheet' | 'fullscreen';
 
@@ -108,8 +109,7 @@ export const sheetRouteDetents: Readonly<Record<string, SheetDetents>> = {
   'settings-font': 'expandable',
   // One short list of languages: as tall as it is, and no taller.
   'settings-language': 'fitToContents',
-  // Two layout previews and their descriptions, with enough room to compare
-  // them without making a two-choice preference a full-screen page.
+  // Three layout previews and their descriptions, in the same scrollable sheet.
   'settings-home-layout': 'expandable',
   // Full height leaves room for the composer and keyboard.
   'new-task': 'expandable',
@@ -341,10 +341,20 @@ export function sheetPresentationOptions(
  * `_layout.tsx`, because each of them also overrides the animation duration --
  * and because the contract test greps for exactly that spelling.
  */
-export function sheetRouteOptions(route: string): NativeStackNavigationOptions {
-  return sheetPresentationOptions(
+export function sheetRouteOptions(
+  route: string,
+  profile?: AppearanceProfile,
+  reduceMotion = false
+): NativeStackNavigationOptions {
+  const options = sheetPresentationOptions(
     sheetRoutePresentations[route] ?? 'sheet',
     sheetRouteDetents[route] ?? 'full',
     sheetRouteContent[route] ?? 'short'
   );
+  return {
+    ...options,
+    ...(profile ? { sheetCornerRadius: profile.chrome.sheet } : {}),
+    // Duration alone does not disable native Android transitions.
+    ...(reduceMotion ? { animation: 'none', animationDuration: 0 } : {}),
+  };
 }

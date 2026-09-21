@@ -16,6 +16,7 @@ describe('home layout resolution', () => {
   test('accepts only released layouts', () => {
     expect(isHomeLayout('classic')).toBe(true);
     expect(isHomeLayout('editorial')).toBe(true);
+    expect(isHomeLayout('mechanical')).toBe(true);
     expect(isHomeLayout('studio')).toBe(false);
     expect(isHomeLayout(null)).toBe(false);
     expect(isHomeLayout({ id: 'classic' })).toBe(false);
@@ -30,5 +31,6 @@ describe('home layout resolution', () => {
 
   test('keeps an explicitly selected released layout', () => {
     expect(resolveHomeLayout('editorial')).toBe('editorial');
+    expect(resolveHomeLayout('mechanical')).toBe('mechanical');
   });
 });

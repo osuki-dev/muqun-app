@@ -21,6 +21,7 @@ import type { GatewayRecord } from '@/lib/gateway-storage';
 import { reachabilityDescription } from '@/i18n/labels';
 import type { ServerReachability } from '@/lib/server-reachability';
 import { useHomeTargetPicker } from '@/stores/home-target-picker';
+import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 
 /** Target choice is local to Home; a selection alone never switches a live connection. */
 export function useHomeLaunchController({
@@ -127,6 +128,7 @@ export function HomeLaunchTarget({
   loading?: boolean;
   onPair: () => Promise<unknown>;
 }) {
+  const profile = useAppearanceProfile();
   const { t } = useLingui();
   const theme = useThemeTokens();
   const background = useSurfaceBackground();
@@ -144,7 +146,10 @@ export function HomeLaunchTarget({
         if (servers.length === 0) void run(onPair);
         else openTargetPicker();
       }}
-      style={[styles.target, { backgroundColor: background(theme.colors.surface) }]}>
+      style={[
+        styles.target,
+        { backgroundColor: background(theme.colors.surface), borderRadius: profile.chrome.control },
+      ]}>
       <Text variant="bodySmall" weight="semibold" numberOfLines={1} style={styles.targetName}>
         {loading
           ? t`Loading servers`
@@ -293,6 +298,7 @@ function LaunchTile({
   disabled: boolean;
   testID: string;
 }) {
+  const profile = useAppearanceProfile();
   const theme = useThemeTokens();
   const background = useSurfaceBackground();
   const ink = primary ? theme.colors.onPrimary : theme.colors.text;
@@ -323,6 +329,7 @@ function LaunchTile({
         onPress={onPress}
         style={[
           styles.compactTile,
+          { borderRadius: profile.chrome.control },
           {
             backgroundColor: background(theme.colors.surface),
             opacity: disabled ? 0.6 : 1,
@@ -361,6 +368,7 @@ function LaunchTile({
       onPress={onPress}
       style={[
         styles.tile,
+        { borderRadius: profile.chrome.control },
         primary ? styles.primaryTile : styles.secondaryTile,
         {
           backgroundColor: background(primary ? theme.colors.primary : theme.colors.surface),

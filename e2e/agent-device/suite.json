@@ -104,6 +104,12 @@
       "platforms": ["ios", "android"]
     },
     {
+      "name": "appearance-profiles",
+      "program": "flows/appearance-profiles",
+      "tags": ["full"],
+      "platforms": ["ios", "android"]
+    },
+    {
       "name": "away-digest",
       "program": "flows/away-digest",
       "tags": ["full"],
@@ -202,6 +208,36 @@
     }
   ],
   "programs": {
+    "flows/appearance-profiles": [
+      { "include": "subflows/launch-home" },
+      {
+        "target": { "text": "(?i)settings" },
+        "mode": "press",
+        "run": "flows/appearance-profiles.ad#press"
+      },
+      {
+        "target": { "id": "settings-home-layout-row" },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 20000,
+        "run": "flows/appearance-profiles.ad#seek"
+      },
+      { "run": "flows/appearance-profiles.ad#choose-mechanical" },
+      { "run": "flows/appearance-profiles.ad#relaunch" },
+      {
+        "target": { "text": "(?i)settings" },
+        "mode": "press",
+        "run": "flows/appearance-profiles.ad#press"
+      },
+      {
+        "target": { "id": "settings-home-layout-row" },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 20000,
+        "run": "flows/appearance-profiles.ad#seek"
+      },
+      { "run": "flows/appearance-profiles.ad#restore" }
+    ],
     "flows/theme-document": [
       {
         "include": "subflows/open-demo"

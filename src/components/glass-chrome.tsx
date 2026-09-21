@@ -14,6 +14,7 @@ import {
 import Animated from 'react-native-reanimated';
 
 import { appChrome } from '@/constants/appearance';
+import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { withAlpha } from '@/lib/color';
 import { DURATION } from '@/lib/motion';
 import { resolveThemeImage } from '@/theme/resolve';
@@ -103,6 +104,7 @@ export function GlassChrome({
   entering,
   exiting,
 }: GlassChromeProps) {
+  const profile = useAppearanceProfile();
   const { resolvedMode } = useThemeMode();
   const theme = useThemeTokens();
   const dark = resolvedMode === 'dark';
@@ -151,6 +153,16 @@ export function GlassChrome({
    */
   const chromeStyle: StyleProp<ViewStyle> = [
     style,
+    profile.id !== 'classic' &&
+      (face === 'sheet'
+        ? {
+            borderTopLeftRadius: profile.chrome.sheet,
+            borderTopRightRadius: profile.chrome.sheet,
+          }
+        : {
+            borderRadius:
+              surface === 'navigation' ? profile.chrome.navigationPill : profile.chrome.control,
+          }),
     hasImage && { overflow: 'hidden' },
     {
       borderWidth: StyleSheet.hairlineWidth,

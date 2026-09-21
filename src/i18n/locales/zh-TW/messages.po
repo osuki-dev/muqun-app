@@ -86,6 +86,11 @@ msgstr "{0, plural, other {# 分鐘}}"
 msgid "{0, plural, one {# more line} other {# more lines}}"
 msgstr "{0, plural, other {還有 # 行}}"
 
+#. placeholder {0}: entries.length
+#: src/components/agent-message-block.tsx
+msgid "{0, plural, one {# operation} other {# operations}}"
+msgstr "{0, plural, other {# 項工具操作}}"
+
 #. placeholder {0}: unused.count
 #. placeholder {1}: formatCacheSize(unused.reclaimableBytes)
 #: src/components/settings-storage.tsx
@@ -482,6 +487,10 @@ msgstr "一律允許"
 #: src/components/agent-context-sheet.tsx
 msgid "Always allowed"
 msgstr "一律允許"
+
+#: src/components/settings-home-layout-sheet.tsx
+msgid "An instrument-panel Home with compact, angular controls."
+msgstr "儀表板式首頁，搭配緊湊、稜角分明的控制項"
 
 #: src/components/agent-revert-plate.tsx
 msgid "and {rest} more"
@@ -889,8 +898,8 @@ msgid "Choose files"
 msgstr "選擇檔案"
 
 #: src/components/settings-appearance.tsx
-msgid "Choose how Home is arranged."
-msgstr "選擇首頁的版面"
+msgid "Choose Home and app chrome. Colours stay with your theme."
+msgstr "選擇首頁與應用程式介面樣式。配色仍由主題決定"
 
 #: src/components/agent-workbench.tsx
 msgid "Choose project"
@@ -1149,6 +1158,7 @@ msgid "Connecting…"
 msgstr "連線中…"
 
 #: src/components/home-editorial-layout.tsx
+#: src/components/home-mechanical-layout.tsx
 msgid "Connections"
 msgstr "連線"
 
@@ -1179,6 +1189,7 @@ msgstr "上下文佔用"
 
 #: src/app/explore.tsx
 #: src/components/home-editorial-layout.tsx
+#: src/components/home-mechanical-layout.tsx
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Continue"
 msgstr "繼續"
@@ -2649,6 +2660,11 @@ msgstr "標記已查看"
 #: src/components/settings-appearance.tsx
 msgid "Mascot"
 msgstr "吉祥物"
+
+#: src/components/settings-appearance.tsx
+#: src/components/settings-home-layout-sheet.tsx
+msgid "Mechanical"
+msgstr "機械"
 
 #. placeholder {0}: hit.path
 #: src/components/file-mention-panel.tsx

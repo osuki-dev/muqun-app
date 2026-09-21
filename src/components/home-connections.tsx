@@ -59,7 +59,6 @@ export function HomeConnections({
               accessibilityRole="button"
               accessibilityLabel={`${host.label}, ${t`Saved SSH host`}`}
               onPress={() => onOpenHost(host.id)}
-              pressedScale={1}
               style={[
                 styles.row,
                 index < hosts.length - 1 && {
@@ -130,7 +129,6 @@ function GatewayConnectionRow({
       accessibilityRole="button"
       accessibilityLabel={`${server.label}, ${status}`}
       onPress={() => onOpen(server.serverId)}
-      pressedScale={1}
       style={[
         styles.row,
         hasSeparator && {

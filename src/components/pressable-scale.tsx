@@ -1,5 +1,11 @@
 import { type PressableProps, Pressable, type StyleProp, type ViewStyle } from 'react-native';
-import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
+import Animated, {
+  useAnimatedStyle,
+  useReducedMotion,
+  useSharedValue,
+  withTiming,
+} from 'react-native-reanimated';
+import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 
 import { feedback, type FeedbackKind } from '@/lib/feedback';
 import { PRESS, timing } from '@/lib/motion';
@@ -17,11 +23,13 @@ export function PressableScale({
   feedback: feedbackKind = 'selection',
   onPressIn,
   onPressOut,
-  pressedScale = 0.985,
+  pressedScale,
   style,
   ...props
 }: PressableScaleProps) {
   const scale = useSharedValue(1);
+  const profile = useAppearanceProfile();
+  const reduceMotion = useReducedMotion();
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
@@ -35,7 +43,10 @@ export function PressableScale({
         // `timing` carries the system ease-out and, more importantly, the
         // reduce-motion check: with the accessibility setting on, the scale
         // lands instantly instead of being animated at all.
-        scale.value = withTiming(pressedScale, timing(PRESS.in));
+        scale.value = withTiming(
+          reduceMotion ? 1 : (pressedScale ?? profile.motion.pressedScale),
+          timing(PRESS.in)
+        );
         onPressIn?.(event);
       }}
       onPressOut={(event) => {

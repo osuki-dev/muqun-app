@@ -86,6 +86,11 @@ msgstr "{0, plural, other {#분}}"
 msgid "{0, plural, one {# more line} other {# more lines}}"
 msgstr "{0, plural, other {#줄 더 있음}}"
 
+#. placeholder {0}: entries.length
+#: src/components/agent-message-block.tsx
+msgid "{0, plural, one {# operation} other {# operations}}"
+msgstr "{0, plural, other {작업 #개}}"
+
 #. placeholder {0}: unused.count
 #. placeholder {1}: formatCacheSize(unused.reclaimableBytes)
 #: src/components/settings-storage.tsx
@@ -482,6 +487,10 @@ msgstr "항상 허용"
 #: src/components/agent-context-sheet.tsx
 msgid "Always allowed"
 msgstr "항상 허용"
+
+#: src/components/settings-home-layout-sheet.tsx
+msgid "An instrument-panel Home with compact, angular controls."
+msgstr "간결하고 각진 컨트롤을 갖춘 계기판 스타일 홈"
 
 #: src/components/agent-revert-plate.tsx
 msgid "and {rest} more"
@@ -889,8 +898,8 @@ msgid "Choose files"
 msgstr "파일 선택"
 
 #: src/components/settings-appearance.tsx
-msgid "Choose how Home is arranged."
-msgstr "Home 배치 방식을 선택하세요"
+msgid "Choose Home and app chrome. Colours stay with your theme."
+msgstr "홈과 앱 인터페이스 스타일을 선택하세요. 색상은 테마를 따릅니다"
 
 #: src/components/agent-workbench.tsx
 msgid "Choose project"
@@ -1149,6 +1158,7 @@ msgid "Connecting…"
 msgstr "연결 중…"
 
 #: src/components/home-editorial-layout.tsx
+#: src/components/home-mechanical-layout.tsx
 msgid "Connections"
 msgstr "연결"
 
@@ -1179,6 +1189,7 @@ msgstr "사용한 컨텍스트"
 
 #: src/app/explore.tsx
 #: src/components/home-editorial-layout.tsx
+#: src/components/home-mechanical-layout.tsx
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Continue"
 msgstr "계속"
@@ -2649,6 +2660,11 @@ msgstr "확인 완료로 표시"
 #: src/components/settings-appearance.tsx
 msgid "Mascot"
 msgstr "마스코트"
+
+#: src/components/settings-appearance.tsx
+#: src/components/settings-home-layout-sheet.tsx
+msgid "Mechanical"
+msgstr "메커니컬"
 
 #. placeholder {0}: hit.path
 #: src/components/file-mention-panel.tsx

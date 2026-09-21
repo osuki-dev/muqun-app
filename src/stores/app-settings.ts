@@ -40,7 +40,8 @@ type PersistedSettings = {
   androidWidgetEnabled: boolean;
   appLockEnabled: boolean;
   hapticsEnabled: boolean;
-  // Home composition is a device preference, independent of the active theme.
+  // The sole appearance preference: also derives global chrome and motion.
+  // Theme choice remains independent and owns only colours and artwork.
   homeLayout: HomeLayout;
   /**
    * The face the app's own text is set in, and the face its code is set in.

@@ -15,7 +15,7 @@ import Animated from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { PressableScale } from '@/components/pressable-scale';
-import { appChrome } from '@/constants/appearance';
+import { useNotificationSurfaceStyle } from '@/components/notification-surface';
 import { fadeInDown, fadeOutUp } from '@/lib/motion';
 import { RELEASE_NOTES } from '@/lib/release-notes';
 
@@ -34,6 +34,7 @@ const NOTES_SIGNATURE = RELEASE_NOTES.items.map((item) => item.message ?? item.i
  * A store build with no updates enabled never reaches the check.
  */
 export function WhatsNewCard() {
+  const notificationSurfaceStyle = useNotificationSurfaceStyle();
   const { t } = useLingui();
   const { _ } = useLinguiRuntime();
   const theme = useThemeTokens();
@@ -73,7 +74,13 @@ export function WhatsNewCard() {
         // this slot under the status bar.
         entering={fadeInDown('medium')}
         exiting={fadeOutUp('short')}
-        style={[styles.card, { backgroundColor: surfaceBackground(theme.colors.surface) }]}>
+        style={[
+          styles.card,
+          notificationSurfaceStyle,
+          {
+            backgroundColor: surfaceBackground(theme.colors.surface),
+          },
+        ]}>
         <View style={styles.header}>
           <View
             style={[
@@ -134,11 +141,8 @@ const styles = StyleSheet.create({
   card: {
     width: '100%',
     maxWidth: 420,
-    borderRadius: appChrome.radius.noticeCard,
-    borderCurve: 'continuous',
     padding: 14,
     gap: 12,
-    boxShadow: appChrome.shadow.notice,
   },
   header: {
     flexDirection: 'row',

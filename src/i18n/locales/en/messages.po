@@ -86,6 +86,11 @@ msgstr "{0, plural, one {# minute} other {# minutes}}"
 msgid "{0, plural, one {# more line} other {# more lines}}"
 msgstr "{0, plural, one {# more line} other {# more lines}}"
 
+#. placeholder {0}: entries.length
+#: src/components/agent-message-block.tsx
+msgid "{0, plural, one {# operation} other {# operations}}"
+msgstr "{0, plural, one {# operation} other {# operations}}"
+
 #. placeholder {0}: unused.count
 #. placeholder {1}: formatCacheSize(unused.reclaimableBytes)
 #: src/components/settings-storage.tsx
@@ -482,6 +487,10 @@ msgstr "Always allow"
 #: src/components/agent-context-sheet.tsx
 msgid "Always allowed"
 msgstr "Always allowed"
+
+#: src/components/settings-home-layout-sheet.tsx
+msgid "An instrument-panel Home with compact, angular controls."
+msgstr "An instrument-panel Home with compact, angular controls"
 
 #: src/components/agent-revert-plate.tsx
 msgid "and {rest} more"
@@ -889,8 +898,8 @@ msgid "Choose files"
 msgstr "Choose files"
 
 #: src/components/settings-appearance.tsx
-msgid "Choose how Home is arranged."
-msgstr "Choose how Home is arranged"
+msgid "Choose Home and app chrome. Colours stay with your theme."
+msgstr "Choose Home and app chrome. Colours stay with your theme"
 
 #: src/components/agent-workbench.tsx
 msgid "Choose project"
@@ -1149,6 +1158,7 @@ msgid "Connecting…"
 msgstr "Connecting…"
 
 #: src/components/home-editorial-layout.tsx
+#: src/components/home-mechanical-layout.tsx
 msgid "Connections"
 msgstr "Connections"
 
@@ -1179,6 +1189,7 @@ msgstr "Context used"
 
 #: src/app/explore.tsx
 #: src/components/home-editorial-layout.tsx
+#: src/components/home-mechanical-layout.tsx
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Continue"
 msgstr "Continue"
@@ -2649,6 +2660,11 @@ msgstr "Mark reviewed"
 #: src/components/settings-appearance.tsx
 msgid "Mascot"
 msgstr "Mascot"
+
+#: src/components/settings-appearance.tsx
+#: src/components/settings-home-layout-sheet.tsx
+msgid "Mechanical"
+msgstr "Mechanical"
 
 #. placeholder {0}: hit.path
 #: src/components/file-mention-panel.tsx

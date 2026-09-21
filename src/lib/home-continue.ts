@@ -40,6 +40,20 @@ export type HomeContinueEntry = {
     | { type: 'recent'; target: HomeTarget };
 };
 
+/** The first screenful is generous; expansion is only useful after it. */
+export const HOME_CONTINUE_INITIAL_LIMIT = 10;
+
+export function visibleHomeContinueEntries(
+  entries: readonly HomeContinueEntry[],
+  expanded: boolean
+): readonly HomeContinueEntry[] {
+  return expanded ? entries : entries.slice(0, HOME_CONTINUE_INITIAL_LIMIT);
+}
+
+export function shouldShowHomeContinueOverflow(entries: readonly HomeContinueEntry[]): boolean {
+  return entries.length > HOME_CONTINUE_INITIAL_LIMIT;
+}
+
 /** Same pane inventory/filter as Classic. Visits rank rows, never create inventory. */
 export function homeContinueEntries({
   serverIds,

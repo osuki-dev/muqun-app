@@ -14,7 +14,12 @@ import { hasRealSessionTitle } from '@/lib/agent-protocol';
 import type { GatewayRecord } from '@/lib/gateway-storage';
 import { listAgentSessionsObserved } from '@/lib/agent-session';
 import type { HomeTarget } from '@/lib/home-recents';
-import { homeContinueEntries, type HomeContinueEntry } from '@/lib/home-continue';
+import {
+  homeContinueEntries,
+  shouldShowHomeContinueOverflow,
+  visibleHomeContinueEntries,
+  type HomeContinueEntry,
+} from '@/lib/home-continue';
 import { agentStatusWord } from '@/i18n/labels';
 import { agentStatusTone } from '@/lib/herdr-entity';
 import type { ActiveServerConnection, ServerReachability } from '@/lib/server-reachability';
@@ -23,6 +28,7 @@ import { useAppSettings } from '@/stores/app-settings';
 import type { SshHostRecord } from '@/lib/ssh-hosts';
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';
 import { useHomeRecentsStore } from '@/stores/home-recents';
+import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 
 const HOME_SESSION_REFRESH_MS = 30_000;
 
@@ -46,6 +52,8 @@ export function HomeRecentSessions({
 }) {
   const { t } = useLingui();
   const theme = useThemeTokens();
+  const profile = useAppearanceProfile();
+  const background = useSurfaceBackground();
   const entries = useHomeRecentsStore((state) => state.entries);
   const hydrated = useHomeRecentsStore((state) => state.hydrated);
   const [expanded, setExpanded] = useState(false);
@@ -133,9 +141,14 @@ export function HomeRecentSessions({
     paneMode,
     nowMs: observationNowMs,
   });
-  const displayed = available.slice(0, expanded ? available.length : 3);
+  const displayed = visibleHomeContinueEntries(available, expanded);
   return (
-    <View testID="home-recent-sessions" style={styles.list}>
+    <View
+      testID="home-recent-sessions"
+      style={[
+        styles.list,
+        { backgroundColor: background(theme.colors.surface), borderRadius: profile.chrome.surface },
+      ]}>
       {displayed.map((entry, index) => (
         <RecentSessionRow
           key={entry.key}
@@ -165,11 +178,17 @@ export function HomeRecentSessions({
           {hydrated && snapshotsHydrated ? t`Nothing to show yet.` : t`Loading recent sessions…`}
         </Text>
       ) : null}
-      {available.length > 3 ? (
+      {shouldShowHomeContinueOverflow(available) ? (
         <PressableScale
           accessibilityRole="button"
           onPress={() => setExpanded(!expanded)}
-          style={styles.more}>
+          style={[
+            styles.more,
+            {
+              borderBottomLeftRadius: profile.chrome.surface,
+              borderBottomRightRadius: profile.chrome.surface,
+            },
+          ]}>
           <Text variant="bodySmall" color={theme.colors.primary}>
             {expanded ? t`Show less` : `${t`Sessions`} (${available.length})`}
           </Text>

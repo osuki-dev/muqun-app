@@ -16,8 +16,16 @@ import {
   Settings,
   SquareTerminal,
 } from 'lucide-react-native';
-import { type ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
-import { AppState, RefreshControl, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
+import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  AppState,
+  RefreshControl,
+  StyleSheet,
+  View,
+  type LayoutChangeEvent,
+  type NativeScrollEvent,
+  type NativeSyntheticEvent,
+} from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import Animated, {
   Extrapolation,
@@ -41,7 +49,12 @@ import { SectionLabel } from '@/components/settings-chrome';
 import { ServerAgentRows } from '@/components/server-agent-rows';
 import { GatewayTunnelBadge } from '@/components/gateway-tunnel-badge';
 import { HomeHero } from '@/components/home-hero';
-import { HomeEditorialLayout } from '@/components/home-editorial-layout';
+import {
+  HomeEditorialLayout,
+  type HomeEditorialLayoutProps,
+} from '@/components/home-editorial-layout';
+import { HomeMechanicalLayout } from '@/components/home-mechanical-layout';
+import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { HomeConnections } from '@/components/home-connections';
 import { HomeAttention } from '@/components/home-attention';
 import { HomeRecentSessions } from '@/components/home-recent-sessions';
@@ -93,7 +106,6 @@ import { homeHeroPreference } from '@/theme/repository';
 import { ThemeArtwork, useHasThemeArtwork } from '@/components/theme-artwork';
 import { ThemedSurface, ThemedSurfaceArtwork } from '@/components/themed-surface';
 import { useBrandMark } from '@/components/brand-mark';
-import { useAppSettings } from '@/stores/app-settings';
 import { forgetWarmWorkspace } from '@/lib/server-warm-cache';
 import { useLaunchHandoff } from '@/stores/launch-handoff';
 
@@ -153,7 +165,8 @@ export function HomeOverview({
   const { record, records, loading, hydrationError, retryHydration, selectRecord, enterDemo } =
     useGatewayRecord();
   const [refreshing, setRefreshing] = useState(false);
-  const homeLayout = useAppSettings((state) => state.homeLayout);
+  const profile = useAppearanceProfile();
+  const homeLayout = profile.id;
   const launchRevealing = useLaunchHandoff((state) => state.revealing);
   const reduceMotion = useReducedMotion();
   const editorialReveal = useSharedValue(0);
@@ -179,6 +192,19 @@ export function HomeOverview({
   const appActive = useAppActive();
   const isFocused = useIsFocused();
   const scrollY = useSharedValue(0);
+  // Save only at gesture boundaries, never once per frame on the JS thread.
+  // A composition can replace the list chrome, not the reader's scroll intent.
+  const overviewScroll = useRef<React.ComponentRef<typeof KeyboardAwareScrollView>>(null);
+  const restoredScroll = useRef<React.ComponentRef<typeof KeyboardAwareScrollView>>(null);
+  const savedScrollY = useRef(0);
+  const rememberScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    savedScrollY.current = event.nativeEvent.contentOffset.y;
+  };
+  const restoreScroll = () => {
+    if (restoredScroll.current === overviewScroll.current) return;
+    overviewScroll.current?.scrollTo({ y: savedScrollY.current, animated: false });
+    restoredScroll.current = overviewScroll.current;
+  };
   // Gutter, measure, card geometry and row density in one answer -- see
   // `homeServerListLayout` for why room, not server count alone, decides it.
   const metrics = homeServerListLayout(width, records.length);
@@ -514,16 +540,22 @@ export function HomeOverview({
   });
   const editorialReady = !loading && launchRevealing;
   useEffect(() => {
-    if (homeLayout !== 'editorial') {
-      editorialReveal.value = 0;
+    if (homeLayout === 'classic') {
+      // Switching the composition after launch is not a second entrance.
+      editorialReveal.value = 1;
       return;
     }
     if (!editorialReady) return;
-    editorialReveal.value = withTiming(1, timing(reduceMotion ? 0 : 'long'));
-  }, [editorialReady, editorialReveal, homeLayout, reduceMotion]);
+    editorialReveal.value = withTiming(1, timing(reduceMotion ? 0 : profile.motion.revealMs));
+  }, [editorialReady, editorialReveal, homeLayout, reduceMotion, profile]);
+  const revealDistance = profile.motion.revealDistance;
   const editorialRevealStyle = useAnimatedStyle(() => ({
-    opacity: 0.84 + editorialReveal.value * 0.16,
-    transform: [{ translateY: (1 - editorialReveal.value) * (reduceMotion ? 0 : 8) }],
+    opacity: reduceMotion ? 1 : 0.84 + editorialReveal.value * 0.16,
+    transform: [
+      {
+        translateY: (1 - editorialReveal.value) * (reduceMotion ? 0 : revealDistance),
+      },
+    ],
   }));
 
   function openServer(serverId: string, paneId?: string) {
@@ -592,15 +624,19 @@ export function HomeOverview({
       </PressableScale>
     ) : null;
 
-  if (homeLayout === 'editorial') {
+  if (homeLayout !== 'classic') {
     const editorialContent = (
       <View
-        testID="home-editorial"
+        testID={homeLayout === 'mechanical' ? 'home-mechanical' : 'home-editorial'}
         onLayout={(event) => setEditorialWidth(event.nativeEvent.layout.width)}
         style={[styles.page, { backgroundColor: background(theme.colors.background) }]}>
         <ThemeArtwork slot="home.background" fallbackSlot="shell.background" />
         <SafeAreaView style={styles.page} edges={['top', 'bottom']}>
           <KeyboardAwareScrollView
+            ref={overviewScroll}
+            onContentSizeChange={restoreScroll}
+            onScrollEndDrag={rememberScroll}
+            onMomentumScrollEnd={rememberScroll}
             contentContainerStyle={{ paddingBottom: 24 }}
             onScroll={onScroll}
             scrollEventThrottle={16}
@@ -617,7 +653,7 @@ export function HomeOverview({
             ) : null}
             <ThemeArtwork slot="home.decoration" banner />
             <Animated.View style={editorialRevealStyle}>
-              <HomeEditorialLayout
+              <ComposedHomeLayout
                 contentWidth={editorialWidth || width}
                 artworkAvailable={hasHeroArtwork}
                 artwork={
@@ -887,6 +923,10 @@ export function HomeOverview({
       ) : null}
 
       <KeyboardAwareScrollView
+        ref={overviewScroll}
+        onContentSizeChange={restoreScroll}
+        onScrollEndDrag={rememberScroll}
+        onMomentumScrollEnd={rememberScroll}
         bottomOffset={24}
         extraKeyboardSpace={12}
         contentInsetAdjustmentBehavior={isPad ? 'automatic' : 'never'}
@@ -1193,6 +1233,7 @@ function HeaderButton({
   children: ReactNode;
   editorial?: boolean;
 }) {
+  const profile = useAppearanceProfile();
   const theme = useThemeTokens();
   const background = useSurfaceBackground();
   return (
@@ -1208,12 +1249,21 @@ function HeaderButton({
         editorial && {
           width: 44,
           height: 44,
-          borderRadius: 5,
+          borderRadius: profile.chrome.control,
         },
       ]}>
       <ThemedSurfaceArtwork slot="navigation.background" baseColor={theme.colors.surface} />
       {children}
     </PressableScale>
+  );
+}
+
+function ComposedHomeLayout(props: HomeEditorialLayoutProps) {
+  const profile = useAppearanceProfile();
+  return profile.id === 'mechanical' ? (
+    <HomeMechanicalLayout {...props} />
+  ) : (
+    <HomeEditorialLayout {...props} />
   );
 }
 

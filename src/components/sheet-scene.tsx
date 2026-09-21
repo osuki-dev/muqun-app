@@ -22,6 +22,7 @@ import Animated, {
 import { PressableScale } from '@/components/pressable-scale';
 import { AGENT_TYPE } from '@/constants/agent-type';
 import { appChrome } from '@/constants/appearance';
+import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { SheetFrame } from '@/components/sheet-ground';
 import { SheetHandle } from '@/components/sheet-route-frame';
 import { KeyboardInset } from '@/components/keyboard-inset';
@@ -530,6 +531,7 @@ export function SheetSceneRow({
   confirmKey?: string | number;
   style?: StyleProp<ViewStyle>;
 }) {
+  const profile = useAppearanceProfile();
   const { colors } = useThemeTokens();
   // No plate on any of this. A row is plain text on the ground, because the
   // ground is frosted (`SHEET_FROST_ALPHA`) and the wallpaper is texture under
@@ -589,7 +591,7 @@ export function SheetSceneRow({
         onPress={onPress}
         onLongPress={onLongPress}
         delayLongPress={onLongPress ? 280 : undefined}
-        style={styles.row}>
+        style={[styles.row, { paddingVertical: profile.rowPaddingVertical }]}>
         {leading ? <View style={styles.rowLeading}>{leading}</View> : null}
         <View style={styles.rowCopy}>
           {/* Keyed on the title, so a rename fades in where the old name was.
@@ -739,6 +741,7 @@ export function SheetSceneAction({
   accessibilityLabel?: string;
   testID?: string;
 }) {
+  const profile = useAppearanceProfile();
   const { colors } = useThemeTokens();
   return (
     <PressableScale
@@ -750,7 +753,7 @@ export function SheetSceneAction({
       onPress={onPress}
       style={[
         styles.action,
-        { backgroundColor: colors.primary },
+        { backgroundColor: colors.primary, borderRadius: profile.chrome.control },
         disabled && !busy ? { opacity: appChrome.opacity.disabled } : null,
       ]}>
       {busy ? <ActivityIndicator size="small" color={colors.onPrimary} /> : leading}

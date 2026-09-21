@@ -1,0 +1,32 @@
+# Mechanical selection, native sheet dismissal/back, Home actions and persistence.
+# suite.json supplies resolved native targets and owns app launch.
+
+# section press
+press "${TARGET}"
+
+# section seek
+scroll down 500
+
+# section choose-mechanical
+press 'id="settings-home-layout-row"'
+wait 'id="settings-home-layout-sheet"' 8000
+press 'label="Mechanical"'
+wait 'label="Home layout, Mechanical"' 8000
+press 'label="Go back"'
+wait 'id="home-mechanical-layout"' 8000
+is visible 'id="home-launch-actions-scroll"'
+is visible 'id="home-new-opencode"'
+
+# section relaunch
+open "dev.osuki.muqun" --relaunch
+wait 'id="home-mechanical-layout"' 15000
+is visible 'id="home-launch-actions-scroll"'
+
+# section restore
+press 'id="settings-home-layout-row"'
+wait 'id="settings-home-layout-sheet"' 8000
+is visible 'id="settings-selection:on:home-layout-mechanical"'
+press 'label="Classic"'
+wait 'label="Home layout, Classic"' 8000
+press 'label="Go back"'
+is hidden 'id="home-mechanical-layout"'

@@ -86,6 +86,11 @@ msgstr "{0, plural, one {# минута} few {# минуты} many {# минут
 msgid "{0, plural, one {# more line} other {# more lines}}"
 msgstr "{0, plural, one {ещё # строка} few {ещё # строки} many {ещё # строк} other {ещё # строки}}"
 
+#. placeholder {0}: entries.length
+#: src/components/agent-message-block.tsx
+msgid "{0, plural, one {# operation} other {# operations}}"
+msgstr "{0, plural, one {# операция} few {# операции} many {# операций} other {# операции}}"
+
 #. placeholder {0}: unused.count
 #. placeholder {1}: formatCacheSize(unused.reclaimableBytes)
 #: src/components/settings-storage.tsx
@@ -482,6 +487,10 @@ msgstr "Всегда разрешать"
 #: src/components/agent-context-sheet.tsx
 msgid "Always allowed"
 msgstr "Всегда разрешено"
+
+#: src/components/settings-home-layout-sheet.tsx
+msgid "An instrument-panel Home with compact, angular controls."
+msgstr "Главная в виде приборной панели с компактными угловатыми элементами управления"
 
 #: src/components/agent-revert-plate.tsx
 msgid "and {rest} more"
@@ -889,8 +898,8 @@ msgid "Choose files"
 msgstr "Выбрать файлы"
 
 #: src/components/settings-appearance.tsx
-msgid "Choose how Home is arranged."
-msgstr "Выберите расположение Home"
+msgid "Choose Home and app chrome. Colours stay with your theme."
+msgstr "Выберите вид главной и интерфейса. Цвета по-прежнему определяет тема"
 
 #: src/components/agent-workbench.tsx
 msgid "Choose project"
@@ -1149,6 +1158,7 @@ msgid "Connecting…"
 msgstr "Подключение…"
 
 #: src/components/home-editorial-layout.tsx
+#: src/components/home-mechanical-layout.tsx
 msgid "Connections"
 msgstr "Подключения"
 
@@ -1179,6 +1189,7 @@ msgstr "Контекст занят"
 
 #: src/app/explore.tsx
 #: src/components/home-editorial-layout.tsx
+#: src/components/home-mechanical-layout.tsx
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Continue"
 msgstr "Продолжить"
@@ -2649,6 +2660,11 @@ msgstr "Отметить как проверенное"
 #: src/components/settings-appearance.tsx
 msgid "Mascot"
 msgstr "Талисман"
+
+#: src/components/settings-appearance.tsx
+#: src/components/settings-home-layout-sheet.tsx
+msgid "Mechanical"
+msgstr "Механический"
 
 #. placeholder {0}: hit.path
 #: src/components/file-mention-panel.tsx

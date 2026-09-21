@@ -51,7 +51,7 @@ function HomeScreenContent({ listPresentationKey }: { listPresentationKey: strin
     mode: workspaceLayout.mode,
     loading,
     serverId: record?.serverId,
-    preferList: homeLayout === 'editorial',
+    preferList: homeLayout !== 'classic',
     allowInitialActivation: isFocused && routeActive,
   });
 

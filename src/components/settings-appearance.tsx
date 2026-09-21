@@ -50,7 +50,12 @@ export function SettingsAppearance({ title }: { title: string }) {
 
   const language = useAppSettings((state) => state.language);
   const homeLayout = useAppSettings((state) => state.homeLayout);
-  const homeLayoutLabel = homeLayout === 'editorial' ? t`Editorial` : t`Classic`;
+  const homeLayoutLabel =
+    homeLayout === 'mechanical'
+      ? t`Mechanical`
+      : homeLayout === 'editorial'
+        ? t`Editorial`
+        : t`Classic`;
   const pack = useThemePack();
 
   /**
@@ -103,7 +108,8 @@ export function SettingsAppearance({ title }: { title: string }) {
       <SettingsChoiceRow
         label={t`Home layout`}
         value={homeLayoutLabel}
-        detail={t`Choose how Home is arranged.`}
+        valuePosition="below"
+        detail={t`Choose Home and app chrome. Colours stay with your theme.`}
         accessibilityLabel={
           // react-doctor-disable-next-line react-hooks-js/todo -- Lingui expands this macro before React Compiler runs.
           t`Home layout, ${homeLayoutLabel}`
@@ -136,6 +142,7 @@ export function SettingsAppearance({ title }: { title: string }) {
       <SettingsChoiceRow
         label={t`Font`}
         value={fontValue}
+        valuePosition="below"
         detail={t`Use your own font for the app and the terminal.`}
         accessibilityLabel={
           // react-doctor-disable-next-line react-hooks-js/todo -- Lingui expands this macro before React Compiler runs.

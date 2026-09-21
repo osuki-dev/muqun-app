@@ -1,13 +1,14 @@
 import type { ThemeDensity, ThemeOverride, ThemeShape } from '@osuki-dev/ui';
 
 /**
- * Muqun's non-colour appearance contract.
+ * Muqun's Classic non-colour baseline.
  *
  * Palette packs deliberately do not carry any of these values. The selected
  * pack can therefore recolour the app without also changing its density,
- * corners, opacity or elevation. `buildTheme` feeds the provider-facing part
- * into `ThemeProvider`; hand-built React Native chrome reads the semantic
- * values below from the same module.
+ * corners, opacity or elevation. `lib/appearance-profile.ts` derives the global
+ * profile from Home layout, reusing this baseline for Classic. `buildTheme`
+ * feeds that profile to the kit; shared chrome uses `useAppearanceProfile`.
+ * Unmigrated leaf styles keep these baseline tokens rather than a second setting.
  *
  * `@osuki-dev/ui` currently has provider tokens for radius and three shadows,
  * but no opacity scale and no extension point for app-specific shadow roles.

@@ -86,6 +86,11 @@ msgstr "{0, plural, one {# minute} other {# minutes}}"
 msgid "{0, plural, one {# more line} other {# more lines}}"
 msgstr "{0, plural, one {# ligne de plus} other {# lignes de plus}}"
 
+#. placeholder {0}: entries.length
+#: src/components/agent-message-block.tsx
+msgid "{0, plural, one {# operation} other {# operations}}"
+msgstr "{0, plural, one {# opération} other {# opérations}}"
+
 #. placeholder {0}: unused.count
 #. placeholder {1}: formatCacheSize(unused.reclaimableBytes)
 #: src/components/settings-storage.tsx
@@ -482,6 +487,10 @@ msgstr "Toujours autoriser"
 #: src/components/agent-context-sheet.tsx
 msgid "Always allowed"
 msgstr "Toujours autorisé"
+
+#: src/components/settings-home-layout-sheet.tsx
+msgid "An instrument-panel Home with compact, angular controls."
+msgstr "Un accueil façon tableau de bord avec des commandes compactes et angulaires"
 
 #: src/components/agent-revert-plate.tsx
 msgid "and {rest} more"
@@ -889,8 +898,8 @@ msgid "Choose files"
 msgstr "Choisir des fichiers"
 
 #: src/components/settings-appearance.tsx
-msgid "Choose how Home is arranged."
-msgstr "Choisissez l’organisation de Home"
+msgid "Choose Home and app chrome. Colours stay with your theme."
+msgstr "Choisissez l’accueil et le style de l’interface. Les couleurs restent celles du thème"
 
 #: src/components/agent-workbench.tsx
 msgid "Choose project"
@@ -1149,6 +1158,7 @@ msgid "Connecting…"
 msgstr "Connexion…"
 
 #: src/components/home-editorial-layout.tsx
+#: src/components/home-mechanical-layout.tsx
 msgid "Connections"
 msgstr "Connexions"
 
@@ -1179,6 +1189,7 @@ msgstr "Contexte utilisé"
 
 #: src/app/explore.tsx
 #: src/components/home-editorial-layout.tsx
+#: src/components/home-mechanical-layout.tsx
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Continue"
 msgstr "Continuer"
@@ -2649,6 +2660,11 @@ msgstr "Marquer comme vérifié"
 #: src/components/settings-appearance.tsx
 msgid "Mascot"
 msgstr "Mascotte"
+
+#: src/components/settings-appearance.tsx
+#: src/components/settings-home-layout-sheet.tsx
+msgid "Mechanical"
+msgstr "Mécanique"
 
 #. placeholder {0}: hit.path
 #: src/components/file-mention-panel.tsx

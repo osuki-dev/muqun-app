@@ -2302,13 +2302,22 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       queued: isQueued,
       order: orderKeyAfter(transcriptStore.getState().timeline),
     };
+    const followAfterSend =
+      listRef.current?.getState().isWithinMaintainScrollAtEndThreshold ?? true;
     setTimeline((prev) => [...prev, tempUserItem]);
-    // No manual scroll. Following the newest message is the list's
-    // `maintainScrollAtEnd`, threshold-guarded -- and a reader who had
-    // deliberately scrolled up to read something while typing has the
-    // jump-to-latest button, which appears in exactly that case. A timer that
-    // yanked them to the bottom was the viewport-moving behaviour the rest of
-    // this screen is built to avoid.
+    if (followAfterSend) {
+      // The optimistic row and the keyboard used to move the list
+      // independently: the row committed while KeyboardChatScrollView was
+      // closing, then maintainScrollAtEnd corrected the same offset. On long
+      // transcripts that race could leave only the new prompt mounted above a
+      // screen of blank space until the next layout. Legend List's chat helper
+      // coordinates those operations behind `freeze`; wait one frame so the
+      // new row is committed before dismissing the keyboard and reaching it.
+      // A reader outside the maintain-at-end threshold is still left alone.
+      requestAnimationFrame(() => {
+        void scrollMessageToEnd({ animated: true, closeKeyboard: true });
+      });
+    }
 
     // No optimistic title. Auto-titling happens on the engine's first turn and
     // arrives as `agent.session.updated`; a client-side guess made from the

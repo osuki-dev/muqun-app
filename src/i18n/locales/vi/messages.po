@@ -86,6 +86,11 @@ msgstr "{0, plural, other {# phút}}"
 msgid "{0, plural, one {# more line} other {# more lines}}"
 msgstr "{0, plural, other {còn # dòng nữa}}"
 
+#. placeholder {0}: entries.length
+#: src/components/agent-message-block.tsx
+msgid "{0, plural, one {# operation} other {# operations}}"
+msgstr "{0, plural, other {# thao tác}}"
+
 #. placeholder {0}: unused.count
 #. placeholder {1}: formatCacheSize(unused.reclaimableBytes)
 #: src/components/settings-storage.tsx
@@ -482,6 +487,10 @@ msgstr "Luôn cho phép"
 #: src/components/agent-context-sheet.tsx
 msgid "Always allowed"
 msgstr "Luôn cho phép"
+
+#: src/components/settings-home-layout-sheet.tsx
+msgid "An instrument-panel Home with compact, angular controls."
+msgstr "Trang chủ kiểu bảng điều khiển với các nút gọn gàng, góc cạnh"
 
 #: src/components/agent-revert-plate.tsx
 msgid "and {rest} more"
@@ -889,8 +898,8 @@ msgid "Choose files"
 msgstr "Chọn tệp"
 
 #: src/components/settings-appearance.tsx
-msgid "Choose how Home is arranged."
-msgstr "Chọn cách sắp xếp Home"
+msgid "Choose Home and app chrome. Colours stay with your theme."
+msgstr "Chọn kiểu trang chủ và giao diện ứng dụng. Màu sắc vẫn theo chủ đề của bạn"
 
 #: src/components/agent-workbench.tsx
 msgid "Choose project"
@@ -1149,6 +1158,7 @@ msgid "Connecting…"
 msgstr "Đang kết nối…"
 
 #: src/components/home-editorial-layout.tsx
+#: src/components/home-mechanical-layout.tsx
 msgid "Connections"
 msgstr "Kết nối"
 
@@ -1179,6 +1189,7 @@ msgstr "Ngữ cảnh đã dùng"
 
 #: src/app/explore.tsx
 #: src/components/home-editorial-layout.tsx
+#: src/components/home-mechanical-layout.tsx
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Continue"
 msgstr "Tiếp tục"
@@ -2649,6 +2660,11 @@ msgstr "Đánh dấu đã xem"
 #: src/components/settings-appearance.tsx
 msgid "Mascot"
 msgstr "Linh vật"
+
+#: src/components/settings-appearance.tsx
+#: src/components/settings-home-layout-sheet.tsx
+msgid "Mechanical"
+msgstr "Cơ khí"
 
 #. placeholder {0}: hit.path
 #: src/components/file-mention-panel.tsx
