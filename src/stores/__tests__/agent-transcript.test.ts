@@ -44,7 +44,7 @@ describe('agent transcript ownership', () => {
     expect(observed).toEqual([{ windowStart: 1, keys: ['grp_anchor', 'grp_last'] }]);
   });
 
-  test('a latest page made of duplicate shells still shows the latest real messages', () => {
+  test('a duplicate-shell window keeps fallback history when send appends a real row', () => {
     const store = createAgentTranscriptStore();
     const tools = Array.from({ length: 60 }, (_, i) =>
       item(`tool-${i}`, {
@@ -54,7 +54,7 @@ describe('agent transcript ownership', () => {
           name: 'shell',
           input: { command: `echo ${i}` },
           content: [],
-          metadata: {},
+          metadata: { shellID: `shell-${i}` },
           state: 'completed',
         },
       })
@@ -68,8 +68,42 @@ describe('agent transcript ownership', () => {
     store.getState().configure({ shells: [], windowStart: 80, status: 'idle' });
     expect(store.getState().keys).toHaveLength(40);
     expect(store.getState().keys.at(-1)).toBe('grp_tool-59');
+    const historyKeys = [...store.getState().keys];
+
+    const optimistic = item('temp_user', {
+      row_key: 'temp_user',
+      message_id: 'prompt',
+      role: 'user',
+      order: 'zzzz',
+      part: { type: 'text', text: 'hello' },
+    });
+    store.getState().setTimeline((timeline) => [...timeline, optimistic]);
+    expect(store.getState().keys).toEqual([...historyKeys, 'grp_temp_user']);
+
+    store.getState().configure({ shells: [], windowStart: 80, status: 'busy' });
+    expect(store.getState().keys).toEqual([...historyKeys, 'grp_temp_user']);
+
+    store.getState().setTimeline((timeline) =>
+      upsertTimelineItems(timeline, [
+        item('acknowledged-user', {
+          message_id: 'prompt',
+          role: 'user',
+          seq: 2,
+          part: { type: 'text', text: 'hello' },
+        }),
+      ])
+    );
+    expect(store.getState().keys).toEqual([...historyKeys, 'grp_temp_user']);
+
+    store
+      .getState()
+      .setTimeline((timeline) =>
+        upsertTimelineItems(timeline, [item('answer', { message_id: 'answer', order: 'zzzzz' })])
+      );
+    expect(store.getState().keys).toEqual([...historyKeys, 'grp_temp_user', 'grp_answer']);
+
     store.getState().configure({ shells: [], windowStart: 0, status: 'idle' });
-    expect(store.getState().keys).toHaveLength(60);
+    expect(store.getState().keys).toHaveLength(62);
   });
 
   test('filtering before the window preserves its original timeline anchor', () => {

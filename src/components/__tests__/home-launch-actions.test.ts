@@ -47,7 +47,7 @@ test('the Gateway target is a separate 44-point masthead control', () => {
 test('launch feedback is restrained and reduced-motion safe', () => {
   expect(actions).toContain('useReducedMotion()');
   expect(actions).toContain('pressed && !reduceMotion ? 2 : 0');
-  expect(actions).toContain('pickerOpen.value * 180');
+  expect(actions).toContain('pickerOpen.get() * 180');
   expect(actions).toContain('onPressIn={() => moveArrow(true)}');
   expect(actions).toContain('onPressOut={() => moveArrow(false)}');
 });

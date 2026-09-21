@@ -38,7 +38,6 @@ export function HomeRecentSessions({
   hosts,
   reachabilityByServer,
   activeConnection,
-  nowMs,
   onOpen,
   onOpenPane,
 }: {
@@ -46,7 +45,6 @@ export function HomeRecentSessions({
   hosts: readonly SshHostRecord[];
   reachabilityByServer: Readonly<Record<string, ServerReachability | undefined>>;
   activeConnection?: ActiveServerConnection;
-  nowMs: number;
   onOpen: (target: HomeTarget) => void;
   onOpenPane: (serverId: string, paneId?: string) => void;
 }) {
@@ -57,7 +55,7 @@ export function HomeRecentSessions({
   const entries = useHomeRecentsStore((state) => state.entries);
   const hydrated = useHomeRecentsStore((state) => state.hydrated);
   const [expanded, setExpanded] = useState(false);
-  const [observationNowMs, setObservationNowMs] = useState(nowMs);
+  const [observationNowMs, setObservationNowMs] = useState(Date.now);
   const snapshots = useServerAgents((state) => state.byServer);
   const snapshotsHydrated = useServerAgents((state) => state.hydrated);
   const paneMode = useAppSettings((state) => state.serverCardPanes);
@@ -143,52 +141,51 @@ export function HomeRecentSessions({
   });
   const displayed = visibleHomeContinueEntries(available, expanded);
   return (
-    <View
-      testID="home-recent-sessions"
-      style={[
-        styles.list,
-        { backgroundColor: background(theme.colors.surface), borderRadius: profile.chrome.surface },
-      ]}>
-      {displayed.map((entry, index) => (
-        <RecentSessionRow
-          key={entry.key}
-          entry={entry}
-          number={index + 1}
-          hasSeparator={index < displayed.length - 1}
-          serverLabel={
-            servers.find(
-              (server) =>
-                server.serverId ===
-                (entry.destination.type === 'pane'
-                  ? entry.destination.serverId
-                  : entry.destination.target.kind === 'ssh-host'
-                    ? undefined
-                    : entry.destination.target.serverId)
-            )?.label
-          }
-          onOpen={() => {
-            if (entry.destination.type === 'pane')
-              onOpenPane(entry.destination.serverId, entry.destination.paneId);
-            else onOpen(entry.destination.target);
-          }}
-        />
-      ))}
-      {available.length === 0 ? (
-        <Text variant="bodySmall" color={theme.colors.textMuted}>
-          {hydrated && snapshotsHydrated ? t`Nothing to show yet.` : t`Loading recent sessions…`}
-        </Text>
-      ) : null}
+    <View testID="home-recent-sessions" style={styles.root}>
+      <View
+        style={[
+          styles.list,
+          {
+            backgroundColor: background(theme.colors.surface),
+            borderRadius: profile.chrome.surface,
+          },
+        ]}>
+        {displayed.map((entry, index) => (
+          <RecentSessionRow
+            key={entry.key}
+            entry={entry}
+            number={index + 1}
+            hasSeparator={index < displayed.length - 1}
+            serverLabel={
+              servers.find(
+                (server) =>
+                  server.serverId ===
+                  (entry.destination.type === 'pane'
+                    ? entry.destination.serverId
+                    : entry.destination.target.kind === 'ssh-host'
+                      ? undefined
+                      : entry.destination.target.serverId)
+              )?.label
+            }
+            onOpen={() => {
+              if (entry.destination.type === 'pane')
+                onOpenPane(entry.destination.serverId, entry.destination.paneId);
+              else onOpen(entry.destination.target);
+            }}
+          />
+        ))}
+        {available.length === 0 ? (
+          <Text variant="bodySmall" color={theme.colors.textMuted}>
+            {hydrated && snapshotsHydrated ? t`Nothing to show yet.` : t`Loading recent sessions…`}
+          </Text>
+        ) : null}
+      </View>
       {shouldShowHomeContinueOverflow(available) ? (
         <PressableScale
+          testID="home-recent-sessions-more"
           accessibilityRole="button"
           onPress={() => setExpanded(!expanded)}
-          style={[
-            styles.more,
-            {
-              borderBottomLeftRadius: profile.chrome.surface,
-              borderBottomRightRadius: profile.chrome.surface,
-            },
-          ]}>
+          style={styles.more}>
           <Text variant="bodySmall" color={theme.colors.primary}>
             {expanded ? t`Show less` : `${t`Sessions`} (${available.length})`}
           </Text>
@@ -257,15 +254,18 @@ function RecentSessionRow({
             : 'textSubtle'
       : agentStatusTone(status);
   const age = observation?.age;
-  const seenLabel = age
-    ? age.unit === 'now'
-      ? t`Seen just now`
-      : age.unit === 'minute'
-        ? t`Seen ${age.value}m ago`
-        : age.unit === 'hour'
-          ? t`Seen ${age.value}h ago`
-          : t`Seen ${age.value}d ago`
-    : undefined;
+  let seenLabel: string | undefined;
+  if (age?.unit === 'now') seenLabel = t`Seen just now`;
+  else if (age?.unit === 'minute') {
+    // react-doctor-disable-next-line react-hooks-js/todo -- Lingui expands this macro before React Compiler runs.
+    seenLabel = t`Seen ${age.value}m ago`;
+  } else if (age?.unit === 'hour') {
+    // react-doctor-disable-next-line react-hooks-js/todo -- Lingui expands this macro before React Compiler runs.
+    seenLabel = t`Seen ${age.value}h ago`;
+  } else if (age?.unit === 'day') {
+    // react-doctor-disable-next-line react-hooks-js/todo -- Lingui expands this macro before React Compiler runs.
+    seenLabel = t`Seen ${age.value}d ago`;
+  }
   const observationLabel = [statusLabel, seenLabel].filter(Boolean).join(' · ');
   return (
     <PressableScale
@@ -320,6 +320,7 @@ function RecentSessionRow({
 }
 
 const styles = StyleSheet.create({
+  root: { minWidth: 0 },
   list: { minWidth: 0, borderRadius: 6, overflow: 'hidden' },
   row: {
     flexDirection: 'row',
@@ -339,5 +340,11 @@ const styles = StyleSheet.create({
   copy: { minWidth: 0, flex: 1, gap: 4 },
   observation: { minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: 6 },
   observationText: { minWidth: 0, flex: 1 },
-  more: { minHeight: 44, justifyContent: 'center', paddingVertical: 12 },
+  more: {
+    alignSelf: 'flex-start',
+    minHeight: 44,
+    justifyContent: 'center',
+    marginTop: 4,
+    paddingVertical: 8,
+  },
 });

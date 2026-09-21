@@ -149,7 +149,12 @@ describe('buildTimelineGroupsCached', () => {
 });
 
 describe('reconcileShellParts', () => {
-  function shellPart(id: string, command: string, status: 'running' | 'exited'): TimelineItem {
+  function shellPart(
+    id: string,
+    command: string,
+    status: 'running' | 'exited',
+    updatedMs = 1
+  ): TimelineItem {
     return {
       id,
       message_id: `msg_${id}`,
@@ -157,14 +162,24 @@ describe('reconcileShellParts', () => {
       ordinal: 0,
       part: { type: 'shell', shell_id: id, command, status },
       seq: 1,
-      updated_ms: 1,
+      updated_ms: updatedMs,
     };
   }
 
-  function shellCall(id: string, command: string): TimelineItem {
+  function shellCall(
+    id: string,
+    command: string,
+    options: {
+      shellId?: string;
+      messageId?: string;
+      created?: number;
+      completed?: number;
+      background?: boolean;
+    } = {}
+  ): TimelineItem {
     return {
       id,
-      message_id: `msg_${id}`,
+      message_id: options.messageId ?? `msg_${id}`,
       role: 'assistant',
       ordinal: 0,
       part: {
@@ -173,19 +188,131 @@ describe('reconcileShellParts', () => {
         name: 'shell',
         input: { command },
         content: [],
-        metadata: {},
+        metadata: options.shellId ? { shellID: options.shellId } : {},
         state: 'completed',
+        background: options.background,
+        time:
+          options.created || options.completed
+            ? { created: options.created, completed: options.completed }
+            : undefined,
       },
       seq: 1,
       updated_ms: 1,
     };
   }
 
-  test('a shell part that mirrors a tool call is dropped', () => {
+  test('a legacy shell part adjacent to its command-only tool call is dropped', () => {
     const items = [shellCall('call1', 'ls -la'), shellPart('sh1', 'ls -la', 'exited')];
     const next = reconcileShellParts(items, []);
     expect(next).toHaveLength(1);
     expect(next[0].id).toBe('call1');
+  });
+
+  test('matching shell identities deduplicate even when command formatting differs', () => {
+    const items = [
+      shellCall('call1', 'printf hello', { shellId: 'sh1' }),
+      shellPart('sh1', 'printf  hello', 'running'),
+    ];
+    const next = reconcileShellParts(items, [
+      { id: 'sh1', status: 'running', command: 'printf  hello', metadata: {} },
+    ]);
+    expect(next).toEqual([items[0]]);
+  });
+
+  test('foreground shell timing correlates a non-adjacent event with its tool call', () => {
+    const items = [
+      shellCall('call1', 'printf hello', { created: 10_000, completed: 11_000 }),
+      item('answer', 'msg_answer'),
+      shellPart('sh1', 'printf hello', 'exited', 11_001),
+    ];
+    expect(reconcileShellParts(items, [])).toEqual(items.slice(0, 2));
+  });
+
+  test('OpenCode creation ids correlate shell events whose gateway time is zero', () => {
+    const items = [
+      shellCall('call1', 'printf hello', {
+        messageId: 'msg_0c364d12f001mPGrMS3lpQJEBI',
+        created: 1789984563596,
+        completed: 1789984564446,
+      }),
+      item('answer', 'msg_answer'),
+      shellPart('sh_0c364e4da001FShSP8cA0WIfCZ', 'printf hello', 'exited', 0),
+    ];
+    expect(reconcileShellParts(items, [])).toEqual(items.slice(0, 2));
+  });
+
+  test('repeated equal commands pair one-to-one with their own ordered shell events', () => {
+    const tools = [
+      shellCall('call1', 'printf hello', {
+        messageId: 'msg_0c364d12f001mPGrMS3lpQJEBI',
+      }),
+      shellCall('call2', 'printf hello', {
+        messageId: 'msg_0c373939d001PKW8TO6phT74xz',
+      }),
+    ];
+    const shells = [
+      shellPart('sh_0c364e4da001FShSP8cA0WIfCZ', 'printf hello', 'exited', 0),
+      shellPart('sh_0c373a43a0016ZECvAEpc95zG5', 'printf hello', 'exited', 0),
+    ];
+    expect(reconcileShellParts([...tools, ...shells], [])).toEqual(tools);
+  });
+
+  test('an old equal-command message outside the id window cannot claim a current shell', () => {
+    const old = shellCall('old-call', 'printf hello', {
+      messageId: 'msg_0c0000000001old',
+    });
+    const current = shellPart('sh_0c373a43a0016ZECvAEpc95zG5', 'printf hello', 'exited', 0);
+    expect(reconcileShellParts([old, current], [])).toContain(current);
+  });
+
+  test('equal command text at a different time is a different shell execution', () => {
+    const current = shellPart('sh-current', 'pnpm test', 'exited', 20_000);
+    const items = [
+      shellCall('old-call', 'pnpm test', { created: 1_000, completed: 2_000 }),
+      current,
+    ];
+    expect(reconcileShellParts(items, [])).toContain(current);
+  });
+
+  test('a background tool keeps the separately addressable shell row', () => {
+    const current = shellPart('sh-current', 'sleep 120', 'running', 10_001);
+    const items = [
+      shellCall('call1', 'sleep 120', {
+        created: 10_000,
+        completed: 10_010,
+        background: true,
+      }),
+      current,
+    ];
+    expect(
+      reconcileShellParts(items, [
+        { id: 'sh-current', status: 'running', command: 'sleep 120', metadata: {} },
+      ])
+    ).toContain(current);
+  });
+
+  test('a listed current shell is not removed by a historical equal command', () => {
+    const current = shellPart('sh-current', 'pnpm test', 'running');
+    const items = [
+      shellCall('old-call', 'pnpm test'),
+      shellPart('separator', 'echo done', 'exited'),
+      current,
+    ];
+    const next = reconcileShellParts(items, [
+      { id: 'sh-current', status: 'running', command: 'pnpm test', metadata: {} },
+    ]);
+    expect(next).toContain(current);
+  });
+
+  test('an unlisted repeated command is not deduplicated across unrelated rows', () => {
+    const repeated = shellPart('sh-later', 'pnpm test', 'exited');
+    const items = [
+      shellCall('old-call', 'pnpm test'),
+      shellPart('separator', 'echo done', 'exited'),
+      repeated,
+    ];
+    const next = reconcileShellParts(items, []);
+    expect(next).toContain(repeated);
   });
 
   test('a detached shell with no call behind it stays', () => {

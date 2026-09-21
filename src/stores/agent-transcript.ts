@@ -20,9 +20,13 @@ export function createAgentTranscriptStore() {
         const windowIds = new Set(timeline.slice(start).map((item) => item.id));
         const anchor = reconciled.findIndex((item) => windowIds.has(item.id));
         const pageSize = Math.max(1, timeline.length - start);
-        visible = reconciled.slice(
-          anchor >= 0 ? anchor : Math.max(0, reconciled.length - pageSize)
-        );
+        const fallbackStart = Math.max(0, reconciled.length - pageSize);
+        // A newly appended user row can be the only surviving member of a
+        // canonical window whose shell echoes were deduplicated. Keep the
+        // fallback history page in that partially surviving case too, or send
+        // collapses a long transcript to only the new prompt until refresh.
+        const visibleStart = anchor >= 0 ? Math.min(anchor, fallbackStart) : fallbackStart;
+        visible = reconciled.slice(visibleStart);
       }
       const nextRows: Record<string, TimelineRenderGroup> = {};
       const keys: string[] = [];

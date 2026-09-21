@@ -108,7 +108,7 @@ export const navHeaderTitleTextStyle = styles.titleText;
 /** A glass circle sized to the row. The screen owns what goes inside it. */
 export function NavHeaderCircle({ children }: { children: ReactNode }) {
   return (
-    <GlassChrome surface="navigation" style={styles.circle}>
+    <GlassChrome surface="navigation" shape="pill" style={styles.circle}>
       {children}
     </GlassChrome>
   );
@@ -173,7 +173,7 @@ export function NavHeaderTitlePill({
 }) {
   const theme = useThemeTokens();
   return (
-    <GlassChrome surface="navigation" style={[styles.titlePill, style]}>
+    <GlassChrome surface="navigation" shape="navigationPill" style={[styles.titlePill, style]}>
       <Text
         variant="bodySmall"
         numberOfLines={1}

@@ -21,6 +21,7 @@ import type { StyleProp, ViewStyle } from 'react-native';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { SectionLabel } from '@/components/settings-chrome';
 import { ServerAgentRows } from '@/components/server-agent-rows';
 import { useSshHostAgeLabel } from '@/components/ssh-host-row';
@@ -116,6 +117,7 @@ export function PadServerRail({
   homeBrand,
 }: PadServerRailProps) {
   const { t } = useLingui();
+  const profile = useAppearanceProfile();
   const theme = useThemeTokens();
   const background = useSurfaceBackground();
   /** Anything in the rail at all -- a paired gateway, or a saved SSH host. */
@@ -147,7 +149,12 @@ export function PadServerRail({
     <SafeAreaView
       edges={['bottom']}
       testID={testID}
-      style={[styles.shell, { backgroundColor: background(theme.colors.surface) }, style]}>
+      style={[
+        styles.shell,
+        { borderRadius: profile.chrome.workspaceRail },
+        { backgroundColor: background(theme.colors.surface) },
+        style,
+      ]}>
       <ThemedSurfaceArtwork slot="navigation.background" baseColor={theme.colors.surface} />
       {brand.visible !== false ? (
         <View testID={homeBrand ? 'home-brand-rail' : undefined} style={styles.brand}>
@@ -333,6 +340,7 @@ function RailGlyphAction({
   icon: typeof ScanLine;
   onPress: () => void;
 }) {
+  const profile = useAppearanceProfile();
   const theme = useThemeTokens();
   const background = useSurfaceBackground();
   return (
@@ -342,6 +350,7 @@ function RailGlyphAction({
       onPress={onPress}
       style={({ pressed }) => [
         styles.glyphAction,
+        { borderRadius: profile.chrome.railGlyph },
         {
           backgroundColor: background(
             pressed ? theme.colors.surfaceRaised : theme.colors.background
@@ -364,6 +373,7 @@ function RailAction({
   icon: typeof ScanLine;
   onPress: () => void;
 }) {
+  const profile = useAppearanceProfile();
   const theme = useThemeTokens();
   const background = useSurfaceBackground();
   return (
@@ -373,6 +383,7 @@ function RailAction({
       onPress={onPress}
       style={({ pressed }) => [
         styles.action,
+        { borderRadius: profile.chrome.railAction },
         { backgroundColor: background(pressed ? theme.colors.surfaceRaised : 'transparent') },
       ]}>
       <View style={[styles.actionIcon, { backgroundColor: background(theme.colors.background) }]}>
@@ -413,6 +424,7 @@ function ServerGroup({
   onSelectAgent: (server: GatewayRecord, agent: ServerAgent) => void;
 }) {
   const { _ } = useLinguiRuntime();
+  const profile = useAppearanceProfile();
   const theme = useThemeTokens();
   const background = useSurfaceBackground();
   const statusColor = reachability === 'live' ? theme.colors.success : theme.colors.textSubtle;
@@ -425,6 +437,7 @@ function ServerGroup({
         testID={`${testID}-server-${server.serverId}`}
         style={[
           styles.serverPill,
+          { borderRadius: profile.chrome.railItem },
           {
             backgroundColor: background(
               selectedServer ? theme.colors.primarySubtle : 'transparent'
@@ -500,6 +513,7 @@ function SshHostPill({
   onPress: () => void;
 }) {
   const { t } = useLingui();
+  const profile = useAppearanceProfile();
   const theme = useThemeTokens();
   const background = useSurfaceBackground();
   const address = sshHomeSubtitle(host);
@@ -518,6 +532,7 @@ function SshHostPill({
       onPress={onPress}
       style={({ pressed }) => [
         styles.serverPill,
+        { borderRadius: profile.chrome.railItem },
         { backgroundColor: background(pressed ? theme.colors.surfaceRaised : 'transparent') },
       ]}>
       <View

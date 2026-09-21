@@ -72,13 +72,12 @@ export function useHomeLaunchController({
     }
   }, [pickerOpenRequestId, pickerRequestId, reachabilityByServer, updatePickerReachability]);
   useEffect(() => {
-    pickerOpen.value = withTiming(
-      reduceMotion ? 0 : pickerOpenRequestId === null ? 0 : 1,
-      timing('micro')
+    pickerOpen.set(
+      withTiming(reduceMotion ? 0 : pickerOpenRequestId === null ? 0 : 1, timing('micro'))
     );
   }, [pickerOpen, pickerOpenRequestId, reduceMotion]);
   const pickerChevronStyle = useAnimatedStyle(() => ({
-    transform: [{ rotate: `${pickerOpen.value * 180}deg` }],
+    transform: [{ rotate: `${pickerOpen.get() * 180}deg` }],
   }));
   function openTargetPicker() {
     if (pickerOpenRequestId !== null) return;
@@ -305,15 +304,14 @@ function LaunchTile({
   const reduceMotion = useReducedMotion();
   const arrowTravel = useSharedValue(0);
   useEffect(() => {
-    if (disabled || reduceMotion) arrowTravel.value = 0;
+    if (disabled || reduceMotion) arrowTravel.set(0);
   }, [arrowTravel, disabled, reduceMotion]);
   const arrowStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: arrowTravel.value }, { translateY: -arrowTravel.value }],
+    transform: [{ translateX: arrowTravel.get() }, { translateY: -arrowTravel.get() }],
   }));
   const moveArrow = (pressed: boolean) => {
-    arrowTravel.value = withTiming(
-      pressed && !reduceMotion ? 2 : 0,
-      timing(pressed ? PRESS.in : PRESS.out)
+    arrowTravel.set(
+      withTiming(pressed && !reduceMotion ? 2 : 0, timing(pressed ? PRESS.in : PRESS.out))
     );
   };
   if (compact) {

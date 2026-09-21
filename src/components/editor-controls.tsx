@@ -141,6 +141,7 @@ export function EditorControls({
         <Animated.View pointerEvents="box-none" style={[styles.panelAnchor, panelStyle]}>
           <GlassChrome
             face="floating"
+            shape="composerDock"
             entering={riseIn()}
             exiting={fadeOutDown('short')}
             style={[styles.panel, { paddingBottom: Math.max(bottomInset, 10) }]}>

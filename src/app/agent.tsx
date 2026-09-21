@@ -179,7 +179,10 @@ export default function AgentScreen() {
       <View pointerEvents="box-none" style={styles.header}>
         <ScreenHeader
           titlePill={
-            <GlassChrome surface="navigation" style={styles.workspaceHeaderPill}>
+            <GlassChrome
+              surface="navigation"
+              shape="navigationPill"
+              style={styles.workspaceHeaderPill}>
               {/* The pill keeps its tap -- it opens whatever it is showing --
                   and gains a horizontal swipe between the workspace's
                   sessions. Both live in `AgentTitlePill`, which reads the
@@ -209,7 +212,7 @@ export default function AgentScreen() {
             </GlassChrome>
           }
           rightPill={
-            <GlassChrome surface="navigation" style={styles.newSessionCircle}>
+            <GlassChrome surface="navigation" shape="pill" style={styles.newSessionCircle}>
               <PressableScale
                 testID="agent-header-new-session"
                 accessibilityRole="button"

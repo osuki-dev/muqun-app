@@ -5099,6 +5099,7 @@ export function ServerTerminalWorkspace({
             */}
                   <GlassChrome
                     surface="composer"
+                    shape="composerDock"
                     style={[styles.composerDock, isPadLayout && styles.padComposerDock]}>
                     {/*
               The dock's own height is a moving thing: an approval banner, the

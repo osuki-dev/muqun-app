@@ -44,7 +44,9 @@ function SessionTreeRow({
     retry: t`Retrying…`,
     unknown: t`Status unknown`,
   }[session.status];
+  // react-doctor-disable-next-line react-hooks-js/todo -- Lingui expands this macro before React Compiler runs.
   const level = t`Level ${depth}`;
+  // react-doctor-disable-next-line react-hooks-js/todo -- Lingui expands this macro before React Compiler runs.
   const parent = parentTitle ? t`Parent: ${parentTitle}` : '';
   const caption = [session.agent, status, depth > 0 ? level : '', parent]
     .filter(Boolean)
@@ -61,7 +63,10 @@ function SessionTreeRow({
         caption={caption}
         selected={selected}
         busy={session.status === 'busy' || session.status === 'retry'}
-        accessibilityLabel={unread ? t`${title} — finished while you were away` : title}
+        accessibilityLabel={
+          // react-doctor-disable-next-line react-hooks-js/todo -- Lingui expands this macro before React Compiler runs.
+          unread ? t`${title} — finished while you were away` : title
+        }
         accessibilityValue={{ text: caption }}
         onPress={() => onPress(node)}
         meta={

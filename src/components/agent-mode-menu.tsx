@@ -5,6 +5,7 @@ import { Text } from '@/components/text';
 import { Bot, Check, Compass, Sparkles } from 'lucide-react-native';
 import Animated from 'react-native-reanimated';
 
+import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { PressableScale } from '@/components/pressable-scale';
 import { appChrome } from '@/constants/appearance';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
@@ -36,6 +37,7 @@ export const AgentModeMenu = memo(function AgentModeMenu({
   onSelectAgent,
   textColor,
 }: AgentModeMenuProps) {
+  const profile = useAppearanceProfile();
   const theme = useThemeTokens();
   const surfaceBackground = useSurfaceBackground();
 
@@ -46,6 +48,7 @@ export const AgentModeMenu = memo(function AgentModeMenu({
       exiting={fadeOutDown('micro')}
       style={[
         styles.menu,
+        { borderRadius: profile.chrome.popover },
         {
           backgroundColor: surfaceBackground(theme.colors.surface),
           borderColor: theme.colors.border,
@@ -61,6 +64,7 @@ export const AgentModeMenu = memo(function AgentModeMenu({
             onPress={() => onSelectAgent(ag.id)}
             style={[
               styles.option,
+              { borderRadius: profile.chrome.control },
               isSelected && { backgroundColor: withAlpha(theme.colors.primary, 0.09) },
             ]}>
             <View style={styles.optionLeft}>

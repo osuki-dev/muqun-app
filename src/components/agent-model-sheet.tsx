@@ -295,6 +295,7 @@ export const AgentModelSheet = memo(function AgentModelSheet({
     ) {
       return;
     }
+    // react-doctor-disable-next-line react-doctor/no-adjust-state-on-prop-change -- this expands virtualization only far enough to mount the externally selected row; it does not mirror the prop.
     setRowLimit((limit) => Math.max(limit, selectedPosition.rowIndex + 1));
   }, [filterMode, searchQuery, selectedPosition]);
 

@@ -5,6 +5,7 @@ import { useEffect, type ComponentProps, type ReactNode, type Ref } from 'react'
 import { StyleSheet, TextInput, type TextInputProps } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
+import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { PressableScale } from '@/components/pressable-scale';
 import { useMonoFontFamily } from '@/hooks/use-user-fonts';
 import { ThemedSurfaceArtwork } from '@/components/themed-surface';
@@ -64,6 +65,7 @@ export function TerminalComposer({
   exiting,
   layout,
 }: TerminalComposerProps) {
+  const profile = useAppearanceProfile();
   const surfaceBackground = useSurfaceBackground();
   const theme = useThemeTokens();
   // The monospace slot is this component's *default*, not its rule, because
@@ -97,7 +99,11 @@ export function TerminalComposer({
       entering={entering}
       exiting={exiting}
       layout={layout}
-      style={[composerStyles.composer, { backgroundColor: surfaceBackground(chromeGlassQuiet) }]}>
+      style={[
+        composerStyles.composer,
+        { borderRadius: profile.chrome.composerField },
+        { backgroundColor: surfaceBackground(chromeGlassQuiet) },
+      ]}>
       {leading}
       <FontedTextInput
         ref={inputRef}

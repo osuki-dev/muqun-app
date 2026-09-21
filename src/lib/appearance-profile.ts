@@ -13,9 +13,23 @@ export type AppearanceProfile = Readonly<{
   shape: ThemeShape;
   radius: Readonly<Record<'none' | 'xs' | 'sm' | 'md' | 'lg' | 'pill', number>>;
   chrome: Readonly<{
+    card: number;
     control: number;
+    popover: number;
+    controlTray: number;
+    noticeCard: number;
     navigationPill: number;
+    noticeBanner: number;
+    composerField: number;
+    composerDock: number;
+    workspaceRail: number;
+    railGlyph: number;
+    railAction: number;
+    railItem: number;
+    segmentedTrack: number;
+    segmentedOption: number;
     sheet: number;
+    transcriptPlate: number;
     overlay: number;
     surface: number;
   }>;
@@ -36,9 +50,23 @@ const classic: AppearanceProfile = {
   shape: appAppearanceConfig.shape,
   radius: appAppearanceConfig.radius,
   chrome: {
+    card: appChrome.radius.card,
     control: appChrome.radius.control,
+    popover: appChrome.radius.popover,
+    controlTray: appChrome.radius.controlTray,
+    noticeCard: appChrome.radius.noticeCard,
     navigationPill: appChrome.radius.navigationPill,
+    noticeBanner: appChrome.radius.noticeBanner,
+    composerField: appChrome.radius.composerField,
+    composerDock: appChrome.radius.composerDock,
+    workspaceRail: appChrome.radius.workspaceRail,
+    railGlyph: appChrome.radius.railGlyph,
+    railAction: appChrome.radius.railAction,
+    railItem: appChrome.radius.railItem,
+    segmentedTrack: appChrome.radius.segmentedTrack,
+    segmentedOption: appChrome.radius.segmentedOption,
     sheet: appChrome.radius.sheet,
+    transcriptPlate: appChrome.radius.transcriptPlate,
     overlay: appChrome.radius.noticeBanner,
     surface: appChrome.radius.transcriptPlate,
   },
@@ -52,7 +80,27 @@ const editorial: AppearanceProfile = {
   density: 'compact',
   shape: 'soft',
   radius: { none: 0, xs: 2, sm: 5, md: 8, lg: 12, pill: 999 },
-  chrome: { control: 8, navigationPill: 10, sheet: 16, overlay: 12, surface: 10 },
+  chrome: {
+    card: 10,
+    control: 8,
+    popover: 12,
+    controlTray: 10,
+    noticeCard: 12,
+    navigationPill: 10,
+    noticeBanner: 12,
+    composerField: 10,
+    composerDock: 16,
+    workspaceRail: 12,
+    railGlyph: 8,
+    railAction: 8,
+    railItem: 8,
+    segmentedTrack: 8,
+    segmentedOption: 5,
+    sheet: 16,
+    transcriptPlate: 10,
+    overlay: 12,
+    surface: 10,
+  },
   navigation: { animation: 'fade' },
   motion: { pageMs: 200, modalMs: 220, revealMs: 200, revealDistance: 4, pressedScale: 0.99 },
   rowPaddingVertical: 10,
@@ -63,7 +111,27 @@ const mechanical: AppearanceProfile = {
   density: 'compact',
   shape: 'sharp',
   radius: { none: 0, xs: 0, sm: 2, md: 4, lg: 8, pill: 999 },
-  chrome: { control: 4, navigationPill: 6, sheet: 8, overlay: 6, surface: 4 },
+  chrome: {
+    card: 4,
+    control: 4,
+    popover: 6,
+    controlTray: 6,
+    noticeCard: 6,
+    navigationPill: 6,
+    noticeBanner: 6,
+    composerField: 4,
+    composerDock: 8,
+    workspaceRail: 8,
+    railGlyph: 4,
+    railAction: 4,
+    railItem: 4,
+    segmentedTrack: 4,
+    segmentedOption: 2,
+    sheet: 8,
+    transcriptPlate: 4,
+    overlay: 6,
+    surface: 4,
+  },
   navigation: { animation: 'simple_push' },
   motion: { pageMs: 160, modalMs: 180, revealMs: 160, revealDistance: 0, pressedScale: 0.995 },
   rowPaddingVertical: 8,

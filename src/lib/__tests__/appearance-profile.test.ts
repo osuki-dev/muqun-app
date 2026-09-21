@@ -9,6 +9,7 @@ import {
 import { resolveHomeLayout } from '../home-layout';
 import { sheetRouteOptions, sheetRoutePresentations } from '../route-presentation';
 import { reconcileHomeWorkspaceOwner } from '../home-workspace-owner';
+import { appChrome } from '../../constants/appearance';
 
 test('released home layouts resolve to one stable, immutable profile, never a second preference', () => {
   for (const id of ['classic', 'editorial', 'mechanical'] as const) {
@@ -24,6 +25,26 @@ test('released home layouts resolve to one stable, immutable profile, never a se
   for (const unknown of [undefined, null, 'studio', {}, 2]) {
     expect(resolveAppearanceProfile(unknown)).toBe(appearanceProfiles.classic);
   }
+});
+
+test('Classic semantic geometry is encoded in the profile rather than component branches', () => {
+  const { chrome } = appearanceProfiles.classic;
+  expect(chrome.card).toBe(appChrome.radius.card);
+  expect(chrome.control).toBe(appChrome.radius.control);
+  expect(chrome.popover).toBe(appChrome.radius.popover);
+  expect(chrome.noticeCard).toBe(appChrome.radius.noticeCard);
+  expect(chrome.navigationPill).toBe(appChrome.radius.navigationPill);
+  expect(chrome.noticeBanner).toBe(appChrome.radius.noticeBanner);
+  expect(chrome.composerField).toBe(appChrome.radius.composerField);
+  expect(chrome.composerDock).toBe(appChrome.radius.composerDock);
+  expect(chrome.workspaceRail).toBe(appChrome.radius.workspaceRail);
+  expect(chrome.railGlyph).toBe(appChrome.radius.railGlyph);
+  expect(chrome.railAction).toBe(appChrome.radius.railAction);
+  expect(chrome.railItem).toBe(appChrome.radius.railItem);
+  expect(chrome.segmentedTrack).toBe(appChrome.radius.segmentedTrack);
+  expect(chrome.segmentedOption).toBe(appChrome.radius.segmentedOption);
+  expect(chrome.sheet).toBe(appChrome.radius.sheet);
+  expect(chrome.transcriptPlate).toBe(appChrome.radius.transcriptPlate);
 });
 
 test('profile native motion stays short, disables animation for reduced motion, and never overrides gestures', () => {
@@ -88,4 +109,40 @@ test('profile wiring keeps route and workspace identities and the shared Home ac
   expect(read('components/home-launch-actions.tsx')).toContain(
     'showsHorizontalScrollIndicator={false}'
   );
+});
+
+test('shared surface seams consume semantic profile geometry without profile-ID branches', () => {
+  const read = (path: string) => readFileSync(`src/${path}`, 'utf8');
+  const seams = {
+    'components/settings-chrome.tsx': ['profile.chrome.popover', 'profile.chrome.control'],
+    'hooks/use-transcript-plate.ts': ['profile.chrome.transcriptPlate', 'profile.chrome.control'],
+    'components/pad-server-rail.tsx': [
+      'profile.chrome.workspaceRail',
+      'profile.chrome.railGlyph',
+      'profile.chrome.railAction',
+      'profile.chrome.railItem',
+    ],
+    'components/terminal-composer.tsx': ['profile.chrome.composerField'],
+    'components/agent-action-menu.tsx': ['profile.chrome.popover'],
+    'components/attachment-menu.tsx': ['profile.chrome.popover'],
+    'components/file-mention-panel.tsx': ['profile.chrome.popover'],
+    'components/agent-mode-menu.tsx': ['profile.chrome.popover', 'profile.chrome.control'],
+    'components/themed-card.tsx': ['profile.chrome.card'],
+    'components/settings-segmented.tsx': [
+      'profile.chrome.segmentedTrack',
+      'profile.chrome.segmentedOption',
+    ],
+  } as const;
+
+  for (const [path, tokens] of Object.entries(seams)) {
+    const source = read(path);
+    expect(source).toContain('useAppearanceProfile');
+    expect(source).not.toContain('profile.id');
+    for (const token of tokens) expect(source).toContain(token);
+  }
+
+  const glass = read('components/glass-chrome.tsx');
+  expect(glass).toContain("shape?: keyof AppearanceProfile['chrome'] | 'pill' | 'none'");
+  expect(glass).toContain('profile.chrome[resolvedShape]');
+  expect(glass).not.toContain("profile.id !== 'classic'");
 });

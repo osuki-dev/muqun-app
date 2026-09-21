@@ -39,6 +39,7 @@ import { type LegendListRef } from '@legendapp/list/react-native';
 import { useKeyboardScrollToEnd } from '@legendapp/list/keyboard';
 import { PressableScale } from '@/components/pressable-scale';
 import { GlassChrome } from '@/components/glass-chrome';
+import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { usePaneChatMarkdownStyle } from '@/components/pane-chat-blocks';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
@@ -358,6 +359,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   }, [pathname, releaseGlobalOwner, rootRouteName, routeFocused, serverId, sessionId, visible]);
   useEffect(() => () => releaseGlobalOwner(), [releaseGlobalOwner]);
   const theme = useThemeTokens();
+  const profile = useAppearanceProfile();
   const { showToast } = useToast();
   const surfaceBackground = useSurfaceBackground();
   const markdownStyle = usePaneChatMarkdownStyle();
@@ -3565,6 +3567,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
                       {
                         backgroundColor: withAlpha(theme.colors.danger, 0.14),
                         borderColor: withAlpha(theme.colors.danger, 0.4),
+                        borderRadius: profile.chrome.control,
                       },
                     ]}>
                     <Text variant="caption" weight="semibold" color={theme.colors.danger}>
@@ -3604,6 +3607,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     handleFormSubmit,
     scrollFooterAboveKeyboard,
     statusPlate,
+    profile.chrome.control,
     surfaceBackground,
     t,
     theme.colors,
@@ -3703,6 +3707,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     const rootChanged = childrenRootRef.current !== activeRootAsid;
     if (!rootChanged && isRunning) return;
     childrenRootRef.current = activeRootAsid;
+    // react-doctor-disable-next-line react-doctor/no-pass-live-state-to-parent -- refreshChildren loads the workbench-owned child index; it is not a parent state callback.
     void refreshChildren(activeRootAsid).catch(() => {});
   }, [refreshChildren, activeRootAsid, isRunning, activeDirectory]);
 
@@ -3933,6 +3938,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
                 {
                   backgroundColor: surfaceBackground(theme.colors.surface),
                   borderColor: theme.colors.border,
+                  borderRadius: profile.chrome.transcriptPlate,
                 },
               ]}>
               {isOffline ? (
@@ -4161,6 +4167,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
                   {
                     backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
                     borderColor: theme.colors.border,
+                    borderRadius: profile.chrome.noticeBanner,
                   },
                 ]}>
                 <StatusDot color={theme.colors.warning} filled size={7} />
@@ -4202,6 +4209,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
                   {
                     backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
                     borderColor: theme.colors.border,
+                    borderRadius: profile.chrome.noticeBanner,
                   },
                 ]}>
                 <StatusDot color={theme.colors.primary} filled size={7} />
@@ -4374,7 +4382,7 @@ const JumpToLatestPill = memo(function JumpToLatestPill({
       entering={fadeIn('micro')}
       exiting={fadeOut('micro')}
       style={[styles.jumpToLatestWrap, { bottom }]}>
-      <GlassChrome surface="navigation" style={styles.jumpToLatestPill}>
+      <GlassChrome surface="navigation" shape="pill" style={styles.jumpToLatestPill}>
         <PressableScale
           testID="agent-jump-to-latest-btn"
           accessibilityRole="button"
@@ -4491,7 +4499,6 @@ const styles = StyleSheet.create({
     paddingVertical: 36,
     paddingHorizontal: 20,
     marginHorizontal: 8,
-    borderRadius: 18,
     borderWidth: StyleSheet.hairlineWidth,
     gap: 10,
   },
@@ -4578,7 +4585,6 @@ const styles = StyleSheet.create({
     gap: 8,
     paddingHorizontal: 12,
     paddingVertical: 10,
-    borderRadius: 16,
     borderCurve: 'continuous',
     borderWidth: StyleSheet.hairlineWidth,
     marginVertical: 4,
@@ -4601,7 +4607,6 @@ const styles = StyleSheet.create({
   statusNoticeButton: {
     paddingHorizontal: 10,
     paddingVertical: 6,
-    borderRadius: 12,
     borderWidth: StyleSheet.hairlineWidth,
   },
   footerContainer: {
@@ -4623,7 +4628,6 @@ const styles = StyleSheet.create({
     maxWidth: 480,
     paddingHorizontal: 14,
     paddingVertical: 10,
-    borderRadius: appChrome.radius.noticeBanner,
     borderCurve: 'continuous',
     borderWidth: StyleSheet.hairlineWidth,
     boxShadow: appChrome.shadow.notice,
@@ -4644,7 +4648,6 @@ const styles = StyleSheet.create({
   },
   jumpToLatestPill: {
     height: 34,
-    borderRadius: 17,
     borderCurve: 'continuous',
     overflow: 'hidden',
     alignItems: 'center',

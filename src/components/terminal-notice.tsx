@@ -3,6 +3,7 @@ import { StyleSheet, type StyleProp, type ViewStyle } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { useThemeTokens } from '@osuki-dev/ui';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
+import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { fadeIn, fadeOut, listLayout } from '@/lib/motion';
 
 /** Shared, content-sized shell for terminal connection/status notices. */
@@ -16,6 +17,7 @@ export function TerminalNotice({
   style?: StyleProp<ViewStyle>;
 }) {
   const { colors } = useThemeTokens();
+  const profile = useAppearanceProfile();
   const background = useSurfaceBackground();
   return (
     <Animated.View
@@ -25,7 +27,10 @@ export function TerminalNotice({
       layout={listLayout('short')}
       style={[
         terminalNoticeStyles.shell,
-        { backgroundColor: background(colors.surfaceRaised) },
+        {
+          backgroundColor: background(colors.surfaceRaised),
+          borderRadius: profile.chrome.transcriptPlate,
+        },
         style,
       ]}>
       {children}
@@ -43,7 +48,6 @@ export const terminalNoticeStyles = StyleSheet.create({
     gap: 8,
     paddingHorizontal: 12,
     paddingVertical: 8,
-    borderRadius: 18,
     borderCurve: 'continuous',
     overflow: 'hidden',
   },

@@ -76,6 +76,7 @@ import {
 } from '@/lib/attachments';
 import { DURATION, fadeIn, fadeOut, fadeOutDown, listLayout, timing } from '@/lib/motion';
 import { appChrome } from '@/constants/appearance';
+import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { withAlpha } from '@/lib/color';
 import type { SessionNode } from '@/lib/agent-session-tree';
 import {
@@ -421,6 +422,7 @@ export const AgentComposer = memo(function AgentComposer({
   const { t } = useLingui();
   const { _ } = useLinguiRuntime();
   const theme = useThemeTokens();
+  const profile = useAppearanceProfile();
   const { showToast } = useToast();
   const surfaceBackground = useSurfaceBackground();
   /**
@@ -966,7 +968,7 @@ export const AgentComposer = memo(function AgentComposer({
           entering={fadeIn('micro')}
           exiting={fadeOut('micro')}
           style={styles.popupWrapper}>
-          <GlassChrome surface="composer" style={styles.inboxCard}>
+          <GlassChrome surface="composer" shape="popover" style={styles.inboxCard}>
             {/* The strip said nothing about itself: three lines of text over
                 the transcript, in the same ink as a sent message, floating
                 across the thinking pill. It says what it is. */}
@@ -996,7 +998,10 @@ export const AgentComposer = memo(function AgentComposer({
                     }
                     style={[
                       styles.inboxRow,
-                      { backgroundColor: surfaceBackground(withAlpha(theme.colors.text, 0.05)) },
+                      {
+                        borderRadius: profile.chrome.control,
+                        backgroundColor: surfaceBackground(withAlpha(theme.colors.text, 0.05)),
+                      },
                     ]}>
                     <Inbox size={13} color={theme.colors.primary} />
                     <Text
@@ -1124,7 +1129,7 @@ export const AgentComposer = memo(function AgentComposer({
           setDockHeight(height);
           onDockHeight?.(height);
         }}>
-        <GlassChrome surface="composer" style={styles.composerDock}>
+        <GlassChrome surface="composer" shape="sheet" style={styles.composerDock}>
           <View style={[styles.composerInner, { paddingBottom: dockBottomPadding }]}>
             {/* Row 1: roots only. Tapping the current root opens its tree. */}
             {sessionStrip.length > 0 ? (
@@ -1682,9 +1687,7 @@ const styles = StyleSheet.create({
   },
   composerDock: {
     // The dock is a sheet-shaped edge over the timeline, so it takes the
-    // sheet's corner rather than a number of its own.
-    borderTopLeftRadius: appChrome.radius.sheet,
-    borderTopRightRadius: appChrome.radius.sheet,
+    // sheet's profile corner rather than a number of its own.
     borderCurve: 'continuous',
     overflow: 'hidden',
   },
@@ -1852,7 +1855,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
   },
   inboxCard: {
-    borderRadius: appChrome.radius.popover,
     borderCurve: 'continuous',
     overflow: 'hidden',
     paddingVertical: 4,
@@ -1870,7 +1872,6 @@ const styles = StyleSheet.create({
     marginVertical: 3,
     paddingHorizontal: 8,
     paddingVertical: 8,
-    borderRadius: 12,
     borderCurve: 'continuous',
   },
   queuedChip: {

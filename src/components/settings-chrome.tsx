@@ -22,6 +22,7 @@ import { ChevronRight, type LucideIcon } from 'lucide-react-native';
 import { Children, Fragment, isValidElement, type ReactNode } from 'react';
 import { StyleSheet, type TextStyle, View } from 'react-native';
 
+import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { PressableScale } from '@/components/pressable-scale';
 import { Toggle } from '@/components/toggle';
 import { ThemedSurface } from '@/components/themed-surface';
@@ -253,6 +254,7 @@ export function SettingsCard({
    */
   flush?: boolean;
 }) {
+  const profile = useAppearanceProfile();
   const theme = useThemeTokens();
   const rows = Children.toArray(children);
   if (flush) {
@@ -272,7 +274,7 @@ export function SettingsCard({
     <ThemedSurface
       slot="cards.decoration"
       baseColor={theme.colors.surface}
-      style={styles.sectionBody}>
+      style={[styles.sectionBody, { borderRadius: profile.chrome.popover }]}>
       {rows.map((row, position) => (
         <Fragment
           key={isValidElement(row) && row.key != null ? row.key : `settings-row-${position}`}>
@@ -398,6 +400,7 @@ export function SettingsNavRow({
   accessibilityRole?: 'button' | 'link';
   testID?: string;
 }) {
+  const profile = useAppearanceProfile();
   const theme = useThemeTokens();
   const surfaceBackground = useSurfaceBackground();
   useRenderTally('SettingsNavRow');
@@ -412,7 +415,11 @@ export function SettingsNavRow({
       style={styles.row}>
       {Icon ? (
         <View
-          style={[styles.chip, { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) }]}>
+          style={[
+            styles.chip,
+            { borderRadius: profile.chrome.control },
+            { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
+          ]}>
           <Icon size={18} color={theme.colors.textMuted} strokeWidth={2} />
         </View>
       ) : null}
@@ -544,13 +551,18 @@ export function SettingsInfoRow({
   detail: ReactNode;
   testID?: string;
 }) {
+  const profile = useAppearanceProfile();
   const theme = useThemeTokens();
   const surfaceBackground = useSurfaceBackground();
   useRenderTally('SettingsInfoRow');
   return (
     <View testID={testID} style={styles.row}>
       <View
-        style={[styles.chip, { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) }]}>
+        style={[
+          styles.chip,
+          { borderRadius: profile.chrome.control },
+          { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
+        ]}>
         <Icon size={18} color={theme.colors.textMuted} strokeWidth={2} />
       </View>
       <View style={styles.rowCopy}>

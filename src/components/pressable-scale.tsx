@@ -32,7 +32,7 @@ export function PressableScale({
   const reduceMotion = useReducedMotion();
 
   const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
+    transform: [{ scale: scale.get() }],
   }));
 
   return (
@@ -43,14 +43,16 @@ export function PressableScale({
         // `timing` carries the system ease-out and, more importantly, the
         // reduce-motion check: with the accessibility setting on, the scale
         // lands instantly instead of being animated at all.
-        scale.value = withTiming(
-          reduceMotion ? 1 : (pressedScale ?? profile.motion.pressedScale),
-          timing(PRESS.in)
+        scale.set(
+          withTiming(
+            reduceMotion ? 1 : (pressedScale ?? profile.motion.pressedScale),
+            timing(PRESS.in)
+          )
         );
         onPressIn?.(event);
       }}
       onPressOut={(event) => {
-        scale.value = withTiming(1, timing(PRESS.out));
+        scale.set(withTiming(1, timing(PRESS.out)));
         onPressOut?.(event);
       }}
       style={[style, animatedStyle]}>

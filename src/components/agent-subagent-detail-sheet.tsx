@@ -73,8 +73,10 @@ export function AgentSubagentDetailSheet({
   const [error, setError] = useState('');
   const requestRef = useRef(0);
 
+  // react-doctor-disable-next-line react-doctor/no-set-state-after-await-in-effect -- requestRef and current() reject stale async results before every post-await update.
   useEffect(() => {
     const request = ++requestRef.current;
+    // react-doctor-disable-next-line react-hooks-js/set-state-in-effect -- scope changes intentionally retain only a snapshot owned by the new target before loading it.
     setLoaded((current) => retainAgentSubagentDetail(current, scopeKey));
     setLoading(true);
     setError('');

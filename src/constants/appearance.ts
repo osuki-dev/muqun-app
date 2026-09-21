@@ -42,8 +42,14 @@ export const appThemeAppearanceOverride = {
  */
 export const appChrome = {
   radius: {
+    card: appAppearanceConfig.radius.lg,
     control: appAppearanceConfig.radius.md,
+    segmentedTrack: 14,
+    railItem: 15,
+    railAction: 17,
     popover: 18,
+    railGlyph: 18,
+    segmentedOption: appAppearanceConfig.radius.pill,
     controlTray: 19,
     roundControl: 20,
     noticeCard: 22,

@@ -542,18 +542,18 @@ export function HomeOverview({
   useEffect(() => {
     if (homeLayout === 'classic') {
       // Switching the composition after launch is not a second entrance.
-      editorialReveal.value = 1;
+      editorialReveal.set(1);
       return;
     }
     if (!editorialReady) return;
-    editorialReveal.value = withTiming(1, timing(reduceMotion ? 0 : profile.motion.revealMs));
+    editorialReveal.set(withTiming(1, timing(reduceMotion ? 0 : profile.motion.revealMs)));
   }, [editorialReady, editorialReveal, homeLayout, reduceMotion, profile]);
   const revealDistance = profile.motion.revealDistance;
   const editorialRevealStyle = useAnimatedStyle(() => ({
-    opacity: reduceMotion ? 1 : 0.84 + editorialReveal.value * 0.16,
+    opacity: reduceMotion ? 1 : 0.84 + editorialReveal.get() * 0.16,
     transform: [
       {
-        translateY: (1 - editorialReveal.value) * (reduceMotion ? 0 : revealDistance),
+        translateY: (1 - editorialReveal.get()) * (reduceMotion ? 0 : revealDistance),
       },
     ],
   }));
@@ -718,7 +718,6 @@ export function HomeOverview({
                       hosts={sshRows}
                       reachabilityByServer={padReachabilityByServer}
                       activeConnection={activeConnection}
-                      nowMs={nowMs}
                       onOpenPane={(serverId, paneId) => {
                         void commands.openServer(serverId, paneId);
                       }}

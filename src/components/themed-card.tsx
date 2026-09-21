@@ -17,11 +17,7 @@ export function Card({ style, variant = 'default', ...props }: CardProps) {
     <BaseCard
       {...props}
       variant={variant}
-      style={[
-        style,
-        { backgroundColor: background(base) },
-        profile.id !== 'classic' && { borderRadius: profile.chrome.surface },
-      ]}
+      style={[style, { backgroundColor: background(base) }, { borderRadius: profile.chrome.card }]}
     />
   );
 }
