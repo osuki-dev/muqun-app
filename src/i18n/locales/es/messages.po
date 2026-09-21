@@ -2249,10 +2249,6 @@ msgstr "Ocultar el simulador"
 msgid "Home"
 msgstr "Inicio"
 
-#: src/components/home-editorial-layout.tsx
-msgid "Home / Editorial"
-msgstr "Inicio / Editorial"
-
 #: src/components/settings-appearance.tsx
 #: src/components/settings-home-layout-sheet.tsx
 msgid "Home layout"
@@ -2582,6 +2578,7 @@ msgid "Loading recent sessions…"
 msgstr "Cargando sesiones recientes…"
 
 #: src/app/servers/[serverId].tsx
+#: src/components/home-launch-actions.tsx
 #: src/components/home-overview.tsx
 #: src/components/settings-servers.tsx
 msgid "Loading servers"
@@ -3169,6 +3166,10 @@ msgstr "Abrir en el navegador"
 msgid "Open in your browser, unavailable over the SSH tunnel"
 msgstr "Abrir en el navegador: no disponible a través del túnel SSH"
 
+#: src/components/opencode-guide-sheet.tsx
+msgid "Open installation guide"
+msgstr "Abrir guía de instalación"
+
 #: src/i18n/labels.ts
 msgid "Open Lazygit"
 msgstr "Abrir Lazygit"
@@ -3221,6 +3222,10 @@ msgstr "Abrir terminal"
 msgid "Open the file explorer"
 msgstr "Abrir el explorador de archivos"
 
+#: src/components/opencode-guide-sheet.tsx
+msgid "Open the OpenCode installation guide"
+msgstr "Abrir la guía de instalación de OpenCode"
+
 #: src/components/agent-tool-card.tsx
 msgid "Open the subagent's session"
 msgstr "Abrir la sesión del subagente"
@@ -3251,6 +3256,14 @@ msgstr "Agente OpenCode"
 msgid "OpenCode agent daemon is not running on this host. Run `opencode serve --service` to start it."
 msgstr "El demonio OpenCode no se está ejecutando en este host. Ejecute `opencode serve --service` para iniciarlo"
 
+#: src/components/opencode-guide-sheet.tsx
+msgid "OpenCode is installed, but its service is not answering. Run this command on the host."
+msgstr "OpenCode está instalado, pero su servicio no responde. Ejecuta este comando en el host"
+
+#: src/components/opencode-guide-sheet.tsx
+msgid "OpenCode is ready on this host."
+msgstr "OpenCode está listo en este host"
+
 #: src/components/new-task-action.tsx
 msgid "OpenCode ready"
 msgstr "OpenCode listo"
@@ -3275,6 +3288,18 @@ msgstr "Sesión de OpenCode"
 #: src/components/new-task-action.tsx
 msgid "OpenCode sessions are not supported. Tap for details"
 msgstr "Las sesiones de OpenCode no son compatibles. Toca para ver los detalles"
+
+#: src/components/opencode-guide-sheet.tsx
+msgid "OpenCode was not found on this host. Install OpenCode 2, then check again."
+msgstr "No se encontró OpenCode en este host. Instala OpenCode 2 y vuelve a comprobarlo"
+
+#: src/components/new-task-action.tsx
+msgid "OpenCode was not found. Tap for installation instructions"
+msgstr "No se encontró OpenCode. Toca para ver las instrucciones de instalación"
+
+#: src/components/opencode-guide-sheet.tsx
+msgid "OpenCode's installation could not be confirmed. If it is installed, run this command on the host."
+msgstr "No se pudo confirmar la instalación de OpenCode. Si está instalado, ejecuta este comando en el host"
 
 #: src/app/+not-found.tsx
 msgid "Opening"
@@ -4603,10 +4628,6 @@ msgstr "Intervenir"
 msgid "Steer running agent"
 msgstr "Intervenir en tiempo real en el agente en ejecución"
 
-#: src/components/opencode-guide-sheet.tsx
-msgid "Still not answering. Check the service is running on the host."
-msgstr "Sigue sin responder. Comprueba que el servicio esté corriendo en el host"
-
 #: src/components/pane-chat-blocks.tsx
 msgid "Still running…"
 msgstr "Todavía en marcha…"
@@ -4755,6 +4776,7 @@ msgid "Tap again to delete"
 msgstr "Toca otra vez para eliminar"
 
 #: src/components/agent-worktree-sheet.tsx
+#: src/components/custom-theme-library.tsx
 #: src/components/ssh-host-form.tsx
 msgid "Tap again to remove"
 msgstr "Toca de nuevo para eliminar"
@@ -4967,10 +4989,6 @@ msgstr "No se pudo leer la clave ({0}). Revisa la clave y su frase de contraseñ
 msgid "The new terminal was created, but could not open it."
 msgstr "El nuevo terminal se creó, pero no se pudo abrir"
 
-#: src/components/opencode-guide-sheet.tsx
-msgid "The OpenCode daemon is not running on this host. Run this and it will be."
-msgstr "El daemon de OpenCode no está corriendo en este host. Ejecuta esto y lo estará"
-
 #: src/components/launch-intro.tsx
 msgid "The question comes to you"
 msgstr "La pregunta viene a ti"
@@ -5145,6 +5163,10 @@ msgstr "Este gateway todavía no sirve archivos. Actualiza el plugin de gateway 
 #: src/components/settings-servers.tsx
 msgid "This gateway has not listed any paired devices."
 msgstr "Este Gateway no ha listado dispositivos vinculados"
+
+#: src/components/opencode-guide-sheet.tsx
+msgid "This gateway is not answering. Check the server connection, then try again."
+msgstr "Este gateway no responde. Comprueba la conexión con el servidor y vuelve a intentarlo"
 
 #: src/components/session-map.tsx
 msgid "This group has no terminals."
@@ -5608,7 +5630,6 @@ msgstr "Cuando un agente solicita confirmación, el aviso llega como notificaci�
 msgid "While you were away"
 msgstr "Mientras no estabas"
 
-#: src/components/home-editorial-layout.tsx
 #: src/components/pad-server-rail.tsx
 msgid "Workbench"
 msgstr "Banco de trabajo"

@@ -2249,10 +2249,6 @@ msgstr "Ẩn trình giả lập"
 msgid "Home"
 msgstr "Trang chủ"
 
-#: src/components/home-editorial-layout.tsx
-msgid "Home / Editorial"
-msgstr "Trang chủ / Biên tập"
-
 #: src/components/settings-appearance.tsx
 #: src/components/settings-home-layout-sheet.tsx
 msgid "Home layout"
@@ -2582,6 +2578,7 @@ msgid "Loading recent sessions…"
 msgstr "Đang tải các phiên gần đây…"
 
 #: src/app/servers/[serverId].tsx
+#: src/components/home-launch-actions.tsx
 #: src/components/home-overview.tsx
 #: src/components/settings-servers.tsx
 msgid "Loading servers"
@@ -3169,6 +3166,10 @@ msgstr "Mở trong trình duyệt của bạn"
 msgid "Open in your browser, unavailable over the SSH tunnel"
 msgstr "Mở trong trình duyệt của bạn, không khả dụng qua đường hầm SSH"
 
+#: src/components/opencode-guide-sheet.tsx
+msgid "Open installation guide"
+msgstr "Mở hướng dẫn cài đặt"
+
 #: src/i18n/labels.ts
 msgid "Open Lazygit"
 msgstr "Mở Lazygit"
@@ -3221,6 +3222,10 @@ msgstr "Mở terminal"
 msgid "Open the file explorer"
 msgstr "Mở trình duyệt tệp"
 
+#: src/components/opencode-guide-sheet.tsx
+msgid "Open the OpenCode installation guide"
+msgstr "Mở hướng dẫn cài đặt OpenCode"
+
 #: src/components/agent-tool-card.tsx
 msgid "Open the subagent's session"
 msgstr "Mở phiên của tác nhân con"
@@ -3251,6 +3256,14 @@ msgstr "Tác nhân OpenCode"
 msgid "OpenCode agent daemon is not running on this host. Run `opencode serve --service` to start it."
 msgstr "Dịch vụ OpenCode không chạy trên máy chủ này. Chạy `opencode serve --service` để khởi động"
 
+#: src/components/opencode-guide-sheet.tsx
+msgid "OpenCode is installed, but its service is not answering. Run this command on the host."
+msgstr "OpenCode đã được cài đặt nhưng dịch vụ không phản hồi. Chạy lệnh này trên máy chủ"
+
+#: src/components/opencode-guide-sheet.tsx
+msgid "OpenCode is ready on this host."
+msgstr "OpenCode đã sẵn sàng trên máy chủ này"
+
 #: src/components/new-task-action.tsx
 msgid "OpenCode ready"
 msgstr "OpenCode đã sẵn sàng"
@@ -3275,6 +3288,18 @@ msgstr "Phiên OpenCode"
 #: src/components/new-task-action.tsx
 msgid "OpenCode sessions are not supported. Tap for details"
 msgstr "Không hỗ trợ các phiên OpenCode. Nhấn để xem chi tiết"
+
+#: src/components/opencode-guide-sheet.tsx
+msgid "OpenCode was not found on this host. Install OpenCode 2, then check again."
+msgstr "Không tìm thấy OpenCode trên máy chủ này. Hãy cài đặt OpenCode 2 rồi kiểm tra lại"
+
+#: src/components/new-task-action.tsx
+msgid "OpenCode was not found. Tap for installation instructions"
+msgstr "Không tìm thấy OpenCode. Nhấn để xem hướng dẫn cài đặt"
+
+#: src/components/opencode-guide-sheet.tsx
+msgid "OpenCode's installation could not be confirmed. If it is installed, run this command on the host."
+msgstr "Không thể xác nhận việc cài đặt OpenCode. Nếu đã cài đặt, hãy chạy lệnh này trên máy chủ"
 
 #: src/app/+not-found.tsx
 msgid "Opening"
@@ -4603,10 +4628,6 @@ msgstr "Can thiệp"
 msgid "Steer running agent"
 msgstr "Can thiệp vào tác nhân đang chạy theo thời gian thực"
 
-#: src/components/opencode-guide-sheet.tsx
-msgid "Still not answering. Check the service is running on the host."
-msgstr "Vẫn chưa phản hồi. Kiểm tra dịch vụ có đang chạy trên máy chủ không"
-
 #: src/components/pane-chat-blocks.tsx
 msgid "Still running…"
 msgstr "Vẫn đang chạy…"
@@ -4755,6 +4776,7 @@ msgid "Tap again to delete"
 msgstr "Chạm lần nữa để xóa"
 
 #: src/components/agent-worktree-sheet.tsx
+#: src/components/custom-theme-library.tsx
 #: src/components/ssh-host-form.tsx
 msgid "Tap again to remove"
 msgstr "Chạm lần nữa để gỡ"
@@ -4967,10 +4989,6 @@ msgstr "Không thể đọc khóa ({0}). Hãy kiểm tra khóa và cụm mật k
 msgid "The new terminal was created, but could not open it."
 msgstr "Terminal mới đã được tạo nhưng không thể mở"
 
-#: src/components/opencode-guide-sheet.tsx
-msgid "The OpenCode daemon is not running on this host. Run this and it will be."
-msgstr "Tiến trình nền OpenCode chưa chạy trên máy chủ này. Chạy lệnh này là xong"
-
 #: src/components/launch-intro.tsx
 msgid "The question comes to you"
 msgstr "Câu hỏi sẽ tìm đến bạn"
@@ -5145,6 +5163,10 @@ msgstr "Gateway này chưa phục vụ tệp. Hãy cập nhật plugin gateway c
 #: src/components/settings-servers.tsx
 msgid "This gateway has not listed any paired devices."
 msgstr "Gateway này chưa liệt kê thiết bị đã ghép nối nào"
+
+#: src/components/opencode-guide-sheet.tsx
+msgid "This gateway is not answering. Check the server connection, then try again."
+msgstr "Gateway này không phản hồi. Hãy kiểm tra kết nối máy chủ rồi thử lại"
 
 #: src/components/session-map.tsx
 msgid "This group has no terminals."
@@ -5608,7 +5630,6 @@ msgstr "Khi tác nhân dừng để xin xác nhận, thông báo đẩy sẽ đ�
 msgid "While you were away"
 msgstr "Khi bạn vắng mặt"
 
-#: src/components/home-editorial-layout.tsx
 #: src/components/pad-server-rail.tsx
 msgid "Workbench"
 msgstr "Bàn làm việc"

@@ -5301,6 +5301,11 @@
         "include": "subflows/dismiss-logbox"
       },
       {
+        "point": [0.8, 0.34],
+        "delta": [-0.55, 0],
+        "run": "flows/ssh.ad#reveal-ssh"
+      },
+      {
         "target": {
           "id": "home-open-ssh"
         },

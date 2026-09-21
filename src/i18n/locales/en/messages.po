@@ -2249,10 +2249,6 @@ msgstr "Hide the simulator"
 msgid "Home"
 msgstr "Home"
 
-#: src/components/home-editorial-layout.tsx
-msgid "Home / Editorial"
-msgstr "Home / Editorial"
-
 #: src/components/settings-appearance.tsx
 #: src/components/settings-home-layout-sheet.tsx
 msgid "Home layout"
@@ -2582,6 +2578,7 @@ msgid "Loading recent sessions…"
 msgstr "Loading recent sessions…"
 
 #: src/app/servers/[serverId].tsx
+#: src/components/home-launch-actions.tsx
 #: src/components/home-overview.tsx
 #: src/components/settings-servers.tsx
 msgid "Loading servers"
@@ -3169,6 +3166,10 @@ msgstr "Open in your browser"
 msgid "Open in your browser, unavailable over the SSH tunnel"
 msgstr "Open in your browser, unavailable over the SSH tunnel"
 
+#: src/components/opencode-guide-sheet.tsx
+msgid "Open installation guide"
+msgstr "Open installation guide"
+
 #: src/i18n/labels.ts
 msgid "Open Lazygit"
 msgstr "Open Lazygit"
@@ -3221,6 +3222,10 @@ msgstr "Open terminal"
 msgid "Open the file explorer"
 msgstr "Open the file explorer"
 
+#: src/components/opencode-guide-sheet.tsx
+msgid "Open the OpenCode installation guide"
+msgstr "Open the OpenCode installation guide"
+
 #: src/components/agent-tool-card.tsx
 msgid "Open the subagent's session"
 msgstr "Open the subagent's session"
@@ -3251,6 +3256,14 @@ msgstr "OpenCode Agent"
 msgid "OpenCode agent daemon is not running on this host. Run `opencode serve --service` to start it."
 msgstr "OpenCode agent daemon is not running on this host. Run `opencode serve --service` to start it"
 
+#: src/components/opencode-guide-sheet.tsx
+msgid "OpenCode is installed, but its service is not answering. Run this command on the host."
+msgstr "OpenCode is installed, but its service is not answering. Run this command on the host"
+
+#: src/components/opencode-guide-sheet.tsx
+msgid "OpenCode is ready on this host."
+msgstr "OpenCode is ready on this host"
+
 #: src/components/new-task-action.tsx
 msgid "OpenCode ready"
 msgstr "OpenCode ready"
@@ -3275,6 +3288,18 @@ msgstr "OpenCode session"
 #: src/components/new-task-action.tsx
 msgid "OpenCode sessions are not supported. Tap for details"
 msgstr "OpenCode sessions are not supported. Tap for details"
+
+#: src/components/opencode-guide-sheet.tsx
+msgid "OpenCode was not found on this host. Install OpenCode 2, then check again."
+msgstr "OpenCode was not found on this host. Install OpenCode 2, then check again"
+
+#: src/components/new-task-action.tsx
+msgid "OpenCode was not found. Tap for installation instructions"
+msgstr "OpenCode was not found. Tap for installation instructions"
+
+#: src/components/opencode-guide-sheet.tsx
+msgid "OpenCode's installation could not be confirmed. If it is installed, run this command on the host."
+msgstr "OpenCode's installation could not be confirmed. If it is installed, run this command on the host"
 
 #: src/app/+not-found.tsx
 msgid "Opening"
@@ -4603,10 +4628,6 @@ msgstr "Steer"
 msgid "Steer running agent"
 msgstr "Steer running agent"
 
-#: src/components/opencode-guide-sheet.tsx
-msgid "Still not answering. Check the service is running on the host."
-msgstr "Still not answering. Check the service is running on the host"
-
 #: src/components/pane-chat-blocks.tsx
 msgid "Still running…"
 msgstr "Still running…"
@@ -4755,6 +4776,7 @@ msgid "Tap again to delete"
 msgstr "Tap again to delete"
 
 #: src/components/agent-worktree-sheet.tsx
+#: src/components/custom-theme-library.tsx
 #: src/components/ssh-host-form.tsx
 msgid "Tap again to remove"
 msgstr "Tap again to remove"
@@ -4967,10 +4989,6 @@ msgstr "The key could not be read ({0}). Check the key and its passphrase"
 msgid "The new terminal was created, but could not open it."
 msgstr "The new terminal was created, but could not open it"
 
-#: src/components/opencode-guide-sheet.tsx
-msgid "The OpenCode daemon is not running on this host. Run this and it will be."
-msgstr "The OpenCode daemon is not running on this host. Run this and it will be"
-
 #: src/components/launch-intro.tsx
 msgid "The question comes to you"
 msgstr "The question comes to you"
@@ -5145,6 +5163,10 @@ msgstr "This gateway does not serve files yet. Update the Muqun gateway plugin t
 #: src/components/settings-servers.tsx
 msgid "This gateway has not listed any paired devices."
 msgstr "This gateway has not listed any paired devices"
+
+#: src/components/opencode-guide-sheet.tsx
+msgid "This gateway is not answering. Check the server connection, then try again."
+msgstr "This gateway is not answering. Check the server connection, then try again"
 
 #: src/components/session-map.tsx
 msgid "This group has no terminals."
@@ -5608,7 +5630,6 @@ msgstr "When an agent halts for confirmation, the prompt arrives as a push. Appr
 msgid "While you were away"
 msgstr "While you were away"
 
-#: src/components/home-editorial-layout.tsx
 #: src/components/pad-server-rail.tsx
 msgid "Workbench"
 msgstr "Workbench"

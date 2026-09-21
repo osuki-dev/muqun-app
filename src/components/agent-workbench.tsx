@@ -2910,10 +2910,16 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     [router, activeDirectory]
   );
 
-  const openDiffSheet = useCallback(() => {
-    if (!activeAsid) return;
-    router.push({ pathname: '/agent-vcs-diff', params: { sessionId, asid: activeAsid } });
-  }, [router, sessionId, activeAsid]);
+  const openDiffSheet = useCallback(
+    (path?: string) => {
+      if (!activeAsid) return;
+      router.push({
+        pathname: '/agent-vcs-diff',
+        params: { sessionId, asid: activeAsid, ...(path ? { path } : {}) },
+      });
+    },
+    [router, sessionId, activeAsid]
+  );
 
   const handleToggleReasoning = useCallback(() => {
     setShowReasoning((prev) => !prev);

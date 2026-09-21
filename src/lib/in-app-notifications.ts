@@ -27,6 +27,23 @@ export interface NoticeQueue {
 export const MAX_NOTICES = 20;
 export const MAX_SEEN_NOTICES = 200;
 
+function destinationKey(route: InAppNotice['route']): string {
+  if (!route) return 'none';
+  if (typeof route === 'string') return `path:${route}`;
+  return JSON.stringify([
+    route.pathname,
+    route.params.serverId,
+    route.params.sessionId ?? '',
+    route.params.paneId ?? '',
+  ]);
+}
+
+/** Approvals are distinct requests; ordinary matching updates share one card. */
+function semanticNoticeKey(notice: InAppNotice): string | null {
+  if (notice.kind === 'approval') return null;
+  return JSON.stringify([notice.kind, notice.title, notice.body, destinationKey(notice.route)]);
+}
+
 /** Memory-only: never persist notification bodies or approval details. */
 export function enqueueNotice(queue: NoticeQueue, notice: InAppNotice): NoticeQueue {
   if (
@@ -35,6 +52,29 @@ export function enqueueNotice(queue: NoticeQueue, notice: InAppNotice): NoticeQu
     queue.items.some((item) => item.id === notice.id)
   )
     return queue;
+  const semanticKey = semanticNoticeKey(notice);
+  if (semanticKey) {
+    let replaced = false;
+    const items: InAppNotice[] = [];
+    for (const item of queue.items) {
+      if (semanticNoticeKey(item) !== semanticKey) {
+        items.push(item);
+        continue;
+      }
+      if (replaced) continue;
+      // Keep the card's queue identity and position so replacing the visible
+      // event does not jump the deck. Content and route come from the latest
+      // receipt, including its notification id.
+      items.push({ ...notice, id: item.id });
+      replaced = true;
+    }
+    if (replaced) {
+      return {
+        items,
+        seen: [...queue.seen, notice.id].slice(-MAX_SEEN_NOTICES),
+      };
+    }
+  }
   return {
     // Keep the visible item stable while new events arrive behind it.
     items:

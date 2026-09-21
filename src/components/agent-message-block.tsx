@@ -331,7 +331,7 @@ export interface AgentToolActions {
   onPreviewImage?: (uri: string) => void;
   onOpenFile?: (file: { uri: string; mime?: string; name?: string }) => void;
   /** The virtualised changes viewer, for a patch too big to draw in a cell. */
-  onOpenFullDiff?: () => void;
+  onOpenFullDiff?: (path?: string) => void;
   /** Live status per child session, from that session's own status events. */
   childStatuses?: Readonly<Record<string, AgentRunStatus>>;
 }
@@ -505,10 +505,12 @@ function splitDiffFences(markdown: string): { kind: 'md' | 'diff'; text: string 
  */
 const InlinePatch = memo(function InlinePatch({
   patch,
+  targetPath,
   onOpenFullDiff,
 }: {
   patch: string;
-  onOpenFullDiff?: () => void;
+  targetPath?: string;
+  onOpenFullDiff?: (path?: string) => void;
 }) {
   const theme = useThemeTokens();
   const colors = usePaneChatColors();
@@ -516,6 +518,7 @@ const InlinePatch = memo(function InlinePatch({
   return (
     <InlineDiffRows
       rows={rows}
+      targetPath={targetPath}
       colors={colors}
       {...(onOpenFullDiff ? { onOpenFullDiff } : {})}
       // The same fill as the plate the diff sits on, so the gutter and the hunk
@@ -537,7 +540,7 @@ const AgentDiffBlock = memo(function AgentDiffBlock({
 }: {
   file: string;
   diff: string;
-  onOpenFullDiff?: () => void;
+  onOpenFullDiff?: (path?: string) => void;
 }) {
   const theme = useThemeTokens();
   const colors = usePaneChatColors();
@@ -590,7 +593,11 @@ const AgentDiffBlock = memo(function AgentDiffBlock({
         <Animated.View entering={fadeIn('micro')} style={styles.diffBodyWrap}>
           {/* Never wrapped: a re-wrapped diff line no longer lines up with the
               one above it, which is the only thing a diff is read for. */}
-          <InlinePatch patch={diff} {...(onOpenFullDiff ? { onOpenFullDiff } : {})} />
+          <InlinePatch
+            patch={diff}
+            targetPath={file}
+            {...(onOpenFullDiff ? { onOpenFullDiff } : {})}
+          />
         </Animated.View>
       ) : null}
     </Animated.View>

@@ -645,6 +645,8 @@ export function DiffRowList({
 
 export interface InlineDiffRowsProps {
   rows: readonly GitDiffRow[];
+  /** File named by the source card when its patch text does not carry a header. */
+  targetPath?: string;
   colors: PaneChatColors;
   gutterFill: string;
   headerFill: string;
@@ -658,7 +660,7 @@ export interface InlineDiffRowsProps {
    * than mounting a thousand animated rows -- but the reader is then told
    * there is more and given no way to it.
    */
-  onOpenFullDiff?: () => void;
+  onOpenFullDiff?: (path?: string) => void;
 }
 
 /**
@@ -677,6 +679,7 @@ export interface InlineDiffRowsProps {
  */
 export function InlineDiffRows({
   rows,
+  targetPath: targetPathProp,
   colors,
   gutterFill,
   headerFill,
@@ -694,6 +697,8 @@ export function InlineDiffRows({
   });
 
   const capped = useMemo(() => capDiffRows(rows, shownLimit), [rows, shownLimit]);
+  const targetPath =
+    targetPathProp ?? rows.find((row) => row.type === 'file')?.path ?? rows[0]?.path;
   const atHardCap = shownLimit >= INLINE_DIFF_HARD_CAP;
   const showMore = useCallback(() => {
     setShownLimit((current) => stepDiffLimit(current).limit);
@@ -752,7 +757,7 @@ export function InlineDiffRows({
               testID="inline-diff-open-full"
               accessibilityRole="button"
               accessibilityLabel={t`Open this diff in the changes viewer`}
-              onPress={onOpenFullDiff}
+              onPress={() => onOpenFullDiff(targetPath)}
               style={[styles.inlineMore, { borderColor: colors.border }]}>
               <Text variant="caption" color={colors.accent}>
                 <Trans>Open in changes</Trans>

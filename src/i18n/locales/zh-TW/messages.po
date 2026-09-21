@@ -1894,7 +1894,7 @@ msgstr "編輯這台伺服器"
 #: src/components/settings-appearance.tsx
 #: src/components/settings-home-layout-sheet.tsx
 msgid "Editorial"
-msgstr "日系雜誌"
+msgstr "編輯部"
 
 #: src/i18n/labels.ts
 msgid "Enter"
@@ -2249,10 +2249,6 @@ msgstr "隱藏模擬器"
 msgid "Home"
 msgstr "主畫面"
 
-#: src/components/home-editorial-layout.tsx
-msgid "Home / Editorial"
-msgstr "首頁 / 編輯"
-
 #: src/components/settings-appearance.tsx
 #: src/components/settings-home-layout-sheet.tsx
 msgid "Home layout"
@@ -2582,6 +2578,7 @@ msgid "Loading recent sessions…"
 msgstr "正在載入最近的工作階段…"
 
 #: src/app/servers/[serverId].tsx
+#: src/components/home-launch-actions.tsx
 #: src/components/home-overview.tsx
 #: src/components/settings-servers.tsx
 msgid "Loading servers"
@@ -3169,6 +3166,10 @@ msgstr "在瀏覽器開啟"
 msgid "Open in your browser, unavailable over the SSH tunnel"
 msgstr "在瀏覽器開啟，透過 SSH 通道時無法使用"
 
+#: src/components/opencode-guide-sheet.tsx
+msgid "Open installation guide"
+msgstr "開啟安裝指南"
+
 #: src/i18n/labels.ts
 msgid "Open Lazygit"
 msgstr "開啟 Lazygit"
@@ -3221,6 +3222,10 @@ msgstr "查看終端"
 msgid "Open the file explorer"
 msgstr "開啟檔案瀏覽器"
 
+#: src/components/opencode-guide-sheet.tsx
+msgid "Open the OpenCode installation guide"
+msgstr "開啟 OpenCode 安裝指南"
+
 #: src/components/agent-tool-card.tsx
 msgid "Open the subagent's session"
 msgstr "開啟子智慧體的工作階段"
@@ -3251,6 +3256,14 @@ msgstr "OpenCode 代理"
 msgid "OpenCode agent daemon is not running on this host. Run `opencode serve --service` to start it."
 msgstr "此主機上未執行 OpenCode 服務。請執行 `opencode serve --service` 啟動"
 
+#: src/components/opencode-guide-sheet.tsx
+msgid "OpenCode is installed, but its service is not answering. Run this command on the host."
+msgstr "OpenCode 已安裝，但其服務沒有回應。請在主機上執行此命令"
+
+#: src/components/opencode-guide-sheet.tsx
+msgid "OpenCode is ready on this host."
+msgstr "OpenCode 已在此主機上準備就緒"
+
 #: src/components/new-task-action.tsx
 msgid "OpenCode ready"
 msgstr "OpenCode 已就緒"
@@ -3275,6 +3288,18 @@ msgstr "OpenCode 工作階段"
 #: src/components/new-task-action.tsx
 msgid "OpenCode sessions are not supported. Tap for details"
 msgstr "不支援 OpenCode 工作階段。點選以查看詳細資訊"
+
+#: src/components/opencode-guide-sheet.tsx
+msgid "OpenCode was not found on this host. Install OpenCode 2, then check again."
+msgstr "在此主機上找不到 OpenCode。請安裝 OpenCode 2，然後再次檢查"
+
+#: src/components/new-task-action.tsx
+msgid "OpenCode was not found. Tap for installation instructions"
+msgstr "找不到 OpenCode。點選查看安裝說明"
+
+#: src/components/opencode-guide-sheet.tsx
+msgid "OpenCode's installation could not be confirmed. If it is installed, run this command on the host."
+msgstr "無法確認 OpenCode 是否已安裝。如果已安裝，請在主機上執行此命令"
 
 #: src/app/+not-found.tsx
 msgid "Opening"
@@ -4603,10 +4628,6 @@ msgstr "插話"
 msgid "Steer running agent"
 msgstr "對執行中的代理進行插話指導"
 
-#: src/components/opencode-guide-sheet.tsx
-msgid "Still not answering. Check the service is running on the host."
-msgstr "仍然沒有回應。檢查主機上的服務是否在執行"
-
 #: src/components/pane-chat-blocks.tsx
 msgid "Still running…"
 msgstr "仍在執行…"
@@ -4755,6 +4776,7 @@ msgid "Tap again to delete"
 msgstr "再點一次即刪除"
 
 #: src/components/agent-worktree-sheet.tsx
+#: src/components/custom-theme-library.tsx
 #: src/components/ssh-host-form.tsx
 msgid "Tap again to remove"
 msgstr "再點一次以移除"
@@ -4967,10 +4989,6 @@ msgstr "無法讀取金鑰（{0}）。請檢查金鑰及其通行密語"
 msgid "The new terminal was created, but could not open it."
 msgstr "已建立新的終端機，但無法開啟"
 
-#: src/components/opencode-guide-sheet.tsx
-msgid "The OpenCode daemon is not running on this host. Run this and it will be."
-msgstr "OpenCode 常駐程式沒有在這台主機上執行。執行這條指令就會啟動"
-
 #: src/components/launch-intro.tsx
 msgid "The question comes to you"
 msgstr "問題會來找你"
@@ -5145,6 +5163,10 @@ msgstr "這個 gateway 尚未提供檔案服務。更新牧群的 gateway 外掛
 #: src/components/settings-servers.tsx
 msgid "This gateway has not listed any paired devices."
 msgstr "這個 Gateway 尚未列出任何已配對的裝置"
+
+#: src/components/opencode-guide-sheet.tsx
+msgid "This gateway is not answering. Check the server connection, then try again."
+msgstr "此閘道沒有回應。請檢查伺服器連線，然後再試一次"
 
 #: src/components/session-map.tsx
 msgid "This group has no terminals."
@@ -5608,7 +5630,6 @@ msgstr "當代理暫停請求權限時，通知直達鎖定畫面。一鍵核准
 msgid "While you were away"
 msgstr "離開期間"
 
-#: src/components/home-editorial-layout.tsx
 #: src/components/pad-server-rail.tsx
 msgid "Workbench"
 msgstr "工作台"

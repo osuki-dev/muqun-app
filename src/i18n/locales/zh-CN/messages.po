@@ -1894,7 +1894,7 @@ msgstr "编辑这台服务器"
 #: src/components/settings-appearance.tsx
 #: src/components/settings-home-layout-sheet.tsx
 msgid "Editorial"
-msgstr "日系杂志"
+msgstr "编辑部"
 
 #: src/i18n/labels.ts
 msgid "Enter"
@@ -2249,10 +2249,6 @@ msgstr "隐藏模拟器"
 msgid "Home"
 msgstr "主页"
 
-#: src/components/home-editorial-layout.tsx
-msgid "Home / Editorial"
-msgstr "首页 / 编辑"
-
 #: src/components/settings-appearance.tsx
 #: src/components/settings-home-layout-sheet.tsx
 msgid "Home layout"
@@ -2582,6 +2578,7 @@ msgid "Loading recent sessions…"
 msgstr "正在加载最近会话…"
 
 #: src/app/servers/[serverId].tsx
+#: src/components/home-launch-actions.tsx
 #: src/components/home-overview.tsx
 #: src/components/settings-servers.tsx
 msgid "Loading servers"
@@ -3169,6 +3166,10 @@ msgstr "在浏览器中打开"
 msgid "Open in your browser, unavailable over the SSH tunnel"
 msgstr "在浏览器中打开，通过 SSH 隧道时不可用"
 
+#: src/components/opencode-guide-sheet.tsx
+msgid "Open installation guide"
+msgstr "打开安装指南"
+
 #: src/i18n/labels.ts
 msgid "Open Lazygit"
 msgstr "打开 Lazygit"
@@ -3221,6 +3222,10 @@ msgstr "查看终端"
 msgid "Open the file explorer"
 msgstr "打开文件浏览器"
 
+#: src/components/opencode-guide-sheet.tsx
+msgid "Open the OpenCode installation guide"
+msgstr "打开 OpenCode 安装指南"
+
 #: src/components/agent-tool-card.tsx
 msgid "Open the subagent's session"
 msgstr "打开子智能体的会话"
@@ -3251,6 +3256,14 @@ msgstr "OpenCode 智能体"
 msgid "OpenCode agent daemon is not running on this host. Run `opencode serve --service` to start it."
 msgstr "此主机上未运行 OpenCode 服务。请运行 `opencode serve --service` 启动"
 
+#: src/components/opencode-guide-sheet.tsx
+msgid "OpenCode is installed, but its service is not answering. Run this command on the host."
+msgstr "OpenCode 已安装，但其服务没有响应。请在主机上运行此命令"
+
+#: src/components/opencode-guide-sheet.tsx
+msgid "OpenCode is ready on this host."
+msgstr "OpenCode 已在此主机上准备就绪"
+
 #: src/components/new-task-action.tsx
 msgid "OpenCode ready"
 msgstr "OpenCode 已就绪"
@@ -3275,6 +3288,18 @@ msgstr "OpenCode 会话"
 #: src/components/new-task-action.tsx
 msgid "OpenCode sessions are not supported. Tap for details"
 msgstr "不支持 OpenCode 会话。点击查看详情"
+
+#: src/components/opencode-guide-sheet.tsx
+msgid "OpenCode was not found on this host. Install OpenCode 2, then check again."
+msgstr "在此主机上未找到 OpenCode。请安装 OpenCode 2，然后再次检查"
+
+#: src/components/new-task-action.tsx
+msgid "OpenCode was not found. Tap for installation instructions"
+msgstr "未找到 OpenCode。轻点查看安装说明"
+
+#: src/components/opencode-guide-sheet.tsx
+msgid "OpenCode's installation could not be confirmed. If it is installed, run this command on the host."
+msgstr "无法确认 OpenCode 是否已安装。如果已安装，请在主机上运行此命令"
 
 #: src/app/+not-found.tsx
 msgid "Opening"
@@ -4603,10 +4628,6 @@ msgstr "插话"
 msgid "Steer running agent"
 msgstr "对运行中的智能体进行插话指导"
 
-#: src/components/opencode-guide-sheet.tsx
-msgid "Still not answering. Check the service is running on the host."
-msgstr "仍然没有响应。检查主机上的服务是否在运行"
-
 #: src/components/pane-chat-blocks.tsx
 msgid "Still running…"
 msgstr "仍在运行…"
@@ -4755,6 +4776,7 @@ msgid "Tap again to delete"
 msgstr "再点一次即删除"
 
 #: src/components/agent-worktree-sheet.tsx
+#: src/components/custom-theme-library.tsx
 #: src/components/ssh-host-form.tsx
 msgid "Tap again to remove"
 msgstr "再点一次以移除"
@@ -4967,10 +4989,6 @@ msgstr "无法读取密钥（{0}）。请检查密钥及其密码短语"
 msgid "The new terminal was created, but could not open it."
 msgstr "新终端已创建，但无法打开"
 
-#: src/components/opencode-guide-sheet.tsx
-msgid "The OpenCode daemon is not running on this host. Run this and it will be."
-msgstr "OpenCode 守护进程没有在这台主机上运行。运行这条命令就会启动"
-
 #: src/components/launch-intro.tsx
 msgid "The question comes to you"
 msgstr "问题会来找你"
@@ -5145,6 +5163,10 @@ msgstr "这个 Gateway 尚未提供文件服务。更新牧群的 Gateway 插件
 #: src/components/settings-servers.tsx
 msgid "This gateway has not listed any paired devices."
 msgstr "这个 Gateway 尚未列出任何已配对的设备"
+
+#: src/components/opencode-guide-sheet.tsx
+msgid "This gateway is not answering. Check the server connection, then try again."
+msgstr "此网关没有响应。请检查服务器连接，然后重试"
 
 #: src/components/session-map.tsx
 msgid "This group has no terminals."
@@ -5608,7 +5630,6 @@ msgstr "当智能体暂停请求权限时，通知直达锁屏。一键批准或
 msgid "While you were away"
 msgstr "离开期间"
 
-#: src/components/home-editorial-layout.tsx
 #: src/components/pad-server-rail.tsx
 msgid "Workbench"
 msgstr "工作台"

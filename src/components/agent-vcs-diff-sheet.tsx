@@ -1,5 +1,6 @@
-import { memo, useCallback, useEffect, useMemo, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { type LegendListRef } from '@legendapp/list/react-native';
 import { useThemeTokens } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
 import { plural } from '@lingui/core/macro';
@@ -36,12 +37,14 @@ import { getAgentVcsDiff, type AgentVcsDiff, type VcsDiffMode } from '@/lib/agen
 export interface AgentVcsDiffSheetProps {
   sessionId: string;
   asid: string;
+  targetPath?: string;
   onClose: () => void;
 }
 
 export const AgentVcsDiffSheet = memo(function AgentVcsDiffSheet({
   sessionId,
   asid,
+  targetPath,
   onClose: _onClose,
 }: AgentVcsDiffSheetProps) {
   const { t } = useLingui();
@@ -61,6 +64,9 @@ export const AgentVcsDiffSheet = memo(function AgentVcsDiffSheet({
   const [mode, setMode] = useState<VcsDiffMode>('working');
   /** Which files are open, oldest first: the same eviction rule as the sheet. */
   const [expandedOrder, setExpandedOrder] = useState<readonly string[]>([]);
+  const listRef = useRef<LegendListRef | null>(null);
+  const pendingTargetPath = useRef(targetPath);
+  const pendingTargetKey = useRef<string | null>(null);
 
   // Fetched once per opening and once per mode: a route mounts when it opens.
   useEffect(() => {
@@ -71,10 +77,20 @@ export const AgentVcsDiffSheet = memo(function AgentVcsDiffSheet({
       .then((next) => {
         if (!active) return;
         setAnswer(next);
+        const requestedPath = mode === 'working' ? pendingTargetPath.current : undefined;
+        const matchedPath = requestedPath
+          ? next.files.find((file) => file.path === requestedPath)?.path
+          : undefined;
         // A single changed file is opened without being asked; with more than
-        // one on screen, opening one of them is a choice the sheet must not
-        // make for the reader.
-        setExpandedOrder(next.files.length === 1 ? [next.files[0].path] : []);
+        // one on screen, opening one of them is a choice the sheet must not make
+        // unless the route names the file the reader just came from.
+        setExpandedOrder(
+          matchedPath ? [matchedPath] : next.files.length === 1 ? [next.files[0].path] : []
+        );
+        if (matchedPath) {
+          pendingTargetPath.current = undefined;
+          pendingTargetKey.current = `f:${matchedPath}`;
+        }
       })
       .catch((err) => {
         console.warn('Failed to load VCS diff:', err);
@@ -107,6 +123,14 @@ export const AgentVcsDiffSheet = memo(function AgentVcsDiffSheet({
   const expanded = useMemo(() => new Set(expandedOrder), [expandedOrder]);
   const diffs = answer.files;
   const rows = useMemo(() => diffRowsFromPatches(diffs, expanded), [diffs, expanded]);
+  useEffect(() => {
+    const key = pendingTargetKey.current;
+    if (!key) return;
+    const index = rows.findIndex((row) => row.key === key);
+    if (index < 0) return;
+    pendingTargetKey.current = null;
+    listRef.current?.scrollToIndex({ index, animated: false });
+  }, [rows]);
   const totals = useMemo(() => diffTotals(diffs), [diffs]);
 
   /**
@@ -178,6 +202,7 @@ export const AgentVcsDiffSheet = memo(function AgentVcsDiffSheet({
           showSide={false}
           onToggleFile={toggleFile}
           onShowMore={noShowMore}
+          listRef={listRef}
           fallback={
             empty === 'loading' ? (
               <ActivityIndicator size="small" color={theme.colors.textMuted} />

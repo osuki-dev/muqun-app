@@ -3,12 +3,15 @@ import { TextDecoder } from 'react-native-nitro-text-decoder';
 import {
   encryptedEventStreamRequest,
   gatewayAuthHeaders,
+  gatewayEndpointFetch,
   gatewayFetch,
   gatewayUrl,
   isGatewayConfigured,
+  type GatewayEndpoint,
 } from './gateway-client';
 import { streamRecordCrypto } from './gateway-transport';
 import { connectAgentStream, type AgentStreamResponse } from './agent-stream';
+import { isShellNotFoundError } from './agent-shell-errors';
 import type { FileMentionHit } from './file-mentions';
 import { activeLocaleHeaders } from '@/i18n/active-locale';
 import {
@@ -915,12 +918,18 @@ export async function getAgentShellOutput(
 }
 
 export async function killAgentShell(shellId: string): Promise<void> {
-  await writeJson(
-    `/api/agent-shells/${encodeURIComponent(shellId)}`,
-    'Failed to stop shell',
-    undefined,
-    'DELETE'
-  );
+  try {
+    await writeJson(
+      `/api/agent-shells/${encodeURIComponent(shellId)}`,
+      'Failed to stop shell',
+      undefined,
+      'DELETE'
+    );
+  } catch (error) {
+    // The process can finish between inventory and Stop. That is already the
+    // requested end state; let the tray refresh instead of showing a failure.
+    if (!isShellNotFoundError(error)) throw error;
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -1049,13 +1058,26 @@ export async function moveAgentSession(
 // ---------------------------------------------------------------------------
 
 /** The one agent route that answers 200 with no engine attached. */
-export async function getAgentEngine(): Promise<AgentEngineInfo> {
-  return readJson('/api/agent-engine', parseAgentEngineInfo, {
+export function getAgentEngine(): Promise<AgentEngineInfo>;
+/** An older Gateway has no status route, which is unknown rather than not installed. */
+export function getAgentEngine(endpoint: GatewayEndpoint): Promise<AgentEngineInfo | null>;
+export async function getAgentEngine(endpoint?: GatewayEndpoint): Promise<AgentEngineInfo | null> {
+  const fallback: AgentEngineInfo = {
     available: false,
     origin: 'none',
     stream_connected: false,
     autostart: true,
+  };
+  if (!endpoint) return readJson('/api/agent-engine', parseAgentEngineInfo, fallback);
+
+  const base = endpoint.url.replace(/\/$/, '');
+  const response = await gatewayEndpointFetch(endpoint, `${base}/api/agent-engine`, {
+    method: 'GET',
+    headers: endpoint.token ? { Authorization: `Bearer ${endpoint.token}` } : {},
   });
+  if (response.status === 404 || response.status === 501) return null;
+  if (!response.ok) throw new Error(`Engine status request failed (${response.status})`);
+  return parseAgentEngineInfo(envelopeData(await response.json()));
 }
 
 // ---------------------------------------------------------------------------

@@ -1742,6 +1742,7 @@ export interface AgentWorktreeListing {
 export interface AgentEngineInfo {
   available: boolean;
   origin: 'adopted' | 'spawned' | 'none';
+  installation?: 'installed' | 'not_found' | 'unknown';
   url?: string;
   version?: string;
   stream_connected: boolean;
@@ -1751,11 +1752,15 @@ export interface AgentEngineInfo {
 export function parseAgentEngineInfo(value: unknown): AgentEngineInfo {
   const rec = asRecord(value) ?? {};
   const origin = asString(rec.origin);
+  const installation = asString(rec.installation);
   const url = pickString(rec, ['url']);
   const version = pickString(rec, ['version']);
   return {
     available: rec.available === true,
     origin: origin === 'adopted' || origin === 'spawned' ? origin : 'none',
+    ...(installation === 'installed' || installation === 'not_found' || installation === 'unknown'
+      ? { installation }
+      : {}),
     ...(url ? { url } : {}),
     ...(version ? { version } : {}),
     stream_connected: rec.stream_connected === true,

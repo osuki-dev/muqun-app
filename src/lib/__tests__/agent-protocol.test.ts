@@ -1094,14 +1094,21 @@ describe('context, shells, engine, diff', () => {
     expect(
       parseAgentEngineInfo({
         available: true,
+        installation: 'installed',
         origin: 'adopted',
         url: 'http://127.0.0.1:49374',
         version: '2.0.1',
         stream_connected: true,
         autostart: true,
       })
-    ).toMatchObject({ available: true, origin: 'adopted', version: '2.0.1' });
+    ).toMatchObject({
+      available: true,
+      installation: 'installed',
+      origin: 'adopted',
+      version: '2.0.1',
+    });
     expect(parseAgentEngineInfo({})).toMatchObject({ available: false, origin: 'none' });
+    expect(parseAgentEngineInfo({ installation: 'future' }).installation).toBeUndefined();
   });
 
   test('a file diff reads either spelling of its fields', () => {

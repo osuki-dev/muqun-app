@@ -24,6 +24,7 @@ import Animated, {
   interpolate,
   useAnimatedScrollHandler,
   useAnimatedStyle,
+  useReducedMotion,
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
@@ -44,7 +45,11 @@ import { HomeEditorialLayout } from '@/components/home-editorial-layout';
 import { HomeConnections } from '@/components/home-connections';
 import { HomeAttention } from '@/components/home-attention';
 import { HomeRecentSessions } from '@/components/home-recent-sessions';
-import { HomeLaunchActions } from '@/components/home-launch-actions';
+import {
+  HomeLaunchActions,
+  HomeLaunchTarget,
+  useHomeLaunchController,
+} from '@/components/home-launch-actions';
 import { SshHostRow } from '@/components/ssh-host-row';
 import { StatusDot } from '@/components/status-dot';
 import { NAV_HEADER_TOP_GAP } from '@/constants/nav-header';
@@ -90,6 +95,7 @@ import { ThemedSurface, ThemedSurfaceArtwork } from '@/components/themed-surface
 import { useBrandMark } from '@/components/brand-mark';
 import { useAppSettings } from '@/stores/app-settings';
 import { forgetWarmWorkspace } from '@/lib/server-warm-cache';
+import { useLaunchHandoff } from '@/stores/launch-handoff';
 
 export type HomeOverviewProps = {
   width: number;
@@ -148,6 +154,9 @@ export function HomeOverview({
     useGatewayRecord();
   const [refreshing, setRefreshing] = useState(false);
   const homeLayout = useAppSettings((state) => state.homeLayout);
+  const launchRevealing = useLaunchHandoff((state) => state.revealing);
+  const reduceMotion = useReducedMotion();
+  const editorialReveal = useSharedValue(0);
   const [editorialWidth, setEditorialWidth] = useState(0);
   const [failedHeroSource, setFailedHeroSource] = useState<string | null>(null);
   const { resolvedMode } = useThemeMode();
@@ -497,6 +506,25 @@ export function HomeOverview({
     routeBound,
     sourceRouteActive,
   });
+  const launchController = useHomeLaunchController({
+    servers: records,
+    selectedServerId: record?.serverId,
+    reachabilityByServer: padReachabilityByServer,
+    onPair: commands.pairGateway,
+  });
+  const editorialReady = !loading && launchRevealing;
+  useEffect(() => {
+    if (homeLayout !== 'editorial') {
+      editorialReveal.value = 0;
+      return;
+    }
+    if (!editorialReady) return;
+    editorialReveal.value = withTiming(1, timing(reduceMotion ? 0 : 'long'));
+  }, [editorialReady, editorialReveal, homeLayout, reduceMotion]);
+  const editorialRevealStyle = useAnimatedStyle(() => ({
+    opacity: 0.84 + editorialReveal.value * 0.16,
+    transform: [{ translateY: (1 - editorialReveal.value) * (reduceMotion ? 0 : 8) }],
+  }));
 
   function openServer(serverId: string, paneId?: string) {
     void commands.openServer(serverId, paneId);
@@ -588,121 +616,127 @@ export function HomeOverview({
               <GatewayStorageError busy={loading} onRetry={retryHydration} />
             ) : null}
             <ThemeArtwork slot="home.decoration" banner />
-            <HomeEditorialLayout
-              contentWidth={editorialWidth || width}
-              artworkAvailable={hasHeroArtwork}
-              artwork={
-                hasHeroArtwork && heroResolution ? (
-                  <HomeHero
-                    resolution={heroResolution}
-                    scrollY={scrollY}
-                    maxHeight={isPad ? 180 : 150}
-                    onAvailabilityChange={(available) => {
-                      if (!available) setFailedHeroSource(heroResolution.source);
-                    }}
-                  />
-                ) : undefined
-              }
-              identity={
-                identity.showBrand ? (
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                    {identity.logo ? (
-                      <Image
-                        source={logoSource}
-                        contentFit="contain"
-                        style={{ width: 44, height: 44 }}
-                        onError={() => setFailedLogo(customLogo ?? null)}
-                      />
-                    ) : null}
-                    {identity.name ? (
-                      <Text
-                        variant="heading"
-                        style={{ flex: 1, minWidth: 0, fontSize: 28, lineHeight: 36 }}>
-                        {identity.name}
-                      </Text>
-                    ) : null}
-                  </View>
-                ) : undefined
-              }
-              launches={
-                hydrationError ? undefined : loading ? (
-                  <Text variant="bodySmall">{t`Loading servers`}</Text>
-                ) : (
-                  <HomeLaunchActions
-                    servers={records}
-                    selectedServerId={record?.serverId}
-                    reachabilityByServer={padReachabilityByServer}
-                    onNewOpenCode={commands.newOpenCode}
-                    onOpenOpenCode={commands.openOpenCode}
-                    onNewTerminal={commands.newTerminal}
-                    onOpenTerminal={commands.openServer}
-                    onSsh={commands.openSsh}
+            <Animated.View style={editorialRevealStyle}>
+              <HomeEditorialLayout
+                contentWidth={editorialWidth || width}
+                artworkAvailable={hasHeroArtwork}
+                artwork={
+                  hasHeroArtwork && heroResolution ? (
+                    <HomeHero
+                      resolution={heroResolution}
+                      scrollY={scrollY}
+                      maxHeight={isPad ? 180 : 150}
+                      onAvailabilityChange={(available) => {
+                        if (!available) setFailedHeroSource(heroResolution.source);
+                      }}
+                    />
+                  ) : undefined
+                }
+                identity={
+                  identity.showBrand ? (
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                      {identity.logo ? (
+                        <Image
+                          source={logoSource}
+                          contentFit="contain"
+                          style={{ width: 44, height: 44 }}
+                          onError={() => setFailedLogo(customLogo ?? null)}
+                        />
+                      ) : null}
+                      {identity.name ? (
+                        <Text
+                          variant="heading"
+                          style={{ flex: 1, minWidth: 0, fontSize: 28, lineHeight: 36 }}>
+                          {identity.name}
+                        </Text>
+                      ) : null}
+                    </View>
+                  ) : undefined
+                }
+                headerLeading={
+                  <HomeLaunchTarget
+                    controller={launchController}
+                    loading={loading}
                     onPair={commands.pairGateway}
-                    onDemo={!loading && !hydrationError && !hasPairedServer ? openDemo : undefined}
                   />
-                )
-              }
-              recent={
-                !loading && !hydrationError ? (
-                  <HomeRecentSessions
-                    servers={records}
-                    hosts={sshRows}
-                    reachabilityByServer={padReachabilityByServer}
-                    activeConnection={activeConnection}
-                    nowMs={nowMs}
-                    onOpenPane={(serverId, paneId) => {
-                      void commands.openServer(serverId, paneId);
-                    }}
-                    onOpen={(target) => {
-                      void commands.resumeTarget(target);
-                    }}
-                  />
-                ) : undefined
-              }
-              attention={
-                !loading && !hydrationError ? (
-                  <HomeAttention
-                    servers={records}
-                    onOpen={(target) => {
-                      void commands.resumeTarget(target);
-                    }}
-                  />
-                ) : undefined
-              }
-              connections={
-                !loading && !hydrationError && !sshLoading ? (
-                  <HomeConnections
-                    servers={records}
-                    hosts={sshRows}
-                    onOpenServer={openServer}
-                    onOpenHost={(hostId) => {
-                      void commands.openSsh(hostId);
-                    }}
-                    onManage={() => {
-                      void commands.manageConnections();
-                    }}
-                    activeConnection={activeConnection}
-                    nowMs={nowMs}
-                  />
-                ) : undefined
-              }
-              headerAction={
-                <View style={{ flexDirection: 'row', gap: 8 }}>
-                  <HeaderButton
-                    editorial
-                    label={t`Scan a gateway QR`}
-                    onPress={() => void commands.pairGateway()}>
-                    <ScanLine size={20} color={theme.colors.text} strokeWidth={1.8} />
-                  </HeaderButton>
-                  <HeaderButton
-                    editorial
-                    label={t`Settings`}
-                    onPress={() => void commands.manageConnections()}>
-                    <Settings size={20} color={theme.colors.text} strokeWidth={1.8} />
-                  </HeaderButton>
-                </View>
-              }
-            />
+                }
+                launches={
+                  hydrationError || loading ? undefined : (
+                    <HomeLaunchActions
+                      controller={launchController}
+                      onNewOpenCode={commands.newOpenCode}
+                      onOpenOpenCode={commands.openOpenCode}
+                      onNewTerminal={commands.newTerminal}
+                      onOpenTerminal={commands.openServer}
+                      onSsh={commands.openSsh}
+                      onDemo={
+                        !loading && !hydrationError && !hasPairedServer ? openDemo : undefined
+                      }
+                    />
+                  )
+                }
+                recent={
+                  !loading && !hydrationError ? (
+                    <HomeRecentSessions
+                      servers={records}
+                      hosts={sshRows}
+                      reachabilityByServer={padReachabilityByServer}
+                      activeConnection={activeConnection}
+                      nowMs={nowMs}
+                      onOpenPane={(serverId, paneId) => {
+                        void commands.openServer(serverId, paneId);
+                      }}
+                      onOpen={(target) => {
+                        void commands.resumeTarget(target);
+                      }}
+                    />
+                  ) : undefined
+                }
+                attention={
+                  !loading && !hydrationError ? (
+                    <HomeAttention
+                      servers={records}
+                      onOpen={(target) => {
+                        void commands.resumeTarget(target);
+                      }}
+                    />
+                  ) : undefined
+                }
+                connections={
+                  !loading && !hydrationError && !sshLoading ? (
+                    <HomeConnections
+                      servers={records}
+                      hosts={sshRows}
+                      onOpenServer={openServer}
+                      onOpenHost={(hostId) => {
+                        void commands.openSsh(hostId);
+                      }}
+                      onManage={() => {
+                        void commands.manageConnections();
+                      }}
+                      activeConnection={activeConnection}
+                      nowMs={nowMs}
+                    />
+                  ) : undefined
+                }
+                headerAction={
+                  <View style={{ flexDirection: 'row', gap: 8 }}>
+                    <HeaderButton
+                      editorial
+                      label={t`Scan a gateway QR`}
+                      onPress={() => void commands.pairGateway()}>
+                      <ScanLine size={20} color={theme.colors.text} strokeWidth={1.8} />
+                    </HeaderButton>
+                    <HeaderButton
+                      editorial
+                      label={t`Settings`}
+                      onPress={() => void commands.manageConnections()}>
+                      <Settings size={20} color={theme.colors.text} strokeWidth={1.8} />
+                    </HeaderButton>
+                  </View>
+                }
+              />
+            </Animated.View>
           </KeyboardAwareScrollView>
         </SafeAreaView>
       </View>

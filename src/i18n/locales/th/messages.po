@@ -2249,10 +2249,6 @@ msgstr "ซ่อนเครื่องจำลอง"
 msgid "Home"
 msgstr "หน้าแรก"
 
-#: src/components/home-editorial-layout.tsx
-msgid "Home / Editorial"
-msgstr "หน้าหลัก / บทบรรณาธิการ"
-
 #: src/components/settings-appearance.tsx
 #: src/components/settings-home-layout-sheet.tsx
 msgid "Home layout"
@@ -2582,6 +2578,7 @@ msgid "Loading recent sessions…"
 msgstr "กำลังโหลดเซสชันล่าสุด…"
 
 #: src/app/servers/[serverId].tsx
+#: src/components/home-launch-actions.tsx
 #: src/components/home-overview.tsx
 #: src/components/settings-servers.tsx
 msgid "Loading servers"
@@ -3169,6 +3166,10 @@ msgstr "เปิดในเบราว์เซอร์"
 msgid "Open in your browser, unavailable over the SSH tunnel"
 msgstr "เปิดในเบราว์เซอร์ ไม่พร้อมใช้งานผ่านอุโมงค์ SSH"
 
+#: src/components/opencode-guide-sheet.tsx
+msgid "Open installation guide"
+msgstr "เปิดคู่มือการติดตั้ง"
+
 #: src/i18n/labels.ts
 msgid "Open Lazygit"
 msgstr "เปิด Lazygit"
@@ -3221,6 +3222,10 @@ msgstr "เปิดเทอร์มินัล"
 msgid "Open the file explorer"
 msgstr "เปิดตัวสำรวจไฟล์"
 
+#: src/components/opencode-guide-sheet.tsx
+msgid "Open the OpenCode installation guide"
+msgstr "เปิดคู่มือการติดตั้ง OpenCode"
+
 #: src/components/agent-tool-card.tsx
 msgid "Open the subagent's session"
 msgstr "เปิดเซสชันของซับเอเจนต์"
@@ -3251,6 +3256,14 @@ msgstr "เอเจนต์ OpenCode"
 msgid "OpenCode agent daemon is not running on this host. Run `opencode serve --service` to start it."
 msgstr "บริการ OpenCode ไม่ได้ทำงานอยู่บนโฮสต์นี้ เรียกใช้ `opencode serve --service` เพื่อเริ่มต้น"
 
+#: src/components/opencode-guide-sheet.tsx
+msgid "OpenCode is installed, but its service is not answering. Run this command on the host."
+msgstr "ติดตั้ง OpenCode แล้ว แต่บริการไม่ตอบสนอง ให้เรียกใช้คำสั่งนี้บนโฮสต์"
+
+#: src/components/opencode-guide-sheet.tsx
+msgid "OpenCode is ready on this host."
+msgstr "OpenCode พร้อมใช้งานบนโฮสต์นี้แล้ว"
+
 #: src/components/new-task-action.tsx
 msgid "OpenCode ready"
 msgstr "OpenCode พร้อมแล้ว"
@@ -3275,6 +3288,18 @@ msgstr "เซสชัน OpenCode"
 #: src/components/new-task-action.tsx
 msgid "OpenCode sessions are not supported. Tap for details"
 msgstr "ไม่รองรับเซสชัน OpenCode แตะเพื่อดูรายละเอียด"
+
+#: src/components/opencode-guide-sheet.tsx
+msgid "OpenCode was not found on this host. Install OpenCode 2, then check again."
+msgstr "ไม่พบ OpenCode บนโฮสต์นี้ ติดตั้ง OpenCode 2 แล้วตรวจสอบอีกครั้ง"
+
+#: src/components/new-task-action.tsx
+msgid "OpenCode was not found. Tap for installation instructions"
+msgstr "ไม่พบ OpenCode แตะเพื่อดูคำแนะนำในการติดตั้ง"
+
+#: src/components/opencode-guide-sheet.tsx
+msgid "OpenCode's installation could not be confirmed. If it is installed, run this command on the host."
+msgstr "ไม่สามารถยืนยันการติดตั้ง OpenCode ได้ หากติดตั้งแล้ว ให้เรียกใช้คำสั่งนี้บนโฮสต์"
 
 #: src/app/+not-found.tsx
 msgid "Opening"
@@ -4603,10 +4628,6 @@ msgstr "แทรกแซง"
 msgid "Steer running agent"
 msgstr "แทรกแซงเอเจนต์ที่กำลังทำงานแบบเรียลไทม์"
 
-#: src/components/opencode-guide-sheet.tsx
-msgid "Still not answering. Check the service is running on the host."
-msgstr "ยังไม่ตอบสนอง ตรวจว่าเซอร์วิสทำงานอยู่บนโฮสต์หรือไม่"
-
 #: src/components/pane-chat-blocks.tsx
 msgid "Still running…"
 msgstr "ยังทำงานอยู่…"
@@ -4755,6 +4776,7 @@ msgid "Tap again to delete"
 msgstr "แตะอีกครั้งเพื่อลบ"
 
 #: src/components/agent-worktree-sheet.tsx
+#: src/components/custom-theme-library.tsx
 #: src/components/ssh-host-form.tsx
 msgid "Tap again to remove"
 msgstr "แตะอีกครั้งเพื่อลบ"
@@ -4967,10 +4989,6 @@ msgstr "อ่านคีย์ไม่ได้ ({0}) ตรวจสอบ�
 msgid "The new terminal was created, but could not open it."
 msgstr "สร้างเทอร์มินัลใหม่แล้ว แต่เปิดไม่ได้"
 
-#: src/components/opencode-guide-sheet.tsx
-msgid "The OpenCode daemon is not running on this host. Run this and it will be."
-msgstr "เดมอน OpenCode ไม่ได้ทำงานบนโฮสต์นี้ รันคำสั่งนี้แล้วมันจะทำงาน"
-
 #: src/components/launch-intro.tsx
 msgid "The question comes to you"
 msgstr "คำถามส่งตรงถึงคุณ"
@@ -5145,6 +5163,10 @@ msgstr "Gateway นี้ยังไม่ให้บริการไฟล�
 #: src/components/settings-servers.tsx
 msgid "This gateway has not listed any paired devices."
 msgstr "Gateway นี้ยังไม่แสดงรายการอุปกรณ์ที่จับคู่"
+
+#: src/components/opencode-guide-sheet.tsx
+msgid "This gateway is not answering. Check the server connection, then try again."
+msgstr "เกตเวย์นี้ไม่ตอบสนอง ตรวจสอบการเชื่อมต่อเซิร์ฟเวอร์แล้วลองอีกครั้ง"
 
 #: src/components/session-map.tsx
 msgid "This group has no terminals."
@@ -5608,7 +5630,6 @@ msgstr "เมื่อเอเจนต์หยุดเพื่อขอก
 msgid "While you were away"
 msgstr "ขณะที่คุณไม่อยู่"
 
-#: src/components/home-editorial-layout.tsx
 #: src/components/pad-server-rail.tsx
 msgid "Workbench"
 msgstr "เวิร์กเบนช์"

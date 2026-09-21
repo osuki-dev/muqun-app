@@ -218,6 +218,7 @@ export function useHomeCommands(options: HomeCommandOptions = {}): HomeCommands 
             ...(command.directory ? { directory: command.directory } : {}),
             intent: 'new',
             status: result.readiness.status,
+            ...(result.readiness.status === 'offline' ? { cause: result.readiness.cause } : {}),
           },
         } as Href);
       }

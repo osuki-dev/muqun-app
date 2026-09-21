@@ -2249,10 +2249,6 @@ msgstr "シミュレータを隠す"
 msgid "Home"
 msgstr "ホーム"
 
-#: src/components/home-editorial-layout.tsx
-msgid "Home / Editorial"
-msgstr "ホーム / エディトリアル"
-
 #: src/components/settings-appearance.tsx
 #: src/components/settings-home-layout-sheet.tsx
 msgid "Home layout"
@@ -2582,6 +2578,7 @@ msgid "Loading recent sessions…"
 msgstr "最近のセッションを読み込み中…"
 
 #: src/app/servers/[serverId].tsx
+#: src/components/home-launch-actions.tsx
 #: src/components/home-overview.tsx
 #: src/components/settings-servers.tsx
 msgid "Loading servers"
@@ -3169,6 +3166,10 @@ msgstr "ブラウザで開く"
 msgid "Open in your browser, unavailable over the SSH tunnel"
 msgstr "ブラウザーで開く（SSH トンネル経由では利用できません）"
 
+#: src/components/opencode-guide-sheet.tsx
+msgid "Open installation guide"
+msgstr "インストールガイドを開く"
+
 #: src/i18n/labels.ts
 msgid "Open Lazygit"
 msgstr "Lazygit を開く"
@@ -3221,6 +3222,10 @@ msgstr "ターミナルを見る"
 msgid "Open the file explorer"
 msgstr "ファイルツリーを開く"
 
+#: src/components/opencode-guide-sheet.tsx
+msgid "Open the OpenCode installation guide"
+msgstr "OpenCode のインストールガイドを開く"
+
 #: src/components/agent-tool-card.tsx
 msgid "Open the subagent's session"
 msgstr "サブエージェントのセッションを開く"
@@ -3251,6 +3256,14 @@ msgstr "OpenCodeエージェント"
 msgid "OpenCode agent daemon is not running on this host. Run `opencode serve --service` to start it."
 msgstr "このホストでOpenCodeデーモンが実行されていません。`opencode serve --service`を実行して起動してください"
 
+#: src/components/opencode-guide-sheet.tsx
+msgid "OpenCode is installed, but its service is not answering. Run this command on the host."
+msgstr "OpenCode はインストールされていますが、サービスが応答していません。このコマンドをホストで実行してください"
+
+#: src/components/opencode-guide-sheet.tsx
+msgid "OpenCode is ready on this host."
+msgstr "OpenCode はこのホストで準備できています"
+
 #: src/components/new-task-action.tsx
 msgid "OpenCode ready"
 msgstr "OpenCodeの準備が完了しました"
@@ -3275,6 +3288,18 @@ msgstr "OpenCode セッション"
 #: src/components/new-task-action.tsx
 msgid "OpenCode sessions are not supported. Tap for details"
 msgstr "OpenCode セッションはサポートされていません。詳細を確認"
+
+#: src/components/opencode-guide-sheet.tsx
+msgid "OpenCode was not found on this host. Install OpenCode 2, then check again."
+msgstr "このホストで OpenCode が見つかりませんでした。OpenCode 2 をインストールしてから、もう一度確認してください"
+
+#: src/components/new-task-action.tsx
+msgid "OpenCode was not found. Tap for installation instructions"
+msgstr "OpenCode が見つかりませんでした。タップしてインストール手順を表示"
+
+#: src/components/opencode-guide-sheet.tsx
+msgid "OpenCode's installation could not be confirmed. If it is installed, run this command on the host."
+msgstr "OpenCode のインストールを確認できませんでした。インストール済みの場合は、このコマンドをホストで実行してください"
 
 #: src/app/+not-found.tsx
 msgid "Opening"
@@ -4603,10 +4628,6 @@ msgstr "ステア (Steer)"
 msgid "Steer running agent"
 msgstr "実行中のエージェントにリアルタイムで指示"
 
-#: src/components/opencode-guide-sheet.tsx
-msgid "Still not answering. Check the service is running on the host."
-msgstr "まだ応答がありません。ホストでサービスが動いているか確認してください"
-
 #: src/components/pane-chat-blocks.tsx
 msgid "Still running…"
 msgstr "実行中…"
@@ -4755,6 +4776,7 @@ msgid "Tap again to delete"
 msgstr "もう一度タップして削除"
 
 #: src/components/agent-worktree-sheet.tsx
+#: src/components/custom-theme-library.tsx
 #: src/components/ssh-host-form.tsx
 msgid "Tap again to remove"
 msgstr "もう一度タップで削除"
@@ -4967,10 +4989,6 @@ msgstr "鍵を読み取れませんでした（{0}）。鍵とパスフレーズ
 msgid "The new terminal was created, but could not open it."
 msgstr "新しいターミナルは作成されましたが、開けませんでした"
 
-#: src/components/opencode-guide-sheet.tsx
-msgid "The OpenCode daemon is not running on this host. Run this and it will be."
-msgstr "このホストで OpenCode デーモンが動いていません。これを実行すれば起動します"
-
 #: src/components/launch-intro.tsx
 msgid "The question comes to you"
 msgstr "質問はあなたのもとへ"
@@ -5145,6 +5163,10 @@ msgstr "この Gateway はまだファイルを提供していません。セッ
 #: src/components/settings-servers.tsx
 msgid "This gateway has not listed any paired devices."
 msgstr "この Gateway はペアリング済みデバイスを返していません"
+
+#: src/components/opencode-guide-sheet.tsx
+msgid "This gateway is not answering. Check the server connection, then try again."
+msgstr "このゲートウェイは応答していません。サーバー接続を確認して、もう一度お試しください"
 
 #: src/components/session-map.tsx
 msgid "This group has no terminals."
@@ -5608,7 +5630,6 @@ msgstr "エージェントが確認を求めて停止したとき、通知がロ
 msgid "While you were away"
 msgstr "離席中の変化"
 
-#: src/components/home-editorial-layout.tsx
 #: src/components/pad-server-rail.tsx
 msgid "Workbench"
 msgstr "ワークベンチ"

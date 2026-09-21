@@ -27,6 +27,7 @@ export default function HomeScreen() {
 function HomeScreenContent({ listPresentationKey }: { listPresentationKey: string }) {
   const { width } = useWindowDimensions();
   const { record, loading } = useGatewayRecord();
+  const homeLayout = useAppSettings((state) => state.homeLayout);
   const isFocused = useIsFocused();
   const sourceRouteActiveRef = useRef(false);
   const [routeActive, setRouteActive] = useState(false);
@@ -50,6 +51,7 @@ function HomeScreenContent({ listPresentationKey }: { listPresentationKey: strin
     mode: workspaceLayout.mode,
     loading,
     serverId: record?.serverId,
+    preferList: homeLayout === 'editorial',
     allowInitialActivation: isFocused && routeActive,
   });
 

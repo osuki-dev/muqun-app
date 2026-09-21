@@ -110,7 +110,7 @@ export interface AgentToolCardProps {
   onPreviewImage?: (uri: string) => void;
   onOpenFile?: (file: { uri: string; mime?: string; name?: string }) => void;
   /** The virtualised changes viewer, for a patch too big to draw in a cell. */
-  onOpenFullDiff?: () => void;
+  onOpenFullDiff?: (path?: string) => void;
 }
 
 // ---------------------------------------------------------------------------
@@ -307,10 +307,12 @@ const ToolFiles = memo(function ToolFiles({
 /** The rows of one patch, inside a card. */
 const PatchBody = memo(function PatchBody({
   patch,
+  targetPath,
   onOpenFullDiff,
 }: {
   patch: string;
-  onOpenFullDiff?: () => void;
+  targetPath?: string;
+  onOpenFullDiff?: (path?: string) => void;
 }) {
   const theme = useThemeTokens();
   const colors = usePaneChatColors();
@@ -319,6 +321,7 @@ const PatchBody = memo(function PatchBody({
   return (
     <InlineDiffRows
       rows={rows}
+      targetPath={targetPath}
       colors={colors}
       gutterFill={theme.colors.surface}
       headerFill={theme.colors.surface}
@@ -840,7 +843,7 @@ interface ToolBodyArgs {
   markdownStyle: MarkdownStyle;
   onPreviewImage?: (uri: string) => void;
   onOpenFile?: (file: { uri: string; mime?: string; name?: string }) => void;
-  onOpenFullDiff?: () => void;
+  onOpenFullDiff?: (path?: string) => void;
 }
 
 /** One body per family. Nothing here fetches; everything is already in hand. */
@@ -924,6 +927,7 @@ function renderToolBody(args: ToolBodyArgs): React.ReactNode {
             <View key={`${section.action}:${section.path}`} style={styles.stretch}>
               <PatchBody
                 patch={section.patch}
+                targetPath={section.path}
                 {...(args.onOpenFullDiff ? { onOpenFullDiff: args.onOpenFullDiff } : {})}
               />
             </View>
@@ -1073,7 +1077,7 @@ const EditDiffs = memo(function EditDiffs({
   onOpenFullDiff,
 }: {
   files: ReturnType<typeof editFilesFromMetadata>;
-  onOpenFullDiff?: () => void;
+  onOpenFullDiff?: (path?: string) => void;
 }) {
   const theme = useThemeTokens();
   const colors = usePaneChatColors();

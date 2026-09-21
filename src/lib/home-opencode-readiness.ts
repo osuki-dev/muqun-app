@@ -1,5 +1,6 @@
 import type { GatewayEndpoint } from '@/lib/gateway-client';
 import type { AgentCatalog, AgentProject } from '@/lib/agent-session';
+import type { AgentEngineInfo } from '@/lib/agent-protocol';
 import type { GatewayRecord } from '@/lib/gateway-storage';
 
 export const OPENCODE_CAPABILITY = 'agent_sessions';
@@ -8,10 +9,16 @@ export const OPENCODE_READINESS_TIMEOUT_MS = 5000;
 export type OpenCodeReadiness =
   | { status: 'ready'; capabilities: readonly string[] }
   | { status: 'unsupported'; capabilities: readonly string[] }
-  | { status: 'offline'; capabilities: readonly string[]; cause: 'health' | 'catalog' };
+  | { status: 'not-installed'; capabilities: readonly string[] }
+  | {
+      status: 'offline';
+      capabilities: readonly string[];
+      cause: 'health' | 'catalog' | 'service';
+    };
 
 export type OpenCodeReadinessPorts = {
   probeHealth: () => Promise<{ ok: boolean; capabilities?: unknown }>;
+  loadEngine?: () => Promise<AgentEngineInfo | null>;
   loadCatalog: () => Promise<AgentCatalog>;
   loadProjects: () => Promise<AgentProject[]>;
 };
@@ -35,6 +42,21 @@ export async function checkOpenCodeReadiness(
   if (!health.ok) return { status: 'offline', capabilities, cause: 'health' };
   if (!capabilities.includes(OPENCODE_CAPABILITY)) {
     return { status: 'unsupported', capabilities };
+  }
+
+  if (ports.loadEngine) {
+    try {
+      const engine = await ports.loadEngine();
+      if (engine?.available) return { status: 'ready', capabilities };
+      if (engine?.installation === 'not_found') {
+        return { status: 'not-installed', capabilities };
+      }
+      if (engine?.installation === 'installed') {
+        return { status: 'offline', capabilities, cause: 'service' };
+      }
+    } catch {
+      // Older Gateways and inconclusive status reads keep the catalog fallback.
+    }
   }
 
   let timer: ReturnType<typeof setTimeout> | undefined;
@@ -107,6 +129,7 @@ export function checkOpenCodeServer(
           }),
         loadProjects: () =>
           agentSession.getAgentProjects(undefined, catalogEndpoint, { forceRefresh: true }),
+        loadEngine: () => agentSession.getAgentEngine(endpoint),
       });
     } catch {
       return { status: 'offline', capabilities: [], cause: 'health' };

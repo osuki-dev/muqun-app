@@ -23,34 +23,18 @@ import type { ServerReachability } from '@/lib/server-reachability';
 import { useHomeTargetPicker } from '@/stores/home-target-picker';
 
 /** Target choice is local to Home; a selection alone never switches a live connection. */
-export function HomeLaunchActions({
+export function useHomeLaunchController({
   servers,
   selectedServerId,
   reachabilityByServer,
-  onNewOpenCode,
-  onOpenOpenCode,
-  onNewTerminal,
-  onOpenTerminal,
-  onSsh,
   onPair,
-  onDemo,
 }: {
   servers: readonly GatewayRecord[];
   selectedServerId?: string;
   reachabilityByServer: Readonly<Record<string, ServerReachability | undefined>>;
-  onNewOpenCode: (serverId: string) => Promise<unknown>;
-  onOpenOpenCode: (serverId: string) => Promise<unknown>;
-  onNewTerminal: (serverId: string) => Promise<unknown>;
-  onOpenTerminal: (serverId: string) => Promise<unknown>;
-  onSsh: () => Promise<unknown>;
   onPair: () => Promise<unknown>;
-  onDemo?: () => void;
 }) {
-  const { t } = useLingui();
-  const { _ } = useLinguiRuntime();
   const router = useRouter();
-  const theme = useThemeTokens();
-  const background = useSurfaceBackground();
   const [chosenId, setChosenId] = useState<string | null>(null);
   const [pickerRequestId, setPickerRequestId] = useState<number | null>(null);
   // This is visual feedback only; the shared command controller owns the
@@ -118,30 +102,89 @@ export function HomeLaunchActions({
     else void launch(onPair);
   }
 
+  return {
+    chosen,
+    chosenOffline,
+    launchOnChosen,
+    openTargetPicker,
+    opening,
+    pickerChevronStyle,
+    pickerOpen: pickerOpenRequestId !== null,
+    run: launch,
+    servers,
+  };
+}
+
+export type HomeLaunchController = ReturnType<typeof useHomeLaunchController>;
+
+/** The Gateway selector lives in Home's masthead but owns no global connection state. */
+export function HomeLaunchTarget({
+  controller,
+  loading = false,
+  onPair,
+}: {
+  controller: HomeLaunchController;
+  loading?: boolean;
+  onPair: () => Promise<unknown>;
+}) {
+  const { t } = useLingui();
+  const theme = useThemeTokens();
+  const background = useSurfaceBackground();
+  const { chosen, openTargetPicker, opening, pickerChevronStyle, pickerOpen, run, servers } =
+    controller;
+  const disabled = loading || opening;
+
+  return (
+    <PressableScale
+      testID={servers.length === 0 ? 'home-pair-server' : 'home-launch-target'}
+      accessibilityRole="button"
+      accessibilityState={{ expanded: pickerOpen, disabled }}
+      disabled={disabled}
+      onPress={() => {
+        if (servers.length === 0) void run(onPair);
+        else openTargetPicker();
+      }}
+      style={[styles.target, { backgroundColor: background(theme.colors.surface) }]}>
+      <Text variant="bodySmall" weight="semibold" numberOfLines={1} style={styles.targetName}>
+        {loading
+          ? t`Loading servers`
+          : chosen
+            ? chosen.label
+            : servers.length
+              ? t`Choose a gateway`
+              : t`Pair a gateway`}
+      </Text>
+      <Animated.View style={pickerChevronStyle}>
+        <ChevronDown size={16} color={theme.colors.primary} />
+      </Animated.View>
+    </PressableScale>
+  );
+}
+
+export function HomeLaunchActions({
+  controller,
+  onNewOpenCode,
+  onOpenOpenCode,
+  onNewTerminal,
+  onOpenTerminal,
+  onSsh,
+  onDemo,
+}: {
+  controller: HomeLaunchController;
+  onNewOpenCode: (serverId: string) => Promise<unknown>;
+  onOpenOpenCode: (serverId: string) => Promise<unknown>;
+  onNewTerminal: (serverId: string) => Promise<unknown>;
+  onOpenTerminal: (serverId: string) => Promise<unknown>;
+  onSsh: () => Promise<unknown>;
+  onDemo?: () => void;
+}) {
+  const { t } = useLingui();
+  const { _ } = useLinguiRuntime();
+  const theme = useThemeTokens();
+  const { chosenOffline, launchOnChosen, opening, run } = controller;
+
   return (
     <View testID="home-launch-actions" style={styles.root}>
-      <PressableScale
-        testID={servers.length === 0 ? 'home-pair-server' : 'home-launch-target'}
-        accessibilityRole="button"
-        accessibilityState={{ expanded: pickerOpenRequestId !== null, disabled: opening }}
-        disabled={opening}
-        onPress={() => {
-          if (servers.length === 0) void launch(onPair);
-          else openTargetPicker();
-        }}
-        style={[
-          styles.target,
-          {
-            backgroundColor: background(theme.colors.surface),
-          },
-        ]}>
-        <Text variant="bodySmall" weight="semibold" style={styles.targetName}>
-          {chosen ? chosen.label : servers.length ? t`Choose a gateway` : t`Pair a gateway`}
-        </Text>
-        <Animated.View style={pickerChevronStyle}>
-          <ChevronDown size={16} color={theme.colors.primary} />
-        </Animated.View>
-      </PressableScale>
       {chosenOffline ? (
         <Text
           testID="home-launch-unavailable"
@@ -220,7 +263,7 @@ export function HomeLaunchActions({
           icon={<Link size={22} color={theme.colors.primary} />}
           disabled={opening}
           onPress={() => {
-            void launch(onSsh);
+            void run(onSsh);
           }}
         />
       </ScrollView>
@@ -359,17 +402,17 @@ function LaunchTile({
 const styles = StyleSheet.create({
   root: { gap: 12, minWidth: 0 },
   target: {
-    minHeight: 44,
+    width: 124,
+    height: 44,
     flexDirection: 'row',
     alignItems: 'center',
-    alignSelf: 'flex-start',
+    justifyContent: 'space-between',
     borderRadius: 3,
-    gap: 12,
+    gap: 8,
     paddingHorizontal: 12,
-    paddingVertical: 8,
     maxWidth: '100%',
   },
-  targetName: { flexShrink: 1 },
+  targetName: { minWidth: 0, flexShrink: 1 },
   demoAction: {
     minWidth: 44,
     minHeight: 44,
@@ -385,7 +428,7 @@ const styles = StyleSheet.create({
   demoLabel: { minWidth: 0, flexShrink: 1 },
   rail: { width: '100%', minWidth: 0 },
   actions: { flexDirection: 'row', alignItems: 'flex-start', gap: 4, paddingRight: 2 },
-  stackedActions: { width: 164, gap: 4 },
+  stackedActions: { width: 152, gap: 4 },
   tile: {
     width: 124,
     minHeight: 92,

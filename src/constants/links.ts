@@ -104,6 +104,9 @@ export const MUQUN_SITE_URL = 'https://muqun.dev/';
  */
 export const GATEWAY_SETUP_URL = MUQUN_SITE_URL;
 
+/** Official OpenCode installation instructions, verified reachable on 2026-09-21. */
+export const OPENCODE_INSTALL_URL = 'https://opencode.ai/docs/#install';
+
 /**
  * The guide, opened from Settings -> About.
  *

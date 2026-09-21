@@ -35,6 +35,8 @@ export type HomeEditorialLayoutProps = {
   artworkAvailable: boolean;
   /** Native actions kept in the compact masthead utility row. */
   headerAction?: ReactNode;
+  /** Current Gateway control aligned opposite the masthead actions. */
+  headerLeading?: ReactNode;
   /** Start-new-work actions, already wired by the parent. */
   launches?: ReactNode;
   /** Recent sessions or panes, already wired by the parent. */
@@ -123,6 +125,7 @@ export function HomeEditorialLayout({
   artwork,
   artworkAvailable,
   headerAction,
+  headerLeading,
   launches,
   recent,
   attention,
@@ -137,26 +140,14 @@ export function HomeEditorialLayout({
   const hasAside = hasSlot(attention) || hasSlot(connections);
   const geometry = getEditorialLayoutGeometry(contentWidth, fontScale, hasAside);
   const hasArtwork = artworkAvailable && hasSlot(artwork);
-  const mastheadWide = geometry.mastheadMode === 'side-by-side' && hasArtwork;
+  const hasIdentity = hasSlot(identity);
+  const mastheadWide = geometry.mastheadMode === 'side-by-side' && hasArtwork && hasIdentity;
   const hasHeaderAction = hasSlot(headerAction);
+  const hasHeaderLeading = hasSlot(headerLeading);
+  const hasHeaderRow = hasHeaderLeading || hasHeaderAction;
   const mastheadText = (
     <View style={styles.mastheadText}>
-      {hasSlot(identity) ? <View style={styles.identity}>{identity}</View> : null}
-      <View style={styles.kicker}>
-        <View style={[styles.kickerRule, { backgroundColor: theme.colors.primary }]} />
-        <Text variant="label" color={theme.colors.textMuted}>
-          {t`Home / Editorial`}
-        </Text>
-      </View>
-      {!hasSlot(identity) ? (
-        <Text
-          variant="heading"
-          color={theme.colors.text}
-          style={styles.title}
-          accessibilityRole="header">
-          {t`Workbench`}
-        </Text>
-      ) : null}
+      {hasIdentity ? <View style={styles.identity}>{identity}</View> : null}
     </View>
   );
 
@@ -165,29 +156,29 @@ export function HomeEditorialLayout({
       testID="home-editorial-layout"
       style={[styles.root, { paddingHorizontal: geometry.gutter }, style]}>
       <View style={styles.masthead}>
+        {hasHeaderRow ? (
+          <View style={styles.mastheadActionRow}>
+            {hasHeaderLeading ? <View style={styles.headerLeading}>{headerLeading}</View> : null}
+            {hasHeaderAction ? <View style={styles.headerAction}>{headerAction}</View> : null}
+          </View>
+        ) : null}
         {hasArtwork ? (
-          <>
-            {hasHeaderAction ? (
-              <View style={styles.mastheadActionRow}>
-                <View style={styles.headerAction}>{headerAction}</View>
-              </View>
-            ) : null}
-            <View style={[styles.mastheadBody, mastheadWide && styles.mastheadWide]}>
+          <View style={[styles.mastheadBody, mastheadWide && styles.mastheadWide]}>
+            {hasIdentity ? (
               <View style={[styles.mastheadCopy, mastheadWide && styles.mastheadCopyWide]}>
                 {mastheadText}
               </View>
-              <View
-                style={[styles.artwork, mastheadWide ? styles.artworkWide : styles.artworkStacked]}>
-                {artwork}
-              </View>
+            ) : null}
+            <View
+              style={[styles.artwork, mastheadWide ? styles.artworkWide : styles.artworkStacked]}>
+              {artwork}
             </View>
-          </>
-        ) : (
-          <View style={[styles.mastheadBody, hasHeaderAction && styles.mastheadNoArtRow]}>
-            <View style={styles.mastheadCopy}>{mastheadText}</View>
-            {hasHeaderAction ? <View style={styles.headerAction}>{headerAction}</View> : null}
           </View>
-        )}
+        ) : hasIdentity ? (
+          <View style={styles.mastheadBody}>
+            <View style={styles.mastheadCopy}>{mastheadText}</View>
+          </View>
+        ) : null}
       </View>
 
       <View
@@ -271,17 +262,15 @@ const styles = StyleSheet.create({
   },
   mastheadActionRow: {
     minWidth: 0,
-    minHeight: 0,
-    alignItems: 'flex-end',
+    minHeight: 44,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    columnGap: 12,
     marginBottom: 12,
   },
   mastheadBody: {
     minWidth: 0,
-  },
-  mastheadNoArtRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    columnGap: 12,
   },
   mastheadWide: {
     flexDirection: 'row',
@@ -301,26 +290,17 @@ const styles = StyleSheet.create({
   },
   headerAction: {
     flexShrink: 0,
+    marginLeft: 'auto',
     maxWidth: '100%',
+  },
+  headerLeading: {
+    minWidth: 0,
+    flexShrink: 1,
+    maxWidth: '60%',
   },
   identity: {
     minWidth: 0,
     marginBottom: 12,
-  },
-  kicker: {
-    minWidth: 0,
-    flexDirection: 'row',
-    alignItems: 'center',
-    columnGap: 8,
-    marginBottom: 8,
-  },
-  kickerRule: {
-    width: 24,
-    height: 2,
-  },
-  title: {
-    flexShrink: 1,
-    letterSpacing: -0.2,
   },
   artwork: {
     minWidth: 0,
