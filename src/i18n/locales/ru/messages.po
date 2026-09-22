@@ -1000,6 +1000,10 @@ msgstr "Код найден. Подключаемся к Gateway"
 msgid "Collapse {0}"
 msgstr "Свернуть {0}"
 
+#: src/components/agent-message-block.tsx
+msgid "Collapse goal continuation"
+msgstr "Свернуть сообщение о продолжении цели"
+
 #: src/components/agent-reasoning-block.tsx
 msgid "Collapse reasoning"
 msgstr "Свернуть рассуждения"
@@ -1732,6 +1736,10 @@ msgstr "Режим отправки: Steer (в реальном времени).
 msgid "Delivery not confirmed"
 msgstr "Доставка не подтверждена"
 
+#: src/components/theme-browse-sheet.tsx
+msgid "Demo catalogue. Leave the demo to download themes."
+msgstr "Демонстрационный каталог. Выйдите из демо, чтобы скачать темы"
+
 #: src/lib/demo-ssh.ts
 msgid "Demo shell"
 msgstr "Демо-shell"
@@ -1951,6 +1959,10 @@ msgstr "Все экраны приложения"
 #: src/components/pane-chat-blocks.tsx
 msgid "Expand {0}"
 msgstr "Развернуть {0}"
+
+#: src/components/agent-message-block.tsx
+msgid "Expand goal continuation"
+msgstr "Развернуть сообщение о продолжении цели"
 
 #: src/components/agent-reasoning-block.tsx
 msgid "Expand reasoning"
@@ -2191,6 +2203,10 @@ msgstr "В начало файла"
 #: src/app/+not-found.tsx
 msgid "Go to your servers"
 msgstr "К вашим серверам"
+
+#: src/components/agent-message-block.tsx
+msgid "Goal continuation"
+msgstr "Продолжение цели"
 
 #: src/app/commands.tsx
 msgid "Group"
@@ -5566,8 +5582,8 @@ msgid "Username"
 msgstr "Имя пользователя"
 
 #: src/components/theme-appearance-settings.tsx
-msgid "Uses the theme's Home artwork in the position chosen by your Home layout. When needed, it falls back to the theme's empty-state illustration."
-msgstr "Показывает оформление главного экрана темы в месте, выбранном макетом главного экрана. При необходимости используется иллюстрация пустого состояния темы"
+msgid "Uses the theme's Home artwork in the position chosen by your Home layout. Themes without Home artwork show no illustration."
+msgstr "Иллюстрация главного экрана темы отображается в месте, заданном его макетом. Если в теме нет такой иллюстрации, она не отображается"
 
 #: src/components/settings-servers.tsx
 msgid "Using"

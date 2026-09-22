@@ -1000,6 +1000,10 @@ msgstr "Código detetado. A contactar o Gateway"
 msgid "Collapse {0}"
 msgstr "Recolher {0}"
 
+#: src/components/agent-message-block.tsx
+msgid "Collapse goal continuation"
+msgstr "Recolher a mensagem de continuação do objetivo"
+
 #: src/components/agent-reasoning-block.tsx
 msgid "Collapse reasoning"
 msgstr "Recolher raciocínio"
@@ -1732,6 +1736,10 @@ msgstr "Modo de envio: Intervenção (Steer). Toque para mudar para Fila"
 msgid "Delivery not confirmed"
 msgstr "Entrega não confirmada"
 
+#: src/components/theme-browse-sheet.tsx
+msgid "Demo catalogue. Leave the demo to download themes."
+msgstr "Catálogo de demonstração. Saia da demonstração para baixar temas"
+
 #: src/lib/demo-ssh.ts
 msgid "Demo shell"
 msgstr "Shell de demonstração"
@@ -1951,6 +1959,10 @@ msgstr "Todos os ecrãs da app"
 #: src/components/pane-chat-blocks.tsx
 msgid "Expand {0}"
 msgstr "Expandir {0}"
+
+#: src/components/agent-message-block.tsx
+msgid "Expand goal continuation"
+msgstr "Expandir a mensagem de continuação do objetivo"
 
 #: src/components/agent-reasoning-block.tsx
 msgid "Expand reasoning"
@@ -2191,6 +2203,10 @@ msgstr "Ir para o início do ficheiro"
 #: src/app/+not-found.tsx
 msgid "Go to your servers"
 msgstr "Ir para os seus servidores"
+
+#: src/components/agent-message-block.tsx
+msgid "Goal continuation"
+msgstr "Continuação do objetivo"
 
 #: src/app/commands.tsx
 msgid "Group"
@@ -5566,8 +5582,8 @@ msgid "Username"
 msgstr "Nome de usuário"
 
 #: src/components/theme-appearance-settings.tsx
-msgid "Uses the theme's Home artwork in the position chosen by your Home layout. When needed, it falls back to the theme's empty-state illustration."
-msgstr "Usa a arte da página inicial do tema na posição definida pelo layout da página inicial. Quando necessário, usa a ilustração de estado vazio do tema"
+msgid "Uses the theme's Home artwork in the position chosen by your Home layout. Themes without Home artwork show no illustration."
+msgstr "Mostra a ilustração inicial do tema na posição definida pelo layout inicial. Os temas sem ilustração inicial não mostram nenhuma ilustração"
 
 #: src/components/settings-servers.tsx
 msgid "Using"

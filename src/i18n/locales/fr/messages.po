@@ -1000,6 +1000,10 @@ msgstr "Code détecté. Connexion au Gateway"
 msgid "Collapse {0}"
 msgstr "Replier {0}"
 
+#: src/components/agent-message-block.tsx
+msgid "Collapse goal continuation"
+msgstr "Réduire le message de poursuite de l’objectif"
+
 #: src/components/agent-reasoning-block.tsx
 msgid "Collapse reasoning"
 msgstr "Réduire le raisonnement"
@@ -1732,6 +1736,10 @@ msgstr "Mode d’envoi : Direct (Steer). Toucher pour passer en file d’attente
 msgid "Delivery not confirmed"
 msgstr "Livraison non confirmée"
 
+#: src/components/theme-browse-sheet.tsx
+msgid "Demo catalogue. Leave the demo to download themes."
+msgstr "Catalogue de démonstration. Quittez la démonstration pour télécharger des thèmes"
+
 #: src/lib/demo-ssh.ts
 msgid "Demo shell"
 msgstr "Shell de démonstration"
@@ -1951,6 +1959,10 @@ msgstr "Tous les écrans de l'app"
 #: src/components/pane-chat-blocks.tsx
 msgid "Expand {0}"
 msgstr "Déplier {0}"
+
+#: src/components/agent-message-block.tsx
+msgid "Expand goal continuation"
+msgstr "Développer le message de poursuite de l’objectif"
 
 #: src/components/agent-reasoning-block.tsx
 msgid "Expand reasoning"
@@ -2191,6 +2203,10 @@ msgstr "Aller au début du fichier"
 #: src/app/+not-found.tsx
 msgid "Go to your servers"
 msgstr "Aller à vos serveurs"
+
+#: src/components/agent-message-block.tsx
+msgid "Goal continuation"
+msgstr "Poursuite de l’objectif"
 
 #: src/app/commands.tsx
 msgid "Group"
@@ -5566,8 +5582,8 @@ msgid "Username"
 msgstr "Nom d’utilisateur"
 
 #: src/components/theme-appearance-settings.tsx
-msgid "Uses the theme's Home artwork in the position chosen by your Home layout. When needed, it falls back to the theme's empty-state illustration."
-msgstr "Utilise l’illustration d’accueil du thème à l’emplacement prévu par la disposition de l’accueil. Si nécessaire, l’illustration d’état vide du thème est utilisée"
+msgid "Uses the theme's Home artwork in the position chosen by your Home layout. Themes without Home artwork show no illustration."
+msgstr "Affiche l’illustration d’accueil du thème à l’emplacement défini par la disposition de l’accueil. Les thèmes sans illustration d’accueil n’affichent aucune illustration"
 
 #: src/components/settings-servers.tsx
 msgid "Using"

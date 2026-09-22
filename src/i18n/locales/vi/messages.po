@@ -1000,6 +1000,10 @@ msgstr "Đã tìm thấy mã. Đang kết nối Gateway"
 msgid "Collapse {0}"
 msgstr "Thu gọn {0}"
 
+#: src/components/agent-message-block.tsx
+msgid "Collapse goal continuation"
+msgstr "Thu gọn tin nhắn tiếp tục mục tiêu"
+
 #: src/components/agent-reasoning-block.tsx
 msgid "Collapse reasoning"
 msgstr "Thu gọn suy luận"
@@ -1732,6 +1736,10 @@ msgstr "Chế độ gửi: Can thiệp trực tiếp (Steer). Chạm để chuy�
 msgid "Delivery not confirmed"
 msgstr "Chưa xác nhận được việc gửi"
 
+#: src/components/theme-browse-sheet.tsx
+msgid "Demo catalogue. Leave the demo to download themes."
+msgstr "Danh mục minh họa. Thoát chế độ minh họa để tải chủ đề"
+
 #: src/lib/demo-ssh.ts
 msgid "Demo shell"
 msgstr "Shell demo"
@@ -1951,6 +1959,10 @@ msgstr "Mọi màn hình trong ứng dụng"
 #: src/components/pane-chat-blocks.tsx
 msgid "Expand {0}"
 msgstr "Mở rộng {0}"
+
+#: src/components/agent-message-block.tsx
+msgid "Expand goal continuation"
+msgstr "Mở rộng tin nhắn tiếp tục mục tiêu"
 
 #: src/components/agent-reasoning-block.tsx
 msgid "Expand reasoning"
@@ -2191,6 +2203,10 @@ msgstr "Về đầu tệp"
 #: src/app/+not-found.tsx
 msgid "Go to your servers"
 msgstr "Đến các máy chủ của bạn"
+
+#: src/components/agent-message-block.tsx
+msgid "Goal continuation"
+msgstr "Tiếp tục mục tiêu"
 
 #: src/app/commands.tsx
 msgid "Group"
@@ -5566,8 +5582,8 @@ msgid "Username"
 msgstr "Tên người dùng"
 
 #: src/components/theme-appearance-settings.tsx
-msgid "Uses the theme's Home artwork in the position chosen by your Home layout. When needed, it falls back to the theme's empty-state illustration."
-msgstr "Dùng hình trang chủ của chủ đề ở vị trí do bố cục Trang chủ chọn. Khi cần, ứng dụng dùng hình minh họa trạng thái trống của chủ đề"
+msgid "Uses the theme's Home artwork in the position chosen by your Home layout. Themes without Home artwork show no illustration."
+msgstr "Hiển thị hình minh họa trang chủ của chủ đề tại vị trí do bố cục trang chủ quy định. Chủ đề không có hình minh họa trang chủ sẽ không hiển thị hình minh họa"
 
 #: src/components/settings-servers.tsx
 msgid "Using"

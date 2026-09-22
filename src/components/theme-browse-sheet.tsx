@@ -20,6 +20,8 @@ import { ThemeImportProgress } from '@/components/theme-import-progress';
 import { Button } from '@/components/themed-button';
 import { useSurfaceBackgroundOpacity } from '@/hooks/use-surface-background';
 import { formatAssetSize } from '@/lib/asset-display';
+import { isDemoActive } from '@/lib/demo-gateway';
+import { demoThemeIndex } from '@/theme/demo-gallery';
 import { DURATION, fadeIn, fadeOut, listLayout, riseIn, STAGGER, timing } from '@/lib/motion';
 import { holdFor, remainingVisibleMs } from '@/lib/minimum-visible';
 import { useRenderTally } from '@/lib/render-tally';
@@ -110,11 +112,14 @@ export function ThemeBrowseSheet({
   useRenderTally('ThemeBrowseSheet');
   const installed = useThemeLibrary((state) => state.library.themes);
 
-  const [entries, setEntries] = useState<ThemeIndexEntry[] | null>(() => cachedThemeIndex());
+  const [demo] = useState(isDemoActive);
+  const [entries, setEntries] = useState<ThemeIndexEntry[] | null>(() =>
+    demo ? demoThemeIndex() : cachedThemeIndex()
+  );
   const [failed, setFailed] = useState(false);
   const [attempt, setAttempt] = useState(0);
   const [shown, setShown] = useState(() =>
-    Math.min(THEME_BROWSE_PAGE, cachedThemeIndex()?.length ?? THEME_BROWSE_PAGE)
+    Math.min(THEME_BROWSE_PAGE, entries?.length ?? THEME_BROWSE_PAGE)
   );
   // Where the page in view began, so an appended page starts its own sequence
   // at zero rather than continuing from twenty and arriving half a second late.
@@ -148,7 +153,7 @@ export function ThemeBrowseSheet({
   }, []);
 
   useEffect(() => {
-    if (entries !== null) return;
+    if (entries !== null || demo) return;
     if (!publicThemeTransport) {
       setFailed(true);
       return;
@@ -170,7 +175,7 @@ export function ThemeBrowseSheet({
     return () => read.cancel();
     // `attempt` is what `Try again` bumps; `entries` is the guard that stops a
     // re-read of a catalogue already in hand.
-  }, [attempt, entries]);
+  }, [attempt, entries, demo]);
 
   // The appended page is on screen once the commit carrying it has run, which
   // is what ends the footer's spinner. Real work, not a timer pretending to be
@@ -192,7 +197,7 @@ export function ThemeBrowseSheet({
   }
 
   function open(entry: ThemeIndexEntry) {
-    if (!publicThemeTransport || active.current) return;
+    if (demo || !publicThemeTransport || active.current) return;
     const owned = new ThemeImportRequest();
     active.current = owned;
     // Synchronously, before anything is awaited, so the render that shows the
@@ -277,7 +282,7 @@ export function ThemeBrowseSheet({
   const broken = new Set(brokenCovers);
 
   function coverOf(entry: ThemeIndexEntry): string | null {
-    if (broken.has(entry.id)) return null;
+    if (demo || broken.has(entry.id)) return null;
     return themePreviewUrl(entry);
   }
 
@@ -325,7 +330,7 @@ export function ThemeBrowseSheet({
       <View style={styles.stateAction}>
         <Button
           variant="secondary"
-          disabled={pending !== null}
+          disabled={demo || pending !== null}
           testID="theme-browse-retry"
           onPress={retry}>{t`Try again`}</Button>
       </View>
@@ -377,6 +382,13 @@ export function ThemeBrowseSheet({
         <Text variant="caption" color={theme.colors.textMuted}>
           {t`Showing ${shown} of ${total}`}
         </Text>
+        {demo ? (
+          <Text
+            variant="caption"
+            color={
+              theme.colors.textMuted
+            }>{t`Demo catalogue. Leave the demo to download themes.`}</Text>
+        ) : null}
       </View>
     ) : null;
 
@@ -444,7 +456,7 @@ export function ThemeBrowseSheet({
             // nothing to draw and re-renders to the same markup.
             progress={pending === item.id ? progress : null}
             dimmed={pending !== null && pending !== item.id}
-            disabled={pending !== null}
+            disabled={demo || pending !== null}
             revealed={revealed}
             delay={Math.min(Math.max(index - pageStart, 0), THEME_BROWSE_STAGGER_CAP) * STAGGER.row}
             onPress={() => open(item)}

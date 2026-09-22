@@ -1000,6 +1000,10 @@ msgstr "코드를 찾았습니다. Gateway에 연결하는 중입니다"
 msgid "Collapse {0}"
 msgstr "{0} 접기"
 
+#: src/components/agent-message-block.tsx
+msgid "Collapse goal continuation"
+msgstr "목표 이어가기 메시지 접기"
+
 #: src/components/agent-reasoning-block.tsx
 msgid "Collapse reasoning"
 msgstr "추론 접기"
@@ -1732,6 +1736,10 @@ msgstr "전송 모드: 실시간 개입(Steer). 탭하여 대기열로 전환"
 msgid "Delivery not confirmed"
 msgstr "전달이 확인되지 않음"
 
+#: src/components/theme-browse-sheet.tsx
+msgid "Demo catalogue. Leave the demo to download themes."
+msgstr "데모 목록입니다. 테마를 다운로드하려면 데모를 종료하세요"
+
 #: src/lib/demo-ssh.ts
 msgid "Demo shell"
 msgstr "데모 셸"
@@ -1951,6 +1959,10 @@ msgstr "앱의 모든 화면"
 #: src/components/pane-chat-blocks.tsx
 msgid "Expand {0}"
 msgstr "{0} 펼치기"
+
+#: src/components/agent-message-block.tsx
+msgid "Expand goal continuation"
+msgstr "목표 이어가기 메시지 펼치기"
 
 #: src/components/agent-reasoning-block.tsx
 msgid "Expand reasoning"
@@ -2191,6 +2203,10 @@ msgstr "파일 맨 위로 이동"
 #: src/app/+not-found.tsx
 msgid "Go to your servers"
 msgstr "서버 목록으로"
+
+#: src/components/agent-message-block.tsx
+msgid "Goal continuation"
+msgstr "목표 이어가기"
 
 #: src/app/commands.tsx
 msgid "Group"
@@ -5566,8 +5582,8 @@ msgid "Username"
 msgstr "사용자 이름"
 
 #: src/components/theme-appearance-settings.tsx
-msgid "Uses the theme's Home artwork in the position chosen by your Home layout. When needed, it falls back to the theme's empty-state illustration."
-msgstr "홈 레이아웃이 정한 위치에 테마의 홈 아트워크를 표시합니다. 필요한 경우 테마의 빈 상태 일러스트레이션을 사용합니다"
+msgid "Uses the theme's Home artwork in the position chosen by your Home layout. Themes without Home artwork show no illustration."
+msgstr "홈 레이아웃에서 지정한 위치에 테마의 홈 이미지를 표시합니다. 홈 이미지가 없는 테마에서는 일러스트를 표시하지 않습니다"
 
 #: src/components/settings-servers.tsx
 msgid "Using"

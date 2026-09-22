@@ -1000,6 +1000,10 @@ msgstr "พบรหัสแล้ว กำลังเชื่อมต่�
 msgid "Collapse {0}"
 msgstr "ยุบ {0}"
 
+#: src/components/agent-message-block.tsx
+msgid "Collapse goal continuation"
+msgstr "ย่อข้อความดำเนินเป้าหมายต่อ"
+
 #: src/components/agent-reasoning-block.tsx
 msgid "Collapse reasoning"
 msgstr "ยุบการใช้เหตุผล"
@@ -1732,6 +1736,10 @@ msgstr "โหมดการส่ง: แทรกแซงแบบเรี�
 msgid "Delivery not confirmed"
 msgstr "ยังไม่ยืนยันการส่ง"
 
+#: src/components/theme-browse-sheet.tsx
+msgid "Demo catalogue. Leave the demo to download themes."
+msgstr "แค็ตตาล็อกสาธิต ออกจากการสาธิตเพื่อดาวน์โหลดธีม"
+
 #: src/lib/demo-ssh.ts
 msgid "Demo shell"
 msgstr "เชลล์สาธิต"
@@ -1951,6 +1959,10 @@ msgstr "ทุกหน้าจอในแอป"
 #: src/components/pane-chat-blocks.tsx
 msgid "Expand {0}"
 msgstr "ขยาย {0}"
+
+#: src/components/agent-message-block.tsx
+msgid "Expand goal continuation"
+msgstr "ขยายข้อความดำเนินเป้าหมายต่อ"
 
 #: src/components/agent-reasoning-block.tsx
 msgid "Expand reasoning"
@@ -2191,6 +2203,10 @@ msgstr "ไปที่ต้นไฟล์"
 #: src/app/+not-found.tsx
 msgid "Go to your servers"
 msgstr "ไปยังเซิร์ฟเวอร์ของคุณ"
+
+#: src/components/agent-message-block.tsx
+msgid "Goal continuation"
+msgstr "ดำเนินเป้าหมายต่อ"
 
 #: src/app/commands.tsx
 msgid "Group"
@@ -5566,8 +5582,8 @@ msgid "Username"
 msgstr "ชื่อผู้ใช้"
 
 #: src/components/theme-appearance-settings.tsx
-msgid "Uses the theme's Home artwork in the position chosen by your Home layout. When needed, it falls back to the theme's empty-state illustration."
-msgstr "ใช้อาร์ตเวิร์กหน้าแรกของธีมในตำแหน่งที่เลย์เอาต์หน้าแรกกำหนด และใช้ภาพประกอบสถานะว่างของธีมเมื่อจำเป็น"
+msgid "Uses the theme's Home artwork in the position chosen by your Home layout. Themes without Home artwork show no illustration."
+msgstr "แสดงภาพประกอบหน้าแรกของธีมในตำแหน่งที่เค้าโครงหน้าแรกกำหนด ธีมที่ไม่มีภาพประกอบหน้าแรกจะไม่แสดงภาพประกอบ"
 
 #: src/components/settings-servers.tsx
 msgid "Using"

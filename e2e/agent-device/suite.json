@@ -357,7 +357,7 @@
         "mode": "scroll",
         "direction": "down",
         "timeout": 20000,
-        "run": "flows/custom-themes.ad#storage-scroll"
+        "run": "flows/custom-themes.ad#storage-anchor"
       },
       {
         "target": {
@@ -427,7 +427,7 @@
         "mode": "scroll",
         "direction": "down",
         "timeout": 20000,
-        "run": "flows/custom-themes.ad#storage-scroll"
+        "run": "flows/custom-themes.ad#storage-anchor"
       },
       {
         "target": {
@@ -4688,7 +4688,7 @@
         "run": "flows/settings-home-layout.ad#rail-visible"
       },
       {
-        "point": [0.8, 0.34],
+        "point": [0.8, 0.28],
         "delta": [-0.55, 0],
         "run": "flows/settings-home-layout.ad#rail-swipe"
       },
