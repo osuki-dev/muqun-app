@@ -352,15 +352,6 @@
       },
       {
         "target": {
-          "text": "STORAGE"
-        },
-        "mode": "scroll",
-        "direction": "down",
-        "timeout": 20000,
-        "run": "flows/custom-themes.ad#storage-scroll"
-      },
-      {
-        "target": {
           "id": "settings-remove-themes-row"
         },
         "mode": "scroll",
@@ -428,15 +419,6 @@
         "mode": "visible",
         "timeout": 8000,
         "run": "flows/custom-themes.ad#visible"
-      },
-      {
-        "target": {
-          "text": "STORAGE"
-        },
-        "mode": "scroll",
-        "direction": "down",
-        "timeout": 20000,
-        "run": "flows/custom-themes.ad#storage-scroll"
       },
       {
         "target": {

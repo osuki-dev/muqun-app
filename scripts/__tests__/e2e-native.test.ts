@@ -1046,6 +1046,33 @@ describe('native end-to-end gate', () => {
     // that also fails is a real blocker, not a timing accident.
     expect(presses).toBe(2);
   });
+  test('scheme confirmation alert is opened before locating controls', async () => {
+    const alertNodes = [
+      { ...node, type: 'Alert', label: 'Open in “Muqun”?' },
+      { ...node, type: 'Button', label: 'Cancel' },
+      { ...node, type: 'Button', label: 'Open' },
+    ];
+    const appNodes = [{ ...node, type: 'Button', label: 'Done' }];
+    const calls: string[][] = [];
+    let dismissed = false;
+    const runner = new NativeRunner(
+      suite,
+      '/unused',
+      '/unused',
+      async (args) => {
+        calls.push(args);
+        if (args[0] === 'press' && args[1].includes('Open')) dismissed = true;
+        if (args[0] === 'snapshot') {
+          return { nodes: dismissed ? appNodes : alertNodes };
+        }
+        if (args[0] === 'is') return { pass: true };
+        return {};
+      },
+      {}
+    );
+    expect((await runner.locate({ text: 'Done' }))?.label).toBe('Done');
+    expect(calls.some((call) => call[0] === 'press' && call[1].includes('Open'))).toBe(true);
+  });
 });
 
 describe('a foreground the app has not filled yet', () => {

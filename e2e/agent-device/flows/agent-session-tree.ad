@@ -8,7 +8,7 @@ wait stable 400 5000
 is visible "${TARGET}"
 
 # section scroll
-scroll down 1
+scroll down --pixels 300
 
 # section open-detail
 press "${TARGET}"
