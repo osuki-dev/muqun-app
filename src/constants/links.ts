@@ -185,14 +185,14 @@ export const FEEDBACK_URL = 'https://github.com/osuki-dev/muqun-app/issues/new/c
 /**
  * The source, opened from Settings -> About.
  *
- * Muqun is open source from 2.0.0, and this is the repository that Feedback
- * above files into -- the same tree, so a reader who wants to read the code
- * that produced a bug and a reader who wants to report it end up in one place.
+ * Muqun publishes its source, and this is the repository that Feedback above
+ * files into -- the same tree, so a reader who wants to inspect the code that
+ * produced a bug and a reader who wants to report it end up in one place.
  *
  * ── WHY THERE IS NO SUPPORT EMAIL ANY MORE ──────────────────────────────────
  * There was a `muqun@osuki.dev` mailbox here, shown and mailto'd from a
  * "Contact us" row. It went with the domain. A mailbox is also the wrong
- * instrument for an open-source app: a bug reported by mail is invisible to
+ * instrument for a source-available app: a bug reported by mail is invisible to
  * everyone else who has it, cannot be linked to the commit that fixes it, and
  * dies if nobody is reading that inbox. Both of the things it was used for --
  * report something, ask something -- are the issue tracker now.
