@@ -143,6 +143,7 @@ export const THEME_ICONS = [
   'chrome.attach',
   'chrome.scan',
   'chrome.settings',
+  'home.arrow',
 ] as const;
 export type ThemeIconName = (typeof THEME_ICONS)[number];
 

@@ -1202,7 +1202,13 @@ export function HomeOverview({
                 <Text variant="caption" color={theme.colors.textMuted}>
                   <Trans>Manage</Trans>
                 </Text>
-                <ChevronRight size={14} color={theme.colors.textMuted} strokeWidth={2} />
+                <ThemeIcon
+                  name="home.arrow"
+                  fallback={ChevronRight}
+                  size={14}
+                  color={theme.colors.textMuted}
+                  strokeWidth={2}
+                />
               </PressableScale>
             </View>
             <View style={styles.sshList}>

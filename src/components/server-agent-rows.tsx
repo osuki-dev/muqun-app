@@ -6,6 +6,7 @@ import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
+import { ThemeIcon } from '@/components/theme-icon';
 import { Bot, ChevronRight, SquareTerminal } from 'lucide-react-native';
 import type { StyleProp, ViewStyle } from 'react-native';
 import { Pressable, StyleSheet, View } from 'react-native';
@@ -303,7 +304,9 @@ function AgentRow({
         ) : null}
         {children}
         <Animated.View style={chevronStyle}>
-          <ChevronRight
+          <ThemeIcon
+            name="home.arrow"
+            fallback={ChevronRight}
             size={15}
             color={selected ? theme.colors.primary : theme.colors.textMuted}
             strokeWidth={2}
