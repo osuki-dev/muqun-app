@@ -43,9 +43,20 @@ export const themeColorsSchema = z.strictObject({
   info: opaque,
 });
 
+export const THEME_AMBIENT_EFFECTS = ['none', 'rain', 'particles', 'scanlines', 'bloom'] as const;
+export type ThemeAmbientEffect = (typeof THEME_AMBIENT_EFFECTS)[number];
+
+export const themeEffectsSchema = z.strictObject({
+  ambient: z.enum(THEME_AMBIENT_EFFECTS).default('none'),
+  intensity: z.number().min(0).max(1).optional(),
+  speed: z.number().min(0).max(2).optional(),
+});
+export type ThemeEffects = z.infer<typeof themeEffectsSchema>;
+
 export const themeVariantSchema = z.strictObject({
   colors: themeColorsSchema,
   surfaces: z.strictObject({ backgroundOpacity: z.number().min(0).max(1).optional() }).optional(),
+  effects: themeEffectsSchema.optional(),
   terminal: z.strictObject({
     background: opaque,
     backgroundOpacity: z.number().min(0).max(1).optional(),
@@ -283,6 +294,7 @@ export const themeManifestSchema = z.object({
       toolbarBackground: z.boolean().optional(),
     })
     .optional(),
+  effects: themeEffectsSchema.optional(),
   variants: z.strictObject({ light: themeVariantSchema, dark: themeVariantSchema }),
   materials: themeMaterialsSchema.optional(),
   assets: z.record(identifier, assetSchema).optional(),
