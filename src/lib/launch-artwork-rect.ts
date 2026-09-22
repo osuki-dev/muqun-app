@@ -18,36 +18,50 @@
  *
  * Free of React and React Native imports on purpose, so `bun test` can load it.
  *
- * The value is deliberately not cleared when Home unmounts. A rect that was
- * true a moment ago is a better landing place than none, and the opening only
- * ever reads it during the first second of a launch.
+ * The publisher clears its value when Home loses focus or unmounts, so a
+ * deep link cannot land the opening on an inactive screen.
  */
 
-export type LaunchHeroRect = {
+export type LaunchArtworkRect = {
   /** Window coordinates, in points. */
   x: number;
   y: number;
   width: number;
   height: number;
+  /** Decoded artwork identity and actual drawn bounds, rather than its layout band. */
+  source?: string;
+  intrinsicWidth?: number;
+  intrinsicHeight?: number;
+  /** A cover crop or mask cannot be represented by scaling the launch image. */
+  cropped?: boolean;
 };
 
-type Listener = (rect: LaunchHeroRect | null) => void;
+type Listener = (rect: LaunchArtworkRect | null) => void;
 
-let current: LaunchHeroRect | null = null;
+let current: LaunchArtworkRect | null = null;
 const listeners = new Set<Listener>();
 
 /** A rect the opening can actually aim at: on screen, and with area. */
-function usable(rect: LaunchHeroRect | null): rect is LaunchHeroRect {
+function usable(rect: LaunchArtworkRect | null): rect is LaunchArtworkRect {
   if (!rect) return false;
   const { x, y, width, height } = rect;
   if (![x, y, width, height].every((value) => Number.isFinite(value))) return false;
   return width > 0 && height > 0;
 }
 
-function same(a: LaunchHeroRect | null, b: LaunchHeroRect | null): boolean {
+function same(a: LaunchArtworkRect | null, b: LaunchArtworkRect | null): boolean {
   if (a === b) return true;
   if (!a || !b) return false;
-  return a.x === b.x && a.y === b.y && a.width === b.width && a.height === b.height;
+  return (
+    a.x === b.x &&
+    a.y === b.y &&
+    a.width === b.width &&
+    a.height === b.height &&
+    a.source === b.source &&
+    a.intrinsicWidth === b.intrinsicWidth &&
+    a.intrinsicHeight === b.intrinsicHeight &&
+    a.cropped === b.cropped
+  );
 }
 
 /**
@@ -57,7 +71,7 @@ function same(a: LaunchHeroRect | null, b: LaunchHeroRect | null): boolean {
  * same state as never having been told: the opening falls back to a cross-fade
  * rather than flying the picture to a corner.
  */
-export function publishLaunchHeroRect(rect: LaunchHeroRect | null): void {
+export function publishLaunchArtworkRect(rect: LaunchArtworkRect | null): void {
   const next = usable(rect) ? rect : null;
   if (same(current, next)) return;
   current = next;
@@ -65,7 +79,7 @@ export function publishLaunchHeroRect(rect: LaunchHeroRect | null): void {
 }
 
 /** The last rect Home reported, or null if it has not drawn a hero. */
-export function launchHeroRect(): LaunchHeroRect | null {
+export function launchArtworkRect(): LaunchArtworkRect | null {
   return current;
 }
 
@@ -75,7 +89,7 @@ export function launchHeroRect(): LaunchHeroRect | null {
  * The listener is called immediately with the current value, because the
  * opening may mount before or after Home measures and must not care which.
  */
-export function subscribeLaunchHeroRect(listener: Listener): () => void {
+export function subscribeLaunchArtworkRect(listener: Listener): () => void {
   listeners.add(listener);
   listener(current);
   return () => {
@@ -84,7 +98,7 @@ export function subscribeLaunchHeroRect(listener: Listener): () => void {
 }
 
 /** Tests only. */
-export function resetLaunchHeroRectForTesting(): void {
+export function resetLaunchArtworkRectForTesting(): void {
   current = null;
   listeners.clear();
 }

@@ -1,5 +1,5 @@
 import { expect, test } from 'bun:test';
-import { createThemeStarter } from '../authoring';
+import { createThemeStarter } from '../starter';
 import { contrastRatio } from '../contrast';
 import { clampThemeOpacity, jointArtworkOpacity, themeOpacityPolicy } from '../opacity-policy';
 

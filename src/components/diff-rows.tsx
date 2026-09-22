@@ -1,3 +1,4 @@
+import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { memo, useCallback, useMemo, useState, type ReactNode } from 'react';
 import { ActivityIndicator, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
 import Animated, {
@@ -162,6 +163,7 @@ export const DiffListRow = memo(function DiffListRow({
   onToggle,
   onShowMore,
   showSide,
+  hasSeparator,
 }: {
   row: GitDiffRow;
   /** The laid-out width of every row: the panning content. */
@@ -176,6 +178,8 @@ export const DiffListRow = memo(function DiffListRow({
   onShowMore: (path: string) => void;
   /** In the `all` view a file says which side it is on; in a half it need not. */
   showSide: boolean;
+  /** Draw a list rule only when another rendered row follows this one. */
+  hasSeparator: boolean;
 }) {
   // One per mounted row rather than one object shared by all of them: a
   // recycled list mounts about forty rows and keeps them, so the hook is paid
@@ -194,6 +198,7 @@ export const DiffListRow = memo(function DiffListRow({
         pinned={pinned}
         onToggle={onToggle}
         showSide={showSide}
+        hasSeparator={hasSeparator}
       />
     );
   }
@@ -289,6 +294,7 @@ const FileRow = memo(function FileRow({
   pinned,
   onToggle,
   showSide,
+  hasSeparator,
 }: {
   row: Extract<GitDiffRow, { type: 'file' }>;
   width: number;
@@ -298,6 +304,7 @@ const FileRow = memo(function FileRow({
   pinned: PinnedStyle;
   onToggle: (path: string) => void;
   showSide: boolean;
+  hasSeparator: boolean;
 }) {
   const { t } = useLingui();
   const { _ } = useLinguiRuntime();
@@ -333,6 +340,7 @@ const FileRow = memo(function FileRow({
           width,
           backgroundColor: row.expanded ? fill : 'transparent',
           borderBottomColor: colors.border,
+          borderBottomWidth: hasSeparator ? StyleSheet.hairlineWidth : 0,
         },
       ]}>
       <Animated.View style={[styles.pinned, styles.fileBody, pinned, { width: pinnedWidth }]}>
@@ -405,6 +413,7 @@ const ShowMoreRow = memo(function ShowMoreRow({
   onPress: (path: string) => void;
 }) {
   const { t } = useLingui();
+  const profile = useAppearanceProfile();
   return (
     // An explicit tap, never `onEndReached`. A diff that grows under the reader
     // is the viewport-moving behaviour the house rules forbid, and the reader
@@ -418,7 +427,11 @@ const ShowMoreRow = memo(function ShowMoreRow({
       onPress={() => onPress(row.path)}
       style={[styles.moreRow, { width }]}>
       <Animated.View style={[styles.pinned, styles.moreBody, pinned, { width: pinnedWidth }]}>
-        <View style={[styles.moreChip, { borderColor: colors.border }]}>
+        <View
+          style={[
+            styles.moreChip,
+            { borderRadius: profile.chrome.control, borderColor: colors.border },
+          ]}>
           {row.loading ? (
             <ActivityIndicator size="small" color={colors.accent} />
           ) : (
@@ -571,7 +584,7 @@ export function DiffRowList({
   }, [rows]);
 
   const renderRow = useCallback(
-    ({ item }: LegendListRenderItemProps<GitDiffRow>) => (
+    ({ item, index }: LegendListRenderItemProps<GitDiffRow>) => (
       <DiffListRow
         row={item}
         width={contentWidth}
@@ -583,6 +596,7 @@ export function DiffRowList({
         onToggle={onToggleFile}
         onShowMore={onShowMore}
         showSide={showSide}
+        hasSeparator={index < rows.length - 1}
       />
     ),
     [
@@ -593,6 +607,7 @@ export function DiffRowList({
       onShowMore,
       onToggleFile,
       pinnedWidth,
+      rows.length,
       scrollX,
       showSide,
     ]
@@ -611,6 +626,7 @@ export function DiffRowList({
         contentContainerStyle={styles.scrollerContent}>
         {rows.length > 0 ? (
           <LegendList
+            nestedScrollEnabled
             ref={listRef}
             data={rows as GitDiffRow[]}
             keyExtractor={keyOfDiffRow}
@@ -645,6 +661,8 @@ export function DiffRowList({
 
 export interface InlineDiffRowsProps {
   rows: readonly GitDiffRow[];
+  /** File named by the source card when its patch text does not carry a header. */
+  targetPath?: string;
   colors: PaneChatColors;
   gutterFill: string;
   headerFill: string;
@@ -658,7 +676,7 @@ export interface InlineDiffRowsProps {
    * than mounting a thousand animated rows -- but the reader is then told
    * there is more and given no way to it.
    */
-  onOpenFullDiff?: () => void;
+  onOpenFullDiff?: (path?: string) => void;
 }
 
 /**
@@ -677,6 +695,7 @@ export interface InlineDiffRowsProps {
  */
 export function InlineDiffRows({
   rows,
+  targetPath: targetPathProp,
   colors,
   gutterFill,
   headerFill,
@@ -684,6 +703,7 @@ export function InlineDiffRows({
   onToggleFile,
   onOpenFullDiff,
 }: InlineDiffRowsProps) {
+  const profile = useAppearanceProfile();
   const { t } = useLingui();
   const [shownLimit, setShownLimit] = useState(limit ?? INLINE_DIFF_MAX_ROWS);
   const { onRulerLayout, onViewportLayout, contentWidth, pinnedWidth } = useDiffMetrics(rows);
@@ -694,6 +714,8 @@ export function InlineDiffRows({
   });
 
   const capped = useMemo(() => capDiffRows(rows, shownLimit), [rows, shownLimit]);
+  const targetPath =
+    targetPathProp ?? rows.find((row) => row.type === 'file')?.path ?? rows[0]?.path;
   const atHardCap = shownLimit >= INLINE_DIFF_HARD_CAP;
   const showMore = useCallback(() => {
     setShownLimit((current) => stepDiffLimit(current).limit);
@@ -714,7 +736,7 @@ export function InlineDiffRows({
         onLayout={onViewportLayout}
         contentContainerStyle={styles.scrollerContent}>
         <View style={{ width: contentWidth }}>
-          {capped.rows.map((row) => (
+          {capped.rows.map((row, index) => (
             <DiffListRow
               key={row.key}
               row={row}
@@ -727,6 +749,7 @@ export function InlineDiffRows({
               onToggle={onToggleFile ?? noop}
               onShowMore={noop}
               showSide={false}
+              hasSeparator={index < capped.rows.length - 1}
             />
           ))}
         </View>
@@ -741,7 +764,10 @@ export function InlineDiffRows({
               accessibilityRole="button"
               accessibilityLabel={t`Show more of this diff`}
               onPress={showMore}
-              style={[styles.inlineMore, { borderColor: colors.border }]}>
+              style={[
+                styles.inlineMore,
+                { borderRadius: profile.chrome.control, borderColor: colors.border },
+              ]}>
               <Text variant="caption" color={colors.accent}>
                 <Plural value={capped.hidden} one="# more line" other="# more lines" />
               </Text>
@@ -752,8 +778,11 @@ export function InlineDiffRows({
               testID="inline-diff-open-full"
               accessibilityRole="button"
               accessibilityLabel={t`Open this diff in the changes viewer`}
-              onPress={onOpenFullDiff}
-              style={[styles.inlineMore, { borderColor: colors.border }]}>
+              onPress={() => onOpenFullDiff(targetPath)}
+              style={[
+                styles.inlineMore,
+                { borderRadius: profile.chrome.control, borderColor: colors.border },
+              ]}>
               <Text variant="caption" color={colors.accent}>
                 <Trans>Open in changes</Trans>
               </Text>
@@ -818,7 +847,6 @@ const styles = StyleSheet.create({
     minHeight: 28,
     justifyContent: 'center',
     paddingHorizontal: 10,
-    borderRadius: 10,
     borderCurve: 'continuous',
     borderWidth: StyleSheet.hairlineWidth,
   },
@@ -835,7 +863,6 @@ const styles = StyleSheet.create({
   fileRow: {
     height: FILE_ROW_HEIGHT,
     justifyContent: 'center',
-    borderBottomWidth: StyleSheet.hairlineWidth,
   },
   fileBody: {
     gap: 10,
@@ -912,7 +939,6 @@ const styles = StyleSheet.create({
     gap: 8,
     minHeight: 30,
     paddingHorizontal: 12,
-    borderRadius: 10,
     borderCurve: 'continuous',
     borderWidth: StyleSheet.hairlineWidth,
   },

@@ -68,6 +68,58 @@ describe('OpenCode readiness', () => {
     expect(calls.sort()).toEqual(['catalog', 'projects']);
   });
 
+  test('uses explicit engine installation evidence before probing catalogs', async () => {
+    let catalogCalls = 0;
+    const result = await checkOpenCodeReadiness(
+      ports({
+        loadEngine: async () => ({
+          available: false,
+          installation: 'not_found',
+          origin: 'none',
+          stream_connected: false,
+          autostart: true,
+        }),
+        loadCatalog: async () => {
+          catalogCalls += 1;
+          return EMPTY_CATALOG;
+        },
+      })
+    );
+
+    expect(result).toEqual({ status: 'not-installed', capabilities: ['agent_sessions'] });
+    expect(catalogCalls).toBe(0);
+  });
+
+  test('distinguishes an installed binary whose service is unavailable', async () => {
+    const result = await checkOpenCodeReadiness(
+      ports({
+        loadEngine: async () => ({
+          available: false,
+          installation: 'installed',
+          origin: 'none',
+          stream_connected: false,
+          autostart: true,
+        }),
+      })
+    );
+
+    expect(result).toEqual({
+      status: 'offline',
+      capabilities: ['agent_sessions'],
+      cause: 'service',
+    });
+  });
+
+  test('keeps the older-gateway catalog fallback when installation is unknown', async () => {
+    const result = await checkOpenCodeReadiness(
+      ports({
+        loadEngine: async () => null,
+      })
+    );
+
+    expect(result).toEqual({ status: 'ready', capabilities: ['agent_sessions'] });
+  });
+
   test('reports a catalog failure as offline while retaining health capabilities', async () => {
     const result = await checkOpenCodeReadiness(
       ports({ loadCatalog: async () => Promise.reject(new Error('service starting')) })

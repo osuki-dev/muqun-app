@@ -129,6 +129,7 @@ export function ComposerPopup({
                 <PressableCard
                   variant="flat"
                   style={{
+                    borderWidth: theme.components.Card.flat.border ? StyleSheet.hairlineWidth : 0,
                     backgroundColor: surfaceBackground(
                       theme.colors[theme.components.Card.flat.background]
                     ),

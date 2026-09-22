@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import { createAgentTranscriptStore } from '../agent-transcript';
+import { windowStartForSnapshot } from '@/lib/agent-timeline-window';
 import type { TimelineItem } from '@/lib/agent-protocol';
 import { upsertTimelineItems } from '@/lib/agent-timeline-upsert';
 
@@ -29,7 +30,21 @@ describe('agent transcript ownership', () => {
     expect(store.getState().config.windowStart).toBe(0);
   });
 
-  test('a latest page made of duplicate shells still shows the latest real messages', () => {
+  test('snapshot replacement publishes its moved window and rows in one notification', () => {
+    const store = createAgentTranscriptStore();
+    store.getState().setTimeline([item('old'), item('anchor'), item('last')], 1);
+    const observed: { windowStart: number; keys: string[] }[] = [];
+    const stop = store.subscribe((state) =>
+      observed.push({ windowStart: state.config.windowStart, keys: [...state.keys] })
+    );
+    const snapshot = [item('new-first'), item('anchor'), item('last')];
+    const nextWindow = windowStartForSnapshot(store.getState().timeline, 1, snapshot, 40);
+    store.getState().setTimeline(snapshot, nextWindow);
+    stop();
+    expect(observed).toEqual([{ windowStart: 1, keys: ['grp_anchor', 'grp_last'] }]);
+  });
+
+  test('a duplicate-shell window keeps fallback history when send appends a real row', () => {
     const store = createAgentTranscriptStore();
     const tools = Array.from({ length: 60 }, (_, i) =>
       item(`tool-${i}`, {
@@ -39,22 +54,57 @@ describe('agent transcript ownership', () => {
           name: 'shell',
           input: { command: `echo ${i}` },
           content: [],
-          metadata: {},
+          metadata: { shellID: `shell-${i}` },
           state: 'completed',
         },
       })
     );
     const shells = Array.from({ length: 60 }, (_, i) =>
-      item(`shell-${i}`, {
+      item(`shell_shell-${i}`, {
+        message_id: `shell_shell-${i}`,
         part: { type: 'shell', shell_id: `shell-${i}`, command: `echo ${i}`, status: 'exited' },
       })
     );
     store.getState().setTimeline([...tools, ...shells]);
-    store.getState().configure({ shells: [], windowStart: 80, status: 'idle' });
+    store.getState().configure({ windowStart: 80, status: 'idle' });
     expect(store.getState().keys).toHaveLength(40);
     expect(store.getState().keys.at(-1)).toBe('grp_tool-59');
-    store.getState().configure({ shells: [], windowStart: 0, status: 'idle' });
-    expect(store.getState().keys).toHaveLength(60);
+    const historyKeys = [...store.getState().keys];
+
+    const optimistic = item('temp_user', {
+      row_key: 'temp_user',
+      message_id: 'prompt',
+      role: 'user',
+      order: 'zzzz',
+      part: { type: 'text', text: 'hello' },
+    });
+    store.getState().setTimeline((timeline) => [...timeline, optimistic]);
+    expect(store.getState().keys).toEqual([...historyKeys, 'grp_temp_user']);
+
+    store.getState().configure({ windowStart: 80, status: 'busy' });
+    expect(store.getState().keys).toEqual([...historyKeys, 'grp_temp_user']);
+
+    store.getState().setTimeline((timeline) =>
+      upsertTimelineItems(timeline, [
+        item('acknowledged-user', {
+          message_id: 'prompt',
+          role: 'user',
+          seq: 2,
+          part: { type: 'text', text: 'hello' },
+        }),
+      ])
+    );
+    expect(store.getState().keys).toEqual([...historyKeys, 'grp_temp_user']);
+
+    store
+      .getState()
+      .setTimeline((timeline) =>
+        upsertTimelineItems(timeline, [item('answer', { message_id: 'answer', order: 'zzzzz' })])
+      );
+    expect(store.getState().keys).toEqual([...historyKeys, 'grp_temp_user', 'grp_answer']);
+
+    store.getState().configure({ windowStart: 0, status: 'idle' });
+    expect(store.getState().keys).toHaveLength(62);
   });
 
   test('filtering before the window preserves its original timeline anchor', () => {
@@ -71,13 +121,14 @@ describe('agent transcript ownership', () => {
           state: 'completed',
         },
       }),
-      item('duplicate', {
+      item('shell_shell', {
+        message_id: 'shell_shell',
         part: { type: 'shell', shell_id: 'shell', command: 'pwd', status: 'exited' },
       }),
       item('anchor'),
       item('last'),
     ]);
-    store.getState().configure({ shells: [], windowStart: 2, status: 'idle' });
+    store.getState().configure({ windowStart: 2, status: 'idle' });
     expect(store.getState().keys).toEqual(['grp_anchor', 'grp_last']);
   });
 
@@ -157,13 +208,13 @@ describe('agent transcript ownership', () => {
     store.getState().setTimeline([r1, r2]);
     const row = store.getState().rows.grp_r1;
     expect(row.items).toHaveLength(2);
-    store.getState().configure({ shells: [], windowStart: 0, status: 'busy' });
+    store.getState().configure({ windowStart: 0, status: 'busy' });
     expect(store.getState().reasoningKey).toBe('grp_r1');
-    store.getState().configure({ shells: [], windowStart: 0, status: 'interrupted' });
+    store.getState().configure({ windowStart: 0, status: 'interrupted' });
     expect(store.getState().reasoningKey).toBeUndefined();
     expect(store.getState().rows.grp_r1).toBe(row);
     store.getState().setTimeline([r1, r2, item('answer')]);
-    store.getState().configure({ shells: [], windowStart: 0, status: 'busy' });
+    store.getState().configure({ windowStart: 0, status: 'busy' });
     expect(store.getState().reasoningKey).toBeUndefined();
   });
 
@@ -199,10 +250,10 @@ describe('agent transcript ownership', () => {
         item('reasoning', { part: { type: 'reasoning', text: 'thought' } }),
         item('answer'),
       ]);
-    store.getState().configure({ shells: [], windowStart: 1, status: 'idle' });
+    store.getState().configure({ windowStart: 1, status: 'idle' });
     expect(store.getState().keys).toEqual(['grp_tool', 'grp_reasoning', 'grp_answer']);
     expect(store.getState().rows.grp_answer.prevItem).toBe(tool);
-    store.getState().configure({ shells: [], windowStart: 0, status: 'idle' });
+    store.getState().configure({ windowStart: 0, status: 'idle' });
     expect(store.getState().keys[0]).toBe('grp_older');
   });
 });

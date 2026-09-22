@@ -1,7 +1,7 @@
 import { RouteScene } from '@/components/route-scene';
 import {
   sheetPresentationOptions,
-  sheetRouteOptions,
+  sheetRouteOptions as resolveSheetRouteOptions,
   sheetRoutePresentations,
 } from '@/lib/route-presentation';
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
@@ -17,22 +17,27 @@ import {
 import * as NavigationBar from 'expo-navigation-bar';
 import * as SecureStore from 'expo-secure-store';
 import { useEffect } from 'react';
-import { AppState, LogBox, Platform } from 'react-native';
+import { AppState, LogBox, Platform, StyleSheet } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { useReducedMotion } from 'react-native-reanimated';
-import { NAVIGATION_MOTION } from '@/lib/motion';
 
 import { SplashScreen } from '@osuki-dev/react-native-splash';
 
 import { LaunchOverlay } from '@/components/launch-overlay';
 import { ReskinSurface, ReskinTransitionProvider } from '@/components/reskin-transition';
 import { AppErrorBoundary } from '@/components/app-error-boundary';
+import {
+  AppearanceProfileProvider,
+  useAppearanceProfile,
+} from '@/components/appearance-profile-provider';
+import { profileNavigationOptions } from '@/lib/appearance-profile';
 import { AppLockGate } from '@/components/app-lock-gate';
 import { HugSlackProvider } from '@/components/text';
 import { SshConnectPromptGate } from '@/components/ssh-connect-prompt-gate';
 import { UpdateStatusBanner } from '@/components/update-status-banner';
 import { InAppNotificationHost } from '@/components/in-app-notification-host';
+import { useNotificationSurfaceStyle } from '@/components/notification-surface';
 import { WhatsNewCard } from '@/components/whats-new-card';
 import { useGatewayRecord } from '@/hooks/use-gateway-record';
 import { useLaunchImageSync } from '@/hooks/use-launch-image-sync';
@@ -189,22 +194,23 @@ export default function RootLayout() {
             already gone wrong. It publishes a context and nothing else, so
             there is no state here that could be the fault.
           */}
-          <HugSlackProvider>
-            {/*
+          <AppearanceProfileProvider>
+            <HugSlackProvider>
+              {/*
               Wraps everything except the theme provider the fallback's <Text>
               needs, so a render throw in the toast host, lock gate, nav theme,
               or update banner is caught too -- not just faults inside the
               router.
             */}
-            <AppErrorBoundary>
-              {/*
+              <AppErrorBoundary>
+                {/*
               Inside the error boundary so a fault in locale resolution shows
               the fallback screen rather than a blank app, and outside
               everything else so the boundary's own copy is the only string in
               the tree that cannot be translated.
             */}
-              <AppI18nProvider>
-                {/*
+                <AppI18nProvider>
+                  {/*
                 `null` until the fonts are registered, which keeps the native
                 launch screen up: `SplashScreen.preventAutoHide()` at module
                 scope holds it until `LaunchOverlay` paints, and the overlay is
@@ -212,10 +218,11 @@ export default function RootLayout() {
                 already wearing the reader's typography -- there is no frame in
                 the system font for anything to cache.
               */}
-                {fontsReady ? <RootContent /> : null}
-              </AppI18nProvider>
-            </AppErrorBoundary>
-          </HugSlackProvider>
+                  {fontsReady ? <RootContent /> : null}
+                </AppI18nProvider>
+              </AppErrorBoundary>
+            </HugSlackProvider>
+          </AppearanceProfileProvider>
         </OsukiThemeProvider>
       </KeyboardProvider>
     </GestureHandlerRootView>
@@ -224,6 +231,12 @@ export default function RootLayout() {
 
 function RootContent() {
   const reduceMotion = useReducedMotion();
+  const profile = useAppearanceProfile();
+  const notificationSurfaceStyle = useNotificationSurfaceStyle();
+  const pageOptions = profileNavigationOptions(profile, reduceMotion);
+  const modalOptions = profileNavigationOptions(profile, reduceMotion, true);
+  const sheetRouteOptions = (route: string) =>
+    resolveSheetRouteOptions(route, profile, reduceMotion);
   const { resolvedMode } = useThemeMode();
   const { colors } = useThemeTokens();
   const surfaceBackground = useSurfaceBackground();
@@ -275,7 +288,13 @@ function RootContent() {
       */}
       <ToastProvider
         maxWidth={480}
-        toastStyle={{ backgroundColor: surfaceBackground(colors.surface) }}>
+        toastStyle={[
+          notificationSurfaceStyle,
+          {
+            backgroundColor: surfaceBackground(colors.surface),
+            borderWidth: StyleSheet.hairlineWidth,
+          },
+        ]}>
         {/*
           The re-skin transitions live here, inside the toast provider and
           around everything the reader can see, because a theme or a font
@@ -313,8 +332,7 @@ function RootContent() {
                 }
                 screenOptions={{
                   headerShown: false,
-                  animation: 'fade',
-                  animationDuration: reduceMotion ? 0 : NAVIGATION_MOTION.pageMs,
+                  ...pageOptions,
                   contentStyle: { backgroundColor: screenBackground },
                   // A screen nobody is looking at should not be rendering. Home
                   // sits under the terminal for as long as the terminal is open,
@@ -327,23 +345,20 @@ function RootContent() {
                 <Stack.Screen
                   name="index"
                   options={{
-                    animation: 'fade',
-                    animationDuration: reduceMotion ? 0 : NAVIGATION_MOTION.pageMs,
+                    ...pageOptions,
                   }}
                 />
-                {/* Pages share a depth reveal; native sheets retain their layout contract. */}
+                {/* Native options change in place; sheets retain their measurement contract. */}
                 <Stack.Screen
                   name="agent"
                   options={{
-                    animation: 'fade',
-                    animationDuration: reduceMotion ? 0 : NAVIGATION_MOTION.pageMs,
+                    ...pageOptions,
                   }}
                 />
                 <Stack.Screen
                   name="settings"
                   options={{
-                    animation: 'fade',
-                    animationDuration: reduceMotion ? 0 : NAVIGATION_MOTION.pageMs,
+                    ...pageOptions,
                   }}
                 />
                 {/*
@@ -355,23 +370,20 @@ function RootContent() {
                   name="servers/[serverId]"
                   options={{
                     gestureEnabled: false,
-                    animation: 'fade',
-                    animationDuration: reduceMotion ? 0 : NAVIGATION_MOTION.pageMs,
+                    ...pageOptions,
                   }}
                 />
                 <Stack.Screen
                   name="ssh"
                   options={{
-                    animation: 'fade',
-                    animationDuration: reduceMotion ? 0 : NAVIGATION_MOTION.pageMs,
+                    ...pageOptions,
                   }}
                 />
                 <Stack.Screen
                   name="ssh/[hostId]"
                   options={{
                     gestureEnabled: false,
-                    animation: 'fade',
-                    animationDuration: reduceMotion ? 0 : NAVIGATION_MOTION.pageMs,
+                    ...pageOptions,
                   }}
                 />
                 <Stack.Screen name="commands" options={sheetRouteOptions('commands')} />
@@ -395,7 +407,7 @@ function RootContent() {
                   name="custom-theme"
                   options={{
                     ...sheetPresentationOptions(sheetRoutePresentations['custom-theme']),
-                    animationDuration: reduceMotion ? 0 : NAVIGATION_MOTION.modalMs,
+                    ...modalOptions,
                   }}
                 />
                 <Stack.Screen
@@ -424,7 +436,7 @@ function RootContent() {
                   name="simfarm"
                   options={{
                     ...sheetPresentationOptions(sheetRoutePresentations['simfarm']),
-                    animationDuration: reduceMotion ? 0 : NAVIGATION_MOTION.modalMs,
+                    ...modalOptions,
                   }}
                 />
                 <Stack.Screen name="explore" options={sheetRouteOptions('explore')} />
@@ -437,6 +449,15 @@ function RootContent() {
               How tall each one opens, and why, is in `sheetRouteDetents`.
             */}
                 <Stack.Screen name="agent-sessions" options={sheetRouteOptions('agent-sessions')} />
+                <Stack.Screen
+                  name="agent-session-tree"
+                  options={sheetRouteOptions('agent-session-tree')}
+                />
+                <Stack.Screen
+                  name="agent-subagent-detail"
+                  dangerouslySingular
+                  options={sheetRouteOptions('agent-subagent-detail')}
+                />
                 <Stack.Screen name="agent-model" options={sheetRouteOptions('agent-model')} />
                 <Stack.Screen name="agent-mode" options={sheetRouteOptions('agent-mode')} />
                 <Stack.Screen

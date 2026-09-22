@@ -1,6 +1,9 @@
 # Native agent-device action sections; suite.json composes guards and includes.
 # ssh
 
+# section reveal-ssh
+gesture pan "${X}" "${Y}" "${DX}" "${DY}" 500
+
 # section s1
 press "${TARGET}"
 
@@ -99,3 +102,12 @@ press "${TARGET}"
 
 # section s32
 is visible "${TARGET}"
+
+# section dismiss-notification
+# Swipe only the app notification, toward the SSH title above it. Both ends
+# resolve from current selectors; never gesture at an arbitrary overlay or the
+# system status bar. Keep the reconnect pill itself under test.
+gesture drag "${TARGET}" "label=\"Demo shell\"" 0 300 0
+
+# section notification-dismissed
+is hidden "${TARGET}"

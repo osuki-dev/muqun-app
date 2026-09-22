@@ -22,11 +22,11 @@ import { ChevronRight, type LucideIcon } from 'lucide-react-native';
 import { Children, Fragment, isValidElement, type ReactNode } from 'react';
 import { StyleSheet, type TextStyle, View } from 'react-native';
 
+import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { PressableScale } from '@/components/pressable-scale';
 import { Toggle } from '@/components/toggle';
 import { ThemedSurface } from '@/components/themed-surface';
 import { useSheetGroundPlate } from '@/components/sheet-ground';
-import { appChrome } from '@/constants/appearance';
 import { useRenderTally } from '@/lib/render-tally';
 
 /**
@@ -222,7 +222,7 @@ export function SettingsSection({ title, children }: { title: string; children: 
   useRenderTally('SettingsSection');
   return (
     <View style={styles.section}>
-      <SectionLabel title={title} />
+      <SectionLabel title={title} style={styles.settingsSectionTitle} />
       <SettingsCard>{children}</SettingsCard>
     </View>
   );
@@ -253,6 +253,7 @@ export function SettingsCard({
    */
   flush?: boolean;
 }) {
+  const profile = useAppearanceProfile();
   const theme = useThemeTokens();
   const rows = Children.toArray(children);
   if (flush) {
@@ -272,7 +273,7 @@ export function SettingsCard({
     <ThemedSurface
       slot="cards.decoration"
       baseColor={theme.colors.surface}
-      style={styles.sectionBody}>
+      style={[styles.sectionBody, { borderRadius: profile.chrome.surface }]}>
       {rows.map((row, position) => (
         <Fragment
           key={isValidElement(row) && row.key != null ? row.key : `settings-row-${position}`}>
@@ -317,6 +318,7 @@ export function SettingsToggleRow({
   disabled?: boolean;
   onValueChange: (value: boolean) => void;
 }) {
+  const profile = useAppearanceProfile();
   const theme = useThemeTokens();
   useRenderTally('SettingsToggleRow');
   // A row that cannot be operated says so with the whole row, not with the
@@ -328,7 +330,7 @@ export function SettingsToggleRow({
   const labelColor = disabled ? theme.colors.textDisabled : theme.colors.text;
   const detailColor = disabled ? theme.colors.textDisabled : theme.colors.textMuted;
   return (
-    <View style={styles.row}>
+    <View style={[styles.row, { paddingVertical: profile.settingsRowPaddingVertical }]}>
       <View style={styles.rowCopy}>
         <Text variant="bodySmall" color={labelColor} style={styles.rowLabel}>
           {label}
@@ -398,6 +400,7 @@ export function SettingsNavRow({
   accessibilityRole?: 'button' | 'link';
   testID?: string;
 }) {
+  const profile = useAppearanceProfile();
   const theme = useThemeTokens();
   const surfaceBackground = useSurfaceBackground();
   useRenderTally('SettingsNavRow');
@@ -409,10 +412,14 @@ export function SettingsNavRow({
       disabled={disabled}
       testID={testID}
       onPress={onPress}
-      style={styles.row}>
+      style={[styles.row, { paddingVertical: profile.settingsRowPaddingVertical }]}>
       {Icon ? (
         <View
-          style={[styles.chip, { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) }]}>
+          style={[
+            styles.chip,
+            { borderRadius: profile.chrome.control },
+            { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
+          ]}>
           <Icon size={18} color={theme.colors.textMuted} strokeWidth={2} />
         </View>
       ) : null}
@@ -475,6 +482,7 @@ export function SettingsChoiceRow({
   testID?: string;
   onPress: () => void;
 }) {
+  const profile = useAppearanceProfile();
   const theme = useThemeTokens();
   useRenderTally('SettingsChoiceRow');
   return (
@@ -483,7 +491,7 @@ export function SettingsChoiceRow({
       accessibilityLabel={accessibilityLabel}
       testID={testID}
       onPress={onPress}
-      style={styles.row}>
+      style={[styles.row, { paddingVertical: profile.settingsRowPaddingVertical }]}>
       <View style={[styles.rowCopy, valuePosition === 'trailing' && styles.rowCopyFloor]}>
         <Text variant="bodySmall" style={styles.rowLabel}>
           {label}
@@ -544,13 +552,20 @@ export function SettingsInfoRow({
   detail: ReactNode;
   testID?: string;
 }) {
+  const profile = useAppearanceProfile();
   const theme = useThemeTokens();
   const surfaceBackground = useSurfaceBackground();
   useRenderTally('SettingsInfoRow');
   return (
-    <View testID={testID} style={styles.row}>
+    <View
+      testID={testID}
+      style={[styles.row, { paddingVertical: profile.settingsRowPaddingVertical }]}>
       <View
-        style={[styles.chip, { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) }]}>
+        style={[
+          styles.chip,
+          { borderRadius: profile.chrome.control },
+          { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
+        ]}>
         <Icon size={18} color={theme.colors.textMuted} strokeWidth={2} />
       </View>
       <View style={styles.rowCopy}>
@@ -605,9 +620,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: LADDER.tight,
     letterSpacing: 0.8,
   },
+  // On a settings section the plate starts at the card edge, while its text
+  // keeps the same gutter as the rows below. Other SectionLabel placements
+  // retain their compact, symmetric plate.
+  settingsSectionTitle: {
+    marginLeft: 0,
+    paddingLeft: LADDER.gutter,
+  },
   sectionBodyFlush: { overflow: 'hidden' },
   sectionBody: {
-    borderRadius: appChrome.radius.popover,
     borderCurve: 'continuous',
     overflow: 'hidden',
   },
@@ -616,7 +637,6 @@ const styles = StyleSheet.create({
   row: {
     minHeight: ROW_MIN_HEIGHT,
     paddingHorizontal: LADDER.gutter,
-    paddingVertical: LADDER.snug,
     flexDirection: 'row',
     alignItems: 'center',
     gap: LADDER.snug,
@@ -660,7 +680,6 @@ const styles = StyleSheet.create({
   chip: {
     width: CHIP_SIZE,
     height: CHIP_SIZE,
-    borderRadius: appChrome.radius.control,
     borderCurve: 'continuous',
     alignItems: 'center',
     justifyContent: 'center',

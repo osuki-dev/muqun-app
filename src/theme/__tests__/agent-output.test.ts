@@ -1,7 +1,7 @@
 import { expect, test } from 'bun:test';
 
 import { extractThemeFromOutput, themeNeedsImages } from '@/theme/agent-output';
-import { createThemeStarter } from '@/theme/authoring';
+import { createThemeStarter } from '@/theme/starter';
 
 const starter = createThemeStarter();
 const fence = (manifest: unknown) => '```muqun-theme\n' + JSON.stringify(manifest) + '\n```';

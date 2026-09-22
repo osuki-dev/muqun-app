@@ -131,11 +131,27 @@ approval prompts, and never retry an ambiguous delivery automatically.
 
 Finishing a feature means the whole app still works, not just the screen that was touched.
 
-- Every change that touches app code runs the full end-to-end suite before it lands: `bash scripts/e2e.sh`.
-  It needs a dedicated, unpaired emulator or simulator with the app installed and English selected; the flows drive offline demo
-  mode, so no gateway, no network and no pairing.
-- `bash scripts/e2e.sh --smoke` is the fast subset (`demo-tour` only). It is for iterating, not for
-  closing a card.
+- During development, run the affected unit tests and the narrowest relevant native flow or domain
+  tag. The runner accepts one tag per invocation: `themes`, `settings`, `terminal`, `files`, `agents`,
+  `workspace`, `connection`, or `localization`. Run multiple tags sequentially when a change crosses
+  domains. Examples:
+
+  ```sh
+  bash scripts/e2e.sh --list
+  bash scripts/e2e.sh --tag terminal --device "$QA_DEVICE" --platform android
+  bash scripts/e2e.sh --flow large-file-preview --device "$QA_DEVICE" --platform android
+  ```
+
+  `--list` prints every flow's domain membership. Shared navigation, theme-provider, persistence,
+  or broad integration changes may need more than one domain before the final gate. A targeted run
+  is iteration evidence, never proof that the full gate passed.
+
+- `bash scripts/e2e.sh --smoke` runs only `demo-tour` for a quick integration check. It does not
+  close a card or replace a relevant domain run.
+- Run the complete suite once on the final candidate before opening or updating a pull request that
+  is ready to land: `bash scripts/e2e.sh`. It needs a dedicated, unpaired emulator or simulator with
+  the app installed and English selected; the flows drive offline demo mode, so no gateway, no
+  network and no pairing. The default `full` selection remains the landing gate.
 - Reports land in `dist/e2e-reports/` (JUnit XML plus the run's screenshots, native command results and view hierarchies).
   The directory is build output and is not committed.
 - A flow that covers a new surface belongs in `e2e/agent-device/` as native `.ad` actions, registered
@@ -152,8 +168,9 @@ Finishing a feature means the whole app still works, not just the screen that wa
 
 ## The checks
 
-These five are the gate, in this order. The first four are fast enough to run on every change;
-the fifth is the feature gate above.
+These five are the final-candidate gate, in this order. During iteration, run focused tests first;
+the first four are the integration checkpoint, and the complete fifth check is required once before
+the change is declared ready to land.
 
 ```sh
 npx tsc --noEmit

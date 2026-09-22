@@ -1,3 +1,4 @@
+import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { Input } from '@/components/themed-input';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { Trans, useLingui } from '@lingui/react/macro';
@@ -204,7 +205,6 @@ export function SettingsServers({ title }: { title: string }) {
           things done once a month in a corner used every minute, and this is
           the page a reader goes to for "add another". Unconditional, so there
           is one place that never moves. */}
-      <SettingsSeparator />
       <SettingsChoiceRow
         label={t`Pair a server`}
         value=""
@@ -213,7 +213,6 @@ export function SettingsServers({ title }: { title: string }) {
         testID="settings-pair-row"
         onPress={() => router.push('/explore')}
       />
-      <SettingsSeparator />
       <SettingsChoiceRow
         label={t`SSH hosts`}
         value=""
@@ -222,7 +221,6 @@ export function SettingsServers({ title }: { title: string }) {
         testID="settings-ssh-row"
         onPress={() => router.push('/ssh')}
       />
-      <SettingsSeparator />
 
       {/* The preference that governs how the home screen draws this same list,
           under the list it is about rather than in a one-row section of its
@@ -298,6 +296,7 @@ function ServerRow({
 }) {
   const { t } = useLingui();
   const { _ } = useLinguiRuntime();
+  const profile = useAppearanceProfile();
   const theme = useThemeTokens();
   const surfaceBackground = useSurfaceBackground();
   useRenderTally('SettingsServerRow');
@@ -351,7 +350,7 @@ function ServerRow({
         accessibilityLabel={t`Options for ${server.label}`}
         accessibilityState={{ expanded: open }}
         onPress={onToggle}
-        style={styles.rowHeader}>
+        style={[styles.rowHeader, { paddingVertical: profile.settingsRowPaddingVertical }]}>
         <View style={styles.rowCopy}>
           <View style={styles.nameLine}>
             <Text variant="bodySmall" numberOfLines={1} style={styles.name}>
@@ -432,6 +431,7 @@ function ServerRow({
                 onPress={onUse}
                 style={[
                   styles.action,
+                  { borderRadius: profile.chrome.control },
                   { backgroundColor: surfaceBackground(theme.colors.primarySubtle) },
                 ]}>
                 <Check size={16} color={theme.colors.primary} strokeWidth={2.2} />
@@ -472,6 +472,7 @@ function ServerRowEditor({
   onUnpair: () => Promise<void>;
 }) {
   const { t } = useLingui();
+  const profile = useAppearanceProfile();
   const theme = useThemeTokens();
   const surfaceBackground = useSurfaceBackground();
   const [editing, setEditing] = useState(false);
@@ -486,7 +487,11 @@ function ServerRowEditor({
         accessibilityRole="button"
         accessibilityLabel={t`Edit ${server.label}`}
         onPress={() => setEditing(true)}
-        style={[styles.action, { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) }]}>
+        style={[
+          styles.action,
+          { borderRadius: profile.chrome.control },
+          { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
+        ]}>
         <Pencil size={15} color={theme.colors.text} strokeWidth={2} />
         <Text variant="caption" color={theme.colors.text}>
           <Trans>Edit this server</Trans>
@@ -517,6 +522,7 @@ function ServerRowEditor({
  */
 function ServerEditForm({ server, onDone }: { server: GatewayRecord; onDone: () => void }) {
   const { t } = useLingui();
+  const profile = useAppearanceProfile();
   const theme = useThemeTokens();
   const surfaceBackground = useSurfaceBackground();
   const { showToast } = useToast();
@@ -629,6 +635,7 @@ function ServerEditForm({ server, onDone }: { server: GatewayRecord; onDone: () 
           onPress={onDone}
           style={[
             styles.action,
+            { borderRadius: profile.chrome.control },
             styles.editButton,
             { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
           ]}>
@@ -644,6 +651,7 @@ function ServerEditForm({ server, onDone }: { server: GatewayRecord; onDone: () 
           onPress={() => void save()}
           style={[
             styles.action,
+            { borderRadius: profile.chrome.control },
             styles.editButton,
             { backgroundColor: surfaceBackground(theme.colors.primary) },
           ]}>
@@ -663,6 +671,7 @@ function ServerEditForm({ server, onDone }: { server: GatewayRecord; onDone: () 
  */
 function UnpairAction({ label, onUnpair }: { label: string; onUnpair: () => Promise<void> }) {
   const { t } = useLingui();
+  const profile = useAppearanceProfile();
   const theme = useThemeTokens();
   const surfaceBackground = useSurfaceBackground();
   const [armed, setArmed] = useState(false);
@@ -698,6 +707,7 @@ function UnpairAction({ label, onUnpair }: { label: string; onUnpair: () => Prom
         onPress={() => void confirm()}
         style={[
           styles.action,
+          { borderRadius: profile.chrome.control },
           styles.armedButton,
           { backgroundColor: surfaceBackground(theme.colors.danger) },
           view.confirm.dimmed && styles.pendingAction,
@@ -724,6 +734,7 @@ function UnpairAction({ label, onUnpair }: { label: string; onUnpair: () => Prom
         }}
         style={[
           styles.action,
+          { borderRadius: profile.chrome.control },
           styles.armedButton,
           { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
           view.cancel.dimmed && styles.pendingAction,
@@ -738,7 +749,11 @@ function UnpairAction({ label, onUnpair }: { label: string; onUnpair: () => Prom
       accessibilityRole="button"
       accessibilityLabel={t`Unpair ${label}`}
       onPress={() => setArmed(true)}
-      style={[styles.action, { backgroundColor: surfaceBackground(theme.colors.dangerSubtle) }]}>
+      style={[
+        styles.action,
+        { borderRadius: profile.chrome.control },
+        { backgroundColor: surfaceBackground(theme.colors.dangerSubtle) },
+      ]}>
       <Trash2 size={15} color={theme.colors.danger} strokeWidth={2} />
       <Text variant="caption" color={theme.colors.danger}>
         <Trans>Unpair this server</Trans>
@@ -759,6 +774,7 @@ function UnpairAction({ label, onUnpair }: { label: string; onUnpair: () => Prom
  */
 function PairedDevices({ server }: { server: GatewayRecord }) {
   const { t } = useLingui();
+  const profile = useAppearanceProfile();
   const theme = useThemeTokens();
   const surfaceBackground = useSurfaceBackground();
   const { showToast } = useToast();
@@ -871,7 +887,11 @@ function PairedDevices({ server }: { server: GatewayRecord }) {
               feedback="selection"
               disabled={revoking !== null}
               onPress={() => void revoke(device)}
-              style={[styles.revoke, { backgroundColor: surfaceBackground(theme.colors.danger) }]}>
+              style={[
+                styles.revoke,
+                { borderRadius: profile.radius.sm },
+                { backgroundColor: surfaceBackground(theme.colors.danger) },
+              ]}>
               {/* Semibold through the prop, for the Android reason at `usingText`. */}
               <Text variant="caption" weight="semibold" color={theme.colors.onPrimary}>
                 <Trans>Revoke</Trans>
@@ -883,7 +903,7 @@ function PairedDevices({ server }: { server: GatewayRecord }) {
               accessibilityLabel={t`Revoke ${device.name}`}
               disabled={revoking !== null}
               onPress={() => setConfirming(device.id)}
-              style={styles.revoke}>
+              style={[styles.revoke, { borderRadius: profile.radius.sm }]}>
               <Text variant="caption" color={theme.colors.danger}>
                 {revoking === device.id ? t`Revoking…` : t`Revoke`}
               </Text>
@@ -903,7 +923,6 @@ const styles = StyleSheet.create({
   row: { paddingHorizontal: LADDER.gutter },
   rowHeader: {
     minHeight: 60,
-    paddingVertical: LADDER.snug,
     flexDirection: 'row',
     alignItems: 'center',
     gap: LADDER.snug,
@@ -938,7 +957,6 @@ const styles = StyleSheet.create({
   action: {
     minHeight: 40,
     paddingHorizontal: LADDER.snug,
-    borderRadius: 12,
     borderCurve: 'continuous',
     flexDirection: 'row',
     alignItems: 'center',
@@ -953,7 +971,6 @@ const styles = StyleSheet.create({
   revoke: {
     minHeight: 32,
     paddingHorizontal: LADDER.snug,
-    borderRadius: 10,
     borderCurve: 'continuous',
     alignItems: 'center',
     justifyContent: 'center',

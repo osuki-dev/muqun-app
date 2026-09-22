@@ -103,6 +103,7 @@ export function HomeTargetSheet() {
   return (
     <SheetScene testID="home-target-sheet" title={t`Choose a gateway`} caption={selected?.label}>
       <ScrollView
+        nestedScrollEnabled
         style={sheetSceneStyles.scroller}
         contentContainerStyle={sheetSceneStyles.scrollerContent}
         showsVerticalScrollIndicator={false}>

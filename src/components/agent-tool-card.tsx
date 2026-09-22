@@ -8,6 +8,7 @@ import { Check, FileText, GitFork, Play } from 'lucide-react-native';
 import { Image } from 'expo-image';
 import { EnrichedMarkdownText, type MarkdownStyle } from 'react-native-enriched-markdown';
 
+import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { PressableScale } from '@/components/pressable-scale';
 import { BoundedMarkdown, TruncationFooter } from '@/components/bounded-markdown';
 import { StatusDot } from '@/components/status-dot';
@@ -110,7 +111,7 @@ export interface AgentToolCardProps {
   onPreviewImage?: (uri: string) => void;
   onOpenFile?: (file: { uri: string; mime?: string; name?: string }) => void;
   /** The virtualised changes viewer, for a patch too big to draw in a cell. */
-  onOpenFullDiff?: () => void;
+  onOpenFullDiff?: (path?: string) => void;
 }
 
 // ---------------------------------------------------------------------------
@@ -146,6 +147,7 @@ const CodeBody = memo(function CodeBody({
   onOpenInViewer?: () => void;
 }) {
   const { t } = useLingui();
+  const profile = useAppearanceProfile();
   const colors = usePaneChatColors();
   const [budget, setBudget] = useState(TOOL_BODY_MAX_LINES);
   const capped = useMemo(() => capToolBody(body, budget), [body, budget]);
@@ -189,7 +191,10 @@ const CodeBody = memo(function CodeBody({
                 accessibilityRole="button"
                 accessibilityLabel={t`Open in viewer`}
                 onPress={onOpenInViewer}
-                style={[styles.moreChip, { borderColor: colors.border }]}>
+                style={[
+                  styles.moreChip,
+                  { borderRadius: profile.chrome.control, borderColor: colors.border },
+                ]}>
                 <Text variant="caption" color={colors.accent}>
                   {t`Open in viewer`}
                 </Text>
@@ -212,6 +217,7 @@ const CodeBody = memo(function CodeBody({
 const OutputLines = memo(function OutputLines({ text }: { text: string }) {
   const { t } = useLingui();
   const theme = useThemeTokens();
+  const profile = useAppearanceProfile();
   const colors = usePaneChatColors();
   const mono = useMonoFontFamily();
   // "Show the rest" used to mean the whole 64 KiB, in one `<Text>`. It means
@@ -236,7 +242,10 @@ const OutputLines = memo(function OutputLines({ text }: { text: string }) {
           onPress={() =>
             setBudget((prev) => (prev === 0 ? TOOL_BODY_MAX_LINES : prev + TOOL_BODY_MAX_LINES))
           }
-          style={[styles.moreChip, { borderColor: colors.border }]}>
+          style={[
+            styles.moreChip,
+            { borderRadius: profile.chrome.control, borderColor: colors.border },
+          ]}>
           <Text variant="caption" color={colors.accent}>
             {t`${plural(capped.hidden, { one: '# more line', other: '# more lines' })}`}
           </Text>
@@ -266,6 +275,7 @@ const ToolFiles = memo(function ToolFiles({
   const { t } = useLingui();
   const theme = useThemeTokens();
   const raised = useTranscriptPlate('raised');
+  const profile = useAppearanceProfile();
 
   return (
     <View style={styles.fileRow}>
@@ -277,7 +287,7 @@ const ToolFiles = memo(function ToolFiles({
               accessibilityRole="imagebutton"
               accessibilityLabel={file.name ?? t`Open image`}
               onPress={() => onPreviewImage?.(file.uri)}
-              style={styles.fileThumbWrap}>
+              style={[styles.fileThumbWrap, { borderRadius: profile.chrome.surface }]}>
               <Image source={{ uri: file.uri }} style={styles.fileThumb} contentFit="cover" />
             </PressableScale>
           );
@@ -307,10 +317,12 @@ const ToolFiles = memo(function ToolFiles({
 /** The rows of one patch, inside a card. */
 const PatchBody = memo(function PatchBody({
   patch,
+  targetPath,
   onOpenFullDiff,
 }: {
   patch: string;
-  onOpenFullDiff?: () => void;
+  targetPath?: string;
+  onOpenFullDiff?: (path?: string) => void;
 }) {
   const theme = useThemeTokens();
   const colors = usePaneChatColors();
@@ -319,6 +331,7 @@ const PatchBody = memo(function PatchBody({
   return (
     <InlineDiffRows
       rows={rows}
+      targetPath={targetPath}
       colors={colors}
       gutterFill={theme.colors.surface}
       headerFill={theme.colors.surface}
@@ -349,6 +362,7 @@ export const AgentToolCard = memo(function AgentToolCard({
   // subscribes this card to the theme itself, so a colour-mode switch reaches
   // it whatever the list decides.
   const markdownStyle = usePaneChatMarkdownStyle();
+  const profile = useAppearanceProfile();
   const colors = usePaneChatColors();
 
   const kind = useMemo(() => classifyTool(part.name), [part.name]);
@@ -574,7 +588,10 @@ export const AgentToolCard = memo(function AgentToolCard({
           accessibilityRole="button"
           accessibilityLabel={t`Run in background`}
           onPress={onRunInBackground}
-          style={[styles.action, { borderColor: colors.border }]}>
+          style={[
+            styles.action,
+            { borderRadius: profile.chrome.control, borderColor: colors.border },
+          ]}>
           <Play size={11} color={colors.accent} />
           <Text variant="caption" color={colors.accent} style={styles.actionText}>
             <Trans>Run in background</Trans>
@@ -593,7 +610,10 @@ export const AgentToolCard = memo(function AgentToolCard({
           accessibilityRole="button"
           accessibilityLabel={t`Open background tasks`}
           onPress={handleOpenTray}
-          style={[styles.action, { borderColor: colors.border }]}>
+          style={[
+            styles.action,
+            { borderRadius: profile.chrome.control, borderColor: colors.border },
+          ]}>
           <Text variant="caption" color={colors.accent} style={styles.actionText}>
             <Trans>Background tasks</Trans>
           </Text>
@@ -608,7 +628,10 @@ export const AgentToolCard = memo(function AgentToolCard({
           accessibilityRole="button"
           accessibilityLabel={t`Open the subagent's session`}
           onPress={handleOpenChild}
-          style={[styles.action, { borderColor: colors.border }]}>
+          style={[
+            styles.action,
+            { borderRadius: profile.chrome.control, borderColor: colors.border },
+          ]}>
           {/* The child's own status, not the tool's: a subagent can still be
               working after the call that started it has returned. */}
           <StatusDot
@@ -644,6 +667,7 @@ export const AgentToolCard = memo(function AgentToolCard({
     childStatus,
     colors,
     theme.colors,
+    profile.chrome.control,
     t,
   ]);
 
@@ -840,7 +864,7 @@ interface ToolBodyArgs {
   markdownStyle: MarkdownStyle;
   onPreviewImage?: (uri: string) => void;
   onOpenFile?: (file: { uri: string; mime?: string; name?: string }) => void;
-  onOpenFullDiff?: () => void;
+  onOpenFullDiff?: (path?: string) => void;
 }
 
 /** One body per family. Nothing here fetches; everything is already in hand. */
@@ -924,6 +948,7 @@ function renderToolBody(args: ToolBodyArgs): React.ReactNode {
             <View key={`${section.action}:${section.path}`} style={styles.stretch}>
               <PatchBody
                 patch={section.patch}
+                targetPath={section.path}
                 {...(args.onOpenFullDiff ? { onOpenFullDiff: args.onOpenFullDiff } : {})}
               />
             </View>
@@ -1073,7 +1098,7 @@ const EditDiffs = memo(function EditDiffs({
   onOpenFullDiff,
 }: {
   files: ReturnType<typeof editFilesFromMetadata>;
-  onOpenFullDiff?: () => void;
+  onOpenFullDiff?: (path?: string) => void;
 }) {
   const theme = useThemeTokens();
   const colors = usePaneChatColors();
@@ -1270,6 +1295,7 @@ const QuestionBody = memo(function QuestionBody({
 }) {
   const { t } = useLingui();
   const theme = useThemeTokens();
+  const profile = useAppearanceProfile();
   const colors = usePaneChatColors();
   // The question is the agent's own words and is content; everything else here
   // is a label naming a choice.
@@ -1333,6 +1359,7 @@ const QuestionBody = memo(function QuestionBody({
                     style={[
                       styles.optionPill,
                       {
+                        borderRadius: profile.chrome.control,
                         borderColor: chosen ? colors.accent : colors.border,
                         backgroundColor: chosen ? withAlpha(colors.accent, 0.12) : 'transparent',
                       },
@@ -1522,7 +1549,6 @@ const styles = StyleSheet.create({
     minHeight: 26,
     justifyContent: 'center',
     paddingHorizontal: 10,
-    borderRadius: 10,
     borderCurve: 'continuous',
     borderWidth: StyleSheet.hairlineWidth,
   },
@@ -1532,7 +1558,6 @@ const styles = StyleSheet.create({
     gap: 5,
     minHeight: 28,
     paddingHorizontal: 10,
-    borderRadius: 999,
     borderCurve: 'continuous',
     borderWidth: StyleSheet.hairlineWidth,
   },
@@ -1546,14 +1571,12 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   fileThumbWrap: {
-    borderRadius: 12,
     borderCurve: 'continuous',
     overflow: 'hidden',
   },
   fileThumb: {
     width: 140,
     height: 96,
-    borderRadius: 12,
   },
   fileChip: {
     flexDirection: 'row',
@@ -1638,7 +1661,6 @@ const styles = StyleSheet.create({
     gap: 4,
     paddingVertical: 3,
     paddingHorizontal: 8,
-    borderRadius: 6,
     borderCurve: 'continuous',
     borderWidth: StyleSheet.hairlineWidth,
     maxWidth: '100%',

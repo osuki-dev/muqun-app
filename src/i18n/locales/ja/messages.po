@@ -86,6 +86,11 @@ msgstr "{0, plural, other {# 分}}"
 msgid "{0, plural, one {# more line} other {# more lines}}"
 msgstr "{0, plural, other {残り # 行}}"
 
+#. placeholder {0}: entries.length
+#: src/components/agent-message-block.tsx
+msgid "{0, plural, one {# operation} other {# operations}}"
+msgstr "{0, plural, other {# 件の操作}}"
+
 #. placeholder {0}: unused.count
 #. placeholder {1}: formatCacheSize(unused.reclaimableBytes)
 #: src/components/settings-storage.tsx
@@ -231,6 +236,7 @@ msgstr "{removeLabel}：{label}"
 msgid "{running} running of {0}"
 msgstr "{0} 件中 {running} 件が実行中"
 
+#: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-sessions-sheet.tsx
 msgid "{title} — finished while you were away"
 msgstr "{title} — 離れている間に完了しました"
@@ -608,10 +614,6 @@ msgstr "ファイルを添付"
 msgid "Attachment"
 msgstr "添付ファイル"
 
-#: src/components/home-editorial-layout.tsx
-msgid "Attention"
-msgstr "要対応"
-
 #: src/components/app-lock-gate.tsx
 msgid "Authenticate with {authLabel} to continue."
 msgstr "続けるには {authLabel} で認証してください"
@@ -691,10 +693,6 @@ msgstr "動作"
 #: src/components/theme-appearance-settings.tsx
 msgid "Below {minimumPercent}%, text is no longer guaranteed to stay readable"
 msgstr "{minimumPercent}% を下回ると、文字が読めることは保証されません"
-
-#: src/components/theme-appearance-settings.tsx
-msgid "Between the header and your servers. Home also borrows the theme's empty-state picture when the theme has no Home illustration of its own."
-msgstr "ヘッダーとサーバーの間に表示されます。テーマに専用のホーム用イラストがない場合、ホームはテーマの空状態の画像も借用します"
 
 #: src/components/diff-rows.tsx
 msgid "Binary file"
@@ -854,21 +852,14 @@ msgid "Checking…"
 msgstr "確認中…"
 
 #: src/components/home-launch-actions.tsx
+#: src/components/home-target-sheet.tsx
 msgid "Choose a gateway"
 msgstr "Gateway を選択"
-
-#: src/components/home-launch-actions.tsx
-msgid "Choose a gateway first"
-msgstr "先に Gateway を選択"
 
 #: src/components/agent-model-sheet.tsx
 #: src/components/agent-workbench.tsx
 msgid "Choose a model"
 msgstr "モデルを選ぶ"
-
-#: src/components/home-launch-actions.tsx
-msgid "Choose a saved host"
-msgstr "保存済みホストを選択"
 
 #: src/components/simfarm-stage.tsx
 msgid "Choose a simulator"
@@ -898,9 +889,9 @@ msgstr "別のターミナルを選択"
 msgid "Choose files"
 msgstr "ファイルを選択"
 
-#: src/components/settings-servers.tsx
-msgid "Choose how Home is arranged."
-msgstr "ホームの配置を選択"
+#: src/components/settings-appearance.tsx
+msgid "Choose Home and app chrome. Colours stay with your theme."
+msgstr "ホームとアプリの外観を選びます。配色はテーマに従います"
 
 #: src/components/agent-workbench.tsx
 msgid "Choose project"
@@ -912,7 +903,6 @@ msgstr "表示するシミュレータを選ぶ"
 
 #: src/components/settings-appearance.tsx
 #: src/components/settings-home-layout-sheet.tsx
-#: src/components/settings-servers.tsx
 msgid "Classic"
 msgstr "クラシック"
 
@@ -1009,6 +999,10 @@ msgstr "コードを読み取りました。Gateway に接続しています"
 #: src/components/pane-chat-blocks.tsx
 msgid "Collapse {0}"
 msgstr "{0} を折りたたむ"
+
+#: src/components/agent-message-block.tsx
+msgid "Collapse goal continuation"
+msgstr "目標の継続メッセージを折りたたむ"
 
 #: src/components/agent-reasoning-block.tsx
 msgid "Collapse reasoning"
@@ -1162,6 +1156,10 @@ msgstr "接続中…"
 #: src/components/home-editorial-layout.tsx
 msgid "Connections"
 msgstr "接続"
+
+#: src/components/agent-composer.tsx
+msgid "Contains subagent sessions"
+msgstr "サブエージェントのセッションを含みます"
 
 #: src/components/agent-context-sheet.tsx
 msgid "Context"
@@ -1451,6 +1449,7 @@ msgstr "ファイルを読み込めませんでした"
 msgid "Could not load models"
 msgstr "モデルを読み込めませんでした"
 
+#: src/components/agent-subagent-detail-sheet.tsx
 #: src/components/agent-workbench.tsx
 msgid "Could not load the session"
 msgstr "セッションを読み込めませんでした"
@@ -1737,6 +1736,10 @@ msgstr "送信モード: リアルタイム割り込み (Steer)。タップし�
 msgid "Delivery not confirmed"
 msgstr "配信は未確認です"
 
+#: src/components/theme-browse-sheet.tsx
+msgid "Demo catalogue. Leave the demo to download themes."
+msgstr "デモ用カタログです。テーマをダウンロードするにはデモを終了してください"
+
 #: src/lib/demo-ssh.ts
 msgid "Demo shell"
 msgstr "デモシェル"
@@ -1897,8 +1900,8 @@ msgstr "SSH ホストを編集"
 msgid "Edit this server"
 msgstr "このサーバーを編集"
 
+#: src/components/settings-appearance.tsx
 #: src/components/settings-home-layout-sheet.tsx
-#: src/components/settings-servers.tsx
 msgid "Editorial"
 msgstr "エディトリアル"
 
@@ -1956,6 +1959,10 @@ msgstr "アプリのすべての画面"
 #: src/components/pane-chat-blocks.tsx
 msgid "Expand {0}"
 msgstr "{0} を展開"
+
+#: src/components/agent-message-block.tsx
+msgid "Expand goal continuation"
+msgstr "目標の継続メッセージを展開"
 
 #: src/components/agent-reasoning-block.tsx
 msgid "Expand reasoning"
@@ -2197,6 +2204,10 @@ msgstr "ファイルの先頭へ移動"
 msgid "Go to your servers"
 msgstr "サーバー一覧へ"
 
+#: src/components/agent-message-block.tsx
+msgid "Goal continuation"
+msgstr "目標の継続"
+
 #: src/app/commands.tsx
 msgid "Group"
 msgstr "グループ"
@@ -2255,12 +2266,8 @@ msgstr "シミュレータを隠す"
 msgid "Home"
 msgstr "ホーム"
 
-#: src/components/home-editorial-layout.tsx
-msgid "Home / Editorial"
-msgstr "ホーム / エディトリアル"
-
+#: src/components/settings-appearance.tsx
 #: src/components/settings-home-layout-sheet.tsx
-#: src/components/settings-servers.tsx
 msgid "Home layout"
 msgstr "ホームのレイアウト"
 
@@ -2268,7 +2275,7 @@ msgstr "ホームのレイアウト"
 msgid "Home layout changed for this session, but could not be saved on this device. Try again."
 msgstr "ホームのレイアウトはこのセッションで変更されましたが、このデバイスに保存できませんでした。もう一度お試しください"
 
-#: src/components/settings-servers.tsx
+#: src/components/settings-appearance.tsx
 msgid "Home layout, {homeLayoutLabel}"
 msgstr "ホームのレイアウト：{homeLayoutLabel}"
 
@@ -2293,6 +2300,8 @@ msgstr "ホスト鍵は信頼済み"
 msgid "How to use Muqun"
 msgstr "Muqun の使い方"
 
+#: src/components/agent-session-tree-sheet.tsx
+#: src/components/home-recent-sessions.tsx
 #: src/i18n/labels.ts
 msgid "Idle"
 msgstr "待機"
@@ -2541,6 +2550,10 @@ msgstr "左矢印"
 msgid "Letters"
 msgstr "英字"
 
+#: src/components/agent-session-tree-sheet.tsx
+msgid "Level {depth}"
+msgstr "階層 {depth}"
+
 #: src/components/custom-theme-preview.tsx
 #: src/components/settings-appearance.tsx
 msgid "Light"
@@ -2582,6 +2595,7 @@ msgid "Loading recent sessions…"
 msgstr "最近のセッションを読み込み中…"
 
 #: src/app/servers/[serverId].tsx
+#: src/components/home-launch-actions.tsx
 #: src/components/home-overview.tsx
 #: src/components/settings-servers.tsx
 msgid "Loading servers"
@@ -2739,10 +2753,6 @@ msgstr "Muqun 自体はフォントを持ちません。追加するとこのデ
 msgid "Muqun is locked"
 msgstr "牧群（ぼくぐん）はロックされています"
 
-#: src/app/settings.tsx
-msgid "Muqun is open source. Read it, or build it yourself."
-msgstr "Muqun はオープンソースです。読むことも、自分でビルドすることもできます"
-
 #: src/components/pairing-camera.tsx
 msgid "Muqun reads the Gateway's QR code through the camera. Nothing is recorded."
 msgstr "Muqun はカメラで Gateway の QR コードを読み取ります。録画は行いません"
@@ -2799,16 +2809,13 @@ msgstr "新しいグループ"
 msgid "New host key"
 msgstr "新しいホスト鍵"
 
-#: src/components/home-launch-actions.tsx
-msgid "New OpenCode"
-msgstr "新しい OpenCode"
-
 #: src/components/collaboration-notice.tsx
 msgid "New output available · refresh"
 msgstr "新しい出力があります · 更新"
 
 #: src/app/agent.tsx
 #: src/components/agent-workbench.tsx
+#: src/components/home-launch-actions.tsx
 msgid "New session"
 msgstr "新規セッション"
 
@@ -2911,6 +2918,7 @@ msgid "No other assistants in this session yet."
 msgstr "このセッションには他のアシスタントがまだいません"
 
 #: src/components/agent-background-tray.tsx
+#: src/components/agent-subagent-detail-sheet.tsx
 msgid "No output yet."
 msgstr "まだ出力はありません"
 
@@ -3066,6 +3074,7 @@ msgstr "バックグラウンドでは何も動いていません。長いコマ
 msgid "Nothing staged"
 msgstr "準備中のものはありません"
 
+#: src/components/home-recent-sessions.tsx
 #: src/components/pane-chat-view.tsx
 msgid "Nothing to show yet."
 msgstr "まだ表示するものはありません"
@@ -3125,10 +3134,6 @@ msgstr "{0} を開く"
 msgid "Open {title}. Long press to close."
 msgstr "{title} を開く。長押しで閉じる"
 
-#: src/components/home-attention.tsx
-msgid "Open a session to check its requests."
-msgstr "セッションを開いてリクエストを確認"
-
 #: src/components/open-web-service-sheet.tsx
 msgid "Open anyway"
 msgstr "それでも開く"
@@ -3174,6 +3179,10 @@ msgstr "ブラウザで開く"
 msgid "Open in your browser, unavailable over the SSH tunnel"
 msgstr "ブラウザーで開く（SSH トンネル経由では利用できません）"
 
+#: src/components/opencode-guide-sheet.tsx
+msgid "Open installation guide"
+msgstr "インストールガイドを開く"
+
 #: src/i18n/labels.ts
 msgid "Open Lazygit"
 msgstr "Lazygit を開く"
@@ -3207,6 +3216,10 @@ msgstr "クイックアクションを開く"
 msgid "Open session"
 msgstr "セッションを開く"
 
+#: src/components/agent-composer.tsx
+msgid "Open session tree"
+msgstr "セッションツリーを開く"
+
 #. placeholder {0}: host.label
 #. placeholder {0}: record.label
 #: src/components/pad-server-rail.tsx
@@ -3221,6 +3234,10 @@ msgstr "ターミナルを見る"
 #: src/i18n/labels.ts
 msgid "Open the file explorer"
 msgstr "ファイルツリーを開く"
+
+#: src/components/opencode-guide-sheet.tsx
+msgid "Open the OpenCode installation guide"
+msgstr "OpenCode のインストールガイドを開く"
 
 #: src/components/agent-tool-card.tsx
 msgid "Open the subagent's session"
@@ -3252,6 +3269,14 @@ msgstr "OpenCodeエージェント"
 msgid "OpenCode agent daemon is not running on this host. Run `opencode serve --service` to start it."
 msgstr "このホストでOpenCodeデーモンが実行されていません。`opencode serve --service`を実行して起動してください"
 
+#: src/components/opencode-guide-sheet.tsx
+msgid "OpenCode is installed, but its service is not answering. Run this command on the host."
+msgstr "OpenCode はインストールされていますが、サービスが応答していません。このコマンドをホストで実行してください"
+
+#: src/components/opencode-guide-sheet.tsx
+msgid "OpenCode is ready on this host."
+msgstr "OpenCode はこのホストで準備できています"
+
 #: src/components/new-task-action.tsx
 msgid "OpenCode ready"
 msgstr "OpenCodeの準備が完了しました"
@@ -3276,6 +3301,18 @@ msgstr "OpenCode セッション"
 #: src/components/new-task-action.tsx
 msgid "OpenCode sessions are not supported. Tap for details"
 msgstr "OpenCode セッションはサポートされていません。詳細を確認"
+
+#: src/components/opencode-guide-sheet.tsx
+msgid "OpenCode was not found on this host. Install OpenCode 2, then check again."
+msgstr "このホストで OpenCode が見つかりませんでした。OpenCode 2 をインストールしてから、もう一度確認してください"
+
+#: src/components/new-task-action.tsx
+msgid "OpenCode was not found. Tap for installation instructions"
+msgstr "OpenCode が見つかりませんでした。タップしてインストール手順を表示"
+
+#: src/components/opencode-guide-sheet.tsx
+msgid "OpenCode's installation could not be confirmed. If it is installed, run this command on the host."
+msgstr "OpenCode のインストールを確認できませんでした。インストール済みの場合は、このコマンドをホストで実行してください"
 
 #: src/app/+not-found.tsx
 msgid "Opening"
@@ -3333,7 +3370,6 @@ msgid "Output lands on a hardware-accelerated terminal grid with instant-respons
 msgstr "ハードウェアアクセラレーションによる正確なターミナル描画。即座に応答する専用キー列と tmux マルチセッション対応で、nvim や REPL も快適に動作します"
 
 #: src/components/home-launch-actions.tsx
-#: src/components/home-overview.tsx
 msgid "Pair a gateway"
 msgstr "Gateway をペアリング"
 
@@ -3396,6 +3432,10 @@ msgstr "ペアリングに失敗しました"
 #: src/components/settings-servers.tsx
 msgid "Panes on server cards"
 msgstr "サーバーカードのパネル"
+
+#: src/components/agent-session-tree-sheet.tsx
+msgid "Parent: {parentTitle}"
+msgstr "親セッション: {parentTitle}"
 
 #: src/components/ssh-host-form.tsx
 msgid "Passphrase (optional)"
@@ -3697,6 +3737,7 @@ msgid "Reconnecting · {0}"
 msgstr "再接続中 · {0}"
 
 #: src/components/agent-background-tray.tsx
+#: src/components/agent-subagent-detail-sheet.tsx
 #: src/components/session-map.tsx
 msgid "Refresh"
 msgstr "更新"
@@ -3731,10 +3772,6 @@ msgstr "削除"
 #: src/components/ssh-host-form.tsx
 msgid "Remove {0}"
 msgstr "{0} を取り除く"
-
-#: src/components/home-recent-sessions.tsx
-msgid "Remove {title} from recents"
-msgstr "最近の項目から {title} を削除"
 
 #: src/components/agent-worktree-sheet.tsx
 msgid "Remove anyway"
@@ -3858,7 +3895,9 @@ msgstr "赤で示された項目を再試行するか、削除してからもう
 msgid "Retry uploading {0}"
 msgstr "{0} のアップロードを再試行"
 
+#: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-workbench.tsx
+#: src/components/home-recent-sessions.tsx
 msgid "Retrying…"
 msgstr "再試行しています…"
 
@@ -3975,6 +4014,11 @@ msgstr "関連するテストを実行"
 #: src/components/home-overview.tsx
 msgid "Run the Gateway on your machine and scan the QR code it prints. The pairing stays on this device."
 msgstr "自分のマシンで Gateway を起動し、表示された QR コードをスキャンします。ペアリング情報はこのデバイスの中だけに残ります"
+
+#: src/components/agent-session-tree-sheet.tsx
+#: src/components/home-recent-sessions.tsx
+msgid "Running"
+msgstr "実行中"
 
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/session-map.tsx
@@ -4099,20 +4143,24 @@ msgid "Security"
 msgstr "セキュリティ"
 
 #. placeholder {0}: age.value
+#: src/components/home-recent-sessions.tsx
 #: src/components/server-agent-rows.tsx
 msgid "Seen {0}d ago"
 msgstr "確認: {0}日前"
 
 #. placeholder {0}: age.value
+#: src/components/home-recent-sessions.tsx
 #: src/components/server-agent-rows.tsx
 msgid "Seen {0}h ago"
 msgstr "確認: {0}時間前"
 
 #. placeholder {0}: age.value
+#: src/components/home-recent-sessions.tsx
 #: src/components/server-agent-rows.tsx
 msgid "Seen {0}m ago"
 msgstr "確認: {0}分前"
 
+#: src/components/home-recent-sessions.tsx
 #: src/components/server-agent-rows.tsx
 msgid "Seen just now"
 msgstr "確認: たった今"
@@ -4216,7 +4264,18 @@ msgstr "セッション名"
 msgid "Session Tokens"
 msgstr "セッショントークン"
 
+#: src/components/agent-session-tree-sheet.tsx
+msgid "Session tree"
+msgstr "セッションツリー"
+
+#: src/components/agent-session-tree-sheet.tsx
+#: src/components/agent-subagent-detail-sheet.tsx
+msgid "Session unavailable"
+msgstr "セッションを利用できません"
+
 #: src/components/agent-sessions-sheet.tsx
+#: src/components/home-launch-actions.tsx
+#: src/components/home-recent-sessions.tsx
 #: src/components/session-map.tsx
 msgid "Sessions"
 msgstr "セッション"
@@ -4225,10 +4284,6 @@ msgstr "セッション"
 msgctxt "agent slash command"
 msgid "Sessions in this workspace"
 msgstr "このワークスペースのセッション"
-
-#: src/components/home-recent-sessions.tsx
-msgid "Sessions you open will appear here."
-msgstr "開いたセッションがここに表示されます"
 
 #. placeholder {0}: sessionTitle ?? ''
 #: src/app/agent.tsx
@@ -4317,9 +4372,9 @@ msgstr "{0} を表示"
 msgid "Show agents and their status on the home screen. Updates while Muqun is open."
 msgstr "ホーム画面にエージェントとその状態を表示します。牧群（ぼくぐん）を開いている間は更新され続けます"
 
-#: src/components/home-recent-sessions.tsx
-msgid "Show all recent sessions"
-msgstr "最近のセッションをすべて表示"
+#: src/components/theme-appearance-settings.tsx
+msgid "Show artwork on Home"
+msgstr "ホームにアートワークを表示"
 
 #: src/components/pairing-camera.tsx
 msgid "Show camera details"
@@ -4340,10 +4395,6 @@ msgstr "ホームのロゴを表示"
 #: src/components/theme-appearance-settings.tsx
 msgid "Show Home text"
 msgstr "ホームのテキストを表示"
-
-#: src/components/theme-appearance-settings.tsx
-msgid "Show illustration on Home"
-msgstr "ホームにイラストを表示"
 
 #: src/components/home-recent-sessions.tsx
 msgid "Show less"
@@ -4481,6 +4532,7 @@ msgstr "ソースコード"
 msgid "Space"
 msgstr "スペース"
 
+#: src/components/home-launch-actions.tsx
 #: src/components/home-overview.tsx
 #: src/components/pad-server-rail.tsx
 #: src/components/ssh-host-list.tsx
@@ -4488,16 +4540,13 @@ msgstr "スペース"
 msgid "SSH"
 msgstr "SSH"
 
-#: src/components/home-launch-actions.tsx
-msgid "SSH connection"
-msgstr "SSH 接続"
-
 #: src/app/explore.tsx
 #: src/components/gateway-tunnel-badge.tsx
 #: src/components/home-recent-sessions.tsx
 msgid "SSH host"
 msgstr "SSH ホスト"
 
+#: src/components/home-launch-actions.tsx
 #: src/components/home-overview.tsx
 #: src/components/pad-server-rail.tsx
 #: src/components/settings-servers.tsx
@@ -4520,10 +4569,6 @@ msgstr "ステージ済みと未ステージ"
 #: src/lib/agent-widget-layout.tsx
 msgid "stale · {age}"
 msgstr "古い情報 · {age}"
-
-#: src/components/home-editorial-layout.tsx
-msgid "Start"
-msgstr "開始"
 
 #. placeholder {0}: profile.kind
 #: src/components/agent-assignment-bar.tsx
@@ -4581,8 +4626,10 @@ msgstr "開始しています…"
 msgid "Status unavailable"
 msgstr "状態を取得できません"
 
+#: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-workbench.tsx
 #: src/components/collaboration-notice.tsx
+#: src/components/home-recent-sessions.tsx
 msgid "Status unknown"
 msgstr "状態不明"
 
@@ -4593,10 +4640,6 @@ msgstr "ステア (Steer)"
 #: src/components/agent-composer.tsx
 msgid "Steer running agent"
 msgstr "実行中のエージェントにリアルタイムで指示"
-
-#: src/components/opencode-guide-sheet.tsx
-msgid "Still not answering. Check the service is running on the host."
-msgstr "まだ応答がありません。ホストでサービスが動いているか確認してください"
 
 #: src/components/pane-chat-blocks.tsx
 msgid "Still running…"
@@ -4628,7 +4671,9 @@ msgstr "このエージェントを停止"
 msgid "Stop this command"
 msgstr "このコマンドを停止"
 
+#: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-workbench.tsx
+#: src/components/home-recent-sessions.tsx
 msgid "Stopped"
 msgstr "停止しました"
 
@@ -4641,6 +4686,7 @@ msgid "subagent"
 msgstr "サブエージェント"
 
 #: src/components/agent-mode-sheet.tsx
+#: src/components/agent-subagent-detail-sheet.tsx
 msgid "Subagent"
 msgstr "サブエージェント"
 
@@ -4743,6 +4789,7 @@ msgid "Tap again to delete"
 msgstr "もう一度タップして削除"
 
 #: src/components/agent-worktree-sheet.tsx
+#: src/components/custom-theme-library.tsx
 #: src/components/ssh-host-form.tsx
 msgid "Tap again to remove"
 msgstr "もう一度タップで削除"
@@ -4798,6 +4845,7 @@ msgstr "一時ファイル"
 
 #: src/app/commands.tsx
 #: src/app/settings.tsx
+#: src/components/home-launch-actions.tsx
 #: src/components/home-recent-sessions.tsx
 #: src/i18n/labels.ts
 msgid "Terminal"
@@ -4954,10 +5002,6 @@ msgstr "鍵を読み取れませんでした（{0}）。鍵とパスフレーズ
 msgid "The new terminal was created, but could not open it."
 msgstr "新しいターミナルは作成されましたが、開けませんでした"
 
-#: src/components/opencode-guide-sheet.tsx
-msgid "The OpenCode daemon is not running on this host. Run this and it will be."
-msgstr "このホストで OpenCode デーモンが動いていません。これを実行すれば起動します"
-
 #: src/components/launch-intro.tsx
 msgid "The question comes to you"
 msgstr "質問はあなたのもとへ"
@@ -5038,7 +5082,9 @@ msgstr "このデバイスからテーマが削除されます"
 msgid "The transcript as a conversation, with tool steps folded away."
 msgstr "やり取りを会話として表示し、ツールの手順は折りたたみます"
 
+#: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-workbench.tsx
+#: src/components/home-recent-sessions.tsx
 msgid "The turn failed"
 msgstr "この処理は失敗しました"
 
@@ -5130,6 +5176,10 @@ msgstr "この Gateway はまだファイルを提供していません。セッ
 #: src/components/settings-servers.tsx
 msgid "This gateway has not listed any paired devices."
 msgstr "この Gateway はペアリング済みデバイスを返していません"
+
+#: src/components/opencode-guide-sheet.tsx
+msgid "This gateway is not answering. Check the server connection, then try again."
+msgstr "このゲートウェイは応答していません。サーバー接続を確認して、もう一度お試しください"
 
 #: src/components/session-map.tsx
 msgid "This group has no terminals."
@@ -5305,6 +5355,7 @@ msgid "Trust"
 msgstr "信頼する"
 
 #: src/app/new-task.tsx
+#: src/components/agent-subagent-detail-sheet.tsx
 #: src/components/app-error-boundary.tsx
 #: src/components/asset-viewer.tsx
 #: src/components/git-diff-view.tsx
@@ -5441,7 +5492,9 @@ msgid "Unsupported item ({0})"
 msgstr "未対応の項目 ({0})"
 
 #: src/components/agent-composer.tsx
+#: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-sessions-sheet.tsx
+#: src/components/agent-subagent-detail-sheet.tsx
 msgid "Untitled session"
 msgstr "タイトルなしのセッション"
 
@@ -5528,6 +5581,10 @@ msgstr "アプリとターミナルに自分のフォントを使えます"
 msgid "Username"
 msgstr "ユーザー名"
 
+#: src/components/theme-appearance-settings.tsx
+msgid "Uses the theme's Home artwork in the position chosen by your Home layout. Themes without Home artwork show no illustration."
+msgstr "ホームレイアウトで指定された位置にテーマのホーム画像を表示します。ホーム画像のないテーマではイラストを表示しません"
+
 #: src/components/settings-servers.tsx
 msgid "Using"
 msgstr "使用中"
@@ -5590,7 +5647,6 @@ msgstr "エージェントが確認を求めて停止したとき、通知がロ
 msgid "While you were away"
 msgstr "離席中の変化"
 
-#: src/components/home-editorial-layout.tsx
 #: src/components/pad-server-rail.tsx
 msgid "Workbench"
 msgstr "ワークベンチ"

@@ -15,6 +15,7 @@ import { Icon, useThemeTokens, type IconName } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
+import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { PressableScale } from '@/components/pressable-scale';
 import { appChrome } from '@/constants/appearance';
 import { FILE_MENTION_VISIBLE_ROWS, type FileMentionHit } from '@/lib/file-mentions';
@@ -60,6 +61,7 @@ export function FileMentionPanel({
   scope = 'workspace',
 }: FileMentionPanelProps) {
   const { t } = useLingui();
+  const profile = useAppearanceProfile();
   const theme = useThemeTokens();
   const surfaceBackground = useSurfaceBackground();
   if (hits.length === 0) return null;
@@ -69,6 +71,7 @@ export function FileMentionPanel({
       accessibilityLabel={t`File mentions`}
       style={[
         styles.panel,
+        { borderRadius: profile.chrome.popover },
         {
           backgroundColor: surfaceBackground(theme.colors.surface),
         },

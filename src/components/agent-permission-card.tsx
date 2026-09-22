@@ -1,3 +1,4 @@
+import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { memo, useMemo, useState } from 'react';
 import { View, StyleSheet, ActivityIndicator } from 'react-native';
 import { useThemeTokens } from '@osuki-dev/ui';
@@ -76,6 +77,7 @@ export const AgentPermissionCard = memo(function AgentPermissionCard({
   const { t } = useLingui();
   const { _ } = useLinguiRuntime();
   const theme = useThemeTokens();
+  const profile = useAppearanceProfile();
   const colors = usePaneChatColors();
   const surfaceBackground = useSurfaceBackground();
   const markdownStyle = useCompactMarkdownStyle('muted');
@@ -148,6 +150,7 @@ export const AgentPermissionCard = memo(function AgentPermissionCard({
       testID={`agent-permission-${request.id}`}
       style={[
         styles.container,
+        { borderRadius: profile.chrome.noticeCard },
         attached ? styles.attached : null,
         {
           backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
@@ -155,7 +158,12 @@ export const AgentPermissionCard = memo(function AgentPermissionCard({
         },
       ]}>
       <View style={styles.header}>
-        <View style={[styles.iconBox, { backgroundColor: withAlpha(theme.colors.warning, 0.13) }]}>
+        <View
+          style={[
+            styles.iconBox,
+            { borderRadius: profile.chrome.control },
+            { backgroundColor: withAlpha(theme.colors.warning, 0.13) },
+          ]}>
           <ShieldAlert size={16} color={theme.colors.warning} />
         </View>
         <View style={styles.headerText}>
@@ -172,7 +180,12 @@ export const AgentPermissionCard = memo(function AgentPermissionCard({
         </View>
       </View>
 
-      <View style={[styles.body, { backgroundColor: withAlpha(theme.colors.surface, 0.6) }]}>
+      <View
+        style={[
+          styles.body,
+          { borderRadius: profile.chrome.surface },
+          { backgroundColor: withAlpha(theme.colors.surface, 0.6) },
+        ]}>
         {subject ? (
           <Text selectable style={[styles.subject, { color: theme.colors.text, fontFamily: mono }]}>
             {subject}
@@ -234,6 +247,7 @@ export const AgentPermissionCard = memo(function AgentPermissionCard({
                 onPress={() => handleDecision(option.decision)}
                 style={[
                   styles.btn,
+                  { borderRadius: profile.chrome.control },
                   primary
                     ? { backgroundColor: theme.colors.primary }
                     : { backgroundColor: withAlpha(color, 0.09), borderColor: color },
@@ -277,7 +291,6 @@ export const AgentPermissionCard = memo(function AgentPermissionCard({
 
 const styles = StyleSheet.create({
   container: {
-    borderRadius: 10,
     borderCurve: 'continuous',
     borderWidth: 1.5,
     overflow: 'hidden',
@@ -296,7 +309,6 @@ const styles = StyleSheet.create({
   iconBox: {
     width: 28,
     height: 28,
-    borderRadius: 6,
     borderCurve: 'continuous',
     alignItems: 'center',
     justifyContent: 'center',
@@ -329,7 +341,6 @@ const styles = StyleSheet.create({
   },
   body: {
     padding: 8,
-    borderRadius: 6,
     borderCurve: 'continuous',
     marginBottom: 10,
   },
@@ -365,7 +376,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: 7,
     paddingHorizontal: 8,
-    borderRadius: 6,
     borderCurve: 'continuous',
     gap: 4,
     borderWidth: StyleSheet.hairlineWidth,

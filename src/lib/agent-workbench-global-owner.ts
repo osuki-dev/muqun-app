@@ -17,6 +17,8 @@ let activeOwner: AgentWorkbenchGlobalOwner | null = null;
 
 const AGENT_WORKBENCH_OVERLAYS = new Set([
   'agent-sessions',
+  'agent-session-tree',
+  'agent-subagent-detail',
   'agent-model',
   'agent-mode',
   'agent-workspace',

@@ -32,10 +32,10 @@ const shareFile = createThemeFileSharer({
   },
   share: (uri, packaged) =>
     Sharing.shareAsync(uri, {
-      mimeType: packaged ? 'application/zip' : 'application/json',
+      mimeType: packaged ? 'application/vnd.muqun.theme' : 'application/json',
       // The app declares `dev.osuki.muqun.theme` and owns the extension, so a
-      // shared pack says what it is rather than arriving as an anonymous zip
-      // the receiving device has no handler for.
+      // shared pack says what it is rather than making every ordinary ZIP a
+      // candidate for Muqun on the receiving device.
       UTI: packaged ? 'dev.osuki.muqun.theme' : 'public.json',
     }),
 });

@@ -4,11 +4,13 @@ import { useThemeTokens } from '@osuki-dev/ui';
 import Animated from 'react-native-reanimated';
 import { FullscreenRouteSafeArea } from '@/components/sheet-route-frame';
 import { routeSceneEnter, type RouteSceneType } from '@/lib/motion';
+import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 
-/** A fluid, elevated surface shared by root pages and custom routes.
- * Native navigation owns swipe back and cancellation; this layer provides
- * a cyber-tactile depth reveal on route entry. Form sheets bypass this
- * wrapper to retain their native measurement contract.
+/** The stable surface shared by root pages and custom routes.
+ * Native navigation owns swipe back and cancellation. Classic keeps its legacy
+ * entry reveal; the new profiles use only the native route transition. Never
+ * swap the wrapper type when the profile changes: it owns live workspaces.
+ * Form sheets bypass this wrapper to retain their native measurement contract.
  */
 export function RouteScene({
   children,
@@ -22,18 +24,19 @@ export function RouteScene({
   animated?: boolean;
 }) {
   const { colors } = useThemeTokens();
+  const profile = useAppearanceProfile();
   const content = modal ? <FullscreenRouteSafeArea>{children}</FullscreenRouteSafeArea> : children;
   const effectiveSceneType: RouteSceneType = modal ? 'modal' : (sceneType ?? 'plain');
 
   return (
     <View style={[styles.viewport, { backgroundColor: colors.background }]}>
-      {animated ? (
-        <Animated.View style={styles.scene} entering={routeSceneEnter(effectiveSceneType)}>
-          {content}
-        </Animated.View>
-      ) : (
-        <View style={styles.scene}>{content}</View>
-      )}
+      <Animated.View
+        style={styles.scene}
+        entering={
+          animated && profile.id === 'classic' ? routeSceneEnter(effectiveSceneType) : undefined
+        }>
+        {content}
+      </Animated.View>
     </View>
   );
 }

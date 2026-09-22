@@ -3,7 +3,14 @@ import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { timing, fadeInDown, listLayout } from '@/lib/motion';
 /** Adapted from @osuki-dev/ui 1.0.1: preserve input behavior; theme only control fills. */
 import React, { useEffect, useMemo } from 'react';
-import { Platform, View, type TextInputProps, type ViewStyle, type TextStyle } from 'react-native';
+import {
+  Platform,
+  StyleSheet,
+  View,
+  type TextInputProps,
+  type ViewStyle,
+  type TextStyle,
+} from 'react-native';
 import Animated, {
   interpolateColor,
   useAnimatedStyle,
@@ -81,7 +88,7 @@ export const Input: React.FC<InputProps> = ({
         paddingVertical: verticalPadding,
       }),
       ...(variant === 'underline' && {
-        borderBottomWidth: 1,
+        borderBottomWidth: StyleSheet.hairlineWidth,
         borderColor: theme.colors[input.border],
         paddingVertical: verticalPadding,
       }),

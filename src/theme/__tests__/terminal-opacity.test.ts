@@ -1,5 +1,5 @@
 import { expect, test } from 'bun:test';
-import { createThemeStarter } from '../authoring';
+import { createThemeStarter } from '../starter';
 import { effectiveThemeManifest, ThemeRepository } from '../repository';
 import { parseThemeManifest } from '../schema';
 import { packTheme, unpackTheme } from '../package';

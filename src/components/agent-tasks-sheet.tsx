@@ -45,6 +45,7 @@ export const AgentTasksSheet = memo(function AgentTasksSheet({
       title={t`Tasks`}
       caption={t`${done} of ${items.length} done`}>
       <ScrollView
+        nestedScrollEnabled
         style={sheetSceneStyles.scroller}
         contentContainerStyle={sheetSceneStyles.scrollerContent}
         showsVerticalScrollIndicator={false}>

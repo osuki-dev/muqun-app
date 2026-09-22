@@ -179,7 +179,9 @@ export function NewTaskAction({
             accessibilityLabel={
               readiness?.status === 'unsupported'
                 ? t`OpenCode sessions are not supported. Tap for details`
-                : t`OpenCode service offline. Tap for setup instructions`
+                : readiness?.status === 'not-installed'
+                  ? t`OpenCode was not found. Tap for installation instructions`
+                  : t`OpenCode service offline. Tap for setup instructions`
             }
             onPress={() =>
               router.push({
@@ -187,7 +189,8 @@ export function NewTaskAction({
                 params: {
                   serverId,
                   label,
-                  status: readiness?.status === 'unsupported' ? 'unsupported' : 'offline',
+                  status: readiness?.status ?? 'offline',
+                  ...(readiness?.status === 'offline' ? { cause: readiness.cause } : {}),
                   intent: 'existing',
                 },
               })

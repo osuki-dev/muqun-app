@@ -1,7 +1,7 @@
 import { expect, test } from 'bun:test';
 import { readFileSync } from 'node:fs';
 
-import { createThemeStarter } from '../authoring';
+import { createThemeStarter } from '../starter';
 import { auditThemeContrast } from '../contrast';
 import { parseThemeManifest } from '../schema';
 
@@ -40,13 +40,12 @@ test('the flow still installs it, rather than testing the built-in theme', () =>
   expect(flow).toContain('press "id=theme-row-my-theme"');
 });
 
-test('the flow reads no theme package, which is the suite’s whole premise', () => {
-  // The premise moved, and pretending otherwise would be worse than saying so.
-  // The catalogue sheet *is* opened now, on purpose: with no network its index
-  // read fails, and the empty state is the thing under test. What must never
-  // happen is a row press, which is the 25 MiB download.
+test('the flow browses the bundled catalogue without downloading a theme package', () => {
+  // Demo mode now supplies the catalogue offline, so the durable assertion is
+  // its first fixture card rather than the obsolete network-error state. What
+  // must never happen is a row press, which would start a package download.
   expect(flow).toContain('is visible "id=theme-browse"');
-  expect(flow).toContain('wait "id=theme-browse-empty" 40000');
+  expect(flow).toContain('wait "text=\\"Acacia Afterglow\\"" 15000');
   expect(flow).not.toContain('theme-browse-item');
   // Still never spelled in the .ad: the manifest drives the press.
   expect(flow).not.toContain('press "id=theme-browse"');

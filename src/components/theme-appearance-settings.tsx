@@ -1,3 +1,4 @@
+import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { useLingui } from '@lingui/react/macro';
 
 import { resolveHomeIdentity } from '@/theme/resolve';
@@ -12,10 +13,10 @@ import { Button } from '@/components/themed-button';
 import { Toggle } from '@/components/toggle';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { terminalBackgroundOpacity } from '@/terminal/background';
-import { type HomeHeroPreference } from '@/theme/home-hero';
+import { type HomeArtworkPreference } from '@/theme/home-artwork';
 import {
   effectiveThemeManifest,
-  homeHeroPreference,
+  homeArtworkPreference,
   type InstalledTheme,
 } from '@/theme/repository';
 import { surfaceBackgroundOpacity } from '@/theme/surface-background';
@@ -29,7 +30,7 @@ export function ThemeAppearanceSettings({
   onSurfaceChange,
   onLogoChange,
   onTextChange,
-  onHeroChange,
+  onArtworkChange,
   onReset,
 }: {
   installed: InstalledTheme;
@@ -38,9 +39,10 @@ export function ThemeAppearanceSettings({
   onSurfaceChange: (value: number) => void;
   onLogoChange: (hidden: boolean) => void;
   onTextChange: (hidden: boolean) => void;
-  onHeroChange: (value: HomeHeroPreference) => void;
+  onArtworkChange: (value: HomeArtworkPreference) => void;
   onReset: () => void;
 }) {
+  const profile = useAppearanceProfile();
   const { t } = useLingui();
   const { colors } = useThemeTokens();
   const { resolvedMode } = useThemeMode();
@@ -58,16 +60,16 @@ export function ThemeAppearanceSettings({
     installed.surfaceBackgroundOpacity,
     installed.hideHomeLogo,
     installed.hideHomeText,
-    installed.homeHero,
+    installed.homeArtwork,
   ].some((value) => value !== undefined);
-  const hero = homeHeroPreference(installed);
+  const artwork = homeArtworkPreference(installed);
   return (
     <View
       testID="theme-appearance-settings"
       style={{
         gap: 12,
         padding: 12,
-        borderRadius: 16,
+        borderRadius: profile.chrome.card,
         backgroundColor: background(colors.surfaceRaised),
       }}>
       {policies.some(
@@ -118,31 +120,25 @@ export function ThemeAppearanceSettings({
           onValueChange={(visible) => onTextChange(!visible)}
         />
       </View>
-      {/* Three answers rather than a switch, because "follow the theme" is a
-          real third state here and not the absence of a decision: a pack can
-          ship a Home illustration and turn it off, and a reader who has never
-          touched this row should stay on whatever the next version of the pack
-          decides. The caption says what `Shown` does beyond flipping a switch
-          -- it is the only way to reach the empty-state picture, and a reader
-          who turns it on for a theme that drew no hero deserves to know why
-          something appeared. */}
+      {/* Theme default follows the author's artwork visibility; an explicit
+          reader choice overrides visibility without inventing missing artwork. */}
       <View style={{ gap: 6 }}>
-        <Text>{t`Show illustration on Home`}</Text>
+        <Text>{t`Show artwork on Home`}</Text>
         <Text
           variant="caption"
           color={
             colors.textMuted
-          }>{t`Between the header and your servers. Home also borrows the theme's empty-state picture when the theme has no Home illustration of its own.`}</Text>
+          }>{t`Uses the theme's Home artwork in the position chosen by your Home layout. Themes without Home artwork show no illustration.`}</Text>
         <SettingsSegmented
-          testID="theme-home-hero"
+          testID="theme-home-artwork"
           options={[
             { label: t`Theme default`, value: 'theme' },
             { label: t`Shown`, value: 'shown' },
             { label: t`Hidden`, value: 'hidden' },
           ]}
-          value={hero}
+          value={artwork}
           onChange={(value) => {
-            if (!disabled) onHeroChange(value as HomeHeroPreference);
+            if (!disabled) onArtworkChange(value as HomeArtworkPreference);
           }}
         />
       </View>

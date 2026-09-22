@@ -38,6 +38,11 @@ export type HomeTarget =
     };
 
 /** One row in the bounded recent index, newest explicit visit first. */
+export type HomeSessionObservation = {
+  status: 'busy' | 'idle' | 'failed' | 'interrupted' | 'retry' | 'unknown';
+  observedAtMs: number;
+};
+
 export type HomeRecentEntry = {
   /** Stable across title and visit-time changes. */
   key: string;
@@ -46,12 +51,15 @@ export type HomeRecentEntry = {
   title: string;
   /** Unix milliseconds at which the user explicitly opened the target. */
   atMs: number;
+  /** Latest status the Gateway actually reported for this OpenCode root session. */
+  sessionObservation?: HomeSessionObservation;
 };
 
 type PersistedHomeRecentEntry = {
   target: HomeTarget;
   title: string;
   atMs: number;
+  sessionObservation?: HomeSessionObservation;
 };
 
 type PersistedHomeRecents = {
@@ -129,15 +137,21 @@ export function normalizeHomeRecentTitle(value: unknown): string {
 export function createHomeRecentEntry(
   target: unknown,
   title: unknown,
-  atMs: unknown = Date.now()
+  atMs: unknown = Date.now(),
+  sessionObservation?: unknown
 ): HomeRecentEntry | null {
   const normalizedTarget = normalizeHomeTarget(target);
   if (!normalizedTarget || !isTimestamp(atMs)) return null;
+  const normalizedObservation =
+    normalizedTarget.kind === 'opencode-session'
+      ? normalizeHomeSessionObservation(sessionObservation)
+      : undefined;
   return {
     key: homeTargetKey(normalizedTarget),
     target: normalizedTarget,
     title: normalizeHomeRecentTitle(title),
     atMs,
+    ...(normalizedObservation ? { sessionObservation: normalizedObservation } : {}),
   };
 }
 
@@ -148,7 +162,7 @@ export function normalizeHomeRecentEntries(value: unknown): HomeRecentEntry[] {
   const seen = new Set<string>();
   for (const raw of value) {
     if (!isRecord(raw)) continue;
-    const entry = createHomeRecentEntry(raw.target, raw.title, raw.atMs);
+    const entry = createHomeRecentEntry(raw.target, raw.title, raw.atMs, raw.sessionObservation);
     if (!entry || seen.has(entry.key)) continue;
     seen.add(entry.key);
     entries.push(entry);
@@ -190,7 +204,12 @@ export function serializeHomeRecents(entries: readonly HomeRecentEntry[]): strin
   const normalized = normalizeHomeRecentEntries(entries);
   const document: PersistedHomeRecents = {
     version: HOME_RECENTS_STORAGE_VERSION,
-    entries: normalized.map(({ target, title, atMs }) => ({ target, title, atMs })),
+    entries: normalized.map(({ target, title, atMs, sessionObservation }) => ({
+      target,
+      title,
+      atMs,
+      ...(sessionObservation ? { sessionObservation } : {}),
+    })),
   };
   return JSON.stringify(document);
 }
@@ -223,6 +242,21 @@ export function isHomeRecentEntryAllowed(
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function normalizeHomeSessionObservation(value: unknown): HomeSessionObservation | undefined {
+  if (!isRecord(value) || !isTimestamp(value.observedAtMs)) return undefined;
+  const status = value.status;
+  if (
+    status !== 'busy' &&
+    status !== 'idle' &&
+    status !== 'failed' &&
+    status !== 'interrupted' &&
+    status !== 'retry' &&
+    status !== 'unknown'
+  )
+    return undefined;
+  return { status, observedAtMs: value.observedAtMs };
 }
 
 function targetField(value: unknown, allowEmpty = false): string | null {

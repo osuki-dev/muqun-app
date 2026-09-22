@@ -31,6 +31,7 @@ import {
 } from 'lucide-react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
+import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { PressableScale } from '@/components/pressable-scale';
 import { EngineFailureText } from '@/components/engine-failure-text';
 import { ThinkingIndicator } from '@/components/agent-thinking-indicator';
@@ -133,6 +134,7 @@ export const EmbeddedTerminalToolBlock = memo(function EmbeddedTerminalToolBlock
   testID,
 }: EmbeddedTerminalProps) {
   const theme = useThemeTokens();
+  const profile = useAppearanceProfile();
   const colors = usePaneChatColors();
   const { t } = useLingui();
   const raised = useTranscriptPlate();
@@ -234,14 +236,22 @@ export const EmbeddedTerminalToolBlock = memo(function EmbeddedTerminalToolBlock
         <View style={[styles.chipRow, styles.underTitle]}>
           {chips}
           {background ? (
-            <View style={[styles.badge, { borderColor: colors.accent }]}>
+            <View
+              style={[
+                styles.badge,
+                { borderRadius: profile.chrome.control, borderColor: colors.accent },
+              ]}>
               <Text variant="caption" color={colors.accent} style={styles.badgeText}>
                 {t`Background`}
               </Text>
             </View>
           ) : null}
           {truncated ? (
-            <View style={[styles.badge, { borderColor: theme.colors.warning }]}>
+            <View
+              style={[
+                styles.badge,
+                { borderRadius: profile.chrome.control, borderColor: theme.colors.warning },
+              ]}>
               <Text variant="caption" color={theme.colors.warning} style={styles.badgeText}>
                 {t`Truncated`}
               </Text>
@@ -278,7 +288,7 @@ export const EmbeddedTerminalToolBlock = memo(function EmbeddedTerminalToolBlock
         // list already animates the neighbours for.
         <Animated.View
           entering={fadeIn('micro')}
-          style={[styles.body, styles.underTitle, { borderLeftColor: theme.colors.border }]}>
+          style={[styles.body, { borderTopColor: theme.colors.border }]}>
           {children}
         </Animated.View>
       ) : null}
@@ -311,7 +321,7 @@ const styles = StyleSheet.create({
   /**
    * The column the title starts in.
    *
-   * The exit chip, the result count, the error line and the body all began at
+   * The exit chip, the result count and the error line all began at
    * the card's outer edge while the title was indented past the icon, so every
    * fact about a call hung left of the call it was about.
    */
@@ -358,7 +368,6 @@ const styles = StyleSheet.create({
   badge: {
     paddingHorizontal: 7,
     paddingVertical: 1,
-    borderRadius: 999,
     borderCurve: 'continuous',
     borderWidth: StyleSheet.hairlineWidth,
   },
@@ -373,8 +382,9 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   body: {
-    paddingLeft: 8,
-    borderLeftWidth: StyleSheet.hairlineWidth,
+    // Expanded documents use the full card width, not the header icon column.
+    paddingTop: 6,
+    borderTopWidth: StyleSheet.hairlineWidth,
     gap: 4,
   },
 });

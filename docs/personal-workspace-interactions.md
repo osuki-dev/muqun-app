@@ -13,11 +13,13 @@ Browse themes is full screen, with safe-area padding and an always-visible close
 control; no grabber or sheet dismissal gesture competes with its list. New task
 uses a full-height sheet and keyboard-aware scrolling. Short pickers remain sheets.
 
-`LogoLoader` prefers the active custom theme's locally installed `home.hero`
-artwork for noncompact loading surfaces. Missing, hidden or broken artwork falls
-back to the bundled mark. Compact authentication indicators remain compact.
-Loading uses existing work boundaries: navigation does not introduce fake waits.
-Theme illustrations add no bundled assets or new network requests.
+Startup resolves the active theme's locally installed `launch.artwork` first,
+then `home.artwork`, then identity or bundled branding. A layout renders at most
+one Home foreground image. Its first decoded frame is prepared before the startup
+overlay leaves, using the same theme background to avoid a blank or mismatched
+frame. Missing or broken imagery falls back to branding. Compact authentication
+indicators remain compact; loading follows real work and adds no artificial wait.
+Transitions respect reduced motion, keep route identity and use existing assets.
 
 ## Theme and input surfaces
 

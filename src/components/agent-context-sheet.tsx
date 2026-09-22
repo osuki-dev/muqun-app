@@ -21,6 +21,7 @@ import { appChrome } from '@/constants/appearance';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { withAlpha } from '@/lib/color';
 import { fadeIn, fadeOut, listLayout } from '@/lib/motion';
+import { formatModelName } from '@/lib/agent-protocol';
 import {
   contextFillRatio,
   contextTokenTotal,
@@ -185,6 +186,9 @@ export const AgentContextSheet = memo(function AgentContextSheet({
         : theme.colors.primary;
   const costLabel =
     cost === undefined || cost === null || cost === 0 ? t`Free` : `$${cost.toFixed(4)}`;
+  // `modelName` is already normalized by the workbench, including its variant.
+  // When it is unavailable, format the session reference by the same rule.
+  const displayModelName = modelName || formatModelName(session?.model, '');
 
   return (
     <SheetScene
@@ -192,6 +196,7 @@ export const AgentContextSheet = memo(function AgentContextSheet({
       title={t`Context`}
       caption={session?.title || modelName || session?.model?.model_id}>
       <ScrollView
+        nestedScrollEnabled
         style={sheetSceneStyles.scroller}
         contentContainerStyle={sheetSceneStyles.scrollerContent}
         showsVerticalScrollIndicator={false}>
@@ -267,9 +272,7 @@ export const AgentContextSheet = memo(function AgentContextSheet({
           title={t`Model`}
           meta={
             <Text variant="caption" color={theme.colors.textMuted} numberOfLines={1}>
-              {[modelName || session?.model?.model_id, session?.model?.variant]
-                .filter(Boolean)
-                .join(' · ') || t`Not set`}
+              {displayModelName || t`Not set`}
             </Text>
           }
         />

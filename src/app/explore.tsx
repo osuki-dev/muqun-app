@@ -34,6 +34,7 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { LogoLoader } from '@/components/logo-loader';
+import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { SshConnectPromptGate } from '@/components/ssh-connect-prompt-gate';
 import { PressableScale } from '@/components/pressable-scale';
 import {
@@ -164,6 +165,7 @@ const RETICLE_CONFIRM_INSET = 0.06;
 const OVER_PREVIEW_INK = '#FFFFFF';
 
 export default function PairModal() {
+  const profile = useAppearanceProfile();
   const surfaceBackground = useSurfaceBackground();
   // `t` from the hook, never the global `t` from `@lingui/core/macro`: React
   // Compiler memoizes a global `t` call whose arguments have not changed and
@@ -621,6 +623,7 @@ export default function PairModal() {
     */
     <SheetScene testID="pairing-sheet" title={title} caption={caption} captionLines={2}>
       <KeyboardAwareScrollView
+        nestedScrollEnabled
         bottomOffset={KEYBOARD_BOTTOM_OFFSET}
         style={sheetSceneStyles.scroller}
         contentContainerStyle={styles.content}
@@ -865,6 +868,7 @@ export default function PairModal() {
                   style={[
                     styles.manualToggle,
                     {
+                      borderRadius: profile.chrome.control,
                       // The quiet state is the aperture's own surface, not `surface`:
                       // in several packs `surface` is brighter than the page, so a
                       // 42pt pill outshone the 460pt frame it is subordinate to.
@@ -910,7 +914,10 @@ export default function PairModal() {
                   }}
                   style={[
                     styles.manualToggle,
-                    { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
+                    {
+                      backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
+                      borderRadius: profile.chrome.control,
+                    },
                   ]}>
                   {sshOpen ? (
                     <ScanLine size={17} color={theme.colors.textMuted} strokeWidth={2} />
@@ -941,7 +948,10 @@ export default function PairModal() {
                   style={[
                     styles.manualToggle,
                     styles.setupRow,
-                    { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
+                    {
+                      backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
+                      borderRadius: profile.chrome.control,
+                    },
                   ]}>
                   <Text variant="bodySmall" color={theme.colors.textMuted} style={styles.setupAsk}>
                     {t`No Gateway yet?`}
@@ -975,7 +985,10 @@ export default function PairModal() {
                   onPress={() => void copyInstallCommand()}
                   style={[
                     styles.installRow,
-                    { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
+                    {
+                      backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
+                      borderRadius: profile.chrome.control,
+                    },
                   ]}>
                   {/* Two lines, not one shrunk to fit: the command wraps at the phone
                 widths this screen is read on, and a command scaled down until it
@@ -1086,7 +1099,10 @@ export default function PairModal() {
               exiting={stepExiting}
               style={[
                 styles.successCard,
-                { backgroundColor: surfaceBackground(theme.colors.primarySubtle) },
+                {
+                  backgroundColor: surfaceBackground(theme.colors.primarySubtle),
+                  borderRadius: profile.chrome.noticeBanner,
+                },
               ]}>
               <Animated.View
                 // Timed, not sprung: the design system rules out bounce, and the
@@ -1121,7 +1137,10 @@ export default function PairModal() {
             layout={listLayout('short')}
             style={[
               styles.message,
-              { backgroundColor: surfaceBackground(theme.colors.dangerSubtle) },
+              {
+                backgroundColor: surfaceBackground(theme.colors.dangerSubtle),
+                borderRadius: profile.chrome.noticeBanner,
+              },
             ]}>
             <Text selectable variant="bodySmall" color={theme.colors.danger}>
               {message}
@@ -1333,7 +1352,6 @@ const styles = StyleSheet.create({
     gap: 10,
     paddingVertical: 10,
     paddingHorizontal: 12,
-    borderRadius: 10,
   },
   installCommand: {
     flex: 1,
@@ -1377,7 +1395,6 @@ const styles = StyleSheet.create({
   manualToggle: {
     alignSelf: 'stretch',
     minHeight: 48,
-    borderRadius: 10,
     borderCurve: 'continuous',
     flexDirection: 'row',
     alignItems: 'center',
@@ -1414,7 +1431,6 @@ const styles = StyleSheet.create({
   },
   successCard: {
     minHeight: 260,
-    borderRadius: 24,
     borderCurve: 'continuous',
     alignItems: 'center',
     justifyContent: 'center',
@@ -1438,7 +1454,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   message: {
-    borderRadius: 14,
     padding: 14,
   },
 });

@@ -1,4 +1,5 @@
 import { Image } from 'expo-image';
+import { useState } from 'react';
 import type { LucideIcon } from 'lucide-react-native';
 
 import { useEffectiveCustomTheme } from '@/components/theme-candidate';
@@ -31,16 +32,18 @@ export function ThemeIcon({
   color: string;
   strokeWidth?: number;
 }) {
+  const [failedUri, setFailedUri] = useState<string | null>(null);
   const { theme, assets } = useEffectiveCustomTheme();
   const icon = theme?.manifest.icons?.[name];
   const uri = icon ? assets?.[icon.asset] : undefined;
   // App-owned files only, the same rule every other artwork consumer applies:
   // a manifest cannot point this at an arbitrary path or a remote URL.
-  if (!icon || !uri?.startsWith('file:///'))
+  if (!icon || !uri?.startsWith('file:///') || uri === failedUri)
     return <Fallback size={size} color={color} strokeWidth={strokeWidth} />;
   return (
     <Image
       source={{ uri }}
+      onError={() => setFailedUri(uri)}
       // Never crops: a glyph that loses its edges reads as a different glyph.
       contentFit="contain"
       cachePolicy="memory"

@@ -32,7 +32,10 @@ import { scheduleOnRN } from 'react-native-worklets';
 import { useAppliedCustomTheme } from '@/components/theme-candidate';
 import { useLaunchBackground } from '@/hooks/use-launch-artwork';
 import { useLaunchHeroEdge } from '@/hooks/use-launch-hero-edge';
-import { LAUNCH_HERO_MAX_WIDTH, LAUNCH_HERO_WIDTH_FRACTION } from '@/hooks/use-launch-image-sync';
+import {
+  LAUNCH_ARTWORK_MAX_WIDTH,
+  LAUNCH_ARTWORK_WIDTH_FRACTION,
+} from '@/hooks/use-launch-image-sync';
 import { useThemePack } from '@/hooks/use-theme-pack';
 import { useMarkdownFonts } from '@/hooks/use-user-fonts';
 import {
@@ -41,8 +44,9 @@ import {
   inkBloomUniforms,
   type InkBloomHole,
 } from '@/lib/ink-bloom-shader';
+import { containedImageRect } from '@/lib/hero-feather';
 import { heroEdgeAmount, HERO_EDGE_REST_FRACTION } from '@/lib/launch-hero-edge';
-import { subscribeLaunchHeroRect, type LaunchHeroRect } from '@/lib/launch-hero-rect';
+import { subscribeLaunchArtworkRect, type LaunchArtworkRect } from '@/lib/launch-artwork-rect';
 import { cursorOpacity, launchPromptLine, scrimWidth, typedCount } from '@/lib/launch-intro-prompt';
 import {
   BLOOM_OVERSHOOT,
@@ -110,7 +114,7 @@ import { resolveThemeImage } from '@/theme/resolve';
  * - the wallpaper is `home.background` falling back to `shell.background`, the
  *   same pair and the same fit `ThemeArtworkLayer` gives Home;
  * - the picture is whatever the native launch screen drew, which
- *   `use-launch-image-sync` already set to the pack's `home.hero`;
+ *   `use-launch-image-sync` already set to the pack's `home.artwork`;
  * - the paper under both is the pack's `colors.background`;
  * - the front's bank is `colors.primary` and its rim is `colors.surface`;
  * - the prompt is the pack's `text` and `primary`, in the reader's own
@@ -127,7 +131,7 @@ import { resolveThemeImage } from '@/theme/resolve';
  *
  * ## Landing rectangle
  *
- * Home measures its hero band and publishes it (`publishLaunchHeroRect`). The
+ * Home measures its hero band and publishes it (`publishLaunchArtworkRect`). The
  * overlay cannot compute that rectangle: it is a measured header, plus a brand
  * block some packs hide, plus a banner slot. When Home has not reported one --
  * no servers paired yet, the hero switched off, the lock gate up, a
@@ -138,7 +142,7 @@ import { resolveThemeImage } from '@/theme/resolve';
  *
  * ## The picture's edge
  *
- * A pack ships whatever it likes in `home.hero`: a character on a transparent
+ * A pack ships whatever it likes in `home.artwork`: a character on a transparent
  * ground, a wide banner, a square logo. The opening used to begin from a
  * circle a third of the launch box across, which meant the rim closed around
  * empty paper for one pack and cut across the drawing for the next, and the
@@ -255,12 +259,27 @@ export function LaunchSceneIntro({
   // Where Home keeps its picture. Subscribed rather than read once: Home is
   // mounting underneath this sheet at the same time, and may measure before or
   // after the opening starts.
-  const [homeRect, setHomeRect] = useState<LaunchHeroRect | null>(null);
-  useEffect(() => subscribeLaunchHeroRect(setHomeRect), []);
+  const latestHomeRect = useRef<LaunchArtworkRect | null>(null);
+  const [homeRect, setHomeRect] = useState<LaunchArtworkRect | null>(null);
+  useEffect(
+    () =>
+      subscribeLaunchArtworkRect((rect) => {
+        latestHomeRect.current = rect;
+      }),
+    []
+  );
+  // Capture before scheduling travel. The animation is armed only after this
+  // snapshot has committed, so a delayed JS render cannot redirect it mid-flight.
+  useEffect(() => {
+    if (phase === 'visible' && !reduced) setHomeRect(latestHomeRect.current);
+  }, [phase, reduced]);
 
   // The picture's box on the launch screen the OS drew. The mirror centres it
   // in the window, so this is a size rather than a rectangle.
-  const launchBoxFallback = Math.min(width * LAUNCH_HERO_WIDTH_FRACTION, LAUNCH_HERO_MAX_WIDTH);
+  const launchBoxFallback = Math.min(
+    width * LAUNCH_ARTWORK_WIDTH_FRACTION,
+    LAUNCH_ARTWORK_MAX_WIDTH
+  );
   const launchBox = Math.min(
     points(mirror.logo.style.width, launchBoxFallback),
     points(mirror.logo.style.height, launchBoxFallback)
@@ -281,12 +300,25 @@ export function LaunchSceneIntro({
     width: heroBox.width,
     height: heroBox.height,
   };
-  const landingCentre = homeRect
-    ? { x: homeRect.x + homeRect.width / 2, y: homeRect.y + homeRect.height / 2 }
-    : launchCentre;
-  // Both the launch frame and Home draw the picture with `contain`, so the
-  // scale between them is the smaller side of the band over the launch box.
-  const landingScale = homeRect ? Math.min(homeRect.width, homeRect.height) / launchBox : 1;
+  // A different responsive image, a cover crop or a hidden Home uses a
+  // dissolve. Pretending these are the same picture causes a visible face jump.
+  const canLand = Boolean(
+    !reduced &&
+    homeRect &&
+    !homeRect.cropped &&
+    homeRect.source === mirror.logo.source?.uri &&
+    homeRect.intrinsicWidth &&
+    homeRect.intrinsicHeight
+  );
+  const landingCentre =
+    canLand && homeRect
+      ? { x: homeRect.x + homeRect.width / 2, y: homeRect.y + homeRect.height / 2 }
+      : launchCentre;
+  const launchDrawing = containedImageRect(heroBox, {
+    width: homeRect?.intrinsicWidth ?? 0,
+    height: homeRect?.intrinsicHeight ?? 0,
+  });
+  const landingScale = canLand && homeRect ? homeRect.width / launchDrawing.width : 1;
 
   const paper = packBackground ?? mirror.backgroundColor ?? theme.colors.background;
   const widthClass = width >= THEME_ARTWORK_REGULAR_MIN_WIDTH ? 'regular' : 'compact';
@@ -434,7 +466,6 @@ export function LaunchSceneIntro({
         blink.value = 1;
       } else {
         ignite.value = withTiming(1, timing(beats.ignite.ms));
-        hero.value = withDelay(beats.hero.at, withTiming(1, timing(beats.hero.ms)));
         type.value = withDelay(beats.type.at, withTiming(1, timing(beats.type.ms)));
         blink.value = withDelay(beats.blink.at, withTiming(1, timing(beats.blink.ms)));
       }
@@ -462,6 +493,15 @@ export function LaunchSceneIntro({
     // The shared values are stable; only the phase drives this.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase]);
+
+  useEffect(() => {
+    if (phase !== 'visible' || reduced || !canLand) return;
+    const elapsed = Date.now() - startedAt.current;
+    // Missing the scheduled departure chooses the dissolve, never a late flight
+    // or a longer splash. The rest of the opening keeps its original timeline.
+    if (elapsed > beats.hero.at) return;
+    hero.value = withDelay(beats.hero.at - elapsed, withTiming(1, timing(beats.hero.ms)));
+  }, [phase, reduced, canLand, homeRect, beats.hero.at, beats.hero.ms, hero]);
 
   // The bloom is the one beat driven by something other than the clock: it
   // leaves when the world behind it exists. Until then it breathes in place,
@@ -681,19 +721,20 @@ export function LaunchSceneIntro({
       */}
       {mirror.hasLogo ? (
         <>
-          {GHOST_LAG.map((lag, index) => (
-            <HeroGhost
-              key={lag}
-              frame={heroFrame}
-              hero={hero}
-              lag={lag}
-              landingCentre={landingCentre}
-              landingScale={landingScale}
-              launchCentre={launchCentre}
-              logo={mirror.logo}
-              peak={GHOST_OPACITY[index] ?? 0}
-            />
-          ))}
+          {canLand &&
+            GHOST_LAG.map((lag, index) => (
+              <HeroGhost
+                key={lag}
+                frame={heroFrame}
+                hero={hero}
+                lag={lag}
+                landingCentre={landingCentre}
+                landingScale={landingScale}
+                launchCentre={launchCentre}
+                logo={mirror.logo}
+                peak={GHOST_OPACITY[index] ?? 0}
+              />
+            ))}
           <Animated.View pointerEvents="none" style={[styles.hero, heroFrame, heroStyle]}>
             <Animated.Image {...mirror.logo} style={mirror.logo.style} />
           </Animated.View>

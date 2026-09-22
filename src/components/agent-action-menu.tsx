@@ -4,6 +4,7 @@ import { useThemeTokens } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
 import Animated from 'react-native-reanimated';
 
+import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { PressableScale } from '@/components/pressable-scale';
 import { TwoStepAction } from '@/components/two-step-action';
 import { appChrome } from '@/constants/appearance';
@@ -56,6 +57,7 @@ export const AgentActionMenu = memo(function AgentActionMenu({
   surface?: 'popover' | 'ground';
   testID?: string;
 }) {
+  const profile = useAppearanceProfile();
   const theme = useThemeTokens();
   const surfaceBackground = useSurfaceBackground();
   const popover = surface === 'popover';
@@ -68,7 +70,11 @@ export const AgentActionMenu = memo(function AgentActionMenu({
       style={[
         styles.menu,
         popover
-          ? [styles.popover, { backgroundColor: surfaceBackground(theme.colors.surface) }]
+          ? [
+              styles.popover,
+              { borderRadius: profile.chrome.popover },
+              { backgroundColor: surfaceBackground(theme.colors.surface) },
+            ]
           : styles.ground,
       ]}>
       {items.map((item) => {

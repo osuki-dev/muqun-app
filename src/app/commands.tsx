@@ -95,6 +95,7 @@ import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AgentCommandDeliveryPicker } from '@/components/agent-command-delivery-picker';
+import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { PressableScale } from '@/components/pressable-scale';
 import { LADDER, SettingsCard } from '@/components/settings-chrome';
 import { useAgentCommandDelivery } from '@/hooks/use-agent-command-delivery';
@@ -162,6 +163,7 @@ const MONO_TEXT = {
 } as const;
 
 export default function QuickCommandsScreen() {
+  const profile = useAppearanceProfile();
   const surfaceBackground = useSurfaceBackground();
   const router = useRouter();
   const theme = useThemeTokens();
@@ -726,6 +728,7 @@ export default function QuickCommandsScreen() {
         </View>
 
         <KeyboardAwareScrollView
+          nestedScrollEnabled
           style={styles.scrollViewport}
           bottomOffset={24}
           keyboardShouldPersistTaps="handled"
@@ -747,7 +750,10 @@ export default function QuickCommandsScreen() {
               <View
                 style={[
                   styles.group,
-                  { backgroundColor: surfaceBackground(theme.colors.dangerSubtle) },
+                  {
+                    backgroundColor: surfaceBackground(theme.colors.dangerSubtle),
+                    borderRadius: profile.chrome.popover,
+                  },
                 ]}>
                 <ActionRow
                   accessibilityLabel={t`Stop this agent`}
@@ -876,7 +882,10 @@ export default function QuickCommandsScreen() {
                                 command.custom ? t`Delete ${name}` : t`Hide ${name}`
                               }
                               onPress={() => void remove(command.id)}
-                              style={styles.deleteButton}>
+                              style={[
+                                styles.deleteButton,
+                                { borderRadius: profile.chrome.control },
+                              ]}>
                               <Trash2 size={16} color={theme.colors.danger} />
                             </PressableScale>
                           ) : null
@@ -1157,6 +1166,7 @@ function ActionTile({
   selected?: boolean;
   onPress?: () => void;
 }) {
+  const profile = useAppearanceProfile();
   const surfaceBackground = useSurfaceBackground();
   const theme = useThemeTokens();
   const ink = disabled
@@ -1169,6 +1179,7 @@ function ActionTile({
       style={[
         styles.tile,
         {
+          borderRadius: profile.chrome.control,
           backgroundColor: surfaceBackground(
             withAlpha(theme.colors.text, appChrome.opacity.chromeControl)
           ),
@@ -1463,7 +1474,6 @@ const styles = StyleSheet.create({
   tile: {
     flex: 1,
     minWidth: 0,
-    borderRadius: appChrome.radius.control,
     borderCurve: 'continuous',
     overflow: 'hidden',
   },
@@ -1490,7 +1500,6 @@ const styles = StyleSheet.create({
   // The surface Stop sits on. `SettingsCard` draws its own, and this one has to
   // be tinted, so it repeats that card's geometry rather than taking it.
   group: {
-    borderRadius: appChrome.radius.popover,
     borderCurve: 'continuous',
     overflow: 'hidden',
   },
@@ -1520,7 +1529,6 @@ const styles = StyleSheet.create({
   deleteButton: {
     width: 38,
     height: 38,
-    borderRadius: appChrome.radius.control,
     borderCurve: 'continuous',
     alignItems: 'center',
     justifyContent: 'center',

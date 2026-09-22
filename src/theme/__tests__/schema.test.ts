@@ -1,11 +1,5 @@
 import { describe, expect, test } from 'bun:test';
-import { readFileSync } from 'node:fs';
 
-import {
-  createThemeAuthoringPrompt,
-  createThemeStarter,
-  THEME_SKILL_VERSION,
-} from '@/theme/authoring';
 import { compileTheme, resolveHomeIdentity, resolveThemeImage } from '@/theme/resolve';
 import {
   parseThemeManifest,
@@ -16,6 +10,7 @@ import {
 
 import { auditThemeContrast } from '@/theme/contrast';
 import { themeOpacityPolicy } from '@/theme/opacity-policy';
+import { createThemeStarter } from '@/theme/starter';
 
 const parse = (value: unknown) => parseThemeManifest(JSON.stringify(value));
 
@@ -151,9 +146,9 @@ describe('theme v1 contract', () => {
       { variantDecorations: { dark: { 'shell.background': { asset: 'missing' } } } },
       { decoration: { 'shell.background': { asset: 'paper', regular: { asset: 'missing' } } } },
       { homeIdentity: { logo: { mode: 'custom', asset: 'missing' } } },
-      // The hero is an ordinary slot, so it is held to the ordinary rule: an
+      // The artwork is an ordinary slot, so it is held to the ordinary rule: an
       // asset it names has to be one the pack declares.
-      { decoration: { 'home.hero': { asset: 'missing', fit: 'contain' } } },
+      { decoration: { 'home.artwork': { asset: 'missing', fit: 'contain' } } },
     ]) {
       expect(() =>
         parse({
@@ -165,19 +160,19 @@ describe('theme v1 contract', () => {
     }
   });
 
-  describe('the Home hero', () => {
-    const withHero = (extra: Record<string, unknown>) =>
+  describe('the Home artwork', () => {
+    const withArtwork = (extra: Record<string, unknown>) =>
       parse({
         ...createThemeStarter(),
         assets: { crest: { path: 'assets/crest.png' } },
-        decoration: { 'home.hero': { asset: 'crest', fit: 'contain' } },
+        decoration: { 'home.artwork': { asset: 'crest', fit: 'contain' } },
         ...extra,
       });
 
     test('is a decoration slot with the same controls as every other one', () => {
-      const manifest = withHero({
+      const manifest = withArtwork({
         decoration: {
-          'home.hero': {
+          'home.artwork': {
             asset: 'crest',
             fit: 'contain',
             opacity: 0.8,
@@ -187,7 +182,7 @@ describe('theme v1 contract', () => {
           },
         },
       });
-      expect(manifest.decoration?.['home.hero']).toEqual({
+      expect(manifest.decoration?.['home.artwork']).toEqual({
         asset: 'crest',
         fit: 'contain',
         opacity: 0.8,
@@ -199,17 +194,24 @@ describe('theme v1 contract', () => {
 
     test('the author default speaks homeIdentity\u2019s own vocabulary', () => {
       for (const mode of ['default', 'hidden'] as const) {
-        expect(withHero({ homeIdentity: { hero: { mode } } }).homeIdentity?.hero).toEqual({ mode });
+        expect(withArtwork({ homeIdentity: { artwork: { mode } } }).homeIdentity?.artwork).toEqual({
+          mode,
+        });
       }
       // `homeIdentity` is strict, so a value from a different vocabulary is a
       // typo with no sensible fallback and is refused rather than ignored.
-      for (const hero of ['shown', { mode: 'shown' }, { mode: 'custom', asset: 'crest' }, true]) {
-        expect(() => withHero({ homeIdentity: { hero } })).toThrow();
+      for (const artwork of [
+        'shown',
+        { mode: 'shown' },
+        { mode: 'custom', asset: 'crest' },
+        true,
+      ]) {
+        expect(() => withArtwork({ homeIdentity: { artwork } })).toThrow();
       }
     });
 
     test('saying nothing leaves the field absent rather than inventing a default', () => {
-      expect(withHero({}).homeIdentity?.hero).toBeUndefined();
+      expect(withArtwork({}).homeIdentity?.artwork).toBeUndefined();
     });
   });
 
@@ -221,39 +223,6 @@ describe('theme v1 contract', () => {
       ])
     );
     expect(() => parse({ ...createThemeStarter(), assets })).toThrow('32 assets');
-  });
-
-  test('skill carries the exact current schema and a parseable complete template', () => {
-    const prompt = createThemeAuthoringPrompt();
-    // Headroom, not a hard edge: the delivered task is capped at 64 KiB
-    // (`collaborationTaskText`), and this prompt is only one part of it -- the
-    // reader's own words, the terminal context and any reference JSON share
-    // that budget. The prompt is 13,419 bytes at this commit; 18 KiB still
-    // leaves the delivered task more than two thirds of the cap, and matches
-    // the ceiling `quick-command-collaboration.test.ts` puts on the task text
-    // this prompt is embedded in, so the two cannot disagree about the budget.
-    expect(new TextEncoder().encode(prompt).length).toBeLessThan(18 * 1024);
-    expect(prompt).toContain(JSON.stringify(themeJsonSchema()));
-    const template = prompt.split('```muqun-theme\n')[1].split('\n```')[0];
-    expect(parseThemeManifest(template)).toEqual(createThemeStarter());
-    expect(/[\p{Script=Han}]/u.test(prompt)).toBe(false);
-  });
-
-  test('generated skill and command carry the same complete contract and starter', () => {
-    const skill = readFileSync(
-      new URL('../../../skills/muqun-theme/SKILL.md', import.meta.url),
-      'utf8'
-    );
-    expect(skill).toContain(`version: ${THEME_SKILL_VERSION}`);
-    expect(JSON.parse(skill.split('```json\n')[1].split('\n```')[0])).toEqual(themeJsonSchema());
-    expect(parseThemeManifest(skill.split('```muqun-theme\n')[1].split('\n```')[0])).toEqual(
-      createThemeStarter()
-    );
-    for (const content of [skill, createThemeAuthoringPrompt()]) {
-      expect(content).toContain('Public HTTPS images download after link review');
-      expect(content).toContain('Do not auto-apply');
-      expect(content).toContain('Report only checks actually run');
-    }
   });
 
   test('compact schema references resolve locally without dropping the shared variant contract', () => {
@@ -313,7 +282,7 @@ describe('shared component resolution', () => {
       asset: 'night',
     });
     expect(resolveThemeImage(manifest, 'shell.background', 'dark', 'regular', false)).toBeNull();
-    expect(resolveThemeImage(manifest, 'home.decoration', 'dark', 'regular')).toBeNull();
+    expect(resolveThemeImage(manifest, 'home.artwork', 'dark', 'regular')).toBeNull();
   });
 
   test('hiding both home identity elements removes the brand block', () => {

@@ -334,6 +334,23 @@ function notificationDenyButton(nodes: Node[], allowCameraDenial = false): Node 
   );
 }
 
+function schemeConfirmationOpenButton(nodes: Node[]): Node | undefined {
+  const text = nodes.map((node) => node.label ?? '').join('\n');
+  if (!/Muqun/i.test(text)) return undefined;
+  if (/notifications?|camera|take pictures/i.test(text)) return undefined;
+
+  const open = nodes.find(
+    (node) => nodeRole(node) === 'button' && /^open$/i.test(node.label ?? '')
+  );
+  if (open) return open;
+
+  const buttons = nodes.filter((node) => nodeRole(node) === 'button');
+  if (buttons.length === 2) {
+    return (buttons[0].rect?.x ?? 0) > (buttons[1].rect?.x ?? 0) ? buttons[0] : buttons[1];
+  }
+  return undefined;
+}
+
 const guardedMutations = new Set([
   'press',
   'longpress',
@@ -575,8 +592,10 @@ export class NativeRunner {
       await this.invoke(['wait', 'stable', '300', '5000']);
       nodes = snapshotNodes(await this.readCapture());
       if (!hasAlert(nodes)) return nodes;
-      const deny = notificationDenyButton(nodes, this.runtime.allowCameraDenial);
-      if (!deny)
+      const actionButton =
+        notificationDenyButton(nodes, this.runtime.allowCameraDenial) ??
+        schemeConfirmationOpenButton(nodes);
+      if (!actionButton)
         throw new Error(
           'Unexpected system alert blocks the test; inspect the saved snapshot before continuing'
         );
@@ -584,7 +603,7 @@ export class NativeRunner {
       // device language may differ from the app language. Never press or
       // swipe app controls underneath a native alert, even if they remain in
       // its tree.
-      await this.invoke(['press', selector(deny)]);
+      await this.invoke(['press', selector(actionButton)]);
     }
     await this.invoke(['wait', 'stable', '300', '5000']);
     nodes = snapshotNodes(await this.readCapture());
@@ -726,7 +745,8 @@ export class NativeRunner {
       }
       // A launch reopens the window; every other step spends it down.
       this.stepsSinceLaunch = args[0] === 'open' ? 0 : this.stepsSinceLaunch + 1;
-      if (guardedMutations.has(args[0])) await this.readySnapshot(true);
+      let guardedNodes: Node[] | undefined;
+      if (guardedMutations.has(args[0])) guardedNodes = await this.readySnapshot(true);
       if (args[0] === 'alert' && args[1] === 'dismiss') {
         const status = await this.invoke(['alert', 'get']);
         const alert = status.alert as { title?: string; buttons?: string[] } | null;
@@ -740,6 +760,22 @@ export class NativeRunner {
           !alert?.buttons?.some((label) => /^cancel$/i.test(label))
         )
           throw new Error('Only the expected local-notification denial alert may be dismissed');
+      }
+      if (args[0] === 'back') {
+        const grabber = guardedNodes?.find((node) => node.label === 'Sheet Grabber');
+        if (grabber?.rect) {
+          const x = Math.round(grabber.rect.x + grabber.rect.width / 2);
+          const y = Math.round(grabber.rect.y + grabber.rect.height / 2);
+          await this.invoke(['gesture', 'pan', String(x), String(y), '0', '500', '350']);
+          continue;
+        }
+        const goBack = guardedNodes?.find(
+          (node) => nodeRole(node) === 'button' && /^(?:go back|back)$/i.test(node.label ?? '')
+        );
+        if (goBack) {
+          await this.invoke(['press', selector(goBack)]);
+          continue;
+        }
       }
       let result: Record<string, unknown>;
       try {

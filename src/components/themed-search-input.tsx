@@ -5,6 +5,7 @@ import React, { useMemo } from 'react';
 import {
   Platform,
   Pressable,
+  StyleSheet,
   type TextInputProps,
   type TextStyle,
   type ViewStyle,
@@ -50,7 +51,7 @@ export const SearchInput: React.FC<SearchInputProps> = ({
     () => ({
       minHeight: 44,
       width: '100%',
-      borderWidth: 1,
+      borderWidth: StyleSheet.hairlineWidth,
       borderRadius: theme.radius.pill,
       paddingHorizontal: theme.spacing.md,
       flexDirection: 'row',

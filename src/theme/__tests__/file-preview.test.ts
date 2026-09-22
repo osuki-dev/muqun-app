@@ -1,6 +1,6 @@
 import { expect, test } from 'bun:test';
 
-import { createThemeStarter } from '@/theme/authoring';
+import { createThemeStarter } from '@/theme/starter';
 import { themeFromDocument } from '@/theme/file-preview';
 
 test('theme preview requires both the advertised extension and valid manifest', () => {

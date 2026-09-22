@@ -2,6 +2,7 @@ import { useLingui } from '@lingui/react/macro';
 import { Text } from '@/components/text';
 import { Image } from 'expo-image';
 import { View } from 'react-native';
+import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 
 import type { ThemeManifest } from '@/theme/schema';
 import { resolveHomeIdentity } from '@/theme/resolve';
@@ -43,6 +44,7 @@ export function CustomThemePreview({
   preferencesApplied?: boolean;
 }) {
   const { t } = useLingui();
+  const profile = useAppearanceProfile();
   const manifest = preferencesApplied ? authoredManifest : clampThemeOpacity(authoredManifest);
   const identity = resolveHomeIdentity(manifest);
   // Per previewed mode, because the two tiles sit side by side and the
@@ -69,7 +71,7 @@ export function CustomThemePreview({
               minWidth: 140,
               gap: 12,
               padding: 16,
-              borderRadius: 18,
+              borderRadius: profile.chrome.card,
               backgroundColor: colors.background,
               overflow: 'hidden',
             }}>
@@ -89,7 +91,7 @@ export function CustomThemePreview({
                 backgroundColor: background(colors.background),
                 paddingHorizontal: 6,
                 paddingVertical: 3,
-                borderRadius: 6,
+                borderRadius: profile.chrome.control,
               }}>
               {mode === 'light' ? t`Light` : t`Dark`}
             </Text>
@@ -100,7 +102,7 @@ export function CustomThemePreview({
                   alignItems: 'center',
                   gap: 8,
                   padding: 8,
-                  borderRadius: 10,
+                  borderRadius: profile.chrome.navigationPill,
                   overflow: 'hidden',
                   backgroundColor: background(colors.surfaceRaised),
                 }}>
@@ -131,7 +133,7 @@ export function CustomThemePreview({
               viewport="compact"
               manifest={manifest}
               assets={assets}
-              slot="home.decoration"
+              slot="home.artwork"
               mode={mode}
               banner
             />
@@ -139,7 +141,7 @@ export function CustomThemePreview({
               style={{
                 padding: 12,
                 gap: 8,
-                borderRadius: 12,
+                borderRadius: profile.chrome.card,
                 overflow: 'hidden',
                 backgroundColor: background(colors.surface),
               }}>
@@ -159,7 +161,7 @@ export function CustomThemePreview({
                 style={{
                   backgroundColor: background(colors.primary),
                   padding: 8,
-                  borderRadius: 8,
+                  borderRadius: profile.chrome.control,
                   overflow: 'hidden',
                 }}>
                 <ThemeArtworkLayer
@@ -180,7 +182,7 @@ export function CustomThemePreview({
               style={{
                 padding: 12,
                 gap: 8,
-                borderRadius: 12,
+                borderRadius: profile.chrome.card,
                 backgroundColor: terminalBackgroundFill(terminal),
               }}>
               <Text variant="caption" color={terminal.foreground}>

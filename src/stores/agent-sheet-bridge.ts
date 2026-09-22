@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import type { ChildrenByParent } from '@/lib/agent-session-tree';
 
 import type {
   AgentContextUsage,
@@ -51,6 +52,7 @@ export interface AgentSheetSnapshot {
   /** The agent session the workbench is showing, if it has one. */
   activeAsid?: string;
   sessions: readonly AgentSessionInfo[];
+  childrenByParent: ChildrenByParent;
   knownProjects: readonly AgentProject[];
   activeDirectory?: string;
   /** The project that directory belongs to, when the engine knows a named one. */
@@ -172,6 +174,7 @@ const INITIAL: AgentSheetSnapshot = {
   sessionId: '',
   activeAsid: undefined,
   sessions: EMPTY_SESSIONS,
+  childrenByParent: {},
   knownProjects: EMPTY_PROJECTS,
   activeDirectory: undefined,
   activeProject: undefined,

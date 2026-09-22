@@ -208,6 +208,7 @@ export const AgentWorkspaceSheet = memo(function AgentWorkspaceSheet({
         </View>
       ) : (
         <ScrollView
+          nestedScrollEnabled
           style={sheetSceneStyles.scroller}
           contentContainerStyle={sheetSceneStyles.scrollerContent}
           keyboardShouldPersistTaps="handled"

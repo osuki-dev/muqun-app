@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import type { ViewStyle } from 'react-native';
 import { useThemeTokens } from '@osuki-dev/ui';
 
-import { appChrome } from '@/constants/appearance';
+import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 
 /**
@@ -32,16 +32,16 @@ import { useSurfaceBackground } from '@/hooks/use-surface-background';
  * with -- as its own row on the timeline, not as a box inside a message.
  */
 export function useTranscriptPlate(variant: 'plate' | 'raised' = 'plate'): ViewStyle {
+  const profile = useAppearanceProfile();
   const theme = useThemeTokens();
   const surfaceBackground = useSurfaceBackground();
   const fill = variant === 'raised' ? theme.colors.surfaceRaised : theme.colors.surface;
   return useMemo<ViewStyle>(
     () => ({
       backgroundColor: surfaceBackground(fill),
-      borderRadius:
-        variant === 'raised' ? appChrome.radius.control : appChrome.radius.transcriptPlate,
+      borderRadius: variant === 'raised' ? profile.chrome.control : profile.chrome.transcriptPlate,
       borderCurve: 'continuous',
     }),
-    [surfaceBackground, fill, variant]
+    [surfaceBackground, fill, profile, variant]
   );
 }

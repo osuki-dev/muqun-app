@@ -5,6 +5,7 @@ import { ChevronRight, CircleAlert } from 'lucide-react-native';
 import { StyleSheet, View } from 'react-native';
 
 import { PressableScale } from '@/components/pressable-scale';
+import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { Text } from '@/components/text';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import type { GatewayRecord } from '@/lib/gateway-storage';
@@ -27,6 +28,7 @@ export function HomeAttention({
   onOpen: (target: HomeTarget) => void;
 }) {
   const { t } = useLingui();
+  const profile = useAppearanceProfile();
   const { i18n } = useLinguiRuntime();
   const theme = useThemeTokens();
   const background = useSurfaceBackground();
@@ -60,6 +62,7 @@ export function HomeAttention({
                 backgroundColor: background(theme.colors.surface),
                 borderColor: theme.colors.borderStrong,
                 borderLeftColor: theme.colors.warning,
+                borderRadius: profile.chrome.noticeCard,
               },
             ]}>
             <CircleAlert size={20} color={theme.colors.warning} />
@@ -95,7 +98,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderWidth: StyleSheet.hairlineWidth,
     borderLeftWidth: 4,
-    borderRadius: 4,
   },
   copy: { flex: 1, minWidth: 0, gap: 4 },
 });

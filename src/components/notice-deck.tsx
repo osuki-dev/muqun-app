@@ -6,7 +6,7 @@ import { Text } from '@/components/text';
 import { useLingui } from '@lingui/react/macro';
 import { ChevronRight } from 'lucide-react-native';
 import { PressableScale } from '@/components/pressable-scale';
-import { appChrome } from '@/constants/appearance';
+import { useNotificationSurfaceStyle } from '@/components/notification-surface';
 import { fadeIn, listLayout } from '@/lib/motion';
 import { noticeDeckPage } from '@/lib/notice-deck';
 
@@ -14,6 +14,7 @@ import { noticeDeckPage } from '@/lib/notice-deck';
  * Empty children measure zero; they must not create a blank notification page.
  */
 export function NoticeDeck({ children }: { children: ReactNode }) {
+  const notificationSurfaceStyle = useNotificationSurfaceStyle(false);
   const { colors } = useThemeTokens();
   const { t } = useLingui();
   const [heights, setHeights] = useState<Record<string, number>>({});
@@ -37,6 +38,7 @@ export function NoticeDeck({ children }: { children: ReactNode }) {
             style={[
               styles.page,
               styles.back,
+              notificationSurfaceStyle,
               {
                 width: front ? widths[front] : undefined,
                 backgroundColor: colors.surfaceRaised,
@@ -62,7 +64,12 @@ export function NoticeDeck({ children }: { children: ReactNode }) {
             importantForAccessibility={active ? 'auto' : 'no-hide-descendants'}
             style={
               active
-                ? [styles.page, styles.front, { backgroundColor: colors.surfaceRaised }]
+                ? [
+                    styles.page,
+                    styles.front,
+                    notificationSurfaceStyle,
+                    { backgroundColor: colors.surfaceRaised },
+                  ]
                 : styles.measuring
             }>
             <View
@@ -87,7 +94,11 @@ export function NoticeDeck({ children }: { children: ReactNode }) {
           accessibilityRole="button"
           accessibilityLabel={t`Next notification`}
           onPress={() => setSelected(next)}
-          style={[styles.next, { backgroundColor: colors.surfaceRaised }]}>
+          style={[
+            styles.next,
+            notificationSurfaceStyle,
+            { backgroundColor: colors.surfaceRaised },
+          ]}>
           <Text variant="caption" color={colors.textMuted}>
             {position + 1} / {visible.length}
           </Text>
@@ -101,12 +112,16 @@ export function NoticeDeck({ children }: { children: ReactNode }) {
 const styles = StyleSheet.create({
   deck: { marginHorizontal: 12, width: 'auto' },
   page: {
-    borderRadius: appChrome.radius.noticeBanner,
-    borderCurve: 'continuous',
     overflow: 'hidden',
   },
   front: { alignSelf: 'center', maxWidth: '100%' },
-  back: { position: 'absolute', top: 0, alignSelf: 'center', bottom: 0, borderWidth: 1 },
+  back: {
+    position: 'absolute',
+    top: 0,
+    alignSelf: 'center',
+    bottom: 0,
+    borderWidth: StyleSheet.hairlineWidth,
+  },
   measuring: { position: 'absolute', top: 0, left: 0, right: 0, opacity: 0 },
   next: {
     alignSelf: 'flex-end',
@@ -115,7 +130,6 @@ const styles = StyleSheet.create({
     gap: 6,
     minHeight: 44,
     paddingHorizontal: 14,
-    borderRadius: appChrome.radius.noticeBanner,
     marginTop: 8,
   },
 });

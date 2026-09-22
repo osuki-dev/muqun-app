@@ -3,50 +3,49 @@ import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens } from '@osuki-dev/ui';
 import { ArrowUpRight, ChevronDown, Link, Play, SquareTerminal } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
-import { useEffect, useState, type ReactNode } from 'react';
-import { StyleSheet, View, useWindowDimensions, type LayoutChangeEvent } from 'react-native';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { StyleSheet, View } from 'react-native';
+import { BlurTargetView } from 'expo-blur';
+import Animated, {
+  useAnimatedStyle,
+  useAnimatedScrollHandler,
+  useReducedMotion,
+  useSharedValue,
+  withTiming,
+} from 'react-native-reanimated';
 
 import { OpenCodeIcon } from '@/components/opencode-icon';
+import { ScrollEdgeGlass } from '@/components/scroll-edge-glass';
 import { PressableScale } from '@/components/pressable-scale';
 import { Text } from '@/components/text';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
+import { PRESS, timing } from '@/lib/motion';
 import type { GatewayRecord } from '@/lib/gateway-storage';
 import { reachabilityDescription } from '@/i18n/labels';
 import type { ServerReachability } from '@/lib/server-reachability';
 import { useHomeTargetPicker } from '@/stores/home-target-picker';
+import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 
 /** Target choice is local to Home; a selection alone never switches a live connection. */
-export function HomeLaunchActions({
+export function useHomeLaunchController({
   servers,
   selectedServerId,
   reachabilityByServer,
-  onNewOpenCode,
-  onNewTerminal,
-  onSsh,
   onPair,
-  onDemo,
 }: {
   servers: readonly GatewayRecord[];
   selectedServerId?: string;
   reachabilityByServer: Readonly<Record<string, ServerReachability | undefined>>;
-  onNewOpenCode: (serverId: string) => Promise<unknown>;
-  onNewTerminal: (serverId: string) => Promise<unknown>;
-  onSsh: () => Promise<unknown>;
   onPair: () => Promise<unknown>;
-  onDemo?: () => void;
 }) {
-  const { t } = useLingui();
-  const { _ } = useLinguiRuntime();
   const router = useRouter();
-  const theme = useThemeTokens();
-  const background = useSurfaceBackground();
-  const { fontScale } = useWindowDimensions();
   const [chosenId, setChosenId] = useState<string | null>(null);
   const [pickerRequestId, setPickerRequestId] = useState<number | null>(null);
-  const [availableWidth, setAvailableWidth] = useState<number | null>(null);
   // This is visual feedback only; the shared command controller owns the
   // operation guard across layouts, buttons, and unmounts.
   const [opening, setOpening] = useState(false);
+  const reduceMotion = useReducedMotion();
+  const pickerOpen = useSharedValue(0);
   const pickerOpenRequestId = useHomeTargetPicker((state) => state.openRequestId);
   const pickerCompletedRequestId = useHomeTargetPicker((state) => state.completedRequestId);
   const pickerCompletedServerId = useHomeTargetPicker((state) => state.completedServerId);
@@ -64,7 +63,6 @@ export function HomeLaunchActions({
     ? (reachabilityByServer[chosen.serverId] ?? 'unknown')
     : undefined;
   const chosenOffline = chosenReachability === 'offline';
-  const chosenCaption = chosen ? chosen.label : t`Choose a gateway first`;
 
   useEffect(() => {
     if (pickerRequestId === null || pickerCompletedRequestId !== pickerRequestId) return;
@@ -76,18 +74,14 @@ export function HomeLaunchActions({
       updatePickerReachability(pickerRequestId, reachabilityByServer);
     }
   }, [pickerOpenRequestId, pickerRequestId, reachabilityByServer, updatePickerReachability]);
-  const wideActions =
-    chosen !== undefined &&
-    availableWidth !== null &&
-    availableWidth >= WIDE_ACTIONS_MIN_WIDTH * Math.max(1, fontScale);
-
-  function handleActionsLayout(event: LayoutChangeEvent) {
-    const width = event.nativeEvent.layout.width;
-    setAvailableWidth((current) =>
-      current === null || Math.abs(current - width) > 0.5 ? width : current
+  useEffect(() => {
+    pickerOpen.set(
+      withTiming(reduceMotion ? 0 : pickerOpenRequestId === null ? 0 : 1, timing('micro'))
     );
-  }
-
+  }, [pickerOpen, pickerOpenRequestId, reduceMotion]);
+  const pickerChevronStyle = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${pickerOpen.get() * 180}deg` }],
+  }));
   function openTargetPicker() {
     if (pickerOpenRequestId !== null) return;
     const requestId = beginPicker(chosen?.serverId, reachabilityByServer);
@@ -105,29 +99,117 @@ export function HomeLaunchActions({
     }
   }
 
+  function launchOnChosen(action: (serverId: string) => Promise<unknown>) {
+    if (chosen && !chosenOffline) void launch(() => action(chosen.serverId));
+    else if (servers.length) openTargetPicker();
+    else void launch(onPair);
+  }
+
+  return {
+    chosen,
+    chosenOffline,
+    launchOnChosen,
+    openTargetPicker,
+    opening,
+    pickerChevronStyle,
+    pickerOpen: pickerOpenRequestId !== null,
+    run: launch,
+    servers,
+  };
+}
+
+export type HomeLaunchController = ReturnType<typeof useHomeLaunchController>;
+
+/** The Gateway selector lives in Home's masthead but owns no global connection state. */
+export function HomeLaunchTarget({
+  controller,
+  loading = false,
+  bare = false,
+  onPair,
+}: {
+  controller: HomeLaunchController;
+  loading?: boolean;
+  bare?: boolean;
+  onPair: () => Promise<unknown>;
+}) {
+  const profile = useAppearanceProfile();
+  const { t } = useLingui();
+  const theme = useThemeTokens();
+  const background = useSurfaceBackground();
+  const { chosen, openTargetPicker, opening, pickerChevronStyle, pickerOpen, run, servers } =
+    controller;
+  const disabled = loading || opening;
+
   return (
-    <View testID="home-launch-actions" style={styles.root}>
-      <PressableScale
-        testID={servers.length === 0 ? 'home-pair-server' : 'home-launch-target'}
-        accessibilityRole="button"
-        accessibilityState={{ expanded: pickerOpenRequestId !== null, disabled: opening }}
-        disabled={opening}
-        onPress={() => {
-          if (servers.length === 0) void launch(onPair);
-          else openTargetPicker();
-        }}
-        style={[
-          styles.target,
-          {
-            borderColor: theme.colors.borderStrong,
-            backgroundColor: background(theme.colors.surface),
-          },
-        ]}>
-        <Text variant="bodySmall" weight="semibold" style={styles.targetName}>
-          {chosen ? chosen.label : servers.length ? t`Choose a gateway` : t`Pair a gateway`}
-        </Text>
+    <PressableScale
+      testID={servers.length === 0 ? 'home-pair-server' : 'home-launch-target'}
+      accessibilityRole="button"
+      accessibilityState={{ expanded: pickerOpen, disabled }}
+      disabled={disabled}
+      onPress={() => {
+        if (servers.length === 0) void run(onPair);
+        else openTargetPicker();
+      }}
+      style={[
+        styles.target,
+        bare && { minWidth: 0, paddingHorizontal: 4 },
+        {
+          borderRadius: profile.chrome.control,
+          backgroundColor: bare ? 'transparent' : background(theme.colors.surface),
+        },
+      ]}>
+      <Text variant="bodySmall" weight="semibold" style={styles.targetName}>
+        {loading
+          ? t`Loading servers`
+          : chosen
+            ? chosen.label
+            : servers.length
+              ? t`Choose a gateway`
+              : t`Pair a gateway`}
+      </Text>
+      <Animated.View style={pickerChevronStyle}>
         <ChevronDown size={16} color={theme.colors.primary} />
-      </PressableScale>
+      </Animated.View>
+    </PressableScale>
+  );
+}
+
+export function HomeLaunchActions({
+  controller,
+  onNewOpenCode,
+  onOpenOpenCode,
+  onNewTerminal,
+  onOpenTerminal,
+  onSsh,
+  onDemo,
+}: {
+  controller: HomeLaunchController;
+  onNewOpenCode: (serverId: string) => Promise<unknown>;
+  onOpenOpenCode: (serverId: string) => Promise<unknown>;
+  onNewTerminal: (serverId: string) => Promise<unknown>;
+  onOpenTerminal: (serverId: string) => Promise<unknown>;
+  onSsh: () => Promise<unknown>;
+  onDemo?: () => void;
+}) {
+  const { t } = useLingui();
+  const { _ } = useLinguiRuntime();
+  const theme = useThemeTokens();
+  const { chosenOffline, launchOnChosen, opening, run } = controller;
+  const [availableWidth, setAvailableWidth] = useState(0);
+  const horizontal = availableWidth < 560;
+  const blurTarget = useRef<View>(null);
+  const railOffset = useSharedValue(0);
+  const railExtent = useSharedValue(0);
+  const onRailScroll = useAnimatedScrollHandler((event) => {
+    railOffset.value = event.contentOffset.x;
+    railExtent.value = Math.max(0, event.contentSize.width - event.layoutMeasurement.width);
+  });
+
+  return (
+    <View
+      testID="home-launch-actions"
+      onLayout={(event) => setAvailableWidth(event.nativeEvent.layout.width)}
+      style={styles.root}>
       {chosenOffline ? (
         <Text
           testID="home-launch-unavailable"
@@ -152,53 +234,91 @@ export function HomeLaunchActions({
           </Text>
         </PressableScale>
       ) : null}
-      <View
-        onLayout={handleActionsLayout}
-        style={[styles.actions, wideActions ? styles.actionsWide : styles.actionsCompact]}>
-        <View style={wideActions ? styles.primarySlotWide : styles.primarySlotCompact}>
-          <LaunchTile
-            testID="home-new-opencode"
-            primary
-            title={t`New OpenCode`}
-            caption={chosenCaption}
-            icon={<OpenCodeIcon size={26} color={theme.colors.onPrimary} />}
-            disabled={opening || chosenOffline}
-            onPress={() => {
-              if (chosen && !chosenOffline) void launch(() => onNewOpenCode(chosen.serverId));
-              else if (servers.length) openTargetPicker();
-              else void launch(onPair);
+      <View>
+        <BlurTargetView ref={blurTarget}>
+          <Animated.ScrollView
+            onScroll={onRailScroll}
+            scrollEventThrottle={16}
+            onContentSizeChange={(width) => {
+              railExtent.value = Math.max(0, width - availableWidth);
             }}
-          />
-        </View>
-        <View style={wideActions ? styles.secondaryGroupWide : styles.secondaryGroupCompact}>
-          <View style={styles.secondarySlot}>
+            horizontal={horizontal}
+            scrollEnabled={horizontal}
+            nestedScrollEnabled
+            directionalLockEnabled
+            showsHorizontalScrollIndicator={false}
+            testID="home-launch-actions-scroll"
+            contentContainerStyle={[styles.actions, horizontal && styles.horizontalActions]}>
             <LaunchTile
+              horizontal={horizontal}
+              testID="home-new-opencode"
+              marker="01"
+              primary
+              title="OpenCode"
+              caption={t`New session`}
+              icon={<OpenCodeIcon size={24} color={theme.colors.onPrimary} />}
+              disabled={opening || chosenOffline}
+              onPress={() => launchOnChosen(onNewOpenCode)}
+            />
+            <View style={[styles.stackedActions, horizontal && styles.horizontalStack]}>
+              <LaunchTile
+                compact
+                testID="home-open-opencode"
+                marker="02"
+                title={t`Sessions`}
+                icon={<OpenCodeIcon size={16} color={theme.colors.primary} />}
+                disabled={opening || chosenOffline}
+                onPress={() => launchOnChosen(onOpenOpenCode)}
+              />
+              <LaunchTile
+                compact
+                testID="home-open-terminal"
+                marker="03"
+                title={t`Terminal`}
+                icon={<SquareTerminal size={16} color={theme.colors.primary} />}
+                disabled={opening || chosenOffline}
+                onPress={() => launchOnChosen(onOpenTerminal)}
+              />
+            </View>
+            <LaunchTile
+              horizontal={horizontal}
               testID="home-new-terminal"
-              title={t`Terminal`}
-              accessibilityTitle={t`New terminal`}
-              caption={chosenCaption}
+              marker="04"
+              title={t`New terminal`}
               icon={<SquareTerminal size={22} color={theme.colors.primary} />}
               disabled={opening || chosenOffline}
-              onPress={() => {
-                if (chosen && !chosenOffline) void launch(() => onNewTerminal(chosen.serverId));
-                else if (servers.length) openTargetPicker();
-                else void launch(onPair);
-              }}
+              onPress={() => launchOnChosen(onNewTerminal)}
             />
-          </View>
-          <View style={styles.secondarySlot}>
             <LaunchTile
+              horizontal={horizontal}
               testID="home-open-ssh"
+              marker="05"
               title={t`SSH`}
               caption={t`SSH hosts`}
               icon={<Link size={22} color={theme.colors.primary} />}
               disabled={opening}
               onPress={() => {
-                void launch(onSsh);
+                void run(onSsh);
               }}
             />
-          </View>
-        </View>
+          </Animated.ScrollView>
+        </BlurTargetView>
+        {horizontal ? (
+          <>
+            <ScrollEdgeGlass
+              side="left"
+              target={blurTarget}
+              offset={railOffset}
+              extent={railExtent}
+            />
+            <ScrollEdgeGlass
+              side="right"
+              target={blurTarget}
+              offset={railOffset}
+              extent={railExtent}
+            />
+          </>
+        ) : null}
       </View>
       {opening ? <Text variant="caption" color={theme.colors.textMuted}>{t`Opening…`}</Text> : null}
     </View>
@@ -207,79 +327,160 @@ export function HomeLaunchActions({
 
 function LaunchTile({
   title,
-  accessibilityTitle,
+  marker,
   caption,
   icon,
   onPress,
   primary = false,
+  compact = false,
+  horizontal = false,
   disabled,
   testID,
 }: {
   title: string;
-  accessibilityTitle?: string;
-  caption: string;
+  marker: string;
+  caption?: string;
   icon: ReactNode;
   onPress: () => void;
   primary?: boolean;
+  compact?: boolean;
+  horizontal?: boolean;
   disabled: boolean;
   testID: string;
 }) {
+  const profile = useAppearanceProfile();
   const theme = useThemeTokens();
   const background = useSurfaceBackground();
   const ink = primary ? theme.colors.onPrimary : theme.colors.text;
+  const reduceMotion = useReducedMotion();
+  const arrowTravel = useSharedValue(0);
+  useEffect(() => {
+    if (disabled || reduceMotion) arrowTravel.set(0);
+  }, [arrowTravel, disabled, reduceMotion]);
+  const arrowStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: arrowTravel.get() }, { translateY: -arrowTravel.get() }],
+  }));
+  const moveArrow = (pressed: boolean) => {
+    arrowTravel.set(
+      withTiming(pressed && !reduceMotion ? 2 : 0, timing(pressed ? PRESS.in : PRESS.out))
+    );
+  };
+  if (compact) {
+    return (
+      <PressableScale
+        testID={testID}
+        accessibilityRole="button"
+        accessibilityLabel={caption ? `${title}, ${caption}` : title}
+        accessibilityState={{ disabled }}
+        disabled={disabled}
+        onPressIn={() => moveArrow(true)}
+        onPressOut={() => moveArrow(false)}
+        onPress={onPress}
+        style={[
+          styles.compactTile,
+          { borderRadius: profile.chrome.control },
+          {
+            backgroundColor: background(theme.colors.surface),
+            opacity: disabled ? 0.6 : 1,
+          },
+        ]}>
+        <View style={styles.compactIcon}>{icon}</View>
+        <View style={styles.compactCopy}>
+          <Text variant="caption" weight="semibold" color={ink} style={styles.tileTitle}>
+            {title}
+          </Text>
+          {caption ? (
+            <Text variant="caption" color={theme.colors.textMuted} style={styles.tileCaption}>
+              {caption}
+            </Text>
+          ) : null}
+        </View>
+        <Text variant="caption" color={theme.colors.textMuted} style={styles.tileMarker}>
+          {marker}
+        </Text>
+        <Animated.View style={arrowStyle}>
+          <ArrowUpRight size={15} color={ink} />
+        </Animated.View>
+      </PressableScale>
+    );
+  }
+
   return (
     <PressableScale
       testID={testID}
       accessibilityRole="button"
-      accessibilityLabel={`${accessibilityTitle ?? title}, ${caption}`}
+      accessibilityLabel={caption ? `${title}, ${caption}` : title}
       accessibilityState={{ disabled }}
       disabled={disabled}
+      onPressIn={() => moveArrow(true)}
+      onPressOut={() => moveArrow(false)}
       onPress={onPress}
       style={[
         styles.tile,
+        {
+          borderRadius: profile.chrome.control,
+        },
         primary ? styles.primaryTile : styles.secondaryTile,
+        horizontal && {
+          flexGrow: 0,
+          flexBasis: 'auto',
+          width: primary ? 148 : 124,
+          minHeight: 92,
+          padding: 6,
+        },
         {
           backgroundColor: background(primary ? theme.colors.primary : theme.colors.surface),
-          borderColor: primary ? background(theme.colors.primary) : theme.colors.borderStrong,
           opacity: disabled ? 0.6 : 1,
         },
       ]}>
-      <View style={styles.tileIcon}>{icon}</View>
-      <Text
-        variant={primary ? 'heading' : 'bodySmall'}
-        weight="semibold"
-        color={ink}
-        style={[styles.tileTitle, primary ? styles.primaryTileTitle : styles.secondaryTileTitle]}>
-        {title}
-      </Text>
-      <Text
-        variant="caption"
-        color={primary ? ink : theme.colors.textMuted}
-        style={styles.tileCaption}>
-        {caption}
-      </Text>
-      <ArrowUpRight size={18} color={ink} style={styles.tileArrow} />
+      <View style={styles.tileTopRow}>
+        <View style={styles.tileIcon}>{icon}</View>
+        <View style={styles.tileMeta}>
+          <Text variant="caption" color={ink} style={styles.tileMarker}>
+            {marker}
+          </Text>
+          <Animated.View style={arrowStyle}>
+            <ArrowUpRight size={16} color={ink} />
+          </Animated.View>
+        </View>
+      </View>
+      <View style={styles.tileCopy}>
+        <Text
+          variant={primary ? 'heading' : 'bodySmall'}
+          weight="semibold"
+          color={ink}
+          style={[styles.tileTitle, primary ? styles.primaryTileTitle : styles.secondaryTileTitle]}>
+          {title}
+        </Text>
+        {caption ? (
+          <Text
+            variant="caption"
+            color={primary ? ink : theme.colors.textMuted}
+            style={styles.tileCaption}>
+            {caption}
+          </Text>
+        ) : null}
+      </View>
     </PressableScale>
   );
 }
 
-const WIDE_ACTIONS_MIN_WIDTH = 340;
-
 const styles = StyleSheet.create({
-  root: { gap: 16, minWidth: 0 },
+  root: { gap: 12, minWidth: 0 },
   target: {
+    minWidth: 124,
     minHeight: 44,
+    paddingVertical: 10,
+    alignSelf: 'flex-start',
     flexDirection: 'row',
     alignItems: 'center',
-    alignSelf: 'flex-start',
-    borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: 6,
-    gap: 12,
+    justifyContent: 'space-between',
+    borderRadius: 3,
+    gap: 8,
     paddingHorizontal: 12,
-    paddingVertical: 8,
     maxWidth: '100%',
   },
-  targetName: { flexShrink: 1 },
+  targetName: { minWidth: 0, flexShrink: 1 },
   demoAction: {
     minWidth: 44,
     minHeight: 44,
@@ -293,30 +494,49 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   demoLabel: { minWidth: 0, flexShrink: 1 },
-  actions: { width: '100%', minWidth: 0, gap: 6 },
-  actionsWide: { flexDirection: 'row' },
-  actionsCompact: { flexDirection: 'column' },
-  primarySlotWide: { flex: 1.6, minWidth: 0 },
-  primarySlotCompact: { width: '100%', minWidth: 0 },
-  secondaryGroupWide: { flex: 2, minWidth: 0, flexDirection: 'row', gap: 6 },
-  secondaryGroupCompact: { minWidth: 0, flexDirection: 'row', gap: 6 },
-  secondarySlot: { flex: 1, minWidth: 0 },
+  actions: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'stretch', gap: 6 },
+  horizontalActions: { flexWrap: 'nowrap', gap: 4, paddingRight: 2 },
+  horizontalStack: { flexGrow: 0, flexBasis: 'auto', width: 152, minHeight: 92, gap: 4 },
+  stackedActions: { flexGrow: 1, flexBasis: 152, minHeight: 104, gap: 6 },
   tile: {
-    flex: 1,
-    width: '100%',
+    flexGrow: 1,
+    flexBasis: 124,
+    minHeight: 104,
+    borderRadius: 3,
+    padding: 6,
+    gap: 3,
+    justifyContent: 'space-between',
+  },
+  tileTopRow: {
     minWidth: 0,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: 6,
-    padding: 10,
-    gap: 8,
-    justifyContent: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
   },
   tileIcon: { alignSelf: 'flex-start' },
-  tileTitle: { minWidth: 0, flexShrink: 1 },
-  primaryTile: { padding: 16 },
+  tileMeta: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  tileMarker: { fontSize: 9, lineHeight: 12, letterSpacing: 0.8, opacity: 0.66 },
+  tileCopy: { gap: 1 },
+  tileTitle: { minWidth: 0, flexShrink: 1, letterSpacing: -0.25 },
+  // The lead action is close to a golden rectangle at the rail's base height;
+  // utility actions stay narrower so the row has hierarchy rather than clones.
+  // 148 × 92 is approximately a golden rectangle and keeps the main action
+  // distinct without making every item in the rail oversized.
+  primaryTile: { flexBasis: 148, padding: 10 },
   secondaryTile: { padding: 10 },
-  primaryTileTitle: { fontSize: 18, lineHeight: 24 },
+  compactTile: {
+    flex: 1,
+    minHeight: 44,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 3,
+    gap: 6,
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+  },
+  compactIcon: { width: 18, alignItems: 'center' },
+  compactCopy: { flex: 1, minWidth: 0, gap: 1 },
+  primaryTileTitle: { fontSize: 16, lineHeight: 20 },
   secondaryTileTitle: { fontSize: 14, lineHeight: 20 },
-  tileCaption: { minWidth: 0, flexShrink: 1 },
-  tileArrow: { alignSelf: 'flex-end', marginTop: 'auto' },
+  tileCaption: { minWidth: 0, flexShrink: 1, fontSize: 11, lineHeight: 14 },
 });

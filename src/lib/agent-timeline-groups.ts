@@ -1,5 +1,4 @@
-import type { ShellInfo, TimelineItem, TimelineRole } from './agent-session';
-import { classifyTool, extractTarget } from './agent-tool-output';
+import type { TimelineItem, TimelineRole } from './agent-session';
 
 /**
  * One rendered message: the timeline's flat per-part items grouped back into
@@ -135,71 +134,33 @@ export function buildTimelineGroupsCached(
 }
 
 /**
- * One card per shell.
+ * Remove Gateway event mirrors without guessing which command they belong to.
  *
- * The gateway maps OpenCode's `Shell` message into a `shell` timeline part, and
- * the tool call that started the shell arrives as a `tool` part of its own. So
- * every `ls -la` the model ran was drawn twice: once in place, correctly, and
- * once more in a group of `shell` parts that -- sorting after every `msg_` id
- * -- piled up at the bottom of the transcript and grew for the life of the
- * session. Each of those copies wore a `Background` chip and a "Background
- * tasks" button whether or not anything had been detached, and one of them was
- * still spinning half an hour after the turn it belonged to was interrupted.
+ * OpenCode exposes ordinary model shell calls as `tool` parts. Its process
+ * service also emits `shell.created`, and the Gateway currently mirrors every
+ * one of those events into a synthetic timeline family addressed as
+ * `shell_${shell_id}`. Those are not OpenCode `Session.Message.Shell` records:
+ * they duplicate the tool card and, because `shell_` sorts after every `msg_`,
+ * collect at the end of the transcript. A newly sent `msg_` then lands before
+ * the old mirror tail, making the old shells look as though they moved below
+ * the new prompt and forcing the reader to scroll through them to reach the
+ * reply.
  *
- * A `shell` part that names a command a tool call in the same session already
- * ran is that tool call, seen from the other side, and it is dropped. What
- * survives is a shell with no call behind it -- one detached by
- * `POST …/background`, or one `/api/agent-shells` is reporting that this
- * transcript never started -- and that is drawn once, in place, as the
- * background card it actually is.
+ * The mirror has a deterministic identity assigned by the Gateway itself:
+ * `id === message_id === shell_${part.shell_id}`. Remove that exact family and
+ * nothing else. In particular, keep genuine OpenCode `Session.Message.Shell`
+ * rows, whose schema requires a `msg_` message id. Command text, timestamps,
+ * adjacency and the current shell inventory are deliberately not used as
+ * identity; all four can be absent, repeated or stale.
  *
- * The shell list is the authority on what is still running: a detached shell
- * the tray no longer lists has finished, whatever the snapshot that carried the
- * part said. That is the same fact the tray's own counter is drawn from, so the
- * card and the tray cannot disagree.
- *
- * Returns the array it was given when nothing changed -- the memoised cells
- * downstream compare by reference.
+ * Returns the input reference when there are no mirrors, preserving downstream
+ * memoisation.
  */
-export function reconcileShellParts(
-  items: TimelineItem[],
-  shells: readonly ShellInfo[]
-): TimelineItem[] {
-  const toolCommands = new Set<string>();
-  let shellParts = 0;
-  for (const item of items) {
-    const part = item.part;
-    if (part.type === 'shell') {
-      shellParts += 1;
-      continue;
-    }
-    if (part.type !== 'tool' || classifyTool(part.name) !== 'shell') continue;
-    const command = extractTarget('shell', part.input).trim();
-    if (command) toolCommands.add(command);
-  }
-  if (shellParts === 0) return items;
-
-  const byId = new Map(shells.map((shell) => [shell.id, shell]));
-  const next: TimelineItem[] = [];
-  let changed = false;
-  for (const item of items) {
-    const part = item.part;
-    if (part.type !== 'shell') {
-      next.push(item);
-      continue;
-    }
-    if (toolCommands.has(part.command.trim())) {
-      changed = true;
-      continue;
-    }
-    const listed = byId.get(part.shell_id);
-    const status = listed ? listed.status : part.status === 'running' ? 'exited' : part.status;
-    if (status === part.status) {
-      next.push(item);
-      continue;
-    }
-    changed = true;
-    next.push({ ...item, part: { ...part, status } });
-  }
-  return changed ? next : items;
+export function reconcileShellParts(items: TimelineItem[]): TimelineItem[] {
+  const next = items.filter((item) => {
+    if (item.part.type !== 'shell') return true;
+    const mirrorId = `shell_${item.part.shell_id}`;
+    return item.id !== mirrorId || item.message_id !== mirrorId;
+  });
+  return next.length === items.length ? items : next;
 }

@@ -128,14 +128,13 @@ reader's decoration opt-out and readability protection. `undefined` inherits,
 **`homeIdentity`'s three modes.** `default` / `hidden` / `custom`, name and logo
 independent, and a pack that says nothing gets nothing.
 
-That vocabulary is why `homeIdentity.hero`, added after v1 opened, is written as
-`{ mode: 'default' | 'hidden' }` and not as a `'shown' | 'hidden'` string. It has
-nothing to customise — the picture, its fit, its opacity and its per-mode and
-per-width overrides all belong to the `home.hero` slot — so it has no `custom`
-member, but inventing a fourth spelling for "on" inside the one object that has
-already frozen three would leave `homeIdentity` speaking two languages. Its
-`default` means what `default` means everywhere else here: the app's own
-behaviour, which for a hero is "show it if the slot is declared".
+`homeIdentity.artwork` uses `{ mode: 'default' | 'hidden' }`. Its image, fit,
+opacity, focal point and responsive variants belong to `home.artwork`; there is
+no `custom` identity mode for the picture. Default displays a declared image.
+Classic and Editorial consume this single foreground slot. `home.background`
+is an independent background, and `launch.artwork` is an optional startup-only
+override. Startup otherwise reuses Home artwork before falling back to identity
+or bundled branding. Empty-state artwork remains exclusive to empty-state cards.
 
 **Identity.** The manifest `id` is author-provided and untrusted. Installation
 identity is local and content-hashed; a duplicate author id never silently
@@ -143,13 +142,11 @@ overwrites.
 
 ## Growable without a version bump
 
-- **Decoration slots.** 11 today, `home.hero` being the first one added since the
-  root was opened and the proof that opening it was worth doing: an app that
-  predates it ignores the slot and draws no hero, which is exactly what a pack
-  that never declared one gets. New ones are additive once `decoration` is open;
-  a pack that uses one an app does not know simply does not decorate there.
+- **Decoration slots.** New slots are additive once `decoration` is open;
+  a pack that uses a slot an app does not know simply does not decorate there.
+  `home.artwork` is the single Home foreground and `launch.artwork` is startup-only.
 - **`homeIdentity` members.** Additive for the same reason, with one condition
-  worth stating: a member an older app ignores must be _safe_ to ignore. `hero`
+  worth stating: a member an older app ignores must be _safe_ to ignore. `artwork`
   is, because ignoring it means not drawing a picture the older app has no slot
   for anyway. A member whose absence would change what an app already draws
   belongs with a `schemaVersion` bump instead.
