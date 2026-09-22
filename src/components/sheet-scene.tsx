@@ -142,6 +142,7 @@ export function SheetScene({
   title,
   caption,
   captionLines,
+  topInset = 0,
   headingTrailing,
   header,
   contentSized = false,
@@ -152,8 +153,10 @@ export function SheetScene({
   title: string;
   /** The current value, live -- never a hint. */
   caption?: string;
-  /** See `SheetSceneHeading`: two only where the caption is a sentence. */
+  /** See `SheetSceneHeading`: sentence captions may wrap; zero removes the limit. */
   captionLines?: number;
+  /** Safe-area clearance for a sheet that can reach the status bar. */
+  topInset?: number;
   /** One quiet control on the title's line. See `SheetSceneHeading`. */
   headingTrailing?: ReactNode;
   /** Search, segmented control: anything pinned above the scroller. */
@@ -171,7 +174,7 @@ export function SheetScene({
   return (
     <SheetFrame testID={testID} tint="surface" frosted>
       <View collapsable={false} style={contentSized ? undefined : styles.scene}>
-        <View style={styles.fixedTop}>
+        <View style={[styles.fixedTop, { paddingTop: SHEET_LADDER.gap + topInset }]}>
           <SheetHandle />
           <SheetSceneHeading
             title={title}
@@ -205,6 +208,7 @@ export function SheetSceneHeading({
   caption?: string;
   /**
    * How many lines the caption may take, and one unless a sheet says so.
+   * Zero lets explanatory sentences wrap fully at large text sizes.
    *
    * A caption is normally the current value -- a model's name, a branch, a
    * pack -- and a value that wraps is a value that has grown a paragraph. The

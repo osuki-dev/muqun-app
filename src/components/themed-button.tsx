@@ -18,6 +18,7 @@ import {
   type ButtonProps,
 } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
+import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { ThemeArtworkLayer } from '@/components/theme-artwork';
 import { useEffectiveCustomTheme } from '@/components/theme-candidate';
 import { resolveThemeImage } from '@/theme/resolve';
@@ -47,6 +48,7 @@ export function Button(props: ButtonProps) {
     ...rest
   } = props;
   const theme = useThemeTokens();
+  const profile = useAppearanceProfile();
   const background = useSurfaceBackground();
   const backgroundOpacity = useSurfaceBackgroundOpacity();
   const { resolvedMode } = useThemeMode();
@@ -78,7 +80,7 @@ export function Button(props: ButtonProps) {
       minHeight: button.height,
       paddingVertical: theme.spacing[button.paddingY],
       paddingHorizontal: theme.spacing[button.paddingX],
-      borderRadius: theme.radius[button.radius],
+      borderRadius: profile.chrome.control,
       alignItems: 'center',
       justifyContent: 'center',
       opacity: loading ? 0.68 : 1,
@@ -99,7 +101,7 @@ export function Button(props: ButtonProps) {
     loading,
     theme.colors,
     theme.mode,
-    theme.radius,
+    profile.chrome.control,
     theme.shadow.pill,
     theme.spacing,
     variantTokens,
@@ -145,6 +147,7 @@ export function Button(props: ButtonProps) {
       <BaseButton
         {...props}
         style={{
+          borderRadius: profile.chrome.control,
           ...(variantTokens.border && { borderWidth: StyleSheet.hairlineWidth }),
           ...style,
         }}
@@ -172,7 +175,7 @@ export function Button(props: ButtonProps) {
           style={[
             StyleSheet.absoluteFill,
             {
-              borderRadius: style?.borderRadius ?? theme.radius[button.radius],
+              borderRadius: style?.borderRadius ?? profile.chrome.control,
               borderCurve: style?.borderCurve,
               borderTopLeftRadius: style?.borderTopLeftRadius,
               borderTopRightRadius: style?.borderTopRightRadius,

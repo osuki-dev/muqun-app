@@ -125,6 +125,14 @@ wait stable 400 5000
 # section s40
 press "${TARGET}"
 
+# section dismiss-obstructing-notification
+# The foreground notification overlaps the lower half of Try the demo. Drag
+# only that app-owned plate upward to the intended target before pressing it.
+gesture drag "${TARGET}" "id=\"home-try-demo\"" 0 300 0
+
+# section obstructing-notification-dismissed
+is hidden "${TARGET}"
+
 # section s41
 press "${TARGET}"
 

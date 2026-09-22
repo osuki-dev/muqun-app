@@ -78,10 +78,10 @@ describe('workspace chrome follows the appearance profile', () => {
     expect(read('update-status-banner')).toContain('useNotificationSurfaceStyle()');
   });
 
-  test('semantic pills, circles and keycaps keep their intentional shapes', () => {
+  test('session controls follow the profile while glyphs and keycaps keep their shapes', () => {
     const composer = read('agent-composer');
     for (const name of ['sessionChip', 'backChip', 'queuedChip', 'compactionPill']) {
-      expect(styleBlock(composer, name)).toContain('borderRadius: 999');
+      expect(styleBlock(composer, name)).not.toContain('borderRadius:');
     }
     const ssh = read('ssh-terminal-workspace');
     expect(styleBlock(ssh, 'terminalKey')).toContain('borderRadius: 12');

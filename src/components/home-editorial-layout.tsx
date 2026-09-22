@@ -180,7 +180,7 @@ export function HomeEditorialLayout({
       <View
         testID="home-editorial-layout"
         onLayout={(event) => setMeasuredWidth(event.nativeEvent.layout.width)}
-        style={[styles.root, { paddingHorizontal: geometry.gutter, paddingTop: 0 }, style]}>
+        style={[styles.root, { paddingHorizontal: geometry.gutter }, style]}>
         <View style={split ? styles.coverColumns : undefined}>
           <View style={split ? { width: coverWidth, minWidth: 0 } : undefined}>
             <View style={styles.coverScene}>
@@ -236,7 +236,7 @@ export function HomeEditorialLayout({
                 }}>
                 {artwork}
               </View>
-              <View style={[styles.coverUtilities, { top: coverTitle ? titleHeight - 4 : 8 }]}>
+              <View style={[styles.coverUtilities, { top: coverTitle ? titleHeight - 4 : 16 }]}>
                 {headerAction ? <View style={styles.coverButtons}>{headerAction}</View> : null}
                 {headerLeading ? <View style={styles.coverTarget}>{headerLeading}</View> : null}
               </View>

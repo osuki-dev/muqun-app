@@ -87,7 +87,7 @@ test('Settings groups draw only between-row separators, including flush and serv
 
 test('profile migration preserves artwork, status chips and the confirmation timer indicator', () => {
   expect(read('components/custom-theme-library.tsx')).toContain(
-    'style={{ ...size, borderRadius: 8 }}'
+    'style={{ ...size, borderRadius: profile.chrome.card }}'
   );
   expect(read('components/settings-servers.tsx')).toContain('borderRadius: LADDER.gap');
   const action = read('components/two-step-action.tsx');

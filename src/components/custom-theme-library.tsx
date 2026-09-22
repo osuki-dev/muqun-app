@@ -81,6 +81,7 @@ function ThemeCover({
   pack: Pick<ThemeAppearance, 'light' | 'dark'>;
   size: { width: number; height: number };
 }) {
+  const profile = useAppearanceProfile();
   const uri = manifest.preview ? assets?.[manifest.preview] : undefined;
   if (!uri?.startsWith('file:///')) return <ThemePaletteStrip pack={pack} />;
   return (
@@ -93,7 +94,7 @@ function ThemeCover({
       cachePolicy="memory"
       transition={DURATION.medium}
       accessible={false}
-      style={{ ...size, borderRadius: 8 }}
+      style={{ ...size, borderRadius: profile.chrome.card }}
     />
   );
 }
@@ -175,7 +176,8 @@ export function CustomThemeLibrary({
   const background = useSurfaceBackground();
   const surfaceOpacity = useSurfaceBackgroundOpacity();
   const { width } = useWindowDimensions();
-  const wideDetail = detail && width >= 840;
+  const wideActions = width >= 840;
+  const wideDetail = detail && wideActions;
   const library = useThemeLibrary((state) => state.library);
   const currentPack = useThemePack();
   const router = useRouter();
@@ -441,6 +443,8 @@ export function CustomThemeLibrary({
     importOpen && !linkImportOpen ? (
       <View
         style={{
+          flexDirection: wideActions ? 'row' : 'column',
+          flexWrap: 'wrap',
           gap: 8,
           padding: 12,
           borderRadius: profile.chrome.card,
@@ -905,6 +909,8 @@ export function CustomThemeLibrary({
           ) : (actionsOpen || detail) && candidateHasActions ? (
             <View
               style={{
+                flexDirection: wideActions ? 'row' : 'column',
+                flexWrap: 'wrap',
                 gap: 4,
                 padding: 8,
                 borderRadius: profile.chrome.card,

@@ -102,3 +102,12 @@ press "${TARGET}"
 
 # section s32
 is visible "${TARGET}"
+
+# section dismiss-notification
+# Swipe only the app notification, toward the SSH title above it. Both ends
+# resolve from current selectors; never gesture at an arbitrary overlay or the
+# system status bar. Keep the reconnect pill itself under test.
+gesture drag "${TARGET}" "label=\"Demo shell\"" 0 300 0
+
+# section notification-dismissed
+is hidden "${TARGET}"

@@ -374,7 +374,7 @@
         "mode": "scroll",
         "direction": "up",
         "timeout": 20000,
-        "run": "flows/custom-themes.ad#scroll-up"
+        "run": "flows/custom-themes.ad#settings-scroll-up"
       },
       {
         "run": "flows/custom-themes.ad#theme-row-clear-header"
@@ -487,7 +487,7 @@
         "mode": "scroll",
         "direction": "up",
         "timeout": 20000,
-        "run": "flows/custom-themes.ad#scroll-up"
+        "run": "flows/custom-themes.ad#settings-scroll-up"
       }
     ],
     "flows/agent-collaboration": [
@@ -5431,6 +5431,31 @@
         "run": "flows/ssh.ad#s26"
       },
       {
+        "when": {
+          "target": {
+            "id": "in-app-notification"
+          },
+          "absent": false
+        },
+        "steps": [
+          {
+            "target": {
+              "id": "in-app-notification"
+            },
+            "mode": "press",
+            "run": "flows/ssh.ad#dismiss-notification"
+          },
+          {
+            "target": {
+              "id": "in-app-notification"
+            },
+            "mode": "hidden",
+            "timeout": 4000,
+            "run": "flows/ssh.ad#notification-dismissed"
+          }
+        ]
+      },
+      {
         "target": {
           "text": "Reconnect"
         },
@@ -5900,6 +5925,31 @@
         },
         "mode": "press",
         "run": "flows/terminal-interactions.ad#s40"
+      },
+      {
+        "when": {
+          "target": {
+            "id": "in-app-notification"
+          },
+          "absent": false
+        },
+        "steps": [
+          {
+            "target": {
+              "id": "in-app-notification"
+            },
+            "mode": "press",
+            "run": "flows/terminal-interactions.ad#dismiss-obstructing-notification"
+          },
+          {
+            "target": {
+              "id": "in-app-notification"
+            },
+            "mode": "hidden",
+            "timeout": 4000,
+            "run": "flows/terminal-interactions.ad#obstructing-notification-dismissed"
+          }
+        ]
       },
       {
         "when": {

@@ -138,6 +138,7 @@ const SessionChip = memo(function SessionChip({
 }) {
   const { t } = useLingui();
   const theme = useThemeTokens();
+  const profile = useAppearanceProfile();
   const surfaceBackground = useSurfaceBackground();
 
   const session = node.session;
@@ -188,6 +189,7 @@ const SessionChip = memo(function SessionChip({
         }
         style={[
           styles.sessionChip,
+          { borderRadius: profile.chrome.navigationPill },
           active
             ? { backgroundColor: theme.colors.primary }
             : {
@@ -1017,6 +1019,7 @@ export const AgentComposer = memo(function AgentComposer({
                     <View
                       style={[
                         styles.queuedChip,
+                        { borderRadius: profile.chrome.control },
                         {
                           backgroundColor: withAlpha(
                             steering ? theme.colors.warning : theme.colors.primary,
@@ -1148,6 +1151,7 @@ export const AgentComposer = memo(function AgentComposer({
                     accessibilityLabel={t`Back to the parent session`}
                     style={[
                       styles.backChip,
+                      { borderRadius: profile.chrome.navigationPill },
                       {
                         backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
                         borderColor: surfaceBackground(theme.colors.border),
@@ -1606,6 +1610,7 @@ const CompactionPill = memo(function CompactionPill({
 }) {
   const { t } = useLingui();
   const theme = useThemeTokens();
+  const profile = useAppearanceProfile();
   const surfaceBackground = useSurfaceBackground();
   const failed = status === 'failed';
 
@@ -1637,6 +1642,7 @@ const CompactionPill = memo(function CompactionPill({
         onPress={onDismiss}
         style={[
           styles.compactionPill,
+          { borderRadius: profile.chrome.control },
           {
             backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
             borderColor: failed ? theme.colors.danger : theme.colors.border,
@@ -1776,7 +1782,6 @@ const styles = StyleSheet.create({
      */
     minHeight: 32,
     paddingHorizontal: 12,
-    borderRadius: 999,
     borderCurve: 'continuous',
   },
   chipRow: {
@@ -1788,7 +1793,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     width: 32,
     height: 32,
-    borderRadius: 999,
     borderCurve: 'continuous',
     borderWidth: StyleSheet.hairlineWidth,
   },
@@ -1888,7 +1892,6 @@ const styles = StyleSheet.create({
   queuedChip: {
     paddingHorizontal: 8,
     paddingVertical: 2,
-    borderRadius: 999,
     borderCurve: 'continuous',
   },
   inboxText: {
@@ -1924,7 +1927,6 @@ const styles = StyleSheet.create({
     gap: 7,
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 999,
     borderCurve: 'continuous',
     borderWidth: StyleSheet.hairlineWidth,
   },
