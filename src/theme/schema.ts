@@ -187,8 +187,8 @@ export const iconsSchema = z.record(z.string(), iconSchema.nullable().optional()
  * type error -- while the schema stays forward compatible.
  */
 export const THEME_SLOTS = [
-  'shell.background',
-  'home.background',
+  'shell.wallpaper',
+  'home.wallpaper',
   'home.artwork',
   'navigation.background',
   'composer.background',
@@ -196,7 +196,7 @@ export const THEME_SLOTS = [
   'cards.decoration',
   'buttons.primary.background',
   'tabs.background',
-  'emptyState.illustration',
+  'empty.artwork',
   'launch.artwork',
 ] as const;
 export type ThemeSlot = (typeof THEME_SLOTS)[number];

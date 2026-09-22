@@ -78,7 +78,7 @@ function EditorialSection({
   const background = useSurfaceBackground();
   const profile = useAppearanceProfile();
   const theme = useThemeTokens();
-  const hasScene = useHasThemeArtwork('home.background', 'shell.background');
+  const hasScene = useHasThemeArtwork('home.wallpaper', 'shell.wallpaper');
   return (
     <View style={[styles.section, { marginTop: first ? 0 : spacing.lg, marginBottom: 0 }]}>
       <View style={[styles.sectionHeader, { borderBottomColor: borderColor }]}>

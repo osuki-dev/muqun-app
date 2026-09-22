@@ -113,7 +113,7 @@ export function ThemeArtworkLayer({
           onError={() => setFailed(uri)}
         />
       )}
-      {(slot === 'shell.background' || slot === 'home.background') && (() => {
+      {(slot === 'shell.wallpaper' || slot === 'home.wallpaper') && (() => {
         const effects = manifest.variants[mode]?.effects ?? manifest.effects;
         return effects?.ambient && effects.ambient !== 'none' ? (
           <SkiaAmbientEffect

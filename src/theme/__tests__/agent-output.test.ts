@@ -60,7 +60,7 @@ test('a manifest naming images cannot install from text alone', () => {
   const withArt = {
     ...starter,
     assets: { scene: { path: 'assets/scene.png' } },
-    decoration: { 'shell.background': { asset: 'scene' } },
+    decoration: { 'shell.wallpaper': { asset: 'scene' } },
   };
   const theme = extractThemeFromOutput(fence(withArt));
   expect(theme).not.toBeNull();

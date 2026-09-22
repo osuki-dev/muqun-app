@@ -7,6 +7,7 @@ import { StyleSheet, View } from 'react-native';
 import { PressableScale } from '@/components/pressable-scale';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { Text } from '@/components/text';
+import { ThemeIcon } from '@/components/theme-icon';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { reachabilityDescription } from '@/i18n/labels';
 import type { GatewayRecord } from '@/lib/gateway-storage';
@@ -80,7 +81,7 @@ export function HomeConnections({
                   {t`Saved SSH host`}
                 </Text>
               </View>
-              <ChevronRight size={16} color={theme.colors.textMuted} />
+              <ThemeIcon name="home.arrow" fallback={ChevronRight} size={16} color={theme.colors.textMuted} />
             </PressableScale>
           ))}
         </View>
@@ -97,7 +98,7 @@ export function HomeConnections({
         <Text variant="bodySmall" color={theme.colors.primary}>
           {t`Manage connections`}
         </Text>
-        <ChevronRight size={16} color={theme.colors.primary} />
+        <ThemeIcon name="home.arrow" fallback={ChevronRight} size={16} color={theme.colors.primary} />
       </PressableScale>
     </View>
   );
@@ -155,7 +156,7 @@ function GatewayConnectionRow({
           </Text>
         ) : null}
       </View>
-      <ChevronRight size={16} color={theme.colors.textMuted} />
+      <ThemeIcon name="home.arrow" fallback={ChevronRight} size={16} color={theme.colors.textMuted} />
     </PressableScale>
   );
 }

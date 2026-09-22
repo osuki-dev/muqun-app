@@ -178,11 +178,11 @@ const cases: FixtureCase[] = [
       query('theme-no-fallback', 'light', 'compact'),
       query('shown-with-direct-fallback', 'light', 'compact', {
         preference: 'shown',
-        directFallbackSlot: 'emptyState.illustration',
+        directFallbackSlot: 'empty.artwork',
       }),
       query('shown-with-direct-fallback-regular', 'dark', 'regular', {
         preference: 'shown',
-        directFallbackSlot: 'emptyState.illustration',
+        directFallbackSlot: 'empty.artwork',
       }),
     ],
   },
@@ -195,7 +195,7 @@ const cases: FixtureCase[] = [
           compact: null,
           regular: { asset: 'artwork-regular' },
         },
-        'emptyState.illustration': { asset: 'empty' },
+        'empty.artwork': { asset: 'empty' },
       },
       variantDecorations: {
         dark: { 'home.artwork': null },
@@ -205,11 +205,11 @@ const cases: FixtureCase[] = [
       query('light-compact-null', 'light', 'compact'),
       query('light-regular-object', 'light', 'regular'),
       query('dark-compact-explicit-null', 'dark', 'compact', {
-        directFallbackSlot: 'emptyState.illustration',
+        directFallbackSlot: 'empty.artwork',
       }),
       query('decorations-disabled', 'light', 'regular', {
         decorationsEnabled: false,
-        directFallbackSlot: 'emptyState.illustration',
+        directFallbackSlot: 'empty.artwork',
       }),
     ],
   },

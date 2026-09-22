@@ -9,7 +9,7 @@ import { THEME_SLOTS } from '../schema';
 // A list names every surface when artwork is consumed in more than one place.
 // Empty-state art stays in its card; launch and Home foregrounds have dedicated slots.
 const consumers = {
-  'shell.background': [
+  'shell.wallpaper': [
     'src/app/settings.tsx',
     // The same wallpaper under every form sheet, from the component that owns
     // the order of its layers. Named here so it cannot be deleted back to a
@@ -17,7 +17,7 @@ const consumers = {
     // the picture in the first place.
     'src/components/sheet-ground.tsx',
   ],
-  'home.background': 'src/components/home-overview.tsx',
+  'home.wallpaper': 'src/components/home-overview.tsx',
   'navigation.background': 'src/components/glass-chrome.tsx',
   'composer.background': 'src/components/glass-chrome.tsx',
   'actions.background': 'src/components/glass-chrome.tsx',
@@ -27,7 +27,7 @@ const consumers = {
   // strip, so the slot lived or died with that one screen; it is on
   // `SettingsSegmented` now, which is every tabbed control in the app.
   'tabs.background': 'src/components/settings-segmented.tsx',
-  'emptyState.illustration': 'src/components/home-overview.tsx',
+  'empty.artwork': 'src/components/home-overview.tsx',
   'home.artwork': 'src/theme/home-artwork.ts',
   'launch.artwork': 'src/theme/launch-artwork.ts',
 } as const;
@@ -67,7 +67,7 @@ test('Home mounts profile-specific top artwork and the empty card keeps its own 
   // otherwise empty screen is a gallery rather than an invitation, and the
   // card's illustration was composed for the card.
   expect(home).toContain('records.length > 0 && artworkResolution');
-  expect(home).toContain('<ThemeArtwork slot="emptyState.illustration" />');
+  expect(home).toContain('<ThemeArtwork slot="empty.artwork" />');
 
   // The iPad rail deliberately does not draw it. The rail is a persistent index
   // of machines beside a live terminal, not the top of a page, and a decoration
@@ -131,7 +131,7 @@ test('the SSH status line keeps a readable plate wherever the shell wallpaper is
   expect(line).toBeDefined();
   expect(line).toContain('hasShell');
   expect(line).toContain('backgroundColor: surfaceBackground(theme.colors.background)');
-  expect(source).toContain("useHasThemeArtwork('shell.background')");
+  expect(source).toContain("useHasThemeArtwork('shell.wallpaper')");
   // There must be no strip of bare wallpaper between the header and the
   // terminal at all. This used to be guarded by requiring a fade at the
   // terminal's top edge, which softened the straight line the strip ended in

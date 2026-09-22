@@ -943,7 +943,7 @@ export function SshTerminalWorkspace({ hostId }: { hostId: string }) {
   if (!record) {
     return (
       <View style={[styles.screen, { backgroundColor: theme.colors.background }]}>
-        <ThemeArtwork slot="shell.background" />
+        <ThemeArtwork slot="shell.wallpaper" />
         <ScreenHeader title={t`SSH`} />
         <View style={styles.missing}>
           {loading ? (
@@ -1120,7 +1120,7 @@ export function SshTerminalWorkspace({ hostId }: { hostId: string }) {
 
   return (
     <View style={[styles.screen, { backgroundColor: theme.colors.background }]}>
-      <ThemeArtwork slot="shell.background" />
+      <ThemeArtwork slot="shell.wallpaper" />
 
       <View
         style={styles.terminal}
@@ -1311,7 +1311,7 @@ function StatusLine({
   const { t } = useLingui();
   const theme = useThemeTokens();
   const surfaceBackground = useSurfaceBackground();
-  const hasShell = useHasThemeArtwork('shell.background');
+  const hasShell = useHasThemeArtwork('shell.wallpaper');
   // Cancelled is the reader's doing and is lit in no colour at all; the
   // others are the connection's state.
   const light =

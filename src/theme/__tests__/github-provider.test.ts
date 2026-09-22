@@ -12,7 +12,7 @@ const image = new Uint8Array(
 );
 const manifest = createThemeStarter();
 manifest.assets = { logo: { path: 'assets/logo.png' } };
-manifest.decoration = { 'shell.background': { asset: 'logo' } };
+manifest.decoration = { 'shell.wallpaper': { asset: 'logo' } };
 const manifestBytes = new TextEncoder().encode(JSON.stringify(manifest));
 const imageOid = fixture.blob(image);
 const manifestOid = fixture.blob(manifestBytes);

@@ -110,7 +110,7 @@ export function SheetGround({
 }) {
   const theme = useThemeTokens();
   const surfaceBackground = useSurfaceBackground();
-  const hasShell = useHasThemeArtwork('shell.background');
+  const hasShell = useHasThemeArtwork('shell.wallpaper');
   return (
     <View
       testID={testID}
@@ -125,7 +125,7 @@ export function SheetGround({
           { backgroundColor: surfaceBackground(sheetGroundTintColor(theme.colors, tint)) },
         ]}
       />
-      <ThemeArtwork slot="shell.background" />
+      <ThemeArtwork slot="shell.wallpaper" />
       {frosted && hasShell ? (
         <View
           style={[
@@ -250,7 +250,7 @@ export const SHEET_GROUND_PLATE_PADDING_VERTICAL = 4;
 export function useSheetGroundPlate(tint?: SheetGroundTint): SheetGroundPlate {
   const profile = useAppearanceProfile();
   const theme = useThemeTokens();
-  const hasShell = useHasThemeArtwork('shell.background');
+  const hasShell = useHasThemeArtwork('shell.wallpaper');
   const ground = useSheetGroundTint();
   if (!hasShell) return EMPTY_PLATE;
   return {
