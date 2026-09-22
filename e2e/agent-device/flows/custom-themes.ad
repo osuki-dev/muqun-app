@@ -175,7 +175,7 @@ back --system
 wait "id=settings-theme-row" 10000
 
 # section scroll-up
-scroll up --pixels 700
+scroll up --pixels 320
 
 # section theme-row-clear-header
 # The target search stops as soon as Android reports the Theme row visible,
