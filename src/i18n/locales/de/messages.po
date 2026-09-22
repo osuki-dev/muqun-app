@@ -416,6 +416,7 @@ msgstr "Richte den QR-Code im Rahmen aus"
 
 #: src/components/git-diff-view.tsx
 #: src/components/session-artifacts.tsx
+#: src/components/theme-browse-sheet.tsx
 msgid "All"
 msgstr "Alle"
 
@@ -932,6 +933,7 @@ msgid "Clear the conversation"
 msgstr "Unterhaltung leeren"
 
 #: src/components/agent-model-sheet.tsx
+#: src/components/theme-browse-sheet.tsx
 msgid "Clear the search"
 msgstr "Suche leeren"
 
@@ -2575,6 +2577,10 @@ msgstr "Listet nur Panels mit einem erkannten Agenten"
 msgid "Live Activity"
 msgstr "Live-Aktivität"
 
+#: src/components/theme-browse-sheet.tsx
+msgid "Load more"
+msgstr "Mehr laden"
+
 #: src/components/gateway-storage-error.tsx
 #: src/components/session-map.tsx
 #: src/components/ssh-host-list.tsx
@@ -3003,6 +3009,11 @@ msgstr "Keine Textänderung"
 #: src/components/theme-browse-sheet.tsx
 msgid "No themes are published yet"
 msgstr "Es sind noch keine Themes veröffentlicht"
+
+#. placeholder {0}: query.trim()
+#: src/components/theme-browse-sheet.tsx
+msgid "No themes match “{0}”."
+msgstr "Keine Themes passen zu „{0}“"
 
 #: src/components/agent-context-sheet.tsx
 msgid "no window reported for this model"
@@ -4117,6 +4128,10 @@ msgstr "Suchen"
 #: src/app/commands.tsx
 msgid "Search actions and commands"
 msgstr "Aktionen und Befehle suchen"
+
+#: src/components/theme-browse-sheet.tsx
+msgid "Search by name or tag"
+msgstr "Nach Name oder Tag suchen"
 
 #: src/components/session-artifacts.tsx
 msgid "Search files"
@@ -5367,6 +5382,10 @@ msgstr "Erneut versuchen"
 msgid "Try again once the gateway responds."
 msgstr "Versuche es erneut, sobald das Gateway antwortet"
 
+#: src/components/theme-browse-sheet.tsx
+msgid "Try searching for another name or tag."
+msgstr "Versuche es mit einem anderen Namen oder Tag"
+
 #: src/components/home-launch-actions.tsx
 #: src/components/home-overview.tsx
 msgid "Try the demo"
@@ -5507,6 +5526,10 @@ msgstr "Unversioniert"
 #: src/i18n/labels.ts
 msgid "Up arrow"
 msgstr "Pfeil nach oben"
+
+#: src/components/theme-browse-sheet.tsx
+msgid "Update"
+msgstr "Aktualisieren"
 
 #: src/components/agent-assignment-bar.tsx
 msgid "Update Herdr on the server to 0.9.0 or newer, then restart the session, to assign a task to another assistant"

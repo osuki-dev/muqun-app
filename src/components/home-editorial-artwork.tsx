@@ -9,9 +9,11 @@ import {
 } from '@shopify/react-native-skia';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { StyleSheet, View, type LayoutChangeEvent } from 'react-native';
+import Animated from 'react-native-reanimated';
 
 import { useLaunchHomeArtwork } from '@/hooks/use-launch-home-artwork';
 import { containedImageRect, coveredImageRect } from '@/lib/hero-feather';
+import { fadeIn, listLayout } from '@/lib/motion';
 import type { ResolvedHomeArtworkAsset } from '@/theme/home-artwork';
 
 const BOTTOM_FEATHER_START = 0.68;
@@ -77,8 +79,7 @@ function HomeEditorialArtworkImage({
     source: resolution.source,
     image: failed ? null : imageRect,
     intrinsic,
-    // The cover may crop the subject; its bottom feather also differs from launch.
-    cropped: fit !== 'contain',
+    cropped: false,
   });
   const onLayout = useCallback(
     (event: LayoutChangeEvent) => {
@@ -90,13 +91,15 @@ function HomeEditorialArtworkImage({
   );
   if (failed) return null;
   return (
-    <View
+    <Animated.View
       ref={view}
       collapsable={false}
       testID="home-editorial-artwork"
       pointerEvents="none"
       accessible={false}
       importantForAccessibility="no-hide-descendants"
+      entering={fadeIn('medium')}
+      layout={listLayout('medium')}
       onLayout={onLayout}
       style={[styles.root, { height }]}>
       {image && imageRect && box ? (
@@ -125,7 +128,7 @@ function HomeEditorialArtworkImage({
           </Mask>
         </Canvas>
       ) : null}
-    </View>
+    </Animated.View>
   );
 }
 
