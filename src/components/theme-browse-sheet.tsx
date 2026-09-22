@@ -1,27 +1,31 @@
 import { LegendList } from '@legendapp/list/react-native';
 import { useLingui } from '@lingui/react/macro';
-import { Spinner, Tag, useThemeTokens } from '@osuki-dev/ui';
+import { Tag, useThemeTokens } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
 import { Image } from 'expo-image';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LogoLoader } from '@/components/logo-loader';
-import { useEffect, useRef, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import {
   SheetScene,
   SheetSceneFooter,
   SheetSceneRow,
+  SheetSceneSearch,
   SHEET_LADDER,
   sheetSceneStyles,
 } from '@/components/sheet-scene';
+import { PressableScale } from '@/components/pressable-scale';
+import { ListLoadMoreFooter } from '@/components/list-load-more-footer';
 import { ThemeImportProgress } from '@/components/theme-import-progress';
 import { Button } from '@/components/themed-button';
 import { useSurfaceBackgroundOpacity } from '@/hooks/use-surface-background';
 import { formatAssetSize } from '@/lib/asset-display';
 import { isDemoActive } from '@/lib/demo-gateway';
 import { demoThemeIndex } from '@/theme/demo-gallery';
+import { collectPopularThemeTags, filterThemeEntries } from '@/theme/theme-search';
 import { DURATION, fadeIn, fadeOut, listLayout, riseIn, STAGGER, timing } from '@/lib/motion';
 import { holdFor, remainingVisibleMs } from '@/lib/minimum-visible';
 import { useRenderTally } from '@/lib/render-tally';
@@ -118,14 +122,37 @@ export function ThemeBrowseSheet({
   );
   const [failed, setFailed] = useState(false);
   const [attempt, setAttempt] = useState(0);
+  const [query, setQuery] = useState('');
+  const needle = query.trim().replace(/^#/, '').toLowerCase();
+
+  const availableTags = useMemo(
+    () => (entries ? collectPopularThemeTags(entries, 12) : []),
+    [entries]
+  );
+
+  const filteredEntries = useMemo(
+    () => (entries ? filterThemeEntries(entries, query) : null),
+    [entries, query]
+  );
+
+  const total = filteredEntries?.length ?? 0;
   const [shown, setShown] = useState(() =>
     Math.min(THEME_BROWSE_PAGE, entries?.length ?? THEME_BROWSE_PAGE)
   );
+
   // Where the page in view began, so an appended page starts its own sequence
   // at zero rather than continuing from twenty and arriving half a second late.
   const [pageStart, setPageStart] = useState(0);
   const [appending, setAppending] = useState(false);
   const appendInFlight = useRef(false);
+
+  // Reset pagination when search query changes or filtered results change
+  useEffect(() => {
+    setShown(Math.min(THEME_BROWSE_PAGE, filteredEntries?.length ?? THEME_BROWSE_PAGE));
+    setPageStart(0);
+    appendInFlight.current = false;
+    setAppending(false);
+  }, [needle, filteredEntries?.length]);
   // Which row is downloading. A row, not a boolean: the acknowledgement belongs
   // on the theme it is for, and a second press elsewhere must not look like it
   // did something.
@@ -191,6 +218,7 @@ export function ThemeBrowseSheet({
     clearThemeIndex();
     setFailed(false);
     setEntries(null);
+    setQuery('');
     setShown(THEME_BROWSE_PAGE);
     setPageStart(0);
     setAttempt((value) => value + 1);
@@ -276,14 +304,28 @@ export function ThemeBrowseSheet({
     })();
   }
 
-  const total = entries?.length ?? 0;
-  const rows = entries ? entries.slice(0, shown) : [];
-  const installedIds = new Set(installed.map((entry) => entry.manifest.id));
+  const rows = filteredEntries ? filteredEntries.slice(0, shown) : [];
+  const installedMap = useMemo(
+    () => new Map(installed.map((entry) => [entry.manifest.id, entry])),
+    [installed]
+  );
+  const installedVersionKey = useMemo(
+    () => installed.map((entry) => `${entry.manifest.id}:${entry.manifest.version}`).join(','),
+    [installed]
+  );
   const broken = new Set(brokenCovers);
 
   function coverOf(entry: ThemeIndexEntry): string | null {
     if (demo || broken.has(entry.id)) return null;
     return themePreviewUrl(entry);
+  }
+
+  function handlePress(item: ThemeIndexEntry) {
+    const installedEntry = installedMap.get(item.id);
+    if (installedEntry && installedEntry.manifest.version === item.version) {
+      return;
+    }
+    open(item);
   }
 
   /**
@@ -303,7 +345,7 @@ export function ThemeBrowseSheet({
     counted?.completed ?? '',
     counted?.total ?? '',
     brokenCovers.length,
-    installedIds.size,
+    installedVersionKey,
     pageStart,
   ].join('|');
 
@@ -355,11 +397,30 @@ export function ThemeBrowseSheet({
             {t`Loading themes…`}
           </Text>
         </Animated.View>
+      ) : needle ? (
+        <Animated.View
+          key="no-match"
+          entering={fadeIn('medium')}
+          testID="theme-browse-no-match"
+          style={styles.stateBlock}>
+          <Text variant="bodySmall">{t`No themes match “${query.trim()}”.`}</Text>
+          <Text variant="caption" color={theme.colors.textMuted}>
+            {t`Try searching for another name or tag.`}
+          </Text>
+          <View style={styles.stateAction}>
+            <Button
+              variant="secondary"
+              testID="theme-browse-clear-search"
+              onPress={() => setQuery('')}>
+              {t`Clear the search`}
+            </Button>
+          </View>
+        </Animated.View>
       ) : (
         <Animated.View
           key="none"
           entering={fadeIn('medium')}
-          testID="theme-browse-none"
+          testID="theme-browse-empty"
           style={styles.stateBlock}>
           <Text color={theme.colors.textMuted}>{t`No themes are published yet`}</Text>
         </Animated.View>
@@ -368,7 +429,7 @@ export function ThemeBrowseSheet({
   );
 
   function appendPage() {
-    if (!entries || shown >= total || pending !== null || failed || appendInFlight.current) return;
+    if (!filteredEntries || shown >= total || pending !== null || failed || appendInFlight.current) return;
     appendInFlight.current = true;
     setAppending(true);
     setPageStart(shown);
@@ -376,20 +437,25 @@ export function ThemeBrowseSheet({
   }
 
   const footer =
-    entries && total > 0 ? (
-      <View testID="theme-browse-page-status" style={styles.footer}>
-        {appending ? <Spinner size="sm" color={theme.colors.textMuted} /> : null}
-        <Text variant="caption" color={theme.colors.textMuted}>
-          {t`Showing ${shown} of ${total}`}
-        </Text>
+    filteredEntries && total > 0 ? (
+      <ListLoadMoreFooter
+        testID="theme-browse-page-status"
+        buttonTestID="theme-browse-more"
+        hasMore={shown < total}
+        loading={appending}
+        onLoadMore={appendPage}
+        shown={shown}
+        total={total}
+        disabled={pending !== null}>
         {demo ? (
           <Text
             variant="caption"
-            color={
-              theme.colors.textMuted
-            }>{t`Demo catalogue. Leave the demo to download themes.`}</Text>
+            color={theme.colors.textMuted}
+            style={styles.footerDemo}>
+            {t`Demo catalogue. Leave the demo to download themes.`}
+          </Text>
         ) : null}
-      </View>
+      </ListLoadMoreFooter>
     ) : null;
 
   /**
@@ -413,6 +479,83 @@ export function ThemeBrowseSheet({
     </Animated.View>
   );
 
+  const isAllSelected = needle === '';
+  const isTagSelected = (tag: string) => needle === tag.toLowerCase();
+
+  const header = (
+    <View style={styles.headerStack}>
+      {entries && entries.length > 0 && !failed ? (
+        <View style={styles.searchBlock}>
+          <SheetSceneSearch
+            testID="theme-browse-search-input"
+            accessibilityLabel={t`Search by name or tag`}
+            placeholder={t`Search by name or tag`}
+            clearAccessibilityLabel={t`Clear the search`}
+            value={query}
+            onChangeText={setQuery}
+          />
+          {availableTags.length > 0 ? (
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.tagsContent}
+              style={styles.tagsScroller}>
+              <PressableScale
+                accessibilityRole="button"
+                accessibilityLabel={t`All`}
+                testID="theme-browse-tag-all"
+                onPress={() => setQuery('')}
+                style={[
+                  styles.tagChip,
+                  isAllSelected
+                    ? { backgroundColor: theme.colors.primary }
+                    : {
+                        backgroundColor: theme.colors.surfaceRaised,
+                        borderColor: theme.colors.border,
+                      },
+                ]}>
+                <Text
+                  variant="caption"
+                  weight={isAllSelected ? 'semibold' : 'regular'}
+                  color={isAllSelected ? theme.colors.onPrimary : theme.colors.textMuted}>
+                  {t`All`}
+                </Text>
+              </PressableScale>
+              {availableTags.map((tag) => {
+                const selected = isTagSelected(tag);
+                return (
+                  <PressableScale
+                    key={tag}
+                    accessibilityRole="button"
+                    accessibilityLabel={tag}
+                    testID={`theme-browse-tag-${tag}`}
+                    onPress={() => setQuery(selected ? '' : tag)}
+                    style={[
+                      styles.tagChip,
+                      selected
+                        ? { backgroundColor: theme.colors.primary }
+                        : {
+                            backgroundColor: theme.colors.surfaceRaised,
+                            borderColor: theme.colors.border,
+                          },
+                    ]}>
+                    <Text
+                      variant="caption"
+                      weight={selected ? 'semibold' : 'regular'}
+                      color={selected ? theme.colors.onPrimary : theme.colors.textMuted}>
+                      {tag}
+                    </Text>
+                  </PressableScale>
+                );
+              })}
+            </ScrollView>
+          ) : null}
+        </View>
+      ) : null}
+      {status}
+    </View>
+  );
+
   // The scene every other picker is built in: one frosted ground, the heading,
   // and the catalogue under it. No close button, and no `onClose` prop to draw
   // one from: the grabber and the swipe are the close.
@@ -423,9 +566,11 @@ export function ThemeBrowseSheet({
       topInset={insets.top}
       captionLines={0}
       caption={t`Themes published at muqun.dev. Nothing downloads until you open one.`}
-      header={status}>
+      header={header}>
       <LegendList
         nestedScrollEnabled
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
         testID="theme-browse-list"
         data={rows}
         onEndReached={appendPage}
@@ -448,25 +593,33 @@ export function ThemeBrowseSheet({
         // No separator: a scene puts a hairline between groups and nowhere
         // else, and a catalogue is one group.
         estimatedItemSize={ROW_MIN_HEIGHT}
-        renderItem={({ item, index }) => (
-          <ThemeBrowseRow
-            entry={item}
-            cover={coverOf(item)}
-            installed={installedIds.has(item.id)}
-            pending={pending === item.id}
-            // Only the row it is about: a row that is not installing has
-            // nothing to draw and re-renders to the same markup.
-            progress={pending === item.id ? progress : null}
-            dimmed={pending !== null && pending !== item.id}
-            disabled={demo || pending !== null}
-            revealed={revealed}
-            delay={Math.min(Math.max(index - pageStart, 0), THEME_BROWSE_STAGGER_CAP) * STAGGER.row}
-            onPress={() => open(item)}
-            onCoverError={() =>
-              setBrokenCovers((value) => (value.includes(item.id) ? value : [...value, item.id]))
-            }
-          />
-        )}
+        renderItem={({ item, index }) => {
+          const installedEntry = installedMap.get(item.id);
+          const isInstalled = Boolean(installedEntry);
+          const hasUpdate = Boolean(
+            installedEntry && installedEntry.manifest.version !== item.version
+          );
+          return (
+            <ThemeBrowseRow
+              entry={item}
+              cover={coverOf(item)}
+              installed={isInstalled}
+              hasUpdate={hasUpdate}
+              pending={pending === item.id}
+              // Only the row it is about: a row that is not installing has
+              // nothing to draw and re-renders to the same markup.
+              progress={pending === item.id ? progress : null}
+              dimmed={pending !== null && pending !== item.id}
+              disabled={demo || pending !== null}
+              revealed={revealed}
+              delay={Math.min(Math.max(index - pageStart, 0), THEME_BROWSE_STAGGER_CAP) * STAGGER.row}
+              onPress={() => handlePress(item)}
+              onCoverError={() =>
+                setBrokenCovers((value) => (value.includes(item.id) ? value : [...value, item.id]))
+              }
+            />
+          );
+        }}
         ListEmptyComponent={empty}
         ListFooterComponent={
           <>
@@ -528,6 +681,7 @@ function ThemeBrowseRow({
   entry,
   cover,
   installed,
+  hasUpdate = false,
   pending,
   progress,
   dimmed,
@@ -540,6 +694,7 @@ function ThemeBrowseRow({
   entry: ThemeIndexEntry;
   cover: string | null;
   installed: boolean;
+  hasUpdate?: boolean;
   pending: boolean;
   /** How far this row's own install has got, and null for every other row. */
   progress: ThemeInstallProgress | null;
@@ -572,9 +727,12 @@ function ThemeBrowseRow({
   const dimStyle = useAnimatedStyle(() => ({ opacity: dim.value }));
 
   // One line under the name, assembled rather than stacked: who wrote it, then
-  // what it is. Two separate lines would put a third capped run in a row whose
+  // what it is, and its tags. Two separate lines would put a third capped run in a row whose
   // whole job is to let a reader compare names.
-  const caption = [entry.author, entry.description].filter(Boolean).join(' · ');
+  const tagsSummary = entry.tags?.length
+    ? entry.tags.slice(0, 3).map((t) => `#${t}`).join(' ')
+    : '';
+  const caption = [entry.author, entry.description, tagsSummary].filter(Boolean).join(' · ');
 
   // Three waits, three names -- the same three the pinned block used to say,
   // said here instead. `downloading` has nothing to count and no bar, so its
@@ -700,17 +858,12 @@ function ThemeBrowseRow({
                   </Text>
                 </Animated.View>
               )}
-              {installed ? (
+              {!pending && (hasUpdate || installed) ? (
                 <Animated.View entering={fadeIn('medium')}>
                   <Tag
-                    // One layer of paint per pixel: under a custom theme the
-                    // kit's opaque chip would be the one thing on the row
-                    // refusing the reader's surface slider, so it drops its
-                    // fill and the row behind shows through at its own alpha.
-                    // A default theme has no alpha to honour and keeps the
-                    // kit's.
+                    variant={hasUpdate ? 'active' : 'default'}
                     style={surfaceOpacity === 1 ? undefined : styles.badgeTransparent}>
-                    {t`Installed`}
+                    {hasUpdate ? t`Update` : t`Installed`}
                   </Tag>
                 </Animated.View>
               ) : null}
@@ -730,6 +883,32 @@ const styles = StyleSheet.create({
     maxWidth: THEME_PICKER_MAX_CONTENT_WIDTH,
     alignSelf: 'center',
     paddingHorizontal: SHEET_LADDER.gutter,
+  },
+  headerStack: {
+    gap: SHEET_LADDER.snug,
+  },
+  searchBlock: {
+    gap: SHEET_LADDER.snug,
+  },
+  tagsScroller: {
+    marginHorizontal: -SHEET_LADDER.gutter,
+  },
+  tagsContent: {
+    paddingHorizontal: SHEET_LADDER.gutter,
+    gap: 8,
+    alignItems: 'center',
+    paddingVertical: 2,
+  },
+  tagChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    borderCurve: 'continuous',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'transparent',
+    minHeight: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   status: { paddingTop: SHEET_LADDER.tight },
   row: { minHeight: ROW_MIN_HEIGHT },
@@ -769,5 +948,20 @@ const styles = StyleSheet.create({
   stateBlock: { gap: SHEET_LADDER.gap },
   stateAction: { flexDirection: 'row' },
   loading: { alignItems: 'center', gap: SHEET_LADDER.gap, paddingVertical: SHEET_LADDER.gap },
-  footer: { paddingTop: SHEET_LADDER.snug },
+  moreAction: {
+    width: '100%',
+    alignItems: 'center',
+    paddingBottom: SHEET_LADDER.tight,
+  },
+  footer: {
+    paddingTop: SHEET_LADDER.snug,
+    alignItems: 'center',
+    gap: SHEET_LADDER.tight,
+  },
+  footerCount: {
+    textAlign: 'center',
+  },
+  footerDemo: {
+    textAlign: 'center',
+  },
 });
