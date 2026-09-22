@@ -76,7 +76,7 @@ export function SshHostList() {
 
   return (
     <View style={[styles.screen, { backgroundColor: surfaceBackground(theme.colors.background) }]}>
-      <ThemeArtwork slot="shell.background" />
+      <ThemeArtwork slot="shell.wallpaper" />
       <ScreenHeader
         title={editing === 'new' ? t`New SSH host` : editing ? t`Edit SSH host` : t`SSH`}
         onBack={editing ? () => setEditing(null) : undefined}

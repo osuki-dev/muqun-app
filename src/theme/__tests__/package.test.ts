@@ -17,7 +17,7 @@ test('offline colors round-trip through stored and compressed ZIP', () => {
 test('declared packaged artwork round-trips byte for byte', () => {
   const manifest = createThemeStarter();
   manifest.assets = { paper: { path: 'assets/paper.png' } };
-  manifest.decoration = { 'shell.background': { asset: 'paper' } };
+  manifest.decoration = { 'shell.wallpaper': { asset: 'paper' } };
   const bytes = new Uint8Array([1, 2, 3]);
   const output = unpackTheme(packTheme({ manifest, assets: { paper: bytes } }));
   expect(output.manifest).toEqual(manifest);
@@ -139,7 +139,7 @@ function noisy(length: number) {
 function packaged(asset: Uint8Array) {
   const manifest = createThemeStarter();
   manifest.assets = { paper: { path: 'assets/paper.png' } };
-  manifest.decoration = { 'shell.background': { asset: 'paper' } };
+  manifest.decoration = { 'shell.wallpaper': { asset: 'paper' } };
   return {
     manifest,
     archive: zipSync(

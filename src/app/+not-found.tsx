@@ -50,7 +50,7 @@ export default function NotFoundScreen() {
       <Stack.Screen options={{ title: stage ? t`Opening` : t`Not found` }} />
       <View
         style={[styles.screen, { backgroundColor: surfaceBackground(theme.colors.background) }]}>
-        <ThemeArtwork slot="shell.background" />
+        <ThemeArtwork slot="shell.wallpaper" />
         {stage ? (
           <>
             <ActivityIndicator color={theme.colors.primary} />

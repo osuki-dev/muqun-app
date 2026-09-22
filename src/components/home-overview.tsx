@@ -143,7 +143,7 @@ export function HomeOverview({
   const background = useSurfaceBackground();
   const customTheme = useThemeLibrary((state) => state.active);
   const identity = resolveHomeIdentity(customTheme?.manifest);
-  const hasScene = useHasThemeArtwork('home.background', 'shell.background');
+  const hasScene = useHasThemeArtwork('home.wallpaper', 'shell.wallpaper');
   const customAssets = useThemeLibrary(
     (state) =>
       state.library.themes.find((entry) => entry.id === state.active?.installationId)?.assets
@@ -616,7 +616,7 @@ export function HomeOverview({
         testID="home-editorial"
         onLayout={(event) => setEditorialWidth(event.nativeEvent.layout.width)}
         style={[styles.page, { backgroundColor: background(theme.colors.background) }]}>
-        <ThemeArtwork slot="home.background" fallbackSlot="shell.background" />
+        <ThemeArtwork slot="home.wallpaper" fallbackSlot="shell.wallpaper" />
         <SafeAreaView style={styles.page} edges={['top', 'bottom']}>
           <KeyboardAwareScrollView
             ref={overviewScroll}
@@ -807,7 +807,7 @@ export function HomeOverview({
 
   const classicContent = (
     <View style={[styles.page, { backgroundColor: background(theme.colors.background) }]}>
-      <ThemeArtwork slot="home.background" fallbackSlot="shell.background" />
+      <ThemeArtwork slot="home.wallpaper" fallbackSlot="shell.wallpaper" />
       {/* The bar and the brand block below it are one header in two states, not
           two rows. At rest the bar's left half is deliberately empty -- no
           hamburger, no title, no rule, no blur -- because the brand block ten
@@ -1202,7 +1202,13 @@ export function HomeOverview({
                 <Text variant="caption" color={theme.colors.textMuted}>
                   <Trans>Manage</Trans>
                 </Text>
-                <ChevronRight size={14} color={theme.colors.textMuted} strokeWidth={2} />
+                <ThemeIcon
+                  name="home.arrow"
+                  fallback={ChevronRight}
+                  size={14}
+                  color={theme.colors.textMuted}
+                  strokeWidth={2}
+                />
               </PressableScale>
             </View>
             <View style={styles.sshList}>
@@ -1511,7 +1517,7 @@ function EmptyState({
     { id: 'bl', style: styles.cornerBL },
     { id: 'br', style: styles.cornerBR },
   ];
-  const hasIllustration = useHasThemeArtwork('emptyState.illustration');
+  const hasIllustration = useHasThemeArtwork('empty.artwork');
 
   return (
     // It had an entrance and no exit, so pairing the first server made this
@@ -1534,7 +1540,7 @@ function EmptyState({
               borderRadius: 24,
               overflow: 'hidden',
             }}>
-            <ThemeArtwork slot="emptyState.illustration" />
+            <ThemeArtwork slot="empty.artwork" />
           </View>
         ) : (
           <View style={styles.scanFrame}>

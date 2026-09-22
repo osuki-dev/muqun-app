@@ -21,7 +21,7 @@ const image = new Uint8Array(
 manifest.assets = {
   logo: { path: 'assets/logo.png', sha256: createHash('sha256').update(image).digest('hex') },
 };
-manifest.decoration = { 'shell.background': { asset: 'logo' } };
+manifest.decoration = { 'shell.wallpaper': { asset: 'logo' } };
 const imageOid = fixture.blob(image);
 const manifestOid = fixture.blob(JSON.stringify(manifest));
 const assetTree = fixture.tree([`100644 blob ${imageOid}\tlogo.png`]);

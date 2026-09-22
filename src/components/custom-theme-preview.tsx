@@ -79,8 +79,8 @@ export function CustomThemePreview({
               viewport="compact"
               manifest={manifest}
               assets={assets}
-              slot="home.background"
-              fallbackSlot="shell.background"
+              slot="home.wallpaper"
+              fallbackSlot="shell.wallpaper"
               mode={mode}
             />
             <Text

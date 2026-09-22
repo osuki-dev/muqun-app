@@ -7,6 +7,7 @@ import { StyleSheet, View } from 'react-native';
 import { PressableScale } from '@/components/pressable-scale';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { Text } from '@/components/text';
+import { ThemeIcon } from '@/components/theme-icon';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import type { GatewayRecord } from '@/lib/gateway-storage';
 import type { HomeTarget } from '@/lib/home-recents';
@@ -80,7 +81,7 @@ export function HomeAttention({
                 {t`Open to check the current state`}
               </Text>
             </View>
-            <ChevronRight size={16} color={theme.colors.primary} />
+            <ThemeIcon name="home.arrow" fallback={ChevronRight} size={16} color={theme.colors.primary} />
           </PressableScale>
         );
       })}

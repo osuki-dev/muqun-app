@@ -142,9 +142,9 @@ describe('theme v1 contract', () => {
 
   test('validates all shared, mode, responsive and logo references', () => {
     for (const extra of [
-      { decoration: { 'shell.background': { asset: 'missing' } } },
-      { variantDecorations: { dark: { 'shell.background': { asset: 'missing' } } } },
-      { decoration: { 'shell.background': { asset: 'paper', regular: { asset: 'missing' } } } },
+      { decoration: { 'shell.wallpaper': { asset: 'missing' } } },
+      { variantDecorations: { dark: { 'shell.wallpaper': { asset: 'missing' } } } },
+      { decoration: { 'shell.wallpaper': { asset: 'paper', regular: { asset: 'missing' } } } },
       { homeIdentity: { logo: { mode: 'custom', asset: 'missing' } } },
       // The artwork is an ordinary slot, so it is held to the ordinary rule: an
       // asset it names has to be one the pack declares.
@@ -252,17 +252,17 @@ describe('theme v1 contract', () => {
 describe('shared component resolution', () => {
   test('shell fallback applies only when home is absent, never when explicitly disabled', () => {
     const manifest = createThemeStarter();
-    manifest.decoration = { 'shell.background': { asset: 'paper' } };
+    manifest.decoration = { 'shell.wallpaper': { asset: 'paper' } };
     const resolve = () =>
-      resolveThemeImage(manifest, 'home.background', 'dark', 'compact', true, 'shell.background');
+      resolveThemeImage(manifest, 'home.wallpaper', 'dark', 'compact', true, 'shell.wallpaper');
     expect(resolve()).toEqual({ asset: 'paper' });
-    manifest.decoration['home.background'] = null;
+    manifest.decoration['home.wallpaper'] = null;
     expect(resolve()).toBeNull();
-    manifest.decoration['home.background'] = { asset: 'home', compact: null };
+    manifest.decoration['home.wallpaper'] = { asset: 'home', compact: null };
     expect(resolve()).toBeNull();
-    manifest.variantDecorations = { dark: { 'home.background': null } };
+    manifest.variantDecorations = { dark: { 'home.wallpaper': null } };
     expect(resolve()).toBeNull();
-    manifest.variantDecorations.dark = { 'home.background': { asset: 'night', compact: null } };
+    manifest.variantDecorations.dark = { 'home.wallpaper': { asset: 'night', compact: null } };
     expect(resolve()).toBeNull();
   });
 
@@ -270,18 +270,18 @@ describe('shared component resolution', () => {
     const manifest = parse({
       ...createThemeStarter(),
       assets: { paper: { path: 'assets/paper.png' }, night: { path: 'assets/night.png' } },
-      decoration: { 'shell.background': { asset: 'paper', regular: null } },
-      variantDecorations: { dark: { 'shell.background': { asset: 'night', compact: null } } },
+      decoration: { 'shell.wallpaper': { asset: 'paper', regular: null } },
+      variantDecorations: { dark: { 'shell.wallpaper': { asset: 'night', compact: null } } },
     });
-    expect(resolveThemeImage(manifest, 'shell.background', 'light', 'compact')).toEqual({
+    expect(resolveThemeImage(manifest, 'shell.wallpaper', 'light', 'compact')).toEqual({
       asset: 'paper',
     });
-    expect(resolveThemeImage(manifest, 'shell.background', 'light', 'regular')).toBeNull();
-    expect(resolveThemeImage(manifest, 'shell.background', 'dark', 'compact')).toBeNull();
-    expect(resolveThemeImage(manifest, 'shell.background', 'dark', 'regular')).toEqual({
+    expect(resolveThemeImage(manifest, 'shell.wallpaper', 'light', 'regular')).toBeNull();
+    expect(resolveThemeImage(manifest, 'shell.wallpaper', 'dark', 'compact')).toBeNull();
+    expect(resolveThemeImage(manifest, 'shell.wallpaper', 'dark', 'regular')).toEqual({
       asset: 'night',
     });
-    expect(resolveThemeImage(manifest, 'shell.background', 'dark', 'regular', false)).toBeNull();
+    expect(resolveThemeImage(manifest, 'shell.wallpaper', 'dark', 'regular', false)).toBeNull();
     expect(resolveThemeImage(manifest, 'home.artwork', 'dark', 'regular')).toBeNull();
   });
 

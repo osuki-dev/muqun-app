@@ -479,7 +479,7 @@ export function SkiaTerminal({
   // Whether anything patterned sits behind this canvas. `shell.background` is
   // the only slot that reaches behind a terminal; Home's own wallpaper never
   // has one over it.
-  const wallpaperBehind = useHasThemeArtwork('shell.background');
+  const wallpaperBehind = useHasThemeArtwork('shell.wallpaper');
   const surfaceBackground = useSurfaceBackground();
   const { t } = useLingui();
   const { showToast } = useToast();

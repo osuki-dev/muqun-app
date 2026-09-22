@@ -80,7 +80,7 @@ test('resource domains are inspectable before images download; returned manifest
   manifest.assets = {
     paper: { url: 'https://images.example.com/paper.png', sha256: 'a'.repeat(64) },
   };
-  manifest.decoration = { 'shell.background': { asset: 'paper' } };
+  manifest.decoration = { 'shell.wallpaper': { asset: 'paper' } };
   const calls: string[] = [];
   const png = new Uint8Array(readFileSync('assets/icons/favicon.png'));
   const inspected = await inspectRemoteTheme(
@@ -246,7 +246,7 @@ function memoryStage(): ThemeAssetStagePort {
 function packageOf(asset: Uint8Array) {
   const manifest = createThemeStarter();
   manifest.assets = { paper: { path: 'assets/paper.png' } };
-  manifest.decoration = { 'shell.background': { asset: 'paper' } };
+  manifest.decoration = { 'shell.wallpaper': { asset: 'paper' } };
   return { manifest, archive: packTheme({ manifest, assets: { paper: asset } }) };
 }
 

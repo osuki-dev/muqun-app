@@ -6,6 +6,7 @@ import { Image as RepeatingImage, StyleSheet, useWindowDimensions, View } from '
 import { useEffectiveCustomTheme } from '@/components/theme-candidate';
 import { resolveThemeImage } from '@/theme/resolve';
 import type { ThemeManifest, ThemeSlot } from '@/theme/schema';
+import { SkiaAmbientEffect } from '@/components/skia-ambient-effect';
 
 /** Use only to choose native fallback content; rendered artwork still validates its URI. */
 export function useHasThemeArtwork(slot: ThemeSlot, fallbackSlot?: ThemeSlot) {
@@ -112,6 +113,17 @@ export function ThemeArtworkLayer({
           onError={() => setFailed(uri)}
         />
       )}
+      {(slot === 'shell.wallpaper' || slot === 'home.wallpaper') && (() => {
+        const effects = manifest.variants[mode]?.effects ?? manifest.effects;
+        return effects?.ambient && effects.ambient !== 'none' ? (
+          <SkiaAmbientEffect
+            effect={effects.ambient}
+            intensity={effects.intensity}
+            speed={effects.speed}
+            mode={mode}
+          />
+        ) : null;
+      })()}
     </View>
   );
 }
