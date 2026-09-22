@@ -416,6 +416,7 @@ msgstr "將 QR code 對準框內"
 
 #: src/components/git-diff-view.tsx
 #: src/components/session-artifacts.tsx
+#: src/components/theme-browse-sheet.tsx
 msgid "All"
 msgstr "全部"
 
@@ -932,6 +933,7 @@ msgid "Clear the conversation"
 msgstr "清空對話"
 
 #: src/components/agent-model-sheet.tsx
+#: src/components/theme-browse-sheet.tsx
 msgid "Clear the search"
 msgstr "清除搜尋內容"
 
@@ -2575,6 +2577,10 @@ msgstr "只列出正在執行可辨識代理程式的面板"
 msgid "Live Activity"
 msgstr "即時動態"
 
+#: src/components/theme-browse-sheet.tsx
+msgid "Load more"
+msgstr "載入更多"
+
 #: src/components/gateway-storage-error.tsx
 #: src/components/session-map.tsx
 #: src/components/ssh-host-list.tsx
@@ -3003,6 +3009,11 @@ msgstr "沒有文字變更"
 #: src/components/theme-browse-sheet.tsx
 msgid "No themes are published yet"
 msgstr "尚未有已發布的佈景主題"
+
+#. placeholder {0}: query.trim()
+#: src/components/theme-browse-sheet.tsx
+msgid "No themes match “{0}”."
+msgstr "沒有符合「{0}」的主題"
 
 #: src/components/agent-context-sheet.tsx
 msgid "no window reported for this model"
@@ -4118,6 +4129,10 @@ msgstr "搜尋"
 msgid "Search actions and commands"
 msgstr "搜尋操作和指令"
 
+#: src/components/theme-browse-sheet.tsx
+msgid "Search by name or tag"
+msgstr "按名稱或標籤搜尋"
+
 #: src/components/session-artifacts.tsx
 msgid "Search files"
 msgstr "搜尋檔案"
@@ -4128,7 +4143,7 @@ msgstr "搜尋模型"
 
 #: src/components/agent-model-sheet.tsx
 msgid "Search models or providers"
-msgstr "搜尋模型或供應商"
+msgstr "搜尋模型或提供者"
 
 #: src/components/agent-sessions-sheet.tsx
 msgid "Search sessions"
@@ -5367,6 +5382,10 @@ msgstr "再試一次"
 msgid "Try again once the gateway responds."
 msgstr "等 Gateway 回應後再試一次"
 
+#: src/components/theme-browse-sheet.tsx
+msgid "Try searching for another name or tag."
+msgstr "嘗試搜尋其他名稱或標籤"
+
 #: src/components/home-launch-actions.tsx
 #: src/components/home-overview.tsx
 msgid "Try the demo"
@@ -5507,6 +5526,10 @@ msgstr "未追蹤"
 #: src/i18n/labels.ts
 msgid "Up arrow"
 msgstr "向上鍵"
+
+#: src/components/theme-browse-sheet.tsx
+msgid "Update"
+msgstr "更新"
 
 #: src/components/agent-assignment-bar.tsx
 msgid "Update Herdr on the server to 0.9.0 or newer, then restart the session, to assign a task to another assistant"

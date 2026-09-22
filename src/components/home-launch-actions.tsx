@@ -146,19 +146,24 @@ export function HomeLaunchTarget({
       accessibilityRole="button"
       accessibilityState={{ expanded: pickerOpen, disabled }}
       disabled={disabled}
+      hitSlop={{ top: 8, bottom: 8, left: 8, right: 12 }}
       onPress={() => {
         if (servers.length === 0) void run(onPair);
         else openTargetPicker();
       }}
       style={[
         styles.target,
-        bare && { minWidth: 0, paddingHorizontal: 4 },
+        bare && { minWidth: 0, paddingHorizontal: 12 },
         {
           borderRadius: profile.chrome.control,
           backgroundColor: bare ? 'transparent' : background(theme.colors.surface),
         },
       ]}>
-      <Text variant="bodySmall" weight="semibold" style={styles.targetName}>
+      <Text
+        variant="bodySmall"
+        weight="semibold"
+        style={styles.targetName}
+        pointerEvents="none">
         {loading
           ? t`Loading servers`
           : chosen
@@ -167,7 +172,7 @@ export function HomeLaunchTarget({
               ? t`Choose a gateway`
               : t`Pair a gateway`}
       </Text>
-      <Animated.View style={pickerChevronStyle}>
+      <Animated.View style={pickerChevronStyle} pointerEvents="none">
         <ChevronDown size={16} color={theme.colors.primary} />
       </Animated.View>
     </PressableScale>

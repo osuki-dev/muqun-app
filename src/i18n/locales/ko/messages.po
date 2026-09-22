@@ -416,6 +416,7 @@ msgstr "QR 코드를 테두리 안에 맞춰 주세요"
 
 #: src/components/git-diff-view.tsx
 #: src/components/session-artifacts.tsx
+#: src/components/theme-browse-sheet.tsx
 msgid "All"
 msgstr "전체"
 
@@ -932,6 +933,7 @@ msgid "Clear the conversation"
 msgstr "대화 비우기"
 
 #: src/components/agent-model-sheet.tsx
+#: src/components/theme-browse-sheet.tsx
 msgid "Clear the search"
 msgstr "검색어 지우기"
 
@@ -2575,6 +2577,10 @@ msgstr "인식된 에이전트가 실행 중인 패널만 나열합니다"
 msgid "Live Activity"
 msgstr "실시간 액티비티"
 
+#: src/components/theme-browse-sheet.tsx
+msgid "Load more"
+msgstr "더 불러오기"
+
 #: src/components/gateway-storage-error.tsx
 #: src/components/session-map.tsx
 #: src/components/ssh-host-list.tsx
@@ -3003,6 +3009,11 @@ msgstr "텍스트 변경 없음"
 #: src/components/theme-browse-sheet.tsx
 msgid "No themes are published yet"
 msgstr "아직 공개된 테마가 없습니다"
+
+#. placeholder {0}: query.trim()
+#: src/components/theme-browse-sheet.tsx
+msgid "No themes match “{0}”."
+msgstr "“{0}”와 일치하는 테마가 없습니다"
 
 #: src/components/agent-context-sheet.tsx
 msgid "no window reported for this model"
@@ -4117,6 +4128,10 @@ msgstr "검색"
 #: src/app/commands.tsx
 msgid "Search actions and commands"
 msgstr "작업 및 명령 검색"
+
+#: src/components/theme-browse-sheet.tsx
+msgid "Search by name or tag"
+msgstr "이름 또는 태그로 검색"
 
 #: src/components/session-artifacts.tsx
 msgid "Search files"
@@ -5367,6 +5382,10 @@ msgstr "다시 시도"
 msgid "Try again once the gateway responds."
 msgstr "Gateway가 응답하면 다시 시도하세요"
 
+#: src/components/theme-browse-sheet.tsx
+msgid "Try searching for another name or tag."
+msgstr "다른 이름이나 태그로 검색해 보세요"
+
 #: src/components/home-launch-actions.tsx
 #: src/components/home-overview.tsx
 msgid "Try the demo"
@@ -5507,6 +5526,10 @@ msgstr "추적되지 않음"
 #: src/i18n/labels.ts
 msgid "Up arrow"
 msgstr "위쪽 화살표"
+
+#: src/components/theme-browse-sheet.tsx
+msgid "Update"
+msgstr "업데이트"
 
 #: src/components/agent-assignment-bar.tsx
 msgid "Update Herdr on the server to 0.9.0 or newer, then restart the session, to assign a task to another assistant"

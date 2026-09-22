@@ -288,6 +288,7 @@ function RootContent() {
       */}
       <ToastProvider
         maxWidth={480}
+        defaultDurationMs={2000}
         toastStyle={[
           notificationSurfaceStyle,
           {

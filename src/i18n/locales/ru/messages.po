@@ -416,6 +416,7 @@ msgstr "Наведите рамку на QR-код"
 
 #: src/components/git-diff-view.tsx
 #: src/components/session-artifacts.tsx
+#: src/components/theme-browse-sheet.tsx
 msgid "All"
 msgstr "Все"
 
@@ -932,6 +933,7 @@ msgid "Clear the conversation"
 msgstr "Очистить переписку"
 
 #: src/components/agent-model-sheet.tsx
+#: src/components/theme-browse-sheet.tsx
 msgid "Clear the search"
 msgstr "Очистить поиск"
 
@@ -2575,6 +2577,10 @@ msgstr "Показывать только панели с распознанны
 msgid "Live Activity"
 msgstr "Live Activity"
 
+#: src/components/theme-browse-sheet.tsx
+msgid "Load more"
+msgstr "Загрузить еще"
+
 #: src/components/gateway-storage-error.tsx
 #: src/components/session-map.tsx
 #: src/components/ssh-host-list.tsx
@@ -3003,6 +3009,11 @@ msgstr "Текст не изменился"
 #: src/components/theme-browse-sheet.tsx
 msgid "No themes are published yet"
 msgstr "Пока нет опубликованных тем"
+
+#. placeholder {0}: query.trim()
+#: src/components/theme-browse-sheet.tsx
+msgid "No themes match “{0}”."
+msgstr "Нет тем, подходящих под «{0}»"
 
 #: src/components/agent-context-sheet.tsx
 msgid "no window reported for this model"
@@ -4117,6 +4128,10 @@ msgstr "Поиск"
 #: src/app/commands.tsx
 msgid "Search actions and commands"
 msgstr "Поиск действий и команд"
+
+#: src/components/theme-browse-sheet.tsx
+msgid "Search by name or tag"
+msgstr "Поиск по названию или тегу"
 
 #: src/components/session-artifacts.tsx
 msgid "Search files"
@@ -5367,6 +5382,10 @@ msgstr "Попробовать ещё раз"
 msgid "Try again once the gateway responds."
 msgstr "Попробуйте ещё раз, когда Gateway ответит"
 
+#: src/components/theme-browse-sheet.tsx
+msgid "Try searching for another name or tag."
+msgstr "Попробуйте найти другое название или тег"
+
 #: src/components/home-launch-actions.tsx
 #: src/components/home-overview.tsx
 msgid "Try the demo"
@@ -5507,6 +5526,10 @@ msgstr "Не отслеживается"
 #: src/i18n/labels.ts
 msgid "Up arrow"
 msgstr "Стрелка вверх"
+
+#: src/components/theme-browse-sheet.tsx
+msgid "Update"
+msgstr "Обновить"
 
 #: src/components/agent-assignment-bar.tsx
 msgid "Update Herdr on the server to 0.9.0 or newer, then restart the session, to assign a task to another assistant"

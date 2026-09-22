@@ -416,6 +416,7 @@ msgstr "QR コードを枠に合わせてください"
 
 #: src/components/git-diff-view.tsx
 #: src/components/session-artifacts.tsx
+#: src/components/theme-browse-sheet.tsx
 msgid "All"
 msgstr "すべて"
 
@@ -932,6 +933,7 @@ msgid "Clear the conversation"
 msgstr "会話を消去"
 
 #: src/components/agent-model-sheet.tsx
+#: src/components/theme-browse-sheet.tsx
 msgid "Clear the search"
 msgstr "検索をクリア"
 
@@ -2575,6 +2577,10 @@ msgstr "認識済みのエージェントが動作しているパネルのみを
 msgid "Live Activity"
 msgstr "ライブアクティビティ"
 
+#: src/components/theme-browse-sheet.tsx
+msgid "Load more"
+msgstr "さらに読み込む"
+
 #: src/components/gateway-storage-error.tsx
 #: src/components/session-map.tsx
 #: src/components/ssh-host-list.tsx
@@ -3003,6 +3009,11 @@ msgstr "テキストの変更なし"
 #: src/components/theme-browse-sheet.tsx
 msgid "No themes are published yet"
 msgstr "公開されているテーマはまだありません"
+
+#. placeholder {0}: query.trim()
+#: src/components/theme-browse-sheet.tsx
+msgid "No themes match “{0}”."
+msgstr "「{0}」に一致するテーマはありません"
 
 #: src/components/agent-context-sheet.tsx
 msgid "no window reported for this model"
@@ -4117,6 +4128,10 @@ msgstr "検索"
 #: src/app/commands.tsx
 msgid "Search actions and commands"
 msgstr "操作とコマンドを検索"
+
+#: src/components/theme-browse-sheet.tsx
+msgid "Search by name or tag"
+msgstr "名前やタグで検索"
 
 #: src/components/session-artifacts.tsx
 msgid "Search files"
@@ -5367,6 +5382,10 @@ msgstr "もう一度試す"
 msgid "Try again once the gateway responds."
 msgstr "Gateway が応答したらもう一度試してください"
 
+#: src/components/theme-browse-sheet.tsx
+msgid "Try searching for another name or tag."
+msgstr "別の名前やタグで検索してみてください"
+
 #: src/components/home-launch-actions.tsx
 #: src/components/home-overview.tsx
 msgid "Try the demo"
@@ -5507,6 +5526,10 @@ msgstr "未追跡"
 #: src/i18n/labels.ts
 msgid "Up arrow"
 msgstr "上矢印"
+
+#: src/components/theme-browse-sheet.tsx
+msgid "Update"
+msgstr "更新"
 
 #: src/components/agent-assignment-bar.tsx
 msgid "Update Herdr on the server to 0.9.0 or newer, then restart the session, to assign a task to another assistant"
