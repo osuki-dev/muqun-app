@@ -313,7 +313,7 @@ function PreviewNotice({
             {/* The same chrome as the Files sheet, from the same component:
                 two screens whose close buttons were different materials would
                 read as two apps. `sheet`, not `floating` -- see `GlassChrome`. */}
-            <GlassChrome face="sheet" style={styles.iconButton}>
+            <GlassChrome face="sheet" shape="pill" style={styles.iconButton}>
               <PressableScale
                 accessibilityLabel={t`Close the simulator`}
                 testID="simfarm-close"

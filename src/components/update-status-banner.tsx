@@ -9,13 +9,14 @@ import { StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { appChrome } from '@/constants/appearance';
+import { useNotificationSurfaceStyle } from '@/components/notification-surface';
 import { fadeInDown, fadeOutUp, timing } from '@/lib/motion';
 
 /** How long the indeterminate download bar takes to crawl to 92%. */
 const DOWNLOAD_RAMP_MS = 2400;
 
 export function UpdateStatusBanner() {
+  const notificationSurfaceStyle = useNotificationSurfaceStyle();
   const surfaceBackground = useSurfaceBackground();
   // `t` from the hook, not the global `t` from `@lingui/core/macro`.
   //
@@ -87,6 +88,7 @@ export function UpdateStatusBanner() {
         exiting={fadeOutUp('short')}
         style={[
           styles.banner,
+          notificationSurfaceStyle,
           {
             backgroundColor: surfaceBackground(theme.colors.surface),
           },
@@ -132,14 +134,11 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 420,
     minHeight: 48,
-    borderRadius: appChrome.radius.noticeBanner,
-    borderCurve: 'continuous',
     paddingHorizontal: 6,
     paddingVertical: 6,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 9,
-    boxShadow: appChrome.shadow.notice,
   },
   icon: {
     width: 36,

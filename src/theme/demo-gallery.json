@@ -1,0 +1,41 @@
+{
+  "format": "muqun-themes-index",
+  "themes": [
+    {
+      "id": "acacia-afterglow",
+      "name": "Acacia Afterglow",
+      "version": "1.1.1",
+      "author": "Muqun Theme Collection",
+      "description": "Kenya. Umbrella acacias and open savanna in textured linocut, with acacia gold, burnt umber and dusty mauve. Golden afternoon and quiet dusk landscapes, with a transparent Editorial cover vignette.",
+      "package": "dist/acacia-afterglow.muqun-theme",
+      "bytes": 2579111
+    },
+    {
+      "id": "aegean-paperlight",
+      "name": "Aegean Paperlight",
+      "version": "1.1.1",
+      "author": "Muqun Theme Collection",
+      "description": "Greece / Cyclades. Chalk stairways, coral bougainvillea and quiet island water shaped from torn paper. A transparent windmill-and-harbor vignette gives Editorial Home a luminous cover.",
+      "package": "dist/aegean-paperlight.muqun-theme",
+      "bytes": 2039523
+    },
+    {
+      "id": "after-school-workshop",
+      "name": "After School Workshop",
+      "version": "1.1.1",
+      "author": "Muqun Project",
+      "description": "A blue hour neighborhood workshop with a quiet bicycle, warm windows, and a place to begin.",
+      "package": "dist/after-school-workshop.muqun-theme",
+      "bytes": 1537765
+    },
+    {
+      "id": "amber-relay",
+      "name": "Amber Relay",
+      "version": "1.1.1",
+      "author": "Muqun Theme Collection",
+      "description": "Analog signal craft in amber, bakelite brown and warm bone. Screenprinted oscilloscopes, copper coils and glass valves now include a transparent Editorial cover vignette.",
+      "package": "dist/amber-relay.muqun-theme",
+      "bytes": 1531128
+    }
+  ]
+}

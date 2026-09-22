@@ -275,6 +275,27 @@ describe('parseAgentPart — tool', () => {
     });
   });
 
+  test('a shellID marks only a detached shell tool as background', () => {
+    const detached = parseAgentPart({
+      ...tool,
+      name: 'shell',
+      metadata: { shellID: 'sh_1', status: 'running' },
+    });
+    const foreground = parseAgentPart({
+      ...tool,
+      name: 'shell',
+      metadata: { status: 'completed', exit: 0 },
+    });
+    const unrelated = parseAgentPart({
+      ...tool,
+      name: 'read',
+      metadata: { shellID: 'not-a-shell-handle' },
+    });
+    expect(detached?.type === 'tool' && detached.background).toBe(true);
+    expect(foreground?.type === 'tool' && foreground.background).toBeUndefined();
+    expect(unrelated?.type === 'tool' && unrelated.background).toBeUndefined();
+  });
+
   test('file content items survive, which is how read returns an image', () => {
     const part = parseAgentPart({
       ...tool,
@@ -1094,14 +1115,21 @@ describe('context, shells, engine, diff', () => {
     expect(
       parseAgentEngineInfo({
         available: true,
+        installation: 'installed',
         origin: 'adopted',
         url: 'http://127.0.0.1:49374',
         version: '2.0.1',
         stream_connected: true,
         autostart: true,
       })
-    ).toMatchObject({ available: true, origin: 'adopted', version: '2.0.1' });
+    ).toMatchObject({
+      available: true,
+      installation: 'installed',
+      origin: 'adopted',
+      version: '2.0.1',
+    });
     expect(parseAgentEngineInfo({})).toMatchObject({ available: false, origin: 'none' });
+    expect(parseAgentEngineInfo({ installation: 'future' }).installation).toBeUndefined();
   });
 
   test('a file diff reads either spelling of its fields', () => {
@@ -1258,6 +1286,20 @@ describe('titles and model names', () => {
     expect(
       formatModelName({ provider_id: 'x', model_id: 'some-new-model', variant: 'xhigh' })
     ).toBe('Some NEW Model · Max');
+    expect(
+      formatModelName(
+        { provider_id: 'openai', model_id: 'gpt-6-astra', variant: 'high' },
+        'Model',
+        'GPT-6 Astra'
+      )
+    ).toBe('GPT-6 Astra · High');
+    expect(
+      formatModelName(
+        { provider_id: 'openai', model_id: 'gpt-6-astra', variant: 'high' },
+        'Model',
+        'GPT-6 Astra · High'
+      )
+    ).toBe('GPT-6 Astra · High');
     expect(formatModelName(null)).toBe('Model');
     expect(formatModelName(undefined, 'Pick one')).toBe('Pick one');
   });

@@ -667,6 +667,7 @@ export function SessionMap({
         </SheetSceneQuietControl>
       }>
       <ScrollView
+        nestedScrollEnabled
         style={sheetSceneStyles.scroller}
         contentContainerStyle={sheetSceneStyles.scrollerContent}
         keyboardShouldPersistTaps="handled"

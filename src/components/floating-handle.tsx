@@ -288,7 +288,7 @@ export function FloatingHandle({
           <GestureDetector gesture={drag}>
             <View>
               <Animated.View entering={zoomIn('short')} exiting={zoomOut('micro')}>
-                <GlassChrome style={styles.handle}>
+                <GlassChrome shape="pill" style={styles.handle}>
                   <PressableScale
                     accessibilityRole="button"
                     accessibilityLabel={accessibilityLabel}

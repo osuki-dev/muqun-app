@@ -29,6 +29,28 @@ describe('home workspace owner lifetime', () => {
     ).toBe('server-a');
   });
 
+  test('keeps an explicitly selected Home composition visible on cold Pad startup', () => {
+    expect(
+      reconcileHomeWorkspaceOwner(null, {
+        mode: 'pad',
+        loading: false,
+        serverId: 'server-a',
+        preferList: true,
+      })
+    ).toBeNull();
+  });
+
+  test('does not tear down an active Pad workspace when the Home composition changes', () => {
+    expect(
+      reconcileHomeWorkspaceOwner('server-a', {
+        mode: 'pad',
+        loading: false,
+        serverId: 'server-a',
+        preferList: true,
+      })
+    ).toBe('server-a');
+  });
+
   test('does not activate while the initial record is still loading', () => {
     expect(
       reconcileHomeWorkspaceOwner(null, {

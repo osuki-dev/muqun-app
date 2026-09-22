@@ -1044,9 +1044,17 @@ function parseToolPart(rec: Record<string, unknown>): ToolPart | null {
     pickString(rec, ['child_session_id', 'childSessionID']) ??
     pickString(metadata, ['sessionID', 'session_id']);
   if (childSessionId) part.child_session_id = childSessionId;
-  // OpenCode 2.0.1 has no flag of its own, so the gateway sets one and reads
-  // `metadata.background` in case a later version starts sending it.
-  if (rec.background === true || metadata.background === true) part.background = true;
+  // A shell detached through `POST …/background` comes back with its stable
+  // `shellID` in metadata. OpenCode 2.0.1 does not also emit a background flag,
+  // so that explicit handle is the durable signal; ordinary foreground shell
+  // calls carry only exit/status metadata and must not be labelled Background.
+  const shellId = pickString(metadata, ['shellID', 'shell_id']);
+  if (
+    rec.background === true ||
+    metadata.background === true ||
+    ((name === 'shell' || name === 'bash') && shellId !== undefined)
+  )
+    part.background = true;
   if (rec.truncated === true || metadata.truncated === true) part.truncated = true;
   const time = parseToolTiming(rec.time);
   if (time) part.time = time;
@@ -1742,6 +1750,7 @@ export interface AgentWorktreeListing {
 export interface AgentEngineInfo {
   available: boolean;
   origin: 'adopted' | 'spawned' | 'none';
+  installation?: 'installed' | 'not_found' | 'unknown';
   url?: string;
   version?: string;
   stream_connected: boolean;
@@ -1751,11 +1760,15 @@ export interface AgentEngineInfo {
 export function parseAgentEngineInfo(value: unknown): AgentEngineInfo {
   const rec = asRecord(value) ?? {};
   const origin = asString(rec.origin);
+  const installation = asString(rec.installation);
   const url = pickString(rec, ['url']);
   const version = pickString(rec, ['version']);
   return {
     available: rec.available === true,
     origin: origin === 'adopted' || origin === 'spawned' ? origin : 'none',
+    ...(installation === 'installed' || installation === 'not_found' || installation === 'unknown'
+      ? { installation }
+      : {}),
     ...(url ? { url } : {}),
     ...(version ? { version } : {}),
     stream_connected: rec.stream_connected === true,
@@ -2503,10 +2516,15 @@ export function workspaceDisplayName(
   return leaf || project?.name?.trim() || fallback;
 }
 
-export function formatModelName(model?: ModelRef | null, fallback = 'Model'): string {
+export function formatModelName(
+  model?: ModelRef | null,
+  fallback = 'Model',
+  catalogName?: string
+): string {
   if (!model?.model_id) return fallback;
   const modelId = model.model_id;
   const baseName =
+    catalogName?.trim() ||
     KNOWN_MODEL_NAMES[modelId] ||
     modelId
       .split(/[-_]/)
@@ -2520,6 +2538,22 @@ export function formatModelName(model?: ModelRef | null, fallback = 'Model'): st
       model.variant === 'xhigh'
         ? 'Max'
         : model.variant.charAt(0).toUpperCase() + model.variant.slice(1);
+    // Catalogues occasionally include the active reasoning level in the name.
+    // The chip must state it once, whether the name came from that catalogue or
+    // from our readable-id fallback.
+    const lowerBaseName = baseName.toLowerCase();
+    const lowerVariant = varLabel.toLowerCase();
+    if (
+      [
+        ` ${lowerVariant}`,
+        ` · ${lowerVariant}`,
+        ` • ${lowerVariant}`,
+        ` / ${lowerVariant}`,
+        ` - ${lowerVariant}`,
+      ].some((suffix) => lowerBaseName.endsWith(suffix))
+    ) {
+      return baseName;
+    }
     return `${baseName} · ${varLabel}`;
   }
   return baseName;

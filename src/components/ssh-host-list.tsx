@@ -12,6 +12,7 @@ import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { PressableScale } from '@/components/pressable-scale';
+import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { ScreenHeader } from '@/components/screen-header';
 import { SshHostForm } from '@/components/ssh-host-form';
 import { SshHostRow } from '@/components/ssh-host-row';
@@ -48,6 +49,7 @@ const KEYBOARD_BOTTOM_OFFSET = 88;
 export function SshHostList() {
   const { t } = useLingui();
   const theme = useThemeTokens();
+  const profile = useAppearanceProfile();
   const surfaceBackground = useSurfaceBackground();
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -144,7 +146,10 @@ export function SshHostList() {
                   onPress={() => setEditing('new')}
                   style={[
                     styles.primaryButton,
-                    { backgroundColor: surfaceBackground(theme.colors.primary) },
+                    {
+                      backgroundColor: surfaceBackground(theme.colors.primary),
+                      borderRadius: profile.radius.pill,
+                    },
                   ]}>
                   <Text variant="caption" color={theme.colors.onPrimary}>
                     <Trans>Add a host</Trans>
@@ -192,7 +197,6 @@ const styles = StyleSheet.create({
   primaryButton: {
     minHeight: 40,
     paddingHorizontal: 20,
-    borderRadius: 20,
     borderCurve: 'continuous',
     alignItems: 'center',
     justifyContent: 'center',

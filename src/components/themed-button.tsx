@@ -18,6 +18,7 @@ import {
   type ButtonProps,
 } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
+import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { ThemeArtworkLayer } from '@/components/theme-artwork';
 import { useEffectiveCustomTheme } from '@/components/theme-candidate';
 import { resolveThemeImage } from '@/theme/resolve';
@@ -29,7 +30,7 @@ import { useSurfaceBackground, useSurfaceBackgroundOpacity } from '@/hooks/use-s
 export type { ButtonProps, ButtonVariant } from '@osuki-dev/ui';
 
 // Preserve @osuki-dev/ui 1.0.1's control behavior; only the in-control artwork
-// plane is added. Unskinned controls delegate to the original Button unchanged.
+// plane is added. Both paths share quiet borders; caller emphasis widths win.
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 export function Button(props: ButtonProps) {
@@ -47,6 +48,7 @@ export function Button(props: ButtonProps) {
     ...rest
   } = props;
   const theme = useThemeTokens();
+  const profile = useAppearanceProfile();
   const background = useSurfaceBackground();
   const backgroundOpacity = useSurfaceBackgroundOpacity();
   const { resolvedMode } = useThemeMode();
@@ -78,7 +80,7 @@ export function Button(props: ButtonProps) {
       minHeight: button.height,
       paddingVertical: theme.spacing[button.paddingY],
       paddingHorizontal: theme.spacing[button.paddingX],
-      borderRadius: theme.radius[button.radius],
+      borderRadius: profile.chrome.control,
       alignItems: 'center',
       justifyContent: 'center',
       opacity: loading ? 0.68 : 1,
@@ -88,7 +90,7 @@ export function Button(props: ButtonProps) {
         ? theme.shadow.pill
         : {}),
       ...(variantTokens.border && {
-        borderWidth: 1,
+        borderWidth: StyleSheet.hairlineWidth,
         borderColor: theme.colors[variantTokens.border],
       }),
     };
@@ -99,7 +101,7 @@ export function Button(props: ButtonProps) {
     loading,
     theme.colors,
     theme.mode,
-    theme.radius,
+    profile.chrome.control,
     theme.shadow.pill,
     theme.spacing,
     variantTokens,
@@ -141,7 +143,16 @@ export function Button(props: ButtonProps) {
   };
 
   if (!hasImage && backgroundOpacity === 1 && !protectsTransparentLabel)
-    return <BaseButton {...props} />;
+    return (
+      <BaseButton
+        {...props}
+        style={{
+          borderRadius: profile.chrome.control,
+          ...(variantTokens.border && { borderWidth: StyleSheet.hairlineWidth }),
+          ...style,
+        }}
+      />
+    );
   return (
     <AnimatedPressable
       style={[
@@ -164,7 +175,7 @@ export function Button(props: ButtonProps) {
           style={[
             StyleSheet.absoluteFill,
             {
-              borderRadius: style?.borderRadius ?? theme.radius[button.radius],
+              borderRadius: style?.borderRadius ?? profile.chrome.control,
               borderCurve: style?.borderCurve,
               borderTopLeftRadius: style?.borderTopLeftRadius,
               borderTopRightRadius: style?.borderTopRightRadius,

@@ -64,21 +64,21 @@ Editing defaults to Save as my version rather than overwriting an upstream or bu
 
 ## Decoration slots
 
-| Slot                         | Customization                | Fallback                  | Constraint                                                                                                                   |
-| ---------------------------- | ---------------------------- | ------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| `shell.background`           | App-wide paper or wallpaper  | Background color          | Behind app content, never system permission dialogs                                                                          |
-| `home.background`            | Home-specific background     | Shell background          | Allow explicit inheritance removal                                                                                           |
-| Home logo                    | Transparent identity artwork | Built-in logo             | Contain without cropping; independently hideable                                                                             |
-| `home.decoration`            | Edge illustration or sticker | None                      | No hit testing or overlap with machine actions                                                                               |
-| `navigation.background`      | Header/sidebar material      | Current surface color     | Preserve readable icons and titles                                                                                           |
-| `tabs.background`            | Session tab container        | Current surface color     | Preserve selection, focus, and unread states                                                                                 |
-| `composer.background`        | Input area's outer shell     | Current surface color     | Keep text input on a controlled fill                                                                                         |
-| `actions.background`         | Quick-action container       | Current surface color     | Preserve key order and hit targets                                                                                           |
-| `buttons.primary.background` | Primary button texture       | Primary color             | Preserve text and interaction states                                                                                         |
-| `cards.decoration`           | Small corner pattern         | None                      | Reuse bounded, small decoded resources                                                                                       |
-| `emptyState.illustration`    | Empty-state artwork          | Existing empty state      | Preserve explanation and action                                                                                              |
-| `home.hero`                  | Home hero illustration       | None                      | Between the header row and the server list; preserve the header and the list; contain-fit; recommended square-ish, ≤ 1024 px |
-| Terminal wallpaper, later    | Terminal interior            | Terminal background color | Separate renderer/performance gate; not in initial schema                                                                    |
+| Slot                         | Customization                 | Fallback                                    | Constraint                                                                    |
+| ---------------------------- | ----------------------------- | ------------------------------------------- | ----------------------------------------------------------------------------- |
+| `shell.background`           | App-wide paper or wallpaper   | Background color                            | Behind app content, never system permission dialogs                           |
+| `home.background`            | Home-specific background      | Shell background                            | Allow explicit inheritance removal                                            |
+| Home logo                    | Transparent identity artwork  | Built-in logo                               | Contain without cropping; independently hideable                              |
+| `home.artwork`               | Single Home foreground image  | None                                        | Layout owns placement and bounds; preserve face, text, and action hit targets |
+| `navigation.background`      | Header/sidebar material       | Current surface color                       | Preserve readable icons and titles                                            |
+| `tabs.background`            | Session tab container         | Current surface color                       | Preserve selection, focus, and unread states                                  |
+| `composer.background`        | Input area's outer shell      | Current surface color                       | Keep text input on a controlled fill                                          |
+| `actions.background`         | Quick-action container        | Current surface color                       | Preserve key order and hit targets                                            |
+| `buttons.primary.background` | Primary button texture        | Primary color                               | Preserve text and interaction states                                          |
+| `cards.decoration`           | Small corner pattern          | None                                        | Reuse bounded, small decoded resources                                        |
+| `emptyState.illustration`    | Empty-state artwork           | Existing empty state                        | Preserve explanation and action                                               |
+| `launch.artwork`             | Optional startup illustration | Home artwork, then identity or bundled mark | Startup only; never render a second foreground image on Home                  |
+| Terminal wallpaper, later    | Terminal interior             | Terminal background color                   | Separate renderer/performance gate; not in initial schema                     |
 
 V1 does not replace semantic back, close, send, delete, connection, or permission glyphs. Icons follow colors; their surrounding surfaces may be decorated. Future noncritical icon sets must be explicitly bounded.
 
@@ -88,34 +88,27 @@ Slot controls are bounded: asset reference, cover/contain/tile, normalized focal
 
 Missing backgrounds fall back to colors. Missing custom logos fall back to the built-in mark unless explicitly hidden. Missing decorative images disappear without broken-image placeholders or layout gaps.
 
-`home.hero` is the one slot that is content rather than decoration, and it is the
-only one with a visibility question of its own. It takes a band of the page — the
-full content width, `contain`-fit, at most 180 dp tall on a phone and 132 on a
-regular-width window — so the rest of Home moves when it appears, and it is
-absent while the "Pair your first server" card is up, because that card already
-carries `emptyState.illustration`. It is independent of the Home logo: a reader
-may keep the mark and drop the picture, or the reverse.
+`home.artwork` is the only Home foreground illustration. Classic and Editorial
+resolve the same asset; each layout owns its placement, bounded size and crop.
+The background remains independent in `home.background`. Do not bake the same
+foreground subject into both assets or render a second foreground layer.
 
-Three answers decide whether it is drawn, resolved in `src/theme/home-hero.ts`
-and nowhere else:
+- **Author visibility.** `homeIdentity.artwork` accepts `{ mode: 'default' }`
+  or `{ mode: 'hidden' }`. Omitted means default: show a declared artwork slot.
+  Image fit, opacity, focal point and mode/width variants belong to the slot.
+- **Reader visibility.** The per-installation Theme default / Shown / Hidden
+  preference can override author visibility. It is cleared by Use theme defaults
+  and does not travel inside an exported package.
+- **Missing artwork.** No declared image means no Home foreground, including when
+  the reader chooses Shown. `emptyState.illustration` belongs to an empty-state
+  card and is never promoted into the Home foreground.
+- **Startup.** `launch.artwork` optionally provides a startup-specific composition.
+  Otherwise startup can reuse `home.artwork`, then the identity or bundled mark.
+  Startup is a separate surface and must never add another image to Home.
 
-- **The author.** `homeIdentity.hero` is `default` or `hidden`, in the same
-  vocabulary as `name` and `logo`. Omitted means `default`, and `default` means
-  "show it if I declared the slot" — so an author turns the hero on by drawing
-  one, and reaches for `hidden` only to ship the artwork switched off.
-- **The reader.** A per-installation preference (`Theme default` / `Shown` /
-  `Hidden`) overrides the author in either direction. It is stored beside the
-  Home logo and text switches, is cleared by "Use theme defaults", and never
-  travels inside an exported pack.
-- **The fallback.** With no `home.hero` declared, and _only_ when the reader has
-  chosen `Shown`, Home borrows `emptyState.illustration`. An author who writes
-  `hero: { mode: 'default' }` without drawing one gets nothing: the empty-state
-  art was composed to sit inside a card under two lines of copy, and promoting it
-  on the author's behalf would be the app redecorating a pack it did not write.
-
-The iPad rail does not draw the hero. The rail is a persistent index of machines
-beside a live terminal rather than the top of a page, so a decoration that cannot
-be scrolled away would stay on screen for the whole session.
+The persistent Pad navigation rail does not draw Home artwork. On wide Editorial
+Home, the cover occupies its own column; the illustration stays within that
+column and cannot cover the adjacent recent sessions or connection controls.
 
 ## Muqun Theme v1
 

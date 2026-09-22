@@ -31,9 +31,6 @@ import { beforeEach, describe, expect, mock, test } from 'bun:test';
 import { fakeQuickCrypto, fakeSecureStore, resetVault } from '@/lib/__tests__/gateway-vault';
 import type { GatewayRecord } from '@/lib/gateway-storage';
 
-/** The two requests behind a revoke each carry this, hence the 16 s it fixes. */
-const OLD_WORST_CASE_MS = 16_000;
-
 const SERVER_ID = 'gone-1';
 
 /** What the fake gateway does when asked to drop this device's token. */
@@ -142,27 +139,45 @@ describe('the revoke that precedes forgetting a gateway', () => {
     expect(await storedIds()).toEqual([]);
   });
 
-  test(
-    'a gateway that never answers is given up on and forgotten anyway',
-    async () => {
-      revoke = neverAnswers;
-      const started = Date.now();
+  test('a gateway that never answers is given up on and forgotten anyway', async () => {
+    revoke = neverAnswers;
+    const originalSetTimeout = globalThis.setTimeout;
+    let scheduledBudgetMs: number | undefined;
+    let expireBudget: (() => void) | undefined;
+    globalThis.setTimeout = ((...args: Parameters<typeof setTimeout>) => {
+      const [callback, delay] = args;
+      if (delay === 4_000 && typeof callback === 'function') {
+        scheduledBudgetMs = delay;
+        expireBudget = () => callback();
+        return 0 as unknown as ReturnType<typeof setTimeout>;
+      }
+      return originalSetTimeout(...args);
+    }) as typeof setTimeout;
 
-      await useGatewayConnectionStore.getState().removeRecord(SERVER_ID);
-      const waited = Date.now() - started;
+    try {
+      const removal = useGatewayConnectionStore.getState().removeRecord(SERVER_ID);
+      await Promise.resolve();
 
-      // Gone from the list and gone from the keychain: an unreachable gateway
-      // must not be able to pin a dead pairing to the app forever.
+      // The production path still asks the gateway and keeps the pairing
+      // until its real four-second budget expires; only the clock is under
+      // test control.
+      expect(revokedFor).toEqual([SERVER_ID]);
+      expect(scheduledBudgetMs).toBe(4_000);
+      expect(remainingIds()).toEqual([SERVER_ID]);
+      expect(await storedIds()).toEqual([SERVER_ID]);
+
+      if (!expireBudget) throw new Error('The revoke budget was not scheduled');
+      expireBudget();
+      await removal;
+
+      // Gone from the list and the real encrypted storage: an unreachable
+      // gateway must not be able to pin a dead pairing forever.
       expect(remainingIds()).toEqual([]);
       expect(await storedIds()).toEqual([]);
-      // And the reader was released long before the two 8 s request budgets
-      // behind the revoke would have elapsed. This is the reported bug.
-      expect(waited).toBeLessThan(OLD_WORST_CASE_MS / 2);
-      // The wait is real, though — the gateway is asked, not skipped.
-      expect(revokedFor).toEqual([SERVER_ID]);
-    },
-    OLD_WORST_CASE_MS
-  );
+    } finally {
+      globalThis.setTimeout = originalSetTimeout;
+    }
+  });
 
   test('a network failure is forgiven the same way an unreachable one is', async () => {
     revoke = async () => {

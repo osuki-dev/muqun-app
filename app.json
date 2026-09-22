@@ -70,12 +70,6 @@
             "CFBundleTypeRole": "Viewer",
             "LSHandlerRank": "Owner",
             "LSItemContentTypes": ["dev.osuki.muqun.theme"]
-          },
-          {
-            "CFBundleTypeName": "Muqun theme colours",
-            "CFBundleTypeRole": "Viewer",
-            "LSHandlerRank": "Alternate",
-            "LSItemContentTypes": ["public.json"]
           }
         ]
       },
@@ -182,18 +176,6 @@
           "data": [
             {
               "scheme": "content"
-            },
-            {
-              "mimeType": "application/zip"
-            },
-            {
-              "mimeType": "application/x-zip-compressed"
-            },
-            {
-              "mimeType": "application/octet-stream"
-            },
-            {
-              "mimeType": "application/json"
             },
             {
               "mimeType": "application/vnd.muqun.theme"

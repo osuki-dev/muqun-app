@@ -1,3 +1,4 @@
+import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { throwIfThemeAborted } from '@/theme/abort';
 import { useEffect, useRef, useState } from 'react';
 import { View } from 'react-native';
@@ -26,6 +27,7 @@ export function ThemeLinkImport({
   onReady: (candidate: ThemeEditorCandidate) => void;
   onClose: () => void;
 }) {
+  const profile = useAppearanceProfile();
   const { t } = useLingui();
   const { colors } = useThemeTokens();
   const background = useSurfaceBackground();
@@ -220,7 +222,7 @@ export function ThemeLinkImport({
           style={{
             gap: 8,
             padding: 12,
-            borderRadius: 12,
+            borderRadius: profile.chrome.card,
             backgroundColor: background(colors.surface),
           }}>
           <Text selectable>{review.manifest.name}</Text>

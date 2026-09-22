@@ -5,6 +5,7 @@ import { ChevronRight, Server, SquareTerminal } from 'lucide-react-native';
 import { StyleSheet, View } from 'react-native';
 
 import { PressableScale } from '@/components/pressable-scale';
+import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { Text } from '@/components/text';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { reachabilityDescription } from '@/i18n/labels';
@@ -33,52 +34,61 @@ export function HomeConnections({
   nowMs?: number;
 }) {
   const { t } = useLingui();
+  const profile = useAppearanceProfile();
   const theme = useThemeTokens();
   const background = useSurfaceBackground();
   const addresses = serverIdsNeedingAddress(servers);
+  const hasConnections = servers.length > 0 || hosts.length > 0;
   return (
     <View testID="home-connections" style={styles.list}>
-      {servers.map((server) => (
-        <GatewayConnectionRow
-          key={server.serverId}
-          server={server}
-          showAddress={addresses.has(server.serverId)}
-          onOpen={onOpenServer}
-          activeConnection={activeConnection}
-          nowMs={nowMs}
-        />
-      ))}
-      {hosts.map((host) => (
-        <PressableScale
-          key={host.id}
-          testID={`home-connection-ssh-${host.id}`}
-          accessibilityRole="button"
-          accessibilityLabel={`${host.label}, ${t`Saved SSH host`}`}
-          onPress={() => onOpenHost(host.id)}
-          style={[
-            styles.row,
-            {
-              borderBottomColor: theme.colors.border,
-              backgroundColor: background(theme.colors.surface),
-            },
-          ]}>
-          <SquareTerminal size={21} color={theme.colors.primary} />
-          <View style={styles.copy}>
-            <Text weight="semibold" variant="bodySmall" numberOfLines={2}>
-              {host.label}
-            </Text>
-            <Text variant="caption" color={theme.colors.textMuted}>
-              {t`Saved SSH host`}
-            </Text>
-          </View>
-          <ChevronRight size={16} color={theme.colors.textMuted} />
-        </PressableScale>
-      ))}
-      {servers.length === 0 && hosts.length === 0 ? (
+      {hasConnections ? (
+        <View style={[styles.connectionGroup, { borderRadius: profile.chrome.surface }]}>
+          {servers.map((server, index) => (
+            <GatewayConnectionRow
+              key={server.serverId}
+              server={server}
+              showAddress={addresses.has(server.serverId)}
+              hasSeparator={index < servers.length + hosts.length - 1}
+              onOpen={onOpenServer}
+              activeConnection={activeConnection}
+              nowMs={nowMs}
+            />
+          ))}
+          {hosts.map((host, index) => (
+            <PressableScale
+              key={host.id}
+              testID={`home-connection-ssh-${host.id}`}
+              accessibilityRole="button"
+              accessibilityLabel={`${host.label}, ${t`Saved SSH host`}`}
+              onPress={() => onOpenHost(host.id)}
+              style={[
+                styles.row,
+                index < hosts.length - 1 && {
+                  borderBottomColor: theme.colors.border,
+                  borderBottomWidth: StyleSheet.hairlineWidth,
+                },
+                {
+                  backgroundColor: background(theme.colors.surface),
+                },
+              ]}>
+              <SquareTerminal size={21} color={theme.colors.primary} />
+              <View style={styles.copy}>
+                <Text weight="semibold" variant="bodySmall" numberOfLines={2}>
+                  {host.label}
+                </Text>
+                <Text variant="caption" color={theme.colors.textMuted}>
+                  {t`Saved SSH host`}
+                </Text>
+              </View>
+              <ChevronRight size={16} color={theme.colors.textMuted} />
+            </PressableScale>
+          ))}
+        </View>
+      ) : (
         <Text variant="bodySmall" color={theme.colors.textMuted}>
           {t`Add a gateway or an SSH host to start working.`}
         </Text>
-      ) : null}
+      )}
       <PressableScale
         testID="home-manage-connections"
         accessibilityRole="button"
@@ -97,12 +107,14 @@ export function HomeConnections({
 function GatewayConnectionRow({
   server,
   showAddress,
+  hasSeparator,
   onOpen,
   activeConnection,
   nowMs,
 }: {
   server: GatewayRecord;
   showAddress: boolean;
+  hasSeparator: boolean;
   onOpen: (serverId: string) => void;
   activeConnection?: ActiveServerConnection;
   nowMs?: number;
@@ -121,8 +133,11 @@ function GatewayConnectionRow({
       onPress={() => onOpen(server.serverId)}
       style={[
         styles.row,
-        {
+        hasSeparator && {
           borderBottomColor: theme.colors.border,
+          borderBottomWidth: StyleSheet.hairlineWidth,
+        },
+        {
           backgroundColor: background(theme.colors.surface),
         },
       ]}>
@@ -146,7 +161,8 @@ function GatewayConnectionRow({
 }
 
 const styles = StyleSheet.create({
-  list: { minWidth: 0, gap: 8 },
+  list: { minWidth: 0 },
+  connectionGroup: { minWidth: 0, overflow: 'hidden' },
   row: {
     minHeight: 64,
     flexDirection: 'row',
@@ -154,8 +170,14 @@ const styles = StyleSheet.create({
     gap: 12,
     paddingVertical: 12,
     paddingHorizontal: 12,
-    borderBottomWidth: StyleSheet.hairlineWidth,
   },
   copy: { flex: 1, minWidth: 0, gap: 4 },
-  manage: { minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' },
+  manage: {
+    minHeight: 44,
+    marginTop: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    flexWrap: 'wrap',
+  },
 });

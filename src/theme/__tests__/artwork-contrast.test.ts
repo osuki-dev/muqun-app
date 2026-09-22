@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import { safeArtworkOpacity, resolveArtworkOpacity } from '../artwork-contrast';
-import { createThemeStarter } from '../authoring';
+import { createThemeStarter } from '../starter';
 
 describe('safe artwork opacity', () => {
   test('preserves a safe requested opacity and clamps the allowed range', () => {

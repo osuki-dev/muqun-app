@@ -538,13 +538,34 @@ describe('home command boundary', () => {
     expect(adapter.navigations).toEqual([]);
   });
 
-  test('missing servers never invoke selection or navigation', async () => {
+  test('a stale server snapshot does not block new OpenCode when selection succeeds', async () => {
+    const adapter = ports({ hasServer: () => false });
+    const controller = createHomeCommandController(adapter);
+
+    const result = await controller.dispatch({ type: 'new-opencode', serverId: 'server-a' });
+
+    expect(result.status).toBe('dispatched');
+    expect(adapter.navigations).toEqual([
+      {
+        type: 'opencode',
+        target: { kind: 'opencode-session', serverId: 'server-a' },
+        intent: 'new',
+      },
+    ]);
+    consumeNewOpenCodeIntent('server-a');
+  });
+
+  test('a missing server becomes missing when synchronous and stored selection fail', async () => {
     let selections = 0;
     const adapter = ports({
       hasServer: () => false,
       selectServerNow: () => {
         selections++;
-        return true;
+        return false;
+      },
+      selectServer: async () => {
+        selections++;
+        return false;
       },
     });
     const controller = createHomeCommandController(adapter);
@@ -552,8 +573,57 @@ describe('home command boundary', () => {
     const result = await controller.dispatch({ type: 'new-opencode', serverId: 'gone' });
 
     expect(result.status).toBe('missing-target');
-    expect(selections).toBe(0);
+    expect(selections).toBe(2);
     expect(adapter.navigations).toEqual([]);
+  });
+
+  test('OpenCode recent targets skip target validation while terminal targets remain strict', async () => {
+    const adapter = ports({ validateTarget: async () => false });
+    const controller = createHomeCommandController(adapter);
+    const opencodeTarget = {
+      kind: 'opencode-session' as const,
+      serverId: 'server-a',
+      sessionId: 'routing-a',
+      directory: '/work/app',
+      asid: 'agent-a',
+    };
+    const terminalTarget = {
+      kind: 'gateway-terminal' as const,
+      serverId: 'server-a',
+      sessionId: 'routing-a',
+      paneId: 'pane-a',
+    };
+
+    expect(
+      (await controller.dispatch({ type: 'resume-target', target: opencodeTarget })).status
+    ).toBe('dispatched');
+    expect(
+      (await controller.dispatch({ type: 'resume-target', target: terminalTarget })).status
+    ).toBe('missing-target');
+    expect(adapter.navigations).toEqual([
+      { type: 'opencode', target: opencodeTarget, intent: 'existing' },
+    ]);
+  });
+
+  test('OpenCode recent targets navigate when target validation would throw', async () => {
+    const adapter = ports({
+      validateTarget: async () => {
+        throw new Error('temporary gateway failure');
+      },
+    });
+    const controller = createHomeCommandController(adapter);
+    const target = {
+      kind: 'opencode-session' as const,
+      serverId: 'server-a',
+      sessionId: 'routing-a',
+      directory: '/work/app',
+      asid: 'agent-a',
+    };
+
+    const result = await controller.dispatch({ type: 'resume-target', target });
+
+    expect(result.status).toBe('dispatched');
+    expect(adapter.navigations).toEqual([{ type: 'opencode', target, intent: 'existing' }]);
   });
 
   test('new OpenCode asks the shared readiness adapter before navigation', async () => {

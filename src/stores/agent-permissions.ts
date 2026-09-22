@@ -61,12 +61,15 @@ export const useAgentPermissionStore = create<AgentPermissionStore>((set, get) =
   reset: () => set({ byToolCall: EMPTY, decide: null }),
 }));
 
-/** The request attached to one tool call, if there is one. */
-export function usePermissionForToolCall(toolCallId: string): PermissionRequest | undefined {
-  return useAgentPermissionStore((state) => state.byToolCall[toolCallId]);
+/** The request attached to one tool call, if this surface may answer it. */
+export function usePermissionForToolCall(
+  toolCallId: string,
+  enabled = true
+): PermissionRequest | undefined {
+  return useAgentPermissionStore((state) => (enabled ? state.byToolCall[toolCallId] : undefined));
 }
 
 /** How to answer one, or `null` when no workbench is mounted behind the card. */
-export function usePermissionDecider(): AgentPermissionStore['decide'] {
-  return useAgentPermissionStore((state) => state.decide);
+export function usePermissionDecider(enabled = true): AgentPermissionStore['decide'] {
+  return useAgentPermissionStore((state) => (enabled ? state.decide : null));
 }

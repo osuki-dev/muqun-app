@@ -149,22 +149,37 @@ describe('buildTimelineGroupsCached', () => {
 });
 
 describe('reconcileShellParts', () => {
-  function shellPart(id: string, command: string, status: 'running' | 'exited'): TimelineItem {
+  function shellPart(
+    id: string,
+    command: string,
+    status: 'running' | 'exited',
+    options: { messageId?: string; shellId?: string } = {}
+  ): TimelineItem {
     return {
       id,
-      message_id: `msg_${id}`,
+      message_id: options.messageId ?? `msg_${id}`,
       role: 'assistant',
       ordinal: 0,
-      part: { type: 'shell', shell_id: id, command, status },
+      part: { type: 'shell', shell_id: options.shellId ?? id, command, status },
       seq: 1,
       updated_ms: 1,
     };
   }
 
-  function shellCall(id: string, command: string): TimelineItem {
+  function shellCall(
+    id: string,
+    command: string,
+    options: {
+      shellId?: string;
+      messageId?: string;
+      created?: number;
+      completed?: number;
+      background?: boolean;
+    } = {}
+  ): TimelineItem {
     return {
       id,
-      message_id: `msg_${id}`,
+      message_id: options.messageId ?? `msg_${id}`,
       role: 'assistant',
       ordinal: 0,
       part: {
@@ -173,47 +188,63 @@ describe('reconcileShellParts', () => {
         name: 'shell',
         input: { command },
         content: [],
-        metadata: {},
+        metadata: options.shellId ? { shellID: options.shellId } : {},
         state: 'completed',
+        background: options.background,
+        time:
+          options.created || options.completed
+            ? { created: options.created, completed: options.completed }
+            : undefined,
       },
       seq: 1,
       updated_ms: 1,
     };
   }
 
-  test('a shell part that mirrors a tool call is dropped', () => {
-    const items = [shellCall('call1', 'ls -la'), shellPart('sh1', 'ls -la', 'exited')];
-    const next = reconcileShellParts(items, []);
-    expect(next).toHaveLength(1);
-    expect(next[0].id).toBe('call1');
+  test('drops the exact shell event family synthesized by the Gateway', () => {
+    const tool = shellCall('call1', 'printf hello');
+    const mirror = shellPart('shell_sh_1', 'printf hello', 'exited', {
+      messageId: 'shell_sh_1',
+      shellId: 'sh_1',
+    });
+    expect(reconcileShellParts([tool, mirror])).toEqual([tool]);
   });
 
-  test('a detached shell with no call behind it stays', () => {
-    const items = [shellCall('call1', 'ls -la'), shellPart('sh2', 'sleep 120', 'running')];
-    const next = reconcileShellParts(items, [
-      { id: 'sh2', status: 'running', command: 'sleep 120', metadata: {} },
+  test('drops a mirror even when its tool call is outside the snapshot window', () => {
+    const mirror = shellPart('shell_sh_historical', 'git status', 'exited', {
+      messageId: 'shell_sh_historical',
+      shellId: 'sh_historical',
+    });
+    expect(reconcileShellParts([item('current', 'msg_current'), mirror])).toEqual([
+      item('current', 'msg_current'),
     ]);
-    expect(next).toHaveLength(2);
-    expect(next[1].part).toMatchObject({ type: 'shell', status: 'running' });
   });
 
-  test('a shell the tray no longer lists has finished', () => {
-    const items = [shellPart('sh3', 'sleep 120', 'running')];
-    const next = reconcileShellParts(items, []);
-    expect(next[0].part).toMatchObject({ type: 'shell', status: 'exited' });
+  test('preserves a genuine OpenCode shell message with a msg identity', () => {
+    const message = shellPart('msg_1:p0', 'sleep 120', 'running', {
+      messageId: 'msg_1',
+      shellId: 'sh_1',
+    });
+    expect(reconcileShellParts([message])).toHaveLength(1);
+    expect(reconcileShellParts([message])[0]).toBe(message);
   });
 
-  test('the list is the authority on status', () => {
-    const items = [shellPart('sh4', 'tail -f log', 'exited')];
-    const next = reconcileShellParts(items, [
-      { id: 'sh4', status: 'running', command: 'tail -f log', metadata: {} },
-    ]);
-    expect(next[0].part).toMatchObject({ type: 'shell', status: 'running' });
+  test('does not guess from equal commands, timing or adjacency', () => {
+    const tool = shellCall('call1', 'printf hello', {
+      shellId: 'sh_1',
+      created: 10_000,
+      completed: 11_000,
+    });
+    const message = shellPart('msg_2:p0', 'printf hello', 'exited', {
+      messageId: 'msg_2',
+      shellId: 'sh_1',
+    });
+    expect(reconcileShellParts([tool, message])).toEqual([tool, message]);
   });
 
   test('a timeline with no shell parts is handed back unchanged', () => {
     const items = [shellCall('call1', 'ls -la')];
-    expect(reconcileShellParts(items, [])).toBe(items);
+    expect(reconcileShellParts(items)).toBe(items);
   });
 });
 

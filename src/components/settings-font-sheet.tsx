@@ -317,6 +317,7 @@ export function SettingsFontSheet({ onClose }: { onClose: () => void }) {
         group below the open field stays reachable while it is up.
       */}
       <KeyboardAwareScrollView
+        nestedScrollEnabled
         bottomOffset={KEYBOARD_BOTTOM_OFFSET}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}

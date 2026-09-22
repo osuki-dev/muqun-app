@@ -63,6 +63,8 @@ export type ServerAgent = {
    * already accepts for the rest of this mirror.
    */
   hasAgent: boolean;
+  /** Gateway-reported agent identity, never inferred from a pane title. */
+  agentLabel?: string;
   /**
    * The pane this row is running in, so tapping it on the home screen lands
    * on that pane rather than on whatever the server was last showing.
@@ -127,6 +129,7 @@ export const MAX_SERVER_AGENTS = 24;
  */
 const MAX_AGENT_NAME_LENGTH = 72;
 const MAX_AGENT_CWD_LENGTH = 48;
+const MAX_AGENT_LABEL_LENGTH = 48;
 
 /**
  * How many servers stay mirrored. Records the user has unpaired are pruned on
@@ -152,6 +155,9 @@ export function normalizeServerAgents(snapshot: ServerAgentsSnapshot): ServerAge
       name: agent.name.slice(0, MAX_AGENT_NAME_LENGTH),
       status: agent.status,
       hasAgent: agent.hasAgent,
+      ...(agent.agentLabel
+        ? { agentLabel: agent.agentLabel.slice(0, MAX_AGENT_LABEL_LENGTH) }
+        : {}),
       // Absent rather than empty: `paneId: ''` would look like a pane id that
       // resolves to nothing, and the home screen decides whether to deep-link
       // by asking whether the field is there at all.
@@ -190,11 +196,13 @@ export function mirroredServerAgents(
   return agents.map((agent) => {
     const paneId = field(agent, 'pane_id');
     const pane = paneById.get(paneId);
+    const agentLabel = gatewayAgentLabel(agent);
     return {
       id: agent.id,
       name: panelTitle(pane, agent),
       status: asAgentStatus(agent.status),
       hasAgent: true,
+      ...(agentLabel ? { agentLabel } : {}),
       // What makes an agent on the home screen a link rather than a label: the
       // list has no session of its own to resolve a name against, so the pane
       // it should open has to travel with the name.
@@ -241,11 +249,13 @@ export function mirroredServerPanes(
   return panes.map((pane) => {
     const agent = agentByPaneId.get(pane.id);
     if (agent) {
+      const agentLabel = gatewayAgentLabel(agent);
       return {
         id: agent.id,
         name: panelTitle(pane, agent),
         status: asAgentStatus(agent.status),
         hasAgent: true,
+        ...(agentLabel ? { agentLabel } : {}),
         paneId: pane.id,
       };
     }
@@ -282,6 +292,7 @@ export function sameServerAgents(
       // passes, so it is a change worth writing even though nothing else about
       // the row moved.
       agent.hasAgent === other.hasAgent &&
+      agent.agentLabel === other.agentLabel &&
       // An agent that moved to another pane is a change worth writing: the row
       // is a deep link, and a stale pane id sends the tap to the wrong panel.
       agent.paneId === other.paneId &&
@@ -463,10 +474,21 @@ function parseSnapshot(value: unknown): ServerAgentsSnapshot | null {
           // field's own doc comment on `ServerAgent` for why `true` is the
           // correct default rather than a guess.
           hasAgent: typeof agent.hasAgent === 'boolean' ? agent.hasAgent : true,
+          ...(typeof agent.agentLabel === 'string' && agent.agentLabel
+            ? { agentLabel: agent.agentLabel }
+            : {}),
           ...(typeof agent.paneId === 'string' && agent.paneId ? { paneId: agent.paneId } : {}),
           ...(typeof agent.cwd === 'string' && agent.cwd ? { cwd: agent.cwd } : {}),
         },
       ];
     }),
   });
+}
+
+function gatewayAgentLabel(agent: GatewayEntity): string | undefined {
+  for (const key of ['display_agent', 'agent', 'kind']) {
+    const value = field(agent, key).trim();
+    if (value) return value.slice(0, MAX_AGENT_LABEL_LENGTH);
+  }
+  return undefined;
 }

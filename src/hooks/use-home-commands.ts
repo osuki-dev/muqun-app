@@ -5,7 +5,6 @@ import { useToast } from '@osuki-dev/ui';
 
 import { useGatewayRecord } from '@/hooks/use-gateway-record';
 import { useLatestRef, useLazyRef } from '@/hooks/use-render-refs';
-import { getAgentSessionSnapshot } from '@/lib/agent-session';
 import { loadRecordSessions } from '@/lib/gateway-client';
 import type { GatewayRecord } from '@/lib/gateway-storage';
 import { checkOpenCodeServer } from '@/lib/home-opencode-readiness';
@@ -133,26 +132,6 @@ export function useHomeCommands(options: HomeCommandOptions = {}): HomeCommands 
               loaded.snapshot.panes.some((pane) => pane.id === target.paneId)
             );
           }
-          case 'opencode-session': {
-            const isOwned = () =>
-              useGatewayConnectionStore.getState().record?.serverId === target.serverId;
-            if (!isOwned()) return false;
-            let loaded: Awaited<ReturnType<typeof getAgentSessionSnapshot>>;
-            try {
-              loaded = await getAgentSessionSnapshot(target.sessionId, target.asid);
-            } catch (error) {
-              // A deleted persisted session is a missing target. Other
-              // failures stay failures so the caller can distinguish a stale
-              // recent entry from a temporarily unavailable gateway.
-              if (error instanceof Error && /\b404\b/.test(error.message)) return false;
-              throw error;
-            }
-            return Boolean(
-              isOwned() &&
-              loaded.info?.asid === target.asid &&
-              loaded.info?.directory === target.directory
-            );
-          }
         }
       },
       navigate: (destination) =>
@@ -218,6 +197,7 @@ export function useHomeCommands(options: HomeCommandOptions = {}): HomeCommands 
             ...(command.directory ? { directory: command.directory } : {}),
             intent: 'new',
             status: result.readiness.status,
+            ...(result.readiness.status === 'offline' ? { cause: result.readiness.cause } : {}),
           },
         } as Href);
       }

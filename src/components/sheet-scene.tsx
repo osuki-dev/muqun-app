@@ -22,6 +22,7 @@ import Animated, {
 import { PressableScale } from '@/components/pressable-scale';
 import { AGENT_TYPE } from '@/constants/agent-type';
 import { appChrome } from '@/constants/appearance';
+import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { SheetFrame } from '@/components/sheet-ground';
 import { SheetHandle } from '@/components/sheet-route-frame';
 import { KeyboardInset } from '@/components/keyboard-inset';
@@ -124,6 +125,13 @@ const RULE_CONFIRM_WIDTH = 3;
 /**
  * The scene: the ground, the grabber, the heading, and one column of content.
  *
+ * Its vertical ScrollView/LegendList must set `nestedScrollEnabled`. Android
+ * BottomSheetBehavior only recognizes nested-scrolling children; without this
+ * it can capture a downward drag while the list still has earlier rows. Keep
+ * the native hand-off at offset zero so the grabber/top-edge dismissal works.
+ * Do not enable this on an inner horizontal rail: it can become the sheet
+ * behavior's first scrolling child instead of the vertical list.
+ *
  * Exactly two subviews inside the frame, which is the most a native form sheet
  * lays out around a scroll view -- the ground is one of them and costs no
  * layout, so the scroller is still the only thing the sheet measures. See
@@ -134,6 +142,7 @@ export function SheetScene({
   title,
   caption,
   captionLines,
+  topInset = 0,
   headingTrailing,
   header,
   contentSized = false,
@@ -144,8 +153,10 @@ export function SheetScene({
   title: string;
   /** The current value, live -- never a hint. */
   caption?: string;
-  /** See `SheetSceneHeading`: two only where the caption is a sentence. */
+  /** See `SheetSceneHeading`: sentence captions may wrap; zero removes the limit. */
   captionLines?: number;
+  /** Safe-area clearance for a sheet that can reach the status bar. */
+  topInset?: number;
   /** One quiet control on the title's line. See `SheetSceneHeading`. */
   headingTrailing?: ReactNode;
   /** Search, segmented control: anything pinned above the scroller. */
@@ -163,7 +174,7 @@ export function SheetScene({
   return (
     <SheetFrame testID={testID} tint="surface" frosted>
       <View collapsable={false} style={contentSized ? undefined : styles.scene}>
-        <View style={styles.fixedTop}>
+        <View style={[styles.fixedTop, { paddingTop: SHEET_LADDER.gap + topInset }]}>
           <SheetHandle />
           <SheetSceneHeading
             title={title}
@@ -197,6 +208,7 @@ export function SheetSceneHeading({
   caption?: string;
   /**
    * How many lines the caption may take, and one unless a sheet says so.
+   * Zero lets explanatory sentences wrap fully at large text sizes.
    *
    * A caption is normally the current value -- a model's name, a branch, a
    * pack -- and a value that wraps is a value that has grown a paragraph. The
@@ -530,6 +542,7 @@ export function SheetSceneRow({
   confirmKey?: string | number;
   style?: StyleProp<ViewStyle>;
 }) {
+  const profile = useAppearanceProfile();
   const { colors } = useThemeTokens();
   // No plate on any of this. A row is plain text on the ground, because the
   // ground is frosted (`SHEET_FROST_ALPHA`) and the wallpaper is texture under
@@ -589,7 +602,7 @@ export function SheetSceneRow({
         onPress={onPress}
         onLongPress={onLongPress}
         delayLongPress={onLongPress ? 280 : undefined}
-        style={styles.row}>
+        style={[styles.row, { paddingVertical: profile.rowPaddingVertical }]}>
         {leading ? <View style={styles.rowLeading}>{leading}</View> : null}
         <View style={styles.rowCopy}>
           {/* Keyed on the title, so a rename fades in where the old name was.
@@ -739,6 +752,7 @@ export function SheetSceneAction({
   accessibilityLabel?: string;
   testID?: string;
 }) {
+  const profile = useAppearanceProfile();
   const { colors } = useThemeTokens();
   return (
     <PressableScale
@@ -750,7 +764,7 @@ export function SheetSceneAction({
       onPress={onPress}
       style={[
         styles.action,
-        { backgroundColor: colors.primary },
+        { backgroundColor: colors.primary, borderRadius: profile.chrome.control },
         disabled && !busy ? { opacity: appChrome.opacity.disabled } : null,
       ]}>
       {busy ? <ActivityIndicator size="small" color={colors.onPrimary} /> : leading}

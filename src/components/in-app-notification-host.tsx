@@ -19,7 +19,8 @@ import Animated, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { NAV_HEADER_CONTROL_SIZE } from '@/components/nav-header';
-import { appAppearanceConfig, appChrome } from '@/constants/appearance';
+import { appAppearanceConfig } from '@/constants/appearance';
+import { useNotificationSurfaceStyle } from '@/components/notification-surface';
 import { NAV_HEADER_TOP_GAP } from '@/constants/nav-header';
 import { permissionActionPhrase } from '@/i18n/labels';
 import { readApprovalBody } from '@/lib/agent-engine-text';
@@ -76,6 +77,7 @@ const DRAG_SLOP = 6;
  * reader who cannot make it.
  */
 export function InAppNotificationHost() {
+  const notificationSurfaceStyle = useNotificationSurfaceStyle();
   const insets = useSafeAreaInsets();
   const surfaceBackground = useSurfaceBackground();
   const { t } = useLingui();
@@ -240,7 +242,7 @@ export function InAppNotificationHost() {
         // waiting behind it -- and a see-through plate let all of that
         // show through its text. It is read for two seconds; it has to be
         // readable for all of them.
-        style={[styles.card, { backgroundColor: colors.surfaceRaised }]}
+        style={[styles.card, notificationSurfaceStyle, { backgroundColor: colors.surfaceRaised }]}
         testID={front ? 'in-app-notification' : 'in-app-notification-back'}>
         {/* The glyph alone. A tinted circle around it is a second
                   surface on a plate that is already one surface. */}
@@ -366,8 +368,6 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     overflow: 'hidden',
-    borderRadius: appChrome.radius.noticeBanner,
-    borderCurve: 'continuous',
   },
   card: {
     width: '100%',
@@ -375,12 +375,9 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 14,
     marginTop: 8,
-    borderRadius: appChrome.radius.noticeBanner,
-    borderCurve: 'continuous',
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    boxShadow: appChrome.shadow.notice,
   },
   glyph: { alignSelf: 'flex-start', marginTop: 2 },
   content: { flex: 1, minWidth: 0, gap: 3 },

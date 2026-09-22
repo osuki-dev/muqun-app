@@ -3,7 +3,7 @@ import { createHash } from 'node:crypto';
 import { mkdtempSync, readFileSync, writeFileSync, rmSync, existsSync, readdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { createThemeStarter } from '../authoring';
+import { createThemeStarter } from '../starter';
 import { inspectThemeImage } from '../image-inspection';
 import {
   stageThemeAssetStream,

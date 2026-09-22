@@ -8,6 +8,7 @@ import { Camera, FileUp, Images } from 'lucide-react-native';
 import { StyleSheet } from 'react-native';
 import Animated from 'react-native-reanimated';
 
+import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { PressableScale } from '@/components/pressable-scale';
 import { appChrome } from '@/constants/appearance';
 import type { AttachmentSource } from '@/lib/attachments';
@@ -60,6 +61,7 @@ export function AttachmentMenu({
   onSelect: (source: AttachmentSource) => void;
   textColor: string;
 }) {
+  const profile = useAppearanceProfile();
   const theme = useThemeTokens();
   const surfaceBackground = useSurfaceBackground();
   const { _ } = useLingui();
@@ -70,6 +72,7 @@ export function AttachmentMenu({
       exiting={fadeOutDown('micro')}
       style={[
         styles.menu,
+        { borderRadius: profile.chrome.popover },
         {
           backgroundColor: surfaceBackground(theme.colors.surface),
         },

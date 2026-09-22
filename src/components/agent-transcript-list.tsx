@@ -30,6 +30,7 @@ const TranscriptRow = memo(function TranscriptRow({ id }: { id: string }) {
       showReasoning={props.showReasoning}
       markdownStyle={props.markdownStyle}
       actions={props.actions}
+      readOnly={props.readOnly}
     />
   );
 });

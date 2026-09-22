@@ -1,4 +1,5 @@
 import { useThemeTokens } from '@osuki-dev/ui';
+import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { type ReactNode } from 'react';
 import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import {
@@ -29,12 +30,17 @@ export function FullscreenRouteSafeArea({ children }: { children: ReactNode }) {
  * still merged last, for the sheets that need a different margin.
  */
 export function SheetHandle({ style }: { style?: StyleProp<ViewStyle> }) {
+  const profile = useAppearanceProfile();
   const { colors } = useThemeTokens();
   if (process.env.EXPO_OS !== 'android') return null;
   return (
     <View
       accessible={false}
-      style={[sheetHandleStyles.handle, { backgroundColor: colors.borderStrong }, style]}
+      style={[
+        sheetHandleStyles.handle,
+        { backgroundColor: colors.borderStrong, borderRadius: Math.min(2, profile.radius.xs) },
+        style,
+      ]}
     />
   );
 }

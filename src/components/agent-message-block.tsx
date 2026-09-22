@@ -1,10 +1,14 @@
+import { useAppearanceProfile } from '@/components/appearance-profile-provider';
+import { goalContinuationSummary } from '@/lib/agent-goal-message';
 import { Fragment, memo, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useThemeTokens, useToast } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
 import { Trans, useLingui } from '@lingui/react/macro';
+import { plural } from '@lingui/core/macro';
 import {
   Bot,
+  Check,
   ChevronDown,
   Clock,
   Copy,
@@ -67,6 +71,7 @@ import {
 } from '@/lib/agent-session';
 import { usePermissionDecider, usePermissionForToolCall } from '@/stores/agent-permissions';
 import type { TimelineRenderGroup } from '@/lib/agent-timeline-groups';
+import { groupRoutineToolEntries, type RoutineToolEntry } from '@/lib/agent-tool-groups';
 import { AGENT_TYPE } from '@/constants/agent-type';
 
 const IMAGE_DATA_URI_PREFIX = 'data:image/';
@@ -98,6 +103,7 @@ const AttachmentImage = memo(function AttachmentImage({
   onPreviewImage: (uri: string) => void;
 }) {
   const theme = useThemeTokens();
+  const profile = useAppearanceProfile();
   const uploadName =
     uri.startsWith('data:') || /^https?:/.test(uri) ? null : uploadNameFromPath(uri);
   const [source, setSource] = useState<AssetImageSource | null>(() =>
@@ -125,7 +131,7 @@ const AttachmentImage = memo(function AttachmentImage({
       accessibilityRole="imagebutton"
       accessibilityLabel={label}
       onPress={() => onPreviewImage(source.uri)}
-      style={styles.attachmentImageWrapper}>
+      style={[styles.attachmentImageWrapper, { borderRadius: profile.chrome.surface }]}>
       <Image
         source={source}
         style={styles.attachmentThumbnail}
@@ -331,7 +337,7 @@ export interface AgentToolActions {
   onPreviewImage?: (uri: string) => void;
   onOpenFile?: (file: { uri: string; mime?: string; name?: string }) => void;
   /** The virtualised changes viewer, for a patch too big to draw in a cell. */
-  onOpenFullDiff?: () => void;
+  onOpenFullDiff?: (path?: string) => void;
   /** Live status per child session, from that session's own status events. */
   childStatuses?: Readonly<Record<string, AgentRunStatus>>;
 }
@@ -505,10 +511,12 @@ function splitDiffFences(markdown: string): { kind: 'md' | 'diff'; text: string 
  */
 const InlinePatch = memo(function InlinePatch({
   patch,
+  targetPath,
   onOpenFullDiff,
 }: {
   patch: string;
-  onOpenFullDiff?: () => void;
+  targetPath?: string;
+  onOpenFullDiff?: (path?: string) => void;
 }) {
   const theme = useThemeTokens();
   const colors = usePaneChatColors();
@@ -516,6 +524,7 @@ const InlinePatch = memo(function InlinePatch({
   return (
     <InlineDiffRows
       rows={rows}
+      targetPath={targetPath}
       colors={colors}
       {...(onOpenFullDiff ? { onOpenFullDiff } : {})}
       // The same fill as the plate the diff sits on, so the gutter and the hunk
@@ -537,7 +546,7 @@ const AgentDiffBlock = memo(function AgentDiffBlock({
 }: {
   file: string;
   diff: string;
-  onOpenFullDiff?: () => void;
+  onOpenFullDiff?: (path?: string) => void;
 }) {
   const theme = useThemeTokens();
   const colors = usePaneChatColors();
@@ -590,7 +599,11 @@ const AgentDiffBlock = memo(function AgentDiffBlock({
         <Animated.View entering={fadeIn('micro')} style={styles.diffBodyWrap}>
           {/* Never wrapped: a re-wrapped diff line no longer lines up with the
               one above it, which is the only thing a diff is read for. */}
-          <InlinePatch patch={diff} {...(onOpenFullDiff ? { onOpenFullDiff } : {})} />
+          <InlinePatch
+            patch={diff}
+            targetPath={file}
+            {...(onOpenFullDiff ? { onOpenFullDiff } : {})}
+          />
         </Animated.View>
       ) : null}
     </Animated.View>
@@ -696,6 +709,7 @@ function renderTimelinePart(
     markdownStyle: MarkdownStyle;
     prevItem?: TimelineItem;
     actions: AgentToolActions;
+    readOnly: boolean;
   }
 ): ReactNode {
   const part = item.part;
@@ -711,6 +725,7 @@ function renderTimelinePart(
           part={part}
           markdownStyle={options.markdownStyle}
           actions={options.actions}
+          readOnly={options.readOnly}
         />
       );
     case 'shell':
@@ -722,6 +737,7 @@ function renderTimelinePart(
           part={shellAsToolPart(part)}
           markdownStyle={options.markdownStyle}
           actions={options.actions}
+          readOnly={options.readOnly}
         />
       );
     case 'diff':
@@ -778,10 +794,12 @@ const ToolPartCard = memo(function ToolPartCard({
   part,
   markdownStyle,
   actions,
+  readOnly,
 }: {
   part: ToolPart;
   markdownStyle: MarkdownStyle;
   actions: AgentToolActions;
+  readOnly: boolean;
 }) {
   const runInBackground = actions.onRunInBackground;
   const handleRunInBackground = useMemo(
@@ -795,8 +813,8 @@ const ToolPartCard = memo(function ToolPartCard({
   // Subscribed by call id rather than searched out of a list handed to every
   // card: one pending permission used to change the object every memoised tool
   // card compared against, so a single prompt re-rendered the whole transcript.
-  const attachedPermission = usePermissionForToolCall(part.id);
-  const decide = usePermissionDecider();
+  const attachedPermission = usePermissionForToolCall(part.id, !readOnly);
+  const decide = usePermissionDecider(!readOnly);
   const handleDecision = useMemo(
     () =>
       decide && attachedPermission
@@ -824,6 +842,79 @@ const ToolPartCard = memo(function ToolPartCard({
         <AgentPermissionCard attached request={attachedPermission} onDecision={handleDecision} />
       ) : null}
     </>
+  );
+});
+
+/** Several quiet, completed calls behind one disclosure row. */
+const AgentToolGroup = memo(function AgentToolGroup({
+  entries,
+  markdownStyle,
+  actions,
+  readOnly,
+}: {
+  entries: readonly RoutineToolEntry[];
+  markdownStyle: MarkdownStyle;
+  actions: AgentToolActions;
+  readOnly: boolean;
+}) {
+  const { t } = useLingui();
+  const theme = useThemeTokens();
+  const plate = useTranscriptPlate();
+  const [expanded, setExpanded] = useState(false);
+  const toolNames = useMemo(
+    () => [...new Set(entries.map((entry) => entry.item.part.name))].join(' · '),
+    [entries]
+  );
+  const title = t`${plural(entries.length, { one: '# operation', other: '# operations' })}`;
+  const chevronProgress = useSharedValue(expanded ? 1 : 0);
+  useEffect(() => {
+    chevronProgress.value = withTiming(expanded ? 1 : 0, timing('micro'));
+  }, [expanded, chevronProgress]);
+  const chevronStyle = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${chevronProgress.value * 180}deg` }],
+  }));
+
+  return (
+    <View style={styles.toolGroup}>
+      <PressableScale
+        testID={`agent-tool-group-${entries[0].item.id}`}
+        accessibilityRole="button"
+        accessibilityState={{ expanded }}
+        accessibilityLabel={[title, toolNames].filter(Boolean).join(', ')}
+        onPress={() => setExpanded((previous) => !previous)}
+        style={[styles.toolGroupHeader, plate]}>
+        <Layers size={13} color={theme.colors.textMuted} />
+        <View style={styles.toolGroupCopy}>
+          <Text variant="caption" weight="semibold" color={theme.colors.text}>
+            {title}
+          </Text>
+          <Text
+            variant="caption"
+            color={theme.colors.textSubtle}
+            numberOfLines={1}
+            style={styles.toolGroupNames}>
+            {toolNames}
+          </Text>
+        </View>
+        <Check size={12} color={theme.colors.success} />
+        <Animated.View style={chevronStyle}>
+          <ChevronDown size={12} color={theme.colors.textMuted} />
+        </Animated.View>
+      </PressableScale>
+      {expanded ? (
+        <Animated.View entering={fadeIn('micro')} style={styles.toolGroupItems}>
+          {entries.map((entry) => (
+            <ToolPartCard
+              key={entry.item.id}
+              part={entry.item.part}
+              markdownStyle={markdownStyle}
+              actions={actions}
+              readOnly={readOnly}
+            />
+          ))}
+        </Animated.View>
+      ) : null}
+    </View>
   );
 });
 
@@ -875,6 +966,7 @@ export const AgentUserMessage = memo(function AgentUserMessage({
   onCancelQueued,
   onUndoToHere,
   actions = NO_TOOL_ACTIONS,
+  readOnly = false,
 }: {
   group: TimelineRenderGroup;
   showReasoning: boolean;
@@ -890,6 +982,8 @@ export const AgentUserMessage = memo(function AgentUserMessage({
    */
   onUndoToHere?: (messageId: string) => void;
   actions?: AgentToolActions;
+  /** Historical/peek surfaces show content without session mutation controls. */
+  readOnly?: boolean;
 }) {
   const { t } = useLingui();
   // Live theme style, see AgentToolCard: a memoised cell must still repaint
@@ -900,6 +994,8 @@ export const AgentUserMessage = memo(function AgentUserMessage({
   const colors = usePaneChatColors();
   const plate = useTranscriptPlate();
   const relativeTime = useRelativeTime();
+  const profile = useAppearanceProfile();
+  const [goalExpanded, setGoalExpanded] = useState(false);
 
   const first = group.items[0];
   const text = useMemo(
@@ -915,6 +1011,11 @@ export const AgentUserMessage = memo(function AgentUserMessage({
     [group.items]
   );
   const queued = group.items.find((item) => item.queued);
+  const goalSummary = useMemo(
+    () =>
+      group.items.every((item) => item.part.type === 'text') ? goalContinuationSummary(text) : null,
+    [group.items, text]
+  );
   const entries = useMemo(() => buildTimelineEntries(group.items), [group.items]);
   const stamp = first?.updated_ms ? relativeTime(first.updated_ms) : '';
 
@@ -963,20 +1064,26 @@ export const AgentUserMessage = memo(function AgentUserMessage({
     return items;
   }, [text, onUndoToHere, messageId, first?.id, group.key, showToast, t]);
 
+  // A disclosure owns its touch responder. A second Pressable around a large
+  // selectable native markdown body can retain the row's responder after it grows.
+  const MessageContainer = goalSummary ? View : Pressable;
+  const openMessageMenu = () => {
+    if (menuItems.length === 0) return;
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setMenuOpen((open) => !open);
+  };
+
   return (
-    <Pressable
+    <MessageContainer
       testID={`user-message-${first?.id ?? group.key}`}
       accessibilityLabel={t`Your message`}
-      onLongPress={() => {
-        if (menuItems.length === 0) return;
-        void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-        setMenuOpen((open) => !open);
-      }}
+      onLongPress={goalSummary ? undefined : openMessageMenu}
       delayLongPress={260}
       style={[
         styles.messageBlock,
         plate,
         styles.userBlock,
+        goalSummary ? styles.goalMessage : null,
         { borderLeftColor: colors.accent },
         queued ? { borderLeftColor: theme.colors.warning } : null,
       ]}>
@@ -1007,40 +1114,81 @@ export const AgentUserMessage = memo(function AgentUserMessage({
                 <Trans>Queued</Trans>
               </Text>
             </View>
-            <PressableScale
-              testID={`queued-edit-${queued.id}`}
-              accessibilityRole="button"
-              accessibilityLabel={t`Edit queued message`}
-              onPress={() => onEditQueued(queued.id, text)}
-              style={styles.queuedActionBtn}>
-              <Edit3 size={13} color={theme.colors.primary} />
-            </PressableScale>
-            <PressableScale
-              testID={`queued-cancel-${queued.id}`}
-              accessibilityRole="button"
-              accessibilityLabel={t`Cancel queued message`}
-              onPress={() => onCancelQueued(queued.id)}
-              style={styles.queuedActionBtn}>
-              <Trash2 size={13} color={theme.colors.danger} />
-            </PressableScale>
+            {!readOnly ? (
+              <>
+                <PressableScale
+                  testID={`queued-edit-${queued.id}`}
+                  accessibilityRole="button"
+                  accessibilityLabel={t`Edit queued message`}
+                  onPress={() => onEditQueued(queued.id, text)}
+                  style={styles.queuedActionBtn}>
+                  <Edit3 size={13} color={theme.colors.primary} />
+                </PressableScale>
+                <PressableScale
+                  testID={`queued-cancel-${queued.id}`}
+                  accessibilityRole="button"
+                  accessibilityLabel={t`Cancel queued message`}
+                  onPress={() => onCancelQueued(queued.id)}
+                  style={styles.queuedActionBtn}>
+                  <Trash2 size={13} color={theme.colors.danger} />
+                </PressableScale>
+              </>
+            ) : null}
           </>
         ) : null}
       </View>
 
-      {entries.map((entry, index) =>
-        entry.kind === 'reasoning' ? (
-          showReasoning ? (
-            <ReasoningRunBlock key={entry.key} run={entry.run} />
-          ) : null
-        ) : (
-          renderTimelinePart(entry.item, {
-            showReasoning,
-            markdownStyle,
-            prevItem: previousItemAt(entries, index) ?? group.prevItem,
-            actions,
-          })
-        )
-      )}
+      {goalSummary ? (
+        <Pressable
+          testID={`goal-message-toggle-${first?.id ?? group.key}`}
+          accessibilityRole="button"
+          accessibilityLabel={
+            goalExpanded ? t`Collapse goal continuation` : t`Expand goal continuation`
+          }
+          accessibilityState={{ expanded: goalExpanded }}
+          onPress={() => setGoalExpanded((open) => !open)}
+          onLongPress={openMessageMenu}
+          delayLongPress={260}
+          style={[styles.goalDisclosure, { borderRadius: profile.chrome.control }]}>
+          <View pointerEvents="none" style={styles.goalSummary}>
+            <Text
+              variant="caption"
+              weight="semibold"
+              color={colors.accent}>{t`Goal continuation`}</Text>
+            <Text variant="bodySmall" color={theme.colors.text} numberOfLines={2}>
+              {goalSummary}
+            </Text>
+          </View>
+          <View pointerEvents="none" style={styles.goalChevron}>
+            <ChevronDown
+              size={14}
+              color={colors.accent}
+              style={{ transform: [{ rotate: goalExpanded ? '180deg' : '0deg' }] }}
+            />
+          </View>
+        </Pressable>
+      ) : null}
+      {goalSummary && goalExpanded ? (
+        <Text selectable variant="body" color={theme.colors.text} style={styles.goalFullText}>
+          {text}
+        </Text>
+      ) : null}
+      {!goalSummary &&
+        entries.map((entry, index) =>
+          entry.kind === 'reasoning' ? (
+            showReasoning ? (
+              <ReasoningRunBlock key={entry.key} run={entry.run} />
+            ) : null
+          ) : (
+            renderTimelinePart(entry.item, {
+              showReasoning,
+              markdownStyle,
+              prevItem: previousItemAt(entries, index) ?? group.prevItem,
+              actions,
+              readOnly,
+            })
+          )
+        )}
 
       {attachments.length > 0 ? (
         <MessageAttachments attachments={attachments} onPreviewImage={onPreviewImage} />
@@ -1053,7 +1201,7 @@ export const AgentUserMessage = memo(function AgentUserMessage({
           items={menuItems}
         />
       ) : null}
-    </Pressable>
+    </MessageContainer>
   );
 });
 
@@ -1069,12 +1217,15 @@ export const AgentAssistantMessage = memo(function AgentAssistantMessage({
   showReasoning,
   reasoningLive = false,
   actions = NO_TOOL_ACTIONS,
+  readOnly = false,
 }: {
   group: TimelineRenderGroup;
   showReasoning: boolean;
   reasoningLive?: boolean;
   markdownStyle: MarkdownStyle;
   actions?: AgentToolActions;
+  /** Historical/peek surfaces show content without permission controls. */
+  readOnly?: boolean;
 }) {
   const plate = useTranscriptPlate();
   const markdownStyle = usePaneChatMarkdownStyle();
@@ -1095,6 +1246,7 @@ export const AgentAssistantMessage = memo(function AgentAssistantMessage({
     const built = buildTimelineEntries(drawn, reasoningLive);
     return showReasoning ? built : built.filter((entry) => entry.kind !== 'reasoning');
   }, [group.items, showReasoning, reasoningLive]);
+  const displayEntries = useMemo(() => groupRoutineToolEntries(entries), [entries]);
 
   if (entries.length === 0) return null;
 
@@ -1115,7 +1267,22 @@ export const AgentAssistantMessage = memo(function AgentAssistantMessage({
     );
     run = [];
   };
-  entries.forEach((entry, index) => {
+  displayEntries.forEach((displayEntry) => {
+    if (displayEntry.kind === 'tool-group') {
+      flush();
+      rows.push(
+        <View key={displayEntry.key} style={styles.standaloneRow}>
+          <AgentToolGroup
+            entries={displayEntry.entries}
+            markdownStyle={markdownStyle}
+            actions={actions}
+            readOnly={readOnly}
+          />
+        </View>
+      );
+      return;
+    }
+    const { entry, sourceIndex } = displayEntry;
     if (entry.kind === 'reasoning') {
       flush();
       rows.push(
@@ -1128,8 +1295,9 @@ export const AgentAssistantMessage = memo(function AgentAssistantMessage({
     const drawn = renderTimelinePart(entry.item, {
       showReasoning,
       markdownStyle,
-      prevItem: previousItemAt(entries, index) ?? group.prevItem,
+      prevItem: previousItemAt(entries, sourceIndex) ?? group.prevItem,
       actions,
+      readOnly,
     });
     if (drawn === null) return;
     if (STANDALONE_PART_TYPES.has(entry.item.part.type)) {
@@ -1204,6 +1372,31 @@ const styles = StyleSheet.create({
     width: '100%',
     marginVertical: TRANSCRIPT_ROW_GAP / 2,
   },
+  toolGroup: { gap: TRANSCRIPT_ROW_GAP },
+  toolGroupHeader: {
+    minHeight: 44,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 7,
+  },
+  toolGroupCopy: { flex: 1, minWidth: 0, gap: 1 },
+  toolGroupNames: { fontSize: AGENT_TYPE.micro.size },
+  toolGroupItems: { gap: TRANSCRIPT_ROW_GAP },
+  goalMessage: { alignSelf: 'stretch', width: '100%' },
+  goalDisclosure: {
+    alignSelf: 'stretch',
+    minHeight: 44,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingVertical: 6,
+    zIndex: 1,
+  },
+  goalSummary: { flex: 1, minWidth: 0, gap: 4 },
+  goalChevron: { width: 20, flexShrink: 0, alignItems: 'center', justifyContent: 'center' },
+  goalFullText: { alignSelf: 'stretch', flexShrink: 1 },
   roleRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1241,14 +1434,12 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   attachmentImageWrapper: {
-    borderRadius: 14,
     borderCurve: 'continuous',
     overflow: 'hidden',
   },
   attachmentThumbnail: {
     width: 160,
     height: 110,
-    borderRadius: 14,
   },
   attachmentChip: {
     flexDirection: 'row',

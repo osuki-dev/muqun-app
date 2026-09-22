@@ -1,6 +1,6 @@
 import { expect, test } from 'bun:test';
 
-import { createThemeStarter } from '../authoring';
+import { createThemeStarter } from '../starter';
 import {
   CANDIDATE_INSTALLATION_ID,
   resolveCandidateTheme,

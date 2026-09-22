@@ -1,7 +1,7 @@
 import { expect, test } from 'bun:test';
 import { strToU8, zipSync } from 'fflate';
 
-import { createThemeStarter } from '@/theme/authoring';
+import { createThemeStarter } from '@/theme/starter';
 import { packTheme, unpackTheme, unpackThemeAsync } from '@/theme/package';
 
 function files() {

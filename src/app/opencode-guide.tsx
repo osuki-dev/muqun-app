@@ -28,6 +28,7 @@ export default function OpenCodeGuideScreen() {
     directory?: string;
     intent?: string;
     status?: string;
+    cause?: string;
   }>();
   const serverId = params.serverId;
   const selectedRecord = useGatewayConnectionStore((state) => state.record);
@@ -41,7 +42,14 @@ export default function OpenCodeGuideScreen() {
   const [readiness, setReadiness] = useState<OpenCodeReadiness>(() =>
     params.status === 'unsupported'
       ? { status: 'unsupported', capabilities: [] }
-      : { status: 'offline', capabilities: [], cause: 'health' }
+      : params.status === 'not-installed'
+        ? { status: 'not-installed', capabilities: [] }
+        : {
+            status: 'offline',
+            capabilities: [],
+            cause:
+              params.cause === 'service' || params.cause === 'catalog' ? params.cause : 'health',
+          }
   );
 
   const checkAgain = async (): Promise<OpenCodeReadiness> => {

@@ -393,6 +393,7 @@ export const AgentWorktreeSheet = memo(function AgentWorktreeSheet({
         </SheetSceneQuietControl>
       }>
       <ScrollView
+        nestedScrollEnabled
         ref={scrollerRef}
         style={sheetSceneStyles.scroller}
         contentContainerStyle={sheetSceneStyles.scrollerContent}

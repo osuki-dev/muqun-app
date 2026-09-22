@@ -21,3 +21,9 @@ test('embedded return action stays inside each home layout scroller', () => {
   expect(HOME_OVERVIEW).toContain('minHeight: 44');
   expect(HOME_OVERVIEW).toContain('minWidth: 0');
 });
+
+test('every Home layout hides its vertical scroll indicator', () => {
+  const scrollers = HOME_OVERVIEW.split('<KeyboardAwareScrollView').slice(1);
+  expect(scrollers).toHaveLength(2);
+  expect(HOME_OVERVIEW.match(/showsVerticalScrollIndicator=\{false\}/g)).toHaveLength(2);
+});

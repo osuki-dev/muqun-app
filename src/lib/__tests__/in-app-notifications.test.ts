@@ -42,6 +42,68 @@ describe('foreground notification queue', () => {
     expect(enqueueNotice(dismissed, notice('first'))).toBe(dismissed);
   });
 
+  test('matching general events keep only the latest content without moving the card', () => {
+    const first = noticeFromPush('first', {
+      title: 'Agent done · osk',
+      body: 'codex finished running.',
+      data: { server_id: 'server', session_id: 'session', pane_id: 'pane' },
+    })!;
+    const latest = noticeFromPush('latest', {
+      title: 'Agent done · osk',
+      body: 'codex finished running.',
+      data: { server_id: 'server', session_id: 'session', pane_id: 'pane' },
+    })!;
+    const queue = enqueueNotice(enqueueNotice(empty(), first), latest);
+
+    expect(queue.items).toHaveLength(1);
+    expect(queue.items[0]?.id).toBe('first');
+    expect(queue.items[0]?.route).toMatchObject({
+      params: { notificationId: 'latest' },
+    });
+    expect(queue.seen).toEqual(['first', 'latest']);
+  });
+
+  test('different agents, destinations and approval requests remain distinct', () => {
+    const base = {
+      title: 'Agent done · osk',
+      body: 'codex finished running.',
+      data: { server_id: 'server', session_id: 'session', pane_id: 'pane' },
+    };
+    let queue = enqueueNotice(empty(), noticeFromPush('base', base)!);
+    queue = enqueueNotice(
+      queue,
+      noticeFromPush('agent', { ...base, body: 'claude finished running.' })!
+    );
+    queue = enqueueNotice(
+      queue,
+      noticeFromPush('destination', { ...base, data: { ...base.data, pane_id: 'other' } })!
+    );
+    queue = enqueueNotice(
+      queue,
+      noticeFromPush('approval-a', {
+        title: 'Approval required',
+        body: 'external_directory: /etc/*',
+        data: { ...base.data, category: 'approval', approval_id: 'a' },
+      })!
+    );
+    queue = enqueueNotice(
+      queue,
+      noticeFromPush('approval-b', {
+        title: 'Approval required',
+        body: 'external_directory: /etc/*',
+        data: { ...base.data, category: 'approval', approval_id: 'b' },
+      })!
+    );
+
+    expect(queue.items.map((item) => item.id)).toEqual([
+      'base',
+      'agent',
+      'destination',
+      'approval-a',
+      'approval-b',
+    ]);
+  });
+
   test('overflow preserves the visible event and drops the oldest waiting event', () => {
     let queue = empty();
     for (let index = 0; index < MAX_NOTICES; index++) {

@@ -1,3 +1,4 @@
+import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { useEffect, useMemo, useRef, useState, memo } from 'react';
 import { View, StyleSheet, Pressable } from 'react-native';
 import { useThemeTokens } from '@osuki-dev/ui';
@@ -44,12 +45,17 @@ export const AgentReasoningBlock = memo(function AgentReasoningBlock({
 }: AgentReasoningBlockProps) {
   const { t } = useLingui();
   const theme = useThemeTokens();
+  const profile = useAppearanceProfile();
   const plate = useTranscriptPlate();
   const markdownFonts = useMarkdownFonts();
-  const markdownStyle = useMemo(
-    () => createThoughtMarkdownStyle(theme.colors, markdownFonts),
-    [theme.colors, markdownFonts]
-  );
+  const markdownStyle = useMemo(() => {
+    const base = createThoughtMarkdownStyle(theme.colors, markdownFonts);
+    return {
+      ...base,
+      codeBlock: { ...base.codeBlock, borderRadius: profile.chrome.surface },
+      table: { ...base.table, borderRadius: profile.chrome.surface },
+    };
+  }, [theme.colors, markdownFonts, profile.chrome.surface]);
   const [expanded, setExpanded] = useState(defaultExpanded);
 
   /**
@@ -113,6 +119,7 @@ export const AgentReasoningBlock = memo(function AgentReasoningBlock({
         onPress={() => setExpanded((prev) => !prev)}
         style={({ pressed }) => [
           styles.headerPill,
+          { borderRadius: profile.chrome.control },
           { backgroundColor: withAlpha(theme.colors.primary, 0.08) },
           pressed && { opacity: 0.7 },
         ]}>
@@ -169,7 +176,6 @@ const styles = StyleSheet.create({
     gap: 6,
     paddingVertical: 5,
     paddingHorizontal: 10,
-    borderRadius: 999,
     borderCurve: 'continuous',
     alignSelf: 'flex-start',
   },
@@ -187,7 +193,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
   },
   quote: {
-    paddingLeft: 12,
+    paddingLeft: 6,
     borderLeftWidth: 1.5,
   },
   reasoningBody: {

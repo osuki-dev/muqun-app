@@ -16,16 +16,6 @@ import { foldPaneRead, mergeTerminalWindow, sanitizePaneRead } from '../history'
 
 const MAXIMUM = 2_000;
 
-/**
- * The budget for the one test here that does seconds of real work.
- *
- * Bun's default is 5s and that test lands a few hundred milliseconds under it,
- * so a build sharing the machine tips it over and the suite reports the
- * terminal contract as broken when nothing about it is. Well clear of the work,
- * well short of a hang.
- */
-const HEAVY_INVARIANT_TIMEOUT_MS = 30_000;
-
 function rows(output: string): string[] {
   return output ? output.split('\n') : [];
 }
@@ -152,6 +142,51 @@ function isSubsequenceOf(part: readonly string[], whole: readonly string[]): num
 
 /** The widest block that is immediately followed by a verbatim copy of itself. */
 function adjacentRepeat(window: readonly string[]): { at: number; size: number } | null {
+  const positions = new Map<string, number[]>();
+  const nonblankPrefix = [0];
+  for (let index = 0; index < window.length; index += 1) {
+    const row = window[index];
+    const rowPositions = positions.get(row) ?? [];
+    rowPositions.push(index);
+    positions.set(row, rowPositions);
+    nonblankPrefix.push(nonblankPrefix[index] + (row.trim() === '' ? 0 : 1));
+  }
+
+  const candidatesBySize = new Map<number, number[]>();
+  for (const rowPositions of positions.values()) {
+    for (let first = 0; first < rowPositions.length; first += 1) {
+      const at = rowPositions[first];
+      for (let second = first + 1; second < rowPositions.length; second += 1) {
+        const size = rowPositions[second] - at;
+        if (at + 2 * size > window.length) break;
+        if (size < 4 || nonblankPrefix[at + size] - nonblankPrefix[at] < 4) continue;
+        const starts = candidatesBySize.get(size) ?? [];
+        starts.push(at);
+        candidatesBySize.set(size, starts);
+      }
+    }
+  }
+
+  for (let size = Math.floor(window.length / 2); size >= 4; size -= 1) {
+    const starts = candidatesBySize.get(size);
+    if (!starts) continue;
+    starts.sort((left, right) => left - right);
+    for (const at of starts) {
+      let same = true;
+      for (let step = 1; step < size; step += 1) {
+        if (window[at + step] !== window[at + size + step]) {
+          same = false;
+          break;
+        }
+      }
+      if (same) return { at, size };
+    }
+  }
+  return null;
+}
+
+/** Exhaustive oracle used only on small fixtures to protect the faster detector. */
+function bruteForceAdjacentRepeat(window: readonly string[]): { at: number; size: number } | null {
   for (let size = Math.floor(window.length / 2); size >= 4; size -= 1) {
     for (let at = 0; at + 2 * size <= window.length; at += 1) {
       let same = true;
@@ -168,6 +203,29 @@ function adjacentRepeat(window: readonly string[]): { at: number; size: number }
   }
   return null;
 }
+
+describe('the adjacent-repeat oracle', () => {
+  test('the indexed detector matches exhaustive comparison', () => {
+    const fixtures: string[][] = [
+      [],
+      ['', '', '', '', '', '', '', ''],
+      ['a', 'b', 'c', 'd', 'a', 'b', 'c', 'd'],
+      [' ', 'a', 'b', 'c', 'd', ' ', 'a', 'b', 'c', 'd'],
+      ['a', 'b', 'c', 'd', 'a', 'b', 'c', 'x'],
+      ['x', 'a', 'b', 'c', 'd', 'a', 'b', 'c', 'd', 'x'],
+    ];
+    const random = randomizer(721);
+    const alphabet = ['', ' ', 'a', 'b', 'c', 'd', 'e'];
+    for (let sample = 0; sample < 200; sample += 1) {
+      const length = Math.floor(random() * 48);
+      fixtures.push(Array.from({ length }, () => alphabet[Math.floor(random() * alphabet.length)]));
+    }
+
+    for (const fixture of fixtures) {
+      expect(adjacentRepeat(fixture)).toEqual(bruteForceAdjacentRepeat(fixture));
+    }
+  });
+});
 
 // ---------------------------------------------------------------------------
 // (a) the held window is a supersequence of what arrived, in arrival order
@@ -559,38 +617,24 @@ describe('(d) identical adjacent blocks never accumulate', () => {
     expect(folded.filter((row) => row === '⏺ Bash(git status)')).toHaveLength(1);
   });
 
-  // Four seeds, 150 polls each, and an O(window^2) repeat scan after every one:
-  // the only test in this file that is seconds of real work rather than
-  // milliseconds. It blew bun's 5s default once, on a machine sharing the box
-  // with a release build, which reads as the terminal contract failing when it
-  // is only the laptop being busy -- hence the cheap assertion below.
-  //
-  // The cheap assertion was not enough: it still lands within a few hundred
-  // milliseconds of the 5s default, so any machine running a build alongside
-  // the suite fails it. A budget of its own is the honest fix. Thirty seconds
-  // is far above what the work costs even on a loaded laptop and far below a
-  // hang, so a failure here still means the fold is stuck rather than slow.
-  test(
-    'no run of the simulated session ever accumulates one',
-    () => {
-      for (const seed of [3, 13, 97, 2_026]) {
-        const random = randomizer(seed);
-        const pane = new Pane();
-        let window = '';
-        for (let poll = 0; poll < 150; poll += 1) {
-          pane.emit(Math.floor(random() * 90));
-          window = foldPaneRead(window, pane.screen(), 'frame', MAXIMUM);
-          // Asserted only when there is something to say. Six hundred passing
-          // deep-equality checks were most of this test's runtime, and the run
-          // that mattered -- the one where a repeat appears -- still reports the
-          // seed and the poll it appeared on.
-          const repeat = adjacentRepeat(rows(window));
-          if (repeat) expect({ seed, poll, repeat }).toEqual({ seed, poll, repeat: null as never });
-        }
+  // Four seeds and 150 polls each preserve the original long-run coverage. The
+  // repeat detector indexes candidate starts before comparing blocks, so this
+  // no longer spends seconds exhaustively comparing unrelated transcript rows.
+  test('no run of the simulated session ever accumulates one', () => {
+    for (const seed of [3, 13, 97, 2_026]) {
+      const random = randomizer(seed);
+      const pane = new Pane();
+      let window = '';
+      for (let poll = 0; poll < 150; poll += 1) {
+        pane.emit(Math.floor(random() * 90));
+        window = foldPaneRead(window, pane.screen(), 'frame', MAXIMUM);
+        // Assert only when there is something to report, while preserving the
+        // seed and poll that make a failure reproducible.
+        const repeat = adjacentRepeat(rows(window));
+        if (repeat) expect({ seed, poll, repeat }).toEqual({ seed, poll, repeat: null as never });
       }
-    },
-    HEAVY_INVARIANT_TIMEOUT_MS
-  );
+    }
+  });
 
   test('a seam hidden under the composer is found, not appended over', () => {
     // Caught by `scripts/terminal-soak.ts` against a live pane, eleven folds

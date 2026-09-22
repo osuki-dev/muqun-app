@@ -32,21 +32,6 @@ export function useLaunchArtwork(): LaunchArtwork {
   return resolveLaunchArtwork(theme, assets, resolvedMode, width >= 768 ? 'regular' : 'compact');
 }
 
-/**
- * The launch overlay's picture: the pack's `home.hero` when it drew one, else
- * the same chain as {@link useLaunchArtwork}. Separate from the lock screen's
- * hook because a hero is a wide banner and the lock frame is a square badge;
- * everything else about the wiring is identical, including which theme counts.
- */
-export function useLaunchHeroArtwork(): LaunchArtwork {
-  const { resolvedMode } = useThemeMode();
-  const { width } = useWindowDimensions();
-  const { theme, assets } = useAppliedCustomTheme();
-  return resolveLaunchArtwork(theme, assets, resolvedMode, width >= 768 ? 'regular' : 'compact', {
-    hero: true,
-  });
-}
-
 /** The applied pack's own paper for the launch overlay, or null to keep the app's. */
 export function useLaunchBackground(): string | null {
   const { resolvedMode } = useThemeMode();

@@ -38,6 +38,7 @@ import { TerminalBoundary } from '@/components/terminal-boundary';
 import { TerminalComposer } from '@/components/terminal-composer';
 import { VirtualKeyboard } from '@/components/virtual-keyboard';
 import { appChrome } from '@/constants/appearance';
+import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { useLatestRef, useLazyRef } from '@/hooks/use-render-refs';
 import { useDockMeasurement } from '@/hooks/use-settled-height';
 import { useMonoFontFamily } from '@/hooks/use-user-fonts';
@@ -187,6 +188,7 @@ const VIEWPORT_SETTLE_MS = 100;
 export function SshTerminalWorkspace({ hostId }: { hostId: string }) {
   const { t } = useLingui();
   const theme = useThemeTokens();
+  const profile = useAppearanceProfile();
   const surfaceBackground = useSurfaceBackground();
   const { showToast } = useToast();
   const router = useRouter();
@@ -957,7 +959,10 @@ export function SshTerminalWorkspace({ hostId }: { hostId: string }) {
                 onPress={() => (router.canGoBack() ? router.back() : router.replace('/ssh'))}
                 style={[
                   styles.pillButton,
-                  { backgroundColor: surfaceBackground(theme.colors.primary) },
+                  {
+                    backgroundColor: surfaceBackground(theme.colors.primary),
+                    borderRadius: profile.radius.pill,
+                  },
                 ]}>
                 <Text variant="caption" color={theme.colors.onPrimary}>
                   <Trans>Back</Trans>
@@ -1208,7 +1213,13 @@ export function SshTerminalWorkspace({ hostId }: { hostId: string }) {
           style={[styles.dockOverlay, dockKeyboardStyle]}>
           <GlassChrome
             surface="composer"
-            style={[styles.dock, { paddingBottom: Math.max(insets.bottom, 10) }]}>
+            shape="composerDock"
+            style={[
+              styles.dock,
+              {
+                paddingBottom: Math.max(insets.bottom, 10),
+              },
+            ]}>
             {dock.virtualKeyboard ? virtualKeyboard : null}
             {dock.keyRow ? (
               <View style={styles.keyRow}>
@@ -1468,7 +1479,6 @@ const styles = StyleSheet.create({
   pillButton: {
     minHeight: 30,
     paddingHorizontal: 14,
-    borderRadius: 15,
     borderCurve: 'continuous',
     alignItems: 'center',
     justifyContent: 'center',
@@ -1495,8 +1505,6 @@ const styles = StyleSheet.create({
     paddingTop: 8,
     paddingHorizontal: 10,
     gap: 8,
-    borderTopLeftRadius: appChrome.radius.composerDock,
-    borderTopRightRadius: appChrome.radius.composerDock,
     borderCurve: 'continuous',
   },
   keyRow: {

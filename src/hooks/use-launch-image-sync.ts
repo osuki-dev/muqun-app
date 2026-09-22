@@ -3,7 +3,7 @@ import { useThemeMode } from '@osuki-dev/ui';
 import { useEffect } from 'react';
 
 import { useAppliedCustomTheme } from '@/components/theme-candidate';
-import { useLaunchHeroArtwork } from '@/hooks/use-launch-artwork';
+import { useLaunchArtwork } from '@/hooks/use-launch-artwork';
 
 /**
  * Hands the applied pack's launch picture to the native launch screen.
@@ -16,8 +16,8 @@ import { useLaunchHeroArtwork } from '@/hooks/use-launch-artwork';
  * when JavaScript takes over. Without this, a themed install showed the app's
  * own mark for half a second on every launch and then cross-faded.
  *
- * The same picture `LaunchSceneIntro` would cross-fade to: the pack's `home.hero`,
- * else its empty-state illustration, else its Home logo. No pack, or a pack
+ * The shared launch artwork chain: explicit launch artwork, primary Home
+ * artwork, then the Home logo. No pack, or a pack
  * without a picture, clears the override and the compiled assets are back.
  *
  * Persisted natively, so it takes effect from the next cold start. Re-run
@@ -27,28 +27,14 @@ import { useLaunchHeroArtwork } from '@/hooks/use-launch-artwork';
  */
 
 /** The box the picture is drawn in, shared with `LaunchSceneIntro`. */
-export const LAUNCH_HERO_WIDTH_FRACTION = 0.74;
-export const LAUNCH_HERO_MAX_WIDTH = 560;
+export const LAUNCH_ARTWORK_WIDTH_FRACTION = 0.74;
+export const LAUNCH_ARTWORK_MAX_WIDTH = 560;
 
-/**
- * The launch box is square, because every picture that can land in it is.
- *
- * It was 2:1 for the `home.hero` slot, on the reasoning that a hero is a wide
- * band on Home. The band is wide; the artwork in it is not. Every `home.hero`
- * the collection ships is a square file -- 768 or 1024 on a side -- and so is
- * every empty-state illustration and every Home logo, because those are the
- * shapes the theme format asks authors for. Contained in a 2:1 box, a square
- * picture is drawn at half the box's width and floats in the middle of it with
- * a quarter of the screen of dead paper on either side, which is most of why
- * the launch read as a small mark on an empty page.
- *
- * Square is not a guess about any one pack: it is the box the drawn picture
- * already fills, so `contain` now has nothing left to shrink.
- */
+/** A stable contain box shared by native splash and its JavaScript mirror. */
 export const LAUNCH_BOX_ASPECT = 1;
 
 export function useLaunchImageSync(): void {
-  const artwork = useLaunchHeroArtwork();
+  const artwork = useLaunchArtwork();
   const { theme } = useAppliedCustomTheme();
   const { resolvedMode } = useThemeMode();
 
@@ -66,8 +52,8 @@ export function useLaunchImageSync(): void {
       uri,
       backgroundColor: light,
       darkBackgroundColor: dark,
-      widthFraction: LAUNCH_HERO_WIDTH_FRACTION,
-      maxWidth: LAUNCH_HERO_MAX_WIDTH,
+      widthFraction: LAUNCH_ARTWORK_WIDTH_FRACTION,
+      maxWidth: LAUNCH_ARTWORK_MAX_WIDTH,
       aspectRatio: LAUNCH_BOX_ASPECT,
     });
   }, [uri, kind, light, dark, resolvedMode]);

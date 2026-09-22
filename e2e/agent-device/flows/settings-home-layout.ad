@@ -29,6 +29,15 @@ press "${TARGET}"
 # section editorial-home
 is visible "${TARGET}"
 
+# section rail-visible
+is visible "${TARGET}"
+
+# section rail-swipe
+gesture pan "${X}" "${Y}" "${DX}" "${DY}" 500
+
+# section rail-end-visible
+is visible "${TARGET}"
+
 # section relaunch-editorial
 open "dev.osuki.muqun" --relaunch
 wait stable 400 8000

@@ -1,3 +1,4 @@
+import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 /**
  * How much room Muqun's cache is taking, and the two buttons that give some of
  * it back.
@@ -138,6 +139,7 @@ async function readThemeAssets(): Promise<ThemeAssetFile[]> {
 
 export function SettingsStorage({ title }: { title: string }) {
   const { t } = useLingui();
+  const profile = useAppearanceProfile();
   const theme = useThemeTokens();
   const surfaceBackground = useSurfaceBackground();
   useRenderTally('SettingsStorage');
@@ -374,7 +376,7 @@ export function SettingsStorage({ title }: { title: string }) {
         // Two taps, never one, and the confirm stays inside the card the way
         // the unpair control does. A system alert here would be the one modal
         // on a screen whose every other decision is made in place.
-        <View style={styles.armedRow}>
+        <View style={[styles.armedRow, { paddingVertical: profile.settingsRowPaddingVertical }]}>
           <PressableScale
             accessibilityRole="button"
             accessibilityLabel={clearing ? t`Clearing cache` : t`Confirm clear cache`}
@@ -385,6 +387,7 @@ export function SettingsStorage({ title }: { title: string }) {
             onPress={() => void clear()}
             style={[
               styles.action,
+              { borderRadius: profile.chrome.control },
               styles.armedButton,
               { backgroundColor: surfaceBackground(theme.colors.danger) },
               clearing && styles.pendingAction,
@@ -415,6 +418,7 @@ export function SettingsStorage({ title }: { title: string }) {
             }}
             style={[
               styles.action,
+              { borderRadius: profile.chrome.control },
               styles.armedButton,
               { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
               clearing && styles.pendingAction,
@@ -438,7 +442,7 @@ export function SettingsStorage({ title }: { title: string }) {
       {armed === 'themes' ? (
         // The same pair, in the same place, for the same reason. An action that
         // takes somebody's import away gets the second tap the cache gets.
-        <View style={styles.armedRow}>
+        <View style={[styles.armedRow, { paddingVertical: profile.settingsRowPaddingVertical }]}>
           <PressableScale
             accessibilityRole="button"
             accessibilityLabel={
@@ -451,6 +455,7 @@ export function SettingsStorage({ title }: { title: string }) {
             onPress={() => void removeUnusedThemes()}
             style={[
               styles.action,
+              { borderRadius: profile.chrome.control },
               styles.armedButton,
               { backgroundColor: surfaceBackground(theme.colors.danger) },
               removing && styles.pendingAction,
@@ -477,6 +482,7 @@ export function SettingsStorage({ title }: { title: string }) {
             }}
             style={[
               styles.action,
+              { borderRadius: profile.chrome.control },
               styles.armedButton,
               { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
               removing && styles.pendingAction,
@@ -510,12 +516,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: LADDER.gap,
     paddingHorizontal: LADDER.gutter,
-    paddingVertical: LADDER.snug,
   },
   action: {
     minHeight: 40,
     paddingHorizontal: LADDER.snug,
-    borderRadius: 12,
     borderCurve: 'continuous',
     flexDirection: 'row',
     alignItems: 'center',

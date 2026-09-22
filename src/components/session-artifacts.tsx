@@ -554,6 +554,7 @@ export function SessionArtifacts({
           ) : null
         }>
         <LegendList
+          nestedScrollEnabled
           testID="artifacts-list"
           showsVerticalScrollIndicator={false}
           data={listRows}

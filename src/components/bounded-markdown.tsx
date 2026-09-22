@@ -1,3 +1,4 @@
+import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { memo, useMemo, useState, type ReactNode } from 'react';
 import {
   Linking,
@@ -50,12 +51,18 @@ export const TruncationFooter = memo(function TruncationFooter({
   extra?: ReactNode;
 }) {
   const theme = useThemeTokens();
+  const profile = useAppearanceProfile();
   const colors = usePaneChatColors();
   const { t } = useLingui();
 
   return (
     <View style={styles.footerRow}>
-      <View style={[styles.badge, { borderColor: theme.colors.warning }]}>
+      <View
+        style={[
+          styles.badge,
+          { borderRadius: profile.chrome.control },
+          { borderColor: theme.colors.warning },
+        ]}>
         <Text variant="caption" color={theme.colors.warning} style={styles.badgeText}>
           {t`Truncated`}
         </Text>
@@ -69,7 +76,11 @@ export const TruncationFooter = memo(function TruncationFooter({
           accessibilityRole="button"
           accessibilityLabel={showMoreLabel}
           onPress={onShowMore}
-          style={[styles.moreChip, { borderColor: colors.border }]}>
+          style={[
+            styles.moreChip,
+            { borderRadius: profile.chrome.control },
+            { borderColor: colors.border },
+          ]}>
           <Text variant="caption" color={colors.accent} style={styles.moreChipText}>
             {showMoreLabel}
           </Text>
@@ -227,7 +238,6 @@ const styles = StyleSheet.create({
   badge: {
     paddingHorizontal: 7,
     paddingVertical: 1,
-    borderRadius: 999,
     borderCurve: 'continuous',
     borderWidth: StyleSheet.hairlineWidth,
   },
@@ -243,7 +253,6 @@ const styles = StyleSheet.create({
     minHeight: 26,
     justifyContent: 'center',
     paddingHorizontal: 10,
-    borderRadius: 10,
     borderCurve: 'continuous',
     borderWidth: StyleSheet.hairlineWidth,
   },

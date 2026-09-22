@@ -1837,7 +1837,11 @@ export interface GatewayEndpoint {
   transport?: typeof GATEWAY_TRANSPORT;
 }
 
-function endpointFetch(endpoint: GatewayEndpoint, input: string, init: RequestInit = {}) {
+export function gatewayEndpointFetch(
+  endpoint: GatewayEndpoint,
+  input: string,
+  init: RequestInit = {}
+) {
   return endpoint.transport === GATEWAY_TRANSPORT && endpoint.deviceId && endpoint.transportKey
     ? encryptedGatewayFetch(input, init, REQUEST_TIMEOUT_MS, endpoint)
     : gatewayFetch(input, init);
@@ -1875,7 +1879,7 @@ export async function readPaneApproval(
   if (!base) throw new Error('Not connected to a server.');
 
   const target = endpoint ?? { url: base, token: token ?? '' };
-  const response = await endpointFetch(target, `${base}${approvalPath(sessionId, paneId)}`, {
+  const response = await gatewayEndpointFetch(target, `${base}${approvalPath(sessionId, paneId)}`, {
     headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
   if (response.status === 404 || response.status === 501) return null;
@@ -1902,7 +1906,7 @@ export async function answerPaneApproval(
   if (!base) throw new Error('Not connected to a server.');
 
   const target = endpoint ?? { url: base, token: token ?? '' };
-  const response = await endpointFetch(target, `${base}${approvalPath(sessionId, paneId)}`, {
+  const response = await gatewayEndpointFetch(target, `${base}${approvalPath(sessionId, paneId)}`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -2901,7 +2905,9 @@ export async function revokeOwnGatewayPairing(record: GatewayRecord): Promise<vo
       transportKey: record.transportKey,
       transport: record.transport,
     };
-    const listResponse = await endpointFetch(endpoint, `${baseUrl}/api/pairings`, { headers });
+    const listResponse = await gatewayEndpointFetch(endpoint, `${baseUrl}/api/pairings`, {
+      headers,
+    });
     if (!listResponse.ok) {
       throw new Error(`HTTP ${listResponse.status}: ${await listResponse.text()}`);
     }
@@ -2912,7 +2918,7 @@ export async function revokeOwnGatewayPairing(record: GatewayRecord): Promise<vo
       throw new Error('Gateway did not identify this paired device.');
     }
 
-    const revokeResponse = await endpointFetch(
+    const revokeResponse = await gatewayEndpointFetch(
       endpoint,
       `${baseUrl}/api/pairings/${encodeURIComponent(currentDevice.id)}`,
       { method: 'DELETE', headers }

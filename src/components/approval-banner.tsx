@@ -1,7 +1,6 @@
 import { useLingui } from '@lingui/react/macro';
 import {
   Alert,
-  Card,
   Icon,
   PressableCard,
   Spinner,
@@ -11,6 +10,7 @@ import {
   type IconName,
 } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
+import { Card } from '@/components/themed-card';
 import { useEffect } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
@@ -91,7 +91,7 @@ export function ApprovalBanner({
           accessibilityLabel={t`Dismiss the approval error`}
           onPress={onDismissError}
           testID="approval-banner-error">
-          <Alert variant="warning" message={error} />
+          <Alert variant="warning" message={error} style={styles.alert} />
         </Pressable>
       </Animated.View>
     );
@@ -153,7 +153,7 @@ export function ApprovalBanner({
               accessibilityLabel={t`Dismiss the approval error`}
               onPress={onDismissError}
               testID="approval-banner-error">
-              <Alert variant="warning" message={error} />
+              <Alert variant="warning" message={error} style={styles.alert} />
             </Pressable>
           ) : null}
 
@@ -273,7 +273,8 @@ function ApprovalOptionRow({
       onPress={() => onAnswer(option)}
       accessibilityRole="button"
       accessibilityLabel={t`Answer: ${option.label}`}
-      testID={`approval-option-${option.index}`}>
+      testID={`approval-option-${option.index}`}
+      style={{ borderWidth: theme.components.Card.flat.border ? StyleSheet.hairlineWidth : 0 }}>
       <Stack direction="horizontal" gap="sm" align="center">
         <View style={styles.decision}>
           <Animated.View style={[StyleSheet.absoluteFill, styles.centred, glyphStyle]}>
@@ -315,6 +316,7 @@ function ApprovalOptionRow({
 }
 
 const styles = StyleSheet.create({
+  alert: { borderWidth: StyleSheet.hairlineWidth },
   /**
    * The width the tool name is allowed, and why it needs one.
    *

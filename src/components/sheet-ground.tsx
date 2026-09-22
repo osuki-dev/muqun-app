@@ -45,6 +45,7 @@ import { StyleSheet, View } from 'react-native';
 import { ThemeArtwork, useHasThemeArtwork } from '@/components/theme-artwork';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { withAlpha } from '@/lib/color';
+import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 
 /**
  * Which token the sheet's tint is mixed from.
@@ -247,6 +248,7 @@ export const SHEET_GROUND_PLATE_PADDING_VERTICAL = 4;
  * frame, which nothing needs to do now that the frame publishes it.
  */
 export function useSheetGroundPlate(tint?: SheetGroundTint): SheetGroundPlate {
+  const profile = useAppearanceProfile();
   const theme = useThemeTokens();
   const hasShell = useHasThemeArtwork('shell.background');
   const ground = useSheetGroundTint();
@@ -258,7 +260,7 @@ export function useSheetGroundPlate(tint?: SheetGroundTint): SheetGroundPlate {
     // Text protection stays opaque even when the reader makes surrounding
     // cards translucent. Wallpaper must never become the label's contrast base.
     backgroundColor: sheetGroundTintColor(theme.colors, tint ?? ground),
-    borderRadius: SHEET_GROUND_PLATE_RADIUS,
+    borderRadius: profile.chrome.surface,
     borderCurve: 'continuous',
     paddingHorizontal: SHEET_GROUND_PLATE_PADDING_HORIZONTAL,
     paddingVertical: SHEET_GROUND_PLATE_PADDING_VERTICAL,

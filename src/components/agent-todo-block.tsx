@@ -1,3 +1,4 @@
+import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { useState, useMemo, memo } from 'react';
 import { View, StyleSheet, Pressable } from 'react-native';
 import { useThemeTokens } from '@osuki-dev/ui';
@@ -34,6 +35,7 @@ export const AgentTodoBlock = memo(function AgentTodoBlock({
 }: AgentTodoBlockProps) {
   const { t } = useLingui();
   const theme = useThemeTokens();
+  const profile = useAppearanceProfile();
   const surfaceBackground = useSurfaceBackground();
   // Three readings of one style, not three styles: an item is the body ink, a
   // done one is muted and struck (`strikeMarkdown`, because `MarkdownStyle`
@@ -69,7 +71,7 @@ export const AgentTodoBlock = memo(function AgentTodoBlock({
         {
           backgroundColor: surfaceBackground(theme.colors.surface),
           borderColor: allCompleted ? withAlpha(theme.colors.primary, 0.27) : theme.colors.border,
-          borderRadius: expanded ? 18 : 999,
+          borderRadius: expanded ? profile.chrome.transcriptPlate : profile.chrome.control,
         },
       ]}>
       <Pressable
@@ -89,6 +91,7 @@ export const AgentTodoBlock = memo(function AgentTodoBlock({
           <View
             style={[
               styles.countBadge,
+              { borderRadius: profile.chrome.control },
               {
                 backgroundColor: allCompleted
                   ? withAlpha(theme.colors.success, 0.11)
@@ -173,7 +176,6 @@ export const AgentTodoBlock = memo(function AgentTodoBlock({
 
 const styles = StyleSheet.create({
   container: {
-    borderRadius: 8,
     borderCurve: 'continuous',
     borderWidth: StyleSheet.hairlineWidth,
     overflow: 'hidden',
@@ -197,7 +199,6 @@ const styles = StyleSheet.create({
   countBadge: {
     paddingHorizontal: 6,
     paddingVertical: 1,
-    borderRadius: 999,
   },
   countText: {
     fontSize: AGENT_TYPE.micro.size,

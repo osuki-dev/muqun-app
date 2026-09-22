@@ -4,103 +4,109 @@
     {
       "name": "theme-document",
       "program": "flows/theme-document",
-      "tags": ["full"],
+      "tags": ["full", "themes", "files"],
       "platforms": ["ios", "android"]
     },
     {
       "name": "custom-themes",
       "program": "flows/custom-themes",
-      "tags": ["full"],
+      "tags": ["full", "themes", "settings"],
       "platforms": ["ios", "android"]
     },
     {
       "name": "agent-collaboration",
       "program": "flows/agent-collaboration",
-      "tags": ["full"],
+      "tags": ["full", "agents"],
+      "platforms": ["ios", "android"]
+    },
+    {
+      "name": "agent-session-tree",
+      "program": "flows/agent-session-tree",
+      "tags": ["full", "agents", "workspace"],
       "platforms": ["ios", "android"]
     },
     {
       "name": "demo-tour",
       "program": "flows/demo-tour",
-      "tags": ["smoke", "full"],
+      "tags": ["smoke", "full", "workspace"],
       "platforms": ["ios", "android"]
     },
     {
       "name": "pairing-manual",
       "program": "flows/pairing-manual",
-      "tags": ["full"],
+      "tags": ["full", "connection"],
       "platforms": ["ios", "android"]
     },
     {
       "name": "terminal-interactions",
       "program": "flows/terminal-interactions",
-      "tags": ["full"],
+      "tags": ["full", "terminal"],
       "platforms": ["ios", "android"]
     },
     {
       "name": "ssh",
       "program": "flows/ssh",
-      "tags": ["full"],
+      "tags": ["full", "connection"],
       "platforms": ["ios", "android"]
     },
     {
       "name": "file-mentions",
       "program": "flows/file-mentions",
-      "tags": ["full"],
+      "tags": ["full", "terminal", "files"],
       "platforms": ["ios", "android"]
     },
     {
       "name": "attachments-ui",
       "program": "flows/attachments-ui",
-      "tags": ["full"],
+      "tags": ["full", "terminal", "files"],
       "platforms": ["ios", "android"]
     },
     {
       "name": "artifacts",
       "program": "flows/artifacts",
-      "tags": ["full"],
+      "tags": ["full", "files"],
       "platforms": ["ios", "android"]
     },
     {
       "name": "large-file-preview",
       "program": "flows/large-file-preview",
-      "tags": ["full"],
+      "tags": ["full", "files"],
       "platforms": ["ios", "android"]
     },
     {
       "name": "git-diff",
       "program": "flows/git-diff",
-      "tags": ["full"],
+      "tags": ["full", "files"],
       "platforms": ["ios", "android"]
     },
     {
       "name": "settings",
       "program": "flows/settings",
-      "tags": ["full"],
+      "tags": ["full", "settings"],
       "platforms": ["ios", "android"]
     },
     {
       "name": "settings-guide",
       "program": "flows/settings-guide",
-      "tags": ["full"],
+      "tags": ["full", "settings"],
       "platforms": ["ios", "android"]
     },
     {
       "name": "settings-font",
       "program": "flows/settings-font",
-      "tags": ["full"],
+      "tags": ["full", "settings"],
       "platforms": ["ios", "android"]
     },
     {
       "name": "settings-home-layout",
       "program": "flows/settings-home-layout",
-      "tags": ["full"],
+      "tags": ["full", "settings", "workspace"],
       "platforms": ["ios", "android"]
     },
     {
       "name": "away-digest",
       "program": "flows/away-digest",
-      "tags": ["full"],
+      "tags": ["full", "agents"],
       "platforms": ["ios", "android"]
     },
     {
@@ -125,13 +131,13 @@
     {
       "name": "pad-workspace",
       "program": "flows/pad-workspace",
-      "tags": ["full"],
+      "tags": ["full", "workspace"],
       "platforms": ["ios", "android"]
     },
     {
       "name": "slash-commands",
       "program": "flows/slash-commands",
-      "tags": ["full"],
+      "tags": ["full", "terminal"],
       "platforms": ["ios", "android"]
     },
     {
@@ -167,31 +173,31 @@
     {
       "name": "agent-shortcuts",
       "program": "flows/agent-shortcuts",
-      "tags": ["full"],
+      "tags": ["full", "agents", "terminal"],
       "platforms": ["ios", "android"]
     },
     {
       "name": "switcher-sheet",
       "program": "flows/switcher-sheet",
-      "tags": ["full"],
+      "tags": ["full", "workspace"],
       "platforms": ["ios", "android"]
     },
     {
       "name": "soft-keyboard",
       "program": "flows/soft-keyboard",
-      "tags": ["full"],
+      "tags": ["full", "terminal"],
       "platforms": ["ios", "android"]
     },
     {
       "name": "personal-workspace",
       "program": "flows/personal-workspace",
-      "tags": ["full"],
+      "tags": ["full", "workspace"],
       "platforms": ["ios", "android"]
     },
     {
       "name": "thai-language",
       "program": "flows/thai-language",
-      "tags": ["full"],
+      "tags": ["full", "localization"],
       "platforms": ["ios", "android"]
     }
   ],
@@ -339,56 +345,10 @@
         "run": "flows/custom-themes.ad#opacity-reset"
       },
       {
-        "target": {
-          "id": "theme-remove-previewed"
-        },
-        "mode": "scroll",
-        "direction": "down",
-        "timeout": 10000,
-        "run": "flows/custom-themes.ad#scroll"
+        "run": "flows/custom-themes.ad#back-to-library"
       },
       {
-        "target": {
-          "id": "theme-remove-previewed"
-        },
-        "mode": "press",
-        "run": "flows/custom-themes.ad#press"
-      },
-      {
-        "run": "flows/custom-themes.ad#confirm-remove"
-      },
-      {
-        "run": "flows/custom-themes.ad#close-sheet"
-      },
-      {
-        "include": "subflows/open-demo"
-      },
-      {
-        "run": "flows/custom-themes.ad#install"
-      },
-      {
-        "target": {
-          "text": "Back to servers"
-        },
-        "mode": "press",
-        "optional": true,
-        "run": "flows/custom-themes.ad#install-back"
-      },
-      {
-        "target": {
-          "text": "Settings"
-        },
-        "mode": "press",
-        "run": "flows/custom-themes.ad#storage-entry"
-      },
-      {
-        "target": {
-          "text": "STORAGE"
-        },
-        "mode": "scroll",
-        "direction": "down",
-        "timeout": 20000,
-        "run": "flows/custom-themes.ad#storage-scroll"
+        "run": "flows/custom-themes.ad#return-settings"
       },
       {
         "target": {
@@ -397,7 +357,7 @@
         "mode": "scroll",
         "direction": "down",
         "timeout": 20000,
-        "run": "flows/custom-themes.ad#storage-scroll"
+        "run": "flows/custom-themes.ad#storage-anchor"
       },
       {
         "target": {
@@ -408,16 +368,16 @@
         "run": "flows/custom-themes.ad#storage-visible"
       },
       {
-        "run": "flows/custom-themes.ad#theme-anchor"
-      },
-      {
         "target": {
           "id": "settings-theme-row"
         },
         "mode": "scroll",
         "direction": "up",
         "timeout": 20000,
-        "run": "flows/custom-themes.ad#scroll-up"
+        "run": "flows/custom-themes.ad#settings-scroll-up"
+      },
+      {
+        "run": "flows/custom-themes.ad#theme-row-clear-header"
       },
       {
         "target": {
@@ -462,21 +422,12 @@
       },
       {
         "target": {
-          "text": "STORAGE"
-        },
-        "mode": "scroll",
-        "direction": "down",
-        "timeout": 20000,
-        "run": "flows/custom-themes.ad#storage-scroll"
-      },
-      {
-        "target": {
           "id": "settings-remove-themes-row"
         },
         "mode": "scroll",
         "direction": "down",
         "timeout": 20000,
-        "run": "flows/custom-themes.ad#storage-scroll"
+        "run": "flows/custom-themes.ad#storage-anchor"
       },
       {
         "target": {
@@ -530,16 +481,13 @@
         "run": "flows/custom-themes.ad#storage-visible"
       },
       {
-        "run": "flows/custom-themes.ad#theme-anchor"
-      },
-      {
         "target": {
           "text": "Theme, Osuki"
         },
         "mode": "scroll",
         "direction": "up",
         "timeout": 20000,
-        "run": "flows/custom-themes.ad#scroll-up"
+        "run": "flows/custom-themes.ad#settings-scroll-up"
       }
     ],
     "flows/agent-collaboration": [
@@ -4732,6 +4680,35 @@
         "run": "flows/settings-home-layout.ad#editorial-home"
       },
       {
+        "target": {
+          "id": "home-open-opencode"
+        },
+        "mode": "visible",
+        "timeout": 8000,
+        "run": "flows/settings-home-layout.ad#rail-visible"
+      },
+      {
+        "point": [0.8, 0.28],
+        "delta": [-0.55, 0],
+        "run": "flows/settings-home-layout.ad#rail-swipe"
+      },
+      {
+        "target": {
+          "id": "home-open-terminal"
+        },
+        "mode": "visible",
+        "timeout": 8000,
+        "run": "flows/settings-home-layout.ad#rail-end-visible"
+      },
+      {
+        "target": {
+          "id": "home-open-ssh"
+        },
+        "mode": "visible",
+        "timeout": 8000,
+        "run": "flows/settings-home-layout.ad#rail-end-visible"
+      },
+      {
         "run": "flows/settings-home-layout.ad#relaunch-editorial"
       },
       {
@@ -5280,9 +5257,18 @@
       },
       {
         "target": {
-          "id": "home-open-ssh"
+          "text": "(?i)settings"
         },
         "mode": "press",
+        "timeout": 8000,
+        "run": "flows/ssh.ad#s1"
+      },
+      {
+        "target": {
+          "id": "settings-ssh-row"
+        },
+        "mode": "press",
+        "timeout": 8000,
         "run": "flows/ssh.ad#s1"
       },
       {
@@ -5445,6 +5431,31 @@
         "run": "flows/ssh.ad#s26"
       },
       {
+        "when": {
+          "target": {
+            "id": "in-app-notification"
+          },
+          "absent": false
+        },
+        "steps": [
+          {
+            "target": {
+              "id": "in-app-notification"
+            },
+            "mode": "press",
+            "run": "flows/ssh.ad#dismiss-notification"
+          },
+          {
+            "target": {
+              "id": "in-app-notification"
+            },
+            "mode": "hidden",
+            "timeout": 4000,
+            "run": "flows/ssh.ad#notification-dismissed"
+          }
+        ]
+      },
+      {
         "target": {
           "text": "Reconnect"
         },
@@ -5483,7 +5494,7 @@
       },
       {
         "target": {
-          "id": "home-open-ssh"
+          "id": "settings-ssh-row"
         },
         "mode": "visible",
         "timeout": 8000,
@@ -5707,7 +5718,7 @@
       },
       {
         "target": {
-          "text": "Claude Code"
+          "id": "terminal-composer-input"
         },
         "mode": "visible",
         "run": "flows/terminal-interactions.ad#s10"
@@ -5918,6 +5929,31 @@
       {
         "when": {
           "target": {
+            "id": "in-app-notification"
+          },
+          "absent": false
+        },
+        "steps": [
+          {
+            "target": {
+              "id": "in-app-notification"
+            },
+            "mode": "press",
+            "run": "flows/terminal-interactions.ad#dismiss-obstructing-notification"
+          },
+          {
+            "target": {
+              "id": "in-app-notification"
+            },
+            "mode": "hidden",
+            "timeout": 4000,
+            "run": "flows/terminal-interactions.ad#obstructing-notification-dismissed"
+          }
+        ]
+      },
+      {
+        "when": {
+          "target": {
             "text": "Try the demo"
           },
           "absent": false
@@ -5937,7 +5973,7 @@
       },
       {
         "target": {
-          "text": "Claude Code"
+          "id": "terminal-composer-input"
         },
         "mode": "visible",
         "timeout": 15000,
@@ -5973,7 +6009,7 @@
       },
       {
         "target": {
-          "text": "Claude Code"
+          "id": "terminal-composer-input"
         },
         "mode": "visible",
         "run": "flows/terminal-interactions.ad#s48"
@@ -7245,7 +7281,7 @@
       },
       {
         "target": {
-          "text": "Claude Code"
+          "id": "terminal-composer-input"
         },
         "mode": "visible",
         "timeout": 15000,
@@ -7423,6 +7459,75 @@
       },
       {
         "run": "flows/personal-workspace.ad"
+      }
+    ],
+    "flows/agent-session-tree": [
+      {
+        "include": "subflows/open-demo"
+      },
+      {
+        "run": "flows/agent-session-tree.ad#open"
+      },
+      {
+        "target": {
+          "text": "Session tree"
+        },
+        "mode": "visible",
+        "timeout": 10000,
+        "run": "flows/agent-session-tree.ad#visible"
+      },
+      {
+        "target": {
+          "id": "agent-session-tree-row-demo-tree-leaf-24"
+        },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 20000,
+        "run": "flows/agent-session-tree.ad#scroll"
+      },
+      {
+        "target": {
+          "id": "agent-session-tree-row-demo-tree-leaf-24"
+        },
+        "mode": "press",
+        "run": "flows/agent-session-tree.ad#open-detail"
+      },
+      {
+        "target": {
+          "id": "agent-subagent-detail-transcript"
+        },
+        "mode": "visible",
+        "timeout": 10000,
+        "run": "flows/agent-session-tree.ad#detail-visible"
+      },
+      {
+        "target": {
+          "text": "Snapshot output for demo-tree-leaf-24."
+        },
+        "mode": "visible",
+        "timeout": 10000,
+        "run": "flows/agent-session-tree.ad#detail-output"
+      },
+      {
+        "run": "flows/agent-session-tree.ad#close-detail"
+      },
+      {
+        "target": {
+          "id": "agent-session-tree-row-demo-tree-leaf-24"
+        },
+        "mode": "visible",
+        "timeout": 10000,
+        "run": "flows/agent-session-tree.ad#tree-restored"
+      },
+      {
+        "run": "flows/agent-session-tree.ad#close-tree"
+      },
+      {
+        "target": {
+          "text": "Session tree"
+        },
+        "mode": "hidden",
+        "run": "flows/agent-session-tree.ad#closed"
       }
     ],
     "flows/thai-language": [

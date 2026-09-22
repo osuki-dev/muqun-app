@@ -1,7 +1,7 @@
 import { afterAll, expect, test } from 'bun:test';
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
-import { createThemeStarter } from '../authoring';
+import { createThemeStarter } from '../starter';
 import { gitThemePath, gitThemeSource, inspectGitTheme } from '../git-import';
 import { packTheme, unpackTheme, type ThemePackage } from '../package';
 import { parseThemeManifest, THEME_LIMITS } from '../schema';

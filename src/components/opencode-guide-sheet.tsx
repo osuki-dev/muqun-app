@@ -1,9 +1,9 @@
 import { memo, useState, useRef, useEffect, useCallback } from 'react';
-import { View, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, StyleSheet, ActivityIndicator, Linking } from 'react-native';
 import { useThemeTokens } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
 import { useLingui } from '@lingui/react/macro';
-import { Check, Copy, RefreshCw, Terminal } from 'lucide-react-native';
+import { Check, Copy, ExternalLink, RefreshCw, Terminal } from 'lucide-react-native';
 import * as Clipboard from 'expo-clipboard';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -12,6 +12,7 @@ import { SheetScene, SHEET_LADDER } from '@/components/sheet-scene';
 import { appChrome } from '@/constants/appearance';
 import { feedback } from '@/lib/feedback';
 import type { OpenCodeReadiness } from '@/lib/home-opencode-readiness';
+import { OPENCODE_INSTALL_URL } from '@/constants/links';
 
 export interface OpenCodeGuideSheetProps {
   serverLabel: string;
@@ -73,18 +74,33 @@ export const OpenCodeGuideSheet = memo(function OpenCodeGuideSheet({
         return;
       }
       void feedback('warning');
-      setStatusMessage(
-        result.status === 'unsupported'
-          ? t`This gateway does not advertise OpenCode sessions.`
-          : t`Still not answering. Check the service is running on the host.`
-      );
+      // The parent applies the returned readiness state, whose explanation is
+      // specific to unsupported, missing, unreachable, or stopped services.
+      setStatusMessage(null);
     } catch {
       void feedback('warning');
-      setStatusMessage(t`Still not answering. Check the service is running on the host.`);
+      setStatusMessage(
+        t`This gateway is not answering. Check the server connection, then try again.`
+      );
     } finally {
       setChecking(false);
     }
   }, [onCheckAgain, onClose, onOpenAgent, t]);
+
+  const offlineCause = readiness.status === 'offline' ? readiness.cause : null;
+  const showServiceCommand = offlineCause !== null && offlineCause !== 'health';
+  const blurb =
+    readiness.status === 'ready'
+      ? t`OpenCode is ready on this host.`
+      : readiness.status === 'unsupported'
+        ? t`This gateway does not advertise OpenCode sessions.`
+        : readiness.status === 'not-installed'
+          ? t`OpenCode was not found on this host. Install OpenCode 2, then check again.`
+          : offlineCause === 'health'
+            ? t`This gateway is not answering. Check the server connection, then try again.`
+            : offlineCause === 'service'
+              ? t`OpenCode is installed, but its service is not answering. Run this command on the host.`
+              : t`OpenCode's installation could not be confirmed. If it is installed, run this command on the host.`;
 
   return (
     <SheetScene
@@ -95,12 +111,28 @@ export const OpenCodeGuideSheet = memo(function OpenCodeGuideSheet({
       <View
         style={[styles.column, { paddingBottom: Math.max(insets.bottom, SHEET_LADDER.section) }]}>
         <Text variant="caption" color={theme.colors.textMuted} style={styles.blurb}>
-          {readiness.status === 'unsupported'
-            ? t`This gateway does not advertise OpenCode sessions.`
-            : t`The OpenCode daemon is not running on this host. Run this and it will be.`}
+          {blurb}
         </Text>
 
-        {readiness.status === 'offline' ? (
+        {readiness.status === 'not-installed' ? (
+          <PressableScale
+            testID="opencode-guide-install-btn"
+            accessibilityRole="link"
+            accessibilityLabel={t`Open the OpenCode installation guide`}
+            onPress={() => void Linking.openURL(OPENCODE_INSTALL_URL)}
+            style={[styles.command, { borderColor: theme.colors.border }]}>
+            <ExternalLink size={15} color={theme.colors.primary} strokeWidth={2.2} />
+            <Text
+              variant="bodySmall"
+              weight="semibold"
+              color={theme.colors.text}
+              style={styles.commandText}>
+              {t`Open installation guide`}
+            </Text>
+          </PressableScale>
+        ) : null}
+
+        {showServiceCommand ? (
           <>
             <PressableScale
               testID="opencode-guide-copy-cmd"

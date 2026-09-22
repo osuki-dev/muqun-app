@@ -1,3 +1,5 @@
+import { useAppearanceProfile } from '@/components/appearance-profile-provider';
+import { appChrome } from '@/constants/appearance';
 import { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useThemeTokens } from '@osuki-dev/ui';
@@ -10,7 +12,6 @@ import Animated from 'react-native-reanimated';
 import { PressableScale } from '@/components/pressable-scale';
 import { usePaneChatColors } from '@/components/pane-chat-blocks';
 import { AGENT_TYPE } from '@/constants/agent-type';
-import { appChrome } from '@/constants/appearance';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { fadeInDown, fadeOutDown } from '@/lib/motion';
 import type { FileDiffItem } from '@/lib/agent-session';
@@ -50,6 +51,7 @@ export const AgentRevertPlate = memo(function AgentRevertPlate({
 }: AgentRevertPlateProps) {
   const { t } = useLingui();
   const theme = useThemeTokens();
+  const profile = useAppearanceProfile();
   const diffColors = usePaneChatColors();
   const surfaceBackground = useSurfaceBackground();
 
@@ -76,6 +78,7 @@ export const AgentRevertPlate = memo(function AgentRevertPlate({
       <View
         style={[
           styles.plate,
+          { borderRadius: profile.chrome.popover },
           {
             backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
             borderColor: theme.colors.border,
@@ -134,7 +137,7 @@ export const AgentRevertPlate = memo(function AgentRevertPlate({
             accessibilityLabel={t`Keep everything and drop the staged rollback`}
             disabled={busy}
             onPress={onKeep}
-            style={styles.keep}>
+            style={[styles.keep, { borderRadius: profile.chrome.control }]}>
             <Text variant="caption" weight="semibold" color={theme.colors.textMuted}>
               {t`Keep`}
             </Text>
@@ -148,6 +151,7 @@ export const AgentRevertPlate = memo(function AgentRevertPlate({
             onPress={onCommit}
             style={[
               styles.commit,
+              { borderRadius: profile.chrome.control },
               { backgroundColor: theme.colors.primary },
               busy ? { opacity: appChrome.opacity.disabled } : null,
             ]}>
@@ -167,7 +171,6 @@ const styles = StyleSheet.create({
     gap: 8,
     paddingHorizontal: 12,
     paddingVertical: 10,
-    borderRadius: appChrome.radius.popover,
     borderCurve: 'continuous',
     borderWidth: StyleSheet.hairlineWidth,
   },
@@ -188,7 +191,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 999,
     borderCurve: 'continuous',
   },
 });

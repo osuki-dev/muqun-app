@@ -3,7 +3,7 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { resolveHomeHero } from '../src/theme/home-hero';
+import { resolveHomeArtwork } from '../src/theme/home-artwork';
 import { resolveHomeIdentity, resolveThemeImage } from '../src/theme/resolve';
 import type { ThemeImage, ThemeManifest, ThemeSlot } from '../src/theme/schema';
 
@@ -19,7 +19,7 @@ const appRoot = fileURLToPath(new URL('../', import.meta.url));
 const appFixturePath = resolve(appRoot, 'fixtures/home-theme-resolvers.json');
 
 const sourceFiles = {
-  app: ['src/theme/resolve.ts', 'src/theme/home-hero.ts', 'src/theme/schema.ts'],
+  app: ['src/theme/resolve.ts', 'src/theme/home-artwork.ts', 'src/theme/schema.ts'],
 } as const;
 
 type FixtureManifest = {
@@ -59,7 +59,7 @@ type Fixture = {
     expectedIdentity: ReturnType<typeof resolveHomeIdentity>;
     expected: {
       id: string;
-      hero: ReturnType<typeof resolveHomeHero>;
+      artwork: ReturnType<typeof resolveHomeArtwork>;
       directImage: ThemeImage | null;
     }[];
   })[];
@@ -100,7 +100,7 @@ const cases: FixtureCase[] = [
   {
     id: 'omitted-identity',
     manifest: manifest('omitted-identity', {
-      decoration: { 'home.hero': { asset: 'hero', fit: 'contain' } },
+      decoration: { 'home.artwork': { asset: 'artwork', fit: 'contain' } },
     }),
     queries: [
       query('theme-light-compact', 'light', 'compact'),
@@ -113,21 +113,21 @@ const cases: FixtureCase[] = [
       homeIdentity: {
         name: { mode: 'custom', text: 'Muqun Lab' },
         logo: { mode: 'custom', asset: 'brand' },
-        hero: { mode: 'default' },
+        artwork: { mode: 'default' },
       },
       decoration: {
-        'home.hero': {
-          asset: 'hero-light',
+        'home.artwork': {
+          asset: 'artwork-light',
           fit: 'contain',
-          regular: { asset: 'hero-light-regular', opacity: 0.8 },
+          regular: { asset: 'artwork-light-regular', opacity: 0.8 },
         },
       },
       variantDecorations: {
         dark: {
-          'home.hero': {
-            asset: 'hero-dark',
+          'home.artwork': {
+            asset: 'artwork-dark',
             fit: 'cover',
-            regular: { asset: 'hero-dark-regular' },
+            regular: { asset: 'artwork-dark-regular' },
           },
         },
       },
@@ -145,9 +145,9 @@ const cases: FixtureCase[] = [
       homeIdentity: {
         name: { mode: 'default' },
         logo: { mode: 'default' },
-        hero: { mode: 'default' },
+        artwork: { mode: 'default' },
       },
-      decoration: { 'home.hero': { asset: 'hero' } },
+      decoration: { 'home.artwork': { asset: 'artwork' } },
     }),
     queries: [query('theme-light-compact', 'light', 'compact')],
   },
@@ -157,9 +157,9 @@ const cases: FixtureCase[] = [
       homeIdentity: {
         name: { mode: 'hidden' },
         logo: { mode: 'hidden' },
-        hero: { mode: 'hidden' },
+        artwork: { mode: 'hidden' },
       },
-      decoration: { 'home.hero': { asset: 'hero' } },
+      decoration: { 'home.artwork': { asset: 'artwork' } },
     }),
     queries: [
       query('theme', 'light', 'compact'),
@@ -168,19 +168,19 @@ const cases: FixtureCase[] = [
     ],
   },
   {
-    id: 'explicit-fallback',
-    manifest: manifest('explicit-fallback', {
+    id: 'empty-state-is-not-home-artwork',
+    manifest: manifest('empty-state-is-not-home-artwork', {
       decoration: {
         'emptyState.illustration': { asset: 'empty', fit: 'contain' },
       },
     }),
     queries: [
       query('theme-no-fallback', 'light', 'compact'),
-      query('shown-fallback', 'light', 'compact', {
+      query('shown-with-direct-fallback', 'light', 'compact', {
         preference: 'shown',
         directFallbackSlot: 'emptyState.illustration',
       }),
-      query('shown-fallback-regular', 'dark', 'regular', {
+      query('shown-with-direct-fallback-regular', 'dark', 'regular', {
         preference: 'shown',
         directFallbackSlot: 'emptyState.illustration',
       }),
@@ -190,15 +190,15 @@ const cases: FixtureCase[] = [
     id: 'responsive-null-and-disabled',
     manifest: manifest('responsive-null-and-disabled', {
       decoration: {
-        'home.hero': {
-          asset: 'hero-base',
+        'home.artwork': {
+          asset: 'artwork-base',
           compact: null,
-          regular: { asset: 'hero-regular' },
+          regular: { asset: 'artwork-regular' },
         },
         'emptyState.illustration': { asset: 'empty' },
       },
       variantDecorations: {
-        dark: { 'home.hero': null },
+        dark: { 'home.artwork': null },
       },
     }),
     queries: [
@@ -248,7 +248,7 @@ function buildFixture(sources: Fixture['sources']): Fixture {
           const directImage = input
             ? resolveThemeImage(
                 input,
-                'home.hero',
+                'home.artwork',
                 itemQuery.mode,
                 itemQuery.width,
                 decorationsEnabled,
@@ -257,7 +257,7 @@ function buildFixture(sources: Fixture['sources']): Fixture {
             : null;
           return {
             id: itemQuery.id,
-            hero: resolveHomeHero({
+            artwork: resolveHomeArtwork({
               manifest: input,
               mode: itemQuery.mode,
               width: itemQuery.width,

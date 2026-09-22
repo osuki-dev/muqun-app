@@ -1,6 +1,7 @@
 import type { NativeStackNavigationOptions } from 'expo-router';
 
 import { appChrome } from '@/constants/appearance';
+import type { AppearanceProfile } from '@/lib/appearance-profile';
 
 export type SheetPresentation = 'sheet' | 'fullscreen';
 
@@ -63,6 +64,8 @@ export const sheetRoutePresentations: Readonly<Record<string, SheetPresentation>
   // pick a workspace, read a diff -- so every one is a route rather than a
   // `<Modal>` the workbench keeps mounted whether it is open or not.
   'agent-sessions': 'sheet',
+  'agent-session-tree': 'sheet',
+  'agent-subagent-detail': 'sheet',
   'agent-model': 'sheet',
   'agent-mode': 'sheet',
   'agent-workspace': 'sheet',
@@ -106,8 +109,7 @@ export const sheetRouteDetents: Readonly<Record<string, SheetDetents>> = {
   'settings-font': 'expandable',
   // One short list of languages: as tall as it is, and no taller.
   'settings-language': 'fitToContents',
-  // Two layout previews and their descriptions, with enough room to compare
-  // them without making a two-choice preference a full-screen page.
+  // Three layout previews and their descriptions, in the same scrollable sheet.
   'settings-home-layout': 'expandable',
   // Full height leaves room for the composer and keyboard.
   'new-task': 'expandable',
@@ -119,6 +121,10 @@ export const sheetRouteDetents: Readonly<Record<string, SheetDetents>> = {
   // Pairing: a viewfinder, two fields and a way in.
   explore: 'expandable',
   'agent-sessions': 'expandable',
+  'agent-session-tree': 'full',
+  // A contextual transcript above the tree or workbench. It is always the
+  // largest sheet and replaces its target in place rather than stacking peers.
+  'agent-subagent-detail': 'full',
   // A model list is usually browsed and sometimes filtered to two rows. At the
   // expandable detent those two rows sat at the top of a sheet that was 82% of
   // the screen, and the rest was ground. It opens at just over half and drags to
@@ -196,6 +202,8 @@ export const sheetRouteContent: Readonly<Record<string, SheetContent>> = {
   'agent-model': 'list',
   'agent-workspace': 'list',
   'agent-sessions': 'list',
+  'agent-session-tree': 'list',
+  'agent-subagent-detail': 'list',
   'agent-worktree': 'list',
   // What is still running after the agent moved on.
   'agent-shells': 'list',
@@ -333,10 +341,20 @@ export function sheetPresentationOptions(
  * `_layout.tsx`, because each of them also overrides the animation duration --
  * and because the contract test greps for exactly that spelling.
  */
-export function sheetRouteOptions(route: string): NativeStackNavigationOptions {
-  return sheetPresentationOptions(
+export function sheetRouteOptions(
+  route: string,
+  profile?: AppearanceProfile,
+  reduceMotion = false
+): NativeStackNavigationOptions {
+  const options = sheetPresentationOptions(
     sheetRoutePresentations[route] ?? 'sheet',
     sheetRouteDetents[route] ?? 'full',
     sheetRouteContent[route] ?? 'short'
   );
+  return {
+    ...options,
+    ...(profile ? { sheetCornerRadius: profile.chrome.sheet } : {}),
+    // Duration alone does not disable native Android transitions.
+    ...(reduceMotion ? { animation: 'none', animationDuration: 0 } : {}),
+  };
 }

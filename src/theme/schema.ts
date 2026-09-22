@@ -126,7 +126,13 @@ const slotSchema = imageSchema
  *
  * The app reads only these names. The schema below deliberately accepts others.
  */
-export const THEME_ICONS = ['chrome.back', 'chrome.send', 'chrome.attach'] as const;
+export const THEME_ICONS = [
+  'chrome.back',
+  'chrome.send',
+  'chrome.attach',
+  'chrome.scan',
+  'chrome.settings',
+] as const;
 export type ThemeIconName = (typeof THEME_ICONS)[number];
 
 const iconSchema = z.strictObject({
@@ -171,7 +177,7 @@ export const iconsSchema = z.record(z.string(), iconSchema.nullable().optional()
 export const THEME_SLOTS = [
   'shell.background',
   'home.background',
-  'home.decoration',
+  'home.artwork',
   'navigation.background',
   'composer.background',
   'actions.background',
@@ -179,7 +185,7 @@ export const THEME_SLOTS = [
   'buttons.primary.background',
   'tabs.background',
   'emptyState.illustration',
-  'home.hero',
+  'launch.artwork',
 ] as const;
 export type ThemeSlot = (typeof THEME_SLOTS)[number];
 
@@ -271,6 +277,12 @@ export const themeManifestSchema = z.object({
   description: plainText(280).optional(),
   tags: z.array(identifier).max(12).optional(),
   preview: identifier.optional(),
+  homePresentation: z
+    .strictObject({
+      header: z.enum(['standard', 'cover']),
+      toolbarBackground: z.boolean().optional(),
+    })
+    .optional(),
   variants: z.strictObject({ light: themeVariantSchema, dark: themeVariantSchema }),
   materials: themeMaterialsSchema.optional(),
   assets: z.record(identifier, assetSchema).optional(),
@@ -296,7 +308,7 @@ export const themeManifestSchema = z.object({
       /**
        * Whether Home shows the pack's own illustration above the server list.
        *
-       * The picture itself is the `home.hero` decoration slot, like every other
+       * The picture itself is the `home.artwork` decoration slot, like every other
        * image a pack ships; this is only the author's answer to "on or off by
        * default", and it is written in the same `default`/`hidden` vocabulary
        * `name` and `logo` already use rather than in a third one. `default`
@@ -308,7 +320,7 @@ export const themeManifestSchema = z.object({
        * that the slot does not already own: the asset, its fit, its opacity and
        * its per-mode and per-width overrides are all the slot's.
        */
-      hero: visibilitySchema.optional(),
+      artwork: visibilitySchema.optional(),
     })
     .optional(),
 });

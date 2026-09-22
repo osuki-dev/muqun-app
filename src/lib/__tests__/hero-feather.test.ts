@@ -11,6 +11,7 @@ import { describe, expect, test } from 'bun:test';
 
 import {
   containedImageRect,
+  coveredImageRect,
   heroFeatherGeometry,
   HOME_HERO_FEATHER,
   MAX_FEATHER_FRACTION,
@@ -76,6 +77,27 @@ describe('the drawn rectangle', () => {
   test('a container with no size yet is not a division by zero', () => {
     const rect = containedImageRect({ width: 0, height: 0 }, { width: 1200, height: 400 });
     expect(rect).toEqual({ x: 0, y: 0, width: 0, height: 0 });
+  });
+});
+
+describe('the Editorial cover rectangle', () => {
+  test('fills the full-width band and crops the overflow', () => {
+    expect(coveredImageRect(BAND, { width: 400, height: 800 })).toEqual({
+      x: 0,
+      y: -270,
+      width: 360,
+      height: 720,
+    });
+  });
+
+  test('the focal point chooses which part of the crop survives', () => {
+    const drawing = { width: 400, height: 800 };
+    expect(coveredImageRect(BAND, drawing, { x: 0.5, y: 0 }).y).toBe(0);
+    expect(coveredImageRect(BAND, drawing, { x: 0.5, y: 1 }).y).toBe(-540);
+  });
+
+  test('invalid dimensions safely fill the container', () => {
+    expect(coveredImageRect(BAND)).toEqual({ x: 0, y: 0, width: 360, height: 180 });
   });
 });
 

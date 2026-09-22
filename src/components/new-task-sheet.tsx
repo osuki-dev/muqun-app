@@ -26,6 +26,7 @@ import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import Animated from 'react-native-reanimated';
 
 import { PressableScale } from '@/components/pressable-scale';
+import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import {
   SheetScene,
   SheetSceneAction,
@@ -230,6 +231,7 @@ export function NewTaskSheet({
   return (
     <>
       <KeyboardAwareScrollView
+        nestedScrollEnabled
         // Keep the focused line visible above the system keyboard.
         bottomOffset={KEYBOARD_BOTTOM_OFFSET}
         keyboardDismissMode="on-drag"
@@ -467,6 +469,7 @@ function RecentCwdRow({
   selected: boolean;
   onSelect: () => void;
 }) {
+  const profile = useAppearanceProfile();
   const theme = useThemeTokens();
   const surfaceBackground = useSurfaceBackground();
 
@@ -478,7 +481,10 @@ function RecentCwdRow({
       onPress={onSelect}
       style={[
         styles.recentRow,
-        { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
+        {
+          backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
+          borderRadius: profile.chrome.control,
+        },
       ]}>
       <FolderOpen
         size={16}
@@ -532,7 +538,6 @@ const styles = StyleSheet.create({
     gap: LADDER.gap,
     minHeight: 42,
     paddingHorizontal: LADDER.snug,
-    borderRadius: 12,
     borderCurve: 'continuous',
   },
   recentPath: { flex: 1, minWidth: 0, includeFontPadding: false },

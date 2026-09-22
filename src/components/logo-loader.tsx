@@ -46,11 +46,10 @@ export function LogoLoader({
     theme,
     assets,
     resolvedMode,
-    width >= 768 ? 'regular' : 'compact',
-    { hero: true }
+    width >= 768 ? 'regular' : 'compact'
   );
-  const heroUri =
-    !compact && artwork.kind === 'hero' && artwork.uri !== failedUri ? artwork.uri : null;
+  const artworkUri =
+    !compact && artwork.kind === 'artwork' && artwork.uri !== failedUri ? artwork.uri : null;
   const reduceMotion = useReducedMotion();
   const appActive = useAppActive();
   const progress = useSharedValue(0);
@@ -84,15 +83,15 @@ export function LogoLoader({
   }));
   const logoSize = size * (compact ? 1.18 : 1.45);
   // Reserve the image's actual footprint so the caption below cannot overlap it.
-  const imageWidth = heroUri ? Math.min(size * 3, width - 64) : logoSize;
-  const imageHeight = heroUri ? imageWidth / 2 : logoSize;
+  const imageWidth = artworkUri ? Math.min(size * 3, width - 64) : logoSize;
+  const imageHeight = artworkUri ? imageWidth / 2 : logoSize;
 
   return (
     <View
       accessibilityLabel={accessibilityLabel}
       accessibilityRole="progressbar"
       style={[styles.root, { width: imageWidth, height: imageHeight }]}>
-      {!compact && !heroUri ? (
+      {!compact && !artworkUri ? (
         <Animated.View
           style={[styles.halo, { borderRadius: size / 2, backgroundColor: '#FF705E' }, haloStyle]}
         />
@@ -108,9 +107,9 @@ export function LogoLoader({
         ]}>
         <Image
           contentFit="contain"
-          source={heroUri ? { uri: heroUri } : logo}
+          source={artworkUri ? { uri: artworkUri } : logo}
           onError={() => {
-            if (heroUri) setFailedUri(heroUri);
+            if (artworkUri) setFailedUri(artworkUri);
           }}
           autoplay={false}
           accessible={false}

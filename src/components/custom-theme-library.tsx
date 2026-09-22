@@ -1,3 +1,4 @@
+import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { useLingui } from '@lingui/react/macro';
 import { Tag, useThemeTokens } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
@@ -14,6 +15,7 @@ import { SettingsSegmented } from '@/components/settings-segmented';
 import { ThemeLinkImport } from '@/components/theme-link-import';
 import { ThemeImportProgress } from '@/components/theme-import-progress';
 import { ThemeAppearanceSettings } from '@/components/theme-appearance-settings';
+import { TwoStepAction } from '@/components/two-step-action';
 import { useSurfaceBackground, useSurfaceBackgroundOpacity } from '@/hooks/use-surface-background';
 import {
   DURATION,
@@ -79,6 +81,7 @@ function ThemeCover({
   pack: Pick<ThemeAppearance, 'light' | 'dark'>;
   size: { width: number; height: number };
 }) {
+  const profile = useAppearanceProfile();
   const uri = manifest.preview ? assets?.[manifest.preview] : undefined;
   if (!uri?.startsWith('file:///')) return <ThemePaletteStrip pack={pack} />;
   return (
@@ -91,7 +94,7 @@ function ThemeCover({
       cachePolicy="memory"
       transition={DURATION.medium}
       accessible={false}
-      style={{ ...size, borderRadius: 8 }}
+      style={{ ...size, borderRadius: profile.chrome.card }}
     />
   );
 }
@@ -112,7 +115,7 @@ type DraftAppearance = Pick<
   | 'surfaceBackgroundOpacity'
   | 'hideHomeLogo'
   | 'hideHomeText'
-  | 'homeHero'
+  | 'homeArtwork'
 >;
 
 export function CustomThemeLibrary({
@@ -161,6 +164,7 @@ export function CustomThemeLibrary({
   tabs?: boolean;
   children?: ReactNode;
 } = {}) {
+  const profile = useAppearanceProfile();
   const { t } = useLingui();
   const { colors } = useThemeTokens();
   const reskin = useReskinTransition();
@@ -172,7 +176,8 @@ export function CustomThemeLibrary({
   const background = useSurfaceBackground();
   const surfaceOpacity = useSurfaceBackgroundOpacity();
   const { width } = useWindowDimensions();
-  const wideDetail = detail && width >= 840;
+  const wideActions = width >= 840;
+  const wideDetail = detail && wideActions;
   const library = useThemeLibrary((state) => state.library);
   const currentPack = useThemePack();
   const router = useRouter();
@@ -195,10 +200,7 @@ export function CustomThemeLibrary({
     initialCandidate ?? (initialManifest ? { manifest: initialManifest } : null)
   );
   const [error, setError] = useState<string | null>(null);
-  const [draftAppearance, setDraftAppearance] = useState<DraftAppearance>({
-    hideHomeLogo: true,
-    hideHomeText: true,
-  });
+  const [draftAppearance, setDraftAppearance] = useState<DraftAppearance>({});
   const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   // Copying a dozen images into permanent storage reports nothing on its own.
@@ -270,6 +272,7 @@ export function CustomThemeLibrary({
       : undefined;
 
   function closePreview() {
+    setDraftAppearance({});
     setRemoving(false);
     setActionsOpen(false);
     setNotice(null);
@@ -328,7 +331,8 @@ export function CustomThemeLibrary({
         store.setHideHomeLogo(id, draftAppearance.hideHomeLogo);
       if (draftAppearance.hideHomeText !== undefined)
         store.setHideHomeText(id, draftAppearance.hideHomeText);
-      if (draftAppearance.homeHero !== undefined) store.setHomeHero(id, draftAppearance.homeHero);
+      if (draftAppearance.homeArtwork !== undefined)
+        store.setHomeArtwork(id, draftAppearance.homeArtwork);
     }
     if (apply) {
       // `colors` here is the *candidate's* palette -- this editor is already
@@ -400,6 +404,7 @@ export function CustomThemeLibrary({
   useEffect(() => () => onPrimaryActionChange?.(null), [onPrimaryActionChange]);
 
   function chooseTab(next: ThemeTab) {
+    setPendingRemoval(null);
     setTab(next);
     saveThemeTab(next);
   }
@@ -438,9 +443,11 @@ export function CustomThemeLibrary({
     importOpen && !linkImportOpen ? (
       <View
         style={{
+          flexDirection: wideActions ? 'row' : 'column',
+          flexWrap: 'wrap',
           gap: 8,
           padding: 12,
-          borderRadius: 16,
+          borderRadius: profile.chrome.card,
           backgroundColor: background(colors.surfaceRaised),
         }}>
         <Button
@@ -461,7 +468,10 @@ export function CustomThemeLibrary({
                   return;
                 }
                 if (onOpenCandidate) onOpenCandidate(value);
-                else setCandidate(value);
+                else {
+                  setDraftAppearance({});
+                  setCandidate(value);
+                }
                 setImportOpen(false);
                 setActionsOpen(false);
               }
@@ -476,7 +486,10 @@ export function CustomThemeLibrary({
         onClose={() => setLinkImportOpen(false)}
         onReady={(value) => {
           if (onOpenCandidate) onOpenCandidate(value);
-          else setCandidate(value);
+          else {
+            setDraftAppearance({});
+            setCandidate(value);
+          }
           setLinkImportOpen(false);
           setImportOpen(false);
           setActionsOpen(false);
@@ -510,9 +523,13 @@ export function CustomThemeLibrary({
                 assets: installed.assets,
               };
               if (onOpenCandidate) onOpenCandidate(next);
-              else setCandidate(next);
+              else {
+                setDraftAppearance({});
+                setCandidate(next);
+              }
               setError(null);
               setNotice(null);
+              setPendingRemoval(null);
               setActionsOpen(false);
               setImportOpen(false);
             }}
@@ -523,7 +540,7 @@ export function CustomThemeLibrary({
               alignItems: 'center',
               gap: 12,
               padding: 12,
-              borderRadius: 12,
+              borderRadius: profile.chrome.control,
               backgroundColor: background(colors.surfaceRaised),
             }}>
             <ThemeCover
@@ -568,51 +585,31 @@ export function CustomThemeLibrary({
             </View>
             <ChevronRight size={18} color={colors.textMuted} />
           </PressableScale>
-          <PressableScale
-            accessibilityRole="button"
-            accessibilityLabel={t`Remove ${installed.manifest.name}`}
+          <TwoStepAction
             testID={`theme-remove-${installed.id}`}
+            presentation="compact"
+            label={t`Remove`}
+            confirmLabel={t`Tap again to remove`}
+            accessibilityLabel={t`Remove ${installed.manifest.name}`}
+            confirmAccessibilityLabel={`${t`Tap again to remove`}: ${installed.manifest.name}`}
+            Icon={Trash2}
+            armed={pendingRemoval === installed.id}
             disabled={busy}
-            onPress={() => {
-              setPendingRemoval(installed.id);
+            onArmedChange={(armed) => {
+              setPendingRemoval((current) =>
+                armed ? installed.id : current === installed.id ? null : current
+              );
               setError(null);
               setNotice(null);
             }}
-            style={{ padding: 12 }}>
-            <Trash2 size={18} color={colors.textMuted} />
-          </PressableScale>
+            onConfirm={() =>
+              void perform(() => {
+                useThemeLibrary.getState().remove(installed.id);
+              })
+            }
+          />
         </View>
       ))}
-      {pendingRemoval ? (
-        <View
-          testID="theme-list-remove-confirm"
-          style={{
-            gap: 8,
-            padding: 12,
-            borderRadius: 16,
-            backgroundColor: background(colors.surfaceRaised),
-          }}>
-          <Text>{t`Remove this theme?`}</Text>
-          <Text
-            variant="bodySmall"
-            color={colors.textMuted}>{t`The theme will be removed from this device`}</Text>
-          <View style={{ flexDirection: 'row', gap: 8 }}>
-            <Button
-              disabled={busy}
-              testID="theme-list-confirm-remove"
-              onPress={() =>
-                void perform(() => {
-                  useThemeLibrary.getState().remove(pendingRemoval);
-                  setPendingRemoval(null);
-                })
-              }>{t`Remove`}</Button>
-            <Button
-              disabled={busy}
-              variant="ghost"
-              onPress={() => setPendingRemoval(null)}>{t`Cancel`}</Button>
-          </View>
-        </View>
-      ) : null}
     </View>
   );
 
@@ -718,7 +715,7 @@ export function CustomThemeLibrary({
           testID="theme-status-message"
           style={{
             padding: 12,
-            borderRadius: 12,
+            borderRadius: profile.chrome.surface,
             backgroundColor: background(colors.surfaceRaised),
           }}>
           {error ? (
@@ -820,14 +817,14 @@ export function CustomThemeLibrary({
                           useThemeLibrary.getState().setHideHomeText(installedCandidate.id, value)
                         )
                   }
-                  onHeroChange={(value) =>
+                  onArtworkChange={(value) =>
                     !installedCandidate
                       ? setDraftAppearance((current) => ({
                           ...current,
-                          homeHero: value === 'theme' ? undefined : value,
+                          homeArtwork: value === 'theme' ? undefined : value,
                         }))
                       : void perform(() =>
-                          useThemeLibrary.getState().setHomeHero(installedCandidate.id, value)
+                          useThemeLibrary.getState().setHomeArtwork(installedCandidate.id, value)
                         )
                   }
                   onReset={() =>
@@ -891,7 +888,7 @@ export function CustomThemeLibrary({
               style={{
                 gap: 8,
                 padding: 12,
-                borderRadius: 16,
+                borderRadius: profile.chrome.card,
                 backgroundColor: background(colors.surfaceRaised),
               }}>
               <Text>{t`Remove this theme?`}</Text>
@@ -912,9 +909,11 @@ export function CustomThemeLibrary({
           ) : (actionsOpen || detail) && candidateHasActions ? (
             <View
               style={{
+                flexDirection: wideActions ? 'row' : 'column',
+                flexWrap: 'wrap',
                 gap: 4,
                 padding: 8,
-                borderRadius: 16,
+                borderRadius: profile.chrome.card,
                 backgroundColor: background(colors.surfaceRaised),
               }}>
               {/* Not where a host draws the primary action. On the detail

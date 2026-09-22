@@ -13,7 +13,7 @@ import {
 import { StyleSheet, View } from 'react-native';
 
 import { PressableScale } from '@/components/pressable-scale';
-import { appChrome } from '@/constants/appearance';
+import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { type SshHomeAge, sshHomeAge, sshHomeSubtitle } from '@/lib/ssh-home';
 import type { SshHostRecord } from '@/lib/ssh-hosts';
 
@@ -91,6 +91,7 @@ export function SshHostRow({
 }) {
   const { t } = useLingui();
   const theme = useThemeTokens();
+  const profile = useAppearanceProfile();
   const surfaceBackground = useSurfaceBackground();
   const address = sshHomeSubtitle(record);
   const trusted = Boolean(record.trustedHostKey);
@@ -109,7 +110,13 @@ export function SshHostRow({
   return (
     <View
       testID={testID}
-      style={[styles.row, { backgroundColor: surfaceBackground(theme.colors.surface) }]}>
+      style={[
+        styles.row,
+        {
+          backgroundColor: surfaceBackground(theme.colors.surface),
+          borderRadius: profile.chrome.noticeCard,
+        },
+      ]}>
       <PressableScale
         accessibilityRole="button"
         accessibilityLabel={t`Open SSH host ${record.label}`}
@@ -175,7 +182,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
     padding: 8,
-    borderRadius: appChrome.radius.noticeCard,
     borderCurve: 'continuous',
   },
   rowMain: {

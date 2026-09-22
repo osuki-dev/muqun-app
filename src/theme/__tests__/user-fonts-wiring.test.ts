@@ -60,7 +60,9 @@ test('the kit theme takes the interface slot for every role, captions included',
   // app is running would be stored, re-render every reader of the setting, and
   // change nothing.
   const hook = read('src/hooks/use-theme-pack.ts');
-  expect(hook).toContain('buildTheme(pack, interfaceFont), [pack, interfaceFont]');
+  expect(hook).toContain(
+    'buildTheme(pack, interfaceFont, profile), [pack, interfaceFont, profile]'
+  );
 });
 
 test('markdown takes both faces, and keeps the platform monospace as its floor', () => {

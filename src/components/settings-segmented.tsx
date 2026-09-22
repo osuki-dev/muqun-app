@@ -27,6 +27,7 @@ import { StyleSheet } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import { ThemedSurfaceArtwork } from '@/components/themed-surface';
+import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { INSTANT, PRESET, timing } from '@/lib/motion';
 import { useRenderTally } from '@/lib/render-tally';
 
@@ -69,6 +70,7 @@ export function SettingsSegmented({
   textCase?: SegmentedCase;
 }) {
   const theme = useThemeTokens();
+  const profile = useAppearanceProfile();
   useRenderTally('SettingsSegmented');
   const [trackWidth, setTrackWidth] = useState(0);
 
@@ -115,6 +117,7 @@ export function SettingsSegmented({
     <Tabs.Root value={value} onValueChange={onChange} variant="pill" size="compact">
       <Tabs.List
         testID={testID}
+        style={{ borderRadius: profile.chrome.segmentedTrack }}
         // The kit's own opaque `surfaceRaised` track, kept, and this is a
         // deliberate exception to the one-layer rule `themed-tabs.tsx` argues
         // at length.
@@ -150,7 +153,7 @@ export function SettingsSegmented({
             {
               width: segment,
               backgroundColor: theme.colors.surface,
-              borderRadius: theme.radius.pill,
+              borderRadius: profile.chrome.segmentedOption,
             },
             pillStyle,
           ]}
@@ -162,7 +165,7 @@ export function SettingsSegmented({
             // Android's native driver omits selected. Expose the same source
             // state in a test identifier, without changing spoken labels.
             testID={`settings-selection:${option.value === value ? 'on' : 'off'}:${testID ?? 'segment'}-${option.value}`}
-            style={styles.trigger}>
+            style={[styles.trigger, { borderRadius: profile.chrome.segmentedOption }]}>
             {textCase === 'sentence' ? (
               // The kit's own label style, with its `textTransform` turned off.
               //

@@ -127,7 +127,7 @@ export function AgentAssignmentBar({
           const ready = canAssignToAgent(candidate.status);
           return (
             <PressableScale
-              key={candidate.paneId}
+              key={candidate.instanceId}
               testID={`assignment-agent-${candidate.paneId}`}
               accessibilityRole="button"
               accessibilityState={{ selected, disabled }}

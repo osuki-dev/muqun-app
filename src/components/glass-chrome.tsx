@@ -14,6 +14,8 @@ import {
 import Animated from 'react-native-reanimated';
 
 import { appChrome } from '@/constants/appearance';
+import { useAppearanceProfile } from '@/components/appearance-profile-provider';
+import type { AppearanceProfile } from '@/lib/appearance-profile';
 import { withAlpha } from '@/lib/color';
 import { DURATION } from '@/lib/motion';
 import { resolveThemeImage } from '@/theme/resolve';
@@ -64,6 +66,8 @@ type GlassChromeProps = {
   /** @default 'floating' */
   face?: GlassFace;
   surface?: ThemeSurface;
+  /** Semantic geometry owned by the active appearance profile. */
+  shape?: keyof AppearanceProfile['chrome'] | 'pill' | 'none';
   /**
    * The face's own shape -- size, radius, padding, shadow. The material is this
    * component's business; where the surface is and how big it is stays with the
@@ -99,10 +103,12 @@ export function GlassChrome({
   children,
   face = 'floating',
   surface = 'actions',
+  shape,
   style,
   entering,
   exiting,
 }: GlassChromeProps) {
+  const profile = useAppearanceProfile();
   const { resolvedMode } = useThemeMode();
   const theme = useThemeTokens();
   const dark = resolvedMode === 'dark';
@@ -121,6 +127,20 @@ export function GlassChrome({
     backgroundOpacity < 1
       ? 'solid'
       : resolveThemeMaterial(active?.manifest, surface, hasImage, glassAvailable);
+  const resolvedShape =
+    shape ?? (face === 'sheet' ? 'sheet' : surface === 'navigation' ? 'navigationPill' : 'control');
+  const radiusStyle: ViewStyle | undefined =
+    resolvedShape === 'none'
+      ? undefined
+      : resolvedShape === 'sheet'
+        ? {
+            borderTopLeftRadius: profile.chrome.sheet,
+            borderTopRightRadius: profile.chrome.sheet,
+          }
+        : {
+            borderRadius:
+              resolvedShape === 'pill' ? profile.radius.pill : profile.chrome[resolvedShape],
+          };
   /**
    * An edge, wherever a pack has made surfaces translucent.
    *
@@ -151,6 +171,7 @@ export function GlassChrome({
    */
   const chromeStyle: StyleProp<ViewStyle> = [
     style,
+    radiusStyle,
     hasImage && { overflow: 'hidden' },
     {
       borderWidth: StyleSheet.hairlineWidth,

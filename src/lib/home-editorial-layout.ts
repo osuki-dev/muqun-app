@@ -4,15 +4,11 @@
  * 400pt for the main column, a 280pt utility column, and a 24pt rule gap.
  */
 export const EDITORIAL_TWO_COLUMN_MIN_WIDTH = 752;
-/** The smallest normal-type content width where the masthead can split. */
-export const EDITORIAL_MASTHEAD_MIN_WIDTH = 360;
 
 export type EditorialLayoutMode = 'one-column' | 'two-column';
-export type EditorialMastheadMode = 'stacked' | 'side-by-side';
 
 export type EditorialLayoutGeometry = {
   mode: EditorialLayoutMode;
-  mastheadMode: EditorialMastheadMode;
   contentWidth: number;
   innerWidth: number;
   gutter: number;
@@ -38,15 +34,12 @@ export function getEditorialLayoutGeometry(
   const wideTypeMinimum = EDITORIAL_TWO_COLUMN_MIN_WIDTH + Math.max(0, scale - 1) * 320;
   const twoColumn =
     hasAside && scale < 1.35 && width >= wideTypeMinimum && innerWidth >= gutter * 2;
-  const mastheadMode: EditorialMastheadMode =
-    scale < 1.2 && width >= EDITORIAL_MASTHEAD_MIN_WIDTH ? 'side-by-side' : 'stacked';
   const gap = twoColumn ? Math.min(32, Math.max(24, Math.round(24 * scale))) : 0;
   const asideWidth = twoColumn ? Math.min(340, Math.max(280, Math.round(280 * scale))) : 0;
   const mainWidth = twoColumn ? Math.max(0, innerWidth - gap - asideWidth) : innerWidth;
 
   return {
     mode: twoColumn ? 'two-column' : 'one-column',
-    mastheadMode,
     contentWidth: width,
     innerWidth,
     gutter,

@@ -558,6 +558,7 @@ export const AgentSessionsSheet = memo(function AgentSessionsSheet({
         </>
       }>
       <ScrollView
+        nestedScrollEnabled
         ref={scrollerRef}
         style={sheetSceneStyles.scroller}
         contentContainerStyle={sheetSceneStyles.scrollerContent}

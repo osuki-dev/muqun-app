@@ -8,7 +8,7 @@ import {
   type ThemeLibrary,
   type ThemeSelection,
 } from '@/theme/repository';
-import type { HomeHeroPreference } from '@/theme/home-hero';
+import type { HomeArtworkPreference } from '@/theme/home-artwork';
 import type { ResolvedCustomTheme } from '@/theme/resolve';
 import { isOwnedThemeAsset, setThemeAssetReferences } from '@/theme/assets';
 
@@ -43,7 +43,7 @@ type ThemeLibraryState = {
   setSurfaceBackgroundOpacity: (id: string, value: number | undefined) => void;
   setHideHomeLogo: (id: string, value: boolean | undefined) => void;
   setHideHomeText: (id: string, value: boolean | undefined) => void;
-  setHomeHero: (id: string, value: HomeHeroPreference) => void;
+  setHomeArtwork: (id: string, value: HomeArtworkPreference) => void;
   resetAppearancePreferences: (id: string) => void;
 };
 
@@ -109,9 +109,9 @@ export const useThemeLibrary = create<ThemeLibraryState>((set) => {
       repo.setHideHomeText(id, value);
       publish(repo);
     },
-    setHomeHero(id, value) {
+    setHomeArtwork(id, value) {
       const repo = getRepository();
-      repo.setHomeHero(id, value);
+      repo.setHomeArtwork(id, value);
       publish(repo);
     },
     resetAppearancePreferences(id) {

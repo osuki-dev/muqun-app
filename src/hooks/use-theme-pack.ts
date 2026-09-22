@@ -5,6 +5,7 @@ import { buildTheme } from '@/constants/theme';
 import { resolveThemePack, type ThemeAppearance } from '@/constants/theme-packs';
 import { createTerminalTheme, type TerminalTheme } from '@/terminal/palette';
 import { useAppSettings } from '@/stores/app-settings';
+import { resolveAppearanceProfile } from '@/lib/appearance-profile';
 import { useThemeLibrary } from '@/stores/theme-library';
 
 /**
@@ -42,7 +43,9 @@ export function useThemePalette(pack: ThemeAppearance): ThemeOverride {
   // consumer of the setting, and change nothing: the provider would hand out
   // the tokens it built the last time the *pack* changed.
   const interfaceFont = useAppSettings((state) => state.interfaceFont);
-  return useMemo(() => buildTheme(pack, interfaceFont), [pack, interfaceFont]);
+  const homeLayout = useAppSettings((state) => state.homeLayout);
+  const profile = resolveAppearanceProfile(homeLayout);
+  return useMemo(() => buildTheme(pack, interfaceFont, profile), [pack, interfaceFont, profile]);
 }
 
 /**

@@ -1,10 +1,10 @@
-import { t } from '@lingui/core/macro';
-import { Trans } from '@lingui/react/macro';
+import { Trans, useLingui } from '@lingui/react/macro';
 import { Text } from '@/components/text';
 import { Component, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { PressableScale } from '@/components/pressable-scale';
+import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 
 /**
  * Keeps a render failure in the terminal from taking down the whole app.
@@ -47,17 +47,28 @@ export class TerminalBoundary extends Component<Props, State> {
         <Text variant="bodySmall" color={this.props.textColor} style={styles.text}>
           <Trans>This terminal could not be drawn.</Trans>
         </Text>
-        <PressableScale
-          accessibilityLabel={t`Retry drawing the terminal`}
+        <TerminalRetry
+          textColor={this.props.textColor}
           onPress={() => this.setState({ failed: false })}
-          style={[styles.retry, { borderColor: this.props.textColor }]}>
-          <Text variant="caption" color={this.props.textColor}>
-            <Trans>Retry</Trans>
-          </Text>
-        </PressableScale>
+        />
       </View>
     );
   }
+}
+
+function TerminalRetry({ textColor, onPress }: { textColor: string; onPress: () => void }) {
+  const { t } = useLingui();
+  const profile = useAppearanceProfile();
+  return (
+    <PressableScale
+      accessibilityLabel={t`Retry drawing the terminal`}
+      onPress={onPress}
+      style={[styles.retry, { borderColor: textColor, borderRadius: profile.radius.pill }]}>
+      <Text variant="caption" color={textColor}>
+        <Trans>Retry</Trans>
+      </Text>
+    </PressableScale>
+  );
 }
 
 const styles = StyleSheet.create({
@@ -74,7 +85,6 @@ const styles = StyleSheet.create({
   retry: {
     minHeight: 40,
     paddingHorizontal: 20,
-    borderRadius: 20,
     borderWidth: StyleSheet.hairlineWidth,
     alignItems: 'center',
     justifyContent: 'center',

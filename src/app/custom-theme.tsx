@@ -6,7 +6,7 @@ import { Button } from '@/components/themed-button';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { ScrollView, View } from 'react-native';
+import { ScrollView, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { CustomThemeLibrary, type ThemePrimaryAction } from '@/components/custom-theme-library';
@@ -76,8 +76,6 @@ export default function CustomThemeScreen() {
               id: 'candidate',
               manifest: candidate.manifest,
               assets: candidate.assets ?? candidate.prepared?.assets ?? {},
-              hideHomeLogo: true,
-              hideHomeText: true,
             }
       }
       installationId={candidate.id}>
@@ -97,6 +95,7 @@ function CustomThemeScene({
   const router = useRouter();
   const theme = useThemeTokens();
   const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
   const background = useSurfaceBackground();
   /**
    * Done closes the editor and everything it was opened on top of.
@@ -169,6 +168,7 @@ function CustomThemeScene({
           }}>
           <View style={{ width: '100%', maxWidth: 1120, alignSelf: 'center' }}>
             <Button
+              style={width >= 840 ? { alignSelf: 'flex-end' } : undefined}
               testID="custom-theme-done"
               disabled={primary?.disabled ?? false}
               onPress={() => (primary ? primary.run() : close())}>

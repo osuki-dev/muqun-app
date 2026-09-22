@@ -59,6 +59,7 @@ export function SettingsLanguageSheet({ onClose }: { onClose: () => void }) {
       title={t`Language`}
       caption={language ? LOCALE_LABELS[language] : t`Following your phone`}>
       <ScrollView
+        nestedScrollEnabled
         style={sheetSceneStyles.scroller}
         contentContainerStyle={sheetSceneStyles.scrollerContent}
         showsVerticalScrollIndicator={false}>

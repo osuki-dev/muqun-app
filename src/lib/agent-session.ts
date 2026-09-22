@@ -3,12 +3,15 @@ import { TextDecoder } from 'react-native-nitro-text-decoder';
 import {
   encryptedEventStreamRequest,
   gatewayAuthHeaders,
+  gatewayEndpointFetch,
   gatewayFetch,
   gatewayUrl,
   isGatewayConfigured,
+  type GatewayEndpoint,
 } from './gateway-client';
 import { streamRecordCrypto } from './gateway-transport';
 import { connectAgentStream, type AgentStreamResponse } from './agent-stream';
+import { isShellNotFoundError } from './agent-shell-errors';
 import type { FileMentionHit } from './file-mentions';
 import { activeLocaleHeaders } from '@/i18n/active-locale';
 import {
@@ -240,6 +243,12 @@ export interface ListAgentSessionsQuery {
   cursor?: string;
 }
 
+export interface ObservedAgentSessionList {
+  sessions: AgentSessionInfo[];
+  /** Last successful Gateway confirmation; cached fallbacks keep their original time. */
+  observedAtMs?: number;
+}
+
 function listQuery(query: ListAgentSessionsQuery | undefined): string {
   if (!query) return '';
   const params = new URLSearchParams();
@@ -265,10 +274,10 @@ function listQuery(query: ListAgentSessionsQuery | undefined): string {
  * also what a failed read answers with, because a strip that empties itself
  * because one request timed out has told the reader something untrue.
  */
-export async function listAgentSessions(
+export async function listAgentSessionsObserved(
   sessionId?: string,
   query?: ListAgentSessionsQuery
-): Promise<AgentSessionInfo[]> {
+): Promise<ObservedAgentSessionList> {
   const search = listQuery(query);
   const path = sessionId
     ? `/api/sessions/${encodeURIComponent(sessionId)}/agent-sessions${search}`
@@ -278,40 +287,84 @@ export async function listAgentSessions(
   const cacheKey = buildAgentCacheKey('sessions', null, sessionId, search || 'all');
   const cached = getCachedEntry<AgentSessionInfo[]>(cacheKey);
 
-  return dedupeInFlight(`GET ${path}`, async () => {
+  return dedupeInFlight(`GET observed ${path}`, async () => {
     try {
-      if (!isGatewayConfigured()) return cached?.data ?? [];
+      if (!isGatewayConfigured()) {
+        return {
+          sessions: cached?.data ?? [],
+          ...(cached ? { observedAtMs: cached.timestamp } : {}),
+        };
+      }
       const headers: Record<string, string> = gatewayAuthHeaders();
       if (cached?.etag) headers['If-None-Match'] = cached.etag;
 
       const res = await gatewayFetch(gatewayUrl(path), { method: 'GET', headers });
       if (res.status === 304 && cached) {
         touchCacheEntryTimestamp(cacheKey);
-        return cached.data;
+        return { sessions: cached.data, observedAtMs: Date.now() };
       }
-      if (!res.ok) return cached?.data ?? [];
+      if (!res.ok) {
+        return {
+          sessions: cached?.data ?? [],
+          ...(cached ? { observedAtMs: cached.timestamp } : {}),
+        };
+      }
 
       const etag = res.headers.get('etag') ?? undefined;
       const list = parseAgentSessionList(envelopeData(await res.json()));
       setCachedEntry(cacheKey, list, etag);
-      return list;
+      return { sessions: list, observedAtMs: Date.now() };
     } catch {
-      return cached?.data ?? [];
+      return {
+        sessions: cached?.data ?? [],
+        ...(cached ? { observedAtMs: cached.timestamp } : {}),
+      };
     }
   });
 }
 
+export async function listAgentSessions(
+  sessionId?: string,
+  query?: ListAgentSessionsQuery
+): Promise<AgentSessionInfo[]> {
+  return (await listAgentSessionsObserved(sessionId, query)).sessions;
+}
+
 /** The children of one session, in the same shape as the list route. */
+export interface AgentSessionChildrenInventory {
+  children: AgentSessionInfo[];
+  /** True only when the Gateway successfully answered this exact inventory request. */
+  authoritative: boolean;
+}
+
+export async function listAgentSessionChildrenObserved(
+  asid: string,
+  query?: Omit<ListAgentSessionsQuery, 'parent_id' | 'roots'>
+): Promise<AgentSessionChildrenInventory> {
+  if (!asid || !isGatewayConfigured()) return { children: [], authoritative: false };
+  const path = `${sessionRoute(asid, '/children')}${listQuery(query)}`;
+  // Capture endpoint and credentials together. `gatewayFetch` already dedupes
+  // GETs by the full URL and headers, so a later gateway selection can neither
+  // join this request nor change where it goes.
+  const url = gatewayUrl(path);
+  const headers = gatewayAuthHeaders();
+  try {
+    const res = await gatewayFetch(url, { method: 'GET', headers });
+    if (!res.ok) return { children: [], authoritative: false };
+    return {
+      children: parseAgentSessionList(envelopeData(await res.json())),
+      authoritative: true,
+    };
+  } catch {
+    return { children: [], authoritative: false };
+  }
+}
+
 export async function listAgentSessionChildren(
   asid: string,
   query?: Omit<ListAgentSessionsQuery, 'parent_id' | 'roots'>
 ): Promise<AgentSessionInfo[]> {
-  if (!asid) return [];
-  return readJson(
-    `${sessionRoute(asid, '/children')}${listQuery(query)}`,
-    parseAgentSessionList,
-    []
-  );
+  return (await listAgentSessionChildrenObserved(asid, query)).children;
 }
 
 export async function createAgentSession(
@@ -865,12 +918,18 @@ export async function getAgentShellOutput(
 }
 
 export async function killAgentShell(shellId: string): Promise<void> {
-  await writeJson(
-    `/api/agent-shells/${encodeURIComponent(shellId)}`,
-    'Failed to stop shell',
-    undefined,
-    'DELETE'
-  );
+  try {
+    await writeJson(
+      `/api/agent-shells/${encodeURIComponent(shellId)}`,
+      'Failed to stop shell',
+      undefined,
+      'DELETE'
+    );
+  } catch (error) {
+    // The process can finish between inventory and Stop. That is already the
+    // requested end state; let the tray refresh instead of showing a failure.
+    if (!isShellNotFoundError(error)) throw error;
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -999,13 +1058,26 @@ export async function moveAgentSession(
 // ---------------------------------------------------------------------------
 
 /** The one agent route that answers 200 with no engine attached. */
-export async function getAgentEngine(): Promise<AgentEngineInfo> {
-  return readJson('/api/agent-engine', parseAgentEngineInfo, {
+export function getAgentEngine(): Promise<AgentEngineInfo>;
+/** An older Gateway has no status route, which is unknown rather than not installed. */
+export function getAgentEngine(endpoint: GatewayEndpoint): Promise<AgentEngineInfo | null>;
+export async function getAgentEngine(endpoint?: GatewayEndpoint): Promise<AgentEngineInfo | null> {
+  const fallback: AgentEngineInfo = {
     available: false,
     origin: 'none',
     stream_connected: false,
     autostart: true,
+  };
+  if (!endpoint) return readJson('/api/agent-engine', parseAgentEngineInfo, fallback);
+
+  const base = endpoint.url.replace(/\/$/, '');
+  const response = await gatewayEndpointFetch(endpoint, `${base}/api/agent-engine`, {
+    method: 'GET',
+    headers: endpoint.token ? { Authorization: `Bearer ${endpoint.token}` } : {},
   });
+  if (response.status === 404 || response.status === 501) return null;
+  if (!response.ok) throw new Error(`Engine status request failed (${response.status})`);
+  return parseAgentEngineInfo(envelopeData(await response.json()));
 }
 
 // ---------------------------------------------------------------------------

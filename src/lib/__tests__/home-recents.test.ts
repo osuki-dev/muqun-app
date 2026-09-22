@@ -87,6 +87,40 @@ describe('home recents domain', () => {
     expect(serializeHomeRecents(parsed.entries)).not.toContain('do not persist');
   });
 
+  test('round-trips only valid OpenCode observations and remains backward compatible', () => {
+    const valid = entry(opencode('server-1'), 'Build', 12);
+    valid.sessionObservation = { status: 'retry', observedAtMs: 20 };
+    const parsed = parseHomeRecentsDocument(serializeHomeRecents([valid]));
+    expect(parsed.kind).toBe('valid');
+    expect(parsed.entries[0]?.sessionObservation).toEqual({ status: 'retry', observedAtMs: 20 });
+
+    const malformed = parseHomeRecentsDocument(
+      JSON.stringify({
+        version: HOME_RECENTS_STORAGE_VERSION,
+        entries: [
+          { target: opencode('server-2'), title: 'Old', atMs: 3 },
+          {
+            target: opencode('server-3'),
+            title: 'Bad',
+            atMs: 4,
+            sessionObservation: { status: 'invented', observedAtMs: 5 },
+          },
+          {
+            target: terminal('server-4'),
+            title: 'Pane',
+            atMs: 5,
+            sessionObservation: { status: 'busy', observedAtMs: 6 },
+          },
+        ],
+      })
+    );
+    expect(malformed.entries.map((item) => item.sessionObservation)).toEqual([
+      undefined,
+      undefined,
+      undefined,
+    ]);
+  });
+
   test('falls back for unknown data and future versions without throwing', () => {
     expect(parseHomeRecentsDocument('not json')).toMatchObject({ kind: 'invalid', entries: [] });
     expect(parseHomeRecentsDocument(JSON.stringify({ version: 99, entries: [] }))).toMatchObject({
@@ -165,6 +199,50 @@ describe('home recents domain', () => {
 });
 
 describe('home recents state', () => {
+  test('observes a stored OpenCode recent after cold hydration without reordering it', async () => {
+    const target = opencode('stored');
+    const saved: string[] = [];
+    const store = createHomeRecentsStore({
+      load: async () =>
+        serializeHomeRecents([
+          entry(ssh('newer'), 'Newer', 20),
+          entry(target, 'Stored session', 10),
+        ]),
+      save: async (value) => {
+        saved.push(value);
+      },
+    });
+
+    await store.getState().observeSession(target, { status: 'busy', observedAtMs: 30 });
+
+    expect(store.getState().entries.map((item) => item.title)).toEqual(['Newer', 'Stored session']);
+    expect(store.getState().entries[1]).toMatchObject({
+      atMs: 10,
+      sessionObservation: { status: 'busy', observedAtMs: 30 },
+    });
+    expect(JSON.parse(saved.at(-1) as string).entries[1].sessionObservation).toEqual({
+      status: 'busy',
+      observedAtMs: 30,
+    });
+  });
+
+  test('observations never create visits or replace a newer observation', async () => {
+    const target = opencode('observed');
+    const store = createHomeRecentsStore({ load: async () => null, save: async () => {} });
+    await store.getState().observeSession(target, { status: 'busy', observedAtMs: 5 });
+    expect(store.getState().entries).toEqual([]);
+
+    await store.getState().visit(target, 'Observed', 1, {
+      status: 'idle',
+      observedAtMs: 20,
+    });
+    await store.getState().observeSession(target, { status: 'failed', observedAtMs: 10 });
+    expect(store.getState().entries[0]).toMatchObject({
+      atMs: 1,
+      sessionObservation: { status: 'idle', observedAtMs: 20 },
+    });
+  });
+
   test('caps a hydrated merge while keeping every newer explicit visit first', async () => {
     const load = deferred<string | null>();
     const store = createHomeRecentsStore({ load: () => load.promise, save: async () => {} });

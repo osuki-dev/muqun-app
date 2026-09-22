@@ -1,4 +1,4 @@
-import { memo, useCallback, useEffect, useMemo, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
 import { Spinner, useThemeTokens } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
@@ -24,6 +24,7 @@ import { appChrome } from '@/constants/appearance';
 import { withAlpha } from '@/lib/color';
 import { fadeIn, listLayout, riseIn, STAGGER } from '@/lib/motion';
 import { SECTION_PAGE_SIZE, nearListEnd, pageSections } from '@/lib/paged-sections';
+import { findAgentModelPosition } from '@/lib/agent-model-position';
 import {
   formatModelName,
   getAgentCatalog,
@@ -155,6 +156,15 @@ export const AgentModelSheet = memo(function AgentModelSheet({
   const [defaults, setDefaults] = useState<CatalogDefaults>({});
   const [searchQuery, setSearchQuery] = useState('');
   const [filterMode, setFilterMode] = useState<'all' | 'free'>('all');
+  const modelListRef = useRef<ScrollView>(null);
+  const sectionOffsetsRef = useRef(new Map<number, number>());
+  const selectedRowOffsetRef = useRef<number | null>(null);
+  const viewportHeightRef = useRef(0);
+  const contentHeightRef = useRef(0);
+  // Automatic positioning belongs to opening this route. Once the reader
+  // searches, filters, or drags, their position is theirs until they dismiss it.
+  const autoRevealCancelledRef = useRef(false);
+  const autoRevealCompleteRef = useRef(false);
   /**
    * Bumped by "Try again", which is the whole of the retry: the effect below
    * watches it and reads the catalog once more, past the cache.
@@ -215,6 +225,9 @@ export const AgentModelSheet = memo(function AgentModelSheet({
     );
   }, [models, searchQuery, filterMode]);
 
+  /** The session's choice, or the catalogue default for a fresh session. */
+  const effectiveModel = selectedModel ?? defaults.model;
+
   // Recent rows resolve against the same catalog and filters as provider groups.
   const sections = useMemo(() => {
     const recent = recentCatalogModels(recentRefs, filteredModels, providers);
@@ -243,6 +256,13 @@ export const AgentModelSheet = memo(function AgentModelSheet({
     return result;
   }, [filteredModels, recentRefs, providers, t]);
 
+  // `sections` puts Recently used first, so this finds that row when the same
+  // model is also present in its provider section.
+  const selectedPosition = useMemo(
+    () => findAgentModelPosition(sections, effectiveModel),
+    [sections, effectiveModel]
+  );
+
   /**
    * How many rows are drawn. A host can publish hundreds of models, so the
    * sheet draws a page and asks for the next as the reader nears the end of
@@ -262,6 +282,44 @@ export const AgentModelSheet = memo(function AgentModelSheet({
     setRowLimit((limit) => (limit < paged.total ? limit + SECTION_PAGE_SIZE : limit));
   }, [paged.total]);
 
+  // The catalogue can have hundreds of models. Grow the existing page just far
+  // enough to mount the current row; its `onLayout` below then gives ScrollView
+  // the real y coordinate rather than guessing from a row height.
+  useEffect(() => {
+    if (
+      autoRevealCancelledRef.current ||
+      autoRevealCompleteRef.current ||
+      searchQuery ||
+      filterMode !== 'all' ||
+      !selectedPosition
+    ) {
+      return;
+    }
+    // react-doctor-disable-next-line react-doctor/no-adjust-state-on-prop-change -- this expands virtualization only far enough to mount the externally selected row; it does not mirror the prop.
+    setRowLimit((limit) => Math.max(limit, selectedPosition.rowIndex + 1));
+  }, [filterMode, searchQuery, selectedPosition]);
+
+  const tryRevealSelectedRow = useCallback(() => {
+    if (
+      autoRevealCancelledRef.current ||
+      autoRevealCompleteRef.current ||
+      searchQuery ||
+      filterMode !== 'all' ||
+      !selectedPosition
+    ) {
+      return;
+    }
+    const sectionOffset = sectionOffsetsRef.current.get(selectedPosition.sectionIndex);
+    const rowOffset = selectedRowOffsetRef.current;
+    const viewportHeight = viewportHeightRef.current;
+    const contentHeight = contentHeightRef.current;
+    if (sectionOffset === undefined || rowOffset === null || viewportHeight <= 0) return;
+    const target = Math.max(0, sectionOffset + rowOffset - SHEET_LADDER.section);
+    const offset = Math.min(target, Math.max(0, contentHeight - viewportHeight));
+    modelListRef.current?.scrollTo({ y: offset, animated: false });
+    autoRevealCompleteRef.current = true;
+  }, [filterMode, searchQuery, selectedPosition]);
+
   /** Which providers the host has switched off. */
   const disabledProviders = useMemo(() => {
     const off = new Set<string>();
@@ -280,11 +338,16 @@ export const AgentModelSheet = memo(function AgentModelSheet({
    * a fresh session, and the reader had to pick one to find out what was
    * already selected.
    */
-  const effectiveModel = selectedModel ?? defaults.model;
+  const currentModelInfo = effectiveModel
+    ? models.find(
+        (model) =>
+          model.id === effectiveModel.model_id &&
+          (!effectiveModel.provider_id || model.provider_id === effectiveModel.provider_id)
+      )
+    : undefined;
   const currentValue = effectiveModel
     ? [
-        formatModelName(effectiveModel),
-        effectiveModel.variant,
+        formatModelName(effectiveModel, 'Model', currentModelInfo?.name),
         selectedModel ? undefined : t`default`,
       ]
         .filter(Boolean)
@@ -322,7 +385,10 @@ export const AgentModelSheet = memo(function AgentModelSheet({
             clearAccessibilityLabel={t`Clear the search`}
             placeholder={t`Search models or providers`}
             value={searchQuery}
-            onChangeText={setSearchQuery}
+            onChangeText={(query) => {
+              autoRevealCancelledRef.current = true;
+              setSearchQuery(query);
+            }}
           />
           <SettingsSegmented
             testID="agent-model-filter"
@@ -331,7 +397,10 @@ export const AgentModelSheet = memo(function AgentModelSheet({
               { label: t`Free only`, value: 'free' },
             ]}
             value={filterMode}
-            onChange={(next) => setFilterMode(next === 'free' ? 'free' : 'all')}
+            onChange={(next) => {
+              autoRevealCancelledRef.current = true;
+              setFilterMode(next === 'free' ? 'free' : 'all');
+            }}
           />
         </>
       }>
@@ -341,11 +410,24 @@ export const AgentModelSheet = memo(function AgentModelSheet({
         </View>
       ) : (
         <ScrollView
+          nestedScrollEnabled
+          ref={modelListRef}
           style={sheetSceneStyles.scroller}
           contentContainerStyle={sheetSceneStyles.scrollerContent}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
           scrollEventThrottle={64}
+          onLayout={({ nativeEvent }) => {
+            viewportHeightRef.current = nativeEvent.layout.height;
+            tryRevealSelectedRow();
+          }}
+          onContentSizeChange={(_width, height) => {
+            contentHeightRef.current = height;
+            tryRevealSelectedRow();
+          }}
+          onScrollBeginDrag={() => {
+            autoRevealCancelledRef.current = true;
+          }}
           onScroll={
             hasMore
               ? ({ nativeEvent }) => {
@@ -390,10 +472,16 @@ export const AgentModelSheet = memo(function AgentModelSheet({
             </Animated.View>
           ) : (
             paged.sections.map((section, sectionIndex) => (
-              <Animated.View key={section.title} layout={listLayout('short')}>
+              <Animated.View
+                key={section.title}
+                layout={listLayout('short')}
+                onLayout={({ nativeEvent }) => {
+                  sectionOffsetsRef.current.set(sectionIndex, nativeEvent.layout.y);
+                  tryRevealSelectedRow();
+                }}>
                 {sectionIndex > 0 ? <SheetSceneGroupRule /> : null}
                 <SheetSceneGroupHeading title={section.title} first={sectionIndex === 0} />
-                {section.models.map((model) => {
+                {section.models.map((model, modelIndex) => {
                   const isSelected =
                     effectiveModel?.model_id === model.id &&
                     (!effectiveModel.provider_id ||
@@ -408,6 +496,15 @@ export const AgentModelSheet = memo(function AgentModelSheet({
                   return (
                     <Animated.View
                       key={`${model.provider_id}:${model.id}`}
+                      onLayout={
+                        selectedPosition?.sectionIndex === sectionIndex &&
+                        selectedPosition.modelIndex === modelIndex
+                          ? ({ nativeEvent }) => {
+                              selectedRowOffsetRef.current = nativeEvent.layout.y;
+                              tryRevealSelectedRow();
+                            }
+                          : undefined
+                      }
                       entering={
                         index < STAGGERED_ROWS ? riseIn(index * STAGGER.row) : fadeIn('short')
                       }

@@ -175,6 +175,15 @@ test('the assistant picker excludes the caller and prioritizes the same workspac
   expect(collaborationAgents(agents, panes, 'self', 'w1')[0].name).toBe('Reviewer');
 });
 
+test('assignment chips keep the opaque agent instance as their React identity', () => {
+  const source = readFileSync(
+    new URL('../../components/agent-assignment-bar.tsx', import.meta.url),
+    'utf8'
+  );
+  expect(source).toContain('key={candidate.instanceId}');
+  expect(source).not.toContain('key={candidate.paneId}');
+});
+
 test('busy, blocked and unknown agents cannot receive a new tracked assignment', () => {
   for (const status of ['working', 'blocked', 'unknown', 'starting', ''])
     expect(canAssignToAgent(status)).toBe(false);

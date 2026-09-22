@@ -4,12 +4,13 @@ import { AgentVcsDiffSheet } from '@/components/agent-vcs-diff-sheet';
 import { useAgentSheetBridge } from '@/stores/agent-sheet-bridge';
 
 /**
- * The agent's working-tree diff route: which session, and nothing else. The
- * patch is fetched by the sheet, the way `git-diff` fetches its own.
+ * The agent's working-tree diff route: which session, plus an optional file to
+ * open and land on. The patch is fetched by the sheet, the way `git-diff`
+ * fetches its own.
  */
 export default function AgentVcsDiffScreen() {
   const router = useRouter();
-  const params = useLocalSearchParams<{ sessionId?: string; asid?: string }>();
+  const params = useLocalSearchParams<{ sessionId?: string; asid?: string; path?: string }>();
   const bridgeSessionId = useAgentSheetBridge((state) => state.sessionId);
   const bridgeAsid = useAgentSheetBridge((state) => state.activeAsid);
 
@@ -19,6 +20,11 @@ export default function AgentVcsDiffScreen() {
   // A session is what this sheet is about; without one there is no diff to
   // fetch and the sheet renders its own empty state rather than throwing.
   return (
-    <AgentVcsDiffSheet sessionId={sessionId} asid={asid ?? ''} onClose={() => router.back()} />
+    <AgentVcsDiffSheet
+      sessionId={sessionId}
+      asid={asid ?? ''}
+      targetPath={params.path}
+      onClose={() => router.back()}
+    />
   );
 }

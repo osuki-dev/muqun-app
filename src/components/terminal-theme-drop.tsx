@@ -105,7 +105,7 @@ export function TerminalThemeDrop({
       exiting={fadeOut('short')}
       pointerEvents="box-none"
       style={[styles.anchor, { bottom: bottomInset + 14 + 38 + 10 }]}>
-      <GlassChrome surface="actions" style={styles.card}>
+      <GlassChrome surface="actions" shape="noticeCard" style={styles.card}>
         <Animated.View style={[styles.body, liftStyle]}>
           <View style={styles.row}>
             <Palette size={16} color={theme.colors.primary} />

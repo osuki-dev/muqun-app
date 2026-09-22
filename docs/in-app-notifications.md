@@ -14,7 +14,9 @@ notification handler to that store.
 
 ## Interaction
 
-- New events wait behind the currently visible notice instead of replacing it
+- New distinct events wait behind the currently visible notice. Repeated general
+  events with the same text and destination update their existing card in place,
+  so only the latest matching event remains. Approval requests never coalesce
 - Open navigates only after an explicit press, then dismisses the notice
 - A swipe dismisses without navigating or answering an agent approval: up and
   off the top edge, or sideways in either direction, past a distance or velocity
@@ -47,10 +49,14 @@ Notification text is plain text, not executable markup.
 The queue contains at most 20 notices. When full, the visible notice stays in
 place, the oldest waiting notice is dropped, and the newest notice is appended.
 The last 200 receipt identifiers suppress duplicate callbacks, including after
-dismissal. Deduplication is bounded rather than permanent: sufficiently old
-identifiers can be accepted again. Neither bodies nor receipt history is written
-to persistent storage. Disabling notifications clears pending notices while
-retaining this bounded, in-memory receipt history.
+dismissal. Separate receipts for the same ordinary event are coalesced only when
+their sanitized title, body, and destination all match; the latest content and
+route replace the older card without changing its position. Approval receipts
+remain separate because identical-looking requests can require separate answers.
+Deduplication is bounded rather than permanent: sufficiently old identifiers can
+be accepted again. Neither bodies nor receipt history is written to persistent
+storage. Disabling notifications clears pending notices while retaining this
+bounded, in-memory receipt history.
 
 Server/session/pane destinations reuse `notificationRoute` and remain structured
 router parameters. Without a server destination, only its existing internal-route

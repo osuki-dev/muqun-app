@@ -16,12 +16,12 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { heroFeatherGeometry } from '@/lib/hero-feather';
-import { publishLaunchHeroRect } from '@/lib/launch-hero-rect';
+import { useLaunchHomeArtwork } from '@/hooks/use-launch-home-artwork';
 import { fadeIn, listLayout } from '@/lib/motion';
 import { homeHeroMaxHeight } from '@/lib/responsive-layout';
-import type { ResolvedHomeHero, ResolvedHomeHeroAsset } from '@/theme/home-hero';
+import type { ResolvedHomeArtwork, ResolvedHomeArtworkAsset } from '@/theme/home-artwork';
 
-export type { ResolvedHomeHeroAsset } from '@/theme/home-hero';
+export type { ResolvedHomeArtworkAsset } from '@/theme/home-artwork';
 
 /**
  * The pack's own picture at the top of Home, when there is one to show.
@@ -36,7 +36,7 @@ export type { ResolvedHomeHeroAsset } from '@/theme/home-hero';
  *
  * It is also the only artwork on Home the reader can turn on and off, so the
  * decision about whether to draw anything is not this component's -- see
- * `resolveHomeHero`, which is where the author's default, the reader's override
+ * `resolveHomeArtwork`, which is where the author's default, the reader's override
  * and the empty-state fallback meet.
  *
  * Nothing here is a hit target and nothing is announced: it is a picture, and a
@@ -76,21 +76,21 @@ export type { ResolvedHomeHeroAsset } from '@/theme/home-hero';
  * The decode is not duplicated and does not repeat per render: `useImage` loads
  * once per URI and keeps the `SkImage` in state, so this is the same single
  * decode `expo-image`'s memory cache was providing. Nothing is fetched either
- * way -- `resolveHomeHero` only ever yields a `file:///` path the theme
+ * way -- `resolveHomeArtwork` only ever yields a `file:///` path the theme
  * installer already wrote to disk, so the file cache this replaces was never
  * doing any work for a hero.
  *
  * Entrance, layout and scroll fading use ordinary Reanimated styles. There is
  * no exit retention: changing themes must immediately release the old picture.
  */
-export function HomeHero({
+export function HomeArtwork({
   scrollY,
   resolution,
   onAvailabilityChange,
   maxHeight,
 }: {
   scrollY: SharedValue<number>;
-  resolution: ResolvedHomeHeroAsset;
+  resolution: ResolvedHomeArtworkAsset;
   onAvailabilityChange?: (available: boolean) => void;
   /** A composition may use a smaller illustration without changing the theme asset. */
   maxHeight?: number;
@@ -104,7 +104,7 @@ export function HomeHero({
   // A source change owns a new decoder. Skia's asynchronous loader otherwise
   // keeps the previous image alive until the next URI has decoded.
   return (
-    <HomeHeroImage
+    <HomeArtworkImage
       key={resolution.source}
       resolved={resolution.resolved}
       source={resolution.source}
@@ -115,14 +115,14 @@ export function HomeHero({
   );
 }
 
-function HomeHeroImage({
+function HomeArtworkImage({
   resolved,
   source,
   band,
   scrollY,
   onAvailabilityChange,
 }: {
-  resolved: ResolvedHomeHero;
+  resolved: ResolvedHomeArtwork;
   source: string;
   band: number;
   scrollY: SharedValue<number>;
@@ -159,14 +159,6 @@ function HomeHeroImage({
         ? previous
         : { width: measuredWidth, height: measuredHeight }
     );
-    view.current?.measureInWindow((x, y, measuredInWindowWidth, measuredInWindowHeight) => {
-      publishLaunchHeroRect({
-        x,
-        y,
-        width: measuredInWindowWidth,
-        height: measuredInWindowHeight,
-      });
-    });
   }, []);
 
   const geometry = useMemo(() => {
@@ -182,11 +174,22 @@ function HomeHeroImage({
     });
   }, [box, image, focalX, focalY]);
 
+  const intrinsic = useMemo(
+    () => (image ? { width: image.width(), height: image.height() } : null),
+    [image]
+  );
+  useLaunchHomeArtwork({
+    view,
+    source,
+    image: failed === source ? null : (geometry?.image ?? null),
+    intrinsic,
+  });
+
   if (failed === source) return null;
 
   return (
     <Animated.View
-      testID="home-hero"
+      testID="home-artwork"
       pointerEvents="none"
       accessible={false}
       importantForAccessibility="no-hide-descendants"

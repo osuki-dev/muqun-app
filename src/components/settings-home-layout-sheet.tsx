@@ -8,6 +8,7 @@ import { PressableScale } from '@/components/pressable-scale';
 import { SheetScene, SheetSceneFooter, sheetSceneStyles } from '@/components/sheet-scene';
 import { Text } from '@/components/text';
 import type { HomeLayout } from '@/lib/home-layout';
+import { resolveAppearanceProfile } from '@/lib/appearance-profile';
 import { useRenderTally } from '@/lib/render-tally';
 import { useAppSettings } from '@/stores/app-settings';
 
@@ -60,8 +61,9 @@ export function SettingsHomeLayoutSheet({ onClose }: { onClose: () => void }) {
     <SheetScene
       testID="settings-home-layout-sheet"
       title={t`Home layout`}
-      caption={layout === 'editorial' ? t`Editorial` : t`Classic`}>
+      caption={choices.find((choice) => choice.id === layout)?.title}>
       <ScrollView
+        nestedScrollEnabled
         style={sheetSceneStyles.scroller}
         contentContainerStyle={sheetSceneStyles.scrollerContent}
         showsVerticalScrollIndicator={false}>
@@ -122,10 +124,18 @@ function HomeLayoutOption({
 
 function HomeLayoutPreview({ layout }: { layout: HomeLayout }) {
   const { colors } = useThemeTokens();
+  const profile = resolveAppearanceProfile(layout);
   return (
     <View
       accessible={false}
-      style={[styles.preview, { backgroundColor: colors.background, borderColor: colors.border }]}>
+      style={[
+        styles.preview,
+        {
+          backgroundColor: colors.background,
+          borderColor: colors.border,
+          borderRadius: profile.chrome.surface,
+        },
+      ]}>
       <View style={[styles.previewHeader, { backgroundColor: colors.surfaceRaised }]} />
       {layout === 'classic' ? (
         <View style={styles.classicPreview}>

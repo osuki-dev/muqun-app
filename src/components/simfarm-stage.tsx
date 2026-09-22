@@ -563,7 +563,7 @@ export function SimfarmStage({
             to be could be swiped away, and a full-screen modal cannot. */}
         {closable ? (
           <View style={[styles.lostClose, { top: topInset + 10 }]}>
-            <GlassChrome style={styles.iconButton}>
+            <GlassChrome shape="pill" style={styles.iconButton}>
               <PressableScale
                 accessibilityLabel={t`Close the simulator`}
                 testID="simfarm-close"
@@ -862,6 +862,7 @@ export function SimfarmStage({
           style={[styles.bottom, { bottom: bottomInset + COMPOSER_GAP }]}
           offset={{ closed: 0, opened: bottomInset }}>
           <GlassChrome
+            shape="composerDock"
             entering={fadeIn('micro')}
             exiting={fadeOut('micro')}
             style={styles.composer}>

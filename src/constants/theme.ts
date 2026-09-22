@@ -16,7 +16,11 @@ import '@/global.css';
 
 import { createThemePreset, type ThemeOverride } from '@osuki-dev/ui';
 
-import { appAppearanceConfig, appThemeAppearanceOverride } from '@/constants/appearance';
+import {
+  resolveAppearanceProfile,
+  profileThemeOverride,
+  type AppearanceProfile,
+} from '@/lib/appearance-profile';
 import {
   DEFAULT_THEME_PACK_ID,
   resolveThemePack,
@@ -46,13 +50,14 @@ export function buildTheme(
    * every theme change, which is the only behaviour that makes sense for a
    * reader who chose a face because they can read it.
    */
-  interfaceFont: FontSlot = SYSTEM_FONT_SLOT
+  interfaceFont: FontSlot = SYSTEM_FONT_SLOT,
+  profile: AppearanceProfile = resolveAppearanceProfile('classic')
 ): ThemeOverride {
   const preset = createThemePreset({
     name: `muqun-${pack.id}`,
     tone: 'commerce',
-    density: appAppearanceConfig.density,
-    shape: appAppearanceConfig.shape,
+    density: profile.density,
+    shape: profile.shape,
     light: pack.light.colors,
     dark: pack.dark.colors,
   });
@@ -78,7 +83,7 @@ export function buildTheme(
 
   return {
     ...preset,
-    ...appThemeAppearanceOverride,
+    ...profileThemeOverride(profile),
     ...(fonts ? { fonts } : {}),
     components: {
       ...preset.components,

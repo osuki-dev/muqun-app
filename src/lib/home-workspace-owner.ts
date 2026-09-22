@@ -15,6 +15,8 @@ export type HomeWorkspaceOwnerInput = {
   mode: HomeWorkspaceOwnerMode;
   loading: boolean;
   serverId: string | null | undefined;
+  /** A selected Home composition can keep Pad on Home instead of the task owner. */
+  preferList?: boolean;
   /** A blurred root may retain an existing owner, but cannot acquire its first one. */
   allowInitialActivation?: boolean;
 };
@@ -71,6 +73,10 @@ export function reconcileHomeWorkspaceOwner(
   currentServerId: string | null,
   input: HomeWorkspaceOwnerInput
 ): string | null {
+  // A Home composition preference controls cold startup only. Replacing an
+  // already-mounted Pad workspace would destroy its terminal ownership when a
+  // reader changes the preference in Settings.
+  if (input.preferList && !currentServerId) return null;
   const serverId = input.serverId || null;
 
   // A concrete different record is an intentional target change, including

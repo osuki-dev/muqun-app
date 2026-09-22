@@ -104,6 +104,9 @@ export const MUQUN_SITE_URL = 'https://muqun.dev/';
  */
 export const GATEWAY_SETUP_URL = MUQUN_SITE_URL;
 
+/** Official OpenCode installation instructions, verified reachable on 2026-09-21. */
+export const OPENCODE_INSTALL_URL = 'https://opencode.ai/docs/#install';
+
 /**
  * The guide, opened from Settings -> About.
  *
@@ -182,9 +185,9 @@ export const FEEDBACK_URL = 'https://github.com/osuki-dev/muqun-app/issues/new/c
 /**
  * The source, opened from Settings -> About.
  *
- * Muqun is open source from 2.0.0, and this is the repository that Feedback
- * above files into -- the same tree, so a reader who wants to read the code
- * that produced a bug and a reader who wants to report it end up in one place.
+ * Muqun publishes its source, and this is the repository that Feedback above
+ * files into -- the same tree, so a reader who wants to inspect the code that
+ * produced a bug and a reader who wants to report it end up in one place.
  *
  * ── WHY THERE IS NO SUPPORT EMAIL ANY MORE ──────────────────────────────────
  * There was a `muqun@osuki.dev` mailbox here, shown and mailto'd from a

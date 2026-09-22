@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { LaunchIntro } from '@/components/launch-intro';
 import { LaunchSceneIntro } from '@/components/launch-intro-scene';
 import { hasSeenLaunchIntro } from '@/lib/launch-intro-seen';
+import { useLaunchHandoff } from '@/stores/launch-handoff';
 
 /**
  * What covers the app while it starts, and what takes that cover away.
@@ -36,12 +37,17 @@ export function LaunchOverlay() {
   const [seen] = useState(() => hasSeenLaunchIntro());
   const [introDone, setIntroDone] = useState(false);
   const [bootDone, setBootDone] = useState(false);
+  const beginHomeReveal = useLaunchHandoff((state) => state.beginReveal);
 
   return (
     <SplashOverlay
       ready={seen ? bootDone : introDone}
       minimumDuration={0}
-      timeout={seen ? undefined : 0}>
+      timeout={seen ? undefined : 0}
+      onPhaseChange={(phase) => {
+        if (phase === 'exiting') beginHomeReveal();
+      }}
+      onHidden={beginHomeReveal}>
       {(context) =>
         seen ? (
           <LaunchSceneIntro {...context} onDone={() => setBootDone(true)} />

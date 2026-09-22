@@ -1,3 +1,4 @@
+import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { memo, useCallback, useMemo, useState } from 'react';
 import { Linking, View, StyleSheet, Switch, ActivityIndicator } from 'react-native';
 import { resolveFontStyle, useThemeTokens } from '@osuki-dev/ui';
@@ -35,6 +36,7 @@ export const AgentFormCard = memo(function AgentFormCard({
 }: AgentFormCardProps) {
   const { t } = useLingui();
   const theme = useThemeTokens();
+  const profile = useAppearanceProfile();
   const surfaceBackground = useSurfaceBackground();
   const markdownStyle = useCompactMarkdownStyle('muted');
   /**
@@ -209,6 +211,7 @@ export const AgentFormCard = memo(function AgentFormCard({
                       onPress={() => setValue(field.key, opt.value)}
                       style={[
                         styles.optionPill,
+                        { borderRadius: profile.chrome.control },
                         {
                           backgroundColor: selected
                             ? withAlpha(theme.colors.primary, 0.13)
@@ -243,6 +246,7 @@ export const AgentFormCard = memo(function AgentFormCard({
               onFocus={onFieldFocus}
               style={[
                 styles.textInput,
+                { borderRadius: profile.chrome.control },
                 inputFont,
                 {
                   color: theme.colors.text,
@@ -285,6 +289,7 @@ export const AgentFormCard = memo(function AgentFormCard({
               onChangeText={(text) => setValue(field.key, Number(text) || 0)}
               style={[
                 styles.textInput,
+                { borderRadius: profile.chrome.control },
                 inputFont,
                 {
                   color: theme.colors.text,
@@ -322,6 +327,7 @@ export const AgentFormCard = memo(function AgentFormCard({
                     }}
                     style={[
                       styles.optionPill,
+                      { borderRadius: profile.chrome.control },
                       {
                         backgroundColor: selected
                           ? withAlpha(theme.colors.primary, 0.13)
@@ -359,6 +365,7 @@ export const AgentFormCard = memo(function AgentFormCard({
               }}
               style={[
                 styles.externalBtn,
+                { borderRadius: profile.chrome.control },
                 {
                   backgroundColor: withAlpha(theme.colors.info, 0.1),
                   borderColor: theme.colors.info,
@@ -391,6 +398,7 @@ export const AgentFormCard = memo(function AgentFormCard({
     <View
       style={[
         styles.container,
+        { borderRadius: profile.chrome.noticeCard },
         {
           backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
           borderColor: theme.colors.info,
@@ -398,7 +406,12 @@ export const AgentFormCard = memo(function AgentFormCard({
       ]}>
       {/* Title */}
       <View style={styles.header}>
-        <View style={[styles.iconBox, { backgroundColor: withAlpha(theme.colors.info, 0.13) }]}>
+        <View
+          style={[
+            styles.iconBox,
+            { borderRadius: profile.chrome.control },
+            { backgroundColor: withAlpha(theme.colors.info, 0.13) },
+          ]}>
           <FormInput size={16} color={theme.colors.info} />
         </View>
         {/*
@@ -419,7 +432,11 @@ export const AgentFormCard = memo(function AgentFormCard({
       <PressableScale
         disabled={submitting}
         onPress={handleSubmit}
-        style={[styles.submitBtn, { backgroundColor: theme.colors.primary }]}>
+        style={[
+          styles.submitBtn,
+          { borderRadius: profile.chrome.control },
+          { backgroundColor: theme.colors.primary },
+        ]}>
         {submitting ? (
           <ActivityIndicator size="small" color={theme.colors.onPrimary} />
         ) : (
@@ -441,7 +458,6 @@ export const AgentFormCard = memo(function AgentFormCard({
 
 const styles = StyleSheet.create({
   container: {
-    borderRadius: 10,
     borderWidth: 1.5,
     overflow: 'hidden',
     marginVertical: 6,
@@ -456,7 +472,6 @@ const styles = StyleSheet.create({
   iconBox: {
     width: 26,
     height: 26,
-    borderRadius: 6,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -497,7 +512,6 @@ const styles = StyleSheet.create({
     fontSize: AGENT_TYPE.micro.size,
   },
   textInput: {
-    borderRadius: 6,
     borderWidth: StyleSheet.hairlineWidth,
     paddingHorizontal: 10,
     paddingVertical: 7,
@@ -514,7 +528,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 5,
     paddingHorizontal: 9,
-    borderRadius: 6,
     borderWidth: StyleSheet.hairlineWidth,
     gap: 4,
   },
@@ -524,7 +537,6 @@ const styles = StyleSheet.create({
     gap: 6,
     minHeight: 32,
     paddingHorizontal: 10,
-    borderRadius: 6,
     borderCurve: 'continuous',
     borderWidth: StyleSheet.hairlineWidth,
   },
@@ -533,7 +545,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 8,
-    borderRadius: 6,
     gap: 6,
   },
   // Weightless for the reason `title` gives: on Android a 700 rounds past the

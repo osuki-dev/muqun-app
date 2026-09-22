@@ -40,6 +40,7 @@ const SHEET_FRAMES = [
   'src/components/new-task-sheet.tsx',
   'src/components/open-web-service-sheet.tsx',
   'src/components/agent-sessions-sheet.tsx',
+  'src/components/agent-session-tree-sheet.tsx',
   'src/components/agent-model-sheet.tsx',
   'src/components/agent-mode-sheet.tsx',
   'src/components/agent-workspace-sheet.tsx',

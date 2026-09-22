@@ -726,6 +726,59 @@ describe('native end-to-end gate', () => {
     expect(selectFlows(suite, 'capture', 'android')).toEqual([]);
     expect(() => selectFlows(suite, 'full', 'ios', 'held')).toThrow('not shipped');
   });
+  test('domain tags select the documented full-gate subsets on both platforms', async () => {
+    const base = path.resolve(fileURLToPath(new URL('../../e2e/agent-device/', import.meta.url)));
+    const manifest = JSON.parse(await readFile(path.join(base, 'suite.json'), 'utf8')) as Suite;
+    const domains: Record<string, string[]> = {
+      themes: ['theme-document', 'custom-themes'],
+      settings: [
+        'custom-themes',
+        'settings',
+        'settings-guide',
+        'settings-font',
+        'settings-home-layout',
+      ],
+      terminal: [
+        'terminal-interactions',
+        'file-mentions',
+        'attachments-ui',
+        'slash-commands',
+        'agent-shortcuts',
+        'soft-keyboard',
+      ],
+      files: [
+        'theme-document',
+        'file-mentions',
+        'attachments-ui',
+        'artifacts',
+        'large-file-preview',
+        'git-diff',
+      ],
+      agents: ['agent-collaboration', 'agent-session-tree', 'away-digest', 'agent-shortcuts'],
+      workspace: [
+        'agent-session-tree',
+        'demo-tour',
+        'settings-home-layout',
+        'pad-workspace',
+        'switcher-sheet',
+        'personal-workspace',
+      ],
+      connection: ['pairing-manual', 'ssh'],
+      localization: ['thai-language'],
+    };
+
+    for (const platform of ['ios', 'android']) {
+      for (const [tag, expected] of Object.entries(domains)) {
+        expect(selectFlows(manifest, tag, platform).map((flow) => flow.name)).toEqual(expected);
+      }
+    }
+    const domainNames = new Set(Object.keys(domains));
+    expect(
+      selectFlows(manifest, 'full', 'android').filter(
+        (flow) => !flow.tags.some((tag) => domainNames.has(tag))
+      )
+    ).toEqual([]);
+  });
   test('false predicates fail even when the command succeeds', () => {
     const result = decodeReply('{"success":true,"data":{"pass":false}}', 0);
     expect(() => requirePass(result)).toThrow('UI assertion failed');
@@ -992,6 +1045,33 @@ describe('native end-to-end gate', () => {
     // Two presses at most: one may race the dialog's last frame, a second
     // that also fails is a real blocker, not a timing accident.
     expect(presses).toBe(2);
+  });
+  test('scheme confirmation alert is opened before locating controls', async () => {
+    const alertNodes = [
+      { ...node, type: 'Alert', label: 'Open in “Muqun”?' },
+      { ...node, type: 'Button', label: 'Cancel' },
+      { ...node, type: 'Button', label: 'Open' },
+    ];
+    const appNodes = [{ ...node, type: 'Button', label: 'Done' }];
+    const calls: string[][] = [];
+    let dismissed = false;
+    const runner = new NativeRunner(
+      suite,
+      '/unused',
+      '/unused',
+      async (args) => {
+        calls.push(args);
+        if (args[0] === 'press' && args[1].includes('Open')) dismissed = true;
+        if (args[0] === 'snapshot') {
+          return { nodes: dismissed ? appNodes : alertNodes };
+        }
+        if (args[0] === 'is') return { pass: true };
+        return {};
+      },
+      {}
+    );
+    expect((await runner.locate({ text: 'Done' }))?.label).toBe('Done');
+    expect(calls.some((call) => call[0] === 'press' && call[1].includes('Open'))).toBe(true);
   });
 });
 

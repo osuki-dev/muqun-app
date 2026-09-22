@@ -8,7 +8,7 @@ import type { InkBloomEdge } from './ink-bloom-shader';
  * The opening's front and its rim used to start from a circle -- a fixed
  * fraction of the launch box, centred on the hero. That circle has nothing to
  * do with the picture actually drawn. A theme pack ships whatever it likes in
- * `home.hero`: a character on a transparent background, a wide banner, a
+ * `home.artwork`: a character on a transparent background, a wide banner, a
  * square logo. So the ring closed around empty paper for one pack, cut across
  * the drawing for the next, and in both cases the reveal visibly began as a
  * disc rather than as the picture waking up.

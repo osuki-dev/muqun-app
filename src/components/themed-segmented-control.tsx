@@ -1,27 +1,23 @@
-import {
-  SegmentedControl as BaseSegmentedControl,
-  useThemeTokens,
-  type SegmentedControlProps,
-} from '@osuki-dev/ui';
+import { useThemeTokens, type SegmentedControlProps } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
 import { View } from 'react-native';
 
 import { PressableScale } from '@/components/pressable-scale';
-import { useSurfaceBackground, useSurfaceBackgroundOpacity } from '@/hooks/use-surface-background';
+import { useAppearanceProfile } from '@/components/appearance-profile-provider';
+import { useSurfaceBackground } from '@/hooks/use-surface-background';
 
 export type { SegmentedControlProps } from '@osuki-dev/ui';
 
 /**
- * Kit 1.0.1 exposes only the outer style, not its selected fill. SDK 57's
- * community iOS Picker also ignores tintColor. Keep that native control for
- * default themes; custom translucency uses the kit's platform-neutral layout
- * with independently painted backgrounds and the app's reduced-motion policy.
+ * The kit exposes only the outer style, not selected geometry or fill. Use
+ * its platform-neutral layout for every profile so both surfaces follow the
+ * profile, translucency and the app's reduced-motion policy without remounting
+ * when appearance changes. An explicit pill remains a pill.
  */
 export function SegmentedControl(props: SegmentedControlProps) {
   const theme = useThemeTokens();
+  const profile = useAppearanceProfile();
   const background = useSurfaceBackground();
-  const opacity = useSurfaceBackgroundOpacity();
-  if (opacity === 1) return <BaseSegmentedControl {...props} />;
   const { options, value, onChange, variant = 'rounded', style, testID, ...rest } = props;
   const fill = style?.backgroundColor ?? theme.colors.surfaceRaised;
   return (
@@ -33,13 +29,15 @@ export function SegmentedControl(props: SegmentedControlProps) {
         {
           flexDirection: 'row',
           height: 44,
-          borderRadius: variant === 'pill' ? 999 : 14,
           padding: 4,
           overflow: 'hidden',
           ...(theme.mode === 'light' ? theme.shadow.soft : {}),
         },
         style,
-        { backgroundColor: typeof fill === 'string' ? background(fill) : fill },
+        {
+          backgroundColor: typeof fill === 'string' ? background(fill) : fill,
+          borderRadius: variant === 'pill' ? profile.radius.pill : profile.chrome.segmentedTrack,
+        },
       ]}>
       {options.map((option) => {
         const selected = option.value === value;
@@ -52,13 +50,15 @@ export function SegmentedControl(props: SegmentedControlProps) {
             accessibilityLabel={option.label}
             accessibilityState={{ selected, disabled }}
             disabled={disabled}
+            feedback="selection"
             pressedScale={0.96}
             onPress={() => onChange(option.value)}
             style={{
               flex: 1,
               alignItems: 'center',
               justifyContent: 'center',
-              borderRadius: 999,
+              borderRadius:
+                variant === 'pill' ? profile.radius.pill : profile.chrome.segmentedOption,
               backgroundColor: background(selected ? theme.colors.surface : 'transparent'),
               ...(selected && theme.mode === 'light' ? theme.shadow.pill : {}),
               opacity: disabled ? 0.4 : 1,
