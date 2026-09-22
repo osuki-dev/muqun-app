@@ -128,7 +128,7 @@ function CustomThemeScene({
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <Stack.Screen options={{ title: candidate?.manifest.name ?? t`Theme` }} />
-      <ThemeArtwork slot="shell.background" />
+      <ThemeArtwork slot="shell.wallpaper" />
       <ScreenHeader title={candidate?.manifest.name ?? t`Theme`} />
       <ScrollView
         testID="custom-theme-editor"

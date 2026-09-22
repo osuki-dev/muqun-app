@@ -319,7 +319,7 @@ test('color export is parseable and excludes image paths, source links and home 
     source: 'https://example.invalid/theme?private=1',
     materials: { default: 'solid' },
     assets: { paper: { path: 'assets/paper.png' } },
-    decoration: { 'shell.background': { asset: 'paper' } },
+    decoration: { 'shell.wallpaper': { asset: 'paper' } },
   };
   const installed = repository.save(JSON.stringify(theme), {
     paper: 'file:///app-owned/theme/paper.png',

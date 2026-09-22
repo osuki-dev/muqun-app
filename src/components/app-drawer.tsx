@@ -131,7 +131,7 @@ export default function AppDrawer({
 
   return (
     <View style={[styles.shell, { backgroundColor: surfaceBackground(theme.colors.background) }]}>
-      <ThemeArtwork slot="shell.background" />
+      <ThemeArtwork slot="shell.wallpaper" />
       {/*
         Entering and exiting rather than a width animated to nothing: the rail
         carries a shadow, and clipping a column down to zero would have meant

@@ -9,6 +9,7 @@ import { useFocusEffect } from 'expo-router';
 import { PressableScale } from '@/components/pressable-scale';
 import { StatusDot } from '@/components/status-dot';
 import { Text } from '@/components/text';
+import { ThemeIcon } from '@/components/theme-icon';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { hasRealSessionTitle } from '@/lib/agent-protocol';
 import type { GatewayRecord } from '@/lib/gateway-storage';
@@ -317,7 +318,7 @@ function RecentSessionRow({
             </View>
           ) : null}
         </View>
-        <ChevronRight size={16} color={theme.colors.primary} />
+        <ThemeIcon name="home.arrow" fallback={ChevronRight} size={16} color={theme.colors.primary} />
       </View>
     </PressableScale>
   );

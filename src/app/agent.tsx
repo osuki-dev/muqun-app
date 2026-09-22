@@ -136,7 +136,7 @@ export default function AgentScreen() {
 
   return (
     <View style={[styles.page, { backgroundColor: surfaceBackground(theme.colors.background) }]}>
-      <ThemeArtwork slot="shell.background" />
+      <ThemeArtwork slot="shell.wallpaper" />
       <StatusBar animated style={resolvedMode === 'dark' ? 'light' : 'dark'} />
 
       {serverReady ? (

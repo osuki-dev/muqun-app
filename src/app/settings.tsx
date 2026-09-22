@@ -90,7 +90,7 @@ export default function SettingsScreen() {
   // under it, so against a pack's wallpaper it is read on whatever the picture
   // happens to put there. `SettingsSection` already solved this for its
   // instrument labels; these two are the only other bare strings on the page.
-  const hasShell = useHasThemeArtwork('shell.background');
+  const hasShell = useHasThemeArtwork('shell.wallpaper');
   // `t` from the hook, not the global `t` from `@lingui/core/macro`.
   //
   // React Compiler is enabled, and it will memoize a global `t` call whose
@@ -202,7 +202,7 @@ export default function SettingsScreen() {
 
   return (
     <View style={[styles.page, { backgroundColor: surfaceBackground(theme.colors.background) }]}>
-      <ThemeArtwork slot="shell.background" />
+      <ThemeArtwork slot="shell.wallpaper" />
       <StatusBar animated style={resolvedMode === 'dark' ? 'light' : 'dark'} />
 
       <RenderTally id="settings">

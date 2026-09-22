@@ -61,6 +61,7 @@ const CONSUMERS: Record<(typeof THEME_ICONS)[number], string> = {
   'chrome.back': 'src/components/nav-header.tsx',
   'chrome.send': 'src/components/terminal-composer.tsx',
   'chrome.attach': 'src/components/server-terminal-workspace.tsx',
+  'home.arrow': 'src/components/server-agent-rows.tsx',
 };
 
 test('every advertised glyph is drawn by a real consumer', () => {

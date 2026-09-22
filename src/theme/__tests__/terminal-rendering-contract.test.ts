@@ -28,14 +28,14 @@ test('terminal opacity affects only the default fill, never the complete termina
   // HWUI still decoded and drew it every frame. The SSH workspace is a root
   // stack screen with no drawer above it, so it draws its own.
   const drawer = readFileSync('src/components/app-drawer.tsx', 'utf8');
-  expect(drawer).toContain('<ThemeArtwork slot="shell.background" />');
+  expect(drawer).toContain('<ThemeArtwork slot="shell.wallpaper" />');
 
   const gateway = readFileSync('src/components/server-terminal-workspace.tsx', 'utf8');
   expect(gateway).toContain('<AppDrawer');
-  expect(gateway).not.toContain('<ThemeArtwork slot="shell.background" />');
+  expect(gateway).not.toContain('<ThemeArtwork slot="shell.wallpaper" />');
 
   const ssh = readFileSync('src/components/ssh-terminal-workspace.tsx', 'utf8');
-  expect(ssh).toContain('<ThemeArtwork slot="shell.background" />');
+  expect(ssh).toContain('<ThemeArtwork slot="shell.wallpaper" />');
 });
 
 test('controlled theme switches retain their native parent during disabled opacity updates', () => {

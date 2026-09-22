@@ -329,11 +329,11 @@ export function LaunchSceneIntro({
     pack && assets
       ? resolveThemeImage(
           pack.manifest,
-          'home.background',
+          'home.wallpaper',
           resolvedMode,
           widthClass,
           true,
-          'shell.background'
+          'shell.wallpaper'
         )
       : null;
   const wallpaperUri = wallpaper ? assets?.[wallpaper.asset] : undefined;
