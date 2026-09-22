@@ -32,13 +32,13 @@ test('no pack, or a pack with neither picture nor mark, keeps the bundled mark',
   expect(resolveLaunchArtwork(plain, undefined, 'light')).toEqual({ kind: 'default' });
 });
 
-test('the empty-state illustration is the first answer', () => {
+test('the primary Home artwork is the default launch picture', () => {
   const pack = theme((manifest) => {
-    manifest.decoration = { 'emptyState.illustration': { asset: 'picture' } };
+    manifest.decoration = { 'home.artwork': { asset: 'picture' } };
     manifest.homeIdentity = { logo: { mode: 'custom', asset: 'mark' } };
   });
   expect(resolveLaunchArtwork(pack, FILES, 'light')).toEqual({
-    kind: 'illustration',
+    kind: 'artwork',
     uri: FILES.picture,
   });
 });
@@ -84,7 +84,7 @@ test("the reader's Show Home logo switch hides the launch logo too", () => {
 
 test('only an app-owned file is rendered, so an uninstalled asset falls through', () => {
   const pack = theme((manifest) => {
-    manifest.decoration = { 'emptyState.illustration': { asset: 'picture' } };
+    manifest.decoration = { 'home.artwork': { asset: 'picture' } };
     manifest.homeIdentity = { logo: { mode: 'custom', asset: 'mark' } };
   });
   // The picture's download failed; the mark's did not.
@@ -101,17 +101,17 @@ test('only an app-owned file is rendered, so an uninstalled asset falls through'
 test('mode overrides and width overrides choose the picture the same way artwork does', () => {
   const pack = theme((manifest) => {
     manifest.decoration = {
-      'emptyState.illustration': { asset: 'picture', regular: { asset: 'wide' } },
+      'home.artwork': { asset: 'picture', regular: { asset: 'wide' } },
     };
-    manifest.variantDecorations = { dark: { 'emptyState.illustration': null } };
+    manifest.variantDecorations = { dark: { 'home.artwork': null } };
     manifest.homeIdentity = { logo: { mode: 'custom', asset: 'mark' } };
   });
   expect(resolveLaunchArtwork(pack, FILES, 'light', 'compact')).toEqual({
-    kind: 'illustration',
+    kind: 'artwork',
     uri: FILES.picture,
   });
   expect(resolveLaunchArtwork(pack, FILES, 'light', 'regular')).toEqual({
-    kind: 'illustration',
+    kind: 'artwork',
     uri: FILES.wide,
   });
   // Dark removes the slot explicitly, so dark launches on the mark instead.
@@ -130,48 +130,33 @@ test("the launch floor is the pack's own background, and nothing without a pack"
   expect(pack.light.colors.background).not.toBe(pack.dark.colors.background);
 });
 
-test('the launch overlay asks for the home hero first, and only the launch overlay', () => {
+test('an explicit launch override wins over Home artwork', () => {
   const pack = theme((manifest) => {
     manifest.decoration = {
-      'home.hero': { asset: 'wide' },
-      'emptyState.illustration': { asset: 'picture' },
+      'launch.artwork': { asset: 'wide' },
+      'home.artwork': { asset: 'picture' },
     };
-    manifest.homeIdentity = { logo: { mode: 'custom', asset: 'mark' } };
   });
-  expect(resolveLaunchArtwork(pack, FILES, 'light', 'compact', { hero: true })).toEqual({
-    kind: 'hero',
+  expect(resolveLaunchArtwork(pack, FILES, 'light')).toEqual({
+    kind: 'artwork',
     uri: FILES.wide,
   });
-  // The lock screen never sees the hero.
-  expect(resolveLaunchArtwork(pack, FILES, 'light', 'compact')).toEqual({
-    kind: 'illustration',
-    uri: FILES.picture,
-  });
-  // No hero drawn: the launch overlay falls through to the same chain.
-  const noHero = theme((manifest) => {
-    manifest.decoration = { 'emptyState.illustration': { asset: 'picture' } };
-  });
-  expect(resolveLaunchArtwork(noHero, FILES, 'light', 'compact', { hero: true })).toEqual({
-    kind: 'illustration',
+  expect(resolveLaunchArtwork(pack, { picture: FILES.picture }, 'light')).toEqual({
+    kind: 'artwork',
     uri: FILES.picture,
   });
 });
 
-test('an author who hid the hero keeps it off the launch screen too', () => {
+test('Home visibility does not hide artwork on launch', () => {
   const pack = theme((manifest) => {
-    manifest.decoration = { 'home.hero': { asset: 'wide' } };
-    manifest.homeIdentity = { hero: { mode: 'hidden' } };
+    manifest.decoration = { 'home.artwork': { asset: 'wide' } };
+    manifest.homeIdentity = { artwork: { mode: 'hidden' } };
   });
-  expect(resolveLaunchArtwork(pack, FILES, 'light', 'compact', { hero: true })).toEqual({
-    kind: 'default',
+  expect(resolveLaunchArtwork(pack, FILES, 'light')).toEqual({
+    kind: 'artwork',
+    uri: FILES.wide,
   });
-  // And a hero whose file never installed is no hero.
-  const installed = theme((manifest) => {
-    manifest.decoration = { 'home.hero': { asset: 'wide' } };
-  });
-  expect(
-    resolveLaunchArtwork(installed, { mark: FILES.mark }, 'light', 'compact', { hero: true })
-  ).toEqual({
+  expect(resolveLaunchArtwork(pack, { mark: FILES.mark }, 'light')).toEqual({
     kind: 'default',
   });
 });

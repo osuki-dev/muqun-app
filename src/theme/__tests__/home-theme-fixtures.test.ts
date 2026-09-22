@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 
 import { expect, test } from 'bun:test';
 
-import { resolveHomeHero } from '../home-hero';
+import { resolveHomeArtwork } from '../home-artwork';
 import { resolveHomeIdentity, resolveThemeImage } from '../resolve';
 import type { ThemeManifest, ThemeSlot } from '../schema';
 
@@ -27,7 +27,7 @@ type Fixture = {
     expectedIdentity: ReturnType<typeof resolveHomeIdentity>;
     expected: {
       id: string;
-      hero: ReturnType<typeof resolveHomeHero>;
+      artwork: ReturnType<typeof resolveHomeArtwork>;
       directImage: ReturnType<typeof resolveThemeImage>;
     }[];
   }[];
@@ -43,7 +43,7 @@ test('the exported Home theme fixture is generated from the App resolver contrac
   expect(fixture.themeSchemaVersion).toBe(1);
   expect(fixture.sources.app.map((source) => source.path)).toEqual([
     'src/theme/resolve.ts',
-    'src/theme/home-hero.ts',
+    'src/theme/home-artwork.ts',
     'src/theme/schema.ts',
   ]);
   for (const item of fixture.cases) {
@@ -57,19 +57,19 @@ test('the exported Home theme fixture is generated from the App resolver contrac
 
       const decorationsEnabled = input.decorationsEnabled ?? true;
       expect(
-        resolveHomeHero({
+        resolveHomeArtwork({
           manifest,
           mode: input.mode,
           width: input.width,
           preference: input.preference,
           decorationsEnabled,
         })
-      ).toEqual(expected.hero);
+      ).toEqual(expected.artwork);
 
       const directImage = manifest
         ? resolveThemeImage(
             manifest,
-            'home.hero',
+            'home.artwork',
             input.mode,
             input.width,
             decorationsEnabled,

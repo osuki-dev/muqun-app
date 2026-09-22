@@ -4,14 +4,14 @@ import { readFileSync } from 'node:fs';
 const actions = readFileSync(new URL('../home-launch-actions.tsx', import.meta.url), 'utf8');
 const overview = readFileSync(new URL('../home-overview.tsx', import.meta.url), 'utf8');
 
-test('Editorial Home presents wide quick actions as one horizontal rail with SSH last', () => {
-  expect(actions).toContain('<ScrollView\n        horizontal');
+test('Editorial Home scrolls narrow actions and wraps wide actions with SSH last', () => {
+  expect(actions).toContain('horizontal={horizontal}');
+  expect(actions).toContain('availableWidth < 560');
   expect(actions).toContain('testID="home-launch-actions-scroll"');
-  expect(actions).toContain('width: 124');
-  expect(actions).toContain('primaryTile: { width: 148');
-  expect(actions).toContain("actions: { flexDirection: 'row', alignItems: 'flex-start', gap: 4");
-  expect(actions).toContain('stackedActions: { width: 152, gap: 4 }');
-  expect(actions).toContain('minHeight: 92');
+  expect(actions).toContain('flexBasis: 124');
+  expect(actions).toContain('primaryTile: { flexBasis: 148');
+  expect(actions).toContain("flexWrap: 'wrap'");
+  expect(actions).toContain('minHeight: 104');
   expect(actions).toContain('minHeight: 44');
   expect(actions).toContain('marker="01"');
   expect(actions).toContain('marker="05"');
@@ -38,7 +38,7 @@ test('view actions reuse the selected Gateway command owners', () => {
 
 test('the Gateway target is a separate 44-point masthead control', () => {
   expect(actions).toContain('export function HomeLaunchTarget');
-  expect(actions).toContain('height: 44');
+  expect(actions).toContain('minHeight: 44');
   expect(overview).toContain('headerLeading={');
   expect(overview).toContain('<HomeLaunchTarget');
   expect(overview).toContain('controller={launchController}');

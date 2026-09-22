@@ -173,6 +173,7 @@ export const AgentModeSheet = memo(function AgentModeSheet({
         </View>
       ) : (
         <ScrollView
+          nestedScrollEnabled
           style={sheetSceneStyles.scroller}
           contentContainerStyle={sheetSceneStyles.scrollerContent}
           showsVerticalScrollIndicator={false}>

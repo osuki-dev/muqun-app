@@ -2737,10 +2737,6 @@ msgstr "Muqun không có phông chữ riêng. Phông bạn thêm sẽ được g
 msgid "Muqun is locked"
 msgstr "Muqun đang khóa"
 
-#: src/app/settings.tsx
-msgid "Muqun is open source. Read it, or build it yourself."
-msgstr "Muqun là mã nguồn mở. Hãy đọc, hoặc tự dựng lấy"
-
 #: src/components/pairing-camera.tsx
 msgid "Muqun reads the Gateway's QR code through the camera. Nothing is recorded."
 msgstr "Muqun đọc mã QR của Gateway qua camera. Không có gì được ghi lại"

@@ -8,7 +8,6 @@ import { StyleSheet, type StyleProp, View, type ViewStyle } from 'react-native';
 
 import { GlassChrome } from '@/components/glass-chrome';
 import { PressableScale } from '@/components/pressable-scale';
-import { appChrome } from '@/constants/appearance';
 import { NAV_HEADER_TOP_GAP } from '@/constants/nav-header';
 
 /**
@@ -69,7 +68,6 @@ const styles = StyleSheet.create({
   circle: {
     width: NAV_HEADER_CONTROL_SIZE,
     height: NAV_HEADER_CONTROL_SIZE,
-    borderRadius: appChrome.radius.navigationPill,
     borderCurve: 'continuous',
     overflow: 'hidden',
     alignItems: 'center',
@@ -85,7 +83,6 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: 0,
     minHeight: NAV_HEADER_CONTROL_SIZE,
-    borderRadius: appChrome.radius.navigationPill,
     borderCurve: 'continuous',
     overflow: 'hidden',
     alignItems: 'center',
@@ -108,7 +105,7 @@ export const navHeaderTitleTextStyle = styles.titleText;
 /** A glass circle sized to the row. The screen owns what goes inside it. */
 export function NavHeaderCircle({ children }: { children: ReactNode }) {
   return (
-    <GlassChrome surface="navigation" shape="pill" style={styles.circle}>
+    <GlassChrome surface="navigation" shape="navigationPill" style={styles.circle}>
       {children}
     </GlassChrome>
   );

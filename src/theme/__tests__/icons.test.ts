@@ -56,6 +56,8 @@ test('an icon entry still needs a real asset id', () => {
 
 /** Which file draws each advertised glyph. Both guards below read this one. */
 const CONSUMERS: Record<(typeof THEME_ICONS)[number], string> = {
+  'chrome.scan': 'src/components/home-overview.tsx',
+  'chrome.settings': 'src/components/home-overview.tsx',
   'chrome.back': 'src/components/nav-header.tsx',
   'chrome.send': 'src/components/terminal-composer.tsx',
   'chrome.attach': 'src/components/server-terminal-workspace.tsx',

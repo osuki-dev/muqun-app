@@ -1,3 +1,4 @@
+import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { useMemo } from 'react';
 import { useThemeTokens } from '@osuki-dev/ui';
 import type { MarkdownStyle } from 'react-native-enriched-markdown';
@@ -25,10 +26,16 @@ export type MarkdownTone = 'body' | 'muted' | 'danger';
  */
 export function useCompactMarkdownStyle(tone: MarkdownTone = 'muted'): MarkdownStyle {
   const theme = useThemeTokens();
+  const profile = useAppearanceProfile();
   return useMemo(() => {
     const colors = theme.colors;
     const ink =
       tone === 'body' ? colors.text : tone === 'danger' ? colors.danger : colors.textMuted;
-    return createCompactMarkdownStyle(colors, ink);
-  }, [theme.colors, tone]);
+    const base = createCompactMarkdownStyle(colors, ink);
+    return {
+      ...base,
+      codeBlock: { ...base.codeBlock, borderRadius: profile.chrome.surface },
+      table: { ...base.table, borderRadius: profile.chrome.surface },
+    };
+  }, [theme.colors, tone, profile.chrome.surface]);
 }

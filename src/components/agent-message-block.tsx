@@ -1,3 +1,5 @@
+import { useAppearanceProfile } from '@/components/appearance-profile-provider';
+import { goalContinuationSummary } from '@/lib/agent-goal-message';
 import { Fragment, memo, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useThemeTokens, useToast } from '@osuki-dev/ui';
@@ -101,6 +103,7 @@ const AttachmentImage = memo(function AttachmentImage({
   onPreviewImage: (uri: string) => void;
 }) {
   const theme = useThemeTokens();
+  const profile = useAppearanceProfile();
   const uploadName =
     uri.startsWith('data:') || /^https?:/.test(uri) ? null : uploadNameFromPath(uri);
   const [source, setSource] = useState<AssetImageSource | null>(() =>
@@ -128,7 +131,7 @@ const AttachmentImage = memo(function AttachmentImage({
       accessibilityRole="imagebutton"
       accessibilityLabel={label}
       onPress={() => onPreviewImage(source.uri)}
-      style={styles.attachmentImageWrapper}>
+      style={[styles.attachmentImageWrapper, { borderRadius: profile.chrome.surface }]}>
       <Image
         source={source}
         style={styles.attachmentThumbnail}
@@ -991,6 +994,8 @@ export const AgentUserMessage = memo(function AgentUserMessage({
   const colors = usePaneChatColors();
   const plate = useTranscriptPlate();
   const relativeTime = useRelativeTime();
+  const profile = useAppearanceProfile();
+  const [goalExpanded, setGoalExpanded] = useState(false);
 
   const first = group.items[0];
   const text = useMemo(
@@ -1006,6 +1011,11 @@ export const AgentUserMessage = memo(function AgentUserMessage({
     [group.items]
   );
   const queued = group.items.find((item) => item.queued);
+  const goalSummary = useMemo(
+    () =>
+      group.items.every((item) => item.part.type === 'text') ? goalContinuationSummary(text) : null,
+    [group.items, text]
+  );
   const entries = useMemo(() => buildTimelineEntries(group.items), [group.items]);
   const stamp = first?.updated_ms ? relativeTime(first.updated_ms) : '';
 
@@ -1054,20 +1064,26 @@ export const AgentUserMessage = memo(function AgentUserMessage({
     return items;
   }, [text, onUndoToHere, messageId, first?.id, group.key, showToast, t]);
 
+  // A disclosure owns its touch responder. A second Pressable around a large
+  // selectable native markdown body can retain the row's responder after it grows.
+  const MessageContainer = goalSummary ? View : Pressable;
+  const openMessageMenu = () => {
+    if (menuItems.length === 0) return;
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setMenuOpen((open) => !open);
+  };
+
   return (
-    <Pressable
+    <MessageContainer
       testID={`user-message-${first?.id ?? group.key}`}
       accessibilityLabel={t`Your message`}
-      onLongPress={() => {
-        if (menuItems.length === 0) return;
-        void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-        setMenuOpen((open) => !open);
-      }}
+      onLongPress={goalSummary ? undefined : openMessageMenu}
       delayLongPress={260}
       style={[
         styles.messageBlock,
         plate,
         styles.userBlock,
+        goalSummary ? styles.goalMessage : null,
         { borderLeftColor: colors.accent },
         queued ? { borderLeftColor: theme.colors.warning } : null,
       ]}>
@@ -1122,21 +1138,57 @@ export const AgentUserMessage = memo(function AgentUserMessage({
         ) : null}
       </View>
 
-      {entries.map((entry, index) =>
-        entry.kind === 'reasoning' ? (
-          showReasoning ? (
-            <ReasoningRunBlock key={entry.key} run={entry.run} />
-          ) : null
-        ) : (
-          renderTimelinePart(entry.item, {
-            showReasoning,
-            markdownStyle,
-            prevItem: previousItemAt(entries, index) ?? group.prevItem,
-            actions,
-            readOnly,
-          })
-        )
-      )}
+      {goalSummary ? (
+        <Pressable
+          testID={`goal-message-toggle-${first?.id ?? group.key}`}
+          accessibilityRole="button"
+          accessibilityLabel={
+            goalExpanded ? t`Collapse goal continuation` : t`Expand goal continuation`
+          }
+          accessibilityState={{ expanded: goalExpanded }}
+          onPress={() => setGoalExpanded((open) => !open)}
+          onLongPress={openMessageMenu}
+          delayLongPress={260}
+          style={[styles.goalDisclosure, { borderRadius: profile.chrome.control }]}>
+          <View pointerEvents="none" style={styles.goalSummary}>
+            <Text
+              variant="caption"
+              weight="semibold"
+              color={colors.accent}>{t`Goal continuation`}</Text>
+            <Text variant="bodySmall" color={theme.colors.text} numberOfLines={2}>
+              {goalSummary}
+            </Text>
+          </View>
+          <View pointerEvents="none" style={styles.goalChevron}>
+            <ChevronDown
+              size={14}
+              color={colors.accent}
+              style={{ transform: [{ rotate: goalExpanded ? '180deg' : '0deg' }] }}
+            />
+          </View>
+        </Pressable>
+      ) : null}
+      {goalSummary && goalExpanded ? (
+        <Text selectable variant="body" color={theme.colors.text} style={styles.goalFullText}>
+          {text}
+        </Text>
+      ) : null}
+      {!goalSummary &&
+        entries.map((entry, index) =>
+          entry.kind === 'reasoning' ? (
+            showReasoning ? (
+              <ReasoningRunBlock key={entry.key} run={entry.run} />
+            ) : null
+          ) : (
+            renderTimelinePart(entry.item, {
+              showReasoning,
+              markdownStyle,
+              prevItem: previousItemAt(entries, index) ?? group.prevItem,
+              actions,
+              readOnly,
+            })
+          )
+        )}
 
       {attachments.length > 0 ? (
         <MessageAttachments attachments={attachments} onPreviewImage={onPreviewImage} />
@@ -1149,7 +1201,7 @@ export const AgentUserMessage = memo(function AgentUserMessage({
           items={menuItems}
         />
       ) : null}
-    </Pressable>
+    </MessageContainer>
   );
 });
 
@@ -1332,6 +1384,19 @@ const styles = StyleSheet.create({
   toolGroupCopy: { flex: 1, minWidth: 0, gap: 1 },
   toolGroupNames: { fontSize: AGENT_TYPE.micro.size },
   toolGroupItems: { gap: TRANSCRIPT_ROW_GAP },
+  goalMessage: { alignSelf: 'stretch', width: '100%' },
+  goalDisclosure: {
+    alignSelf: 'stretch',
+    minHeight: 44,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingVertical: 6,
+    zIndex: 1,
+  },
+  goalSummary: { flex: 1, minWidth: 0, gap: 4 },
+  goalChevron: { width: 20, flexShrink: 0, alignItems: 'center', justifyContent: 'center' },
+  goalFullText: { alignSelf: 'stretch', flexShrink: 1 },
   roleRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1369,14 +1434,12 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   attachmentImageWrapper: {
-    borderRadius: 14,
     borderCurve: 'continuous',
     overflow: 'hidden',
   },
   attachmentThumbnail: {
     width: 160,
     height: 110,
-    borderRadius: 14,
   },
   attachmentChip: {
     flexDirection: 'row',

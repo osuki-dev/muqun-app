@@ -131,7 +131,7 @@ export function CustomThemePreview({
               viewport="compact"
               manifest={manifest}
               assets={assets}
-              slot="home.decoration"
+              slot="home.artwork"
               mode={mode}
               banner
             />

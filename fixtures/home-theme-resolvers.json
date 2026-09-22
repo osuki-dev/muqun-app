@@ -9,12 +9,12 @@
         "sha256": "a852b1be5fb719aa4caddd537afac60bfc073c2a6e27a095f6922da90b5de290"
       },
       {
-        "path": "src/theme/home-hero.ts",
-        "sha256": "ff1462660c84e0f5a5f20bfa51dcea03047f0c4c83d658915a15a10057561a17"
+        "path": "src/theme/home-artwork.ts",
+        "sha256": "857ad2ec1615b1ce0091e980b25e259e0fb2c96357b10be62d3851c2aba17476"
       },
       {
         "path": "src/theme/schema.ts",
-        "sha256": "8452fa9c68ff967b8aaba4540f4545677b1d07e4b25560081508e2dfb3c44591"
+        "sha256": "9f8829be9479b7ceca4576bdeac2ea2e2e564c7d4463186a945bb131bd1ef24b"
       }
     ]
   },
@@ -45,12 +45,12 @@
       "expected": [
         {
           "id": "theme-light-compact",
-          "hero": null,
+          "artwork": null,
           "directImage": null
         },
         {
           "id": "shown-dark-regular",
-          "hero": null,
+          "artwork": null,
           "directImage": null
         }
       ]
@@ -64,8 +64,8 @@
         "name": "omitted-identity",
         "version": "1.0.0",
         "decoration": {
-          "home.hero": {
-            "asset": "hero",
+          "home.artwork": {
+            "asset": "artwork",
             "fit": "contain"
           }
         }
@@ -90,29 +90,29 @@
       "expected": [
         {
           "id": "theme-light-compact",
-          "hero": {
-            "slot": "home.hero",
+          "artwork": {
+            "slot": "home.artwork",
             "image": {
-              "asset": "hero",
+              "asset": "artwork",
               "fit": "contain"
             }
           },
           "directImage": {
-            "asset": "hero",
+            "asset": "artwork",
             "fit": "contain"
           }
         },
         {
           "id": "theme-dark-regular",
-          "hero": {
-            "slot": "home.hero",
+          "artwork": {
+            "slot": "home.artwork",
             "image": {
-              "asset": "hero",
+              "asset": "artwork",
               "fit": "contain"
             }
           },
           "directImage": {
-            "asset": "hero",
+            "asset": "artwork",
             "fit": "contain"
           }
         }
@@ -135,27 +135,27 @@
             "mode": "custom",
             "asset": "brand"
           },
-          "hero": {
+          "artwork": {
             "mode": "default"
           }
         },
         "decoration": {
-          "home.hero": {
-            "asset": "hero-light",
+          "home.artwork": {
+            "asset": "artwork-light",
             "fit": "contain",
             "regular": {
-              "asset": "hero-light-regular",
+              "asset": "artwork-light-regular",
               "opacity": 0.8
             }
           }
         },
         "variantDecorations": {
           "dark": {
-            "home.hero": {
-              "asset": "hero-dark",
+            "home.artwork": {
+              "asset": "artwork-dark",
               "fit": "cover",
               "regular": {
-                "asset": "hero-dark-regular"
+                "asset": "artwork-dark-regular"
               }
             }
           }
@@ -194,56 +194,56 @@
       "expected": [
         {
           "id": "light-compact",
-          "hero": {
-            "slot": "home.hero",
+          "artwork": {
+            "slot": "home.artwork",
             "image": {
-              "asset": "hero-light",
+              "asset": "artwork-light",
               "fit": "contain"
             }
           },
           "directImage": {
-            "asset": "hero-light",
+            "asset": "artwork-light",
             "fit": "contain"
           }
         },
         {
           "id": "light-regular",
-          "hero": {
-            "slot": "home.hero",
+          "artwork": {
+            "slot": "home.artwork",
             "image": {
-              "asset": "hero-light-regular",
+              "asset": "artwork-light-regular",
               "opacity": 0.8
             }
           },
           "directImage": {
-            "asset": "hero-light-regular",
+            "asset": "artwork-light-regular",
             "opacity": 0.8
           }
         },
         {
           "id": "dark-compact",
-          "hero": {
-            "slot": "home.hero",
+          "artwork": {
+            "slot": "home.artwork",
             "image": {
-              "asset": "hero-dark",
+              "asset": "artwork-dark",
               "fit": "cover"
             }
           },
           "directImage": {
-            "asset": "hero-dark",
+            "asset": "artwork-dark",
             "fit": "cover"
           }
         },
         {
           "id": "dark-regular",
-          "hero": {
-            "slot": "home.hero",
+          "artwork": {
+            "slot": "home.artwork",
             "image": {
-              "asset": "hero-dark-regular"
+              "asset": "artwork-dark-regular"
             }
           },
           "directImage": {
-            "asset": "hero-dark-regular"
+            "asset": "artwork-dark-regular"
           }
         }
       ]
@@ -263,13 +263,13 @@
           "logo": {
             "mode": "default"
           },
-          "hero": {
+          "artwork": {
             "mode": "default"
           }
         },
         "decoration": {
-          "home.hero": {
-            "asset": "hero"
+          "home.artwork": {
+            "asset": "artwork"
           }
         }
       },
@@ -290,14 +290,14 @@
       "expected": [
         {
           "id": "theme-light-compact",
-          "hero": {
-            "slot": "home.hero",
+          "artwork": {
+            "slot": "home.artwork",
             "image": {
-              "asset": "hero"
+              "asset": "artwork"
             }
           },
           "directImage": {
-            "asset": "hero"
+            "asset": "artwork"
           }
         }
       ]
@@ -317,13 +317,13 @@
           "logo": {
             "mode": "hidden"
           },
-          "hero": {
+          "artwork": {
             "mode": "hidden"
           }
         },
         "decoration": {
-          "home.hero": {
-            "asset": "hero"
+          "home.artwork": {
+            "asset": "artwork"
           }
         }
       },
@@ -354,39 +354,39 @@
       "expected": [
         {
           "id": "theme",
-          "hero": null,
+          "artwork": null,
           "directImage": {
-            "asset": "hero"
+            "asset": "artwork"
           }
         },
         {
           "id": "shown",
-          "hero": {
-            "slot": "home.hero",
+          "artwork": {
+            "slot": "home.artwork",
             "image": {
-              "asset": "hero"
+              "asset": "artwork"
             }
           },
           "directImage": {
-            "asset": "hero"
+            "asset": "artwork"
           }
         },
         {
           "id": "hidden",
-          "hero": null,
+          "artwork": null,
           "directImage": {
-            "asset": "hero"
+            "asset": "artwork"
           }
         }
       ]
     },
     {
-      "id": "explicit-fallback",
+      "id": "empty-state-is-not-home-artwork",
       "manifest": {
         "format": "muqun-theme",
         "schemaVersion": 1,
-        "id": "explicit-fallback",
-        "name": "explicit-fallback",
+        "id": "empty-state-is-not-home-artwork",
+        "name": "empty-state-is-not-home-artwork",
         "version": "1.0.0",
         "decoration": {
           "emptyState.illustration": {
@@ -402,14 +402,14 @@
           "width": "compact"
         },
         {
-          "id": "shown-fallback",
+          "id": "shown-with-direct-fallback",
           "mode": "light",
           "width": "compact",
           "preference": "shown",
           "directFallbackSlot": "emptyState.illustration"
         },
         {
-          "id": "shown-fallback-regular",
+          "id": "shown-with-direct-fallback-regular",
           "mode": "dark",
           "width": "regular",
           "preference": "shown",
@@ -424,32 +424,20 @@
       "expected": [
         {
           "id": "theme-no-fallback",
-          "hero": null,
+          "artwork": null,
           "directImage": null
         },
         {
-          "id": "shown-fallback",
-          "hero": {
-            "slot": "emptyState.illustration",
-            "image": {
-              "asset": "empty",
-              "fit": "contain"
-            }
-          },
+          "id": "shown-with-direct-fallback",
+          "artwork": null,
           "directImage": {
             "asset": "empty",
             "fit": "contain"
           }
         },
         {
-          "id": "shown-fallback-regular",
-          "hero": {
-            "slot": "emptyState.illustration",
-            "image": {
-              "asset": "empty",
-              "fit": "contain"
-            }
-          },
+          "id": "shown-with-direct-fallback-regular",
+          "artwork": null,
           "directImage": {
             "asset": "empty",
             "fit": "contain"
@@ -466,11 +454,11 @@
         "name": "responsive-null-and-disabled",
         "version": "1.0.0",
         "decoration": {
-          "home.hero": {
-            "asset": "hero-base",
+          "home.artwork": {
+            "asset": "artwork-base",
             "compact": null,
             "regular": {
-              "asset": "hero-regular"
+              "asset": "artwork-regular"
             }
           },
           "emptyState.illustration": {
@@ -479,7 +467,7 @@
         },
         "variantDecorations": {
           "dark": {
-            "home.hero": null
+            "home.artwork": null
           }
         }
       },
@@ -516,29 +504,29 @@
       "expected": [
         {
           "id": "light-compact-null",
-          "hero": null,
+          "artwork": null,
           "directImage": null
         },
         {
           "id": "light-regular-object",
-          "hero": {
-            "slot": "home.hero",
+          "artwork": {
+            "slot": "home.artwork",
             "image": {
-              "asset": "hero-regular"
+              "asset": "artwork-regular"
             }
           },
           "directImage": {
-            "asset": "hero-regular"
+            "asset": "artwork-regular"
           }
         },
         {
           "id": "dark-compact-explicit-null",
-          "hero": null,
+          "artwork": null,
           "directImage": null
         },
         {
           "id": "decorations-disabled",
-          "hero": null,
+          "artwork": null,
           "directImage": null
         }
       ]

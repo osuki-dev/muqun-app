@@ -2737,10 +2737,6 @@ msgstr "Muqun n'a aucune police à lui. Celle que vous ajoutez reste sur cet app
 msgid "Muqun is locked"
 msgstr "Muqun est verrouillé"
 
-#: src/app/settings.tsx
-msgid "Muqun is open source. Read it, or build it yourself."
-msgstr "Muqun est open source. Lisez-le, ou compilez-le vous-même"
-
 #: src/components/pairing-camera.tsx
 msgid "Muqun reads the Gateway's QR code through the camera. Nothing is recorded."
 msgstr "Muqun lit le QR code du Gateway avec la caméra. Rien n'est enregistré"

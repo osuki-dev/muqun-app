@@ -728,6 +728,7 @@ export default function QuickCommandsScreen() {
         </View>
 
         <KeyboardAwareScrollView
+          nestedScrollEnabled
           style={styles.scrollViewport}
           bottomOffset={24}
           keyboardShouldPersistTaps="handled"

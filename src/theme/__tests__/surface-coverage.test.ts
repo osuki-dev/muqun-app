@@ -6,12 +6,8 @@ import { THEME_SLOTS } from '../schema';
 // Contract guard, not a replacement for native screenshots or interaction QA.
 // Every advertised slot must retain a real consumer rather than a schema-only promise.
 //
-// A list rather than a single file wherever a slot is drawn in more than one
-// place. `emptyState.illustration` is the slot that made that necessary: it is
-// the pack's one square, self-contained picture, so besides the "Pair your
-// first server" card it is now also what the launch overlay and the lock
-// screen show in place of the app's mark. Naming only the card would let the
-// other two be deleted without this guard noticing, which is the whole job.
+// A list names every surface when artwork is consumed in more than one place.
+// Empty-state art stays in its card; launch and Home foregrounds have dedicated slots.
 const consumers = {
   'shell.background': [
     'src/app/settings.tsx',
@@ -22,7 +18,6 @@ const consumers = {
     'src/components/sheet-ground.tsx',
   ],
   'home.background': 'src/components/home-overview.tsx',
-  'home.decoration': 'src/components/home-overview.tsx',
   'navigation.background': 'src/components/glass-chrome.tsx',
   'composer.background': 'src/components/glass-chrome.tsx',
   'actions.background': 'src/components/glass-chrome.tsx',
@@ -32,16 +27,9 @@ const consumers = {
   // strip, so the slot lived or died with that one screen; it is on
   // `SettingsSegmented` now, which is every tabbed control in the app.
   'tabs.background': 'src/components/settings-segmented.tsx',
-  'emptyState.illustration': [
-    'src/components/home-overview.tsx',
-    'src/theme/launch-artwork.ts',
-    // Reachable from Home as well, but only through an explicit reader choice.
-    'src/theme/home-hero.ts',
-  ],
-  // The resolver rather than the screen: the hero is the one slot whose
-  // visibility is a decision rather than a presence, and `home-hero.ts` is where
-  // that decision is made. The test below holds the screen to mounting it.
-  'home.hero': 'src/theme/home-hero.ts',
+  'emptyState.illustration': 'src/components/home-overview.tsx',
+  'home.artwork': 'src/theme/home-artwork.ts',
+  'launch.artwork': 'src/theme/launch-artwork.ts',
 } as const;
 
 test('every supported artwork slot has a named runtime consumer', () => {
@@ -64,35 +52,33 @@ test('every supported artwork slot has a named runtime consumer', () => {
 
 test('Home mounts profile-specific top artwork and the empty card keeps its own picture', () => {
   const home = readFileSync('src/components/home-overview.tsx', 'utf8');
-  expect(home).toContain('resolveEditorialHomeArtworkAsset');
+  expect(home).toContain('resolveHomeArtworkAsset');
   expect(home).toContain('<HomeEditorialArtwork');
-  expect(home.indexOf('<HomeEditorialArtwork')).toBeLessThan(home.indexOf('<HomeEditorialLayout'));
   const editorialArtwork = readFileSync('src/components/home-editorial-artwork.tsx', 'utf8');
   expect(editorialArtwork).toContain("colors={['white', 'white', 'transparent']}");
   expect(editorialArtwork).toContain("root: { width: '100%'");
   expect(editorialArtwork).not.toContain('RoundedRect');
-  // Classic keeps its existing contained decoration followed by its hero.
-  expect(home).toContain('<HomeHero ');
-  const heroAt = home.indexOf('<HomeHero ');
-  expect(heroAt).toBeGreaterThan(home.indexOf('slot="home.decoration"'));
-  expect(heroAt).toBeLessThan(home.indexOf('<ServerCard'));
-  expect(home).toContain('resolveHomeHeroAsset');
-  // The hero is omitted while the empty state is up. Both pictures on one
+  // Both layouts render the same foreground in their own composition.
+  expect(home).toContain('<HomeArtwork ');
+  const artworkAt = home.indexOf('<HomeArtwork ');
+  expect(artworkAt).toBeLessThan(home.indexOf('<ServerCard'));
+  expect(home).toContain('resolveHomeArtworkAsset');
+  // The artwork is omitted while the empty state is up. Both pictures on one
   // otherwise empty screen is a gallery rather than an invitation, and the
   // card's illustration was composed for the card.
-  expect(home).toContain('records.length > 0 && heroResolution');
+  expect(home).toContain('records.length > 0 && artworkResolution');
   expect(home).toContain('<ThemeArtwork slot="emptyState.illustration" />');
 
   // The iPad rail deliberately does not draw it. The rail is a persistent index
   // of machines beside a live terminal, not the top of a page, and a decoration
   // that cannot scroll away would sit there for the whole session.
   const rail = readFileSync('src/components/pad-server-rail.tsx', 'utf8');
-  expect(rail).not.toContain('HomeHero');
+  expect(rail).not.toContain('HomeArtwork');
 });
 
 test('both launch surfaces take their mark from the shared fallback chain', () => {
   // The slot names live in `launch-artwork.ts` and the order they imply --
-  // the hero for the launch overlay only, then illustration, then Home logo,
+  // explicit launch artwork, then primary Home artwork, then Home logo,
   // then the bundled mark -- is tested there. What this holds is that neither
   // screen grows a second opinion: a lock screen that resolved the slot itself
   // could drift from the overlay, and the two are the first and last thing a
@@ -106,10 +92,10 @@ test('both launch surfaces take their mark from the shared fallback chain', () =
   // the chain" but "exactly one surface does, and the overlay mirrors it".
   const launch = readFileSync('src/components/launch-intro-scene.tsx', 'utf8');
   expect(launch).toContain('useSplashMirror()');
-  expect(launch).not.toContain('useLaunchHeroArtwork()');
+  expect(launch).not.toContain('useLaunchArtwork()');
   const sync = readFileSync('src/hooks/use-launch-image-sync.ts', 'utf8');
   expect(sync).toContain("from '@/hooks/use-launch-artwork'");
-  expect(sync).toContain('useLaunchHeroArtwork()');
+  expect(sync).toContain('useLaunchArtwork()');
   expect(sync).toContain("kind === 'default'");
 
   const lock = readFileSync('src/components/app-lock-gate.tsx', 'utf8');

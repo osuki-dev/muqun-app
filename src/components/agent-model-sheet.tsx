@@ -410,6 +410,7 @@ export const AgentModelSheet = memo(function AgentModelSheet({
         </View>
       ) : (
         <ScrollView
+          nestedScrollEnabled
           ref={modelListRef}
           style={sheetSceneStyles.scroller}
           contentContainerStyle={sheetSceneStyles.scrollerContent}

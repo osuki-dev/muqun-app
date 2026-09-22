@@ -61,11 +61,15 @@ test('Editorial keeps its magazine layout with the compact corner treatment', ()
   });
 });
 
-test('profile native motion stays short, disables animation for reduced motion, and never overrides gestures', () => {
+test('profile motion preserves native defaults, reduced motion, and gestures', () => {
   for (const profile of Object.values(appearanceProfiles)) {
     for (const modal of [false, true]) {
       const options = profileNavigationOptions(profile, false, modal);
-      expect(options.animationDuration).toBeLessThanOrEqual(260);
+      if (profile.id === 'editorial') {
+        expect(options).toEqual({ animation: 'default' });
+      } else {
+        expect(options.animationDuration).toBeLessThanOrEqual(260);
+      }
       expect('gestureEnabled' in options).toBe(false);
       expect(profileNavigationOptions(profile, true, modal)).toEqual({
         animation: 'none',

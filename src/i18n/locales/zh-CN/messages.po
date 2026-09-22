@@ -2737,10 +2737,6 @@ msgstr "Muqun 自己不提供字体。添加后会保存在本机"
 msgid "Muqun is locked"
 msgstr "牧群已锁定"
 
-#: src/app/settings.tsx
-msgid "Muqun is open source. Read it, or build it yourself."
-msgstr "Muqun 是开源的。你可以阅读源代码，或自行构建"
-
 #: src/components/pairing-camera.tsx
 msgid "Muqun reads the Gateway's QR code through the camera. Nothing is recorded."
 msgstr "Muqun 通过相机读取 Gateway 的二维码，不会录制任何内容"

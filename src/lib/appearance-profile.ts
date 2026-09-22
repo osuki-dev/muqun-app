@@ -15,6 +15,7 @@ export type AppearanceProfile = Readonly<{
   chrome: Readonly<{
     card: number;
     control: number;
+    roundControl: number;
     popover: number;
     controlTray: number;
     noticeCard: number;
@@ -32,6 +33,21 @@ export type AppearanceProfile = Readonly<{
     transcriptPlate: number;
     overlay: number;
     surface: number;
+  }>;
+  rail: Readonly<{
+    showsDivider: boolean;
+    contentGap: number;
+    actionsShowDivider: boolean;
+    actionsPaddingTop: number;
+    workbenchMarginHorizontal: number;
+    selectionBarWidth: number;
+    selectionPaddingLeft: number;
+    brandIconRadius: number;
+    itemIconRadius: number;
+    brandTitleFontSize?: number;
+    brandTitleLineHeight?: number;
+    brandTitleLetterSpacing?: number;
+    showsTagline: boolean;
   }>;
   settingsRowPaddingVertical: number;
   navigation: Readonly<Pick<NativeStackNavigationOptions, 'animation'>>;
@@ -53,6 +69,7 @@ const classic: AppearanceProfile = {
   chrome: {
     card: appChrome.radius.card,
     control: appChrome.radius.control,
+    roundControl: appChrome.radius.roundControl,
     popover: appChrome.radius.popover,
     controlTray: appChrome.radius.controlTray,
     noticeCard: appChrome.radius.noticeCard,
@@ -71,6 +88,18 @@ const classic: AppearanceProfile = {
     overlay: appChrome.radius.noticeBanner,
     surface: appChrome.radius.transcriptPlate,
   },
+  rail: {
+    showsDivider: false,
+    contentGap: 20,
+    actionsShowDivider: false,
+    actionsPaddingTop: 10,
+    workbenchMarginHorizontal: 0,
+    selectionBarWidth: 0,
+    selectionPaddingLeft: 10,
+    brandIconRadius: 15,
+    itemIconRadius: 17,
+    showsTagline: true,
+  },
   settingsRowPaddingVertical: 12,
   navigation: { animation: 'fade' },
   motion: { pageMs: 240, modalMs: 260, revealMs: 240, revealDistance: 8, pressedScale: 0.985 },
@@ -85,6 +114,7 @@ const editorial: AppearanceProfile = {
   chrome: {
     card: 4,
     control: 4,
+    roundControl: 4,
     popover: 6,
     controlTray: 6,
     noticeCard: 6,
@@ -103,8 +133,24 @@ const editorial: AppearanceProfile = {
     overlay: 6,
     surface: 4,
   },
+  rail: {
+    showsDivider: true,
+    contentGap: 24,
+    actionsShowDivider: true,
+    actionsPaddingTop: 12,
+    workbenchMarginHorizontal: 10,
+    selectionBarWidth: 3,
+    selectionPaddingLeft: 7,
+    brandIconRadius: 4,
+    itemIconRadius: 4,
+    brandTitleFontSize: 32,
+    brandTitleLineHeight: 36,
+    brandTitleLetterSpacing: -1,
+    showsTagline: false,
+  },
   settingsRowPaddingVertical: 10,
-  navigation: { animation: 'fade' },
+  // Native presentation owns route motion, duration and back gestures.
+  navigation: { animation: 'default' },
   motion: { pageMs: 200, modalMs: 220, revealMs: 200, revealDistance: 4, pressedScale: 0.99 },
   rowPaddingVertical: 10,
 };
@@ -119,6 +165,7 @@ export const appearanceProfiles: Readonly<Record<AppearanceProfileId, Appearance
 for (const profile of Object.values(appearanceProfiles)) {
   Object.freeze(profile.radius);
   Object.freeze(profile.chrome);
+  Object.freeze(profile.rail);
   Object.freeze(profile.navigation);
   Object.freeze(profile.motion);
   Object.freeze(profile);
@@ -140,8 +187,10 @@ export function profileNavigationOptions(
   reduceMotion: boolean,
   modal = false
 ): Pick<NativeStackNavigationOptions, 'animation' | 'animationDuration'> {
+  if (reduceMotion) return { animation: 'none', animationDuration: 0 };
+  if (profile.navigation.animation === 'default') return { animation: 'default' };
   return {
-    animation: reduceMotion ? 'none' : modal ? 'slide_from_bottom' : profile.navigation.animation,
-    animationDuration: reduceMotion ? 0 : modal ? profile.motion.modalMs : profile.motion.pageMs,
+    animation: modal ? 'slide_from_bottom' : profile.navigation.animation,
+    animationDuration: modal ? profile.motion.modalMs : profile.motion.pageMs,
   };
 }

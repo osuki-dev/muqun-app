@@ -2,7 +2,7 @@ import { isThemePackId, type ThemePackId } from '@/constants/theme-packs';
 import { auditThemeContrast } from '@/theme/contrast';
 import { cloneThemeData } from '@/theme/clone';
 import { clampThemeOpacity } from '@/theme/opacity-policy';
-import type { HomeHeroPreference } from '@/theme/home-hero';
+import type { HomeArtworkPreference } from '@/theme/home-artwork';
 import { compileTheme, type ResolvedCustomTheme } from '@/theme/resolve';
 import { parseThemeManifest, type ThemeManifest } from '@/theme/schema';
 
@@ -20,16 +20,16 @@ export type InstalledTheme = {
   hideHomeLogo?: boolean;
   hideHomeText?: boolean;
   /**
-   * Undefined follows the author's `homeIdentity.hero`.
+   * Undefined follows the author's `homeIdentity.artwork`.
    *
    * Stored as the two answers that are actually a choice; "follow the theme" is
    * the absence of the key, exactly as it is for the two flags above. It is not
    * folded into `effectiveThemeManifest` the way those are, because `shown`
    * means more than the manifest can say -- it also unlocks the empty-state
    * fallback -- and one rule split across two places is how the two would come
-   * to disagree. `resolveHomeHero` is the single reader.
+   * to disagree. `resolveHomeArtwork` is the single reader.
    */
-  homeHero?: 'shown' | 'hidden';
+  homeArtwork?: 'shown' | 'hidden';
 };
 
 type ThemePreferenceKey =
@@ -37,11 +37,11 @@ type ThemePreferenceKey =
   | 'surfaceBackgroundOpacity'
   | 'hideHomeLogo'
   | 'hideHomeText'
-  | 'homeHero';
+  | 'homeArtwork';
 
 /** The three-valued answer the settings row shows, over the two-valued stored one. */
-export function homeHeroPreference(installed: InstalledTheme): HomeHeroPreference {
-  return installed.homeHero ?? 'theme';
+export function homeArtworkPreference(installed: InstalledTheme): HomeArtworkPreference {
+  return installed.homeArtwork ?? 'theme';
 }
 
 function validBackgroundOpacity(value: unknown): value is number {
@@ -204,8 +204,8 @@ export class ThemeRepository {
             ...(typeof candidate.hideHomeText === 'boolean'
               ? { hideHomeText: candidate.hideHomeText }
               : {}),
-            ...(candidate.homeHero === 'shown' || candidate.homeHero === 'hidden'
-              ? { homeHero: candidate.homeHero }
+            ...(candidate.homeArtwork === 'shown' || candidate.homeArtwork === 'hidden'
+              ? { homeArtwork: candidate.homeArtwork }
               : {}),
           });
         } catch {
@@ -309,10 +309,10 @@ export class ThemeRepository {
   }
 
   /** `theme` is stored as no preference at all, so a reset and a return to it agree. */
-  setHomeHero(id: string, value: HomeHeroPreference): ThemeLibrary {
+  setHomeArtwork(id: string, value: HomeArtworkPreference): ThemeLibrary {
     if (value !== 'theme' && value !== 'shown' && value !== 'hidden')
-      throw new Error('Invalid home illustration preference');
-    return this.updatePreference(id, 'homeHero', value === 'theme' ? undefined : value);
+      throw new Error('Invalid home artwork preference');
+    return this.updatePreference(id, 'homeArtwork', value === 'theme' ? undefined : value);
   }
 
   resetAppearancePreferences(id: string): ThemeLibrary {
@@ -323,7 +323,7 @@ export class ThemeRepository {
       'surfaceBackgroundOpacity',
       'hideHomeLogo',
       'hideHomeText',
-      'homeHero',
+      'homeArtwork',
     ];
     if (keys.every((key) => installed[key] === undefined)) return this.snapshot();
     const updated = { ...installed };

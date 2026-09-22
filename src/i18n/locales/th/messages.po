@@ -2737,10 +2737,6 @@ msgstr "Muqun ไม่มีฟอนต์ของตัวเอง ฟอ�
 msgid "Muqun is locked"
 msgstr "Muqun ถูกล็อก"
 
-#: src/app/settings.tsx
-msgid "Muqun is open source. Read it, or build it yourself."
-msgstr "Muqun เป็นโอเพนซอร์ส อ่านโค้ดหรือสร้างแอปด้วยตัวเองได้"
-
 #: src/components/pairing-camera.tsx
 msgid "Muqun reads the Gateway's QR code through the camera. Nothing is recorded."
 msgstr "Muqun อ่าน QR ของ Gateway ผ่านกล้อง โดยไม่บันทึกภาพ"

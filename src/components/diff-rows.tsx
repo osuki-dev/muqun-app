@@ -1,3 +1,4 @@
+import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { memo, useCallback, useMemo, useState, type ReactNode } from 'react';
 import { ActivityIndicator, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
 import Animated, {
@@ -412,6 +413,7 @@ const ShowMoreRow = memo(function ShowMoreRow({
   onPress: (path: string) => void;
 }) {
   const { t } = useLingui();
+  const profile = useAppearanceProfile();
   return (
     // An explicit tap, never `onEndReached`. A diff that grows under the reader
     // is the viewport-moving behaviour the house rules forbid, and the reader
@@ -425,7 +427,11 @@ const ShowMoreRow = memo(function ShowMoreRow({
       onPress={() => onPress(row.path)}
       style={[styles.moreRow, { width }]}>
       <Animated.View style={[styles.pinned, styles.moreBody, pinned, { width: pinnedWidth }]}>
-        <View style={[styles.moreChip, { borderColor: colors.border }]}>
+        <View
+          style={[
+            styles.moreChip,
+            { borderRadius: profile.chrome.control, borderColor: colors.border },
+          ]}>
           {row.loading ? (
             <ActivityIndicator size="small" color={colors.accent} />
           ) : (
@@ -620,6 +626,7 @@ export function DiffRowList({
         contentContainerStyle={styles.scrollerContent}>
         {rows.length > 0 ? (
           <LegendList
+            nestedScrollEnabled
             ref={listRef}
             data={rows as GitDiffRow[]}
             keyExtractor={keyOfDiffRow}
@@ -696,6 +703,7 @@ export function InlineDiffRows({
   onToggleFile,
   onOpenFullDiff,
 }: InlineDiffRowsProps) {
+  const profile = useAppearanceProfile();
   const { t } = useLingui();
   const [shownLimit, setShownLimit] = useState(limit ?? INLINE_DIFF_MAX_ROWS);
   const { onRulerLayout, onViewportLayout, contentWidth, pinnedWidth } = useDiffMetrics(rows);
@@ -756,7 +764,10 @@ export function InlineDiffRows({
               accessibilityRole="button"
               accessibilityLabel={t`Show more of this diff`}
               onPress={showMore}
-              style={[styles.inlineMore, { borderColor: colors.border }]}>
+              style={[
+                styles.inlineMore,
+                { borderRadius: profile.chrome.control, borderColor: colors.border },
+              ]}>
               <Text variant="caption" color={colors.accent}>
                 <Plural value={capped.hidden} one="# more line" other="# more lines" />
               </Text>
@@ -768,7 +779,10 @@ export function InlineDiffRows({
               accessibilityRole="button"
               accessibilityLabel={t`Open this diff in the changes viewer`}
               onPress={() => onOpenFullDiff(targetPath)}
-              style={[styles.inlineMore, { borderColor: colors.border }]}>
+              style={[
+                styles.inlineMore,
+                { borderRadius: profile.chrome.control, borderColor: colors.border },
+              ]}>
               <Text variant="caption" color={colors.accent}>
                 <Trans>Open in changes</Trans>
               </Text>
@@ -833,7 +847,6 @@ const styles = StyleSheet.create({
     minHeight: 28,
     justifyContent: 'center',
     paddingHorizontal: 10,
-    borderRadius: 10,
     borderCurve: 'continuous',
     borderWidth: StyleSheet.hairlineWidth,
   },
@@ -926,7 +939,6 @@ const styles = StyleSheet.create({
     gap: 8,
     minHeight: 30,
     paddingHorizontal: 12,
-    borderRadius: 10,
     borderCurve: 'continuous',
     borderWidth: StyleSheet.hairlineWidth,
   },

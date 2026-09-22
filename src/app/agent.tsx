@@ -21,7 +21,6 @@ import { SessionActionIcon, WorkspacePillContent } from '@/components/agent-head
 import { AgentTitlePill } from '@/components/agent-title-pill';
 import { GlassChrome } from '@/components/glass-chrome';
 import { PressableScale } from '@/components/pressable-scale';
-import { appChrome } from '@/constants/appearance';
 import { NAV_HEADER_TOP_GAP } from '@/constants/nav-header';
 import { useGatewayRecord } from '@/hooks/use-gateway-record';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
@@ -212,7 +211,10 @@ export default function AgentScreen() {
             </GlassChrome>
           }
           rightPill={
-            <GlassChrome surface="navigation" shape="pill" style={styles.newSessionCircle}>
+            <GlassChrome
+              surface="navigation"
+              shape="navigationPill"
+              style={styles.newSessionCircle}>
               <PressableScale
                 testID="agent-header-new-session"
                 accessibilityRole="button"
@@ -250,7 +252,6 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: 0,
     height: NAV_HEADER_CONTROL_SIZE,
-    borderRadius: appChrome.radius.navigationPill,
     borderCurve: 'continuous',
     overflow: 'hidden',
     justifyContent: 'center',
@@ -265,7 +266,6 @@ const styles = StyleSheet.create({
   newSessionCircle: {
     width: NAV_HEADER_CONTROL_SIZE,
     height: NAV_HEADER_CONTROL_SIZE,
-    borderRadius: NAV_HEADER_CONTROL_SIZE / 2,
     borderCurve: 'continuous',
     overflow: 'hidden',
     alignItems: 'center',

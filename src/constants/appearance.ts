@@ -44,7 +44,7 @@ export const appChrome = {
   radius: {
     card: appAppearanceConfig.radius.lg,
     control: appAppearanceConfig.radius.md,
-    segmentedTrack: 14,
+    segmentedTrack: appAppearanceConfig.radius.pill,
     railItem: 15,
     railAction: 17,
     popover: 18,

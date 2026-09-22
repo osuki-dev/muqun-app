@@ -103,6 +103,7 @@ export function AgentSessionTreeSheet({
       title={t`Session tree`}
       caption={root ? sessionTitleOr(root, t`Untitled session`) : t`Session unavailable`}>
       <LegendList
+        nestedScrollEnabled
         testID="agent-session-tree-list"
         data={nodes}
         dataKey={root?.asid}

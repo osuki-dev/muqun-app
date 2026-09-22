@@ -280,7 +280,6 @@ export default function SettingsScreen() {
                       icon={Code}
                       trailing={ExternalLink}
                       label={t`Source code`}
-                      detail={t`Muqun is open source. Read it, or build it yourself.`}
                       onPress={() => void openSource()}
                     />
                     <SettingsNavRow

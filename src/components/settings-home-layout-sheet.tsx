@@ -63,6 +63,7 @@ export function SettingsHomeLayoutSheet({ onClose }: { onClose: () => void }) {
       title={t`Home layout`}
       caption={choices.find((choice) => choice.id === layout)?.title}>
       <ScrollView
+        nestedScrollEnabled
         style={sheetSceneStyles.scroller}
         contentContainerStyle={sheetSceneStyles.scrollerContent}
         showsVerticalScrollIndicator={false}>

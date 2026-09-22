@@ -1193,7 +1193,11 @@ export const AgentComposer = memo(function AgentComposer({
                     onPress={onOpenSessionsSheet}
                     accessibilityRole="button"
                     accessibilityLabel={t`All sessions`}
-                    style={[styles.actionBtn, { backgroundColor: surfaceBackground(chromeGlass) }]}>
+                    style={[
+                      styles.actionBtn,
+                      { borderRadius: profile.chrome.roundControl },
+                      { backgroundColor: surfaceBackground(chromeGlass) },
+                    ]}>
                     <Layers size={16} color={chromeText} />
                   </PressableScale>
                 ) : null}
@@ -1215,6 +1219,7 @@ export const AgentComposer = memo(function AgentComposer({
                     accessibilityLabel={t`Select agent mode`}
                     style={[
                       styles.actionBtnWithLabel,
+                      { borderRadius: profile.chrome.roundControl },
                       modeMenuOpen && { borderColor: theme.colors.primary, borderWidth: 1 },
                       { backgroundColor: surfaceBackground(chromeGlass) },
                     ]}>
@@ -1234,6 +1239,7 @@ export const AgentComposer = memo(function AgentComposer({
                     accessibilityLabel={t`Select model: ${modelDisplayName}`}
                     style={[
                       styles.actionBtnWithLabel,
+                      { borderRadius: profile.chrome.roundControl },
                       { backgroundColor: surfaceBackground(chromeGlass) },
                     ]}>
                     <Text variant="caption" color={theme.colors.text} style={styles.actionBtnLabel}>
@@ -1253,6 +1259,7 @@ export const AgentComposer = memo(function AgentComposer({
                     accessibilityLabel={t`${inbox.length} queued`}
                     style={[
                       styles.actionBtnWithLabel,
+                      { borderRadius: profile.chrome.roundControl },
                       { backgroundColor: surfaceBackground(withAlpha(theme.colors.primary, 0.18)) },
                     ]}>
                     <Inbox size={13} color={theme.colors.primary} />
@@ -1275,6 +1282,7 @@ export const AgentComposer = memo(function AgentComposer({
                     accessibilityLabel={t`${backgroundCount} running in the background`}
                     style={[
                       styles.actionBtnWithLabel,
+                      { borderRadius: profile.chrome.roundControl },
                       {
                         backgroundColor: surfaceBackground(withAlpha(theme.colors.warning, 0.18)),
                       },
@@ -1299,6 +1307,7 @@ export const AgentComposer = memo(function AgentComposer({
                     accessibilityLabel={t`Tasks progress`}
                     style={[
                       styles.actionBtnWithLabel,
+                      { borderRadius: profile.chrome.roundControl },
                       { backgroundColor: surfaceBackground(chromeGlass) },
                     ]}>
                     <CheckSquare
@@ -1333,6 +1342,7 @@ export const AgentComposer = memo(function AgentComposer({
                     }
                     style={[
                       styles.actionBtnWithLabel,
+                      { borderRadius: profile.chrome.roundControl },
                       {
                         backgroundColor:
                           deliveryMode === 'steer'
@@ -1394,6 +1404,7 @@ export const AgentComposer = memo(function AgentComposer({
                     }
                     style={[
                       styles.actionBtnWithLabel,
+                      { borderRadius: profile.chrome.roundControl },
                       { backgroundColor: surfaceBackground(chromeGlass) },
                     ]}>
                     <Cpu size={13} color={chromeText} />
@@ -1438,6 +1449,7 @@ export const AgentComposer = memo(function AgentComposer({
                     accessibilityLabel={t`View file changes`}
                     style={[
                       styles.actionBtn,
+                      { borderRadius: profile.chrome.roundControl },
                       {
                         backgroundColor: withAlpha(theme.colors.primary, 0.18),
                       },
@@ -1456,6 +1468,7 @@ export const AgentComposer = memo(function AgentComposer({
                     accessibilityLabel={t`Stop agent execution`}
                     style={[
                       styles.actionBtnWithLabel,
+                      { borderRadius: profile.chrome.roundControl },
                       styles.stopActionBtn,
                       { backgroundColor: theme.colors.danger },
                     ]}>
@@ -1516,11 +1529,11 @@ export const AgentComposer = memo(function AgentComposer({
                     onPress={() => setAttachmentMenuOpen((open) => !open)}
                     style={[
                       composerStyles.button,
-                      { backgroundColor: surfaceBackground(chromeGlass) },
+                      { borderRadius: profile.chrome.roundControl },
                       attachmentMenuOpen
                         ? { backgroundColor: surfaceBackground(theme.colors.primarySubtle) }
                         : null,
-                      disabled ? { opacity: 0.5 } : null,
+                      sending || disabled ? { opacity: 0.5 } : null,
                     ]}>
                     <Paperclip
                       size={16}
@@ -1832,7 +1845,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     width: 36,
     height: 36,
-    borderRadius: 999,
     borderCurve: 'continuous',
     position: 'relative',
   },
@@ -1844,7 +1856,6 @@ const styles = StyleSheet.create({
     // around centred text clips a taller face's ascenders.
     minHeight: 36,
     paddingHorizontal: 12,
-    borderRadius: 999,
     borderCurve: 'continuous',
   },
   actionBtnLabel: {

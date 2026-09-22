@@ -146,9 +146,9 @@ describe('theme v1 contract', () => {
       { variantDecorations: { dark: { 'shell.background': { asset: 'missing' } } } },
       { decoration: { 'shell.background': { asset: 'paper', regular: { asset: 'missing' } } } },
       { homeIdentity: { logo: { mode: 'custom', asset: 'missing' } } },
-      // The hero is an ordinary slot, so it is held to the ordinary rule: an
+      // The artwork is an ordinary slot, so it is held to the ordinary rule: an
       // asset it names has to be one the pack declares.
-      { decoration: { 'home.hero': { asset: 'missing', fit: 'contain' } } },
+      { decoration: { 'home.artwork': { asset: 'missing', fit: 'contain' } } },
     ]) {
       expect(() =>
         parse({
@@ -160,19 +160,19 @@ describe('theme v1 contract', () => {
     }
   });
 
-  describe('the Home hero', () => {
-    const withHero = (extra: Record<string, unknown>) =>
+  describe('the Home artwork', () => {
+    const withArtwork = (extra: Record<string, unknown>) =>
       parse({
         ...createThemeStarter(),
         assets: { crest: { path: 'assets/crest.png' } },
-        decoration: { 'home.hero': { asset: 'crest', fit: 'contain' } },
+        decoration: { 'home.artwork': { asset: 'crest', fit: 'contain' } },
         ...extra,
       });
 
     test('is a decoration slot with the same controls as every other one', () => {
-      const manifest = withHero({
+      const manifest = withArtwork({
         decoration: {
-          'home.hero': {
+          'home.artwork': {
             asset: 'crest',
             fit: 'contain',
             opacity: 0.8,
@@ -182,7 +182,7 @@ describe('theme v1 contract', () => {
           },
         },
       });
-      expect(manifest.decoration?.['home.hero']).toEqual({
+      expect(manifest.decoration?.['home.artwork']).toEqual({
         asset: 'crest',
         fit: 'contain',
         opacity: 0.8,
@@ -194,17 +194,24 @@ describe('theme v1 contract', () => {
 
     test('the author default speaks homeIdentity\u2019s own vocabulary', () => {
       for (const mode of ['default', 'hidden'] as const) {
-        expect(withHero({ homeIdentity: { hero: { mode } } }).homeIdentity?.hero).toEqual({ mode });
+        expect(withArtwork({ homeIdentity: { artwork: { mode } } }).homeIdentity?.artwork).toEqual({
+          mode,
+        });
       }
       // `homeIdentity` is strict, so a value from a different vocabulary is a
       // typo with no sensible fallback and is refused rather than ignored.
-      for (const hero of ['shown', { mode: 'shown' }, { mode: 'custom', asset: 'crest' }, true]) {
-        expect(() => withHero({ homeIdentity: { hero } })).toThrow();
+      for (const artwork of [
+        'shown',
+        { mode: 'shown' },
+        { mode: 'custom', asset: 'crest' },
+        true,
+      ]) {
+        expect(() => withArtwork({ homeIdentity: { artwork } })).toThrow();
       }
     });
 
     test('saying nothing leaves the field absent rather than inventing a default', () => {
-      expect(withHero({}).homeIdentity?.hero).toBeUndefined();
+      expect(withArtwork({}).homeIdentity?.artwork).toBeUndefined();
     });
   });
 
@@ -275,7 +282,7 @@ describe('shared component resolution', () => {
       asset: 'night',
     });
     expect(resolveThemeImage(manifest, 'shell.background', 'dark', 'regular', false)).toBeNull();
-    expect(resolveThemeImage(manifest, 'home.decoration', 'dark', 'regular')).toBeNull();
+    expect(resolveThemeImage(manifest, 'home.artwork', 'dark', 'regular')).toBeNull();
   });
 
   test('hiding both home identity elements removes the brand block', () => {

@@ -7,11 +7,12 @@ import {
   useImage,
   vec,
 } from '@shopify/react-native-skia';
-import { useCallback, useMemo, useState } from 'react';
-import { StyleSheet, useWindowDimensions, View, type LayoutChangeEvent } from 'react-native';
+import { useCallback, useMemo, useRef, useState } from 'react';
+import { StyleSheet, View, type LayoutChangeEvent } from 'react-native';
 
-import { coveredImageRect } from '@/lib/hero-feather';
-import type { ResolvedHomeHeroAsset } from '@/theme/home-hero';
+import { useLaunchHomeArtwork } from '@/hooks/use-launch-home-artwork';
+import { containedImageRect, coveredImageRect } from '@/lib/hero-feather';
+import type { ResolvedHomeArtworkAsset } from '@/theme/home-artwork';
 
 const BOTTOM_FEATHER_START = 0.68;
 
@@ -22,18 +23,18 @@ const BOTTOM_FEATHER_START = 0.68;
  */
 export function HomeEditorialArtwork({
   resolution,
+  cover = false,
   onAvailabilityChange,
 }: {
-  resolution: ResolvedHomeHeroAsset;
+  resolution: ResolvedHomeArtworkAsset;
+  cover?: boolean;
   onAvailabilityChange?: (available: boolean) => void;
 }) {
-  const { width } = useWindowDimensions();
-  const height = Math.min(width >= 768 ? 360 : 280, Math.max(220, width * 0.64));
   return (
     <HomeEditorialArtworkImage
       key={resolution.source}
       resolution={resolution}
-      height={height}
+      cover={cover}
       onAvailabilityChange={onAvailabilityChange}
     />
   );
@@ -41,39 +42,57 @@ export function HomeEditorialArtwork({
 
 function HomeEditorialArtworkImage({
   resolution,
-  height,
+  cover,
   onAvailabilityChange,
 }: {
-  resolution: ResolvedHomeHeroAsset;
-  height: number;
+  resolution: ResolvedHomeArtworkAsset;
+  cover: boolean;
   onAvailabilityChange?: (available: boolean) => void;
 }) {
-  const [box, setBox] = useState<{ width: number; height: number } | null>(null);
+  const [width, setWidth] = useState(0);
+  const height = cover ? Math.min(640, width * 0.9) : Math.min(280, width / 2);
+  const box = useMemo(() => (width > 0 ? { width, height } : null), [width, height]);
   const [failed, setFailed] = useState(false);
   const onError = useCallback(() => {
     setFailed(true);
     onAvailabilityChange?.(false);
   }, [onAvailabilityChange]);
   const image = useImage(resolution.source, onError);
-  const focalPoint = resolution.resolved.image.focalPoint;
+  const { focalPoint, fit } = resolution.resolved.image;
+  const fitRect = fit === 'contain' ? containedImageRect : coveredImageRect;
   const imageRect = useMemo(
     () =>
       box && image
-        ? coveredImageRect(box, { width: image.width(), height: image.height() }, focalPoint)
+        ? fitRect(box, { width: image.width(), height: image.height() }, focalPoint)
         : null,
-    [box, focalPoint, image]
+    [box, focalPoint, image, fitRect]
   );
-  const onLayout = useCallback((event: LayoutChangeEvent) => {
-    const next = event.nativeEvent.layout;
-    setBox((current) =>
-      current?.width === next.width && current.height === next.height
-        ? current
-        : { width: next.width, height: next.height }
-    );
-  }, []);
+  const view = useRef<View | null>(null);
+  const intrinsic = useMemo(
+    () => (image ? { width: image.width(), height: image.height() } : null),
+    [image]
+  );
+  const measureArtwork = useLaunchHomeArtwork({
+    view,
+    source: resolution.source,
+    image: failed ? null : imageRect,
+    intrinsic,
+    // The cover may crop the subject; its bottom feather also differs from launch.
+    cropped: fit !== 'contain',
+  });
+  const onLayout = useCallback(
+    (event: LayoutChangeEvent) => {
+      const next = event.nativeEvent.layout;
+      setWidth((current) => (current === next.width ? current : next.width));
+      measureArtwork();
+    },
+    [measureArtwork]
+  );
   if (failed) return null;
   return (
     <View
+      ref={view}
+      collapsable={false}
       testID="home-editorial-artwork"
       pointerEvents="none"
       accessible={false}

@@ -411,6 +411,7 @@ export function ThemeBrowseSheet({
       caption={t`Themes published at muqun.dev. Nothing downloads until you open one.`}
       header={status}>
       <LegendList
+        nestedScrollEnabled
         testID="theme-browse-list"
         data={rows}
         onEndReached={appendPage}

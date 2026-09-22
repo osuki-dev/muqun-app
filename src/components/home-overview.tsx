@@ -32,7 +32,6 @@ import Animated, {
   interpolate,
   useAnimatedScrollHandler,
   useAnimatedStyle,
-  useReducedMotion,
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
@@ -48,7 +47,8 @@ import { PressableScale } from '@/components/pressable-scale';
 import { SectionLabel } from '@/components/settings-chrome';
 import { ServerAgentRows } from '@/components/server-agent-rows';
 import { GatewayTunnelBadge } from '@/components/gateway-tunnel-badge';
-import { HomeHero } from '@/components/home-hero';
+import { HomeArtwork } from '@/components/home-artwork';
+import { ThemeIcon } from '@/components/theme-icon';
 import { HomeEditorialArtwork } from '@/components/home-editorial-artwork';
 import { HomeEditorialLayout } from '@/components/home-editorial-layout';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
@@ -98,17 +98,12 @@ import { useServerLastViewed } from '@/stores/server-last-viewed';
 import { useSshHostsStore } from '@/stores/ssh-hosts';
 import { useThemeLibrary } from '@/stores/theme-library';
 import { resolveHomeIdentity } from '@/theme/resolve';
-import {
-  isHomeHeroAvailable,
-  resolveEditorialHomeArtworkAsset,
-  resolveHomeHeroAsset,
-} from '@/theme/home-hero';
-import { homeHeroPreference } from '@/theme/repository';
+import { isHomeArtworkAvailable, resolveHomeArtworkAsset } from '@/theme/home-artwork';
+import { homeArtworkPreference } from '@/theme/repository';
 import { ThemeArtwork, useHasThemeArtwork } from '@/components/theme-artwork';
 import { ThemedSurface, ThemedSurfaceArtwork } from '@/components/themed-surface';
 import { useBrandMark } from '@/components/brand-mark';
 import { forgetWarmWorkspace } from '@/lib/server-warm-cache';
-import { useLaunchHandoff } from '@/stores/launch-handoff';
 
 export type HomeOverviewProps = {
   width: number;
@@ -168,39 +163,36 @@ export function HomeOverview({
   const [refreshing, setRefreshing] = useState(false);
   const profile = useAppearanceProfile();
   const homeLayout = profile.id;
-  const launchRevealing = useLaunchHandoff((state) => state.revealing);
-  const reduceMotion = useReducedMotion();
-  const editorialReveal = useSharedValue(0);
   const [editorialWidth, setEditorialWidth] = useState(0);
   const [failedEditorialArtworkSource, setFailedEditorialArtworkSource] = useState<string | null>(
     null
   );
   const { resolvedMode } = useThemeMode();
-  const homeHeroPreferenceValue = useThemeLibrary((state) => {
+  const homeArtworkPreferenceValue = useThemeLibrary((state) => {
     const installed = state.library.themes.find(
       (entry) => entry.id === customTheme?.installationId
     );
-    return installed ? homeHeroPreference(installed) : 'theme';
+    return installed ? homeArtworkPreference(installed) : 'theme';
   });
   const artworkWidth = width >= THEME_ARTWORK_REGULAR_MIN_WIDTH ? 'regular' : 'compact';
-  const heroResolution = resolveHomeHeroAsset({
+  const artworkResolution = resolveHomeArtworkAsset({
     manifest: customTheme?.manifest,
     assets: customAssets,
     mode: resolvedMode,
     width: artworkWidth,
-    preference: homeHeroPreferenceValue,
+    preference: homeArtworkPreferenceValue,
   });
-  const editorialArtworkResolution = resolveEditorialHomeArtworkAsset({
+  const editorialArtworkResolution = resolveHomeArtworkAsset({
     manifest: customTheme?.manifest,
     assets: customAssets,
     mode: resolvedMode,
-    width: artworkWidth,
-    preference: homeHeroPreferenceValue,
+    width: (editorialWidth || width) >= THEME_ARTWORK_REGULAR_MIN_WIDTH ? 'regular' : 'compact',
+    preference: homeArtworkPreferenceValue,
   });
   const hasEditorialArtwork =
     !loading &&
     !hydrationError &&
-    isHomeHeroAvailable(editorialArtworkResolution, failedEditorialArtworkSource);
+    isHomeArtworkAvailable(editorialArtworkResolution, failedEditorialArtworkSource);
   const hasPairedServer = records.some((server) => server.serverId !== DEMO_SERVER_ID);
   const appActive = useAppActive();
   const isFocused = useIsFocused();
@@ -551,25 +543,6 @@ export function HomeOverview({
     reachabilityByServer: padReachabilityByServer,
     onPair: commands.pairGateway,
   });
-  const editorialReady = !loading && launchRevealing;
-  useEffect(() => {
-    if (homeLayout === 'classic') {
-      // Switching the composition after launch is not a second entrance.
-      editorialReveal.set(1);
-      return;
-    }
-    if (!editorialReady) return;
-    editorialReveal.set(withTiming(1, timing(reduceMotion ? 0 : profile.motion.revealMs)));
-  }, [editorialReady, editorialReveal, homeLayout, reduceMotion, profile]);
-  const revealDistance = profile.motion.revealDistance;
-  const editorialRevealStyle = useAnimatedStyle(() => ({
-    opacity: reduceMotion ? 1 : 0.84 + editorialReveal.get() * 0.16,
-    transform: [
-      {
-        translateY: (1 - editorialReveal.get()) * (reduceMotion ? 0 : revealDistance),
-      },
-    ],
-  }));
 
   function openServer(serverId: string, paneId?: string) {
     void commands.openServer(serverId, paneId);
@@ -650,7 +623,8 @@ export function HomeOverview({
             onContentSizeChange={restoreScroll}
             onScrollEndDrag={rememberScroll}
             onMomentumScrollEnd={rememberScroll}
-            contentContainerStyle={{ paddingBottom: 24 }}
+            style={styles.page}
+            contentContainerStyle={{ flexGrow: 1, paddingBottom: 24 }}
             onScroll={onScroll}
             scrollEventThrottle={16}
             showsVerticalScrollIndicator={false}
@@ -661,22 +635,27 @@ export function HomeOverview({
                 tintColor={theme.colors.primary}
               />
             }>
-            {hasEditorialArtwork && editorialArtworkResolution ? (
-              <HomeEditorialArtwork
-                resolution={editorialArtworkResolution}
-                onAvailabilityChange={(available) => {
-                  if (!available)
-                    setFailedEditorialArtworkSource(editorialArtworkResolution.source);
-                }}
-              />
-            ) : null}
             {returnToTask ? <View style={styles.embeddedReturnRow}>{returnToTask}</View> : null}
             {hydrationError ? (
               <GatewayStorageError busy={loading} onRetry={retryHydration} />
             ) : null}
-            <Animated.View style={editorialRevealStyle}>
+            <View>
               <HomeEditorialLayout
                 contentWidth={editorialWidth || width}
+                cover={customTheme?.manifest.homePresentation?.header === 'cover'}
+                coverTitle={identity.name ?? undefined}
+                artwork={
+                  hasEditorialArtwork && editorialArtworkResolution ? (
+                    <HomeEditorialArtwork
+                      cover={customTheme?.manifest.homePresentation?.header === 'cover'}
+                      resolution={editorialArtworkResolution}
+                      onAvailabilityChange={(available) => {
+                        if (!available)
+                          setFailedEditorialArtworkSource(editorialArtworkResolution.source);
+                      }}
+                    />
+                  ) : null
+                }
                 identity={
                   identity.showBrand ? (
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
@@ -691,7 +670,9 @@ export function HomeOverview({
                       {identity.name ? (
                         <Text
                           variant="heading"
-                          style={{ flex: 1, minWidth: 0, fontSize: 28, lineHeight: 36 }}>
+                          numberOfLines={1}
+                          ellipsizeMode="tail"
+                          style={{ flexShrink: 1, minWidth: 0, fontSize: 28, lineHeight: 36 }}>
                           {identity.name}
                         </Text>
                       ) : null}
@@ -700,6 +681,7 @@ export function HomeOverview({
                 }
                 headerLeading={
                   <HomeLaunchTarget
+                    bare={customTheme?.manifest.homePresentation?.toolbarBackground === false}
                     controller={launchController}
                     loading={loading}
                     onPair={commands.pairGateway}
@@ -767,20 +749,34 @@ export function HomeOverview({
                   <View style={{ flexDirection: 'row', gap: 8 }}>
                     <HeaderButton
                       editorial
+                      bare={customTheme?.manifest.homePresentation?.toolbarBackground === false}
                       label={t`Scan a gateway QR`}
                       onPress={() => void commands.pairGateway()}>
-                      <ScanLine size={20} color={theme.colors.text} strokeWidth={1.8} />
+                      <ThemeIcon
+                        name="chrome.scan"
+                        fallback={ScanLine}
+                        size={20}
+                        color={theme.colors.text}
+                        strokeWidth={1.8}
+                      />
                     </HeaderButton>
                     <HeaderButton
                       editorial
+                      bare={customTheme?.manifest.homePresentation?.toolbarBackground === false}
                       label={t`Settings`}
                       onPress={() => void commands.manageConnections()}>
-                      <Settings size={20} color={theme.colors.text} strokeWidth={1.8} />
+                      <ThemeIcon
+                        name="chrome.settings"
+                        fallback={Settings}
+                        size={20}
+                        color={theme.colors.text}
+                        strokeWidth={1.8}
+                      />
                     </HeaderButton>
                   </View>
                 }
               />
-            </Animated.View>
+            </View>
           </KeyboardAwareScrollView>
         </SafeAreaView>
       </View>
@@ -917,12 +913,24 @@ export function HomeOverview({
                 the size: the one productive gesture on this screen looks the
                 same whether it is a 64pt viewfinder in the middle of an empty
                 screen or a 20pt glyph in the corner of a full one. */}
-                      <ScanLine size={20} color={theme.colors.textMuted} strokeWidth={2} />
+                      <ThemeIcon
+                        name="chrome.scan"
+                        fallback={ScanLine}
+                        size={20}
+                        color={theme.colors.textMuted}
+                        strokeWidth={2}
+                      />
                     </HeaderButton>
                   </>
                 )}
                 <HeaderButton label={t`Settings`} onPress={() => void commands.manageConnections()}>
-                  <Settings size={20} color={theme.colors.textMuted} strokeWidth={2} />
+                  <ThemeIcon
+                    name="chrome.settings"
+                    fallback={Settings}
+                    size={20}
+                    color={theme.colors.textMuted}
+                    strokeWidth={2}
+                  />
                 </HeaderButton>
               </Animated.View>
             </View>
@@ -1060,8 +1068,6 @@ export function HomeOverview({
           </Animated.View>
         ) : null}
 
-        <ThemeArtwork slot="home.decoration" banner />
-
         {/* The pack's own illustration, between the header and the machines.
             Absent while the "Pair your first server" card is up: that card
             already carries `emptyState.illustration`, and two pictures stacked
@@ -1070,8 +1076,8 @@ export function HomeOverview({
             the mark and drop the picture, or the other way round -- because the
             two answer different questions: what the app is called, and what the
             theme looks like. */}
-        {!loading && !hydrationError && records.length > 0 && heroResolution ? (
-          <HomeHero resolution={heroResolution} scrollY={scrollY} />
+        {!loading && !hydrationError && records.length > 0 && artworkResolution ? (
+          <HomeArtwork resolution={artworkResolution} scrollY={scrollY} />
         ) : null}
 
         {hydrationError ? <GatewayStorageError busy={loading} onRetry={retryHydration} /> : null}
@@ -1234,12 +1240,14 @@ function HeaderButton({
   onPress,
   children,
   editorial = false,
+  bare = false,
 }: {
   testID?: string;
   label: string;
   onPress: () => void;
   children: ReactNode;
   editorial?: boolean;
+  bare?: boolean;
 }) {
   const profile = useAppearanceProfile();
   const theme = useThemeTokens();
@@ -1255,12 +1263,15 @@ function HeaderButton({
         styles.headerButton,
         { backgroundColor: background(theme.colors.surface), overflow: 'hidden' },
         editorial && {
+          backgroundColor: bare ? 'transparent' : background(theme.colors.surface),
           width: 44,
           height: 44,
           borderRadius: profile.chrome.control,
         },
       ]}>
-      <ThemedSurfaceArtwork slot="navigation.background" baseColor={theme.colors.surface} />
+      {!bare && (
+        <ThemedSurfaceArtwork slot="navigation.background" baseColor={theme.colors.surface} />
+      )}
       {children}
     </PressableScale>
   );

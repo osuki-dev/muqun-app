@@ -3,16 +3,19 @@ import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens } from '@osuki-dev/ui';
 import { ArrowUpRight, ChevronDown, Link, Play, SquareTerminal } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
-import { useEffect, useState, type ReactNode } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { StyleSheet, View } from 'react-native';
+import { BlurTargetView } from 'expo-blur';
 import Animated, {
   useAnimatedStyle,
+  useAnimatedScrollHandler,
   useReducedMotion,
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
 
 import { OpenCodeIcon } from '@/components/opencode-icon';
+import { ScrollEdgeGlass } from '@/components/scroll-edge-glass';
 import { PressableScale } from '@/components/pressable-scale';
 import { Text } from '@/components/text';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
@@ -121,10 +124,12 @@ export type HomeLaunchController = ReturnType<typeof useHomeLaunchController>;
 export function HomeLaunchTarget({
   controller,
   loading = false,
+  bare = false,
   onPair,
 }: {
   controller: HomeLaunchController;
   loading?: boolean;
+  bare?: boolean;
   onPair: () => Promise<unknown>;
 }) {
   const profile = useAppearanceProfile();
@@ -147,9 +152,13 @@ export function HomeLaunchTarget({
       }}
       style={[
         styles.target,
-        { backgroundColor: background(theme.colors.surface), borderRadius: profile.chrome.control },
+        bare && { minWidth: 0, paddingHorizontal: 4 },
+        {
+          borderRadius: profile.chrome.control,
+          backgroundColor: bare ? 'transparent' : background(theme.colors.surface),
+        },
       ]}>
-      <Text variant="bodySmall" weight="semibold" numberOfLines={1} style={styles.targetName}>
+      <Text variant="bodySmall" weight="semibold" style={styles.targetName}>
         {loading
           ? t`Loading servers`
           : chosen
@@ -186,9 +195,21 @@ export function HomeLaunchActions({
   const { _ } = useLinguiRuntime();
   const theme = useThemeTokens();
   const { chosenOffline, launchOnChosen, opening, run } = controller;
+  const [availableWidth, setAvailableWidth] = useState(0);
+  const horizontal = availableWidth < 560;
+  const blurTarget = useRef<View>(null);
+  const railOffset = useSharedValue(0);
+  const railExtent = useSharedValue(0);
+  const onRailScroll = useAnimatedScrollHandler((event) => {
+    railOffset.value = event.contentOffset.x;
+    railExtent.value = Math.max(0, event.contentSize.width - event.layoutMeasurement.width);
+  });
 
   return (
-    <View testID="home-launch-actions" style={styles.root}>
+    <View
+      testID="home-launch-actions"
+      onLayout={(event) => setAvailableWidth(event.nativeEvent.layout.width)}
+      style={styles.root}>
       {chosenOffline ? (
         <Text
           testID="home-launch-unavailable"
@@ -213,64 +234,92 @@ export function HomeLaunchActions({
           </Text>
         </PressableScale>
       ) : null}
-      <ScrollView
-        horizontal
-        nestedScrollEnabled
-        directionalLockEnabled
-        testID="home-launch-actions-scroll"
-        showsHorizontalScrollIndicator={false}
-        style={styles.rail}
-        contentContainerStyle={styles.actions}>
-        <LaunchTile
-          testID="home-new-opencode"
-          marker="01"
-          primary
-          title="OpenCode"
-          caption={t`New session`}
-          icon={<OpenCodeIcon size={24} color={theme.colors.onPrimary} />}
-          disabled={opening || chosenOffline}
-          onPress={() => launchOnChosen(onNewOpenCode)}
-        />
-        <View style={styles.stackedActions}>
-          <LaunchTile
-            compact
-            testID="home-open-opencode"
-            marker="02"
-            title={t`Sessions`}
-            icon={<OpenCodeIcon size={16} color={theme.colors.primary} />}
-            disabled={opening || chosenOffline}
-            onPress={() => launchOnChosen(onOpenOpenCode)}
-          />
-          <LaunchTile
-            compact
-            testID="home-open-terminal"
-            marker="03"
-            title={t`Terminal`}
-            icon={<SquareTerminal size={16} color={theme.colors.primary} />}
-            disabled={opening || chosenOffline}
-            onPress={() => launchOnChosen(onOpenTerminal)}
-          />
-        </View>
-        <LaunchTile
-          testID="home-new-terminal"
-          marker="04"
-          title={t`New terminal`}
-          icon={<SquareTerminal size={22} color={theme.colors.primary} />}
-          disabled={opening || chosenOffline}
-          onPress={() => launchOnChosen(onNewTerminal)}
-        />
-        <LaunchTile
-          testID="home-open-ssh"
-          marker="05"
-          title={t`SSH`}
-          caption={t`SSH hosts`}
-          icon={<Link size={22} color={theme.colors.primary} />}
-          disabled={opening}
-          onPress={() => {
-            void run(onSsh);
-          }}
-        />
-      </ScrollView>
+      <View>
+        <BlurTargetView ref={blurTarget}>
+          <Animated.ScrollView
+            onScroll={onRailScroll}
+            scrollEventThrottle={16}
+            onContentSizeChange={(width) => {
+              railExtent.value = Math.max(0, width - availableWidth);
+            }}
+            horizontal={horizontal}
+            scrollEnabled={horizontal}
+            nestedScrollEnabled
+            directionalLockEnabled
+            showsHorizontalScrollIndicator={false}
+            testID="home-launch-actions-scroll"
+            contentContainerStyle={[styles.actions, horizontal && styles.horizontalActions]}>
+            <LaunchTile
+              horizontal={horizontal}
+              testID="home-new-opencode"
+              marker="01"
+              primary
+              title="OpenCode"
+              caption={t`New session`}
+              icon={<OpenCodeIcon size={24} color={theme.colors.onPrimary} />}
+              disabled={opening || chosenOffline}
+              onPress={() => launchOnChosen(onNewOpenCode)}
+            />
+            <View style={[styles.stackedActions, horizontal && styles.horizontalStack]}>
+              <LaunchTile
+                compact
+                testID="home-open-opencode"
+                marker="02"
+                title={t`Sessions`}
+                icon={<OpenCodeIcon size={16} color={theme.colors.primary} />}
+                disabled={opening || chosenOffline}
+                onPress={() => launchOnChosen(onOpenOpenCode)}
+              />
+              <LaunchTile
+                compact
+                testID="home-open-terminal"
+                marker="03"
+                title={t`Terminal`}
+                icon={<SquareTerminal size={16} color={theme.colors.primary} />}
+                disabled={opening || chosenOffline}
+                onPress={() => launchOnChosen(onOpenTerminal)}
+              />
+            </View>
+            <LaunchTile
+              horizontal={horizontal}
+              testID="home-new-terminal"
+              marker="04"
+              title={t`New terminal`}
+              icon={<SquareTerminal size={22} color={theme.colors.primary} />}
+              disabled={opening || chosenOffline}
+              onPress={() => launchOnChosen(onNewTerminal)}
+            />
+            <LaunchTile
+              horizontal={horizontal}
+              testID="home-open-ssh"
+              marker="05"
+              title={t`SSH`}
+              caption={t`SSH hosts`}
+              icon={<Link size={22} color={theme.colors.primary} />}
+              disabled={opening}
+              onPress={() => {
+                void run(onSsh);
+              }}
+            />
+          </Animated.ScrollView>
+        </BlurTargetView>
+        {horizontal ? (
+          <>
+            <ScrollEdgeGlass
+              side="left"
+              target={blurTarget}
+              offset={railOffset}
+              extent={railExtent}
+            />
+            <ScrollEdgeGlass
+              side="right"
+              target={blurTarget}
+              offset={railOffset}
+              extent={railExtent}
+            />
+          </>
+        ) : null}
+      </View>
       {opening ? <Text variant="caption" color={theme.colors.textMuted}>{t`Opening…`}</Text> : null}
     </View>
   );
@@ -284,6 +333,7 @@ function LaunchTile({
   onPress,
   primary = false,
   compact = false,
+  horizontal = false,
   disabled,
   testID,
 }: {
@@ -294,6 +344,7 @@ function LaunchTile({
   onPress: () => void;
   primary?: boolean;
   compact?: boolean;
+  horizontal?: boolean;
   disabled: boolean;
   testID: string;
 }) {
@@ -366,8 +417,17 @@ function LaunchTile({
       onPress={onPress}
       style={[
         styles.tile,
-        { borderRadius: profile.chrome.control },
+        {
+          borderRadius: profile.chrome.control,
+        },
         primary ? styles.primaryTile : styles.secondaryTile,
+        horizontal && {
+          flexGrow: 0,
+          flexBasis: 'auto',
+          width: primary ? 148 : 124,
+          minHeight: 92,
+          padding: 6,
+        },
         {
           backgroundColor: background(primary ? theme.colors.primary : theme.colors.surface),
           opacity: disabled ? 0.6 : 1,
@@ -408,8 +468,10 @@ function LaunchTile({
 const styles = StyleSheet.create({
   root: { gap: 12, minWidth: 0 },
   target: {
-    width: 124,
-    height: 44,
+    minWidth: 124,
+    minHeight: 44,
+    paddingVertical: 10,
+    alignSelf: 'flex-start',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -432,12 +494,14 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   demoLabel: { minWidth: 0, flexShrink: 1 },
-  rail: { width: '100%', minWidth: 0 },
-  actions: { flexDirection: 'row', alignItems: 'flex-start', gap: 4, paddingRight: 2 },
-  stackedActions: { width: 152, gap: 4 },
+  actions: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'stretch', gap: 6 },
+  horizontalActions: { flexWrap: 'nowrap', gap: 4, paddingRight: 2 },
+  horizontalStack: { flexGrow: 0, flexBasis: 'auto', width: 152, minHeight: 92, gap: 4 },
+  stackedActions: { flexGrow: 1, flexBasis: 152, minHeight: 104, gap: 6 },
   tile: {
-    width: 124,
-    minHeight: 92,
+    flexGrow: 1,
+    flexBasis: 124,
+    minHeight: 104,
     borderRadius: 3,
     padding: 6,
     gap: 3,
@@ -458,8 +522,8 @@ const styles = StyleSheet.create({
   // utility actions stay narrower so the row has hierarchy rather than clones.
   // 148 × 92 is approximately a golden rectangle and keeps the main action
   // distinct without making every item in the rail oversized.
-  primaryTile: { width: 148, padding: 6 },
-  secondaryTile: { padding: 6 },
+  primaryTile: { flexBasis: 148, padding: 10 },
+  secondaryTile: { padding: 10 },
   compactTile: {
     flex: 1,
     minHeight: 44,

@@ -222,7 +222,7 @@ export function SettingsSection({ title, children }: { title: string; children: 
   useRenderTally('SettingsSection');
   return (
     <View style={styles.section}>
-      <SectionLabel title={title} />
+      <SectionLabel title={title} style={styles.settingsSectionTitle} />
       <SettingsCard>{children}</SettingsCard>
     </View>
   );
@@ -619,6 +619,13 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     paddingHorizontal: LADDER.tight,
     letterSpacing: 0.8,
+  },
+  // On a settings section the plate starts at the card edge, while its text
+  // keeps the same gutter as the rows below. Other SectionLabel placements
+  // retain their compact, symmetric plate.
+  settingsSectionTitle: {
+    marginLeft: 0,
+    paddingLeft: LADDER.gutter,
   },
   sectionBodyFlush: { overflow: 'hidden' },
   sectionBody: {

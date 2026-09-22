@@ -1,3 +1,4 @@
+import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { useThemeTokens } from '@osuki-dev/ui';
@@ -97,15 +98,18 @@ export function usePaneChatColors(): PaneChatColors {
  * asset viewer reads documents with, and there a rule is content.
  */
 export function usePaneChatMarkdownStyle(): MarkdownStyle {
+  const profile = useAppearanceProfile();
   const theme = useThemeTokens();
   const fonts = useMarkdownFonts();
   return useMemo(() => {
     const base = createMarkdownStyle(theme.colors, fonts);
     return {
       ...base,
+      codeBlock: { ...base.codeBlock, borderRadius: profile.chrome.surface },
+      table: { ...base.table, borderRadius: profile.chrome.surface },
       thematicBreak: { color: 'transparent', height: 0, marginTop: 0, marginBottom: 0 },
     };
-  }, [theme.colors, fonts]);
+  }, [theme.colors, fonts, profile.chrome.surface]);
 }
 
 /** What the user said, on the right, as a bubble. */
@@ -117,9 +121,17 @@ export const PaneChatPromptRow = memo(function PaneChatPromptRow({
   colors: PaneChatColors;
 }) {
   const surfaceBackground = useSurfaceBackground();
+  const profile = useAppearanceProfile();
   return (
     <View style={styles.promptAlign}>
-      <View style={[styles.promptBubble, { backgroundColor: surfaceBackground(colors.bubble) }]}>
+      <View
+        style={[
+          styles.promptBubble,
+          {
+            borderRadius: profile.chrome.transcriptPlate,
+            backgroundColor: surfaceBackground(colors.bubble),
+          },
+        ]}>
         <Text variant="bodySmall" selectable color={colors.text}>
           {text}
         </Text>
@@ -170,6 +182,7 @@ export const PaneChatActivityRow = memo(function PaneChatActivityRow({
   onToggle: (id: string) => void;
 }) {
   const { t } = useLingui();
+  const profile = useAppearanceProfile();
   const Chevron = expanded ? ChevronDown : ChevronRight;
   return (
     <View style={styles.agentAlign}>
@@ -178,7 +191,7 @@ export const PaneChatActivityRow = memo(function PaneChatActivityRow({
         feedback="selection"
         pressedScale={0.99}
         onPress={() => onToggle(item.id)}
-        style={styles.activityChip}>
+        style={[styles.activityChip, { borderRadius: profile.chrome.control }]}>
         {item.status === 'running' ? (
           <ActivityIndicator size="small" color={colors.status.running} />
         ) : (
@@ -224,6 +237,7 @@ export const PaneChatPartRow = memo(function PaneChatPartRow({
   onOpenAsset?: (assetId: string) => void;
 }) {
   const surfaceBackground = useSurfaceBackground();
+  const profile = useAppearanceProfile();
   const { t } = useLingui();
   const mono = useMonoFontFamily();
   switch (part.type) {
@@ -287,6 +301,7 @@ export const PaneChatPartRow = memo(function PaneChatPartRow({
           onPress={() => onOpenAsset?.(part.asset_id)}
           style={[
             styles.assetCard,
+            { borderRadius: profile.chrome.surface },
             styles.agentAlign,
             { backgroundColor: surfaceBackground(colors.surfaceRaised) },
           ]}>
@@ -328,13 +343,21 @@ const PaneChatToolCard = memo(function PaneChatToolCard({
   onToggle?: (id: string) => void;
 }) {
   const surfaceBackground = useSurfaceBackground();
+  const profile = useAppearanceProfile();
   const { t } = useLingui();
   const mono = useMonoFontFamily();
   const summary = firstLine(block.input);
   const Chevron = open ? ChevronDown : ChevronRight;
 
   return (
-    <View style={[styles.card, { backgroundColor: surfaceBackground(colors.surfaceRaised) }]}>
+    <View
+      style={[
+        styles.card,
+        {
+          borderRadius: profile.chrome.transcriptPlate,
+          backgroundColor: surfaceBackground(colors.surfaceRaised),
+        },
+      ]}>
       <PressableScale
         accessibilityLabel={open ? t`Collapse ${block.tool}` : t`Expand ${block.tool}`}
         feedback="selection"
@@ -405,10 +428,12 @@ const TodoCard = memo(function TodoCard({
   colors: PaneChatColors;
 }) {
   const surfaceBackground = useSurfaceBackground();
+  const profile = useAppearanceProfile();
   return (
     <View
       style={[
         styles.card,
+        { borderRadius: profile.chrome.surface },
         styles.agentAlign,
         { backgroundColor: surfaceBackground(colors.surfaceRaised) },
       ]}>
@@ -417,6 +442,7 @@ const TodoCard = memo(function TodoCard({
           <View
             style={[
               styles.todoBox,
+              { borderRadius: profile.radius.xs },
               {
                 borderColor: item.done ? colors.accent : colors.border,
                 backgroundColor: item.done ? colors.accent : 'transparent',
@@ -446,6 +472,7 @@ const DiffRow = memo(function DiffRow({
 }) {
   const theme = useThemeTokens();
   const surfaceBackground = useSurfaceBackground();
+  const profile = useAppearanceProfile();
   // The fourth hand-rolled patch painter in this tree is gone: the terminal
   // transcript draws the same rows, with the same gutter and the same greens
   // and reds, as the changes sheet and the agent timeline.
@@ -455,6 +482,7 @@ const DiffRow = memo(function DiffRow({
     <View
       style={[
         styles.diffCard,
+        { borderRadius: profile.chrome.surface },
         styles.agentAlign,
         { borderColor: colors.border, backgroundColor: surfaceBackground(colors.surface) },
       ]}>
@@ -483,8 +511,14 @@ const TableRow = memo(function TableRow({
   colors: PaneChatColors;
 }) {
   const surfaceBackground = useSurfaceBackground();
+  const profile = useAppearanceProfile();
   return (
-    <View style={[styles.tableCard, styles.agentAlign, { borderColor: colors.border }]}>
+    <View
+      style={[
+        styles.tableCard,
+        styles.agentAlign,
+        { borderRadius: profile.chrome.surface, borderColor: colors.border },
+      ]}>
       {part.rows.map((row, rowIndex) => (
         <View
           key={`${rowIndex}-${row.join('|')}`}
@@ -570,8 +604,6 @@ const styles = StyleSheet.create({
     letterSpacing: 0.6,
   },
   promptBubble: {
-    borderRadius: 16,
-    borderBottomRightRadius: 5,
     borderCurve: 'continuous',
     paddingHorizontal: 13,
     paddingVertical: 9,
@@ -582,7 +614,6 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     maxWidth: '100%',
     gap: 8,
-    borderRadius: 999,
     borderCurve: 'continuous',
     paddingHorizontal: 11,
     paddingVertical: 6,
@@ -592,7 +623,6 @@ const styles = StyleSheet.create({
     paddingTop: 8,
   },
   card: {
-    borderRadius: 14,
     borderCurve: 'continuous',
     overflow: 'hidden',
   },
@@ -634,7 +664,6 @@ const styles = StyleSheet.create({
     width: 16,
     height: 16,
     marginTop: 2,
-    borderRadius: 5,
     borderCurve: 'continuous',
     borderWidth: 1.5,
     alignItems: 'center',
@@ -651,7 +680,6 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
   diffCard: {
-    borderRadius: 14,
     borderCurve: 'continuous',
     borderWidth: StyleSheet.hairlineWidth,
     overflow: 'hidden',
@@ -662,7 +690,6 @@ const styles = StyleSheet.create({
     paddingBottom: 4,
   },
   tableCard: {
-    borderRadius: 14,
     borderCurve: 'continuous',
     borderWidth: StyleSheet.hairlineWidth,
     overflow: 'hidden',
@@ -680,7 +707,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    borderRadius: 14,
     borderCurve: 'continuous',
     paddingHorizontal: 12,
     paddingVertical: 12,

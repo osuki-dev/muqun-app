@@ -125,6 +125,13 @@ const RULE_CONFIRM_WIDTH = 3;
 /**
  * The scene: the ground, the grabber, the heading, and one column of content.
  *
+ * Its vertical ScrollView/LegendList must set `nestedScrollEnabled`. Android
+ * BottomSheetBehavior only recognizes nested-scrolling children; without this
+ * it can capture a downward drag while the list still has earlier rows. Keep
+ * the native hand-off at offset zero so the grabber/top-edge dismissal works.
+ * Do not enable this on an inner horizontal rail: it can become the sheet
+ * behavior's first scrolling child instead of the vertical list.
+ *
  * Exactly two subviews inside the frame, which is the most a native form sheet
  * lays out around a scroll view -- the ground is one of them and costs no
  * layout, so the scroller is still the only thing the sheet measures. See

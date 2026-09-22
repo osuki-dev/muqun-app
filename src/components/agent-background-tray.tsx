@@ -1,3 +1,4 @@
+import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
 import { useThemeTokens, useToast } from '@osuki-dev/ui';
@@ -91,6 +92,7 @@ export const AgentBackgroundTray = memo(function AgentBackgroundTray({
 }: AgentBackgroundTrayProps) {
   const { t } = useLingui();
   const theme = useThemeTokens();
+  const profile = useAppearanceProfile();
   const colors = usePaneChatColors();
   const insets = useSafeAreaInsets();
   const surfaceBackground = useSurfaceBackground();
@@ -216,6 +218,7 @@ export const AgentBackgroundTray = memo(function AgentBackgroundTray({
         </View>
       ) : (
         <ScrollView
+          nestedScrollEnabled
           style={sheetSceneStyles.scroller}
           contentContainerStyle={sheetSceneStyles.scrollerContent}
           showsVerticalScrollIndicator={false}>
@@ -253,7 +256,11 @@ export const AgentBackgroundTray = memo(function AgentBackgroundTray({
                         accessibilityLabel={t`Stop this command`}
                         disabled={killing !== null}
                         onPress={() => void handleKill(shell.id)}
-                        style={[styles.killBtn, { borderColor: theme.colors.danger }]}>
+                        style={[
+                          styles.killBtn,
+                          { borderRadius: profile.chrome.control },
+                          { borderColor: theme.colors.danger },
+                        ]}>
                         {killing === shell.id ? (
                           <ActivityIndicator size="small" color={theme.colors.danger} />
                         ) : (
@@ -271,6 +278,7 @@ export const AgentBackgroundTray = memo(function AgentBackgroundTray({
                       <View
                         style={[
                           styles.outputBox,
+                          { borderRadius: profile.chrome.surface },
                           { backgroundColor: surfaceBackground(theme.colors.surface) },
                         ]}>
                         <Text
@@ -314,14 +322,12 @@ const styles = StyleSheet.create({
     height: 28,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 999,
     borderCurve: 'continuous',
     borderWidth: StyleSheet.hairlineWidth,
   },
   outputBox: {
     marginBottom: SHEET_LADDER.snug,
     padding: SHEET_LADDER.gap,
-    borderRadius: 10,
     borderCurve: 'continuous',
   },
   // The family is merged in at the render site from `useMonoFontFamily`. It

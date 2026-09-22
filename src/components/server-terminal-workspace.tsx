@@ -78,6 +78,7 @@ import { navHeaderButtonStyle } from '@/components/nav-header';
 import { PaneChatView } from '@/components/pane-chat-view';
 
 import { AgentWorkbench } from '@/components/agent-workbench';
+import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { gatewaySupportsAgentSessions } from '@/lib/agent-session';
 import { PadServerRail } from '@/components/pad-server-rail';
 import { GatewayTunnelBadge } from '@/components/gateway-tunnel-badge';
@@ -653,6 +654,7 @@ export function ServerTerminalWorkspace({
   // call keeps the old language. The hook's `t` is bound to the Lingui context,
   // so the compiler sees a dependency that actually changes.
   const { t } = useLingui();
+  const profile = useAppearanceProfile();
   const escapeKey: TerminalKey = { label: 'ESC', key: 'esc', accessibilityLabel: t`Escape` };
 
   const routeParams = useLocalSearchParams<{
@@ -4324,10 +4326,11 @@ export function ServerTerminalWorkspace({
             onPress={() => setAttachmentMenuOpen((open) => !open)}
             style={[
               composerStyles.button,
-              { backgroundColor: surfaceBackground(chromeGlass) },
+              { borderRadius: profile.chrome.roundControl },
               attachmentMenuOpen
                 ? { backgroundColor: surfaceBackground(theme.colors.primarySubtle) }
                 : null,
+              !targetReady || !selectedPane || sending ? { opacity: 0.45 } : null,
             ]}>
             <ThemeIcon
               name="chrome.attach"

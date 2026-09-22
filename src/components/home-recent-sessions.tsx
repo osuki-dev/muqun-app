@@ -146,7 +146,7 @@ export function HomeRecentSessions({
         style={[
           styles.list,
           {
-            backgroundColor: background(theme.colors.surface),
+            backgroundColor: available.length ? background(theme.colors.surface) : 'transparent',
             borderRadius: profile.chrome.surface,
           },
         ]}>
@@ -175,7 +175,10 @@ export function HomeRecentSessions({
           />
         ))}
         {available.length === 0 ? (
-          <Text variant="bodySmall" color={theme.colors.textMuted}>
+          <Text
+            variant="bodySmall"
+            color={theme.colors.textMuted}
+            style={{ paddingVertical: 16, paddingHorizontal: 0 }}>
             {hydrated && snapshotsHydrated ? t`Nothing to show yet.` : t`Loading recent sessions…`}
           </Text>
         ) : null}
@@ -322,7 +325,7 @@ function RecentSessionRow({
 
 const styles = StyleSheet.create({
   root: { minWidth: 0 },
-  list: { minWidth: 0, borderRadius: 6, overflow: 'hidden' },
+  list: { minWidth: 0, overflow: 'hidden' },
   row: {
     flexDirection: 'row',
     alignItems: 'center',

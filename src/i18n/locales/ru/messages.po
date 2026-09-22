@@ -2737,10 +2737,6 @@ msgstr "У Muqun нет своих шрифтов. Добавленный ост
 msgid "Muqun is locked"
 msgstr "Muqun заблокирован"
 
-#: src/app/settings.tsx
-msgid "Muqun is open source. Read it, or build it yourself."
-msgstr "Muqun — открытый код. Прочтите его или соберите сами"
-
 #: src/components/pairing-camera.tsx
 msgid "Muqun reads the Gateway's QR code through the camera. Nothing is recorded."
 msgstr "Muqun считывает QR-код Gateway через камеру. Ничего не записывается"

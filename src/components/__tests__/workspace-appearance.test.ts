@@ -78,16 +78,9 @@ describe('workspace chrome follows the appearance profile', () => {
     expect(read('update-status-banner')).toContain('useNotificationSurfaceStyle()');
   });
 
-  test('semantic pills, circles, keycaps and content thumbnails keep their intentional shapes', () => {
+  test('semantic pills, circles and keycaps keep their intentional shapes', () => {
     const composer = read('agent-composer');
-    for (const name of [
-      'sessionChip',
-      'backChip',
-      'actionBtn',
-      'actionBtnWithLabel',
-      'queuedChip',
-      'compactionPill',
-    ]) {
+    for (const name of ['sessionChip', 'backChip', 'queuedChip', 'compactionPill']) {
       expect(styleBlock(composer, name)).toContain('borderRadius: 999');
     }
     const ssh = read('ssh-terminal-workspace');
@@ -96,9 +89,6 @@ describe('workspace chrome follows the appearance profile', () => {
     expect(styleBlock(ssh, 'statusDot')).toContain('borderRadius: 3.5');
     for (const name of ['rowIcon', 'rowAction']) {
       expect(styleBlock(read('ssh-host-row'), name)).toContain('borderRadius: 20');
-    }
-    for (const name of ['attachmentImageWrapper', 'attachmentThumbnail']) {
-      expect(styleBlock(read('agent-message-block'), name)).toContain('borderRadius: 14');
     }
     expect(styleBlock(read('update-status-banner'), 'icon')).toContain('borderRadius: 18');
   });

@@ -87,7 +87,6 @@ export function TerminalComposer({
   // change and this one -- the field they type into -- keep the platform's.
   const mono = useMonoFontFamily();
   const chromeText = theme.colors.text;
-  const chromeGlass = withAlpha(theme.colors.text, appChrome.opacity.chromeControl);
   const chromeGlassQuiet = withAlpha(theme.colors.text, appChrome.opacity.chromeControlQuiet);
   // Every other field is <Input>, which reads this token itself. Resolving it
   // here rather than naming a colour is what keeps the two from drifting apart.
@@ -123,7 +122,6 @@ export function TerminalComposer({
         disabled={send.disabled}
         onPress={send.onPress}
         armedFill={theme.colors.primary}
-        restFill={chromeGlass}
         restText={theme.colors.textMuted}
         activeText={theme.colors.onPrimary}
       />
@@ -147,7 +145,6 @@ export function ComposerSendButton({
   disabled,
   onPress,
   armedFill,
-  restFill,
   restText,
   activeText,
 }: {
@@ -158,10 +155,10 @@ export function ComposerSendButton({
   disabled: boolean;
   onPress: () => void;
   armedFill: string;
-  restFill: string;
   restText: string;
   activeText: string;
 }) {
+  const profile = useAppearanceProfile();
   const surfaceBackground = useSurfaceBackground();
   const armedValue = useSharedValue(armed ? 1 : 0);
   const sendingValue = useSharedValue(sending ? 1 : 0);
@@ -172,7 +169,9 @@ export function ComposerSendButton({
     sendingValue.value = withTiming(sending ? 1 : 0, timing('button'));
   }, [sending, sendingValue]);
 
-  const fillStyle = useAnimatedStyle(() => ({ opacity: armedValue.value }));
+  const fillStyle = useAnimatedStyle(() => ({
+    opacity: Math.max(armedValue.value, sendingValue.value),
+  }));
   const restGlyphStyle = useAnimatedStyle(() => ({
     opacity: (1 - armedValue.value) * (1 - sendingValue.value),
   }));
@@ -187,12 +186,12 @@ export function ComposerSendButton({
       accessibilityLabel={accessibilityLabel}
       disabled={disabled}
       onPress={onPress}
-      style={[composerStyles.button, { backgroundColor: surfaceBackground(restFill) }]}>
+      style={[composerStyles.button, { borderRadius: profile.chrome.roundControl }]}>
       <Animated.View
         pointerEvents="none"
         style={[
           StyleSheet.absoluteFill,
-          composerStyles.buttonFill,
+          { borderRadius: profile.chrome.roundControl },
           { backgroundColor: surfaceBackground(armedFill) },
           fillStyle,
         ]}>
@@ -221,7 +220,6 @@ export const composerStyles = StyleSheet.create({
   composer: {
     minHeight: 50,
     maxHeight: 150,
-    borderRadius: appChrome.radius.composerField,
     borderCurve: 'continuous',
     overflow: 'hidden',
     paddingHorizontal: 6,
@@ -246,12 +244,8 @@ export const composerStyles = StyleSheet.create({
   button: {
     width: 40,
     height: 40,
-    borderRadius: appChrome.radius.roundControl,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  buttonFill: {
-    borderRadius: appChrome.radius.roundControl,
   },
   buttonGlyph: {
     alignItems: 'center',

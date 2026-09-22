@@ -114,7 +114,7 @@ type DraftAppearance = Pick<
   | 'surfaceBackgroundOpacity'
   | 'hideHomeLogo'
   | 'hideHomeText'
-  | 'homeHero'
+  | 'homeArtwork'
 >;
 
 export function CustomThemeLibrary({
@@ -198,10 +198,7 @@ export function CustomThemeLibrary({
     initialCandidate ?? (initialManifest ? { manifest: initialManifest } : null)
   );
   const [error, setError] = useState<string | null>(null);
-  const [draftAppearance, setDraftAppearance] = useState<DraftAppearance>({
-    hideHomeLogo: true,
-    hideHomeText: true,
-  });
+  const [draftAppearance, setDraftAppearance] = useState<DraftAppearance>({});
   const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   // Copying a dozen images into permanent storage reports nothing on its own.
@@ -273,6 +270,7 @@ export function CustomThemeLibrary({
       : undefined;
 
   function closePreview() {
+    setDraftAppearance({});
     setRemoving(false);
     setActionsOpen(false);
     setNotice(null);
@@ -331,7 +329,8 @@ export function CustomThemeLibrary({
         store.setHideHomeLogo(id, draftAppearance.hideHomeLogo);
       if (draftAppearance.hideHomeText !== undefined)
         store.setHideHomeText(id, draftAppearance.hideHomeText);
-      if (draftAppearance.homeHero !== undefined) store.setHomeHero(id, draftAppearance.homeHero);
+      if (draftAppearance.homeArtwork !== undefined)
+        store.setHomeArtwork(id, draftAppearance.homeArtwork);
     }
     if (apply) {
       // `colors` here is the *candidate's* palette -- this editor is already
@@ -465,7 +464,10 @@ export function CustomThemeLibrary({
                   return;
                 }
                 if (onOpenCandidate) onOpenCandidate(value);
-                else setCandidate(value);
+                else {
+                  setDraftAppearance({});
+                  setCandidate(value);
+                }
                 setImportOpen(false);
                 setActionsOpen(false);
               }
@@ -480,7 +482,10 @@ export function CustomThemeLibrary({
         onClose={() => setLinkImportOpen(false)}
         onReady={(value) => {
           if (onOpenCandidate) onOpenCandidate(value);
-          else setCandidate(value);
+          else {
+            setDraftAppearance({});
+            setCandidate(value);
+          }
           setLinkImportOpen(false);
           setImportOpen(false);
           setActionsOpen(false);
@@ -514,7 +519,10 @@ export function CustomThemeLibrary({
                 assets: installed.assets,
               };
               if (onOpenCandidate) onOpenCandidate(next);
-              else setCandidate(next);
+              else {
+                setDraftAppearance({});
+                setCandidate(next);
+              }
               setError(null);
               setNotice(null);
               setPendingRemoval(null);
@@ -805,14 +813,14 @@ export function CustomThemeLibrary({
                           useThemeLibrary.getState().setHideHomeText(installedCandidate.id, value)
                         )
                   }
-                  onHeroChange={(value) =>
+                  onArtworkChange={(value) =>
                     !installedCandidate
                       ? setDraftAppearance((current) => ({
                           ...current,
-                          homeHero: value === 'theme' ? undefined : value,
+                          homeArtwork: value === 'theme' ? undefined : value,
                         }))
                       : void perform(() =>
-                          useThemeLibrary.getState().setHomeHero(installedCandidate.id, value)
+                          useThemeLibrary.getState().setHomeArtwork(installedCandidate.id, value)
                         )
                   }
                   onReset={() =>

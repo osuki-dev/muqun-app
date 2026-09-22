@@ -153,6 +153,10 @@ export function PadServerRail({
         styles.shell,
         { borderRadius: profile.chrome.workspaceRail },
         { backgroundColor: background(theme.colors.surface) },
+        {
+          borderRightWidth: profile.rail.showsDivider ? StyleSheet.hairlineWidth : 0,
+          borderRightColor: theme.colors.border,
+        },
         style,
       ]}>
       <ThemedSurfaceArtwork slot="navigation.background" baseColor={theme.colors.surface} />
@@ -163,6 +167,7 @@ export function PadServerRail({
               style={[
                 styles.brandIconFrame,
                 { backgroundColor: background(theme.colors.surfaceRaised) },
+                { borderRadius: profile.rail.brandIconRadius },
               ]}>
               <Image
                 source={brand.logo ?? brandMark}
@@ -178,10 +183,20 @@ export function PadServerRail({
           ) : null}
           {brand.name !== null ? (
             <View style={styles.brandCopy}>
-              <Text variant="heading">{brand.name ?? <Trans>Muqun</Trans>}</Text>
-              <Text variant="caption" color={theme.colors.textMuted}>
-                <Trans>Your agents, anywhere.</Trans>
+              <Text
+                variant="heading"
+                style={{
+                  fontSize: profile.rail.brandTitleFontSize,
+                  lineHeight: profile.rail.brandTitleLineHeight,
+                  letterSpacing: profile.rail.brandTitleLetterSpacing,
+                }}>
+                {brand.name ?? <Trans>Muqun</Trans>}
               </Text>
+              {profile.rail.showsTagline ? (
+                <Text variant="caption" color={theme.colors.textMuted}>
+                  <Trans>Your agents, anywhere.</Trans>
+                </Text>
+              ) : null}
             </View>
           ) : null}
         </View>
@@ -200,6 +215,13 @@ export function PadServerRail({
           onPress={onOpenWorkbench}
           style={({ pressed }) => [
             styles.serverPill,
+            { marginHorizontal: profile.rail.workbenchMarginHorizontal },
+            { borderRadius: profile.chrome.railItem },
+            {
+              borderLeftWidth: profile.rail.selectionBarWidth,
+              borderLeftColor: workbenchSelected ? theme.colors.primary : 'transparent',
+              paddingLeft: profile.rail.selectionPaddingLeft,
+            },
             {
               backgroundColor: background(
                 workbenchSelected || pressed ? theme.colors.primarySubtle : 'transparent'
@@ -210,6 +232,7 @@ export function PadServerRail({
             style={[
               styles.serverIcon,
               { backgroundColor: background(theme.colors.surfaceRaised) },
+              { borderRadius: profile.rail.itemIconRadius },
             ]}>
             <PanelsTopLeft size={17} color={theme.colors.primary} strokeWidth={2} />
           </View>
@@ -227,7 +250,7 @@ export function PadServerRail({
       <ScrollView
         style={styles.scroll}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, { gap: profile.rail.contentGap }]}
         keyboardShouldPersistTaps="handled">
         {servers.length === 0 ? (
           <Text variant="bodySmall" color={theme.colors.textMuted} style={styles.railEmpty}>
@@ -245,6 +268,7 @@ export function PadServerRail({
                 reachability={reachability}
                 selectedServerId={selectedServerId}
                 selectedPaneId={selectedPaneId}
+                workbenchSelected={workbenchSelected}
                 showAddress={duplicateLabels.has(server.label.trim().toLocaleLowerCase())}
                 nowMs={nowMs}
                 testID={testID}
@@ -289,7 +313,15 @@ export function PadServerRail({
           reader actually came for, and it is the list that should have the
           room. So it collapses: same three destinations, same order, one row. */}
       {compactActions ? (
-        <View style={styles.actionBar}>
+        <View
+          style={[
+            styles.actionBar,
+            {
+              borderTopWidth: profile.rail.actionsShowDivider ? StyleSheet.hairlineWidth : 0,
+              borderTopColor: theme.colors.border,
+              paddingTop: profile.rail.actionsPaddingTop,
+            },
+          ]}>
           <RailGlyphAction label={t`Pair a server`} icon={ScanLine} onPress={onPairServer} />
           {onOpenSsh ? (
             <RailGlyphAction label={t`SSH`} icon={SquareTerminal} onPress={onOpenSsh} />
@@ -297,7 +329,15 @@ export function PadServerRail({
           <RailGlyphAction label={t`Settings`} icon={Settings} onPress={onOpenSettings} />
         </View>
       ) : (
-        <View style={styles.actions}>
+        <View
+          style={[
+            styles.actions,
+            {
+              borderTopWidth: profile.rail.actionsShowDivider ? StyleSheet.hairlineWidth : 0,
+              borderTopColor: theme.colors.border,
+              paddingTop: profile.rail.actionsPaddingTop,
+            },
+          ]}>
           <RailAction
             label={t`Pair a server`}
             detail={t`Scan a gateway QR`}
@@ -386,7 +426,12 @@ function RailAction({
         { borderRadius: profile.chrome.railAction },
         { backgroundColor: background(pressed ? theme.colors.surfaceRaised : 'transparent') },
       ]}>
-      <View style={[styles.actionIcon, { backgroundColor: background(theme.colors.background) }]}>
+      <View
+        style={[
+          styles.actionIcon,
+          { backgroundColor: background(theme.colors.background) },
+          { borderRadius: profile.rail.itemIconRadius },
+        ]}>
         <Icon size={18} color={theme.colors.textMuted} strokeWidth={2} />
       </View>
       <View style={styles.actionCopy}>
@@ -408,6 +453,7 @@ function ServerGroup({
   reachability,
   selectedServerId,
   selectedPaneId,
+  workbenchSelected,
   showAddress,
   nowMs,
   testID,
@@ -418,6 +464,7 @@ function ServerGroup({
   reachability: ServerReachability;
   selectedServerId: string | null;
   selectedPaneId: string | null | undefined;
+  workbenchSelected: boolean;
   showAddress: boolean;
   nowMs: number;
   testID: string;
@@ -439,13 +486,23 @@ function ServerGroup({
           styles.serverPill,
           { borderRadius: profile.chrome.railItem },
           {
+            borderLeftWidth: profile.rail.selectionBarWidth,
+            borderLeftColor:
+              selectedServer && !workbenchSelected ? theme.colors.primary : 'transparent',
+            paddingLeft: profile.rail.selectionPaddingLeft,
+          },
+          {
             backgroundColor: background(
               selectedServer ? theme.colors.primarySubtle : 'transparent'
             ),
           },
         ]}>
         <View
-          style={[styles.serverIcon, { backgroundColor: background(theme.colors.surfaceRaised) }]}>
+          style={[
+            styles.serverIcon,
+            { backgroundColor: background(theme.colors.surfaceRaised) },
+            { borderRadius: profile.rail.itemIconRadius },
+          ]}>
           <Server size={17} color={theme.colors.textMuted} strokeWidth={2} />
         </View>
         <View style={styles.serverCopy}>
@@ -536,7 +593,11 @@ function SshHostPill({
         { backgroundColor: background(pressed ? theme.colors.surfaceRaised : 'transparent') },
       ]}>
       <View
-        style={[styles.serverIcon, { backgroundColor: background(theme.colors.surfaceRaised) }]}>
+        style={[
+          styles.serverIcon,
+          { backgroundColor: background(theme.colors.surfaceRaised) },
+          { borderRadius: profile.rail.itemIconRadius },
+        ]}>
         {host.auth.type === 'privateKey' ? (
           <KeyRound size={17} color={theme.colors.textMuted} strokeWidth={2} />
         ) : host.auth.type === 'keyboardInteractive' ? (
@@ -579,7 +640,6 @@ const styles = StyleSheet.create({
   shell: {
     flex: 1,
     minWidth: 0,
-    borderRadius: 28,
     borderCurve: 'continuous',
   },
   // 12, not 16: `SectionLabel` carries the remaining 4 itself, so the rail's
@@ -650,7 +710,6 @@ const styles = StyleSheet.create({
   glyphAction: {
     flex: 1,
     height: 44,
-    borderRadius: 12,
     borderCurve: 'continuous',
     alignItems: 'center',
     justifyContent: 'center',
@@ -660,7 +719,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    borderRadius: 18,
     borderCurve: 'continuous',
     paddingHorizontal: 10,
     paddingVertical: 7,
@@ -702,7 +760,6 @@ const styles = StyleSheet.create({
     gap: 10,
     paddingHorizontal: 10,
     paddingVertical: 8,
-    borderRadius: 18,
     borderCurve: 'continuous',
   },
   serverIcon: {

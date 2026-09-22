@@ -2737,10 +2737,6 @@ msgstr "Muqun에는 자체 글꼴이 없습니다. 추가하면 이 기기에 �
 msgid "Muqun is locked"
 msgstr "Muqun 잠김"
 
-#: src/app/settings.tsx
-msgid "Muqun is open source. Read it, or build it yourself."
-msgstr "Muqun은 오픈 소스입니다. 코드를 읽거나 직접 빌드할 수 있습니다"
-
 #: src/components/pairing-camera.tsx
 msgid "Muqun reads the Gateway's QR code through the camera. Nothing is recorded."
 msgstr "Muqun은 카메라로 Gateway의 QR 코드를 읽습니다. 아무것도 기록하지 않습니다"

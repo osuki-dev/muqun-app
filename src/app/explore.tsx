@@ -623,6 +623,7 @@ export default function PairModal() {
     */
     <SheetScene testID="pairing-sheet" title={title} caption={caption} captionLines={2}>
       <KeyboardAwareScrollView
+        nestedScrollEnabled
         bottomOffset={KEYBOARD_BOTTOM_OFFSET}
         style={sheetSceneStyles.scroller}
         contentContainerStyle={styles.content}

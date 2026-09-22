@@ -196,6 +196,7 @@ export const AgentContextSheet = memo(function AgentContextSheet({
       title={t`Context`}
       caption={session?.title || modelName || session?.model?.model_id}>
       <ScrollView
+        nestedScrollEnabled
         style={sheetSceneStyles.scroller}
         contentContainerStyle={sheetSceneStyles.scrollerContent}
         showsVerticalScrollIndicator={false}>

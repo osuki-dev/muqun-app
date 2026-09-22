@@ -2737,10 +2737,6 @@ msgstr "O Muqun não traz tipos de letra próprios. O que adicionar fica neste d
 msgid "Muqun is locked"
 msgstr "O Muqun está bloqueado"
 
-#: src/app/settings.tsx
-msgid "Muqun is open source. Read it, or build it yourself."
-msgstr "O Muqun é de código aberto. Leia-o ou compile-o você mesmo"
-
 #: src/components/pairing-camera.tsx
 msgid "Muqun reads the Gateway's QR code through the camera. Nothing is recorded."
 msgstr "O Muqun lê o código QR do Gateway pela câmara. Nada é gravado"
