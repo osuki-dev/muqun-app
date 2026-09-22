@@ -4,109 +4,109 @@
     {
       "name": "theme-document",
       "program": "flows/theme-document",
-      "tags": ["full"],
+      "tags": ["full", "themes", "files"],
       "platforms": ["ios", "android"]
     },
     {
       "name": "custom-themes",
       "program": "flows/custom-themes",
-      "tags": ["full"],
+      "tags": ["full", "themes", "settings"],
       "platforms": ["ios", "android"]
     },
     {
       "name": "agent-collaboration",
       "program": "flows/agent-collaboration",
-      "tags": ["full"],
+      "tags": ["full", "agents"],
       "platforms": ["ios", "android"]
     },
     {
       "name": "agent-session-tree",
       "program": "flows/agent-session-tree",
-      "tags": ["full"],
+      "tags": ["full", "agents", "workspace"],
       "platforms": ["ios", "android"]
     },
     {
       "name": "demo-tour",
       "program": "flows/demo-tour",
-      "tags": ["smoke", "full"],
+      "tags": ["smoke", "full", "workspace"],
       "platforms": ["ios", "android"]
     },
     {
       "name": "pairing-manual",
       "program": "flows/pairing-manual",
-      "tags": ["full"],
+      "tags": ["full", "connection"],
       "platforms": ["ios", "android"]
     },
     {
       "name": "terminal-interactions",
       "program": "flows/terminal-interactions",
-      "tags": ["full"],
+      "tags": ["full", "terminal"],
       "platforms": ["ios", "android"]
     },
     {
       "name": "ssh",
       "program": "flows/ssh",
-      "tags": ["full"],
+      "tags": ["full", "connection"],
       "platforms": ["ios", "android"]
     },
     {
       "name": "file-mentions",
       "program": "flows/file-mentions",
-      "tags": ["full"],
+      "tags": ["full", "terminal", "files"],
       "platforms": ["ios", "android"]
     },
     {
       "name": "attachments-ui",
       "program": "flows/attachments-ui",
-      "tags": ["full"],
+      "tags": ["full", "terminal", "files"],
       "platforms": ["ios", "android"]
     },
     {
       "name": "artifacts",
       "program": "flows/artifacts",
-      "tags": ["full"],
+      "tags": ["full", "files"],
       "platforms": ["ios", "android"]
     },
     {
       "name": "large-file-preview",
       "program": "flows/large-file-preview",
-      "tags": ["full"],
+      "tags": ["full", "files"],
       "platforms": ["ios", "android"]
     },
     {
       "name": "git-diff",
       "program": "flows/git-diff",
-      "tags": ["full"],
+      "tags": ["full", "files"],
       "platforms": ["ios", "android"]
     },
     {
       "name": "settings",
       "program": "flows/settings",
-      "tags": ["full"],
+      "tags": ["full", "settings"],
       "platforms": ["ios", "android"]
     },
     {
       "name": "settings-guide",
       "program": "flows/settings-guide",
-      "tags": ["full"],
+      "tags": ["full", "settings"],
       "platforms": ["ios", "android"]
     },
     {
       "name": "settings-font",
       "program": "flows/settings-font",
-      "tags": ["full"],
+      "tags": ["full", "settings"],
       "platforms": ["ios", "android"]
     },
     {
       "name": "settings-home-layout",
       "program": "flows/settings-home-layout",
-      "tags": ["full"],
+      "tags": ["full", "settings", "workspace"],
       "platforms": ["ios", "android"]
     },
     {
       "name": "away-digest",
       "program": "flows/away-digest",
-      "tags": ["full"],
+      "tags": ["full", "agents"],
       "platforms": ["ios", "android"]
     },
     {
@@ -131,13 +131,13 @@
     {
       "name": "pad-workspace",
       "program": "flows/pad-workspace",
-      "tags": ["full"],
+      "tags": ["full", "workspace"],
       "platforms": ["ios", "android"]
     },
     {
       "name": "slash-commands",
       "program": "flows/slash-commands",
-      "tags": ["full"],
+      "tags": ["full", "terminal"],
       "platforms": ["ios", "android"]
     },
     {
@@ -173,31 +173,31 @@
     {
       "name": "agent-shortcuts",
       "program": "flows/agent-shortcuts",
-      "tags": ["full"],
+      "tags": ["full", "agents", "terminal"],
       "platforms": ["ios", "android"]
     },
     {
       "name": "switcher-sheet",
       "program": "flows/switcher-sheet",
-      "tags": ["full"],
+      "tags": ["full", "workspace"],
       "platforms": ["ios", "android"]
     },
     {
       "name": "soft-keyboard",
       "program": "flows/soft-keyboard",
-      "tags": ["full"],
+      "tags": ["full", "terminal"],
       "platforms": ["ios", "android"]
     },
     {
       "name": "personal-workspace",
       "program": "flows/personal-workspace",
-      "tags": ["full"],
+      "tags": ["full", "workspace"],
       "platforms": ["ios", "android"]
     },
     {
       "name": "thai-language",
       "program": "flows/thai-language",
-      "tags": ["full"],
+      "tags": ["full", "localization"],
       "platforms": ["ios", "android"]
     }
   ],

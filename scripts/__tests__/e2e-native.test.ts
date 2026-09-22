@@ -726,6 +726,59 @@ describe('native end-to-end gate', () => {
     expect(selectFlows(suite, 'capture', 'android')).toEqual([]);
     expect(() => selectFlows(suite, 'full', 'ios', 'held')).toThrow('not shipped');
   });
+  test('domain tags select the documented full-gate subsets on both platforms', async () => {
+    const base = path.resolve(fileURLToPath(new URL('../../e2e/agent-device/', import.meta.url)));
+    const manifest = JSON.parse(await readFile(path.join(base, 'suite.json'), 'utf8')) as Suite;
+    const domains: Record<string, string[]> = {
+      themes: ['theme-document', 'custom-themes'],
+      settings: [
+        'custom-themes',
+        'settings',
+        'settings-guide',
+        'settings-font',
+        'settings-home-layout',
+      ],
+      terminal: [
+        'terminal-interactions',
+        'file-mentions',
+        'attachments-ui',
+        'slash-commands',
+        'agent-shortcuts',
+        'soft-keyboard',
+      ],
+      files: [
+        'theme-document',
+        'file-mentions',
+        'attachments-ui',
+        'artifacts',
+        'large-file-preview',
+        'git-diff',
+      ],
+      agents: ['agent-collaboration', 'agent-session-tree', 'away-digest', 'agent-shortcuts'],
+      workspace: [
+        'agent-session-tree',
+        'demo-tour',
+        'settings-home-layout',
+        'pad-workspace',
+        'switcher-sheet',
+        'personal-workspace',
+      ],
+      connection: ['pairing-manual', 'ssh'],
+      localization: ['thai-language'],
+    };
+
+    for (const platform of ['ios', 'android']) {
+      for (const [tag, expected] of Object.entries(domains)) {
+        expect(selectFlows(manifest, tag, platform).map((flow) => flow.name)).toEqual(expected);
+      }
+    }
+    const domainNames = new Set(Object.keys(domains));
+    expect(
+      selectFlows(manifest, 'full', 'android').filter(
+        (flow) => !flow.tags.some((tag) => domainNames.has(tag))
+      )
+    ).toEqual([]);
+  });
   test('false predicates fail even when the command succeeds', () => {
     const result = decodeReply('{"success":true,"data":{"pass":false}}', 0);
     expect(() => requirePass(result)).toThrow('UI assertion failed');
