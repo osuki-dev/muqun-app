@@ -245,6 +245,10 @@ msgstr "{title} — 자리를 비운 사이에 끝났습니다"
 msgid "+{overflow} more"
 msgstr "외 {overflow}개"
 
+#: src/components/dev-home-ambient-controls.tsx
+msgid "0 speed pauses motion. Theme default restores the theme."
+msgstr "속도 0은 움직임을 일시 중지합니다. 테마 기본값을 선택하면 복원됩니다"
+
 #. placeholder {0}: Math.round(USER_FONT_MAX_BYTES / (1024 * 1024))
 #: src/components/settings-font-sheet.tsx
 msgid "A .ttf or .otf up to {0} MB."
@@ -643,6 +647,10 @@ msgstr "지금은 인증을 사용할 수 없습니다. 다시 시도하거나 �
 msgid "Auto-approve every action"
 msgstr "모든 작업 자동 승인"
 
+#: src/components/dev-home-ambient-controls.tsx
+msgid "Automatic"
+msgstr "자동"
+
 #: src/components/agent-mode-sheet.tsx
 msgid "Autonomous software engineering: edits files, runs commands, tests."
 msgstr "자율 소프트웨어 엔지니어링: 파일 편집, 명령 실행, 테스트"
@@ -944,6 +952,10 @@ msgstr "캐시를 비우는 중"
 #: src/components/settings-storage.tsx
 msgid "Clearing…"
 msgstr "비우는 중…"
+
+#: src/components/dev-home-ambient-controls.tsx
+msgid "Close effects"
+msgstr "효과 닫기"
 
 #: src/components/asset-viewer.tsx
 msgid "Close file"
@@ -1480,6 +1492,10 @@ msgstr "파일을 열지 못했습니다"
 msgid "Could not open the guide"
 msgstr "안내를 열 수 없습니다"
 
+#: src/components/settings-registration.tsx
+msgid "Could not open the link"
+msgstr "링크를 열지 못했습니다"
+
 #: src/lib/attachments.ts
 msgid "Could not open the picker."
 msgstr "선택기를 열지 못했습니다"
@@ -1659,6 +1675,10 @@ msgstr "파일을 업로드하지 못했습니다"
 msgid "Create and move"
 msgstr "생성하고 이동"
 
+#: src/components/agent-workbench.tsx
+msgid "Creating session…"
+msgstr "세션 생성 중…"
+
 #: src/components/custom-theme-library.tsx
 msgid "Current"
 msgstr "사용 중"
@@ -1691,6 +1711,10 @@ msgstr "사용자 지정"
 #: src/components/settings-appearance.tsx
 msgid "Dark"
 msgstr "다크"
+
+#: src/components/dev-home-ambient-controls.tsx
+msgid "Decrease {label}"
+msgstr "{label} 낮추기"
 
 #: src/components/agent-model-sheet.tsx
 msgid "default"
@@ -1754,6 +1778,10 @@ msgstr "데모 워크스페이스"
 msgid "Denied by you"
 msgstr "사용자가 거부함"
 
+#: src/components/dev-home-ambient-controls.tsx
+msgid "Density"
+msgstr "밀도"
+
 #: src/i18n/labels.ts
 msgid "Deny"
 msgstr "거부"
@@ -1775,6 +1803,10 @@ msgstr "변경 요약"
 msgid "Direct control for OpenCode autonomous coding. Follow real-time reasoning, inspect code diffs, review step-by-step todos, and guide tasks on the go."
 msgstr "OpenCode 자율 코딩 에이전트를 모바일에서 직접 제어하세요. 실시간 추론 스트림, 코드 변경 사항, 작업 체크리스트를 확인하고 관리합니다"
 
+#: src/components/dev-home-ambient-controls.tsx
+msgid "Direction"
+msgstr "방향"
+
 #: src/components/new-task-sheet.tsx
 msgid "Directory"
 msgstr "디렉터리"
@@ -1793,6 +1825,7 @@ msgstr "연결 끊김 · {0}"
 msgid "Disconnected."
 msgstr "연결이 끊겼습니다"
 
+#: src/components/agent-workbench.tsx
 #: src/components/in-app-notification-host.tsx
 msgid "Dismiss"
 msgstr "닫기"
@@ -1906,6 +1939,11 @@ msgstr "이 서버 편집"
 #: src/components/settings-home-layout-sheet.tsx
 msgid "Editorial"
 msgstr "에디토리얼"
+
+#. placeholder {0}: props.value
+#: src/components/dev-home-ambient-controls.tsx
+msgid "Effects · {0}"
+msgstr "효과 · {0}"
 
 #: src/i18n/labels.ts
 msgid "Enter"
@@ -2268,6 +2306,10 @@ msgstr "시뮬레이터 숨기기"
 msgid "Home"
 msgstr "홈"
 
+#: src/components/dev-home-ambient-controls.tsx
+msgid "Home effects · development only"
+msgstr "홈 효과 · 개발 전용"
+
 #: src/components/settings-appearance.tsx
 #: src/components/settings-home-layout-sheet.tsx
 msgid "Home layout"
@@ -2337,6 +2379,10 @@ msgstr "파일 가져오기"
 msgid "Import link"
 msgstr "링크로 가져오기"
 
+#: src/components/dev-home-ambient-controls.tsx
+msgid "Increase {label}"
+msgstr "{label} 높이기"
+
 #: src/components/agent-context-sheet.tsx
 msgid "Input"
 msgstr "입력"
@@ -2377,6 +2423,10 @@ msgstr "이미지 설치 중"
 #: src/components/settings-font-sheet.tsx
 msgid "Installing…"
 msgstr "설치 중…"
+
+#: src/components/dev-home-ambient-controls.tsx
+msgid "Intensity"
+msgstr "강도"
 
 #: src/components/settings-font-sheet.tsx
 msgid "Interface"
@@ -2577,11 +2627,13 @@ msgstr "인식된 에이전트가 실행 중인 패널만 나열합니다"
 msgid "Live Activity"
 msgstr "실시간 액티비티"
 
-#: src/components/theme-browse-sheet.tsx
+#: src/components/list-load-more-footer.tsx
 msgid "Load more"
 msgstr "더 불러오기"
 
 #: src/components/gateway-storage-error.tsx
+#: src/components/home-recent-sessions.tsx
+#: src/components/list-load-more-footer.tsx
 #: src/components/session-map.tsx
 #: src/components/ssh-host-list.tsx
 #: src/components/theme-link-import.tsx
@@ -3439,6 +3491,10 @@ msgstr "페어링 코드가 만료되었습니다. 다시 스캔해 새 코드�
 #: src/app/explore.tsx
 msgid "Pairing failed."
 msgstr "페어링에 실패했습니다"
+
+#: src/components/dev-home-ambient-controls.tsx
+msgid "Palette (up to 4)"
+msgstr "팔레트 (최대 4개)"
 
 #: src/components/settings-servers.tsx
 msgid "Panes on server cards"
@@ -4462,7 +4518,7 @@ msgctxt "agent slash command"
 msgid "Show what rolling back to the last message would undo"
 msgstr "마지막 메시지까지 되돌리면 무엇이 취소되는지 보기"
 
-#: src/components/theme-browse-sheet.tsx
+#: src/components/list-load-more-footer.tsx
 msgid "Showing {shown} of {total}"
 msgstr "{total}개 중 {shown}개 표시 중"
 
@@ -4505,6 +4561,7 @@ msgid "Simulator controls"
 msgstr "시뮬레이터 컨트롤"
 
 #: src/components/asset-viewer.tsx
+#: src/components/dev-home-ambient-controls.tsx
 msgid "Size"
 msgstr "크기"
 
@@ -4546,6 +4603,10 @@ msgstr "소스 코드"
 #: src/components/virtual-keyboard.tsx
 msgid "Space"
 msgstr "스페이스"
+
+#: src/components/dev-home-ambient-controls.tsx
+msgid "Speed"
+msgstr "속도"
 
 #: src/components/home-launch-actions.tsx
 #: src/components/home-overview.tsx
@@ -5110,6 +5171,7 @@ msgstr "이번 턴이 실패했습니다"
 msgid "Theme"
 msgstr "테마"
 
+#: src/components/dev-home-ambient-controls.tsx
 #: src/components/theme-appearance-settings.tsx
 msgid "Theme default"
 msgstr "테마 기본값"

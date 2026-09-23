@@ -245,6 +245,10 @@ msgstr "{title} — ทำงานเสร็จตอนที่คุณไ
 msgid "+{overflow} more"
 msgstr "อีก +{overflow} รายการ"
 
+#: src/components/dev-home-ambient-controls.tsx
+msgid "0 speed pauses motion. Theme default restores the theme."
+msgstr "ความเร็ว 0 จะหยุดการเคลื่อนไหว ค่าเริ่มต้นของธีมจะคืนค่าเอฟเฟกต์"
+
 #. placeholder {0}: Math.round(USER_FONT_MAX_BYTES / (1024 * 1024))
 #: src/components/settings-font-sheet.tsx
 msgid "A .ttf or .otf up to {0} MB."
@@ -643,6 +647,10 @@ msgstr "การยืนยันตัวตนไม่พร้อมใช
 msgid "Auto-approve every action"
 msgstr "อนุมัติทุกการกระทำอัตโนมัติ"
 
+#: src/components/dev-home-ambient-controls.tsx
+msgid "Automatic"
+msgstr "อัตโนมัติ"
+
 #: src/components/agent-mode-sheet.tsx
 msgid "Autonomous software engineering: edits files, runs commands, tests."
 msgstr "พัฒนาซอฟต์แวร์อัตโนมัติ: แก้ไฟล์ รันคำสั่ง และทดสอบ"
@@ -944,6 +952,10 @@ msgstr "กำลังล้างแคช"
 #: src/components/settings-storage.tsx
 msgid "Clearing…"
 msgstr "กำลังล้าง…"
+
+#: src/components/dev-home-ambient-controls.tsx
+msgid "Close effects"
+msgstr "ปิดเอฟเฟกต์"
 
 #: src/components/asset-viewer.tsx
 msgid "Close file"
@@ -1480,6 +1492,10 @@ msgstr "เปิดไฟล์ไม่ได้"
 msgid "Could not open the guide"
 msgstr "เปิดคู่มือไม่ได้"
 
+#: src/components/settings-registration.tsx
+msgid "Could not open the link"
+msgstr "ไม่สามารถเปิดลิงก์ได้"
+
 #: src/lib/attachments.ts
 msgid "Could not open the picker."
 msgstr "เปิดตัวเลือกไม่ได้"
@@ -1659,6 +1675,10 @@ msgstr "อัปโหลดไฟล์ไม่ได้"
 msgid "Create and move"
 msgstr "สร้างแล้วย้ายไป"
 
+#: src/components/agent-workbench.tsx
+msgid "Creating session…"
+msgstr "กำลังสร้างเซสชัน…"
+
 #: src/components/custom-theme-library.tsx
 msgid "Current"
 msgstr "ปัจจุบัน"
@@ -1691,6 +1711,10 @@ msgstr "กำหนดเอง"
 #: src/components/settings-appearance.tsx
 msgid "Dark"
 msgstr "มืด"
+
+#: src/components/dev-home-ambient-controls.tsx
+msgid "Decrease {label}"
+msgstr "ลด {label}"
 
 #: src/components/agent-model-sheet.tsx
 msgid "default"
@@ -1754,6 +1778,10 @@ msgstr "พื้นที่ทำงานสาธิต"
 msgid "Denied by you"
 msgstr "คุณปฏิเสธแล้ว"
 
+#: src/components/dev-home-ambient-controls.tsx
+msgid "Density"
+msgstr "ความหนาแน่น"
+
 #: src/i18n/labels.ts
 msgid "Deny"
 msgstr "ปฏิเสธ"
@@ -1775,6 +1803,10 @@ msgstr "สรุปความแตกต่าง"
 msgid "Direct control for OpenCode autonomous coding. Follow real-time reasoning, inspect code diffs, review step-by-step todos, and guide tasks on the go."
 msgstr "ควบคุมเอเจนต์เขียนโค้ด OpenCode ได้โดยตรง ติดตามการคิดแบบเรียลไทม์ ตรวจสอบความเปลี่ยนแปลงของโค้ด และติดตามงานได้จากทุกที่"
 
+#: src/components/dev-home-ambient-controls.tsx
+msgid "Direction"
+msgstr "ทิศทาง"
+
 #: src/components/new-task-sheet.tsx
 msgid "Directory"
 msgstr "ไดเรกทอรี"
@@ -1793,6 +1825,7 @@ msgstr "ตัดการเชื่อมต่อแล้ว · {0}"
 msgid "Disconnected."
 msgstr "ตัดการเชื่อมต่อแล้ว"
 
+#: src/components/agent-workbench.tsx
 #: src/components/in-app-notification-host.tsx
 msgid "Dismiss"
 msgstr "ปิด"
@@ -1906,6 +1939,11 @@ msgstr "แก้ไขเซิร์ฟเวอร์นี้"
 #: src/components/settings-home-layout-sheet.tsx
 msgid "Editorial"
 msgstr "บทบรรณาธิการ"
+
+#. placeholder {0}: props.value
+#: src/components/dev-home-ambient-controls.tsx
+msgid "Effects · {0}"
+msgstr "เอฟเฟกต์ · {0}"
 
 #: src/i18n/labels.ts
 msgid "Enter"
@@ -2268,6 +2306,10 @@ msgstr "ซ่อนเครื่องจำลอง"
 msgid "Home"
 msgstr "หน้าแรก"
 
+#: src/components/dev-home-ambient-controls.tsx
+msgid "Home effects · development only"
+msgstr "เอฟเฟกต์หน้าหลัก · สำหรับการพัฒนาเท่านั้น"
+
 #: src/components/settings-appearance.tsx
 #: src/components/settings-home-layout-sheet.tsx
 msgid "Home layout"
@@ -2337,6 +2379,10 @@ msgstr "นำเข้าไฟล์"
 msgid "Import link"
 msgstr "นำเข้าลิงก์"
 
+#: src/components/dev-home-ambient-controls.tsx
+msgid "Increase {label}"
+msgstr "เพิ่ม {label}"
+
 #: src/components/agent-context-sheet.tsx
 msgid "Input"
 msgstr "อินพุต"
@@ -2377,6 +2423,10 @@ msgstr "กำลังติดตั้งรูปภาพ"
 #: src/components/settings-font-sheet.tsx
 msgid "Installing…"
 msgstr "กำลังติดตั้ง…"
+
+#: src/components/dev-home-ambient-controls.tsx
+msgid "Intensity"
+msgstr "ความเข้ม"
 
 #: src/components/settings-font-sheet.tsx
 msgid "Interface"
@@ -2577,11 +2627,13 @@ msgstr "แสดงเฉพาะพาเนลที่กำลังเร
 msgid "Live Activity"
 msgstr "กิจกรรมสด"
 
-#: src/components/theme-browse-sheet.tsx
+#: src/components/list-load-more-footer.tsx
 msgid "Load more"
 msgstr "โหลดเพิ่มเติม"
 
 #: src/components/gateway-storage-error.tsx
+#: src/components/home-recent-sessions.tsx
+#: src/components/list-load-more-footer.tsx
 #: src/components/session-map.tsx
 #: src/components/ssh-host-list.tsx
 #: src/components/theme-link-import.tsx
@@ -3439,6 +3491,10 @@ msgstr "รหัสจับคู่หมดอายุ สแกนอี�
 #: src/app/explore.tsx
 msgid "Pairing failed."
 msgstr "จับคู่ไม่สำเร็จ"
+
+#: src/components/dev-home-ambient-controls.tsx
+msgid "Palette (up to 4)"
+msgstr "ชุดสี (สูงสุด 4 สี)"
 
 #: src/components/settings-servers.tsx
 msgid "Panes on server cards"
@@ -4462,7 +4518,7 @@ msgctxt "agent slash command"
 msgid "Show what rolling back to the last message would undo"
 msgstr "แสดงว่าการย้อนกลับถึงข้อความล่าสุดจะยกเลิกอะไรบ้าง"
 
-#: src/components/theme-browse-sheet.tsx
+#: src/components/list-load-more-footer.tsx
 msgid "Showing {shown} of {total}"
 msgstr "แสดง {shown} จาก {total}"
 
@@ -4505,6 +4561,7 @@ msgid "Simulator controls"
 msgstr "ตัวควบคุมเครื่องจำลอง"
 
 #: src/components/asset-viewer.tsx
+#: src/components/dev-home-ambient-controls.tsx
 msgid "Size"
 msgstr "ขนาด"
 
@@ -4546,6 +4603,10 @@ msgstr "ซอร์สโค้ด"
 #: src/components/virtual-keyboard.tsx
 msgid "Space"
 msgstr "Space"
+
+#: src/components/dev-home-ambient-controls.tsx
+msgid "Speed"
+msgstr "ความเร็ว"
 
 #: src/components/home-launch-actions.tsx
 #: src/components/home-overview.tsx
@@ -5110,6 +5171,7 @@ msgstr "รอบนี้ล้มเหลว"
 msgid "Theme"
 msgstr "ธีม"
 
+#: src/components/dev-home-ambient-controls.tsx
 #: src/components/theme-appearance-settings.tsx
 msgid "Theme default"
 msgstr "ค่าเริ่มต้นของธีม"

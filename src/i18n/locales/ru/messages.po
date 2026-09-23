@@ -245,6 +245,10 @@ msgstr "{title} — завершилось, пока вас не было"
 msgid "+{overflow} more"
 msgstr "Ещё {overflow}"
 
+#: src/components/dev-home-ambient-controls.tsx
+msgid "0 speed pauses motion. Theme default restores the theme."
+msgstr "Скорость 0 останавливает движение. Настройка по умолчанию восстанавливает тему"
+
 #. placeholder {0}: Math.round(USER_FONT_MAX_BYTES / (1024 * 1024))
 #: src/components/settings-font-sheet.tsx
 msgid "A .ttf or .otf up to {0} MB."
@@ -643,6 +647,10 @@ msgstr "Проверка недоступна. Попробуйте ещё ра�
 msgid "Auto-approve every action"
 msgstr "Автоматически одобрять любое действие"
 
+#: src/components/dev-home-ambient-controls.tsx
+msgid "Automatic"
+msgstr "Автоматически"
+
 #: src/components/agent-mode-sheet.tsx
 msgid "Autonomous software engineering: edits files, runs commands, tests."
 msgstr "Автономная разработка: правит файлы, запускает команды, тестирует"
@@ -944,6 +952,10 @@ msgstr "Очищаем кэш"
 #: src/components/settings-storage.tsx
 msgid "Clearing…"
 msgstr "Очищаем…"
+
+#: src/components/dev-home-ambient-controls.tsx
+msgid "Close effects"
+msgstr "Закрыть эффекты"
 
 #: src/components/asset-viewer.tsx
 msgid "Close file"
@@ -1480,6 +1492,10 @@ msgstr "Не удалось открыть файл"
 msgid "Could not open the guide"
 msgstr "Не удалось открыть руководство"
 
+#: src/components/settings-registration.tsx
+msgid "Could not open the link"
+msgstr "Не удалось открыть ссылку"
+
 #: src/lib/attachments.ts
 msgid "Could not open the picker."
 msgstr "Не удалось открыть выбор"
@@ -1659,6 +1675,10 @@ msgstr "Не удалось загрузить файл"
 msgid "Create and move"
 msgstr "Создать и перейти"
 
+#: src/components/agent-workbench.tsx
+msgid "Creating session…"
+msgstr "Создание сессии…"
+
 #: src/components/custom-theme-library.tsx
 msgid "Current"
 msgstr "Текущая"
@@ -1691,6 +1711,10 @@ msgstr "Пользовательский"
 #: src/components/settings-appearance.tsx
 msgid "Dark"
 msgstr "Тёмная"
+
+#: src/components/dev-home-ambient-controls.tsx
+msgid "Decrease {label}"
+msgstr "Уменьшить {label}"
 
 #: src/components/agent-model-sheet.tsx
 msgid "default"
@@ -1754,6 +1778,10 @@ msgstr "Демо-пространство"
 msgid "Denied by you"
 msgstr "Отклонено вами"
 
+#: src/components/dev-home-ambient-controls.tsx
+msgid "Density"
+msgstr "Плотность"
+
 #: src/i18n/labels.ts
 msgid "Deny"
 msgstr "Отклонить"
@@ -1775,6 +1803,10 @@ msgstr "Сводка diff"
 msgid "Direct control for OpenCode autonomous coding. Follow real-time reasoning, inspect code diffs, review step-by-step todos, and guide tasks on the go."
 msgstr "Прямое управление агентами OpenCode. Отслеживайте ход мыслей в реальном времени, проверяйте диффы кода, контролируйте шаги задач прямо с телефона"
 
+#: src/components/dev-home-ambient-controls.tsx
+msgid "Direction"
+msgstr "Направление"
+
 #: src/components/new-task-sheet.tsx
 msgid "Directory"
 msgstr "Каталог"
@@ -1793,6 +1825,7 @@ msgstr "Отключено · {0}"
 msgid "Disconnected."
 msgstr "Отключено"
 
+#: src/components/agent-workbench.tsx
 #: src/components/in-app-notification-host.tsx
 msgid "Dismiss"
 msgstr "Скрыть"
@@ -1906,6 +1939,11 @@ msgstr "Изменить этот сервер"
 #: src/components/settings-home-layout-sheet.tsx
 msgid "Editorial"
 msgstr "Журнальный"
+
+#. placeholder {0}: props.value
+#: src/components/dev-home-ambient-controls.tsx
+msgid "Effects · {0}"
+msgstr "Эффекты · {0}"
 
 #: src/i18n/labels.ts
 msgid "Enter"
@@ -2268,6 +2306,10 @@ msgstr "Скрыть симулятор"
 msgid "Home"
 msgstr "Главная"
 
+#: src/components/dev-home-ambient-controls.tsx
+msgid "Home effects · development only"
+msgstr "Эффекты главного экрана · для разработки"
+
 #: src/components/settings-appearance.tsx
 #: src/components/settings-home-layout-sheet.tsx
 msgid "Home layout"
@@ -2337,6 +2379,10 @@ msgstr "Импортировать файл"
 msgid "Import link"
 msgstr "Импорт по ссылке"
 
+#: src/components/dev-home-ambient-controls.tsx
+msgid "Increase {label}"
+msgstr "Увеличить {label}"
+
 #: src/components/agent-context-sheet.tsx
 msgid "Input"
 msgstr "Вход"
@@ -2377,6 +2423,10 @@ msgstr "Установка изображений"
 #: src/components/settings-font-sheet.tsx
 msgid "Installing…"
 msgstr "Установка…"
+
+#: src/components/dev-home-ambient-controls.tsx
+msgid "Intensity"
+msgstr "Интенсивность"
 
 #: src/components/settings-font-sheet.tsx
 msgid "Interface"
@@ -2577,11 +2627,13 @@ msgstr "Показывать только панели с распознанны
 msgid "Live Activity"
 msgstr "Live Activity"
 
-#: src/components/theme-browse-sheet.tsx
+#: src/components/list-load-more-footer.tsx
 msgid "Load more"
 msgstr "Загрузить еще"
 
 #: src/components/gateway-storage-error.tsx
+#: src/components/home-recent-sessions.tsx
+#: src/components/list-load-more-footer.tsx
 #: src/components/session-map.tsx
 #: src/components/ssh-host-list.tsx
 #: src/components/theme-link-import.tsx
@@ -3439,6 +3491,10 @@ msgstr "Код привязки истёк. Отсканируйте снова,
 #: src/app/explore.tsx
 msgid "Pairing failed."
 msgstr "Привязка не удалась"
+
+#: src/components/dev-home-ambient-controls.tsx
+msgid "Palette (up to 4)"
+msgstr "Палитра (до 4)"
 
 #: src/components/settings-servers.tsx
 msgid "Panes on server cards"
@@ -4462,7 +4518,7 @@ msgctxt "agent slash command"
 msgid "Show what rolling back to the last message would undo"
 msgstr "Показать, что отменит откат до последнего сообщения"
 
-#: src/components/theme-browse-sheet.tsx
+#: src/components/list-load-more-footer.tsx
 msgid "Showing {shown} of {total}"
 msgstr "Показано {shown} из {total}"
 
@@ -4505,6 +4561,7 @@ msgid "Simulator controls"
 msgstr "Кнопки симулятора"
 
 #: src/components/asset-viewer.tsx
+#: src/components/dev-home-ambient-controls.tsx
 msgid "Size"
 msgstr "Размер"
 
@@ -4546,6 +4603,10 @@ msgstr "Исходный код"
 #: src/components/virtual-keyboard.tsx
 msgid "Space"
 msgstr "Пробел"
+
+#: src/components/dev-home-ambient-controls.tsx
+msgid "Speed"
+msgstr "Скорость"
 
 #: src/components/home-launch-actions.tsx
 #: src/components/home-overview.tsx
@@ -5110,6 +5171,7 @@ msgstr "Ход завершился ошибкой"
 msgid "Theme"
 msgstr "Тема"
 
+#: src/components/dev-home-ambient-controls.tsx
 #: src/components/theme-appearance-settings.tsx
 msgid "Theme default"
 msgstr "Как в теме"

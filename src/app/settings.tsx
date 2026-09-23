@@ -25,6 +25,7 @@ import { Trans, useLingui } from '@lingui/react/macro';
 
 import { NAV_HEADER_CONTROL_SIZE } from '@/components/nav-header';
 import { ScreenHeader } from '@/components/screen-header';
+import { SettingsRegistration } from '@/components/settings-registration';
 import { SettingsAlerts } from '@/components/settings-alerts';
 import { SettingsAppearance } from '@/components/settings-appearance';
 import { LADDER, SettingsNavRow, SettingsSection } from '@/components/settings-chrome';
@@ -338,6 +339,7 @@ export default function SettingsScreen() {
                   </Trans>
                 </Text>
               </View>
+              <SettingsRegistration />
             </>
           ) : null}
         </ScrollView>

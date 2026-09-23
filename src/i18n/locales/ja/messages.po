@@ -245,6 +245,10 @@ msgstr "{title} — 離れている間に完了しました"
 msgid "+{overflow} more"
 msgstr "ほか {overflow} 件"
 
+#: src/components/dev-home-ambient-controls.tsx
+msgid "0 speed pauses motion. Theme default restores the theme."
+msgstr "速度0で動きを停止します。テーマの既定値を選ぶと元に戻ります"
+
 #. placeholder {0}: Math.round(USER_FONT_MAX_BYTES / (1024 * 1024))
 #: src/components/settings-font-sheet.tsx
 msgid "A .ttf or .otf up to {0} MB."
@@ -643,6 +647,10 @@ msgstr "認証を利用できません。もう一度試すか、システム設
 msgid "Auto-approve every action"
 msgstr "すべての操作を自動承認する"
 
+#: src/components/dev-home-ambient-controls.tsx
+msgid "Automatic"
+msgstr "自動"
+
 #: src/components/agent-mode-sheet.tsx
 msgid "Autonomous software engineering: edits files, runs commands, tests."
 msgstr "自律的なソフトウェア開発。ファイル編集、コマンド実行、テストを行います"
@@ -944,6 +952,10 @@ msgstr "キャッシュを削除しています"
 #: src/components/settings-storage.tsx
 msgid "Clearing…"
 msgstr "削除しています…"
+
+#: src/components/dev-home-ambient-controls.tsx
+msgid "Close effects"
+msgstr "エフェクトを閉じる"
 
 #: src/components/asset-viewer.tsx
 msgid "Close file"
@@ -1480,6 +1492,10 @@ msgstr "ファイルを開けませんでした"
 msgid "Could not open the guide"
 msgstr "ガイドを開けませんでした"
 
+#: src/components/settings-registration.tsx
+msgid "Could not open the link"
+msgstr "リンクを開けませんでした"
+
 #: src/lib/attachments.ts
 msgid "Could not open the picker."
 msgstr "ピッカーを開けませんでした"
@@ -1659,6 +1675,10 @@ msgstr "ファイルをアップロードできませんでした"
 msgid "Create and move"
 msgstr "作成して移動"
 
+#: src/components/agent-workbench.tsx
+msgid "Creating session…"
+msgstr "セッションを作成中…"
+
 #: src/components/custom-theme-library.tsx
 msgid "Current"
 msgstr "使用中"
@@ -1691,6 +1711,10 @@ msgstr "カスタム"
 #: src/components/settings-appearance.tsx
 msgid "Dark"
 msgstr "ダーク"
+
+#: src/components/dev-home-ambient-controls.tsx
+msgid "Decrease {label}"
+msgstr "{label}を下げる"
 
 #: src/components/agent-model-sheet.tsx
 msgid "default"
@@ -1754,6 +1778,10 @@ msgstr "デモワークスペース"
 msgid "Denied by you"
 msgstr "あなたが拒否しました"
 
+#: src/components/dev-home-ambient-controls.tsx
+msgid "Density"
+msgstr "密度"
+
 #: src/i18n/labels.ts
 msgid "Deny"
 msgstr "拒否"
@@ -1775,6 +1803,10 @@ msgstr "差分の要約"
 msgid "Direct control for OpenCode autonomous coding. Follow real-time reasoning, inspect code diffs, review step-by-step todos, and guide tasks on the go."
 msgstr "OpenCode 自律型コーディングを直感的に操作。推論プロセスの追跡、コード差分の確認、タスクの進捗管理を外出先から行えます"
 
+#: src/components/dev-home-ambient-controls.tsx
+msgid "Direction"
+msgstr "方向"
+
 #: src/components/new-task-sheet.tsx
 msgid "Directory"
 msgstr "ディレクトリ"
@@ -1793,6 +1825,7 @@ msgstr "切断 · {0}"
 msgid "Disconnected."
 msgstr "切断しました"
 
+#: src/components/agent-workbench.tsx
 #: src/components/in-app-notification-host.tsx
 msgid "Dismiss"
 msgstr "閉じる"
@@ -1906,6 +1939,11 @@ msgstr "このサーバーを編集"
 #: src/components/settings-home-layout-sheet.tsx
 msgid "Editorial"
 msgstr "エディトリアル"
+
+#. placeholder {0}: props.value
+#: src/components/dev-home-ambient-controls.tsx
+msgid "Effects · {0}"
+msgstr "エフェクト · {0}"
 
 #: src/i18n/labels.ts
 msgid "Enter"
@@ -2268,6 +2306,10 @@ msgstr "シミュレータを隠す"
 msgid "Home"
 msgstr "ホーム"
 
+#: src/components/dev-home-ambient-controls.tsx
+msgid "Home effects · development only"
+msgstr "ホームのエフェクト · 開発用"
+
 #: src/components/settings-appearance.tsx
 #: src/components/settings-home-layout-sheet.tsx
 msgid "Home layout"
@@ -2337,6 +2379,10 @@ msgstr "ファイルをインポート"
 msgid "Import link"
 msgstr "リンクからインポート"
 
+#: src/components/dev-home-ambient-controls.tsx
+msgid "Increase {label}"
+msgstr "{label}を上げる"
+
 #: src/components/agent-context-sheet.tsx
 msgid "Input"
 msgstr "入力"
@@ -2377,6 +2423,10 @@ msgstr "画像をインストールしています"
 #: src/components/settings-font-sheet.tsx
 msgid "Installing…"
 msgstr "インストール中…"
+
+#: src/components/dev-home-ambient-controls.tsx
+msgid "Intensity"
+msgstr "強度"
 
 #: src/components/settings-font-sheet.tsx
 msgid "Interface"
@@ -2577,11 +2627,13 @@ msgstr "認識済みのエージェントが動作しているパネルのみを
 msgid "Live Activity"
 msgstr "ライブアクティビティ"
 
-#: src/components/theme-browse-sheet.tsx
+#: src/components/list-load-more-footer.tsx
 msgid "Load more"
 msgstr "さらに読み込む"
 
 #: src/components/gateway-storage-error.tsx
+#: src/components/home-recent-sessions.tsx
+#: src/components/list-load-more-footer.tsx
 #: src/components/session-map.tsx
 #: src/components/ssh-host-list.tsx
 #: src/components/theme-link-import.tsx
@@ -3439,6 +3491,10 @@ msgstr "ペアリングコードの有効期限が切れました。もう一度
 #: src/app/explore.tsx
 msgid "Pairing failed."
 msgstr "ペアリングに失敗しました"
+
+#: src/components/dev-home-ambient-controls.tsx
+msgid "Palette (up to 4)"
+msgstr "パレット（最大4色）"
 
 #: src/components/settings-servers.tsx
 msgid "Panes on server cards"
@@ -4462,7 +4518,7 @@ msgctxt "agent slash command"
 msgid "Show what rolling back to the last message would undo"
 msgstr "直前のメッセージまで戻すと何が取り消されるかを表示"
 
-#: src/components/theme-browse-sheet.tsx
+#: src/components/list-load-more-footer.tsx
 msgid "Showing {shown} of {total}"
 msgstr "{total} 件中 {shown} 件を表示"
 
@@ -4505,6 +4561,7 @@ msgid "Simulator controls"
 msgstr "シミュレータの操作"
 
 #: src/components/asset-viewer.tsx
+#: src/components/dev-home-ambient-controls.tsx
 msgid "Size"
 msgstr "サイズ"
 
@@ -4546,6 +4603,10 @@ msgstr "ソースコード"
 #: src/components/virtual-keyboard.tsx
 msgid "Space"
 msgstr "スペース"
+
+#: src/components/dev-home-ambient-controls.tsx
+msgid "Speed"
+msgstr "速度"
 
 #: src/components/home-launch-actions.tsx
 #: src/components/home-overview.tsx
@@ -5110,6 +5171,7 @@ msgstr "この処理は失敗しました"
 msgid "Theme"
 msgstr "テーマ"
 
+#: src/components/dev-home-ambient-controls.tsx
 #: src/components/theme-appearance-settings.tsx
 msgid "Theme default"
 msgstr "テーマの既定"

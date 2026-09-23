@@ -245,6 +245,10 @@ msgstr "{title} — finished while you were away"
 msgid "+{overflow} more"
 msgstr "+{overflow} more"
 
+#: src/components/dev-home-ambient-controls.tsx
+msgid "0 speed pauses motion. Theme default restores the theme."
+msgstr "0 speed pauses motion. Theme default restores the theme"
+
 #. placeholder {0}: Math.round(USER_FONT_MAX_BYTES / (1024 * 1024))
 #: src/components/settings-font-sheet.tsx
 msgid "A .ttf or .otf up to {0} MB."
@@ -643,6 +647,10 @@ msgstr "Authentication is unavailable. Try again or check system settings"
 msgid "Auto-approve every action"
 msgstr "Auto-approve every action"
 
+#: src/components/dev-home-ambient-controls.tsx
+msgid "Automatic"
+msgstr "Automatic"
+
 #: src/components/agent-mode-sheet.tsx
 msgid "Autonomous software engineering: edits files, runs commands, tests."
 msgstr "Autonomous software engineering: edits files, runs commands, tests"
@@ -944,6 +952,10 @@ msgstr "Clearing cache"
 #: src/components/settings-storage.tsx
 msgid "Clearing…"
 msgstr "Clearing…"
+
+#: src/components/dev-home-ambient-controls.tsx
+msgid "Close effects"
+msgstr "Close effects"
 
 #: src/components/asset-viewer.tsx
 msgid "Close file"
@@ -1480,6 +1492,10 @@ msgstr "Could not open the file"
 msgid "Could not open the guide"
 msgstr "Could not open the guide"
 
+#: src/components/settings-registration.tsx
+msgid "Could not open the link"
+msgstr "Could not open the link"
+
 #: src/lib/attachments.ts
 msgid "Could not open the picker."
 msgstr "Could not open the picker"
@@ -1659,6 +1675,10 @@ msgstr "Could not upload the file"
 msgid "Create and move"
 msgstr "Create and move"
 
+#: src/components/agent-workbench.tsx
+msgid "Creating session…"
+msgstr "Creating session…"
+
 #: src/components/custom-theme-library.tsx
 msgid "Current"
 msgstr "Current"
@@ -1691,6 +1711,10 @@ msgstr "Custom"
 #: src/components/settings-appearance.tsx
 msgid "Dark"
 msgstr "Dark"
+
+#: src/components/dev-home-ambient-controls.tsx
+msgid "Decrease {label}"
+msgstr "Decrease {label}"
 
 #: src/components/agent-model-sheet.tsx
 msgid "default"
@@ -1754,6 +1778,10 @@ msgstr "Demo workspace"
 msgid "Denied by you"
 msgstr "Denied by you"
 
+#: src/components/dev-home-ambient-controls.tsx
+msgid "Density"
+msgstr "Density"
+
 #: src/i18n/labels.ts
 msgid "Deny"
 msgstr "Deny"
@@ -1775,6 +1803,10 @@ msgstr "Diff summary"
 msgid "Direct control for OpenCode autonomous coding. Follow real-time reasoning, inspect code diffs, review step-by-step todos, and guide tasks on the go."
 msgstr "Direct control for OpenCode autonomous coding. Follow real-time reasoning, inspect code diffs, review step-by-step todos, and guide tasks on the go"
 
+#: src/components/dev-home-ambient-controls.tsx
+msgid "Direction"
+msgstr "Direction"
+
 #: src/components/new-task-sheet.tsx
 msgid "Directory"
 msgstr "Directory"
@@ -1793,6 +1825,7 @@ msgstr "Disconnected · {0}"
 msgid "Disconnected."
 msgstr "Disconnected"
 
+#: src/components/agent-workbench.tsx
 #: src/components/in-app-notification-host.tsx
 msgid "Dismiss"
 msgstr "Dismiss"
@@ -1906,6 +1939,11 @@ msgstr "Edit this server"
 #: src/components/settings-home-layout-sheet.tsx
 msgid "Editorial"
 msgstr "Editorial"
+
+#. placeholder {0}: props.value
+#: src/components/dev-home-ambient-controls.tsx
+msgid "Effects · {0}"
+msgstr "Effects · {0}"
 
 #: src/i18n/labels.ts
 msgid "Enter"
@@ -2268,6 +2306,10 @@ msgstr "Hide the simulator"
 msgid "Home"
 msgstr "Home"
 
+#: src/components/dev-home-ambient-controls.tsx
+msgid "Home effects · development only"
+msgstr "Home effects · development only"
+
 #: src/components/settings-appearance.tsx
 #: src/components/settings-home-layout-sheet.tsx
 msgid "Home layout"
@@ -2337,6 +2379,10 @@ msgstr "Import file"
 msgid "Import link"
 msgstr "Import link"
 
+#: src/components/dev-home-ambient-controls.tsx
+msgid "Increase {label}"
+msgstr "Increase {label}"
+
 #: src/components/agent-context-sheet.tsx
 msgid "Input"
 msgstr "Input"
@@ -2377,6 +2423,10 @@ msgstr "Installing images"
 #: src/components/settings-font-sheet.tsx
 msgid "Installing…"
 msgstr "Installing…"
+
+#: src/components/dev-home-ambient-controls.tsx
+msgid "Intensity"
+msgstr "Intensity"
 
 #: src/components/settings-font-sheet.tsx
 msgid "Interface"
@@ -2577,11 +2627,13 @@ msgstr "List only the panes running a recognised agent"
 msgid "Live Activity"
 msgstr "Live Activity"
 
-#: src/components/theme-browse-sheet.tsx
+#: src/components/list-load-more-footer.tsx
 msgid "Load more"
 msgstr "Load more"
 
 #: src/components/gateway-storage-error.tsx
+#: src/components/home-recent-sessions.tsx
+#: src/components/list-load-more-footer.tsx
 #: src/components/session-map.tsx
 #: src/components/ssh-host-list.tsx
 #: src/components/theme-link-import.tsx
@@ -3439,6 +3491,10 @@ msgstr "Pairing code expired. Scan again for a new code"
 #: src/app/explore.tsx
 msgid "Pairing failed."
 msgstr "Pairing failed"
+
+#: src/components/dev-home-ambient-controls.tsx
+msgid "Palette (up to 4)"
+msgstr "Palette (up to 4)"
 
 #: src/components/settings-servers.tsx
 msgid "Panes on server cards"
@@ -4462,7 +4518,7 @@ msgctxt "agent slash command"
 msgid "Show what rolling back to the last message would undo"
 msgstr "Show what rolling back to the last message would undo"
 
-#: src/components/theme-browse-sheet.tsx
+#: src/components/list-load-more-footer.tsx
 msgid "Showing {shown} of {total}"
 msgstr "Showing {shown} of {total}"
 
@@ -4505,6 +4561,7 @@ msgid "Simulator controls"
 msgstr "Simulator controls"
 
 #: src/components/asset-viewer.tsx
+#: src/components/dev-home-ambient-controls.tsx
 msgid "Size"
 msgstr "Size"
 
@@ -4546,6 +4603,10 @@ msgstr "Source code"
 #: src/components/virtual-keyboard.tsx
 msgid "Space"
 msgstr "Space"
+
+#: src/components/dev-home-ambient-controls.tsx
+msgid "Speed"
+msgstr "Speed"
 
 #: src/components/home-launch-actions.tsx
 #: src/components/home-overview.tsx
@@ -5110,6 +5171,7 @@ msgstr "The turn failed"
 msgid "Theme"
 msgstr "Theme"
 
+#: src/components/dev-home-ambient-controls.tsx
 #: src/components/theme-appearance-settings.tsx
 msgid "Theme default"
 msgstr "Theme default"
