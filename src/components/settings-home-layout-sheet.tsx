@@ -1,7 +1,7 @@
 import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens, useToast } from '@osuki-dev/ui';
 import { useRef } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { PressableScale } from '@/components/pressable-scale';
@@ -61,12 +61,9 @@ export function SettingsHomeLayoutSheet({ onClose }: { onClose: () => void }) {
     <SheetScene
       testID="settings-home-layout-sheet"
       title={t`Home layout`}
-      caption={choices.find((choice) => choice.id === layout)?.title}>
-      <ScrollView
-        nestedScrollEnabled
-        style={sheetSceneStyles.scroller}
-        contentContainerStyle={sheetSceneStyles.scrollerContent}
-        showsVerticalScrollIndicator={false}>
+      caption={choices.find((choice) => choice.id === layout)?.title}
+      contentSized={true}>
+      <View style={sheetSceneStyles.column}>
         <View accessibilityRole="radiogroup" accessibilityLabel={t`Home layout`}>
           {choices.map((choice) => (
             <HomeLayoutOption
@@ -78,7 +75,7 @@ export function SettingsHomeLayoutSheet({ onClose }: { onClose: () => void }) {
           ))}
         </View>
         <SheetSceneFooter bottomInset={insets.bottom} />
-      </ScrollView>
+      </View>
     </SheetScene>
   );
 }
