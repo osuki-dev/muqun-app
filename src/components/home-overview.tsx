@@ -727,6 +727,7 @@ export function HomeOverview({
               recent={
                 !loading && !hydrationError ? (
                   <HomeRecentSessions
+                    selectedServerId={launchController.chosen?.serverId}
                     servers={records}
                     hosts={sshRows}
                     reachabilityByServer={padReachabilityByServer}
