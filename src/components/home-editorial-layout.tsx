@@ -96,7 +96,7 @@ function EditorialSection({
         styles.section,
         { marginTop: first ? 0 : spacing.lg, marginBottom: 0 },
         surface && {
-          backgroundColor: theme.colors.surface,
+          backgroundColor: background(theme.colors.surface),
           borderRadius: profile.chrome.surface,
           padding: spacing.md,
         },
