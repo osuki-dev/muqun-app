@@ -40,7 +40,8 @@ import {
  *    written to MMKV, and read back synchronously on the next launch -- before
  *    the first frame, the same way `launch-intro-seen.ts` reads its flag. So
  *    the launch that pays is the first one after a pack is applied, and it
- *    pays on the JavaScript thread while the animation runs on the UI one.
+ *    measures only before the opening begins. A late file read is cancelled
+ *    before decode/readback so Home never pays for an unused outline.
  *
  * All of it degrades to the rectangle rather than to an error: a picture that
  * will not decode, a Skia that will not hand back alpha, a binary older than
@@ -193,20 +194,28 @@ function downsample(alpha: Alpha, width: number, height: number): HeroAlphaGrid 
 /** Decode the picture and fit its outline. Returns null for anything unusable. */
 async function measureHeroEdge(
   uri: string,
-  box: { width: number; height: number }
+  box: { width: number; height: number },
+  cancelled: () => boolean
 ): Promise<InkBloomEdge | null> {
   const data = await Skia.Data.fromURI(uri);
-  const image = Skia.Image.MakeImageFromEncoded(data);
-  if (!image) return null;
-  const width = image.width();
-  const height = image.height();
-  if (!(width > 0) || !(height > 0) || width * height > MAX_PIXELS) return null;
-  const alpha = readAlpha(image, width, height);
-  if (!alpha) return null;
-  // The launch frame draws the picture `contain`-fit in its box, so the part
-  // of the box the drawing actually occupies is the part worth measuring.
-  const drawn = containedImageRect(box, { width, height });
-  return heroAlphaEdge(downsample(alpha, width, height), drawn, box);
+  let image: SkImage | null = null;
+  try {
+    // File IO is async; decode/readback below are synchronous JS work. A
+    // cancelled pre-handoff measurement must not stall the Home that replaced it.
+    if (cancelled()) return null;
+    image = Skia.Image.MakeImageFromEncoded(data);
+    if (!image) return null;
+    const width = image.width();
+    const height = image.height();
+    if (!(width > 0) || !(height > 0) || width * height > MAX_PIXELS) return null;
+    const alpha = readAlpha(image, width, height);
+    if (!alpha) return null;
+    const drawn = containedImageRect(box, { width, height });
+    return heroAlphaEdge(downsample(alpha, width, height), drawn, box);
+  } finally {
+    image?.dispose();
+    data.dispose();
+  }
 }
 
 /**
@@ -249,11 +258,11 @@ export function useLaunchHeroEdge({
       setMeasured((current) => (current && current.max === stored.max ? current : stored));
       return;
     }
+    // The outline is already latched once visible. Measuring after that can
+    // only benefit a later launch, at the expense of this launch's first taps.
+    if (started) return;
     let cancelled = false;
-    // Deliberately not awaited on any render path, and deliberately not
-    // deferred either: it is racing the handover, and the launch it cannot
-    // win the race for is the launch that pays for every one after it.
-    measureHeroEdge(uri, { width, height })
+    measureHeroEdge(uri, { width, height }, () => cancelled)
       .then((edge) => {
         if (cancelled || !edge) return;
         remember(uri, edge, width);
@@ -265,7 +274,7 @@ export function useLaunchHeroEdge({
     return () => {
       cancelled = true;
     };
-  }, [uri, width, height]);
+  }, [uri, width, height, started]);
 
   // The fallback, memoised rather than rebuilt: it is what the chosen edge is
   // most of the time, and the latch below compares edges by identity. Only for

@@ -74,7 +74,6 @@ type EditorialSectionProps = {
     lg: number;
   };
   first?: boolean;
-  plain?: boolean;
 };
 
 function EditorialSection({
@@ -84,7 +83,6 @@ function EditorialSection({
   textColor,
   spacing,
   first = false,
-  plain = false,
 }: EditorialSectionProps) {
   const background = useSurfaceBackground();
   const profile = useAppearanceProfile();
@@ -98,7 +96,7 @@ function EditorialSection({
           color={textColor}
           accessibilityRole="header"
           style={
-            hasScene && !plain
+            hasScene
               ? {
                   alignSelf: 'flex-start',
                   backgroundColor: background(theme.colors.surface),
@@ -281,7 +279,6 @@ export function HomeEditorialLayout({
                 textColor={theme.colors.text}
                 spacing={theme.spacing}
                 title={t`Continue`}
-                plain
                 first={split}>
                 {recent}
               </EditorialSection>
@@ -292,8 +289,7 @@ export function HomeEditorialLayout({
                 borderColor={theme.colors.border}
                 textColor={theme.colors.text}
                 spacing={theme.spacing}
-                title={t`Connections`}
-                plain>
+                title={t`Connections`}>
                 {connections}
               </EditorialSection>
             ) : null}
