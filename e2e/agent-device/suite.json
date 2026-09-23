@@ -4649,6 +4649,19 @@
         "run": "flows/settings.ad#s75"
       },
       {
+        "when": {
+          "target": { "text": "SERVERS" },
+          "absent": true
+        },
+        "steps": [
+          {
+            "target": { "text": "Settings" },
+            "mode": "press",
+            "run": "flows/settings.ad#s75"
+          }
+        ]
+      },
+      {
         "target": {
           "text": "SERVERS"
         },
@@ -8160,6 +8173,19 @@
         },
         "mode": "press",
         "run": "flows/thai-language.ad#press"
+      },
+      {
+        "when": {
+          "target": { "id": "settings-home-layout-row" },
+          "absent": true
+        },
+        "steps": [
+          {
+            "target": { "text": "การตั้งค่า" },
+            "mode": "press",
+            "run": "flows/thai-language.ad#press"
+          }
+        ]
       },
       {
         "target": {
