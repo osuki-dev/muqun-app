@@ -13,6 +13,7 @@ import Animated, {
   Extrapolation,
   interpolate,
   useAnimatedStyle,
+  useReducedMotion,
   type SharedValue,
 } from 'react-native-reanimated';
 
@@ -40,7 +41,7 @@ export type HomeEditorialLayoutProps = {
   identity?: ReactNode;
   /** Cover artwork follows the utility row and precedes work actions. */
   artwork?: ReactNode;
-  /** Scroll position used for artwork fade and parallax depth effects. */
+  /** Scroll position used only for the artwork's pull-down stretch. */
   scrollY?: SharedValue<number>;
   cover?: boolean;
   coverTitle?: string;
@@ -171,6 +172,7 @@ export function HomeEditorialLayout({
   const hasHeaderAction = hasSlot(headerAction);
   const hasHeaderLeading = hasSlot(headerLeading);
   const hasHeaderRow = hasHeaderLeading || hasHeaderAction;
+  const reducedMotion = useReducedMotion();
   const mastheadText = (
     <View style={styles.mastheadText}>
       {hasIdentity ? <View style={styles.identity}>{identity}</View> : null}
@@ -178,13 +180,14 @@ export function HomeEditorialLayout({
   );
 
   const animatedArtworkStyle = useAnimatedStyle(() => {
-    if (!scrollY) return {};
+    if (!scrollY || reducedMotion) return {};
     const y = scrollY.value;
-    const opacity = interpolate(y, [0, 40, 200], [1, 0.9, 0], Extrapolation.CLAMP);
-    const translateY = interpolate(y, [-120, 0, 200], [36, 0, -48], Extrapolation.CLAMP);
-    const scale = interpolate(y, [-120, 0, 200], [1.12, 1, 0.88], Extrapolation.CLAMP);
+    // Its layout space remains visible well past 200pt, especially on tablets.
+    // Let normal scrolling carry the opaque artwork out with that space instead
+    // of fading/shrinking it into a blank hole. Stretch only during pull-down.
+    const translateY = interpolate(y, [-120, 0], [18, 0], Extrapolation.CLAMP);
+    const scale = interpolate(y, [-120, 0], [1.04, 1], Extrapolation.CLAMP);
     return {
-      opacity,
       transform: [{ translateY }, { scale }],
     };
   });
