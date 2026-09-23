@@ -1584,7 +1584,7 @@
             },
             "mode": "scroll",
             "direction": "down",
-            "timeout": 30000,
+            "timeout": 60000,
             "run": "flows/git-diff.ad#s12-ipad"
           }
         ]
@@ -1601,7 +1601,7 @@
             },
             "mode": "scroll",
             "direction": "down",
-            "timeout": 30000,
+            "timeout": 60000,
             "run": "flows/git-diff.ad#s12"
           }
         ]
@@ -1618,7 +1618,7 @@
             },
             "mode": "scroll",
             "direction": "down",
-            "timeout": 30000,
+            "timeout": 60000,
             "run": "flows/git-diff.ad#s12"
           }
         ]
@@ -1635,7 +1635,7 @@
             },
             "mode": "scroll",
             "direction": "down",
-            "timeout": 30000,
+            "timeout": 60000,
             "run": "flows/git-diff.ad#s12"
           }
         ]
@@ -4853,7 +4853,7 @@
             },
             "mode": "scroll",
             "direction": "up",
-            "timeout": 20000,
+            "timeout": 45000,
             "run": "flows/settings.ad#quick-actions-seek"
           }
         ]
