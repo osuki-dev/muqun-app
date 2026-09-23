@@ -40,6 +40,23 @@ wait "label=\"Refresh files\"" 10000
 back --system
 wait stable 400 5000
 
+# section install-ipad
+# XCUITest 0.21.12 can stall while reading the landscape theme preview tree.
+# The preview screenshot is retained, then the known bottom Apply button is
+# tapped at its visible centre on the dedicated 1210x834 landscape QA iPad.
+press "text=\"Open files\""
+wait stable 400 5000
+scroll down --pixels 350
+press "text=\"Open muqun.muqun-theme.json\""
+wait "id=asset-preview-theme" 15000
+press "id=asset-preview-theme"
+press 605 778 --visual
+wait "label=\"Close file\"" 15000
+press "label=\"Close file\""
+wait "label=\"Refresh files\"" 10000
+back --system
+wait stable 400 5000
+
 # section install-back
 # The workspace stack unwinds differently per form factor: a phone pushes the
 # demo workspace over Home and offers the way back, while a pad rail keeps
@@ -87,19 +104,32 @@ is visible "id=theme-import-file"
 is visible "id=theme-browse"
 
 # section browse-offline
-# The offline catalogue fixture is now bundled with the demo. Wait for its
-# first stable card rather than an error state that a working fixture correctly
-# never renders.
+# The demo catalogue can supply this card offline; on an unpaired home the
+# published catalogue supplies the same first entry over the normal transport.
 wait "text=\"Acacia Afterglow\"" 15000
 is visible "text=\"Acacia Afterglow\""
 screenshot dist/theme-browse.png
-# The catalogue is a form sheet now, so there is no "Close theme catalogue" to
-# press: the grabber and the swipe are the close. System back is the same
-# gesture a reader has, and it is what the settings flow already dismisses a
-# form sheet with. What it lands on is the theme picker, which is the sheet
-# this one was opened from.
+
+# section browse-network-offline
+# On phones, Settings is reached after leaving the demo workspace. The
+# catalogue then uses the normal network transport; with Wi-Fi disabled it
+# must explain the failure and offer a retry without downloading a package.
+is visible "text=\"Could not reach the theme catalogue\""
+is visible "text=\"TRY AGAIN\""
+screenshot dist/theme-browse-network-offline.png
+
+# section browse-close-android
 back --system
+
+# section browse-close-iphone
+gesture pan 201 237 0 520 500
+
+# section browse-close-ipad
+gesture pan 605 95 0 600 500
+
+# section browse-closed
 wait stable 400 5000
+is hidden "id=theme-browse-list"
 is visible "id=theme-browse"
 
 # section mine-tab
@@ -163,7 +193,7 @@ is visible "id=theme-home-hero"
 
 # section back-to-library
 # Return from the detail editor before continuing to Settings storage checks.
-back --system
+press "id=custom-theme-back"
 wait "id=theme-row-my-theme" 10000
 
 # section return-settings
@@ -171,13 +201,27 @@ wait "id=theme-row-my-theme" 10000
 # action's controlled two-step contract has focused source coverage; driving
 # both taps through separate native captures can consume its intentional
 # four-second window before the second tap is delivered.
-back --system
+back --in-app
+is hidden "id=theme-tab"
 wait "id=settings-theme-row" 10000
 
 # section settings-scroll-up
 # Storage is near the end of the full Settings document. Use a viewport-sized
-# step while searching upward so the bounded search reaches Appearance.
-scroll up --pixels 800
+# gesture inside the content: a generic scroll starts on the pinned header on
+# iOS and leaves the Settings list at the bottom.
+gesture pan 270 320 0 430 400
+wait stable 300 5000
+
+# section settings-scroll-up-android
+# Android's nested Settings grid responds to a drag through its content;
+# the generic scroll may land on its outer scroll view and leave it at the foot.
+gesture pan 450 1100 0 800 600
+wait stable 300 5000
+
+# section settings-scroll-up-android-tablet
+# The tablet viewport is 2560x1600; keep the full drag inside its content.
+gesture pan 1000 600 0 700 600
+wait stable 300 5000
 
 # section scroll-up
 scroll up --pixels 320
@@ -185,9 +229,19 @@ scroll up --pixels 320
 # section theme-row-clear-header
 # The target search stops as soon as Android reports the Theme row visible,
 # which can leave its centre behind Settings' pinned header. One extra bounded
-# scroll moves the already-found row clear without relying on `scroll top`,
-# whose edge detection is unreliable for this nested settings list.
-scroll up --pixels 320
+# pan moves the already-found row clear without relying on `scroll top`, whose
+# edge detection is unreliable for this nested settings list.
+gesture pan 270 320 0 160 300
+wait stable 400 5000
+is visible "id=settings-theme-row"
+
+# section theme-row-clear-header-android
+gesture pan 450 1100 0 300 400
+wait stable 400 5000
+is visible "id=settings-theme-row"
+
+# section theme-row-clear-header-android-tablet
+gesture pan 1000 600 0 300 400
 wait stable 400 5000
 is visible "id=settings-theme-row"
 

@@ -15,6 +15,8 @@
 wait "role=button text=\"Open quick actions\"" 15000
 # The control that opens the strip lives in the key row, beside the keyboard
 # toggle, because it changes what typing does.
+press "id=terminal-composer-input"
+wait "id=\"assignment-toggle\"" 15000
 is visible "id=\"assignment-toggle\""
 press "id=\"assignment-toggle\""
 wait text "Choose an assistant" 10000

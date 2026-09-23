@@ -1,6 +1,6 @@
 # Native end-to-end tests
 
-Run the offline app suite with agent-device **0.20.10** on a dedicated simulator or
+Run the offline app suite with agent-device **0.21.12** on a dedicated simulator or
 emulator with no paired servers or saved SSH hosts. Install the app, select
 English and the Osuki theme, and start Metro for development builds. Preview and
 release builds include their own JavaScript bundle.

@@ -284,15 +284,14 @@ export function GlassChrome({
         exiting={exiting}
         style={[
           chromeStyle,
-          // Android has no cheap live blur here, so a nearly opaque raised
-          // surface stands in for it. Derive the material from the active pack
-          // rather than from mode-only literals: the Settings header, terminal
-          // dock and connection capsule now inherit Ayu, Dracula, Solarized,
-          // and every other pack while retaining a trace of the live content.
+          // Android has no cheap live blur here. Navigation pills need an
+          // opaque fill: otherwise labels on a scrolled Settings card remain
+          // legible through the title and back controls. Other floating chrome
+          // keeps a trace of the live content behind its themed raised fill.
           {
             backgroundColor: withAlpha(
               theme.colors.surfaceRaised,
-              appChrome.opacity.glassAndroidFill
+              surface === 'navigation' ? 1 : appChrome.opacity.glassAndroidFill
             ),
           },
         ]}>

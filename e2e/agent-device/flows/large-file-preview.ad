@@ -27,7 +27,7 @@ is visible "${TARGET}"
 is hidden "${TARGET}"
 
 # section scroll-body
-scroll down --pixels 160 --duration-ms 300
+scroll down --pixels ${FILE_SCROLL_PIXELS} --duration-ms 350
 wait stable 300 8000
 
 # section shot-document

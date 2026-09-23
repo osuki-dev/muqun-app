@@ -127,6 +127,7 @@ export function NavHeaderSpacer() {
 export function NavHeaderBackButton({
   accessibilityLabel,
   onPress,
+  testID,
 }: {
   /**
    * Named per screen: it is what a screen reader announces and, for Settings,
@@ -134,11 +135,13 @@ export function NavHeaderBackButton({
    */
   accessibilityLabel: string;
   onPress: () => void;
+  testID?: string;
 }) {
   const theme = useThemeTokens();
   return (
     <NavHeaderCircle>
       <PressableScale
+        testID={testID}
         accessibilityRole="button"
         accessibilityLabel={accessibilityLabel}
         onPress={onPress}

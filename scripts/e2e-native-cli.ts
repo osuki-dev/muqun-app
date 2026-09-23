@@ -107,6 +107,8 @@ async function validate(): Promise<void> {
       for (const step of steps) {
         if (step.target !== undefined) validateTarget(step.target);
         if (step.when?.target !== undefined) validateTarget(step.when.target);
+        if (step.when && !step.steps)
+          throw new Error('A conditional step must put its actions in steps');
         if (step.include) {
           if (stack.includes(step.include) || !suite.programs[step.include])
             throw new Error(`Invalid include: ${step.include}`);
@@ -189,8 +191,34 @@ if (!device) {
 }
 platform ??= /^[0-9a-f-]{36}$/i.test(device) ? 'ios' : 'android';
 if (!['ios', 'android'].includes(platform)) throw new Error('Platform must be ios or android');
+if (platform === 'android' && process.env.E2E_AD_METRO_PORT) {
+  const port = Number(process.env.E2E_AD_METRO_PORT);
+  if (!Number.isInteger(port) || port < 1 || port > 65535)
+    throw new Error('E2E_AD_METRO_PORT must be a TCP port');
+  const reverse = spawnSync('adb', ['-s', device, 'reverse', `tcp:${port}`, `tcp:${port}`]);
+  if (reverse.status !== 0)
+    throw new Error(`Cannot connect Android test device ${device} to Metro`);
+}
 // Device-derived branch input cannot be overridden by a user-supplied --env.
 env.PLATFORM = platform;
+env.FILE_SCROLL_PIXELS = platform === 'android' ? '700' : '160';
+if (platform === 'ios') {
+  const result = spawnSync('xcrun', ['simctl', 'list', 'devices', '--json']);
+  if (result.status !== 0) throw new Error('Cannot identify iOS test device');
+  const devices = JSON.parse(result.stdout.toString()).devices as Record<
+    string,
+    { udid: string; name: string }[]
+  >;
+  const selected = Object.values(devices)
+    .flat()
+    .find((entry) => entry.udid === device);
+  if (!selected) throw new Error(`Unknown iOS test device: ${device}`);
+  env.DEVICE_KIND = /ipad/i.test(selected.name) ? 'ipad' : 'iphone';
+} else {
+  const result = spawnSync('adb', ['-s', device, 'emu', 'avd', 'name']);
+  if (result.status !== 0) throw new Error(`Cannot identify Android test device: ${device}`);
+  env.DEVICE_KIND = /tablet/i.test(result.stdout.toString()) ? 'android-tablet' : 'android-phone';
+}
 const androidSerials: string[] = [];
 if (platform === 'android' && which('adb')) {
   const devices = spawnSync('adb', ['devices']);
@@ -203,9 +231,9 @@ if (platform === 'android' && which('adb')) {
 const binary = process.env.AGENT_DEVICE_BIN ?? which('agent-device');
 if (!binary) throw new Error('Set AGENT_DEVICE_BIN to the installed agent-device executable');
 const version = spawnSync(binary, ['--version']);
-if (version.status !== 0 || version.stdout.toString().trim() !== '0.20.10')
+if (version.status !== 0 || version.stdout.toString().trim() !== '0.21.12')
   throw new Error(
-    'This suite requires agent-device 0.20.10; review compatibility before changing the pin'
+    'This suite requires agent-device 0.21.12; review compatibility before changing the pin'
   );
 if (script) {
   const relative = path.relative(base, path.resolve(root, script));

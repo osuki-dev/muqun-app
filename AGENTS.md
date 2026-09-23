@@ -156,7 +156,7 @@ Finishing a feature means the whole app still works, not just the screen that wa
   The directory is build output and is not committed.
 - A flow that covers a new surface belongs in `e2e/agent-device/` as native `.ad` actions, registered
   with the `full` tag in `suite.json` in the same change as the feature. A flow without that tag is
-  not enforced by the gate. Use agent-device 0.20.10 and the native runner; do not introduce another
+  not enforced by the gate. Use agent-device 0.21.12 and the native runner; do not introduce another
   test-driver format. `bash scripts/e2e.sh --check` validates native syntax and manifest references
   without driving a device. The runner's own tests run before the device suite.
 - The suite relaunches the app without erasing user data. Never run it on a simulator with real

@@ -103,7 +103,7 @@ is visible "${TARGET}"
 is visible "${TARGET}"
 
 # section s26
-scroll down --pixels 160 --duration-ms 300
+scroll down --pixels 400 --duration-ms 350
 wait stable 300 5000
 
 # section s27
@@ -179,6 +179,16 @@ wait stable 400 5000
 
 # section s50
 scroll down --pixels 160 --duration-ms 300
+wait stable 300 5000
+
+# section s50-android-tablet
+# The landscape grid is nested inside the page; drag its centre to reach the
+# terminal density control without scrolling the outer container.
+gesture pan 900 800 0 -300 400
+wait stable 300 5000
+
+# section s50-android-phone
+gesture pan 450 1100 0 -400 400
 wait stable 300 5000
 
 # section s51
@@ -423,6 +433,14 @@ wait stable 400 5000
 # y=22..188 -- the y=32..198 the Android nudge was calibrated on.
 scroll up --pixels 160 --duration-ms 300
 wait stable 300 5000
+wait stable 400 5000
+
+# section quick-actions-seek-android-phone
+gesture pan 450 1050 0 600 500
+wait stable 400 5000
+
+# section quick-actions-seek-android-tablet
+gesture pan 900 700 0 300 400
 wait stable 400 5000
 
 # section s89

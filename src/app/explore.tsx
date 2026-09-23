@@ -865,6 +865,7 @@ export default function PairModal() {
                 <PressableScale
                   accessibilityRole="button"
                   accessibilityLabel={manualOpen ? t`Scan a gateway QR` : t`Enter URL manually`}
+                  testID="pairing-manual-toggle"
                   onPress={() => {
                     setSshOpen(false);
                     setManualOpen((value) => !value);

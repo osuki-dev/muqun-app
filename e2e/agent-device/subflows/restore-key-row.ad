@@ -5,7 +5,7 @@ press "${TARGET}"
 press "${TARGET}"
 
 # section scroll
-scroll down --pixels 160 --duration-ms 300
+scroll down --pixels 260 --duration-ms 300
 wait stable 300 5000
 
 # section toggle

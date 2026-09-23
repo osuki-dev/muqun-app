@@ -49,8 +49,8 @@ wait "label=\"Open on-screen keyboard\"" 10000
 
 # The editor uses the same first row, with its contextual macros at the front.
 press "label=\"Switch to nvim\""
-wait "label=\"Show the editor keyboard\"" 10000
-press "label=\"Show the editor keyboard\""
+wait "role=button label=\"Show the editor keyboard\"" 10000
+press "role=button label=\"Show the editor keyboard\""
 wait "label=\"Hide keyboard\"" 10000
 # Let the outgoing dock controls finish their exit animation before checking absence.
 wait stable 400 5000

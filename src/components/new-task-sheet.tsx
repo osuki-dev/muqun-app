@@ -21,8 +21,12 @@ import {
 import { Trans, useLingui } from '@lingui/react/macro';
 import { Bot, Check, FolderOpen, Paperclip } from 'lucide-react-native';
 import { useEffect, useRef, useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
-import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
+import { Keyboard, Platform, ScrollView, StyleSheet, View, type TextInput } from 'react-native';
+import {
+  KeyboardAwareScrollView,
+  KeyboardController,
+  type KeyboardAwareScrollViewRef,
+} from 'react-native-keyboard-controller';
 import Animated from 'react-native-reanimated';
 
 import { PressableScale } from '@/components/pressable-scale';
@@ -124,14 +128,27 @@ export function NewTaskSheet({
   const [agent, setAgent] = useState('');
   const [cwd, setCwd] = useState(initialCwd ?? '');
   const [prompt, setPrompt] = useState('');
+  const [promptFocused, setPromptFocused] = useState(false);
   const [starting, setStarting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const record = useGatewayConnectionStore((state) => state.record);
   const uploads = useAttachmentUploads(record);
   const [attachmentMenuOpen, setAttachmentMenuOpen] = useState(false);
+  const [menuKeyboardPadding, setMenuKeyboardPadding] = useState(0);
   const [previewId, setPreviewId] = useState<string | null>(null);
+  const promptInput = useRef<TextInput>(null);
+  const sheetScroll = useRef<KeyboardAwareScrollViewRef>(null);
   const sending = useRef(false);
   const mounted = useRef(true);
+  useEffect(() => {
+    const hidden = Keyboard.addListener('keyboardDidHide', () => setMenuKeyboardPadding(0));
+    return () => hidden.remove();
+  }, []);
+  useEffect(() => {
+    if (!attachmentMenuOpen) return;
+    const frame = requestAnimationFrame(() => sheetScroll.current?.scrollToEnd({ animated: true }));
+    return () => cancelAnimationFrame(frame);
+  }, [attachmentMenuOpen]);
   useEffect(() => {
     mounted.current = true;
     return () => {
@@ -231,6 +248,7 @@ export function NewTaskSheet({
   return (
     <>
       <KeyboardAwareScrollView
+        ref={sheetScroll}
         // Keep the focused line visible above the system keyboard.
         bottomOffset={KEYBOARD_BOTTOM_OFFSET}
         keyboardDismissMode="on-drag"
@@ -238,7 +256,7 @@ export function NewTaskSheet({
         // Transparent: the ground below paints this sheet's floor, its surface
         // tint and the shell's wallpaper, in that order.
         style={[styles.sheet, styles.transparent]}
-        contentContainerStyle={styles.canvas}>
+        contentContainerStyle={[styles.canvas, { paddingBottom: menuKeyboardPadding }]}>
         {/* The ground and the padded column are the scroller's two children,
             which is the shape a content-sized sheet uses -- the content container
             carries no padding of its own, so the ground's `absoluteFill` covers
@@ -347,13 +365,27 @@ export function NewTaskSheet({
                   />
                 </View>
                 <TerminalComposer
+                  inputRef={promptInput}
                   leading={
                     <PressableScale
                       testID="new-task-attach"
                       accessibilityRole="button"
                       accessibilityLabel={t`Add attachment`}
                       disabled={starting || !record}
-                      onPress={() => setAttachmentMenuOpen((open) => !open)}
+                      onPress={() => {
+                        // The source menu needs the space the software keyboard
+                        // occupies; otherwise its lower choices sit behind keys.
+                        setMenuKeyboardPadding(
+                          Platform.OS === 'ios' && promptFocused
+                            ? Math.max(Keyboard.metrics()?.height ?? 0, Platform.isPad ? 440 : 340)
+                            : 0
+                        );
+                        promptInput.current?.blur();
+                        Keyboard.dismiss();
+                        void KeyboardController.dismiss({ animated: false }).then(() => {
+                          if (mounted.current) setAttachmentMenuOpen((open) => !open);
+                        });
+                      }}
                       style={composerStyles.button}>
                       <Paperclip size={18} color={theme.colors.text} />
                     </PressableScale>
@@ -362,6 +394,8 @@ export function NewTaskSheet({
                     testID: 'new-task-prompt',
                     value: prompt,
                     onChangeText: setPrompt,
+                    onFocus: () => setPromptFocused(true),
+                    onBlur: () => setPromptFocused(false),
                     editable: !starting,
                     placeholder: t`Review the failing test and fix it.`,
                     style: { fontFamily: interfaceFontFamily },

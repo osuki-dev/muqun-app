@@ -122,7 +122,7 @@ wait stable 400 5000
 screenshot "shots/05-privacy.png"
 
 # section s38
-scroll down --pixels 160 --duration-ms 300
+scroll down --pixels 260 --duration-ms 300
 wait stable 300 5000
 
 # section s39
@@ -136,6 +136,11 @@ press "${TARGET}"
 
 # section s42
 press "${TARGET}"
+
+# section settle-home
+# Android can still be transitioning out of Settings when the conditional
+# checks whether the unpaired home offers Try the demo again.
+wait stable 400 5000
 
 # section s43
 is visible "${TARGET}"

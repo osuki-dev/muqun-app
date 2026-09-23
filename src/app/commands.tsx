@@ -729,6 +729,7 @@ export default function QuickCommandsScreen() {
 
         <KeyboardAwareScrollView
           nestedScrollEnabled
+          keyboardDismissMode="on-drag"
           style={styles.scrollViewport}
           bottomOffset={24}
           keyboardShouldPersistTaps="handled"
@@ -1331,14 +1332,10 @@ function ActionRow({
   );
 
   if (!onPress) {
-    // Still labelled: in edit mode the row is not pressable, but the delete
-    // button beside it is named after it and a screen reader needs the row it
-    // is named after to exist.
-    return (
-      <View accessible accessibilityLabel={accessibilityLabel}>
-        {body}
-      </View>
-    );
+    // Let the name and trailing delete control remain separate accessibility
+    // elements. Making this wrapper accessible hides the delete control on iPad
+    // when a newly saved custom command is rendered inside it.
+    return <View>{body}</View>;
   }
   return (
     <PressableScale
