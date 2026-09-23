@@ -1,3 +1,4 @@
+import { HOME_TOOLBAR_PAIR_WIDTH, HOME_TOOLBAR_ICON_INSET } from '@/constants/home-toolbar';
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens } from '@osuki-dev/ui';
@@ -151,8 +152,8 @@ export function HomeLaunchTarget({
       }}
       style={[
         styles.target,
-        (bare || !hasMultiple) && { minWidth: 0 },
-        bare && { paddingHorizontal: 12 },
+        bare && { minWidth: 0 },
+        bare && { paddingHorizontal: HOME_TOOLBAR_ICON_INSET },
         {
           borderRadius: profile.chrome.control,
           backgroundColor: bare ? 'transparent' : background(theme.colors.surface),
@@ -448,7 +449,7 @@ function LaunchTile({
 const styles = StyleSheet.create({
   root: { gap: 12, minWidth: 0 },
   target: {
-    minWidth: 124,
+    minWidth: HOME_TOOLBAR_PAIR_WIDTH,
     minHeight: 44,
     paddingVertical: 10,
     alignSelf: 'flex-start',

@@ -1,3 +1,8 @@
+import {
+  HOME_TOOLBAR_BUTTON_SIZE,
+  HOME_TOOLBAR_ICON_SIZE,
+  HOME_TOOLBAR_GAP,
+} from '@/constants/home-toolbar';
 import { useAppActive } from '@/hooks/use-app-active';
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';
 import { useThemeMode, useThemeTokens } from '@osuki-dev/ui';
@@ -748,7 +753,7 @@ export function HomeOverview({
                 ) : undefined
               }
               headerAction={
-                <View style={{ flexDirection: 'row', gap: 8 }}>
+                <View style={{ flexDirection: 'row', gap: HOME_TOOLBAR_GAP }}>
                   <HeaderButton
                     editorial
                     bare={customTheme?.manifest.homePresentation?.toolbarBackground === false}
@@ -757,7 +762,7 @@ export function HomeOverview({
                     <ThemeIcon
                       name="chrome.scan"
                       fallback={ScanLine}
-                      size={20}
+                      size={HOME_TOOLBAR_ICON_SIZE}
                       color={theme.colors.text}
                       strokeWidth={1.8}
                     />
@@ -770,7 +775,7 @@ export function HomeOverview({
                     <ThemeIcon
                       name="chrome.settings"
                       fallback={Settings}
-                      size={20}
+                      size={HOME_TOOLBAR_ICON_SIZE}
                       color={theme.colors.text}
                       strokeWidth={1.8}
                     />
@@ -1271,8 +1276,8 @@ function HeaderButton({
         { backgroundColor: background(theme.colors.surface), overflow: 'hidden' },
         editorial && {
           backgroundColor: bare ? 'transparent' : background(theme.colors.surface),
-          width: 44,
-          height: 44,
+          width: HOME_TOOLBAR_BUTTON_SIZE,
+          height: HOME_TOOLBAR_BUTTON_SIZE,
           borderRadius: profile.chrome.control,
         },
       ]}>
