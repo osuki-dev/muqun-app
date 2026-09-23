@@ -640,150 +640,146 @@ export function HomeOverview({
               progressViewOffset={insets.top}
             />
           }>
-            {returnToTask ? <View style={styles.embeddedReturnRow}>{returnToTask}</View> : null}
-            {hydrationError ? (
-              <GatewayStorageError busy={loading} onRetry={retryHydration} />
-            ) : null}
-            <View>
-              <HomeEditorialLayout
-                contentWidth={editorialWidth || width}
-                scrollY={scrollY}
-                cover={customTheme?.manifest.homePresentation?.header === 'cover'}
-                coverTitle={identity.name ?? undefined}
-                artwork={
-                  hasEditorialArtwork && editorialArtworkResolution ? (
-                    <HomeEditorialArtwork
-                      cover={customTheme?.manifest.homePresentation?.header === 'cover'}
-                      resolution={editorialArtworkResolution}
-                      onAvailabilityChange={(available) => {
-                        if (!available)
-                          setFailedEditorialArtworkSource(editorialArtworkResolution.source);
-                      }}
-                    />
-                  ) : null
-                }
-                identity={
-                  identity.showBrand ? (
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                      {identity.logo ? (
-                        <Image
-                          source={logoSource}
-                          contentFit="contain"
-                          style={{ width: 44, height: 44 }}
-                          onError={() => setFailedLogo(customLogo ?? null)}
-                        />
-                      ) : null}
-                      {identity.name ? (
-                        <Text
-                          variant="heading"
-                          numberOfLines={1}
-                          ellipsizeMode="tail"
-                          style={{ flexShrink: 1, minWidth: 0, fontSize: 28, lineHeight: 36 }}>
-                          {identity.name}
-                        </Text>
-                      ) : null}
-                    </View>
-                  ) : undefined
-                }
-                headerLeading={
-                  <HomeLaunchTarget
-                    bare={customTheme?.manifest.homePresentation?.toolbarBackground === false}
-                    controller={launchController}
-                    loading={loading}
-                    onPair={commands.pairGateway}
+          {returnToTask ? <View style={styles.embeddedReturnRow}>{returnToTask}</View> : null}
+          {hydrationError ? <GatewayStorageError busy={loading} onRetry={retryHydration} /> : null}
+          <View>
+            <HomeEditorialLayout
+              contentWidth={editorialWidth || width}
+              scrollY={scrollY}
+              cover={customTheme?.manifest.homePresentation?.header === 'cover'}
+              coverTitle={identity.name ?? undefined}
+              artwork={
+                hasEditorialArtwork && editorialArtworkResolution ? (
+                  <HomeEditorialArtwork
+                    cover={customTheme?.manifest.homePresentation?.header === 'cover'}
+                    resolution={editorialArtworkResolution}
+                    onAvailabilityChange={(available) => {
+                      if (!available)
+                        setFailedEditorialArtworkSource(editorialArtworkResolution.source);
+                    }}
                   />
-                }
-                launches={
-                  hydrationError || loading ? undefined : (
-                    <HomeLaunchActions
-                      controller={launchController}
-                      onNewOpenCode={commands.newOpenCode}
-                      onOpenOpenCode={commands.openOpenCode}
-                      onNewTerminal={commands.newTerminal}
-                      onOpenTerminal={commands.openServer}
-                      onSsh={commands.openSsh}
-                      onDemo={
-                        !loading && !hydrationError && !hasPairedServer ? openDemo : undefined
-                      }
-                    />
-                  )
-                }
-                recent={
-                  !loading && !hydrationError ? (
-                    <HomeRecentSessions
-                      servers={records}
-                      hosts={sshRows}
-                      reachabilityByServer={padReachabilityByServer}
-                      activeConnection={activeConnection}
-                      onOpenPane={(serverId, paneId) => {
-                        void commands.openServer(serverId, paneId);
-                      }}
-                      onOpen={(target) => {
-                        void commands.resumeTarget(target);
-                      }}
-                    />
-                  ) : undefined
-                }
-                attention={
-                  !loading && !hydrationError ? (
-                    <HomeAttention
-                      servers={records}
-                      onOpen={(target) => {
-                        void commands.resumeTarget(target);
-                      }}
-                    />
-                  ) : undefined
-                }
-                connections={
-                  !loading && !hydrationError && !sshLoading ? (
-                    <HomeConnections
-                      servers={records}
-                      hosts={sshRows}
-                      onOpenServer={openServer}
-                      onOpenHost={(hostId) => {
-                        void commands.openSsh(hostId);
-                      }}
-                      onManage={() => {
-                        void commands.manageConnections();
-                      }}
-                      activeConnection={activeConnection}
-                      nowMs={nowMs}
-                    />
-                  ) : undefined
-                }
-                headerAction={
-                  <View style={{ flexDirection: 'row', gap: 8 }}>
-                    <HeaderButton
-                      editorial
-                      bare={customTheme?.manifest.homePresentation?.toolbarBackground === false}
-                      label={t`Scan a gateway QR`}
-                      onPress={() => void commands.pairGateway()}>
-                      <ThemeIcon
-                        name="chrome.scan"
-                        fallback={ScanLine}
-                        size={20}
-                        color={theme.colors.text}
-                        strokeWidth={1.8}
+                ) : null
+              }
+              identity={
+                identity.showBrand ? (
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                    {identity.logo ? (
+                      <Image
+                        source={logoSource}
+                        contentFit="contain"
+                        style={{ width: 44, height: 44 }}
+                        onError={() => setFailedLogo(customLogo ?? null)}
                       />
-                    </HeaderButton>
-                    <HeaderButton
-                      editorial
-                      bare={customTheme?.manifest.homePresentation?.toolbarBackground === false}
-                      label={t`Settings`}
-                      onPress={() => void commands.manageConnections()}>
-                      <ThemeIcon
-                        name="chrome.settings"
-                        fallback={Settings}
-                        size={20}
-                        color={theme.colors.text}
-                        strokeWidth={1.8}
-                      />
-                    </HeaderButton>
+                    ) : null}
+                    {identity.name ? (
+                      <Text
+                        variant="heading"
+                        numberOfLines={1}
+                        ellipsizeMode="tail"
+                        style={{ flexShrink: 1, minWidth: 0, fontSize: 28, lineHeight: 36 }}>
+                        {identity.name}
+                      </Text>
+                    ) : null}
                   </View>
-                }
-              />
-            </View>
-          </KeyboardAwareScrollView>
+                ) : undefined
+              }
+              headerLeading={
+                <HomeLaunchTarget
+                  bare={customTheme?.manifest.homePresentation?.toolbarBackground === false}
+                  controller={launchController}
+                  loading={loading}
+                  onPair={commands.pairGateway}
+                />
+              }
+              launches={
+                hydrationError || loading ? undefined : (
+                  <HomeLaunchActions
+                    controller={launchController}
+                    onNewOpenCode={commands.newOpenCode}
+                    onOpenOpenCode={commands.openOpenCode}
+                    onNewTerminal={commands.newTerminal}
+                    onOpenTerminal={commands.openServer}
+                    onSsh={commands.openSsh}
+                    onDemo={!loading && !hydrationError && !hasPairedServer ? openDemo : undefined}
+                  />
+                )
+              }
+              recent={
+                !loading && !hydrationError ? (
+                  <HomeRecentSessions
+                    servers={records}
+                    hosts={sshRows}
+                    reachabilityByServer={padReachabilityByServer}
+                    activeConnection={activeConnection}
+                    onOpenPane={(serverId, paneId) => {
+                      void commands.openServer(serverId, paneId);
+                    }}
+                    onOpen={(target) => {
+                      void commands.resumeTarget(target);
+                    }}
+                  />
+                ) : undefined
+              }
+              attention={
+                !loading && !hydrationError ? (
+                  <HomeAttention
+                    servers={records}
+                    onOpen={(target) => {
+                      void commands.resumeTarget(target);
+                    }}
+                  />
+                ) : undefined
+              }
+              connections={
+                !loading && !hydrationError && !sshLoading ? (
+                  <HomeConnections
+                    servers={records}
+                    hosts={sshRows}
+                    onOpenServer={openServer}
+                    onOpenHost={(hostId) => {
+                      void commands.openSsh(hostId);
+                    }}
+                    onManage={() => {
+                      void commands.manageConnections();
+                    }}
+                    activeConnection={activeConnection}
+                    nowMs={nowMs}
+                  />
+                ) : undefined
+              }
+              headerAction={
+                <View style={{ flexDirection: 'row', gap: 8 }}>
+                  <HeaderButton
+                    editorial
+                    bare={customTheme?.manifest.homePresentation?.toolbarBackground === false}
+                    label={t`Scan a gateway QR`}
+                    onPress={() => void commands.pairGateway()}>
+                    <ThemeIcon
+                      name="chrome.scan"
+                      fallback={ScanLine}
+                      size={20}
+                      color={theme.colors.text}
+                      strokeWidth={1.8}
+                    />
+                  </HeaderButton>
+                  <HeaderButton
+                    editorial
+                    bare={customTheme?.manifest.homePresentation?.toolbarBackground === false}
+                    label={t`Settings`}
+                    onPress={() => void commands.manageConnections()}>
+                    <ThemeIcon
+                      name="chrome.settings"
+                      fallback={Settings}
+                      size={20}
+                      color={theme.colors.text}
+                      strokeWidth={1.8}
+                    />
+                  </HeaderButton>
+                </View>
+              }
+            />
+          </View>
+        </KeyboardAwareScrollView>
       </View>
     );
     return editorialContent;

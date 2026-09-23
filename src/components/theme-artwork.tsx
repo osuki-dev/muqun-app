@@ -113,17 +113,18 @@ export function ThemeArtworkLayer({
           onError={() => setFailed(uri)}
         />
       )}
-      {(slot === 'shell.wallpaper' || slot === 'home.wallpaper') && (() => {
-        const effects = manifest.variants[mode]?.effects ?? manifest.effects;
-        return effects?.ambient && effects.ambient !== 'none' ? (
-          <SkiaAmbientEffect
-            effect={effects.ambient}
-            intensity={effects.intensity}
-            speed={effects.speed}
-            mode={mode}
-          />
-        ) : null;
-      })()}
+      {(slot === 'shell.wallpaper' || slot === 'home.wallpaper') &&
+        (() => {
+          const effects = manifest.variants[mode]?.effects ?? manifest.effects;
+          return effects?.ambient && effects.ambient !== 'none' ? (
+            <SkiaAmbientEffect
+              effect={effects.ambient}
+              intensity={effects.intensity}
+              speed={effects.speed}
+              mode={mode}
+            />
+          ) : null;
+        })()}
     </View>
   );
 }

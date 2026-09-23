@@ -429,7 +429,8 @@ export function ThemeBrowseSheet({
   );
 
   function appendPage() {
-    if (!filteredEntries || shown >= total || pending !== null || failed || appendInFlight.current) return;
+    if (!filteredEntries || shown >= total || pending !== null || failed || appendInFlight.current)
+      return;
     appendInFlight.current = true;
     setAppending(true);
     setPageStart(shown);
@@ -448,10 +449,7 @@ export function ThemeBrowseSheet({
         total={total}
         disabled={pending !== null}>
         {demo ? (
-          <Text
-            variant="caption"
-            color={theme.colors.textMuted}
-            style={styles.footerDemo}>
+          <Text variant="caption" color={theme.colors.textMuted} style={styles.footerDemo}>
             {t`Demo catalogue. Leave the demo to download themes.`}
           </Text>
         ) : null}
@@ -612,7 +610,9 @@ export function ThemeBrowseSheet({
               dimmed={pending !== null && pending !== item.id}
               disabled={demo || pending !== null}
               revealed={revealed}
-              delay={Math.min(Math.max(index - pageStart, 0), THEME_BROWSE_STAGGER_CAP) * STAGGER.row}
+              delay={
+                Math.min(Math.max(index - pageStart, 0), THEME_BROWSE_STAGGER_CAP) * STAGGER.row
+              }
               onPress={() => handlePress(item)}
               onCoverError={() =>
                 setBrokenCovers((value) => (value.includes(item.id) ? value : [...value, item.id]))
@@ -730,7 +730,10 @@ function ThemeBrowseRow({
   // what it is, and its tags. Two separate lines would put a third capped run in a row whose
   // whole job is to let a reader compare names.
   const tagsSummary = entry.tags?.length
-    ? entry.tags.slice(0, 3).map((t) => `#${t}`).join(' ')
+    ? entry.tags
+        .slice(0, 3)
+        .map((t) => `#${t}`)
+        .join(' ')
     : '';
   const caption = [entry.author, entry.description, tagsSummary].filter(Boolean).join(' · ');
 

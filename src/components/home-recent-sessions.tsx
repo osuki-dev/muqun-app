@@ -318,7 +318,12 @@ function RecentSessionRow({
             </View>
           ) : null}
         </View>
-        <ThemeIcon name="home.arrow" fallback={ChevronRight} size={16} color={theme.colors.primary} />
+        <ThemeIcon
+          name="home.arrow"
+          fallback={ChevronRight}
+          size={16}
+          color={theme.colors.primary}
+        />
       </View>
     </PressableScale>
   );

@@ -56,11 +56,7 @@ export function SkiaAmbientEffect({
       return;
     }
     const duration = Math.max(1000, 6000 / Math.max(0.2, speed));
-    progress.value = withRepeat(
-      withTiming(1, { duration, easing: Easing.linear }),
-      -1,
-      false
-    );
+    progress.value = withRepeat(withTiming(1, { duration, easing: Easing.linear }), -1, false);
     return () => {
       cancelAnimation(progress);
     };
@@ -244,15 +240,7 @@ function ScanlinesCanvas({
     <Canvas style={StyleSheet.absoluteFill}>
       {Array.from({ length: Math.min(count, 120) }, (_, i) => {
         const y = i * (height / Math.min(count, 120));
-        return (
-          <Line
-            key={i}
-            p1={vec(0, y)}
-            p2={vec(width, y)}
-            color={color}
-            strokeWidth={1}
-          />
-        );
+        return <Line key={i} p1={vec(0, y)} p2={vec(width, y)} color={color} strokeWidth={1} />;
       })}
     </Canvas>
   );
