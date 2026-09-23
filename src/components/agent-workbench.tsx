@@ -486,6 +486,14 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   const [catalogDefaults, setCatalogDefaults] = useState<CatalogDefaults>(NO_CATALOG_DEFAULTS);
   const [activeAsid, setActiveAsid] = useState<string | undefined>(initialAsid);
   const newSessionCreationRef = useRef(false);
+  const promptDispatchRef = useRef(false);
+  const [creatingSession, setCreatingSession] = useState(false);
+  // A create response already proves this session exists. Its first snapshot
+  // can still precede the first prompt's mirror events.
+  const freshSessionRef = useRef<string | undefined>(undefined);
+  useEffect(() => {
+    if (freshSessionRef.current !== activeAsid) freshSessionRef.current = undefined;
+  }, [activeAsid]);
   const [sessionInfo, setSessionInfo] = useState<AgentSessionInfo | null>(null);
   const [transcriptStore] = useState(createAgentTranscriptStore);
   const setTimeline = transcriptStore.getState().setTimeline;
@@ -1028,7 +1036,11 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         setIsOffline(false);
         if (list) {
           if (!directory) hostListCompleteRef.current = list.length < SESSION_LIST_LIMIT;
-          setSessions(list);
+          const fresh = freshSessionRef.current;
+          setSessions((previous) => {
+            const local = previous.find((item) => item.asid === fresh);
+            return local && !list.some((item) => item.asid === fresh) ? [local, ...list] : list;
+          });
           setChildrenByParent((previous) =>
             list.reduce(
               (known, info) => (info.parent_id ? applyChildInfo(known, info) : known),
@@ -1344,14 +1356,26 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         activeAsidRef.current === asid &&
         useGatewayConnectionStore.getState().record?.serverId === serverId;
       if (!ownsSnapshot()) return;
-      if (mode === 'enter') setLoading(true);
+      if (mode === 'enter' && freshSessionRef.current !== asid) setLoading(true);
       const snapshotTicket = useHomeAttention.getState().reserve();
       try {
         const snap = await getAgentSessionSnapshot(sessionId, asid);
         if (!ownsSnapshot()) return;
+        const fresh = freshSessionRef.current === asid;
+        const timeline = fresh
+          ? upsertTimelineItems(transcriptStore.getState().timeline, snap.timeline)
+          : snap.timeline;
+        const pendingFirstPrompt = fresh && timeline.some((item) => item.id.startsWith('temp_'));
+        if (fresh && !pendingFirstPrompt && !promptDispatchRef.current) {
+          freshSessionRef.current = undefined;
+        }
         const info = snap.info;
         if (info) {
-          setSessionInfo(info);
+          setSessionInfo((previous) =>
+            pendingFirstPrompt && previous?.status === 'busy' && info.status === 'idle'
+              ? { ...info, status: 'busy' }
+              : info
+          );
           if (info.parent_id) setChildrenByParent((previous) => applyChildInfo(previous, info));
           void removeChildSessionRecents(useHomeRecentsStore.getState, serverId, [info]);
           syncHomeRecentTitle(info.asid, info.title, info.directory);
@@ -1401,9 +1425,9 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         if (mode === 'enter') {
           // Publish the new dataset and its window together; otherwise the list
           // briefly sees the previous session's offset against the new rows.
-          const nextWindow = Math.max(0, snap.timeline.length - HISTORY_PAGE_SIZE);
+          const nextWindow = Math.max(0, timeline.length - HISTORY_PAGE_SIZE);
           windowStartRef.current = nextWindow;
-          setTimeline(snap.timeline, nextWindow);
+          setTimeline(timeline, nextWindow);
           setWindowStart(nextWindow);
           follow.reset();
         } else {
@@ -1413,11 +1437,11 @@ export const AgentWorkbench = memo(function AgentWorkbench({
           const nextWindow = windowStartForSnapshot(
             transcriptStore.getState().timeline,
             windowStartRef.current,
-            snap.timeline,
+            timeline,
             HISTORY_PAGE_SIZE
           );
           windowStartRef.current = nextWindow;
-          setTimeline(snap.timeline, nextWindow);
+          setTimeline(timeline, nextWindow);
           setWindowStart(nextWindow);
         }
 
@@ -1491,6 +1515,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         if (!ownsSnapshot()) return;
         console.warn('Failed to load snapshot:', err);
         if (
+          freshSessionRef.current !== asid &&
           err instanceof Error &&
           (err.message.includes('404') || err.message.includes('session_not_found'))
         ) {
@@ -2224,13 +2249,13 @@ export const AgentWorkbench = memo(function AgentWorkbench({
    * looking exactly like a message that had been delivered. The reader waited
    * for a reply to something the engine had never been told about.
    */
-  const handleSendPrompt = async (
+  const dispatchPrompt = async (
     text: string,
     attachments?: string[],
     delivery?: 'steer' | 'queue'
   ): Promise<boolean> => {
-    const sourceAsid = activeAsid;
-    const directory = activeDirectoryRef.current ?? sessionInfo?.directory;
+    const sourceAsid = activeAsidRef.current;
+    let directory = activeDirectoryRef.current ?? sessionInfo?.directory;
     let requestOwner = captureWorkbenchOwner(sourceAsid, directory);
     const ownsRoute = () =>
       mountedRef.current &&
@@ -2245,9 +2270,11 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     if (!currentAsid) {
       if (newSessionCreationRef.current) return false;
       newSessionCreationRef.current = true;
+      setCreatingSession(true);
       const params = newSessionParams(directory);
       if (!ownsSource()) {
         newSessionCreationRef.current = false;
+        setCreatingSession(false);
         return false;
       }
       try {
@@ -2259,11 +2286,20 @@ export const AgentWorkbench = memo(function AgentWorkbench({
           created.asid
         );
         if (!advancedOwner) return false;
+        directory = created.directory ?? directory;
+        activeDirectoryRef.current = directory;
+        setActiveDirectory(directory);
+        freshSessionRef.current = created.asid;
+        setSessions((previous) => [
+          created,
+          ...previous.filter((item) => item.asid !== created.asid),
+        ]);
+        setLoading(false);
         currentAsid = created.asid;
         activeAsidRef.current = created.asid;
         setActiveAsid(created.asid);
         setSessionInfo(created);
-        requestOwner = advancedOwner;
+        requestOwner = { ...advancedOwner, directory };
       } catch (err) {
         console.warn('Failed to create session on prompt send:', err);
         if (ownsSource())
@@ -2275,6 +2311,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         return false;
       } finally {
         newSessionCreationRef.current = false;
+        setCreatingSession(false);
       }
     }
     if (!currentAsid || !ownsRoute() || activeAsidRef.current !== currentAsid) return false;
@@ -2318,9 +2355,9 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     // arrives as `agent.session.updated`; a client-side guess made from the
     // first thirty characters was only ever replaced a few seconds later, and
     // it is what put a truncated prompt in the strip instead of a real title.
-    if (sessionInfo) {
-      setSessionInfo({ ...sessionInfo, status: 'busy' });
-    }
+    setSessionInfo((previous) =>
+      previous?.asid === currentAsid ? { ...previous, status: 'busy' } : previous
+    );
 
     try {
       // Selection can change between the optimistic row and the network call.
@@ -2347,6 +2384,17 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         message: formatAgentErrorMessage(err, t`OpenCode service is offline`),
       });
       return false;
+    }
+  };
+
+  const handleSendPrompt = async (...args: Parameters<typeof dispatchPrompt>): Promise<boolean> => {
+    // React state does not synchronously lock two taps in the same frame.
+    if (promptDispatchRef.current || newSessionCreationRef.current) return false;
+    promptDispatchRef.current = true;
+    try {
+      return await dispatchPrompt(...args);
+    } finally {
+      promptDispatchRef.current = false;
     }
   };
 
@@ -2491,7 +2539,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   );
 
   const handleCreateNewSession = useCallback(async () => {
-    if (newSessionCreationRef.current) return;
+    if (newSessionCreationRef.current || promptDispatchRef.current) return;
     if (isOffline) {
       showToast({
         variant: 'danger',
@@ -2501,6 +2549,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       return;
     }
     newSessionCreationRef.current = true;
+    setCreatingSession(true);
     const directory = activeDirectoryRef.current ?? sessionInfo?.directory;
     const sourceAsid = activeAsidRef.current;
     const capturedOwner = captureWorkbenchOwner(sourceAsid, directory);
@@ -2508,11 +2557,18 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     const ownsCreate = () => ownsWorkbench(capturedOwner) && activeAsidRef.current === sourceAsid;
     if (!ownsCreate()) {
       newSessionCreationRef.current = false;
+      setCreatingSession(false);
       return;
     }
     try {
       const created = await createAgentSession(sessionId, params);
       if (!ownsCreate()) return;
+      freshSessionRef.current = created.asid;
+      setSessions((previous) => [
+        created,
+        ...previous.filter((item) => item.asid !== created.asid),
+      ]);
+      setLoading(false);
       activeAsidRef.current = created.asid;
       setActiveAsid(created.asid);
       setSessionInfo(created);
@@ -2536,6 +2592,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       }
     } finally {
       newSessionCreationRef.current = false;
+      setCreatingSession(false);
     }
   }, [
     setTimeline,
@@ -3919,7 +3976,14 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     <View style={styles.root}>
       {/* Main Content Stream, standing clear of whatever notice is up. */}
       <Animated.View style={[styles.transcriptArea, transcriptAreaStyle]}>
-        {loading ? (
+        {creatingSession ? (
+          <View style={[styles.emptyScrollWrapper, { paddingTop: topInset }]}>
+            <ActivityIndicator color={theme.colors.primary} />
+            <Text style={styles.emptySubtitle} color={theme.colors.textMuted}>
+              <Trans>Creating session…</Trans>
+            </Text>
+          </View>
+        ) : loading ? (
           /*
             The shape of what is coming, which is what every other surface in
             this app answers a wait with. This branch is also the whole of the
