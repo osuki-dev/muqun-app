@@ -83,7 +83,9 @@ function HomeEditorialArtworkImage({
     source: resolution.source,
     image: failed ? null : imageRect,
     intrinsic,
-    cropped: false,
+    // The bottom mask (and cover clipping) cannot be reproduced by scaling the
+    // unmasked launch image. Cross-fade to the real Home drawing instead.
+    cropped: true,
   });
   const onLayout = useCallback(
     (event: LayoutChangeEvent) => {

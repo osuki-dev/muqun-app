@@ -2304,22 +2304,15 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       queued: isQueued,
       order: orderKeyAfter(transcriptStore.getState().timeline),
     };
-    const followAfterSend =
-      listRef.current?.getState().isWithinMaintainScrollAtEndThreshold ?? true;
     setTimeline((prev) => [...prev, tempUserItem]);
-    if (followAfterSend) {
-      // The optimistic row and the keyboard used to move the list
-      // independently: the row committed while KeyboardChatScrollView was
-      // closing, then maintainScrollAtEnd corrected the same offset. On long
-      // transcripts that race could leave only the new prompt mounted above a
-      // screen of blank space until the next layout. Legend List's chat helper
-      // coordinates those operations behind `freeze`; wait one frame so the
-      // new row is committed before dismissing the keyboard and reaching it.
-      // A reader outside the maintain-at-end threshold is still left alone.
-      requestAnimationFrame(() => {
-        void scrollMessageToEnd({ animated: true, closeKeyboard: true });
-      });
-    }
+    // Sending is an explicit request to see the newest message, even when the
+    // reader was browsing history. Keep the keyboard in place: dismissing it
+    // while appending and animating an end scroll changes the viewport and
+    // offset together. Stream updates still respect the normal end threshold.
+    requestAnimationFrame(() => {
+      if (!ownsRoute() || activeAsidRef.current !== currentAsid) return;
+      void scrollMessageToEnd({ animated: false, closeKeyboard: false });
+    });
 
     // No optimistic title. Auto-titling happens on the engine's first turn and
     // arrives as `agent.session.updated`; a client-side guess made from the
@@ -3379,6 +3372,12 @@ export const AgentWorkbench = memo(function AgentWorkbench({
    * nowhere else in this app or in any catalog it fetches.
    */
   const statusPlate = useTranscriptPlate();
+  const [retryNoticeDismissed, setRetryNoticeDismissed] = useState(false);
+  useEffect(() => {
+    // Dismissal belongs to this retry episode, never to the engine's state.
+    // A recovered session that later retries must be able to explain why again.
+    setRetryNoticeDismissed(false);
+  }, [activeAsid, sessionInfo?.status, sessionInfo?.error?.message]);
   const statusNotice = useMemo(() => {
     const status = sessionInfo?.status;
     if (status === 'failed') {
@@ -3403,10 +3402,12 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       return { tone: theme.colors.warning, label: t`Stopped`, detail: '' };
     }
     if (status === 'retry') {
+      if (retryNoticeDismissed) return null;
       return {
         tone: theme.colors.warning,
         label: t`Retrying…`,
         detail: sessionInfo?.error?.message ?? '',
+        dismissible: true,
       };
     }
     if (status === 'unknown') {
@@ -3428,7 +3429,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       };
     }
     return null;
-  }, [sessionInfo?.status, sessionInfo?.error?.message, theme.colors, t]);
+  }, [sessionInfo?.status, sessionInfo?.error?.message, retryNoticeDismissed, theme.colors, t]);
 
   // A form field in the footer took focus: once the keyboard has risen, bring
   // the card up above the composer. The inset at the end of the list is what
@@ -3505,6 +3506,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
               style={[
                 styles.thinkingPill,
                 {
+                  borderRadius: profile.chrome.control,
                   backgroundColor: surfaceBackground(theme.colors.surface),
                   borderColor: theme.colors.border,
                 },
@@ -3523,6 +3525,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         {statusNotice ? (
           <PressableScale
             testID="agent-status-notice"
+            accessible={!statusNotice.dismissible}
             accessibilityRole={statusNotice.refresh ? 'button' : 'text'}
             accessibilityLabel={statusNotice.label}
             disabled={!statusNotice.refresh}
@@ -3577,6 +3580,16 @@ export const AgentWorkbench = memo(function AgentWorkbench({
                 </Animated.View>
               ) : null}
             </View>
+            {statusNotice.dismissible ? (
+              <PressableScale
+                testID="agent-status-notice-dismiss"
+                accessibilityRole="button"
+                accessibilityLabel={t`Dismiss`}
+                onPress={() => setRetryNoticeDismissed(true)}
+                style={[styles.statusNoticeDismiss, { borderRadius: profile.chrome.control }]}>
+                <X size={16} color={theme.colors.textMuted} />
+              </PressableScale>
+            ) : null}
           </PressableScale>
         ) : null}
         {footerPermissions.map((p) => (
@@ -4558,7 +4571,6 @@ const styles = StyleSheet.create({
     gap: 7,
     paddingHorizontal: 12,
     paddingVertical: 7,
-    borderRadius: 999,
     borderCurve: 'continuous',
     borderWidth: StyleSheet.hairlineWidth,
   },
@@ -4595,6 +4607,13 @@ const styles = StyleSheet.create({
   statusNoticeHug: {
     alignSelf: 'flex-start',
     maxWidth: '100%',
+  },
+  statusNoticeDismiss: {
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 'auto',
   },
   // Shrinks, never grows: inside a plate that hugs, a `flex: 1` column measures
   // to nothing and the row collapses to its dot.

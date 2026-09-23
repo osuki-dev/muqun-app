@@ -9,6 +9,7 @@ import {
   noticeFromPush,
   noticePresentation,
   noticeTitleParts,
+  noticeAutoDismissDelay,
   type InAppNotice,
   type NoticeQueue,
 } from '../in-app-notifications';
@@ -21,6 +22,23 @@ const notice = (id: string): InAppNotice => ({
   kind: 'general',
 });
 const empty = (): NoticeQueue => ({ items: [], seen: [] });
+
+test('only visible general notices expire after two seconds', () => {
+  expect(noticeAutoDismissDelay('general', true)).toBe(2000);
+  expect(noticeAutoDismissDelay('approval', true)).toBeNull();
+  expect(noticeAutoDismissDelay('general', false)).toBeNull();
+  expect(noticeAutoDismissDelay(undefined, true)).toBeNull();
+});
+
+test('expiring the visible notice preserves pending approval and queued updates', () => {
+  const first = notice('done');
+  const approval = { ...notice('permission'), kind: 'approval' as const };
+  const next = notice('next');
+  const queue = [first, approval, next].reduce(enqueueNotice, empty());
+  const expired = dismissNotice(queue, first.id);
+  expect(expired.items).toEqual([approval, next]);
+  expect(enqueueNotice(expired, first)).toBe(expired);
+});
 
 describe('foreground notification queue', () => {
   test('new events queue behind the visible notice without mutating the input', () => {

@@ -25,7 +25,11 @@ import { NAV_HEADER_TOP_GAP } from '@/constants/nav-header';
 import { permissionActionPhrase } from '@/i18n/labels';
 import { readApprovalBody } from '@/lib/agent-engine-text';
 import { feedback } from '@/lib/feedback';
-import { noticeTitleParts, type InAppNotice } from '@/lib/in-app-notifications';
+import {
+  noticeAutoDismissDelay,
+  noticeTitleParts,
+  type InAppNotice,
+} from '@/lib/in-app-notifications';
 import { fadeInDown, settleTo, timing } from '@/lib/motion';
 import { noticeDragOffset, noticeSwipeEnd } from '@/lib/notice-swipe';
 import { AGENT_TYPE } from '@/constants/agent-type';
@@ -119,6 +123,16 @@ export function InAppNotificationHost() {
   /** The plate's own size, for the sideways threshold and the flight distance. */
   const plateHeight = useSharedValue(0);
   const noticeId = notice?.id ?? '';
+  const autoDismissDelay = noticeAutoDismissDelay(notice?.kind, visible);
+  useEffect(() => {
+    if (!noticeId || autoDismissDelay === null) return;
+    // Depend on the visible identity, not the queue: incoming/duplicate events
+    // must not keep restarting the lifetime of the card already on screen.
+    const timer = setTimeout(() => {
+      useInAppNotifications.getState().dismiss(noticeId);
+    }, autoDismissDelay);
+    return () => clearTimeout(timer);
+  }, [noticeId, autoDismissDelay]);
   useEffect(() => {
     cancelAnimation(dragX);
     cancelAnimation(dragY);
