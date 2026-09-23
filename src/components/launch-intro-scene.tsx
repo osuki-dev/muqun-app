@@ -311,8 +311,8 @@ export function LaunchSceneIntro({
     width: heroBox.width,
     height: heroBox.height,
   };
-  // A different responsive image, a cover crop or a hidden Home uses a
-  // dissolve. Pretending these are the same picture causes a visible face jump.
+  // Exact matches can land without a dissolve. Cropped or independent artwork
+  // still travels toward Home, then dissolves into its actual composition.
   const canLand = Boolean(
     !reduced &&
     homeRect &&
@@ -321,15 +321,21 @@ export function LaunchSceneIntro({
     homeRect.intrinsicWidth &&
     homeRect.intrinsicHeight
   );
+  const canTravel = !reduced && Boolean(homeRect);
   const landingCentre =
-    canLand && homeRect
+    canTravel && homeRect
       ? { x: homeRect.x + homeRect.width / 2, y: homeRect.y + homeRect.height / 2 }
       : launchCentre;
   const launchDrawing = containedImageRect(heroBox, {
     width: homeRect?.intrinsicWidth ?? 0,
     height: homeRect?.intrinsicHeight ?? 0,
   });
-  const landingScale = canLand && homeRect ? homeRect.width / launchDrawing.width : 1;
+  const landingScale =
+    canLand && homeRect
+      ? homeRect.width / launchDrawing.width
+      : canTravel && homeRect
+        ? Math.min(homeRect.width / heroBox.width, homeRect.height / heroBox.height)
+        : 1;
 
   const paper = packBackground ?? theme.colors.background;
   const handoffPaper = useSharedValue(1);
@@ -508,13 +514,13 @@ export function LaunchSceneIntro({
   }, [phase]);
 
   useEffect(() => {
-    if (phase !== 'visible' || reduced || !canLand) return;
+    if (phase !== 'visible' || reduced) return;
     const elapsed = Date.now() - startedAt.current;
     // Missing the scheduled departure chooses the dissolve, never a late flight
     // or a longer splash. The rest of the opening keeps its original timeline.
     if (elapsed > beats.hero.at) return;
     hero.value = withDelay(beats.hero.at - elapsed, withTiming(1, timing(beats.hero.ms)));
-  }, [phase, reduced, canLand, homeRect, beats.hero.at, beats.hero.ms, hero]);
+  }, [phase, reduced, homeRect, beats.hero.at, beats.hero.ms, hero]);
 
   // The bloom is the one beat driven by something other than the clock: it
   // leaves when the world behind it exists. Until then it breathes in place,
@@ -604,7 +610,13 @@ export function LaunchSceneIntro({
     });
   });
 
-  const sheetStyle = useAnimatedStyle(() => ({ opacity: 1 - exit.value }));
+  const sheetStyle = useAnimatedStyle(() => ({
+    opacity:
+      (1 - exit.value) *
+      (canLand || reduced
+        ? 1
+        : interpolate(hero.value, [0, 0.55, 1], [1, 1, 0], Extrapolation.CLAMP)),
+  }));
   const heroStyle = useAnimatedStyle(() => ({
     transform: [
       { translateX: (landingCentre.x - launchCentre.x) * hero.value },
