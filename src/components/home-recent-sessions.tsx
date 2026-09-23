@@ -2,7 +2,7 @@ import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens } from '@osuki-dev/ui';
 import { ChevronRight } from 'lucide-react-native';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 
@@ -11,9 +11,12 @@ import { StatusDot } from '@/components/status-dot';
 import { Text } from '@/components/text';
 import { ThemeIcon } from '@/components/theme-icon';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
-import { hasRealSessionTitle } from '@/lib/agent-protocol';
+import { refreshHomeContinue } from '@/lib/home-continue-refresh';
+import { loadRecordSessions, readGatewayRecordJson } from '@/lib/gateway-client';
+import { resolveSessionId, sessionChoices } from '@/lib/session-switcher';
+import { useServerSession } from '@/stores/server-session';
+import { isDemoRecord } from '@/lib/demo-gateway';
 import type { GatewayRecord } from '@/lib/gateway-storage';
-import { listAgentSessionsObserved } from '@/lib/agent-session';
 import type { HomeTarget } from '@/lib/home-recents';
 import {
   homeContinueEntries,
@@ -27,7 +30,6 @@ import type { ActiveServerConnection, ServerReachability } from '@/lib/server-re
 import { useServerAgents } from '@/stores/server-agents';
 import { useAppSettings } from '@/stores/app-settings';
 import type { SshHostRecord } from '@/lib/ssh-hosts';
-import { useGatewayConnectionStore } from '@/stores/gateway-connection';
 import { useHomeRecentsStore } from '@/stores/home-recents';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 
@@ -39,6 +41,7 @@ export function HomeRecentSessions({
   hosts,
   reachabilityByServer,
   activeConnection,
+  selectedServerId,
   onOpen,
   onOpenPane,
 }: {
@@ -46,6 +49,7 @@ export function HomeRecentSessions({
   hosts: readonly SshHostRecord[];
   reachabilityByServer: Readonly<Record<string, ServerReachability | undefined>>;
   activeConnection?: ActiveServerConnection;
+  selectedServerId?: string;
   onOpen: (target: HomeTarget) => void;
   onOpenPane: (serverId: string, paneId?: string) => void;
 }) {
@@ -60,80 +64,61 @@ export function HomeRecentSessions({
   const snapshots = useServerAgents((state) => state.byServer);
   const snapshotsHydrated = useServerAgents((state) => state.hydrated);
   const paneMode = useAppSettings((state) => state.serverCardPanes);
-  const openCodeScopes = useMemo(() => {
-    if (!activeConnection || activeConnection.phase !== 'connected') return [];
-    const seen = new Set<string>();
-    return entries.flatMap((entry) => {
-      const target = entry.target;
-      if (target.kind !== 'opencode-session' || target.serverId !== activeConnection.serverId) {
-        return [];
-      }
-      const key = JSON.stringify([target.sessionId, target.directory]);
-      if (seen.has(key)) return [];
-      seen.add(key);
-      return [{ sessionId: target.sessionId, directory: target.directory }];
-    });
-  }, [activeConnection, entries]);
-  const openCodeScopeKey = JSON.stringify(openCodeScopes);
-  const refreshOpenCodeObservations = useCallback(async () => {
-    if (!activeConnection || activeConnection.phase !== 'connected') return;
-    const serverId = activeConnection.serverId;
-    const recentEntries = useHomeRecentsStore.getState().entries;
-    const scopes = JSON.parse(openCodeScopeKey) as {
-      sessionId: string;
-      directory: string;
-    }[];
-    await Promise.all(
-      scopes.map(async ({ sessionId, directory }) => {
-        const result = await listAgentSessionsObserved(sessionId, {
-          roots: true,
-          directory,
-          limit: 50,
-          order: 'desc',
-        });
-        if (
-          useGatewayConnectionStore.getState().record?.serverId !== serverId ||
-          result.observedAtMs === undefined
-        ) {
-          return;
-        }
-        const byAsid = new Map(result.sessions.map((info) => [info.asid, info]));
-        for (const entry of recentEntries) {
-          const target = entry.target;
-          if (
-            target.kind !== 'opencode-session' ||
-            target.serverId !== serverId ||
-            target.sessionId !== sessionId ||
-            target.directory !== directory
-          ) {
-            continue;
-          }
-          const info = byAsid.get(target.asid);
-          if (!info || info.parent_id || info.deleted) continue;
-          const store = useHomeRecentsStore.getState();
-          if (hasRealSessionTitle(info)) void store.updateTitle(target, info.title);
-          void store.observeSession(target, {
-            status: info.status,
-            observedAtMs: result.observedAtMs,
-          });
-        }
-      })
-    );
-  }, [activeConnection, openCodeScopeKey]);
+  const targetId = selectedServerId ?? activeConnection?.serverId;
+  const targetRecord = servers.find((server) => server.serverId === targetId);
+  const [refreshing, setRefreshing] = useState(false);
   useFocusEffect(
     useCallback(() => {
+      let current = true;
+      let pending = false;
+      const refresh = async () => {
+        if (!hydrated || pending || !targetRecord || isDemoRecord(targetRecord)) return;
+        pending = true;
+        setRefreshing(true);
+        try {
+          const inventory = await loadRecordSessions(targetRecord);
+          if (!current) return;
+          const choices = sessionChoices(inventory.sessions);
+          const sessionId = resolveSessionId(
+            choices.length ? choices : sessionChoices(inventory.sessions, true),
+            useServerSession.getState().byServer[targetRecord.serverId]
+          );
+          const recent = useHomeRecentsStore.getState();
+          await refreshHomeContinue({
+            serverId: targetRecord.serverId,
+            sessionId,
+            entries: recent.entries,
+            read: (path) => readGatewayRecordJson(targetRecord, path),
+            isCurrent: () => current,
+            recordPanes: useServerAgents.getState().record,
+            observe: recent.observeSession,
+            updateTitle: recent.updateTitle,
+          });
+        } catch {
+          // Preserve last observed rows and their original age on read failures.
+        } finally {
+          pending = false;
+          if (current) {
+            setRefreshing(false);
+            setObservationNowMs(Date.now());
+          }
+        }
+      };
+      setRefreshing(false);
       setObservationNowMs(Date.now());
-      void refreshOpenCodeObservations();
+      void refresh();
       const timer = setInterval(() => {
-        setObservationNowMs(Date.now());
-        void refreshOpenCodeObservations();
+        void refresh();
       }, HOME_SESSION_REFRESH_MS);
-      return () => clearInterval(timer);
-    }, [refreshOpenCodeObservations])
+      return () => {
+        current = false;
+        clearInterval(timer);
+      };
+    }, [targetRecord, hydrated])
   );
   const available = homeContinueEntries({
-    serverIds: servers.map((server) => server.serverId),
-    hostIds: hosts.map((host) => host.id),
+    serverIds: targetId ? [targetId] : servers.map((server) => server.serverId),
+    hostIds: targetId ? [] : hosts.map((host) => host.id),
     snapshots,
     recents: entries,
     reachabilityByServer,
@@ -143,6 +128,12 @@ export function HomeRecentSessions({
   const displayed = visibleHomeContinueEntries(available, expanded);
   return (
     <View testID="home-recent-sessions" style={styles.root}>
+      {refreshing ? (
+        <Text
+          variant="caption"
+          color={theme.colors.textMuted}
+          style={{ position: 'absolute', top: -22, right: 0 }}>{t`Loading`}</Text>
+      ) : null}
       <View
         style={[
           styles.list,
