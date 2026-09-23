@@ -56,9 +56,20 @@ function reset(stored?: unknown) {
 beforeEach(() => reset());
 
 describe('home layout persistence', () => {
-  test('uses classic when nothing is stored', async () => {
+  test('uses editorial when nothing is stored', async () => {
     await store.getState().hydrate();
     expect(store.getState().homeLayout).toBe(DEFAULT_HOME_LAYOUT);
+  });
+
+  test('upgrades settings without a layout and preserves an explicit Classic choice', async () => {
+    reset({ hapticsEnabled: false });
+    await store.getState().hydrate();
+    expect(store.getState().homeLayout).toBe('editorial');
+    expect(store.getState().hapticsEnabled).toBe(false);
+
+    reset({ homeLayout: 'classic' });
+    await store.getState().hydrate();
+    expect(store.getState().homeLayout).toBe('classic');
   });
 
   test('persists editorial through the existing settings patch API', async () => {

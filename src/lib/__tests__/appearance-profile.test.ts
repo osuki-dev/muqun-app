@@ -23,7 +23,7 @@ test('released home layouts resolve to one stable, immutable profile, never a se
     expect('colors' in profile).toBe(false);
   }
   for (const unknown of [undefined, null, 'studio', {}, 2]) {
-    expect(resolveAppearanceProfile(unknown)).toBe(appearanceProfiles.classic);
+    expect(resolveAppearanceProfile(unknown)).toBe(appearanceProfiles.editorial);
   }
 });
 
