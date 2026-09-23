@@ -56,10 +56,12 @@ is visible "${TARGET}"
 screenshot "shots/03-panels.png"
 
 # section s18
-scroll down --pixels 320
+scroll down --pixels 160 --duration-ms 300
+wait stable 300 5000
 
 # section s19
-scroll up --pixels 320
+scroll up --pixels 160 --duration-ms 300
+wait stable 300 5000
 
 # section s20
 # A form sheet has no X circle any more: the grabber and the swipe are the
@@ -120,7 +122,8 @@ wait stable 400 5000
 screenshot "shots/05-privacy.png"
 
 # section s38
-scroll down --pixels 320
+scroll down --pixels 160 --duration-ms 300
+wait stable 300 5000
 
 # section s39
 press "${TARGET}"

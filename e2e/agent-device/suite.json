@@ -3415,6 +3415,15 @@
         "target": {
           "text": "Enter URL manually"
         },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 20000,
+        "run": "flows/pairing-manual.ad#scroll-controls"
+      },
+      {
+        "target": {
+          "text": "Enter URL manually"
+        },
         "mode": "press",
         "run": "flows/pairing-manual.ad#s5"
       },
@@ -3443,6 +3452,15 @@
         "target": {
           "text": "Scan a gateway QR"
         },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 20000,
+        "run": "flows/pairing-manual.ad#scroll-controls"
+      },
+      {
+        "target": {
+          "text": "Scan a gateway QR"
+        },
         "mode": "press",
         "run": "flows/pairing-manual.ad#s9"
       },
@@ -3464,6 +3482,15 @@
         "target": {
           "text": "Enter URL manually"
         },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 20000,
+        "run": "flows/pairing-manual.ad#scroll-controls"
+      },
+      {
+        "target": {
+          "text": "Enter URL manually"
+        },
         "mode": "press",
         "run": "flows/pairing-manual.ad#s12"
       },
@@ -3473,6 +3500,15 @@
         },
         "mode": "visible",
         "run": "flows/pairing-manual.ad#s13"
+      },
+      {
+        "target": {
+          "text": "Scan a gateway QR"
+        },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 20000,
+        "run": "flows/pairing-manual.ad#scroll-controls"
       },
       {
         "target": {
@@ -4453,7 +4489,7 @@
         "mode": "scroll",
         "direction": "down",
         "timeout": 20000,
-        "run": "flows/settings-font.ad#open-settings"
+        "run": "flows/settings-font.ad#scroll-font"
       },
       {
         "target": { "text": "Font, .+" },
@@ -4487,7 +4523,7 @@
       },
       { "run": "flows/settings-font.ad#leave" },
       {
-        "target": { "text": "SERVERS" },
+        "target": { "text": "Font, .+" },
         "mode": "visible",
         "timeout": 8000,
         "run": "flows/settings-font.ad#back-on-settings"

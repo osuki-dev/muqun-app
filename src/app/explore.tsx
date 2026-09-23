@@ -22,7 +22,10 @@ import {
   useWindowDimensions,
   View,
 } from 'react-native';
-import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
+import {
+  KeyboardAwareScrollView,
+  type KeyboardAwareScrollViewRef,
+} from 'react-native-keyboard-controller';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
   cancelAnimation,
@@ -191,6 +194,7 @@ export default function PairModal() {
   const { width: windowWidth } = useWindowDimensions();
   const { setRecord, enterDemo } = useGatewayRecord();
   const handledScan = useRef(false);
+  const scrollRef = useRef<KeyboardAwareScrollViewRef>(null);
   // A failed scan must not re-fire instantly: the same QR is still in frame, so
   // resetting the guard immediately looped scan→fail→scan and flickered the UI.
   const scanBlockedUntil = useRef(0);
@@ -623,6 +627,7 @@ export default function PairModal() {
     */
     <SheetScene testID="pairing-sheet" title={title} caption={caption} captionLines={2}>
       <KeyboardAwareScrollView
+        ref={scrollRef}
         bottomOffset={KEYBOARD_BOTTOM_OFFSET}
         style={sheetSceneStyles.scroller}
         contentContainerStyle={styles.content}
@@ -863,6 +868,9 @@ export default function PairModal() {
                   onPress={() => {
                     setSshOpen(false);
                     setManualOpen((value) => !value);
+                    // The mode switch is below the viewfinder on compact sheets.
+                    // Reveal the replacement form instead of keeping it above the viewport.
+                    scrollRef.current?.scrollTo({ y: 0, animated: true });
                   }}
                   style={[
                     styles.manualToggle,
@@ -910,6 +918,7 @@ export default function PairModal() {
                   onPress={() => {
                     setManualOpen(false);
                     setSshOpen((value) => !value);
+                    scrollRef.current?.scrollTo({ y: 0, animated: true });
                   }}
                   style={[
                     styles.manualToggle,

@@ -310,6 +310,38 @@ function nodeRole(node: Node): string {
   return aliases[role] ?? role;
 }
 
+/** Native iOS visibility can include rows clipped below a form sheet's list. */
+export function withinScrollViewport(node: Node, nodes: Node[]): boolean {
+  if (!node.rect) return true;
+  const { x, y, width, height } = node.rect;
+  const centerX = x + width / 2;
+  const centerY = y + height / 2;
+  const actionable =
+    actionableRoles.has(nodeRole(node)) || settingsControlState(node) !== undefined;
+  const seen = new Set<number>();
+  let parentIndex = node.parentIndex;
+  while (parentIndex !== undefined && !seen.has(parentIndex)) {
+    seen.add(parentIndex);
+    const parent = nodes.find((candidate) => candidate.index === parentIndex);
+    if (!parent) break;
+    if (parent.rect && ['scroll-area', 'application'].includes(nodeRole(parent))) {
+      const rect = parent.rect;
+      const visible = actionable
+        ? centerX >= rect.x &&
+          centerX < rect.x + rect.width &&
+          centerY >= rect.y &&
+          centerY < rect.y + rect.height
+        : x < rect.x + rect.width &&
+          x + width > rect.x &&
+          y < rect.y + rect.height &&
+          y + height > rect.y;
+      if (!visible) return false;
+    }
+    parentIndex = parent.parentIndex;
+  }
+  return true;
+}
+
 function hasAlert(nodes: Node[]): boolean {
   return nodes.some(
     (node) =>
@@ -686,6 +718,7 @@ export class NativeRunner {
     // label again to a large ancestor. Distinct same-role siblings still reach
     // native ambiguity checks; no coordinate or arbitrary-first fallback.
     for (const node of candidates.filter((candidate) => matches(candidate, target))) {
+      if (!withinScrollViewport(node, nodes)) continue;
       let visible: Record<string, unknown>;
       try {
         visible = await this.invoke(['is', 'exists', `${selector(node)} visible=true`]);

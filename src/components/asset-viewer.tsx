@@ -585,7 +585,8 @@ function AssetBody({
           </Text>
           <PressableScale
             testID="asset-copy-path"
-            accessibilityLabel={t`Copy path`}
+            accessibilityRole="button"
+            accessibilityLabel={pathCopied ? t`Copied` : t`Copy path`}
             onPress={copyPath}
             style={[
               styles.retry,

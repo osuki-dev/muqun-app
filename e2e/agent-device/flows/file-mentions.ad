@@ -8,7 +8,7 @@ press "${TARGET}"
 press "${TARGET}"
 
 # section s3
-type "@"
+fill id="terminal-composer-input" "@"
 
 # section s4
 is visible "${TARGET}"

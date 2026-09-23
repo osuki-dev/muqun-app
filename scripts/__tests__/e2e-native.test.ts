@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import {
   NativeRunner,
+  withinScrollViewport,
   appViewport,
   exactSelectorMatches,
   NativeCommandError,
@@ -35,6 +36,42 @@ const suite: Suite = {
 const node = { index: 1, ref: 'e2', label: 'Done', rect: { x: 0, y: 0, width: 20, height: 20 } };
 
 describe('native end-to-end gate', () => {
+  test('sheet list rows must have their tap center inside the visible scroll viewport', () => {
+    const app = {
+      ref: 'e1',
+      index: 0,
+      type: 'Application',
+      rect: { x: 0, y: 0, width: 1210, height: 834 },
+    };
+    const list = {
+      ref: 'e2',
+      index: 1,
+      parentIndex: 0,
+      type: 'ScrollView',
+      rect: { x: 315, y: 368, width: 580, height: 369 },
+    };
+    const row = {
+      ref: 'e3',
+      index: 2,
+      parentIndex: 1,
+      type: 'Button',
+      label: 'Open CHANGELOG.md',
+      rect: { x: 335, y: 738, width: 540, height: 44 },
+    };
+    expect(withinScrollViewport(row, [app, list, row])).toBe(false);
+    const scrolled = { ...row, rect: { ...row.rect, y: 650 } };
+    expect(withinScrollViewport(scrolled, [app, list, scrolled])).toBe(true);
+    const above = { ...row, rect: { ...row.rect, y: 330 } };
+    expect(withinScrollViewport(above, [app, list, above])).toBe(false);
+    // A source row spans the horizontal canvas; its text can be visible even
+    // when the row's center is thousands of points outside the viewport.
+    const source = {
+      ...row,
+      type: 'StaticText',
+      rect: { x: 335, y: 400, width: 28000, height: 17 },
+    };
+    expect(withinScrollViewport(source, [app, list, source])).toBe(true);
+  });
   test('flow cleanup follows failure evidence, always closes, and preserves original failure', async () => {
     const order: string[] = [];
     const failure = await runWithCleanup({

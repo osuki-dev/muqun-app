@@ -17,16 +17,19 @@ is visible "${TARGET}"
 is visible "${TARGET}"
 
 # section s6
-scroll down --pixels 320
+scroll down --pixels 160 --duration-ms 300
+wait stable 300 5000
 
 # section s7
-scroll down --pixels 320
+scroll down --pixels 160 --duration-ms 300
+wait stable 300 5000
 
 # section s8
 press "${TARGET}"
 
 # section scroll-up
-scroll up --pixels 320
+scroll up --pixels 160 --duration-ms 300
+wait stable 300 5000
 
 # section reset-theme
 # Selected by testID, not by role. A pack used to be a tile declaring
@@ -65,7 +68,8 @@ wait stable 400 5000
 is visible "${TARGET}"
 
 # section s16
-scroll down --pixels 320
+scroll down --pixels 160 --duration-ms 300
+wait stable 300 5000
 
 # section reset-color-mode-control
 press "${TARGET}"
@@ -99,7 +103,8 @@ is visible "${TARGET}"
 is visible "${TARGET}"
 
 # section s26
-scroll down --pixels 320
+scroll down --pixels 160 --duration-ms 300
+wait stable 300 5000
 
 # section s27
 press "${TARGET}"
@@ -159,10 +164,12 @@ press "${TARGET}"
 is visible "${TARGET}"
 
 # section s46
-scroll down --pixels 320
+scroll down --pixels 160 --duration-ms 300
+wait stable 300 5000
 
 # section s47
-scroll down --pixels 320
+scroll down --pixels 160 --duration-ms 300
+wait stable 300 5000
 
 # section s48
 press "${TARGET}"
@@ -171,7 +178,8 @@ press "${TARGET}"
 wait stable 400 5000
 
 # section s50
-scroll down --pixels 320
+scroll down --pixels 160 --duration-ms 300
+wait stable 300 5000
 
 # section s51
 is visible "${TARGET}"
@@ -220,7 +228,8 @@ gesture pan 200 600 0 -120 400
 gesture pan 200 600 0 -120 400
 
 # section s58
-scroll down --pixels 320
+scroll down --pixels 160 --duration-ms 300
+wait stable 300 5000
 
 # section scroll-notifications
 # A pan for the same reason `s56` uses one: these three targets sit within a
@@ -254,10 +263,12 @@ wait stable 400 5000
 is visible "${TARGET}"
 
 # section s66
-scroll down --pixels 320
+scroll down --pixels 160 --duration-ms 300
+wait stable 300 5000
 
 # section s67
-scroll down --pixels 320
+scroll down --pixels 160 --duration-ms 300
+wait stable 300 5000
 
 # section storage-scroll
 # STORAGE sits between SECURITY and ABOUT. Its four rows are within a screen of
@@ -265,7 +276,8 @@ scroll down --pixels 320
 # `s56`, every target below is a full row rather than a 13pt instrument label,
 # and a flick that overshoots one of them still leaves it in the tree for the
 # scroll-to-visible to come back to.
-scroll down --pixels 320
+scroll down --pixels 160 --duration-ms 300
+wait stable 300 5000
 
 # section storage-seek
 # The rows below STORAGE are sought UP from the bottom edge, never down into
@@ -279,7 +291,8 @@ scroll down --pixels 320
 # progress or resets, and can never wedge at the stop.
 scroll bottom
 wait stable 400 5000
-scroll up --pixels 320
+scroll up --pixels 160 --duration-ms 300
+wait stable 300 5000
 
 # section storage-visible
 is visible "${TARGET}"
@@ -315,19 +328,24 @@ press "${TARGET}"
 wait stable 400 5000
 
 # section s68
-scroll down --pixels 320
+scroll down --pixels 160 --duration-ms 300
+wait stable 300 5000
 
 # section s69
-scroll down --pixels 320
+scroll down --pixels 160 --duration-ms 300
+wait stable 300 5000
 
 # section s70
-scroll down --pixels 320
+scroll down --pixels 160 --duration-ms 300
+wait stable 300 5000
 
 # section s71
-scroll down --pixels 320
+scroll down --pixels 160 --duration-ms 300
+wait stable 300 5000
 
 # section s72
-scroll down --pixels 320
+scroll down --pixels 160 --duration-ms 300
+wait stable 300 5000
 
 # section s73
 open "dev.osuki.muqun" --relaunch
@@ -342,7 +360,8 @@ press "${TARGET}"
 is visible "${TARGET}"
 
 # section s77
-scroll down --pixels 320
+scroll down --pixels 160 --duration-ms 300
+wait stable 300 5000
 
 # section s78
 press "${TARGET}"
@@ -363,7 +382,8 @@ wait stable 400 5000
 is visible "${TARGET}"
 
 # section s84
-scroll down --pixels 320
+scroll down --pixels 160 --duration-ms 300
+wait stable 300 5000
 
 # section s85
 is visible "${TARGET}"
@@ -397,11 +417,12 @@ wait stable 400 5000
 #
 # So the seek is a loop rather than a number, and what it restores is the
 # *precondition* the two nudges were measured against rather than a distance:
-# the row just back inside the top edge. `scroll up --pixels 320` is the
+# the row just back inside the top edge. `scroll up --pixels 160 --duration-ms 300` is the
 # flick the rest of this flow uses; measured here, each one moves the list
 # about 409px, and the first one that brings the row back lands it at
 # y=22..188 -- the y=32..198 the Android nudge was calibrated on.
-scroll up --pixels 320
+scroll up --pixels 160 --duration-ms 300
+wait stable 300 5000
 wait stable 400 5000
 
 # section s89
