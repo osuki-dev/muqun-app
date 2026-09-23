@@ -36,7 +36,6 @@ import {
   X,
 } from 'lucide-react-native';
 import { type LegendListRef } from '@legendapp/list/react-native';
-import { useKeyboardScrollToEnd } from '@legendapp/list/keyboard';
 import { PressableScale } from '@/components/pressable-scale';
 import { GlassChrome } from '@/components/glass-chrome';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
@@ -364,9 +363,6 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   const surfaceBackground = useSurfaceBackground();
   const markdownStyle = usePaneChatMarkdownStyle();
   const listRef = useRef<LegendListRef>(null);
-  const { freeze: freezeTimelineKeyboard, scrollMessageToEnd } = useKeyboardScrollToEnd({
-    listRef,
-  });
   const injectDraftRef = useRef<((text: string) => void) | null>(null);
 
   /**
@@ -1164,8 +1160,8 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     // offsets while native measurement and keyboard reactions move the target.
     // Only onScroll may mark the output as read: requesting a jump is not
     // evidence that it reached the end (it can be interrupted or have no list).
-    void scrollMessageToEnd({ animated: false, closeKeyboard: false });
-  }, [scrollMessageToEnd]);
+    void listRef.current?.scrollToEnd({ animated: false });
+  }, []);
 
   // YOLO answers every permission request itself: `allow` for anything the
   // safety list lets through, `deny` (with a report) for irreversibly
@@ -2348,7 +2344,10 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     // offset together. Stream updates still respect the normal end threshold.
     requestAnimationFrame(() => {
       if (!ownsRoute() || activeAsidRef.current !== currentAsid) return;
-      void scrollMessageToEnd({ animated: false, closeKeyboard: false });
+      // Keep keyboard reactions live while LegendList measures the appended
+      // row. Freezing until scrollToEnd resolves can miss a keyboard dismissal
+      // and leave the native offset one keyboard-height beyond the new end.
+      void listRef.current?.scrollToEnd({ animated: false });
     });
 
     // No optimistic title. Auto-titling happens on the engine's first turn and
@@ -4157,7 +4156,6 @@ export const AgentWorkbench = memo(function AgentWorkbench({
               store={transcriptStore}
               rowProps={rowProps}
               ref={listRef}
-              freeze={freezeTimelineKeyboard}
               /*
             Lift only for a reader at the latest message. Someone who has
             scrolled up to read is not moved by a keyboard any more than by
