@@ -697,18 +697,16 @@ export class NativeRunner {
       const quality = capture.snapshotQuality as
         | { state?: string; backend?: string; reason?: string; reasonCode?: string }
         | undefined;
-      if (
-        attempt >= 2 ||
-        quality?.backend !== 'private-ax' ||
-        !(
-          (quality.state === 'sparse' && /deferred/i.test(quality.reason ?? '')) ||
-          quality.reasonCode === 'sparse-tree'
-        )
-      )
-        return capture;
-      // Deferred iOS acquisition is transient; retry only this read, never
-      // dismiss, reopen or repeat an input. Exhaustion still fails quality.
-      await new Promise((resolve) => setTimeout(resolve, 250));
+      const sparseTree = quality?.reasonCode === 'sparse-tree';
+      const deferredPrivateAX =
+        quality?.backend === 'private-ax' &&
+        quality.state === 'sparse' &&
+        /deferred/i.test(quality.reason ?? '');
+      if (!sparseTree && !deferredPrivateAX) return capture;
+      if (attempt >= (sparseTree ? 8 : 2)) return capture;
+      // A relaunch can expose a bare native tree while the first app frame is
+      // still rendering. Repeat only the read; never replay the preceding input.
+      await new Promise((resolve) => setTimeout(resolve, sparseTree ? 500 : 250));
     }
   }
 

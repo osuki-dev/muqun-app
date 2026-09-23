@@ -435,6 +435,32 @@ describe('native end-to-end gate', () => {
     expect(await runner.readySnapshot()).toEqual([node]);
     expect(attempts).toBe(2);
   });
+  test('a transient bare iOS tree at launch is recaptured before asserting absence', async () => {
+    let attempts = 0;
+    const runner = new NativeRunner(
+      suite,
+      '/unused',
+      '/unused',
+      async (args) => {
+        expect(args).toEqual(['snapshot']);
+        attempts++;
+        return attempts < 3
+          ? {
+              nodes: [node],
+              snapshotQuality: {
+                state: 'sparse',
+                backend: 'tree',
+                reasonCode: 'sparse-tree',
+                reason: 'snapshot returned no semantic controls or content',
+              },
+            }
+          : { nodes: [node] };
+      },
+      {}
+    );
+    expect(await runner.readySnapshot()).toEqual([node]);
+    expect(attempts).toBe(3);
+  });
   test('a busy iOS runner retries the snapshot without repeating an input', async () => {
     const calls: string[][] = [];
     const runner = new NativeRunner(

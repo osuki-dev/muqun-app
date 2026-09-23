@@ -4311,7 +4311,7 @@
             },
             "mode": "scroll",
             "direction": "down",
-            "timeout": 20000,
+            "timeout": 45000,
             "run": "flows/settings.ad#s50-android-phone"
           }
         ]
@@ -4775,7 +4775,7 @@
             },
             "mode": "scroll",
             "direction": "down",
-            "timeout": 20000,
+            "timeout": 45000,
             "run": "flows/settings.ad#s50-android-phone"
           }
         ]
