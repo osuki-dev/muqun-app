@@ -74,6 +74,7 @@ type EditorialSectionProps = {
     lg: number;
   };
   first?: boolean;
+  surface?: boolean;
 };
 
 function EditorialSection({
@@ -83,13 +84,23 @@ function EditorialSection({
   textColor,
   spacing,
   first = false,
+  surface = false,
 }: EditorialSectionProps) {
   const background = useSurfaceBackground();
   const profile = useAppearanceProfile();
   const theme = useThemeTokens();
   const hasScene = useHasThemeArtwork('home.wallpaper', 'shell.wallpaper');
   return (
-    <View style={[styles.section, { marginTop: first ? 0 : spacing.lg, marginBottom: 0 }]}>
+    <View
+      style={[
+        styles.section,
+        { marginTop: first ? 0 : spacing.lg, marginBottom: 0 },
+        surface && {
+          backgroundColor: theme.colors.surface,
+          borderRadius: profile.chrome.surface,
+          padding: spacing.md,
+        },
+      ]}>
       <View style={[styles.sectionHeader, { borderBottomColor: borderColor }]}>
         <Text
           variant="heading"
@@ -279,6 +290,7 @@ export function HomeEditorialLayout({
                 textColor={theme.colors.text}
                 spacing={theme.spacing}
                 title={t`Continue`}
+                surface
                 first={split}>
                 {recent}
               </EditorialSection>
@@ -289,7 +301,8 @@ export function HomeEditorialLayout({
                 borderColor={theme.colors.border}
                 textColor={theme.colors.text}
                 spacing={theme.spacing}
-                title={t`Connections`}>
+                title={t`Connections`}
+                surface>
                 {connections}
               </EditorialSection>
             ) : null}
@@ -452,6 +465,7 @@ export function HomeEditorialLayout({
               textColor={theme.colors.text}
               spacing={theme.spacing}
               first={!hasArtwork}
+              surface={hasArtwork}
               title={t`Continue`}>
               {recent}
             </EditorialSection>
@@ -461,6 +475,7 @@ export function HomeEditorialLayout({
               borderColor={theme.colors.border}
               textColor={theme.colors.text}
               spacing={theme.spacing}
+              surface={hasArtwork}
               title={t`Connections`}>
               {connections}
             </EditorialSection>
@@ -476,6 +491,7 @@ export function HomeEditorialLayout({
                 textColor={theme.colors.text}
                 spacing={theme.spacing}
                 first
+                surface={hasArtwork}
                 title={t`Connections`}>
                 {connections}
               </EditorialSection>

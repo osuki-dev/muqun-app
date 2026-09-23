@@ -8179,9 +8179,6 @@
         "run": "flows/thai-language.ad#relaunch"
       },
       {
-        "include": "subflows/dismiss-logbox"
-      },
-      {
         "target": {
           "text": "การตั้งค่า"
         },
