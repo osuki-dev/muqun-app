@@ -10,6 +10,7 @@
 import { describe, expect, test } from 'bun:test';
 
 import {
+  artworkVisibleTop,
   containedImageRect,
   coveredImageRect,
   editorialArtworkRect,
@@ -294,4 +295,29 @@ describe('the feather', () => {
     expect(nonsense.feather).toEqual({ x: 0, y: 0 });
     expect(nonsense.mask).toEqual(nonsense.image);
   });
+});
+
+test('foreground alignment ignores transparent padding and faint export residue', () => {
+  const alpha = new Uint8Array(1000 * 20);
+  alpha[12] = 4;
+  alpha[3000] = 255;
+  alpha[8000] = 255;
+  alpha[8001] = 200;
+  expect(artworkVisibleTop(alpha, 1000, 20)).toBe(8);
+  expect(artworkVisibleTop(new Uint8Array(80).fill(255), 10, 8)).toBe(0);
+  expect(artworkVisibleTop(new Uint8Array(80), 10, 8)).toBe(0);
+  const source = { width: 1000, height: 1500 };
+  for (const width of [360, 600, 900]) {
+    const rect = editorialArtworkRect(
+      { width, height: Math.min(640, width * 0.9) },
+      source,
+      'cover'
+    );
+    const visibleTop = (117 * rect.height) / source.height;
+    const titleHeight = width * 0.2;
+    const wrapperTop = titleHeight * 0.65 - visibleTop;
+    expect(wrapperTop + visibleTop).toBeCloseTo(titleHeight * 0.65);
+    expect(rect.width).toBe(width);
+    expect(rect.y).toBe(0);
+  }
 });

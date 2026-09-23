@@ -169,6 +169,15 @@ export function HomeOverview({
   const profile = useAppearanceProfile();
   const homeLayout = profile.id;
   const [editorialWidth, setEditorialWidth] = useState(0);
+  const [editorialArtworkTop, setEditorialArtworkTop] = useState<{
+    source: string;
+    top: number;
+  } | null>(null);
+  const reportEditorialArtworkTop = useCallback((source: string, top: number) => {
+    setEditorialArtworkTop((current) =>
+      current?.source === source && current.top === top ? current : { source, top }
+    );
+  }, []);
   const [failedEditorialArtworkSource, setFailedEditorialArtworkSource] = useState<string | null>(
     null
   );
@@ -653,11 +662,17 @@ export function HomeOverview({
               scrollY={scrollY}
               cover={customTheme?.manifest.homePresentation?.header === 'cover'}
               coverTitle={identity.name ?? undefined}
+              artworkTopInset={
+                editorialArtworkTop?.source === editorialArtworkResolution?.source
+                  ? editorialArtworkTop?.top
+                  : 0
+              }
               artwork={
                 hasEditorialArtwork && editorialArtworkResolution ? (
                   <HomeEditorialArtwork
                     cover={customTheme?.manifest.homePresentation?.header === 'cover'}
                     resolution={editorialArtworkResolution}
+                    onVisibleTopChange={reportEditorialArtworkTop}
                     onAvailabilityChange={(available) => {
                       if (!available)
                         setFailedEditorialArtworkSource(editorialArtworkResolution.source);
