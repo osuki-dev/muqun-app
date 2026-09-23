@@ -300,6 +300,7 @@ import {
 } from '@/terminal/history';
 import { useTerminalTheme } from '@/hooks/use-theme-pack';
 import { rememberWarmWorkspace, warmWorkspace, type WarmWorkspace } from '@/lib/server-warm-cache';
+import { startWorkspacePoller } from '@/lib/workspace-poller';
 
 /** The cache and this screen describe the same snapshot, so they share a type. */
 type ServerData = WarmWorkspace;
@@ -1405,6 +1406,14 @@ export function ServerTerminalWorkspace({
           return sameSelection(current, reconciled) ? current : reconciled;
         });
         setError(null);
+        // Structural refreshes share request ownership with the watchdog. Their
+        // confirmed success is readiness evidence too, even if they superseded
+        // the watchdog's in-flight read.
+        setConnection((current) =>
+          current.phase === 'connected' && current.attempt === 0
+            ? current
+            : { phase: 'connected', attempt: 0 }
+        );
         return { ok: true, data: next };
       } catch (failure) {
         if (!isCurrentRequest()) return null;
@@ -1430,24 +1439,14 @@ export function ServerTerminalWorkspace({
     // send. Coming back re-runs this effect, and `poll` reads immediately --
     // which is the same catch-up the stream's reconnect performs.
     if (!ready || !appActive) return;
-    let cancelled = false;
-    let timer: ReturnType<typeof setTimeout> | undefined;
     let attempt = 0;
 
-    async function poll(initial: boolean) {
-      const result = await refreshData(initial);
-      if (cancelled || !result) return;
+    function onResult(result: NonNullable<RefreshResult>): number | null {
       if (result.ok) {
         attempt = 0;
-        setConnection((current) =>
-          current.phase === 'connected' && current.attempt === 0
-            ? current
-            : { phase: 'connected', attempt: 0 }
-        );
         // Structural changes arrive over the event stream; this slow poll only
         // covers a missed event or a stream that never connected.
-        timer = setTimeout(() => void poll(false), 12000);
-        return;
+        return 12000;
       }
 
       attempt += 1;
@@ -1459,9 +1458,9 @@ export function ServerTerminalWorkspace({
         needsPairing: result.failure.needsPairing,
       });
       if (result.failure.retryable) {
-        const retryDelay = Math.min(1000 * 2 ** Math.min(attempt - 1, 3), MAX_RECONNECT_DELAY_MS);
-        timer = setTimeout(() => void poll(false), retryDelay);
+        return Math.min(1000 * 2 ** Math.min(attempt - 1, 3), MAX_RECONNECT_DELAY_MS);
       }
+      return null;
     }
 
     setConnection((current) => {
@@ -1471,11 +1470,7 @@ export function ServerTerminalWorkspace({
       if (hasLoadedData && current.phase === 'connected') return current;
       return { phase: hasLoadedData ? 'reconnecting' : 'connecting', attempt: 0 };
     });
-    void poll(!hasLoadedData);
-    return () => {
-      cancelled = true;
-      if (timer) clearTimeout(timer);
-    };
+    return startWorkspacePoller({ refresh: refreshData, initial: !hasLoadedData, onResult });
   }, [appActive, hasLoadedData, ready, refreshData, retryNonce, serverId, t]);
 
   // A burst of structural events (opening a workspace spawns several) should
