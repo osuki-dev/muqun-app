@@ -89,7 +89,7 @@ import {
   Trash2,
 } from 'lucide-react-native';
 import { type ReactNode, useEffect, useMemo, useState } from 'react';
-import { StyleSheet, useWindowDimensions, View, type TextStyle } from 'react-native';
+import { Keyboard, StyleSheet, useWindowDimensions, View, type TextStyle } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -1032,7 +1032,10 @@ export default function QuickCommandsScreen() {
                   <AgentCommandDeliveryPicker
                     testID="quick-command-delivery"
                     value={delivery}
-                    onChange={setDelivery}
+                    onChange={(next) => {
+                      Keyboard.dismiss();
+                      setDelivery(next);
+                    }}
                   />
                 ) : null}
 
