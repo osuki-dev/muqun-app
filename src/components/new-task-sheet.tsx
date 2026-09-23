@@ -1,10 +1,11 @@
+import { ComposerAttachmentButton } from '@/components/composer-attachment-button';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 /** Start an agent with the shared terminal composer and attachment pipeline.
  * The full-height sheet keeps input reachable with long host catalogs.
  */
 import { useThemeTokens } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
-import { TerminalComposer, composerStyles } from '@/components/terminal-composer';
+import { TerminalComposer } from '@/components/terminal-composer';
 import { AttachmentMenu } from '@/components/attachment-menu';
 import { AttachmentStrip } from '@/components/attachment-strip';
 import { ImagePreviewModal } from '@/components/image-preview-modal';
@@ -19,7 +20,7 @@ import {
   type AttachmentSource,
 } from '@/lib/attachments';
 import { Trans, useLingui } from '@lingui/react/macro';
-import { Bot, Check, FolderOpen, Paperclip } from 'lucide-react-native';
+import { Bot, Check, FolderOpen } from 'lucide-react-native';
 import { useEffect, useRef, useState } from 'react';
 import { Keyboard, Platform, ScrollView, StyleSheet, View, type TextInput } from 'react-native';
 import {
@@ -367,10 +368,10 @@ export function NewTaskSheet({
                 <TerminalComposer
                   inputRef={promptInput}
                   leading={
-                    <PressableScale
+                    <ComposerAttachmentButton
                       testID="new-task-attach"
-                      accessibilityRole="button"
-                      accessibilityLabel={t`Add attachment`}
+                      label={t`Add attachment`}
+                      expanded={attachmentMenuOpen}
                       disabled={starting || !record}
                       onPress={() => {
                         // The source menu needs the space the software keyboard
@@ -386,9 +387,9 @@ export function NewTaskSheet({
                           if (mounted.current) setAttachmentMenuOpen((open) => !open);
                         });
                       }}
-                      style={composerStyles.button}>
-                      <Paperclip size={18} color={theme.colors.text} />
-                    </PressableScale>
+                      size={18}
+                      color={theme.colors.text}
+                    />
                   }
                   inputProps={{
                     testID: 'new-task-prompt',

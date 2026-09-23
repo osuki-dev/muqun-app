@@ -1,3 +1,4 @@
+import { ThemeIcon } from '@/components/theme-icon';
 import { useThemeTokens } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
 import { ChevronDown, FolderGit2, Plus, Square } from 'lucide-react-native';
@@ -88,7 +89,13 @@ export function SessionActionIcon({ running }: { running: boolean }) {
   return (
     <View pointerEvents="none" style={styles.actionIconStack}>
       <Animated.View style={[styles.actionIconLayer, plusStyle]}>
-        <Plus size={18} color={theme.colors.text} strokeWidth={2.2} />
+        <ThemeIcon
+          name="chrome.create"
+          fallback={Plus}
+          size={18}
+          color={theme.colors.text}
+          strokeWidth={2.2}
+        />
       </Animated.View>
       <Animated.View style={[styles.actionIconLayer, stopStyle]}>
         <Square

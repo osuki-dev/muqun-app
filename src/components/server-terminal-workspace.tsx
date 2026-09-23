@@ -1,6 +1,6 @@
+import { ComposerAttachmentButton } from '@/components/composer-attachment-button';
 import { TerminalNotice, terminalNoticeStyles } from '@/components/terminal-notice';
 import { NoticeDeck } from '@/components/notice-deck';
-import { ThemeIcon } from '@/components/theme-icon';
 import { ComposerSendGuard } from '@/lib/composer-send-guard';
 import { Spinner, useThemeMode, useThemeTokens, useToast } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
@@ -18,7 +18,6 @@ import { StatusBar } from 'expo-status-bar';
 import {
   Bot,
   Keyboard as KeyboardIcon,
-  Paperclip,
   PenLine,
   SquareTerminal,
   X,
@@ -78,7 +77,6 @@ import { navHeaderButtonStyle } from '@/components/nav-header';
 import { PaneChatView } from '@/components/pane-chat-view';
 
 import { AgentWorkbench } from '@/components/agent-workbench';
-import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { gatewaySupportsAgentSessions } from '@/lib/agent-session';
 import { PadServerRail } from '@/components/pad-server-rail';
 import { GatewayTunnelBadge } from '@/components/gateway-tunnel-badge';
@@ -87,7 +85,7 @@ import { StatusDot } from '@/components/status-dot';
 import { SwitchIndicator } from '@/components/switch-indicator';
 import { TerminalBoundary } from '@/components/terminal-boundary';
 import { EditorControls } from '@/components/editor-controls';
-import { composerStyles, TerminalComposer } from '@/components/terminal-composer';
+import { TerminalComposer } from '@/components/terminal-composer';
 import { TerminalPanel } from '@/components/terminal-output';
 import { VirtualKeyboard } from '@/components/virtual-keyboard';
 import { WorkspaceTitleSwitcher } from '@/components/workspace-title-switcher';
@@ -655,7 +653,6 @@ export function ServerTerminalWorkspace({
   // call keeps the old language. The hook's `t` is bound to the Lingui context,
   // so the compiler sees a dependency that actually changes.
   const { t } = useLingui();
-  const profile = useAppearanceProfile();
   const escapeKey: TerminalKey = { label: 'ESC', key: 'esc', accessibilityLabel: t`Escape` };
 
   const routeParams = useLocalSearchParams<{
@@ -4310,30 +4307,14 @@ export function ServerTerminalWorkspace({
         // destination was never unsaid: the strip above highlights the chosen
         // assistant, the placeholder names it, and Send names it again.
         dock.attachEntry ? (
-          <PressableScale
+          <ComposerAttachmentButton
             testID="terminal-composer-attach"
-            accessibilityLabel={
-              attachmentMenuOpen ? t`Close the attachment menu` : t`Attach a file`
-            }
-            // A file picked now would join a message that is already on
-            // its way out, so the menu closes for the length of the send.
+            label={attachmentMenuOpen ? t`Close the attachment menu` : t`Attach a file`}
+            expanded={attachmentMenuOpen}
             disabled={!targetReady || !selectedPane || sending}
             onPress={() => setAttachmentMenuOpen((open) => !open)}
-            style={[
-              composerStyles.button,
-              { borderRadius: profile.chrome.roundControl },
-              attachmentMenuOpen
-                ? { backgroundColor: surfaceBackground(theme.colors.primarySubtle) }
-                : null,
-              !targetReady || !selectedPane || sending ? { opacity: 0.45 } : null,
-            ]}>
-            <ThemeIcon
-              name="chrome.attach"
-              fallback={Paperclip}
-              size={17}
-              color={theme.colors.primary}
-            />
-          </PressableScale>
+            color={theme.colors.primary}
+          />
         ) : null
       }
       inputProps={{
