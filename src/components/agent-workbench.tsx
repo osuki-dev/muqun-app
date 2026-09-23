@@ -2304,22 +2304,15 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       queued: isQueued,
       order: orderKeyAfter(transcriptStore.getState().timeline),
     };
-    const followAfterSend =
-      listRef.current?.getState().isWithinMaintainScrollAtEndThreshold ?? true;
     setTimeline((prev) => [...prev, tempUserItem]);
-    if (followAfterSend) {
-      // The optimistic row and the keyboard used to move the list
-      // independently: the row committed while KeyboardChatScrollView was
-      // closing, then maintainScrollAtEnd corrected the same offset. On long
-      // transcripts that race could leave only the new prompt mounted above a
-      // screen of blank space until the next layout. Legend List's chat helper
-      // coordinates those operations behind `freeze`; wait one frame so the
-      // new row is committed before dismissing the keyboard and reaching it.
-      // A reader outside the maintain-at-end threshold is still left alone.
-      requestAnimationFrame(() => {
-        void scrollMessageToEnd({ animated: true, closeKeyboard: true });
-      });
-    }
+    // Sending is an explicit request to see the newest message, even when the
+    // reader was browsing history. Keep the keyboard in place: dismissing it
+    // while appending and animating an end scroll changes the viewport and
+    // offset together. Stream updates still respect the normal end threshold.
+    requestAnimationFrame(() => {
+      if (!ownsRoute() || activeAsidRef.current !== currentAsid) return;
+      void scrollMessageToEnd({ animated: false, closeKeyboard: false });
+    });
 
     // No optimistic title. Auto-titling happens on the engine's first turn and
     // arrives as `agent.session.updated`; a client-side guess made from the
@@ -3513,6 +3506,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
               style={[
                 styles.thinkingPill,
                 {
+                  borderRadius: profile.chrome.control,
                   backgroundColor: surfaceBackground(theme.colors.surface),
                   borderColor: theme.colors.border,
                 },
@@ -4577,7 +4571,6 @@ const styles = StyleSheet.create({
     gap: 7,
     paddingHorizontal: 12,
     paddingVertical: 7,
-    borderRadius: 999,
     borderCurve: 'continuous',
     borderWidth: StyleSheet.hairlineWidth,
   },

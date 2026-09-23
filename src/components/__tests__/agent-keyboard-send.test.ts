@@ -3,21 +3,13 @@ import { readFileSync } from 'node:fs';
 
 const workbench = readFileSync('src/components/agent-workbench.tsx', 'utf8');
 
-test('sending coordinates the optimistic row with keyboard dismissal only near the end', () => {
-  const threshold = workbench.indexOf(
-    'listRef.current?.getState().isWithinMaintainScrollAtEndThreshold'
-  );
-  const optimistic = workbench.indexOf('setTimeline((prev) => [...prev, tempUserItem])', threshold);
-  const guard = workbench.indexOf('if (followAfterSend)', optimistic);
-  const frame = workbench.indexOf('requestAnimationFrame(() => {', guard);
-  const coordinatedScroll = workbench.indexOf(
-    'scrollMessageToEnd({ animated: true, closeKeyboard: true })',
-    frame
-  );
-
-  expect(threshold).toBeGreaterThan(-1);
-  expect(optimistic).toBeGreaterThan(threshold);
-  expect(guard).toBeGreaterThan(optimistic);
-  expect(frame).toBeGreaterThan(guard);
-  expect(coordinatedScroll).toBeGreaterThan(frame);
+test('explicit sends reach the newest row without dismissing the keyboard or animating the offset', () => {
+  const start = workbench.indexOf('setTimeline((prev) => [...prev, tempUserItem])');
+  const end = workbench.indexOf('// No optimistic title.', start);
+  const sendScroll = workbench.slice(start, end);
+  expect(start).toBeGreaterThan(-1);
+  expect(sendScroll).toContain('requestAnimationFrame');
+  expect(sendScroll).toContain('activeAsidRef.current !== currentAsid');
+  expect(sendScroll).toContain('scrollMessageToEnd({ animated: false, closeKeyboard: false })');
+  expect(sendScroll).not.toContain('followAfterSend');
 });
