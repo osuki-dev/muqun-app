@@ -106,6 +106,13 @@ import { resolveHomeIdentity } from '@/theme/resolve';
 import { isHomeArtworkAvailable, resolveHomeArtworkAsset } from '@/theme/home-artwork';
 import { homeArtworkPreference } from '@/theme/repository';
 import { ThemeArtwork, useHasThemeArtwork } from '@/components/theme-artwork';
+import { DevHomeAmbientControls } from '@/components/dev-home-ambient-controls';
+import { SkiaAmbientEffect } from '@/components/skia-ambient-effect';
+import type {
+  ThemeAmbientEffect,
+  ThemeEffectColorRole,
+  ThemeEffectDirection,
+} from '@/theme/schema';
 import { ThemedSurface, ThemedSurfaceArtwork } from '@/components/themed-surface';
 import { useBrandMark } from '@/components/brand-mark';
 import { forgetWarmWorkspace } from '@/lib/server-warm-cache';
@@ -182,6 +189,45 @@ export function HomeOverview({
     null
   );
   const { resolvedMode } = useThemeMode();
+  const [devEffect, setDevEffect] = useState<ThemeAmbientEffect | 'theme'>('theme');
+  const [devEffectIntensity, setDevEffectIntensity] = useState(0.5);
+  const [devEffectSpeed, setDevEffectSpeed] = useState(1);
+  const [devEffectDensity, setDevEffectDensity] = useState(1);
+  const [devEffectSize, setDevEffectSize] = useState(1);
+  const [devEffectPalette, setDevEffectPalette] = useState<ThemeEffectColorRole[] | undefined>();
+  const [devEffectDirection, setDevEffectDirection] = useState<ThemeEffectDirection | undefined>();
+  const hasDevEffectOverride = __DEV__ && devEffect !== 'theme';
+  const devAmbientLayer = hasDevEffectOverride ? (
+    <SkiaAmbientEffect
+      effect={devEffect}
+      intensity={devEffectIntensity}
+      speed={devEffectSpeed}
+      density={devEffectDensity}
+      size={devEffectSize}
+      palette={devEffectPalette}
+      direction={devEffectDirection}
+      mode={resolvedMode}
+      colors={theme.colors}
+    />
+  ) : null;
+  const devAmbientControls = __DEV__ ? (
+    <DevHomeAmbientControls
+      value={devEffect}
+      onChange={setDevEffect}
+      intensity={devEffectIntensity}
+      onIntensityChange={setDevEffectIntensity}
+      speed={devEffectSpeed}
+      onSpeedChange={setDevEffectSpeed}
+      density={devEffectDensity}
+      onDensityChange={setDevEffectDensity}
+      size={devEffectSize}
+      onSizeChange={setDevEffectSize}
+      palette={devEffectPalette}
+      onPaletteChange={setDevEffectPalette}
+      direction={devEffectDirection}
+      onDirectionChange={setDevEffectDirection}
+    />
+  ) : null;
   const homeArtworkPreferenceValue = useThemeLibrary((state) => {
     const installed = state.library.themes.find(
       (entry) => entry.id === customTheme?.installationId
@@ -630,7 +676,12 @@ export function HomeOverview({
         testID="home-editorial"
         onLayout={(event) => setEditorialWidth(event.nativeEvent.layout.width)}
         style={[styles.page, { backgroundColor: background(theme.colors.background) }]}>
-        <ThemeArtwork slot="home.wallpaper" fallbackSlot="shell.wallpaper" />
+        <ThemeArtwork
+          slot="home.wallpaper"
+          fallbackSlot="shell.wallpaper"
+          effectsEnabled={!hasDevEffectOverride}
+        />
+        {devAmbientLayer}
         <KeyboardAwareScrollView
           ref={overviewScroll}
           onContentSizeChange={restoreScroll}
@@ -801,6 +852,7 @@ export function HomeOverview({
             />
           </View>
         </KeyboardAwareScrollView>
+        {devAmbientControls}
       </View>
     );
     return editorialContent;
@@ -829,7 +881,12 @@ export function HomeOverview({
 
   const classicContent = (
     <View style={[styles.page, { backgroundColor: background(theme.colors.background) }]}>
-      <ThemeArtwork slot="home.wallpaper" fallbackSlot="shell.wallpaper" />
+      <ThemeArtwork
+        slot="home.wallpaper"
+        fallbackSlot="shell.wallpaper"
+        effectsEnabled={!hasDevEffectOverride}
+      />
+      {devAmbientLayer}
       {/* The bar and the brand block below it are one header in two states, not
           two rows. At rest the bar's left half is deliberately empty -- no
           hamburger, no title, no rule, no blur -- because the brand block ten
@@ -1249,9 +1306,16 @@ export function HomeOverview({
 
         {!loading ? <View style={[styles.spacerBelow, isPad && styles.padSpacer]} /> : null}
       </KeyboardAwareScrollView>
+      {devAmbientControls}
     </View>
   );
-  return embedded ? classicContent : <AppDrawer padRail={padRail}>{classicContent}</AppDrawer>;
+  return embedded ? (
+    classicContent
+  ) : (
+    <AppDrawer padRail={padRail} wallpaperEffectsEnabled={!hasScene && !hasDevEffectOverride}>
+      {classicContent}
+    </AppDrawer>
+  );
 }
 
 /**

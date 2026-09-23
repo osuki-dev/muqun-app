@@ -43,13 +43,64 @@ export const themeColorsSchema = z.strictObject({
   info: opaque,
 });
 
-export const THEME_AMBIENT_EFFECTS = ['none', 'rain', 'particles', 'scanlines', 'bloom'] as const;
+export const THEME_AMBIENT_EFFECTS = [
+  'none',
+  'rain',
+  'particles',
+  'scanlines',
+  'bloom',
+  'dust',
+  'embers',
+  'snow',
+  'stars',
+] as const;
 export type ThemeAmbientEffect = (typeof THEME_AMBIENT_EFFECTS)[number];
+
+export const THEME_EFFECT_PALETTE_ROLES = [
+  'primary',
+  'text',
+  'textMuted',
+  'info',
+  'success',
+  'warning',
+] as const;
+export type ThemeEffectColorRole = (typeof THEME_EFFECT_PALETTE_ROLES)[number];
+export type ThemeEffectPaletteRole = ThemeEffectColorRole;
+export const THEME_EFFECT_DIRECTIONS = [
+  'up',
+  'down',
+  'left',
+  'right',
+  'up-left',
+  'up-right',
+  'down-left',
+  'down-right',
+] as const;
+export type ThemeEffectDirection = (typeof THEME_EFFECT_DIRECTIONS)[number];
+export const THEME_EFFECT_CAPABILITIES = Object.fromEntries(
+  THEME_AMBIENT_EFFECTS.map((effect) => [
+    effect,
+    {
+      speed: effect !== 'none' && effect !== 'scanlines',
+      density: effect !== 'none' && effect !== 'bloom',
+      direction: ['rain', 'particles', 'dust', 'embers', 'snow'].includes(effect),
+      size: effect !== 'none',
+      palette: effect !== 'none',
+    },
+  ])
+) as Record<
+  ThemeAmbientEffect,
+  { speed: boolean; density: boolean; direction: boolean; size: boolean; palette: boolean }
+>;
 
 export const themeEffectsSchema = z.strictObject({
   ambient: z.enum(THEME_AMBIENT_EFFECTS).default('none'),
   intensity: z.number().min(0).max(1).optional(),
   speed: z.number().min(0).max(2).optional(),
+  density: z.number().min(0).max(1).optional(),
+  size: z.number().min(0.5).max(2).optional(),
+  palette: z.array(z.enum(THEME_EFFECT_PALETTE_ROLES)).min(1).max(4).optional(),
+  direction: z.enum(THEME_EFFECT_DIRECTIONS).optional(),
 });
 export type ThemeEffects = z.infer<typeof themeEffectsSchema>;
 
