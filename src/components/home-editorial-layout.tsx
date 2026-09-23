@@ -214,6 +214,7 @@ export function HomeEditorialLayout({
     const titleHeight = titleFontSize * 1.08;
     return (
       <View
+        key="cover"
         testID="home-editorial-layout"
         onLayout={(event) => setMeasuredWidth(event.nativeEvent.layout.width)}
         style={[styles.root, { paddingHorizontal: geometry.gutter }, style]}>
@@ -316,6 +317,7 @@ export function HomeEditorialLayout({
   if (!hasArtwork) {
     return (
       <View
+        key="without-artwork"
         testID="home-editorial-layout"
         onLayout={(event) => setMeasuredWidth(event.nativeEvent.layout.width)}
         style={[styles.root, styles.noArtworkRoot, { paddingHorizontal: geometry.gutter }, style]}>
@@ -412,6 +414,7 @@ export function HomeEditorialLayout({
 
   return (
     <View
+      key="with-artwork"
       testID="home-editorial-layout"
       onLayout={(event) => setMeasuredWidth(event.nativeEvent.layout.width)}
       style={[styles.root, { paddingHorizontal: geometry.gutter }, style]}>
