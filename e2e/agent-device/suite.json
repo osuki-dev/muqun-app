@@ -900,7 +900,7 @@
       },
       {
         "target": {
-          "text": "function render60\\(state, props\\) \\{"
+          "text": "function render40\\(state, props\\) \\{"
         },
         "mode": "scroll",
         "direction": "down",
@@ -909,7 +909,7 @@
       },
       {
         "target": {
-          "text": "function render60\\(state, props\\) \\{"
+          "text": "function render40\\(state, props\\) \\{"
         },
         "mode": "visible",
         "run": "flows/large-file-preview.ad#visible"
