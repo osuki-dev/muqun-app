@@ -19,7 +19,7 @@
  * this and cannot read the headings on the way down to it.
  */
 import { useLingui } from '@lingui/react/macro';
-import { ScrollView } from 'react-native';
+import { View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import {
@@ -57,12 +57,10 @@ export function SettingsLanguageSheet({ onClose }: { onClose: () => void }) {
     <SheetScene
       testID="settings-language-sheet"
       title={t`Language`}
-      caption={language ? LOCALE_LABELS[language] : t`Following your phone`}>
-      <ScrollView
-        nestedScrollEnabled
-        style={sheetSceneStyles.scroller}
-        contentContainerStyle={sheetSceneStyles.scrollerContent}
-        showsVerticalScrollIndicator={false}>
+      caption={language ? LOCALE_LABELS[language] : t`Following your phone`}
+      contentSized>
+      <View
+        style={sheetSceneStyles.scroller}>
         {/* First, and the default, so the app follows the phone until someone
             has a reason for it not to. `null` is what the store keeps -- it is
             the absence of a choice, not a tenth language. */}
@@ -85,7 +83,7 @@ export function SettingsLanguageSheet({ onClose }: { onClose: () => void }) {
           />
         ))}
         <SheetSceneFooter bottomInset={insets.bottom} />
-      </ScrollView>
+      </View>
     </SheetScene>
   );
 }

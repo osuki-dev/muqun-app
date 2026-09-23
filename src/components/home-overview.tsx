@@ -617,24 +617,29 @@ export function HomeOverview({
         onLayout={(event) => setEditorialWidth(event.nativeEvent.layout.width)}
         style={[styles.page, { backgroundColor: background(theme.colors.background) }]}>
         <ThemeArtwork slot="home.wallpaper" fallbackSlot="shell.wallpaper" />
-        <SafeAreaView style={styles.page} edges={['top', 'bottom']}>
-          <KeyboardAwareScrollView
-            ref={overviewScroll}
-            onContentSizeChange={restoreScroll}
-            onScrollEndDrag={rememberScroll}
-            onMomentumScrollEnd={rememberScroll}
-            style={styles.page}
-            contentContainerStyle={{ flexGrow: 1, paddingBottom: 24 }}
-            onScroll={onScroll}
-            scrollEventThrottle={16}
-            showsVerticalScrollIndicator={false}
-            refreshControl={
-              <RefreshControl
-                refreshing={refreshing}
-                onRefresh={() => void onRefresh()}
-                tintColor={theme.colors.primary}
-              />
-            }>
+        <KeyboardAwareScrollView
+          ref={overviewScroll}
+          onContentSizeChange={restoreScroll}
+          onScrollEndDrag={rememberScroll}
+          onMomentumScrollEnd={rememberScroll}
+          contentInsetAdjustmentBehavior="never"
+          style={styles.page}
+          contentContainerStyle={{
+            flexGrow: 1,
+            paddingTop: insets.top,
+            paddingBottom: insets.bottom + 24,
+          }}
+          onScroll={onScroll}
+          scrollEventThrottle={16}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={() => void onRefresh()}
+              tintColor={theme.colors.primary}
+              progressViewOffset={insets.top}
+            />
+          }>
             {returnToTask ? <View style={styles.embeddedReturnRow}>{returnToTask}</View> : null}
             {hydrationError ? (
               <GatewayStorageError busy={loading} onRetry={retryHydration} />
@@ -642,6 +647,7 @@ export function HomeOverview({
             <View>
               <HomeEditorialLayout
                 contentWidth={editorialWidth || width}
+                scrollY={scrollY}
                 cover={customTheme?.manifest.homePresentation?.header === 'cover'}
                 coverTitle={identity.name ?? undefined}
                 artwork={
@@ -778,7 +784,6 @@ export function HomeOverview({
               />
             </View>
           </KeyboardAwareScrollView>
-        </SafeAreaView>
       </View>
     );
     return editorialContent;

@@ -162,44 +162,55 @@ export const AgentModeSheet = memo(function AgentModeSheet({
   const effectiveAgent = effectiveAgentId(selectedAgent, defaultAgent);
   const current = displayAgents.find((agent) => agent.id === effectiveAgent);
 
+  const contentSized = displayAgents.length <= 4;
+
+  const content = (
+    <>
+      <SheetSceneGroupHeading title={t`Agents on this host`} first />
+      {displayAgents.map((agent, index) => {
+        const isSelected = effectiveAgent === agent.id;
+        return (
+          <Animated.View
+            key={agent.id}
+            entering={index < STAGGERED_ROWS ? riseIn(index * STAGGER.row) : fadeIn('short')}
+            layout={listLayout('short')}>
+            <SheetSceneRow
+              testID={`agent-mode-row-${agent.id}`}
+              title={agent.name || agent.id}
+              caption={[modeLabel(agent), agent.description].filter(Boolean).join(' · ')}
+              selected={isSelected}
+              leading={agentIcon(
+                agent.id,
+                isSelected ? theme.colors.primary : theme.colors.textSubtle
+              )}
+              onPress={() => onSelectAgent(agent.id)}
+            />
+          </Animated.View>
+        );
+      })}
+      <SheetSceneFooter bottomInset={insets.bottom} />
+    </>
+  );
+
   return (
     <SheetScene
       testID="agent-mode-sheet"
       title={t`Choose an agent`}
-      caption={current ? current.name || current.id : effectiveAgent}>
+      caption={current ? current.name || current.id : effectiveAgent}
+      contentSized={contentSized}>
       {loading ? (
         <View style={styles.loading}>
           <Spinner size="lg" color={theme.colors.primary} />
         </View>
+      ) : contentSized ? (
+        <View style={sheetSceneStyles.scrollerContent}>{content}</View>
       ) : (
         <ScrollView
           nestedScrollEnabled
           style={sheetSceneStyles.scroller}
           contentContainerStyle={sheetSceneStyles.scrollerContent}
           showsVerticalScrollIndicator={false}>
-          <SheetSceneGroupHeading title={t`Agents on this host`} first />
-          {displayAgents.map((agent, index) => {
-            const isSelected = effectiveAgent === agent.id;
-            return (
-              <Animated.View
-                key={agent.id}
-                entering={index < STAGGERED_ROWS ? riseIn(index * STAGGER.row) : fadeIn('short')}
-                layout={listLayout('short')}>
-                <SheetSceneRow
-                  testID={`agent-mode-row-${agent.id}`}
-                  title={agent.name || agent.id}
-                  caption={[modeLabel(agent), agent.description].filter(Boolean).join(' · ')}
-                  selected={isSelected}
-                  leading={agentIcon(
-                    agent.id,
-                    isSelected ? theme.colors.primary : theme.colors.textSubtle
-                  )}
-                  onPress={() => onSelectAgent(agent.id)}
-                />
-              </Animated.View>
-            );
-          })}
-          <SheetSceneFooter bottomInset={insets.bottom} />
+          {content}
         </ScrollView>
       )}
     </SheetScene>
