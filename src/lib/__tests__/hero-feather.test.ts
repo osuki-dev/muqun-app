@@ -12,6 +12,7 @@ import { describe, expect, test } from 'bun:test';
 import {
   containedImageRect,
   coveredImageRect,
+  editorialArtworkRect,
   heroFeatherGeometry,
   HOME_HERO_FEATHER,
   MAX_FEATHER_FRACTION,
@@ -19,6 +20,39 @@ import {
 
 /** The compact band: full phone width, `HOME_HERO_MAX_HEIGHT.compact` tall. */
 const BAND = { width: 360, height: 180 };
+
+describe('Editorial foreground framing', () => {
+  test.each([360, 600, 900])(
+    'keeps the portrait head at width %i without shrinking it',
+    (width) => {
+      const box = { width, height: Math.min(640, width * 0.9) };
+      const source = { width: 1024, height: 1536 };
+      const focalPoint = { x: 0.58, y: 0.35 };
+      const previous = coveredImageRect(box, source, focalPoint);
+      const next = editorialArtworkRect(box, source, 'cover', focalPoint);
+      expect(previous.y).toBeLessThan(0);
+      expect(next.y).toBe(0);
+      expect(next.width).toBe(previous.width);
+      expect(next.height).toBe(previous.height);
+    }
+  );
+
+  test('retains horizontal framing for wide foregrounds', () => {
+    const source = { width: 2400, height: 800 };
+    const focalPoint = { x: 0.8, y: 0.35 };
+    expect(editorialArtworkRect(BAND, source, 'cover', focalPoint)).toEqual(
+      coveredImageRect(BAND, source, focalPoint)
+    );
+  });
+
+  test('contain artwork retains its authored positioning', () => {
+    const source = { width: 1024, height: 1536 };
+    const focalPoint = { x: 0.8, y: 0.35 };
+    expect(editorialArtworkRect(BAND, source, 'contain', focalPoint)).toEqual(
+      containedImageRect(BAND, source, focalPoint)
+    );
+  });
+});
 
 describe('the drawn rectangle', () => {
   test('a wide drawing is letterboxed and the empty rows are not part of it', () => {

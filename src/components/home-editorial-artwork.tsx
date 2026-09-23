@@ -12,7 +12,7 @@ import { StyleSheet, View, type LayoutChangeEvent } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { useLaunchHomeArtwork } from '@/hooks/use-launch-home-artwork';
-import { containedImageRect, coveredImageRect } from '@/lib/hero-feather';
+import { editorialArtworkRect } from '@/lib/hero-feather';
 import { fadeIn, listLayout } from '@/lib/motion';
 import type { ResolvedHomeArtworkAsset } from '@/theme/home-artwork';
 
@@ -61,13 +61,17 @@ function HomeEditorialArtworkImage({
   }, [onAvailabilityChange]);
   const image = useImage(resolution.source, onError);
   const { focalPoint, fit } = resolution.resolved.image;
-  const fitRect = fit === 'contain' ? containedImageRect : coveredImageRect;
   const imageRect = useMemo(
     () =>
       box && image
-        ? fitRect(box, { width: image.width(), height: image.height() }, focalPoint)
+        ? editorialArtworkRect(
+            box,
+            { width: image.width(), height: image.height() },
+            fit,
+            focalPoint
+          )
         : null,
-    [box, focalPoint, image, fitRect]
+    [box, focalPoint, image, fit]
   );
   const view = useRef<View | null>(null);
   const intrinsic = useMemo(

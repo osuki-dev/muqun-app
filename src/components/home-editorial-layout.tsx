@@ -255,6 +255,7 @@ export function HomeEditorialLayout({
                   {
                     marginTop: coverTitle ? -titleHeight * 0.35 : 0,
                     marginHorizontal: split ? 0 : -geometry.gutter,
+                    zIndex: 1,
                   },
                   animatedArtworkStyle,
                 ]}>
@@ -501,7 +502,7 @@ const styles = StyleSheet.create({
   coverColumns: { flexDirection: 'row', alignItems: 'flex-start', gap: 24 },
   coverReadingColumn: { flex: 1, minWidth: 0, paddingTop: 16 },
   coverScene: { position: 'relative', minWidth: 0 },
-  coverUtilities: { position: 'absolute', left: 0, maxWidth: '48%', gap: 14 },
+  coverUtilities: { position: 'absolute', left: 0, maxWidth: '48%', gap: 14, zIndex: 2 },
   coverButtons: { alignSelf: 'flex-start' },
   coverTarget: { alignSelf: 'flex-start', maxWidth: '100%' },
   coverLaunches: { marginTop: -64, zIndex: 1 },
