@@ -55,7 +55,7 @@ import {
   reducedLaunchIntroTimeline,
   WORLD_ARRIVAL_ZOOM,
 } from '@/lib/launch-intro-timeline';
-import { bloomRadius, chooseLaunchWorld } from '@/lib/launch-intro-world';
+import { bloomRadius, chooseLaunchWorld, launchWorldHole } from '@/lib/launch-intro-world';
 import { DURATION, RISE_DISTANCE, timing } from '@/lib/motion';
 import { THEME_ARTWORK_REGULAR_MIN_WIDTH } from '@/lib/responsive-layout';
 import { resolveThemeImage } from '@/theme/resolve';
@@ -260,13 +260,24 @@ export function LaunchSceneIntro({
   // mounting underneath this sheet at the same time, and may measure before or
   // after the opening starts.
   const latestHomeRect = useRef<LaunchArtworkRect | null>(null);
+  const startedAt = useRef(0);
   const [homeRect, setHomeRect] = useState<LaunchArtworkRect | null>(null);
   useEffect(
     () =>
       subscribeLaunchArtworkRect((rect) => {
         latestHomeRect.current = rect;
+        // A cold image decode may complete after the native handover. Accept
+        // it before departure, but never redirect an artwork already in flight.
+        if (
+          phase === 'visible' &&
+          !reduced &&
+          startedAt.current > 0 &&
+          Date.now() - startedAt.current <= beats.hero.at
+        ) {
+          setHomeRect(rect);
+        }
       }),
-    []
+    [phase, reduced, beats.hero.at]
   );
   // Capture before scheduling travel. The animation is armed only after this
   // snapshot has committed, so a delayed JS render cannot redirect it mid-flight.
@@ -431,10 +442,6 @@ export function LaunchSceneIntro({
   const hold = useSharedValue(0);
   const exit = useSharedValue(0);
 
-  // When the handover happened, for the skip gate. A ref rather than state:
-  // reading it must not re-render the sheet mid-sequence.
-  const startedAt = useRef(0);
-
   const skip = useCallback(() => {
     if (!canSkipLaunchIntro(Date.now() - startedAt.current, beats)) return;
     onDone();
@@ -554,14 +561,7 @@ export function LaunchSceneIntro({
   // paper it is already showing, but a palette pack drew a small coloured blob
   // on the splash for half a second. The cover stays shut until there is an
   // opening to open.
-  const hole: InkBloomHole =
-    phase !== 'visible'
-      ? 'closed'
-      : world.kind === 'palette'
-        ? 'field'
-        : world.kind === 'painted' && world.ready
-          ? 'through'
-          : 'closed';
+  const hole: InkBloomHole = launchWorldHole(phase, world);
   const worldAlpha = wallpaper?.opacity ?? 1;
 
   // Every uniform, once per frame, on the UI thread. JavaScript does nothing
@@ -628,7 +628,9 @@ export function LaunchSceneIntro({
     world.kind === 'palette' || (world.kind === 'painted' && !(frontGone && world.ready));
 
   return (
-    <Animated.View style={[mirror.container.style, sheetStyle]}>
+    <Animated.View
+      needsOffscreenAlphaCompositing={phase === 'exiting'}
+      style={[mirror.container.style, sheetStyle]}>
       {/* The paper, which is the pack's own and is under everything. */}
       <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: paper }]} />
 
