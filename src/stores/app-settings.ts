@@ -8,7 +8,12 @@ import {
   type PaneViewMode,
   type StoredAgentViewSettings,
 } from '@/lib/pane-view-mode';
-import { isHomeLayout, resolveHomeLayout, type HomeLayout } from '@/lib/home-layout';
+import {
+  DEFAULT_HOME_LAYOUT,
+  isHomeLayout,
+  resolveHomeLayout,
+  type HomeLayout,
+} from '@/lib/home-layout';
 import type { TerminalTextSize } from '@/lib/terminal-text-size';
 import { parseFontSlot, SYSTEM_FONT_SLOT, type FontSlot } from '@/theme/user-font-file';
 
@@ -91,7 +96,7 @@ const defaults: PersistedSettings = {
   androidWidgetEnabled: false,
   appLockEnabled: false,
   hapticsEnabled: true,
-  homeLayout: 'classic',
+  homeLayout: DEFAULT_HOME_LAYOUT,
   // The system font, which is the absence of a choice rather than a third
   // option. The app offers no fonts of its own, so until a reader brings one
   // there is nothing to choose between.
