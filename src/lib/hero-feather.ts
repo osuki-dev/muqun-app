@@ -153,6 +153,17 @@ export function coveredImageRect(
   };
 }
 
+/** Foreground portraits retain their top edge; only wallpaper may crop above it. */
+export function editorialArtworkRect(
+  container: FeatherSize,
+  intrinsic: FeatherSize,
+  fit: string | undefined,
+  focalPoint?: { x: number; y: number }
+): FeatherRect {
+  if (fit === 'contain') return containedImageRect(container, intrinsic, focalPoint);
+  return coveredImageRect(container, intrinsic, { x: focalPoint?.x ?? 0.5, y: 0 });
+}
+
 /**
  * The drawn rectangle, and the blurred rounded rectangle that feathers it.
  *
