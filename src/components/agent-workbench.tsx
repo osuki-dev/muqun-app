@@ -3379,6 +3379,12 @@ export const AgentWorkbench = memo(function AgentWorkbench({
    * nowhere else in this app or in any catalog it fetches.
    */
   const statusPlate = useTranscriptPlate();
+  const [retryNoticeDismissed, setRetryNoticeDismissed] = useState(false);
+  useEffect(() => {
+    // Dismissal belongs to this retry episode, never to the engine's state.
+    // A recovered session that later retries must be able to explain why again.
+    setRetryNoticeDismissed(false);
+  }, [activeAsid, sessionInfo?.status, sessionInfo?.error?.message]);
   const statusNotice = useMemo(() => {
     const status = sessionInfo?.status;
     if (status === 'failed') {
@@ -3403,10 +3409,12 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       return { tone: theme.colors.warning, label: t`Stopped`, detail: '' };
     }
     if (status === 'retry') {
+      if (retryNoticeDismissed) return null;
       return {
         tone: theme.colors.warning,
         label: t`Retrying…`,
         detail: sessionInfo?.error?.message ?? '',
+        dismissible: true,
       };
     }
     if (status === 'unknown') {
@@ -3428,7 +3436,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       };
     }
     return null;
-  }, [sessionInfo?.status, sessionInfo?.error?.message, theme.colors, t]);
+  }, [sessionInfo?.status, sessionInfo?.error?.message, retryNoticeDismissed, theme.colors, t]);
 
   // A form field in the footer took focus: once the keyboard has risen, bring
   // the card up above the composer. The inset at the end of the list is what
@@ -3523,6 +3531,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         {statusNotice ? (
           <PressableScale
             testID="agent-status-notice"
+            accessible={!statusNotice.dismissible}
             accessibilityRole={statusNotice.refresh ? 'button' : 'text'}
             accessibilityLabel={statusNotice.label}
             disabled={!statusNotice.refresh}
@@ -3577,6 +3586,16 @@ export const AgentWorkbench = memo(function AgentWorkbench({
                 </Animated.View>
               ) : null}
             </View>
+            {statusNotice.dismissible ? (
+              <PressableScale
+                testID="agent-status-notice-dismiss"
+                accessibilityRole="button"
+                accessibilityLabel={t`Dismiss`}
+                onPress={() => setRetryNoticeDismissed(true)}
+                style={[styles.statusNoticeDismiss, { borderRadius: profile.chrome.control }]}>
+                <X size={16} color={theme.colors.textMuted} />
+              </PressableScale>
+            ) : null}
           </PressableScale>
         ) : null}
         {footerPermissions.map((p) => (
@@ -4595,6 +4614,13 @@ const styles = StyleSheet.create({
   statusNoticeHug: {
     alignSelf: 'flex-start',
     maxWidth: '100%',
+  },
+  statusNoticeDismiss: {
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 'auto',
   },
   // Shrinks, never grows: inside a plate that hugs, a `flex: 1` column measures
   // to nothing and the row collapses to its dot.
