@@ -3,19 +3,16 @@ import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens } from '@osuki-dev/ui';
 import { ArrowUpRight, ChevronDown, Link, Play, SquareTerminal } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { BlurTargetView } from 'expo-blur';
 import Animated, {
   useAnimatedStyle,
-  useAnimatedScrollHandler,
   useReducedMotion,
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
 
 import { OpenCodeIcon } from '@/components/opencode-icon';
-import { ScrollEdgeGlass } from '@/components/scroll-edge-glass';
 import { PressableScale } from '@/components/pressable-scale';
 import { Text } from '@/components/text';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
@@ -164,6 +161,8 @@ export function HomeLaunchTarget({
       <Text
         variant="bodySmall"
         weight="semibold"
+        numberOfLines={1}
+        ellipsizeMode="tail"
         style={styles.targetName}
         pointerEvents="none">
         {loading
@@ -206,13 +205,6 @@ export function HomeLaunchActions({
   const { chosenOffline, launchOnChosen, opening, run } = controller;
   const [availableWidth, setAvailableWidth] = useState(0);
   const horizontal = availableWidth < 560;
-  const blurTarget = useRef<View>(null);
-  const railOffset = useSharedValue(0);
-  const railExtent = useSharedValue(0);
-  const onRailScroll = useAnimatedScrollHandler((event) => {
-    railOffset.value = event.contentOffset.x;
-    railExtent.value = Math.max(0, event.contentSize.width - event.layoutMeasurement.width);
-  });
 
   return (
     <View
@@ -244,13 +236,8 @@ export function HomeLaunchActions({
         </PressableScale>
       ) : null}
       <View>
-        <BlurTargetView ref={blurTarget}>
+        <View>
           <Animated.ScrollView
-            onScroll={onRailScroll}
-            scrollEventThrottle={16}
-            onContentSizeChange={(width) => {
-              railExtent.value = Math.max(0, width - availableWidth);
-            }}
             horizontal={horizontal}
             scrollEnabled={horizontal}
             nestedScrollEnabled
@@ -311,23 +298,7 @@ export function HomeLaunchActions({
               }}
             />
           </Animated.ScrollView>
-        </BlurTargetView>
-        {horizontal ? (
-          <>
-            <ScrollEdgeGlass
-              side="left"
-              target={blurTarget}
-              offset={railOffset}
-              extent={railExtent}
-            />
-            <ScrollEdgeGlass
-              side="right"
-              target={blurTarget}
-              offset={railOffset}
-              extent={railExtent}
-            />
-          </>
-        ) : null}
+        </View>
       </View>
       {opening ? <Text variant="caption" color={theme.colors.textMuted}>{t`Opening…`}</Text> : null}
     </View>

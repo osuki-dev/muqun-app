@@ -19,7 +19,7 @@ import Animated, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { NAV_HEADER_CONTROL_SIZE } from '@/components/nav-header';
-import { appAppearanceConfig } from '@/constants/appearance';
+import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { useNotificationSurfaceStyle } from '@/components/notification-surface';
 import { NAV_HEADER_TOP_GAP } from '@/constants/nav-header';
 import { permissionActionPhrase } from '@/i18n/labels';
@@ -77,6 +77,7 @@ const DRAG_SLOP = 6;
  * reader who cannot make it.
  */
 export function InAppNotificationHost() {
+  const profile = useAppearanceProfile();
   const notificationSurfaceStyle = useNotificationSurfaceStyle();
   const insets = useSafeAreaInsets();
   const surfaceBackground = useSurfaceBackground();
@@ -223,8 +224,10 @@ export function InAppNotificationHost() {
     const { lead, suffix } = noticeTitleParts(
       approval ? t`Approval required` : entry.title || t`Muqun`
     );
-    const body = approval ? approvalPhrase : entry.body;
-    const detail = approval ? approval.subject : '';
+    // A terminal approval push is ordinary prose, not an OpenCode rule/path.
+    // Keep it in the wrapping UI face instead of the single-line code detail.
+    const body = approval?.action ? approvalPhrase : entry.body;
+    const detail = approval?.action ? approval.subject : '';
     return (
       <Animated.View
         key={entry.id}
@@ -286,7 +289,13 @@ export function InAppNotificationHost() {
               testID="in-app-notification-next"
               accessibilityRole="button"
               onPress={() => setSelectedId(items[(position + 1) % items.length]!.id)}
-              style={[styles.pill, { backgroundColor: surfaceBackground(colors.primarySubtle) }]}
+              style={[
+                styles.pill,
+                {
+                  borderRadius: profile.chrome.control,
+                  backgroundColor: surfaceBackground(colors.primarySubtle),
+                },
+              ]}
               accessibilityLabel={t`Next notification`}>
               <Text variant="caption" color={colors.textMuted} style={styles.count}>
                 {page + 1} / {items.length}
@@ -388,7 +397,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 7,
     minHeight: 44,
     justifyContent: 'center',
-    borderRadius: appAppearanceConfig.radius.pill,
   },
   action: { minHeight: 44, justifyContent: 'center', paddingLeft: 10 },
   count: { fontVariant: ['tabular-nums'] },

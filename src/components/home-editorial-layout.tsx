@@ -420,10 +420,7 @@ export function HomeEditorialLayout({
 
       {hasArtwork ? (
         <Animated.View
-          style={[
-            { marginHorizontal: -geometry.gutter, marginBottom: 12 },
-            animatedArtworkStyle,
-          ]}>
+          style={[{ marginHorizontal: -geometry.gutter, marginBottom: 12 }, animatedArtworkStyle]}>
           {artwork}
         </Animated.View>
       ) : null}
@@ -554,7 +551,7 @@ const styles = StyleSheet.create({
   },
   mastheadLeadGroup: {
     minWidth: 0,
-    flexShrink: 1,
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
@@ -582,7 +579,7 @@ const styles = StyleSheet.create({
   headerLeading: {
     minWidth: 0,
     flexShrink: 1,
-    maxWidth: '60%',
+    maxWidth: '100%',
   },
   identity: {
     minWidth: 0,
