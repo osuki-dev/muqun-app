@@ -181,6 +181,7 @@ export function AgentSubagentDetailSheet({
         </View>
       ) : (
         <AgentTranscriptList
+          keyboardAware={false}
           nestedScrollEnabled
           testID="agent-subagent-detail-transcript"
           store={store}
