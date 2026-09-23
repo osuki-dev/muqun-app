@@ -1606,6 +1606,10 @@ msgstr "단축 명령을 저장하지 못했습니다"
 msgid "Could not save theme"
 msgstr "테마를 저장하지 못했어요"
 
+#: src/components/theme-appearance-settings.tsx
+msgid "Could not save this setting. Try again."
+msgstr "설정을 저장하지 못했습니다. 다시 시도하세요"
+
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Could not send"
 msgstr "보낼 수 없습니다"
@@ -2326,6 +2330,10 @@ msgstr "Home 레이아웃: {homeLayoutLabel}"
 #: src/components/settings-alerts.tsx
 msgid "Home screen widget"
 msgstr "홈 화면 위젯"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Home visual effects"
+msgstr "홈 시각 효과"
 
 #: src/components/ssh-host-form.tsx
 msgid "Host"
@@ -4504,6 +4512,10 @@ msgstr "이 출력의 나머지 보기"
 #: src/components/app-drawer.tsx
 msgid "Show the server list"
 msgstr "서버 목록 표시"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Show theme effects only while Home is visible. Turn off to reduce battery use."
+msgstr "홈이 보일 때만 테마 효과를 표시합니다. 끄면 배터리 사용량이 줄어듭니다"
 
 #: src/components/agent-context-sheet.tsx
 msgid "Show thinking"

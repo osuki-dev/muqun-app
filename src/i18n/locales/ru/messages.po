@@ -1606,6 +1606,10 @@ msgstr "Не удалось сохранить команду"
 msgid "Could not save theme"
 msgstr "Не удалось сохранить тему"
 
+#: src/components/theme-appearance-settings.tsx
+msgid "Could not save this setting. Try again."
+msgstr "Не удалось сохранить настройку. Повторите попытку"
+
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Could not send"
 msgstr "Не удалось отправить"
@@ -2326,6 +2330,10 @@ msgstr "Макет Home: {homeLayoutLabel}"
 #: src/components/settings-alerts.tsx
 msgid "Home screen widget"
 msgstr "Виджет на экране «Домой»"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Home visual effects"
+msgstr "Визуальные эффекты главной"
 
 #: src/components/ssh-host-form.tsx
 msgid "Host"
@@ -4504,6 +4512,10 @@ msgstr "Показать остальной вывод"
 #: src/components/app-drawer.tsx
 msgid "Show the server list"
 msgstr "Показать список серверов"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Show theme effects only while Home is visible. Turn off to reduce battery use."
+msgstr "Показывать эффекты темы только на видимой главной странице. Отключите для экономии заряда"
 
 #: src/components/agent-context-sheet.tsx
 msgid "Show thinking"

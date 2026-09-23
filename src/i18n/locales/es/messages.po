@@ -1606,6 +1606,10 @@ msgstr "No se pudo guardar el atajo"
 msgid "Could not save theme"
 msgstr "No se pudo guardar el tema"
 
+#: src/components/theme-appearance-settings.tsx
+msgid "Could not save this setting. Try again."
+msgstr "No se pudo guardar este ajuste. Inténtalo de nuevo"
+
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Could not send"
 msgstr "No se pudo enviar"
@@ -2326,6 +2330,10 @@ msgstr "Diseño de Home: {homeLayoutLabel}"
 #: src/components/settings-alerts.tsx
 msgid "Home screen widget"
 msgstr "Widget en la pantalla de inicio"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Home visual effects"
+msgstr "Efectos visuales de Inicio"
 
 #: src/components/ssh-host-form.tsx
 msgid "Host"
@@ -4504,6 +4512,10 @@ msgstr "Mostrar el resto de esta salida"
 #: src/components/app-drawer.tsx
 msgid "Show the server list"
 msgstr "Mostrar la lista de servidores"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Show theme effects only while Home is visible. Turn off to reduce battery use."
+msgstr "Muestra efectos del tema solo mientras Inicio está visible. Desactívalos para ahorrar batería"
 
 #: src/components/agent-context-sheet.tsx
 msgid "Show thinking"

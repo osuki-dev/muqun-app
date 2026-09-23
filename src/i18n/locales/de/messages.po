@@ -1606,6 +1606,10 @@ msgstr "Verknüpfung konnte nicht gespeichert werden"
 msgid "Could not save theme"
 msgstr "Design konnte nicht gespeichert werden"
 
+#: src/components/theme-appearance-settings.tsx
+msgid "Could not save this setting. Try again."
+msgstr "Diese Einstellung konnte nicht gespeichert werden. Bitte erneut versuchen"
+
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Could not send"
 msgstr "Senden fehlgeschlagen"
@@ -2326,6 +2330,10 @@ msgstr "Home-Layout: {homeLayoutLabel}"
 #: src/components/settings-alerts.tsx
 msgid "Home screen widget"
 msgstr "Startbildschirm-Widget"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Home visual effects"
+msgstr "Visuelle Effekte auf der Startseite"
 
 #: src/components/ssh-host-form.tsx
 msgid "Host"
@@ -4504,6 +4512,10 @@ msgstr "Restliche Ausgabe anzeigen"
 #: src/components/app-drawer.tsx
 msgid "Show the server list"
 msgstr "Serverliste einblenden"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Show theme effects only while Home is visible. Turn off to reduce battery use."
+msgstr "Theme-Effekte nur anzeigen, wenn die Startseite sichtbar ist. Ausschalten spart Akku"
 
 #: src/components/agent-context-sheet.tsx
 msgid "Show thinking"

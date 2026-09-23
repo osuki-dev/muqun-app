@@ -1606,6 +1606,10 @@ msgstr "บันทึกปุ่มลัดไม่ได้"
 msgid "Could not save theme"
 msgstr "บันทึกธีมไม่ได้"
 
+#: src/components/theme-appearance-settings.tsx
+msgid "Could not save this setting. Try again."
+msgstr "บันทึกการตั้งค่านี้ไม่ได้ โปรดลองอีกครั้ง"
+
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Could not send"
 msgstr "ส่งไม่ได้"
@@ -2326,6 +2330,10 @@ msgstr "เลย์เอาต์ Home: {homeLayoutLabel}"
 #: src/components/settings-alerts.tsx
 msgid "Home screen widget"
 msgstr "วิดเจ็ตหน้าจอหลัก"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Home visual effects"
+msgstr "เอฟเฟกต์ภาพหน้าแรก"
 
 #: src/components/ssh-host-form.tsx
 msgid "Host"
@@ -4504,6 +4512,10 @@ msgstr "แสดงผลลัพธ์ส่วนที่เหลือ"
 #: src/components/app-drawer.tsx
 msgid "Show the server list"
 msgstr "แสดงรายการเซิร์ฟเวอร์"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Show theme effects only while Home is visible. Turn off to reduce battery use."
+msgstr "แสดงเอฟเฟกต์ธีมเฉพาะเมื่อมองเห็นหน้าแรก ปิดเพื่อลดการใช้แบตเตอรี่"
 
 #: src/components/agent-context-sheet.tsx
 msgid "Show thinking"

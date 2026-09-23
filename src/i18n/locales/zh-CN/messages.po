@@ -1606,6 +1606,10 @@ msgstr "无法保存快捷命令"
 msgid "Could not save theme"
 msgstr "无法保存主题"
 
+#: src/components/theme-appearance-settings.tsx
+msgid "Could not save this setting. Try again."
+msgstr "无法保存此设置，请重试"
+
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Could not send"
 msgstr "无法发送"
@@ -2326,6 +2330,10 @@ msgstr "首页布局：{homeLayoutLabel}"
 #: src/components/settings-alerts.tsx
 msgid "Home screen widget"
 msgstr "主屏幕小组件"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Home visual effects"
+msgstr "首页视觉效果"
 
 #: src/components/ssh-host-form.tsx
 msgid "Host"
@@ -4504,6 +4512,10 @@ msgstr "显示其余输出"
 #: src/components/app-drawer.tsx
 msgid "Show the server list"
 msgstr "显示服务器列表"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Show theme effects only while Home is visible. Turn off to reduce battery use."
+msgstr "仅在首页可见时显示主题效果。关闭可减少耗电"
 
 #: src/components/agent-context-sheet.tsx
 msgid "Show thinking"

@@ -1606,6 +1606,10 @@ msgstr "Impossible d’enregistrer le raccourci"
 msgid "Could not save theme"
 msgstr "Impossible d’enregistrer le thème"
 
+#: src/components/theme-appearance-settings.tsx
+msgid "Could not save this setting. Try again."
+msgstr "Impossible d’enregistrer ce réglage. Réessayez"
+
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Could not send"
 msgstr "Envoi impossible"
@@ -2326,6 +2330,10 @@ msgstr "Mise en page de Home : {homeLayoutLabel}"
 #: src/components/settings-alerts.tsx
 msgid "Home screen widget"
 msgstr "Widget de l’écran d’accueil"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Home visual effects"
+msgstr "Effets visuels de l’accueil"
 
 #: src/components/ssh-host-form.tsx
 msgid "Host"
@@ -4504,6 +4512,10 @@ msgstr "Afficher le reste de cette sortie"
 #: src/components/app-drawer.tsx
 msgid "Show the server list"
 msgstr "Afficher la liste des serveurs"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Show theme effects only while Home is visible. Turn off to reduce battery use."
+msgstr "Afficher les effets du thème uniquement quand l’accueil est visible. Désactivez-les pour économiser la batterie"
 
 #: src/components/agent-context-sheet.tsx
 msgid "Show thinking"

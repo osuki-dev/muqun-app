@@ -1606,6 +1606,10 @@ msgstr "Could not save shortcut"
 msgid "Could not save theme"
 msgstr "Could not save theme"
 
+#: src/components/theme-appearance-settings.tsx
+msgid "Could not save this setting. Try again."
+msgstr "Could not save this setting. Try again"
+
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Could not send"
 msgstr "Could not send"
@@ -2326,6 +2330,10 @@ msgstr "Home layout, {homeLayoutLabel}"
 #: src/components/settings-alerts.tsx
 msgid "Home screen widget"
 msgstr "Home screen widget"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Home visual effects"
+msgstr "Home visual effects"
 
 #: src/components/ssh-host-form.tsx
 msgid "Host"
@@ -4504,6 +4512,10 @@ msgstr "Show the rest of this output"
 #: src/components/app-drawer.tsx
 msgid "Show the server list"
 msgstr "Show the server list"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Show theme effects only while Home is visible. Turn off to reduce battery use."
+msgstr "Show theme effects only while Home is visible. Turn off to reduce battery use"
 
 #: src/components/agent-context-sheet.tsx
 msgid "Show thinking"

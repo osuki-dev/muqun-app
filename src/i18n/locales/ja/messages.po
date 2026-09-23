@@ -1606,6 +1606,10 @@ msgstr "ショートカットを保存できませんでした"
 msgid "Could not save theme"
 msgstr "テーマを保存できませんでした"
 
+#: src/components/theme-appearance-settings.tsx
+msgid "Could not save this setting. Try again."
+msgstr "設定を保存できませんでした。もう一度お試しください"
+
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Could not send"
 msgstr "送信できませんでした"
@@ -2326,6 +2330,10 @@ msgstr "ホームのレイアウト：{homeLayoutLabel}"
 #: src/components/settings-alerts.tsx
 msgid "Home screen widget"
 msgstr "ホーム画面ウィジェット"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Home visual effects"
+msgstr "ホームの視覚効果"
 
 #: src/components/ssh-host-form.tsx
 msgid "Host"
@@ -4504,6 +4512,10 @@ msgstr "この出力の残りを表示"
 #: src/components/app-drawer.tsx
 msgid "Show the server list"
 msgstr "サーバー一覧を表示"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Show theme effects only while Home is visible. Turn off to reduce battery use."
+msgstr "ホームの表示中のみテーマ効果を表示します。オフにすると消費電力を抑えられます"
 
 #: src/components/agent-context-sheet.tsx
 msgid "Show thinking"

@@ -1606,6 +1606,10 @@ msgstr "Không thể lưu lệnh nhanh"
 msgid "Could not save theme"
 msgstr "Không thể lưu giao diện"
 
+#: src/components/theme-appearance-settings.tsx
+msgid "Could not save this setting. Try again."
+msgstr "Không thể lưu cài đặt này. Hãy thử lại"
+
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Could not send"
 msgstr "Không thể gửi"
@@ -2326,6 +2330,10 @@ msgstr "Bố cục Home: {homeLayoutLabel}"
 #: src/components/settings-alerts.tsx
 msgid "Home screen widget"
 msgstr "Tiện ích màn hình chính"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Home visual effects"
+msgstr "Hiệu ứng hình ảnh trang chủ"
 
 #: src/components/ssh-host-form.tsx
 msgid "Host"
@@ -4504,6 +4512,10 @@ msgstr "Hiện phần còn lại của kết quả"
 #: src/components/app-drawer.tsx
 msgid "Show the server list"
 msgstr "Hiện danh sách máy chủ"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Show theme effects only while Home is visible. Turn off to reduce battery use."
+msgstr "Chỉ hiển thị hiệu ứng chủ đề khi trang chủ đang hiển thị. Tắt để giảm tiêu hao pin"
 
 #: src/components/agent-context-sheet.tsx
 msgid "Show thinking"
