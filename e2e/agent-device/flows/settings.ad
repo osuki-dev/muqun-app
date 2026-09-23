@@ -444,7 +444,7 @@ gesture pan 900 700 0 300 400
 wait stable 400 5000
 
 # section s89
-# The iOS nudge, from the precondition the seek above restores.
+# The iPhone nudge, from the precondition the seek above restores.
 #
 # Tapping the row where the seek leaves it does not work: it settles at y=-20,
 # just above the top edge, and a tap on its clamped centre hits the status bar
@@ -454,6 +454,14 @@ wait stable 400 5000
 # row at y=414. `--pixels` is a gesture magnitude rather than a literal delta,
 # so 96 and above carry it straight back out of the tree.
 scroll up --pixels 60
+
+# section s89-ipad
+# The landscape iPad seek can leave the row at the top edge. Native scroll
+# flicks of 60 or 160 pixels only move it to y=51 or y=28; their tap centres
+# still land inside the floating Settings header. A drag starting in the left
+# column places the row well below the header before pressing it.
+gesture pan 420 350 0 280 400
+wait stable 400 5000
 
 # section s89-android
 # Android's own calibration of the step above, kept apart rather than merged.

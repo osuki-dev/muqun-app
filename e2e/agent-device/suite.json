@@ -4894,12 +4894,26 @@
       },
       {
         "when": {
-          "env": "PLATFORM",
-          "equals": "ios"
+          "env": "DEVICE_KIND",
+          "equals": "iphone"
         },
         "steps": [
           {
             "run": "flows/settings.ad#s89"
+          },
+          {
+            "run": "flows/settings.ad#clear-native-header"
+          }
+        ]
+      },
+      {
+        "when": {
+          "env": "DEVICE_KIND",
+          "equals": "ipad"
+        },
+        "steps": [
+          {
+            "run": "flows/settings.ad#s89-ipad"
           },
           {
             "run": "flows/settings.ad#clear-native-header"
