@@ -20,6 +20,7 @@ fill "id=\"quick-command-value\"" "Review this project without changing any file
 scroll down 1 --dismiss-ipad-keyboard --unless-visible id=quick-command-delivery-tab-collaboration
 wait "id=\"quick-command-delivery-tab-collaboration\"" 10000
 press "id=\"quick-command-delivery-tab-collaboration\""
+scroll down 1 --in-sheet --unless-visible id=quick-command-save
 press "id=\"quick-command-save\""
 # Saving keeps the editor open. Confirm the new row before leaving edit mode.
 wait "label=\"QA review instructions\"" 10000

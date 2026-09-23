@@ -201,7 +201,7 @@ if (platform === 'android' && process.env.E2E_AD_METRO_PORT) {
 }
 // Device-derived branch input cannot be overridden by a user-supplied --env.
 env.PLATFORM = platform;
-env.FILE_SCROLL_PIXELS = platform === 'android' ? '700' : '160';
+env.FILE_SCROLL_PIXELS = platform === 'android' ? '1200' : '500';
 if (platform === 'ios') {
   const result = spawnSync('xcrun', ['simctl', 'list', 'devices', '--json']);
   if (result.status !== 0) throw new Error('Cannot identify iOS test device');

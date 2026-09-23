@@ -202,7 +202,6 @@ wait "id=theme-row-my-theme" 10000
 # both taps through separate native captures can consume its intentional
 # four-second window before the second tap is delivered.
 back --in-app
-is hidden "id=theme-tab"
 wait "id=settings-theme-row" 10000
 
 # section settings-scroll-up

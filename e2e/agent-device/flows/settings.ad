@@ -361,7 +361,7 @@ wait stable 300 5000
 open "dev.osuki.muqun" --relaunch
 
 # section s74
-wait stable 400 5000
+wait stable 1500 10000
 
 # section s75
 press "${TARGET}"

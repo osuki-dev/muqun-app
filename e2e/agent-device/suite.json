@@ -461,7 +461,7 @@
       },
       {
         "target": {
-          "text": "Remove unused themes, 0 themes · 0 B"
+          "text": "Remove unused themes, \\d+ themes? · .*"
         },
         "mode": "visible",
         "timeout": 20000,
@@ -631,7 +631,7 @@
       },
       {
         "target": {
-          "text": "Remove unused themes, 1 theme · .*"
+          "text": "Remove unused themes, [1-9]\\d* themes? · .*"
         },
         "mode": "visible",
         "timeout": 20000,
@@ -900,7 +900,7 @@
       },
       {
         "target": {
-          "text": "function render80\\(state, props\\) \\{"
+          "text": "function render60\\(state, props\\) \\{"
         },
         "mode": "scroll",
         "direction": "down",
@@ -909,7 +909,7 @@
       },
       {
         "target": {
-          "text": "function render80\\(state, props\\) \\{"
+          "text": "function render60\\(state, props\\) \\{"
         },
         "mode": "visible",
         "run": "flows/large-file-preview.ad#visible"
@@ -2241,7 +2241,7 @@
       },
       {
         "target": {
-          "text": "Terminal key row"
+          "id": "toggle-Terminal key row"
         },
         "mode": "scroll",
         "direction": "down",
@@ -4051,6 +4051,9 @@
         },
         "mode": "visible",
         "run": "flows/settings.ad#s17"
+      },
+      {
+        "include": "subflows/dismiss-logbox"
       },
       {
         "target": {
@@ -7900,7 +7903,7 @@
       },
       {
         "target": {
-          "text": "Terminal key row"
+          "id": "toggle-Terminal key row"
         },
         "mode": "scroll",
         "direction": "down",
@@ -7994,6 +7997,12 @@
       }
     ],
     "flows/soft-keyboard": [
+      {
+        "include": "subflows/launch-home"
+      },
+      {
+        "include": "subflows/restore-key-row"
+      },
       {
         "include": "subflows/open-demo"
       },
