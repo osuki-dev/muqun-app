@@ -109,11 +109,11 @@ export const sheetRouteDetents: Readonly<Record<string, SheetDetents>> = {
   'settings-font': 'expandable',
   // One short list of languages: as tall as it is, and no taller.
   'settings-language': 'fitToContents',
-  // Three layout previews and their descriptions, in the same scrollable sheet.
-  'settings-home-layout': 'expandable',
+  // Three layout previews and their descriptions, sized to what it holds.
+  'settings-home-layout': 'fitToContents',
   // Full height leaves room for the composer and keyboard.
   'new-task': 'expandable',
-  'home-target': 'expandable',
+  'home-target': 'fitToContents',
   // Open a web service (card #829). One field with a row of shortcuts over it:
   // a full-height sheet for a port number would be the app implying the task is
   // bigger than typing four digits.
@@ -224,14 +224,14 @@ export const sheetRouteContent: Readonly<Record<string, SheetContent>> = {
   'agent-mode': 'list',
   'settings-font': 'list',
   'settings-language': 'list',
-  'settings-home-layout': 'list',
   'opencode-guide': 'list',
 
   // A short form and nothing else, which opens where it always has. A sheet
   // that jumps to full height to ask for two fields is louder than the
   // question.
   'new-task': 'short',
-  'home-target': 'list',
+  'home-target': 'short',
+  'settings-home-layout': 'short',
   'web-service': 'short',
 };
 

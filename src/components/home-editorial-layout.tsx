@@ -9,6 +9,12 @@ import {
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
+import Animated, {
+  Extrapolation,
+  interpolate,
+  useAnimatedStyle,
+  type SharedValue,
+} from 'react-native-reanimated';
 
 import { Text } from '@/components/text';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
@@ -34,6 +40,8 @@ export type HomeEditorialLayoutProps = {
   identity?: ReactNode;
   /** Cover artwork follows the utility row and precedes work actions. */
   artwork?: ReactNode;
+  /** Scroll position used for artwork fade and parallax depth effects. */
+  scrollY?: SharedValue<number>;
   cover?: boolean;
   coverTitle?: string;
   /** Native actions kept in the compact masthead utility row. */
@@ -127,6 +135,7 @@ export function HomeEditorialLayout({
   fontScale: fontScaleProp,
   identity,
   artwork,
+  scrollY,
   cover = false,
   coverTitle,
   headerAction,
@@ -167,6 +176,18 @@ export function HomeEditorialLayout({
       {hasIdentity ? <View style={styles.identity}>{identity}</View> : null}
     </View>
   );
+
+  const animatedArtworkStyle = useAnimatedStyle(() => {
+    if (!scrollY) return {};
+    const y = scrollY.value;
+    const opacity = interpolate(y, [0, 40, 200], [1, 0.9, 0], Extrapolation.CLAMP);
+    const translateY = interpolate(y, [-120, 0, 200], [36, 0, -48], Extrapolation.CLAMP);
+    const scale = interpolate(y, [-120, 0, 200], [1.12, 1, 0.88], Extrapolation.CLAMP);
+    return {
+      opacity,
+      transform: [{ translateY }, { scale }],
+    };
+  });
 
   if (cover && hasSlot(artwork)) {
     const split = geometry.contentWidth >= 752 && fontScale < 1.35;
@@ -228,15 +249,18 @@ export function HomeEditorialLayout({
                   {coverTitle}
                 </Text>
               ) : null}
-              <View
+              <Animated.View
                 pointerEvents="none"
-                style={{
-                  marginTop: coverTitle ? -titleHeight * 0.35 : 0,
-                  marginHorizontal: split ? 0 : -geometry.gutter,
-                }}>
+                style={[
+                  {
+                    marginTop: coverTitle ? -titleHeight * 0.35 : 0,
+                    marginHorizontal: split ? 0 : -geometry.gutter,
+                  },
+                  animatedArtworkStyle,
+                ]}>
                 {artwork}
-              </View>
-              <View style={[styles.coverUtilities, { top: coverTitle ? titleHeight - 4 : 16 }]}>
+              </Animated.View>
+              <View style={[styles.coverUtilities, { top: coverTitle ? titleHeight + 28 : 16 }]}>
                 {headerAction ? <View style={styles.coverButtons}>{headerAction}</View> : null}
                 {headerLeading ? <View style={styles.coverTarget}>{headerLeading}</View> : null}
               </View>
@@ -395,7 +419,13 @@ export function HomeEditorialLayout({
       </View>
 
       {hasArtwork ? (
-        <View style={{ marginHorizontal: -geometry.gutter, marginBottom: 12 }}>{artwork}</View>
+        <Animated.View
+          style={[
+            { marginHorizontal: -geometry.gutter, marginBottom: 12 },
+            animatedArtworkStyle,
+          ]}>
+          {artwork}
+        </Animated.View>
       ) : null}
 
       {!hasArtwork && hasSlot(launches) ? <View style={styles.launches}>{launches}</View> : null}

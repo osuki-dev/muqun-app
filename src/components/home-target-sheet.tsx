@@ -2,7 +2,7 @@ import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens } from '@osuki-dev/ui';
 import { Server } from 'lucide-react-native';
-import { ScrollView } from 'react-native';
+import { ScrollView, View } from 'react-native';
 import { useCallback, useEffect, useMemo } from 'react';
 import { useIsFocused, useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -100,35 +100,50 @@ export function HomeTargetSheet() {
     router.back();
   }
 
+  const contentSized = records.length <= 5;
+
+  const rows = records.map((server) => {
+    const reachability = reachabilityByServer[server.serverId] ?? 'unknown';
+    return (
+      <SheetSceneRow
+        key={server.serverId}
+        testID={`home-target-${server.serverId}`}
+        title={server.label}
+        caption={_(reachabilityDescription[reachability])}
+        selected={requestIsActive && server.serverId === selectedServerId}
+        accessibilityLabel={`${server.label}, ${_(reachabilityDescription[reachability])}`}
+        leading={
+          <Server
+            size={20}
+            color={reachability === 'live' ? theme.colors.success : theme.colors.textMuted}
+          />
+        }
+        onPress={() => select(server.serverId)}
+      />
+    );
+  });
+
   return (
-    <SheetScene testID="home-target-sheet" title={t`Choose a gateway`} caption={selected?.label}>
-      <ScrollView
-        nestedScrollEnabled
-        style={sheetSceneStyles.scroller}
-        contentContainerStyle={sheetSceneStyles.scrollerContent}
-        showsVerticalScrollIndicator={false}>
-        {records.map((server) => {
-          const reachability = reachabilityByServer[server.serverId] ?? 'unknown';
-          return (
-            <SheetSceneRow
-              key={server.serverId}
-              testID={`home-target-${server.serverId}`}
-              title={server.label}
-              caption={_(reachabilityDescription[reachability])}
-              selected={requestIsActive && server.serverId === selectedServerId}
-              accessibilityLabel={`${server.label}, ${_(reachabilityDescription[reachability])}`}
-              leading={
-                <Server
-                  size={20}
-                  color={reachability === 'live' ? theme.colors.success : theme.colors.textMuted}
-                />
-              }
-              onPress={() => select(server.serverId)}
-            />
-          );
-        })}
-        <SheetSceneFooter bottomInset={insets.bottom} />
-      </ScrollView>
+    <SheetScene
+      testID="home-target-sheet"
+      title={t`Choose a gateway`}
+      caption={selected?.label}
+      contentSized={contentSized}>
+      {contentSized ? (
+        <View style={sheetSceneStyles.scrollerContent}>
+          {rows}
+          <SheetSceneFooter bottomInset={insets.bottom} />
+        </View>
+      ) : (
+        <ScrollView
+          nestedScrollEnabled
+          style={sheetSceneStyles.scroller}
+          contentContainerStyle={sheetSceneStyles.scrollerContent}
+          showsVerticalScrollIndicator={false}>
+          {rows}
+          <SheetSceneFooter bottomInset={insets.bottom} />
+        </ScrollView>
+      )}
     </SheetScene>
   );
 }

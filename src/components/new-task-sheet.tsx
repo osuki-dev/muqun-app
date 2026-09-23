@@ -231,7 +231,6 @@ export function NewTaskSheet({
   return (
     <>
       <KeyboardAwareScrollView
-        nestedScrollEnabled
         // Keep the focused line visible above the system keyboard.
         bottomOffset={KEYBOARD_BOTTOM_OFFSET}
         keyboardDismissMode="on-drag"

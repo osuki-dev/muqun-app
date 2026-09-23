@@ -152,7 +152,6 @@ export function OpenWebServiceSheet({
   return (
     <>
       <KeyboardAwareScrollView
-        nestedScrollEnabled
         bottomOffset={KEYBOARD_BOTTOM_OFFSET}
         keyboardShouldPersistTaps="handled"
         // Transparent: the ground below paints this sheet's floor, its surface

@@ -138,13 +138,14 @@ export function HomeLaunchTarget({
   const background = useSurfaceBackground();
   const { chosen, openTargetPicker, opening, pickerChevronStyle, pickerOpen, run, servers } =
     controller;
+  const hasMultiple = servers.length > 1;
   const disabled = loading || opening;
 
   return (
     <PressableScale
       testID={servers.length === 0 ? 'home-pair-server' : 'home-launch-target'}
       accessibilityRole="button"
-      accessibilityState={{ expanded: pickerOpen, disabled }}
+      accessibilityState={{ expanded: hasMultiple ? pickerOpen : undefined, disabled }}
       disabled={disabled}
       hitSlop={{ top: 8, bottom: 8, left: 8, right: 12 }}
       onPress={() => {
@@ -153,7 +154,8 @@ export function HomeLaunchTarget({
       }}
       style={[
         styles.target,
-        bare && { minWidth: 0, paddingHorizontal: 12 },
+        (bare || !hasMultiple) && { minWidth: 0 },
+        bare && { paddingHorizontal: 12 },
         {
           borderRadius: profile.chrome.control,
           backgroundColor: bare ? 'transparent' : background(theme.colors.surface),
@@ -172,9 +174,11 @@ export function HomeLaunchTarget({
               ? t`Choose a gateway`
               : t`Pair a gateway`}
       </Text>
-      <Animated.View style={pickerChevronStyle} pointerEvents="none">
-        <ChevronDown size={16} color={theme.colors.primary} />
-      </Animated.View>
+      {hasMultiple ? (
+        <Animated.View style={pickerChevronStyle} pointerEvents="none">
+          <ChevronDown size={16} color={theme.colors.primary} />
+        </Animated.View>
+      ) : null}
     </PressableScale>
   );
 }

@@ -39,49 +39,62 @@ export const AgentTasksSheet = memo(function AgentTasksSheet({
   const done = items.filter((item) => item.done).length;
   const firstPending = items.findIndex((item) => !item.done);
 
+  const contentSized = items.length <= 4;
+
+  const content = (
+    <>
+      {items.length === 0 ? (
+        <View style={styles.empty}>
+          <Text variant="caption" color={theme.colors.textMuted}>
+            {t`No tasks in this session yet.`}
+          </Text>
+        </View>
+      ) : (
+        items.map((item, index) => {
+          const running = !item.done && index === firstPending;
+          return (
+            <Animated.View
+              key={item.text}
+              entering={index < STAGGERED_ROWS ? riseIn(index * STAGGER.row) : fadeIn('short')}
+              layout={listLayout('short')}>
+              <SheetSceneRow
+                title={item.text}
+                selected={running}
+                leading={
+                  item.done ? (
+                    <CheckCircle2 size={16} color={theme.colors.success} strokeWidth={2.2} />
+                  ) : running ? (
+                    <Clock size={16} color={theme.colors.primary} strokeWidth={2.2} />
+                  ) : (
+                    <Circle size={15} color={theme.colors.textSubtle} strokeWidth={1.8} />
+                  )
+                }
+              />
+            </Animated.View>
+          );
+        })
+      )}
+      <SheetSceneFooter bottomInset={insets.bottom} />
+    </>
+  );
+
   return (
     <SheetScene
       testID="agent-tasks-modal"
       title={t`Tasks`}
-      caption={t`${done} of ${items.length} done`}>
-      <ScrollView
-        nestedScrollEnabled
-        style={sheetSceneStyles.scroller}
-        contentContainerStyle={sheetSceneStyles.scrollerContent}
-        showsVerticalScrollIndicator={false}>
-        {items.length === 0 ? (
-          <View style={styles.empty}>
-            <Text variant="caption" color={theme.colors.textMuted}>
-              {t`No tasks in this session yet.`}
-            </Text>
-          </View>
-        ) : (
-          items.map((item, index) => {
-            const running = !item.done && index === firstPending;
-            return (
-              <Animated.View
-                key={item.text}
-                entering={index < STAGGERED_ROWS ? riseIn(index * STAGGER.row) : fadeIn('short')}
-                layout={listLayout('short')}>
-                <SheetSceneRow
-                  title={item.text}
-                  selected={running}
-                  leading={
-                    item.done ? (
-                      <CheckCircle2 size={16} color={theme.colors.success} strokeWidth={2.2} />
-                    ) : running ? (
-                      <Clock size={16} color={theme.colors.primary} strokeWidth={2.2} />
-                    ) : (
-                      <Circle size={15} color={theme.colors.textSubtle} strokeWidth={1.8} />
-                    )
-                  }
-                />
-              </Animated.View>
-            );
-          })
-        )}
-        <SheetSceneFooter bottomInset={insets.bottom} />
-      </ScrollView>
+      caption={t`${done} of ${items.length} done`}
+      contentSized={contentSized}>
+      {contentSized ? (
+        <View style={sheetSceneStyles.scrollerContent}>{content}</View>
+      ) : (
+        <ScrollView
+          nestedScrollEnabled
+          style={sheetSceneStyles.scroller}
+          contentContainerStyle={sheetSceneStyles.scrollerContent}
+          showsVerticalScrollIndicator={false}>
+          {content}
+        </ScrollView>
+      )}
     </SheetScene>
   );
 });
