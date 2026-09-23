@@ -1,4 +1,6 @@
 import {
+  AlphaType,
+  ColorType,
   Canvas,
   Image as SkiaImage,
   LinearGradient,
@@ -7,12 +9,12 @@ import {
   useImage,
   vec,
 } from '@shopify/react-native-skia';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet, View, type LayoutChangeEvent } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import { useLaunchHomeArtwork } from '@/hooks/use-launch-home-artwork';
-import { editorialArtworkRect } from '@/lib/hero-feather';
+import { artworkVisibleTop, editorialArtworkRect } from '@/lib/hero-feather';
 import { fadeIn, listLayout } from '@/lib/motion';
 import type { ResolvedHomeArtworkAsset } from '@/theme/home-artwork';
 
@@ -27,10 +29,12 @@ export function HomeEditorialArtwork({
   resolution,
   cover = false,
   onAvailabilityChange,
+  onVisibleTopChange,
 }: {
   resolution: ResolvedHomeArtworkAsset;
   cover?: boolean;
   onAvailabilityChange?: (available: boolean) => void;
+  onVisibleTopChange?: (source: string, top: number) => void;
 }) {
   return (
     <HomeEditorialArtworkImage
@@ -38,6 +42,7 @@ export function HomeEditorialArtwork({
       resolution={resolution}
       cover={cover}
       onAvailabilityChange={onAvailabilityChange}
+      onVisibleTopChange={onVisibleTopChange}
     />
   );
 }
@@ -46,10 +51,12 @@ function HomeEditorialArtworkImage({
   resolution,
   cover,
   onAvailabilityChange,
+  onVisibleTopChange,
 }: {
   resolution: ResolvedHomeArtworkAsset;
   cover: boolean;
   onAvailabilityChange?: (available: boolean) => void;
+  onVisibleTopChange?: (source: string, top: number) => void;
 }) {
   const [width, setWidth] = useState(0);
   const height = cover ? Math.min(640, width * 0.9) : Math.min(280, width / 2);
@@ -73,6 +80,23 @@ function HomeEditorialArtworkImage({
         : null,
     [box, focalPoint, image, fit]
   );
+  const visibleTop = useMemo(() => {
+    if (!cover || !image) return 0;
+    const pixels = image.readPixels(0, 0, {
+      width: image.width(),
+      height: image.height(),
+      colorType: ColorType.Alpha_8,
+      alphaType: AlphaType.Unpremul,
+    });
+    return pixels ? artworkVisibleTop(pixels, image.width(), image.height()) : 0;
+  }, [cover, image]);
+  useEffect(() => {
+    if (!image || !imageRect) return;
+    onVisibleTopChange?.(
+      resolution.source,
+      Math.max(0, imageRect.y + (visibleTop * imageRect.height) / image.height())
+    );
+  }, [image, imageRect, onVisibleTopChange, resolution.source, visibleTop]);
   const view = useRef<View | null>(null);
   const intrinsic = useMemo(
     () => (image ? { width: image.width(), height: image.height() } : null),

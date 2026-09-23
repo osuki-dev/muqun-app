@@ -41,6 +41,8 @@ export type HomeEditorialLayoutProps = {
   identity?: ReactNode;
   /** Cover artwork follows the utility row and precedes work actions. */
   artwork?: ReactNode;
+  /** Rendered offset to visible foreground; preserves transparent source pixels. */
+  artworkTopInset?: number;
   /** Scroll position used only for the artwork's pull-down stretch. */
   scrollY?: SharedValue<number>;
   cover?: boolean;
@@ -137,6 +139,7 @@ export function HomeEditorialLayout({
   identity,
   artwork,
   scrollY,
+  artworkTopInset = 0,
   cover = false,
   coverTitle,
   headerAction,
@@ -256,7 +259,7 @@ export function HomeEditorialLayout({
                 pointerEvents="none"
                 style={[
                   {
-                    marginTop: coverTitle ? -titleHeight * 0.35 : 0,
+                    marginTop: coverTitle ? -titleHeight * 0.35 - artworkTopInset : 0,
                     marginHorizontal: split ? 0 : -geometry.gutter,
                     zIndex: 1,
                   },

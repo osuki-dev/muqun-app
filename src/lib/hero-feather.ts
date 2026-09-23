@@ -226,3 +226,18 @@ export function heroFeatherGeometry({
     feather: { x: fadeX, y: fadeY },
   };
 }
+
+/** Ignore nearly transparent export residue when locating the foreground's top.
+ * This is an alignment guide only: no source pixels are cropped away.
+ */
+export function artworkVisibleTop(alpha: ArrayLike<number>, width: number, height: number): number {
+  if (width <= 0 || height <= 0 || alpha.length < width * height) return 0;
+  const minimumPixels = Math.max(1, Math.ceil(width * 0.002));
+  for (let y = 0; y < height; y++) {
+    let visible = 0;
+    for (let x = 0; x < width; x++) {
+      if (alpha[y * width + x] >= 32 && ++visible >= minimumPixels) return y;
+    }
+  }
+  return 0;
+}
