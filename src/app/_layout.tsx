@@ -13,6 +13,8 @@ import {
   ToastProvider,
   useThemeMode,
   useThemeTokens,
+  type ThemeMode,
+  type ThemeStorageAdapter,
 } from '@osuki-dev/ui';
 import * as NavigationBar from 'expo-navigation-bar';
 import * as SecureStore from 'expo-secure-store';
@@ -79,6 +81,23 @@ LogBox.ignoreLogs(['[Reanimated] dependencies should only be used in web impleme
  * side would auto-hide on it -- before any effect runs.
  */
 SplashScreen.preventAutoHide();
+
+// The mode is a single unauthenticated SecureStore value. Read it before the
+// first React frame so the launch scene never paints the system mode and then
+// switches to the reader's choice when ThemeProvider's async effect finishes.
+const initialThemeMode: ThemeMode = (() => {
+  try {
+    const stored = SecureStore.getItem('osuki-theme-mode');
+    return stored === 'light' || stored === 'dark' || stored === 'system' ? stored : 'system';
+  } catch {
+    return 'system';
+  }
+})();
+
+const themeModeStorage: ThemeStorageAdapter = {
+  getItem: (key) => SecureStore.getItemAsync(key),
+  setItem: (key, value) => SecureStore.setItemAsync(key, value),
+};
 
 /**
  * The theme library is read here, at module scope, and not in an effect.
@@ -180,11 +199,8 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <KeyboardProvider>
         <OsukiThemeProvider
-          defaultMode="system"
-          storageAdapter={{
-            getItem: (key) => SecureStore.getItemAsync(key),
-            setItem: (key, value) => SecureStore.setItemAsync(key, value),
-          }}
+          defaultMode={initialThemeMode}
+          storageAdapter={themeModeStorage}
           theme={theme}>
           {/*
             Outside the error boundary because the boundary's own fallback is

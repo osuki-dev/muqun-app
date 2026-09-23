@@ -320,7 +320,13 @@ export function LaunchSceneIntro({
   });
   const landingScale = canLand && homeRect ? homeRect.width / launchDrawing.width : 1;
 
-  const paper = packBackground ?? mirror.backgroundColor ?? theme.colors.background;
+  const paper = packBackground ?? theme.colors.background;
+  const handoffPaper = useSharedValue(1);
+  const handoffPaperStyle = useAnimatedStyle(() => ({ opacity: handoffPaper.value }));
+  useEffect(() => {
+    if (phase !== 'visible') return;
+    handoffPaper.value = withTiming(0, { duration: reduced ? 0 : 220 });
+  }, [phase, reduced, handoffPaper]);
   const widthClass = width >= THEME_ARTWORK_REGULAR_MIN_WIDTH ? 'regular' : 'compact';
 
   // The pack's own world, resolved exactly the way Home resolves it, so what
@@ -690,6 +696,19 @@ export function LaunchSceneIntro({
           fit={wallpaper?.fit}
           focalPoint={wallpaper?.focalPoint}
           opacity={worldAlpha}
+        />
+      ) : null}
+
+      {/* Keep the native paper through the handoff, then reveal the selected
+          pack's paper and artwork without a one-frame light/dark cut. */}
+      {paper !== mirror.backgroundColor ? (
+        <Animated.View
+          pointerEvents="none"
+          style={[
+            StyleSheet.absoluteFill,
+            { backgroundColor: mirror.backgroundColor },
+            handoffPaperStyle,
+          ]}
         />
       ) : null}
 
