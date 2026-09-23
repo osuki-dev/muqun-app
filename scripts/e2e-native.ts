@@ -806,6 +806,17 @@ export class NativeRunner {
           continue;
         }
       }
+      if (args.includes('--dismiss-iphone-keyboard')) {
+        args.splice(args.indexOf('--dismiss-iphone-keyboard'), 1);
+        if (env.DEVICE_KIND === 'iphone') {
+          const returnKey = await this.locate({ text: 'return' });
+          if (returnKey) {
+            await this.invoke(['press', selector(returnKey)]);
+            await this.invoke(['wait', 'stable', '300', '5000']);
+          }
+        }
+        continue;
+      }
       if (args.includes('--in-sheet')) {
         if (args[0] !== 'scroll' || args[1] !== 'down')
           throw new Error('In-sheet scrolling requires scroll down');
