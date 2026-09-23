@@ -141,6 +141,7 @@ export const THEME_ICONS = [
   'chrome.back',
   'chrome.send',
   'chrome.attach',
+  'chrome.create',
   'chrome.scan',
   'chrome.settings',
   'home.arrow',

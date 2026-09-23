@@ -1,10 +1,11 @@
+import { ComposerAttachmentButton } from '@/components/composer-attachment-button';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 /** Start an agent with the shared terminal composer and attachment pipeline.
  * The full-height sheet keeps input reachable with long host catalogs.
  */
 import { useThemeTokens } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
-import { TerminalComposer, composerStyles } from '@/components/terminal-composer';
+import { TerminalComposer } from '@/components/terminal-composer';
 import { AttachmentMenu } from '@/components/attachment-menu';
 import { AttachmentStrip } from '@/components/attachment-strip';
 import { ImagePreviewModal } from '@/components/image-preview-modal';
@@ -19,7 +20,7 @@ import {
   type AttachmentSource,
 } from '@/lib/attachments';
 import { Trans, useLingui } from '@lingui/react/macro';
-import { Bot, Check, FolderOpen, Paperclip } from 'lucide-react-native';
+import { Bot, Check, FolderOpen } from 'lucide-react-native';
 import { useEffect, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
@@ -348,15 +349,15 @@ export function NewTaskSheet({
                 </View>
                 <TerminalComposer
                   leading={
-                    <PressableScale
+                    <ComposerAttachmentButton
                       testID="new-task-attach"
-                      accessibilityRole="button"
-                      accessibilityLabel={t`Add attachment`}
+                      label={t`Add attachment`}
+                      expanded={attachmentMenuOpen}
                       disabled={starting || !record}
                       onPress={() => setAttachmentMenuOpen((open) => !open)}
-                      style={composerStyles.button}>
-                      <Paperclip size={18} color={theme.colors.text} />
-                    </PressableScale>
+                      size={18}
+                      color={theme.colors.text}
+                    />
                   }
                   inputProps={{
                     testID: 'new-task-prompt',

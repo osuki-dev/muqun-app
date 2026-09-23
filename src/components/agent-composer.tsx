@@ -1,3 +1,4 @@
+import { ComposerAttachmentButton } from '@/components/composer-attachment-button';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   NativeSyntheticEvent,
@@ -24,7 +25,6 @@ import {
   Inbox,
   Layers,
   Loader,
-  Paperclip,
   Terminal,
   Square,
   Trash2,
@@ -45,7 +45,7 @@ import { PressableScale } from '@/components/pressable-scale';
 import { AgentActionMenu, type AgentActionMenuItem } from '@/components/agent-action-menu';
 import { AgentRevertPlate } from '@/components/agent-revert-plate';
 import { AgentUnreadDot } from '@/components/agent-unread-dot';
-import { TerminalComposer, composerStyles } from '@/components/terminal-composer';
+import { TerminalComposer } from '@/components/terminal-composer';
 import { AttachmentMenu } from '@/components/attachment-menu';
 import { AgentModeMenu } from '@/components/agent-mode-menu';
 import { AttachmentStrip } from '@/components/attachment-strip';
@@ -1522,28 +1522,15 @@ export const AgentComposer = memo(function AgentComposer({
               <TerminalComposer
                 inputRef={inputRef}
                 leading={
-                  <PressableScale
+                  <ComposerAttachmentButton
                     testID="agent-composer-attach"
-                    accessibilityRole="button"
-                    accessibilityState={{ expanded: attachmentMenuOpen }}
-                    accessibilityLabel={
-                      attachmentMenuOpen ? t`Close the attachment menu` : t`Attach a file`
-                    }
+                    label={attachmentMenuOpen ? t`Close the attachment menu` : t`Attach a file`}
+                    expanded={attachmentMenuOpen}
                     disabled={sending || disabled}
                     onPress={() => setAttachmentMenuOpen((open) => !open)}
-                    style={[
-                      composerStyles.button,
-                      { borderRadius: profile.chrome.roundControl },
-                      attachmentMenuOpen
-                        ? { backgroundColor: surfaceBackground(theme.colors.primarySubtle) }
-                        : null,
-                      sending || disabled ? { opacity: 0.5 } : null,
-                    ]}>
-                    <Paperclip
-                      size={16}
-                      color={attachmentMenuOpen ? theme.colors.primary : chromeText}
-                    />
-                  </PressableScale>
+                    size={16}
+                    color={attachmentMenuOpen ? theme.colors.primary : chromeText}
+                  />
                 }
                 inputProps={{
                   value: text,
