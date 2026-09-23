@@ -1,21 +1,20 @@
 import { useThemeTokens } from '@osuki-dev/ui';
 import { Canvas, Circle, Line, Oval, vec } from '@shopify/react-native-skia';
 import { NavigationContext } from 'expo-router/react-navigation';
+import { usePathname } from 'expo-router';
 import { useCallback, useContext, useEffect, useState, useSyncExternalStore } from 'react';
 import { StyleSheet, View } from 'react-native';
 import {
-  Easing,
-  cancelAnimation,
+  useFrameCallback,
   useDerivedValue,
   useReducedMotion,
   useSharedValue,
-  withRepeat,
-  withTiming,
   type SharedValue,
 } from 'react-native-reanimated';
 
 import { AmbientCircuitLines } from '@/components/ambient-circuit-lines';
 import { useAppActive } from '@/hooks/use-app-active';
+import { useAppSettings } from '@/stores/app-settings';
 import {
   THEME_EFFECT_CAPABILITIES,
   type ThemeEffectPaletteRole,
@@ -29,6 +28,7 @@ import {
   directionalAmbientFrame,
   ambientDirectionVector,
   ambientParticleCount,
+  ambientSurfaceVisible,
 } from '@/lib/ambient-motion';
 
 export interface SkiaAmbientEffectProps {
@@ -83,6 +83,8 @@ export function SkiaAmbientEffect({
   const hidden = intensity <= 0 || (THEME_EFFECT_CAPABILITIES[effect].density && density <= 0);
   const [{ width, height }, setSize] = useState({ width: 0, height: 0 });
   const appActive = useAppActive();
+  const pathname = usePathname();
+  const effectsEnabled = useAppSettings((state) => state.themeEffectsEnabled);
   const navigation = useContext(NavigationContext);
   const subscribe = useCallback(
     (notify: () => void) => {
@@ -95,47 +97,44 @@ export function SkiaAmbientEffect({
     },
     [navigation]
   );
-  const getFocused = useCallback(() => navigation?.isFocused() ?? true, [navigation]);
+  const getFocused = useCallback(() => navigation?.isFocused() ?? false, [navigation]);
   const focused = useSyncExternalStore(subscribe, getFocused, getFocused);
   const reducedMotion = useReducedMotion();
   const progress = useSharedValue(0);
-
+  const lastPaint = useSharedValue(-1000);
+  const visible =
+    ambientSurfaceVisible(pathname, focused, appActive, effectsEnabled) &&
+    !hidden &&
+    effect !== 'none';
+  const period =
+    effect === 'dust'
+      ? 18000
+      : effect === 'embers'
+        ? 12000
+        : effect === 'snow'
+          ? 16000
+          : effect === 'stars'
+            ? 8000
+            : 6000;
+  const duration = speed > 0 ? period / speed : period;
+  const frame = useFrameCallback(({ timeSinceFirstFrame }) => {
+    'worklet';
+    if (timeSinceFirstFrame - lastPaint.value < 1000 / 30) return;
+    lastPaint.value = timeSinceFirstFrame;
+    progress.value = (timeSinceFirstFrame % duration) / duration;
+  }, false);
   useEffect(() => {
-    cancelAnimation(progress);
     progress.value = 0;
-    if (
-      effect === 'none' ||
-      effect === 'scanlines' ||
-      reducedMotion ||
-      !appActive ||
-      !focused ||
-      hidden ||
-      speed <= 0 ||
-      width <= 0 ||
-      height <= 0
-    ) {
-      cancelAnimation(progress);
-      progress.value = 0;
-      return;
-    }
-    const period =
-      effect === 'dust'
-        ? 18000
-        : effect === 'embers'
-          ? 12000
-          : effect === 'snow'
-            ? 16000
-            : effect === 'stars'
-              ? 8000
-              : 6000;
-    const duration = period / speed;
-    progress.value = withRepeat(withTiming(1, { duration, easing: Easing.linear }), -1, false);
+    lastPaint.value = -1000;
+    frame.setActive(
+      visible && effect !== 'scanlines' && !reducedMotion && speed > 0 && width > 0 && height > 0
+    );
     return () => {
-      cancelAnimation(progress);
+      frame.setActive(false);
     };
-  }, [effect, speed, hidden, reducedMotion, appActive, focused, width, height, progress]);
+  }, [effect, speed, visible, reducedMotion, width, height, frame, progress, lastPaint]);
 
-  if (effect === 'none' || hidden) return null;
+  if (!visible) return null;
 
   return (
     <View

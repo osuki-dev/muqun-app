@@ -56,6 +56,18 @@ function reset(stored?: unknown) {
 beforeEach(() => reset());
 
 describe('home layout persistence', () => {
+  test('theme effects default on and a saved disable survives hydration and theme changes', async () => {
+    await store.getState().hydrate();
+    expect(store.getState().themeEffectsEnabled).toBe(true);
+    await store.getState().update({ themeEffectsEnabled: false });
+    expect(JSON.parse(vault[STORAGE_KEY]).themeEffectsEnabled).toBe(false);
+    reset(JSON.parse(vault[STORAGE_KEY]));
+    await store.getState().hydrate();
+    expect(store.getState().themeEffectsEnabled).toBe(false);
+    await store.getState().update({ themePack: 'catppuccin' });
+    expect(store.getState().themeEffectsEnabled).toBe(false);
+    expect(JSON.parse(vault[STORAGE_KEY]).themeEffectsEnabled).toBe(false);
+  });
   test('uses editorial when nothing is stored', async () => {
     await store.getState().hydrate();
     expect(store.getState().homeLayout).toBe(DEFAULT_HOME_LAYOUT);

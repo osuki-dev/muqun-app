@@ -11,7 +11,18 @@ import {
   ambientMoteFrame,
   ambientParticleCount,
   directionalAmbientFrame,
+  ambientSurfaceVisible,
 } from './ambient-motion';
+
+test('ambient surfaces exist only on the active focused Home route', () => {
+  expect(ambientSurfaceVisible('/', true, true, true)).toBe(true);
+  for (const route of ['/agent', '/settings', '/themes', '/terminal', '']) {
+    expect(ambientSurfaceVisible(route, true, true, true)).toBe(false);
+  }
+  expect(ambientSurfaceVisible('/', false, true, true)).toBe(false);
+  expect(ambientSurfaceVisible('/', true, false, true)).toBe(false);
+  expect(ambientSurfaceVisible('/', true, true, false)).toBe(false);
+});
 
 describe('ambient mote motion', () => {
   test('bounded count and stable full-loop coordinates', () => {

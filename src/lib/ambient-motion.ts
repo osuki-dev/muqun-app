@@ -1,4 +1,13 @@
 /** Deterministic, bounded atmosphere; also shared with local visual inspection. */
+export function ambientSurfaceVisible(
+  pathname: string,
+  focused: boolean,
+  appActive: boolean,
+  enabled: boolean
+) {
+  return pathname === '/' && focused && appActive && enabled;
+}
+
 export const AMBIENT_MOTES = Array.from({ length: 16 }, (_, index) => ({
   x: 0.06 + (((index * 137.5) % 100) / 100) * 0.88,
   offset: ((index * 73.1) % 100) / 100,
