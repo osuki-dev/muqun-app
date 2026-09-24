@@ -1919,6 +1919,7 @@ export interface ProviderInfo {
 export interface AgentInfo {
   id: string;
   name: string;
+  model?: ModelRef;
   description?: string;
   mode?: string;
   color?: string;
@@ -2122,9 +2123,11 @@ export function parseAgentCatalog(value: unknown): AgentCatalog {
       const description = pickString(agentRec, ['description']);
       const mode = pickString(agentRec, ['mode']);
       const color = pickString(agentRec, ['color']);
+      const model = parseModelRef(agentRec.model);
       agents.push({
         id,
         name: pickString(agentRec, ['name']) ?? id,
+        ...(model ? { model } : {}),
         ...(description ? { description } : {}),
         ...(mode ? { mode } : {}),
         ...(color ? { color } : {}),

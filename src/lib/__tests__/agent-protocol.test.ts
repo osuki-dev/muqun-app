@@ -932,7 +932,13 @@ describe('catalog', () => {
       { id: 'paid', name: 'Paid', provider_id: 'acme', enabled: false, status: 'needs key' },
     ],
     agents: [
-      { id: 'build', name: 'Build', mode: 'primary', hidden: false },
+      {
+        id: 'build',
+        name: 'Build',
+        mode: 'primary',
+        hidden: false,
+        model: { provider_id: 'opencode', model_id: 'union-alpha', variant: 'thinking' },
+      },
       { id: 'explore', name: 'Explore', mode: 'subagent', hidden: false },
       { id: 'title', name: 'Title', mode: 'primary', hidden: true },
     ],
@@ -956,6 +962,11 @@ describe('catalog', () => {
 
   test('reads providers, commands and defaults', () => {
     const parsed = parseAgentCatalog(catalog);
+    expect(parsed.agents[0]?.model).toEqual({
+      provider_id: 'opencode',
+      model_id: 'union-alpha',
+      variant: 'thinking',
+    });
     expect(parsed.providers.map((provider) => provider.id)).toEqual(['opencode', 'acme']);
     expect(parsed.providers[1].activation).toBe('disabled');
     expect(parsed.commands[0]).toMatchObject({ name: 'review', agent: 'plan' });

@@ -1660,6 +1660,10 @@ msgid "Could not switch agent"
 msgstr "สลับเอเจนต์ไม่สำเร็จ"
 
 #: src/components/agent-workbench.tsx
+msgid "Could not switch model"
+msgstr "ไม่สามารถเปลี่ยนโมเดลได้"
+
+#: src/components/agent-workbench.tsx
 msgid "Could not undo"
 msgstr "ย้อนกลับไม่ได้"
 

@@ -27,6 +27,11 @@ const models: ModelInfo[] = [
 const agents: AgentInfo[] = [
   { id: 'build', name: 'Build' },
   { id: 'plan', name: 'Plan' },
+  {
+    id: 'osuki',
+    name: 'Osuki',
+    model: { provider_id: 'opencode', model_id: 'union-alpha', variant: 'thinking' },
+  },
   { id: 'nested', name: 'Nested', mode: 'subagent' },
   { id: 'secret', name: 'Secret', hidden: true },
 ];
@@ -102,6 +107,27 @@ describe('catalogAgentId', () => {
 });
 
 describe('resolveNewSessionDefaults', () => {
+  test('an agent model wins over an unrelated remembered model', () => {
+    expect(
+      resolveNewSessionDefaults({
+        picked: { agent: 'osuki' },
+        workspace: { model: nemotron },
+        models,
+        agents,
+      })
+    ).toEqual({ model: { ...alpha, variant: 'thinking' }, agent: 'osuki' });
+  });
+
+  test('an explicit model choice still wins over the agent model', () => {
+    expect(
+      resolveNewSessionDefaults({
+        picked: { agent: 'osuki', model: nemotron },
+        models,
+        agents,
+      })
+    ).toEqual({ model: nemotron, agent: 'osuki' });
+  });
+
   test('nothing to go on still sends a model the host can run', () => {
     // Not `{}`: a host with no default configured runs the first entry of its
     // own list, which is how "Model jev-latest is not supported" happened.

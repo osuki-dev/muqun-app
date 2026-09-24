@@ -1660,6 +1660,10 @@ msgid "Could not switch agent"
 msgstr "Не удалось сменить агента"
 
 #: src/components/agent-workbench.tsx
+msgid "Could not switch model"
+msgstr "Не удалось переключить модель"
+
+#: src/components/agent-workbench.tsx
 msgid "Could not undo"
 msgstr "Не удалось отменить"
 

@@ -122,7 +122,7 @@ import { shouldRefetchAgentCatalog, type AgentCatalogScope } from '@/lib/agent-c
 import { loadRememberedAgentDefaults, rememberAgentChoice } from '@/lib/agent-model-memory';
 import { loadRememberedAgentSession, rememberOpenedAgentSession } from '@/lib/agent-session-memory';
 import { latestSession, pickSessionToOpen } from '@/lib/agent-session-pick';
-import { resolveNewSessionDefaults } from '@/lib/agent-session-defaults';
+import { catalogModelRef, resolveNewSessionDefaults } from '@/lib/agent-session-defaults';
 import { engineFailureAction } from '@/lib/agent-engine-text';
 import { dangerousPermissionReason, yoloDecision } from '@/lib/agent-permission-safety';
 import { removeTimelineItems, revertedMessageCount } from '@/lib/agent-revert';
@@ -699,6 +699,13 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   const [selectedAgent, setSelectedAgent] = useState<string | undefined>(undefined);
   const pickedAgentRef = useRef(false);
   const pickedModelRef = useRef(false);
+  const [manualModelOverride, setManualModelOverride] = useState(false);
+  const manualModelSessionRef = useRef(activeAsid);
+  useEffect(() => {
+    const previousAsid = manualModelSessionRef.current;
+    if (previousAsid && previousAsid !== activeAsid) setManualModelOverride(false);
+    manualModelSessionRef.current = activeAsid;
+  }, [activeAsid]);
   // YOLO mode: every permission request is answered automatically, `allow`
   // except for the irreversibly dangerous commands the safety list denies.
   // Mirrored in a ref so the stream handler sees the current value without
@@ -723,10 +730,8 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   /**
    * What a `POST /api/agent-sessions` carries.
    *
-   * Only the parts the reader actually chose. Omitting `model` is the
-   * documented way to get the user's configured default, and a display
-   * fallback sent as a real field is not a default -- it is this app
-   * overriding the host.
+   * The model follows the selected agent's configuration before unrelated
+   * remembered choices. A model explicitly picked in this run still wins.
    *
    * "Chose" used to mean "chose since this app was launched", which made a
    * relaunch forget the model the reader had been working on all week. It now
@@ -920,9 +925,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     getAgentCatalog(sessionId, undefined, scope.directory ? { directory: scope.directory } : {})
       .then((catalog) => {
         if (!mounted) return;
-        if (catalog?.agents && catalog.agents.length > 0) {
-          setAvailableAgents(catalog.agents);
-        }
+        setAvailableAgents(catalog?.agents ?? []);
         if (catalog?.skills && catalog.skills.length > 0) {
           setSkills(catalog.skills);
         }
@@ -967,7 +970,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     if (activeAsid) return;
     if (pickedModelRef.current && pickedAgentRef.current) return;
     const resolved = resolveNewSessionDefaults({
-      picked: {},
+      picked: pickedAgentRef.current && selectedAgent ? { agent: selectedAgent } : {},
       ...loadRememberedAgentDefaults(sessionId, activeDirectory),
       sessions: sessionsRef.current,
       ...(activeDirectory ? { directory: activeDirectory } : {}),
@@ -975,7 +978,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       models: catalogModels,
       agents: availableAgents,
     });
-    if (!pickedModelRef.current && resolved.model) applySelectedModel(resolved.model);
+    if (!pickedModelRef.current) applySelectedModel(resolved.model);
     if (!pickedAgentRef.current && resolved.agent) setSelectedAgent(resolved.agent);
   }, [
     sessionId,
@@ -984,6 +987,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     catalogDefaults,
     catalogModels,
     availableAgents,
+    selectedAgent,
     sessions,
     applySelectedModel,
   ]);
@@ -1062,9 +1066,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
             activeAsidRef.current = opening.asid;
             setActiveAsid(opening.asid);
             setSessionInfo(opening);
-            if (opening.model) {
-              applySelectedModel(opening.model);
-            }
+            applySelectedModel(opening.model ?? undefined);
             if (opening.agent) setSelectedAgent(opening.agent);
           } else if (list.length === 0 || initialIntent === 'new') {
             setLoading(false);
@@ -1461,9 +1463,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         const settled = snapshotSettled(syncRef.current, snap.seq);
         syncRef.current = settled.state;
         if (settled.from !== null) catchUpRef.current();
-        if (info?.model) {
-          applySelectedModel(info.model);
-        }
+        if (info) applySelectedModel(info.model ?? undefined);
         if (info?.agent) setSelectedAgent(info.agent);
 
         /**
@@ -2046,6 +2046,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   const handleSelectModel = useCallback(
     (model: ModelRef) => {
       pickedModelRef.current = true;
+      setManualModelOverride(true);
       applySelectedModel(model);
       // Written because the *reader* chose it, which is the only thing the
       // memory records: a default the app merely observed -- the catalog's, or
@@ -2440,21 +2441,40 @@ export const AgentWorkbench = memo(function AgentWorkbench({
    */
   const handleSelectAgentMode = useCallback(
     (agent: string) => {
+      const configuredModel = catalogModelRef(
+        availableAgents.find((entry) => entry.id === agent)?.model,
+        catalogModels
+      );
       pickedAgentRef.current = true;
+      pickedModelRef.current = false;
+      setManualModelOverride(false);
       setSelectedAgent(agent);
+      if (configuredModel) applySelectedModel(configuredModel);
       // The reader's own pick, remembered the same way the model is.
       rememberAgentChoice(sessionId, activeDirectoryRef.current, { agent });
       if (!activeAsid) return;
-      switchAgentMode(activeAsid, agent).catch((err) => {
-        console.warn('Failed to switch agent:', err);
-        showToast({
-          variant: 'danger',
-          title: t`Could not switch agent`,
-          message: formatAgentErrorMessage(err, t`OpenCode service is offline`),
+      void switchAgentMode(activeAsid, agent)
+        .then(async () => {
+          if (!configuredModel) return;
+          try {
+            await switchAgentModel(sessionId, activeAsid, configuredModel);
+          } catch (err) {
+            showToast({
+              variant: 'danger',
+              title: t`Could not switch model`,
+              message: formatAgentErrorMessage(err, t`OpenCode service is offline`),
+            });
+          }
+        })
+        .catch((err) => {
+          showToast({
+            variant: 'danger',
+            title: t`Could not switch agent`,
+            message: formatAgentErrorMessage(err, t`OpenCode service is offline`),
+          });
         });
-      });
     },
-    [activeAsid, sessionId, showToast, t]
+    [activeAsid, sessionId, showToast, t, availableAgents, catalogModels, applySelectedModel]
   );
 
   /**
@@ -3795,7 +3815,19 @@ export const AgentWorkbench = memo(function AgentWorkbench({
    * A `ModelRef` is three strings; everything else about a model -- its name as
    * its publisher spells it, how much it can hold -- is in the catalogue.
    */
-  const activeModelRef = selectedModel ?? currentSession?.model ?? sessionInfo?.model ?? undefined;
+  const activeAgent =
+    selectedAgent ?? currentSession?.agent ?? sessionInfo?.agent ?? catalogDefaults.agent;
+  const activeAgentModel = catalogModelRef(
+    availableAgents.find((entry) => entry.id === activeAgent)?.model,
+    catalogModels
+  );
+  const activeModelRef = manualModelOverride
+    ? selectedModel
+    : (activeAgentModel ??
+      selectedModel ??
+      currentSession?.model ??
+      sessionInfo?.model ??
+      undefined);
   const activeModelInfo = useMemo(() => {
     if (!activeModelRef?.model_id) return undefined;
     return catalogModels.find(

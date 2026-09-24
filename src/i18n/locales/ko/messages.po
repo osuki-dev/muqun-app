@@ -1660,6 +1660,10 @@ msgid "Could not switch agent"
 msgstr "에이전트를 전환하지 못했습니다"
 
 #: src/components/agent-workbench.tsx
+msgid "Could not switch model"
+msgstr "모델을 전환할 수 없습니다"
+
+#: src/components/agent-workbench.tsx
 msgid "Could not undo"
 msgstr "실행 취소하지 못했습니다"
 
