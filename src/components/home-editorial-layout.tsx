@@ -1,23 +1,29 @@
 import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens } from '@osuki-dev/ui';
-import { useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import {
   StyleSheet,
   Platform,
   useWindowDimensions,
   View,
+  type LayoutChangeEvent,
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
 import Animated, {
+  cancelAnimation,
+  withTiming,
   Extrapolation,
   interpolate,
   useAnimatedStyle,
   useReducedMotion,
+  useSharedValue,
   type SharedValue,
 } from 'react-native-reanimated';
 
 import { Text } from '@/components/text';
+import { homeScrollFadeOpacity } from '@/lib/home-scroll-fade';
+import { useLaunchHandoff } from '@/stores/launch-handoff';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { useInterfaceFontFamily } from '@/hooks/use-user-fonts';
@@ -43,7 +49,7 @@ export type HomeEditorialLayoutProps = {
   artwork?: ReactNode;
   /** Rendered offset to visible foreground; preserves transparent source pixels. */
   artworkTopInset?: number;
-  /** Scroll position used only for the artwork's pull-down stretch. */
+  /** Scroll position drives reversible cover fades and pull-down stretch. */
   scrollY?: SharedValue<number>;
   cover?: boolean;
   coverTitle?: string;
@@ -131,6 +137,33 @@ function EditorialSection({
  * />
  * ```
  */
+function useScrollStage(
+  scrollY: SharedValue<number> | undefined,
+  origin: SharedValue<number>,
+  entryProgress: SharedValue<number>,
+  timelineEnd: SharedValue<number>,
+  enabled: boolean,
+  fadeDistance: number
+) {
+  const bounds = useSharedValue({ y: 0, height: 0 });
+  const onLayout = (event: LayoutChangeEvent) => {
+    const { y, height } = event.nativeEvent.layout;
+    bounds.set({ y, height });
+    timelineEnd.set(Math.max(timelineEnd.get(), origin.get() + y + height));
+  };
+  const style = useAnimatedStyle(() => {
+    if (!enabled || !scrollY || bounds.value.height <= 0) return { opacity: 1 };
+    return {
+      opacity: homeScrollFadeOpacity(
+        Math.max(scrollY.value, (1 - entryProgress.value) * timelineEnd.value),
+        origin.value + bounds.value.y + bounds.value.height,
+        Math.min(fadeDistance, bounds.value.height)
+      ),
+    };
+  });
+  return { onLayout, style };
+}
+
 export function HomeEditorialLayout({
   contentWidth,
   fontScale: fontScaleProp,
@@ -174,6 +207,54 @@ export function HomeEditorialLayout({
   const hasHeaderLeading = hasSlot(headerLeading);
   const hasHeaderRow = hasHeaderLeading || hasHeaderAction;
   const reducedMotion = useReducedMotion();
+  const sceneOrigin = useSharedValue(0);
+  const animateCover = cover && hasArtwork && !reducedMotion;
+  const revealing = useLaunchHandoff((state) => state.revealing);
+  const entryProgress = useSharedValue(revealing || reducedMotion ? 1 : 0);
+  const timelineEnd = useSharedValue(0);
+  useEffect(() => {
+    if (revealing || reducedMotion) {
+      entryProgress.set(withTiming(1, { duration: reducedMotion ? 0 : 520 }));
+    }
+    return () => cancelAnimation(entryProgress);
+  }, [revealing, reducedMotion, entryProgress]);
+  const titleStage = useScrollStage(
+    scrollY,
+    sceneOrigin,
+    entryProgress,
+    timelineEnd,
+    animateCover,
+    120
+  );
+  const artworkStage = useScrollStage(
+    scrollY,
+    sceneOrigin,
+    entryProgress,
+    timelineEnd,
+    animateCover,
+    160
+  );
+  const controlsStage = useScrollStage(
+    scrollY,
+    sceneOrigin,
+    entryProgress,
+    timelineEnd,
+    animateCover,
+    96
+  );
+  const launchesStage = useScrollStage(
+    scrollY,
+    sceneOrigin,
+    entryProgress,
+    timelineEnd,
+    animateCover,
+    120
+  );
+  const readingEntryStyle = useAnimatedStyle(() => {
+    if (!animateCover) return { opacity: 1, transform: [{ translateY: 0 }] };
+    const opacity = homeScrollFadeOpacity((1 - entryProgress.value) * 120, 120, 120);
+    return { opacity, transform: [{ translateY: (1 - opacity) * 8 }] };
+  });
   const mastheadText = (
     <View style={styles.mastheadText}>
       {hasIdentity ? <View style={styles.identity}>{identity}</View> : null}
@@ -183,9 +264,8 @@ export function HomeEditorialLayout({
   const animatedArtworkStyle = useAnimatedStyle(() => {
     if (!scrollY || reducedMotion) return {};
     const y = scrollY.value;
-    // Its layout space remains visible well past 200pt, especially on tablets.
-    // Let normal scrolling carry the opaque artwork out with that space instead
-    // of fading/shrinking it into a blank hole. Stretch only during pull-down.
+    // Pull-down stretch is independent from the measured scroll-fade stages.
+    // Keep layout geometry stable while the cover scrolls away.
     const translateY = interpolate(y, [-120, 0], [18, 0], Extrapolation.CLAMP);
     const scale = interpolate(y, [-120, 0], [1.04, 1], Extrapolation.CLAMP);
     return {
@@ -205,7 +285,10 @@ export function HomeEditorialLayout({
       <View
         key="cover"
         testID="home-editorial-layout"
-        onLayout={(event) => setMeasuredWidth(event.nativeEvent.layout.width)}
+        onLayout={(event) => {
+          setMeasuredWidth(event.nativeEvent.layout.width);
+          sceneOrigin.set(event.nativeEvent.layout.y + 12);
+        }}
         style={[styles.root, { paddingHorizontal: geometry.gutter }, style]}>
         <View style={split ? styles.coverColumns : undefined}>
           <View style={split ? { width: coverWidth, minWidth: 0 } : undefined}>
@@ -238,23 +321,26 @@ export function HomeEditorialLayout({
                 </View>
               ) : null}
               {coverTitle ? (
-                <Text
-                  accessibilityRole="header"
-                  color={theme.colors.text}
-                  adjustsFontSizeToFit
-                  numberOfLines={1}
-                  allowFontScaling={false}
-                  style={{
-                    fontSize: titleFontSize,
-                    lineHeight: titleHeight,
-                    fontFamily: chromeFontFamily,
-                    fontWeight: titleWeight,
-                    letterSpacing: -titleFontSize * 0.05,
-                  }}>
-                  {coverTitle}
-                </Text>
+                <Animated.View onLayout={titleStage.onLayout} style={titleStage.style}>
+                  <Text
+                    accessibilityRole="header"
+                    color={theme.colors.text}
+                    adjustsFontSizeToFit
+                    numberOfLines={1}
+                    allowFontScaling={false}
+                    style={{
+                      fontSize: titleFontSize,
+                      lineHeight: titleHeight,
+                      fontFamily: chromeFontFamily,
+                      fontWeight: titleWeight,
+                      letterSpacing: -titleFontSize * 0.05,
+                    }}>
+                    {coverTitle}
+                  </Text>
+                </Animated.View>
               ) : null}
               <Animated.View
+                onLayout={artworkStage.onLayout}
                 pointerEvents="none"
                 style={[
                   {
@@ -263,17 +349,30 @@ export function HomeEditorialLayout({
                     zIndex: 1,
                   },
                   animatedArtworkStyle,
+                  artworkStage.style,
                 ]}>
                 {artwork}
               </Animated.View>
-              <View style={[styles.coverUtilities, { top: coverTitle ? titleHeight + 28 : 16 }]}>
+              <Animated.View
+                onLayout={controlsStage.onLayout}
+                style={[
+                  styles.coverUtilities,
+                  { top: coverTitle ? titleHeight + 28 : 16 },
+                  controlsStage.style,
+                ]}>
                 {headerAction ? <View style={styles.coverButtons}>{headerAction}</View> : null}
                 {headerLeading ? <View style={styles.coverTarget}>{headerLeading}</View> : null}
-              </View>
+              </Animated.View>
             </View>
-            {hasSlot(launches) ? <View style={styles.coverLaunches}>{launches}</View> : null}
+            {hasSlot(launches) ? (
+              <Animated.View
+                onLayout={launchesStage.onLayout}
+                style={[styles.coverLaunches, launchesStage.style]}>
+                {launches}
+              </Animated.View>
+            ) : null}
           </View>
-          <View style={split ? styles.coverReadingColumn : undefined}>
+          <Animated.View style={[split ? styles.coverReadingColumn : undefined, readingEntryStyle]}>
             {hasSlot(recent) ? (
               <EditorialSection
                 borderColor={theme.colors.border}
@@ -295,7 +394,7 @@ export function HomeEditorialLayout({
               </EditorialSection>
             ) : null}
             {controls}
-          </View>
+          </Animated.View>
         </View>
       </View>
     );
