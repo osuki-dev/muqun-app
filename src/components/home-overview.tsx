@@ -755,12 +755,14 @@ export function HomeOverview({
                 ) : undefined
               }
               headerLeading={
-                <HomeLaunchTarget
-                  bare={customTheme?.manifest.homePresentation?.toolbarBackground === false}
-                  controller={launchController}
-                  loading={loading}
-                  onPair={commands.pairGateway}
-                />
+                launchController.servers.length === 1 ? undefined : (
+                  <HomeLaunchTarget
+                    bare={customTheme?.manifest.homePresentation?.toolbarBackground === false}
+                    controller={launchController}
+                    loading={loading}
+                    onPair={commands.pairGateway}
+                  />
+                )
               }
               launches={
                 hydrationError || loading ? undefined : (
