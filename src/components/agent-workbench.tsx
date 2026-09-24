@@ -1,3 +1,4 @@
+import { useRootRouteName } from '@/hooks/use-root-route-name';
 import { useStore } from 'zustand';
 import { createAgentTranscriptStore } from '@/stores/agent-transcript';
 import { AgentTranscriptList } from '@/components/agent-transcript-list';
@@ -21,7 +22,7 @@ import {
   RefreshControl,
   Share,
 } from 'react-native';
-import { useIsFocused, useNavigation, usePathname, useRouter } from 'expo-router';
+import { useIsFocused, usePathname, useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { useThemeTokens, useToast } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
@@ -300,13 +301,9 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   }, [serverId, sessionId]);
   const { t } = useLingui();
   const router = useRouter();
-  const rootNavigation = useNavigation('/');
   const routeFocused = useIsFocused();
   const pathname = usePathname();
-  const rootNavigationState = rootNavigation.getState();
-  const rootRouteName = rootNavigationState
-    ? rootNavigationState.routes[rootNavigationState.index]?.name
-    : undefined;
+  const rootRouteName = useRootRouteName();
   const globalOwnerRef = useRef<AgentWorkbenchGlobalOwner | null>(null);
   const [globalOwnerEpoch, setGlobalOwnerEpoch] = useState(0);
   const isGlobalOwner = useCallback(

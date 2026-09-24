@@ -1,13 +1,8 @@
+import { useRootRouteName } from '@/hooks/use-root-route-name';
 import { useEffect, useRef } from 'react';
 import { useLingui } from '@lingui/react/macro';
 import { useThemeMode, useThemeTokens } from '@osuki-dev/ui';
-import {
-  useIsFocused,
-  useLocalSearchParams,
-  useNavigation,
-  usePathname,
-  useRouter,
-} from 'expo-router';
+import { useIsFocused, useLocalSearchParams, usePathname, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -57,11 +52,7 @@ export default function AgentScreen() {
   const router = useRouter();
   const routeFocused = useIsFocused();
   const pathname = usePathname();
-  const rootNavigation = useNavigation('/');
-  const rootNavigationState = rootNavigation.getState();
-  const rootRouteName = rootNavigationState
-    ? rootNavigationState.routes[rootNavigationState.index]?.name
-    : undefined;
+  const rootRouteName = useRootRouteName();
   const theme = useThemeTokens();
   const { resolvedMode } = useThemeMode();
   const insets = useSafeAreaInsets();
