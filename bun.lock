@@ -93,6 +93,9 @@
     "@shopify/react-native-skia",
     "react-native-enriched-markdown",
   ],
+  "patchedDependencies": {
+    "@shopify/react-native-skia@2.12.0": "patches/@shopify%2Freact-native-skia@2.12.0.patch",
+  },
   "overrides": {
     "react-native-screens": "4.28.0",
   },
