@@ -274,11 +274,9 @@ import { useSshHostsStore } from '@/stores/ssh-hosts';
 import { homeWorkspaceHandoffStore } from '@/lib/home-workspace-handoff';
 import {
   type TerminalKey,
-  INSERT_MODE_KEYS,
   isFullScreenTuiPane,
   keyCap,
   parseNvimMode,
-  terminalKeysForPane,
   keyboardCombinationKeys,
   terminalKeysFromGateway,
   withCommonTerminalCombinations,
@@ -2042,22 +2040,29 @@ export function ServerTerminalWorkspace({
     // is the one case that does not go through the usual resolve-then-merge
     // below: the usage-ordered row is deliberately not used here either, so
     // Esc stays first no matter how often the other keys have been pressed.
-    if (fullScreenPane && nvimMode === 'insert') return INSERT_MODE_KEYS;
-    const resolved =
-      shortcuts && shortcuts.keys.length > 0
-        ? terminalKeysFromGateway(shortcuts.keys)
-        : terminalKeysForPane(
-            selectedAgent ? field(selectedAgent, 'agent') : null,
-            selectedPane ? field(selectedPane, 'terminal_title_stripped') : null
-          );
+    if (fullScreenPane && nvimMode === 'insert') {
+      return (shortcuts ? terminalKeysFromGateway(shortcuts.keys) : [])
+        .filter((item) => ['esc', 'enter', 'tab', 'ctrl+c', 'backspace'].includes(item.key))
+        .map((item) => (item.key === 'esc' ? { ...item, emphasis: true } : item));
+    }
+    const resolved = shortcuts
+      ? terminalKeysFromGateway([...shortcuts.keys, ...(shortcuts.keyActions ?? [])])
+      : [];
     // An editor's own commands go on top of whatever was resolved rather than
     // into the table: the gateway's answer wins when there is one, so a set
     // added only to the fallback would never be seen against a real gateway.
-    const completed = withCommonTerminalCombinations(resolved);
-    const base = fullScreenPane ? withEditorActions(completed) : completed;
+    // Older Gateways have no keyActions field. Keep their editor shortcuts
+    // usable until the installed Gateway is updated; a current Gateway is
+    // authoritative for both the dock and the virtual keyboard.
+    const base =
+      shortcuts?.keyActions === undefined
+        ? fullScreenPane
+          ? withEditorActions(withCommonTerminalCombinations(resolved))
+          : withCommonTerminalCombinations(resolved)
+        : resolved;
     const scope = shortcuts ? usageScope(serverId, shortcuts.profile, 'keys') : null;
     return orderByUsage(base, scope ? loadUsage()[scope] : undefined, (item) => item.key);
-  }, [fullScreenPane, nvimMode, selectedAgent, selectedPane, serverId, shortcuts]);
+  }, [fullScreenPane, nvimMode, serverId, shortcuts]);
   const keyScope = shortcuts ? usageScope(serverId, shortcuts.profile, 'keys') : null;
   // Typing "/" in an agent pane offers what that agent actually accepts.
   //
@@ -4254,7 +4259,9 @@ export function ServerTerminalWorkspace({
         showsHorizontalScrollIndicator={false}
         style={isPadLayout ? styles.padTerminalKeyViewport : undefined}
         contentContainerStyle={styles.terminalKeyList}>
-        {renderTerminalKeyButtons(keyboardCombinationKeys(terminalKeys))}
+        {renderTerminalKeyButtons(
+          keyboardCombinationKeys(terminalKeys, shortcuts?.keyActions === undefined)
+        )}
       </ScrollView>
       {dock.composerEntry ? composerEntry : null}
     </View>

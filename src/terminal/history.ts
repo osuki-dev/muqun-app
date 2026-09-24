@@ -392,6 +392,29 @@ export function foldPaneRead(
     const held = terminalLines(currentOutput);
     const latest = terminalLines(incoming);
 
+    // A shell's active input row changes in place as a person types. With a
+    // short pane there may be too few stable rows for screenPlacement to
+    // recognise the same screen, so b -> bu -> bun used to become three
+    // history rows. Only replace when every preceding row in this read still
+    // matches the held tail; an actual new output row must continue to append.
+    const heldLast = held.at(-1);
+    const latestLast = latest.at(-1);
+    const preceding = latest.slice(0, -1);
+    const heldPreceding = held.slice(0, -1);
+    if (
+      (origin === 'refresh' || origin === 'frame') &&
+      heldLast &&
+      latestLast &&
+      heldLast !== latestLast &&
+      (latestLast.startsWith(heldLast) || heldLast.startsWith(latestLast)) &&
+      preceding.length <= heldPreceding.length &&
+      preceding.every(
+        (row, index) => row === heldPreceding[heldPreceding.length - preceding.length + index]
+      )
+    ) {
+      return trimTerminalWindow([...heldPreceding, latestLast].join('\n'), maximumLines);
+    }
+
     // Deepening first, and only for a source allowed to claim depth. A read
     // that reaches further back than the window covers everything the window
     // holds, so taking it whole loses nothing -- that is the one and only way

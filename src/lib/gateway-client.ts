@@ -620,6 +620,9 @@ export interface ShortcutKey {
   label: string;
   key: string;
   description?: string;
+  keys?: string[];
+  text?: string;
+  submit?: boolean;
 }
 
 export interface SlashCommand {
@@ -630,7 +633,7 @@ export interface SlashCommand {
    * runs exactly as written, so it is safe to send on a single tap.
    */
   argument_hint?: string | null;
-  /** "builtin" for the gateway's own table, "user"/"project" for a command file. */
+  /** "catalog" for the downloaded built-in command snapshot. */
   source?: string;
 }
 
@@ -639,6 +642,8 @@ export interface PaneShortcuts {
   /** Which table the gateway matched: an agent name, "editor", or "shell". */
   profile: string;
   keys: ShortcutKey[];
+  /** Optional multi-key and text actions; older Gateways omit this. */
+  keyActions?: ShortcutKey[];
   commands: SlashCommand[];
 }
 
