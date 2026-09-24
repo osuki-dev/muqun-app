@@ -75,3 +75,33 @@ export async function refreshHomeContinue({
     }),
   ]);
 }
+
+/** Refresh independent gateways with bounded concurrency; one failure keeps other rows fresh. */
+export async function refreshHomeGateways<T extends { serverId: string }>({
+  records,
+  selectedServerId,
+  isCurrent,
+  refresh,
+}: {
+  records: readonly T[];
+  selectedServerId?: string;
+  isCurrent: () => boolean;
+  refresh: (record: T) => Promise<unknown>;
+}): Promise<void> {
+  const queue = [...new Map(records.map((record) => [record.serverId, record])).values()];
+  queue.sort(
+    (a, b) => Number(b.serverId === selectedServerId) - Number(a.serverId === selectedServerId)
+  );
+  const worker = async (): Promise<void> => {
+    if (!isCurrent()) return;
+    const record = queue.shift();
+    if (!record) return;
+    try {
+      await refresh(record);
+    } catch {
+      // Keep the last observation and its original timestamp on failed reads.
+    }
+    await worker();
+  };
+  await Promise.all([worker(), worker()]);
+}

@@ -89,3 +89,54 @@ test('failed reads preserve stored observations instead of replacing them with e
   expect(results.every((result) => result.status === 'rejected')).toBe(true);
   expect(writes).toEqual([]);
 });
+
+test('multi-gateway refresh prioritizes selection and never exceeds two active gateways', async () => {
+  const { refreshHomeGateways } = await import('../home-continue-refresh');
+  const started: string[] = [];
+  const finish: (() => void)[] = [];
+  let active = 0;
+  let peak = 0;
+  const run = refreshHomeGateways({
+    records: ['a', 'b', 'c', 'b'].map((serverId) => ({ serverId })),
+    selectedServerId: 'c',
+    isCurrent: () => true,
+    refresh: async ({ serverId }) => {
+      started.push(serverId);
+      peak = Math.max(peak, ++active);
+      await new Promise<void>((resolve) => finish.push(resolve));
+      active--;
+    },
+  });
+  expect(started).toEqual(['c', 'a']);
+  finish.shift()!();
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  expect(started).toEqual(['c', 'a', 'b']);
+  finish.forEach((resolve) => resolve());
+  await run;
+  expect(peak).toBe(2);
+});
+
+test('one failed gateway does not stop others, and leaving Home stops queued reads', async () => {
+  const { refreshHomeGateways } = await import('../home-continue-refresh');
+  const started: string[] = [];
+  await refreshHomeGateways({
+    records: ['a', 'b', 'c'].map((serverId) => ({ serverId })),
+    isCurrent: () => true,
+    refresh: async ({ serverId }) => {
+      started.push(serverId);
+      if (serverId === 'a') throw new Error('offline');
+    },
+  });
+  expect(started).toEqual(['a', 'b', 'c']);
+  let current = true;
+  const stopped: string[] = [];
+  await refreshHomeGateways({
+    records: ['a', 'b', 'c'].map((serverId) => ({ serverId })),
+    isCurrent: () => current,
+    refresh: async ({ serverId }) => {
+      stopped.push(serverId);
+      current = false;
+    },
+  });
+  expect(stopped).toEqual(['a']);
+});

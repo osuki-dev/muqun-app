@@ -2,8 +2,8 @@ import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens } from '@osuki-dev/ui';
 import { ChevronRight } from 'lucide-react-native';
-import { useCallback, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { useCallback, useRef, useState } from 'react';
+import { AppState, StyleSheet, View } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 
 import { PressableScale } from '@/components/pressable-scale';
@@ -11,7 +11,8 @@ import { StatusDot } from '@/components/status-dot';
 import { Text } from '@/components/text';
 import { ThemeIcon } from '@/components/theme-icon';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
-import { refreshHomeContinue } from '@/lib/home-continue-refresh';
+import { refreshHomeContinue, refreshHomeGateways } from '@/lib/home-continue-refresh';
+import { useAppActive } from '@/hooks/use-app-active';
 import { loadRecordSessions, readGatewayRecordJson } from '@/lib/gateway-client';
 import { resolveSessionId, sessionChoices } from '@/lib/session-switcher';
 import { useServerSession } from '@/stores/server-session';
@@ -65,40 +66,54 @@ export function HomeRecentSessions({
   const snapshotsHydrated = useServerAgents((state) => state.hydrated);
   const paneMode = useAppSettings((state) => state.serverCardPanes);
   const targetId = selectedServerId ?? activeConnection?.serverId;
-  const targetRecord = servers.find((server) => server.serverId === targetId);
+  const appActive = useAppActive();
+  const refreshFlight = useRef<Promise<void>>(Promise.resolve());
   const [refreshing, setRefreshing] = useState(false);
   useFocusEffect(
     useCallback(() => {
+      if (!appActive || !hydrated) return;
       let current = true;
       let pending = false;
+      const isCurrent = () => current && AppState.currentState === 'active';
       const refresh = async () => {
-        if (!hydrated || pending || !targetRecord || isDemoRecord(targetRecord)) return;
+        if (!isCurrent() || pending) return;
         pending = true;
-        setRefreshing(true);
-        try {
-          const inventory = await loadRecordSessions(targetRecord);
-          if (!current) return;
-          const choices = sessionChoices(inventory.sessions);
-          const sessionId = resolveSessionId(
-            choices.length ? choices : sessionChoices(inventory.sessions, true),
-            useServerSession.getState().byServer[targetRecord.serverId]
-          );
-          const recent = useHomeRecentsStore.getState();
-          await refreshHomeContinue({
-            serverId: targetRecord.serverId,
-            sessionId,
-            entries: recent.entries,
-            read: (path) => readGatewayRecordJson(targetRecord, path),
-            isCurrent: () => current,
-            recordPanes: useServerAgents.getState().record,
-            observe: recent.observeSession,
-            updateTitle: recent.updateTitle,
+        // Drain older reads before starting another batch after a focus/target change.
+        const flight = refreshFlight.current.then(async () => {
+          if (!isCurrent()) return;
+          setRefreshing(true);
+          await refreshHomeGateways({
+            records: servers.filter((server) => !isDemoRecord(server)),
+            selectedServerId: targetId,
+            isCurrent,
+            refresh: async (targetRecord) => {
+              const inventory = await loadRecordSessions(targetRecord);
+              if (!isCurrent()) return;
+              const choices = sessionChoices(inventory.sessions);
+              const sessionId = resolveSessionId(
+                choices.length ? choices : sessionChoices(inventory.sessions, true),
+                useServerSession.getState().byServer[targetRecord.serverId]
+              );
+              const recent = useHomeRecentsStore.getState();
+              await refreshHomeContinue({
+                serverId: targetRecord.serverId,
+                sessionId,
+                entries: recent.entries,
+                read: (path) => readGatewayRecordJson(targetRecord, path),
+                isCurrent,
+                recordPanes: useServerAgents.getState().record,
+                observe: recent.observeSession,
+                updateTitle: recent.updateTitle,
+              });
+            },
           });
-        } catch {
-          // Preserve last observed rows and their original age on read failures.
+        });
+        refreshFlight.current = flight;
+        try {
+          await flight;
         } finally {
           pending = false;
-          if (current) {
+          if (isCurrent()) {
             setRefreshing(false);
             setObservationNowMs(Date.now());
           }
@@ -114,7 +129,7 @@ export function HomeRecentSessions({
         current = false;
         clearInterval(timer);
       };
-    }, [targetRecord, hydrated])
+    }, [servers, targetId, hydrated, appActive])
   );
   const available = homeContinueEntries({
     serverIds: servers.map((server) => server.serverId),
