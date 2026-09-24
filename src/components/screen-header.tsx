@@ -39,7 +39,10 @@ export function ScreenHeader({
   backTestID,
   right,
   rightPill,
+  contentMaxWidth,
 }: {
+  /** Limit controls while the status-bar backdrop and fade span the screen. */
+  contentMaxWidth?: number;
   title?: string;
   titlePill?: ReactNode;
   /** Defaults to router back, falling back to Home when there's nothing to pop. */
@@ -66,7 +69,12 @@ export function ScreenHeader({
   const handleBack = onBack ?? (() => (router.canGoBack() ? router.back() : router.replace('/')));
 
   return (
-    <View style={[navHeaderBarStyle, { paddingTop: insets.top + NAV_HEADER_TOP_GAP }]}>
+    <View
+      style={[
+        navHeaderBarStyle,
+        { paddingTop: insets.top + NAV_HEADER_TOP_GAP },
+        contentMaxWidth !== undefined && { paddingHorizontal: 0 },
+      ]}>
       {/* Keep labels scrolling behind the controls from showing through their
           translucent material. The solid themed plane covers the status bar
           and control row; the soft edge begins below the controls. */}
@@ -92,7 +100,17 @@ export function ScreenHeader({
           },
         ]}
       />
-      <Animated.View style={[navHeaderRowStyle, arrivalStyle]}>
+      <Animated.View
+        style={[
+          navHeaderRowStyle,
+          contentMaxWidth !== undefined && {
+            width: '100%',
+            maxWidth: contentMaxWidth,
+            alignSelf: 'center',
+            paddingHorizontal: navHeaderBarStyle.paddingHorizontal,
+          },
+          arrivalStyle,
+        ]}>
         <NavHeaderBackButton
           accessibilityLabel={t`Go back`}
           onPress={handleBack}

@@ -1,3 +1,4 @@
+import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { ComposerAttachmentButton } from '@/components/composer-attachment-button';
 import { TerminalNotice, terminalNoticeStyles } from '@/components/terminal-notice';
 import { NoticeDeck } from '@/components/notice-deck';
@@ -737,6 +738,7 @@ export function ServerTerminalWorkspace({
     },
     [rememberSimfarmPortForServer, serverId]
   );
+  const profile = useAppearanceProfile();
   const theme = useThemeTokens();
   const surfaceBackground = useSurfaceBackground();
   const { resolvedMode } = useThemeMode();
@@ -4210,6 +4212,7 @@ export function ServerTerminalWorkspace({
       }}
       style={[
         styles.keyRowToggle,
+        { borderRadius: profile.chrome.control },
         {
           backgroundColor: surfaceBackground(
             assignment.open ? theme.colors.primarySubtle : chromeGlass
@@ -4227,7 +4230,11 @@ export function ServerTerminalWorkspace({
       feedback="selection"
       pressedScale={0.9}
       onPress={() => setComposerRevealed(true)}
-      style={[styles.keyRowToggle, { backgroundColor: surfaceBackground(chromeGlass) }]}>
+      style={[
+        styles.keyRowToggle,
+        { borderRadius: profile.chrome.control },
+        { backgroundColor: surfaceBackground(chromeGlass) },
+      ]}>
       <PenLine size={16} color={chromeText} />
     </PressableScale>
   );
@@ -4416,7 +4423,11 @@ export function ServerTerminalWorkspace({
               Keyboard.dismiss();
               setComposerRevealed(false);
             }}
-            style={[styles.keyRowToggle, { backgroundColor: surfaceBackground(chromeGlass) }]}>
+            style={[
+              styles.keyRowToggle,
+              { borderRadius: profile.chrome.control },
+              { backgroundColor: surfaceBackground(chromeGlass) },
+            ]}>
             <KeyboardIcon size={16} color={theme.colors.primary} />
           </PressableScale>
           <ScrollView
@@ -4461,6 +4472,7 @@ export function ServerTerminalWorkspace({
         style={[
           styles.keyRowToggle,
           isPadLayout && styles.padKeyRowEntry,
+          { borderRadius: profile.chrome.control },
           { backgroundColor: surfaceBackground(fill) },
         ]}>
         <Zap size={isPadLayout ? 15 : 16} color={theme.colors.primary} />
@@ -4991,6 +5003,7 @@ export function ServerTerminalWorkspace({
                   <View
                     style={[
                       styles.floatingEntriesTray,
+                      { borderRadius: profile.chrome.controlTray },
                       {
                         backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
                       },
@@ -5079,7 +5092,15 @@ export function ServerTerminalWorkspace({
                   <GlassChrome
                     surface="composer"
                     shape="composerDock"
-                    style={[styles.composerDock, isPadLayout && styles.padComposerDock]}>
+                    style={[
+                      styles.composerDock,
+                      isPadLayout && styles.padComposerDock,
+                      {
+                        borderTopLeftRadius: profile.chrome.composerDock,
+                        borderTopRightRadius: profile.chrome.composerDock,
+                      },
+                      isPadLayout && { borderRadius: profile.chrome.composerDock },
+                    ]}>
                     {/*
               The dock's own height is a moving thing: an approval banner, the
               pane strip, the upload-wait row and a growing multiline input all
@@ -5222,6 +5243,7 @@ export function ServerTerminalWorkspace({
                                   }}
                                   style={[
                                     styles.keyRowToggle,
+                                    { borderRadius: profile.chrome.control },
                                     { backgroundColor: surfaceBackground(chromeGlass) },
                                   ]}>
                                   {/* The pack's primary, like the four entries beside it: it
@@ -5378,6 +5400,7 @@ function PaneChip({
   onLayout: (event: LayoutChangeEvent) => void;
   onPress: () => void;
 }) {
+  const profile = useAppearanceProfile();
   const surfaceBackground = useSurfaceBackground();
   const selected = useSharedValue(active ? 1 : 0);
   useEffect(() => {
@@ -5395,12 +5418,13 @@ function PaneChip({
       accessibilityLabel={accessibilityLabel}
       onLayout={onLayout}
       onPress={onPress}
-      style={styles.paneChip}>
+      style={[styles.paneChip, { borderRadius: profile.chrome.navigationPill }]}>
       <Animated.View
         pointerEvents="none"
         style={[
           StyleSheet.absoluteFill,
           styles.paneChipFill,
+          { borderRadius: profile.chrome.navigationPill },
           { backgroundColor: surfaceBackground(activeFill) },
           selectedStyle,
         ]}
@@ -5448,6 +5472,7 @@ function TerminalKeyButton({
   activeBackground: string;
   activeText: string;
 }) {
+  const profile = useAppearanceProfile();
   const { t } = useLingui();
   const surfaceBackground = useSurfaceBackground();
   // A cap is a key, not a word: `Ctrl C`, `:wq`, `␣ff`, `⌫`. The mono slot is
@@ -5531,6 +5556,7 @@ function TerminalKeyButton({
       }}
       style={[
         styles.terminalKey,
+        { borderRadius: profile.chrome.control },
         { backgroundColor: surfaceBackground(background) },
         // Insert mode's Esc: bigger, and bordered in the same colour the
         // press animation below already uses for "sent", so it reads as the
@@ -5542,6 +5568,7 @@ function TerminalKeyButton({
         style={[
           StyleSheet.absoluteFill,
           styles.terminalKeyFill,
+          { borderRadius: profile.chrome.control },
           { backgroundColor: surfaceBackground(activeBackground) },
           activeFillStyle,
         ]}

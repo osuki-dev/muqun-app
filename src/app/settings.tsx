@@ -351,9 +351,7 @@ export default function SettingsScreen() {
           band above the scroll, which is the one thing on this screen that
           could not have come from the same app as the server page. */}
       <View pointerEvents="box-none" style={styles.header}>
-        <View pointerEvents="box-none" style={styles.headerContent}>
-          <ScreenHeader title={t`Settings`} />
-        </View>
+        <ScreenHeader title={t`Settings`} contentMaxWidth={SETTINGS_CONTENT_MAX_WIDTH} />
       </View>
     </View>
   );
@@ -362,11 +360,6 @@ export default function SettingsScreen() {
 const styles = StyleSheet.create({
   page: { flex: 1 },
   header: { position: 'absolute', top: 0, left: 0, right: 0 },
-  headerContent: {
-    width: '100%',
-    maxWidth: SETTINGS_CONTENT_MAX_WIDTH,
-    alignSelf: 'center',
-  },
   content: {
     width: '100%',
     maxWidth: SETTINGS_CONTENT_MAX_WIDTH,
