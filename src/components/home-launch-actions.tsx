@@ -16,6 +16,7 @@ import Animated, {
 import { OpenCodeIcon } from '@/components/opencode-icon';
 import { PressableScale } from '@/components/pressable-scale';
 import { Text } from '@/components/text';
+import { ThemeIcon } from '@/components/theme-icon';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { PRESS, timing } from '@/lib/motion';
 import type { GatewayRecord } from '@/lib/gateway-storage';
@@ -182,7 +183,13 @@ export function HomeLaunchTarget({
       </Text>
       {hasMultiple ? (
         <Animated.View style={pickerChevronStyle} pointerEvents="none">
-          <ChevronDown size={16} color={theme.colors.primary} />
+          <ThemeIcon
+            name="home.arrow"
+            fallback={ChevronDown}
+            size={16}
+            color={theme.colors.primary}
+            direction="down"
+          />
         </Animated.View>
       ) : null}
     </PressableScale>
@@ -386,7 +393,13 @@ function LaunchTile({
           {marker}
         </Text>
         <Animated.View style={arrowStyle}>
-          <ArrowUpRight size={15} color={ink} />
+          <ThemeIcon
+            name="home.arrow"
+            direction="up-right"
+            fallback={ArrowUpRight}
+            size={15}
+            color={ink}
+          />
         </Animated.View>
       </PressableScale>
     );
@@ -427,7 +440,13 @@ function LaunchTile({
             {marker}
           </Text>
           <Animated.View style={arrowStyle}>
-            <ArrowUpRight size={16} color={ink} />
+            <ThemeIcon
+              name="home.arrow"
+              direction="up-right"
+              fallback={ArrowUpRight}
+              size={16}
+              color={ink}
+            />
           </Animated.View>
         </View>
       </View>

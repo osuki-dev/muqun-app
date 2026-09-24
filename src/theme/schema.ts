@@ -199,6 +199,19 @@ export const THEME_ICONS = [
 ] as const;
 export type ThemeIconName = (typeof THEME_ICONS)[number];
 
+/** The direction drawn into the asset, before any control-specific rotation. */
+export const themeIconDirectionSchema = z.enum([
+  'up',
+  'up-right',
+  'right',
+  'down-right',
+  'down',
+  'down-left',
+  'left',
+  'up-left',
+]);
+export type ThemeIconDirection = z.infer<typeof themeIconDirectionSchema>;
+
 const iconSchema = z.strictObject({
   asset: identifier,
   /**
@@ -353,6 +366,8 @@ export const themeManifestSchema = z.object({
   assets: z.record(identifier, assetSchema).optional(),
   decoration: decorationSchema.optional(),
   icons: iconsSchema.optional(),
+  // Top-level so older readers ignore this optional capability without rejecting the pack.
+  iconDirections: z.record(z.string(), themeIconDirectionSchema).optional(),
   variantDecorations: z
     .strictObject({
       light: decorationSchema.optional(),
