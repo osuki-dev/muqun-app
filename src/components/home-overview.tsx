@@ -755,7 +755,7 @@ export function HomeOverview({
                 ) : undefined
               }
               headerLeading={
-                launchController.servers.length === 1 ? undefined : (
+                launchController.servers.length <= 1 ? undefined : (
                   <HomeLaunchTarget
                     bare={customTheme?.manifest.homePresentation?.toolbarBackground === false}
                     controller={launchController}
@@ -765,7 +765,14 @@ export function HomeOverview({
                 )
               }
               launches={
-                hydrationError || loading ? undefined : (
+                hydrationError || loading ? undefined : launchController.servers.length === 0 ? (
+                  <EmptyState
+                    compact
+                    isPad={isPad}
+                    onPair={() => void commands.pairGateway()}
+                    onDemo={openDemo}
+                  />
+                ) : (
                   <HomeLaunchActions
                     controller={launchController}
                     onNewOpenCode={commands.newOpenCode}
@@ -1588,10 +1595,12 @@ function ServerCard({
  * going to point at the QR code their Gateway prints.
  */
 function EmptyState({
+  compact = false,
   isPad,
   onPair,
   onDemo,
 }: {
+  compact?: boolean;
   isPad: boolean;
   onPair: () => void;
   onDemo: () => void;
@@ -1619,7 +1628,7 @@ function EmptyState({
             the accent because the accent on this card belongs to the button --
             spending it twice, once on a picture of the action and once on the
             action, is what made the card read as two invitations. */}
-        {hasIllustration ? (
+        {compact ? null : hasIllustration ? (
           <View
             style={{
               width: isPad ? 180 : 128,
