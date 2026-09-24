@@ -205,7 +205,9 @@ the lint rule for whether something compiles.
 The usual fixes keep behaviour identical:
 
 - **A Reanimated shared value written with `.value =`:** use `.set()` and
-  `.get()`.
+  `.get()`. The two are not identical: `.set(fn)` treats a plain function as an
+  updater and stores `fn(current)`. For a shared value that holds a function,
+  write `.set(() => fn)`.
 - **`try`/`finally`, a `try` without `catch`, a `throw` inside `try`, or
   `?:`/`&&`/`?.` inside a `try` block:** call through
   `@/lib/compiler-safe-control-flow` (`settleAfter`, `recoverWith`, `rethrow`),
