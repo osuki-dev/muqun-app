@@ -2751,6 +2751,7 @@ msgid "Message not sent"
 msgstr "ยังไม่ได้ส่งข้อความ"
 
 #: src/components/agent-context-sheet.tsx
+#: src/components/agent-subagent-detail-sheet.tsx
 msgid "Model"
 msgstr "โมเดล"
 
@@ -3091,6 +3092,7 @@ msgstr "ยังไม่มีเวิร์กทรี สร้างส�
 msgid "Not a git repository"
 msgstr "ไม่ใช่ที่เก็บโค้ด Git"
 
+#: src/components/agent-context-sheet.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Not available"
 msgstr "ไม่พร้อมใช้งาน"
@@ -5423,6 +5425,7 @@ msgid "Today"
 msgstr "วันนี้"
 
 #: src/components/agent-context-sheet.tsx
+#: src/components/agent-subagent-detail-sheet.tsx
 msgid "Tokens this session"
 msgstr "โทเค็นในเซสชันนี้"
 

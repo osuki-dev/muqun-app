@@ -1611,16 +1611,23 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         generation === childrenRequestRef.current &&
         request === childrenRootRequestsRef.current.get(rootAsid) &&
         ownsWorkbench(owner);
+      const observedChildren = childrenByParentRef.current;
       await loadSessionDescendants({
         rootAsid,
-        known: childrenByParentRef.current,
+        known: observedChildren,
         listChildren: listAgentSessionChildrenObserved,
         isCurrent,
         onChildren: (parent, inventory) => {
           if (!isCurrent()) return;
           setChildrenByParent((previous) =>
             isCurrent()
-              ? mergeSessionChildren(previous, parent, inventory.children, inventory.authoritative)
+              ? mergeSessionChildren(
+                  previous,
+                  parent,
+                  inventory.children,
+                  inventory.authoritative,
+                  observedChildren[parent] ?? []
+                )
               : previous
           );
           void removeChildSessionRecents(

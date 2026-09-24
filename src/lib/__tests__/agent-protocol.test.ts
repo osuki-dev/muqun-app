@@ -1074,14 +1074,15 @@ describe('context, shells, engine, diff', () => {
     expect(usage.messages).toBe(12);
     expect(usage.tokens).toMatchObject({ input: 20801, cache_read: 3, cache_write: 4 });
     // The cached half of the input is input the model still read.
-    expect(contextTokenTotal(usage.tokens)).toBe(20801 + 41 + 134 + 3);
+    expect(contextTokenTotal(usage.tokens)).toBe(20801 + 41 + 134 + 3 + 4);
   });
 
   test('tokens may be null, and the ring has nothing to fill', () => {
     const usage = parseAgentContextUsage({ messages: 0, tokens: null });
     expect(usage.tokens).toBeNull();
     expect(contextTokenTotal(usage.tokens)).toBe(0);
-    expect(contextFillRatio(usage.tokens, 200000)).toBe(0);
+    expect(contextFillRatio(usage.tokens, 200000)).toBeNull();
+    expect(contextFillRatio({ input: 0, output: 0 }, 200000)).toBe(0);
     expect(contextFillRatio({ input: 1, output: 0 }, undefined)).toBeNull();
     expect(contextFillRatio({ input: 1, output: 0 }, 0)).toBeNull();
     expect(contextFillRatio({ input: 100, output: 100 }, 400)).toBeCloseTo(0.5);

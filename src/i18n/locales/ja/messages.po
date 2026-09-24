@@ -2751,6 +2751,7 @@ msgid "Message not sent"
 msgstr "メッセージを送信できませんでした"
 
 #: src/components/agent-context-sheet.tsx
+#: src/components/agent-subagent-detail-sheet.tsx
 msgid "Model"
 msgstr "モデル"
 
@@ -3091,6 +3092,7 @@ msgstr "ワークツリーはまだありません。下で作成すると、こ
 msgid "Not a git repository"
 msgstr "Git リポジトリではありません"
 
+#: src/components/agent-context-sheet.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Not available"
 msgstr "利用できません"
@@ -5423,6 +5425,7 @@ msgid "Today"
 msgstr "今日"
 
 #: src/components/agent-context-sheet.tsx
+#: src/components/agent-subagent-detail-sheet.tsx
 msgid "Tokens this session"
 msgstr "このセッションのトークン"
 

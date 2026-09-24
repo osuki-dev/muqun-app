@@ -2751,6 +2751,7 @@ msgid "Message not sent"
 msgstr "Chưa gửi được tin nhắn"
 
 #: src/components/agent-context-sheet.tsx
+#: src/components/agent-subagent-detail-sheet.tsx
 msgid "Model"
 msgstr "Mô hình"
 
@@ -3091,6 +3092,7 @@ msgstr "Chưa có worktree nào. Tạo một cái bên dưới để làm việc
 msgid "Not a git repository"
 msgstr "Không phải kho mã Git"
 
+#: src/components/agent-context-sheet.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Not available"
 msgstr "Không khả dụng"
@@ -5423,6 +5425,7 @@ msgid "Today"
 msgstr "Hôm nay"
 
 #: src/components/agent-context-sheet.tsx
+#: src/components/agent-subagent-detail-sheet.tsx
 msgid "Tokens this session"
 msgstr "Token trong phiên này"
 

@@ -2751,6 +2751,7 @@ msgid "Message not sent"
 msgstr "Mensagem não enviada"
 
 #: src/components/agent-context-sheet.tsx
+#: src/components/agent-subagent-detail-sheet.tsx
 msgid "Model"
 msgstr "Modelo"
 
@@ -3091,6 +3092,7 @@ msgstr "Ainda não há worktrees. Cria um abaixo para trabalhar num ramo sem mex
 msgid "Not a git repository"
 msgstr "Não é um repositório Git"
 
+#: src/components/agent-context-sheet.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Not available"
 msgstr "Indisponível"
@@ -5423,6 +5425,7 @@ msgid "Today"
 msgstr "Hoje"
 
 #: src/components/agent-context-sheet.tsx
+#: src/components/agent-subagent-detail-sheet.tsx
 msgid "Tokens this session"
 msgstr "Tokens desta sessão"
 

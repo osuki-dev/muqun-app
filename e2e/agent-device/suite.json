@@ -8081,6 +8081,16 @@
         "run": "flows/agent-session-tree.ad#detail-output"
       },
       {
+        "target": { "id": "agent-subagent-detail-model" },
+        "mode": "visible",
+        "run": "flows/agent-session-tree.ad#detail-model"
+      },
+      {
+        "target": { "id": "agent-subagent-detail-tokens" },
+        "mode": "visible",
+        "run": "flows/agent-session-tree.ad#detail-tokens"
+      },
+      {
         "run": "flows/agent-session-tree.ad#close-detail"
       },
       {

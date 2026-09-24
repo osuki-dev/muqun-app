@@ -2751,6 +2751,7 @@ msgid "Message not sent"
 msgstr "訊息未送出"
 
 #: src/components/agent-context-sheet.tsx
+#: src/components/agent-subagent-detail-sheet.tsx
 msgid "Model"
 msgstr "模型"
 
@@ -3091,6 +3092,7 @@ msgstr "還沒有工作樹。在下面建立一個，就能在某個分支上工
 msgid "Not a git repository"
 msgstr "不是 Git 儲存庫"
 
+#: src/components/agent-context-sheet.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Not available"
 msgstr "無法使用"
@@ -5423,6 +5425,7 @@ msgid "Today"
 msgstr "今天"
 
 #: src/components/agent-context-sheet.tsx
+#: src/components/agent-subagent-detail-sheet.tsx
 msgid "Tokens this session"
 msgstr "本次工作階段的 token"
 

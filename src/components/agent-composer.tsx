@@ -469,18 +469,10 @@ export const AgentComposer = memo(function AgentComposer({
   /** Which queued prompt has its actions open, if any. */
   const [inboxMenuId, setInboxMenuId] = useState<string | null>(null);
 
-  /**
-   * How full the model's context is, and how much the session has cost.
-   *
-   * The number is `GET …/context`, not `info.tokens`: the second is total
-   * spend and never comes down, so a gauge drawn from it would sit at 100%
-   * forever after one long session. The spend is still the fallback, because a
-   * gateway that has not answered the context route yet has nothing else to
-   * say, and it is labelled the same either way.
-   */
+  // Session spend cannot substitute for the latest context measurement.
   const contextPill = useMemo(() => {
     const live = contextUsage?.tokens ?? null;
-    const total = live ? contextTokenTotal(live) : contextTokenTotal(tokens);
+    const total = contextTokenTotal(live);
     if (total <= 0) return null;
     const ratio = live ? contextFillRatio(live, contextLimit) : null;
     let tokStr = `${total}`;
@@ -489,7 +481,7 @@ export const AgentComposer = memo(function AgentComposer({
     const costStr =
       cost === undefined || cost === null || cost === 0 ? t`Free` : `$${cost.toFixed(2)}`;
     return { label: `${tokStr} • ${costStr}`, ratio };
-  }, [contextUsage, contextLimit, tokens, cost, t]);
+  }, [contextUsage, contextLimit, cost, t]);
 
   const modelDisplayName = useMemo(
     () => modelName || formatModelName(selectedModel),
