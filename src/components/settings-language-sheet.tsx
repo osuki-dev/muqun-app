@@ -59,7 +59,7 @@ export function SettingsLanguageSheet({ onClose }: { onClose: () => void }) {
       title={t`Language`}
       caption={language ? LOCALE_LABELS[language] : t`Following your phone`}
       contentSized>
-      <View style={sheetSceneStyles.scroller}>
+      <View style={sheetSceneStyles.scrollerContent}>
         {/* First, and the default, so the app follows the phone until someone
             has a reason for it not to. `null` is what the store keeps -- it is
             the absence of a choice, not a tenth language. */}

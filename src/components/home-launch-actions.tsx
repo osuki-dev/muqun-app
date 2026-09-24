@@ -152,6 +152,7 @@ export function HomeLaunchTarget({
       }}
       style={[
         styles.target,
+        !bare && servers.length > 0 && { width: HOME_TOOLBAR_PAIR_WIDTH },
         bare && { minWidth: 0 },
         bare && { paddingHorizontal: HOME_TOOLBAR_ICON_INSET },
         {

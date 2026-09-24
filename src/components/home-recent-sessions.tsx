@@ -117,8 +117,8 @@ export function HomeRecentSessions({
     }, [targetRecord, hydrated])
   );
   const available = homeContinueEntries({
-    serverIds: targetId ? [targetId] : servers.map((server) => server.serverId),
-    hostIds: targetId ? [] : hosts.map((host) => host.id),
+    serverIds: servers.map((server) => server.serverId),
+    hostIds: hosts.map((host) => host.id),
     snapshots,
     recents: entries,
     reachabilityByServer,
