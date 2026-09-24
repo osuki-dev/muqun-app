@@ -5252,33 +5252,21 @@
         "run": "flows/settings-home-layout.ad#editorial-home"
       },
       {
-        "target": {
-          "id": "home-open-opencode"
-        },
+        "target": { "id": "home-pair-server" },
         "mode": "visible",
         "timeout": 8000,
-        "run": "flows/settings-home-layout.ad#rail-visible"
+        "run": "flows/settings-home-layout.ad#empty-pair-visible"
       },
       {
-        "point": [0.8, 0.28],
-        "delta": [-0.55, 0],
-        "run": "flows/settings-home-layout.ad#rail-swipe"
-      },
-      {
-        "target": {
-          "id": "home-open-terminal"
-        },
+        "target": { "text": "Try the demo" },
         "mode": "visible",
         "timeout": 8000,
-        "run": "flows/settings-home-layout.ad#rail-end-visible"
+        "run": "flows/settings-home-layout.ad#empty-demo-visible"
       },
       {
-        "target": {
-          "id": "home-open-ssh"
-        },
-        "mode": "visible",
-        "timeout": 8000,
-        "run": "flows/settings-home-layout.ad#rail-end-visible"
+        "target": { "id": "home-launch-actions" },
+        "mode": "hidden",
+        "run": "flows/settings-home-layout.ad#empty-launches-hidden"
       },
       {
         "run": "flows/settings-home-layout.ad#relaunch-editorial"

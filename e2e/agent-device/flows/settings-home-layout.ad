@@ -29,14 +29,14 @@ press "${TARGET}"
 # section editorial-home
 is visible "${TARGET}"
 
-# section rail-visible
+# section empty-pair-visible
 is visible "${TARGET}"
 
-# section rail-swipe
-gesture pan "${X}" "${Y}" "${DX}" "${DY}" 500
-
-# section rail-end-visible
+# section empty-demo-visible
 is visible "${TARGET}"
+
+# section empty-launches-hidden
+is hidden "${TARGET}"
 
 # section relaunch-editorial
 open "dev.osuki.muqun" --relaunch
