@@ -49,6 +49,10 @@ yarn-error.*
 # Local working notes and documentation
 /docs/
 
+# Release profiler output (react-native-release-profiler CLI)
+*.cpuprofile
+*.cpuprofile.txt*
+
 # typescript
 *.tsbuildinfo
 
