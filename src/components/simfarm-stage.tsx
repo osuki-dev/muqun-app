@@ -498,8 +498,7 @@ export function SimfarmStage({
    * Inline rather than a helper taking `t`, which is the shape that looks
    * tidier and does not work: Lingui's macro only expands a tagged template
    * whose tag is the hook's own binding, so a `t` passed as an argument is left
-   * alone, never extracted, and answers with an empty string at run time --
-   * `i18n-audit.ts` exists because that has reached a screen before.
+   * alone, never extracted, and answers with an empty string at run time.
    */
   const itemName = useCallback(
     (item: SimfarmMenuItem): string => {

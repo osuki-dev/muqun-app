@@ -1628,15 +1628,6 @@ export function ServerTerminalWorkspace({
   const chatViewShown =
     chatViewChosen && ((supportsAgentSessions && isOpenCodeAgent) || !partsForPane.failed);
   const hideTerminalDock = chatViewShown && supportsAgentSessions && isOpenCodeAgent;
-  if (__DEV__) {
-    console.log('[DEBUG AgentSessions]', {
-      paneViewMode: paneView.mode,
-      supportsAgentSessions,
-      chatViewShown,
-      chatViewChosen,
-      hideTerminalDock,
-    });
-  }
   // New content for this pane, however it was noticed: the gateway's revision
   // where there is one, and otherwise the output itself, which `setOutput`
   // leaves untouched when nothing changed.

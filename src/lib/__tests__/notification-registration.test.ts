@@ -1,7 +1,6 @@
 import { expect, test } from 'bun:test';
-import { readFileSync } from 'node:fs';
 import { runInNewContext } from 'node:vm';
-import ts from 'typescript';
+import { declaration, transpile } from '../../test-support/production-source';
 import { DEMO_PAIRING_SERVER_ID } from '../pairing';
 // The real constant, not a copy: the rule is executed in the sandbox below and
 // closes over this. Leaving it out made every reference throw a ReferenceError
@@ -11,20 +10,6 @@ import { PUSH_TOKEN_MAX_AGE_MS } from '../push-token-rule';
 
 /** Execute the actual production effect with inert native/network ports. No
  * React Native imports, global module mocks, devices or push credentials. */
-function declaration(path: string, name: string): string {
-  const source = ts.createSourceFile(
-    path,
-    readFileSync(path, 'utf8'),
-    ts.ScriptTarget.Latest,
-    true,
-    ts.ScriptKind.TS
-  );
-  const node = source.statements.find(
-    (item) => ts.isFunctionDeclaration(item) && item.name?.text === name
-  );
-  if (!node) throw new Error(`Missing production function ${name}`);
-  return node.getText(source).replace(/^export /, '');
-}
 
 /**
  * The persisted "what this device already told this server" store, faked as a
@@ -51,9 +36,7 @@ function effect(
     declaration('src/lib/notifications.ts', 'useGatewayPushRegistration'),
     'useGatewayPushRegistration(record);',
   ].join('\n');
-  const script = ts.transpileModule(source, {
-    compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.None },
-  }).outputText;
+  const script = transpile(source);
   runInNewContext(script, {
     DEMO_SERVER_ID: DEMO_PAIRING_SERVER_ID,
     record: serverId === null ? null : { serverId },

@@ -66,14 +66,6 @@ export function usePaneViewMode({
   const detail = choice?.detail ?? 'simplified';
 
   const cycle = useCallback(() => {
-    if (__DEV__) {
-      console.log('[DEBUG usePaneViewMode cycle called]', {
-        key,
-        mode,
-        available,
-        next: nextPaneViewMode(mode, available),
-      });
-    }
     // Cycling from what is on screen, not from what was asked for: pressing the
     // button has to move the view the user is looking at.
     choose(key, { mode: nextPaneViewMode(mode, available) });

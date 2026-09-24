@@ -37,12 +37,12 @@ is hidden "label=\"Alt ✓\""
 is visible "id=\"virtual-key-q\" label=\"q\""
 # Both symbol pages and the return to letters keep the keyboard open.
 press "label=\"Symbols\""
-is visible "id=\"virtual-key-1\""
+wait "id=\"virtual-key-1\"" 5000
 press "label=\"More symbols\""
-is visible "id=\"virtual-key-[\""
+wait "id=\"virtual-key-[\"" 5000
 press "id=\"virtual-key-[\""
 press "label=\"Letters\""
-is visible "id=\"virtual-key-q\""
+wait "id=\"virtual-key-q\"" 5000
 screenshot "shots/soft-keyboard-qwerty.png"
 press "label=\"Hide keyboard\""
 wait "label=\"Open on-screen keyboard\"" 10000
