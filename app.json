@@ -299,6 +299,9 @@
       [
         "expo-build-properties",
         {
+          "ios": {
+            "enableSceneSupport": true
+          },
           "android": {
             "buildArchs": ["arm64-v8a"],
             "useLegacyPackaging": true,
