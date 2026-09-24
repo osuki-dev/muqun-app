@@ -30,7 +30,7 @@ import Animated, {
 import { scheduleOnRN } from 'react-native-worklets';
 
 import { useAppliedCustomTheme } from '@/components/theme-candidate';
-import { useLaunchBackground } from '@/hooks/use-launch-artwork';
+import { useLaunchArtwork, useLaunchBackground } from '@/hooks/use-launch-artwork';
 import { useLaunchHeroEdge } from '@/hooks/use-launch-hero-edge';
 import {
   LAUNCH_ARTWORK_MAX_WIDTH,
@@ -241,12 +241,30 @@ export function LaunchSceneIntro({
   finish,
   onDone,
 }: SplashRenderContext & { onDone: () => void }) {
-  const mirror = useSplashMirror();
+  const nativeMirror = useSplashMirror();
+  const launchArtwork = useLaunchArtwork();
+  const { width, height } = useWindowDimensions();
+  const artworkBox = Math.min(width * LAUNCH_ARTWORK_WIDTH_FRACTION, LAUNCH_ARTWORK_MAX_WIDTH);
+  // Native keeps the image from process startup. A theme applied later must
+  // still use its own launch artwork when this scene mounts again.
+  const [launchUri] = useState(() =>
+    launchArtwork.kind === 'default' ? undefined : launchArtwork.uri
+  );
+  const mirror = launchUri
+    ? {
+        ...nativeMirror,
+        hasLogo: true,
+        logo: {
+          ...nativeMirror.logo,
+          source: { uri: launchUri },
+          style: { width: artworkBox, height: artworkBox },
+        },
+      }
+    : nativeMirror;
   const packBackground = useLaunchBackground();
   const { theme: pack, assets } = useAppliedCustomTheme();
   const theme = useThemeTokens();
   const { resolvedMode } = useThemeMode();
-  const { width, height } = useWindowDimensions();
   const reduced = useReducedMotion();
   const fonts = useMarkdownFonts();
   const packLabel = useThemePack().label;
