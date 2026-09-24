@@ -33,6 +33,7 @@ import { useAppSettings } from '@/stores/app-settings';
 import type { SshHostRecord } from '@/lib/ssh-hosts';
 import { useHomeRecentsStore } from '@/stores/home-recents';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
+import { settleAfter } from '@/lib/compiler-safe-control-flow';
 
 const HOME_SESSION_REFRESH_MS = 30_000;
 
@@ -109,15 +110,18 @@ export function HomeRecentSessions({
           });
         });
         refreshFlight.current = flight;
-        try {
-          await flight;
-        } finally {
-          pending = false;
-          if (isCurrent()) {
-            setRefreshing(false);
-            setObservationNowMs(Date.now());
+        return settleAfter(
+          async () => {
+            await flight;
+          },
+          () => {
+            pending = false;
+            if (isCurrent()) {
+              setRefreshing(false);
+              setObservationNowMs(Date.now());
+            }
           }
-        }
+        );
       };
       setRefreshing(false);
       setObservationNowMs(Date.now());

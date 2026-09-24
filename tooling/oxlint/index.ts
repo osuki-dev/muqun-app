@@ -9,6 +9,7 @@ import {
   paneShape,
   sshDialogs,
 } from './source-contracts.ts';
+import { reactCompiler } from './react-compiler.ts';
 
 const dependencyIndex = new Map([
   ['useAnimatedGestureHandler', 1],
@@ -81,6 +82,7 @@ export default definePlugin({
   meta: { name: 'muqun' },
   rules: {
     'no-reanimated-dependencies': noReanimatedDependencies,
+    'react-compiler': reactCompiler,
     'pane-cache-shape': contract((path, root) =>
       path.endsWith('/src/components/server-terminal-workspace.tsx') ? paneShape(root) : []
     ),

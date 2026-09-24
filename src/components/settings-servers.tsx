@@ -40,6 +40,7 @@ import { useAppSettings, type ServerCardPanes } from '@/stores/app-settings';
 import { useServerAgents } from '@/stores/server-agents';
 import { useServerReachability } from '@/stores/server-reachability';
 import type { ServerAgentsSnapshot } from '@/lib/server-agents';
+import { settleAfter } from '@/lib/compiler-safe-control-flow';
 
 /**
  * The full account of every paired server, and the one preference about how
@@ -330,7 +331,7 @@ function ServerRow({
 
   const turn = useSharedValue(open ? 1 : 0);
   useEffect(() => {
-    turn.value = withTiming(open ? 1 : 0, timing('short'));
+    turn.set(withTiming(open ? 1 : 0, timing('short')));
   }, [open, turn]);
   const chevronStyle = useAnimatedStyle(() => ({
     transform: [{ rotate: `${turn.value * 180}deg` }],
@@ -689,11 +690,14 @@ function UnpairAction({ label, onUnpair }: { label: string; onUnpair: () => Prom
   async function confirm() {
     if (!acceptsConfirm({ armed, pending })) return;
     setPending(true);
-    try {
-      await onUnpair();
-    } finally {
-      setPending(false);
-    }
+    return settleAfter(
+      async () => {
+        await onUnpair();
+      },
+      () => {
+        setPending(false);
+      }
+    );
   }
 
   return view.showArmedPair ? (
@@ -823,19 +827,24 @@ function PairedDevices({ server }: { server: GatewayRecord }) {
   async function revoke(device: PairedDevice) {
     setConfirming(null);
     setRevoking(device.id);
-    try {
-      await revokePairedDevice(device.id);
-      await feedback('success');
-      await refresh();
-    } catch (error) {
-      showToast({
-        variant: 'danger',
-        title: t`Could not revoke device`,
-        message: describeGatewayFailure(error, t`Try again once the gateway responds.`).message,
-      });
-    } finally {
-      setRevoking(null);
-    }
+    return settleAfter(
+      async () => {
+        try {
+          await revokePairedDevice(device.id);
+          await feedback('success');
+          await refresh();
+        } catch (error) {
+          showToast({
+            variant: 'danger',
+            title: t`Could not revoke device`,
+            message: describeGatewayFailure(error, t`Try again once the gateway responds.`).message,
+          });
+        }
+      },
+      () => {
+        setRevoking(null);
+      }
+    );
   }
 
   if (devices === null) {

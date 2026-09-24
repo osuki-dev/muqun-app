@@ -516,8 +516,6 @@ export const AgentSessionsSheet = memo(function AgentSessionsSheet({
     return null;
   };
 
-  let rowIndex = 0;
-
   return (
     <SheetScene
       testID="agent-sessions-sheet"
@@ -576,7 +574,7 @@ export const AgentSessionsSheet = memo(function AgentSessionsSheet({
           filteredRoots.map((root, index) => {
             const subs = subagentMap.get(root.asid) ?? [];
             const projectName = projectNameOf(root);
-            const rowAt = rowIndex++;
+            const rowAt = index;
             return (
               <Animated.View
                 key={root.asid}

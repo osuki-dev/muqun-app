@@ -285,10 +285,10 @@ function AgentRow({
         accessibilityState={{ selected }}
         onPressIn={() => {
           void feedback('selection');
-          pressed.value = withTiming(1, timing(PRESS.in));
+          pressed.set(withTiming(1, timing(PRESS.in)));
         }}
         onPressOut={() => {
-          pressed.value = withTiming(0, timing(PRESS.out));
+          pressed.set(withTiming(0, timing(PRESS.out)));
         }}
         onPress={onPress}
         style={[styles.row, compact ? styles.compactRow : null, { minHeight }]}>

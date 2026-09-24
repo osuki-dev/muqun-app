@@ -45,6 +45,7 @@ import { unpackTheme } from '@/theme/package';
 import { THEME_LIMITS } from '@/theme/schema';
 import type { ThemeEditorCandidate } from '@/theme/draft-session';
 import { themeFromDocument } from '@/theme/file-preview';
+import { settleAfter } from '@/lib/compiler-safe-control-flow';
 
 /**
  * Read-only view of one artifact the agent produced.
@@ -255,29 +256,34 @@ function AssetSheet({ asset, onClose }: { asset: SessionAsset; onClose: () => vo
     setPackProgress({ done: 0, total: asset.size || null });
     let prepared: PreparedThemeAssets | undefined;
     let transferred = false;
-    try {
-      const bytes = await readAssetBytes(asset, {
-        signal: request.signal,
-        maxBytes: THEME_LIMITS.packageBytes,
-        onProgress: (done, total) => {
-          if (mounted.current && !request.signal.aborted) setPackProgress({ done, total });
-        },
-      });
-      const unpacked = unpackTheme(bytes);
-      prepared = await prepareThemeAssets(unpacked, { signal: request.signal });
-      const candidate = { manifest: unpacked.manifest, prepared };
-      request.handoff(() => setPack(candidate));
-      transferred = true;
-    } catch (failure) {
-      // A read this screen itself cancelled is not a failure to report: there is
-      // no longer a screen to report it on.
-      if (mounted.current && !request.isCanceled)
-        setError(describeGatewayFailure(failure, t`Could not open this theme.`).message);
-    } finally {
-      if (!transferred) prepared?.dispose();
-      if (active.current === request) active.current = null;
-      if (mounted.current) setPackProgress(null);
-    }
+    return settleAfter(
+      async () => {
+        try {
+          const bytes = await readAssetBytes(asset, {
+            signal: request.signal,
+            maxBytes: THEME_LIMITS.packageBytes,
+            onProgress: (done, total) => {
+              if (mounted.current && !request.signal.aborted) setPackProgress({ done, total });
+            },
+          });
+          const unpacked = unpackTheme(bytes);
+          prepared = await prepareThemeAssets(unpacked, { signal: request.signal });
+          const candidate = { manifest: unpacked.manifest, prepared };
+          request.handoff(() => setPack(candidate));
+          transferred = true;
+        } catch (failure) {
+          // A read this screen itself cancelled is not a failure to report: there is
+          // no longer a screen to report it on.
+          if (mounted.current && !request.isCanceled)
+            setError(describeGatewayFailure(failure, t`Could not open this theme.`).message);
+        }
+      },
+      () => {
+        if (!transferred) prepared?.dispose();
+        if (active.current === request) active.current = null;
+        if (mounted.current) setPackProgress(null);
+      }
+    );
   }
 
   useEffect(() => {

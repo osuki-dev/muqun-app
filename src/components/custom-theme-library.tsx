@@ -46,6 +46,7 @@ import { useAppSettings } from '@/stores/app-settings';
 import type { ThemeAppearance } from '@/constants/theme-packs';
 import type { ThemeManifest } from '@/theme/schema';
 import type { ThemeEditorCandidate } from '@/theme/draft-session';
+import { settleAfter } from '@/lib/compiler-safe-control-flow';
 
 /**
  * One layer of paint per pixel: under a custom theme the kit's opaque chip
@@ -271,6 +272,31 @@ export function CustomThemeLibrary({
       ? library.themes.find((entry) => entry.id === library.selection?.id)
       : undefined;
 
+  async function perform(action: () => void | Promise<void>) {
+    if (pending.current) return;
+    pending.current = true;
+    setBusy(true);
+    setError(null);
+    setNotice(null);
+    return settleAfter(
+      async () => {
+        try {
+          await action();
+        } catch (cause) {
+          if (mounted.current)
+            setError(cause instanceof Error ? cause.message : t`Something went wrong`);
+        }
+      },
+      () => {
+        pending.current = false;
+        if (mounted.current) {
+          setBusy(false);
+          setStep(null);
+        }
+      }
+    );
+  }
+
   function closePreview() {
     setDraftAppearance({});
     setRemoving(false);
@@ -288,26 +314,6 @@ export function CustomThemeLibrary({
       useThemeLibrary.getState().remove(id);
       closePreview();
     });
-  }
-
-  async function perform(action: () => void | Promise<void>) {
-    if (pending.current) return;
-    pending.current = true;
-    setBusy(true);
-    setError(null);
-    setNotice(null);
-    try {
-      await action();
-    } catch (cause) {
-      if (mounted.current)
-        setError(cause instanceof Error ? cause.message : t`Something went wrong`);
-    } finally {
-      pending.current = false;
-      if (mounted.current) {
-        setBusy(false);
-        setStep(null);
-      }
-    }
   }
 
   async function save(apply: boolean) {

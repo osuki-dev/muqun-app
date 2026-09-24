@@ -2,26 +2,27 @@
 // project's top-level devDependencies as well, and the profiler's Android
 // manifest adds WRITE_EXTERNAL_STORAGE. It must never reach a store build.
 //
-// - Default: linked into Debug only -- the iOS Debug configuration and the
-//   Android debug build type -- so a Release archive or APK does not contain
-//   it. Android's generated PackageList still names the package in release;
-//   plugins/with-release-profiler-stub.js gives release an empty stand-in.
-// - MUQUN_RELEASE_PROFILER=1: linked into every configuration, for a Release
-//   profiling build.
+// - iOS: linked into the Debug configuration only, or into every
+//   configuration with MUQUN_RELEASE_PROFILER=1 at `pod install` time (the
+//   Podfile re-runs autolinking on every install).
+// - Android: always the debug build type here. Gradle caches this file's
+//   result keyed on its contents, not on the environment, so the release side
+//   is decided in Gradle instead: plugins/with-release-profiler-stub.cjs adds
+//   the real module to release with MUQUN_RELEASE_PROFILER=1, and an empty
+//   stand-in for the package React Native's shared PackageList names
+//   otherwise.
 //
 // The JS side is stripped from Release bundles separately; see
 // src/lib/release-profiler.ts.
 const profiling = process.env.MUQUN_RELEASE_PROFILER === '1';
 
 module.exports = {
-  dependencies: profiling
-    ? {}
-    : {
-        'react-native-release-profiler': {
-          platforms: {
-            ios: { configurations: ['Debug'] },
-            android: { buildTypes: ['debug'] },
-          },
-        },
+  dependencies: {
+    'react-native-release-profiler': {
+      platforms: {
+        ios: { configurations: profiling ? [] : ['Debug'] },
+        android: { buildTypes: ['debug'] },
       },
+    },
+  },
 };

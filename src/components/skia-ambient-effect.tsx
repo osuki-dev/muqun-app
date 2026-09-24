@@ -120,12 +120,12 @@ export function SkiaAmbientEffect({
   const frame = useFrameCallback(({ timeSinceFirstFrame }) => {
     'worklet';
     if (timeSinceFirstFrame - lastPaint.value < 1000 / 30) return;
-    lastPaint.value = timeSinceFirstFrame;
-    progress.value = (timeSinceFirstFrame % duration) / duration;
+    lastPaint.set(timeSinceFirstFrame);
+    progress.set((timeSinceFirstFrame % duration) / duration);
   }, false);
   useEffect(() => {
-    progress.value = 0;
-    lastPaint.value = -1000;
+    progress.set(0);
+    lastPaint.set(-1000);
     frame.setActive(
       visible && effect !== 'scanlines' && !reducedMotion && speed > 0 && width > 0 && height > 0
     );

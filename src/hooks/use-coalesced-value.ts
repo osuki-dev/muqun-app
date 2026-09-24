@@ -19,6 +19,9 @@ import { useLatestRef, useResetSignal } from '@/hooks/use-render-refs';
  * pane's in-flight window and paint a stale or blank frame while it expires.
  */
 export function useCoalescedValue<T>(value: T, resetKey: unknown, intervalMs = 100): T {
+  // Adjusts its own state during render from a ref, deliberately (see above);
+  // React Compiler would refuse that, so it stays uncompiled on purpose.
+  'use no memo';
   const [displayed, setDisplayed] = useState(value);
   // The newest value, read by the trailing timer. Kept current every render so
   // a timer that outlives a reset can only ever emit the latest value, never

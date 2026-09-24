@@ -78,6 +78,7 @@ import {
   type UserFontProblem,
 } from '@/theme/user-fonts';
 import { FontedTextInput } from '@/components/fonted-text-input';
+import { settleAfter } from '@/lib/compiler-safe-control-flow';
 
 /** The focused field's clearance above the keyboard: the URL field. */
 const KEYBOARD_BOTTOM_OFFSET = 96;
@@ -204,34 +205,39 @@ export function SettingsFontSheet({ onClose }: { onClose: () => void }) {
     abortRef.current[id] = controller;
     setSlotError(id, undefined);
     emit(id, { kind: 'start', mode: 'download' });
-    try {
-      const installed = await downloadUserFont({
-        slot: id,
-        url: trimmed,
-        previous: slots[id],
-        signal: controller.signal,
-        onProgress: ({ bytesWritten, totalBytes }) =>
-          emit(id, { kind: 'bytes', bytesWritten, totalBytes }),
-        onStep: (phase) => emit(id, { kind: 'step', phase }),
-      });
-      // The last step, and the one `user-fonts.ts` cannot report because it
-      // happens here: binding the face to its alias is what actually changes
-      // what the app draws with.
-      emit(id, { kind: 'step', phase: 'registering' });
-      await apply(id, installed);
-      emit(id, { kind: 'done' });
-      holdDone(id);
-      setUrl('');
-      setUrlSlot(null);
-    } catch (error) {
-      emit(id, { kind: reportFailure(id, error) ? 'cancelled' : 'failed' });
-    } finally {
-      // Only if it is still ours. The other slot can start its own download
-      // while this one runs, and clearing the map wholesale would orphan that
-      // controller -- its Cancel would do nothing, and leaving the sheet would
-      // no longer stop it.
-      if (abortRef.current[id] === controller) delete abortRef.current[id];
-    }
+    return settleAfter(
+      async () => {
+        try {
+          const installed = await downloadUserFont({
+            slot: id,
+            url: trimmed,
+            previous: slots[id],
+            signal: controller.signal,
+            onProgress: ({ bytesWritten, totalBytes }) =>
+              emit(id, { kind: 'bytes', bytesWritten, totalBytes }),
+            onStep: (phase) => emit(id, { kind: 'step', phase }),
+          });
+          // The last step, and the one `user-fonts.ts` cannot report because it
+          // happens here: binding the face to its alias is what actually changes
+          // what the app draws with.
+          emit(id, { kind: 'step', phase: 'registering' });
+          await apply(id, installed);
+          emit(id, { kind: 'done' });
+          holdDone(id);
+          setUrl('');
+          setUrlSlot(null);
+        } catch (error) {
+          emit(id, { kind: reportFailure(id, error) ? 'cancelled' : 'failed' });
+        }
+      },
+      () => {
+        // Only if it is still ours. The other slot can start its own download
+        // while this one runs, and clearing the map wholesale would orphan that
+        // controller -- its Cancel would do nothing, and leaving the sheet would
+        // no longer stop it.
+        if (abortRef.current[id] === controller) delete abortRef.current[id];
+      }
+    );
   }
 
   /**

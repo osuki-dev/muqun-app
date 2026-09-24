@@ -15,6 +15,10 @@ test('Reanimated rule loads in Oxlint and handles aliases, namespaces and argume
   execFileSync('node', ['tooling/oxlint/reanimated.check.ts'], { stdio: 'pipe' });
 });
 
+test('React Compiler rule reports bailouts the build would make, and not opt-outs or macro templates', () => {
+  execFileSync('node', ['tooling/oxlint/react-compiler.check.ts'], { stdio: 'pipe' });
+});
+
 const source = (path: string) => readFileSync(path, 'utf8');
 const workspace = 'src/components/server-terminal-workspace.tsx';
 test('pane shape lint detects an extra cache identity and a missing screen component', () => {

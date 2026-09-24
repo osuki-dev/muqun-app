@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useEffectEvent } from 'react';
 
 import type { GatewayRecord } from '@/lib/gateway-storage';
 import type { TunnelPhase } from '@/lib/ssh-tunnel';
@@ -38,11 +38,14 @@ export function useGatewayTunnel(
   const serverId = record?.serverId;
   const hostId = record?.sshTunnel?.hostId;
 
+  // The identity that matters is the tunnel target, not the record object: the
+  // record is read when the target changes rather than being a reason to run.
+  const readRecord = useEffectEvent(() => record);
   useEffect(() => {
-    if (!record?.sshTunnel || !enabled) return;
-    hold(record);
-    return () => release(record);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- the identity that matters is the tunnel target, not the record object.
+    const current = readRecord();
+    if (!current?.sshTunnel || !enabled) return;
+    hold(current);
+    return () => release(current);
   }, [enabled, tunnelled, serverId, hostId, hold, release]);
 
   const retry = useCallback(() => {

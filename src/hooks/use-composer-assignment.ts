@@ -133,9 +133,12 @@ export function useComposerAssignment(context: {
       if (!agent || field(agent, 'instance_id') !== target.instanceId)
         throw new Error('That assistant is no longer in that terminal');
       if (!canAssignToAgent(agent.status ?? 'unknown')) throw new Error('That assistant is busy');
+      // The opaque target from the fresh read, never the captured one. Read
+      // before the `try`: a field read cannot throw, and React Compiler cannot
+      // lower a `||` inside one.
+      const sendTarget = field(agent, 'target') || target.paneId;
       try {
-        // The opaque target from the fresh read, never the captured one.
-        await sendAgentText(sessionId, field(agent, 'target') || target.paneId, text);
+        await sendAgentText(sessionId, sendTarget, text);
       } catch {
         return { status: 'unconfirmed', paneId: target.paneId, reason: 'delivery-unconfirmed' };
       }

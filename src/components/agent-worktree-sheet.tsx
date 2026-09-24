@@ -54,6 +54,7 @@ import {
   type WorktreeDirectory,
 } from '@/lib/agent-session';
 import { FontedTextInput } from '@/components/fonted-text-input';
+import { settleAfter } from '@/lib/compiler-safe-control-flow';
 
 const STAGGERED_ROWS = 8;
 
@@ -175,13 +176,16 @@ export const AgentWorktreeSheet = memo(function AgentWorktreeSheet({
   const queryDirectory = activeDirectory || projectDirectory;
 
   const load = useCallback(async () => {
-    try {
-      const listing = await listAgentWorktrees(queryDirectory);
-      setEntries(listing.entries);
-      setMissing(listing.missing ?? null);
-    } finally {
-      setLoading(false);
-    }
+    return settleAfter(
+      async () => {
+        const listing = await listAgentWorktrees(queryDirectory);
+        setEntries(listing.entries);
+        setMissing(listing.missing ?? null);
+      },
+      () => {
+        setLoading(false);
+      }
+    );
   }, [queryDirectory]);
 
   useEffect(() => {
@@ -242,24 +246,29 @@ export const AgentWorktreeSheet = memo(function AgentWorktreeSheet({
       setMenuDirectory(null);
       setRowError(null);
       setRemoving(directory);
-      try {
-        await removeAgentWorktree(directory, { directory: projectRoot, force });
-        await load();
-      } catch (err) {
-        if (!force && isWorktreeForceRequired(err)) {
-          // Asked in the row, not in a native alert: the menu reopens on this
-          // worktree with one item, and that item takes two taps.
-          setForceFor(directory);
-          setMenuDirectory(directory);
-        } else {
-          setRowError({
-            directory,
-            message: err instanceof Error ? err.message : t`Could not remove that worktree.`,
-          });
+      return settleAfter(
+        async () => {
+          try {
+            await removeAgentWorktree(directory, { directory: projectRoot, force });
+            await load();
+          } catch (err) {
+            if (!force && isWorktreeForceRequired(err)) {
+              // Asked in the row, not in a native alert: the menu reopens on this
+              // worktree with one item, and that item takes two taps.
+              setForceFor(directory);
+              setMenuDirectory(directory);
+            } else {
+              setRowError({
+                directory,
+                message: err instanceof Error ? err.message : t`Could not remove that worktree.`,
+              });
+            }
+          }
+        },
+        () => {
+          setRemoving(null);
         }
-      } finally {
-        setRemoving(null);
-      }
+      );
     },
     [projectRoot, load, t]
   );

@@ -3,7 +3,7 @@ import { useSplashMirror } from '@osuki-dev/react-native-splash';
 import { useThemeMode, useThemeTokens } from '@osuki-dev/ui';
 import { Canvas, ColorShader, Fill, Shader } from '@shopify/react-native-skia';
 import { Image } from 'expo-image';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useEffectEvent, useMemo, useRef, useState } from 'react';
 import {
   Platform,
   Pressable,
@@ -360,7 +360,7 @@ export function LaunchSceneIntro({
   const handoffPaperStyle = useAnimatedStyle(() => ({ opacity: handoffPaper.value }));
   useEffect(() => {
     if (phase !== 'visible') return;
-    handoffPaper.value = withTiming(0, { duration: reduced ? 0 : 220 });
+    handoffPaper.set(withTiming(0, { duration: reduced ? 0 : 220 }));
   }, [phase, reduced, handoffPaper]);
   const widthClass = width >= THEME_ARTWORK_REGULAR_MIN_WIDTH ? 'regular' : 'compact';
 
@@ -391,11 +391,12 @@ export function LaunchSceneIntro({
   // The front will not wait past the budget. Armed on the handover rather than
   // on mount, because the handover is when the reader starts counting.
   const [deadlinePassed, setDeadlinePassed] = useState(false);
+  // The budget is read when the timer is armed, not a reason to re-arm it.
+  const readWorldDeadline = useEffectEvent(() => beats.worldDeadlineAt);
   useEffect(() => {
     if (phase !== 'visible' || reduced || !hasArtwork) return;
-    const timer = setTimeout(() => setDeadlinePassed(true), beats.worldDeadlineAt);
+    const timer = setTimeout(() => setDeadlinePassed(true), readWorldDeadline());
     return () => clearTimeout(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase, hasArtwork, reduced]);
 
   // The reveal, once chosen, may only become more conservative. `irisLatched`
@@ -488,47 +489,47 @@ export function LaunchSceneIntro({
   const [frontGone, setFrontGone] = useState(false);
   const onFrontGone = useCallback(() => setFrontGone(true), []);
 
-  useEffect(() => {
+  // Only the phase drives this. The beats, the reduced-motion setting and the
+  // callbacks are read when it changes rather than being reasons to run, and
+  // the shared values are stable -- which is what an effect event is for.
+  const followPhase = useEffectEvent(() => {
     if (phase === 'visible') {
       startedAt.current = Date.now();
       if (reduced) {
         // Nothing travels, but the composition still has to be the finished one
         // so the cross-fade lands on Home rather than on a half-built stage.
-        ignite.value = 1;
-        bloom.value = 1;
-        settle.value = 1;
+        ignite.set(1);
+        bloom.set(1);
+        settle.set(1);
         setFrontGone(true);
-        hero.value = 1;
-        type.value = 1;
-        blink.value = 1;
+        hero.set(1);
+        type.set(1);
+        blink.set(1);
       } else {
-        ignite.value = withTiming(1, timing(beats.ignite.ms));
-        type.value = withDelay(beats.type.at, withTiming(1, timing(beats.type.ms)));
-        blink.value = withDelay(beats.blink.at, withTiming(1, timing(beats.blink.ms)));
+        ignite.set(withTiming(1, timing(beats.ignite.ms)));
+        type.set(withDelay(beats.type.at, withTiming(1, timing(beats.type.ms))));
+        blink.set(withDelay(beats.blink.at, withTiming(1, timing(beats.blink.ms))));
       }
       // The hold is what hands back: `ready` in the overlay is this callback.
       // `ReduceMotion.Never` so the beat survives the setting -- it is a wait,
       // not a movement, and collapsing it would snap the app in.
-      hold.value = withTiming(
-        1,
-        timing(beats.holdUntil, { reduceMotion: ReduceMotion.Never }),
-        (finished) => {
+      hold.set(
+        withTiming(1, timing(beats.holdUntil, { reduceMotion: ReduceMotion.Never }), (finished) => {
           if (finished) scheduleOnRN(onDone);
-        }
+        })
       );
       return;
     }
     if (phase !== 'exiting') return;
     // Likewise a dissolve rather than a cut, at either setting.
-    exit.value = withTiming(
-      1,
-      timing(beats.exit.ms, { reduceMotion: ReduceMotion.Never }),
-      (finished) => {
+    exit.set(
+      withTiming(1, timing(beats.exit.ms, { reduceMotion: ReduceMotion.Never }), (finished) => {
         if (finished) scheduleOnRN(finish);
-      }
+      })
     );
-    // The shared values are stable; only the phase drives this.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  });
+  useEffect(() => {
+    followPhase();
   }, [phase]);
 
   useEffect(() => {
@@ -537,22 +538,26 @@ export function LaunchSceneIntro({
     // Missing the scheduled departure chooses the dissolve, never a late flight
     // or a longer splash. The rest of the opening keeps its original timeline.
     if (elapsed > beats.hero.at) return;
-    hero.value = withDelay(beats.hero.at - elapsed, withTiming(1, timing(beats.hero.ms)));
+    hero.set(withDelay(beats.hero.at - elapsed, withTiming(1, timing(beats.hero.ms))));
   }, [phase, reduced, homeRect, beats.hero.at, beats.hero.ms, hero]);
 
   // The bloom is the one beat driven by something other than the clock: it
   // leaves when the world behind it exists. Until then it breathes in place,
   // which is a front waiting rather than a launch that has hung.
-  useEffect(() => {
+  // Driven by the phase, the reveal and the setting; the beats and
+  // `onFrontGone` are read when those change, not reasons to run.
+  const followBloom = useEffectEvent(() => {
     if (phase !== 'visible' || reduced) return;
     if (!revealReady) {
-      bloom.value = withRepeat(
-        withSequence(
-          withTiming(BREATH.high, timing('short')),
-          withTiming(BREATH.low, timing('short'))
-        ),
-        -1,
-        true
+      bloom.set(
+        withRepeat(
+          withSequence(
+            withTiming(BREATH.high, timing('short')),
+            withTiming(BREATH.low, timing('short'))
+          ),
+          -1,
+          true
+        )
       );
       return;
     }
@@ -562,14 +567,18 @@ export function LaunchSceneIntro({
       DURATION.short,
       beats.bloom.at + beats.bloom.ms - Math.max(elapsed, beats.bloom.at)
     );
-    bloom.value = withDelay(
-      delay,
-      withTiming(1, timing(remaining), (finished) => {
-        if (finished) scheduleOnRN(onFrontGone);
-      })
+    bloom.set(
+      withDelay(
+        delay,
+        withTiming(1, timing(remaining), (finished) => {
+          if (finished) scheduleOnRN(onFrontGone);
+        })
+      )
     );
-    settle.value = withDelay(delay, withTiming(1, timing(beats.settle.ms)));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    settle.set(withDelay(delay, withTiming(1, timing(beats.settle.ms))));
+  });
+  useEffect(() => {
+    followBloom();
   }, [phase, revealReady, reduced]);
 
   const paperVector = useMemo(() => colorVector(paper), [paper]);

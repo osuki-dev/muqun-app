@@ -54,6 +54,7 @@ import { listLayout, riseIn, STAGGER } from '@/lib/motion';
 import { describeGatewayFailure } from '@/lib/network-error';
 import { useRenderTally } from '@/lib/render-tally';
 import { FontedTextInput } from '@/components/fonted-text-input';
+import { recoverWith, rethrow, settleAfter } from '@/lib/compiler-safe-control-flow';
 
 /**
  * How many recent directories the sheet will draw.
@@ -221,29 +222,37 @@ export function NewTaskSheet({
     const owner = record;
     setStarting(true);
     setError(null);
-    try {
-      const paths = await uploads.awaitUploads();
-      if (!mounted.current || useGatewayConnectionStore.getState().record !== owner) return;
-      if (paths === null) throw new Error(t`Could not add a file`);
-      const firstPrompt = [prompt.trim(), ...paths].filter(Boolean).join(' ');
-      const spawned = await spawnAgent(
-        sessionId,
-        agentSpawnRequest({ agent, cwd, tabId, prompt: firstPrompt })
-      );
-      if (mounted.current && useGatewayConnectionStore.getState().record === owner) {
-        uploads.clearAttachments();
-        onStarted(spawned);
+    return settleAfter(
+      async () => {
+        return recoverWith(
+          async () => {
+            const paths = await uploads.awaitUploads();
+            if (!mounted.current || useGatewayConnectionStore.getState().record !== owner) return;
+            if (paths === null) rethrow(new Error(t`Could not add a file`));
+            const firstPrompt = [prompt.trim(), ...paths].filter(Boolean).join(' ');
+            const spawned = await spawnAgent(
+              sessionId,
+              agentSpawnRequest({ agent, cwd, tabId, prompt: firstPrompt })
+            );
+            if (mounted.current && useGatewayConnectionStore.getState().record === owner) {
+              uploads.clearAttachments();
+              onStarted(spawned);
+            }
+          },
+          (failure) => {
+            // Reported in the sheet rather than by closing it. An unknown agent kind
+            // and a directory outside the session's workspaces are both refusals of
+            // one field, and the reader needs the other two answers still on screen
+            // to fix it.
+            setError(describeGatewayFailure(failure, t`Could not start the task.`).message);
+          }
+        );
+      },
+      () => {
+        sending.current = false;
+        if (mounted.current) setStarting(false);
       }
-    } catch (failure) {
-      // Reported in the sheet rather than by closing it. An unknown agent kind
-      // and a directory outside the session's workspaces are both refusals of
-      // one field, and the reader needs the other two answers still on screen
-      // to fix it.
-      setError(describeGatewayFailure(failure, t`Could not start the task.`).message);
-    } finally {
-      sending.current = false;
-      if (mounted.current) setStarting(false);
-    }
+    );
   }
 
   return (

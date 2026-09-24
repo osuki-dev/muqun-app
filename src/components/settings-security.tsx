@@ -25,6 +25,7 @@ import {
 } from '@/lib/local-authentication';
 import { useRenderTally } from '@/lib/render-tally';
 import { useAppSettings } from '@/stores/app-settings';
+import { recoverWith, settleAfter } from '@/lib/compiler-safe-control-flow';
 
 export function SettingsSecurity({ title }: { title: string }) {
   const { t } = useLingui();
@@ -65,35 +66,43 @@ export function SettingsSecurity({ title }: { title: string }) {
     }
 
     setChanging(true);
-    try {
-      const availability = authAvailability ?? (await getLocalAuthAvailability());
-      if (!authAvailability) setAuthAvailability(availability);
-      if (!availability.available || !availability.enrolled) {
-        showToast({
-          variant: 'warning',
-          title: t`App Lock unavailable`,
-          message: t`Set up ${availability.label} in system settings first.`,
-        });
-        return;
+    return settleAfter(
+      async () => {
+        return recoverWith(
+          async () => {
+            const availability = authAvailability ?? (await getLocalAuthAvailability());
+            if (!authAvailability) setAuthAvailability(availability);
+            if (!availability.available || !availability.enrolled) {
+              showToast({
+                variant: 'warning',
+                title: t`App Lock unavailable`,
+                message: t`Set up ${availability.label} in system settings first.`,
+              });
+              return;
+            }
+            const result = await authenticateForAppUnlock(availability.label);
+            if (!result.success) return;
+            await update({ appLockEnabled: true });
+            await feedback('success');
+            showToast({
+              variant: 'success',
+              title: t`App Lock enabled`,
+              message: t`Muqun will use ${availability.label} when the app opens.`,
+            });
+          },
+          () => {
+            showToast({
+              variant: 'danger',
+              title: t`Could not enable App Lock`,
+              message: t`Check device authentication settings and try again.`,
+            });
+          }
+        );
+      },
+      () => {
+        setChanging(false);
       }
-      const result = await authenticateForAppUnlock(availability.label);
-      if (!result.success) return;
-      await update({ appLockEnabled: true });
-      await feedback('success');
-      showToast({
-        variant: 'success',
-        title: t`App Lock enabled`,
-        message: t`Muqun will use ${availability.label} when the app opens.`,
-      });
-    } catch {
-      showToast({
-        variant: 'danger',
-        title: t`Could not enable App Lock`,
-        message: t`Check device authentication settings and try again.`,
-      });
-    } finally {
-      setChanging(false);
-    }
+    );
   }
 
   return (

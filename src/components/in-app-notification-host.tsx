@@ -137,10 +137,10 @@ export function InAppNotificationHost() {
     cancelAnimation(dragX);
     cancelAnimation(dragY);
     cancelAnimation(dragOpacity);
-    dragOpacity.value = 1;
-    dismissing.value = false;
-    dragX.value = 0;
-    dragY.value = 0;
+    dragOpacity.set(1);
+    dismissing.set(false);
+    dragX.set(0);
+    dragY.set(0);
   }, [noticeId, dragX, dragY, dragOpacity, dismissing]);
   useEffect(
     () => () => {
@@ -198,8 +198,8 @@ export function InAppNotificationHost() {
     .onUpdate((event) => {
       if (dismissing.value) return;
       const offset = noticeDragOffset(event);
-      dragX.value = offset.x;
-      dragY.value = offset.y;
+      dragX.set(offset.x);
+      dragY.set(offset.y);
     })
     .onEnd((event) => {
       if (dismissing.value) return;
@@ -213,13 +213,15 @@ export function InAppNotificationHost() {
       }
       // A short glide and fade replaces the full-screen throw. Ignore release
       // velocity here so a fast flick cannot launch the card into the status bar.
-      dismissing.value = true;
+      dismissing.set(true);
       const config = timing('short');
-      dragX.value = withTiming(end.x, config);
-      dragY.value = withTiming(end.y, config);
-      dragOpacity.value = withTiming(0, config, (finished) => {
-        if (finished) runOnJS(swept)();
-      });
+      dragX.set(withTiming(end.x, config));
+      dragY.set(withTiming(end.y, config));
+      dragOpacity.set(
+        withTiming(0, config, (finished) => {
+          if (finished) runOnJS(swept)();
+        })
+      );
     });
 
   // Render real queued content with exactly the same presentation as the front.
@@ -250,7 +252,7 @@ export function InAppNotificationHost() {
         onLayout={
           front
             ? (event) => {
-                plateHeight.value = event.nativeEvent.layout.height;
+                plateHeight.set(event.nativeEvent.layout.height);
               }
             : undefined
         }

@@ -21,6 +21,7 @@ import { describeGatewayFailure } from '@/lib/network-error';
 import { useAgentCollaboration } from '@/stores/agent-collaboration';
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';
 import { usePanelPickerStore } from '@/stores/panel-picker';
+import { rethrow, settleAfter } from '@/lib/compiler-safe-control-flow';
 
 /** A single compact notice in the terminal's existing notification column. */
 export function CollaborationNotice({
@@ -64,22 +65,29 @@ export function CollaborationNotice({
     if (opening) return;
     setOpening(true);
     setError(null);
-    try {
-      const assertConnection = () => {
-        if (useGatewayConnectionStore.getState().record?.serverId !== task.serverId)
-          throw new Error(t`Return to this server to continue.`);
-      };
-      assertConnection();
-      const fresh = await loadAgents(task.sessionId);
-      assertConnection();
-      if (!taskAgent(task, fresh)) throw new Error(t`Agent no longer present`);
-      usePanelPickerStore.getState().choosePanel({ serverId: task.serverId, paneId: task.paneId });
-      setExpandedId(null);
-    } catch (failure) {
-      setError(describeGatewayFailure(failure, t`Agent no longer present`).message);
-    } finally {
-      setOpening(false);
-    }
+    return settleAfter(
+      async () => {
+        try {
+          const assertConnection = () => {
+            if (useGatewayConnectionStore.getState().record?.serverId !== task.serverId)
+              throw new Error(t`Return to this server to continue.`);
+          };
+          assertConnection();
+          const fresh = await loadAgents(task.sessionId);
+          assertConnection();
+          if (!taskAgent(task, fresh)) rethrow(new Error(t`Agent no longer present`));
+          usePanelPickerStore
+            .getState()
+            .choosePanel({ serverId: task.serverId, paneId: task.paneId });
+          setExpandedId(null);
+        } catch (failure) {
+          setError(describeGatewayFailure(failure, t`Agent no longer present`).message);
+        }
+      },
+      () => {
+        setOpening(false);
+      }
+    );
   };
   return (
     <View

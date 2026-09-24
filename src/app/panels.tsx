@@ -12,6 +12,7 @@ import { parseSessionChoices, sessionChoices } from '@/lib/session-switcher';
 import type { MachineChoice } from '@/lib/switcher-rails';
 import { usePanelPickerStore } from '@/stores/panel-picker';
 import { useServerSession } from '@/stores/server-session';
+import { recoverWith, rethrow, settleAfter } from '@/lib/compiler-safe-control-flow';
 
 /**
  * The one switcher sheet's route: its params, the machine connections the sheet
@@ -122,31 +123,39 @@ export default function PanelPickerScreen() {
     busy.current = true;
     const request = generation.current;
     setPendingId(serverId);
-    try {
-      const target = saved.find((item) => item.serverId === serverId);
-      if (!target) throw new Error('Machine unavailable');
-      if (serverId === params.serverId && sessionId) {
-        await select(serverId, sessionId, request);
-        return;
+    return settleAfter(
+      async () => {
+        return recoverWith(
+          async () => {
+            const target = saved.find((item) => item.serverId === serverId);
+            if (!target) rethrow(new Error('Machine unavailable'));
+            if (serverId === params.serverId && sessionId) {
+              await select(serverId, sessionId, request);
+              return;
+            }
+            const choices = await inspectMachine({
+              load: async () => sessionChoices((await loadRecordSessions(target)).sessions),
+              current: () => request === generation.current,
+              choose: (id) => select(serverId, id, request),
+              requested: sessionId ?? useServerSession.getState().byServer[serverId],
+            });
+            if (!choices) return;
+            setLoaded((previous) => ({ ...previous, [serverId]: { sessions: choices } }));
+          },
+          () => {
+            if (request === generation.current)
+              setLoaded((previous) => ({
+                ...previous,
+                [serverId]: { error: t`Could not connect to this machine — tap to retry` },
+              }));
+          }
+        );
+      },
+      () => {
+        busy.current = false;
+        if (request === generation.current) setPendingId(null);
       }
-      const choices = await inspectMachine({
-        load: async () => sessionChoices((await loadRecordSessions(target)).sessions),
-        current: () => request === generation.current,
-        choose: (id) => select(serverId, id, request),
-        requested: sessionId ?? useServerSession.getState().byServer[serverId],
-      });
-      if (!choices) return;
-      setLoaded((previous) => ({ ...previous, [serverId]: { sessions: choices } }));
-    } catch {
-      if (request === generation.current)
-        setLoaded((previous) => ({
-          ...previous,
-          [serverId]: { error: t`Could not connect to this machine — tap to retry` },
-        }));
-    } finally {
-      busy.current = false;
-      if (request === generation.current) setPendingId(null);
-    }
+    );
   }
 
   function openPane(paneId: string) {

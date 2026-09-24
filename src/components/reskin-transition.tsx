@@ -375,10 +375,12 @@ export function ReskinTransitionProvider({ children }: { children: ReactNode }) 
                 // who has asked for less movement.
                 timing(DURATION.short, { reduceMotion: ReduceMotion.Never })
               : timing(chosen === 'wash' ? RESKIN_MOTION.washMs : RESKIN_MOTION.halftoneMs);
-          progress.value = withTiming(1, config, (done) => {
-            'worklet';
-            if (done) runOnJS(finish)(id);
-          });
+          progress.set(
+            withTiming(1, config, (done) => {
+              'worklet';
+              if (done) runOnJS(finish)(id);
+            })
+          );
         });
       };
 
@@ -416,8 +418,8 @@ export function ReskinTransitionProvider({ children }: { children: ReactNode }) 
         }
 
         const accent = colorVector(options.accent ?? paint.current.primary);
-        progress.value = 0;
-        veil.value = 0;
+        progress.set(0);
+        veil.set(0);
         setActive({
           id,
           play: chosen,
@@ -438,13 +440,11 @@ export function ReskinTransitionProvider({ children }: { children: ReactNode }) 
         await new Promise<void>((resolve) => {
           const covered = () => resolve();
           afterNextPaint(() => {
-            veil.value = withTiming(
-              1,
-              timing(DURATION.short, { reduceMotion: ReduceMotion.Never }),
-              () => {
+            veil.set(
+              withTiming(1, timing(DURATION.short, { reduceMotion: ReduceMotion.Never }), () => {
                 'worklet';
                 runOnJS(covered)();
-              }
+              })
             );
           });
         });
@@ -504,8 +504,8 @@ export function ReskinTransitionProvider({ children }: { children: ReactNode }) 
       }
 
       const accent = colorVector(options.accent ?? paint.current.primary);
-      progress.value = 0;
-      veil.value = 1;
+      progress.set(0);
+      veil.set(1);
       // The cover goes up and the setting changes in the same React commit, so
       // there is no frame in which one has happened and the other has not.
       // The origin is where the reader last touched, on whichever surface they

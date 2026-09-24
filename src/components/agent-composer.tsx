@@ -108,6 +108,7 @@ import {
   type TokensUsage,
 } from '@/lib/agent-session';
 import { AGENT_TYPE } from '@/constants/agent-type';
+import { settleAfter } from '@/lib/compiler-safe-control-flow';
 
 /**
  * One root in Row 1. An inactive root selects; the root already on screen opens
@@ -711,13 +712,16 @@ export const AgentComposer = memo(function AgentComposer({
         // gateway refused with the composer already emptied is a line the
         // reader has to remember and retype.
         setSending(true);
-        try {
-          const accepted = await onInvokeSkill(parsed.name, parsed.args);
-          if (accepted === false) return;
-          setText('');
-        } finally {
-          setSending(false);
-        }
+        await settleAfter(
+          async () => {
+            const accepted = await onInvokeSkill(parsed.name, parsed.args);
+            if (accepted === false) return;
+            setText('');
+          },
+          () => {
+            setSending(false);
+          }
+        );
         return;
       }
       if (parsed?.kind === 'client' && onClientCommand) {
@@ -728,33 +732,36 @@ export const AgentComposer = memo(function AgentComposer({
     }
 
     setSending(true);
-    try {
-      let uploadedFilePaths: string[] = [];
-      if (hasAttachments) {
-        const paths = await attachmentUploads.awaitUploads();
-        if (!paths) {
-          showToast({
-            variant: 'danger',
-            title: t`Upload failed`,
-            message: t`Please retry or remove failed attachments.`,
-          });
-          return;
+    return settleAfter(
+      async () => {
+        let uploadedFilePaths: string[] = [];
+        if (hasAttachments) {
+          const paths = await attachmentUploads.awaitUploads();
+          if (!paths) {
+            showToast({
+              variant: 'danger',
+              title: t`Upload failed`,
+              message: t`Please retry or remove failed attachments.`,
+            });
+            return;
+          }
+          uploadedFilePaths = paths;
         }
-        uploadedFilePaths = paths;
+        const accepted = await onSend(
+          trimmed,
+          uploadedFilePaths.length > 0 ? uploadedFilePaths : undefined,
+          running ? deliveryMode : undefined
+        );
+        // `void` from a caller that does not report is taken as accepted, which
+        // is the behaviour every other composer in this app has.
+        if (accepted === false) return;
+        setText('');
+        attachmentUploads.clearAttachments();
+      },
+      () => {
+        setSending(false);
       }
-      const accepted = await onSend(
-        trimmed,
-        uploadedFilePaths.length > 0 ? uploadedFilePaths : undefined,
-        running ? deliveryMode : undefined
-      );
-      // `void` from a caller that does not report is taken as accepted, which
-      // is the behaviour every other composer in this app has.
-      if (accepted === false) return;
-      setText('');
-      attachmentUploads.clearAttachments();
-    } finally {
-      setSending(false);
-    }
+    );
   }, [
     text,
     attachmentUploads,
@@ -1595,12 +1602,14 @@ const CompactionPill = memo(function CompactionPill({
 
   const pulse = useSharedValue(failed ? 1 : 0.4);
   useEffect(() => {
-    pulse.value = failed
-      ? withTiming(1, timing('micro'))
-      : withRepeat(
-          withSequence(withTiming(1, timing('long')), withTiming(0.4, timing('long'))),
-          -1
-        );
+    pulse.set(
+      failed
+        ? withTiming(1, timing('micro'))
+        : withRepeat(
+            withSequence(withTiming(1, timing('long')), withTiming(0.4, timing('long'))),
+            -1
+          )
+    );
     // An endless repeat must not outlive the pill: a view that is gone while
     // its animation still writes props is the SurfaceMountingManager noise
     // in logcat, not a harmless leftover.

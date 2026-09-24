@@ -116,6 +116,7 @@ import type {
 import { ThemedSurface, ThemedSurfaceArtwork } from '@/components/themed-surface';
 import { useBrandMark } from '@/components/brand-mark';
 import { forgetWarmWorkspace } from '@/lib/server-warm-cache';
+import { settleAfter } from '@/lib/compiler-safe-control-flow';
 
 export type HomeOverviewProps = {
   width: number;
@@ -469,32 +470,35 @@ export function HomeOverview({
   const onRefresh = useCallback(async () => {
     if (!isFocused || AppState.currentState !== 'active') return;
     setRefreshing(true);
-    try {
-      await refreshReachabilityMany(probeTargets, {
-        force: true,
-        shouldContinue: () => AppState.currentState === 'active',
-      });
-      // The rows under the selected server, re-read. A pull used to refresh the
-      // dots and leave the lists as they were, so an agent the reader had
-      // closed stayed on its card until they opened the server and came back.
-      // The warm cache is dropped first because a pull is someone asking: the
-      // warm would otherwise answer from what it read a moment ago.
-      const selected = useGatewayConnectionStore.getState().record;
-      if (selected && !isDemoRecord(selected) && !selected.sshTunnel) {
-        const gate = serverPrewarmGate(selected.serverId);
-        if (gate.warm) {
-          forgetWarmWorkspace(selected.serverId);
-          await warmConfiguredWorkspace(
-            selected.serverId,
-            useServerSession.getState().byServer[selected.serverId],
-            () => AppState.currentState === 'active',
-            gate.health
-          );
+    return settleAfter(
+      async () => {
+        await refreshReachabilityMany(probeTargets, {
+          force: true,
+          shouldContinue: () => AppState.currentState === 'active',
+        });
+        // The rows under the selected server, re-read. A pull used to refresh the
+        // dots and leave the lists as they were, so an agent the reader had
+        // closed stayed on its card until they opened the server and came back.
+        // The warm cache is dropped first because a pull is someone asking: the
+        // warm would otherwise answer from what it read a moment ago.
+        const selected = useGatewayConnectionStore.getState().record;
+        if (selected && !isDemoRecord(selected) && !selected.sshTunnel) {
+          const gate = serverPrewarmGate(selected.serverId);
+          if (gate.warm) {
+            forgetWarmWorkspace(selected.serverId);
+            await warmConfiguredWorkspace(
+              selected.serverId,
+              useServerSession.getState().byServer[selected.serverId],
+              () => AppState.currentState === 'active',
+              gate.health
+            );
+          }
         }
+      },
+      () => {
+        setRefreshing(false);
       }
-    } finally {
-      setRefreshing(false);
-    }
+    );
   }, [isFocused, probeTargets, refreshReachabilityMany]);
 
   /*
@@ -529,17 +533,17 @@ export function HomeOverview({
     onScroll(event) {
       const y = event.contentOffset.y;
       const delta = y - lastScrollY.value;
-      lastScrollY.value = y;
-      scrollY.value = y;
+      lastScrollY.set(y);
+      scrollY.set(y);
       let target = foldTarget.value;
       if (y <= HEADER_FOLD_FREE_ZONE) {
         target = 0;
-        travel.value = 0;
+        travel.set(0);
       } else {
         // Travel accumulates while the direction holds and resets when it
         // turns, so a slow drag folds the bar as surely as a flick and a
         // finger resting on the screen does not flap it.
-        travel.value = Math.sign(delta) === Math.sign(travel.value) ? travel.value + delta : delta;
+        travel.set(Math.sign(delta) === Math.sign(travel.value) ? travel.value + delta : delta);
         if (travel.value > HEADER_FOLD_TRAVEL) target = 1;
         else if (travel.value < -HEADER_FOLD_TRAVEL) target = 0;
       }
@@ -547,8 +551,8 @@ export function HomeOverview({
       // scroll event would hold the bar half-folded for as long as the finger
       // keeps moving.
       if (target !== foldTarget.value) {
-        foldTarget.value = target;
-        fold.value = withTiming(target, timing('medium'));
+        foldTarget.set(target);
+        fold.set(withTiming(target, timing('medium')));
       }
     },
   });
@@ -670,6 +674,11 @@ export function HomeOverview({
       </PressableScale>
     ) : null;
 
+  // Whether the measured artwork top belongs to the artwork now resolved. Read
+  // here rather than inline in the prop: React Compiler cannot lower an
+  // optional chain in a conditional's test.
+  const editorialArtworkTopCurrent =
+    editorialArtworkTop?.source === editorialArtworkResolution?.source;
   if (homeLayout !== 'classic') {
     const editorialContent = (
       <View
@@ -713,11 +722,7 @@ export function HomeOverview({
               scrollY={scrollY}
               cover={customTheme?.manifest.homePresentation?.header === 'cover'}
               coverTitle={identity.name ?? undefined}
-              artworkTopInset={
-                editorialArtworkTop?.source === editorialArtworkResolution?.source
-                  ? editorialArtworkTop?.top
-                  : 0
-              }
+              artworkTopInset={editorialArtworkTopCurrent ? editorialArtworkTop?.top : 0}
               artwork={
                 hasEditorialArtwork && editorialArtworkResolution ? (
                   <HomeEditorialArtwork
@@ -908,7 +913,7 @@ export function HomeOverview({
           style={[styles.topBar, barFoldStyle]}
           onLayout={(event: LayoutChangeEvent) => {
             const { height } = event.nativeEvent.layout;
-            barHeightValue.value = height;
+            barHeightValue.set(height);
             setBarHeight(height);
           }}>
           <SafeAreaView edges={['top']}>

@@ -4,6 +4,7 @@ import { summariseAwayEvents, wasAwayLongEnough, type AwayDigest } from '@/lib/a
 import { demoAwayWindowStart, isDemoActive } from '@/lib/demo-gateway';
 import { listAgentEvents } from '@/lib/gateway-client';
 import { useServerLastViewed } from '@/stores/server-last-viewed';
+import { recoverWith } from '@/lib/compiler-safe-control-flow';
 
 export interface AwayDigestController {
   /** What to draw, or `null` for "draw nothing", which is most of the time. */
@@ -65,30 +66,33 @@ export function useAwayDigest({
 
     let live = true;
     void (async () => {
-      try {
-        const nowMs = Date.now();
-        const previous = await visit(serverId, nowMs);
-        // Demo mode has no history to have been away from -- the mark it just
-        // consumed was written seconds ago by this same launch -- so it is
-        // handed a fabricated window, once per launch, and only where the real
-        // one would not have produced a card anyway.
-        const sinceMs = wasAwayLongEnough(previous, nowMs)
-          ? previous
-          : isDemoActive()
-            ? demoAwayWindowStart(nowMs)
-            : null;
-        if (sinceMs === null || !wasAwayLongEnough(sinceMs, nowMs)) return;
+      return recoverWith(
+        async () => {
+          const nowMs = Date.now();
+          const previous = await visit(serverId, nowMs);
+          // Demo mode has no history to have been away from -- the mark it just
+          // consumed was written seconds ago by this same launch -- so it is
+          // handed a fabricated window, once per launch, and only where the real
+          // one would not have produced a card anyway.
+          const sinceMs = wasAwayLongEnough(previous, nowMs)
+            ? previous
+            : isDemoActive()
+              ? demoAwayWindowStart(nowMs)
+              : null;
+          if (sinceMs === null || !wasAwayLongEnough(sinceMs, nowMs)) return;
 
-        // The whole ring, not a window: the endpoint's own cursor is a sequence
-        // number this app has no memory of. See `listAgentEvents`.
-        const events = await listAgentEvents(sessionId);
-        if (!live) return;
-        setDigest(summariseAwayEvents(events, { sinceMs, nowMs: Date.now() }));
-      } catch {
-        // See the docblock: silence is the correct answer to a digest that
-        // could not be built. The screen behind this is already saying whatever
-        // there is to say about the connection.
-      }
+          // The whole ring, not a window: the endpoint's own cursor is a sequence
+          // number this app has no memory of. See `listAgentEvents`.
+          const events = await listAgentEvents(sessionId);
+          if (!live) return;
+          setDigest(summariseAwayEvents(events, { sinceMs, nowMs: Date.now() }));
+        },
+        () => {
+          // See the docblock: silence is the correct answer to a digest that
+          // could not be built. The screen behind this is already saying whatever
+          // there is to say about the connection.
+        }
+      );
     })();
 
     return () => {

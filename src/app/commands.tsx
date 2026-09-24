@@ -142,6 +142,7 @@ import {
   type QuickCommandDelivery,
 } from '@/lib/quick-commands';
 import { quickCommandName } from '@/i18n/labels';
+import { recoverWith } from '@/lib/compiler-safe-control-flow';
 
 /**
  * Spread into every style that carries the terminal's face.
@@ -419,32 +420,35 @@ export default function QuickCommandsScreen() {
     if (!available.canCreate || creating || !serverId) return;
     setCreating(focus ? 'tab' : 'panel');
     setError(null);
-    try {
-      // Two different objects, not one object with two focuses: a new panel is
-      // a split of the tab the reader is in (Ellen: "add it underneath the tab
-      // you are on"), and only a new tab is a new tab.
-      const target = focus
-        ? await createTab(params.sessionId, {
-            workspace_id: params.workspaceId,
-            focus,
-          })
-        : await splitPane(params.sessionId, params.paneId, { direction: 'down' });
-      // The create is what names the new pane. Without that id there is nothing
-      // to send the phone to, and choosing an empty one would clear the
-      // terminal instead -- so say so and stay put.
-      if (!target.paneId) {
-        setError(t`The server did not say which terminal it made.`);
+    return recoverWith(
+      async () => {
+        // Two different objects, not one object with two focuses: a new panel is
+        // a split of the tab the reader is in (Ellen: "add it underneath the tab
+        // you are on"), and only a new tab is a new tab.
+        const target = focus
+          ? await createTab(params.sessionId, {
+              workspace_id: params.workspaceId,
+              focus,
+            })
+          : await splitPane(params.sessionId, params.paneId, { direction: 'down' });
+        // The create is what names the new pane. Without that id there is nothing
+        // to send the phone to, and choosing an empty one would clear the
+        // terminal instead -- so say so and stay put.
+        if (!target.paneId) {
+          setError(t`The server did not say which terminal it made.`);
+          setCreating(null);
+          return;
+        }
+        choosePanel({ serverId, paneId: target.paneId });
+        router.back();
+      },
+      (failure) => {
+        // Reported here rather than by closing the sheet: a sheet that dismisses
+        // itself onto the pane you were already on has told you nothing.
+        setError(failure instanceof Error ? failure.message : t`Could not start a terminal.`);
         setCreating(null);
-        return;
       }
-      choosePanel({ serverId, paneId: target.paneId });
-      router.back();
-    } catch (failure) {
-      // Reported here rather than by closing the sheet: a sheet that dismisses
-      // itself onto the pane you were already on has told you nothing.
-      setError(failure instanceof Error ? failure.message : t`Could not start a terminal.`);
-      setCreating(null);
-    }
+    );
   }
 
   /**

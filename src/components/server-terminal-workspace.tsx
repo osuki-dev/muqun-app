@@ -298,6 +298,7 @@ import {
 import { useTerminalTheme } from '@/hooks/use-theme-pack';
 import { rememberWarmWorkspace, warmWorkspace, type WarmWorkspace } from '@/lib/server-warm-cache';
 import { startWorkspacePoller } from '@/lib/workspace-poller';
+import { recoverWith, rethrow, settleAfter } from '@/lib/compiler-safe-control-flow';
 
 /** The cache and this screen describe the same snapshot, so they share a type. */
 type ServerData = WarmWorkspace;
@@ -633,6 +634,110 @@ export type ServerTerminalWorkspaceProps = {
  * persistent Pad workspace. Keeping one component means both compositions own
  * exactly one poller, event stream, attachment queue, and pane selection.
  */
+/**
+ * The pane-switch handoff in `ServerTerminalWorkspace`: file the window being
+ * left, recall the one being entered.
+ *
+ * Moved here verbatim from the component body, and called from the same place
+ * in the same render, so nothing about when it runs has changed. It reads and
+ * writes the window's bookkeeping refs *during render* on purpose -- the
+ * component's docblock at the call site says why an effect is a coalescing
+ * interval too late -- and React Compiler refuses to compile a component that
+ * touches refs in render. `'use no memo'` keeps the compiler out of this one
+ * hook, so the whole workspace around it can be compiled.
+ */
+function usePaneWindowHandoff(
+  paneSwitched: boolean,
+  {
+    output,
+    paneId,
+    outputShape,
+    paneCacheRef,
+    paneWindowOwnerRef,
+    heldShapeRef,
+    outputLineLimitRef,
+    paneRevisionRef,
+    canLoadEarlierOutputRef,
+    earlierOutputRowsRef,
+    rangeUnsupportedRef,
+    lastReadRef,
+    setOutput,
+    setCanLoadEarlierOutput,
+    setPaneRevision,
+  }: {
+    output: string;
+    paneId: string;
+    outputShape: string;
+    paneCacheRef: { current: PaneCache };
+    paneWindowOwnerRef: { current: string };
+    heldShapeRef: { readonly current: string };
+    outputLineLimitRef: { readonly current: number };
+    paneRevisionRef: { readonly current: number };
+    canLoadEarlierOutputRef: { readonly current: boolean };
+    earlierOutputRowsRef: { readonly current: number };
+    rangeUnsupportedRef: { readonly current: boolean };
+    lastReadRef: { readonly current: unknown };
+    setOutput: (value: string) => void;
+    setCanLoadEarlierOutput: (value: boolean) => void;
+    setPaneRevision: (value: number) => void;
+  }
+): void {
+  'use no memo';
+  /* oxlint-disable react/refs, react/purity -- deliberate, for this block only:
+     every ref touched here is the window's own bookkeeping, none of it is read
+     into what this render draws, and nothing but a switch writes any of it --
+     which is the render this is. The alternative is an effect, and an effect
+     is a coalescing interval late. See the docblock above and
+     `useCoalescedValue`, which adjusts its own state during render for the
+     same reason and with the same suppression. */
+  if (paneSwitched) {
+    const cache = paneCacheRef.current;
+    const leaving = paneWindowOwnerRef.current;
+    // A pane that never painted has nothing to hand back, and caching the
+    // blank would let the recall claim a hit that shows the reader nothing --
+    // worse than a miss, because a miss at least knows it is one.
+    //
+    // `output` is the render's own value, which on this render is still the
+    // outgoing pane's window; the depth beside it is read from the refs, which
+    // no post-commit write has reached yet either.
+    //
+    // A program leaving the alternate screen is a switch with the same pane on
+    // both sides, and its last frame is not filed: the cache holds one window
+    // per pane, and that slot is holding the scrollback filed on the way in,
+    // which the recall below is about to ask for. See `paneWindowWorthFiling`.
+    // The shape is read from `heldShapeRef`, not `outputShape` -- on this
+    // render the latter already says `main`.
+    const held: PaneWindow | null =
+      leaving &&
+      output &&
+      paneWindowWorthFiling(leaving, paneId, heldShapeRef.current.endsWith(':alt'))
+        ? {
+            shape: heldShapeRef.current,
+            output,
+            lineLimit: outputLineLimitRef.current,
+            revision: paneRevisionRef.current,
+            canLoadEarlier: canLoadEarlierOutputRef.current,
+            earlierRows: earlierOutputRowsRef.current,
+            rangeUnsupported: rangeUnsupportedRef.current,
+            lastRead: lastReadRef.current,
+          }
+        : null;
+    const remembered = held ? rememberPaneWindow(cache, leaving, held) : cache;
+    // What the window would have been if the pane had never been left: the
+    // folded string, and the four facts that say how deep it is. Restoring the
+    // depth alongside the text is not optional -- a window put back at the
+    // initial limit would have the next refresh ask for one page of a pane the
+    // reader had paged five back, and `foldPaneRead` would honour that answer.
+    const restored = recallPaneWindow(remembered, paneId, outputShape);
+    paneCacheRef.current = remembered;
+    paneWindowOwnerRef.current = paneId;
+    setOutput(restored?.output ?? '');
+    setCanLoadEarlierOutput(restored?.canLoadEarlier ?? false);
+    setPaneRevision(restored?.revision ?? -1);
+  }
+  /* oxlint-enable react/refs, react/purity */
+}
+
 export function ServerTerminalWorkspace({
   serverId: providedServerId,
   sessionId: providedSessionId,
@@ -662,7 +767,11 @@ export function ServerTerminalWorkspace({
     tabId?: string;
     notificationId?: string;
   }>();
-  const serverId = providedServerId ?? routeParams.serverId ?? '';
+  // A template literal rather than the bare `??` chain: the value is the same
+  // string, and it is what tells React Compiler this is a primitive -- without
+  // it the compiler assumed `serverId` could be an object mutated later and
+  // declined to compile this component.
+  const serverId = `${providedServerId ?? routeParams.serverId ?? ''}`;
   const routeSessionId = providedSessionId ?? routeParams.sessionId;
   const routePaneId = providedPaneId ?? routeParams.paneId;
   const routeWorkspaceId = providedWorkspaceId ?? routeParams.workspaceId;
@@ -726,15 +835,17 @@ export function ServerTerminalWorkspace({
   );
   const simfarmPorts = useServerSimfarm((state) => state.byServer);
   const hydrateSimfarmPorts = useServerSimfarm((state) => state.hydrate);
-  const rememberSimfarmPortForServer = useServerSimfarm((state) => state.remember);
   useEffect(() => {
     void hydrateSimfarmPorts();
   }, [hydrateSimfarmPorts]);
   const rememberSimfarmPort = useCallback(
     (port: number) => {
-      if (serverId) void rememberSimfarmPortForServer(serverId, port);
+      // The store's action, read when the port is found rather than subscribed
+      // to: it never changes, and a selector over it only gave React Compiler
+      // a dependency it could not prove stable.
+      if (serverId) void useServerSimfarm.getState().remember(serverId, port);
     },
-    [rememberSimfarmPortForServer, serverId]
+    [serverId]
   );
   const profile = useAppearanceProfile();
   const theme = useThemeTokens();
@@ -1311,7 +1422,15 @@ export function ServerTerminalWorkspace({
     setAttachmentMenuOpen(false);
     setPreviewAttachmentId(null);
     clearAttachments();
-  }, [clearAttachments, composerSendGuard, deliveryOwnership, setSelection]);
+  }, [
+    clearAttachments,
+    composerSendGuard,
+    deliveryOwnership,
+    setSelection,
+    setData,
+    setSnapshotGeneration,
+    setMissingRequestedTarget,
+  ]);
 
   useEffect(() => {
     if (selectedServer) return;
@@ -1343,83 +1462,108 @@ export function ServerTerminalWorkspace({
         dataRequestIdRef.current === requestId &&
         useGatewayConnectionStore.getState().record?.serverId === requestServerId;
       if (showLoading) setLoadingData(true);
-      try {
-        // Health costs a herdr round-trip and is only read as a "have we loaded
-        // anything yet" flag, so it is fetched once rather than every poll.
-        const health = healthRef.current;
-        const previous = resolvedSessionRef.current;
-        // A backend coming back must reveal a choice, not pull the reader away
-        // from the live fallback they are now using. Explicit picks reset this.
-        // This is the one part of the load the home screen cannot share: it
-        // needs state only this screen has. What it decides is the preference,
-        // which is all `loadWorkspaceSnapshot` is told.
-        const stablePreference =
-          previous?.serverId === serverId && previous.preference === preferredSessionId
-            ? previous.sessionId
-            : preferredSessionId;
-        const { snapshot: next, choices } = await loadWorkspaceSnapshot(stablePreference, health);
-        if (!isCurrentRequest()) return null;
-        setSessions((current) => (sameSessionChoices(current, choices) ? current : choices));
-        const { sessionId } = next;
-        resolvedSessionRef.current = { serverId, preference: preferredSessionId, sessionId };
-        healthRef.current = next.health;
-        rememberWarmWorkspace(serverId, next);
-        // Only a confirmed, still-owned request may refresh Home's mirror.
-        // Initial/reset data and a cached first frame are not new observations.
-        if (!isDemoRecord(record)) {
-          void useServerAgents.getState().record({
-            serverId,
-            checkedAtMs: Date.now(),
-            agents: mirroredServerPanes(next.panes, next.agents),
-          });
+      return settleAfter(
+        async () => {
+          return recoverWith<RefreshResult>(
+            async () => {
+              // Health costs a herdr round-trip and is only read as a "have we loaded
+              // anything yet" flag, so it is fetched once rather than every poll.
+              const health = healthRef.current;
+              const previous = resolvedSessionRef.current;
+              // A backend coming back must reveal a choice, not pull the reader away
+              // from the live fallback they are now using. Explicit picks reset this.
+              // This is the one part of the load the home screen cannot share: it
+              // needs state only this screen has. What it decides is the preference,
+              // which is all `loadWorkspaceSnapshot` is told.
+              const stablePreference =
+                previous?.serverId === serverId && previous.preference === preferredSessionId
+                  ? previous.sessionId
+                  : preferredSessionId;
+              const { snapshot: next, choices } = await loadWorkspaceSnapshot(
+                stablePreference,
+                health
+              );
+              if (!isCurrentRequest()) return null;
+              setSessions((current) => (sameSessionChoices(current, choices) ? current : choices));
+              const { sessionId } = next;
+              resolvedSessionRef.current = { serverId, preference: preferredSessionId, sessionId };
+              healthRef.current = next.health;
+              rememberWarmWorkspace(serverId, next);
+              // Only a confirmed, still-owned request may refresh Home's mirror.
+              // Initial/reset data and a cached first frame are not new observations.
+              if (!isDemoRecord(record)) {
+                void useServerAgents.getState().record({
+                  serverId,
+                  checkedAtMs: Date.now(),
+                  agents: mirroredServerPanes(next.panes, next.agents),
+                });
+              }
+              const nextSnapshotGeneration = snapshotGenerationRef.current + 1;
+              snapshotGenerationRef.current = nextSnapshotGeneration;
+              setSnapshotGeneration(nextSnapshotGeneration);
+              setData((current) => (sameServerData(current, next) ? current : next));
+              const strictTargetAtRequest = activeStrictTarget;
+              setSelection((current) => {
+                if (
+                  strictTargetAtRequest?.serverId === serverId &&
+                  ((strictTargetAtRequest.sessionId &&
+                    next.sessionId !== strictTargetAtRequest.sessionId) ||
+                    (strictTargetAtRequest.workspaceId &&
+                      !next.workspaces.some(
+                        (workspace) => workspace.id === strictTargetAtRequest.workspaceId
+                      )) ||
+                    (strictTargetAtRequest.tabId &&
+                      !next.tabs.some(
+                        (tab) =>
+                          tab.id === strictTargetAtRequest.tabId &&
+                          (!strictTargetAtRequest.workspaceId ||
+                            field(tab, 'workspace_id') === strictTargetAtRequest.workspaceId)
+                      )) ||
+                    (strictTargetAtRequest.paneId &&
+                      !next.panes.some((pane) => pane.id === strictTargetAtRequest.paneId)))
+                ) {
+                  return current;
+                }
+                const reconciled = reconcileSelection(next, current);
+                return sameSelection(current, reconciled) ? current : reconciled;
+              });
+              setError(null);
+              // Structural refreshes share request ownership with the watchdog. Their
+              // confirmed success is readiness evidence too, even if they superseded
+              // the watchdog's in-flight read.
+              setConnection((current) =>
+                current.phase === 'connected' && current.attempt === 0
+                  ? current
+                  : { phase: 'connected', attempt: 0 }
+              );
+              return { ok: true, data: next };
+            },
+            (failure) => {
+              if (!isCurrentRequest()) return null;
+              return {
+                ok: false,
+                failure: describeGatewayFailure(failure, t`Server unavailable.`),
+              };
+            }
+          );
+        },
+        () => {
+          if (isCurrentRequest()) setLoadingData(false);
         }
-        const nextSnapshotGeneration = snapshotGenerationRef.current + 1;
-        snapshotGenerationRef.current = nextSnapshotGeneration;
-        setSnapshotGeneration(nextSnapshotGeneration);
-        setData((current) => (sameServerData(current, next) ? current : next));
-        const strictTargetAtRequest = activeStrictTarget;
-        setSelection((current) => {
-          if (
-            strictTargetAtRequest?.serverId === serverId &&
-            ((strictTargetAtRequest.sessionId &&
-              next.sessionId !== strictTargetAtRequest.sessionId) ||
-              (strictTargetAtRequest.workspaceId &&
-                !next.workspaces.some(
-                  (workspace) => workspace.id === strictTargetAtRequest.workspaceId
-                )) ||
-              (strictTargetAtRequest.tabId &&
-                !next.tabs.some(
-                  (tab) =>
-                    tab.id === strictTargetAtRequest.tabId &&
-                    (!strictTargetAtRequest.workspaceId ||
-                      field(tab, 'workspace_id') === strictTargetAtRequest.workspaceId)
-                )) ||
-              (strictTargetAtRequest.paneId &&
-                !next.panes.some((pane) => pane.id === strictTargetAtRequest.paneId)))
-          ) {
-            return current;
-          }
-          const reconciled = reconcileSelection(next, current);
-          return sameSelection(current, reconciled) ? current : reconciled;
-        });
-        setError(null);
-        // Structural refreshes share request ownership with the watchdog. Their
-        // confirmed success is readiness evidence too, even if they superseded
-        // the watchdog's in-flight read.
-        setConnection((current) =>
-          current.phase === 'connected' && current.attempt === 0
-            ? current
-            : { phase: 'connected', attempt: 0 }
-        );
-        return { ok: true, data: next };
-      } catch (failure) {
-        if (!isCurrentRequest()) return null;
-        return { ok: false, failure: describeGatewayFailure(failure, t`Server unavailable.`) };
-      } finally {
-        if (isCurrentRequest()) setLoadingData(false);
-      }
+      );
     },
-    [activeStrictTarget, preferredSessionId, ready, record, serverId, t, setSelection]
+    [
+      activeStrictTarget,
+      preferredSessionId,
+      ready,
+      record,
+      serverId,
+      t,
+      setSelection,
+      setSessions,
+      setSnapshotGeneration,
+      setData,
+    ]
   );
 
   useEffect(() => {
@@ -1656,33 +1800,36 @@ export function ServerTerminalWorkspace({
       // re-read whole, so a refresh at the initial limit would silently throw
       // away every page they pulled in.
       const lineLimit = partsLineLimitRef.current;
-      try {
-        const result = await listPaneParts(data.sessionId, requestPaneId, lineLimit);
-        if (!isCurrentRequest()) return;
-        setPartsState({
-          paneId: requestPaneId,
-          answered: true,
-          supported: result.structured,
-          failed: false,
-          failures: 0,
-          parts: result.parts,
-          composer: result.composer,
-        });
-        const scroll = panesRef.current.find((pane) => pane.id === requestPaneId)?.raw.scroll;
-        earlierPartsRowsRef.current = paneTranscriptRows(result.parts);
-        setCanLoadEarlierParts(
-          hasEarlierPaneParts(result.parts, lineLimit, MAX_PANE_OUTPUT_LINES, scroll)
-        );
-      } catch {
-        if (!isCurrentRequest()) return;
-        // Silent on purpose: the structured view is an alternative reading of
-        // output the user can already see, so a failure here is not an error
-        // to report -- it drops back to the terminal and marks the toggle.
-        setPartsState((current) => {
-          const base = current.paneId === requestPaneId ? current : initialPartsState;
-          return { ...base, paneId: requestPaneId, failed: true, failures: base.failures + 1 };
-        });
-      }
+      return recoverWith(
+        async () => {
+          const result = await listPaneParts(data.sessionId, requestPaneId, lineLimit);
+          if (!isCurrentRequest()) return;
+          setPartsState({
+            paneId: requestPaneId,
+            answered: true,
+            supported: result.structured,
+            failed: false,
+            failures: 0,
+            parts: result.parts,
+            composer: result.composer,
+          });
+          const scroll = panesRef.current.find((pane) => pane.id === requestPaneId)?.raw.scroll;
+          earlierPartsRowsRef.current = paneTranscriptRows(result.parts);
+          setCanLoadEarlierParts(
+            hasEarlierPaneParts(result.parts, lineLimit, MAX_PANE_OUTPUT_LINES, scroll)
+          );
+        },
+        () => {
+          if (!isCurrentRequest()) return;
+          // Silent on purpose: the structured view is an alternative reading of
+          // output the user can already see, so a failure here is not an error
+          // to report -- it drops back to the terminal and marks the toggle.
+          setPartsState((current) => {
+            const base = current.paneId === requestPaneId ? current : initialPartsState;
+            return { ...base, paneId: requestPaneId, failed: true, failures: base.failures + 1 };
+          });
+        }
+      );
     },
     [agentPane, connection.phase, data.sessionId, ready, selection.paneId, serverId]
   );
@@ -1717,45 +1864,53 @@ export function ServerTerminalWorkspace({
 
     loadingEarlierPartsRef.current = true;
     setLoadingEarlierParts(true);
-    try {
-      const result = await listPaneParts(data.sessionId, requestPaneId, nextLimit);
-      if (!isCurrentRequest()) return;
-      partsLineLimitRef.current = nextLimit;
-      // This transcript was read under a wider window than the content key
-      // describes, so the next change has to re-read rather than be skipped as
-      // "already have that content".
-      readPartsKeyRef.current = { paneId: '', contentKey: '' };
-      setPartsState({
-        paneId: requestPaneId,
-        answered: true,
-        supported: result.structured,
-        failed: false,
-        failures: 0,
-        parts: result.parts,
-        composer: result.composer,
-      });
-      const scroll = panesRef.current.find((pane) => pane.id === requestPaneId)?.raw.scroll;
-      const reachedRows = earlierPartsRowsRef.current;
-      earlierPartsRowsRef.current = paneTranscriptRows(result.parts);
-      setCanLoadEarlierParts(
-        hasEarlierPartsAfterPage(
-          result.parts,
-          nextLimit,
-          MAX_PANE_OUTPUT_LINES,
-          scroll,
-          reachedRows
-        )
-      );
-    } catch {
-      // Same silence as the ordinary read: the transcript already on screen is
-      // still true, and the pull can simply be tried again.
-      if (isCurrentRequest()) setCanLoadEarlierParts(false);
-    } finally {
-      if (isCurrentRequest()) {
-        loadingEarlierPartsRef.current = false;
-        setLoadingEarlierParts(false);
+    return settleAfter(
+      async () => {
+        return recoverWith(
+          async () => {
+            const result = await listPaneParts(data.sessionId, requestPaneId, nextLimit);
+            if (!isCurrentRequest()) return;
+            partsLineLimitRef.current = nextLimit;
+            // This transcript was read under a wider window than the content key
+            // describes, so the next change has to re-read rather than be skipped as
+            // "already have that content".
+            readPartsKeyRef.current = { paneId: '', contentKey: '' };
+            setPartsState({
+              paneId: requestPaneId,
+              answered: true,
+              supported: result.structured,
+              failed: false,
+              failures: 0,
+              parts: result.parts,
+              composer: result.composer,
+            });
+            const scroll = panesRef.current.find((pane) => pane.id === requestPaneId)?.raw.scroll;
+            const reachedRows = earlierPartsRowsRef.current;
+            earlierPartsRowsRef.current = paneTranscriptRows(result.parts);
+            setCanLoadEarlierParts(
+              hasEarlierPartsAfterPage(
+                result.parts,
+                nextLimit,
+                MAX_PANE_OUTPUT_LINES,
+                scroll,
+                reachedRows
+              )
+            );
+          },
+          () => {
+            // Same silence as the ordinary read: the transcript already on screen is
+            // still true, and the pull can simply be tried again.
+            if (isCurrentRequest()) setCanLoadEarlierParts(false);
+          }
+        );
+      },
+      () => {
+        if (isCurrentRequest()) {
+          loadingEarlierPartsRef.current = false;
+          setLoadingEarlierParts(false);
+        }
       }
-    }
+    );
   }, [connection.phase, data.sessionId, ready, selection.paneId, serverId]);
 
   useEffect(() => {
@@ -2381,59 +2536,26 @@ export function ServerTerminalWorkspace({
    * render -- see its docblock, which describes this case by name.
    */
   const paneSwitched = useResetSignal(`${selection.paneId}|${outputShape}`);
-  /* oxlint-disable react/refs, react/purity -- deliberate, for this block only:
-     every ref touched here is the window's own bookkeeping, none of it is read
-     into what this render draws, and nothing but a switch writes any of it --
-     which is the render this is. The alternative is an effect, and an effect
-     is a coalescing interval late. See the docblock above and
-     `useCoalescedValue`, which adjusts its own state during render for the
-     same reason and with the same suppression. */
-  if (paneSwitched) {
-    const cache = paneCacheRef.current;
-    const leaving = paneWindowOwnerRef.current;
-    // A pane that never painted has nothing to hand back, and caching the
-    // blank would let the recall claim a hit that shows the reader nothing --
-    // worse than a miss, because a miss at least knows it is one.
-    //
-    // `output` is the render's own value, which on this render is still the
-    // outgoing pane's window; the depth beside it is read from the refs, which
-    // no post-commit write has reached yet either.
-    //
-    // A program leaving the alternate screen is a switch with the same pane on
-    // both sides, and its last frame is not filed: the cache holds one window
-    // per pane, and that slot is holding the scrollback filed on the way in,
-    // which the recall below is about to ask for. See `paneWindowWorthFiling`.
-    // The shape is read from `heldShapeRef`, not `outputShape` -- on this
-    // render the latter already says `main`.
-    const held: PaneWindow | null =
-      leaving &&
-      output &&
-      paneWindowWorthFiling(leaving, selection.paneId, heldShapeRef.current.endsWith(':alt'))
-        ? {
-            shape: heldShapeRef.current,
-            output,
-            lineLimit: outputLineLimitRef.current,
-            revision: paneRevisionRef.current,
-            canLoadEarlier: canLoadEarlierOutputRef.current,
-            earlierRows: earlierOutputRowsRef.current,
-            rangeUnsupported: rangeUnsupportedRef.current,
-            lastRead: lastReadRef.current,
-          }
-        : null;
-    const remembered = held ? rememberPaneWindow(cache, leaving, held) : cache;
-    // What the window would have been if the pane had never been left: the
-    // folded string, and the four facts that say how deep it is. Restoring the
-    // depth alongside the text is not optional -- a window put back at the
-    // initial limit would have the next refresh ask for one page of a pane the
-    // reader had paged five back, and `foldPaneRead` would honour that answer.
-    const restored = recallPaneWindow(remembered, selection.paneId, outputShape);
-    paneCacheRef.current = remembered;
-    paneWindowOwnerRef.current = selection.paneId;
-    setOutput(restored?.output ?? '');
-    setCanLoadEarlierOutput(restored?.canLoadEarlier ?? false);
-    setPaneRevision(restored?.revision ?? -1);
-  }
-  /* oxlint-enable react/refs, react/purity */
+  // The handoff itself lives in `usePaneWindowHandoff` -- the same statements,
+  // run here, in this render -- so React Compiler can compile this component
+  // around it. See the hook's docblock.
+  usePaneWindowHandoff(paneSwitched, {
+    output,
+    paneId: selection.paneId,
+    outputShape,
+    paneCacheRef,
+    paneWindowOwnerRef,
+    heldShapeRef,
+    outputLineLimitRef,
+    paneRevisionRef,
+    canLoadEarlierOutputRef,
+    earlierOutputRowsRef,
+    rangeUnsupportedRef,
+    lastReadRef,
+    setOutput,
+    setCanLoadEarlierOutput,
+    setPaneRevision,
+  });
 
   // Clearing belongs here rather than in the poller: opening a sheet over the
   // terminal unfocuses this screen, and blanking on every refocus made the
@@ -2778,32 +2900,36 @@ export function ServerTerminalWorkspace({
       activeServerRef.current === requestServerId &&
       activePaneRef.current === requestPaneId &&
       outputRequestIdRef.current === requestId;
-    try {
-      // As deep as the reader has already paged, not the first page again. A
-      // refresh that asks for one page and then replaces the window with the
-      // answer throws away everything the reader pulled up -- the history
-      // vanishes and the screen jumps, once a second, which is the flicker.
-      const value = await readPaneOutput(
-        data.sessionId,
-        requestPaneId,
-        PANE_OUTPUT_FORMAT,
-        outputLineLimitRef.current,
-        outputSource
-      );
-      if (!isCurrentRequest()) return;
-      const paneRevision = panesRef.current.find((pane) => pane.id === requestPaneId)?.raw.revision;
-      applyPaneOutput(
-        requestPaneId,
-        value,
-        typeof paneRevision === 'number' ? paneRevision : undefined,
-        'refresh'
-      );
-    } catch (failure) {
-      if (isCurrentRequest()) {
-        const description = describeGatewayFailure(failure, t`Could not read the terminal.`);
-        if (!description.retryable) setError(description.message);
+    return recoverWith(
+      async () => {
+        // As deep as the reader has already paged, not the first page again. A
+        // refresh that asks for one page and then replaces the window with the
+        // answer throws away everything the reader pulled up -- the history
+        // vanishes and the screen jumps, once a second, which is the flicker.
+        const value = await readPaneOutput(
+          data.sessionId,
+          requestPaneId,
+          PANE_OUTPUT_FORMAT,
+          outputLineLimitRef.current,
+          outputSource
+        );
+        if (!isCurrentRequest()) return;
+        const paneRevision = panesRef.current.find((pane) => pane.id === requestPaneId)?.raw
+          .revision;
+        applyPaneOutput(
+          requestPaneId,
+          value,
+          typeof paneRevision === 'number' ? paneRevision : undefined,
+          'refresh'
+        );
+      },
+      (failure) => {
+        if (isCurrentRequest()) {
+          const description = describeGatewayFailure(failure, t`Could not read the terminal.`);
+          if (!description.retryable) setError(description.message);
+        }
       }
-    }
+    );
   }, [
     applyPaneOutput,
     connection.phase,
@@ -2838,125 +2964,141 @@ export function ServerTerminalWorkspace({
     loadingEarlierOutputRef.current = true;
     setLoadingEarlierOutput(true);
     setError(null);
-    try {
-      // Where the window's own top sits, asked fresh rather than remembered.
-      // `seedPageRange` was written for the one read that cannot carry a
-      // `range` -- every pane's first page -- but the same formula
-      // (`total - currentLimit`, off the pane record's *live* scroll metrics)
-      // is the right answer on every later page too, and it is the ONLY one
-      // that stays right: the window sits at exactly `currentLimit` lines
-      // once a page has been pulled, and every line the pane prints after
-      // that evicts one paged-in line off the top -- `foldPaneRead` trims
-      // from the top to hold the cap. The *served* range from the last page
-      // (`lastRange`, below) freezes the instant that read landed and goes
-      // stale the moment a single refresh runs past it, which asks for
-      // exactly the span above the line that eviction just took, not above
-      // where the window actually begins now -- a gap opens between the two
-      // and nothing above ever notices, because `foldPaneRead` finds zero
-      // overlap and prepends there too, correctly, by construction. Recomputed
-      // off `total` this cannot go stale: it is not a memory of a past
-      // answer, it is the same question asked again. `lastRange` is kept only
-      // as a fallback for the pane record momentarily missing scroll metrics
-      // -- stale is still better than nothing there -- and a pane or gateway
-      // that has neither leaves both null and asks exactly the widening-tail
-      // question it always has.
-      const seedScroll = panesRef.current.find((pane) => pane.id === requestPaneId)?.raw.scroll;
-      const seedRange = seedPageRange(seedScroll, currentLimit);
-      const lastRange = paneReadRange(lastReadRef.current);
-      const range = rangeUnsupportedRef.current ? null : (seedRange ?? lastRange);
-      const page = range ? nextPageRange(range, PANE_OUTPUT_PAGE_LINES) : null;
-      // A range-addressed page is disjoint from the window, so it costs its
-      // own rows rather than every line beneath it. Without one this is the
-      // widening tail read it has always been, byte-for-byte.
-      let fetched = page
-        ? await readPaneRange(
-            data.sessionId,
-            requestPaneId,
-            page.start,
-            page.end,
-            PANE_OUTPUT_FORMAT,
-            outputSource
-          )
-        : await readPaneTail(
-            data.sessionId,
-            requestPaneId,
-            PANE_OUTPUT_FORMAT,
-            nextLimit,
-            outputSource
-          );
-      // A backend can accept `start`/`end` without complaint and still ignore
-      // them, always answering with its own tail (herdr's does) -- there is no
-      // capability flag that says so up front, so the only honest check is
-      // whether what came back is shaped like the page that was actually
-      // asked for. Compared on `start`, not `end`: a backend that shrank
-      // between reads (a cleared pane, a restarted session reusing a pane id)
-      // legitimately clamps `end` down while still honouring the requested
-      // `start` verbatim, and reading that clamp as "ignored my range" would
-      // punish a backend that fully supports it. A backend that ignores the
-      // request outright answers with its own tail instead, whose `start`
-      // bears no relation to the page asked for. A mismatch is remembered so
-      // it is asked at most once, and this click still makes forward progress
-      // rather than looking like it did nothing: fall back to the same
-      // widening-tail request immediately.
-      let origin: PaneReadOrigin = page ? 'rangePage' : 'page';
-      if (page) {
-        const servedRange = paneReadRange(fetched.read);
-        if (!servedRange || servedRange.start !== page.start) {
-          rangeUnsupportedRef.current = true;
-          origin = 'page';
-          fetched = await readPaneTail(
-            data.sessionId,
-            requestPaneId,
-            PANE_OUTPUT_FORMAT,
-            nextLimit,
-            outputSource
-          );
+    return settleAfter(
+      async () => {
+        return recoverWith(
+          async () => {
+            // Where the window's own top sits, asked fresh rather than remembered.
+            // `seedPageRange` was written for the one read that cannot carry a
+            // `range` -- every pane's first page -- but the same formula
+            // (`total - currentLimit`, off the pane record's *live* scroll metrics)
+            // is the right answer on every later page too, and it is the ONLY one
+            // that stays right: the window sits at exactly `currentLimit` lines
+            // once a page has been pulled, and every line the pane prints after
+            // that evicts one paged-in line off the top -- `foldPaneRead` trims
+            // from the top to hold the cap. The *served* range from the last page
+            // (`lastRange`, below) freezes the instant that read landed and goes
+            // stale the moment a single refresh runs past it, which asks for
+            // exactly the span above the line that eviction just took, not above
+            // where the window actually begins now -- a gap opens between the two
+            // and nothing above ever notices, because `foldPaneRead` finds zero
+            // overlap and prepends there too, correctly, by construction. Recomputed
+            // off `total` this cannot go stale: it is not a memory of a past
+            // answer, it is the same question asked again. `lastRange` is kept only
+            // as a fallback for the pane record momentarily missing scroll metrics
+            // -- stale is still better than nothing there -- and a pane or gateway
+            // that has neither leaves both null and asks exactly the widening-tail
+            // question it always has.
+            const seedScroll = panesRef.current.find((pane) => pane.id === requestPaneId)?.raw
+              .scroll;
+            const seedRange = seedPageRange(seedScroll, currentLimit);
+            const lastRange = paneReadRange(lastReadRef.current);
+            const range = rangeUnsupportedRef.current ? null : (seedRange ?? lastRange);
+            const page = range ? nextPageRange(range, PANE_OUTPUT_PAGE_LINES) : null;
+            // A range-addressed page is disjoint from the window, so it costs its
+            // own rows rather than every line beneath it. Without one this is the
+            // widening tail read it has always been, byte-for-byte.
+            let fetched = page
+              ? await readPaneRange(
+                  data.sessionId,
+                  requestPaneId,
+                  page.start,
+                  page.end,
+                  PANE_OUTPUT_FORMAT,
+                  outputSource
+                )
+              : await readPaneTail(
+                  data.sessionId,
+                  requestPaneId,
+                  PANE_OUTPUT_FORMAT,
+                  nextLimit,
+                  outputSource
+                );
+            // A backend can accept `start`/`end` without complaint and still ignore
+            // them, always answering with its own tail (herdr's does) -- there is no
+            // capability flag that says so up front, so the only honest check is
+            // whether what came back is shaped like the page that was actually
+            // asked for. Compared on `start`, not `end`: a backend that shrank
+            // between reads (a cleared pane, a restarted session reusing a pane id)
+            // legitimately clamps `end` down while still honouring the requested
+            // `start` verbatim, and reading that clamp as "ignored my range" would
+            // punish a backend that fully supports it. A backend that ignores the
+            // request outright answers with its own tail instead, whose `start`
+            // bears no relation to the page asked for. A mismatch is remembered so
+            // it is asked at most once, and this click still makes forward progress
+            // rather than looking like it did nothing: fall back to the same
+            // widening-tail request immediately.
+            let origin: PaneReadOrigin = page ? 'rangePage' : 'page';
+            if (page) {
+              const servedRange = paneReadRange(fetched.read);
+              if (!servedRange || servedRange.start !== page.start) {
+                rangeUnsupportedRef.current = true;
+                origin = 'page';
+                fetched = await readPaneTail(
+                  data.sessionId,
+                  requestPaneId,
+                  PANE_OUTPUT_FORMAT,
+                  nextLimit,
+                  outputSource
+                );
+              }
+            }
+            const { output: value, read } = fetched;
+            if (!isCurrentRequest()) return;
+            outputLineLimitRef.current = nextLimit;
+            lastReadRef.current = read;
+            // Through the same door as everything else. A page is the one source
+            // allowed to claim depth, and it only gets it when the read demonstrably
+            // reaches past the window's own head. Where Herdr plateaus below what its
+            // row metric promised (card #646: a pane claiming 2765 rows that stops
+            // returning more at 932) the wider read comes back no deeper than the one
+            // before it, and a bare `setOutput(value)` would then hand the reader
+            // *less* than they were already holding as the reward for pulling down.
+            // A range page carries none of that ambiguity -- it is disjoint by
+            // construction -- which is exactly why it folds through the door under
+            // its own `'rangePage'` origin rather than `'page'`: the two may look
+            // alike at this call site, but only a genuine range read may be believed
+            // with zero overlap. See the origin's own doc in `history.ts`.
+            setOutput((current) => {
+              const next = foldPaneRead(
+                current,
+                value,
+                origin,
+                nextLimit,
+                paneOwnsScreenRef.current,
+                paneScreenRowsRef.current
+              );
+              return next;
+            });
+            const scroll = panesRef.current.find((pane) => pane.id === requestPaneId)?.raw.scroll;
+            const reachedRows = earlierOutputRowsRef.current;
+            earlierOutputRowsRef.current = terminalOutputLineCount(value);
+            setCanLoadEarlierOutput(
+              hasEarlierAfterPage(
+                value,
+                nextLimit,
+                MAX_PANE_OUTPUT_LINES,
+                scroll,
+                reachedRows,
+                read
+              )
+            );
+            setHistoryRevision((revision) => revision + 1);
+          },
+          (failure) => {
+            if (isCurrentRequest()) {
+              setError(describeGatewayFailure(failure, t`Could not load earlier output.`).message);
+            }
+          }
+        );
+      },
+      () => {
+        if (isCurrentRequest()) {
+          loadingEarlierOutputRef.current = false;
+          setLoadingEarlierOutput(false);
         }
       }
-      const { output: value, read } = fetched;
-      if (!isCurrentRequest()) return;
-      outputLineLimitRef.current = nextLimit;
-      lastReadRef.current = read;
-      // Through the same door as everything else. A page is the one source
-      // allowed to claim depth, and it only gets it when the read demonstrably
-      // reaches past the window's own head. Where Herdr plateaus below what its
-      // row metric promised (card #646: a pane claiming 2765 rows that stops
-      // returning more at 932) the wider read comes back no deeper than the one
-      // before it, and a bare `setOutput(value)` would then hand the reader
-      // *less* than they were already holding as the reward for pulling down.
-      // A range page carries none of that ambiguity -- it is disjoint by
-      // construction -- which is exactly why it folds through the door under
-      // its own `'rangePage'` origin rather than `'page'`: the two may look
-      // alike at this call site, but only a genuine range read may be believed
-      // with zero overlap. See the origin's own doc in `history.ts`.
-      setOutput((current) => {
-        const next = foldPaneRead(
-          current,
-          value,
-          origin,
-          nextLimit,
-          paneOwnsScreenRef.current,
-          paneScreenRowsRef.current
-        );
-        return next;
-      });
-      const scroll = panesRef.current.find((pane) => pane.id === requestPaneId)?.raw.scroll;
-      const reachedRows = earlierOutputRowsRef.current;
-      earlierOutputRowsRef.current = terminalOutputLineCount(value);
-      setCanLoadEarlierOutput(
-        hasEarlierAfterPage(value, nextLimit, MAX_PANE_OUTPUT_LINES, scroll, reachedRows, read)
-      );
-      setHistoryRevision((revision) => revision + 1);
-    } catch (failure) {
-      if (isCurrentRequest()) {
-        setError(describeGatewayFailure(failure, t`Could not load earlier output.`).message);
-      }
-    } finally {
-      if (isCurrentRequest()) {
-        loadingEarlierOutputRef.current = false;
-        setLoadingEarlierOutput(false);
-      }
-    }
+    );
   }, [connection.phase, data.sessionId, outputSource, ready, selection.paneId, serverId, t]);
 
   useEffect(() => {
@@ -3520,7 +3662,19 @@ export function ServerTerminalWorkspace({
         }
       }
     },
-    [data, providedServerId, router, selectRecord, serverId, setSelection]
+    [
+      data,
+      providedServerId,
+      router,
+      selectRecord,
+      serverId,
+      setSelection,
+      setOverviewVisible,
+      setMissingRequestedTarget,
+      setStrictTarget,
+      setPadRequestedPaneId,
+      setChosenSessionId,
+    ]
   );
 
   useEffect(() => {
@@ -3673,102 +3827,110 @@ export function ServerTerminalWorkspace({
       activePaneRef.current === requestPaneId;
     setSending(true);
     setError(null);
-    try {
-      // The transfers started at selection, so this is normally already
-      // settled and returns without yielding. When a photo is still climbing
-      // the uplink it waits it out instead of sending half a message, and the
-      // wait is visible: the button holds its spinner and the tile keeps its
-      // own.
-      const attachmentPaths = hasAttachments ? await awaitUploads() : [];
-      if (attachmentPaths === null) {
-        showToast({
-          variant: 'danger',
-          title: t`Some files did not upload`,
-          message: t`Retry the ones marked in red, or remove them, then send again.`,
-        });
-        return;
-      }
-      if (!isCurrentSend()) return;
+    return settleAfter(
+      async () => {
+        return recoverWith(
+          async () => {
+            // The transfers started at selection, so this is normally already
+            // settled and returns without yielding. When a photo is still climbing
+            // the uplink it waits it out instead of sending half a message, and the
+            // wait is visible: the button holds its spinner and the tile keeps its
+            // own.
+            const attachmentPaths = hasAttachments ? await awaitUploads() : [];
+            if (attachmentPaths === null) {
+              showToast({
+                variant: 'danger',
+                title: t`Some files did not upload`,
+                message: t`Retry the ones marked in red, or remove them, then send again.`,
+              });
+              return;
+            }
+            if (!isCurrentSend()) return;
 
-      // With nothing attached the draft goes over exactly as typed. Attachments
-      // join with spaces, not newlines: in a plain shell pane every newline is
-      // an Enter, so line-separated paths would each execute as a command.
-      // Upload names are uuid-based and never contain spaces, so no quoting is
-      // needed.
-      const value =
-        attachmentPaths.length > 0
-          ? [draft.trim(), ...attachmentPaths].filter((part) => part.length > 0).join(' ')
-          : draft;
-      if (!value.trim()) return;
+            // With nothing attached the draft goes over exactly as typed. Attachments
+            // join with spaces, not newlines: in a plain shell pane every newline is
+            // an Enter, so line-separated paths would each execute as a command.
+            // Upload names are uuid-based and never contain spaces, so no quoting is
+            // needed.
+            const value =
+              attachmentPaths.length > 0
+                ? [draft.trim(), ...attachmentPaths].filter((part) => part.length > 0).join(' ')
+                : draft;
+            if (!value.trim()) return;
 
-      if (assignment.active) {
-        // The task goes to an assistant that does not exist yet, so this neither
-        // types into the pane nor folds attachment paths into the line: the
-        // references travel as their own block (`attachmentCommandText`), and a
-        // bundled instruction set rides with them rather than in the field.
-        if (!record) throw new Error('Not connected to a server.');
-        const outcome = await assignment.assign(
-          record,
-          draft,
-          attachments,
-          {
-            serverId: requestServerId,
-            sessionId: data.sessionId,
-            sourcePaneId: requestPaneId,
-            connectionGeneration: ATTACHMENT_CONNECTION_GENERATION,
+            if (assignment.active) {
+              // The task goes to an assistant that does not exist yet, so this neither
+              // types into the pane nor folds attachment paths into the line: the
+              // references travel as their own block (`attachmentCommandText`), and a
+              // bundled instruction set rides with them rather than in the field.
+              if (!record) rethrow(new Error('Not connected to a server.'));
+              const outcome = await assignment.assign(
+                record,
+                draft,
+                attachments,
+                {
+                  serverId: requestServerId,
+                  sessionId: data.sessionId,
+                  sourcePaneId: requestPaneId,
+                  connectionGeneration: ATTACHMENT_CONNECTION_GENERATION,
+                },
+                isCurrentSend
+              );
+              if (!isCurrentSend()) return;
+              if (outcome.status === 'sent') {
+                assignment.close();
+                showToast({
+                  variant: 'success',
+                  title: t`Assistant started`,
+                  message: t`It works on its own. Follow it in Agent collaboration.`,
+                });
+              } else {
+                // Never retried automatically: a second attempt would be a second
+                // assistant, and nothing here can tell whether the first received the
+                // task. The text stays in the composer and the chip stays armed so the
+                // reader decides, after checking the terminal that was created.
+                showToast({
+                  variant: 'danger',
+                  title: t`Delivery not confirmed`,
+                  message: t`A terminal was created. Check it before sending again — your task is still here.`,
+                });
+                return;
+              }
+            } else if (selectedAgent) {
+              await sendAgentText(data.sessionId, requestPaneId, value);
+            } else {
+              // A shell needs Enter to run what was typed. An editor does not: Enter
+              // there is a newline in the buffer, so it belongs on the key row where
+              // it can be pressed deliberately.
+              //
+              // A composed line stays a paste, and that is not an oversight: it is
+              // what keeps a two-line message one message instead of two Enters, and
+              // the only channel by which an agent recognises an attachment path as
+              // an image.
+              await sendPaneCharacters(requestPaneId, value, 'composer', !fullScreenPane);
+            }
+            if (!isCurrentSend()) return;
+            setDraft('');
+            setCaret(0);
+            clearAttachments();
+            setStickBottomNonce((value) => value + 1);
+            // Delivery is acknowledged. Painting its output must not keep the input
+            // locked behind another network round trip. Events and the existing
+            // polling fallback cover output that arrives after this immediate read.
+            void refreshOutput();
           },
-          isCurrentSend
+          (failure) => {
+            if (isCurrentSend()) {
+              setError(describeGatewayFailure(failure, t`Could not send input.`).message);
+            }
+          }
         );
-        if (!isCurrentSend()) return;
-        if (outcome.status === 'sent') {
-          assignment.close();
-          showToast({
-            variant: 'success',
-            title: t`Assistant started`,
-            message: t`It works on its own. Follow it in Agent collaboration.`,
-          });
-        } else {
-          // Never retried automatically: a second attempt would be a second
-          // assistant, and nothing here can tell whether the first received the
-          // task. The text stays in the composer and the chip stays armed so the
-          // reader decides, after checking the terminal that was created.
-          showToast({
-            variant: 'danger',
-            title: t`Delivery not confirmed`,
-            message: t`A terminal was created. Check it before sending again — your task is still here.`,
-          });
-          return;
-        }
-      } else if (selectedAgent) {
-        await sendAgentText(data.sessionId, requestPaneId, value);
-      } else {
-        // A shell needs Enter to run what was typed. An editor does not: Enter
-        // there is a newline in the buffer, so it belongs on the key row where
-        // it can be pressed deliberately.
-        //
-        // A composed line stays a paste, and that is not an oversight: it is
-        // what keeps a two-line message one message instead of two Enters, and
-        // the only channel by which an agent recognises an attachment path as
-        // an image.
-        await sendPaneCharacters(requestPaneId, value, 'composer', !fullScreenPane);
+      },
+      () => {
+        if (composerSendGuard.release(sendToken) && activeServerRef.current === requestServerId)
+          setSending(false);
       }
-      if (!isCurrentSend()) return;
-      setDraft('');
-      setCaret(0);
-      clearAttachments();
-      setStickBottomNonce((value) => value + 1);
-      // Delivery is acknowledged. Painting its output must not keep the input
-      // locked behind another network round trip. Events and the existing
-      // polling fallback cover output that arrives after this immediate read.
-      void refreshOutput();
-    } catch (failure) {
-      if (isCurrentSend()) {
-        setError(describeGatewayFailure(failure, t`Could not send input.`).message);
-      }
-    } finally {
-      if (composerSendGuard.release(sendToken) && activeServerRef.current === requestServerId)
-        setSending(false);
-    }
+    );
   }
 
   /**
@@ -3839,28 +4001,36 @@ export function ServerTerminalWorkspace({
     setSendingKey(item.key);
     setError(null);
     if (keyScope) recordUsage(keyScope, item.key);
-    try {
-      if (item.text === undefined) {
-        await sendPaneKeys(data.sessionId, requestPaneId, item.keys ?? [item.key]);
-      } else {
-        // A cap made of characters is still a key the reader pressed, so it
-        // goes as keys: `:` has to open nvim's command line rather than arrive
-        // in the buffer, and `dd` has to delete a line rather than type two.
-        //
-        // The note that used to be here said the gateway rejects `:` as a key
-        // name. It does not -- `tmux_key` takes any single non-control
-        // character verbatim -- and sending these as text is what made every
-        // editor key on this screen do nothing.
-        await sendPaneCharacters(requestPaneId, item.text, 'terminal-key', item.submit);
+    return settleAfter(
+      async () => {
+        return recoverWith(
+          async () => {
+            if (item.text === undefined) {
+              await sendPaneKeys(data.sessionId, requestPaneId, item.keys ?? [item.key]);
+            } else {
+              // A cap made of characters is still a key the reader pressed, so it
+              // goes as keys: `:` has to open nvim's command line rather than arrive
+              // in the buffer, and `dd` has to delete a line rather than type two.
+              //
+              // The note that used to be here said the gateway rejects `:` as a key
+              // name. It does not -- `tmux_key` takes any single non-control
+              // character verbatim -- and sending these as text is what made every
+              // editor key on this screen do nothing.
+              await sendPaneCharacters(requestPaneId, item.text, 'terminal-key', item.submit);
+            }
+            setTimeout(() => void refreshOutput(), 80);
+          },
+          (failure) => {
+            if (activeServerRef.current === requestServerId) {
+              setError(describeGatewayFailure(failure, t`Could not send key.`).message);
+            }
+          }
+        );
+      },
+      () => {
+        if (activeServerRef.current === requestServerId) setSendingKey(null);
       }
-      setTimeout(() => void refreshOutput(), 80);
-    } catch (failure) {
-      if (activeServerRef.current === requestServerId) {
-        setError(describeGatewayFailure(failure, t`Could not send key.`).message);
-      }
-    } finally {
-      if (activeServerRef.current === requestServerId) setSendingKey(null);
-    }
+    );
   }
 
   function openQuickActions() {
@@ -3989,49 +4159,54 @@ export function ServerTerminalWorkspace({
       setThemeDrop({ phase: 'downloading', name, received: 0, total: null });
       let prepared: PreparedThemeAssets | undefined;
       let transferred = false;
-      try {
-        const asset = await resolveAssetByPath(
-          data.sessionId,
-          selection.tabId,
-          path,
-          field(selectedPane, 'cwd')
-        );
-        if (!asset) throw new Error(t`This file is not among the session artifacts.`);
-        const bytes = await readAssetBytes(asset, {
-          signal: request.signal,
-          maxBytes: THEME_LIMITS.packageBytes,
-          onProgress: (received, total) => {
-            if (!request.signal.aborted)
-              setThemeDrop({ phase: 'downloading', name, received, total });
-          },
-        });
-        const unpacked = unpackTheme(bytes);
-        prepared = await prepareThemeAssets(unpacked, { signal: request.signal });
-        const candidate = { manifest: unpacked.manifest, prepared };
-        request.handoff(() => {
-          themeCandidateRef.current?.prepared?.dispose();
-          themeCandidateRef.current = candidate;
-        });
-        transferred = true;
-        setThemeDrop({
-          phase: 'ready',
-          name,
-          themeName: unpacked.manifest.name,
-          applying: false,
-        });
-      } catch (failure) {
-        // A download this screen itself cancelled is not news, and the card it
-        // would report on has already gone with the screen.
-        if (!request.isCanceled)
-          setThemeDrop({
-            phase: 'failed',
-            name,
-            message: describeGatewayFailure(failure, t`Could not open this theme.`).message,
-          });
-      } finally {
-        if (!transferred) prepared?.dispose();
-        if (themeRequestRef.current === request) themeRequestRef.current = null;
-      }
+      return settleAfter(
+        async () => {
+          try {
+            const asset = await resolveAssetByPath(
+              data.sessionId,
+              selection.tabId,
+              path,
+              field(selectedPane, 'cwd')
+            );
+            if (!asset) rethrow(new Error(t`This file is not among the session artifacts.`));
+            const bytes = await readAssetBytes(asset, {
+              signal: request.signal,
+              maxBytes: THEME_LIMITS.packageBytes,
+              onProgress: (received, total) => {
+                if (!request.signal.aborted)
+                  setThemeDrop({ phase: 'downloading', name, received, total });
+              },
+            });
+            const unpacked = unpackTheme(bytes);
+            prepared = await prepareThemeAssets(unpacked, { signal: request.signal });
+            const candidate = { manifest: unpacked.manifest, prepared };
+            request.handoff(() => {
+              themeCandidateRef.current?.prepared?.dispose();
+              themeCandidateRef.current = candidate;
+            });
+            transferred = true;
+            setThemeDrop({
+              phase: 'ready',
+              name,
+              themeName: unpacked.manifest.name,
+              applying: false,
+            });
+          } catch (failure) {
+            // A download this screen itself cancelled is not news, and the card it
+            // would report on has already gone with the screen.
+            if (!request.isCanceled)
+              setThemeDrop({
+                phase: 'failed',
+                name,
+                message: describeGatewayFailure(failure, t`Could not open this theme.`).message,
+              });
+          }
+        },
+        () => {
+          if (!transferred) prepared?.dispose();
+          if (themeRequestRef.current === request) themeRequestRef.current = null;
+        }
+      );
     },
     [data.sessionId, selection.tabId, selectedPane, t]
   );
@@ -5402,7 +5577,7 @@ function PaneChip({
   const surfaceBackground = useSurfaceBackground();
   const selected = useSharedValue(active ? 1 : 0);
   useEffect(() => {
-    selected.value = withTiming(active ? 1 : 0, timing('toggle'));
+    selected.set(withTiming(active ? 1 : 0, timing('toggle')));
   }, [active, selected]);
 
   const restingStyle = useAnimatedStyle(() => ({ opacity: 1 - selected.value }));
@@ -5512,7 +5687,7 @@ function TerminalKeyButton({
   const held = useSharedValue(0);
   const pressed = useSharedValue(0);
   useEffect(() => {
-    if (disabled) pressed.value = 0;
+    if (disabled) pressed.set(0);
   }, [disabled, pressed]);
   // Only a key that was actually sending has a release to play. The effect
   // also runs on mount with `sending` false, and playing the sequence there
@@ -5522,10 +5697,10 @@ function TerminalKeyButton({
   useEffect(() => {
     if (sending) {
       wasSending.current = true;
-      held.value = withTiming(1, timing('micro'));
+      held.set(withTiming(1, timing('micro')));
     } else if (wasSending.current) {
       wasSending.current = false;
-      held.value = withSequence(withTiming(1, timing(PRESS.in)), withTiming(0, timing('micro')));
+      held.set(withSequence(withTiming(1, timing(PRESS.in)), withTiming(0, timing('micro'))));
     }
   }, [held, sending]);
 
@@ -5547,10 +5722,10 @@ function TerminalKeyButton({
       hitSlop={{ top: 8, bottom: 8, left: 2, right: 2 }}
       onPress={onPress}
       onPressIn={() => {
-        if (!disabled) pressed.value = 1;
+        if (!disabled) pressed.set(1);
       }}
       onPressOut={() => {
-        pressed.value = 0;
+        pressed.set(0);
       }}
       style={[
         styles.terminalKey,

@@ -9,7 +9,8 @@ test('explicit sends reach the newest row without dismissing the keyboard or ani
   const sendScroll = workbench.slice(start, end);
   expect(start).toBeGreaterThan(-1);
   expect(sendScroll).toContain('requestAnimationFrame');
-  expect(sendScroll).toContain('activeAsidRef.current !== currentAsid');
+  // `promptAsid` is the session this prompt goes to, fixed once it was chosen.
+  expect(sendScroll).toContain('activeAsidRef.current !== promptAsid');
   expect(sendScroll).toContain('listRef.current?.scrollToEnd({ animated: false })');
   expect(sendScroll).not.toContain('KeyboardController.dismiss');
   expect(sendScroll).not.toContain('followAfterSend');

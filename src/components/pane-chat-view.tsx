@@ -4,7 +4,7 @@ import { LegendList, type LegendListRenderItemProps } from '@legendapp/list/reac
 import { useThemeTokens } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
 import { ChevronsDownUp, ChevronsUpDown } from 'lucide-react-native';
-import { memo, useCallback, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useMemo, useState } from 'react';
 import { RefreshControl, StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
@@ -21,6 +21,7 @@ import { Skeleton } from '@/components/themed-skeleton';
 import { buildPaneChatItems, type PaneChatDetail, type PaneChatItem } from '@/lib/pane-chat';
 import { fadeIn, fadeOut } from '@/lib/motion';
 import type { PanePart } from '@/lib/pane-parts';
+import { carryBox, carryForward } from '@/lib/carry-forward';
 
 /**
  * The chat view of a pane: the gateway's normalized transcript, laid out as the
@@ -123,17 +124,16 @@ export const PaneChatView = memo(function PaneChatView({
   const [expandedIds, setExpandedIds] = useState<ReadonlySet<string>>(EMPTY_EXPANDED);
   const FoldIcon = detail === 'simplified' ? ChevronsUpDown : ChevronsDownUp;
 
-  // The previous rows, so an unchanged row keeps its object. Written during
+  // The previous rows, so an unchanged row keeps its object. Carried during
   // render on purpose: it is derived state, and the derivation is idempotent --
-  // building twice from the same parts returns the same objects.
-  const previousItemsRef = useRef<PaneChatItem[]>([]);
-  const items = useMemo(() => {
-    // oxlint-disable-next-line react/refs -- deliberate: the ref carries last render's rows in so unchanged ones keep their objects. Nothing is rendered from the ref itself.
-    const next = buildPaneChatItems(parts, { detail }, previousItemsRef.current);
-    // oxlint-disable-next-line react/refs -- deliberate: the same idempotent derivation, written back.
-    previousItemsRef.current = next;
-    return next;
-  }, [detail, parts]);
+  // building twice from the same parts returns the same objects. A box rather
+  // than a ref so React Compiler can compile this view; see `carryForward`.
+  const [previousItems] = useState(() => carryBox<PaneChatItem[]>([]));
+  const items = useMemo(
+    () =>
+      carryForward(previousItems, (previous) => buildPaneChatItems(parts, { detail }, previous)),
+    [detail, parts, previousItems]
+  );
 
   const toggleExpanded = useCallback((id: string) => {
     setExpandedIds((current) => {

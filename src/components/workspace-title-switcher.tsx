@@ -14,7 +14,7 @@ import { scheduleOnRN } from 'react-native-worklets';
 
 import { detailTitlePillStyle, detailTitleTextStyle } from '@/components/app-drawer';
 import { GlassChrome } from '@/components/glass-chrome';
-import { useLatestRef } from '@/hooks/use-render-refs';
+import { useLatestRef, useStableHandler } from '@/hooks/use-render-refs';
 import { feedback } from '@/lib/feedback';
 import { INSTANT, timing } from '@/lib/motion';
 import {
@@ -123,12 +123,14 @@ export function WorkspaceTitleSwitcher({
       // Durations come from the design system rather than from taste.
       const out = timing('dropdown');
       const back = timing('short');
-      fade.value = withSequence(withTiming(0, out), withTiming(1, back));
-      slide.value = withSequence(
-        withTiming(away, out),
-        // The jump to the far side happens while the title is invisible.
-        withTiming(-away, INSTANT),
-        withTiming(0, back)
+      fade.set(withSequence(withTiming(0, out), withTiming(1, back)));
+      slide.set(
+        withSequence(
+          withTiming(away, out),
+          // The jump to the far side happens while the title is invisible.
+          withTiming(-away, INSTANT),
+          withTiming(0, back)
+        )
       );
     },
     [fade, slide]
@@ -256,17 +258,11 @@ export function WorkspaceTitleSwitcher({
     [commit, playCarousel, workspaceId, workspaces]
   );
 
-  // The gesture reads `runCycle` through a ref and is therefore built once.
+  // The gesture reaches `runCycle` through a stable handler and is therefore built once.
   // Rebuilding it every render -- which is what a bare `Gesture.Pan()` in the
   // body does -- drops and re-registers the native handler on every state
   // change, including the ones a swipe itself causes.
-  const runCycleRef = useRef(runCycle);
-  useEffect(() => {
-    runCycleRef.current = runCycle;
-  }, [runCycle]);
-  const cycleFromGesture = useCallback((direction: 'next' | 'previous') => {
-    runCycleRef.current(direction);
-  }, []);
+  const cycleFromGesture = useStableHandler(runCycle);
 
   const gesture = useMemo(
     () =>
@@ -288,14 +284,11 @@ export function WorkspaceTitleSwitcher({
           // chrome, and the drag is a direction being chosen, not a workspace
           // being positioned.
           const followed = event.translationX * FOLLOW_RATIO;
-          slide.value = Math.max(-SLIDE_DISTANCE, Math.min(SLIDE_DISTANCE, followed));
+          slide.set(Math.max(-SLIDE_DISTANCE, Math.min(SLIDE_DISTANCE, followed)));
         })
-        // The handler reaches `runCycle` through the ref above, which the rule
-        // reads as a ref access during render because it cannot see that
-        // Gesture.Pan only ever calls this from the native gesture, never while
-        // rendering. Reading the ref is the whole point: it is what keeps the
+        // `cycleFromGesture` never changes identity and always reaches the
+        // newest `runCycle` (see `useStableHandler`), which is what keeps the
         // gesture built once instead of re-registered on every state change.
-        // oxlint-disable-next-line react/refs -- deliberate: see above.
         .onEnd((event) => {
           const direction = swipeDirection(event.translationX, event.translationY, event.velocityX);
           if (direction) {
@@ -305,12 +298,12 @@ export function WorkspaceTitleSwitcher({
           // Not a swipe after all: the pill goes back where it was rather than
           // being left wherever the finger abandoned it. `timing` is a worklet,
           // so it is safe to ask for a duration from in here.
-          slide.value = withTiming(0, timing('short'));
+          slide.set(withTiming(0, timing('short')));
         })
         // A gesture the system takes away -- a navigation pop, another
         // recogniser winning -- still has to put the pill back.
         .onFinalize((_event, success) => {
-          if (!success) slide.value = withTiming(0, timing('short'));
+          if (!success) slide.set(withTiming(0, timing('short')));
         }),
     [cycleFromGesture, enabled, slide]
   );

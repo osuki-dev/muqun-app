@@ -13,6 +13,7 @@ import { appChrome } from '@/constants/appearance';
 import { feedback } from '@/lib/feedback';
 import type { OpenCodeReadiness } from '@/lib/home-opencode-readiness';
 import { OPENCODE_INSTALL_URL } from '@/constants/links';
+import { settleAfter } from '@/lib/compiler-safe-control-flow';
 
 export interface OpenCodeGuideSheetProps {
   serverLabel: string;
@@ -65,26 +66,31 @@ export const OpenCodeGuideSheet = memo(function OpenCodeGuideSheet({
   const handleCheckAgain = useCallback(async () => {
     setChecking(true);
     setStatusMessage(null);
-    try {
-      const result = await onCheckAgain();
-      if (result.status === 'ready') {
-        void feedback('success');
-        if (onOpenAgent) onOpenAgent();
-        else onClose();
-        return;
+    return settleAfter(
+      async () => {
+        try {
+          const result = await onCheckAgain();
+          if (result.status === 'ready') {
+            void feedback('success');
+            if (onOpenAgent) onOpenAgent();
+            else onClose();
+            return;
+          }
+          void feedback('warning');
+          // The parent applies the returned readiness state, whose explanation is
+          // specific to unsupported, missing, unreachable, or stopped services.
+          setStatusMessage(null);
+        } catch {
+          void feedback('warning');
+          setStatusMessage(
+            t`This gateway is not answering. Check the server connection, then try again.`
+          );
+        }
+      },
+      () => {
+        setChecking(false);
       }
-      void feedback('warning');
-      // The parent applies the returned readiness state, whose explanation is
-      // specific to unsupported, missing, unreachable, or stopped services.
-      setStatusMessage(null);
-    } catch {
-      void feedback('warning');
-      setStatusMessage(
-        t`This gateway is not answering. Check the server connection, then try again.`
-      );
-    } finally {
-      setChecking(false);
-    }
+    );
   }, [onCheckAgain, onClose, onOpenAgent, t]);
 
   const offlineCause = readiness.status === 'offline' ? readiness.cause : null;

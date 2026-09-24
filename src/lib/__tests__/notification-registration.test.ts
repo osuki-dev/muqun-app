@@ -33,6 +33,9 @@ function effect(
     // test that re-implemented either would pass while production drifted.
     declaration('src/lib/push-token-rule.ts', 'pushTokenNeedsSending'),
     declaration('src/lib/notifications.ts', 'appBuildIdentity'),
+    // The effect's catch runs through this helper so React Compiler can compile
+    // the hook; the real one, like everything else here.
+    declaration('src/lib/compiler-safe-control-flow.ts', 'recoverWith'),
     declaration('src/lib/notifications.ts', 'useGatewayPushRegistration'),
     'useGatewayPushRegistration(record);',
   ].join('\n');

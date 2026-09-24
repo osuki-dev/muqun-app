@@ -80,8 +80,9 @@ const styles = StyleSheet.create({
     left: 8,
     bottom: 8,
     maxWidth: 320,
+    // The last child of the root, so it draws above the app without the
+    // Android-only `elevation`.
     zIndex: 20_000,
-    elevation: 20_000,
   },
   button: {
     alignSelf: 'flex-start',

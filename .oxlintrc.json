@@ -27,6 +27,7 @@
   "ignorePatterns": ["dist/**", "ios/**", "android/**", ".expo/**", "src/i18n/locales/**"],
   "rules": {
     "muqun/no-reanimated-dependencies": "error",
+    "muqun/react-compiler": "error",
     "muqun/pane-cache-shape": "error",
     "muqun/composer-delivery": "error",
     "muqun/ssh-dialog-contract": "error",
@@ -151,7 +152,7 @@
     },
     {
       // CommonJS config plugins and Node scripts.
-      "files": ["plugins/**/*.js", "scripts/**/*.js", "*.config.js"],
+      "files": ["plugins/**/*.js", "plugins/**/*.cjs", "scripts/**/*.js", "*.config.js"],
       "env": { "node": true },
       "rules": {
         "typescript/no-require-imports": "off"

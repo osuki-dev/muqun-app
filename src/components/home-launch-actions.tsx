@@ -23,6 +23,7 @@ import { reachabilityDescription } from '@/i18n/labels';
 import type { ServerReachability } from '@/lib/server-reachability';
 import { useHomeTargetPicker } from '@/stores/home-target-picker';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
+import { settleAfter } from '@/lib/compiler-safe-control-flow';
 
 /** Target choice is local to Home; a selection alone never switches a live connection. */
 export function useHomeLaunchController({
@@ -90,11 +91,14 @@ export function useHomeLaunchController({
   async function launch(action: () => Promise<unknown>) {
     if (opening) return;
     setOpening(true);
-    try {
-      await action();
-    } finally {
-      setOpening(false);
-    }
+    return settleAfter(
+      async () => {
+        await action();
+      },
+      () => {
+        setOpening(false);
+      }
+    );
   }
 
   function launchOnChosen(action: (serverId: string) => Promise<unknown>) {
