@@ -10,7 +10,9 @@ import {
 } from '@/theme/repository';
 import type { HomeArtworkPreference } from '@/theme/home-artwork';
 import type { ResolvedCustomTheme } from '@/theme/resolve';
-import { isOwnedThemeAsset, setThemeAssetReferences } from '@/theme/assets';
+import { isOwnedThemeAsset, setThemeAssetReferences, themeAssetDirectoryUri } from '@/theme/assets';
+
+import { createThemeAssetPaths } from '@/theme/asset-paths';
 
 // Metadata is a single MMKV value, not SecureStore or a collection of partially
 // updated keys. A failed durable write must never repaint the running app.
@@ -21,7 +23,8 @@ function getRepository() {
     const restored = new ThemeRepository(
       { read: () => storage.getString('library'), write: (value) => storage.set('library', value) },
       () => QuickCrypto.randomBytes(16).toString('hex'),
-      isOwnedThemeAsset
+      isOwnedThemeAsset,
+      createThemeAssetPaths(themeAssetDirectoryUri())
     );
     restored.hydrate();
     repository = restored;
