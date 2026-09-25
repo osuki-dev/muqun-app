@@ -45,6 +45,7 @@ import {
   type TerminalLine,
   type TerminalLink,
   type TerminalLinkKind,
+  type TerminalStyle,
 } from '@/terminal/types';
 import {
   codePointWidth,
@@ -846,11 +847,12 @@ export function parseTerminalSnapshot(
   input: string,
   theme: TerminalTheme = DEFAULT_TERMINAL_THEME,
   columns?: number,
-  rows?: number
+  rows?: number,
+  cache?: SnapshotLineCache
 ): TerminalFrame {
   const reportedRows = rows && rows > 0 ? rows : 0;
   if (!forceFullEmulation) {
-    const flat = parseFlatSnapshot(input, theme, columns, reportedRows);
+    const flat = parseFlatSnapshot(input, theme, columns, reportedRows, cache);
     if (flat) return flat;
   }
   const measured = measureSnapshot(input);
@@ -927,7 +929,8 @@ function parseFlatSnapshot(
   input: string,
   theme: TerminalTheme,
   columns?: number,
-  minRows = 0
+  minRows = 0,
+  cache?: SnapshotLineCache
 ): TerminalFrame | null {
   const scan = scanFlatSnapshot(input);
   if (!scan) return null;
@@ -960,6 +963,7 @@ function parseFlatSnapshot(
   // actually has, or the screen the gateway says the pane has. Allocating to
   // the smaller of the two would leave `buildTerminalFrame` nothing to floor.
   const rows = clamp(Math.max(2, lineCount + 1, minRows), 2, EMULATED_ROW_CAP);
+  if (cache) return parseFlatLines(input, scan, theme, gridColumns, rows, minRows, cache);
   const grid = new TerminalGrid(gridColumns, rows, 0);
   // One mutable style carried across lines, exactly as the emulator carries it:
   // an unterminated SGR keeps applying to the rows below.
@@ -998,6 +1002,161 @@ function parseFlatSnapshot(
   }
 
   return buildTerminalFrame(grid, gridColumns, cursorX, lineCount - 1, true, null, minRows);
+}
+
+/**
+ * Rows parsed by an earlier snapshot of the same pane, for `parseTerminalSnapshot`
+ * to reuse. Make one per pane with `createSnapshotLineCache` and pass it on
+ * every parse.
+ *
+ * A refresh usually changes a line or two -- a spinner, a status line, the
+ * prompt -- yet without this every refresh allocates a grid for the whole read
+ * (up to `EMULATED_ROW_CAP` rows) and rebuilds every row's cells and runs.
+ *
+ * A flat row's cells depend on four things only: its own text between line ends
+ * (SGR included), the style the rows above left running into it, the grid width
+ * and the theme the colours resolve against. The key is the first two, and the
+ * cache is emptied when either of the other two changes. The cached value is
+ * everything the row contributes to the frame: its line, the style it hands to
+ * the next row and where its text ends, which is the cursor column when it is
+ * the last row. Frames built this way equal the uncached ones
+ * (`__tests__/snapshot-line-cache.test.ts`).
+ *
+ * Entries live for two parses: the one that used them and the next. That is
+ * enough for a stream that pushes rows up the pane, and it bounds the cache to
+ * the rows of two reads. The cache only reads and adds while parsing, so a render
+ * that is thrown away cannot leave it holding a wrong row.
+ */
+export type SnapshotLineCache = {
+  theme: TerminalTheme | null;
+  columns: number;
+  current: Map<string, FlatLineEntry>;
+  previous: Map<string, FlatLineEntry>;
+  blank: TerminalLine | null;
+};
+
+type FlatLineEntry = {
+  line: TerminalLine;
+  /** The style running into the next row; never mutated once stored. */
+  styleOut: TerminalStyle;
+  /** Column after the row's last cell, before the last-column clamp. */
+  column: number;
+};
+
+export function createSnapshotLineCache(): SnapshotLineCache {
+  return { theme: null, columns: 0, current: new Map(), previous: new Map(), blank: null };
+}
+
+/**
+ * The flat path with rows taken from `cache` when their text and incoming style
+ * were seen before. Everything else matches `parseFlatSnapshot`'s own loop and
+ * `buildTerminalFrame`: in a flat snapshot the cursor sits on the last line,
+ * and every row below it is blank, so the frame is the snapshot's own lines
+ * followed by blank rows up to `minRows`.
+ */
+function parseFlatLines(
+  input: string,
+  scan: FlatScan,
+  theme: TerminalTheme,
+  gridColumns: number,
+  rows: number,
+  minRows: number,
+  cache: SnapshotLineCache
+): TerminalFrame | null {
+  if (cache.theme !== theme || cache.columns !== gridColumns) {
+    cache.theme = theme;
+    cache.columns = gridColumns;
+    cache.current = new Map();
+    cache.previous = new Map();
+    cache.blank = null;
+  }
+  const lineCount = scan.starts.length;
+  const lines: TerminalLine[] = [];
+  const used = new Map<string, FlatLineEntry>();
+  let style: TerminalStyle = DEFAULT_TERMINAL_STYLE;
+  let column = 0;
+  for (let row = 0; row < lineCount; row += 1) {
+    const key = `${terminalStyleKey(style)}\u0000${input.slice(scan.starts[row], scan.ends[row])}`;
+    let entry = used.get(key) ?? cache.current.get(key) ?? cache.previous.get(key);
+    if (!entry) {
+      const parsed = parseFlatLine(input, scan, row, style, theme, gridColumns);
+      if (!parsed) return null;
+      entry = parsed;
+    }
+    used.set(key, entry);
+    lines.push(entry.line);
+    style = entry.styleOut;
+    column = entry.column;
+  }
+  const floor = minRows > 0 ? Math.min(rows, minRows) : 0;
+  if (lines.length < floor) {
+    cache.blank ??= new TerminalGrid(gridColumns, 1, 0).lineAt(0);
+    while (lines.length < floor) lines.push(cache.blank);
+  }
+  cache.previous = cache.current;
+  cache.current = used;
+  return {
+    columns: gridColumns,
+    rows: lines.length,
+    lines,
+    cursor: {
+      column: column >= gridColumns ? gridColumns - 1 : column,
+      row: lineCount - 1,
+      visible: true,
+    },
+    title: null,
+  };
+}
+
+/** One row of `parseFlatSnapshot`'s loop, laid into a grid of its own. */
+function parseFlatLine(
+  input: string,
+  scan: FlatScan,
+  row: number,
+  styleIn: TerminalStyle,
+  theme: TerminalTheme,
+  gridColumns: number
+): FlatLineEntry | null {
+  const grid = new TerminalGrid(gridColumns, 1, 0);
+  const end = scan.ends[row];
+  const segmented = scan.kinds[row] === FLAT_LINE_SEGMENTED;
+  // `applySgrCodes` edits the style it is given, and `styleIn` is shared with
+  // the entry that produced it.
+  let style = cloneTerminalStyle(styleIn);
+  let column = 0;
+  let chunkStart = scan.starts[row];
+  let index = chunkStart;
+  while (index <= end) {
+    if (index < end && input.charCodeAt(index) !== 0x1b) {
+      index += 1;
+      continue;
+    }
+    if (index > chunkStart) {
+      column = segmented
+        ? grid.putGraphemeRun(0, column, splitGraphemes(input.slice(chunkStart, index)), style)
+        : grid.putCodeUnitRun(0, column, input, chunkStart, index, style);
+      if (column < 0) return null;
+    }
+    if (index >= end) break;
+    const next = skipSgrSequence(input, index);
+    if (next < 0) return null;
+    style = applySgrCodes(style, parseSgrValues(input.slice(index + 2, next - 1)), theme);
+    index = next;
+    chunkStart = next;
+  }
+  return { line: grid.lineAt(0), styleOut: cloneTerminalStyle(style), column };
+}
+
+function terminalStyleKey(style: TerminalStyle): string {
+  const flags =
+    (style.bold ? 1 : 0) |
+    (style.dim ? 2 : 0) |
+    (style.italic ? 4 : 0) |
+    (style.underline ? 8 : 0) |
+    (style.strikethrough ? 16 : 0) |
+    (style.inverse ? 32 : 0) |
+    (style.hidden ? 64 : 0);
+  return `${flags}\u0001${style.foreground ?? '\u0002'}\u0001${style.background ?? '\u0002'}\u0001${style.link ?? '\u0002'}`;
 }
 
 /** Lines made only of ASCII printables; laid out without any width lookup. */
@@ -1218,10 +1377,49 @@ function terminalFilePath(printed: string): string | null {
   return isPreviewableFilePath(path) ? path : null;
 }
 
+/**
+ * Links of a row that no autowrap joins to its neighbours, found with the row
+ * at 0. They depend on the row's line alone, and a snapshot refresh hands back
+ * the same line object for a row it did not change (`SnapshotLineCache`), so a
+ * refresh only scans the rows that did.
+ */
+const standaloneRowLinks = new WeakMap<TerminalLine, readonly TerminalLink[]>();
+
 export function terminalFrameLinks(frame: TerminalFrame): TerminalLink[] {
   const links: TerminalLink[] = [];
+  const lines = frame.lines;
+  // Rows are taken a wrap chain at a time: a row plus every row an autowrap
+  // carries it onto. Links never cross a chain's edges -- a hard newline is
+  // never evidence that two lines belong to the same path -- and overlaps are
+  // only ever checked within a row, so each chain's links are its own.
+  let row = 0;
+  while (row < lines.length) {
+    let last = row;
+    while (lines[last].wrapsToNext && last + 1 < lines.length) last += 1;
+    if (last === row) {
+      const line = lines[row];
+      let found = standaloneRowLinks.get(line);
+      if (!found) {
+        found = chainLinks(lines, row, row).map((link) => ({ ...link, row: 0 }));
+        standaloneRowLinks.set(line, found);
+      }
+      for (const link of found) links.push({ ...link, row });
+    } else {
+      links.push(...chainLinks(lines, row, last));
+    }
+    row = last + 1;
+  }
+  links.sort((a, b) => a.row - b.row || a.startColumn - b.startColumn);
 
-  frame.lines.forEach((line, row) => {
+  return links;
+}
+
+/** Links on rows `first`..`last`, one wrap chain, before the frame-wide sort. */
+function chainLinks(lines: readonly TerminalLine[], first: number, last: number): TerminalLink[] {
+  const links: TerminalLink[] = [];
+
+  for (let row = first; row <= last; row += 1) {
+    const line = lines[row];
     for (const run of line.runs) {
       if (!run.style.link) continue;
       links.push({
@@ -1245,43 +1443,37 @@ export function terminalFrameLinks(frame: TerminalFrame): TerminalLink[] {
       if (!uri || !isSupportedTerminalUri(uri)) continue;
       addTextLink(links, spans, row, match.index, uri, 'url');
     }
-  });
+  }
 
-  // Join only known autowrap boundaries. A hard newline is never evidence that
-  // two unrelated lines belong to the same path.
-  for (let row = 0; row < frame.lines.length; row += 1) {
-    const parts: { row: number; offset: number; text: string; spans: TerminalTextSpan[] }[] = [];
-    let text = '';
-    do {
-      const line = frame.lines[row];
-      const part = terminalLineTextSpans(line);
-      // Frame rows omit trailing blanks; preserve real spaces inside quoted
-      // paths, but not the unused cell before a wrapped wide glyph.
-      const padding = Math.max(0, (line.wrapsToNext ?? 0) - line.cells.length);
-      part.text += ' '.repeat(padding);
-      parts.push({ row, offset: text.length, ...part });
-      text += part.text;
-      if (!frame.lines[row].wrapsToNext || row + 1 >= frame.lines.length) break;
-      row += 1;
-    } while (row < frame.lines.length);
-    for (const pattern of [QUOTED_FILE_PATH_PATTERN, TERMINAL_FILE_PATH_PATTERN]) {
-      for (const match of text.matchAll(pattern)) {
-        const printed =
-          pattern === QUOTED_FILE_PATH_PATTERN ? match[2] : trimTrailingPunctuation(match[2]);
-        const path = terminalFilePath(printed);
-        if (!path) continue;
-        const start = match.index + match[1].length;
-        const end = start + printed.length;
-        for (const part of parts) {
-          const from = Math.max(start, part.offset);
-          const to = Math.min(end, part.offset + (part.spans.at(-1)?.endIndex ?? 0));
-          if (from < to)
-            addTextLink(links, part.spans, part.row, from - part.offset, path, 'file', to - from);
-        }
+  // Join only known autowrap boundaries.
+  const parts: { row: number; offset: number; text: string; spans: TerminalTextSpan[] }[] = [];
+  let text = '';
+  for (let row = first; row <= last; row += 1) {
+    const line = lines[row];
+    const part = terminalLineTextSpans(line);
+    // Frame rows omit trailing blanks; preserve real spaces inside quoted
+    // paths, but not the unused cell before a wrapped wide glyph.
+    const padding = Math.max(0, (line.wrapsToNext ?? 0) - line.cells.length);
+    part.text += ' '.repeat(padding);
+    parts.push({ row, offset: text.length, ...part });
+    text += part.text;
+  }
+  for (const pattern of [QUOTED_FILE_PATH_PATTERN, TERMINAL_FILE_PATH_PATTERN]) {
+    for (const match of text.matchAll(pattern)) {
+      const printed =
+        pattern === QUOTED_FILE_PATH_PATTERN ? match[2] : trimTrailingPunctuation(match[2]);
+      const path = terminalFilePath(printed);
+      if (!path) continue;
+      const start = match.index + match[1].length;
+      const end = start + printed.length;
+      for (const part of parts) {
+        const from = Math.max(start, part.offset);
+        const to = Math.min(end, part.offset + (part.spans.at(-1)?.endIndex ?? 0));
+        if (from < to)
+          addTextLink(links, part.spans, part.row, from - part.offset, path, 'file', to - from);
       }
     }
   }
-  links.sort((a, b) => a.row - b.row || a.startColumn - b.startColumn);
 
   return links;
 }

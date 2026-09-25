@@ -158,7 +158,11 @@ import {
   terminalRestOffset,
   terminalTopStop,
 } from '@/terminal/scroll-anchor';
-import { parseTerminalSnapshot, terminalFrameLinks } from '@/terminal/terminal-core';
+import {
+  createSnapshotLineCache,
+  parseTerminalSnapshot,
+  terminalFrameLinks,
+} from '@/terminal/terminal-core';
 import type {
   TerminalFrame,
   TerminalLine,
@@ -692,6 +696,10 @@ export function SkiaTerminal({
   // swapped at the moment they are drawn (see `substituteRenderedGrapheme`)
   // rather than here, so the cells hold the text the agent printed -- which is
   // what the clipboard has to be given.
+  // Rows of earlier snapshots of this pane, so a refresh re-parses only the
+  // rows that changed (see `SnapshotLineCache`). Content-keyed and add-only
+  // while parsing, so a render React throws away cannot leave it wrong.
+  const [lineCache] = useState(createSnapshotLineCache);
   const frame = useMemo(
     () =>
       appliedFrame ??
@@ -706,9 +714,10 @@ export function SkiaTerminal({
         coalescedOutput,
         terminalTheme,
         paneColumns,
-        ownsScreen ? paneRows : undefined
+        ownsScreen ? paneRows : undefined,
+        lineCache
       ),
-    [appliedFrame, coalescedOutput, terminalTheme, paneColumns, paneRows, ownsScreen]
+    [appliedFrame, coalescedOutput, terminalTheme, paneColumns, paneRows, ownsScreen, lineCache]
   );
   // The pane's own colours, which are the app's unless the frame says the
   // program owns the screen and is painting in colours we never named. The
