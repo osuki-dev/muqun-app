@@ -2,31 +2,22 @@ import { expect, test } from 'bun:test';
 import crypto from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { runInNewContext } from 'node:vm';
-import ts from 'typescript';
+import { productionSource, transpile, walk } from '../../test-support/production-source';
 import type { GatewayRecord } from '../gateway-storage';
 
 function moduleSource(path: string) {
-  const source = ts.createSourceFile(
-    path,
-    readFileSync(path, 'utf8'),
-    ts.ScriptTarget.Latest,
-    true
-  );
-  return source.statements
-    .filter((node) => !ts.isImportDeclaration(node))
-    .map((node) => node.getText(source).replace(/^export /, ''))
+  const source = productionSource(path);
+  return source.program.body
+    .filter((node) => node.type !== 'ImportDeclaration')
+    .map((node) =>
+      source.code(
+        node.type === 'ExportNamedDeclaration' && node.declaration ? node.declaration : node
+      )
+    )
     .join('\n');
 }
 function evaluate(source: string, globals: Record<string, unknown>) {
-  return runInNewContext(
-    ts.transpileModule(source, {
-      compilerOptions: {
-        target: ts.ScriptTarget.ES2022,
-        module: ts.ModuleKind.None,
-      },
-    }).outputText,
-    globals
-  );
+  return runInNewContext(transpile(source), globals);
 }
 function deferred<T>() {
   let resolve!: (value: T) => void;
@@ -209,28 +200,21 @@ test('strict hydration rejects unavailable keys and corrupt encrypted data inste
 });
 test('Home cache pruning is disabled on hydration error, including after its spinner stops', () => {
   const path = 'src/components/home-overview.tsx';
-  const source = ts.createSourceFile(
-    path,
-    readFileSync(path, 'utf8'),
-    ts.ScriptTarget.Latest,
-    true,
-    ts.ScriptKind.TSX
-  );
-  let effect: ts.Node | undefined;
-  function visit(node: ts.Node) {
+  const source = productionSource(path);
+  let effect = '';
+  walk(source.program, (node) => {
     if (
-      ts.isCallExpression(node) &&
-      node.expression.getText(source) === 'useEffect' &&
-      node.arguments[0]?.getText(source).includes('keepServerAgents(serverIds)')
+      node.type === 'CallExpression' &&
+      source.code(node.callee) === 'useEffect' &&
+      node.arguments[0] &&
+      source.code(node.arguments[0]).includes('keepServerAgents(serverIds)')
     )
-      effect = node.arguments[0];
-    ts.forEachChild(node, visit);
-  }
-  visit(source);
+      effect = source.code(node.arguments[0]);
+  });
   if (!effect) throw new Error('Missing production cache effect');
   for (const hydrationError of [null, 'unavailable', 'timeout']) {
     const calls: string[] = [];
-    evaluate(`(${effect.getText(source)})()`, {
+    evaluate(`(${effect})()`, {
       loading: false,
       hydrationError,
       serverIds: [],

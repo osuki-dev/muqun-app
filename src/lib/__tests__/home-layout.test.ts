@@ -8,9 +8,9 @@ import {
 } from '@/lib/home-layout';
 
 describe('home layout resolution', () => {
-  test('classic is the released default', () => {
-    expect(DEFAULT_HOME_LAYOUT satisfies HomeLayout).toBe('classic');
-    expect(resolveHomeLayout(undefined)).toBe('classic');
+  test('editorial is the default for users without a saved choice', () => {
+    expect(DEFAULT_HOME_LAYOUT satisfies HomeLayout).toBe('editorial');
+    expect(resolveHomeLayout(undefined)).toBe('editorial');
   });
 
   test('accepts only released layouts', () => {
@@ -22,13 +22,14 @@ describe('home layout resolution', () => {
   });
 
   test.each([undefined, null, '', 'studio', 42, { id: 'editorial' }])(
-    'falls back to classic for unknown input %#',
+    'falls back to editorial for unknown input %#',
     (value) => {
-      expect(resolveHomeLayout(value)).toBe('classic');
+      expect(resolveHomeLayout(value)).toBe('editorial');
     }
   );
 
   test('keeps an explicitly selected released layout', () => {
     expect(resolveHomeLayout('editorial')).toBe('editorial');
+    expect(resolveHomeLayout('classic')).toBe('classic');
   });
 });

@@ -132,13 +132,13 @@ export function Button(props: ButtonProps) {
   const handlePressIn: PressableProps['onPressIn'] = (event) => {
     if (!isDisabled) {
       haptics.feedback('light');
-      pressProgress.value = kitButtonPressMotion(true);
+      pressProgress.set(kitButtonPressMotion(true));
     }
     onPressIn?.(event);
   };
 
   const handlePressOut: PressableProps['onPressOut'] = (event) => {
-    pressProgress.value = kitButtonPressMotion(false);
+    pressProgress.set(kitButtonPressMotion(false));
     onPressOut?.(event);
   };
 

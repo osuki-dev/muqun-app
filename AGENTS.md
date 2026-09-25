@@ -156,7 +156,7 @@ Finishing a feature means the whole app still works, not just the screen that wa
   The directory is build output and is not committed.
 - A flow that covers a new surface belongs in `e2e/agent-device/` as native `.ad` actions, registered
   with the `full` tag in `suite.json` in the same change as the feature. A flow without that tag is
-  not enforced by the gate. Use agent-device 0.20.10 and the native runner; do not introduce another
+  not enforced by the gate. Use agent-device 0.21.12 and the native runner; do not introduce another
   test-driver format. `bash scripts/e2e.sh --check` validates native syntax and manifest references
   without driving a device. The runner's own tests run before the device suite.
 - The suite relaunches the app without erasing user data. Never run it on a simulator with real
@@ -185,6 +185,79 @@ Linting is `oxlint` and formatting is `oxfmt` (the same pair as the org's `kit` 
 `// oxlint-disable-next-line <rule> -- <reason>`, and the rule names are oxlint's (`react/refs`,
 `typescript/no-require-imports`, ...). `bun run lint` fails on warnings deliberately, so the gate
 cannot quietly grow a new baseline the way it did before card #611.
+
+## React Compiler and performance
+
+Every component and hook must compile under React Compiler (`app.json`
+`experiments.reactCompiler`). A component the compiler skips ships with no
+automatic memoization and re-renders everything under it on every update, and
+nothing at runtime says so. `muqun/react-compiler` (`tooling/oxlint/react-compiler.ts`)
+enforces this in `bun run lint`. It runs the build's own pipeline, the Lingui
+macro and then `babel-plugin-react-compiler`, and reports each bailout at its
+line. Results are cached by content in `node_modules/.cache`, so a warm lint is
+about a second.
+
+React Doctor's `react-hooks-js/*` findings come from the same compiler, but it
+reads source before the Lingui macro runs. It flags `` t`…${x}` `` templates the
+build never shows the compiler, and it only covers files a PR touched. Trust
+the lint rule for whether something compiles.
+
+The usual fixes keep behaviour identical:
+
+- **A Reanimated shared value written with `.value =`:** use `.set()` and
+  `.get()`. The two are not identical: `.set(fn)` treats a plain function as an
+  updater and stores `fn(current)`. For a shared value that holds a function,
+  write `.set(() => fn)`.
+- **`try`/`finally`, a `try` without `catch`, a `throw` inside `try`, or
+  `?:`/`&&`/`?.` inside a `try` block:** call through
+  `@/lib/compiler-safe-control-flow` (`settleAfter`, `recoverWith`, `rethrow`),
+  or hoist a pure expression out of the `try`.
+- **A ref read or written during render:**
+  - For a callback built once, use `useStableHandler` or `useLatestReader` from
+    `@/hooks/use-render-refs`.
+  - For rows reused from the previous render, use `carryBox`/`carryForward`
+    from `@/lib/carry-forward`.
+  - For deliberate render-time work, extract it verbatim into its own hook
+    marked `'use no memo'` and call it from the same place.
+- **A disabled `react-hooks/exhaustive-deps`:** use `useEffectEvent` for what the
+  effect reads without reacting to, and keep the dependency list.
+- **Other patterns:**
+  - A counter incremented inside `.map` callbacks: use the callback's index.
+  - A ref read in a parameter default: move the default into the body.
+  - A value used above its declaration: declare it first.
+
+`'use no memo'` is for documented escape hatches only, with the reason written
+beside it. Today those are the Android widget layout, the render-time ref hooks
+in `use-render-refs`, `use-frozen-value` and `use-coalesced-value`, and
+`usePaneEvents`.
+
+Measure performance on Release builds, never on a Debug run. Xcode's memory
+gauge on a Debug build is hundreds of megabytes of Hermes compiler state.
+
+- **The ●/■ profiling control** records Hermes sampling profiles.
+  - Debug builds link it: iOS Debug, and the Android debug build type.
+  - A Release profiling build needs `MUQUN_RELEASE_PROFILER=1` at
+    `pod install`/Gradle time and `EXPO_PUBLIC_RELEASE_PROFILER=1` at bundle
+    time.
+  - Store builds contain neither the native module nor the JS.
+  - `plugins/with-release-profiler-stub.cjs` keeps Android release compiling.
+  - Rerun `pod install` without the variable after a profiling build.
+- **`scripts/perf/`:**
+  - `android-profile-scenarios.sh` records one profile per interaction.
+  - `analyze-profile.py` summarises a profile's JS self and inclusive time.
+  - `ios-theme-memory.sh` and `android-theme-memory.sh` measure footprint, PSS
+    and frames.
+- **Comparisons:** compare builds with the same script, on the same QA device,
+  from the same app state. Run each side at least twice before calling a
+  difference.
+
+`@shopify/react-native-skia` carries
+`patches/@shopify%2Freact-native-skia@2.12.0.patch`, which disposes the Canvas
+recorders and pictures it retired. Upstream this is Shopify/react-native-skia#4079
+and #4080; drop the patch once a release carries the fix.
+
+`bun install` re-extracting the package removes Skia's prebuilt `libs/`, which
+`pod install` copies back. Run it before the next iOS build.
 
 ## agent-device
 

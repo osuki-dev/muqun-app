@@ -1,13 +1,8 @@
+import { useRootRouteName } from '@/hooks/use-root-route-name';
 import { useEffect, useRef } from 'react';
 import { useLingui } from '@lingui/react/macro';
 import { useThemeMode, useThemeTokens } from '@osuki-dev/ui';
-import {
-  useIsFocused,
-  useLocalSearchParams,
-  useNavigation,
-  usePathname,
-  useRouter,
-} from 'expo-router';
+import { useIsFocused, useLocalSearchParams, usePathname, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -17,12 +12,14 @@ import { ScreenHeader } from '@/components/screen-header';
 import { EdgeFade } from '@/components/edge-fade';
 import { ThemeArtwork } from '@/components/theme-artwork';
 import { AgentWorkbench } from '@/components/agent-workbench';
+import { GatewayTunnelBadge } from '@/components/gateway-tunnel-badge';
 import { SessionActionIcon, WorkspacePillContent } from '@/components/agent-header-morph';
 import { AgentTitlePill } from '@/components/agent-title-pill';
 import { GlassChrome } from '@/components/glass-chrome';
 import { PressableScale } from '@/components/pressable-scale';
 import { NAV_HEADER_TOP_GAP } from '@/constants/nav-header';
 import { useGatewayRecord } from '@/hooks/use-gateway-record';
+import { useGatewayTunnel } from '@/hooks/use-gateway-tunnel';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { LogoLoader } from '@/components/logo-loader';
 import { workspaceDisplayName } from '@/lib/agent-protocol';
@@ -55,11 +52,7 @@ export default function AgentScreen() {
   const router = useRouter();
   const routeFocused = useIsFocused();
   const pathname = usePathname();
-  const rootNavigation = useNavigation('/');
-  const rootNavigationState = rootNavigation.getState();
-  const rootRouteName = rootNavigationState
-    ? rootNavigationState.routes[rootNavigationState.index]?.name
-    : undefined;
+  const rootRouteName = useRootRouteName();
   const theme = useThemeTokens();
   const { resolvedMode } = useThemeMode();
   const insets = useSafeAreaInsets();
@@ -86,6 +79,10 @@ export default function AgentScreen() {
   const { record, selectRecord } = useGatewayRecord();
   const wantedServer = typeof params.server === 'string' && params.server ? params.server : null;
   const serverReady = !wantedServer || record?.serverId === wantedServer;
+  // The workbench has no terminal screen beneath it when opened from Home.
+  // Keep its own SSH forward alive and wait for it before making API requests.
+  const tunnel = useGatewayTunnel(record, serverReady);
+  const connectionReady = serverReady && (!tunnel.tunnelled || tunnel.phase === 'open');
   const newSessionIntent = params.intent === 'new';
   useEffect(() => {
     if (!newSessionIntent || !wantedServer) return;
@@ -139,7 +136,7 @@ export default function AgentScreen() {
       <ThemeArtwork slot="shell.wallpaper" />
       <StatusBar animated style={resolvedMode === 'dark' ? 'light' : 'dark'} />
 
-      {serverReady ? (
+      {connectionReady ? (
         <AgentWorkbench
           // Keyed on the server: switching servers is a new workbench, not
           // the old one told to look elsewhere.
@@ -162,8 +159,11 @@ export default function AgentScreen() {
           abortSessionRef={abortSessionRef}
         />
       ) : (
-        <View style={styles.serverWait} pointerEvents="none">
+        <View style={styles.serverWait}>
           <LogoLoader size={56} accessibilityLabel={t`Connecting`} />
+          {serverReady && tunnel.tunnelled ? (
+            <GatewayTunnelBadge record={record} variant="notice" />
+          ) : null}
         </View>
       )}
 
@@ -238,7 +238,7 @@ export default function AgentScreen() {
 }
 
 const styles = StyleSheet.create({
-  serverWait: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  serverWait: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 16 },
   page: { flex: 1 },
   topFade: {
     position: 'absolute',

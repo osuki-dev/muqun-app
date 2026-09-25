@@ -5,6 +5,7 @@ import { useToast } from '@osuki-dev/ui';
 
 import { useOpenThemeEditor } from '@/hooks/use-open-theme-editor';
 import { readThemeFile, type ThemeFileStage } from '@/theme/local-files';
+import { recoverWith, settleAfter } from '@/lib/compiler-safe-control-flow';
 
 /**
  * Whether a file handed to the app from outside is being read right now.
@@ -73,47 +74,60 @@ export function useThemeFileOpen(): void {
       // Before the first `await`, so `+not-found` never paints its verdict on a
       // file this is already reading.
       setHandedFileStage({ phase: 'reading' });
-      try {
-        // Inside the try because this is the first thing done to a string any
-        // app on the device can hand over: malformed percent-encoding makes
-        // `decodeURIComponent` throw, and out here that was an unhandled
-        // rejection triggerable by sending `%zz.muqun-theme`.
-        const name = decodeURIComponent(url.split('/').pop() ?? '');
-        // A named file must look like a theme; an unnamed one is judged by its
-        // bytes. Refusing every `content://` that does not spell out an
-        // extension would mean Android could never open a theme at all.
-        if (name.includes('.') && !THEME_FILE.test(name)) {
-          showToast({ variant: 'danger', message: t`That file is not a Muqun theme` });
-          return;
+      return settleAfter(
+        async () => {
+          return recoverWith(
+            async () => {
+              // Inside the guarded body because this is the first thing done to a string any
+              // app on the device can hand over: malformed percent-encoding makes
+              // `decodeURIComponent` throw, and out here that was an unhandled
+              // rejection triggerable by sending `%zz.muqun-theme`.
+              const name = decodeURIComponent(url.split('/').pop() ?? '');
+              // A named file must look like a theme; an unnamed one is judged by its
+              // bytes. Refusing every `content://` that does not spell out an
+              // extension would mean Android could never open a theme at all.
+              if (name.includes('.') && !THEME_FILE.test(name)) {
+                showToast({ variant: 'danger', message: t`That file is not a Muqun theme` });
+                return;
+              }
+              const preview = await readThemeFile(
+                url,
+                name || undefined,
+                undefined,
+                setHandedFileStage
+              );
+              if (cancelled) {
+                preview.prepared?.dispose();
+                return;
+              }
+              // Inside the try on purpose: the handoff can refuse when too many
+              // previews are already open, and a refusal is not worth a crash on a
+              // file the reader opened from another app.
+              openThemeEditor(preview, true);
+            },
+            (failure) => {
+              // Say so. This used to swallow, on the reasoning that the file came
+              // from another app and there was no screen of ours to report it on --
+              // but the router cannot match a `file://` or `content://` URL either,
+              // so what the reader is actually left looking at is `+not-found`
+              // telling them the link points nowhere. It pointed at a file they
+              // chose. Every failure here looked exactly like every other one, which
+              // is what made the Android hand-off impossible to tell apart from a
+              // missing intent filter.
+              showToast({
+                variant: 'danger',
+                message: failure instanceof Error ? failure.message : t`Could not open that theme`,
+              });
+            }
+          );
+        },
+        () => {
+          // Whatever happened, the wait is over: either the editor is on top of
+          // `+not-found` or a toast has said why it is not, and in both cases
+          // that screen should go back to being honest about the URL it holds.
+          setHandedFileStage(null);
         }
-        const preview = await readThemeFile(url, name || undefined, undefined, setHandedFileStage);
-        if (cancelled) {
-          preview.prepared?.dispose();
-          return;
-        }
-        // Inside the try on purpose: the handoff can refuse when too many
-        // previews are already open, and a refusal is not worth a crash on a
-        // file the reader opened from another app.
-        openThemeEditor(preview, true);
-      } catch (failure) {
-        // Say so. This used to swallow, on the reasoning that the file came
-        // from another app and there was no screen of ours to report it on --
-        // but the router cannot match a `file://` or `content://` URL either,
-        // so what the reader is actually left looking at is `+not-found`
-        // telling them the link points nowhere. It pointed at a file they
-        // chose. Every failure here looked exactly like every other one, which
-        // is what made the Android hand-off impossible to tell apart from a
-        // missing intent filter.
-        showToast({
-          variant: 'danger',
-          message: failure instanceof Error ? failure.message : t`Could not open that theme`,
-        });
-      } finally {
-        // Whatever happened, the wait is over: either the editor is on top of
-        // `+not-found` or a toast has said why it is not, and in both cases
-        // that screen should go back to being honest about the URL it holds.
-        setHandedFileStage(null);
-      }
+      );
     }
     // The launch case and the running case are the same case.
     void Linking.getInitialURL().then(accept);

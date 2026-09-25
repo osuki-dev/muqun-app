@@ -10,6 +10,10 @@
 
 # section s1
 press "${TARGET}"
+wait stable 400 5000
+# Expand the phone sheet and reveal the controls below the tablet viewfinder.
+scroll down --pixels 160 --duration-ms 300
+wait stable 400 5000
 
 # section s2
 is visible "${TARGET}"
@@ -49,6 +53,10 @@ is visible "${TARGET}"
 
 # section s14
 press "${TARGET}"
+wait stable 400 5000
+# The scanner is taller than the manual form; bring its last action into view.
+scroll down --pixels 160 --duration-ms 300
+wait stable 400 5000
 
 # section s15
 is visible "${TARGET}"
@@ -58,3 +66,7 @@ press "${TARGET}"
 
 # section s17
 is visible "${TARGET}"
+
+# section scroll-controls
+scroll down --pixels 160 --duration-ms 300
+wait stable 400 5000

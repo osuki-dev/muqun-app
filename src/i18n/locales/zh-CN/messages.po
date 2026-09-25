@@ -245,6 +245,10 @@ msgstr "{title} — 在你离开时完成"
 msgid "+{overflow} more"
 msgstr "还有 {overflow} 个"
 
+#: src/components/dev-home-ambient-controls.tsx
+msgid "0 speed pauses motion. Theme default restores the theme."
+msgstr "速度为 0 时暂停动画，选择主题默认可恢复主题效果"
+
 #. placeholder {0}: Math.round(USER_FONT_MAX_BYTES / (1024 * 1024))
 #: src/components/settings-font-sheet.tsx
 msgid "A .ttf or .otf up to {0} MB."
@@ -643,6 +647,10 @@ msgstr "目前无法验证。请重试，或检查系统设置"
 msgid "Auto-approve every action"
 msgstr "自动批准所有操作"
 
+#: src/components/dev-home-ambient-controls.tsx
+msgid "Automatic"
+msgstr "自动"
+
 #: src/components/agent-mode-sheet.tsx
 msgid "Autonomous software engineering: edits files, runs commands, tests."
 msgstr "自主软件工程：编辑文件、执行命令、运行测试"
@@ -944,6 +952,10 @@ msgstr "正在清除缓存"
 #: src/components/settings-storage.tsx
 msgid "Clearing…"
 msgstr "正在清除…"
+
+#: src/components/dev-home-ambient-controls.tsx
+msgid "Close effects"
+msgstr "关闭效果面板"
 
 #: src/components/asset-viewer.tsx
 msgid "Close file"
@@ -1480,6 +1492,10 @@ msgstr "无法打开文件"
 msgid "Could not open the guide"
 msgstr "无法打开指南"
 
+#: src/components/settings-registration.tsx
+msgid "Could not open the link"
+msgstr "无法打开链接"
+
 #: src/lib/attachments.ts
 msgid "Could not open the picker."
 msgstr "无法打开选择器"
@@ -1590,6 +1606,10 @@ msgstr "无法保存快捷命令"
 msgid "Could not save theme"
 msgstr "无法保存主题"
 
+#: src/components/theme-appearance-settings.tsx
+msgid "Could not save this setting. Try again."
+msgstr "无法保存此设置，请重试"
+
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Could not send"
 msgstr "无法发送"
@@ -1640,6 +1660,10 @@ msgid "Could not switch agent"
 msgstr "无法切换 Agent"
 
 #: src/components/agent-workbench.tsx
+msgid "Could not switch model"
+msgstr "无法切换模型"
+
+#: src/components/agent-workbench.tsx
 msgid "Could not undo"
 msgstr "无法撤销"
 
@@ -1658,6 +1682,10 @@ msgstr "无法上传文件"
 #: src/components/agent-worktree-sheet.tsx
 msgid "Create and move"
 msgstr "创建并移动"
+
+#: src/components/agent-workbench.tsx
+msgid "Creating session…"
+msgstr "正在创建会话…"
 
 #: src/components/custom-theme-library.tsx
 msgid "Current"
@@ -1691,6 +1719,10 @@ msgstr "自定义"
 #: src/components/settings-appearance.tsx
 msgid "Dark"
 msgstr "深色"
+
+#: src/components/dev-home-ambient-controls.tsx
+msgid "Decrease {label}"
+msgstr "降低{label}"
 
 #: src/components/agent-model-sheet.tsx
 msgid "default"
@@ -1754,6 +1786,10 @@ msgstr "示例工作区"
 msgid "Denied by you"
 msgstr "已被你拒绝"
 
+#: src/components/dev-home-ambient-controls.tsx
+msgid "Density"
+msgstr "疏密"
+
 #: src/i18n/labels.ts
 msgid "Deny"
 msgstr "拒绝"
@@ -1775,6 +1811,10 @@ msgstr "Diff 摘要"
 msgid "Direct control for OpenCode autonomous coding. Follow real-time reasoning, inspect code diffs, review step-by-step todos, and guide tasks on the go."
 msgstr "专为 OpenCode 自主编程打造。手机端实时跟进思考过程、审查代码变更、跟进多步任务，随时掌控远程智能体"
 
+#: src/components/dev-home-ambient-controls.tsx
+msgid "Direction"
+msgstr "方向"
+
 #: src/components/new-task-sheet.tsx
 msgid "Directory"
 msgstr "目录"
@@ -1793,6 +1833,7 @@ msgstr "已断开 · {0}"
 msgid "Disconnected."
 msgstr "连接已断开"
 
+#: src/components/agent-workbench.tsx
 #: src/components/in-app-notification-host.tsx
 msgid "Dismiss"
 msgstr "关闭"
@@ -1906,6 +1947,11 @@ msgstr "编辑这台服务器"
 #: src/components/settings-home-layout-sheet.tsx
 msgid "Editorial"
 msgstr "编辑部"
+
+#. placeholder {0}: props.value
+#: src/components/dev-home-ambient-controls.tsx
+msgid "Effects · {0}"
+msgstr "效果 · {0}"
 
 #: src/i18n/labels.ts
 msgid "Enter"
@@ -2268,6 +2314,10 @@ msgstr "隐藏模拟器"
 msgid "Home"
 msgstr "主页"
 
+#: src/components/dev-home-ambient-controls.tsx
+msgid "Home effects · development only"
+msgstr "首页效果 · 仅开发模式"
+
 #: src/components/settings-appearance.tsx
 #: src/components/settings-home-layout-sheet.tsx
 msgid "Home layout"
@@ -2284,6 +2334,10 @@ msgstr "首页布局：{homeLayoutLabel}"
 #: src/components/settings-alerts.tsx
 msgid "Home screen widget"
 msgstr "主屏幕小组件"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Home visual effects"
+msgstr "首页视觉效果"
 
 #: src/components/ssh-host-form.tsx
 msgid "Host"
@@ -2337,6 +2391,10 @@ msgstr "导入文件"
 msgid "Import link"
 msgstr "从链接导入"
 
+#: src/components/dev-home-ambient-controls.tsx
+msgid "Increase {label}"
+msgstr "提高{label}"
+
 #: src/components/agent-context-sheet.tsx
 msgid "Input"
 msgstr "输入"
@@ -2377,6 +2435,10 @@ msgstr "正在安装图片"
 #: src/components/settings-font-sheet.tsx
 msgid "Installing…"
 msgstr "安装中…"
+
+#: src/components/dev-home-ambient-controls.tsx
+msgid "Intensity"
+msgstr "强度"
 
 #: src/components/settings-font-sheet.tsx
 msgid "Interface"
@@ -2577,11 +2639,13 @@ msgstr "只列出正在运行可识别代理的面板"
 msgid "Live Activity"
 msgstr "实时活动"
 
-#: src/components/theme-browse-sheet.tsx
+#: src/components/list-load-more-footer.tsx
 msgid "Load more"
 msgstr "加载更多"
 
 #: src/components/gateway-storage-error.tsx
+#: src/components/home-recent-sessions.tsx
+#: src/components/list-load-more-footer.tsx
 #: src/components/session-map.tsx
 #: src/components/ssh-host-list.tsx
 #: src/components/theme-link-import.tsx
@@ -2687,6 +2751,7 @@ msgid "Message not sent"
 msgstr "消息未发送"
 
 #: src/components/agent-context-sheet.tsx
+#: src/components/agent-subagent-detail-sheet.tsx
 msgid "Model"
 msgstr "模型"
 
@@ -3027,6 +3092,7 @@ msgstr "还没有工作树。在下面创建一个，就能在某个分支上工
 msgid "Not a git repository"
 msgstr "不是 Git 仓库"
 
+#: src/components/agent-context-sheet.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Not available"
 msgstr "不可用"
@@ -3439,6 +3505,10 @@ msgstr "配对码已过期。请重新扫描获取新的代码"
 #: src/app/explore.tsx
 msgid "Pairing failed."
 msgstr "配对失败"
+
+#: src/components/dev-home-ambient-controls.tsx
+msgid "Palette (up to 4)"
+msgstr "配色（最多 4 色）"
 
 #: src/components/settings-servers.tsx
 msgid "Panes on server cards"
@@ -4449,6 +4519,10 @@ msgstr "显示其余输出"
 msgid "Show the server list"
 msgstr "显示服务器列表"
 
+#: src/components/theme-appearance-settings.tsx
+msgid "Show theme effects only while Home is visible. Turn off to reduce battery use."
+msgstr "仅在首页可见时显示主题效果。关闭可减少耗电"
+
 #: src/components/agent-context-sheet.tsx
 msgid "Show thinking"
 msgstr "显示思考过程"
@@ -4462,7 +4536,7 @@ msgctxt "agent slash command"
 msgid "Show what rolling back to the last message would undo"
 msgstr "查看回滚到上一条消息会撤销什么"
 
-#: src/components/theme-browse-sheet.tsx
+#: src/components/list-load-more-footer.tsx
 msgid "Showing {shown} of {total}"
 msgstr "已显示 {shown} / {total}"
 
@@ -4505,6 +4579,7 @@ msgid "Simulator controls"
 msgstr "模拟器控件"
 
 #: src/components/asset-viewer.tsx
+#: src/components/dev-home-ambient-controls.tsx
 msgid "Size"
 msgstr "大小"
 
@@ -4546,6 +4621,10 @@ msgstr "源代码"
 #: src/components/virtual-keyboard.tsx
 msgid "Space"
 msgstr "空格键"
+
+#: src/components/dev-home-ambient-controls.tsx
+msgid "Speed"
+msgstr "速度"
 
 #: src/components/home-launch-actions.tsx
 #: src/components/home-overview.tsx
@@ -5110,6 +5189,7 @@ msgstr "这一轮执行失败"
 msgid "Theme"
 msgstr "主题"
 
+#: src/components/dev-home-ambient-controls.tsx
 #: src/components/theme-appearance-settings.tsx
 msgid "Theme default"
 msgstr "跟随主题"
@@ -5345,6 +5425,7 @@ msgid "Today"
 msgstr "今天"
 
 #: src/components/agent-context-sheet.tsx
+#: src/components/agent-subagent-detail-sheet.tsx
 msgid "Tokens this session"
 msgstr "本次会话的 token"
 

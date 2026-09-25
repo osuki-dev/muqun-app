@@ -66,7 +66,12 @@ test('nothing is done to the handed-over string outside the catch', () => {
   // comes from whichever app invoked the share sheet. Out here that was an
   // unhandled rejection anyone could trigger by sending `%zz.muqun-theme`.
   const hook = readFileSync('src/hooks/use-theme-file-open.ts', 'utf8');
-  const body = hook.match(/try \{[\s\S]*?\n {6}\} catch/)?.[0] ?? '';
+  // The guarded region is the body `recoverWith` runs under its catch (see
+  // `@/lib/compiler-safe-control-flow`): everything up to its recovery handler.
+  const body =
+    hook.match(
+      /recoverWith\(\s*async \(\) => \{[\s\S]*?\n\s*\},\s*(?:async\s*)?\(\w*\)\s*=>/
+    )?.[0] ?? '';
   expect(body).toContain('decodeURIComponent(');
   expect(body).toContain('readThemeFile(');
 });

@@ -49,6 +49,10 @@ test('detail replaces nested targets in place and cannot form a deeper native st
   expect(route).not.toContain('router.push(');
   const detail = source('components/agent-subagent-detail-sheet.tsx');
   expect(detail).toContain('readOnly: true');
+  // The native sheet must see the list's real scroll range, without the
+  // composer's keyboard-inset decorator translating the scroll content.
+  expect(detail).toContain('keyboardAware={false}');
+  expect(detail).toContain('nestedScrollEnabled');
   expect(detail).toContain('initialScrollAtEnd');
   expect(detail).not.toContain('initialScrollAtEnd={false}');
   expect(detail).toContain('maintainScrollAtEnd={false}');

@@ -27,6 +27,7 @@ import {
 } from '@/lib/ssh-hosts';
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';
 import { useSshHostsStore } from '@/stores/ssh-hosts';
+import { recoverWith, settleAfter } from '@/lib/compiler-safe-control-flow';
 
 /**
  * Add or edit one SSH host.
@@ -118,8 +119,11 @@ export function SshHostForm({
     } else if (value.authType === 'password' && value.password) {
       credential = { type: 'password', password: value.password };
     } else if (value.authType === 'privateKey' && value.privateKey) {
+      // Read before the `try`: it cannot throw, and React Compiler cannot lower
+      // a `||` inside one.
+      const passphrase = value.passphrase || undefined;
       try {
-        inspectSshPrivateKey(value.privateKey, value.passphrase || undefined);
+        inspectSshPrivateKey(value.privateKey, passphrase);
       } catch (error) {
         const failure = describeSshFailure(error);
         setErrors({
@@ -164,23 +168,31 @@ export function SshHostForm({
 
   async function generate() {
     setGenerating(true);
-    try {
-      const pair = await generateSshKeyPair({
-        type: 'ed25519',
-        comment: 'muqun',
-        passphrase: draft.passphrase || undefined,
-      });
-      patch({ privateKey: pair.privateKey });
-      setPublicKey(pair.publicKey);
-    } catch (error) {
-      showToast({
-        variant: 'danger',
-        title: t`Could not generate a key`,
-        message: sshFailureLine(describeSshFailure(error)),
-      });
-    } finally {
-      setGenerating(false);
-    }
+    return settleAfter(
+      async () => {
+        return recoverWith(
+          async () => {
+            const pair = await generateSshKeyPair({
+              type: 'ed25519',
+              comment: 'muqun',
+              passphrase: draft.passphrase || undefined,
+            });
+            patch({ privateKey: pair.privateKey });
+            setPublicKey(pair.publicKey);
+          },
+          (error) => {
+            showToast({
+              variant: 'danger',
+              title: t`Could not generate a key`,
+              message: sshFailureLine(describeSshFailure(error)),
+            });
+          }
+        );
+      },
+      () => {
+        setGenerating(false);
+      }
+    );
   }
 
   async function copyPublicKey() {

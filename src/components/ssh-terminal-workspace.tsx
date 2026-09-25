@@ -92,6 +92,7 @@ import { slotAdvanceRatio } from '@/theme/user-fonts';
 import { useSshHostsStore } from '@/stores/ssh-hosts';
 import { useHomeRecentsStore } from '@/stores/home-recents';
 import type { TerminalFrame } from '@/terminal/types';
+import { recoverWithSync } from '@/lib/compiler-safe-control-flow';
 
 /**
  * A shell on an SSH host, drawn by the same canvas every gateway pane uses.
@@ -866,16 +867,19 @@ export function SshTerminalWorkspace({ hostId }: { hostId: string }) {
   function send(bytes: Uint8Array, options?: { stickBottom?: boolean }) {
     const shell = sessionRef.current.shell;
     if (!shell || status.phase !== 'connected') return;
-    try {
-      shell.write(bytes);
-      if (options?.stickBottom !== false) setStickBottomNonce((value) => value + 1);
-    } catch (error) {
-      showToast({
-        variant: 'danger',
-        title: t`Could not send`,
-        message: sshFailureLine(describeSshFailure(error)),
-      });
-    }
+    return recoverWithSync(
+      () => {
+        shell.write(bytes);
+        if (options?.stickBottom !== false) setStickBottomNonce((value) => value + 1);
+      },
+      (error) => {
+        showToast({
+          variant: 'danger',
+          title: t`Could not send`,
+          message: sshFailureLine(describeSshFailure(error)),
+        });
+      }
+    );
   }
 
   function typeKey(name: string) {

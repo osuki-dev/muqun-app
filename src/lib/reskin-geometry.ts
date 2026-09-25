@@ -354,3 +354,8 @@ export function recordSnapshotCost(strikes: number, elapsedMs: number): number {
   if (elapsedMs <= SNAPSHOT_BUDGET_MS) return 0;
   return strikes + 1;
 }
+
+/** Theme reveals keep the new UI interactive after its covered commit. */
+export function reskinBlocksTouches(play: ReskinPlay, swapping: boolean): boolean {
+  return swapping || play === 'halftone';
+}

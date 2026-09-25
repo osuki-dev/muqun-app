@@ -1,3 +1,4 @@
+import { useRootRouteName } from '@/hooks/use-root-route-name';
 import { useStore } from 'zustand';
 import { createAgentTranscriptStore } from '@/stores/agent-transcript';
 import { AgentTranscriptList } from '@/components/agent-transcript-list';
@@ -21,7 +22,7 @@ import {
   RefreshControl,
   Share,
 } from 'react-native';
-import { useIsFocused, useNavigation, usePathname, useRouter } from 'expo-router';
+import { useIsFocused, usePathname, useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { useThemeTokens, useToast } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
@@ -36,7 +37,6 @@ import {
   X,
 } from 'lucide-react-native';
 import { type LegendListRef } from '@legendapp/list/react-native';
-import { useKeyboardScrollToEnd } from '@legendapp/list/keyboard';
 import { PressableScale } from '@/components/pressable-scale';
 import { GlassChrome } from '@/components/glass-chrome';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
@@ -123,7 +123,7 @@ import { shouldRefetchAgentCatalog, type AgentCatalogScope } from '@/lib/agent-c
 import { loadRememberedAgentDefaults, rememberAgentChoice } from '@/lib/agent-model-memory';
 import { loadRememberedAgentSession, rememberOpenedAgentSession } from '@/lib/agent-session-memory';
 import { latestSession, pickSessionToOpen } from '@/lib/agent-session-pick';
-import { resolveNewSessionDefaults } from '@/lib/agent-session-defaults';
+import { catalogModelRef, resolveNewSessionDefaults } from '@/lib/agent-session-defaults';
 import { engineFailureAction } from '@/lib/agent-engine-text';
 import { dangerousPermissionReason, yoloDecision } from '@/lib/agent-permission-safety';
 import { removeTimelineItems, revertedMessageCount } from '@/lib/agent-revert';
@@ -200,6 +200,7 @@ import {
   shouldPreserveNewSessionDraft,
   type AgentWorkbenchOwner,
 } from '@/lib/agent-workbench-ownership';
+import { recoverWith, settleAfter } from '@/lib/compiler-safe-control-flow';
 
 /**
  * How many history timeline items the workbench reveals per page. The gateway
@@ -300,13 +301,9 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   }, [serverId, sessionId]);
   const { t } = useLingui();
   const router = useRouter();
-  const rootNavigation = useNavigation('/');
   const routeFocused = useIsFocused();
   const pathname = usePathname();
-  const rootNavigationState = rootNavigation.getState();
-  const rootRouteName = rootNavigationState
-    ? rootNavigationState.routes[rootNavigationState.index]?.name
-    : undefined;
+  const rootRouteName = useRootRouteName();
   const globalOwnerRef = useRef<AgentWorkbenchGlobalOwner | null>(null);
   const [globalOwnerEpoch, setGlobalOwnerEpoch] = useState(0);
   const isGlobalOwner = useCallback(
@@ -364,9 +361,6 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   const surfaceBackground = useSurfaceBackground();
   const markdownStyle = usePaneChatMarkdownStyle();
   const listRef = useRef<LegendListRef>(null);
-  const { freeze: freezeTimelineKeyboard, scrollMessageToEnd } = useKeyboardScrollToEnd({
-    listRef,
-  });
   const injectDraftRef = useRef<((text: string) => void) | null>(null);
 
   /**
@@ -415,7 +409,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       : 0;
   const reservedWithGap = reserved > 0 ? reserved + NOTICE_RESERVE_GAP : 0;
   useEffect(() => {
-    noticeReserve.value = withTiming(reservedWithGap, timing('dropdown'));
+    noticeReserve.set(withTiming(reservedWithGap, timing('dropdown')));
   }, [reservedWithGap, noticeReserve]);
   const transcriptAreaStyle = useAnimatedStyle(() => ({ paddingTop: noticeReserve.value }));
 
@@ -486,6 +480,14 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   const [catalogDefaults, setCatalogDefaults] = useState<CatalogDefaults>(NO_CATALOG_DEFAULTS);
   const [activeAsid, setActiveAsid] = useState<string | undefined>(initialAsid);
   const newSessionCreationRef = useRef(false);
+  const promptDispatchRef = useRef(false);
+  const [creatingSession, setCreatingSession] = useState(false);
+  // A create response already proves this session exists. Its first snapshot
+  // can still precede the first prompt's mirror events.
+  const freshSessionRef = useRef<string | undefined>(undefined);
+  useEffect(() => {
+    if (freshSessionRef.current !== activeAsid) freshSessionRef.current = undefined;
+  }, [activeAsid]);
   const [sessionInfo, setSessionInfo] = useState<AgentSessionInfo | null>(null);
   const [transcriptStore] = useState(createAgentTranscriptStore);
   const setTimeline = transcriptStore.getState().setTimeline;
@@ -533,6 +535,13 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   const appActiveRef = useRef(true);
   /** The workspace on screen, for the calls that are made outside a render. */
   const activeDirectoryRef = useRef<string | undefined>(initialDirectory);
+  // Declared ahead of the callbacks that reach them: React Compiler reads a
+  // ref or a setter used above its own declaration as an access out of order
+  // and declines to compile the workbench. Each is described where it is used.
+  const openedAsidRef = useRef<string | undefined>(undefined);
+  const catchUpRef = useRef<() => void>(() => {});
+  const handleCreateNewSessionRef = useRef<(() => Promise<void>) | null>(null);
+  const [worktreeRevision, setWorktreeRevision] = useState(0);
   const captureWorkbenchOwner = useCallback(
     (asid: string | undefined, directory: string | undefined): AgentWorkbenchOwner => ({
       serverId,
@@ -695,6 +704,13 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   const [selectedAgent, setSelectedAgent] = useState<string | undefined>(undefined);
   const pickedAgentRef = useRef(false);
   const pickedModelRef = useRef(false);
+  const [manualModelOverride, setManualModelOverride] = useState(false);
+  const manualModelSessionRef = useRef(activeAsid);
+  useEffect(() => {
+    const previousAsid = manualModelSessionRef.current;
+    if (previousAsid && previousAsid !== activeAsid) setManualModelOverride(false);
+    manualModelSessionRef.current = activeAsid;
+  }, [activeAsid]);
   // YOLO mode: every permission request is answered automatically, `allow`
   // except for the irreversibly dangerous commands the safety list denies.
   // Mirrored in a ref so the stream handler sees the current value without
@@ -719,10 +735,8 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   /**
    * What a `POST /api/agent-sessions` carries.
    *
-   * Only the parts the reader actually chose. Omitting `model` is the
-   * documented way to get the user's configured default, and a display
-   * fallback sent as a real field is not a default -- it is this app
-   * overriding the host.
+   * The model follows the selected agent's configuration before unrelated
+   * remembered choices. A model explicitly picked in this run still wins.
    *
    * "Chose" used to mean "chose since this app was launched", which made a
    * relaunch forget the model the reader had been working on all week. It now
@@ -916,9 +930,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     getAgentCatalog(sessionId, undefined, scope.directory ? { directory: scope.directory } : {})
       .then((catalog) => {
         if (!mounted) return;
-        if (catalog?.agents && catalog.agents.length > 0) {
-          setAvailableAgents(catalog.agents);
-        }
+        setAvailableAgents(catalog?.agents ?? []);
         if (catalog?.skills && catalog.skills.length > 0) {
           setSkills(catalog.skills);
         }
@@ -963,7 +975,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     if (activeAsid) return;
     if (pickedModelRef.current && pickedAgentRef.current) return;
     const resolved = resolveNewSessionDefaults({
-      picked: {},
+      picked: pickedAgentRef.current && selectedAgent ? { agent: selectedAgent } : {},
       ...loadRememberedAgentDefaults(sessionId, activeDirectory),
       sessions: sessionsRef.current,
       ...(activeDirectory ? { directory: activeDirectory } : {}),
@@ -971,7 +983,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       models: catalogModels,
       agents: availableAgents,
     });
-    if (!pickedModelRef.current && resolved.model) applySelectedModel(resolved.model);
+    if (!pickedModelRef.current) applySelectedModel(resolved.model);
     if (!pickedAgentRef.current && resolved.agent) setSelectedAgent(resolved.agent);
   }, [
     sessionId,
@@ -980,6 +992,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     catalogDefaults,
     catalogModels,
     availableAgents,
+    selectedAgent,
     sessions,
     applySelectedModel,
   ]);
@@ -998,7 +1011,11 @@ export const AgentWorkbench = memo(function AgentWorkbench({
    * mirrors it instead, which is the same fact without the feedback loop.
    */
   const refreshSessions = useCallback(
-    async (directory = activeDirectoryRef.current) => {
+    async (requestedDirectory?: string) => {
+      // The parameter's default, spelled out: React Compiler cannot reorder a
+      // default that reads a ref, and this is the same "only when omitted".
+      const directory =
+        requestedDirectory === undefined ? activeDirectoryRef.current : requestedDirectory;
       const request = ++sessionListRequestRef.current;
       const capturedOwner: AgentWorkbenchOwner = {
         serverId,
@@ -1011,76 +1028,88 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       const ownsList = () =>
         request === sessionListRequestRef.current && ownsWorkbench(capturedOwner);
       if (!ownsList()) return;
-      try {
-        // Roots only, and scoped to the workspace on screen: a subagent session
-        // is a row in its parent's tree, never a sibling of it in the strip.
-        // Bounded, because the strip draws a handful of chips and every surface
-        // that reads this list sorts by recency: `desc` is newest first, so
-        // what the limit cuts is the oldest.
-        const observation = await listAgentSessionsObserved(sessionId, {
-          roots: true,
-          limit: SESSION_LIST_LIMIT,
-          order: 'desc',
-          ...(directory ? { directory } : {}),
-        });
-        const list = observation.sessions;
-        if (!ownsList()) return;
-        setIsOffline(false);
-        if (list) {
-          if (!directory) hostListCompleteRef.current = list.length < SESSION_LIST_LIMIT;
-          setSessions(list);
-          setChildrenByParent((previous) =>
-            list.reduce(
-              (known, info) => (info.parent_id ? applyChildInfo(known, info) : known),
-              previous
-            )
-          );
-          const observedAtMs = observation.observedAtMs;
-          for (const info of list) {
-            syncHomeRecentTitle(info.asid, info.title, info.directory);
-            if (observedAtMs !== undefined) syncHomeRecentObservation(info, observedAtMs);
-          }
-          void removeChildSessionRecents(useHomeRecentsStore.getState, serverId, list);
-          // Coming in from Home lands on the session the reader last opened,
-          // and only falls back to newest activity when there is no such
-          // session any more. Newest activity alone meant an agent finishing a
-          // turn elsewhere could take the screen away from the session the
-          // reader had chosen -- see `agent-session-pick.ts`.
-          const opening =
-            initialIntent === 'new'
-              ? null
-              : pickSessionToOpen(list, loadRememberedAgentSession(sessionId, directory));
-          if (opening && !activeAsidRef.current) {
-            activeAsidRef.current = opening.asid;
-            setActiveAsid(opening.asid);
-            setSessionInfo(opening);
-            if (opening.model) {
-              applySelectedModel(opening.model);
+      return settleAfter(
+        async () => {
+          return recoverWith(
+            async () => {
+              // Roots only, and scoped to the workspace on screen: a subagent session
+              // is a row in its parent's tree, never a sibling of it in the strip.
+              // Bounded, because the strip draws a handful of chips and every surface
+              // that reads this list sorts by recency: `desc` is newest first, so
+              // what the limit cuts is the oldest.
+              const observation = await listAgentSessionsObserved(sessionId, {
+                roots: true,
+                limit: SESSION_LIST_LIMIT,
+                order: 'desc',
+                ...(directory ? { directory } : {}),
+              });
+              const list = observation.sessions;
+              if (!ownsList()) return;
+              setIsOffline(false);
+              if (list) {
+                if (!directory) hostListCompleteRef.current = list.length < SESSION_LIST_LIMIT;
+                const fresh = freshSessionRef.current;
+                setSessions((previous) => {
+                  const local = previous.find((item) => item.asid === fresh);
+                  return local && !list.some((item) => item.asid === fresh)
+                    ? [local, ...list]
+                    : list;
+                });
+                setChildrenByParent((previous) =>
+                  list.reduce(
+                    (known, info) => (info.parent_id ? applyChildInfo(known, info) : known),
+                    previous
+                  )
+                );
+                const observedAtMs = observation.observedAtMs;
+                for (const info of list) {
+                  syncHomeRecentTitle(info.asid, info.title, info.directory);
+                  if (observedAtMs !== undefined) syncHomeRecentObservation(info, observedAtMs);
+                }
+                void removeChildSessionRecents(useHomeRecentsStore.getState, serverId, list);
+                // Coming in from Home lands on the session the reader last opened,
+                // and only falls back to newest activity when there is no such
+                // session any more. Newest activity alone meant an agent finishing a
+                // turn elsewhere could take the screen away from the session the
+                // reader had chosen -- see `agent-session-pick.ts`.
+                const opening =
+                  initialIntent === 'new'
+                    ? null
+                    : pickSessionToOpen(list, loadRememberedAgentSession(sessionId, directory));
+                if (opening && !activeAsidRef.current) {
+                  activeAsidRef.current = opening.asid;
+                  setActiveAsid(opening.asid);
+                  setSessionInfo(opening);
+                  applySelectedModel(opening.model ?? undefined);
+                  if (opening.agent) setSelectedAgent(opening.agent);
+                } else if (list.length === 0 || initialIntent === 'new') {
+                  setLoading(false);
+                }
+              } else {
+                setLoading(false);
+              }
+            },
+            (err) => {
+              if (!ownsList()) return;
+              console.warn('Failed to list agent sessions:', err);
+              const errMsg = err instanceof Error ? err.message : String(err);
+              if (
+                errMsg.includes('502') ||
+                errMsg.includes('503') ||
+                errMsg.includes('agent_engine_error') ||
+                errMsg.includes('agent_unavailable') ||
+                errMsg.includes('Network error')
+              ) {
+                setIsOffline(true);
+              }
+              setLoading(false);
             }
-            if (opening.agent) setSelectedAgent(opening.agent);
-          } else if (list.length === 0 || initialIntent === 'new') {
-            setLoading(false);
-          }
-        } else {
-          setLoading(false);
+          );
+        },
+        () => {
+          if (ownsList()) initialCheckDoneRef.current = true;
         }
-      } catch (err) {
-        if (!ownsList()) return;
-        console.warn('Failed to list agent sessions:', err);
-        const errMsg = err instanceof Error ? err.message : String(err);
-        if (
-          errMsg.includes('502') ||
-          errMsg.includes('503') ||
-          errMsg.includes('agent_engine_error') ||
-          errMsg.includes('agent_unavailable') ||
-          errMsg.includes('Network error')
-        ) {
-          setIsOffline(true);
-        }
-        setLoading(false);
-      } finally {
-        if (ownsList()) initialCheckDoneRef.current = true;
-      }
+      );
     },
     [
       applySelectedModel,
@@ -1152,8 +1181,8 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     // offsets while native measurement and keyboard reactions move the target.
     // Only onScroll may mark the output as read: requesting a jump is not
     // evidence that it reached the end (it can be interrupted or have no list).
-    void scrollMessageToEnd({ animated: false, closeKeyboard: false });
-  }, [scrollMessageToEnd]);
+    void listRef.current?.scrollToEnd({ animated: false });
+  }, []);
 
   // YOLO answers every permission request itself: `allow` for anything the
   // safety list lets through, `deny` (with a report) for irreversibly
@@ -1344,184 +1373,205 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         activeAsidRef.current === asid &&
         useGatewayConnectionStore.getState().record?.serverId === serverId;
       if (!ownsSnapshot()) return;
-      if (mode === 'enter') setLoading(true);
+      if (mode === 'enter' && freshSessionRef.current !== asid) setLoading(true);
       const snapshotTicket = useHomeAttention.getState().reserve();
-      try {
-        const snap = await getAgentSessionSnapshot(sessionId, asid);
-        if (!ownsSnapshot()) return;
-        const info = snap.info;
-        if (info) {
-          setSessionInfo(info);
-          if (info.parent_id) setChildrenByParent((previous) => applyChildInfo(previous, info));
-          void removeChildSessionRecents(useHomeRecentsStore.getState, serverId, [info]);
-          syncHomeRecentTitle(info.asid, info.title, info.directory);
-          syncHomeRecentObservation(info);
-          if (info.directory) {
-            snapshotDirectoryRef.current = info.directory;
-            activeDirectoryRef.current = info.directory;
-            setActiveDirectory(info.directory);
-          }
-        }
-        setInbox(snap.inbox);
-        // A rollback staged before the app was opened is still staged.
-        setStagedRevert(info?.revert ?? null);
-
-        if (ownsSnapshot() && info?.asid === asid && !info.deleted && info.directory) {
-          const target = homeTargetFor(asid, info.directory);
-          if (target) {
-            const observedAt = Date.now();
-            // This is the only entry visit publisher: silent resyncs and
-            // output effects never turn background activity into a recent row.
-            if (mode === 'enter' && appActiveRef.current && isRootSessionRecent(info)) {
-              void useHomeRecentsStore
-                .getState()
-                .visit(target, sessionTitleOr(info, ''), observedAt, {
-                  status: info.status,
-                  observedAtMs: observedAt,
-                });
-            }
-            // Permission ids are the complete summary. The prompt and
-            // resources remain in the source workbench only.
-            for (const permission of snap.permissions) {
-              if (!permission.asid || permission.asid === asid) {
-                permissionTargetsRef.current.set(permission.id, target);
+      return settleAfter(
+        async () => {
+          return recoverWith(
+            async () => {
+              const snap = await getAgentSessionSnapshot(sessionId, asid);
+              if (!ownsSnapshot()) return;
+              const fresh = freshSessionRef.current === asid;
+              const timeline = fresh
+                ? upsertTimelineItems(transcriptStore.getState().timeline, snap.timeline)
+                : snap.timeline;
+              const pendingFirstPrompt =
+                fresh && timeline.some((item) => item.id.startsWith('temp_'));
+              if (fresh && !pendingFirstPrompt && !promptDispatchRef.current) {
+                freshSessionRef.current = undefined;
               }
+              const info = snap.info;
+              if (info) {
+                setSessionInfo((previous) =>
+                  pendingFirstPrompt && previous?.status === 'busy' && info.status === 'idle'
+                    ? { ...info, status: 'busy' }
+                    : info
+                );
+                if (info.parent_id)
+                  setChildrenByParent((previous) => applyChildInfo(previous, info));
+                void removeChildSessionRecents(useHomeRecentsStore.getState, serverId, [info]);
+                syncHomeRecentTitle(info.asid, info.title, info.directory);
+                syncHomeRecentObservation(info);
+                if (info.directory) {
+                  snapshotDirectoryRef.current = info.directory;
+                  activeDirectoryRef.current = info.directory;
+                  setActiveDirectory(info.directory);
+                }
+              }
+              setInbox(snap.inbox);
+              // A rollback staged before the app was opened is still staged.
+              setStagedRevert(info?.revert ?? null);
+
+              if (ownsSnapshot() && info?.asid === asid && !info.deleted && info.directory) {
+                const target = homeTargetFor(asid, info.directory);
+                if (target) {
+                  const observedAt = Date.now();
+                  // This is the only entry visit publisher: silent resyncs and
+                  // output effects never turn background activity into a recent row.
+                  if (mode === 'enter' && appActiveRef.current && isRootSessionRecent(info)) {
+                    void useHomeRecentsStore
+                      .getState()
+                      .visit(target, sessionTitleOr(info, ''), observedAt, {
+                        status: info.status,
+                        observedAtMs: observedAt,
+                      });
+                  }
+                  // Permission ids are the complete summary. The prompt and
+                  // resources remain in the source workbench only.
+                  for (const permission of snap.permissions) {
+                    if (!permission.asid || permission.asid === asid) {
+                      permissionTargetsRef.current.set(permission.id, target);
+                    }
+                  }
+                  useHomeAttention.getState().observe(
+                    target,
+                    snap.permissions
+                      .filter((permission) => !permission.asid || permission.asid === asid)
+                      .map((permission) => permission.id),
+                    observedAt,
+                    snapshotTicket
+                  );
+                }
+              }
+
+              if (mode === 'enter') {
+                // Publish the new dataset and its window together; otherwise the list
+                // briefly sees the previous session's offset against the new rows.
+                const nextWindow = Math.max(0, timeline.length - HISTORY_PAGE_SIZE);
+                windowStartRef.current = nextWindow;
+                setTimeline(timeline, nextWindow);
+                setWindowStart(nextWindow);
+                follow.reset();
+              } else {
+                // Hold the reader's place across the correction. The row that was at
+                // the top of the window is the anchor: its index has moved, because
+                // that is what a resync means, so the window start moves with it.
+                const nextWindow = windowStartForSnapshot(
+                  transcriptStore.getState().timeline,
+                  windowStartRef.current,
+                  timeline,
+                  HISTORY_PAGE_SIZE
+                );
+                windowStartRef.current = nextWindow;
+                setTimeline(timeline, nextWindow);
+                setWindowStart(nextWindow);
+              }
+
+              if (yoloModeRef.current) {
+                // Auto-answer everything the engine raised while we were away — the
+                // safety list still denies its share.
+                for (const perm of snap.permissions) void handleAutoPermission(perm);
+                for (const item of snap.timeline) {
+                  if (item.part.type === 'approval') void handleAutoPermission(item.part.request);
+                }
+                setPermissions([]);
+              } else {
+                setPermissions(snap.permissions);
+              }
+              setForms(snap.forms);
+              /**
+               * Raised to the snapshot's point, not assigned to it -- and a catch-up
+               * that was asked for before this landed is paid here rather than lost.
+               * See `lib/agent-catch-up.ts`.
+               */
+              const settled = snapshotSettled(syncRef.current, snap.seq);
+              syncRef.current = settled.state;
+              if (settled.from !== null) catchUpRef.current();
+              if (info) applySelectedModel(info.model ?? undefined);
+              if (info?.agent) setSelectedAgent(info.agent);
+
+              /**
+               * Reading it is what makes it read.
+               *
+               * `markAgentSessionViewed` existed in the client with no caller and
+               * `isSessionUnread` with no reader, so every session on the host was
+               * permanently unread and nothing drew the fact. The idle the session
+               * reached is what is acknowledged -- not "now" -- so a turn that ends
+               * between this call leaving and landing is still unread afterwards,
+               * which is the honest answer.
+               */
+              if (info && appActiveRef.current) {
+                const idle = info.time_idle;
+                const viewedAsid = info.asid;
+                void (
+                  idle === undefined
+                    ? markAgentSessionViewed(viewedAsid)
+                    : markAgentSessionViewed(viewedAsid, idle)
+                )
+                  .then((viewed) => applyViewed(viewedAsid, viewed))
+                  .catch(() => {});
+              }
+
+              /**
+               * The chips, after the transcript.
+               *
+               * None of these draws a word of the conversation: the token gauge, the
+               * background count and the changes dot are all composer furniture, and
+               * running them on the way in put three requests in front of the first
+               * frame. `snap.inbox` has already been applied above, so the inbox is
+               * not asked for again at all -- that read was answering a question the
+               * snapshot had just answered.
+               */
+              requestIdleCallback(
+                () => {
+                  if (!ownsSnapshot() || !appActiveRef.current) return;
+                  void sideLoadsRef.current.context();
+                  void sideLoadsRef.current.shells();
+                  void sideLoadsRef.current.diffs();
+                },
+                { timeout: 250 }
+              );
+            },
+            (err) => {
+              if (!ownsSnapshot()) return;
+              console.warn('Failed to load snapshot:', err);
+              if (
+                freshSessionRef.current !== asid &&
+                err instanceof Error &&
+                (err.message.includes('404') || err.message.includes('session_not_found'))
+              ) {
+                const target = homeTargetFor(asid, activeDirectoryRef.current);
+                if (target) {
+                  void useHomeRecentsStore.getState().remove(target);
+                  useHomeAttention.getState().observe(target, [], Date.now(), snapshotTicket);
+                }
+                setLoading(false);
+                activeAsidRef.current = undefined;
+                setActiveAsid(undefined);
+                setSessionInfo(null);
+                setTimeline([]);
+                setWindowStart(0);
+                setPermissions([]);
+                setForms([]);
+                return;
+              }
+              // Anything else is a session that exists and could not be read. The
+              // entry guard is released so this session can be opened again: a
+              // snapshot that failed once -- the gateway's address not hydrated yet,
+              // a dropped request -- must not leave the screen permanently empty.
+              openedAsidRef.current = undefined;
+              showToast({
+                variant: 'danger',
+                title: t`Could not load the session`,
+                message: formatAgentErrorMessage(err, t`OpenCode service is offline`),
+              });
             }
-            useHomeAttention.getState().observe(
-              target,
-              snap.permissions
-                .filter((permission) => !permission.asid || permission.asid === asid)
-                .map((permission) => permission.id),
-              observedAt,
-              snapshotTicket
-            );
-          }
-        }
-
-        if (mode === 'enter') {
-          // Publish the new dataset and its window together; otherwise the list
-          // briefly sees the previous session's offset against the new rows.
-          const nextWindow = Math.max(0, snap.timeline.length - HISTORY_PAGE_SIZE);
-          windowStartRef.current = nextWindow;
-          setTimeline(snap.timeline, nextWindow);
-          setWindowStart(nextWindow);
-          follow.reset();
-        } else {
-          // Hold the reader's place across the correction. The row that was at
-          // the top of the window is the anchor: its index has moved, because
-          // that is what a resync means, so the window start moves with it.
-          const nextWindow = windowStartForSnapshot(
-            transcriptStore.getState().timeline,
-            windowStartRef.current,
-            snap.timeline,
-            HISTORY_PAGE_SIZE
           );
-          windowStartRef.current = nextWindow;
-          setTimeline(snap.timeline, nextWindow);
-          setWindowStart(nextWindow);
+        },
+        () => {
+          if (mode === 'enter' && ownsSnapshot()) setLoading(false);
         }
-
-        if (yoloModeRef.current) {
-          // Auto-answer everything the engine raised while we were away — the
-          // safety list still denies its share.
-          for (const perm of snap.permissions) void handleAutoPermission(perm);
-          for (const item of snap.timeline) {
-            if (item.part.type === 'approval') void handleAutoPermission(item.part.request);
-          }
-          setPermissions([]);
-        } else {
-          setPermissions(snap.permissions);
-        }
-        setForms(snap.forms);
-        /**
-         * Raised to the snapshot's point, not assigned to it -- and a catch-up
-         * that was asked for before this landed is paid here rather than lost.
-         * See `lib/agent-catch-up.ts`.
-         */
-        const settled = snapshotSettled(syncRef.current, snap.seq);
-        syncRef.current = settled.state;
-        if (settled.from !== null) catchUpRef.current();
-        if (info?.model) {
-          applySelectedModel(info.model);
-        }
-        if (info?.agent) setSelectedAgent(info.agent);
-
-        /**
-         * Reading it is what makes it read.
-         *
-         * `markAgentSessionViewed` existed in the client with no caller and
-         * `isSessionUnread` with no reader, so every session on the host was
-         * permanently unread and nothing drew the fact. The idle the session
-         * reached is what is acknowledged -- not "now" -- so a turn that ends
-         * between this call leaving and landing is still unread afterwards,
-         * which is the honest answer.
-         */
-        if (info && appActiveRef.current) {
-          const idle = info.time_idle;
-          const viewedAsid = info.asid;
-          void (
-            idle === undefined
-              ? markAgentSessionViewed(viewedAsid)
-              : markAgentSessionViewed(viewedAsid, idle)
-          )
-            .then((viewed) => applyViewed(viewedAsid, viewed))
-            .catch(() => {});
-        }
-
-        /**
-         * The chips, after the transcript.
-         *
-         * None of these draws a word of the conversation: the token gauge, the
-         * background count and the changes dot are all composer furniture, and
-         * running them on the way in put three requests in front of the first
-         * frame. `snap.inbox` has already been applied above, so the inbox is
-         * not asked for again at all -- that read was answering a question the
-         * snapshot had just answered.
-         */
-        requestIdleCallback(
-          () => {
-            if (!ownsSnapshot() || !appActiveRef.current) return;
-            void sideLoadsRef.current.context();
-            void sideLoadsRef.current.shells();
-            void sideLoadsRef.current.diffs();
-          },
-          { timeout: 250 }
-        );
-      } catch (err) {
-        if (!ownsSnapshot()) return;
-        console.warn('Failed to load snapshot:', err);
-        if (
-          err instanceof Error &&
-          (err.message.includes('404') || err.message.includes('session_not_found'))
-        ) {
-          const target = homeTargetFor(asid, activeDirectoryRef.current);
-          if (target) {
-            void useHomeRecentsStore.getState().remove(target);
-            useHomeAttention.getState().observe(target, [], Date.now(), snapshotTicket);
-          }
-          setLoading(false);
-          activeAsidRef.current = undefined;
-          setActiveAsid(undefined);
-          setSessionInfo(null);
-          setTimeline([]);
-          setWindowStart(0);
-          setPermissions([]);
-          setForms([]);
-          return;
-        }
-        // Anything else is a session that exists and could not be read. The
-        // entry guard is released so this session can be opened again: a
-        // snapshot that failed once -- the gateway's address not hydrated yet,
-        // a dropped request -- must not leave the screen permanently empty.
-        openedAsidRef.current = undefined;
-        showToast({
-          variant: 'danger',
-          title: t`Could not load the session`,
-          message: formatAgentErrorMessage(err, t`OpenCode service is offline`),
-        });
-      } finally {
-        if (mode === 'enter' && ownsSnapshot()) setLoading(false);
-      }
+      );
     },
     [
       setTimeline,
@@ -1550,7 +1600,6 @@ export const AgentWorkbench = memo(function AgentWorkbench({
    * what this is keyed on: the loader still re-declares when the session
    * changes, and the ref says whether that session has already been opened.
    */
-  const openedAsidRef = useRef<string | undefined>(undefined);
   useEffect(() => {
     if (!activeAsid) {
       openedAsidRef.current = undefined;
@@ -1590,16 +1639,23 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         generation === childrenRequestRef.current &&
         request === childrenRootRequestsRef.current.get(rootAsid) &&
         ownsWorkbench(owner);
+      const observedChildren = childrenByParentRef.current;
       await loadSessionDescendants({
         rootAsid,
-        known: childrenByParentRef.current,
+        known: observedChildren,
         listChildren: listAgentSessionChildrenObserved,
         isCurrent,
         onChildren: (parent, inventory) => {
           if (!isCurrent()) return;
           setChildrenByParent((previous) =>
             isCurrent()
-              ? mergeSessionChildren(previous, parent, inventory.children, inventory.authoritative)
+              ? mergeSessionChildren(
+                  previous,
+                  parent,
+                  inventory.children,
+                  inventory.authoritative,
+                  observedChildren[parent] ?? []
+                )
               : previous
           );
           void removeChildSessionRecents(
@@ -1873,7 +1929,6 @@ export const AgentWorkbench = memo(function AgentWorkbench({
    * until the reader left the screen and came back. The gate remembers the
    * debt instead; see `lib/agent-catch-up.ts`.
    */
-  const catchUpRef = useRef<() => void>(() => {});
   const catchUp = useCallback(() => {
     const asid = activeAsidRef.current;
     if (!asid) return;
@@ -2025,6 +2080,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   const handleSelectModel = useCallback(
     (model: ModelRef) => {
       pickedModelRef.current = true;
+      setManualModelOverride(true);
       applySelectedModel(model);
       // Written because the *reader* chose it, which is the only thing the
       // memory records: a default the app merely observed -- the catalog's, or
@@ -2196,7 +2252,6 @@ export const AgentWorkbench = memo(function AgentWorkbench({
    * Assigned in an effect rather than during render: a ref written while
    * rendering is a ref React may throw away under Strict Mode.
    */
-  const handleCreateNewSessionRef = useRef<(() => Promise<void>) | null>(null);
   /**
    * The three sheet openers, reachable from the command dispatcher above them.
    *
@@ -2224,13 +2279,13 @@ export const AgentWorkbench = memo(function AgentWorkbench({
    * looking exactly like a message that had been delivered. The reader waited
    * for a reply to something the engine had never been told about.
    */
-  const handleSendPrompt = async (
+  const dispatchPrompt = async (
     text: string,
     attachments?: string[],
     delivery?: 'steer' | 'queue'
   ): Promise<boolean> => {
-    const sourceAsid = activeAsid;
-    const directory = activeDirectoryRef.current ?? sessionInfo?.directory;
+    const sourceAsid = activeAsidRef.current;
+    let directory = activeDirectoryRef.current ?? sessionInfo?.directory;
     let requestOwner = captureWorkbenchOwner(sourceAsid, directory);
     const ownsRoute = () =>
       mountedRef.current &&
@@ -2245,39 +2300,65 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     if (!currentAsid) {
       if (newSessionCreationRef.current) return false;
       newSessionCreationRef.current = true;
+      setCreatingSession(true);
       const params = newSessionParams(directory);
       if (!ownsSource()) {
         newSessionCreationRef.current = false;
+        setCreatingSession(false);
         return false;
       }
-      try {
-        const created = await createAgentSession(sessionId, params);
-        if (!ownsSource()) return false;
-        const advancedOwner = advanceAgentWorkbenchOwnerAfterCreate(
-          requestOwner,
-          captureWorkbenchOwner(activeAsidRef.current, activeDirectoryRef.current),
-          created.asid
-        );
-        if (!advancedOwner) return false;
-        currentAsid = created.asid;
-        activeAsidRef.current = created.asid;
-        setActiveAsid(created.asid);
-        setSessionInfo(created);
-        requestOwner = advancedOwner;
-      } catch (err) {
-        console.warn('Failed to create session on prompt send:', err);
-        if (ownsSource())
-          showToast({
-            variant: 'danger',
-            title: t`Could not start a session`,
-            message: formatAgentErrorMessage(err, t`OpenCode service is offline`),
-          });
-        return false;
-      } finally {
-        newSessionCreationRef.current = false;
-      }
+      // Every exit below still returns `false` from this function, and the
+      // flag clears whichever way it ends; see `settleAfter` and `recoverWith`.
+      const sessionStarted = await settleAfter(
+        async () =>
+          recoverWith(
+            async () => {
+              const created = await createAgentSession(sessionId, params);
+              if (!ownsSource()) return false;
+              const advancedOwner = advanceAgentWorkbenchOwnerAfterCreate(
+                requestOwner,
+                captureWorkbenchOwner(activeAsidRef.current, activeDirectoryRef.current),
+                created.asid
+              );
+              if (!advancedOwner) return false;
+              directory = created.directory ?? directory;
+              activeDirectoryRef.current = directory;
+              setActiveDirectory(directory);
+              freshSessionRef.current = created.asid;
+              setSessions((previous) => [
+                created,
+                ...previous.filter((item) => item.asid !== created.asid),
+              ]);
+              setLoading(false);
+              currentAsid = created.asid;
+              activeAsidRef.current = created.asid;
+              setActiveAsid(created.asid);
+              setSessionInfo(created);
+              requestOwner = { ...advancedOwner, directory };
+              return true;
+            },
+            (err) => {
+              console.warn('Failed to create session on prompt send:', err);
+              if (ownsSource())
+                showToast({
+                  variant: 'danger',
+                  title: t`Could not start a session`,
+                  message: formatAgentErrorMessage(err, t`OpenCode service is offline`),
+                });
+              return false;
+            }
+          ),
+        () => {
+          newSessionCreationRef.current = false;
+          setCreatingSession(false);
+        }
+      );
+      if (!sessionStarted) return false;
     }
     if (!currentAsid || !ownsRoute() || activeAsidRef.current !== currentAsid) return false;
+    // The session this prompt goes to, fixed here: `currentAsid` is assigned
+    // inside the create above, so closures below read this narrowed copy.
+    const promptAsid = currentAsid;
 
     const isQueued = isBusyStatus(sessionInfo?.status) && delivery === 'queue';
 
@@ -2304,57 +2385,70 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       queued: isQueued,
       order: orderKeyAfter(transcriptStore.getState().timeline),
     };
-    const followAfterSend =
-      listRef.current?.getState().isWithinMaintainScrollAtEndThreshold ?? true;
     setTimeline((prev) => [...prev, tempUserItem]);
-    if (followAfterSend) {
-      // The optimistic row and the keyboard used to move the list
-      // independently: the row committed while KeyboardChatScrollView was
-      // closing, then maintainScrollAtEnd corrected the same offset. On long
-      // transcripts that race could leave only the new prompt mounted above a
-      // screen of blank space until the next layout. Legend List's chat helper
-      // coordinates those operations behind `freeze`; wait one frame so the
-      // new row is committed before dismissing the keyboard and reaching it.
-      // A reader outside the maintain-at-end threshold is still left alone.
-      requestAnimationFrame(() => {
-        void scrollMessageToEnd({ animated: true, closeKeyboard: true });
-      });
-    }
+    // Sending is an explicit request to see the newest message, even when the
+    // reader was browsing history. Keep the keyboard in place: dismissing it
+    // while appending and animating an end scroll changes the viewport and
+    // offset together. Stream updates still respect the normal end threshold.
+    requestAnimationFrame(() => {
+      if (!ownsRoute() || activeAsidRef.current !== promptAsid) return;
+      // Keep keyboard reactions live while LegendList measures the appended
+      // row. Freezing until scrollToEnd resolves can miss a keyboard dismissal
+      // and leave the native offset one keyboard-height beyond the new end.
+      void listRef.current?.scrollToEnd({ animated: false });
+    });
 
     // No optimistic title. Auto-titling happens on the engine's first turn and
     // arrives as `agent.session.updated`; a client-side guess made from the
     // first thirty characters was only ever replaced a few seconds later, and
     // it is what put a truncated prompt in the strip instead of a real title.
-    if (sessionInfo) {
-      setSessionInfo({ ...sessionInfo, status: 'busy' });
-    }
+    setSessionInfo((previous) =>
+      previous?.asid === promptAsid ? { ...previous, status: 'busy' } : previous
+    );
 
-    try {
-      // Selection can change between the optimistic row and the network call.
-      // Do not send a newly-created prompt through the newly-selected gateway.
-      if (!ownsRoute() || activeAsidRef.current !== currentAsid) return false;
-      await sendAgentPrompt(sessionId, currentAsid, {
-        text,
-        attachments,
-        delivery,
-      });
-      if (!ownsRoute() || activeAsidRef.current !== currentAsid) return false;
-      return true;
-    } catch (err) {
-      console.warn('Failed to send prompt:', err);
-      if (!ownsRoute() || activeAsidRef.current !== currentAsid) return false;
-      // The row goes with the failure. A message that was never delivered has
-      // no business sitting in the transcript, and the draft comes back so the
-      // reader can try again rather than retype it.
-      setTimeline((prev) => prev.filter((item) => item.id !== tempUserItem.id));
-      setSessionInfo((prev) => (prev ? { ...prev, status: 'idle' } : prev));
-      showToast({
-        variant: 'danger',
-        title: t`Message not sent`,
-        message: formatAgentErrorMessage(err, t`OpenCode service is offline`),
-      });
-      return false;
-    }
+    return recoverWith(
+      async () => {
+        // Selection can change between the optimistic row and the network call.
+        // Do not send a newly-created prompt through the newly-selected gateway.
+        if (!ownsRoute() || activeAsidRef.current !== promptAsid) return false;
+        await sendAgentPrompt(sessionId, promptAsid, {
+          text,
+          attachments,
+          delivery,
+        });
+        if (!ownsRoute() || activeAsidRef.current !== promptAsid) return false;
+        return true;
+      },
+      (err) => {
+        console.warn('Failed to send prompt:', err);
+        if (!ownsRoute() || activeAsidRef.current !== promptAsid) return false;
+        // The row goes with the failure. A message that was never delivered has
+        // no business sitting in the transcript, and the draft comes back so the
+        // reader can try again rather than retype it.
+        setTimeline((prev) => prev.filter((item) => item.id !== tempUserItem.id));
+        setSessionInfo((prev) => (prev ? { ...prev, status: 'idle' } : prev));
+        showToast({
+          variant: 'danger',
+          title: t`Message not sent`,
+          message: formatAgentErrorMessage(err, t`OpenCode service is offline`),
+        });
+        return false;
+      }
+    );
+  };
+
+  const handleSendPrompt = async (...args: Parameters<typeof dispatchPrompt>): Promise<boolean> => {
+    // React state does not synchronously lock two taps in the same frame.
+    if (promptDispatchRef.current || newSessionCreationRef.current) return false;
+    promptDispatchRef.current = true;
+    return settleAfter(
+      async () => {
+        return await dispatchPrompt(...args);
+      },
+      () => {
+        promptDispatchRef.current = false;
+      }
+    );
   };
 
   // Assigned in an effect rather than during render: a ref written while
@@ -2400,21 +2494,40 @@ export const AgentWorkbench = memo(function AgentWorkbench({
    */
   const handleSelectAgentMode = useCallback(
     (agent: string) => {
+      const configuredModel = catalogModelRef(
+        availableAgents.find((entry) => entry.id === agent)?.model,
+        catalogModels
+      );
       pickedAgentRef.current = true;
+      pickedModelRef.current = false;
+      setManualModelOverride(false);
       setSelectedAgent(agent);
+      if (configuredModel) applySelectedModel(configuredModel);
       // The reader's own pick, remembered the same way the model is.
       rememberAgentChoice(sessionId, activeDirectoryRef.current, { agent });
       if (!activeAsid) return;
-      switchAgentMode(activeAsid, agent).catch((err) => {
-        console.warn('Failed to switch agent:', err);
-        showToast({
-          variant: 'danger',
-          title: t`Could not switch agent`,
-          message: formatAgentErrorMessage(err, t`OpenCode service is offline`),
+      void switchAgentMode(activeAsid, agent)
+        .then(async () => {
+          if (!configuredModel) return;
+          try {
+            await switchAgentModel(sessionId, activeAsid, configuredModel);
+          } catch (err) {
+            showToast({
+              variant: 'danger',
+              title: t`Could not switch model`,
+              message: formatAgentErrorMessage(err, t`OpenCode service is offline`),
+            });
+          }
+        })
+        .catch((err) => {
+          showToast({
+            variant: 'danger',
+            title: t`Could not switch agent`,
+            message: formatAgentErrorMessage(err, t`OpenCode service is offline`),
+          });
         });
-      });
     },
-    [activeAsid, sessionId, showToast, t]
+    [activeAsid, sessionId, showToast, t, availableAgents, catalogModels, applySelectedModel]
   );
 
   /**
@@ -2435,7 +2548,6 @@ export const AgentWorkbench = memo(function AgentWorkbench({
    * the sheet re-lists from the route, which is the only thing that can answer
    * authoritatively -- so what is kept is the count, and the sheet watches it.
    */
-  const [worktreeRevision, setWorktreeRevision] = useState(0);
 
   const handlePermissionDecision = useCallback(
     async (permId: string, decision: PermissionDecision) => {
@@ -2498,7 +2610,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   );
 
   const handleCreateNewSession = useCallback(async () => {
-    if (newSessionCreationRef.current) return;
+    if (newSessionCreationRef.current || promptDispatchRef.current) return;
     if (isOffline) {
       showToast({
         variant: 'danger',
@@ -2508,6 +2620,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       return;
     }
     newSessionCreationRef.current = true;
+    setCreatingSession(true);
     const directory = activeDirectoryRef.current ?? sessionInfo?.directory;
     const sourceAsid = activeAsidRef.current;
     const capturedOwner = captureWorkbenchOwner(sourceAsid, directory);
@@ -2515,35 +2628,48 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     const ownsCreate = () => ownsWorkbench(capturedOwner) && activeAsidRef.current === sourceAsid;
     if (!ownsCreate()) {
       newSessionCreationRef.current = false;
+      setCreatingSession(false);
       return;
     }
-    try {
-      const created = await createAgentSession(sessionId, params);
-      if (!ownsCreate()) return;
-      activeAsidRef.current = created.asid;
-      setActiveAsid(created.asid);
-      setSessionInfo(created);
-      setTimeline([]);
-      setWindowStart(0);
-      setPermissions([]);
-      setForms([]);
-      syncRef.current = CATCH_UP_START;
-      refreshSessions();
-      void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      showScreenNotice(t`New session`, t`Started with a clean context.`);
-    } catch (err) {
-      console.warn('Failed to create session:', err);
-      if (ownsCreate()) {
-        setIsOffline(true);
-        showToast({
-          variant: 'danger',
-          title: t`Could not create session`,
-          message: formatAgentErrorMessage(err, t`Failed to create agent session`),
-        });
+    return settleAfter(
+      async () => {
+        try {
+          const created = await createAgentSession(sessionId, params);
+          if (!ownsCreate()) return;
+          freshSessionRef.current = created.asid;
+          setSessions((previous) => [
+            created,
+            ...previous.filter((item) => item.asid !== created.asid),
+          ]);
+          setLoading(false);
+          activeAsidRef.current = created.asid;
+          setActiveAsid(created.asid);
+          setSessionInfo(created);
+          setTimeline([]);
+          setWindowStart(0);
+          setPermissions([]);
+          setForms([]);
+          syncRef.current = CATCH_UP_START;
+          refreshSessions();
+          void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          showScreenNotice(t`New session`, t`Started with a clean context.`);
+        } catch (err) {
+          console.warn('Failed to create session:', err);
+          if (ownsCreate()) {
+            setIsOffline(true);
+            showToast({
+              variant: 'danger',
+              title: t`Could not create session`,
+              message: formatAgentErrorMessage(err, t`Failed to create agent session`),
+            });
+          }
+        }
+      },
+      () => {
+        newSessionCreationRef.current = false;
+        setCreatingSession(false);
       }
-    } finally {
-      newSessionCreationRef.current = false;
-    }
+    );
   }, [
     setTimeline,
     isOffline,
@@ -2713,42 +2839,45 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       // replace the fresh draft with an existing or empty project session.
       if (shouldPreserveNewSessionDraft(initialIntent, activeAsidRef.current)) return;
       const params = newSessionParams(directory);
-      try {
-        // A workspace that already has sessions opens on the one the reader
-        // last had open there, or on its most recent one; only an empty
-        // workspace gets a new session made for it.
-        const existing = await listAgentSessions(sessionId, { roots: true, directory });
-        if (!ownsSelection()) return;
-        const opening = existing
-          ? pickSessionToOpen(existing, loadRememberedAgentSession(sessionId, directory))
-          : null;
-        let target = opening;
-        if (!target) {
+      return recoverWith(
+        async () => {
+          // A workspace that already has sessions opens on the one the reader
+          // last had open there, or on its most recent one; only an empty
+          // workspace gets a new session made for it.
+          const existing = await listAgentSessions(sessionId, { roots: true, directory });
           if (!ownsSelection()) return;
-          target = await createAgentSession(sessionId, params);
+          const opening = existing
+            ? pickSessionToOpen(existing, loadRememberedAgentSession(sessionId, directory))
+            : null;
+          let target = opening;
+          if (!target) {
+            if (!ownsSelection()) return;
+            target = await createAgentSession(sessionId, params);
+            if (!ownsSelection()) return;
+          }
           if (!ownsSelection()) return;
+          activeAsidRef.current = target.asid;
+          setActiveAsid(target.asid);
+          setSessionInfo(target);
+          setTimeline([]);
+          setWindowStart(0);
+          setPermissions([]);
+          setForms([]);
+          syncRef.current = CATCH_UP_START;
+          refreshSessions();
+        },
+        (err) => {
+          console.warn('Failed to switch workspace session:', err);
+          if (ownsSelection()) {
+            setIsOffline(true);
+            showToast({
+              variant: 'danger',
+              title: t`Could not create session`,
+              message: formatAgentErrorMessage(err, t`Failed to switch project`),
+            });
+          }
         }
-        if (!ownsSelection()) return;
-        activeAsidRef.current = target.asid;
-        setActiveAsid(target.asid);
-        setSessionInfo(target);
-        setTimeline([]);
-        setWindowStart(0);
-        setPermissions([]);
-        setForms([]);
-        syncRef.current = CATCH_UP_START;
-        refreshSessions();
-      } catch (err) {
-        console.warn('Failed to switch workspace session:', err);
-        if (ownsSelection()) {
-          setIsOffline(true);
-          showToast({
-            variant: 'danger',
-            title: t`Could not create session`,
-            message: formatAgentErrorMessage(err, t`Failed to switch project`),
-          });
-        }
-      }
+      );
     },
     [
       setTimeline,
@@ -3379,6 +3508,12 @@ export const AgentWorkbench = memo(function AgentWorkbench({
    * nowhere else in this app or in any catalog it fetches.
    */
   const statusPlate = useTranscriptPlate();
+  const [retryNoticeDismissed, setRetryNoticeDismissed] = useState(false);
+  useEffect(() => {
+    // Dismissal belongs to this retry episode, never to the engine's state.
+    // A recovered session that later retries must be able to explain why again.
+    setRetryNoticeDismissed(false);
+  }, [activeAsid, sessionInfo?.status, sessionInfo?.error?.message]);
   const statusNotice = useMemo(() => {
     const status = sessionInfo?.status;
     if (status === 'failed') {
@@ -3403,10 +3538,12 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       return { tone: theme.colors.warning, label: t`Stopped`, detail: '' };
     }
     if (status === 'retry') {
+      if (retryNoticeDismissed) return null;
       return {
         tone: theme.colors.warning,
         label: t`Retrying…`,
         detail: sessionInfo?.error?.message ?? '',
+        dismissible: true,
       };
     }
     if (status === 'unknown') {
@@ -3428,7 +3565,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       };
     }
     return null;
-  }, [sessionInfo?.status, sessionInfo?.error?.message, theme.colors, t]);
+  }, [sessionInfo?.status, sessionInfo?.error?.message, retryNoticeDismissed, theme.colors, t]);
 
   // A form field in the footer took focus: once the keyboard has risen, bring
   // the card up above the composer. The inset at the end of the list is what
@@ -3505,6 +3642,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
               style={[
                 styles.thinkingPill,
                 {
+                  borderRadius: profile.chrome.control,
                   backgroundColor: surfaceBackground(theme.colors.surface),
                   borderColor: theme.colors.border,
                 },
@@ -3523,6 +3661,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         {statusNotice ? (
           <PressableScale
             testID="agent-status-notice"
+            accessible={!statusNotice.dismissible}
             accessibilityRole={statusNotice.refresh ? 'button' : 'text'}
             accessibilityLabel={statusNotice.label}
             disabled={!statusNotice.refresh}
@@ -3577,6 +3716,16 @@ export const AgentWorkbench = memo(function AgentWorkbench({
                 </Animated.View>
               ) : null}
             </View>
+            {statusNotice.dismissible ? (
+              <PressableScale
+                testID="agent-status-notice-dismiss"
+                accessibilityRole="button"
+                accessibilityLabel={t`Dismiss`}
+                onPress={() => setRetryNoticeDismissed(true)}
+                style={[styles.statusNoticeDismiss, { borderRadius: profile.chrome.control }]}>
+                <X size={16} color={theme.colors.textMuted} />
+              </PressableScale>
+            ) : null}
           </PressableScale>
         ) : null}
         {footerPermissions.map((p) => (
@@ -3726,7 +3875,19 @@ export const AgentWorkbench = memo(function AgentWorkbench({
    * A `ModelRef` is three strings; everything else about a model -- its name as
    * its publisher spells it, how much it can hold -- is in the catalogue.
    */
-  const activeModelRef = selectedModel ?? currentSession?.model ?? sessionInfo?.model ?? undefined;
+  const activeAgent =
+    selectedAgent ?? currentSession?.agent ?? sessionInfo?.agent ?? catalogDefaults.agent;
+  const activeAgentModel = catalogModelRef(
+    availableAgents.find((entry) => entry.id === activeAgent)?.model,
+    catalogModels
+  );
+  const activeModelRef = manualModelOverride
+    ? selectedModel
+    : (activeAgentModel ??
+      selectedModel ??
+      currentSession?.model ??
+      sessionInfo?.model ??
+      undefined);
   const activeModelInfo = useMemo(() => {
     if (!activeModelRef?.model_id) return undefined;
     return catalogModels.find(
@@ -3906,7 +4067,14 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     <View style={styles.root}>
       {/* Main Content Stream, standing clear of whatever notice is up. */}
       <Animated.View style={[styles.transcriptArea, transcriptAreaStyle]}>
-        {loading ? (
+        {creatingSession ? (
+          <View style={[styles.emptyScrollWrapper, { paddingTop: topInset }]}>
+            <ActivityIndicator color={theme.colors.primary} />
+            <Text style={styles.emptySubtitle} color={theme.colors.textMuted}>
+              <Trans>Creating session…</Trans>
+            </Text>
+          </View>
+        ) : loading ? (
           /*
             The shape of what is coming, which is what every other surface in
             this app answers a wait with. This branch is also the whole of the
@@ -4080,7 +4248,6 @@ export const AgentWorkbench = memo(function AgentWorkbench({
               store={transcriptStore}
               rowProps={rowProps}
               ref={listRef}
-              freeze={freezeTimelineKeyboard}
               /*
             Lift only for a reader at the latest message. Someone who has
             scrolled up to read is not moved by a keyboard any more than by
@@ -4558,7 +4725,6 @@ const styles = StyleSheet.create({
     gap: 7,
     paddingHorizontal: 12,
     paddingVertical: 7,
-    borderRadius: 999,
     borderCurve: 'continuous',
     borderWidth: StyleSheet.hairlineWidth,
   },
@@ -4595,6 +4761,13 @@ const styles = StyleSheet.create({
   statusNoticeHug: {
     alignSelf: 'flex-start',
     maxWidth: '100%',
+  },
+  statusNoticeDismiss: {
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 'auto',
   },
   // Shrinks, never grows: inside a plate that hugs, a `flex: 1` column measures
   // to nothing and the row collapses to its dot.

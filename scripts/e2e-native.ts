@@ -274,7 +274,7 @@ function nodeRole(node: Node): string {
     .split('.')
     .at(-1)!
     .toLowerCase();
-  // Match agent-device 0.20.10's semantic type normalization, not raw AX or
+  // Match agent-device 0.21.12's semantic type normalization, not raw AX or
   // Android class names. TextView is editable on iOS but static on Android.
   if (role === 'textview')
     return /^(android\.|androidx\.|com\.)/.test(source) ? 'text' : 'text-view';
@@ -308,6 +308,38 @@ function nodeRole(node: Node): string {
     segmentedcontrol: 'segmented-control',
   };
   return aliases[role] ?? role;
+}
+
+/** Native iOS visibility can include rows clipped below a form sheet's list. */
+export function withinScrollViewport(node: Node, nodes: Node[]): boolean {
+  if (!node.rect) return true;
+  const { x, y, width, height } = node.rect;
+  const centerX = x + width / 2;
+  const centerY = y + height / 2;
+  const actionable =
+    actionableRoles.has(nodeRole(node)) || settingsControlState(node) !== undefined;
+  const seen = new Set<number>();
+  let parentIndex = node.parentIndex;
+  while (parentIndex !== undefined && !seen.has(parentIndex)) {
+    seen.add(parentIndex);
+    const parent = nodes.find((candidate) => candidate.index === parentIndex);
+    if (!parent) break;
+    if (parent.rect && ['scroll-area', 'application'].includes(nodeRole(parent))) {
+      const rect = parent.rect;
+      const visible = actionable
+        ? centerX >= rect.x &&
+          centerX < rect.x + rect.width &&
+          centerY >= rect.y &&
+          centerY < rect.y + rect.height
+        : x < rect.x + rect.width &&
+          x + width > rect.x &&
+          y < rect.y + rect.height &&
+          y + height > rect.y;
+      if (!visible) return false;
+    }
+    parentIndex = parent.parentIndex;
+  }
+  return true;
 }
 
 function hasAlert(nodes: Node[]): boolean {
@@ -649,22 +681,32 @@ export class NativeRunner {
 
   private async readCapture(): Promise<Record<string, unknown>> {
     for (let attempt = 0; ; attempt++) {
-      const capture = await this.invokeSettling(['snapshot']);
+      let capture: Record<string, unknown>;
+      for (let busyAttempt = 0; ; busyAttempt++) {
+        try {
+          capture = await this.invokeSettling(['snapshot']);
+          break;
+        } catch (error) {
+          const delay = [1000, 2000, 4000, 8000][busyAttempt];
+          if (delay === undefined || !String(error).includes('RUNNER_BUSY')) throw error;
+          // A heavy iOS accessibility capture can outlive agent-device's
+          // watchdog. Only repeat this read; never replay the preceding input.
+          await new Promise((resolve) => setTimeout(resolve, delay));
+        }
+      }
       const quality = capture.snapshotQuality as
         | { state?: string; backend?: string; reason?: string; reasonCode?: string }
         | undefined;
-      if (
-        attempt >= 2 ||
-        quality?.backend !== 'private-ax' ||
-        !(
-          (quality.state === 'sparse' && /deferred/i.test(quality.reason ?? '')) ||
-          quality.reasonCode === 'sparse-tree'
-        )
-      )
-        return capture;
-      // Deferred iOS acquisition is transient; retry only this read, never
-      // dismiss, reopen or repeat an input. Exhaustion still fails quality.
-      await new Promise((resolve) => setTimeout(resolve, 250));
+      const sparseTree = quality?.reasonCode === 'sparse-tree';
+      const deferredPrivateAX =
+        quality?.backend === 'private-ax' &&
+        quality.state === 'sparse' &&
+        /deferred/i.test(quality.reason ?? '');
+      if (!sparseTree && !deferredPrivateAX) return capture;
+      if (attempt >= (sparseTree ? 8 : 2)) return capture;
+      // A relaunch can expose a bare native tree while the first app frame is
+      // still rendering. Repeat only the read; never replay the preceding input.
+      await new Promise((resolve) => setTimeout(resolve, sparseTree ? 500 : 250));
     }
   }
 
@@ -686,6 +728,7 @@ export class NativeRunner {
     // label again to a large ancestor. Distinct same-role siblings still reach
     // native ambiguity checks; no coordinate or arbitrary-first fallback.
     for (const node of candidates.filter((candidate) => matches(candidate, target))) {
+      if (!withinScrollViewport(node, nodes)) continue;
       let visible: Record<string, unknown>;
       try {
         visible = await this.invoke(['is', 'exists', `${selector(node)} visible=true`]);
@@ -743,10 +786,75 @@ export class NativeRunner {
         args[1] = path.join(this.artifacts, args[1].replace(/^dist\//, ''));
         await mkdir(path.dirname(args[1]), { recursive: true });
       }
+      if (args.includes('--unless-visible')) {
+        const index = args.indexOf('--unless-visible');
+        const target = args[index + 1];
+        if (args[0] !== 'scroll' || !target?.startsWith('id='))
+          throw new Error('Conditional scrolling requires an id target');
+        args.splice(index, 2);
+        if (await this.locate({ id: target.slice(3) })) continue;
+      }
+      if (args.includes('--dismiss-ipad-keyboard')) {
+        args.splice(args.indexOf('--dismiss-ipad-keyboard'), 1);
+        if (env.DEVICE_KIND === 'ipad') {
+          // The dedicated 1210x834 iPad keyboard has a Hide keyboard key at
+          // this point. Its AX label is intermittent, but the key is visible.
+          await this.invoke(['press', '1138', '771']);
+          await this.invoke(['wait', 'stable', '300', '5000']);
+          continue;
+        }
+      }
+      if (args.includes('--dismiss-iphone-keyboard')) {
+        args.splice(args.indexOf('--dismiss-iphone-keyboard'), 1);
+        if (env.DEVICE_KIND === 'iphone') {
+          const returnKey = await this.locate({ text: 'return' });
+          if (returnKey) {
+            await this.invoke(['press', selector(returnKey)]);
+            await this.invoke(['wait', 'stable', '300', '5000']);
+          }
+        }
+        continue;
+      }
+      if (args.includes('--in-sheet')) {
+        if (args[0] !== 'scroll' || args[1] !== 'down')
+          throw new Error('In-sheet scrolling requires scroll down');
+        args.splice(args.indexOf('--in-sheet'), 1);
+        if (env.DEVICE_KIND === 'ipad') {
+          const nodes = await this.readySnapshot(true);
+          const grabber = nodes.find((node) => node.label === 'Sheet Grabber');
+          if (!grabber?.rect) throw new Error('Missing iPad sheet grabber for in-sheet scroll');
+          const viewport = appViewport(nodes);
+          const x = Math.round(grabber.rect.x + grabber.rect.width / 2);
+          const start = Math.round(
+            Math.min(viewport.y + viewport.height - 80, grabber.rect.y + 395)
+          );
+          const dy = Math.round(grabber.rect.y + 90 - start);
+          for (let pass = 0; pass < Number(args[2] ?? '1'); pass++)
+            await this.invoke(['gesture', 'pan', String(x), String(start), '0', String(dy), '400']);
+          continue;
+        }
+      }
       // A launch reopens the window; every other step spends it down.
       this.stepsSinceLaunch = args[0] === 'open' ? 0 : this.stepsSinceLaunch + 1;
+      // The landscape iPad theme preview stalls XCUITest accessibility capture.
+      // Permit one screenshot-backed coordinate press there, without asking the
+      // stalled tree for another verdict. The next assertion checks its result.
+      const visualPress =
+        args[0] === 'press' &&
+        args[3] === '--visual' &&
+        /^\d+$/.test(args[1] ?? '') &&
+        /^\d+$/.test(args[2] ?? '') &&
+        env.DEVICE_KIND === 'ipad';
+      if (args.includes('--visual') && !visualPress)
+        throw new Error('Visual press requires iPad and numeric coordinates');
+      if (visualPress) {
+        const screenshot = path.join(this.artifacts, 'visual-press-before.png');
+        await this.invoke(['screenshot', screenshot]);
+        args.pop();
+      }
       let guardedNodes: Node[] | undefined;
-      if (guardedMutations.has(args[0])) guardedNodes = await this.readySnapshot(true);
+      if (guardedMutations.has(args[0]) && !visualPress)
+        guardedNodes = await this.readySnapshot(true);
       if (args[0] === 'alert' && args[1] === 'dismiss') {
         const status = await this.invoke(['alert', 'get']);
         const alert = status.alert as { title?: string; buttons?: string[] } | null;
@@ -762,6 +870,36 @@ export class NativeRunner {
           throw new Error('Only the expected local-notification denial alert may be dismissed');
       }
       if (args[0] === 'back') {
+        // Android exposes controls behind the catalogue sheet in its tree.
+        // Its underlying "Go back" must not steal the sheet's Back action.
+        if (
+          guardedNodes?.some(
+            (node) =>
+              node.identifier === 'theme-browse-list' ||
+              (env.PLATFORM === 'android' &&
+                (node.identifier === 'theme-tab' || node.label === 'Quick action settings'))
+          )
+        ) {
+          await this.invoke(['back', '--system']);
+          continue;
+        }
+        // A landscape iPad form sheet exposes its outside dismissal region.
+        // Press a point in that region: dragging the grabber by 500 points
+        // crosses the reduced viewport when the software keyboard is open.
+        const dismissRegion = guardedNodes?.find(
+          (node) => node.identifier === 'PopoverDismissRegion'
+        );
+        if (dismissRegion && guardedNodes) {
+          const viewport = appViewport(guardedNodes);
+          if (viewport.width > 900) {
+            await this.invoke([
+              'press',
+              String(Math.round(viewport.x + viewport.width * 0.08)),
+              String(Math.round(viewport.y + Math.min(200, viewport.height * 0.25))),
+            ]);
+            continue;
+          }
+        }
         const grabber = guardedNodes?.find((node) => node.label === 'Sheet Grabber');
         if (grabber?.rect) {
           const x = Math.round(grabber.rect.x + grabber.rect.width / 2);
@@ -784,20 +922,39 @@ export class NativeRunner {
             ? await this.invokeSettling(args)
             : await this.invoke(args);
         } catch (error) {
-          // Right after a relaunch the accessibility backend can stall before
-          // it has read a single tree: agent-device reports `captureStalled`
-          // with zero captures and calls it retriable. The app is up (the
-          // failure screenshot shows it); only the capture is. One more try
-          // before it counts as the flow's failure.
-          const detail = error instanceof NativeCommandError ? error.details.details : undefined;
           if (
-            args[0] !== 'wait' ||
-            args[1] !== 'stable' ||
-            detail?.captureStalled !== true ||
-            (typeof detail.captures === 'number' && detail.captures > 0)
-          )
-            throw error;
-          result = await this.invoke(args);
+            args[0] === 'fill' &&
+            error instanceof NativeCommandError &&
+            error.details.code === 'TEXT_INPUT_COMMIT_NOT_OBSERVED'
+          ) {
+            const fields = snapshotNodes(await this.readCapture()).filter((node) =>
+              exactSelectorMatches(node, args[1])
+            );
+            if (fields.length === 1 && fields[0].value === args[2]) {
+              result = { verification: 'confirmed' };
+            } else {
+              const retry = [...args];
+              const delay = retry.indexOf('--delay-ms');
+              if (delay >= 0) retry[delay + 1] = '80';
+              else retry.push('--delay-ms', '80');
+              result = await this.invoke(retry);
+            }
+          } else {
+            // Right after a relaunch the accessibility backend can stall before
+            // it has read a single tree: agent-device reports `captureStalled`
+            // with zero captures and calls it retriable. The app is up (the
+            // failure screenshot shows it); only the capture is. One more try
+            // before it counts as the flow's failure.
+            const detail = error instanceof NativeCommandError ? error.details.details : undefined;
+            if (
+              args[0] !== 'wait' ||
+              args[1] !== 'stable' ||
+              detail?.captureStalled !== true ||
+              (typeof detail.captures === 'number' && detail.captures > 0)
+            )
+              throw error;
+            result = await this.invoke(args);
+          }
         }
         // An atomic `fill` can race the IME: agent-device then reports the
         // set as `unconfirmed` and the field is left with whatever the editor

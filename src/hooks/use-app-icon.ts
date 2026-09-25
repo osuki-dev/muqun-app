@@ -6,6 +6,7 @@ import {
 import { useCallback, useState } from 'react';
 
 import { type AppIconId, appIconFromNative, nativeAppIconName } from '@/lib/app-icon';
+import { settleAfter } from '@/lib/compiler-safe-control-flow';
 
 /**
  * The launcher icon in effect, and the one call that changes it.
@@ -24,12 +25,15 @@ export function useAppIcon() {
 
   const choose = useCallback(async (next: AppIconId) => {
     setBusy(true);
-    try {
-      const applied = await setAlternateAppIcon(nativeAppIconName(next));
-      setIcon(appIconFromNative(applied));
-    } finally {
-      setBusy(false);
-    }
+    return settleAfter(
+      async () => {
+        const applied = await setAlternateAppIcon(nativeAppIconName(next));
+        setIcon(appIconFromNative(applied));
+      },
+      () => {
+        setBusy(false);
+      }
+    );
   }, []);
 
   return { icon, choose, busy, supported: supportsAlternateIcons };

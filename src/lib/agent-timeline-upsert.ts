@@ -18,7 +18,11 @@ export function upsertTimelineItems(
       const before = next[existing];
       reordered ||=
         timelineOrderKey(before) !== timelineOrderKey(item) || before.ordinal !== item.ordinal;
-      next[existing] = item;
+      next[existing] = {
+        ...item,
+        ...(before.order === undefined ? {} : { order: before.order }),
+        ...(before.row_key === undefined ? {} : { row_key: before.row_key }),
+      };
       dirty = true;
       continue;
     }

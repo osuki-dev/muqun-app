@@ -208,8 +208,8 @@ export function FloatingHandle({
    */
   function measureTrack(event: LayoutChangeEvent) {
     const { width, height } = event.nativeEvent.layout;
-    trackWidth.value = width;
-    trackHeight.value = height;
+    trackWidth.set(width);
+    trackHeight.set(height);
     track.current = { width, height };
     if (width <= 0 || height <= 0) return;
     const next = boundsNow();
@@ -217,7 +217,7 @@ export function FloatingHandle({
     const rest = previous
       ? reseatFloatingHandle({ x: offsetX.value, y: offsetY.value }, previous, next)
       : snapFloatingHandle({ x: offsetX.value, y: offsetY.value }, next);
-    settledBounds.value = next;
+    settledBounds.set(next);
     if (rest.x !== offsetX.value) settleTo(offsetX, rest.x);
     if (rest.y !== offsetY.value) settleTo(offsetY, rest.y);
   }
@@ -233,7 +233,7 @@ export function FloatingHandle({
   const moveToNextCorner = useCallback(() => {
     const next = boundsNow();
     const corner = nextHandleCorner({ x: offsetX.value, y: offsetY.value }, next);
-    settledBounds.value = next;
+    settledBounds.set(next);
     settleTo(offsetX, corner.x);
     settleTo(offsetY, corner.y);
   }, [boundsNow, offsetX, offsetY, settledBounds]);
@@ -249,8 +249,8 @@ export function FloatingHandle({
   const drag = Gesture.Pan()
     .minDistance(DRAG_SLOP)
     .onStart(() => {
-      startX.value = offsetX.value;
-      startY.value = offsetY.value;
+      startX.set(offsetX.value);
+      startY.set(offsetY.value);
     })
     .onUpdate((event) => {
       // Free in both axes while the finger is down: the button is under the
@@ -258,8 +258,8 @@ export function FloatingHandle({
       // -- a control dragged past the edge of the screen is a control the
       // reader cannot get back.
       const edge = bounds();
-      offsetX.value = Math.min(edge.maxX, Math.max(edge.minX, startX.value + event.translationX));
-      offsetY.value = Math.min(edge.maxY, Math.max(edge.minY, startY.value + event.translationY));
+      offsetX.set(Math.min(edge.maxX, Math.max(edge.minX, startX.value + event.translationX)));
+      offsetY.set(Math.min(edge.maxY, Math.max(edge.minY, startY.value + event.translationY)));
     })
     .onEnd((event) => {
       const next = bounds();
@@ -267,7 +267,7 @@ export function FloatingHandle({
         { x: offsetX.value, y: offsetY.value, velocityX: event.velocityX },
         next
       );
-      settledBounds.value = next;
+      settledBounds.set(next);
       // The spring carries the throw's own velocity into the rail it was
       // heading for, so a flick lands rather than being taken away and put
       // down by the app.

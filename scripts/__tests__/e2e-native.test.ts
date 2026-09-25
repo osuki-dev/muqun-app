@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import {
   NativeRunner,
+  withinScrollViewport,
   appViewport,
   exactSelectorMatches,
   NativeCommandError,
@@ -35,6 +36,42 @@ const suite: Suite = {
 const node = { index: 1, ref: 'e2', label: 'Done', rect: { x: 0, y: 0, width: 20, height: 20 } };
 
 describe('native end-to-end gate', () => {
+  test('sheet list rows must have their tap center inside the visible scroll viewport', () => {
+    const app = {
+      ref: 'e1',
+      index: 0,
+      type: 'Application',
+      rect: { x: 0, y: 0, width: 1210, height: 834 },
+    };
+    const list = {
+      ref: 'e2',
+      index: 1,
+      parentIndex: 0,
+      type: 'ScrollView',
+      rect: { x: 315, y: 368, width: 580, height: 369 },
+    };
+    const row = {
+      ref: 'e3',
+      index: 2,
+      parentIndex: 1,
+      type: 'Button',
+      label: 'Open CHANGELOG.md',
+      rect: { x: 335, y: 738, width: 540, height: 44 },
+    };
+    expect(withinScrollViewport(row, [app, list, row])).toBe(false);
+    const scrolled = { ...row, rect: { ...row.rect, y: 650 } };
+    expect(withinScrollViewport(scrolled, [app, list, scrolled])).toBe(true);
+    const above = { ...row, rect: { ...row.rect, y: 330 } };
+    expect(withinScrollViewport(above, [app, list, above])).toBe(false);
+    // A source row spans the horizontal canvas; its text can be visible even
+    // when the row's center is thousands of points outside the viewport.
+    const source = {
+      ...row,
+      type: 'StaticText',
+      rect: { x: 335, y: 400, width: 28000, height: 17 },
+    };
+    expect(withinScrollViewport(source, [app, list, source])).toBe(true);
+  });
   test('flow cleanup follows failure evidence, always closes, and preserves original failure', async () => {
     const order: string[] = [];
     const failure = await runWithCleanup({
@@ -397,6 +434,48 @@ describe('native end-to-end gate', () => {
     );
     expect(await runner.readySnapshot()).toEqual([node]);
     expect(attempts).toBe(2);
+  });
+  test('a transient bare iOS tree at launch is recaptured before asserting absence', async () => {
+    let attempts = 0;
+    const runner = new NativeRunner(
+      suite,
+      '/unused',
+      '/unused',
+      async (args) => {
+        expect(args).toEqual(['snapshot']);
+        attempts++;
+        return attempts < 3
+          ? {
+              nodes: [node],
+              snapshotQuality: {
+                state: 'sparse',
+                backend: 'tree',
+                reasonCode: 'sparse-tree',
+                reason: 'snapshot returned no semantic controls or content',
+              },
+            }
+          : { nodes: [node] };
+      },
+      {}
+    );
+    expect(await runner.readySnapshot()).toEqual([node]);
+    expect(attempts).toBe(3);
+  });
+  test('a busy iOS runner retries the snapshot without repeating an input', async () => {
+    const calls: string[][] = [];
+    const runner = new NativeRunner(
+      suite,
+      '/unused',
+      '/unused',
+      async (args) => {
+        calls.push(args);
+        if (calls.length === 1) throw new Error('runnerErrorCode: RUNNER_BUSY');
+        return { nodes: [node] };
+      },
+      {}
+    );
+    expect(await runner.readySnapshot()).toEqual([node]);
+    expect(calls).toEqual([['snapshot'], ['snapshot']]);
   });
   test('canvas gestures use the app viewport, never the first Android SystemUI status bar', () => {
     const appRect = { x: 0, y: 0, width: 1080, height: 2400 };
@@ -836,6 +915,169 @@ describe('native end-to-end gate', () => {
     ]);
     expect(interpolate('${TARGET}', { TARGET: 'label="Use spaces"' })).toBe('label="Use spaces"');
     expect(() => interpolate('${MISSING}', {})).toThrow('Missing test input');
+  });
+  test('the iPad visual press records evidence and cannot bypass guards on other devices', async () => {
+    const directory = await mkdtemp(path.join(tmpdir(), 'muqun-e2e-visual-'));
+    try {
+      await writeFile(path.join(directory, 'visual.ad'), '# section tap\npress 605 778 --visual\n');
+      const calls: string[][] = [];
+      const runner = new NativeRunner(
+        suite,
+        directory,
+        directory,
+        async (args) => {
+          calls.push(args);
+          return {};
+        },
+        {}
+      );
+      await runner.runSection('visual.ad#tap', { DEVICE_KIND: 'ipad' });
+      expect(calls.map((args) => args[0])).toEqual(['screenshot', 'press']);
+      expect(calls[1]).toEqual(['press', '605', '778']);
+      await expect(runner.runSection('visual.ad#tap', { DEVICE_KIND: 'iphone' })).rejects.toThrow(
+        'Visual press requires iPad'
+      );
+      expect(calls).toHaveLength(2);
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
+  });
+  test('a landscape form sheet dismisses outside the keyboard-reduced viewport', async () => {
+    const directory = await mkdtemp(path.join(tmpdir(), 'muqun-e2e-popover-'));
+    try {
+      await writeFile(path.join(directory, 'dismiss.ad'), '# section close\nback --system\n');
+      const calls: string[][] = [];
+      const runner = new NativeRunner(
+        suite,
+        directory,
+        directory,
+        async (args) => {
+          calls.push(args);
+          if (args[0] === 'snapshot')
+            return {
+              nodes: [
+                { ...node, type: 'Application', rect: { x: 0, y: 0, width: 1210, height: 834 } },
+                { ...node, identifier: 'PopoverDismissRegion', type: 'Other' },
+                { ...node, label: 'Sheet Grabber', type: 'Button' },
+              ],
+            };
+          return {};
+        },
+        {}
+      );
+      await runner.runSection('dismiss.ad#close', {});
+      expect(calls.filter((args) => args[0] === 'press')).toEqual([['press', '97', '200']]);
+      expect(calls.some((args) => args[0] === 'gesture')).toBe(false);
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
+  });
+  test('catalogue Back ignores an exposed underlying navigation button', async () => {
+    const directory = await mkdtemp(path.join(tmpdir(), 'muqun-e2e-catalogue-'));
+    try {
+      await writeFile(path.join(directory, 'dismiss.ad'), '# section close\nback --system\n');
+      const calls: string[][] = [];
+      const runner = new NativeRunner(
+        suite,
+        directory,
+        directory,
+        async (args) => {
+          calls.push(args);
+          if (args[0] === 'snapshot')
+            return {
+              nodes: [
+                { ...node, identifier: 'theme-browse-list', type: 'android.widget.ScrollView' },
+                { ...node, label: 'Go back', type: 'android.widget.Button' },
+              ],
+            };
+          return { kind: 'alertStatus', alert: null };
+        },
+        {}
+      );
+      await runner.runSection('dismiss.ad#close', {});
+      expect(calls.filter((args) => args[0] === 'back')).toEqual([['back', '--system']]);
+      expect(calls.some((args) => args[0] === 'press')).toBe(false);
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
+  });
+  test('iPad sheet scrolling starts inside the form sheet', async () => {
+    const directory = await mkdtemp(path.join(tmpdir(), 'muqun-e2e-sheet-scroll-'));
+    try {
+      await writeFile(
+        path.join(directory, 'scroll.ad'),
+        '# section list\nscroll down 2 --in-sheet\n'
+      );
+      const calls: string[][] = [];
+      const runner = new NativeRunner(
+        suite,
+        directory,
+        directory,
+        async (args) => {
+          calls.push(args);
+          if (args[0] === 'snapshot')
+            return {
+              nodes: [
+                { ...node, type: 'Application', rect: { x: 0, y: 0, width: 1210, height: 834 } },
+                {
+                  ...node,
+                  label: 'Sheet Grabber',
+                  rect: { x: 567, y: 205, width: 76, height: 25 },
+                },
+              ],
+            };
+          return {};
+        },
+        {}
+      );
+      await runner.runSection('scroll.ad#list', { DEVICE_KIND: 'ipad' });
+      expect(calls.filter((args) => args[0] === 'gesture')).toEqual([
+        ['gesture', 'pan', '605', '600', '0', '-305', '400'],
+        ['gesture', 'pan', '605', '600', '0', '-305', '400'],
+      ]);
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
+  });
+  test('an unconfirmed iOS fill observes its committed value before any retry', async () => {
+    const directory = await mkdtemp(path.join(tmpdir(), 'muqun-e2e-fill-'));
+    try {
+      await writeFile(
+        path.join(directory, 'fill.ad'),
+        '# section input\nfill "id=new-task-prompt" "QA attachment draft"\n'
+      );
+      const calls: string[][] = [];
+      let attempted = false;
+      const runner = new NativeRunner(
+        suite,
+        directory,
+        directory,
+        async (args) => {
+          calls.push(args);
+          if (args[0] === 'snapshot')
+            return {
+              nodes: [
+                {
+                  ...node,
+                  identifier: 'new-task-prompt',
+                  type: 'XCUIElementTypeTextField',
+                  value: attempted ? 'QA attachment draft' : '',
+                },
+              ],
+            };
+          if (args[0] === 'fill') {
+            attempted = true;
+            throw new NativeCommandError({ code: 'TEXT_INPUT_COMMIT_NOT_OBSERVED' });
+          }
+          return {};
+        },
+        {}
+      );
+      await runner.runSection('fill.ad#input', {});
+      expect(calls.filter((args) => args[0] === 'fill')).toHaveLength(1);
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
   });
   test('optional absent targets skip, while capture errors still fail', async () => {
     const runner = new NativeRunner(

@@ -11,6 +11,7 @@ import type { HomeLayout } from '@/lib/home-layout';
 import { resolveAppearanceProfile } from '@/lib/appearance-profile';
 import { useRenderTally } from '@/lib/render-tally';
 import { useAppSettings } from '@/stores/app-settings';
+import { settleAfter } from '@/lib/compiler-safe-control-flow';
 
 type HomeLayoutChoice = {
   id: HomeLayout;
@@ -43,18 +44,23 @@ export function SettingsHomeLayoutSheet({ onClose }: { onClose: () => void }) {
   async function choose(next: HomeLayout) {
     if (savePending.current) return;
     savePending.current = true;
-    try {
-      await setHomeLayout(next);
-    } catch {
-      showToast({
-        variant: 'danger',
-        title: t`Could not save Home layout`,
-        message: t`Home layout changed for this session, but could not be saved on this device. Try again.`,
-      });
-    } finally {
-      savePending.current = false;
-      onClose();
-    }
+    return settleAfter(
+      async () => {
+        try {
+          await setHomeLayout(next);
+        } catch {
+          showToast({
+            variant: 'danger',
+            title: t`Could not save Home layout`,
+            message: t`Home layout changed for this session, but could not be saved on this device. Try again.`,
+          });
+        }
+      },
+      () => {
+        savePending.current = false;
+        onClose();
+      }
+    );
   }
 
   return (

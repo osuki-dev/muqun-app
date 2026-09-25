@@ -18,6 +18,7 @@ import { PressableScale } from '@/components/pressable-scale';
 import { useNotificationSurfaceStyle } from '@/components/notification-surface';
 import { fadeInDown, fadeOutUp } from '@/lib/motion';
 import { RELEASE_NOTES } from '@/lib/release-notes';
+import { recoverWith } from '@/lib/compiler-safe-control-flow';
 
 const SEEN_KEY = 'muqun.seen-notes.v1';
 
@@ -46,18 +47,21 @@ export function WhatsNewCard() {
     async function check() {
       if (!Updates.isEnabled || Updates.isEmbeddedLaunch) return;
       if (RELEASE_NOTES.items.length === 0) return;
-      try {
-        const seen = await SecureStore.getItemAsync(SEEN_KEY);
-        if (!active || seen === NOTES_SIGNATURE) return;
-        // Mark seen as soon as we decide to show it, so it appears once per
-        // changelog rather than every launch until the user happens to dismiss.
-        await SecureStore.setItemAsync(SEEN_KEY, NOTES_SIGNATURE, {
-          keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
-        });
-        if (active) setShow(true);
-      } catch {
-        // A keychain hiccup just means no card this launch; nothing to surface.
-      }
+      return recoverWith(
+        async () => {
+          const seen = await SecureStore.getItemAsync(SEEN_KEY);
+          if (!active || seen === NOTES_SIGNATURE) return;
+          // Mark seen as soon as we decide to show it, so it appears once per
+          // changelog rather than every launch until the user happens to dismiss.
+          await SecureStore.setItemAsync(SEEN_KEY, NOTES_SIGNATURE, {
+            keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
+          });
+          if (active) setShow(true);
+        },
+        () => {
+          // A keychain hiccup just means no card this launch; nothing to surface.
+        }
+      );
     }
     void check();
     return () => {

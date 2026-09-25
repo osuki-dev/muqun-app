@@ -1,7 +1,7 @@
 import { createContext, memo, useContext, useMemo, type ComponentProps } from 'react';
 import { useStore } from 'zustand';
 import { KeyboardAwareLegendList } from '@legendapp/list/keyboard';
-import type { LegendListRenderItemProps } from '@legendapp/list/react-native';
+import { LegendList, type LegendListRenderItemProps } from '@legendapp/list/react-native';
 import type { AgentTranscriptStore } from '@/stores/agent-transcript';
 import { AgentAssistantMessage, AgentUserMessage } from './agent-message-block';
 
@@ -45,19 +45,20 @@ type ListProps = Omit<
 export const AgentTranscriptList = memo(function AgentTranscriptList({
   store,
   rowProps,
+  keyboardAware = true,
   ...props
-}: ListProps & { store: AgentTranscriptStore; rowProps: Omit<UserProps, 'group'> }) {
+}: ListProps & {
+  store: AgentTranscriptStore;
+  rowProps: Omit<UserProps, 'group'>;
+  /** Read-only sheets use the native list's scrolling range for sheet hand-off. */
+  keyboardAware?: boolean;
+}) {
   const keys = useStore(store, (state) => state.keys);
   const context = useMemo(() => ({ store, ...rowProps }), [store, rowProps]);
+  const List = keyboardAware ? KeyboardAwareLegendList<string> : LegendList<string>;
   return (
     <RowContext.Provider value={context}>
-      <KeyboardAwareLegendList<string>
-        {...props}
-        data={keys}
-        keyExtractor={keyOfRow}
-        renderItem={renderRow}
-        recycleItems
-      />
+      <List {...props} data={keys} keyExtractor={keyOfRow} renderItem={renderRow} recycleItems />
     </RowContext.Provider>
   );
 });

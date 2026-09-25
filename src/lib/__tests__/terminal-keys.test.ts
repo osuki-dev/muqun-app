@@ -12,11 +12,33 @@ import {
   EDITOR_ACTIONS,
   INSERT_MODE_KEYS,
   isFullScreenTuiPane,
+  keyboardCombinationKeys,
   keyCap,
   parseNvimMode,
+  terminalKeysFromGateway,
   terminalKeysForPane,
   withEditorActions,
 } from '@/lib/terminal-keys';
+
+test('Gateway actions reach both terminal shortcut strips without App additions', () => {
+  const keys = terminalKeysFromGateway([
+    { label: 'ESC', key: 'esc', description: 'Escape' },
+    { label: 'Ctrl [', key: 'ctrl+[', description: 'Control left bracket' },
+    { label: 'ESC ESC', key: 'sequence:escape', keys: ['esc', 'esc'] },
+    { label: ':wq', key: 'nvim:wq', text: ':wq', submit: true },
+  ]);
+  expect(keys.map((item) => item.key)).toEqual(['esc', 'ctrl+[', 'sequence:escape', 'nvim:wq']);
+  expect(keys.find((item) => item.key === 'nvim:wq')).toMatchObject({
+    cap: ':wq',
+    text: ':wq',
+    submit: true,
+  });
+  expect(keyboardCombinationKeys(keys, false).map((item) => item.key)).toEqual([
+    'nvim:wq',
+    'ctrl+[',
+    'sequence:escape',
+  ]);
+});
 
 describe('isFullScreenTuiPane', () => {
   test('takes the gateway at its word', () => {

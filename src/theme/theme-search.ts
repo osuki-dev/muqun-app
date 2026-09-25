@@ -12,13 +12,7 @@ export function filterThemeEntries(
   if (!needle) return [...entries];
 
   return entries.filter((entry) => {
-    const fields = [
-      entry.id,
-      entry.name,
-      entry.author,
-      entry.description,
-      ...(entry.tags ?? []),
-    ];
+    const fields = [entry.id, entry.name, entry.author, entry.description, ...(entry.tags ?? [])];
     return fields
       .filter((part): part is string => typeof part === 'string')
       .some((part) => part.toLowerCase().includes(needle));
@@ -28,10 +22,7 @@ export function filterThemeEntries(
 /**
  * Extract popular theme tags ordered by frequency from the theme catalogue.
  */
-export function collectPopularThemeTags(
-  entries: readonly ThemeIndexEntry[],
-  limit = 12
-): string[] {
+export function collectPopularThemeTags(entries: readonly ThemeIndexEntry[], limit = 12): string[] {
   const counts = new Map<string, number>();
   for (const entry of entries) {
     if (entry.tags) {

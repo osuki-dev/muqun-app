@@ -21,6 +21,7 @@ function record(serverId: string, hostId = 'host-a', remotePort = 23847): Tunnel
 /** A fake SSH host: connections it hands out, and hooks to drop them. */
 class FakeSsh {
   connectCount = 0;
+  dialCount = 0;
   disconnectCount = 0;
   nextPort = 40000;
   /** hostId -> the live connection's drop trigger. */
@@ -28,15 +29,16 @@ class FakeSsh {
   /** serverId -> the live forward's close trigger. */
   private forwardClosed = new Map<string, (reason: string) => void>();
   /** Make the next openConnection reject. */
-  failNextConnect: string | null = null;
+  failNextConnect: string | Error | null = null;
 
   deps(): TunnelDeps {
     return {
       openConnection: (hostId: string, events: { onDropped: (reason: string) => void }) => {
+        this.dialCount += 1;
         if (this.failNextConnect) {
           const reason = this.failNextConnect;
           this.failNextConnect = null;
-          return Promise.reject(new Error(reason));
+          return Promise.reject(typeof reason === 'string' ? new Error(reason) : reason);
         }
         this.connectCount += 1;
         this.dropped.set(hostId, events.onDropped);
@@ -77,6 +79,7 @@ class FakeSsh {
 }
 
 const tick = () => new Promise((resolve) => setTimeout(resolve, 0));
+const waitForReconnect = () => new Promise((resolve) => setTimeout(resolve, 550));
 
 let ssh: FakeSsh;
 let manager: SshTunnelManager;
@@ -186,6 +189,97 @@ describe('reconnect', () => {
     ssh.dropHost('host-a');
     expect(manager.state('s1').phase).toBe('down');
     expect(manager.state('s2').phase).toBe('down');
+    manager.release('s1');
+    manager.release('s2');
+  });
+
+  test('an unexpected host drop reconnects held forwards without another screen hold', async () => {
+    manager.hold(record('s1'));
+    await tick();
+    ssh.dropHost('host-a');
+    expect(manager.state('s1').phase).toBe('down');
+    await waitForReconnect();
+    expect(manager.state('s1').phase).toBe('open');
+    expect(ssh.dialCount).toBe(2);
+    manager.release('s1');
+  });
+
+  test('two gateways recover over one replacement host connection', async () => {
+    manager.hold(record('s1', 'host-a', 1));
+    manager.hold(record('s2', 'host-a', 2));
+    await tick();
+    ssh.dropHost('host-a');
+    await waitForReconnect();
+    expect(manager.state('s1').phase).toBe('open');
+    expect(manager.state('s2').phase).toBe('open');
+    expect(ssh.dialCount).toBe(2);
+    manager.release('s1');
+    manager.release('s2');
+  });
+
+  test('an unexpected forward close reconnects its held gateway', async () => {
+    manager.hold(record('s1'));
+    await tick();
+    ssh.closeForward('host-a', 23847);
+    expect(manager.state('s1').phase).toBe('down');
+    await waitForReconnect();
+    expect(manager.state('s1').phase).toBe('open');
+    expect(ssh.dialCount).toBe(2);
+    manager.release('s1');
+  });
+
+  test('a transient failed reconnect retries without another hold', async () => {
+    manager.hold(record('s1'));
+    await tick();
+    ssh.failNextConnect = Object.assign(new Error('temporary network failure'), {
+      code: 'CONNECT',
+    });
+    ssh.dropHost('host-a');
+    await waitForReconnect();
+    expect(manager.state('s1').phase).toBe('down');
+    await new Promise((resolve) => setTimeout(resolve, 1050));
+    expect(manager.state('s1').phase).toBe('open');
+    expect(ssh.dialCount).toBe(3);
+    manager.release('s1');
+  });
+
+  test('releasing a dropped forward cancels its reconnect', async () => {
+    manager.hold(record('s1'));
+    await tick();
+    ssh.dropHost('host-a');
+    manager.release('s1');
+    await waitForReconnect();
+    expect(manager.state('s1').phase).toBe('idle');
+    expect(ssh.dialCount).toBe(1);
+  });
+
+  test('background idle cancels recovery and foreground resumes the held gateway', async () => {
+    manager.hold(record('s1'));
+    await tick();
+    ssh.dropHost('host-a');
+    manager.setBackgroundedIdle(true);
+    await waitForReconnect();
+    expect(ssh.dialCount).toBe(1);
+    expect(manager.state('s1').phase).toBe('idle');
+    manager.setBackgroundedIdle(false);
+    await tick();
+    expect(manager.state('s1').phase).toBe('open');
+    expect(ssh.dialCount).toBe(2);
+    manager.release('s1');
+  });
+
+  test('host-key rejection during recovery does not ask again automatically', async () => {
+    manager.hold(record('s1'));
+    await tick();
+    ssh.failNextConnect = Object.assign(new Error('host key rejected'), {
+      code: 'HOST_KEY_REJECTED',
+    });
+    ssh.dropHost('host-a');
+    await waitForReconnect();
+    expect(manager.state('s1').phase).toBe('down');
+    await waitForReconnect();
+    expect(ssh.dialCount).toBe(2);
+    manager.release('s1');
   });
 
   test('a failed dial reports down and does not wedge the next attempt', async () => {

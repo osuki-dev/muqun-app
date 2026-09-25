@@ -113,6 +113,17 @@ function modelCaption(model: ModelInfo): string | undefined {
   return parts.length > 0 ? parts.join(' · ') : undefined;
 }
 
+/** The index each run of `lengths` starts at when the runs are laid end to end. */
+function runningStarts(lengths: readonly number[]): number[] {
+  const starts: number[] = [];
+  let at = 0;
+  for (const length of lengths) {
+    starts.push(at);
+    at += length;
+  }
+  return starts;
+}
+
 export const AgentModelSheet = memo(function AgentModelSheet({
   sessionId,
   directory,
@@ -370,7 +381,9 @@ export const AgentModelSheet = memo(function AgentModelSheet({
       ? 'free-filter'
       : 'nothing';
 
-  let rowIndex = 0;
+  // Where each section's rows start in the one running order the list staggers
+  // its rows by: every row of every earlier section comes first.
+  const sectionRowStarts = runningStarts(paged.sections.map((section) => section.models.length));
 
   return (
     <SheetScene
@@ -492,7 +505,7 @@ export const AgentModelSheet = memo(function AgentModelSheet({
                   const unavailable =
                     model.enabled === false || disabledProviders.has(model.provider_id);
                   const variants = model.variants ?? [];
-                  const index = rowIndex++;
+                  const index = sectionRowStarts[sectionIndex] + modelIndex;
                   return (
                     <Animated.View
                       key={`${model.provider_id}:${model.id}`}

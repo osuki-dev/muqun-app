@@ -81,7 +81,12 @@ export function HomeAttention({
                 {t`Open to check the current state`}
               </Text>
             </View>
-            <ThemeIcon name="home.arrow" fallback={ChevronRight} size={16} color={theme.colors.primary} />
+            <ThemeIcon
+              name="home.arrow"
+              fallback={ChevronRight}
+              size={16}
+              color={theme.colors.primary}
+            />
           </PressableScale>
         );
       })}

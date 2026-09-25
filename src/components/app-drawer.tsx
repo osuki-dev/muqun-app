@@ -30,6 +30,8 @@ import { responsiveWorkspaceLayout } from '@/lib/responsive-layout';
 
 type AppDrawerProps = {
   children: ReactNode;
+  /** Home draws its own ambient layer; keep the shell wallpaper without duplicating it. */
+  wallpaperEffectsEnabled?: boolean;
   /**
    * The server/agent navigator that replaces the phone's Back control when
    * the available window is wide enough for a real master-detail workspace.
@@ -79,6 +81,7 @@ type AppDrawerProps = {
 
 export default function AppDrawer({
   children,
+  wallpaperEffectsEnabled = true,
   padRail,
   padRailCollapsed = false,
   detailTitle,
@@ -131,7 +134,7 @@ export default function AppDrawer({
 
   return (
     <View style={[styles.shell, { backgroundColor: surfaceBackground(theme.colors.background) }]}>
-      <ThemeArtwork slot="shell.wallpaper" />
+      <ThemeArtwork slot="shell.wallpaper" effectsEnabled={wallpaperEffectsEnabled} />
       {/*
         Entering and exiting rather than a width animated to nothing: the rail
         carries a shadow, and clipping a column down to zero would have meant

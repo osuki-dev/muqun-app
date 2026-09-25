@@ -237,23 +237,25 @@ export function firstUsableModel(
 }
 
 /**
- * Model and agent for a new session, each resolved on its own:
+ * Model and agent for a new session. An agent's configured model takes
+ * precedence over remembered model choices from other agents:
  *
  *   1. picked in this run
- *   2. remembered for this workspace
- *   3. remembered for this server
- *   4. the newest session in this workspace
- *   5. the newest session anywhere on this server
- *   6. the catalog's own `defaults`, unless this server has already refused it
- *   7. the first enabled free model in the catalog (model only)
- *   8. nothing, and only when the catalog lists nothing to send
+ *   2. configured on the selected agent (model only)
+ *   3. remembered for this workspace
+ *   4. remembered for this server
+ *   5. the newest session in this workspace
+ *   6. the newest session anywhere on this server
+ *   7. the catalog's own `defaults`, unless this server has already refused it
+ *   8. the first enabled free model in the catalog (model only)
+ *   9. nothing, and only when the catalog lists nothing to send
  *
  * Per field, because the two are chosen per field: picking a model in a
  * workspace does not say anything about which agent belongs there. A value the
  * catalog no longer lists falls through to the next rung rather than ending the
  * chain.
  *
- * Rungs 4-7 exist because omitting `model` is not the safe move it reads as.
+ * The fallback rungs exist because omitting `model` is not always safe.
  * The contract calls it "the user's configured default", but a host with none
  * configured answers `GET /api/model/default` with `null`, and OpenCode then
  * falls back to the *first entry of its model list* -- list order, not a sane
@@ -280,14 +282,6 @@ export function resolveNewSessionDefaults(input: NewSessionDefaultsInput): NewSe
   const here = recentSessionChoice(sessions, input.directory);
   const anywhere = recentSessionChoice(sessions);
   const refused = unsupportedModelRefs(sessions);
-  const model =
-    picked.model ??
-    catalogModelRef(workspace?.model, models) ??
-    catalogModelRef(server?.model, models) ??
-    catalogModelRef(here.model, models) ??
-    catalogModelRef(anywhere.model, models) ??
-    catalogModelRef(usableCatalogDefaultModel(catalogDefaults?.model, refused), models) ??
-    firstUsableModel(models, refused);
   const agent =
     picked.agent ??
     catalogAgentId(workspace?.agent, agents) ??
@@ -295,6 +289,16 @@ export function resolveNewSessionDefaults(input: NewSessionDefaultsInput): NewSe
     catalogAgentId(here.agent, agents) ??
     catalogAgentId(anywhere.agent, agents) ??
     catalogAgentId(catalogDefaults?.agent, agents);
+  const agentModel = agents.find((entry) => entry.id === agent)?.model;
+  const model =
+    picked.model ??
+    catalogModelRef(agentModel, models) ??
+    catalogModelRef(workspace?.model, models) ??
+    catalogModelRef(server?.model, models) ??
+    catalogModelRef(here.model, models) ??
+    catalogModelRef(anywhere.model, models) ??
+    catalogModelRef(usableCatalogDefaultModel(catalogDefaults?.model, refused), models) ??
+    firstUsableModel(models, refused);
   return {
     ...(model ? { model } : {}),
     ...(agent ? { agent } : {}),

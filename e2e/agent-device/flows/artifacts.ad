@@ -38,7 +38,7 @@ scroll up --pixels 320
 press "${TARGET}"
 
 # section s13
-type "diff"
+fill id="artifacts-search" "diff"
 
 # section s14
 wait stable 400 5000

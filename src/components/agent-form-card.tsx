@@ -21,6 +21,7 @@ import {
 } from '@/lib/agent-session';
 import { AGENT_TYPE } from '@/constants/agent-type';
 import { FontedTextInput } from '@/components/fonted-text-input';
+import { settleAfter } from '@/lib/compiler-safe-control-flow';
 
 export interface AgentFormCardProps {
   request: FormRequest;
@@ -121,11 +122,14 @@ export const AgentFormCard = memo(function AgentFormCard({
       if (field.key in values) answers[field.key] = values[field.key];
     }
     setSubmitting(true);
-    try {
-      await onSubmit(answers);
-    } finally {
-      setSubmitting(false);
-    }
+    return settleAfter(
+      async () => {
+        await onSubmit(answers);
+      },
+      () => {
+        setSubmitting(false);
+      }
+    );
   };
 
   /** Why this answer was refused, in the reader's language. */

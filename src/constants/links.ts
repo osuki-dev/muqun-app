@@ -203,3 +203,6 @@ export const FEEDBACK_URL = 'https://github.com/osuki-dev/muqun-app/issues/new/c
  * ────────────────────────────────────────────────────────────────────────────
  */
 export const SOURCE_URL = 'https://github.com/osuki-dev/muqun-app';
+
+/** Public registration lookup; the registration number is supplied by the local build. */
+export const ICP_REGISTRATION_URL = 'https://beian.miit.gov.cn/';

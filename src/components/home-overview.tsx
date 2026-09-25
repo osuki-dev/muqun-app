@@ -1,3 +1,8 @@
+import {
+  HOME_TOOLBAR_BUTTON_SIZE,
+  HOME_TOOLBAR_ICON_SIZE,
+  HOME_TOOLBAR_GAP,
+} from '@/constants/home-toolbar';
 import { useAppActive } from '@/hooks/use-app-active';
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';
 import { useThemeMode, useThemeTokens } from '@osuki-dev/ui';
@@ -101,9 +106,17 @@ import { resolveHomeIdentity } from '@/theme/resolve';
 import { isHomeArtworkAvailable, resolveHomeArtworkAsset } from '@/theme/home-artwork';
 import { homeArtworkPreference } from '@/theme/repository';
 import { ThemeArtwork, useHasThemeArtwork } from '@/components/theme-artwork';
+import { DevHomeAmbientControls } from '@/components/dev-home-ambient-controls';
+import { SkiaAmbientEffect } from '@/components/skia-ambient-effect';
+import type {
+  ThemeAmbientEffect,
+  ThemeEffectColorRole,
+  ThemeEffectDirection,
+} from '@/theme/schema';
 import { ThemedSurface, ThemedSurfaceArtwork } from '@/components/themed-surface';
 import { useBrandMark } from '@/components/brand-mark';
 import { forgetWarmWorkspace } from '@/lib/server-warm-cache';
+import { settleAfter } from '@/lib/compiler-safe-control-flow';
 
 export type HomeOverviewProps = {
   width: number;
@@ -164,10 +177,58 @@ export function HomeOverview({
   const profile = useAppearanceProfile();
   const homeLayout = profile.id;
   const [editorialWidth, setEditorialWidth] = useState(0);
+  const [editorialArtworkTop, setEditorialArtworkTop] = useState<{
+    source: string;
+    top: number;
+  } | null>(null);
+  const reportEditorialArtworkTop = useCallback((source: string, top: number) => {
+    setEditorialArtworkTop((current) =>
+      current?.source === source && current.top === top ? current : { source, top }
+    );
+  }, []);
   const [failedEditorialArtworkSource, setFailedEditorialArtworkSource] = useState<string | null>(
     null
   );
   const { resolvedMode } = useThemeMode();
+  const [devEffect, setDevEffect] = useState<ThemeAmbientEffect | 'theme'>('theme');
+  const [devEffectIntensity, setDevEffectIntensity] = useState(0.5);
+  const [devEffectSpeed, setDevEffectSpeed] = useState(1);
+  const [devEffectDensity, setDevEffectDensity] = useState(1);
+  const [devEffectSize, setDevEffectSize] = useState(1);
+  const [devEffectPalette, setDevEffectPalette] = useState<ThemeEffectColorRole[] | undefined>();
+  const [devEffectDirection, setDevEffectDirection] = useState<ThemeEffectDirection | undefined>();
+  const hasDevEffectOverride = __DEV__ && devEffect !== 'theme';
+  const devAmbientLayer = hasDevEffectOverride ? (
+    <SkiaAmbientEffect
+      effect={devEffect}
+      intensity={devEffectIntensity}
+      speed={devEffectSpeed}
+      density={devEffectDensity}
+      size={devEffectSize}
+      palette={devEffectPalette}
+      direction={devEffectDirection}
+      mode={resolvedMode}
+      colors={theme.colors}
+    />
+  ) : null;
+  const devAmbientControls = __DEV__ ? (
+    <DevHomeAmbientControls
+      value={devEffect}
+      onChange={setDevEffect}
+      intensity={devEffectIntensity}
+      onIntensityChange={setDevEffectIntensity}
+      speed={devEffectSpeed}
+      onSpeedChange={setDevEffectSpeed}
+      density={devEffectDensity}
+      onDensityChange={setDevEffectDensity}
+      size={devEffectSize}
+      onSizeChange={setDevEffectSize}
+      palette={devEffectPalette}
+      onPaletteChange={setDevEffectPalette}
+      direction={devEffectDirection}
+      onDirectionChange={setDevEffectDirection}
+    />
+  ) : null;
   const homeArtworkPreferenceValue = useThemeLibrary((state) => {
     const installed = state.library.themes.find(
       (entry) => entry.id === customTheme?.installationId
@@ -409,32 +470,35 @@ export function HomeOverview({
   const onRefresh = useCallback(async () => {
     if (!isFocused || AppState.currentState !== 'active') return;
     setRefreshing(true);
-    try {
-      await refreshReachabilityMany(probeTargets, {
-        force: true,
-        shouldContinue: () => AppState.currentState === 'active',
-      });
-      // The rows under the selected server, re-read. A pull used to refresh the
-      // dots and leave the lists as they were, so an agent the reader had
-      // closed stayed on its card until they opened the server and came back.
-      // The warm cache is dropped first because a pull is someone asking: the
-      // warm would otherwise answer from what it read a moment ago.
-      const selected = useGatewayConnectionStore.getState().record;
-      if (selected && !isDemoRecord(selected) && !selected.sshTunnel) {
-        const gate = serverPrewarmGate(selected.serverId);
-        if (gate.warm) {
-          forgetWarmWorkspace(selected.serverId);
-          await warmConfiguredWorkspace(
-            selected.serverId,
-            useServerSession.getState().byServer[selected.serverId],
-            () => AppState.currentState === 'active',
-            gate.health
-          );
+    return settleAfter(
+      async () => {
+        await refreshReachabilityMany(probeTargets, {
+          force: true,
+          shouldContinue: () => AppState.currentState === 'active',
+        });
+        // The rows under the selected server, re-read. A pull used to refresh the
+        // dots and leave the lists as they were, so an agent the reader had
+        // closed stayed on its card until they opened the server and came back.
+        // The warm cache is dropped first because a pull is someone asking: the
+        // warm would otherwise answer from what it read a moment ago.
+        const selected = useGatewayConnectionStore.getState().record;
+        if (selected && !isDemoRecord(selected) && !selected.sshTunnel) {
+          const gate = serverPrewarmGate(selected.serverId);
+          if (gate.warm) {
+            forgetWarmWorkspace(selected.serverId);
+            await warmConfiguredWorkspace(
+              selected.serverId,
+              useServerSession.getState().byServer[selected.serverId],
+              () => AppState.currentState === 'active',
+              gate.health
+            );
+          }
         }
+      },
+      () => {
+        setRefreshing(false);
       }
-    } finally {
-      setRefreshing(false);
-    }
+    );
   }, [isFocused, probeTargets, refreshReachabilityMany]);
 
   /*
@@ -469,17 +533,17 @@ export function HomeOverview({
     onScroll(event) {
       const y = event.contentOffset.y;
       const delta = y - lastScrollY.value;
-      lastScrollY.value = y;
-      scrollY.value = y;
+      lastScrollY.set(y);
+      scrollY.set(y);
       let target = foldTarget.value;
       if (y <= HEADER_FOLD_FREE_ZONE) {
         target = 0;
-        travel.value = 0;
+        travel.set(0);
       } else {
         // Travel accumulates while the direction holds and resets when it
         // turns, so a slow drag folds the bar as surely as a flick and a
         // finger resting on the screen does not flap it.
-        travel.value = Math.sign(delta) === Math.sign(travel.value) ? travel.value + delta : delta;
+        travel.set(Math.sign(delta) === Math.sign(travel.value) ? travel.value + delta : delta);
         if (travel.value > HEADER_FOLD_TRAVEL) target = 1;
         else if (travel.value < -HEADER_FOLD_TRAVEL) target = 0;
       }
@@ -487,8 +551,8 @@ export function HomeOverview({
       // scroll event would hold the bar half-folded for as long as the finger
       // keeps moving.
       if (target !== foldTarget.value) {
-        foldTarget.value = target;
-        fold.value = withTiming(target, timing('medium'));
+        foldTarget.set(target);
+        fold.set(withTiming(target, timing('medium')));
       }
     },
   });
@@ -610,13 +674,23 @@ export function HomeOverview({
       </PressableScale>
     ) : null;
 
+  // Whether the measured artwork top belongs to the artwork now resolved. Read
+  // here rather than inline in the prop: React Compiler cannot lower an
+  // optional chain in a conditional's test.
+  const editorialArtworkTopCurrent =
+    editorialArtworkTop?.source === editorialArtworkResolution?.source;
   if (homeLayout !== 'classic') {
     const editorialContent = (
       <View
         testID="home-editorial"
         onLayout={(event) => setEditorialWidth(event.nativeEvent.layout.width)}
         style={[styles.page, { backgroundColor: background(theme.colors.background) }]}>
-        <ThemeArtwork slot="home.wallpaper" fallbackSlot="shell.wallpaper" />
+        <ThemeArtwork
+          slot="home.wallpaper"
+          fallbackSlot="shell.wallpaper"
+          effectsEnabled={!hasDevEffectOverride}
+        />
+        {devAmbientLayer}
         <KeyboardAwareScrollView
           ref={overviewScroll}
           onContentSizeChange={restoreScroll}
@@ -640,150 +714,159 @@ export function HomeOverview({
               progressViewOffset={insets.top}
             />
           }>
-            {returnToTask ? <View style={styles.embeddedReturnRow}>{returnToTask}</View> : null}
-            {hydrationError ? (
-              <GatewayStorageError busy={loading} onRetry={retryHydration} />
-            ) : null}
-            <View>
-              <HomeEditorialLayout
-                contentWidth={editorialWidth || width}
-                scrollY={scrollY}
-                cover={customTheme?.manifest.homePresentation?.header === 'cover'}
-                coverTitle={identity.name ?? undefined}
-                artwork={
-                  hasEditorialArtwork && editorialArtworkResolution ? (
-                    <HomeEditorialArtwork
-                      cover={customTheme?.manifest.homePresentation?.header === 'cover'}
-                      resolution={editorialArtworkResolution}
-                      onAvailabilityChange={(available) => {
-                        if (!available)
-                          setFailedEditorialArtworkSource(editorialArtworkResolution.source);
-                      }}
-                    />
-                  ) : null
-                }
-                identity={
-                  identity.showBrand ? (
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                      {identity.logo ? (
-                        <Image
-                          source={logoSource}
-                          contentFit="contain"
-                          style={{ width: 44, height: 44 }}
-                          onError={() => setFailedLogo(customLogo ?? null)}
-                        />
-                      ) : null}
-                      {identity.name ? (
-                        <Text
-                          variant="heading"
-                          numberOfLines={1}
-                          ellipsizeMode="tail"
-                          style={{ flexShrink: 1, minWidth: 0, fontSize: 28, lineHeight: 36 }}>
-                          {identity.name}
-                        </Text>
-                      ) : null}
-                    </View>
-                  ) : undefined
-                }
-                headerLeading={
+          {returnToTask ? <View style={styles.embeddedReturnRow}>{returnToTask}</View> : null}
+          {hydrationError ? <GatewayStorageError busy={loading} onRetry={retryHydration} /> : null}
+          <View>
+            <HomeEditorialLayout
+              contentWidth={editorialWidth || width}
+              scrollY={scrollY}
+              cover={customTheme?.manifest.homePresentation?.header === 'cover'}
+              coverTitle={identity.name ?? undefined}
+              artworkTopInset={editorialArtworkTopCurrent ? editorialArtworkTop?.top : 0}
+              artwork={
+                hasEditorialArtwork && editorialArtworkResolution ? (
+                  <HomeEditorialArtwork
+                    cover={customTheme?.manifest.homePresentation?.header === 'cover'}
+                    resolution={editorialArtworkResolution}
+                    onVisibleTopChange={reportEditorialArtworkTop}
+                    onAvailabilityChange={(available) => {
+                      if (!available)
+                        setFailedEditorialArtworkSource(editorialArtworkResolution.source);
+                    }}
+                  />
+                ) : null
+              }
+              identity={
+                identity.showBrand ? (
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                    {identity.logo ? (
+                      <Image
+                        source={logoSource}
+                        contentFit="contain"
+                        style={{ width: 44, height: 44 }}
+                        onError={() => setFailedLogo(customLogo ?? null)}
+                      />
+                    ) : null}
+                    {identity.name ? (
+                      <Text
+                        variant="heading"
+                        numberOfLines={1}
+                        ellipsizeMode="tail"
+                        style={{ flexShrink: 1, minWidth: 0, fontSize: 28, lineHeight: 36 }}>
+                        {identity.name}
+                      </Text>
+                    ) : null}
+                  </View>
+                ) : undefined
+              }
+              headerLeading={
+                launchController.servers.length <= 1 ? undefined : (
                   <HomeLaunchTarget
                     bare={customTheme?.manifest.homePresentation?.toolbarBackground === false}
                     controller={launchController}
                     loading={loading}
                     onPair={commands.pairGateway}
                   />
-                }
-                launches={
-                  hydrationError || loading ? undefined : (
-                    <HomeLaunchActions
-                      controller={launchController}
-                      onNewOpenCode={commands.newOpenCode}
-                      onOpenOpenCode={commands.openOpenCode}
-                      onNewTerminal={commands.newTerminal}
-                      onOpenTerminal={commands.openServer}
-                      onSsh={commands.openSsh}
-                      onDemo={
-                        !loading && !hydrationError && !hasPairedServer ? openDemo : undefined
-                      }
+                )
+              }
+              launches={
+                hydrationError || loading ? undefined : launchController.servers.length === 0 ? (
+                  <EmptyState
+                    compact
+                    isPad={isPad}
+                    onPair={() => void commands.pairGateway()}
+                    onDemo={openDemo}
+                  />
+                ) : (
+                  <HomeLaunchActions
+                    controller={launchController}
+                    onNewOpenCode={commands.newOpenCode}
+                    onOpenOpenCode={commands.openOpenCode}
+                    onNewTerminal={commands.newTerminal}
+                    onOpenTerminal={commands.openServer}
+                    onSsh={commands.openSsh}
+                    onDemo={!loading && !hydrationError && !hasPairedServer ? openDemo : undefined}
+                  />
+                )
+              }
+              recent={
+                !loading && !hydrationError ? (
+                  <HomeRecentSessions
+                    selectedServerId={launchController.chosen?.serverId}
+                    servers={records}
+                    hosts={sshRows}
+                    reachabilityByServer={padReachabilityByServer}
+                    activeConnection={activeConnection}
+                    onOpenPane={(serverId, paneId) => {
+                      void commands.openServer(serverId, paneId);
+                    }}
+                    onOpen={(target) => {
+                      void commands.resumeTarget(target);
+                    }}
+                  />
+                ) : undefined
+              }
+              attention={
+                !loading && !hydrationError ? (
+                  <HomeAttention
+                    servers={records}
+                    onOpen={(target) => {
+                      void commands.resumeTarget(target);
+                    }}
+                  />
+                ) : undefined
+              }
+              connections={
+                !loading && !hydrationError && !sshLoading ? (
+                  <HomeConnections
+                    servers={records}
+                    hosts={sshRows}
+                    onOpenServer={openServer}
+                    onOpenHost={(hostId) => {
+                      void commands.openSsh(hostId);
+                    }}
+                    onManage={() => {
+                      void commands.manageConnections();
+                    }}
+                    activeConnection={activeConnection}
+                    nowMs={nowMs}
+                  />
+                ) : undefined
+              }
+              headerAction={
+                <View style={{ flexDirection: 'row', gap: HOME_TOOLBAR_GAP }}>
+                  <HeaderButton
+                    editorial
+                    bare={customTheme?.manifest.homePresentation?.toolbarBackground === false}
+                    label={t`Scan a gateway QR`}
+                    onPress={() => void commands.pairGateway()}>
+                    <ThemeIcon
+                      name="chrome.scan"
+                      fallback={ScanLine}
+                      size={HOME_TOOLBAR_ICON_SIZE}
+                      color={theme.colors.text}
+                      strokeWidth={1.8}
                     />
-                  )
-                }
-                recent={
-                  !loading && !hydrationError ? (
-                    <HomeRecentSessions
-                      servers={records}
-                      hosts={sshRows}
-                      reachabilityByServer={padReachabilityByServer}
-                      activeConnection={activeConnection}
-                      onOpenPane={(serverId, paneId) => {
-                        void commands.openServer(serverId, paneId);
-                      }}
-                      onOpen={(target) => {
-                        void commands.resumeTarget(target);
-                      }}
+                  </HeaderButton>
+                  <HeaderButton
+                    editorial
+                    bare={customTheme?.manifest.homePresentation?.toolbarBackground === false}
+                    label={t`Settings`}
+                    onPress={() => void commands.manageConnections()}>
+                    <ThemeIcon
+                      name="chrome.settings"
+                      fallback={Settings}
+                      size={HOME_TOOLBAR_ICON_SIZE}
+                      color={theme.colors.text}
+                      strokeWidth={1.8}
                     />
-                  ) : undefined
-                }
-                attention={
-                  !loading && !hydrationError ? (
-                    <HomeAttention
-                      servers={records}
-                      onOpen={(target) => {
-                        void commands.resumeTarget(target);
-                      }}
-                    />
-                  ) : undefined
-                }
-                connections={
-                  !loading && !hydrationError && !sshLoading ? (
-                    <HomeConnections
-                      servers={records}
-                      hosts={sshRows}
-                      onOpenServer={openServer}
-                      onOpenHost={(hostId) => {
-                        void commands.openSsh(hostId);
-                      }}
-                      onManage={() => {
-                        void commands.manageConnections();
-                      }}
-                      activeConnection={activeConnection}
-                      nowMs={nowMs}
-                    />
-                  ) : undefined
-                }
-                headerAction={
-                  <View style={{ flexDirection: 'row', gap: 8 }}>
-                    <HeaderButton
-                      editorial
-                      bare={customTheme?.manifest.homePresentation?.toolbarBackground === false}
-                      label={t`Scan a gateway QR`}
-                      onPress={() => void commands.pairGateway()}>
-                      <ThemeIcon
-                        name="chrome.scan"
-                        fallback={ScanLine}
-                        size={20}
-                        color={theme.colors.text}
-                        strokeWidth={1.8}
-                      />
-                    </HeaderButton>
-                    <HeaderButton
-                      editorial
-                      bare={customTheme?.manifest.homePresentation?.toolbarBackground === false}
-                      label={t`Settings`}
-                      onPress={() => void commands.manageConnections()}>
-                      <ThemeIcon
-                        name="chrome.settings"
-                        fallback={Settings}
-                        size={20}
-                        color={theme.colors.text}
-                        strokeWidth={1.8}
-                      />
-                    </HeaderButton>
-                  </View>
-                }
-              />
-            </View>
-          </KeyboardAwareScrollView>
+                  </HeaderButton>
+                </View>
+              }
+            />
+          </View>
+        </KeyboardAwareScrollView>
+        {devAmbientControls}
       </View>
     );
     return editorialContent;
@@ -812,7 +895,12 @@ export function HomeOverview({
 
   const classicContent = (
     <View style={[styles.page, { backgroundColor: background(theme.colors.background) }]}>
-      <ThemeArtwork slot="home.wallpaper" fallbackSlot="shell.wallpaper" />
+      <ThemeArtwork
+        slot="home.wallpaper"
+        fallbackSlot="shell.wallpaper"
+        effectsEnabled={!hasDevEffectOverride}
+      />
+      {devAmbientLayer}
       {/* The bar and the brand block below it are one header in two states, not
           two rows. At rest the bar's left half is deliberately empty -- no
           hamburger, no title, no rule, no blur -- because the brand block ten
@@ -825,7 +913,7 @@ export function HomeOverview({
           style={[styles.topBar, barFoldStyle]}
           onLayout={(event: LayoutChangeEvent) => {
             const { height } = event.nativeEvent.layout;
-            barHeightValue.value = height;
+            barHeightValue.set(height);
             setBarHeight(height);
           }}>
           <SafeAreaView edges={['top']}>
@@ -1232,9 +1320,16 @@ export function HomeOverview({
 
         {!loading ? <View style={[styles.spacerBelow, isPad && styles.padSpacer]} /> : null}
       </KeyboardAwareScrollView>
+      {devAmbientControls}
     </View>
   );
-  return embedded ? classicContent : <AppDrawer padRail={padRail}>{classicContent}</AppDrawer>;
+  return embedded ? (
+    classicContent
+  ) : (
+    <AppDrawer padRail={padRail} wallpaperEffectsEnabled={!hasScene && !hasDevEffectOverride}>
+      {classicContent}
+    </AppDrawer>
+  );
 }
 
 /**
@@ -1275,8 +1370,8 @@ function HeaderButton({
         { backgroundColor: background(theme.colors.surface), overflow: 'hidden' },
         editorial && {
           backgroundColor: bare ? 'transparent' : background(theme.colors.surface),
-          width: 44,
-          height: 44,
+          width: HOME_TOOLBAR_BUTTON_SIZE,
+          height: HOME_TOOLBAR_BUTTON_SIZE,
           borderRadius: profile.chrome.control,
         },
       ]}>
@@ -1505,10 +1600,12 @@ function ServerCard({
  * going to point at the QR code their Gateway prints.
  */
 function EmptyState({
+  compact = false,
   isPad,
   onPair,
   onDemo,
 }: {
+  compact?: boolean;
   isPad: boolean;
   onPair: () => void;
   onDemo: () => void;
@@ -1536,7 +1633,7 @@ function EmptyState({
             the accent because the accent on this card belongs to the button --
             spending it twice, once on a picture of the action and once on the
             action, is what made the card read as two invitations. */}
-        {hasIllustration ? (
+        {compact ? null : hasIllustration ? (
           <View
             style={{
               width: isPad ? 180 : 128,

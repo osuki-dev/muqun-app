@@ -137,6 +137,33 @@ async function readThemeAssets(): Promise<ThemeAssetFile[]> {
   return files;
 }
 
+/**
+ * Delete what `planCacheDeletions` names, one entry per idle slot, and say
+ * whether any of it failed.
+ *
+ * The cache-clearing step `SettingsStorage` runs, moved out of the component
+ * unchanged: a loop inside a `try` is something React Compiler cannot lower,
+ * and it declined to compile the whole screen for it.
+ */
+async function deletePlannedCacheEntries(): Promise<boolean> {
+  let failed = false;
+  try {
+    const { root, entries } = await readCacheRoot();
+    for (const entry of planCacheDeletions(entries, root)) {
+      await whenIdle(100);
+      try {
+        const directory = new Directory(entry.uri);
+        if (directory.exists) directory.delete();
+      } catch {
+        failed = true;
+      }
+    }
+  } catch {
+    failed = true;
+  }
+  return failed;
+}
+
 export function SettingsStorage({ title }: { title: string }) {
   const { t } = useLingui();
   const profile = useAppearanceProfile();
@@ -251,20 +278,7 @@ export function SettingsStorage({ title }: { title: string }) {
       failed = true;
     }
 
-    try {
-      const { root, entries } = await readCacheRoot();
-      for (const entry of planCacheDeletions(entries, root)) {
-        await whenIdle(100);
-        try {
-          const directory = new Directory(entry.uri);
-          if (directory.exists) directory.delete();
-        } catch {
-          failed = true;
-        }
-      }
-    } catch {
-      failed = true;
-    }
+    if (await deletePlannedCacheEntries()) failed = true;
 
     if (mounted.current) {
       setTotals(null);

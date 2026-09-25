@@ -4,7 +4,7 @@ import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
 import { Bell, Bot, ScanLine, SquareTerminal, type LucideIcon } from 'lucide-react-native';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useEffectEvent, useRef, useState } from 'react';
 import { Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 import Animated, {
   Extrapolation,
@@ -111,21 +111,27 @@ export function LaunchIntro({
   const scrollX = useSharedValue(0);
   const exit = useSharedValue(0);
 
-  useEffect(() => {
+  // Only the phase drives this. Everything else it reads -- the shared values,
+  // which are stable, and `finish` -- is read when the phase changes rather
+  // than being a reason to run, which is what an effect event is for.
+  const followPhase = useEffectEvent(() => {
     if (phase === 'visible') {
-      reveal.value = withDelay(DURATION.micro, withTiming(1, timing('long')));
+      reveal.set(withDelay(DURATION.micro, withTiming(1, timing('long'))));
       return;
     }
     if (phase !== 'exiting') return;
-    exit.value = withTiming(1, timing('long'), (finished) => {
-      if (finished) scheduleOnRN(finish);
-    });
-    // The shared values are stable; only the phase drives this.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    exit.set(
+      withTiming(1, timing('long'), (finished) => {
+        if (finished) scheduleOnRN(finish);
+      })
+    );
+  });
+  useEffect(() => {
+    followPhase();
   }, [phase]);
 
   const onScroll = useAnimatedScrollHandler((event) => {
-    scrollX.value = event.contentOffset.x;
+    scrollX.set(event.contentOffset.x);
   });
 
   const done = () => {

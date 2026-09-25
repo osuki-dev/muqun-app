@@ -77,6 +77,13 @@ export function chooseLaunchWorld(input: LaunchWorldInput): LaunchWorld {
   return input.deadlinePassed ? { kind: 'iris' } : { kind: 'painted', ready: false };
 }
 
+/** Keep the revealed world intact while its overlay fades into Home. */
+export function launchWorldHole(phase: string, world: LaunchWorld): 'closed' | 'field' | 'through' {
+  if (phase === 'native') return 'closed';
+  if (world.kind === 'palette') return 'field';
+  return world.kind === 'painted' && world.ready ? 'through' : 'closed';
+}
+
 /** A rectangle in window points. */
 export type Box = { width: number; height: number };
 

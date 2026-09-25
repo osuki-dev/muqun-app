@@ -113,7 +113,12 @@ export function TerminalComposer({
         {...inputProps}
         // The family sits ahead of `inputProps.style` so a caller may still
         // override it -- the agent composer does, with the interface face.
-        style={[composerStyles.input, fieldFont, inputProps.style]}
+        style={[
+          composerStyles.input,
+          !leading && composerStyles.inputWithoutLeading,
+          fieldFont,
+          inputProps.style,
+        ]}
       />
       <ComposerSendButton
         accessibilityLabel={send.accessibilityLabel}
@@ -222,11 +227,11 @@ export const composerStyles = StyleSheet.create({
     maxHeight: 150,
     borderCurve: 'continuous',
     overflow: 'hidden',
-    paddingHorizontal: 6,
+    paddingHorizontal: 0,
     paddingVertical: 5,
     flexDirection: 'row',
     alignItems: 'flex-end',
-    gap: 8,
+    gap: 0,
     // The faint fill is supplied at render time from the active pack.
   },
   input: {
@@ -240,6 +245,9 @@ export const composerStyles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 19,
     textAlignVertical: 'top',
+  },
+  inputWithoutLeading: {
+    paddingLeft: 12,
   },
   button: {
     width: 40,

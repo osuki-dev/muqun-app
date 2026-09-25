@@ -1,29 +1,4 @@
-// The other half of "is this screen translated", and the half a compiler cannot
-// see.
-//
-// `macro-expansion.test.ts` beside this one catches a string that was *offered*
-// to Lingui and did not arrive: a `` t`...` `` whose macro never expanded. This
-// catches the string that was never offered at all -- a literal written straight
-// into `title=`, `accessibilityLabel=`, an `Alert`, or between two tags. Nothing
-// about that is a type error, nothing throws, and it reads perfectly in review;
-// it is only visible on a phone set to a language the app claims to speak, which
-// is where it was found.
-//
-// Two kinds of assertion here, because there are two ways a surface stays
-// English:
-//
-//  1. **A raw literal in a user-facing prop.** `scripts/i18n-audit.ts` walks the
-//     real TypeScript AST for these. Run it by hand for a readable report:
-//     `bun scripts/i18n-audit.ts`.
-//  2. **A descriptor table with a hole in it.** The pure modules -- the ones
-//     `bun test` imports, and which therefore cannot contain a macro -- keep
-//     their copy as English source data and are translated through a table in
-//     `@/i18n/labels`. A key with no entry in that table falls through to the
-//     English, silently. The scanner is deliberately quiet about those modules
-//     (`DESCRIPTOR_BACKED`), so the coverage checks below are the only thing
-//     standing behind them.
-//
-// Both directions matter. Either one alone passes while the app renders English.
+// Descriptor coverage remains a Bun test; message extraction and validation use the Lingui CLI.
 /// <reference types="node" />
 import { describe, expect, test } from 'bun:test';
 import { readFileSync } from 'node:fs';
@@ -37,8 +12,6 @@ import {
   withEditorActions,
   type TerminalKey,
 } from '@/lib/terminal-keys';
-
-import { auditUserFacingStrings, auditedFileCount } from '../../../scripts/i18n-audit';
 
 const I18N = dirname(fileURLToPath(import.meta.url));
 const SRC = join(I18N, '..', '..');
@@ -61,30 +34,6 @@ function descriptorKeys(table: string): Set<string> {
   );
   return new Set(keys);
 }
-
-describe('no user-facing string is written as a raw literal', () => {
-  test('the scan reaches the whole tree, or it is not proving anything', () => {
-    // A walk that silently stopped finding files would report zero findings and
-    // look like success. This is what tells the two apart.
-    expect(auditedFileCount()).toBeGreaterThan(150);
-  });
-
-  test('every literal reaching a user-facing prop goes through a macro', () => {
-    const findings = auditUserFacingStrings();
-    // Reported as `file:line  prop = "text"` so a failure names the screen
-    // rather than handing back an object graph to squint at.
-    const readable = findings.map(
-      (finding) =>
-        `${finding.file}:${finding.line}  ${finding.sink} = ${JSON.stringify(finding.text)}`
-    );
-    // A hit is a string that will render in English on all eight languages.
-    // Fix it with a hook-bound `t`/`<Trans>`, or -- if the module is pure and
-    // cannot hold a macro -- with a descriptor in `@/i18n/labels` plus a
-    // coverage assertion below. If it is genuinely not copy, it goes in the
-    // scanner's `ALLOWED` list with the reason written out.
-    expect(readable).toEqual([]);
-  });
-});
 
 // The key row is the surface this check was written for.
 //

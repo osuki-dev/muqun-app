@@ -245,6 +245,10 @@ msgstr "{title} — terminou enquanto você estava fora"
 msgid "+{overflow} more"
 msgstr "+{overflow} mais"
 
+#: src/components/dev-home-ambient-controls.tsx
+msgid "0 speed pauses motion. Theme default restores the theme."
+msgstr "A velocidade 0 pausa o movimento. O padrão do tema restaura o tema"
+
 #. placeholder {0}: Math.round(USER_FONT_MAX_BYTES / (1024 * 1024))
 #: src/components/settings-font-sheet.tsx
 msgid "A .ttf or .otf up to {0} MB."
@@ -643,6 +647,10 @@ msgstr "A autenticação está indisponível. Tente novamente ou verifique as de
 msgid "Auto-approve every action"
 msgstr "Aprovar automaticamente todas as ações"
 
+#: src/components/dev-home-ambient-controls.tsx
+msgid "Automatic"
+msgstr "Automático"
+
 #: src/components/agent-mode-sheet.tsx
 msgid "Autonomous software engineering: edits files, runs commands, tests."
 msgstr "Engenharia de software autónoma: edita ficheiros, executa comandos e testa"
@@ -944,6 +952,10 @@ msgstr "A limpar a cache"
 #: src/components/settings-storage.tsx
 msgid "Clearing…"
 msgstr "A limpar…"
+
+#: src/components/dev-home-ambient-controls.tsx
+msgid "Close effects"
+msgstr "Fechar efeitos"
 
 #: src/components/asset-viewer.tsx
 msgid "Close file"
@@ -1480,6 +1492,10 @@ msgstr "Não foi possível abrir o ficheiro"
 msgid "Could not open the guide"
 msgstr "Não foi possível abrir o guia"
 
+#: src/components/settings-registration.tsx
+msgid "Could not open the link"
+msgstr "Não foi possível abrir o link"
+
 #: src/lib/attachments.ts
 msgid "Could not open the picker."
 msgstr "Não foi possível abrir o seletor"
@@ -1590,6 +1606,10 @@ msgstr "Não foi possível salvar o atalho"
 msgid "Could not save theme"
 msgstr "Não foi possível salvar o tema"
 
+#: src/components/theme-appearance-settings.tsx
+msgid "Could not save this setting. Try again."
+msgstr "Não foi possível guardar esta definição. Tente novamente"
+
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Could not send"
 msgstr "Não foi possível enviar"
@@ -1640,6 +1660,10 @@ msgid "Could not switch agent"
 msgstr "Não foi possível trocar de agente"
 
 #: src/components/agent-workbench.tsx
+msgid "Could not switch model"
+msgstr "Não foi possível mudar o modelo"
+
+#: src/components/agent-workbench.tsx
 msgid "Could not undo"
 msgstr "Não foi possível desfazer"
 
@@ -1658,6 +1682,10 @@ msgstr "Não foi possível carregar o ficheiro"
 #: src/components/agent-worktree-sheet.tsx
 msgid "Create and move"
 msgstr "Criar e mover"
+
+#: src/components/agent-workbench.tsx
+msgid "Creating session…"
+msgstr "Criando sessão…"
 
 #: src/components/custom-theme-library.tsx
 msgid "Current"
@@ -1691,6 +1719,10 @@ msgstr "Personalizado"
 #: src/components/settings-appearance.tsx
 msgid "Dark"
 msgstr "Escuro"
+
+#: src/components/dev-home-ambient-controls.tsx
+msgid "Decrease {label}"
+msgstr "Diminuir {label}"
 
 #: src/components/agent-model-sheet.tsx
 msgid "default"
@@ -1754,6 +1786,10 @@ msgstr "Espaço de trabalho de demo"
 msgid "Denied by you"
 msgstr "Recusado por ti"
 
+#: src/components/dev-home-ambient-controls.tsx
+msgid "Density"
+msgstr "Densidade"
+
 #: src/i18n/labels.ts
 msgid "Deny"
 msgstr "Recusar"
@@ -1775,6 +1811,10 @@ msgstr "Resumo do diff"
 msgid "Direct control for OpenCode autonomous coding. Follow real-time reasoning, inspect code diffs, review step-by-step todos, and guide tasks on the go."
 msgstr "Controle direto para agentes OpenCode. Acompanhe o raciocínio em tempo real, inspecione diffs de código, revise tarefas passo a passo e comande seus agentes de onde estiver"
 
+#: src/components/dev-home-ambient-controls.tsx
+msgid "Direction"
+msgstr "Direção"
+
 #: src/components/new-task-sheet.tsx
 msgid "Directory"
 msgstr "Diretório"
@@ -1793,6 +1833,7 @@ msgstr "Desconectado · {0}"
 msgid "Disconnected."
 msgstr "Desconectado"
 
+#: src/components/agent-workbench.tsx
 #: src/components/in-app-notification-host.tsx
 msgid "Dismiss"
 msgstr "Dispensar"
@@ -1906,6 +1947,11 @@ msgstr "Editar este servidor"
 #: src/components/settings-home-layout-sheet.tsx
 msgid "Editorial"
 msgstr "Revista"
+
+#. placeholder {0}: props.value
+#: src/components/dev-home-ambient-controls.tsx
+msgid "Effects · {0}"
+msgstr "Efeitos · {0}"
 
 #: src/i18n/labels.ts
 msgid "Enter"
@@ -2268,6 +2314,10 @@ msgstr "Ocultar o simulador"
 msgid "Home"
 msgstr "Início"
 
+#: src/components/dev-home-ambient-controls.tsx
+msgid "Home effects · development only"
+msgstr "Efeitos da página inicial · apenas desenvolvimento"
+
 #: src/components/settings-appearance.tsx
 #: src/components/settings-home-layout-sheet.tsx
 msgid "Home layout"
@@ -2284,6 +2334,10 @@ msgstr "Layout do Home: {homeLayoutLabel}"
 #: src/components/settings-alerts.tsx
 msgid "Home screen widget"
 msgstr "Widget no ecrã principal"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Home visual effects"
+msgstr "Efeitos visuais do início"
 
 #: src/components/ssh-host-form.tsx
 msgid "Host"
@@ -2337,6 +2391,10 @@ msgstr "Importar arquivo"
 msgid "Import link"
 msgstr "Importar link"
 
+#: src/components/dev-home-ambient-controls.tsx
+msgid "Increase {label}"
+msgstr "Aumentar {label}"
+
 #: src/components/agent-context-sheet.tsx
 msgid "Input"
 msgstr "Entrada"
@@ -2377,6 +2435,10 @@ msgstr "Instalando imagens"
 #: src/components/settings-font-sheet.tsx
 msgid "Installing…"
 msgstr "A instalar…"
+
+#: src/components/dev-home-ambient-controls.tsx
+msgid "Intensity"
+msgstr "Intensidade"
 
 #: src/components/settings-font-sheet.tsx
 msgid "Interface"
@@ -2577,11 +2639,13 @@ msgstr "Lista apenas os painéis com um agente reconhecido"
 msgid "Live Activity"
 msgstr "Atividade ao vivo"
 
-#: src/components/theme-browse-sheet.tsx
+#: src/components/list-load-more-footer.tsx
 msgid "Load more"
 msgstr "Carregar mais"
 
 #: src/components/gateway-storage-error.tsx
+#: src/components/home-recent-sessions.tsx
+#: src/components/list-load-more-footer.tsx
 #: src/components/session-map.tsx
 #: src/components/ssh-host-list.tsx
 #: src/components/theme-link-import.tsx
@@ -2687,6 +2751,7 @@ msgid "Message not sent"
 msgstr "Mensagem não enviada"
 
 #: src/components/agent-context-sheet.tsx
+#: src/components/agent-subagent-detail-sheet.tsx
 msgid "Model"
 msgstr "Modelo"
 
@@ -3027,6 +3092,7 @@ msgstr "Ainda não há worktrees. Cria um abaixo para trabalhar num ramo sem mex
 msgid "Not a git repository"
 msgstr "Não é um repositório Git"
 
+#: src/components/agent-context-sheet.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Not available"
 msgstr "Indisponível"
@@ -3439,6 +3505,10 @@ msgstr "O código de emparelhamento expirou. Leia novamente para obter um novo c
 #: src/app/explore.tsx
 msgid "Pairing failed."
 msgstr "O emparelhamento falhou"
+
+#: src/components/dev-home-ambient-controls.tsx
+msgid "Palette (up to 4)"
+msgstr "Paleta (até 4)"
 
 #: src/components/settings-servers.tsx
 msgid "Panes on server cards"
@@ -4449,6 +4519,10 @@ msgstr "Mostrar o restante desta saída"
 msgid "Show the server list"
 msgstr "Mostrar a lista de servidores"
 
+#: src/components/theme-appearance-settings.tsx
+msgid "Show theme effects only while Home is visible. Turn off to reduce battery use."
+msgstr "Mostrar efeitos do tema apenas enquanto o início estiver visível. Desative para poupar bateria"
+
 #: src/components/agent-context-sheet.tsx
 msgid "Show thinking"
 msgstr "Mostrar o raciocínio"
@@ -4462,7 +4536,7 @@ msgctxt "agent slash command"
 msgid "Show what rolling back to the last message would undo"
 msgstr "Mostrar o que reverter até a última mensagem desfaria"
 
-#: src/components/theme-browse-sheet.tsx
+#: src/components/list-load-more-footer.tsx
 msgid "Showing {shown} of {total}"
 msgstr "Mostrando {shown} de {total}"
 
@@ -4505,6 +4579,7 @@ msgid "Simulator controls"
 msgstr "Controlos do simulador"
 
 #: src/components/asset-viewer.tsx
+#: src/components/dev-home-ambient-controls.tsx
 msgid "Size"
 msgstr "Tamanho"
 
@@ -4546,6 +4621,10 @@ msgstr "Código-fonte"
 #: src/components/virtual-keyboard.tsx
 msgid "Space"
 msgstr "Espaço"
+
+#: src/components/dev-home-ambient-controls.tsx
+msgid "Speed"
+msgstr "Velocidade"
 
 #: src/components/home-launch-actions.tsx
 #: src/components/home-overview.tsx
@@ -5110,6 +5189,7 @@ msgstr "A rodada falhou"
 msgid "Theme"
 msgstr "Tema"
 
+#: src/components/dev-home-ambient-controls.tsx
 #: src/components/theme-appearance-settings.tsx
 msgid "Theme default"
 msgstr "Predefinição do tema"
@@ -5345,6 +5425,7 @@ msgid "Today"
 msgstr "Hoje"
 
 #: src/components/agent-context-sheet.tsx
+#: src/components/agent-subagent-detail-sheet.tsx
 msgid "Tokens this session"
 msgstr "Tokens desta sessão"
 

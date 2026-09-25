@@ -149,7 +149,8 @@ export function mergeSessionChildren(
   previous: ChildrenByParent,
   parent: string,
   incoming: readonly AgentSessionInfo[],
-  authoritative = false
+  authoritative = false,
+  observedAtRequest?: readonly AgentSessionInfo[]
 ): ChildrenByParent {
   if (!authoritative && incoming.length === 0) return previous;
   const children = new Map<string, AgentSessionInfo>();
@@ -164,6 +165,17 @@ export function mergeSessionChildren(
       removed.add(child.asid);
     } else {
       children.set(child.asid, child);
+    }
+  }
+  // A GET describes an earlier snapshot. A child announced or updated on the
+  // stream while it was in flight must not disappear behind that response.
+  // Unchanged history is still reconciled against the authoritative inventory.
+  if (authoritative && observedAtRequest) {
+    const observed = new Map(observedAtRequest.map((child) => [child.asid, child]));
+    for (const child of previous[parent] ?? []) {
+      if (observed.get(child.asid) !== child && !removed.has(child.asid)) {
+        children.set(child.asid, child);
+      }
     }
   }
   for (const child of previous[parent] ?? []) {

@@ -40,6 +40,7 @@ import { noticeFromPush, noticePresentation } from '@/lib/in-app-notifications';
 import { useInAppNotifications } from '@/stores/in-app-notifications';
 import { isDemoRecord } from '@/lib/demo-gateway';
 import { getActiveLocale } from '@/i18n/active-locale';
+import { recoverWith } from '@/lib/compiler-safe-control-flow';
 
 Notifications.setNotificationHandler({
   handleNotification: async (notification) => {
@@ -185,42 +186,45 @@ export function useGatewayPushRegistration(record: GatewayRecord | null) {
     let cancelled = false;
 
     async function register() {
-      try {
-        const token = await registerForPushNotificationsAsync();
-        if (cancelled || !token) return;
-        // What this device has already told *this server*, read from disk
-        // rather than from a local. The local was reset every time this effect
-        // re-ran, and it re-runs on a new `record` object -- which
-        // `stores/gateway-connection` produces on select, rename and edit -- so
-        // renaming a server re-posted a token the gateway already had. The rule
-        // for when a post is owed is in `lib/push-token-registry`.
-        const build = appBuildIdentity();
-        // Read at the moment of the post, not captured by the effect: the
-        // language can change between the effect running and the token
-        // arriving, and what is sent has to be what is remembered.
-        const locale = getActiveLocale();
-        if (
-          !pushTokenNeedsSending(registeredPushToken(serverId), token, build, Date.now(), locale)
-        ) {
-          return;
+      return recoverWith(
+        async () => {
+          const token = await registerForPushNotificationsAsync();
+          if (cancelled || !token) return;
+          // What this device has already told *this server*, read from disk
+          // rather than from a local. The local was reset every time this effect
+          // re-ran, and it re-runs on a new `record` object -- which
+          // `stores/gateway-connection` produces on select, rename and edit -- so
+          // renaming a server re-posted a token the gateway already had. The rule
+          // for when a post is owed is in `lib/push-token-registry`.
+          const build = appBuildIdentity();
+          // Read at the moment of the post, not captured by the effect: the
+          // language can change between the effect running and the token
+          // arriving, and what is sent has to be what is remembered.
+          const locale = getActiveLocale();
+          if (
+            !pushTokenNeedsSending(registeredPushToken(serverId), token, build, Date.now(), locale)
+          ) {
+            return;
+          }
+          await registerDevicePushToken({
+            token,
+            platform: Platform.OS === 'ios' ? 'ios' : 'android',
+            device_name: Device.deviceName ?? Device.modelName ?? undefined,
+            // Named in the body rather than left to the request's headers: the
+            // gateway prefers a body that names a language, and this is the one
+            // request whose whole point is to tell it which.
+            locale,
+          });
+          if (cancelled) return;
+          // Written only now: a post that failed has told the gateway nothing,
+          // and must be retried on the next foreground rather than remembered.
+          rememberRegisteredPushToken(serverId, { token, build, locale });
+        },
+        (error) => {
+          // Registration is retried when the app next enters the foreground.
+          if (__DEV__) console.warn('Push notification registration failed.', error);
         }
-        await registerDevicePushToken({
-          token,
-          platform: Platform.OS === 'ios' ? 'ios' : 'android',
-          device_name: Device.deviceName ?? Device.modelName ?? undefined,
-          // Named in the body rather than left to the request's headers: the
-          // gateway prefers a body that names a language, and this is the one
-          // request whose whole point is to tell it which.
-          locale,
-        });
-        if (cancelled) return;
-        // Written only now: a post that failed has told the gateway nothing,
-        // and must be retried on the next foreground rather than remembered.
-        rememberRegisteredPushToken(serverId, { token, build, locale });
-      } catch (error) {
-        // Registration is retried when the app next enters the foreground.
-        if (__DEV__) console.warn('Push notification registration failed.', error);
-      }
+      );
     }
 
     void register();

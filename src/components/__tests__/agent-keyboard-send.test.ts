@@ -3,21 +3,28 @@ import { readFileSync } from 'node:fs';
 
 const workbench = readFileSync('src/components/agent-workbench.tsx', 'utf8');
 
-test('sending coordinates the optimistic row with keyboard dismissal only near the end', () => {
-  const threshold = workbench.indexOf(
-    'listRef.current?.getState().isWithinMaintainScrollAtEndThreshold'
-  );
-  const optimistic = workbench.indexOf('setTimeline((prev) => [...prev, tempUserItem])', threshold);
-  const guard = workbench.indexOf('if (followAfterSend)', optimistic);
-  const frame = workbench.indexOf('requestAnimationFrame(() => {', guard);
-  const coordinatedScroll = workbench.indexOf(
-    'scrollMessageToEnd({ animated: true, closeKeyboard: true })',
-    frame
-  );
+test('explicit sends reach the newest row without dismissing the keyboard or animating the offset', () => {
+  const start = workbench.indexOf('setTimeline((prev) => [...prev, tempUserItem])');
+  const end = workbench.indexOf('// No optimistic title.', start);
+  const sendScroll = workbench.slice(start, end);
+  expect(start).toBeGreaterThan(-1);
+  expect(sendScroll).toContain('requestAnimationFrame');
+  // `promptAsid` is the session this prompt goes to, fixed once it was chosen.
+  expect(sendScroll).toContain('activeAsidRef.current !== promptAsid');
+  expect(sendScroll).toContain('listRef.current?.scrollToEnd({ animated: false })');
+  expect(sendScroll).not.toContain('KeyboardController.dismiss');
+  expect(sendScroll).not.toContain('followAfterSend');
+});
 
-  expect(threshold).toBeGreaterThan(-1);
-  expect(optimistic).toBeGreaterThan(threshold);
-  expect(guard).toBeGreaterThan(optimistic);
-  expect(frame).toBeGreaterThan(guard);
-  expect(coordinatedScroll).toBeGreaterThan(frame);
+test('keyboard inset reactions stay active while an explicit end scroll awaits row measurement', () => {
+  // Native regression: append beyond the viewport, then dismiss the keyboard
+  // before the end-scroll promise settles. Freezing the keyboard integration
+  // leaves the offset beyond the closed-keyboard content range on Android.
+  expect(workbench).not.toContain('useKeyboardScrollToEnd');
+  expect(workbench).not.toContain('freeze={');
+  const start = workbench.indexOf('const handleJumpToLatest =');
+  const end = workbench.indexOf('// YOLO', start);
+  expect(workbench.slice(start, end)).toContain(
+    'listRef.current?.scrollToEnd({ animated: false })'
+  );
 });

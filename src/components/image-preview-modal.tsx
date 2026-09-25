@@ -74,16 +74,16 @@ export function ImagePreviewModal({
   // A rotation, or opening a different image, changes what "page 3" means in
   // pixels. Re-resting the pager keeps the visible page put.
   useEffect(() => {
-    pagerX.value = -pageIndex.value * width;
+    pagerX.set(-pageIndex.value * width);
   }, [pageIndex, pagerX, width]);
 
   const panGesture = Gesture.Pan()
     .minDistance(2)
     .onStart(() => {
-      gestureStartPagerX.value = pagerX.value;
-      gestureStartImageX.value = imageX.value;
-      gestureStartImageY.value = imageY.value;
-      panAxis.value = AXIS_UNDECIDED;
+      gestureStartPagerX.set(pagerX.value);
+      gestureStartImageX.set(imageX.value);
+      gestureStartImageY.set(imageY.value);
+      panAxis.set(AXIS_UNDECIDED);
     })
     .onUpdate((event) => {
       if (scale.value > 1) {
@@ -92,13 +92,11 @@ export function ImagePreviewModal({
         // dragged clear of the screen.
         const boundX = ((scale.value - 1) * width) / 2;
         const boundY = ((scale.value - 1) * height) / 2;
-        imageX.value = Math.max(
-          -boundX,
-          Math.min(boundX, gestureStartImageX.value + event.translationX)
+        imageX.set(
+          Math.max(-boundX, Math.min(boundX, gestureStartImageX.value + event.translationX))
         );
-        imageY.value = Math.max(
-          -boundY,
-          Math.min(boundY, gestureStartImageY.value + event.translationY)
+        imageY.set(
+          Math.max(-boundY, Math.min(boundY, gestureStartImageY.value + event.translationY))
         );
         return;
       }
@@ -107,15 +105,15 @@ export function ImagePreviewModal({
         const dx = Math.abs(event.translationX);
         const dy = Math.abs(event.translationY);
         if (Math.max(dx, dy) >= AXIS_LOCK_DISTANCE) {
-          panAxis.value = dx > dy ? AXIS_HORIZONTAL : AXIS_VERTICAL;
+          panAxis.set(dx > dy ? AXIS_HORIZONTAL : AXIS_VERTICAL);
         }
       }
       if (panAxis.value === AXIS_HORIZONTAL) {
-        pagerX.value = gestureStartPagerX.value + event.translationX;
+        pagerX.set(gestureStartPagerX.value + event.translationX);
       } else if (panAxis.value === AXIS_VERTICAL) {
         // Only downward: dragging up has no meaning here and letting the image
         // follow it looked like a broken scroll.
-        dragY.value = Math.max(0, event.translationY);
+        dragY.set(Math.max(0, event.translationY));
       }
     })
     .onEnd((event) => {
@@ -125,8 +123,8 @@ export function ImagePreviewModal({
         const flicked = Math.abs(event.velocityX) > 500;
         const step = flicked || Math.abs(travelled) > width * 0.3 ? (travelled < 0 ? 1 : -1) : 0;
         const next = Math.max(0, Math.min(images.length - 1, pageIndex.value + step));
-        pageIndex.value = next;
-        pagerX.value = withTiming(-next * width, timing('short'));
+        pageIndex.set(next);
+        pagerX.set(withTiming(-next * width, timing('short')));
         return;
       }
       if (panAxis.value === AXIS_VERTICAL) {
@@ -134,35 +132,35 @@ export function ImagePreviewModal({
           scheduleOnRN(onClose);
           return;
         }
-        dragY.value = withTiming(0, timing('short'));
+        dragY.set(withTiming(0, timing('short')));
       }
     })
     .onFinalize(() => {
-      panAxis.value = AXIS_UNDECIDED;
+      panAxis.set(AXIS_UNDECIDED);
     });
 
   const pinchGesture = Gesture.Pinch()
     .onStart(() => {
-      gestureStartScale.value = scale.value;
+      gestureStartScale.set(scale.value);
     })
     .onUpdate((event) => {
-      scale.value = Math.max(MIN_SCALE, Math.min(MAX_SCALE, gestureStartScale.value * event.scale));
+      scale.set(Math.max(MIN_SCALE, Math.min(MAX_SCALE, gestureStartScale.value * event.scale)));
     })
     .onEnd(() => {
       // Anything near 1x snaps back cleanly, so a stray pinch cannot leave the
       // image a few percent off and permanently pannable.
       if (scale.value <= 1.05) {
-        scale.value = withTiming(1, timing('micro'));
-        imageX.value = withTiming(0, timing('micro'));
-        imageY.value = withTiming(0, timing('micro'));
+        scale.set(withTiming(1, timing('micro')));
+        imageX.set(withTiming(0, timing('micro')));
+        imageY.set(withTiming(0, timing('micro')));
         return;
       }
       // Re-clamp: shrinking can leave the image translated further than its
       // new, smaller overflow allows.
       const boundX = ((scale.value - 1) * width) / 2;
       const boundY = ((scale.value - 1) * height) / 2;
-      imageX.value = withTiming(Math.max(-boundX, Math.min(boundX, imageX.value)), timing('micro'));
-      imageY.value = withTiming(Math.max(-boundY, Math.min(boundY, imageY.value)), timing('micro'));
+      imageX.set(withTiming(Math.max(-boundX, Math.min(boundX, imageX.value)), timing('micro')));
+      imageY.set(withTiming(Math.max(-boundY, Math.min(boundY, imageY.value)), timing('micro')));
     });
 
   const doubleTapGesture = Gesture.Tap()
@@ -171,9 +169,9 @@ export function ImagePreviewModal({
     .onEnd((_event, success) => {
       if (!success) return;
       const zoomedIn = scale.value > 1.05;
-      scale.value = withTiming(zoomedIn ? 1 : DOUBLE_TAP_SCALE, timing('short'));
-      imageX.value = withTiming(0, timing('short'));
-      imageY.value = withTiming(0, timing('short'));
+      scale.set(withTiming(zoomedIn ? 1 : DOUBLE_TAP_SCALE, timing('short')));
+      imageX.set(withTiming(0, timing('short')));
+      imageY.set(withTiming(0, timing('short')));
     });
 
   const singleTapGesture = Gesture.Tap()

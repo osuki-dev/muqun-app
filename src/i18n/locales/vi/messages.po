@@ -245,6 +245,10 @@ msgstr "{title} — đã xong khi bạn đi vắng"
 msgid "+{overflow} more"
 msgstr "+{overflow} nữa"
 
+#: src/components/dev-home-ambient-controls.tsx
+msgid "0 speed pauses motion. Theme default restores the theme."
+msgstr "Tốc độ 0 tạm dừng chuyển động. Mặc định chủ đề khôi phục hiệu ứng"
+
 #. placeholder {0}: Math.round(USER_FONT_MAX_BYTES / (1024 * 1024))
 #: src/components/settings-font-sheet.tsx
 msgid "A .ttf or .otf up to {0} MB."
@@ -643,6 +647,10 @@ msgstr "Không thể xác thực. Hãy thử lại hoặc kiểm tra cài đặt
 msgid "Auto-approve every action"
 msgstr "Tự động duyệt mọi hành động"
 
+#: src/components/dev-home-ambient-controls.tsx
+msgid "Automatic"
+msgstr "Tự động"
+
 #: src/components/agent-mode-sheet.tsx
 msgid "Autonomous software engineering: edits files, runs commands, tests."
 msgstr "Kỹ thuật phần mềm tự chủ: sửa tệp, chạy lệnh, kiểm thử"
@@ -944,6 +952,10 @@ msgstr "Đang xóa bộ nhớ đệm"
 #: src/components/settings-storage.tsx
 msgid "Clearing…"
 msgstr "Đang xóa…"
+
+#: src/components/dev-home-ambient-controls.tsx
+msgid "Close effects"
+msgstr "Đóng hiệu ứng"
 
 #: src/components/asset-viewer.tsx
 msgid "Close file"
@@ -1480,6 +1492,10 @@ msgstr "Không thể mở tệp"
 msgid "Could not open the guide"
 msgstr "Không mở được hướng dẫn"
 
+#: src/components/settings-registration.tsx
+msgid "Could not open the link"
+msgstr "Không thể mở liên kết"
+
 #: src/lib/attachments.ts
 msgid "Could not open the picker."
 msgstr "Không thể mở bộ chọn"
@@ -1590,6 +1606,10 @@ msgstr "Không thể lưu lệnh nhanh"
 msgid "Could not save theme"
 msgstr "Không thể lưu giao diện"
 
+#: src/components/theme-appearance-settings.tsx
+msgid "Could not save this setting. Try again."
+msgstr "Không thể lưu cài đặt này. Hãy thử lại"
+
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Could not send"
 msgstr "Không thể gửi"
@@ -1640,6 +1660,10 @@ msgid "Could not switch agent"
 msgstr "Không thể đổi tác nhân"
 
 #: src/components/agent-workbench.tsx
+msgid "Could not switch model"
+msgstr "Không thể chuyển đổi mô hình"
+
+#: src/components/agent-workbench.tsx
 msgid "Could not undo"
 msgstr "Không thể hoàn tác"
 
@@ -1658,6 +1682,10 @@ msgstr "Không thể tải tệp lên"
 #: src/components/agent-worktree-sheet.tsx
 msgid "Create and move"
 msgstr "Tạo và chuyển sang"
+
+#: src/components/agent-workbench.tsx
+msgid "Creating session…"
+msgstr "Đang tạo phiên…"
 
 #: src/components/custom-theme-library.tsx
 msgid "Current"
@@ -1691,6 +1719,10 @@ msgstr "Tùy chỉnh"
 #: src/components/settings-appearance.tsx
 msgid "Dark"
 msgstr "Tối"
+
+#: src/components/dev-home-ambient-controls.tsx
+msgid "Decrease {label}"
+msgstr "Giảm {label}"
 
 #: src/components/agent-model-sheet.tsx
 msgid "default"
@@ -1754,6 +1786,10 @@ msgstr "Không gian làm việc demo"
 msgid "Denied by you"
 msgstr "Bạn đã từ chối"
 
+#: src/components/dev-home-ambient-controls.tsx
+msgid "Density"
+msgstr "Mật độ"
+
 #: src/i18n/labels.ts
 msgid "Deny"
 msgstr "Từ chối"
@@ -1775,6 +1811,10 @@ msgstr "Tóm tắt diff"
 msgid "Direct control for OpenCode autonomous coding. Follow real-time reasoning, inspect code diffs, review step-by-step todos, and guide tasks on the go."
 msgstr "Kiểm soát trực tiếp tác nhân lập trình OpenCode. Theo dõi luồng suy nghĩ theo thời gian thực, xem khác biệt mã, kiểm tra danh sách nhiệm vụ và điều hướng mọi lúc"
 
+#: src/components/dev-home-ambient-controls.tsx
+msgid "Direction"
+msgstr "Hướng"
+
 #: src/components/new-task-sheet.tsx
 msgid "Directory"
 msgstr "Thư mục"
@@ -1793,6 +1833,7 @@ msgstr "Đã ngắt kết nối · {0}"
 msgid "Disconnected."
 msgstr "Đã ngắt kết nối"
 
+#: src/components/agent-workbench.tsx
 #: src/components/in-app-notification-host.tsx
 msgid "Dismiss"
 msgstr "Bỏ qua"
@@ -1906,6 +1947,11 @@ msgstr "Sửa máy chủ này"
 #: src/components/settings-home-layout-sheet.tsx
 msgid "Editorial"
 msgstr "Biên tập"
+
+#. placeholder {0}: props.value
+#: src/components/dev-home-ambient-controls.tsx
+msgid "Effects · {0}"
+msgstr "Hiệu ứng · {0}"
 
 #: src/i18n/labels.ts
 msgid "Enter"
@@ -2268,6 +2314,10 @@ msgstr "Ẩn trình giả lập"
 msgid "Home"
 msgstr "Trang chủ"
 
+#: src/components/dev-home-ambient-controls.tsx
+msgid "Home effects · development only"
+msgstr "Hiệu ứng trang chủ · chỉ dành cho phát triển"
+
 #: src/components/settings-appearance.tsx
 #: src/components/settings-home-layout-sheet.tsx
 msgid "Home layout"
@@ -2284,6 +2334,10 @@ msgstr "Bố cục Home: {homeLayoutLabel}"
 #: src/components/settings-alerts.tsx
 msgid "Home screen widget"
 msgstr "Tiện ích màn hình chính"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Home visual effects"
+msgstr "Hiệu ứng hình ảnh trang chủ"
 
 #: src/components/ssh-host-form.tsx
 msgid "Host"
@@ -2337,6 +2391,10 @@ msgstr "Nhập tệp"
 msgid "Import link"
 msgstr "Nhập từ liên kết"
 
+#: src/components/dev-home-ambient-controls.tsx
+msgid "Increase {label}"
+msgstr "Tăng {label}"
+
 #: src/components/agent-context-sheet.tsx
 msgid "Input"
 msgstr "Đầu vào"
@@ -2377,6 +2435,10 @@ msgstr "Đang cài đặt hình ảnh"
 #: src/components/settings-font-sheet.tsx
 msgid "Installing…"
 msgstr "Đang cài đặt…"
+
+#: src/components/dev-home-ambient-controls.tsx
+msgid "Intensity"
+msgstr "Cường độ"
 
 #: src/components/settings-font-sheet.tsx
 msgid "Interface"
@@ -2577,11 +2639,13 @@ msgstr "Chỉ liệt kê các ngăn đang chạy một tác tử được nhận
 msgid "Live Activity"
 msgstr "Live Activity"
 
-#: src/components/theme-browse-sheet.tsx
+#: src/components/list-load-more-footer.tsx
 msgid "Load more"
 msgstr "Tải thêm"
 
 #: src/components/gateway-storage-error.tsx
+#: src/components/home-recent-sessions.tsx
+#: src/components/list-load-more-footer.tsx
 #: src/components/session-map.tsx
 #: src/components/ssh-host-list.tsx
 #: src/components/theme-link-import.tsx
@@ -2687,6 +2751,7 @@ msgid "Message not sent"
 msgstr "Chưa gửi được tin nhắn"
 
 #: src/components/agent-context-sheet.tsx
+#: src/components/agent-subagent-detail-sheet.tsx
 msgid "Model"
 msgstr "Mô hình"
 
@@ -3027,6 +3092,7 @@ msgstr "Chưa có worktree nào. Tạo một cái bên dưới để làm việc
 msgid "Not a git repository"
 msgstr "Không phải kho mã Git"
 
+#: src/components/agent-context-sheet.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Not available"
 msgstr "Không khả dụng"
@@ -3439,6 +3505,10 @@ msgstr "Mã ghép nối đã hết hạn. Hãy quét lại để lấy mã mới
 #: src/app/explore.tsx
 msgid "Pairing failed."
 msgstr "Ghép nối thất bại"
+
+#: src/components/dev-home-ambient-controls.tsx
+msgid "Palette (up to 4)"
+msgstr "Bảng màu (tối đa 4)"
 
 #: src/components/settings-servers.tsx
 msgid "Panes on server cards"
@@ -4449,6 +4519,10 @@ msgstr "Hiện phần còn lại của kết quả"
 msgid "Show the server list"
 msgstr "Hiện danh sách máy chủ"
 
+#: src/components/theme-appearance-settings.tsx
+msgid "Show theme effects only while Home is visible. Turn off to reduce battery use."
+msgstr "Chỉ hiển thị hiệu ứng chủ đề khi trang chủ đang hiển thị. Tắt để giảm tiêu hao pin"
+
 #: src/components/agent-context-sheet.tsx
 msgid "Show thinking"
 msgstr "Hiện phần suy luận"
@@ -4462,7 +4536,7 @@ msgctxt "agent slash command"
 msgid "Show what rolling back to the last message would undo"
 msgstr "Xem hoàn tác đến tin nhắn cuối sẽ bỏ những gì"
 
-#: src/components/theme-browse-sheet.tsx
+#: src/components/list-load-more-footer.tsx
 msgid "Showing {shown} of {total}"
 msgstr "Đang hiển thị {shown} trên {total}"
 
@@ -4505,6 +4579,7 @@ msgid "Simulator controls"
 msgstr "Điều khiển trình giả lập"
 
 #: src/components/asset-viewer.tsx
+#: src/components/dev-home-ambient-controls.tsx
 msgid "Size"
 msgstr "Kích thước"
 
@@ -4546,6 +4621,10 @@ msgstr "Mã nguồn"
 #: src/components/virtual-keyboard.tsx
 msgid "Space"
 msgstr "Space"
+
+#: src/components/dev-home-ambient-controls.tsx
+msgid "Speed"
+msgstr "Tốc độ"
 
 #: src/components/home-launch-actions.tsx
 #: src/components/home-overview.tsx
@@ -5110,6 +5189,7 @@ msgstr "Lượt này đã thất bại"
 msgid "Theme"
 msgstr "Chủ đề"
 
+#: src/components/dev-home-ambient-controls.tsx
 #: src/components/theme-appearance-settings.tsx
 msgid "Theme default"
 msgstr "Theo chủ đề"
@@ -5345,6 +5425,7 @@ msgid "Today"
 msgstr "Hôm nay"
 
 #: src/components/agent-context-sheet.tsx
+#: src/components/agent-subagent-detail-sheet.tsx
 msgid "Tokens this session"
 msgstr "Token trong phiên này"
 

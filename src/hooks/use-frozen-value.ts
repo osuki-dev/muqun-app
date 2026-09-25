@@ -38,6 +38,9 @@ export function nextFrozenValue<T>(
  * the newest value with it. `resetKey` flushes the hold.
  */
 export function useFrozenValue<T>(value: T, frozen: boolean, resetKey: unknown): T {
+  // Holds the frame in a ref it reads during render, deliberately (see above);
+  // React Compiler would refuse that, so it stays uncompiled on purpose.
+  'use no memo';
   const displayedRef = useRef(value);
   const resetKeyRef = useRef(resetKey);
   const flush = resetKeyRef.current !== resetKey;
@@ -79,6 +82,9 @@ export type FreezeGate = {
  * the lag being fixed.
  */
 export function useFreezeGate(): FreezeGate {
+  // A render-time ref, deliberately (see above); React Compiler would refuse it,
+  // so it stays uncompiled on purpose.
+  'use no memo';
   const activeRef = useRef(false);
   const [, applyRelease] = useState(0);
   const setActive = useCallback((active: boolean) => {

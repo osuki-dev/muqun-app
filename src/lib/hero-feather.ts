@@ -153,6 +153,17 @@ export function coveredImageRect(
   };
 }
 
+/** Foreground portraits retain their top edge; only wallpaper may crop above it. */
+export function editorialArtworkRect(
+  container: FeatherSize,
+  intrinsic: FeatherSize,
+  fit: string | undefined,
+  focalPoint?: { x: number; y: number }
+): FeatherRect {
+  if (fit === 'contain') return containedImageRect(container, intrinsic, focalPoint);
+  return coveredImageRect(container, intrinsic, { x: focalPoint?.x ?? 0.5, y: 0 });
+}
+
 /**
  * The drawn rectangle, and the blurred rounded rectangle that feathers it.
  *
@@ -214,4 +225,19 @@ export function heroFeatherGeometry({
     blur: { x: fadeX / 6, y: fadeY / 6 },
     feather: { x: fadeX, y: fadeY },
   };
+}
+
+/** Ignore nearly transparent export residue when locating the foreground's top.
+ * This is an alignment guide only: no source pixels are cropped away.
+ */
+export function artworkVisibleTop(alpha: ArrayLike<number>, width: number, height: number): number {
+  if (width <= 0 || height <= 0 || alpha.length < width * height) return 0;
+  const minimumPixels = Math.max(1, Math.ceil(width * 0.002));
+  for (let y = 0; y < height; y++) {
+    let visible = 0;
+    for (let x = 0; x < width; x++) {
+      if (alpha[y * width + x] >= 32 && ++visible >= minimumPixels) return y;
+    }
+  }
+  return 0;
 }

@@ -52,6 +52,8 @@ import {
 import { describeGatewayFailure } from '@/lib/network-error';
 import { RenderTally, useRenderTally } from '@/lib/render-tally';
 import { responsiveWorkspaceLayout } from '@/lib/responsive-layout';
+import { recoverWith, settleAfter } from '@/lib/compiler-safe-control-flow';
+import { carryBox, carryForward } from '@/lib/carry-forward';
 
 /**
  * Everything the session has produced.
@@ -318,49 +320,57 @@ export function SessionArtifacts({
       return;
     }
     setLoading(true);
-    try {
-      const page = await listSessionAssets(sessionId, tabId, {
-        kind: FILTER_KINDS[filter],
-        limit: windowSize,
-        signal: controller.signal,
-      });
-      if (controller.signal.aborted) return;
-      setAssets(page);
-      // A window that came back with room to spare is the whole listing, and a
-      // window at the endpoint's ceiling is as much of it as can be asked for.
-      // Either way there is nothing further to fetch, so the list stops asking.
-      setAtEnd(page.length < windowSize || windowSize >= MAX_SESSION_ASSET_LIMIT);
-      // Read once per load rather than per render: the day headings must not
-      // renumber themselves because a keystroke in the search field happened to
-      // land after local midnight.
-      setLoadedAt(Date.now());
-      setAvailable(true);
-      setError(null);
-    } catch (failure) {
-      // A listing this sheet itself gave up on is not a failure to report. It
-      // usually surfaces as the abort, but a request cancelled between the
-      // headers and the body can also come back as the budget's own timeout,
-      // so the controller is what decides -- not the shape of the error.
-      if (controller.signal.aborted) return;
-      setAssets([]);
-      // A window that failed says nothing about whether a wider one would, but
-      // it must not leave the list asking for one on every scroll.
-      setAtEnd(true);
-      if (isMissingEndpoint(failure)) {
-        setAvailable(false);
-        setError(null);
-        return;
+    return settleAfter(
+      async () => {
+        return recoverWith(
+          async () => {
+            const page = await listSessionAssets(sessionId, tabId, {
+              kind: FILTER_KINDS[filter],
+              limit: windowSize,
+              signal: controller.signal,
+            });
+            if (controller.signal.aborted) return;
+            setAssets(page);
+            // A window that came back with room to spare is the whole listing, and a
+            // window at the endpoint's ceiling is as much of it as can be asked for.
+            // Either way there is nothing further to fetch, so the list stops asking.
+            setAtEnd(page.length < windowSize || windowSize >= MAX_SESSION_ASSET_LIMIT);
+            // Read once per load rather than per render: the day headings must not
+            // renumber themselves because a keystroke in the search field happened to
+            // land after local midnight.
+            setLoadedAt(Date.now());
+            setAvailable(true);
+            setError(null);
+          },
+          (failure) => {
+            // A listing this sheet itself gave up on is not a failure to report. It
+            // usually surfaces as the abort, but a request cancelled between the
+            // headers and the body can also come back as the budget's own timeout,
+            // so the controller is what decides -- not the shape of the error.
+            if (controller.signal.aborted) return;
+            setAssets([]);
+            // A window that failed says nothing about whether a wider one would, but
+            // it must not leave the list asking for one on every scroll.
+            setAtEnd(true);
+            if (isMissingEndpoint(failure)) {
+              setAvailable(false);
+              setError(null);
+              return;
+            }
+            setError(describeGatewayFailure(failure, t`Could not load files.`).message);
+          }
+        );
+      },
+      () => {
+        // Not the abandoned load's business either. Clearing these would hand the
+        // spinner belonging to the request still on the wire to the one that has
+        // already been given up on.
+        if (!controller.signal.aborted) {
+          setLoading(false);
+          setLoadingMore(false);
+        }
       }
-      setError(describeGatewayFailure(failure, t`Could not load files.`).message);
-    } finally {
-      // Not the abandoned load's business either. Clearing these would hand the
-      // spinner belonging to the request still on the wire to the one that has
-      // already been given up on.
-      if (!controller.signal.aborted) {
-        setLoading(false);
-        setLoadingMore(false);
-      }
-    }
+    );
   }, [filter, sessionId, t, windowSize, tabId]);
 
   useEffect(() => {
@@ -376,11 +386,11 @@ export function SessionArtifacts({
    * The rows the listing in hand makes, with the ones that have not changed
    * kept as the very objects they were.
    *
-   * Written to the ref during render on purpose, the way the chat transcript
+   * Carried in a box during render on purpose, the way the chat transcript
    * does it: this is derived state, and the derivation is idempotent -- built
    * twice from the same assets it returns the same objects.
    */
-  const previousRowsRef = useRef<ArtifactRow[]>([]);
+  const [previousRows] = useState(() => carryBox<ArtifactRow[]>([]));
   const rows = useMemo(() => {
     const needle = query.trim().toLowerCase();
     const matching = assets.filter(
@@ -392,20 +402,21 @@ export function SessionArtifacts({
           asset.name.toLowerCase().includes(needle) ||
           asset.path.toLowerCase().includes(needle))
     );
-    // oxlint-disable-next-line react/refs -- deliberate: the ref carries last render's rows in so unchanged ones keep their objects. Nothing is rendered *from* it -- the rows returned are, and they are recomputed from the props and state in the dependency list.
-    const next = groupByDay(matching, loadedAt, previousRowsRef.current);
-    // oxlint-disable-next-line react/refs -- deliberate: the same idempotent derivation, written back. Building twice from the same assets returns the same objects.
-    previousRowsRef.current = next;
-    return next;
-  }, [assets, filter, loadedAt, query]);
+    // The box carries last render's rows in so unchanged ones keep their
+    // objects, and takes this render's back; see `carryForward`.
+    return carryForward(previousRows, (previous) => groupByDay(matching, loadedAt, previous));
+  }, [assets, filter, loadedAt, query, previousRows]);
 
   async function refresh() {
     setRefreshing(true);
-    try {
-      await load();
-    } finally {
-      setRefreshing(false);
-    }
+    return settleAfter(
+      async () => {
+        await load();
+      },
+      () => {
+        setRefreshing(false);
+      }
+    );
   }
 
   /**

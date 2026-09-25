@@ -29,7 +29,7 @@ press "${TARGET}"
 press "${TARGET}"
 
 # section s9
-type "/comp"
+fill id="terminal-composer-input" "/comp"
 
 # section s10
 is visible "${TARGET}"

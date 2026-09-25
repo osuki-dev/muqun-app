@@ -1,6 +1,33 @@
 import { describe, expect, test } from 'bun:test';
 
-import { bloomRadius, chooseLaunchWorld } from '../launch-intro-world';
+import { bloomRadius, chooseLaunchWorld, launchWorldHole } from '../launch-intro-world';
+
+describe('launch exit preserves the revealed world', () => {
+  test('palette does not flash back to paper at the start of the exit fade', () => {
+    const world = chooseLaunchWorld({
+      hasArtwork: false,
+      shaderCompiled: true,
+      imageReady: false,
+      deadlinePassed: false,
+      irisLatched: false,
+    });
+    expect(launchWorldHole('native', world)).toBe('closed');
+    expect(launchWorldHole('visible', world)).toBe('field');
+    expect(launchWorldHole('exiting', world)).toBe('field');
+  });
+
+  test('a decoded wallpaper stays revealed while fading into Home', () => {
+    expect(launchWorldHole('native', { kind: 'painted', ready: true })).toBe('closed');
+    expect(launchWorldHole('visible', { kind: 'painted', ready: true })).toBe('through');
+    expect(launchWorldHole('exiting', { kind: 'painted', ready: true })).toBe('through');
+  });
+
+  test('a missing image never creates an empty hole during exit', () => {
+    expect(launchWorldHole('exiting', { kind: 'painted', ready: false })).toBe('closed');
+    expect(launchWorldHole('exiting', { kind: 'plain' })).toBe('closed');
+    expect(launchWorldHole('exiting', { kind: 'iris' })).toBe('closed');
+  });
+});
 
 const PAINTED = {
   hasArtwork: true,

@@ -81,7 +81,12 @@ export function HomeConnections({
                   {t`Saved SSH host`}
                 </Text>
               </View>
-              <ThemeIcon name="home.arrow" fallback={ChevronRight} size={16} color={theme.colors.textMuted} />
+              <ThemeIcon
+                name="home.arrow"
+                fallback={ChevronRight}
+                size={16}
+                color={theme.colors.textMuted}
+              />
             </PressableScale>
           ))}
         </View>
@@ -98,7 +103,12 @@ export function HomeConnections({
         <Text variant="bodySmall" color={theme.colors.primary}>
           {t`Manage connections`}
         </Text>
-        <ThemeIcon name="home.arrow" fallback={ChevronRight} size={16} color={theme.colors.primary} />
+        <ThemeIcon
+          name="home.arrow"
+          fallback={ChevronRight}
+          size={16}
+          color={theme.colors.primary}
+        />
       </PressableScale>
     </View>
   );
@@ -156,7 +166,12 @@ function GatewayConnectionRow({
           </Text>
         ) : null}
       </View>
-      <ThemeIcon name="home.arrow" fallback={ChevronRight} size={16} color={theme.colors.textMuted} />
+      <ThemeIcon
+        name="home.arrow"
+        fallback={ChevronRight}
+        size={16}
+        color={theme.colors.textMuted}
+      />
     </PressableScale>
   );
 }

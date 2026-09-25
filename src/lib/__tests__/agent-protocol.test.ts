@@ -932,7 +932,13 @@ describe('catalog', () => {
       { id: 'paid', name: 'Paid', provider_id: 'acme', enabled: false, status: 'needs key' },
     ],
     agents: [
-      { id: 'build', name: 'Build', mode: 'primary', hidden: false },
+      {
+        id: 'build',
+        name: 'Build',
+        mode: 'primary',
+        hidden: false,
+        model: { provider_id: 'opencode', model_id: 'union-alpha', variant: 'thinking' },
+      },
       { id: 'explore', name: 'Explore', mode: 'subagent', hidden: false },
       { id: 'title', name: 'Title', mode: 'primary', hidden: true },
     ],
@@ -956,6 +962,11 @@ describe('catalog', () => {
 
   test('reads providers, commands and defaults', () => {
     const parsed = parseAgentCatalog(catalog);
+    expect(parsed.agents[0]?.model).toEqual({
+      provider_id: 'opencode',
+      model_id: 'union-alpha',
+      variant: 'thinking',
+    });
     expect(parsed.providers.map((provider) => provider.id)).toEqual(['opencode', 'acme']);
     expect(parsed.providers[1].activation).toBe('disabled');
     expect(parsed.commands[0]).toMatchObject({ name: 'review', agent: 'plan' });
@@ -1063,14 +1074,15 @@ describe('context, shells, engine, diff', () => {
     expect(usage.messages).toBe(12);
     expect(usage.tokens).toMatchObject({ input: 20801, cache_read: 3, cache_write: 4 });
     // The cached half of the input is input the model still read.
-    expect(contextTokenTotal(usage.tokens)).toBe(20801 + 41 + 134 + 3);
+    expect(contextTokenTotal(usage.tokens)).toBe(20801 + 41 + 134 + 3 + 4);
   });
 
   test('tokens may be null, and the ring has nothing to fill', () => {
     const usage = parseAgentContextUsage({ messages: 0, tokens: null });
     expect(usage.tokens).toBeNull();
     expect(contextTokenTotal(usage.tokens)).toBe(0);
-    expect(contextFillRatio(usage.tokens, 200000)).toBe(0);
+    expect(contextFillRatio(usage.tokens, 200000)).toBeNull();
+    expect(contextFillRatio({ input: 0, output: 0 }, 200000)).toBe(0);
     expect(contextFillRatio({ input: 1, output: 0 }, undefined)).toBeNull();
     expect(contextFillRatio({ input: 1, output: 0 }, 0)).toBeNull();
     expect(contextFillRatio({ input: 100, output: 100 }, 400)).toBeCloseTo(0.5);

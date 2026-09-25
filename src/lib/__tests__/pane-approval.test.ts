@@ -10,6 +10,7 @@ import {
   APPROVAL_NOTIFICATION_ACTIONS,
   approvalActionDecision,
   approvalBannerReducer,
+  approvalContextLines,
   approvalPushTarget,
   pushOffersDecision,
   gatewaySupportsApprovals,
@@ -20,6 +21,25 @@ import {
   type ApprovalBannerState,
   type PaneApproval,
 } from '../pane-approval';
+
+test('approval context removes terminal frame lines without dropping commands or diffs', () => {
+  expect(
+    approvalContextLines({
+      prompt: 'Approve this change?',
+      context: [
+        ' Approve this change? ',
+        '╭────────────────────╮',
+        '│                    │',
+        '╰────────────────────╯',
+        '',
+        'git diff -- src/app.ts',
+        '- old value',
+        '+ new value',
+        '│ Keep this explanation │',
+      ],
+    })
+  ).toEqual(['git diff -- src/app.ts', '- old value', '+ new value', '│ Keep this explanation │']);
+});
 
 const OPTIONS = [
   { index: 1, label: 'Yes', selected: true, decision: 'allow' },

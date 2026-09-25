@@ -334,6 +334,10 @@ export function terminalKeysFromGateway(keys: ShortcutKey[]): TerminalKey[] {
     label: entry.label,
     key: entry.key,
     accessibilityLabel: entry.description || entry.label,
+    cap: entry.text !== undefined || entry.keys !== undefined ? entry.label : undefined,
+    keys: entry.keys,
+    text: entry.text,
+    submit: entry.submit,
   }));
 }
 
@@ -367,28 +371,35 @@ export function terminalKeysForPane(
 }
 
 /** Full keyboard shortcuts never duplicate the single keys on the keyboard. */
-export function keyboardCombinationKeys(keys: TerminalKey[]): TerminalKey[] {
-  const required: TerminalKey[] = [
-    { label: 'Shift Tab', key: 'shift+tab', accessibilityLabel: 'Shift Tab' },
-    { label: 'Ctrl C', key: 'ctrl+c', accessibilityLabel: 'Control C' },
-    {
-      label: 'Esc Esc',
-      key: 'sequence:escape',
-      cap: 'Esc Esc',
-      accessibilityLabel: 'Escape twice',
-      keys: ['esc', 'esc'],
-    },
-    ...['left', 'down', 'up', 'right'].map((direction) => ({
-      label: `Alt ${direction}`,
-      key: `alt+${direction}`,
-      accessibilityLabel: `Alt ${direction}`,
-    })),
-  ];
+export function keyboardCombinationKeys(
+  keys: TerminalKey[],
+  includeFallback = true
+): TerminalKey[] {
+  const required: TerminalKey[] = includeFallback
+    ? [
+        { label: 'Shift Tab', key: 'shift+tab', accessibilityLabel: 'Shift Tab' },
+        { label: 'Ctrl C', key: 'ctrl+c', accessibilityLabel: 'Control C' },
+        {
+          label: 'Esc Esc',
+          key: 'sequence:escape',
+          cap: 'Esc Esc',
+          accessibilityLabel: 'Escape twice',
+          keys: ['esc', 'esc'],
+        },
+        ...['left', 'down', 'up', 'right'].map((direction) => ({
+          label: `Alt ${direction}`,
+          key: `alt+${direction}`,
+          accessibilityLabel: `Alt ${direction}`,
+        })),
+      ]
+    : [];
   const seen = new Set<string>();
   return [
     ...keys.filter((item) => item.text !== undefined),
     ...required,
-    ...keys.filter((item) => item.text === undefined && item.key.includes('+')),
+    ...keys.filter(
+      (item) => item.text === undefined && (item.key.includes('+') || item.keys !== undefined)
+    ),
   ].filter((item) => {
     if (seen.has(item.key)) return false;
     seen.add(item.key);

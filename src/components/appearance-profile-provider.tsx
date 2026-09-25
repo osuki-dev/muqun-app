@@ -1,10 +1,11 @@
 import { createContext, useContext, type ReactNode } from 'react';
 
 import { resolveAppearanceProfile, type AppearanceProfile } from '@/lib/appearance-profile';
+import { DEFAULT_HOME_LAYOUT } from '@/lib/home-layout';
 import { useAppSettings } from '@/stores/app-settings';
 
 const AppearanceProfileContext = createContext<AppearanceProfile>(
-  resolveAppearanceProfile('classic')
+  resolveAppearanceProfile(DEFAULT_HOME_LAYOUT)
 );
 
 export function AppearanceProfileProvider({ children }: { children: ReactNode }) {

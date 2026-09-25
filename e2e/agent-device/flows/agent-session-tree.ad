@@ -19,6 +19,12 @@ is visible "${TARGET}"
 # section detail-output
 is visible "${TARGET}"
 
+# section detail-model
+is visible "${TARGET}"
+
+# section detail-tokens
+is visible "${TARGET}"
+
 # section close-detail
 back --system
 

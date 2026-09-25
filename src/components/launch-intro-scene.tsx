@@ -3,7 +3,7 @@ import { useSplashMirror } from '@osuki-dev/react-native-splash';
 import { useThemeMode, useThemeTokens } from '@osuki-dev/ui';
 import { Canvas, ColorShader, Fill, Shader } from '@shopify/react-native-skia';
 import { Image } from 'expo-image';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useEffectEvent, useMemo, useRef, useState } from 'react';
 import {
   Platform,
   Pressable,
@@ -30,7 +30,7 @@ import Animated, {
 import { scheduleOnRN } from 'react-native-worklets';
 
 import { useAppliedCustomTheme } from '@/components/theme-candidate';
-import { useLaunchBackground } from '@/hooks/use-launch-artwork';
+import { useLaunchArtwork, useLaunchBackground } from '@/hooks/use-launch-artwork';
 import { useLaunchHeroEdge } from '@/hooks/use-launch-hero-edge';
 import {
   LAUNCH_ARTWORK_MAX_WIDTH,
@@ -55,7 +55,7 @@ import {
   reducedLaunchIntroTimeline,
   WORLD_ARRIVAL_ZOOM,
 } from '@/lib/launch-intro-timeline';
-import { bloomRadius, chooseLaunchWorld } from '@/lib/launch-intro-world';
+import { bloomRadius, chooseLaunchWorld, launchWorldHole } from '@/lib/launch-intro-world';
 import { DURATION, RISE_DISTANCE, timing } from '@/lib/motion';
 import { THEME_ARTWORK_REGULAR_MIN_WIDTH } from '@/lib/responsive-layout';
 import { resolveThemeImage } from '@/theme/resolve';
@@ -241,12 +241,30 @@ export function LaunchSceneIntro({
   finish,
   onDone,
 }: SplashRenderContext & { onDone: () => void }) {
-  const mirror = useSplashMirror();
+  const nativeMirror = useSplashMirror();
+  const launchArtwork = useLaunchArtwork();
+  const { width, height } = useWindowDimensions();
+  const artworkBox = Math.min(width * LAUNCH_ARTWORK_WIDTH_FRACTION, LAUNCH_ARTWORK_MAX_WIDTH);
+  // Native keeps the image from process startup. A theme applied later must
+  // still use its own launch artwork when this scene mounts again.
+  const [launchUri] = useState(() =>
+    launchArtwork.kind === 'default' ? undefined : launchArtwork.uri
+  );
+  const mirror = launchUri
+    ? {
+        ...nativeMirror,
+        hasLogo: true,
+        logo: {
+          ...nativeMirror.logo,
+          source: { uri: launchUri },
+          style: { width: artworkBox, height: artworkBox },
+        },
+      }
+    : nativeMirror;
   const packBackground = useLaunchBackground();
   const { theme: pack, assets } = useAppliedCustomTheme();
   const theme = useThemeTokens();
   const { resolvedMode } = useThemeMode();
-  const { width, height } = useWindowDimensions();
   const reduced = useReducedMotion();
   const fonts = useMarkdownFonts();
   const packLabel = useThemePack().label;
@@ -260,13 +278,24 @@ export function LaunchSceneIntro({
   // mounting underneath this sheet at the same time, and may measure before or
   // after the opening starts.
   const latestHomeRect = useRef<LaunchArtworkRect | null>(null);
+  const startedAt = useRef(0);
   const [homeRect, setHomeRect] = useState<LaunchArtworkRect | null>(null);
   useEffect(
     () =>
       subscribeLaunchArtworkRect((rect) => {
         latestHomeRect.current = rect;
+        // A cold image decode may complete after the native handover. Accept
+        // it before departure, but never redirect an artwork already in flight.
+        if (
+          phase === 'visible' &&
+          !reduced &&
+          startedAt.current > 0 &&
+          Date.now() - startedAt.current <= beats.hero.at
+        ) {
+          setHomeRect(rect);
+        }
       }),
-    []
+    [phase, reduced, beats.hero.at]
   );
   // Capture before scheduling travel. The animation is armed only after this
   // snapshot has committed, so a delayed JS render cannot redirect it mid-flight.
@@ -300,8 +329,8 @@ export function LaunchSceneIntro({
     width: heroBox.width,
     height: heroBox.height,
   };
-  // A different responsive image, a cover crop or a hidden Home uses a
-  // dissolve. Pretending these are the same picture causes a visible face jump.
+  // Exact matches can land without a dissolve. Cropped or independent artwork
+  // still travels toward Home, then dissolves into its actual composition.
   const canLand = Boolean(
     !reduced &&
     homeRect &&
@@ -310,17 +339,29 @@ export function LaunchSceneIntro({
     homeRect.intrinsicWidth &&
     homeRect.intrinsicHeight
   );
+  const canTravel = !reduced && Boolean(homeRect);
   const landingCentre =
-    canLand && homeRect
+    canTravel && homeRect
       ? { x: homeRect.x + homeRect.width / 2, y: homeRect.y + homeRect.height / 2 }
       : launchCentre;
   const launchDrawing = containedImageRect(heroBox, {
     width: homeRect?.intrinsicWidth ?? 0,
     height: homeRect?.intrinsicHeight ?? 0,
   });
-  const landingScale = canLand && homeRect ? homeRect.width / launchDrawing.width : 1;
+  const landingScale =
+    canLand && homeRect
+      ? homeRect.width / launchDrawing.width
+      : canTravel && homeRect
+        ? Math.min(homeRect.width / heroBox.width, homeRect.height / heroBox.height)
+        : 1;
 
-  const paper = packBackground ?? mirror.backgroundColor ?? theme.colors.background;
+  const paper = packBackground ?? theme.colors.background;
+  const handoffPaper = useSharedValue(1);
+  const handoffPaperStyle = useAnimatedStyle(() => ({ opacity: handoffPaper.value }));
+  useEffect(() => {
+    if (phase !== 'visible') return;
+    handoffPaper.set(withTiming(0, { duration: reduced ? 0 : 220 }));
+  }, [phase, reduced, handoffPaper]);
   const widthClass = width >= THEME_ARTWORK_REGULAR_MIN_WIDTH ? 'regular' : 'compact';
 
   // The pack's own world, resolved exactly the way Home resolves it, so what
@@ -350,11 +391,12 @@ export function LaunchSceneIntro({
   // The front will not wait past the budget. Armed on the handover rather than
   // on mount, because the handover is when the reader starts counting.
   const [deadlinePassed, setDeadlinePassed] = useState(false);
+  // The budget is read when the timer is armed, not a reason to re-arm it.
+  const readWorldDeadline = useEffectEvent(() => beats.worldDeadlineAt);
   useEffect(() => {
     if (phase !== 'visible' || reduced || !hasArtwork) return;
-    const timer = setTimeout(() => setDeadlinePassed(true), beats.worldDeadlineAt);
+    const timer = setTimeout(() => setDeadlinePassed(true), readWorldDeadline());
     return () => clearTimeout(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase, hasArtwork, reduced]);
 
   // The reveal, once chosen, may only become more conservative. `irisLatched`
@@ -425,10 +467,6 @@ export function LaunchSceneIntro({
   const hold = useSharedValue(0);
   const exit = useSharedValue(0);
 
-  // When the handover happened, for the skip gate. A ref rather than state:
-  // reading it must not re-render the sheet mid-sequence.
-  const startedAt = useRef(0);
-
   const skip = useCallback(() => {
     if (!canSkipLaunchIntro(Date.now() - startedAt.current, beats)) return;
     onDone();
@@ -451,71 +489,75 @@ export function LaunchSceneIntro({
   const [frontGone, setFrontGone] = useState(false);
   const onFrontGone = useCallback(() => setFrontGone(true), []);
 
-  useEffect(() => {
+  // Only the phase drives this. The beats, the reduced-motion setting and the
+  // callbacks are read when it changes rather than being reasons to run, and
+  // the shared values are stable -- which is what an effect event is for.
+  const followPhase = useEffectEvent(() => {
     if (phase === 'visible') {
       startedAt.current = Date.now();
       if (reduced) {
         // Nothing travels, but the composition still has to be the finished one
         // so the cross-fade lands on Home rather than on a half-built stage.
-        ignite.value = 1;
-        bloom.value = 1;
-        settle.value = 1;
+        ignite.set(1);
+        bloom.set(1);
+        settle.set(1);
         setFrontGone(true);
-        hero.value = 1;
-        type.value = 1;
-        blink.value = 1;
+        hero.set(1);
+        type.set(1);
+        blink.set(1);
       } else {
-        ignite.value = withTiming(1, timing(beats.ignite.ms));
-        type.value = withDelay(beats.type.at, withTiming(1, timing(beats.type.ms)));
-        blink.value = withDelay(beats.blink.at, withTiming(1, timing(beats.blink.ms)));
+        ignite.set(withTiming(1, timing(beats.ignite.ms)));
+        type.set(withDelay(beats.type.at, withTiming(1, timing(beats.type.ms))));
+        blink.set(withDelay(beats.blink.at, withTiming(1, timing(beats.blink.ms))));
       }
       // The hold is what hands back: `ready` in the overlay is this callback.
       // `ReduceMotion.Never` so the beat survives the setting -- it is a wait,
       // not a movement, and collapsing it would snap the app in.
-      hold.value = withTiming(
-        1,
-        timing(beats.holdUntil, { reduceMotion: ReduceMotion.Never }),
-        (finished) => {
+      hold.set(
+        withTiming(1, timing(beats.holdUntil, { reduceMotion: ReduceMotion.Never }), (finished) => {
           if (finished) scheduleOnRN(onDone);
-        }
+        })
       );
       return;
     }
     if (phase !== 'exiting') return;
     // Likewise a dissolve rather than a cut, at either setting.
-    exit.value = withTiming(
-      1,
-      timing(beats.exit.ms, { reduceMotion: ReduceMotion.Never }),
-      (finished) => {
+    exit.set(
+      withTiming(1, timing(beats.exit.ms, { reduceMotion: ReduceMotion.Never }), (finished) => {
         if (finished) scheduleOnRN(finish);
-      }
+      })
     );
-    // The shared values are stable; only the phase drives this.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  });
+  useEffect(() => {
+    followPhase();
   }, [phase]);
 
   useEffect(() => {
-    if (phase !== 'visible' || reduced || !canLand) return;
+    if (phase !== 'visible' || reduced) return;
     const elapsed = Date.now() - startedAt.current;
     // Missing the scheduled departure chooses the dissolve, never a late flight
     // or a longer splash. The rest of the opening keeps its original timeline.
     if (elapsed > beats.hero.at) return;
-    hero.value = withDelay(beats.hero.at - elapsed, withTiming(1, timing(beats.hero.ms)));
-  }, [phase, reduced, canLand, homeRect, beats.hero.at, beats.hero.ms, hero]);
+    hero.set(withDelay(beats.hero.at - elapsed, withTiming(1, timing(beats.hero.ms))));
+  }, [phase, reduced, homeRect, beats.hero.at, beats.hero.ms, hero]);
 
   // The bloom is the one beat driven by something other than the clock: it
   // leaves when the world behind it exists. Until then it breathes in place,
   // which is a front waiting rather than a launch that has hung.
-  useEffect(() => {
+  // Driven by the phase, the reveal and the setting; the beats and
+  // `onFrontGone` are read when those change, not reasons to run.
+  const followBloom = useEffectEvent(() => {
     if (phase !== 'visible' || reduced) return;
     if (!revealReady) {
-      bloom.value = withRepeat(
-        withSequence(
-          withTiming(BREATH.high, timing('short')),
-          withTiming(BREATH.low, timing('short'))
-        ),
-        -1,
-        true
+      bloom.set(
+        withRepeat(
+          withSequence(
+            withTiming(BREATH.high, timing('short')),
+            withTiming(BREATH.low, timing('short'))
+          ),
+          -1,
+          true
+        )
       );
       return;
     }
@@ -525,14 +567,18 @@ export function LaunchSceneIntro({
       DURATION.short,
       beats.bloom.at + beats.bloom.ms - Math.max(elapsed, beats.bloom.at)
     );
-    bloom.value = withDelay(
-      delay,
-      withTiming(1, timing(remaining), (finished) => {
-        if (finished) scheduleOnRN(onFrontGone);
-      })
+    bloom.set(
+      withDelay(
+        delay,
+        withTiming(1, timing(remaining), (finished) => {
+          if (finished) scheduleOnRN(onFrontGone);
+        })
+      )
     );
-    settle.value = withDelay(delay, withTiming(1, timing(beats.settle.ms)));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    settle.set(withDelay(delay, withTiming(1, timing(beats.settle.ms))));
+  });
+  useEffect(() => {
+    followBloom();
   }, [phase, revealReady, reduced]);
 
   const paperVector = useMemo(() => colorVector(paper), [paper]);
@@ -548,14 +594,7 @@ export function LaunchSceneIntro({
   // paper it is already showing, but a palette pack drew a small coloured blob
   // on the splash for half a second. The cover stays shut until there is an
   // opening to open.
-  const hole: InkBloomHole =
-    phase !== 'visible'
-      ? 'closed'
-      : world.kind === 'palette'
-        ? 'field'
-        : world.kind === 'painted' && world.ready
-          ? 'through'
-          : 'closed';
+  const hole: InkBloomHole = launchWorldHole(phase, world);
   const worldAlpha = wallpaper?.opacity ?? 1;
 
   // Every uniform, once per frame, on the UI thread. JavaScript does nothing
@@ -598,7 +637,13 @@ export function LaunchSceneIntro({
     });
   });
 
-  const sheetStyle = useAnimatedStyle(() => ({ opacity: 1 - exit.value }));
+  const sheetStyle = useAnimatedStyle(() => ({
+    opacity:
+      (1 - exit.value) *
+      (canLand || reduced
+        ? 1
+        : interpolate(hero.value, [0, 0.55, 1], [1, 1, 0], Extrapolation.CLAMP)),
+  }));
   const heroStyle = useAnimatedStyle(() => ({
     transform: [
       { translateX: (landingCentre.x - launchCentre.x) * hero.value },
@@ -622,7 +667,9 @@ export function LaunchSceneIntro({
     world.kind === 'palette' || (world.kind === 'painted' && !(frontGone && world.ready));
 
   return (
-    <Animated.View style={[mirror.container.style, sheetStyle]}>
+    <Animated.View
+      needsOffscreenAlphaCompositing={phase === 'exiting'}
+      style={[mirror.container.style, sheetStyle]}>
       {/* The paper, which is the pack's own and is under everything. */}
       <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: paper }]} />
 
@@ -690,6 +737,19 @@ export function LaunchSceneIntro({
           fit={wallpaper?.fit}
           focalPoint={wallpaper?.focalPoint}
           opacity={worldAlpha}
+        />
+      ) : null}
+
+      {/* Keep the native paper through the handoff, then reveal the selected
+          pack's paper and artwork without a one-frame light/dark cut. */}
+      {paper !== mirror.backgroundColor ? (
+        <Animated.View
+          pointerEvents="none"
+          style={[
+            StyleSheet.absoluteFill,
+            { backgroundColor: mirror.backgroundColor },
+            handoffPaperStyle,
+          ]}
         />
       ) : null}
 

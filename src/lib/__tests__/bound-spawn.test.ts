@@ -1,7 +1,6 @@
 import { expect, test } from 'bun:test';
-import { readFileSync } from 'node:fs';
 import { runInNewContext } from 'node:vm';
-import ts from 'typescript';
+import { declaration, transpile } from '../../test-support/production-source';
 import { assertDeliveryCurrent, DeliveryOwnership } from '../bound-delivery';
 import {
   spawnedAgentFromResponse,
@@ -28,20 +27,8 @@ function deferred<T>() {
 }
 const turn = () => new Promise<void>((resolve) => setImmediate(resolve));
 function fixture() {
-  const source = ts.createSourceFile(
-    'client.ts',
-    readFileSync('src/lib/gateway-client.ts', 'utf8'),
-    ts.ScriptTarget.Latest,
-    true
-  );
   const declarations = ['spawnBoundAgent', 'withRecordBaseUrl']
-    .map((name) => {
-      const node = source.statements.find(
-        (item) => ts.isFunctionDeclaration(item) && item.name?.text === name
-      );
-      if (!node) throw new Error(`Missing production ${name}`);
-      return node.getText(source).replace(/^export /, '');
-    })
+    .map((name) => declaration('src/lib/gateway-client.ts', name))
     .join('\n');
   const tunnel = deferred<void>();
   const reply = deferred<unknown>();
@@ -104,12 +91,7 @@ function fixture() {
       return response;
     },
   };
-  const spawn = runInNewContext(
-    ts.transpileModule(`${declarations}\nspawnBoundAgent`, {
-      compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.None },
-    }).outputText,
-    globals
-  ) as (
+  const spawn = runInNewContext(transpile(`${declarations}\nspawnBoundAgent`), globals) as (
     record: GatewayRecord,
     session: string,
     request: AgentSpawnRequest,

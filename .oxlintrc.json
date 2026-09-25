@@ -1,5 +1,6 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "jsPlugins": ["./tooling/oxlint/index.ts", "eslint-plugin-lingui"],
   "plugins": ["typescript", "unicorn", "oxc", "react", "import"],
   "categories": {
     "correctness": "error"
@@ -25,6 +26,17 @@
   },
   "ignorePatterns": ["dist/**", "ios/**", "android/**", ".expo/**", "src/i18n/locales/**"],
   "rules": {
+    "muqun/no-reanimated-dependencies": "error",
+    "muqun/react-compiler": "error",
+    "muqun/pane-cache-shape": "error",
+    "muqun/composer-delivery": "error",
+    "muqun/ssh-dialog-contract": "error",
+    "muqun/input-adapter-contract": "error",
+    "muqun/home-model-boundary": "error",
+    "lingui/t-call-in-function": "error",
+    "lingui/no-single-tag-to-translate": "error",
+    "lingui/no-single-variables-to-translate": "error",
+    "lingui/no-trans-inside-trans": "error",
     "eqeqeq": ["error", "smart"],
     "no-dupe-class-members": "error",
     "no-dupe-keys": "error",
@@ -140,7 +152,7 @@
     },
     {
       // CommonJS config plugins and Node scripts.
-      "files": ["plugins/**/*.js", "scripts/**/*.js", "*.config.js"],
+      "files": ["plugins/**/*.js", "plugins/**/*.cjs", "scripts/**/*.js", "*.config.js"],
       "env": { "node": true },
       "rules": {
         "typescript/no-require-imports": "off"

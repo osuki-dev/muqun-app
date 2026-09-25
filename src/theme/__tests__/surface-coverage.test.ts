@@ -83,16 +83,11 @@ test('both launch surfaces take their mark from the shared fallback chain', () =
   // screen grows a second opinion: a lock screen that resolved the slot itself
   // could drift from the overlay, and the two are the first and last thing a
   // reader sees in a session.
-  // The launch overlay does not resolve the mark at all any more: its picture
-  // *is* the frame the OS drew, handed over by the splash mirror, because the
-  // opening's first rule is that nothing ever replaces the artwork the reader
-  // is already looking at. The chain still decides which picture that is --
-  // one launch earlier, in `use-launch-image-sync`, which is the only place
-  // allowed to tell native what to draw. So the rule is not "the overlay calls
-  // the chain" but "exactly one surface does, and the overlay mirrors it".
+  // Native persists the chain for the next cold start. The scene also reads
+  // it so a warm remount cannot reuse an earlier theme's native manifest.
   const launch = readFileSync('src/components/launch-intro-scene.tsx', 'utf8');
   expect(launch).toContain('useSplashMirror()');
-  expect(launch).not.toContain('useLaunchArtwork()');
+  expect(launch).toContain('useLaunchArtwork()');
   const sync = readFileSync('src/hooks/use-launch-image-sync.ts', 'utf8');
   expect(sync).toContain("from '@/hooks/use-launch-artwork'");
   expect(sync).toContain('useLaunchArtwork()');

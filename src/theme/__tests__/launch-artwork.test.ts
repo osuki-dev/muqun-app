@@ -160,3 +160,23 @@ test('Home visibility does not hide artwork on launch', () => {
     kind: 'default',
   });
 });
+
+test('variant launch art stays independent from Home in both widths and modes', () => {
+  const pack = theme((manifest) => {
+    manifest.decoration = { 'home.artwork': { asset: 'picture' } };
+    manifest.variantDecorations = {
+      light: { 'launch.artwork': { asset: 'wide' } },
+      dark: { 'launch.artwork': { asset: 'mark' } },
+    };
+  });
+  for (const width of ['compact', 'regular'] as const) {
+    expect(resolveLaunchArtwork(pack, FILES, 'light', width)).toEqual({
+      kind: 'artwork',
+      uri: FILES.wide,
+    });
+    expect(resolveLaunchArtwork(pack, FILES, 'dark', width)).toEqual({
+      kind: 'artwork',
+      uri: FILES.mark,
+    });
+  }
+});

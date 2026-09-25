@@ -1,3 +1,4 @@
+import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens } from '@osuki-dev/ui';
@@ -55,6 +56,7 @@ export function ArtifactsButton({
   const { t } = useLingui();
 
   const router = useRouter();
+  const profile = useAppearanceProfile();
   const theme = useThemeTokens();
   const surfaceBackground = useSurfaceBackground();
 
@@ -92,6 +94,7 @@ export function ArtifactsButton({
       style={[
         styles.button,
         compact && styles.compactButton,
+        { borderRadius: profile.chrome.control },
         { backgroundColor: surfaceBackground(background) },
       ]}>
       <FolderOpen size={compact ? 15 : 16} color={theme.colors.primary} />

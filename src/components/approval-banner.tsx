@@ -11,12 +11,14 @@ import {
 } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
 import { Card } from '@/components/themed-card';
+import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { useEffect } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import { fadeIn, fadeInDown, fadeOut, fadeOutDown, listLayout, timing } from '@/lib/motion';
 import type { ApprovalDecision, ApprovalOption, PaneApproval } from '@/lib/pane-approval';
+import { approvalContextLines } from '@/lib/pane-approval';
 
 /**
  * The banner the terminal screen raises when its pane is blocked on a
@@ -79,6 +81,7 @@ export function ApprovalBanner({
 }: ApprovalBannerProps) {
   const { t } = useLingui();
   const theme = useThemeTokens();
+  const profile = useAppearanceProfile();
 
   // An error with no menu behind it is still worth one line: it is how a user
   // learns that the answer they tapped did not land.
@@ -100,7 +103,7 @@ export function ApprovalBanner({
   const busy = answeringIndex !== null;
   // The agent's framing of the request -- the command, the file, the diff. One
   // line of it is orientation; the rest is already on the terminal behind this.
-  const context = approval.context.filter((line) => line !== approval.prompt).join('  ·  ');
+  const context = approvalContextLines(approval).join('  ·  ');
 
   return (
     <Animated.View
@@ -197,7 +200,7 @@ export function ApprovalBanner({
                     accessibilityRole="button"
                     accessibilityLabel={t`Press Escape to dismiss this request`}
                     testID="approval-escape"
-                    style={styles.escape}>
+                    style={{ ...styles.escape, borderRadius: profile.chrome.control }}>
                     {escapeSending ? (
                       <Spinner size="sm" color={theme.colors.textMuted} />
                     ) : (
@@ -249,6 +252,7 @@ function ApprovalOptionRow({
 }) {
   const { t } = useLingui();
   const theme = useThemeTokens();
+  const profile = useAppearanceProfile();
   const answeringValue = useSharedValue(answering ? 1 : 0);
   const busyValue = useSharedValue(busy ? 1 : 0);
 
@@ -274,7 +278,10 @@ function ApprovalOptionRow({
       accessibilityRole="button"
       accessibilityLabel={t`Answer: ${option.label}`}
       testID={`approval-option-${option.index}`}
-      style={{ borderWidth: theme.components.Card.flat.border ? StyleSheet.hairlineWidth : 0 }}>
+      style={{
+        borderRadius: profile.chrome.control,
+        borderWidth: theme.components.Card.flat.border ? StyleSheet.hairlineWidth : 0,
+      }}>
       <Stack direction="horizontal" gap="sm" align="center">
         <View style={styles.decision}>
           <Animated.View style={[StyleSheet.absoluteFill, styles.centred, glyphStyle]}>
@@ -309,7 +316,9 @@ function ApprovalOptionRow({
             some scripts, so case is left to each translator. */}
         {/* `t` rather than `<Trans>`: `Tag` types its children as `string`, so
             the element a `<Trans>` renders is a type error there. */}
-        {option.selected ? <Tag variant="pill">{t`DEFAULT`}</Tag> : null}
+        {option.selected ? (
+          <Tag variant="pill" style={{ borderRadius: profile.chrome.control }}>{t`DEFAULT`}</Tag>
+        ) : null}
       </Stack>
     </PressableCard>
   );

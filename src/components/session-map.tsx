@@ -76,6 +76,7 @@ import {
   type SessionMapOperationScope,
 } from '@/lib/session-map-operations';
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';
+import { recoverWith, settleAfter } from '@/lib/compiler-safe-control-flow';
 
 /**
  * The session map: every panel in the current workspace, grouped under the tab
@@ -420,39 +421,47 @@ export function SessionMap({
     const request = ++loadRequest.current;
     if (!mounted.current || !gatewayOwnsServer()) return false;
     setLoading(true);
-    try {
-      const [nextWorkspaces, nextTabs, nextPanes, nextAgents] = await Promise.all([
-        gatewayTransport.loadWorkspaces(sessionId),
-        gatewayTransport.loadTabs(sessionId),
-        gatewayTransport.loadPanes(sessionId),
-        gatewayTransport.loadAgents(sessionId),
-      ]);
-      if (request !== loadRequest.current || !isCurrentScope(token) || !gatewayOwnsServer())
-        return false;
-      setWorkspaces(nextWorkspaces);
-      setTabs(nextTabs);
-      setPanes(nextPanes);
-      setAgents(nextAgents);
-      setError(null);
-      // Open on whatever the terminal is already showing, so the sheet reads as
-      // "where am I" rather than a fresh list.
-      const current = nextPanes.find((pane) => pane.id === activePaneId);
-      setWorkspaceId(
-        current
-          ? field(current, 'workspace_id')
-          : (nextWorkspaces.find((item) => Boolean(item.raw.focused))?.id ??
-              nextWorkspaces[0]?.id ??
-              '')
-      );
-      return true;
-    } catch (failure) {
-      if (request === loadRequest.current && isCurrentScope(token) && gatewayOwnsServer())
-        setError(describeGatewayFailure(failure, t`Could not load what is running.`).message);
-      return false;
-    } finally {
-      if (request === loadRequest.current && isCurrentScope(token) && gatewayOwnsServer())
-        setLoading(false);
-    }
+    return settleAfter(
+      async () => {
+        return recoverWith(
+          async () => {
+            const [nextWorkspaces, nextTabs, nextPanes, nextAgents] = await Promise.all([
+              gatewayTransport.loadWorkspaces(sessionId),
+              gatewayTransport.loadTabs(sessionId),
+              gatewayTransport.loadPanes(sessionId),
+              gatewayTransport.loadAgents(sessionId),
+            ]);
+            if (request !== loadRequest.current || !isCurrentScope(token) || !gatewayOwnsServer())
+              return false;
+            setWorkspaces(nextWorkspaces);
+            setTabs(nextTabs);
+            setPanes(nextPanes);
+            setAgents(nextAgents);
+            setError(null);
+            // Open on whatever the terminal is already showing, so the sheet reads as
+            // "where am I" rather than a fresh list.
+            const current = nextPanes.find((pane) => pane.id === activePaneId);
+            setWorkspaceId(
+              current
+                ? field(current, 'workspace_id')
+                : (nextWorkspaces.find((item) => Boolean(item.raw.focused))?.id ??
+                    nextWorkspaces[0]?.id ??
+                    '')
+            );
+            return true;
+          },
+          (failure) => {
+            if (request === loadRequest.current && isCurrentScope(token) && gatewayOwnsServer())
+              setError(describeGatewayFailure(failure, t`Could not load what is running.`).message);
+            return false;
+          }
+        );
+      },
+      () => {
+        if (request === loadRequest.current && isCurrentScope(token) && gatewayOwnsServer())
+          setLoading(false);
+      }
+    );
   }, [activePaneId, currentScope, gatewayOwnsServer, isCurrentScope, sessionId, t]);
 
   useEffect(() => {
@@ -517,15 +526,20 @@ export function SessionMap({
     const operation = beginStructuralOperation();
     if (!operation) return;
     setError(null);
-    try {
-      await action();
-      if (owns(operation)) await load();
-    } catch (failure) {
-      if (owns(operation))
-        setError(describeGatewayFailure(failure, t`Could not update the session.`).message);
-    } finally {
-      finishStructuralOperation(operation);
-    }
+    return settleAfter(
+      async () => {
+        try {
+          await action();
+          if (owns(operation)) await load();
+        } catch (failure) {
+          if (owns(operation))
+            setError(describeGatewayFailure(failure, t`Could not update the session.`).message);
+        }
+      },
+      () => {
+        finishStructuralOperation(operation);
+      }
+    );
   }
 
   async function reconcileUnknownCreate(operation: SessionMapOperation): Promise<void> {
@@ -544,49 +558,58 @@ export function SessionMap({
     const operation = beginStructuralOperation('create');
     if (!operation) return;
     setError(null);
-    try {
-      const created = await action();
-      if (!created.paneId) {
-        await reconcileUnknownCreate(operation);
-        return;
-      }
-      if (!owns(operation)) return;
-      if (created.workspaceId) setWorkspaceId(created.workspaceId);
-
-      // The POST response is the authoritative success signal. Refreshing the
-      // sheet is useful, but a refresh failure must not discard a pane we already
-      // know the gateway created.
-      await load();
-      if (!owns(operation)) return;
-      if (onCreatedPane) {
+    return settleAfter(
+      async () => {
         try {
-          onCreatedPane(created.paneId);
-        } catch {
-          // Selection is recorded before routing, so the known target remains
-          // recoverable in the picker store even when navigation itself fails.
-          if (owns(operation)) setError(t`The new terminal was created, but could not open it.`);
+          const created = await action();
+          if (!created.paneId) {
+            await reconcileUnknownCreate(operation);
+            return;
+          }
+          if (!owns(operation)) return;
+          if (created.workspaceId) setWorkspaceId(created.workspaceId);
+
+          // The POST response is the authoritative success signal. Refreshing the
+          // sheet is useful, but a refresh failure must not discard a pane we already
+          // know the gateway created.
+          await load();
+          if (!owns(operation)) return;
+          if (onCreatedPane) {
+            try {
+              onCreatedPane(created.paneId);
+            } catch {
+              // Selection is recorded before routing, so the known target remains
+              // recoverable in the picker store even when navigation itself fails.
+              if (owns(operation))
+                setError(t`The new terminal was created, but could not open it.`);
+            }
+          }
+        } catch (failure) {
+          const described = describeGatewayFailure(failure, t`Could not update the session.`);
+          if (described.retryable) await reconcileUnknownCreate(operation);
+          else if (owns(operation)) setError(described.message);
         }
+      },
+      () => {
+        finishStructuralOperation(operation);
       }
-    } catch (failure) {
-      const described = describeGatewayFailure(failure, t`Could not update the session.`);
-      if (described.retryable) await reconcileUnknownCreate(operation);
-      else if (owns(operation)) setError(described.message);
-    } finally {
-      finishStructuralOperation(operation);
-    }
+    );
   }
 
   async function refresh() {
     const token = currentScope();
     setRefreshing(true);
-    try {
-      const refreshed = await load();
-      if (refreshed && isCurrentScope(token)) {
-        clearSessionMapOutcome(token);
+    return settleAfter(
+      async () => {
+        const refreshed = await load();
+        if (refreshed && isCurrentScope(token)) {
+          clearSessionMapOutcome(token);
+        }
+      },
+      () => {
+        if (isCurrentScope(token)) setRefreshing(false);
       }
-    } finally {
-      if (isCurrentScope(token)) setRefreshing(false);
-    }
+    );
   }
 
   function beginRename() {
@@ -1068,7 +1091,7 @@ function RailChip({
   const theme = useThemeTokens();
   const chosen = useSharedValue(selected ? 1 : 0);
   useEffect(() => {
-    chosen.value = withTiming(selected ? 1 : 0, timing('toggle'));
+    chosen.set(withTiming(selected ? 1 : 0, timing('toggle')));
   }, [chosen, selected]);
 
   // A breath, not a spinner. A spinner in the dot's place is 20pt where 7pt
@@ -1078,9 +1101,11 @@ function RailChip({
   // live status dot and the pairing screen breathe on.
   const breath = useSharedValue(1);
   useEffect(() => {
-    breath.value = busy
-      ? withRepeat(withTiming(0.25, timing(PULSE_PERIOD)), -1, true)
-      : withTiming(1, timing('short'));
+    breath.set(
+      busy
+        ? withRepeat(withTiming(0.25, timing(PULSE_PERIOD)), -1, true)
+        : withTiming(1, timing('short'))
+    );
   }, [breath, busy]);
 
   const restingStyle = useAnimatedStyle(() => ({ opacity: 1 - chosen.value }));
@@ -1188,7 +1213,7 @@ function SessionChip({
   const theme = useThemeTokens();
   const chosen = useSharedValue(session.selected ? 1 : 0);
   useEffect(() => {
-    chosen.value = withTiming(session.selected ? 1 : 0, timing('toggle'));
+    chosen.set(withTiming(session.selected ? 1 : 0, timing('toggle')));
   }, [chosen, session.selected]);
 
   const restingStyle = useAnimatedStyle(() => ({ opacity: 1 - chosen.value }));
@@ -1294,7 +1319,7 @@ function PanelRow({
   const { _ } = useLinguiRuntime();
   const chosen = useSharedValue(selected ? 1 : 0);
   useEffect(() => {
-    chosen.value = withTiming(selected ? 1 : 0, timing('toggle'));
+    chosen.set(withTiming(selected ? 1 : 0, timing('toggle')));
   }, [chosen, selected]);
 
   const restingStyle = useAnimatedStyle(() => ({ opacity: 1 - chosen.value }));

@@ -17,6 +17,7 @@ import { isGitHubThemeLink, type ThemeLinkInspection } from '@/theme/link-source
 import { normalizeThemeLink } from '@/theme/link-normalize';
 import { GitThemeSourceError } from '@/theme/git-source';
 import { ThemeImportRequest } from '@/theme/import-request';
+import { settleAfter } from '@/lib/compiler-safe-control-flow';
 
 /** Inline review, followed by the existing editor. Nothing installs or applies
  * until the editor's explicit confirmation; closing cancels this owned request. */
@@ -68,27 +69,32 @@ export function ThemeLinkImport({
     active.current = request;
     setBusy(true);
     setError(null);
-    try {
-      await action(request);
-    } catch (cause) {
-      if (mounted.current && active.current === request && !request.isCanceled)
-        setError(
-          cause instanceof GitThemeSourceError && cause.code === 'ambiguous-link'
-            ? t`Use the repository URL, then enter its branch and theme file below`
-            : cause instanceof GitThemeSourceError
-              ? t`Check the repository URL, branch and theme file`
-              : cause instanceof Error
-                ? cause.message
-                : t`Something went wrong`
-        );
-    } finally {
-      if (mounted.current && active.current === request) {
-        active.current = null;
-        setBusy(false);
-        setProgress(null);
-        setStage(null);
+    return settleAfter(
+      async () => {
+        try {
+          await action(request);
+        } catch (cause) {
+          if (mounted.current && active.current === request && !request.isCanceled)
+            setError(
+              cause instanceof GitThemeSourceError && cause.code === 'ambiguous-link'
+                ? t`Use the repository URL, then enter its branch and theme file below`
+                : cause instanceof GitThemeSourceError
+                  ? t`Check the repository URL, branch and theme file`
+                  : cause instanceof Error
+                    ? cause.message
+                    : t`Something went wrong`
+            );
+        }
+      },
+      () => {
+        if (mounted.current && active.current === request) {
+          active.current = null;
+          setBusy(false);
+          setProgress(null);
+          setStage(null);
+        }
       }
-    }
+    );
   }
 
   function inspect() {
@@ -122,21 +128,24 @@ export function ThemeLinkImport({
       setStage('downloading');
       let prepared: PreparedThemeAssets | undefined;
       let transferred = false;
-      try {
-        prepared = await prepareThemeAssetStream(review.manifest, review.assets(signal), {
-          signal,
-          onProgress(value) {
-            if (mounted.current && !signal.aborted) setProgress(value);
-          },
-        });
-        throwIfThemeAborted(signal);
-        if (!mounted.current) return;
-        const candidate = { manifest: review.manifest, prepared };
-        request.handoff(() => onReady(candidate));
-        transferred = true;
-      } finally {
-        if (!transferred) prepared?.dispose();
-      }
+      return settleAfter(
+        async () => {
+          prepared = await prepareThemeAssetStream(review.manifest, review.assets(signal), {
+            signal,
+            onProgress(value) {
+              if (mounted.current && !signal.aborted) setProgress(value);
+            },
+          });
+          throwIfThemeAborted(signal);
+          if (!mounted.current) return;
+          const candidate = { manifest: review.manifest, prepared };
+          request.handoff(() => onReady(candidate));
+          transferred = true;
+        },
+        () => {
+          if (!transferred) prepared?.dispose();
+        }
+      );
     });
   }
 

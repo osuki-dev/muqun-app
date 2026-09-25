@@ -9,6 +9,7 @@ import { EdgeFade } from '@/components/edge-fade';
 import Animated from 'react-native-reanimated';
 import { useNavigationArrival } from '@/hooks/use-navigation-arrival';
 import {
+  NAV_HEADER_CONTROL_SIZE,
   NavHeaderBackButton,
   NavHeaderCircle,
   NavHeaderSpacer,
@@ -35,13 +36,18 @@ export function ScreenHeader({
   title,
   titlePill,
   onBack,
+  backTestID,
   right,
   rightPill,
+  contentMaxWidth,
 }: {
+  /** Limit controls while the status-bar backdrop and fade span the screen. */
+  contentMaxWidth?: number;
   title?: string;
   titlePill?: ReactNode;
   /** Defaults to router back, falling back to Home when there's nothing to pop. */
   onBack?: () => void;
+  backTestID?: string;
   right?: ReactNode;
   rightPill?: ReactNode;
 }) {
@@ -63,20 +69,53 @@ export function ScreenHeader({
   const handleBack = onBack ?? (() => (router.canGoBack() ? router.back() : router.replace('/')));
 
   return (
-    <View style={[navHeaderBarStyle, { paddingTop: insets.top + NAV_HEADER_TOP_GAP }]}>
-      {/* The fade starts above the safe area, not below it: the pills sit
-          under the status bar, and a fade that began at their top left a strip
-          of live content showing over the clock. `insets.top` is added back as
-          negative offset and height so the gradient covers the whole thing,
-          which is what makes the glass read as glass rather than as a shape
-          with content sliding past it. */}
+    <View
+      style={[
+        navHeaderBarStyle,
+        { paddingTop: insets.top + NAV_HEADER_TOP_GAP },
+        contentMaxWidth !== undefined && { paddingHorizontal: 0 },
+      ]}>
+      {/* Keep labels scrolling behind the controls from showing through their
+          translucent material. The solid themed plane covers the status bar
+          and control row; the soft edge begins below the controls. */}
+      <View
+        pointerEvents="none"
+        style={[
+          styles.backdrop,
+          {
+            top: -insets.top,
+            height: insets.top * 2 + NAV_HEADER_TOP_GAP + NAV_HEADER_CONTROL_SIZE + 8,
+            backgroundColor: theme.colors.background,
+          },
+        ]}
+      />
       <EdgeFade
         edge="top"
         color={theme.colors.background}
-        style={[styles.fade, { top: -insets.top, height: insets.top + FADE_HEIGHT }]}
+        style={[
+          styles.fade,
+          {
+            top: insets.top + NAV_HEADER_TOP_GAP + NAV_HEADER_CONTROL_SIZE + 8,
+            height: FADE_HEIGHT,
+          },
+        ]}
       />
-      <Animated.View style={[navHeaderRowStyle, arrivalStyle]}>
-        <NavHeaderBackButton accessibilityLabel={t`Go back`} onPress={handleBack} />
+      <Animated.View
+        style={[
+          navHeaderRowStyle,
+          contentMaxWidth !== undefined && {
+            width: '100%',
+            maxWidth: contentMaxWidth,
+            alignSelf: 'center',
+            paddingHorizontal: navHeaderBarStyle.paddingHorizontal,
+          },
+          arrivalStyle,
+        ]}>
+        <NavHeaderBackButton
+          accessibilityLabel={t`Go back`}
+          onPress={handleBack}
+          testID={backTestID}
+        />
 
         {titlePill ? titlePill : <NavHeaderTitlePill title={title ?? ''} />}
 
@@ -93,6 +132,11 @@ export function ScreenHeader({
 }
 
 const styles = StyleSheet.create({
+  backdrop: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+  },
   fade: {
     position: 'absolute',
     left: 0,

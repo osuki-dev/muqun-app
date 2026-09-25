@@ -22,6 +22,7 @@ import { useAppSettings } from '@/stores/app-settings';
 
 import { LogoLoader } from './logo-loader';
 import { PressableScale } from './pressable-scale';
+import { recoverWith, settleAfter } from '@/lib/compiler-safe-control-flow';
 
 const APP_LOCK_CAPTURE_KEY = 'muqun-app-lock';
 const RELOCK_AFTER_BACKGROUND_MS = 30_000;
@@ -101,32 +102,42 @@ export function AppLockGate({ children }: { children: ReactNode }) {
     setAuthenticating(true);
     setLocked(true);
     setError(null);
-    try {
-      const availability = await getLocalAuthAvailability();
-      setAuthLabel(availability.label);
-      setAuthKind(availability.kind);
-      if (!availability.available || !availability.enrolled) {
-        setError(t`Set up ${availability.label} in system settings to unlock Muqun.`);
-        return;
+    return settleAfter(
+      async () => {
+        return recoverWith(
+          async () => {
+            const availability = await getLocalAuthAvailability();
+            setAuthLabel(availability.label);
+            setAuthKind(availability.kind);
+            if (!availability.available || !availability.enrolled) {
+              setError(t`Set up ${availability.label} in system settings to unlock Muqun.`);
+              return;
+            }
+            const result = await authenticateForAppUnlock(availability.label);
+            if (result.success) {
+              setLocked(false);
+              await feedback('success');
+              if (process.env.EXPO_OS === 'android') {
+                await ScreenCapture.allowScreenCaptureAsync(APP_LOCK_CAPTURE_KEY).catch(
+                  () => undefined
+                );
+              }
+              return;
+            }
+            if (result.error !== 'user_cancel' && result.error !== 'system_cancel') {
+              setError(localAuthErrorMessage(result.error, availability.label));
+            }
+          },
+          () => {
+            setError(t`Authentication is unavailable. Try again or check system settings.`);
+          }
+        );
+      },
+      () => {
+        authenticatingRef.current = false;
+        setAuthenticating(false);
       }
-      const result = await authenticateForAppUnlock(availability.label);
-      if (result.success) {
-        setLocked(false);
-        await feedback('success');
-        if (process.env.EXPO_OS === 'android') {
-          await ScreenCapture.allowScreenCaptureAsync(APP_LOCK_CAPTURE_KEY).catch(() => undefined);
-        }
-        return;
-      }
-      if (result.error !== 'user_cancel' && result.error !== 'system_cancel') {
-        setError(localAuthErrorMessage(result.error, availability.label));
-      }
-    } catch {
-      setError(t`Authentication is unavailable. Try again or check system settings.`);
-    } finally {
-      authenticatingRef.current = false;
-      setAuthenticating(false);
-    }
+    );
   }, [localAuthErrorMessage, t]);
 
   useEffect(() => {

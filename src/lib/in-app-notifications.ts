@@ -7,7 +7,7 @@ import { sanitizeServerText } from './ssh-server-text';
  * An approval is the one kind whose life the app knows: it stands while the
  * agent is waiting and means nothing the moment the request is answered --
  * from the card, from the lock screen, or by another device. Everything else
- * is `general` and lives until it is read or dismissed.
+ * is `general` and clears after two seconds in the foreground.
  */
 export type NoticeKind = 'approval' | 'general';
 
@@ -26,6 +26,14 @@ export interface NoticeQueue {
 
 export const MAX_NOTICES = 20;
 export const MAX_SEEN_NOTICES = 200;
+
+/** Only a visible informational card expires; approvals require a response. */
+export function noticeAutoDismissDelay(
+  kind: NoticeKind | undefined,
+  visible: boolean
+): number | null {
+  return visible && kind === 'general' ? 2000 : null;
+}
 
 function destinationKey(route: InAppNotice['route']): string {
   if (!route) return 'none';

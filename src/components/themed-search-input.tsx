@@ -104,12 +104,12 @@ export const SearchInput: React.FC<SearchInputProps> = ({
   };
 
   const handleFocus: TextInputProps['onFocus'] = (event) => {
-    focusProgress.value = withTiming(1, timing(140));
+    focusProgress.set(withTiming(1, timing(140)));
     onFocus?.(event);
   };
 
   const handleBlur: TextInputProps['onBlur'] = (event) => {
-    focusProgress.value = withTiming(0, timing(160));
+    focusProgress.set(withTiming(0, timing(160)));
     onBlur?.(event);
   };
 

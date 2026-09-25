@@ -3,7 +3,8 @@ import { useState } from 'react';
 import type { LucideIcon } from 'lucide-react-native';
 
 import { useEffectiveCustomTheme } from '@/components/theme-candidate';
-import type { ThemeIconName } from '@/theme/schema';
+import type { ThemeIconDirection, ThemeIconName } from '@/theme/schema';
+import { themeIconRotation } from '@/theme/icon-direction';
 
 /**
  * A chrome glyph the active pack may have replaced.
@@ -25,20 +26,24 @@ export function ThemeIcon({
   size,
   color,
   strokeWidth,
+  direction,
 }: {
   name: ThemeIconName;
   fallback: LucideIcon;
   size: number;
   color: string;
   strokeWidth?: number;
+  /** Desired control direction; unknown source directions use the correctly oriented fallback. */
+  direction?: ThemeIconDirection;
 }) {
   const [failedUri, setFailedUri] = useState<string | null>(null);
   const { theme, assets } = useEffectiveCustomTheme();
   const icon = theme?.manifest.icons?.[name];
   const uri = icon ? assets?.[icon.asset] : undefined;
+  const rotation = themeIconRotation(theme?.manifest.iconDirections?.[name], direction);
   // App-owned files only, the same rule every other artwork consumer applies:
   // a manifest cannot point this at an arbitrary path or a remote URL.
-  if (!icon || !uri?.startsWith('file:///') || uri === failedUri)
+  if (!icon || !uri?.startsWith('file:///') || uri === failedUri || rotation === null)
     return <Fallback size={size} color={color} strokeWidth={strokeWidth} />;
   return (
     <Image
@@ -50,7 +55,11 @@ export function ThemeIcon({
       accessible={false}
       // Decorative here on purpose. The control around it carries the label,
       // so the glyph must not announce itself and say everything twice.
-      style={{ width: size, height: size }}
+      style={{
+        width: size,
+        height: size,
+        transform: rotation ? [{ rotate: `${rotation}deg` }] : undefined,
+      }}
       tintColor={icon.render === 'template' ? color : undefined}
     />
   );
