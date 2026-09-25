@@ -1,6 +1,6 @@
 import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens } from '@osuki-dev/ui';
-import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { type ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import {
   type AccessibilityActionEvent,
   type LayoutChangeEvent,
@@ -33,6 +33,7 @@ import {
   type SessionSwipeDirection,
 } from '@/lib/session-swipe';
 import { useAgentSessionState } from '@/stores/agent-session-state';
+import { useStableHandler } from '@/hooks/use-render-refs';
 
 /**
  * The agent header's title pill, with a horizontal swipe on it switching to the
@@ -210,17 +211,11 @@ export function AgentTitlePill({
     [activeAsid, playSwitch, sessionOrder, switchSession, switching]
   );
 
-  // The gesture reads `commit` through a ref and is therefore built once.
+  // The gesture reaches `commit` through a stable handler and is therefore built once.
   // Rebuilding it every render -- which is what a bare `Gesture.Pan()` in the
   // body does -- drops and re-registers the native handler on every state
   // change, including the ones a switch itself causes.
-  const commitRef = useRef(commit);
-  useEffect(() => {
-    commitRef.current = commit;
-  }, [commit]);
-  const commitFromGesture = useCallback((direction: SessionSwipeDirection) => {
-    commitRef.current(direction);
-  }, []);
+  const commitFromGesture = useStableHandler(commit);
 
   // Read on the UI thread while the finger is down, so the drag can resist in
   // the direction that has nothing behind it without a round trip to JS.
@@ -249,14 +244,11 @@ export function AgentTitlePill({
           // abandon by dragging back.
           const forward = event.translationX < 0;
           const available = forward ? hasNext.value : hasPrevious.value;
-          slide.value = sessionSwipeFollow(event.translationX, pillWidth.value, available);
+          slide.set(sessionSwipeFollow(event.translationX, pillWidth.value, available));
         })
-        // The handler reaches `commit` through the ref above, which the rule
-        // reads as a ref access during render because it cannot see that
-        // Gesture.Pan only ever calls this from the native gesture, never while
-        // rendering. Reading the ref is the whole point: it is what keeps the
+        // `commitFromGesture` never changes identity and always reaches the
+        // newest `commit` (see `useStableHandler`), which is what keeps the
         // gesture built once instead of re-registered on every state change.
-        // oxlint-disable-next-line react/refs -- deliberate: see above.
         .onEnd((event) => {
           const direction = sessionSwipeDirection(
             event.translationX,
@@ -267,7 +259,7 @@ export function AgentTitlePill({
           if (direction && available) {
             // `playSwitch` puts the title where the carousel wants it, so the
             // drag's own offset is cleared here rather than settled.
-            slide.value = 0;
+            slide.set(0);
             scheduleOnRN(commitFromGesture, direction);
             return;
           }
@@ -279,7 +271,7 @@ export function AgentTitlePill({
         // A gesture the system takes away -- a navigation pop, another
         // recogniser winning -- still has to put the title back.
         .onFinalize((_event, success) => {
-          if (!success) slide.value = withTiming(0, timing('short'));
+          if (!success) slide.set(withTiming(0, timing('short')));
         }),
     [commitFromGesture, enabled, hasNext, hasPrevious, pillWidth, slide]
   );

@@ -1,3 +1,4 @@
+import { ComposerAttachmentButton } from '@/components/composer-attachment-button';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   NativeSyntheticEvent,
@@ -24,7 +25,6 @@ import {
   Inbox,
   Layers,
   Loader,
-  Paperclip,
   Terminal,
   Square,
   Trash2,
@@ -45,7 +45,7 @@ import { PressableScale } from '@/components/pressable-scale';
 import { AgentActionMenu, type AgentActionMenuItem } from '@/components/agent-action-menu';
 import { AgentRevertPlate } from '@/components/agent-revert-plate';
 import { AgentUnreadDot } from '@/components/agent-unread-dot';
-import { TerminalComposer, composerStyles } from '@/components/terminal-composer';
+import { TerminalComposer } from '@/components/terminal-composer';
 import { AttachmentMenu } from '@/components/attachment-menu';
 import { AgentModeMenu } from '@/components/agent-mode-menu';
 import { AttachmentStrip } from '@/components/attachment-strip';
@@ -108,6 +108,7 @@ import {
   type TokensUsage,
 } from '@/lib/agent-session';
 import { AGENT_TYPE } from '@/constants/agent-type';
+import { settleAfter } from '@/lib/compiler-safe-control-flow';
 
 /**
  * One root in Row 1. An inactive root selects; the root already on screen opens
@@ -469,18 +470,10 @@ export const AgentComposer = memo(function AgentComposer({
   /** Which queued prompt has its actions open, if any. */
   const [inboxMenuId, setInboxMenuId] = useState<string | null>(null);
 
-  /**
-   * How full the model's context is, and how much the session has cost.
-   *
-   * The number is `GET …/context`, not `info.tokens`: the second is total
-   * spend and never comes down, so a gauge drawn from it would sit at 100%
-   * forever after one long session. The spend is still the fallback, because a
-   * gateway that has not answered the context route yet has nothing else to
-   * say, and it is labelled the same either way.
-   */
+  // Session spend cannot substitute for the latest context measurement.
   const contextPill = useMemo(() => {
     const live = contextUsage?.tokens ?? null;
-    const total = live ? contextTokenTotal(live) : contextTokenTotal(tokens);
+    const total = contextTokenTotal(live);
     if (total <= 0) return null;
     const ratio = live ? contextFillRatio(live, contextLimit) : null;
     let tokStr = `${total}`;
@@ -489,7 +482,7 @@ export const AgentComposer = memo(function AgentComposer({
     const costStr =
       cost === undefined || cost === null || cost === 0 ? t`Free` : `$${cost.toFixed(2)}`;
     return { label: `${tokStr} • ${costStr}`, ratio };
-  }, [contextUsage, contextLimit, tokens, cost, t]);
+  }, [contextUsage, contextLimit, cost, t]);
 
   const modelDisplayName = useMemo(
     () => modelName || formatModelName(selectedModel),
@@ -719,13 +712,16 @@ export const AgentComposer = memo(function AgentComposer({
         // gateway refused with the composer already emptied is a line the
         // reader has to remember and retype.
         setSending(true);
-        try {
-          const accepted = await onInvokeSkill(parsed.name, parsed.args);
-          if (accepted === false) return;
-          setText('');
-        } finally {
-          setSending(false);
-        }
+        await settleAfter(
+          async () => {
+            const accepted = await onInvokeSkill(parsed.name, parsed.args);
+            if (accepted === false) return;
+            setText('');
+          },
+          () => {
+            setSending(false);
+          }
+        );
         return;
       }
       if (parsed?.kind === 'client' && onClientCommand) {
@@ -736,33 +732,36 @@ export const AgentComposer = memo(function AgentComposer({
     }
 
     setSending(true);
-    try {
-      let uploadedFilePaths: string[] = [];
-      if (hasAttachments) {
-        const paths = await attachmentUploads.awaitUploads();
-        if (!paths) {
-          showToast({
-            variant: 'danger',
-            title: t`Upload failed`,
-            message: t`Please retry or remove failed attachments.`,
-          });
-          return;
+    return settleAfter(
+      async () => {
+        let uploadedFilePaths: string[] = [];
+        if (hasAttachments) {
+          const paths = await attachmentUploads.awaitUploads();
+          if (!paths) {
+            showToast({
+              variant: 'danger',
+              title: t`Upload failed`,
+              message: t`Please retry or remove failed attachments.`,
+            });
+            return;
+          }
+          uploadedFilePaths = paths;
         }
-        uploadedFilePaths = paths;
+        const accepted = await onSend(
+          trimmed,
+          uploadedFilePaths.length > 0 ? uploadedFilePaths : undefined,
+          running ? deliveryMode : undefined
+        );
+        // `void` from a caller that does not report is taken as accepted, which
+        // is the behaviour every other composer in this app has.
+        if (accepted === false) return;
+        setText('');
+        attachmentUploads.clearAttachments();
+      },
+      () => {
+        setSending(false);
       }
-      const accepted = await onSend(
-        trimmed,
-        uploadedFilePaths.length > 0 ? uploadedFilePaths : undefined,
-        running ? deliveryMode : undefined
-      );
-      // `void` from a caller that does not report is taken as accepted, which
-      // is the behaviour every other composer in this app has.
-      if (accepted === false) return;
-      setText('');
-      attachmentUploads.clearAttachments();
-    } finally {
-      setSending(false);
-    }
+    );
   }, [
     text,
     attachmentUploads,
@@ -1522,28 +1521,15 @@ export const AgentComposer = memo(function AgentComposer({
               <TerminalComposer
                 inputRef={inputRef}
                 leading={
-                  <PressableScale
+                  <ComposerAttachmentButton
                     testID="agent-composer-attach"
-                    accessibilityRole="button"
-                    accessibilityState={{ expanded: attachmentMenuOpen }}
-                    accessibilityLabel={
-                      attachmentMenuOpen ? t`Close the attachment menu` : t`Attach a file`
-                    }
+                    label={attachmentMenuOpen ? t`Close the attachment menu` : t`Attach a file`}
+                    expanded={attachmentMenuOpen}
                     disabled={sending || disabled}
                     onPress={() => setAttachmentMenuOpen((open) => !open)}
-                    style={[
-                      composerStyles.button,
-                      { borderRadius: profile.chrome.roundControl },
-                      attachmentMenuOpen
-                        ? { backgroundColor: surfaceBackground(theme.colors.primarySubtle) }
-                        : null,
-                      sending || disabled ? { opacity: 0.5 } : null,
-                    ]}>
-                    <Paperclip
-                      size={16}
-                      color={attachmentMenuOpen ? theme.colors.primary : chromeText}
-                    />
-                  </PressableScale>
+                    size={16}
+                    color={attachmentMenuOpen ? theme.colors.primary : chromeText}
+                  />
                 }
                 inputProps={{
                   value: text,
@@ -1616,12 +1602,14 @@ const CompactionPill = memo(function CompactionPill({
 
   const pulse = useSharedValue(failed ? 1 : 0.4);
   useEffect(() => {
-    pulse.value = failed
-      ? withTiming(1, timing('micro'))
-      : withRepeat(
-          withSequence(withTiming(1, timing('long')), withTiming(0.4, timing('long'))),
-          -1
-        );
+    pulse.set(
+      failed
+        ? withTiming(1, timing('micro'))
+        : withRepeat(
+            withSequence(withTiming(1, timing('long')), withTiming(0.4, timing('long'))),
+            -1
+          )
+    );
     // An endless repeat must not outlive the pill: a view that is gone while
     // its animation still writes props is the SurfaceMountingManager noise
     // in logcat, not a harmless leftover.

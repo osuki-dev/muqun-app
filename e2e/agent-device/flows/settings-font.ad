@@ -8,10 +8,6 @@ press "${TARGET}"
 is visible "${TARGET}"
 
 # section open-font
-# The Font row is in APPEARANCE, the second card on the page, so it is on
-# screen when Settings arrives and needs no seek. It is also above the `deep`
-# fold (`settings.tsx`), which is why this flow can reach it on the frame the
-# push finishes rather than waiting for the idle callback the ABOUT rows need.
 press "${TARGET}"
 
 # section sheet-arrived
@@ -39,3 +35,7 @@ back --system
 
 # section back-on-settings
 is visible "${TARGET}"
+
+# section scroll-font
+scroll down --pixels 160 --duration-ms 300
+wait stable 300 5000

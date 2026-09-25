@@ -1,9 +1,14 @@
 import {
+  AlphaType,
   Blur,
   Canvas,
+  ColorType,
+  LinearGradient,
   Mask,
+  Rect,
   RoundedRect,
   useImage,
+  vec,
   Image as SkiaImage,
 } from '@shopify/react-native-skia';
 import { useCallback, useMemo, useRef, useState } from 'react';
@@ -16,6 +21,7 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { heroFeatherGeometry } from '@/lib/hero-feather';
+import { hasTransparentArtworkEdges } from '@/lib/artwork-edge-alpha';
 import { useLaunchHomeArtwork } from '@/hooks/use-launch-home-artwork';
 import { fadeIn, listLayout } from '@/lib/motion';
 import { homeHeroMaxHeight } from '@/lib/responsive-layout';
@@ -146,6 +152,20 @@ function HomeArtworkImage({
     onAvailabilityChange?.(false);
   }, [onAvailabilityChange, source]);
   const image = useImage(source, onError);
+  const foreground = useMemo(() => {
+    if (!image || image.getImageInfo().alphaType === AlphaType.Opaque) return false;
+    return hasTransparentArtworkEdges(
+      image.width(),
+      image.height(),
+      (x, y) =>
+        image.readPixels(x, y, {
+          width: 1,
+          height: 1,
+          colorType: ColorType.Alpha_8,
+          alphaType: AlphaType.Unpremul,
+        })?.[0]
+    );
+  }, [image]);
   // The band in window coordinates, for the launch opening to land in. The
   // layout event carries the box in the scroll content's coordinates, which is
   // not where the overlay draws -- it sits above the router with the whole
@@ -183,6 +203,9 @@ function HomeArtworkImage({
     source,
     image: failed === source ? null : (geometry?.image ?? null),
     intrinsic,
+    // Neither mask can be reproduced by the unmasked launch sprite. Hand off
+    // by cross-fading to the actual Home drawing instead of changing its edges.
+    cropped: true,
   });
 
   if (failed === source) return null;
@@ -212,27 +235,38 @@ function HomeArtworkImage({
             <Mask
               mode="alpha"
               mask={
-                // One blurred rounded rectangle, not four edge gradients and four
-                // corner ones: gradients meeting at a corner either double up into
-                // a dark notch or leave a square one, while a rounded rect has
-                // already turned away from the corner before either side begins to
-                // fade. `heroFeatherGeometry` owns every number here -- the inset
-                // is already in the rect, and the sigmas are what make each blurred
-                // edge exactly as wide as its axis asked for.
-                //
-                // An image-filter `Blur` rather than a `BlurMask`: only this one
-                // takes a vector, and the top and bottom are softened harder than
-                // the left and right. `decal` so the blur falls to nothing outside
-                // the shape instead of smearing its edge outwards.
-                <RoundedRect
-                  x={geometry.mask.x}
-                  y={geometry.mask.y}
-                  width={geometry.mask.width}
-                  height={geometry.mask.height}
-                  r={geometry.radius}
-                  color="white">
-                  <Blur blur={geometry.blur} mode="decal" />
-                </RoundedRect>
+                foreground ? (
+                  <Rect {...geometry.image}>
+                    <LinearGradient
+                      start={vec(0, geometry.image.y)}
+                      end={vec(0, geometry.image.y + geometry.image.height)}
+                      colors={['white', 'white', 'transparent']}
+                      positions={[0, 0.72, 1]}
+                    />
+                  </Rect>
+                ) : (
+                  // One blurred rounded rectangle, not four edge gradients and four
+                  // corner ones: gradients meeting at a corner either double up into
+                  // a dark notch or leave a square one, while a rounded rect has
+                  // already turned away from the corner before either side begins to
+                  // fade. `heroFeatherGeometry` owns every number here -- the inset
+                  // is already in the rect, and the sigmas are what make each blurred
+                  // edge exactly as wide as its axis asked for.
+                  //
+                  // An image-filter `Blur` rather than a `BlurMask`: only this one
+                  // takes a vector, and the top and bottom are softened harder than
+                  // the left and right. `decal` so the blur falls to nothing outside
+                  // the shape instead of smearing its edge outwards.
+                  <RoundedRect
+                    x={geometry.mask.x}
+                    y={geometry.mask.y}
+                    width={geometry.mask.width}
+                    height={geometry.mask.height}
+                    r={geometry.radius}
+                    color="white">
+                    <Blur blur={geometry.blur} mode="decal" />
+                  </RoundedRect>
+                )
               }>
               <SkiaImage
                 image={image}

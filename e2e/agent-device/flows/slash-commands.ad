@@ -14,7 +14,7 @@ wait stable 400 5000
 press "${TARGET}"
 
 # section s5
-type "/"
+fill id="terminal-composer-input" "/"
 
 # section s6
 is visible "${TARGET}"

@@ -28,6 +28,7 @@ import { loadSessions, type SpawnedAgent } from '@/lib/gateway-client';
 import { describeGatewayFailure } from '@/lib/network-error';
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';
 import { usePanelPickerStore } from '@/stores/panel-picker';
+import { recoverWith } from '@/lib/compiler-safe-control-flow';
 
 export default function NewTaskScreen() {
   const surfaceBackground = useSurfaceBackground();
@@ -70,28 +71,31 @@ export default function NewTaskScreen() {
     let cancelled = false;
 
     async function connect() {
-      try {
-        if (needsSelect && !(await selectRecord(serverId))) {
-          if (!cancelled) setError(t`This server is no longer paired.`);
-          return;
+      return recoverWith(
+        async () => {
+          if (needsSelect && !(await selectRecord(serverId))) {
+            if (!cancelled) setError(t`This server is no longer paired.`);
+            return;
+          }
+          if (cancelled || needsSelect || tunnel.phase !== 'open' || sessionId) return;
+          const sessions = await loadSessions();
+          // One session per gateway today, and the first is the one every other
+          // screen uses. Named here rather than assumed, so a gateway that starts
+          // reporting several does not silently pick a different one.
+          const first = sessions.sessions?.[0]?.id;
+          if (cancelled) return;
+          if (!first) {
+            setError(t`This server has no session to start an agent in.`);
+            return;
+          }
+          setSessionId(first);
+        },
+        (failure) => {
+          if (!cancelled) {
+            setError(describeGatewayFailure(failure, t`Could not reach this server.`).message);
+          }
         }
-        if (cancelled || needsSelect || tunnel.phase !== 'open' || sessionId) return;
-        const sessions = await loadSessions();
-        // One session per gateway today, and the first is the one every other
-        // screen uses. Named here rather than assumed, so a gateway that starts
-        // reporting several does not silently pick a different one.
-        const first = sessions.sessions?.[0]?.id;
-        if (cancelled) return;
-        if (!first) {
-          setError(t`This server has no session to start an agent in.`);
-          return;
-        }
-        setSessionId(first);
-      } catch (failure) {
-        if (!cancelled) {
-          setError(describeGatewayFailure(failure, t`Could not reach this server.`).message);
-        }
-      }
+      );
     }
 
     void connect();

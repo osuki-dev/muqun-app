@@ -21,6 +21,7 @@ import {
 } from '@/theme/repository';
 import { surfaceBackgroundOpacity } from '@/theme/surface-background';
 import { themeOpacityPolicy } from '@/theme/opacity-policy';
+import { useAppSettings } from '@/stores/app-settings';
 
 /** Saved preferences affect Home branding only, never the launcher identity. */
 export function ThemeAppearanceSettings({
@@ -47,6 +48,10 @@ export function ThemeAppearanceSettings({
   const { colors } = useThemeTokens();
   const { resolvedMode } = useThemeMode();
   const background = useSurfaceBackground();
+  const effectsEnabled = useAppSettings((state) => state.themeEffectsEnabled);
+  const updateSettings = useAppSettings((state) => state.update);
+  const [savingEffects, setSavingEffects] = useState(false);
+  const [effectSaveFailed, setEffectSaveFailed] = useState(false);
   const effective = effectiveThemeManifest(installed);
   const variant = effective.variants[resolvedMode];
   const policies = [
@@ -97,6 +102,34 @@ export function ThemeAppearanceSettings({
         testID="theme-terminal-opacity"
         onCommit={onTerminalChange}
       />
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+        <View style={{ flex: 1, gap: 4 }}>
+          <Text>{t`Home visual effects`}</Text>
+          <Text
+            variant="caption"
+            color={
+              colors.textMuted
+            }>{t`Show theme effects only while Home is visible. Turn off to reduce battery use.`}</Text>
+          {effectSaveFailed ? (
+            <Text
+              variant="caption"
+              color={colors.danger}>{t`Could not save this setting. Try again.`}</Text>
+          ) : null}
+        </View>
+        <Toggle
+          testID="theme-home-effects"
+          accessibilityLabel={t`Home visual effects`}
+          value={effectsEnabled}
+          disabled={disabled || savingEffects}
+          onValueChange={(value) => {
+            setSavingEffects(true);
+            setEffectSaveFailed(false);
+            void updateSettings({ themeEffectsEnabled: value })
+              .catch(() => setEffectSaveFailed(true))
+              .finally(() => setSavingEffects(false));
+          }}
+        />
+      </View>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
         <Text style={{ flex: 1 }}>{t`Show Home logo`}</Text>
         <Toggle

@@ -2,8 +2,8 @@
   "extends": "expo/tsconfig.base",
   "compilerOptions": {
     "strict": true,
+    "allowImportingTsExtensions": true,
     "paths": {
-      "typescript": ["./node_modules/typescript-compiler-api"],
       "@/*": ["./src/*"],
       "@/assets/*": ["./assets/*"]
     }

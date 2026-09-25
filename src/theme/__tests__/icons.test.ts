@@ -60,7 +60,8 @@ const CONSUMERS: Record<(typeof THEME_ICONS)[number], string> = {
   'chrome.settings': 'src/components/home-overview.tsx',
   'chrome.back': 'src/components/nav-header.tsx',
   'chrome.send': 'src/components/terminal-composer.tsx',
-  'chrome.attach': 'src/components/server-terminal-workspace.tsx',
+  'chrome.attach': 'src/components/composer-attachment-button.tsx',
+  'chrome.create': 'src/components/agent-header-morph.tsx',
   'home.arrow': 'src/components/server-agent-rows.tsx',
 };
 

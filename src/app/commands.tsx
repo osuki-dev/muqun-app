@@ -89,7 +89,7 @@ import {
   Trash2,
 } from 'lucide-react-native';
 import { type ReactNode, useEffect, useMemo, useState } from 'react';
-import { StyleSheet, useWindowDimensions, View, type TextStyle } from 'react-native';
+import { Keyboard, StyleSheet, useWindowDimensions, View, type TextStyle } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -142,6 +142,7 @@ import {
   type QuickCommandDelivery,
 } from '@/lib/quick-commands';
 import { quickCommandName } from '@/i18n/labels';
+import { recoverWith } from '@/lib/compiler-safe-control-flow';
 
 /**
  * Spread into every style that carries the terminal's face.
@@ -419,32 +420,35 @@ export default function QuickCommandsScreen() {
     if (!available.canCreate || creating || !serverId) return;
     setCreating(focus ? 'tab' : 'panel');
     setError(null);
-    try {
-      // Two different objects, not one object with two focuses: a new panel is
-      // a split of the tab the reader is in (Ellen: "add it underneath the tab
-      // you are on"), and only a new tab is a new tab.
-      const target = focus
-        ? await createTab(params.sessionId, {
-            workspace_id: params.workspaceId,
-            focus,
-          })
-        : await splitPane(params.sessionId, params.paneId, { direction: 'down' });
-      // The create is what names the new pane. Without that id there is nothing
-      // to send the phone to, and choosing an empty one would clear the
-      // terminal instead -- so say so and stay put.
-      if (!target.paneId) {
-        setError(t`The server did not say which terminal it made.`);
+    return recoverWith(
+      async () => {
+        // Two different objects, not one object with two focuses: a new panel is
+        // a split of the tab the reader is in (Ellen: "add it underneath the tab
+        // you are on"), and only a new tab is a new tab.
+        const target = focus
+          ? await createTab(params.sessionId, {
+              workspace_id: params.workspaceId,
+              focus,
+            })
+          : await splitPane(params.sessionId, params.paneId, { direction: 'down' });
+        // The create is what names the new pane. Without that id there is nothing
+        // to send the phone to, and choosing an empty one would clear the
+        // terminal instead -- so say so and stay put.
+        if (!target.paneId) {
+          setError(t`The server did not say which terminal it made.`);
+          setCreating(null);
+          return;
+        }
+        choosePanel({ serverId, paneId: target.paneId });
+        router.back();
+      },
+      (failure) => {
+        // Reported here rather than by closing the sheet: a sheet that dismisses
+        // itself onto the pane you were already on has told you nothing.
+        setError(failure instanceof Error ? failure.message : t`Could not start a terminal.`);
         setCreating(null);
-        return;
       }
-      choosePanel({ serverId, paneId: target.paneId });
-      router.back();
-    } catch (failure) {
-      // Reported here rather than by closing the sheet: a sheet that dismisses
-      // itself onto the pane you were already on has told you nothing.
-      setError(failure instanceof Error ? failure.message : t`Could not start a terminal.`);
-      setCreating(null);
-    }
+    );
   }
 
   /**
@@ -729,6 +733,7 @@ export default function QuickCommandsScreen() {
 
         <KeyboardAwareScrollView
           nestedScrollEnabled
+          keyboardDismissMode="on-drag"
           style={styles.scrollViewport}
           bottomOffset={24}
           keyboardShouldPersistTaps="handled"
@@ -1031,7 +1036,10 @@ export default function QuickCommandsScreen() {
                   <AgentCommandDeliveryPicker
                     testID="quick-command-delivery"
                     value={delivery}
-                    onChange={setDelivery}
+                    onChange={(next) => {
+                      Keyboard.dismiss();
+                      setDelivery(next);
+                    }}
                   />
                 ) : null}
 
@@ -1331,14 +1339,10 @@ function ActionRow({
   );
 
   if (!onPress) {
-    // Still labelled: in edit mode the row is not pressable, but the delete
-    // button beside it is named after it and a screen reader needs the row it
-    // is named after to exist.
-    return (
-      <View accessible accessibilityLabel={accessibilityLabel}>
-        {body}
-      </View>
-    );
+    // Let the name and trailing delete control remain separate accessibility
+    // elements. Making this wrapper accessible hides the delete control on iPad
+    // when a newly saved custom command is rendered inside it.
+    return <View>{body}</View>;
   }
   return (
     <PressableScale

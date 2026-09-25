@@ -20,7 +20,7 @@ screenshot "shots/thai-selected.png"
 
 # section relaunch
 open "dev.osuki.muqun" --relaunch
-wait stable 400 5000
+wait stable 1500 10000
 
 # section verify-english
 wait "label=\"Language, English\"" 10000

@@ -18,7 +18,7 @@ import {
   SquareStack,
   X,
 } from 'lucide-react-native';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useEffectEvent, useMemo, useState } from 'react';
 import {
   BackHandler,
   Platform,
@@ -211,10 +211,11 @@ export function SimfarmStage({
    * the reader closing the menu is not a reason to open it again.
    */
   const measured = viewport.height > 0;
+  // `openMenu` changes with the viewport, and a rotation is not an arrival: it
+  // is read when the stream arrives, not a reason to open the menu again.
+  const offerMenu = useEffectEvent(() => openMenu('offer'));
   useEffect(() => {
-    if (measured && stream.status === 'picking' && stream.wanted === null) openMenu('offer');
-    // `openMenu` changes with the viewport, and a rotation is not an arrival.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    if (measured && stream.status === 'picking' && stream.wanted === null) offerMenu();
   }, [measured, stream.status, stream.wanted]);
 
   /**
@@ -362,8 +363,8 @@ export function SimfarmStage({
   const select = useCallback(
     (deviceId: string) => {
       dispatch('chose');
-      zoom.value = SIMFARM_MIN_ZOOM;
-      offset.value = null;
+      zoom.set(SIMFARM_MIN_ZOOM);
+      offset.set(null);
       stream.select(deviceId);
     },
     [dispatch, offset, stream, zoom]
@@ -461,10 +462,12 @@ export function SimfarmStage({
           const placed = placement.value;
           if (placed === null || frame === null) return;
           const from = offset.value ?? simfarmRestingOffset(frame, viewport, zoom.value);
-          offset.value = clampSimfarmOffset(placed, viewport, {
-            x: from.x + event.changeX,
-            y: from.y + event.changeY,
-          });
+          offset.set(
+            clampSimfarmOffset(placed, viewport, {
+              x: from.x + event.changeX,
+              y: from.y + event.changeY,
+            })
+          );
         }),
     [frame, offset, placement, viewport, zoom]
   );
@@ -473,9 +476,8 @@ export function SimfarmStage({
     () =>
       Gesture.Pinch().onChange((event) => {
         'worklet';
-        zoom.value = Math.min(
-          SIMFARM_MAX_ZOOM,
-          Math.max(SIMFARM_MIN_ZOOM, zoom.value * event.scaleChange)
+        zoom.set(
+          Math.min(SIMFARM_MAX_ZOOM, Math.max(SIMFARM_MIN_ZOOM, zoom.value * event.scaleChange))
         );
       }),
     [zoom]
@@ -498,8 +500,7 @@ export function SimfarmStage({
    * Inline rather than a helper taking `t`, which is the shape that looks
    * tidier and does not work: Lingui's macro only expands a tagged template
    * whose tag is the hook's own binding, so a `t` passed as an argument is left
-   * alone, never extracted, and answers with an empty string at run time --
-   * `i18n-audit.ts` exists because that has reached a screen before.
+   * alone, never extracted, and answers with an empty string at run time.
    */
   const itemName = useCallback(
     (item: SimfarmMenuItem): string => {

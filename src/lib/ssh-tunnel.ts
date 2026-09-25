@@ -33,6 +33,16 @@ export function tunnelBaseUrl(localPort: number): string {
  */
 export const MAX_TUNNEL_CONNECTIONS = 8;
 
+/** Retry an unexpected transport drop promptly, with a bounded budget per outage. */
+const RECONNECT_DELAYS_MS = [500, 1000, 2000, 4000, 8000] as const;
+
+function isRetryableConnectionError(error: unknown): boolean {
+  const code = error && typeof error === 'object' && 'code' in error ? error.code : undefined;
+  // A changed host key, rejected approval or bad credential needs the reader,
+  // not another automatic prompt. Unknown errors get the same bounded budget.
+  return typeof code !== 'string' || ['CONNECT', 'TIMEOUT', 'CLOSED', 'IO'].includes(code);
+}
+
 /**
  * The address a *stored* record may be reached at directly, or null when it may
  * not be reached directly at all.
@@ -150,6 +160,9 @@ interface RecordEntry {
   /** A monotonic id so a stale async open cannot install itself after a close. */
   generation: number;
   state: TunnelState;
+  reconnectTimer: ReturnType<typeof setTimeout> | null;
+  reconnectAttempts: number;
+  recovering: boolean;
 }
 
 export interface TunnelRecordInput {
@@ -214,6 +227,9 @@ export class SshTunnelManager {
   retry(serverId: string): void {
     const entry = this.records.get(serverId);
     if (!entry || entry.refs === 0) return;
+    this.cancelReconnect(entry);
+    entry.reconnectAttempts = 0;
+    entry.recovering = false;
     void this.ensureForward(entry);
   }
 
@@ -253,6 +269,9 @@ export class SshTunnelManager {
       forward: null,
       generation: 0,
       state: IDLE_STATE,
+      reconnectTimer: null,
+      reconnectAttempts: 0,
+      recovering: false,
     };
     this.records.set(record.serverId, entry);
     return entry;
@@ -275,6 +294,7 @@ export class SshTunnelManager {
   private async ensureForward(entry: RecordEntry): Promise<void> {
     if (entry.forward || entry.refs === 0) return;
     if (entry.state.phase === 'connecting') return;
+    this.cancelReconnect(entry);
     const generation = ++entry.generation;
     this.setState(entry, { phase: 'connecting', baseUrl: null });
     const host = this.hostEntry(entry.hostId);
@@ -296,6 +316,8 @@ export class SshTunnelManager {
         return;
       }
       entry.forward = forward;
+      entry.reconnectAttempts = 0;
+      entry.recovering = false;
       this.setState(entry, { phase: 'open', baseUrl: tunnelBaseUrl(forward.localPort) });
     } catch (error) {
       if (entry.generation !== generation) return;
@@ -305,7 +327,30 @@ export class SshTunnelManager {
         baseUrl: null,
         reason: this.deps.describeFailure(error),
       });
+      if (entry.recovering && isRetryableConnectionError(error)) this.scheduleReconnect(entry);
     }
+  }
+
+  private cancelReconnect(entry: RecordEntry): void {
+    if (entry.reconnectTimer) clearTimeout(entry.reconnectTimer);
+    entry.reconnectTimer = null;
+  }
+
+  private scheduleReconnect(entry: RecordEntry): void {
+    if (this.backgroundedIdle || entry.refs === 0 || entry.reconnectTimer) return;
+    const delay = RECONNECT_DELAYS_MS[entry.reconnectAttempts];
+    if (delay === undefined) {
+      entry.recovering = false;
+      return;
+    }
+    entry.reconnectAttempts += 1;
+    const generation = entry.generation;
+    entry.reconnectTimer = setTimeout(() => {
+      entry.reconnectTimer = null;
+      if (entry.generation === generation && entry.refs > 0 && !this.backgroundedIdle) {
+        void this.ensureForward(entry);
+      }
+    }, delay);
   }
 
   private connectHost(host: HostEntry): Promise<TunnelConnectionHandle> {
@@ -335,11 +380,13 @@ export class SshTunnelManager {
     const host = this.hosts.get(entry.hostId);
     if (host) this.pruneHostRider(host, serverId);
     if (entry.refs > 0) {
+      entry.recovering = true;
       this.setState(entry, {
         phase: 'down',
         baseUrl: null,
         reason: this.deps.describeFailure(reason),
       });
+      this.scheduleReconnect(entry);
     } else {
       this.setState(entry, IDLE_STATE);
     }
@@ -358,11 +405,13 @@ export class SshTunnelManager {
       entry.forward = null;
       entry.generation += 1;
       if (entry.refs > 0) {
+        entry.recovering = true;
         this.setState(entry, {
           phase: 'down',
           baseUrl: null,
           reason: this.deps.describeFailure(reason),
         });
+        this.scheduleReconnect(entry);
       } else {
         this.setState(entry, IDLE_STATE);
       }
@@ -371,6 +420,9 @@ export class SshTunnelManager {
 
   /** Drop one forward and, if it was the host's last rider, the host connection too. */
   private teardownRecord(entry: RecordEntry, phase: 'idle', keepRefs = false): void {
+    this.cancelReconnect(entry);
+    entry.reconnectAttempts = 0;
+    entry.recovering = false;
     entry.generation += 1;
     const forward = entry.forward;
     entry.forward = null;

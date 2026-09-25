@@ -111,10 +111,12 @@ press "${TARGET}"
 is visible "${TARGET}"
 
 # section s36
-scroll down --pixels 320
+scroll down --pixels 600 --duration-ms 350
+wait stable 300 5000
 
 # section s37
-scroll down --pixels 320
+scroll down --pixels 600 --duration-ms 350
+wait stable 300 5000
 
 # section s38
 press "${TARGET}"

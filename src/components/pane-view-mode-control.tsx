@@ -54,12 +54,7 @@ export const PaneViewModeControl = memo(function PaneViewModeControl({
       accessibilityLabel={_(
         switchToViewLabel[paneViewModeFallback(nextPaneViewMode(mode, available))]
       )}
-      onPress={() => {
-        if (__DEV__) {
-          console.log('[DEBUG PaneViewModeControl onPress clicked]');
-        }
-        onCycle();
-      }}
+      onPress={onCycle}
       style={styles.button}>
       <ModeIcon size={18} color={color} strokeWidth={2} />
       {degraded ? (

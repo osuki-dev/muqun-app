@@ -57,9 +57,9 @@ PYEOF
 # NOTE: no `grep -q` in pipelines in this script: under `pipefail` its early
 # pipe close SIGPIPEs the writer and the check misfires. `case` matches instead.
 case "$(agent-device --version 2>/dev/null)" in
-*"0.20.10"*) ;;
+*"0.21.12"*) ;;
 *)
-  echo "This suite requires agent-device 0.20.10" >&2
+  echo "This suite requires agent-device 0.21.12" >&2
   exit 1
   ;;
 esac
@@ -182,10 +182,15 @@ ensure_android_offline() {
 preflight_unpaired() {
   local session="$1"
   shift
-  run_timeout 120 agent-device open dev.osuki.muqun --relaunch --session "$session" "$@" >/dev/null 2>&1 || true
+  if [ -n "${E2E_AD_METRO_HOST:-}" ]; then
+    run_timeout 120 agent-device open dev.osuki.muqun --relaunch --session "$session" \
+      --metro-host "$E2E_AD_METRO_HOST" --metro-port "${E2E_AD_METRO_PORT:-8081}" "$@" >/dev/null 2>&1 || true
+  else
+    run_timeout 120 agent-device open dev.osuki.muqun --relaunch --session "$session" "$@" >/dev/null 2>&1 || true
+  fi
   local snapshot="" attempt
   for attempt in 1 2 3 4 5 6; do
-    snapshot=$(run_timeout 90 agent-device snapshot --session "$session" "$@" 2>/dev/null || true)
+    snapshot=$(run_timeout 90 agent-device snapshot --force-full --session "$session" "$@" 2>/dev/null || true)
     # A fresh install can still be launching: a handful of chrome nodes and
     # no content is "not yet", not "dirty". Only a settled screen decides.
     case "$snapshot" in
@@ -249,6 +254,13 @@ while IFS='|' read -r name platform sim avd; do
       echo "SKIP $name" >>"$report_root/.e2e-all-skips"
       continue
     }
+    if [ -n "${E2E_AD_METRO_PORT:-}" ]; then
+      adb -s "$device_id" reverse "tcp:$E2E_AD_METRO_PORT" "tcp:$E2E_AD_METRO_PORT" || {
+        echo "e2e-all: SKIP $name: could not connect Metro" >&2
+        echo "SKIP $name" >>"$report_root/.e2e-all-skips"
+        continue
+      }
+    fi
     flags="--serial $device_id --platform android"
   fi
   # shellcheck disable=SC2086

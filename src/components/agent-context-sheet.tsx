@@ -209,7 +209,7 @@ export const AgentContextSheet = memo(function AgentContextSheet({
             </Text>
             {ratio === null ? (
               <Text variant="caption" color={theme.colors.textMuted}>
-                {t`no window reported for this model`}
+                {!live ? t`Not available` : t`no window reported for this model`}
               </Text>
             ) : (
               <Text variant="caption" weight="semibold" color={barTone}>
@@ -235,9 +235,11 @@ export const AgentContextSheet = memo(function AgentContextSheet({
           {/* What the number is, said plainly: the last turn's input, cached
               input, reasoning and output -- which is what the model read. */}
           <Text variant="caption" color={theme.colors.textMuted}>
-            {limitLabel === null
-              ? t`${compact(inContext)} tokens the model last read`
-              : t`${compact(inContext)} of ${limitLabel} tokens the model can hold`}
+            {!live
+              ? t`Not available`
+              : limitLabel === null
+                ? t`${compact(inContext)} tokens the model last read`
+                : t`${compact(inContext)} of ${limitLabel} tokens the model can hold`}
           </Text>
           {contextUsage ? (
             <Text variant="caption" color={theme.colors.textSubtle}>
@@ -282,7 +284,7 @@ export const AgentContextSheet = memo(function AgentContextSheet({
           title={t`Tokens this session`}
           meta={
             <Text variant="caption" color={theme.colors.textMuted}>
-              {compact(spent)}
+              {tokens ? compact(spent) : t`Not available`}
             </Text>
           }
         />

@@ -26,6 +26,7 @@ import {
   type PermissionRequest,
 } from '@/lib/agent-session';
 import { AGENT_TYPE } from '@/constants/agent-type';
+import { settleAfter } from '@/lib/compiler-safe-control-flow';
 
 export interface AgentPermissionCardProps {
   request: PermissionRequest;
@@ -135,11 +136,14 @@ export const AgentPermissionCard = memo(function AgentPermissionCard({
   const handleDecision = async (decision: PermissionDecision) => {
     if (submitting) return;
     setSubmitting(decision);
-    try {
-      await onDecision(decision);
-    } finally {
-      setSubmitting(null);
-    }
+    return settleAfter(
+      async () => {
+        await onDecision(decision);
+      },
+      () => {
+        setSubmitting(null);
+      }
+    );
   };
 
   const tone = (decision: PermissionDecision) =>

@@ -1,7 +1,11 @@
 import { expect, test } from 'bun:test';
-import { readFileSync } from 'node:fs';
 import { runInNewContext } from 'node:vm';
-import ts from 'typescript';
+import {
+  declaration,
+  productionSource,
+  transpile,
+  walk,
+} from '../../test-support/production-source';
 import {
   assertDeliveryCurrent,
   DeliveryOwnership,
@@ -14,19 +18,6 @@ import type { GatewayRecord } from '../gateway-storage';
 import * as queue from '../attachment-queue';
 import type { AttachmentUploads } from '../../hooks/use-attachment-uploads';
 
-function declaration(path: string, name: string) {
-  const source = ts.createSourceFile(
-    path,
-    readFileSync(path, 'utf8'),
-    ts.ScriptTarget.Latest,
-    true
-  );
-  const node = source.statements.find(
-    (item) => ts.isFunctionDeclaration(item) && item.name?.text === name
-  );
-  if (!node) throw new Error(`Missing production function ${name}`);
-  return node.getText(source).replace(/^export /, '');
-}
 function deferred<T>() {
   let resolve!: (value: T) => void;
   let reject!: (error: Error) => void;
@@ -112,9 +103,7 @@ function client() {
     },
   };
   const functions = runInNewContext(
-    ts.transpileModule(`${source}\n({ uploadAttachment, sendBoundPaneText })`, {
-      compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.None },
-    }).outputText,
+    transpile(`${source}\n({ uploadAttachment, sendBoundPaneText })`),
     globals
   ) as {
     uploadAttachment: (
@@ -236,12 +225,12 @@ test('failed ACK or failed tunnel cleanup never retries a delivery', async () =>
 
 test('explicit incomplete encrypted credentials do not borrow global credentials', async () => {
   const source = declaration('src/lib/gateway-client.ts', 'encryptedGatewayFetch');
-  const run = runInNewContext(
-    ts.transpileModule(`${source}\nencryptedGatewayFetch`, {
-      compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.None },
-    }).outputText,
-    { currentToken: 'b', currentDeviceId: 'b', currentTransportKey: 'b', REQUEST_TIMEOUT_MS: 1 }
-  );
+  const run = runInNewContext(transpile(`${source}\nencryptedGatewayFetch`), {
+    currentToken: 'b',
+    currentDeviceId: 'b',
+    currentTransportKey: 'b',
+    REQUEST_TIMEOUT_MS: 1,
+  });
   await expect(run(a.url, {}, 1, { token: 'a' })).rejects.toThrow('Not connected');
 });
 
@@ -274,20 +263,15 @@ test('encrypted serialization rechecks ownership before any network transmission
   const serialization = deferred<{ bytes: Uint8Array; contentType: string }>();
   const owner = new DeliveryOwnership();
   const source = declaration('src/lib/gateway-client.ts', 'encryptedGatewayFetch');
-  const run = runInNewContext(
-    ts.transpileModule(`${source}\nencryptedGatewayFetch`, {
-      compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.None },
-    }).outputText,
-    {
-      REQUEST_TIMEOUT_MS: 1,
-      assertDeliveryCurrent,
-      isStreamingRequest: () => false,
-      requestAad: () => 'fixture',
-      headerRecord: () => ({}),
-      serializeBody: () => serialization.promise,
-      // No crypto or network ports: reaching either would fail this fixture.
-    }
-  );
+  const run = runInNewContext(transpile(`${source}\nencryptedGatewayFetch`), {
+    REQUEST_TIMEOUT_MS: 1,
+    assertDeliveryCurrent,
+    isStreamingRequest: () => false,
+    requestAad: () => 'fixture',
+    headerRecord: () => ({}),
+    serializeBody: () => serialization.promise,
+    // No crypto or network ports: reaching either would fail this fixture.
+  });
   const result = run(
     a.url,
     {},
@@ -312,46 +296,38 @@ function uploads() {
   const cleanups: (() => void)[] = [];
   let blur: (() => void) | undefined;
   const source = declaration('src/hooks/use-attachment-uploads.ts', 'useAttachmentUploads');
-  const hook = runInNewContext(
-    ts.transpileModule(`${source}\nuseAttachmentUploads(record)`, {
-      compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.None },
-    }).outputText,
-    {
-      ...queue,
-      DeliveryOwnership,
-      record,
-      markUploading: (entries: queue.PendingAttachment[], id: string) => {
-        uploadingId = id;
-        return queue.markUploading(entries, id);
+  const hook = runInNewContext(transpile(`${source}\nuseAttachmentUploads(record)`), {
+    ...queue,
+    DeliveryOwnership,
+    record,
+    markUploading: (entries: queue.PendingAttachment[], id: string) => {
+      uploadingId = id;
+      return queue.markUploading(entries, id);
+    },
+    useState: (initial: unknown) => [typeof initial === 'function' ? initial() : initial, () => {}],
+    useRef: (current: unknown) => ({ current }),
+    useCallback: (fn: unknown) => fn,
+    useEffect: (body: () => (() => void) | undefined) => {
+      const cleanup = body();
+      if (cleanup) cleanups.push(cleanup);
+    },
+    useFocusEffect: (body: () => () => void) => {
+      blur = body();
+    },
+    useGatewayConnectionStore: {
+      getState: () => ({ record }),
+      subscribe: (fn: typeof listener) => {
+        listener = fn;
+        return () => {};
       },
-      useState: (initial: unknown) => [
-        typeof initial === 'function' ? initial() : initial,
-        () => {},
-      ],
-      useRef: (current: unknown) => ({ current }),
-      useCallback: (fn: unknown) => fn,
-      useEffect: (body: () => (() => void) | undefined) => {
-        const cleanup = body();
-        if (cleanup) cleanups.push(cleanup);
-      },
-      useFocusEffect: (body: () => () => void) => {
-        blur = body();
-      },
-      useGatewayConnectionStore: {
-        getState: () => ({ record }),
-        subscribe: (fn: typeof listener) => {
-          listener = fn;
-          return () => {};
-        },
-      },
-      compressPickedImage: () => compression.promise,
-      uploadAttachment: (destination: GatewayRecord) => {
-        calls.push(destination);
-        return upload.promise;
-      },
-      describeUploadFailure: () => 'fixture failure',
-    }
-  ) as AttachmentUploads;
+    },
+    compressPickedImage: () => compression.promise,
+    uploadAttachment: (destination: GatewayRecord) => {
+      calls.push(destination);
+      return upload.promise;
+    },
+    describeUploadFailure: () => 'fixture failure',
+  }) as AttachmentUploads;
   return {
     hook,
     calls,
@@ -422,13 +398,7 @@ test('actual hook binds successful upload to A and discards late completion afte
 
 function selectionPaths() {
   const path = 'src/components/server-terminal-workspace.tsx';
-  const source = ts.createSourceFile(
-    path,
-    readFileSync(path, 'utf8'),
-    ts.ScriptTarget.Latest,
-    true,
-    ts.ScriptKind.TSX
-  );
+  const source = productionSource(path);
   const found: Record<string, string> = {};
   // `reconcileSelection` moved to `lib/workspace-selection` so the warm cache
   // could choose the same pane the screen does -- two answers to "which pane"
@@ -436,45 +406,37 @@ function selectionPaths() {
   // replaced by another. It is still production selection code and still has to
   // be executed here, so it is parsed from where it now lives.
   const selectionPath = 'src/lib/workspace-selection.ts';
-  const selectionSource = ts.createSourceFile(
-    selectionPath,
-    readFileSync(selectionPath, 'utf8'),
-    ts.ScriptTarget.Latest,
-    true
-  );
+  const selectionSource = productionSource(selectionPath);
   let route = '';
   let readiness = '';
-  function visit(node: ts.Node) {
-    if (
-      ts.isFunctionDeclaration(node) &&
-      ['selectWorkspace', 'sameSelection', 'reconcileSelection', 'selectionForPane'].includes(
-        node.name?.text ?? ''
-      )
-    )
-      // Without the `export` keyword: these are evaluated in a VM that has no
-      // module wrapper, and a transpiled `export function` becomes an
-      // assignment to an `exports` that is not there. The declaration itself is
-      // what this test runs.
-      found[node.name!.text] = node.getText(node.getSourceFile()).replace(/^export\s+/, '');
-    if (
-      ts.isVariableDeclaration(node) &&
-      ['setSelection', 'selectTab'].includes(node.name.getText(source))
-    )
-      found[node.name.getText(source)] = `const ${node.getText(source)};`;
-    if (ts.isCallExpression(node) && node.arguments[0] && ts.isArrowFunction(node.arguments[0])) {
-      const body = node.arguments[0].getText(source);
-      if (node.expression.getText(source) === 'useEffect' && body.includes('const targetKey ='))
-        route = body;
+  for (const parsed of [source, selectionSource]) {
+    walk(parsed.program, (node) => {
       if (
-        node.expression.getText(source) === 'useLayoutEffect' &&
-        body.includes('activeServerRef.current =')
+        node.type === 'FunctionDeclaration' &&
+        node.id &&
+        ['selectWorkspace', 'sameSelection', 'reconcileSelection', 'selectionForPane'].includes(
+          node.id.name
+        )
       )
-        readiness = body;
-    }
-    ts.forEachChild(node, visit);
+        found[node.id.name] = parsed.code(node);
+      if (
+        node.type === 'VariableDeclarator' &&
+        node.id.type === 'Identifier' &&
+        ['setSelection', 'selectTab'].includes(node.id.name)
+      )
+        found[node.id.name] = `const ${parsed.code(node)};`;
+      if (node.type === 'CallExpression' && node.arguments[0]?.type === 'ArrowFunctionExpression') {
+        const body = parsed.code(node.arguments[0]);
+        if (parsed.code(node.callee) === 'useEffect' && body.includes('const targetKey ='))
+          route = body;
+        if (
+          parsed.code(node.callee) === 'useLayoutEffect' &&
+          body.includes('activeServerRef.current =')
+        )
+          readiness = body;
+      }
+    });
   }
-  visit(source);
-  visit(selectionSource);
   if (!route || !readiness || Object.keys(found).length !== 6)
     throw new Error('Production selection paths missing');
   const owner = new DeliveryOwnership();
@@ -528,12 +490,9 @@ function selectionPaths() {
     selection: initial,
   };
   const functions = runInNewContext(
-    ts.transpileModule(
-      `${Object.values(found).join('\n')}\n({selectWorkspace, selectTab, route:${route}, readiness:${readiness}})`,
-      {
-        compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.None },
-      }
-    ).outputText,
+    transpile(
+      `${Object.values(found).join('\n')}\n({selectWorkspace, selectTab, route:${route}, readiness:${readiness}})`
+    ),
     context
   ) as {
     selectWorkspace: (id: string) => void;

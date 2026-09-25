@@ -7,6 +7,7 @@ import { ServerSentEventParser } from '@/lib/sse-stream';
 import { ENCRYPTED_SSE_EVENT, EncryptedEventStreamDecryptor } from '@/lib/sse-record';
 import { streamRecordCrypto } from '@/lib/gateway-transport';
 import { encryptedEventStreamRequest, gatewayUsesEncryptedTransport } from '@/lib/gateway-client';
+import { rethrow } from '@/lib/compiler-safe-control-flow';
 
 /**
  * A live event feed for one session, replacing the output poll.
@@ -107,6 +108,10 @@ export function usePaneEvents(
   restartKey: number,
   handlers: PaneEventHandlers
 ): void {
+  // One long-lived subscription with nothing rendered from it to memoize. Its
+  // stream loop is control flow React Compiler cannot lower, so it stays
+  // uncompiled on purpose rather than being bent into a shape that could.
+  'use no memo';
   // Held in a ref so a new handler identity on every render does not tear down
   // and rebuild the connection.
   const handlersRef = useRef(handlers);
@@ -218,7 +223,7 @@ export function usePaneEvents(
           signal: controller.signal,
           stream: true,
         });
-        if (!response.ok) throw new Error(`Event stream returned HTTP ${response.status}`);
+        if (!response.ok) rethrow(new Error(`Event stream returned HTTP ${response.status}`));
         if (decryptor) {
           // A sealed request answered with anything but a stream is the
           // gateway refusing it (sealed errors come back as one JSON
@@ -226,15 +231,15 @@ export function usePaneEvents(
           // gateway at all. Neither is worth reading events from.
           const contentType = response.headers.get('content-type') ?? '';
           if (!contentType.startsWith('text/event-stream')) {
-            throw new Error('The server did not answer with an event stream.');
+            rethrow(new Error('The server did not answer with an event stream.'));
           }
           if (response.headers.get('x-muqun-transport') !== '1') {
-            throw new Error('The server did not answer with an encrypted event stream.');
+            rethrow(new Error('The server did not answer with an encrypted event stream.'));
           }
         }
 
         const reader = response.body?.getReader();
-        if (!reader) throw new Error('Event stream has no readable body');
+        if (!reader) rethrow(new Error('Event stream has no readable body'));
 
         retryAttempt = 0;
         handlersRef.current.onConnected();

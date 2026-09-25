@@ -9,6 +9,7 @@ const surfaces = [
     'InAppNotificationHost',
   ],
   ['terminal notice decks', 'src/components/notice-deck.tsx', 'NoticeDeck'],
+  ['workspace switch indicators', 'src/components/switch-indicator.tsx', 'SwitchIndicator'],
   ['update banners', 'src/components/update-status-banner.tsx', 'UpdateStatusBanner'],
   ["What's New cards", 'src/components/whats-new-card.tsx', 'WhatsNewCard'],
 ] as const;

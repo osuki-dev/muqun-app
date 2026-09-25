@@ -11,6 +11,7 @@ import {
   normalizeOrigin,
   recordSnapshotCost,
   reskinCoverSource,
+  reskinBlocksTouches,
   resolveOrigin,
   selectReskinPlay,
   shouldAttemptSnapshot,
@@ -273,4 +274,13 @@ describe('reskinCoverSource', () => {
     expect(reskinCoverSource('android')).toBe('veil');
     expect(reskinCoverSource('ios')).toBe('photograph');
   });
+});
+
+test('theme reveal releases touches after the covered swap, including reduced motion', () => {
+  for (const play of ['wash', 'crossfade'] as const) {
+    expect(reskinBlocksTouches(play, true)).toBe(true);
+    expect(reskinBlocksTouches(play, false)).toBe(false);
+  }
+  // Font metrics still move beneath the photograph during their reveal.
+  expect(reskinBlocksTouches('halftone', false)).toBe(true);
 });

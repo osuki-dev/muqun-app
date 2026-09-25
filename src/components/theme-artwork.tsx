@@ -31,11 +31,13 @@ export function ThemeArtwork({
   fallbackSlot,
   banner = false,
   opacityLimit = 1,
+  effectsEnabled = true,
 }: {
   slot: ThemeSlot;
   fallbackSlot?: ThemeSlot;
   banner?: boolean;
   opacityLimit?: number;
+  effectsEnabled?: boolean;
 }) {
   const { resolvedMode } = useThemeMode();
   const { theme: active, assets } = useEffectiveCustomTheme();
@@ -49,6 +51,7 @@ export function ThemeArtwork({
       mode={resolvedMode}
       banner={banner}
       opacityLimit={opacityLimit}
+      effectsEnabled={effectsEnabled}
     />
   );
 }
@@ -63,6 +66,7 @@ export function ThemeArtworkLayer({
   banner = false,
   opacityLimit = 1,
   viewport,
+  effectsEnabled = true,
 }: {
   manifest: ThemeManifest;
   assets: Record<string, string>;
@@ -73,6 +77,8 @@ export function ThemeArtworkLayer({
   opacityLimit?: number;
   /** Preview cards model a compact screen independently of their parent window. */
   viewport?: 'compact' | 'regular';
+  /** Suppress a duplicate effect when another visible layer already owns it. */
+  effectsEnabled?: boolean;
 }) {
   const { width } = useWindowDimensions();
   const [failed, setFailed] = useState<string | null>(null);
@@ -113,17 +119,24 @@ export function ThemeArtworkLayer({
           onError={() => setFailed(uri)}
         />
       )}
-      {(slot === 'shell.wallpaper' || slot === 'home.wallpaper') && (() => {
-        const effects = manifest.variants[mode]?.effects ?? manifest.effects;
-        return effects?.ambient && effects.ambient !== 'none' ? (
-          <SkiaAmbientEffect
-            effect={effects.ambient}
-            intensity={effects.intensity}
-            speed={effects.speed}
-            mode={mode}
-          />
-        ) : null;
-      })()}
+      {effectsEnabled &&
+        (slot === 'shell.wallpaper' || slot === 'home.wallpaper') &&
+        (() => {
+          const effects = manifest.variants[mode]?.effects ?? manifest.effects;
+          return effects?.ambient && effects.ambient !== 'none' ? (
+            <SkiaAmbientEffect
+              effect={effects.ambient}
+              intensity={effects.intensity}
+              speed={effects.speed}
+              density={effects.density}
+              size={effects.size}
+              palette={effects.palette}
+              direction={effects.direction}
+              mode={mode}
+              colors={manifest.variants[mode].colors}
+            />
+          ) : null;
+        })()}
     </View>
   );
 }

@@ -1,23 +1,22 @@
+import { HOME_TOOLBAR_PAIR_WIDTH, HOME_TOOLBAR_ICON_INSET } from '@/constants/home-toolbar';
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens } from '@osuki-dev/ui';
 import { ArrowUpRight, ChevronDown, Link, Play, SquareTerminal } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { BlurTargetView } from 'expo-blur';
 import Animated, {
   useAnimatedStyle,
-  useAnimatedScrollHandler,
   useReducedMotion,
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
 
 import { OpenCodeIcon } from '@/components/opencode-icon';
-import { ScrollEdgeGlass } from '@/components/scroll-edge-glass';
 import { PressableScale } from '@/components/pressable-scale';
 import { Text } from '@/components/text';
+import { ThemeIcon } from '@/components/theme-icon';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { PRESS, timing } from '@/lib/motion';
 import type { GatewayRecord } from '@/lib/gateway-storage';
@@ -25,6 +24,7 @@ import { reachabilityDescription } from '@/i18n/labels';
 import type { ServerReachability } from '@/lib/server-reachability';
 import { useHomeTargetPicker } from '@/stores/home-target-picker';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
+import { settleAfter } from '@/lib/compiler-safe-control-flow';
 
 /** Target choice is local to Home; a selection alone never switches a live connection. */
 export function useHomeLaunchController({
@@ -92,11 +92,14 @@ export function useHomeLaunchController({
   async function launch(action: () => Promise<unknown>) {
     if (opening) return;
     setOpening(true);
-    try {
-      await action();
-    } finally {
-      setOpening(false);
-    }
+    return settleAfter(
+      async () => {
+        await action();
+      },
+      () => {
+        setOpening(false);
+      }
+    );
   }
 
   function launchOnChosen(action: (serverId: string) => Promise<unknown>) {
@@ -154,8 +157,10 @@ export function HomeLaunchTarget({
       }}
       style={[
         styles.target,
-        (bare || !hasMultiple) && { minWidth: 0 },
-        bare && { paddingHorizontal: 12 },
+        !bare &&
+          servers.length > 0 && { width: HOME_TOOLBAR_PAIR_WIDTH, paddingHorizontal: 8, gap: 4 },
+        bare && { minWidth: 0 },
+        bare && { paddingHorizontal: HOME_TOOLBAR_ICON_INSET },
         {
           borderRadius: profile.chrome.control,
           backgroundColor: bare ? 'transparent' : background(theme.colors.surface),
@@ -164,6 +169,8 @@ export function HomeLaunchTarget({
       <Text
         variant="bodySmall"
         weight="semibold"
+        numberOfLines={1}
+        ellipsizeMode="tail"
         style={styles.targetName}
         pointerEvents="none">
         {loading
@@ -176,7 +183,13 @@ export function HomeLaunchTarget({
       </Text>
       {hasMultiple ? (
         <Animated.View style={pickerChevronStyle} pointerEvents="none">
-          <ChevronDown size={16} color={theme.colors.primary} />
+          <ThemeIcon
+            name="home.arrow"
+            fallback={ChevronDown}
+            size={16}
+            color={theme.colors.primary}
+            direction="down"
+          />
         </Animated.View>
       ) : null}
     </PressableScale>
@@ -206,13 +219,6 @@ export function HomeLaunchActions({
   const { chosenOffline, launchOnChosen, opening, run } = controller;
   const [availableWidth, setAvailableWidth] = useState(0);
   const horizontal = availableWidth < 560;
-  const blurTarget = useRef<View>(null);
-  const railOffset = useSharedValue(0);
-  const railExtent = useSharedValue(0);
-  const onRailScroll = useAnimatedScrollHandler((event) => {
-    railOffset.value = event.contentOffset.x;
-    railExtent.value = Math.max(0, event.contentSize.width - event.layoutMeasurement.width);
-  });
 
   return (
     <View
@@ -244,13 +250,8 @@ export function HomeLaunchActions({
         </PressableScale>
       ) : null}
       <View>
-        <BlurTargetView ref={blurTarget}>
+        <View>
           <Animated.ScrollView
-            onScroll={onRailScroll}
-            scrollEventThrottle={16}
-            onContentSizeChange={(width) => {
-              railExtent.value = Math.max(0, width - availableWidth);
-            }}
             horizontal={horizontal}
             scrollEnabled={horizontal}
             nestedScrollEnabled
@@ -311,23 +312,7 @@ export function HomeLaunchActions({
               }}
             />
           </Animated.ScrollView>
-        </BlurTargetView>
-        {horizontal ? (
-          <>
-            <ScrollEdgeGlass
-              side="left"
-              target={blurTarget}
-              offset={railOffset}
-              extent={railExtent}
-            />
-            <ScrollEdgeGlass
-              side="right"
-              target={blurTarget}
-              offset={railOffset}
-              extent={railExtent}
-            />
-          </>
-        ) : null}
+        </View>
       </View>
       {opening ? <Text variant="caption" color={theme.colors.textMuted}>{t`Opening…`}</Text> : null}
     </View>
@@ -408,7 +393,13 @@ function LaunchTile({
           {marker}
         </Text>
         <Animated.View style={arrowStyle}>
-          <ArrowUpRight size={15} color={ink} />
+          <ThemeIcon
+            name="home.arrow"
+            direction="up-right"
+            fallback={ArrowUpRight}
+            size={15}
+            color={ink}
+          />
         </Animated.View>
       </PressableScale>
     );
@@ -449,7 +440,13 @@ function LaunchTile({
             {marker}
           </Text>
           <Animated.View style={arrowStyle}>
-            <ArrowUpRight size={16} color={ink} />
+            <ThemeIcon
+              name="home.arrow"
+              direction="up-right"
+              fallback={ArrowUpRight}
+              size={16}
+              color={ink}
+            />
           </Animated.View>
         </View>
       </View>
@@ -477,7 +474,7 @@ function LaunchTile({
 const styles = StyleSheet.create({
   root: { gap: 12, minWidth: 0 },
   target: {
-    minWidth: 124,
+    minWidth: HOME_TOOLBAR_PAIR_WIDTH,
     minHeight: 44,
     paddingVertical: 10,
     alignSelf: 'flex-start',

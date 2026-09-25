@@ -63,6 +63,16 @@ export interface PaneApproval {
   options: ApprovalOption[];
 }
 
+/** Terminal box borders are decoration, not part of the approval request. */
+export function approvalContextLines(approval: Pick<PaneApproval, 'context' | 'prompt'>): string[] {
+  return approval.context.filter(
+    (line) =>
+      line.trim() !== approval.prompt.trim() &&
+      line.trim().length > 0 &&
+      !/^[\s\u2500-\u257f]+$/u.test(line)
+  );
+}
+
 /** One pane's approval state, the shape both the endpoint and the events carry. */
 export interface PaneApprovalState {
   sessionId: string;

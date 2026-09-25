@@ -8,7 +8,12 @@ import {
   type PaneViewMode,
   type StoredAgentViewSettings,
 } from '@/lib/pane-view-mode';
-import { isHomeLayout, resolveHomeLayout, type HomeLayout } from '@/lib/home-layout';
+import {
+  DEFAULT_HOME_LAYOUT,
+  isHomeLayout,
+  resolveHomeLayout,
+  type HomeLayout,
+} from '@/lib/home-layout';
 import type { TerminalTextSize } from '@/lib/terminal-text-size';
 import { parseFontSlot, SYSTEM_FONT_SLOT, type FontSlot } from '@/theme/user-font-file';
 
@@ -43,6 +48,7 @@ type PersistedSettings = {
   // The sole appearance preference: also derives global chrome and motion.
   // Theme choice remains independent and owns only colours and artwork.
   homeLayout: HomeLayout;
+  themeEffectsEnabled: boolean;
   /**
    * The face the app's own text is set in, and the face its code is set in.
    *
@@ -91,7 +97,8 @@ const defaults: PersistedSettings = {
   androidWidgetEnabled: false,
   appLockEnabled: false,
   hapticsEnabled: true,
-  homeLayout: 'classic',
+  homeLayout: DEFAULT_HOME_LAYOUT,
+  themeEffectsEnabled: true,
   // The system font, which is the absence of a choice rather than a third
   // option. The app offers no fonts of its own, so until a reader brings one
   // there is nothing to choose between.
@@ -207,6 +214,9 @@ function parseSettings(value: string): Partial<PersistedSettings> {
         ? { hapticsEnabled: parsed.hapticsEnabled }
         : {}),
       ...(isHomeLayout(parsed.homeLayout) ? { homeLayout: parsed.homeLayout } : {}),
+      ...(typeof parsed.themeEffectsEnabled === 'boolean'
+        ? { themeEffectsEnabled: parsed.themeEffectsEnabled }
+        : {}),
       // Every field of a stored slot is checked, and a slot that fails any of
       // them reads as no slot at all -- back to the system font, which is the
       // state the app can always be in. The guard is not a formality: the file
@@ -270,6 +280,7 @@ function pickPersisted(state: AppSettingsState): PersistedSettings {
     appLockEnabled: state.appLockEnabled,
     hapticsEnabled: state.hapticsEnabled,
     homeLayout: state.homeLayout,
+    themeEffectsEnabled: state.themeEffectsEnabled,
     interfaceFont: state.interfaceFont,
     language: state.language,
     liveActivityEnabled: state.liveActivityEnabled,

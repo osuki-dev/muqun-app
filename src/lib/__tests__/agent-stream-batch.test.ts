@@ -132,3 +132,34 @@ describe('timeline revision merge', () => {
     expect(next[1].order).toBe('b');
   });
 });
+
+test('a new-session snapshot cannot erase the first prompt or rewind arriving output', () => {
+  const prompt = item('temp_usr_first', 1, {
+    role: 'user',
+    row_key: 'temp_usr_first',
+    order: 'a',
+    attachments: ['/uploads/original.png'],
+    part: { type: 'text', text: 'Keep my original message' },
+  });
+  const emptySnapshot = upsertTimelineItems([prompt], []);
+  expect(emptySnapshot).toEqual([prompt]);
+  const answer = item('z', 8);
+  const live = upsertTimelineItems(emptySnapshot, [answer]);
+  const canonical = item('user-server-id', 2, {
+    role: 'user',
+    attachments: prompt.attachments,
+    part: prompt.part,
+  });
+  const snapshot = [canonical, item('z', 3)];
+  const confirmed = upsertTimelineItems(live, snapshot);
+  expect(confirmed).toHaveLength(2);
+  expect(confirmed[0]).toMatchObject({
+    id: 'user-server-id',
+    row_key: 'temp_usr_first',
+    order: 'a',
+    part: prompt.part,
+    attachments: prompt.attachments,
+  });
+  expect(confirmed[1]).toEqual(answer);
+  expect(upsertTimelineItems(confirmed, snapshot)).toEqual(confirmed);
+});

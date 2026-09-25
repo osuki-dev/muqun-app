@@ -27,6 +27,7 @@ wait stable 400 5000
 
 # section s9
 press "${TARGET}"
+wait stable 400 5000
 
 # section s10
 press "${TARGET}"

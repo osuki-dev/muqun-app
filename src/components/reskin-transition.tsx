@@ -49,6 +49,7 @@ import {
   normalizeOrigin,
   recordSnapshotCost,
   reskinCoverSource,
+  reskinBlocksTouches,
   resolveOrigin,
   selectReskinPlay,
   shouldAttemptSnapshot,
@@ -158,6 +159,8 @@ type ActiveRun = {
    * old screen and so is simply there; a veil is not, and fades up first.
    */
   veiled: boolean;
+  /** Block only the covered swap, not the reveal of the interactive new theme. */
+  swapping: boolean;
 };
 
 /** Where a reader last put a finger on a surface, and when. */
@@ -359,6 +362,9 @@ export function ReskinTransitionProvider({ children }: { children: ReactNode }) 
       const erase = (chosen: Exclude<ReskinPlay, 'none'>) => {
         afterNextPaint(() => {
           if (id !== nextId.current) return;
+          setActive((current) =>
+            current?.id === id && current.swapping ? { ...current, swapping: false } : current
+          );
           const config =
             chosen === 'crossfade'
               ? // The one animation in the app that must ignore the reduced-motion
@@ -369,10 +375,12 @@ export function ReskinTransitionProvider({ children }: { children: ReactNode }) 
                 // who has asked for less movement.
                 timing(DURATION.short, { reduceMotion: ReduceMotion.Never })
               : timing(chosen === 'wash' ? RESKIN_MOTION.washMs : RESKIN_MOTION.halftoneMs);
-          progress.value = withTiming(1, config, (done) => {
-            'worklet';
-            if (done) runOnJS(finish)(id);
-          });
+          progress.set(
+            withTiming(1, config, (done) => {
+              'worklet';
+              if (done) runOnJS(finish)(id);
+            })
+          );
         });
       };
 
@@ -410,8 +418,8 @@ export function ReskinTransitionProvider({ children }: { children: ReactNode }) 
         }
 
         const accent = colorVector(options.accent ?? paint.current.primary);
-        progress.value = 0;
-        veil.value = 0;
+        progress.set(0);
+        veil.set(0);
         setActive({
           id,
           play: chosen,
@@ -421,6 +429,7 @@ export function ReskinTransitionProvider({ children }: { children: ReactNode }) 
           cell: halftoneCell(paint.current.body),
           shots,
           veiled: true,
+          swapping: true,
         });
 
         // The veil comes up over the old interface, the change lands under it
@@ -431,13 +440,11 @@ export function ReskinTransitionProvider({ children }: { children: ReactNode }) 
         await new Promise<void>((resolve) => {
           const covered = () => resolve();
           afterNextPaint(() => {
-            veil.value = withTiming(
-              1,
-              timing(DURATION.short, { reduceMotion: ReduceMotion.Never }),
-              () => {
+            veil.set(
+              withTiming(1, timing(DURATION.short, { reduceMotion: ReduceMotion.Never }), () => {
                 'worklet';
                 runOnJS(covered)();
-              }
+              })
             );
           });
         });
@@ -497,8 +504,8 @@ export function ReskinTransitionProvider({ children }: { children: ReactNode }) 
       }
 
       const accent = colorVector(options.accent ?? paint.current.primary);
-      progress.value = 0;
-      veil.value = 1;
+      progress.set(0);
+      veil.set(1);
       // The cover goes up and the setting changes in the same React commit, so
       // there is no frame in which one has happened and the other has not.
       // The origin is where the reader last touched, on whichever surface they
@@ -513,6 +520,7 @@ export function ReskinTransitionProvider({ children }: { children: ReactNode }) 
         cell: halftoneCell(paint.current.body),
         shots,
         veiled: false,
+        swapping: false,
       });
       await apply();
       erase(chosen);
@@ -645,10 +653,6 @@ export function ReskinSurface({ id, children }: { id: string; children: ReactNod
  *
  * Neither choice delays the apply; both are over in well under a second.
  */
-function overlayTouches(play: ActiveRun['play']): 'none' | 'auto' {
-  return play === 'halftone' ? 'auto' : 'none';
-}
-
 function ReskinOverlay({
   image,
   progress,
@@ -677,7 +681,7 @@ function ReskinOverlay({
       // instant a flow applies a theme.
       accessible={false}
       importantForAccessibility="no"
-      pointerEvents={run.veiled ? 'auto' : overlayTouches(run.play)}
+      pointerEvents={reskinBlocksTouches(run.play, run.swapping) ? 'auto' : 'none'}
       style={[styles.cover, arriving]}>
       {run.play === 'wash' ? (
         <WashOverlay image={image} origin={origin} progress={progress} run={run} size={size} />

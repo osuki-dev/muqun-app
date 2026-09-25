@@ -31,6 +31,7 @@ import { appChrome } from '@/constants/appearance';
 import { withAlpha } from '@/lib/color';
 import { listableWorkspaces, workspaceProjectMissing } from '@/lib/agent-workspace-missing';
 import { AGENT_TYPE } from '@/constants/agent-type';
+import { recoverWith, settleAfter } from '@/lib/compiler-safe-control-flow';
 
 const STAGGERED_ROWS = 8;
 
@@ -101,21 +102,29 @@ export const AgentWorkspaceSheet = memo(function AgentWorkspaceSheet({
   const loadProjects = useCallback(
     async (options?: { forceRefresh?: boolean }) => {
       if (!loadedOnceRef.current) setLoading(true);
-      try {
-        // A retry that reads the cached answer again is not a retry; the first
-        // read of an opening is still allowed to be instant.
-        const list = await getAgentProjects(
-          sessionId,
-          undefined,
-          options?.forceRefresh ? { forceRefresh: true } : undefined
-        );
-        setProjects(withoutGlobalRoot(list ?? []));
-        loadedOnceRef.current = true;
-      } catch {
-        // Quiet: the cached list, or the empty state, is still the right answer.
-      } finally {
-        setLoading(false);
-      }
+      return settleAfter(
+        async () => {
+          return recoverWith(
+            async () => {
+              // A retry that reads the cached answer again is not a retry; the first
+              // read of an opening is still allowed to be instant.
+              const list = await getAgentProjects(
+                sessionId,
+                undefined,
+                options?.forceRefresh ? { forceRefresh: true } : undefined
+              );
+              setProjects(withoutGlobalRoot(list ?? []));
+              loadedOnceRef.current = true;
+            },
+            () => {
+              // Quiet: the cached list, or the empty state, is still the right answer.
+            }
+          );
+        },
+        () => {
+          setLoading(false);
+        }
+      );
     },
     [sessionId]
   );
@@ -186,7 +195,6 @@ export const AgentWorkspaceSheet = memo(function AgentWorkspaceSheet({
     typedPath.length > 0 &&
     (typedPath.startsWith('/') || typedPath.startsWith('~')) &&
     typedPath !== activeDirectory;
-  let rowIndex = 0;
 
   return (
     <SheetScene
@@ -278,8 +286,7 @@ export const AgentWorkspaceSheet = memo(function AgentWorkspaceSheet({
                 )}
               </View>
             ) : (
-              filtered.map((project) => {
-                const index = rowIndex++;
+              filtered.map((project, index) => {
                 return (
                   <Animated.View
                     key={project.id}

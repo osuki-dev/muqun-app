@@ -43,6 +43,49 @@ const CHILDREN = {
 };
 
 describe('root-only strip and uncapped sheet projection', () => {
+  test('a delayed inventory cannot erase a child announced while the request was in flight', async () => {
+    const observed: ChildrenByParent = { ses_a: [CHILD_A2] };
+    let current = observed;
+    await loadSessionDescendants({
+      rootAsid: ROOT_A.asid,
+      known: observed,
+      isCurrent: () => true,
+      listChildren: async () => {
+        // The stream announces a background child after the GET took its snapshot.
+        current = { ses_a: [CHILD_A2, CHILD_A1], ses_a1: [GRANDCHILD] };
+        return { children: [], authoritative: true };
+      },
+      onChildren: (parent, inventory) => {
+        current = mergeSessionChildren(
+          current,
+          parent,
+          inventory.children,
+          inventory.authoritative,
+          observed[parent] ?? []
+        );
+      },
+    });
+    expect(flattenSessionTree(ROOT_A, current).map((node) => node.session.asid)).toEqual([
+      ROOT_A.asid,
+      CHILD_A1.asid,
+      GRANDCHILD.asid,
+    ]);
+    // A later inventory may remove the child normally; this is not an immortal cache.
+    expect(mergeSessionChildren(current, ROOT_A.asid, [], true, current.ses_a).ses_a).toEqual([]);
+  });
+
+  test('stream updates beat stale inventory fields, but explicit deletion still wins', () => {
+    const updated = { ...CHILD_A1, title: 'Background reviewer', status: 'retry' as const };
+    const current = { ses_a: [updated] };
+    expect(mergeSessionChildren(current, 'ses_a', [CHILD_A1], true, [CHILD_A1]).ses_a).toEqual([
+      updated,
+    ]);
+    expect(
+      mergeSessionChildren(current, 'ses_a', [{ ...CHILD_A1, deleted: true }], true, [CHILD_A1])
+        .ses_a
+    ).toEqual([]);
+  });
+
   test('mixed inventory never renders children horizontally and selects their root', () => {
     const strip = buildRootSessionStrip(
       [ROOT_A, CHILD_A1, ROOT_B, ROOT_A],

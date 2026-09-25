@@ -37,6 +37,12 @@ screenshot "shots/21-changes-expanded.png"
 # section s12
 scroll down --pixels 900
 
+# section s12-ipad
+# The generic scroll starts at y=751, below the landscape form sheet's bottom
+# edge. Start inside the diff's own scroll viewport instead.
+gesture pan 605 550 0 -300 400
+wait stable 300 5000
+
 # section s13
 press "${TARGET}"
 

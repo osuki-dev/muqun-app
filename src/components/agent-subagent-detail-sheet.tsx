@@ -28,6 +28,7 @@ import {
   type AgentSessionInfo,
   type AgentSessionSnapshot,
 } from '@/lib/agent-session';
+import { contextTokenTotal, formatModelName } from '@/lib/agent-protocol';
 import { createAgentTranscriptStore } from '@/stores/agent-transcript';
 import { useAgentSheetBridge } from '@/stores/agent-sheet-bridge';
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';
@@ -62,6 +63,7 @@ export function AgentSubagentDetailSheet({
   const insets = useSafeAreaInsets();
   const markdownStyle = usePaneChatMarkdownStyle();
   const serverId = useGatewayConnectionStore((state) => state.record?.serverId);
+  const models = useAgentSheetBridge((state) => state.models);
   const ownerSessionId = useAgentSheetBridge((state) => state.sessionId);
   const showReasoning = useAgentSheetBridge((state) => state.showReasoning);
   const scopeKey = agentSubagentDetailScopeKey({ serverId, sessionId, ownerSessionId, asid });
@@ -137,6 +139,11 @@ export function AgentSubagentDetailSheet({
     }),
     [actions, markdownStyle, showReasoning]
   );
+  const childModel = info?.model;
+  const catalogName = models.find(
+    (model) => model.id === childModel?.model_id && model.provider_id === childModel?.provider_id
+  )?.name;
+  const childModelName = formatModelName(childModel, '', catalogName);
   const hasSnapshot = activeLoaded !== null;
   const contentState = agentSubagentDetailContentState(hasSnapshot, loading, Boolean(error));
 
@@ -146,14 +153,26 @@ export function AgentSubagentDetailSheet({
       title={t`Subagent`}
       caption={title}
       header={
-        error && hasSnapshot ? (
-          <Text
-            testID="agent-subagent-detail-refresh-error"
-            variant="caption"
-            color={colors.danger}>
-            {t`Could not load the session`}
-          </Text>
-        ) : undefined
+        <View style={styles.metadata}>
+          {childModelName ? (
+            <Text testID="agent-subagent-detail-model" variant="caption" color={colors.textMuted}>
+              {t`Model`}: {childModelName}
+            </Text>
+          ) : null}
+          {info?.tokens ? (
+            <Text testID="agent-subagent-detail-tokens" variant="caption" color={colors.textMuted}>
+              {t`Tokens this session`}: {contextTokenTotal(info.tokens).toLocaleString()}
+            </Text>
+          ) : null}
+          {error && hasSnapshot ? (
+            <Text
+              testID="agent-subagent-detail-refresh-error"
+              variant="caption"
+              color={colors.danger}>
+              {t`Could not load the session`}
+            </Text>
+          ) : null}
+        </View>
       }
       headingTrailing={
         <SheetSceneQuietControl
@@ -181,6 +200,7 @@ export function AgentSubagentDetailSheet({
         </View>
       ) : (
         <AgentTranscriptList
+          keyboardAware={false}
           nestedScrollEnabled
           testID="agent-subagent-detail-transcript"
           store={store}
@@ -207,6 +227,7 @@ export function AgentSubagentDetailSheet({
 }
 
 const styles = StyleSheet.create({
+  metadata: { gap: 4 },
   center: {
     flex: 1,
     justifyContent: 'center',

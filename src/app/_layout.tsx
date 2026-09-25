@@ -13,6 +13,8 @@ import {
   ToastProvider,
   useThemeMode,
   useThemeTokens,
+  type ThemeMode,
+  type ThemeStorageAdapter,
 } from '@osuki-dev/ui';
 import * as NavigationBar from 'expo-navigation-bar';
 import * as SecureStore from 'expo-secure-store';
@@ -80,6 +82,23 @@ LogBox.ignoreLogs(['[Reanimated] dependencies should only be used in web impleme
  */
 SplashScreen.preventAutoHide();
 
+// The mode is a single unauthenticated SecureStore value. Read it before the
+// first React frame so the launch scene never paints the system mode and then
+// switches to the reader's choice when ThemeProvider's async effect finishes.
+const initialThemeMode: ThemeMode = (() => {
+  try {
+    const stored = SecureStore.getItem('osuki-theme-mode');
+    return stored === 'light' || stored === 'dark' || stored === 'system' ? stored : 'system';
+  } catch {
+    return 'system';
+  }
+})();
+
+const themeModeStorage: ThemeStorageAdapter = {
+  getItem: (key) => SecureStore.getItemAsync(key),
+  setItem: (key, value) => SecureStore.setItemAsync(key, value),
+};
+
 /**
  * The theme library is read here, at module scope, and not in an effect.
  *
@@ -110,6 +129,23 @@ function ThemeFileOpener() {
   useThemeFileOpen();
   return null;
 }
+
+/**
+ * The profiling control, in a Debug bundle or a Release profiling bundle only.
+ *
+ * A `require` behind a condition Metro can fold, not an import: `__DEV__` and
+ * `process.env.EXPO_PUBLIC_*` are inlined when a bundle is built, so a store
+ * bundle sees `false`, and the control, `@/lib/release-profiler` and the
+ * library's JS never enter it. See src/lib/release-profiler.ts.
+ */
+type ProfilerControlModule = typeof import('@/components/release-profiler-control');
+
+const ReleaseProfilerControl =
+  __DEV__ || process.env.EXPO_PUBLIC_RELEASE_PROFILER === '1'
+    ? // oxlint-disable-next-line typescript/no-require-imports
+      (require('@/components/release-profiler-control') as ProfilerControlModule)
+        .ReleaseProfilerControl
+    : null;
 
 export default function RootLayout() {
   /**
@@ -180,11 +216,8 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <KeyboardProvider>
         <OsukiThemeProvider
-          defaultMode="system"
-          storageAdapter={{
-            getItem: (key) => SecureStore.getItemAsync(key),
-            setItem: (key, value) => SecureStore.setItemAsync(key, value),
-          }}
+          defaultMode={initialThemeMode}
+          storageAdapter={themeModeStorage}
           theme={theme}>
           {/*
             Outside the error boundary because the boundary's own fallback is
@@ -479,6 +512,8 @@ function RootContent() {
             <WhatsNewCard />
           </ReskinSurface>
         </ReskinTransitionProvider>
+        {/* Outside the re-skin surface so a transition never photographs it. */}
+        {ReleaseProfilerControl ? <ReleaseProfilerControl /> : null}
       </ToastProvider>
     </ThemeProvider>
   );

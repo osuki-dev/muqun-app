@@ -59,7 +59,7 @@ export const Input: React.FC<InputProps> = ({
   const errorProgress = useSharedValue(hasError ? 1 : 0);
 
   useEffect(() => {
-    errorProgress.value = withTiming(hasError ? 1 : 0, timing(160));
+    errorProgress.set(withTiming(hasError ? 1 : 0, timing(160)));
   }, [errorProgress, hasError]);
 
   const containerStyles = useMemo<ViewStyle>(
@@ -148,12 +148,12 @@ export const Input: React.FC<InputProps> = ({
   ]);
 
   const handleFocus: TextInputProps['onFocus'] = (e) => {
-    focusProgress.value = withTiming(1, timing(140));
+    focusProgress.set(withTiming(1, timing(140)));
     onFocus?.(e);
   };
 
   const handleBlur: TextInputProps['onBlur'] = (e) => {
-    focusProgress.value = withTiming(0, timing(160));
+    focusProgress.set(withTiming(0, timing(160)));
     onBlur?.(e);
   };
 

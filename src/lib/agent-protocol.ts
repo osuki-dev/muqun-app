@@ -1430,20 +1430,16 @@ export function parseAgentContextUsage(value: unknown): AgentContextUsage {
   };
 }
 
-/**
- * Every token still in context, which is what the ring fills against.
- *
- * `cache_read` counts. OpenCode reports the latest assistant message's usage
- * split four ways -- fresh input, cached input, reasoning and output -- and the
- * cached half is input the model still read; leaving it out is what made a
- * long session with a warm prompt cache report a few hundred tokens against a
- * 262k window. `cache_write` is deliberately not added: a write is the same
- * text as the `input` beside it, counted twice by the provider's billing shape
- * rather than twice in the window.
- */
+/** OpenCode v2 TokenUsage.total: all five counters are disjoint, including cache writes. */
 export function contextTokenTotal(tokens: TokensUsage | null | undefined): number {
   if (!tokens) return 0;
-  return tokens.input + tokens.output + (tokens.reasoning ?? 0) + (tokens.cache_read ?? 0);
+  return (
+    tokens.input +
+    tokens.output +
+    (tokens.reasoning ?? 0) +
+    (tokens.cache_read ?? 0) +
+    (tokens.cache_write ?? 0)
+  );
 }
 
 /** 0…1, or `null` when there is no limit to measure against. */
@@ -1451,7 +1447,7 @@ export function contextFillRatio(
   tokens: TokensUsage | null | undefined,
   limit: number | undefined
 ): number | null {
-  if (!limit || limit <= 0) return null;
+  if (!tokens || !limit || limit <= 0) return null;
   const used = contextTokenTotal(tokens);
   if (used <= 0) return 0;
   return Math.min(1, used / limit);
@@ -1919,6 +1915,7 @@ export interface ProviderInfo {
 export interface AgentInfo {
   id: string;
   name: string;
+  model?: ModelRef;
   description?: string;
   mode?: string;
   color?: string;
@@ -2122,9 +2119,11 @@ export function parseAgentCatalog(value: unknown): AgentCatalog {
       const description = pickString(agentRec, ['description']);
       const mode = pickString(agentRec, ['mode']);
       const color = pickString(agentRec, ['color']);
+      const model = parseModelRef(agentRec.model);
       agents.push({
         id,
         name: pickString(agentRec, ['name']) ?? id,
+        ...(model ? { model } : {}),
         ...(description ? { description } : {}),
         ...(mode ? { mode } : {}),
         ...(color ? { color } : {}),

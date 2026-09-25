@@ -620,6 +620,9 @@ export interface ShortcutKey {
   label: string;
   key: string;
   description?: string;
+  keys?: string[];
+  text?: string;
+  submit?: boolean;
 }
 
 export interface SlashCommand {
@@ -630,7 +633,7 @@ export interface SlashCommand {
    * runs exactly as written, so it is safe to send on a single tap.
    */
   argument_hint?: string | null;
-  /** "builtin" for the gateway's own table, "user"/"project" for a command file. */
+  /** "catalog" for the downloaded built-in command snapshot. */
   source?: string;
 }
 
@@ -639,6 +642,8 @@ export interface PaneShortcuts {
   /** Which table the gateway matched: an agent name, "editor", or "shell". */
   profile: string;
   keys: ShortcutKey[];
+  /** Optional multi-key and text actions; older Gateways omit this. */
+  keyActions?: ShortcutKey[];
   commands: SlashCommand[];
 }
 
@@ -2215,6 +2220,26 @@ export async function loadSessions(): Promise<SessionsResponse> {
   return sessions.sessions?.some((session) => typeof session.connected !== 'boolean')
     ? withSessionAvailability(sessions, (await getHealth()) as HealthResponse)
     : sessions;
+}
+
+/** Read a saved Gateway with its own credentials, without configuring the live connection. */
+export async function readGatewayRecordJson(record: GatewayRecord, path: string): Promise<unknown> {
+  if (!path.startsWith('/api/') || path.includes('://'))
+    throw new Error('Invalid Gateway read path');
+  const captured = { ...record, sshTunnel: record.sshTunnel ? { ...record.sshTunnel } : undefined };
+  return withRecordBaseUrl(captured, async (baseUrl) => {
+    const init = {
+      method: 'GET',
+      headers: { Authorization: `Bearer ${captured.token}`, ...activeLocaleHeaders() },
+    };
+    const url = `${baseUrl}${path}`;
+    const response =
+      captured.transport === GATEWAY_TRANSPORT
+        ? await encryptedGatewayFetch(url, init, REQUEST_TIMEOUT_MS, { ...captured, url: baseUrl })
+        : await fetchWithin(REQUEST_TIMEOUT_MS, 'Timed out waiting for the server.', url, init);
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    return response.json();
+  });
 }
 
 /** Inspect a saved machine without switching the active terminal's credentials. */

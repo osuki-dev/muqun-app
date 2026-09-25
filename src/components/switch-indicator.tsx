@@ -4,7 +4,7 @@ import { Text } from '@/components/text';
 import { StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
-import { appChrome } from '@/constants/appearance';
+import { useNotificationSurfaceStyle } from '@/components/notification-surface';
 import { useMonoFontFamily } from '@/hooks/use-user-fonts';
 import { fadeIn, fadeOut, listLayout } from '@/lib/motion';
 import { paneAddressText, type PaneAddress } from '@/lib/pane-address';
@@ -36,6 +36,7 @@ import { paneAddressText, type PaneAddress } from '@/lib/pane-address';
 export function SwitchIndicator({ address, testID }: { address: PaneAddress; testID?: string }) {
   const surfaceBackground = useSurfaceBackground();
   const theme = useThemeTokens();
+  const notificationSurfaceStyle = useNotificationSurfaceStyle(false);
   const mono = useMonoFontFamily();
   return (
     <Animated.View
@@ -47,23 +48,21 @@ export function SwitchIndicator({ address, testID }: { address: PaneAddress; tes
       <View
         style={[
           styles.indicator,
+          notificationSurfaceStyle,
           {
-            backgroundColor: surfaceBackground(theme.colors.primary),
-            borderRadius: theme.radius.pill,
+            backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
+            borderColor: theme.colors.border,
           },
         ]}>
         <Text
           variant="caption"
-          color={theme.colors.onPrimary}
+          color={theme.colors.textMuted}
+          numberOfLines={1}
           testID={testID}
           style={[styles.address, { fontFamily: mono }]}>
           {paneAddressText(address)}
         </Text>
-        <Text
-          variant="caption"
-          numberOfLines={1}
-          color={theme.colors.onPrimary}
-          style={styles.title}>
+        <Text variant="caption" numberOfLines={1} color={theme.colors.text} style={styles.title}>
           {address.title}
         </Text>
       </View>
@@ -82,10 +81,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    height: 26,
+    minHeight: 32,
+    paddingVertical: 6,
     paddingHorizontal: 12,
     borderCurve: 'continuous',
-    boxShadow: appChrome.shadow.floatingPill,
+    borderWidth: StyleSheet.hairlineWidth,
   },
   // A pane address is `2:3` -- numbers the reader compares against the pill in
   // the header and against the panels sheet -- so it is a literal, and it now

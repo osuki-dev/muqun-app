@@ -3,7 +3,7 @@ wait "role=button text=\"Open quick actions\"" 15000
 press "role=button text=\"Open quick actions\""
 wait "label=\"Edit shortcuts\"" 10000
 press "label=\"Edit shortcuts\""
-scroll down 3
+scroll down 3 --in-sheet
 wait "id=\"quick-command-name\"" 10000
 # This field drops characters on iOS when typed at full speed -- a run saved
 # "QA rview instructions" and the assertion on the real name then timed out.
@@ -12,20 +12,19 @@ fill "id=\"quick-command-name\"" "QA review instructions" --delay-ms 60
 # Filling the name raises the keyboard, which takes enough of the viewport to
 # push the next field below the fold. `fill` refuses an off-screen target, so
 # bring it back into view before reaching for it.
-scroll down 1
+scroll down 1 --dismiss-ipad-keyboard
 wait "id=\"quick-command-value\"" 10000
 fill "id=\"quick-command-value\"" "Review this project without changing any files" --delay-ms 60
-# The iOS keyboard here exposes no dismiss key, and agent-device will not tap
-# outside it to close one (no such tap can be proven side-effect-free). Its own
-# guidance is to press the next target directly; the keyboard does not block a
-# press the way it blocks a fill.
-# The keyboard is still up, so the delivery tabs sit below the rendered
-# window. Bring them into view before reaching for one.
-scroll down 1
+# The keyboard can cover the delivery tabs on iPad; dismiss it before choosing
+# where the shortcut sends its prompt.
+scroll down 1 --dismiss-ipad-keyboard --unless-visible id=quick-command-delivery-tab-collaboration
 wait "id=\"quick-command-delivery-tab-collaboration\"" 10000
 press "id=\"quick-command-delivery-tab-collaboration\""
+scroll down 1 --dismiss-iphone-keyboard
+scroll down 1 --in-sheet --unless-visible id=quick-command-save
 press "id=\"quick-command-save\""
-wait "label=\"Delete QA review instructions\"" 10000
+# Saving keeps the editor open. Confirm the new row before leaving edit mode.
+wait "label=\"QA review instructions\"" 10000
 press "label=\"Done editing shortcuts\""
 # Leaving edit mode already returns the saved command to the visible list.
 # A viewport-length pull from the sheet header dismisses the native sheet.
@@ -55,7 +54,7 @@ press "role=button text=\"Open quick actions\""
 # and the search field -- so a custom shortcut, which is appended after the
 # bundled ones, starts below the fold. Measured here: one screen is enough, and
 # a second scroll is a no-op because the list is then already at its end.
-scroll down 1
+scroll down 1 --in-sheet
 wait "role=button label=\"QA review instructions\"" 10000
 press "role=button label=\"QA review instructions\""
 wait "id=\"assignment-bar-close\"" 10000
@@ -78,6 +77,7 @@ press "id=\"assignment-bar-close\""
 press "role=button text=\"Open quick actions\""
 wait "label=\"Edit shortcuts\"" 10000
 press "label=\"Edit shortcuts\""
+scroll down 3 --in-sheet
 wait "label=\"Delete QA review instructions\"" 10000
 press "label=\"Delete QA review instructions\""
 is hidden "label=\"Delete QA review instructions\""
@@ -96,6 +96,9 @@ press "role=button text=\"Open quick actions\""
 
 # section pre-edit
 press "label=\"Edit shortcuts\""
+
+# section pre-scroll
+scroll down 3 --in-sheet
 
 # section pre-delete
 press "label=\"Delete QA review instructions\""

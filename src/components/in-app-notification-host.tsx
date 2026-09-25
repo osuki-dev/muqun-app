@@ -19,13 +19,17 @@ import Animated, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { NAV_HEADER_CONTROL_SIZE } from '@/components/nav-header';
-import { appAppearanceConfig } from '@/constants/appearance';
+import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { useNotificationSurfaceStyle } from '@/components/notification-surface';
 import { NAV_HEADER_TOP_GAP } from '@/constants/nav-header';
 import { permissionActionPhrase } from '@/i18n/labels';
 import { readApprovalBody } from '@/lib/agent-engine-text';
 import { feedback } from '@/lib/feedback';
-import { noticeTitleParts, type InAppNotice } from '@/lib/in-app-notifications';
+import {
+  noticeAutoDismissDelay,
+  noticeTitleParts,
+  type InAppNotice,
+} from '@/lib/in-app-notifications';
 import { fadeInDown, settleTo, timing } from '@/lib/motion';
 import { noticeDragOffset, noticeSwipeEnd } from '@/lib/notice-swipe';
 import { AGENT_TYPE } from '@/constants/agent-type';
@@ -77,6 +81,7 @@ const DRAG_SLOP = 6;
  * reader who cannot make it.
  */
 export function InAppNotificationHost() {
+  const profile = useAppearanceProfile();
   const notificationSurfaceStyle = useNotificationSurfaceStyle();
   const insets = useSafeAreaInsets();
   const surfaceBackground = useSurfaceBackground();
@@ -118,14 +123,24 @@ export function InAppNotificationHost() {
   /** The plate's own size, for the sideways threshold and the flight distance. */
   const plateHeight = useSharedValue(0);
   const noticeId = notice?.id ?? '';
+  const autoDismissDelay = noticeAutoDismissDelay(notice?.kind, visible);
+  useEffect(() => {
+    if (!noticeId || autoDismissDelay === null) return;
+    // Depend on the visible identity, not the queue: incoming/duplicate events
+    // must not keep restarting the lifetime of the card already on screen.
+    const timer = setTimeout(() => {
+      useInAppNotifications.getState().dismiss(noticeId);
+    }, autoDismissDelay);
+    return () => clearTimeout(timer);
+  }, [noticeId, autoDismissDelay]);
   useEffect(() => {
     cancelAnimation(dragX);
     cancelAnimation(dragY);
     cancelAnimation(dragOpacity);
-    dragOpacity.value = 1;
-    dismissing.value = false;
-    dragX.value = 0;
-    dragY.value = 0;
+    dragOpacity.set(1);
+    dismissing.set(false);
+    dragX.set(0);
+    dragY.set(0);
   }, [noticeId, dragX, dragY, dragOpacity, dismissing]);
   useEffect(
     () => () => {
@@ -183,8 +198,8 @@ export function InAppNotificationHost() {
     .onUpdate((event) => {
       if (dismissing.value) return;
       const offset = noticeDragOffset(event);
-      dragX.value = offset.x;
-      dragY.value = offset.y;
+      dragX.set(offset.x);
+      dragY.set(offset.y);
     })
     .onEnd((event) => {
       if (dismissing.value) return;
@@ -198,13 +213,15 @@ export function InAppNotificationHost() {
       }
       // A short glide and fade replaces the full-screen throw. Ignore release
       // velocity here so a fast flick cannot launch the card into the status bar.
-      dismissing.value = true;
+      dismissing.set(true);
       const config = timing('short');
-      dragX.value = withTiming(end.x, config);
-      dragY.value = withTiming(end.y, config);
-      dragOpacity.value = withTiming(0, config, (finished) => {
-        if (finished) runOnJS(swept)();
-      });
+      dragX.set(withTiming(end.x, config));
+      dragY.set(withTiming(end.y, config));
+      dragOpacity.set(
+        withTiming(0, config, (finished) => {
+          if (finished) runOnJS(swept)();
+        })
+      );
     });
 
   // Render real queued content with exactly the same presentation as the front.
@@ -223,8 +240,10 @@ export function InAppNotificationHost() {
     const { lead, suffix } = noticeTitleParts(
       approval ? t`Approval required` : entry.title || t`Muqun`
     );
-    const body = approval ? approvalPhrase : entry.body;
-    const detail = approval ? approval.subject : '';
+    // A terminal approval push is ordinary prose, not an OpenCode rule/path.
+    // Keep it in the wrapping UI face instead of the single-line code detail.
+    const body = approval?.action ? approvalPhrase : entry.body;
+    const detail = approval?.action ? approval.subject : '';
     return (
       <Animated.View
         key={entry.id}
@@ -233,7 +252,7 @@ export function InAppNotificationHost() {
         onLayout={
           front
             ? (event) => {
-                plateHeight.value = event.nativeEvent.layout.height;
+                plateHeight.set(event.nativeEvent.layout.height);
               }
             : undefined
         }
@@ -286,7 +305,13 @@ export function InAppNotificationHost() {
               testID="in-app-notification-next"
               accessibilityRole="button"
               onPress={() => setSelectedId(items[(position + 1) % items.length]!.id)}
-              style={[styles.pill, { backgroundColor: surfaceBackground(colors.primarySubtle) }]}
+              style={[
+                styles.pill,
+                {
+                  borderRadius: profile.chrome.control,
+                  backgroundColor: surfaceBackground(colors.primarySubtle),
+                },
+              ]}
               accessibilityLabel={t`Next notification`}>
               <Text variant="caption" color={colors.textMuted} style={styles.count}>
                 {page + 1} / {items.length}
@@ -388,7 +413,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 7,
     minHeight: 44,
     justifyContent: 'center',
-    borderRadius: appAppearanceConfig.radius.pill,
   },
   action: { minHeight: 44, justifyContent: 'center', paddingLeft: 10 },
   count: { fontVariant: ['tabular-nums'] },

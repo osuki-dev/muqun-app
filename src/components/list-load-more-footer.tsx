@@ -61,9 +61,7 @@ export function ListLoadMoreFooter({
 
   const countText =
     statusMessage ??
-    (shown !== undefined && total !== undefined
-      ? t`Showing ${shown} of ${total}`
-      : undefined);
+    (shown !== undefined && total !== undefined ? t`Showing ${shown} of ${total}` : undefined);
 
   const verticalPadding =
     profile.density === 'compact' ? 12 : profile.density === 'comfortable' ? 20 : 16;

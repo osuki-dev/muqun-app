@@ -45,6 +45,7 @@ import { assetInstallProgress, type ThemeInstallProgress } from '@/theme/install
 import { publicThemeTransport } from '@/theme/public-transport';
 import { inspectRemoteTheme } from '@/theme/remote-import';
 import { useThemeLibrary } from '@/stores/theme-library';
+import { recoverWith, settleAfter } from '@/lib/compiler-safe-control-flow';
 
 /**
  * The published themes, as a sheet of their own, with nothing downloaded until
@@ -185,19 +186,25 @@ export function ThemeBrowseSheet({
       setFailed(true);
       return;
     }
+    // Bound once, narrowed: the read below runs in a callback, where the
+    // import's null check above would not carry.
+    const transport = publicThemeTransport;
     const read = new ThemeImportRequest();
     void (async () => {
-      try {
-        const list = await loadThemeIndex(publicThemeTransport, read.signal);
-        if (!mounted.current || read.isCanceled) return;
-        putThemeIndex(list);
-        setEntries(list);
-        setShown(Math.min(THEME_BROWSE_PAGE, list.length));
-      } catch {
-        // The thrown message is a plain English module string and is in no
-        // catalog. A full-width empty state is the last place to show one.
-        if (mounted.current && !read.isCanceled) setFailed(true);
-      }
+      return recoverWith(
+        async () => {
+          const list = await loadThemeIndex(transport, read.signal);
+          if (!mounted.current || read.isCanceled) return;
+          putThemeIndex(list);
+          setEntries(list);
+          setShown(Math.min(THEME_BROWSE_PAGE, list.length));
+        },
+        () => {
+          // The thrown message is a plain English module string and is in no
+          // catalog. A full-width empty state is the last place to show one.
+          if (mounted.current && !read.isCanceled) setFailed(true);
+        }
+      );
     })();
     return () => read.cancel();
     // `attempt` is what `Try again` bumps; `entries` is the guard that stops a
@@ -226,6 +233,9 @@ export function ThemeBrowseSheet({
 
   function open(entry: ThemeIndexEntry) {
     if (demo || !publicThemeTransport || active.current) return;
+    // Bound once, narrowed: the install below runs in a callback, where the
+    // import's null check above would not carry.
+    const transport = publicThemeTransport;
     const owned = new ThemeImportRequest();
     active.current = owned;
     // Synchronously, before anything is awaited, so the render that shows the
@@ -238,69 +248,78 @@ export function ThemeBrowseSheet({
       const { signal } = owned;
       let prepared: PreparedThemeAssets | undefined;
       let transferred = false;
-      try {
-        /*
-         * There used to be a hold here, and the pipeline having learned to
-         * yield is what removed it.
-         *
-         * The device review found a press that looked ignored: React had the
-         * pending state but never got a frame to commit it in, because
-         * everything after the call below took the JS thread and kept it --
-         * the download resolved, then the whole archive was inflated and
-         * CRC32'd synchronously. A `DURATION.short` hold in front of the work
-         * bought the commit a frame, which fixed the symptom by delaying the
-         * install.
-         *
-         * The phases do it properly now. The download is a real await on the
-         * native transport, the unpack yields between every ZIP entry and
-         * every 256 KiB inside one, and staging yields before each image, so
-         * the acknowledgement paints as part of the work starting rather than
-         * instead of it. Two mechanisms for one frame would be one too many,
-         * so only the floor below survives -- and that one is not about
-         * painting at all, it is about a state that did paint staying up long
-         * enough to have been seen.
-         */
-        // `format: 'package'` because a catalogue entry is always a packed
-        // `.muqun-theme`. Its assets come out of the archive rather than off
-        // the network, so there are no third-party domains for a reader to
-        // review -- one download, from the origin they already chose.
-        const inspection = await inspectRemoteTheme(publicThemeTransport, themePackageUrl(entry), {
-          signal,
-          format: 'package',
-          onProgress(value) {
-            if (mounted.current && !signal.aborted) setProgress(value);
-          },
-        });
-        throwIfThemeAborted(signal);
-        prepared = await prepareThemeAssetStream(inspection.manifest, inspection.assets(signal), {
-          signal,
-          onProgress(value) {
-            // The stream counts images in its own vocabulary; the phase model
-            // is where the two meet.
-            if (mounted.current && !signal.aborted) setProgress(assetInstallProgress(value));
-          },
-        });
-        throwIfThemeAborted(signal);
-        // The floor, and the whole of it: a download that beat its own
-        // announcement leaves the announcement up for the rest of its welcome
-        // rather than flashing through it on the way to another screen.
-        await holdFor(remainingVisibleMs(pressedAt, MINIMUM_PENDING_VISIBLE_MS));
-        throwIfThemeAborted(signal);
-        if (!mounted.current) return;
-        const candidate = { manifest: inspection.manifest, prepared };
-        owned.handoff(() => onReady(candidate));
-        transferred = true;
-      } catch {
-        // Same argument as the index read: the module's message is English.
-        if (mounted.current && active.current === owned && !owned.isCanceled) setFailed(true);
-      } finally {
-        if (!transferred) prepared?.dispose();
-        if (active.current === owned) active.current = null;
-        if (mounted.current) {
-          setPending(null);
-          setProgress(null);
+      return settleAfter(
+        async () => {
+          try {
+            /*
+             * There used to be a hold here, and the pipeline having learned to
+             * yield is what removed it.
+             *
+             * The device review found a press that looked ignored: React had the
+             * pending state but never got a frame to commit it in, because
+             * everything after the call below took the JS thread and kept it --
+             * the download resolved, then the whole archive was inflated and
+             * CRC32'd synchronously. A `DURATION.short` hold in front of the work
+             * bought the commit a frame, which fixed the symptom by delaying the
+             * install.
+             *
+             * The phases do it properly now. The download is a real await on the
+             * native transport, the unpack yields between every ZIP entry and
+             * every 256 KiB inside one, and staging yields before each image, so
+             * the acknowledgement paints as part of the work starting rather than
+             * instead of it. Two mechanisms for one frame would be one too many,
+             * so only the floor below survives -- and that one is not about
+             * painting at all, it is about a state that did paint staying up long
+             * enough to have been seen.
+             */
+            // `format: 'package'` because a catalogue entry is always a packed
+            // `.muqun-theme`. Its assets come out of the archive rather than off
+            // the network, so there are no third-party domains for a reader to
+            // review -- one download, from the origin they already chose.
+            const inspection = await inspectRemoteTheme(transport, themePackageUrl(entry), {
+              signal,
+              format: 'package',
+              onProgress(value) {
+                if (mounted.current && !signal.aborted) setProgress(value);
+              },
+            });
+            throwIfThemeAborted(signal);
+            prepared = await prepareThemeAssetStream(
+              inspection.manifest,
+              inspection.assets(signal),
+              {
+                signal,
+                onProgress(value) {
+                  // The stream counts images in its own vocabulary; the phase model
+                  // is where the two meet.
+                  if (mounted.current && !signal.aborted) setProgress(assetInstallProgress(value));
+                },
+              }
+            );
+            throwIfThemeAborted(signal);
+            // The floor, and the whole of it: a download that beat its own
+            // announcement leaves the announcement up for the rest of its welcome
+            // rather than flashing through it on the way to another screen.
+            await holdFor(remainingVisibleMs(pressedAt, MINIMUM_PENDING_VISIBLE_MS));
+            throwIfThemeAborted(signal);
+            if (!mounted.current) return;
+            const candidate = { manifest: inspection.manifest, prepared };
+            owned.handoff(() => onReady(candidate));
+            transferred = true;
+          } catch {
+            // Same argument as the index read: the module's message is English.
+            if (mounted.current && active.current === owned && !owned.isCanceled) setFailed(true);
+          }
+        },
+        () => {
+          if (!transferred) prepared?.dispose();
+          if (active.current === owned) active.current = null;
+          if (mounted.current) {
+            setPending(null);
+            setProgress(null);
+          }
         }
-      }
+      );
     })();
   }
 
@@ -429,7 +448,8 @@ export function ThemeBrowseSheet({
   );
 
   function appendPage() {
-    if (!filteredEntries || shown >= total || pending !== null || failed || appendInFlight.current) return;
+    if (!filteredEntries || shown >= total || pending !== null || failed || appendInFlight.current)
+      return;
     appendInFlight.current = true;
     setAppending(true);
     setPageStart(shown);
@@ -448,10 +468,7 @@ export function ThemeBrowseSheet({
         total={total}
         disabled={pending !== null}>
         {demo ? (
-          <Text
-            variant="caption"
-            color={theme.colors.textMuted}
-            style={styles.footerDemo}>
+          <Text variant="caption" color={theme.colors.textMuted} style={styles.footerDemo}>
             {t`Demo catalogue. Leave the demo to download themes.`}
           </Text>
         ) : null}
@@ -612,7 +629,9 @@ export function ThemeBrowseSheet({
               dimmed={pending !== null && pending !== item.id}
               disabled={demo || pending !== null}
               revealed={revealed}
-              delay={Math.min(Math.max(index - pageStart, 0), THEME_BROWSE_STAGGER_CAP) * STAGGER.row}
+              delay={
+                Math.min(Math.max(index - pageStart, 0), THEME_BROWSE_STAGGER_CAP) * STAGGER.row
+              }
               onPress={() => handlePress(item)}
               onCoverError={() =>
                 setBrokenCovers((value) => (value.includes(item.id) ? value : [...value, item.id]))
@@ -722,7 +741,7 @@ function ThemeBrowseRow({
   // The pressed row is never dimmed: it is the one the reader is waiting on.
   const dim = useSharedValue(dimmed ? 0.5 : 1);
   useEffect(() => {
-    dim.value = withTiming(dimmed ? 0.5 : 1, timing('short'));
+    dim.set(withTiming(dimmed ? 0.5 : 1, timing('short')));
   }, [dim, dimmed]);
   const dimStyle = useAnimatedStyle(() => ({ opacity: dim.value }));
 
@@ -730,7 +749,10 @@ function ThemeBrowseRow({
   // what it is, and its tags. Two separate lines would put a third capped run in a row whose
   // whole job is to let a reader compare names.
   const tagsSummary = entry.tags?.length
-    ? entry.tags.slice(0, 3).map((t) => `#${t}`).join(' ')
+    ? entry.tags
+        .slice(0, 3)
+        .map((t) => `#${t}`)
+        .join(' ')
     : '';
   const caption = [entry.author, entry.description, tagsSummary].filter(Boolean).join(' · ');
 

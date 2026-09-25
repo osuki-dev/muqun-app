@@ -86,6 +86,17 @@ describe('merging one window into another', () => {
 // rows deleted out from under them, once a second, which on a device reads as
 // the pane scrolling itself.
 describe('applying one read of a pane to the window on screen', () => {
+  test('typing bun updates one live input row instead of adding b and bu to history', () => {
+    let output = '';
+    for (const read of ['$ b', '$ bu', '$ bun']) {
+      output = foldPaneRead(output, read, 'refresh', MAXIMUM, false, 24);
+    }
+    expect(output).toBe('$ bun');
+    expect(foldPaneRead(output, '$ bun\nresult', 'refresh', MAXIMUM, false, 24)).toBe(
+      '$ bun\nresult'
+    );
+  });
+
   /** A ring window: `history` numbered rows with a screen of `screen` rows under them. */
   const windowOf = (history: number, screen: readonly string[]) =>
     [...Array.from({ length: history }, (_, index) => `history ${index}`), ...screen].join('\n');

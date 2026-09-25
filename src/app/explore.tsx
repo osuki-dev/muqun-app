@@ -22,7 +22,10 @@ import {
   useWindowDimensions,
   View,
 } from 'react-native';
-import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
+import {
+  KeyboardAwareScrollView,
+  type KeyboardAwareScrollViewRef,
+} from 'react-native-keyboard-controller';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
   cancelAnimation,
@@ -91,6 +94,7 @@ import {
   type ScanReading,
 } from '@/lib/pairing-scan';
 import { FontedTextInput } from '@/components/fonted-text-input';
+import { recoverWith, settleAfter } from '@/lib/compiler-safe-control-flow';
 
 type Step = 'scan' | 'confirm' | 'success';
 
@@ -191,6 +195,7 @@ export default function PairModal() {
   const { width: windowWidth } = useWindowDimensions();
   const { setRecord, enterDemo } = useGatewayRecord();
   const handledScan = useRef(false);
+  const scrollRef = useRef<KeyboardAwareScrollViewRef>(null);
   // A failed scan must not re-fire instantly: the same QR is still in frame, so
   // resetting the guard immediately looped scan→fail→scan and flickered the UI.
   const scanBlockedUntil = useRef(0);
@@ -335,47 +340,55 @@ export default function PairModal() {
   async function beginPairing(nextOffer: PairingOffer, fromScan: boolean) {
     setBusy(true);
     setMessage(null);
-    try {
-      const deviceName = Device.deviceName ?? Device.modelName ?? `Muqun ${Platform.OS}`;
-      const request = await beginPairingTransaction(nextOffer, deviceName);
-      setOffer(request.offer);
-      setRequestId(request.requestId);
-      setServerName(request.serverLabel);
-      setExpiresAt(request.expiresAt);
-      setStepDirection('forward');
-      setStep('confirm');
-    } catch (error) {
-      const failure = describeGatewayFailure(error, t`Could not reach the gateway.`);
-      // Whether the gateway turned this down, or was never reached at all.
-      // Only the first is the code's fault, and only the first may arm the
-      // aperture's "that code was refused".
-      const unreachable = failure.kind === 'network' || failure.kind === 'timeout';
-      if (fromScan && !unreachable) {
-        // Wait before accepting the same QR again, or a bad/stale code loops.
-        scanBlockedUntil.current = Date.now() + SCAN_REJECT_HOLD_MS;
-        setRejected(true);
+    return settleAfter(
+      async () => {
+        return recoverWith(
+          async () => {
+            const deviceName = Device.deviceName ?? Device.modelName ?? `Muqun ${Platform.OS}`;
+            const request = await beginPairingTransaction(nextOffer, deviceName);
+            setOffer(request.offer);
+            setRequestId(request.requestId);
+            setServerName(request.serverLabel);
+            setExpiresAt(request.expiresAt);
+            setStepDirection('forward');
+            setStep('confirm');
+          },
+          (error) => {
+            const failure = describeGatewayFailure(error, t`Could not reach the gateway.`);
+            // Whether the gateway turned this down, or was never reached at all.
+            // Only the first is the code's fault, and only the first may arm the
+            // aperture's "that code was refused".
+            const unreachable = failure.kind === 'network' || failure.kind === 'timeout';
+            if (fromScan && !unreachable) {
+              // Wait before accepting the same QR again, or a bad/stale code loops.
+              scanBlockedUntil.current = Date.now() + SCAN_REJECT_HOLD_MS;
+              setRejected(true);
+            }
+            handledScan.current = false;
+            // The reticle said it had the code; the gateway then said otherwise. Let
+            // it go back to looking, or the frame stays locked on a code that failed.
+            setDetected(false);
+            // A connection failure while pairing is almost always a stale QR or a
+            // gateway that is not running -- say so instead of a bare network notice.
+            // Typed and scanned offers fail differently, though: a scanned QR is
+            // stale (refresh it), but a typed address was never a QR at all, and
+            // telling a reader who typed it to go scan something is no help.
+            setMessage(
+              unreachable
+                ? nextOffer.sshTunnel
+                  ? t`Nothing answered on port ${nextOffer.sshTunnel.remotePort} through the SSH host. Check the gateway's port on that machine.`
+                  : nextOffer.serverId
+                    ? t`Could not reach the gateway. Make sure it is running, then refresh the QR and scan again.`
+                    : t`Could not reach that address. Check it and make sure the Gateway is running.`
+                : failure.message
+            );
+          }
+        );
+      },
+      () => {
+        setBusy(false);
       }
-      handledScan.current = false;
-      // The reticle said it had the code; the gateway then said otherwise. Let
-      // it go back to looking, or the frame stays locked on a code that failed.
-      setDetected(false);
-      // A connection failure while pairing is almost always a stale QR or a
-      // gateway that is not running -- say so instead of a bare network notice.
-      // Typed and scanned offers fail differently, though: a scanned QR is
-      // stale (refresh it), but a typed address was never a QR at all, and
-      // telling a reader who typed it to go scan something is no help.
-      setMessage(
-        unreachable
-          ? nextOffer.sshTunnel
-            ? t`Nothing answered on port ${nextOffer.sshTunnel.remotePort} through the SSH host. Check the gateway's port on that machine.`
-            : nextOffer.serverId
-              ? t`Could not reach the gateway. Make sure it is running, then refresh the QR and scan again.`
-              : t`Could not reach that address. Check it and make sure the Gateway is running.`
-          : failure.message
-      );
-    } finally {
-      setBusy(false);
-    }
+    );
   }
 
   function handleScanned(value: string) {
@@ -509,23 +522,28 @@ export default function PairModal() {
     }
     setBusy(true);
     setMessage(null);
-    try {
-      const record = await claimPairingTransaction(
-        { offer, requestId, serverLabel: serverName },
-        normalizedCode,
-        serverName
-      );
-      setRecord(record);
-      await feedback('success');
-      Keyboard.dismiss();
-      setPairedServer(record);
-      setStepDirection('forward');
-      setStep('success');
-    } catch (error) {
-      setMessage(describeGatewayFailure(error, t`Pairing failed.`).message);
-    } finally {
-      setBusy(false);
-    }
+    return settleAfter(
+      async () => {
+        try {
+          const record = await claimPairingTransaction(
+            { offer, requestId, serverLabel: serverName },
+            normalizedCode,
+            serverName
+          );
+          setRecord(record);
+          await feedback('success');
+          Keyboard.dismiss();
+          setPairedServer(record);
+          setStepDirection('forward');
+          setStep('success');
+        } catch (error) {
+          setMessage(describeGatewayFailure(error, t`Pairing failed.`).message);
+        }
+      },
+      () => {
+        setBusy(false);
+      }
+    );
   }
 
   function reset() {
@@ -623,6 +641,7 @@ export default function PairModal() {
     */
     <SheetScene testID="pairing-sheet" title={title} caption={caption} captionLines={2}>
       <KeyboardAwareScrollView
+        ref={scrollRef}
         bottomOffset={KEYBOARD_BOTTOM_OFFSET}
         style={sheetSceneStyles.scroller}
         contentContainerStyle={styles.content}
@@ -860,9 +879,13 @@ export default function PairModal() {
                 <PressableScale
                   accessibilityRole="button"
                   accessibilityLabel={manualOpen ? t`Scan a gateway QR` : t`Enter URL manually`}
+                  testID="pairing-manual-toggle"
                   onPress={() => {
                     setSshOpen(false);
                     setManualOpen((value) => !value);
+                    // The mode switch is below the viewfinder on compact sheets.
+                    // Reveal the replacement form instead of keeping it above the viewport.
+                    scrollRef.current?.scrollTo({ y: 0, animated: true });
                   }}
                   style={[
                     styles.manualToggle,
@@ -910,6 +933,7 @@ export default function PairModal() {
                   onPress={() => {
                     setManualOpen(false);
                     setSshOpen((value) => !value);
+                    scrollRef.current?.scrollTo({ y: 0, animated: true });
                   }}
                   style={[
                     styles.manualToggle,
@@ -1188,16 +1212,16 @@ function ScanReticle({ active, detected }: { active: boolean; detected: boolean 
     // breathe about while the camera is off.
     if (!active || detected || reduceMotion) {
       cancelAnimation(breath);
-      breath.value = 0;
+      breath.set(0);
       return;
     }
-    breath.value = 0;
-    breath.value = withRepeat(withTiming(1, timing(PULSE_PERIOD)), -1, true);
+    breath.set(0);
+    breath.set(withRepeat(withTiming(1, timing(PULSE_PERIOD)), -1, true));
     return () => cancelAnimation(breath);
   }, [active, breath, detected, reduceMotion]);
 
   useEffect(() => {
-    confirm.value = withTiming(detected ? 1 : 0, timing('short'));
+    confirm.set(withTiming(detected ? 1 : 0, timing('short')));
   }, [confirm, detected]);
 
   const frameStyle = useAnimatedStyle(() => ({

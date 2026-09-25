@@ -32,6 +32,7 @@ import {
   type ShellStatus,
 } from '@/lib/agent-session';
 import { AGENT_TYPE } from '@/constants/agent-type';
+import { settleAfter } from '@/lib/compiler-safe-control-flow';
 
 /**
  * What is still running after the agent moved on.
@@ -171,19 +172,24 @@ export const AgentBackgroundTray = memo(function AgentBackgroundTray({
   const handleKill = useCallback(
     async (shellId: string) => {
       setKilling(shellId);
-      try {
-        await killAgentShell(shellId);
-        await refreshShells();
-      } catch (err) {
-        console.warn('Failed to stop shell:', err);
-        showToast({
-          variant: 'danger',
-          title: t`Could not stop it`,
-          message: err instanceof Error ? err.message : String(err),
-        });
-      } finally {
-        setKilling(null);
-      }
+      return settleAfter(
+        async () => {
+          try {
+            await killAgentShell(shellId);
+            await refreshShells();
+          } catch (err) {
+            console.warn('Failed to stop shell:', err);
+            showToast({
+              variant: 'danger',
+              title: t`Could not stop it`,
+              message: err instanceof Error ? err.message : String(err),
+            });
+          }
+        },
+        () => {
+          setKilling(null);
+        }
+      );
     },
     [refreshShells, showToast, t]
   );

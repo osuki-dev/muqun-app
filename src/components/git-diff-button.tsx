@@ -1,3 +1,4 @@
+import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens } from '@osuki-dev/ui';
@@ -66,6 +67,7 @@ export function GitDiffButton({
   const { t } = useLingui();
 
   const router = useRouter();
+  const profile = useAppearanceProfile();
   const theme = useThemeTokens();
   const surfaceBackground = useSurfaceBackground();
   const repo = useGitRepoStatus({ sessionId, paneId, cwd, capabilities, enabled: !disabled });
@@ -103,6 +105,7 @@ export function GitDiffButton({
       style={[
         styles.button,
         compact && styles.compactButton,
+        { borderRadius: profile.chrome.control },
         { backgroundColor: surfaceBackground(background) },
       ]}>
       <GitCompare

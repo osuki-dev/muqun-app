@@ -10,6 +10,7 @@ import {
 } from '@/lib/agent-collaboration';
 import { describeGatewayFailure } from '@/lib/network-error';
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';
+import { recoverWith, rethrow, settleAfter } from '@/lib/compiler-safe-control-flow';
 
 /** Shared by the terminal notice and history sheet; never replaces a reader's snapshot. */
 export function useCollaborationOutput(task: CollaborationTask | undefined, enabled: boolean) {
@@ -40,52 +41,62 @@ export function useCollaborationOutput(task: CollaborationTask | undefined, enab
     async function poll() {
       if (cancelled || running || AppState.currentState !== 'active') return;
       running = true;
-      try {
-        const snapshot = await readCollaborationOutput(
-          observedTask,
-          () => loadAgents(observedTask.sessionId),
-          async (agent) => {
-            const signature = await readPaneOutput(
-              observedTask.sessionId,
-              observedTask.paneId,
-              'text',
-              80,
-              'visible'
-            );
-            assertConnection();
-            const text =
-              !initialized && canAssignToAgent(agent.status ?? 'unknown')
-                ? await readPaneOutput(
+      return settleAfter(
+        async () => {
+          return recoverWith(
+            async () => {
+              const snapshot = await readCollaborationOutput(
+                observedTask,
+                () => loadAgents(observedTask.sessionId),
+                async (agent) => {
+                  const signature = await readPaneOutput(
                     observedTask.sessionId,
                     observedTask.paneId,
                     'text',
                     80,
-                    'recent-unwrapped'
-                  )
-                : signature;
-            return { text, signature };
-          },
-          assertConnection
-        );
-        if (cancelled || AppState.currentState !== 'active') return;
-        if (!snapshot) throw new Error(t`Agent no longer present`);
-        if (!initialized) {
-          displayed = snapshot.signature;
-          initialized = true;
-          setOutput(compactCollaborationOutput(snapshot.text));
+                    'visible'
+                  );
+                  assertConnection();
+                  const text =
+                    !initialized && canAssignToAgent(agent.status ?? 'unknown')
+                      ? await readPaneOutput(
+                          observedTask.sessionId,
+                          observedTask.paneId,
+                          'text',
+                          80,
+                          'recent-unwrapped'
+                        )
+                      : signature;
+                  return { text, signature };
+                },
+                assertConnection
+              );
+              if (cancelled || AppState.currentState !== 'active') return;
+              if (!snapshot) rethrow(new Error(t`Agent no longer present`));
+              if (!initialized) {
+                displayed = snapshot.signature;
+                initialized = true;
+                setOutput(compactCollaborationOutput(snapshot.text));
+              }
+              setHasNewOutput(snapshot.signature !== displayed);
+              setOutputError(null);
+            },
+            (failure) => {
+              if (!cancelled)
+                setOutputError(
+                  describeGatewayFailure(failure, t`Could not read the terminal.`).message
+                );
+            }
+          );
+        },
+        () => {
+          running = false;
+          if (!cancelled) {
+            setOutputLoading(false);
+            timer = setTimeout(() => void poll(), 6000);
+          }
         }
-        setHasNewOutput(snapshot.signature !== displayed);
-        setOutputError(null);
-      } catch (failure) {
-        if (!cancelled)
-          setOutputError(describeGatewayFailure(failure, t`Could not read the terminal.`).message);
-      } finally {
-        running = false;
-        if (!cancelled) {
-          setOutputLoading(false);
-          timer = setTimeout(() => void poll(), 6000);
-        }
-      }
+      );
     }
     void poll();
     const subscription = AppState.addEventListener('change', (state) => {

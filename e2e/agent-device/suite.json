@@ -202,6 +202,21 @@
     }
   ],
   "programs": {
+    "subflows/open-editor-composer": [
+      {
+        "run": "subflows/open-editor-composer.ad#open"
+      },
+      {
+        "when": {
+          "target": { "id": "terminal-composer-input" },
+          "absent": true
+        },
+        "steps": [{ "run": "subflows/open-editor-composer.ad#write-line" }]
+      },
+      {
+        "run": "subflows/open-editor-composer.ad#ready"
+      }
+    ],
     "flows/theme-document": [
       {
         "include": "subflows/open-demo"
@@ -231,7 +246,48 @@
         "include": "subflows/open-demo"
       },
       {
-        "run": "flows/custom-themes.ad#install"
+        "when": {
+          "env": "DEVICE_KIND",
+          "equals": "ipad"
+        },
+        "steps": [
+          {
+            "run": "flows/custom-themes.ad#install-ipad"
+          }
+        ]
+      },
+      {
+        "when": {
+          "env": "DEVICE_KIND",
+          "equals": "iphone"
+        },
+        "steps": [
+          {
+            "run": "flows/custom-themes.ad#install"
+          }
+        ]
+      },
+      {
+        "when": {
+          "env": "DEVICE_KIND",
+          "equals": "android-phone"
+        },
+        "steps": [
+          {
+            "run": "flows/custom-themes.ad#install"
+          }
+        ]
+      },
+      {
+        "when": {
+          "env": "DEVICE_KIND",
+          "equals": "android-tablet"
+        },
+        "steps": [
+          {
+            "run": "flows/custom-themes.ad#install"
+          }
+        ]
       },
       {
         "target": {
@@ -285,7 +341,51 @@
         "run": "flows/custom-themes.ad#press"
       },
       {
-        "run": "flows/custom-themes.ad#browse-offline"
+        "target": {
+          "text": "Acacia Afterglow|Could not reach the theme catalogue"
+        },
+        "mode": "visible",
+        "timeout": 20000,
+        "run": "flows/custom-themes.ad#visible"
+      },
+      {
+        "when": {
+          "target": {
+            "text": "Acacia Afterglow"
+          }
+        },
+        "steps": [
+          {
+            "run": "flows/custom-themes.ad#browse-offline"
+          }
+        ]
+      },
+      {
+        "when": {
+          "target": {
+            "text": "Could not reach the theme catalogue"
+          }
+        },
+        "steps": [
+          {
+            "run": "flows/custom-themes.ad#browse-network-offline"
+          }
+        ]
+      },
+      {
+        "when": { "env": "DEVICE_KIND", "equals": "iphone" },
+        "steps": [{ "run": "flows/custom-themes.ad#browse-close-iphone" }]
+      },
+      {
+        "when": { "env": "DEVICE_KIND", "equals": "ipad" },
+        "steps": [{ "run": "flows/custom-themes.ad#browse-close-ipad" }]
+      },
+      {
+        "when": { "env": "PLATFORM", "equals": "android" },
+        "steps": [{ "run": "flows/custom-themes.ad#browse-close-android" }]
+      },
+      {
+        "run": "flows/custom-themes.ad#browse-closed"
       },
       {
         "run": "flows/custom-themes.ad#settle"
@@ -361,23 +461,123 @@
       },
       {
         "target": {
-          "text": "Remove unused themes, 0 themes · 0 B"
+          "text": "Remove unused themes, \\d+ themes? · .*"
         },
         "mode": "visible",
         "timeout": 20000,
         "run": "flows/custom-themes.ad#storage-visible"
       },
       {
-        "target": {
-          "id": "settings-theme-row"
+        "when": {
+          "env": "DEVICE_KIND",
+          "equals": "android-phone"
         },
-        "mode": "scroll",
-        "direction": "up",
-        "timeout": 20000,
-        "run": "flows/custom-themes.ad#settings-scroll-up"
+        "steps": [
+          {
+            "target": {
+              "id": "settings-theme-row"
+            },
+            "mode": "scroll",
+            "direction": "up",
+            "timeout": 45000,
+            "run": "flows/custom-themes.ad#settings-scroll-up-android"
+          }
+        ]
       },
       {
-        "run": "flows/custom-themes.ad#theme-row-clear-header"
+        "when": {
+          "env": "DEVICE_KIND",
+          "equals": "android-tablet"
+        },
+        "steps": [
+          {
+            "target": {
+              "id": "settings-theme-row"
+            },
+            "mode": "scroll",
+            "direction": "up",
+            "timeout": 45000,
+            "run": "flows/custom-themes.ad#settings-scroll-up-android-tablet"
+          }
+        ]
+      },
+      {
+        "when": {
+          "env": "DEVICE_KIND",
+          "equals": "iphone"
+        },
+        "steps": [
+          {
+            "target": {
+              "id": "settings-theme-row"
+            },
+            "mode": "scroll",
+            "direction": "up",
+            "timeout": 45000,
+            "run": "flows/custom-themes.ad#settings-scroll-up"
+          }
+        ]
+      },
+      {
+        "when": {
+          "env": "DEVICE_KIND",
+          "equals": "ipad"
+        },
+        "steps": [
+          {
+            "target": {
+              "id": "settings-theme-row"
+            },
+            "mode": "scroll",
+            "direction": "up",
+            "timeout": 45000,
+            "run": "flows/custom-themes.ad#settings-scroll-up"
+          }
+        ]
+      },
+      {
+        "when": {
+          "env": "DEVICE_KIND",
+          "equals": "android-phone"
+        },
+        "steps": [
+          {
+            "run": "flows/custom-themes.ad#theme-row-clear-header-android"
+          }
+        ]
+      },
+      {
+        "when": {
+          "env": "DEVICE_KIND",
+          "equals": "android-tablet"
+        },
+        "steps": [
+          {
+            "run": "flows/custom-themes.ad#theme-row-clear-header-android-tablet"
+          }
+        ]
+      },
+      {
+        "when": {
+          "env": "DEVICE_KIND",
+          "equals": "iphone"
+        },
+        "steps": [
+          {
+            "run": "flows/custom-themes.ad#theme-row-clear-header"
+          }
+        ]
+      },
+      {
+        "when": {
+          "env": "DEVICE_KIND",
+          "equals": "ipad"
+        },
+        "steps": [
+          {
+            "run": "flows/custom-themes.ad#theme-row-clear-header"
+          }
+        ]
       },
       {
         "target": {
@@ -431,7 +631,7 @@
       },
       {
         "target": {
-          "text": "Remove unused themes, 1 theme · .*"
+          "text": "Remove unused themes, [1-9]\\d* themes? · .*"
         },
         "mode": "visible",
         "timeout": 20000,
@@ -481,13 +681,72 @@
         "run": "flows/custom-themes.ad#storage-visible"
       },
       {
-        "target": {
-          "text": "Theme, Osuki"
+        "when": {
+          "env": "DEVICE_KIND",
+          "equals": "android-phone"
         },
-        "mode": "scroll",
-        "direction": "up",
-        "timeout": 20000,
-        "run": "flows/custom-themes.ad#settings-scroll-up"
+        "steps": [
+          {
+            "target": {
+              "text": "Theme, Osuki"
+            },
+            "mode": "scroll",
+            "direction": "up",
+            "timeout": 45000,
+            "run": "flows/custom-themes.ad#settings-scroll-up-android"
+          }
+        ]
+      },
+      {
+        "when": {
+          "env": "DEVICE_KIND",
+          "equals": "android-tablet"
+        },
+        "steps": [
+          {
+            "target": {
+              "text": "Theme, Osuki"
+            },
+            "mode": "scroll",
+            "direction": "up",
+            "timeout": 45000,
+            "run": "flows/custom-themes.ad#settings-scroll-up-android-tablet"
+          }
+        ]
+      },
+      {
+        "when": {
+          "env": "DEVICE_KIND",
+          "equals": "iphone"
+        },
+        "steps": [
+          {
+            "target": {
+              "text": "Theme, Osuki"
+            },
+            "mode": "scroll",
+            "direction": "up",
+            "timeout": 45000,
+            "run": "flows/custom-themes.ad#settings-scroll-up"
+          }
+        ]
+      },
+      {
+        "when": {
+          "env": "DEVICE_KIND",
+          "equals": "ipad"
+        },
+        "steps": [
+          {
+            "target": {
+              "text": "Theme, Osuki"
+            },
+            "mode": "scroll",
+            "direction": "up",
+            "timeout": 45000,
+            "run": "flows/custom-themes.ad#settings-scroll-up"
+          }
+        ]
       }
     ],
     "flows/agent-collaboration": [
@@ -641,7 +900,7 @@
       },
       {
         "target": {
-          "text": "function render80\\(state, props\\) \\{"
+          "text": "function render40\\(state, props\\) \\{"
         },
         "mode": "scroll",
         "direction": "down",
@@ -650,7 +909,7 @@
       },
       {
         "target": {
-          "text": "function render80\\(state, props\\) \\{"
+          "text": "function render40\\(state, props\\) \\{"
         },
         "mode": "visible",
         "run": "flows/large-file-preview.ad#visible"
@@ -1314,13 +1573,72 @@
         "run": "flows/git-diff.ad#s11"
       },
       {
-        "target": {
-          "text": "Show more"
+        "when": {
+          "env": "DEVICE_KIND",
+          "equals": "ipad"
         },
-        "mode": "scroll",
-        "direction": "down",
-        "timeout": 30000,
-        "run": "flows/git-diff.ad#s12"
+        "steps": [
+          {
+            "target": {
+              "text": "Show more"
+            },
+            "mode": "scroll",
+            "direction": "down",
+            "timeout": 60000,
+            "run": "flows/git-diff.ad#s12-ipad"
+          }
+        ]
+      },
+      {
+        "when": {
+          "env": "DEVICE_KIND",
+          "equals": "iphone"
+        },
+        "steps": [
+          {
+            "target": {
+              "text": "Show more"
+            },
+            "mode": "scroll",
+            "direction": "down",
+            "timeout": 60000,
+            "run": "flows/git-diff.ad#s12"
+          }
+        ]
+      },
+      {
+        "when": {
+          "env": "DEVICE_KIND",
+          "equals": "android-phone"
+        },
+        "steps": [
+          {
+            "target": {
+              "text": "Show more"
+            },
+            "mode": "scroll",
+            "direction": "down",
+            "timeout": 60000,
+            "run": "flows/git-diff.ad#s12"
+          }
+        ]
+      },
+      {
+        "when": {
+          "env": "DEVICE_KIND",
+          "equals": "android-tablet"
+        },
+        "steps": [
+          {
+            "target": {
+              "text": "Show more"
+            },
+            "mode": "scroll",
+            "direction": "down",
+            "timeout": 60000,
+            "run": "flows/git-diff.ad#s12"
+          }
+        ]
       },
       {
         "target": {
@@ -1923,11 +2241,11 @@
       },
       {
         "target": {
-          "text": "Terminal key row"
+          "id": "toggle-Terminal key row"
         },
         "mode": "scroll",
         "direction": "down",
-        "timeout": 20000,
+        "timeout": 60000,
         "run": "flows/demo-tour.ad#s38"
       },
       {
@@ -1948,6 +2266,9 @@
         "run": "flows/demo-tour.ad#s41"
       },
       {
+        "run": "flows/demo-tour.ad#settle-home"
+      },
+      {
         "when": {
           "target": {
             "text": "Try the demo"
@@ -1966,19 +2287,19 @@
       },
       {
         "target": {
-          "text": "Claude Code"
-        },
-        "mode": "visible",
-        "timeout": 15000,
-        "run": "flows/demo-tour.ad#s43"
-      },
-      {
-        "target": {
           "id": "server-agent-pane-1"
         },
         "mode": "press",
         "optional": true,
         "run": "flows/demo-tour.ad#s29"
+      },
+      {
+        "target": {
+          "text": "Claude Code"
+        },
+        "mode": "visible",
+        "timeout": 15000,
+        "run": "flows/demo-tour.ad#s43"
       },
       {
         "run": "flows/demo-tour.ad#s44"
@@ -2202,7 +2523,7 @@
         "run": "flows/file-mentions.ad#s28"
       },
       {
-        "run": "subflows/open-editor-composer.ad"
+        "include": "subflows/open-editor-composer"
       },
       {
         "target": {
@@ -2354,9 +2675,6 @@
       },
       {
         "include": "subflows/dismiss-permission"
-      },
-      {
-        "include": "subflows/dismiss-logbox"
       },
       {
         "target": {
@@ -3300,7 +3618,7 @@
         "run": "flows/pad-workspace.ad#s12"
       },
       {
-        "run": "subflows/open-editor-composer.ad"
+        "include": "subflows/open-editor-composer"
       },
       {
         "target": {
@@ -3415,6 +3733,15 @@
         "target": {
           "text": "Enter URL manually"
         },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 20000,
+        "run": "flows/pairing-manual.ad#scroll-controls"
+      },
+      {
+        "target": {
+          "text": "Enter URL manually"
+        },
         "mode": "press",
         "run": "flows/pairing-manual.ad#s5"
       },
@@ -3441,7 +3768,16 @@
       },
       {
         "target": {
-          "text": "Scan a gateway QR"
+          "id": "pairing-manual-toggle"
+        },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 20000,
+        "run": "flows/pairing-manual.ad#scroll-controls"
+      },
+      {
+        "target": {
+          "id": "pairing-manual-toggle"
         },
         "mode": "press",
         "run": "flows/pairing-manual.ad#s9"
@@ -3464,6 +3800,15 @@
         "target": {
           "text": "Enter URL manually"
         },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 20000,
+        "run": "flows/pairing-manual.ad#scroll-controls"
+      },
+      {
+        "target": {
+          "text": "Enter URL manually"
+        },
         "mode": "press",
         "run": "flows/pairing-manual.ad#s12"
       },
@@ -3476,7 +3821,16 @@
       },
       {
         "target": {
-          "text": "Scan a gateway QR"
+          "id": "pairing-manual-toggle"
+        },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 20000,
+        "run": "flows/pairing-manual.ad#scroll-controls"
+      },
+      {
+        "target": {
+          "id": "pairing-manual-toggle"
         },
         "mode": "press",
         "run": "flows/pairing-manual.ad#s14"
@@ -3485,8 +3839,10 @@
         "target": {
           "id": "pairing-install-command"
         },
-        "mode": "visible",
-        "run": "flows/pairing-manual.ad#s15"
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 30000,
+        "run": "flows/pairing-manual.ad#scroll-controls"
       },
       {
         "target": {
@@ -3697,6 +4053,9 @@
         "run": "flows/settings.ad#s17"
       },
       {
+        "include": "subflows/dismiss-logbox"
+      },
+      {
         "target": {
           "id": "settings-selection:(on|off):segment-dark"
         },
@@ -3750,7 +4109,7 @@
         },
         "mode": "scroll",
         "direction": "down",
-        "timeout": 20000,
+        "timeout": 45000,
         "run": "flows/settings.ad#s26"
       },
       {
@@ -3858,7 +4217,7 @@
       },
       {
         "target": {
-          "id": "language-option-system-selected"
+          "id": "settings-selection:on:language-option-system"
         },
         "mode": "visible",
         "timeout": 8000,
@@ -3866,7 +4225,7 @@
       },
       {
         "target": {
-          "id": "language-option-system-selected"
+          "id": "settings-selection:on:language-option-system"
         },
         "mode": "visible",
         "run": "flows/settings.ad#s43"
@@ -3924,13 +4283,72 @@
         "run": "flows/settings.ad#s49"
       },
       {
-        "target": {
-          "id": "settings-selection:(on|off):segment-compact"
+        "when": {
+          "env": "DEVICE_KIND",
+          "equals": "android-tablet"
         },
-        "mode": "scroll",
-        "direction": "down",
-        "timeout": 20000,
-        "run": "flows/settings.ad#s50"
+        "steps": [
+          {
+            "target": {
+              "id": "settings-selection:(on|off):segment-compact"
+            },
+            "mode": "scroll",
+            "direction": "down",
+            "timeout": 20000,
+            "run": "flows/settings.ad#s50-android-tablet"
+          }
+        ]
+      },
+      {
+        "when": {
+          "env": "DEVICE_KIND",
+          "equals": "android-phone"
+        },
+        "steps": [
+          {
+            "target": {
+              "id": "settings-selection:(on|off):segment-compact"
+            },
+            "mode": "scroll",
+            "direction": "down",
+            "timeout": 45000,
+            "run": "flows/settings.ad#s50-android-phone"
+          }
+        ]
+      },
+      {
+        "when": {
+          "env": "DEVICE_KIND",
+          "equals": "iphone"
+        },
+        "steps": [
+          {
+            "target": {
+              "id": "settings-selection:(on|off):segment-compact"
+            },
+            "mode": "scroll",
+            "direction": "down",
+            "timeout": 20000,
+            "run": "flows/settings.ad#s50"
+          }
+        ]
+      },
+      {
+        "when": {
+          "env": "DEVICE_KIND",
+          "equals": "ipad"
+        },
+        "steps": [
+          {
+            "target": {
+              "id": "settings-selection:(on|off):segment-compact"
+            },
+            "mode": "scroll",
+            "direction": "down",
+            "timeout": 20000,
+            "run": "flows/settings.ad#s50"
+          }
+        ]
       },
       {
         "target": {
@@ -4231,6 +4649,19 @@
         "run": "flows/settings.ad#s75"
       },
       {
+        "when": {
+          "target": { "text": "SERVERS" },
+          "absent": true
+        },
+        "steps": [
+          {
+            "target": { "text": "Settings" },
+            "mode": "press",
+            "run": "flows/settings.ad#s75"
+          }
+        ]
+      },
+      {
         "target": {
           "text": "SERVERS"
         },
@@ -4316,13 +4747,72 @@
         "run": "flows/settings.ad#s83"
       },
       {
-        "target": {
-          "id": "settings-selection:(on|off):segment-compact"
+        "when": {
+          "env": "DEVICE_KIND",
+          "equals": "android-tablet"
         },
-        "mode": "scroll",
-        "direction": "down",
-        "timeout": 20000,
-        "run": "flows/settings.ad#s84"
+        "steps": [
+          {
+            "target": {
+              "id": "settings-selection:(on|off):segment-compact"
+            },
+            "mode": "scroll",
+            "direction": "down",
+            "timeout": 20000,
+            "run": "flows/settings.ad#s50-android-tablet"
+          }
+        ]
+      },
+      {
+        "when": {
+          "env": "DEVICE_KIND",
+          "equals": "android-phone"
+        },
+        "steps": [
+          {
+            "target": {
+              "id": "settings-selection:(on|off):segment-compact"
+            },
+            "mode": "scroll",
+            "direction": "down",
+            "timeout": 45000,
+            "run": "flows/settings.ad#s50-android-phone"
+          }
+        ]
+      },
+      {
+        "when": {
+          "env": "DEVICE_KIND",
+          "equals": "iphone"
+        },
+        "steps": [
+          {
+            "target": {
+              "id": "settings-selection:(on|off):segment-compact"
+            },
+            "mode": "scroll",
+            "direction": "down",
+            "timeout": 20000,
+            "run": "flows/settings.ad#s84"
+          }
+        ]
+      },
+      {
+        "when": {
+          "env": "DEVICE_KIND",
+          "equals": "ipad"
+        },
+        "steps": [
+          {
+            "target": {
+              "id": "settings-selection:(on|off):segment-compact"
+            },
+            "mode": "scroll",
+            "direction": "down",
+            "timeout": 20000,
+            "run": "flows/settings.ad#s84"
+          }
+        ]
       },
       {
         "target": {
@@ -4352,22 +4842,78 @@
         "run": "flows/settings.ad#quick-actions-bottom"
       },
       {
-        "target": {
-          "text": "Quick actions, Add commands and custom key combinations"
-        },
-        "mode": "scroll",
-        "direction": "up",
-        "timeout": 20000,
-        "run": "flows/settings.ad#quick-actions-seek"
-      },
-      {
         "when": {
           "env": "PLATFORM",
           "equals": "ios"
         },
         "steps": [
           {
+            "target": {
+              "text": "Quick actions, Add commands and custom key combinations"
+            },
+            "mode": "scroll",
+            "direction": "up",
+            "timeout": 45000,
+            "run": "flows/settings.ad#quick-actions-seek"
+          }
+        ]
+      },
+      {
+        "when": {
+          "env": "DEVICE_KIND",
+          "equals": "android-phone"
+        },
+        "steps": [
+          {
+            "target": {
+              "text": "Quick actions, Add commands and custom key combinations"
+            },
+            "mode": "scroll",
+            "direction": "up",
+            "timeout": 20000,
+            "run": "flows/settings.ad#quick-actions-seek-android-phone"
+          }
+        ]
+      },
+      {
+        "when": {
+          "env": "DEVICE_KIND",
+          "equals": "android-tablet"
+        },
+        "steps": [
+          {
+            "target": {
+              "text": "Quick actions, Add commands and custom key combinations"
+            },
+            "mode": "scroll",
+            "direction": "up",
+            "timeout": 20000,
+            "run": "flows/settings.ad#quick-actions-seek-android-tablet"
+          }
+        ]
+      },
+      {
+        "when": {
+          "env": "DEVICE_KIND",
+          "equals": "iphone"
+        },
+        "steps": [
+          {
             "run": "flows/settings.ad#s89"
+          },
+          {
+            "run": "flows/settings.ad#clear-native-header"
+          }
+        ]
+      },
+      {
+        "when": {
+          "env": "DEVICE_KIND",
+          "equals": "ipad"
+        },
+        "steps": [
+          {
+            "run": "flows/settings.ad#s89-ipad"
           },
           {
             "run": "flows/settings.ad#clear-native-header"
@@ -4435,59 +4981,85 @@
       }
     ],
     "flows/settings-font": [
-      { "include": "subflows/launch-home" },
       {
-        "target": { "text": "Settings" },
+        "include": "subflows/launch-home"
+      },
+      {
+        "target": {
+          "text": "Settings"
+        },
         "mode": "press",
         "run": "flows/settings-font.ad#open-settings"
       },
       {
-        "target": { "text": "SERVERS" },
+        "target": {
+          "text": "SERVERS"
+        },
         "mode": "visible",
         "timeout": 8000,
         "run": "flows/settings-font.ad#settings-arrived"
       },
-      { "include": "subflows/dismiss-logbox" },
       {
-        "target": { "text": "Font, .+" },
+        "include": "subflows/dismiss-logbox"
+      },
+      {
+        "target": {
+          "text": "Font, .+"
+        },
         "mode": "scroll",
         "direction": "down",
         "timeout": 20000,
-        "run": "flows/settings-font.ad#open-settings"
+        "run": "flows/settings-font.ad#scroll-font"
       },
       {
-        "target": { "text": "Font, .+" },
+        "target": {
+          "text": "Font, .+"
+        },
         "mode": "press",
         "run": "flows/settings-font.ad#open-font"
       },
-      { "run": "flows/settings-font.ad#sheet-arrived" },
       {
-        "target": { "text": "Interface" },
+        "run": "flows/settings-font.ad#sheet-arrived"
+      },
+      {
+        "target": {
+          "text": "Interface"
+        },
         "mode": "visible",
         "timeout": 8000,
         "run": "flows/settings-font.ad#group-visible"
       },
       {
-        "target": { "text": "Monospace" },
+        "target": {
+          "text": "Monospace"
+        },
         "mode": "visible",
         "timeout": 8000,
         "run": "flows/settings-font.ad#group-visible"
       },
       {
-        "target": { "text": "Use system font" },
+        "target": {
+          "text": "Use system font"
+        },
         "mode": "visible",
         "timeout": 8000,
         "run": "flows/settings-font.ad#row-visible"
       },
       {
-        "target": { "text": "Paste a URL\u2026" },
+        "target": {
+          "text": "Paste a URL…"
+        },
         "mode": "visible",
         "timeout": 8000,
         "run": "flows/settings-font.ad#row-visible"
       },
-      { "run": "flows/settings-font.ad#leave" },
       {
-        "target": { "text": "SERVERS" },
+        "run": "flows/settings-font.ad#leave"
+      },
+      {
+        "target": {
+          "text": "Font, .+"
+        },
         "mode": "visible",
         "timeout": 8000,
         "run": "flows/settings-font.ad#back-on-settings"
@@ -4502,7 +5074,7 @@
       },
       {
         "target": {
-          "text": "(?i)skip intro"
+          "id": "launch-intro-skip"
         },
         "mode": "press",
         "optional": true,
@@ -4680,33 +5252,21 @@
         "run": "flows/settings-home-layout.ad#editorial-home"
       },
       {
-        "target": {
-          "id": "home-open-opencode"
-        },
+        "target": { "id": "home-pair-server" },
         "mode": "visible",
         "timeout": 8000,
-        "run": "flows/settings-home-layout.ad#rail-visible"
+        "run": "flows/settings-home-layout.ad#empty-pair-visible"
       },
       {
-        "point": [0.8, 0.28],
-        "delta": [-0.55, 0],
-        "run": "flows/settings-home-layout.ad#rail-swipe"
-      },
-      {
-        "target": {
-          "id": "home-open-terminal"
-        },
+        "target": { "text": "Try the demo" },
         "mode": "visible",
         "timeout": 8000,
-        "run": "flows/settings-home-layout.ad#rail-end-visible"
+        "run": "flows/settings-home-layout.ad#empty-demo-visible"
       },
       {
-        "target": {
-          "id": "home-open-ssh"
-        },
-        "mode": "visible",
-        "timeout": 8000,
-        "run": "flows/settings-home-layout.ad#rail-end-visible"
+        "target": { "id": "home-launch-actions" },
+        "mode": "hidden",
+        "run": "flows/settings-home-layout.ad#empty-launches-hidden"
       },
       {
         "run": "flows/settings-home-layout.ad#relaunch-editorial"
@@ -5331,6 +5891,9 @@
         "run": "flows/ssh.ad#s11"
       },
       {
+        "include": "subflows/dismiss-logbox"
+      },
+      {
         "target": {
           "text": "Send Enter"
         },
@@ -5897,7 +6460,7 @@
         },
         "mode": "scroll",
         "direction": "down",
-        "timeout": 20000,
+        "timeout": 45000,
         "run": "flows/terminal-interactions.ad#s36"
       },
       {
@@ -5906,7 +6469,7 @@
         },
         "mode": "scroll",
         "direction": "down",
-        "timeout": 20000,
+        "timeout": 45000,
         "run": "flows/terminal-interactions.ad#s37"
       },
       {
@@ -6913,14 +7476,6 @@
       },
       {
         "target": {
-          "text": "(?i)skip intro"
-        },
-        "mode": "press",
-        "optional": true,
-        "run": "subflows/launch-home.ad#s9"
-      },
-      {
-        "target": {
           "text": "Got it"
         },
         "mode": "press",
@@ -6962,15 +7517,23 @@
         ]
       },
       {
-        "include": "subflows/dismiss-logbox"
-      },
-      {
         "target": {
           "text": "Try the demo"
         },
         "mode": "visible",
         "timeout": 60000,
         "run": "subflows/launch-home.ad#s12"
+      },
+      {
+        "include": "subflows/dismiss-logbox"
+      },
+      {
+        "target": {
+          "id": "launch-intro-skip"
+        },
+        "mode": "press",
+        "optional": true,
+        "run": "subflows/launch-home.ad#s9"
       }
     ],
     "subflows/motion-618-close-capture": [
@@ -7355,11 +7918,11 @@
       },
       {
         "target": {
-          "text": "Terminal key row"
+          "id": "toggle-Terminal key row"
         },
         "mode": "scroll",
         "direction": "down",
-        "timeout": 20000,
+        "timeout": 60000,
         "run": "subflows/restore-key-row.ad#scroll"
       },
       {
@@ -7398,6 +7961,9 @@
         },
         "mode": "press",
         "run": "flows/agent-shortcuts.ad#pre-edit"
+      },
+      {
+        "run": "flows/agent-shortcuts.ad#pre-scroll"
       },
       {
         "when": {
@@ -7446,6 +8012,12 @@
       }
     ],
     "flows/soft-keyboard": [
+      {
+        "include": "subflows/launch-home"
+      },
+      {
+        "include": "subflows/restore-key-row"
+      },
       {
         "include": "subflows/open-demo"
       },
@@ -7507,6 +8079,16 @@
         "mode": "visible",
         "timeout": 10000,
         "run": "flows/agent-session-tree.ad#detail-output"
+      },
+      {
+        "target": { "id": "agent-subagent-detail-model" },
+        "mode": "visible",
+        "run": "flows/agent-session-tree.ad#detail-model"
+      },
+      {
+        "target": { "id": "agent-subagent-detail-tokens" },
+        "mode": "visible",
+        "run": "flows/agent-session-tree.ad#detail-tokens"
       },
       {
         "run": "flows/agent-session-tree.ad#close-detail"
@@ -7576,9 +8158,6 @@
         "run": "flows/thai-language.ad#scroll"
       },
       {
-        "run": "flows/thai-language.ad#bottom"
-      },
-      {
         "include": "subflows/dismiss-logbox"
       },
       {
@@ -7598,14 +8177,24 @@
         "run": "flows/thai-language.ad#relaunch"
       },
       {
-        "include": "subflows/dismiss-logbox"
-      },
-      {
         "target": {
           "text": "การตั้งค่า"
         },
         "mode": "press",
         "run": "flows/thai-language.ad#press"
+      },
+      {
+        "when": {
+          "target": { "id": "settings-home-layout-row" },
+          "absent": true
+        },
+        "steps": [
+          {
+            "target": { "text": "การตั้งค่า" },
+            "mode": "press",
+            "run": "flows/thai-language.ad#press"
+          }
+        ]
       },
       {
         "target": {
@@ -7628,9 +8217,6 @@
         },
         "mode": "press",
         "run": "flows/thai-language.ad#press"
-      },
-      {
-        "run": "flows/thai-language.ad#bottom"
       },
       {
         "target": {
