@@ -152,13 +152,13 @@ export function InAppNotificationHost() {
   );
 
   const dragStyle = useAnimatedStyle(() => ({
-    opacity: dragOpacity.value,
-    transform: [{ translateX: dragX.value }, { translateY: dragY.value }],
+    opacity: dragOpacity.get(),
+    transform: [{ translateX: dragX.get() }, { translateY: dragY.get() }],
   }));
 
   const backSizeStyle = useAnimatedStyle(() => ({
-    height: plateHeight.value + 8,
-    opacity: plateHeight.value > 0 ? 1 : 0,
+    height: plateHeight.get() + 8,
+    opacity: plateHeight.get() > 0 ? 1 : 0,
   }));
 
   if (!visible || !notice) return null;
@@ -196,13 +196,13 @@ export function InAppNotificationHost() {
     .activeOffsetY(-DRAG_SLOP)
     .failOffsetY(DRAG_SLOP)
     .onUpdate((event) => {
-      if (dismissing.value) return;
+      if (dismissing.get()) return;
       const offset = noticeDragOffset(event);
       dragX.set(offset.x);
       dragY.set(offset.y);
     })
     .onEnd((event) => {
-      if (dismissing.value) return;
+      if (dismissing.get()) return;
       const end = noticeSwipeEnd(event);
       if (!end.dismissed) {
         // Under the threshold the plate goes back where it was, carrying the

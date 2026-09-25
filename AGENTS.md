@@ -208,6 +208,17 @@ The usual fixes keep behaviour identical:
   `.get()`. The two are not identical: `.set(fn)` treats a plain function as an
   updater and stores `fn(current)`. For a shared value that holds a function,
   write `.set(() => fn)`.
+- **A shared value read with `.value` inside a callback, worklet or gesture:**
+  use `.get()`. The compiler keys the surrounding memo on `x.value`, so every
+  render reads the shared value and the memo is rebuilt whenever it moves.
+  Only a read that runs later can change this way. A read during render (in
+  the component body or a `useMemo` body) must stay as it is: as `x.get()` the
+  compiler would key it on the stable `x` and keep serving the first value.
+- **A `Gesture.*()` builder:** build it in `useMemo`. A new gesture object on
+  every render makes gesture-handler re-send every worklet handler to the UI
+  thread. Set relations such as `requireExternalGestureToFail` inside the
+  same memo, never on a memoized gesture afterwards, which would append them
+  again on every render.
 - **`try`/`finally`, a `try` without `catch`, a `throw` inside `try`, or
   `?:`/`&&`/`?.` inside a `try` block:** call through
   `@/lib/compiler-safe-control-flow` (`settleAfter`, `recoverWith`, `rethrow`),

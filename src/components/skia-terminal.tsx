@@ -40,7 +40,12 @@ import {
   Text,
   View,
 } from 'react-native';
-import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import {
+  Gesture,
+  GestureDetector,
+  type GestureStateChangeEvent,
+  type TapGestureHandlerEventPayload,
+} from 'react-native-gesture-handler';
 import {
   default as Animated,
   cancelAnimation,
@@ -59,7 +64,12 @@ import { scheduleOnRN } from 'react-native-worklets';
 import { PressableScale } from '@/components/pressable-scale';
 import { useCoalescedValue } from '@/hooks/use-coalesced-value';
 import { useFreezeGate, useFrozenValue } from '@/hooks/use-frozen-value';
-import { useLatestReader, useLatestRef, useResetSignal } from '@/hooks/use-render-refs';
+import {
+  useLatestReader,
+  useLatestRef,
+  useResetSignal,
+  useStableHandler,
+} from '@/hooks/use-render-refs';
 import { followsOutputOnScreenRelease, latestPillVisible } from '@/lib/dock-presentation';
 import { feedback } from '@/lib/feedback';
 import { fadeOut, timing, zoomIn, zoomOut } from '@/lib/motion';
@@ -1082,14 +1092,14 @@ export function SkiaTerminal({
       // The finger may already have moved a cell or two in the tick this took
       // to arrive. Widening to the word must not haul the far end back to where
       // the press started, so the focus is only taken while it is untouched.
-      if (focusRow.value === cell.row && focusColumn.value === cell.column) {
+      if (focusRow.get() === cell.row && focusColumn.get() === cell.column) {
         focusRow.set(word.focus.row);
         focusColumn.set(word.focus.column);
         setSelection(word);
       } else {
         setSelection({
           anchor: word.anchor,
-          focus: { row: focusRow.value, column: focusColumn.value },
+          focus: { row: focusRow.get(), column: focusColumn.get() },
         });
       }
       setSelectionDragging(true);
@@ -1148,11 +1158,11 @@ export function SkiaTerminal({
    */
   const moveSelectionRows = useCallback(
     (droppedRows: number, rows: number) => {
-      if (!selecting.value || droppedRows === 0) return;
+      if (!selecting.get() || droppedRows === 0) return;
       const moved = shiftSelectionRows(
         {
-          anchor: { row: anchorRow.value, column: anchorColumn.value },
-          focus: { row: focusRow.value, column: focusColumn.value },
+          anchor: { row: anchorRow.get(), column: anchorColumn.get() },
+          focus: { row: focusRow.get(), column: focusColumn.get() },
         },
         droppedRows,
         rows
@@ -1196,12 +1206,12 @@ export function SkiaTerminal({
   const animatedVisibleHeight = useDerivedValue(() =>
     Math.max(
       1,
-      unobstructedHeight - animatedBottomInset.value - Math.max(0, -activeKeyboardOffset.value)
+      unobstructedHeight - animatedBottomInset.get() - Math.max(0, -activeKeyboardOffset.get())
     )
   );
   // The pill sits against the dock, so it travels with it.
   const latestButtonStyle = useAnimatedStyle(() => ({
-    bottom: 14 + animatedBottomInset.value,
+    bottom: 14 + animatedBottomInset.get(),
   }));
 
   useEffect(() => {
@@ -1374,7 +1384,7 @@ export function SkiaTerminal({
     if (screenFocused) return;
     if (viewport.width <= 0) return;
     savePaneScales(
-      terminalScaleOnScreenLeave(terminalId, scale.value, loadPaneScales(), paneRestingScale)
+      terminalScaleOnScreenLeave(terminalId, scale.get(), loadPaneScales(), paneRestingScale)
     );
     translateX.set(0);
   }, [paneRestingScale, scale, screenFocused, terminalId, translateX, viewport.width]);
@@ -1411,7 +1421,7 @@ export function SkiaTerminal({
         terminalScaleOnScreenLeave(
           // oxlint-disable-next-line react/exhaustive-deps -- deliberate: same as above.
           unmountTerminalIdRef.current,
-          scale.value,
+          scale.get(),
           loadPaneScales(),
           // oxlint-disable-next-line react/exhaustive-deps -- deliberate: same as above.
           unmountRestingScaleRef.current
@@ -1426,8 +1436,8 @@ export function SkiaTerminal({
   useEffect(() => {
     contentWidthRef.current = contentWidth;
     if (viewport.width <= 0) return;
-    const minX = terminalPanMinX(viewport.width, textWidth, scale.value);
-    translateX.set(Math.max(minX, Math.min(0, translateX.value)));
+    const minX = terminalPanMinX(viewport.width, textWidth, scale.get());
+    translateX.set(Math.max(minX, Math.min(0, translateX.get())));
   }, [contentWidth, scale, textWidth, translateX, viewport.width]);
 
   // Everything that has to happen when a frame is *applied* -- which, with the
@@ -1444,7 +1454,7 @@ export function SkiaTerminal({
       historyAnchorRef.current = { terminalId, revision: coalescedRevision, anchor };
       return;
     }
-    const minimumY = animatedVisibleHeight.value - contentHeight * scale.value;
+    const minimumY = animatedVisibleHeight.get() - contentHeight * scale.get();
     if (previous.revision !== coalescedRevision) {
       // Pull-to-load prepended history: everything the reader can see moved down
       // by the rows that went in above it -- and only by those. The compensation
@@ -1464,10 +1474,10 @@ export function SkiaTerminal({
       if (addedRows > 0) {
         translateY.set(
           clampScrollOffset(
-            translateY.value - addedRows * lineHeight * scale.value,
+            translateY.get() - addedRows * lineHeight * scale.get(),
             minimumY,
-            animatedTopInset.value,
-            historyHeight * scale.value
+            animatedTopInset.get(),
+            historyHeight * scale.get()
           )
         );
         followOutput.set(false);
@@ -1476,20 +1486,20 @@ export function SkiaTerminal({
         // to the two things that name a position in the content.
         moveSelectionRows(-addedRows, frame.lines.length);
       }
-    } else if (!followOutput.value) {
+    } else if (!followOutput.get()) {
       // A full scrollback window drops a row off the top for every row the agent
       // prints, so a reader parked in history watches their content climb out of
       // the viewport on its own. Following readers are already pinned to the
       // bottom and want exactly that motion, so they are left alone.
       const droppedRows = measureRowsDropped(previous.anchor, frame.lines);
       if (droppedRows > 0) {
-        const compensation = droppedRows * lineHeight * scale.value;
+        const compensation = droppedRows * lineHeight * scale.get();
         translateY.set(
           clampScrollOffset(
-            translateY.value + compensation,
+            translateY.get() + compensation,
             minimumY,
-            animatedTopInset.value,
-            historyHeight * scale.value
+            animatedTopInset.get(),
+            historyHeight * scale.get()
           )
         );
         moveSelectionRows(droppedRows, frame.lines.length);
@@ -1532,11 +1542,11 @@ export function SkiaTerminal({
   const catchingUp = useSharedValue(false);
 
   useEffect(() => {
-    if (!followOutput.value || viewport.height <= 0) return;
+    if (!followOutput.get() || viewport.height <= 0) return;
     const bottom = terminalRestOffset(
-      animatedVisibleHeight.value - contentHeight * scale.value,
-      animatedTopInset.value,
-      historyHeight * scale.value
+      animatedVisibleHeight.get() - contentHeight * scale.get(),
+      animatedTopInset.get(),
+      historyHeight * scale.get()
     );
     const debt = owesFreezeDebt.current;
     owesFreezeDebt.current = false;
@@ -1582,18 +1592,18 @@ export function SkiaTerminal({
       // the pane and the clamp is what stops it at the real end of the content.
       translateY.set(
         clampScrollOffset(
-          bottom - placedRows * lineHeight * scale.value,
-          animatedVisibleHeight.value - contentHeight * scale.value,
-          animatedTopInset.value,
-          historyHeight * scale.value
+          bottom - placedRows * lineHeight * scale.get(),
+          animatedVisibleHeight.get() - contentHeight * scale.get(),
+          animatedTopInset.get(),
+          historyHeight * scale.get()
         )
       );
       // The horizontal half, measured against this frame's own width so the
       // clamp is the one the finger would meet rather than the outgoing pane's.
       translateX.set(
         Math.max(
-          terminalPanMinX(viewport.width, textWidth, scale.value),
-          Math.min(0, -placedColumns * cellWidth * scale.value)
+          terminalPanMinX(viewport.width, textWidth, scale.get()),
+          Math.min(0, -placedColumns * cellWidth * scale.get())
         )
       );
       // A pane placed downward is deliberately not at its anchor, so follow is
@@ -1608,7 +1618,7 @@ export function SkiaTerminal({
       return;
     }
 
-    if (snapToBottomNext.value) {
+    if (snapToBottomNext.get()) {
       // First output after a pane switch: jump to the bottom with no animation,
       // so the content is simply there rather than scrolling into place.
       cancelAnimation(translateY);
@@ -1623,7 +1633,7 @@ export function SkiaTerminal({
     // applied frame after it lands pins the remainder. Retargeting mid-flight
     // is what `withTiming` cannot do -- it cancels and re-eases from a partial
     // position, which is the judder this whole block exists to remove.
-    if (catchingUp.value) return;
+    if (catchingUp.get()) return;
 
     // The ordinary case, and the one a streaming pane is in the whole time: the
     // bottom moved because rows arrived, so put the pane on it. The scrolling
@@ -1631,7 +1641,7 @@ export function SkiaTerminal({
     // an animation here is what made a printing pane judder ten times a second
     // -- see `followCatchUpDurationMs`, which now returns 0 for a step.
     const duration = debt
-      ? followCatchUpDurationMs(bottom - translateY.value, lineHeight * scale.value)
+      ? followCatchUpDurationMs(bottom - translateY.get(), lineHeight * scale.get())
       : 0;
     if (duration <= 0) {
       translateY.set(bottom);
@@ -1672,18 +1682,18 @@ export function SkiaTerminal({
   ]);
 
   useAnimatedReaction(
-    () => animatedVisibleHeight.value - contentHeight * scale.value,
+    () => animatedVisibleHeight.get() - contentHeight * scale.get(),
     (minimumY, previousMinimumY) => {
-      if (minimumY === previousMinimumY || gesturing.value) return;
-      const topInsetValue = animatedTopInset.value;
+      if (minimumY === previousMinimumY || gesturing.get()) return;
+      const topInsetValue = animatedTopInset.get();
       translateY.set(
-        followOutput.value
-          ? terminalRestOffset(minimumY, topInsetValue, historyHeight * scale.value)
+        followOutput.get()
+          ? terminalRestOffset(minimumY, topInsetValue, historyHeight * scale.get())
           : clampScrollOffset(
-              translateY.value,
+              translateY.get(),
               minimumY,
               topInsetValue,
-              historyHeight * scale.value
+              historyHeight * scale.get()
             )
       );
     }
@@ -1704,25 +1714,25 @@ export function SkiaTerminal({
   // the pane's first row slides clear of the header with it, rather than
   // arriving there in one frame at the end.
   useAnimatedReaction(
-    () => animatedTopInset.value,
+    () => animatedTopInset.get(),
     (topInsetValue, previousTopInset) => {
-      if (topInsetValue === previousTopInset || gesturing.value) return;
-      const minimumY = animatedVisibleHeight.value - contentHeight * scale.value;
+      if (topInsetValue === previousTopInset || gesturing.get()) return;
+      const minimumY = animatedVisibleHeight.get() - contentHeight * scale.get();
       translateY.set(
-        followOutput.value
-          ? terminalRestOffset(minimumY, topInsetValue, historyHeight * scale.value)
+        followOutput.get()
+          ? terminalRestOffset(minimumY, topInsetValue, historyHeight * scale.get())
           : clampScrollOffset(
-              translateY.value,
+              translateY.get(),
               minimumY,
               topInsetValue,
-              historyHeight * scale.value
+              historyHeight * scale.get()
             )
       );
     }
   );
 
   useAnimatedReaction(
-    () => followOutput.value,
+    () => followOutput.get(),
     (current, previous) => {
       if (current !== previous) scheduleOnRN(setFollowing, current);
     }
@@ -1733,7 +1743,7 @@ export function SkiaTerminal({
   // re-layout lands as a jump rather than as drift, and the reader has no thumb
   // on the screen to explain it.
   useAnimatedReaction(
-    () => gesturing.value || coasting.value > 0,
+    () => gesturing.get() || coasting.get() > 0,
     (current, previous) => {
       if (current !== previous) scheduleOnRN(gate.setActive, current);
     }
@@ -1747,11 +1757,11 @@ export function SkiaTerminal({
   const gridColumns = frame.columns;
 
   const selectionAutoScrollFrame = useFrameCallback((frameInfo) => {
-    if (!selecting.value || !selectionDragActive.value) return;
+    if (!selecting.get() || !selectionDragActive.get()) return;
     const velocity = selectionAutoScrollVelocity(
-      selectionPointerY.value,
-      animatedTopInset.value,
-      animatedVisibleHeight.value
+      selectionPointerY.get(),
+      animatedTopInset.get(),
+      animatedVisibleHeight.get()
     );
     if (velocity === 0) return;
 
@@ -1759,30 +1769,30 @@ export function SkiaTerminal({
     // screenful. Ordinary frames use their real elapsed time and therefore
     // keep the same speed on 60 Hz and 120 Hz displays.
     const elapsedMs = Math.min(32, Math.max(0, frameInfo.timeSincePreviousFrame ?? 0));
-    const minY = animatedVisibleHeight.value - contentHeight * scale.value;
+    const minY = animatedVisibleHeight.get() - contentHeight * scale.get();
     const nextY = clampScrollOffset(
-      translateY.value + velocity * (elapsedMs / 1000),
+      translateY.get() + velocity * (elapsedMs / 1000),
       minY,
-      animatedTopInset.value,
-      historyHeight * scale.value
+      animatedTopInset.get(),
+      historyHeight * scale.get()
     );
-    if (nextY === translateY.value) return;
+    if (nextY === translateY.get()) return;
     translateY.set(nextY);
     followOutput.set(
       terminalFollowsOutput(
         nextY,
-        terminalRestOffset(minY, animatedTopInset.value, historyHeight * scale.value)
+        terminalRestOffset(minY, animatedTopInset.get(), historyHeight * scale.get())
       )
     );
 
     const cell = cellAtViewportPoint(
-      selectionPointerX.value,
-      selectionPointerY.value,
+      selectionPointerX.get(),
+      selectionPointerY.get(),
       {
         cellWidth,
         lineHeight,
-        scale: scale.value,
-        translateX: translateX.value,
+        scale: scale.get(),
+        translateX: translateX.get(),
         translateY: nextY,
         horizontalPadding,
         verticalPadding,
@@ -1790,11 +1800,11 @@ export function SkiaTerminal({
       gridRows,
       gridColumns
     );
-    if (cell.row === focusRow.value && cell.column === focusColumn.value) return;
+    if (cell.row === focusRow.get() && cell.column === focusColumn.get()) return;
     focusRow.set(cell.row);
     focusColumn.set(cell.column);
     scheduleOnRN(applySelection, {
-      anchor: { row: anchorRow.value, column: anchorColumn.value },
+      anchor: { row: anchorRow.get(), column: anchorColumn.get() },
       focus: cell,
     });
   }, false);
@@ -1940,9 +1950,9 @@ export function SkiaTerminal({
         {
           cellWidth,
           lineHeight,
-          scale: scale.value,
-          translateX: translateX.value,
-          translateY: translateY.value + pullDistance.value,
+          scale: scale.get(),
+          translateX: translateX.get(),
+          translateY: translateY.get() + pullDistance.get(),
           horizontalPadding,
           verticalPadding,
         },
@@ -1953,7 +1963,7 @@ export function SkiaTerminal({
         row: hit.row,
         column: hit.column,
         lineCount: gridRows,
-        screenRows: touchScreenRows.value,
+        screenRows: touchScreenRows.get(),
         columns: gridColumns,
       });
     },
@@ -2003,7 +2013,7 @@ export function SkiaTerminal({
   const trackProgramDrag = useCallback(
     (event: { x: number; y: number; translationX: number; translationY: number }) => {
       'worklet';
-      if (programRebase.value) {
+      if (programRebase.get()) {
         programRebase.set(false);
         programBaseX.set(event.translationX);
         programBaseY.set(event.translationY);
@@ -2012,14 +2022,14 @@ export function SkiaTerminal({
         programEmittedRows.set(0);
         programEmittedColumns.set(0);
       }
-      const zoom = scale.value > 0 ? scale.value : 1;
+      const zoom = scale.get() > 0 ? scale.get() : 1;
       const rowPitch = lineHeight * zoom;
       const columnPitch = cellWidth * zoom;
       programTravelRows.set(
-        rowPitch > 0 ? Math.trunc((event.translationY - programBaseY.value) / rowPitch) : 0
+        rowPitch > 0 ? Math.trunc((event.translationY - programBaseY.get()) / rowPitch) : 0
       );
       programTravelColumns.set(
-        columnPitch > 0 ? Math.trunc((event.translationX - programBaseX.value) / columnPitch) : 0
+        columnPitch > 0 ? Math.trunc((event.translationX - programBaseX.get()) / columnPitch) : 0
       );
       const cell = programCellAt(event.x, event.y);
       programCellRow.set(cell.row);
@@ -2054,23 +2064,23 @@ export function SkiaTerminal({
    */
   const touchInputFrame = useFrameCallback(() => {
     'worklet';
-    if (!programDragActive.value) return;
-    const rows = programTravelRows.value - programEmittedRows.value;
-    const columns = programTravelColumns.value - programEmittedColumns.value;
+    if (!programDragActive.get()) return;
+    const rows = programTravelRows.get() - programEmittedRows.get();
+    const columns = programTravelColumns.get() - programEmittedColumns.get();
     if (rows === 0 && columns === 0) return;
-    programEmittedRows.set(programTravelRows.value);
-    programEmittedColumns.set(programTravelColumns.value);
+    programEmittedRows.set(programTravelRows.get());
+    programEmittedColumns.set(programTravelColumns.get());
     scheduleOnRN(emitProgramDrag, {
-      row: programCellRow.value,
-      column: programCellColumn.value,
+      row: programCellRow.get(),
+      column: programCellColumn.get(),
       rows,
       columns,
-      held: programDragHeld.value,
+      held: programDragHeld.get(),
     });
   }, false);
   const [programDragging, setProgramDragging] = useState(false);
   useAnimatedReaction(
-    () => programDragActive.value,
+    () => programDragActive.get(),
     (active, wasActive) => {
       if (active !== wasActive) scheduleOnRN(setProgramDragging, active);
     }
@@ -2091,24 +2101,24 @@ export function SkiaTerminal({
    */
   const endProgramDrag = useCallback(() => {
     'worklet';
-    if (!programDragActive.value) return;
-    const rows = programTravelRows.value - programEmittedRows.value;
-    const columns = programTravelColumns.value - programEmittedColumns.value;
-    programEmittedRows.set(programTravelRows.value);
-    programEmittedColumns.set(programTravelColumns.value);
+    if (!programDragActive.get()) return;
+    const rows = programTravelRows.get() - programEmittedRows.get();
+    const columns = programTravelColumns.get() - programEmittedColumns.get();
+    programEmittedRows.set(programTravelRows.get());
+    programEmittedColumns.set(programTravelColumns.get());
     if (rows !== 0 || columns !== 0) {
       scheduleOnRN(emitProgramDrag, {
-        row: programCellRow.value,
-        column: programCellColumn.value,
+        row: programCellRow.get(),
+        column: programCellColumn.get(),
         rows,
         columns,
-        held: programDragHeld.value,
+        held: programDragHeld.get(),
       });
     }
-    if (programDragHeld.value) {
+    if (programDragHeld.get()) {
       scheduleOnRN(emitProgramRelease, {
-        row: programCellRow.value,
-        column: programCellColumn.value,
+        row: programCellRow.get(),
+        column: programCellColumn.get(),
       });
     }
     programDragHeld.set(false);
@@ -2126,359 +2136,515 @@ export function SkiaTerminal({
     programTravelRows,
   ]);
 
-  const panGesture = Gesture.Pan()
-    .hitSlop({ left: -32 })
-    .minDistance(2)
-    .onBegin(() => {
-      // The gate closes on touch-down, not on activation. A pan does not become
-      // a pan until the thumb has travelled its minimum distance, and the tens
-      // of milliseconds between the touch landing and the thumb moving is the
-      // head start the JS thread needs to have held the frame before the first
-      // pixel of movement. Nothing else happens here: a touch that turns out to
-      // be a tap costs the pane one held refresh, released by onFinalize.
-      //
-      // Not in the two program layers. The freeze exists so a frame swap cannot
-      // land under a moving finger, and it is exactly wrong here: in those
-      // layers the drag IS what is changing the frame, and holding the picture
-      // would mean the reader drags through vim and sees nothing move until
-      // they lift. A two-finger drag in those layers is the scrollback again
-      // and takes the freeze back below.
-      if (terminalTouchLayer(touchModeBits.value) === 'scrollback') gesturing.set(true);
-    })
-    .onStart((event) => {
-      // Selecting owns the finger. The transform is not touched at all -- not
-      // even to land the follow ease, which would slide the page under a
-      // reader who is dragging across the line they mean to copy.
-      if (terminalDragIntent(selecting.value, event.numberOfPointers) === 'extend-selection') {
-        selectionPointerX.set(event.x);
-        selectionPointerY.set(event.y);
-        selectionDragActive.set(true);
-        scheduleOnRN(startSelectionDrag);
-        gesturing.set(true);
+  const onSingleTapEnd = useStableHandler(
+    (event: GestureStateChangeEvent<TapGestureHandlerEventPayload>, success: boolean) => {
+      if (!success) return;
+      // A tap anywhere puts the selection down. It is the gesture every text
+      // surface on both platforms uses for exactly this, and it has to come
+      // before the link test: a tap that landed on a link inside the highlight
+      // means "I am done", not "open this".
+      if (selecting.get()) {
+        clearSelection();
         return;
       }
-      // The program's finger. Nothing about the transform is touched -- not
-      // the running decay, which a reader who flicked and then dragged still
-      // wants to watch coast out, and not the follow ease. `gestureStartX/Y`
-      // are still recorded, because a second finger landing mid-drag hands the
-      // gesture back to the pan and it has to have somewhere to start from.
-      if (terminalTouchDragTarget(touchModeBits.value, event.numberOfPointers) === 'program') {
-        gestureStartX.set(translateX.value);
-        gestureStartY.set(translateY.value);
-        panAxis.set(AXIS_UNDECIDED);
-        beginProgramDrag(event);
+      // A program reporting the mouse gets the tap, and gets it before the link
+      // test rather than after. The links this pane draws are found by pattern
+      // in whatever text is on screen, and inside a full-screen program that
+      // text is a file being edited: a tap on a path in a vim buffer means
+      // "put the cursor here", never "open this". Nor does the keyboard fall,
+      // for the same reason -- the program asked for the click.
+      if (terminalTouchLayer(touchModeBits.get()) === 'mouse') {
+        emitProgramTap(programCellAt(event.x, event.y));
         return;
       }
-      cancelAnimation(translateX);
-      cancelAnimation(translateY);
-      // A follower is almost never standing still: it is a fraction of the way
-      // through the ease onto the bottom that the last line started. Stopping
-      // that ease where the touch happened to land leaves the pane a row or two
-      // short of where it was heading and holds it there for the whole gesture,
-      // and the reader sees the page slide BACKWARDS at the very moment they put
-      // a finger down -- measurably, one jerk of up to three rows on every
-      // swipe. Finishing it costs nothing: the bottom is where the animation was
-      // going anyway.
-      if (followOutput.value) {
-        translateY.set(
-          terminalRestOffset(
-            animatedVisibleHeight.value - contentHeight * scale.value,
-            animatedTopInset.value,
-            historyHeight * scale.value
-          )
-        );
-      }
-      gestureStartX.set(translateX.value);
-      gestureStartY.set(translateY.value);
-      pullDistance.set(0);
-      panAxis.set(AXIS_UNDECIDED);
-      gesturing.set(true);
-    })
-    .onUpdate((event) => {
-      const intent = terminalDragIntent(selecting.value, event.numberOfPointers);
-      // A second finger during a selection is a pinch or a tab swipe, and both
-      // are running simultaneously with this one. Yanking the selection's far
-      // end to wherever the centroid went is not a third answer.
-      if (intent === 'ignore') {
-        selectionDragActive.set(false);
-        return;
-      }
-      if (intent === 'extend-selection') {
-        selectionPointerX.set(event.x);
-        selectionPointerY.set(event.y);
-        selectionDragActive.set(true);
-        const cell = cellAtViewportPoint(
-          event.x,
-          event.y,
-          {
-            cellWidth,
-            lineHeight,
-            scale: scale.value,
-            translateX: translateX.value,
-            translateY: translateY.value + pullDistance.value,
-            horizontalPadding,
-            verticalPadding,
-          },
-          gridRows,
-          gridColumns
-        );
-        // Only on a cell change. The finger moves at frame rate; the selection
-        // changes at cell rate, which is an order of magnitude less often, and
-        // that is how often the pane is asked to re-render.
-        if (cell.row === focusRow.value && cell.column === focusColumn.value) return;
-        focusRow.set(cell.row);
-        focusColumn.set(cell.column);
-        scheduleOnRN(applySelection, {
-          anchor: { row: anchorRow.value, column: anchorColumn.value },
-          focus: cell,
-        });
-        return;
-      }
-      if (terminalTouchDragTarget(touchModeBits.value, event.numberOfPointers) === 'program') {
-        // A drag that began as a pan and is only now the program's -- the mode
-        // flipped under the finger, which `vim` does the instant it starts.
-        if (!programDragActive.value) beginProgramDrag(event);
-        else trackProgramDrag(event);
-        return;
-      }
-      if (programDragActive.value) {
-        // A second finger landed. The scrollback takes the gesture back, and
-        // has to take it back from where the content actually is: the pan is
-        // driven by `event.translationX/Y`, which has been accumulating for the
-        // whole of the program's part of this drag and would otherwise jump the
-        // content by all of it on the very next frame.
-        endProgramDrag();
-        gestureStartX.set(translateX.value - event.translationX);
-        gestureStartY.set(translateY.value - event.translationY);
-        panAxis.set(AXIS_UNDECIDED);
-        gesturing.set(true);
-      }
-      // See `terminalPullOvershoot`: how far past the top stop this drag is
-      // asking to go, independent of where the gesture itself started.
-      const minY = animatedVisibleHeight.value - contentHeight * scale.value;
-      const topStop = terminalTopStop(minY, animatedTopInset.value);
-      const overshoot = terminalPullOvershoot(gestureStartY.value, event.translationY, topStop);
-      if (
-        canLoadEarlier &&
-        overshoot > 0 &&
-        Math.abs(event.translationY) > Math.abs(event.translationX)
-      ) {
-        pullDistance.set(Math.min(68, overshoot * 0.44));
-        return;
-      }
-      pullDistance.set(0);
-
-      // Reading a terminal is almost always vertical. Without an axis lock a
-      // thumb travelling up the screen drifts a few pixels sideways and the
-      // whole grid slides with it, which reads as the pane being knocked out of
-      // alignment. Once a direction is established the gesture commits to it
-      // for the rest of the drag.
-      if (panAxis.value === AXIS_UNDECIDED) {
-        const dx = Math.abs(event.translationX);
-        const dy = Math.abs(event.translationY);
-        if (Math.max(dx, dy) >= AXIS_LOCK_DISTANCE) {
-          panAxis.set(dx > dy * AXIS_LOCK_BIAS ? AXIS_HORIZONTAL : AXIS_VERTICAL);
+      const link = linkAtViewportPoint(
+        links,
+        event.x,
+        event.y,
+        cellWidth,
+        lineHeight,
+        scale.get(),
+        translateX.get(),
+        translateY.get()
+      );
+      if (link?.kind === 'file') {
+        // No handler means nothing can open it, so the tap falls through to the
+        // dismiss below rather than looking like a dead link.
+        if (onFileLink) {
+          onFileLink(link.uri);
+          return;
         }
+      } else if (link) {
+        void openTerminalLink(link.uri);
+        return;
       }
+      // A tap that hit no link dismisses the keyboard, so the output can be read
+      // without reaching for a separate control.
+      Keyboard.dismiss();
+    }
+  );
+  const singleTapGesture = useMemo(
+    () => Gesture.Tap().runOnJS(true).maxDistance(12).maxDuration(600).onEnd(onSingleTapEnd),
+    [onSingleTapEnd]
+  );
 
-      const minX = terminalPanMinX(viewport.width, textWidth, scale.value);
-      if (panAxis.value !== AXIS_VERTICAL) {
-        translateX.set(Math.max(minX, Math.min(0, gestureStartX.value + event.translationX)));
-      }
-      if (panAxis.value !== AXIS_HORIZONTAL) {
-        translateY.set(
-          clampScrollOffset(
-            gestureStartY.value + event.translationY,
-            minY,
-            animatedTopInset.value,
-            historyHeight * scale.value
-          )
-        );
-        // Following is a position, not a mode the touch cancels. Clearing it the
-        // moment a finger landed meant a swipe that never left the bottom -- one
-        // that is clamped there and moves nothing at all -- came back as a
-        // reader parked in history: the frame the release applied was pushed
-        // BACK by the rows the window had trimmed, and then the decay handed
-        // follow straight back and it was hauled forward again. Two corrections
-        // in opposite directions on one release, which is a jolt in each
-        // direction for every swipe.
-        //
-        // The threshold is distance from the rest anchor, in both directions --
-        // see `terminalFollowsOutput`, which is also where the bug the second
-        // direction fixes is written down (card #828). For every pane that
-        // prints the anchor IS the bottom, so this is unchanged there; on a
-        // screen-owning pane the anchor floats above the bottom by however much
-        // its live screen overflows the viewport, and asking only "at or below
-        // the anchor" made that whole overflow read as following -- which is
-        // the pane springing back under the reader's thumb.
-        followOutput.set(
-          terminalFollowsOutput(
-            translateY.value,
-            terminalRestOffset(minY, animatedTopInset.value, historyHeight * scale.value)
-          )
-        );
-      }
-    })
-    .onEnd((event) => {
-      // No momentum for a program drag either, and for a sharper reason than
-      // the selection's: a decay would keep posting wheel events into a PTY
-      // for half a second after the finger left, and the program on the far
-      // side would still be redrawing when the reader reached for the next
-      // thing. The tail the frame callback had not yet sent goes out here.
-      if (programDragActive.value) {
-        endProgramDrag();
-        return;
-      }
-      // No momentum for a selection: the far end is where the finger left it,
-      // and a highlight that coasted on past would be a copy the reader did not
-      // ask for.
-      if (selecting.value) return;
-      if (pullDistance.value > 0) {
-        const shouldLoad = pullDistance.value >= 46;
-        // `timing` is a worklet, which is what makes it safe to call from
-        // inside this gesture callback -- see the note on it in `motion.ts`.
-        pullDistance.set(withTiming(0, timing('short')));
-        if (shouldLoad && onLoadEarlier && !loadingEarlier) {
-          scheduleOnRN(onLoadEarlier);
-        }
-        return;
-      }
-      const minX = terminalPanMinX(viewport.width, textWidth, scale.value);
-      const minY = animatedVisibleHeight.value - contentHeight * scale.value;
-      // Momentum follows the axis the drag committed to, so a flick up cannot
-      // coast sideways after the finger has left the screen.
-      if (panAxis.value !== AXIS_VERTICAL) {
-        coasting.set(coasting.get() + 1);
-        translateX.set(
-          withDecay({ velocity: event.velocityX, clamp: [minX, 0] }, () => {
-            coasting.set(Math.max(0, coasting.value - 1));
-          })
-        );
-      }
-      if (panAxis.value !== AXIS_HORIZONTAL) {
-        coasting.set(coasting.get() + 1);
-        translateY.set(
-          withDecay(
-            {
-              velocity: event.velocityY,
-              clamp: [
-                terminalBottomStop(minY, animatedTopInset.value, historyHeight * scale.value),
-                terminalTopStop(minY, animatedTopInset.value),
-              ],
-            },
-            (finished) => {
-              coasting.set(Math.max(0, coasting.value - 1));
-              // Reanimated calls this on cancellation as well as completion --
-              // `valueSetter` fires `callback(false)` before installing whatever
-              // replaced this decay, whether that is a second flick's own decay
-              // or a gesture that landed mid-coast. `minY` and `historyHeight`
-              // above are plain numbers closed over at the moment THIS flick
-              // ended, not shared values a worklet can re-read later, so by the
-              // time a superseded decay's callback actually runs -- which,
-              // unlike every per-frame gesture callback in this file, is never
-              // rebound to a fresh render -- they can already describe a pane
-              // that has since printed more output and moved on. Recomputing
-              // `followOutput` from that stale pair and writing it unconditionally
-              // is exactly the bug: a second, still-in-flight flick has already
-              // set `followOutput` correctly from live data, and this write can
-              // land after it and clobber it back. `finished` is precisely the
-              // signal for whether that happened -- true only when this decay
-              // ran to its own natural end, uninterrupted, which is the one case
-              // where the values it closed over are still the values that made
-              // it stop. `false` means something newer is already in charge of
-              // the answer, and this callback's only job left is the coast count
-              // above (measured live: three of these firing back to back with
-              // `gesturing: true`, i.e. a second gesture already active, is what
-              // exposed it).
-              if (!finished) return;
-              followOutput.set(
-                terminalFollowsOutput(
-                  translateY.value,
-                  terminalRestOffset(minY, animatedTopInset.value, historyHeight * scale.value)
-                )
-              );
+  const onDoubleTapEnd = useStableHandler(
+    (event: GestureStateChangeEvent<TapGestureHandlerEventPayload>, success: boolean) => {
+      if (!success) return;
+      const cell = cellAtViewportPoint(
+        event.x,
+        event.y,
+        {
+          cellWidth,
+          lineHeight,
+          scale: scale.get(),
+          translateX: translateX.get(),
+          translateY: translateY.get(),
+          horizontalPadding,
+          verticalPadding,
+        },
+        gridRows,
+        gridColumns
+      );
+      selectLine(cell);
+    }
+  );
+  const doubleTapGesture = useMemo(
+    () =>
+      Gesture.Tap()
+        .runOnJS(true)
+        .numberOfTaps(2)
+        .maxDistance(16)
+        .maxDuration(250)
+        .maxDelay(250)
+        .onEnd(onDoubleTapEnd),
+    [onDoubleTapEnd]
+  );
+
+  const panGesture = useMemo(
+    () =>
+      Gesture.Pan()
+        .hitSlop({ left: -32 })
+        .minDistance(2)
+        .onBegin(() => {
+          // The gate closes on touch-down, not on activation. A pan does not become
+          // a pan until the thumb has travelled its minimum distance, and the tens
+          // of milliseconds between the touch landing and the thumb moving is the
+          // head start the JS thread needs to have held the frame before the first
+          // pixel of movement. Nothing else happens here: a touch that turns out to
+          // be a tap costs the pane one held refresh, released by onFinalize.
+          //
+          // Not in the two program layers. The freeze exists so a frame swap cannot
+          // land under a moving finger, and it is exactly wrong here: in those
+          // layers the drag IS what is changing the frame, and holding the picture
+          // would mean the reader drags through vim and sees nothing move until
+          // they lift. A two-finger drag in those layers is the scrollback again
+          // and takes the freeze back below.
+          if (terminalTouchLayer(touchModeBits.get()) === 'scrollback') gesturing.set(true);
+        })
+        .onStart((event) => {
+          // Selecting owns the finger. The transform is not touched at all -- not
+          // even to land the follow ease, which would slide the page under a
+          // reader who is dragging across the line they mean to copy.
+          if (terminalDragIntent(selecting.get(), event.numberOfPointers) === 'extend-selection') {
+            selectionPointerX.set(event.x);
+            selectionPointerY.set(event.y);
+            selectionDragActive.set(true);
+            scheduleOnRN(startSelectionDrag);
+            gesturing.set(true);
+            return;
+          }
+          // The program's finger. Nothing about the transform is touched -- not
+          // the running decay, which a reader who flicked and then dragged still
+          // wants to watch coast out, and not the follow ease. `gestureStartX/Y`
+          // are still recorded, because a second finger landing mid-drag hands the
+          // gesture back to the pan and it has to have somewhere to start from.
+          if (terminalTouchDragTarget(touchModeBits.get(), event.numberOfPointers) === 'program') {
+            gestureStartX.set(translateX.get());
+            gestureStartY.set(translateY.get());
+            panAxis.set(AXIS_UNDECIDED);
+            beginProgramDrag(event);
+            return;
+          }
+          cancelAnimation(translateX);
+          cancelAnimation(translateY);
+          // A follower is almost never standing still: it is a fraction of the way
+          // through the ease onto the bottom that the last line started. Stopping
+          // that ease where the touch happened to land leaves the pane a row or two
+          // short of where it was heading and holds it there for the whole gesture,
+          // and the reader sees the page slide BACKWARDS at the very moment they put
+          // a finger down -- measurably, one jerk of up to three rows on every
+          // swipe. Finishing it costs nothing: the bottom is where the animation was
+          // going anyway.
+          if (followOutput.get()) {
+            translateY.set(
+              terminalRestOffset(
+                animatedVisibleHeight.get() - contentHeight * scale.get(),
+                animatedTopInset.get(),
+                historyHeight * scale.get()
+              )
+            );
+          }
+          gestureStartX.set(translateX.get());
+          gestureStartY.set(translateY.get());
+          pullDistance.set(0);
+          panAxis.set(AXIS_UNDECIDED);
+          gesturing.set(true);
+        })
+        .onUpdate((event) => {
+          const intent = terminalDragIntent(selecting.get(), event.numberOfPointers);
+          // A second finger during a selection is a pinch or a tab swipe, and both
+          // are running simultaneously with this one. Yanking the selection's far
+          // end to wherever the centroid went is not a third answer.
+          if (intent === 'ignore') {
+            selectionDragActive.set(false);
+            return;
+          }
+          if (intent === 'extend-selection') {
+            selectionPointerX.set(event.x);
+            selectionPointerY.set(event.y);
+            selectionDragActive.set(true);
+            const cell = cellAtViewportPoint(
+              event.x,
+              event.y,
+              {
+                cellWidth,
+                lineHeight,
+                scale: scale.get(),
+                translateX: translateX.get(),
+                translateY: translateY.get() + pullDistance.get(),
+                horizontalPadding,
+                verticalPadding,
+              },
+              gridRows,
+              gridColumns
+            );
+            // Only on a cell change. The finger moves at frame rate; the selection
+            // changes at cell rate, which is an order of magnitude less often, and
+            // that is how often the pane is asked to re-render.
+            if (cell.row === focusRow.get() && cell.column === focusColumn.get()) return;
+            focusRow.set(cell.row);
+            focusColumn.set(cell.column);
+            scheduleOnRN(applySelection, {
+              anchor: { row: anchorRow.get(), column: anchorColumn.get() },
+              focus: cell,
+            });
+            return;
+          }
+          if (terminalTouchDragTarget(touchModeBits.get(), event.numberOfPointers) === 'program') {
+            // A drag that began as a pan and is only now the program's -- the mode
+            // flipped under the finger, which `vim` does the instant it starts.
+            if (!programDragActive.get()) beginProgramDrag(event);
+            else trackProgramDrag(event);
+            return;
+          }
+          if (programDragActive.get()) {
+            // A second finger landed. The scrollback takes the gesture back, and
+            // has to take it back from where the content actually is: the pan is
+            // driven by `event.translationX/Y`, which has been accumulating for the
+            // whole of the program's part of this drag and would otherwise jump the
+            // content by all of it on the very next frame.
+            endProgramDrag();
+            gestureStartX.set(translateX.get() - event.translationX);
+            gestureStartY.set(translateY.get() - event.translationY);
+            panAxis.set(AXIS_UNDECIDED);
+            gesturing.set(true);
+          }
+          // See `terminalPullOvershoot`: how far past the top stop this drag is
+          // asking to go, independent of where the gesture itself started.
+          const minY = animatedVisibleHeight.get() - contentHeight * scale.get();
+          const topStop = terminalTopStop(minY, animatedTopInset.get());
+          const overshoot = terminalPullOvershoot(gestureStartY.get(), event.translationY, topStop);
+          if (
+            canLoadEarlier &&
+            overshoot > 0 &&
+            Math.abs(event.translationY) > Math.abs(event.translationX)
+          ) {
+            pullDistance.set(Math.min(68, overshoot * 0.44));
+            return;
+          }
+          pullDistance.set(0);
+
+          // Reading a terminal is almost always vertical. Without an axis lock a
+          // thumb travelling up the screen drifts a few pixels sideways and the
+          // whole grid slides with it, which reads as the pane being knocked out of
+          // alignment. Once a direction is established the gesture commits to it
+          // for the rest of the drag.
+          if (panAxis.get() === AXIS_UNDECIDED) {
+            const dx = Math.abs(event.translationX);
+            const dy = Math.abs(event.translationY);
+            if (Math.max(dx, dy) >= AXIS_LOCK_DISTANCE) {
+              panAxis.set(dx > dy * AXIS_LOCK_BIAS ? AXIS_HORIZONTAL : AXIS_VERTICAL);
             }
-          )
-        );
-      }
-    })
-    .onFinalize(() => {
-      // Idempotent, and reached from here as well as from `onEnd` because a
-      // cancelled drag -- a call arriving, the app going to the background --
-      // still owes the far side the release of a button it was told was down.
-      endProgramDrag();
-      pullDistance.set(withTiming(0, timing('short')));
-      panAxis.set(AXIS_UNDECIDED);
-      gesturing.set(false);
-      selectionDragActive.set(false);
-      // Here rather than in `onEnd` so a cancelled drag floats the bar too: the
-      // selection outlives the gesture that made it, and a reader whose gesture
-      // was interrupted still has a highlight and still needs the Copy button.
-      if (selecting.value) scheduleOnRN(endSelectionDrag);
-    });
+          }
 
-  const pinchGesture = Gesture.Pinch()
-    .onBegin((event) => {
-      cancelAnimation(translateX);
-      cancelAnimation(translateY);
-      // Same as the pan: land the follow ease before taking the transform over.
-      if (followOutput.value) {
-        translateY.set(
-          terminalRestOffset(
-            animatedVisibleHeight.value - contentHeight * scale.value,
-            animatedTopInset.value,
-            historyHeight * scale.value
-          )
-        );
-      }
-      gestureStartScale.set(scale.value);
-      gestureStartX.set(translateX.value);
-      gestureStartY.set(translateY.value);
-      focalX.set(event.focalX);
-      focalY.set(event.focalY);
-      // Watching, not zooming. Android begins this recogniser on the first
-      // pointer of any drag, so `began` is where a plain scroll lives too --
-      // and that is why the freeze is not taken here in the two program layers.
-      // One finger on Android reaches this line, and freezing the picture for
-      // it would hold vim's own redraw off the screen for the whole of a drag
-      // that is meant to be driving it. A real pinch takes the freeze in
-      // `onStart` below, which is the edge that only a zoom crosses.
-      if (terminalTouchLayer(touchModeBits.value) === 'scrollback') gesturing.set(true);
-      pinchPhase.set('began');
-    })
-    // The recogniser has decided the two fingers really are changing the span:
-    // the only edge that means "a zoom is happening" -- still tracked for
-    // `longPressArms` below, which must not let a long press win a race a
-    // pinch already started.
-    .onStart(() => {
-      gesturing.set(true);
-      pinchPhase.set('active');
-    })
-    .onUpdate((event) => {
-      const nextScale = pinchedTerminalScale(gestureStartScale.value, event.scale);
-      const ratio = nextScale / gestureStartScale.value;
-      const nextX = focalX.value - (focalX.value - gestureStartX.value) * ratio;
-      const nextY = focalY.value - (focalY.value - gestureStartY.value) * ratio;
-      const minX = terminalPanMinX(viewport.width, textWidth, nextScale);
-      const minY = animatedVisibleHeight.value - contentHeight * nextScale;
-      scale.set(nextScale);
-      translateX.set(Math.max(minX, Math.min(0, nextX)));
-      translateY.set(
-        clampScrollOffset(nextY, minY, animatedTopInset.value, historyHeight * nextScale)
-      );
-      // Same rule as the pan: a pinch that leaves the last line on screen is
-      // still a reader watching the bottom, and zooming out used to park them.
-      followOutput.set(
-        terminalFollowsOutput(
-          translateY.value,
-          terminalRestOffset(minY, animatedTopInset.value, historyHeight * nextScale)
-        )
-      );
-    })
-    .onFinalize(() => {
-      gesturing.set(false);
-      pinchPhase.set('idle');
-    });
+          const minX = terminalPanMinX(viewport.width, textWidth, scale.get());
+          if (panAxis.get() !== AXIS_VERTICAL) {
+            translateX.set(Math.max(minX, Math.min(0, gestureStartX.get() + event.translationX)));
+          }
+          if (panAxis.get() !== AXIS_HORIZONTAL) {
+            translateY.set(
+              clampScrollOffset(
+                gestureStartY.get() + event.translationY,
+                minY,
+                animatedTopInset.get(),
+                historyHeight * scale.get()
+              )
+            );
+            // Following is a position, not a mode the touch cancels. Clearing it the
+            // moment a finger landed meant a swipe that never left the bottom -- one
+            // that is clamped there and moves nothing at all -- came back as a
+            // reader parked in history: the frame the release applied was pushed
+            // BACK by the rows the window had trimmed, and then the decay handed
+            // follow straight back and it was hauled forward again. Two corrections
+            // in opposite directions on one release, which is a jolt in each
+            // direction for every swipe.
+            //
+            // The threshold is distance from the rest anchor, in both directions --
+            // see `terminalFollowsOutput`, which is also where the bug the second
+            // direction fixes is written down (card #828). For every pane that
+            // prints the anchor IS the bottom, so this is unchanged there; on a
+            // screen-owning pane the anchor floats above the bottom by however much
+            // its live screen overflows the viewport, and asking only "at or below
+            // the anchor" made that whole overflow read as following -- which is
+            // the pane springing back under the reader's thumb.
+            followOutput.set(
+              terminalFollowsOutput(
+                translateY.get(),
+                terminalRestOffset(minY, animatedTopInset.get(), historyHeight * scale.get())
+              )
+            );
+          }
+        })
+        .onEnd((event) => {
+          // No momentum for a program drag either, and for a sharper reason than
+          // the selection's: a decay would keep posting wheel events into a PTY
+          // for half a second after the finger left, and the program on the far
+          // side would still be redrawing when the reader reached for the next
+          // thing. The tail the frame callback had not yet sent goes out here.
+          if (programDragActive.get()) {
+            endProgramDrag();
+            return;
+          }
+          // No momentum for a selection: the far end is where the finger left it,
+          // and a highlight that coasted on past would be a copy the reader did not
+          // ask for.
+          if (selecting.get()) return;
+          if (pullDistance.get() > 0) {
+            const shouldLoad = pullDistance.get() >= 46;
+            // `timing` is a worklet, which is what makes it safe to call from
+            // inside this gesture callback -- see the note on it in `motion.ts`.
+            pullDistance.set(withTiming(0, timing('short')));
+            if (shouldLoad && onLoadEarlier && !loadingEarlier) {
+              scheduleOnRN(onLoadEarlier);
+            }
+            return;
+          }
+          const minX = terminalPanMinX(viewport.width, textWidth, scale.get());
+          const minY = animatedVisibleHeight.get() - contentHeight * scale.get();
+          // Momentum follows the axis the drag committed to, so a flick up cannot
+          // coast sideways after the finger has left the screen.
+          if (panAxis.get() !== AXIS_VERTICAL) {
+            coasting.set(coasting.get() + 1);
+            translateX.set(
+              withDecay({ velocity: event.velocityX, clamp: [minX, 0] }, () => {
+                coasting.set(Math.max(0, coasting.get() - 1));
+              })
+            );
+          }
+          if (panAxis.get() !== AXIS_HORIZONTAL) {
+            coasting.set(coasting.get() + 1);
+            translateY.set(
+              withDecay(
+                {
+                  velocity: event.velocityY,
+                  clamp: [
+                    terminalBottomStop(minY, animatedTopInset.get(), historyHeight * scale.get()),
+                    terminalTopStop(minY, animatedTopInset.get()),
+                  ],
+                },
+                (finished) => {
+                  coasting.set(Math.max(0, coasting.get() - 1));
+                  // Reanimated calls this on cancellation as well as completion --
+                  // `valueSetter` fires `callback(false)` before installing whatever
+                  // replaced this decay, whether that is a second flick's own decay
+                  // or a gesture that landed mid-coast. `minY` and `historyHeight`
+                  // above are plain numbers closed over at the moment THIS flick
+                  // ended, not shared values a worklet can re-read later, so by the
+                  // time a superseded decay's callback actually runs -- which,
+                  // unlike every per-frame gesture callback in this file, is never
+                  // rebound to a fresh render -- they can already describe a pane
+                  // that has since printed more output and moved on. Recomputing
+                  // `followOutput` from that stale pair and writing it unconditionally
+                  // is exactly the bug: a second, still-in-flight flick has already
+                  // set `followOutput` correctly from live data, and this write can
+                  // land after it and clobber it back. `finished` is precisely the
+                  // signal for whether that happened -- true only when this decay
+                  // ran to its own natural end, uninterrupted, which is the one case
+                  // where the values it closed over are still the values that made
+                  // it stop. `false` means something newer is already in charge of
+                  // the answer, and this callback's only job left is the coast count
+                  // above (measured live: three of these firing back to back with
+                  // `gesturing: true`, i.e. a second gesture already active, is what
+                  // exposed it).
+                  if (!finished) return;
+                  followOutput.set(
+                    terminalFollowsOutput(
+                      translateY.get(),
+                      terminalRestOffset(minY, animatedTopInset.get(), historyHeight * scale.get())
+                    )
+                  );
+                }
+              )
+            );
+          }
+        })
+        .onFinalize(() => {
+          // Idempotent, and reached from here as well as from `onEnd` because a
+          // cancelled drag -- a call arriving, the app going to the background --
+          // still owes the far side the release of a button it was told was down.
+          endProgramDrag();
+          pullDistance.set(withTiming(0, timing('short')));
+          panAxis.set(AXIS_UNDECIDED);
+          gesturing.set(false);
+          selectionDragActive.set(false);
+          // Here rather than in `onEnd` so a cancelled drag floats the bar too: the
+          // selection outlives the gesture that made it, and a reader whose gesture
+          // was interrupted still has a highlight and still needs the Copy button.
+          if (selecting.get()) scheduleOnRN(endSelectionDrag);
+        })
+        .requireExternalGestureToFail(doubleTapGesture)
+        .requireExternalGestureToFail(singleTapGesture),
+    [
+      anchorColumn,
+      anchorRow,
+      animatedTopInset,
+      animatedVisibleHeight,
+      applySelection,
+      beginProgramDrag,
+      canLoadEarlier,
+      cellWidth,
+      coasting,
+      contentHeight,
+      doubleTapGesture,
+      endProgramDrag,
+      endSelectionDrag,
+      focusColumn,
+      focusRow,
+      followOutput,
+      gestureStartX,
+      gestureStartY,
+      gesturing,
+      gridColumns,
+      gridRows,
+      historyHeight,
+      lineHeight,
+      loadingEarlier,
+      onLoadEarlier,
+      panAxis,
+      programDragActive,
+      pullDistance,
+      scale,
+      selecting,
+      selectionDragActive,
+      selectionPointerX,
+      selectionPointerY,
+      singleTapGesture,
+      startSelectionDrag,
+      textWidth,
+      touchModeBits,
+      trackProgramDrag,
+      translateX,
+      translateY,
+      viewport,
+    ]
+  );
+
+  const pinchGesture = useMemo(
+    () =>
+      Gesture.Pinch()
+        .onBegin((event) => {
+          cancelAnimation(translateX);
+          cancelAnimation(translateY);
+          // Same as the pan: land the follow ease before taking the transform over.
+          if (followOutput.get()) {
+            translateY.set(
+              terminalRestOffset(
+                animatedVisibleHeight.get() - contentHeight * scale.get(),
+                animatedTopInset.get(),
+                historyHeight * scale.get()
+              )
+            );
+          }
+          gestureStartScale.set(scale.get());
+          gestureStartX.set(translateX.get());
+          gestureStartY.set(translateY.get());
+          focalX.set(event.focalX);
+          focalY.set(event.focalY);
+          // Watching, not zooming. Android begins this recogniser on the first
+          // pointer of any drag, so `began` is where a plain scroll lives too --
+          // and that is why the freeze is not taken here in the two program layers.
+          // One finger on Android reaches this line, and freezing the picture for
+          // it would hold vim's own redraw off the screen for the whole of a drag
+          // that is meant to be driving it. A real pinch takes the freeze in
+          // `onStart` below, which is the edge that only a zoom crosses.
+          if (terminalTouchLayer(touchModeBits.get()) === 'scrollback') gesturing.set(true);
+          pinchPhase.set('began');
+        })
+        // The recogniser has decided the two fingers really are changing the span:
+        // the only edge that means "a zoom is happening" -- still tracked for
+        // `longPressArms` below, which must not let a long press win a race a
+        // pinch already started.
+        .onStart(() => {
+          gesturing.set(true);
+          pinchPhase.set('active');
+        })
+        .onUpdate((event) => {
+          const nextScale = pinchedTerminalScale(gestureStartScale.get(), event.scale);
+          const ratio = nextScale / gestureStartScale.get();
+          const nextX = focalX.get() - (focalX.get() - gestureStartX.get()) * ratio;
+          const nextY = focalY.get() - (focalY.get() - gestureStartY.get()) * ratio;
+          const minX = terminalPanMinX(viewport.width, textWidth, nextScale);
+          const minY = animatedVisibleHeight.get() - contentHeight * nextScale;
+          scale.set(nextScale);
+          translateX.set(Math.max(minX, Math.min(0, nextX)));
+          translateY.set(
+            clampScrollOffset(nextY, minY, animatedTopInset.get(), historyHeight * nextScale)
+          );
+          // Same rule as the pan: a pinch that leaves the last line on screen is
+          // still a reader watching the bottom, and zooming out used to park them.
+          followOutput.set(
+            terminalFollowsOutput(
+              translateY.get(),
+              terminalRestOffset(minY, animatedTopInset.get(), historyHeight * nextScale)
+            )
+          );
+        })
+        .onFinalize(() => {
+          gesturing.set(false);
+          pinchPhase.set('idle');
+        }),
+    [
+      animatedTopInset,
+      animatedVisibleHeight,
+      contentHeight,
+      focalX,
+      focalY,
+      followOutput,
+      gestureStartScale,
+      gestureStartX,
+      gestureStartY,
+      gesturing,
+      historyHeight,
+      pinchPhase,
+      scale,
+      textWidth,
+      touchModeBits,
+      translateX,
+      translateY,
+      viewport,
+    ]
+  );
 
   // Both fingers of the gesture below: one object for the life of the pane,
   // mutated in place. Held in state rather than in a ref because it is read
@@ -2509,107 +2675,35 @@ export function SkiaTerminal({
    * callback at the end of the gesture, never per frame -- and nothing here
    * touches the transform.
    */
-  const twoFingerSwipeGesture = Gesture.Pan()
-    .runOnJS(true)
-    .enabled(Boolean(onTwoFingerSwipe))
-    .minPointers(2)
-    .minDistance(TWO_FINGER_MIN_DISTANCE)
-    .onTouchesDown((event) => {
-      sampleTwoFingers(twoFingerTracking, event.allTouches);
-    })
-    .onTouchesMove((event) => {
-      sampleTwoFingers(twoFingerTracking, event.allTouches);
-    })
-    .onEnd(() => {
-      const { start, latest, abandoned } = twoFingerTracking;
-      if (abandoned || !start || !latest) return;
-      const gesture = classifyTwoFingerGesture(start, latest);
-      // `pinch` and `none` are both silence. The canvas has already answered
-      // the pinch by zooming, and it must not also change what is being zoomed.
-      if (gesture === 'next' || gesture === 'previous') {
-        if (tabSwipeClearsSelection(selecting.value, true)) clearSelection();
-        onTwoFingerSwipe?.(gesture);
-      }
-    })
-    .onFinalize(() => {
-      resetTwoFingers(twoFingerTracking);
-    });
-
-  const singleTapGesture = Gesture.Tap()
-    .runOnJS(true)
-    .maxDistance(12)
-    .maxDuration(600)
-    .onEnd((event, success) => {
-      if (!success) return;
-      // A tap anywhere puts the selection down. It is the gesture every text
-      // surface on both platforms uses for exactly this, and it has to come
-      // before the link test: a tap that landed on a link inside the highlight
-      // means "I am done", not "open this".
-      if (selecting.value) {
-        clearSelection();
-        return;
-      }
-      // A program reporting the mouse gets the tap, and gets it before the link
-      // test rather than after. The links this pane draws are found by pattern
-      // in whatever text is on screen, and inside a full-screen program that
-      // text is a file being edited: a tap on a path in a vim buffer means
-      // "put the cursor here", never "open this". Nor does the keyboard fall,
-      // for the same reason -- the program asked for the click.
-      if (terminalTouchLayer(touchModeBits.value) === 'mouse') {
-        emitProgramTap(programCellAt(event.x, event.y));
-        return;
-      }
-      const link = linkAtViewportPoint(
-        links,
-        event.x,
-        event.y,
-        cellWidth,
-        lineHeight,
-        scale.value,
-        translateX.value,
-        translateY.value
-      );
-      if (link?.kind === 'file') {
-        // No handler means nothing can open it, so the tap falls through to the
-        // dismiss below rather than looking like a dead link.
-        if (onFileLink) {
-          onFileLink(link.uri);
-          return;
-        }
-      } else if (link) {
-        void openTerminalLink(link.uri);
-        return;
-      }
-      // A tap that hit no link dismisses the keyboard, so the output can be read
-      // without reaching for a separate control.
-      Keyboard.dismiss();
-    });
-
-  const doubleTapGesture = Gesture.Tap()
-    .runOnJS(true)
-    .numberOfTaps(2)
-    .maxDistance(16)
-    .maxDuration(250)
-    .maxDelay(250)
-    .onEnd((event, success) => {
-      if (!success) return;
-      const cell = cellAtViewportPoint(
-        event.x,
-        event.y,
-        {
-          cellWidth,
-          lineHeight,
-          scale: scale.value,
-          translateX: translateX.value,
-          translateY: translateY.value,
-          horizontalPadding,
-          verticalPadding,
-        },
-        gridRows,
-        gridColumns
-      );
-      selectLine(cell);
-    });
+  const twoFingerSwipeGesture = useMemo(
+    () =>
+      Gesture.Pan()
+        .runOnJS(true)
+        .enabled(Boolean(onTwoFingerSwipe))
+        .minPointers(2)
+        .minDistance(TWO_FINGER_MIN_DISTANCE)
+        .onTouchesDown((event) => {
+          sampleTwoFingers(twoFingerTracking, event.allTouches);
+        })
+        .onTouchesMove((event) => {
+          sampleTwoFingers(twoFingerTracking, event.allTouches);
+        })
+        .onEnd(() => {
+          const { start, latest, abandoned } = twoFingerTracking;
+          if (abandoned || !start || !latest) return;
+          const gesture = classifyTwoFingerGesture(start, latest);
+          // `pinch` and `none` are both silence. The canvas has already answered
+          // the pinch by zooming, and it must not also change what is being zoomed.
+          if (gesture === 'next' || gesture === 'previous') {
+            if (tabSwipeClearsSelection(selecting.get(), true)) clearSelection();
+            onTwoFingerSwipe?.(gesture);
+          }
+        })
+        .onFinalize(() => {
+          resetTwoFingers(twoFingerTracking);
+        }),
+    [clearSelection, onTwoFingerSwipe, selecting, twoFingerTracking]
+  );
 
   /**
    * The press that turns the pane from something you read into something you
@@ -2625,77 +2719,116 @@ export function SkiaTerminal({
    * very next thing that happens is a drag reading it from there, and a hop to
    * JS and back is a hop the first few pixels of that drag would arrive during.
    */
-  const longPressGesture = Gesture.LongPress()
-    .numberOfPointers(1)
-    .minDuration(TERMINAL_LONG_PRESS_MS)
-    .maxDistance(TERMINAL_LONG_PRESS_SLOP)
-    .shouldCancelWhenOutside(false)
-    .onStart((event) => {
-      if (
-        !longPressArms({
-          pointerCount: event.numberOfPointers,
-          panning: panAxis.value !== AXIS_UNDECIDED,
-          pinching: pinchPhase.value === 'active',
-          coasting: coasting.value > 0,
+  const longPressGesture = useMemo(
+    () =>
+      Gesture.LongPress()
+        .numberOfPointers(1)
+        .minDuration(TERMINAL_LONG_PRESS_MS)
+        .maxDistance(TERMINAL_LONG_PRESS_SLOP)
+        .shouldCancelWhenOutside(false)
+        .onStart((event) => {
+          if (
+            !longPressArms({
+              pointerCount: event.numberOfPointers,
+              panning: panAxis.get() !== AXIS_UNDECIDED,
+              pinching: pinchPhase.get() === 'active',
+              coasting: coasting.get() > 0,
+            })
+          ) {
+            return;
+          }
+          // Under `?1002` this press is the program's, not a selection: see
+          // `terminalTouchPressDrags`. The button goes down here and the pan, which
+          // is simultaneous with this and has not committed to an axis while the
+          // finger was still, carries the motion from wherever it goes next.
+          if (terminalTouchPressDrags(touchModeBits.get())) {
+            const target = programCellAt(event.x, event.y);
+            programCellRow.set(target.row);
+            programCellColumn.set(target.column);
+            programDragHeld.set(true);
+            programTravelRows.set(0);
+            programTravelColumns.set(0);
+            programEmittedRows.set(0);
+            programEmittedColumns.set(0);
+            // Active straight away, so a press that is lifted without ever moving
+            // still owes -- and sends -- its release. The origin arrives with the
+            // pan's next update; see `programRebase`.
+            programRebase.set(true);
+            programDragActive.set(true);
+            scheduleOnRN(emitProgramPress, { row: target.row, column: target.column });
+            return;
+          }
+          const cell = cellAtViewportPoint(
+            event.x,
+            event.y,
+            {
+              cellWidth,
+              lineHeight,
+              scale: scale.get(),
+              translateX: translateX.get(),
+              translateY: translateY.get() + pullDistance.get(),
+              horizontalPadding,
+              verticalPadding,
+            },
+            gridRows,
+            gridColumns
+          );
+          selecting.set(true);
+          anchorRow.set(cell.row);
+          anchorColumn.set(cell.column);
+          focusRow.set(cell.row);
+          focusColumn.set(cell.column);
+          // The word under the finger needs the frame's cells, which live on the JS
+          // side. The cell above is a usable selection on its own, so the highlight
+          // is up on this frame and the widening lands a tick later.
+          scheduleOnRN(beginSelection, cell);
         })
-      ) {
-        return;
-      }
-      // Under `?1002` this press is the program's, not a selection: see
-      // `terminalTouchPressDrags`. The button goes down here and the pan, which
-      // is simultaneous with this and has not committed to an axis while the
-      // finger was still, carries the motion from wherever it goes next.
-      if (terminalTouchPressDrags(touchModeBits.value)) {
-        const target = programCellAt(event.x, event.y);
-        programCellRow.set(target.row);
-        programCellColumn.set(target.column);
-        programDragHeld.set(true);
-        programTravelRows.set(0);
-        programTravelColumns.set(0);
-        programEmittedRows.set(0);
-        programEmittedColumns.set(0);
-        // Active straight away, so a press that is lifted without ever moving
-        // still owes -- and sends -- its release. The origin arrives with the
-        // pan's next update; see `programRebase`.
-        programRebase.set(true);
-        programDragActive.set(true);
-        scheduleOnRN(emitProgramPress, { row: target.row, column: target.column });
-        return;
-      }
-      const cell = cellAtViewportPoint(
-        event.x,
-        event.y,
-        {
-          cellWidth,
-          lineHeight,
-          scale: scale.value,
-          translateX: translateX.value,
-          translateY: translateY.value + pullDistance.value,
-          horizontalPadding,
-          verticalPadding,
-        },
-        gridRows,
-        gridColumns
-      );
-      selecting.set(true);
-      anchorRow.set(cell.row);
-      anchorColumn.set(cell.column);
-      focusRow.set(cell.row);
-      focusColumn.set(cell.column);
-      // The word under the finger needs the frame's cells, which live on the JS
-      // side. The cell above is a usable selection on its own, so the highlight
-      // is up on this frame and the widening lands a tick later.
-      scheduleOnRN(beginSelection, cell);
-    })
-    // A press that armed the program's button and was then lifted without ever
-    // travelling far enough to activate the pan never reaches the pan's own
-    // finalizer, and the button would stay down. Only what this press armed,
-    // though: the recogniser also finalizes by FAILING, which is what an
-    // ordinary wheel drag does to it a few pixels in, and ending that drag from
-    // here would cut it in half.
-    .onFinalize(() => {
-      if (programDragHeld.value) endProgramDrag();
-    });
+        // A press that armed the program's button and was then lifted without ever
+        // travelling far enough to activate the pan never reaches the pan's own
+        // finalizer, and the button would stay down. Only what this press armed,
+        // though: the recogniser also finalizes by FAILING, which is what an
+        // ordinary wheel drag does to it a few pixels in, and ending that drag from
+        // here would cut it in half.
+        .onFinalize(() => {
+          if (programDragHeld.get()) endProgramDrag();
+        })
+        .requireExternalGestureToFail(doubleTapGesture)
+        .requireExternalGestureToFail(singleTapGesture),
+    [
+      anchorColumn,
+      anchorRow,
+      beginSelection,
+      cellWidth,
+      coasting,
+      doubleTapGesture,
+      emitProgramPress,
+      endProgramDrag,
+      focusColumn,
+      focusRow,
+      gridColumns,
+      gridRows,
+      lineHeight,
+      panAxis,
+      pinchPhase,
+      programCellAt,
+      programCellColumn,
+      programCellRow,
+      programDragActive,
+      programDragHeld,
+      programEmittedColumns,
+      programEmittedRows,
+      programRebase,
+      programTravelColumns,
+      programTravelRows,
+      pullDistance,
+      scale,
+      selecting,
+      singleTapGesture,
+      touchModeBits,
+      translateX,
+      translateY,
+    ]
+  );
 
   // One combined transform on a single group rather than a translate group
   // wrapping a scale group: two nested transforms composite independently, and
@@ -2762,23 +2895,23 @@ export function SkiaTerminal({
   const gestureCommitFrame = useFrameCallback(() => {
     'worklet';
     commitPaced.set(1);
-    committedTranslateX.set(translateX.value);
-    committedTranslateY.set(translateY.value + pullDistance.value);
-    committedScale.set(scale.value);
+    committedTranslateX.set(translateX.get());
+    committedTranslateY.set(translateY.get() + pullDistance.get());
+    committedScale.set(scale.get());
   }, false);
   useAnimatedReaction(
     () => ({
-      x: translateX.value,
-      y: translateY.value + pullDistance.value,
-      s: scale.value,
-      moving: gesturing.value || coasting.value > 0,
+      x: translateX.get(),
+      y: translateY.get() + pullDistance.get(),
+      s: scale.get(),
+      moving: gesturing.get() || coasting.get() > 0,
     }),
     (live) => {
       // Paced only once the callback is actually running. Registering it is a
       // hop to the JS thread and back (see the effect below), and the frames in
       // that gap still have to reach the screen -- a gesture that began with a
       // hitch would be a poor trade for the frames it saved.
-      if (live.moving && commitPaced.value === 1) return;
+      if (live.moving && commitPaced.get() === 1) return;
       committedTranslateX.set(live.x);
       committedTranslateY.set(live.y);
       committedScale.set(live.s);
@@ -2786,7 +2919,7 @@ export function SkiaTerminal({
   );
   const [gestureMoving, setGestureMoving] = useState(false);
   useAnimatedReaction(
-    () => gesturing.value || coasting.value > 0,
+    () => gesturing.get() || coasting.get() > 0,
     (moving, wasMoving) => {
       if (moving === wasMoving) return;
       if (moving) {
@@ -2795,9 +2928,9 @@ export function SkiaTerminal({
         // The callback stops on the frame the gesture ends, and the finger's
         // last position lands after it. Written straight through so a release
         // cannot leave the pane a frame short of where it was let go.
-        committedTranslateX.set(translateX.value);
-        committedTranslateY.set(translateY.value + pullDistance.value);
-        committedScale.set(scale.value);
+        committedTranslateX.set(translateX.get());
+        committedTranslateY.set(translateY.get() + pullDistance.get());
+        committedScale.set(scale.get());
       }
       scheduleOnRN(setGestureMoving, moving);
     }
@@ -2813,9 +2946,9 @@ export function SkiaTerminal({
   const contentTransform = useDerivedValue(() => {
     const snap = (value: number) => Math.round(value * devicePixelRatio) / devicePixelRatio;
     return [
-      { translateX: snap(committedTranslateX.value) },
-      { translateY: snap(committedTranslateY.value) },
-      { scale: committedScale.value },
+      { translateX: snap(committedTranslateX.get()) },
+      { translateY: snap(committedTranslateY.get()) },
+      { scale: committedScale.get() },
     ];
   });
   /**
@@ -2858,8 +2991,8 @@ export function SkiaTerminal({
   // consistent with the arrival flash, and harmless where both fire together.
   useAnimatedReaction(
     () => {
-      const minY = animatedVisibleHeight.value - contentHeight * scale.value;
-      return translateY.value >= terminalTopStop(minY, animatedTopInset.value) - 1;
+      const minY = animatedVisibleHeight.get() - contentHeight * scale.get();
+      return translateY.get() >= terminalTopStop(minY, animatedTopInset.get()) - 1;
     },
     (isAtTop, wasAtTop) => {
       if (!isAtTop || wasAtTop || !canLoadEarlier) return;
@@ -2872,8 +3005,8 @@ export function SkiaTerminal({
   );
 
   const pullIndicatorStyle = useAnimatedStyle(() => ({
-    opacity: historyHintOpacity(pullDistance.value, loadingEarlier, historyHintIntro.value),
-    transform: [{ translateY: Math.min(8, pullDistance.value * 0.16) }],
+    opacity: historyHintOpacity(pullDistance.get(), loadingEarlier, historyHintIntro.get()),
+    transform: [{ translateY: Math.min(8, pullDistance.get() * 0.16) }],
   }));
   // The tab swipe joins the pan, the pinch, and the long press in one flat
   // `Simultaneous` with the tap.
@@ -2914,17 +3047,26 @@ export function SkiaTerminal({
   // not fail until its own 600ms `maxDuration` is up, so the press arms then
   // rather than at 500. That is the right way round -- a link tap must never
   // wait on a long press -- and the haptic is what tells the reader it landed.
-  panGesture.requireExternalGestureToFail(doubleTapGesture);
-  panGesture.requireExternalGestureToFail(singleTapGesture);
-  longPressGesture.requireExternalGestureToFail(doubleTapGesture);
-  longPressGesture.requireExternalGestureToFail(singleTapGesture);
-  const tapGesture = Gesture.Exclusive(doubleTapGesture, singleTapGesture);
-  const gesture = Gesture.Simultaneous(
-    tapGesture,
-    panGesture,
-    pinchGesture,
-    twoFingerSwipeGesture,
-    longPressGesture
+  // The two relations above are set where the pan and the long press are
+  // built (`requireExternalGestureToFail`), inside their memos, so a render
+  // that keeps them does not append the same relation to them again.
+  const gesture = useMemo(
+    () =>
+      Gesture.Simultaneous(
+        Gesture.Exclusive(doubleTapGesture, singleTapGesture),
+        panGesture,
+        pinchGesture,
+        twoFingerSwipeGesture,
+        longPressGesture
+      ),
+    [
+      doubleTapGesture,
+      longPressGesture,
+      panGesture,
+      pinchGesture,
+      singleTapGesture,
+      twoFingerSwipeGesture,
+    ]
   );
 
   /**
@@ -2970,9 +3112,9 @@ export function SkiaTerminal({
     translateY.set(
       withTiming(
         terminalRestOffset(
-          animatedVisibleHeight.value - contentHeight * scale.value,
-          animatedTopInset.value,
-          historyHeight * scale.value
+          animatedVisibleHeight.get() - contentHeight * scale.get(),
+          animatedTopInset.get(),
+          historyHeight * scale.get()
         ),
         timing('short')
       )
@@ -3062,9 +3204,9 @@ export function SkiaTerminal({
     translateY.set(
       withTiming(
         terminalRestOffset(
-          animatedVisibleHeight.value - contentHeight * scale.value,
-          animatedTopInset.value,
-          historyHeight * scale.value
+          animatedVisibleHeight.get() - contentHeight * scale.get(),
+          animatedTopInset.get(),
+          historyHeight * scale.get()
         ),
         timing('short')
       )
