@@ -159,7 +159,8 @@ export class ThemeRepository {
   constructor(
     private storage: ThemeLibraryStorage,
     private allocateId: () => string,
-    private assetAvailable: (uri: string) => boolean = (uri) => uri.startsWith('file:///')
+    private assetAvailable: (uri: string) => boolean = (uri) => uri.startsWith('file:///'),
+    private assetPaths?: { encode: (uri: string) => string; decode: (uri: string) => string }
   ) {}
 
   hydrate(): ThemeLibrary {
@@ -186,12 +187,21 @@ export class ThemeRepository {
           )
             continue;
           const manifest = parseThemeManifest(JSON.stringify(candidate.manifest));
-          validateInstalledAssets(manifest, candidate.assets);
-          if (Object.values(candidate.assets).some((uri) => !this.assetAvailable(uri))) continue;
+          const assets =
+            candidate.assets && typeof candidate.assets === 'object'
+              ? Object.fromEntries(
+                  Object.entries(candidate.assets).map(([id, uri]) => [
+                    id,
+                    typeof uri === 'string' ? (this.assetPaths?.decode(uri) ?? uri) : uri,
+                  ])
+                )
+              : candidate.assets;
+          validateInstalledAssets(manifest, assets);
+          if (Object.values(assets).some((uri) => !this.assetAvailable(uri))) continue;
           themes.push({
             id: candidate.id,
             manifest,
-            assets: { ...candidate.assets },
+            assets: { ...assets },
             ...(validBackgroundOpacity(candidate.terminalBackgroundOpacity)
               ? { terminalBackgroundOpacity: candidate.terminalBackgroundOpacity }
               : {}),
@@ -406,7 +416,19 @@ export class ThemeRepository {
   }
 
   private commit(next: ThemeLibrary): void {
-    const value = JSON.stringify(next);
+    const value = JSON.stringify(
+      this.assetPaths
+        ? {
+            ...next,
+            themes: next.themes.map((theme) => ({
+              ...theme,
+              assets: Object.fromEntries(
+                Object.entries(theme.assets).map(([id, uri]) => [id, this.assetPaths!.encode(uri)])
+              ),
+            })),
+          }
+        : next
+    );
     if (new TextEncoder().encode(value).length > MAX_LIBRARY_BYTES)
       throw new Error('Theme library is full');
     this.storage.write(value);
