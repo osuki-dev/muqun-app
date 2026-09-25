@@ -74,61 +74,61 @@ export function ImagePreviewModal({
   // A rotation, or opening a different image, changes what "page 3" means in
   // pixels. Re-resting the pager keeps the visible page put.
   useEffect(() => {
-    pagerX.set(-pageIndex.value * width);
+    pagerX.set(-pageIndex.get() * width);
   }, [pageIndex, pagerX, width]);
 
   const panGesture = Gesture.Pan()
     .minDistance(2)
     .onStart(() => {
-      gestureStartPagerX.set(pagerX.value);
-      gestureStartImageX.set(imageX.value);
-      gestureStartImageY.set(imageY.value);
+      gestureStartPagerX.set(pagerX.get());
+      gestureStartImageX.set(imageX.get());
+      gestureStartImageY.set(imageY.get());
       panAxis.set(AXIS_UNDECIDED);
     })
     .onUpdate((event) => {
-      if (scale.value > 1) {
+      if (scale.get() > 1) {
         // Zoomed in, the drag moves the image inside its own frame. The bounds
         // are half the overflow in each direction, so the picture can never be
         // dragged clear of the screen.
-        const boundX = ((scale.value - 1) * width) / 2;
-        const boundY = ((scale.value - 1) * height) / 2;
+        const boundX = ((scale.get() - 1) * width) / 2;
+        const boundY = ((scale.get() - 1) * height) / 2;
         imageX.set(
-          Math.max(-boundX, Math.min(boundX, gestureStartImageX.value + event.translationX))
+          Math.max(-boundX, Math.min(boundX, gestureStartImageX.get() + event.translationX))
         );
         imageY.set(
-          Math.max(-boundY, Math.min(boundY, gestureStartImageY.value + event.translationY))
+          Math.max(-boundY, Math.min(boundY, gestureStartImageY.get() + event.translationY))
         );
         return;
       }
 
-      if (panAxis.value === AXIS_UNDECIDED) {
+      if (panAxis.get() === AXIS_UNDECIDED) {
         const dx = Math.abs(event.translationX);
         const dy = Math.abs(event.translationY);
         if (Math.max(dx, dy) >= AXIS_LOCK_DISTANCE) {
           panAxis.set(dx > dy ? AXIS_HORIZONTAL : AXIS_VERTICAL);
         }
       }
-      if (panAxis.value === AXIS_HORIZONTAL) {
-        pagerX.set(gestureStartPagerX.value + event.translationX);
-      } else if (panAxis.value === AXIS_VERTICAL) {
+      if (panAxis.get() === AXIS_HORIZONTAL) {
+        pagerX.set(gestureStartPagerX.get() + event.translationX);
+      } else if (panAxis.get() === AXIS_VERTICAL) {
         // Only downward: dragging up has no meaning here and letting the image
         // follow it looked like a broken scroll.
         dragY.set(Math.max(0, event.translationY));
       }
     })
     .onEnd((event) => {
-      if (scale.value > 1) return;
-      if (panAxis.value === AXIS_HORIZONTAL) {
+      if (scale.get() > 1) return;
+      if (panAxis.get() === AXIS_HORIZONTAL) {
         const travelled = event.translationX;
         const flicked = Math.abs(event.velocityX) > 500;
         const step = flicked || Math.abs(travelled) > width * 0.3 ? (travelled < 0 ? 1 : -1) : 0;
-        const next = Math.max(0, Math.min(images.length - 1, pageIndex.value + step));
+        const next = Math.max(0, Math.min(images.length - 1, pageIndex.get() + step));
         pageIndex.set(next);
         pagerX.set(withTiming(-next * width, timing('short')));
         return;
       }
-      if (panAxis.value === AXIS_VERTICAL) {
-        if (dragY.value > DISMISS_DISTANCE || event.velocityY > DISMISS_VELOCITY) {
+      if (panAxis.get() === AXIS_VERTICAL) {
+        if (dragY.get() > DISMISS_DISTANCE || event.velocityY > DISMISS_VELOCITY) {
           scheduleOnRN(onClose);
           return;
         }
@@ -141,15 +141,15 @@ export function ImagePreviewModal({
 
   const pinchGesture = Gesture.Pinch()
     .onStart(() => {
-      gestureStartScale.set(scale.value);
+      gestureStartScale.set(scale.get());
     })
     .onUpdate((event) => {
-      scale.set(Math.max(MIN_SCALE, Math.min(MAX_SCALE, gestureStartScale.value * event.scale)));
+      scale.set(Math.max(MIN_SCALE, Math.min(MAX_SCALE, gestureStartScale.get() * event.scale)));
     })
     .onEnd(() => {
       // Anything near 1x snaps back cleanly, so a stray pinch cannot leave the
       // image a few percent off and permanently pannable.
-      if (scale.value <= 1.05) {
+      if (scale.get() <= 1.05) {
         scale.set(withTiming(1, timing('micro')));
         imageX.set(withTiming(0, timing('micro')));
         imageY.set(withTiming(0, timing('micro')));
@@ -157,10 +157,10 @@ export function ImagePreviewModal({
       }
       // Re-clamp: shrinking can leave the image translated further than its
       // new, smaller overflow allows.
-      const boundX = ((scale.value - 1) * width) / 2;
-      const boundY = ((scale.value - 1) * height) / 2;
-      imageX.set(withTiming(Math.max(-boundX, Math.min(boundX, imageX.value)), timing('micro')));
-      imageY.set(withTiming(Math.max(-boundY, Math.min(boundY, imageY.value)), timing('micro')));
+      const boundX = ((scale.get() - 1) * width) / 2;
+      const boundY = ((scale.get() - 1) * height) / 2;
+      imageX.set(withTiming(Math.max(-boundX, Math.min(boundX, imageX.get())), timing('micro')));
+      imageY.set(withTiming(Math.max(-boundY, Math.min(boundY, imageY.get())), timing('micro')));
     });
 
   const doubleTapGesture = Gesture.Tap()
@@ -168,7 +168,7 @@ export function ImagePreviewModal({
     .maxDuration(260)
     .onEnd((_event, success) => {
       if (!success) return;
-      const zoomedIn = scale.value > 1.05;
+      const zoomedIn = scale.get() > 1.05;
       scale.set(withTiming(zoomedIn ? 1 : DOUBLE_TAP_SCALE, timing('short')));
       imageX.set(withTiming(0, timing('short')));
       imageY.set(withTiming(0, timing('short')));
@@ -188,13 +188,13 @@ export function ImagePreviewModal({
   );
 
   const backdropStyle = useAnimatedStyle(() => ({
-    opacity: 1 - Math.min(0.7, dragY.value / 420),
+    opacity: 1 - Math.min(0.7, dragY.get() / 420),
   }));
   const pagerStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: pagerX.value }, { translateY: dragY.value }],
+    transform: [{ translateX: pagerX.get() }, { translateY: dragY.get() }],
   }));
   const zoomStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: imageX.value }, { translateY: imageY.value }, { scale: scale.value }],
+    transform: [{ translateX: imageX.get() }, { translateY: imageY.get() }, { scale: scale.get() }],
   }));
 
   return (

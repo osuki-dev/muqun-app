@@ -48,6 +48,27 @@ export function useLatest<T>(value: T) {
   return ref;
 }`,
     },
+    {
+      // A deferred shared-value read through \`.get()\`: the memo keys on the
+      // stable shared value, not on what it holds.
+      filename,
+      code: `import { useSharedValue } from 'react-native-reanimated';
+export function Handle() {
+  const x = useSharedValue(0);
+  const onMove = () => x.get() + 1;
+  return <div onClick={onMove} />;
+}`,
+    },
+    {
+      // A render-time read keeps \`.value\`: moved to \`.get()\`, the compiler
+      // would serve the first value on every later render.
+      filename,
+      code: `import { useSharedValue } from 'react-native-reanimated';
+export function Now() {
+  const x = useSharedValue(0);
+  return <span>{x.value}</span>;
+}`,
+    },
   ],
   invalid: [
     {
@@ -82,6 +103,17 @@ export function Slide() {
   const x = useSharedValue(0);
   const style = useAnimatedStyle(() => ({ opacity: x.value }));
   return <Animated.View style={style} onTouchStart={() => { x.value = 1; }} />;
+}`,
+      errors: 1,
+    },
+    {
+      filename,
+      // Compiles, but the memo is keyed on \`x.value\`.
+      code: `import { useSharedValue } from 'react-native-reanimated';
+export function Handle() {
+  const x = useSharedValue(0);
+  const onMove = () => x.value + 1;
+  return <div onClick={onMove} />;
 }`,
       errors: 1,
     },

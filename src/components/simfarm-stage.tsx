@@ -181,7 +181,7 @@ export function SimfarmStage({
   const handleX = useSharedValue(remembered?.x ?? 0);
   const handleY = useSharedValue(remembered?.y ?? 0);
   useEffect(() => {
-    return () => rememberSimfarmHandle({ x: handleX.value, y: handleY.value });
+    return () => rememberSimfarmHandle({ x: handleX.get(), y: handleY.get() });
   }, [handleX, handleY]);
 
   /**
@@ -195,7 +195,7 @@ export function SimfarmStage({
     (event: 'button' | 'offer') => {
       const button = floatingHandleFrame(
         viewport,
-        { x: handleX.value, y: handleY.value },
+        { x: handleX.get(), y: handleY.get() },
         bottomInset
       );
       setMenuAt(simfarmMenuPlacement(button, viewport, { top: topInset, bottom: bottomInset }));
@@ -277,8 +277,8 @@ export function SimfarmStage({
     return placeSimfarmFrame(
       frame,
       viewport,
-      zoom.value,
-      offset.value ?? simfarmRestingOffset(frame, viewport, zoom.value)
+      zoom.get(),
+      offset.get() ?? simfarmRestingOffset(frame, viewport, zoom.get())
     );
   });
 
@@ -292,7 +292,7 @@ export function SimfarmStage({
   const rotation = screen?.rotation ?? 0;
   const quarterTurned = rotation % 180 !== 0;
   const picture = useDerivedValue(() => {
-    const placed = placement.value;
+    const placed = placement.get();
     if (placed === null) return { x: 0, y: 0, width: 0, height: 0 };
     if (!quarterTurned) {
       return { x: placed.x, y: placed.y, width: placed.width, height: placed.height };
@@ -305,7 +305,7 @@ export function SimfarmStage({
     };
   });
   const centre = useDerivedValue(() => {
-    const placed = placement.value;
+    const placed = placement.get();
     if (placed === null) return { x: 0, y: 0 };
     return { x: placed.x + placed.width / 2, y: placed.y + placed.height / 2 };
   });
@@ -325,7 +325,7 @@ export function SimfarmStage({
    */
   const forward = useCallback(
     (phase: SimfarmTouchPhase, x: number, y: number) => {
-      const placed = placement.value;
+      const placed = placement.get();
       if (placed === null) return;
       stream.touch({
         phase,
@@ -459,9 +459,9 @@ export function SimfarmStage({
         .minPointers(2)
         .onChange((event) => {
           'worklet';
-          const placed = placement.value;
+          const placed = placement.get();
           if (placed === null || frame === null) return;
-          const from = offset.value ?? simfarmRestingOffset(frame, viewport, zoom.value);
+          const from = offset.get() ?? simfarmRestingOffset(frame, viewport, zoom.get());
           offset.set(
             clampSimfarmOffset(placed, viewport, {
               x: from.x + event.changeX,
@@ -477,7 +477,7 @@ export function SimfarmStage({
       Gesture.Pinch().onChange((event) => {
         'worklet';
         zoom.set(
-          Math.min(SIMFARM_MAX_ZOOM, Math.max(SIMFARM_MIN_ZOOM, zoom.value * event.scaleChange))
+          Math.min(SIMFARM_MAX_ZOOM, Math.max(SIMFARM_MIN_ZOOM, zoom.get() * event.scaleChange))
         );
       }),
     [zoom]

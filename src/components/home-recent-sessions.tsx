@@ -69,7 +69,6 @@ export function HomeRecentSessions({
   const targetId = selectedServerId ?? activeConnection?.serverId;
   const appActive = useAppActive();
   const refreshFlight = useRef<Promise<void>>(Promise.resolve());
-  const [refreshing, setRefreshing] = useState(false);
   useFocusEffect(
     useCallback(() => {
       if (!appActive || !hydrated) return;
@@ -82,7 +81,6 @@ export function HomeRecentSessions({
         // Drain older reads before starting another batch after a focus/target change.
         const flight = refreshFlight.current.then(async () => {
           if (!isCurrent()) return;
-          setRefreshing(true);
           await refreshHomeGateways({
             records: servers.filter((server) => !isDemoRecord(server)),
             selectedServerId: targetId,
@@ -116,14 +114,10 @@ export function HomeRecentSessions({
           },
           () => {
             pending = false;
-            if (isCurrent()) {
-              setRefreshing(false);
-              setObservationNowMs(Date.now());
-            }
+            if (isCurrent()) setObservationNowMs(Date.now());
           }
         );
       };
-      setRefreshing(false);
       setObservationNowMs(Date.now());
       void refresh();
       const timer = setInterval(() => {
@@ -147,12 +141,6 @@ export function HomeRecentSessions({
   const displayed = visibleHomeContinueEntries(available, expanded);
   return (
     <View testID="home-recent-sessions" style={styles.root}>
-      {refreshing ? (
-        <Text
-          variant="caption"
-          color={theme.colors.textMuted}
-          style={{ position: 'absolute', top: -22, right: 0 }}>{t`Loading`}</Text>
-      ) : null}
       <View
         style={[
           styles.list,

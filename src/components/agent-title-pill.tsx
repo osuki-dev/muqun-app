@@ -96,7 +96,7 @@ function EdgeMark({ side, present }: { side: 'left' | 'right'; present: boolean 
     shown.set(withTiming(present ? MARK_OPACITY : 0, timing('short')));
   }, [present, shown]);
 
-  const style = useAnimatedStyle(() => ({ opacity: shown.value }));
+  const style = useAnimatedStyle(() => ({ opacity: shown.get() }));
 
   return (
     <Animated.View
@@ -243,8 +243,8 @@ export function AgentTitlePill({
           // recognised, no sense of how far it has to go, and nothing to
           // abandon by dragging back.
           const forward = event.translationX < 0;
-          const available = forward ? hasNext.value : hasPrevious.value;
-          slide.set(sessionSwipeFollow(event.translationX, pillWidth.value, available));
+          const available = forward ? hasNext.get() : hasPrevious.get();
+          slide.set(sessionSwipeFollow(event.translationX, pillWidth.get(), available));
         })
         // `commitFromGesture` never changes identity and always reaches the
         // newest `commit` (see `useStableHandler`), which is what keeps the
@@ -255,7 +255,7 @@ export function AgentTitlePill({
             event.translationY,
             event.velocityX
           );
-          const available = direction === 'next' ? hasNext.value : hasPrevious.value;
+          const available = direction === 'next' ? hasNext.get() : hasPrevious.get();
           if (direction && available) {
             // `playSwitch` puts the title where the carousel wants it, so the
             // drag's own offset is cleared here rather than settled.
@@ -277,8 +277,8 @@ export function AgentTitlePill({
   );
 
   const titleStyle = useAnimatedStyle(() => ({
-    opacity: fade.value,
-    transform: [{ translateX: slide.value }],
+    opacity: fade.get(),
+    transform: [{ translateX: slide.get() }],
   }));
 
   const accessibilityActions = useMemo(

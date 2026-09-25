@@ -121,7 +121,12 @@ import { GatewayStorageError } from '@/components/gateway-storage-error';
 import { useGatewayTunnel } from '@/hooks/use-gateway-tunnel';
 import { usePaneApproval } from '@/hooks/use-pane-approval';
 import { usePaneEvents } from '@/hooks/use-pane-events';
-import { useLatestRef, useLazyRef, useResetSignal } from '@/hooks/use-render-refs';
+import {
+  useLatestRef,
+  useLazyRef,
+  useResetSignal,
+  useStableHandler,
+} from '@/hooks/use-render-refs';
 import { useSettledHeight } from '@/hooks/use-settled-height';
 import { useMonoFontFamily } from '@/hooks/use-user-fonts';
 import { useTabSwipe } from '@/hooks/use-tab-swipe';
@@ -3809,6 +3814,47 @@ export function ServerTerminalWorkspace({
     }
   }
 
+  /**
+   * Characters into a pane, by the one rule that decides how they travel.
+   *
+   * `send-text` is a *paste* -- the gateway loads a tmux buffer and pastes it
+   * bracketed -- and a full-screen program reads a bracketed paste as content
+   * rather than as keys. So a keypress that went out this way did not press
+   * anything: `i` typed the letter into the file instead of entering insert
+   * mode, and on nvim's dashboard or a file tree, where the buffer cannot be
+   * written, it did nothing at all. `lib/pane-input` is the rule and the
+   * reason; this is the only place on this screen that acts on it.
+   */
+  function sendPaneCharacters(
+    paneId: string,
+    text: string,
+    source: PaneInputSource,
+    submit = false
+  ): Promise<unknown> {
+    if (paneInputDelivery(source) === 'keystrokes' && isSendableAsKeystrokes(text)) {
+      // The submit rides in the same request, so an Enter cannot land between
+      // two halves of a command line.
+      return sendPaneKeys(data.sessionId, paneId, paneKeystrokes(text, { submit }));
+    }
+    if (!record) return Promise.reject(new Error('Not connected to a server.'));
+    const capturedRecord = record;
+    const requestServerId = serverId;
+    const requestSessionId = data.sessionId;
+    return sendBoundPaneText(
+      capturedRecord,
+      requestSessionId,
+      paneId,
+      text,
+      submit,
+      deliveryOwnership.capture(
+        () =>
+          useGatewayConnectionStore.getState().record === capturedRecord &&
+          activeServerRef.current === requestServerId &&
+          activePaneRef.current === paneId
+      )
+    );
+  }
+
   async function sendInput() {
     const requestServerId = serverId;
     const requestPaneId = selection.paneId;
@@ -3930,47 +3976,6 @@ export function ServerTerminalWorkspace({
         if (composerSendGuard.release(sendToken) && activeServerRef.current === requestServerId)
           setSending(false);
       }
-    );
-  }
-
-  /**
-   * Characters into a pane, by the one rule that decides how they travel.
-   *
-   * `send-text` is a *paste* -- the gateway loads a tmux buffer and pastes it
-   * bracketed -- and a full-screen program reads a bracketed paste as content
-   * rather than as keys. So a keypress that went out this way did not press
-   * anything: `i` typed the letter into the file instead of entering insert
-   * mode, and on nvim's dashboard or a file tree, where the buffer cannot be
-   * written, it did nothing at all. `lib/pane-input` is the rule and the
-   * reason; this is the only place on this screen that acts on it.
-   */
-  function sendPaneCharacters(
-    paneId: string,
-    text: string,
-    source: PaneInputSource,
-    submit = false
-  ): Promise<unknown> {
-    if (paneInputDelivery(source) === 'keystrokes' && isSendableAsKeystrokes(text)) {
-      // The submit rides in the same request, so an Enter cannot land between
-      // two halves of a command line.
-      return sendPaneKeys(data.sessionId, paneId, paneKeystrokes(text, { submit }));
-    }
-    if (!record) return Promise.reject(new Error('Not connected to a server.'));
-    const capturedRecord = record;
-    const requestServerId = serverId;
-    const requestSessionId = data.sessionId;
-    return sendBoundPaneText(
-      capturedRecord,
-      requestSessionId,
-      paneId,
-      text,
-      submit,
-      deliveryOwnership.capture(
-        () =>
-          useGatewayConnectionStore.getState().record === capturedRecord &&
-          activeServerRef.current === requestServerId &&
-          activePaneRef.current === paneId
-      )
     );
   }
 
@@ -4262,6 +4267,12 @@ export function ServerTerminalWorkspace({
     } as Href);
   }
 
+  // The key row's press goes through a stable handler so the caps keep their
+  // props while the reader types: `sendTerminalKey` closes over most of this
+  // screen, and as a prop it re-rendered every cap on every keystroke. What a
+  // cap shows -- `sending`, `disabled` -- is still read at render.
+  const pressTerminalKey = useStableHandler((item: TerminalKey) => void sendTerminalKey(item));
+
   if (hydrationError)
     return (
       <AppDrawer>
@@ -4312,7 +4323,7 @@ export function ServerTerminalWorkspace({
         disabled={
           !targetReady || connection.phase !== 'connected' || !selectedPane || Boolean(sendingKey)
         }
-        onPress={() => void sendTerminalKey(item)}
+        onPress={() => pressTerminalKey(item)}
         textColor={chromeText}
         background={chromeGlass}
         activeBackground={theme.colors.primary}

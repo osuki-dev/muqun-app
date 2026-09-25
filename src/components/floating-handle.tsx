@@ -165,7 +165,7 @@ export function FloatingHandle({
   const bounds = useCallback((): HandleBounds => {
     'worklet';
     return floatingHandleBounds(
-      { width: trackWidth.value, height: trackHeight.value },
+      { width: trackWidth.get(), height: trackHeight.get() },
       { size: HANDLE_SIZE, gap: HANDLE_GAP, restingGap: HANDLE_RESTING_GAP, resting, topInset }
     );
   }, [resting, topInset, trackHeight, trackWidth]);
@@ -213,7 +213,7 @@ export function FloatingHandle({
     track.current = { width, height };
     if (width <= 0 || height <= 0) return;
     const next = boundsNow();
-    const previous = settledBounds.value;
+    const previous = settledBounds.get();
     const rest = previous
       ? reseatFloatingHandle({ x: offsetX.value, y: offsetY.value }, previous, next)
       : snapFloatingHandle({ x: offsetX.value, y: offsetY.value }, next);
@@ -258,8 +258,8 @@ export function FloatingHandle({
       // -- a control dragged past the edge of the screen is a control the
       // reader cannot get back.
       const edge = bounds();
-      offsetX.set(Math.min(edge.maxX, Math.max(edge.minX, startX.value + event.translationX)));
-      offsetY.set(Math.min(edge.maxY, Math.max(edge.minY, startY.value + event.translationY)));
+      offsetX.set(Math.min(edge.maxX, Math.max(edge.minX, startX.get() + event.translationX)));
+      offsetY.set(Math.min(edge.maxY, Math.max(edge.minY, startY.get() + event.translationY)));
     })
     .onEnd((event) => {
       const next = bounds();
