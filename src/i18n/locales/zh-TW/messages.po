@@ -170,6 +170,11 @@ msgstr "{0} 小時前"
 msgid "{0}m ago"
 msgstr "{0} 分鐘前"
 
+#: src/components/agent-composer.tsx
+#: src/components/agent-workbench.tsx
+msgid "{agentName} is offline"
+msgstr "{agentName} 已離線"
+
 #: src/components/agent-guide-sheet.tsx
 msgid "{agentName} is ready on this host."
 msgstr "{agentName} 已在此主機上就緒"
@@ -411,17 +416,6 @@ msgstr "新增"
 #: src/components/new-task-sheet.tsx
 msgid "Agent"
 msgstr "Agent"
-
-#. placeholder {0}: part.mode
-#: src/components/agent-message-block.tsx
-msgid "Agent · {0}"
-msgstr "Agent · {0}"
-
-#. placeholder {0}: part.previous
-#. placeholder {1}: part.mode
-#: src/components/agent-message-block.tsx
-msgid "Agent · {0} → {1}"
-msgstr "Agent · {0} → {1}"
 
 #: src/app/commands.tsx
 #: src/components/agent-command-delivery-picker.tsx
@@ -2319,8 +2313,8 @@ msgid "Guided AGENTS.md setup"
 msgstr "引導式 AGENTS.md 設定"
 
 #: src/app/settings.tsx
-msgid "Guides for pairing, the terminal, OpenCode and themes"
-msgstr "配對、終端機、OpenCode 與主題的指南"
+msgid "Guides for pairing, the terminal, agents and themes"
+msgstr "配對、終端機、Agent 和主題的使用指南"
 
 #: src/components/settings-alerts.tsx
 msgid "Haptic feedback"
@@ -2646,8 +2640,8 @@ msgid "Latest"
 msgstr "最新"
 
 #: src/components/agent-worktree-sheet.tsx
-msgid "Leave it empty and OpenCode picks a name."
-msgstr "留空則由 OpenCode 取名"
+msgid "Leave it empty and the agent picks a name."
+msgstr "留空則由 Agent 自動命名"
 
 #: src/components/new-task-sheet.tsx
 msgid "Leave it empty to start where the session already is."
@@ -2796,6 +2790,17 @@ msgstr "訊息已複製到剪貼簿"
 #: src/components/agent-workbench.tsx
 msgid "Message not sent"
 msgstr "訊息未送出"
+
+#. placeholder {0}: part.mode
+#: src/components/agent-message-block.tsx
+msgid "Mode · {0}"
+msgstr "模式 · {0}"
+
+#. placeholder {0}: part.previous
+#. placeholder {1}: part.mode
+#: src/components/agent-message-block.tsx
+msgid "Mode · {0} → {1}"
+msgstr "模式 · {0} → {1}"
 
 #: src/components/agent-context-sheet.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
@@ -3400,22 +3405,9 @@ msgstr "開啟以檢查目前狀態"
 msgid "Open workspace {0}, {panelCount, plural, one {# running} other {# running}}. Long press to close."
 msgstr "開啟工作區 {0}，{panelCount, plural, one {# 個執行中} other {# 個執行中}}。長按可關閉"
 
-#: src/components/agent-workbench.tsx
-msgid "OpenCode agent daemon is not running on this host. Run `opencode serve --service` to start it."
-msgstr "此主機上未執行 OpenCode 服務。請執行 `opencode serve --service` 啟動"
-
 #: src/i18n/labels.ts
 msgid "OpenCode is installed, but its service is not answering. Run this command on the host."
 msgstr "OpenCode 已安裝，但其服務沒有回應。請在主機上執行此命令"
-
-#: src/components/agent-workbench.tsx
-msgid "OpenCode service is offline"
-msgstr "OpenCode 服務目前離線"
-
-#: src/components/agent-composer.tsx
-#: src/components/agent-workbench.tsx
-msgid "OpenCode service offline"
-msgstr "OpenCode 服務離線"
 
 #: src/app/+not-found.tsx
 msgid "Opening"
@@ -3600,10 +3592,6 @@ msgstr "規劃 (Plan)"
 #: src/components/agent-composer.tsx
 msgid "Please retry or remove failed attachments."
 msgstr "請重試或移除上傳失敗的附件"
-
-#: src/components/agent-workbench.tsx
-msgid "Please start OpenCode on the server: opencode serve --service"
-msgstr "請在伺服器上啟動 OpenCode：opencode serve --service"
 
 #: src/components/open-web-service-sheet.tsx
 #: src/components/simfarm-preview.tsx
@@ -5077,6 +5065,10 @@ msgstr "代理程式現在問的是別的問題"
 msgid "The agent is no longer waiting."
 msgstr "代理程式已經不再等待了"
 
+#: src/components/agent-composer.tsx
+msgid "The agent is offline"
+msgstr "Agent 已離線"
+
 #: src/components/agent-context-sheet.tsx
 msgid "The agent stops asking; irreversibly destructive commands stay blocked"
 msgstr "代理將不再詢問；不可逆的破壞性指令仍會被攔截"
@@ -5770,8 +5762,8 @@ msgid "Waiting to send"
 msgstr "等待傳送"
 
 #: src/components/agent-workbench.tsx
-msgid "Welcome to OpenCode Agent"
-msgstr "歡迎使用 OpenCode 智慧體"
+msgid "Welcome to {agentName}"
+msgstr "歡迎使用 {agentName}"
 
 #: src/components/session-map.tsx
 msgid "What is running"

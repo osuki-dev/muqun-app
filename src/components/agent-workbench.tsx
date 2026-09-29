@@ -26,6 +26,7 @@ import { useIsFocused, usePathname, useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { useThemeTokens, useToast } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
+import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { Trans, useLingui } from '@lingui/react/macro';
 import {
   Bot,
@@ -133,6 +134,8 @@ import {
   useAgentsDiscoveryRefresh,
   useSelectedAgent,
 } from '@/hooks/use-agent-features';
+import { agentDisplayName } from '@/lib/home-launch-model';
+import { agentGuideFor } from '@/i18n/labels';
 import { hasAgentsDiscoveryFor, useAgents } from '@/stores/agents';
 import { useServerCapabilities } from '@/stores/server-capabilities';
 import { socketReconnectDelay, WS_EVENTS_CAPABILITY } from '@/lib/gateway-socket';
@@ -256,7 +259,12 @@ const NO_INBOX: InboxItem[] = [];
 /** Between a notice and the first transcript row it is standing over. */
 const NOTICE_RESERVE_GAP = 8;
 
-function formatAgentErrorMessage(err: unknown, fallback: string): string {
+/**
+ * The error text to show, or `offlineAdvice` when the error says the agent is
+ * not answering. The advice is the caller's, in the agent's own name and start
+ * instructions, so nothing here knows one agent's command from another's.
+ */
+function formatAgentErrorMessage(err: unknown, fallback: string, offlineAdvice: string): string {
   if (!err) return fallback;
   const str = err instanceof Error ? err.message : String(err);
   if (
@@ -265,10 +273,10 @@ function formatAgentErrorMessage(err: unknown, fallback: string): string {
     str.includes('502') ||
     str.includes('503') ||
     str.includes('Connection refused') ||
-    str.includes('Network error communicating with agent engine') ||
+    str.includes('Network error communicating with agent') ||
     str.includes('error sending request')
   ) {
-    return 'OpenCode service is offline on the host. Please run "opencode serve --service" to start it.';
+    return offlineAdvice;
   }
   return str;
 }
@@ -321,6 +329,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     };
   }, [serverId, sessionId]);
   const { t } = useLingui();
+  const { _ } = useLinguiRuntime();
   const router = useRouter();
   const routeFocused = useIsFocused();
   const pathname = usePathname();
@@ -522,6 +531,27 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   const agentChoice = useSelectedAgent(serverId);
   const activeAgentId = sessionInfo?.agent_id ?? agentChoice.selected;
   const agentFeatures = useAgentFeatures(serverId, activeAgentId);
+  const activeAgentEntry = useMemo(
+    () => agentChoice.agents.find((entry) => entry.id === activeAgentId),
+    [agentChoice.agents, activeAgentId]
+  );
+  const agentName = agentDisplayName(agentChoice.agents, activeAgentId);
+  const agentGuide = agentGuideFor(activeAgentEntry?.kind);
+  /** How to bring this agent up: its own sentence, then its command when it has one. */
+  const startAdvice = [_(agentGuide.start), agentGuide.command].filter(Boolean).join('\n');
+  const offlineFallback = t`${agentName} is offline`;
+  /**
+   * Turns a failed request into the text to show. A ref, so the many handlers
+   * that report errors read the current agent's name and start advice without
+   * each depending on them; the effect keeps it current before any handler runs.
+   */
+  const agentErrorRef = useRef((err: unknown, fallback: string = offlineFallback) =>
+    formatAgentErrorMessage(err, fallback, `${offlineFallback}\n${startAdvice}`)
+  );
+  useEffect(() => {
+    agentErrorRef.current = (err, fallback = offlineFallback) =>
+      formatAgentErrorMessage(err, fallback, `${offlineFallback}\n${startAdvice}`);
+  }, [offlineFallback, startAdvice]);
   const hiddenCommands = useMemo(() => hiddenClientCommands(agentFeatures), [agentFeatures]);
   const agentChoiceRef = useLatestRef(agentChoice);
   const markAgentUsed = useAgents((state) => state.markUsed);
@@ -1623,7 +1653,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
               showToast({
                 variant: 'danger',
                 title: t`Could not load the session`,
-                message: formatAgentErrorMessage(err, t`OpenCode service is offline`),
+                message: agentErrorRef.current(err),
               });
             }
           );
@@ -2228,7 +2258,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       showToast({
         variant: 'danger',
         title: t`Could not compact`,
-        message: formatAgentErrorMessage(err, t`OpenCode service is offline`),
+        message: agentErrorRef.current(err),
       });
     });
   }, [activeAsid, showToast, t]);
@@ -2261,7 +2291,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         showToast({
           variant: 'danger',
           title: t`Could not run that`,
-          message: formatAgentErrorMessage(err, t`OpenCode service is offline`),
+          message: agentErrorRef.current(err),
         });
       });
     },
@@ -2293,10 +2323,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         return true;
       } catch (err) {
         console.warn('Failed to run skill:', err);
-        showScreenNotice(
-          t`Could not run that skill`,
-          formatAgentErrorMessage(err, t`OpenCode service is offline`)
-        );
+        showScreenNotice(t`Could not run that skill`, agentErrorRef.current(err));
         return false;
       }
     },
@@ -2339,10 +2366,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       setAgentInboxDelivery(activeAsid, inboxId, delivery).catch((err) => {
         console.warn('Failed to change delivery:', err);
         void refreshInbox();
-        showScreenNotice(
-          t`Could not change delivery`,
-          formatAgentErrorMessage(err, t`OpenCode service is offline`)
-        );
+        showScreenNotice(t`Could not change delivery`, agentErrorRef.current(err));
       });
     },
     [activeAsid, refreshInbox, showScreenNotice, t]
@@ -2457,7 +2481,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
                 showToast({
                   variant: 'danger',
                   title: t`Could not start a session`,
-                  message: formatAgentErrorMessage(err, t`OpenCode service is offline`),
+                  message: agentErrorRef.current(err),
                 });
               return false;
             }
@@ -2544,7 +2568,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         showToast({
           variant: 'danger',
           title: t`Message not sent`,
-          message: formatAgentErrorMessage(err, t`OpenCode service is offline`),
+          message: agentErrorRef.current(err),
         });
         return false;
       }
@@ -2591,7 +2615,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       showToast({
         variant: 'danger',
         title: t`Could not stop it`,
-        message: formatAgentErrorMessage(err, t`OpenCode service is offline`),
+        message: agentErrorRef.current(err),
       });
     }
   }, [activeAsid, sessionId, showToast, t]);
@@ -2629,7 +2653,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
             showToast({
               variant: 'danger',
               title: t`Could not switch model`,
-              message: formatAgentErrorMessage(err, t`OpenCode service is offline`),
+              message: agentErrorRef.current(err),
             });
           }
         })
@@ -2637,7 +2661,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
           showToast({
             variant: 'danger',
             title: t`Could not switch agent`,
-            message: formatAgentErrorMessage(err, t`OpenCode service is offline`),
+            message: agentErrorRef.current(err),
           });
         });
     },
@@ -2683,7 +2707,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
           showToast({
             variant: 'danger',
             title: t`Could not reply`,
-            message: formatAgentErrorMessage(err, t`OpenCode service is offline`),
+            message: agentErrorRef.current(err),
           });
         return;
       }
@@ -2714,7 +2738,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         showToast({
           variant: 'danger',
           title: t`Could not reply`,
-          message: formatAgentErrorMessage(err, t`OpenCode service is offline`),
+          message: agentErrorRef.current(err),
         });
         return;
       }
@@ -2735,8 +2759,8 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       if (isOffline) {
         showToast({
           variant: 'danger',
-          title: t`OpenCode service offline`,
-          message: t`Please start OpenCode on the server: opencode serve --service`,
+          title: t`${agentName} is offline`,
+          message: startAdvice,
         });
         return;
       }
@@ -2783,7 +2807,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
               showToast({
                 variant: 'danger',
                 title: t`Could not create session`,
-                message: formatAgentErrorMessage(err, t`Failed to create agent session`),
+                message: agentErrorRef.current(err, t`Failed to create agent session`),
               });
             }
           }
@@ -2795,6 +2819,8 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       );
     },
     [
+      agentName,
+      startAdvice,
       setTimeline,
       isOffline,
       sessionId,
@@ -2891,10 +2917,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
           // Back to what it was called, rather than leaving a name on screen that
           // exists nowhere else.
           if (previous !== undefined) apply(previous);
-          showScreenNotice(
-            t`Could not rename`,
-            formatAgentErrorMessage(err, t`OpenCode service is offline`)
-          );
+          showScreenNotice(t`Could not rename`, agentErrorRef.current(err));
         });
     },
     [homeTargetFor, sessions, sessionInfo, showScreenNotice, t]
@@ -2953,10 +2976,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
             activeAsidRef.current = asid;
             setActiveAsid(asid);
           }
-          showScreenNotice(
-            t`Could not delete`,
-            formatAgentErrorMessage(err, t`OpenCode service is offline`)
-          );
+          showScreenNotice(t`Could not delete`, agentErrorRef.current(err));
         });
     },
     [setTimeline, sessions, childrenByParent, activeAsid, homeTargetFor, showScreenNotice, t]
@@ -3020,7 +3040,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
             showToast({
               variant: 'danger',
               title: t`Could not create session`,
-              message: formatAgentErrorMessage(err, t`Failed to switch project`),
+              message: agentErrorRef.current(err, t`Failed to switch project`),
             });
           }
         }
@@ -3083,9 +3103,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         const gone = detail.includes('workspace_missing') ? { directory } : null;
         showScreenNotice(
           t`Could not move this session`,
-          gone
-            ? t`Project folder is missing: ${gone.directory}`
-            : formatAgentErrorMessage(err, t`OpenCode service is offline`)
+          gone ? t`Project folder is missing: ${gone.directory}` : agentErrorRef.current(err)
         );
       }
     },
@@ -3233,10 +3251,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         })
         .catch((err) => {
           console.warn('Failed to stage revert:', err);
-          showScreenNotice(
-            t`Could not stage the rollback`,
-            formatAgentErrorMessage(err, t`OpenCode service is offline`)
-          );
+          showScreenNotice(t`Could not stage the rollback`, agentErrorRef.current(err));
         });
     },
     [activeAsid, showScreenNotice, t]
@@ -3255,10 +3270,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       })
       .catch((err) => {
         console.warn('Failed to apply revert:', err);
-        showScreenNotice(
-          t`Could not undo`,
-          formatAgentErrorMessage(err, t`OpenCode service is offline`)
-        );
+        showScreenNotice(t`Could not undo`, agentErrorRef.current(err));
       })
       .finally(() => setRevertBusy(false));
   }, [activeAsid, showScreenNotice, t]);
@@ -3276,10 +3288,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     clearAgentRevert(activeAsid).catch((err) => {
       console.warn('Failed to clear revert:', err);
       setStagedRevert(previous);
-      showScreenNotice(
-        t`Could not keep it`,
-        formatAgentErrorMessage(err, t`OpenCode service is offline`)
-      );
+      showScreenNotice(t`Could not keep it`, agentErrorRef.current(err));
     });
   }, [activeAsid, stagedRevert, showScreenNotice, t]);
 
@@ -3434,7 +3443,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
           showToast({
             variant: 'danger',
             title: t`Could not detach`,
-            message: formatAgentErrorMessage(err, t`OpenCode service is offline`),
+            message: agentErrorRef.current(err),
           });
         });
     },
@@ -4280,16 +4289,13 @@ export const AgentWorkbench = memo(function AgentWorkbench({
                     weight="semibold"
                     color={theme.colors.text}
                     style={styles.emptyTitle}>
-                    <Trans>OpenCode service offline</Trans>
+                    <Trans>{agentName} is offline</Trans>
                   </Text>
                   <Text
                     variant="caption"
                     color={theme.colors.textMuted}
                     style={styles.emptySubtitle}>
-                    <Trans>
-                      OpenCode agent daemon is not running on this host. Run `opencode serve
-                      --service` to start it.
-                    </Trans>
+                    {startAdvice}
                   </Text>
                   <PressableScale
                     testID="agent-offline-retry-btn"
@@ -4324,7 +4330,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
                     weight="semibold"
                     color={theme.colors.text}
                     style={styles.emptyTitle}>
-                    <Trans>Welcome to OpenCode Agent</Trans>
+                    <Trans>Welcome to {agentName}</Trans>
                   </Text>
                   <Text
                     variant="caption"
@@ -4624,6 +4630,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       {/* Floating Glass Composer at Bottom */}
       <AgentComposer
         disabled={isOffline}
+        agentName={agentName}
         running={isRunning}
         sessionStrip={rootStrip.nodes}
         selectedRootAsid={rootStrip.selectedRootAsid}

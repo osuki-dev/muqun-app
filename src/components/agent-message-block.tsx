@@ -213,9 +213,7 @@ const AgentNoticeRow = memo(function AgentNoticeRow({ part }: { part: AgentPart 
       case 'agent_switched':
         return {
           Icon: Bot,
-          text: part.previous
-            ? t`Agent · ${part.previous} → ${part.mode}`
-            : t`Agent · ${part.mode}`,
+          text: part.previous ? t`Mode · ${part.previous} → ${part.mode}` : t`Mode · ${part.mode}`,
         };
       case 'location_switched':
         return { Icon: FolderGit2, text: t`Project · ${part.directory}` };
