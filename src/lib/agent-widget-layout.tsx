@@ -14,11 +14,13 @@ import {
   agentWidgetAgeParts,
   agentWidgetUri,
   isAgentWidgetStale,
+  widgetEntryAgentId,
   AGENT_WIDGET_ROW,
   type AgentWidgetEntry,
   type AgentWidgetName,
   type AgentWidgetSnapshot,
 } from '@/lib/agent-widget';
+import { agentDisplayName } from '@/lib/home-launch-model';
 import { statusColor } from '@/lib/herdr-entity';
 
 /**
@@ -246,8 +248,12 @@ function AgentRow({
   const stepInfo = agent.todoProgress
     ? `${agent.todoProgress.done}/${agent.todoProgress.total}`
     : undefined;
-  const engineTag =
-    agent.engine === 'opencode' ? 'OpenCode' : agent.engine === 'tmux' ? 'tmux' : undefined;
+  const agentId = widgetEntryAgentId(agent);
+  const engineTag = agentId
+    ? agentDisplayName(undefined, agentId)
+    : agent.engine === 'tmux'
+      ? 'tmux'
+      : undefined;
 
   return (
     <FlexWidget

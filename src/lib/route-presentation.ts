@@ -60,6 +60,7 @@ export const sheetRoutePresentations: Readonly<Record<string, SheetPresentation>
   simfarm: 'fullscreen',
   'new-task': 'sheet',
   'home-target': 'sheet',
+  'home-agents': 'sheet',
   // The agent's pickers. Every one of them is a destination -- pick a model,
   // pick a workspace, read a diff -- so every one is a route rather than a
   // `<Modal>` the workbench keeps mounted whether it is open or not.
@@ -74,7 +75,7 @@ export const sheetRoutePresentations: Readonly<Record<string, SheetPresentation>
   'agent-vcs-diff': 'sheet',
   'agent-tasks': 'sheet',
   'agent-shells': 'sheet',
-  'opencode-guide': 'sheet',
+  'agent-guide': 'sheet',
 };
 
 /**
@@ -114,6 +115,7 @@ export const sheetRouteDetents: Readonly<Record<string, SheetDetents>> = {
   // Full height leaves room for the composer and keyboard.
   'new-task': 'expandable',
   'home-target': 'fitToContents',
+  'home-agents': 'fitToContents',
   // Open a web service (card #829). One field with a row of shortcuts over it:
   // a full-height sheet for a port number would be the app implying the task is
   // bigger than typing four digits.
@@ -146,7 +148,7 @@ export const sheetRouteDetents: Readonly<Record<string, SheetDetents>> = {
   'agent-shells': [0.65, 0.9],
   // One banner, one command and one button: content-sized, for the reason
   // `web-service` is.
-  'opencode-guide': 'fitToContents',
+  'agent-guide': 'fitToContents',
 };
 
 /** The named windows, spelled out. Ascending, which `highest` relies on. */
@@ -224,13 +226,14 @@ export const sheetRouteContent: Readonly<Record<string, SheetContent>> = {
   'agent-mode': 'list',
   'settings-font': 'list',
   'settings-language': 'list',
-  'opencode-guide': 'list',
+  'agent-guide': 'list',
 
   // A short form and nothing else, which opens where it always has. A sheet
   // that jumps to full height to ask for two fields is louder than the
   // question.
   'new-task': 'short',
   'home-target': 'short',
+  'home-agents': 'short',
   'settings-home-layout': 'short',
   'web-service': 'short',
 };

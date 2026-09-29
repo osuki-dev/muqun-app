@@ -12,35 +12,46 @@ import { SheetScene, SHEET_LADDER } from '@/components/sheet-scene';
 import { appChrome } from '@/constants/appearance';
 import { feedback } from '@/lib/feedback';
 import type { AgentReadiness } from '@/lib/home-agent-readiness';
-import { OPENCODE_INSTALL_URL } from '@/constants/links';
+import { agentGuideFor } from '@/i18n/labels';
+import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { settleAfter } from '@/lib/compiler-safe-control-flow';
 
-export interface OpenCodeGuideSheetProps {
+export interface AgentGuideSheetProps {
   serverLabel: string;
+  /** What the gateway calls the agent, or the id with its first letter raised. */
+  agentName: string;
+  /** The agent's kind, which picks the copy: `opencode`, `deepseek`, `t3`, or anything else. */
+  agentKind: string;
   onClose: () => void;
   readiness: AgentReadiness;
   onCheckAgain: () => Promise<AgentReadiness>;
   onOpenAgent?: () => void;
 }
 
-const OPENCODE_COMMAND = 'opencode serve --service';
 const COPIED_HOLD_MS = 2000;
 
 /**
- * What to run when OpenCode is not answering, as a native form sheet route.
+ * What to do when an agent is not answering, as a native form sheet route.
  *
  * Content-sized, and the shortest sheet in the app: one sentence, one command
  * to copy, one button. `sheet-scene.tsx`'s heading and ground, and no card
  * around the command -- the monospace line on the ground is the object.
  */
-export const OpenCodeGuideSheet = memo(function OpenCodeGuideSheet({
+export const AgentGuideSheet = memo(function AgentGuideSheet({
   serverLabel,
+  agentName,
+  agentKind,
   onClose,
   readiness,
   onCheckAgain,
   onOpenAgent,
-}: OpenCodeGuideSheetProps) {
+}: AgentGuideSheetProps) {
   const { t } = useLingui();
+  const { _ } = useLinguiRuntime();
+  // Read as separate values: the copy is a table's row, and a callback that
+  // closed over the row could not be proven stable.
+  const command = agentGuideFor(agentKind).command;
+  const installUrl = agentGuideFor(agentKind).installUrl;
   const theme = useThemeTokens();
   const insets = useSafeAreaInsets();
 
@@ -56,12 +67,12 @@ export const OpenCodeGuideSheet = memo(function OpenCodeGuideSheet({
   }, []);
 
   const handleCopy = useCallback(async () => {
-    await Clipboard.setStringAsync(OPENCODE_COMMAND);
+    if (command) await Clipboard.setStringAsync(command);
     void feedback('success');
     setCopied(true);
     if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
     copyTimerRef.current = setTimeout(() => setCopied(false), COPIED_HOLD_MS);
-  }, []);
+  }, [command]);
 
   const handleCheckAgain = useCallback(async () => {
     setChecking(true);
@@ -94,24 +105,24 @@ export const OpenCodeGuideSheet = memo(function OpenCodeGuideSheet({
   }, [onCheckAgain, onClose, onOpenAgent, t]);
 
   const offlineCause = readiness.status === 'offline' ? readiness.cause : null;
-  const showServiceCommand = offlineCause !== null && offlineCause !== 'health';
+  const showServiceCommand = offlineCause !== null && offlineCause !== 'health' && Boolean(command);
   const blurb =
     readiness.status === 'ready'
-      ? t`OpenCode is ready on this host.`
+      ? t`${agentName} is ready on this host.`
       : readiness.status === 'unsupported'
-        ? t`This gateway does not advertise OpenCode sessions.`
+        ? t`This gateway does not advertise ${agentName} sessions.`
         : readiness.status === 'not-installed'
-          ? t`OpenCode was not found on this host. Install OpenCode 2, then check again.`
+          ? t`${agentName} was not found on this host. Install it, then check again.`
           : offlineCause === 'health'
             ? t`This gateway is not answering. Check the server connection, then try again.`
             : offlineCause === 'service'
-              ? t`OpenCode is installed, but its service is not answering. Run this command on the host.`
-              : t`OpenCode's installation could not be confirmed. If it is installed, run this command on the host.`;
+              ? _(agentGuideFor(agentKind).start)
+              : t`${agentName}'s installation could not be confirmed. If it is installed, start it on the host.`;
 
   return (
     <SheetScene
-      testID="opencode-guide-sheet"
-      title={t`Start OpenCode`}
+      testID="agent-guide-sheet"
+      title={t`Start ${agentName}`}
       caption={serverLabel}
       contentSized>
       <View
@@ -120,12 +131,12 @@ export const OpenCodeGuideSheet = memo(function OpenCodeGuideSheet({
           {blurb}
         </Text>
 
-        {readiness.status === 'not-installed' ? (
+        {readiness.status === 'not-installed' && installUrl ? (
           <PressableScale
-            testID="opencode-guide-install-btn"
+            testID="agent-guide-install-btn"
             accessibilityRole="link"
-            accessibilityLabel={t`Open the OpenCode installation guide`}
-            onPress={() => void Linking.openURL(OPENCODE_INSTALL_URL)}
+            accessibilityLabel={t`Open the ${agentName} installation guide`}
+            onPress={() => void Linking.openURL(installUrl)}
             style={[styles.command, { borderColor: theme.colors.border }]}>
             <ExternalLink size={15} color={theme.colors.primary} strokeWidth={2.2} />
             <Text
@@ -141,7 +152,7 @@ export const OpenCodeGuideSheet = memo(function OpenCodeGuideSheet({
         {showServiceCommand ? (
           <>
             <PressableScale
-              testID="opencode-guide-copy-cmd"
+              testID="agent-guide-copy-cmd"
               accessibilityRole="button"
               accessibilityLabel={copied ? t`Copied` : t`Copy the command`}
               onPress={handleCopy}
@@ -155,7 +166,7 @@ export const OpenCodeGuideSheet = memo(function OpenCodeGuideSheet({
                 weight="semibold"
                 color={theme.colors.text}
                 style={styles.commandText}>
-                {OPENCODE_COMMAND}
+                {command}
               </Text>
               {copied ? (
                 <Check size={14} color={theme.colors.success} strokeWidth={2.5} />
@@ -180,7 +191,7 @@ export const OpenCodeGuideSheet = memo(function OpenCodeGuideSheet({
         ) : null}
 
         <PressableScale
-          testID="opencode-guide-check-again-btn"
+          testID="agent-guide-check-again-btn"
           accessibilityRole="button"
           accessibilityLabel={t`Check again`}
           disabled={checking}

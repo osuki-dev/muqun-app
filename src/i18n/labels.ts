@@ -25,6 +25,8 @@ import type { GitFileStatus } from '@/lib/git-diff';
 import type { NamedApprovalDecision } from '@/lib/pane-approval';
 import type { PaneViewMode } from '@/lib/pane-view-mode';
 import type { ServerReachability } from '@/lib/server-reachability';
+import type { LaunchAgentCaption } from '@/lib/home-launch-model';
+import { OPENCODE_INSTALL_URL } from '@/constants/links';
 
 /**
  * What the card says out loud next to the dot.
@@ -367,3 +369,54 @@ export const agentClientCommandDescription: Record<AgentClientCommandId, Message
 export const agentHostCommandDescription: Record<string, MessageDescriptor> = {
   init: msg({ message: 'Guided AGENTS.md setup', context: 'agent slash command' }),
 };
+
+/**
+ * What an agent tile on Home says under the agent's name. A state is a word,
+ * never only a colour, so the reader who cannot see the dim tile still knows
+ * why it is dim.
+ */
+export const agentLaunchCaption: Record<LaunchAgentCaption, MessageDescriptor> = {
+  'new-session': msg`New session`,
+  'not-installed': msg`Not installed`,
+  offline: msg`Offline`,
+};
+
+/** What the readiness guide tells the reader to do for one kind of agent. */
+export type AgentGuideCopy = {
+  /** The sentence above the command: how to start this agent on the gateway host. */
+  start: MessageDescriptor;
+  /** The command to copy, when the kind has one. Shell text, never translated. */
+  command?: string;
+  /** Where the agent is installed from, when the kind has a page for it. */
+  installUrl?: string;
+};
+
+/**
+ * The guide's copy, per agent `kind`. A new kind ships with the fallback
+ * below and nothing else; a row here is only for a kind that has something
+ * more useful to say.
+ */
+export const agentGuideCopy: Record<string, AgentGuideCopy> = {
+  opencode: {
+    start: msg`OpenCode is installed, but its service is not answering. Run this command on the host.`,
+    command: 'opencode serve --service',
+    installUrl: OPENCODE_INSTALL_URL,
+  },
+  deepseek: {
+    start: msg`Start DeepSeek on the gateway host, then check again.`,
+    command: 'bunx @deepseek-ai/dsh web',
+  },
+  t3: {
+    start: msg`Start T3 Code on the gateway host, then check again.`,
+    command: 't3 serve',
+  },
+};
+
+/** The guide for a kind this build has never heard of. */
+export const agentGuideFallback: AgentGuideCopy = {
+  start: msg`Start the agent on the gateway host, then check again.`,
+};
+
+export function agentGuideFor(kind: string | undefined): AgentGuideCopy {
+  return (kind ? agentGuideCopy[kind] : undefined) ?? agentGuideFallback;
+}

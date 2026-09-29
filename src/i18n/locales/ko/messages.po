@@ -170,9 +170,41 @@ msgstr "{0}시간 전"
 msgid "{0}m ago"
 msgstr "{0}분 전"
 
+#: src/components/agent-guide-sheet.tsx
+msgid "{agentName} is ready on this host."
+msgstr "이 호스트에서 {agentName}을(를) 사용할 수 있습니다"
+
+#: src/components/new-task-action.tsx
+msgid "{agentName} ready"
+msgstr "{agentName} 준비됨"
+
+#: src/components/new-task-action.tsx
+msgid "{agentName} service offline. Tap for setup instructions"
+msgstr "{agentName} 서비스가 오프라인입니다. 탭하여 설정 방법 보기"
+
+#: src/components/home-recent-sessions.tsx
+msgid "{agentName} session"
+msgstr "{agentName} 세션"
+
+#: src/components/new-task-action.tsx
+msgid "{agentName} sessions are not supported. Tap for details"
+msgstr "{agentName} 세션은 지원되지 않습니다. 탭하여 자세히 보기"
+
+#: src/components/agent-guide-sheet.tsx
+msgid "{agentName} was not found on this host. Install it, then check again."
+msgstr "이 호스트에서 {agentName}을(를) 찾을 수 없습니다. 설치한 후 다시 확인하세요"
+
+#: src/components/new-task-action.tsx
+msgid "{agentName} was not found. Tap for installation instructions"
+msgstr "{agentName}을(를) 찾을 수 없습니다. 탭하여 설치 방법 보기"
+
 #: src/components/agent-composer.tsx
 msgid "{agentName}: {title} — finished while you were away"
 msgstr "{agentName}: {title} — 자리를 비운 사이에 끝났습니다"
+
+#: src/components/agent-guide-sheet.tsx
+msgid "{agentName}'s installation could not be confirmed. If it is installed, start it on the host."
+msgstr "{agentName} 설치를 확인할 수 없습니다. 설치되어 있다면 호스트에서 시작하세요"
 
 #: src/components/away-digest-card.tsx
 msgid "{asked, plural, one {· asked once} other {· asked # times}}"
@@ -199,6 +231,10 @@ msgstr "최근 확인된 요청 {count}개"
 msgid "{done} of {0} done"
 msgstr "{0}개 중 {done}개 완료"
 
+#: src/components/home-launch-actions.tsx
+msgid "{hidden} more"
+msgstr "{hidden}개 더 보기"
+
 #: src/components/bounded-markdown.tsx
 msgid "{hiddenKb} KB not shown"
 msgstr "{hiddenKb} KB 표시되지 않음"
@@ -222,6 +258,14 @@ msgstr "{language} 코드를 클립보드에 복사했습니다"
 #: src/components/agent-revert-plate.tsx
 msgid "{messages, plural, one {# message} other {# messages}}"
 msgstr "{messages, plural, other {메시지 #개}}"
+
+#: src/components/new-task-action.tsx
+msgid "{name} service offline. Tap for setup instructions"
+msgstr "{name} 서비스가 오프라인입니다. 탭하여 설정 방법 보기"
+
+#: src/components/new-task-action.tsx
+msgid "{name} was not found. Tap for installation instructions"
+msgstr "{name}을(를) 찾을 수 없습니다. 탭하여 설치 방법 보기"
 
 #: src/components/session-map.tsx
 msgid "{panelCount, plural, one {# running} other {# running}}"
@@ -368,13 +412,13 @@ msgstr "추가됨"
 msgid "Agent"
 msgstr "에이전트"
 
-#. placeholder {0}: part.agent
+#. placeholder {0}: part.mode
 #: src/components/agent-message-block.tsx
 msgid "Agent · {0}"
 msgstr "에이전트 · {0}"
 
 #. placeholder {0}: part.previous
-#. placeholder {1}: part.agent
+#. placeholder {1}: part.mode
 #: src/components/agent-message-block.tsx
 msgid "Agent · {0} → {1}"
 msgstr "에이전트 · {0} → {1}"
@@ -398,6 +442,8 @@ msgstr "에이전트가 종료됨"
 msgid "Agent panes open in"
 msgstr "에이전트 패널 기본 보기"
 
+#: src/components/app-drawer-content.tsx
+#: src/components/launch-intro.tsx
 #: src/components/settings-servers.tsx
 msgid "Agents"
 msgstr "에이전트"
@@ -775,6 +821,7 @@ msgstr "카메라 접근 권한 필요"
 #: src/components/agent-composer.tsx
 #: src/components/agent-context-sheet.tsx
 #: src/components/agent-sessions-sheet.tsx
+#: src/components/agent-workbench.tsx
 #: src/components/agent-worktree-sheet.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/row-action-menu.tsx
@@ -830,8 +877,8 @@ msgstr "텍스트, 아이콘, 장식 이미지는 그대로 두고 배경색만 
 msgid "Chat"
 msgstr "대화"
 
+#: src/components/agent-guide-sheet.tsx
 #: src/components/agent-workbench.tsx
-#: src/components/opencode-guide-sheet.tsx
 msgid "Check again"
 msgstr "다시 확인"
 
@@ -879,6 +926,7 @@ msgid "Choose a simulator from the menu."
 msgstr "메뉴에서 시뮬레이터를 선택하세요"
 
 #: src/components/agent-mode-sheet.tsx
+#: src/components/home-agents-sheet.tsx
 msgid "Choose an agent"
 msgstr "에이전트 선택"
 
@@ -1326,10 +1374,10 @@ msgstr "제어"
 msgid "Conversational help and open-ended project questions."
 msgstr "대화형 도움말과 프로젝트에 대한 자유로운 질문"
 
+#: src/components/agent-guide-sheet.tsx
 #: src/components/agent-message-block.tsx
 #: src/components/asset-viewer.tsx
 #: src/components/bounded-markdown.tsx
-#: src/components/opencode-guide-sheet.tsx
 msgid "Copied"
 msgstr "복사됨"
 
@@ -1364,7 +1412,7 @@ msgstr "경로 복사"
 msgid "Copy public key"
 msgstr "공개 키 복사"
 
-#: src/components/opencode-guide-sheet.tsx
+#: src/components/agent-guide-sheet.tsx
 msgid "Copy the command"
 msgstr "명령 복사"
 
@@ -1808,8 +1856,8 @@ msgid "Diff summary"
 msgstr "변경 요약"
 
 #: src/components/launch-intro.tsx
-msgid "Direct control for OpenCode autonomous coding. Follow real-time reasoning, inspect code diffs, review step-by-step todos, and guide tasks on the go."
-msgstr "OpenCode 자율 코딩 에이전트를 모바일에서 직접 제어하세요. 실시간 추론 스트림, 코드 변경 사항, 작업 체크리스트를 확인하고 관리합니다"
+msgid "Direct control for autonomous coding agents. Follow real-time reasoning, inspect code diffs, review step-by-step todos, and guide tasks on the go."
+msgstr "자율 코딩 에이전트를 모바일에서 직접 제어하세요. 실시간 추론 스트림, 코드 변경 사항, 작업 체크리스트를 확인하고 관리합니다"
 
 #: src/components/dev-home-ambient-controls.tsx
 msgid "Direction"
@@ -2644,7 +2692,6 @@ msgid "Load more"
 msgstr "더 불러오기"
 
 #: src/components/gateway-storage-error.tsx
-#: src/components/home-recent-sessions.tsx
 #: src/components/list-load-more-footer.tsx
 #: src/components/session-map.tsx
 #: src/components/ssh-host-list.tsx
@@ -2781,6 +2828,10 @@ msgstr "고정폭"
 msgid "More actions"
 msgstr "추가 작업"
 
+#: src/components/home-launch-actions.tsx
+msgid "More agents"
+msgstr "더 많은 에이전트"
+
 #: src/components/virtual-keyboard.tsx
 msgid "More symbols"
 msgstr "기호 더 보기"
@@ -2886,7 +2937,7 @@ msgstr "새 출력 있음 · 새로 고침"
 
 #: src/app/agent.tsx
 #: src/components/agent-workbench.tsx
-#: src/components/home-launch-actions.tsx
+#: src/i18n/labels.ts
 msgid "New session"
 msgstr "새 세션"
 
@@ -3114,6 +3165,10 @@ msgstr "연결 안 됨"
 msgid "Not found"
 msgstr "찾을 수 없음"
 
+#: src/i18n/labels.ts
+msgid "Not installed"
+msgstr "설치되지 않음"
+
 #: src/components/settings-font-sheet.tsx
 msgid "Not monospace — the terminal may look uneven"
 msgstr "고정폭이 아닙니다 — 터미널이 고르지 않게 보일 수 있습니다"
@@ -3173,6 +3228,10 @@ msgid "Off"
 msgstr "꺼짐"
 
 #: src/i18n/labels.ts
+msgid "Offline"
+msgstr "오프라인"
+
+#: src/i18n/labels.ts
 msgid "OFFLINE"
 msgstr "오프라인"
 
@@ -3206,6 +3265,14 @@ msgstr "열기"
 #: src/components/session-artifacts.tsx
 msgid "Open {0}"
 msgstr "{0} 열기"
+
+#: src/components/new-task-action.tsx
+msgid "Open {agentName} Agent on {label}"
+msgstr "{label}에서 {agentName} 에이전트 열기"
+
+#: src/components/new-task-action.tsx
+msgid "Open {name} Agent on {label}"
+msgstr "{label}에서 {name} 에이전트 열기"
 
 #: src/components/session-map.tsx
 msgid "Open {title}. Long press to close."
@@ -3256,7 +3323,7 @@ msgstr "브라우저에서 열기"
 msgid "Open in your browser, unavailable over the SSH tunnel"
 msgstr "브라우저에서 열기, SSH 터널에서는 사용할 수 없음"
 
-#: src/components/opencode-guide-sheet.tsx
+#: src/components/agent-guide-sheet.tsx
 msgid "Open installation guide"
 msgstr "설치 가이드 열기"
 
@@ -3272,10 +3339,6 @@ msgstr "Muqun을 열어 연결하세요"
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Open on-screen keyboard"
 msgstr "화면 키보드 열기"
-
-#: src/components/new-task-action.tsx
-msgid "Open OpenCode Agent on {label}"
-msgstr "{label}에서 OpenCode 에이전트 열기"
 
 #: src/components/agent-sessions-sheet.tsx
 msgid "Open parent"
@@ -3308,13 +3371,13 @@ msgstr "SSH 호스트 {0} 열기"
 msgid "Open terminal"
 msgstr "터미널 보기"
 
+#: src/components/agent-guide-sheet.tsx
+msgid "Open the {agentName} installation guide"
+msgstr "{agentName} 설치 가이드 열기"
+
 #: src/i18n/labels.ts
 msgid "Open the file explorer"
 msgstr "파일 탐색기 열기"
-
-#: src/components/opencode-guide-sheet.tsx
-msgid "Open the OpenCode installation guide"
-msgstr "OpenCode 설치 가이드 열기"
 
 #: src/components/agent-tool-card.tsx
 msgid "Open the subagent's session"
@@ -3337,26 +3400,13 @@ msgstr "열어서 현재 상태를 확인하세요"
 msgid "Open workspace {0}, {panelCount, plural, one {# running} other {# running}}. Long press to close."
 msgstr "작업 공간 {0} 열기, {panelCount, plural, one {# 실행 중} other {# 실행 중}}. 길게 눌러 닫기"
 
-#: src/components/app-drawer-content.tsx
-#: src/components/launch-intro.tsx
-msgid "OpenCode Agent"
-msgstr "OpenCode 에이전트"
-
 #: src/components/agent-workbench.tsx
 msgid "OpenCode agent daemon is not running on this host. Run `opencode serve --service` to start it."
 msgstr "이 호스트에서 OpenCode 데몬이 실행 중이지 않습니다. `opencode serve --service`를 실행하여 시작하세요"
 
-#: src/components/opencode-guide-sheet.tsx
+#: src/i18n/labels.ts
 msgid "OpenCode is installed, but its service is not answering. Run this command on the host."
 msgstr "OpenCode는 설치되어 있지만 서비스가 응답하지 않습니다. 호스트에서 이 명령을 실행하세요"
-
-#: src/components/opencode-guide-sheet.tsx
-msgid "OpenCode is ready on this host."
-msgstr "OpenCode가 이 호스트에서 준비되었습니다"
-
-#: src/components/new-task-action.tsx
-msgid "OpenCode ready"
-msgstr "OpenCode 준비 완료"
 
 #: src/components/agent-workbench.tsx
 msgid "OpenCode service is offline"
@@ -3366,30 +3416,6 @@ msgstr "OpenCode 서비스가 오프라인입니다"
 #: src/components/agent-workbench.tsx
 msgid "OpenCode service offline"
 msgstr "OpenCode 서비스 오프라인"
-
-#: src/components/new-task-action.tsx
-msgid "OpenCode service offline. Tap for setup instructions"
-msgstr "OpenCode 서비스 오프라인. 탭하여 설정 안내 확인"
-
-#: src/components/home-recent-sessions.tsx
-msgid "OpenCode session"
-msgstr "OpenCode 세션"
-
-#: src/components/new-task-action.tsx
-msgid "OpenCode sessions are not supported. Tap for details"
-msgstr "OpenCode 세션은 지원되지 않습니다. 탭하여 자세히 보기"
-
-#: src/components/opencode-guide-sheet.tsx
-msgid "OpenCode was not found on this host. Install OpenCode 2, then check again."
-msgstr "이 호스트에서 OpenCode를 찾을 수 없습니다. OpenCode 2를 설치한 후 다시 확인하세요"
-
-#: src/components/new-task-action.tsx
-msgid "OpenCode was not found. Tap for installation instructions"
-msgstr "OpenCode를 찾을 수 없습니다. 설치 안내를 보려면 탭하세요"
-
-#: src/components/opencode-guide-sheet.tsx
-msgid "OpenCode's installation could not be confirmed. If it is installed, run this command on the host."
-msgstr "OpenCode 설치를 확인할 수 없습니다. 설치되어 있다면 호스트에서 이 명령을 실행하세요"
 
 #: src/app/+not-found.tsx
 msgid "Opening"
@@ -4084,7 +4110,7 @@ msgstr "명령 실행"
 msgid "Run in background"
 msgstr "백그라운드에서 실행"
 
-#: src/components/opencode-guide-sheet.tsx
+#: src/components/agent-guide-sheet.tsx
 msgid "Run it under systemd or tmux to keep it up after you log out."
 msgstr "로그아웃 뒤에도 계속 돌리려면 systemd나 tmux 아래에서 실행하세요"
 
@@ -4308,9 +4334,9 @@ msgstr "다음에 보냄: {0}"
 msgid "Sending to"
 msgstr "보내는 대상"
 
+#: src/app/agent-guide.tsx
 #: src/app/artifacts.tsx
 #: src/app/git-diff.tsx
-#: src/app/opencode-guide.tsx
 #: src/app/panels.tsx
 #: src/components/app-drawer.tsx
 #: src/components/server-terminal-workspace.tsx
@@ -4664,6 +4690,10 @@ msgstr "스테이징됨 및 안 됨"
 msgid "stale · {age}"
 msgstr "오래됨 · {age}"
 
+#: src/components/agent-guide-sheet.tsx
+msgid "Start {agentName}"
+msgstr "{agentName} 시작"
+
 #. placeholder {0}: profile.kind
 #: src/components/agent-assignment-bar.tsx
 msgid "Start a new {0}"
@@ -4690,13 +4720,21 @@ msgstr "에이전트를 시작하고 첫 할 일을 보내기"
 msgid "Start an agent and send it the first thing to do."
 msgstr "에이전트를 시작하고 가장 먼저 할 일을 보냅니다"
 
-#: src/components/opencode-guide-sheet.tsx
-msgid "Start OpenCode"
-msgstr "OpenCode 시작"
+#: src/i18n/labels.ts
+msgid "Start DeepSeek on the gateway host, then check again."
+msgstr "게이트웨이 호스트에서 DeepSeek을 시작한 후 다시 확인하세요"
+
+#: src/i18n/labels.ts
+msgid "Start T3 Code on the gateway host, then check again."
+msgstr "게이트웨이 호스트에서 T3 Code를 시작한 후 다시 확인하세요"
 
 #: src/components/new-task-sheet.tsx
 msgid "Start task"
 msgstr "작업 시작"
+
+#: src/i18n/labels.ts
+msgid "Start the agent on the gateway host, then check again."
+msgstr "게이트웨이 호스트에서 에이전트를 시작한 후 다시 확인하세요"
 
 #: src/components/agent-workbench.tsx
 msgid "Started with a clean context."
@@ -5256,9 +5294,9 @@ msgstr "이 파일은 너무 큽니다"
 msgid "This font could not be read."
 msgstr "이 글꼴을 읽을 수 없습니다"
 
-#: src/components/opencode-guide-sheet.tsx
-msgid "This gateway does not advertise OpenCode sessions."
-msgstr "이 Gateway는 OpenCode 세션을 제공하지 않습니다"
+#: src/components/agent-guide-sheet.tsx
+msgid "This gateway does not advertise {agentName} sessions."
+msgstr "이 게이트웨이는 {agentName} 세션을 제공하지 않습니다"
 
 #: src/lib/network-error.ts
 msgid "This Gateway does not answer to that address."
@@ -5272,7 +5310,7 @@ msgstr "이 Gateway는 아직 파일을 제공하지 않습니다. Muqun Gateway
 msgid "This gateway has not listed any paired devices."
 msgstr "이 Gateway는 페어링된 기기를 나열하지 않았습니다"
 
-#: src/components/opencode-guide-sheet.tsx
+#: src/components/agent-guide-sheet.tsx
 msgid "This gateway is not answering. Check the server connection, then try again."
 msgstr "이 게이트웨이가 응답하지 않습니다. 서버 연결을 확인한 후 다시 시도하세요"
 
@@ -5357,8 +5395,8 @@ msgstr "이 서버는 그 요청을 이미 처리했습니다"
 msgid "This server has no session to start an agent in."
 msgstr "이 서버에는 에이전트를 시작할 세션이 없습니다"
 
+#: src/app/agent-guide.tsx
 #: src/app/new-task.tsx
-#: src/app/opencode-guide.tsx
 #: src/app/simfarm.tsx
 #: src/app/web-service.tsx
 msgid "This server is no longer paired."

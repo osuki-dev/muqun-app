@@ -56,18 +56,14 @@ export type HomeCommands = {
     workspaceId?: string,
     tabId?: string
   ) => Promise<HomeCommandResult>;
-  openOpenCode: (
+  openAgent: (
     serverId: string,
     asid?: string,
     directory?: string,
     sessionId?: string,
     agentId?: string
   ) => Promise<HomeCommandResult>;
-  newOpenCode: (
-    serverId: string,
-    directory?: string,
-    agentId?: string
-  ) => Promise<HomeCommandResult>;
+  newAgent: (serverId: string, directory?: string, agentId?: string) => Promise<HomeCommandResult>;
   newTerminal: (serverId: string, workspaceId?: string) => Promise<HomeCommandResult>;
   openSsh: (hostId?: string) => Promise<HomeCommandResult>;
   pairGateway: () => Promise<HomeCommandResult>;
@@ -109,7 +105,7 @@ export function useHomeCommands(options: HomeCommandOptions = {}): HomeCommands 
       sourceRouteActive: () =>
         latest.current.options.sourceRouteActive?.() ?? latest.current.navigation.isFocused(),
       loadTerminalSelection: (serverId) => loadTerminalSelection(latest.current.records, serverId),
-      prepareNewOpenCode: async (serverId, _directory, agentId) => {
+      prepareNewAgent: async (serverId, _directory, agentId) => {
         const state = useGatewayConnectionStore.getState();
         const target = state.records.find((item) => item.serverId === serverId);
         return checkAgentServer(target, agentId);
@@ -194,11 +190,16 @@ export function useHomeCommands(options: HomeCommandOptions = {}): HomeCommands 
           title: t`Could not open destination`,
           message: t`The destination could not be opened.`,
         });
-      } else if (result.status === 'setup-required' && command.type === 'new-opencode') {
+      } else if (result.status === 'setup-required' && command.type === 'new-agent') {
+        const label = useGatewayConnectionStore
+          .getState()
+          .records.find((item) => item.serverId === command.serverId)?.label;
         router.push({
-          pathname: '/opencode-guide',
+          pathname: '/agent-guide',
           params: {
             serverId: command.serverId,
+            ...(label ? { label } : {}),
+            agentId: result.readiness.agentId,
             ...(command.directory ? { directory: command.directory } : {}),
             intent: 'new',
             status: result.readiness.status,
@@ -230,10 +231,10 @@ export function useHomeCommands(options: HomeCommandOptions = {}): HomeCommands 
       }),
     [resumeServer]
   );
-  const openOpenCode = useCallback(
+  const openAgent = useCallback(
     (serverId: string, asid?: string, directory?: string, sessionId?: string, agentId?: string) =>
       dispatch({
-        type: 'open-opencode',
+        type: 'open-agent',
         target: {
           kind: 'agent-session',
           serverId,
@@ -245,10 +246,10 @@ export function useHomeCommands(options: HomeCommandOptions = {}): HomeCommands 
       }),
     [dispatch]
   );
-  const newOpenCode = useCallback(
+  const newAgent = useCallback(
     (serverId: string, directory?: string, agentId?: string) =>
       dispatch({
-        type: 'new-opencode',
+        type: 'new-agent',
         serverId,
         ...(directory ? { directory } : {}),
         ...(agentId ? { agentId } : {}),
@@ -272,8 +273,8 @@ export function useHomeCommands(options: HomeCommandOptions = {}): HomeCommands 
     resumeServer,
     resumeTarget,
     openServer,
-    openOpenCode,
-    newOpenCode,
+    openAgent,
+    newAgent,
     newTerminal,
     openSsh,
     pairGateway,
@@ -315,7 +316,7 @@ function navigateHome(
         },
       } as Href);
       return;
-    case 'opencode':
+    case 'agent':
       router.push({
         pathname: '/agent',
         params: {

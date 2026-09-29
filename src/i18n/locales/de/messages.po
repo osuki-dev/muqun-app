@@ -170,9 +170,41 @@ msgstr "vor {0} Std"
 msgid "{0}m ago"
 msgstr "vor {0} Min"
 
+#: src/components/agent-guide-sheet.tsx
+msgid "{agentName} is ready on this host."
+msgstr "{agentName} ist auf diesem Host bereit"
+
+#: src/components/new-task-action.tsx
+msgid "{agentName} ready"
+msgstr "{agentName} bereit"
+
+#: src/components/new-task-action.tsx
+msgid "{agentName} service offline. Tap for setup instructions"
+msgstr "{agentName}-Dienst offline. Tippen Sie für Einrichtungshinweise"
+
+#: src/components/home-recent-sessions.tsx
+msgid "{agentName} session"
+msgstr "{agentName}-Sitzung"
+
+#: src/components/new-task-action.tsx
+msgid "{agentName} sessions are not supported. Tap for details"
+msgstr "{agentName}-Sitzungen werden nicht unterstützt. Tippen Sie für Details"
+
+#: src/components/agent-guide-sheet.tsx
+msgid "{agentName} was not found on this host. Install it, then check again."
+msgstr "{agentName} wurde auf diesem Host nicht gefunden. Installieren Sie es und prüfen Sie dann erneut"
+
+#: src/components/new-task-action.tsx
+msgid "{agentName} was not found. Tap for installation instructions"
+msgstr "{agentName} wurde nicht gefunden. Tippen Sie für Installationshinweise"
+
 #: src/components/agent-composer.tsx
 msgid "{agentName}: {title} — finished while you were away"
 msgstr "{agentName}: {title} – wurde fertig, während Sie weg waren"
+
+#: src/components/agent-guide-sheet.tsx
+msgid "{agentName}'s installation could not be confirmed. If it is installed, start it on the host."
+msgstr "Die Installation von {agentName} konnte nicht bestätigt werden. Falls es installiert ist, starten Sie es auf dem Host"
 
 #: src/components/away-digest-card.tsx
 msgid "{asked, plural, one {· asked once} other {· asked # times}}"
@@ -199,6 +231,10 @@ msgstr "{count} Anfragen zuletzt beobachtet"
 msgid "{done} of {0} done"
 msgstr "{done} von {0} erledigt"
 
+#: src/components/home-launch-actions.tsx
+msgid "{hidden} more"
+msgstr "{hidden} weitere"
+
 #: src/components/bounded-markdown.tsx
 msgid "{hiddenKb} KB not shown"
 msgstr "{hiddenKb} KB nicht angezeigt"
@@ -222,6 +258,14 @@ msgstr "{language}-Code in die Zwischenablage kopiert"
 #: src/components/agent-revert-plate.tsx
 msgid "{messages, plural, one {# message} other {# messages}}"
 msgstr "{messages, plural, one {# Nachricht} other {# Nachrichten}}"
+
+#: src/components/new-task-action.tsx
+msgid "{name} service offline. Tap for setup instructions"
+msgstr "{name}-Dienst offline. Tippen Sie für Einrichtungshinweise"
+
+#: src/components/new-task-action.tsx
+msgid "{name} was not found. Tap for installation instructions"
+msgstr "{name} wurde nicht gefunden. Tippen Sie für Installationshinweise"
 
 #: src/components/session-map.tsx
 msgid "{panelCount, plural, one {# running} other {# running}}"
@@ -368,13 +412,13 @@ msgstr "Hinzugefügt"
 msgid "Agent"
 msgstr "Agent"
 
-#. placeholder {0}: part.agent
+#. placeholder {0}: part.mode
 #: src/components/agent-message-block.tsx
 msgid "Agent · {0}"
 msgstr "Agent · {0}"
 
 #. placeholder {0}: part.previous
-#. placeholder {1}: part.agent
+#. placeholder {1}: part.mode
 #: src/components/agent-message-block.tsx
 msgid "Agent · {0} → {1}"
 msgstr "Agent · {0} → {1}"
@@ -398,6 +442,8 @@ msgstr "Agent nicht mehr vorhanden"
 msgid "Agent panes open in"
 msgstr "Standardansicht für Agent-Panels"
 
+#: src/components/app-drawer-content.tsx
+#: src/components/launch-intro.tsx
 #: src/components/settings-servers.tsx
 msgid "Agents"
 msgstr "Agenten"
@@ -775,6 +821,7 @@ msgstr "Kamerazugriff erforderlich"
 #: src/components/agent-composer.tsx
 #: src/components/agent-context-sheet.tsx
 #: src/components/agent-sessions-sheet.tsx
+#: src/components/agent-workbench.tsx
 #: src/components/agent-worktree-sheet.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/row-action-menu.tsx
@@ -830,8 +877,8 @@ msgstr "Ändert farbige Hintergründe, nicht Text, Symbole oder Grafiken"
 msgid "Chat"
 msgstr "Chat"
 
+#: src/components/agent-guide-sheet.tsx
 #: src/components/agent-workbench.tsx
-#: src/components/opencode-guide-sheet.tsx
 msgid "Check again"
 msgstr "Erneut prüfen"
 
@@ -879,6 +926,7 @@ msgid "Choose a simulator from the menu."
 msgstr "Einen Simulator im Menü auswählen"
 
 #: src/components/agent-mode-sheet.tsx
+#: src/components/home-agents-sheet.tsx
 msgid "Choose an agent"
 msgstr "Agenten wählen"
 
@@ -1326,10 +1374,10 @@ msgstr "Steuerung"
 msgid "Conversational help and open-ended project questions."
 msgstr "Hilfe im Gespräch und offene Fragen zum Projekt"
 
+#: src/components/agent-guide-sheet.tsx
 #: src/components/agent-message-block.tsx
 #: src/components/asset-viewer.tsx
 #: src/components/bounded-markdown.tsx
-#: src/components/opencode-guide-sheet.tsx
 msgid "Copied"
 msgstr "Kopiert"
 
@@ -1364,7 +1412,7 @@ msgstr "Pfad kopieren"
 msgid "Copy public key"
 msgstr "Öffentlichen Schlüssel kopieren"
 
-#: src/components/opencode-guide-sheet.tsx
+#: src/components/agent-guide-sheet.tsx
 msgid "Copy the command"
 msgstr "Befehl kopieren"
 
@@ -1808,8 +1856,8 @@ msgid "Diff summary"
 msgstr "Diff-Übersicht"
 
 #: src/components/launch-intro.tsx
-msgid "Direct control for OpenCode autonomous coding. Follow real-time reasoning, inspect code diffs, review step-by-step todos, and guide tasks on the go."
-msgstr "Direkte Steuerung für OpenCode-Coding-Agenten. Verfolgen Sie Gedankengänge in Echtzeit, prüfen Sie Diffs, behalten Sie Todos im Blick und steuern Sie Aufgaben von unterwegs"
+msgid "Direct control for autonomous coding agents. Follow real-time reasoning, inspect code diffs, review step-by-step todos, and guide tasks on the go."
+msgstr "Direkte Steuerung für Coding-Agenten. Verfolgen Sie Gedankengänge in Echtzeit, prüfen Sie Diffs, behalten Sie Todos im Blick und steuern Sie Aufgaben von unterwegs"
 
 #: src/components/dev-home-ambient-controls.tsx
 msgid "Direction"
@@ -2644,7 +2692,6 @@ msgid "Load more"
 msgstr "Mehr laden"
 
 #: src/components/gateway-storage-error.tsx
-#: src/components/home-recent-sessions.tsx
 #: src/components/list-load-more-footer.tsx
 #: src/components/session-map.tsx
 #: src/components/ssh-host-list.tsx
@@ -2781,6 +2828,10 @@ msgstr "Feste Breite"
 msgid "More actions"
 msgstr "Weitere Aktionen"
 
+#: src/components/home-launch-actions.tsx
+msgid "More agents"
+msgstr "Weitere Agenten"
+
 #: src/components/virtual-keyboard.tsx
 msgid "More symbols"
 msgstr "Weitere Symbole"
@@ -2886,7 +2937,7 @@ msgstr "Neue Ausgabe verfügbar · aktualisieren"
 
 #: src/app/agent.tsx
 #: src/components/agent-workbench.tsx
-#: src/components/home-launch-actions.tsx
+#: src/i18n/labels.ts
 msgid "New session"
 msgstr "Neue Sitzung"
 
@@ -3114,6 +3165,10 @@ msgstr "NICHT VERBUNDEN"
 msgid "Not found"
 msgstr "Nicht gefunden"
 
+#: src/i18n/labels.ts
+msgid "Not installed"
+msgstr "Nicht installiert"
+
 #: src/components/settings-font-sheet.tsx
 msgid "Not monospace — the terminal may look uneven"
 msgstr "Keine feste Breite — das Terminal kann ungleichmäßig aussehen"
@@ -3173,6 +3228,10 @@ msgid "Off"
 msgstr "Aus"
 
 #: src/i18n/labels.ts
+msgid "Offline"
+msgstr "Offline"
+
+#: src/i18n/labels.ts
 msgid "OFFLINE"
 msgstr "OFFLINE"
 
@@ -3206,6 +3265,14 @@ msgstr "Öffnen"
 #: src/components/session-artifacts.tsx
 msgid "Open {0}"
 msgstr "{0} öffnen"
+
+#: src/components/new-task-action.tsx
+msgid "Open {agentName} Agent on {label}"
+msgstr "{agentName}-Agent auf {label} öffnen"
+
+#: src/components/new-task-action.tsx
+msgid "Open {name} Agent on {label}"
+msgstr "{name}-Agent auf {label} öffnen"
 
 #: src/components/session-map.tsx
 msgid "Open {title}. Long press to close."
@@ -3256,7 +3323,7 @@ msgstr "Im Browser öffnen"
 msgid "Open in your browser, unavailable over the SSH tunnel"
 msgstr "Im Browser öffnen – über den SSH-Tunnel nicht verfügbar"
 
-#: src/components/opencode-guide-sheet.tsx
+#: src/components/agent-guide-sheet.tsx
 msgid "Open installation guide"
 msgstr "Installationsanleitung öffnen"
 
@@ -3272,10 +3339,6 @@ msgstr "Muqun öffnen, um zu verbinden"
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Open on-screen keyboard"
 msgstr "Bildschirmtastatur öffnen"
-
-#: src/components/new-task-action.tsx
-msgid "Open OpenCode Agent on {label}"
-msgstr "OpenCode-Agent auf {label} öffnen"
 
 #: src/components/agent-sessions-sheet.tsx
 msgid "Open parent"
@@ -3308,13 +3371,13 @@ msgstr "SSH-Host {0} öffnen"
 msgid "Open terminal"
 msgstr "Terminal öffnen"
 
+#: src/components/agent-guide-sheet.tsx
+msgid "Open the {agentName} installation guide"
+msgstr "Installationsanleitung für {agentName} öffnen"
+
 #: src/i18n/labels.ts
 msgid "Open the file explorer"
 msgstr "Dateibaum öffnen"
-
-#: src/components/opencode-guide-sheet.tsx
-msgid "Open the OpenCode installation guide"
-msgstr "OpenCode-Installationsanleitung öffnen"
 
 #: src/components/agent-tool-card.tsx
 msgid "Open the subagent's session"
@@ -3337,26 +3400,13 @@ msgstr "Öffnen, um den aktuellen Status zu prüfen"
 msgid "Open workspace {0}, {panelCount, plural, one {# running} other {# running}}. Long press to close."
 msgstr "Arbeitsbereich {0} öffnen, {panelCount, plural, one {# aktiv} other {# aktiv}}. Lange drücken zum Schließen"
 
-#: src/components/app-drawer-content.tsx
-#: src/components/launch-intro.tsx
-msgid "OpenCode Agent"
-msgstr "OpenCode-Agent"
-
 #: src/components/agent-workbench.tsx
 msgid "OpenCode agent daemon is not running on this host. Run `opencode serve --service` to start it."
 msgstr "OpenCode-Dienst läuft nicht auf diesem Host. Führen Sie `opencode serve --service` aus, um ihn zu starten"
 
-#: src/components/opencode-guide-sheet.tsx
+#: src/i18n/labels.ts
 msgid "OpenCode is installed, but its service is not answering. Run this command on the host."
 msgstr "OpenCode ist installiert, aber sein Dienst antwortet nicht. Führen Sie diesen Befehl auf dem Host aus"
-
-#: src/components/opencode-guide-sheet.tsx
-msgid "OpenCode is ready on this host."
-msgstr "OpenCode ist auf diesem Host bereit"
-
-#: src/components/new-task-action.tsx
-msgid "OpenCode ready"
-msgstr "OpenCode bereit"
 
 #: src/components/agent-workbench.tsx
 msgid "OpenCode service is offline"
@@ -3366,30 +3416,6 @@ msgstr "Der OpenCode-Dienst ist offline"
 #: src/components/agent-workbench.tsx
 msgid "OpenCode service offline"
 msgstr "OpenCode-Dienst offline"
-
-#: src/components/new-task-action.tsx
-msgid "OpenCode service offline. Tap for setup instructions"
-msgstr "OpenCode-Dienst offline. Tippen für Einrichtungsanleitung"
-
-#: src/components/home-recent-sessions.tsx
-msgid "OpenCode session"
-msgstr "OpenCode-Sitzung"
-
-#: src/components/new-task-action.tsx
-msgid "OpenCode sessions are not supported. Tap for details"
-msgstr "OpenCode-Sitzungen werden nicht unterstützt. Tippe für Details"
-
-#: src/components/opencode-guide-sheet.tsx
-msgid "OpenCode was not found on this host. Install OpenCode 2, then check again."
-msgstr "OpenCode wurde auf diesem Host nicht gefunden. Installieren Sie OpenCode 2 und prüfen Sie dann erneut"
-
-#: src/components/new-task-action.tsx
-msgid "OpenCode was not found. Tap for installation instructions"
-msgstr "OpenCode wurde nicht gefunden. Tippen Sie für Installationsanweisungen"
-
-#: src/components/opencode-guide-sheet.tsx
-msgid "OpenCode's installation could not be confirmed. If it is installed, run this command on the host."
-msgstr "Die Installation von OpenCode konnte nicht bestätigt werden. Falls es installiert ist, führen Sie diesen Befehl auf dem Host aus"
 
 #: src/app/+not-found.tsx
 msgid "Opening"
@@ -4084,7 +4110,7 @@ msgstr "Befehl ausführen"
 msgid "Run in background"
 msgstr "Im Hintergrund ausführen"
 
-#: src/components/opencode-guide-sheet.tsx
+#: src/components/agent-guide-sheet.tsx
 msgid "Run it under systemd or tmux to keep it up after you log out."
 msgstr "Starte es unter systemd oder tmux, damit es nach dem Abmelden weiterläuft"
 
@@ -4308,9 +4334,9 @@ msgstr "Wird als Nächstes gesendet: {0}"
 msgid "Sending to"
 msgstr "Senden an"
 
+#: src/app/agent-guide.tsx
 #: src/app/artifacts.tsx
 #: src/app/git-diff.tsx
-#: src/app/opencode-guide.tsx
 #: src/app/panels.tsx
 #: src/components/app-drawer.tsx
 #: src/components/server-terminal-workspace.tsx
@@ -4664,6 +4690,10 @@ msgstr "Vorgemerkt und nicht vorgemerkt"
 msgid "stale · {age}"
 msgstr "veraltet · {age}"
 
+#: src/components/agent-guide-sheet.tsx
+msgid "Start {agentName}"
+msgstr "{agentName} starten"
+
 #. placeholder {0}: profile.kind
 #: src/components/agent-assignment-bar.tsx
 msgid "Start a new {0}"
@@ -4690,13 +4720,21 @@ msgstr "Einen Agenten starten und ihm das Erste auftragen"
 msgid "Start an agent and send it the first thing to do."
 msgstr "Starte einen Agent und gib ihm das Erste zu tun"
 
-#: src/components/opencode-guide-sheet.tsx
-msgid "Start OpenCode"
-msgstr "OpenCode starten"
+#: src/i18n/labels.ts
+msgid "Start DeepSeek on the gateway host, then check again."
+msgstr "Starten Sie DeepSeek auf dem Gateway-Host und prüfen Sie dann erneut"
+
+#: src/i18n/labels.ts
+msgid "Start T3 Code on the gateway host, then check again."
+msgstr "Starten Sie T3 Code auf dem Gateway-Host und prüfen Sie dann erneut"
 
 #: src/components/new-task-sheet.tsx
 msgid "Start task"
 msgstr "Aufgabe starten"
+
+#: src/i18n/labels.ts
+msgid "Start the agent on the gateway host, then check again."
+msgstr "Starten Sie den Agenten auf dem Gateway-Host und prüfen Sie dann erneut"
 
 #: src/components/agent-workbench.tsx
 msgid "Started with a clean context."
@@ -5256,9 +5294,9 @@ msgstr "Diese Datei ist zu groß"
 msgid "This font could not be read."
 msgstr "Diese Schrift konnte nicht gelesen werden"
 
-#: src/components/opencode-guide-sheet.tsx
-msgid "This gateway does not advertise OpenCode sessions."
-msgstr "Dieses Gateway kündigt keine OpenCode-Sitzungen an"
+#: src/components/agent-guide-sheet.tsx
+msgid "This gateway does not advertise {agentName} sessions."
+msgstr "Dieses Gateway bietet keine {agentName}-Sitzungen an"
 
 #: src/lib/network-error.ts
 msgid "This Gateway does not answer to that address."
@@ -5272,7 +5310,7 @@ msgstr "Dieses Gateway liefert noch keine Dateien. Aktualisiere das Muqun-Gatewa
 msgid "This gateway has not listed any paired devices."
 msgstr "Dieses Gateway hat keine gekoppelten Geräte aufgelistet"
 
-#: src/components/opencode-guide-sheet.tsx
+#: src/components/agent-guide-sheet.tsx
 msgid "This gateway is not answering. Check the server connection, then try again."
 msgstr "Dieses Gateway antwortet nicht. Prüfen Sie die Serververbindung und versuchen Sie es dann erneut"
 
@@ -5357,8 +5395,8 @@ msgstr "Dieser Server hat diese Anfrage bereits bearbeitet"
 msgid "This server has no session to start an agent in."
 msgstr "Dieser Server hat keine Session, in der ein Agent starten könnte"
 
+#: src/app/agent-guide.tsx
 #: src/app/new-task.tsx
-#: src/app/opencode-guide.tsx
 #: src/app/simfarm.tsx
 #: src/app/web-service.tsx
 msgid "This server is no longer paired."

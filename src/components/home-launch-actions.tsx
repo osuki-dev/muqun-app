@@ -2,9 +2,17 @@ import { HOME_TOOLBAR_PAIR_WIDTH, HOME_TOOLBAR_ICON_INSET } from '@/constants/ho
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens } from '@osuki-dev/ui';
-import { ArrowUpRight, ChevronDown, Link, Play, SquareTerminal } from 'lucide-react-native';
-import { useRouter } from 'expo-router';
-import { useEffect, useState, type ReactNode } from 'react';
+import {
+  ArrowUpRight,
+  ChevronDown,
+  Ellipsis,
+  Link,
+  MessagesSquare,
+  Play,
+  SquareTerminal,
+} from 'lucide-react-native';
+import { useIsFocused, useRouter } from 'expo-router';
+import { useEffect, useEffectEvent, useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, {
   useAnimatedStyle,
@@ -13,18 +21,27 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
-import { OpenCodeIcon } from '@/components/opencode-icon';
+import { AgentMark } from '@/components/agent-mark';
 import { PressableScale } from '@/components/pressable-scale';
 import { Text } from '@/components/text';
 import { ThemeIcon } from '@/components/theme-icon';
+import { useAppActive } from '@/hooks/use-app-active';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
+import { isDemoRecord } from '@/lib/demo-gateway';
+import { refreshAgentServerDiscovery } from '@/lib/home-agent-readiness';
+import { buildLaunchModel, groupLaunchCells, type LaunchEntry } from '@/lib/home-launch-model';
+import { useAgents } from '@/stores/agents';
+import { useHomeAgentPicker } from '@/stores/home-agent-picker';
 import { PRESS, timing } from '@/lib/motion';
 import type { GatewayRecord } from '@/lib/gateway-storage';
-import { reachabilityDescription } from '@/i18n/labels';
+import { agentLaunchCaption, reachabilityDescription } from '@/i18n/labels';
 import type { ServerReachability } from '@/lib/server-reachability';
 import { useHomeTargetPicker } from '@/stores/home-target-picker';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { settleAfter } from '@/lib/compiler-safe-control-flow';
+
+/** Discovery is refreshed on the same cadence Continue uses. */
+const HOME_AGENTS_REFRESH_MS = 30_000;
 
 /** Target choice is local to Home; a selection alone never switches a live connection. */
 export function useHomeLaunchController({
@@ -198,16 +215,16 @@ export function HomeLaunchTarget({
 
 export function HomeLaunchActions({
   controller,
-  onNewOpenCode,
-  onOpenOpenCode,
+  onNewAgent,
+  onOpenAgent,
   onNewTerminal,
   onOpenTerminal,
   onSsh,
   onDemo,
 }: {
   controller: HomeLaunchController;
-  onNewOpenCode: (serverId: string) => Promise<unknown>;
-  onOpenOpenCode: (serverId: string) => Promise<unknown>;
+  onNewAgent: (serverId: string, directory?: string, agentId?: string) => Promise<unknown>;
+  onOpenAgent: (serverId: string) => Promise<unknown>;
   onNewTerminal: (serverId: string) => Promise<unknown>;
   onOpenTerminal: (serverId: string) => Promise<unknown>;
   onSsh: () => Promise<unknown>;
@@ -216,9 +233,147 @@ export function HomeLaunchActions({
   const { t } = useLingui();
   const { _ } = useLinguiRuntime();
   const theme = useThemeTokens();
-  const { chosenOffline, launchOnChosen, opening, run } = controller;
+  const router = useRouter();
+  const { chosen, chosenOffline, launchOnChosen, opening, run } = controller;
   const [availableWidth, setAvailableWidth] = useState(0);
   const horizontal = availableWidth < 560;
+
+  // The row is a projection of what the chosen gateway said about itself; a
+  // gateway never asked, or too old to be asked, projects to the fixed five.
+  const chosenId = chosen?.serverId;
+  const discovery = useAgents((state) => (chosenId ? state.index.servers[chosenId] : undefined));
+  const lastUsedAgentId = useAgents((state) =>
+    chosenId ? state.index.lastUsed[chosenId] : undefined
+  );
+  const model = buildLaunchModel({ discovery, lastUsedAgentId });
+  const cells = groupLaunchCells(model.entries);
+
+  // Fresh on focus and on Continue's own cadence, for the chosen gateway only,
+  // and never in the way of a render: the row draws from the mirror.
+  const focused = useIsFocused();
+  const appActive = useAppActive();
+  useEffect(() => {
+    if (!chosen || chosenOffline || !focused || !appActive || isDemoRecord(chosen)) return;
+    void refreshAgentServerDiscovery(chosen);
+    const timer = setInterval(() => {
+      void refreshAgentServerDiscovery(chosen);
+    }, HOME_AGENTS_REFRESH_MS);
+    return () => clearInterval(timer);
+  }, [appActive, chosen, chosenOffline, focused]);
+
+  // "More agents" answers through a store, as the gateway picker does: the
+  // sheet only says which agent, and the command that starts it runs here.
+  const [agentsRequestId, setAgentsRequestId] = useState<number | null>(null);
+  const beginAgentsPicker = useHomeAgentPicker((state) => state.begin);
+  const agentsCompletedRequestId = useHomeAgentPicker((state) => state.completedRequestId);
+  const agentsCompletedAgentId = useHomeAgentPicker((state) => state.completedAgentId);
+  const startChosenAgent = useEffectEvent((agentId: string) => {
+    launchOnChosen((serverId) => onNewAgent(serverId, undefined, agentId));
+  });
+  useEffect(() => {
+    if (agentsRequestId === null || agentsCompletedRequestId !== agentsRequestId) return;
+    setAgentsRequestId(null);
+    if (agentsCompletedAgentId) startChosenAgent(agentsCompletedAgentId);
+  }, [agentsCompletedAgentId, agentsCompletedRequestId, agentsRequestId]);
+  function openAgentsPicker() {
+    if (!chosenId) return;
+    const requestId = beginAgentsPicker(chosenId);
+    setAgentsRequestId(requestId);
+    router.push({ pathname: '/home-agents', params: { requestId: String(requestId) } });
+  }
+
+  function renderEntry(entry: LaunchEntry) {
+    const common = {
+      testID: entry.testID,
+      marker: entry.marker,
+      horizontal,
+    };
+    switch (entry.kind) {
+      case 'agent': {
+        const ink = entry.primary ? theme.colors.onPrimary : theme.colors.primary;
+        return (
+          <LaunchTile
+            key={entry.key}
+            {...common}
+            aliasTestID={entry.aliasTestID}
+            primary={entry.primary}
+            title={entry.name}
+            caption={_(agentLaunchCaption[entry.caption])}
+            icon={<AgentMark kind={entry.agentKind} size={entry.primary ? 24 : 22} color={ink} />}
+            disabled={opening || chosenOffline}
+            onPress={() =>
+              launchOnChosen((serverId) => onNewAgent(serverId, undefined, entry.agentId))
+            }
+          />
+        );
+      }
+      case 'more-agents': {
+        const hidden = entry.hidden;
+        return (
+          <LaunchTile
+            key={entry.key}
+            {...common}
+            title={t`More agents`}
+            caption={t`${hidden} more`}
+            icon={<Ellipsis size={22} color={theme.colors.primary} />}
+            disabled={opening || chosenOffline}
+            onPress={openAgentsPicker}
+          />
+        );
+      }
+      case 'sessions':
+        return (
+          <LaunchTile
+            key={entry.key}
+            {...common}
+            aliasTestID={entry.aliasTestID}
+            compact
+            title={t`Sessions`}
+            icon={<MessagesSquare size={16} color={theme.colors.primary} />}
+            disabled={opening || chosenOffline}
+            onPress={() => launchOnChosen(onOpenAgent)}
+          />
+        );
+      case 'terminal':
+        return (
+          <LaunchTile
+            key={entry.key}
+            {...common}
+            compact
+            title={t`Terminal`}
+            icon={<SquareTerminal size={16} color={theme.colors.primary} />}
+            disabled={opening || chosenOffline}
+            onPress={() => launchOnChosen(onOpenTerminal)}
+          />
+        );
+      case 'new-terminal':
+        return (
+          <LaunchTile
+            key={entry.key}
+            {...common}
+            title={t`New terminal`}
+            caption={entry.backend}
+            icon={<SquareTerminal size={22} color={theme.colors.primary} />}
+            disabled={opening || chosenOffline}
+            onPress={() => launchOnChosen(onNewTerminal)}
+          />
+        );
+      case 'ssh':
+        return (
+          <LaunchTile
+            key={entry.key}
+            {...common}
+            title={t`SSH`}
+            caption={t`SSH hosts`}
+            icon={<Link size={22} color={theme.colors.primary} />}
+            disabled={opening}
+            onPress={() => {
+              void run(onSsh);
+            }}
+          />
+        );
+    }
+  }
 
   return (
     <View
@@ -259,58 +414,17 @@ export function HomeLaunchActions({
             showsHorizontalScrollIndicator={false}
             testID="home-launch-actions-scroll"
             contentContainerStyle={[styles.actions, horizontal && styles.horizontalActions]}>
-            <LaunchTile
-              horizontal={horizontal}
-              testID="home-new-opencode"
-              marker="01"
-              primary
-              title="OpenCode"
-              caption={t`New session`}
-              icon={<OpenCodeIcon size={24} color={theme.colors.onPrimary} />}
-              disabled={opening || chosenOffline}
-              onPress={() => launchOnChosen(onNewOpenCode)}
-            />
-            <View style={[styles.stackedActions, horizontal && styles.horizontalStack]}>
-              <LaunchTile
-                compact
-                testID="home-open-opencode"
-                marker="02"
-                title={t`Sessions`}
-                icon={<OpenCodeIcon size={16} color={theme.colors.primary} />}
-                disabled={opening || chosenOffline}
-                onPress={() => launchOnChosen(onOpenOpenCode)}
-              />
-              <LaunchTile
-                compact
-                testID="home-open-terminal"
-                marker="03"
-                title={t`Terminal`}
-                icon={<SquareTerminal size={16} color={theme.colors.primary} />}
-                disabled={opening || chosenOffline}
-                onPress={() => launchOnChosen(onOpenTerminal)}
-              />
-            </View>
-            <LaunchTile
-              horizontal={horizontal}
-              testID="home-new-terminal"
-              marker="04"
-              title={t`New terminal`}
-              icon={<SquareTerminal size={22} color={theme.colors.primary} />}
-              disabled={opening || chosenOffline}
-              onPress={() => launchOnChosen(onNewTerminal)}
-            />
-            <LaunchTile
-              horizontal={horizontal}
-              testID="home-open-ssh"
-              marker="05"
-              title={t`SSH`}
-              caption={t`SSH hosts`}
-              icon={<Link size={22} color={theme.colors.primary} />}
-              disabled={opening}
-              onPress={() => {
-                void run(onSsh);
-              }}
-            />
+            {cells.map((cell) =>
+              cell.entries[0]?.layout === 'compact' ? (
+                <View
+                  key={cell.key}
+                  style={[styles.stackedActions, horizontal && styles.horizontalStack]}>
+                  {cell.entries.map(renderEntry)}
+                </View>
+              ) : (
+                renderEntry(cell.entries[0]!)
+              )
+            )}
           </Animated.ScrollView>
         </View>
       </View>
@@ -330,6 +444,7 @@ function LaunchTile({
   horizontal = false,
   disabled,
   testID,
+  aliasTestID,
 }: {
   title: string;
   marker: string;
@@ -341,6 +456,8 @@ function LaunchTile({
   horizontal?: boolean;
   disabled: boolean;
   testID: string;
+  /** The id this tile answered to before it was projected; kept for the e2e manifest. */
+  aliasTestID?: string;
 }) {
   const profile = useAppearanceProfile();
   const theme = useThemeTokens();
@@ -363,6 +480,7 @@ function LaunchTile({
     return (
       <PressableScale
         testID={testID}
+        nativeID={aliasTestID}
         accessibilityRole="button"
         accessibilityLabel={caption ? `${title}, ${caption}` : title}
         accessibilityState={{ disabled }}
@@ -408,6 +526,7 @@ function LaunchTile({
   return (
     <PressableScale
       testID={testID}
+      nativeID={aliasTestID}
       accessibilityRole="button"
       accessibilityLabel={caption ? `${title}, ${caption}` : title}
       accessibilityState={{ disabled }}

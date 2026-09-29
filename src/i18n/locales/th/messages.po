@@ -170,9 +170,41 @@ msgstr "{0} ชั่วโมงที่แล้ว"
 msgid "{0}m ago"
 msgstr "{0} นาทีที่แล้ว"
 
+#: src/components/agent-guide-sheet.tsx
+msgid "{agentName} is ready on this host."
+msgstr "{agentName} พร้อมใช้งานบนโฮสต์นี้"
+
+#: src/components/new-task-action.tsx
+msgid "{agentName} ready"
+msgstr "{agentName} พร้อมแล้ว"
+
+#: src/components/new-task-action.tsx
+msgid "{agentName} service offline. Tap for setup instructions"
+msgstr "บริการ {agentName} ออฟไลน์ แตะเพื่อดูวิธีตั้งค่า"
+
+#: src/components/home-recent-sessions.tsx
+msgid "{agentName} session"
+msgstr "เซสชัน {agentName}"
+
+#: src/components/new-task-action.tsx
+msgid "{agentName} sessions are not supported. Tap for details"
+msgstr "ไม่รองรับเซสชัน {agentName} แตะเพื่อดูรายละเอียด"
+
+#: src/components/agent-guide-sheet.tsx
+msgid "{agentName} was not found on this host. Install it, then check again."
+msgstr "ไม่พบ {agentName} บนโฮสต์นี้ ติดตั้งแล้วตรวจสอบอีกครั้ง"
+
+#: src/components/new-task-action.tsx
+msgid "{agentName} was not found. Tap for installation instructions"
+msgstr "ไม่พบ {agentName} แตะเพื่อดูวิธีติดตั้ง"
+
 #: src/components/agent-composer.tsx
 msgid "{agentName}: {title} — finished while you were away"
 msgstr "{agentName}: {title} — ทำงานเสร็จตอนที่คุณไม่อยู่"
+
+#: src/components/agent-guide-sheet.tsx
+msgid "{agentName}'s installation could not be confirmed. If it is installed, start it on the host."
+msgstr "ยืนยันการติดตั้ง {agentName} ไม่ได้ หากติดตั้งไว้แล้ว ให้เริ่มทำงานบนโฮสต์"
 
 #: src/components/away-digest-card.tsx
 msgid "{asked, plural, one {· asked once} other {· asked # times}}"
@@ -199,6 +231,10 @@ msgstr "พบคำขอ {count} รายการในการตรวจ
 msgid "{done} of {0} done"
 msgstr "เสร็จ {done} จาก {0}"
 
+#: src/components/home-launch-actions.tsx
+msgid "{hidden} more"
+msgstr "อีก {hidden}"
+
 #: src/components/bounded-markdown.tsx
 msgid "{hiddenKb} KB not shown"
 msgstr "ไม่ได้แสดง {hiddenKb} KB"
@@ -222,6 +258,14 @@ msgstr "คัดลอกโค้ด {language} ไปยังคลิปบ
 #: src/components/agent-revert-plate.tsx
 msgid "{messages, plural, one {# message} other {# messages}}"
 msgstr "{messages, plural, other {# ข้อความ}}"
+
+#: src/components/new-task-action.tsx
+msgid "{name} service offline. Tap for setup instructions"
+msgstr "บริการ {name} ออฟไลน์ แตะเพื่อดูวิธีตั้งค่า"
+
+#: src/components/new-task-action.tsx
+msgid "{name} was not found. Tap for installation instructions"
+msgstr "ไม่พบ {name} แตะเพื่อดูวิธีติดตั้ง"
 
 #: src/components/session-map.tsx
 msgid "{panelCount, plural, one {# running} other {# running}}"
@@ -368,13 +412,13 @@ msgstr "เพิ่มแล้ว"
 msgid "Agent"
 msgstr "เอเจนต์"
 
-#. placeholder {0}: part.agent
+#. placeholder {0}: part.mode
 #: src/components/agent-message-block.tsx
 msgid "Agent · {0}"
 msgstr "เอเจนต์ · {0}"
 
 #. placeholder {0}: part.previous
-#. placeholder {1}: part.agent
+#. placeholder {1}: part.mode
 #: src/components/agent-message-block.tsx
 msgid "Agent · {0} → {1}"
 msgstr "เอเจนต์ · {0} → {1}"
@@ -398,6 +442,8 @@ msgstr "เอเจนต์ไม่อยู่แล้ว"
 msgid "Agent panes open in"
 msgstr "เปิดพาเนลเอเจนต์ใน"
 
+#: src/components/app-drawer-content.tsx
+#: src/components/launch-intro.tsx
 #: src/components/settings-servers.tsx
 msgid "Agents"
 msgstr "เอเจนต์"
@@ -775,6 +821,7 @@ msgstr "ต้องเข้าถึงกล้อง"
 #: src/components/agent-composer.tsx
 #: src/components/agent-context-sheet.tsx
 #: src/components/agent-sessions-sheet.tsx
+#: src/components/agent-workbench.tsx
 #: src/components/agent-worktree-sheet.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/row-action-menu.tsx
@@ -830,8 +877,8 @@ msgstr "เปลี่ยนสีพื้นหลัง ไม่เปล�
 msgid "Chat"
 msgstr "แชต"
 
+#: src/components/agent-guide-sheet.tsx
 #: src/components/agent-workbench.tsx
-#: src/components/opencode-guide-sheet.tsx
 msgid "Check again"
 msgstr "ตรวจสอบอีกครั้ง"
 
@@ -879,6 +926,7 @@ msgid "Choose a simulator from the menu."
 msgstr "เลือกเครื่องจำลองจากเมนู"
 
 #: src/components/agent-mode-sheet.tsx
+#: src/components/home-agents-sheet.tsx
 msgid "Choose an agent"
 msgstr "เลือกเอเจนต์"
 
@@ -1326,10 +1374,10 @@ msgstr "การควบคุม"
 msgid "Conversational help and open-ended project questions."
 msgstr "ความช่วยเหลือแบบสนทนาและคำถามปลายเปิดเกี่ยวกับโปรเจกต์"
 
+#: src/components/agent-guide-sheet.tsx
 #: src/components/agent-message-block.tsx
 #: src/components/asset-viewer.tsx
 #: src/components/bounded-markdown.tsx
-#: src/components/opencode-guide-sheet.tsx
 msgid "Copied"
 msgstr "คัดลอกแล้ว"
 
@@ -1364,7 +1412,7 @@ msgstr "คัดลอกพาธ"
 msgid "Copy public key"
 msgstr "คัดลอกคีย์สาธารณะ"
 
-#: src/components/opencode-guide-sheet.tsx
+#: src/components/agent-guide-sheet.tsx
 msgid "Copy the command"
 msgstr "คัดลอกคำสั่ง"
 
@@ -1808,8 +1856,8 @@ msgid "Diff summary"
 msgstr "สรุปความแตกต่าง"
 
 #: src/components/launch-intro.tsx
-msgid "Direct control for OpenCode autonomous coding. Follow real-time reasoning, inspect code diffs, review step-by-step todos, and guide tasks on the go."
-msgstr "ควบคุมเอเจนต์เขียนโค้ด OpenCode ได้โดยตรง ติดตามการคิดแบบเรียลไทม์ ตรวจสอบความเปลี่ยนแปลงของโค้ด และติดตามงานได้จากทุกที่"
+msgid "Direct control for autonomous coding agents. Follow real-time reasoning, inspect code diffs, review step-by-step todos, and guide tasks on the go."
+msgstr "ควบคุมเอเจนต์เขียนโค้ด ได้โดยตรง ติดตามการคิดแบบเรียลไทม์ ตรวจสอบความเปลี่ยนแปลงของโค้ด และติดตามงานได้จากทุกที่"
 
 #: src/components/dev-home-ambient-controls.tsx
 msgid "Direction"
@@ -2644,7 +2692,6 @@ msgid "Load more"
 msgstr "โหลดเพิ่มเติม"
 
 #: src/components/gateway-storage-error.tsx
-#: src/components/home-recent-sessions.tsx
 #: src/components/list-load-more-footer.tsx
 #: src/components/session-map.tsx
 #: src/components/ssh-host-list.tsx
@@ -2781,6 +2828,10 @@ msgstr "ความกว้างคงที่"
 msgid "More actions"
 msgstr "การทำงานเพิ่มเติม"
 
+#: src/components/home-launch-actions.tsx
+msgid "More agents"
+msgstr "เอเจนต์เพิ่มเติม"
+
 #: src/components/virtual-keyboard.tsx
 msgid "More symbols"
 msgstr "สัญลักษณ์เพิ่มเติม"
@@ -2886,7 +2937,7 @@ msgstr "มีเอาต์พุตใหม่ · รีเฟรช"
 
 #: src/app/agent.tsx
 #: src/components/agent-workbench.tsx
-#: src/components/home-launch-actions.tsx
+#: src/i18n/labels.ts
 msgid "New session"
 msgstr "เซสชันใหม่"
 
@@ -3114,6 +3165,10 @@ msgstr "ไม่ได้เชื่อมต่อ"
 msgid "Not found"
 msgstr "ไม่พบ"
 
+#: src/i18n/labels.ts
+msgid "Not installed"
+msgstr "ยังไม่ได้ติดตั้ง"
+
 #: src/components/settings-font-sheet.tsx
 msgid "Not monospace — the terminal may look uneven"
 msgstr "ไม่ใช่ฟอนต์ความกว้างคงที่ — เทอร์มินัลอาจดูไม่เรียบร้อย"
@@ -3173,6 +3228,10 @@ msgid "Off"
 msgstr "ปิด"
 
 #: src/i18n/labels.ts
+msgid "Offline"
+msgstr "ออฟไลน์"
+
+#: src/i18n/labels.ts
 msgid "OFFLINE"
 msgstr "ออฟไลน์"
 
@@ -3206,6 +3265,14 @@ msgstr "เปิด"
 #: src/components/session-artifacts.tsx
 msgid "Open {0}"
 msgstr "เปิด {0}"
+
+#: src/components/new-task-action.tsx
+msgid "Open {agentName} Agent on {label}"
+msgstr "เปิดเอเจนต์ {agentName} บน {label}"
+
+#: src/components/new-task-action.tsx
+msgid "Open {name} Agent on {label}"
+msgstr "เปิดเอเจนต์ {name} บน {label}"
 
 #: src/components/session-map.tsx
 msgid "Open {title}. Long press to close."
@@ -3256,7 +3323,7 @@ msgstr "เปิดในเบราว์เซอร์"
 msgid "Open in your browser, unavailable over the SSH tunnel"
 msgstr "เปิดในเบราว์เซอร์ ไม่พร้อมใช้งานผ่านอุโมงค์ SSH"
 
-#: src/components/opencode-guide-sheet.tsx
+#: src/components/agent-guide-sheet.tsx
 msgid "Open installation guide"
 msgstr "เปิดคู่มือการติดตั้ง"
 
@@ -3272,10 +3339,6 @@ msgstr "เปิด Muqun เพื่อเชื่อมต่อ"
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Open on-screen keyboard"
 msgstr "เปิดแป้นพิมพ์บนหน้าจอ"
-
-#: src/components/new-task-action.tsx
-msgid "Open OpenCode Agent on {label}"
-msgstr "เปิด OpenCode Agent บน {label}"
 
 #: src/components/agent-sessions-sheet.tsx
 msgid "Open parent"
@@ -3308,13 +3371,13 @@ msgstr "เปิดโฮสต์ SSH {0}"
 msgid "Open terminal"
 msgstr "เปิดเทอร์มินัล"
 
+#: src/components/agent-guide-sheet.tsx
+msgid "Open the {agentName} installation guide"
+msgstr "เปิดคู่มือการติดตั้ง {agentName}"
+
 #: src/i18n/labels.ts
 msgid "Open the file explorer"
 msgstr "เปิดตัวสำรวจไฟล์"
-
-#: src/components/opencode-guide-sheet.tsx
-msgid "Open the OpenCode installation guide"
-msgstr "เปิดคู่มือการติดตั้ง OpenCode"
 
 #: src/components/agent-tool-card.tsx
 msgid "Open the subagent's session"
@@ -3337,26 +3400,13 @@ msgstr "เปิดเพื่อตรวจสอบสถานะปัจ
 msgid "Open workspace {0}, {panelCount, plural, one {# running} other {# running}}. Long press to close."
 msgstr "เปิดพื้นที่ทำงาน {0} {panelCount, plural, other {กำลังทำงาน # รายการ}} กดค้างเพื่อปิด"
 
-#: src/components/app-drawer-content.tsx
-#: src/components/launch-intro.tsx
-msgid "OpenCode Agent"
-msgstr "เอเจนต์ OpenCode"
-
 #: src/components/agent-workbench.tsx
 msgid "OpenCode agent daemon is not running on this host. Run `opencode serve --service` to start it."
 msgstr "บริการ OpenCode ไม่ได้ทำงานอยู่บนโฮสต์นี้ เรียกใช้ `opencode serve --service` เพื่อเริ่มต้น"
 
-#: src/components/opencode-guide-sheet.tsx
+#: src/i18n/labels.ts
 msgid "OpenCode is installed, but its service is not answering. Run this command on the host."
 msgstr "ติดตั้ง OpenCode แล้ว แต่บริการไม่ตอบสนอง ให้เรียกใช้คำสั่งนี้บนโฮสต์"
-
-#: src/components/opencode-guide-sheet.tsx
-msgid "OpenCode is ready on this host."
-msgstr "OpenCode พร้อมใช้งานบนโฮสต์นี้แล้ว"
-
-#: src/components/new-task-action.tsx
-msgid "OpenCode ready"
-msgstr "OpenCode พร้อมแล้ว"
 
 #: src/components/agent-workbench.tsx
 msgid "OpenCode service is offline"
@@ -3366,30 +3416,6 @@ msgstr "บริการ OpenCode ออฟไลน์"
 #: src/components/agent-workbench.tsx
 msgid "OpenCode service offline"
 msgstr "บริการ OpenCode ออฟไลน์"
-
-#: src/components/new-task-action.tsx
-msgid "OpenCode service offline. Tap for setup instructions"
-msgstr "บริการ OpenCode ออฟไลน์ แตะเพื่อดูคำแนะนำการตั้งค่า"
-
-#: src/components/home-recent-sessions.tsx
-msgid "OpenCode session"
-msgstr "เซสชัน OpenCode"
-
-#: src/components/new-task-action.tsx
-msgid "OpenCode sessions are not supported. Tap for details"
-msgstr "ไม่รองรับเซสชัน OpenCode แตะเพื่อดูรายละเอียด"
-
-#: src/components/opencode-guide-sheet.tsx
-msgid "OpenCode was not found on this host. Install OpenCode 2, then check again."
-msgstr "ไม่พบ OpenCode บนโฮสต์นี้ ติดตั้ง OpenCode 2 แล้วตรวจสอบอีกครั้ง"
-
-#: src/components/new-task-action.tsx
-msgid "OpenCode was not found. Tap for installation instructions"
-msgstr "ไม่พบ OpenCode แตะเพื่อดูคำแนะนำในการติดตั้ง"
-
-#: src/components/opencode-guide-sheet.tsx
-msgid "OpenCode's installation could not be confirmed. If it is installed, run this command on the host."
-msgstr "ไม่สามารถยืนยันการติดตั้ง OpenCode ได้ หากติดตั้งแล้ว ให้เรียกใช้คำสั่งนี้บนโฮสต์"
 
 #: src/app/+not-found.tsx
 msgid "Opening"
@@ -4084,7 +4110,7 @@ msgstr "เรียกใช้คำสั่ง"
 msgid "Run in background"
 msgstr "รันเบื้องหลัง"
 
-#: src/components/opencode-guide-sheet.tsx
+#: src/components/agent-guide-sheet.tsx
 msgid "Run it under systemd or tmux to keep it up after you log out."
 msgstr "รันใต้ systemd หรือ tmux เพื่อให้ทำงานต่อหลังออกจากระบบ"
 
@@ -4308,9 +4334,9 @@ msgstr "จะส่งถัดไป: {0}"
 msgid "Sending to"
 msgstr "กำลังส่งไปยัง"
 
+#: src/app/agent-guide.tsx
 #: src/app/artifacts.tsx
 #: src/app/git-diff.tsx
-#: src/app/opencode-guide.tsx
 #: src/app/panels.tsx
 #: src/components/app-drawer.tsx
 #: src/components/server-terminal-workspace.tsx
@@ -4664,6 +4690,10 @@ msgstr "เตรียมคอมมิตแล้วและยังไม
 msgid "stale · {age}"
 msgstr "ข้อมูลเก่า · {age}"
 
+#: src/components/agent-guide-sheet.tsx
+msgid "Start {agentName}"
+msgstr "เริ่ม {agentName}"
+
 #. placeholder {0}: profile.kind
 #: src/components/agent-assignment-bar.tsx
 msgid "Start a new {0}"
@@ -4690,13 +4720,21 @@ msgstr "เริ่มเอเจนต์แล้วส่งงานแร
 msgid "Start an agent and send it the first thing to do."
 msgstr "เริ่มเอเจนต์และส่งงานแรกให้ทำ"
 
-#: src/components/opencode-guide-sheet.tsx
-msgid "Start OpenCode"
-msgstr "เริ่ม OpenCode"
+#: src/i18n/labels.ts
+msgid "Start DeepSeek on the gateway host, then check again."
+msgstr "เริ่ม DeepSeek บนโฮสต์เกตเวย์ แล้วตรวจสอบอีกครั้ง"
+
+#: src/i18n/labels.ts
+msgid "Start T3 Code on the gateway host, then check again."
+msgstr "เริ่ม T3 Code บนโฮสต์เกตเวย์ แล้วตรวจสอบอีกครั้ง"
 
 #: src/components/new-task-sheet.tsx
 msgid "Start task"
 msgstr "เริ่มงาน"
+
+#: src/i18n/labels.ts
+msgid "Start the agent on the gateway host, then check again."
+msgstr "เริ่มเอเจนต์บนโฮสต์เกตเวย์ แล้วตรวจสอบอีกครั้ง"
 
 #: src/components/agent-workbench.tsx
 msgid "Started with a clean context."
@@ -5256,9 +5294,9 @@ msgstr "ไฟล์นี้ใหญ่เกินไป"
 msgid "This font could not be read."
 msgstr "อ่านฟอนต์นี้ไม่ได้"
 
-#: src/components/opencode-guide-sheet.tsx
-msgid "This gateway does not advertise OpenCode sessions."
-msgstr "Gateway นี้ไม่ประกาศเซสชัน OpenCode"
+#: src/components/agent-guide-sheet.tsx
+msgid "This gateway does not advertise {agentName} sessions."
+msgstr "เกตเวย์นี้ไม่ได้ให้บริการเซสชัน {agentName}"
 
 #: src/lib/network-error.ts
 msgid "This Gateway does not answer to that address."
@@ -5272,7 +5310,7 @@ msgstr "Gateway นี้ยังไม่ให้บริการไฟล�
 msgid "This gateway has not listed any paired devices."
 msgstr "Gateway นี้ยังไม่แสดงรายการอุปกรณ์ที่จับคู่"
 
-#: src/components/opencode-guide-sheet.tsx
+#: src/components/agent-guide-sheet.tsx
 msgid "This gateway is not answering. Check the server connection, then try again."
 msgstr "เกตเวย์นี้ไม่ตอบสนอง ตรวจสอบการเชื่อมต่อเซิร์ฟเวอร์แล้วลองอีกครั้ง"
 
@@ -5357,8 +5395,8 @@ msgstr "เซิร์ฟเวอร์นี้จัดการคำขอ
 msgid "This server has no session to start an agent in."
 msgstr "เซิร์ฟเวอร์นี้ไม่มีเซสชันสำหรับเริ่มเอเจนต์"
 
+#: src/app/agent-guide.tsx
 #: src/app/new-task.tsx
-#: src/app/opencode-guide.tsx
 #: src/app/simfarm.tsx
 #: src/app/web-service.tsx
 msgid "This server is no longer paired."

@@ -170,9 +170,41 @@ msgstr "{0} 小時前"
 msgid "{0}m ago"
 msgstr "{0} 分鐘前"
 
+#: src/components/agent-guide-sheet.tsx
+msgid "{agentName} is ready on this host."
+msgstr "{agentName} 已在此主機上就緒"
+
+#: src/components/new-task-action.tsx
+msgid "{agentName} ready"
+msgstr "{agentName} 已就緒"
+
+#: src/components/new-task-action.tsx
+msgid "{agentName} service offline. Tap for setup instructions"
+msgstr "{agentName} 服務已離線。點一下查看設定說明"
+
+#: src/components/home-recent-sessions.tsx
+msgid "{agentName} session"
+msgstr "{agentName} 工作階段"
+
+#: src/components/new-task-action.tsx
+msgid "{agentName} sessions are not supported. Tap for details"
+msgstr "不支援 {agentName} 工作階段。點一下查看詳細資料"
+
+#: src/components/agent-guide-sheet.tsx
+msgid "{agentName} was not found on this host. Install it, then check again."
+msgstr "在此主機上找不到 {agentName}。請先安裝，然後重新檢查"
+
+#: src/components/new-task-action.tsx
+msgid "{agentName} was not found. Tap for installation instructions"
+msgstr "找不到 {agentName}。點一下查看安裝說明"
+
 #: src/components/agent-composer.tsx
 msgid "{agentName}: {title} — finished while you were away"
 msgstr "{agentName}：{title} — 在你離開時完成"
+
+#: src/components/agent-guide-sheet.tsx
+msgid "{agentName}'s installation could not be confirmed. If it is installed, start it on the host."
+msgstr "無法確認 {agentName} 的安裝狀況。如果已安裝，請在主機上啟動它"
 
 #: src/components/away-digest-card.tsx
 msgid "{asked, plural, one {· asked once} other {· asked # times}}"
@@ -199,6 +231,10 @@ msgstr "最近觀察到 {count} 個請求"
 msgid "{done} of {0} done"
 msgstr "已完成 {done}/{0}"
 
+#: src/components/home-launch-actions.tsx
+msgid "{hidden} more"
+msgstr "另外 {hidden} 個"
+
 #: src/components/bounded-markdown.tsx
 msgid "{hiddenKb} KB not shown"
 msgstr "未顯示 {hiddenKb} KB"
@@ -222,6 +258,14 @@ msgstr "已複製 {language} 程式碼到剪貼簿"
 #: src/components/agent-revert-plate.tsx
 msgid "{messages, plural, one {# message} other {# messages}}"
 msgstr "{messages, plural, other {# 則訊息}}"
+
+#: src/components/new-task-action.tsx
+msgid "{name} service offline. Tap for setup instructions"
+msgstr "{name} 服務已離線。點一下查看設定說明"
+
+#: src/components/new-task-action.tsx
+msgid "{name} was not found. Tap for installation instructions"
+msgstr "找不到 {name}。點一下查看安裝說明"
 
 #: src/components/session-map.tsx
 msgid "{panelCount, plural, one {# running} other {# running}}"
@@ -368,13 +412,13 @@ msgstr "新增"
 msgid "Agent"
 msgstr "Agent"
 
-#. placeholder {0}: part.agent
+#. placeholder {0}: part.mode
 #: src/components/agent-message-block.tsx
 msgid "Agent · {0}"
 msgstr "Agent · {0}"
 
 #. placeholder {0}: part.previous
-#. placeholder {1}: part.agent
+#. placeholder {1}: part.mode
 #: src/components/agent-message-block.tsx
 msgid "Agent · {0} → {1}"
 msgstr "Agent · {0} → {1}"
@@ -398,6 +442,8 @@ msgstr "代理已離開"
 msgid "Agent panes open in"
 msgstr "代理程式面板的預設檢視"
 
+#: src/components/app-drawer-content.tsx
+#: src/components/launch-intro.tsx
 #: src/components/settings-servers.tsx
 msgid "Agents"
 msgstr "代理程式"
@@ -775,6 +821,7 @@ msgstr "需要相機存取權"
 #: src/components/agent-composer.tsx
 #: src/components/agent-context-sheet.tsx
 #: src/components/agent-sessions-sheet.tsx
+#: src/components/agent-workbench.tsx
 #: src/components/agent-worktree-sheet.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/row-action-menu.tsx
@@ -830,8 +877,8 @@ msgstr "只調整背景顏色，不影響文字、圖示或裝飾圖片"
 msgid "Chat"
 msgstr "對話"
 
+#: src/components/agent-guide-sheet.tsx
 #: src/components/agent-workbench.tsx
-#: src/components/opencode-guide-sheet.tsx
 msgid "Check again"
 msgstr "重新檢查"
 
@@ -879,6 +926,7 @@ msgid "Choose a simulator from the menu."
 msgstr "請從選單選擇模擬器"
 
 #: src/components/agent-mode-sheet.tsx
+#: src/components/home-agents-sheet.tsx
 msgid "Choose an agent"
 msgstr "選擇 Agent"
 
@@ -1326,10 +1374,10 @@ msgstr "控制"
 msgid "Conversational help and open-ended project questions."
 msgstr "對話式協助，以及關於專案的開放式問題"
 
+#: src/components/agent-guide-sheet.tsx
 #: src/components/agent-message-block.tsx
 #: src/components/asset-viewer.tsx
 #: src/components/bounded-markdown.tsx
-#: src/components/opencode-guide-sheet.tsx
 msgid "Copied"
 msgstr "已複製"
 
@@ -1364,7 +1412,7 @@ msgstr "複製路徑"
 msgid "Copy public key"
 msgstr "複製公開金鑰"
 
-#: src/components/opencode-guide-sheet.tsx
+#: src/components/agent-guide-sheet.tsx
 msgid "Copy the command"
 msgstr "複製指令"
 
@@ -1808,8 +1856,8 @@ msgid "Diff summary"
 msgstr "Diff 摘要"
 
 #: src/components/launch-intro.tsx
-msgid "Direct control for OpenCode autonomous coding. Follow real-time reasoning, inspect code diffs, review step-by-step todos, and guide tasks on the go."
-msgstr "專為 OpenCode 自主編程打造。行動端即時追蹤思考歷程、審查程式碼變更、追蹤逐步任務，隨時掌控遠端代理"
+msgid "Direct control for autonomous coding agents. Follow real-time reasoning, inspect code diffs, review step-by-step todos, and guide tasks on the go."
+msgstr "專為自主編程代理打造。行動端即時追蹤思考歷程、審查程式碼變更、追蹤逐步任務，隨時掌控遠端代理"
 
 #: src/components/dev-home-ambient-controls.tsx
 msgid "Direction"
@@ -2644,7 +2692,6 @@ msgid "Load more"
 msgstr "載入更多"
 
 #: src/components/gateway-storage-error.tsx
-#: src/components/home-recent-sessions.tsx
 #: src/components/list-load-more-footer.tsx
 #: src/components/session-map.tsx
 #: src/components/ssh-host-list.tsx
@@ -2781,6 +2828,10 @@ msgstr "等寬"
 msgid "More actions"
 msgstr "更多操作"
 
+#: src/components/home-launch-actions.tsx
+msgid "More agents"
+msgstr "更多代理程式"
+
 #: src/components/virtual-keyboard.tsx
 msgid "More symbols"
 msgstr "更多符號"
@@ -2886,7 +2937,7 @@ msgstr "有新輸出 · 點擊重新整理"
 
 #: src/app/agent.tsx
 #: src/components/agent-workbench.tsx
-#: src/components/home-launch-actions.tsx
+#: src/i18n/labels.ts
 msgid "New session"
 msgstr "新增會話"
 
@@ -3114,6 +3165,10 @@ msgstr "未連線"
 msgid "Not found"
 msgstr "找不到"
 
+#: src/i18n/labels.ts
+msgid "Not installed"
+msgstr "未安裝"
+
 #: src/components/settings-font-sheet.tsx
 msgid "Not monospace — the terminal may look uneven"
 msgstr "不是等寬字型 — 終端機可能顯示不齊"
@@ -3173,6 +3228,10 @@ msgid "Off"
 msgstr "關閉"
 
 #: src/i18n/labels.ts
+msgid "Offline"
+msgstr "離線"
+
+#: src/i18n/labels.ts
 msgid "OFFLINE"
 msgstr "離線"
 
@@ -3206,6 +3265,14 @@ msgstr "開啟"
 #: src/components/session-artifacts.tsx
 msgid "Open {0}"
 msgstr "開啟 {0}"
+
+#: src/components/new-task-action.tsx
+msgid "Open {agentName} Agent on {label}"
+msgstr "在 {label} 上開啟 {agentName} 代理程式"
+
+#: src/components/new-task-action.tsx
+msgid "Open {name} Agent on {label}"
+msgstr "在 {label} 上開啟 {name} 代理程式"
 
 #: src/components/session-map.tsx
 msgid "Open {title}. Long press to close."
@@ -3256,7 +3323,7 @@ msgstr "在瀏覽器開啟"
 msgid "Open in your browser, unavailable over the SSH tunnel"
 msgstr "在瀏覽器開啟，透過 SSH 通道時無法使用"
 
-#: src/components/opencode-guide-sheet.tsx
+#: src/components/agent-guide-sheet.tsx
 msgid "Open installation guide"
 msgstr "開啟安裝指南"
 
@@ -3272,10 +3339,6 @@ msgstr "開啟牧群以連線"
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Open on-screen keyboard"
 msgstr "開啟螢幕鍵盤"
-
-#: src/components/new-task-action.tsx
-msgid "Open OpenCode Agent on {label}"
-msgstr "在 {label} 上開啟 OpenCode 智慧體"
 
 #: src/components/agent-sessions-sheet.tsx
 msgid "Open parent"
@@ -3308,13 +3371,13 @@ msgstr "開啟 SSH 主機 {0}"
 msgid "Open terminal"
 msgstr "查看終端"
 
+#: src/components/agent-guide-sheet.tsx
+msgid "Open the {agentName} installation guide"
+msgstr "開啟 {agentName} 安裝指南"
+
 #: src/i18n/labels.ts
 msgid "Open the file explorer"
 msgstr "開啟檔案瀏覽器"
-
-#: src/components/opencode-guide-sheet.tsx
-msgid "Open the OpenCode installation guide"
-msgstr "開啟 OpenCode 安裝指南"
 
 #: src/components/agent-tool-card.tsx
 msgid "Open the subagent's session"
@@ -3337,26 +3400,13 @@ msgstr "開啟以檢查目前狀態"
 msgid "Open workspace {0}, {panelCount, plural, one {# running} other {# running}}. Long press to close."
 msgstr "開啟工作區 {0}，{panelCount, plural, one {# 個執行中} other {# 個執行中}}。長按可關閉"
 
-#: src/components/app-drawer-content.tsx
-#: src/components/launch-intro.tsx
-msgid "OpenCode Agent"
-msgstr "OpenCode 代理"
-
 #: src/components/agent-workbench.tsx
 msgid "OpenCode agent daemon is not running on this host. Run `opencode serve --service` to start it."
 msgstr "此主機上未執行 OpenCode 服務。請執行 `opencode serve --service` 啟動"
 
-#: src/components/opencode-guide-sheet.tsx
+#: src/i18n/labels.ts
 msgid "OpenCode is installed, but its service is not answering. Run this command on the host."
 msgstr "OpenCode 已安裝，但其服務沒有回應。請在主機上執行此命令"
-
-#: src/components/opencode-guide-sheet.tsx
-msgid "OpenCode is ready on this host."
-msgstr "OpenCode 已在此主機上準備就緒"
-
-#: src/components/new-task-action.tsx
-msgid "OpenCode ready"
-msgstr "OpenCode 已就緒"
 
 #: src/components/agent-workbench.tsx
 msgid "OpenCode service is offline"
@@ -3366,30 +3416,6 @@ msgstr "OpenCode 服務目前離線"
 #: src/components/agent-workbench.tsx
 msgid "OpenCode service offline"
 msgstr "OpenCode 服務離線"
-
-#: src/components/new-task-action.tsx
-msgid "OpenCode service offline. Tap for setup instructions"
-msgstr "OpenCode 服務離線。輕觸查看啟動指引"
-
-#: src/components/home-recent-sessions.tsx
-msgid "OpenCode session"
-msgstr "OpenCode 工作階段"
-
-#: src/components/new-task-action.tsx
-msgid "OpenCode sessions are not supported. Tap for details"
-msgstr "不支援 OpenCode 工作階段。點選以查看詳細資訊"
-
-#: src/components/opencode-guide-sheet.tsx
-msgid "OpenCode was not found on this host. Install OpenCode 2, then check again."
-msgstr "在此主機上找不到 OpenCode。請安裝 OpenCode 2，然後再次檢查"
-
-#: src/components/new-task-action.tsx
-msgid "OpenCode was not found. Tap for installation instructions"
-msgstr "找不到 OpenCode。點選查看安裝說明"
-
-#: src/components/opencode-guide-sheet.tsx
-msgid "OpenCode's installation could not be confirmed. If it is installed, run this command on the host."
-msgstr "無法確認 OpenCode 是否已安裝。如果已安裝，請在主機上執行此命令"
 
 #: src/app/+not-found.tsx
 msgid "Opening"
@@ -4084,7 +4110,7 @@ msgstr "執行指令"
 msgid "Run in background"
 msgstr "轉入背景執行"
 
-#: src/components/opencode-guide-sheet.tsx
+#: src/components/agent-guide-sheet.tsx
 msgid "Run it under systemd or tmux to keep it up after you log out."
 msgstr "用 systemd 或 tmux 執行，登出後它才會繼續跑"
 
@@ -4308,9 +4334,9 @@ msgstr "下一個傳送：{0}"
 msgid "Sending to"
 msgstr "傳送給"
 
+#: src/app/agent-guide.tsx
 #: src/app/artifacts.tsx
 #: src/app/git-diff.tsx
-#: src/app/opencode-guide.tsx
 #: src/app/panels.tsx
 #: src/components/app-drawer.tsx
 #: src/components/server-terminal-workspace.tsx
@@ -4664,6 +4690,10 @@ msgstr "已暫存和未暫存"
 msgid "stale · {age}"
 msgstr "資料過舊 · {age}"
 
+#: src/components/agent-guide-sheet.tsx
+msgid "Start {agentName}"
+msgstr "啟動 {agentName}"
+
 #. placeholder {0}: profile.kind
 #: src/components/agent-assignment-bar.tsx
 msgid "Start a new {0}"
@@ -4690,13 +4720,21 @@ msgstr "啟動一個 Agent，並交給它第一件事"
 msgid "Start an agent and send it the first thing to do."
 msgstr "啟動一個代理程式，並交代它第一件要做的事"
 
-#: src/components/opencode-guide-sheet.tsx
-msgid "Start OpenCode"
-msgstr "啟動 OpenCode"
+#: src/i18n/labels.ts
+msgid "Start DeepSeek on the gateway host, then check again."
+msgstr "請在閘道主機上啟動 DeepSeek，然後重新檢查"
+
+#: src/i18n/labels.ts
+msgid "Start T3 Code on the gateway host, then check again."
+msgstr "請在閘道主機上啟動 T3 Code，然後重新檢查"
 
 #: src/components/new-task-sheet.tsx
 msgid "Start task"
 msgstr "開始任務"
+
+#: src/i18n/labels.ts
+msgid "Start the agent on the gateway host, then check again."
+msgstr "請在閘道主機上啟動該代理程式，然後重新檢查"
 
 #: src/components/agent-workbench.tsx
 msgid "Started with a clean context."
@@ -5256,9 +5294,9 @@ msgstr "這個檔案太大了"
 msgid "This font could not be read."
 msgstr "無法讀取這個字型"
 
-#: src/components/opencode-guide-sheet.tsx
-msgid "This gateway does not advertise OpenCode sessions."
-msgstr "此 Gateway 未提供 OpenCode 工作階段"
+#: src/components/agent-guide-sheet.tsx
+msgid "This gateway does not advertise {agentName} sessions."
+msgstr "此閘道未提供 {agentName} 工作階段"
 
 #: src/lib/network-error.ts
 msgid "This Gateway does not answer to that address."
@@ -5272,7 +5310,7 @@ msgstr "這個 gateway 尚未提供檔案服務。更新牧群的 gateway 外掛
 msgid "This gateway has not listed any paired devices."
 msgstr "這個 Gateway 尚未列出任何已配對的裝置"
 
-#: src/components/opencode-guide-sheet.tsx
+#: src/components/agent-guide-sheet.tsx
 msgid "This gateway is not answering. Check the server connection, then try again."
 msgstr "此閘道沒有回應。請檢查伺服器連線，然後再試一次"
 
@@ -5357,8 +5395,8 @@ msgstr "這台伺服器已經處理過這個請求了"
 msgid "This server has no session to start an agent in."
 msgstr "這台伺服器沒有可以啟動代理程式的工作階段"
 
+#: src/app/agent-guide.tsx
 #: src/app/new-task.tsx
-#: src/app/opencode-guide.tsx
 #: src/app/simfarm.tsx
 #: src/app/web-service.tsx
 msgid "This server is no longer paired."
