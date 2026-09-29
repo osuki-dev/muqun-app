@@ -341,10 +341,6 @@ msgstr "Una shell sencilla en cualquier máquina a la que llegues. No hace falta
 msgid "A second checkout of this repository"
 msgstr "Un segundo checkout de este repositorio"
 
-#: src/lib/release-notes.ts
-msgid "A server's key is remembered the first time and checked every time after, and a key that changed stops the connection until you say otherwise."
-msgstr "La clave de un servidor se recuerda la primera vez y se comprueba siempre después; si cambia, la conexión se detiene hasta que tú digas lo contrario"
-
 #: src/components/pad-server-rail.tsx
 msgid "A shell on any machine with sshd"
 msgstr "Una shell en cualquier máquina con sshd"
@@ -598,6 +594,10 @@ msgstr "Aplicando…"
 #: src/components/in-app-notification-host.tsx
 msgid "Approval required"
 msgstr "Se requiere aprobación"
+
+#: src/lib/release-notes.ts
+msgid "Approvals and status changes for every session now arrive over one live connection per computer, not only for the session you have open."
+msgstr "Las aprobaciones y los cambios de estado de todas las sesiones llegan ahora por una única conexión en vivo por ordenador, no solo los de la sesión abierta"
 
 #: src/components/agent-mode-sheet.tsx
 msgid "Architecture, design proposals, step-by-step roadmaps."
@@ -1248,6 +1248,10 @@ msgstr "Contexto usado"
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Continue"
 msgstr "Continuar"
+
+#: src/lib/release-notes.ts
+msgid "Continue and the offline and empty-state messages now name the agent they mean, and a new session asks which agent when more than one is ready."
+msgstr "Continuar y los mensajes de sin conexión y de estado vacío ahora nombran al agente correspondiente, y una sesión nueva pregunta qué agente usar cuando hay más de uno listo"
 
 #: src/i18n/labels.ts
 msgid "Continue task"
@@ -1958,6 +1962,10 @@ msgstr "Descargando…"
 msgid "Draft the notes for the next build"
 msgstr "Redacta las notas de la próxima versión"
 
+#: src/lib/release-notes.ts
+msgid "Each agent's screen shows only what it supports, and the model picker groups models by provider and greys out the ones you are not signed in to."
+msgstr "La pantalla de cada agente muestra solo lo que admite, y el selector de modelos agrupa los modelos por proveedor y atenúa aquellos en los que no has iniciado sesión"
+
 #. placeholder {0}: server.label
 #: src/components/settings-servers.tsx
 msgid "Each device holds its own token for {0}."
@@ -2582,10 +2590,6 @@ msgstr "Mantén en la pantalla de bloqueo el terminal que estás viendo mientras
 msgid "Keys"
 msgstr "Teclas"
 
-#: src/lib/release-notes.ts
-msgid "Keys are generated on the device and never leave it."
-msgstr "Las claves se generan en el dispositivo y nunca salen de él"
-
 #: src/components/settings-appearance.tsx
 #: src/components/settings-language-sheet.tsx
 msgid "Language"
@@ -2885,6 +2889,10 @@ msgstr "Muqun no trae fuentes propias. La que añadas se guarda en este disposit
 msgid "Muqun is locked"
 msgstr "Muqun está bloqueado"
 
+#: src/lib/release-notes.ts
+msgid "Muqun now works with several coding agents on one computer. OpenCode, DeepSeek and T3 Code each get their own tile on Home, with their own mark."
+msgstr "Muqun ahora funciona con varios agentes de programación en un mismo ordenador. OpenCode, DeepSeek y T3 Code tienen cada uno su propio mosaico en Inicio, con su propio logotipo"
+
 #: src/components/pairing-camera.tsx
 msgid "Muqun reads the Gateway's QR code through the camera. Nothing is recorded."
 msgstr "Muqun lee el código QR del Gateway con la cámara. No se graba nada"
@@ -2892,10 +2900,6 @@ msgstr "Muqun lee el código QR del Gateway con la cámara. No se graba nada"
 #: src/app/settings.tsx
 msgid "Muqun settings stay on this device."
 msgstr "Los ajustes de Muqun se quedan en este dispositivo"
-
-#: src/lib/release-notes.ts
-msgid "Muqun speaks SSH. Save a host, tap it on the home screen, and you are in a real shell — password, key or a code from your authenticator."
-msgstr "Muqun habla SSH. Guarda un host, tócalo en la pantalla de inicio y ya estás en un shell de verdad: contraseña, clave o un código de tu autenticador"
 
 #: src/components/settings-appearance.tsx
 msgid "Muqun stays in this language whatever the phone is set to."
@@ -3256,6 +3260,10 @@ msgstr "Sin conexión, no responde"
 #: src/components/toggle.tsx
 msgid "On"
 msgstr "Activado"
+
+#: src/lib/release-notes.ts
+msgid "On a tablet, Continue rows now open their terminal panes. An older Gateway keeps working with OpenCode as before."
+msgstr "En una tableta, las filas de Continuar ahora abren sus paneles de terminal. Un Gateway anterior sigue funcionando con OpenCode como antes"
 
 #: src/i18n/labels.ts
 msgid "Online"
@@ -5045,10 +5053,6 @@ msgstr "Esa es la shell de demostración incluida, y el único host aquí. Añad
 #: src/components/settings-font-sheet.tsx
 msgid "That link opens a web page, not the font file. Use the file's direct download link."
 msgstr "Ese enlace abre una página web, no el archivo de fuente. Usa el enlace de descarga directa del archivo"
-
-#: src/lib/release-notes.ts
-msgid "That shell is the terminal you already know: the same keyboard, the same key row, the same colours, and your phone's own keyboard for anything you would rather type."
-msgstr "Ese shell es la terminal que ya conoces: el mismo teclado, la misma fila de teclas, los mismos colores y el teclado del propio teléfono cuando prefieras escribir"
 
 #: src/components/simfarm-stage.tsx
 msgid "That simulator cannot be started from here. Start it on the machine and it appears in the list."
