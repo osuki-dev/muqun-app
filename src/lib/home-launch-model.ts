@@ -300,6 +300,19 @@ export type LaunchRowLayout =
       utilityWidth: number;
     };
 
+/**
+ * The style that pins a tile to one grid cell.
+ *
+ * Every size is spelled out, and `flex` is reset, because a compact tile's own
+ * style carries `flex: 1` -- and in Yoga a positive `flex` implies a zero flex
+ * basis that `flexBasis: 'auto'` does not undo. With `'auto'` the width below
+ * was ignored along the row, the tiles shrank to nothing and their labels
+ * wrapped one letter per line into tall empty strips.
+ */
+export function launchGridCellStyle(width: number) {
+  return { flex: 0, flexGrow: 0, flexShrink: 0, flexBasis: width, width } as const;
+}
+
 function columnWidth(width: number, columns: number): number {
   if (columns <= 0) return 0;
   return Math.max(0, Math.floor((width - LAUNCH_GRID_GAP * (columns - 1)) / columns));
