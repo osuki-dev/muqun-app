@@ -546,7 +546,7 @@ export const AgentComposer = memo(function AgentComposer({
         const known = agentHostCommandDescription[key];
         return {
           name: command.name.startsWith('/') ? command.name : `/${command.name}`,
-          description: known ? _(known) : (command.description ?? command.agent ?? ''),
+          description: known ? _(known) : (command.description ?? command.mode ?? ''),
           argsHint: command.template ? '…' : '',
           source: 'workspace' as const,
         };

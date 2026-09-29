@@ -937,7 +937,7 @@ export type AgentPart =
       truncated?: boolean;
     }
   | { type: 'model_switched'; model: ModelRef | null; previous: ModelRef | null }
-  | { type: 'agent_switched'; agent: string; previous?: string }
+  | { type: 'agent_switched'; mode: string; previous?: string }
   | { type: 'synthetic'; text?: string; description?: string }
   | { type: 'system'; text?: string; description?: string }
   | { type: 'location_switched'; directory: string; previous?: string }
@@ -1142,10 +1142,10 @@ export function parseAgentPart(value: unknown): AgentPart | null {
         previous: parseModelRef(rec.previous),
       };
     case 'agent_switched': {
-      const agent = pickString(rec, ['agent']);
-      if (!agent) return null;
+      const mode = pickString(rec, ['mode']);
+      if (!mode) return null;
       const previous = pickString(rec, ['previous']);
-      return { type: 'agent_switched', agent, ...(previous ? { previous } : {}) };
+      return { type: 'agent_switched', mode, ...(previous ? { previous } : {}) };
     }
     case 'synthetic':
     case 'system': {
@@ -2387,7 +2387,8 @@ export function isSlashSkill(skill: SkillInfo): boolean {
 export interface CommandInfo {
   name: string;
   description?: string;
-  agent?: string;
+  /** The mode (persona) the command runs under, when it names one. */
+  mode?: string;
   template?: string;
 }
 
@@ -2604,12 +2605,12 @@ export function parseAgentCatalog(value: unknown): AgentCatalog {
       const name = pickString(commandRec, ['name']);
       if (!name) continue;
       const description = pickString(commandRec, ['description']);
-      const agent = pickString(commandRec, ['agent']);
+      const mode = pickString(commandRec, ['mode']);
       const template = pickString(commandRec, ['template']);
       commands.push({
         name,
         ...(description ? { description } : {}),
-        ...(agent ? { agent } : {}),
+        ...(mode ? { mode } : {}),
         ...(template ? { template } : {}),
       });
     }

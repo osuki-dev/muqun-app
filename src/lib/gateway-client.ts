@@ -1021,6 +1021,15 @@ export function assetTextTimeoutMs(bytes: number): number {
   return Math.min(90_000, ASSET_CONTENT_TIMEOUT_MS + megabytes * 10_000);
 }
 
+/**
+ * The local id of the record the shared client is configured for, or null.
+ * The event socket is per server record and opens with this client's base URL
+ * and credentials, so it checks it is still talking about the same server.
+ */
+export function configuredGatewayServerId(): string | null {
+  return currentRecord?.serverId ?? null;
+}
+
 export function isGatewayConfigured(): boolean {
   return Boolean(currentBaseUrl && currentBaseUrl.trim().length > 0);
 }
