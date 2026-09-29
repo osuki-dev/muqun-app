@@ -52,12 +52,12 @@ beforeEach(() => {
 });
 
 describe('recording a discovery', () => {
-  test('a server never asked offers nothing and answers the default', () => {
+  test('a server never asked offers nothing and answers every control on', () => {
     expect(homeAgentsFor('srv')).toEqual([]);
     expect(selectedAgentOn('srv')).toBe('opencode');
     expect(offersAgentChoiceOn('srv')).toBe(false);
     expect(agentFeaturesOn('srv', 'opencode').revert).toBe(true);
-    expect(agentFeaturesOn('srv', 'deepseek').revert).toBe(false);
+    expect(agentFeaturesOn('srv', 'deepseek').revert).toBe(true);
   });
 
   test('what the gateway said is what Home reads back, without endpoints', () => {

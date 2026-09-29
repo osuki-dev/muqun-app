@@ -23,6 +23,7 @@ import { recentCatalogModels } from '@/lib/recent-agent-models';
 import { appChrome } from '@/constants/appearance';
 import { withAlpha } from '@/lib/color';
 import { fadeIn, listLayout, riseIn, STAGGER } from '@/lib/motion';
+import { groupModelsByProvider } from '@/lib/agent-model-groups';
 import { SECTION_PAGE_SIZE, nearListEnd, pageSections } from '@/lib/paged-sections';
 import { findAgentModelPosition } from '@/lib/agent-model-position';
 import {
@@ -246,32 +247,28 @@ export const AgentModelSheet = memo(function AgentModelSheet({
   const effectiveModel = selectedModel ?? defaults.model;
 
   // Recent rows resolve against the same catalog and filters as provider groups.
+  const searching = searchQuery.trim().length > 0 || filterMode === 'free';
   const sections = useMemo(() => {
     const recent = recentCatalogModels(recentRefs, filteredModels, providers);
-    const result: { title: string; models: ModelInfo[]; recent?: boolean }[] = recent.length
-      ? [{ title: t`Recently used`, models: recent, recent: true }]
-      : [];
-    const byProvider = new Map<string, ModelInfo[]>();
-    for (const model of filteredModels) {
-      const provider = model.provider_id || 'other';
-      const list = byProvider.get(provider) ?? [];
-      list.push(model);
-      byProvider.set(provider, list);
-    }
-    const preferred = ['opencode', 'deepseek', 'openai', 'anthropic', 'google'];
-    const order = Array.from(byProvider.keys()).sort((a, b) => {
-      const ia = preferred.indexOf(a);
-      const ib = preferred.indexOf(b);
-      if (ia !== -1 && ib !== -1) return ia - ib;
-      if (ia !== -1) return -1;
-      if (ib !== -1) return 1;
-      return a.localeCompare(b);
-    });
-    for (const provider of order) {
-      result.push({ title: providerName(provider), models: byProvider.get(provider) ?? [] });
+    const result: {
+      title: string;
+      models: ModelInfo[];
+      recent?: boolean;
+      unavailable?: boolean;
+    }[] = recent.length ? [{ title: t`Recently used`, models: recent, recent: true }] : [];
+    // Titled by the catalog's provider names; a provider the host has not
+    // signed in is still a group, greyed, so the reader learns why it is empty.
+    for (const group of groupModelsByProvider(filteredModels, providers, providerName, {
+      includeEmptyUnavailable: !searching,
+    })) {
+      result.push({
+        title: group.title,
+        models: group.models,
+        ...(group.available ? {} : { unavailable: true }),
+      });
     }
     return result;
-  }, [filteredModels, recentRefs, providers, t]);
+  }, [filteredModels, recentRefs, providers, searching, t]);
 
   // `sections` puts Recently used first, so this finds that row when the same
   // model is also present in its provider section.
@@ -342,6 +339,14 @@ export const AgentModelSheet = memo(function AgentModelSheet({
     const off = new Set<string>();
     for (const provider of providers) {
       if (provider.activation === 'disabled') off.add(provider.id);
+    }
+    return off;
+  }, [providers]);
+  /** Which providers the gateway says no session can start on now. */
+  const unavailableProviders = useMemo(() => {
+    const off = new Set<string>();
+    for (const provider of providers) {
+      if (provider.available === false) off.add(provider.id);
     }
     return off;
   }, [providers]);
@@ -500,6 +505,14 @@ export const AgentModelSheet = memo(function AgentModelSheet({
                 }}>
                 {sectionIndex > 0 ? <SheetSceneGroupRule /> : null}
                 <SheetSceneGroupHeading title={section.title} first={sectionIndex === 0} />
+                {section.unavailable && section.models.length === 0 ? (
+                  <Text
+                    variant="caption"
+                    color={theme.colors.textMuted}
+                    style={styles.providerHint}>
+                    {t`Not signed in on the host`}
+                  </Text>
+                ) : null}
                 {section.models.map((model, modelIndex) => {
                   const isSelected =
                     effectiveModel?.model_id === model.id &&
@@ -508,8 +521,11 @@ export const AgentModelSheet = memo(function AgentModelSheet({
                   // Carried through rather than filtered out, and said plainly:
                   // the host is where a provider is signed in, and the gateway
                   // proxies no credential route.
+                  const signedOut = unavailableProviders.has(model.provider_id);
                   const unavailable =
-                    model.enabled === false || disabledProviders.has(model.provider_id);
+                    signedOut ||
+                    model.enabled === false ||
+                    disabledProviders.has(model.provider_id);
                   const variants = model.variants ?? [];
                   const index = sectionRowStarts[sectionIndex] + modelIndex;
                   return (
@@ -540,7 +556,11 @@ export const AgentModelSheet = memo(function AgentModelSheet({
                         }
                         selected={isSelected && !unavailable}
                         disabled={unavailable}
-                        disabledCaption={model.status || t`Set up on the host`}
+                        disabledCaption={
+                          signedOut
+                            ? t`Not signed in on the host`
+                            : model.status || t`Set up on the host`
+                        }
                         {...(!unavailable && isFreeModel(model)
                           ? {
                               // What the "Free only" segment filters on, said on
@@ -641,6 +661,7 @@ export const AgentModelSheet = memo(function AgentModelSheet({
 const styles = StyleSheet.create({
   more: { minHeight: 44, alignItems: 'center', justifyContent: 'center' },
   loading: { padding: 40, alignItems: 'center', justifyContent: 'center' },
+  providerHint: { paddingVertical: SHEET_LADDER.gap },
   empty: {
     paddingVertical: 40,
     alignItems: 'center',

@@ -53,6 +53,11 @@ export interface AgentSheetSnapshot {
   serverId?: string;
   /** The agentId the open session runs on, or the one a new session would go to. */
   agentId?: string;
+  /**
+   * The agent a sheet's catalog and project reads name: `agentId` on a
+   * gateway with discovery, absent on one without (it has no parameter).
+   */
+  catalogAgentId?: string;
   /** The agent session the workbench is showing, if it has one. */
   activeAsid?: string;
   sessions: readonly AgentSessionInfo[];

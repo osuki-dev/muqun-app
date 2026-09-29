@@ -158,3 +158,32 @@ describe('isEmptyAgentCatalog', () => {
     expect(isEmptyAgentCatalog({ models: [], providers: [] })).toBe(true);
   });
 });
+
+describe('catalog scoping by agent', () => {
+  test('another agent on the same session reads its own catalog', () => {
+    expect(
+      shouldRefetchAgentCatalog(
+        { sessionId: 'sess-1', directory: '/a', agentId: 'opencode' },
+        { sessionId: 'sess-1', directory: '/a', agentId: 'deepseek' }
+      )
+    ).toBe(true);
+    expect(
+      shouldRefetchAgentCatalog(
+        { sessionId: 'sess-1', agentId: 'deepseek' },
+        { sessionId: 'sess-1', agentId: 'deepseek' }
+      )
+    ).toBe(false);
+  });
+
+  test('every named agent is in the path and the cache key; none named keeps both', () => {
+    expect(agentCatalogPath('sess-1', '/a', 't3')).toBe(
+      '/api/sessions/sess-1/agent-catalog?directory=%2Fa&agent_id=t3'
+    );
+    expect(agentCatalogPath('sess-1', undefined, 'opencode')).toBe(
+      '/api/sessions/sess-1/agent-catalog?agent_id=opencode'
+    );
+    expect(agentCatalogCacheVariant('/a', 'opencode')).toBe('dir=/a;agent=opencode');
+    expect(agentCatalogCacheVariant(undefined, 't3')).toBe('agent=t3');
+    expect(agentCatalogCacheVariant('/a')).toBe('dir=/a');
+  });
+});

@@ -12,6 +12,7 @@ import { loadWorkspaceSnapshot } from '@/lib/workspace-snapshot';
 import {
   type HomeCommand,
   createHomeCommandController,
+  embeddedResumeRoute,
   isHomeSshTargetAvailable,
   type HomeCommandResult,
   type HomeServerEntry,
@@ -148,7 +149,13 @@ export function useHomeCommands(options: HomeCommandOptions = {}): HomeCommands 
             if (!selected) return 'missing' satisfies HomeResumeServerResult;
             if (!isCurrent()) return false satisfies HomeResumeServerResult;
           }
-          if (latest.current.options.routeBound) {
+          if (
+            embeddedResumeRoute({
+              routeBound: latest.current.options.routeBound === true,
+              workspaceServerId: selectedServerId,
+              targetServerId: target.serverId,
+            }) === 'route'
+          ) {
             if (!isCurrent()) return false;
             navigateHome(latest.current.router, { type: 'server', target });
             return true;

@@ -183,6 +183,10 @@ msgstr "{agentName} is ready on this host"
 msgid "{agentName} ready"
 msgstr "{agentName} ready"
 
+#: src/components/agent-workbench.tsx
+msgid "{agentName} refused the request: {message}"
+msgstr "{agentName} refused the request: {message}"
+
 #: src/components/new-task-action.tsx
 msgid "{agentName} service offline. Tap for setup instructions"
 msgstr "{agentName} service offline. Tap for setup instructions"
@@ -202,10 +206,6 @@ msgstr "{agentName} was not found on this host. Install it, then check again"
 #: src/components/new-task-action.tsx
 msgid "{agentName} was not found. Tap for installation instructions"
 msgstr "{agentName} was not found. Tap for installation instructions"
-
-#: src/components/agent-composer.tsx
-msgid "{agentName}: {title} — finished while you were away"
-msgstr "{agentName}: {title} — finished while you were away"
 
 #: src/components/agent-guide-sheet.tsx
 msgid "{agentName}'s installation could not be confirmed. If it is installed, start it on the host."
@@ -260,6 +260,10 @@ msgstr "{label} is temporarily locked. Use the system fallback or try later"
 msgid "{language} code copied to clipboard"
 msgstr "{language} code copied to clipboard"
 
+#: src/components/agent-composer.tsx
+msgid "{lead}: {title} — finished while you were away"
+msgstr "{lead}: {title} — finished while you were away"
+
 #: src/components/agent-revert-plate.tsx
 msgid "{messages, plural, one {# message} other {# messages}}"
 msgstr "{messages, plural, one {# message} other {# messages}}"
@@ -285,6 +289,7 @@ msgstr "{removeLabel}: {label}"
 msgid "{running} running of {0}"
 msgstr "{running} running of {0}"
 
+#: src/components/agent-composer.tsx
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-sessions-sheet.tsx
 msgid "{title} — finished while you were away"
@@ -3186,6 +3191,10 @@ msgstr "Not running"
 msgid "Not set"
 msgstr "Not set"
 
+#: src/components/agent-model-sheet.tsx
+msgid "Not signed in on the host"
+msgstr "Not signed in on the host"
+
 #: src/components/ssh-host-form.tsx
 msgid "Not valid."
 msgstr "Not valid"
@@ -4800,10 +4809,6 @@ msgstr "Stopped"
 #: src/app/settings.tsx
 msgid "Storage"
 msgstr "Storage"
-
-#: src/components/agent-composer.tsx
-msgid "subagent"
-msgstr "subagent"
 
 #: src/components/agent-mode-sheet.tsx
 #: src/components/agent-subagent-detail-sheet.tsx

@@ -119,8 +119,7 @@ const SessionChip = memo(function SessionChip({
   node,
   active,
   current,
-  fallbackAgent,
-  nameOfAgent,
+  lead,
   onPress,
   onOpenTree,
   onMeasure,
@@ -129,9 +128,11 @@ const SessionChip = memo(function SessionChip({
   active: boolean;
   /** This root is the session on screen, not merely a highlighted ancestor. */
   current: boolean;
-  fallbackAgent?: string;
-  /** An agent's id to the name the host gave it: `plan` to `Plan`. */
-  nameOfAgent: (id: string) => string;
+  /**
+   * What the chip leads with: the mode, or another agent's name, or nothing.
+   * See `lib/agent-session-chip.ts`.
+   */
+  lead?: string;
   onPress: (asid: string) => void;
   onOpenTree?: (asid: string) => void;
   /** Where this chip sits in the strip, so the strip can bring it into view. */
@@ -143,10 +144,6 @@ const SessionChip = memo(function SessionChip({
   const surfaceBackground = useSurfaceBackground();
 
   const session = node.session;
-  // The name the host publishes, which is what the agent sheet lists. The chip
-  // drew the id, so the same agent read "Plan" in the list and "plan" here.
-  const agentId = session.mode || fallbackAgent || 'build';
-  const agentName = agentId ? nameOfAgent(agentId) : t`subagent`;
   const titled = hasRealSessionTitle(session);
   // Untitled reads as untitled; the time is the caption a listing shows, not
   // the name a chip stands under.
@@ -185,8 +182,12 @@ const SessionChip = memo(function SessionChip({
         }}
         accessibilityLabel={
           unread
-            ? t`${agentName}: ${title} — finished while you were away`
-            : `${agentName}: ${title}`
+            ? lead
+              ? t`${lead}: ${title} — finished while you were away`
+              : t`${title} — finished while you were away`
+            : lead
+              ? `${lead}: ${title}`
+              : title
         }
         style={[
           styles.sessionChip,
@@ -207,23 +208,27 @@ const SessionChip = memo(function SessionChip({
             {...(active ? { tone: theme.colors.onPrimary } : {})}
           />
         ) : null}
-        {/* `agentName` is whatever the host called the agent, so it can be
-            `code-reviewer-specialist`. It gives way before the title does:
+        {/* `lead` is whatever the host called the mode or the agent, so it can
+            be `code-reviewer-specialist`. It gives way before the title does:
             the title is what tells two sessions apart. */}
-        <Text
-          variant="caption"
-          weight="semibold"
-          numberOfLines={1}
-          color={active ? theme.colors.onPrimary : theme.colors.primary}
-          style={styles.sessionChipAgentBadge}>
-          {agentName}
-        </Text>
-        <Text
-          variant="caption"
-          color={active ? withAlpha(theme.colors.onPrimary, 0.6) : theme.colors.textMuted}
-          style={styles.sessionChipDot}>
-          •
-        </Text>
+        {lead ? (
+          <>
+            <Text
+              variant="caption"
+              weight="semibold"
+              numberOfLines={1}
+              color={active ? theme.colors.onPrimary : theme.colors.primary}
+              style={styles.sessionChipAgentBadge}>
+              {lead}
+            </Text>
+            <Text
+              variant="caption"
+              color={active ? withAlpha(theme.colors.onPrimary, 0.6) : theme.colors.textMuted}
+              style={styles.sessionChipDot}>
+              •
+            </Text>
+          </>
+        ) : null}
         {/* Keyed on the title so the arriving auto-title fades in where the
             placeholder was, rather than replacing it between two frames. */}
         <Animated.View key={title} entering={fadeIn('short')} style={styles.sessionChipTitleSlot}>
@@ -322,6 +327,15 @@ export interface AgentComposerProps {
   onCreateNewSession?: () => void;
   onOpenModelSheet?: () => void;
   onOpenModeSheet?: () => void;
+  /**
+   * Whether the session's agent has modes: the mode chip is drawn only then.
+   * Absent means yes.
+   */
+  canPickMode?: boolean;
+  /** Whether the session's agent takes attachments. Absent means yes. */
+  canAttach?: boolean;
+  /** What a session chip leads with; see `lib/agent-session-chip.ts`. */
+  sessionLead?: (session: AgentSessionInfo) => string | undefined;
   onOpenDiffSheet: () => void;
   disabled?: boolean;
   /** The agent's display name, for the offline placeholder. */
@@ -411,6 +425,9 @@ export const AgentComposer = memo(function AgentComposer({
   agentName,
   onOpenModelSheet,
   onOpenModeSheet,
+  canPickMode = true,
+  canAttach = true,
+  sessionLead,
   onOpenDiffSheet,
   onOpenSessionsSheet,
   onOpenTasksSheet,
@@ -596,6 +613,7 @@ export const AgentComposer = memo(function AgentComposer({
       new Set(
         composerChipIds({
           canOpenSessions: Boolean(onOpenSessionsSheet),
+          canPickMode,
           canOpenModel: Boolean(onOpenModelSheet),
           taskCount: tasks?.length ?? 0,
           canOpenTasks: Boolean(onOpenTasksSheet),
@@ -609,6 +627,7 @@ export const AgentComposer = memo(function AgentComposer({
       ),
     [
       onOpenSessionsSheet,
+      canPickMode,
       onOpenModelSheet,
       tasks,
       onOpenTasksSheet,
@@ -1173,8 +1192,11 @@ export const AgentComposer = memo(function AgentComposer({
                     node={node}
                     active={node.session.asid === selectedRootAsid}
                     current={node.session.asid === activeAsid}
-                    {...(selectedAgent ? { fallbackAgent: selectedAgent } : {})}
-                    nameOfAgent={nameOfAgent}
+                    lead={
+                      sessionLead
+                        ? sessionLead(node.session)
+                        : nameOfAgent(node.session.mode || selectedAgent || 'build')
+                    }
                     onPress={handleSelectSession}
                     onOpenTree={onOpenSessionTree}
                     onMeasure={measureChip}
@@ -1529,15 +1551,17 @@ export const AgentComposer = memo(function AgentComposer({
               <TerminalComposer
                 inputRef={inputRef}
                 leading={
-                  <ComposerAttachmentButton
-                    testID="agent-composer-attach"
-                    label={attachmentMenuOpen ? t`Close the attachment menu` : t`Attach a file`}
-                    expanded={attachmentMenuOpen}
-                    disabled={sending || disabled}
-                    onPress={() => setAttachmentMenuOpen((open) => !open)}
-                    size={16}
-                    color={attachmentMenuOpen ? theme.colors.primary : chromeText}
-                  />
+                  canAttach ? (
+                    <ComposerAttachmentButton
+                      testID="agent-composer-attach"
+                      label={attachmentMenuOpen ? t`Close the attachment menu` : t`Attach a file`}
+                      expanded={attachmentMenuOpen}
+                      disabled={sending || disabled}
+                      onPress={() => setAttachmentMenuOpen((open) => !open)}
+                      size={16}
+                      color={attachmentMenuOpen ? theme.colors.primary : chromeText}
+                    />
+                  ) : undefined
                 }
                 inputProps={{
                   value: text,

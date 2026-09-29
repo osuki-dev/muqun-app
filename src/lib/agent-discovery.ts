@@ -61,6 +61,32 @@ export function withAgentIdQuery(path: string, agentId: string | undefined | nul
 }
 
 /**
+ * `?agent_id=<id>` for any agent named, the default one included.
+ *
+ * For the reads a multi-agent gateway answers per agent -- the catalog and
+ * the projects. Asked without an agent it merges every agent's answer, so an
+ * OpenCode session's mode sheet listed DeepSeek's presets as well. The caller
+ * names an agent only on a gateway that has discovery; an older one has one
+ * agent, no parameter, and gets the path alone.
+ */
+export function withScopedAgentId(path: string, agentId: string | undefined | null): string {
+  const value = agentId?.trim();
+  if (!value) return path;
+  return `${path}${path.includes('?') ? '&' : '?'}agent_id=${encodeURIComponent(value)}`;
+}
+
+/** The cache-key variant for a read made with `withScopedAgentId`. */
+export function scopedAgentCacheVariant(
+  variant: string | null | undefined,
+  agentId: string | undefined | null
+): string | null {
+  const value = agentId?.trim();
+  if (!value) return variant ?? null;
+  const suffix = `agent=${value}`;
+  return variant ? `${variant};${suffix}` : suffix;
+}
+
+/**
  * A cache-key variant with the agent folded in, or the variant untouched for
  * the default agent -- so every entry written before agents existed is still
  * the entry the default agent reads.
@@ -132,13 +158,15 @@ export function findAgent<T extends Pick<AgentInfo, 'id' | 'kind'>>(
   return agents.find((agent) => agent.id === id) ?? agents.find((agent) => agent.kind === id);
 }
 
+const SHARED_DEFAULT_FEATURES: AgentFeatures = defaultAgentFeatures();
+
 /**
  * What an agent can do, for a screen that must answer whether or not
  * discovery ever happened.
  *
- * No discovery, or an agent discovery does not list, answers the kind's own
- * default -- which for OpenCode is everything, so a gateway too old to be
- * asked loses nothing.
+ * No discovery, or an agent discovery does not list, answers every control
+ * on: a gateway too old to be asked loses nothing, and no agent kind is
+ * treated differently from another.
  *
  * The answer is the same object for the same input: this runs as a zustand
  * selector, and a fresh default on every call is a snapshot that never
@@ -149,18 +177,7 @@ export function agentFeaturesFor(
   agentId: string | undefined | null
 ): AgentFeatures {
   const found = findAgent(agents, agentId);
-  return found ? found.features : sharedDefaultFeatures(normalizeAgentId(agentId));
-}
-
-const DEFAULT_FEATURES_BY_KIND = new Map<string, AgentFeatures>();
-
-function sharedDefaultFeatures(kind: string): AgentFeatures {
-  let features = DEFAULT_FEATURES_BY_KIND.get(kind);
-  if (!features) {
-    features = defaultAgentFeatures(kind);
-    DEFAULT_FEATURES_BY_KIND.set(kind, features);
-  }
-  return features;
+  return found ? found.features : SHARED_DEFAULT_FEATURES;
 }
 
 /**
@@ -311,7 +328,7 @@ function parseMirroredAgent(value: unknown): MirroredAgent | null {
     name: typeof value.name === 'string' && value.name ? value.name : id,
     status: parseAgentAvailability(value.status),
     enabled: value.enabled !== false,
-    features: parseAgentFeatures(value.features, kind),
+    features: parseAgentFeatures(value.features),
   };
 }
 

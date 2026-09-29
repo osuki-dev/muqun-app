@@ -183,6 +183,10 @@ msgstr "{agentName} 已在此主机上就绪"
 msgid "{agentName} ready"
 msgstr "{agentName} 已就绪"
 
+#: src/components/agent-workbench.tsx
+msgid "{agentName} refused the request: {message}"
+msgstr "{agentName} 拒绝了请求：{message}"
+
 #: src/components/new-task-action.tsx
 msgid "{agentName} service offline. Tap for setup instructions"
 msgstr "{agentName} 服务已离线。点按查看设置说明"
@@ -202,10 +206,6 @@ msgstr "在此主机上未找到 {agentName}。请先安装，然后重新检查
 #: src/components/new-task-action.tsx
 msgid "{agentName} was not found. Tap for installation instructions"
 msgstr "未找到 {agentName}。点按查看安装说明"
-
-#: src/components/agent-composer.tsx
-msgid "{agentName}: {title} — finished while you were away"
-msgstr "{agentName}：{title} — 在你离开时完成"
 
 #: src/components/agent-guide-sheet.tsx
 msgid "{agentName}'s installation could not be confirmed. If it is installed, start it on the host."
@@ -260,6 +260,10 @@ msgstr "{label} 已暂时锁定。请改用系统备用方式，或稍后再试"
 msgid "{language} code copied to clipboard"
 msgstr "已复制 {language} 代码到剪贴板"
 
+#: src/components/agent-composer.tsx
+msgid "{lead}: {title} — finished while you were away"
+msgstr "{lead}：{title} — 在你离开时完成"
+
 #: src/components/agent-revert-plate.tsx
 msgid "{messages, plural, one {# message} other {# messages}}"
 msgstr "{messages, plural, other {# 条消息}}"
@@ -285,6 +289,7 @@ msgstr "{removeLabel}：{label}"
 msgid "{running} running of {0}"
 msgstr "{0} 个中有 {running} 个正在运行"
 
+#: src/components/agent-composer.tsx
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-sessions-sheet.tsx
 msgid "{title} — finished while you were away"
@@ -3186,6 +3191,10 @@ msgstr "未运行"
 msgid "Not set"
 msgstr "未设置"
 
+#: src/components/agent-model-sheet.tsx
+msgid "Not signed in on the host"
+msgstr "未在主机上登录"
+
 #: src/components/ssh-host-form.tsx
 msgid "Not valid."
 msgstr "无效"
@@ -4800,10 +4809,6 @@ msgstr "已停止"
 #: src/app/settings.tsx
 msgid "Storage"
 msgstr "存储空间"
-
-#: src/components/agent-composer.tsx
-msgid "subagent"
-msgstr "子智能体"
 
 #: src/components/agent-mode-sheet.tsx
 #: src/components/agent-subagent-detail-sheet.tsx

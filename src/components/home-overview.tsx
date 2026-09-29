@@ -797,11 +797,8 @@ export function HomeOverview({
                     hosts={sshRows}
                     reachabilityByServer={padReachabilityByServer}
                     activeConnection={activeConnection}
-                    onOpenPane={(serverId, paneId) => {
-                      void commands.openServer(serverId, paneId);
-                    }}
-                    onOpen={(target) => {
-                      void commands.resumeTarget(target);
+                    onOpen={(command) => {
+                      void commands.dispatch(command);
                     }}
                   />
                 ) : undefined

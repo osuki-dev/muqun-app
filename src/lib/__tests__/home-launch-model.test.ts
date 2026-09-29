@@ -21,7 +21,7 @@ function agent(
     name: id === 'opencode' ? 'OpenCode' : id === 'deepseek' ? 'DeepSeek' : id.toUpperCase(),
     status,
     enabled: true,
-    features: defaultAgentFeatures(id),
+    features: defaultAgentFeatures(),
     ...extra,
   };
 }

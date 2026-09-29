@@ -128,15 +128,17 @@ import { catalogModelRef, resolveNewSessionDefaults } from '@/lib/agent-session-
 import { engineFailureAction } from '@/lib/agent-engine-text';
 import { dangerousPermissionReason, yoloDecision } from '@/lib/agent-permission-safety';
 import { removeTimelineItems, revertedMessageCount } from '@/lib/agent-revert';
-import { hiddenClientCommands } from '@/lib/agent-discovery';
+import { hiddenClientCommands, normalizeAgentId } from '@/lib/agent-discovery';
 import {
   useAgentFeatures,
   useAgentsDiscoveryRefresh,
   useSelectedAgent,
 } from '@/hooks/use-agent-features';
+import { classifyAgentRequestError, isAgentOfflineError } from '@/lib/agent-request-error';
 import { agentDisplayName } from '@/lib/home-launch-model';
 import { agentGuideFor } from '@/i18n/labels';
 import { hasAgentsDiscoveryFor, useAgents } from '@/stores/agents';
+import { sessionChipLead } from '@/lib/agent-session-chip';
 import { useServerCapabilities } from '@/stores/server-capabilities';
 import { socketReconnectDelay, WS_EVENTS_CAPABILITY } from '@/lib/gateway-socket';
 import { gatewaySocketFor } from '@/lib/gateway-socket-runtime';
@@ -255,30 +257,38 @@ const NO_CATALOG_DEFAULTS: CatalogDefaults = {};
 /** What the composer is handed for a feature the session's agent lacks. */
 const NO_SKILLS: SkillInfo[] = [];
 const NO_INBOX: InboxItem[] = [];
+const NO_COMMANDS: CommandInfo[] = [];
+
+/** The sessions a new one on `agentId` may take its defaults from. */
+function sessionsOfAgent(
+  sessions: readonly AgentSessionInfo[],
+  agentId: string | undefined
+): readonly AgentSessionInfo[] {
+  if (!agentId) return sessions;
+  const id = normalizeAgentId(agentId);
+  return sessions.filter((session) => normalizeAgentId(session.agent_id) === id);
+}
 
 /** Between a notice and the first transcript row it is standing over. */
 const NOTICE_RESERVE_GAP = 8;
 
 /**
- * The error text to show, or `offlineAdvice` when the error says the agent is
- * not answering. The advice is the caller's, in the agent's own name and start
- * instructions, so nothing here knows one agent's command from another's.
+ * The error text to show. `offlineAdvice` when the agent is not answering, and
+ * `refused` wrapping the gateway's own words when it answered and said no. Both
+ * are the caller's, in the agent's own name, so nothing here knows one agent's
+ * command from another's; `classifyAgentRequestError` decides which applies.
  */
-function formatAgentErrorMessage(err: unknown, fallback: string, offlineAdvice: string): string {
+function formatAgentErrorMessage(
+  err: unknown,
+  fallback: string,
+  offlineAdvice: string,
+  refused: (message: string) => string
+): string {
   if (!err) return fallback;
-  const str = err instanceof Error ? err.message : String(err);
-  if (
-    str.includes('agent_error') ||
-    str.includes('agent_unavailable') ||
-    str.includes('502') ||
-    str.includes('503') ||
-    str.includes('Connection refused') ||
-    str.includes('Network error communicating with agent') ||
-    str.includes('error sending request')
-  ) {
-    return offlineAdvice;
-  }
-  return str;
+  const reading = classifyAgentRequestError(err);
+  if (reading.kind === 'offline') return offlineAdvice;
+  if (reading.kind === 'refused') return refused(reading.message);
+  return reading.message;
 }
 
 export interface AgentWorkbenchProps {
@@ -531,6 +541,18 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   const agentChoice = useSelectedAgent(serverId);
   const activeAgentId = sessionInfo?.agent_id ?? agentChoice.selected;
   const agentFeatures = useAgentFeatures(serverId, activeAgentId);
+  /**
+   * The agent every catalog and project read names, or none on a gateway
+   * without discovery (it drives one agent and predates the parameter).
+   *
+   * Named whenever there is discovery, the default agent too: asked without
+   * one, a multi-agent gateway merges every agent's catalog, and a DeepSeek
+   * session's mode sheet listed OpenCode's agents beside its own presets.
+   */
+  const agentsDiscovered = useAgents(
+    useCallback((state) => Boolean(state.index.servers[serverId]?.agents), [serverId])
+  );
+  const catalogAgentId = agentsDiscovered ? normalizeAgentId(activeAgentId) : undefined;
   const activeAgentEntry = useMemo(
     () => agentChoice.agents.find((entry) => entry.id === activeAgentId),
     [agentChoice.agents, activeAgentId]
@@ -546,12 +568,22 @@ export const AgentWorkbench = memo(function AgentWorkbench({
    * each depending on them; the effect keeps it current before any handler runs.
    */
   const agentErrorRef = useRef((err: unknown, fallback: string = offlineFallback) =>
-    formatAgentErrorMessage(err, fallback, `${offlineFallback}\n${startAdvice}`)
+    formatAgentErrorMessage(
+      err,
+      fallback,
+      `${offlineFallback}\n${startAdvice}`,
+      (message) => t`${agentName} refused the request: ${message}`
+    )
   );
   useEffect(() => {
     agentErrorRef.current = (err, fallback = offlineFallback) =>
-      formatAgentErrorMessage(err, fallback, `${offlineFallback}\n${startAdvice}`);
-  }, [offlineFallback, startAdvice]);
+      formatAgentErrorMessage(
+        err,
+        fallback,
+        `${offlineFallback}\n${startAdvice}`,
+        (message) => t`${agentName} refused the request: ${message}`
+      );
+  }, [agentName, offlineFallback, startAdvice, t]);
   const hiddenCommands = useMemo(() => hiddenClientCommands(agentFeatures), [agentFeatures]);
   const agentChoiceRef = useLatestRef(agentChoice);
   const markAgentUsed = useAgents((state) => state.markUsed);
@@ -838,7 +870,8 @@ export const AgentWorkbench = memo(function AgentWorkbench({
             ...(pickedModelRef.current && selectedModel ? { model: selectedModel } : {}),
           },
           ...loadRememberedAgentDefaults(sessionId, directory, agent),
-          sessions: sessionsRef.current,
+          // Another agent's sessions ran another agent's models and modes.
+          sessions: sessionsOfAgent(sessionsRef.current, agent),
           ...(directory ? { directory } : {}),
           catalogDefaults,
           models: catalogModels,
@@ -1012,16 +1045,37 @@ export const AgentWorkbench = memo(function AgentWorkbench({
    * re-render that changes nothing about the scope does not ask again.
    */
   const catalogScopeRef = useRef<AgentCatalogScope | null>(null);
+  /** The agent the catalog on screen was read for; `null` until one answers. */
+  const [catalogAnsweredFor, setCatalogAnsweredFor] = useState<string | null>(null);
   useEffect(() => {
-    const scope: AgentCatalogScope = { sessionId, directory: activeDirectory };
-    if (!shouldRefetchAgentCatalog(catalogScopeRef.current, scope)) return;
+    const scope: AgentCatalogScope = {
+      sessionId,
+      directory: activeDirectory,
+      ...(catalogAgentId ? { agentId: catalogAgentId } : {}),
+    };
+    const previous = catalogScopeRef.current;
+    if (!shouldRefetchAgentCatalog(previous, scope)) return;
     catalogScopeRef.current = scope;
+    const agentChanged = previous !== null && (previous.agentId ?? '') !== (scope.agentId ?? '');
+    if (agentChanged && !activeAsidRef.current) {
+      // A new session on another agent: what was picked or applied for the
+      // last agent is not a choice on this one. Its own defaults apply.
+      pickedAgentRef.current = false;
+      pickedModelRef.current = false;
+      applySelectedModel(undefined);
+      setSelectedAgent(undefined);
+    }
     let mounted = true;
-    getAgentCatalog(sessionId, undefined, scope.directory ? { directory: scope.directory } : {})
+    getAgentCatalog(sessionId, undefined, {
+      ...(scope.directory ? { directory: scope.directory } : {}),
+      ...(scope.agentId ? { agentId: scope.agentId } : {}),
+    })
       .then((catalog) => {
         if (!mounted) return;
         setAvailableAgents(catalog?.modes ?? []);
-        if (catalog?.skills && catalog.skills.length > 0) {
+        setCatalogAnsweredFor(scope.agentId ?? '');
+        if (agentChanged) setSkills(catalog?.skills ?? []);
+        else if (catalog?.skills && catalog.skills.length > 0) {
           setSkills(catalog.skills);
         }
         setCommands(catalog?.commands ?? []);
@@ -1044,7 +1098,31 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     return () => {
       mounted = false;
     };
-  }, [sessionId, activeDirectory, applySelectedModel]);
+  }, [sessionId, activeDirectory, catalogAgentId, applySelectedModel]);
+  /**
+   * Whether the mode chip belongs on screen: the agent's features allow modes
+   * and, once its catalog has answered, the catalog lists some. T3 has none.
+   */
+  const canPickMode =
+    agentFeatures.modes &&
+    (catalogAnsweredFor !== (catalogAgentId ?? '') || availableAgents.length > 0);
+  const chipAgents = agentChoice.agents;
+  /** What each session chip leads with; the rule is `sessionChipLead`. */
+  const sessionLead = useCallback(
+    (session: AgentSessionInfo) => {
+      const lead = sessionChipLead({
+        sessionAgentId: session.agent_id,
+        currentAgentId: activeAgentId,
+        sessionMode: session.mode,
+        ...(selectedAgent ? { fallbackMode: selectedAgent } : {}),
+        agentHasModes: canPickMode,
+      });
+      if (!lead) return undefined;
+      if (lead.kind === 'agent') return agentDisplayName(chipAgents, lead.agentId);
+      return availableAgents.find((entry) => entry.id === lead.modeId)?.name || lead.modeId;
+    },
+    [activeAgentId, selectedAgent, canPickMode, chipAgents, availableAgents]
+  );
 
   /**
    * The chips say what a new session is about to run, which is the remembered
@@ -1066,8 +1144,8 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     if (pickedModelRef.current && pickedAgentRef.current) return;
     const resolved = resolveNewSessionDefaults({
       picked: pickedAgentRef.current && selectedAgent ? { mode: selectedAgent } : {},
-      ...loadRememberedAgentDefaults(sessionId, activeDirectory),
-      sessions: sessionsRef.current,
+      ...loadRememberedAgentDefaults(sessionId, activeDirectory, catalogAgentId),
+      sessions: sessionsOfAgent(sessionsRef.current, catalogAgentId),
       ...(activeDirectory ? { directory: activeDirectory } : {}),
       catalogDefaults,
       models: catalogModels,
@@ -1079,6 +1157,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     sessionId,
     activeAsid,
     activeDirectory,
+    catalogAgentId,
     catalogDefaults,
     catalogModels,
     availableAgents,
@@ -1182,16 +1261,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
             (err) => {
               if (!ownsList()) return;
               console.warn('Failed to list agent sessions:', err);
-              const errMsg = err instanceof Error ? err.message : String(err);
-              if (
-                errMsg.includes('502') ||
-                errMsg.includes('503') ||
-                errMsg.includes('agent_error') ||
-                errMsg.includes('agent_unavailable') ||
-                errMsg.includes('Network error')
-              ) {
-                setIsOffline(true);
-              }
+              if (isAgentOfflineError(err)) setIsOffline(true);
               setLoading(false);
             }
           );
@@ -1704,7 +1774,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   // Load known projects for workspace switcher
   useEffect(() => {
     let mounted = true;
-    getAgentProjects(sessionId)
+    getAgentProjects(sessionId, undefined, catalogAgentId ? { agentId: catalogAgentId } : {})
       .then((projs) => {
         if (mounted && projs) setKnownProjects(projs);
       })
@@ -1712,7 +1782,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     return () => {
       mounted = false;
     };
-  }, [sessionId]);
+  }, [sessionId, catalogAgentId]);
 
   /** Discover all depths without replacing other roots or trusting empty fallbacks. */
   const refreshChildren = useCallback(
@@ -2803,7 +2873,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
           } catch (err) {
             console.warn('Failed to create session:', err);
             if (ownsCreate()) {
-              setIsOffline(true);
+              if (isAgentOfflineError(err)) setIsOffline(true);
               showToast({
                 variant: 'danger',
                 title: t`Could not create session`,
@@ -3036,7 +3106,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         (err) => {
           console.warn('Failed to switch workspace session:', err);
           if (ownsSelection()) {
-            setIsOffline(true);
+            if (isAgentOfflineError(err)) setIsOffline(true);
             showToast({
               variant: 'danger',
               title: t`Could not create session`,
@@ -3173,16 +3243,24 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   const openModelSheet = useCallback(() => {
     router.push({
       pathname: '/agent-model',
-      params: { sessionId, ...(activeDirectory ? { directory: activeDirectory } : {}) },
+      params: {
+        sessionId,
+        ...(activeDirectory ? { directory: activeDirectory } : {}),
+        ...(catalogAgentId ? { agentId: catalogAgentId } : {}),
+      },
     });
-  }, [router, sessionId, activeDirectory]);
+  }, [router, sessionId, activeDirectory, catalogAgentId]);
 
   const openModeSheet = useCallback(() => {
     router.push({
       pathname: '/agent-mode',
-      params: { sessionId, ...(activeDirectory ? { directory: activeDirectory } : {}) },
+      params: {
+        sessionId,
+        ...(activeDirectory ? { directory: activeDirectory } : {}),
+        ...(catalogAgentId ? { agentId: catalogAgentId } : {}),
+      },
     });
-  }, [router, sessionId, activeDirectory]);
+  }, [router, sessionId, activeDirectory, catalogAgentId]);
 
   const openWorkspaceSheet = useCallback(() => {
     router.push({ pathname: '/agent-workspace', params: { sessionId } });
@@ -4116,6 +4194,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       sessionId,
       serverId,
       agentId: activeAgentId,
+      catalogAgentId,
       activeAsid,
       sessions: allSessions,
       childrenByParent,
@@ -4145,6 +4224,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     sessionId,
     serverId,
     activeAgentId,
+    catalogAgentId,
     activeAsid,
     allSessions,
     childrenByParent,
@@ -4666,14 +4746,17 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         onSelectSession={selectAsid}
         onSelectAgentMode={handleSelectAgentMode}
         onCreateNewSession={handleCreateNewSession}
-        onOpenModeSheet={agentFeatures.modes ? openModeSheet : undefined}
+        onOpenModeSheet={canPickMode ? openModeSheet : undefined}
+        canPickMode={canPickMode}
+        canAttach={agentFeatures.attachments}
+        sessionLead={sessionLead}
         onOpenModelSheet={agentFeatures.modelSelection ? openModelSheet : undefined}
         onOpenDiffSheet={openDiffSheet}
         onOpenSessionsSheet={openSessionsSheet}
         onOpenTasksSheet={activeTodos && activeTodos.length > 0 ? openTasksSheet : undefined}
         backgroundCount={agentFeatures.backgroundShells ? backgroundCount : 0}
         onOpenBackgroundTray={agentFeatures.backgroundShells ? openBackgroundTray : undefined}
-        commands={commands}
+        commands={agentFeatures.slashCommands ? commands : NO_COMMANDS}
         onRunCommand={handleRunCommand}
         onInvokeSkill={handleInvokeSkill}
         onClientCommand={commandFromComposer}

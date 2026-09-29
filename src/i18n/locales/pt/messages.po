@@ -183,6 +183,10 @@ msgstr "{agentName} está pronto neste host"
 msgid "{agentName} ready"
 msgstr "{agentName} pronto"
 
+#: src/components/agent-workbench.tsx
+msgid "{agentName} refused the request: {message}"
+msgstr "{agentName} recusou a solicitação: {message}"
+
 #: src/components/new-task-action.tsx
 msgid "{agentName} service offline. Tap for setup instructions"
 msgstr "Serviço do {agentName} offline. Toque para ver as instruções de configuração"
@@ -202,10 +206,6 @@ msgstr "{agentName} não foi encontrado neste host. Instale-o e verifique novame
 #: src/components/new-task-action.tsx
 msgid "{agentName} was not found. Tap for installation instructions"
 msgstr "{agentName} não foi encontrado. Toque para ver as instruções de instalação"
-
-#: src/components/agent-composer.tsx
-msgid "{agentName}: {title} — finished while you were away"
-msgstr "{agentName}: {title} — terminou enquanto você estava fora"
 
 #: src/components/agent-guide-sheet.tsx
 msgid "{agentName}'s installation could not be confirmed. If it is installed, start it on the host."
@@ -260,6 +260,10 @@ msgstr "{label} está temporariamente bloqueado. Use a alternativa do sistema ou
 msgid "{language} code copied to clipboard"
 msgstr "Código {language} copiado para a área de transferência"
 
+#: src/components/agent-composer.tsx
+msgid "{lead}: {title} — finished while you were away"
+msgstr "{lead}: {title} — terminou enquanto você estava fora"
+
 #: src/components/agent-revert-plate.tsx
 msgid "{messages, plural, one {# message} other {# messages}}"
 msgstr "{messages, plural, one {# mensagem} other {# mensagens}}"
@@ -285,6 +289,7 @@ msgstr "{removeLabel}: {label}"
 msgid "{running} running of {0}"
 msgstr "{running} de {0} em execução"
 
+#: src/components/agent-composer.tsx
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-sessions-sheet.tsx
 msgid "{title} — finished while you were away"
@@ -3186,6 +3191,10 @@ msgstr "Não está a correr"
 msgid "Not set"
 msgstr "Não definido"
 
+#: src/components/agent-model-sheet.tsx
+msgid "Not signed in on the host"
+msgstr "Sem sessão iniciada no host"
+
 #: src/components/ssh-host-form.tsx
 msgid "Not valid."
 msgstr "Inválido"
@@ -4800,10 +4809,6 @@ msgstr "Parado"
 #: src/app/settings.tsx
 msgid "Storage"
 msgstr "Armazenamento"
-
-#: src/components/agent-composer.tsx
-msgid "subagent"
-msgstr "subagente"
 
 #: src/components/agent-mode-sheet.tsx
 #: src/components/agent-subagent-detail-sheet.tsx

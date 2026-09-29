@@ -31,7 +31,13 @@ import {
   isEmptyAgentCatalog,
   normalizeCatalogDirectory,
 } from './agent-catalog-scope';
-import { agentIdQueryValue, hasMultiAgent, withAgentIdQuery } from './agent-discovery';
+import {
+  agentIdQueryValue,
+  hasMultiAgent,
+  scopedAgentCacheVariant,
+  withAgentIdQuery,
+  withScopedAgentId,
+} from './agent-discovery';
 import {
   asFiniteNumber,
   asRecord,
@@ -839,7 +845,12 @@ export async function getAgentProjects(
   endpoint?: { url?: string; token?: string | null },
   options?: { forceRefresh?: boolean; agentId?: string }
 ): Promise<AgentProject[]> {
-  const cacheKey = buildAgentCacheKey('projects', endpoint?.url, sessionId, null, options?.agentId);
+  const cacheKey = buildAgentCacheKey(
+    'projects',
+    endpoint?.url,
+    sessionId,
+    scopedAgentCacheVariant(null, options?.agentId)
+  );
   const cached = getCachedEntry<AgentProject[]>(cacheKey);
   const isFresh = cached && Date.now() - cached.timestamp < PROJECTS_TTL_MS;
 
@@ -851,7 +862,7 @@ export async function getAgentProjects(
     try {
       const base = endpoint?.url ? endpoint.url.replace(/\/$/, '') : null;
       if (!base && !isGatewayConfigured()) return cached?.data ?? [];
-      const path = withAgentIdQuery(
+      const path = withScopedAgentId(
         sessionId
           ? `/api/sessions/${encodeURIComponent(sessionId)}/agent-projects`
           : '/api/agent-projects',
