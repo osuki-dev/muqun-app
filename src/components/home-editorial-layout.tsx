@@ -43,6 +43,8 @@ export type HomeEditorialLayoutProps = {
   contentWidth: number;
   /** Optional override for deterministic layout previews and tests. */
   fontScale?: number;
+  /** A tablet Home: Connections keeps a narrow column and Continue takes the rest. */
+  pad?: boolean;
   /** The existing identity block supplied by Home data/theme composition. */
   identity?: ReactNode;
   /** Cover artwork follows the utility row and precedes work actions. */
@@ -167,6 +169,7 @@ function useScrollStage(
 export function HomeEditorialLayout({
   contentWidth,
   fontScale: fontScaleProp,
+  pad = false,
   identity,
   artwork,
   scrollY,
@@ -199,7 +202,8 @@ export function HomeEditorialLayout({
   const geometry = getEditorialLayoutGeometry(
     measuredWidth || Math.min(contentWidth, 1120),
     fontScale,
-    hasAside
+    hasAside,
+    pad
   );
   const hasIdentity = hasSlot(identity);
   const hasArtwork = hasSlot(artwork);

@@ -443,10 +443,6 @@ msgstr "代理面板的默认视图"
 msgid "Agents"
 msgstr "代理"
 
-#: src/components/agent-mode-sheet.tsx
-msgid "Agents on this host"
-msgstr "此主机上的 Agent"
-
 #: src/components/app-drawer-content.tsx
 msgid "AI coding assistant"
 msgstr "AI 编程助手"
@@ -700,6 +696,10 @@ msgstr "自动"
 msgid "Autonomous software engineering: edits files, runs commands, tests."
 msgstr "自主软件工程：编辑文件、执行命令、运行测试"
 
+#: src/components/agent-mode-sheet.tsx
+msgid "Available modes"
+msgstr "可用模式"
+
 #: src/components/simfarm-stage.tsx
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Back"
@@ -911,6 +911,10 @@ msgstr "检查中…"
 msgid "Choose a gateway"
 msgstr "选择 Gateway"
 
+#: src/components/agent-mode-sheet.tsx
+msgid "Choose a mode"
+msgstr "选择模式"
+
 #: src/components/agent-model-sheet.tsx
 #: src/components/agent-workbench.tsx
 msgid "Choose a model"
@@ -924,7 +928,6 @@ msgstr "选择模拟器"
 msgid "Choose a simulator from the menu."
 msgstr "请从菜单中选择模拟器"
 
-#: src/components/agent-mode-sheet.tsx
 #: src/components/home-agents-sheet.tsx
 msgid "Choose an agent"
 msgstr "选择 Agent"
@@ -2412,7 +2415,6 @@ msgid "How to use Muqun"
 msgstr "如何使用 Muqun"
 
 #: src/components/agent-session-tree-sheet.tsx
-#: src/components/home-recent-sessions.tsx
 #: src/i18n/labels.ts
 msgid "Idle"
 msgstr "空闲"
@@ -2824,6 +2826,10 @@ msgstr "模型 · {0} → {next}"
 #: src/components/agent-message-block.tsx
 msgid "Model · {next}"
 msgstr "模型 · {next}"
+
+#: src/components/agent-mode-sheet.tsx
+msgid "Modes of {agentName}"
+msgstr "{agentName} 的模式"
 
 #: src/components/asset-viewer.tsx
 msgid "Modified"
@@ -4009,7 +4015,7 @@ msgstr "重试上传 {0}"
 
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-workbench.tsx
-#: src/components/home-recent-sessions.tsx
+#: src/i18n/labels.ts
 msgid "Retrying…"
 msgstr "正在重试…"
 
@@ -4128,7 +4134,7 @@ msgid "Run the Gateway on your machine and scan the QR code it prints. The pairi
 msgstr "在你的电脑上运行 Gateway，然后扫描它打印出的二维码。配对信息只保存在本设备上"
 
 #: src/components/agent-session-tree-sheet.tsx
-#: src/components/home-recent-sessions.tsx
+#: src/i18n/labels.ts
 msgid "Running"
 msgstr "运行中"
 
@@ -4766,7 +4772,7 @@ msgstr "暂时无法获取状态"
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-workbench.tsx
 #: src/components/collaboration-notice.tsx
-#: src/components/home-recent-sessions.tsx
+#: src/i18n/labels.ts
 msgid "Status unknown"
 msgstr "状态未知"
 
@@ -4810,7 +4816,7 @@ msgstr "停止这条命令"
 
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-workbench.tsx
-#: src/components/home-recent-sessions.tsx
+#: src/i18n/labels.ts
 msgid "Stopped"
 msgstr "已停止"
 
@@ -5217,7 +5223,7 @@ msgstr "把对话记录当成聊天呈现，并收起工具步骤"
 
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-workbench.tsx
-#: src/components/home-recent-sessions.tsx
+#: src/i18n/labels.ts
 msgid "The turn failed"
 msgstr "这一轮执行失败"
 

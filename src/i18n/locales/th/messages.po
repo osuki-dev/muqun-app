@@ -443,10 +443,6 @@ msgstr "เปิดพาเนลเอเจนต์ใน"
 msgid "Agents"
 msgstr "เอเจนต์"
 
-#: src/components/agent-mode-sheet.tsx
-msgid "Agents on this host"
-msgstr "เอเจนต์บนโฮสต์นี้"
-
 #: src/components/app-drawer-content.tsx
 msgid "AI coding assistant"
 msgstr "ผู้ช่วยเขียนโค้ด AI"
@@ -700,6 +696,10 @@ msgstr "อัตโนมัติ"
 msgid "Autonomous software engineering: edits files, runs commands, tests."
 msgstr "พัฒนาซอฟต์แวร์อัตโนมัติ: แก้ไฟล์ รันคำสั่ง และทดสอบ"
 
+#: src/components/agent-mode-sheet.tsx
+msgid "Available modes"
+msgstr "โหมดที่ใช้ได้"
+
 #: src/components/simfarm-stage.tsx
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Back"
@@ -911,6 +911,10 @@ msgstr "กำลังตรวจสอบ…"
 msgid "Choose a gateway"
 msgstr "เลือก Gateway"
 
+#: src/components/agent-mode-sheet.tsx
+msgid "Choose a mode"
+msgstr "เลือกโหมด"
+
 #: src/components/agent-model-sheet.tsx
 #: src/components/agent-workbench.tsx
 msgid "Choose a model"
@@ -924,7 +928,6 @@ msgstr "เลือกเครื่องจำลอง"
 msgid "Choose a simulator from the menu."
 msgstr "เลือกเครื่องจำลองจากเมนู"
 
-#: src/components/agent-mode-sheet.tsx
 #: src/components/home-agents-sheet.tsx
 msgid "Choose an agent"
 msgstr "เลือกเอเจนต์"
@@ -2412,7 +2415,6 @@ msgid "How to use Muqun"
 msgstr "วิธีใช้ Muqun"
 
 #: src/components/agent-session-tree-sheet.tsx
-#: src/components/home-recent-sessions.tsx
 #: src/i18n/labels.ts
 msgid "Idle"
 msgstr "ว่าง"
@@ -2824,6 +2826,10 @@ msgstr "โมเดล · {0} → {next}"
 #: src/components/agent-message-block.tsx
 msgid "Model · {next}"
 msgstr "โมเดล · {next}"
+
+#: src/components/agent-mode-sheet.tsx
+msgid "Modes of {agentName}"
+msgstr "โหมดของ {agentName}"
 
 #: src/components/asset-viewer.tsx
 msgid "Modified"
@@ -4009,7 +4015,7 @@ msgstr "ลองอัปโหลด {0} อีกครั้ง"
 
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-workbench.tsx
-#: src/components/home-recent-sessions.tsx
+#: src/i18n/labels.ts
 msgid "Retrying…"
 msgstr "กำลังลองใหม่…"
 
@@ -4128,7 +4134,7 @@ msgid "Run the Gateway on your machine and scan the QR code it prints. The pairi
 msgstr "เรียกใช้ Gateway บนเครื่องของคุณแล้วสแกน QR ที่แสดง การจับคู่จะเก็บอยู่บนอุปกรณ์นี้"
 
 #: src/components/agent-session-tree-sheet.tsx
-#: src/components/home-recent-sessions.tsx
+#: src/i18n/labels.ts
 msgid "Running"
 msgstr "กำลังทำงาน"
 
@@ -4766,7 +4772,7 @@ msgstr "สถานะไม่พร้อมใช้งาน"
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-workbench.tsx
 #: src/components/collaboration-notice.tsx
-#: src/components/home-recent-sessions.tsx
+#: src/i18n/labels.ts
 msgid "Status unknown"
 msgstr "ไม่ทราบสถานะ"
 
@@ -4810,7 +4816,7 @@ msgstr "หยุดคำสั่งนี้"
 
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-workbench.tsx
-#: src/components/home-recent-sessions.tsx
+#: src/i18n/labels.ts
 msgid "Stopped"
 msgstr "หยุดแล้ว"
 
@@ -5217,7 +5223,7 @@ msgstr "บันทึกในรูปแบบบทสนทนา โด�
 
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-workbench.tsx
-#: src/components/home-recent-sessions.tsx
+#: src/i18n/labels.ts
 msgid "The turn failed"
 msgstr "รอบนี้ล้มเหลว"
 

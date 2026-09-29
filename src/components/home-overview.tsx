@@ -167,6 +167,9 @@ export function HomeOverview({
     identity.logo?.mode === 'custom' ? customAssets?.[identity.logo.asset] : undefined;
   const logoSource = customLogo && customLogo !== failedLogo ? { uri: customLogo } : brandMark;
   const isPad = layoutMode === 'pad';
+  // The Pad workspace's rail already carries the brand; the Home it embeds
+  // as the Workbench view does not repeat it.
+  const showsEditorialBrand = identity.showBrand && !(embedded && isPad);
   // Renaming and unpairing live in Settings, not here: the owner asked for one
   // place that manages servers, and the tablet branch's long-press row menu was
   // a second answer to the same question. The layout work from that branch is
@@ -721,7 +724,8 @@ export function HomeOverview({
               contentWidth={editorialWidth || width}
               scrollY={scrollY}
               cover={customTheme?.manifest.homePresentation?.header === 'cover'}
-              coverTitle={identity.name ?? undefined}
+              coverTitle={showsEditorialBrand ? (identity.name ?? undefined) : undefined}
+              pad={isPad}
               artworkTopInset={editorialArtworkTopCurrent ? editorialArtworkTop?.top : 0}
               artwork={
                 hasEditorialArtwork && editorialArtworkResolution ? (
@@ -737,7 +741,7 @@ export function HomeOverview({
                 ) : null
               }
               identity={
-                identity.showBrand ? (
+                showsEditorialBrand ? (
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
                     {identity.logo ? (
                       <Image
@@ -780,6 +784,7 @@ export function HomeOverview({
                 ) : (
                   <HomeLaunchActions
                     controller={launchController}
+                    grid={isPad}
                     onNewAgent={commands.newAgent}
                     onOpenAgent={commands.openAgent}
                     onNewTerminal={commands.newTerminal}
