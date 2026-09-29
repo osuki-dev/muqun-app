@@ -341,10 +341,6 @@ msgstr "接続できるどのマシンでも使える普通のシェル。Gatewa
 msgid "A second checkout of this repository"
 msgstr "このリポジトリの 2 つ目のチェックアウト"
 
-#: src/lib/release-notes.ts
-msgid "A server's key is remembered the first time and checked every time after, and a key that changed stops the connection until you say otherwise."
-msgstr "サーバーの鍵は初回に記憶し、以後は毎回照合します。鍵が変わったら、あなたが認めるまで接続を止めます"
-
 #: src/components/pad-server-rail.tsx
 msgid "A shell on any machine with sshd"
 msgstr "sshd があるどのマシンでも使えるシェル"
@@ -598,6 +594,10 @@ msgstr "適用中…"
 #: src/components/in-app-notification-host.tsx
 msgid "Approval required"
 msgstr "承認が必要です"
+
+#: src/lib/release-notes.ts
+msgid "Approvals and status changes for every session now arrive over one live connection per computer, not only for the session you have open."
+msgstr "すべてのセッションの承認とステータス変更が、開いているセッションだけでなく、コンピュータごとの 1 本のライブ接続で届くようになりました"
 
 #: src/components/agent-mode-sheet.tsx
 msgid "Architecture, design proposals, step-by-step roadmaps."
@@ -1248,6 +1248,10 @@ msgstr "コンテキスト使用量"
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Continue"
 msgstr "続行"
+
+#: src/lib/release-notes.ts
+msgid "Continue and the offline and empty-state messages now name the agent they mean, and a new session asks which agent when more than one is ready."
+msgstr "「続ける」とオフライン・空の状態のメッセージが、対象のエージェント名を表示するようになりました。複数のエージェントが使える場合、新しいセッションではどれを使うか確認されます"
 
 #: src/i18n/labels.ts
 msgid "Continue task"
@@ -1958,6 +1962,10 @@ msgstr "ダウンロードしています…"
 msgid "Draft the notes for the next build"
 msgstr "次のビルドのリリースノートを下書きします"
 
+#: src/lib/release-notes.ts
+msgid "Each agent's screen shows only what it supports, and the model picker groups models by provider and greys out the ones you are not signed in to."
+msgstr "各エージェントの画面には、対応している機能だけが表示されます。モデル選択はプロバイダごとにグループ化され、サインインしていないものはグレー表示になります"
+
 #. placeholder {0}: server.label
 #: src/components/settings-servers.tsx
 msgid "Each device holds its own token for {0}."
@@ -2582,10 +2590,6 @@ msgstr "エージェントの作業中、見ているターミナルをロック
 msgid "Keys"
 msgstr "キー"
 
-#: src/lib/release-notes.ts
-msgid "Keys are generated on the device and never leave it."
-msgstr "鍵は端末上で生成され、外に出ることはありません"
-
 #: src/components/settings-appearance.tsx
 #: src/components/settings-language-sheet.tsx
 msgid "Language"
@@ -2885,6 +2889,10 @@ msgstr "Muqun 自体はフォントを持ちません。追加するとこのデ
 msgid "Muqun is locked"
 msgstr "牧群（ぼくぐん）はロックされています"
 
+#: src/lib/release-notes.ts
+msgid "Muqun now works with several coding agents on one computer. OpenCode, DeepSeek and T3 Code each get their own tile on Home, with their own mark."
+msgstr "Muqun が 1 台のコンピュータ上の複数のコーディングエージェントに対応しました。OpenCode、DeepSeek、T3 Code がそれぞれ専用のマークつきタイルとしてホームに並びます"
+
 #: src/components/pairing-camera.tsx
 msgid "Muqun reads the Gateway's QR code through the camera. Nothing is recorded."
 msgstr "Muqun はカメラで Gateway の QR コードを読み取ります。録画は行いません"
@@ -2892,10 +2900,6 @@ msgstr "Muqun はカメラで Gateway の QR コードを読み取ります。�
 #: src/app/settings.tsx
 msgid "Muqun settings stay on this device."
 msgstr "牧群（ぼくぐん）の設定はこのデバイスの中だけに保存されます"
-
-#: src/lib/release-notes.ts
-msgid "Muqun speaks SSH. Save a host, tap it on the home screen, and you are in a real shell — password, key or a code from your authenticator."
-msgstr "Muqun が SSH を話します。ホストを保存してホーム画面でタップすれば、本物のシェルへ — パスワード、鍵、あるいは認証アプリのコードで"
 
 #: src/components/settings-appearance.tsx
 msgid "Muqun stays in this language whatever the phone is set to."
@@ -3256,6 +3260,10 @@ msgstr "オフライン、応答がありません"
 #: src/components/toggle.tsx
 msgid "On"
 msgstr "オン"
+
+#: src/lib/release-notes.ts
+msgid "On a tablet, Continue rows now open their terminal panes. An older Gateway keeps working with OpenCode as before."
+msgstr "タブレットでは「続ける」の行から、ターミナルペインが開くようになりました。古い Gateway でも、これまでどおり OpenCode で動作します"
 
 #: src/i18n/labels.ts
 msgid "Online"
@@ -5045,10 +5053,6 @@ msgstr "これは同梱のデモシェルで、ここにある唯一のホスト
 #: src/components/settings-font-sheet.tsx
 msgid "That link opens a web page, not the font file. Use the file's direct download link."
 msgstr "そのリンクはフォントファイルではなく Web ページを開きます。ファイルの直接ダウンロードリンクを使ってください"
-
-#: src/lib/release-notes.ts
-msgid "That shell is the terminal you already know: the same keyboard, the same key row, the same colours, and your phone's own keyboard for anything you would rather type."
-msgstr "そのシェルは見慣れたターミナルそのもの。同じキーボード、同じキー列、同じ配色。入力したいときはスマホ自身のキーボードも使えます"
 
 #: src/components/simfarm-stage.tsx
 msgid "That simulator cannot be started from here. Start it on the machine and it appears in the list."

@@ -341,10 +341,6 @@ msgstr "Một shell thường trên bất kỳ máy nào bạn kết nối đư�
 msgid "A second checkout of this repository"
 msgstr "Một bản checkout thứ hai của kho mã này"
 
-#: src/lib/release-notes.ts
-msgid "A server's key is remembered the first time and checked every time after, and a key that changed stops the connection until you say otherwise."
-msgstr "Khóa của máy chủ được ghi nhớ lần đầu và kiểm tra mọi lần sau, và một khóa đã thay đổi sẽ chặn kết nối cho đến khi bạn quyết định khác"
-
 #: src/components/pad-server-rail.tsx
 msgid "A shell on any machine with sshd"
 msgstr "Một shell trên bất kỳ máy nào có sshd"
@@ -598,6 +594,10 @@ msgstr "Đang áp dụng…"
 #: src/components/in-app-notification-host.tsx
 msgid "Approval required"
 msgstr "Cần phê duyệt"
+
+#: src/lib/release-notes.ts
+msgid "Approvals and status changes for every session now arrive over one live connection per computer, not only for the session you have open."
+msgstr "Các yêu cầu phê duyệt và thay đổi trạng thái của mọi phiên giờ đến qua một kết nối trực tiếp cho mỗi máy tính, không chỉ với phiên đang mở"
 
 #: src/components/agent-mode-sheet.tsx
 msgid "Architecture, design proposals, step-by-step roadmaps."
@@ -1248,6 +1248,10 @@ msgstr "Ngữ cảnh đã dùng"
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Continue"
 msgstr "Tiếp tục"
+
+#: src/lib/release-notes.ts
+msgid "Continue and the offline and empty-state messages now name the agent they mean, and a new session asks which agent when more than one is ready."
+msgstr "Tiếp tục cùng các thông báo ngoại tuyến và trạng thái trống giờ nêu tên tác tử tương ứng, và phiên mới sẽ hỏi dùng tác tử nào khi có nhiều hơn một tác tử sẵn sàng"
 
 #: src/i18n/labels.ts
 msgid "Continue task"
@@ -1958,6 +1962,10 @@ msgstr "Đang tải xuống…"
 msgid "Draft the notes for the next build"
 msgstr "Soạn ghi chú cho bản dựng tiếp theo"
 
+#: src/lib/release-notes.ts
+msgid "Each agent's screen shows only what it supports, and the model picker groups models by provider and greys out the ones you are not signed in to."
+msgstr "Màn hình của mỗi tác tử chỉ hiển thị những gì nó hỗ trợ, và bộ chọn mô hình nhóm mô hình theo nhà cung cấp, làm mờ những nhà cung cấp bạn chưa đăng nhập"
+
 #. placeholder {0}: server.label
 #: src/components/settings-servers.tsx
 msgid "Each device holds its own token for {0}."
@@ -2582,10 +2590,6 @@ msgstr "Giữ terminal bạn đang xem trên Màn hình khóa trong khi tác t�
 msgid "Keys"
 msgstr "Phím"
 
-#: src/lib/release-notes.ts
-msgid "Keys are generated on the device and never leave it."
-msgstr "Khóa được tạo trên thiết bị và không bao giờ rời khỏi đó"
-
 #: src/components/settings-appearance.tsx
 #: src/components/settings-language-sheet.tsx
 msgid "Language"
@@ -2885,6 +2889,10 @@ msgstr "Muqun không có phông chữ riêng. Phông bạn thêm sẽ được g
 msgid "Muqun is locked"
 msgstr "Muqun đang khóa"
 
+#: src/lib/release-notes.ts
+msgid "Muqun now works with several coding agents on one computer. OpenCode, DeepSeek and T3 Code each get their own tile on Home, with their own mark."
+msgstr "Muqun giờ làm việc với nhiều tác tử lập trình trên cùng một máy tính. OpenCode, DeepSeek và T3 Code mỗi tác tử có ô riêng trên Trang chủ, kèm biểu tượng riêng"
+
 #: src/components/pairing-camera.tsx
 msgid "Muqun reads the Gateway's QR code through the camera. Nothing is recorded."
 msgstr "Muqun đọc mã QR của Gateway qua camera. Không có gì được ghi lại"
@@ -2892,10 +2900,6 @@ msgstr "Muqun đọc mã QR của Gateway qua camera. Không có gì được gh
 #: src/app/settings.tsx
 msgid "Muqun settings stay on this device."
 msgstr "Cài đặt của Muqun ở lại trên thiết bị này"
-
-#: src/lib/release-notes.ts
-msgid "Muqun speaks SSH. Save a host, tap it on the home screen, and you are in a real shell — password, key or a code from your authenticator."
-msgstr "Muqun nói được SSH. Lưu một host, chạm vào nó trên màn hình chính, và bạn đã ở trong một shell thật — bằng mật khẩu, khóa hoặc mã từ ứng dụng xác thực của bạn"
 
 #: src/components/settings-appearance.tsx
 msgid "Muqun stays in this language whatever the phone is set to."
@@ -3256,6 +3260,10 @@ msgstr "Ngoại tuyến, không phản hồi"
 #: src/components/toggle.tsx
 msgid "On"
 msgstr "Bật"
+
+#: src/lib/release-notes.ts
+msgid "On a tablet, Continue rows now open their terminal panes. An older Gateway keeps working with OpenCode as before."
+msgstr "Trên máy tính bảng, các dòng Tiếp tục giờ mở đúng ngăn terminal của chúng. Gateway cũ hơn vẫn chạy với OpenCode như trước"
 
 #: src/i18n/labels.ts
 msgid "Online"
@@ -5045,10 +5053,6 @@ msgstr "Đó là shell demo đi kèm, và là host duy nhất ở đây. Thêm m
 #: src/components/settings-font-sheet.tsx
 msgid "That link opens a web page, not the font file. Use the file's direct download link."
 msgstr "Liên kết đó mở một trang web, không phải tệp phông chữ. Hãy dùng liên kết tải trực tiếp của tệp"
-
-#: src/lib/release-notes.ts
-msgid "That shell is the terminal you already know: the same keyboard, the same key row, the same colours, and your phone's own keyboard for anything you would rather type."
-msgstr "Shell đó chính là terminal bạn đã quen: cùng bàn phím, cùng hàng phím, cùng màu sắc, và bàn phím của điện thoại cho bất cứ thứ gì bạn muốn gõ"
 
 #: src/components/simfarm-stage.tsx
 msgid "That simulator cannot be started from here. Start it on the machine and it appears in the list."
