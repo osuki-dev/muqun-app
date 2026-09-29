@@ -454,6 +454,7 @@ function RootContent() {
                 />
                 <Stack.Screen name="new-task" options={sheetRouteOptions('new-task')} />
                 <Stack.Screen name="home-target" options={sheetRouteOptions('home-target')} />
+                <Stack.Screen name="home-agents" options={sheetRouteOptions('home-agents')} />
                 <Stack.Screen name="web-service" options={sheetRouteOptions('web-service')} />
                 {/*
               A full-screen modal, not a sheet, and the route file says why at
@@ -503,7 +504,7 @@ function RootContent() {
                 <Stack.Screen name="agent-vcs-diff" options={sheetRouteOptions('agent-vcs-diff')} />
                 <Stack.Screen name="agent-tasks" options={sheetRouteOptions('agent-tasks')} />
                 <Stack.Screen name="agent-shells" options={sheetRouteOptions('agent-shells')} />
-                <Stack.Screen name="opencode-guide" options={sheetRouteOptions('opencode-guide')} />
+                <Stack.Screen name="agent-guide" options={sheetRouteOptions('agent-guide')} />
               </Stack>
               <InAppNotificationHost />
             </AppLockGate>

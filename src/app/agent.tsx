@@ -25,7 +25,7 @@ import { LogoLoader } from '@/components/logo-loader';
 import { workspaceDisplayName } from '@/lib/agent-protocol';
 import { useAgentSessionState } from '@/stores/agent-session-state';
 import { hasRealSessionTitle } from '@/lib/agent-session';
-import { consumeNewOpenCodeIntent } from '@/lib/home-commands';
+import { consumeNewAgentIntent } from '@/lib/home-commands';
 import {
   isAgentWorkbenchOwnedOverlayPath,
   isAgentWorkbenchOwnedRootRoute,
@@ -87,7 +87,7 @@ export default function AgentScreen() {
   const newSessionIntent = params.intent === 'new';
   useEffect(() => {
     if (!newSessionIntent || !wantedServer) return;
-    consumeNewOpenCodeIntent(wantedServer, params.directory);
+    consumeNewAgentIntent(wantedServer, params.directory);
   }, [newSessionIntent, params.directory, wantedServer]);
   useEffect(() => {
     if (!wantedServer || serverReady) return;

@@ -780,8 +780,8 @@ export function HomeOverview({
                 ) : (
                   <HomeLaunchActions
                     controller={launchController}
-                    onNewOpenCode={commands.newOpenCode}
-                    onOpenOpenCode={commands.openOpenCode}
+                    onNewAgent={commands.newAgent}
+                    onOpenAgent={commands.openAgent}
                     onNewTerminal={commands.newTerminal}
                     onOpenTerminal={commands.openServer}
                     onSsh={commands.openSsh}

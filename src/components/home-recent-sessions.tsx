@@ -18,7 +18,9 @@ import { resolveSessionId, sessionChoices } from '@/lib/session-switcher';
 import { useServerSession } from '@/stores/server-session';
 import { isDemoRecord } from '@/lib/demo-gateway';
 import type { GatewayRecord } from '@/lib/gateway-storage';
-import type { HomeTarget } from '@/lib/home-recents';
+import { homeTargetAgentId, type HomeTarget } from '@/lib/home-recents';
+import { agentDisplayName } from '@/lib/home-launch-model';
+import { useAgents } from '@/stores/agents';
 import {
   homeContinueEntries,
   shouldShowHomeContinueOverflow,
@@ -221,9 +223,20 @@ function RecentSessionRow({
       : target?.kind === 'agent-session'
         ? target.directory
         : undefined;
+  // The agent's own name from the last discovery, so a DeepSeek session does
+  // not say it is an OpenCode one.
+  const mirroredAgents = useAgents((state) =>
+    target?.kind === 'agent-session'
+      ? state.index.servers[target.serverId]?.agents?.agents
+      : undefined
+  );
+  const agentName =
+    target?.kind === 'agent-session'
+      ? agentDisplayName(mirroredAgents, homeTargetAgentId(target))
+      : '';
   const kind =
     target?.kind === 'agent-session'
-      ? t`OpenCode session`
+      ? t`${agentName} session`
       : !target || target.kind === 'gateway-terminal'
         ? t`Terminal`
         : t`SSH host`;

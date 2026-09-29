@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
@@ -18,17 +18,24 @@ import Animated, {
 
 import { AgentActionMenu, type AgentActionMenuItem } from '@/components/agent-action-menu';
 import { PressableScale } from '@/components/pressable-scale';
-import { OpenCodeIcon } from '@/components/opencode-icon';
-import { useAgentsDiscoveryRefresh, useSelectedAgent } from '@/hooks/use-agent-features';
+import { AgentMark } from '@/components/agent-mark';
+import { useSelectedAgent } from '@/hooks/use-agent-features';
 import { useHomeCommands } from '@/hooks/use-home-commands';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { useServerCapabilities } from '@/stores/server-capabilities';
 import type { GatewayRecord } from '@/lib/gateway-storage';
 import { withAlpha } from '@/lib/color';
-import { checkAgentServer, type AgentReadiness } from '@/lib/home-agent-readiness';
+import {
+  checkAgentServer,
+  refreshAgentServerDiscovery,
+  type AgentReadiness,
+} from '@/lib/home-agent-readiness';
+import type { HomeAgentEntry } from '@/lib/agent-discovery';
+import { MAX_AGENT_TILES, agentDisplayName, projectLaunchAgents } from '@/lib/home-launch-model';
+import { useAgents } from '@/stores/agents';
 import { INSTANT, SHEEN_MOTION, fadeIn, fadeOut, listLayout } from '@/lib/motion';
 
-/** How long the "OpenCode ready" label stays visible before settling to the compact icon. */
+/** How long the "ready" label stays visible before settling to the compact icon. */
 const READY_ANNOUNCEMENT_MS = 3800;
 
 /** Set of servers that have already completed their "ready" announcement this session. */
@@ -47,7 +54,7 @@ export function NewTaskAction({
   const theme = useThemeTokens();
   const surfaceBackground = useSurfaceBackground();
   const router = useRouter();
-  const { openOpenCode } = useHomeCommands();
+  const { openAgent } = useHomeCommands();
   const capabilities = useServerCapabilities((s) => s.byServer[serverId]);
 
   const [isReady, setIsReady] = useState(false);
@@ -62,7 +69,23 @@ export function NewTaskAction({
    */
   const agentChoice = useSelectedAgent(serverId);
   const [agentMenuOpen, setAgentMenuOpen] = useState(false);
-  useAgentsDiscoveryRefresh(serverId, Boolean(capabilities?.includes('agent_sessions')));
+  const hasAgentSessions = Boolean(capabilities?.includes('agent_sessions'));
+  // Through this server's own endpoint: the card is not necessarily the
+  // connected gateway, and its answer must land under its own id.
+  useEffect(() => {
+    if (hasAgentSessions && server) void refreshAgentServerDiscovery(server);
+  }, [hasAgentSessions, server]);
+
+  // What the card offers is what the gateway lists. One agent keeps the one
+  // button this card always had; two or three get a button each; more fall
+  // back to the one button and its menu.
+  const mirrored = useAgents((state) => state.index.servers[serverId]);
+  const lastUsedAgentId = useAgents((state) => state.index.lastUsed[serverId]);
+  const offered = projectLaunchAgents(mirrored, lastUsedAgentId);
+  const soleAgentId = offered.length === 1 ? offered[0]?.id : undefined;
+  const agentRow = offered.length > 1 && offered.length <= MAX_AGENT_TILES;
+  const agentName = agentDisplayName([...offered], soleAgentId ?? agentChoice.selected);
+  const agentKind = (offered.length === 1 ? offered[0]?.kind : undefined) ?? 'opencode';
 
   /**
    * The live entry: a band of light crosses the button, the glyph swells a
@@ -119,7 +142,7 @@ export function NewTaskAction({
     let announcementTimer: ReturnType<typeof setTimeout> | null = null;
 
     const checkReady = async (isRetry = false): Promise<boolean> => {
-      const result = await checkAgentServer(server);
+      const result = await checkAgentServer(server, soleAgentId);
       if (cancelled) return result.status === 'ready';
 
       setReadiness(result);
@@ -159,7 +182,7 @@ export function NewTaskAction({
       if (announcementTimer) clearTimeout(announcementTimer);
       if (announcementTimerRef.current) clearTimeout(announcementTimerRef.current);
     };
-  }, [capabilities, server, serverId]);
+  }, [capabilities, server, serverId, soleAgentId]);
 
   // The card belongs to one server, and the screen it opens must be that
   // server's. This used to fire the selection and push the route in the same
@@ -167,15 +190,15 @@ export function NewTaskAction({
   // moment ago -- with two servers on Home, the first card's button opened the
   // second server's OpenCode. The switch is awaited, and the route carries the
   // server id so the screen can refuse to mount on any other.
-  const handlePress = useCallback(() => {
+  const handlePress = () => {
     if (agentChoice.offersChoice) {
       setAgentMenuOpen((open) => !open);
       return;
     }
     // Opening the existing entry is intentionally separate from the genuine
     // new-session command. The workbench resumes its remembered session.
-    void openOpenCode(serverId);
-  }, [agentChoice.offersChoice, openOpenCode, serverId]);
+    void openAgent(serverId, undefined, undefined, undefined, soleAgentId);
+  };
   const agentMenuItems = useMemo<AgentActionMenuItem[]>(
     () =>
       agentChoice.ready.map((agent) => ({
@@ -185,17 +208,47 @@ export function NewTaskAction({
         onPress: () => {
           setAgentMenuOpen(false);
           agentChoice.select(agent.id);
-          void openOpenCode(serverId, undefined, undefined, undefined, agent.id);
+          void openAgent(serverId, undefined, undefined, undefined, agent.id);
         },
       })),
-    [agentChoice, openOpenCode, serverId]
+    [agentChoice, openAgent, serverId]
   );
 
   if (!capabilities?.includes('agent_sessions')) {
     return null;
   }
 
-  // If probe completed and OpenCode service is offline / timed out:
+  if (agentRow) {
+    return (
+      <Animated.View layout={listLayout()} entering={fadeIn()} exiting={fadeOut()}>
+        <View style={styles.agentRow}>
+          {offered.map((agent) => (
+            <AgentRowButton
+              key={agent.id}
+              agent={agent}
+              label={label}
+              onOpen={() => void openAgent(serverId, undefined, undefined, undefined, agent.id)}
+              onSetup={() =>
+                router.push({
+                  pathname: '/agent-guide',
+                  params: {
+                    serverId,
+                    label,
+                    agentId: agent.id,
+                    status: agent.readiness === 'not-installed' ? 'not-installed' : 'offline',
+                    ...(agent.readiness === 'not-installed' ? {} : { cause: 'service' }),
+                    intent: 'existing',
+                  },
+                })
+              }
+            />
+          ))}
+        </View>
+      </Animated.View>
+    );
+  }
+
+  // If probe completed and the agent's service is offline / timed out:
   // Render warning button opening the guide sheet
   if (!isReady) {
     if (!hasChecked) return null;
@@ -207,17 +260,18 @@ export function NewTaskAction({
             accessibilityRole="button"
             accessibilityLabel={
               readiness?.status === 'unsupported'
-                ? t`OpenCode sessions are not supported. Tap for details`
+                ? t`${agentName} sessions are not supported. Tap for details`
                 : readiness?.status === 'not-installed'
-                  ? t`OpenCode was not found. Tap for installation instructions`
-                  : t`OpenCode service offline. Tap for setup instructions`
+                  ? t`${agentName} was not found. Tap for installation instructions`
+                  : t`${agentName} service offline. Tap for setup instructions`
             }
             onPress={() =>
               router.push({
-                pathname: '/opencode-guide',
+                pathname: '/agent-guide',
                 params: {
                   serverId,
                   label,
+                  agentId: soleAgentId ?? readiness?.agentId ?? agentChoice.selected,
                   status: readiness?.status ?? 'offline',
                   ...(readiness?.status === 'offline' ? { cause: readiness.cause } : {}),
                   intent: 'existing',
@@ -232,7 +286,7 @@ export function NewTaskAction({
               },
             ]}>
             <View style={styles.offlineIconWrapper}>
-              <OpenCodeIcon size={16} color={theme.colors.warning} />
+              <AgentMark kind={agentKind} size={16} color={theme.colors.warning} />
               <View style={[styles.offlineDot, { backgroundColor: theme.colors.warning }]} />
             </View>
           </PressableScale>
@@ -242,8 +296,8 @@ export function NewTaskAction({
   }
 
   // react-doctor-disable-next-line react-hooks-js/todo -- lingui t macro; the lingui babel plugin compiles the template away
-  const openAgentLabel = t`Open OpenCode Agent on ${label}`;
-  const readyLabel = t`OpenCode ready`;
+  const openAgentLabel = t`Open ${agentName} Agent on ${label}`;
+  const readyLabel = t`${agentName} ready`;
   const actionLabel = showAnnouncement ? `${readyLabel}. ${openAgentLabel}` : openAgentLabel;
 
   return (
@@ -271,7 +325,7 @@ export function NewTaskAction({
             ]}
           />
           <Animated.View style={glyphStyle}>
-            <OpenCodeIcon size={18} color={theme.colors.primary} />
+            <AgentMark kind={agentKind} size={18} color={theme.colors.primary} />
           </Animated.View>
         </PressableScale>
         {agentMenuOpen ? (
@@ -291,7 +345,7 @@ export function NewTaskAction({
               color={theme.colors.primary}
               numberOfLines={2}
               style={styles.announcementText}>
-              {t`OpenCode ready`}
+              {readyLabel}
             </Text>
           </Animated.View>
         ) : null}
@@ -300,7 +354,67 @@ export function NewTaskAction({
   );
 }
 
+/**
+ * One agent's button on a card that lists several: its own mark, and the
+ * warning dot the single button wears when the agent is not answering.
+ */
+function AgentRowButton({
+  agent,
+  label,
+  onOpen,
+  onSetup,
+}: {
+  agent: HomeAgentEntry;
+  label: string;
+  onOpen: () => void;
+  onSetup: () => void;
+}) {
+  const { t } = useLingui();
+  const theme = useThemeTokens();
+  const surfaceBackground = useSurfaceBackground();
+  const ready = agent.readiness === 'ready';
+  const name = agent.name;
+  const description = ready
+    ? t`Open ${name} Agent on ${label}`
+    : agent.readiness === 'not-installed'
+      ? t`${name} was not found. Tap for installation instructions`
+      : t`${name} service offline. Tap for setup instructions`;
+  return (
+    <PressableScale
+      testID={`server-agent-action-${agent.id}`}
+      accessibilityRole="button"
+      accessibilityLabel={description}
+      onPress={ready ? onOpen : onSetup}
+      style={[
+        styles.button,
+        ready
+          ? {
+              backgroundColor: surfaceBackground(theme.colors.primarySubtle),
+              borderColor: surfaceBackground(theme.colors.border),
+            }
+          : {
+              backgroundColor: surfaceBackground(withAlpha(theme.colors.warning, 0.12)),
+              borderColor: withAlpha(theme.colors.warning, 0.4),
+            },
+      ]}>
+      {ready ? (
+        <AgentMark kind={agent.kind} size={18} color={theme.colors.primary} />
+      ) : (
+        <View style={styles.offlineIconWrapper}>
+          <AgentMark kind={agent.kind} size={16} color={theme.colors.warning} />
+          <View style={[styles.offlineDot, { backgroundColor: theme.colors.warning }]} />
+        </View>
+      )}
+    </PressableScale>
+  );
+}
+
 const styles = StyleSheet.create({
+  agentRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
   actionRow: {
     width: 44,
     flexDirection: 'column',

@@ -238,6 +238,39 @@ export function checkAgentServer(
   })();
 }
 
+/**
+ * Asks one stored server what it drives and writes the answer to the agent
+ * mirror -- through that server's own endpoint, so a Home that is showing a
+ * gateway other than the connected one never mirrors the wrong answer under
+ * its id. A gateway whose mirrored capabilities do not list discovery is not
+ * asked. Never throws; an answer that could not be read changes nothing.
+ */
+export async function refreshAgentServerDiscovery(
+  record: GatewayRecord | undefined | null
+): Promise<void> {
+  if (!record) return;
+  try {
+    const [gatewayClient, agentSession, agentsStore, capabilityStore] = await Promise.all([
+      import('@/lib/gateway-client'),
+      import('@/lib/agent-session'),
+      import('@/stores/agents'),
+      import('@/stores/server-capabilities'),
+    ]);
+    const endpoint: GatewayEndpoint = {
+      url: gatewayClient.effectiveGatewayBaseUrl(record),
+      token: record.token,
+      ...(record.deviceId ? { deviceId: record.deviceId } : {}),
+      ...(record.transportKey ? { transportKey: record.transportKey } : {}),
+      ...(record.transport ? { transport: record.transport } : {}),
+    };
+    const capabilities = capabilityStore.useServerCapabilities.getState().byServer[record.serverId];
+    const discovery = await agentSession.getAgentsDiscovery({ capabilities, endpoint });
+    if (discovery) agentsStore.useAgents.getState().record(record.serverId, discovery);
+  } catch {
+    // Home renders from the last mirror; a refresh that failed is not news.
+  }
+}
+
 function normalizeReadinessCapabilities(value: unknown): string[] {
   if (!Array.isArray(value)) return [];
   const names: string[] = [];

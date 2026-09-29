@@ -153,3 +153,28 @@ describe('agent ids on a widget entry', () => {
     expect(agentWidgetUri(snapshot, base)).toBe('muqun://agent?asid=asid-1');
   });
 });
+
+describe('agent engines on a widget entry', () => {
+  const snapshot: AgentWidgetSnapshot = {
+    version: 1,
+    serverId: 'srv-1',
+    serverLabel: 'Studio',
+    sessionId: 'ses-1',
+    checkedAtMs: 0,
+    agents: [],
+  };
+
+  test('any engine that is not a terminal engine is an agent id', () => {
+    const entry: AgentWidgetEntry = {
+      id: 'asid-9',
+      name: 'A',
+      status: 'idle',
+      paneId: '',
+      engine: 'deepseek',
+    };
+    expect(agentWidgetUri(snapshot, entry)).toBe('muqun://agent?asid=asid-9&agentId=deepseek');
+    expect(agentWidgetUri(snapshot, { ...entry, engine: 'herdr', paneId: '%1' })).toBe(
+      'muqun://servers/srv-1?sessionId=ses-1&paneId=%251'
+    );
+  });
+});
