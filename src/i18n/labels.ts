@@ -26,6 +26,7 @@ import type { NamedApprovalDecision } from '@/lib/pane-approval';
 import type { PaneViewMode } from '@/lib/pane-view-mode';
 import type { ServerReachability } from '@/lib/server-reachability';
 import type { LaunchAgentCaption } from '@/lib/home-launch-model';
+import type { AgentSessionStatusWord } from '@/lib/home-continue';
 import { OPENCODE_INSTALL_URL } from '@/constants/links';
 
 /**
@@ -375,6 +376,16 @@ export const agentHostCommandDescription: Record<string, MessageDescriptor> = {
  * never only a colour, so the reader who cannot see the dim tile still knows
  * why it is dim.
  */
+/** An agent session's status on a Continue row; `agentSessionStatusPresentation` picks the word. */
+export const agentSessionStatusWord: Record<AgentSessionStatusWord, MessageDescriptor> = {
+  running: msg`Running`,
+  idle: msg`Idle`,
+  failed: msg`The turn failed`,
+  stopped: msg`Stopped`,
+  retrying: msg`Retrying…`,
+  unknown: msg`Status unknown`,
+};
+
 export const agentLaunchCaption: Record<LaunchAgentCaption, MessageDescriptor> = {
   'new-session': msg`New session`,
   'not-installed': msg`Not installed`,

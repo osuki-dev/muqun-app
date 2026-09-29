@@ -13,6 +13,18 @@ test('keeps the editorial pad threshold tied to measured remaining content width
   expect(threshold.gap).toBe(24);
 });
 
+test('a Pad Home keeps Connections narrow and gives Continue the rest', () => {
+  const pad = getEditorialLayoutGeometry(980, 1, true, true);
+  expect(pad.mode).toBe('two-column');
+  expect(pad.asideWidth).toBe(261);
+  expect(pad.mainWidth).toBe(932 - 24 - 261);
+  // Never wider than 320, whatever the width or the type size.
+  expect(getEditorialLayoutGeometry(2000, 1, true, true).asideWidth).toBe(320);
+  expect(getEditorialLayoutGeometry(1600, 1.3, true, true).asideWidth).toBeLessThanOrEqual(320);
+  // The phone and every non-Pad caller keep the old utility column.
+  expect(getEditorialLayoutGeometry(980, 1, true).asideWidth).toBe(280);
+});
+
 test('uses content width rather than a device width assumption', () => {
   expect(getEditorialLayoutGeometry(752, 1, true).mode).toBe('two-column');
   expect(getEditorialLayoutGeometry(720, 1, true).mode).toBe('one-column');

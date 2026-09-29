@@ -447,10 +447,6 @@ msgstr "エージェントのパネルの初期表示"
 msgid "Agents"
 msgstr "エージェント"
 
-#: src/components/agent-mode-sheet.tsx
-msgid "Agents on this host"
-msgstr "このホストのエージェント"
-
 #: src/components/app-drawer-content.tsx
 msgid "AI coding assistant"
 msgstr "AIコーディングアシスタント"
@@ -700,6 +696,10 @@ msgstr "自動"
 msgid "Autonomous software engineering: edits files, runs commands, tests."
 msgstr "自律的なソフトウェア開発。ファイル編集、コマンド実行、テストを行います"
 
+#: src/components/agent-mode-sheet.tsx
+msgid "Available modes"
+msgstr "利用できるモード"
+
 #: src/components/simfarm-stage.tsx
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Back"
@@ -911,6 +911,10 @@ msgstr "確認中…"
 msgid "Choose a gateway"
 msgstr "Gateway を選択"
 
+#: src/components/agent-mode-sheet.tsx
+msgid "Choose a mode"
+msgstr "モードを選ぶ"
+
 #: src/components/agent-model-sheet.tsx
 #: src/components/agent-workbench.tsx
 msgid "Choose a model"
@@ -924,7 +928,6 @@ msgstr "シミュレータを選ぶ"
 msgid "Choose a simulator from the menu."
 msgstr "メニューからシミュレータを選んでください"
 
-#: src/components/agent-mode-sheet.tsx
 #: src/components/home-agents-sheet.tsx
 msgid "Choose an agent"
 msgstr "エージェントを選ぶ"
@@ -2404,7 +2407,6 @@ msgid "How to use Muqun"
 msgstr "Muqun の使い方"
 
 #: src/components/agent-session-tree-sheet.tsx
-#: src/components/home-recent-sessions.tsx
 #: src/i18n/labels.ts
 msgid "Idle"
 msgstr "待機"
@@ -2820,6 +2822,10 @@ msgstr "モデル · {0} → {next}"
 #: src/components/agent-message-block.tsx
 msgid "Model · {next}"
 msgstr "モデル · {next}"
+
+#: src/components/agent-mode-sheet.tsx
+msgid "Modes of {agentName}"
+msgstr "{agentName} のモード"
 
 #: src/components/asset-viewer.tsx
 msgid "Modified"
@@ -4001,7 +4007,7 @@ msgstr "{0} のアップロードを再試行"
 
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-workbench.tsx
-#: src/components/home-recent-sessions.tsx
+#: src/i18n/labels.ts
 msgid "Retrying…"
 msgstr "再試行しています…"
 
@@ -4120,7 +4126,7 @@ msgid "Run the Gateway on your machine and scan the QR code it prints. The pairi
 msgstr "自分のマシンで Gateway を起動し、表示された QR コードをスキャンします。ペアリング情報はこのデバイスの中だけに残ります"
 
 #: src/components/agent-session-tree-sheet.tsx
-#: src/components/home-recent-sessions.tsx
+#: src/i18n/labels.ts
 msgid "Running"
 msgstr "実行中"
 
@@ -4758,7 +4764,7 @@ msgstr "状態を取得できません"
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-workbench.tsx
 #: src/components/collaboration-notice.tsx
-#: src/components/home-recent-sessions.tsx
+#: src/i18n/labels.ts
 msgid "Status unknown"
 msgstr "状態不明"
 
@@ -4802,7 +4808,7 @@ msgstr "このコマンドを停止"
 
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-workbench.tsx
-#: src/components/home-recent-sessions.tsx
+#: src/i18n/labels.ts
 msgid "Stopped"
 msgstr "停止しました"
 
@@ -5213,7 +5219,7 @@ msgstr "やり取りを会話として表示し、ツールの手順は折りた
 
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-workbench.tsx
-#: src/components/home-recent-sessions.tsx
+#: src/i18n/labels.ts
 msgid "The turn failed"
 msgstr "この処理は失敗しました"
 

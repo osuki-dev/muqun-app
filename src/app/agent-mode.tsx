@@ -1,7 +1,9 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 
 import { AgentModeSheet } from '@/components/agent-mode-sheet';
+import { agentDisplayName } from '@/lib/home-launch-model';
 import { useAgentSheetBridge } from '@/stores/agent-sheet-bridge';
+import { useAgents } from '@/stores/agents';
 
 /** The agent-mode picker's route. See `agent-model.tsx` for the same shape. */
 export default function AgentModeScreen() {
@@ -32,12 +34,18 @@ export default function AgentModeScreen() {
    */
   const sessionAgent = useAgentSheetBridge((state) => state.sessionInfo?.mode);
   const selectAgentMode = useAgentSheetBridge((state) => state.actions.selectAgentMode);
+  const serverId = useAgentSheetBridge((state) => state.serverId);
+  const mirroredAgents = useAgents((state) =>
+    serverId ? state.index.servers[serverId]?.agents?.agents : undefined
+  );
+  const agentId = params.agentId || bridgeAgentId || undefined;
 
   return (
     <AgentModeSheet
       sessionId={params.sessionId || bridgeSessionId || undefined}
       directory={params.directory || bridgeDirectory || undefined}
-      agentId={params.agentId || bridgeAgentId || undefined}
+      agentId={agentId}
+      agentName={agentDisplayName(mirroredAgents, agentId)}
       selectedAgent={selectedAgent ?? sessionAgent}
       onSelectAgent={(agent) => {
         selectAgentMode(agent);

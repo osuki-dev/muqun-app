@@ -6,6 +6,7 @@ import { useCallback, useRef, useState } from 'react';
 import { AppState, StyleSheet, View } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 
+import { AgentMark } from '@/components/agent-mark';
 import { PressableScale } from '@/components/pressable-scale';
 import { StatusDot } from '@/components/status-dot';
 import { Text } from '@/components/text';
@@ -19,17 +20,21 @@ import { useServerSession } from '@/stores/server-session';
 import { isDemoRecord } from '@/lib/demo-gateway';
 import type { GatewayRecord } from '@/lib/gateway-storage';
 import type { HomeCommand } from '@/lib/home-commands';
-import { homeTargetAgentId } from '@/lib/home-recents';
+import { findAgent } from '@/lib/agent-discovery';
 import { agentDisplayName } from '@/lib/home-launch-model';
 import { useAgents } from '@/stores/agents';
+import { useHomeAgentSessions } from '@/stores/home-agent-sessions';
 import {
+  agentSessionStatusPresentation,
   homeContinueCommand,
   homeContinueEntries,
+  homeContinueKind,
+  homeContinueTarget,
   shouldShowHomeContinueOverflow,
   visibleHomeContinueEntries,
   type HomeContinueEntry,
 } from '@/lib/home-continue';
-import { agentStatusWord } from '@/i18n/labels';
+import { agentSessionStatusWord, agentStatusWord } from '@/i18n/labels';
 import { agentStatusTone } from '@/lib/herdr-entity';
 import type { ActiveServerConnection, ServerReachability } from '@/lib/server-reachability';
 import { useServerAgents } from '@/stores/server-agents';
@@ -70,6 +75,9 @@ export function HomeRecentSessions({
   const snapshotsHydrated = useServerAgents((state) => state.hydrated);
   const paneMode = useAppSettings((state) => state.serverCardPanes);
   const targetId = selectedServerId ?? activeConnection?.serverId;
+  const agentSessions = useHomeAgentSessions((state) =>
+    targetId ? state.byServer[targetId] : undefined
+  );
   const appActive = useAppActive();
   const refreshFlight = useRef<Promise<void>>(Promise.resolve());
   useFocusEffect(
@@ -106,6 +114,13 @@ export function HomeRecentSessions({
                 recordPanes: useServerAgents.getState().record,
                 observe: recent.observeSession,
                 updateTitle: recent.updateTitle,
+                repairAgent: recent.repairAgent,
+                // The chosen gateway's own sessions, including ones this
+                // device never opened; every other gateway keeps its recents.
+                recordAgentSessions:
+                  targetRecord.serverId === targetId
+                    ? useHomeAgentSessions.getState().record
+                    : undefined,
               });
             },
           });
@@ -140,6 +155,7 @@ export function HomeRecentSessions({
     reachabilityByServer,
     paneMode,
     nowMs: observationNowMs,
+    gatewaySessions: agentSessions,
   });
   const displayed = visibleHomeContinueEntries(available, expanded);
   return (
@@ -213,7 +229,8 @@ function RecentSessionRow({
   const { _ } = useLinguiRuntime();
   const theme = useThemeTokens();
   const background = useSurfaceBackground();
-  const target = entry.destination.type === 'recent' ? entry.destination.target : undefined;
+  const target = homeContinueTarget(entry.destination);
+  const rowKind = homeContinueKind(entry.destination);
   const cwd =
     entry.destination.type === 'pane'
       ? entry.destination.cwd
@@ -227,45 +244,29 @@ function RecentSessionRow({
       ? state.index.servers[target.serverId]?.agents?.agents
       : undefined
   );
-  const agentName =
-    target?.kind === 'agent-session'
-      ? agentDisplayName(mirroredAgents, homeTargetAgentId(target))
-      : '';
+  const agentId = rowKind.kind === 'agent' ? rowKind.agentId : undefined;
+  const agentName = agentId ? agentDisplayName(mirroredAgents, agentId) : '';
+  const agentKind = agentId ? (findAgent(mirroredAgents, agentId)?.kind ?? agentId) : undefined;
   const kind =
-    target?.kind === 'agent-session'
+    rowKind.kind === 'agent'
       ? t`${agentName} session`
-      : !target || target.kind === 'gateway-terminal'
+      : rowKind.kind === 'terminal'
         ? t`Terminal`
         : t`SSH host`;
   const title = entry.title || kind;
   const metadataKind = entry.agentLabel ? `${kind} · ${entry.agentLabel}` : kind;
   const observation = entry.observation;
   const status = observation?.status;
+  const sessionStatus =
+    observation?.kind === 'agent-session' && observation.status
+      ? agentSessionStatusPresentation(observation.status)
+      : undefined;
   const statusLabel = status
-    ? observation?.kind === 'agent-session'
-      ? status === 'busy'
-        ? t`Running`
-        : status === 'idle'
-          ? t`Idle`
-          : status === 'failed'
-            ? t`The turn failed`
-            : status === 'interrupted'
-              ? t`Stopped`
-              : status === 'retry'
-                ? t`Retrying…`
-                : t`Status unknown`
+    ? sessionStatus
+      ? _(agentSessionStatusWord[sessionStatus.word])
       : _(agentStatusWord[status] ?? agentStatusWord.unknown)
     : undefined;
-  const statusTone =
-    observation?.kind === 'agent-session'
-      ? status === 'busy' || status === 'retry'
-        ? 'info'
-        : status === 'failed'
-          ? 'danger'
-          : status === 'interrupted'
-            ? 'warning'
-            : 'textSubtle'
-      : agentStatusTone(status);
+  const statusTone = sessionStatus ? sessionStatus.tone : agentStatusTone(status);
   const age = observation?.age;
   let seenLabel: string | undefined;
   if (age?.unit === 'now') seenLabel = t`Seen just now`;
@@ -301,9 +302,20 @@ function RecentSessionRow({
           {String(number).padStart(2, '0')}
         </Text>
         <View style={styles.copy}>
-          <Text variant="bodySmall" weight="semibold" numberOfLines={2}>
-            {title}
-          </Text>
+          {agentKind ? (
+            <View style={styles.titleLine}>
+              <View style={styles.titleMark}>
+                <AgentMark kind={agentKind} size={14} color={theme.colors.primary} />
+              </View>
+              <Text variant="bodySmall" weight="semibold" numberOfLines={2} style={styles.title}>
+                {title}
+              </Text>
+            </View>
+          ) : (
+            <Text variant="bodySmall" weight="semibold" numberOfLines={2}>
+              {title}
+            </Text>
+          )}
           <Text variant="caption" color={theme.colors.textMuted} numberOfLines={2}>
             {metadataKind}
             {serverLabel ? ` · ${serverLabel}` : ''}
@@ -356,6 +368,10 @@ const styles = StyleSheet.create({
   },
   number: { minWidth: 48, fontSize: 36, lineHeight: 44, letterSpacing: -1 },
   copy: { minWidth: 0, flex: 1, gap: 4 },
+  titleLine: { minWidth: 0, flexDirection: 'row', alignItems: 'flex-start', gap: 6 },
+  // Centred on the title's first line (bodySmall's 20pt line box).
+  titleMark: { height: 20, justifyContent: 'center' },
+  title: { minWidth: 0, flex: 1 },
   observation: { minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: 6 },
   observationText: { minWidth: 0, flex: 1 },
   more: {
