@@ -29,7 +29,13 @@ import { useAppActive } from '@/hooks/use-app-active';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { isDemoRecord } from '@/lib/demo-gateway';
 import { refreshAgentServerDiscovery } from '@/lib/home-agent-readiness';
-import { buildLaunchModel, groupLaunchCells, type LaunchEntry } from '@/lib/home-launch-model';
+import {
+  buildLaunchModel,
+  groupLaunchCells,
+  LAUNCH_GRID_GAP,
+  launchRowLayout,
+  type LaunchEntry,
+} from '@/lib/home-launch-model';
 import { useAgents } from '@/stores/agents';
 import { useHomeAgentPicker } from '@/stores/home-agent-picker';
 import { PRESS, timing } from '@/lib/motion';
@@ -221,8 +227,14 @@ export function HomeLaunchActions({
   onOpenTerminal,
   onSsh,
   onDemo,
+  grid = false,
 }: {
   controller: HomeLaunchController;
+  /**
+   * The Pad's embedded Home: every agent in a row of its own and the
+   * utilities in compact tiles under it, with no sideways scroll.
+   */
+  grid?: boolean;
   onNewAgent: (serverId: string, directory?: string, agentId?: string) => Promise<unknown>;
   onOpenAgent: (serverId: string) => Promise<unknown>;
   onNewTerminal: (serverId: string) => Promise<unknown>;
@@ -236,7 +248,6 @@ export function HomeLaunchActions({
   const router = useRouter();
   const { chosen, chosenOffline, launchOnChosen, opening, run } = controller;
   const [availableWidth, setAvailableWidth] = useState(0);
-  const horizontal = availableWidth < 560;
 
   // The row is a projection of what the chosen gateway said about itself; a
   // gateway never asked, or too old to be asked, projects to the fixed five.
@@ -245,8 +256,21 @@ export function HomeLaunchActions({
   const lastUsedAgentId = useAgents((state) =>
     chosenId ? state.index.lastUsed[chosenId] : undefined
   );
-  const model = buildLaunchModel({ discovery, lastUsedAgentId });
+  const model = buildLaunchModel({
+    discovery,
+    lastUsedAgentId,
+    ...(grid ? { maxAgentTiles: Number.POSITIVE_INFINITY } : {}),
+  });
   const cells = groupLaunchCells(model.entries);
+  const agentEntries = model.entries.filter(isAgentEntry);
+  const utilityEntries = model.entries.filter((entry) => !isAgentEntry(entry));
+  const layout = launchRowLayout({
+    width: availableWidth,
+    grid,
+    agentCount: agentEntries.length,
+    utilityCount: utilityEntries.length,
+  });
+  const horizontal = layout.mode === 'scroll';
 
   // Fresh on focus and on Continue's own cadence, for the chosen gateway only,
   // and never in the way of a render: the row draws from the mirror.
@@ -282,12 +306,15 @@ export function HomeLaunchActions({
     router.push({ pathname: '/home-agents', params: { requestId: String(requestId) } });
   }
 
-  function renderEntry(entry: LaunchEntry) {
+  /** `cell` is the Pad grid's fixed width and whether the tile is drawn compact there. */
+  function renderEntry(entry: LaunchEntry, cell?: { width: number; compact: boolean }) {
     const common = {
       testID: entry.testID,
       marker: entry.marker,
       horizontal,
+      ...(cell ? { width: cell.width } : {}),
     };
+    const utilityCompact = cell?.compact ?? false;
     switch (entry.kind) {
       case 'agent': {
         const ink = entry.primary ? theme.colors.onPrimary : theme.colors.primary;
@@ -351,9 +378,10 @@ export function HomeLaunchActions({
           <LaunchTile
             key={entry.key}
             {...common}
+            compact={utilityCompact}
             title={t`New terminal`}
             caption={entry.backend}
-            icon={<SquareTerminal size={22} color={theme.colors.primary} />}
+            icon={<SquareTerminal size={utilityCompact ? 16 : 22} color={theme.colors.primary} />}
             disabled={opening || chosenOffline}
             onPress={() => launchOnChosen(onNewTerminal)}
           />
@@ -363,9 +391,10 @@ export function HomeLaunchActions({
           <LaunchTile
             key={entry.key}
             {...common}
+            compact={utilityCompact}
             title={t`SSH`}
             caption={t`SSH hosts`}
-            icon={<Link size={22} color={theme.colors.primary} />}
+            icon={<Link size={utilityCompact ? 16 : 22} color={theme.colors.primary} />}
             disabled={opening}
             onPress={() => {
               void run(onSsh);
@@ -404,7 +433,26 @@ export function HomeLaunchActions({
           </Text>
         </PressableScale>
       ) : null}
-      <View>
+      {layout.mode === 'grid' ? (
+        <View testID="home-launch-actions-grid" style={styles.grid}>
+          {layout.agentWidth > 0 ? (
+            <>
+              {agentEntries.length ? (
+                <View style={styles.gridRow}>
+                  {agentEntries.map((entry) =>
+                    renderEntry(entry, { width: layout.agentWidth, compact: false })
+                  )}
+                </View>
+              ) : null}
+              <View style={styles.gridRow}>
+                {utilityEntries.map((entry) =>
+                  renderEntry(entry, { width: layout.utilityWidth, compact: true })
+                )}
+              </View>
+            </>
+          ) : null}
+        </View>
+      ) : (
         <View>
           <Animated.ScrollView
             horizontal={horizontal}
@@ -419,7 +467,7 @@ export function HomeLaunchActions({
                 <View
                   key={cell.key}
                   style={[styles.stackedActions, horizontal && styles.horizontalStack]}>
-                  {cell.entries.map(renderEntry)}
+                  {cell.entries.map((entry) => renderEntry(entry))}
                 </View>
               ) : (
                 renderEntry(cell.entries[0]!)
@@ -427,10 +475,14 @@ export function HomeLaunchActions({
             )}
           </Animated.ScrollView>
         </View>
-      </View>
+      )}
       {opening ? <Text variant="caption" color={theme.colors.textMuted}>{t`Opening…`}</Text> : null}
     </View>
   );
+}
+
+function isAgentEntry(entry: LaunchEntry): boolean {
+  return entry.kind === 'agent' || entry.kind === 'more-agents';
 }
 
 function LaunchTile({
@@ -442,6 +494,7 @@ function LaunchTile({
   primary = false,
   compact = false,
   horizontal = false,
+  width,
   disabled,
   testID,
   aliasTestID,
@@ -454,6 +507,8 @@ function LaunchTile({
   primary?: boolean;
   compact?: boolean;
   horizontal?: boolean;
+  /** A fixed cell width, from the Pad grid; the phone row sizes tiles by flex. */
+  width?: number;
   disabled: boolean;
   testID: string;
   /** The id this tile answered to before it was projected; kept for the e2e manifest. */
@@ -491,6 +546,7 @@ function LaunchTile({
         style={[
           styles.compactTile,
           { borderRadius: profile.chrome.control },
+          width !== undefined && { flexGrow: 0, flexShrink: 0, flexBasis: 'auto', width },
           {
             backgroundColor: background(theme.colors.surface),
             opacity: disabled ? 0.6 : 1,
@@ -547,6 +603,7 @@ function LaunchTile({
           minHeight: 92,
           padding: 6,
         },
+        width !== undefined && { flexGrow: 0, flexShrink: 0, flexBasis: 'auto', width },
         {
           backgroundColor: background(primary ? theme.colors.primary : theme.colors.surface),
           opacity: disabled ? 0.6 : 1,
@@ -619,6 +676,8 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   demoLabel: { minWidth: 0, flexShrink: 1 },
+  grid: { gap: LAUNCH_GRID_GAP, minWidth: 0 },
+  gridRow: { flexDirection: 'row', flexWrap: 'wrap', gap: LAUNCH_GRID_GAP, minWidth: 0 },
   actions: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'stretch', gap: 6 },
   horizontalActions: { flexWrap: 'nowrap', gap: 4, paddingRight: 2 },
   horizontalStack: { flexGrow: 0, flexBasis: 'auto', width: 152, minHeight: 92, gap: 4 },

@@ -1,14 +1,98 @@
 import { expect, test } from 'bun:test';
 import { readFileSync } from 'node:fs';
 
-import { buildLaunchModel } from '../../lib/home-launch-model';
+import {
+  buildLaunchModel,
+  LAUNCH_SCROLL_MAX_WIDTH,
+  launchRowLayout,
+} from '../../lib/home-launch-model';
 
 const actions = readFileSync(new URL('../home-launch-actions.tsx', import.meta.url), 'utf8');
 const overview = readFileSync(new URL('../home-overview.tsx', import.meta.url), 'utf8');
 
+const discoveryWith = (ids: string[]) =>
+  ({
+    checkedAtMs: 1,
+    agents: {
+      supported: true,
+      features: {},
+      agents: ids.map((id) => ({
+        id,
+        kind: id,
+        name: id,
+        enabled: true,
+        status: 'connected',
+        features: {},
+      })),
+    },
+  }) as unknown as NonNullable<Parameters<typeof buildLaunchModel>[0]>['discovery'];
+
+test('the phone row is unchanged: it scrolls under 560pt and wraps above', () => {
+  const phone = { grid: false, agentCount: 3, utilityCount: 4 };
+  expect(launchRowLayout({ ...phone, width: 0 })).toEqual({ mode: 'scroll' });
+  expect(launchRowLayout({ ...phone, width: 375 })).toEqual({ mode: 'scroll' });
+  expect(launchRowLayout({ ...phone, width: LAUNCH_SCROLL_MAX_WIDTH })).toEqual({ mode: 'wrap' });
+  // Same tiles, same collapse: three agents, then "More agents".
+  const kinds = buildLaunchModel({ discovery: discoveryWith(['a', 'b', 'c', 'd']) }).entries.map(
+    (entry) => entry.kind
+  );
+  expect(kinds.slice(0, 4)).toEqual(['agent', 'agent', 'agent', 'more-agents']);
+});
+
+test('a Pad Home lays the launch area out as a grid and never scrolls sideways', () => {
+  const wide = launchRowLayout({ width: 930, grid: true, agentCount: 3, utilityCount: 4 });
+  expect(wide).toEqual({
+    mode: 'grid',
+    columns: 4,
+    agentColumns: 3,
+    agentWidth: 304,
+    utilityColumns: 4,
+    utilityWidth: 226,
+  });
+  // The cover-artwork column on a tablet is narrow: still a grid, three across.
+  const cover = launchRowLayout({ width: 370, grid: true, agentCount: 3, utilityCount: 4 });
+  expect(cover).toMatchObject({ mode: 'grid', columns: 3, agentColumns: 3, utilityColumns: 2 });
+  for (const width of [0, 320, 560, 900, 1400]) {
+    expect(launchRowLayout({ width, grid: true, agentCount: 5, utilityCount: 4 }).mode).toBe(
+      'grid'
+    );
+  }
+  // Every agent gets a tile; nothing collapses behind "More agents".
+  const padKinds = buildLaunchModel({
+    discovery: discoveryWith(['a', 'b', 'c', 'd']),
+    maxAgentTiles: Number.POSITIVE_INFINITY,
+  }).entries.map((entry) => entry.kind);
+  expect(padKinds).toEqual([
+    'agent',
+    'agent',
+    'agent',
+    'agent',
+    'sessions',
+    'terminal',
+    'new-terminal',
+    'ssh',
+  ]);
+  // The grid branch draws plain rows; the only ScrollView is the phone's.
+  const gridBranch = actions.slice(
+    actions.indexOf('testID="home-launch-actions-grid"'),
+    actions.indexOf('<Animated.ScrollView')
+  );
+  expect(gridBranch).toContain('renderEntry(entry, { width: layout.agentWidth, compact: false })');
+  expect(gridBranch).toContain('renderEntry(entry, { width: layout.utilityWidth, compact: true })');
+  expect(gridBranch).not.toContain('ScrollView');
+  expect(actions).toContain('grid = false');
+  expect(overview).toContain('grid={isPad}');
+});
+
+test('the embedded Pad Home does not repeat the brand the rail carries', () => {
+  expect(overview).toContain('identity.showBrand && !(embedded && isPad)');
+  expect(overview).toContain('showsEditorialBrand ? (');
+  expect(overview).toContain('pad={isPad}');
+});
+
 test('Editorial Home scrolls narrow actions and wraps wide actions', () => {
   expect(actions).toContain('horizontal={horizontal}');
-  expect(actions).toContain('availableWidth < 560');
+  expect(actions).toContain("const horizontal = layout.mode === 'scroll'");
   expect(actions).toContain('testID="home-launch-actions-scroll"');
   expect(actions).toContain('flexBasis: 124');
   expect(actions).toContain('primaryTile: { flexBasis: 148');
@@ -19,7 +103,7 @@ test('Editorial Home scrolls narrow actions and wraps wide actions', () => {
 });
 
 test('the launch row is drawn from the projection, not from a fixed list', () => {
-  expect(actions).toContain('buildLaunchModel({ discovery, lastUsedAgentId })');
+  expect(actions).toContain('buildLaunchModel({\n    discovery,\n    lastUsedAgentId,');
   expect(actions).toContain('groupLaunchCells(model.entries)');
   // Markers come from the model, so no tile hard-codes its own number.
   expect(/marker="\d\d"/.test(actions)).toBe(false);

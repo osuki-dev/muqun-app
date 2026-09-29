@@ -447,10 +447,6 @@ msgstr "에이전트 패널 기본 보기"
 msgid "Agents"
 msgstr "에이전트"
 
-#: src/components/agent-mode-sheet.tsx
-msgid "Agents on this host"
-msgstr "이 호스트의 에이전트"
-
 #: src/components/app-drawer-content.tsx
 msgid "AI coding assistant"
 msgstr "AI 코딩 어시스턴트"
@@ -700,6 +696,10 @@ msgstr "자동"
 msgid "Autonomous software engineering: edits files, runs commands, tests."
 msgstr "자율 소프트웨어 엔지니어링: 파일 편집, 명령 실행, 테스트"
 
+#: src/components/agent-mode-sheet.tsx
+msgid "Available modes"
+msgstr "사용 가능한 모드"
+
 #: src/components/simfarm-stage.tsx
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Back"
@@ -911,6 +911,10 @@ msgstr "확인 중…"
 msgid "Choose a gateway"
 msgstr "Gateway 선택"
 
+#: src/components/agent-mode-sheet.tsx
+msgid "Choose a mode"
+msgstr "모드 선택"
+
 #: src/components/agent-model-sheet.tsx
 #: src/components/agent-workbench.tsx
 msgid "Choose a model"
@@ -924,7 +928,6 @@ msgstr "시뮬레이터 선택"
 msgid "Choose a simulator from the menu."
 msgstr "메뉴에서 시뮬레이터를 선택하세요"
 
-#: src/components/agent-mode-sheet.tsx
 #: src/components/home-agents-sheet.tsx
 msgid "Choose an agent"
 msgstr "에이전트 선택"
@@ -2404,7 +2407,6 @@ msgid "How to use Muqun"
 msgstr "Muqun 사용법"
 
 #: src/components/agent-session-tree-sheet.tsx
-#: src/components/home-recent-sessions.tsx
 #: src/i18n/labels.ts
 msgid "Idle"
 msgstr "대기"
@@ -2820,6 +2822,10 @@ msgstr "모델 · {0} → {next}"
 #: src/components/agent-message-block.tsx
 msgid "Model · {next}"
 msgstr "모델 · {next}"
+
+#: src/components/agent-mode-sheet.tsx
+msgid "Modes of {agentName}"
+msgstr "{agentName}의 모드"
 
 #: src/components/asset-viewer.tsx
 msgid "Modified"
@@ -4001,7 +4007,7 @@ msgstr "{0} 업로드 다시 시도"
 
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-workbench.tsx
-#: src/components/home-recent-sessions.tsx
+#: src/i18n/labels.ts
 msgid "Retrying…"
 msgstr "다시 시도하는 중…"
 
@@ -4120,7 +4126,7 @@ msgid "Run the Gateway on your machine and scan the QR code it prints. The pairi
 msgstr "내 컴퓨터에서 Gateway를 실행하고 화면에 출력된 QR 코드를 스캔하세요. 페어링 정보는 이 기기에만 남습니다"
 
 #: src/components/agent-session-tree-sheet.tsx
-#: src/components/home-recent-sessions.tsx
+#: src/i18n/labels.ts
 msgid "Running"
 msgstr "실행 중"
 
@@ -4758,7 +4764,7 @@ msgstr "상태를 확인할 수 없음"
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-workbench.tsx
 #: src/components/collaboration-notice.tsx
-#: src/components/home-recent-sessions.tsx
+#: src/i18n/labels.ts
 msgid "Status unknown"
 msgstr "알 수 없는 상태"
 
@@ -4802,7 +4808,7 @@ msgstr "이 명령 중지"
 
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-workbench.tsx
-#: src/components/home-recent-sessions.tsx
+#: src/i18n/labels.ts
 msgid "Stopped"
 msgstr "중지됨"
 
@@ -5213,7 +5219,7 @@ msgstr "기록을 대화 형태로 보여 주고 도구 단계는 접어 둡니�
 
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-workbench.tsx
-#: src/components/home-recent-sessions.tsx
+#: src/i18n/labels.ts
 msgid "The turn failed"
 msgstr "이번 턴이 실패했습니다"
 

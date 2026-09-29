@@ -447,10 +447,6 @@ msgstr "Ngăn tác tử mở ở"
 msgid "Agents"
 msgstr "Tác tử"
 
-#: src/components/agent-mode-sheet.tsx
-msgid "Agents on this host"
-msgstr "Tác nhân trên máy chủ này"
-
 #: src/components/app-drawer-content.tsx
 msgid "AI coding assistant"
 msgstr "Trợ lý lập trình AI"
@@ -700,6 +696,10 @@ msgstr "Tự động"
 msgid "Autonomous software engineering: edits files, runs commands, tests."
 msgstr "Kỹ thuật phần mềm tự chủ: sửa tệp, chạy lệnh, kiểm thử"
 
+#: src/components/agent-mode-sheet.tsx
+msgid "Available modes"
+msgstr "Các chế độ có sẵn"
+
 #: src/components/simfarm-stage.tsx
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Back"
@@ -911,6 +911,10 @@ msgstr "Đang kiểm tra…"
 msgid "Choose a gateway"
 msgstr "Chọn Gateway"
 
+#: src/components/agent-mode-sheet.tsx
+msgid "Choose a mode"
+msgstr "Chọn chế độ"
+
 #: src/components/agent-model-sheet.tsx
 #: src/components/agent-workbench.tsx
 msgid "Choose a model"
@@ -924,7 +928,6 @@ msgstr "Chọn trình giả lập"
 msgid "Choose a simulator from the menu."
 msgstr "Chọn một trình giả lập từ menu"
 
-#: src/components/agent-mode-sheet.tsx
 #: src/components/home-agents-sheet.tsx
 msgid "Choose an agent"
 msgstr "Chọn tác nhân"
@@ -2404,7 +2407,6 @@ msgid "How to use Muqun"
 msgstr "Cách dùng Muqun"
 
 #: src/components/agent-session-tree-sheet.tsx
-#: src/components/home-recent-sessions.tsx
 #: src/i18n/labels.ts
 msgid "Idle"
 msgstr "Rảnh"
@@ -2820,6 +2822,10 @@ msgstr "Mô hình · {0} → {next}"
 #: src/components/agent-message-block.tsx
 msgid "Model · {next}"
 msgstr "Mô hình · {next}"
+
+#: src/components/agent-mode-sheet.tsx
+msgid "Modes of {agentName}"
+msgstr "Chế độ của {agentName}"
 
 #: src/components/asset-viewer.tsx
 msgid "Modified"
@@ -4001,7 +4007,7 @@ msgstr "Thử tải lên lại {0}"
 
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-workbench.tsx
-#: src/components/home-recent-sessions.tsx
+#: src/i18n/labels.ts
 msgid "Retrying…"
 msgstr "Đang thử lại…"
 
@@ -4120,7 +4126,7 @@ msgid "Run the Gateway on your machine and scan the QR code it prints. The pairi
 msgstr "Chạy Gateway trên máy của bạn và quét mã QR nó in ra. Việc ghép nối ở lại trên thiết bị này"
 
 #: src/components/agent-session-tree-sheet.tsx
-#: src/components/home-recent-sessions.tsx
+#: src/i18n/labels.ts
 msgid "Running"
 msgstr "Đang chạy"
 
@@ -4758,7 +4764,7 @@ msgstr "Không lấy được trạng thái"
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-workbench.tsx
 #: src/components/collaboration-notice.tsx
-#: src/components/home-recent-sessions.tsx
+#: src/i18n/labels.ts
 msgid "Status unknown"
 msgstr "Chưa rõ trạng thái"
 
@@ -4802,7 +4808,7 @@ msgstr "Dừng lệnh này"
 
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-workbench.tsx
-#: src/components/home-recent-sessions.tsx
+#: src/i18n/labels.ts
 msgid "Stopped"
 msgstr "Đã dừng"
 
@@ -5213,7 +5219,7 @@ msgstr "Bản ghi dưới dạng cuộc trò chuyện, với các bước công 
 
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-workbench.tsx
-#: src/components/home-recent-sessions.tsx
+#: src/i18n/labels.ts
 msgid "The turn failed"
 msgstr "Lượt này đã thất bại"
 
