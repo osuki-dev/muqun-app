@@ -134,6 +134,9 @@ import {
   useSelectedAgent,
 } from '@/hooks/use-agent-features';
 import { hasAgentsDiscoveryFor, useAgents } from '@/stores/agents';
+import { useServerCapabilities } from '@/stores/server-capabilities';
+import { socketReconnectDelay, WS_EVENTS_CAPABILITY } from '@/lib/gateway-socket';
+import { gatewaySocketFor } from '@/lib/gateway-socket-runtime';
 import { AgentActionMenu, type AgentActionMenuItem } from '@/components/agent-action-menu';
 import { capText } from '@/lib/agent-tool-output';
 import type { AgentClientCommandId } from '@/lib/agent-commands';
@@ -257,7 +260,7 @@ function formatAgentErrorMessage(err: unknown, fallback: string): string {
   if (!err) return fallback;
   const str = err instanceof Error ? err.message : String(err);
   if (
-    str.includes('agent_engine_error') ||
+    str.includes('agent_error') ||
     str.includes('agent_unavailable') ||
     str.includes('502') ||
     str.includes('503') ||
@@ -1153,7 +1156,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
               if (
                 errMsg.includes('502') ||
                 errMsg.includes('503') ||
-                errMsg.includes('agent_engine_error') ||
+                errMsg.includes('agent_error') ||
                 errMsg.includes('agent_unavailable') ||
                 errMsg.includes('Network error')
               ) {
@@ -2070,20 +2073,30 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     handleStreamEventRef.current = handleStreamEvent;
   }, [handleStreamEvent]);
 
-  // Real-time SSE stream — the only sync channel. Engine output arrives over
-  // it; a dropped connection reconnects with a short backoff instead of being
-  // papered over by polling.
+  /**
+   * Whether this server carries agent events over its device-wide WebSocket.
+   * A boolean, so the stream effect below reconnects only when the answer
+   * changes, not on every capability write.
+   */
+  const wsEvents = useServerCapabilities(
+    (state) => state.byServer[serverId]?.includes(WS_EVENTS_CAPABILITY) === true
+  );
+
+  // The live channel: the server's event socket when it has one, otherwise the
+  // session's SSE stream. Engine output arrives over it; a dropped connection
+  // reconnects with a short backoff instead of being papered over by polling.
   useEffect(() => {
     if (!activeAsid) return;
     let mounted = true;
     let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
     let attempts = 0;
+    let closeStream: () => void = () => {};
 
     const streamBatch = createAgentStreamBatch((event) => {
       if (mounted) handleStreamEventRef.current(event);
     });
 
-    const connect = () => {
+    const connectSse = () => {
       /**
        * Try again, soon.
        *
@@ -2099,12 +2112,14 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         streamBatch.flush();
         // Quiet reconnect. Mobile streams drop often; keep the gap short so
         // a dropped connection costs at most a couple of seconds, not a poll.
-        const delay = Math.min(400 * 2 ** attempts, 5000);
+        const delay = socketReconnectDelay(attempts);
         attempts += 1;
-        reconnectTimer = setTimeout(connect, delay);
+        reconnectTimer = setTimeout(connectSse, delay);
       };
 
-      const closeStream = openAgentSessionStream({
+      // Kept, so unmounting closes the connection a reconnect opened too and
+      // not only the first one.
+      closeStream = openAgentSessionStream({
         asid: activeAsid,
         sessionId,
         onConnected: () => {
@@ -2121,18 +2136,59 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         onError: scheduleReconnect,
         onClose: scheduleReconnect,
       });
-      return closeStream;
     };
 
-    const closeCurrent = connect();
+    /**
+     * The socket owns its own reconnects and re-subscribes after each one; its
+     * `subscribed` is this session's connect, and the catch-up runs there.
+     * Two failed opens in a row, or a socket that cannot be used at all, put
+     * this session back on SSE until it is left -- never permanently.
+     */
+    let releaseSocket: (() => void) | null = null;
+    let onSocket = wsEvents;
+    const fallBackToSse = () => {
+      if (!mounted || !onSocket) return;
+      onSocket = false;
+      // Can fire inside `watch()` itself, before its release is in hand.
+      queueMicrotask(() => {
+        releaseSocket?.();
+        releaseSocket = null;
+        if (!mounted) return;
+        streamBatch.flush();
+        connectSse();
+      });
+    };
+    if (wsEvents) {
+      const asid = activeAsid;
+      releaseSocket = gatewaySocketFor(serverId).watch(asid, {
+        onSubscribed: () => {
+          if (!mounted || !onSocket) return;
+          streamBatch.flush();
+          catchUpRef.current();
+        },
+        onEvent: (event) => {
+          if (mounted && onSocket) streamBatch.push(event);
+        },
+        onResync: () => {
+          if (mounted && onSocket) streamBatch.push({ type: 'agent.resync', asid, seq: 0 });
+        },
+        onOpenFailed: (consecutive) => {
+          if (consecutive >= 2) fallBackToSse();
+        },
+        onUnavailable: fallBackToSse,
+      });
+    } else {
+      connectSse();
+    }
 
     return () => {
       mounted = false;
       streamBatch.cancel();
-      closeCurrent();
+      releaseSocket?.();
+      closeStream();
       if (reconnectTimer) clearTimeout(reconnectTimer);
     };
-  }, [sessionId, activeAsid]);
+  }, [sessionId, activeAsid, serverId, wsEvents]);
 
   const handleSelectModel = useCallback(
     (model: ModelRef) => {

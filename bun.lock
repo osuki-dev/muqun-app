@@ -63,6 +63,7 @@
         "react-native-nitro-image": "^0.15.2",
         "react-native-nitro-modules": "0.37.1",
         "react-native-nitro-text-decoder": "0.1.2",
+        "react-native-nitro-websockets": "1.3.1",
         "react-native-quick-base64": "^3.0.1",
         "react-native-quick-crypto": "^1.1.7",
         "react-native-reanimated": "4.7.0",
@@ -1573,6 +1574,8 @@
     "react-native-nitro-modules": ["react-native-nitro-modules@0.37.1", "https://registry.npmmirror.com/react-native-nitro-modules/-/react-native-nitro-modules-0.37.1.tgz", { "peerDependencies": { "react": "*", "react-native": "*" } }, "sha512-KpW6EQVQ/bfegpCGxN9Be+ndvsfj56t4IESEvCASu9gWpJa/NDfHpIeIwCOvZQ3eXmLEj6YD4wCLqcC1FJPr2w=="],
 
     "react-native-nitro-text-decoder": ["react-native-nitro-text-decoder@0.1.2", "https://registry.npmmirror.com/react-native-nitro-text-decoder/-/react-native-nitro-text-decoder-0.1.2.tgz", { "dependencies": { "web-streams-polyfill": "^4.2.0" }, "peerDependencies": { "react": "*", "react-native": "*", "react-native-nitro-modules": ">=0.36.1" } }, "sha512-GZC3tDw6NC4SNbKHTKRpwZuTn4Cpg7VUjJeZ4vHrMEw4R4pEmv7f7QenuxkDAH7kHiW+BEeDc8CoNbndY/7wYw=="],
+
+    "react-native-nitro-websockets": ["react-native-nitro-websockets@1.3.1", "https://registry.npmmirror.com/react-native-nitro-websockets/-/react-native-nitro-websockets-1.3.1.tgz", { "peerDependencies": { "react": "*", "react-native": "*", "react-native-nitro-fetch": "*", "react-native-nitro-modules": "*", "react-native-nitro-text-decoder": ">=0.1.0" }, "optionalPeers": ["react-native-nitro-fetch"] }, "sha512-d0oEZ1/HBjXGNA1Fey0Ox0B6dh/jjShflMYH1q1huOR91QREZgFtZl0cYm9j5GZmhBuAJDzte2J9MtsaqHnXuw=="],
 
     "react-native-quick-base64": ["react-native-quick-base64@3.0.1", "https://registry.npmmirror.com/react-native-quick-base64/-/react-native-quick-base64-3.0.1.tgz", { "peerDependencies": { "react": "*", "react-native": "*" } }, "sha512-EjUP2U7WqKmlMmoY7XGyHomy8bM0q4+yCDCRg4ZezQ6zedYRwc7yVk4V2O/iSftKaLEzhuW98lpyPMdk1iPHXQ=="],
 

@@ -384,9 +384,9 @@ describe('parseAgentPart — the rest of the union', () => {
         previous: { provider_id: 'opencode', model_id: 'b' },
       })
     ).toMatchObject({ type: 'model_switched' });
-    expect(parseAgentPart({ type: 'agent_switched', agent: 'plan', previous: 'build' })).toEqual({
+    expect(parseAgentPart({ type: 'agent_switched', mode: 'plan', previous: 'build' })).toEqual({
       type: 'agent_switched',
-      agent: 'plan',
+      mode: 'plan',
       previous: 'build',
     });
     expect(parseAgentPart({ type: 'location_switched', directory: '/a', previous: '/b' })).toEqual({
@@ -453,7 +453,7 @@ describe('parseAgentPart — the rest of the union', () => {
   test('the quiet one-line kinds are recognisable as a group', () => {
     const notices = [
       { type: 'model_switched', model: null, previous: null },
-      { type: 'agent_switched', agent: 'plan' },
+      { type: 'agent_switched', mode: 'plan' },
       { type: 'location_switched', directory: '/a' },
       { type: 'skill', skill: 's' },
       { type: 'synthetic', text: 't' },
@@ -956,7 +956,7 @@ describe('catalog', () => {
       },
       { id: 'acme', name: 'Acme', activation: 'disabled', models: [] },
     ],
-    commands: [{ name: 'review', description: 'Review the branch', agent: 'plan' }],
+    commands: [{ name: 'review', description: 'Review the branch', mode: 'plan' }],
     defaults: { model: { provider_id: 'opencode', model_id: 'union-alpha' }, mode: 'build' },
   };
 
@@ -969,7 +969,7 @@ describe('catalog', () => {
     });
     expect(parsed.providers.map((provider) => provider.id)).toEqual(['opencode', 'acme']);
     expect(parsed.providers[1].activation).toBe('disabled');
-    expect(parsed.commands[0]).toMatchObject({ name: 'review', agent: 'plan' });
+    expect(parsed.commands[0]).toMatchObject({ name: 'review', mode: 'plan' });
     expect(parsed.defaults.mode).toBe('build');
     expect(parsed.defaults.model?.model_id).toBe('union-alpha');
   });
