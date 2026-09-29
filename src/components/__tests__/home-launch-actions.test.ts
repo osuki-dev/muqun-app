@@ -4,8 +4,50 @@ import { readFileSync } from 'node:fs';
 import {
   buildLaunchModel,
   LAUNCH_SCROLL_MAX_WIDTH,
+  launchGridCellStyle,
   launchRowLayout,
 } from '../../lib/home-launch-model';
+
+test('the cover column (~370pt) gives compact tiles two usable columns', () => {
+  const cover = launchRowLayout({ width: 370, grid: true, agentCount: 3, utilityCount: 4 });
+  // (370 - 2 × 8) / 3 and (370 - 8) / 2.
+  expect(cover).toEqual({
+    mode: 'grid',
+    columns: 3,
+    agentColumns: 3,
+    agentWidth: 118,
+    utilityColumns: 2,
+    utilityWidth: 181,
+  });
+});
+
+test('the embedded Pad column (~1000pt) lays the utilities out four across', () => {
+  const embedded = launchRowLayout({ width: 1000, grid: true, agentCount: 3, utilityCount: 4 });
+  // (1000 - 2 × 8) / 3 and (1000 - 3 × 8) / 4.
+  expect(embedded).toEqual({
+    mode: 'grid',
+    columns: 4,
+    agentColumns: 3,
+    agentWidth: 328,
+    utilityColumns: 4,
+    utilityWidth: 244,
+  });
+});
+
+test('a grid cell pins the width on the main axis even over a tile that says flex: 1', () => {
+  // Yoga reads positive `flex` as a zero basis unless the basis is a number;
+  // `'auto'` let the compact tiles collapse into empty strips.
+  expect(launchGridCellStyle(181)).toEqual({
+    flex: 0,
+    flexGrow: 0,
+    flexShrink: 0,
+    flexBasis: 181,
+    width: 181,
+  });
+  expect(actions).toContain('compactTile: {\n    flex: 1,');
+  expect(actions.match(/launchGridCellStyle\(width\)/g)).toHaveLength(2);
+  expect(actions).not.toContain("flexBasis: 'auto', width }");
+});
 
 const actions = readFileSync(new URL('../home-launch-actions.tsx', import.meta.url), 'utf8');
 const overview = readFileSync(new URL('../home-overview.tsx', import.meta.url), 'utf8');

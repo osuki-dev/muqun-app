@@ -33,6 +33,7 @@ import {
   buildLaunchModel,
   groupLaunchCells,
   LAUNCH_GRID_GAP,
+  launchGridCellStyle,
   launchRowLayout,
   type LaunchEntry,
 } from '@/lib/home-launch-model';
@@ -546,7 +547,7 @@ function LaunchTile({
         style={[
           styles.compactTile,
           { borderRadius: profile.chrome.control },
-          width !== undefined && { flexGrow: 0, flexShrink: 0, flexBasis: 'auto', width },
+          width !== undefined && launchGridCellStyle(width),
           {
             backgroundColor: background(theme.colors.surface),
             opacity: disabled ? 0.6 : 1,
@@ -603,7 +604,7 @@ function LaunchTile({
           minHeight: 92,
           padding: 6,
         },
-        width !== undefined && { flexGrow: 0, flexShrink: 0, flexBasis: 'auto', width },
+        width !== undefined && launchGridCellStyle(width),
         {
           backgroundColor: background(primary ? theme.colors.primary : theme.colors.surface),
           opacity: disabled ? 0.6 : 1,
