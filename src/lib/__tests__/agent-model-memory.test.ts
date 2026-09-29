@@ -56,7 +56,7 @@ describe('round trip', () => {
     rememberAgentMode('herdr', '/work/app', 'plan');
     expect(loadRememberedAgentDefaults('herdr', '/work/app').workspace).toEqual({
       model: alpha,
-      agent: 'plan',
+      mode: 'plan',
     });
   });
 
@@ -109,7 +109,7 @@ describe('what was stored is not trusted', () => {
       })
     );
     expect(loadRememberedAgentDefaults('herdr', '/work/app')).toEqual({
-      workspace: { agent: 'plan' },
+      workspace: { mode: 'plan' },
     });
   });
 
@@ -148,4 +148,30 @@ test('recent model choices survive reads, deduplicate variants and stay isolated
   for (let i = 0; i < 20; i++)
     rememberAgentModel('one', '/app', { provider_id: 'p', model_id: String(i) });
   expect(loadRecentAgentModels('one')).toHaveLength(12);
+});
+
+describe('per agent', () => {
+  test('another agent remembers on its own, and the default keeps the key it had', () => {
+    rememberAgentModel('herdr', '/work/app', alpha);
+    rememberAgentModel('herdr', '/work/app', nemotron, 'deepseek');
+    expect(loadRememberedAgentDefaults('herdr', '/work/app').workspace).toEqual({ model: alpha });
+    expect(loadRememberedAgentDefaults('herdr', '/work/app', 'opencode').workspace).toEqual({
+      model: alpha,
+    });
+    expect(loadRememberedAgentDefaults('herdr', '/work/app', 'deepseek').workspace).toEqual({
+      model: nemotron,
+    });
+    expect(stored.has(KEY)).toBe(true);
+    expect(stored.has(`${KEY}#deepseek`)).toBe(true);
+  });
+
+  test('a pick written before the rename still reads, under its new name', () => {
+    stored.set(
+      KEY,
+      JSON.stringify({ last: { model: alpha, agent: 'plan', at: 1 }, workspaces: {} })
+    );
+    expect(loadRememberedAgentDefaults('herdr')).toEqual({
+      server: { model: alpha, mode: 'plan' },
+    });
+  });
 });

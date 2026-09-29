@@ -63,6 +63,7 @@ export default function AgentScreen() {
     server?: string;
     directory?: string;
     intent?: string;
+    agentId?: string;
   }>();
 
   const sessionId = params.sessionId || 'herdr';
@@ -146,11 +147,13 @@ export default function AgentScreen() {
             params.sessionId ?? '',
             params.asid ?? '',
             params.directory ?? '',
+            params.agentId ?? '',
           ])}
           serverId={wantedServer ?? record?.serverId ?? ''}
           sessionId={sessionId}
           initialAsid={newSessionIntent ? undefined : params.asid}
           initialDirectory={params.directory}
+          initialAgentId={typeof params.agentId === 'string' ? params.agentId : undefined}
           initialIntent={newSessionIntent ? 'new' : undefined}
           visible={workbenchVisible}
           topInset={insets.top + HEADER_INSET}

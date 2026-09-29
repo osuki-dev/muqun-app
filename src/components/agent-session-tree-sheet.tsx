@@ -48,7 +48,7 @@ function SessionTreeRow({
   const level = t`Level ${depth}`;
   // react-doctor-disable-next-line react-hooks-js/todo -- Lingui expands this macro before React Compiler runs.
   const parent = parentTitle ? t`Parent: ${parentTitle}` : '';
-  const caption = [session.agent, status, depth > 0 ? level : '', parent]
+  const caption = [session.mode, status, depth > 0 ? level : '', parent]
     .filter(Boolean)
     .join(' · ');
 

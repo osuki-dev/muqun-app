@@ -1,7 +1,7 @@
 import {
   isFreeModel,
-  selectableAgents,
-  type AgentInfo,
+  selectableModes,
+  type ModeInfo,
   type AgentSessionInfo,
   type CatalogDefaults,
   type ModelInfo,
@@ -25,10 +25,10 @@ import { isUnsupportedModelFailure } from './agent-engine-text';
  * being sent -- can be read and tested without a native store.
  */
 
-/** One remembered pick: the model, the agent, or both. */
+/** One remembered pick: the model, the mode, or both. */
 export interface RememberedAgentChoice {
   model?: ModelRef;
-  agent?: string;
+  mode?: string;
 }
 
 /** What the store remembers for the server a screen is looking at. */
@@ -75,14 +75,14 @@ export interface NewSessionDefaultsInput {
    * have.
    */
   models: readonly ModelInfo[];
-  /** Every agent the current catalog lists, read the same way. */
-  agents: readonly AgentInfo[];
+  /** Every mode the current catalog lists, read the same way. */
+  modes: readonly ModeInfo[];
 }
 
 /** What `POST /api/agent-sessions` carries, minus the directory. */
 export interface NewSessionDefaults {
   model?: ModelRef;
-  agent?: string;
+  mode?: string;
 }
 
 /**
@@ -109,13 +109,13 @@ export function catalogModelRef(
   return listed ? { ...base, variant: ref.variant } : base;
 }
 
-/** The remembered agent, if the catalog still offers it as a choice. */
-export function catalogAgentId(
-  agent: string | undefined,
-  agents: readonly AgentInfo[]
+/** The remembered mode, if the catalog still offers it as a choice. */
+export function catalogModeId(
+  mode: string | undefined,
+  modes: readonly ModeInfo[]
 ): string | undefined {
-  if (!agent) return undefined;
-  return selectableAgents(agents).some((entry) => entry.id === agent) ? agent : undefined;
+  if (!mode) return undefined;
+  return selectableModes(modes).some((entry) => entry.id === mode) ? mode : undefined;
 }
 
 /**
@@ -150,17 +150,17 @@ export function recentSessionChoice(
 ): RememberedAgentChoice {
   const ordered = [...sessions].sort((a, b) => (b.updated_ms ?? 0) - (a.updated_ms ?? 0));
   let model: ModelRef | undefined;
-  let agent: string | undefined;
+  let mode: string | undefined;
   for (const session of ordered) {
     if (directory !== undefined && session.directory !== directory) continue;
     if (isUnsupportedModelFailure(session.error?.message ?? '')) continue;
     if (!model && session.model) model = session.model;
-    if (!agent && session.agent) agent = session.agent;
-    if (model && agent) break;
+    if (!mode && session.mode) mode = session.mode;
+    if (model && mode) break;
   }
   return {
     ...(model ? { model } : {}),
-    ...(agent ? { agent } : {}),
+    ...(mode ? { mode } : {}),
   };
 }
 
@@ -277,22 +277,22 @@ export function firstUsableModel(
  * nobody made, that prefers free.
  */
 export function resolveNewSessionDefaults(input: NewSessionDefaultsInput): NewSessionDefaults {
-  const { picked, workspace, server, models, agents, catalogDefaults } = input;
+  const { picked, workspace, server, models, modes, catalogDefaults } = input;
   const sessions = input.sessions ?? [];
   const here = recentSessionChoice(sessions, input.directory);
   const anywhere = recentSessionChoice(sessions);
   const refused = unsupportedModelRefs(sessions);
-  const agent =
-    picked.agent ??
-    catalogAgentId(workspace?.agent, agents) ??
-    catalogAgentId(server?.agent, agents) ??
-    catalogAgentId(here.agent, agents) ??
-    catalogAgentId(anywhere.agent, agents) ??
-    catalogAgentId(catalogDefaults?.agent, agents);
-  const agentModel = agents.find((entry) => entry.id === agent)?.model;
+  const mode =
+    picked.mode ??
+    catalogModeId(workspace?.mode, modes) ??
+    catalogModeId(server?.mode, modes) ??
+    catalogModeId(here.mode, modes) ??
+    catalogModeId(anywhere.mode, modes) ??
+    catalogModeId(catalogDefaults?.mode, modes);
+  const modeModel = modes.find((entry) => entry.id === mode)?.model;
   const model =
     picked.model ??
-    catalogModelRef(agentModel, models) ??
+    catalogModelRef(modeModel, models) ??
     catalogModelRef(workspace?.model, models) ??
     catalogModelRef(server?.model, models) ??
     catalogModelRef(here.model, models) ??
@@ -301,6 +301,6 @@ export function resolveNewSessionDefaults(input: NewSessionDefaultsInput): NewSe
     firstUsableModel(models, refused);
   return {
     ...(model ? { model } : {}),
-    ...(agent ? { agent } : {}),
+    ...(mode ? { mode } : {}),
   };
 }

@@ -31,18 +31,20 @@ import {
   isEmptyAgentCatalog,
   normalizeCatalogDirectory,
 } from './agent-catalog-scope';
+import { agentIdQueryValue, hasMultiAgent, withAgentIdQuery } from './agent-discovery';
 import {
   asFiniteNumber,
   asRecord,
   EMPTY_CATALOG,
   parseAgentCatalog,
   parseAgentContextUsage,
-  parseAgentEngineInfo,
+  parseAgentStatusInfo,
   parseAgentSessionInfo,
   parseAgentSessionList,
   parseAgentSessionRevert,
   parseAgentSessionSnapshot,
   parseAgentVcsDiff,
+  parseGatewayDiscovery,
   parseWorkspaceMissing,
   parseInboxItems,
   parseSavedPermissions,
@@ -57,13 +59,14 @@ import {
   type AgentContextUsage,
   type AgentProject,
   type AgentDomainEvent,
-  type AgentEngineInfo,
+  type AgentStatusInfo,
   type AgentRunStatus,
   type AgentSessionInfo,
   type AgentSessionRevert,
   type AgentSessionSnapshot,
   type AgentVcsDiff,
   type AgentWorktreeListing,
+  type GatewayDiscovery,
   type InboxItem,
   type ModelRef,
   type PermissionDecision,
@@ -241,6 +244,12 @@ export interface ListAgentSessionsQuery {
   order?: 'asc' | 'desc';
   search?: string;
   cursor?: string;
+  /**
+   * One agent's sessions only. Absent, a multi-agent gateway merges every
+   * agent's list and tags each row; the default agent is never spelled
+   * out (see `agentIdQueryValue`).
+   */
+  agentId?: string;
 }
 
 export interface ObservedAgentSessionList {
@@ -259,6 +268,8 @@ function listQuery(query: ListAgentSessionsQuery | undefined): string {
   if (query.order) params.set('order', query.order);
   if (query.search) params.set('search', query.search);
   if (query.cursor) params.set('cursor', query.cursor);
+  const agentId = agentIdQueryValue(query.agentId);
+  if (agentId) params.set('agent_id', agentId);
   const encoded = params.toString();
   return encoded ? `?${encoded}` : '';
 }
@@ -370,9 +381,17 @@ export async function listAgentSessionChildren(
 export async function createAgentSession(
   sessionId: string | undefined,
   params: {
-    agent?: string;
+    /** The mode (persona) the session starts in; the agent's own default when omitted. */
+    mode?: string;
     model?: ModelRef;
     directory?: string;
+    /**
+     * Which agent owns the new session. Omitted, the gateway's primary
+     * takes it -- which is the only agent an older gateway has. A gateway
+     * answers `400 invalid_agent` for a name it does not know and
+     * `503 agent_unavailable` for one it knows but has not attached.
+     */
+    agentId?: string;
   }
 ): Promise<AgentSessionInfo> {
   const path = sessionId
@@ -383,7 +402,8 @@ export async function createAgentSession(
   const body: Record<string, unknown> = {};
   if (params.directory) body.directory = params.directory;
   if (params.model) body.model = params.model;
-  if (params.agent) body.agent = params.agent;
+  if (params.mode) body.mode = params.mode;
+  if (params.agentId) body.agent_id = params.agentId;
   const data = await writeJson(path, 'Failed to create agent session', body);
   const info = parseAgentSessionInfo(data);
   if (!info) throw new Error('Failed to create agent session: unreadable response');
@@ -526,10 +546,10 @@ export async function switchAgentModel(
   });
 }
 
-/** Agent ids are lowercase; OpenCode rejects a display name such as `Build`. */
-export async function switchAgentMode(asid: string, agent: string): Promise<void> {
-  await writeJson(sessionRoute(asid, '/agent'), 'Failed to switch agent', {
-    agent: agent.toLowerCase(),
+/** Mode ids are lowercase; OpenCode rejects a display name such as `Build`. */
+export async function switchAgentMode(asid: string, mode: string): Promise<void> {
+  await writeJson(sessionRoute(asid, '/mode'), 'Failed to switch mode', {
+    mode: mode.toLowerCase(),
   });
 }
 
@@ -746,14 +766,14 @@ export async function getAgentVcsDiff(
 export async function getAgentCatalog(
   sessionId?: string,
   endpoint?: { url?: string; token?: string | null },
-  options?: { directory?: string; forceRefresh?: boolean; requireFresh?: boolean }
+  options?: { directory?: string; forceRefresh?: boolean; requireFresh?: boolean; agentId?: string }
 ): Promise<AgentCatalog> {
   const directory = normalizeCatalogDirectory(options?.directory);
   const cacheKey = buildAgentCacheKey(
     'catalog',
     endpoint?.url,
     sessionId,
-    agentCatalogCacheVariant(directory)
+    agentCatalogCacheVariant(directory, options?.agentId)
   );
   const cached = getCachedEntry<AgentCatalog>(cacheKey);
   const isFresh = cached && Date.now() - cached.timestamp < CATALOG_TTL_MS;
@@ -769,7 +789,7 @@ export async function getAgentCatalog(
         if (options?.requireFresh) throw new Error('Gateway is not connected');
         return cached?.data ?? EMPTY_CATALOG;
       }
-      const path = agentCatalogPath(sessionId, directory);
+      const path = agentCatalogPath(sessionId, directory, options?.agentId);
       const url = base ? `${base}${path}` : gatewayUrl(path);
       const headers: Record<string, string> = endpoint?.url
         ? {
@@ -817,9 +837,9 @@ export async function getAgentCatalog(
 export async function getAgentProjects(
   sessionId?: string,
   endpoint?: { url?: string; token?: string | null },
-  options?: { forceRefresh?: boolean }
+  options?: { forceRefresh?: boolean; agentId?: string }
 ): Promise<AgentProject[]> {
-  const cacheKey = buildAgentCacheKey('projects', endpoint?.url, sessionId);
+  const cacheKey = buildAgentCacheKey('projects', endpoint?.url, sessionId, null, options?.agentId);
   const cached = getCachedEntry<AgentProject[]>(cacheKey);
   const isFresh = cached && Date.now() - cached.timestamp < PROJECTS_TTL_MS;
 
@@ -831,11 +851,13 @@ export async function getAgentProjects(
     try {
       const base = endpoint?.url ? endpoint.url.replace(/\/$/, '') : null;
       if (!base && !isGatewayConfigured()) return cached?.data ?? [];
-      const url = base
-        ? `${base}${sessionId ? `/api/sessions/${encodeURIComponent(sessionId)}/agent-projects` : '/api/agent-projects'}`
-        : sessionId
-          ? gatewayUrl(`/api/sessions/${encodeURIComponent(sessionId)}/agent-projects`)
-          : gatewayUrl('/api/agent-projects');
+      const path = withAgentIdQuery(
+        sessionId
+          ? `/api/sessions/${encodeURIComponent(sessionId)}/agent-projects`
+          : '/api/agent-projects',
+        options?.agentId
+      );
+      const url = base ? `${base}${path}` : gatewayUrl(path);
       const headers: Record<string, string> = endpoint?.url
         ? {
             ...activeLocaleHeaders(),
@@ -1058,26 +1080,86 @@ export async function moveAgentSession(
 // ---------------------------------------------------------------------------
 
 /** The one agent route that answers 200 with no engine attached. */
-export function getAgentEngine(): Promise<AgentEngineInfo>;
+export function getAgentStatus(endpoint?: undefined, agentId?: string): Promise<AgentStatusInfo>;
 /** An older Gateway has no status route, which is unknown rather than not installed. */
-export function getAgentEngine(endpoint: GatewayEndpoint): Promise<AgentEngineInfo | null>;
-export async function getAgentEngine(endpoint?: GatewayEndpoint): Promise<AgentEngineInfo | null> {
-  const fallback: AgentEngineInfo = {
+export function getAgentStatus(
+  endpoint: GatewayEndpoint,
+  agentId?: string
+): Promise<AgentStatusInfo | null>;
+export async function getAgentStatus(
+  endpoint?: GatewayEndpoint,
+  /** Which agentId to ask after; the primary when omitted or the default. */
+  agentId?: string
+): Promise<AgentStatusInfo | null> {
+  const fallback: AgentStatusInfo = {
     available: false,
     origin: 'none',
     stream_connected: false,
     autostart: true,
   };
-  if (!endpoint) return readJson('/api/agent-engine', parseAgentEngineInfo, fallback);
+  const path = withAgentIdQuery('/api/agent-status', agentId);
+  if (!endpoint) return readJson(path, parseAgentStatusInfo, fallback);
 
   const base = endpoint.url.replace(/\/$/, '');
-  const response = await gatewayEndpointFetch(endpoint, `${base}/api/agent-engine`, {
+  const response = await gatewayEndpointFetch(endpoint, `${base}${path}`, {
     method: 'GET',
     headers: endpoint.token ? { Authorization: `Bearer ${endpoint.token}` } : {},
   });
   if (response.status === 404 || response.status === 501) return null;
   if (!response.ok) throw new Error(`Engine status request failed (${response.status})`);
-  return parseAgentEngineInfo(envelopeData(await response.json()));
+  return parseAgentStatusInfo(envelopeData(await response.json()));
+}
+
+// ---------------------------------------------------------------------------
+// Agents discovery
+// ---------------------------------------------------------------------------
+
+/**
+ * `GET /api/discovery`: which agents this gateway drives and what each can
+ * do, with the terminal and SSH planes beside them.
+ *
+ * Asked only of a gateway whose `/health` capability list says the answer has
+ * an agent plane (`hasMultiAgent`); any other gateway is the single
+ * OpenCode engine it always was, and `null` here is what tells every caller
+ * to keep that path. The route answers outside the content envelope, which
+ * `parseGatewayDiscovery` allows for. A refusal, a missing route and a body
+ * that is not a discovery document all answer `null` too: discovery is an
+ * improvement on the single-engine path, never a gate in front of it.
+ */
+export async function getAgentsDiscovery(options: {
+  /** The server to ask, or the selected gateway when omitted. */
+  endpoint?: GatewayEndpoint;
+  /** The server's latest `/health` capability list, which decides whether to ask at all. */
+  capabilities: readonly string[] | undefined | null;
+  signal?: AbortSignal;
+}): Promise<GatewayDiscovery | null> {
+  if (!hasMultiAgent(options.capabilities)) return null;
+  try {
+    let response: Response;
+    if (options.endpoint) {
+      const base = options.endpoint.url.replace(/\/$/, '');
+      if (!base) return null;
+      response = await gatewayEndpointFetch(options.endpoint, `${base}/api/discovery`, {
+        method: 'GET',
+        headers: options.endpoint.token
+          ? { Authorization: `Bearer ${options.endpoint.token}` }
+          : {},
+        ...(options.signal ? { signal: options.signal } : {}),
+      });
+    } else {
+      if (!isGatewayConfigured()) return null;
+      response = await gatewayFetch(gatewayUrl('/api/discovery'), {
+        method: 'GET',
+        headers: gatewayAuthHeaders(),
+        ...(options.signal ? { signal: options.signal } : {}),
+      });
+    }
+    if (!response.ok) return null;
+    const discovery = parseGatewayDiscovery(await response.json());
+    return discovery.agents || discovery.terminal || discovery.ssh ? discovery : null;
+  } catch {
+    return null;
+  }
 }
 
 // ---------------------------------------------------------------------------

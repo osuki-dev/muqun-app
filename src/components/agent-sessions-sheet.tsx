@@ -228,14 +228,14 @@ export const AgentSessionsSheet = memo(function AgentSessionsSheet({
     return list.filter((root) => {
       const hit =
         root.title?.toLowerCase().includes(q) ||
-        root.agent?.toLowerCase().includes(q) ||
+        root.mode?.toLowerCase().includes(q) ||
         root.directory?.toLowerCase().includes(q) ||
         root.asid.toLowerCase().includes(q);
       if (hit) return true;
       return (subagentMap.get(root.asid) ?? []).some(
         (sub) =>
           sub.title?.toLowerCase().includes(q) ||
-          sub.agent?.toLowerCase().includes(q) ||
+          sub.mode?.toLowerCase().includes(q) ||
           sub.asid.toLowerCase().includes(q)
       );
     });
@@ -586,7 +586,7 @@ export const AgentSessionsSheet = memo(function AgentSessionsSheet({
                 <SheetSceneRow
                   testID={`agent-session-row-${root.asid}`}
                   title={sessionTitleOr(root, t`Untitled session`)}
-                  caption={[root.agent || 'build', modelNameOf(root.model), projectName]
+                  caption={[root.mode || 'build', modelNameOf(root.model), projectName]
                     .filter(Boolean)
                     .join(' · ')}
                   selected={root.asid === activeAsid}
@@ -615,7 +615,7 @@ export const AgentSessionsSheet = memo(function AgentSessionsSheet({
                     key={sub.asid}
                     testID={`agent-subagent-row-${sub.asid}`}
                     title={sessionTitleOr(sub, t`Untitled session`)}
-                    caption={sub.agent || 'subagent'}
+                    caption={sub.mode || 'subagent'}
                     selected={sub.asid === activeAsid}
                     style={styles.subagentRow}
                     accessibilityLabel={rowLabel(sub)}

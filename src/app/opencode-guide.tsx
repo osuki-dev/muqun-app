@@ -7,9 +7,10 @@ import { StyleSheet, View } from 'react-native';
 
 import { OpenCodeGuideSheet } from '@/components/opencode-guide-sheet';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
-import { checkOpenCodeServer, type OpenCodeReadiness } from '@/lib/home-opencode-readiness';
+import { checkAgentServer, type AgentReadiness } from '@/lib/home-agent-readiness';
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';
 import { useServerCapabilities } from '@/stores/server-capabilities';
+import { DEFAULT_AGENT_ID } from '@/lib/agent-discovery';
 
 /**
  * The OpenCode setup sheet's route owns the re-check. That keeps Editorial's
@@ -29,8 +30,11 @@ export default function OpenCodeGuideScreen() {
     intent?: string;
     status?: string;
     cause?: string;
+    agentId?: string;
   }>();
   const serverId = params.serverId;
+  const agentId =
+    typeof params.agentId === 'string' && params.agentId ? params.agentId : DEFAULT_AGENT_ID;
   const selectedRecord = useGatewayConnectionStore((state) => state.record);
   const records = useGatewayConnectionStore((state) => state.records);
   const server =
@@ -39,21 +43,22 @@ export default function OpenCodeGuideScreen() {
       : serverId
         ? records.find((record) => record.serverId === serverId)
         : undefined;
-  const [readiness, setReadiness] = useState<OpenCodeReadiness>(() =>
+  const [readiness, setReadiness] = useState<AgentReadiness>(() =>
     params.status === 'unsupported'
-      ? { status: 'unsupported', capabilities: [] }
+      ? { status: 'unsupported', capabilities: [], agentId }
       : params.status === 'not-installed'
-        ? { status: 'not-installed', capabilities: [] }
+        ? { status: 'not-installed', capabilities: [], agentId }
         : {
             status: 'offline',
             capabilities: [],
+            agentId,
             cause:
               params.cause === 'service' || params.cause === 'catalog' ? params.cause : 'health',
           }
   );
 
-  const checkAgain = async (): Promise<OpenCodeReadiness> => {
-    const result = await checkOpenCodeServer(server);
+  const checkAgain = async (): Promise<AgentReadiness> => {
+    const result = await checkAgentServer(server, agentId);
     setReadiness(result);
     if (serverId && result.capabilities.length > 0) {
       void useServerCapabilities.getState().record(serverId, result.capabilities);

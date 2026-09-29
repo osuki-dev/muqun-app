@@ -49,6 +49,10 @@ export interface CompactionProgress {
 export interface AgentSheetSnapshot {
   /** The gateway session every agent call is made against. */
   sessionId: string;
+  /** The paired server the workbench is on, for a sheet that gates on its agents. */
+  serverId?: string;
+  /** The agentId the open session runs on, or the one a new session would go to. */
+  agentId?: string;
   /** The agent session the workbench is showing, if it has one. */
   activeAsid?: string;
   sessions: readonly AgentSessionInfo[];
@@ -179,6 +183,8 @@ const INITIAL: AgentSheetSnapshot = {
   activeDirectory: undefined,
   activeProject: undefined,
   sessionInfo: undefined,
+  serverId: undefined,
+  agentId: undefined,
   tokens: undefined,
   cost: undefined,
   selectedModel: undefined,

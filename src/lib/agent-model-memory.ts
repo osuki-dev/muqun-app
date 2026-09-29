@@ -1,5 +1,6 @@
 import { createMMKV } from 'react-native-mmkv';
 
+import { agentIdQueryValue } from './agent-discovery';
 import { parseModelRef, type ModelRef } from './agent-protocol';
 import type { RememberedAgentChoice, RememberedAgentDefaults } from './agent-session-defaults';
 
@@ -30,6 +31,18 @@ type KeyValueStore = {
 
 const STORE_ID = 'muqun.agent-ui';
 const KEY_PREFIX = 'muqun.agent-model.v1:';
+
+/**
+ * Where one server's memory lives, per agent.
+ *
+ * A model picked for DeepSeek is not a model OpenCode can run, so each agent
+ * remembers on its own. The default agent keeps the key it always had, so a
+ * device upgraded under a reader loses none of what it remembered.
+ */
+function memoryKey(serverId: string, agentId: string | undefined): string {
+  const scope = agentIdQueryValue(agentId);
+  return scope ? `${KEY_PREFIX}${serverId}#${scope}` : KEY_PREFIX + serverId;
+}
 
 /**
  * How many workspaces one server remembers.
@@ -80,15 +93,18 @@ function parseChoice(value: unknown): StoredChoice | undefined {
   if (!value || typeof value !== 'object') return undefined;
   const rec = value as Record<string, unknown>;
   const model = parseModelRef(rec.model) ?? undefined;
-  const agent = typeof rec.agent === 'string' && rec.agent ? rec.agent : undefined;
-  if (!model && !agent) return undefined;
+  // `mode` is the word now; `agent` is how every pick before the rename was
+  // written, and a reader's memory is not something to lose over a word.
+  const stored = typeof rec.mode === 'string' && rec.mode ? rec.mode : rec.agent;
+  const mode = typeof stored === 'string' && stored ? stored : undefined;
+  if (!model && !mode) return undefined;
   const at = typeof rec.at === 'number' && Number.isFinite(rec.at) ? rec.at : 0;
-  return { ...(model ? { model } : {}), ...(agent ? { agent } : {}), at };
+  return { ...(model ? { model } : {}), ...(mode ? { mode } : {}), at };
 }
 
-function readServerMemory(serverId: string): StoredServerMemory {
+function readServerMemory(serverId: string, agentId?: string): StoredServerMemory {
   try {
-    const raw = store().getString(KEY_PREFIX + serverId);
+    const raw = store().getString(memoryKey(serverId, agentId));
     if (!raw) return EMPTY_MEMORY;
     const parsed: unknown = JSON.parse(raw);
     if (!parsed || typeof parsed !== 'object') return EMPTY_MEMORY;
@@ -118,9 +134,9 @@ function readServerMemory(serverId: string): StoredServerMemory {
   }
 }
 
-function writeServerMemory(serverId: string, memory: StoredServerMemory): void {
+function writeServerMemory(serverId: string, memory: StoredServerMemory, agentId?: string): void {
   try {
-    store().set(KEY_PREFIX + serverId, JSON.stringify(memory));
+    store().set(memoryKey(serverId, agentId), JSON.stringify(memory));
   } catch {
     // See above.
   }
@@ -144,8 +160,8 @@ function mergeChoice(
   at: number
 ): StoredChoice {
   const model = choice.model ?? previous?.model;
-  const agent = choice.agent ?? previous?.agent;
-  return { ...(model ? { model } : {}), ...(agent ? { agent } : {}), at };
+  const mode = choice.mode ?? previous?.mode;
+  return { ...(model ? { model } : {}), ...(mode ? { mode } : {}), at };
 }
 
 /**
@@ -160,47 +176,55 @@ export function rememberAgentChoice(
   serverId: string,
   directory: string | undefined,
   choice: RememberedAgentChoice,
-  atMs: number = Date.now()
+  atMs: number = Date.now(),
+  /** The agent the pick was made on; the default when the screen has none. */
+  agentId?: string
 ): void {
   if (!serverId) return;
-  if (!choice.model && !choice.agent) return;
-  const memory = readServerMemory(serverId);
+  if (!choice.model && !choice.mode) return;
+  const memory = readServerMemory(serverId, agentId);
   const workspaces = { ...memory.workspaces };
   if (directory) {
     workspaces[directory] = mergeChoice(workspaces[directory], choice, atMs);
   }
-  writeServerMemory(serverId, {
-    recent: choice.model
-      ? [
-          choice.model,
-          ...(memory.recent ?? []).filter(
-            (ref) =>
-              ref.provider_id !== choice.model!.provider_id ||
-              ref.model_id !== choice.model!.model_id
-          ),
-        ].slice(0, 12)
-      : memory.recent,
-    last: mergeChoice(memory.last, choice, atMs),
-    workspaces: prune(workspaces),
-  });
+  writeServerMemory(
+    serverId,
+    {
+      recent: choice.model
+        ? [
+            choice.model,
+            ...(memory.recent ?? []).filter(
+              (ref) =>
+                ref.provider_id !== choice.model!.provider_id ||
+                ref.model_id !== choice.model!.model_id
+            ),
+          ].slice(0, 12)
+        : memory.recent,
+      last: mergeChoice(memory.last, choice, atMs),
+      workspaces: prune(workspaces),
+    },
+    agentId
+  );
 }
 
 /** Remembers the model, leaving whatever agent was remembered beside it. */
 export function rememberAgentModel(
   serverId: string,
   directory: string | undefined,
-  model: ModelRef
+  model: ModelRef,
+  agentId?: string
 ): void {
-  rememberAgentChoice(serverId, directory, { model });
+  rememberAgentChoice(serverId, directory, { model }, Date.now(), agentId);
 }
 
-/** Remembers the agent, leaving whatever model was remembered beside it. */
+/** Remembers the mode, leaving whatever model was remembered beside it. */
 export function rememberAgentMode(
   serverId: string,
   directory: string | undefined,
-  agent: string
+  mode: string,
+  agentId?: string
 ): void {
-  rememberAgentChoice(serverId, directory, { agent });
+  rememberAgentChoice(serverId, directory, { mode }, Date.now(), agentId);
 }
 
 /**
@@ -212,10 +236,11 @@ export function rememberAgentMode(
  */
 export function loadRememberedAgentDefaults(
   serverId: string,
-  directory?: string
+  directory?: string,
+  agentId?: string
 ): RememberedAgentDefaults {
   if (!serverId) return {};
-  const memory = readServerMemory(serverId);
+  const memory = readServerMemory(serverId, agentId);
   const workspace = directory ? memory.workspaces[directory] : undefined;
   return {
     ...(workspace ? { workspace: choiceOf(workspace) } : {}),
@@ -227,11 +252,11 @@ export function loadRememberedAgentDefaults(
 function choiceOf(stored: StoredChoice): RememberedAgentChoice {
   return {
     ...(stored.model ? { model: stored.model } : {}),
-    ...(stored.agent ? { agent: stored.agent } : {}),
+    ...(stored.mode ? { mode: stored.mode } : {}),
   };
 }
 
 /** References only: names, prices and capabilities always come from the live catalog. */
-export function loadRecentAgentModels(serverId: string): ModelRef[] {
-  return serverId ? (readServerMemory(serverId).recent ?? []) : [];
+export function loadRecentAgentModels(serverId: string, agentId?: string): ModelRef[] {
+  return serverId ? (readServerMemory(serverId, agentId).recent ?? []) : [];
 }

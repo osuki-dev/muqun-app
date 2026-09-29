@@ -11,15 +11,15 @@ import { PressableScale } from '@/components/pressable-scale';
 import { SheetScene, SHEET_LADDER } from '@/components/sheet-scene';
 import { appChrome } from '@/constants/appearance';
 import { feedback } from '@/lib/feedback';
-import type { OpenCodeReadiness } from '@/lib/home-opencode-readiness';
+import type { AgentReadiness } from '@/lib/home-agent-readiness';
 import { OPENCODE_INSTALL_URL } from '@/constants/links';
 import { settleAfter } from '@/lib/compiler-safe-control-flow';
 
 export interface OpenCodeGuideSheetProps {
   serverLabel: string;
   onClose: () => void;
-  readiness: OpenCodeReadiness;
-  onCheckAgain: () => Promise<OpenCodeReadiness>;
+  readiness: AgentReadiness;
+  onCheckAgain: () => Promise<AgentReadiness>;
   onOpenAgent?: () => void;
 }
 

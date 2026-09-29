@@ -3,8 +3,8 @@ import { describe, expect, test } from 'bun:test';
 import { createHomeAttentionStore } from '@/lib/home-attention';
 import { homeTargetKey, type HomeTarget } from '@/lib/home-recents';
 
-const target: Extract<HomeTarget, { kind: 'opencode-session' }> = {
-  kind: 'opencode-session',
+const target: Extract<HomeTarget, { kind: 'agent-session' }> = {
+  kind: 'agent-session',
   serverId: 'a',
   sessionId: 'herdr',
   directory: '/work',

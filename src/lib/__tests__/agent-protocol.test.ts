@@ -16,7 +16,7 @@ import {
   parseAgentCatalog,
   parseAgentContextUsage,
   parseAgentDomainEvent,
-  parseAgentEngineInfo,
+  parseAgentStatusInfo,
   parseAgentPart,
   parseAgentSessionInfo,
   parseAgentSessionList,
@@ -32,7 +32,7 @@ import {
   parseShellOutputPage,
   parseTimelineItem,
   parseVcsDiffMode,
-  selectableAgents,
+  selectableModes,
   sessionTitleOr,
   sortTimeline,
   toolDurationMs,
@@ -83,7 +83,7 @@ describe('primitives and hostile input', () => {
       expect(() => parseInboxItems(value)).not.toThrow();
       expect(() => parseShellList(value)).not.toThrow();
       expect(() => parseShellOutputPage(value)).not.toThrow();
-      expect(() => parseAgentEngineInfo(value)).not.toThrow();
+      expect(() => parseAgentStatusInfo(value)).not.toThrow();
       expect(() => parseFileDiffItems(value)).not.toThrow();
       expect(() => parseAgentDomainEvent('agent.timeline.upsert', value)).not.toThrow();
     }
@@ -104,7 +104,7 @@ describe('parseAgentSessionInfo', () => {
     asid: 'ses_1',
     backend_session_id: 'ses_1',
     title: 'Tool availability',
-    agent: 'build',
+    mode: 'build',
     model: { provider_id: 'opencode', model_id: 'union-alpha', variant: 'default' },
     status: 'busy',
     directory: '/home/ryu/Work/muqun/app',
@@ -154,7 +154,7 @@ describe('parseAgentSessionInfo', () => {
       updated_ms: 7,
     });
     expect(info?.model).toBeNull();
-    expect(info?.agent).toBeUndefined();
+    expect(info?.mode).toBeUndefined();
     expect(info?.tokens).toBeUndefined();
     expect(info?.limit).toBeUndefined();
   });
@@ -931,7 +931,7 @@ describe('catalog', () => {
       { id: 'union-alpha', name: 'Union Alpha', provider_id: 'opencode', enabled: true },
       { id: 'paid', name: 'Paid', provider_id: 'acme', enabled: false, status: 'needs key' },
     ],
-    agents: [
+    modes: [
       {
         id: 'build',
         name: 'Build',
@@ -957,12 +957,12 @@ describe('catalog', () => {
       { id: 'acme', name: 'Acme', activation: 'disabled', models: [] },
     ],
     commands: [{ name: 'review', description: 'Review the branch', agent: 'plan' }],
-    defaults: { model: { provider_id: 'opencode', model_id: 'union-alpha' }, agent: 'build' },
+    defaults: { model: { provider_id: 'opencode', model_id: 'union-alpha' }, mode: 'build' },
   };
 
   test('reads providers, commands and defaults', () => {
     const parsed = parseAgentCatalog(catalog);
-    expect(parsed.agents[0]?.model).toEqual({
+    expect(parsed.modes[0]?.model).toEqual({
       provider_id: 'opencode',
       model_id: 'union-alpha',
       variant: 'thinking',
@@ -970,7 +970,7 @@ describe('catalog', () => {
     expect(parsed.providers.map((provider) => provider.id)).toEqual(['opencode', 'acme']);
     expect(parsed.providers[1].activation).toBe('disabled');
     expect(parsed.commands[0]).toMatchObject({ name: 'review', agent: 'plan' });
-    expect(parsed.defaults.agent).toBe('build');
+    expect(parsed.defaults.mode).toBe('build');
     expect(parsed.defaults.model?.model_id).toBe('union-alpha');
   });
 
@@ -1021,7 +1021,7 @@ describe('catalog', () => {
 
   test('a picker hides hidden agents and subagents', () => {
     const parsed = parseAgentCatalog(catalog);
-    expect(selectableAgents(parsed.agents).map((agent) => agent.id)).toEqual(['build']);
+    expect(selectableModes(parsed.modes).map((mode) => mode.id)).toEqual(['build']);
   });
 
   test("a user's own agent is a choice, whatever mode it declares", () => {
@@ -1032,7 +1032,7 @@ describe('catalog', () => {
     // `mode: "subagent"` are the only two reasons to hide an entry, and a
     // custom agent declares `primary`, `all`, or no mode whatsoever.
     const parsed = parseAgentCatalog({
-      agents: [
+      modes: [
         { id: 'build', name: 'Build', mode: 'primary', hidden: false },
         {
           id: 'osuki-coder',
@@ -1047,13 +1047,13 @@ describe('catalog', () => {
         { id: 'Compaction', name: 'Compaction', hidden: true },
       ],
     });
-    expect(selectableAgents(parsed.agents).map((agent) => agent.id)).toEqual([
+    expect(selectableModes(parsed.modes).map((mode) => mode.id)).toEqual([
       'build',
       'osuki-coder',
       'osuki-any',
       'osuki-plain',
     ]);
-    const custom = parsed.agents.find((agent) => agent.id === 'osuki-coder');
+    const custom = parsed.modes.find((mode) => mode.id === 'osuki-coder');
     expect(custom?.description).toBe('The house style, the house checks, and nothing else.');
   });
 
@@ -1125,7 +1125,7 @@ describe('context, shells, engine, diff', () => {
 
   test('engine status explains a 503 rather than pretending to be up', () => {
     expect(
-      parseAgentEngineInfo({
+      parseAgentStatusInfo({
         available: true,
         installation: 'installed',
         origin: 'adopted',
@@ -1140,8 +1140,8 @@ describe('context, shells, engine, diff', () => {
       origin: 'adopted',
       version: '2.0.1',
     });
-    expect(parseAgentEngineInfo({})).toMatchObject({ available: false, origin: 'none' });
-    expect(parseAgentEngineInfo({ installation: 'future' }).installation).toBeUndefined();
+    expect(parseAgentStatusInfo({})).toMatchObject({ available: false, origin: 'none' });
+    expect(parseAgentStatusInfo({ installation: 'future' }).installation).toBeUndefined();
   });
 
   test('a file diff reads either spelling of its fields', () => {

@@ -7,7 +7,7 @@ import { useGatewayRecord } from '@/hooks/use-gateway-record';
 import { useLatestRef, useLazyRef } from '@/hooks/use-render-refs';
 import { loadRecordSessions } from '@/lib/gateway-client';
 import type { GatewayRecord } from '@/lib/gateway-storage';
-import { checkOpenCodeServer } from '@/lib/home-opencode-readiness';
+import { checkAgentServer } from '@/lib/home-agent-readiness';
 import { loadWorkspaceSnapshot } from '@/lib/workspace-snapshot';
 import {
   type HomeCommand,
@@ -60,9 +60,14 @@ export type HomeCommands = {
     serverId: string,
     asid?: string,
     directory?: string,
-    sessionId?: string
+    sessionId?: string,
+    agentId?: string
   ) => Promise<HomeCommandResult>;
-  newOpenCode: (serverId: string, directory?: string) => Promise<HomeCommandResult>;
+  newOpenCode: (
+    serverId: string,
+    directory?: string,
+    agentId?: string
+  ) => Promise<HomeCommandResult>;
   newTerminal: (serverId: string, workspaceId?: string) => Promise<HomeCommandResult>;
   openSsh: (hostId?: string) => Promise<HomeCommandResult>;
   pairGateway: () => Promise<HomeCommandResult>;
@@ -104,10 +109,10 @@ export function useHomeCommands(options: HomeCommandOptions = {}): HomeCommands 
       sourceRouteActive: () =>
         latest.current.options.sourceRouteActive?.() ?? latest.current.navigation.isFocused(),
       loadTerminalSelection: (serverId) => loadTerminalSelection(latest.current.records, serverId),
-      prepareNewOpenCode: async (serverId) => {
+      prepareNewOpenCode: async (serverId, _directory, agentId) => {
         const state = useGatewayConnectionStore.getState();
         const target = state.records.find((item) => item.serverId === serverId);
-        return checkOpenCodeServer(target);
+        return checkAgentServer(target, agentId);
       },
       validateTarget: async (target) => {
         switch (target.kind) {
@@ -226,22 +231,28 @@ export function useHomeCommands(options: HomeCommandOptions = {}): HomeCommands 
     [resumeServer]
   );
   const openOpenCode = useCallback(
-    (serverId: string, asid?: string, directory?: string, sessionId?: string) =>
+    (serverId: string, asid?: string, directory?: string, sessionId?: string, agentId?: string) =>
       dispatch({
         type: 'open-opencode',
         target: {
-          kind: 'opencode-session',
+          kind: 'agent-session',
           serverId,
           ...(sessionId ? { sessionId } : {}),
           ...(directory ? { directory } : {}),
           ...(asid ? { asid } : {}),
+          ...(agentId ? { agentId } : {}),
         },
       }),
     [dispatch]
   );
   const newOpenCode = useCallback(
-    (serverId: string, directory?: string) =>
-      dispatch({ type: 'new-opencode', serverId, ...(directory ? { directory } : {}) }),
+    (serverId: string, directory?: string, agentId?: string) =>
+      dispatch({
+        type: 'new-opencode',
+        serverId,
+        ...(directory ? { directory } : {}),
+        ...(agentId ? { agentId } : {}),
+      }),
     [dispatch]
   );
   const newTerminal = useCallback(
@@ -312,6 +323,7 @@ function navigateHome(
           ...(destination.target.sessionId ? { sessionId: destination.target.sessionId } : {}),
           ...(destination.target.asid ? { asid: destination.target.asid } : {}),
           ...(destination.target.directory ? { directory: destination.target.directory } : {}),
+          ...(destination.target.agentId ? { agentId: destination.target.agentId } : {}),
           ...(destination.intent === 'new' ? { intent: 'new' } : {}),
         },
       });

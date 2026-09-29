@@ -24,7 +24,7 @@ export default function AgentModeScreen() {
    * With neither, the sheet had no current row at all and the reader had to
    * pick one to find out which agent was already answering them.
    */
-  const sessionAgent = useAgentSheetBridge((state) => state.sessionInfo?.agent);
+  const sessionAgent = useAgentSheetBridge((state) => state.sessionInfo?.mode);
   const selectAgentMode = useAgentSheetBridge((state) => state.actions.selectAgentMode);
 
   return (

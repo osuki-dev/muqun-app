@@ -2,7 +2,7 @@ import { createStore, type StateCreator } from 'zustand/vanilla';
 
 import { homeTargetKey, type HomeTarget } from '@/lib/home-recents';
 
-type OpenCodeTarget = Extract<HomeTarget, { kind: 'opencode-session' }>;
+type OpenCodeTarget = Extract<HomeTarget, { kind: 'agent-session' }>;
 
 const MAX_ATTENTION_TARGETS = 24;
 const MAX_REQUEST_IDS = 32;

@@ -125,3 +125,31 @@ describe('agent-widget', () => {
     });
   });
 });
+
+describe('agent ids on a widget entry', () => {
+  const snapshot: AgentWidgetSnapshot = {
+    version: 1,
+    serverId: 'srv-1',
+    serverLabel: 'Studio',
+    sessionId: 'ses-1',
+    checkedAtMs: 0,
+    agents: [],
+  };
+
+  test('a non-default agent is named in the link; the default is not', () => {
+    const base: AgentWidgetEntry = {
+      id: 'asid-1',
+      name: 'A',
+      status: 'idle',
+      paneId: '',
+      engine: 'opencode',
+    };
+    expect(agentWidgetUri(snapshot, { ...base, agentId: 'deepseek' })).toBe(
+      'muqun://agent?asid=asid-1&agentId=deepseek'
+    );
+    expect(agentWidgetUri(snapshot, { ...base, agentId: 'opencode' })).toBe(
+      'muqun://agent?asid=asid-1'
+    );
+    expect(agentWidgetUri(snapshot, base)).toBe('muqun://agent?asid=asid-1');
+  });
+});

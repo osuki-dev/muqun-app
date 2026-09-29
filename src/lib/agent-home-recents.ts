@@ -28,7 +28,7 @@ export async function removeChildSessionRecents(
   if (!serverId || children.size === 0) return;
   await getRecents().hydrate();
   const targets = getRecents().entries.flatMap(({ target }) =>
-    target.kind === 'opencode-session' && target.serverId === serverId && children.has(target.asid)
+    target.kind === 'agent-session' && target.serverId === serverId && children.has(target.asid)
       ? [target]
       : []
   );
