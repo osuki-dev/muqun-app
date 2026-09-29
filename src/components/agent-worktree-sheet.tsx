@@ -521,7 +521,7 @@ export const AgentWorktreeSheet = memo(function AgentWorktreeSheet({
                   style={styles.create}>
                   <SheetSceneField
                     label={t`Name`}
-                    hint={t`Leave it empty and OpenCode picks a name.`}>
+                    hint={t`Leave it empty and the agent picks a name.`}>
                     <FontedTextInput
                       testID="agent-worktree-name-input"
                       accessibilityLabel={t`Worktree name`}

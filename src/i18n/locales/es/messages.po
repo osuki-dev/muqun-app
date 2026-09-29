@@ -170,6 +170,11 @@ msgstr "hace {0} h"
 msgid "{0}m ago"
 msgstr "hace {0} min"
 
+#: src/components/agent-composer.tsx
+#: src/components/agent-workbench.tsx
+msgid "{agentName} is offline"
+msgstr "{agentName} está sin conexión"
+
 #: src/components/agent-guide-sheet.tsx
 msgid "{agentName} is ready on this host."
 msgstr "{agentName} está listo en este host"
@@ -411,17 +416,6 @@ msgstr "Añadido"
 #: src/components/new-task-sheet.tsx
 msgid "Agent"
 msgstr "Agente"
-
-#. placeholder {0}: part.mode
-#: src/components/agent-message-block.tsx
-msgid "Agent · {0}"
-msgstr "Agente · {0}"
-
-#. placeholder {0}: part.previous
-#. placeholder {1}: part.mode
-#: src/components/agent-message-block.tsx
-msgid "Agent · {0} → {1}"
-msgstr "Agente · {0} → {1}"
 
 #: src/app/commands.tsx
 #: src/components/agent-command-delivery-picker.tsx
@@ -2319,8 +2313,8 @@ msgid "Guided AGENTS.md setup"
 msgstr "Configuración guiada de AGENTS.md"
 
 #: src/app/settings.tsx
-msgid "Guides for pairing, the terminal, OpenCode and themes"
-msgstr "Guías sobre la vinculación, el terminal, OpenCode y los temas"
+msgid "Guides for pairing, the terminal, agents and themes"
+msgstr "Guías sobre emparejamiento, el terminal, agentes y temas"
 
 #: src/components/settings-alerts.tsx
 msgid "Haptic feedback"
@@ -2646,8 +2640,8 @@ msgid "Latest"
 msgstr "Última"
 
 #: src/components/agent-worktree-sheet.tsx
-msgid "Leave it empty and OpenCode picks a name."
-msgstr "Déjalo vacío y OpenCode elige un nombre"
+msgid "Leave it empty and the agent picks a name."
+msgstr "Déjalo vacío y el agente elegirá un nombre"
 
 #: src/components/new-task-sheet.tsx
 msgid "Leave it empty to start where the session already is."
@@ -2796,6 +2790,17 @@ msgstr "Mensaje copiado al portapapeles"
 #: src/components/agent-workbench.tsx
 msgid "Message not sent"
 msgstr "El mensaje no se envió"
+
+#. placeholder {0}: part.mode
+#: src/components/agent-message-block.tsx
+msgid "Mode · {0}"
+msgstr "Modo · {0}"
+
+#. placeholder {0}: part.previous
+#. placeholder {1}: part.mode
+#: src/components/agent-message-block.tsx
+msgid "Mode · {0} → {1}"
+msgstr "Modo · {0} → {1}"
 
 #: src/components/agent-context-sheet.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
@@ -3400,22 +3405,9 @@ msgstr "Abre para comprobar el estado actual"
 msgid "Open workspace {0}, {panelCount, plural, one {# running} other {# running}}. Long press to close."
 msgstr "Abrir el espacio de trabajo {0}, {panelCount, plural, one {# activo} other {# activos}}. Mantén pulsado para cerrar"
 
-#: src/components/agent-workbench.tsx
-msgid "OpenCode agent daemon is not running on this host. Run `opencode serve --service` to start it."
-msgstr "El demonio OpenCode no se está ejecutando en este host. Ejecute `opencode serve --service` para iniciarlo"
-
 #: src/i18n/labels.ts
 msgid "OpenCode is installed, but its service is not answering. Run this command on the host."
 msgstr "OpenCode está instalado, pero su servicio no responde. Ejecuta este comando en el host"
-
-#: src/components/agent-workbench.tsx
-msgid "OpenCode service is offline"
-msgstr "El servicio de OpenCode está sin conexión"
-
-#: src/components/agent-composer.tsx
-#: src/components/agent-workbench.tsx
-msgid "OpenCode service offline"
-msgstr "Servicio OpenCode desconectado"
 
 #: src/app/+not-found.tsx
 msgid "Opening"
@@ -3600,10 +3592,6 @@ msgstr "Planificar"
 #: src/components/agent-composer.tsx
 msgid "Please retry or remove failed attachments."
 msgstr "Reintente o elimine los archivos adjuntos fallidos"
-
-#: src/components/agent-workbench.tsx
-msgid "Please start OpenCode on the server: opencode serve --service"
-msgstr "Inicie OpenCode en el servidor: opencode serve --service"
 
 #: src/components/open-web-service-sheet.tsx
 #: src/components/simfarm-preview.tsx
@@ -5077,6 +5065,10 @@ msgstr "Ahora el agente pregunta otra cosa"
 msgid "The agent is no longer waiting."
 msgstr "El agente ya no está esperando"
 
+#: src/components/agent-composer.tsx
+msgid "The agent is offline"
+msgstr "El agente está sin conexión"
+
 #: src/components/agent-context-sheet.tsx
 msgid "The agent stops asking; irreversibly destructive commands stay blocked"
 msgstr "El agente deja de preguntar; los comandos destructivos irreversibles siguen bloqueados"
@@ -5770,8 +5762,8 @@ msgid "Waiting to send"
 msgstr "En espera de envío"
 
 #: src/components/agent-workbench.tsx
-msgid "Welcome to OpenCode Agent"
-msgstr "Te damos la bienvenida al agente OpenCode"
+msgid "Welcome to {agentName}"
+msgstr "Te damos la bienvenida a {agentName}"
 
 #: src/components/session-map.tsx
 msgid "What is running"

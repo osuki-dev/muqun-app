@@ -170,6 +170,11 @@ msgstr "{0} ชั่วโมงที่แล้ว"
 msgid "{0}m ago"
 msgstr "{0} นาทีที่แล้ว"
 
+#: src/components/agent-composer.tsx
+#: src/components/agent-workbench.tsx
+msgid "{agentName} is offline"
+msgstr "{agentName} ออฟไลน์"
+
 #: src/components/agent-guide-sheet.tsx
 msgid "{agentName} is ready on this host."
 msgstr "{agentName} พร้อมใช้งานบนโฮสต์นี้"
@@ -411,17 +416,6 @@ msgstr "เพิ่มแล้ว"
 #: src/components/new-task-sheet.tsx
 msgid "Agent"
 msgstr "เอเจนต์"
-
-#. placeholder {0}: part.mode
-#: src/components/agent-message-block.tsx
-msgid "Agent · {0}"
-msgstr "เอเจนต์ · {0}"
-
-#. placeholder {0}: part.previous
-#. placeholder {1}: part.mode
-#: src/components/agent-message-block.tsx
-msgid "Agent · {0} → {1}"
-msgstr "เอเจนต์ · {0} → {1}"
 
 #: src/app/commands.tsx
 #: src/components/agent-command-delivery-picker.tsx
@@ -2319,8 +2313,8 @@ msgid "Guided AGENTS.md setup"
 msgstr "ตั้งค่า AGENTS.md แบบมีคำแนะนำ"
 
 #: src/app/settings.tsx
-msgid "Guides for pairing, the terminal, OpenCode and themes"
-msgstr "คู่มือการจับคู่ เทอร์มินัล OpenCode และธีม"
+msgid "Guides for pairing, the terminal, agents and themes"
+msgstr "คู่มือการจับคู่ เทอร์มินัล เอเจนต์ และธีม"
 
 #: src/components/settings-alerts.tsx
 msgid "Haptic feedback"
@@ -2646,8 +2640,8 @@ msgid "Latest"
 msgstr "ล่าสุด"
 
 #: src/components/agent-worktree-sheet.tsx
-msgid "Leave it empty and OpenCode picks a name."
-msgstr "เว้นว่างไว้แล้ว OpenCode จะตั้งชื่อให้"
+msgid "Leave it empty and the agent picks a name."
+msgstr "เว้นว่างไว้ แล้วเอเจนต์จะตั้งชื่อให้"
 
 #: src/components/new-task-sheet.tsx
 msgid "Leave it empty to start where the session already is."
@@ -2796,6 +2790,17 @@ msgstr "คัดลอกข้อความไปยังคลิปบอ
 #: src/components/agent-workbench.tsx
 msgid "Message not sent"
 msgstr "ยังไม่ได้ส่งข้อความ"
+
+#. placeholder {0}: part.mode
+#: src/components/agent-message-block.tsx
+msgid "Mode · {0}"
+msgstr "โหมด · {0}"
+
+#. placeholder {0}: part.previous
+#. placeholder {1}: part.mode
+#: src/components/agent-message-block.tsx
+msgid "Mode · {0} → {1}"
+msgstr "โหมด · {0} → {1}"
 
 #: src/components/agent-context-sheet.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
@@ -3400,22 +3405,9 @@ msgstr "เปิดเพื่อตรวจสอบสถานะปัจ
 msgid "Open workspace {0}, {panelCount, plural, one {# running} other {# running}}. Long press to close."
 msgstr "เปิดพื้นที่ทำงาน {0} {panelCount, plural, other {กำลังทำงาน # รายการ}} กดค้างเพื่อปิด"
 
-#: src/components/agent-workbench.tsx
-msgid "OpenCode agent daemon is not running on this host. Run `opencode serve --service` to start it."
-msgstr "บริการ OpenCode ไม่ได้ทำงานอยู่บนโฮสต์นี้ เรียกใช้ `opencode serve --service` เพื่อเริ่มต้น"
-
 #: src/i18n/labels.ts
 msgid "OpenCode is installed, but its service is not answering. Run this command on the host."
 msgstr "ติดตั้ง OpenCode แล้ว แต่บริการไม่ตอบสนอง ให้เรียกใช้คำสั่งนี้บนโฮสต์"
-
-#: src/components/agent-workbench.tsx
-msgid "OpenCode service is offline"
-msgstr "บริการ OpenCode ออฟไลน์"
-
-#: src/components/agent-composer.tsx
-#: src/components/agent-workbench.tsx
-msgid "OpenCode service offline"
-msgstr "บริการ OpenCode ออฟไลน์"
 
 #: src/app/+not-found.tsx
 msgid "Opening"
@@ -3600,10 +3592,6 @@ msgstr "วางแผน (Plan)"
 #: src/components/agent-composer.tsx
 msgid "Please retry or remove failed attachments."
 msgstr "โปรดลองอีกครั้งหรือนำไฟล์แนบที่ไม่สำเร็จออก"
-
-#: src/components/agent-workbench.tsx
-msgid "Please start OpenCode on the server: opencode serve --service"
-msgstr "โปรดเริ่ม OpenCode บนเซิร์ฟเวอร์: opencode serve --service"
 
 #: src/components/open-web-service-sheet.tsx
 #: src/components/simfarm-preview.tsx
@@ -5077,6 +5065,10 @@ msgstr "ตอนนี้เอเจนต์กำลังถามเรื
 msgid "The agent is no longer waiting."
 msgstr "เอเจนต์ไม่ได้รอแล้ว"
 
+#: src/components/agent-composer.tsx
+msgid "The agent is offline"
+msgstr "เอเจนต์ออฟไลน์"
+
 #: src/components/agent-context-sheet.tsx
 msgid "The agent stops asking; irreversibly destructive commands stay blocked"
 msgstr "เอเจนต์จะเลิกถาม แต่คำสั่งที่ทำลายอย่างกู้คืนไม่ได้ยังถูกบล็อกอยู่"
@@ -5770,8 +5762,8 @@ msgid "Waiting to send"
 msgstr "รอส่ง"
 
 #: src/components/agent-workbench.tsx
-msgid "Welcome to OpenCode Agent"
-msgstr "ยินดีต้อนรับสู่ OpenCode Agent"
+msgid "Welcome to {agentName}"
+msgstr "ยินดีต้อนรับสู่ {agentName}"
 
 #: src/components/session-map.tsx
 msgid "What is running"

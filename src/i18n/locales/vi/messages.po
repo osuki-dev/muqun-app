@@ -170,6 +170,11 @@ msgstr "{0} giờ trước"
 msgid "{0}m ago"
 msgstr "{0} phút trước"
 
+#: src/components/agent-composer.tsx
+#: src/components/agent-workbench.tsx
+msgid "{agentName} is offline"
+msgstr "{agentName} đang ngoại tuyến"
+
 #: src/components/agent-guide-sheet.tsx
 msgid "{agentName} is ready on this host."
 msgstr "{agentName} đã sẵn sàng trên máy chủ này"
@@ -411,17 +416,6 @@ msgstr "Đã thêm"
 #: src/components/new-task-sheet.tsx
 msgid "Agent"
 msgstr "Tác nhân"
-
-#. placeholder {0}: part.mode
-#: src/components/agent-message-block.tsx
-msgid "Agent · {0}"
-msgstr "Tác nhân · {0}"
-
-#. placeholder {0}: part.previous
-#. placeholder {1}: part.mode
-#: src/components/agent-message-block.tsx
-msgid "Agent · {0} → {1}"
-msgstr "Tác nhân · {0} → {1}"
 
 #: src/app/commands.tsx
 #: src/components/agent-command-delivery-picker.tsx
@@ -2319,8 +2313,8 @@ msgid "Guided AGENTS.md setup"
 msgstr "Thiết lập AGENTS.md có hướng dẫn"
 
 #: src/app/settings.tsx
-msgid "Guides for pairing, the terminal, OpenCode and themes"
-msgstr "Hướng dẫn ghép nối, terminal, OpenCode và chủ đề"
+msgid "Guides for pairing, the terminal, agents and themes"
+msgstr "Hướng dẫn về ghép nối, terminal, tác nhân và giao diện"
 
 #: src/components/settings-alerts.tsx
 msgid "Haptic feedback"
@@ -2646,8 +2640,8 @@ msgid "Latest"
 msgstr "Mới nhất"
 
 #: src/components/agent-worktree-sheet.tsx
-msgid "Leave it empty and OpenCode picks a name."
-msgstr "Để trống thì OpenCode tự đặt tên"
+msgid "Leave it empty and the agent picks a name."
+msgstr "Để trống và tác nhân sẽ tự đặt tên"
 
 #: src/components/new-task-sheet.tsx
 msgid "Leave it empty to start where the session already is."
@@ -2796,6 +2790,17 @@ msgstr "Đã sao chép tin nhắn vào khay nhớ tạm"
 #: src/components/agent-workbench.tsx
 msgid "Message not sent"
 msgstr "Chưa gửi được tin nhắn"
+
+#. placeholder {0}: part.mode
+#: src/components/agent-message-block.tsx
+msgid "Mode · {0}"
+msgstr "Chế độ · {0}"
+
+#. placeholder {0}: part.previous
+#. placeholder {1}: part.mode
+#: src/components/agent-message-block.tsx
+msgid "Mode · {0} → {1}"
+msgstr "Chế độ · {0} → {1}"
 
 #: src/components/agent-context-sheet.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
@@ -3400,22 +3405,9 @@ msgstr "Mở để kiểm tra trạng thái hiện tại"
 msgid "Open workspace {0}, {panelCount, plural, one {# running} other {# running}}. Long press to close."
 msgstr "Mở không gian làm việc {0}, {panelCount, plural, other {# đang chạy}}. Nhấn giữ để đóng"
 
-#: src/components/agent-workbench.tsx
-msgid "OpenCode agent daemon is not running on this host. Run `opencode serve --service` to start it."
-msgstr "Dịch vụ OpenCode không chạy trên máy chủ này. Chạy `opencode serve --service` để khởi động"
-
 #: src/i18n/labels.ts
 msgid "OpenCode is installed, but its service is not answering. Run this command on the host."
 msgstr "OpenCode đã được cài đặt nhưng dịch vụ không phản hồi. Chạy lệnh này trên máy chủ"
-
-#: src/components/agent-workbench.tsx
-msgid "OpenCode service is offline"
-msgstr "Dịch vụ OpenCode đang ngoại tuyến"
-
-#: src/components/agent-composer.tsx
-#: src/components/agent-workbench.tsx
-msgid "OpenCode service offline"
-msgstr "Dịch vụ OpenCode ngoại tuyến"
 
 #: src/app/+not-found.tsx
 msgid "Opening"
@@ -3600,10 +3592,6 @@ msgstr "Kế hoạch"
 #: src/components/agent-composer.tsx
 msgid "Please retry or remove failed attachments."
 msgstr "Vui lòng thử lại hoặc xóa các tệp đính kèm bị lỗi"
-
-#: src/components/agent-workbench.tsx
-msgid "Please start OpenCode on the server: opencode serve --service"
-msgstr "Vui lòng khởi động OpenCode trên máy chủ: opencode serve --service"
 
 #: src/components/open-web-service-sheet.tsx
 #: src/components/simfarm-preview.tsx
@@ -5077,6 +5065,10 @@ msgstr "Tác tử giờ đang hỏi điều khác"
 msgid "The agent is no longer waiting."
 msgstr "Tác tử không còn chờ nữa"
 
+#: src/components/agent-composer.tsx
+msgid "The agent is offline"
+msgstr "Tác nhân đang ngoại tuyến"
+
 #: src/components/agent-context-sheet.tsx
 msgid "The agent stops asking; irreversibly destructive commands stay blocked"
 msgstr "Tác nhân sẽ thôi hỏi; các lệnh phá huỷ không thể hoàn tác vẫn bị chặn"
@@ -5770,8 +5762,8 @@ msgid "Waiting to send"
 msgstr "Chờ gửi"
 
 #: src/components/agent-workbench.tsx
-msgid "Welcome to OpenCode Agent"
-msgstr "Chào mừng bạn đến với OpenCode Agent"
+msgid "Welcome to {agentName}"
+msgstr "Chào mừng đến với {agentName}"
 
 #: src/components/session-map.tsx
 msgid "What is running"

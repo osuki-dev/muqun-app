@@ -324,6 +324,8 @@ export interface AgentComposerProps {
   onOpenModeSheet?: () => void;
   onOpenDiffSheet: () => void;
   disabled?: boolean;
+  /** The agent's display name, for the offline placeholder. */
+  agentName?: string;
   onOpenSessionsSheet?: () => void;
   onOpenTasksSheet?: () => void;
   /** How many running shells the Background tasks sheet can show. */
@@ -406,6 +408,7 @@ export const AgentComposer = memo(function AgentComposer({
   onSelectAgentMode,
   onCreateNewSession,
   disabled,
+  agentName,
   onOpenModelSheet,
   onOpenModeSheet,
   onOpenDiffSheet,
@@ -1540,7 +1543,9 @@ export const AgentComposer = memo(function AgentComposer({
                   value: text,
                   onChangeText: setText,
                   placeholder: disabled
-                    ? t`OpenCode service offline`
+                    ? agentName
+                      ? t`${agentName} is offline`
+                      : t`The agent is offline`
                     : t`Send a message, type / for commands, @ for files…`,
                   editable: !sending && !disabled,
                   testID: 'agent-composer-input',
