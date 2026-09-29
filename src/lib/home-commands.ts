@@ -93,6 +93,26 @@ export type HomeNavigation =
 
 export type HomeResumeServerResult = boolean | 'missing' | void;
 
+/**
+ * How an overview embedded in a workspace resumes a terminal target.
+ *
+ * `handoff` publishes it for the mounted workspace, which closes the overview
+ * and selects the pane; `route` navigates to `/servers/[serverId]`. A
+ * route-bound workspace used to navigate for every target, and for its own
+ * server that is the route it already is: the params changed, the overview
+ * stayed up, and the Continue row looked as if it could not be tapped. Only a
+ * target on another server needs the route, because this owner is keyed to
+ * the route's server and will not consume a handoff for a different one.
+ */
+export function embeddedResumeRoute(options: {
+  routeBound: boolean;
+  workspaceServerId: string | null | undefined;
+  targetServerId: string;
+}): 'handoff' | 'route' {
+  if (!options.routeBound) return 'handoff';
+  return options.workspaceServerId === options.targetServerId ? 'handoff' : 'route';
+}
+
 export type HomeCommandPorts = {
   /** Whether a server target is still present in the current paired records. */
   hasServer: (serverId: string) => boolean;

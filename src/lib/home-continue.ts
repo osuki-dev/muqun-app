@@ -1,3 +1,4 @@
+import type { HomeCommand } from './home-commands';
 import type { HomeRecentEntry, HomeSessionObservation, HomeTarget } from './home-recents';
 import {
   homeServerModel,
@@ -41,6 +42,28 @@ export type HomeContinueEntry = {
     | { type: 'pane'; serverId: string; paneId?: string; cwd?: string }
     | { type: 'recent'; target: HomeTarget };
 };
+
+/**
+ * The Home command a Continue row runs.
+ *
+ * A pane row and a remembered terminal both resume the server on that pane, so
+ * an embedded Pad overview hands the pane to the workspace it sits on. Only a
+ * remembered agent session opens the agent workbench, and only an SSH target
+ * opens the SSH host; `resume-target` routes both by the target's own kind.
+ */
+export function homeContinueCommand(destination: HomeContinueEntry['destination']): HomeCommand {
+  if (destination.type === 'pane') {
+    return {
+      type: 'resume-server',
+      target: {
+        kind: 'gateway-terminal',
+        serverId: destination.serverId,
+        ...(destination.paneId ? { paneId: destination.paneId } : {}),
+      },
+    };
+  }
+  return { type: 'resume-target', target: destination.target };
+}
 
 /** The first screenful is generous; expansion is only useful after it. */
 export const HOME_CONTINUE_INITIAL_LIMIT = 10;

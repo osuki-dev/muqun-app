@@ -183,6 +183,10 @@ msgstr "{agentName} đã sẵn sàng trên máy chủ này"
 msgid "{agentName} ready"
 msgstr "{agentName} sẵn sàng"
 
+#: src/components/agent-workbench.tsx
+msgid "{agentName} refused the request: {message}"
+msgstr "{agentName} đã từ chối yêu cầu: {message}"
+
 #: src/components/new-task-action.tsx
 msgid "{agentName} service offline. Tap for setup instructions"
 msgstr "Dịch vụ {agentName} ngoại tuyến. Chạm để xem hướng dẫn thiết lập"
@@ -202,10 +206,6 @@ msgstr "Không tìm thấy {agentName} trên máy chủ này. Hãy cài đặt r
 #: src/components/new-task-action.tsx
 msgid "{agentName} was not found. Tap for installation instructions"
 msgstr "Không tìm thấy {agentName}. Chạm để xem hướng dẫn cài đặt"
-
-#: src/components/agent-composer.tsx
-msgid "{agentName}: {title} — finished while you were away"
-msgstr "{agentName}: {title} — đã xong khi bạn đi vắng"
 
 #: src/components/agent-guide-sheet.tsx
 msgid "{agentName}'s installation could not be confirmed. If it is installed, start it on the host."
@@ -260,6 +260,10 @@ msgstr "{label} tạm thời bị khóa. Hãy dùng cách dự phòng của hệ
 msgid "{language} code copied to clipboard"
 msgstr "Đã sao chép mã {language} vào bộ nhớ tạm"
 
+#: src/components/agent-composer.tsx
+msgid "{lead}: {title} — finished while you were away"
+msgstr "{lead}: {title} — đã xong khi bạn đi vắng"
+
 #: src/components/agent-revert-plate.tsx
 msgid "{messages, plural, one {# message} other {# messages}}"
 msgstr "{messages, plural, other {# tin nhắn}}"
@@ -285,6 +289,7 @@ msgstr "{removeLabel}: {label}"
 msgid "{running} running of {0}"
 msgstr "{running} trong {0} đang chạy"
 
+#: src/components/agent-composer.tsx
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-sessions-sheet.tsx
 msgid "{title} — finished while you were away"
@@ -3186,6 +3191,10 @@ msgstr "Đã tắt"
 msgid "Not set"
 msgstr "Chưa đặt"
 
+#: src/components/agent-model-sheet.tsx
+msgid "Not signed in on the host"
+msgstr "Chưa đăng nhập trên máy chủ"
+
 #: src/components/ssh-host-form.tsx
 msgid "Not valid."
 msgstr "Không hợp lệ"
@@ -4800,10 +4809,6 @@ msgstr "Đã dừng"
 #: src/app/settings.tsx
 msgid "Storage"
 msgstr "Bộ nhớ"
-
-#: src/components/agent-composer.tsx
-msgid "subagent"
-msgstr "tác nhân con"
 
 #: src/components/agent-mode-sheet.tsx
 #: src/components/agent-subagent-detail-sheet.tsx

@@ -1837,10 +1837,8 @@ export function parseAgentAvailability(value: unknown): AgentAvailability {
 
 /**
  * What an agent can do, as the gateway's `AgentFeatures` (camelCase on the
- * wire, like the whole discovery document). The seven named flags are the
- * gateway's; the rest are read from the same object when a gateway sends them
- * and default to the agent kind's own answer when it does not -- see
- * `parseAgentFeatures`.
+ * wire, like the whole discovery document). Every flag is the gateway's to
+ * state; a flag it does not send reads `true` -- see `parseAgentFeatures`.
  */
 export interface AgentFeatures {
   streaming: boolean;
@@ -1858,11 +1856,15 @@ export interface AgentFeatures {
   modes: boolean;
   /** Slash-invocable skills from the catalog. */
   skills: boolean;
+  /** The host's own slash commands, offered for completion in the composer. */
+  slashCommands: boolean;
+  /** Files and images attached to a prompt. */
+  attachments: boolean;
   /** Every other key the gateway sent, untouched, for a reader that knows one. */
   extra: Record<string, unknown>;
 }
 
-/** The wire's own seven; everything else is an `extra` this app may also read. */
+/** The flags this app reads; everything else is kept as an `extra`. */
 const AGENT_FEATURE_KEYS = [
   'streaming',
   'reasoningEffort',
@@ -1871,10 +1873,20 @@ const AGENT_FEATURE_KEYS = [
   'worktrees',
   'revert',
   'inbox',
+  'compaction',
+  'backgroundShells',
+  'modes',
+  'skills',
+  'slashCommands',
+  'attachments',
 ] as const;
 
-/** The whole of OpenCode, which is what the app assumed before it could ask. */
-export const OPENCODE_AGENT_FEATURES: Readonly<AgentFeatures> = Object.freeze({
+/**
+ * Every control on, which is what the app assumed before it could ask: a
+ * gateway without discovery drives the one agent every surface here was built
+ * on, and silence must not take a control away.
+ */
+export const LEGACY_AGENT_FEATURES: Readonly<AgentFeatures> = Object.freeze({
   streaming: true,
   reasoningEffort: true,
   modelSelection: true,
@@ -1886,34 +1898,20 @@ export const OPENCODE_AGENT_FEATURES: Readonly<AgentFeatures> = Object.freeze({
   backgroundShells: true,
   modes: true,
   skills: true,
+  slashCommands: true,
+  attachments: true,
   extra: Object.freeze({}) as Record<string, unknown>,
 });
 
 /**
- * What to assume of an agent whose features nobody has stated.
+ * What to assume of an agent whose features nobody has stated: everything.
  *
- * OpenCode is everything, because every surface in this app was built on it
- * and a discovery that fails must not take a single control away. Any other
- * kind gets the wire's seven flags at `false` -- a control that fails when
- * tapped is worse than a control that is missing -- and the four extended ones
- * at `false` too, for the same reason.
+ * No agent kind is special here. The gateway states each agent's features in
+ * discovery; this is only the answer for a gateway that has no discovery at
+ * all, where the one agent it drives is the one this app was built on.
  */
-export function defaultAgentFeatures(kind: string | undefined): AgentFeatures {
-  if (normalizeAgentId(kind) === DEFAULT_AGENT_ID) return { ...OPENCODE_AGENT_FEATURES };
-  return {
-    streaming: true,
-    reasoningEffort: false,
-    modelSelection: false,
-    toolApprovals: false,
-    worktrees: false,
-    revert: false,
-    inbox: false,
-    compaction: false,
-    backgroundShells: false,
-    modes: false,
-    skills: false,
-    extra: {},
-  };
+export function defaultAgentFeatures(): AgentFeatures {
+  return { ...LEGACY_AGENT_FEATURES, extra: {} };
 }
 
 /** A flag by name, when the gateway sent one. */
@@ -1926,45 +1924,39 @@ function pickBool(rec: Record<string, unknown>, keys: readonly string[]): boolea
 }
 
 /**
- * `features` of one agent. A flag the gateway did not send keeps the kind's
- * default, so a `deepseek` entry with `{}` for features is a DeepSeek with
- * nothing, and an `opencode` entry with `{}` is the OpenCode this app knows.
+ * `features` of one agent, as the gateway stated them.
  *
- * The four extended flags are not on the wire today. They are read from the
- * same object under the names the gateway would most naturally give them, so
- * a gateway that starts sending `compaction: false` is honoured on the day it
- * does; until then an OpenCode agent has them and every other kind does not.
+ * A flag the gateway did not send reads `true`: an older gateway predates the
+ * flag, and taking a control away because nobody mentioned it would break the
+ * agent those gateways drive. Whatever a flag leaves open, the screen still
+ * narrows by what the agent's catalog lists -- no modes, no mode button.
  */
-export function parseAgentFeatures(value: unknown, kind: string | undefined): AgentFeatures {
-  const defaults = defaultAgentFeatures(kind);
+export function parseAgentFeatures(value: unknown): AgentFeatures {
+  const defaults = defaultAgentFeatures();
   const rec = asRecord(value);
   if (!rec) return defaults;
   // A parsed object handed back in (the mirror re-reads its own writes)
   // carries its extras under `extra` already; they are kept there, not nested.
   const extra: Record<string, unknown> = { ...asRecord(rec.extra) };
-  const named = new Set<string>([
-    ...AGENT_FEATURE_KEYS,
-    'compaction',
-    'backgroundShells',
-    'modes',
-    'skills',
-    'extra',
-  ]);
+  const named = new Set<string>([...AGENT_FEATURE_KEYS, 'extra']);
   for (const [key, entry] of Object.entries(rec)) {
     if (!named.has(key)) extra[key] = entry;
   }
+  const flag = (key: (typeof AGENT_FEATURE_KEYS)[number]) => pickBool(rec, [key]) ?? defaults[key];
   return {
-    streaming: pickBool(rec, ['streaming']) ?? defaults.streaming,
-    reasoningEffort: pickBool(rec, ['reasoningEffort']) ?? defaults.reasoningEffort,
-    modelSelection: pickBool(rec, ['modelSelection']) ?? defaults.modelSelection,
-    toolApprovals: pickBool(rec, ['toolApprovals']) ?? defaults.toolApprovals,
-    worktrees: pickBool(rec, ['worktrees']) ?? defaults.worktrees,
-    revert: pickBool(rec, ['revert']) ?? defaults.revert,
-    inbox: pickBool(rec, ['inbox']) ?? defaults.inbox,
-    compaction: pickBool(rec, ['compaction']) ?? defaults.compaction,
-    backgroundShells: pickBool(rec, ['backgroundShells']) ?? defaults.backgroundShells,
-    modes: pickBool(rec, ['modes']) ?? defaults.modes,
-    skills: pickBool(rec, ['skills']) ?? defaults.skills,
+    streaming: flag('streaming'),
+    reasoningEffort: flag('reasoningEffort'),
+    modelSelection: flag('modelSelection'),
+    toolApprovals: flag('toolApprovals'),
+    worktrees: flag('worktrees'),
+    revert: flag('revert'),
+    inbox: flag('inbox'),
+    compaction: flag('compaction'),
+    backgroundShells: flag('backgroundShells'),
+    modes: flag('modes'),
+    skills: flag('skills'),
+    slashCommands: flag('slashCommands'),
+    attachments: flag('attachments'),
     extra,
   };
 }
@@ -2067,7 +2059,7 @@ export function parseAgentInfo(value: unknown): AgentInfo | null {
     ...(version ? { version } : {}),
     models,
     modes,
-    features: parseAgentFeatures(rec.features, kind),
+    features: parseAgentFeatures(rec.features),
   };
 }
 
@@ -2336,8 +2328,14 @@ export interface ModelInfo {
 
 export interface ProviderInfo {
   id: string;
+  /** The display name the gateway gave it; the id when it gave none. */
   name: string;
   activation?: 'auto' | 'enabled' | 'disabled';
+  /**
+   * Whether a session can start on it now. `false` is listed so the sheet can
+   * say what the host needs; absent (an older gateway) means available.
+   */
+  available?: boolean;
   models: ModelInfo[];
 }
 
@@ -2508,6 +2506,7 @@ export function parseAgentCatalog(value: unknown): AgentCatalog {
         ...(activation === 'auto' || activation === 'enabled' || activation === 'disabled'
           ? { activation }
           : {}),
+        ...(typeof providerRec.available === 'boolean' ? { available: providerRec.available } : {}),
         models: providerModels,
       });
       // The flat list is what every picker in the app reads; a provider-only

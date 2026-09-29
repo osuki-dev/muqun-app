@@ -183,6 +183,10 @@ msgstr "{agentName} พร้อมใช้งานบนโฮสต์นี
 msgid "{agentName} ready"
 msgstr "{agentName} พร้อมแล้ว"
 
+#: src/components/agent-workbench.tsx
+msgid "{agentName} refused the request: {message}"
+msgstr "{agentName} ปฏิเสธคำขอ: {message}"
+
 #: src/components/new-task-action.tsx
 msgid "{agentName} service offline. Tap for setup instructions"
 msgstr "บริการ {agentName} ออฟไลน์ แตะเพื่อดูวิธีตั้งค่า"
@@ -202,10 +206,6 @@ msgstr "ไม่พบ {agentName} บนโฮสต์นี้ ติดต�
 #: src/components/new-task-action.tsx
 msgid "{agentName} was not found. Tap for installation instructions"
 msgstr "ไม่พบ {agentName} แตะเพื่อดูวิธีติดตั้ง"
-
-#: src/components/agent-composer.tsx
-msgid "{agentName}: {title} — finished while you were away"
-msgstr "{agentName}: {title} — ทำงานเสร็จตอนที่คุณไม่อยู่"
 
 #: src/components/agent-guide-sheet.tsx
 msgid "{agentName}'s installation could not be confirmed. If it is installed, start it on the host."
@@ -260,6 +260,10 @@ msgstr "{label} ถูกล็อกชั่วคราว ใช้วิธ
 msgid "{language} code copied to clipboard"
 msgstr "คัดลอกโค้ด {language} ไปยังคลิปบอร์ดแล้ว"
 
+#: src/components/agent-composer.tsx
+msgid "{lead}: {title} — finished while you were away"
+msgstr "{lead}: {title} — ทำงานเสร็จตอนที่คุณไม่อยู่"
+
 #: src/components/agent-revert-plate.tsx
 msgid "{messages, plural, one {# message} other {# messages}}"
 msgstr "{messages, plural, other {# ข้อความ}}"
@@ -285,6 +289,7 @@ msgstr "{removeLabel}: {label}"
 msgid "{running} running of {0}"
 msgstr "กำลังทำงาน {running} จาก {0}"
 
+#: src/components/agent-composer.tsx
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-sessions-sheet.tsx
 msgid "{title} — finished while you were away"
@@ -3186,6 +3191,10 @@ msgstr "ไม่ได้ทำงาน"
 msgid "Not set"
 msgstr "ยังไม่ได้ตั้ง"
 
+#: src/components/agent-model-sheet.tsx
+msgid "Not signed in on the host"
+msgstr "ยังไม่ได้ลงชื่อเข้าใช้บนโฮสต์"
+
 #: src/components/ssh-host-form.tsx
 msgid "Not valid."
 msgstr "ไม่ถูกต้อง"
@@ -4800,10 +4809,6 @@ msgstr "หยุดแล้ว"
 #: src/app/settings.tsx
 msgid "Storage"
 msgstr "พื้นที่จัดเก็บ"
-
-#: src/components/agent-composer.tsx
-msgid "subagent"
-msgstr "ซับเอเจนต์"
 
 #: src/components/agent-mode-sheet.tsx
 #: src/components/agent-subagent-detail-sheet.tsx

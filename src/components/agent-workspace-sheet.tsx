@@ -1,3 +1,4 @@
+import { scopedAgentCacheVariant } from '@/lib/agent-discovery';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
 import { Spinner, useThemeTokens } from '@osuki-dev/ui';
@@ -62,6 +63,8 @@ function directoryAsProject(directory: string): AgentProject {
 export interface AgentWorkspaceSheetProps {
   activeDirectory?: string;
   sessionId?: string;
+  /** The agent whose projects are listed; absent on a gateway without discovery. */
+  agentId?: string;
   initialProjects?: readonly AgentProject[];
   onSelectWorkspace: (directory: string, project?: AgentProject) => void;
   onClose: () => void;
@@ -74,6 +77,7 @@ function withoutGlobalRoot(projects: readonly AgentProject[]): AgentProject[] {
 export const AgentWorkspaceSheet = memo(function AgentWorkspaceSheet({
   activeDirectory,
   sessionId,
+  agentId,
   initialProjects,
   onSelectWorkspace,
   onClose,
@@ -84,7 +88,9 @@ export const AgentWorkspaceSheet = memo(function AgentWorkspaceSheet({
 
   const [projects, setProjects] = useState<AgentProject[]>(() => {
     if (initialProjects && initialProjects.length > 0) return withoutGlobalRoot(initialProjects);
-    const cached = getCachedAgentProjectsSync(buildAgentCacheKey('projects', null, sessionId));
+    const cached = getCachedAgentProjectsSync(
+      buildAgentCacheKey('projects', null, sessionId, scopedAgentCacheVariant(null, agentId))
+    );
     return cached ? withoutGlobalRoot(cached) : [];
   });
   /**
@@ -108,11 +114,10 @@ export const AgentWorkspaceSheet = memo(function AgentWorkspaceSheet({
             async () => {
               // A retry that reads the cached answer again is not a retry; the first
               // read of an opening is still allowed to be instant.
-              const list = await getAgentProjects(
-                sessionId,
-                undefined,
-                options?.forceRefresh ? { forceRefresh: true } : undefined
-              );
+              const list = await getAgentProjects(sessionId, undefined, {
+                ...(options?.forceRefresh ? { forceRefresh: true } : {}),
+                ...(agentId ? { agentId } : {}),
+              });
               setProjects(withoutGlobalRoot(list ?? []));
               loadedOnceRef.current = true;
             },
@@ -126,7 +131,7 @@ export const AgentWorkspaceSheet = memo(function AgentWorkspaceSheet({
         }
       );
     },
-    [sessionId]
+    [sessionId, agentId]
   );
 
   useEffect(() => {

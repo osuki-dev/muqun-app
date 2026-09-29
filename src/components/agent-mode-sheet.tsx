@@ -37,6 +37,11 @@ export interface AgentModeSheetProps {
    * is not in it -- which is what made this sheet unable to offer one.
    */
   directory?: string;
+  /**
+   * The agent whose modes are listed. Named on a gateway with discovery,
+   * where a read without it merges every agent's modes into one list.
+   */
+  agentId?: string;
   selectedAgent?: string;
   onSelectAgent: (agent: string) => void;
   onClose: () => void;
@@ -60,6 +65,7 @@ function agentIcon(id: string, color: string) {
 export const AgentModeSheet = memo(function AgentModeSheet({
   sessionId,
   directory,
+  agentId,
   selectedAgent,
   onSelectAgent,
   onClose: _onClose,
@@ -115,7 +121,13 @@ export const AgentModeSheet = memo(function AgentModeSheet({
   useEffect(() => {
     let active = true;
     setLoading(true);
-    getAgentCatalog(sessionId, undefined, directory ? { directory } : {})
+    // The built-in list is the legacy single-agent gateway's; an agent that
+    // discovery named lists its own modes or none.
+    const fallbackModes = agentId ? [] : builtinAgents;
+    getAgentCatalog(sessionId, undefined, {
+      ...(directory ? { directory } : {}),
+      ...(agentId ? { agentId } : {}),
+    })
       .then((catalog) => {
         if (!active) return;
         /*
@@ -129,12 +141,12 @@ export const AgentModeSheet = memo(function AgentModeSheet({
          */
         const listed = selectableModes(catalog?.modes ?? []);
         const fallback = catalog?.modes && catalog.modes.length > 0 ? catalog.modes : [];
-        setAgents(listed.length > 0 ? listed : fallback.length > 0 ? fallback : builtinAgents);
+        setAgents(listed.length > 0 ? listed : fallback.length > 0 ? fallback : fallbackModes);
         setDefaultAgent(catalog?.defaults?.mode);
       })
       .catch((err) => {
         console.warn('Failed to load agent catalog:', err);
-        if (active) setAgents(builtinAgents);
+        if (active) setAgents(fallbackModes);
       })
       .finally(() => {
         if (active) setLoading(false);
@@ -142,7 +154,7 @@ export const AgentModeSheet = memo(function AgentModeSheet({
     return () => {
       active = false;
     };
-  }, [sessionId, directory, builtinAgents]);
+  }, [sessionId, directory, agentId, builtinAgents]);
 
   const displayAgents = agents.length > 0 ? agents : builtinAgents;
 

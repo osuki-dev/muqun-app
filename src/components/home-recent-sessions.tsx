@@ -18,10 +18,12 @@ import { resolveSessionId, sessionChoices } from '@/lib/session-switcher';
 import { useServerSession } from '@/stores/server-session';
 import { isDemoRecord } from '@/lib/demo-gateway';
 import type { GatewayRecord } from '@/lib/gateway-storage';
-import { homeTargetAgentId, type HomeTarget } from '@/lib/home-recents';
+import type { HomeCommand } from '@/lib/home-commands';
+import { homeTargetAgentId } from '@/lib/home-recents';
 import { agentDisplayName } from '@/lib/home-launch-model';
 import { useAgents } from '@/stores/agents';
 import {
+  homeContinueCommand,
   homeContinueEntries,
   shouldShowHomeContinueOverflow,
   visibleHomeContinueEntries,
@@ -47,15 +49,14 @@ export function HomeRecentSessions({
   activeConnection,
   selectedServerId,
   onOpen,
-  onOpenPane,
 }: {
   servers: readonly GatewayRecord[];
   hosts: readonly SshHostRecord[];
   reachabilityByServer: Readonly<Record<string, ServerReachability | undefined>>;
   activeConnection?: ActiveServerConnection;
   selectedServerId?: string;
-  onOpen: (target: HomeTarget) => void;
-  onOpenPane: (serverId: string, paneId?: string) => void;
+  /** Runs the row's Home command; see `homeContinueCommand`. */
+  onOpen: (command: HomeCommand) => void;
 }) {
   const { t } = useLingui();
   const theme = useThemeTokens();
@@ -168,11 +169,7 @@ export function HomeRecentSessions({
                       : entry.destination.target.serverId)
               )?.label
             }
-            onOpen={() => {
-              if (entry.destination.type === 'pane')
-                onOpenPane(entry.destination.serverId, entry.destination.paneId);
-              else onOpen(entry.destination.target);
-            }}
+            onOpen={() => onOpen(homeContinueCommand(entry.destination))}
           />
         ))}
         {available.length === 0 ? (

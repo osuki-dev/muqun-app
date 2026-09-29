@@ -183,6 +183,10 @@ msgstr "이 호스트에서 {agentName}을(를) 사용할 수 있습니다"
 msgid "{agentName} ready"
 msgstr "{agentName} 준비됨"
 
+#: src/components/agent-workbench.tsx
+msgid "{agentName} refused the request: {message}"
+msgstr "{agentName}이(가) 요청을 거부했습니다: {message}"
+
 #: src/components/new-task-action.tsx
 msgid "{agentName} service offline. Tap for setup instructions"
 msgstr "{agentName} 서비스가 오프라인입니다. 탭하여 설정 방법 보기"
@@ -202,10 +206,6 @@ msgstr "이 호스트에서 {agentName}을(를) 찾을 수 없습니다. 설치�
 #: src/components/new-task-action.tsx
 msgid "{agentName} was not found. Tap for installation instructions"
 msgstr "{agentName}을(를) 찾을 수 없습니다. 탭하여 설치 방법 보기"
-
-#: src/components/agent-composer.tsx
-msgid "{agentName}: {title} — finished while you were away"
-msgstr "{agentName}: {title} — 자리를 비운 사이에 끝났습니다"
 
 #: src/components/agent-guide-sheet.tsx
 msgid "{agentName}'s installation could not be confirmed. If it is installed, start it on the host."
@@ -260,6 +260,10 @@ msgstr "{label}이(가) 일시적으로 잠겼습니다. 시스템 대체 수단
 msgid "{language} code copied to clipboard"
 msgstr "{language} 코드를 클립보드에 복사했습니다"
 
+#: src/components/agent-composer.tsx
+msgid "{lead}: {title} — finished while you were away"
+msgstr "{lead}: {title} — 자리를 비운 사이에 끝났습니다"
+
 #: src/components/agent-revert-plate.tsx
 msgid "{messages, plural, one {# message} other {# messages}}"
 msgstr "{messages, plural, other {메시지 #개}}"
@@ -285,6 +289,7 @@ msgstr "{removeLabel}: {label}"
 msgid "{running} running of {0}"
 msgstr "{0}개 중 {running}개 실행 중"
 
+#: src/components/agent-composer.tsx
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-sessions-sheet.tsx
 msgid "{title} — finished while you were away"
@@ -3186,6 +3191,10 @@ msgstr "실행 중이 아님"
 msgid "Not set"
 msgstr "설정 안 됨"
 
+#: src/components/agent-model-sheet.tsx
+msgid "Not signed in on the host"
+msgstr "호스트에 로그인되어 있지 않음"
+
 #: src/components/ssh-host-form.tsx
 msgid "Not valid."
 msgstr "올바르지 않습니다"
@@ -4800,10 +4809,6 @@ msgstr "중지됨"
 #: src/app/settings.tsx
 msgid "Storage"
 msgstr "저장 공간"
-
-#: src/components/agent-composer.tsx
-msgid "subagent"
-msgstr "서브에이전트"
 
 #: src/components/agent-mode-sheet.tsx
 #: src/components/agent-subagent-detail-sheet.tsx

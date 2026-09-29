@@ -209,7 +209,7 @@ test('a session chip follows its title and never clips a taller face', () => {
     expect(`${name}:${style(source, name)}`).toContain('flexShrink: 0');
   }
   // The badge is host-supplied; it stays one line.
-  expect(source).toContain('weight="semibold"\n          numberOfLines={1}');
+  expect(source).toContain('weight="semibold"\n              numberOfLines={1}');
 });
 
 test('the approval tool tag is capped, so it cannot take the prompt', () => {

@@ -25,7 +25,7 @@ import {
 import {
   DEFAULT_AGENT_ID,
   defaultAgentFeatures,
-  OPENCODE_AGENT_FEATURES,
+  LEGACY_AGENT_FEATURES,
   parseGatewayDiscovery,
   type AgentInfo,
   type GatewayDiscovery,
@@ -50,7 +50,7 @@ function agent(over: Partial<AgentInfo> & Pick<AgentInfo, 'id'>): AgentInfo {
     enabled: true,
     models: [],
     modes: [],
-    features: defaultAgentFeatures(over.id),
+    features: defaultAgentFeatures(),
     ...over,
   };
 }
@@ -110,6 +110,12 @@ const gatewayAnswer = {
             worktrees: false,
             revert: false,
             inbox: false,
+            modes: true,
+            skills: false,
+            slashCommands: false,
+            compaction: false,
+            backgroundShells: false,
+            attachments: false,
           },
         },
         {
@@ -167,9 +173,12 @@ describe('naming an agent on the wire', () => {
     expect(agentCatalogPath(undefined, '/work', 'deepseek')).toBe(
       '/api/agent-catalog?directory=%2Fwork&agent_id=deepseek'
     );
+    // The catalog names the default agent too: unnamed, a multi-agent
+    // gateway merges every agent's catalog into one answer.
     expect(agentCatalogPath('herdr', undefined, 'opencode')).toBe(
-      '/api/sessions/herdr/agent-catalog'
+      '/api/sessions/herdr/agent-catalog?agent_id=opencode'
     );
+    expect(agentCatalogPath('herdr')).toBe('/api/sessions/herdr/agent-catalog');
   });
 
   test('cache keys keep every entry written before agents existed', () => {
@@ -184,7 +193,7 @@ describe('naming an agent on the wire', () => {
     );
     expect(agentCacheVariant(null, undefined)).toBeNull();
     expect(agentCatalogCacheVariant('/work')).toBe('dir=/work');
-    expect(agentCatalogCacheVariant('/work', 'opencode')).toBe('dir=/work');
+    expect(agentCatalogCacheVariant('/work', 'opencode')).toBe('dir=/work;agent=opencode');
     expect(agentCatalogCacheVariant(undefined, 'deepseek')).toBe('agent=deepseek');
   });
 });
@@ -241,11 +250,10 @@ describe('which agent a new session goes to', () => {
 });
 
 describe('features and gating', () => {
-  test('an agent nobody has described is its kind: OpenCode is everything, anything else nothing', () => {
-    expect(agentFeaturesFor(undefined, 'opencode')).toEqual({ ...OPENCODE_AGENT_FEATURES });
+  test('an agent nobody has described has every control, whatever its kind', () => {
+    expect(agentFeaturesFor(undefined, 'opencode')).toEqual({ ...LEGACY_AGENT_FEATURES });
     expect(agentFeaturesFor(undefined, undefined).revert).toBe(true);
-    expect(agentFeaturesFor([], 'deepseek').revert).toBe(false);
-    expect(agentFeaturesFor([], 'deepseek').streaming).toBe(true);
+    expect(agentFeaturesFor([], 'deepseek')).toEqual({ ...LEGACY_AGENT_FEATURES });
   });
 
   test('a listed agent answers with what the gateway said', () => {
@@ -258,8 +266,10 @@ describe('features and gating', () => {
       modelSelection: true,
       compaction: false,
       backgroundShells: false,
-      modes: false,
+      modes: true,
       skills: false,
+      slashCommands: false,
+      attachments: false,
     });
     expect(agentFeaturesFor(agents, 'opencode')).toMatchObject({
       worktrees: true,
@@ -282,15 +292,17 @@ describe('features and gating', () => {
   });
 
   test('the composer hides exactly the commands the agent cannot answer', () => {
-    expect(hiddenClientCommands({ ...OPENCODE_AGENT_FEATURES })).toEqual([]);
-    expect(hiddenClientCommands(defaultAgentFeatures('deepseek'))).toEqual([
-      'undo',
-      'keep',
-      'compact',
-      'agents',
-    ]);
+    expect(hiddenClientCommands({ ...LEGACY_AGENT_FEATURES })).toEqual([]);
     expect(
-      hiddenClientCommands({ ...OPENCODE_AGENT_FEATURES, revert: false, compaction: false })
+      hiddenClientCommands({
+        ...LEGACY_AGENT_FEATURES,
+        revert: false,
+        compaction: false,
+        modes: false,
+      })
+    ).toEqual(['undo', 'keep', 'compact', 'agents']);
+    expect(
+      hiddenClientCommands({ ...LEGACY_AGENT_FEATURES, revert: false, compaction: false })
     ).toEqual(['undo', 'keep', 'compact']);
   });
 });

@@ -147,12 +147,29 @@ describe('the agents plane', () => {
     expect(opencode?.features.reasoningEffort).toBe(false);
   });
 
-  test('a flag the gateway left out is the kind default', () => {
+  test('a flag the gateway left out is on, whatever the kind', () => {
     const deepseek = parseAgentsDiscovery(plane)?.agents[1];
     expect(deepseek?.status).toBe('not_installed');
     expect(deepseek?.enabled).toBe(false);
-    expect(deepseek?.features.revert).toBe(false);
+    expect(deepseek?.features.revert).toBe(true);
     expect(deepseek?.features.streaming).toBe(true);
+    const stated = parseAgentsDiscovery({
+      agents: [
+        {
+          id: 't3',
+          status: 'connected',
+          features: { modes: false, slashCommands: false, attachments: false, skills: true },
+        },
+      ],
+    });
+    expect(stated?.agents[0]?.features).toMatchObject({
+      modes: false,
+      slashCommands: false,
+      attachments: false,
+      skills: true,
+      compaction: true,
+    });
+    expect(stated?.agents[0]?.features.extra).toEqual({});
     const unredacted = parseAgentsDiscovery({
       agents: [{ id: 'opencode', status: 'connected', features: {} }],
     });

@@ -18,20 +18,20 @@
  * without a gateway client or a native store behind them.
  */
 
-import { agentCacheVariant, withAgentIdQuery } from './agent-discovery';
+import { scopedAgentCacheVariant, withScopedAgentId } from './agent-discovery';
 
 /**
  * The route a catalog read goes to, with the workspace named when there is
- * one and the agent named when it is not the default. Without `agent` a
- * multi-agent gateway answers with every agent's catalog merged, which is
- * not what a screen on one session wants -- see `withAgentIdQuery`.
+ * one and the agent whenever the caller names one -- the default agent too.
+ * Without it a multi-agent gateway answers with every agent's catalog merged,
+ * which is not what a screen on one session wants; see `withScopedAgentId`.
  */
 export function agentCatalogPath(sessionId?: string, directory?: string, agentId?: string): string {
   const base = sessionId
     ? `/api/sessions/${encodeURIComponent(sessionId)}/agent-catalog`
     : '/api/agent-catalog';
   const dir = normalizeCatalogDirectory(directory);
-  return withAgentIdQuery(dir ? `${base}?directory=${encodeURIComponent(dir)}` : base, agentId);
+  return withScopedAgentId(dir ? `${base}?directory=${encodeURIComponent(dir)}` : base, agentId);
 }
 
 /**
@@ -39,12 +39,13 @@ export function agentCatalogPath(sessionId?: string, directory?: string, agentId
  *
  * `null` keeps the unscoped key exactly as it was, so a caller with no
  * directory -- the composer before a session's snapshot has landed, say --
- * still reads and writes the entry it always did. The agent is folded in
- * the same way: only a non-default one changes the key.
+ * still reads and writes the entry it always did. A named agent -- the
+ * default one included -- is another resource: the merged answer and one
+ * agent's answer must never share an entry or an ETag.
  */
 export function agentCatalogCacheVariant(directory?: string, agentId?: string): string | null {
   const dir = normalizeCatalogDirectory(directory);
-  return agentCacheVariant(dir ? `dir=${dir}` : null, agentId);
+  return scopedAgentCacheVariant(dir ? `dir=${dir}` : null, agentId);
 }
 
 /** An empty or whitespace-only directory is no directory at all. */
@@ -53,10 +54,12 @@ export function normalizeCatalogDirectory(directory?: string): string | undefine
   return trimmed ? trimmed : undefined;
 }
 
-/** Which gateway session and which workspace a catalog on screen came from. */
+/** Which gateway session, workspace and agent a catalog on screen came from. */
 export interface AgentCatalogScope {
   sessionId?: string;
   directory?: string;
+  /** The agent the read named; absent on a gateway without discovery. */
+  agentId?: string;
 }
 
 /**
@@ -68,7 +71,8 @@ export interface AgentCatalogScope {
  *    happens before any snapshot has said which directory the session is in,
  *    and a screen that waited for one would have no catalog at all on a host
  *    that never answers.
- *  * Another gateway session is another host's catalog, so it always reads.
+ *  * Another gateway session is another host's catalog, so it always reads,
+ *    and another agent is another catalog on the same host.
  *  * **Losing** the directory is not a reason to read. `activeDirectory` is
  *    `undefined` until a snapshot or an `agent.session.updated` states it, and
  *    it can go back to `undefined` while one is in flight. Re-reading then
@@ -83,6 +87,8 @@ export function shouldRefetchAgentCatalog(
 ): boolean {
   if (!previous) return true;
   if (previous.sessionId !== next.sessionId) return true;
+  // Another agent is another catalog: its modes, models and defaults.
+  if ((previous.agentId ?? '') !== (next.agentId ?? '')) return true;
   const nextDir = normalizeCatalogDirectory(next.directory);
   if (!nextDir) return false;
   return normalizeCatalogDirectory(previous.directory) !== nextDir;
