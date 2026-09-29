@@ -1,5 +1,5 @@
 import { homeTargetKey, type HomeTarget } from '@/lib/home-recents';
-import type { OpenCodeReadiness } from '@/lib/home-opencode-readiness';
+import type { AgentReadiness } from '@/lib/home-agent-readiness';
 import { homeWorkspaceHandoffStore } from '@/lib/home-workspace-handoff';
 import { DEMO_SSH_HOST_ID } from '@/lib/demo-ssh-transcript';
 
@@ -39,20 +39,22 @@ export type HomeServerEntry = {
 };
 
 export type HomeOpenCodeEntry = {
-  kind: 'opencode-session';
+  kind: 'agent-session';
   serverId: string;
   /** Gateway routing session, when a recent target supplies it. */
   sessionId?: string;
   directory?: string;
   /** OpenCode agent session identity, when a recent target supplies it. */
   asid?: string;
+  /** The agentId to open or create on; the server's own choice when absent. */
+  agentId?: string;
 };
 
 export type HomeCommand =
   | { type: 'resume-server'; target: HomeServerEntry }
   | { type: 'resume-target'; target: HomeTarget }
   | { type: 'open-opencode'; target: HomeOpenCodeEntry }
-  | { type: 'new-opencode'; serverId: string; directory?: string }
+  | { type: 'new-opencode'; serverId: string; directory?: string; agentId?: string }
   | { type: 'new-terminal'; serverId: string; workspaceId?: string }
   | { type: 'open-ssh'; hostId?: string }
   | { type: 'pair-gateway' }
@@ -105,11 +107,15 @@ export type HomeCommandPorts = {
   /** Read the existing server/session API needed by the panels picker. */
   loadTerminalSelection: (serverId: string) => Promise<HomeTerminalSelection | null>;
   /** Validate persisted terminal and SSH targets before routing to them. */
-  validateTarget?: (target: Exclude<HomeTarget, { kind: 'opencode-session' }>) => Promise<boolean>;
+  validateTarget?: (target: Exclude<HomeTarget, { kind: 'agent-session' }>) => Promise<boolean>;
   /** An adapter owns actual route calls and any transport warm ordering. */
   navigate: (destination: HomeNavigation) => void;
   /** Optional shared capability/setup gate for creating a new OpenCode session. */
-  prepareNewOpenCode?: (serverId: string, directory?: string) => Promise<OpenCodeReadiness>;
+  prepareNewOpenCode?: (
+    serverId: string,
+    directory?: string,
+    agentId?: string
+  ) => Promise<AgentReadiness>;
   /**
    * Optional adapter for the existing server-open path. The guard remains
    * valid when the source Home owner unmounts, so an embedded adapter can
@@ -127,7 +133,7 @@ export type HomeCommandResult =
   | { status: 'superseded'; operationId: number }
   | { status: 'missing-target'; operationId: number; target: string }
   | { status: 'unavailable'; operationId: number; message: string }
-  | { status: 'setup-required'; operationId: number; readiness: OpenCodeReadiness }
+  | { status: 'setup-required'; operationId: number; readiness: AgentReadiness }
   | { status: 'failed'; operationId: number; message: string };
 
 type PendingOperation = { id: number; key: string; owner: symbol; survivesDispose: boolean };
@@ -221,7 +227,7 @@ export function createHomeCommandController(ports: HomeCommandPorts) {
 
   function setupRequired(
     operation: PendingOperation,
-    readiness: OpenCodeReadiness
+    readiness: AgentReadiness
   ): HomeCommandResult {
     finish(operation);
     return { status: 'setup-required', operationId: operation.id, readiness };
@@ -342,7 +348,11 @@ export function createHomeCommandController(ports: HomeCommandPorts) {
           const ownership = selectedServerStillOwns(operation, command.serverId);
           if (ownership) return ownership;
           if (ports.prepareNewOpenCode) {
-            const readiness = await ports.prepareNewOpenCode(command.serverId, command.directory);
+            const readiness = await ports.prepareNewOpenCode(
+              command.serverId,
+              command.directory,
+              command.agentId
+            );
             if (!current(operation)) return superseded(operation);
             const preparedOwnership = selectedServerStillOwns(operation, command.serverId);
             if (preparedOwnership) return preparedOwnership;
@@ -359,9 +369,10 @@ export function createHomeCommandController(ports: HomeCommandPorts) {
             ports.navigate({
               type: 'opencode',
               target: {
-                kind: 'opencode-session',
+                kind: 'agent-session',
                 serverId: command.serverId,
                 ...(command.directory ? { directory: command.directory } : {}),
+                ...(command.agentId ? { agentId: command.agentId } : {}),
               },
               intent: 'new',
             });

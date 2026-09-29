@@ -218,11 +218,11 @@ function RecentSessionRow({
   const cwd =
     entry.destination.type === 'pane'
       ? entry.destination.cwd
-      : target?.kind === 'opencode-session'
+      : target?.kind === 'agent-session'
         ? target.directory
         : undefined;
   const kind =
-    target?.kind === 'opencode-session'
+    target?.kind === 'agent-session'
       ? t`OpenCode session`
       : !target || target.kind === 'gateway-terminal'
         ? t`Terminal`
@@ -232,7 +232,7 @@ function RecentSessionRow({
   const observation = entry.observation;
   const status = observation?.status;
   const statusLabel = status
-    ? observation?.kind === 'opencode-session'
+    ? observation?.kind === 'agent-session'
       ? status === 'busy'
         ? t`Running`
         : status === 'idle'
@@ -247,7 +247,7 @@ function RecentSessionRow({
       : _(agentStatusWord[status] ?? agentStatusWord.unknown)
     : undefined;
   const statusTone =
-    observation?.kind === 'opencode-session'
+    observation?.kind === 'agent-session'
       ? status === 'busy' || status === 'retry'
         ? 'info'
         : status === 'failed'

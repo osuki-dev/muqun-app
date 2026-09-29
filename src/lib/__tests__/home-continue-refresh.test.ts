@@ -3,7 +3,7 @@ import { refreshHomeContinue } from '../home-continue-refresh';
 import type { HomeRecentEntry } from '../home-recents';
 
 const target = {
-  kind: 'opencode-session' as const,
+  kind: 'agent-session' as const,
   serverId: 'chosen',
   sessionId: 'dev',
   directory: '/work',

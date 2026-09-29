@@ -113,7 +113,7 @@ import {
   type FormRequest,
   type ModelRef,
   type PermissionDecision,
-  type AgentInfo,
+  type ModeInfo,
   type CatalogDefaults,
   type ModelInfo,
   type SkillInfo,
@@ -127,6 +127,14 @@ import { catalogModelRef, resolveNewSessionDefaults } from '@/lib/agent-session-
 import { engineFailureAction } from '@/lib/agent-engine-text';
 import { dangerousPermissionReason, yoloDecision } from '@/lib/agent-permission-safety';
 import { removeTimelineItems, revertedMessageCount } from '@/lib/agent-revert';
+import { hiddenClientCommands } from '@/lib/agent-discovery';
+import {
+  useAgentFeatures,
+  useAgentsDiscoveryRefresh,
+  useSelectedAgent,
+} from '@/hooks/use-agent-features';
+import { hasAgentsDiscoveryFor, useAgents } from '@/stores/agents';
+import { AgentActionMenu, type AgentActionMenuItem } from '@/components/agent-action-menu';
 import { capText } from '@/lib/agent-tool-output';
 import type { AgentClientCommandId } from '@/lib/agent-commands';
 import {
@@ -238,6 +246,9 @@ const SCREEN_NOTICE_HEADER_GAP = 14;
 
 /** A catalog that has not answered yet, as one object rather than a new `{}`. */
 const NO_CATALOG_DEFAULTS: CatalogDefaults = {};
+/** What the composer is handed for a feature the session's agent lacks. */
+const NO_SKILLS: SkillInfo[] = [];
+const NO_INBOX: InboxItem[] = [];
 
 /** Between a notice and the first transcript row it is standing over. */
 const NOTICE_RESERVE_GAP = 8;
@@ -266,6 +277,12 @@ export interface AgentWorkbenchProps {
   initialAsid?: string;
   /** Directory supplied by Home's explicit new-session intent. */
   initialDirectory?: string;
+  /**
+   * The agent a Home entry named. Becomes the reader's pick for this server,
+   * so the next new session goes there; the open session's own agent still
+   * decides what the screen can do.
+   */
+  initialAgentId?: string;
   /** A route intent is consumed by this screen; opening `/agent` alone resumes. */
   initialIntent?: 'new';
   /** A retained task under the Home overview is mounted, but is not being read. */
@@ -282,6 +299,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   sessionId,
   initialAsid,
   initialDirectory,
+  initialAgentId,
   initialIntent,
   visible = true,
   topInset = 0,
@@ -462,7 +480,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   }, [sessions]);
   const sessionListRequestRef = useRef(0);
   const workspaceSelectionRef = useRef(0);
-  const [availableAgents, setAvailableAgents] = useState<AgentInfo[]>([]);
+  const [availableAgents, setAvailableAgents] = useState<ModeInfo[]>([]);
   /**
    * Every model the host publishes, kept for the two things a `ModelRef`
    * cannot answer on its own: the name the catalogue gives it -- "Nemotron 3.5
@@ -489,6 +507,28 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     if (freshSessionRef.current !== activeAsid) freshSessionRef.current = undefined;
   }, [activeAsid]);
   const [sessionInfo, setSessionInfo] = useState<AgentSessionInfo | null>(null);
+  /**
+   * Which agent this screen is on, and which a new session would go to.
+   *
+   * The open session's own `agent_id` wins; before there is one, the reader's
+   * pick for this server, or the gateway's first ready agent. Every gated
+   * control below reads `agentFeatures`, which on a gateway too old to say
+   * otherwise is the kind's whole feature set -- nothing is taken away by
+   * silence.
+   */
+  const agentChoice = useSelectedAgent(serverId);
+  const activeAgentId = sessionInfo?.agent_id ?? agentChoice.selected;
+  const agentFeatures = useAgentFeatures(serverId, activeAgentId);
+  const hiddenCommands = useMemo(() => hiddenClientCommands(agentFeatures), [agentFeatures]);
+  const agentChoiceRef = useLatestRef(agentChoice);
+  const markAgentUsed = useAgents((state) => state.markUsed);
+  /** The new-session picker, open only while more than one agent is ready. */
+  const [agentPickerOpen, setAgentPickerOpen] = useState(false);
+  useAgentsDiscoveryRefresh(serverId);
+  const selectAgent = agentChoice.select;
+  useEffect(() => {
+    if (initialAgentId) selectAgent(initialAgentId);
+  }, [initialAgentId, selectAgent]);
   const [transcriptStore] = useState(createAgentTranscriptStore);
   const setTimeline = transcriptStore.getState().setTimeline;
   const timelineEmpty = useStore(transcriptStore, (state) => state.timeline.length === 0);
@@ -540,7 +580,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   // and declines to compile the workbench. Each is described where it is used.
   const openedAsidRef = useRef<string | undefined>(undefined);
   const catchUpRef = useRef<() => void>(() => {});
-  const handleCreateNewSessionRef = useRef<(() => Promise<void>) | null>(null);
+  const handleCreateNewSessionRef = useRef<((agentId?: string) => Promise<void>) | null>(null);
   const [worktreeRevision, setWorktreeRevision] = useState(0);
   const captureWorkbenchOwner = useCallback(
     (asid: string | undefined, directory: string | undefined): AgentWorkbenchOwner => ({
@@ -566,7 +606,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     (
       asid: string | undefined,
       directory: string | undefined
-    ): Extract<HomeTarget, { kind: 'opencode-session' }> | null => {
+    ): Extract<HomeTarget, { kind: 'agent-session' }> | null => {
       if (
         !serverId ||
         !sessionId ||
@@ -576,7 +616,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       ) {
         return null;
       }
-      return { kind: 'opencode-session', serverId, sessionId, directory, asid };
+      return { kind: 'agent-session', serverId, sessionId, directory, asid };
     },
     [serverId, sessionId]
   );
@@ -626,7 +666,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   const snapshotDirectoryRef = useRef<string | undefined>(undefined);
   const [permissions, setPermissions] = useState<PermissionRequest[]>([]);
   const permissionTargetsRef = useRef(
-    new Map<string, Extract<HomeTarget, { kind: 'opencode-session' }>>()
+    new Map<string, Extract<HomeTarget, { kind: 'agent-session' }>>()
   );
   useEffect(() => {
     if (permissions.length > 0) {
@@ -752,22 +792,39 @@ export const AgentWorkbench = memo(function AgentWorkbench({
    * rebuilding them all.
    */
   const newSessionParams = useCallback(
-    (directory?: string) => ({
-      ...resolveNewSessionDefaults({
-        picked: {
-          ...(pickedAgentRef.current && selectedAgent ? { agent: selectedAgent } : {}),
-          ...(pickedModelRef.current && selectedModel ? { model: selectedModel } : {}),
-        },
-        ...loadRememberedAgentDefaults(sessionId, directory),
-        sessions: sessionsRef.current,
+    (directory?: string, agentId?: string) => {
+      // Named only on a gateway that has said which agents it drives: an older
+      // gateway has one agent and no `agent_id` to read.
+      const agent = hasAgentsDiscoveryFor(serverId)
+        ? (agentId ?? agentChoiceRef.current.selected)
+        : undefined;
+      return {
+        ...resolveNewSessionDefaults({
+          picked: {
+            ...(pickedAgentRef.current && selectedAgent ? { mode: selectedAgent } : {}),
+            ...(pickedModelRef.current && selectedModel ? { model: selectedModel } : {}),
+          },
+          ...loadRememberedAgentDefaults(sessionId, directory, agent),
+          sessions: sessionsRef.current,
+          ...(directory ? { directory } : {}),
+          catalogDefaults,
+          models: catalogModels,
+          modes: availableAgents,
+        }),
         ...(directory ? { directory } : {}),
-        catalogDefaults,
-        models: catalogModels,
-        agents: availableAgents,
-      }),
-      ...(directory ? { directory } : {}),
-    }),
-    [selectedAgent, selectedModel, sessionId, catalogDefaults, catalogModels, availableAgents]
+        ...(agent ? { agentId: agent } : {}),
+      };
+    },
+    [
+      selectedAgent,
+      selectedModel,
+      sessionId,
+      serverId,
+      agentChoiceRef,
+      catalogDefaults,
+      catalogModels,
+      availableAgents,
+    ]
   );
   const [showReasoning, setShowReasoning] = useState<boolean>(true);
   const [skills, setSkills] = useState<SkillInfo[]>([]);
@@ -930,7 +987,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     getAgentCatalog(sessionId, undefined, scope.directory ? { directory: scope.directory } : {})
       .then((catalog) => {
         if (!mounted) return;
-        setAvailableAgents(catalog?.agents ?? []);
+        setAvailableAgents(catalog?.modes ?? []);
         if (catalog?.skills && catalog.skills.length > 0) {
           setSkills(catalog.skills);
         }
@@ -944,8 +1001,8 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         if (catalog?.defaults.model && !appliedModelRef.current) {
           applySelectedModel(catalog.defaults.model);
         }
-        if (catalog?.defaults.agent && !pickedAgentRef.current) {
-          setSelectedAgent(catalog.defaults.agent);
+        if (catalog?.defaults.mode && !pickedAgentRef.current) {
+          setSelectedAgent(catalog.defaults.mode);
         }
       })
       .catch((err) => {
@@ -975,16 +1032,16 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     if (activeAsid) return;
     if (pickedModelRef.current && pickedAgentRef.current) return;
     const resolved = resolveNewSessionDefaults({
-      picked: pickedAgentRef.current && selectedAgent ? { agent: selectedAgent } : {},
+      picked: pickedAgentRef.current && selectedAgent ? { mode: selectedAgent } : {},
       ...loadRememberedAgentDefaults(sessionId, activeDirectory),
       sessions: sessionsRef.current,
       ...(activeDirectory ? { directory: activeDirectory } : {}),
       catalogDefaults,
       models: catalogModels,
-      agents: availableAgents,
+      modes: availableAgents,
     });
     if (!pickedModelRef.current) applySelectedModel(resolved.model);
-    if (!pickedAgentRef.current && resolved.agent) setSelectedAgent(resolved.agent);
+    if (!pickedAgentRef.current && resolved.mode) setSelectedAgent(resolved.mode);
   }, [
     sessionId,
     activeAsid,
@@ -1081,7 +1138,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
                   setActiveAsid(opening.asid);
                   setSessionInfo(opening);
                   applySelectedModel(opening.model ?? undefined);
-                  if (opening.agent) setSelectedAgent(opening.agent);
+                  if (opening.mode) setSelectedAgent(opening.mode);
                 } else if (list.length === 0 || initialIntent === 'new') {
                   setLoading(false);
                 }
@@ -1488,7 +1545,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
               syncRef.current = settled.state;
               if (settled.from !== null) catchUpRef.current();
               if (info) applySelectedModel(info.model ?? undefined);
-              if (info?.agent) setSelectedAgent(info.agent);
+              if (info?.mode) setSelectedAgent(info.mode);
 
               /**
                * Reading it is what makes it read.
@@ -2314,6 +2371,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
           recoverWith(
             async () => {
               const created = await createAgentSession(sessionId, params);
+              markAgentUsed(serverId, created.agent_id);
               if (!ownsSource()) return false;
               const advancedOwner = advanceAgentWorkbenchOwnerAfterCreate(
                 requestOwner,
@@ -2504,7 +2562,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       setSelectedAgent(agent);
       if (configuredModel) applySelectedModel(configuredModel);
       // The reader's own pick, remembered the same way the model is.
-      rememberAgentChoice(sessionId, activeDirectoryRef.current, { agent });
+      rememberAgentChoice(sessionId, activeDirectoryRef.current, { mode: agent });
       if (!activeAsid) return;
       void switchAgentMode(activeAsid, agent)
         .then(async () => {
@@ -2609,80 +2667,113 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     [activeAsid, sessionId, showToast, t]
   );
 
-  const handleCreateNewSession = useCallback(async () => {
-    if (newSessionCreationRef.current || promptDispatchRef.current) return;
-    if (isOffline) {
-      showToast({
-        variant: 'danger',
-        title: t`OpenCode service offline`,
-        message: t`Please start OpenCode on the server: opencode serve --service`,
-      });
-      return;
-    }
-    newSessionCreationRef.current = true;
-    setCreatingSession(true);
-    const directory = activeDirectoryRef.current ?? sessionInfo?.directory;
-    const sourceAsid = activeAsidRef.current;
-    const capturedOwner = captureWorkbenchOwner(sourceAsid, directory);
-    const params = newSessionParams(directory);
-    const ownsCreate = () => ownsWorkbench(capturedOwner) && activeAsidRef.current === sourceAsid;
-    if (!ownsCreate()) {
-      newSessionCreationRef.current = false;
-      setCreatingSession(false);
-      return;
-    }
-    return settleAfter(
-      async () => {
-        try {
-          const created = await createAgentSession(sessionId, params);
-          if (!ownsCreate()) return;
-          freshSessionRef.current = created.asid;
-          setSessions((previous) => [
-            created,
-            ...previous.filter((item) => item.asid !== created.asid),
-          ]);
-          setLoading(false);
-          activeAsidRef.current = created.asid;
-          setActiveAsid(created.asid);
-          setSessionInfo(created);
-          setTimeline([]);
-          setWindowStart(0);
-          setPermissions([]);
-          setForms([]);
-          syncRef.current = CATCH_UP_START;
-          refreshSessions();
-          void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-          showScreenNotice(t`New session`, t`Started with a clean context.`);
-        } catch (err) {
-          console.warn('Failed to create session:', err);
-          if (ownsCreate()) {
-            setIsOffline(true);
-            showToast({
-              variant: 'danger',
-              title: t`Could not create session`,
-              message: formatAgentErrorMessage(err, t`Failed to create agent session`),
-            });
-          }
-        }
-      },
-      () => {
+  const handleCreateNewSession = useCallback(
+    async (agentId?: string) => {
+      if (newSessionCreationRef.current || promptDispatchRef.current) return;
+      // More than one agent is ready and none was named: ask first. The picker
+      // calls back here with its answer.
+      if (!agentId && agentChoiceRef.current.offersChoice) {
+        setAgentPickerOpen(true);
+        return;
+      }
+      if (isOffline) {
+        showToast({
+          variant: 'danger',
+          title: t`OpenCode service offline`,
+          message: t`Please start OpenCode on the server: opencode serve --service`,
+        });
+        return;
+      }
+      newSessionCreationRef.current = true;
+      setCreatingSession(true);
+      const directory = activeDirectoryRef.current ?? sessionInfo?.directory;
+      const sourceAsid = activeAsidRef.current;
+      const capturedOwner = captureWorkbenchOwner(sourceAsid, directory);
+      const params = newSessionParams(directory, agentId);
+      const ownsCreate = () => ownsWorkbench(capturedOwner) && activeAsidRef.current === sourceAsid;
+      if (!ownsCreate()) {
         newSessionCreationRef.current = false;
         setCreatingSession(false);
+        return;
       }
-    );
-  }, [
-    setTimeline,
-    isOffline,
-    sessionId,
-    newSessionParams,
-    sessionInfo,
-    captureWorkbenchOwner,
-    ownsWorkbench,
-    t,
-    refreshSessions,
-    showToast,
-    showScreenNotice,
-  ]);
+      return settleAfter(
+        async () => {
+          try {
+            const created = await createAgentSession(sessionId, params);
+            markAgentUsed(serverId, created.agent_id);
+            if (agentId) agentChoiceRef.current.select(agentId);
+            if (!ownsCreate()) return;
+            freshSessionRef.current = created.asid;
+            setSessions((previous) => [
+              created,
+              ...previous.filter((item) => item.asid !== created.asid),
+            ]);
+            setLoading(false);
+            activeAsidRef.current = created.asid;
+            setActiveAsid(created.asid);
+            setSessionInfo(created);
+            setTimeline([]);
+            setWindowStart(0);
+            setPermissions([]);
+            setForms([]);
+            syncRef.current = CATCH_UP_START;
+            refreshSessions();
+            void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            showScreenNotice(t`New session`, t`Started with a clean context.`);
+          } catch (err) {
+            console.warn('Failed to create session:', err);
+            if (ownsCreate()) {
+              setIsOffline(true);
+              showToast({
+                variant: 'danger',
+                title: t`Could not create session`,
+                message: formatAgentErrorMessage(err, t`Failed to create agent session`),
+              });
+            }
+          }
+        },
+        () => {
+          newSessionCreationRef.current = false;
+          setCreatingSession(false);
+        }
+      );
+    },
+    [
+      setTimeline,
+      isOffline,
+      sessionId,
+      serverId,
+      newSessionParams,
+      sessionInfo,
+      captureWorkbenchOwner,
+      ownsWorkbench,
+      agentChoiceRef,
+      markAgentUsed,
+      t,
+      refreshSessions,
+      showToast,
+      showScreenNotice,
+    ]
+  );
+
+  // Left to the compiler: a row per ready agent, and a way out.
+  const agentPickerItems: AgentActionMenuItem[] = [
+    ...agentChoice.ready.map((agent) => ({
+      id: agent.id,
+      label: agent.name,
+      testID: `agent-new-session-picker-${agent.id}`,
+      onPress: () => {
+        setAgentPickerOpen(false);
+        void handleCreateNewSession(agent.id);
+      },
+    })),
+    {
+      id: 'cancel',
+      label: t`Cancel`,
+      testID: 'agent-new-session-picker-cancel',
+      onPress: () => setAgentPickerOpen(false),
+    },
+  ];
 
   useEffect(() => {
     handleCreateNewSessionRef.current = handleCreateNewSession;
@@ -3146,6 +3237,9 @@ export const AgentWorkbench = memo(function AgentWorkbench({
    */
   const handleClientCommand = useCallback(
     (name: AgentClientCommandId) => {
+      // A command the session's agent cannot answer is not listed, and typed
+      // in full it does nothing rather than send a request that will fail.
+      if (hiddenCommands.includes(name)) return;
       switch (name) {
         case 'new':
           void handleCreateNewSessionRef.current?.();
@@ -3214,6 +3308,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       activeAsid,
       transcriptStore,
       stagedRevert,
+      hiddenCommands,
       handleStageRevert,
       handleKeepRevert,
       handleCompactContext,
@@ -3331,17 +3426,19 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     useAgentPermissionStore.getState().setDecider(handlePermissionDecision);
   }, [globalOwnerEpoch, handlePermissionDecision, isGlobalOwner]);
 
+  const canRunInBackground = agentFeatures.backgroundShells;
   const toolActions = useMemo<AgentToolActions>(
     () => ({
       onOpenChildSession: openSubagentDetail,
-      onRunInBackground: handleRunInBackground,
+      ...(canRunInBackground ? { onRunInBackground: handleRunInBackground } : {}),
       onPreviewImage: setPreviewImageUri,
       onOpenFile: handleOpenToolFile,
-      onOpenBackgroundTray: openBackgroundTray,
+      ...(canRunInBackground ? { onOpenBackgroundTray: openBackgroundTray } : {}),
       onOpenFullDiff: openDiffSheet,
       childStatuses,
     }),
     [
+      canRunInBackground,
       handleRunInBackground,
       handleOpenToolFile,
       openBackgroundTray,
@@ -3373,7 +3470,8 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       onPreviewImage: setPreviewImageUri,
       onEditQueued: handleEditQueuedItem,
       onCancelQueued: handleCancelQueuedItem,
-      onUndoToHere: handleStageRevert,
+      // Roll-back is offered only on an agent that can stage one.
+      onUndoToHere: agentFeatures.revert ? handleStageRevert : undefined,
       actions: toolActions,
     }),
     [
@@ -3382,6 +3480,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       handleEditQueuedItem,
       handleCancelQueuedItem,
       handleStageRevert,
+      agentFeatures.revert,
       toolActions,
     ]
   );
@@ -3396,8 +3495,9 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     useAgentSessionState.getState().setSessionStatus({
       running: isRunning,
       title: sessionInfo?.title,
+      agentId: sessionInfo?.agent_id,
     });
-  }, [globalOwnerEpoch, isGlobalOwner, isRunning, sessionInfo?.title]);
+  }, [globalOwnerEpoch, isGlobalOwner, isRunning, sessionInfo?.title, sessionInfo?.agent_id]);
 
   const activeProject = useMemo(() => {
     if (!activeDirectory) return undefined;
@@ -3876,7 +3976,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
    * its publisher spells it, how much it can hold -- is in the catalogue.
    */
   const activeAgent =
-    selectedAgent ?? currentSession?.agent ?? sessionInfo?.agent ?? catalogDefaults.agent;
+    selectedAgent ?? currentSession?.mode ?? sessionInfo?.mode ?? catalogDefaults.mode;
   const activeAgentModel = catalogModelRef(
     availableAgents.find((entry) => entry.id === activeAgent)?.model,
     catalogModels
@@ -3949,6 +4049,8 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     if (!isGlobalOwner()) return;
     const snapshot: Partial<AgentSheetSnapshot> = {
       sessionId,
+      serverId,
+      agentId: activeAgentId,
       activeAsid,
       sessions: allSessions,
       childrenByParent,
@@ -3976,6 +4078,8 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     useAgentSheetBridge.getState().publish(snapshot);
   }, [
     sessionId,
+    serverId,
+    activeAgentId,
     activeAsid,
     allSessions,
     childrenByParent,
@@ -4175,7 +4279,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
                   <View style={styles.emptyActionsRow}>
                     <PressableScale
                       testID="agent-empty-new-session-btn"
-                      onPress={handleCreateNewSession}
+                      onPress={() => void handleCreateNewSession()}
                       style={[
                         styles.emptyNewBtn,
                         {
@@ -4444,6 +4548,23 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         </Animated.View>
       ) : null}
 
+      {/*
+        Which agent the new session goes to, asked only when the gateway has
+        more than one ready. One row per agent, in the gateway's order, and
+        the pick is remembered for this server. Drawn with the row menu the
+        rest of the surface already uses; the launch surfaces get their own
+        treatment in the next phase.
+      */}
+      {agentPickerOpen ? (
+        <Animated.View
+          entering={fadeIn('micro')}
+          exiting={fadeOut('micro')}
+          style={[styles.agentPickerWrap, { bottom: latestBottom + 42 }]}
+          pointerEvents="box-none">
+          <AgentActionMenu testID="agent-new-session-picker" items={agentPickerItems} />
+        </Animated.View>
+      ) : null}
+
       {/* Floating Glass Composer at Bottom */}
       <AgentComposer
         disabled={isOffline}
@@ -4453,7 +4574,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         onOpenSessionTree={openSessionTree}
         parentSession={activeParent}
         availableAgents={availableAgents}
-        skills={skills}
+        skills={agentFeatures.skills ? skills : NO_SKILLS}
         sessionId={sessionId}
         activeAsid={activeAsid}
         activeDirectory={activeDirectory}
@@ -4469,11 +4590,11 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         contextUsage={contextUsage}
         contextLimit={contextLimit}
         modelName={activeModelName}
-        revert={revertPreview}
+        revert={agentFeatures.revert ? revertPreview : null}
         onCommitRevert={handleCommitRevert}
         onKeepRevert={handleKeepRevert}
         revertBusy={revertBusy}
-        compaction={compaction}
+        compaction={agentFeatures.compaction ? compaction : null}
         onDismissCompaction={dismissCompaction}
         cost={sessionInfo?.cost}
         sessionTitle={sessionInfo?.title}
@@ -4482,18 +4603,19 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         onSelectSession={selectAsid}
         onSelectAgentMode={handleSelectAgentMode}
         onCreateNewSession={handleCreateNewSession}
-        onOpenModeSheet={openModeSheet}
-        onOpenModelSheet={openModelSheet}
+        onOpenModeSheet={agentFeatures.modes ? openModeSheet : undefined}
+        onOpenModelSheet={agentFeatures.modelSelection ? openModelSheet : undefined}
         onOpenDiffSheet={openDiffSheet}
         onOpenSessionsSheet={openSessionsSheet}
         onOpenTasksSheet={activeTodos && activeTodos.length > 0 ? openTasksSheet : undefined}
-        backgroundCount={backgroundCount}
-        onOpenBackgroundTray={openBackgroundTray}
+        backgroundCount={agentFeatures.backgroundShells ? backgroundCount : 0}
+        onOpenBackgroundTray={agentFeatures.backgroundShells ? openBackgroundTray : undefined}
         commands={commands}
         onRunCommand={handleRunCommand}
         onInvokeSkill={handleInvokeSkill}
         onClientCommand={commandFromComposer}
-        inbox={inbox}
+        hiddenClientCommands={hiddenCommands}
+        inbox={agentFeatures.inbox ? inbox : NO_INBOX}
         onCancelInboxItem={handleCancelInboxItem}
         onSetInboxDelivery={handleSetInboxDelivery}
         onPressTokens={openContextSheet}
@@ -4840,6 +4962,11 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: 14,
     zIndex: 5,
+  },
+  agentPickerWrap: {
+    position: 'absolute',
+    right: 14,
+    zIndex: 6,
   },
   yoloBanner: {
     flexDirection: 'row',

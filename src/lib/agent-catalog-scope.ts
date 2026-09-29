@@ -18,13 +18,20 @@
  * without a gateway client or a native store behind them.
  */
 
-/** The route a catalog read goes to, with the workspace named when there is one. */
-export function agentCatalogPath(sessionId?: string, directory?: string): string {
+import { agentCacheVariant, withAgentIdQuery } from './agent-discovery';
+
+/**
+ * The route a catalog read goes to, with the workspace named when there is
+ * one and the agent named when it is not the default. Without `agent` a
+ * multi-agent gateway answers with every agent's catalog merged, which is
+ * not what a screen on one session wants -- see `withAgentIdQuery`.
+ */
+export function agentCatalogPath(sessionId?: string, directory?: string, agentId?: string): string {
   const base = sessionId
     ? `/api/sessions/${encodeURIComponent(sessionId)}/agent-catalog`
     : '/api/agent-catalog';
   const dir = normalizeCatalogDirectory(directory);
-  return dir ? `${base}?directory=${encodeURIComponent(dir)}` : base;
+  return withAgentIdQuery(dir ? `${base}?directory=${encodeURIComponent(dir)}` : base, agentId);
 }
 
 /**
@@ -32,11 +39,12 @@ export function agentCatalogPath(sessionId?: string, directory?: string): string
  *
  * `null` keeps the unscoped key exactly as it was, so a caller with no
  * directory -- the composer before a session's snapshot has landed, say --
- * still reads and writes the entry it always did.
+ * still reads and writes the entry it always did. The agent is folded in
+ * the same way: only a non-default one changes the key.
  */
-export function agentCatalogCacheVariant(directory?: string): string | null {
+export function agentCatalogCacheVariant(directory?: string, agentId?: string): string | null {
   const dir = normalizeCatalogDirectory(directory);
-  return dir ? `dir=${dir}` : null;
+  return agentCacheVariant(dir ? `dir=${dir}` : null, agentId);
 }
 
 /** An empty or whitespace-only directory is no directory at all. */

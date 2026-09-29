@@ -11,10 +11,10 @@ import { appChrome } from '@/constants/appearance';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { withAlpha } from '@/lib/color';
 import { fadeInDown, fadeOutDown } from '@/lib/motion';
-import type { AgentInfo } from '@/lib/agent-session';
+import type { ModeInfo } from '@/lib/agent-session';
 
 export interface AgentModeMenuProps {
-  agents: AgentInfo[];
+  agents: ModeInfo[];
   selectedAgent?: string;
   onSelectAgent: (agentId: string) => void;
   textColor: string;

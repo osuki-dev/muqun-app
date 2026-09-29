@@ -14,7 +14,7 @@ import {
   sheetSceneStyles,
 } from '@/components/sheet-scene';
 import { fadeIn, listLayout, riseIn, STAGGER } from '@/lib/motion';
-import { getAgentCatalog, selectableAgents, type AgentInfo } from '@/lib/agent-session';
+import { getAgentCatalog, selectableModes, type ModeInfo } from '@/lib/agent-session';
 import { effectiveAgentId } from '@/lib/agent-session-defaults';
 
 const STAGGERED_ROWS = 8;
@@ -68,7 +68,7 @@ export const AgentModeSheet = memo(function AgentModeSheet({
   const theme = useThemeTokens();
   const insets = useSafeAreaInsets();
   const [loading, setLoading] = useState(false);
-  const [agents, setAgents] = useState<AgentInfo[]>([]);
+  const [agents, setAgents] = useState<ModeInfo[]>([]);
   /**
    * The agent the host runs when nobody has picked one.
    *
@@ -80,7 +80,7 @@ export const AgentModeSheet = memo(function AgentModeSheet({
    */
   const [defaultAgent, setDefaultAgent] = useState<string | undefined>(undefined);
 
-  const builtinAgents = useMemo<AgentInfo[]>(
+  const builtinAgents = useMemo<ModeInfo[]>(
     () => [
       {
         id: 'build',
@@ -123,14 +123,14 @@ export const AgentModeSheet = memo(function AgentModeSheet({
           `Title`, `Summary` -- marked `hidden`, and its subagents marked
           `mode: "subagent"`. Both were listed here as things to switch the
           session to, which for the hidden three is switching the session to an
-          internal routine. `selectableAgents` is the filter the protocol
+          internal routine. `selectableModes` is the filter the protocol
           already states; a host whose whole catalogue is hidden still gets a
           picker rather than an empty sheet.
          */
-        const listed = selectableAgents(catalog?.agents ?? []);
-        const fallback = catalog?.agents && catalog.agents.length > 0 ? catalog.agents : [];
+        const listed = selectableModes(catalog?.modes ?? []);
+        const fallback = catalog?.modes && catalog.modes.length > 0 ? catalog.modes : [];
         setAgents(listed.length > 0 ? listed : fallback.length > 0 ? fallback : builtinAgents);
-        setDefaultAgent(catalog?.defaults?.agent);
+        setDefaultAgent(catalog?.defaults?.mode);
       })
       .catch((err) => {
         console.warn('Failed to load agent catalog:', err);
@@ -146,7 +146,7 @@ export const AgentModeSheet = memo(function AgentModeSheet({
 
   const displayAgents = agents.length > 0 ? agents : builtinAgents;
 
-  const modeLabel = (agent: AgentInfo): string => {
+  const modeLabel = (agent: ModeInfo): string => {
     const mode = agent.mode?.toLowerCase();
     if (mode === 'subagent' || agent.id === 'explore') return t`Subagent`;
     if (mode === 'primary' || BUILTIN_IDS.includes(agent.id)) return t`Primary`;

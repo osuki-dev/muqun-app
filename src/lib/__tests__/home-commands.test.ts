@@ -71,7 +71,7 @@ describe('home command boundary', () => {
     const adapter = ports();
     const controller = createHomeCommandController(adapter);
     const target = {
-      kind: 'opencode-session' as const,
+      kind: 'agent-session' as const,
       serverId: 'server-a',
       sessionId: 'routing-a',
       directory: '/work/app',
@@ -204,7 +204,7 @@ describe('home command boundary', () => {
 
     const stale = controller.dispatch({
       type: 'open-opencode',
-      target: { kind: 'opencode-session', serverId: 'server-a' },
+      target: { kind: 'agent-session', serverId: 'server-a' },
     });
     const newer = await controller.dispatch({ type: 'open-ssh', hostId: 'host-a' });
     expect(newer.status).toBe('dispatched');
@@ -275,14 +275,14 @@ describe('home command boundary', () => {
 
     const result = await controller.dispatch({
       type: 'open-opencode',
-      target: { kind: 'opencode-session', serverId: 'server-b' },
+      target: { kind: 'agent-session', serverId: 'server-b' },
     });
 
     expect(result.status).toBe('dispatched');
     expect(adapter.navigations).toEqual([
       {
         type: 'opencode',
-        target: { kind: 'opencode-session', serverId: 'server-b' },
+        target: { kind: 'agent-session', serverId: 'server-b' },
         intent: 'existing',
       },
     ]);
@@ -291,7 +291,11 @@ describe('home command boundary', () => {
   test('keeps a new OpenCode draft alive when server selection unmounts Home', async () => {
     let disposeOwner = () => {};
     const adapter = ports({
-      prepareNewOpenCode: async () => ({ status: 'ready', capabilities: ['agent_sessions'] }),
+      prepareNewOpenCode: async () => ({
+        status: 'ready',
+        capabilities: ['agent_sessions'],
+        agentId: 'opencode',
+      }),
     });
     const selectServerNow = adapter.selectServerNow;
     adapter.selectServerNow = (serverId) => {
@@ -313,7 +317,7 @@ describe('home command boundary', () => {
       {
         type: 'opencode',
         target: {
-          kind: 'opencode-session',
+          kind: 'agent-session',
           serverId: 'server-b',
           directory: '/work/app',
         },
@@ -465,7 +469,7 @@ describe('home command boundary', () => {
 
     const result = await controller.dispatch({
       type: 'open-opencode',
-      target: { kind: 'opencode-session', serverId: 'server-a' },
+      target: { kind: 'agent-session', serverId: 'server-a' },
     });
 
     expect(result.status).toBe('dispatched');
@@ -485,7 +489,7 @@ describe('home command boundary', () => {
 
     const stale = staleController.dispatch({
       type: 'open-opencode',
-      target: { kind: 'opencode-session', serverId: 'server-a' },
+      target: { kind: 'agent-session', serverId: 'server-a' },
     });
     const live = liveController.dispatch({ type: 'new-terminal', serverId: 'server-a' });
     selection.resolve(true);
@@ -507,7 +511,7 @@ describe('home command boundary', () => {
 
     const pending = controller.dispatch({
       type: 'open-opencode',
-      target: { kind: 'opencode-session', serverId: 'server-a' },
+      target: { kind: 'agent-session', serverId: 'server-a' },
     });
     adapter.setSelected('server-b');
 
@@ -516,7 +520,7 @@ describe('home command boundary', () => {
 
     const retry = await controller.dispatch({
       type: 'open-opencode',
-      target: { kind: 'opencode-session', serverId: 'server-a' },
+      target: { kind: 'agent-session', serverId: 'server-a' },
     });
     expect(retry.status).toBe('dispatched');
     expect(adapter.navigations).toHaveLength(1);
@@ -548,7 +552,7 @@ describe('home command boundary', () => {
     expect(adapter.navigations).toEqual([
       {
         type: 'opencode',
-        target: { kind: 'opencode-session', serverId: 'server-a' },
+        target: { kind: 'agent-session', serverId: 'server-a' },
         intent: 'new',
       },
     ]);
@@ -581,7 +585,7 @@ describe('home command boundary', () => {
     const adapter = ports({ validateTarget: async () => false });
     const controller = createHomeCommandController(adapter);
     const opencodeTarget = {
-      kind: 'opencode-session' as const,
+      kind: 'agent-session' as const,
       serverId: 'server-a',
       sessionId: 'routing-a',
       directory: '/work/app',
@@ -613,7 +617,7 @@ describe('home command boundary', () => {
     });
     const controller = createHomeCommandController(adapter);
     const target = {
-      kind: 'opencode-session' as const,
+      kind: 'agent-session' as const,
       serverId: 'server-a',
       sessionId: 'routing-a',
       directory: '/work/app',
@@ -628,7 +632,12 @@ describe('home command boundary', () => {
 
   test('new OpenCode asks the shared readiness adapter before navigation', async () => {
     const adapter = ports({
-      prepareNewOpenCode: async () => ({ status: 'offline', capabilities: [], cause: 'health' }),
+      prepareNewOpenCode: async () => ({
+        status: 'offline',
+        capabilities: [],
+        agentId: 'opencode',
+        cause: 'health',
+      }),
     });
     const controller = createHomeCommandController(adapter);
 
@@ -640,7 +649,11 @@ describe('home command boundary', () => {
 
   test('new OpenCode preserves the new intent after readiness succeeds', async () => {
     const adapter = ports({
-      prepareNewOpenCode: async () => ({ status: 'ready', capabilities: ['agent_sessions'] }),
+      prepareNewOpenCode: async () => ({
+        status: 'ready',
+        capabilities: ['agent_sessions'],
+        agentId: 'opencode',
+      }),
     });
     const controller = createHomeCommandController(adapter);
 
@@ -654,7 +667,7 @@ describe('home command boundary', () => {
     expect(adapter.navigations).toEqual([
       {
         type: 'opencode',
-        target: { kind: 'opencode-session', serverId: 'server-a', directory: '/work/app' },
+        target: { kind: 'agent-session', serverId: 'server-a', directory: '/work/app' },
         intent: 'new',
       },
     ]);
@@ -670,7 +683,7 @@ describe('home command boundary', () => {
     await Promise.resolve();
 
     expect((await controller.dispatch({ type: 'manage-connections' })).status).toBe('dispatched');
-    readiness.resolve({ status: 'ready', capabilities: ['agent_sessions'] });
+    readiness.resolve({ status: 'ready', capabilities: ['agent_sessions'], agentId: 'opencode' });
 
     expect((await pending).status).toBe('superseded');
     expect(adapter.navigations).toEqual([{ type: 'manage' }]);
@@ -697,7 +710,7 @@ describe('home command boundary', () => {
     expect(adapter.navigations[0]).toMatchObject({
       type: 'opencode',
       intent: 'new',
-      target: { serverId: 'server-a', kind: 'opencode-session' },
+      target: { serverId: 'server-a', kind: 'agent-session' },
     });
     consumeNewOpenCodeIntent('server-a', '/work/app');
 
@@ -707,5 +720,37 @@ describe('home command boundary', () => {
       directory: '/work/app',
     });
     expect(retry.status).toBe('dispatched');
+  });
+});
+
+describe('agents on a new session', () => {
+  test('a new OpenCode command carries its agent to readiness and to the route', async () => {
+    consumeNewOpenCodeIntent('server-agents');
+    const seen: (string | undefined)[] = [];
+    const adapter = ports({
+      prepareNewOpenCode: async (_serverId, _directory, agentId) => {
+        seen.push(agentId);
+        return {
+          status: 'ready',
+          capabilities: ['agent_sessions'],
+          agentId: agentId ?? 'opencode',
+        };
+      },
+    });
+    const controller = createHomeCommandController(adapter);
+    const result = await controller.dispatch({
+      type: 'new-opencode',
+      serverId: 'server-agents',
+      agentId: 'deepseek',
+    });
+    expect(result.status).toBe('dispatched');
+    expect(seen).toEqual(['deepseek']);
+    expect(adapter.navigations).toEqual([
+      {
+        type: 'opencode',
+        target: { kind: 'agent-session', serverId: 'server-agents', agentId: 'deepseek' },
+        intent: 'new',
+      },
+    ]);
   });
 });

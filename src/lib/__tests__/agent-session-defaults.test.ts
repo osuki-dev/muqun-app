@@ -1,8 +1,8 @@
 import { describe, expect, test } from 'bun:test';
 
-import type { AgentInfo, AgentSessionInfo, ModelInfo } from '../agent-protocol';
+import type { ModeInfo, AgentSessionInfo, ModelInfo } from '../agent-protocol';
 import {
-  catalogAgentId,
+  catalogModeId,
   catalogModelRef,
   effectiveAgentId,
   firstUsableModel,
@@ -24,7 +24,7 @@ const models: ModelInfo[] = [
   { id: 'spark-free', name: 'Spark Free', provider_id: 'opencode', enabled: true },
 ];
 
-const agents: AgentInfo[] = [
+const modes: ModeInfo[] = [
   { id: 'build', name: 'Build' },
   { id: 'plan', name: 'Plan' },
   {
@@ -49,6 +49,7 @@ function session(over: Partial<AgentSessionInfo>): AgentSessionInfo {
     status: 'idle',
     updated_ms: 0,
     ...over,
+    agent_id: over.agent_id ?? 'opencode',
   };
 }
 
@@ -90,19 +91,19 @@ describe('catalogModelRef', () => {
   });
 });
 
-describe('catalogAgentId', () => {
+describe('catalogModeId', () => {
   test('an agent the picker offers survives', () => {
-    expect(catalogAgentId('plan', agents)).toBe('plan');
+    expect(catalogModeId('plan', modes)).toBe('plan');
   });
 
   test('an agent that vanished, is hidden, or is a subagent is dropped', () => {
-    expect(catalogAgentId('gone', agents)).toBeUndefined();
-    expect(catalogAgentId('secret', agents)).toBeUndefined();
-    expect(catalogAgentId('nested', agents)).toBeUndefined();
+    expect(catalogModeId('gone', modes)).toBeUndefined();
+    expect(catalogModeId('secret', modes)).toBeUndefined();
+    expect(catalogModeId('nested', modes)).toBeUndefined();
   });
 
   test('an empty catalog verifies nothing', () => {
-    expect(catalogAgentId('build', [])).toBeUndefined();
+    expect(catalogModeId('build', [])).toBeUndefined();
   });
 });
 
@@ -110,67 +111,67 @@ describe('resolveNewSessionDefaults', () => {
   test('an agent model wins over an unrelated remembered model', () => {
     expect(
       resolveNewSessionDefaults({
-        picked: { agent: 'osuki' },
+        picked: { mode: 'osuki' },
         workspace: { model: nemotron },
         models,
-        agents,
+        modes,
       })
-    ).toEqual({ model: { ...alpha, variant: 'thinking' }, agent: 'osuki' });
+    ).toEqual({ model: { ...alpha, variant: 'thinking' }, mode: 'osuki' });
   });
 
   test('an explicit model choice still wins over the agent model', () => {
     expect(
       resolveNewSessionDefaults({
-        picked: { agent: 'osuki', model: nemotron },
+        picked: { mode: 'osuki', model: nemotron },
         models,
-        agents,
+        modes,
       })
-    ).toEqual({ model: nemotron, agent: 'osuki' });
+    ).toEqual({ model: nemotron, mode: 'osuki' });
   });
 
   test('nothing to go on still sends a model the host can run', () => {
     // Not `{}`: a host with no default configured runs the first entry of its
     // own list, which is how "Model jev-latest is not supported" happened.
-    expect(resolveNewSessionDefaults({ picked: {}, models, agents })).toEqual({ model: free });
+    expect(resolveNewSessionDefaults({ picked: {}, models, modes })).toEqual({ model: free });
   });
 
   test('an empty catalog is the one case that sends nothing', () => {
-    expect(resolveNewSessionDefaults({ picked: {}, models: [], agents: [] })).toEqual({});
+    expect(resolveNewSessionDefaults({ picked: {}, models: [], modes: [] })).toEqual({});
   });
 
   test('a pick made in this run outranks everything remembered', () => {
     expect(
       resolveNewSessionDefaults({
-        picked: { model: alpha, agent: 'plan' },
-        workspace: { model: nemotron, agent: 'build' },
-        server: { model: nemotron, agent: 'build' },
+        picked: { model: alpha, mode: 'plan' },
+        workspace: { model: nemotron, mode: 'build' },
+        server: { model: nemotron, mode: 'build' },
         models,
-        agents,
+        modes,
       })
-    ).toEqual({ model: alpha, agent: 'plan' });
+    ).toEqual({ model: alpha, mode: 'plan' });
   });
 
   test('the workspace outranks the server-wide fallback', () => {
     expect(
       resolveNewSessionDefaults({
         picked: {},
-        workspace: { model: alpha, agent: 'plan' },
-        server: { model: nemotron, agent: 'build' },
+        workspace: { model: alpha, mode: 'plan' },
+        server: { model: nemotron, mode: 'build' },
         models,
-        agents,
+        modes,
       })
-    ).toEqual({ model: alpha, agent: 'plan' });
+    ).toEqual({ model: alpha, mode: 'plan' });
   });
 
   test('a workspace never used before falls back to the server-wide pick', () => {
     expect(
       resolveNewSessionDefaults({
         picked: {},
-        server: { model: nemotron, agent: 'build' },
+        server: { model: nemotron, mode: 'build' },
         models,
-        agents,
+        modes,
       })
-    ).toEqual({ model: nemotron, agent: 'build' });
+    ).toEqual({ model: nemotron, mode: 'build' });
   });
 
   test('model and agent are resolved one at a time', () => {
@@ -180,23 +181,23 @@ describe('resolveNewSessionDefaults', () => {
       resolveNewSessionDefaults({
         picked: {},
         workspace: { model: alpha },
-        server: { model: nemotron, agent: 'build' },
+        server: { model: nemotron, mode: 'build' },
         models,
-        agents,
+        modes,
       })
-    ).toEqual({ model: alpha, agent: 'build' });
+    ).toEqual({ model: alpha, mode: 'build' });
   });
 
   test('a remembered model the catalog dropped falls through instead of ending the chain', () => {
     expect(
       resolveNewSessionDefaults({
         picked: {},
-        workspace: { model: { provider_id: 'opencode', model_id: 'retired' }, agent: 'retired' },
-        server: { model: nemotron, agent: 'build' },
+        workspace: { model: { provider_id: 'opencode', model_id: 'retired' }, mode: 'retired' },
+        server: { model: nemotron, mode: 'build' },
         models,
-        agents,
+        modes,
       })
-    ).toEqual({ model: nemotron, agent: 'build' });
+    ).toEqual({ model: nemotron, mode: 'build' });
   });
 
   test('a remembered model no catalog confirms is never sent', () => {
@@ -205,9 +206,9 @@ describe('resolveNewSessionDefaults', () => {
     expect(
       resolveNewSessionDefaults({
         picked: {},
-        workspace: { model: { provider_id: 'opencode', model_id: 'retired' }, agent: 'retired' },
+        workspace: { model: { provider_id: 'opencode', model_id: 'retired' }, mode: 'retired' },
         models,
-        agents,
+        modes,
       })
     ).toEqual({ model: free });
   });
@@ -216,18 +217,18 @@ describe('resolveNewSessionDefaults', () => {
 describe('recentSessionChoice', () => {
   test('the newest session answers', () => {
     const list = [
-      session({ asid: 'old', model: alpha, agent: 'build', updated_ms: 10 }),
-      session({ asid: 'new', model: nemotron, agent: 'plan', updated_ms: 20 }),
+      session({ asid: 'old', model: alpha, mode: 'build', updated_ms: 10 }),
+      session({ asid: 'new', model: nemotron, mode: 'plan', updated_ms: 20 }),
     ];
-    expect(recentSessionChoice(list)).toEqual({ model: nemotron, agent: 'plan' });
+    expect(recentSessionChoice(list)).toEqual({ model: nemotron, mode: 'plan' });
   });
 
   test('each field is read from the newest session that has one', () => {
     const list = [
-      session({ asid: 'old', model: alpha, agent: 'build', updated_ms: 10 }),
+      session({ asid: 'old', model: alpha, mode: 'build', updated_ms: 10 }),
       session({ asid: 'new', model: nemotron, updated_ms: 20 }),
     ];
-    expect(recentSessionChoice(list)).toEqual({ model: nemotron, agent: 'build' });
+    expect(recentSessionChoice(list)).toEqual({ model: nemotron, mode: 'build' });
   });
 
   test('a workspace is answered by its own sessions', () => {
@@ -276,11 +277,11 @@ describe('firstUsableModel', () => {
 
 describe('the rungs below memory', () => {
   const sessions = [
-    session({ asid: 'here', model: alpha, agent: 'plan', updated_ms: 10, directory: '/work/app' }),
+    session({ asid: 'here', model: alpha, mode: 'plan', updated_ms: 10, directory: '/work/app' }),
     session({
       asid: 'elsewhere',
       model: nemotron,
-      agent: 'build',
+      mode: 'build',
       updated_ms: 20,
       directory: '/work/notes',
     }),
@@ -293,9 +294,9 @@ describe('the rungs below memory', () => {
         sessions,
         directory: '/work/app',
         models,
-        agents,
+        modes,
       })
-    ).toEqual({ model: alpha, agent: 'plan' });
+    ).toEqual({ model: alpha, mode: 'plan' });
   });
 
   test('a workspace with no sessions of its own follows the newest anywhere', () => {
@@ -305,9 +306,9 @@ describe('the rungs below memory', () => {
         sessions,
         directory: '/work/fresh',
         models,
-        agents,
+        modes,
       })
-    ).toEqual({ model: nemotron, agent: 'build' });
+    ).toEqual({ model: nemotron, mode: 'build' });
   });
 
   test('memory outranks the sessions on the host', () => {
@@ -318,20 +319,20 @@ describe('the rungs below memory', () => {
         sessions,
         directory: '/work/app',
         models,
-        agents,
+        modes,
       })
-    ).toEqual({ model: free, agent: 'plan' });
+    ).toEqual({ model: free, mode: 'plan' });
   });
 
   test("the catalog's defaults answer when there are no sessions", () => {
     expect(
       resolveNewSessionDefaults({
         picked: {},
-        catalogDefaults: { model: nemotron, agent: 'build' },
+        catalogDefaults: { model: nemotron, mode: 'build' },
         models,
-        agents,
+        modes,
       })
-    ).toEqual({ model: nemotron, agent: 'build' });
+    ).toEqual({ model: nemotron, mode: 'build' });
   });
 
   test('a stale catalog default is checked like everything else', () => {
@@ -340,7 +341,7 @@ describe('the rungs below memory', () => {
         picked: {},
         catalogDefaults: { model: { provider_id: 'opencode', model_id: 'retired' } },
         models,
-        agents,
+        modes,
       })
     ).toEqual({ model: free });
   });
@@ -351,28 +352,28 @@ describe('the rungs below memory', () => {
         picked: {},
         sessions,
         directory: '/work/app',
-        catalogDefaults: { model: nemotron, agent: 'build' },
+        catalogDefaults: { model: nemotron, mode: 'build' },
         models,
-        agents,
+        modes,
       })
-    ).toEqual({ model: alpha, agent: 'plan' });
+    ).toEqual({ model: alpha, mode: 'plan' });
   });
 
   test('the agent may be omitted even when the model may not', () => {
     // OpenCode's fallback agent is its primary agent, which is a real default;
     // its fallback model is whatever sorted first, which is not.
-    expect(resolveNewSessionDefaults({ picked: {}, models, agents: [] })).toEqual({ model: free });
+    expect(resolveNewSessionDefaults({ picked: {}, models, modes: [] })).toEqual({ model: free });
   });
 });
 
 describe("a project's own agent", () => {
   /**
    * What a workspace-scoped catalog answers with once `?directory=` is sent:
-   * the host's agents *and* the one defined under the project's own
+   * the host's modes *and* the one defined under the project's own
    * `.opencode/agent`. Nothing downstream may treat it as second class.
    */
-  const withCustom: AgentInfo[] = [
-    ...agents,
+  const withCustom: ModeInfo[] = [
+    ...modes,
     {
       id: 'osuki-coder',
       name: 'osuki-coder',
@@ -383,10 +384,10 @@ describe("a project's own agent", () => {
   ];
 
   test('it is a choice a session can be remembered on', () => {
-    expect(catalogAgentId('osuki-coder', withCustom)).toBe('osuki-coder');
+    expect(catalogModeId('osuki-coder', withCustom)).toBe('osuki-coder');
     // And it is not invented: an agent this catalog does not list is dropped,
     // so a memory from another workspace cannot be sent to this one.
-    expect(catalogAgentId('osuki-coder', agents)).toBeUndefined();
+    expect(catalogModeId('osuki-coder', modes)).toBeUndefined();
   });
 
   test('a session running it marks it as the current row', () => {
@@ -437,7 +438,7 @@ describe('a default this server has already refused', () => {
         sessions: failed,
         catalogDefaults: { model: jev },
         models: withJev,
-        agents,
+        modes,
       }).model
     ).toEqual(free);
   });
@@ -454,7 +455,7 @@ describe('a default this server has already refused', () => {
         sessions: [],
         catalogDefaults: { model: jev },
         models: withJev,
-        agents,
+        modes,
       }).model
     ).toEqual(jev);
   });

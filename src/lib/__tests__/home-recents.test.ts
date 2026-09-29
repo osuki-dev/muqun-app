@@ -3,6 +3,7 @@ import { describe, expect, test } from 'bun:test';
 import {
   HOME_RECENTS_STORAGE_VERSION,
   MAX_HOME_RECENTS,
+  homeTargetAgentId,
   homeTargetKey,
   parseHomeRecentsDocument,
   serializeHomeRecents,
@@ -35,7 +36,7 @@ function terminal(serverId: string, paneId = `${serverId}-pane`): HomeTarget {
 
 function opencode(serverId: string, asid = `${serverId}-asid`): HomeTarget {
   return {
-    kind: 'opencode-session',
+    kind: 'agent-session',
     serverId,
     sessionId: `${serverId}-routing`,
     directory: '/work/project',
@@ -417,5 +418,56 @@ describe('home recents state', () => {
     });
     await store.getState().hydrate();
     expect(store.getState().entries[0]?.target).toEqual(terminal('offline'));
+  });
+});
+
+describe('agents on a target', () => {
+  test('a target written as `opencode-session` reads as the default agent under the new kind', () => {
+    const doc = JSON.stringify({
+      version: HOME_RECENTS_STORAGE_VERSION,
+      entries: [
+        {
+          target: {
+            kind: 'opencode-session',
+            serverId: 'srv',
+            sessionId: 'herdr',
+            directory: '/work',
+            asid: 'ses_1',
+          },
+          title: 'Old',
+          atMs: 5,
+        },
+      ],
+    });
+    const parsed = parseHomeRecentsDocument(doc);
+    expect(parsed.kind).toBe('valid');
+    expect(parsed.entries[0]?.target).toEqual({
+      kind: 'agent-session',
+      serverId: 'srv',
+      sessionId: 'herdr',
+      directory: '/work',
+      asid: 'ses_1',
+    });
+    expect(homeTargetAgentId(parsed.entries[0]?.target as { agentId?: string })).toBe('opencode');
+  });
+
+  test('an agent id is kept through storage, and does not change the row key', () => {
+    const plain = opencode('srv');
+    const withAgent: HomeTarget = {
+      kind: 'agent-session',
+      serverId: 'srv',
+      sessionId: 'srv-routing',
+      directory: '/work/project',
+      asid: 'srv-asid',
+      agentId: 'deepseek',
+    };
+    expect(homeTargetKey(withAgent)).toBe(homeTargetKey(plain));
+    const back = parseHomeRecentsDocument(
+      serializeHomeRecents([
+        { key: homeTargetKey(withAgent), target: withAgent, title: 'T', atMs: 1 },
+      ])
+    );
+    expect(back.entries[0]?.target).toMatchObject({ agentId: 'deepseek' });
+    expect(homeTargetAgentId(back.entries[0]?.target as { agentId?: string })).toBe('deepseek');
   });
 });

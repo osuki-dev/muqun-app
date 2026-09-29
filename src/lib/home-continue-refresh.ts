@@ -25,7 +25,7 @@ export async function refreshHomeContinue({
 }) {
   const scopes = new Map<string, { sessionId: string; directory: string }>();
   for (const { target } of entries) {
-    if (target.kind === 'opencode-session' && target.serverId === serverId) {
+    if (target.kind === 'agent-session' && target.serverId === serverId) {
       scopes.set(JSON.stringify([target.sessionId, target.directory]), target);
     }
   }
@@ -61,7 +61,7 @@ export async function refreshHomeContinue({
       for (const { target } of entries) {
         if (!isCurrent()) return;
         if (
-          target.kind !== 'opencode-session' ||
+          target.kind !== 'agent-session' ||
           target.serverId !== serverId ||
           target.sessionId !== scope.sessionId ||
           target.directory !== scope.directory

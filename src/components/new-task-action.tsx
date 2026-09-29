@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
@@ -16,14 +16,16 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
+import { AgentActionMenu, type AgentActionMenuItem } from '@/components/agent-action-menu';
 import { PressableScale } from '@/components/pressable-scale';
 import { OpenCodeIcon } from '@/components/opencode-icon';
+import { useAgentsDiscoveryRefresh, useSelectedAgent } from '@/hooks/use-agent-features';
 import { useHomeCommands } from '@/hooks/use-home-commands';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { useServerCapabilities } from '@/stores/server-capabilities';
 import type { GatewayRecord } from '@/lib/gateway-storage';
 import { withAlpha } from '@/lib/color';
-import { checkOpenCodeServer, type OpenCodeReadiness } from '@/lib/home-opencode-readiness';
+import { checkAgentServer, type AgentReadiness } from '@/lib/home-agent-readiness';
 import { INSTANT, SHEEN_MOTION, fadeIn, fadeOut, listLayout } from '@/lib/motion';
 
 /** How long the "OpenCode ready" label stays visible before settling to the compact icon. */
@@ -49,9 +51,18 @@ export function NewTaskAction({
   const capabilities = useServerCapabilities((s) => s.byServer[serverId]);
 
   const [isReady, setIsReady] = useState(false);
-  const [readiness, setReadiness] = useState<OpenCodeReadiness | null>(null);
+  const [readiness, setReadiness] = useState<AgentReadiness | null>(null);
   const [hasChecked, setHasChecked] = useState(false);
   const [showAnnouncement, setShowAnnouncement] = useState(false);
+  /**
+   * Which agent to open on this server. A gateway that drives more than one
+   * ready agent gets a small menu on tap; every other gateway keeps the one
+   * tap it always had. The mirror this reads is written by the readiness
+   * probe below, so the menu appears once the server has answered.
+   */
+  const agentChoice = useSelectedAgent(serverId);
+  const [agentMenuOpen, setAgentMenuOpen] = useState(false);
+  useAgentsDiscoveryRefresh(serverId, Boolean(capabilities?.includes('agent_sessions')));
 
   /**
    * The live entry: a band of light crosses the button, the glyph swells a
@@ -108,7 +119,7 @@ export function NewTaskAction({
     let announcementTimer: ReturnType<typeof setTimeout> | null = null;
 
     const checkReady = async (isRetry = false): Promise<boolean> => {
-      const result = await checkOpenCodeServer(server);
+      const result = await checkAgentServer(server);
       if (cancelled) return result.status === 'ready';
 
       setReadiness(result);
@@ -157,10 +168,28 @@ export function NewTaskAction({
   // second server's OpenCode. The switch is awaited, and the route carries the
   // server id so the screen can refuse to mount on any other.
   const handlePress = useCallback(() => {
+    if (agentChoice.offersChoice) {
+      setAgentMenuOpen((open) => !open);
+      return;
+    }
     // Opening the existing entry is intentionally separate from the genuine
     // new-session command. The workbench resumes its remembered session.
     void openOpenCode(serverId);
-  }, [openOpenCode, serverId]);
+  }, [agentChoice.offersChoice, openOpenCode, serverId]);
+  const agentMenuItems = useMemo<AgentActionMenuItem[]>(
+    () =>
+      agentChoice.ready.map((agent) => ({
+        id: agent.id,
+        label: agent.name,
+        testID: `server-agent-pick-${agent.id}`,
+        onPress: () => {
+          setAgentMenuOpen(false);
+          agentChoice.select(agent.id);
+          void openOpenCode(serverId, undefined, undefined, undefined, agent.id);
+        },
+      })),
+    [agentChoice, openOpenCode, serverId]
+  );
 
   if (!capabilities?.includes('agent_sessions')) {
     return null;
@@ -245,6 +274,11 @@ export function NewTaskAction({
             <OpenCodeIcon size={18} color={theme.colors.primary} />
           </Animated.View>
         </PressableScale>
+        {agentMenuOpen ? (
+          <View style={styles.agentMenu}>
+            <AgentActionMenu testID="server-agent-picker" items={agentMenuItems} />
+          </View>
+        ) : null}
         {showAnnouncement ? (
           <Animated.View
             entering={fadeIn()}
@@ -308,6 +342,13 @@ const styles = StyleSheet.create({
   announcementLane: {
     width: 44,
     maxWidth: 44,
+  },
+  agentMenu: {
+    position: 'absolute',
+    top: 48,
+    right: 0,
+    zIndex: 10,
+    minWidth: 180,
   },
   announcementText: {
     letterSpacing: 0.2,

@@ -26,6 +26,7 @@ function session(asid: string, extra: Partial<AgentSessionInfo> = {}): AgentSess
     status: 'idle',
     updated_ms: 0,
     ...extra,
+    agent_id: extra.agent_id ?? 'opencode',
   };
 }
 

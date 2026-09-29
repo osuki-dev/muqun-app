@@ -58,6 +58,8 @@ export interface AgentModelSheetProps {
    * the default, and so both share one cache entry rather than two.
    */
   directory?: string;
+  /** The agentId whose catalog is listed and whose memory a pick goes to. */
+  agentId?: string;
   selectedModel?: ModelRef;
   onSelectModel: (model: ModelRef) => void;
   onClose: () => void;
@@ -127,6 +129,7 @@ function runningStarts(lengths: readonly number[]): number[] {
 export const AgentModelSheet = memo(function AgentModelSheet({
   sessionId,
   directory,
+  agentId,
   selectedModel,
   onSelectModel,
   onClose: _onClose,
@@ -144,11 +147,13 @@ export const AgentModelSheet = memo(function AgentModelSheet({
    */
   const [loading, setLoading] = useState(true);
   const [loadFailed, setLoadFailed] = useState(false);
-  const [recentRefs, setRecentRefs] = useState(() => loadRecentAgentModels(sessionId ?? ''));
+  const [recentRefs, setRecentRefs] = useState(() =>
+    loadRecentAgentModels(sessionId ?? '', agentId)
+  );
   const selectModel = (model: ModelRef) => {
     if (sessionId) {
-      rememberAgentModel(sessionId, directory, model);
-      setRecentRefs(loadRecentAgentModels(sessionId));
+      rememberAgentModel(sessionId, directory, model, agentId);
+      setRecentRefs(loadRecentAgentModels(sessionId, agentId));
     }
     onSelectModel(model);
   };
@@ -189,9 +194,10 @@ export const AgentModelSheet = memo(function AgentModelSheet({
     setLoading(true);
     setLoadFailed(false);
     setModels([]);
-    setRecentRefs(loadRecentAgentModels(sessionId ?? ''));
+    setRecentRefs(loadRecentAgentModels(sessionId ?? '', agentId));
     getAgentCatalog(sessionId, undefined, {
       ...(directory ? { directory } : {}),
+      ...(agentId ? { agentId } : {}),
       // Revalidate on every opening so history never supplies stale model metadata.
       forceRefresh: true,
       requireFresh: true,
@@ -212,7 +218,7 @@ export const AgentModelSheet = memo(function AgentModelSheet({
     return () => {
       active = false;
     };
-  }, [sessionId, directory, reloadToken]);
+  }, [sessionId, directory, agentId, reloadToken]);
 
   /**
    * Which rows the reader scrolls past, and nothing more.

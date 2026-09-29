@@ -92,7 +92,7 @@ test('OpenCode recents show only current Gateway observations and keep honest ag
     title: 'Build release',
     atMs: 20,
     target: {
-      kind: 'opencode-session',
+      kind: 'agent-session',
       serverId: 'a',
       sessionId: 'routing',
       directory: '/workspace',
@@ -107,7 +107,7 @@ test('OpenCode recents show only current Gateway observations and keep honest ag
     nowMs: 70_000,
   })[0]?.observation;
   expect(current).toEqual({
-    kind: 'opencode-session',
+    kind: 'agent-session',
     status: 'busy',
     age: { unit: 'now', value: 0 },
     stale: false,
@@ -130,7 +130,7 @@ test('OpenCode recents show only current Gateway observations and keep honest ag
     nowMs: 400_001,
   })[0]?.observation;
   expect(stale).toMatchObject({
-    kind: 'opencode-session',
+    kind: 'agent-session',
     age: { unit: 'minute', value: 6 },
     stale: true,
   });
@@ -204,7 +204,7 @@ test('offline filtering is gateway-scoped, retains unknown and SSH entries, and 
     title: 'Offline OpenCode',
     atMs: 50,
     target: {
-      kind: 'opencode-session',
+      kind: 'agent-session',
       serverId: 'c',
       sessionId: 'routing',
       directory: '/workspace',

@@ -95,7 +95,7 @@ import {
   listAgentFiles,
   inboxItemText,
   type AgentContextUsage,
-  type AgentInfo,
+  type ModeInfo,
   type CommandInfo,
   type InboxItem,
   type AgentProject,
@@ -145,7 +145,7 @@ const SessionChip = memo(function SessionChip({
   const session = node.session;
   // The name the host publishes, which is what the agent sheet lists. The chip
   // drew the id, so the same agent read "Plan" in the list and "plan" here.
-  const agentId = session.agent || fallbackAgent || 'build';
+  const agentId = session.mode || fallbackAgent || 'build';
   const agentName = agentId ? nameOfAgent(agentId) : t`subagent`;
   const titled = hasRealSessionTitle(session);
   // Untitled reads as untitled; the time is the caption a listing shows, not
@@ -254,7 +254,7 @@ export interface AgentComposerProps {
   onOpenSessionTree?: (asid: string) => void;
   /** The session above the one on screen, for the way back out of a subagent. */
   parentSession?: AgentSessionInfo;
-  availableAgents?: AgentInfo[];
+  availableAgents?: ModeInfo[];
   skills?: SkillInfo[];
   sessionId?: string;
   activeAsid?: string;
@@ -342,6 +342,8 @@ export interface AgentComposerProps {
   onInvokeSkill?: (skill: string, args: string) => Promise<boolean | void>;
   /** One of the app's own commands, dispatched by the screen that owns them. */
   onClientCommand?: (name: AgentClientCommandId) => void;
+  /** The app's own commands the session's agent cannot answer; not listed. */
+  hiddenClientCommands?: readonly AgentClientCommandId[];
   /** What is waiting behind the current turn. */
   inbox?: readonly InboxItem[];
   onCancelInboxItem?: (inboxId: string) => void;
@@ -415,6 +417,7 @@ export const AgentComposer = memo(function AgentComposer({
   onRunCommand,
   onInvokeSkill,
   onClientCommand,
+  hiddenClientCommands = NO_HIDDEN_COMMANDS,
   inbox = EMPTY_INBOX,
   onCancelInboxItem,
   onSetInboxDelivery,
@@ -525,13 +528,15 @@ export const AgentComposer = memo(function AgentComposer({
    */
   const builtinCommands: PaneSlashCommand[] = useMemo(
     () =>
-      AGENT_CLIENT_COMMANDS.map((command) => ({
-        name: command.name,
-        description: _(agentClientCommandDescription[command.id]),
-        argsHint: '',
-        source: 'builtin' as const,
-      })),
-    [_]
+      AGENT_CLIENT_COMMANDS.filter((command) => !hiddenClientCommands.includes(command.id)).map(
+        (command) => ({
+          name: command.name,
+          description: _(agentClientCommandDescription[command.id]),
+          argsHint: '',
+          source: 'builtin' as const,
+        })
+      ),
+    [_, hiddenClientCommands]
   );
 
   const serverCommands: PaneSlashCommand[] = useMemo(
@@ -1675,6 +1680,7 @@ const SESSION_CHIP_REVEAL_MARGIN = 24;
 const EMPTY_STRIP: readonly SessionNode[] = Object.freeze([]);
 const EMPTY_COMMANDS: readonly CommandInfo[] = Object.freeze([]);
 const EMPTY_INBOX: readonly InboxItem[] = Object.freeze([]);
+const NO_HIDDEN_COMMANDS: readonly AgentClientCommandId[] = Object.freeze([]);
 
 const styles = StyleSheet.create({
   dockOuter: {

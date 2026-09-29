@@ -22,7 +22,7 @@ export type HomeContinueObservation =
       stale: boolean;
     }
   | {
-      kind: 'opencode-session';
+      kind: 'agent-session';
       /** Present only while the Gateway's observation remains current and not known offline. */
       status?: HomeSessionObservation['status'];
       age: HomeContinueAge;
@@ -129,7 +129,7 @@ export function homeContinueEntries({
       title: entry.title,
       atMs: entry.atMs,
       observation:
-        target.kind === 'opencode-session' && entry.sessionObservation
+        target.kind === 'agent-session' && entry.sessionObservation
           ? openCodeObservation(
               entry.sessionObservation,
               reachabilityByServer[target.serverId] ?? 'unknown',
@@ -149,7 +149,7 @@ function openCodeObservation(
 ): HomeContinueObservation {
   const stale = nowMs - observation.observedAtMs > SERVER_AGENTS_STALE_AFTER_MS;
   return {
-    kind: 'opencode-session',
+    kind: 'agent-session',
     age: observationAgeParts(observation.observedAtMs, nowMs),
     stale,
     ...(!stale && reachability !== 'offline' ? { status: observation.status } : {}),
