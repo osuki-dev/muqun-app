@@ -272,6 +272,15 @@ describe('features and gating', () => {
     });
   });
 
+  // These run as zustand selectors; a new object per call never lets the
+  // store's snapshot settle and loops the workbench ("Maximum update depth").
+  test('the same input answers the same object', () => {
+    expect(agentFeaturesFor(undefined, 'opencode')).toBe(agentFeaturesFor(undefined, 'opencode'));
+    expect(agentFeaturesFor([], 'deepseek')).toBe(agentFeaturesFor(undefined, 'deepseek'));
+    const agents = discovery.agents?.agents ?? [];
+    expect(agentFeaturesFor(agents, 'deepseek')).toBe(agentFeaturesFor(agents, 'deepseek'));
+  });
+
   test('the composer hides exactly the commands the agent cannot answer', () => {
     expect(hiddenClientCommands({ ...OPENCODE_AGENT_FEATURES })).toEqual([]);
     expect(hiddenClientCommands(defaultAgentFeatures('deepseek'))).toEqual([
@@ -356,6 +365,17 @@ describe('selectors for Home', () => {
       ['opencode', 'offline'],
     ]);
     expect(selectHomeAgents(index, 'never-asked')).toEqual([]);
+  });
+
+  test('answers the same array while the mirror is unchanged, a new one once it changes', () => {
+    const first = selectHomeAgents(index, 'srv-1');
+    expect(selectHomeAgents(index, 'srv-1')).toBe(first);
+    // A write that leaves this server's list alone keeps the answer.
+    expect(selectHomeAgents({ ...index, selected: { 'srv-1': 'deepseek' } }, 'srv-1')).toBe(first);
+    expect(selectHomeAgents(index, 'never-asked')).toBe(selectHomeAgents(index, 'other'));
+    const answered = withMirroredDiscovery(index, 'srv-1', mirrorDiscovery(discovery, 2));
+    expect(selectHomeAgents(answered, 'srv-1')).not.toBe(first);
+    expect(selectHomeAgents(answered, 'srv-1')).toEqual(first);
   });
 
   test('the selected agent is the pick, the last used, or the first ready one', () => {

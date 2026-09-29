@@ -139,13 +139,28 @@ export function findAgent<T extends Pick<AgentInfo, 'id' | 'kind'>>(
  * No discovery, or an agent discovery does not list, answers the kind's own
  * default -- which for OpenCode is everything, so a gateway too old to be
  * asked loses nothing.
+ *
+ * The answer is the same object for the same input: this runs as a zustand
+ * selector, and a fresh default on every call is a snapshot that never
+ * settles, which React reports as "Maximum update depth exceeded".
  */
 export function agentFeaturesFor(
   agents: readonly Pick<AgentInfo, 'id' | 'kind' | 'features'>[] | undefined,
   agentId: string | undefined | null
 ): AgentFeatures {
   const found = findAgent(agents, agentId);
-  return found ? found.features : defaultAgentFeatures(normalizeAgentId(agentId));
+  return found ? found.features : sharedDefaultFeatures(normalizeAgentId(agentId));
+}
+
+const DEFAULT_FEATURES_BY_KIND = new Map<string, AgentFeatures>();
+
+function sharedDefaultFeatures(kind: string): AgentFeatures {
+  let features = DEFAULT_FEATURES_BY_KIND.get(kind);
+  if (!features) {
+    features = defaultAgentFeatures(kind);
+    DEFAULT_FEATURES_BY_KIND.set(kind, features);
+  }
+  return features;
 }
 
 /**
@@ -433,12 +448,24 @@ export type HomeAgentEntry = MirroredAgent & { readiness: AgentReadinessStatus }
  * say about it. Empty for a server that has never answered discovery, which is
  * the same rule the capability mirror keeps: nothing is offered until the
  * server has been asked.
+ *
+ * Referentially stable while the mirrored list is unchanged, because it is a
+ * zustand selector: a new array per call never lets the store's snapshot
+ * settle, and every subscriber loops until React gives up.
  */
 export function selectHomeAgents(index: AgentsMirrorIndex, serverId: string): HomeAgentEntry[] {
   const agents = index.servers[serverId]?.agents?.agents;
-  if (!agents) return [];
-  return agents.map((agent) => ({ ...agent, readiness: agentReadiness(agent) }));
+  if (!agents) return NO_HOME_AGENTS;
+  let entries = HOME_AGENTS_BY_LIST.get(agents);
+  if (!entries) {
+    entries = agents.map((agent) => ({ ...agent, readiness: agentReadiness(agent) }));
+    HOME_AGENTS_BY_LIST.set(agents, entries);
+  }
+  return entries;
 }
+
+const NO_HOME_AGENTS: HomeAgentEntry[] = [];
+const HOME_AGENTS_BY_LIST = new WeakMap<readonly MirroredAgent[], HomeAgentEntry[]>();
 
 /** The agent the server last created a session on, or nothing. */
 export function lastUsedAgent(index: AgentsMirrorIndex, serverId: string): string | undefined {
