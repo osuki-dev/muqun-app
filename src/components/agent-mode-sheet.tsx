@@ -20,7 +20,7 @@ import { effectiveAgentId } from '@/lib/agent-session-defaults';
 const STAGGERED_ROWS = 8;
 
 /**
- * Choose an agent, as a native form sheet route.
+ * Choose a mode of one agent, as a native form sheet route.
  *
  * `sheet-scene.tsx`'s shape. The mode -- primary or subagent -- is part of the
  * row's caption rather than a coloured chip: it is a fact about the agent, and
@@ -42,6 +42,8 @@ export interface AgentModeSheetProps {
    * where a read without it merges every agent's modes into one list.
    */
   agentId?: string;
+  /** What the caption calls that agent -- "Modes of DeepSeek". */
+  agentName: string;
   selectedAgent?: string;
   onSelectAgent: (agent: string) => void;
   onClose: () => void;
@@ -66,6 +68,7 @@ export const AgentModeSheet = memo(function AgentModeSheet({
   sessionId,
   directory,
   agentId,
+  agentName,
   selectedAgent,
   onSelectAgent,
   onClose: _onClose,
@@ -172,13 +175,12 @@ export const AgentModeSheet = memo(function AgentModeSheet({
    * `effectiveAgentId`'s, which is the order a create is sent in.
    */
   const effectiveAgent = effectiveAgentId(selectedAgent, defaultAgent);
-  const current = displayAgents.find((agent) => agent.id === effectiveAgent);
 
   const contentSized = displayAgents.length <= 4;
 
   const content = (
     <>
-      <SheetSceneGroupHeading title={t`Agents on this host`} first />
+      <SheetSceneGroupHeading title={t`Available modes`} first />
       {displayAgents.map((agent, index) => {
         const isSelected = effectiveAgent === agent.id;
         return (
@@ -207,8 +209,8 @@ export const AgentModeSheet = memo(function AgentModeSheet({
   return (
     <SheetScene
       testID="agent-mode-sheet"
-      title={t`Choose an agent`}
-      caption={current ? current.name || current.id : effectiveAgent}
+      title={t`Choose a mode`}
+      caption={t`Modes of ${agentName}`}
       contentSized={contentSized}>
       {loading ? (
         <View style={styles.loading}>

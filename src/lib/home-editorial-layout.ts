@@ -5,6 +5,10 @@
  */
 export const EDITORIAL_TWO_COLUMN_MIN_WIDTH = 752;
 
+/** On a tablet the utility column never grows past this; Continue takes the rest. */
+export const EDITORIAL_PAD_ASIDE_MAX_WIDTH = 320;
+const EDITORIAL_PAD_ASIDE_MIN_WIDTH = 240;
+
 export type EditorialLayoutMode = 'one-column' | 'two-column';
 
 export type EditorialLayoutGeometry = {
@@ -25,7 +29,8 @@ export type EditorialLayoutGeometry = {
 export function getEditorialLayoutGeometry(
   contentWidth: number,
   fontScale = 1,
-  hasAside = true
+  hasAside = true,
+  pad = false
 ): EditorialLayoutGeometry {
   const width = Number.isFinite(contentWidth) ? Math.max(0, contentWidth) : 0;
   const scale = Number.isFinite(fontScale) ? Math.max(1, fontScale) : 1;
@@ -35,7 +40,14 @@ export function getEditorialLayoutGeometry(
   const twoColumn =
     hasAside && scale < 1.35 && width >= wideTypeMinimum && innerWidth >= gutter * 2;
   const gap = twoColumn ? Math.min(32, Math.max(24, Math.round(24 * scale))) : 0;
-  const asideWidth = twoColumn ? Math.min(340, Math.max(280, Math.round(280 * scale))) : 0;
+  const asideWidth = !twoColumn
+    ? 0
+    : pad
+      ? Math.min(
+          EDITORIAL_PAD_ASIDE_MAX_WIDTH,
+          Math.max(EDITORIAL_PAD_ASIDE_MIN_WIDTH, Math.round(innerWidth * 0.28))
+        )
+      : Math.min(340, Math.max(280, Math.round(280 * scale)));
   const mainWidth = twoColumn ? Math.max(0, innerWidth - gap - asideWidth) : innerWidth;
 
   return {

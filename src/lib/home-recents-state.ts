@@ -35,6 +35,12 @@ export type HomeRecentsState = {
   ) => Promise<void>;
   /** Updates display metadata in place without creating or reordering a visit. */
   updateTitle: (target: HomeTarget, title: string) => Promise<void>;
+  /**
+   * Writes down the agent the gateway says owns a remembered session, in
+   * place, without creating or reordering a visit. A target recorded before
+   * agents were tagged reads as OpenCode until this repairs it.
+   */
+  repairAgent: (target: HomeTarget, agentId: string) => Promise<void>;
   /** Updates observed OpenCode status without creating or reordering a visit. */
   observeSession: (target: HomeTarget, observation: HomeSessionObservation) => Promise<void>;
   /** Removes references to unpaired servers and deleted SSH hosts. */
@@ -241,6 +247,31 @@ export function createHomeRecentsState(
       else await requestWrite();
     };
 
+    const repairAgent = async (target: HomeTarget, agentId: string): Promise<void> => {
+      const normalized = createHomeRecentEntry(target, '', 0);
+      const id = agentId.trim();
+      if (!normalized || normalized.target.kind !== 'agent-session' || !id) return;
+      if (allowed && !isHomeRecentEntryAllowed(normalized, allowed)) return;
+
+      const before = get().entries;
+      const index = before.findIndex((item) => item.key === normalized.key);
+      const current = before[index];
+      if (!current || current.target.kind !== 'agent-session' || current.target.agentId === id) {
+        await hydrate();
+        return;
+      }
+
+      const repairWasDuringHydration = !hydrated;
+      if (repairWasDuringHydration) changedDuringHydration.add(normalized.key);
+      const next = before.slice();
+      next[index] = { ...current, target: { ...current.target, agentId: id } };
+      set({ entries: next });
+
+      await hydrate();
+      if (repairWasDuringHydration) await writeDrain;
+      else await requestWrite();
+    };
+
     const remove = async (target: HomeTarget): Promise<void> => {
       const normalized = createHomeRecentEntry(target, '', 0);
       if (!normalized) return;
@@ -278,6 +309,7 @@ export function createHomeRecentsState(
       hydrate,
       visit,
       updateTitle,
+      repairAgent,
       observeSession,
       keepOnly,
       remove,
@@ -345,7 +377,9 @@ function sameHomeRecentEntries(
       entry.atMs === other.atMs &&
       entry.sessionObservation?.status === other.sessionObservation?.status &&
       entry.sessionObservation?.observedAtMs === other.sessionObservation?.observedAtMs &&
-      homeTargetKey(entry.target) === homeTargetKey(other.target)
+      homeTargetKey(entry.target) === homeTargetKey(other.target) &&
+      (entry.target.kind === 'agent-session' ? entry.target.agentId : undefined) ===
+        (other.target.kind === 'agent-session' ? other.target.agentId : undefined)
     );
   });
 }

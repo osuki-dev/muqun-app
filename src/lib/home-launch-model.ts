@@ -76,6 +76,11 @@ export type LaunchModelInput = {
   discovery?: MirroredServerDiscovery | null;
   /** The agent the gateway last created a session on. */
   lastUsedAgentId?: string;
+  /**
+   * Agent tiles shown before the rest collapse into "More agents". The Pad
+   * grid has a row of its own for agents and shows every one.
+   */
+  maxAgentTiles?: number;
 };
 
 /** The agent that owned Home before agents were listed. */
@@ -194,14 +199,14 @@ function fallbackModel(): LaunchModel {
  * terminal; SSH. Markers are numbered after the row is known.
  */
 export function buildLaunchModel(input: LaunchModelInput = {}): LaunchModel {
-  const { discovery, lastUsedAgentId } = input;
+  const { discovery, lastUsedAgentId, maxAgentTiles = MAX_AGENT_TILES } = input;
   const plane = discovery?.agents;
   // Without an agents plane, or with one that names nobody, discovery has
   // nothing to project and the fixed row stands.
   if (!discovery || !plane || plane.agents.length === 0) return fallbackModel();
 
   const agents = projectLaunchAgents(discovery, lastUsedAgentId);
-  const shown = agents.length > MAX_AGENT_TILES ? agents.slice(0, MAX_AGENT_TILES) : agents;
+  const shown = agents.length > maxAgentTiles ? agents.slice(0, maxAgentTiles) : agents;
   const drafts: Draft[] = shown.map((agent, index) => ({
     key: `agent:${agent.id}`,
     kind: 'agent',
@@ -214,13 +219,13 @@ export function buildLaunchModel(input: LaunchModelInput = {}): LaunchModel {
     name: agent.name,
     caption: launchAgentCaption(agent),
   }));
-  if (agents.length > MAX_AGENT_TILES) {
+  if (agents.length > maxAgentTiles) {
     drafts.push({
       key: 'more-agents',
       kind: 'more-agents',
       layout: 'tile',
       testID: 'home-more-agents',
-      hidden: agents.length - MAX_AGENT_TILES,
+      hidden: agents.length - maxAgentTiles,
     });
   }
   // A session list with no agent behind it would open an empty screen.
@@ -272,4 +277,65 @@ export function groupLaunchCells(entries: readonly LaunchEntry[]): LaunchCell[] 
     }
   }
   return cells;
+}
+
+/** Under this measured width the phone row scrolls sideways; above it, it wraps. */
+export const LAUNCH_SCROLL_MAX_WIDTH = 560;
+/** The Pad grid takes a fourth column from this content width. */
+export const LAUNCH_GRID_FOUR_COLUMN_MIN_WIDTH = 640;
+export const LAUNCH_GRID_GAP = 8;
+
+export type LaunchRowLayout =
+  | { mode: 'scroll' }
+  | { mode: 'wrap' }
+  | {
+      mode: 'grid';
+      /** 3 or 4, from the content width. */
+      columns: number;
+      /** Agents share a row of their own: as many columns as there are agents, up to `columns`. */
+      agentColumns: number;
+      agentWidth: number;
+      /** The four utilities sit in one row of four, or two rows of two. */
+      utilityColumns: number;
+      utilityWidth: number;
+    };
+
+function columnWidth(width: number, columns: number): number {
+  if (columns <= 0) return 0;
+  return Math.max(0, Math.floor((width - LAUNCH_GRID_GAP * (columns - 1)) / columns));
+}
+
+/**
+ * How the launch row is laid out.
+ *
+ * The phone keeps its row exactly as it was: a sideways scroller under 560pt
+ * and a wrapping row above it. The Pad's embedded Home asks for `grid` and
+ * never scrolls sideways, however many agents the gateway lists: agents take
+ * the first row (or rows), and Sessions, Terminal, New terminal and SSH sit
+ * under them as compact tiles.
+ */
+export function launchRowLayout({
+  width,
+  grid,
+  agentCount,
+  utilityCount,
+}: {
+  width: number;
+  grid: boolean;
+  agentCount: number;
+  utilityCount: number;
+}): LaunchRowLayout {
+  const measured = Number.isFinite(width) ? Math.max(0, width) : 0;
+  if (!grid) return measured < LAUNCH_SCROLL_MAX_WIDTH ? { mode: 'scroll' } : { mode: 'wrap' };
+  const columns = measured >= LAUNCH_GRID_FOUR_COLUMN_MIN_WIDTH ? 4 : 3;
+  const agentColumns = Math.max(1, Math.min(agentCount, columns));
+  const utilityColumns = Math.max(1, Math.min(utilityCount, columns === 4 ? 4 : 2));
+  return {
+    mode: 'grid',
+    columns,
+    agentColumns,
+    agentWidth: columnWidth(measured, agentColumns),
+    utilityColumns,
+    utilityWidth: columnWidth(measured, utilityColumns),
+  };
 }

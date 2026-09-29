@@ -443,10 +443,6 @@ msgstr "Vue par défaut des panneaux d’agent"
 msgid "Agents"
 msgstr "Agents"
 
-#: src/components/agent-mode-sheet.tsx
-msgid "Agents on this host"
-msgstr "Agents sur cet hôte"
-
 #: src/components/app-drawer-content.tsx
 msgid "AI coding assistant"
 msgstr "Assistant de programmation IA"
@@ -700,6 +696,10 @@ msgstr "Automatique"
 msgid "Autonomous software engineering: edits files, runs commands, tests."
 msgstr "Ingénierie logicielle autonome : modifie des fichiers, exécute des commandes, teste"
 
+#: src/components/agent-mode-sheet.tsx
+msgid "Available modes"
+msgstr "Modes disponibles"
+
 #: src/components/simfarm-stage.tsx
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Back"
@@ -911,6 +911,10 @@ msgstr "Vérification…"
 msgid "Choose a gateway"
 msgstr "Choisir une passerelle"
 
+#: src/components/agent-mode-sheet.tsx
+msgid "Choose a mode"
+msgstr "Choisir un mode"
+
 #: src/components/agent-model-sheet.tsx
 #: src/components/agent-workbench.tsx
 msgid "Choose a model"
@@ -924,7 +928,6 @@ msgstr "Choisir un simulateur"
 msgid "Choose a simulator from the menu."
 msgstr "Choisissez un simulateur dans le menu"
 
-#: src/components/agent-mode-sheet.tsx
 #: src/components/home-agents-sheet.tsx
 msgid "Choose an agent"
 msgstr "Choisir un agent"
@@ -2412,7 +2415,6 @@ msgid "How to use Muqun"
 msgstr "Comment utiliser Muqun"
 
 #: src/components/agent-session-tree-sheet.tsx
-#: src/components/home-recent-sessions.tsx
 #: src/i18n/labels.ts
 msgid "Idle"
 msgstr "Inactif"
@@ -2824,6 +2826,10 @@ msgstr "Modèle · {0} → {next}"
 #: src/components/agent-message-block.tsx
 msgid "Model · {next}"
 msgstr "Modèle · {next}"
+
+#: src/components/agent-mode-sheet.tsx
+msgid "Modes of {agentName}"
+msgstr "Modes de {agentName}"
 
 #: src/components/asset-viewer.tsx
 msgid "Modified"
@@ -4009,7 +4015,7 @@ msgstr "Réessayer d’envoyer {0}"
 
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-workbench.tsx
-#: src/components/home-recent-sessions.tsx
+#: src/i18n/labels.ts
 msgid "Retrying…"
 msgstr "Nouvelle tentative…"
 
@@ -4128,7 +4134,7 @@ msgid "Run the Gateway on your machine and scan the QR code it prints. The pairi
 msgstr "Lancez le Gateway sur votre machine et scannez le QR code qu’il affiche. L’appairage reste sur cet appareil"
 
 #: src/components/agent-session-tree-sheet.tsx
-#: src/components/home-recent-sessions.tsx
+#: src/i18n/labels.ts
 msgid "Running"
 msgstr "En cours"
 
@@ -4766,7 +4772,7 @@ msgstr "État indisponible"
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-workbench.tsx
 #: src/components/collaboration-notice.tsx
-#: src/components/home-recent-sessions.tsx
+#: src/i18n/labels.ts
 msgid "Status unknown"
 msgstr "État inconnu"
 
@@ -4810,7 +4816,7 @@ msgstr "Arrêter cette commande"
 
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-workbench.tsx
-#: src/components/home-recent-sessions.tsx
+#: src/i18n/labels.ts
 msgid "Stopped"
 msgstr "Arrêté"
 
@@ -5217,7 +5223,7 @@ msgstr "La transcription sous forme de conversation, avec les étapes d’outils
 
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-workbench.tsx
-#: src/components/home-recent-sessions.tsx
+#: src/i18n/labels.ts
 msgid "The turn failed"
 msgstr "Le tour a échoué"
 
