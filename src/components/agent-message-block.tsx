@@ -615,38 +615,15 @@ const AgentDiffBlock = memo(function AgentDiffBlock({
  */
 const MessageTextPart = memo(function MessageTextPart({
   text,
-  prevTool,
   markdownStyle,
 }: {
   text: string;
-  prevTool?: TimelineItem;
   markdownStyle: MarkdownStyle;
 }) {
   const segments = useMemo(
     () => splitDiffFences(text).filter((seg) => seg.kind === 'diff' || seg.text.trim().length > 0),
     [text]
   );
-
-  // An assistant text that merely echoes the tool output right before it is
-  // chrome, not content; OpenCode's own output does not repeat it.
-  if (prevTool && prevTool.part.type === 'tool') {
-    const cleanText = text
-      .replace(/^```[\w]*\n/, '')
-      .replace(/\n```$/, '')
-      .replace(/Command exited with code \d+\.?/gi, '')
-      .trim();
-    const cleanOutput = (typeof prevTool.part.output === 'string' ? prevTool.part.output : '')
-      .replace(/Command exited with code \d+\.?/gi, '')
-      .trim();
-    if (
-      !cleanText ||
-      cleanText === cleanOutput ||
-      (cleanOutput && cleanText.includes(cleanOutput)) ||
-      (cleanOutput && cleanOutput.includes(cleanText))
-    ) {
-      return null;
-    }
-  }
 
   const renderMarkdown = (key: string, markdown: string) => (
     <BoundedMarkdown
@@ -765,14 +742,7 @@ function renderTimelinePart(
       return <AgentNoticeRow key={item.id} part={part} />;
     case 'text':
       return (
-        <MessageTextPart
-          key={item.id}
-          text={part.text}
-          prevTool={
-            options.prevItem && options.prevItem.part.type === 'tool' ? options.prevItem : undefined
-          }
-          markdownStyle={options.markdownStyle}
-        />
+        <MessageTextPart key={item.id} text={part.text} markdownStyle={options.markdownStyle} />
       );
     default:
       // `approval` and `form` are drawn by the surfaces that own their state:

@@ -19,6 +19,24 @@ export const SESSION_STRIP_MAX_NODES = 60;
 
 export type ChildrenByParent = Readonly<Record<string, readonly AgentSessionInfo[]>>;
 
+/** A bounded or delayed listing must not hide the root currently being read. */
+export function includeOpenedRoot(
+  roots: readonly AgentSessionInfo[],
+  opened: AgentSessionInfo | null,
+  activeAsid: string | undefined
+): readonly AgentSessionInfo[] {
+  if (
+    !opened ||
+    opened.asid !== activeAsid ||
+    opened.parent_id ||
+    opened.deleted ||
+    roots.some((root) => root.asid === opened.asid)
+  ) {
+    return roots;
+  }
+  return [opened, ...roots];
+}
+
 /**
  * Keep live subagents visible before historical siblings without changing the
  * Gateway's order within either group. `idle` is not a completion signal.

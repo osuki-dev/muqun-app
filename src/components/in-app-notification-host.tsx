@@ -4,7 +4,7 @@ import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { useMonoFontFamily } from '@/hooks/use-user-fonts';
 import { useThemeTokens } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
-import { router, type Href } from 'expo-router';
+import { router, usePathname, type Href } from 'expo-router';
 import { Bell } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import { AppState, StyleSheet, View, type AccessibilityActionEvent } from 'react-native';
@@ -27,6 +27,7 @@ import { readApprovalBody } from '@/lib/agent-engine-text';
 import { feedback } from '@/lib/feedback';
 import {
   noticeAutoDismissDelay,
+  noticePresentationAllowed,
   noticeTitleParts,
   type InAppNotice,
 } from '@/lib/in-app-notifications';
@@ -90,6 +91,7 @@ export function InAppNotificationHost() {
   const { colors } = useThemeTokens();
   const mono = useMonoFontFamily();
   const enabled = useAppSettings((state) => state.notificationsEnabled);
+  const pathname = usePathname();
   const items = useInAppNotifications((state) => state.items);
   const [active, setActive] = useState(AppState.currentState === 'active');
   useEffect(() => {
@@ -105,7 +107,7 @@ export function InAppNotificationHost() {
   const selectedIndex = items.findIndex((item) => item.id === selectedId);
   const position = selectedIndex < 0 ? 0 : selectedIndex;
   const notice = items[position];
-  const visible = Boolean(enabled && active && notice);
+  const visible = Boolean(enabled && active && notice && noticePresentationAllowed(pathname));
 
   /**
    * Where the plate is, as a translation off its resting place.

@@ -8,6 +8,7 @@ import {
   buildSessionStrip,
   flattenSessionTree,
   indexSessions,
+  includeOpenedRoot,
   parentOf,
   rootOf,
   sessionsInWorkspace,
@@ -44,6 +45,20 @@ const CHILDREN = {
 };
 
 describe('root-only strip and uncapped sheet projection', () => {
+  test('an open root remains selected when a bounded listing omits it', () => {
+    const roots = includeOpenedRoot([ROOT_B], ROOT_A, ROOT_A.asid);
+    const strip = buildRootSessionStrip(roots, {}, ROOT_A.asid);
+    expect(strip.selectedRootAsid).toBe(ROOT_A.asid);
+    expect(strip.nodes.map((node) => node.session.asid)).toEqual(['ses_a', 'ses_b']);
+  });
+
+  test('opening cannot duplicate roots or promote children, deleted or stale snapshots', () => {
+    const roots = [ROOT_B];
+    expect(includeOpenedRoot(roots, ROOT_B, ROOT_B.asid)).toBe(roots);
+    expect(includeOpenedRoot(roots, CHILD_A1, CHILD_A1.asid)).toBe(roots);
+    expect(includeOpenedRoot(roots, { ...ROOT_A, deleted: true }, ROOT_A.asid)).toBe(roots);
+    expect(includeOpenedRoot(roots, ROOT_A, ROOT_B.asid)).toBe(roots);
+  });
   test('a delayed inventory cannot erase a child announced while the request was in flight', async () => {
     const observed: ChildrenByParent = { ses_a: [CHILD_A2] };
     let current = observed;

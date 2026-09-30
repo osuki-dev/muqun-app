@@ -18,7 +18,7 @@ import {
   SHEET_LADDER,
   sheetSceneStyles,
 } from '@/components/sheet-scene';
-import { loadRecentAgentModels, rememberAgentModel } from '@/lib/agent-model-memory';
+import { loadRecentAgentModels } from '@/lib/agent-model-memory';
 import { recentCatalogModels } from '@/lib/recent-agent-models';
 import { appChrome } from '@/constants/appearance';
 import { withAlpha } from '@/lib/color';
@@ -151,13 +151,7 @@ export const AgentModelSheet = memo(function AgentModelSheet({
   const [recentRefs, setRecentRefs] = useState(() =>
     loadRecentAgentModels(sessionId ?? '', agentId)
   );
-  const selectModel = (model: ModelRef) => {
-    if (sessionId) {
-      rememberAgentModel(sessionId, directory, model, agentId);
-      setRecentRefs(loadRecentAgentModels(sessionId, agentId));
-    }
-    onSelectModel(model);
-  };
+  const selectModel = onSelectModel;
   const [models, setModels] = useState<ModelInfo[]>([]);
   /**
    * The providers, for their `activation`, and the catalog's own defaults.
@@ -173,6 +167,7 @@ export const AgentModelSheet = memo(function AgentModelSheet({
   const [defaults, setDefaults] = useState<CatalogDefaults>({});
   const [searchQuery, setSearchQuery] = useState('');
   const [filterMode, setFilterMode] = useState<'all' | 'free'>('all');
+  const [pickedProvider, setPickedProvider] = useState<string | null>(null);
   const modelListRef = useRef<ScrollView>(null);
   const sectionOffsetsRef = useRef(new Map<number, number>());
   const selectedRowOffsetRef = useRef<number | null>(null);
@@ -248,20 +243,24 @@ export const AgentModelSheet = memo(function AgentModelSheet({
 
   // Recent rows resolve against the same catalog and filters as provider groups.
   const searching = searchQuery.trim().length > 0 || filterMode === 'free';
-  const sections = useMemo(() => {
+  const providerSections = useMemo(() => {
     const recent = recentCatalogModels(recentRefs, filteredModels, providers);
     const result: {
+      providerId: string;
       title: string;
       models: ModelInfo[];
       recent?: boolean;
       unavailable?: boolean;
-    }[] = recent.length ? [{ title: t`Recently used`, models: recent, recent: true }] : [];
+    }[] = recent.length
+      ? [{ providerId: '__recent__', title: t`Recently used`, models: recent, recent: true }]
+      : [];
     // Titled by the catalog's provider names; a provider the host has not
     // signed in is still a group, greyed, so the reader learns why it is empty.
     for (const group of groupModelsByProvider(filteredModels, providers, providerName, {
       includeEmptyUnavailable: !searching,
     })) {
       result.push({
+        providerId: group.providerId,
         title: group.title,
         models: group.models,
         ...(group.available ? {} : { unavailable: true }),
@@ -269,6 +268,15 @@ export const AgentModelSheet = memo(function AgentModelSheet({
     }
     return result;
   }, [filteredModels, recentRefs, providers, searching, t]);
+
+  const activeProvider = providerSections.some((section) => section.providerId === pickedProvider)
+    ? pickedProvider
+    : (providerSections.find((section) => section.providerId === effectiveModel?.provider_id)
+        ?.providerId ?? providerSections[0]?.providerId);
+  const sections = useMemo(
+    () => providerSections.filter((section) => section.providerId === activeProvider),
+    [providerSections, activeProvider]
+  );
 
   // `sections` puts Recently used first, so this finds that row when the same
   // model is also present in its provider section.
@@ -291,7 +299,7 @@ export const AgentModelSheet = memo(function AgentModelSheet({
   // reader who had scrolled deep would mount every match of the next query.
   useEffect(() => {
     setRowLimit(SECTION_PAGE_SIZE);
-  }, [searchQuery, filterMode]);
+  }, [searchQuery, filterMode, activeProvider]);
   const loadMore = useCallback(() => {
     setRowLimit((limit) => (limit < paged.total ? limit + SECTION_PAGE_SIZE : limit));
   }, [paged.total]);
@@ -433,232 +441,285 @@ export const AgentModelSheet = memo(function AgentModelSheet({
           <Spinner size="lg" color={theme.colors.primary} />
         </View>
       ) : (
-        <ScrollView
-          nestedScrollEnabled
-          ref={modelListRef}
-          style={sheetSceneStyles.scroller}
-          contentContainerStyle={sheetSceneStyles.scrollerContent}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
-          scrollEventThrottle={64}
-          onLayout={({ nativeEvent }) => {
-            viewportHeightRef.current = nativeEvent.layout.height;
-            tryRevealSelectedRow();
-          }}
-          onContentSizeChange={(_width, height) => {
-            contentHeightRef.current = height;
-            tryRevealSelectedRow();
-          }}
-          onScrollBeginDrag={() => {
-            autoRevealCancelledRef.current = true;
-          }}
-          onScroll={
-            hasMore
-              ? ({ nativeEvent }) => {
-                  if (
-                    nearListEnd({
-                      offset: nativeEvent.contentOffset.y,
-                      viewport: nativeEvent.layoutMeasurement.height,
-                      content: nativeEvent.contentSize.height,
-                    })
-                  ) {
-                    loadMore();
-                  }
-                }
-              : undefined
-          }>
-          {sections.length === 0 || filteredModels.length === 0 ? (
-            <Animated.View entering={fadeIn('short')} style={styles.empty}>
-              <Text variant="caption" color={theme.colors.textMuted}>
-                {loadFailed
-                  ? t`Could not load models`
-                  : emptyReason === 'search'
-                    ? t`No models match “${searchQuery.trim()}”.`
-                    : emptyReason === 'free-filter'
-                      ? t`No free models on this host.`
-                      : t`No models on this host.`}
-              </Text>
-              {loadFailed || emptyReason === 'nothing' ? (
+        <View style={styles.columns}>
+          <ScrollView
+            style={styles.providers}
+            contentContainerStyle={styles.providerContent}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled">
+            {providerSections.map((section) => {
+              const selected = section.providerId === activeProvider;
+              return (
                 <PressableScale
-                  testID="agent-model-retry"
+                  key={section.providerId}
+                  testID={`agent-model-provider-${section.providerId}`}
                   accessibilityRole="button"
-                  accessibilityLabel={t`Retry`}
-                  onPress={() => setReloadToken((token) => token + 1)}
+                  accessibilityLabel={section.title}
+                  accessibilityState={{ selected }}
+                  onPress={() => {
+                    autoRevealCancelledRef.current = true;
+                    setPickedProvider(section.providerId);
+                    modelListRef.current?.scrollTo({ y: 0, animated: false });
+                  }}
                   style={[
-                    styles.retry,
-                    { backgroundColor: withAlpha(theme.colors.primary, 0.09) },
+                    styles.providerRow,
+                    {
+                      borderLeftColor: selected ? theme.colors.primary : 'transparent',
+                      backgroundColor: selected
+                        ? withAlpha(theme.colors.primary, 0.08)
+                        : 'transparent',
+                    },
                   ]}>
-                  <Text variant="caption" weight="semibold" color={theme.colors.primary}>
-                    {t`Retry`}
-                  </Text>
-                </PressableScale>
-              ) : null}
-            </Animated.View>
-          ) : (
-            paged.sections.map((section, sectionIndex) => (
-              <Animated.View
-                key={section.title}
-                layout={listLayout('short')}
-                onLayout={({ nativeEvent }) => {
-                  sectionOffsetsRef.current.set(sectionIndex, nativeEvent.layout.y);
-                  tryRevealSelectedRow();
-                }}>
-                {sectionIndex > 0 ? <SheetSceneGroupRule /> : null}
-                <SheetSceneGroupHeading title={section.title} first={sectionIndex === 0} />
-                {section.unavailable && section.models.length === 0 ? (
                   <Text
                     variant="caption"
-                    color={theme.colors.textMuted}
-                    style={styles.providerHint}>
-                    {t`Not signed in on the host`}
+                    weight={selected ? 'semibold' : 'regular'}
+                    color={selected ? theme.colors.primary : theme.colors.textMuted}>
+                    {section.title}
                   </Text>
+                </PressableScale>
+              );
+            })}
+          </ScrollView>
+          <ScrollView
+            key={activeProvider}
+            nestedScrollEnabled
+            ref={modelListRef}
+            style={sheetSceneStyles.scroller}
+            contentContainerStyle={[sheetSceneStyles.scrollerContent, styles.modelContent]}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+            scrollEventThrottle={64}
+            onLayout={({ nativeEvent }) => {
+              viewportHeightRef.current = nativeEvent.layout.height;
+              tryRevealSelectedRow();
+            }}
+            onContentSizeChange={(_width, height) => {
+              contentHeightRef.current = height;
+              tryRevealSelectedRow();
+            }}
+            onScrollBeginDrag={() => {
+              autoRevealCancelledRef.current = true;
+            }}
+            onScroll={
+              hasMore
+                ? ({ nativeEvent }) => {
+                    if (
+                      nearListEnd({
+                        offset: nativeEvent.contentOffset.y,
+                        viewport: nativeEvent.layoutMeasurement.height,
+                        content: nativeEvent.contentSize.height,
+                      })
+                    ) {
+                      loadMore();
+                    }
+                  }
+                : undefined
+            }>
+            {sections.length === 0 || filteredModels.length === 0 ? (
+              <Animated.View entering={fadeIn('short')} style={styles.empty}>
+                <Text variant="caption" color={theme.colors.textMuted}>
+                  {loadFailed
+                    ? t`Could not load models`
+                    : emptyReason === 'search'
+                      ? t`No models match “${searchQuery.trim()}”.`
+                      : emptyReason === 'free-filter'
+                        ? t`No free models on this host.`
+                        : t`No models on this host.`}
+                </Text>
+                {loadFailed || emptyReason === 'nothing' ? (
+                  <PressableScale
+                    testID="agent-model-retry"
+                    accessibilityRole="button"
+                    accessibilityLabel={t`Retry`}
+                    onPress={() => setReloadToken((token) => token + 1)}
+                    style={[
+                      styles.retry,
+                      { backgroundColor: withAlpha(theme.colors.primary, 0.09) },
+                    ]}>
+                    <Text variant="caption" weight="semibold" color={theme.colors.primary}>
+                      {t`Retry`}
+                    </Text>
+                  </PressableScale>
                 ) : null}
-                {section.models.map((model, modelIndex) => {
-                  const isSelected =
-                    effectiveModel?.model_id === model.id &&
-                    (!effectiveModel.provider_id ||
-                      effectiveModel.provider_id === model.provider_id);
-                  // Carried through rather than filtered out, and said plainly:
-                  // the host is where a provider is signed in, and the gateway
-                  // proxies no credential route.
-                  const signedOut = unavailableProviders.has(model.provider_id);
-                  const unavailable =
-                    signedOut ||
-                    model.enabled === false ||
-                    disabledProviders.has(model.provider_id);
-                  const variants = model.variants ?? [];
-                  const index = sectionRowStarts[sectionIndex] + modelIndex;
-                  return (
-                    <Animated.View
-                      key={`${model.provider_id}:${model.id}`}
-                      onLayout={
-                        selectedPosition?.sectionIndex === sectionIndex &&
-                        selectedPosition.modelIndex === modelIndex
-                          ? ({ nativeEvent }) => {
-                              selectedRowOffsetRef.current = nativeEvent.layout.y;
-                              tryRevealSelectedRow();
-                            }
-                          : undefined
-                      }
-                      entering={
-                        index < STAGGERED_ROWS ? riseIn(index * STAGGER.row) : fadeIn('short')
-                      }
-                      layout={listLayout('short')}>
-                      <SheetSceneRow
-                        testID={`agent-model-row-${model.id}`}
-                        title={model.name || model.id}
-                        caption={
-                          section.recent
-                            ? [providerName(model.provider_id), modelCaption(model)]
-                                .filter(Boolean)
-                                .join(' · ')
-                            : modelCaption(model)
+              </Animated.View>
+            ) : (
+              paged.sections.map((section, sectionIndex) => (
+                <Animated.View
+                  key={section.title}
+                  layout={listLayout('short')}
+                  onLayout={({ nativeEvent }) => {
+                    sectionOffsetsRef.current.set(sectionIndex, nativeEvent.layout.y);
+                    tryRevealSelectedRow();
+                  }}>
+                  {sectionIndex > 0 ? <SheetSceneGroupRule /> : null}
+                  <SheetSceneGroupHeading title={section.title} first={sectionIndex === 0} />
+                  {section.unavailable && section.models.length === 0 ? (
+                    <Text
+                      variant="caption"
+                      color={theme.colors.textMuted}
+                      style={styles.providerHint}>
+                      {t`Not signed in on the host`}
+                    </Text>
+                  ) : null}
+                  {section.models.map((model, modelIndex) => {
+                    const isSelected =
+                      effectiveModel?.model_id === model.id &&
+                      (!effectiveModel.provider_id ||
+                        effectiveModel.provider_id === model.provider_id);
+                    // Carried through rather than filtered out, and said plainly:
+                    // the host is where a provider is signed in, and the gateway
+                    // proxies no credential route.
+                    const signedOut = unavailableProviders.has(model.provider_id);
+                    const unavailable =
+                      signedOut ||
+                      model.enabled === false ||
+                      disabledProviders.has(model.provider_id);
+                    const variants = model.variants ?? [];
+                    const index = sectionRowStarts[sectionIndex] + modelIndex;
+                    return (
+                      <Animated.View
+                        key={`${model.provider_id}:${model.id}`}
+                        onLayout={
+                          selectedPosition?.sectionIndex === sectionIndex &&
+                          selectedPosition.modelIndex === modelIndex
+                            ? ({ nativeEvent }) => {
+                                selectedRowOffsetRef.current = nativeEvent.layout.y;
+                                tryRevealSelectedRow();
+                              }
+                            : undefined
                         }
-                        selected={isSelected && !unavailable}
-                        disabled={unavailable}
-                        disabledCaption={
-                          signedOut
-                            ? t`Not signed in on the host`
-                            : model.status || t`Set up on the host`
+                        entering={
+                          index < STAGGERED_ROWS ? riseIn(index * STAGGER.row) : fadeIn('short')
                         }
-                        {...(!unavailable && isFreeModel(model)
-                          ? {
-                              // What the "Free only" segment filters on, said on
-                              // the row itself: a name ending in "Free" is the
-                              // publisher's word for it, not the price list's.
-                              meta: (
-                                <View
-                                  style={[
-                                    styles.freeChip,
-                                    { backgroundColor: withAlpha(theme.colors.success, 0.14) },
-                                  ]}>
-                                  <Text
-                                    variant="caption"
-                                    weight="semibold"
-                                    color={theme.colors.success}>
-                                    {t`Free`}
-                                  </Text>
-                                </View>
-                              ),
-                            }
-                          : {})}
-                        onPress={() =>
-                          selectModel({
-                            provider_id: model.provider_id,
-                            model_id: model.id,
-                            variant: isSelected
-                              ? effectiveModel?.variant
-                              : (variants.find((v) => v.id === 'high')?.id ?? variants[0]?.id),
-                          })
-                        }
-                        trailing={
-                          isSelected && !unavailable && variants.length > 0 ? (
-                            <View style={styles.variants}>
-                              {variants.map((variant) => {
-                                const active = (effectiveModel?.variant || 'high') === variant.id;
-                                return (
-                                  <PressableScale
-                                    key={variant.id}
-                                    accessibilityRole="button"
-                                    accessibilityState={{ selected: active }}
-                                    accessibilityLabel={variant.id}
-                                    onPress={() =>
-                                      selectModel({
-                                        provider_id: model.provider_id,
-                                        model_id: model.id,
-                                        variant: variant.id,
-                                      })
-                                    }
+                        layout={listLayout('short')}>
+                        <SheetSceneRow
+                          testID={`agent-model-row-${model.id}`}
+                          title={model.name || model.id}
+                          caption={
+                            section.recent
+                              ? [providerName(model.provider_id), modelCaption(model)]
+                                  .filter(Boolean)
+                                  .join(' · ')
+                              : modelCaption(model)
+                          }
+                          selected={isSelected && !unavailable}
+                          disabled={unavailable}
+                          disabledCaption={
+                            signedOut
+                              ? t`Not signed in on the host`
+                              : model.status || t`Set up on the host`
+                          }
+                          {...(!unavailable && isFreeModel(model)
+                            ? {
+                                // What the "Free only" segment filters on, said on
+                                // the row itself: a name ending in "Free" is the
+                                // publisher's word for it, not the price list's.
+                                meta: (
+                                  <View
                                     style={[
-                                      styles.variantChip,
-                                      {
-                                        backgroundColor: active
-                                          ? theme.colors.primary
-                                          : withAlpha(theme.colors.primary, 0.09),
-                                      },
+                                      styles.freeChip,
+                                      { backgroundColor: withAlpha(theme.colors.success, 0.14) },
                                     ]}>
                                     <Text
                                       variant="caption"
-                                      weight={active ? 'semibold' : 'regular'}
-                                      color={active ? theme.colors.onPrimary : theme.colors.primary}
-                                      style={styles.variantChipText}>
-                                      {variant.id}
+                                      weight="semibold"
+                                      color={theme.colors.success}>
+                                      {t`Free`}
                                     </Text>
-                                  </PressableScale>
-                                );
-                              })}
-                            </View>
-                          ) : null
-                        }
-                      />
-                    </Animated.View>
-                  );
-                })}
-              </Animated.View>
-            ))
-          )}
-          {hasMore ? (
-            // Scrolling loads the next page on its own; the row is for a
-            // reader who cannot scroll, and it says how much is left.
-            <PressableScale
-              testID="agent-model-more"
-              accessibilityRole="button"
-              accessibilityLabel={t`Show more models`}
-              onPress={loadMore}
-              style={styles.more}>
-              <Text variant="caption" color={theme.colors.textMuted}>
-                {t`${paged.total - paged.shown} more models`}
-              </Text>
-            </PressableScale>
-          ) : null}
-          <SheetSceneFooter bottomInset={insets.bottom} />
-        </ScrollView>
+                                  </View>
+                                ),
+                              }
+                            : {})}
+                          onPress={() =>
+                            selectModel({
+                              provider_id: model.provider_id,
+                              model_id: model.id,
+                              variant: isSelected
+                                ? effectiveModel?.variant
+                                : (variants.find((v) => v.id === 'high')?.id ?? variants[0]?.id),
+                            })
+                          }
+                          trailing={
+                            isSelected && !unavailable && variants.length > 0 ? (
+                              <View style={styles.variants}>
+                                {variants.map((variant) => {
+                                  const active = (effectiveModel?.variant || 'high') === variant.id;
+                                  return (
+                                    <PressableScale
+                                      key={variant.id}
+                                      accessibilityRole="button"
+                                      accessibilityState={{ selected: active }}
+                                      accessibilityLabel={variant.id}
+                                      onPress={() =>
+                                        selectModel({
+                                          provider_id: model.provider_id,
+                                          model_id: model.id,
+                                          variant: variant.id,
+                                        })
+                                      }
+                                      style={[
+                                        styles.variantChip,
+                                        {
+                                          backgroundColor: active
+                                            ? theme.colors.primary
+                                            : withAlpha(theme.colors.primary, 0.09),
+                                        },
+                                      ]}>
+                                      <Text
+                                        variant="caption"
+                                        weight={active ? 'semibold' : 'regular'}
+                                        color={
+                                          active ? theme.colors.onPrimary : theme.colors.primary
+                                        }
+                                        style={styles.variantChipText}>
+                                        {variant.id}
+                                      </Text>
+                                    </PressableScale>
+                                  );
+                                })}
+                              </View>
+                            ) : null
+                          }
+                        />
+                      </Animated.View>
+                    );
+                  })}
+                </Animated.View>
+              ))
+            )}
+            {hasMore ? (
+              // Scrolling loads the next page on its own; the row is for a
+              // reader who cannot scroll, and it says how much is left.
+              <PressableScale
+                testID="agent-model-more"
+                accessibilityRole="button"
+                accessibilityLabel={t`Show more models`}
+                onPress={loadMore}
+                style={styles.more}>
+                <Text variant="caption" color={theme.colors.textMuted}>
+                  {t`${paged.total - paged.shown} more models`}
+                </Text>
+              </PressableScale>
+            ) : null}
+            <SheetSceneFooter bottomInset={insets.bottom} />
+          </ScrollView>
+        </View>
       )}
     </SheetScene>
   );
 });
 
 const styles = StyleSheet.create({
+  columns: { flex: 1, minHeight: 0, flexDirection: 'row' },
+  providers: { width: '29%', maxWidth: 160, flexGrow: 0, flexShrink: 0 },
+  providerContent: { paddingLeft: SHEET_LADDER.gap, paddingBottom: SHEET_LADDER.section },
+  providerRow: {
+    minHeight: 48,
+    justifyContent: 'center',
+    borderLeftWidth: 2,
+    padding: SHEET_LADDER.gap,
+  },
+  modelContent: { paddingHorizontal: SHEET_LADDER.snug },
   more: { minHeight: 44, alignItems: 'center', justifyContent: 'center' },
   loading: { padding: 40, alignItems: 'center', justifyContent: 'center' },
   providerHint: { paddingVertical: SHEET_LADDER.gap },
