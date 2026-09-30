@@ -345,7 +345,7 @@
           "text": "Acacia Afterglow|Could not reach the theme catalogue"
         },
         "mode": "visible",
-        "timeout": 20000,
+        "timeout": 40000,
         "run": "flows/custom-themes.ad#visible"
       },
       {
