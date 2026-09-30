@@ -156,6 +156,7 @@ import {
   buildRootSessionStrip,
   buildSessionStrip,
   indexSessions,
+  includeOpenedRoot,
   loadSessionDescendants,
   mergeSessionChildren,
   parentOf,
@@ -626,10 +627,6 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   useEffect(() => {
     activeAsidRef.current = activeAsid;
   }, [activeAsid]);
-  const selectAsid = useCallback((nextAsid: string | undefined) => {
-    activeAsidRef.current = nextAsid;
-    setActiveAsid(nextAsid);
-  }, []);
   /**
    * Whether the app is in front, for the stream handler.
    *
@@ -769,6 +766,23 @@ export const AgentWorkbench = memo(function AgentWorkbench({
    * stream effect or re-render anything.
    */
   const syncRef = useRef<CatchUpState>(CATCH_UP_START);
+  const selectAsid = useCallback(
+    (nextAsid: string | undefined) => {
+      if (activeAsidRef.current === nextAsid) return;
+      // A failed read must not show the previous conversation or approvals
+      // beneath the newly selected session.
+      setTimeline([]);
+      setSessionInfo(null);
+      setWindowStart(0);
+      setPermissions([]);
+      setForms([]);
+      setInbox([]);
+      syncRef.current = CATCH_UP_START;
+      activeAsidRef.current = nextAsid;
+      setActiveAsid(nextAsid);
+    },
+    [setTimeline]
+  );
   const [loading, setLoading] = useState(true);
   const [hasDiffs, setHasDiffs] = useState(false);
   const [isOffline, setIsOffline] = useState(false);
@@ -1105,6 +1119,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
    */
   const canPickMode =
     agentFeatures.modes &&
+    (!activeAsid || agentFeatures.extra.modeSwitching !== false) &&
     (catalogAnsweredFor !== (catalogAgentId ?? '') || availableAgents.length > 0);
   const chipAgents = agentChoice.agents;
   /** What each session chip leads with; the rule is `sessionChipLead`. */
@@ -1952,6 +1967,19 @@ export const AgentWorkbench = memo(function AgentWorkbench({
             setSessionInfo((prev) =>
               prev && prev.asid !== info.asid ? prev : prev ? { ...prev, ...info } : info
             );
+            // Some engines announce completion only in session metadata.
+            // A reply delivered to the foreground conversation has been read.
+            if (
+              appActiveRef.current &&
+              info.status === 'idle' &&
+              info.time_idle !== undefined &&
+              info.time_idle > (info.time_viewed ?? 0)
+            ) {
+              const viewedAsid = info.asid;
+              void markAgentSessionViewed(viewedAsid, info.time_idle)
+                .then((viewed) => applyViewed(viewedAsid, viewed))
+                .catch(() => {});
+            }
             // A session update states the staged boundary when there is one.
             // It never states its absence -- a field an event did not mention
             // keeps its previous value -- so clearing is the revert event's job.
@@ -2119,11 +2147,18 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         const nextStatus = delta.status;
         if (nextStatus) {
           setSessionInfo((prev) => (prev ? { ...prev, status: nextStatus } : prev));
+          // A reconnect may recover the reply without replaying its idle event.
+          // A foreground reader has read that recovered conversation too.
+          if (nextStatus === 'idle' && appActiveRef.current) {
+            void markAgentSessionViewed(asid)
+              .then((viewed) => applyViewed(asid, viewed))
+              .catch(() => {});
+          }
         }
         syncRef.current = advanceSeq(syncRef.current, delta.latest_seq);
       })
       .catch(() => {});
-  }, [setTimeline, sessionId, loadSnapshot]);
+  }, [setTimeline, sessionId, loadSnapshot, applyViewed]);
 
   useEffect(() => {
     catchUpRef.current = catchUp;
@@ -2292,23 +2327,39 @@ export const AgentWorkbench = memo(function AgentWorkbench({
 
   const handleSelectModel = useCallback(
     (model: ModelRef) => {
-      pickedModelRef.current = true;
-      setManualModelOverride(true);
-      applySelectedModel(model);
-      // Written because the *reader* chose it, which is the only thing the
-      // memory records: a default the app merely observed -- the catalog's, or
-      // the one a session came back carrying -- is the host's answer, not
-      // theirs. The next new session in this workspace starts here.
-      rememberAgentChoice(sessionId, activeDirectoryRef.current, { model });
-      // The server owns the per-session model via this call; on next entry the
-      // session's own model is restored from it (see loadSnapshot).
-      if (activeAsid) {
-        void switchAgentModel(sessionId, activeAsid, model).catch((err) => {
-          console.warn('Failed to switch agent model:', err);
-        });
+      const owner = captureWorkbenchOwner(activeAsid, activeDirectoryRef.current);
+      const applyModel = () => {
+        if (!ownsWorkbench(owner)) return;
+        pickedModelRef.current = true;
+        setManualModelOverride(true);
+        applySelectedModel(model);
+        rememberAgentChoice(sessionId, owner.directory, { model }, undefined, activeAgentId);
+      };
+      if (!activeAsid) {
+        applyModel();
+        return;
       }
+      void switchAgentModel(sessionId, activeAsid, model)
+        .then(applyModel)
+        .catch((err) => {
+          if (!ownsWorkbench(owner)) return;
+          showToast({
+            variant: 'danger',
+            title: t`Could not switch model`,
+            message: agentErrorRef.current(err),
+          });
+        });
     },
-    [applySelectedModel, sessionId, activeAsid]
+    [
+      applySelectedModel,
+      sessionId,
+      activeAsid,
+      activeAgentId,
+      captureWorkbenchOwner,
+      ownsWorkbench,
+      showToast,
+      t,
+    ]
   );
 
   /**
@@ -2706,20 +2757,31 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         availableAgents.find((entry) => entry.id === agent)?.model,
         catalogModels
       );
-      pickedAgentRef.current = true;
-      pickedModelRef.current = false;
-      setManualModelOverride(false);
-      setSelectedAgent(agent);
-      if (configuredModel) applySelectedModel(configuredModel);
-      // The reader's own pick, remembered the same way the model is.
-      rememberAgentChoice(sessionId, activeDirectoryRef.current, { mode: agent });
-      if (!activeAsid) return;
+      const owner = captureWorkbenchOwner(activeAsid, activeDirectoryRef.current);
+      const applyMode = () => {
+        if (!ownsWorkbench(owner)) return;
+        pickedAgentRef.current = true;
+        pickedModelRef.current = false;
+        setManualModelOverride(false);
+        setSelectedAgent(agent);
+        rememberAgentChoice(sessionId, owner.directory, { mode: agent }, undefined, activeAgentId);
+      };
+      if (!activeAsid) {
+        applyMode();
+        if (configuredModel) applySelectedModel(configuredModel);
+        return;
+      }
       void switchAgentMode(activeAsid, agent)
         .then(async () => {
+          if (!ownsWorkbench(owner)) return;
+          applyMode();
           if (!configuredModel) return;
           try {
             await switchAgentModel(sessionId, activeAsid, configuredModel);
+            if (!ownsWorkbench(owner)) return;
+            applySelectedModel(configuredModel);
           } catch (err) {
+            if (!ownsWorkbench(owner)) return;
             showToast({
               variant: 'danger',
               title: t`Could not switch model`,
@@ -2728,6 +2790,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
           }
         })
         .catch((err) => {
+          if (!ownsWorkbench(owner)) return;
           showToast({
             variant: 'danger',
             title: t`Could not switch agent`,
@@ -2735,7 +2798,18 @@ export const AgentWorkbench = memo(function AgentWorkbench({
           });
         });
     },
-    [activeAsid, sessionId, showToast, t, availableAgents, catalogModels, applySelectedModel]
+    [
+      activeAsid,
+      sessionId,
+      showToast,
+      t,
+      availableAgents,
+      catalogModels,
+      applySelectedModel,
+      activeAgentId,
+      captureWorkbenchOwner,
+      ownsWorkbench,
+    ]
   );
 
   /**
@@ -4021,13 +4095,15 @@ export const AgentWorkbench = memo(function AgentWorkbench({
    * rather than coming back empty.
    */
   const workspaceRoots = useMemo(() => {
-    if (!activeDirectory && !activeProject) return sessions;
-    return sessionsInWorkspace(sessions, {
+    if (!activeDirectory && !activeProject)
+      return includeOpenedRoot(sessions, sessionInfo, activeAsid);
+    const scoped = sessionsInWorkspace(sessions, {
       ...(activeDirectory ? { directory: activeDirectory } : {}),
       ...(activeProject?.id ? { projectId: activeProject.id } : {}),
       ...(activeProject?.canonical ? { canonical: activeProject.canonical } : {}),
     });
-  }, [sessions, activeDirectory, activeProject]);
+    return includeOpenedRoot(scoped, sessionInfo, activeAsid);
+  }, [sessions, activeDirectory, activeProject, sessionInfo, activeAsid]);
 
   const sessionIndex = useMemo(
     () =>

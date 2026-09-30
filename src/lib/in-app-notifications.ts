@@ -27,6 +27,12 @@ export interface NoticeQueue {
 export const MAX_NOTICES = 20;
 export const MAX_SEEN_NOTICES = 200;
 
+/** Keep floating notices off the search and controls in agent selection sheets. */
+export function noticePresentationAllowed(pathname: string): boolean {
+  const route = pathname.split('/').filter(Boolean).at(-1);
+  return route !== 'agent-model' && route !== 'agent-mode' && route !== 'agent-sessions';
+}
+
 /** Only a visible informational card expires; approvals require a response. */
 export function noticeAutoDismissDelay(
   kind: NoticeKind | undefined,

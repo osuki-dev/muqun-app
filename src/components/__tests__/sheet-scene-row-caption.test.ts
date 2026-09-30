@@ -54,7 +54,7 @@ test('the scroller is the shape every long sheet uses', () => {
     });
     expect({
       file,
-      content: text.includes('contentContainerStyle={sheetSceneStyles.scrollerContent}'),
+      content: /contentContainerStyle=\{(?:\[)?sheetSceneStyles\.scrollerContent/.test(text),
     }).toEqual({ file, content: true });
     expect({
       file,
