@@ -53,7 +53,7 @@ import {
   normalizeGatewayEntity,
   type GatewayEntity,
 } from './gateway-entities';
-import { GatewayTransportRefusalError } from './gateway-refusal';
+import { GatewayTransportRefusalError, retryReplayedRead } from './gateway-refusal';
 import {
   decodeSealedBody,
   ENVELOPE_ACCEPT_ENCODINGS,
@@ -350,6 +350,34 @@ async function serializeBody(body: BodyInit | null | undefined, contentType?: st
 }
 
 async function encryptedGatewayFetch(
+  input: RequestInfo | URL,
+  init: RequestInit = {},
+  timeoutMs = REQUEST_TIMEOUT_MS,
+  endpoint?: GatewayEndpoint,
+  isCurrent: () => boolean = () => true
+): Promise<Response> {
+  const started = Date.now();
+  const method = (
+    init.method ?? (typeof input === 'object' && 'method' in input ? input.method : 'GET')
+  ).toUpperCase();
+  const capturedEndpoint = endpoint ?? {
+    url: currentBaseUrl,
+    token: currentToken ?? '',
+    deviceId: currentDeviceId ?? undefined,
+    transportKey: currentTransportKey ?? undefined,
+  };
+  return retryReplayedRead(method, () =>
+    sendEncryptedGatewayRequest(
+      input,
+      { ...init, method },
+      Math.max(1, timeoutMs - (Date.now() - started)),
+      capturedEndpoint,
+      isCurrent
+    )
+  );
+}
+
+async function sendEncryptedGatewayRequest(
   input: RequestInfo | URL,
   init: RequestInit = {},
   timeoutMs = REQUEST_TIMEOUT_MS,
