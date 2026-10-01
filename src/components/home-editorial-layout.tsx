@@ -400,11 +400,13 @@ export function HomeEditorialLayout({
               </View>
             )}
             {hasSlot(launches) ? (
+              // Capped so the tiles stay near phone size and the figure's torso
+              // at the column's right stays clear of the dock.
               <View
                 testID="home-pad-launch-dock"
                 style={[
                   styles.padLaunchDock,
-                  { bottom: geometry.gutter, width: coverWidth - geometry.gutter },
+                  { bottom: geometry.gutter, width: Math.min(coverWidth - geometry.gutter, 760) },
                 ]}>
                 {launches}
               </View>
