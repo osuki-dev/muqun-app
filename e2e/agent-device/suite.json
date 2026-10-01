@@ -3612,7 +3612,10 @@
           "target": { "id": "pad-server-rail-workbench" },
           "absent": false
         },
-        "steps": [{ "run": "flows/pad-workspace.ad#home-navigation" }]
+        "steps": [
+          { "run": "flows/pad-workspace.ad#home-navigation" },
+          { "run": "flows/pad-workspace.ad#pad-agent-in-place" }
+        ]
       },
       {
         "target": {
