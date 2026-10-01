@@ -1761,6 +1761,9 @@ export function ServerTerminalWorkspace({
   );
   const lastHomeVisit = useRef<string | null>(null);
   const homeVisit = useRef<{ target: HomeTarget; title: string } | null>(null);
+  // `resolvedSessionRef` is not reactive: a session pick clears it, and the
+  // refresh that confirms the session again may leave `data` unchanged. The
+  // snapshot generation it bumps right after is what re-runs this effect.
   useEffect(() => {
     homeVisit.current = null;
     if (!isFocused || overviewVisible || !padDetailIsPane) {
@@ -1794,6 +1797,7 @@ export function ServerTerminalWorkspace({
     selectedPane,
     selectedServer,
     serverId,
+    snapshotGeneration,
     targetReady,
   ]);
   // A visit is stamped once per selection, but agents keep refreshing their

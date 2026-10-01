@@ -2,7 +2,7 @@ import { expect, test } from 'bun:test';
 import { homeContinueEntries, supersededTerminalRecent } from '../home-continue';
 import { homeServerModel } from '../home-server-model';
 import type { HomeRecentEntry } from '../home-recents';
-import type { ServerAgentsIndex } from '../server-agents';
+import { MAX_SERVER_AGENTS, type ServerAgentsIndex } from '../server-agents';
 
 const snapshots: ServerAgentsIndex = {
   a: {
@@ -389,4 +389,31 @@ test('supersededTerminalRecent drops a recent whose pane is already a snapshot r
   };
   expect(supersededTerminalRecent(shell, session, 'all')).toBe(true);
   expect(supersededTerminalRecent(shell, session, 'agents')).toBe(false);
+});
+
+test('a recent missing from a snapshot cut at the mirror cap is kept, not taken as closed', () => {
+  const panes = (count: number) =>
+    Array.from({ length: count }, (_, index) => ({
+      id: `w${index}`,
+      paneId: `w${index}`,
+      name: `pane ${index}`,
+      hasAgent: true,
+      status: 'idle' as const,
+    }));
+  const shell = {
+    kind: 'gateway-terminal' as const,
+    serverId: 'a',
+    sessionId: 'routing',
+    paneId: 'w-newest',
+  };
+  const full = { ...snapshots.a, sessionId: 'routing', agents: panes(MAX_SERVER_AGENTS) };
+  expect(supersededTerminalRecent(shell, full, 'all')).toBe(false);
+  const partial = { ...full, agents: panes(MAX_SERVER_AGENTS - 1) };
+  expect(supersededTerminalRecent(shell, partial, 'all')).toBe(true);
+  const rows = homeContinueEntries({
+    ...input,
+    snapshots: { a: full },
+    recents: [{ key: 'newest', title: 'ryu@osk:~/app', atMs: 50, target: shell }],
+  });
+  expect(rows[0]?.title).toBe('ryu@osk:~/app');
 });
