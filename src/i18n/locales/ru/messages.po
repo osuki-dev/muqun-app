@@ -1211,6 +1211,7 @@ msgstr "Подключено к {address}"
 #: src/app/explore.tsx
 #: src/app/new-task.tsx
 #: src/components/agent-transcript-skeleton.tsx
+#: src/components/pad-agent-detail.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/components/session-map.tsx
 #: src/components/simfarm-stage.tsx
@@ -1234,6 +1235,7 @@ msgid "Connecting…"
 msgstr "Подключение…"
 
 #: src/components/home-editorial-layout.tsx
+#: src/components/home-overview.tsx
 #: src/components/pad-server-rail.tsx
 msgid "Connections"
 msgstr "Подключения"
@@ -1265,6 +1267,7 @@ msgstr "Контекст занят"
 
 #: src/app/explore.tsx
 #: src/components/home-editorial-layout.tsx
+#: src/components/home-overview.tsx
 #: src/components/pad-server-rail.tsx
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Continue"
