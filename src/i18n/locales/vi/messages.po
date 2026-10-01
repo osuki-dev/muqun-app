@@ -2026,6 +2026,10 @@ msgid "Effects · {0}"
 msgstr "Hiệu ứng · {0}"
 
 #: src/i18n/labels.ts
+msgid "Enable deepseek in the gateway config, start DeepSeek Harness on the host, then restart the gateway."
+msgstr "Bật deepseek trong cấu hình gateway, khởi động DeepSeek Harness trên máy chủ, sau đó khởi động lại gateway"
+
+#: src/i18n/labels.ts
 msgid "Enter"
 msgstr "Enter"
 
@@ -3411,6 +3415,10 @@ msgstr "Mở cây phiên"
 msgid "Open SSH host {0}"
 msgstr "Mở host SSH {0}"
 
+#: src/i18n/labels.ts
+msgid "Open T3 Code on the gateway host (or run t3 service install), then check again."
+msgstr "Mở T3 Code trên máy chủ gateway (hoặc chạy t3 service install), sau đó kiểm tra lại"
+
 #: src/components/collaboration-notice.tsx
 msgid "Open terminal"
 msgstr "Mở terminal"
@@ -3443,10 +3451,6 @@ msgstr "Mở để kiểm tra trạng thái hiện tại"
 #: src/components/session-map.tsx
 msgid "Open workspace {0}, {panelCount, plural, one {# running} other {# running}}. Long press to close."
 msgstr "Mở không gian làm việc {0}, {panelCount, plural, other {# đang chạy}}. Nhấn giữ để đóng"
-
-#: src/i18n/labels.ts
-msgid "OpenCode is installed, but its service is not answering. Run this command on the host."
-msgstr "OpenCode đã được cài đặt nhưng dịch vụ không phản hồi. Chạy lệnh này trên máy chủ"
 
 #: src/app/+not-found.tsx
 msgid "Opening"
@@ -4145,6 +4149,10 @@ msgstr "Chạy dưới systemd hoặc tmux để nó tiếp tục sau khi bạn 
 msgid "Run relevant tests"
 msgstr "Chạy các kiểm thử liên quan"
 
+#: src/i18n/labels.ts
+msgid "Run t3 pair on the host, set the printed token as t3.pairing_token in the gateway config, and restart the gateway within 5 minutes."
+msgstr "Chạy t3 pair trên máy chủ, đặt mã thông báo được in ra làm t3.pairing_token trong cấu hình gateway và khởi động lại gateway trong vòng 5 phút"
+
 #: src/components/home-overview.tsx
 msgid "Run the Gateway on your machine and scan the QR code it prints. The pairing stays on this device."
 msgstr "Chạy Gateway trên máy của bạn và quét mã QR nó in ra. Việc ghép nối ở lại trên thiết bị này"
@@ -4745,14 +4753,6 @@ msgstr "Khởi động một tác nhân và gửi việc đầu tiên"
 msgid "Start an agent and send it the first thing to do."
 msgstr "Khởi động một tác tử và giao cho nó việc đầu tiên"
 
-#: src/i18n/labels.ts
-msgid "Start DeepSeek on the gateway host, then check again."
-msgstr "Hãy khởi động DeepSeek trên máy chủ gateway rồi kiểm tra lại"
-
-#: src/i18n/labels.ts
-msgid "Start T3 Code on the gateway host. Then run t3 pair, set the token it prints as t3.pairing_token in the gateway config, restart the gateway and check again."
-msgstr "Khởi động T3 Code trên máy chủ gateway. Sau đó chạy t3 pair, đặt mã thông báo được in ra làm t3.pairing_token trong cấu hình gateway, khởi động lại gateway và kiểm tra lại"
-
 #: src/components/new-task-sheet.tsx
 msgid "Start task"
 msgstr "Bắt đầu tác vụ"
@@ -4760,6 +4760,10 @@ msgstr "Bắt đầu tác vụ"
 #: src/i18n/labels.ts
 msgid "Start the agent on the gateway host, then check again."
 msgstr "Hãy khởi động tác tử trên máy chủ gateway rồi kiểm tra lại"
+
+#: src/i18n/labels.ts
+msgid "Start the OpenCode service on the gateway host, then check again."
+msgstr "Khởi động dịch vụ OpenCode trên máy chủ gateway, sau đó kiểm tra lại"
 
 #: src/components/agent-workbench.tsx
 msgid "Started with a clean context."

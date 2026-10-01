@@ -14,6 +14,7 @@ import { feedback } from '@/lib/feedback';
 import {
   agentGuideBlurb,
   agentGuideCommand,
+  agentGuideStart,
   showsAgentSetupCommand,
   type AgentReadiness,
 } from '@/lib/home-agent-readiness';
@@ -121,7 +122,7 @@ export const AgentGuideSheet = memo(function AgentGuideSheet({
           : blurbKind === 'health'
             ? t`This gateway is not answering. Check the server connection, then try again.`
             : blurbKind === 'setup'
-              ? _(agentGuideFor(agentKind).start)
+              ? _(agentGuideStart(agentGuideFor(agentKind), readiness.status))
               : t`${agentName}'s installation could not be confirmed. If it is installed, start it on the host.`;
 
   return (
