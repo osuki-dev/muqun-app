@@ -69,7 +69,7 @@ is hidden "${TARGET}"
 press "id=\"pad-server-rail-workbench\""
 wait "id=\"home-overview-overlay\"" 10000
 wait stable 400 5000
-is hidden "id=\"pad-server-rail-container\""
+is visible "id=\"home-pad-toolbar-actions\""
 is hidden "id=\"server-agent-pane-1\""
 is visible "id=\"home-pad-launch-pane\""
 is visible "id=\"home-pad-lower-band\""
@@ -112,4 +112,4 @@ is visible "label=\"Switch to nvim\""
 is visible "id=\"pad-server-rail-container\""
 press "id=\"pad-server-rail-workbench\""
 wait "id=\"home-overview-overlay\"" 10000
-is hidden "id=\"pad-server-rail-container\""
+is visible "id=\"home-pad-toolbar-actions\""
