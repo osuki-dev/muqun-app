@@ -2,7 +2,7 @@ import { useLingui } from '@lingui/react/macro';
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { useThemeTokens } from '@osuki-dev/ui';
 import { ChevronRight, Server, SquareTerminal } from 'lucide-react-native';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import { PressableScale } from '@/components/pressable-scale';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
@@ -25,6 +25,7 @@ export function HomeConnections({
   onManage,
   activeConnection,
   nowMs,
+  linkStyle,
 }: {
   servers: readonly GatewayRecord[];
   hosts: readonly SshHostRecord[];
@@ -33,6 +34,8 @@ export function HomeConnections({
   onManage: () => void;
   activeConnection?: ActiveServerConnection;
   nowMs?: number;
+  /** Overrides the `Manage connections` link's box, e.g. to inset it like the rows. */
+  linkStyle?: StyleProp<ViewStyle>;
 }) {
   const { t } = useLingui();
   const profile = useAppearanceProfile();
@@ -99,7 +102,7 @@ export function HomeConnections({
         testID="home-manage-connections"
         accessibilityRole="button"
         onPress={onManage}
-        style={styles.manage}>
+        style={[styles.manage, linkStyle]}>
         <Text variant="bodySmall" color={theme.colors.primary}>
           {t`Manage connections`}
         </Text>
