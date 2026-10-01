@@ -804,8 +804,21 @@ export function HomeOverview({
                     onDemo={openDemo}
                   />
                 ) : (
-                  <View style={{ gap: 16 }}>
-                    {isPad ? (
+                  <View style={{ gap: padLaunch ? 12 : 16 }}>
+                    {padLaunch ? (
+                      // The cover dock: no heading; the Gateway chip only when
+                      // there is a choice to make.
+                      launchController.servers.length > 1 ? (
+                        <HomeLaunchTarget
+                          wide
+                          chip
+                          bare={customTheme?.manifest.homePresentation?.toolbarBackground === false}
+                          controller={launchController}
+                          loading={loading}
+                          onPair={commands.pairGateway}
+                        />
+                      ) : null
+                    ) : isPad ? (
                       <>
                         <Text variant="heading" accessibilityRole="header">
                           <Trans>New session</Trans>
@@ -823,6 +836,7 @@ export function HomeOverview({
                       controller={launchController}
                       grid={isPad}
                       newOnly={isPad}
+                      dock={padLaunch}
                       onNewAgent={commands.newAgent}
                       onOpenAgent={commands.openAgent}
                       onNewTerminal={commands.newTerminal}

@@ -47,6 +47,9 @@ import { useHomeTargetPicker } from '@/stores/home-target-picker';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { settleAfter } from '@/lib/compiler-safe-control-flow';
 
+/** Agent chips and utility rows in the wide Pad cover's launch dock share one height. */
+const DOCK_ROW_HEIGHT = 56;
+
 /** Discovery is refreshed on the same cadence Continue uses. */
 const HOME_AGENTS_REFRESH_MS = 30_000;
 
@@ -153,12 +156,15 @@ export function HomeLaunchTarget({
   loading = false,
   bare = false,
   wide = false,
+  chip = false,
   onPair,
 }: {
   controller: HomeLaunchController;
   loading?: boolean;
   bare?: boolean;
   wide?: boolean;
+  /** A short chip, for the wide Pad cover's launch dock. */
+  chip?: boolean;
   onPair: () => Promise<unknown>;
 }) {
   const profile = useAppearanceProfile();
@@ -186,6 +192,7 @@ export function HomeLaunchTarget({
         !bare &&
           servers.length > 0 && { width: HOME_TOOLBAR_PAIR_WIDTH, paddingHorizontal: 8, gap: 4 },
         wide && { width: undefined, minWidth: 160, maxWidth: 300, paddingHorizontal: 16, gap: 12 },
+        chip && styles.targetChip,
         bare && { minWidth: 0 },
         bare && { paddingHorizontal: HOME_TOOLBAR_ICON_INSET },
         {
@@ -233,6 +240,7 @@ export function HomeLaunchActions({
   onDemo,
   grid = false,
   newOnly = false,
+  dock = false,
 }: {
   controller: HomeLaunchController;
   /**
@@ -242,6 +250,11 @@ export function HomeLaunchActions({
   grid?: boolean;
   /** Existing destinations live in the Pad's persistent navigation. */
   newOnly?: boolean;
+  /**
+   * The wide Pad cover's launch dock: up to three agents (plus More agents) as
+   * one row of equal chips, then the utilities as full-width rows.
+   */
+  dock?: boolean;
   onNewAgent: (serverId: string, directory?: string, agentId?: string) => Promise<unknown>;
   onOpenAgent: (serverId: string) => Promise<unknown>;
   onNewTerminal: (serverId: string) => Promise<unknown>;
@@ -266,7 +279,7 @@ export function HomeLaunchActions({
   const model = buildLaunchModel({
     discovery,
     lastUsedAgentId,
-    ...(grid ? { maxAgentTiles: Number.POSITIVE_INFINITY } : {}),
+    ...(grid && !dock ? { maxAgentTiles: Number.POSITIVE_INFINITY } : {}),
   });
   const entries = newOnly
     ? model.entries.filter((entry) => isAgentEntry(entry) || entry.kind === 'new-terminal')
@@ -323,10 +336,46 @@ export function HomeLaunchActions({
       marker: entry.marker,
       horizontal,
       ...(cell ? { width: cell.width } : {}),
+      ...(dock ? { rowHeight: DOCK_ROW_HEIGHT } : {}),
     };
-    const utilityCompact = cell?.compact ?? false;
+    const utilityCompact = dock || (cell?.compact ?? false);
     switch (entry.kind) {
       case 'agent': {
+        if (dock) {
+          // Not ready: muted, with its state after the name instead of a second line.
+          const ready = entry.caption === 'new-session';
+          const filled = entry.primary && ready;
+          return (
+            <LaunchTile
+              key={entry.key}
+              {...common}
+              chip
+              aliasTestID={entry.aliasTestID}
+              primary={filled}
+              muted={!ready}
+              title={entry.name}
+              caption={_(agentLaunchCaption[entry.caption])}
+              inlineCaption={ready ? undefined : _(agentLaunchCaption[entry.caption])}
+              icon={
+                <AgentMark
+                  kind={entry.agentKind}
+                  size={18}
+                  color={
+                    filled
+                      ? theme.colors.onPrimary
+                      : ready
+                        ? theme.colors.primary
+                        : theme.colors.textMuted
+                  }
+                />
+              }
+              disabled={opening || chosenOffline}
+              onPress={() =>
+                launchOnChosen((serverId) => onNewAgent(serverId, undefined, entry.agentId))
+              }
+            />
+          );
+        }
         const ink = entry.primary ? theme.colors.onPrimary : theme.colors.primary;
         return (
           <LaunchTile
@@ -350,9 +399,10 @@ export function HomeLaunchActions({
           <LaunchTile
             key={entry.key}
             {...common}
+            chip={dock}
             title={t`More agents`}
             caption={t`${hidden} more`}
-            icon={<Ellipsis size={22} color={theme.colors.primary} />}
+            icon={<Ellipsis size={dock ? 18 : 22} color={theme.colors.primary} />}
             disabled={opening || chosenOffline}
             onPress={openAgentsPicker}
           />
@@ -443,7 +493,14 @@ export function HomeLaunchActions({
           </Text>
         </PressableScale>
       ) : null}
-      {layout.mode === 'grid' ? (
+      {dock ? (
+        <View testID="home-launch-actions-dock" style={styles.dock}>
+          {agentEntries.length ? (
+            <View style={styles.dockChips}>{agentEntries.map((entry) => renderEntry(entry))}</View>
+          ) : null}
+          {utilityEntries.map((entry) => renderEntry(entry))}
+        </View>
+      ) : layout.mode === 'grid' ? (
         <View testID="home-launch-actions-grid" style={styles.grid}>
           {layout.agentWidth > 0 ? (
             <>
@@ -503,6 +560,10 @@ function LaunchTile({
   onPress,
   primary = false,
   compact = false,
+  chip = false,
+  muted = false,
+  inlineCaption,
+  rowHeight,
   horizontal = false,
   width,
   disabled,
@@ -516,6 +577,14 @@ function LaunchTile({
   onPress: () => void;
   primary?: boolean;
   compact?: boolean;
+  /** One line, icon + name, sharing a row equally: the Pad cover dock's agent chip. */
+  chip?: boolean;
+  /** A chip for an agent that is not ready to start. */
+  muted?: boolean;
+  /** Shown after a chip's name ("T3 Code · Not installed"); `caption` stays the a11y text. */
+  inlineCaption?: string;
+  /** A fixed height for chips and compact rows. */
+  rowHeight?: number;
   horizontal?: boolean;
   /** A fixed cell width, from the Pad grid; the phone row sizes tiles by flex. */
   width?: number;
@@ -541,6 +610,42 @@ function LaunchTile({
       withTiming(pressed && !reduceMotion ? 2 : 0, timing(pressed ? PRESS.in : PRESS.out))
     );
   };
+  if (chip) {
+    const chipInk = primary
+      ? theme.colors.onPrimary
+      : muted
+        ? theme.colors.textMuted
+        : theme.colors.text;
+    return (
+      <PressableScale
+        testID={testID}
+        nativeID={aliasTestID}
+        accessibilityRole="button"
+        accessibilityLabel={caption ? `${title}, ${caption}` : title}
+        accessibilityState={{ disabled }}
+        disabled={disabled}
+        onPress={onPress}
+        style={[
+          styles.chip,
+          { borderRadius: profile.chrome.control },
+          rowHeight !== undefined && { height: rowHeight },
+          {
+            backgroundColor: background(primary ? theme.colors.primary : theme.colors.surface),
+            opacity: disabled ? 0.6 : 1,
+          },
+        ]}>
+        {icon}
+        <Text
+          variant="bodySmall"
+          weight="semibold"
+          color={chipInk}
+          numberOfLines={1}
+          style={styles.chipTitle}>
+          {inlineCaption ? `${title} · ${inlineCaption}` : title}
+        </Text>
+      </PressableScale>
+    );
+  }
   if (compact) {
     return (
       <PressableScale
@@ -556,6 +661,7 @@ function LaunchTile({
         style={[
           styles.compactTile,
           { borderRadius: profile.chrome.control },
+          rowHeight !== undefined && { minHeight: rowHeight },
           width !== undefined && launchGridCellStyle(width),
           {
             backgroundColor: background(theme.colors.surface),
@@ -673,6 +779,18 @@ const styles = StyleSheet.create({
     maxWidth: '100%',
   },
   targetName: { minWidth: 0, flexShrink: 1 },
+  targetChip: { minHeight: 36, paddingVertical: 6, paddingHorizontal: 12 },
+  dock: { gap: 12, minWidth: 0 },
+  dockChips: { flexDirection: 'row', gap: LAUNCH_GRID_GAP, minWidth: 0 },
+  chip: {
+    flex: 1,
+    minWidth: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 12,
+  },
+  chipTitle: { minWidth: 0, flexShrink: 1 },
   demoAction: {
     minWidth: 44,
     minHeight: 44,
