@@ -1,4 +1,5 @@
 import { fetch as nitroFetch } from 'react-native-nitro-fetch';
+import { agentSessionListQuery, type ListAgentSessionsQuery } from './agent-session-list-query';
 import { TextDecoder } from 'react-native-nitro-text-decoder';
 import {
   encryptedEventStreamRequest,
@@ -32,7 +33,6 @@ import {
   normalizeCatalogDirectory,
 } from './agent-catalog-scope';
 import {
-  agentIdQueryValue,
   hasMultiAgent,
   scopedAgentCacheVariant,
   withAgentIdQuery,
@@ -241,43 +241,12 @@ async function writeJson(
 // Session lifecycle
 // ---------------------------------------------------------------------------
 
-export interface ListAgentSessionsQuery {
-  directory?: string;
-  parent_id?: string;
-  /** `true` lists top-level sessions only — no subagent sessions. */
-  roots?: boolean;
-  limit?: number;
-  order?: 'asc' | 'desc';
-  search?: string;
-  cursor?: string;
-  /**
-   * One agent's sessions only. Absent, a multi-agent gateway merges every
-   * agent's list and tags each row; the default agent is never spelled
-   * out (see `agentIdQueryValue`).
-   */
-  agentId?: string;
-}
+export type { ListAgentSessionsQuery } from './agent-session-list-query';
 
 export interface ObservedAgentSessionList {
   sessions: AgentSessionInfo[];
   /** Last successful Gateway confirmation; cached fallbacks keep their original time. */
   observedAtMs?: number;
-}
-
-function listQuery(query: ListAgentSessionsQuery | undefined): string {
-  if (!query) return '';
-  const params = new URLSearchParams();
-  if (query.directory) params.set('directory', query.directory);
-  if (query.parent_id) params.set('parent_id', query.parent_id);
-  if (query.roots) params.set('roots', 'true');
-  if (query.limit !== undefined) params.set('limit', String(query.limit));
-  if (query.order) params.set('order', query.order);
-  if (query.search) params.set('search', query.search);
-  if (query.cursor) params.set('cursor', query.cursor);
-  const agentId = agentIdQueryValue(query.agentId);
-  if (agentId) params.set('agent_id', agentId);
-  const encoded = params.toString();
-  return encoded ? `?${encoded}` : '';
 }
 
 /**
@@ -295,7 +264,7 @@ export async function listAgentSessionsObserved(
   sessionId?: string,
   query?: ListAgentSessionsQuery
 ): Promise<ObservedAgentSessionList> {
-  const search = listQuery(query);
+  const search = agentSessionListQuery(query);
   const path = sessionId
     ? `/api/sessions/${encodeURIComponent(sessionId)}/agent-sessions${search}`
     : `/api/agent-sessions${search}`;
@@ -359,7 +328,7 @@ export async function listAgentSessionChildrenObserved(
   query?: Omit<ListAgentSessionsQuery, 'parent_id' | 'roots'>
 ): Promise<AgentSessionChildrenInventory> {
   if (!asid || !isGatewayConfigured()) return { children: [], authoritative: false };
-  const path = `${sessionRoute(asid, '/children')}${listQuery(query)}`;
+  const path = `${sessionRoute(asid, '/children')}${agentSessionListQuery(query)}`;
   // Capture endpoint and credentials together. `gatewayFetch` already dedupes
   // GETs by the full URL and headers, so a later gateway selection can neither
   // join this request nor change where it goes.
