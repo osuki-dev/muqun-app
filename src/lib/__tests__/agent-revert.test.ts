@@ -2,6 +2,7 @@ import { describe, expect, test } from 'bun:test';
 
 import {
   agentRevertPath,
+  oneStepRevertTarget,
   removeTimelineItems,
   revertedFileCount,
   revertedMessageCount,
@@ -226,5 +227,19 @@ describe('a staging the agent refused as unsupported', () => {
     expect(stagingUnsupported(new Error('Failed to stage revert: 500 boom'))).toBe(false);
     expect(stagingUnsupported(new TypeError('Network request failed'))).toBe(false);
     expect(stagingUnsupported(undefined)).toBe(false);
+  });
+});
+
+describe('a confirmed one-step rollback', () => {
+  const asked = { asid: 'ses-1', messageId: 'msg-3' };
+
+  test('goes ahead on the session it was asked about', () => {
+    expect(oneStepRevertTarget(asked, 'ses-1')).toEqual(asked);
+  });
+
+  test('does nothing once the reader is on another session, or on none', () => {
+    expect(oneStepRevertTarget(asked, 'ses-2')).toBeNull();
+    expect(oneStepRevertTarget(asked, undefined)).toBeNull();
+    expect(oneStepRevertTarget(null, 'ses-1')).toBeNull();
   });
 });

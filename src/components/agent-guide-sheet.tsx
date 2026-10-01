@@ -13,6 +13,7 @@ import { appChrome } from '@/constants/appearance';
 import { feedback } from '@/lib/feedback';
 import {
   agentGuideBlurb,
+  agentGuideCommand,
   showsAgentSetupCommand,
   type AgentReadiness,
 } from '@/lib/home-agent-readiness';
@@ -54,7 +55,7 @@ export const AgentGuideSheet = memo(function AgentGuideSheet({
   const { _ } = useLinguiRuntime();
   // Read as separate values: the copy is a table's row, and a callback that
   // closed over the row could not be proven stable.
-  const command = agentGuideFor(agentKind).command;
+  const command = agentGuideCommand(agentGuideFor(agentKind), readiness.status);
   const installUrl = agentGuideFor(agentKind).installUrl;
   const theme = useThemeTokens();
   const insets = useSafeAreaInsets();

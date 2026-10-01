@@ -36,3 +36,11 @@ describe('the T3 setup guide', () => {
     expect(shipped.some((part) => typeof part === 'string' && part.includes(start))).toBe(true);
   });
 });
+
+describe('the T3 setup command', () => {
+  test('is t3 pair, offered when T3 needs setup in place of t3 serve', () => {
+    const block = LABELS.match(/\n  t3: \{\n([\s\S]*?)\n  \},/)?.[1] ?? '';
+    expect(block).toContain("command: 't3 serve'");
+    expect(block).toContain("setupCommand: 't3 pair'");
+  });
+});

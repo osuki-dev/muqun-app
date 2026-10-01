@@ -130,9 +130,11 @@ import { engineFailureAction } from '@/lib/agent-engine-text';
 import { dangerousPermissionReason, yoloDecision } from '@/lib/agent-permission-safety';
 import {
   agentRevertPath,
+  oneStepRevertTarget,
   removeTimelineItems,
   revertedMessageCount,
   stagingUnsupported,
+  type OneStepRevertRequest,
 } from '@/lib/agent-revert';
 import { hiddenClientCommands, normalizeAgentId } from '@/lib/agent-discovery';
 import {
@@ -143,6 +145,7 @@ import {
 import { classifyAgentRequestError, isAgentOfflineError } from '@/lib/agent-request-error';
 import { agentDisplayName } from '@/lib/home-launch-model';
 import { agentGuideFor } from '@/i18n/labels';
+import { agentGuideCommand } from '@/lib/home-agent-readiness';
 import { hasAgentsDiscoveryFor, useAgents } from '@/stores/agents';
 import { sessionChipLead } from '@/lib/agent-session-chip';
 import { useServerCapabilities } from '@/stores/server-capabilities';
@@ -585,14 +588,18 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   );
   const agentName = agentDisplayName(agentChoice.agents, activeAgentId);
   const agentGuide = agentGuideFor(activeAgentEntry?.kind);
-  /** How to bring this agent up: its own sentence, then its command when it has one. */
-  const startAdvice = [_(agentGuide.start), agentGuide.command].filter(Boolean).join('\n');
-  const offlineFallback = t`${agentName} is offline`;
   /**
-   * Turns a failed request into the text to show. A ref, so the many handlers
-   * that report errors read the current agent's name and start advice without
-   * each depending on them; the effect keeps it current before any handler runs.
+   * How to bring this agent up: its own sentence, then its command when it has
+   * one -- the setup step for an agent that is running but needs setup.
    */
+  const startAdvice = [
+    _(agentGuide.start),
+    agentGuideCommand(agentGuide, activeAgentEntry?.readiness ?? 'offline'),
+  ]
+    .filter(Boolean)
+    .join('\n');
+  const offlineFallback = t`${agentName} is offline`;
+  /** What each kind of failed request says, in this agent's name. */
   const agentErrorSentences = useMemo<AgentErrorSentences>(
     () => ({
       offline: `${offlineFallback}\n${startAdvice}`,
@@ -602,6 +609,11 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     }),
     [agentName, offlineFallback, startAdvice, t]
   );
+  /**
+   * Turns a failed request into the text to show. A ref, so the many handlers
+   * that report errors read the current agent's name and start advice without
+   * each depending on them; the effect keeps it current before any handler runs.
+   */
   const agentErrorRef = useRef((err: unknown, fallback: string = offlineFallback) =>
     formatAgentErrorMessage(err, fallback, agentErrorSentences)
   );
@@ -777,10 +789,11 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   const [stagedRevert, setStagedRevert] = useState<AgentSessionRevert | null>(null);
   const [revertBusy, setRevertBusy] = useState(false);
   /**
-   * The message a one-step rollback would go back to, while the reader is
-   * being asked. Set only for an agent that cannot stage a rollback.
+   * The one-step rollback the reader is being asked about: the session it was
+   * asked on and the message it would go back to. Set only for an agent that
+   * cannot stage a rollback.
    */
-  const [oneStepRevertMessageId, setOneStepRevertMessageId] = useState<string | null>(null);
+  const [oneStepRevert, setOneStepRevert] = useState<OneStepRevertRequest | null>(null);
   // A compaction in flight, which is a pill above the composer rather than a
   // row: the row lands in the timeline when the boundary is reached.
   const [compaction, setCompaction] = useState<{
@@ -3414,21 +3427,26 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   /**
    * Stage a rollback to one message, and show what it would do.
    *
-   * Never commit: `POST …/revert` is stage-and-apply in one call, which is what
-   * `/undo` used to be -- four characters typed and a turn's work gone, with no
-   * statement of what had been taken. This asks for the boundary *and the files
-   * it would put back*, and the plate above the composer is where the reader
-   * decides.
+   * Never commit here: `POST …/revert` is stage-and-apply in one call, which is
+   * what `/undo` used to be -- four characters typed and a turn's work gone,
+   * with no statement of what had been taken. This asks for the boundary *and
+   * the files it would put back*, and the plate above the composer is where the
+   * reader decides.
+   *
+   * The one exception is an agent that cannot stage (`stagedRevert: false`, or
+   * a stage call refused as unsupported): it has only the one-step call, so the
+   * reader is asked first, in a dialog that says the turn cannot come back.
    */
   const revertPath = agentRevertPath(agentFeatures);
   const handleStageRevert = useCallback(
     (messageId: string) => {
-      if (!activeAsid || !messageId) return;
+      // A rollback already in flight is not asked for twice.
+      if (!activeAsid || !messageId || revertBusy) return;
       void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       // An agent that cannot stage (T3) has only the one-step rollback, and
       // that is asked about first: nothing previews it and nothing brings it back.
       if (revertPath === 'one-step') {
-        setOneStepRevertMessageId(messageId);
+        setOneStepRevert({ asid: activeAsid, messageId });
         return;
       }
       stageAgentRevert(activeAsid, messageId)
@@ -3441,35 +3459,36 @@ export const AgentWorkbench = memo(function AgentWorkbench({
           // A gateway that predates `stagedRevert` says so only by refusing
           // the stage call; that is the one-step agent, not a failure.
           if (stagingUnsupported(err)) {
-            setOneStepRevertMessageId(messageId);
+            setOneStepRevert({ asid: activeAsid, messageId });
             return;
           }
           console.warn('Failed to stage revert:', err);
           showScreenNotice(t`Could not stage the rollback`, agentErrorRef.current(err));
         });
     },
-    [activeAsid, revertPath, showScreenNotice, t]
+    [activeAsid, revertBusy, revertPath, showScreenNotice, t]
   );
 
   /**
-   * The confirmed one-step rollback. The rows it removes arrive as
+   * The confirmed one-step rollback, on the session it was asked about; if the
+   * screen has moved to another one since, the question is simply dropped. The rows it removes arrive as
    * `agent.timeline.removed`, as a committed staging's do.
    */
   const handleConfirmOneStepRevert = useCallback(() => {
-    const messageId = oneStepRevertMessageId;
-    setOneStepRevertMessageId(null);
-    if (!activeAsid || !messageId) return;
+    const target = oneStepRevertTarget(oneStepRevert, activeAsid);
+    setOneStepRevert(null);
+    if (!target) return;
     void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
     setRevertBusy(true);
-    revertAgentSession(sessionId, activeAsid, messageId)
+    revertAgentSession(sessionId, target.asid, target.messageId)
       .catch((err) => {
         console.warn('Failed to revert session:', err);
         showScreenNotice(t`Could not undo`, agentErrorRef.current(err));
       })
       .finally(() => setRevertBusy(false));
-  }, [activeAsid, oneStepRevertMessageId, sessionId, showScreenNotice, t]);
+  }, [activeAsid, oneStepRevert, sessionId, showScreenNotice, t]);
 
-  const handleCancelOneStepRevert = useCallback(() => setOneStepRevertMessageId(null), []);
+  const handleCancelOneStepRevert = useCallback(() => setOneStepRevert(null), []);
 
   /** Apply what is staged. The rows it deletes arrive as `agent.timeline.removed`. */
   const handleCommitRevert = useCallback(() => {
@@ -3749,7 +3768,8 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       onPreviewImage: setPreviewImageUri,
       onEditQueued: handleEditQueuedItem,
       onCancelQueued: handleCancelQueuedItem,
-      // Roll-back is offered only on an agent that can stage one.
+      // Roll-back is offered on any agent that can revert; one that cannot
+      // stage gets the one-step path behind a confirmation.
       onUndoToHere: agentFeatures.revert ? handleStageRevert : undefined,
       actions: toolActions,
     }),
@@ -4922,7 +4942,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         />
       ) : null}
 
-      {oneStepRevertMessageId ? (
+      {oneStepRevert ? (
         <Dialog
           visible
           testID="agent-one-step-revert-dialog"
