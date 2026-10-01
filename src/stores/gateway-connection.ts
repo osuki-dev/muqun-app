@@ -143,7 +143,6 @@ export const useGatewayConnectionStore = create<GatewayConnectionState>((set, ge
     selectionRequestId += 1;
     configureGateway(demoRecord);
     set({ record: demoRecord, loading: false, hydrationError: null });
-    seedDemoAgentRecent();
   },
 
   selectRecordNow(serverId) {
