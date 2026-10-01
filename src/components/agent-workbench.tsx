@@ -145,7 +145,7 @@ import {
 import { classifyAgentRequestError, isAgentOfflineError } from '@/lib/agent-request-error';
 import { agentDisplayName } from '@/lib/home-launch-model';
 import { agentGuideFor } from '@/i18n/labels';
-import { agentGuideCommand } from '@/lib/home-agent-readiness';
+import { agentGuideCommand, agentGuideStart } from '@/lib/home-agent-readiness';
 import { hasAgentsDiscoveryFor, useAgents } from '@/stores/agents';
 import { sessionChipLead } from '@/lib/agent-session-chip';
 import { useServerCapabilities } from '@/stores/server-capabilities';
@@ -592,9 +592,10 @@ export const AgentWorkbench = memo(function AgentWorkbench({
    * How to bring this agent up: its own sentence, then its command when it has
    * one -- the setup step for an agent that is running but needs setup.
    */
+  const guideStatus = activeAgentEntry?.readiness ?? 'offline';
   const startAdvice = [
-    _(agentGuide.start),
-    agentGuideCommand(agentGuide, activeAgentEntry?.readiness ?? 'offline'),
+    _(agentGuideStart(agentGuide, guideStatus)),
+    agentGuideCommand(agentGuide, guideStatus),
   ]
     .filter(Boolean)
     .join('\n');

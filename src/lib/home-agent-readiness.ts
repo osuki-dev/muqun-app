@@ -1,3 +1,4 @@
+import type { MessageDescriptor } from '@lingui/core';
 import type { GatewayEndpoint } from '@/lib/gateway-client';
 import type { AgentCatalog, AgentProject } from '@/lib/agent-session';
 import type { AgentStatusInfo, GatewayDiscovery } from '@/lib/agent-protocol';
@@ -63,6 +64,14 @@ export function agentGuideBlurb(readiness: AgentReadiness): AgentGuideBlurb {
           ? 'setup'
           : 'unconfirmed';
   }
+}
+
+/** The sentence the guide shows: the kind's setup sentence when it needs setup, else its start sentence. */
+export function agentGuideStart(
+  copy: { start: MessageDescriptor; setupStart?: MessageDescriptor },
+  status: AgentReadiness['status']
+): MessageDescriptor {
+  return (status === 'needs-setup' ? copy.setupStart : undefined) ?? copy.start;
 }
 
 /**
