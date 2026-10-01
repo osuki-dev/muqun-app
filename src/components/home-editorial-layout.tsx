@@ -30,9 +30,15 @@ import { useInterfaceFontFamily } from '@/hooks/use-user-fonts';
 import { USER_FONT_MAX_NATIVE_WEIGHT } from '@/theme/interface-font-registry';
 import { useHasThemeArtwork } from '@/components/theme-artwork';
 
-import { EDITORIAL_MAX_WIDTH, getEditorialLayoutGeometry } from '@/lib/home-editorial-layout';
+import {
+  EDITORIAL_MAX_WIDTH,
+  EDITORIAL_PAD_MAX_WIDTH,
+  getEditorialLayoutGeometry,
+} from '@/lib/home-editorial-layout';
+import { padLaunchLayoutEnabled } from '@/lib/home-pad-geometry';
 export {
   EDITORIAL_MAX_WIDTH,
+  EDITORIAL_PAD_MAX_WIDTH,
   EDITORIAL_TWO_COLUMN_MIN_WIDTH,
   getEditorialLayoutGeometry,
   type EditorialLayoutGeometry,
@@ -206,14 +212,15 @@ export function HomeEditorialLayout({
   const [titleMeasurement, setTitleMeasurement] = useState<{ title: string; width: number } | null>(
     null
   );
+  const maxWidth = pad ? EDITORIAL_PAD_MAX_WIDTH : EDITORIAL_MAX_WIDTH;
   const geometry = getEditorialLayoutGeometry(
-    measuredWidth || Math.min(contentWidth, EDITORIAL_MAX_WIDTH),
+    measuredWidth || Math.min(contentWidth, maxWidth),
     fontScale,
     hasAside,
     pad
   );
   const padLaunchLayout =
-    pad && geometry.contentWidth >= 752 && fontScale < 1.35 && Boolean(viewportHeight);
+    pad && padLaunchLayoutEnabled(geometry.contentWidth, fontScale, viewportHeight);
   const scrollPosition = scrollY;
   const hasIdentity = hasSlot(identity);
   const hasArtwork = hasSlot(artwork);
@@ -292,7 +299,7 @@ export function HomeEditorialLayout({
   });
 
   if (padLaunchLayout) {
-    const launchWidth = Math.min(320, geometry.innerWidth * 0.36);
+    const launchWidth = Math.min(360, geometry.innerWidth * 0.36);
     const coverWidth = geometry.innerWidth - launchWidth - 24;
     const titleFontSize =
       titleMeasurement && titleMeasurement.title === titleKey && titleMeasurement.width > 0
@@ -310,7 +317,7 @@ export function HomeEditorialLayout({
         style={[
           styles.root,
           styles.padRoot,
-          { minHeight: viewportHeight, paddingHorizontal: geometry.gutter },
+          { maxWidth, minHeight: viewportHeight, paddingHorizontal: geometry.gutter },
           style,
         ]}>
         {hasHeaderRow ? (
@@ -433,7 +440,7 @@ export function HomeEditorialLayout({
           setMeasuredWidth(event.nativeEvent.layout.width);
           sceneOrigin.set(event.nativeEvent.layout.y + 12);
         }}
-        style={[styles.root, { paddingHorizontal: geometry.gutter }, style]}>
+        style={[styles.root, { maxWidth, paddingHorizontal: geometry.gutter }, style]}>
         <View style={split ? styles.coverColumns : undefined}>
           <View style={split ? { width: coverWidth, minWidth: 0 } : undefined}>
             <View style={styles.coverScene}>
@@ -550,7 +557,12 @@ export function HomeEditorialLayout({
         key="without-artwork"
         testID="home-editorial-layout"
         onLayout={(event) => setMeasuredWidth(event.nativeEvent.layout.width)}
-        style={[styles.root, styles.noArtworkRoot, { paddingHorizontal: geometry.gutter }, style]}>
+        style={[
+          styles.root,
+          styles.noArtworkRoot,
+          { maxWidth, paddingHorizontal: geometry.gutter },
+          style,
+        ]}>
         {hasHeaderRow ? (
           <View style={styles.noArtworkToolbar}>
             <View style={[styles.mastheadLeadGroup, styles.noArtworkLeadGroup]}>
@@ -647,7 +659,7 @@ export function HomeEditorialLayout({
       key="with-artwork"
       testID="home-editorial-layout"
       onLayout={(event) => setMeasuredWidth(event.nativeEvent.layout.width)}
-      style={[styles.root, { paddingHorizontal: geometry.gutter }, style]}>
+      style={[styles.root, { maxWidth, paddingHorizontal: geometry.gutter }, style]}>
       <View style={styles.masthead}>
         {hasHeaderRow ? (
           <View style={styles.mastheadActionRow}>
@@ -758,7 +770,7 @@ const styles = StyleSheet.create({
   padColumns: { flexDirection: 'row', alignItems: 'flex-start', gap: 24 },
   padThemePane: { flex: 1, minWidth: 0 },
   padLaunchPane: { flexShrink: 0, paddingTop: 16 },
-  padLowerBand: { marginTop: 24, flexDirection: 'row', flexWrap: 'wrap', alignItems: 'flex-start' },
+  padLowerBand: { marginTop: 24 },
 
   coverColumns: { flexDirection: 'row', alignItems: 'flex-start', gap: 24 },
   coverReadingColumn: { flex: 1, minWidth: 0, paddingTop: 16 },

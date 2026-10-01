@@ -57,6 +57,7 @@ import { ThemeIcon } from '@/components/theme-icon';
 import { HomeEditorialArtwork } from '@/components/home-editorial-artwork';
 import {
   EDITORIAL_MAX_WIDTH,
+  EDITORIAL_PAD_MAX_WIDTH,
   HomeEditorialLayout,
   getEditorialLayoutGeometry,
 } from '@/components/home-editorial-layout';
@@ -64,7 +65,7 @@ import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { HomeConnections } from '@/components/home-connections';
 import { HomeAttention } from '@/components/home-attention';
 import { HomeRecentSessions } from '@/components/home-recent-sessions';
-import { padLowerBandLayout } from '@/lib/home-pad-geometry';
+import { padLaunchLayoutEnabled, padLowerBandLayout } from '@/lib/home-pad-geometry';
 import {
   HomeLaunchActions,
   HomeLaunchTarget,
@@ -175,7 +176,7 @@ export function HomeOverview({
     identity.logo?.mode === 'custom' ? customAssets?.[identity.logo.asset] : undefined;
   const logoSource = customLogo && customLogo !== failedLogo ? { uri: customLogo } : brandMark;
   const isPad = layoutMode === 'pad';
-  const { height: windowHeight } = useWindowDimensions();
+  const { height: windowHeight, fontScale } = useWindowDimensions();
   const showsEditorialBrand = identity.showBrand;
   // Renaming and unpairing live in Settings, not here: the owner asked for one
   // place that manages servers, and the tablet branch's long-press row menu was
@@ -691,11 +692,16 @@ export function HomeOverview({
   const editorialArtworkTopCurrent =
     editorialArtworkTop?.source === editorialArtworkResolution?.source;
   if (homeLayout !== 'classic' || isPad) {
-    // Same width and gutter the layout resolves for itself, so the band lines up
-    // with the cover and the launch pane.
-    const padBand = padLowerBandLayout(
-      getEditorialLayoutGeometry(Math.min(editorialWidth || width, EDITORIAL_MAX_WIDTH)).innerWidth
+    // Same width, gutter and predicate the layout resolves for itself, so the band
+    // lines up with the cover and launch pane, and a narrow Pad (split view, large
+    // type) gets Continue and Connections in the vertical page instead.
+    const editorialViewportHeight = windowHeight - insets.top - insets.bottom - 24;
+    const padGeometry = getEditorialLayoutGeometry(
+      Math.min(editorialWidth || width, isPad ? EDITORIAL_PAD_MAX_WIDTH : EDITORIAL_MAX_WIDTH)
     );
+    const padLaunch =
+      isPad && padLaunchLayoutEnabled(padGeometry.contentWidth, fontScale, editorialViewportHeight);
+    const padBand = padLowerBandLayout(padGeometry.innerWidth);
     const editorialContent = (
       <View
         testID="home-editorial"
@@ -737,7 +743,7 @@ export function HomeOverview({
           <View>
             <HomeEditorialLayout
               contentWidth={editorialWidth || width}
-              viewportHeight={windowHeight - insets.top - insets.bottom - 24}
+              viewportHeight={editorialViewportHeight}
               scrollY={scrollY}
               cover={customTheme?.manifest.homePresentation?.header === 'cover'}
               coverTitle={showsEditorialBrand ? (identity.name ?? undefined) : undefined}
@@ -831,9 +837,8 @@ export function HomeOverview({
                 )
               }
               recent={
-                !isPad && !loading && !hydrationError ? (
+                !padLaunch && !loading && !hydrationError ? (
                   <HomeRecentSessions
-                    compact={isPad}
                     selectedServerId={launchController.chosen?.serverId}
                     servers={records}
                     hosts={sshRows}
@@ -856,7 +861,7 @@ export function HomeOverview({
                 ) : undefined
               }
               connections={
-                !isPad && !loading && !hydrationError && !sshLoading ? (
+                !padLaunch && !loading && !hydrationError && !sshLoading ? (
                   <HomeConnections
                     servers={records}
                     hosts={sshRows}
@@ -873,9 +878,16 @@ export function HomeOverview({
                 ) : undefined
               }
               padLowerBand={
-                isPad && !loading && !hydrationError ? (
-                  <>
-                    <View testID="home-pad-continue" style={{ width: padBand.continueWidth }}>
+                padLaunch && !loading && !hydrationError ? (
+                  <View
+                    style={
+                      padBand.columns === 2
+                        ? { flexDirection: 'row', alignItems: 'flex-start', gap: padBand.gap }
+                        : { gap: padBand.gap }
+                    }>
+                    <View
+                      testID="home-pad-continue"
+                      style={padBand.columns === 2 ? { flex: 1, minWidth: 0 } : undefined}>
                       <SectionLabel
                         title={<Trans>Continue</Trans>}
                         color={theme.colors.textMuted}
@@ -893,13 +905,11 @@ export function HomeOverview({
                         }}
                       />
                     </View>
-                    {padBand.columns === 2 ? <View style={{ width: padBand.gap }} /> : null}
                     <View
                       testID="home-pad-connections"
-                      style={{
-                        width: padBand.connectionsWidth,
-                        marginTop: padBand.columns === 1 ? padBand.gap : 0,
-                      }}>
+                      style={
+                        padBand.columns === 2 ? { width: padBand.connectionsWidth } : undefined
+                      }>
                       <SectionLabel
                         title={<Trans>Connections</Trans>}
                         color={theme.colors.textMuted}
@@ -920,7 +930,7 @@ export function HomeOverview({
                         />
                       )}
                     </View>
-                  </>
+                  </View>
                 ) : undefined
               }
               headerAction={

@@ -12,3 +12,15 @@ export function padLowerBandLayout(innerWidth: number) {
     columns: 2 as const,
   };
 }
+
+/**
+ * Whether Pad Home gets the cover + launch pane + lower band composition.
+ * Narrower content or large type falls back to the vertical editorial page.
+ */
+export function padLaunchLayoutEnabled(
+  contentWidth: number,
+  fontScale: number,
+  viewportHeight: number | undefined
+): boolean {
+  return contentWidth >= 752 && fontScale < 1.35 && Boolean(viewportHeight);
+}
