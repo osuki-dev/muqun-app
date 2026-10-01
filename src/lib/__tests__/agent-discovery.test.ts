@@ -5,6 +5,7 @@ import {
   agentFeaturesFor,
   agentIdQueryValue,
   agentReadiness,
+  canMoveSessionToWorktree,
   emptyAgentsMirror,
   hasMultiAgent,
   hiddenClientCommands,
@@ -307,6 +308,21 @@ describe('features and gating', () => {
     expect(hiddenClientCommands({ ...LEGACY_AGENT_FEATURES, stagedRevert: false })).toEqual([
       'keep',
     ]);
+  });
+});
+
+describe('moving a session to a worktree', () => {
+  const agents = () => discovery.agents?.agents ?? [];
+
+  test('is offered only on a session whose agent reports worktrees', () => {
+    expect(canMoveSessionToWorktree(agents(), 'deepseek')).toBe(false);
+    expect(canMoveSessionToWorktree(agents(), 'opencode')).toBe(true);
+  });
+
+  test('an agent nobody has described keeps it, as OpenCode always had it', () => {
+    expect(canMoveSessionToWorktree(undefined, 'opencode')).toBe(true);
+    expect(canMoveSessionToWorktree([], undefined)).toBe(true);
+    expect(canMoveSessionToWorktree(agents(), 'unlisted')).toBe(true);
   });
 });
 
