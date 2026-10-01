@@ -3,6 +3,7 @@ import { useThemeTokens } from '@osuki-dev/ui';
 import { useEffect, useState, type ReactNode } from 'react';
 import {
   StyleSheet,
+  ScrollView,
   Platform,
   useWindowDimensions,
   View,
@@ -35,7 +36,8 @@ import {
   EDITORIAL_PAD_MAX_WIDTH,
   getEditorialLayoutGeometry,
 } from '@/lib/home-editorial-layout';
-import { padHeroHeight, padHeroSplit, padLaunchLayoutEnabled } from '@/lib/home-pad-geometry';
+import { padLaunchLayoutEnabled, padWorkColumnWidth } from '@/lib/home-pad-geometry';
+import { SectionLabel } from '@/components/settings-chrome';
 export {
   EDITORIAL_MAX_WIDTH,
   EDITORIAL_PAD_MAX_WIDTH,
@@ -56,12 +58,8 @@ export type HomeEditorialLayoutProps = {
   pad?: boolean;
   /** The existing identity block supplied by Home data/theme composition. */
   identity?: ReactNode;
-  /**
-   * Cover artwork follows the utility row and precedes work actions. As a
-   * function it receives the height the Pad hero leaves for it (undefined
-   * elsewhere), so the drawing re-fits instead of being clipped.
-   */
-  artwork?: ReactNode | ((maxHeight: number | undefined) => ReactNode);
+  /** Cover artwork follows the utility row and precedes work actions. */
+  artwork?: ReactNode;
   /** Rendered offset to visible foreground; preserves transparent source pixels. */
   artworkTopInset?: number;
   /** Scroll position drives reversible cover fades and pull-down stretch. */
@@ -82,8 +80,6 @@ export type HomeEditorialLayoutProps = {
   connections?: ReactNode;
   /** Secondary scan or pair controls, already wired by the parent. */
   controls?: ReactNode;
-  /** Pad only: the Continue and Connections band under the cover and launch pane. */
-  padLowerBand?: ReactNode;
   style?: StyleProp<ViewStyle>;
 };
 
@@ -187,7 +183,7 @@ export function HomeEditorialLayout({
   fontScale: fontScaleProp,
   pad = false,
   identity,
-  artwork: artworkSlot,
+  artwork,
   scrollY,
   artworkTopInset = 0,
   cover = false,
@@ -199,7 +195,6 @@ export function HomeEditorialLayout({
   attention,
   connections,
   controls,
-  padLowerBand,
   style,
 }: HomeEditorialLayoutProps) {
   const { t } = useLingui();
@@ -226,7 +221,6 @@ export function HomeEditorialLayout({
   const padLaunchLayout =
     pad && padLaunchLayoutEnabled(geometry.contentWidth, fontScale, viewportHeight);
   const scrollPosition = scrollY;
-  const artwork = typeof artworkSlot === 'function' ? artworkSlot(undefined) : artworkSlot;
   const hasIdentity = hasSlot(identity);
   const hasArtwork = hasSlot(artwork);
   const hasHeaderAction = hasSlot(headerAction);
@@ -234,10 +228,6 @@ export function HomeEditorialLayout({
   const hasHeaderRow = hasHeaderLeading || hasHeaderAction;
   const reducedMotion = useReducedMotion();
   const sceneOrigin = useSharedValue(0);
-  // The Pad cover sits below the toolbar; its scene origin is the root's offset
-  // in the page scroll plus the columns' offset in the root.
-  const padRootY = useSharedValue(0);
-  const padColumnsY = useSharedValue(0);
   const animateCover = cover && hasArtwork && !reducedMotion;
   const revealing = useLaunchHandoff((state) => state.revealing);
   const entryProgress = useSharedValue(revealing || reducedMotion ? 1 : 0);
@@ -304,36 +294,25 @@ export function HomeEditorialLayout({
   });
 
   if (padLaunchLayout) {
-    const launchWidth = Math.min(360, geometry.innerWidth * 0.36);
+    // A cover spread: the cover fills the left column top to bottom, the work
+    // column beside it scrolls on its own. The page itself does not scroll.
+    const launchWidth = padWorkColumnWidth(geometry.innerWidth);
     const coverWidth = geometry.innerWidth - launchWidth - 24;
-    const fittedTitleFontSize =
+    const titleFontSize =
       titleMeasurement && titleMeasurement.title === titleKey && titleMeasurement.width > 0
         ? Math.min(coverWidth * 0.38, ((coverWidth - 4) * 100) / titleMeasurement.width)
         : coverWidth * 0.25;
-    // The hero row is a fixed share of the viewport so Continue starts on the
-    // first screen. The title keeps its width-fitted size until it would crowd
-    // the drawing (`padHeroSplit`); the drawing is fitted into what is left.
-    const heroHeight = padHeroHeight(viewportHeight ?? 0);
-    const { titleHeight, artworkMaxHeight } = padHeroSplit(
-      heroHeight,
-      fittedTitleFontSize * 1.08,
-      Boolean(coverTitle)
-    );
-    const titleFontSize = titleHeight / 1.08;
-    const padArtwork =
-      typeof artworkSlot === 'function' ? artworkSlot(artworkMaxHeight) : artworkSlot;
+    const titleHeight = titleFontSize * 1.08;
+    const hasRecent = hasSlot(recent);
+    const hasConnections = hasSlot(connections);
     return (
       <View
         testID="home-editorial-layout"
-        onLayout={(event) => {
-          setMeasuredWidth(event.nativeEvent.layout.width);
-          padRootY.set(event.nativeEvent.layout.y);
-          sceneOrigin.set(event.nativeEvent.layout.y + padColumnsY.get());
-        }}
+        onLayout={(event) => setMeasuredWidth(event.nativeEvent.layout.width)}
         style={[
           styles.root,
           styles.padRoot,
-          { maxWidth, paddingHorizontal: geometry.gutter },
+          { maxWidth, height: viewportHeight, paddingHorizontal: geometry.gutter },
           style,
         ]}>
         {hasHeaderRow ? (
@@ -344,15 +323,10 @@ export function HomeEditorialLayout({
             {hasHeaderAction ? <View style={styles.headerAction}>{headerAction}</View> : null}
           </View>
         ) : null}
-        <View
-          style={[styles.padColumns, { minHeight: heroHeight }]}
-          onLayout={(event) => {
-            padColumnsY.set(event.nativeEvent.layout.y);
-            sceneOrigin.set(padRootY.get() + event.nativeEvent.layout.y);
-          }}>
-          <View testID="home-pad-theme-pane" style={styles.padThemePane}>
+        <View style={styles.padColumns}>
+          <View testID="home-pad-theme-pane" style={[styles.padThemePane, { width: coverWidth }]}>
             {cover && hasArtwork ? (
-              <View style={styles.coverScene}>
+              <View style={[styles.coverScene, styles.padCoverScene]}>
                 {coverTitle ? (
                   <View
                     pointerEvents="none"
@@ -399,19 +373,13 @@ export function HomeEditorialLayout({
                     </Text>
                   </Animated.View>
                 ) : null}
+                {/* The figure stands on the column's bottom edge and rises over
+                    the title, as the phone cover's drawing overlaps its title. */}
                 <Animated.View
                   onLayout={artworkStage.onLayout}
                   pointerEvents="none"
-                  style={[
-                    {
-                      marginTop: coverTitle ? -titleHeight * 0.35 - artworkTopInset : 0,
-                      marginHorizontal: 0,
-                      zIndex: 1,
-                    },
-                    animatedArtworkStyle,
-                    artworkStage.style,
-                  ]}>
-                  {padArtwork}
+                  style={[styles.padCoverArtwork, animatedArtworkStyle, artworkStage.style]}>
+                  {artwork}
                 </Animated.View>
               </View>
             ) : (
@@ -419,23 +387,37 @@ export function HomeEditorialLayout({
                 {hasIdentity ? <View style={styles.identity}>{identity}</View> : null}
                 {hasArtwork ? (
                   <Animated.View pointerEvents="none" style={animatedArtworkStyle}>
-                    {padArtwork}
+                    {artwork}
                   </Animated.View>
                 ) : null}
               </View>
             )}
           </View>
-          <View
+          <ScrollView
             testID="home-pad-launch-pane"
-            style={[styles.padLaunchPane, { width: launchWidth }]}>
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            style={{ width: launchWidth, flexGrow: 0, flexShrink: 0 }}
+            contentContainerStyle={styles.padWorkContent}>
             {launches}
-          </View>
+            {hasRecent || hasConnections ? (
+              <View testID="home-pad-lower-band" style={styles.padWorkSections}>
+                {hasRecent ? (
+                  <View testID="home-pad-continue">
+                    <SectionLabel title={t`Continue`} color={theme.colors.textMuted} />
+                    {recent}
+                  </View>
+                ) : null}
+                {hasConnections ? (
+                  <View testID="home-pad-connections">
+                    <SectionLabel title={t`Connections`} color={theme.colors.textMuted} />
+                    {connections}
+                  </View>
+                ) : null}
+              </View>
+            ) : null}
+          </ScrollView>
         </View>
-        {hasSlot(padLowerBand) ? (
-          <View testID="home-pad-lower-band" style={styles.padLowerBand}>
-            {padLowerBand}
-          </View>
-        ) : null}
       </View>
     );
   }
@@ -783,10 +765,12 @@ const styles = StyleSheet.create({
     gap: 24,
     marginBottom: 24,
   },
-  padColumns: { flexDirection: 'row', alignItems: 'flex-start', gap: 24 },
-  padThemePane: { flex: 1, minWidth: 0 },
-  padLaunchPane: { flexShrink: 0, paddingTop: 16 },
-  padLowerBand: { marginTop: 24 },
+  padColumns: { flex: 1, minHeight: 0, flexDirection: 'row', gap: 24 },
+  padThemePane: { flexShrink: 0, minWidth: 0 },
+  padCoverScene: { flex: 1 },
+  padCoverArtwork: { position: 'absolute', left: 0, right: 0, bottom: 0, zIndex: 1 },
+  padWorkContent: { paddingTop: 16, paddingBottom: 24, gap: 24 },
+  padWorkSections: { gap: 24 },
 
   coverColumns: { flexDirection: 'row', alignItems: 'flex-start', gap: 24 },
   coverReadingColumn: { flex: 1, minWidth: 0, paddingTop: 16 },
