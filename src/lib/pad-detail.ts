@@ -60,7 +60,8 @@ export function padShellReducer(state: PadShellState, event: PadShellEvent): Pad
       return state.overviewVisible ? { ...state, overviewVisible: false } : state;
     case 'route': {
       const p = event.params;
-      if (p.overview === 'home') return { ...state, overviewVisible: true };
+      if (p.overview === 'home')
+        return state.overviewVisible ? state : { ...state, overviewVisible: true };
       if (!p.asid && p.intent !== 'new') return state;
       return {
         detail: {
@@ -76,4 +77,22 @@ export function padShellReducer(state: PadShellState, event: PadShellEvent): Pad
       };
     }
   }
+}
+
+/** Identity of a route landing: params that select what the detail shows. */
+export function padRouteKey(serverId: string, params: PadRouteParams): string {
+  return [
+    serverId,
+    params.asid ?? '',
+    params.sessionId ?? '',
+    params.directory ?? '',
+    params.agentId ?? '',
+    params.intent ?? '',
+    params.overview ?? '',
+  ].join('\u0000');
+}
+
+/** A route is applied once per distinct key. */
+export function shouldApplyRoute(appliedKey: string | null, nextKey: string): boolean {
+  return appliedKey !== nextKey;
 }
