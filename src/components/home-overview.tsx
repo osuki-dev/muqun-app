@@ -55,11 +55,16 @@ import { GatewayTunnelBadge } from '@/components/gateway-tunnel-badge';
 import { HomeArtwork } from '@/components/home-artwork';
 import { ThemeIcon } from '@/components/theme-icon';
 import { HomeEditorialArtwork } from '@/components/home-editorial-artwork';
-import { HomeEditorialLayout } from '@/components/home-editorial-layout';
+import {
+  EDITORIAL_MAX_WIDTH,
+  HomeEditorialLayout,
+  getEditorialLayoutGeometry,
+} from '@/components/home-editorial-layout';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { HomeConnections } from '@/components/home-connections';
 import { HomeAttention } from '@/components/home-attention';
 import { HomeRecentSessions } from '@/components/home-recent-sessions';
+import { padLowerBandLayout } from '@/lib/home-pad-geometry';
 import {
   HomeLaunchActions,
   HomeLaunchTarget,
@@ -686,6 +691,11 @@ export function HomeOverview({
   const editorialArtworkTopCurrent =
     editorialArtworkTop?.source === editorialArtworkResolution?.source;
   if (homeLayout !== 'classic' || isPad) {
+    // Same width and gutter the layout resolves for itself, so the band lines up
+    // with the cover and the launch pane.
+    const padBand = padLowerBandLayout(
+      getEditorialLayoutGeometry(Math.min(editorialWidth || width, EDITORIAL_MAX_WIDTH)).innerWidth
+    );
     const editorialContent = (
       <View
         testID="home-editorial"
@@ -860,6 +870,57 @@ export function HomeOverview({
                     activeConnection={activeConnection}
                     nowMs={nowMs}
                   />
+                ) : undefined
+              }
+              padLowerBand={
+                isPad && !loading && !hydrationError ? (
+                  <>
+                    <View testID="home-pad-continue" style={{ width: padBand.continueWidth }}>
+                      <SectionLabel
+                        title={<Trans>Continue</Trans>}
+                        color={theme.colors.textMuted}
+                      />
+                      <HomeRecentSessions
+                        columns={padBand.columns}
+                        limit={8}
+                        selectedServerId={launchController.chosen?.serverId}
+                        servers={records}
+                        hosts={sshRows}
+                        reachabilityByServer={padReachabilityByServer}
+                        activeConnection={activeConnection}
+                        onOpen={(command) => {
+                          void commands.dispatch(command);
+                        }}
+                      />
+                    </View>
+                    {padBand.columns === 2 ? <View style={{ width: padBand.gap }} /> : null}
+                    <View
+                      testID="home-pad-connections"
+                      style={{
+                        width: padBand.connectionsWidth,
+                        marginTop: padBand.columns === 1 ? padBand.gap : 0,
+                      }}>
+                      <SectionLabel
+                        title={<Trans>Connections</Trans>}
+                        color={theme.colors.textMuted}
+                      />
+                      {sshLoading ? null : (
+                        <HomeConnections
+                          servers={records}
+                          hosts={sshRows}
+                          onOpenServer={openServer}
+                          onOpenHost={(hostId) => {
+                            void commands.openSsh(hostId);
+                          }}
+                          onManage={() => {
+                            void commands.manageConnections();
+                          }}
+                          activeConnection={activeConnection}
+                          nowMs={nowMs}
+                        />
+                      )}
+                    </View>
+                  </>
                 ) : undefined
               }
               headerAction={

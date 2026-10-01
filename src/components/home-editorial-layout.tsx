@@ -3,7 +3,6 @@ import { useThemeTokens } from '@osuki-dev/ui';
 import { useEffect, useState, type ReactNode } from 'react';
 import {
   StyleSheet,
-  ScrollView,
   Platform,
   useWindowDimensions,
   View,
@@ -31,8 +30,9 @@ import { useInterfaceFontFamily } from '@/hooks/use-user-fonts';
 import { USER_FONT_MAX_NATIVE_WEIGHT } from '@/theme/interface-font-registry';
 import { useHasThemeArtwork } from '@/components/theme-artwork';
 
-import { getEditorialLayoutGeometry } from '@/lib/home-editorial-layout';
+import { EDITORIAL_MAX_WIDTH, getEditorialLayoutGeometry } from '@/lib/home-editorial-layout';
 export {
+  EDITORIAL_MAX_WIDTH,
   EDITORIAL_TWO_COLUMN_MIN_WIDTH,
   getEditorialLayoutGeometry,
   type EditorialLayoutGeometry,
@@ -72,6 +72,8 @@ export type HomeEditorialLayoutProps = {
   connections?: ReactNode;
   /** Secondary scan or pair controls, already wired by the parent. */
   controls?: ReactNode;
+  /** Pad only: the Continue and Connections band under the cover and launch pane. */
+  padLowerBand?: ReactNode;
   style?: StyleProp<ViewStyle>;
 };
 
@@ -187,6 +189,7 @@ export function HomeEditorialLayout({
   attention,
   connections,
   controls,
+  padLowerBand,
   style,
 }: HomeEditorialLayoutProps) {
   const { t } = useLingui();
@@ -204,15 +207,14 @@ export function HomeEditorialLayout({
     null
   );
   const geometry = getEditorialLayoutGeometry(
-    measuredWidth || Math.min(contentWidth, 1120),
+    measuredWidth || Math.min(contentWidth, EDITORIAL_MAX_WIDTH),
     fontScale,
     hasAside,
     pad
   );
   const padLaunchLayout =
     pad && geometry.contentWidth >= 752 && fontScale < 1.35 && Boolean(viewportHeight);
-  const themeScroll = useSharedValue(0);
-  const scrollPosition = padLaunchLayout ? themeScroll : scrollY;
+  const scrollPosition = scrollY;
   const hasIdentity = hasSlot(identity);
   const hasArtwork = hasSlot(artwork);
   const hasHeaderAction = hasSlot(headerAction);
@@ -220,6 +222,10 @@ export function HomeEditorialLayout({
   const hasHeaderRow = hasHeaderLeading || hasHeaderAction;
   const reducedMotion = useReducedMotion();
   const sceneOrigin = useSharedValue(0);
+  // The Pad cover sits below the toolbar; its scene origin is the root's offset
+  // in the page scroll plus the columns' offset in the root.
+  const padRootY = useSharedValue(0);
+  const padColumnsY = useSharedValue(0);
   const animateCover = cover && hasArtwork && !reducedMotion;
   const revealing = useLaunchHandoff((state) => state.revealing);
   const entryProgress = useSharedValue(revealing || reducedMotion ? 1 : 0);
@@ -296,11 +302,15 @@ export function HomeEditorialLayout({
     return (
       <View
         testID="home-editorial-layout"
-        onLayout={(event) => setMeasuredWidth(event.nativeEvent.layout.width)}
+        onLayout={(event) => {
+          setMeasuredWidth(event.nativeEvent.layout.width);
+          padRootY.set(event.nativeEvent.layout.y);
+          sceneOrigin.set(event.nativeEvent.layout.y + padColumnsY.get());
+        }}
         style={[
           styles.root,
           styles.padRoot,
-          { height: viewportHeight, paddingHorizontal: geometry.gutter },
+          { minHeight: viewportHeight, paddingHorizontal: geometry.gutter },
           style,
         ]}>
         {hasHeaderRow ? (
@@ -311,16 +321,13 @@ export function HomeEditorialLayout({
             {hasHeaderAction ? <View style={styles.headerAction}>{headerAction}</View> : null}
           </View>
         ) : null}
-        <View style={styles.padColumns}>
-          <Animated.ScrollView
-            testID="home-pad-theme-pane"
-            nestedScrollEnabled
-            showsVerticalScrollIndicator={false}
-            keyboardShouldPersistTaps="handled"
-            scrollEventThrottle={16}
-            onScroll={(event) => themeScroll.set(event.nativeEvent.contentOffset.y)}
-            style={styles.padThemePane}
-            contentContainerStyle={styles.padThemeContent}>
+        <View
+          style={styles.padColumns}
+          onLayout={(event) => {
+            padColumnsY.set(event.nativeEvent.layout.y);
+            sceneOrigin.set(padRootY.get() + event.nativeEvent.layout.y);
+          }}>
+          <View testID="home-pad-theme-pane" style={styles.padThemePane}>
             {cover && hasArtwork ? (
               <View style={styles.coverScene}>
                 {coverTitle ? (
@@ -394,16 +401,18 @@ export function HomeEditorialLayout({
                 ) : null}
               </View>
             )}
-          </Animated.ScrollView>
-          <ScrollView
+          </View>
+          <View
             testID="home-pad-launch-pane"
-            showsVerticalScrollIndicator={false}
-            keyboardShouldPersistTaps="handled"
-            style={{ width: launchWidth, flexGrow: 0, flexShrink: 0 }}
-            contentContainerStyle={{ paddingBottom: 24, paddingTop: 16 }}>
+            style={[styles.padLaunchPane, { width: launchWidth }]}>
             {launches}
-          </ScrollView>
+          </View>
         </View>
+        {hasSlot(padLowerBand) ? (
+          <View testID="home-pad-lower-band" style={styles.padLowerBand}>
+            {padLowerBand}
+          </View>
+        ) : null}
       </View>
     );
   }
@@ -746,9 +755,10 @@ const styles = StyleSheet.create({
     gap: 24,
     marginBottom: 24,
   },
-  padColumns: { flex: 1, minHeight: 0, flexDirection: 'row', gap: 24 },
+  padColumns: { flexDirection: 'row', alignItems: 'flex-start', gap: 24 },
   padThemePane: { flex: 1, minWidth: 0 },
-  padThemeContent: { paddingBottom: 24 },
+  padLaunchPane: { flexShrink: 0, paddingTop: 16 },
+  padLowerBand: { marginTop: 24, flexDirection: 'row', flexWrap: 'wrap', alignItems: 'flex-start' },
 
   coverColumns: { flexDirection: 'row', alignItems: 'flex-start', gap: 24 },
   coverReadingColumn: { flex: 1, minWidth: 0, paddingTop: 16 },
@@ -760,7 +770,7 @@ const styles = StyleSheet.create({
   root: {
     alignSelf: 'center',
     width: '100%',
-    maxWidth: 1120,
+    maxWidth: EDITORIAL_MAX_WIDTH,
     minWidth: 0,
     paddingTop: 12,
     paddingBottom: 32,

@@ -1195,6 +1195,7 @@ msgstr "เชื่อมต่อกับ {address} แล้ว"
 #: src/app/explore.tsx
 #: src/app/new-task.tsx
 #: src/components/agent-transcript-skeleton.tsx
+#: src/components/pad-agent-detail.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/components/session-map.tsx
 #: src/components/simfarm-stage.tsx
@@ -1218,6 +1219,8 @@ msgid "Connecting…"
 msgstr "กำลังเชื่อมต่อ…"
 
 #: src/components/home-editorial-layout.tsx
+#: src/components/home-overview.tsx
+#: src/components/pad-server-rail.tsx
 msgid "Connections"
 msgstr "การเชื่อมต่อ"
 
@@ -1248,6 +1251,8 @@ msgstr "บริบทที่ใช้ไป"
 
 #: src/app/explore.tsx
 #: src/components/home-editorial-layout.tsx
+#: src/components/home-overview.tsx
+#: src/components/pad-server-rail.tsx
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Continue"
 msgstr "ดำเนินการต่อ"
@@ -1756,10 +1761,6 @@ msgstr "เครื่องปัจจุบัน"
 #: src/i18n/labels.ts
 msgid "Current path"
 msgstr "พาธปัจจุบัน"
-
-#: src/components/pad-server-rail.tsx
-msgid "Current task"
-msgstr "งานปัจจุบัน"
 
 #: src/components/custom-theme-library.tsx
 msgid "Current theme"
@@ -2368,6 +2369,7 @@ msgstr "ซ่อนรายการเซิร์ฟเวอร์"
 msgid "Hide the simulator"
 msgstr "ซ่อนเครื่องจำลอง"
 
+#: src/components/pad-server-rail.tsx
 #: src/components/simfarm-stage.tsx
 msgid "Home"
 msgstr "หน้าแรก"
@@ -2405,7 +2407,6 @@ msgstr "โฮสต์"
 msgid "Host key changed"
 msgstr "คีย์โฮสต์เปลี่ยนไป"
 
-#: src/components/pad-server-rail.tsx
 #: src/components/ssh-host-row.tsx
 msgid "Host key trusted"
 msgstr "เชื่อถือคีย์โฮสต์แล้ว"
@@ -2957,6 +2958,7 @@ msgstr "มีเอาต์พุตใหม่ · รีเฟรช"
 
 #: src/app/agent.tsx
 #: src/components/agent-workbench.tsx
+#: src/components/home-overview.tsx
 #: src/i18n/labels.ts
 msgid "New session"
 msgstr "เซสชันใหม่"
@@ -3097,7 +3099,6 @@ msgstr "ไม่มีโปรเจกต์ที่ตรงกับ “{0
 msgid "No server to start a task on."
 msgstr "ไม่มีเซิร์ฟเวอร์ให้เริ่มงาน"
 
-#: src/components/pad-server-rail.tsx
 #: src/components/settings-servers.tsx
 msgid "No servers paired yet"
 msgstr "ยังไม่ได้จับคู่เซิร์ฟเวอร์"
@@ -3388,9 +3389,7 @@ msgstr "เปิดเซสชัน"
 msgid "Open session tree"
 msgstr "เปิดแผนผังเซสชัน"
 
-#. placeholder {0}: host.label
 #. placeholder {0}: record.label
-#: src/components/pad-server-rail.tsx
 #: src/components/ssh-host-row.tsx
 msgid "Open SSH host {0}"
 msgstr "เปิดโฮสต์ SSH {0}"
@@ -4374,7 +4373,6 @@ msgstr "เซิร์ฟเวอร์ไม่พร้อมใช้งา
 
 #: src/app/settings.tsx
 #: src/components/app-drawer-content.tsx
-#: src/components/pad-server-rail.tsx
 msgid "Servers"
 msgstr "เซิร์ฟเวอร์"
 
@@ -4679,7 +4677,6 @@ msgstr "โฮสต์ SSH"
 
 #: src/components/home-launch-actions.tsx
 #: src/components/home-overview.tsx
-#: src/components/pad-server-rail.tsx
 #: src/components/settings-servers.tsx
 msgid "SSH hosts"
 msgstr "โฮสต์ SSH"
@@ -5795,10 +5792,6 @@ msgstr "เมื่อเอเจนต์หยุดเพื่อขอก
 #: src/components/away-digest-card.tsx
 msgid "While you were away"
 msgstr "ขณะที่คุณไม่อยู่"
-
-#: src/components/pad-server-rail.tsx
-msgid "Workbench"
-msgstr "เวิร์กเบนช์"
 
 #: src/components/agent-vcs-diff-sheet.tsx
 #: src/components/collaboration-notice.tsx
