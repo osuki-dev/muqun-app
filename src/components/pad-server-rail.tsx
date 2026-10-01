@@ -202,6 +202,7 @@ export function PadServerRail({
           onPress={onOpenWorkbench}
           style={({ pressed }) => [
             styles.serverPill,
+            { marginBottom: 12 },
             { marginHorizontal: profile.rail.workbenchMarginHorizontal },
             { borderRadius: profile.chrome.railItem },
             {
