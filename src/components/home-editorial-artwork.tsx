@@ -28,11 +28,14 @@ const BOTTOM_FEATHER_START = 0.68;
 export function HomeEditorialArtwork({
   resolution,
   cover = false,
+  maxHeight,
   onAvailabilityChange,
   onVisibleTopChange,
 }: {
   resolution: ResolvedHomeArtworkAsset;
   cover?: boolean;
+  /** Caps the drawn box (the image re-fits inside it, feather intact); Pad hero. */
+  maxHeight?: number;
   onAvailabilityChange?: (available: boolean) => void;
   onVisibleTopChange?: (source: string, top: number) => void;
 }) {
@@ -41,6 +44,7 @@ export function HomeEditorialArtwork({
       key={resolution.source}
       resolution={resolution}
       cover={cover}
+      maxHeight={maxHeight}
       onAvailabilityChange={onAvailabilityChange}
       onVisibleTopChange={onVisibleTopChange}
     />
@@ -50,16 +54,21 @@ export function HomeEditorialArtwork({
 function HomeEditorialArtworkImage({
   resolution,
   cover,
+  maxHeight,
   onAvailabilityChange,
   onVisibleTopChange,
 }: {
   resolution: ResolvedHomeArtworkAsset;
   cover: boolean;
+  maxHeight?: number;
   onAvailabilityChange?: (available: boolean) => void;
   onVisibleTopChange?: (source: string, top: number) => void;
 }) {
   const [width, setWidth] = useState(0);
-  const height = cover ? Math.min(640, width * 0.9) : Math.min(280, width / 2);
+  const height = Math.min(
+    cover ? Math.min(640, width * 0.9) : Math.min(280, width / 2),
+    maxHeight ?? Infinity
+  );
   const box = useMemo(() => (width > 0 ? { width, height } : null), [width, height]);
   const [failed, setFailed] = useState(false);
   const onError = useCallback(() => {
