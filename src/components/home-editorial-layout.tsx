@@ -35,7 +35,7 @@ import {
   EDITORIAL_PAD_MAX_WIDTH,
   getEditorialLayoutGeometry,
 } from '@/lib/home-editorial-layout';
-import { padLaunchLayoutEnabled } from '@/lib/home-pad-geometry';
+import { padHeroHeight, padLaunchLayoutEnabled } from '@/lib/home-pad-geometry';
 export {
   EDITORIAL_MAX_WIDTH,
   EDITORIAL_PAD_MAX_WIDTH,
@@ -56,8 +56,12 @@ export type HomeEditorialLayoutProps = {
   pad?: boolean;
   /** The existing identity block supplied by Home data/theme composition. */
   identity?: ReactNode;
-  /** Cover artwork follows the utility row and precedes work actions. */
-  artwork?: ReactNode;
+  /**
+   * Cover artwork follows the utility row and precedes work actions. As a
+   * function it receives the height the Pad hero leaves for it (undefined
+   * elsewhere), so the drawing re-fits instead of being clipped.
+   */
+  artwork?: ReactNode | ((maxHeight: number | undefined) => ReactNode);
   /** Rendered offset to visible foreground; preserves transparent source pixels. */
   artworkTopInset?: number;
   /** Scroll position drives reversible cover fades and pull-down stretch. */
@@ -183,7 +187,7 @@ export function HomeEditorialLayout({
   fontScale: fontScaleProp,
   pad = false,
   identity,
-  artwork,
+  artwork: artworkSlot,
   scrollY,
   artworkTopInset = 0,
   cover = false,
@@ -222,6 +226,7 @@ export function HomeEditorialLayout({
   const padLaunchLayout =
     pad && padLaunchLayoutEnabled(geometry.contentWidth, fontScale, viewportHeight);
   const scrollPosition = scrollY;
+  const artwork = typeof artworkSlot === 'function' ? artworkSlot(undefined) : artworkSlot;
   const hasIdentity = hasSlot(identity);
   const hasArtwork = hasSlot(artwork);
   const hasHeaderAction = hasSlot(headerAction);
@@ -301,11 +306,19 @@ export function HomeEditorialLayout({
   if (padLaunchLayout) {
     const launchWidth = Math.min(360, geometry.innerWidth * 0.36);
     const coverWidth = geometry.innerWidth - launchWidth - 24;
-    const titleFontSize =
+    const fittedTitleFontSize =
       titleMeasurement && titleMeasurement.title === titleKey && titleMeasurement.width > 0
         ? Math.min(coverWidth * 0.38, ((coverWidth - 4) * 100) / titleMeasurement.width)
         : coverWidth * 0.25;
+    // The hero row is a fixed share of the viewport so Continue starts on the
+    // first screen. The title keeps its width-fitted size but never takes more
+    // than 40% of the hero; the drawing gets what is left under the title.
+    const heroHeight = padHeroHeight(viewportHeight ?? 0);
+    const titleFontSize = Math.min(fittedTitleFontSize, (heroHeight * 0.4) / 1.08);
     const titleHeight = titleFontSize * 1.08;
+    const artworkMaxHeight = Math.max(0, heroHeight - (coverTitle ? titleHeight * 0.65 : 0));
+    const padArtwork =
+      typeof artworkSlot === 'function' ? artworkSlot(artworkMaxHeight) : artworkSlot;
     return (
       <View
         testID="home-editorial-layout"
@@ -317,7 +330,7 @@ export function HomeEditorialLayout({
         style={[
           styles.root,
           styles.padRoot,
-          { maxWidth, minHeight: viewportHeight, paddingHorizontal: geometry.gutter },
+          { maxWidth, paddingHorizontal: geometry.gutter },
           style,
         ]}>
         {hasHeaderRow ? (
@@ -329,7 +342,7 @@ export function HomeEditorialLayout({
           </View>
         ) : null}
         <View
-          style={styles.padColumns}
+          style={[styles.padColumns, { minHeight: heroHeight }]}
           onLayout={(event) => {
             padColumnsY.set(event.nativeEvent.layout.y);
             sceneOrigin.set(padRootY.get() + event.nativeEvent.layout.y);
@@ -395,7 +408,7 @@ export function HomeEditorialLayout({
                     animatedArtworkStyle,
                     artworkStage.style,
                   ]}>
-                  {artwork}
+                  {padArtwork}
                 </Animated.View>
               </View>
             ) : (
@@ -403,7 +416,7 @@ export function HomeEditorialLayout({
                 {hasIdentity ? <View style={styles.identity}>{identity}</View> : null}
                 {hasArtwork ? (
                   <Animated.View pointerEvents="none" style={animatedArtworkStyle}>
-                    {artwork}
+                    {padArtwork}
                   </Animated.View>
                 ) : null}
               </View>
