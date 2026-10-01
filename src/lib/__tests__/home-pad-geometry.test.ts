@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 import { EDITORIAL_PAD_MAX_WIDTH, getEditorialLayoutGeometry } from '@/lib/home-editorial-layout';
-import { padLaunchLayoutEnabled, padLowerBandLayout } from '@/lib/home-pad-geometry';
+import { padHeroHeight, padLaunchLayoutEnabled, padLowerBandLayout } from '@/lib/home-pad-geometry';
 
 describe('padLowerBandLayout', () => {
   test('wide pad gives two continue columns and a 320 connections column', () => {
@@ -38,5 +38,24 @@ describe('Pad width cap', () => {
     const inner = getEditorialLayoutGeometry(Math.min(1280, EDITORIAL_PAD_MAX_WIDTH)).innerWidth;
     expect(inner).toBe(1232);
     expect(padLowerBandLayout(inner).columns).toBe(2);
+  });
+});
+
+describe('padHeroHeight', () => {
+  // min(0.58h, h - 300), floored at 440 from a 740 viewport; below 740 the floor
+  // would crowd out the band, so it is h - 300, never under 320.
+  test('800 viewport: 58% of the height, leaving the band 336', () => {
+    expect(padHeroHeight(800)).toBeCloseTo(464);
+  });
+  test('1366 viewport: 58% of the height', () => {
+    expect(padHeroHeight(1366)).toBeCloseTo(792.28);
+  });
+  test('740 is where the 440 floor starts to apply', () => {
+    expect(padHeroHeight(740)).toBe(440);
+    expect(padHeroHeight(739)).toBe(439);
+  });
+  test('short viewports leave 300 for the band, never under 320', () => {
+    expect(padHeroHeight(700)).toBe(400);
+    expect(padHeroHeight(600)).toBe(320);
   });
 });

@@ -80,7 +80,13 @@ import { PaneChatView } from '@/components/pane-chat-view';
 import { AgentWorkbench } from '@/components/agent-workbench';
 import { gatewaySupportsAgentSessions } from '@/lib/agent-session';
 import { PadServerRail } from '@/components/pad-server-rail';
-import { PadAgentDetail, usePadAgentOpener, usePadAgentTitle } from '@/components/pad-agent-detail';
+import {
+  PadAgentDetail,
+  PadAgentSessionAction,
+  usePadAgentOpener,
+  usePadAgentSessionControls,
+  usePadAgentTitle,
+} from '@/components/pad-agent-detail';
 import { usePadDetail } from '@/hooks/use-pad-detail';
 import { GatewayTunnelBadge } from '@/components/gateway-tunnel-badge';
 import { PressableScale } from '@/components/pressable-scale';
@@ -856,6 +862,7 @@ export function ServerTerminalWorkspace({
     padDispatch({ type: visible ? 'show-home' : 'hide-home' });
   const openAgentInPlace = usePadAgentOpener(serverId, padDispatch);
   const padAgentTitle = usePadAgentTitle();
+  const padAgentControls = usePadAgentSessionControls();
   // Spent once the hook has read it, so the next `overview=home` navigation
   // is a change it sees rather than the same value it already applied.
   const routeOverview = routeParams.overview;
@@ -4815,7 +4822,7 @@ export function ServerTerminalWorkspace({
       }
       detailTitle={overviewVisible ? undefined : shellTitle}
       onDetailBack={!overviewVisible && demoMode ? leaveDetail : undefined}
-      detailFadeColor={terminalBackground}
+      detailFadeColor={padDetailIsPane ? terminalBackground : theme.colors.background}
       detailTitleSlot={
         overviewVisible || !padDetailIsPane ? undefined : (
           // The title carries the workspace switch, so it replaces the header's
@@ -4846,22 +4853,24 @@ export function ServerTerminalWorkspace({
       detailAccessory={
         overviewVisible
           ? []
-          : [
-              // No machine button beside the panels one. Two glyphs in this corner
-              // were two halves of one question -- which machine, which backend,
-              // which workspace, which panel -- and a reader had to know which half
-              // theirs was in before they could press anything. `onDetailAction`
-              // above is the one button, and the whole address is inside it.
-              padDetailIsPane && simfarmSplit.previewWidth > 0 ? (
-                <PressableScale
-                  key="simulator"
-                  accessibilityLabel={t`Hide the simulator`}
-                  onPress={() => toggleSimfarmSplit(serverId)}
-                  style={navHeaderButtonStyle}>
-                  <X size={18} color={theme.colors.text} strokeWidth={2} />
-                </PressableScale>
-              ) : null,
-            ]
+          : !padDetailIsPane
+            ? [<PadAgentSessionAction key="agent-session" controls={padAgentControls} />]
+            : [
+                // No machine button beside the panels one. Two glyphs in this corner
+                // were two halves of one question -- which machine, which backend,
+                // which workspace, which panel -- and a reader had to know which half
+                // theirs was in before they could press anything. `onDetailAction`
+                // above is the one button, and the whole address is inside it.
+                padDetailIsPane && simfarmSplit.previewWidth > 0 ? (
+                  <PressableScale
+                    key="simulator"
+                    accessibilityLabel={t`Hide the simulator`}
+                    onPress={() => toggleSimfarmSplit(serverId)}
+                    style={navHeaderButtonStyle}>
+                    <X size={18} color={theme.colors.text} strokeWidth={2} />
+                  </PressableScale>
+                ) : null,
+              ]
       }>
       {/* The terminal and, beside it, the simulator it is changing.
 
@@ -5579,8 +5588,7 @@ export function ServerTerminalWorkspace({
               detail={padDetail}
               ready={selectedServer && tunnelReady}
               visible={!overviewVisible}
-              topInset={insets.top + NAV_HEADER_TOP_GAP + 54}
-              bottomInset={insets.bottom}
+              controls={padAgentControls}
             />
           </View>
         ) : null}

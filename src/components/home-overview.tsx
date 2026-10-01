@@ -750,17 +750,20 @@ export function HomeOverview({
               pad={isPad}
               artworkTopInset={editorialArtworkTopCurrent ? editorialArtworkTop?.top : 0}
               artwork={
-                hasEditorialArtwork && editorialArtworkResolution ? (
-                  <HomeEditorialArtwork
-                    cover={customTheme?.manifest.homePresentation?.header === 'cover'}
-                    resolution={editorialArtworkResolution}
-                    onVisibleTopChange={reportEditorialArtworkTop}
-                    onAvailabilityChange={(available) => {
-                      if (!available)
-                        setFailedEditorialArtworkSource(editorialArtworkResolution.source);
-                    }}
-                  />
-                ) : null
+                hasEditorialArtwork && editorialArtworkResolution
+                  ? (maxHeight: number | undefined) => (
+                      <HomeEditorialArtwork
+                        cover={customTheme?.manifest.homePresentation?.header === 'cover'}
+                        maxHeight={maxHeight}
+                        resolution={editorialArtworkResolution}
+                        onVisibleTopChange={reportEditorialArtworkTop}
+                        onAvailabilityChange={(available) => {
+                          if (!available)
+                            setFailedEditorialArtworkSource(editorialArtworkResolution.source);
+                        }}
+                      />
+                    )
+                  : null
               }
               identity={
                 showsEditorialBrand ? (
