@@ -1,7 +1,12 @@
 import { describe, expect, test } from 'bun:test';
 
 import { EMPTY_CATALOG, parseGatewayDiscovery } from '../agent-protocol';
-import { checkAgentReadiness, type AgentReadinessPorts } from '../home-agent-readiness';
+import {
+  agentGuideBlurb,
+  checkAgentReadiness,
+  showsAgentSetupCommand,
+  type AgentReadinessPorts,
+} from '../home-agent-readiness';
 
 function ports(overrides: Partial<AgentReadinessPorts> = {}): AgentReadinessPorts {
   return {
@@ -225,6 +230,7 @@ describe('agents discovery', () => {
   test.each([
     ['not_installed', 'not-installed'],
     ['disabled', 'unsupported'],
+    ['unconfigured', 'needs-setup'],
     ['offline', 'offline'],
   ] as const)('%s on the agent asked for is %s', async (status, expected) => {
     const result = await checkAgentReadiness(
@@ -258,5 +264,29 @@ describe('agents discovery', () => {
     );
     expect(result).toMatchObject({ status: 'ready', agentId: 'opencode' });
     expect(result.discovery).toBeUndefined();
+  });
+});
+
+describe('what the guide says', () => {
+  const common = { capabilities: [], agentId: 't3' };
+
+  test("an agent that needs setup gets its kind's start sentence and command", () => {
+    const readiness = { status: 'needs-setup', ...common } as const;
+    expect(agentGuideBlurb(readiness)).toBe('setup');
+    expect(showsAgentSetupCommand(readiness)).toBe(true);
+  });
+
+  test('a stopped service gets the same, a dead gateway does not', () => {
+    expect(agentGuideBlurb({ status: 'offline', cause: 'service', ...common })).toBe('setup');
+    expect(showsAgentSetupCommand({ status: 'offline', cause: 'service', ...common })).toBe(true);
+    expect(agentGuideBlurb({ status: 'offline', cause: 'health', ...common })).toBe('health');
+    expect(showsAgentSetupCommand({ status: 'offline', cause: 'health', ...common })).toBe(false);
+    expect(agentGuideBlurb({ status: 'offline', cause: 'catalog', ...common })).toBe('unconfirmed');
+  });
+
+  test('unsupported stays unsupported, with nothing to run', () => {
+    const readiness = { status: 'unsupported', ...common } as const;
+    expect(agentGuideBlurb(readiness)).toBe('unsupported');
+    expect(showsAgentSetupCommand(readiness)).toBe(false);
   });
 });

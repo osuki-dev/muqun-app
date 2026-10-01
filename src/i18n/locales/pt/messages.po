@@ -188,6 +188,10 @@ msgid "{agentName} is ready on this host."
 msgstr "{agentName} está pronto neste host"
 
 #: src/components/new-task-action.tsx
+msgid "{agentName} needs setup. Tap for setup instructions"
+msgstr "{agentName} precisa de configuração. Toque para ver as instruções de configuração"
+
+#: src/components/new-task-action.tsx
 msgid "{agentName} ready"
 msgstr "{agentName} pronto"
 
@@ -275,6 +279,10 @@ msgstr "{lead}: {title} — terminou enquanto você estava fora"
 #: src/components/agent-revert-plate.tsx
 msgid "{messages, plural, one {# message} other {# messages}}"
 msgstr "{messages, plural, one {# mensagem} other {# mensagens}}"
+
+#: src/components/new-task-action.tsx
+msgid "{name} needs setup. Tap for setup instructions"
+msgstr "{name} precisa de configuração. Toque para ver as instruções de configuração"
 
 #: src/components/new-task-action.tsx
 msgid "{name} service offline. Tap for setup instructions"
@@ -2935,6 +2943,10 @@ msgstr "Nome"
 #: src/app/explore.tsx
 msgid "Name it, then enter the code shown by the Gateway."
 msgstr "Dê-lhe um nome e depois introduza o código mostrado pelo Gateway"
+
+#: src/i18n/labels.ts
+msgid "Needs setup"
+msgstr "Requer configuração"
 
 #: src/components/collaboration-notice.tsx
 msgid "Needs your attention"

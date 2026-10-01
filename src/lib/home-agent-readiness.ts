@@ -31,7 +31,45 @@ export type AgentReadiness =
   | ({ status: 'ready' } & ReadinessCommon)
   | ({ status: 'unsupported' } & ReadinessCommon)
   | ({ status: 'not-installed' } & ReadinessCommon)
+  /** Listed and answering, but the host has not finished setting it up (`unconfigured`). */
+  | ({ status: 'needs-setup' } & ReadinessCommon)
   | ({ status: 'offline'; cause: 'health' | 'catalog' | 'service' } & ReadinessCommon);
+
+/**
+ * Which sentence the guide leads with. `setup` is the kind's own start
+ * sentence (`agentGuideFor(kind).start`), for an agent that needs setup and for
+ * a service that is installed but not answering; the rest are the guide's.
+ */
+export type AgentGuideBlurb =
+  | 'ready'
+  | 'unsupported'
+  | 'not-installed'
+  | 'health'
+  | 'setup'
+  | 'unconfirmed';
+
+export function agentGuideBlurb(readiness: AgentReadiness): AgentGuideBlurb {
+  switch (readiness.status) {
+    case 'ready':
+    case 'unsupported':
+    case 'not-installed':
+      return readiness.status;
+    case 'needs-setup':
+      return 'setup';
+    case 'offline':
+      return readiness.cause === 'health'
+        ? 'health'
+        : readiness.cause === 'service'
+          ? 'setup'
+          : 'unconfirmed';
+  }
+}
+
+/** Whether the guide offers the kind's command to copy, when it has one. */
+export function showsAgentSetupCommand(readiness: AgentReadiness): boolean {
+  if (readiness.status === 'needs-setup') return true;
+  return readiness.status === 'offline' && readiness.cause !== 'health';
+}
 
 export type AgentReadinessPorts = {
   probeHealth: () => Promise<{ ok: boolean; capabilities?: unknown }>;
@@ -99,6 +137,8 @@ export async function checkAgentReadiness(
             return { status: 'ready', ...common };
           case 'not-installed':
             return { status: 'not-installed', ...common };
+          case 'needs-setup':
+            return { status: 'needs-setup', ...common };
           case 'unsupported':
             return { status: 'unsupported', ...common };
           default:

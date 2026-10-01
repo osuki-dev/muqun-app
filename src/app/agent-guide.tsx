@@ -55,13 +55,15 @@ export default function AgentGuideScreen() {
       ? { status: 'unsupported', capabilities: [], agentId }
       : params.status === 'not-installed'
         ? { status: 'not-installed', capabilities: [], agentId }
-        : {
-            status: 'offline',
-            capabilities: [],
-            agentId,
-            cause:
-              params.cause === 'service' || params.cause === 'catalog' ? params.cause : 'health',
-          }
+        : params.status === 'needs-setup'
+          ? { status: 'needs-setup', capabilities: [], agentId }
+          : {
+              status: 'offline',
+              capabilities: [],
+              agentId,
+              cause:
+                params.cause === 'service' || params.cause === 'catalog' ? params.cause : 'health',
+            }
   );
 
   const checkAgain = async (): Promise<AgentReadiness> => {

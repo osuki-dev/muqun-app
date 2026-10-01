@@ -205,16 +205,16 @@ describe('readiness', () => {
     ['reachable', 'ready'],
     ['not_installed', 'not-installed'],
     ['disabled', 'unsupported'],
-    ['unconfigured', 'unsupported'],
+    ['unconfigured', 'needs-setup'],
     ['offline', 'offline'],
     ['unknown', 'offline'],
   ] as const)('%s reads as %s', (status, readiness) => {
     expect(agentReadiness({ status, enabled: true })).toBe(readiness);
   });
 
-  test('an unpaired T3 (unconfigured) is unsupported, not offline, and not offered', () => {
+  test('an unpaired T3 (unconfigured) needs setup, and is not where a session goes', () => {
     const t3 = agent({ id: 't3', status: 'unconfigured' });
-    expect(agentReadiness(t3)).toBe('unsupported');
+    expect(agentReadiness(t3)).toBe('needs-setup');
     expect(resolveSelectedAgent('t3', { agents: [t3, agent({ id: 'opencode' })] })).toBe(
       'opencode'
     );
@@ -222,6 +222,8 @@ describe('readiness', () => {
 
   test('a disabled agent is unsupported whatever its status says', () => {
     expect(agentReadiness({ status: 'connected', enabled: false })).toBe('unsupported');
+    expect(agentReadiness({ status: 'unconfigured', enabled: false })).toBe('unsupported');
+    expect(agentReadiness({ status: 'disabled', enabled: true })).toBe('unsupported');
   });
 });
 
