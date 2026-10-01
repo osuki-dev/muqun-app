@@ -88,6 +88,7 @@ import {
   usePadAgentTitle,
 } from '@/components/pad-agent-detail';
 import { usePadDetail } from '@/hooks/use-pad-detail';
+import { phoneAgentParams } from '@/lib/pad-detail';
 import { GatewayTunnelBadge } from '@/components/gateway-tunnel-badge';
 import { PressableScale } from '@/components/pressable-scale';
 import { StatusDot } from '@/components/status-dot';
@@ -860,7 +861,23 @@ export function ServerTerminalWorkspace({
   const paneHidden = overviewVisible || !padDetailIsPane;
   const setOverviewVisible = (visible: boolean) =>
     padDispatch({ type: visible ? 'show-home' : 'hide-home' });
-  const openAgentInPlace = usePadAgentOpener(serverId, padDispatch);
+  // The root Home route's owner, as opposed to a `/servers/[serverId]` route.
+  const rootOwned = providedServerId !== undefined;
+  const openAgentInPlace = usePadAgentOpener(serverId, padDispatch, rootOwned);
+  // A Pad narrowed below Pad width while it shows an agent session has no rail
+  // and no agent header -- a dead end. The phone shows agent sessions on
+  // `/agent`, so the session moves there and this workspace returns to its
+  // pane. A route-bound workspace is replaced (as the phone would have it);
+  // the root Home owner stays under the pushed screen.
+  const compactAgentDetail =
+    !isPadLayout && isFocused && !overviewVisible && padDetail.kind === 'agent' ? padDetail : null;
+  useEffect(() => {
+    if (!compactAgentDetail) return;
+    padDispatch({ type: 'open-pane' });
+    const href = { pathname: '/agent', params: phoneAgentParams(compactAgentDetail) } as Href;
+    if (rootOwned) router.push(href);
+    else router.replace(href);
+  }, [compactAgentDetail, padDispatch, rootOwned, router]);
   const padAgentTitle = usePadAgentTitle();
   const padAgentControls = usePadAgentSessionControls();
   // Spent once the hook has read it, so the next `overview=home` navigation
@@ -3458,6 +3475,14 @@ export function ServerTerminalWorkspace({
     if (dock.approvalOnly) Keyboard.dismiss();
   }, [dock.approvalOnly]);
 
+  // Home or an agent session covering the pane hides it by opacity, which
+  // leaves the composer mounted. Its field must not keep focus underneath: a
+  // hardware keyboard would type into a field no one can see, and Enter would
+  // send it to the pane.
+  useEffect(() => {
+    if (paneHidden) Keyboard.dismiss();
+  }, [paneHidden]);
+
   // Which pane the stream is opened against, which trails the selection by
   // `PANE_STREAM_SETTLE_MS`. See that constant for why it trails at all; the
   // short version is that re-pointing the stream is a reconnect, and a pane
@@ -3799,8 +3824,17 @@ export function ServerTerminalWorkspace({
     }
     if (!isFocused) return;
     const handoff = homeWorkspaceHandoffStore.getState().consume(workspaceHandoff.id);
-    if (handoff) openTaskTarget(handoff.target);
-  }, [isFocused, openTaskTarget, selectedServer, serverId, workspaceHandoff]);
+    if (!handoff) return;
+    // An agent route handed to this owner opens in the detail column; the
+    // terminal selection stays where it was.
+    if (handoff.agent)
+      padDispatch({
+        type: 'open-agent',
+        target: handoff.agent.target,
+        intent: handoff.agent.intent,
+      });
+    else openTaskTarget(handoff.target);
+  }, [isFocused, openTaskTarget, padDispatch, selectedServer, serverId, workspaceHandoff]);
 
   // The saved SSH hosts, for the rail's own group under the servers. Hydrated
   // here as well as on the home list, since on a Pad this screen *is* the
@@ -4570,7 +4604,11 @@ export function ServerTerminalWorkspace({
           setCaret(event.nativeEvent.selection.start);
         },
         editable:
-          targetReady && connection.phase === 'connected' && Boolean(selectedPane) && !sending,
+          !paneHidden &&
+          targetReady &&
+          connection.phase === 'connected' &&
+          Boolean(selectedPane) &&
+          !sending,
         maxLength: 64 * 1024,
         // Summoned into the editor panel, the field arrives *instead of* the
         // app's keyboard rather than on top of it, so a reader who still had
@@ -4604,6 +4642,7 @@ export function ServerTerminalWorkspace({
         armed: Boolean(hasSendableContent && selectedPane),
         sending,
         disabled:
+          paneHidden ||
           !targetReady ||
           connection.phase !== 'connected' ||
           !hasSendableContent ||

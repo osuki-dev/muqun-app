@@ -1,7 +1,7 @@
 import { type MutableRefObject, useEffect, useRef } from 'react';
 import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens } from '@osuki-dev/ui';
-import { type Href, useRouter } from 'expo-router';
+import { type Href, useIsFocused, usePathname, useRouter } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -14,7 +14,13 @@ import { PressableScale } from '@/components/pressable-scale';
 import { NAV_HEADER_TOP_GAP } from '@/constants/nav-header';
 import { hasRealSessionTitle } from '@/lib/agent-protocol';
 import { consumeNewAgentIntent, type HomeAgentEntry } from '@/lib/home-commands';
-import type { PadDetail, PadShellEvent } from '@/lib/pad-detail';
+import { padAgentRouteParams, type PadDetail, type PadShellEvent } from '@/lib/pad-detail';
+import { homeWorkspaceHandoffStore } from '@/lib/home-workspace-handoff';
+import { useRootRouteName } from '@/hooks/use-root-route-name';
+import {
+  isAgentWorkbenchOwnedOverlayPath,
+  isAgentWorkbenchOwnedRootRoute,
+} from '@/lib/agent-workbench-global-owner';
 import { useAgentSessionState } from '@/stores/agent-session-state';
 
 /**
@@ -67,6 +73,8 @@ export function PadAgentDetail({ detail, ready, visible, controls }: Props) {
     consumeNewAgentIntent(intentServerId, intentDirectory);
   }, [intentDirectory, intentNonce, intentServerId, newIntent]);
 
+  const routeVisible = usePadAgentRouteVisible();
+
   return (
     <View testID="pad-agent-detail" style={StyleSheet.absoluteFill}>
       {ready ? (
@@ -86,7 +94,7 @@ export function PadAgentDetail({ detail, ready, visible, controls }: Props) {
           initialDirectory={detail.directory}
           initialAgentId={detail.agentId}
           initialIntent={detail.intent}
-          visible={visible}
+          visible={visible && routeVisible}
           topInset={insets.top + HEADER_INSET}
           bottomInset={insets.bottom}
           createNewSessionRef={controls.createNewSessionRef}
@@ -104,6 +112,27 @@ export function PadAgentDetail({ detail, ready, visible, controls }: Props) {
         style={[styles.topFade, { height: insets.top + HEADER_INSET + 20 }]}
       />
     </View>
+  );
+}
+
+/**
+ * Whether the workbench is on screen as far as navigation is concerned: the
+ * same test `/agent` makes for `workbenchVisible`.
+ *
+ * Focused, or covered only by one of the workbench's own sheets. Under any
+ * other pushed screen (Settings, Pair, SSH) the workbench stays mounted --
+ * a draft or a session switched from the Sessions sheet survives the trip --
+ * and `visible=false` hands back its global bridges and stops its foreground
+ * work until the route is focused again.
+ */
+function usePadAgentRouteVisible(): boolean {
+  const isFocused = useIsFocused();
+  const pathname = usePathname();
+  const rootRouteName = useRootRouteName();
+  return (
+    isFocused ||
+    isAgentWorkbenchOwnedRootRoute(rootRouteName) ||
+    isAgentWorkbenchOwnedOverlayPath(pathname)
   );
 }
 
@@ -140,27 +169,37 @@ export function usePadAgentTitle(): string | undefined {
  *
  * The workspace is scoped to one gateway, and a Home command has already
  * selected the target's record before it calls this. A session on this
- * workspace's server swaps the detail column; one on another server leaves by
- * the `/agent` route as it always did, since the owner that would show it is
- * not this one.
+ * workspace's server swaps the detail column. One on another server belongs to
+ * that server's workspace, and never by way of `/agent` (a blank page and a
+ * second transition):
+ * - the root Home owner is re-keyed to the newly selected server, so the
+ *   session rides the handoff that owner consumes when it mounts;
+ * - a route-bound workspace is replaced by the other server's route, the same
+ *   way the rail switches servers, so two workspaces never stack.
  */
-export function usePadAgentOpener(serverId: string, dispatch: (event: PadShellEvent) => void) {
+export function usePadAgentOpener(
+  serverId: string,
+  dispatch: (event: PadShellEvent) => void,
+  rootOwned: boolean
+) {
   const router = useRouter();
   return (target: HomeAgentEntry, intent: 'existing' | 'new') => {
     if (target.serverId === serverId) {
       dispatch({ type: 'open-agent', target, intent });
       return;
     }
-    router.push({
-      pathname: '/agent',
-      params: {
-        server: target.serverId,
-        ...(target.sessionId ? { sessionId: target.sessionId } : {}),
-        ...(target.asid && intent !== 'new' ? { asid: target.asid } : {}),
-        ...(target.directory ? { directory: target.directory } : {}),
-        ...(target.agentId ? { agentId: target.agentId } : {}),
-        ...(intent === 'new' ? { intent: 'new' } : {}),
-      },
+    if (rootOwned) {
+      homeWorkspaceHandoffStore
+        .getState()
+        .publish({ kind: 'gateway-terminal', serverId: target.serverId }, undefined, serverId, {
+          target,
+          intent,
+        });
+      return;
+    }
+    router.replace({
+      pathname: '/servers/[serverId]',
+      params: padAgentRouteParams(target, intent),
     } as Href);
   };
 }
