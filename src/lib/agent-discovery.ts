@@ -181,6 +181,18 @@ export function agentFeaturesFor(
 }
 
 /**
+ * Whether a session on `agentId` can be moved into a worktree: only when its
+ * agent reports `worktrees`. An agent discovery never described keeps the
+ * action, as every OpenCode session always had it.
+ */
+export function canMoveSessionToWorktree(
+  agents: readonly Pick<AgentInfo, 'id' | 'kind' | 'features'>[] | undefined,
+  agentId: string | undefined | null
+): boolean {
+  return agentFeaturesFor(agents, agentId).worktrees;
+}
+
+/**
  * The agent a new session goes to.
  *
  * The reader's own pick wins while it is still ready; then the first ready

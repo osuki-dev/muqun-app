@@ -113,6 +113,12 @@ export interface AgentSessionsSheetProps {
    * first is the same guarantee with nothing hidden.
    */
   onMoveSession?: (asid: string) => void;
+  /**
+   * Whether one session's agent can be moved into a worktree. A session whose
+   * agent reports `worktrees: false` is not offered the move; without this,
+   * every row is.
+   */
+  canMoveSession?: (session: AgentSessionInfo) => boolean;
   /** Open the project sheet, where the reader switches project or opens a path. */
   onOpenProjects?: () => void;
   onClose: () => void;
@@ -129,6 +135,7 @@ export const AgentSessionsSheet = memo(function AgentSessionsSheet({
   onRenameSession,
   onDeleteSession,
   onMoveSession,
+  canMoveSession,
   onOpenProjects,
   onClose,
 }: AgentSessionsSheetProps) {
@@ -406,7 +413,7 @@ export const AgentSessionsSheet = memo(function AgentSessionsSheet({
         testID: `agent-session-open-parent-${session.asid}`,
       });
     }
-    if (onMoveSession) {
+    if (onMoveSession && (canMoveSession?.(session) ?? true)) {
       items.push({
         id: 'worktree',
         // No trailing ellipsis. It is the desktop convention for "this opens

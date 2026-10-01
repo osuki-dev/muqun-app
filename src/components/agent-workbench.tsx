@@ -3788,8 +3788,10 @@ export const AgentWorkbench = memo(function AgentWorkbench({
    * or the inventory says it moved.
    */
   const [worktreeEntries, setWorktreeEntries] = useState<readonly WorktreeDirectory[]>([]);
+  // An agent without worktrees has no inventory to read and no badge to show.
+  const worktreesSupported = agentFeatures.worktrees;
   useEffect(() => {
-    if (!activeDirectory || !badgeLoads) {
+    if (!activeDirectory || !badgeLoads || !worktreesSupported) {
       setWorktreeEntries([]);
       return;
     }
@@ -3810,7 +3812,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     return () => {
       active = false;
     };
-  }, [activeDirectory, worktreeRevision, badgeLoads, noteWorkspaceMissing]);
+  }, [activeDirectory, worktreeRevision, badgeLoads, worktreesSupported, noteWorkspaceMissing]);
 
   const activeWorktree = useMemo(() => {
     const root = worktreeEntries.find((entry) => !entry.strategy)?.directory;
