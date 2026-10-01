@@ -417,8 +417,11 @@ export const agentGuideCopy: Record<string, AgentGuideCopy> = {
     start: msg`Start DeepSeek on the gateway host, then check again.`,
     command: 'bunx @deepseek-ai/dsh web',
   },
+  // T3 is not `connected` until the gateway holds a pairing token, so the
+  // sentence carries the second step. The copyable command stays the one that
+  // starts the server: pasted as two lines, `t3 pair` would wait behind it.
   t3: {
-    start: msg`Start T3 Code on the gateway host, then check again.`,
+    start: msg`Start T3 Code on the gateway host. Then run t3 pair, set the token it prints as t3.pairing_token in the gateway config, restart the gateway and check again.`,
     command: 't3 serve',
   },
 };
