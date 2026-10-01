@@ -1218,6 +1218,7 @@ msgid "Connecting…"
 msgstr "연결 중…"
 
 #: src/components/home-editorial-layout.tsx
+#: src/components/pad-server-rail.tsx
 msgid "Connections"
 msgstr "연결"
 
@@ -1248,6 +1249,7 @@ msgstr "사용한 컨텍스트"
 
 #: src/app/explore.tsx
 #: src/components/home-editorial-layout.tsx
+#: src/components/pad-server-rail.tsx
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Continue"
 msgstr "계속"
@@ -1756,10 +1758,6 @@ msgstr "현재 머신"
 #: src/i18n/labels.ts
 msgid "Current path"
 msgstr "현재 경로"
-
-#: src/components/pad-server-rail.tsx
-msgid "Current task"
-msgstr "현재 작업"
 
 #: src/components/custom-theme-library.tsx
 msgid "Current theme"
@@ -2368,6 +2366,7 @@ msgstr "서버 목록 숨기기"
 msgid "Hide the simulator"
 msgstr "시뮬레이터 숨기기"
 
+#: src/components/pad-server-rail.tsx
 #: src/components/simfarm-stage.tsx
 msgid "Home"
 msgstr "홈"
@@ -2405,7 +2404,6 @@ msgstr "호스트"
 msgid "Host key changed"
 msgstr "호스트 키가 바뀌었습니다"
 
-#: src/components/pad-server-rail.tsx
 #: src/components/ssh-host-row.tsx
 msgid "Host key trusted"
 msgstr "호스트 키 신뢰됨"
@@ -2957,6 +2955,7 @@ msgstr "새 출력 있음 · 새로 고침"
 
 #: src/app/agent.tsx
 #: src/components/agent-workbench.tsx
+#: src/components/home-overview.tsx
 #: src/i18n/labels.ts
 msgid "New session"
 msgstr "새 세션"
@@ -3097,7 +3096,6 @@ msgstr "“{0}”와 일치하는 프로젝트가 없습니다"
 msgid "No server to start a task on."
 msgstr "작업을 시작할 서버가 없습니다"
 
-#: src/components/pad-server-rail.tsx
 #: src/components/settings-servers.tsx
 msgid "No servers paired yet"
 msgstr "아직 페어링된 서버가 없습니다"
@@ -3388,9 +3386,7 @@ msgstr "세션 열기"
 msgid "Open session tree"
 msgstr "세션 트리 열기"
 
-#. placeholder {0}: host.label
 #. placeholder {0}: record.label
-#: src/components/pad-server-rail.tsx
 #: src/components/ssh-host-row.tsx
 msgid "Open SSH host {0}"
 msgstr "SSH 호스트 {0} 열기"
@@ -4374,7 +4370,6 @@ msgstr "서버를 사용할 수 없습니다"
 
 #: src/app/settings.tsx
 #: src/components/app-drawer-content.tsx
-#: src/components/pad-server-rail.tsx
 msgid "Servers"
 msgstr "서버"
 
@@ -4679,7 +4674,6 @@ msgstr "SSH 호스트"
 
 #: src/components/home-launch-actions.tsx
 #: src/components/home-overview.tsx
-#: src/components/pad-server-rail.tsx
 #: src/components/settings-servers.tsx
 msgid "SSH hosts"
 msgstr "SSH 호스트"
@@ -5795,10 +5789,6 @@ msgstr "에이전트가 승인을 요청하면 알림이 잠금 화면으로 바
 #: src/components/away-digest-card.tsx
 msgid "While you were away"
 msgstr "자리를 비운 사이"
-
-#: src/components/pad-server-rail.tsx
-msgid "Workbench"
-msgstr "워크벤치"
 
 #: src/components/agent-vcs-diff-sheet.tsx
 #: src/components/collaboration-notice.tsx

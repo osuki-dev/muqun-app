@@ -1218,6 +1218,7 @@ msgid "Connecting…"
 msgstr "連線中…"
 
 #: src/components/home-editorial-layout.tsx
+#: src/components/pad-server-rail.tsx
 msgid "Connections"
 msgstr "連線"
 
@@ -1248,6 +1249,7 @@ msgstr "上下文佔用"
 
 #: src/app/explore.tsx
 #: src/components/home-editorial-layout.tsx
+#: src/components/pad-server-rail.tsx
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Continue"
 msgstr "繼續"
@@ -1756,10 +1758,6 @@ msgstr "目前機器"
 #: src/i18n/labels.ts
 msgid "Current path"
 msgstr "目前路徑"
-
-#: src/components/pad-server-rail.tsx
-msgid "Current task"
-msgstr "目前工作"
 
 #: src/components/custom-theme-library.tsx
 msgid "Current theme"
@@ -2368,6 +2366,7 @@ msgstr "隱藏伺服器清單"
 msgid "Hide the simulator"
 msgstr "隱藏模擬器"
 
+#: src/components/pad-server-rail.tsx
 #: src/components/simfarm-stage.tsx
 msgid "Home"
 msgstr "主畫面"
@@ -2405,7 +2404,6 @@ msgstr "主機"
 msgid "Host key changed"
 msgstr "主機金鑰已改變"
 
-#: src/components/pad-server-rail.tsx
 #: src/components/ssh-host-row.tsx
 msgid "Host key trusted"
 msgstr "主機金鑰已信任"
@@ -2957,6 +2955,7 @@ msgstr "有新輸出 · 點擊重新整理"
 
 #: src/app/agent.tsx
 #: src/components/agent-workbench.tsx
+#: src/components/home-overview.tsx
 #: src/i18n/labels.ts
 msgid "New session"
 msgstr "新增會話"
@@ -3097,7 +3096,6 @@ msgstr "沒有符合「{0}」的專案"
 msgid "No server to start a task on."
 msgstr "沒有可以開始任務的伺服器"
 
-#: src/components/pad-server-rail.tsx
 #: src/components/settings-servers.tsx
 msgid "No servers paired yet"
 msgstr "尚未配對任何伺服器"
@@ -3388,9 +3386,7 @@ msgstr "開啟工作階段"
 msgid "Open session tree"
 msgstr "開啟工作階段樹狀結構"
 
-#. placeholder {0}: host.label
 #. placeholder {0}: record.label
-#: src/components/pad-server-rail.tsx
 #: src/components/ssh-host-row.tsx
 msgid "Open SSH host {0}"
 msgstr "開啟 SSH 主機 {0}"
@@ -4374,7 +4370,6 @@ msgstr "伺服器無法使用"
 
 #: src/app/settings.tsx
 #: src/components/app-drawer-content.tsx
-#: src/components/pad-server-rail.tsx
 msgid "Servers"
 msgstr "伺服器"
 
@@ -4679,7 +4674,6 @@ msgstr "SSH 主機"
 
 #: src/components/home-launch-actions.tsx
 #: src/components/home-overview.tsx
-#: src/components/pad-server-rail.tsx
 #: src/components/settings-servers.tsx
 msgid "SSH hosts"
 msgstr "SSH 主機"
@@ -5795,10 +5789,6 @@ msgstr "當代理暫停請求權限時，通知直達鎖定畫面。一鍵核准
 #: src/components/away-digest-card.tsx
 msgid "While you were away"
 msgstr "離開期間"
-
-#: src/components/pad-server-rail.tsx
-msgid "Workbench"
-msgstr "工作台"
 
 #: src/components/agent-vcs-diff-sheet.tsx
 #: src/components/collaboration-notice.tsx
