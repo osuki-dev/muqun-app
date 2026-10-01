@@ -9,7 +9,9 @@ import QuickCrypto from 'react-native-quick-crypto';
 
 import { activeLocaleHeaders } from '@/i18n/active-locale';
 
-import { AGENT_SOCKET_PATH, type SocketFrameCrypto } from './agent-socket-codec';
+import { mirroredDiscoveryFor } from '@/stores/agents';
+
+import type { SocketFrameCrypto } from './agent-socket-codec';
 import { isDemoActive } from './demo-gateway';
 import {
   configuredGatewayServerId,
@@ -20,6 +22,7 @@ import {
 } from './gateway-client';
 import {
   GatewaySocket,
+  gatewaySocketPath,
   type GatewaySocketTransport,
   type GatewaySocketUpgrade,
 } from './gateway-socket';
@@ -71,7 +74,10 @@ export const socketFrameCrypto: SocketFrameCrypto = {
 function prepareUpgrade(serverId: string): GatewaySocketUpgrade | null {
   if (isDemoActive() || !isGatewayConfigured()) return null;
   if (configuredGatewayServerId() !== serverId) return null;
-  const httpUrl = gatewayUrl(AGENT_SOCKET_PATH);
+  // Read per attempt, so a reconnect follows a discovery answered since.
+  const path = gatewaySocketPath(mirroredDiscoveryFor(serverId)?.transports);
+  if (!path) return null;
+  const httpUrl = gatewayUrl(path);
   const url = httpUrl.replace(/^http(s?):\/\//i, (_, secure: string) => `ws${secure}://`);
   if (!/^wss?:\/\//i.test(url)) return null;
   // The AAD is path-only, so sealing against the http spelling is the same

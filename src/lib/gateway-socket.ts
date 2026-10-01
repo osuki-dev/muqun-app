@@ -19,8 +19,9 @@
  * lifecycle runs under bun against a fake. `gateway-socket-runtime.ts` wires
  * the real ones.
  */
-import type { AgentDomainEvent } from './agent-protocol';
+import type { AgentDomainEvent, TransportsDiscovery } from './agent-protocol';
 import {
+  AGENT_SOCKET_PATH,
   AGENT_SOCKET_PROTOCOL,
   AgentSocketProtocolError,
   parseAgentSocketFrame,
@@ -99,6 +100,23 @@ export interface GatewaySocketOptions {
 
 /** The `/health` capability that says `GET /api/ws` exists. */
 export const WS_EVENTS_CAPABILITY = 'ws_events';
+
+/**
+ * The path to upgrade on: the one discovery's `transports.websocket` states,
+ * else `/api/ws`, which is where every gateway before `transports` has it.
+ * `null` when the gateway says it speaks a frame protocol this build does
+ * not, which leaves the workbench on SSE rather than on a socket it would
+ * close at `hello`.
+ */
+export function gatewaySocketPath(
+  transports: TransportsDiscovery | null | undefined
+): string | null {
+  const websocket = transports?.websocket;
+  if (websocket?.protocol !== undefined && websocket.protocol !== AGENT_SOCKET_PROTOCOL) {
+    return null;
+  }
+  return websocket?.path ?? AGENT_SOCKET_PATH;
+}
 
 const ALL = '*';
 

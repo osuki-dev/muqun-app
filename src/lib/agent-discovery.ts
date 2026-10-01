@@ -22,6 +22,7 @@ import {
   normalizeAgentId,
   parseAgentAvailability,
   parseAgentFeatures,
+  parseTransportsDiscovery,
   type AgentAvailability,
   type AgentFeatures,
   type AgentInfo,
@@ -29,6 +30,7 @@ import {
   type GatewayDiscovery,
   type SshDiscovery,
   type TerminalDiscovery,
+  type TransportsDiscovery,
 } from './agent-protocol';
 
 export { DEFAULT_AGENT_ID, normalizeAgentId };
@@ -263,6 +265,8 @@ export interface MirroredServerDiscovery {
   agents: MirroredAgentsDiscovery | null;
   terminal: TerminalDiscovery | null;
   ssh: SshDiscovery | null;
+  /** The transports it advertised; absent from a gateway that predates them. */
+  transports?: TransportsDiscovery;
   /** When the answer was taken, so a reader can say how old it is. */
   observedAtMs: number;
 }
@@ -309,6 +313,7 @@ export function mirrorDiscovery(
       : null,
     terminal: discovery.terminal,
     ssh: discovery.ssh,
+    ...(discovery.transports ? { transports: discovery.transports } : {}),
     observedAtMs,
   };
 }
@@ -414,7 +419,8 @@ function parseMirroredServer(value: unknown): MirroredServerDiscovery | null {
   const terminal = parseMirroredTerminal(value.terminal);
   const ssh = parseMirroredSsh(value.ssh);
   if (!agents && !terminal && !ssh) return null;
-  return { agents, terminal, ssh, observedAtMs };
+  const transports = parseTransportsDiscovery(value.transports);
+  return { agents, terminal, ssh, ...(transports ? { transports } : {}), observedAtMs };
 }
 
 function parseIdMap(value: unknown): Record<string, string> {
