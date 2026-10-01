@@ -3612,7 +3612,18 @@
           "target": { "id": "pad-server-rail-workbench" },
           "absent": false
         },
-        "steps": [{ "run": "flows/pad-workspace.ad#home-navigation" }]
+        "steps": [
+          { "run": "flows/pad-workspace.ad#home-navigation" },
+          {
+            "target": { "id": "home-connection-gateway-muqun-demo" },
+            "mode": "scroll",
+            "direction": "down",
+            "timeout": 20000,
+            "run": "flows/pad-workspace.ad#home-navigation-scroll"
+          },
+          { "run": "flows/pad-workspace.ad#home-navigation-connect" },
+          { "run": "flows/pad-workspace.ad#pad-agent-in-place" }
+        ]
       },
       {
         "target": {

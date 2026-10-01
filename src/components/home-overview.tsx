@@ -47,7 +47,6 @@ import { Trans, useLingui } from '@lingui/react/macro';
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 
 import AppDrawer from '@/components/app-drawer';
-import { PadServerRail } from '@/components/pad-server-rail';
 import { NewTaskAction } from '@/components/new-task-action';
 import { PressableScale } from '@/components/pressable-scale';
 import { SectionLabel } from '@/components/settings-chrome';
@@ -56,11 +55,17 @@ import { GatewayTunnelBadge } from '@/components/gateway-tunnel-badge';
 import { HomeArtwork } from '@/components/home-artwork';
 import { ThemeIcon } from '@/components/theme-icon';
 import { HomeEditorialArtwork } from '@/components/home-editorial-artwork';
-import { HomeEditorialLayout } from '@/components/home-editorial-layout';
+import {
+  EDITORIAL_MAX_WIDTH,
+  EDITORIAL_PAD_MAX_WIDTH,
+  HomeEditorialLayout,
+  getEditorialLayoutGeometry,
+} from '@/components/home-editorial-layout';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { HomeConnections } from '@/components/home-connections';
 import { HomeAttention } from '@/components/home-attention';
 import { HomeRecentSessions } from '@/components/home-recent-sessions';
+import { padLaunchLayoutEnabled, padLowerBandLayout } from '@/lib/home-pad-geometry';
 import {
   HomeLaunchActions,
   HomeLaunchTarget,
@@ -90,7 +95,7 @@ import {
 import { sshHomeRows } from '@/lib/ssh-home';
 import type { SshHostRecord } from '@/lib/ssh-hosts';
 import { useGatewayRecord } from '@/hooks/use-gateway-record';
-import { useHomeCommands } from '@/hooks/use-home-commands';
+import { type HomeCommandOptions, useHomeCommands } from '@/hooks/use-home-commands';
 import type { HomeServerEntry } from '@/lib/home-commands';
 import { GatewayStorageError } from '@/components/gateway-storage-error';
 import { useServerAgents } from '@/stores/server-agents';
@@ -131,6 +136,8 @@ export type HomeOverviewProps = {
   routeBound?: boolean;
   /** Live state for the exact gateway owned by an embedded workspace. */
   activeConnection?: ActiveServerConnection;
+  /** The Pad shell's detail swap: agent rows open beside it instead of on `/agent`. */
+  onOpenAgentInPlace?: HomeCommandOptions['openAgentInPlace'];
 };
 
 export function HomeOverview({
@@ -141,6 +148,7 @@ export function HomeOverview({
   sourceRouteActive,
   routeBound = false,
   activeConnection,
+  onOpenAgentInPlace,
 }: HomeOverviewProps) {
   // `t` from the hook, not the global `t` from `@lingui/core/macro`.
   //
@@ -168,7 +176,7 @@ export function HomeOverview({
     identity.logo?.mode === 'custom' ? customAssets?.[identity.logo.asset] : undefined;
   const logoSource = customLogo && customLogo !== failedLogo ? { uri: customLogo } : brandMark;
   const isPad = layoutMode === 'pad';
-  const { height: windowHeight } = useWindowDimensions();
+  const { height: windowHeight, fontScale } = useWindowDimensions();
   const showsEditorialBrand = identity.showBrand;
   // Renaming and unpairing live in Settings, not here: the owner asked for one
   // place that manages servers, and the tablet branch's long-press row menu was
@@ -603,6 +611,7 @@ export function HomeOverview({
     embedded,
     routeBound,
     sourceRouteActive,
+    openAgentInPlace: onOpenAgentInPlace,
   });
   const launchController = useHomeLaunchController({
     servers: records,
@@ -682,24 +691,17 @@ export function HomeOverview({
   // optional chain in a conditional's test.
   const editorialArtworkTopCurrent =
     editorialArtworkTop?.source === editorialArtworkResolution?.source;
-  const padNavigation =
-    isPad && !embedded ? (
-      <PadServerRail
-        servers={records}
-        reachabilityByServer={padReachabilityByServer}
-        selectedServerId={record?.serverId ?? null}
-        activeConnection={activeConnection}
-        workbenchSelected
-        onOpenWorkbench={() => overviewScroll.current?.scrollTo({ y: 0, animated: true })}
-        onSelectServer={(server) => openServer(server.serverId)}
-        onPairServer={() => void commands.pairGateway()}
-        onOpenSettings={() => router.push('/settings')}
-        onOpenSsh={() => void commands.openSsh()}
-        sshHosts={sshRows}
-        onSelectSshHost={(host) => void commands.openSsh(host.id)}
-      />
-    ) : undefined;
   if (homeLayout !== 'classic' || isPad) {
+    // Same width, gutter and predicate the layout resolves for itself, so the band
+    // lines up with the cover and launch pane, and a narrow Pad (split view, large
+    // type) gets Continue and Connections in the vertical page instead.
+    const editorialViewportHeight = windowHeight - insets.top - insets.bottom - 24;
+    const padGeometry = getEditorialLayoutGeometry(
+      Math.min(editorialWidth || width, isPad ? EDITORIAL_PAD_MAX_WIDTH : EDITORIAL_MAX_WIDTH)
+    );
+    const padLaunch =
+      isPad && padLaunchLayoutEnabled(padGeometry.contentWidth, fontScale, editorialViewportHeight);
+    const padBand = padLowerBandLayout(padGeometry.innerWidth);
     const editorialContent = (
       <View
         testID="home-editorial"
@@ -741,7 +743,7 @@ export function HomeOverview({
           <View>
             <HomeEditorialLayout
               contentWidth={editorialWidth || width}
-              viewportHeight={windowHeight - insets.top - insets.bottom - 24}
+              viewportHeight={editorialViewportHeight}
               scrollY={scrollY}
               cover={customTheme?.manifest.homePresentation?.header === 'cover'}
               coverTitle={showsEditorialBrand ? (identity.name ?? undefined) : undefined}
@@ -784,7 +786,7 @@ export function HomeOverview({
                 ) : undefined
               }
               headerLeading={
-                isPad || launchController.servers.length <= 1 ? undefined : (
+                launchController.servers.length <= 1 ? undefined : (
                   <HomeLaunchTarget
                     wide={isPad}
                     bare={customTheme?.manifest.homePresentation?.toolbarBackground === false}
@@ -835,9 +837,8 @@ export function HomeOverview({
                 )
               }
               recent={
-                !isPad && !loading && !hydrationError ? (
+                !padLaunch && !loading && !hydrationError ? (
                   <HomeRecentSessions
-                    compact={isPad}
                     selectedServerId={launchController.chosen?.serverId}
                     servers={records}
                     hosts={sshRows}
@@ -860,7 +861,7 @@ export function HomeOverview({
                 ) : undefined
               }
               connections={
-                !isPad && !loading && !hydrationError && !sshLoading ? (
+                !padLaunch && !loading && !hydrationError && !sshLoading ? (
                   <HomeConnections
                     servers={records}
                     hosts={sshRows}
@@ -876,8 +877,108 @@ export function HomeOverview({
                   />
                 ) : undefined
               }
+              padLowerBand={
+                padLaunch && !loading && !hydrationError ? (
+                  <View
+                    style={
+                      padBand.columns === 2
+                        ? { flexDirection: 'row', alignItems: 'flex-start', gap: padBand.gap }
+                        : { gap: padBand.gap }
+                    }>
+                    <View
+                      testID="home-pad-continue"
+                      style={padBand.columns === 2 ? { flex: 1, minWidth: 0 } : undefined}>
+                      <SectionLabel
+                        title={<Trans>Continue</Trans>}
+                        color={theme.colors.textMuted}
+                      />
+                      <HomeRecentSessions
+                        columns={padBand.columns}
+                        limit={8}
+                        selectedServerId={launchController.chosen?.serverId}
+                        servers={records}
+                        hosts={sshRows}
+                        reachabilityByServer={padReachabilityByServer}
+                        activeConnection={activeConnection}
+                        onOpen={(command) => {
+                          void commands.dispatch(command);
+                        }}
+                      />
+                    </View>
+                    <View
+                      testID="home-pad-connections"
+                      style={
+                        padBand.columns === 2 ? { width: padBand.connectionsWidth } : undefined
+                      }>
+                      <SectionLabel
+                        title={<Trans>Connections</Trans>}
+                        color={theme.colors.textMuted}
+                      />
+                      {sshLoading ? null : (
+                        <HomeConnections
+                          servers={records}
+                          hosts={sshRows}
+                          onOpenServer={openServer}
+                          onOpenHost={(hostId) => {
+                            void commands.openSsh(hostId);
+                          }}
+                          onManage={() => {
+                            void commands.manageConnections();
+                          }}
+                          activeConnection={activeConnection}
+                          nowMs={nowMs}
+                        />
+                      )}
+                    </View>
+                  </View>
+                ) : undefined
+              }
               headerAction={
-                isPad ? undefined : (
+                isPad ? (
+                  // The rail no longer sits beside Home, so its three
+                  // destinations live here, under the rail's own labels.
+                  <View
+                    testID="home-pad-toolbar-actions"
+                    style={{ flexDirection: 'row', alignItems: 'center', gap: HOME_TOOLBAR_GAP }}>
+                    <HeaderButton
+                      editorial
+                      bare={customTheme?.manifest.homePresentation?.toolbarBackground === false}
+                      label={t`Pair a server`}
+                      onPress={() => void commands.pairGateway()}>
+                      <ThemeIcon
+                        name="chrome.scan"
+                        fallback={ScanLine}
+                        size={HOME_TOOLBAR_ICON_SIZE}
+                        color={theme.colors.text}
+                        strokeWidth={1.8}
+                      />
+                    </HeaderButton>
+                    <HeaderButton
+                      editorial
+                      bare={customTheme?.manifest.homePresentation?.toolbarBackground === false}
+                      label={t`SSH`}
+                      onPress={() => void commands.openSsh()}>
+                      <SquareTerminal
+                        size={HOME_TOOLBAR_ICON_SIZE}
+                        color={theme.colors.text}
+                        strokeWidth={1.8}
+                      />
+                    </HeaderButton>
+                    <HeaderButton
+                      editorial
+                      bare={customTheme?.manifest.homePresentation?.toolbarBackground === false}
+                      label={t`Settings`}
+                      onPress={() => router.push('/settings')}>
+                      <ThemeIcon
+                        name="chrome.settings"
+                        fallback={Settings}
+                        size={HOME_TOOLBAR_ICON_SIZE}
+                        color={theme.colors.text}
+                        strokeWidth={1.8}
+                      />
+                    </HeaderButton>
+                  </View>
+                ) : (
                   <View
                     style={{ flexDirection: 'row', alignItems: 'center', gap: HOME_TOOLBAR_GAP }}>
                     <HeaderButton
@@ -918,9 +1019,7 @@ export function HomeOverview({
     return embedded ? (
       editorialContent
     ) : (
-      <AppDrawer
-        padRail={padNavigation}
-        wallpaperEffectsEnabled={!hasScene && !hasDevEffectOverride}>
+      <AppDrawer wallpaperEffectsEnabled={!hasScene && !hasDevEffectOverride}>
         {editorialContent}
       </AppDrawer>
     );
@@ -1357,7 +1456,7 @@ export function HomeOverview({
   return embedded ? (
     classicContent
   ) : (
-    <AppDrawer padRail={padNavigation} wallpaperEffectsEnabled={!hasScene && !hasDevEffectOverride}>
+    <AppDrawer wallpaperEffectsEnabled={!hasScene && !hasDevEffectOverride}>
       {classicContent}
     </AppDrawer>
   );

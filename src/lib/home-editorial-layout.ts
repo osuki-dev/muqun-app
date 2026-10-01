@@ -5,6 +5,12 @@
  */
 export const EDITORIAL_TWO_COLUMN_MIN_WIDTH = 752;
 
+/** The editorial page never grows past this; wider windows centre it. */
+export const EDITORIAL_MAX_WIDTH = 1120;
+
+/** Pad Home has no rail, so the cover may use a 1280dp tablet's full width. */
+export const EDITORIAL_PAD_MAX_WIDTH = 1440;
+
 /** On a tablet the utility column never grows past this; Continue takes the rest. */
 export const EDITORIAL_PAD_ASIDE_MAX_WIDTH = 320;
 const EDITORIAL_PAD_ASIDE_MIN_WIDTH = 240;

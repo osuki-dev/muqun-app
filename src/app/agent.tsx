@@ -1,5 +1,6 @@
 import { useRootRouteName } from '@/hooks/use-root-route-name';
 import { useEffect, useRef } from 'react';
+import type { Href } from 'expo-router';
 import { useLingui } from '@lingui/react/macro';
 import { useThemeMode, useThemeTokens } from '@osuki-dev/ui';
 import { useIsFocused, useLocalSearchParams, usePathname, useRouter } from 'expo-router';
@@ -13,7 +14,6 @@ import { EdgeFade } from '@/components/edge-fade';
 import { ThemeArtwork } from '@/components/theme-artwork';
 import { AgentWorkbench } from '@/components/agent-workbench';
 import AppDrawer from '@/components/app-drawer';
-import { AgentPadNavigation } from '@/components/agent-pad-navigation';
 import { responsiveWorkspaceLayout } from '@/lib/responsive-layout';
 import { GatewayTunnelBadge } from '@/components/gateway-tunnel-badge';
 import { SessionActionIcon, WorkspacePillContent } from '@/components/agent-header-morph';
@@ -29,6 +29,7 @@ import { workspaceDisplayName } from '@/lib/agent-protocol';
 import { useAgentSessionState } from '@/stores/agent-session-state';
 import { hasRealSessionTitle } from '@/lib/agent-session';
 import { consumeNewAgentIntent } from '@/lib/home-commands';
+import { padAgentRedirectParams } from '@/lib/pad-detail';
 import {
   isAgentWorkbenchOwnedOverlayPath,
   isAgentWorkbenchOwnedRootRoute,
@@ -98,12 +99,19 @@ export default function AgentScreen() {
     if (!wantedServer || serverReady) return;
     void selectRecord(wantedServer);
   }, [wantedServer, serverReady, selectRecord]);
+  const redirectServerId = padAgentRedirectParams(params).serverId ?? record?.serverId;
+  useEffect(() => {
+    if (!isPad || !redirectServerId) return;
+    router.replace({
+      pathname: '/servers/[serverId]',
+      params: { ...padAgentRedirectParams(params), serverId: redirectServerId },
+    } as Href);
+  }, [isPad, params, redirectServerId, router]);
   const sessionRunning = useAgentSessionState((s) => s.running);
   const sessionTitle = useAgentSessionState((s) => s.title);
   const activeDirectory = useAgentSessionState((s) => s.directory);
   const activeProject = useAgentSessionState((s) => s.project);
   const activeWorktree = useAgentSessionState((s) => s.worktree);
-  const activeAsid = useAgentSessionState((s) => s.activeAsid);
   const workbenchVisible =
     routeFocused ||
     isAgentWorkbenchOwnedRootRoute(rootRouteName) ||
@@ -138,8 +146,14 @@ export default function AgentScreen() {
   // react-doctor-disable-next-line react-hooks-js/todo -- lingui t macro; the lingui babel plugin compiles the template away before the compiler sees it
   const openSessionsLabel = t`Sessions: ${sessionTitle ?? ''}`;
 
+  // On Pad the workspace shell owns agent detail; this route only forwards.
+  if (isPad)
+    return (
+      <View style={{ flex: 1, backgroundColor: surfaceBackground(theme.colors.background) }} />
+    );
+
   return (
-    <AppDrawer padRail={isPad ? <AgentPadNavigation asid={activeAsid} /> : undefined}>
+    <AppDrawer>
       <View style={[styles.page, { backgroundColor: surfaceBackground(theme.colors.background) }]}>
         <ThemeArtwork slot="shell.wallpaper" />
         <StatusBar animated style={resolvedMode === 'dark' ? 'light' : 'dark'} />
