@@ -16,31 +16,52 @@ const LABELS = readFileSync(
   'utf8'
 );
 
-function startSentence(kind: string): string | undefined {
-  return LABELS.match(
-    new RegExp(`\\n  ${kind}: \\{\\n(?:\\s*//.*\\n)*\\s*start: msg\`([^\`]*)\``)
-  )?.[1];
+function sentence(kind: string, field: 'start' | 'setupStart'): string | undefined {
+  const block = LABELS.match(new RegExp(`\\n  ${kind}: \\{\\n([\\s\\S]*?)\\n  \\},`))?.[1] ?? '';
+  return block.match(new RegExp(`\\b${field}: msg\`([^\`]*)\``))?.[1];
+}
+
+function commandOf(kind: string): string | undefined {
+  return LABELS.match(new RegExp(`\\n  ${kind}: \\{\\n[\\s\\S]*?\\n    command: '([^']*)'`))?.[1];
 }
 
 describe('the T3 setup guide', () => {
-  test('tells the reader to pair the gateway', () => {
-    const start = startSentence('t3');
-    expect(start).toBeDefined();
-    expect(start).toContain('t3 pair');
-    expect(start).toContain('t3.pairing_token');
+  test('tells the reader to pair the gateway within the token window', () => {
+    const setup = sentence('t3', 'setupStart');
+    expect(setup).toBeDefined();
+    expect(setup).toContain('t3 pair');
+    expect(setup).toContain('t3.pairing_token');
+    expect(setup).toContain('5 minutes');
   });
 
-  test('is the sentence the English catalog ships', () => {
-    const start = withoutClosingFullStop(startSentence('t3') ?? '');
-    const shipped = Object.values(enMessages).flat();
-    expect(shipped.some((part) => typeof part === 'string' && part.includes(start))).toBe(true);
+  test('starts T3 without colliding with the desktop app', () => {
+    expect(sentence('t3', 'start')).toContain('t3 service install');
   });
+
+  test.each(['start', 'setupStart'] as const)(
+    'ships the %s sentence in the English catalog',
+    (field) => {
+      const text = withoutClosingFullStop(sentence('t3', field) ?? '');
+      const shipped = Object.values(enMessages).flat();
+      expect(shipped.some((part) => typeof part === 'string' && part.includes(text))).toBe(true);
+    }
+  );
 });
 
-describe('the T3 setup command', () => {
-  test('is t3 pair, offered when T3 needs setup in place of t3 serve', () => {
+describe('the setup commands', () => {
+  test('T3 starts with t3 service install and pairs with t3 pair', () => {
     const block = LABELS.match(/\n  t3: \{\n([\s\S]*?)\n  \},/)?.[1] ?? '';
-    expect(block).toContain("command: 't3 serve'");
+    expect(block).toContain("command: 't3 service install'");
     expect(block).toContain("setupCommand: 't3 pair'");
+  });
+
+  test('OpenCode is started by its service, not by serve', () => {
+    expect(commandOf('opencode')).toBe('opencode service start');
+    expect(sentence('opencode', 'start')).toContain('Start the OpenCode service');
+  });
+
+  test('DeepSeek Harness does not open a browser on the host', () => {
+    expect(commandOf('deepseek')).toBe('bunx @deepseek-ai/dsh web --no-open');
+    expect(sentence('deepseek', 'start')).toContain('Enable deepseek in the gateway config');
   });
 });

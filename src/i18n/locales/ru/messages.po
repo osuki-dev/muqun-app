@@ -2027,6 +2027,10 @@ msgid "Effects · {0}"
 msgstr "Эффекты · {0}"
 
 #: src/i18n/labels.ts
+msgid "Enable deepseek in the gateway config, start DeepSeek Harness on the host, then restart the gateway."
+msgstr "Включите deepseek в конфигурации шлюза, запустите DeepSeek Harness на хосте, затем перезапустите шлюз"
+
+#: src/i18n/labels.ts
 msgid "Enter"
 msgstr "Enter"
 
@@ -3413,6 +3417,10 @@ msgstr "Открыть дерево сеансов"
 msgid "Open SSH host {0}"
 msgstr "Открыть SSH-хост {0}"
 
+#: src/i18n/labels.ts
+msgid "Open T3 Code on the gateway host (or run t3 service install), then check again."
+msgstr "Откройте T3 Code на хосте шлюза (или выполните t3 service install) и проверьте снова"
+
 #: src/components/collaboration-notice.tsx
 msgid "Open terminal"
 msgstr "Открыть терминал"
@@ -3445,10 +3453,6 @@ msgstr "Откройте, чтобы проверить текущее сост�
 #: src/components/session-map.tsx
 msgid "Open workspace {0}, {panelCount, plural, one {# running} other {# running}}. Long press to close."
 msgstr "Открыть пространство {0}, {panelCount, plural, one {# в работе} few {# в работе} many {# в работе} other {# в работе}}. Удерживайте, чтобы закрыть"
-
-#: src/i18n/labels.ts
-msgid "OpenCode is installed, but its service is not answering. Run this command on the host."
-msgstr "OpenCode установлен, но его служба не отвечает. Выполните эту команду на хосте"
 
 #: src/app/+not-found.tsx
 msgid "Opening"
@@ -4147,6 +4151,10 @@ msgstr "Запустите его под systemd или tmux, чтобы он п
 msgid "Run relevant tests"
 msgstr "Запустить нужные тесты"
 
+#: src/i18n/labels.ts
+msgid "Run t3 pair on the host, set the printed token as t3.pairing_token in the gateway config, and restart the gateway within 5 minutes."
+msgstr "Выполните t3 pair на хосте, укажите выведенный токен как t3.pairing_token в конфигурации шлюза и перезапустите шлюз в течение 5 минут"
+
 #: src/components/home-overview.tsx
 msgid "Run the Gateway on your machine and scan the QR code it prints. The pairing stays on this device."
 msgstr "Запустите Gateway на своём компьютере и отсканируйте QR-код, который он выводит. Привязка остаётся на этом устройстве"
@@ -4747,14 +4755,6 @@ msgstr "Запустите агента и отправьте ему перво�
 msgid "Start an agent and send it the first thing to do."
 msgstr "Запустите агента и дайте ему первое задание"
 
-#: src/i18n/labels.ts
-msgid "Start DeepSeek on the gateway host, then check again."
-msgstr "Запустите DeepSeek на хосте шлюза и проверьте снова"
-
-#: src/i18n/labels.ts
-msgid "Start T3 Code on the gateway host. Then run t3 pair, set the token it prints as t3.pairing_token in the gateway config, restart the gateway and check again."
-msgstr "Запустите T3 Code на хосте шлюза. Затем выполните t3 pair, укажите выведенный токен как t3.pairing_token в конфигурации шлюза, перезапустите шлюз и проверьте снова"
-
 #: src/components/new-task-sheet.tsx
 msgid "Start task"
 msgstr "Запустить задачу"
@@ -4762,6 +4762,10 @@ msgstr "Запустить задачу"
 #: src/i18n/labels.ts
 msgid "Start the agent on the gateway host, then check again."
 msgstr "Запустите агента на хосте шлюза и проверьте снова"
+
+#: src/i18n/labels.ts
+msgid "Start the OpenCode service on the gateway host, then check again."
+msgstr "Запустите службу OpenCode на хосте шлюза и проверьте снова"
 
 #: src/components/agent-workbench.tsx
 msgid "Started with a clean context."
