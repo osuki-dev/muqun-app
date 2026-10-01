@@ -46,6 +46,8 @@ import type { ServerReachability } from '@/lib/server-reachability';
 import { useHomeTargetPicker } from '@/stores/home-target-picker';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { settleAfter } from '@/lib/compiler-safe-control-flow';
+import { scheduleHomeRefresh } from '@/lib/home-refresh-schedule';
+import { useHomeRefreshPause } from '@/hooks/use-home-refresh-pause';
 
 /** Agent chips and utility rows in the wide Pad cover's launch dock share one height. */
 const DOCK_ROW_HEIGHT = 56;
@@ -305,14 +307,17 @@ export function HomeLaunchActions({
   // and never in the way of a render: the row draws from the mirror.
   const focused = useIsFocused();
   const appActive = useAppActive();
+  const pause = useHomeRefreshPause();
   useEffect(() => {
     if (!chosen || chosenOffline || !focused || !appActive || isDemoRecord(chosen)) return;
-    void refreshAgentServerDiscovery(chosen);
-    const timer = setInterval(() => {
-      void refreshAgentServerDiscovery(chosen);
-    }, HOME_AGENTS_REFRESH_MS);
-    return () => clearInterval(timer);
-  }, [appActive, chosen, chosenOffline, focused]);
+    return scheduleHomeRefresh({
+      intervalMs: HOME_AGENTS_REFRESH_MS,
+      pause,
+      refresh: () => {
+        void refreshAgentServerDiscovery(chosen);
+      },
+    });
+  }, [appActive, chosen, chosenOffline, focused, pause]);
 
   // "More agents" answers through a store, as the gateway picker does: the
   // sheet only says which agent, and the command that starts it runs here.
