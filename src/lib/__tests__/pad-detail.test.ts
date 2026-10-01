@@ -37,6 +37,44 @@ describe('padShellReducer', () => {
     const s = padShellReducer(initialPadShellState, { type: 'open-agent', target, intent: 'new' });
     expect(s.detail).toMatchObject({ kind: 'agent', asid: undefined, intent: 'new' });
   });
+  test('two new opens for the same directory are different details', () => {
+    const first = padShellReducer(initialPadShellState, {
+      type: 'open-agent',
+      target,
+      intent: 'new',
+    });
+    const second = padShellReducer(first, { type: 'open-agent', target, intent: 'new' });
+    const a = first.detail.kind === 'agent' ? first.detail.nonce : undefined;
+    const b = second.detail.kind === 'agent' ? second.detail.nonce : undefined;
+    expect(typeof a).toBe('number');
+    expect(typeof b).toBe('number');
+    expect(b).not.toBe(a);
+  });
+  test('route intent=new after an open-agent new gets a new nonce', () => {
+    const first = padShellReducer(initialPadShellState, {
+      type: 'open-agent',
+      target,
+      intent: 'new',
+    });
+    const second = padShellReducer(first, {
+      type: 'route',
+      serverId: 's1',
+      params: { intent: 'new', directory: '/w' },
+    });
+    const a = first.detail.kind === 'agent' ? first.detail.nonce : undefined;
+    const b = second.detail.kind === 'agent' ? second.detail.nonce : undefined;
+    expect(b).not.toBe(a);
+  });
+  test('an existing open has no nonce', () => {
+    const fromNew = padShellReducer(initialPadShellState, {
+      type: 'open-agent',
+      target,
+      intent: 'new',
+    });
+    const s = padShellReducer(fromNew, { type: 'open-agent', target, intent: 'existing' });
+    expect(s.detail).toMatchObject({ kind: 'agent', asid: 'a1' });
+    expect(s.detail.kind === 'agent' ? s.detail.nonce : 'pane').toBeUndefined();
+  });
   test('open-agent without a sessionId falls back to herdr', () => {
     const bare = { kind: 'agent-session', serverId: 's1' } as never;
     const s = padShellReducer(initialPadShellState, {

@@ -10,6 +10,12 @@ export type PadDetail =
       directory?: string;
       agentId?: string;
       intent?: 'new';
+      /**
+       * Set on every `new` request so a second request for the same directory
+       * is a different detail: a fresh workbench, and a fresh release of the
+       * Home command's new-session claim.
+       */
+      nonce?: number;
     };
 
 export type PadShellState = { detail: PadDetail; overviewVisible: boolean };
@@ -35,6 +41,11 @@ export const initialPadShellState: PadShellState = {
   overviewVisible: false,
 };
 
+/** One more than the current detail's nonce, so consecutive `new` requests differ. */
+function nextNonce(detail: PadDetail): number {
+  return (detail.kind === 'agent' ? (detail.nonce ?? 0) : 0) + 1;
+}
+
 export function padShellReducer(state: PadShellState, event: PadShellEvent): PadShellState {
   switch (event.type) {
     case 'open-agent': {
@@ -48,6 +59,7 @@ export function padShellReducer(state: PadShellState, event: PadShellEvent): Pad
           directory: t.directory,
           agentId: t.agentId,
           intent: event.intent === 'new' ? 'new' : undefined,
+          nonce: event.intent === 'new' ? nextNonce(state.detail) : undefined,
         },
         overviewVisible: false,
       };
@@ -72,6 +84,7 @@ export function padShellReducer(state: PadShellState, event: PadShellEvent): Pad
           directory: p.directory,
           agentId: p.agentId,
           intent: p.intent === 'new' ? 'new' : undefined,
+          nonce: p.intent === 'new' ? nextNonce(state.detail) : undefined,
         },
         overviewVisible: false,
       };
