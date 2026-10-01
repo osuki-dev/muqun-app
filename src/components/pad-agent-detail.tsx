@@ -31,13 +31,15 @@ export function PadAgentDetail({ detail, ready, visible, topInset, bottomInset }
   const newIntent = detail.intent === 'new';
   const intentServerId = detail.serverId;
   const intentDirectory = detail.directory;
+  const intentNonce = detail.nonce;
   // The same release `/agent` does on its way in: the Home command claimed this
   // server + directory so a double tap could not make two sessions, and the
-  // claim is what lets the next "new session" through.
+  // claim is what lets the next "new session" through. The nonce makes each
+  // request its own run, even for the same directory.
   useEffect(() => {
     if (!newIntent) return;
     consumeNewAgentIntent(intentServerId, intentDirectory);
-  }, [intentDirectory, intentServerId, newIntent]);
+  }, [intentDirectory, intentNonce, intentServerId, newIntent]);
 
   return (
     <View testID="pad-agent-detail" style={StyleSheet.absoluteFill}>
@@ -50,6 +52,7 @@ export function PadAgentDetail({ detail, ready, visible, topInset, bottomInset }
             detail.directory ?? '',
             detail.agentId ?? '',
             detail.intent ?? '',
+            detail.nonce ?? 0,
           ])}
           serverId={detail.serverId}
           sessionId={detail.sessionId}

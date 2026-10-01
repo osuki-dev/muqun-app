@@ -850,6 +850,7 @@ export function ServerTerminalWorkspace({
   const overviewVisible = padShell.state.overviewVisible;
   const padDetail = padShell.state.detail;
   const padDetailIsPane = padDetail.kind === 'pane';
+  const paneHidden = overviewVisible || !padDetailIsPane;
   const setOverviewVisible = (visible: boolean) =>
     padDispatch({ type: visible ? 'show-home' : 'hide-home' });
   const openAgentInPlace = usePadAgentOpener(serverId, padDispatch);
@@ -1003,6 +1004,9 @@ export function ServerTerminalWorkspace({
   useEffect(() => {
     if (routeTargetKeyRef.current === routeTargetKey) return;
     routeTargetKeyRef.current = routeTargetKey;
+    // A link naming a pane brings the pane back from an agent detail. Not a
+    // bare sessionId: agent links carry one too.
+    if (routePaneId || routeWorkspaceId || routeTabId) padDispatch({ type: 'open-pane' });
     if (routeSessionId || routeWorkspaceId || routeTabId || routePaneId) {
       setStrictTarget({
         serverId,
@@ -1016,7 +1020,15 @@ export function ServerTerminalWorkspace({
       setStrictTarget(null);
     }
     setMissingRequestedTarget(null);
-  }, [routePaneId, routeSessionId, routeTabId, routeTargetKey, routeWorkspaceId, serverId]);
+  }, [
+    padDispatch,
+    routePaneId,
+    routeSessionId,
+    routeTabId,
+    routeTargetKey,
+    routeWorkspaceId,
+    serverId,
+  ]);
   const [deliveryOwnership] = useState(() => new DeliveryOwnership());
   const [selectionOwner] = useState(
     () => new DeliverySelection(initialSelection, sameSelection, deliveryOwnership)
@@ -4735,7 +4747,7 @@ export function ServerTerminalWorkspace({
       // Not `previewOpen`: the layout is what decides, and it declines the
       // preview on a window too narrow to hold both. Reading its answer keeps
       // the rail from standing down for a preview that never opened.
-      padRailCollapsed={workspaceLayout.previewWidth > 0}
+      padRailCollapsed={padDetailIsPane && workspaceLayout.previewWidth > 0}
       padRail={
         // Home is the whole width: the rail stands down while it covers the
         // detail, and its own server list takes the rail's place.
@@ -4800,7 +4812,7 @@ export function ServerTerminalWorkspace({
               // which workspace, which panel -- and a reader had to know which half
               // theirs was in before they could press anything. `onDetailAction`
               // above is the one button, and the whole address is inside it.
-              simfarmSplit.previewWidth > 0 ? (
+              padDetailIsPane && simfarmSplit.previewWidth > 0 ? (
                 <PressableScale
                   key="simulator"
                   accessibilityLabel={t`Hide the simulator`}
@@ -4819,22 +4831,15 @@ export function ServerTerminalWorkspace({
           or the window is too narrow to keep both halves usable, so this is a
           row of one for the whole of the compact layout and most of the Pad. */}
       <View style={styles.workspaceHost}>
+        {/* Hidden, not unmounted, under an agent detail as under Home: the
+            terminal keeps its scrollback and view state for the way back. */}
         <View
-          pointerEvents={overviewVisible ? 'none' : 'auto'}
-          accessibilityElementsHidden={overviewVisible}
-          importantForAccessibility={overviewVisible ? 'no-hide-descendants' : 'auto'}
-          style={[StyleSheet.absoluteFill, { opacity: overviewVisible ? 0 : 1 }]}>
-          {padDetail.kind === 'agent' ? (
-            <PadAgentDetail
-              detail={padDetail}
-              ready={selectedServer && tunnelReady}
-              visible={!overviewVisible}
-              topInset={insets.top + NAV_HEADER_TOP_GAP + 54}
-              bottomInset={insets.bottom}
-            />
-          ) : (
-            <View style={styles.workspaceSplit}>
-              {/* No background and no wallpaper of its own. `AppDrawer` wraps this
+          pointerEvents={paneHidden ? 'none' : 'auto'}
+          accessibilityElementsHidden={paneHidden}
+          importantForAccessibility={paneHidden ? 'no-hide-descendants' : 'auto'}
+          style={[StyleSheet.absoluteFill, { opacity: paneHidden ? 0 : 1 }]}>
+          <View style={styles.workspaceSplit}>
+            {/* No background and no wallpaper of its own. `AppDrawer` wraps this
             screen and already paints both, and painting them again here drew a
             second full-screen image that nothing could ever see: the opaque
             fill on this view covered the drawer's copy, and HWUI does no
@@ -4846,9 +4851,9 @@ export function ServerTerminalWorkspace({
             `surfaceBackground(colors.background)`, which at the default alpha of
             1 is `colors.background` exactly -- the same pixels as before -- and
             below 1 is the translucency that was being asked for and ignored. */}
-              <View style={styles.page}>
-                <StatusBar animated style={resolvedMode === 'dark' ? 'light' : 'dark'} />
-                {/*
+            <View style={styles.page}>
+              <StatusBar animated style={resolvedMode === 'dark' ? 'light' : 'dark'} />
+              {/*
           One column for every notice that floats over the terminal.
 
           They used to be three independently absolute views pinned to the same
@@ -4859,122 +4864,125 @@ export function ServerTerminalWorkspace({
           `box-none` so the terminal underneath still takes taps everywhere the
           notices are not.
         */}
-                <View
-                  pointerEvents="box-none"
-                  style={[styles.noticeStack, { top: insets.top + NAV_HEADER_TOP_GAP + 58 }]}>
-                  <NoticeDeck>
-                    {/* A dead pairing outranks whatever action happened to fail first.
+              <View
+                pointerEvents="box-none"
+                style={[styles.noticeStack, { top: insets.top + NAV_HEADER_TOP_GAP + 58 }]}>
+                <NoticeDeck>
+                  {/* A dead pairing outranks whatever action happened to fail first.
               Every request fails once this server has no record of this device,
               so the pane read that lost the race writes its own sentence into
               the error bar -- and the bar has no button on it, which used to
               hide the one control that can end the situation. The notice wins
               here, because it is the thing carrying the way out. */}
-                    {error && !connection.needsPairing ? (
-                      <Animated.View
-                        entering={fadeIn('micro')}
-                        exiting={fadeOut('micro')}
-                        layout={listLayout('short')}
-                        style={[
-                          styles.errorBar,
-                          { backgroundColor: surfaceBackground(theme.colors.dangerSubtle) },
-                        ]}>
-                        <Text selectable variant="caption" color={theme.colors.danger}>
-                          {error}
-                        </Text>
-                      </Animated.View>
-                    ) : null}
-                    {/* The tunnel's own status, above the gateway connection notice: a
+                  {error && !connection.needsPairing ? (
+                    <Animated.View
+                      entering={fadeIn('micro')}
+                      exiting={fadeOut('micro')}
+                      layout={listLayout('short')}
+                      style={[
+                        styles.errorBar,
+                        { backgroundColor: surfaceBackground(theme.colors.dangerSubtle) },
+                      ]}>
+                      <Text selectable variant="caption" color={theme.colors.danger}>
+                        {error}
+                      </Text>
+                    </Animated.View>
+                  ) : null}
+                  {/* The tunnel's own status, above the gateway connection notice: a
                 tunnelled gateway cannot connect until its SSH forward is up, so
                 while it is connecting or down this is the news, and the gateway
                 notice below stays quiet (it would only say "Connecting"). */}
-                    {tunnel.tunnelled && tunnel.phase !== 'open' ? (
-                      <Animated.View
-                        entering={fadeIn('micro')}
-                        exiting={fadeOut('micro')}
-                        layout={listLayout('short')}>
-                        <GatewayTunnelBadge record={record} variant="notice" />
-                      </Animated.View>
-                    ) : null}
-                    {tunnelReady && (!error || connection.needsPairing) ? (
-                      <ConnectionNotice
-                        status={connection}
-                        onRetry={() => setRetryNonce((value) => value + 1)}
-                        onPairAgain={() => router.push('/explore')}
-                      />
-                    ) : null}
+                  {tunnel.tunnelled && tunnel.phase !== 'open' ? (
+                    <Animated.View
+                      entering={fadeIn('micro')}
+                      exiting={fadeOut('micro')}
+                      layout={listLayout('short')}>
+                      <GatewayTunnelBadge record={record} variant="notice" />
+                    </Animated.View>
+                  ) : null}
+                  {tunnelReady && (!error || connection.needsPairing) ? (
+                    <ConnectionNotice
+                      status={connection}
+                      onRetry={() => setRetryNonce((value) => value + 1)}
+                      onPairAgain={() => router.push('/explore')}
+                    />
+                  ) : null}
 
-                    {/* What happened while nobody was looking. Above the switch pill and
+                  {/* What happened while nobody was looking. Above the switch pill and
               below the standing conditions: it is news rather than a state, but
               it is news the user came back for, so a transient answer to a
               gesture queues underneath it rather than the other way round. */}
-                    {featureFlags.terminalAwayDigest && away.digest ? (
-                      <AwayDigestCard digest={away.digest} onDismiss={away.dismiss} />
-                    ) : null}
-                    <CollaborationNotice
-                      context={{
-                        serverId,
-                        sessionId: data.sessionId,
-                        paneId: selection.paneId,
-                        workspaceId: selection.workspaceId,
-                        tabId: selection.tabId,
-                        cwd: field(selectedPane, 'cwd'),
-                      }}
-                      agents={data.agents}
-                      connected={ready && targetReady && connection.phase === 'connected'}
-                      active={isFocused}
-                    />
+                  {featureFlags.terminalAwayDigest && away.digest ? (
+                    <AwayDigestCard digest={away.digest} onDismiss={away.dismiss} />
+                  ) : null}
+                  <CollaborationNotice
+                    context={{
+                      serverId,
+                      sessionId: data.sessionId,
+                      paneId: selection.paneId,
+                      workspaceId: selection.workspaceId,
+                      tabId: selection.tabId,
+                      cwd: field(selectedPane, 'cwd'),
+                    }}
+                    agents={data.agents}
+                    connected={ready && targetReady && connection.phase === 'connected'}
+                    active={isFocused}
+                  />
 
-                    {/* Last in the stack on purpose. An error bar and a connection notice
+                  {/* Last in the stack on purpose. An error bar and a connection notice
               are standing conditions and keep the top of the column; this is a
               transient answer to a gesture and clears itself, so it queues
               underneath rather than pushing a condition out of the way. */}
-                    {switchPill ? (
-                      <SwitchIndicator address={switchPill.address} testID={switchPill.testID} />
-                    ) : null}
-                  </NoticeDeck>
-                </View>
+                  {switchPill ? (
+                    <SwitchIndicator address={switchPill.address} testID={switchPill.testID} />
+                  ) : null}
+                </NoticeDeck>
+              </View>
 
-                <View style={styles.terminalArea}>
-                  {/* The two-finger tab swipe is recognised by the canvas itself, as one
+              <View style={styles.terminalArea}>
+                {/* The two-finger tab swipe is recognised by the canvas itself, as one
               more gesture simultaneous with its pan and pinch -- React Native's
               touches never see it. See `useTabSwipe` for the measurements. */}
-                  <View style={[styles.terminalSwipeArea, { overflow: 'hidden' }]}>
-                    {/* Keep the canvas mounted and stationary across pane changes. */}
-                    <Animated.View style={styles.terminalSwipeArea}>
-                      {targetUnavailable ? (
-                        <View style={styles.missingTargetState}>
-                          <Text variant="heading">
-                            <Trans>Terminal unavailable</Trans>
+                <View style={[styles.terminalSwipeArea, { overflow: 'hidden' }]}>
+                  {/* Keep the canvas mounted and stationary across pane changes. */}
+                  <Animated.View style={styles.terminalSwipeArea}>
+                    {targetUnavailable ? (
+                      <View style={styles.missingTargetState}>
+                        <Text variant="heading">
+                          <Trans>Terminal unavailable</Trans>
+                        </Text>
+                        <Text variant="bodySmall" color={theme.colors.textMuted}>
+                          <Trans>
+                            This terminal was removed. Choose another terminal to continue.
+                          </Trans>
+                        </Text>
+                        <PressableScale
+                          accessibilityRole="button"
+                          accessibilityLabel={t`Choose another terminal`}
+                          disabled={!hasLoadedData || sessions.length === 0}
+                          onPress={openPanelPicker}
+                          style={[
+                            styles.missingTargetButton,
+                            { backgroundColor: surfaceBackground(theme.colors.primarySubtle) },
+                          ]}>
+                          <SquareTerminal size={16} color={theme.colors.primary} />
+                          <Text variant="label" color={theme.colors.primary}>
+                            <Trans>Choose another terminal</Trans>
                           </Text>
-                          <Text variant="bodySmall" color={theme.colors.textMuted}>
-                            <Trans>
-                              This terminal was removed. Choose another terminal to continue.
-                            </Trans>
-                          </Text>
-                          <PressableScale
-                            accessibilityRole="button"
-                            accessibilityLabel={t`Choose another terminal`}
-                            disabled={!hasLoadedData || sessions.length === 0}
-                            onPress={openPanelPicker}
-                            style={[
-                              styles.missingTargetButton,
-                              { backgroundColor: surfaceBackground(theme.colors.primarySubtle) },
-                            ]}>
-                            <SquareTerminal size={16} color={theme.colors.primary} />
-                            <Text variant="label" color={theme.colors.primary}>
-                              <Trans>Choose another terminal</Trans>
-                            </Text>
-                          </PressableScale>
-                        </View>
-                      ) : targetPending ? (
-                        <View style={styles.missingTargetState}>
-                          <Spinner size="sm" color={theme.colors.textMuted} />
-                          <Text variant="bodySmall" color={theme.colors.textMuted}>
-                            <Trans>Opening…</Trans>
-                          </Text>
-                        </View>
-                      ) : chatViewShown ? (
-                        supportsAgentSessions && isOpenCodeAgent ? (
+                        </PressableScale>
+                      </View>
+                    ) : targetPending ? (
+                      <View style={styles.missingTargetState}>
+                        <Spinner size="sm" color={theme.colors.textMuted} />
+                        <Text variant="bodySmall" color={theme.colors.textMuted}>
+                          <Trans>Opening…</Trans>
+                        </Text>
+                      </View>
+                    ) : chatViewShown ? (
+                      supportsAgentSessions && isOpenCodeAgent ? (
+                        // One workbench at a time: under an agent detail the
+                        // shell's own owns the agent session store.
+                        !padDetailIsPane ? null : (
                           <AgentWorkbench
                             // The home route mounts this workspace from its warm or
                             // placeholder data first. `data.sessionId` can change
@@ -4990,171 +4998,172 @@ export function ServerTerminalWorkspace({
                             topInset={insets.top + NAV_HEADER_TOP_GAP + 54}
                             bottomInset={insets.bottom}
                           />
-                        ) : (
-                          <PaneChatView
-                            // Remounted per pane: the follow-the-latest position and which
-                            // tool runs are open belong to the transcript being read.
-                            key={selection.paneId}
-                            parts={partsForPane.parts}
-                            detail={paneView.detail}
-                            // `answered` is the gateway having said *something* about
-                            // this pane. Until it has, an empty transcript is a question
-                            // in flight rather than an empty pane.
-                            awaitingFirstParts={!partsForPane.answered}
-                            topInset={insets.top + NAV_HEADER_TOP_GAP + 54}
-                            bottomInset={composerVisible ? composerHeight : 0}
-                            canLoadEarlier={canLoadEarlierParts}
-                            loadingEarlier={loadingEarlierParts}
-                            onLoadEarlier={loadEarlierParts}
-                            onOpenAsset={openAssetById}
-                            onToggleDetail={paneView.toggleDetail}
-                          />
                         )
                       ) : (
-                        <TerminalBoundary
-                          resetKey={selection.paneId}
-                          background={terminalBackground}
-                          textColor={chromeText}>
-                          <TerminalPanel
-                            sessionId={data.sessionId}
-                            paneId={selection.paneId}
-                            output={output}
-                            // The whole composer reserves space, key row included: anything
-                            // it covers is unreachable, and the "jump to latest" pill sits
-                            // against this inset too.
-                            //
-                            // Zero on an editor, because there is no composer there to
-                            // reserve for. What floats over an editor is deliberately
-                            // *not* measured into this: reserving height for it would
-                            // hand the pane back the problem the dock was taken away to
-                            // solve, and would move the terminal every time the panel
-                            // opened.
-                            bottomInset={composerVisible && !dock.editorMode ? composerHeight : 0}
-                            // Only a program that owns the screen gets one, and it is
-                            // the same clearance the reading view above uses, so the two
-                            // surfaces clear the same chrome by the same amount. Keyed
-                            // on the surface rather than on "is an editor": an agent
-                            // paints the whole screen too, and keying this on the editor
-                            // predicate is what slid an agent's output under the pill.
-                            topInset={paneOwnsScreen ? insets.top + NAV_HEADER_TOP_GAP + 54 : 0}
-                            // How many rows of the window are the live screen, so the
-                            // grid can rest an editor on the screen rather than on the
-                            // oldest frame of the ring-buffer history above it.
-                            screenRows={selectedPaneScreenRows}
-                            // Deliberately the *editor* predicate, not `paneOwnsScreen`,
-                            // even though the two describe the same alternate screen.
-                            //
-                            // This one decides whether the grid stops resolving a
-                            // truecolour scheme's defaults against the app theme (see
-                            // `terminalPaneTheme`). An editor owns its whole surface and
-                            // is unreadable resolved against the wrong side, which is
-                            // what card #685 measured. An agent is different in practice:
-                            // it paints some of its own colours and leaves the rest at
-                            // the default, and the owner reads it beside light app
-                            // chrome. Giving it its own surface turned the pane fully
-                            // dark inside a light app -- correct by the rule, wrong on
-                            // the screen, and reverted here on that evidence.
-                            //
-                            // The cost is stated rather than hidden: an agent that paints
-                            // a dark box of its own (codex's composer) still shows that
-                            // box against the app's paper. That is a narrower defect than
-                            // a whole pane in the wrong mode, and it wants its own fix.
-                            //
-                            // The tablet branch reached this same line independently, from
-                            // the other end of the same problem: forcing the terminal
-                            // theme turned a light Pad workspace into one large dark
-                            // rectangle. Two surfaces, two readers, one answer.
-                            ownsScreen={fullScreenPane}
-                            keyboardOffset={keyboardOffset}
-                            // The setting, not a point size: how big that is belongs to
-                            // `@/lib/terminal-text-size`, which is also where the rule
-                            // that the pinch never outlives this screen is written.
-                            textSize={terminalTextSize}
-                            // An editor pane's own read is always `history_size: 0`
-                            // (measured live, card #795) -- there is nothing earlier
-                            // for a pull to reach, so the affordance is refused
-                            // outright rather than trusted to the scroll-metric
-                            // fallback `hasEarlierTerminalOutput` already computes
-                            // (belt and suspenders: that fallback already lands on
-                            // `false` here, but a screen-owning pane must never be
-                            // able to arm this gesture on the strength of a metric
-                            // alone).
-                            canLoadEarlier={fullScreenPane ? false : canLoadEarlierOutput}
-                            historyRevision={historyRevision}
-                            loadingEarlier={loadingEarlierOutput}
-                            onLoadEarlier={loadEarlierOutput}
-                            onViewportReady={refreshOutput}
-                            historyIndicatorTopInset={insets.top + NAV_HEADER_TOP_GAP + 62}
-                            stickBottomNonce={stickBottomNonce}
-                            onFileLink={openFileLink}
-                            onTwoFingerSwipe={tabSwipe.onSwipe}
-                            screenFocused={isFocused}
-                            paneColumns={selectedPaneColumns}
-                            paneRows={selectedPaneRows}
-                            paneCursorColumn={selectedPaneCursorColumn}
-                            paneCursorRow={selectedPaneCursorRow}
-                          />
-                        </TerminalBoundary>
-                      )}
-                      {themeDrop ? (
-                        <TerminalThemeDrop
-                          state={themeDrop}
+                        <PaneChatView
+                          // Remounted per pane: the follow-the-latest position and which
+                          // tool runs are open belong to the transcript being read.
+                          key={selection.paneId}
+                          parts={partsForPane.parts}
+                          detail={paneView.detail}
+                          // `answered` is the gateway having said *something* about
+                          // this pane. Until it has, an empty transcript is a question
+                          // in flight rather than an empty pane.
+                          awaitingFirstParts={!partsForPane.answered}
+                          topInset={insets.top + NAV_HEADER_TOP_GAP + 54}
                           bottomInset={composerVisible ? composerHeight : 0}
-                          onApply={() => {
-                            const candidate = themeCandidateRef.current;
-                            if (!candidate || themeDrop.phase !== 'ready') return;
-                            setThemeDrop({ ...themeDrop, applying: true });
-                            // The editor owns the preview from here: it is the one
-                            // surface that shows both variants, the contrast verdict
-                            // and the opacity floors, and a theme arriving from
-                            // another machine is exactly as unreviewed as one picked
-                            // by hand. The card's job was to get it here.
-                            openThemeEditor(candidate);
-                            themeCandidateRef.current = null;
-                            setThemeDrop(null);
-                          }}
-                          onDismiss={() => {
-                            // Dismissing during the download has to stop it as well as
-                            // clear the card: the staging it would otherwise finish
-                            // has nowhere left to be shown, and would sit in the cache
-                            // directory until the screen itself went away.
-                            themeRequestRef.current?.cancel();
-                            themeRequestRef.current = null;
-                            themeCandidateRef.current?.prepared?.dispose();
-                            themeCandidateRef.current = null;
-                            setThemeDrop(null);
-                          }}
+                          canLoadEarlier={canLoadEarlierParts}
+                          loadingEarlier={loadingEarlierParts}
+                          onLoadEarlier={loadEarlierParts}
+                          onOpenAsset={openAssetById}
+                          onToggleDetail={paneView.toggleDetail}
                         />
-                      ) : null}
-                    </Animated.View>
-                  </View>
-                </View>
-
-                {attachmentMenuOpen && dock.attachEntry ? (
-                  <Animated.View style={[styles.menuBackdrop, menuBackdropStyle]}>
-                    <Pressable
-                      accessibilityLabel={t`Close the attachment menu`}
-                      onPress={() => setAttachmentMenuOpen(false)}
-                      style={StyleSheet.absoluteFill}
-                    />
+                      )
+                    ) : (
+                      <TerminalBoundary
+                        resetKey={selection.paneId}
+                        background={terminalBackground}
+                        textColor={chromeText}>
+                        <TerminalPanel
+                          sessionId={data.sessionId}
+                          paneId={selection.paneId}
+                          output={output}
+                          // The whole composer reserves space, key row included: anything
+                          // it covers is unreachable, and the "jump to latest" pill sits
+                          // against this inset too.
+                          //
+                          // Zero on an editor, because there is no composer there to
+                          // reserve for. What floats over an editor is deliberately
+                          // *not* measured into this: reserving height for it would
+                          // hand the pane back the problem the dock was taken away to
+                          // solve, and would move the terminal every time the panel
+                          // opened.
+                          bottomInset={composerVisible && !dock.editorMode ? composerHeight : 0}
+                          // Only a program that owns the screen gets one, and it is
+                          // the same clearance the reading view above uses, so the two
+                          // surfaces clear the same chrome by the same amount. Keyed
+                          // on the surface rather than on "is an editor": an agent
+                          // paints the whole screen too, and keying this on the editor
+                          // predicate is what slid an agent's output under the pill.
+                          topInset={paneOwnsScreen ? insets.top + NAV_HEADER_TOP_GAP + 54 : 0}
+                          // How many rows of the window are the live screen, so the
+                          // grid can rest an editor on the screen rather than on the
+                          // oldest frame of the ring-buffer history above it.
+                          screenRows={selectedPaneScreenRows}
+                          // Deliberately the *editor* predicate, not `paneOwnsScreen`,
+                          // even though the two describe the same alternate screen.
+                          //
+                          // This one decides whether the grid stops resolving a
+                          // truecolour scheme's defaults against the app theme (see
+                          // `terminalPaneTheme`). An editor owns its whole surface and
+                          // is unreadable resolved against the wrong side, which is
+                          // what card #685 measured. An agent is different in practice:
+                          // it paints some of its own colours and leaves the rest at
+                          // the default, and the owner reads it beside light app
+                          // chrome. Giving it its own surface turned the pane fully
+                          // dark inside a light app -- correct by the rule, wrong on
+                          // the screen, and reverted here on that evidence.
+                          //
+                          // The cost is stated rather than hidden: an agent that paints
+                          // a dark box of its own (codex's composer) still shows that
+                          // box against the app's paper. That is a narrower defect than
+                          // a whole pane in the wrong mode, and it wants its own fix.
+                          //
+                          // The tablet branch reached this same line independently, from
+                          // the other end of the same problem: forcing the terminal
+                          // theme turned a light Pad workspace into one large dark
+                          // rectangle. Two surfaces, two readers, one answer.
+                          ownsScreen={fullScreenPane}
+                          keyboardOffset={keyboardOffset}
+                          // The setting, not a point size: how big that is belongs to
+                          // `@/lib/terminal-text-size`, which is also where the rule
+                          // that the pinch never outlives this screen is written.
+                          textSize={terminalTextSize}
+                          // An editor pane's own read is always `history_size: 0`
+                          // (measured live, card #795) -- there is nothing earlier
+                          // for a pull to reach, so the affordance is refused
+                          // outright rather than trusted to the scroll-metric
+                          // fallback `hasEarlierTerminalOutput` already computes
+                          // (belt and suspenders: that fallback already lands on
+                          // `false` here, but a screen-owning pane must never be
+                          // able to arm this gesture on the strength of a metric
+                          // alone).
+                          canLoadEarlier={fullScreenPane ? false : canLoadEarlierOutput}
+                          historyRevision={historyRevision}
+                          loadingEarlier={loadingEarlierOutput}
+                          onLoadEarlier={loadEarlierOutput}
+                          onViewportReady={refreshOutput}
+                          historyIndicatorTopInset={insets.top + NAV_HEADER_TOP_GAP + 62}
+                          stickBottomNonce={stickBottomNonce}
+                          onFileLink={openFileLink}
+                          onTwoFingerSwipe={tabSwipe.onSwipe}
+                          screenFocused={isFocused}
+                          paneColumns={selectedPaneColumns}
+                          paneRows={selectedPaneRows}
+                          paneCursorColumn={selectedPaneCursorColumn}
+                          paneCursorRow={selectedPaneCursorRow}
+                        />
+                      </TerminalBoundary>
+                    )}
+                    {themeDrop ? (
+                      <TerminalThemeDrop
+                        state={themeDrop}
+                        bottomInset={composerVisible ? composerHeight : 0}
+                        onApply={() => {
+                          const candidate = themeCandidateRef.current;
+                          if (!candidate || themeDrop.phase !== 'ready') return;
+                          setThemeDrop({ ...themeDrop, applying: true });
+                          // The editor owns the preview from here: it is the one
+                          // surface that shows both variants, the contrast verdict
+                          // and the opacity floors, and a theme arriving from
+                          // another machine is exactly as unreviewed as one picked
+                          // by hand. The card's job was to get it here.
+                          openThemeEditor(candidate);
+                          themeCandidateRef.current = null;
+                          setThemeDrop(null);
+                        }}
+                        onDismiss={() => {
+                          // Dismissing during the download has to stop it as well as
+                          // clear the card: the staging it would otherwise finish
+                          // has nowhere left to be shown, and would sit in the cache
+                          // directory until the screen itself went away.
+                          themeRequestRef.current?.cancel();
+                          themeRequestRef.current = null;
+                          themeCandidateRef.current?.prepared?.dispose();
+                          themeCandidateRef.current = null;
+                          setThemeDrop(null);
+                        }}
+                      />
+                    ) : null}
                   </Animated.View>
-                ) : null}
+                </View>
+              </View>
 
-                {/* Tap-outside, the half of dismissal a key press cannot cover on a
+              {attachmentMenuOpen && dock.attachEntry ? (
+                <Animated.View style={[styles.menuBackdrop, menuBackdropStyle]}>
+                  <Pressable
+                    accessibilityLabel={t`Close the attachment menu`}
+                    onPress={() => setAttachmentMenuOpen(false)}
+                    style={StyleSheet.absoluteFill}
+                  />
+                </Animated.View>
+              ) : null}
+
+              {/* Tap-outside, the half of dismissal a key press cannot cover on a
             phone. Under the composer overlay in the stack, so the panel's own
             rows still take their taps -- and bounded to the pane above it, so
             that the element a tap is aimed at is the one that gets it. */}
-                {slashPopup.open ? (
-                  <Animated.View style={[styles.menuBackdrop, menuBackdropStyle]}>
-                    <Pressable
-                      accessibilityLabel={t`Close the command list`}
-                      onPress={slashPopup.dismiss}
-                      style={StyleSheet.absoluteFill}
-                    />
-                  </Animated.View>
-                ) : null}
+              {slashPopup.open ? (
+                <Animated.View style={[styles.menuBackdrop, menuBackdropStyle]}>
+                  <Pressable
+                    accessibilityLabel={t`Close the command list`}
+                    onPress={slashPopup.dismiss}
+                    style={StyleSheet.absoluteFill}
+                  />
+                </Animated.View>
+              ) : null}
 
-                {/*
+              {/*
           The key row switched off, so its two entries come out here: bottom
           left, on the line the "jump to latest" pill keeps on the right, both
           of them 14 above the dock. The pane gets back the line the row was
@@ -5173,124 +5182,120 @@ export function ServerTerminalWorkspace({
           here should close the menu, the way a tap anywhere else on the pane
           does.
         */}
-                {composerVisible && dock.floatingActions && !isPadLayout && !hideTerminalDock ? (
-                  <Animated.View
-                    // The band across from it belongs to the pill, and a full-width
-                    // invisible parent lying over it would have taken the pill's taps.
-                    pointerEvents="box-none"
-                    entering={fadeIn('micro')}
-                    exiting={fadeOutDown('short')}
+              {composerVisible && dock.floatingActions && !isPadLayout && !hideTerminalDock ? (
+                <Animated.View
+                  // The band across from it belongs to the pill, and a full-width
+                  // invisible parent lying over it would have taken the pill's taps.
+                  pointerEvents="box-none"
+                  entering={fadeIn('micro')}
+                  exiting={fadeOutDown('short')}
+                  style={[
+                    styles.floatingEntries,
+                    { bottom: composerHeight + 14 },
+                    composerKeyboardStyle,
+                  ]}>
+                  <View
                     style={[
-                      styles.floatingEntries,
-                      { bottom: composerHeight + 14 },
-                      composerKeyboardStyle,
+                      styles.floatingEntriesTray,
+                      { borderRadius: profile.chrome.controlTray },
+                      {
+                        backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
+                      },
                     ]}>
-                    <View
-                      style={[
-                        styles.floatingEntriesTray,
-                        { borderRadius: profile.chrome.controlTray },
-                        {
-                          backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
-                        },
-                      ]}>
-                      {paneEntries('transparent')}
-                    </View>
-                  </Animated.View>
-                ) : null}
+                    {paneEntries('transparent')}
+                  </View>
+                </Animated.View>
+              ) : null}
 
-                {/*
+              {/*
             The editor's own controls, which are the dock's replacement and not
             a smaller dock. Absolutely positioned over the pane and measured into
             nothing, so opening and closing the panel cannot move the terminal --
             see `EditorControls` for why that constraint is the whole design.
           */}
-                {dock.editorMode ? (
-                  <EditorControls
-                    expanded={dock.editorPanel}
-                    onExpand={() => {
-                      Keyboard.dismiss();
-                      setKeyboardMode(true);
-                    }}
-                    offsetX={editorHandleX}
-                    offsetY={editorHandleY}
-                    keyboardOffset={keyboardOffset}
-                    // The floating header is chrome the cluster must not disappear
-                    // behind: the same clearance the grid itself takes above.
-                    topInset={insets.top + NAV_HEADER_TOP_GAP + 54}
-                    bottomInset={insets.bottom}
-                    disabled={!targetReady || connection.phase !== 'connected' || !selectedPane}>
-                    {editorPanelBody}
-                  </EditorControls>
-                ) : null}
+              {dock.editorMode ? (
+                <EditorControls
+                  expanded={dock.editorPanel}
+                  onExpand={() => {
+                    Keyboard.dismiss();
+                    setKeyboardMode(true);
+                  }}
+                  offsetX={editorHandleX}
+                  offsetY={editorHandleY}
+                  keyboardOffset={keyboardOffset}
+                  // The floating header is chrome the cluster must not disappear
+                  // behind: the same clearance the grid itself takes above.
+                  topInset={insets.top + NAV_HEADER_TOP_GAP + 54}
+                  bottomInset={insets.bottom}
+                  disabled={!targetReady || connection.phase !== 'connected' || !selectedPane}>
+                  {editorPanelBody}
+                </EditorControls>
+              ) : null}
 
-                {composerVisible && !dock.editorMode && !hideTerminalDock ? (
-                  <Animated.View
-                    style={[
-                      styles.composerOverlay,
-                      isPadLayout && styles.padComposerOverlay,
-                      composerKeyboardStyle,
-                    ]}>
-                    <EdgeFade
-                      edge="bottom"
-                      color={terminalBackground}
-                      style={styles.composerFade}
-                    />
-                    {/* Both of these hang off the caret in an input that is not on screen
+              {composerVisible && !dock.editorMode && !hideTerminalDock ? (
+                <Animated.View
+                  style={[
+                    styles.composerOverlay,
+                    isPadLayout && styles.padComposerOverlay,
+                    composerKeyboardStyle,
+                  ]}>
+                  <EdgeFade edge="bottom" color={terminalBackground} style={styles.composerFade} />
+                  {/* Both of these hang off the caret in an input that is not on screen
               while a question is standing, so both go with it. */}
-                    {mentionTrigger && dock.composer ? (
-                      <View
-                        style={[
-                          styles.composerFloatingContent,
-                          isPadLayout && styles.padComposerFloatingContent,
-                        ]}>
-                        <FileMentionPanel
-                          hits={mentionHits}
-                          query={mentionTrigger.query}
-                          visibleRows={isPadLayout ? 3 : undefined}
-                          onSelect={chooseMention}
-                        />
-                      </View>
-                    ) : null}
-                    {/* The pane's own command surface, above the dock so the keyboard
+                  {mentionTrigger && dock.composer ? (
+                    <View
+                      style={[
+                        styles.composerFloatingContent,
+                        isPadLayout && styles.padComposerFloatingContent,
+                      ]}>
+                      <FileMentionPanel
+                        hits={mentionHits}
+                        query={mentionTrigger.query}
+                        visibleRows={isPadLayout ? 3 : undefined}
+                        onSelect={chooseMention}
+                      />
+                    </View>
+                  ) : null}
+                  {/* The pane's own command surface, above the dock so the keyboard
                 never has to come down to read it. Everything about when it
                 opens, what it shows and what a tap inserts lives in
                 `composer-popup.ts`; this is only where it is hung. */}
-                    {dock.composer ? (
-                      <View style={[styles.composerPopup, isPadLayout && styles.padComposerPopup]}>
-                        <ComposerPopup
-                          rows={slashPopup.rows}
-                          onPick={slashPopup.pick}
-                          testIDPrefix="slash-command"
-                        />
-                      </View>
-                    ) : null}
-                    {attachmentMenuOpen && dock.attachEntry ? (
-                      <View
-                        style={[
-                          styles.composerFloatingContent,
-                          isPadLayout && styles.padComposerFloatingContent,
-                        ]}>
-                        <AttachmentMenu onSelect={chooseAttachmentSource} textColor={chromeText} />
-                      </View>
-                    ) : null}
-                    {/*
+                  {dock.composer ? (
+                    <View style={[styles.composerPopup, isPadLayout && styles.padComposerPopup]}>
+                      <ComposerPopup
+                        rows={slashPopup.rows}
+                        onPick={slashPopup.pick}
+                        testIDPrefix="slash-command"
+                      />
+                    </View>
+                  ) : null}
+                  {attachmentMenuOpen && dock.attachEntry ? (
+                    <View
+                      style={[
+                        styles.composerFloatingContent,
+                        isPadLayout && styles.padComposerFloatingContent,
+                      ]}>
+                      <AttachmentMenu onSelect={chooseAttachmentSource} textColor={chromeText} />
+                    </View>
+                  ) : null}
+                  {/*
               The key row and the input share one blurred dock, so output fades
               out under a single surface instead of passing behind two floating
               pieces with a gap between them.
             */}
-                    <GlassChrome
-                      surface="composer"
-                      shape="composerDock"
-                      style={[
-                        styles.composerDock,
-                        isPadLayout && styles.padComposerDock,
-                        {
-                          borderTopLeftRadius: profile.chrome.composerDock,
-                          borderTopRightRadius: profile.chrome.composerDock,
-                        },
-                        isPadLayout && { borderRadius: profile.chrome.composerDock },
-                      ]}>
-                      {/*
+                  <GlassChrome
+                    surface="composer"
+                    shape="composerDock"
+                    style={[
+                      styles.composerDock,
+                      isPadLayout && styles.padComposerDock,
+                      {
+                        borderTopLeftRadius: profile.chrome.composerDock,
+                        borderTopRightRadius: profile.chrome.composerDock,
+                      },
+                      isPadLayout && { borderRadius: profile.chrome.composerDock },
+                    ]}>
+                    {/*
               The dock's own height is a moving thing: an approval banner, the
               pane strip, the upload-wait row and a growing multiline input all
               live in here, and each of them used to change the dock's height
@@ -5300,95 +5305,95 @@ export function ServerTerminalWorkspace({
               surface covering it move together instead of the terminal snapping
               a beat after the dock.
             */}
-                      <Animated.View
-                        layout={dockRowLayout}
-                        onLayout={(event: LayoutChangeEvent) => {
-                          measureComposerHeight(Math.ceil(event.nativeEvent.layout.height));
-                        }}
-                        style={[
-                          styles.composerSafeArea,
-                          isPadLayout && styles.padComposerSafeArea,
-                          dockClearanceStyle,
-                        ]}>
-                        {/* Inside the dock rather than floating over the pane: the dock is
+                    <Animated.View
+                      layout={dockRowLayout}
+                      onLayout={(event: LayoutChangeEvent) => {
+                        measureComposerHeight(Math.ceil(event.nativeEvent.layout.height));
+                      }}
+                      style={[
+                        styles.composerSafeArea,
+                        isPadLayout && styles.padComposerSafeArea,
+                        dockClearanceStyle,
+                      ]}>
+                      {/* Inside the dock rather than floating over the pane: the dock is
                 measured into `composerHeight`, so the terminal reserves room
                 for the banner instead of having its last lines covered by it --
                 the same lesson the quick-actions pill taught. */}
-                        <ApprovalBanner
-                          approval={approval.state.approval}
-                          answeringIndex={approval.state.answeringIndex}
-                          error={approval.state.error}
-                          onAnswer={approval.answer}
-                          onDismissError={approval.dismissError}
-                          // The way out of the question, for exactly as long as the key row
-                          // that normally carries it is standing down for the banner.
-                          onEscape={
-                            dock.bannerEscape ? () => void sendTerminalKey(escapeKey) : undefined
-                          }
-                          escapeDisabled={
-                            !targetReady ||
-                            connection.phase !== 'connected' ||
-                            !selectedPane ||
-                            Boolean(sendingKey)
-                          }
-                          escapeSending={sendingKey === escapeKey.key}
-                        />
-                        {dock.paneChips && !isPadLayout ? (
-                          <Animated.ScrollView
-                            ref={paneStripRef}
-                            horizontal
-                            keyboardShouldPersistTaps="always"
-                            showsHorizontalScrollIndicator={false}
-                            scrollEventThrottle={32}
-                            onScroll={(event) => {
-                              paneStripOffsetRef.current = event.nativeEvent.contentOffset.x;
-                            }}
-                            onLayout={(event: LayoutChangeEvent) => {
-                              paneStripViewportRef.current = event.nativeEvent.layout.width;
-                              revealActivePaneChip();
-                            }}
-                            // The strip appears when a tab grows a second pane and leaves
-                            // when the on-screen keyboard takes the dock, or when an
-                            // approval clears the dock down to its own question. All three
-                            // used to be hard cuts, and the exit matters more than the
-                            // entrance: it is what the dock's height travels behind.
-                            entering={fadeIn('micro')}
-                            exiting={fadeOutDown('short')}
-                            style={styles.phonePaneStripViewport}
-                            contentContainerStyle={styles.paneStrip}>
-                            {paneChips}
-                          </Animated.ScrollView>
-                        ) : null}
-                        {dock.virtualKeyboard ? (
-                          // Rises out of the dock the way a keyboard does, and leaves the
-                          // same way: this swap replaces the whole key row, and a control
-                          // this large appearing between two frames read as a glitch.
-                          <Animated.View entering={riseIn()} exiting={fadeOutDown('short')}>
-                            <VirtualKeyboard
-                              key={`${serverId}:${data.sessionId}:${selection.paneId}`}
-                              disabled={
-                                !targetReady || connection.phase !== 'connected' || !selectedPane
-                              }
-                              onText={typeText}
-                              onKey={typeKey}
-                              onClose={() => setKeyboardMode(false)}
-                              shortcuts={keyboardShortcuts}
-                            />
-                          </Animated.View>
-                        ) : null}
-                        {!dock.virtualKeyboard ? (
-                          <>
-                            {isPadLayout && composerVisible && !dock.keyRow && dock.composer ? (
-                              <Animated.View
-                                entering={fadeInDown('short')}
-                                exiting={fadeOutDown('short')}
-                                layout={dockRowLayout}
-                                style={styles.keyRowWrap}>
-                                {padPaneSwitcher}
-                                {paneEntries(chromeGlass)}
-                              </Animated.View>
-                            ) : null}
-                            {/* The row exists to carry the terminal keys, so switching them off
+                      <ApprovalBanner
+                        approval={approval.state.approval}
+                        answeringIndex={approval.state.answeringIndex}
+                        error={approval.state.error}
+                        onAnswer={approval.answer}
+                        onDismissError={approval.dismissError}
+                        // The way out of the question, for exactly as long as the key row
+                        // that normally carries it is standing down for the banner.
+                        onEscape={
+                          dock.bannerEscape ? () => void sendTerminalKey(escapeKey) : undefined
+                        }
+                        escapeDisabled={
+                          !targetReady ||
+                          connection.phase !== 'connected' ||
+                          !selectedPane ||
+                          Boolean(sendingKey)
+                        }
+                        escapeSending={sendingKey === escapeKey.key}
+                      />
+                      {dock.paneChips && !isPadLayout ? (
+                        <Animated.ScrollView
+                          ref={paneStripRef}
+                          horizontal
+                          keyboardShouldPersistTaps="always"
+                          showsHorizontalScrollIndicator={false}
+                          scrollEventThrottle={32}
+                          onScroll={(event) => {
+                            paneStripOffsetRef.current = event.nativeEvent.contentOffset.x;
+                          }}
+                          onLayout={(event: LayoutChangeEvent) => {
+                            paneStripViewportRef.current = event.nativeEvent.layout.width;
+                            revealActivePaneChip();
+                          }}
+                          // The strip appears when a tab grows a second pane and leaves
+                          // when the on-screen keyboard takes the dock, or when an
+                          // approval clears the dock down to its own question. All three
+                          // used to be hard cuts, and the exit matters more than the
+                          // entrance: it is what the dock's height travels behind.
+                          entering={fadeIn('micro')}
+                          exiting={fadeOutDown('short')}
+                          style={styles.phonePaneStripViewport}
+                          contentContainerStyle={styles.paneStrip}>
+                          {paneChips}
+                        </Animated.ScrollView>
+                      ) : null}
+                      {dock.virtualKeyboard ? (
+                        // Rises out of the dock the way a keyboard does, and leaves the
+                        // same way: this swap replaces the whole key row, and a control
+                        // this large appearing between two frames read as a glitch.
+                        <Animated.View entering={riseIn()} exiting={fadeOutDown('short')}>
+                          <VirtualKeyboard
+                            key={`${serverId}:${data.sessionId}:${selection.paneId}`}
+                            disabled={
+                              !targetReady || connection.phase !== 'connected' || !selectedPane
+                            }
+                            onText={typeText}
+                            onKey={typeKey}
+                            onClose={() => setKeyboardMode(false)}
+                            shortcuts={keyboardShortcuts}
+                          />
+                        </Animated.View>
+                      ) : null}
+                      {!dock.virtualKeyboard ? (
+                        <>
+                          {isPadLayout && composerVisible && !dock.keyRow && dock.composer ? (
+                            <Animated.View
+                              entering={fadeInDown('short')}
+                              exiting={fadeOutDown('short')}
+                              layout={dockRowLayout}
+                              style={styles.keyRowWrap}>
+                              {padPaneSwitcher}
+                              {paneEntries(chromeGlass)}
+                            </Animated.View>
+                          ) : null}
+                          {/* The row exists to carry the terminal keys, so switching them off
                 takes the row with them and its two entries go and float in the
                 corner instead (see `floatingActions` below) -- a full-width
                 line of the pane is too much rent for two circles.
@@ -5400,131 +5405,145 @@ export function ServerTerminalWorkspace({
                 than vanishing, and the dock's own `listLayout` above carries
                 the height change into the terminal's bottom inset, so the
                 output falls in behind them instead of jumping a beat later. */}
-                            {composerVisible && dock.keyRow ? (
-                              <Animated.View
-                                entering={fadeInDown('short')}
-                                exiting={fadeOutDown('short')}
-                                layout={dockRowLayout}
-                                style={styles.keyRowWrap}>
-                                {/* The Pad's pane switcher keeps its own scroller --
+                          {composerVisible && dock.keyRow ? (
+                            <Animated.View
+                              entering={fadeInDown('short')}
+                              exiting={fadeOutDown('short')}
+                              layout={dockRowLayout}
+                              style={styles.keyRowWrap}>
+                              {/* The Pad's pane switcher keeps its own scroller --
                               nesting two horizontal ScrollViews would leave
                               neither able to say which one a drag belongs to. */}
-                                {isPadLayout ? padPaneSwitcher : null}
-                                {/* Everything else scrolls as one row. The entries
+                              {isPadLayout ? padPaneSwitcher : null}
+                              {/* Everything else scrolls as one row. The entries
                               used to be pinned to the left while only the keys
                               moved, which fixed the row's budget at whatever
                               four circles and the keys could fit -- so a fifth
                               control had nowhere to go, and on a narrow phone
                               the keys were already losing their tail. */}
-                                <ScrollView
-                                  horizontal
-                                  keyboardShouldPersistTaps="always"
-                                  showsHorizontalScrollIndicator={false}
-                                  contentContainerStyle={styles.keyRowScroller}>
-                                  {paneEntries(chromeGlass)}
-                                  <PressableScale
-                                    accessibilityLabel={t`Open on-screen keyboard`}
-                                    feedback="selection"
-                                    pressedScale={0.9}
-                                    onPress={() => {
-                                      Keyboard.dismiss();
-                                      setKeyboardMode(true);
-                                    }}
-                                    style={[
-                                      styles.keyRowToggle,
-                                      { borderRadius: profile.chrome.control },
-                                      { backgroundColor: surfaceBackground(chromeGlass) },
-                                    ]}>
-                                    {/* The pack's primary, like the four entries beside it: it
+                              <ScrollView
+                                horizontal
+                                keyboardShouldPersistTaps="always"
+                                showsHorizontalScrollIndicator={false}
+                                contentContainerStyle={styles.keyRowScroller}>
+                                {paneEntries(chromeGlass)}
+                                <PressableScale
+                                  accessibilityLabel={t`Open on-screen keyboard`}
+                                  feedback="selection"
+                                  pressedScale={0.9}
+                                  onPress={() => {
+                                    Keyboard.dismiss();
+                                    setKeyboardMode(true);
+                                  }}
+                                  style={[
+                                    styles.keyRowToggle,
+                                    { borderRadius: profile.chrome.control },
+                                    { backgroundColor: surfaceBackground(chromeGlass) },
+                                  ]}>
+                                  {/* The pack's primary, like the four entries beside it: it
                                   opens a surface, as they do. It was the text
                                   colour, which is what the key caps after it
                                   wear, and read as a dead button in a lit row. */}
-                                    <KeyboardIcon size={16} color={theme.colors.primary} />
-                                  </PressableScale>
-                                  {assignmentToggle}
-                                  {terminalKeyButtons}
-                                </ScrollView>
-                              </Animated.View>
-                            ) : null}
-                            {/* The files staged for the next message. They are not lost while
+                                  <KeyboardIcon size={16} color={theme.colors.primary} />
+                                </PressableScale>
+                                {assignmentToggle}
+                                {terminalKeyButtons}
+                              </ScrollView>
+                            </Animated.View>
+                          ) : null}
+                          {/* The files staged for the next message. They are not lost while
                 the dock is cleared -- nothing is unstaged, no upload is
                 cancelled -- they are simply not on screen for as long as the
                 pane is asking about something else. */}
-                            {dock.attachmentStrip ? (
-                              <Animated.View
-                                entering={fadeIn('micro')}
-                                exiting={fadeOutDown('short')}
-                                layout={dockRowLayout}>
-                                <AttachmentStrip
-                                  attachments={attachments}
-                                  onRemove={removeAttachment}
-                                  onRetry={retryUpload}
-                                  onPreview={setPreviewAttachmentId}
-                                  textColor={chromeText}
-                                />
-                              </Animated.View>
-                            ) : null}
-                            {/* Send tapped while a photo is still going up. Without this the
+                          {dock.attachmentStrip ? (
+                            <Animated.View
+                              entering={fadeIn('micro')}
+                              exiting={fadeOutDown('short')}
+                              layout={dockRowLayout}>
+                              <AttachmentStrip
+                                attachments={attachments}
+                                onRemove={removeAttachment}
+                                onRetry={retryUpload}
+                                onPreview={setPreviewAttachmentId}
+                                textColor={chromeText}
+                              />
+                            </Animated.View>
+                          ) : null}
+                          {/* Send tapped while a photo is still going up. Without this the
                 spinner on the button is indistinguishable from a slow gateway,
                 and the wait looks like a hang rather than a queue. */}
-                            {dock.composer && sending && attachmentsUploading ? (
-                              <Animated.View
-                                // It used to appear between two frames and shove the composer
-                                // down with it. The dock's own `listLayout` below takes the
-                                // height change; this takes the row.
-                                entering={fadeIn('micro')}
-                                exiting={fadeOut('micro')}
-                                layout={dockRowLayout}
-                                style={styles.uploadWait}>
-                                <Spinner size="sm" color={theme.colors.textMuted} />
-                                <Text variant="caption" color={theme.colors.textMuted}>
-                                  <Trans>Waiting for uploads to finish…</Trans>
-                                </Text>
-                              </Animated.View>
-                            ) : null}
-                          </>
-                        ) : null}
-                        {/* Written once, above: on an editor the same field floats in
+                          {dock.composer && sending && attachmentsUploading ? (
+                            <Animated.View
+                              // It used to appear between two frames and shove the composer
+                              // down with it. The dock's own `listLayout` below takes the
+                              // height change; this takes the row.
+                              entering={fadeIn('micro')}
+                              exiting={fadeOut('micro')}
+                              layout={dockRowLayout}
+                              style={styles.uploadWait}>
+                              <Spinner size="sm" color={theme.colors.textMuted} />
+                              <Text variant="caption" color={theme.colors.textMuted}>
+                                <Trans>Waiting for uploads to finish…</Trans>
+                              </Text>
+                            </Animated.View>
+                          ) : null}
+                        </>
+                      ) : null}
+                      {/* Written once, above: on an editor the same field floats in
                 the panel instead. `dock.composer` is what decides in both
                 places, and it accounts for the approval, the keyboard and the
                 editor alike. */}
-                        {assignmentBar}
-                        {dock.composer ? composerField : null}
-                      </Animated.View>
-                    </GlassChrome>
-                  </Animated.View>
-                ) : null}
+                      {assignmentBar}
+                      {dock.composer ? composerField : null}
+                    </Animated.View>
+                  </GlassChrome>
+                </Animated.View>
+              ) : null}
 
-                {previewIndex >= 0 ? (
-                  <ImagePreviewModal
-                    images={previewImages}
-                    initialIndex={previewIndex}
-                    onClose={() => setPreviewAttachmentId(null)}
-                  />
-                ) : null}
+              {previewIndex >= 0 ? (
+                <ImagePreviewModal
+                  images={previewImages}
+                  initialIndex={previewIndex}
+                  onClose={() => setPreviewAttachmentId(null)}
+                />
+              ) : null}
 
-                {openAsset ? (
-                  <AssetViewer asset={openAsset} onClose={() => setOpenAsset(null)} />
-                ) : null}
-              </View>
-              {simfarmSplit.previewWidth > 0 ? (
-                <View
-                  style={[
-                    styles.previewColumn,
-                    { width: simfarmSplit.previewWidth, borderLeftColor: theme.colors.border },
-                  ]}>
-                  <SimfarmPreview
-                    embedded
-                    gatewayUrl={record?.url}
-                    allowed={simfarmSplit.allowed}
-                    initialPort={simfarmPorts[record?.serverId ?? '']}
-                    onPortFound={rememberSimfarmPort}
-                  />
-                </View>
+              {openAsset ? (
+                <AssetViewer asset={openAsset} onClose={() => setOpenAsset(null)} />
               ) : null}
             </View>
-          )}
+            {simfarmSplit.previewWidth > 0 ? (
+              <View
+                style={[
+                  styles.previewColumn,
+                  { width: simfarmSplit.previewWidth, borderLeftColor: theme.colors.border },
+                ]}>
+                <SimfarmPreview
+                  embedded
+                  gatewayUrl={record?.url}
+                  allowed={simfarmSplit.allowed}
+                  initialPort={simfarmPorts[record?.serverId ?? '']}
+                  onPortFound={rememberSimfarmPort}
+                />
+              </View>
+            ) : null}
+          </View>
         </View>
+        {padDetail.kind === 'agent' ? (
+          <View
+            pointerEvents={overviewVisible ? 'none' : 'auto'}
+            accessibilityElementsHidden={overviewVisible}
+            importantForAccessibility={overviewVisible ? 'no-hide-descendants' : 'auto'}
+            style={[StyleSheet.absoluteFill, { opacity: overviewVisible ? 0 : 1 }]}>
+            <PadAgentDetail
+              detail={padDetail}
+              ready={selectedServer && tunnelReady}
+              visible={!overviewVisible}
+              topInset={insets.top + NAV_HEADER_TOP_GAP + 54}
+              bottomInset={insets.bottom}
+            />
+          </View>
+        ) : null}
         {overviewVisible ? (
           <View
             testID="home-overview-overlay"
