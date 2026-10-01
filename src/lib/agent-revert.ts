@@ -1,5 +1,5 @@
 import type { AgentFeatures, AgentSessionRevert, TimelineItem } from './agent-protocol';
-import { readAgentRequestError } from './agent-request-error';
+import { classifyAgentRequestError } from './agent-request-error';
 
 /**
  * What a staged rollback is about to do, counted from what is on screen.
@@ -99,7 +99,5 @@ export function agentRevertPath(
  * the one-step rollback. That is a route to take, not an error to show.
  */
 export function stagingUnsupported(err: unknown): boolean {
-  if (!err) return false;
-  const { status, code } = readAgentRequestError(err);
-  return status === 501 || code === 'feature_unsupported';
+  return Boolean(err) && classifyAgentRequestError(err).kind === 'unsupported';
 }

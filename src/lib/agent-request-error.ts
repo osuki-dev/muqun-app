@@ -21,6 +21,10 @@ export type AgentRequestError =
   | { kind: 'offline' }
   /** The agent answered, and said no; `message` is the gateway's, bounded. */
   | { kind: 'refused'; message: string }
+  /** `feature_unsupported` or `501`: this agent cannot do what was asked. */
+  | { kind: 'unsupported' }
+  /** `invalid_agent`: the gateway does not know the agent the app named. */
+  | { kind: 'unknown-agent' }
   /** Anything else, as it was thrown. */
   | { kind: 'other'; message: string };
 
@@ -72,7 +76,7 @@ function bound(text: string): string {
 }
 
 /** The HTTP status (0 when none) and the gateway's error code, read off a thrown request error. */
-export function readAgentRequestError(err: unknown): {
+function readAgentRequestError(err: unknown): {
   raw: string;
   match: RegExpMatchArray | null;
   status: number;
@@ -87,6 +91,11 @@ export function readAgentRequestError(err: unknown): {
 
 export function classifyAgentRequestError(err: unknown): AgentRequestError {
   const { raw, match, status, code, message } = readAgentRequestError(err);
+
+  // Both are answers about the request, not about whether the agent is up:
+  // checked first, so neither reads as "offline" or as a generic refusal.
+  if (code === 'feature_unsupported' || (status === 501 && !code)) return { kind: 'unsupported' };
+  if (code === 'invalid_agent') return { kind: 'unknown-agent' };
 
   if (code === 'agent_unavailable') return { kind: 'offline' };
   if (UNREACHABLE_AGENT.some((needle) => raw.includes(needle))) return { kind: 'offline' };

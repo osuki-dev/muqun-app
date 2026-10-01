@@ -69,3 +69,29 @@ describe('classifyAgentRequestError', () => {
     expect(isAgentOfflineError(err)).toBe(false);
   });
 });
+
+describe('codes with a sentence of their own', () => {
+  test('feature_unsupported is the agent lacking the action, whatever the status', () => {
+    expect(
+      classifyAgentRequestError(
+        refusal(501, 'feature_unsupported', 'This agent does not support: stage_revert')
+      )
+    ).toEqual({ kind: 'unsupported' });
+    expect(classifyAgentRequestError(refusal(400, 'feature_unsupported', 'nope')).kind).toBe(
+      'unsupported'
+    );
+  });
+
+  test('a bare 501 is the same answer', () => {
+    expect(classifyAgentRequestError(new Error('Failed to stage revert: 501 '))).toEqual({
+      kind: 'unsupported',
+    });
+  });
+
+  test('invalid_agent is a gateway that does not know the agent', () => {
+    expect(classifyAgentRequestError(refusal(404, 'invalid_agent', 'Unknown agent: t3'))).toEqual({
+      kind: 'unknown-agent',
+    });
+    expect(isAgentOfflineError(refusal(400, 'invalid_agent', 'Unknown agent: t3'))).toBe(false);
+  });
+});
