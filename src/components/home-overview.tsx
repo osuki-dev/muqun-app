@@ -693,7 +693,7 @@ export function HomeOverview({
     editorialArtworkTop?.source === editorialArtworkResolution?.source;
   if (homeLayout !== 'classic' || isPad) {
     // Same width and predicate the layout resolves for itself: the Pad cover
-    // spread lists six Continue rows in its work column; other layouts keep theirs.
+    // spread lists eight Continue rows in its work column; other layouts keep theirs.
     const editorialViewportHeight = windowHeight - insets.top - insets.bottom - 24;
     const padGeometry = getEditorialLayoutGeometry(
       Math.min(editorialWidth || width, isPad ? EDITORIAL_PAD_MAX_WIDTH : EDITORIAL_MAX_WIDTH)
@@ -838,7 +838,7 @@ export function HomeOverview({
               recent={
                 !loading && !hydrationError ? (
                   <HomeRecentSessions
-                    limit={padLaunch ? 6 : undefined}
+                    limit={padLaunch ? 8 : undefined}
                     selectedServerId={launchController.chosen?.serverId}
                     servers={records}
                     hosts={sshRows}
