@@ -350,8 +350,9 @@ function navigateHome(
       return;
     case 'agent': {
       const href = homeAgentHref(destination.target, destination.intent, isPad);
-      // `navigate`, not `push`: on a Pad an already-open workspace for this
-      // server takes the params in place rather than stacking a second one.
+      // `navigate`, not `push`: when the top route is already this server's
+      // workspace it takes the params in place rather than stacking a second
+      // one. A different server's workspace is still pushed.
       if (isPad) router.navigate(href as Href);
       else router.push(href as Href);
       return;

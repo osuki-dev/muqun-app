@@ -869,7 +869,7 @@ export function ServerTerminalWorkspace({
   // pane. A route-bound workspace is replaced (as the phone would have it);
   // the root Home owner stays under the pushed screen.
   const compactAgentDetail =
-    !isPadLayout && isFocused && padDetail.kind === 'agent' ? padDetail : null;
+    !isPadLayout && isFocused && !overviewVisible && padDetail.kind === 'agent' ? padDetail : null;
   useEffect(() => {
     if (!compactAgentDetail) return;
     padDispatch({ type: 'open-pane' });

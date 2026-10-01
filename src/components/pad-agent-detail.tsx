@@ -1,4 +1,4 @@
-import { type MutableRefObject, useEffect, useRef, useState } from 'react';
+import { type MutableRefObject, useEffect, useRef } from 'react';
 import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens } from '@osuki-dev/ui';
 import { type Href, useIsFocused, usePathname, useRouter } from 'expo-router';
@@ -73,11 +73,11 @@ export function PadAgentDetail({ detail, ready, visible, controls }: Props) {
     consumeNewAgentIntent(intentServerId, intentDirectory);
   }, [intentDirectory, intentNonce, intentServerId, newIntent]);
 
-  const live = usePadAgentRouteLive();
+  const routeVisible = usePadAgentRouteVisible();
 
   return (
     <View testID="pad-agent-detail" style={StyleSheet.absoluteFill}>
-      {ready && live ? (
+      {ready ? (
         <AgentWorkbench
           key={JSON.stringify([
             detail.serverId,
@@ -94,7 +94,7 @@ export function PadAgentDetail({ detail, ready, visible, controls }: Props) {
           initialDirectory={detail.directory}
           initialAgentId={detail.agentId}
           initialIntent={detail.intent}
-          visible={visible}
+          visible={visible && routeVisible}
           topInset={insets.top + HEADER_INSET}
           bottomInset={insets.bottom}
           createNewSessionRef={controls.createNewSessionRef}
@@ -116,28 +116,24 @@ export function PadAgentDetail({ detail, ready, visible, controls }: Props) {
 }
 
 /**
- * Whether this workspace's route may hold a live workbench.
+ * Whether the workbench is on screen as far as navigation is concerned: the
+ * same test `/agent` makes for `workbenchVisible`.
  *
- * Focused, or covered only by one of the workbench's own sheets that was
- * opened from here. A workspace frozen under another route (a second
- * workspace, Settings) drops its workbench, so it never keeps streaming a
- * session nobody can see; it mounts again when the route is focused.
+ * Focused, or covered only by one of the workbench's own sheets. Under any
+ * other pushed screen (Settings, Pair, SSH) the workbench stays mounted --
+ * a draft or a session switched from the Sessions sheet survives the trip --
+ * and `visible=false` hands back its global bridges and stops its foreground
+ * work until the route is focused again.
  */
-function usePadAgentRouteLive(): boolean {
+function usePadAgentRouteVisible(): boolean {
   const isFocused = useIsFocused();
   const pathname = usePathname();
   const rootRouteName = useRootRouteName();
-  const ownedOverlay =
-    isAgentWorkbenchOwnedRootRoute(rootRouteName) || isAgentWorkbenchOwnedOverlayPath(pathname);
-  // Set while focused; cleared once the route blurs to anything but a sheet
-  // of the workbench, so a frozen instance cannot revive under someone
-  // else's sheet.
-  const [held, setHeld] = useState(isFocused);
-  useEffect(() => {
-    if (isFocused) setHeld(true);
-    else if (!ownedOverlay) setHeld(false);
-  }, [isFocused, ownedOverlay]);
-  return isFocused || (held && ownedOverlay);
+  return (
+    isFocused ||
+    isAgentWorkbenchOwnedRootRoute(rootRouteName) ||
+    isAgentWorkbenchOwnedOverlayPath(pathname)
+  );
 }
 
 /**
