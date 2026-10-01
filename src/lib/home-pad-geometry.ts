@@ -39,3 +39,33 @@ export function padHeroHeight(viewportHeight: number): number {
   }
   return Math.max(320, viewportHeight - 300);
 }
+
+/**
+ * Splits the Pad hero between the cover title and the drawing. The title keeps
+ * its width-fitted height up to 30% of a hero under 520 (40% from 520), and the
+ * drawing gets the rest: it starts 35% of the title's height up into it.
+ */
+export function padHeroSplit(
+  heroHeight: number,
+  fittedTitleHeight: number,
+  hasTitle: boolean
+): { titleHeight: number; artworkMaxHeight: number } {
+  if (!hasTitle) return { titleHeight: 0, artworkMaxHeight: heroHeight };
+  const titleHeight = Math.min(fittedTitleHeight, heroHeight * (heroHeight < 520 ? 0.3 : 0.4));
+  return { titleHeight, artworkMaxHeight: Math.max(0, heroHeight - titleHeight * 0.65) };
+}
+
+/**
+ * The artwork's drawing box. Over the cap the whole natural box scales down
+ * (width with it), so the composition is shrunk rather than cropped.
+ */
+export function fitArtworkBox(
+  width: number,
+  naturalHeight: number,
+  maxHeight: number | undefined
+): { width: number; height: number } {
+  if (maxHeight === undefined || naturalHeight <= maxHeight || naturalHeight <= 0) {
+    return { width, height: naturalHeight };
+  }
+  return { width: (width * maxHeight) / naturalHeight, height: maxHeight };
+}

@@ -2,6 +2,7 @@ import { useCallback, useEffect } from 'react';
 import { useLingui } from '@lingui/react/macro';
 import { useNavigation, useRouter, type Href } from 'expo-router';
 import { useToast } from '@osuki-dev/ui';
+import { useWindowDimensions } from 'react-native';
 
 import { useGatewayRecord } from '@/hooks/use-gateway-record';
 import { useLatestRef, useLazyRef } from '@/hooks/use-render-refs';
@@ -26,6 +27,8 @@ import { encodeSessionChoices, resolveSessionId, sessionChoices } from '@/lib/se
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';
 import { isDemoRecord } from '@/lib/demo-gateway';
 import { useServerSession } from '@/stores/server-session';
+import { homeAgentHref } from '@/lib/pad-detail';
+import { responsiveWorkspaceLayout } from '@/lib/responsive-layout';
 import { useSshHostsStore } from '@/stores/ssh-hosts';
 import { homeWorkspaceHandoffStore } from '@/lib/home-workspace-handoff';
 
@@ -92,6 +95,8 @@ export function useHomeCommands(options: HomeCommandOptions = {}): HomeCommands 
   const navigation = useNavigation();
   const router = useRouter();
   const { record, records, selectRecordNow, selectRecord } = useGatewayRecord();
+  // The same test `/agent` makes: on a Pad the workspace owns agent detail.
+  const isPad = responsiveWorkspaceLayout(useWindowDimensions().width).mode === 'pad';
   const latest = useLatestRef({
     record,
     records,
@@ -100,6 +105,7 @@ export function useHomeCommands(options: HomeCommandOptions = {}): HomeCommands 
     router,
     navigation,
     options,
+    isPad,
   });
   const controller = useLazyRef(() =>
     createHomeCommandController({
@@ -149,7 +155,12 @@ export function useHomeCommands(options: HomeCommandOptions = {}): HomeCommands 
           inPlace(destination.target, destination.intent);
           return;
         }
-        navigateHome(latest.current.router, destination, latest.current.options.embedded === true);
+        navigateHome(
+          latest.current.router,
+          destination,
+          latest.current.options.embedded === true,
+          latest.current.isPad
+        );
       },
       resumeServer: async (target, isCurrent) => {
         if (latest.current.options.embedded) {
@@ -319,7 +330,8 @@ async function loadTerminalSelection(records: readonly GatewayRecord[], serverId
 function navigateHome(
   router: ReturnType<typeof useRouter>,
   destination: HomeNavigation,
-  embedded = false
+  embedded = false,
+  isPad = false
 ): void {
   switch (destination.type) {
     case 'server':
@@ -336,19 +348,15 @@ function navigateHome(
         },
       } as Href);
       return;
-    case 'agent':
-      router.push({
-        pathname: '/agent',
-        params: {
-          server: destination.target.serverId,
-          ...(destination.target.sessionId ? { sessionId: destination.target.sessionId } : {}),
-          ...(destination.target.asid ? { asid: destination.target.asid } : {}),
-          ...(destination.target.directory ? { directory: destination.target.directory } : {}),
-          ...(destination.target.agentId ? { agentId: destination.target.agentId } : {}),
-          ...(destination.intent === 'new' ? { intent: 'new' } : {}),
-        },
-      });
+    case 'agent': {
+      const href = homeAgentHref(destination.target, destination.intent, isPad);
+      // `navigate`, not `push`: when the top route is already this server's
+      // workspace it takes the params in place rather than stacking a second
+      // one. A different server's workspace is still pushed.
+      if (isPad) router.navigate(href as Href);
+      else router.push(href as Href);
       return;
+    }
     case 'panels':
       router.push({
         pathname: '/panels',

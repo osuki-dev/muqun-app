@@ -1,4 +1,4 @@
-import type { HomeAgentEntry } from '@/lib/home-commands';
+import type { HomeAgentEntry, HomeServerEntry } from '@/lib/home-commands';
 
 export type PadDetail =
   | { kind: 'pane' }
@@ -127,4 +127,100 @@ export function padAgentRedirectParams(params: {
   if (params.agentId) out.agentId = params.agentId;
   if (params.intent === 'new') out.intent = 'new';
   return out;
+}
+
+/** The workspace route's params for an agent session: `/servers/[serverId]` with the agent named. */
+export function padAgentRouteParams(
+  target: HomeAgentEntry,
+  intent: 'existing' | 'new'
+): Record<string, string> {
+  return padAgentRedirectParams({
+    server: target.serverId,
+    sessionId: target.sessionId,
+    asid: intent === 'new' ? undefined : target.asid,
+    directory: target.directory,
+    agentId: target.agentId,
+    intent: intent === 'new' ? 'new' : undefined,
+  });
+}
+
+/**
+ * Where a Home agent destination goes.
+ *
+ * On a Pad the workspace owns agent detail, so the destination is that route
+ * directly -- going by `/agent` painted a blank page and then a second
+ * transition when it forwarded. A phone keeps its own `/agent` screen.
+ */
+export function homeAgentHref(
+  target: HomeAgentEntry,
+  intent: 'existing' | 'new',
+  isPad: boolean
+): { pathname: '/servers/[serverId]' | '/agent'; params: Record<string, string> } {
+  const params = padAgentRouteParams(target, intent);
+  if (isPad) return { pathname: '/servers/[serverId]', params };
+  const { serverId, ...rest } = params;
+  return { pathname: '/agent', params: { server: serverId, ...rest } };
+}
+
+/** An agent session carried through the Home workspace handoff. */
+export type PadAgentHandoff = { target: HomeAgentEntry; intent: 'existing' | 'new' };
+
+/**
+ * What `/servers/[serverId]` hands the root Home workspace when that owner is
+ * the one alive.
+ *
+ * An agent route (an `asid`, or `intent=new`) carries its session through, so
+ * the owner opens it in its detail column; the terminal target is then only
+ * the server, so the owner's terminal selection is left as it was.
+ */
+export function padRouteHandoff(params: {
+  serverId: string;
+  sessionId?: string;
+  workspaceId?: string;
+  tabId?: string;
+  paneId?: string;
+  asid?: string;
+  directory?: string;
+  agentId?: string;
+  intent?: string;
+}): { target: HomeServerEntry; agent?: PadAgentHandoff } {
+  const { serverId } = params;
+  if (params.asid || params.intent === 'new') {
+    const intent = params.intent === 'new' ? 'new' : 'existing';
+    return {
+      target: { kind: 'gateway-terminal', serverId },
+      agent: {
+        target: {
+          kind: 'agent-session',
+          serverId,
+          ...(params.sessionId ? { sessionId: params.sessionId } : {}),
+          ...(params.asid && intent !== 'new' ? { asid: params.asid } : {}),
+          ...(params.directory ? { directory: params.directory } : {}),
+          ...(params.agentId ? { agentId: params.agentId } : {}),
+        },
+        intent,
+      },
+    };
+  }
+  return {
+    target: {
+      kind: 'gateway-terminal',
+      serverId,
+      ...(params.sessionId ? { sessionId: params.sessionId } : {}),
+      ...(params.workspaceId ? { workspaceId: params.workspaceId } : {}),
+      ...(params.tabId ? { tabId: params.tabId } : {}),
+      ...(params.paneId ? { paneId: params.paneId } : {}),
+    },
+  };
+}
+
+/** The phone `/agent` params for an agent detail, when a Pad narrows to compact. */
+export function phoneAgentParams(
+  detail: Extract<PadDetail, { kind: 'agent' }>
+): Record<string, string> {
+  const { serverId, ...rest } = padAgentRouteParams(
+    { ...detail, kind: 'agent-session' },
+    detail.intent === 'new' ? 'new' : 'existing'
+  );
+  return { server: serverId, ...rest };
 }

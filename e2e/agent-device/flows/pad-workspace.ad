@@ -97,6 +97,12 @@ press "text=\"Root session\""
 wait "id=\"pad-agent-detail\"" 10000
 is visible "id=\"pad-server-rail-container\""
 is hidden "id=\"home-overview-overlay\""
+# The rail's row for this gateway brings its pane back; the rail stays.
+press "id=\"home-connection-gateway-muqun-demo\""
+wait absent "id=\"pad-agent-detail\"" 10000
+wait "label=\"Switch to nvim\"" 10000
+is visible "label=\"Switch to nvim\""
+is visible "id=\"pad-server-rail-container\""
 press "id=\"pad-server-rail-workbench\""
 wait "id=\"home-overview-overlay\"" 10000
 is hidden "id=\"pad-server-rail-container\""
