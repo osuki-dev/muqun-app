@@ -12,7 +12,11 @@ import { StatusDot } from '@/components/status-dot';
 import { Text } from '@/components/text';
 import { ThemeIcon } from '@/components/theme-icon';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
-import { refreshHomeContinue, refreshHomeGateways } from '@/lib/home-continue-refresh';
+import {
+  HOME_CONTINUE_REFRESH_MS,
+  refreshHomeContinue,
+  refreshHomeGateways,
+} from '@/lib/home-continue-refresh';
 import { useAppActive } from '@/hooks/use-app-active';
 import { loadRecordSessions, readGatewayRecordJson } from '@/lib/gateway-client';
 import { resolveSessionId, sessionChoices } from '@/lib/session-switcher';
@@ -43,10 +47,6 @@ import type { SshHostRecord } from '@/lib/ssh-hosts';
 import { useHomeRecentsStore } from '@/stores/home-recents';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { settleAfter } from '@/lib/compiler-safe-control-flow';
-import { scheduleHomeRefresh } from '@/lib/home-refresh-schedule';
-import { useHomeRefreshPause } from '@/hooks/use-home-refresh-pause';
-
-const HOME_SESSION_REFRESH_MS = 30_000;
 
 /** Shared Classic pane inventory, ranked by explicit visits without recording synthetic visits. */
 export function HomeRecentSessions({
@@ -93,7 +93,6 @@ export function HomeRecentSessions({
     targetId ? state.byServer[targetId] : undefined
   );
   const appActive = useAppActive();
-  const pause = useHomeRefreshPause();
   const refreshFlight = useRef<Promise<void>>(Promise.resolve());
   useFocusEffect(
     useCallback(() => {
@@ -152,18 +151,15 @@ export function HomeRecentSessions({
         );
       };
       setObservationNowMs(Date.now());
-      const stop = scheduleHomeRefresh({
-        intervalMs: HOME_SESSION_REFRESH_MS,
-        pause,
-        refresh: () => {
-          void refresh();
-        },
-      });
+      void refresh();
+      const timer = setInterval(() => {
+        void refresh();
+      }, HOME_CONTINUE_REFRESH_MS);
       return () => {
         current = false;
-        stop();
+        clearInterval(timer);
       };
-    }, [servers, targetId, hydrated, appActive, pause])
+    }, [servers, targetId, hydrated, appActive])
   );
   const available = homeContinueEntries({
     serverIds: servers.map((server) => server.serverId),

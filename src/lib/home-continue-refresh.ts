@@ -8,6 +8,12 @@ import {
 import type { HomeRecentEntry, HomeTarget, HomeSessionObservation } from './home-recents';
 import { mirroredServerPanes, type ServerAgentsSnapshot } from './server-agents';
 
+/**
+ * How often Home re-reads Continue, and how often an open terminal re-stamps
+ * its visit so it keeps ranking as recent while the user stays on it.
+ */
+export const HOME_CONTINUE_REFRESH_MS = 30_000;
+
 /** Bound reads and publication to one explicit Home selection, never the live connection. */
 export async function refreshHomeContinue({
   serverId,
