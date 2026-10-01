@@ -350,7 +350,9 @@ function snapshotCoversSession(
  * snapshot: either its pane is a snapshot row (which carries the visit), or
  * the snapshot is for the same Herdr session and the pane is gone from it.
  * A pane the pane filter hides, or one in another session, keeps its recent
- * row -- the user went there, so Continue offers it back.
+ * row -- the user went there, so Continue offers it back. A snapshot written
+ * before it recorded its session keeps the old rule: it supersedes every
+ * terminal recent for its server.
  */
 export function supersededTerminalRecent(
   target: GatewayTerminalTarget,
@@ -358,7 +360,9 @@ export function supersededTerminalRecent(
   paneMode: HomeServerPaneMode
 ): boolean {
   const snapshot = candidate?.serverId === target.serverId ? candidate : undefined;
-  if (!snapshot || !snapshotCoversSession(snapshot, target.sessionId)) return false;
+  if (!snapshot) return false;
+  if (snapshot.sessionId === undefined) return true;
+  if (snapshot.sessionId !== target.sessionId) return false;
   const pane = snapshot.agents.find((agent) => agent.paneId === target.paneId);
   if (!pane) return true;
   return paneMode === 'all' || pane.hasAgent;
