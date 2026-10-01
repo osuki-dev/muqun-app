@@ -3,7 +3,7 @@ import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens } from '@osuki-dev/ui';
 import { ChevronRight } from 'lucide-react-native';
 import { useCallback, useRef, useState } from 'react';
-import { AppState, StyleSheet, View } from 'react-native';
+import { AppState, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 
 import { AgentMark } from '@/components/agent-mark';
@@ -55,6 +55,7 @@ export function HomeRecentSessions({
   selectedServerId,
   compact = false,
   limit,
+  linkStyle,
   selectedPaneId,
   selectedAsid,
   onOpen,
@@ -67,6 +68,8 @@ export function HomeRecentSessions({
   compact?: boolean;
   /** Rows shown before the `Sessions (N)` toggle; compact lists default to four. */
   limit?: number;
+  /** Overrides the `Sessions (N)` link's box, e.g. to inset it like the rows. */
+  linkStyle?: StyleProp<ViewStyle>;
   selectedPaneId?: string;
   selectedAsid?: string;
   /** Runs the row's Home command; see `homeContinueCommand`. */
@@ -219,7 +222,7 @@ export function HomeRecentSessions({
           testID="home-recent-sessions-more"
           accessibilityRole="button"
           onPress={() => setExpanded(!expanded)}
-          style={styles.more}>
+          style={[styles.more, linkStyle]}>
           <Text variant="bodySmall" color={theme.colors.primary}>
             {expanded ? t`Show less` : `${t`Sessions`} (${available.length})`}
           </Text>

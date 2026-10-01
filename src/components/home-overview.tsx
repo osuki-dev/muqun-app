@@ -140,6 +140,12 @@ export type HomeOverviewProps = {
   onOpenAgentInPlace?: HomeCommandOptions['openAgentInPlace'];
 };
 
+/**
+ * The work column's trailing links ("Sessions (N)", "Manage connections"): text
+ * 12 under the card (the 44 tap box centres it) and inset to the rows' text.
+ */
+const PAD_WORK_LINK = { marginTop: 0, paddingVertical: 0, paddingHorizontal: 12 } as const;
+
 export function HomeOverview({
   width,
   layoutMode,
@@ -853,6 +859,7 @@ export function HomeOverview({
                 !loading && !hydrationError ? (
                   <HomeRecentSessions
                     limit={padLaunch ? 8 : undefined}
+                    linkStyle={padLaunch ? PAD_WORK_LINK : undefined}
                     selectedServerId={launchController.chosen?.serverId}
                     servers={records}
                     hosts={sshRows}
@@ -888,6 +895,7 @@ export function HomeOverview({
                     }}
                     activeConnection={activeConnection}
                     nowMs={nowMs}
+                    linkStyle={padLaunch ? PAD_WORK_LINK : undefined}
                   />
                 ) : undefined
               }
