@@ -212,6 +212,14 @@ describe('readiness', () => {
     expect(agentReadiness({ status, enabled: true })).toBe(readiness);
   });
 
+  test('an unpaired T3 (unconfigured) is unsupported, not offline, and not offered', () => {
+    const t3 = agent({ id: 't3', status: 'unconfigured' });
+    expect(agentReadiness(t3)).toBe('unsupported');
+    expect(resolveSelectedAgent('t3', { agents: [t3, agent({ id: 'opencode' })] })).toBe(
+      'opencode'
+    );
+  });
+
   test('a disabled agent is unsupported whatever its status says', () => {
     expect(agentReadiness({ status: 'connected', enabled: false })).toBe('unsupported');
   });

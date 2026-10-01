@@ -4734,8 +4734,8 @@ msgid "Start DeepSeek on the gateway host, then check again."
 msgstr "Starten Sie DeepSeek auf dem Gateway-Host und prüfen Sie dann erneut"
 
 #: src/i18n/labels.ts
-msgid "Start T3 Code on the gateway host, then check again."
-msgstr "Starten Sie T3 Code auf dem Gateway-Host und prüfen Sie dann erneut"
+msgid "Start T3 Code on the gateway host. Then run t3 pair, set the token it prints as t3.pairing_token in the gateway config, restart the gateway and check again."
+msgstr "Starten Sie T3 Code auf dem Gateway-Host. Führen Sie dann t3 pair aus, tragen Sie das ausgegebene Token als t3.pairing_token in die Gateway-Konfiguration ein, starten Sie das Gateway neu und prüfen Sie erneut"
 
 #: src/components/new-task-sheet.tsx
 msgid "Start task"
