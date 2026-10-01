@@ -8,9 +8,9 @@ import AppDrawer from '@/components/app-drawer';
 import { ServerTerminalWorkspace } from '@/components/server-terminal-workspace';
 import { Text } from '@/components/text';
 import { useGatewayRecord } from '@/hooks/use-gateway-record';
-import type { HomeServerEntry } from '@/lib/home-commands';
 import { homeWorkspaceHostStore, homeWorkspaceRouteMode } from '@/lib/home-workspace-owner';
 import { homeWorkspaceHandoffStore } from '@/lib/home-workspace-handoff';
+import { padRouteHandoff } from '@/lib/pad-detail';
 import { usePanelPickerStore } from '@/stores/panel-picker';
 import { useServerSession } from '@/stores/server-session';
 
@@ -29,18 +29,30 @@ export default function ServerScreen() {
     workspaceId: rawWorkspaceId,
     tabId: rawTabId,
     paneId: rawPaneId,
+    asid: rawAsid,
+    directory: rawDirectory,
+    agentId: rawAgentId,
+    intent: rawIntent,
   } = useLocalSearchParams<{
     serverId: string;
     sessionId?: string;
     workspaceId?: string;
     tabId?: string;
     paneId?: string;
+    asid?: string;
+    directory?: string;
+    agentId?: string;
+    intent?: string;
   }>();
   const serverId = param(rawServerId);
   const sessionId = param(rawSessionId);
   const workspaceId = param(rawWorkspaceId);
   const tabId = param(rawTabId);
   const paneId = param(rawPaneId);
+  const asid = param(rawAsid);
+  const directory = param(rawDirectory);
+  const agentId = param(rawAgentId);
+  const intent = param(rawIntent);
   const router = useRouter();
   const { selectRecord, selectRecordNow } = useGatewayRecord();
   const rootOwnerServerId = useSyncExternalStore(
@@ -66,22 +78,28 @@ export default function ServerScreen() {
     // These stores are the existing route-to-owner bridge. Write the complete
     // destination before selecting the record so a frozen Home owner cannot
     // paint its remembered pane for one frame before the requested target.
-    if (sessionId) useServerSession.getState().chooseSession({ serverId, sessionId });
-    if (paneId) usePanelPickerStore.getState().choosePanel({ serverId, paneId });
-    const target: HomeServerEntry = {
-      kind: 'gateway-terminal',
+    // An agent route (`asid`, `intent=new`) carries its session through the
+    // handoff instead, and leaves the owner's terminal selection alone.
+    const { target, agent } = padRouteHandoff({
       serverId,
-      ...(sessionId ? { sessionId } : {}),
-      ...(workspaceId ? { workspaceId } : {}),
-      ...(tabId ? { tabId } : {}),
-      ...(paneId ? { paneId } : {}),
-    };
+      sessionId,
+      workspaceId,
+      tabId,
+      paneId,
+      asid,
+      directory,
+      agentId,
+      intent,
+    });
+    if (!agent && sessionId) useServerSession.getState().chooseSession({ serverId, sessionId });
+    if (!agent && paneId) usePanelPickerStore.getState().choosePanel({ serverId, paneId });
     const handoffId = homeWorkspaceHandoffStore
       .getState()
       .publish(
         target,
         () => active && request === transferRequest.current,
-        rootOwnerServerId ?? undefined
+        rootOwnerServerId ?? undefined,
+        agent
       );
 
     const returnToHome = (selected: boolean) => {
@@ -127,6 +145,10 @@ export default function ServerScreen() {
         homeWorkspaceHandoffStore.getState().clear();
     };
   }, [
+    agentId,
+    asid,
+    directory,
+    intent,
     paneId,
     routeMode,
     rootOwnerServerId,
