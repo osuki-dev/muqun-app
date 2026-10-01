@@ -3,6 +3,7 @@ import { describe, expect, test } from 'bun:test';
 import { EMPTY_CATALOG, parseGatewayDiscovery } from '../agent-protocol';
 import {
   agentGuideBlurb,
+  agentGuideCommand,
   checkAgentReadiness,
   showsAgentSetupCommand,
   type AgentReadinessPorts,
@@ -288,5 +289,22 @@ describe('what the guide says', () => {
     const readiness = { status: 'unsupported', ...common } as const;
     expect(agentGuideBlurb(readiness)).toBe('unsupported');
     expect(showsAgentSetupCommand(readiness)).toBe(false);
+  });
+});
+
+describe('the command the guide offers', () => {
+  const t3 = { command: 't3 serve', setupCommand: 't3 pair' };
+
+  test('an agent that needs setup is given its setup step, not its start command', () => {
+    expect(agentGuideCommand(t3, 'needs-setup')).toBe('t3 pair');
+  });
+
+  test('a stopped service is given the start command', () => {
+    expect(agentGuideCommand(t3, 'offline')).toBe('t3 serve');
+  });
+
+  test('a kind without a setup step keeps its start command throughout', () => {
+    expect(agentGuideCommand({ command: 'opencode serve' }, 'needs-setup')).toBe('opencode serve');
+    expect(agentGuideCommand({}, 'needs-setup')).toBeUndefined();
   });
 });

@@ -101,3 +101,22 @@ export function agentRevertPath(
 export function stagingUnsupported(err: unknown): boolean {
   return Boolean(err) && classifyAgentRequestError(err).kind === 'unsupported';
 }
+
+/** A one-step rollback the reader is being asked about, pinned to its session. */
+export interface OneStepRevertRequest {
+  asid: string;
+  messageId: string;
+}
+
+/**
+ * The rollback to perform once the reader confirms, or `null` when it must
+ * not run: the screen has moved to another session (or to none) since the
+ * question was asked, and the message id belongs to the session it came from.
+ */
+export function oneStepRevertTarget(
+  request: OneStepRevertRequest | null,
+  activeAsid: string | undefined
+): OneStepRevertRequest | null {
+  if (!request || !activeAsid || request.asid !== activeAsid) return null;
+  return request;
+}

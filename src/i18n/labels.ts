@@ -399,6 +399,11 @@ export type AgentGuideCopy = {
   start: MessageDescriptor;
   /** The command to copy, when the kind has one. Shell text, never translated. */
   command?: string;
+  /**
+   * The command to copy instead when the agent is running but needs setup
+   * (`needs-setup`), when that step differs from starting it.
+   */
+  setupCommand?: string;
   /** Where the agent is installed from, when the kind has a page for it. */
   installUrl?: string;
 };
@@ -419,11 +424,14 @@ export const agentGuideCopy: Record<string, AgentGuideCopy> = {
     command: 'bunx @deepseek-ai/dsh web',
   },
   // T3 is not `connected` until the gateway holds a pairing token, so the
-  // sentence carries the second step. The copyable command stays the one that
-  // starts the server: pasted as two lines, `t3 pair` would wait behind it.
+  // sentence carries the second step. A stopped T3 is offered the command that
+  // starts it; one that is running but unpaired (`needs-setup`) is offered
+  // `t3 pair`. Never both at once: pasted as two lines, `t3 pair` would wait
+  // behind the server.
   t3: {
     start: msg`Start T3 Code on the gateway host. Then run t3 pair, set the token it prints as t3.pairing_token in the gateway config, restart the gateway and check again.`,
     command: 't3 serve',
+    setupCommand: 't3 pair',
   },
 };
 

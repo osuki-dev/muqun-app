@@ -65,6 +65,17 @@ export function agentGuideBlurb(readiness: AgentReadiness): AgentGuideBlurb {
   }
 }
 
+/**
+ * The command the guide offers for this readiness: the kind's setup step when
+ * the agent is running but needs setup, else the command that starts it.
+ */
+export function agentGuideCommand(
+  copy: { command?: string; setupCommand?: string },
+  status: AgentReadiness['status']
+): string | undefined {
+  return (status === 'needs-setup' ? copy.setupCommand : undefined) ?? copy.command;
+}
+
 /** Whether the guide offers the kind's command to copy, when it has one. */
 export function showsAgentSetupCommand(readiness: AgentReadiness): boolean {
   if (readiness.status === 'needs-setup') return true;
