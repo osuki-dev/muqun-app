@@ -47,7 +47,6 @@ import { Trans, useLingui } from '@lingui/react/macro';
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 
 import AppDrawer from '@/components/app-drawer';
-import { PadServerRail } from '@/components/pad-server-rail';
 import { NewTaskAction } from '@/components/new-task-action';
 import { PressableScale } from '@/components/pressable-scale';
 import { SectionLabel } from '@/components/settings-chrome';
@@ -686,23 +685,6 @@ export function HomeOverview({
   // optional chain in a conditional's test.
   const editorialArtworkTopCurrent =
     editorialArtworkTop?.source === editorialArtworkResolution?.source;
-  const padNavigation =
-    isPad && !embedded ? (
-      <PadServerRail
-        servers={records}
-        reachabilityByServer={padReachabilityByServer}
-        selectedServerId={record?.serverId ?? null}
-        activeConnection={activeConnection}
-        workbenchSelected
-        onOpenWorkbench={() => overviewScroll.current?.scrollTo({ y: 0, animated: true })}
-        onSelectServer={(server) => openServer(server.serverId)}
-        onPairServer={() => void commands.pairGateway()}
-        onOpenSettings={() => router.push('/settings')}
-        onOpenSsh={() => void commands.openSsh()}
-        sshHosts={sshRows}
-        onSelectSshHost={(host) => void commands.openSsh(host.id)}
-      />
-    ) : undefined;
   if (homeLayout !== 'classic' || isPad) {
     const editorialContent = (
       <View
@@ -922,9 +904,7 @@ export function HomeOverview({
     return embedded ? (
       editorialContent
     ) : (
-      <AppDrawer
-        padRail={padNavigation}
-        wallpaperEffectsEnabled={!hasScene && !hasDevEffectOverride}>
+      <AppDrawer wallpaperEffectsEnabled={!hasScene && !hasDevEffectOverride}>
         {editorialContent}
       </AppDrawer>
     );
@@ -1361,7 +1341,7 @@ export function HomeOverview({
   return embedded ? (
     classicContent
   ) : (
-    <AppDrawer padRail={padNavigation} wallpaperEffectsEnabled={!hasScene && !hasDevEffectOverride}>
+    <AppDrawer wallpaperEffectsEnabled={!hasScene && !hasDevEffectOverride}>
       {classicContent}
     </AppDrawer>
   );
