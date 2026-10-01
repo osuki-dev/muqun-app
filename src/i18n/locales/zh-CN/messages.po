@@ -2979,6 +2979,7 @@ msgstr "有新输出 · 点击刷新"
 #: src/app/agent.tsx
 #: src/components/agent-workbench.tsx
 #: src/components/home-overview.tsx
+#: src/components/pad-agent-detail.tsx
 #: src/i18n/labels.ts
 msgid "New session"
 msgstr "新建会话"
@@ -4811,6 +4812,7 @@ msgid "Stop"
 msgstr "停止"
 
 #: src/app/agent.tsx
+#: src/components/pad-agent-detail.tsx
 msgid "Stop agent"
 msgstr "停止智能体"
 

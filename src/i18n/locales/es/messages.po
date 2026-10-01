@@ -2979,6 +2979,7 @@ msgstr "Hay nueva salida · actualizar"
 #: src/app/agent.tsx
 #: src/components/agent-workbench.tsx
 #: src/components/home-overview.tsx
+#: src/components/pad-agent-detail.tsx
 #: src/i18n/labels.ts
 msgid "New session"
 msgstr "Nueva sesión"
@@ -4811,6 +4812,7 @@ msgid "Stop"
 msgstr "Detener"
 
 #: src/app/agent.tsx
+#: src/components/pad-agent-detail.tsx
 msgid "Stop agent"
 msgstr "Detener agente"
 
