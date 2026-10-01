@@ -1501,6 +1501,7 @@ export function ServerTerminalWorkspace({
               if (!isDemoRecord(record)) {
                 void useServerAgents.getState().record({
                   serverId,
+                  sessionId,
                   checkedAtMs: Date.now(),
                   agents: mirroredServerPanes(next.panes, next.agents),
                 });

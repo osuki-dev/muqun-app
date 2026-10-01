@@ -144,12 +144,7 @@ test('history changes ranking without duplicating panes or replacing authoritati
   expect(history.title).toBe('Old name');
 });
 
-test('Classic agent filtering and authoritative deletion win over pane history', () => {
-  expect(
-    homeContinueEntries({ ...input, recents: [history], paneMode: 'agents' }).map(
-      (row) => row.title
-    )
-  ).toEqual(['Current agent title']);
+test('authoritative deletion wins over pane history', () => {
   expect(
     homeContinueEntries({
       ...input,
@@ -283,4 +278,92 @@ test('plain panes and history-only entries never receive agent status', () => {
   expect(
     homeContinueEntries({ ...input, snapshots: {}, recents: [history] })[0]?.observation
   ).toBeUndefined();
+});
+
+const T = 1_700_000_000_000;
+const terminalVisit: HomeRecentEntry = {
+  key: 'visit',
+  title: 'zsh',
+  atMs: T,
+  target: { kind: 'gateway-terminal', serverId: 'a', sessionId: 'routing', paneId: 'p2' },
+};
+function gatewayAgent(asid: string, updatedMs: number) {
+  return {
+    asid,
+    agentId: 'opencode',
+    title: `${asid} task`,
+    directory: '/w',
+    status: 'idle' as const,
+    updatedMs,
+  };
+}
+const rankingInput = {
+  ...input,
+  snapshots: { a: { ...snapshots.a, sessionId: 'routing', checkedAtMs: T } },
+  nowMs: T + 1_000,
+  gatewaySessions: {
+    serverId: 'a',
+    sessionId: 'routing',
+    observedAtMs: T,
+    sessions: [gatewayAgent('newer', T + 1_000), gatewayAgent('older', T - 1_000)],
+  },
+};
+
+test('a terminal visited at T ranks between agents updated at T+1s and T-1s', () => {
+  const rows = homeContinueEntries({ ...rankingInput, recents: [terminalVisit] });
+  expect(rows.map((row) => row.title)).toEqual([
+    'newer task',
+    'Shell',
+    'older task',
+    'Current agent title',
+  ]);
+});
+
+test('a terminal with neither a visit nor activity ranks last', () => {
+  const rows = homeContinueEntries(rankingInput);
+  expect(rows.at(-1)?.atMs).toBe(0);
+  expect(rows.slice(0, 2).map((row) => row.title)).toEqual(['newer task', 'older task']);
+});
+
+test('a visited plain terminal survives the agents-only pane filter', () => {
+  const rows = homeContinueEntries({
+    ...rankingInput,
+    paneMode: 'agents',
+    recents: [terminalVisit],
+  });
+  expect(rows.map((row) => row.title)).toEqual([
+    'newer task',
+    'zsh',
+    'older task',
+    'Current agent title',
+  ]);
+  expect(rows[1]?.destination).toEqual({ type: 'recent', target: terminalVisit.target });
+  // Unvisited plain panes still follow the filter.
+  expect(
+    homeContinueEntries({ ...rankingInput, paneMode: 'agents' }).some(
+      (row) => row.title === 'Shell'
+    )
+  ).toBe(false);
+});
+
+test('a recent for a pane in another Herdr session than the snapshot is kept', () => {
+  const elsewhere: HomeRecentEntry = {
+    ...terminalVisit,
+    key: 'elsewhere',
+    title: 'Other session shell',
+    target: { kind: 'gateway-terminal', serverId: 'a', sessionId: 'other', paneId: 'gone' },
+  };
+  const rows = homeContinueEntries({
+    ...input,
+    snapshots: rankingInput.snapshots,
+    recents: [elsewhere],
+  });
+  expect(rows.map((row) => row.title)).toContain('Other session shell');
+  // The same pane id in the snapshot's own session is a closed pane and is dropped.
+  const closed = { ...elsewhere, target: { ...elsewhere.target, sessionId: 'routing' } };
+  expect(
+    homeContinueEntries({ ...input, snapshots: rankingInput.snapshots, recents: [closed] }).map(
+      (row) => row.title
+    )
+  ).not.toContain('Other session shell');
 });

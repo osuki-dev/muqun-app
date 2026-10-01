@@ -56,6 +56,7 @@ export async function refreshHomeContinue({
       if (!isCurrent()) return;
       await recordPanes({
         serverId,
+        sessionId,
         checkedAtMs: Date.now(),
         agents: mirroredServerPanes(
           normalizeGatewayEntities(panes, ['panes', 'items']),
