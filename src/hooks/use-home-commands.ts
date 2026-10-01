@@ -10,7 +10,9 @@ import type { GatewayRecord } from '@/lib/gateway-storage';
 import { checkAgentServer } from '@/lib/home-agent-readiness';
 import { loadWorkspaceSnapshot } from '@/lib/workspace-snapshot';
 import {
+  type HomeAgentEntry,
   type HomeCommand,
+  agentOpensInPlace,
   createHomeCommandController,
   embeddedResumeRoute,
   isHomeSshTargetAvailable,
@@ -44,6 +46,11 @@ export type HomeCommandOptions = {
   routeBound?: boolean;
   /** Stable Home route liveness, separate from an owner subtree's lifetime. */
   sourceRouteActive?: () => boolean;
+  /**
+   * A Pad workspace that shows agent sessions in its own detail column.
+   * With it, an agent destination never leaves the route.
+   */
+  openAgentInPlace?: (target: HomeAgentEntry, intent: 'existing' | 'new') => void;
 };
 
 export type HomeCommands = {
@@ -136,8 +143,14 @@ export function useHomeCommands(options: HomeCommandOptions = {}): HomeCommands 
           }
         }
       },
-      navigate: (destination) =>
-        navigateHome(latest.current.router, destination, latest.current.options.embedded === true),
+      navigate: (destination) => {
+        const inPlace = latest.current.options.openAgentInPlace;
+        if (inPlace && agentOpensInPlace(destination, true)) {
+          inPlace(destination.target, destination.intent);
+          return;
+        }
+        navigateHome(latest.current.router, destination, latest.current.options.embedded === true);
+      },
       resumeServer: async (target, isCurrent) => {
         if (latest.current.options.embedded) {
           // Plain server cards have no controller selection step. Select here,

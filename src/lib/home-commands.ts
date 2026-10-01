@@ -91,6 +91,14 @@ export type HomeNavigation =
   | { type: 'pair' }
   | { type: 'manage' };
 
+/** A Pad shell can swap its detail to an agent session instead of routing to `/agent`. */
+export function agentOpensInPlace(
+  destination: HomeNavigation,
+  hasHandler: boolean
+): destination is Extract<HomeNavigation, { type: 'agent' }> {
+  return hasHandler && destination.type === 'agent';
+}
+
 export type HomeResumeServerResult = boolean | 'missing' | void;
 
 /**
