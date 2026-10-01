@@ -1195,6 +1195,7 @@ msgstr "Conectado a {address}"
 #: src/app/explore.tsx
 #: src/app/new-task.tsx
 #: src/components/agent-transcript-skeleton.tsx
+#: src/components/pad-agent-detail.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/components/session-map.tsx
 #: src/components/simfarm-stage.tsx
@@ -1218,6 +1219,8 @@ msgid "Connecting…"
 msgstr "A ligar…"
 
 #: src/components/home-editorial-layout.tsx
+#: src/components/home-overview.tsx
+#: src/components/pad-server-rail.tsx
 msgid "Connections"
 msgstr "Conexões"
 
@@ -1248,6 +1251,8 @@ msgstr "Contexto usado"
 
 #: src/app/explore.tsx
 #: src/components/home-editorial-layout.tsx
+#: src/components/home-overview.tsx
+#: src/components/pad-server-rail.tsx
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Continue"
 msgstr "Continuar"
@@ -1756,10 +1761,6 @@ msgstr "Máquina atual"
 #: src/i18n/labels.ts
 msgid "Current path"
 msgstr "Caminho atual"
-
-#: src/components/pad-server-rail.tsx
-msgid "Current task"
-msgstr "Tarefa atual"
 
 #: src/components/custom-theme-library.tsx
 msgid "Current theme"
@@ -2368,6 +2369,7 @@ msgstr "Ocultar a lista de servidores"
 msgid "Hide the simulator"
 msgstr "Ocultar o simulador"
 
+#: src/components/pad-server-rail.tsx
 #: src/components/simfarm-stage.tsx
 msgid "Home"
 msgstr "Início"
@@ -2405,7 +2407,6 @@ msgstr "Host"
 msgid "Host key changed"
 msgstr "A chave do host mudou"
 
-#: src/components/pad-server-rail.tsx
 #: src/components/ssh-host-row.tsx
 msgid "Host key trusted"
 msgstr "Chave de host confiável"
@@ -2957,6 +2958,7 @@ msgstr "Nova saída disponível · atualizar"
 
 #: src/app/agent.tsx
 #: src/components/agent-workbench.tsx
+#: src/components/home-overview.tsx
 #: src/i18n/labels.ts
 msgid "New session"
 msgstr "Nova sessão"
@@ -3097,7 +3099,6 @@ msgstr "Nenhum projeto corresponde a “{0}”"
 msgid "No server to start a task on."
 msgstr "Não há nenhum servidor onde iniciar uma tarefa"
 
-#: src/components/pad-server-rail.tsx
 #: src/components/settings-servers.tsx
 msgid "No servers paired yet"
 msgstr "Ainda não há servidores emparelhados"
@@ -3388,9 +3389,7 @@ msgstr "Abrir sessão"
 msgid "Open session tree"
 msgstr "Abrir árvore de sessões"
 
-#. placeholder {0}: host.label
 #. placeholder {0}: record.label
-#: src/components/pad-server-rail.tsx
 #: src/components/ssh-host-row.tsx
 msgid "Open SSH host {0}"
 msgstr "Abrir host SSH {0}"
@@ -4374,7 +4373,6 @@ msgstr "Servidor indisponível"
 
 #: src/app/settings.tsx
 #: src/components/app-drawer-content.tsx
-#: src/components/pad-server-rail.tsx
 msgid "Servers"
 msgstr "Servidores"
 
@@ -4679,7 +4677,6 @@ msgstr "Host SSH"
 
 #: src/components/home-launch-actions.tsx
 #: src/components/home-overview.tsx
-#: src/components/pad-server-rail.tsx
 #: src/components/settings-servers.tsx
 msgid "SSH hosts"
 msgstr "Hosts SSH"
@@ -5795,10 +5792,6 @@ msgstr "Quando um agente precisa de confirmação, o aviso chega por notificaç�
 #: src/components/away-digest-card.tsx
 msgid "While you were away"
 msgstr "Enquanto você esteve fora"
-
-#: src/components/pad-server-rail.tsx
-msgid "Workbench"
-msgstr "Bancada"
 
 #: src/components/agent-vcs-diff-sheet.tsx
 #: src/components/collaboration-notice.tsx
