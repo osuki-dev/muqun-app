@@ -170,6 +170,10 @@ msgstr "il y a {0} h"
 msgid "{0}m ago"
 msgstr "il y a {0} min"
 
+#: src/components/agent-workbench.tsx
+msgid "{agentName} cannot preview a rollback. This removes the message and everything after it, the whole turn, and it cannot be undone."
+msgstr "{agentName} ne peut pas prévisualiser un retour en arrière. Cela supprime le message et tout ce qui suit, le tour entier, et c’est irréversible"
+
 #: src/components/agent-composer.tsx
 #: src/components/agent-workbench.tsx
 msgid "{agentName} is offline"
@@ -5550,6 +5554,7 @@ msgid "Type on the simulator"
 msgstr "Saisir sur le simulateur"
 
 #: src/components/agent-revert-plate.tsx
+#: src/components/agent-workbench.tsx
 #: src/components/custom-theme-library.tsx
 #: src/i18n/labels.ts
 msgid "Undo"
@@ -5562,6 +5567,10 @@ msgstr "Annuler {summary}"
 #: src/components/agent-revert-plate.tsx
 msgid "Undo back to the staged message"
 msgstr "Annuler jusqu’au message préparé"
+
+#: src/components/agent-workbench.tsx
+msgid "Undo this turn?"
+msgstr "Annuler ce tour ?"
 
 #: src/components/agent-message-block.tsx
 msgid "Undo to here"

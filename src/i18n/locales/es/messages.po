@@ -170,6 +170,10 @@ msgstr "hace {0} h"
 msgid "{0}m ago"
 msgstr "hace {0} min"
 
+#: src/components/agent-workbench.tsx
+msgid "{agentName} cannot preview a rollback. This removes the message and everything after it, the whole turn, and it cannot be undone."
+msgstr "{agentName} no puede mostrar una vista previa de la reversión. Esto elimina el mensaje y todo lo posterior, el turno completo, y no se puede deshacer"
+
 #: src/components/agent-composer.tsx
 #: src/components/agent-workbench.tsx
 msgid "{agentName} is offline"
@@ -5550,6 +5554,7 @@ msgid "Type on the simulator"
 msgstr "Escribir en el simulador"
 
 #: src/components/agent-revert-plate.tsx
+#: src/components/agent-workbench.tsx
 #: src/components/custom-theme-library.tsx
 #: src/i18n/labels.ts
 msgid "Undo"
@@ -5562,6 +5567,10 @@ msgstr "Deshacer {summary}"
 #: src/components/agent-revert-plate.tsx
 msgid "Undo back to the staged message"
 msgstr "Deshacer hasta el mensaje preparado"
+
+#: src/components/agent-workbench.tsx
+msgid "Undo this turn?"
+msgstr "¿Deshacer este turno?"
 
 #: src/components/agent-message-block.tsx
 msgid "Undo to here"

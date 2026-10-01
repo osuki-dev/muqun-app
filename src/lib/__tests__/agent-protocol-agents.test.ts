@@ -178,6 +178,19 @@ describe('the agents plane', () => {
     expect(Object.keys(unredacted?.agents[0] ?? {})).not.toContain('endpoint');
   });
 
+  test('stagedRevert is on unless the gateway says otherwise', () => {
+    const older = parseAgentsDiscovery({
+      agents: [{ id: 'opencode', status: 'connected', features: { revert: true } }],
+    });
+    expect(older?.agents[0]?.features.stagedRevert).toBe(true);
+    const t3 = parseAgentsDiscovery({
+      agents: [{ id: 't3', status: 'connected', features: { revert: true, stagedRevert: false } }],
+    });
+    expect(t3?.agents[0]?.features.revert).toBe(true);
+    expect(t3?.agents[0]?.features.stagedRevert).toBe(false);
+    expect(t3?.agents[0]?.features.extra).toEqual({});
+  });
+
   test('a status this build has never heard of is `unknown`, not a crash', () => {
     const parsed = parseAgentsDiscovery({
       agents: [{ id: 'x', status: 'hibernating', features: null }],

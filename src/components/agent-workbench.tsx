@@ -24,7 +24,7 @@ import {
 } from 'react-native';
 import { useIsFocused, usePathname, useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
-import { useThemeTokens, useToast } from '@osuki-dev/ui';
+import { Dialog, useThemeTokens, useToast } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { Trans, useLingui } from '@lingui/react/macro';
@@ -88,6 +88,7 @@ import {
   setAgentInboxDelivery,
   clearAgentRevert,
   commitAgentRevert,
+  revertAgentSession,
   stageAgentRevert,
   exportAgentSession,
   sendAgentCommand,
@@ -127,7 +128,12 @@ import { latestSession, pickSessionToOpen } from '@/lib/agent-session-pick';
 import { catalogModelRef, resolveNewSessionDefaults } from '@/lib/agent-session-defaults';
 import { engineFailureAction } from '@/lib/agent-engine-text';
 import { dangerousPermissionReason, yoloDecision } from '@/lib/agent-permission-safety';
-import { removeTimelineItems, revertedMessageCount } from '@/lib/agent-revert';
+import {
+  agentRevertPath,
+  removeTimelineItems,
+  revertedMessageCount,
+  stagingUnsupported,
+} from '@/lib/agent-revert';
 import { hiddenClientCommands, normalizeAgentId } from '@/lib/agent-discovery';
 import {
   useAgentFeatures,
@@ -752,6 +758,11 @@ export const AgentWorkbench = memo(function AgentWorkbench({
    */
   const [stagedRevert, setStagedRevert] = useState<AgentSessionRevert | null>(null);
   const [revertBusy, setRevertBusy] = useState(false);
+  /**
+   * The message a one-step rollback would go back to, while the reader is
+   * being asked. Set only for an agent that cannot stage a rollback.
+   */
+  const [oneStepRevertMessageId, setOneStepRevertMessageId] = useState<string | null>(null);
   // A compaction in flight, which is a pill above the composer rather than a
   // row: the row lands in the timeline when the boundary is reached.
   const [compaction, setCompaction] = useState<{
@@ -3391,10 +3402,17 @@ export const AgentWorkbench = memo(function AgentWorkbench({
    * it would put back*, and the plate above the composer is where the reader
    * decides.
    */
+  const revertPath = agentRevertPath(agentFeatures);
   const handleStageRevert = useCallback(
     (messageId: string) => {
       if (!activeAsid || !messageId) return;
       void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      // An agent that cannot stage (T3) has only the one-step rollback, and
+      // that is asked about first: nothing previews it and nothing brings it back.
+      if (revertPath === 'one-step') {
+        setOneStepRevertMessageId(messageId);
+        return;
+      }
       stageAgentRevert(activeAsid, messageId)
         .then((staged) => {
           // The stream says the same thing a moment later; this is so the plate
@@ -3402,12 +3420,38 @@ export const AgentWorkbench = memo(function AgentWorkbench({
           if (staged) setStagedRevert(staged);
         })
         .catch((err) => {
+          // A gateway that predates `stagedRevert` says so only by refusing
+          // the stage call; that is the one-step agent, not a failure.
+          if (stagingUnsupported(err)) {
+            setOneStepRevertMessageId(messageId);
+            return;
+          }
           console.warn('Failed to stage revert:', err);
           showScreenNotice(t`Could not stage the rollback`, agentErrorRef.current(err));
         });
     },
-    [activeAsid, showScreenNotice, t]
+    [activeAsid, revertPath, showScreenNotice, t]
   );
+
+  /**
+   * The confirmed one-step rollback. The rows it removes arrive as
+   * `agent.timeline.removed`, as a committed staging's do.
+   */
+  const handleConfirmOneStepRevert = useCallback(() => {
+    const messageId = oneStepRevertMessageId;
+    setOneStepRevertMessageId(null);
+    if (!activeAsid || !messageId) return;
+    void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+    setRevertBusy(true);
+    revertAgentSession(sessionId, activeAsid, messageId)
+      .catch((err) => {
+        console.warn('Failed to revert session:', err);
+        showScreenNotice(t`Could not undo`, agentErrorRef.current(err));
+      })
+      .finally(() => setRevertBusy(false));
+  }, [activeAsid, oneStepRevertMessageId, sessionId, showScreenNotice, t]);
+
+  const handleCancelOneStepRevert = useCallback(() => setOneStepRevertMessageId(null), []);
 
   /** Apply what is staged. The rows it deletes arrive as `agent.timeline.removed`. */
   const handleCommitRevert = useCallback(() => {
@@ -4855,6 +4899,27 @@ export const AgentWorkbench = memo(function AgentWorkbench({
           images={previewImages}
           initialIndex={0}
           onClose={() => setPreviewImageUri(null)}
+        />
+      ) : null}
+
+      {oneStepRevertMessageId ? (
+        <Dialog
+          visible
+          testID="agent-one-step-revert-dialog"
+          onClose={handleCancelOneStepRevert}
+          tone="danger"
+          title={t`Undo this turn?`}
+          message={t`${agentName} cannot preview a rollback. This removes the message and everything after it, the whole turn, and it cannot be undone.`}
+          actionLayout="row"
+          actions={[
+            { id: 'cancel', label: t`Cancel`, onPress: handleCancelOneStepRevert },
+            {
+              id: 'undo',
+              label: t`Undo`,
+              tone: 'destructive',
+              onPress: handleConfirmOneStepRevert,
+            },
+          ]}
         />
       ) : null}
 

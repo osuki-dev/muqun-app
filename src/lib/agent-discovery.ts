@@ -215,13 +215,16 @@ export function offersAgentChoice(
 /**
  * The composer's own slash commands an agent cannot answer.
  *
- * `/undo` and `/keep` stage and withdraw a revert; `/compact` asks the agent
+ * `/undo` and `/keep` stage and withdraw a revert (an agent with only the
+ * one-step rollback keeps `/undo`, which asks first, and loses `/keep`); `/compact` asks the agent
  * to fold its context; `/agents` opens the mode sheet. Listing one of them on
  * an agent without the feature offers a command that fails when typed.
  */
 export function hiddenClientCommands(features: AgentFeatures): AgentClientCommandId[] {
   const hidden: AgentClientCommandId[] = [];
   if (!features.revert) hidden.push('undo', 'keep');
+  // A one-step rollback is never staged, so there is nothing to keep.
+  else if (!features.stagedRevert) hidden.push('keep');
   if (!features.compaction) hidden.push('compact');
   if (!features.modes) hidden.push('agents');
   return hidden;

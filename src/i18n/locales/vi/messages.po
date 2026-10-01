@@ -170,6 +170,10 @@ msgstr "{0} giờ trước"
 msgid "{0}m ago"
 msgstr "{0} phút trước"
 
+#: src/components/agent-workbench.tsx
+msgid "{agentName} cannot preview a rollback. This removes the message and everything after it, the whole turn, and it cannot be undone."
+msgstr "{agentName} không thể xem trước thao tác hoàn tác. Thao tác này xoá tin nhắn và mọi thứ sau nó, tức cả lượt, và không thể khôi phục"
+
 #: src/components/agent-composer.tsx
 #: src/components/agent-workbench.tsx
 msgid "{agentName} is offline"
@@ -5550,6 +5554,7 @@ msgid "Type on the simulator"
 msgstr "Gõ trên trình giả lập"
 
 #: src/components/agent-revert-plate.tsx
+#: src/components/agent-workbench.tsx
 #: src/components/custom-theme-library.tsx
 #: src/i18n/labels.ts
 msgid "Undo"
@@ -5562,6 +5567,10 @@ msgstr "Hoàn tác {summary}"
 #: src/components/agent-revert-plate.tsx
 msgid "Undo back to the staged message"
 msgstr "Hoàn tác về tin nhắn đã chuẩn bị"
+
+#: src/components/agent-workbench.tsx
+msgid "Undo this turn?"
+msgstr "Hoàn tác lượt này?"
 
 #: src/components/agent-message-block.tsx
 msgid "Undo to here"

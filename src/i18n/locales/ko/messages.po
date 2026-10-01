@@ -170,6 +170,10 @@ msgstr "{0}시간 전"
 msgid "{0}m ago"
 msgstr "{0}분 전"
 
+#: src/components/agent-workbench.tsx
+msgid "{agentName} cannot preview a rollback. This removes the message and everything after it, the whole turn, and it cannot be undone."
+msgstr "{agentName}은(는) 롤백을 미리 볼 수 없습니다. 이 메시지와 그 이후의 모든 내용, 즉 턴 전체가 삭제되며 되돌릴 수 없습니다"
+
 #: src/components/agent-composer.tsx
 #: src/components/agent-workbench.tsx
 msgid "{agentName} is offline"
@@ -5550,6 +5554,7 @@ msgid "Type on the simulator"
 msgstr "시뮬레이터에 입력"
 
 #: src/components/agent-revert-plate.tsx
+#: src/components/agent-workbench.tsx
 #: src/components/custom-theme-library.tsx
 #: src/i18n/labels.ts
 msgid "Undo"
@@ -5562,6 +5567,10 @@ msgstr "{summary} 되돌리기"
 #: src/components/agent-revert-plate.tsx
 msgid "Undo back to the staged message"
 msgstr "준비된 메시지까지 되돌리기"
+
+#: src/components/agent-workbench.tsx
+msgid "Undo this turn?"
+msgstr "이 턴을 실행 취소할까요?"
 
 #: src/components/agent-message-block.tsx
 msgid "Undo to here"

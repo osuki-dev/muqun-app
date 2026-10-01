@@ -170,6 +170,10 @@ msgstr "{0} ชั่วโมงที่แล้ว"
 msgid "{0}m ago"
 msgstr "{0} นาทีที่แล้ว"
 
+#: src/components/agent-workbench.tsx
+msgid "{agentName} cannot preview a rollback. This removes the message and everything after it, the whole turn, and it cannot be undone."
+msgstr "{agentName} แสดงตัวอย่างการย้อนกลับไม่ได้ การดำเนินการนี้จะลบข้อความนี้และทุกอย่างหลังจากนั้นทั้งรอบ และเลิกทำไม่ได้"
+
 #: src/components/agent-composer.tsx
 #: src/components/agent-workbench.tsx
 msgid "{agentName} is offline"
@@ -5550,6 +5554,7 @@ msgid "Type on the simulator"
 msgstr "พิมพ์บนเครื่องจำลอง"
 
 #: src/components/agent-revert-plate.tsx
+#: src/components/agent-workbench.tsx
 #: src/components/custom-theme-library.tsx
 #: src/i18n/labels.ts
 msgid "Undo"
@@ -5562,6 +5567,10 @@ msgstr "เลิกทำ {summary}"
 #: src/components/agent-revert-plate.tsx
 msgid "Undo back to the staged message"
 msgstr "เลิกทำถึงข้อความที่เตรียมไว้"
+
+#: src/components/agent-workbench.tsx
+msgid "Undo this turn?"
+msgstr "เลิกทำรอบนี้ใช่ไหม"
 
 #: src/components/agent-message-block.tsx
 msgid "Undo to here"

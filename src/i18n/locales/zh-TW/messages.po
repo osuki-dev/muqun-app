@@ -170,6 +170,10 @@ msgstr "{0} 小時前"
 msgid "{0}m ago"
 msgstr "{0} 分鐘前"
 
+#: src/components/agent-workbench.tsx
+msgid "{agentName} cannot preview a rollback. This removes the message and everything after it, the whole turn, and it cannot be undone."
+msgstr "{agentName} 無法預覽回溯。這會刪除這則訊息及其之後的所有內容，也就是整輪對話，且無法還原"
+
 #: src/components/agent-composer.tsx
 #: src/components/agent-workbench.tsx
 msgid "{agentName} is offline"
@@ -5550,6 +5554,7 @@ msgid "Type on the simulator"
 msgstr "在模擬器上輸入"
 
 #: src/components/agent-revert-plate.tsx
+#: src/components/agent-workbench.tsx
 #: src/components/custom-theme-library.tsx
 #: src/i18n/labels.ts
 msgid "Undo"
@@ -5562,6 +5567,10 @@ msgstr "復原 {summary}"
 #: src/components/agent-revert-plate.tsx
 msgid "Undo back to the staged message"
 msgstr "復原到已準備的訊息"
+
+#: src/components/agent-workbench.tsx
+msgid "Undo this turn?"
+msgstr "復原這一輪？"
 
 #: src/components/agent-message-block.tsx
 msgid "Undo to here"
