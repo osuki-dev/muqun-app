@@ -15,7 +15,6 @@ import Animated from 'react-native-reanimated';
 
 import { useLaunchHomeArtwork } from '@/hooks/use-launch-home-artwork';
 import { artworkVisibleTop, editorialArtworkRect } from '@/lib/hero-feather';
-import { fitArtworkBox } from '@/lib/home-pad-geometry';
 import { fadeIn, listLayout } from '@/lib/motion';
 import type { ResolvedHomeArtworkAsset } from '@/theme/home-artwork';
 
@@ -29,18 +28,11 @@ const BOTTOM_FEATHER_START = 0.68;
 export function HomeEditorialArtwork({
   resolution,
   cover = false,
-  maxHeight,
   onAvailabilityChange,
   onVisibleTopChange,
 }: {
   resolution: ResolvedHomeArtworkAsset;
   cover?: boolean;
-  /**
-   * Pad hero only: the most height the drawing may take. Over it the whole box
-   * scales down from the top-left corner (contain by height), never cropping the
-   * subject; the bottom feather scales with it.
-   */
-  maxHeight?: number;
   onAvailabilityChange?: (available: boolean) => void;
   onVisibleTopChange?: (source: string, top: number) => void;
 }) {
@@ -49,7 +41,6 @@ export function HomeEditorialArtwork({
       key={resolution.source}
       resolution={resolution}
       cover={cover}
-      maxHeight={maxHeight}
       onAvailabilityChange={onAvailabilityChange}
       onVisibleTopChange={onVisibleTopChange}
     />
@@ -59,28 +50,17 @@ export function HomeEditorialArtwork({
 function HomeEditorialArtworkImage({
   resolution,
   cover,
-  maxHeight,
   onAvailabilityChange,
   onVisibleTopChange,
 }: {
   resolution: ResolvedHomeArtworkAsset;
   cover: boolean;
-  maxHeight?: number;
   onAvailabilityChange?: (available: boolean) => void;
   onVisibleTopChange?: (source: string, top: number) => void;
 }) {
   const [width, setWidth] = useState(0);
-  const fitted = fitArtworkBox(
-    width,
-    cover ? Math.min(640, width * 0.9) : Math.min(280, width / 2),
-    maxHeight
-  );
-  const height = fitted.height;
-  const boxWidth = fitted.width;
-  const box = useMemo(
-    () => (boxWidth > 0 ? { width: boxWidth, height } : null),
-    [boxWidth, height]
-  );
+  const height = cover ? Math.min(640, width * 0.9) : Math.min(280, width / 2);
+  const box = useMemo(() => (width > 0 ? { width, height } : null), [width, height]);
   const [failed, setFailed] = useState(false);
   const onError = useCallback(() => {
     setFailed(true);
@@ -153,7 +133,7 @@ function HomeEditorialArtworkImage({
       onLayout={onLayout}
       style={[styles.root, { height }]}>
       {image && imageRect && box ? (
-        <Canvas style={[styles.canvas, { width: box.width, height: box.height }]}>
+        <Canvas style={StyleSheet.absoluteFill}>
           <Mask
             mode="alpha"
             mask={
@@ -184,6 +164,4 @@ function HomeEditorialArtworkImage({
 
 const styles = StyleSheet.create({
   root: { width: '100%', alignSelf: 'stretch', overflow: 'hidden' },
-  // Pinned top-left, so a height-fitted drawing lines up with the title above it.
-  canvas: { position: 'absolute', top: 0, left: 0 },
 });
