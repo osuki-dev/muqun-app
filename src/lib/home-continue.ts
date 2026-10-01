@@ -13,6 +13,7 @@ import {
   type HomeServerPaneMode,
 } from './home-server-model';
 import {
+  MAX_SERVER_AGENTS,
   SERVER_AGENTS_STALE_AFTER_MS,
   type ServerAgent,
   type ServerAgentsIndex,
@@ -348,7 +349,8 @@ function snapshotCoversSession(
 /**
  * Whether a remembered terminal is already accounted for by the server's pane
  * snapshot: either its pane is a snapshot row (which carries the visit), or
- * the snapshot is for the same Herdr session and the pane is gone from it.
+ * the snapshot is for the same Herdr session and the pane is gone from it
+ * (provable only when the snapshot was not cut at `MAX_SERVER_AGENTS`).
  * A pane the pane filter hides, or one in another session, keeps its recent
  * row -- the user went there, so Continue offers it back. A snapshot written
  * before it recorded its session keeps the old rule: it supersedes every
@@ -364,7 +366,8 @@ export function supersededTerminalRecent(
   if (snapshot.sessionId === undefined) return true;
   if (snapshot.sessionId !== target.sessionId) return false;
   const pane = snapshot.agents.find((agent) => agent.paneId === target.paneId);
-  if (!pane) return true;
+  // A full snapshot was cut at the mirror's cap, so a missing pane may be open.
+  if (!pane) return snapshot.agents.length < MAX_SERVER_AGENTS;
   return paneMode === 'all' || pane.hasAgent;
 }
 
