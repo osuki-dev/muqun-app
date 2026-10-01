@@ -174,6 +174,10 @@ msgstr "{0} phút trước"
 msgid "{agentName} cannot preview a rollback. This removes the message and everything after it, the whole turn, and it cannot be undone."
 msgstr "{agentName} không thể xem trước thao tác hoàn tác. Thao tác này xoá tin nhắn và mọi thứ sau nó, tức cả lượt, và không thể khôi phục"
 
+#: src/components/agent-workbench.tsx
+msgid "{agentName} does not support that action."
+msgstr "{agentName} không hỗ trợ thao tác này"
+
 #: src/components/agent-composer.tsx
 #: src/components/agent-workbench.tsx
 msgid "{agentName} is offline"
@@ -5306,6 +5310,10 @@ msgstr "Gateway này không cung cấp phiên {agentName}"
 #: src/lib/network-error.ts
 msgid "This Gateway does not answer to that address."
 msgstr "Gateway này không trả lời ở địa chỉ đó"
+
+#: src/components/agent-workbench.tsx
+msgid "This gateway does not know {agentName}. Refresh the agent list and try again."
+msgstr "Gateway này không biết {agentName}. Hãy làm mới danh sách tác tử rồi thử lại"
 
 #: src/components/session-artifacts.tsx
 msgid "This gateway does not serve files yet. Update the Muqun gateway plugin to browse what a session writes."

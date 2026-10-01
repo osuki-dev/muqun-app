@@ -174,6 +174,10 @@ msgstr "há {0} min"
 msgid "{agentName} cannot preview a rollback. This removes the message and everything after it, the whole turn, and it cannot be undone."
 msgstr "{agentName} não pode pré-visualizar uma reversão. Isto remove a mensagem e tudo o que vem depois, o turno inteiro, e não pode ser desfeito"
 
+#: src/components/agent-workbench.tsx
+msgid "{agentName} does not support that action."
+msgstr "{agentName} não suporta essa ação"
+
 #: src/components/agent-composer.tsx
 #: src/components/agent-workbench.tsx
 msgid "{agentName} is offline"
@@ -5306,6 +5310,10 @@ msgstr "Este gateway não oferece sessões do {agentName}"
 #: src/lib/network-error.ts
 msgid "This Gateway does not answer to that address."
 msgstr "Este Gateway não responde nesse endereço"
+
+#: src/components/agent-workbench.tsx
+msgid "This gateway does not know {agentName}. Refresh the agent list and try again."
+msgstr "Este gateway não conhece {agentName}. Atualize a lista de agentes e tente novamente"
 
 #: src/components/session-artifacts.tsx
 msgid "This gateway does not serve files yet. Update the Muqun gateway plugin to browse what a session writes."

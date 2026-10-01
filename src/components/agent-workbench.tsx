@@ -279,23 +279,42 @@ function sessionsOfAgent(
 /** Between a notice and the first transcript row it is standing over. */
 const NOTICE_RESERVE_GAP = 8;
 
+/** The caller's sentences for each kind of failure, in the agent's own name. */
+interface AgentErrorSentences {
+  /** The agent is not answering, and how to start it. */
+  offline: string;
+  /** The agent answered and said no; wraps the gateway's own words. */
+  refused: (message: string) => string;
+  /** `feature_unsupported`: this agent cannot do what was asked. */
+  unsupported: string;
+  /** `invalid_agent`: the gateway does not know this agent. */
+  unknownAgent: string;
+}
+
 /**
- * The error text to show. `offlineAdvice` when the agent is not answering, and
- * `refused` wrapping the gateway's own words when it answered and said no. Both
- * are the caller's, in the agent's own name, so nothing here knows one agent's
- * command from another's; `classifyAgentRequestError` decides which applies.
+ * The error text to show. Every sentence is the caller's, so nothing here
+ * knows one agent's command from another's; `classifyAgentRequestError`
+ * decides which applies.
  */
 function formatAgentErrorMessage(
   err: unknown,
   fallback: string,
-  offlineAdvice: string,
-  refused: (message: string) => string
+  sentences: AgentErrorSentences
 ): string {
   if (!err) return fallback;
   const reading = classifyAgentRequestError(err);
-  if (reading.kind === 'offline') return offlineAdvice;
-  if (reading.kind === 'refused') return refused(reading.message);
-  return reading.message;
+  switch (reading.kind) {
+    case 'offline':
+      return sentences.offline;
+    case 'refused':
+      return sentences.refused(reading.message);
+    case 'unsupported':
+      return sentences.unsupported;
+    case 'unknown-agent':
+      return sentences.unknownAgent;
+    case 'other':
+      return reading.message;
+  }
 }
 
 export interface AgentWorkbenchProps {
@@ -574,23 +593,22 @@ export const AgentWorkbench = memo(function AgentWorkbench({
    * that report errors read the current agent's name and start advice without
    * each depending on them; the effect keeps it current before any handler runs.
    */
+  const agentErrorSentences = useMemo<AgentErrorSentences>(
+    () => ({
+      offline: `${offlineFallback}\n${startAdvice}`,
+      refused: (message) => t`${agentName} refused the request: ${message}`,
+      unsupported: t`${agentName} does not support that action.`,
+      unknownAgent: t`This gateway does not know ${agentName}. Refresh the agent list and try again.`,
+    }),
+    [agentName, offlineFallback, startAdvice, t]
+  );
   const agentErrorRef = useRef((err: unknown, fallback: string = offlineFallback) =>
-    formatAgentErrorMessage(
-      err,
-      fallback,
-      `${offlineFallback}\n${startAdvice}`,
-      (message) => t`${agentName} refused the request: ${message}`
-    )
+    formatAgentErrorMessage(err, fallback, agentErrorSentences)
   );
   useEffect(() => {
     agentErrorRef.current = (err, fallback = offlineFallback) =>
-      formatAgentErrorMessage(
-        err,
-        fallback,
-        `${offlineFallback}\n${startAdvice}`,
-        (message) => t`${agentName} refused the request: ${message}`
-      );
-  }, [agentName, offlineFallback, startAdvice, t]);
+      formatAgentErrorMessage(err, fallback, agentErrorSentences);
+  }, [agentErrorSentences, offlineFallback]);
   const hiddenCommands = useMemo(() => hiddenClientCommands(agentFeatures), [agentFeatures]);
   const agentChoiceRef = useLatestRef(agentChoice);
   const markAgentUsed = useAgents((state) => state.markUsed);
