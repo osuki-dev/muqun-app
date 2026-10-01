@@ -265,7 +265,7 @@ import { initialSelection, reconcileSelection, type Selection } from '@/lib/work
 import { useAppActive } from '@/hooks/use-app-active';
 import { useServerAgents } from '@/stores/server-agents';
 import { useHomeRecentsStore } from '@/stores/home-recents';
-import { homeTargetKey, type HomeTarget } from '@/lib/home-recents';
+import { homeTargetKey, isLiveHomeTerminalVisit, type HomeTarget } from '@/lib/home-recents';
 import { HOME_CONTINUE_REFRESH_MS } from '@/lib/home-continue-refresh';
 import {
   classifyHomeTargetAvailability,
@@ -1753,20 +1753,33 @@ export function ServerTerminalWorkspace({
     targetReady,
   ]);
   // A visit is stamped once per selection, but agents keep refreshing their
-  // own times; re-stamp the pane in use on Continue's cadence and once on the
-  // way out so it keeps ranking as recent.
+  // own times. While the pane stays in use, touch it in memory on Continue's
+  // cadence (no keychain write); persist one real visit when it is left.
   useEffect(() => {
     if (!appActive || !isFocused || overviewVisible || connection.phase !== 'connected') return;
-    const restamp = () => {
+    const timer = setInterval(() => {
       const visit = homeVisit.current;
-      if (visit) void useHomeRecentsStore.getState().visit(visit.target, visit.title);
-    };
-    const timer = setInterval(restamp, HOME_CONTINUE_REFRESH_MS);
+      if (visit) useHomeRecentsStore.getState().touch(visit.target);
+    }, HOME_CONTINUE_REFRESH_MS);
+    return () => clearInterval(timer);
+  }, [appActive, connection.phase, isFocused, overviewVisible]);
+  const homePanes = useRef({ sessionId: data.sessionId, panes: data.panes });
+  useEffect(() => {
+    homePanes.current = { sessionId: data.sessionId, panes: data.panes };
+  }, [data.panes, data.sessionId]);
+  // Leaving: blur, overview, background, another server, or unmount. A pane
+  // switch is not a leave -- the new pane's own visit covers it. React runs
+  // every cleanup of a commit before any setup, so `homeVisit` and `homePanes`
+  // still describe the pane being left when this cleanup reads them.
+  useEffect(() => {
+    if (!appActive || !isFocused || overviewVisible) return;
     return () => {
-      clearInterval(timer);
-      restamp();
+      const visit = homeVisit.current;
+      const { sessionId, panes } = homePanes.current;
+      if (visit && isLiveHomeTerminalVisit(visit.target, sessionId, panes))
+        void useHomeRecentsStore.getState().visit(visit.target, visit.title);
     };
-  }, [appActive, connection.phase, data.sessionId, isFocused, overviewVisible, selection.paneId]);
+  }, [appActive, isFocused, overviewVisible, serverId]);
   const agentKind = useMemo(() => {
     if (!selectedAgent) return '';
     return (
