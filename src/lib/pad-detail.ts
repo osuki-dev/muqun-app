@@ -109,3 +109,22 @@ export function padRouteKey(serverId: string, params: PadRouteParams): string {
 export function shouldApplyRoute(appliedKey: string | null, nextKey: string): boolean {
   return appliedKey !== nextKey;
 }
+
+/** Params a legacy `/agent` URL carries into the Pad workspace route, empties dropped. */
+export function padAgentRedirectParams(params: {
+  server?: string;
+  sessionId?: string;
+  asid?: string;
+  directory?: string;
+  agentId?: string;
+  intent?: string;
+}): Record<string, string> {
+  const out: Record<string, string> = {};
+  if (params.server) out.serverId = params.server;
+  if (params.sessionId) out.sessionId = params.sessionId;
+  if (params.asid) out.asid = params.asid;
+  if (params.directory) out.directory = params.directory;
+  if (params.agentId) out.agentId = params.agentId;
+  if (params.intent === 'new') out.intent = 'new';
+  return out;
+}
