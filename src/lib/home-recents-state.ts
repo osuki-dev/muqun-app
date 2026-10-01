@@ -33,6 +33,12 @@ export type HomeRecentsState = {
     atMs?: number,
     sessionObservation?: HomeSessionObservation
   ) => Promise<void>;
+  /**
+   * Moves an existing recent to the front with a newer time, in memory only.
+   * For a pane the user is still on: re-stamping it on a timer must not cost
+   * a keychain write each time. The next persisted mutation carries it.
+   */
+  touch: (target: HomeTarget, atMs?: number) => void;
   /** Updates display metadata in place without creating or reordering a visit. */
   updateTitle: (target: HomeTarget, title: string) => Promise<void>;
   /**
@@ -182,6 +188,16 @@ export function createHomeRecentsState(
       else await requestWrite();
     };
 
+    const touch = (target: HomeTarget, atMs = Date.now()): void => {
+      const key = homeTargetKey(target);
+      const before = get().entries;
+      const current = before.find((item) => item.key === key);
+      if (!current || current.atMs >= atMs) return;
+      set({
+        entries: [{ ...current, atMs }, ...before.filter((item) => item.key !== key)],
+      });
+    };
+
     const observeSession = async (
       target: HomeTarget,
       observation: HomeSessionObservation
@@ -308,6 +324,7 @@ export function createHomeRecentsState(
       entries: [],
       hydrate,
       visit,
+      touch,
       updateTitle,
       repairAgent,
       observeSession,
