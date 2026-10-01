@@ -16,6 +16,7 @@ import {
   SERVER_AGENTS_STALE_AFTER_MS,
   type ServerAgent,
   type ServerAgentsIndex,
+  type ServerAgentsSnapshot,
 } from './server-agents';
 import type { ServerReachability } from './server-reachability';
 
@@ -241,7 +242,8 @@ export function homeContinueEntries({
         ({ target }) =>
           target.kind === 'gateway-terminal' &&
           target.serverId === serverId &&
-          target.paneId === agent.paneId
+          target.paneId === agent.paneId &&
+          snapshotCoversSession(model.snapshot, target.sessionId)
       );
       rows.push({
         key,
@@ -270,10 +272,9 @@ export function homeContinueEntries({
     )
       continue;
     if (target.kind !== 'ssh-host' && reachabilityByServer[target.serverId] === 'offline') continue;
-    // Once the shared snapshot exists, its inventory and pane filter win over history.
     if (
       target.kind === 'gateway-terminal' &&
-      snapshots[target.serverId]?.serverId === target.serverId
+      supersededTerminalRecent(target, snapshots[target.serverId], paneMode)
     )
       continue;
     const reported =
@@ -332,6 +333,35 @@ export function homeContinueEntries({
     }
   }
   return rows.sort((a, b) => b.atMs - a.atMs);
+}
+
+type GatewayTerminalTarget = Extract<HomeTarget, { kind: 'gateway-terminal' }>;
+
+/** A snapshot without a recorded session predates the field and covers every session. */
+function snapshotCoversSession(
+  snapshot: ServerAgentsSnapshot | undefined,
+  sessionId: string
+): boolean {
+  return snapshot?.sessionId === undefined || snapshot.sessionId === sessionId;
+}
+
+/**
+ * Whether a remembered terminal is already accounted for by the server's pane
+ * snapshot: either its pane is a snapshot row (which carries the visit), or
+ * the snapshot is for the same Herdr session and the pane is gone from it.
+ * A pane the pane filter hides, or one in another session, keeps its recent
+ * row -- the user went there, so Continue offers it back.
+ */
+export function supersededTerminalRecent(
+  target: GatewayTerminalTarget,
+  candidate: ServerAgentsSnapshot | undefined,
+  paneMode: HomeServerPaneMode
+): boolean {
+  const snapshot = candidate?.serverId === target.serverId ? candidate : undefined;
+  if (!snapshot || !snapshotCoversSession(snapshot, target.sessionId)) return false;
+  const pane = snapshot.agents.find((agent) => agent.paneId === target.paneId);
+  if (!pane) return true;
+  return paneMode === 'all' || pane.hasAgent;
 }
 
 /** A generated placeholder title is no title; the row then falls back to its caption. */
