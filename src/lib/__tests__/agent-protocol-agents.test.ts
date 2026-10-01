@@ -7,6 +7,7 @@ import {
   parseAgentsDiscovery,
   parseAgentStatusInfo,
   parseGatewayDiscovery,
+  parseTransportsDiscovery,
 } from '../agent-protocol';
 
 /**
@@ -250,5 +251,34 @@ describe('the whole discovery answer', () => {
       ssh: null,
     });
     expect(parseGatewayDiscovery('nope')).toEqual({ agents: null, terminal: null, ssh: null });
+  });
+});
+
+describe('the transports', () => {
+  test('the websocket path and protocol are read from the top of the answer', () => {
+    const parsed = parseGatewayDiscovery({
+      ok: true,
+      planes: {},
+      transports: { websocket: { path: '/api/ws', protocol: 1 } },
+    });
+    expect(parsed.transports).toEqual({ websocket: { path: '/api/ws', protocol: 1 } });
+  });
+
+  test('a protocol is optional', () => {
+    expect(parseTransportsDiscovery({ websocket: { path: '/gw/ws' } })).toEqual({
+      websocket: { path: '/gw/ws' },
+    });
+  });
+
+  test('anything that is not an absolute path is ignored, never followed', () => {
+    for (const path of ['', 'api/ws', 'wss://elsewhere/ws', '//elsewhere/ws', '/a b', 42]) {
+      expect(parseTransportsDiscovery({ websocket: { path } })).toEqual({});
+    }
+    expect(parseTransportsDiscovery(null)).toBeNull();
+    expect(parseTransportsDiscovery({ websocket: 'yes' })).toEqual({});
+  });
+
+  test('an older gateway has no transports, and no key for them', () => {
+    expect('transports' in parseGatewayDiscovery({ ok: true, planes: {} })).toBe(false);
   });
 });

@@ -2137,11 +2137,53 @@ export interface SshDiscovery {
   pushTokenSupported: boolean;
 }
 
+/** The event WebSocket, as discovery's `transports.websocket` states it. */
+export interface WebSocketTransportDiscovery {
+  /** An absolute path on the gateway, `/api/ws` today. */
+  path: string;
+  /** The frame protocol version the gateway speaks, when it says. */
+  protocol?: number;
+}
+
+/** The App-facing transports beyond plain HTTP, keyed by name. */
+export interface TransportsDiscovery {
+  websocket?: WebSocketTransportDiscovery;
+}
+
 /** Every plane of one `GET /api/discovery` answer this app reads. */
 export interface GatewayDiscovery {
   agents: AgentsDiscovery | null;
   terminal: TerminalDiscovery | null;
   ssh: SshDiscovery | null;
+  /** Absent on a gateway that predates `transports`. */
+  transports?: TransportsDiscovery;
+}
+
+/**
+ * A path the app will put after the gateway's own origin: absolute, and
+ * nothing that could name another host (`//host`) or carry a scheme.
+ */
+function isGatewayPath(value: unknown): value is string {
+  return typeof value === 'string' && /^\/(?!\/)\S*$/.test(value);
+}
+
+/**
+ * `transports` from discovery. A key this build does not know, or a value it
+ * cannot use, is left out, and the reader falls back to its own default.
+ */
+export function parseTransportsDiscovery(value: unknown): TransportsDiscovery | null {
+  const rec = asRecord(value);
+  if (!rec) return null;
+  const transports: TransportsDiscovery = {};
+  const websocket = asRecord(rec.websocket);
+  if (websocket && isGatewayPath(websocket.path)) {
+    const protocol = websocket.protocol;
+    transports.websocket = {
+      path: websocket.path,
+      ...(typeof protocol === 'number' && Number.isInteger(protocol) ? { protocol } : {}),
+    };
+  }
+  return transports;
 }
 
 export function parseTerminalDiscovery(value: unknown): TerminalDiscovery | null {
@@ -2195,10 +2237,12 @@ export function parseGatewayDiscovery(value: unknown): GatewayDiscovery {
     if (data && 'planes' in data) rec = data;
   }
   const planes = asRecord(rec.planes) ?? {};
+  const transports = parseTransportsDiscovery(rec.transports);
   return {
     agents: parseAgentsDiscovery(rec),
     terminal: parseTerminalDiscovery(planes.terminal),
     ssh: parseSshDiscovery(planes.ssh),
+    ...(transports ? { transports } : {}),
   };
 }
 

@@ -360,6 +360,20 @@ describe('the mirror', () => {
     expect(back).toEqual(index);
   });
 
+  test('keeps the advertised websocket transport, through storage too', () => {
+    const withTransports = mirrorDiscovery(
+      { ...discovery, transports: { websocket: { path: '/gw/api/ws', protocol: 1 } } },
+      1
+    );
+    expect(withTransports.transports).toEqual({ websocket: { path: '/gw/api/ws', protocol: 1 } });
+    const index = withMirroredDiscovery(emptyAgentsMirror(), 'srv-1', withTransports);
+    const back = parseAgentsMirrorIndex(serializeAgentsMirrorIndex(index));
+    expect(back.servers['srv-1']?.transports).toEqual({
+      websocket: { path: '/gw/api/ws', protocol: 1 },
+    });
+    expect('transports' in mirrored).toBe(false);
+  });
+
   test('a document from a newer version, or an unreadable one, is empty rather than misread', () => {
     expect(parseAgentsMirrorIndex(JSON.stringify({ version: 2, servers: { x: {} } }))).toEqual(
       emptyAgentsMirror()

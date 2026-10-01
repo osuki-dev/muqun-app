@@ -3,6 +3,7 @@ import { describe, expect, test } from 'bun:test';
 import type { AgentDomainEvent } from '../agent-protocol';
 import {
   GatewaySocket,
+  gatewaySocketPath,
   socketReconnectDelay,
   type GatewaySocketListener,
   type GatewaySocketTransport,
@@ -440,5 +441,24 @@ describe('unavailable', () => {
     h.socket.watch('ses_1', r.listener);
     h.latest().deliver('{"t":"pong"}');
     expect(r.log).toEqual(['failed:1']);
+  });
+});
+
+describe('the upgrade path', () => {
+  test('a gateway that does not say is the path it always was', () => {
+    expect(gatewaySocketPath(undefined)).toBe('/api/ws');
+    expect(gatewaySocketPath(null)).toBe('/api/ws');
+    expect(gatewaySocketPath({})).toBe('/api/ws');
+  });
+
+  test('the path discovery states is the one used', () => {
+    expect(gatewaySocketPath({ websocket: { path: '/gw/api/ws', protocol: 1 } })).toBe(
+      '/gw/api/ws'
+    );
+    expect(gatewaySocketPath({ websocket: { path: '/api/ws' } })).toBe('/api/ws');
+  });
+
+  test('a protocol this build does not speak means no socket at all', () => {
+    expect(gatewaySocketPath({ websocket: { path: '/api/ws', protocol: 2 } })).toBeNull();
   });
 });
