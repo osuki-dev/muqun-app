@@ -192,7 +192,10 @@ export function HomeLaunchTarget({
         !bare &&
           servers.length > 0 && { width: HOME_TOOLBAR_PAIR_WIDTH, paddingHorizontal: 8, gap: 4 },
         wide && { width: undefined, minWidth: 160, maxWidth: 300, paddingHorizontal: 16, gap: 12 },
-        chip && styles.targetChip,
+        chip && [
+          styles.targetChip,
+          { borderColor: theme.colors.border, backgroundColor: background(theme.colors.surface) },
+        ],
         bare && { minWidth: 0 },
         bare && { paddingHorizontal: HOME_TOOLBAR_ICON_INSET },
         {
@@ -241,6 +244,7 @@ export function HomeLaunchActions({
   grid = false,
   newOnly = false,
   dock = false,
+  dockAccessory,
 }: {
   controller: HomeLaunchController;
   /**
@@ -255,6 +259,8 @@ export function HomeLaunchActions({
    * one row of equal chips, then the utilities as full-width rows.
    */
   dock?: boolean;
+  /** Drawn beside the dock's terminal pill (the Gateway chip, when there is a choice). */
+  dockAccessory?: ReactNode;
   onNewAgent: (serverId: string, directory?: string, agentId?: string) => Promise<unknown>;
   onOpenAgent: (serverId: string) => Promise<unknown>;
   onNewTerminal: (serverId: string) => Promise<unknown>;
@@ -438,10 +444,16 @@ export function HomeLaunchActions({
           <LaunchTile
             key={entry.key}
             {...common}
+            pill={dock}
             compact={utilityCompact}
             title={t`New terminal`}
             caption={entry.backend}
-            icon={<SquareTerminal size={utilityCompact ? 16 : 22} color={theme.colors.primary} />}
+            icon={
+              <SquareTerminal
+                size={dock ? 18 : utilityCompact ? 16 : 22}
+                color={theme.colors.primary}
+              />
+            }
             disabled={opening || chosenOffline}
             onPress={() => launchOnChosen(onNewTerminal)}
           />
@@ -498,7 +510,10 @@ export function HomeLaunchActions({
           {agentEntries.length ? (
             <View style={styles.dockChips}>{agentEntries.map((entry) => renderEntry(entry))}</View>
           ) : null}
-          {utilityEntries.map((entry) => renderEntry(entry))}
+          <View style={styles.dockPills}>
+            {utilityEntries.map((entry) => renderEntry(entry))}
+            {dockAccessory}
+          </View>
         </View>
       ) : layout.mode === 'grid' ? (
         <View testID="home-launch-actions-grid" style={styles.grid}>
@@ -561,6 +576,7 @@ function LaunchTile({
   primary = false,
   compact = false,
   chip = false,
+  pill = false,
   muted = false,
   inlineCaption,
   rowHeight,
@@ -579,6 +595,11 @@ function LaunchTile({
   compact?: boolean;
   /** One line, icon + name, sharing a row equally: the Pad cover dock's agent chip. */
   chip?: boolean;
+  /**
+   * An auto-width outlined pill, a step below the chips: the Pad dock's terminal
+   * action. The caption (a backend, only when there is a choice) is a muted suffix.
+   */
+  pill?: boolean;
   /** A chip for an agent that is not ready to start. */
   muted?: boolean;
   /** Shown after a chip's name ("T3 Code · Not installed"); `caption` stays the a11y text. */
@@ -610,6 +631,37 @@ function LaunchTile({
       withTiming(pressed && !reduceMotion ? 2 : 0, timing(pressed ? PRESS.in : PRESS.out))
     );
   };
+  if (pill) {
+    return (
+      <PressableScale
+        testID={testID}
+        nativeID={aliasTestID}
+        accessibilityRole="button"
+        accessibilityLabel={caption ? `${title}, ${caption}` : title}
+        accessibilityState={{ disabled }}
+        disabled={disabled}
+        onPress={onPress}
+        style={[
+          styles.pill,
+          {
+            borderRadius: profile.chrome.control,
+            borderColor: theme.colors.border,
+            backgroundColor: background(theme.colors.surface),
+            opacity: disabled ? 0.6 : 1,
+          },
+        ]}>
+        {icon}
+        <Text variant="bodySmall" weight="semibold" color={theme.colors.text}>
+          {title}
+        </Text>
+        {caption ? (
+          <Text variant="bodySmall" color={theme.colors.textMuted}>
+            {`· ${caption}`}
+          </Text>
+        ) : null}
+      </PressableScale>
+    );
+  }
   if (chip) {
     const chipInk = primary
       ? theme.colors.onPrimary
@@ -779,7 +831,14 @@ const styles = StyleSheet.create({
     maxWidth: '100%',
   },
   targetName: { minWidth: 0, flexShrink: 1 },
-  targetChip: { minHeight: 36, paddingVertical: 6, paddingHorizontal: 12 },
+  targetChip: {
+    minWidth: 0,
+    height: 44,
+    minHeight: 44,
+    paddingVertical: 0,
+    paddingHorizontal: 14,
+    borderWidth: StyleSheet.hairlineWidth,
+  },
   dock: { gap: 12, minWidth: 0 },
   dockChips: { flexDirection: 'row', gap: LAUNCH_GRID_GAP, minWidth: 0 },
   chip: {
@@ -791,6 +850,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
   },
   chipTitle: { minWidth: 0, flexShrink: 1 },
+  dockPills: { flexDirection: 'row', alignItems: 'center', gap: LAUNCH_GRID_GAP, minWidth: 0 },
+  pill: {
+    height: 44,
+    flexShrink: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 14,
+    borderWidth: StyleSheet.hairlineWidth,
+  },
   demoAction: {
     minWidth: 44,
     minHeight: 44,
