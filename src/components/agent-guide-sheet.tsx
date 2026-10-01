@@ -11,7 +11,11 @@ import { PressableScale } from '@/components/pressable-scale';
 import { SheetScene, SHEET_LADDER } from '@/components/sheet-scene';
 import { appChrome } from '@/constants/appearance';
 import { feedback } from '@/lib/feedback';
-import type { AgentReadiness } from '@/lib/home-agent-readiness';
+import {
+  agentGuideBlurb,
+  showsAgentSetupCommand,
+  type AgentReadiness,
+} from '@/lib/home-agent-readiness';
 import { agentGuideFor } from '@/i18n/labels';
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { settleAfter } from '@/lib/compiler-safe-control-flow';
@@ -104,18 +108,18 @@ export const AgentGuideSheet = memo(function AgentGuideSheet({
     );
   }, [onCheckAgain, onClose, onOpenAgent, t]);
 
-  const offlineCause = readiness.status === 'offline' ? readiness.cause : null;
-  const showServiceCommand = offlineCause !== null && offlineCause !== 'health' && Boolean(command);
+  const showServiceCommand = showsAgentSetupCommand(readiness) && Boolean(command);
+  const blurbKind = agentGuideBlurb(readiness);
   const blurb =
-    readiness.status === 'ready'
+    blurbKind === 'ready'
       ? t`${agentName} is ready on this host.`
-      : readiness.status === 'unsupported'
+      : blurbKind === 'unsupported'
         ? t`This gateway does not advertise ${agentName} sessions.`
-        : readiness.status === 'not-installed'
+        : blurbKind === 'not-installed'
           ? t`${agentName} was not found on this host. Install it, then check again.`
-          : offlineCause === 'health'
+          : blurbKind === 'health'
             ? t`This gateway is not answering. Check the server connection, then try again.`
-            : offlineCause === 'service'
+            : blurbKind === 'setup'
               ? _(agentGuideFor(agentKind).start)
               : t`${agentName}'s installation could not be confirmed. If it is installed, start it on the host.`;
 

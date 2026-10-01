@@ -156,18 +156,26 @@ describe('a projected row', () => {
     ]);
   });
 
-  test('disabled and unconfigured agents get no tile', () => {
+  test('disabled agents get no tile', () => {
     const model = buildLaunchModel({
       discovery: mirror([
         agent('opencode'),
         agent('deepseek', 'disabled'),
-        agent('t3', 'unconfigured'),
         agent('gone', 'connected', { enabled: false }),
       ]),
     });
     expect(ids(model.entries).filter((id) => id.startsWith('home-new-agent'))).toEqual([
       'home-new-agent-opencode',
     ]);
+  });
+
+  test('an unconfigured agent keeps a tile that says it needs setup', () => {
+    const model = buildLaunchModel({
+      discovery: mirror([agent('opencode'), agent('t3', 'unconfigured')]),
+    });
+    expect(model.entries.find((entry) => entry.testID === 'home-new-agent-t3')).toMatchObject({
+      caption: 'needs-setup',
+    });
   });
 
   test('all offline: every agent keeps an enabled tile that says why', () => {

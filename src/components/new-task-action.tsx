@@ -235,8 +235,9 @@ export function NewTaskAction({
                     serverId,
                     label,
                     agentId: agent.id,
-                    status: agent.readiness === 'not-installed' ? 'not-installed' : 'offline',
-                    ...(agent.readiness === 'not-installed' ? {} : { cause: 'service' }),
+                    ...(agent.readiness === 'not-installed' || agent.readiness === 'needs-setup'
+                      ? { status: agent.readiness }
+                      : { status: 'offline', cause: 'service' }),
                     intent: 'existing',
                   },
                 })
@@ -263,7 +264,9 @@ export function NewTaskAction({
                 ? t`${agentName} sessions are not supported. Tap for details`
                 : readiness?.status === 'not-installed'
                   ? t`${agentName} was not found. Tap for installation instructions`
-                  : t`${agentName} service offline. Tap for setup instructions`
+                  : readiness?.status === 'needs-setup'
+                    ? t`${agentName} needs setup. Tap for setup instructions`
+                    : t`${agentName} service offline. Tap for setup instructions`
             }
             onPress={() =>
               router.push({
@@ -378,7 +381,9 @@ function AgentRowButton({
     ? t`Open ${name} Agent on ${label}`
     : agent.readiness === 'not-installed'
       ? t`${name} was not found. Tap for installation instructions`
-      : t`${name} service offline. Tap for setup instructions`;
+      : agent.readiness === 'needs-setup'
+        ? t`${name} needs setup. Tap for setup instructions`
+        : t`${name} service offline. Tap for setup instructions`;
   return (
     <PressableScale
       testID={`server-agent-action-${agent.id}`}

@@ -111,17 +111,25 @@ export function agentCacheVariant(
 type AgentIdentity = Pick<AgentInfo, 'id' | 'kind' | 'status' | 'enabled'>;
 
 /** What Home says about an agent, in the vocabulary the OpenCode card already used. */
-export type AgentReadinessStatus = 'ready' | 'not-installed' | 'unsupported' | 'offline';
+export type AgentReadinessStatus =
+  | 'ready'
+  | 'not-installed'
+  | 'needs-setup'
+  | 'unsupported'
+  | 'offline';
 
 /**
  * An agent's status as a Home readiness.
  *
  * `connected` is attached and answering. `reachable` is a service the gateway
  * can see and has not attached yet, which a session create will attach; both
- * are `ready`. `not_installed` has its own guide page. `disabled` and
- * `unconfigured` are choices made on the host, not faults, so they are
- * `unsupported` -- the entry is not offered. Everything else is a service that
- * should answer and does not.
+ * are `ready`. `not_installed` has its own guide page. `unconfigured` is an
+ * agent whose server answers but which the gateway holds no credential for
+ * (T3 before `t3 pair`): the host needs setup, which is what the kind's guide
+ * says, so it is `needs-setup` -- shown, and not launchable. `disabled`, or an
+ * agent the gateway lists as not enabled, is a choice made on the host, so it
+ * is `unsupported` and not offered. Everything else is a service that should
+ * answer and does not.
  */
 export function agentReadiness(info: Pick<AgentInfo, 'status' | 'enabled'>): AgentReadinessStatus {
   if (!info.enabled) return 'unsupported';
@@ -131,8 +139,9 @@ export function agentReadiness(info: Pick<AgentInfo, 'status' | 'enabled'>): Age
       return 'ready';
     case 'not_installed':
       return 'not-installed';
-    case 'disabled':
     case 'unconfigured':
+      return 'needs-setup';
+    case 'disabled':
       return 'unsupported';
     default:
       return 'offline';

@@ -21,7 +21,7 @@ import { agentReadiness, findAgent, normalizeAgentId } from '@/lib/agent-discove
 export const MAX_AGENT_TILES = 3;
 
 /** What an agent tile says under its name; state is never colour alone. */
-export type LaunchAgentCaption = 'new-session' | 'not-installed' | 'offline';
+export type LaunchAgentCaption = 'new-session' | 'not-installed' | 'needs-setup' | 'offline';
 
 type LaunchEntryBase = {
   /** Stable React key. */
@@ -93,8 +93,8 @@ export function launchAgentTestID(agentId: string): string {
 
 /**
  * The agents Home offers a tile for: everything discovery lists except an
- * agent switched off or never set up (those are a choice made on the host,
- * not a fault), in the gateway's own order with the last-used agent first.
+ * agent switched off (a choice made on the host, not a fault). One that still
+ * needs setup keeps its tile, which opens the guide, in the gateway's own order with the last-used agent first.
  *
  * The "More agents" sheet reads the same list, so the two can never disagree
  * about what an agent is called or whether it is ready.
@@ -114,11 +114,15 @@ export function projectLaunchAgents(
 }
 
 export function launchAgentCaption(agent: HomeAgentEntry): LaunchAgentCaption {
-  return agent.readiness === 'not-installed'
-    ? 'not-installed'
-    : agent.readiness === 'ready'
-      ? 'new-session'
-      : 'offline';
+  switch (agent.readiness) {
+    case 'ready':
+      return 'new-session';
+    case 'not-installed':
+    case 'needs-setup':
+      return agent.readiness;
+    default:
+      return 'offline';
+  }
 }
 
 /** The backend kind to name on the terminal tile, or nothing when there is no choice. */

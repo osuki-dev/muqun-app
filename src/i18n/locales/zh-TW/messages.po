@@ -188,6 +188,10 @@ msgid "{agentName} is ready on this host."
 msgstr "{agentName} 已在此主機上就緒"
 
 #: src/components/new-task-action.tsx
+msgid "{agentName} needs setup. Tap for setup instructions"
+msgstr "{agentName} 需要設定。點一下查看設定說明"
+
+#: src/components/new-task-action.tsx
 msgid "{agentName} ready"
 msgstr "{agentName} 已就緒"
 
@@ -275,6 +279,10 @@ msgstr "{lead}：{title} — 在你離開時完成"
 #: src/components/agent-revert-plate.tsx
 msgid "{messages, plural, one {# message} other {# messages}}"
 msgstr "{messages, plural, other {# 則訊息}}"
+
+#: src/components/new-task-action.tsx
+msgid "{name} needs setup. Tap for setup instructions"
+msgstr "{name} 需要設定。點一下查看設定說明"
 
 #: src/components/new-task-action.tsx
 msgid "{name} service offline. Tap for setup instructions"
@@ -2935,6 +2943,10 @@ msgstr "名稱"
 #: src/app/explore.tsx
 msgid "Name it, then enter the code shown by the Gateway."
 msgstr "為它命名，然後輸入 Gateway 顯示的代碼"
+
+#: src/i18n/labels.ts
+msgid "Needs setup"
+msgstr "需要設定"
 
 #: src/components/collaboration-notice.tsx
 msgid "Needs your attention"
