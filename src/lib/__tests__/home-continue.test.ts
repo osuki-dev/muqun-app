@@ -1,5 +1,5 @@
 import { expect, test } from 'bun:test';
-import { homeContinueEntries } from '../home-continue';
+import { homeContinueEntries, supersededTerminalRecent } from '../home-continue';
 import { homeServerModel } from '../home-server-model';
 import type { HomeRecentEntry } from '../home-recents';
 import type { ServerAgentsIndex } from '../server-agents';
@@ -366,4 +366,27 @@ test('a recent for a pane in another Herdr session than the snapshot is kept', (
       (row) => row.title
     )
   ).not.toContain('Other session shell');
+});
+
+test('supersededTerminalRecent keeps the old filter for a snapshot without a session', () => {
+  const legacy = { ...snapshots.a, sessionId: undefined };
+  const shell = {
+    kind: 'gateway-terminal' as const,
+    serverId: 'a',
+    sessionId: 'any',
+    paneId: 'p2',
+  };
+  expect(supersededTerminalRecent(shell, legacy, 'agents')).toBe(true);
+});
+
+test('supersededTerminalRecent drops a recent whose pane is already a snapshot row', () => {
+  const session = { ...snapshots.a, sessionId: 'routing' };
+  const shell = {
+    kind: 'gateway-terminal' as const,
+    serverId: 'a',
+    sessionId: 'routing',
+    paneId: 'p2',
+  };
+  expect(supersededTerminalRecent(shell, session, 'all')).toBe(true);
+  expect(supersededTerminalRecent(shell, session, 'agents')).toBe(false);
 });

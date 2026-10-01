@@ -101,6 +101,23 @@ export function homeTargetKey(target: HomeTarget): string {
   }
 }
 
+/**
+ * Whether a remembered terminal still names a pane the workspace can see: the
+ * same Herdr session, and the pane still listed. Stamping a pane that was
+ * closed (or a pane id from another session) would put a dead row on Home.
+ */
+export function isLiveHomeTerminalVisit(
+  target: HomeTarget,
+  sessionId: string,
+  panes: readonly { id: string }[]
+): boolean {
+  return (
+    target.kind === 'gateway-terminal' &&
+    target.sessionId === sessionId &&
+    panes.some((pane) => pane.id === target.paneId)
+  );
+}
+
 /** What every agent target was before the gateway could name a agentId. */
 export const DEFAULT_HOME_TARGET_AGENT_ID = 'opencode';
 

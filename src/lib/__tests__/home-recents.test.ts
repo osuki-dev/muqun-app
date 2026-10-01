@@ -5,6 +5,7 @@ import {
   MAX_HOME_RECENTS,
   homeTargetAgentId,
   homeTargetKey,
+  isLiveHomeTerminalVisit,
   parseHomeRecentsDocument,
   serializeHomeRecents,
   type HomeRecentEntry,
@@ -469,5 +470,80 @@ describe('agents on a target', () => {
     );
     expect(back.entries[0]?.target).toMatchObject({ agentId: 'deepseek' });
     expect(homeTargetAgentId(back.entries[0]?.target as { agentId?: string })).toBe('deepseek');
+  });
+});
+
+describe('touching the open pane', () => {
+  test('touch moves an existing recent to the front in memory and schedules no write', async () => {
+    const saved: string[] = [];
+    const store = createHomeRecentsStore({
+      load: async () => null,
+      save: async (value) => {
+        saved.push(value);
+      },
+    });
+    await store.getState().hydrate();
+    await store.getState().visit(terminal('first'), 'First', 10);
+    await store.getState().visit(terminal('second'), 'Second', 20);
+    const writes = saved.length;
+
+    store.getState().touch(terminal('first'), 30);
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(store.getState().entries.map((item) => [item.title, item.atMs])).toEqual([
+      ['First', 30],
+      ['Second', 20],
+    ]);
+    expect(saved).toHaveLength(writes);
+  });
+
+  test('touch never creates a recent and never moves one back in time', async () => {
+    const store = createHomeRecentsStore({ load: async () => null, save: async () => {} });
+    await store.getState().hydrate();
+    await store.getState().visit(terminal('first'), 'First', 50);
+    const before = store.getState().entries;
+
+    store.getState().touch(terminal('missing'), 60);
+    store.getState().touch(terminal('first'), 40);
+
+    expect(store.getState().entries).toBe(before);
+  });
+
+  test('a later visit persists the touched order', async () => {
+    const saved: string[] = [];
+    const store = createHomeRecentsStore({
+      load: async () => null,
+      save: async (value) => {
+        saved.push(value);
+      },
+    });
+    await store.getState().hydrate();
+    await store.getState().visit(terminal('first'), 'First', 10);
+    await store.getState().visit(terminal('second'), 'Second', 20);
+    store.getState().touch(terminal('first'), 30);
+    await store.getState().visit(terminal('first'), 'First', 40);
+
+    expect(JSON.parse(saved.at(-1) as string).entries[0]).toMatchObject({
+      target: terminal('first'),
+      atMs: 40,
+    });
+  });
+});
+
+describe('isLiveHomeTerminalVisit', () => {
+  const pane = (id: string) => ({ id });
+  const target = terminal('a', 'p1');
+
+  test('a pane still listed in the same Herdr session is live', () => {
+    expect(isLiveHomeTerminalVisit(target, 'a-routing', [pane('p0'), pane('p1')])).toBe(true);
+  });
+
+  test('a closed pane is not live', () => {
+    expect(isLiveHomeTerminalVisit(target, 'a-routing', [pane('p0')])).toBe(false);
+  });
+
+  test('a pane id from another Herdr session is not live', () => {
+    expect(isLiveHomeTerminalVisit(target, 'other', [pane('p1')])).toBe(false);
   });
 });
