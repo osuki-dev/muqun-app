@@ -53,6 +53,9 @@ export function HomeRecentSessions({
   reachabilityByServer,
   activeConnection,
   selectedServerId,
+  compact = false,
+  selectedPaneId,
+  selectedAsid,
   onOpen,
 }: {
   servers: readonly GatewayRecord[];
@@ -60,6 +63,9 @@ export function HomeRecentSessions({
   reachabilityByServer: Readonly<Record<string, ServerReachability | undefined>>;
   activeConnection?: ActiveServerConnection;
   selectedServerId?: string;
+  compact?: boolean;
+  selectedPaneId?: string;
+  selectedAsid?: string;
   /** Runs the row's Home command; see `homeContinueCommand`. */
   onOpen: (command: HomeCommand) => void;
 }) {
@@ -157,7 +163,8 @@ export function HomeRecentSessions({
     nowMs: observationNowMs,
     gatewaySessions: agentSessions,
   });
-  const displayed = visibleHomeContinueEntries(available, expanded);
+  const visible = visibleHomeContinueEntries(available, expanded);
+  const displayed = compact && !expanded ? visible.slice(0, 4) : visible;
   return (
     <View testID="home-recent-sessions" style={styles.root}>
       <View
@@ -173,6 +180,10 @@ export function HomeRecentSessions({
             key={entry.key}
             entry={entry}
             number={index + 1}
+            compact={compact}
+            selectedServerId={selectedServerId}
+            selectedPaneId={selectedPaneId}
+            selectedAsid={selectedAsid}
             hasSeparator={index < displayed.length - 1}
             serverLabel={
               servers.find(
@@ -197,7 +208,7 @@ export function HomeRecentSessions({
           </Text>
         ) : null}
       </View>
-      {shouldShowHomeContinueOverflow(available) ? (
+      {shouldShowHomeContinueOverflow(available) || (compact && available.length > 4) ? (
         <PressableScale
           testID="home-recent-sessions-more"
           accessibilityRole="button"
@@ -217,12 +228,20 @@ function RecentSessionRow({
   number,
   hasSeparator,
   serverLabel,
+  compact,
+  selectedServerId,
+  selectedPaneId,
+  selectedAsid,
   onOpen,
 }: {
   entry: HomeContinueEntry;
   number: number;
   hasSeparator: boolean;
   serverLabel?: string;
+  compact: boolean;
+  selectedServerId?: string;
+  selectedPaneId?: string;
+  selectedAsid?: string;
   onOpen: () => void;
 }) {
   const { t } = useLingui();
@@ -230,6 +249,17 @@ function RecentSessionRow({
   const theme = useThemeTokens();
   const background = useSurfaceBackground();
   const target = homeContinueTarget(entry.destination);
+  const selected =
+    target?.kind === 'agent-session'
+      ? target.serverId === selectedServerId && target.asid === selectedAsid
+      : target?.kind === 'gateway-terminal'
+        ? target.serverId === selectedServerId &&
+          Boolean(selectedPaneId) &&
+          target.paneId === selectedPaneId
+        : entry.destination.type === 'pane' &&
+          entry.destination.serverId === selectedServerId &&
+          Boolean(selectedPaneId) &&
+          entry.destination.paneId === selectedPaneId;
   const rowKind = homeContinueKind(entry.destination);
   const cwd =
     entry.destination.type === 'pane'
@@ -286,6 +316,8 @@ function RecentSessionRow({
       testID="home-recent-open"
       accessibilityRole="button"
       accessibilityLabel={`${title}, ${metadataKind}${serverLabel ? `, ${serverLabel}` : ''}${observationLabel ? `, ${observationLabel}` : ''}`}
+      accessibilityHint={cwd}
+      accessibilityState={{ selected }}
       onPress={onOpen}
       style={[
         styles.row,
@@ -294,13 +326,15 @@ function RecentSessionRow({
           borderBottomWidth: StyleSheet.hairlineWidth,
         },
         {
-          backgroundColor: background(theme.colors.surface),
+          backgroundColor: background(selected ? theme.colors.primarySubtle : theme.colors.surface),
         },
       ]}>
       <View style={styles.open}>
-        <Text variant="heading" color={theme.colors.primary} style={styles.number}>
-          {String(number).padStart(2, '0')}
-        </Text>
+        {compact ? null : (
+          <Text variant="heading" color={theme.colors.primary} style={styles.number}>
+            {String(number).padStart(2, '0')}
+          </Text>
+        )}
         <View style={styles.copy}>
           {agentKind ? (
             <View style={styles.titleLine}>
@@ -320,7 +354,7 @@ function RecentSessionRow({
             {metadataKind}
             {serverLabel ? ` · ${serverLabel}` : ''}
           </Text>
-          {cwd ? (
+          {cwd && !compact ? (
             <Text variant="caption" color={theme.colors.textSubtle} numberOfLines={1}>
               {cwd}
             </Text>

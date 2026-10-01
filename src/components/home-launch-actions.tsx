@@ -152,11 +152,13 @@ export function HomeLaunchTarget({
   controller,
   loading = false,
   bare = false,
+  wide = false,
   onPair,
 }: {
   controller: HomeLaunchController;
   loading?: boolean;
   bare?: boolean;
+  wide?: boolean;
   onPair: () => Promise<unknown>;
 }) {
   const profile = useAppearanceProfile();
@@ -183,6 +185,7 @@ export function HomeLaunchTarget({
         styles.target,
         !bare &&
           servers.length > 0 && { width: HOME_TOOLBAR_PAIR_WIDTH, paddingHorizontal: 8, gap: 4 },
+        wide && { width: undefined, minWidth: 160, maxWidth: 300, paddingHorizontal: 16, gap: 12 },
         bare && { minWidth: 0 },
         bare && { paddingHorizontal: HOME_TOOLBAR_ICON_INSET },
         {
@@ -229,6 +232,7 @@ export function HomeLaunchActions({
   onSsh,
   onDemo,
   grid = false,
+  newOnly = false,
 }: {
   controller: HomeLaunchController;
   /**
@@ -236,6 +240,8 @@ export function HomeLaunchActions({
    * utilities in compact tiles under it, with no sideways scroll.
    */
   grid?: boolean;
+  /** Existing destinations live in the Pad's persistent navigation. */
+  newOnly?: boolean;
   onNewAgent: (serverId: string, directory?: string, agentId?: string) => Promise<unknown>;
   onOpenAgent: (serverId: string) => Promise<unknown>;
   onNewTerminal: (serverId: string) => Promise<unknown>;
@@ -262,9 +268,12 @@ export function HomeLaunchActions({
     lastUsedAgentId,
     ...(grid ? { maxAgentTiles: Number.POSITIVE_INFINITY } : {}),
   });
-  const cells = groupLaunchCells(model.entries);
-  const agentEntries = model.entries.filter(isAgentEntry);
-  const utilityEntries = model.entries.filter((entry) => !isAgentEntry(entry));
+  const entries = newOnly
+    ? model.entries.filter((entry) => isAgentEntry(entry) || entry.kind === 'new-terminal')
+    : model.entries;
+  const cells = groupLaunchCells(entries);
+  const agentEntries = entries.filter(isAgentEntry);
+  const utilityEntries = entries.filter((entry) => !isAgentEntry(entry));
   const layout = launchRowLayout({
     width: availableWidth,
     grid,

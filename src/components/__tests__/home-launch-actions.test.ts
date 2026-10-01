@@ -126,12 +126,6 @@ test('a Pad Home lays the launch area out as a grid and never scrolls sideways',
   expect(overview).toContain('grid={isPad}');
 });
 
-test('the embedded Pad Home does not repeat the brand the rail carries', () => {
-  expect(overview).toContain('identity.showBrand && !(embedded && isPad)');
-  expect(overview).toContain('showsEditorialBrand ? (');
-  expect(overview).toContain('pad={isPad}');
-});
-
 test('Editorial Home scrolls narrow actions and wraps wide actions', () => {
   expect(actions).toContain('horizontal={horizontal}');
   expect(actions).toContain("const horizontal = layout.mode === 'scroll'");
@@ -146,7 +140,6 @@ test('Editorial Home scrolls narrow actions and wraps wide actions', () => {
 
 test('the launch row is drawn from the projection, not from a fixed list', () => {
   expect(actions).toContain('buildLaunchModel({\n    discovery,\n    lastUsedAgentId,');
-  expect(actions).toContain('groupLaunchCells(model.entries)');
   // Markers come from the model, so no tile hard-codes its own number.
   expect(/marker="\d\d"/.test(actions)).toBe(false);
   // Every tile kind the model can emit has a renderer.

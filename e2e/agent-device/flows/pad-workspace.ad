@@ -63,3 +63,25 @@ is visible "${TARGET}"
 
 # section s20
 is hidden "${TARGET}"
+
+# section home-navigation
+# Home and task share one persistent navigation rail.
+press "id=\"pad-server-rail-workbench\""
+wait "id=\"home-overview-overlay\"" 10000
+wait stable 400 5000
+is visible "id=\"pad-server-rail-container\""
+is hidden "id=\"server-agent-pane-1\""
+is hidden "label=\"Show the server list\""
+is visible "role=button label=\"Home\""
+is visible "id=\"home-pad-launch-pane\""
+is visible "text=\"Pair your first server\""
+press "role=button label=\"Settings\""
+wait text "SERVERS" 10000
+is visible "role=button label=\"Go back\""
+back --system
+wait "role=button label=\"Home\"" 10000
+press "id=\"home-connection-gateway-muqun-demo\""
+wait absent "id=\"home-overview-overlay\"" 10000
+wait "id=\"pad-server-rail-container\"" 10000
+is hidden "id=\"home-overview-overlay\""
+is visible "label=\"Switch to nvim\""

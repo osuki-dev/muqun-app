@@ -230,7 +230,6 @@ import {
   timing,
 } from '@/lib/motion';
 import { mirroredServerAgents, mirroredServerPanes } from '@/lib/server-agents';
-import type { ServerAgent } from '@/lib/server-agents';
 import { resolveServerReachability, type ServerReachability } from '@/lib/server-reachability';
 import { responsiveWorkspaceLayout } from '@/lib/responsive-layout';
 import { loadUsage, orderByUsage, recordUsage, usageScope } from '@/lib/shortcut-usage';
@@ -771,6 +770,7 @@ export function ServerTerminalWorkspace({
     workspaceId?: string;
     tabId?: string;
     notificationId?: string;
+    overview?: string;
   }>();
   // A template literal rather than the bare `??` chain: the value is the same
   // string, and it is what tells React Compiler this is a primitive -- without
@@ -831,6 +831,11 @@ export function ServerTerminalWorkspace({
   const workspaceLayout = responsiveWorkspaceLayout(windowWidth, previewOpen);
   const isPadLayout = workspaceLayout.mode === 'pad';
   const [overviewVisible, setOverviewVisible] = useState(false);
+  useEffect(() => {
+    if (!isFocused || routeParams.overview !== 'home') return;
+    setOverviewVisible(true);
+    router.setParams({ overview: undefined });
+  }, [isFocused, routeParams.overview, router]);
   const [overviewWidth, setOverviewWidth] = useState(0);
   const overviewTargetRequest = useRef(0);
   const workspaceHandoff = useSyncExternalStore(
@@ -1016,9 +1021,6 @@ export function ServerTerminalWorkspace({
     (!strictRequestedWorkspaceId || selection.workspaceId === strictRequestedWorkspaceId) &&
     (!strictRequestedTabId || selection.tabId === strictRequestedTabId);
   const targetPending = Boolean(activeStrictTarget) && !targetUnavailable && !targetReady;
-  // Gives the in-memory Demo mirror one stable freshness boundary for this
-  // mounted workspace. Real servers continue to use their persisted mirror.
-  const [demoRailCheckedAtMs] = useState(() => Date.now());
   // Seeded from the prefetch when it read the pane this screen is about to
   // land on, in the shape this screen reads. Everything else about the
   // workspace already painted from that snapshot on the first frame; without
@@ -1999,7 +2001,6 @@ export function ServerTerminalWorkspace({
   // above record all panes with their resolved titles; initial/reset state and
   // cached first frames do not become new observations. The shared Home model
   // applies the reader's agent-only filter without rewriting stored snapshots.
-  const agentsByServer = useServerAgents((state) => state.byServer);
   const hydrateServerAgents = useServerAgents((state) => state.hydrate);
   const reachabilityProbes = useServerReachability((state) => state.probes);
 
@@ -3718,18 +3719,6 @@ export function ServerTerminalWorkspace({
     return [routeRecord, ...records];
   }, [records, routeRecord]);
 
-  const railAgentsByServer = useMemo(() => {
-    if (!routeRecord || !isDemoRecord(routeRecord)) return agentsByServer;
-    return {
-      ...agentsByServer,
-      [routeRecord.serverId]: {
-        serverId: routeRecord.serverId,
-        checkedAtMs: demoRailCheckedAtMs,
-        agents: mirroredServerAgents(data.agents, data.panes),
-      },
-    };
-  }, [agentsByServer, data.agents, data.panes, demoRailCheckedAtMs, routeRecord]);
-
   const railReachabilityByServer = useMemo<Record<string, ServerReachability>>(
     () =>
       Object.fromEntries(
@@ -3760,58 +3749,10 @@ export function ServerTerminalWorkspace({
     if (server.serverId === serverId) return;
     void selectRecord(server.serverId);
 
-    // A compact detail can become wide during rotation or Stage Manager. Keep
-    // that already-visible composition in place while its dynamic segment is
-    // updated; the persistent Home workspace needs no route mutation at all.
-    if (providedServerId === undefined) {
-      router.replace({
-        pathname: '/servers/[serverId]',
-        params: { serverId: server.serverId },
-      } as Href);
-    }
-  }
-
-  function selectPadAgent(server: GatewayRecord, agent: ServerAgent) {
-    setOverviewVisible(false);
-    if (!agent.paneId) {
-      selectPadServer(server);
-      return;
-    }
-
-    const request = ++overviewTargetRequest.current;
-
-    if (server.serverId === serverId) {
-      setPadRequestedPaneId(agent.paneId);
-      setMissingRequestedTarget(null);
-      setStrictTarget({
-        serverId: server.serverId,
-        paneId: agent.paneId,
-        afterGeneration: snapshotGenerationRef.current,
-      });
-      const pane = data.panes.find((item) => item.id === agent.paneId);
-      if (pane) choosePane(pane);
-      return;
-    }
-
-    const target: HomeServerEntry = {
-      kind: 'gateway-terminal',
-      serverId: server.serverId,
-      paneId: agent.paneId,
-    };
-    const handoffId = homeWorkspaceHandoffStore
-      .getState()
-      .publish(target, () => request === overviewTargetRequest.current, serverId);
-    void selectRecord(server.serverId).then((selected) => {
-      if (request !== overviewTargetRequest.current || selected) return;
-      const pending = homeWorkspaceHandoffStore.getState().handoff;
-      if (pending?.id === handoffId) homeWorkspaceHandoffStore.getState().clear();
-    });
-    if (providedServerId === undefined) {
-      router.replace({
-        pathname: '/servers/[serverId]',
-        params: { serverId: server.serverId, paneId: agent.paneId },
-      } as Href);
-    }
+    router.replace({
+      pathname: '/servers/[serverId]',
+      params: { serverId: server.serverId },
+    } as Href);
   }
 
   /**
@@ -4755,13 +4696,14 @@ export function ServerTerminalWorkspace({
       padRail={
         <PadServerRail
           servers={railServers}
-          agentsByServer={railAgentsByServer}
           reachabilityByServer={railReachabilityByServer}
           selectedServerId={record?.serverId ?? null}
+          activeConnection={{ serverId, phase: connection.phase }}
           selectedPaneId={selection.paneId || null}
           workbenchSelected={overviewVisible}
+          commandOptions={{ embedded: true, routeBound, sourceRouteActive }}
           onOpenWorkbench={() => setOverviewVisible(true)}
-          onSelectAgent={selectPadAgent}
+          onSelectServer={selectPadServer}
           onPairServer={() => router.push('/explore')}
           onOpenSettings={() => router.push('/settings')}
           onOpenSsh={() => router.push('/ssh')}
