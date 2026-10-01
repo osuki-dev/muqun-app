@@ -1,10 +1,10 @@
 import { useEffect, useReducer, useRef } from 'react';
 import {
   initialPadShellState,
+  padRouteKey,
   padShellReducer,
+  shouldApplyRoute,
   type PadRouteParams,
-  type PadShellEvent,
-  type PadShellState,
 } from '@/lib/pad-detail';
 
 /**
@@ -16,18 +16,12 @@ import {
  */
 export function usePadDetail(serverId: string, params: PadRouteParams) {
   const [state, dispatch] = useReducer(padShellReducer, initialPadShellState);
-  const routeKey = [
-    serverId,
-    params.asid ?? '',
-    params.sessionId ?? '',
-    params.intent ?? '',
-    params.overview ?? '',
-  ].join('\u0000');
+  const routeKey = padRouteKey(serverId, params);
   const appliedRouteKey = useRef<string | null>(null);
   useEffect(() => {
-    if (appliedRouteKey.current === routeKey) return;
+    if (!shouldApplyRoute(appliedRouteKey.current, routeKey)) return;
     appliedRouteKey.current = routeKey;
     dispatch({ type: 'route', params, serverId });
   }, [params, routeKey, serverId]);
-  return { state, dispatch } as { state: PadShellState; dispatch: (event: PadShellEvent) => void };
+  return { state, dispatch };
 }
