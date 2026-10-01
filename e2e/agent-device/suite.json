@@ -3615,6 +3615,11 @@
         "steps": [
           { "run": "flows/pad-workspace.ad#home-navigation" },
           {
+            "point": [0.82, 0.8],
+            "delta": [0, -0.6],
+            "run": "flows/pad-workspace.ad#home-navigation-work-column"
+          },
+          {
             "target": { "id": "home-connection-gateway-muqun-demo" },
             "mode": "scroll",
             "direction": "down",

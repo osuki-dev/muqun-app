@@ -1235,7 +1235,6 @@ msgid "Connecting…"
 msgstr "Conectando…"
 
 #: src/components/home-editorial-layout.tsx
-#: src/components/home-overview.tsx
 #: src/components/pad-server-rail.tsx
 msgid "Connections"
 msgstr "Conexiones"
@@ -1267,7 +1266,6 @@ msgstr "Contexto usado"
 
 #: src/app/explore.tsx
 #: src/components/home-editorial-layout.tsx
-#: src/components/home-overview.tsx
 #: src/components/pad-server-rail.tsx
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Continue"
