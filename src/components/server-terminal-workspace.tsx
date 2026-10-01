@@ -266,6 +266,7 @@ import { useAppActive } from '@/hooks/use-app-active';
 import { useServerAgents } from '@/stores/server-agents';
 import { useHomeRecentsStore } from '@/stores/home-recents';
 import { homeTargetKey, type HomeTarget } from '@/lib/home-recents';
+import { HOME_CONTINUE_REFRESH_MS } from '@/lib/home-continue-refresh';
 import {
   classifyHomeTargetAvailability,
   isHomeTargetReady,
@@ -1716,7 +1717,9 @@ export function ServerTerminalWorkspace({
     [data.agents, selection.paneId]
   );
   const lastHomeVisit = useRef<string | null>(null);
+  const homeVisit = useRef<{ target: HomeTarget; title: string } | null>(null);
   useEffect(() => {
+    homeVisit.current = null;
     if (!isFocused || overviewVisible) {
       lastHomeVisit.current = null;
       return;
@@ -1733,6 +1736,7 @@ export function ServerTerminalWorkspace({
       paneId: selectedPane.id,
     };
     const key = homeTargetKey(target);
+    homeVisit.current = { target, title: panelTitle(selectedPane, selectedAgent) };
     if (lastHomeVisit.current === key) return;
     lastHomeVisit.current = key;
     void useHomeRecentsStore.getState().visit(target, panelTitle(selectedPane, selectedAgent));
@@ -1748,6 +1752,21 @@ export function ServerTerminalWorkspace({
     serverId,
     targetReady,
   ]);
+  // A visit is stamped once per selection, but agents keep refreshing their
+  // own times; re-stamp the pane in use on Continue's cadence and once on the
+  // way out so it keeps ranking as recent.
+  useEffect(() => {
+    if (!appActive || !isFocused || overviewVisible || connection.phase !== 'connected') return;
+    const restamp = () => {
+      const visit = homeVisit.current;
+      if (visit) void useHomeRecentsStore.getState().visit(visit.target, visit.title);
+    };
+    const timer = setInterval(restamp, HOME_CONTINUE_REFRESH_MS);
+    return () => {
+      clearInterval(timer);
+      restamp();
+    };
+  }, [appActive, connection.phase, data.sessionId, isFocused, overviewVisible, selection.paneId]);
   const agentKind = useMemo(() => {
     if (!selectedAgent) return '';
     return (
