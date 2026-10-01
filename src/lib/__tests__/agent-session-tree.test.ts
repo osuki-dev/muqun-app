@@ -12,6 +12,8 @@ import {
   parentOf,
   rootOf,
   sessionsInWorkspace,
+  sessionsOfAgent,
+  workbenchAgentId,
   SESSION_STRIP_MAX_NODES,
   loadSessionDescendants,
   mergeSessionChildren,
@@ -448,5 +450,54 @@ describe('sessionsInWorkspace', () => {
 
   test('with no workspace at all nothing matches, rather than everything', () => {
     expect(sessionsInWorkspace(sessions, {})).toEqual([]);
+  });
+});
+
+describe('workbench agent scoping', () => {
+  const opencode = { asid: 'o1', agent_id: 'opencode' };
+  const deepseek = { asid: 'd1', agent_id: 'deepseek' };
+  const t3 = { asid: 't1', agent_id: 't3' };
+  const all = [opencode, deepseek, t3];
+
+  test('a new session from a launch tile scopes to initialAgentId over a stale pick', () => {
+    const agent = workbenchAgentId({
+      discovered: true,
+      sessionAgentId: undefined,
+      initialAgentId: 'deepseek',
+      selectedAgentId: 'opencode',
+    });
+    expect(agent).toBe('deepseek');
+    expect(sessionsOfAgent(all, agent)).toEqual([deepseek]);
+  });
+
+  test('without an initial agent the pick decides', () => {
+    expect(workbenchAgentId({ discovered: true, selectedAgentId: 't3' })).toBe('t3');
+  });
+
+  test('once the session exists its own agent wins', () => {
+    const agent = workbenchAgentId({
+      discovered: true,
+      sessionAgentId: 't3',
+      initialAgentId: 'deepseek',
+      selectedAgentId: 'opencode',
+    });
+    expect(agent).toBe('t3');
+    expect(sessionsOfAgent(all, agent)).toEqual([t3]);
+  });
+
+  test('a gateway without agent discovery is not filtered', () => {
+    const agent = workbenchAgentId({
+      discovered: false,
+      sessionAgentId: 'opencode',
+      initialAgentId: 'deepseek',
+      selectedAgentId: 'deepseek',
+    });
+    expect(agent).toBeUndefined();
+    expect(sessionsOfAgent(all, agent)).toEqual(all);
+  });
+
+  test('a row without agent_id is the default agent', () => {
+    const legacy = { asid: 'x', agent_id: '' };
+    expect(sessionsOfAgent([legacy, deepseek], 'opencode')).toEqual([legacy]);
   });
 });

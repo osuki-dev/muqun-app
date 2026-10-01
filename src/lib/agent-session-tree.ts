@@ -1,4 +1,4 @@
-import { isBusyStatus, type AgentSessionInfo } from './agent-protocol';
+import { isBusyStatus, normalizeAgentId, type AgentSessionInfo } from './agent-protocol';
 
 /** Separate projections for the root strip, nested sheet and legacy header swipe window. */
 
@@ -326,4 +326,39 @@ export function sessionsInWorkspace(
     if (canonical && (dir === canonical || dir.startsWith(`${canonical}/`))) return true;
     return false;
   });
+}
+
+/**
+ * The agent whose sessions the workbench lists, or none on a gateway without
+ * agent discovery (it drives one agent, and its rows carry no `agent_id`).
+ *
+ * The open session's own agent wins. Before there is one -- a launch tile's
+ * new session -- the agent the screen was opened for, and only then the
+ * reader's pick: the pick is written from `initialAgentId` an effect later,
+ * and until then it still names whichever agent was last chosen.
+ */
+export function workbenchAgentId(input: {
+  discovered: boolean;
+  sessionAgentId?: string | null;
+  initialAgentId?: string;
+  selectedAgentId?: string;
+}): string | undefined {
+  if (!input.discovered) return undefined;
+  const id = input.sessionAgentId || input.initialAgentId || input.selectedAgentId;
+  return id ? normalizeAgentId(id) : undefined;
+}
+
+/**
+ * The sessions that belong to `agentId`, or all of them when no agent is named.
+ *
+ * Every session belongs to exactly one agent; a row without `agent_id` is the
+ * default agent's, which is what the gateway answers for when none is said.
+ */
+export function sessionsOfAgent<T extends Pick<AgentSessionInfo, 'agent_id'>>(
+  sessions: readonly T[],
+  agentId: string | undefined
+): readonly T[] {
+  if (!agentId) return sessions;
+  const id = normalizeAgentId(agentId);
+  return sessions.filter((session) => normalizeAgentId(session.agent_id) === id);
 }

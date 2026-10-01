@@ -171,6 +171,8 @@ import {
   parentOf,
   rootOf,
   sessionsInWorkspace,
+  sessionsOfAgent,
+  workbenchAgentId,
   type ChildrenByParent,
 } from '@/lib/agent-session-tree';
 import { upsertTimelineItems } from '@/lib/agent-timeline-upsert';
@@ -268,16 +270,6 @@ const NO_CATALOG_DEFAULTS: CatalogDefaults = {};
 const NO_SKILLS: SkillInfo[] = [];
 const NO_INBOX: InboxItem[] = [];
 const NO_COMMANDS: CommandInfo[] = [];
-
-/** The sessions a new one on `agentId` may take its defaults from. */
-function sessionsOfAgent(
-  sessions: readonly AgentSessionInfo[],
-  agentId: string | undefined
-): readonly AgentSessionInfo[] {
-  if (!agentId) return sessions;
-  const id = normalizeAgentId(agentId);
-  return sessions.filter((session) => normalizeAgentId(session.agent_id) === id);
-}
 
 /** Between a notice and the first transcript row it is standing over. */
 const NOTICE_RESERVE_GAP = 8;
@@ -582,6 +574,19 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     useCallback((state) => Boolean(state.index.servers[serverId]?.agents), [serverId])
   );
   const catalogAgentId = agentsDiscovered ? normalizeAgentId(activeAgentId) : undefined;
+  /**
+   * The agent whose sessions the strip, the sessions sheet and the listing
+   * show. Each session belongs to one agent, and a DeepSeek workbench drawing
+   * OpenCode's sessions beside its own invited a tap into the wrong agent.
+   * None on a gateway without discovery, which has one agent and no filter.
+   */
+  const listAgentId = workbenchAgentId({
+    discovered: agentsDiscovered,
+    sessionAgentId: sessionInfo?.agent_id,
+    initialAgentId,
+    selectedAgentId: agentChoice.selected,
+  });
+  const listAgentIdRef = useLatestRef(listAgentId);
   const activeAgentEntry = useMemo(
     () => agentChoice.agents.find((entry) => entry.id === activeAgentId),
     [agentChoice.agents, activeAgentId]
@@ -1264,11 +1269,13 @@ export const AgentWorkbench = memo(function AgentWorkbench({
               // Bounded, because the strip draws a handful of chips and every surface
               // that reads this list sorts by recency: `desc` is newest first, so
               // what the limit cuts is the oldest.
+              const agentId = listAgentIdRef.current;
               const observation = await listAgentSessionsObserved(sessionId, {
                 roots: true,
                 limit: SESSION_LIST_LIMIT,
                 order: 'desc',
                 ...(directory ? { directory } : {}),
+                ...(agentId ? { agentId } : {}),
               });
               const list = observation.sessions;
               if (!ownsList()) return;
@@ -1332,6 +1339,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     [
       applySelectedModel,
       initialIntent,
+      listAgentIdRef,
       ownsWorkbench,
       serverId,
       sessionId,
@@ -1350,9 +1358,11 @@ export const AgentWorkbench = memo(function AgentWorkbench({
    * is what tells the two apart.
    */
   const listedScopeRef = useRef<string | undefined>(undefined);
+  /** The agent the listing in hand was asked for; another agent is another list. */
+  const listedAgentRef = useRef<string | undefined>(undefined);
   useEffect(() => {
     const scope = activeDirectory ?? '';
-    if (listedScopeRef.current !== undefined) {
+    if (listedScopeRef.current !== undefined && listedAgentRef.current === listAgentId) {
       if (listedScopeRef.current === scope) return;
       // A directory that arrived from the session we just opened is a directory
       // the listing already covers -- but only when the listing in hand is the
@@ -1373,8 +1383,9 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       }
     }
     listedScopeRef.current = scope;
+    listedAgentRef.current = listAgentId;
     void refreshSessions(scope || undefined).catch(() => {});
-  }, [activeDirectory, refreshSessions]);
+  }, [activeDirectory, listAgentId, refreshSessions]);
 
   const handleTimelineScroll = useCallback(
     (event: NativeSyntheticEvent<NativeScrollEvent>) => {
@@ -4180,15 +4191,18 @@ export const AgentWorkbench = memo(function AgentWorkbench({
    * rather than coming back empty.
    */
   const workspaceRoots = useMemo(() => {
+    // The agent first: the listing is asked for one agent, but the default
+    // agent is never named on the wire, and live updates arrive for every agent.
+    const agentSessions = sessionsOfAgent(sessions, listAgentId);
     if (!activeDirectory && !activeProject)
-      return includeOpenedRoot(sessions, sessionInfo, activeAsid);
-    const scoped = sessionsInWorkspace(sessions, {
+      return includeOpenedRoot(agentSessions, sessionInfo, activeAsid);
+    const scoped = sessionsInWorkspace(agentSessions, {
       ...(activeDirectory ? { directory: activeDirectory } : {}),
       ...(activeProject?.id ? { projectId: activeProject.id } : {}),
       ...(activeProject?.canonical ? { canonical: activeProject.canonical } : {}),
     });
     return includeOpenedRoot(scoped, sessionInfo, activeAsid);
-  }, [sessions, activeDirectory, activeProject, sessionInfo, activeAsid]);
+  }, [sessions, listAgentId, activeDirectory, activeProject, sessionInfo, activeAsid]);
 
   const sessionIndex = useMemo(
     () =>
