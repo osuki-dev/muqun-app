@@ -406,7 +406,7 @@ export function HomeEditorialLayout({
                 testID="home-pad-launch-dock"
                 style={[
                   styles.padLaunchDock,
-                  { bottom: geometry.gutter, width: Math.min(coverWidth - geometry.gutter, 760) },
+                  { bottom: geometry.gutter, width: Math.min(coverWidth - geometry.gutter, 560) },
                 ]}>
                 {launches}
               </View>
