@@ -71,11 +71,22 @@ function bound(text: string): string {
   return `${clean.slice(0, AGENT_ERROR_MESSAGE_LIMIT - 1).trimEnd()}…`;
 }
 
-export function classifyAgentRequestError(err: unknown): AgentRequestError {
+/** The HTTP status (0 when none) and the gateway's error code, read off a thrown request error. */
+export function readAgentRequestError(err: unknown): {
+  raw: string;
+  match: RegExpMatchArray | null;
+  status: number;
+  code?: string;
+  message?: string;
+} {
   const raw = err instanceof Error ? err.message : String(err ?? '');
   const match = raw.match(STATUS_PATTERN);
   const status = Number(match?.[1] ?? match?.[2] ?? match?.[3] ?? 0);
-  const { code, message } = readBody(raw);
+  return { raw, match, status, ...readBody(raw) };
+}
+
+export function classifyAgentRequestError(err: unknown): AgentRequestError {
+  const { raw, match, status, code, message } = readAgentRequestError(err);
 
   if (code === 'agent_unavailable') return { kind: 'offline' };
   if (UNREACHABLE_AGENT.some((needle) => raw.includes(needle))) return { kind: 'offline' };

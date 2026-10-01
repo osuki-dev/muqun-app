@@ -1847,6 +1847,12 @@ export interface AgentFeatures {
   toolApprovals: boolean;
   worktrees: boolean;
   revert: boolean;
+  /**
+   * `POST …/revert/stage`: a rollback that can be previewed before it is
+   * applied. An agent with `revert` and without this only has the one-step
+   * `POST …/revert`, which the app asks the reader to confirm first.
+   */
+  stagedRevert: boolean;
   inbox: boolean;
   /** `POST …/compact`, and the compaction pill above the composer. */
   compaction: boolean;
@@ -1872,6 +1878,7 @@ const AGENT_FEATURE_KEYS = [
   'toolApprovals',
   'worktrees',
   'revert',
+  'stagedRevert',
   'inbox',
   'compaction',
   'backgroundShells',
@@ -1893,6 +1900,7 @@ export const LEGACY_AGENT_FEATURES: Readonly<AgentFeatures> = Object.freeze({
   toolApprovals: true,
   worktrees: true,
   revert: true,
+  stagedRevert: true,
   inbox: true,
   compaction: true,
   backgroundShells: true,
@@ -1950,6 +1958,7 @@ export function parseAgentFeatures(value: unknown): AgentFeatures {
     toolApprovals: flag('toolApprovals'),
     worktrees: flag('worktrees'),
     revert: flag('revert'),
+    stagedRevert: flag('stagedRevert'),
     inbox: flag('inbox'),
     compaction: flag('compaction'),
     backgroundShells: flag('backgroundShells'),

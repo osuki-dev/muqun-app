@@ -304,6 +304,9 @@ describe('features and gating', () => {
     expect(
       hiddenClientCommands({ ...LEGACY_AGENT_FEATURES, revert: false, compaction: false })
     ).toEqual(['undo', 'keep', 'compact']);
+    expect(hiddenClientCommands({ ...LEGACY_AGENT_FEATURES, stagedRevert: false })).toEqual([
+      'keep',
+    ]);
   });
 });
 
