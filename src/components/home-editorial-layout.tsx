@@ -35,7 +35,7 @@ import {
   EDITORIAL_PAD_MAX_WIDTH,
   getEditorialLayoutGeometry,
 } from '@/lib/home-editorial-layout';
-import { padHeroHeight, padLaunchLayoutEnabled } from '@/lib/home-pad-geometry';
+import { padHeroHeight, padHeroSplit, padLaunchLayoutEnabled } from '@/lib/home-pad-geometry';
 export {
   EDITORIAL_MAX_WIDTH,
   EDITORIAL_PAD_MAX_WIDTH,
@@ -311,12 +311,15 @@ export function HomeEditorialLayout({
         ? Math.min(coverWidth * 0.38, ((coverWidth - 4) * 100) / titleMeasurement.width)
         : coverWidth * 0.25;
     // The hero row is a fixed share of the viewport so Continue starts on the
-    // first screen. The title keeps its width-fitted size but never takes more
-    // than 40% of the hero; the drawing gets what is left under the title.
+    // first screen. The title keeps its width-fitted size until it would crowd
+    // the drawing (`padHeroSplit`); the drawing is fitted into what is left.
     const heroHeight = padHeroHeight(viewportHeight ?? 0);
-    const titleFontSize = Math.min(fittedTitleFontSize, (heroHeight * 0.4) / 1.08);
-    const titleHeight = titleFontSize * 1.08;
-    const artworkMaxHeight = Math.max(0, heroHeight - (coverTitle ? titleHeight * 0.65 : 0));
+    const { titleHeight, artworkMaxHeight } = padHeroSplit(
+      heroHeight,
+      fittedTitleFontSize * 1.08,
+      Boolean(coverTitle)
+    );
+    const titleFontSize = titleHeight / 1.08;
     const padArtwork =
       typeof artworkSlot === 'function' ? artworkSlot(artworkMaxHeight) : artworkSlot;
     return (

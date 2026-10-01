@@ -1,6 +1,12 @@
 import { describe, expect, test } from 'bun:test';
 import { EDITORIAL_PAD_MAX_WIDTH, getEditorialLayoutGeometry } from '@/lib/home-editorial-layout';
-import { padHeroHeight, padLaunchLayoutEnabled, padLowerBandLayout } from '@/lib/home-pad-geometry';
+import {
+  fitArtworkBox,
+  padHeroHeight,
+  padHeroSplit,
+  padLaunchLayoutEnabled,
+  padLowerBandLayout,
+} from '@/lib/home-pad-geometry';
 
 describe('padLowerBandLayout', () => {
   test('wide pad gives two continue columns and a 320 connections column', () => {
@@ -57,5 +63,43 @@ describe('padHeroHeight', () => {
   test('short viewports leave 300 for the band, never under 320', () => {
     expect(padHeroHeight(700)).toBe(400);
     expect(padHeroHeight(600)).toBe(320);
+  });
+});
+
+describe('padHeroSplit', () => {
+  // omarchy-pad 1280x800: viewport after insets ~750 -> hero 440; cover column
+  // 848 wide, so the width-fitted title could be 0.38 * 848 * 1.08 = 348 tall.
+  test('a short hero caps the title at 30% and leaves the drawing >= 60%', () => {
+    const split = padHeroSplit(440, 348, true);
+    expect(split.titleHeight).toBeCloseTo(132);
+    expect(split.artworkMaxHeight).toBeCloseTo(440 - 0.65 * 132);
+    expect(split.artworkMaxHeight / 440).toBeGreaterThanOrEqual(0.6);
+  });
+  test('from a 520 hero the title may take 40%', () => {
+    const split = padHeroSplit(600, 348, true);
+    expect(split.titleHeight).toBeCloseTo(240);
+    expect(split.artworkMaxHeight).toBeCloseTo(600 - 0.65 * 240);
+  });
+  test('a title that already fits keeps its size', () => {
+    expect(padHeroSplit(600, 100, true).titleHeight).toBe(100);
+  });
+  test('without a title the drawing gets the whole hero', () => {
+    expect(padHeroSplit(440, 348, false)).toEqual({ titleHeight: 0, artworkMaxHeight: 440 });
+  });
+});
+
+describe('fitArtworkBox', () => {
+  test('without a cap the natural box is kept', () => {
+    expect(fitArtworkBox(848, 640, undefined)).toEqual({ width: 848, height: 640 });
+    expect(fitArtworkBox(848, 640, 700)).toEqual({ width: 848, height: 640 });
+  });
+  test('a cap scales the whole box down, so the composition is never cropped', () => {
+    const box = fitArtworkBox(848, 640, 354.2);
+    expect(box.height).toBeCloseTo(354.2);
+    expect(box.width).toBeCloseTo((848 * 354.2) / 640);
+    expect(box.width / box.height).toBeCloseTo(848 / 640);
+  });
+  test('a zero-width layout stays empty', () => {
+    expect(fitArtworkBox(0, 0, 300)).toEqual({ width: 0, height: 0 });
   });
 });
