@@ -786,7 +786,7 @@ export function HomeOverview({
                 ) : undefined
               }
               headerLeading={
-                isPad || launchController.servers.length <= 1 ? undefined : (
+                launchController.servers.length <= 1 ? undefined : (
                   <HomeLaunchTarget
                     wide={isPad}
                     bare={customTheme?.manifest.homePresentation?.toolbarBackground === false}
@@ -934,7 +934,51 @@ export function HomeOverview({
                 ) : undefined
               }
               headerAction={
-                isPad ? undefined : (
+                isPad ? (
+                  // The rail no longer sits beside Home, so its three
+                  // destinations live here, under the rail's own labels.
+                  <View
+                    testID="home-pad-toolbar-actions"
+                    style={{ flexDirection: 'row', alignItems: 'center', gap: HOME_TOOLBAR_GAP }}>
+                    <HeaderButton
+                      editorial
+                      bare={customTheme?.manifest.homePresentation?.toolbarBackground === false}
+                      label={t`Pair a server`}
+                      onPress={() => void commands.pairGateway()}>
+                      <ThemeIcon
+                        name="chrome.scan"
+                        fallback={ScanLine}
+                        size={HOME_TOOLBAR_ICON_SIZE}
+                        color={theme.colors.text}
+                        strokeWidth={1.8}
+                      />
+                    </HeaderButton>
+                    <HeaderButton
+                      editorial
+                      bare={customTheme?.manifest.homePresentation?.toolbarBackground === false}
+                      label={t`SSH`}
+                      onPress={() => void commands.openSsh()}>
+                      <SquareTerminal
+                        size={HOME_TOOLBAR_ICON_SIZE}
+                        color={theme.colors.text}
+                        strokeWidth={1.8}
+                      />
+                    </HeaderButton>
+                    <HeaderButton
+                      editorial
+                      bare={customTheme?.manifest.homePresentation?.toolbarBackground === false}
+                      label={t`Settings`}
+                      onPress={() => router.push('/settings')}>
+                      <ThemeIcon
+                        name="chrome.settings"
+                        fallback={Settings}
+                        size={HOME_TOOLBAR_ICON_SIZE}
+                        color={theme.colors.text}
+                        strokeWidth={1.8}
+                      />
+                    </HeaderButton>
+                  </View>
+                ) : (
                   <View
                     style={{ flexDirection: 'row', alignItems: 'center', gap: HOME_TOOLBAR_GAP }}>
                     <HeaderButton
