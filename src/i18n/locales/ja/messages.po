@@ -2959,6 +2959,7 @@ msgstr "新しい出力があります · 更新"
 #: src/app/agent.tsx
 #: src/components/agent-workbench.tsx
 #: src/components/home-overview.tsx
+#: src/components/pad-agent-detail.tsx
 #: src/i18n/labels.ts
 msgid "New session"
 msgstr "新規セッション"
@@ -4791,6 +4792,7 @@ msgid "Stop"
 msgstr "停止"
 
 #: src/app/agent.tsx
+#: src/components/pad-agent-detail.tsx
 msgid "Stop agent"
 msgstr "エージェントを停止"
 
