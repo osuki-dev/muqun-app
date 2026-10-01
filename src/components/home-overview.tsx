@@ -140,6 +140,12 @@ export type HomeOverviewProps = {
   onOpenAgentInPlace?: HomeCommandOptions['openAgentInPlace'];
 };
 
+/**
+ * The work column's trailing links ("Sessions (N)", "Manage connections"): text
+ * 12 under the card (the 44 tap box centres it) and inset to the rows' text.
+ */
+const PAD_WORK_LINK = { marginTop: 0, paddingVertical: 0, paddingHorizontal: 12 } as const;
+
 export function HomeOverview({
   width,
   layoutMode,
@@ -693,7 +699,7 @@ export function HomeOverview({
     editorialArtworkTop?.source === editorialArtworkResolution?.source;
   if (homeLayout !== 'classic' || isPad) {
     // Same width and predicate the layout resolves for itself: the Pad cover
-    // spread lists six Continue rows in its work column; other layouts keep theirs.
+    // spread lists eight Continue rows in its work column; other layouts keep theirs.
     const editorialViewportHeight = windowHeight - insets.top - insets.bottom - 24;
     const padGeometry = getEditorialLayoutGeometry(
       Math.min(editorialWidth || width, isPad ? EDITORIAL_PAD_MAX_WIDTH : EDITORIAL_MAX_WIDTH)
@@ -804,8 +810,8 @@ export function HomeOverview({
                     onDemo={openDemo}
                   />
                 ) : (
-                  <View style={{ gap: 16 }}>
-                    {isPad ? (
+                  <View style={{ gap: padLaunch ? 12 : 16 }}>
+                    {padLaunch ? null : isPad ? (
                       <>
                         <Text variant="heading" accessibilityRole="header">
                           <Trans>New session</Trans>
@@ -823,6 +829,20 @@ export function HomeOverview({
                       controller={launchController}
                       grid={isPad}
                       newOnly={isPad}
+                      dock={padLaunch}
+                      dockAccessory={
+                        // The cover dock has no heading; the Gateway chip sits
+                        // beside the terminal pill, only when there is a choice.
+                        padLaunch && launchController.servers.length > 1 ? (
+                          <HomeLaunchTarget
+                            wide
+                            chip
+                            controller={launchController}
+                            loading={loading}
+                            onPair={commands.pairGateway}
+                          />
+                        ) : undefined
+                      }
                       onNewAgent={commands.newAgent}
                       onOpenAgent={commands.openAgent}
                       onNewTerminal={commands.newTerminal}
@@ -838,7 +858,8 @@ export function HomeOverview({
               recent={
                 !loading && !hydrationError ? (
                   <HomeRecentSessions
-                    limit={padLaunch ? 6 : undefined}
+                    limit={padLaunch ? 8 : undefined}
+                    linkStyle={padLaunch ? PAD_WORK_LINK : undefined}
                     selectedServerId={launchController.chosen?.serverId}
                     servers={records}
                     hosts={sshRows}
@@ -874,6 +895,7 @@ export function HomeOverview({
                     }}
                     activeConnection={activeConnection}
                     nowMs={nowMs}
+                    linkStyle={padLaunch ? PAD_WORK_LINK : undefined}
                   />
                 ) : undefined
               }

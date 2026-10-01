@@ -37,7 +37,6 @@ import {
   getEditorialLayoutGeometry,
 } from '@/lib/home-editorial-layout';
 import { padLaunchLayoutEnabled, padWorkColumnWidth } from '@/lib/home-pad-geometry';
-import { SectionLabel } from '@/components/settings-chrome';
 export {
   EDITORIAL_MAX_WIDTH,
   EDITORIAL_PAD_MAX_WIDTH,
@@ -294,8 +293,9 @@ export function HomeEditorialLayout({
   });
 
   if (padLaunchLayout) {
-    // A cover spread: the cover fills the left column top to bottom, the work
-    // column beside it scrolls on its own. The page itself does not scroll.
+    // A cover spread: the cover fills the left column top to bottom with the
+    // New-session block docked at its foot; the work column beside it (Continue,
+    // Connections) scrolls on its own. The page itself does not scroll.
     const launchWidth = padWorkColumnWidth(geometry.innerWidth);
     const coverWidth = geometry.innerWidth - launchWidth - 24;
     const titleFontSize =
@@ -378,7 +378,13 @@ export function HomeEditorialLayout({
                 <Animated.View
                   onLayout={artworkStage.onLayout}
                   pointerEvents="none"
-                  style={[styles.padCoverArtwork, animatedArtworkStyle, artworkStage.style]}>
+                  style={[
+                    styles.padCoverArtwork,
+                    // Anchored right, so the figure stands clear of the dock's leading edge.
+                    { left: Math.round(coverWidth * 0.15) },
+                    animatedArtworkStyle,
+                    artworkStage.style,
+                  ]}>
                   {artwork}
                 </Animated.View>
               </View>
@@ -392,6 +398,18 @@ export function HomeEditorialLayout({
                 ) : null}
               </View>
             )}
+            {hasSlot(launches) ? (
+              // Capped so the tiles stay near phone size and the figure's torso
+              // at the column's right stays clear of the dock.
+              <View
+                testID="home-pad-launch-dock"
+                style={[
+                  styles.padLaunchDock,
+                  { bottom: geometry.gutter, width: Math.min(coverWidth - geometry.gutter, 560) },
+                ]}>
+                {launches}
+              </View>
+            ) : null}
           </View>
           <ScrollView
             testID="home-pad-launch-pane"
@@ -399,18 +417,29 @@ export function HomeEditorialLayout({
             keyboardShouldPersistTaps="handled"
             style={{ width: launchWidth, flexGrow: 0, flexShrink: 0 }}
             contentContainerStyle={styles.padWorkContent}>
-            {launches}
             {hasRecent || hasConnections ? (
               <View testID="home-pad-lower-band" style={styles.padWorkSections}>
                 {hasRecent ? (
                   <View testID="home-pad-continue">
-                    <SectionLabel title={t`Continue`} color={theme.colors.textMuted} />
+                    <Text
+                      variant="heading"
+                      accessibilityRole="header"
+                      color={theme.colors.text}
+                      style={styles.padWorkTitle}>
+                      {t`Continue`}
+                    </Text>
                     {recent}
                   </View>
                 ) : null}
                 {hasConnections ? (
                   <View testID="home-pad-connections">
-                    <SectionLabel title={t`Connections`} color={theme.colors.textMuted} />
+                    <Text
+                      variant="heading"
+                      accessibilityRole="header"
+                      color={theme.colors.text}
+                      style={styles.padWorkTitle}>
+                      {t`Connections`}
+                    </Text>
                     {connections}
                   </View>
                 ) : null}
@@ -768,9 +797,12 @@ const styles = StyleSheet.create({
   padColumns: { flex: 1, minHeight: 0, flexDirection: 'row', gap: 24 },
   padThemePane: { flexShrink: 0, minWidth: 0 },
   padCoverScene: { flex: 1 },
-  padCoverArtwork: { position: 'absolute', left: 0, right: 0, bottom: 0, zIndex: 1 },
+  padCoverArtwork: { position: 'absolute', right: 0, bottom: 0, zIndex: 1 },
+  padLaunchDock: { position: 'absolute', left: 0, zIndex: 2 },
   padWorkContent: { paddingTop: 16, paddingBottom: 24, gap: 24 },
-  padWorkSections: { gap: 24 },
+  padWorkSections: { gap: 32 },
+  // The phone editorial section's heading, without its rule: title, 12, card.
+  padWorkTitle: { marginBottom: 12 },
 
   coverColumns: { flexDirection: 'row', alignItems: 'flex-start', gap: 24 },
   coverReadingColumn: { flex: 1, minWidth: 0, paddingTop: 16 },

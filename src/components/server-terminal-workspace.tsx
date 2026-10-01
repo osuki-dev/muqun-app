@@ -80,6 +80,7 @@ import { PaneChatView } from '@/components/pane-chat-view';
 import { AgentWorkbench } from '@/components/agent-workbench';
 import { gatewaySupportsAgentSessions } from '@/lib/agent-session';
 import { PadServerRail } from '@/components/pad-server-rail';
+import { PadHomeOverlay } from '@/components/pad-home-overlay';
 import {
   PadAgentDetail,
   PadAgentSessionAction,
@@ -886,7 +887,6 @@ export function ServerTerminalWorkspace({
   useEffect(() => {
     if (routeOverview === 'home') router.setParams({ overview: undefined });
   }, [routeOverview, router]);
-  const [overviewWidth, setOverviewWidth] = useState(0);
   const overviewTargetRequest = useRef(0);
   const workspaceHandoff = useSyncExternalStore(
     homeWorkspaceHandoffStore.subscribe,
@@ -4839,35 +4839,49 @@ export function ServerTerminalWorkspace({
       // the rail from standing down for a preview that never opened.
       padRailCollapsed={padDetailIsPane && workspaceLayout.previewWidth > 0}
       padRail={
-        // Home is the whole width: the rail stands down while it covers the
-        // detail, and its own server list takes the rail's place.
-        overviewVisible ? undefined : (
-          <PadServerRail
-            servers={railServers}
-            reachabilityByServer={railReachabilityByServer}
-            selectedServerId={record?.serverId ?? null}
-            activeConnection={{ serverId, phase: connection.phase }}
-            selectedPaneId={padDetailIsPane ? selection.paneId || null : null}
-            selectedAsid={padDetail.kind === 'agent' ? padDetail.asid : undefined}
-            workbenchSelected={false}
-            commandOptions={{ embedded: true, routeBound, sourceRouteActive, openAgentInPlace }}
-            onOpenWorkbench={() => setOverviewVisible(true)}
-            onSelectServer={selectPadServer}
-            onPairServer={() => router.push('/explore')}
-            onOpenSettings={() => router.push('/settings')}
-            onOpenSsh={() => router.push('/ssh')}
-            sshHosts={railSshHosts}
-            // The shell cannot open in this column: the workspace is keyed by
-            // the selected gateway record, so a host leaves for its own screen.
-            onSelectSshHost={(host) => router.navigate(`/ssh/${host.id}`)}
-          />
-        )
+        <PadServerRail
+          servers={railServers}
+          reachabilityByServer={railReachabilityByServer}
+          selectedServerId={record?.serverId ?? null}
+          activeConnection={{ serverId, phase: connection.phase }}
+          selectedPaneId={padDetailIsPane ? selection.paneId || null : null}
+          selectedAsid={padDetail.kind === 'agent' ? padDetail.asid : undefined}
+          workbenchSelected={false}
+          commandOptions={{ embedded: true, routeBound, sourceRouteActive, openAgentInPlace }}
+          onOpenWorkbench={() => setOverviewVisible(true)}
+          onSelectServer={selectPadServer}
+          onPairServer={() => router.push('/explore')}
+          onOpenSettings={() => router.push('/settings')}
+          onOpenSsh={() => router.push('/ssh')}
+          sshHosts={railSshHosts}
+          // The shell cannot open in this column: the workspace is keyed by
+          // the selected gateway record, so a host leaves for its own screen.
+          onSelectSshHost={(host) => router.navigate(`/ssh/${host.id}`)}
+        />
       }
-      detailTitle={overviewVisible ? undefined : shellTitle}
-      onDetailBack={!overviewVisible && demoMode ? leaveDetail : undefined}
+      // Home covers the whole frame, rail included, and stays mounted between
+      // visits: the rail and the detail keep their layout under it.
+      overlayVisible={overviewVisible}
+      overlay={
+        <PadHomeOverlay visible={overviewVisible}>
+          <HomeOverview
+            width={workspaceLayout.availableWidth}
+            layoutMode={workspaceLayout.mode}
+            embedded
+            routeBound={routeBound}
+            sourceRouteActive={sourceRouteActive}
+            activeConnection={{ serverId, phase: connection.phase }}
+            onExitOverview={() => padDispatch({ type: 'hide-home' })}
+            onOpenAgentInPlace={openAgentInPlace}
+          />
+        </PadHomeOverlay>
+      }
+      // The header stays mounted under Home; the overlay covers it.
+      detailTitle={shellTitle}
+      onDetailBack={demoMode ? leaveDetail : undefined}
       detailFadeColor={padDetailIsPane ? terminalBackground : theme.colors.background}
       detailTitleSlot={
-        overviewVisible || !padDetailIsPane ? undefined : (
+        !padDetailIsPane ? undefined : (
           // The title carries the workspace switch, so it replaces the header's
           // plain pill. It draws the same pill either way -- with one workspace
           // the gesture is simply off.
@@ -4880,9 +4894,7 @@ export function ServerTerminalWorkspace({
           />
         )
       }
-      onDetailAction={
-        !overviewVisible && padDetailIsPane && hasLoadedData ? openPanelPicker : undefined
-      }
+      onDetailAction={padDetailIsPane && hasLoadedData ? openPanelPicker : undefined}
       /*
         The way out of the split, beside the control that arranges panes.
 
@@ -4894,26 +4906,24 @@ export function ServerTerminalWorkspace({
         close and nothing else the header could mean by it.
       */
       detailAccessory={
-        overviewVisible
-          ? []
-          : !padDetailIsPane
-            ? [<PadAgentSessionAction key="agent-session" controls={padAgentControls} />]
-            : [
-                // No machine button beside the panels one. Two glyphs in this corner
-                // were two halves of one question -- which machine, which backend,
-                // which workspace, which panel -- and a reader had to know which half
-                // theirs was in before they could press anything. `onDetailAction`
-                // above is the one button, and the whole address is inside it.
-                padDetailIsPane && simfarmSplit.previewWidth > 0 ? (
-                  <PressableScale
-                    key="simulator"
-                    accessibilityLabel={t`Hide the simulator`}
-                    onPress={() => toggleSimfarmSplit(serverId)}
-                    style={navHeaderButtonStyle}>
-                    <X size={18} color={theme.colors.text} strokeWidth={2} />
-                  </PressableScale>
-                ) : null,
-              ]
+        !padDetailIsPane
+          ? [<PadAgentSessionAction key="agent-session" controls={padAgentControls} />]
+          : [
+              // No machine button beside the panels one. Two glyphs in this corner
+              // were two halves of one question -- which machine, which backend,
+              // which workspace, which panel -- and a reader had to know which half
+              // theirs was in before they could press anything. `onDetailAction`
+              // above is the one button, and the whole address is inside it.
+              padDetailIsPane && simfarmSplit.previewWidth > 0 ? (
+                <PressableScale
+                  key="simulator"
+                  accessibilityLabel={t`Hide the simulator`}
+                  onPress={() => toggleSimfarmSplit(serverId)}
+                  style={navHeaderButtonStyle}>
+                  <X size={18} color={theme.colors.text} strokeWidth={2} />
+                </PressableScale>
+              ) : null,
+            ]
       }>
       {/* The terminal and, beside it, the simulator it is changing.
 
@@ -5635,23 +5645,6 @@ export function ServerTerminalWorkspace({
             />
           </View>
         ) : null}
-        {overviewVisible ? (
-          <View
-            testID="home-overview-overlay"
-            style={styles.overviewLayer}
-            onLayout={(event) => setOverviewWidth(event.nativeEvent.layout.width)}>
-            <HomeOverview
-              width={overviewWidth || workspaceLayout.availableWidth}
-              layoutMode={workspaceLayout.mode}
-              embedded
-              routeBound={routeBound}
-              sourceRouteActive={sourceRouteActive}
-              activeConnection={{ serverId, phase: connection.phase }}
-              onExitOverview={() => padDispatch({ type: 'hide-home' })}
-              onOpenAgentInPlace={openAgentInPlace}
-            />
-          </View>
-        ) : null}
       </View>
     </AppDrawer>
   );
@@ -6166,11 +6159,6 @@ const styles = StyleSheet.create({
   workspaceHost: {
     flex: 1,
     position: 'relative',
-  },
-  overviewLayer: {
-    ...StyleSheet.absoluteFill,
-    zIndex: 20,
-    elevation: 20,
   },
   previewColumn: {
     // A hairline is the whole of the seam. The two halves are one machine's

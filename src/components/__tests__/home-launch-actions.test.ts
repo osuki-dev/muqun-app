@@ -135,7 +135,9 @@ test('Editorial Home scrolls narrow actions and wraps wide actions', () => {
   expect(actions).toContain("flexWrap: 'wrap'");
   expect(actions).toContain('minHeight: 104');
   expect(actions).toContain('minHeight: 44');
-  expect(actions.slice(actions.indexOf('function LaunchTile'))).not.toContain('numberOfLines=');
+  // Tiles wrap their titles; only the Pad dock's one-line chip truncates.
+  const tile = actions.slice(actions.indexOf('function LaunchTile'));
+  expect(tile.slice(tile.indexOf('  if (compact) {'))).not.toContain('numberOfLines=');
 });
 
 test('the launch row is drawn from the projection, not from a fixed list', () => {
