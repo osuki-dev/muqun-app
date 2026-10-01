@@ -1219,7 +1219,6 @@ msgid "Connecting…"
 msgstr "연결 중…"
 
 #: src/components/home-editorial-layout.tsx
-#: src/components/home-overview.tsx
 #: src/components/pad-server-rail.tsx
 msgid "Connections"
 msgstr "연결"
@@ -1251,7 +1250,6 @@ msgstr "사용한 컨텍스트"
 
 #: src/app/explore.tsx
 #: src/components/home-editorial-layout.tsx
-#: src/components/home-overview.tsx
 #: src/components/pad-server-rail.tsx
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Continue"

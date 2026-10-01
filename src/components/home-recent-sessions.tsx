@@ -54,7 +54,6 @@ export function HomeRecentSessions({
   activeConnection,
   selectedServerId,
   compact = false,
-  columns = 1,
   limit,
   selectedPaneId,
   selectedAsid,
@@ -66,8 +65,6 @@ export function HomeRecentSessions({
   activeConnection?: ActiveServerConnection;
   selectedServerId?: string;
   compact?: boolean;
-  /** Two lays the rows out as a grid on wide Pad Home; one is a plain list. */
-  columns?: 1 | 2;
   /** Rows shown before the `Sessions (N)` toggle; compact lists default to four. */
   limit?: number;
   selectedPaneId?: string;
@@ -173,14 +170,11 @@ export function HomeRecentSessions({
   const collapsedLimit = limit ?? (compact ? 4 : undefined);
   const displayed =
     collapsedLimit !== undefined && !expanded ? visible.slice(0, collapsedLimit) : visible;
-  // The first index on the grid's last line; rows before it carry the rule under them.
-  const lastLineStart = displayed.length - (((displayed.length - 1) % columns) + 1);
   return (
     <View testID="home-recent-sessions" style={styles.root}>
       <View
         style={[
           styles.list,
-          columns === 2 && styles.grid,
           {
             backgroundColor: available.length ? background(theme.colors.surface) : 'transparent',
             borderRadius: profile.chrome.surface,
@@ -195,9 +189,7 @@ export function HomeRecentSessions({
             selectedServerId={selectedServerId}
             selectedPaneId={selectedPaneId}
             selectedAsid={selectedAsid}
-            hasSeparator={index < lastLineStart}
-            hasColumnSeparator={columns === 2 && index % 2 === 0 && index + 1 < displayed.length}
-            gridCell={columns === 2}
+            hasSeparator={index < displayed.length - 1}
             serverLabel={
               servers.find(
                 (server) =>
@@ -241,8 +233,6 @@ function RecentSessionRow({
   entry,
   number,
   hasSeparator,
-  hasColumnSeparator,
-  gridCell,
   serverLabel,
   compact,
   selectedServerId,
@@ -253,8 +243,6 @@ function RecentSessionRow({
   entry: HomeContinueEntry;
   number: number;
   hasSeparator: boolean;
-  hasColumnSeparator: boolean;
-  gridCell: boolean;
   serverLabel?: string;
   compact: boolean;
   selectedServerId?: string;
@@ -343,11 +331,6 @@ function RecentSessionRow({
           borderBottomColor: theme.colors.border,
           borderBottomWidth: StyleSheet.hairlineWidth,
         },
-        gridCell && styles.gridCell,
-        hasColumnSeparator && {
-          borderRightColor: theme.colors.border,
-          borderRightWidth: StyleSheet.hairlineWidth,
-        },
         {
           backgroundColor: background(selected ? theme.colors.primarySubtle : theme.colors.surface),
         },
@@ -409,8 +392,6 @@ function RecentSessionRow({
 const styles = StyleSheet.create({
   root: { minWidth: 0 },
   list: { minWidth: 0, overflow: 'hidden' },
-  grid: { flexDirection: 'row', flexWrap: 'wrap' },
-  gridCell: { width: '50%' },
   row: {
     flexDirection: 'row',
     alignItems: 'center',

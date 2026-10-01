@@ -65,7 +65,7 @@ import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { HomeConnections } from '@/components/home-connections';
 import { HomeAttention } from '@/components/home-attention';
 import { HomeRecentSessions } from '@/components/home-recent-sessions';
-import { padLaunchLayoutEnabled, padLowerBandLayout } from '@/lib/home-pad-geometry';
+import { padLaunchLayoutEnabled } from '@/lib/home-pad-geometry';
 import {
   HomeLaunchActions,
   HomeLaunchTarget,
@@ -692,16 +692,14 @@ export function HomeOverview({
   const editorialArtworkTopCurrent =
     editorialArtworkTop?.source === editorialArtworkResolution?.source;
   if (homeLayout !== 'classic' || isPad) {
-    // Same width, gutter and predicate the layout resolves for itself, so the band
-    // lines up with the cover and launch pane, and a narrow Pad (split view, large
-    // type) gets Continue and Connections in the vertical page instead.
+    // Same width and predicate the layout resolves for itself: the Pad cover
+    // spread lists six Continue rows in its work column; other layouts keep theirs.
     const editorialViewportHeight = windowHeight - insets.top - insets.bottom - 24;
     const padGeometry = getEditorialLayoutGeometry(
       Math.min(editorialWidth || width, isPad ? EDITORIAL_PAD_MAX_WIDTH : EDITORIAL_MAX_WIDTH)
     );
     const padLaunch =
       isPad && padLaunchLayoutEnabled(padGeometry.contentWidth, fontScale, editorialViewportHeight);
-    const padBand = padLowerBandLayout(padGeometry.innerWidth);
     const editorialContent = (
       <View
         testID="home-editorial"
@@ -750,20 +748,17 @@ export function HomeOverview({
               pad={isPad}
               artworkTopInset={editorialArtworkTopCurrent ? editorialArtworkTop?.top : 0}
               artwork={
-                hasEditorialArtwork && editorialArtworkResolution
-                  ? (maxHeight: number | undefined) => (
-                      <HomeEditorialArtwork
-                        cover={customTheme?.manifest.homePresentation?.header === 'cover'}
-                        maxHeight={maxHeight}
-                        resolution={editorialArtworkResolution}
-                        onVisibleTopChange={reportEditorialArtworkTop}
-                        onAvailabilityChange={(available) => {
-                          if (!available)
-                            setFailedEditorialArtworkSource(editorialArtworkResolution.source);
-                        }}
-                      />
-                    )
-                  : null
+                hasEditorialArtwork && editorialArtworkResolution ? (
+                  <HomeEditorialArtwork
+                    cover={customTheme?.manifest.homePresentation?.header === 'cover'}
+                    resolution={editorialArtworkResolution}
+                    onVisibleTopChange={reportEditorialArtworkTop}
+                    onAvailabilityChange={(available) => {
+                      if (!available)
+                        setFailedEditorialArtworkSource(editorialArtworkResolution.source);
+                    }}
+                  />
+                ) : null
               }
               identity={
                 showsEditorialBrand ? (
@@ -789,7 +784,8 @@ export function HomeOverview({
                 ) : undefined
               }
               headerLeading={
-                launchController.servers.length <= 1 ? undefined : (
+                // On Pad the Gateway pill lives in the New-session block only.
+                isPad || launchController.servers.length <= 1 ? undefined : (
                   <HomeLaunchTarget
                     wide={isPad}
                     bare={customTheme?.manifest.homePresentation?.toolbarBackground === false}
@@ -840,8 +836,9 @@ export function HomeOverview({
                 )
               }
               recent={
-                !padLaunch && !loading && !hydrationError ? (
+                !loading && !hydrationError ? (
                   <HomeRecentSessions
+                    limit={padLaunch ? 6 : undefined}
                     selectedServerId={launchController.chosen?.serverId}
                     servers={records}
                     hosts={sshRows}
@@ -864,7 +861,7 @@ export function HomeOverview({
                 ) : undefined
               }
               connections={
-                !padLaunch && !loading && !hydrationError && !sshLoading ? (
+                !loading && !hydrationError && !sshLoading ? (
                   <HomeConnections
                     servers={records}
                     hosts={sshRows}
@@ -878,62 +875,6 @@ export function HomeOverview({
                     activeConnection={activeConnection}
                     nowMs={nowMs}
                   />
-                ) : undefined
-              }
-              padLowerBand={
-                padLaunch && !loading && !hydrationError ? (
-                  <View
-                    style={
-                      padBand.columns === 2
-                        ? { flexDirection: 'row', alignItems: 'flex-start', gap: padBand.gap }
-                        : { gap: padBand.gap }
-                    }>
-                    <View
-                      testID="home-pad-continue"
-                      style={padBand.columns === 2 ? { flex: 1, minWidth: 0 } : undefined}>
-                      <SectionLabel
-                        title={<Trans>Continue</Trans>}
-                        color={theme.colors.textMuted}
-                      />
-                      <HomeRecentSessions
-                        columns={padBand.columns}
-                        limit={8}
-                        selectedServerId={launchController.chosen?.serverId}
-                        servers={records}
-                        hosts={sshRows}
-                        reachabilityByServer={padReachabilityByServer}
-                        activeConnection={activeConnection}
-                        onOpen={(command) => {
-                          void commands.dispatch(command);
-                        }}
-                      />
-                    </View>
-                    <View
-                      testID="home-pad-connections"
-                      style={
-                        padBand.columns === 2 ? { width: padBand.connectionsWidth } : undefined
-                      }>
-                      <SectionLabel
-                        title={<Trans>Connections</Trans>}
-                        color={theme.colors.textMuted}
-                      />
-                      {sshLoading ? null : (
-                        <HomeConnections
-                          servers={records}
-                          hosts={sshRows}
-                          onOpenServer={openServer}
-                          onOpenHost={(hostId) => {
-                            void commands.openSsh(hostId);
-                          }}
-                          onManage={() => {
-                            void commands.manageConnections();
-                          }}
-                          activeConnection={activeConnection}
-                          nowMs={nowMs}
-                        />
-                      )}
-                    </View>
-                  </View>
                 ) : undefined
               }
               headerAction={
