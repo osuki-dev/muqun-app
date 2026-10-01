@@ -2959,6 +2959,7 @@ msgstr "New output available · refresh"
 #: src/app/agent.tsx
 #: src/components/agent-workbench.tsx
 #: src/components/home-overview.tsx
+#: src/components/pad-agent-detail.tsx
 #: src/i18n/labels.ts
 msgid "New session"
 msgstr "New session"
@@ -4791,6 +4792,7 @@ msgid "Stop"
 msgstr "Stop"
 
 #: src/app/agent.tsx
+#: src/components/pad-agent-detail.tsx
 msgid "Stop agent"
 msgstr "Stop agent"
 

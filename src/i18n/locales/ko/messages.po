@@ -2959,6 +2959,7 @@ msgstr "새 출력 있음 · 새로 고침"
 #: src/app/agent.tsx
 #: src/components/agent-workbench.tsx
 #: src/components/home-overview.tsx
+#: src/components/pad-agent-detail.tsx
 #: src/i18n/labels.ts
 msgid "New session"
 msgstr "새 세션"
@@ -4791,6 +4792,7 @@ msgid "Stop"
 msgstr "중지"
 
 #: src/app/agent.tsx
+#: src/components/pad-agent-detail.tsx
 msgid "Stop agent"
 msgstr "에이전트 중지"
 
