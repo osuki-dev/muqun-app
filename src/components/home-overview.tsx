@@ -90,7 +90,7 @@ import {
 import { sshHomeRows } from '@/lib/ssh-home';
 import type { SshHostRecord } from '@/lib/ssh-hosts';
 import { useGatewayRecord } from '@/hooks/use-gateway-record';
-import { useHomeCommands } from '@/hooks/use-home-commands';
+import { type HomeCommandOptions, useHomeCommands } from '@/hooks/use-home-commands';
 import type { HomeServerEntry } from '@/lib/home-commands';
 import { GatewayStorageError } from '@/components/gateway-storage-error';
 import { useServerAgents } from '@/stores/server-agents';
@@ -131,6 +131,8 @@ export type HomeOverviewProps = {
   routeBound?: boolean;
   /** Live state for the exact gateway owned by an embedded workspace. */
   activeConnection?: ActiveServerConnection;
+  /** The Pad shell's detail swap: agent rows open beside it instead of on `/agent`. */
+  onOpenAgentInPlace?: HomeCommandOptions['openAgentInPlace'];
 };
 
 export function HomeOverview({
@@ -141,6 +143,7 @@ export function HomeOverview({
   sourceRouteActive,
   routeBound = false,
   activeConnection,
+  onOpenAgentInPlace,
 }: HomeOverviewProps) {
   // `t` from the hook, not the global `t` from `@lingui/core/macro`.
   //
@@ -603,6 +606,7 @@ export function HomeOverview({
     embedded,
     routeBound,
     sourceRouteActive,
+    openAgentInPlace: onOpenAgentInPlace,
   });
   const launchController = useHomeLaunchController({
     servers: records,
