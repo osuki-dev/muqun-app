@@ -3608,6 +3608,13 @@
         ]
       },
       {
+        "when": {
+          "target": { "id": "pad-server-rail-workbench" },
+          "absent": false
+        },
+        "steps": [{ "run": "flows/pad-workspace.ad#home-navigation" }]
+      },
+      {
         "target": {
           "text": "Switch to nvim"
         },

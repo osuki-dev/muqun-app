@@ -4,7 +4,7 @@ import { useLingui } from '@lingui/react/macro';
 import { useThemeMode, useThemeTokens } from '@osuki-dev/ui';
 import { useIsFocused, useLocalSearchParams, usePathname, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { NAV_HEADER_CONTROL_SIZE } from '@/components/nav-header';
@@ -12,6 +12,9 @@ import { ScreenHeader } from '@/components/screen-header';
 import { EdgeFade } from '@/components/edge-fade';
 import { ThemeArtwork } from '@/components/theme-artwork';
 import { AgentWorkbench } from '@/components/agent-workbench';
+import AppDrawer from '@/components/app-drawer';
+import { AgentPadNavigation } from '@/components/agent-pad-navigation';
+import { responsiveWorkspaceLayout } from '@/lib/responsive-layout';
 import { GatewayTunnelBadge } from '@/components/gateway-tunnel-badge';
 import { SessionActionIcon, WorkspacePillContent } from '@/components/agent-header-morph';
 import { AgentTitlePill } from '@/components/agent-title-pill';
@@ -49,6 +52,8 @@ const HEADER_INSET = NAV_HEADER_TOP_GAP + NAV_HEADER_CONTROL_SIZE + 24;
  */
 export default function AgentScreen() {
   const { t } = useLingui();
+  const { width } = useWindowDimensions();
+  const isPad = responsiveWorkspaceLayout(width).mode === 'pad';
   const router = useRouter();
   const routeFocused = useIsFocused();
   const pathname = usePathname();
@@ -98,6 +103,7 @@ export default function AgentScreen() {
   const activeDirectory = useAgentSessionState((s) => s.directory);
   const activeProject = useAgentSessionState((s) => s.project);
   const activeWorktree = useAgentSessionState((s) => s.worktree);
+  const activeAsid = useAgentSessionState((s) => s.activeAsid);
   const workbenchVisible =
     routeFocused ||
     isAgentWorkbenchOwnedRootRoute(rootRouteName) ||
@@ -133,110 +139,112 @@ export default function AgentScreen() {
   const openSessionsLabel = t`Sessions: ${sessionTitle ?? ''}`;
 
   return (
-    <View style={[styles.page, { backgroundColor: surfaceBackground(theme.colors.background) }]}>
-      <ThemeArtwork slot="shell.wallpaper" />
-      <StatusBar animated style={resolvedMode === 'dark' ? 'light' : 'dark'} />
+    <AppDrawer padRail={isPad ? <AgentPadNavigation asid={activeAsid} /> : undefined}>
+      <View style={[styles.page, { backgroundColor: surfaceBackground(theme.colors.background) }]}>
+        <ThemeArtwork slot="shell.wallpaper" />
+        <StatusBar animated style={resolvedMode === 'dark' ? 'light' : 'dark'} />
 
-      {connectionReady ? (
-        <AgentWorkbench
-          // Keyed on the server: switching servers is a new workbench, not
-          // the old one told to look elsewhere.
-          key={JSON.stringify([
-            record?.serverId ?? 'none',
-            newSessionIntent ? 'new' : 'existing',
-            params.sessionId ?? '',
-            params.asid ?? '',
-            params.directory ?? '',
-            params.agentId ?? '',
-          ])}
-          serverId={wantedServer ?? record?.serverId ?? ''}
-          sessionId={sessionId}
-          initialAsid={newSessionIntent ? undefined : params.asid}
-          initialDirectory={params.directory}
-          initialAgentId={typeof params.agentId === 'string' ? params.agentId : undefined}
-          initialIntent={newSessionIntent ? 'new' : undefined}
-          visible={workbenchVisible}
-          topInset={insets.top + HEADER_INSET}
-          bottomInset={insets.bottom}
-          createNewSessionRef={createNewSessionRef}
-          abortSessionRef={abortSessionRef}
+        {connectionReady ? (
+          <AgentWorkbench
+            // Keyed on the server: switching servers is a new workbench, not
+            // the old one told to look elsewhere.
+            key={JSON.stringify([
+              record?.serverId ?? 'none',
+              newSessionIntent ? 'new' : 'existing',
+              params.sessionId ?? '',
+              params.asid ?? '',
+              params.directory ?? '',
+              params.agentId ?? '',
+            ])}
+            serverId={wantedServer ?? record?.serverId ?? ''}
+            sessionId={sessionId}
+            initialAsid={newSessionIntent ? undefined : params.asid}
+            initialDirectory={params.directory}
+            initialAgentId={typeof params.agentId === 'string' ? params.agentId : undefined}
+            initialIntent={newSessionIntent ? 'new' : undefined}
+            visible={workbenchVisible}
+            topInset={insets.top + HEADER_INSET}
+            bottomInset={insets.bottom}
+            createNewSessionRef={createNewSessionRef}
+            abortSessionRef={abortSessionRef}
+          />
+        ) : (
+          <View style={styles.serverWait}>
+            <LogoLoader size={56} accessibilityLabel={t`Connecting`} />
+            {serverReady && tunnel.tunnelled ? (
+              <GatewayTunnelBadge record={record} variant="notice" />
+            ) : null}
+          </View>
+        )}
+
+        {/* Top glass fade for smooth dissolve under nav header */}
+        <EdgeFade
+          edge="top"
+          color={theme.colors.background}
+          style={[styles.topFade, { height: insets.top + HEADER_INSET + 20 }]}
         />
-      ) : (
-        <View style={styles.serverWait}>
-          <LogoLoader size={56} accessibilityLabel={t`Connecting`} />
-          {serverReady && tunnel.tunnelled ? (
-            <GatewayTunnelBadge record={record} variant="notice" />
-          ) : null}
-        </View>
-      )}
 
-      {/* Top glass fade for smooth dissolve under nav header */}
-      <EdgeFade
-        edge="top"
-        color={theme.colors.background}
-        style={[styles.topFade, { height: insets.top + HEADER_INSET + 20 }]}
-      />
-
-      {/* Pinned top navigation bar */}
-      <View pointerEvents="box-none" style={styles.header}>
-        <ScreenHeader
-          titlePill={
-            <GlassChrome
-              surface="navigation"
-              shape="navigationPill"
-              style={styles.workspaceHeaderPill}>
-              {/* The pill keeps its tap -- it opens whatever it is showing --
+        {/* Pinned top navigation bar */}
+        <View pointerEvents="box-none" style={styles.header}>
+          <ScreenHeader
+            titlePill={
+              <GlassChrome
+                surface="navigation"
+                shape="navigationPill"
+                style={styles.workspaceHeaderPill}>
+                {/* The pill keeps its tap -- it opens whatever it is showing --
                   and gains a horizontal swipe between the workspace's
                   sessions. Both live in `AgentTitlePill`, which reads the
                   strip's order from the same store the workbench publishes it
                   to, so the header and the strip can never disagree about
                   which session is next. */}
-              <AgentTitlePill
-                testID="agent-header-workspace-pill"
-                // One dropdown, one sheet. It used to open the Sessions sheet
-                // when a session's title was showing and the project sheet when
-                // it was not, so the same control in the same place answered
-                // with two different lists and the owner could not tell why.
-                // Projects are reached from the first row of the Sessions
-                // sheet, which also says which project this is.
-                onPress={() => router.push('/agent-sessions')}
-                accessibilityLabel={openSessionsLabel}
-                style={styles.workspaceHeaderPillInner}>
-                <WorkspacePillContent
-                  showSession={showSessionTitle}
-                  running={sessionRunning}
-                  sessionTitle={sessionTitle}
-                  worktreeName={activeWorktree}
-                  workspaceName={displayWorkspaceName}
-                  workspacePath={displayWorkspacePath}
-                />
-              </AgentTitlePill>
-            </GlassChrome>
-          }
-          rightPill={
-            <GlassChrome
-              surface="navigation"
-              shape="navigationPill"
-              style={styles.newSessionCircle}>
-              <PressableScale
-                testID="agent-header-new-session"
-                accessibilityRole="button"
-                accessibilityLabel={sessionRunning ? t`Stop agent` : t`New session`}
-                onPress={() => {
-                  if (sessionRunning) {
-                    abortSessionRef.current?.();
-                  } else {
-                    createNewSessionRef.current?.();
-                  }
-                }}
-                style={styles.newSessionCircleInner}>
-                <SessionActionIcon running={sessionRunning} />
-              </PressableScale>
-            </GlassChrome>
-          }
-        />
+                <AgentTitlePill
+                  testID="agent-header-workspace-pill"
+                  // One dropdown, one sheet. It used to open the Sessions sheet
+                  // when a session's title was showing and the project sheet when
+                  // it was not, so the same control in the same place answered
+                  // with two different lists and the owner could not tell why.
+                  // Projects are reached from the first row of the Sessions
+                  // sheet, which also says which project this is.
+                  onPress={() => router.push('/agent-sessions')}
+                  accessibilityLabel={openSessionsLabel}
+                  style={styles.workspaceHeaderPillInner}>
+                  <WorkspacePillContent
+                    showSession={showSessionTitle}
+                    running={sessionRunning}
+                    sessionTitle={sessionTitle}
+                    worktreeName={activeWorktree}
+                    workspaceName={displayWorkspaceName}
+                    workspacePath={displayWorkspacePath}
+                  />
+                </AgentTitlePill>
+              </GlassChrome>
+            }
+            rightPill={
+              <GlassChrome
+                surface="navigation"
+                shape="navigationPill"
+                style={styles.newSessionCircle}>
+                <PressableScale
+                  testID="agent-header-new-session"
+                  accessibilityRole="button"
+                  accessibilityLabel={sessionRunning ? t`Stop agent` : t`New session`}
+                  onPress={() => {
+                    if (sessionRunning) {
+                      abortSessionRef.current?.();
+                    } else {
+                      createNewSessionRef.current?.();
+                    }
+                  }}
+                  style={styles.newSessionCircleInner}>
+                  <SessionActionIcon running={sessionRunning} />
+                </PressableScale>
+              </GlassChrome>
+            }
+          />
+        </View>
       </View>
-    </View>
+    </AppDrawer>
   );
 }
 

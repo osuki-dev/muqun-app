@@ -3,6 +3,7 @@ import { useThemeTokens } from '@osuki-dev/ui';
 import { useEffect, useState, type ReactNode } from 'react';
 import {
   StyleSheet,
+  ScrollView,
   Platform,
   useWindowDimensions,
   View,
@@ -41,9 +42,11 @@ export {
 export type HomeEditorialLayoutProps = {
   /** Remaining content width after the parent has accounted for its rail. */
   contentWidth: number;
+  /** Available height for the Pad theme and launch pane. */
+  viewportHeight?: number;
   /** Optional override for deterministic layout previews and tests. */
   fontScale?: number;
-  /** A tablet Home: Connections keeps a narrow column and Continue takes the rest. */
+  /** A tablet Home with navigation owned by the persistent left rail. */
   pad?: boolean;
   /** The existing identity block supplied by Home data/theme composition. */
   identity?: ReactNode;
@@ -168,6 +171,7 @@ function useScrollStage(
 
 export function HomeEditorialLayout({
   contentWidth,
+  viewportHeight,
   fontScale: fontScaleProp,
   pad = false,
   identity,
@@ -205,6 +209,10 @@ export function HomeEditorialLayout({
     hasAside,
     pad
   );
+  const padLaunchLayout =
+    pad && geometry.contentWidth >= 752 && fontScale < 1.35 && Boolean(viewportHeight);
+  const themeScroll = useSharedValue(0);
+  const scrollPosition = padLaunchLayout ? themeScroll : scrollY;
   const hasIdentity = hasSlot(identity);
   const hasArtwork = hasSlot(artwork);
   const hasHeaderAction = hasSlot(headerAction);
@@ -223,7 +231,7 @@ export function HomeEditorialLayout({
     return () => cancelAnimation(entryProgress);
   }, [revealing, reducedMotion, entryProgress]);
   const titleStage = useScrollStage(
-    scrollY,
+    scrollPosition,
     sceneOrigin,
     entryProgress,
     timelineEnd,
@@ -231,7 +239,7 @@ export function HomeEditorialLayout({
     120
   );
   const artworkStage = useScrollStage(
-    scrollY,
+    scrollPosition,
     sceneOrigin,
     entryProgress,
     timelineEnd,
@@ -239,7 +247,7 @@ export function HomeEditorialLayout({
     160
   );
   const controlsStage = useScrollStage(
-    scrollY,
+    scrollPosition,
     sceneOrigin,
     entryProgress,
     timelineEnd,
@@ -247,7 +255,7 @@ export function HomeEditorialLayout({
     96
   );
   const launchesStage = useScrollStage(
-    scrollY,
+    scrollPosition,
     sceneOrigin,
     entryProgress,
     timelineEnd,
@@ -266,8 +274,8 @@ export function HomeEditorialLayout({
   );
 
   const animatedArtworkStyle = useAnimatedStyle(() => {
-    if (!scrollY || reducedMotion) return {};
-    const y = scrollY.value;
+    if (!scrollPosition || reducedMotion) return {};
+    const y = scrollPosition.value;
     // Pull-down stretch is independent from the measured scroll-fade stages.
     // Keep layout geometry stable while the cover scrolls away.
     const translateY = interpolate(y, [-120, 0], [18, 0], Extrapolation.CLAMP);
@@ -276,6 +284,129 @@ export function HomeEditorialLayout({
       transform: [{ translateY }, { scale }],
     };
   });
+
+  if (padLaunchLayout) {
+    const launchWidth = Math.min(320, geometry.innerWidth * 0.36);
+    const coverWidth = geometry.innerWidth - launchWidth - 24;
+    const titleFontSize =
+      titleMeasurement && titleMeasurement.title === titleKey && titleMeasurement.width > 0
+        ? Math.min(coverWidth * 0.38, ((coverWidth - 4) * 100) / titleMeasurement.width)
+        : coverWidth * 0.25;
+    const titleHeight = titleFontSize * 1.08;
+    return (
+      <View
+        testID="home-editorial-layout"
+        onLayout={(event) => setMeasuredWidth(event.nativeEvent.layout.width)}
+        style={[
+          styles.root,
+          styles.padRoot,
+          { height: viewportHeight, paddingHorizontal: geometry.gutter },
+          style,
+        ]}>
+        {hasHeaderRow ? (
+          <View testID="home-pad-toolbar" style={styles.padToolbar}>
+            <View style={styles.mastheadLeadGroup}>
+              {hasHeaderLeading ? <View style={styles.headerLeading}>{headerLeading}</View> : null}
+            </View>
+            {hasHeaderAction ? <View style={styles.headerAction}>{headerAction}</View> : null}
+          </View>
+        ) : null}
+        <View style={styles.padColumns}>
+          <Animated.ScrollView
+            testID="home-pad-theme-pane"
+            nestedScrollEnabled
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            scrollEventThrottle={16}
+            onScroll={(event) => themeScroll.set(event.nativeEvent.contentOffset.y)}
+            style={styles.padThemePane}
+            contentContainerStyle={styles.padThemeContent}>
+            {cover && hasArtwork ? (
+              <View style={styles.coverScene}>
+                {coverTitle ? (
+                  <View
+                    pointerEvents="none"
+                    accessibilityElementsHidden
+                    importantForAccessibility="no-hide-descendants"
+                    style={{ position: 'absolute', width: 10000, opacity: 0 }}>
+                    <Text
+                      allowFontScaling={false}
+                      onTextLayout={(event) => {
+                        const measured = event.nativeEvent.lines[0]?.width ?? 0;
+                        if (measured > 0)
+                          setTitleMeasurement((current) =>
+                            current?.title === titleKey && Math.abs(current.width - measured) < 0.1
+                              ? current
+                              : { title: titleKey, width: measured }
+                          );
+                      }}
+                      style={{
+                        fontSize: 100,
+                        fontFamily: chromeFontFamily,
+                        fontWeight: titleWeight,
+                        letterSpacing: -5,
+                      }}>
+                      {coverTitle}
+                    </Text>
+                  </View>
+                ) : null}
+                {coverTitle ? (
+                  <Animated.View onLayout={titleStage.onLayout} style={titleStage.style}>
+                    <Text
+                      accessibilityRole="header"
+                      color={theme.colors.text}
+                      adjustsFontSizeToFit
+                      numberOfLines={1}
+                      allowFontScaling={false}
+                      style={{
+                        fontSize: titleFontSize,
+                        lineHeight: titleHeight,
+                        fontFamily: chromeFontFamily,
+                        fontWeight: titleWeight,
+                        letterSpacing: -titleFontSize * 0.05,
+                      }}>
+                      {coverTitle}
+                    </Text>
+                  </Animated.View>
+                ) : null}
+                <Animated.View
+                  onLayout={artworkStage.onLayout}
+                  pointerEvents="none"
+                  style={[
+                    {
+                      marginTop: coverTitle ? -titleHeight * 0.35 - artworkTopInset : 0,
+                      marginHorizontal: 0,
+                      zIndex: 1,
+                    },
+                    animatedArtworkStyle,
+                    artworkStage.style,
+                  ]}>
+                  {artwork}
+                </Animated.View>
+              </View>
+            ) : (
+              <View>
+                {hasIdentity ? <View style={styles.identity}>{identity}</View> : null}
+                {hasArtwork ? (
+                  <Animated.View pointerEvents="none" style={animatedArtworkStyle}>
+                    {artwork}
+                  </Animated.View>
+                ) : null}
+              </View>
+            )}
+          </Animated.ScrollView>
+          <ScrollView
+            testID="home-pad-launch-pane"
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            style={{ width: launchWidth, flexGrow: 0, flexShrink: 0 }}
+            contentContainerStyle={{ paddingBottom: 24, paddingTop: 16 }}>
+            {launches}
+          </ScrollView>
+        </View>
+      </View>
+    );
+  }
 
   if (cover && hasSlot(artwork)) {
     const split = geometry.contentWidth >= 752 && fontScale < 1.35;
@@ -607,6 +738,18 @@ function hasSlot(value: ReactNode): boolean {
 }
 
 const styles = StyleSheet.create({
+  padRoot: { paddingBottom: 0 },
+  padToolbar: {
+    minHeight: 44,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 24,
+    marginBottom: 24,
+  },
+  padColumns: { flex: 1, minHeight: 0, flexDirection: 'row', gap: 24 },
+  padThemePane: { flex: 1, minWidth: 0 },
+  padThemeContent: { paddingBottom: 24 },
+
   coverColumns: { flexDirection: 'row', alignItems: 'flex-start', gap: 24 },
   coverReadingColumn: { flex: 1, minWidth: 0, paddingTop: 16 },
   coverScene: { position: 'relative', minWidth: 0 },
