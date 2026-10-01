@@ -1218,6 +1218,7 @@ msgid "Connecting…"
 msgstr "Đang kết nối…"
 
 #: src/components/home-editorial-layout.tsx
+#: src/components/pad-server-rail.tsx
 msgid "Connections"
 msgstr "Kết nối"
 
@@ -1248,6 +1249,7 @@ msgstr "Ngữ cảnh đã dùng"
 
 #: src/app/explore.tsx
 #: src/components/home-editorial-layout.tsx
+#: src/components/pad-server-rail.tsx
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Continue"
 msgstr "Tiếp tục"
@@ -1756,10 +1758,6 @@ msgstr "Máy hiện tại"
 #: src/i18n/labels.ts
 msgid "Current path"
 msgstr "Đường dẫn hiện tại"
-
-#: src/components/pad-server-rail.tsx
-msgid "Current task"
-msgstr "Tác vụ hiện tại"
 
 #: src/components/custom-theme-library.tsx
 msgid "Current theme"
@@ -2368,6 +2366,7 @@ msgstr "Ẩn danh sách máy chủ"
 msgid "Hide the simulator"
 msgstr "Ẩn trình giả lập"
 
+#: src/components/pad-server-rail.tsx
 #: src/components/simfarm-stage.tsx
 msgid "Home"
 msgstr "Trang chủ"
@@ -2405,7 +2404,6 @@ msgstr "Host"
 msgid "Host key changed"
 msgstr "Khóa host đã thay đổi"
 
-#: src/components/pad-server-rail.tsx
 #: src/components/ssh-host-row.tsx
 msgid "Host key trusted"
 msgstr "Khóa host đã được tin cậy"
@@ -2957,6 +2955,7 @@ msgstr "Có đầu ra mới · làm mới"
 
 #: src/app/agent.tsx
 #: src/components/agent-workbench.tsx
+#: src/components/home-overview.tsx
 #: src/i18n/labels.ts
 msgid "New session"
 msgstr "Phiên mới"
@@ -3097,7 +3096,6 @@ msgstr "Không có dự án nào khớp “{0}”"
 msgid "No server to start a task on."
 msgstr "Không có máy chủ để bắt đầu tác vụ"
 
-#: src/components/pad-server-rail.tsx
 #: src/components/settings-servers.tsx
 msgid "No servers paired yet"
 msgstr "Chưa ghép nối máy chủ nào"
@@ -3388,9 +3386,7 @@ msgstr "Mở phiên"
 msgid "Open session tree"
 msgstr "Mở cây phiên"
 
-#. placeholder {0}: host.label
 #. placeholder {0}: record.label
-#: src/components/pad-server-rail.tsx
 #: src/components/ssh-host-row.tsx
 msgid "Open SSH host {0}"
 msgstr "Mở host SSH {0}"
@@ -4374,7 +4370,6 @@ msgstr "Máy chủ không khả dụng"
 
 #: src/app/settings.tsx
 #: src/components/app-drawer-content.tsx
-#: src/components/pad-server-rail.tsx
 msgid "Servers"
 msgstr "Máy chủ"
 
@@ -4679,7 +4674,6 @@ msgstr "Host SSH"
 
 #: src/components/home-launch-actions.tsx
 #: src/components/home-overview.tsx
-#: src/components/pad-server-rail.tsx
 #: src/components/settings-servers.tsx
 msgid "SSH hosts"
 msgstr "Host SSH"
@@ -5795,10 +5789,6 @@ msgstr "Khi tác nhân dừng để xin xác nhận, thông báo đẩy sẽ đ�
 #: src/components/away-digest-card.tsx
 msgid "While you were away"
 msgstr "Khi bạn vắng mặt"
-
-#: src/components/pad-server-rail.tsx
-msgid "Workbench"
-msgstr "Bàn làm việc"
 
 #: src/components/agent-vcs-diff-sheet.tsx
 #: src/components/collaboration-notice.tsx

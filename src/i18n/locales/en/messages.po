@@ -1218,6 +1218,7 @@ msgid "Connecting…"
 msgstr "Connecting…"
 
 #: src/components/home-editorial-layout.tsx
+#: src/components/pad-server-rail.tsx
 msgid "Connections"
 msgstr "Connections"
 
@@ -1248,6 +1249,7 @@ msgstr "Context used"
 
 #: src/app/explore.tsx
 #: src/components/home-editorial-layout.tsx
+#: src/components/pad-server-rail.tsx
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Continue"
 msgstr "Continue"
@@ -1756,10 +1758,6 @@ msgstr "Current machine"
 #: src/i18n/labels.ts
 msgid "Current path"
 msgstr "Current path"
-
-#: src/components/pad-server-rail.tsx
-msgid "Current task"
-msgstr "Current task"
 
 #: src/components/custom-theme-library.tsx
 msgid "Current theme"
@@ -2368,6 +2366,7 @@ msgstr "Hide the server list"
 msgid "Hide the simulator"
 msgstr "Hide the simulator"
 
+#: src/components/pad-server-rail.tsx
 #: src/components/simfarm-stage.tsx
 msgid "Home"
 msgstr "Home"
@@ -2405,7 +2404,6 @@ msgstr "Host"
 msgid "Host key changed"
 msgstr "Host key changed"
 
-#: src/components/pad-server-rail.tsx
 #: src/components/ssh-host-row.tsx
 msgid "Host key trusted"
 msgstr "Host key trusted"
@@ -2957,6 +2955,7 @@ msgstr "New output available · refresh"
 
 #: src/app/agent.tsx
 #: src/components/agent-workbench.tsx
+#: src/components/home-overview.tsx
 #: src/i18n/labels.ts
 msgid "New session"
 msgstr "New session"
@@ -3097,7 +3096,6 @@ msgstr "No projects match “{0}”"
 msgid "No server to start a task on."
 msgstr "No server to start a task on"
 
-#: src/components/pad-server-rail.tsx
 #: src/components/settings-servers.tsx
 msgid "No servers paired yet"
 msgstr "No servers paired yet"
@@ -3388,9 +3386,7 @@ msgstr "Open session"
 msgid "Open session tree"
 msgstr "Open session tree"
 
-#. placeholder {0}: host.label
 #. placeholder {0}: record.label
-#: src/components/pad-server-rail.tsx
 #: src/components/ssh-host-row.tsx
 msgid "Open SSH host {0}"
 msgstr "Open SSH host {0}"
@@ -4374,7 +4370,6 @@ msgstr "Server unavailable"
 
 #: src/app/settings.tsx
 #: src/components/app-drawer-content.tsx
-#: src/components/pad-server-rail.tsx
 msgid "Servers"
 msgstr "Servers"
 
@@ -4679,7 +4674,6 @@ msgstr "SSH host"
 
 #: src/components/home-launch-actions.tsx
 #: src/components/home-overview.tsx
-#: src/components/pad-server-rail.tsx
 #: src/components/settings-servers.tsx
 msgid "SSH hosts"
 msgstr "SSH hosts"
@@ -5795,10 +5789,6 @@ msgstr "When an agent halts for confirmation, the prompt arrives as a push. Appr
 #: src/components/away-digest-card.tsx
 msgid "While you were away"
 msgstr "While you were away"
-
-#: src/components/pad-server-rail.tsx
-msgid "Workbench"
-msgstr "Workbench"
 
 #: src/components/agent-vcs-diff-sheet.tsx
 #: src/components/collaboration-notice.tsx

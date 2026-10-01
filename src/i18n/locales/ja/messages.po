@@ -1218,6 +1218,7 @@ msgid "Connecting…"
 msgstr "接続中…"
 
 #: src/components/home-editorial-layout.tsx
+#: src/components/pad-server-rail.tsx
 msgid "Connections"
 msgstr "接続"
 
@@ -1248,6 +1249,7 @@ msgstr "コンテキスト使用量"
 
 #: src/app/explore.tsx
 #: src/components/home-editorial-layout.tsx
+#: src/components/pad-server-rail.tsx
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Continue"
 msgstr "続行"
@@ -1756,10 +1758,6 @@ msgstr "現在のマシン"
 #: src/i18n/labels.ts
 msgid "Current path"
 msgstr "現在のパス"
-
-#: src/components/pad-server-rail.tsx
-msgid "Current task"
-msgstr "現在のタスク"
 
 #: src/components/custom-theme-library.tsx
 msgid "Current theme"
@@ -2368,6 +2366,7 @@ msgstr "サーバー一覧を隠す"
 msgid "Hide the simulator"
 msgstr "シミュレータを隠す"
 
+#: src/components/pad-server-rail.tsx
 #: src/components/simfarm-stage.tsx
 msgid "Home"
 msgstr "ホーム"
@@ -2405,7 +2404,6 @@ msgstr "ホスト"
 msgid "Host key changed"
 msgstr "ホスト鍵が変わりました"
 
-#: src/components/pad-server-rail.tsx
 #: src/components/ssh-host-row.tsx
 msgid "Host key trusted"
 msgstr "ホスト鍵は信頼済み"
@@ -2957,6 +2955,7 @@ msgstr "新しい出力があります · 更新"
 
 #: src/app/agent.tsx
 #: src/components/agent-workbench.tsx
+#: src/components/home-overview.tsx
 #: src/i18n/labels.ts
 msgid "New session"
 msgstr "新規セッション"
@@ -3097,7 +3096,6 @@ msgstr "「{0}」に一致するプロジェクトはありません"
 msgid "No server to start a task on."
 msgstr "タスクを開始できるサーバーがありません"
 
-#: src/components/pad-server-rail.tsx
 #: src/components/settings-servers.tsx
 msgid "No servers paired yet"
 msgstr "ペアリング済みのサーバーはまだありません"
@@ -3388,9 +3386,7 @@ msgstr "セッションを開く"
 msgid "Open session tree"
 msgstr "セッションツリーを開く"
 
-#. placeholder {0}: host.label
 #. placeholder {0}: record.label
-#: src/components/pad-server-rail.tsx
 #: src/components/ssh-host-row.tsx
 msgid "Open SSH host {0}"
 msgstr "SSH ホスト {0} を開く"
@@ -4374,7 +4370,6 @@ msgstr "サーバーを利用できません"
 
 #: src/app/settings.tsx
 #: src/components/app-drawer-content.tsx
-#: src/components/pad-server-rail.tsx
 msgid "Servers"
 msgstr "サーバー"
 
@@ -4679,7 +4674,6 @@ msgstr "SSH ホスト"
 
 #: src/components/home-launch-actions.tsx
 #: src/components/home-overview.tsx
-#: src/components/pad-server-rail.tsx
 #: src/components/settings-servers.tsx
 msgid "SSH hosts"
 msgstr "SSH ホスト"
@@ -5795,10 +5789,6 @@ msgstr "エージェントが確認を求めて停止したとき、通知がロ
 #: src/components/away-digest-card.tsx
 msgid "While you were away"
 msgstr "離席中の変化"
-
-#: src/components/pad-server-rail.tsx
-msgid "Workbench"
-msgstr "ワークベンチ"
 
 #: src/components/agent-vcs-diff-sheet.tsx
 #: src/components/collaboration-notice.tsx

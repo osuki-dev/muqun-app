@@ -1218,6 +1218,7 @@ msgid "Connecting…"
 msgstr "连接中…"
 
 #: src/components/home-editorial-layout.tsx
+#: src/components/pad-server-rail.tsx
 msgid "Connections"
 msgstr "连接"
 
@@ -1248,6 +1249,7 @@ msgstr "上下文占用"
 
 #: src/app/explore.tsx
 #: src/components/home-editorial-layout.tsx
+#: src/components/pad-server-rail.tsx
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Continue"
 msgstr "继续"
@@ -1756,10 +1758,6 @@ msgstr "当前机器"
 #: src/i18n/labels.ts
 msgid "Current path"
 msgstr "当前路径"
-
-#: src/components/pad-server-rail.tsx
-msgid "Current task"
-msgstr "当前任务"
 
 #: src/components/custom-theme-library.tsx
 msgid "Current theme"
@@ -2368,6 +2366,7 @@ msgstr "隐藏服务器列表"
 msgid "Hide the simulator"
 msgstr "隐藏模拟器"
 
+#: src/components/pad-server-rail.tsx
 #: src/components/simfarm-stage.tsx
 msgid "Home"
 msgstr "主页"
@@ -2405,7 +2404,6 @@ msgstr "主机"
 msgid "Host key changed"
 msgstr "主机密钥已改变"
 
-#: src/components/pad-server-rail.tsx
 #: src/components/ssh-host-row.tsx
 msgid "Host key trusted"
 msgstr "主机密钥已信任"
@@ -2957,6 +2955,7 @@ msgstr "有新输出 · 点击刷新"
 
 #: src/app/agent.tsx
 #: src/components/agent-workbench.tsx
+#: src/components/home-overview.tsx
 #: src/i18n/labels.ts
 msgid "New session"
 msgstr "新建会话"
@@ -3097,7 +3096,6 @@ msgstr "没有匹配“{0}”的项目"
 msgid "No server to start a task on."
 msgstr "没有可以开始任务的服务器"
 
-#: src/components/pad-server-rail.tsx
 #: src/components/settings-servers.tsx
 msgid "No servers paired yet"
 msgstr "尚未配对任何服务器"
@@ -3388,9 +3386,7 @@ msgstr "打开会话"
 msgid "Open session tree"
 msgstr "打开会话树"
 
-#. placeholder {0}: host.label
 #. placeholder {0}: record.label
-#: src/components/pad-server-rail.tsx
 #: src/components/ssh-host-row.tsx
 msgid "Open SSH host {0}"
 msgstr "打开 SSH 主机 {0}"
@@ -4374,7 +4370,6 @@ msgstr "服务器不可用"
 
 #: src/app/settings.tsx
 #: src/components/app-drawer-content.tsx
-#: src/components/pad-server-rail.tsx
 msgid "Servers"
 msgstr "服务器"
 
@@ -4679,7 +4674,6 @@ msgstr "SSH 主机"
 
 #: src/components/home-launch-actions.tsx
 #: src/components/home-overview.tsx
-#: src/components/pad-server-rail.tsx
 #: src/components/settings-servers.tsx
 msgid "SSH hosts"
 msgstr "SSH 主机"
@@ -5795,10 +5789,6 @@ msgstr "当智能体暂停请求权限时，通知直达锁屏。一键批准或
 #: src/components/away-digest-card.tsx
 msgid "While you were away"
 msgstr "离开期间"
-
-#: src/components/pad-server-rail.tsx
-msgid "Workbench"
-msgstr "工作台"
 
 #: src/components/agent-vcs-diff-sheet.tsx
 #: src/components/collaboration-notice.tsx
