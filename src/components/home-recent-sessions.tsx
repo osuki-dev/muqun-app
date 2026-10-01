@@ -43,6 +43,8 @@ import type { SshHostRecord } from '@/lib/ssh-hosts';
 import { useHomeRecentsStore } from '@/stores/home-recents';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { settleAfter } from '@/lib/compiler-safe-control-flow';
+import { scheduleHomeRefresh } from '@/lib/home-refresh-schedule';
+import { useHomeRefreshPause } from '@/hooks/use-home-refresh-pause';
 
 const HOME_SESSION_REFRESH_MS = 30_000;
 
@@ -91,6 +93,7 @@ export function HomeRecentSessions({
     targetId ? state.byServer[targetId] : undefined
   );
   const appActive = useAppActive();
+  const pause = useHomeRefreshPause();
   const refreshFlight = useRef<Promise<void>>(Promise.resolve());
   useFocusEffect(
     useCallback(() => {
@@ -149,15 +152,18 @@ export function HomeRecentSessions({
         );
       };
       setObservationNowMs(Date.now());
-      void refresh();
-      const timer = setInterval(() => {
-        void refresh();
-      }, HOME_SESSION_REFRESH_MS);
+      const stop = scheduleHomeRefresh({
+        intervalMs: HOME_SESSION_REFRESH_MS,
+        pause,
+        refresh: () => {
+          void refresh();
+        },
+      });
       return () => {
         current = false;
-        clearInterval(timer);
+        stop();
       };
-    }, [servers, targetId, hydrated, appActive])
+    }, [servers, targetId, hydrated, appActive, pause])
   );
   const available = homeContinueEntries({
     serverIds: servers.map((server) => server.serverId),
