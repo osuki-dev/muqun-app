@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'bun:test';
+import { readFileSync } from 'node:fs';
 
 import {
   HOME_RECENTS_STORAGE_VERSION,
@@ -546,4 +547,15 @@ describe('isLiveHomeTerminalVisit', () => {
   test('a pane id from another Herdr session is not live', () => {
     expect(isLiveHomeTerminalVisit(target, 'other', [pane('p1')])).toBe(false);
   });
+});
+
+test('the terminal visit effect re-runs once a refresh confirms the session it gates on', () => {
+  // A session pick clears the non-reactive `resolvedSessionRef`; when the
+  // confirming refresh leaves `data` unchanged, only the snapshot generation
+  // changes, so without it the open pane is never stamped for Home.
+  const source = readFileSync('src/components/server-terminal-workspace.tsx', 'utf8');
+  const body = source.indexOf('const observed = resolvedSessionRef.current;');
+  expect(body).toBeGreaterThan(-1);
+  const deps = source.slice(source.indexOf('}, [', body), source.indexOf(']);', body));
+  expect(deps).toContain('snapshotGeneration');
 });
