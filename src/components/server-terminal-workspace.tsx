@@ -3414,6 +3414,14 @@ export function ServerTerminalWorkspace({
     if (dock.approvalOnly) Keyboard.dismiss();
   }, [dock.approvalOnly]);
 
+  // Home or an agent session covering the pane hides it by opacity, which
+  // leaves the composer mounted. Its field must not keep focus underneath: a
+  // hardware keyboard would type into a field no one can see, and Enter would
+  // send it to the pane.
+  useEffect(() => {
+    if (paneHidden) Keyboard.dismiss();
+  }, [paneHidden]);
+
   // Which pane the stream is opened against, which trails the selection by
   // `PANE_STREAM_SETTLE_MS`. See that constant for why it trails at all; the
   // short version is that re-pointing the stream is a reconnect, and a pane
@@ -4526,7 +4534,11 @@ export function ServerTerminalWorkspace({
           setCaret(event.nativeEvent.selection.start);
         },
         editable:
-          targetReady && connection.phase === 'connected' && Boolean(selectedPane) && !sending,
+          !paneHidden &&
+          targetReady &&
+          connection.phase === 'connected' &&
+          Boolean(selectedPane) &&
+          !sending,
         maxLength: 64 * 1024,
         // Summoned into the editor panel, the field arrives *instead of* the
         // app's keyboard rather than on top of it, so a reader who still had
@@ -4560,6 +4572,7 @@ export function ServerTerminalWorkspace({
         armed: Boolean(hasSendableContent && selectedPane),
         sending,
         disabled:
+          paneHidden ||
           !targetReady ||
           connection.phase !== 'connected' ||
           !hasSendableContent ||
