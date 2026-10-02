@@ -4419,6 +4419,10 @@ msgstr "โทเค็นเซสชัน"
 msgid "Session tree"
 msgstr "แผนผังเซสชัน"
 
+#: src/components/agent-composer.tsx
+msgid "Session tree, {runningSubtasks, plural, one {# subtask running} other {# subtasks running}}"
+msgstr "แผนผังเซสชัน, {runningSubtasks, plural, other {งานย่อย # งานกำลังทำงาน}}"
+
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
 msgid "Session unavailable"
@@ -4857,6 +4861,18 @@ msgstr "เอเจนต์ย่อย"
 #: src/components/agent-form-card.tsx
 msgid "Submit"
 msgstr "ส่ง"
+
+#: src/components/agent-subtasks-row.tsx
+msgid "Subtasks · {blocked, plural, one {# waiting for you} other {# waiting for you}}"
+msgstr "งานย่อย · {blocked, plural, other {# งานรอคุณอยู่}}"
+
+#: src/components/agent-subtasks-row.tsx
+msgid "Subtasks · {running, plural, one {# running} other {# running}}"
+msgstr "งานย่อย · {running, plural, other {# งานกำลังทำงาน}}"
+
+#: src/components/agent-subtasks-row.tsx
+msgid "Subtasks · {total}, all idle"
+msgstr "งานย่อย · {total} งาน ว่างทั้งหมด"
 
 #: src/i18n/labels.ts
 msgid "Summarise progress"
@@ -5674,6 +5690,7 @@ msgstr "รายการที่ยังไม่รองรับ ({0})"
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
+#: src/components/agent-subtasks-row.tsx
 msgid "Untitled session"
 msgstr "เซสชันไม่มีชื่อ"
 
@@ -5781,6 +5798,10 @@ msgstr "เวอร์ชัน {version}{0}"
 msgid "View file changes"
 msgstr "ดูการเปลี่ยนแปลงของไฟล์"
 
+#: src/components/agent-subtasks-row.tsx
+msgid "View tree"
+msgstr "ดูแผนผัง"
+
 #: src/i18n/labels.ts
 msgid "Visual mode"
 msgstr "โหมดเลือกข้อความ"
@@ -5801,6 +5822,10 @@ msgstr "กำลังรอเครือข่าย"
 #: src/components/server-terminal-workspace.tsx
 msgid "Waiting for uploads to finish…"
 msgstr "กำลังรอให้อัปโหลดเสร็จ…"
+
+#: src/components/agent-subtasks-row.tsx
+msgid "Waiting for you"
+msgstr "รอคุณอยู่"
 
 #: src/components/agent-workbench.tsx
 msgid "Waiting for your answer"

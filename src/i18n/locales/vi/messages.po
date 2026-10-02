@@ -4419,6 +4419,10 @@ msgstr "Token phiên"
 msgid "Session tree"
 msgstr "Cây phiên"
 
+#: src/components/agent-composer.tsx
+msgid "Session tree, {runningSubtasks, plural, one {# subtask running} other {# subtasks running}}"
+msgstr "Cây phiên, {runningSubtasks, plural, other {# tác vụ con đang chạy}}"
+
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
 msgid "Session unavailable"
@@ -4857,6 +4861,18 @@ msgstr "Tác nhân phụ"
 #: src/components/agent-form-card.tsx
 msgid "Submit"
 msgstr "Gửi"
+
+#: src/components/agent-subtasks-row.tsx
+msgid "Subtasks · {blocked, plural, one {# waiting for you} other {# waiting for you}}"
+msgstr "Tác vụ con · {blocked, plural, other {# đang chờ bạn}}"
+
+#: src/components/agent-subtasks-row.tsx
+msgid "Subtasks · {running, plural, one {# running} other {# running}}"
+msgstr "Tác vụ con · {running, plural, other {# đang chạy}}"
+
+#: src/components/agent-subtasks-row.tsx
+msgid "Subtasks · {total}, all idle"
+msgstr "Tác vụ con · {total}, tất cả đang rảnh"
 
 #: src/i18n/labels.ts
 msgid "Summarise progress"
@@ -5674,6 +5690,7 @@ msgstr "Mục chưa được hỗ trợ ({0})"
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
+#: src/components/agent-subtasks-row.tsx
 msgid "Untitled session"
 msgstr "Phiên chưa có tên"
 
@@ -5781,6 +5798,10 @@ msgstr "Phiên bản {version}{0}"
 msgid "View file changes"
 msgstr "Xem các thay đổi tệp"
 
+#: src/components/agent-subtasks-row.tsx
+msgid "View tree"
+msgstr "Xem cây"
+
 #: src/i18n/labels.ts
 msgid "Visual mode"
 msgstr "Chế độ visual"
@@ -5801,6 +5822,10 @@ msgstr "Đang chờ mạng"
 #: src/components/server-terminal-workspace.tsx
 msgid "Waiting for uploads to finish…"
 msgstr "Đang chờ tải lên xong…"
+
+#: src/components/agent-subtasks-row.tsx
+msgid "Waiting for you"
+msgstr "Đang chờ bạn"
 
 #: src/components/agent-workbench.tsx
 msgid "Waiting for your answer"

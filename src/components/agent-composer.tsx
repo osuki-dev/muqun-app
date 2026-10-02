@@ -13,6 +13,7 @@ import {
 import { Spinner, useThemeTokens, useToast } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
 import { useLingui as useLinguiRuntime } from '@lingui/react';
+import { plural } from '@lingui/core/macro';
 import { Trans, useLingui } from '@lingui/react/macro';
 import {
   AlertCircle,
@@ -45,6 +46,7 @@ import { PressableScale } from '@/components/pressable-scale';
 import { AgentActionMenu, type AgentActionMenuItem } from '@/components/agent-action-menu';
 import { AgentRevertPlate } from '@/components/agent-revert-plate';
 import { AgentUnreadDot } from '@/components/agent-unread-dot';
+import { AgentSubtasksRow } from '@/components/agent-subtasks-row';
 import { TerminalComposer } from '@/components/terminal-composer';
 import { AttachmentMenu } from '@/components/attachment-menu';
 import { AgentModeMenu } from '@/components/agent-mode-menu';
@@ -79,6 +81,7 @@ import { appChrome } from '@/constants/appearance';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { withAlpha } from '@/lib/color';
 import type { SessionNode } from '@/lib/agent-session-tree';
+import type { SubtaskBlocks, SubtaskNode, SubtaskSummary } from '@/lib/agent-subtasks';
 import {
   AGENT_CLIENT_COMMANDS,
   readSlashCommand,
@@ -123,6 +126,7 @@ const SessionChip = memo(function SessionChip({
   onPress,
   onOpenTree,
   onMeasure,
+  runningSubtasks = 0,
 }: {
   node: SessionNode;
   active: boolean;
@@ -137,6 +141,8 @@ const SessionChip = memo(function SessionChip({
   onOpenTree?: (asid: string) => void;
   /** Where this chip sits in the strip, so the strip can bring it into view. */
   onMeasure?: (asid: string, x: number, width: number) => void;
+  /** Running sessions under this root, drawn as a count on its tree mark. */
+  runningSubtasks?: number;
 }) {
   const { t } = useLingui();
   const theme = useThemeTokens();
@@ -151,6 +157,10 @@ const SessionChip = memo(function SessionChip({
   // The gateway's two numbers, and nothing else: a chip never says "unread"
   // because this app thought something had happened over there.
   const unread = isSessionUnread(session);
+  const treeLabel =
+    runningSubtasks > 0
+      ? t`Session tree, ${plural(runningSubtasks, { one: '# subtask running', other: '# subtasks running' })}`
+      : undefined;
   const pressSession = () => {
     if (current && node.hasChildren && onOpenTree) {
       onOpenTree(session.asid);
@@ -180,15 +190,18 @@ const SessionChip = memo(function SessionChip({
         onAccessibilityAction={(event) => {
           if (event.nativeEvent.actionName === 'openSessionTree') onOpenTree?.(session.asid);
         }}
-        accessibilityLabel={
+        accessibilityLabel={[
           unread
             ? lead
               ? t`${lead}: ${title} — finished while you were away`
               : t`${title} — finished while you were away`
             : lead
               ? `${lead}: ${title}`
-              : title
-        }
+              : title,
+          treeLabel,
+        ]
+          .filter(Boolean)
+          .join(', ')}
         style={[
           styles.sessionChip,
           { borderRadius: profile.chrome.navigationPill },
@@ -246,6 +259,23 @@ const SessionChip = memo(function SessionChip({
         {node.hasChildren ? (
           <GitFork size={13} color={active ? theme.colors.onPrimary : theme.colors.primary} />
         ) : null}
+        {/* How many sessions under this root are running; no badge when none is. */}
+        {node.hasChildren && runningSubtasks > 0 ? (
+          <View
+            testID={`agent-composer-session-subtasks-${session.asid}`}
+            style={[
+              styles.subtaskBadge,
+              { backgroundColor: active ? theme.colors.onPrimary : theme.colors.primary },
+            ]}>
+            <Text
+              variant="caption"
+              weight="semibold"
+              color={active ? theme.colors.primary : theme.colors.onPrimary}
+              style={styles.subtaskBadgeText}>
+              {runningSubtasks}
+            </Text>
+          </View>
+        ) : null}
       </PressableScale>
     </View>
   );
@@ -257,6 +287,14 @@ export interface AgentComposerProps {
   sessionStrip?: readonly SessionNode[];
   selectedRootAsid?: string;
   onOpenSessionTree?: (asid: string) => void;
+  /** The open session's descendants, for the row above the toolbar. */
+  subtasks?: {
+    nodes: readonly SubtaskNode[];
+    summary: SubtaskSummary;
+    blocks: SubtaskBlocks;
+  } | null;
+  /** Running sessions under the selected root, for its chip's badge. */
+  rootRunningSubtasks?: number;
   /** The session above the one on screen, for the way back out of a subagent. */
   parentSession?: AgentSessionInfo;
   availableAgents?: ModeInfo[];
@@ -391,6 +429,8 @@ export const AgentComposer = memo(function AgentComposer({
   sessionStrip = EMPTY_STRIP,
   selectedRootAsid,
   onOpenSessionTree,
+  subtasks,
+  rootRunningSubtasks = 0,
   parentSession,
   availableAgents: availableAgentsProp,
   skills = [],
@@ -876,6 +916,12 @@ export const AgentComposer = memo(function AgentComposer({
           },
         ];
 
+  const subtaskLead = useCallback(
+    (session: AgentSessionInfo) =>
+      sessionLead ? sessionLead(session) : nameOfAgent(session.mode || selectedAgent || 'build'),
+    [sessionLead, nameOfAgent, selectedAgent]
+  );
+
   const handleSelectSession = useCallback(
     (asid: string) => {
       if (asid !== activeAsid) onSelectSession?.(asid);
@@ -1200,9 +1246,26 @@ export const AgentComposer = memo(function AgentComposer({
                     onPress={handleSelectSession}
                     onOpenTree={onOpenSessionTree}
                     onMeasure={measureChip}
+                    runningSubtasks={
+                      node.session.asid === selectedRootAsid ? rootRunningSubtasks : 0
+                    }
                   />
                 ))}
               </ScrollView>
+            ) : null}
+
+            {/* The open session's subtasks: one line, expandable. */}
+            {subtasks ? (
+              <AgentSubtasksRow
+                nodes={subtasks.nodes}
+                summary={subtasks.summary}
+                blocks={subtasks.blocks}
+                leadOf={subtaskLead}
+                onOpenSession={handleSelectSession}
+                {...(onOpenSessionTree && activeAsid
+                  ? { onOpenTree: () => onOpenSessionTree(selectedRootAsid ?? activeAsid) }
+                  : {})}
+              />
             ) : null}
 
             {/* Row 2: Function Keyboard / Toolbar (功能键盘) */}
@@ -1810,6 +1873,19 @@ const styles = StyleSheet.create({
   chipRow: {
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  subtaskBadge: {
+    minWidth: 16,
+    height: 16,
+    borderRadius: 8,
+    paddingHorizontal: 4,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: -2,
+  },
+  subtaskBadgeText: {
+    fontSize: AGENT_TYPE.micro.size,
+    lineHeight: 14,
   },
   backChip: {
     alignItems: 'center',
