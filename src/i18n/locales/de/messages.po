@@ -2957,6 +2957,10 @@ msgstr "Einrichtung nötig"
 msgid "Needs your attention"
 msgstr "Deine Hilfe ist nötig"
 
+#: src/lib/notifications.ts
+msgid "Needs your input"
+msgstr "Braucht deine Eingabe"
+
 #: src/components/settings-servers.tsx
 #: src/components/ssh-host-row.tsx
 msgid "Never connected"
