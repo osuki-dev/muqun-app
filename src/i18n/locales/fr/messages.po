@@ -4419,10 +4419,6 @@ msgstr "Jetons de session"
 msgid "Session tree"
 msgstr "Arborescence des sessions"
 
-#: src/components/agent-composer.tsx
-msgid "Session tree, {runningSubtasks, plural, one {# subtask running} other {# subtasks running}}"
-msgstr "Arborescence des sessions, {runningSubtasks, plural, one {# sous-tâche en cours} other {# sous-tâches en cours}}"
-
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
 msgid "Session unavailable"
@@ -4861,18 +4857,6 @@ msgstr "Sous-agent"
 #: src/components/agent-form-card.tsx
 msgid "Submit"
 msgstr "Envoyer"
-
-#: src/components/agent-subtasks-row.tsx
-msgid "Subtasks · {blocked, plural, one {# waiting for you} other {# waiting for you}}"
-msgstr "Sous-tâches · {blocked, plural, one {# vous attend} other {# vous attendent}}"
-
-#: src/components/agent-subtasks-row.tsx
-msgid "Subtasks · {running, plural, one {# running} other {# running}}"
-msgstr "Sous-tâches · {running, plural, one {# en cours} other {# en cours}}"
-
-#: src/components/agent-subtasks-row.tsx
-msgid "Subtasks · {total}, all idle"
-msgstr "Sous-tâches · {total}, toutes inactives"
 
 #: src/i18n/labels.ts
 msgid "Summarise progress"
@@ -5690,7 +5674,6 @@ msgstr "Élément non pris en charge ({0})"
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
-#: src/components/agent-subtasks-row.tsx
 msgid "Untitled session"
 msgstr "Session sans titre"
 
@@ -5798,10 +5781,6 @@ msgstr "Version {version}{0}"
 msgid "View file changes"
 msgstr "Afficher les modifications de fichiers"
 
-#: src/components/agent-subtasks-row.tsx
-msgid "View tree"
-msgstr "Voir l’arborescence"
-
 #: src/i18n/labels.ts
 msgid "Visual mode"
 msgstr "Mode visuel"
@@ -5822,10 +5801,6 @@ msgstr "En attente du réseau"
 #: src/components/server-terminal-workspace.tsx
 msgid "Waiting for uploads to finish…"
 msgstr "En attente de la fin des envois…"
-
-#: src/components/agent-subtasks-row.tsx
-msgid "Waiting for you"
-msgstr "Vous attend"
 
 #: src/components/agent-workbench.tsx
 msgid "Waiting for your answer"
