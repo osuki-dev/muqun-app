@@ -4419,6 +4419,10 @@ msgstr "Session Tokens"
 msgid "Session tree"
 msgstr "Session tree"
 
+#: src/components/agent-composer.tsx
+msgid "Session tree, {runningSubtasks, plural, one {# subtask running} other {# subtasks running}}"
+msgstr "Session tree, {runningSubtasks, plural, one {# subtask running} other {# subtasks running}}"
+
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
 msgid "Session unavailable"
@@ -4857,6 +4861,18 @@ msgstr "Subagent"
 #: src/components/agent-form-card.tsx
 msgid "Submit"
 msgstr "Submit"
+
+#: src/components/agent-subtasks-row.tsx
+msgid "Subtasks · {blocked, plural, one {# waiting for you} other {# waiting for you}}"
+msgstr "Subtasks · {blocked, plural, one {# waiting for you} other {# waiting for you}}"
+
+#: src/components/agent-subtasks-row.tsx
+msgid "Subtasks · {running, plural, one {# running} other {# running}}"
+msgstr "Subtasks · {running, plural, one {# running} other {# running}}"
+
+#: src/components/agent-subtasks-row.tsx
+msgid "Subtasks · {total}, all idle"
+msgstr "Subtasks · {total}, all idle"
 
 #: src/i18n/labels.ts
 msgid "Summarise progress"
@@ -5674,6 +5690,7 @@ msgstr "Unsupported item ({0})"
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
+#: src/components/agent-subtasks-row.tsx
 msgid "Untitled session"
 msgstr "Untitled session"
 
@@ -5781,6 +5798,10 @@ msgstr "Version {version}{0}"
 msgid "View file changes"
 msgstr "View file changes"
 
+#: src/components/agent-subtasks-row.tsx
+msgid "View tree"
+msgstr "View tree"
+
 #: src/i18n/labels.ts
 msgid "Visual mode"
 msgstr "Visual mode"
@@ -5801,6 +5822,10 @@ msgstr "Waiting for the network"
 #: src/components/server-terminal-workspace.tsx
 msgid "Waiting for uploads to finish…"
 msgstr "Waiting for uploads to finish…"
+
+#: src/components/agent-subtasks-row.tsx
+msgid "Waiting for you"
+msgstr "Waiting for you"
 
 #: src/components/agent-workbench.tsx
 msgid "Waiting for your answer"
