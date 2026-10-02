@@ -4419,10 +4419,6 @@ msgstr "Sitzungs-Tokens"
 msgid "Session tree"
 msgstr "Sitzungsbaum"
 
-#: src/components/agent-composer.tsx
-msgid "Session tree, {runningSubtasks, plural, one {# subtask running} other {# subtasks running}}"
-msgstr "Sitzungsbaum, {runningSubtasks, plural, one {# Unteraufgabe läuft} other {# Unteraufgaben laufen}}"
-
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
 msgid "Session unavailable"
@@ -4861,18 +4857,6 @@ msgstr "Subagent"
 #: src/components/agent-form-card.tsx
 msgid "Submit"
 msgstr "Absenden"
-
-#: src/components/agent-subtasks-row.tsx
-msgid "Subtasks · {blocked, plural, one {# waiting for you} other {# waiting for you}}"
-msgstr "Unteraufgaben · {blocked, plural, one {# wartet auf dich} other {# warten auf dich}}"
-
-#: src/components/agent-subtasks-row.tsx
-msgid "Subtasks · {running, plural, one {# running} other {# running}}"
-msgstr "Unteraufgaben · {running, plural, one {# läuft} other {# laufen}}"
-
-#: src/components/agent-subtasks-row.tsx
-msgid "Subtasks · {total}, all idle"
-msgstr "Unteraufgaben · {total}, alle untätig"
 
 #: src/i18n/labels.ts
 msgid "Summarise progress"
@@ -5690,7 +5674,6 @@ msgstr "Nicht unterstütztes Element ({0})"
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
-#: src/components/agent-subtasks-row.tsx
 msgid "Untitled session"
 msgstr "Sitzung ohne Titel"
 
@@ -5798,10 +5781,6 @@ msgstr "Version {version}{0}"
 msgid "View file changes"
 msgstr "Dateiänderungen anzeigen"
 
-#: src/components/agent-subtasks-row.tsx
-msgid "View tree"
-msgstr "Baum anzeigen"
-
 #: src/i18n/labels.ts
 msgid "Visual mode"
 msgstr "Visueller Modus"
@@ -5822,10 +5801,6 @@ msgstr "Warten auf das Netzwerk"
 #: src/components/server-terminal-workspace.tsx
 msgid "Waiting for uploads to finish…"
 msgstr "Warten auf den Abschluss der Uploads…"
-
-#: src/components/agent-subtasks-row.tsx
-msgid "Waiting for you"
-msgstr "Wartet auf dich"
 
 #: src/components/agent-workbench.tsx
 msgid "Waiting for your answer"

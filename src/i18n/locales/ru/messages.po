@@ -4419,10 +4419,6 @@ msgstr "Токены сессии"
 msgid "Session tree"
 msgstr "Дерево сеансов"
 
-#: src/components/agent-composer.tsx
-msgid "Session tree, {runningSubtasks, plural, one {# subtask running} other {# subtasks running}}"
-msgstr "Дерево сессий, {runningSubtasks, plural, one {# подзадача выполняется} few {# подзадачи выполняются} many {# подзадач выполняются} other {# подзадачи выполняются}}"
-
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
 msgid "Session unavailable"
@@ -4861,18 +4857,6 @@ msgstr "Субагент"
 #: src/components/agent-form-card.tsx
 msgid "Submit"
 msgstr "Отправить"
-
-#: src/components/agent-subtasks-row.tsx
-msgid "Subtasks · {blocked, plural, one {# waiting for you} other {# waiting for you}}"
-msgstr "Подзадачи · {blocked, plural, one {# ждёт вас} few {# ждут вас} many {# ждут вас} other {# ждут вас}}"
-
-#: src/components/agent-subtasks-row.tsx
-msgid "Subtasks · {running, plural, one {# running} other {# running}}"
-msgstr "Подзадачи · {running, plural, one {# выполняется} few {# выполняются} many {# выполняются} other {# выполняются}}"
-
-#: src/components/agent-subtasks-row.tsx
-msgid "Subtasks · {total}, all idle"
-msgstr "Подзадачи · {total}, все простаивают"
 
 #: src/i18n/labels.ts
 msgid "Summarise progress"
@@ -5690,7 +5674,6 @@ msgstr "Неподдерживаемый элемент ({0})"
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
-#: src/components/agent-subtasks-row.tsx
 msgid "Untitled session"
 msgstr "Сессия без названия"
 
@@ -5798,10 +5781,6 @@ msgstr "Версия {version}{0}"
 msgid "View file changes"
 msgstr "Просмотреть изменения файлов"
 
-#: src/components/agent-subtasks-row.tsx
-msgid "View tree"
-msgstr "Показать дерево"
-
 #: src/i18n/labels.ts
 msgid "Visual mode"
 msgstr "Визуальный режим"
@@ -5822,10 +5801,6 @@ msgstr "Ждём сеть"
 #: src/components/server-terminal-workspace.tsx
 msgid "Waiting for uploads to finish…"
 msgstr "Ждём завершения загрузок…"
-
-#: src/components/agent-subtasks-row.tsx
-msgid "Waiting for you"
-msgstr "Ждёт вас"
 
 #: src/components/agent-workbench.tsx
 msgid "Waiting for your answer"

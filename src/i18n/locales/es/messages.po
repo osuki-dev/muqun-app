@@ -4419,10 +4419,6 @@ msgstr "Tokens de sesión"
 msgid "Session tree"
 msgstr "Árbol de sesiones"
 
-#: src/components/agent-composer.tsx
-msgid "Session tree, {runningSubtasks, plural, one {# subtask running} other {# subtasks running}}"
-msgstr "Árbol de sesiones, {runningSubtasks, plural, one {# subtarea en curso} other {# subtareas en curso}}"
-
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
 msgid "Session unavailable"
@@ -4861,18 +4857,6 @@ msgstr "Subagente"
 #: src/components/agent-form-card.tsx
 msgid "Submit"
 msgstr "Enviar"
-
-#: src/components/agent-subtasks-row.tsx
-msgid "Subtasks · {blocked, plural, one {# waiting for you} other {# waiting for you}}"
-msgstr "Subtareas · {blocked, plural, one {# te espera} other {# te esperan}}"
-
-#: src/components/agent-subtasks-row.tsx
-msgid "Subtasks · {running, plural, one {# running} other {# running}}"
-msgstr "Subtareas · {running, plural, one {# en curso} other {# en curso}}"
-
-#: src/components/agent-subtasks-row.tsx
-msgid "Subtasks · {total}, all idle"
-msgstr "Subtareas · {total}, todas inactivas"
 
 #: src/i18n/labels.ts
 msgid "Summarise progress"
@@ -5690,7 +5674,6 @@ msgstr "Elemento no admitido ({0})"
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
-#: src/components/agent-subtasks-row.tsx
 msgid "Untitled session"
 msgstr "Sesión sin título"
 
@@ -5798,10 +5781,6 @@ msgstr "Versión {version}{0}"
 msgid "View file changes"
 msgstr "Ver cambios de archivos"
 
-#: src/components/agent-subtasks-row.tsx
-msgid "View tree"
-msgstr "Ver árbol"
-
 #: src/i18n/labels.ts
 msgid "Visual mode"
 msgstr "Modo visual"
@@ -5822,10 +5801,6 @@ msgstr "Esperando la red"
 #: src/components/server-terminal-workspace.tsx
 msgid "Waiting for uploads to finish…"
 msgstr "Esperando a que terminen las subidas…"
-
-#: src/components/agent-subtasks-row.tsx
-msgid "Waiting for you"
-msgstr "Te espera"
 
 #: src/components/agent-workbench.tsx
 msgid "Waiting for your answer"

@@ -4419,10 +4419,6 @@ msgstr "セッショントークン"
 msgid "Session tree"
 msgstr "セッションツリー"
 
-#: src/components/agent-composer.tsx
-msgid "Session tree, {runningSubtasks, plural, one {# subtask running} other {# subtasks running}}"
-msgstr "セッションツリー、{runningSubtasks, plural, other {# 件のサブタスクが実行中}}"
-
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
 msgid "Session unavailable"
@@ -4861,18 +4857,6 @@ msgstr "サブエージェント"
 #: src/components/agent-form-card.tsx
 msgid "Submit"
 msgstr "送信"
-
-#: src/components/agent-subtasks-row.tsx
-msgid "Subtasks · {blocked, plural, one {# waiting for you} other {# waiting for you}}"
-msgstr "サブタスク · {blocked, plural, other {# 件があなたの対応待ち}}"
-
-#: src/components/agent-subtasks-row.tsx
-msgid "Subtasks · {running, plural, one {# running} other {# running}}"
-msgstr "サブタスク · {running, plural, other {# 件実行中}}"
-
-#: src/components/agent-subtasks-row.tsx
-msgid "Subtasks · {total}, all idle"
-msgstr "サブタスク · {total} 件、すべてアイドル"
 
 #: src/i18n/labels.ts
 msgid "Summarise progress"
@@ -5690,7 +5674,6 @@ msgstr "未対応の項目 ({0})"
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
-#: src/components/agent-subtasks-row.tsx
 msgid "Untitled session"
 msgstr "タイトルなしのセッション"
 
@@ -5798,10 +5781,6 @@ msgstr "バージョン {version}{0}"
 msgid "View file changes"
 msgstr "ファイルの変更を表示"
 
-#: src/components/agent-subtasks-row.tsx
-msgid "View tree"
-msgstr "ツリーを表示"
-
 #: src/i18n/labels.ts
 msgid "Visual mode"
 msgstr "ビジュアルモード"
@@ -5822,10 +5801,6 @@ msgstr "ネットワークを待っています"
 #: src/components/server-terminal-workspace.tsx
 msgid "Waiting for uploads to finish…"
 msgstr "アップロードの完了を待っています…"
-
-#: src/components/agent-subtasks-row.tsx
-msgid "Waiting for you"
-msgstr "あなたの対応待ち"
 
 #: src/components/agent-workbench.tsx
 msgid "Waiting for your answer"
