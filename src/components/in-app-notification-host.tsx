@@ -234,7 +234,9 @@ export function InAppNotificationHost() {
     with a body of `external_directory: /etc/*`, which is the rule key the
     permission card already translates. Same words here as on the card.
   */
-    const approval = entry.kind === 'approval' ? readApprovalBody(entry.body) : null;
+    // A question shares the approval's persistence, not its words.
+    const approval =
+      entry.kind === 'approval' && !entry.question ? readApprovalBody(entry.body) : null;
     const approvalPhrase =
       approval && approval.action && permissionActionPhrase[approval.action]
         ? _(permissionActionPhrase[approval.action]!)

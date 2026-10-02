@@ -21,6 +21,12 @@ export interface InAppNotice {
   body: string;
   route: NotificationRoute | string | null;
   kind: NoticeKind;
+  /**
+   * Set on an agent's question (`FormPending`). It shares the approval's
+   * persistence -- a question waits for an answer just as an approval does --
+   * but is drawn with its own words and cleared by its own session.
+   */
+  question?: { asid: string; formId: string };
 }
 
 export interface NoticeQueue {
@@ -64,6 +70,10 @@ function semanticNoticeKey(notice: InAppNotice): string | null {
   return JSON.stringify([notice.kind, notice.title, notice.body, destinationKey(notice.route)]);
 }
 
+function sameQuestion(a: InAppNotice['question'], b: InAppNotice['question']): boolean {
+  return Boolean(a && b && a.asid === b.asid && a.formId === b.formId);
+}
+
 /** Memory-only: never persist notification bodies or approval details. */
 export function enqueueNotice(queue: NoticeQueue, notice: InAppNotice): NoticeQueue {
   if (
@@ -72,6 +82,12 @@ export function enqueueNotice(queue: NoticeQueue, notice: InAppNotice): NoticeQu
     queue.items.some((item) => item.id === notice.id)
   )
     return queue;
+  // The same question asked again retires its earlier card; one card per form.
+  if (notice.question && queue.items.some((item) => sameQuestion(item.question, notice.question)))
+    queue = {
+      ...queue,
+      items: queue.items.filter((item) => !sameQuestion(item.question, notice.question)),
+    };
   const semanticKey = semanticNoticeKey(notice);
   if (semanticKey) {
     let replaced = false;
@@ -109,10 +125,21 @@ export function dismissNotice(queue: NoticeQueue, id: string): NoticeQueue {
   return { ...queue, items: queue.items.filter((item) => item.id !== id) };
 }
 
-/** Every notice of one kind at once: an approval nobody is waiting on any more. */
+/**
+ * Every notice of one kind at once: an approval nobody is waiting on any more.
+ * Questions are left alone -- an answered permission says nothing about a form.
+ */
 export function dismissNoticeKind(queue: NoticeQueue, kind: NoticeKind): NoticeQueue {
-  if (!queue.items.some((item) => item.kind === kind)) return queue;
-  return { ...queue, items: queue.items.filter((item) => item.kind !== kind) };
+  const gone = (item: InAppNotice) => item.kind === kind && !item.question;
+  if (!queue.items.some(gone)) return queue;
+  return { ...queue, items: queue.items.filter((item) => !gone(item)) };
+}
+
+/** Every question about one agent session: the reader has opened it. */
+export function dismissSessionQuestions(queue: NoticeQueue, asid: string): NoticeQueue {
+  const gone = (item: InAppNotice) => item.question?.asid === asid;
+  if (!queue.items.some(gone)) return queue;
+  return { ...queue, items: queue.items.filter((item) => !gone(item)) };
 }
 
 /**
@@ -139,6 +166,16 @@ function pushIsQuestion(data: Record<string, unknown> | undefined): boolean {
   return data?.type === 'question' || data?.category === 'question';
 }
 
+/** A question's identity: the session it was asked in and its form. */
+function pushQuestion(
+  data: Record<string, unknown> | undefined
+): InAppNotice['question'] | undefined {
+  if (!pushIsQuestion(data)) return undefined;
+  const asid = typeof data?.asid === 'string' ? data.asid.trim() : '';
+  const formId = typeof data?.form_id === 'string' ? data.form_id.trim() : '';
+  return asid && formId ? { asid, formId } : undefined;
+}
+
 export interface NoticeFromPushOptions {
   /** Whether the workspace is in its Pad layout; decides an agent route's shape. */
   isPad?: boolean;
@@ -155,12 +192,15 @@ export function noticeFromPush(
   const body = sanitizeServerText(content.body, 320);
   if (!title && pushIsQuestion(content.data)) title = options.questionTitle ?? '';
   if (!id || id.length > 512 || (!title && !body)) return null;
+  const question = pushQuestion(content.data);
   return {
     id,
     title,
     body,
     route: notificationRoute(content.data, id, { isPad: options.isPad }),
-    kind: pushIsApproval(content.data) ? 'approval' : 'general',
+    // A question waits for its answer the way an approval does.
+    kind: question || pushIsApproval(content.data) ? 'approval' : 'general',
+    ...(question ? { question } : {}),
   };
 }
 
