@@ -344,3 +344,53 @@ describe('notice title', () => {
     expect(noticeTitleParts(' \u00b7 osk')).toEqual({ lead: '\u00b7 osk', suffix: '' });
   });
 });
+
+describe('question pushes', () => {
+  const data = {
+    type: 'question',
+    category: 'question',
+    form_id: 'form-1',
+    fingerprint: 'fp-1',
+    server_id: 'server-1',
+    asid: 'asid-1',
+    agent_id: 'claude',
+  };
+
+  test('a question with no title shows the needs-your-input title and opens the session', () => {
+    const notice = noticeFromPush(
+      'q-1',
+      { data },
+      { isPad: false, questionTitle: 'Needs your input' }
+    );
+    expect(notice).toMatchObject({
+      title: 'Needs your input',
+      kind: 'general',
+      route: {
+        pathname: '/agent',
+        params: { server: 'server-1', asid: 'asid-1', agentId: 'claude' },
+      },
+    });
+  });
+
+  test('the gateway title wins and a Pad gets the workspace route', () => {
+    const notice = noticeFromPush(
+      'q-2',
+      { title: 'Claude needs your input · osk', body: 'Which branch?', data },
+      { isPad: true, questionTitle: 'Needs your input' }
+    );
+    expect(notice?.title).toBe('Claude needs your input · osk');
+    expect(notice?.route).toEqual({
+      pathname: '/servers/[serverId]',
+      params: { serverId: 'server-1', asid: 'asid-1', agentId: 'claude' },
+    });
+  });
+
+  test('questions about different sessions are separate cards', () => {
+    const a = noticeFromPush('q-a', { title: 'Needs your input', data })!;
+    const b = noticeFromPush('q-b', {
+      title: 'Needs your input',
+      data: { ...data, asid: 'asid-2' },
+    })!;
+    expect(enqueueNotice(enqueueNotice(empty(), a), b).items).toHaveLength(2);
+  });
+});
