@@ -1869,10 +1869,14 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         request === childrenRootRequestsRef.current.get(rootAsid) &&
         ownsWorkbench(owner);
       const observedChildren = childrenByParentRef.current;
+      // Unscoped, a multi-agent gateway asks every agent for these children,
+      // and an adapter without a parent filter answers with all its roots.
+      const agentId = listAgentIdRef.current;
       await loadSessionDescendants({
         rootAsid,
         known: observedChildren,
-        listChildren: listAgentSessionChildrenObserved,
+        listChildren: (asid) =>
+          listAgentSessionChildrenObserved(asid, agentId ? { agentId } : undefined),
         isCurrent,
         onChildren: (parent, inventory) => {
           if (!isCurrent()) return;
@@ -1895,7 +1899,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         },
       });
     },
-    [captureWorkbenchOwner, ownsWorkbench, serverId]
+    [captureWorkbenchOwner, listAgentIdRef, ownsWorkbench, serverId]
   );
 
   const handleStreamEvent = useCallback(

@@ -50,6 +50,17 @@ export function activeFirstSessionChildren(
   ];
 }
 
+/**
+ * Whether `child` is really a child of `parent`, by its own `parent_id` link.
+ *
+ * A `/children` inventory is not proof: an adapter that ignores the parent
+ * filter answers with every session it has, all of them roots. Trusting that
+ * listing nested every unrelated root under the previous one in the sheet.
+ */
+export function isChildSession(child: AgentSessionInfo, parent: string): boolean {
+  return child.parent_id === parent && child.asid !== parent;
+}
+
 /** Every session in hand, by id: roots and whatever children were fetched. */
 export function indexSessions(
   roots: readonly AgentSessionInfo[],
@@ -137,10 +148,16 @@ export function buildRootSessionStrip(
   return { nodes, selectedRootAsid: root && seen.has(root.asid) ? root.asid : undefined };
 }
 
-/** Preorder for the virtualized sheet. No recursion, depth limit, or row cap. */
+/**
+ * Preorder of one root's subtree for the virtualized sheet. No recursion,
+ * depth limit, or row cap. Only `parent_id` links are followed, so a row filed
+ * under the wrong parent (or another agent's session, when `agentId` is
+ * given) never appears, and unrelated roots can never chain into depth.
+ */
 export function flattenSessionTree(
   root: AgentSessionInfo | undefined,
-  childrenByParent: ChildrenByParent
+  childrenByParent: ChildrenByParent,
+  agentId?: string
 ): SessionNode[] {
   const nodes: SessionNode[] = [];
   const seen = new Set<string>();
@@ -149,7 +166,11 @@ export function flattenSessionTree(
     const node = pending.pop();
     if (!node || node.session.deleted || seen.has(node.session.asid)) continue;
     seen.add(node.session.asid);
-    const children = activeFirstSessionChildren(childrenByParent[node.session.asid] ?? []);
+    const children = activeFirstSessionChildren(
+      sessionsOfAgent(childrenByParent[node.session.asid] ?? [], agentId).filter((child) =>
+        isChildSession(child, node.session.asid)
+      )
+    );
     nodes.push({
       ...node,
       hasChildren: children.some((child) => !child.deleted && !seen.has(child.asid)),
@@ -177,7 +198,7 @@ export function mergeSessionChildren(
   }
   const removed = new Set<string>();
   for (const child of incoming) {
-    if (child.asid === parent) continue;
+    if (!isChildSession(child, parent)) continue;
     if (child.deleted) {
       children.delete(child.asid);
       removed.add(child.asid);
@@ -250,7 +271,9 @@ export async function loadSessionDescendants(input: {
           ? inventory.children
           : [...(input.known[parent] ?? []), ...inventory.children];
         for (const child of discovered) {
-          if (child.deleted || scheduled.has(child.asid)) continue;
+          if (child.deleted || !isChildSession(child, parent) || scheduled.has(child.asid)) {
+            continue;
+          }
           scheduled.add(child.asid);
           pending.push(child.asid);
         }

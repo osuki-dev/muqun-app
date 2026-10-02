@@ -92,7 +92,7 @@ export function AgentSessionTreeSheet({
 }) {
   const { t } = useLingui();
   const insets = useSafeAreaInsets();
-  const nodes = flattenSessionTree(root, childrenByParent);
+  const nodes = flattenSessionTree(root, childrenByParent, root?.agent_id ?? undefined);
   const titles = new Map(
     nodes.map(({ session }) => [session.asid, sessionTitleOr(session, t`Untitled session`)])
   );
