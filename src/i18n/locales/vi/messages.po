@@ -2957,6 +2957,10 @@ msgstr "Cần thiết lập"
 msgid "Needs your attention"
 msgstr "Cần bạn xử lý"
 
+#: src/lib/notifications.ts
+msgid "Needs your input"
+msgstr "Cần bạn trả lời"
+
 #: src/components/settings-servers.tsx
 #: src/components/ssh-host-row.tsx
 msgid "Never connected"

@@ -2957,6 +2957,10 @@ msgstr "설정 필요"
 msgid "Needs your attention"
 msgstr "확인이 필요함"
 
+#: src/lib/notifications.ts
+msgid "Needs your input"
+msgstr "입력이 필요합니다"
+
 #: src/components/settings-servers.tsx
 #: src/components/ssh-host-row.tsx
 msgid "Never connected"

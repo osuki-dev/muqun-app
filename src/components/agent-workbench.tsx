@@ -669,6 +669,10 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   useEffect(() => {
     activeAsidRef.current = activeAsid;
   }, [activeAsid]);
+  // Opening a session answers its question notices: the form is on screen now.
+  useEffect(() => {
+    if (activeAsid) useInAppNotifications.getState().dismissQuestions(activeAsid);
+  }, [activeAsid]);
   /**
    * Whether the app is in front, for the stream handler.
    *
