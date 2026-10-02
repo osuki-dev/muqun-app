@@ -7,6 +7,7 @@ import {
   memo,
   useCallback,
   useEffect,
+  useEffectEvent,
   useLayoutEffect,
   useMemo,
   useRef,
@@ -175,6 +176,12 @@ import {
   workbenchAgentId,
   type ChildrenByParent,
 } from '@/lib/agent-session-tree';
+import {
+  applySubtaskBlockEvent,
+  descendantsOf,
+  subtaskSummary,
+  type SubtaskBlocks,
+} from '@/lib/agent-subtasks';
 import { upsertTimelineItems } from '@/lib/agent-timeline-upsert';
 import { windowStartForSnapshot } from '@/lib/agent-timeline-window';
 import { createAgentStreamBatch } from '@/lib/agent-stream-batch';
@@ -4238,6 +4245,108 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   );
 
   /**
+   * The open session's subtasks, at every depth, and what they are waiting on.
+   *
+   * Read out of the same index as the strip, so a child's status is whatever
+   * `childrenByParent` last heard: its own stream below, the parent's stream,
+   * or the inventory refresh.
+   */
+  const [subtaskBlocks, setSubtaskBlocks] = useState<SubtaskBlocks>({});
+  const openDescendants = useMemo(
+    () => descendantsOf(sessionIndex.values(), activeAsid),
+    [sessionIndex, activeAsid]
+  );
+  const subtasks = useMemo(() => {
+    const summary = subtaskSummary(openDescendants, subtaskBlocks);
+    return summary ? { nodes: openDescendants, summary, blocks: subtaskBlocks } : null;
+  }, [openDescendants, subtaskBlocks]);
+  const rootRunningSubtasks = useMemo(() => {
+    const root = rootStrip.selectedRootAsid;
+    if (!root) return 0;
+    if (root === activeAsid) return subtasks?.summary.running ?? 0;
+    return subtaskSummary(descendantsOf(sessionIndex.values(), root), subtaskBlocks)?.running ?? 0;
+  }, [rootStrip.selectedRootAsid, activeAsid, subtasks, sessionIndex, subtaskBlocks]);
+  /** Which sessions to follow; a string, so a status change does not resubscribe. */
+  const descendantKey = useMemo(
+    () => openDescendants.map((node) => node.session.asid).join(' '),
+    [openDescendants]
+  );
+  const anySubtaskRunning = (subtasks?.summary.running ?? 0) > 0;
+
+  const subtaskRefreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  /** The socket gave up on this server; the descendants fall back to the walk. */
+  const [subtaskSocketDown, setSubtaskSocketDown] = useState(false);
+
+  /** A descendant's own event: its status, its info and what it waits on -- never its timeline. */
+  const applyDescendantEvent = useEffectEvent((event: AgentDomainEvent) => {
+    switch (event.type) {
+      case 'agent.status.changed':
+        setChildrenByParent((prev) => applyChildStatus(prev, event.asid, event.status));
+        break;
+      case 'agent.session.updated':
+        setChildrenByParent((prev) =>
+          event.info.deleted ? dropSession(prev, event.info.asid) : applyChildInfo(prev, event.info)
+        );
+        break;
+      default:
+        break;
+    }
+    setSubtaskBlocks((prev) => applySubtaskBlockEvent(prev, event));
+  });
+  /** One inventory walk for however many descendant streams (re)connected at once. */
+  const refreshSubtasksSoon = useEffectEvent(() => {
+    if (subtaskRefreshTimerRef.current) return;
+    subtaskRefreshTimerRef.current = setTimeout(() => {
+      subtaskRefreshTimerRef.current = null;
+      void refreshChildren(activeRootAsid).catch(() => {});
+    }, 500);
+  });
+  /**
+   * Follow every descendant while its ancestor is open.
+   *
+   * The event socket is strictly per session (`subscribe` names one asid) and
+   * so is the SSE stream, so the parent's channel never carries a child's
+   * status. On the socket each descendant gets a `watch()` of its own, released
+   * when it leaves the tree or the workbench moves on. Without the socket a
+   * second SSE stream per child would be a connection each, so the tree is
+   * walked again every 15 s instead -- and only while a subtask is running.
+   */
+  useEffect(() => {
+    const watched = descendantKey ? descendantKey.split(' ') : [];
+    setSubtaskBlocks((prev) => {
+      const kept = Object.keys(prev).filter((asid) => watched.includes(asid));
+      if (kept.length === Object.keys(prev).length) return prev;
+      return Object.fromEntries(kept.map((asid) => [asid, prev[asid] ?? []]));
+    });
+    if (!wsEvents || watched.length === 0) return;
+    const socket = gatewaySocketFor(serverId);
+    const releases = watched.map((asid) =>
+      socket.watch(asid, {
+        onSubscribed: () => refreshSubtasksSoon(),
+        onResync: () => refreshSubtasksSoon(),
+        onEvent: (event) => {
+          if (event.asid === asid) applyDescendantEvent(event);
+        },
+        onUnavailable: () => setSubtaskSocketDown(true),
+      })
+    );
+    return () => {
+      for (const release of releases) release();
+    };
+  }, [descendantKey, serverId, wsEvents]);
+  useEffect(() => {
+    if ((wsEvents && !subtaskSocketDown) || !anySubtaskRunning) return;
+    const timer = setInterval(() => refreshSubtasksSoon(), 15_000);
+    return () => clearInterval(timer);
+  }, [wsEvents, subtaskSocketDown, anySubtaskRunning]);
+  useEffect(
+    () => () => {
+      if (subtaskRefreshTimerRef.current) clearTimeout(subtaskRefreshTimerRef.current);
+    },
+    []
+  );
+
+  /**
    * The strip's order, the selection and the strip's own switch handler, put
    * where the header pill can read them.
    *
@@ -4898,6 +5007,8 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         sessionStrip={rootStrip.nodes}
         selectedRootAsid={rootStrip.selectedRootAsid}
         onOpenSessionTree={openSessionTree}
+        subtasks={subtasks}
+        rootRunningSubtasks={rootRunningSubtasks}
         parentSession={activeParent}
         availableAgents={availableAgents}
         skills={agentFeatures.skills ? skills : NO_SKILLS}
