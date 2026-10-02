@@ -4419,10 +4419,6 @@ msgstr "会话 Token"
 msgid "Session tree"
 msgstr "会话树"
 
-#: src/components/agent-composer.tsx
-msgid "Session tree, {runningSubtasks, plural, one {# subtask running} other {# subtasks running}}"
-msgstr "会话树，{runningSubtasks, plural, other {# 个子任务运行中}}"
-
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
 msgid "Session unavailable"
@@ -4861,18 +4857,6 @@ msgstr "子代理"
 #: src/components/agent-form-card.tsx
 msgid "Submit"
 msgstr "提交"
-
-#: src/components/agent-subtasks-row.tsx
-msgid "Subtasks · {blocked, plural, one {# waiting for you} other {# waiting for you}}"
-msgstr "子任务 · {blocked, plural, other {# 个等待你处理}}"
-
-#: src/components/agent-subtasks-row.tsx
-msgid "Subtasks · {running, plural, one {# running} other {# running}}"
-msgstr "子任务 · {running, plural, other {# 个运行中}}"
-
-#: src/components/agent-subtasks-row.tsx
-msgid "Subtasks · {total}, all idle"
-msgstr "子任务 · {total} 个，全部空闲"
 
 #: src/i18n/labels.ts
 msgid "Summarise progress"
@@ -5690,7 +5674,6 @@ msgstr "暂不支持的内容（{0}）"
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
-#: src/components/agent-subtasks-row.tsx
 msgid "Untitled session"
 msgstr "未命名会话"
 
@@ -5798,10 +5781,6 @@ msgstr "版本 {version}{0}"
 msgid "View file changes"
 msgstr "查看文件变更"
 
-#: src/components/agent-subtasks-row.tsx
-msgid "View tree"
-msgstr "查看会话树"
-
 #: src/i18n/labels.ts
 msgid "Visual mode"
 msgstr "可视模式"
@@ -5822,10 +5801,6 @@ msgstr "正在等待网络"
 #: src/components/server-terminal-workspace.tsx
 msgid "Waiting for uploads to finish…"
 msgstr "正在等待上传完成…"
-
-#: src/components/agent-subtasks-row.tsx
-msgid "Waiting for you"
-msgstr "等待你处理"
 
 #: src/components/agent-workbench.tsx
 msgid "Waiting for your answer"

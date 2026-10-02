@@ -4256,22 +4256,25 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     () => descendantsOf(sessionIndex.values(), activeAsid),
     [sessionIndex, activeAsid]
   );
-  const subtasks = useMemo(() => {
-    const summary = subtaskSummary(openDescendants, subtaskBlocks);
-    return summary ? { nodes: openDescendants, summary, blocks: subtaskBlocks } : null;
-  }, [openDescendants, subtaskBlocks]);
-  const rootRunningSubtasks = useMemo(() => {
+  const openSummary = useMemo(
+    () => subtaskSummary(openDescendants, subtaskBlocks),
+    [openDescendants, subtaskBlocks]
+  );
+  const rootSubtaskActivity = useMemo(() => {
     const root = rootStrip.selectedRootAsid;
-    if (!root) return 0;
-    if (root === activeAsid) return subtasks?.summary.running ?? 0;
-    return subtaskSummary(descendantsOf(sessionIndex.values(), root), subtaskBlocks)?.running ?? 0;
-  }, [rootStrip.selectedRootAsid, activeAsid, subtasks, sessionIndex, subtaskBlocks]);
+    if (!root) return undefined;
+    const summary =
+      root === activeAsid
+        ? openSummary
+        : subtaskSummary(descendantsOf(sessionIndex.values(), root), subtaskBlocks);
+    return summary ? { running: summary.running, blocked: summary.blocked } : undefined;
+  }, [rootStrip.selectedRootAsid, activeAsid, openSummary, sessionIndex, subtaskBlocks]);
   /** Which sessions to follow; a string, so a status change does not resubscribe. */
   const descendantKey = useMemo(
     () => openDescendants.map((node) => node.session.asid).join(' '),
     [openDescendants]
   );
-  const anySubtaskRunning = (subtasks?.summary.running ?? 0) > 0;
+  const anySubtaskRunning = (openSummary?.running ?? 0) > 0;
 
   const subtaskRefreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   /** The socket gave up on this server; the descendants fall back to the walk. */
@@ -5007,8 +5010,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         sessionStrip={rootStrip.nodes}
         selectedRootAsid={rootStrip.selectedRootAsid}
         onOpenSessionTree={openSessionTree}
-        subtasks={subtasks}
-        rootRunningSubtasks={rootRunningSubtasks}
+        rootSubtaskActivity={rootSubtaskActivity}
         parentSession={activeParent}
         availableAgents={availableAgents}
         skills={agentFeatures.skills ? skills : NO_SKILLS}
