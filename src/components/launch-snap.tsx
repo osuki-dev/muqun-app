@@ -31,16 +31,20 @@ import {
 } from '@/lib/snap-dissolve';
 
 /**
- * How long the snap canvas is on screen, drawing the untouched snapshot over
- * the live scene, before anything moves.
+ * How long the snap canvas draws the untouched snapshot over the live sheet
+ * before anything moves.
  *
- * A Skia canvas mounted this frame has not necessarily presented this frame.
- * Until the first tile moves, the snapshot and the live scene are the same
- * picture, so the live scene stays up underneath and nothing can be seen to
- * swap; the live scene is hidden on the frame progress leaves 0. Three frames
- * at 60 Hz is the margin for the canvas to have drawn by then.
+ * Until the first tile moves, the snapshot and the live sheet are the same
+ * picture, so the live sheet stays up underneath and nothing can be seen to
+ * swap; the sheet is hidden on the frame progress leaves 0. The canvas gives
+ * no signal when it has presented the snapshot, so this is a margin rather
+ * than a handshake: the first frame carrying the snapshot uploads it (a
+ * device-resolution bitmap) and that was the slow frame on the emulators. 48
+ * ms was not enough there, 400 ms was, 120 ms mostly was not -- but those
+ * emulators render Vulkan in software (llvmpipe) and every Skia frame of the
+ * opening lags there, so this is set for hardware and is unverified on it.
  */
-export const SNAP_MOUNT_MS = 48;
+export const SNAP_MOUNT_MS = 120;
 
 /**
  * The opening's exit: a snapshot of the finished sheet, cut into tiles that
