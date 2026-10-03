@@ -1504,8 +1504,8 @@ msgid "Could not detach"
 msgstr "ย้ายไปเบื้องหลังไม่สำเร็จ"
 
 #: src/components/agent-vcs-diff-sheet.tsx
-msgid "Could not discard changes to {name}."
-msgstr "ไม่สามารถละทิ้งการเปลี่ยนแปลงของ {name}"
+msgid "Could not discard {name}"
+msgstr "ไม่สามารถละทิ้ง {name}"
 
 #. placeholder {0}: problem.status
 #: src/components/settings-font-sheet.tsx
@@ -3082,6 +3082,7 @@ msgid "No camera was found on this device."
 msgstr "ไม่พบกล้องบนอุปกรณ์นี้"
 
 #: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/change-tree-rows.tsx
 msgid "No changes"
 msgstr "ไม่มีการเปลี่ยนแปลง"
 
@@ -3305,6 +3306,10 @@ msgstr "ไม่มีอะไรให้ย้อนกลับ"
 #: src/components/agent-vcs-diff-sheet.tsx
 msgid "Nothing uncommitted in this project."
 msgstr "ไม่มีการเปลี่ยนแปลงที่ยังไม่ได้คอมมิตในโปรเจกต์นี้"
+
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "Nothing was changed."
+msgstr "ไม่มีการเปลี่ยนแปลงใด"
 
 #: src/components/agent-context-sheet.tsx
 msgid "Nothing yet — an “Always allow” reply lands here, for this project."
@@ -5188,6 +5193,10 @@ msgstr "เปิดปลายทางนี้ไม่ได้"
 #: src/components/settings-font-sheet.tsx
 msgid "The font file is missing. Add it again."
 msgstr "ไม่พบไฟล์ฟอนต์ กรุณาเพิ่มอีกครั้ง"
+
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "The gateway could not be reached."
+msgstr "ไม่สามารถเชื่อมต่อเกตเวย์"
 
 #: src/components/agent-worktree-sheet.tsx
 msgid "The host made a worktree but did not say where."

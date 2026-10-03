@@ -1504,8 +1504,8 @@ msgid "Could not detach"
 msgstr "無法轉入背景"
 
 #: src/components/agent-vcs-diff-sheet.tsx
-msgid "Could not discard changes to {name}."
-msgstr "無法捨棄對 {name} 的變更"
+msgid "Could not discard {name}"
+msgstr "無法捨棄 {name}"
 
 #. placeholder {0}: problem.status
 #: src/components/settings-font-sheet.tsx
@@ -3082,6 +3082,7 @@ msgid "No camera was found on this device."
 msgstr "在這台裝置上找不到相機"
 
 #: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/change-tree-rows.tsx
 msgid "No changes"
 msgstr "沒有變更"
 
@@ -3305,6 +3306,10 @@ msgstr "沒有可復原的內容"
 #: src/components/agent-vcs-diff-sheet.tsx
 msgid "Nothing uncommitted in this project."
 msgstr "此專案沒有未提交的變更"
+
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "Nothing was changed."
+msgstr "沒有做任何變更"
 
 #: src/components/agent-context-sheet.tsx
 msgid "Nothing yet — an “Always allow” reply lands here, for this project."
@@ -5188,6 +5193,10 @@ msgstr "無法開啟該目的地"
 #: src/components/settings-font-sheet.tsx
 msgid "The font file is missing. Add it again."
 msgstr "找不到字型檔案。請重新加入"
+
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "The gateway could not be reached."
+msgstr "無法連線到閘道"
 
 #: src/components/agent-worktree-sheet.tsx
 msgid "The host made a worktree but did not say where."

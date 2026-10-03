@@ -1504,8 +1504,8 @@ msgid "Could not detach"
 msgstr "분리하지 못했습니다"
 
 #: src/components/agent-vcs-diff-sheet.tsx
-msgid "Could not discard changes to {name}."
-msgstr "{name}의 변경 사항을 버리지 못했습니다"
+msgid "Could not discard {name}"
+msgstr "{name}을(를) 버리지 못했습니다"
 
 #. placeholder {0}: problem.status
 #: src/components/settings-font-sheet.tsx
@@ -3082,6 +3082,7 @@ msgid "No camera was found on this device."
 msgstr "이 기기에서 카메라를 찾지 못했습니다"
 
 #: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/change-tree-rows.tsx
 msgid "No changes"
 msgstr "변경 사항 없음"
 
@@ -3305,6 +3306,10 @@ msgstr "실행 취소할 것이 없습니다"
 #: src/components/agent-vcs-diff-sheet.tsx
 msgid "Nothing uncommitted in this project."
 msgstr "이 프로젝트에 커밋되지 않은 변경이 없습니다"
+
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "Nothing was changed."
+msgstr "아무것도 변경되지 않았습니다"
 
 #: src/components/agent-context-sheet.tsx
 msgid "Nothing yet — an “Always allow” reply lands here, for this project."
@@ -5188,6 +5193,10 @@ msgstr "해당 대상을 열 수 없습니다"
 #: src/components/settings-font-sheet.tsx
 msgid "The font file is missing. Add it again."
 msgstr "글꼴 파일이 없습니다. 다시 추가하세요"
+
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "The gateway could not be reached."
+msgstr "게이트웨이에 연결할 수 없습니다"
 
 #: src/components/agent-worktree-sheet.tsx
 msgid "The host made a worktree but did not say where."

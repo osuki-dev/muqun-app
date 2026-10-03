@@ -1504,8 +1504,8 @@ msgid "Could not detach"
 msgstr "バックグラウンドに移せませんでした"
 
 #: src/components/agent-vcs-diff-sheet.tsx
-msgid "Could not discard changes to {name}."
-msgstr "{name} の変更を破棄できませんでした"
+msgid "Could not discard {name}"
+msgstr "{name} を破棄できませんでした"
 
 #. placeholder {0}: problem.status
 #: src/components/settings-font-sheet.tsx
@@ -3082,6 +3082,7 @@ msgid "No camera was found on this device."
 msgstr "このデバイスでカメラが見つかりませんでした"
 
 #: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/change-tree-rows.tsx
 msgid "No changes"
 msgstr "変更なし"
 
@@ -3305,6 +3306,10 @@ msgstr "元に戻せるものがありません"
 #: src/components/agent-vcs-diff-sheet.tsx
 msgid "Nothing uncommitted in this project."
 msgstr "このプロジェクトに未コミットの変更はありません"
+
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "Nothing was changed."
+msgstr "何も変更されていません"
 
 #: src/components/agent-context-sheet.tsx
 msgid "Nothing yet — an “Always allow” reply lands here, for this project."
@@ -5188,6 +5193,10 @@ msgstr "その目的地を開けませんでした"
 #: src/components/settings-font-sheet.tsx
 msgid "The font file is missing. Add it again."
 msgstr "フォントファイルが見つかりません。もう一度追加してください"
+
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "The gateway could not be reached."
+msgstr "ゲートウェイに接続できませんでした"
 
 #: src/components/agent-worktree-sheet.tsx
 msgid "The host made a worktree but did not say where."

@@ -1,7 +1,7 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { type LegendListRef } from '@legendapp/list/react-native';
-import { Dialog, useThemeTokens } from '@osuki-dev/ui';
+import { Dialog, useThemeTokens, useToast } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
 import { plural } from '@lingui/core/macro';
 import { Trans, useLingui } from '@lingui/react/macro';
@@ -33,6 +33,7 @@ import {
   type GitFileChange,
   type GitFilePatchState,
 } from '@/lib/gateway-client';
+import { agentRequestErrorDetail, isAgentOfflineError } from '@/lib/agent-request-error';
 import { diffEmptyState } from '@/lib/agent-workspace-missing';
 import {
   discardAgentVcsFile,
@@ -40,6 +41,7 @@ import {
   getAgentVcsFile,
   getAgentVcsFiles,
   type AgentVcsDiff,
+  type AgentVcsFiles,
   type VcsFilesMode,
   type WorkspaceMissing,
 } from '@/lib/agent-session';
@@ -82,7 +84,7 @@ interface ChangeListing {
   /** The list came from `…/vcs/files`: patches are fetched per file. */
   lazy: boolean;
   truncated: boolean;
-  reason?: AgentVcsDiff['reason'];
+  reason?: AgentVcsDiff['reason'] | AgentVcsFiles['reason'];
   missing?: WorkspaceMissing;
 }
 
@@ -92,6 +94,8 @@ interface PatchEntry {
   loading: boolean;
   patch: string | null;
   truncated: boolean;
+  /** The gateway said `unchanged`: there is nothing between the two sides any more. */
+  unchanged: boolean;
   error: string | null;
 }
 
@@ -173,7 +177,6 @@ export const AgentVcsDiffSheet = memo(function AgentVcsDiffSheet({
   const [patches, setPatches] = useState<Readonly<Record<string, PatchEntry>>>({});
   const [menuPath, setMenuPath] = useState<string | null>(null);
   const [discardTarget, setDiscardTarget] = useState<GitFileChange | null>(null);
-  const [discardError, setDiscardError] = useState<string | null>(null);
   const listRef = useRef<LegendListRef | null>(null);
   const pendingTargetPath = useRef(targetPath);
   const pendingTargetKey = useRef<string | null>(null);
@@ -190,6 +193,7 @@ export const AgentVcsDiffSheet = memo(function AgentVcsDiffSheet({
           loading: true,
           patch: prev[key]?.patch ?? null,
           truncated: prev[key]?.truncated ?? false,
+          unchanged: prev[key]?.unchanged ?? false,
           error: null,
         },
       }));
@@ -202,6 +206,7 @@ export const AgentVcsDiffSheet = memo(function AgentVcsDiffSheet({
               loading: false,
               patch: answer.patch,
               truncated: answer.truncated,
+              unchanged: answer.status === 'unchanged',
               error: null,
             },
           }));
@@ -214,6 +219,7 @@ export const AgentVcsDiffSheet = memo(function AgentVcsDiffSheet({
               loading: false,
               patch: prev[key]?.patch ?? null,
               truncated: prev[key]?.truncated ?? false,
+              unchanged: prev[key]?.unchanged ?? false,
               error: patchLoadFailed,
             },
           }));
@@ -230,6 +236,13 @@ export const AgentVcsDiffSheet = memo(function AgentVcsDiffSheet({
     loadListing(sessionId, asid, scope, filesApi)
       .then(({ listing: next, base: nextBase }) => {
         if (!active) return;
+        if (next.reason === 'no_default_branch') {
+          // Nothing to compare with after all: the option goes, and the sheet
+          // goes back to what it can show.
+          setBase(undefined);
+          setScope('working');
+          return;
+        }
         setListing(next);
         if (nextBase) setBase(nextBase);
         const requestedPath = scope === 'working' ? pendingTargetPath.current : undefined;
@@ -320,20 +333,24 @@ export const AgentVcsDiffSheet = memo(function AgentVcsDiffSheet({
   // Discarding is offered for uncommitted changes only, and only by a gateway
   // that lists files itself: a comparison with the base is history, and
   // `…/vcs/diff` has no discard to go with it.
-  const canDiscard = listing.lazy && scope === 'working';
+  // A cut listing is refused (`409 listing_truncated`): the gateway cannot
+  // vouch for a path it did not list in full, so the action is not offered.
+  const canDiscard = listing.lazy && scope === 'working' && !listing.truncated;
+  const { showToast } = useToast();
   const openFileActions = useCallback((path: string) => {
     setMenuPath((current) => (current === path ? null : path));
   }, []);
   const askDiscard = useCallback(
     (path: string) => {
       setMenuPath(null);
-      setDiscardError(null);
       setDiscardTarget(changesByPath.get(path) ?? null);
     },
     [changesByPath]
   );
   const cancelDiscard = useCallback(() => setDiscardTarget(null), []);
-  const discardFailed = (name: string) => t`Could not discard changes to ${name}.`;
+  const discardFailed = (name: string) => t`Could not discard ${name}`;
+  const gatewayUnreachable = t`The gateway could not be reached.`;
+  const discardFallback = t`Nothing was changed.`;
   const confirmDiscard = () => {
     const target = discardTarget;
     setDiscardTarget(null);
@@ -353,8 +370,17 @@ export const AgentVcsDiffSheet = memo(function AgentVcsDiffSheet({
         });
       })
       .catch((err) => {
-        console.warn('Failed to discard changes:', err);
-        setDiscardError(discardFailed(target.path.split('/').pop() ?? target.path));
+        // `409 listing_truncated`, `403 repository_is_home`,
+        // `403 path_outside_repository`, `404 unknown_path`: one title, and
+        // the gateway's own sentence under it.
+        const detail = agentRequestErrorDetail(err);
+        showToast({
+          variant: 'danger',
+          title: discardFailed(target.path.split('/').pop() ?? target.path),
+          message: isAgentOfflineError(err)
+            ? gatewayUnreachable
+            : (detail.message ?? detail.code ?? discardFallback),
+        });
       });
   };
 
@@ -372,10 +398,11 @@ export const AgentVcsDiffSheet = memo(function AgentVcsDiffSheet({
 
   const expanded = useMemo(() => new Set(expandedOrder), [expandedOrder]);
   const tree = useMemo(() => buildChangeTree(listing.changes), [listing.changes]);
-  const { pages, contextOffers, truncatedPaths } = useMemo(() => {
+  const { pages, contextOffers, truncatedPaths, unchangedPaths } = useMemo(() => {
     const pageMap = new Map<string, GitFilePatchState>();
     const offers = new Map<string, boolean>();
     const cut = new Set<string>();
+    const same = new Set<string>();
     for (const path of expandedOrder) {
       const change = changesByPath.get(path);
       if (!change) continue;
@@ -398,9 +425,10 @@ export const AgentVcsDiffSheet = memo(function AgentVcsDiffSheet({
       }
       pageMap.set(path, patchStateFromText(entry.patch));
       if (entry.truncated) cut.add(path);
+      if (entry.unchanged) same.add(path);
       if (nextDiffContext(entry.context) !== null) offers.set(path, entry.loading);
     }
-    return { pages: pageMap, contextOffers: offers, truncatedPaths: cut };
+    return { pages: pageMap, contextOffers: offers, truncatedPaths: cut, unchangedPaths: same };
   }, [changesByPath, expandedOrder, listing.lazy, listing.patches, patches, scope]);
 
   const rows = useMemo(
@@ -412,9 +440,20 @@ export const AgentVcsDiffSheet = memo(function AgentVcsDiffSheet({
         pages,
         moreContext: contextOffers,
         truncated: truncatedPaths,
+        unchanged: unchangedPaths,
         menuPath: canDiscard ? menuPath : null,
       }),
-    [canDiscard, collapsedDirs, contextOffers, expanded, menuPath, pages, tree, truncatedPaths]
+    [
+      canDiscard,
+      collapsedDirs,
+      contextOffers,
+      expanded,
+      menuPath,
+      pages,
+      tree,
+      truncatedPaths,
+      unchangedPaths,
+    ]
   );
   useEffect(() => {
     const key = pendingTargetKey.current;
@@ -443,7 +482,11 @@ export const AgentVcsDiffSheet = memo(function AgentVcsDiffSheet({
    * host. Neither is an error toast -- nothing failed, and there is nothing
    * for the reader to retry.
    */
-  const empty = diffEmptyState({ loading, fileCount, reason: listing.reason });
+  const empty = diffEmptyState({
+    loading,
+    fileCount,
+    reason: listing.reason === 'no_default_branch' ? undefined : listing.reason,
+  });
   // The caption keeps what the last scope said while the next one loads, so a
   // reload never swaps the line for a blank or a third wording.
   const summary =
@@ -519,11 +562,6 @@ export const AgentVcsDiffSheet = memo(function AgentVcsDiffSheet({
           {listing.truncated ? (
             <Text variant="caption" color={theme.colors.warning}>
               <Trans>Too many changes to list. This is the start of them, not all of them.</Trans>
-            </Text>
-          ) : null}
-          {discardError ? (
-            <Text variant="caption" color={theme.colors.danger}>
-              {discardError}
             </Text>
           ) : null}
           {/* In the pinned block, not beside the list: the scene's frame lays

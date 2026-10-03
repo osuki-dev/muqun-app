@@ -1504,8 +1504,8 @@ msgid "Could not detach"
 msgstr "Konnte nicht losgelöst werden"
 
 #: src/components/agent-vcs-diff-sheet.tsx
-msgid "Could not discard changes to {name}."
-msgstr "Änderungen an {name} konnten nicht verworfen werden"
+msgid "Could not discard {name}"
+msgstr "{name} konnte nicht verworfen werden"
 
 #. placeholder {0}: problem.status
 #: src/components/settings-font-sheet.tsx
@@ -3082,6 +3082,7 @@ msgid "No camera was found on this device."
 msgstr "Auf diesem Gerät wurde keine Kamera gefunden"
 
 #: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/change-tree-rows.tsx
 msgid "No changes"
 msgstr "Keine Änderungen"
 
@@ -3305,6 +3306,10 @@ msgstr "Nichts rückgängig zu machen"
 #: src/components/agent-vcs-diff-sheet.tsx
 msgid "Nothing uncommitted in this project."
 msgstr "Keine nicht committeten Änderungen in diesem Projekt"
+
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "Nothing was changed."
+msgstr "Es wurde nichts geändert"
 
 #: src/components/agent-context-sheet.tsx
 msgid "Nothing yet — an “Always allow” reply lands here, for this project."
@@ -5188,6 +5193,10 @@ msgstr "Dieses Ziel konnte nicht geöffnet werden"
 #: src/components/settings-font-sheet.tsx
 msgid "The font file is missing. Add it again."
 msgstr "Die Schriftdatei fehlt. Erneut hinzufügen"
+
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "The gateway could not be reached."
+msgstr "Das Gateway ist nicht erreichbar"
 
 #: src/components/agent-worktree-sheet.tsx
 msgid "The host made a worktree but did not say where."

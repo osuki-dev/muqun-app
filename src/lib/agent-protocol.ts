@@ -2379,10 +2379,15 @@ export interface AgentVcsFileSummary {
   path: string;
   /** Where a rename or copy came from. */
   oldPath?: string;
-  /** The wire word (`added`, `typechange`, ...); `agent-diff-rows.ts` maps it. */
+  /**
+   * The wire word (`added`, `typechange`, `conflicted`, and `unchanged` from
+   * `…/vcs/file`); `agent-diff-rows.ts` maps it, and an unknown one is
+   * `modified`.
+   */
   status?: string;
-  additions: number;
-  deletions: number;
+  /** `null` when the gateway would not count, e.g. an untracked file too large to read. */
+  additions: number | null;
+  deletions: number | null;
   binary: boolean;
 }
 
@@ -2395,8 +2400,17 @@ export interface AgentVcsFiles {
   /** The gateway cut the list at its cap. */
   truncated: boolean;
   vcs?: 'git' | null;
-  reason?: 'not_a_repository' | 'workspace_missing';
+  /**
+   * `no_default_branch`: `mode=branch` was asked of a repository with nothing
+   * to compare against.
+   */
+  reason?: 'not_a_repository' | 'no_default_branch' | 'workspace_missing';
   missing?: WorkspaceMissing;
+}
+
+/** A count, `null` when the gateway said `null`, and zero when it said nothing. */
+function countOf(value: unknown): number | null {
+  return value === null ? null : (asFiniteNumber(value) ?? 0);
 }
 
 function parseVcsFileSummary(value: unknown): AgentVcsFileSummary | null {
@@ -2410,8 +2424,8 @@ function parseVcsFileSummary(value: unknown): AgentVcsFileSummary | null {
     path,
     ...(oldPath ? { oldPath } : {}),
     ...(status ? { status } : {}),
-    additions: asFiniteNumber(rec.additions) ?? 0,
-    deletions: asFiniteNumber(rec.deletions) ?? 0,
+    additions: countOf(rec.additions),
+    deletions: countOf(rec.deletions),
     binary: asBool(rec.binary) ?? false,
   };
 }
@@ -2433,14 +2447,15 @@ export function parseAgentVcsFiles(value: unknown): AgentVcsFiles | null {
   }
   const base = asString(rec.base);
   const vcs: 'git' | null = !('vcs' in rec) || asString(rec.vcs) === 'git' ? 'git' : null;
+  const reason = asString(rec.reason);
   return {
     files,
     mode: asString(rec.mode) === 'branch' ? 'branch' : 'working',
     ...(base ? { base } : {}),
     truncated: asBool(rec.truncated) ?? false,
     vcs,
-    ...(files.length === 0 && asString(rec.reason) === 'not_a_repository'
-      ? { reason: 'not_a_repository' as const }
+    ...(files.length === 0 && (reason === 'not_a_repository' || reason === 'no_default_branch')
+      ? { reason }
       : {}),
   };
 }

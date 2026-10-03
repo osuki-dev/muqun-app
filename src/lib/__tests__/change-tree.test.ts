@@ -208,3 +208,17 @@ describe('nextDiffContext', () => {
     expect(nextDiffContext(25)).toBeNull();
   });
 });
+
+describe('changeTreeRows unchanged', () => {
+  test('a file the gateway called unchanged says so', () => {
+    const tree = buildChangeTree([change('a.ts')]);
+    const rows = changeTreeRows({
+      tree,
+      collapsed: new Set(),
+      expanded: new Set(['a.ts']),
+      pages: new Map([['a.ts', patchStateFromText('')]]),
+      unchanged: new Set(['a.ts']),
+    });
+    expect(rows[0]).toMatchObject({ type: 'treeFile', unchanged: true, note: 'empty' });
+  });
+});
