@@ -1,4 +1,4 @@
-import { Canvas, Circle, Path, Skia } from '@shopify/react-native-skia';
+import { Canvas, Circle, Path, Skia } from 'react-native-skia';
 import { useMemo } from 'react';
 import { StyleSheet } from 'react-native';
 
@@ -49,10 +49,9 @@ export function AmbientCircuitLines({
           { x: startX + direction * (reach + elbow), y: startY + elbow + 14 },
           { x: startX + direction * (reach + elbow + 20), y: startY + elbow + 14 },
         ];
-        const path = Skia.Path.Make();
-        path.moveTo(points[0]!.x, points[0]!.y);
-        for (const point of points.slice(1)) path.lineTo(point.x, point.y);
-        return { path, end: points[points.length - 1]! };
+        const builder = Skia.PathBuilder.Make().moveTo(points[0]!.x, points[0]!.y);
+        for (const point of points.slice(1)) builder.lineTo(point.x, point.y);
+        return { path: builder.detach(), end: points[points.length - 1]! };
       }),
     [width, height]
   );

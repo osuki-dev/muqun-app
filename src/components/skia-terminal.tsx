@@ -19,7 +19,7 @@ import {
   type SkPicture,
   type SkRect,
   type SkTypefaceFontProvider,
-} from '@shopify/react-native-skia';
+} from 'react-native-skia';
 import { useThemeTokens, useToast } from '@osuki-dev/ui';
 import { useHasThemeArtwork } from '@/components/theme-artwork';
 import { Button } from '@/components/themed-button';

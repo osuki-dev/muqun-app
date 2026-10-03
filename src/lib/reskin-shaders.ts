@@ -1,4 +1,4 @@
-import { Skia, type Uniforms } from '@shopify/react-native-skia';
+import { Skia, type Uniforms } from 'react-native-skia';
 
 import { SKSL_NOISE, SKSL_RIM, rimSlack } from './sksl-field';
 

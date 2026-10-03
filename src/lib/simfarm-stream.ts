@@ -65,7 +65,7 @@
  * already answered next door -- and a preview quietly reattaching to a machine
  * nobody is looking at is not a behaviour worth having either.
  */
-import { Skia, type SkImage } from '@shopify/react-native-skia';
+import { Skia, type SkImage } from 'react-native-skia';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AppState } from 'react-native';
 import { useSharedValue, type SharedValue } from 'react-native-reanimated';

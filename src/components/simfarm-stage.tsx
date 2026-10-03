@@ -3,7 +3,7 @@ import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { useLingui } from '@lingui/react/macro';
 import { Spinner, useThemeTokens } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
-import { Canvas, Fill, Group, Image as SkiaImage } from '@shopify/react-native-skia';
+import { Canvas, Fill, Group, Image as SkiaImage } from 'react-native-skia';
 import {
   ArrowLeft,
   ChevronDown,

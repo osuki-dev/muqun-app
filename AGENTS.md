@@ -262,10 +262,11 @@ gauge on a Debug build is hundreds of megabytes of Hermes compiler state.
   from the same app state. Run each side at least twice before calling a
   difference.
 
-`@shopify/react-native-skia` carries
-`patches/@shopify%2Freact-native-skia@2.12.0.patch`, which disposes the Canvas
-recorders and pictures it retired. Upstream this is Shopify/react-native-skia#4079
-and #4080; drop the patch once a release carries the fix.
+Skia is `react-native-skia` 3.x (the unscoped successor of
+`@shopify/react-native-skia`) on the Graphite backend: Vulkan on Android, which
+needs minSdk 26. Paths are immutable; build them with `Skia.PathBuilder` and
+`detach()`. The old Canvas recorder patch is gone: in 3.x the native view owns
+the recorder and releases the recording when it is replaced or torn down.
 
 `bun install` re-extracting the package removes Skia's prebuilt `libs/`, which
 `pod install` copies back. Run it before the next iOS build.

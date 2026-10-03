@@ -1,5 +1,5 @@
 import { useThemeTokens } from '@osuki-dev/ui';
-import { Canvas, Circle, Line, Oval, vec } from '@shopify/react-native-skia';
+import { Canvas, Circle, Line, Oval, vec } from 'react-native-skia';
 import { NavigationContext } from 'expo-router/react-navigation';
 import { usePathname } from 'expo-router';
 import { useCallback, useContext, useEffect, useState, useSyncExternalStore } from 'react';

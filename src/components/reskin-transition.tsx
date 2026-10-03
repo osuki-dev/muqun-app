@@ -9,7 +9,7 @@ import {
   TileMode,
   makeImageFromView,
   type SkImage,
-} from '@shopify/react-native-skia';
+} from 'react-native-skia';
 import {
   createContext,
   useCallback,
