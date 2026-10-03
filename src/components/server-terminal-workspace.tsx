@@ -285,7 +285,7 @@ import {
 import { useServerCapabilities } from '@/stores/server-capabilities';
 import { useAgents } from '@/stores/agents';
 import { useAgentsDiscoveryRefresh } from '@/hooks/use-agent-features';
-import { allowChord, vocabularyForSession } from '@/lib/key-vocabulary';
+import { allowChord, isKeyUnsupportedError, vocabularyForSession } from '@/lib/key-vocabulary';
 import { useServerReachability } from '@/stores/server-reachability';
 import { useServerSession } from '@/stores/server-session';
 import { useSshHostsStore } from '@/stores/ssh-hosts';
@@ -4085,10 +4085,17 @@ export function ServerTerminalWorkspace({
   // without waiting on the event stream.
   function typeKey(key: string) {
     const requestPaneId = selection.paneId;
-    if (!targetReady || connection.phase !== 'connected' || !ready || !requestPaneId) return;
-    void sendPaneKeys(data.sessionId, requestPaneId, [key])
-      .then(() => refreshOutputRef.current())
-      .catch(() => {});
+    if (!targetReady || connection.phase !== 'connected' || !ready || !requestPaneId) {
+      return Promise.resolve('failed' as const);
+    }
+    return sendPaneKeys(data.sessionId, requestPaneId, [key]).then(
+      () => {
+        refreshOutputRef.current();
+        return 'sent' as const;
+      },
+      (err: unknown) =>
+        isKeyUnsupportedError(err) ? ('unsupported' as const) : ('failed' as const)
+    );
   }
 
   function typeText(text: string) {
