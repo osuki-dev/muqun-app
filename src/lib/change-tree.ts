@@ -193,6 +193,8 @@ export interface ChangeTreeFileRow {
   error: string | null;
   /** The gateway cut this file's patch. */
   truncated: boolean;
+  /** The gateway said this file no longer differs (`unchanged`). */
+  unchanged: boolean;
 }
 
 /** "Show more context", under an open file's last line. */
@@ -228,6 +230,8 @@ export interface ChangeTreeRowsInput {
   moreContext?: ReadonlyMap<string, boolean>;
   /** Files whose patch the gateway cut. */
   truncated?: ReadonlySet<string>;
+  /** Files the gateway answered `unchanged` for. */
+  unchanged?: ReadonlySet<string>;
   /** The file whose actions are open, if any. */
   menuPath?: string | null;
 }
@@ -249,6 +253,7 @@ export function changeTreeRows({
   pages,
   moreContext = NO_CONTEXT,
   truncated = NO_PATHS,
+  unchanged = NO_PATHS,
   menuPath = null,
 }: ChangeTreeRowsInput): DiffListItem[] {
   const rows: DiffListItem[] = [];
@@ -279,6 +284,7 @@ export function changeTreeRows({
       note: head.note,
       error: head.error,
       truncated: truncated.has(node.path),
+      unchanged: unchanged.has(node.path),
     });
     if (menuPath === node.path) {
       rows.push({ type: 'actions', key: `a:${node.path}`, path: node.path });

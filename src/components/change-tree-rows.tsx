@@ -149,6 +149,10 @@ export const ChangeTreeFileRowView = memo(function ChangeTreeFileRowView({
             <Text variant="caption" color={colors.status.error}>
               {row.error}
             </Text>
+          ) : row.unchanged && row.expanded ? (
+            <Text variant="caption" color={colors.subtle}>
+              <Trans>No changes</Trans>
+            </Text>
           ) : row.note === 'empty' ? (
             <Text variant="caption" color={colors.subtle}>
               <Trans>No textual change</Trans>
@@ -161,12 +165,20 @@ export const ChangeTreeFileRowView = memo(function ChangeTreeFileRowView({
         </View>
         {row.loading ? <ActivityIndicator size="small" color={colors.subtle} /> : null}
         <View style={styles.meta}>
-          <Text variant="caption" color={colors.subtle}>
+          {/* A conflict is the one status that asks for the reader's attention. */}
+          <Text
+            variant="caption"
+            color={row.file.status === 'conflicted' ? colors.status.running : colors.subtle}>
             {word}
           </Text>
           {row.file.binary || row.note === 'binary' ? (
             <Text variant="caption" color={colors.subtle}>
               <Trans>Binary file</Trans>
+            </Text>
+          ) : row.file.added === null && row.file.removed === null ? (
+            // Too large for the gateway to count: a dash, never a made-up zero.
+            <Text variant="caption" color={colors.subtle}>
+              —
             </Text>
           ) : (
             <>

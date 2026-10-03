@@ -133,3 +133,43 @@ describe('parseAgentVcsDiscard', () => {
     expect(parseAgentVcsDiscard({ action: 'restored' })).toBeNull();
   });
 });
+
+describe('contract additions', () => {
+  test('a null count stays null; an absent one is zero', () => {
+    expect(
+      parseAgentVcsFiles({
+        files: [{ path: 'huge.bin', status: 'untracked', additions: null, deletions: null }],
+      })?.files[0]
+    ).toEqual({
+      path: 'huge.bin',
+      status: 'untracked',
+      additions: null,
+      deletions: null,
+      binary: false,
+    });
+  });
+
+  test('reason null inside a repository, no_default_branch when branch has no base', () => {
+    expect(
+      parseAgentVcsFiles({ vcs: 'git', reason: null, mode: 'working', files: [] })?.reason
+    ).toBeUndefined();
+    expect(
+      parseAgentVcsFiles({ vcs: 'git', reason: 'no_default_branch', mode: 'branch', files: [] })
+        ?.reason
+    ).toBe('no_default_branch');
+  });
+
+  test('vcs/file may answer unchanged with an empty patch', () => {
+    expect(
+      parseAgentVcsFilePatch({
+        path: 'a.ts',
+        status: 'unchanged',
+        additions: 0,
+        deletions: 0,
+        binary: false,
+        patch: '',
+        truncated: false,
+      })
+    ).toMatchObject({ status: 'unchanged', patch: '' });
+  });
+});
