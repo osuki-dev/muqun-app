@@ -106,6 +106,11 @@ const EMPTY_LISTING: ChangeListing = {
   truncated: false,
 };
 
+/** The unchecked scope keeps the check mark's width, so both labels line up. */
+function UncheckedSlot({ size = 16 }: { size?: number; color?: string }) {
+  return <View style={{ width: size, height: size }} />;
+}
+
 function patchKey(scope: VcsFilesMode, path: string): string {
   return `${scope}\n${path}`;
 }
@@ -545,14 +550,14 @@ export const AgentVcsDiffSheet = memo(function AgentVcsDiffSheet({
                 {
                   id: 'working',
                   label: workingLabel,
-                  Icon: scope === 'working' ? Check : undefined,
+                  Icon: scope === 'working' ? Check : UncheckedSlot,
                   onPress: () => changeScope('working'),
                   testID: 'agent-changes-scope-working',
                 },
                 {
                   id: 'branch',
                   label: branchLabel,
-                  Icon: scope === 'branch' ? Check : undefined,
+                  Icon: scope === 'branch' ? Check : UncheckedSlot,
                   onPress: () => changeScope('branch'),
                   testID: 'agent-changes-scope-branch',
                 },
