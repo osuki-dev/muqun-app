@@ -1,5 +1,6 @@
 import { memo } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import Animated from 'react-native-reanimated';
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { Folder, FolderOpen, MoreHorizontal, Trash2 } from 'lucide-react-native';
@@ -20,10 +21,12 @@ import type {
 /**
  * The agent Changes sheet's tree rows, drawn inside the shared diff list.
  *
- * Each row takes the list's width, the same width the patch under it wraps
- * at. Unlike the flat list's file row, a tree row's content is in flow rather
- * than absolutely placed: a long file name wraps instead of being cut, and the
- * row grows to hold it -- which is why these rows are measured, not computed.
+ * Each row is laid out at the list's full content width -- so a patch's
+ * horizontal pan carries it -- and its visible part is counter-translated by
+ * the same offset as the gutter, so a directory or a file name never pans off
+ * the screen. Unlike the flat list's file row, that visible part is in flow
+ * rather than absolutely placed: a long file name wraps instead of being cut,
+ * and the row grows to hold it.
  */
 
 /** One level of the tree. */
@@ -39,17 +42,26 @@ export interface ChangeTreeHandlers {
   onDiscard: (path: string) => void;
 }
 
+/** An `Animated.View` style that holds the row's visible part at the viewport. */
+type Pinned = React.ComponentProps<typeof Animated.View>['style'];
+
 function indentOf(depth: number): number {
   return ROW_INSET + depth * CHANGE_TREE_INDENT;
 }
 
 export const ChangeTreeDirRowView = memo(function ChangeTreeDirRowView({
   row,
+  width,
+  pinnedWidth,
   colors,
+  pinned,
   onToggle,
 }: {
   row: ChangeTreeDirRow;
+  width: number;
+  pinnedWidth: number;
   colors: PaneChatColors;
+  pinned: Pinned;
   onToggle: (path: string) => void;
 }) {
   const { t } = useLingui();
@@ -61,8 +73,15 @@ export const ChangeTreeDirRowView = memo(function ChangeTreeDirRowView({
       accessibilityState={{ expanded: !row.collapsed }}
       accessibilityLabel={row.collapsed ? t`Show ${row.path}` : t`Hide ${row.path}`}
       pressedScale={0.995}
-      onPress={() => onToggle(row.path)}>
-      <View style={[styles.row, styles.dirRow, { paddingLeft: indentOf(row.depth) }]}>
+      onPress={() => onToggle(row.path)}
+      style={{ width }}>
+      <Animated.View
+        style={[
+          styles.row,
+          styles.dirRow,
+          pinned,
+          { width: pinnedWidth, paddingLeft: indentOf(row.depth) },
+        ]}>
         <Icon size={15} color={colors.subtle} />
         <Text variant="bodySmall" color={colors.muted} style={styles.flexOne}>
           {row.name}
@@ -72,22 +91,28 @@ export const ChangeTreeDirRowView = memo(function ChangeTreeDirRowView({
             {row.fileCount}
           </Text>
         ) : null}
-      </View>
+      </Animated.View>
     </PressableScale>
   );
 });
 
 export const ChangeTreeFileRowView = memo(function ChangeTreeFileRowView({
   row,
+  width,
+  pinnedWidth,
   colors,
   fill,
+  pinned,
   hasSeparator,
   onToggle,
   onActions,
 }: {
   row: ChangeTreeFileRow;
+  width: number;
+  pinnedWidth: number;
   colors: PaneChatColors;
   fill: string;
+  pinned: Pinned;
   hasSeparator: boolean;
   onToggle: (path: string) => void;
   onActions?: (path: string) => void;
@@ -106,11 +131,18 @@ export const ChangeTreeFileRowView = memo(function ChangeTreeFileRowView({
       onPress={() => onToggle(row.path)}
       onLongPress={onActions ? () => onActions(row.path) : undefined}
       style={{
+        width,
         backgroundColor: row.expanded ? fill : 'transparent',
         borderBottomColor: colors.border,
         borderBottomWidth: hasSeparator ? StyleSheet.hairlineWidth : 0,
       }}>
-      <View style={[styles.row, styles.fileRow, { paddingLeft: indentOf(row.depth) }]}>
+      <Animated.View
+        style={[
+          styles.row,
+          styles.fileRow,
+          pinned,
+          { width: pinnedWidth, paddingLeft: indentOf(row.depth) },
+        ]}>
         <View style={styles.flexOne}>
           <Text variant="bodySmall">{row.name}</Text>
           {row.note === 'error' && row.error ? (
@@ -174,18 +206,24 @@ export const ChangeTreeFileRowView = memo(function ChangeTreeFileRowView({
             <MoreHorizontal size={16} color={colors.subtle} />
           </PressableScale>
         ) : null}
-      </View>
+      </Animated.View>
     </PressableScale>
   );
 });
 
 export const ChangeTreeContextRowView = memo(function ChangeTreeContextRowView({
   row,
+  width,
+  pinnedWidth,
   colors,
+  pinned,
   onPress,
 }: {
   row: ChangeTreeContextRow;
+  width: number;
+  pinnedWidth: number;
   colors: PaneChatColors;
+  pinned: Pinned;
   onPress: (path: string) => void;
 }) {
   const { t } = useLingui();
@@ -197,8 +235,9 @@ export const ChangeTreeContextRowView = memo(function ChangeTreeContextRowView({
       accessibilityLabel={t`Show more context`}
       accessibilityState={{ busy: row.loading }}
       disabled={row.loading}
-      onPress={() => onPress(row.path)}>
-      <View style={[styles.row, styles.contextRow]}>
+      onPress={() => onPress(row.path)}
+      style={{ width }}>
+      <Animated.View style={[styles.row, styles.contextRow, pinned, { width: pinnedWidth }]}>
         <View
           style={[
             styles.chip,
@@ -212,35 +251,43 @@ export const ChangeTreeContextRowView = memo(function ChangeTreeContextRowView({
             </Text>
           )}
         </View>
-      </View>
+      </Animated.View>
     </PressableScale>
   );
 });
 
 export const ChangeTreeActionsRowView = memo(function ChangeTreeActionsRowView({
   row,
+  width,
+  pinnedWidth,
+  pinned,
   onDiscard,
 }: {
   row: ChangeTreeActionsRow;
+  width: number;
+  pinnedWidth: number;
+  pinned: Pinned;
   onDiscard: (path: string) => void;
 }) {
   const { t } = useLingui();
   return (
-    <View>
-      <AgentActionMenu
-        testID={`agent-changes-actions-${row.path}`}
-        surface="ground"
-        items={[
-          {
-            id: 'discard',
-            label: t`Discard changes`,
-            Icon: Trash2,
-            tone: 'danger',
-            onPress: () => onDiscard(row.path),
-            testID: 'agent-changes-discard',
-          },
-        ]}
-      />
+    <View style={{ width }}>
+      <Animated.View style={[pinned, { width: pinnedWidth }]}>
+        <AgentActionMenu
+          testID={`agent-changes-actions-${row.path}`}
+          surface="ground"
+          items={[
+            {
+              id: 'discard',
+              label: t`Discard changes`,
+              Icon: Trash2,
+              tone: 'danger',
+              onPress: () => onDiscard(row.path),
+              testID: 'agent-changes-discard',
+            },
+          ]}
+        />
+      </Animated.View>
     </View>
   );
 });

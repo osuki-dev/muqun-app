@@ -345,7 +345,7 @@ export function GitDiffView({
     if (index >= 0) listRef.current?.scrollToIndex({ index, animated: false });
   }, [rows]);
 
-  // The measured geometry, the wrapping, the gutter and the
+  // The measured geometry, the horizontal panning, the pinned gutter and the
   // sticky file headers all live in `diff-rows.tsx` now, because the agent's
   // diff sheet draws exactly the same body from a different source.
   const gutterFill = theme.colors.surface;
