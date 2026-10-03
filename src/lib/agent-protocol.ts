@@ -21,6 +21,8 @@
  * OpenCode's payloads and stay camelCase.
  */
 
+import { parseKeyboardVocabulary, type KeyboardVocabulary } from './key-vocabulary';
+
 // ---------------------------------------------------------------------------
 // Primitives
 // ---------------------------------------------------------------------------
@@ -2119,6 +2121,8 @@ export interface TerminalBackendSummary {
   kind: string;
   connected: boolean;
   capabilities: string[];
+  /** The keys this backend can deliver; absent from a gateway that predates it. */
+  keyboard?: KeyboardVocabulary;
 }
 
 /** The terminal plane, as `TerminalPlaneDiscovery`, reduced to what Home projects. */
@@ -2195,12 +2199,14 @@ export function parseTerminalDiscovery(value: unknown): TerminalDiscovery | null
     if (!backend) continue;
     const sessionId = pickString(backend, ['sessionId']);
     if (!sessionId) continue;
+    const keyboard = parseKeyboardVocabulary(backend.keyboard);
     backends.push({
       sessionId,
       label: pickString(backend, ['label']) ?? sessionId,
       kind: pickString(backend, ['kind']) ?? '',
       connected: backend.connected === true,
       capabilities: asStringArray(backend.capabilities),
+      ...(keyboard ? { keyboard } : {}),
     });
   }
   const activeBackend = pickString(rec, ['activeBackend']);
