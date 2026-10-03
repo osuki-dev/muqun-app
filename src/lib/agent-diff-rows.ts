@@ -7,7 +7,7 @@ import {
   type GitFilePatchState,
   type GitFileStatus,
 } from './git-diff';
-import type { FileDiffItem } from './agent-protocol';
+import type { AgentVcsFileSummary, FileDiffItem } from './agent-protocol';
 
 /**
  * A unified patch the agent already handed us, as the rows the diff viewer
@@ -134,6 +134,23 @@ export function fileChangeFromDiffItem(item: FileDiffItem): GitFileChange {
     staged: false,
     unstaged: true,
     binary: /^(?:Binary files |GIT binary patch)/m.test(header),
+    added: item.additions,
+    removed: item.deletions,
+  };
+}
+
+/**
+ * One file from `…/vcs/files`, which has no patch to read a status out of: the
+ * gateway's word, or "modified" when it gave none this app knows.
+ */
+export function fileChangeFromSummary(item: AgentVcsFileSummary): GitFileChange {
+  return {
+    path: item.path,
+    oldPath: item.oldPath ?? null,
+    status: fileStatusFromWire(item.status) ?? 'modified',
+    staged: false,
+    unstaged: true,
+    binary: item.binary,
     added: item.additions,
     removed: item.deletions,
   };
