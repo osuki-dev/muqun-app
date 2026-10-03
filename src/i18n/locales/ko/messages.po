@@ -2280,6 +2280,10 @@ msgstr "자주 사용"
 msgid "Front camera. Hold the QR up to the screen"
 msgstr "전면 카메라입니다. QR 코드를 화면 쪽으로 들어 주세요"
 
+#: src/components/virtual-keyboard.tsx
+msgid "Function keys"
+msgstr "기능 키"
+
 #: src/app/explore.tsx
 msgid "Gateway"
 msgstr "Gateway"
@@ -5506,6 +5510,10 @@ msgstr "이 세션"
 #: src/components/agent-workbench.tsx
 msgid "This session has no message to roll back to."
 msgstr "이 세션에는 되돌아갈 메시지가 없습니다"
+
+#: src/components/virtual-keyboard.tsx
+msgid "This terminal can't send {chord}"
+msgstr "이 터미널은 {chord}을(를) 보낼 수 없습니다"
 
 #: src/components/terminal-boundary.tsx
 msgid "This terminal could not be drawn."

@@ -11,6 +11,7 @@ import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { ArrowBigUp, Delete, Keyboard as KeyboardIcon } from 'lucide-react-native';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import {
+  type GestureResponderEvent,
   Pressable,
   type PressableProps,
   StyleSheet,
@@ -25,7 +26,24 @@ import { useMonoFontFamily } from '@/hooks/use-user-fonts';
 import { withAlpha } from '@/lib/color';
 import { feedback } from '@/lib/feedback';
 import { timing } from '@/lib/motion';
-import { changeKeyboardLayout, resolveKeyboardInput } from '@/lib/virtual-keyboard-input';
+import { chordGlyph, type KeyboardVocabulary } from '@/lib/key-vocabulary';
+import {
+  changeKeyboardLayout,
+  keyboardChordName,
+  resolveKeyboardInput,
+  type KeyboardInput,
+} from '@/lib/virtual-keyboard-input';
+import {
+  MAIN_UNITS,
+  NAV_UNITS,
+  consumeModifier,
+  resolveWideKey,
+  tapModifier,
+  wideKeyEnabled,
+  wideKeyboardRows,
+  type ModifierState,
+  type WideKey,
+} from '@/lib/virtual-keyboard-layout';
 
 /**
  * A full on-screen keyboard that types straight into the pane.
@@ -59,6 +77,26 @@ import { changeKeyboardLayout, resolveKeyboardInput } from '@/lib/virtual-keyboa
  * top-left is where they are on a real keyboard -- and the hide toggle sits at
  * the top strip's right end: dismissal lives in corners, and its old seat on
  * the bottom row put five controls where four fit (Ellen, on device).
+ *
+ * ## The wide layout
+ *
+ * In the Pad layout (`wide`, which the workspace sets from
+ * `workspaceLayout.mode === 'pad'` -- one signal, the same one that picks the
+ * rest of the Pad shell, rather than a width this component would have to
+ * measure) the phone's ten-unit pages give way to a whole keyboard: function
+ * strip, number row, ANSI letter rows and a navigation column. Its geometry is
+ * a model in `@/lib/virtual-keyboard-layout`, in the same key units, and the
+ * same rule holds: flex weights, no layout pass. `WIDE_KEYBOARD_MAX_WIDTH`
+ * caps a key at about 52pt and the keyboard is centred, so a 1280pt tablet
+ * does not draw giant keys.
+ *
+ * ## Keys a pane cannot take
+ *
+ * What a pane can receive is its backend's question: `vocabulary` is what the
+ * gateway advertised for it (`@/lib/key-vocabulary`), and without one the SSH
+ * encoder decides as it always has. A key that cannot be delivered in the
+ * current modifier state is drawn muted, never hidden, so nothing moves under
+ * a hand; pressing it says so for two seconds instead of doing nothing.
  */
 const LETTER_ROWS = [
   ['q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p'],
@@ -118,7 +156,21 @@ type VirtualKeyboardProps = {
    * ordering -- while this component only owns where they sit.
    */
   shortcuts?: ReactNode;
+  /** What the pane's backend can deliver; absent keeps the SSH encoder's answer. */
+  vocabulary?: KeyboardVocabulary;
+  /** Draw the whole tablet keyboard instead of the phone's pages. */
+  wide?: boolean;
 };
+
+/**
+ * Whether the wide layout's function strip is showing. Remembered for the
+ * launch rather than per mount: the keyboard remounts with every pane switch,
+ * and a strip that comes back each time is a strip hidden over and over.
+ */
+const functionStripMemory = { shown: true };
+
+/** How long the "can't send" hint stays. */
+const REFUSED_HINT_MS = 2000;
 
 export function VirtualKeyboard({
   disabled,
@@ -126,6 +178,8 @@ export function VirtualKeyboard({
   onKey,
   onClose,
   shortcuts,
+  vocabulary,
+  wide = false,
 }: VirtualKeyboardProps) {
   const { t } = useLingui();
   const { _ } = useLinguiRuntime();
@@ -144,16 +198,35 @@ export function VirtualKeyboard({
    * other chord besides, rather than the app choosing six on the reader's
    * behalf.
    */
-  const [ctrl, setCtrl] = useState(false);
-  const [alt, setAlt] = useState(false);
+  const [ctrlState, setCtrlState] = useState<ModifierState>('off');
+  const [altState, setAltState] = useState<ModifierState>('off');
+  /** The wide layout's shift, sticky like ctrl and alt; the phone's lives in `layout`. */
+  const [wideShift, setWideShift] = useState<ModifierState>('off');
+  const lastModifierTap = useRef<{ modifier: string; at: number } | null>(null);
+  const [functionStrip, setFunctionStrip] = useState(functionStripMemory.shown);
+  /** The chord last refused, shown until the hint times out; `count` restarts it on a repeat. */
+  const [refused, setRefused] = useState<{ chord: string; count: number } | null>(null);
+  const ctrl = ctrlState !== 'off';
+  const alt = altState !== 'off';
 
   useEffect(() => {
     if (disabled) {
-      setCtrl(false);
-      setAlt(false);
+      setCtrlState('off');
+      setAltState('off');
+      setWideShift('off');
       setLayout((value) => changeKeyboardLayout(value, 'consume'));
     }
   }, [disabled]);
+
+  useEffect(() => {
+    if (!refused) return;
+    const timer = setTimeout(() => setRefused(null), REFUSED_HINT_MS);
+    return () => clearTimeout(timer);
+  }, [refused]);
+
+  useEffect(() => {
+    functionStripMemory.shown = functionStrip;
+  }, [functionStrip]);
 
   const keyText = theme.colors.text;
   const keyFill = surfaceBackground(withAlpha(theme.colors.text, appChrome.opacity.chromeControl));
@@ -165,19 +238,111 @@ export function VirtualKeyboard({
 
   const rows = symbols ? (moreSymbols ? SHIFTED_SYMBOL_ROWS : SYMBOL_ROWS) : LETTER_ROWS;
 
+  const modifiers = { ctrl, alt, shift: wide ? wideShift !== 'off' : shift };
+
   function inputFor(value: string, kind: 'character' | 'key') {
-    return resolveKeyboardInput(value, kind, { ctrl, alt, shift });
+    return resolveKeyboardInput(value, kind, modifiers, vocabulary);
+  }
+
+  function send(input: KeyboardInput | null, chord: string) {
+    if (disabled) return;
+    if (!input) {
+      // Muted, not inert: the press is the moment to say why nothing happened.
+      setRefused((previous) => ({ chord, count: (previous?.count ?? 0) + 1 }));
+      return;
+    }
+    if ('text' in input) onText(input.text);
+    else onKey(input.key);
+    setCtrlState(consumeModifier);
+    setAltState(consumeModifier);
+    setWideShift(consumeModifier);
+    setLayout((value) => changeKeyboardLayout(value, 'consume'));
   }
 
   function pressInput(value: string, kind: 'character' | 'key') {
-    if (disabled) return;
-    const input = inputFor(value, kind);
-    if (!input) return;
-    if ('text' in input) onText(input.text);
-    else onKey(input.key);
-    setCtrl(false);
-    setAlt(false);
-    setLayout((value) => changeKeyboardLayout(value, 'consume'));
+    send(inputFor(value, kind), keyboardChordName(value, modifiers));
+  }
+
+  /** The phone's modifiers toggle; the wide layout's lock on a double tap. */
+  function tap(modifier: string, at: number) {
+    const set =
+      modifier === 'ctrl' ? setCtrlState : modifier === 'alt' ? setAltState : setWideShift;
+    if (!wide) {
+      set((state) => (state === 'off' ? 'once' : 'off'));
+      return;
+    }
+    const last = lastModifierTap.current;
+    const since = last && last.modifier === modifier ? at - last.at : Number.POSITIVE_INFINITY;
+    lastModifierTap.current = { modifier, at };
+    set((state) => tapModifier(state, since));
+  }
+
+  /** `at` is the touch's own timestamp, which is what a double tap is measured in. */
+  function pressWideKey(item: WideKey, at: number) {
+    if (item.kind === 'modifier') tap(item.value, at);
+    else if (item.kind === 'control') {
+      if (item.value === 'hide') onClose();
+      else {
+        setFunctionStrip((shown) => !shown);
+      }
+    } else {
+      send(resolveWideKey(item, modifiers, vocabulary), keyboardChordName(item.value, modifiers));
+    }
+  }
+
+  const modifierStates: Record<string, ModifierState> = {
+    ctrl: ctrlState,
+    alt: altState,
+    shift: wideShift,
+  };
+
+  // Laid over the keyboard's foot rather than added under it: a row that
+  // appeared and went would move every key under the finger that caused it.
+  const chord = refused ? chordGlyph(refused.chord) : '';
+  const refusedHint = refused ? (
+    <View pointerEvents="none" style={styles.hintWrap}>
+      <View style={[styles.hint, { backgroundColor: surfaceBackground(theme.colors.background) }]}>
+        <Text variant="caption" color={keyText}>
+          {t`This terminal can't send ${chord}`}
+        </Text>
+      </View>
+    </View>
+  ) : null;
+
+  if (wide) {
+    return (
+      <View style={[styles.keyboard, styles.wideKeyboard]}>
+        {shortcuts}
+        {wideKeyboardRows(functionStrip).map((row) => (
+          <View key={row.id} style={styles.wideRow}>
+            {(['main', 'nav'] as const).map((block) => (
+              <View
+                key={block}
+                style={[styles.row, { flex: block === 'main' ? MAIN_UNITS : NAV_UNITS }]}>
+                {row[block].map((item) => (
+                  <WideKeyCap
+                    key={item.id}
+                    item={item}
+                    disabled={disabled}
+                    muted={!wideKeyEnabled(item, modifiers, vocabulary)}
+                    held={item.kind === 'modifier' ? modifierStates[item.value] : undefined}
+                    shift={modifiers.shift}
+                    functionStrip={functionStrip}
+                    keyFill={keyFill}
+                    fnFill={fnFill}
+                    keyText={keyText}
+                    activeFill={activeFill}
+                    activeText={activeText}
+                    onPress={(event) => pressWideKey(item, event.nativeEvent.timestamp)}
+                  />
+                ))}
+              </View>
+            ))}
+          </View>
+        ))}
+        {refusedHint}
+      </View>
+    );
   }
 
   return (
@@ -216,7 +381,7 @@ export function VirtualKeyboard({
           disabled={disabled}
           accessibilityLabel={t`Control`}
           selected={ctrl}
-          onPress={() => setCtrl((value) => !value)}
+          onPress={() => tap('ctrl', 0)}
         />
         <FunctionKey
           label="alt"
@@ -225,7 +390,7 @@ export function VirtualKeyboard({
           disabled={disabled}
           accessibilityLabel={t`Alt`}
           selected={alt}
-          onPress={() => setAlt((value) => !value)}
+          onPress={() => tap('alt', 0)}
         />
         <VirtualKey
           accessibilityLabel={t`Hide keyboard`}
@@ -264,9 +429,14 @@ export function VirtualKeyboard({
                 key={char}
                 testID={`virtual-key-${char}`}
                 accessibilityLabel={!symbols && shift ? char.toUpperCase() : char}
-                disabled={disabled || inputFor(char, 'character') === null}
+                disabled={disabled}
                 onPress={() => pressInput(char, 'character')}
-                style={[styles.key, styles.unitKey, { backgroundColor: keyFill }]}>
+                style={[
+                  styles.key,
+                  styles.unitKey,
+                  { backgroundColor: keyFill },
+                  inputFor(char, 'character') === null && styles.muted,
+                ]}>
                 {({ pressed }) => (
                   <Text
                     variant="bodySmall"
@@ -334,7 +504,12 @@ export function VirtualKeyboard({
               disabled={disabled}
               hitSlop={{ top: 6, bottom: 6 }}
               onPress={() => pressInput(arrow.key, 'key')}
-              style={[styles.key, styles.unitKey, { backgroundColor: fnFill }]}>
+              style={[
+                styles.key,
+                styles.unitKey,
+                { backgroundColor: fnFill },
+                inputFor(arrow.key, 'key') === null && styles.muted,
+              ]}>
               {({ pressed }) => (
                 <Text
                   variant="caption"
@@ -350,7 +525,12 @@ export function VirtualKeyboard({
           accessibilityLabel={t`Return`}
           disabled={disabled}
           onPress={() => pressInput('enter', 'key')}
-          style={[styles.key, styles.returnKey, { backgroundColor: keyFill }]}>
+          style={[
+            styles.key,
+            styles.returnKey,
+            { backgroundColor: keyFill },
+            inputFor('enter', 'key') === null && styles.muted,
+          ]}>
           {({ pressed }) => (
             <Text variant="caption" color={pressed ? activeText : keyText} style={styles.keyGlyph}>
               ↵
@@ -358,7 +538,142 @@ export function VirtualKeyboard({
           )}
         </VirtualKey>
       </View>
+      {refusedHint}
     </View>
+  );
+}
+
+/**
+ * One key of the wide layout. Plain `VirtualKey` underneath, for the same
+ * mount-cost reason as every other key (see `VirtualKey`).
+ */
+function WideKeyCap({
+  item,
+  disabled,
+  muted,
+  held,
+  shift,
+  functionStrip,
+  keyFill,
+  fnFill,
+  keyText,
+  activeFill,
+  activeText,
+  onPress,
+}: {
+  item: WideKey;
+  disabled: boolean;
+  /** The pane cannot take this key in the current modifier state. */
+  muted: boolean;
+  /** A modifier's state; undefined for every other key. */
+  held?: ModifierState;
+  shift: boolean;
+  functionStrip: boolean;
+  keyFill: string;
+  fnFill: string;
+  keyText: string;
+  activeFill: string;
+  activeText: string;
+  onPress: (event: GestureResponderEvent) => void;
+}) {
+  const { t } = useLingui();
+  const mono = useMonoFontFamily();
+  if (item.kind === 'spacer') return <View style={{ flex: item.units }} />;
+
+  const flex = { flex: item.units };
+  if (item.kind === 'control') {
+    const hide = item.value === 'hide';
+    return (
+      <VirtualKey
+        testID={`virtual-key-${item.value}`}
+        accessibilityLabel={hide ? t`Hide keyboard` : t`Function keys`}
+        accessibilityRole={hide ? 'button' : 'togglebutton'}
+        accessibilityState={hide ? undefined : { selected: functionStrip, checked: functionStrip }}
+        commit="up"
+        onPress={onPress}
+        style={[
+          styles.key,
+          flex,
+          { backgroundColor: !hide && functionStrip ? activeFill : fnFill },
+        ]}>
+        {({ pressed }) =>
+          hide ? (
+            <KeyboardIcon size={16} color={pressed ? activeText : keyText} />
+          ) : (
+            <Text
+              variant="caption"
+              color={pressed || functionStrip ? activeText : keyText}
+              style={[styles.keyText, { fontFamily: mono }]}>
+              fn
+            </Text>
+          )
+        }
+      </VirtualKey>
+    );
+  }
+
+  if (item.kind === 'modifier') {
+    const on = held !== undefined && held !== 'off';
+    const locked = held === 'locked';
+    return (
+      <VirtualKey
+        testID={`virtual-key-${item.id}`}
+        accessibilityLabel={`${item.value === 'ctrl' ? t`Control` : item.value === 'alt' ? t`Alt` : t`Shift`}${locked ? ' ⇪' : on ? ' ✓' : ''}`}
+        accessibilityRole="togglebutton"
+        accessibilityState={{ selected: on, checked: locked ? 'mixed' : on }}
+        disabled={disabled}
+        onPress={onPress}
+        style={[
+          styles.key,
+          flex,
+          { backgroundColor: on ? activeFill : fnFill },
+          // Locked reads differently from held-once: the same fill, ringed.
+          locked && [styles.lockedKey, { borderColor: activeText }],
+        ]}>
+        {({ pressed }) => (
+          <Text
+            variant="caption"
+            color={pressed || on ? activeText : keyText}
+            style={[
+              styles.keyText,
+              { fontFamily: mono, textDecorationLine: locked ? 'underline' : 'none' },
+            ]}>
+            {item.label}
+          </Text>
+        )}
+      </VirtualKey>
+    );
+  }
+
+  const glyph = item.label.length === 1 && item.kind === 'key';
+  const cap = item.kind === 'char' && shift ? (item.shiftLabel ?? item.label) : item.label;
+  const named = item.kind === 'key' && !glyph;
+  return (
+    <VirtualKey
+      testID={`virtual-key-${item.id}`}
+      accessibilityLabel={item.value === ' ' ? t`Space` : cap}
+      disabled={disabled}
+      hitSlop={item.kind === 'key' && glyph ? { top: 2, bottom: 2 } : undefined}
+      onPress={onPress}
+      style={[
+        styles.key,
+        flex,
+        { backgroundColor: named ? fnFill : keyFill },
+        muted && styles.muted,
+      ]}>
+      {({ pressed }) =>
+        item.value === 'backspace' ? (
+          <Delete size={18} color={pressed ? activeText : keyText} />
+        ) : (
+          <Text
+            variant={item.kind === 'char' && item.value !== ' ' ? 'bodySmall' : 'caption'}
+            color={pressed ? activeText : keyText}
+            style={glyph ? styles.keyGlyph : [styles.keyText, { fontFamily: mono }]}>
+            {cap}
+          </Text>
+        )
+      }
+    </VirtualKey>
   );
 }
 
@@ -569,6 +884,13 @@ function VirtualKey({
 }
 
 const KEY_GAP = 5;
+/** Between the wide layout's main block and its navigation column: half a key's breathing room. */
+const NAV_GAP = 14;
+/**
+ * The wide layout's cap: 18 units across plus gaps, which puts a key at about
+ * 52pt -- the size of a laptop key -- however wide the Pad pane is.
+ */
+const WIDE_KEYBOARD_MAX_WIDTH = 1020;
 /** Tighter than the row's, so the four arrows read as one control. */
 const ARROW_GAP = 3;
 /** Keeps ten-unit rows comfortably key-sized instead of stretching across a Pad pane. */
@@ -589,6 +911,33 @@ const styles = StyleSheet.create({
   functionRow: {
     flexDirection: 'row',
     gap: KEY_GAP,
+  },
+  wideKeyboard: {
+    maxWidth: WIDE_KEYBOARD_MAX_WIDTH,
+  },
+  wideRow: {
+    flexDirection: 'row',
+    gap: NAV_GAP,
+  },
+  /** A key the pane cannot take right now: still there, still pressable, quieter. */
+  muted: {
+    opacity: appChrome.opacity.disabled,
+  },
+  lockedKey: {
+    borderWidth: 2,
+  },
+  hintWrap: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    alignItems: 'center',
+  },
+  hint: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    borderCurve: 'continuous',
   },
   row: {
     flexDirection: 'row',

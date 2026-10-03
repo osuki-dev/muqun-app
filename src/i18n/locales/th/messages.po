@@ -2280,6 +2280,10 @@ msgstr "ใช้บ่อย"
 msgid "Front camera. Hold the QR up to the screen"
 msgstr "กล้องหน้า ถือ QR หันเข้าหาหน้าจอ"
 
+#: src/components/virtual-keyboard.tsx
+msgid "Function keys"
+msgstr "ปุ่มฟังก์ชัน"
+
 #: src/app/explore.tsx
 msgid "Gateway"
 msgstr "Gateway"
@@ -5506,6 +5510,10 @@ msgstr "เซสชันนี้"
 #: src/components/agent-workbench.tsx
 msgid "This session has no message to roll back to."
 msgstr "เซสชันนี้ไม่มีข้อความให้ย้อนกลับไป"
+
+#: src/components/virtual-keyboard.tsx
+msgid "This terminal can't send {chord}"
+msgstr "เทอร์มินัลนี้ส่ง {chord} ไม่ได้"
 
 #: src/components/terminal-boundary.tsx
 msgid "This terminal could not be drawn."
