@@ -280,6 +280,10 @@ msgstr "{lead}: {title} — terminou enquanto você estava fora"
 msgid "{messages, plural, one {# message} other {# messages}}"
 msgstr "{messages, plural, one {# mensagem} other {# mensagens}}"
 
+#: src/components/virtual-keyboard.tsx
+msgid "{modifierKeys} combinations need the program in this terminal to enable extended keys"
+msgstr "As combinações com {modifierKeys} exigem que o programa deste terminal ative as teclas estendidas"
+
 #: src/components/new-task-action.tsx
 msgid "{name} needs setup. Tap for setup instructions"
 msgstr "{name} precisa de configuração. Toque para ver as instruções de configuração"
