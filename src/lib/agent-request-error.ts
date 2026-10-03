@@ -89,6 +89,23 @@ function readAgentRequestError(err: unknown): {
   return { raw, match, status, ...readBody(raw) };
 }
 
+/**
+ * The status, the gateway's error code and its message, for a caller that
+ * names its own refusals (`409 listing_truncated`, `404 unknown_path`, ...).
+ */
+export function agentRequestErrorDetail(err: unknown): {
+  status: number;
+  code?: string;
+  message?: string;
+} {
+  const { status, code, message } = readAgentRequestError(err);
+  return {
+    status,
+    ...(code ? { code } : {}),
+    ...(message ? { message: bound(message) } : {}),
+  };
+}
+
 export function classifyAgentRequestError(err: unknown): AgentRequestError {
   const { raw, match, status, code, message } = readAgentRequestError(err);
 
