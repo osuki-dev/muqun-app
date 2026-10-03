@@ -762,10 +762,6 @@ msgstr "Backspace"
 msgid "Behaviour"
 msgstr "Поведение"
 
-#: src/components/theme-appearance-settings.tsx
-msgid "Below {minimumPercent}%, text is no longer guaranteed to stay readable"
-msgstr "Ниже {minimumPercent}% читаемость текста не гарантируется"
-
 #: src/components/change-tree-rows.tsx
 #: src/components/diff-rows.tsx
 msgid "Binary file"
@@ -2851,6 +2847,10 @@ msgstr "Сообщение скопировано в буфер обмена"
 msgid "Message not sent"
 msgstr "Сообщение не отправлено"
 
+#: src/components/theme-appearance-settings.tsx
+msgid "Minimum for readable text: {minimumPercent}%"
+msgstr "Минимум для читаемого текста: {minimumPercent}%"
+
 #. placeholder {0}: part.mode
 #: src/components/agent-message-block.tsx
 msgid "Mode · {0}"
@@ -3900,10 +3900,6 @@ msgstr "Последний вывод"
 #: src/components/agent-model-sheet.tsx
 msgid "Recently used"
 msgstr "Недавно использованные"
-
-#: src/components/theme-appearance-settings.tsx
-msgid "Recommended minimum for readable text: {minimumPercent}%"
-msgstr "Рекомендуемый минимум для читаемого текста: {minimumPercent}%"
 
 #: src/components/gateway-tunnel-badge.tsx
 #: src/components/ssh-terminal-workspace.tsx

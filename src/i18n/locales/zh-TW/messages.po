@@ -762,10 +762,6 @@ msgstr "退格鍵"
 msgid "Behaviour"
 msgstr "行為"
 
-#: src/components/theme-appearance-settings.tsx
-msgid "Below {minimumPercent}%, text is no longer guaranteed to stay readable"
-msgstr "低於 {minimumPercent}% 後,文字不再保證可讀"
-
 #: src/components/change-tree-rows.tsx
 #: src/components/diff-rows.tsx
 msgid "Binary file"
@@ -2851,6 +2847,10 @@ msgstr "訊息已複製到剪貼簿"
 msgid "Message not sent"
 msgstr "訊息未送出"
 
+#: src/components/theme-appearance-settings.tsx
+msgid "Minimum for readable text: {minimumPercent}%"
+msgstr "文字清晰的最低值:{minimumPercent}%"
+
 #. placeholder {0}: part.mode
 #: src/components/agent-message-block.tsx
 msgid "Mode · {0}"
@@ -3900,10 +3900,6 @@ msgstr "查看輸出"
 #: src/components/agent-model-sheet.tsx
 msgid "Recently used"
 msgstr "最近使用"
-
-#: src/components/theme-appearance-settings.tsx
-msgid "Recommended minimum for readable text: {minimumPercent}%"
-msgstr "文字清晰的建議最低值:{minimumPercent}%"
 
 #: src/components/gateway-tunnel-badge.tsx
 #: src/components/ssh-terminal-workspace.tsx
