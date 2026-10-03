@@ -13,7 +13,6 @@ import { DiffRowList } from '@/components/diff-rows';
 import { usePaneChatColors } from '@/components/pane-chat-blocks';
 import { PressableScale } from '@/components/pressable-scale';
 import { SheetScene, SHEET_LADDER } from '@/components/sheet-scene';
-import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import {
   fileChangeFromDiffItem,
   fileChangeFromSummary,
@@ -168,7 +167,6 @@ export const AgentVcsDiffSheet = memo(function AgentVcsDiffSheet({
   const { t } = useLingui();
   const theme = useThemeTokens();
   const colors = usePaneChatColors();
-  const surfaceBackground = useSurfaceBackground();
 
   const [loading, setLoading] = useState(false);
   const [listing, setListing] = useState<ChangeListing>(EMPTY_LISTING);
@@ -603,12 +601,13 @@ export const AgentVcsDiffSheet = memo(function AgentVcsDiffSheet({
         <DiffRowList
           rows={rows}
           colors={colors}
-          gutterFill={surfaceBackground(theme.colors.surface)}
-          // Opaque, not through the artwork-opacity slider: an open file's
-          // header is pinned over its own patch, and a see-through band shows
-          // the code scrolling behind the file name.
-          // Opacity audit: legibility -- the pinned file header sits over the
-          // code scrolling under it and must hide it whatever the slider says.
+          // Both opaque, not through the artwork-opacity slider: the gutter is
+          // pinned over code panning sideways under it, and an open file's
+          // header over its own patch scrolling up; a see-through band shows
+          // that code behind the line numbers or the file name.
+          // Opacity audit: legibility -- the pinned gutter and file header sit
+          // over moving code and must hide it whatever the slider says.
+          gutterFill={theme.colors.surface}
           headerFill={theme.colors.surface}
           surfaceFill="transparent"
           // There is no index to attribute an agent's edits to, so there is no
