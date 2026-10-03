@@ -62,7 +62,7 @@ msgstr "{0, plural, other {# tệp đã thay đổi}}"
 msgid "{0, plural, one {# file} other {# files}}"
 msgstr "{0, plural, other {# tệp}}"
 
-#. placeholder {0}: diffs.length
+#. placeholder {0}: listing.changes.length
 #. placeholder {1}: totals.additions
 #. placeholder {2}: totals.deletions
 #: src/components/agent-vcs-diff-sheet.tsx
@@ -385,10 +385,12 @@ msgstr "Tác động lên terminal này, hoặc gửi cho nó một lệnh"
 msgid "Act on this terminal, or send its agent a prompt"
 msgstr "Tác động lên terminal này, hoặc gửi yêu cầu cho tác nhân của nó"
 
+#. placeholder {0}: row.name
 #. placeholder {0}: sessionTitleOr(session, t`Untitled session`)
 #. placeholder {0}: worktreeDisplayName(directory)
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/agent-worktree-sheet.tsx
+#: src/components/change-tree-rows.tsx
 msgid "Actions for {0}"
 msgstr "Thao tác cho {0}"
 
@@ -764,6 +766,7 @@ msgstr "Hành vi"
 msgid "Below {minimumPercent}%, text is no longer guaranteed to stay readable"
 msgstr "Dưới {minimumPercent}%, chữ không còn được bảo đảm dễ đọc"
 
+#: src/components/change-tree-rows.tsx
 #: src/components/diff-rows.tsx
 msgid "Binary file"
 msgstr "Tệp nhị phân"
@@ -779,10 +782,6 @@ msgstr "Đang chờ"
 #: src/components/agent-workbench.tsx
 msgid "Blocked by agent safety"
 msgstr "Bị chặn bởi tính năng an toàn của agent"
-
-#: src/components/agent-vcs-diff-sheet.tsx
-msgid "Branch"
-msgstr "Nhánh"
 
 #: src/components/theme-link-import.tsx
 msgid "Branch and theme file came from the link. A branch can change later"
@@ -836,6 +835,7 @@ msgstr "Cần quyền truy cập camera"
 #: src/components/agent-composer.tsx
 #: src/components/agent-context-sheet.tsx
 #: src/components/agent-sessions-sheet.tsx
+#: src/components/agent-vcs-diff-sheet.tsx
 #: src/components/agent-workbench.tsx
 #: src/components/agent-worktree-sheet.tsx
 #: src/components/custom-theme-library.tsx
@@ -971,6 +971,10 @@ msgstr "Chọn kiểu trang chủ và giao diện ứng dụng. Màu sắc vẫn
 #: src/components/agent-workbench.tsx
 msgid "Choose project"
 msgstr "Chọn dự án"
+
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "Choose which changes to show"
+msgstr "Chọn thay đổi cần hiển thị"
 
 #: src/components/simfarm-stage.tsx
 msgid "Choose which simulator to show"
@@ -1120,10 +1124,6 @@ msgstr "Commit"
 msgid "Commit & push"
 msgstr "Commit và push"
 
-#: src/components/agent-vcs-diff-sheet.tsx
-msgid "Committed"
-msgstr "Đã commit"
-
 #: src/components/settings-terminal.tsx
 msgid "Compact"
 msgstr "Gọn"
@@ -1149,6 +1149,10 @@ msgstr "Nén thất bại"
 #: src/components/agent-composer.tsx
 msgid "Compaction failed — tap to dismiss"
 msgstr "Nén thất bại — chạm để bỏ qua"
+
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "Compared with {base}"
+msgstr "So với {base}"
 
 #: src/components/settings-storage.tsx
 msgid "Confirm clear cache"
@@ -1499,6 +1503,10 @@ msgstr "Không thể xóa"
 msgid "Could not detach"
 msgstr "Không thể tách ra"
 
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "Could not discard {name}"
+msgstr "Không thể hủy {name}"
+
 #. placeholder {0}: problem.status
 #: src/components/settings-font-sheet.tsx
 msgid "Could not download: {0}"
@@ -1540,6 +1548,10 @@ msgstr "Không thể tải mô hình"
 #: src/components/agent-workbench.tsx
 msgid "Could not load the session"
 msgstr "Không thể tải phiên"
+
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "Could not load this file's changes."
+msgstr "Không thể tải thay đổi của tệp này"
 
 #: src/components/session-map.tsx
 msgid "Could not load what is running."
@@ -1810,9 +1822,14 @@ msgid "Defaults to theme.json at the repository root"
 msgstr "Mặc định là theme.json ở thư mục gốc của kho mã"
 
 #: src/components/agent-sessions-sheet.tsx
+#: src/components/agent-vcs-diff-sheet.tsx
 #: src/components/row-action-menu.tsx
 msgid "Delete"
 msgstr "Xóa"
+
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "Delete {discardName}?"
+msgstr "Xóa {discardName}?"
 
 #: src/app/commands.tsx
 msgid "Delete {name}"
@@ -1887,6 +1904,18 @@ msgstr "Hướng"
 #: src/components/new-task-sheet.tsx
 msgid "Directory"
 msgstr "Thư mục"
+
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "Discard"
+msgstr "Hủy bỏ"
+
+#: src/components/change-tree-rows.tsx
+msgid "Discard changes"
+msgstr "Hủy thay đổi"
+
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "Discard changes to {discardName}?"
+msgstr "Hủy thay đổi của {discardName}?"
 
 #. placeholder {0}: record.label
 #: src/components/ssh-terminal-workspace.tsx
@@ -2361,6 +2390,7 @@ msgstr "Ẩn"
 
 #. placeholder {0}: item.summary
 #. placeholder {0}: row.path
+#: src/components/change-tree-rows.tsx
 #: src/components/diff-rows.tsx
 #: src/components/pane-chat-blocks.tsx
 msgid "Hide {0}"
@@ -3052,8 +3082,13 @@ msgid "No camera was found on this device."
 msgstr "Không tìm thấy camera trên thiết bị này"
 
 #: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/change-tree-rows.tsx
 msgid "No changes"
 msgstr "Không có thay đổi"
+
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "No changes compared with {base}."
+msgstr "Không có thay đổi so với {base}"
 
 #: src/components/git-diff-view.tsx
 msgid "No changes. The working tree matches HEAD."
@@ -3166,6 +3201,7 @@ msgstr "Chưa có tác vụ nào trong phiên này"
 msgid "No terminal session is available on this server."
 msgstr "Máy chủ này không có phiên terminal khả dụng"
 
+#: src/components/change-tree-rows.tsx
 #: src/components/diff-rows.tsx
 msgid "No textual change"
 msgstr "Không có thay đổi văn bản"
@@ -3270,6 +3306,10 @@ msgstr "Không có gì để hoàn tác"
 #: src/components/agent-vcs-diff-sheet.tsx
 msgid "Nothing uncommitted in this project."
 msgstr "Không có thay đổi chưa commit trong dự án này"
+
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "Nothing was changed."
+msgstr "Không có gì thay đổi"
 
 #: src/components/agent-context-sheet.tsx
 msgid "Nothing yet — an “Always allow” reply lands here, for this project."
@@ -3613,6 +3653,10 @@ msgstr "Dán liên kết giao diện công khai hoặc URL kho mã GitHub"
 msgid "Paste a URL…"
 msgstr "Dán một URL…"
 
+#: src/components/change-tree-rows.tsx
+msgid "Patch too long; showing the start of it."
+msgstr "Bản vá quá dài; chỉ hiển thị phần đầu"
+
 #: src/components/asset-viewer.tsx
 #: src/components/new-task-sheet.tsx
 msgid "Path"
@@ -3719,8 +3763,8 @@ msgstr "Dự án"
 msgid "Project · {0}"
 msgstr "Dự án · {0}"
 
-#. placeholder {0}: answer.missing?.directory ?? ''
 #. placeholder {0}: gone.directory
+#. placeholder {0}: listing.missing?.directory ?? ''
 #. placeholder {0}: missing.directory
 #: src/components/agent-vcs-diff-sheet.tsx
 #: src/components/agent-workbench.tsx
@@ -4514,6 +4558,7 @@ msgstr "Shift Tab, chuyển chế độ"
 
 #. placeholder {0}: item.summary
 #. placeholder {0}: row.path
+#: src/components/change-tree-rows.tsx
 #: src/components/diff-rows.tsx
 #: src/components/pane-chat-blocks.tsx
 msgid "Show {0}"
@@ -4556,6 +4601,10 @@ msgstr "Hiện ít hơn"
 #: src/components/diff-rows.tsx
 msgid "Show more"
 msgstr "Hiện thêm"
+
+#: src/components/change-tree-rows.tsx
+msgid "Show more context"
+msgstr "Hiện thêm ngữ cảnh"
 
 #: src/components/agent-model-sheet.tsx
 msgid "Show more models"
@@ -5145,6 +5194,10 @@ msgstr "Không thể mở đích đến này"
 msgid "The font file is missing. Add it again."
 msgstr "Không tìm thấy tệp phông chữ. Hãy thêm lại"
 
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "The gateway could not be reached."
+msgstr "Không thể kết nối tới gateway"
+
 #: src/components/agent-worktree-sheet.tsx
 msgid "The host made a worktree but did not say where."
 msgstr "Host đã tạo worktree nhưng không cho biết ở đâu"
@@ -5296,6 +5349,10 @@ msgstr "Đang suy nghĩ…"
 #: src/i18n/labels.ts
 msgid "This agent did not offer that answer."
 msgstr "Tác tử này không đưa ra câu trả lời đó"
+
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "This cannot be undone."
+msgstr "Không thể hoàn tác thao tác này"
 
 #: src/lib/attachments.ts
 msgid "This device has no camera available."
@@ -5511,6 +5568,7 @@ msgstr "Mức sử dụng mã token và chi phí"
 msgid "Too large to highlight — showing plain text."
 msgstr "Quá lớn để tô sáng cú pháp — hiển thị dưới dạng văn bản thuần"
 
+#: src/components/agent-vcs-diff-sheet.tsx
 #: src/components/git-diff-view.tsx
 msgid "Too many changes to list. This is the start of them, not all of them."
 msgstr "Quá nhiều thay đổi để liệt kê. Đây là phần đầu, không phải tất cả"
@@ -5583,6 +5641,10 @@ msgstr "Gõ vào, hoặc dùng phím đọc chính tả trên bàn phím của b
 #: src/components/simfarm-stage.tsx
 msgid "Type on the simulator"
 msgstr "Gõ trên trình giả lập"
+
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "Uncommitted changes"
+msgstr "Thay đổi chưa commit"
 
 #: src/components/agent-revert-plate.tsx
 #: src/components/agent-workbench.tsx
@@ -5830,7 +5892,6 @@ msgstr "Khi tác nhân dừng để xin xác nhận, thông báo đẩy sẽ đ�
 msgid "While you were away"
 msgstr "Khi bạn vắng mặt"
 
-#: src/components/agent-vcs-diff-sheet.tsx
 #: src/components/collaboration-notice.tsx
 #: src/i18n/labels.ts
 msgid "Working"

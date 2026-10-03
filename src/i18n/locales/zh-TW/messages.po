@@ -62,7 +62,7 @@ msgstr "{0, plural, other {# 個檔案有變更}}"
 msgid "{0, plural, one {# file} other {# files}}"
 msgstr "{0, plural, other {# 個檔案}}"
 
-#. placeholder {0}: diffs.length
+#. placeholder {0}: listing.changes.length
 #. placeholder {1}: totals.additions
 #. placeholder {2}: totals.deletions
 #: src/components/agent-vcs-diff-sheet.tsx
@@ -385,10 +385,12 @@ msgstr "操作這個終端機，或給它送一條指令"
 msgid "Act on this terminal, or send its agent a prompt"
 msgstr "操作這個終端機，或給它的 Agent 下一條指令"
 
+#. placeholder {0}: row.name
 #. placeholder {0}: sessionTitleOr(session, t`Untitled session`)
 #. placeholder {0}: worktreeDisplayName(directory)
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/agent-worktree-sheet.tsx
+#: src/components/change-tree-rows.tsx
 msgid "Actions for {0}"
 msgstr "{0} 的操作"
 
@@ -764,6 +766,7 @@ msgstr "行為"
 msgid "Below {minimumPercent}%, text is no longer guaranteed to stay readable"
 msgstr "低於 {minimumPercent}% 後,文字不再保證可讀"
 
+#: src/components/change-tree-rows.tsx
 #: src/components/diff-rows.tsx
 msgid "Binary file"
 msgstr "二進位檔案"
@@ -779,10 +782,6 @@ msgstr "等待回應"
 #: src/components/agent-workbench.tsx
 msgid "Blocked by agent safety"
 msgstr "已被代理安全機制攔截"
-
-#: src/components/agent-vcs-diff-sheet.tsx
-msgid "Branch"
-msgstr "分支"
 
 #: src/components/theme-link-import.tsx
 msgid "Branch and theme file came from the link. A branch can change later"
@@ -836,6 +835,7 @@ msgstr "需要相機存取權"
 #: src/components/agent-composer.tsx
 #: src/components/agent-context-sheet.tsx
 #: src/components/agent-sessions-sheet.tsx
+#: src/components/agent-vcs-diff-sheet.tsx
 #: src/components/agent-workbench.tsx
 #: src/components/agent-worktree-sheet.tsx
 #: src/components/custom-theme-library.tsx
@@ -971,6 +971,10 @@ msgstr "選擇首頁與應用程式介面樣式。配色仍由主題決定"
 #: src/components/agent-workbench.tsx
 msgid "Choose project"
 msgstr "選擇專案"
+
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "Choose which changes to show"
+msgstr "選擇要顯示的變更"
 
 #: src/components/simfarm-stage.tsx
 msgid "Choose which simulator to show"
@@ -1120,10 +1124,6 @@ msgstr "提交"
 msgid "Commit & push"
 msgstr "提交並推送"
 
-#: src/components/agent-vcs-diff-sheet.tsx
-msgid "Committed"
-msgstr "已提交"
-
 #: src/components/settings-terminal.tsx
 msgid "Compact"
 msgstr "緊湊"
@@ -1149,6 +1149,10 @@ msgstr "壓縮失敗"
 #: src/components/agent-composer.tsx
 msgid "Compaction failed — tap to dismiss"
 msgstr "壓縮失敗 — 點按關閉"
+
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "Compared with {base}"
+msgstr "與 {base} 比較"
 
 #: src/components/settings-storage.tsx
 msgid "Confirm clear cache"
@@ -1499,6 +1503,10 @@ msgstr "無法刪除"
 msgid "Could not detach"
 msgstr "無法轉入背景"
 
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "Could not discard {name}"
+msgstr "無法捨棄 {name}"
+
 #. placeholder {0}: problem.status
 #: src/components/settings-font-sheet.tsx
 msgid "Could not download: {0}"
@@ -1540,6 +1548,10 @@ msgstr "無法載入模型"
 #: src/components/agent-workbench.tsx
 msgid "Could not load the session"
 msgstr "無法載入工作階段"
+
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "Could not load this file's changes."
+msgstr "無法載入此檔案的變更"
 
 #: src/components/session-map.tsx
 msgid "Could not load what is running."
@@ -1810,9 +1822,14 @@ msgid "Defaults to theme.json at the repository root"
 msgstr "預設為儲存庫根目錄下的 theme.json"
 
 #: src/components/agent-sessions-sheet.tsx
+#: src/components/agent-vcs-diff-sheet.tsx
 #: src/components/row-action-menu.tsx
 msgid "Delete"
 msgstr "刪除"
+
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "Delete {discardName}?"
+msgstr "刪除 {discardName}？"
 
 #: src/app/commands.tsx
 msgid "Delete {name}"
@@ -1887,6 +1904,18 @@ msgstr "方向"
 #: src/components/new-task-sheet.tsx
 msgid "Directory"
 msgstr "目錄"
+
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "Discard"
+msgstr "捨棄"
+
+#: src/components/change-tree-rows.tsx
+msgid "Discard changes"
+msgstr "捨棄變更"
+
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "Discard changes to {discardName}?"
+msgstr "捨棄對 {discardName} 的變更？"
 
 #. placeholder {0}: record.label
 #: src/components/ssh-terminal-workspace.tsx
@@ -2361,6 +2390,7 @@ msgstr "隱藏"
 
 #. placeholder {0}: item.summary
 #. placeholder {0}: row.path
+#: src/components/change-tree-rows.tsx
 #: src/components/diff-rows.tsx
 #: src/components/pane-chat-blocks.tsx
 msgid "Hide {0}"
@@ -3052,8 +3082,13 @@ msgid "No camera was found on this device."
 msgstr "在這台裝置上找不到相機"
 
 #: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/change-tree-rows.tsx
 msgid "No changes"
 msgstr "沒有變更"
+
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "No changes compared with {base}."
+msgstr "與 {base} 相比沒有變更"
 
 #: src/components/git-diff-view.tsx
 msgid "No changes. The working tree matches HEAD."
@@ -3166,6 +3201,7 @@ msgstr "此工作階段還沒有任務"
 msgid "No terminal session is available on this server."
 msgstr "此伺服器沒有可用的終端機工作階段"
 
+#: src/components/change-tree-rows.tsx
 #: src/components/diff-rows.tsx
 msgid "No textual change"
 msgstr "沒有文字變更"
@@ -3270,6 +3306,10 @@ msgstr "沒有可復原的內容"
 #: src/components/agent-vcs-diff-sheet.tsx
 msgid "Nothing uncommitted in this project."
 msgstr "此專案沒有未提交的變更"
+
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "Nothing was changed."
+msgstr "沒有做任何變更"
 
 #: src/components/agent-context-sheet.tsx
 msgid "Nothing yet — an “Always allow” reply lands here, for this project."
@@ -3613,6 +3653,10 @@ msgstr "貼上公開的主題連結或 GitHub 儲存庫網址"
 msgid "Paste a URL…"
 msgstr "貼上連結…"
 
+#: src/components/change-tree-rows.tsx
+msgid "Patch too long; showing the start of it."
+msgstr "修補檔太長，僅顯示開頭部分"
+
 #: src/components/asset-viewer.tsx
 #: src/components/new-task-sheet.tsx
 msgid "Path"
@@ -3719,8 +3763,8 @@ msgstr "專案"
 msgid "Project · {0}"
 msgstr "專案 · {0}"
 
-#. placeholder {0}: answer.missing?.directory ?? ''
 #. placeholder {0}: gone.directory
+#. placeholder {0}: listing.missing?.directory ?? ''
 #. placeholder {0}: missing.directory
 #: src/components/agent-vcs-diff-sheet.tsx
 #: src/components/agent-workbench.tsx
@@ -4514,6 +4558,7 @@ msgstr "Shift Tab 鍵，循環切換模式"
 
 #. placeholder {0}: item.summary
 #. placeholder {0}: row.path
+#: src/components/change-tree-rows.tsx
 #: src/components/diff-rows.tsx
 #: src/components/pane-chat-blocks.tsx
 msgid "Show {0}"
@@ -4556,6 +4601,10 @@ msgstr "顯示較少"
 #: src/components/diff-rows.tsx
 msgid "Show more"
 msgstr "顯示更多"
+
+#: src/components/change-tree-rows.tsx
+msgid "Show more context"
+msgstr "顯示更多上下文"
 
 #: src/components/agent-model-sheet.tsx
 msgid "Show more models"
@@ -5145,6 +5194,10 @@ msgstr "無法開啟該目的地"
 msgid "The font file is missing. Add it again."
 msgstr "找不到字型檔案。請重新加入"
 
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "The gateway could not be reached."
+msgstr "無法連線到閘道"
+
 #: src/components/agent-worktree-sheet.tsx
 msgid "The host made a worktree but did not say where."
 msgstr "主機建立了工作樹，卻沒有說它在哪裡"
@@ -5296,6 +5349,10 @@ msgstr "正在思考…"
 #: src/i18n/labels.ts
 msgid "This agent did not offer that answer."
 msgstr "這個代理程式沒有提供那個選項"
+
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "This cannot be undone."
+msgstr "此操作無法復原"
 
 #: src/lib/attachments.ts
 msgid "This device has no camera available."
@@ -5511,6 +5568,7 @@ msgstr "Token 用量與費用"
 msgid "Too large to highlight — showing plain text."
 msgstr "檔案太大，無法上色，顯示為純文字"
 
+#: src/components/agent-vcs-diff-sheet.tsx
 #: src/components/git-diff-view.tsx
 msgid "Too many changes to list. This is the start of them, not all of them."
 msgstr "變更太多，無法全部列出。這只是開頭，不是全部"
@@ -5583,6 +5641,10 @@ msgstr "可以直接打字，或用鍵盤上的語音輸入鍵"
 #: src/components/simfarm-stage.tsx
 msgid "Type on the simulator"
 msgstr "在模擬器上輸入"
+
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "Uncommitted changes"
+msgstr "未提交的變更"
 
 #: src/components/agent-revert-plate.tsx
 #: src/components/agent-workbench.tsx
@@ -5830,7 +5892,6 @@ msgstr "當代理暫停請求權限時，通知直達鎖定畫面。一鍵核准
 msgid "While you were away"
 msgstr "離開期間"
 
-#: src/components/agent-vcs-diff-sheet.tsx
 #: src/components/collaboration-notice.tsx
 #: src/i18n/labels.ts
 msgid "Working"

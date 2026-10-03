@@ -2,6 +2,7 @@ import { describe, expect, test } from 'bun:test';
 
 import {
   AGENT_ERROR_MESSAGE_LIMIT,
+  agentRequestErrorDetail,
   classifyAgentRequestError,
   isAgentOfflineError,
 } from '../agent-request-error';
@@ -93,5 +94,24 @@ describe('codes with a sentence of their own', () => {
       kind: 'unknown-agent',
     });
     expect(isAgentOfflineError(refusal(400, 'invalid_agent', 'Unknown agent: t3'))).toBe(false);
+  });
+});
+
+describe('agentRequestErrorDetail', () => {
+  test('reads a discard refusal', () => {
+    const err = new Error(
+      `Failed to discard changes: 409 ${JSON.stringify({
+        error: { code: 'listing_truncated', message: 'The change listing is too large.' },
+      })}`
+    );
+    expect(agentRequestErrorDetail(err)).toEqual({
+      status: 409,
+      code: 'listing_truncated',
+      message: 'The change listing is too large.',
+    });
+  });
+
+  test('a bare failure has only a status of zero', () => {
+    expect(agentRequestErrorDetail(new Error('Network request failed'))).toEqual({ status: 0 });
   });
 });

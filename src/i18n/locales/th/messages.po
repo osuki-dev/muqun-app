@@ -62,7 +62,7 @@ msgstr "{0, plural, other {เปลี่ยนแปลง # ไฟล์}}"
 msgid "{0, plural, one {# file} other {# files}}"
 msgstr "{0, plural, other {# ไฟล์}}"
 
-#. placeholder {0}: diffs.length
+#. placeholder {0}: listing.changes.length
 #. placeholder {1}: totals.additions
 #. placeholder {2}: totals.deletions
 #: src/components/agent-vcs-diff-sheet.tsx
@@ -385,10 +385,12 @@ msgstr "สั่งงานเทอร์มินัลนี้ หรื�
 msgid "Act on this terminal, or send its agent a prompt"
 msgstr "สั่งงานเทอร์มินัลนี้ หรือส่งคำสั่งให้เอเจนต์ของมัน"
 
+#. placeholder {0}: row.name
 #. placeholder {0}: sessionTitleOr(session, t`Untitled session`)
 #. placeholder {0}: worktreeDisplayName(directory)
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/agent-worktree-sheet.tsx
+#: src/components/change-tree-rows.tsx
 msgid "Actions for {0}"
 msgstr "การดำเนินการกับ {0}"
 
@@ -764,6 +766,7 @@ msgstr "พฤติกรรม"
 msgid "Below {minimumPercent}%, text is no longer guaranteed to stay readable"
 msgstr "ต่ำกว่า {minimumPercent}% จะไม่รับประกันว่าข้อความยังอ่านได้ชัดเจน"
 
+#: src/components/change-tree-rows.tsx
 #: src/components/diff-rows.tsx
 msgid "Binary file"
 msgstr "ไฟล์ไบนารี"
@@ -779,10 +782,6 @@ msgstr "ถูกบล็อก"
 #: src/components/agent-workbench.tsx
 msgid "Blocked by agent safety"
 msgstr "ถูกบล็อกโดยระบบความปลอดภัยของเอเจนต์"
-
-#: src/components/agent-vcs-diff-sheet.tsx
-msgid "Branch"
-msgstr "สาขา"
 
 #: src/components/theme-link-import.tsx
 msgid "Branch and theme file came from the link. A branch can change later"
@@ -836,6 +835,7 @@ msgstr "ต้องเข้าถึงกล้อง"
 #: src/components/agent-composer.tsx
 #: src/components/agent-context-sheet.tsx
 #: src/components/agent-sessions-sheet.tsx
+#: src/components/agent-vcs-diff-sheet.tsx
 #: src/components/agent-workbench.tsx
 #: src/components/agent-worktree-sheet.tsx
 #: src/components/custom-theme-library.tsx
@@ -971,6 +971,10 @@ msgstr "เลือกสไตล์หน้าแรกและส่วน
 #: src/components/agent-workbench.tsx
 msgid "Choose project"
 msgstr "เลือกโปรเจกต์"
+
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "Choose which changes to show"
+msgstr "เลือกการเปลี่ยนแปลงที่จะแสดง"
 
 #: src/components/simfarm-stage.tsx
 msgid "Choose which simulator to show"
@@ -1120,10 +1124,6 @@ msgstr "คอมมิต"
 msgid "Commit & push"
 msgstr "คอมมิตและพุช"
 
-#: src/components/agent-vcs-diff-sheet.tsx
-msgid "Committed"
-msgstr "คอมมิตแล้ว"
-
 #: src/components/settings-terminal.tsx
 msgid "Compact"
 msgstr "ย่อบริบท"
@@ -1149,6 +1149,10 @@ msgstr "บีบอัดไม่สำเร็จ"
 #: src/components/agent-composer.tsx
 msgid "Compaction failed — tap to dismiss"
 msgstr "บีบอัดไม่สำเร็จ — แตะเพื่อปิด"
+
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "Compared with {base}"
+msgstr "เทียบกับ {base}"
 
 #: src/components/settings-storage.tsx
 msgid "Confirm clear cache"
@@ -1499,6 +1503,10 @@ msgstr "ลบไม่ได้"
 msgid "Could not detach"
 msgstr "ย้ายไปเบื้องหลังไม่สำเร็จ"
 
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "Could not discard {name}"
+msgstr "ไม่สามารถละทิ้ง {name}"
+
 #. placeholder {0}: problem.status
 #: src/components/settings-font-sheet.tsx
 msgid "Could not download: {0}"
@@ -1540,6 +1548,10 @@ msgstr "ไม่สามารถโหลดโมเดลได้"
 #: src/components/agent-workbench.tsx
 msgid "Could not load the session"
 msgstr "โหลดเซสชันไม่สำเร็จ"
+
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "Could not load this file's changes."
+msgstr "ไม่สามารถโหลดการเปลี่ยนแปลงของไฟล์นี้"
 
 #: src/components/session-map.tsx
 msgid "Could not load what is running."
@@ -1810,9 +1822,14 @@ msgid "Defaults to theme.json at the repository root"
 msgstr "ค่าเริ่มต้นคือ theme.json ที่รากของที่เก็บโค้ด"
 
 #: src/components/agent-sessions-sheet.tsx
+#: src/components/agent-vcs-diff-sheet.tsx
 #: src/components/row-action-menu.tsx
 msgid "Delete"
 msgstr "ลบ"
+
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "Delete {discardName}?"
+msgstr "ลบ {discardName} ใช่ไหม"
 
 #: src/app/commands.tsx
 msgid "Delete {name}"
@@ -1887,6 +1904,18 @@ msgstr "ทิศทาง"
 #: src/components/new-task-sheet.tsx
 msgid "Directory"
 msgstr "ไดเรกทอรี"
+
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "Discard"
+msgstr "ละทิ้ง"
+
+#: src/components/change-tree-rows.tsx
+msgid "Discard changes"
+msgstr "ละทิ้งการเปลี่ยนแปลง"
+
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "Discard changes to {discardName}?"
+msgstr "ละทิ้งการเปลี่ยนแปลงของ {discardName} ใช่ไหม"
 
 #. placeholder {0}: record.label
 #: src/components/ssh-terminal-workspace.tsx
@@ -2361,6 +2390,7 @@ msgstr "ซ่อนอยู่"
 
 #. placeholder {0}: item.summary
 #. placeholder {0}: row.path
+#: src/components/change-tree-rows.tsx
 #: src/components/diff-rows.tsx
 #: src/components/pane-chat-blocks.tsx
 msgid "Hide {0}"
@@ -3052,8 +3082,13 @@ msgid "No camera was found on this device."
 msgstr "ไม่พบกล้องบนอุปกรณ์นี้"
 
 #: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/change-tree-rows.tsx
 msgid "No changes"
 msgstr "ไม่มีการเปลี่ยนแปลง"
+
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "No changes compared with {base}."
+msgstr "ไม่มีการเปลี่ยนแปลงเมื่อเทียบกับ {base}"
 
 #: src/components/git-diff-view.tsx
 msgid "No changes. The working tree matches HEAD."
@@ -3166,6 +3201,7 @@ msgstr "ยังไม่มีงานในเซสชันนี้"
 msgid "No terminal session is available on this server."
 msgstr "เซิร์ฟเวอร์นี้ไม่มีเซสชันเทอร์มินัลที่พร้อมใช้งาน"
 
+#: src/components/change-tree-rows.tsx
 #: src/components/diff-rows.tsx
 msgid "No textual change"
 msgstr "ไม่มีข้อความเปลี่ยนแปลง"
@@ -3270,6 +3306,10 @@ msgstr "ไม่มีอะไรให้ย้อนกลับ"
 #: src/components/agent-vcs-diff-sheet.tsx
 msgid "Nothing uncommitted in this project."
 msgstr "ไม่มีการเปลี่ยนแปลงที่ยังไม่ได้คอมมิตในโปรเจกต์นี้"
+
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "Nothing was changed."
+msgstr "ไม่มีการเปลี่ยนแปลงใด"
 
 #: src/components/agent-context-sheet.tsx
 msgid "Nothing yet — an “Always allow” reply lands here, for this project."
@@ -3613,6 +3653,10 @@ msgstr "วางลิงก์ธีมสาธารณะหรือที
 msgid "Paste a URL…"
 msgstr "วางลิงก์…"
 
+#: src/components/change-tree-rows.tsx
+msgid "Patch too long; showing the start of it."
+msgstr "แพตช์ยาวเกินไป แสดงเฉพาะส่วนต้น"
+
 #: src/components/asset-viewer.tsx
 #: src/components/new-task-sheet.tsx
 msgid "Path"
@@ -3719,8 +3763,8 @@ msgstr "โปรเจกต์"
 msgid "Project · {0}"
 msgstr "โปรเจกต์ · {0}"
 
-#. placeholder {0}: answer.missing?.directory ?? ''
 #. placeholder {0}: gone.directory
+#. placeholder {0}: listing.missing?.directory ?? ''
 #. placeholder {0}: missing.directory
 #: src/components/agent-vcs-diff-sheet.tsx
 #: src/components/agent-workbench.tsx
@@ -4514,6 +4558,7 @@ msgstr "Shift Tab สลับโหมด"
 
 #. placeholder {0}: item.summary
 #. placeholder {0}: row.path
+#: src/components/change-tree-rows.tsx
 #: src/components/diff-rows.tsx
 #: src/components/pane-chat-blocks.tsx
 msgid "Show {0}"
@@ -4556,6 +4601,10 @@ msgstr "แสดงน้อยลง"
 #: src/components/diff-rows.tsx
 msgid "Show more"
 msgstr "แสดงเพิ่มเติม"
+
+#: src/components/change-tree-rows.tsx
+msgid "Show more context"
+msgstr "แสดงบริบทเพิ่มเติม"
 
 #: src/components/agent-model-sheet.tsx
 msgid "Show more models"
@@ -5145,6 +5194,10 @@ msgstr "เปิดปลายทางนี้ไม่ได้"
 msgid "The font file is missing. Add it again."
 msgstr "ไม่พบไฟล์ฟอนต์ กรุณาเพิ่มอีกครั้ง"
 
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "The gateway could not be reached."
+msgstr "ไม่สามารถเชื่อมต่อเกตเวย์"
+
 #: src/components/agent-worktree-sheet.tsx
 msgid "The host made a worktree but did not say where."
 msgstr "โฮสต์สร้างเวิร์กทรีแล้วแต่ไม่ได้บอกว่าอยู่ที่ไหน"
@@ -5296,6 +5349,10 @@ msgstr "กำลังคิด…"
 #: src/i18n/labels.ts
 msgid "This agent did not offer that answer."
 msgstr "เอเจนต์นี้ไม่ได้เสนอตัวเลือกคำตอบนั้น"
+
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "This cannot be undone."
+msgstr "การดำเนินการนี้ย้อนกลับไม่ได้"
 
 #: src/lib/attachments.ts
 msgid "This device has no camera available."
@@ -5511,6 +5568,7 @@ msgstr "การใช้โทเค็นและค่าใช้จ่า
 msgid "Too large to highlight — showing plain text."
 msgstr "ใหญ่เกินกว่าจะไฮไลต์ — แสดงเป็นข้อความธรรมดา"
 
+#: src/components/agent-vcs-diff-sheet.tsx
 #: src/components/git-diff-view.tsx
 msgid "Too many changes to list. This is the start of them, not all of them."
 msgstr "มีการเปลี่ยนแปลงมากเกินกว่าจะแสดงทั้งหมด นี่เป็นเพียงส่วนแรก"
@@ -5583,6 +5641,10 @@ msgstr "พิมพ์หรือใช้ปุ่มป้อนตามค
 #: src/components/simfarm-stage.tsx
 msgid "Type on the simulator"
 msgstr "พิมพ์บนเครื่องจำลอง"
+
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "Uncommitted changes"
+msgstr "การเปลี่ยนแปลงที่ยังไม่ commit"
 
 #: src/components/agent-revert-plate.tsx
 #: src/components/agent-workbench.tsx
@@ -5830,7 +5892,6 @@ msgstr "เมื่อเอเจนต์หยุดเพื่อขอก
 msgid "While you were away"
 msgstr "ขณะที่คุณไม่อยู่"
 
-#: src/components/agent-vcs-diff-sheet.tsx
 #: src/components/collaboration-notice.tsx
 #: src/i18n/labels.ts
 msgid "Working"

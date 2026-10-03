@@ -23,7 +23,15 @@ import { PressableScale } from '@/components/pressable-scale';
 import type { PaneChatColors } from '@/components/pane-chat-blocks';
 import { useMonoFontFamily } from '@/hooks/use-user-fonts';
 import { gitFileStatusWord } from '@/i18n/labels';
-import { sideOfFile, type GitDiffRow, type GitDiffRowType } from '@/lib/git-diff';
+import { sideOfFile, type GitDiffRow } from '@/lib/git-diff';
+import type { DiffListItem } from '@/lib/change-tree';
+import {
+  ChangeTreeActionsRowView,
+  ChangeTreeContextRowView,
+  ChangeTreeDirRowView,
+  ChangeTreeFileRowView,
+  type ChangeTreeHandlers,
+} from '@/components/change-tree-rows';
 import {
   capDiffRows,
   INLINE_DIFF_HARD_CAP,
@@ -88,32 +96,43 @@ const MORE_ROW_HEIGHT = 44;
 const GUTTER_WIDTH = 78;
 const LINE_PADDING = 10;
 
-const ROW_HEIGHT: Record<GitDiffRowType, number> = {
+const ROW_HEIGHT: Record<DiffListItem['type'], number> = {
   file: FILE_ROW_HEIGHT,
   hunk: HUNK_ROW_HEIGHT,
   line: LINE_ROW_HEIGHT,
   more: MORE_ROW_HEIGHT,
+  // The agent Changes sheet's tree rows: estimates only, all but one measured.
+  dir: 40,
+  treeFile: 48,
+  context: MORE_ROW_HEIGHT,
+  actions: 50,
 };
 
 /** Matching `pane-chat-view`: the reader's place across a change of data. */
 const MAINTAIN_POSITION = { data: true, size: true } as const;
 
-export function keyOfDiffRow(row: GitDiffRow): string {
+export function keyOfDiffRow(row: DiffListItem): string {
   return row.key;
 }
 
-export function typeOfDiffRow(row: GitDiffRow): GitDiffRowType {
+export function typeOfDiffRow(row: DiffListItem): DiffListItem['type'] {
   return row.type;
 }
 
-export function sizeOfDiffRow(row: GitDiffRow): number {
+export function sizeOfDiffRow(row: DiffListItem): number {
   return ROW_HEIGHT[row.type];
 }
 
-function fixedBodySizeOfDiffRow(row: GitDiffRow): number | undefined {
+function fixedBodySizeOfDiffRow(row: DiffListItem): number | undefined {
   // Measure file headers so a collapsed prefix does not force LegendList's
   // initial pool to use 52px rows. The 18px hint reserves room for an expansion.
-  return row.type === 'file' ? undefined : sizeOfDiffRow(row);
+  // Tree rows are measured too: a file name wraps rather than being cut.
+  return row.type === 'file' ||
+    row.type === 'treeFile' ||
+    row.type === 'dir' ||
+    row.type === 'actions'
+    ? undefined
+    : sizeOfDiffRow(row);
 }
 
 /**
@@ -122,7 +141,7 @@ function fixedBodySizeOfDiffRow(row: GitDiffRow): number | undefined {
  * Counted over rows rather than measured per row, because the answer is one
  * number for the whole list and it only ever grows as pages arrive.
  */
-function widestRow(rows: readonly GitDiffRow[], floor = 0): number {
+function widestRow(rows: readonly DiffListItem[], floor = 0): number {
   let widest = floor;
   for (const row of rows) {
     if (row.type === 'line') {
@@ -164,8 +183,9 @@ export const DiffListRow = memo(function DiffListRow({
   onShowMore,
   showSide,
   hasSeparator,
+  tree,
 }: {
-  row: GitDiffRow;
+  row: DiffListItem;
   /** The laid-out width of every row: the panning content. */
   width: number;
   /** The visible width: how much of a row its pinned part may occupy. */
@@ -180,6 +200,8 @@ export const DiffListRow = memo(function DiffListRow({
   showSide: boolean;
   /** Draw a list rule only when another rendered row follows this one. */
   hasSeparator: boolean;
+  /** The agent Changes sheet's tree; absent everywhere else. */
+  tree?: ChangeTreeHandlers;
 }) {
   // One per mounted row rather than one object shared by all of them: a
   // recycled list mounts about forty rows and keeps them, so the hook is paid
@@ -187,6 +209,56 @@ export const DiffListRow = memo(function DiffListRow({
   const pinned = usePinnedStyle(scrollX);
   const mono = useMonoFontFamily();
 
+  if (row.type === 'dir') {
+    return tree ? (
+      <ChangeTreeDirRowView
+        row={row}
+        width={width}
+        pinnedWidth={pinnedWidth}
+        colors={colors}
+        pinned={pinned}
+        onToggle={tree.onToggleDir}
+      />
+    ) : null;
+  }
+  if (row.type === 'treeFile') {
+    return (
+      <ChangeTreeFileRowView
+        row={row}
+        width={width}
+        pinnedWidth={pinnedWidth}
+        colors={colors}
+        fill={headerFill}
+        pinned={pinned}
+        hasSeparator={hasSeparator}
+        onToggle={onToggle}
+        onActions={tree?.onFileActions}
+      />
+    );
+  }
+  if (row.type === 'context') {
+    return tree ? (
+      <ChangeTreeContextRowView
+        row={row}
+        width={width}
+        pinnedWidth={pinnedWidth}
+        colors={colors}
+        pinned={pinned}
+        onPress={tree.onMoreContext}
+      />
+    ) : null;
+  }
+  if (row.type === 'actions') {
+    return tree ? (
+      <ChangeTreeActionsRowView
+        row={row}
+        width={width}
+        pinnedWidth={pinnedWidth}
+        pinned={pinned}
+        onDiscard={tree.onDiscard}
+      />
+    ) : null;
+  }
   if (row.type === 'file') {
     return (
       <FileRow
@@ -485,7 +557,7 @@ const DiffRuler = memo(function DiffRuler({
  * is the ratio every common monospace face is within a few percent of, so the
  * first paint is never wildly wrong and the correction is never visible.
  */
-function useDiffMetrics(rows: readonly GitDiffRow[]) {
+function useDiffMetrics(rows: readonly DiffListItem[]) {
   const [advance, setAdvance] = useState(LINE_FONT_SIZE * 0.6);
   const onRulerLayout = useCallback((event: LayoutChangeEvent) => {
     const width = event.nativeEvent.layout.width;
@@ -519,7 +591,7 @@ function useDiffMetrics(rows: readonly GitDiffRow[]) {
 }
 
 export interface DiffRowListProps {
-  rows: readonly GitDiffRow[];
+  rows: readonly DiffListItem[];
   colors: PaneChatColors;
   /** The column the line numbers sit on, and the band an open file takes. */
   gutterFill: string;
@@ -532,6 +604,8 @@ export interface DiffRowListProps {
   /** Drawn in place of the rows when there are none: loading, error or empty. */
   fallback: ReactNode;
   listRef?: React.RefObject<LegendListRef | null>;
+  /** Draw `rows` as the agent Changes sheet's directory tree. */
+  tree?: ChangeTreeHandlers;
 }
 
 /**
@@ -555,6 +629,7 @@ export function DiffRowList({
   onShowMore,
   fallback,
   listRef,
+  tree,
 }: DiffRowListProps) {
   const { onRulerLayout, onViewportLayout, contentWidth, pinnedWidth } = useDiffMetrics(rows);
 
@@ -575,16 +650,20 @@ export function DiffRowList({
   const stickyIndices = useMemo(() => {
     // A collapsed file list has no patch to label. Treating every entry as a
     // sticky header drives header handoffs continuously during a plain scroll.
-    if (!rows.some((row) => row.type !== 'file')) return [];
+    if (!rows.some((row) => row.type === 'hunk' || row.type === 'line' || row.type === 'more')) {
+      return [];
+    }
     const indices: number[] = [];
     for (let index = 0; index < rows.length; index += 1) {
-      if (rows[index].type === 'file') indices.push(index);
+      const row = rows[index];
+      // In the tree only an open file labels the code under it.
+      if (row.type === 'file' || (row.type === 'treeFile' && row.expanded)) indices.push(index);
     }
     return indices;
   }, [rows]);
 
   const renderRow = useCallback(
-    ({ item, index }: LegendListRenderItemProps<GitDiffRow>) => (
+    ({ item, index }: LegendListRenderItemProps<DiffListItem>) => (
       <DiffListRow
         row={item}
         width={contentWidth}
@@ -597,6 +676,7 @@ export function DiffRowList({
         onShowMore={onShowMore}
         showSide={showSide}
         hasSeparator={index < rows.length - 1}
+        tree={tree}
       />
     ),
     [
@@ -610,6 +690,7 @@ export function DiffRowList({
       rows.length,
       scrollX,
       showSide,
+      tree,
     ]
   );
 
@@ -628,7 +709,7 @@ export function DiffRowList({
           <LegendList
             nestedScrollEnabled
             ref={listRef}
-            data={rows as GitDiffRow[]}
+            data={rows as DiffListItem[]}
             keyExtractor={keyOfDiffRow}
             renderItem={renderRow}
             // Code rows have exact geometry; file headers are measured so the
