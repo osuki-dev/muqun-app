@@ -62,7 +62,7 @@ msgstr "{0, plural, one {# file changed} other {# files changed}}"
 msgid "{0, plural, one {# file} other {# files}}"
 msgstr "{0, plural, one {# file} other {# files}}"
 
-#. placeholder {0}: diffs.length
+#. placeholder {0}: listing.changes.length
 #. placeholder {1}: totals.additions
 #. placeholder {2}: totals.deletions
 #: src/components/agent-vcs-diff-sheet.tsx
@@ -385,10 +385,12 @@ msgstr "Act on this terminal, or send it a command"
 msgid "Act on this terminal, or send its agent a prompt"
 msgstr "Act on this terminal, or send its agent a prompt"
 
+#. placeholder {0}: row.name
 #. placeholder {0}: sessionTitleOr(session, t`Untitled session`)
 #. placeholder {0}: worktreeDisplayName(directory)
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/agent-worktree-sheet.tsx
+#: src/components/change-tree-rows.tsx
 msgid "Actions for {0}"
 msgstr "Actions for {0}"
 
@@ -764,6 +766,7 @@ msgstr "Behaviour"
 msgid "Below {minimumPercent}%, text is no longer guaranteed to stay readable"
 msgstr "Below {minimumPercent}%, text is no longer guaranteed to stay readable"
 
+#: src/components/change-tree-rows.tsx
 #: src/components/diff-rows.tsx
 msgid "Binary file"
 msgstr "Binary file"
@@ -779,10 +782,6 @@ msgstr "Blocked"
 #: src/components/agent-workbench.tsx
 msgid "Blocked by agent safety"
 msgstr "Blocked by agent safety"
-
-#: src/components/agent-vcs-diff-sheet.tsx
-msgid "Branch"
-msgstr "Branch"
 
 #: src/components/theme-link-import.tsx
 msgid "Branch and theme file came from the link. A branch can change later"
@@ -836,6 +835,7 @@ msgstr "Camera access needed"
 #: src/components/agent-composer.tsx
 #: src/components/agent-context-sheet.tsx
 #: src/components/agent-sessions-sheet.tsx
+#: src/components/agent-vcs-diff-sheet.tsx
 #: src/components/agent-workbench.tsx
 #: src/components/agent-worktree-sheet.tsx
 #: src/components/custom-theme-library.tsx
@@ -971,6 +971,10 @@ msgstr "Choose Home and app chrome. Colours stay with your theme"
 #: src/components/agent-workbench.tsx
 msgid "Choose project"
 msgstr "Choose project"
+
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "Choose which changes to show"
+msgstr "Choose which changes to show"
 
 #: src/components/simfarm-stage.tsx
 msgid "Choose which simulator to show"
@@ -1120,10 +1124,6 @@ msgstr "Commit"
 msgid "Commit & push"
 msgstr "Commit & push"
 
-#: src/components/agent-vcs-diff-sheet.tsx
-msgid "Committed"
-msgstr "Committed"
-
 #: src/components/settings-terminal.tsx
 msgid "Compact"
 msgstr "Compact"
@@ -1149,6 +1149,10 @@ msgstr "Compaction failed"
 #: src/components/agent-composer.tsx
 msgid "Compaction failed — tap to dismiss"
 msgstr "Compaction failed — tap to dismiss"
+
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "Compared with {base}"
+msgstr "Compared with {base}"
 
 #: src/components/settings-storage.tsx
 msgid "Confirm clear cache"
@@ -1499,6 +1503,10 @@ msgstr "Could not delete"
 msgid "Could not detach"
 msgstr "Could not detach"
 
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "Could not discard changes to {name}."
+msgstr "Could not discard changes to {name}"
+
 #. placeholder {0}: problem.status
 #: src/components/settings-font-sheet.tsx
 msgid "Could not download: {0}"
@@ -1540,6 +1548,10 @@ msgstr "Could not load models"
 #: src/components/agent-workbench.tsx
 msgid "Could not load the session"
 msgstr "Could not load the session"
+
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "Could not load this file's changes."
+msgstr "Could not load this file's changes"
 
 #: src/components/session-map.tsx
 msgid "Could not load what is running."
@@ -1810,9 +1822,14 @@ msgid "Defaults to theme.json at the repository root"
 msgstr "Defaults to theme.json at the repository root"
 
 #: src/components/agent-sessions-sheet.tsx
+#: src/components/agent-vcs-diff-sheet.tsx
 #: src/components/row-action-menu.tsx
 msgid "Delete"
 msgstr "Delete"
+
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "Delete {discardName}?"
+msgstr "Delete {discardName}?"
 
 #: src/app/commands.tsx
 msgid "Delete {name}"
@@ -1887,6 +1904,18 @@ msgstr "Direction"
 #: src/components/new-task-sheet.tsx
 msgid "Directory"
 msgstr "Directory"
+
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "Discard"
+msgstr "Discard"
+
+#: src/components/change-tree-rows.tsx
+msgid "Discard changes"
+msgstr "Discard changes"
+
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "Discard changes to {discardName}?"
+msgstr "Discard changes to {discardName}?"
 
 #. placeholder {0}: record.label
 #: src/components/ssh-terminal-workspace.tsx
@@ -2361,6 +2390,7 @@ msgstr "Hidden"
 
 #. placeholder {0}: item.summary
 #. placeholder {0}: row.path
+#: src/components/change-tree-rows.tsx
 #: src/components/diff-rows.tsx
 #: src/components/pane-chat-blocks.tsx
 msgid "Hide {0}"
@@ -3055,6 +3085,10 @@ msgstr "No camera was found on this device"
 msgid "No changes"
 msgstr "No changes"
 
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "No changes compared with {base}."
+msgstr "No changes compared with {base}"
+
 #: src/components/git-diff-view.tsx
 msgid "No changes. The working tree matches HEAD."
 msgstr "No changes. The working tree matches HEAD"
@@ -3166,6 +3200,7 @@ msgstr "No tasks in this session yet"
 msgid "No terminal session is available on this server."
 msgstr "No terminal session is available on this server"
 
+#: src/components/change-tree-rows.tsx
 #: src/components/diff-rows.tsx
 msgid "No textual change"
 msgstr "No textual change"
@@ -3613,6 +3648,10 @@ msgstr "Paste a public theme link or GitHub repository"
 msgid "Paste a URL…"
 msgstr "Paste a URL…"
 
+#: src/components/change-tree-rows.tsx
+msgid "Patch too long; showing the start of it."
+msgstr "Patch too long; showing the start of it"
+
 #: src/components/asset-viewer.tsx
 #: src/components/new-task-sheet.tsx
 msgid "Path"
@@ -3719,8 +3758,8 @@ msgstr "Project"
 msgid "Project · {0}"
 msgstr "Project · {0}"
 
-#. placeholder {0}: answer.missing?.directory ?? ''
 #. placeholder {0}: gone.directory
+#. placeholder {0}: listing.missing?.directory ?? ''
 #. placeholder {0}: missing.directory
 #: src/components/agent-vcs-diff-sheet.tsx
 #: src/components/agent-workbench.tsx
@@ -4514,6 +4553,7 @@ msgstr "Shift Tab, cycle mode"
 
 #. placeholder {0}: item.summary
 #. placeholder {0}: row.path
+#: src/components/change-tree-rows.tsx
 #: src/components/diff-rows.tsx
 #: src/components/pane-chat-blocks.tsx
 msgid "Show {0}"
@@ -4556,6 +4596,10 @@ msgstr "Show less"
 #: src/components/diff-rows.tsx
 msgid "Show more"
 msgstr "Show more"
+
+#: src/components/change-tree-rows.tsx
+msgid "Show more context"
+msgstr "Show more context"
 
 #: src/components/agent-model-sheet.tsx
 msgid "Show more models"
@@ -5297,6 +5341,10 @@ msgstr "Thinking…"
 msgid "This agent did not offer that answer."
 msgstr "This agent did not offer that answer"
 
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "This cannot be undone."
+msgstr "This cannot be undone"
+
 #: src/lib/attachments.ts
 msgid "This device has no camera available."
 msgstr "This device has no camera available"
@@ -5511,6 +5559,7 @@ msgstr "Tokens usage and cost"
 msgid "Too large to highlight — showing plain text."
 msgstr "Too large to highlight — showing plain text"
 
+#: src/components/agent-vcs-diff-sheet.tsx
 #: src/components/git-diff-view.tsx
 msgid "Too many changes to list. This is the start of them, not all of them."
 msgstr "Too many changes to list. This is the start of them, not all of them"
@@ -5583,6 +5632,10 @@ msgstr "Type it, or use your keyboard's dictation key"
 #: src/components/simfarm-stage.tsx
 msgid "Type on the simulator"
 msgstr "Type on the simulator"
+
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "Uncommitted changes"
+msgstr "Uncommitted changes"
 
 #: src/components/agent-revert-plate.tsx
 #: src/components/agent-workbench.tsx
@@ -5830,7 +5883,6 @@ msgstr "When an agent halts for confirmation, the prompt arrives as a push. Appr
 msgid "While you were away"
 msgstr "While you were away"
 
-#: src/components/agent-vcs-diff-sheet.tsx
 #: src/components/collaboration-notice.tsx
 #: src/i18n/labels.ts
 msgid "Working"

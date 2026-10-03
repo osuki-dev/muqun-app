@@ -62,7 +62,7 @@ msgstr "{0, plural, one {Изменён # файл} few {Изменено # фа
 msgid "{0, plural, one {# file} other {# files}}"
 msgstr "{0, plural, one {# файл} few {# файла} many {# файлов} other {# файла}}"
 
-#. placeholder {0}: diffs.length
+#. placeholder {0}: listing.changes.length
 #. placeholder {1}: totals.additions
 #. placeholder {2}: totals.deletions
 #: src/components/agent-vcs-diff-sheet.tsx
@@ -385,10 +385,12 @@ msgstr "Действуйте в этом терминале или отправ�
 msgid "Act on this terminal, or send its agent a prompt"
 msgstr "Действуйте в этом терминале или дайте задание его агенту"
 
+#. placeholder {0}: row.name
 #. placeholder {0}: sessionTitleOr(session, t`Untitled session`)
 #. placeholder {0}: worktreeDisplayName(directory)
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/agent-worktree-sheet.tsx
+#: src/components/change-tree-rows.tsx
 msgid "Actions for {0}"
 msgstr "Действия для {0}"
 
@@ -764,6 +766,7 @@ msgstr "Поведение"
 msgid "Below {minimumPercent}%, text is no longer guaranteed to stay readable"
 msgstr "Ниже {minimumPercent}% читаемость текста не гарантируется"
 
+#: src/components/change-tree-rows.tsx
 #: src/components/diff-rows.tsx
 msgid "Binary file"
 msgstr "Двоичный файл"
@@ -779,10 +782,6 @@ msgstr "Ждёт ответа"
 #: src/components/agent-workbench.tsx
 msgid "Blocked by agent safety"
 msgstr "Заблокировано защитой агента"
-
-#: src/components/agent-vcs-diff-sheet.tsx
-msgid "Branch"
-msgstr "Ветка"
 
 #: src/components/theme-link-import.tsx
 msgid "Branch and theme file came from the link. A branch can change later"
@@ -836,6 +835,7 @@ msgstr "Нужен доступ к камере"
 #: src/components/agent-composer.tsx
 #: src/components/agent-context-sheet.tsx
 #: src/components/agent-sessions-sheet.tsx
+#: src/components/agent-vcs-diff-sheet.tsx
 #: src/components/agent-workbench.tsx
 #: src/components/agent-worktree-sheet.tsx
 #: src/components/custom-theme-library.tsx
@@ -971,6 +971,10 @@ msgstr "Выберите вид главной и интерфейса. Цвет
 #: src/components/agent-workbench.tsx
 msgid "Choose project"
 msgstr "Выбрать проект"
+
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "Choose which changes to show"
+msgstr "Выбрать, какие изменения показывать"
 
 #: src/components/simfarm-stage.tsx
 msgid "Choose which simulator to show"
@@ -1120,10 +1124,6 @@ msgstr "Коммит"
 msgid "Commit & push"
 msgstr "Коммит и пуш"
 
-#: src/components/agent-vcs-diff-sheet.tsx
-msgid "Committed"
-msgstr "Закоммичено"
-
 #: src/components/settings-terminal.tsx
 msgid "Compact"
 msgstr "Компактно"
@@ -1149,6 +1149,10 @@ msgstr "Сжатие не удалось"
 #: src/components/agent-composer.tsx
 msgid "Compaction failed — tap to dismiss"
 msgstr "Сжатие не удалось — нажмите, чтобы скрыть"
+
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "Compared with {base}"
+msgstr "По сравнению с {base}"
 
 #: src/components/settings-storage.tsx
 msgid "Confirm clear cache"
@@ -1499,6 +1503,10 @@ msgstr "Не удалось удалить"
 msgid "Could not detach"
 msgstr "Не удалось отсоединить"
 
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "Could not discard changes to {name}."
+msgstr "Не удалось отменить изменения в {name}"
+
 #. placeholder {0}: problem.status
 #: src/components/settings-font-sheet.tsx
 msgid "Could not download: {0}"
@@ -1540,6 +1548,10 @@ msgstr "Не удалось загрузить модели"
 #: src/components/agent-workbench.tsx
 msgid "Could not load the session"
 msgstr "Не удалось загрузить сессию"
+
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "Could not load this file's changes."
+msgstr "Не удалось загрузить изменения этого файла"
 
 #: src/components/session-map.tsx
 msgid "Could not load what is running."
@@ -1810,9 +1822,14 @@ msgid "Defaults to theme.json at the repository root"
 msgstr "По умолчанию — theme.json в корне репозитория"
 
 #: src/components/agent-sessions-sheet.tsx
+#: src/components/agent-vcs-diff-sheet.tsx
 #: src/components/row-action-menu.tsx
 msgid "Delete"
 msgstr "Удалить"
+
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "Delete {discardName}?"
+msgstr "Удалить {discardName}?"
 
 #: src/app/commands.tsx
 msgid "Delete {name}"
@@ -1887,6 +1904,18 @@ msgstr "Направление"
 #: src/components/new-task-sheet.tsx
 msgid "Directory"
 msgstr "Каталог"
+
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "Discard"
+msgstr "Отменить"
+
+#: src/components/change-tree-rows.tsx
+msgid "Discard changes"
+msgstr "Отменить изменения"
+
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "Discard changes to {discardName}?"
+msgstr "Отменить изменения в {discardName}?"
 
 #. placeholder {0}: record.label
 #: src/components/ssh-terminal-workspace.tsx
@@ -2361,6 +2390,7 @@ msgstr "Скрыть"
 
 #. placeholder {0}: item.summary
 #. placeholder {0}: row.path
+#: src/components/change-tree-rows.tsx
 #: src/components/diff-rows.tsx
 #: src/components/pane-chat-blocks.tsx
 msgid "Hide {0}"
@@ -3055,6 +3085,10 @@ msgstr "На этом устройстве не найдена камера"
 msgid "No changes"
 msgstr "Без изменений"
 
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "No changes compared with {base}."
+msgstr "Нет изменений по сравнению с {base}"
+
 #: src/components/git-diff-view.tsx
 msgid "No changes. The working tree matches HEAD."
 msgstr "Изменений нет. Рабочее дерево совпадает с HEAD"
@@ -3166,6 +3200,7 @@ msgstr "В этой сессии пока нет задач"
 msgid "No terminal session is available on this server."
 msgstr "На этом сервере нет доступного сеанса терминала"
 
+#: src/components/change-tree-rows.tsx
 #: src/components/diff-rows.tsx
 msgid "No textual change"
 msgstr "Текст не изменился"
@@ -3613,6 +3648,10 @@ msgstr "Вставьте публичную ссылку на тему или UR
 msgid "Paste a URL…"
 msgstr "Вставить ссылку…"
 
+#: src/components/change-tree-rows.tsx
+msgid "Patch too long; showing the start of it."
+msgstr "Патч слишком длинный; показано начало"
+
 #: src/components/asset-viewer.tsx
 #: src/components/new-task-sheet.tsx
 msgid "Path"
@@ -3719,8 +3758,8 @@ msgstr "Проект"
 msgid "Project · {0}"
 msgstr "Проект · {0}"
 
-#. placeholder {0}: answer.missing?.directory ?? ''
 #. placeholder {0}: gone.directory
+#. placeholder {0}: listing.missing?.directory ?? ''
 #. placeholder {0}: missing.directory
 #: src/components/agent-vcs-diff-sheet.tsx
 #: src/components/agent-workbench.tsx
@@ -4514,6 +4553,7 @@ msgstr "Shift Tab, переключить режим"
 
 #. placeholder {0}: item.summary
 #. placeholder {0}: row.path
+#: src/components/change-tree-rows.tsx
 #: src/components/diff-rows.tsx
 #: src/components/pane-chat-blocks.tsx
 msgid "Show {0}"
@@ -4556,6 +4596,10 @@ msgstr "Показать меньше"
 #: src/components/diff-rows.tsx
 msgid "Show more"
 msgstr "Показать ещё"
+
+#: src/components/change-tree-rows.tsx
+msgid "Show more context"
+msgstr "Показать больше контекста"
 
 #: src/components/agent-model-sheet.tsx
 msgid "Show more models"
@@ -5297,6 +5341,10 @@ msgstr "Думает…"
 msgid "This agent did not offer that answer."
 msgstr "Этот агент не предлагал такой ответ"
 
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "This cannot be undone."
+msgstr "Это действие нельзя отменить"
+
 #: src/lib/attachments.ts
 msgid "This device has no camera available."
 msgstr "На этом устройстве нет доступной камеры"
@@ -5511,6 +5559,7 @@ msgstr "Использование токенов и стоимость"
 msgid "Too large to highlight — showing plain text."
 msgstr "Слишком большой для подсветки — показан обычным текстом"
 
+#: src/components/agent-vcs-diff-sheet.tsx
 #: src/components/git-diff-view.tsx
 msgid "Too many changes to list. This is the start of them, not all of them."
 msgstr "Слишком много изменений для списка. Это их начало, а не всё"
@@ -5583,6 +5632,10 @@ msgstr "Наберите его или используйте клавишу д�
 #: src/components/simfarm-stage.tsx
 msgid "Type on the simulator"
 msgstr "Ввод на симуляторе"
+
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "Uncommitted changes"
+msgstr "Незафиксированные изменения"
 
 #: src/components/agent-revert-plate.tsx
 #: src/components/agent-workbench.tsx
@@ -5830,7 +5883,6 @@ msgstr "Когда агенту требуется подтверждение, �
 msgid "While you were away"
 msgstr "Пока вас не было"
 
-#: src/components/agent-vcs-diff-sheet.tsx
 #: src/components/collaboration-notice.tsx
 #: src/i18n/labels.ts
 msgid "Working"
