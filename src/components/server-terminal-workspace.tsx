@@ -283,6 +283,9 @@ import {
   type HomeTargetAvailability,
 } from '@/lib/home-target-availability';
 import { useServerCapabilities } from '@/stores/server-capabilities';
+import { useAgents } from '@/stores/agents';
+import { useAgentsDiscoveryRefresh } from '@/hooks/use-agent-features';
+import { allowChord, vocabularyForSession } from '@/lib/key-vocabulary';
 import { useServerReachability } from '@/stores/server-reachability';
 import { useServerSession } from '@/stores/server-session';
 import { useSshHostsStore } from '@/stores/ssh-hosts';
@@ -2288,6 +2291,14 @@ export function ServerTerminalWorkspace({
     );
   }, [fullScreenPane, output, selectedPaneColumns]);
 
+  // What this pane's backend says it can deliver, from the discovery mirror.
+  // Asked again whenever the screen connects, so a tmux whose extended-keys
+  // option changed is seen on the next visit. Undefined on a gateway older
+  // than the field, which keeps the SSH encoder as the judge.
+  useAgentsDiscoveryRefresh(serverId, ready && connection.phase === 'connected');
+  const terminalPlane = useAgents((state) => state.index.servers[serverId]?.terminal ?? null);
+  const keyVocabulary = vocabularyForSession(terminalPlane, data.sessionId);
+
   // The row follows what the pane is actually running: an agent's own actions,
   // an editor's motions, or shell line editing.
   // Ordered by how often these keys have actually been pressed, for this server
@@ -2301,8 +2312,16 @@ export function ServerTerminalWorkspace({
     // is the one case that does not go through the usual resolve-then-merge
     // below: the usage-ordered row is deliberately not used here either, so
     // Esc stays first no matter how often the other keys have been pressed.
+    // The gateway lists a key like `⌃↵` whatever the backend can deliver; a key
+    // this pane cannot take is left off the row rather than drawn as a tap that
+    // fails. Only with a vocabulary: without one, nothing was filtered before.
+    const deliverable = (item: TerminalKey) =>
+      !keyVocabulary ||
+      item.text !== undefined ||
+      (item.keys ?? [item.key]).every((key) => allowChord(key, keyVocabulary));
     if (fullScreenPane && nvimMode === 'insert') {
       return (shortcuts ? terminalKeysFromGateway(shortcuts.keys) : [])
+        .filter(deliverable)
         .filter((item) => ['esc', 'enter', 'tab', 'ctrl+c', 'backspace'].includes(item.key))
         .map((item) => (item.key === 'esc' ? { ...item, emphasis: true } : item));
     }
@@ -2322,8 +2341,12 @@ export function ServerTerminalWorkspace({
           : withCommonTerminalCombinations(resolved)
         : resolved;
     const scope = shortcuts ? usageScope(serverId, shortcuts.profile, 'keys') : null;
-    return orderByUsage(base, scope ? loadUsage()[scope] : undefined, (item) => item.key);
-  }, [fullScreenPane, nvimMode, serverId, shortcuts]);
+    return orderByUsage(
+      base.filter(deliverable),
+      scope ? loadUsage()[scope] : undefined,
+      (item) => item.key
+    );
+  }, [fullScreenPane, keyVocabulary, nvimMode, serverId, shortcuts]);
   const keyScope = shortcuts ? usageScope(serverId, shortcuts.profile, 'keys') : null;
   // Typing "/" in an agent pane offers what that agent actually accepts.
   //
@@ -4677,6 +4700,8 @@ export function ServerTerminalWorkspace({
           onKey={typeKey}
           onClose={() => setKeyboardMode(false)}
           shortcuts={keyboardShortcuts}
+          vocabulary={keyVocabulary}
+          wide={isPadLayout}
         />
       ) : null}
       {dock.keyRow ? (
@@ -5480,6 +5505,8 @@ export function ServerTerminalWorkspace({
                             onKey={typeKey}
                             onClose={() => setKeyboardMode(false)}
                             shortcuts={keyboardShortcuts}
+                            vocabulary={keyVocabulary}
+                            wide={isPadLayout}
                           />
                         </Animated.View>
                       ) : null}

@@ -2280,6 +2280,10 @@ msgstr "Thường dùng"
 msgid "Front camera. Hold the QR up to the screen"
 msgstr "Camera trước. Giơ mã QR lên trước màn hình"
 
+#: src/components/virtual-keyboard.tsx
+msgid "Function keys"
+msgstr "Phím chức năng"
+
 #: src/app/explore.tsx
 msgid "Gateway"
 msgstr "Gateway"
@@ -5506,6 +5510,10 @@ msgstr "Phiên này"
 #: src/components/agent-workbench.tsx
 msgid "This session has no message to roll back to."
 msgstr "Phiên này không có tin nhắn nào để quay lại"
+
+#: src/components/virtual-keyboard.tsx
+msgid "This terminal can't send {chord}"
+msgstr "Terminal này không gửi được {chord}"
 
 #: src/components/terminal-boundary.tsx
 msgid "This terminal could not be drawn."
