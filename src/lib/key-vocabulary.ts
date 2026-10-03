@@ -109,12 +109,16 @@ export function heldBackModifiers(
   vocabulary: KeyboardVocabulary | undefined
 ): string | null {
   if (!vocabulary || vocabulary.extended) return null;
+  // Shift on its own is how a phone types a capital, so it never raises the
+  // line by itself: its special-key chords stay muted and the press explains
+  // them. It is named only beside Ctrl or Alt.
+  if (!modifiers.ctrl && !modifiers.alt) return null;
   const names = [
     modifiers.ctrl ? 'Ctrl' : '',
     modifiers.alt ? 'Alt' : '',
     modifiers.shift ? 'Shift' : '',
   ].filter(Boolean);
-  return names.length > 0 ? names.join('+') : null;
+  return names.join('+');
 }
 
 /** The slice of a terminal plane this needs, so a mirror and a live answer both fit. */
