@@ -72,6 +72,7 @@ export function CustomThemePreview({
               gap: 12,
               padding: 16,
               borderRadius: profile.chrome.card,
+              // Opacity audit: floor -- the previewed screen's base; its surfaces use `background()`.
               backgroundColor: colors.background,
               overflow: 'hidden',
             }}>

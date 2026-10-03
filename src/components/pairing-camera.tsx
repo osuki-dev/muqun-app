@@ -304,6 +304,7 @@ export default function PairingCamera({
             camera opens by revealing an image rather than by cutting a black
             hole in the page and filling it in afterwards. */}
       {previewStarted ? null : (
+        // Opacity audit: safety -- the camera shutter stays opaque over the preview.
         <Animated.View
           exiting={fadeOut('short')}
           style={[styles.state, { backgroundColor: theme.colors.surfaceRaised }]}>

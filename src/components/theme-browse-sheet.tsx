@@ -21,7 +21,7 @@ import { PressableScale } from '@/components/pressable-scale';
 import { ListLoadMoreFooter } from '@/components/list-load-more-footer';
 import { ThemeImportProgress } from '@/components/theme-import-progress';
 import { Button } from '@/components/themed-button';
-import { useSurfaceBackgroundOpacity } from '@/hooks/use-surface-background';
+import { useSurfaceBackground, useSurfaceBackgroundOpacity } from '@/hooks/use-surface-background';
 import { formatAssetSize } from '@/lib/asset-display';
 import { isDemoActive } from '@/lib/demo-gateway';
 import { demoThemeIndex } from '@/theme/demo-gallery';
@@ -114,6 +114,7 @@ export function ThemeBrowseSheet({
   const { t } = useLingui();
   const insets = useSafeAreaInsets();
   const theme = useThemeTokens();
+  const surfaceBackground = useSurfaceBackground();
   useRenderTally('ThemeBrowseSheet');
   const installed = useThemeLibrary((state) => state.library.themes);
 
@@ -527,7 +528,7 @@ export function ThemeBrowseSheet({
                   isAllSelected
                     ? { backgroundColor: theme.colors.primary }
                     : {
-                        backgroundColor: theme.colors.surfaceRaised,
+                        backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
                         borderColor: theme.colors.border,
                       },
                 ]}>
@@ -552,7 +553,7 @@ export function ThemeBrowseSheet({
                       selected
                         ? { backgroundColor: theme.colors.primary }
                         : {
-                            backgroundColor: theme.colors.surfaceRaised,
+                            backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
                             borderColor: theme.colors.border,
                           },
                     ]}>
@@ -785,6 +786,7 @@ function ThemeBrowseRow({
           onPress={onPress}
           style={styles.row}
           leading={
+            // Opacity audit: decorative -- the cover's placeholder matte, artwork rather than a surface.
             <View style={[styles.cover, { backgroundColor: theme.colors.surfaceRaised }]}>
               {/* The placeholder is always underneath, so the image's own fade
                   is a cross-fade onto a surface that is already the right
@@ -792,6 +794,7 @@ function ThemeBrowseRow({
                   index carries no palette of its own, so the two swatches are
                   the sheet's rather than the theme's. */}
               <View accessible={false} style={[StyleSheet.absoluteFill, styles.placeholder]}>
+                {/* Opacity audit: decorative -- placeholder swatch, artwork not surface. */}
                 <View style={[styles.swatch, { backgroundColor: theme.colors.background }]} />
                 <View style={[styles.swatch, { backgroundColor: theme.colors.primary }]} />
               </View>

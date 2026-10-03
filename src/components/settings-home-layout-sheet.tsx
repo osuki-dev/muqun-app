@@ -125,6 +125,7 @@ function HomeLayoutOption({
   );
 }
 
+// Opacity audit: decorative -- a schematic of the layout, not surfaces that carry content.
 function HomeLayoutPreview({ layout }: { layout: HomeLayout }) {
   const { colors } = useThemeTokens();
   const profile = resolveAppearanceProfile(layout);

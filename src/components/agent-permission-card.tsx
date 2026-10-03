@@ -188,7 +188,7 @@ export const AgentPermissionCard = memo(function AgentPermissionCard({
         style={[
           styles.body,
           { borderRadius: profile.chrome.surface },
-          { backgroundColor: withAlpha(theme.colors.surface, 0.6) },
+          { backgroundColor: surfaceBackground(withAlpha(theme.colors.surface, 0.6)) },
         ]}>
         {subject ? (
           <Text selectable style={[styles.subject, { color: theme.colors.text, fontFamily: mono }]}>
