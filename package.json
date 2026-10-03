@@ -54,7 +54,6 @@
     "@osuki-dev/react-native-splash": "0.4.0",
     "@osuki-dev/react-native-ssh": "0.3.0",
     "@osuki-dev/ui": "^1.1.0",
-    "@shopify/react-native-skia": "2.14.0",
     "expo": "~57.0.26",
     "expo-alternate-app-icons": "^8.0.0",
     "expo-application": "~57.0.3",
@@ -108,6 +107,7 @@
     "react-native-reanimated": "4.7.1",
     "react-native-safe-area-context": "~5.10.1",
     "react-native-screens": "4.28.0",
+    "react-native-skia": "3.0.1",
     "react-native-svg": "15.15.5",
     "react-native-vision-camera": "^5.2.3",
     "react-native-vision-camera-barcode-scanner": "^5.2.3",
@@ -165,17 +165,14 @@
         "react-native-svg",
         "react-native-webview",
         "react-native-worklets",
-        "@shopify/react-native-skia",
+        "react-native-skia",
         "react-native-screens",
         "typescript"
       ]
     }
   },
-  "patchedDependencies": {
-    "@shopify/react-native-skia@2.12.0": "patches/@shopify%2Freact-native-skia@2.12.0.patch"
-  },
   "trustedDependencies": [
-    "@shopify/react-native-skia",
+    "react-native-skia",
     "react-native-enriched-markdown"
   ]
 }
