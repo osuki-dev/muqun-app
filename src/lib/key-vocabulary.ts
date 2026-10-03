@@ -81,6 +81,42 @@ export function allowChord(key: string, vocabulary: KeyboardVocabulary | undefin
   return known && vocabulary.extended;
 }
 
+/**
+ * The backend's vocabulary narrowed by what one pane says right now.
+ *
+ * `extended` in discovery is the backend's capability (tmux's `extended-keys`
+ * option); whether a given pane can take `ctrl+enter` also depends on the
+ * program in it having asked for extended keys, which the pane-shortcuts
+ * answer carries as `keyboard.extended`. Both must hold. A pane answer without
+ * the field (an older gateway, or none fetched yet) narrows nothing.
+ */
+export function paneVocabulary(
+  vocabulary: KeyboardVocabulary | undefined,
+  paneExtended: boolean | undefined
+): KeyboardVocabulary | undefined {
+  if (!vocabulary || paneExtended !== false || !vocabulary.extended) return vocabulary;
+  return { ...vocabulary, extended: false };
+}
+
+/**
+ * The armed modifiers that the pane cannot combine with special keys right
+ * now, spelled for the hint (`Ctrl`, `Ctrl+Alt`), or `null` when nothing armed
+ * is held back. Only a vocabulary that says `extended: false` holds anything
+ * back this way; without a vocabulary the SSH encoder decides key by key.
+ */
+export function heldBackModifiers(
+  modifiers: { ctrl: boolean; alt: boolean; shift: boolean },
+  vocabulary: KeyboardVocabulary | undefined
+): string | null {
+  if (!vocabulary || vocabulary.extended) return null;
+  const names = [
+    modifiers.ctrl ? 'Ctrl' : '',
+    modifiers.alt ? 'Alt' : '',
+    modifiers.shift ? 'Shift' : '',
+  ].filter(Boolean);
+  return names.length > 0 ? names.join('+') : null;
+}
+
 /** The slice of a terminal plane this needs, so a mirror and a live answer both fit. */
 type TerminalBackends = {
   activeBackend?: string;

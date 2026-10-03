@@ -3,7 +3,9 @@ import { describe, expect, test } from 'bun:test';
 import {
   allowChord,
   chordGlyph,
+  heldBackModifiers,
   isKeyUnsupportedError,
+  paneVocabulary,
   parseKeyboardVocabulary,
   vocabularyForSession,
   type KeyboardVocabulary,
@@ -99,7 +101,10 @@ describe('allowChord', () => {
     expect(allowChord('ctrl+f13', extended)).toBe(false);
     expect(allowChord('escape', extended)).toBe(false);
     expect(allowChord('ctrl+', extended)).toBe(false);
-    const noHome = { ...extended, bases: BASES.filter((base) => base !== 'home') };
+    const noHome = {
+      ...extended,
+      bases: BASES.filter((base) => base !== 'home'),
+    };
     expect(allowChord('home', noHome)).toBe(false);
   });
 
@@ -114,7 +119,12 @@ describe('the vocabulary on the wire', () => {
     sessionId: 'default',
     kind: 'tmux',
     connected: true,
-    keyboard: { version: 1, bases: BASES, modifiers: ['ctrl', 'alt', 'shift'], extended: true },
+    keyboard: {
+      version: 1,
+      bases: BASES,
+      modifiers: ['ctrl', 'alt', 'shift'],
+      extended: true,
+    },
   };
 
   test('parses, and anything malformed is absent rather than empty', () => {
@@ -185,5 +195,66 @@ describe('isKeyUnsupportedError', () => {
   test('ignores transport failures and non-errors', () => {
     expect(isKeyUnsupportedError(new Error('Network request failed'))).toBe(false);
     expect(isKeyUnsupportedError(undefined)).toBe(false);
+  });
+});
+
+describe('paneVocabulary: the backend and the pane both have to take extended keys', () => {
+  test('a pane that has not asked for extended keys narrows an extended backend', () => {
+    const combined = paneVocabulary(extended, false);
+    expect(combined?.extended).toBe(false);
+    expect(combined?.bases).toEqual(extended.bases);
+    expect(combined?.modifiers).toEqual(extended.modifiers);
+    expect(allowChord('ctrl+enter', combined)).toBe(false);
+    expect(allowChord('shift+enter', combined)).toBe(false);
+    expect(allowChord('alt+left', combined)).toBe(false);
+    // The classic set never depended on it.
+    expect(allowChord('ctrl+c', combined)).toBe(true);
+    expect(allowChord('ctrl+[', combined)).toBe(true);
+    expect(allowChord('ctrl+space', combined)).toBe(true);
+    expect(allowChord('shift+tab', combined)).toBe(true);
+    expect(allowChord('enter', combined)).toBe(true);
+  });
+
+  test('a pane that has asked, or an answer without the field, changes nothing', () => {
+    expect(paneVocabulary(extended, true)).toBe(extended);
+    expect(paneVocabulary(extended, undefined)).toBe(extended);
+    expect(allowChord('ctrl+enter', paneVocabulary(extended, undefined))).toBe(true);
+  });
+
+  test('a pane cannot widen a backend that has no extended keys', () => {
+    expect(paneVocabulary(classicOnly, true)).toBe(classicOnly);
+    expect(allowChord('ctrl+enter', paneVocabulary(classicOnly, true))).toBe(false);
+  });
+
+  test('no backend vocabulary stays none, so the SSH encoder still decides', () => {
+    expect(paneVocabulary(undefined, false)).toBeUndefined();
+    expect(paneVocabulary(undefined, true)).toBeUndefined();
+  });
+
+  test('a row sequence is deliverable when each of its keys is', () => {
+    const narrowed = paneVocabulary(extended, false);
+    // Claude Code's backslash-Enter needs nothing extended.
+    expect(['\\', 'enter'].every((key) => allowChord(key, narrowed))).toBe(true);
+    expect(['esc', 'esc'].every((key) => allowChord(key, narrowed))).toBe(true);
+    expect(['\\', 'ctrl+enter'].every((key) => allowChord(key, narrowed))).toBe(false);
+  });
+});
+
+describe('heldBackModifiers: the hint while a modifier is armed', () => {
+  const none = { ctrl: false, alt: false, shift: false };
+
+  test('names the armed modifiers when the pane takes no extended keys', () => {
+    expect(heldBackModifiers({ ...none, ctrl: true }, classicOnly)).toBe('Ctrl');
+    expect(heldBackModifiers({ ...none, alt: true }, classicOnly)).toBe('Alt');
+    expect(heldBackModifiers({ ...none, shift: true }, classicOnly)).toBe('Shift');
+    expect(heldBackModifiers({ ctrl: true, alt: false, shift: true }, classicOnly)).toBe(
+      'Ctrl+Shift'
+    );
+  });
+
+  test('nothing armed, an extended pane, or no vocabulary: no hint', () => {
+    expect(heldBackModifiers(none, classicOnly)).toBeNull();
+    expect(heldBackModifiers({ ...none, ctrl: true }, extended)).toBeNull();
+    expect(heldBackModifiers({ ...none, ctrl: true }, undefined)).toBeNull();
   });
 });

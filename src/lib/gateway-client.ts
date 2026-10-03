@@ -673,6 +673,12 @@ export interface PaneShortcuts {
   /** Optional multi-key and text actions; older Gateways omit this. */
   keyActions?: ShortcutKey[];
   commands: SlashCommand[];
+  /**
+   * What this pane can take right now: `extended` is false when the program in
+   * a tmux pane has not asked for extended keys, so `ctrl+enter` and the like
+   * cannot reach it. Older Gateways omit this, which narrows nothing.
+   */
+  keyboard?: { extended: boolean };
 }
 
 export interface PaneOutputResponse {
@@ -2840,8 +2846,19 @@ export async function loadPaneShortcuts(sessionId: string, paneId: string): Prom
     version: typeof value?.version === 'number' ? value.version : 0,
     profile: typeof value?.profile === 'string' ? value.profile : 'shell',
     keys: Array.isArray(value?.keys) ? value.keys.filter(isShortcutKey) : [],
+    ...(Array.isArray(value?.keyActions)
+      ? { keyActions: value.keyActions.filter(isShortcutKey) }
+      : {}),
     commands: Array.isArray(value?.commands) ? value.commands.filter(isSlashCommand) : [],
+    ...(typeof value?.keyboard?.extended === 'boolean'
+      ? { keyboard: { extended: value.keyboard.extended } }
+      : {}),
   };
+}
+
+/** Two shortcut answers say the same thing (the fields are plain JSON, in wire order). */
+export function samePaneShortcuts(a: PaneShortcuts | null, b: PaneShortcuts | null): boolean {
+  return a === b || (a !== null && b !== null && JSON.stringify(a) === JSON.stringify(b));
 }
 
 function isShortcutKey(value: unknown): value is ShortcutKey {
