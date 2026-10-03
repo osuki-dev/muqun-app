@@ -4,9 +4,12 @@ import {
   buildChangeTree,
   changeTreeRows,
   defaultCollapsedDirs,
+  listKeyOfDiffRow,
   nextDiffContext,
+  stickyDiffRowsOf,
   visibleChangeTree,
   type ChangeTreeNode,
+  type DiffListItem,
 } from '../change-tree';
 import { patchStateFromText } from '../agent-diff-rows';
 import type { GitFileChange } from '../git-diff';
@@ -220,5 +223,58 @@ describe('changeTreeRows unchanged', () => {
       unchanged: new Set(['a.ts']),
     });
     expect(rows[0]).toMatchObject({ type: 'treeFile', unchanged: true, note: 'empty' });
+  });
+});
+
+describe('stickyDiffRowsOf', () => {
+  const file = { path: 'a.txt', status: 'modified', added: 1, removed: 0 } as GitFileChange;
+  const treeFile = (key: string, expanded: boolean): DiffListItem => ({
+    type: 'treeFile',
+    key,
+    path: key,
+    name: key,
+    depth: 0,
+    file,
+    expanded,
+    loading: false,
+    note: null,
+    error: null,
+    truncated: false,
+    unchanged: false,
+  });
+  const line = (key: string): DiffListItem => ({
+    type: 'line',
+    key,
+    path: 'a',
+    kind: 'added',
+    text: 'x',
+    oldLine: null,
+    newLine: 1,
+    noNewline: false,
+  });
+
+  test('pins nothing while no patch is open', () => {
+    const rows = [treeFile('f:a', false), treeFile('f:b', false)];
+    expect(stickyDiffRowsOf(rows).indices).toEqual([]);
+  });
+
+  test('pins only the open files in the tree', () => {
+    const rows = [
+      treeFile('f:a', false),
+      treeFile('f:b', true),
+      line('l:1'),
+      treeFile('f:c', false),
+    ];
+    const sticky = stickyDiffRowsOf(rows);
+    expect(sticky.indices).toEqual([1]);
+    expect([...sticky.keys]).toEqual(['f:b']);
+  });
+
+  test('a header that becomes sticky is known to the list by a new key', () => {
+    const open = treeFile('f:b', true);
+    const sticky = stickyDiffRowsOf([open, line('l:1')]);
+    expect(listKeyOfDiffRow(open, sticky.keys)).not.toBe(open.key);
+    expect(listKeyOfDiffRow(line('l:1'), sticky.keys)).toBe('l:1');
+    expect(listKeyOfDiffRow(open, stickyDiffRowsOf([open]).keys)).toBe(open.key);
   });
 });

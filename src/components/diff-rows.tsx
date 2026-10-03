@@ -4,6 +4,7 @@ import {
   memo,
   useCallback,
   useContext,
+  useEffect,
   useLayoutEffect,
   useMemo,
   useRef,
@@ -34,7 +35,12 @@ import type { PaneChatColors } from '@/components/pane-chat-blocks';
 import { useMonoFontFamily } from '@/hooks/use-user-fonts';
 import { gitFileStatusWord } from '@/i18n/labels';
 import { sideOfFile, type GitDiffRow } from '@/lib/git-diff';
-import type { DiffListItem } from '@/lib/change-tree';
+import {
+  listKeyOfDiffRow,
+  stickyDiffRowsOf,
+  type DiffListItem,
+  type StickyDiffRows,
+} from '@/lib/change-tree';
 import {
   ChangeTreeActionsRowView,
   ChangeTreeContextRowView,
@@ -166,10 +172,6 @@ const DiffLayoutContext = createContext<DiffLayout>({
   numberWidth: 12,
   numberColumns: 2,
 });
-
-export function keyOfDiffRow(row: DiffListItem): string {
-  return row.key;
-}
 
 export function typeOfDiffRow(row: DiffListItem): DiffListItem['type'] {
   return row.type;
@@ -659,6 +661,50 @@ function useResetSizesOnWrapChange(
   }, [columns, listRef]);
 }
 
+/**
+ * The sticky rows to hand LegendList: `next`, one frame after the rows it was
+ * computed from have been committed.
+ *
+ * LegendList (3.6) drives its sticky headers from a native-driver
+ * `Animated.event` on the scroll view, rebuilt whenever `stickyHeaderIndices`
+ * changes. Collapsing a long patch shrinks the content and the scroll view
+ * clamps its offset in the same commit, and that one scroll event lands while
+ * the old native binding is detached and the new one not yet attached: the
+ * JS listener sees offset 0, the animated scroll value keeps the old offset,
+ * and a pinned header is left translated to where that offset put it. Letting
+ * the rows commit first means the clamp goes through the binding that is
+ * already there; the binding is swapped a frame later, when nothing scrolls.
+ */
+function useStickyRowsAfterCommit(next: StickyDiffRows): AppliedStickyRows {
+  const [applied, setApplied] = useState<AppliedStickyRows>(() => ({ ...next, version: 0 }));
+  useEffect(() => {
+    if (sameStickyRows(applied, next)) return;
+    const frame = requestAnimationFrame(() =>
+      setApplied((current) => ({ ...next, version: current.version + 1 }))
+    );
+    return () => cancelAnimationFrame(frame);
+  }, [applied, next]);
+  return applied;
+}
+
+function sameStickyRows(a: StickyDiffRows, b: StickyDiffRows): boolean {
+  return (
+    a.indices.length === b.indices.length &&
+    a.indices.every((index, at) => index === b.indices[at]) &&
+    a.keys.size === b.keys.size &&
+    [...a.keys].every((key) => b.keys.has(key))
+  );
+}
+
+/**
+ * Sticky rows as applied, with a version that changes with them: the rows'
+ * keys change with stickiness, and LegendList re-reads keys only when told its
+ * data changed.
+ */
+interface AppliedStickyRows extends StickyDiffRows {
+  version: number;
+}
+
 export interface DiffRowListProps {
   rows: readonly DiffListItem[];
   colors: PaneChatColors;
@@ -711,20 +757,13 @@ export function DiffRowList({
     [layout]
   );
 
-  const stickyIndices = useMemo(() => {
-    // A collapsed file list has no patch to label. Treating every entry as a
-    // sticky header drives header handoffs continuously during a plain scroll.
-    if (!rows.some((row) => row.type === 'hunk' || row.type === 'line' || row.type === 'more')) {
-      return [];
-    }
-    const indices: number[] = [];
-    for (let index = 0; index < rows.length; index += 1) {
-      const row = rows[index];
-      // In the tree only an open file labels the code under it.
-      if (row.type === 'file' || (row.type === 'treeFile' && row.expanded)) indices.push(index);
-    }
-    return indices;
-  }, [rows]);
+  const sticky = useStickyRowsAfterCommit(useMemo(() => stickyDiffRowsOf(rows), [rows]));
+  // See `listKeyOfDiffRow`: a header's key changes as it becomes sticky, so a
+  // header already on screen is moved into a sticky container straight away.
+  const keyOfListRow = useCallback(
+    (row: DiffListItem) => listKeyOfDiffRow(row, sticky.keys),
+    [sticky]
+  );
 
   const renderRow = useCallback(
     ({ item, index }: LegendListRenderItemProps<DiffListItem>) => (
@@ -750,7 +789,8 @@ export function DiffRowList({
         nestedScrollEnabled
         ref={ref}
         data={rows as DiffListItem[]}
-        keyExtractor={keyOfDiffRow}
+        keyExtractor={keyOfListRow}
+        dataVersion={sticky.version}
         renderItem={renderRow}
         // Code rows have exact, computed geometry; file headers are measured so
         // the initial container pool uses the short-row allocation hint.
@@ -768,7 +808,7 @@ export function DiffRowList({
         // Use the core list's native Animated scroll view and sticky engine
         // together. The Reanimated adapter passes web-only hook dependencies
         // on native and logs on every recycled header render.
-        stickyHeaderIndices={stickyIndices}
+        stickyHeaderIndices={sticky.indices}
         onLayout={onViewportLayout}
         ListEmptyComponent={<View style={styles.state}>{fallback}</View>}
         style={[styles.scroller, { backgroundColor: surfaceFill }]}

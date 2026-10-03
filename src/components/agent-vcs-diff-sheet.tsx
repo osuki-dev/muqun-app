@@ -604,7 +604,10 @@ export const AgentVcsDiffSheet = memo(function AgentVcsDiffSheet({
           rows={rows}
           colors={colors}
           gutterFill={surfaceBackground(theme.colors.surface)}
-          headerFill={surfaceBackground(theme.colors.surface)}
+          // Opaque, not through the artwork-opacity slider: an open file's
+          // header is pinned over its own patch, and a see-through band shows
+          // the code scrolling behind the file name.
+          headerFill={theme.colors.surface}
           surfaceFill="transparent"
           // There is no index to attribute an agent's edits to, so there is no
           // staged/unstaged mark to show either.
