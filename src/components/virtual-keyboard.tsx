@@ -26,7 +26,7 @@ import { useMonoFontFamily } from '@/hooks/use-user-fonts';
 import { withAlpha } from '@/lib/color';
 import { feedback } from '@/lib/feedback';
 import { timing } from '@/lib/motion';
-import { chordGlyph, type KeyboardVocabulary } from '@/lib/key-vocabulary';
+import { chordGlyph, heldBackModifiers, type KeyboardVocabulary } from '@/lib/key-vocabulary';
 import {
   changeKeyboardLayout,
   keyboardChordName,
@@ -97,6 +97,13 @@ import {
  * encoder decides as it always has. A key that cannot be delivered in the
  * current modifier state is drawn muted, never hidden, so nothing moves under
  * a hand; pressing it says so for two seconds instead of doing nothing.
+ *
+ * One case is known before any press: a pane that is not taking extended keys
+ * (`vocabulary.extended === false`, the backend's and the pane's answer
+ * combined) cannot receive a modifier on a special key. While a modifier is
+ * armed there, the keys it would spoil are disabled outright -- a shown key
+ * that fails is not offered -- and the hint stays up for as long as the
+ * modifier does, saying why.
  */
 const LETTER_ROWS = [
   ['q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p'],
@@ -311,15 +318,26 @@ export function VirtualKeyboard({
   // Laid over the keyboard's foot rather than added under it: a row that
   // appeared and went would move every key under the finger that caused it.
   const chord = refused ? chordGlyph(refused.chord) : '';
-  const refusedHint = refused ? (
+  // The armed modifiers this pane holds back, while they are armed: those keys
+  // are disabled rather than muted, and this is the line that says why.
+  const modifierKeys = heldBackModifiers(modifiers, vocabulary);
+  const hintText = refused
+    ? t`This terminal can't send ${chord}`
+    : modifierKeys
+      ? t`${modifierKeys} combinations need the program in this terminal to enable extended keys`
+      : null;
+  const refusedHint = hintText ? (
     <View pointerEvents="none" style={styles.hintWrap}>
       <View style={[styles.hint, { backgroundColor: surfaceBackground(theme.colors.background) }]}>
-        <Text variant="caption" color={keyText}>
-          {t`This terminal can't send ${chord}`}
+        <Text variant="caption" color={keyText} style={styles.hintText}>
+          {hintText}
         </Text>
       </View>
     </View>
   ) : null;
+  /** A muted key is out of reach, not merely quiet, while the hint explains it. */
+  const keyDisabled = (muted: boolean) => disabled || (muted && modifierKeys !== null);
+  const refusedInput = (value: string, kind: 'character' | 'key') => inputFor(value, kind) === null;
 
   if (wide) {
     return (
@@ -337,6 +355,7 @@ export function VirtualKeyboard({
                     item={item}
                     disabled={disabled}
                     muted={!wideKeyEnabled(item, modifiers, vocabulary)}
+                    heldBack={modifierKeys !== null}
                     held={item.kind === 'modifier' ? modifierStates[item.value] : undefined}
                     shift={modifiers.shift}
                     functionStrip={functionStrip}
@@ -379,7 +398,8 @@ export function VirtualKeyboard({
           label="tab"
           color={keyText}
           fill={fnFill}
-          disabled={disabled}
+          disabled={keyDisabled(refusedInput('tab', 'key'))}
+          muted={refusedInput('tab', 'key')}
           onPress={() => pressInput('tab', 'key')}
         />
         {/* Spelled, not `⌃`. Its two neighbours are words, and the glyph is a
@@ -441,13 +461,13 @@ export function VirtualKeyboard({
                 key={char}
                 testID={`virtual-key-${char}`}
                 accessibilityLabel={!symbols && shift ? char.toUpperCase() : char}
-                disabled={disabled}
+                disabled={keyDisabled(refusedInput(char, 'character'))}
                 onPress={() => pressInput(char, 'character')}
                 style={[
                   styles.key,
                   styles.unitKey,
                   { backgroundColor: keyFill },
-                  inputFor(char, 'character') === null && styles.muted,
+                  refusedInput(char, 'character') && styles.muted,
                 ]}>
                 {({ pressed }) => (
                   <Text
@@ -463,9 +483,14 @@ export function VirtualKeyboard({
             {last ? (
               <VirtualKey
                 accessibilityLabel={t`Backspace`}
-                disabled={disabled}
+                disabled={keyDisabled(refusedInput('backspace', 'key'))}
                 onPress={() => pressInput('backspace', 'key')}
-                style={[styles.key, styles.shiftKey, { backgroundColor: keyFill }]}>
+                style={[
+                  styles.key,
+                  styles.shiftKey,
+                  { backgroundColor: keyFill },
+                  refusedInput('backspace', 'key') && styles.muted,
+                ]}>
                 {({ pressed }) => <Delete size={18} color={pressed ? activeText : keyText} />}
               </VirtualKey>
             ) : null}
@@ -493,9 +518,14 @@ export function VirtualKeyboard({
         </VirtualKey>
         <VirtualKey
           accessibilityLabel={t`Space`}
-          disabled={disabled}
+          disabled={keyDisabled(refusedInput(' ', 'character'))}
           onPress={() => pressInput(' ', 'character')}
-          style={[styles.key, styles.spaceKey, { backgroundColor: keyFill }]}>
+          style={[
+            styles.key,
+            styles.spaceKey,
+            { backgroundColor: keyFill },
+            refusedInput(' ', 'character') && styles.muted,
+          ]}>
           {({ pressed }) => (
             <Text
               variant="caption"
@@ -513,14 +543,14 @@ export function VirtualKeyboard({
             <VirtualKey
               key={arrow.key}
               accessibilityLabel={_(arrow.accessibilityLabel)}
-              disabled={disabled}
+              disabled={keyDisabled(refusedInput(arrow.key, 'key'))}
               hitSlop={{ top: 6, bottom: 6 }}
               onPress={() => pressInput(arrow.key, 'key')}
               style={[
                 styles.key,
                 styles.unitKey,
                 { backgroundColor: fnFill },
-                inputFor(arrow.key, 'key') === null && styles.muted,
+                refusedInput(arrow.key, 'key') && styles.muted,
               ]}>
               {({ pressed }) => (
                 <Text
@@ -535,13 +565,13 @@ export function VirtualKeyboard({
         </View>
         <VirtualKey
           accessibilityLabel={t`Return`}
-          disabled={disabled}
+          disabled={keyDisabled(refusedInput('enter', 'key'))}
           onPress={() => pressInput('enter', 'key')}
           style={[
             styles.key,
             styles.returnKey,
             { backgroundColor: keyFill },
-            inputFor('enter', 'key') === null && styles.muted,
+            refusedInput('enter', 'key') && styles.muted,
           ]}>
           {({ pressed }) => (
             <Text variant="caption" color={pressed ? activeText : keyText} style={styles.keyGlyph}>
@@ -563,6 +593,7 @@ function WideKeyCap({
   item,
   disabled,
   muted,
+  heldBack,
   held,
   shift,
   functionStrip,
@@ -577,6 +608,8 @@ function WideKeyCap({
   disabled: boolean;
   /** The pane cannot take this key in the current modifier state. */
   muted: boolean;
+  /** An armed modifier the pane holds back: a muted key is disabled, not just quiet. */
+  heldBack: boolean;
   /** A modifier's state; undefined for every other key. */
   held?: ModifierState;
   shift: boolean;
@@ -664,7 +697,7 @@ function WideKeyCap({
     <VirtualKey
       testID={`virtual-key-${item.id}`}
       accessibilityLabel={item.value === ' ' ? t`Space` : cap}
-      disabled={disabled}
+      disabled={disabled || (muted && heldBack)}
       hitSlop={item.kind === 'key' && glyph ? { top: 2, bottom: 2 } : undefined}
       onPress={onPress}
       style={[
@@ -780,6 +813,7 @@ function FunctionKey({
   color,
   fill,
   disabled,
+  muted = false,
   onPress,
   accessibilityLabel,
   selected,
@@ -788,6 +822,8 @@ function FunctionKey({
   color: string;
   fill: string;
   disabled: boolean;
+  /** The pane cannot take this key in the current modifier state. */
+  muted?: boolean;
   onPress: () => void;
   /**
    * Spoken instead of the cap, for a key whose cap is a glyph. `esc` and `tab`
@@ -806,7 +842,7 @@ function FunctionKey({
       accessibilityState={selected === undefined ? undefined : { selected, checked: selected }}
       disabled={disabled}
       onPress={onPress}
-      style={[styles.key, styles.functionWide, { backgroundColor: fill }]}>
+      style={[styles.key, styles.functionWide, { backgroundColor: fill }, muted && styles.muted]}>
       {({ pressed }) => (
         <Text
           variant="caption"
@@ -931,7 +967,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: NAV_GAP,
   },
-  /** A key the pane cannot take right now: still there, still pressable, quieter. */
+  /**
+   * A key the pane cannot take right now: still there, quieter. Pressable, to
+   * say why on the press -- unless the hint already says so (see `heldBackModifiers`).
+   */
   muted: {
     opacity: appChrome.opacity.disabled,
   },
@@ -945,7 +984,11 @@ const styles = StyleSheet.create({
     bottom: 0,
     alignItems: 'center',
   },
+  hintText: {
+    textAlign: 'center',
+  },
   hint: {
+    maxWidth: '92%',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 8,
