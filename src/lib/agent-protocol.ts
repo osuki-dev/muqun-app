@@ -2357,6 +2357,126 @@ export function parseVcsDiffMode(value: unknown): VcsDiffMode {
   return raw === 'branch' || raw === 'committed' ? raw : 'working';
 }
 
+/**
+ * The gateway can list changed files without their patches, read one file's
+ * patch at a chosen context, and discard one file's changes:
+ * `…/vcs/files`, `…/vcs/file` and `POST …/vcs/discard`. A gateway without it
+ * has only `…/vcs/diff`, which answers every patch at once.
+ */
+export const AGENT_VCS_FILES_CAPABILITY = 'agent_vcs_files';
+
+export function gatewaySupportsVcsFiles(
+  capabilities: readonly string[] | undefined | null
+): boolean {
+  return Array.isArray(capabilities) && capabilities.includes(AGENT_VCS_FILES_CAPABILITY);
+}
+
+/** The two comparisons `…/vcs/files` answers: uncommitted, or against the branch's base. */
+export type VcsFilesMode = 'working' | 'branch';
+
+/** One changed file from `…/vcs/files`: a summary, never a patch. */
+export interface AgentVcsFileSummary {
+  path: string;
+  /** Where a rename or copy came from. */
+  oldPath?: string;
+  /** The wire word (`added`, `typechange`, ...); `agent-diff-rows.ts` maps it. */
+  status?: string;
+  additions: number;
+  deletions: number;
+  binary: boolean;
+}
+
+/** What `GET …/vcs/files` answered. */
+export interface AgentVcsFiles {
+  files: AgentVcsFileSummary[];
+  mode: VcsFilesMode;
+  /** The ref `branch` compares against; absent when there is none to offer. */
+  base?: string;
+  /** The gateway cut the list at its cap. */
+  truncated: boolean;
+  vcs?: 'git' | null;
+  reason?: 'not_a_repository' | 'workspace_missing';
+  missing?: WorkspaceMissing;
+}
+
+function parseVcsFileSummary(value: unknown): AgentVcsFileSummary | null {
+  const rec = asRecord(value);
+  if (!rec) return null;
+  const path = asString(rec.path);
+  if (!path) return null;
+  const oldPath = asString(rec.old_path) ?? asString(rec.oldPath);
+  const status = asString(rec.status);
+  return {
+    path,
+    ...(oldPath ? { oldPath } : {}),
+    ...(status ? { status } : {}),
+    additions: asFiniteNumber(rec.additions) ?? 0,
+    deletions: asFiniteNumber(rec.deletions) ?? 0,
+    binary: asBool(rec.binary) ?? false,
+  };
+}
+
+/**
+ * The `200` body of `…/vcs/files`, or `null` for anything that is not one.
+ *
+ * `null` is what sends the sheet back to `…/vcs/diff`: a gateway that
+ * advertised the capability and then answered something else is better read
+ * through the route every gateway has than shown as an empty list.
+ */
+export function parseAgentVcsFiles(value: unknown): AgentVcsFiles | null {
+  const rec = asRecord(value);
+  if (!rec || !Array.isArray(rec.files)) return null;
+  const files: AgentVcsFileSummary[] = [];
+  for (const entry of rec.files) {
+    const file = parseVcsFileSummary(entry);
+    if (file) files.push(file);
+  }
+  const base = asString(rec.base);
+  const vcs: 'git' | null = !('vcs' in rec) || asString(rec.vcs) === 'git' ? 'git' : null;
+  return {
+    files,
+    mode: asString(rec.mode) === 'branch' ? 'branch' : 'working',
+    ...(base ? { base } : {}),
+    truncated: asBool(rec.truncated) ?? false,
+    vcs,
+    ...(files.length === 0 && asString(rec.reason) === 'not_a_repository'
+      ? { reason: 'not_a_repository' as const }
+      : {}),
+  };
+}
+
+/** What `GET …/vcs/file` answered: one file's patch at the context asked for. */
+export interface AgentVcsFilePatch extends AgentVcsFileSummary {
+  patch: string;
+  /** The gateway cut the patch at its cap. */
+  truncated: boolean;
+}
+
+export function parseAgentVcsFilePatch(value: unknown): AgentVcsFilePatch | null {
+  const summary = parseVcsFileSummary(value);
+  const rec = asRecord(value);
+  if (!summary || !rec) return null;
+  return {
+    ...summary,
+    patch: asString(rec.patch) ?? '',
+    truncated: asBool(rec.truncated) ?? false,
+  };
+}
+
+/** What `POST …/vcs/discard` did: put a tracked file back, or delete an untracked one. */
+export interface AgentVcsDiscard {
+  path: string;
+  action: 'restored' | 'deleted';
+}
+
+export function parseAgentVcsDiscard(value: unknown): AgentVcsDiscard | null {
+  const rec = asRecord(value);
+  const path = rec ? asString(rec.path) : undefined;
+  const action = rec ? asString(rec.action) : undefined;
+  if (!path || (action !== 'restored' && action !== 'deleted')) return null;
+  return { path, action };
+}
+
 // ---------------------------------------------------------------------------
 // Catalog
 // ---------------------------------------------------------------------------
