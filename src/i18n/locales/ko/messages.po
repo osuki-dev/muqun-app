@@ -62,7 +62,7 @@ msgstr "{0, plural, other {파일 #개 변경됨}}"
 msgid "{0, plural, one {# file} other {# files}}"
 msgstr "{0, plural, other {파일 #개}}"
 
-#. placeholder {0}: diffs.length
+#. placeholder {0}: listing.changes.length
 #. placeholder {1}: totals.additions
 #. placeholder {2}: totals.deletions
 #: src/components/agent-vcs-diff-sheet.tsx
@@ -385,10 +385,12 @@ msgstr "이 터미널을 조작하거나 명령을 보내기"
 msgid "Act on this terminal, or send its agent a prompt"
 msgstr "이 터미널을 조작하거나 에이전트에게 지시 보내기"
 
+#. placeholder {0}: row.name
 #. placeholder {0}: sessionTitleOr(session, t`Untitled session`)
 #. placeholder {0}: worktreeDisplayName(directory)
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/agent-worktree-sheet.tsx
+#: src/components/change-tree-rows.tsx
 msgid "Actions for {0}"
 msgstr "{0} 작업"
 
@@ -764,6 +766,7 @@ msgstr "동작"
 msgid "Below {minimumPercent}%, text is no longer guaranteed to stay readable"
 msgstr "{minimumPercent}% 아래에서는 글자의 가독성이 보장되지 않습니다"
 
+#: src/components/change-tree-rows.tsx
 #: src/components/diff-rows.tsx
 msgid "Binary file"
 msgstr "바이너리 파일"
@@ -779,10 +782,6 @@ msgstr "응답 대기"
 #: src/components/agent-workbench.tsx
 msgid "Blocked by agent safety"
 msgstr "에이전트 안전 기능이 차단함"
-
-#: src/components/agent-vcs-diff-sheet.tsx
-msgid "Branch"
-msgstr "브랜치"
 
 #: src/components/theme-link-import.tsx
 msgid "Branch and theme file came from the link. A branch can change later"
@@ -836,6 +835,7 @@ msgstr "카메라 접근 권한 필요"
 #: src/components/agent-composer.tsx
 #: src/components/agent-context-sheet.tsx
 #: src/components/agent-sessions-sheet.tsx
+#: src/components/agent-vcs-diff-sheet.tsx
 #: src/components/agent-workbench.tsx
 #: src/components/agent-worktree-sheet.tsx
 #: src/components/custom-theme-library.tsx
@@ -971,6 +971,10 @@ msgstr "홈과 앱 인터페이스 스타일을 선택하세요. 색상은 테�
 #: src/components/agent-workbench.tsx
 msgid "Choose project"
 msgstr "프로젝트 선택"
+
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "Choose which changes to show"
+msgstr "표시할 변경 사항 선택"
 
 #: src/components/simfarm-stage.tsx
 msgid "Choose which simulator to show"
@@ -1120,10 +1124,6 @@ msgstr "커밋"
 msgid "Commit & push"
 msgstr "커밋 후 푸시"
 
-#: src/components/agent-vcs-diff-sheet.tsx
-msgid "Committed"
-msgstr "커밋됨"
-
 #: src/components/settings-terminal.tsx
 msgid "Compact"
 msgstr "작게"
@@ -1149,6 +1149,10 @@ msgstr "압축에 실패했습니다"
 #: src/components/agent-composer.tsx
 msgid "Compaction failed — tap to dismiss"
 msgstr "압축에 실패했습니다 — 탭하여 닫기"
+
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "Compared with {base}"
+msgstr "{base}와(과) 비교"
 
 #: src/components/settings-storage.tsx
 msgid "Confirm clear cache"
@@ -1499,6 +1503,10 @@ msgstr "삭제할 수 없습니다"
 msgid "Could not detach"
 msgstr "분리하지 못했습니다"
 
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "Could not discard changes to {name}."
+msgstr "{name}의 변경 사항을 버리지 못했습니다"
+
 #. placeholder {0}: problem.status
 #: src/components/settings-font-sheet.tsx
 msgid "Could not download: {0}"
@@ -1540,6 +1548,10 @@ msgstr "모델을 불러올 수 없습니다"
 #: src/components/agent-workbench.tsx
 msgid "Could not load the session"
 msgstr "세션을 불러오지 못했습니다"
+
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "Could not load this file's changes."
+msgstr "이 파일의 변경 사항을 불러오지 못했습니다"
 
 #: src/components/session-map.tsx
 msgid "Could not load what is running."
@@ -1810,9 +1822,14 @@ msgid "Defaults to theme.json at the repository root"
 msgstr "기본값은 저장소 루트의 theme.json입니다"
 
 #: src/components/agent-sessions-sheet.tsx
+#: src/components/agent-vcs-diff-sheet.tsx
 #: src/components/row-action-menu.tsx
 msgid "Delete"
 msgstr "삭제"
+
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "Delete {discardName}?"
+msgstr "{discardName}을(를) 삭제할까요?"
 
 #: src/app/commands.tsx
 msgid "Delete {name}"
@@ -1887,6 +1904,18 @@ msgstr "방향"
 #: src/components/new-task-sheet.tsx
 msgid "Directory"
 msgstr "디렉터리"
+
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "Discard"
+msgstr "버리기"
+
+#: src/components/change-tree-rows.tsx
+msgid "Discard changes"
+msgstr "변경 사항 버리기"
+
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "Discard changes to {discardName}?"
+msgstr "{discardName}의 변경 사항을 버릴까요?"
 
 #. placeholder {0}: record.label
 #: src/components/ssh-terminal-workspace.tsx
@@ -2361,6 +2390,7 @@ msgstr "숨김"
 
 #. placeholder {0}: item.summary
 #. placeholder {0}: row.path
+#: src/components/change-tree-rows.tsx
 #: src/components/diff-rows.tsx
 #: src/components/pane-chat-blocks.tsx
 msgid "Hide {0}"
@@ -3055,6 +3085,10 @@ msgstr "이 기기에서 카메라를 찾지 못했습니다"
 msgid "No changes"
 msgstr "변경 사항 없음"
 
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "No changes compared with {base}."
+msgstr "{base}와(과) 비교해 변경 사항이 없습니다"
+
 #: src/components/git-diff-view.tsx
 msgid "No changes. The working tree matches HEAD."
 msgstr "변경 사항이 없습니다. 작업 트리가 HEAD와 같습니다"
@@ -3166,6 +3200,7 @@ msgstr "이 세션에는 아직 작업이 없습니다"
 msgid "No terminal session is available on this server."
 msgstr "이 서버에는 사용할 수 있는 터미널 세션이 없습니다"
 
+#: src/components/change-tree-rows.tsx
 #: src/components/diff-rows.tsx
 msgid "No textual change"
 msgstr "텍스트 변경 없음"
@@ -3613,6 +3648,10 @@ msgstr "공개 테마 링크 또는 GitHub 저장소 URL을 붙여넣으세요"
 msgid "Paste a URL…"
 msgstr "URL 붙여넣기…"
 
+#: src/components/change-tree-rows.tsx
+msgid "Patch too long; showing the start of it."
+msgstr "패치가 너무 길어 앞부분만 표시합니다"
+
 #: src/components/asset-viewer.tsx
 #: src/components/new-task-sheet.tsx
 msgid "Path"
@@ -3719,8 +3758,8 @@ msgstr "프로젝트"
 msgid "Project · {0}"
 msgstr "프로젝트 · {0}"
 
-#. placeholder {0}: answer.missing?.directory ?? ''
 #. placeholder {0}: gone.directory
+#. placeholder {0}: listing.missing?.directory ?? ''
 #. placeholder {0}: missing.directory
 #: src/components/agent-vcs-diff-sheet.tsx
 #: src/components/agent-workbench.tsx
@@ -4514,6 +4553,7 @@ msgstr "시프트 탭, 모드 전환"
 
 #. placeholder {0}: item.summary
 #. placeholder {0}: row.path
+#: src/components/change-tree-rows.tsx
 #: src/components/diff-rows.tsx
 #: src/components/pane-chat-blocks.tsx
 msgid "Show {0}"
@@ -4556,6 +4596,10 @@ msgstr "간단히 보기"
 #: src/components/diff-rows.tsx
 msgid "Show more"
 msgstr "더 보기"
+
+#: src/components/change-tree-rows.tsx
+msgid "Show more context"
+msgstr "주변 줄 더 보기"
 
 #: src/components/agent-model-sheet.tsx
 msgid "Show more models"
@@ -5297,6 +5341,10 @@ msgstr "생각 중…"
 msgid "This agent did not offer that answer."
 msgstr "이 에이전트는 그 답변을 제시하지 않았습니다"
 
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "This cannot be undone."
+msgstr "이 작업은 되돌릴 수 없습니다"
+
 #: src/lib/attachments.ts
 msgid "This device has no camera available."
 msgstr "이 기기에는 사용할 수 있는 카메라가 없습니다"
@@ -5511,6 +5559,7 @@ msgstr "토큰 사용량 및 비용"
 msgid "Too large to highlight — showing plain text."
 msgstr "너무 커서 구문 강조 없이 일반 텍스트로 표시합니다"
 
+#: src/components/agent-vcs-diff-sheet.tsx
 #: src/components/git-diff-view.tsx
 msgid "Too many changes to list. This is the start of them, not all of them."
 msgstr "변경 사항이 너무 많아 모두 나열할 수 없습니다. 전체가 아니라 앞부분입니다"
@@ -5583,6 +5632,10 @@ msgstr "직접 입력하거나 키보드의 받아쓰기 키를 사용하세요"
 #: src/components/simfarm-stage.tsx
 msgid "Type on the simulator"
 msgstr "시뮬레이터에 입력"
+
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "Uncommitted changes"
+msgstr "커밋되지 않은 변경 사항"
 
 #: src/components/agent-revert-plate.tsx
 #: src/components/agent-workbench.tsx
@@ -5830,7 +5883,6 @@ msgstr "에이전트가 승인을 요청하면 알림이 잠금 화면으로 바
 msgid "While you were away"
 msgstr "자리를 비운 사이"
 
-#: src/components/agent-vcs-diff-sheet.tsx
 #: src/components/collaboration-notice.tsx
 #: src/i18n/labels.ts
 msgid "Working"

@@ -62,7 +62,7 @@ msgstr "{0, plural, other {# 件のファイルが変更されました}}"
 msgid "{0, plural, one {# file} other {# files}}"
 msgstr "{0, plural, other {# 件のファイル}}"
 
-#. placeholder {0}: diffs.length
+#. placeholder {0}: listing.changes.length
 #. placeholder {1}: totals.additions
 #. placeholder {2}: totals.deletions
 #: src/components/agent-vcs-diff-sheet.tsx
@@ -385,10 +385,12 @@ msgstr "このターミナルを操作するか、コマンドを送る"
 msgid "Act on this terminal, or send its agent a prompt"
 msgstr "このターミナルを操作するか、エージェントに指示を送る"
 
+#. placeholder {0}: row.name
 #. placeholder {0}: sessionTitleOr(session, t`Untitled session`)
 #. placeholder {0}: worktreeDisplayName(directory)
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/agent-worktree-sheet.tsx
+#: src/components/change-tree-rows.tsx
 msgid "Actions for {0}"
 msgstr "{0} の操作"
 
@@ -764,6 +766,7 @@ msgstr "動作"
 msgid "Below {minimumPercent}%, text is no longer guaranteed to stay readable"
 msgstr "{minimumPercent}% を下回ると、文字が読めることは保証されません"
 
+#: src/components/change-tree-rows.tsx
 #: src/components/diff-rows.tsx
 msgid "Binary file"
 msgstr "バイナリファイル"
@@ -779,10 +782,6 @@ msgstr "応答待ち"
 #: src/components/agent-workbench.tsx
 msgid "Blocked by agent safety"
 msgstr "エージェントの安全機能がブロックしました"
-
-#: src/components/agent-vcs-diff-sheet.tsx
-msgid "Branch"
-msgstr "ブランチ"
 
 #: src/components/theme-link-import.tsx
 msgid "Branch and theme file came from the link. A branch can change later"
@@ -836,6 +835,7 @@ msgstr "カメラへのアクセスが必要です"
 #: src/components/agent-composer.tsx
 #: src/components/agent-context-sheet.tsx
 #: src/components/agent-sessions-sheet.tsx
+#: src/components/agent-vcs-diff-sheet.tsx
 #: src/components/agent-workbench.tsx
 #: src/components/agent-worktree-sheet.tsx
 #: src/components/custom-theme-library.tsx
@@ -971,6 +971,10 @@ msgstr "ホームとアプリの外観を選びます。配色はテーマに従
 #: src/components/agent-workbench.tsx
 msgid "Choose project"
 msgstr "プロジェクトを選択"
+
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "Choose which changes to show"
+msgstr "表示する変更を選択"
 
 #: src/components/simfarm-stage.tsx
 msgid "Choose which simulator to show"
@@ -1120,10 +1124,6 @@ msgstr "コミット"
 msgid "Commit & push"
 msgstr "コミットしてプッシュ"
 
-#: src/components/agent-vcs-diff-sheet.tsx
-msgid "Committed"
-msgstr "コミット済み"
-
 #: src/components/settings-terminal.tsx
 msgid "Compact"
 msgstr "コンパクト"
@@ -1149,6 +1149,10 @@ msgstr "圧縮に失敗しました"
 #: src/components/agent-composer.tsx
 msgid "Compaction failed — tap to dismiss"
 msgstr "圧縮に失敗しました — タップで閉じる"
+
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "Compared with {base}"
+msgstr "{base} と比較"
 
 #: src/components/settings-storage.tsx
 msgid "Confirm clear cache"
@@ -1499,6 +1503,10 @@ msgstr "削除できませんでした"
 msgid "Could not detach"
 msgstr "バックグラウンドに移せませんでした"
 
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "Could not discard changes to {name}."
+msgstr "{name} の変更を破棄できませんでした"
+
 #. placeholder {0}: problem.status
 #: src/components/settings-font-sheet.tsx
 msgid "Could not download: {0}"
@@ -1540,6 +1548,10 @@ msgstr "モデルを読み込めませんでした"
 #: src/components/agent-workbench.tsx
 msgid "Could not load the session"
 msgstr "セッションを読み込めませんでした"
+
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "Could not load this file's changes."
+msgstr "このファイルの変更を読み込めませんでした"
 
 #: src/components/session-map.tsx
 msgid "Could not load what is running."
@@ -1810,9 +1822,14 @@ msgid "Defaults to theme.json at the repository root"
 msgstr "既定はリポジトリ直下の theme.json です"
 
 #: src/components/agent-sessions-sheet.tsx
+#: src/components/agent-vcs-diff-sheet.tsx
 #: src/components/row-action-menu.tsx
 msgid "Delete"
 msgstr "削除"
+
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "Delete {discardName}?"
+msgstr "{discardName} を削除しますか？"
 
 #: src/app/commands.tsx
 msgid "Delete {name}"
@@ -1887,6 +1904,18 @@ msgstr "方向"
 #: src/components/new-task-sheet.tsx
 msgid "Directory"
 msgstr "ディレクトリ"
+
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "Discard"
+msgstr "破棄"
+
+#: src/components/change-tree-rows.tsx
+msgid "Discard changes"
+msgstr "変更を破棄"
+
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "Discard changes to {discardName}?"
+msgstr "{discardName} の変更を破棄しますか？"
 
 #. placeholder {0}: record.label
 #: src/components/ssh-terminal-workspace.tsx
@@ -2361,6 +2390,7 @@ msgstr "非表示"
 
 #. placeholder {0}: item.summary
 #. placeholder {0}: row.path
+#: src/components/change-tree-rows.tsx
 #: src/components/diff-rows.tsx
 #: src/components/pane-chat-blocks.tsx
 msgid "Hide {0}"
@@ -3055,6 +3085,10 @@ msgstr "このデバイスでカメラが見つかりませんでした"
 msgid "No changes"
 msgstr "変更なし"
 
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "No changes compared with {base}."
+msgstr "{base} と比べて変更はありません"
+
 #: src/components/git-diff-view.tsx
 msgid "No changes. The working tree matches HEAD."
 msgstr "変更はありません。作業ツリーは HEAD と一致しています"
@@ -3166,6 +3200,7 @@ msgstr "このセッションにはまだタスクがありません"
 msgid "No terminal session is available on this server."
 msgstr "このサーバーに利用できるターミナルセッションはありません"
 
+#: src/components/change-tree-rows.tsx
 #: src/components/diff-rows.tsx
 msgid "No textual change"
 msgstr "テキストの変更なし"
@@ -3613,6 +3648,10 @@ msgstr "公開テーマのリンクまたは GitHub リポジトリの URL を�
 msgid "Paste a URL…"
 msgstr "URL を貼り付け…"
 
+#: src/components/change-tree-rows.tsx
+msgid "Patch too long; showing the start of it."
+msgstr "パッチが長すぎるため、先頭のみ表示しています"
+
 #: src/components/asset-viewer.tsx
 #: src/components/new-task-sheet.tsx
 msgid "Path"
@@ -3719,8 +3758,8 @@ msgstr "プロジェクト"
 msgid "Project · {0}"
 msgstr "プロジェクト · {0}"
 
-#. placeholder {0}: answer.missing?.directory ?? ''
 #. placeholder {0}: gone.directory
+#. placeholder {0}: listing.missing?.directory ?? ''
 #. placeholder {0}: missing.directory
 #: src/components/agent-vcs-diff-sheet.tsx
 #: src/components/agent-workbench.tsx
@@ -4514,6 +4553,7 @@ msgstr "シフト タブ、モードを切り替え"
 
 #. placeholder {0}: item.summary
 #. placeholder {0}: row.path
+#: src/components/change-tree-rows.tsx
 #: src/components/diff-rows.tsx
 #: src/components/pane-chat-blocks.tsx
 msgid "Show {0}"
@@ -4556,6 +4596,10 @@ msgstr "表示を減らす"
 #: src/components/diff-rows.tsx
 msgid "Show more"
 msgstr "さらに表示"
+
+#: src/components/change-tree-rows.tsx
+msgid "Show more context"
+msgstr "前後の行をもっと表示"
 
 #: src/components/agent-model-sheet.tsx
 msgid "Show more models"
@@ -5297,6 +5341,10 @@ msgstr "思考中…"
 msgid "This agent did not offer that answer."
 msgstr "このエージェントはその選択肢を提示していません"
 
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "This cannot be undone."
+msgstr "この操作は元に戻せません"
+
 #: src/lib/attachments.ts
 msgid "This device has no camera available."
 msgstr "このデバイスには使用できるカメラがありません"
@@ -5511,6 +5559,7 @@ msgstr "トークン使用量とコスト"
 msgid "Too large to highlight — showing plain text."
 msgstr "大きすぎてハイライトできません。プレーンテキストで表示しています"
 
+#: src/components/agent-vcs-diff-sheet.tsx
 #: src/components/git-diff-view.tsx
 msgid "Too many changes to list. This is the start of them, not all of them."
 msgstr "変更が多すぎて一覧にできません。これは先頭部分で、すべてではありません"
@@ -5583,6 +5632,10 @@ msgstr "入力するか、キーボードの音声入力キーを使ってくだ
 #: src/components/simfarm-stage.tsx
 msgid "Type on the simulator"
 msgstr "シミュレータに入力する"
+
+#: src/components/agent-vcs-diff-sheet.tsx
+msgid "Uncommitted changes"
+msgstr "未コミットの変更"
 
 #: src/components/agent-revert-plate.tsx
 #: src/components/agent-workbench.tsx
@@ -5830,7 +5883,6 @@ msgstr "エージェントが確認を求めて停止したとき、通知がロ
 msgid "While you were away"
 msgstr "離席中の変化"
 
-#: src/components/agent-vcs-diff-sheet.tsx
 #: src/components/collaboration-notice.tsx
 #: src/i18n/labels.ts
 msgid "Working"
