@@ -315,8 +315,12 @@ export function VirtualKeyboard({
     shift: wideShift,
   };
 
-  // Laid over the keyboard's foot rather than added under it: a row that
-  // appeared and went would move every key under the finger that caused it.
+  // Laid over a row rather than added as one: a row that appeared and went
+  // would move every key under the finger that caused it. Over the shortcut
+  // row when there is one -- the held-back hint stays up while a modifier is
+  // armed, and over the foot of a phone keyboard it would hide the whole
+  // bottom row, the dimmed key it explains included. (Not above the keyboard:
+  // the dock clips its children.)
   const chord = refused ? chordGlyph(refused.chord) : '';
   // The armed modifiers this pane holds back, while they are armed: those keys
   // are disabled rather than muted, and this is the line that says why.
@@ -327,7 +331,9 @@ export function VirtualKeyboard({
       ? t`${modifierKeys} combinations need the program in this terminal to enable extended keys`
       : null;
   const refusedHint = hintText ? (
-    <View pointerEvents="none" style={styles.hintWrap}>
+    <View
+      pointerEvents="none"
+      style={[styles.hintWrap, shortcuts ? styles.hintOverShortcuts : styles.hintAtFoot]}>
       <View style={[styles.hint, { backgroundColor: surfaceBackground(theme.colors.background) }]}>
         <Text variant="caption" color={keyText} style={styles.hintText}>
           {hintText}
@@ -981,8 +987,15 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 0,
     right: 0,
-    bottom: 0,
     alignItems: 'center',
+  },
+  /** Over the shortcut row, when there is one: no typing key is hidden. */
+  hintOverShortcuts: {
+    top: 0,
+  },
+  /** Over the keyboard's foot, when the top row is the keyboard's own. */
+  hintAtFoot: {
+    bottom: 0,
   },
   hintText: {
     textAlign: 'center',
