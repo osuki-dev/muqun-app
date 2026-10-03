@@ -2280,6 +2280,10 @@ msgstr "Frequentes"
 msgid "Front camera. Hold the QR up to the screen"
 msgstr "Câmara frontal. Aponte o código QR ao ecrã"
 
+#: src/components/virtual-keyboard.tsx
+msgid "Function keys"
+msgstr "Teclas de função"
+
 #: src/app/explore.tsx
 msgid "Gateway"
 msgstr "Gateway"
@@ -5506,6 +5510,10 @@ msgstr "Esta sessão"
 #: src/components/agent-workbench.tsx
 msgid "This session has no message to roll back to."
 msgstr "Esta sessão não tem nenhuma mensagem para a qual voltar"
+
+#: src/components/virtual-keyboard.tsx
+msgid "This terminal can't send {chord}"
+msgstr "Este terminal não pode enviar {chord}"
 
 #: src/components/terminal-boundary.tsx
 msgid "This terminal could not be drawn."
