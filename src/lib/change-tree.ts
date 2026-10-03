@@ -309,3 +309,49 @@ export function nextDiffContext(current: number): number | null {
   if (current < 25) return 25;
   return null;
 }
+
+/** The rows the diff list pins while their patch scrolls, by index and by key. */
+export interface StickyDiffRows {
+  indices: number[];
+  keys: ReadonlySet<string>;
+}
+
+const NO_STICKY_ROWS: StickyDiffRows = { indices: [], keys: new Set() };
+
+/**
+ * Which rows label the code under them: every flat file header, and in the
+ * tree only an open file.
+ *
+ * A list with no code rows pins nothing. Treating every entry of a collapsed
+ * file list as a sticky header drives header handoffs continuously during a
+ * plain scroll.
+ */
+export function stickyDiffRowsOf(rows: readonly DiffListItem[]): StickyDiffRows {
+  if (!rows.some((row) => row.type === 'hunk' || row.type === 'line' || row.type === 'more')) {
+    return NO_STICKY_ROWS;
+  }
+  const indices: number[] = [];
+  const keys = new Set<string>();
+  for (let index = 0; index < rows.length; index += 1) {
+    const row = rows[index];
+    if (row.type === 'file' || (row.type === 'treeFile' && row.expanded)) {
+      indices.push(index);
+      keys.add(row.key);
+    }
+  }
+  return { indices, keys };
+}
+
+/**
+ * The key the list knows a row by: its own key, marked when the row is pinned.
+ *
+ * LegendList (3.6) decides that a container is sticky only when it hands an
+ * item to that container. A header already on screen when it becomes sticky --
+ * the one the reader just tapped open -- keeps its ordinary container, so it
+ * scrolls away with the patch and only pins once that container has been
+ * recycled, a screen or so later. A key that changes with stickiness makes the
+ * list treat the header as a new item and give it a sticky container at once.
+ */
+export function listKeyOfDiffRow(row: DiffListItem, sticky: ReadonlySet<string>): string {
+  return sticky.has(row.key) ? `${row.key}#pinned` : row.key;
+}
