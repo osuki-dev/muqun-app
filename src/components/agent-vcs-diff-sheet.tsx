@@ -607,6 +607,8 @@ export const AgentVcsDiffSheet = memo(function AgentVcsDiffSheet({
           // Opaque, not through the artwork-opacity slider: an open file's
           // header is pinned over its own patch, and a see-through band shows
           // the code scrolling behind the file name.
+          // Opacity audit: legibility -- the pinned file header sits over the
+          // code scrolling under it and must hide it whatever the slider says.
           headerFill={theme.colors.surface}
           surfaceFill="transparent"
           // There is no index to attribute an agent's edits to, so there is no
