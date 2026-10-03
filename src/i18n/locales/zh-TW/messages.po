@@ -2280,6 +2280,10 @@ msgstr "常用"
 msgid "Front camera. Hold the QR up to the screen"
 msgstr "前鏡頭。將 QR code 朝向螢幕"
 
+#: src/components/virtual-keyboard.tsx
+msgid "Function keys"
+msgstr "功能鍵"
+
 #: src/app/explore.tsx
 msgid "Gateway"
 msgstr "Gateway"
@@ -5506,6 +5510,10 @@ msgstr "本次工作階段"
 #: src/components/agent-workbench.tsx
 msgid "This session has no message to roll back to."
 msgstr "這個工作階段還沒有可以回復到的訊息"
+
+#: src/components/virtual-keyboard.tsx
+msgid "This terminal can't send {chord}"
+msgstr "此終端機無法傳送 {chord}"
 
 #: src/components/terminal-boundary.tsx
 msgid "This terminal could not be drawn."

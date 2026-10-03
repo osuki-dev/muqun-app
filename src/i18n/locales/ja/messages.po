@@ -2280,6 +2280,10 @@ msgstr "よく使う"
 msgid "Front camera. Hold the QR up to the screen"
 msgstr "フロントカメラです。QR コードを画面に向けてください"
 
+#: src/components/virtual-keyboard.tsx
+msgid "Function keys"
+msgstr "ファンクションキー"
+
 #: src/app/explore.tsx
 msgid "Gateway"
 msgstr "Gateway"
@@ -5506,6 +5510,10 @@ msgstr "このセッション"
 #: src/components/agent-workbench.tsx
 msgid "This session has no message to roll back to."
 msgstr "このセッションには戻れるメッセージがありません"
+
+#: src/components/virtual-keyboard.tsx
+msgid "This terminal can't send {chord}"
+msgstr "このターミナルは {chord} を送信できません"
 
 #: src/components/terminal-boundary.tsx
 msgid "This terminal could not be drawn."
