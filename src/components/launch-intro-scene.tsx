@@ -493,6 +493,19 @@ export function LaunchSceneIntro({
   const sheetRef = useRef<View>(null);
   const snapProgress = useSharedValue(0);
   const [snapImage, setSnapImage] = useState<SkImage | null>(null);
+  // The opening is planned around the snap whenever motion is allowed; only
+  // Reduce Motion plans for the cross-fade from the start.
+  const snapAhead = !reduced;
+  // The snap's canvas goes up while the opening is still playing, so it is
+  // already presenting when the exit hands it a picture (see `LaunchSnap`).
+  // Not at the very start, where it would compete with the bloom's own first
+  // frame, and never when the exit will be the cross-fade anyway.
+  const [snapReady, setSnapReady] = useState(false);
+  useEffect(() => {
+    if (phase !== 'visible' || reduced) return;
+    const timer = setTimeout(() => setSnapReady(true), beats.skipArmedAt);
+    return () => clearTimeout(timer);
+  }, [phase, reduced, beats.skipArmedAt]);
   const mounted = useRef(true);
   useEffect(() => {
     mounted.current = true;
@@ -708,7 +721,11 @@ export function LaunchSceneIntro({
     opacity:
       (snapProgress.value > 0 ? 0 : 1) *
       (1 - exit.value) *
-      (canLand || reduced
+      // Artwork that cannot land used to take the whole sheet with it as it
+      // travelled, so the mismatch never met Home. With the snap ahead the
+      // sheet stays whole instead and the picture comes apart at the exit:
+      // a sheet already gone would leave the snap nothing to break.
+      (canLand || reduced || snapAhead
         ? 1
         : interpolate(hero.value, [0, 0.55, 1], [1, 1, 0], Extrapolation.CLAMP)),
   }));
@@ -725,6 +742,15 @@ export function LaunchSceneIntro({
   const worldStyle = useAnimatedStyle(() => ({
     transform: [{ scale: WORLD_ARRIVAL_ZOOM + (1 - WORLD_ARRIVAL_ZOOM) * settle.value }],
   }));
+
+  // The snap is drawn exactly where the sheet it was cut from sits.
+  const snapFrame = {
+    position: 'absolute' as const,
+    top: mirror.container.style.top,
+    bottom: mirror.container.style.bottom,
+    left: 0,
+    right: 0,
+  };
 
   const showWorldImage = world.kind === 'painted' && Boolean(wallpaperUri);
   // The cover may only leave once it has something to leave behind. Unmounting
@@ -903,11 +929,11 @@ export function LaunchSceneIntro({
       over Home. A sibling of the sheet rather than a child, because the sheet
       is hidden while it plays and the snap is what is left on screen.
     */}
-      {snapImage ? (
+      {snapReady || snapImage ? (
         <LaunchSnap
           durationMs={beats.snap.ms}
-          height={height}
           image={snapImage}
+          frame={snapFrame}
           onFinish={finish}
           progress={snapProgress}
           width={width}
