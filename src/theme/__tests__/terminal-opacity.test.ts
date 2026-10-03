@@ -56,20 +56,18 @@ test('override persists, invalidates active cache, and reset restores authored m
   expect(original?.manifest.variants.light.terminal.backgroundOpacity).toBe(
     Math.max(0.3, terminalFloor)
   );
-  // Zero means zero. The line above is the contrast floor doing its one job --
-  // the *author* asked for 0.3 and was raised to `terminalFloor` -- and these
-  // two are the other side of the same rule: the reader asked for a terminal
-  // with no background at all, on their own device, and gets it. A clamp here
-  // would be the app overruling the person holding it.
-  expect(repo.active()?.manifest.variants.light.terminal.backgroundOpacity).toBe(0);
-  expect(repo.active()?.manifest.variants.dark.terminal.backgroundOpacity).toBe(0);
+  // The reader's zero is stored as zero and read through the same contrast
+  // floor as the author's value: the slider stops at the floor (owner's
+  // decision, 2026-10-03), so an older stored preference below it renders at
+  // the floor rather than disagreeing with what the control shows.
+  expect(repo.active()?.manifest.variants.light.terminal.backgroundOpacity).toBe(terminalFloor);
+  expect(repo.active()?.manifest.variants.dark.terminal.backgroundOpacity).toBe(terminalFloor);
   expect(repo.snapshot().themes[0].manifest).toEqual(manifest);
   const reopened = new ThemeRepository(storage, () => 'later');
   reopened.hydrate();
   expect(reopened.snapshot().themes[0].terminalBackgroundOpacity).toBe(0);
-  // Still zero after a reopen: the preference is stored as the reader set it
-  // and re-read the same way, not corrected on the way back in.
-  expect(reopened.active()?.manifest.variants.dark.terminal.backgroundOpacity).toBe(0);
+  // Still stored as zero after a reopen, still rendered at the floor.
+  expect(reopened.active()?.manifest.variants.dark.terminal.backgroundOpacity).toBe(terminalFloor);
   reopened.setTerminalBackgroundOpacity('installed', undefined);
   expect(reopened.snapshot().themes[0].terminalBackgroundOpacity).toBeUndefined();
   expect(reopened.active()?.manifest.variants.light.terminal.backgroundOpacity).toBe(
@@ -121,12 +119,14 @@ test('color and package exports carry effective override without rewriting autho
   const packaged = unpackTheme(
     packTheme({ manifest: effectiveThemeManifest(installed), assets: {} })
   );
-  // 0.42 is below `terminalFloor`, and both exports carry it unchanged: an
-  // export is a copy of what this reader is actually looking at, not a copy
-  // corrected back towards what the author wrote.
+  // 0.42 is below `terminalFloor`; both exports carry what this reader is
+  // actually looking at, which since the slider stops at the floor (owner's
+  // decision, 2026-10-03) is the floor itself.
   for (const mode of ['light', 'dark'] as const) {
-    expect(colors.variants[mode].terminal.backgroundOpacity).toBe(0.42);
-    expect(packaged.manifest.variants[mode].terminal.backgroundOpacity).toBe(0.42);
+    expect(colors.variants[mode].terminal.backgroundOpacity).toBe(Math.max(0.42, terminalFloor));
+    expect(packaged.manifest.variants[mode].terminal.backgroundOpacity).toBe(
+      Math.max(0.42, terminalFloor)
+    );
     expect(installed.manifest.variants[mode].terminal.backgroundOpacity).toBeUndefined();
   }
 });
