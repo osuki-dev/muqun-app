@@ -50,6 +50,9 @@ import {
   parseAgentSessionRevert,
   parseAgentSessionSnapshot,
   parseAgentVcsDiff,
+  parseAgentVcsDiscard,
+  parseAgentVcsFilePatch,
+  parseAgentVcsFiles,
   parseGatewayDiscovery,
   parseWorkspaceMissing,
   parseInboxItems,
@@ -71,6 +74,9 @@ import {
   type AgentSessionRevert,
   type AgentSessionSnapshot,
   type AgentVcsDiff,
+  type AgentVcsDiscard,
+  type AgentVcsFilePatch,
+  type AgentVcsFiles,
   type AgentWorktreeListing,
   type GatewayDiscovery,
   type InboxItem,
@@ -81,6 +87,7 @@ import {
   type ShellOutputPage,
   type TimelineItem,
   type VcsDiffMode,
+  type VcsFilesMode,
   type WorkspaceMissing,
   type WorktreeDirectory,
 } from './agent-protocol';
@@ -723,6 +730,80 @@ export async function getAgentVcsDiff(
   return read.missing
     ? { files: [], reason: 'workspace_missing', missing: read.missing }
     : read.value;
+}
+
+/**
+ * The changed files, without their patches (`agent_vcs_files`).
+ *
+ * `null` means this route gave no usable answer -- a gateway that advertised
+ * the capability and then refused, or answered something else -- and is the
+ * caller's cue to fall back to `getAgentVcsDiff`. A missing folder is an
+ * answer, not a failure, and comes back as one.
+ */
+export async function getAgentVcsFiles(
+  sessionId: string | undefined,
+  asid: string,
+  mode: VcsFilesMode = 'working'
+): Promise<AgentVcsFiles | null> {
+  if (!asid) return null;
+  const read = await readScoped<AgentVcsFiles | null>(
+    `${sessionRoute(asid, '/vcs/files', sessionId)}?mode=${mode}`,
+    parseAgentVcsFiles,
+    null
+  );
+  if (read.missing) {
+    return {
+      files: [],
+      mode,
+      truncated: false,
+      reason: 'workspace_missing',
+      missing: read.missing,
+    };
+  }
+  return read.value;
+}
+
+/**
+ * One file's patch at `context` lines of context (`agent_vcs_files`).
+ *
+ * Throws when there is no patch to show, so the file row can say so; the
+ * sheet asks for this only when the reader opens the file.
+ */
+export async function getAgentVcsFile(
+  sessionId: string | undefined,
+  asid: string,
+  options: { mode: VcsFilesMode; path: string; context: number }
+): Promise<AgentVcsFilePatch> {
+  const params = new URLSearchParams({
+    mode: options.mode,
+    path: options.path,
+    context: String(options.context),
+  });
+  const read = await readScoped<AgentVcsFilePatch | null>(
+    `${sessionRoute(asid, '/vcs/file', sessionId)}?${params.toString()}`,
+    parseAgentVcsFilePatch,
+    null
+  );
+  if (!read.value) throw new Error(`Failed to load the patch for ${options.path}`);
+  return read.value;
+}
+
+/**
+ * Throw away one file's uncommitted changes (`agent_vcs_files`): a tracked
+ * file is restored, an untracked one deleted. Irreversible; the sheet asks
+ * first.
+ */
+export async function discardAgentVcsFile(
+  sessionId: string | undefined,
+  asid: string,
+  path: string
+): Promise<AgentVcsDiscard> {
+  const data = await writeJson(
+    sessionRoute(asid, '/vcs/discard', sessionId),
+    'Failed to discard changes',
+    { path }
+  );
+  return parseAgentVcsDiscard(data) ?? { path, action: 'restored' };
 }
 
 /**
