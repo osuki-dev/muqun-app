@@ -1,6 +1,7 @@
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { useLingui } from '@lingui/react/macro';
-import { useSurfaceBackground } from '@/hooks/use-surface-background';
+import { useSurfaceBackground, useSurfaceBackgroundOpacity } from '@/hooks/use-surface-background';
+import { surfaceBackgroundFill } from '@/theme/surface-background';
 import { useMonoFontFamily } from '@/hooks/use-user-fonts';
 import { useThemeTokens } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
@@ -21,6 +22,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { NAV_HEADER_CONTROL_SIZE } from '@/components/nav-header';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { useNotificationSurfaceStyle } from '@/components/notification-surface';
+import { appChrome } from '@/constants/appearance';
 import { NAV_HEADER_TOP_GAP } from '@/constants/nav-header';
 import { permissionActionPhrase } from '@/i18n/labels';
 import { readApprovalBody } from '@/lib/agent-engine-text';
@@ -86,6 +88,7 @@ export function InAppNotificationHost() {
   const notificationSurfaceStyle = useNotificationSurfaceStyle();
   const insets = useSafeAreaInsets();
   const surfaceBackground = useSurfaceBackground();
+  const surfaceOpacity = useSurfaceBackgroundOpacity();
   const { t } = useLingui();
   const { _ } = useLinguiRuntime();
   const { colors } = useThemeTokens();
@@ -260,12 +263,21 @@ export function InAppNotificationHost() {
               }
             : undefined
         }
-        // Solid, not the theme's translucent surface. A notice floats over
-        // whatever screen is up -- header buttons, a transcript, the pages
-        // waiting behind it -- and a see-through plate let all of that
-        // show through its text. It is read for two seconds; it has to be
-        // readable for all of them.
-        style={[styles.card, notificationSurfaceStyle, { backgroundColor: colors.surfaceRaised }]}
+        // The reader's opacity, but never thinner than the chrome floor. A
+        // notice floats over whatever screen is up -- header buttons, a
+        // transcript, the pages waiting behind it -- and a plate at the bare
+        // slider let all of that show through its text. It is read for two
+        // seconds; it has to be readable for all of them.
+        style={[
+          styles.card,
+          notificationSurfaceStyle,
+          {
+            backgroundColor: surfaceBackgroundFill(
+              colors.surfaceRaised,
+              Math.max(surfaceOpacity, appChrome.opacity.glassSolidFloor)
+            ),
+          },
+        ]}
         testID={front ? 'in-app-notification' : 'in-app-notification-back'}>
         {/* The glyph alone. A tinted circle around it is a second
                   surface on a plate that is already one surface. */}

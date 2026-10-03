@@ -28,6 +28,7 @@ export function RouteScene({
   const content = modal ? <FullscreenRouteSafeArea>{children}</FullscreenRouteSafeArea> : children;
   const effectiveSceneType: RouteSceneType = modal ? 'modal' : (sceneType ?? 'plain');
 
+  // Opacity audit: floor -- the route's opaque base, or the previous route shows through.
   return (
     <View style={[styles.viewport, { backgroundColor: colors.background }]}>
       <Animated.View

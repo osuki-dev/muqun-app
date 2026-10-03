@@ -85,6 +85,7 @@ export function ScreenHeader({
           {
             top: -insets.top,
             height: insets.top * 2 + NAV_HEADER_TOP_GAP + NAV_HEADER_CONTROL_SIZE + 8,
+            // Opacity audit: scrim -- stops scrolled text bleeding under the header controls.
             backgroundColor: theme.colors.background,
           },
         ]}

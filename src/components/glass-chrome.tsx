@@ -198,6 +198,7 @@ export function GlassChrome({
           importantForAccessibility="no-hide-descendants"
           style={[
             StyleSheet.absoluteFill,
+            // Opacity audit: glass -- the pack's explicit glass material keeps its base.
             material === 'glass' && { backgroundColor: theme.colors.surfaceRaised },
           ]}>
           <ThemeArtwork slot={slot} opacityLimit={opacityLimit} />

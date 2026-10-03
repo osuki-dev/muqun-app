@@ -60,6 +60,7 @@ function ErrorRecovery({ onRetry }: { onRetry: () => void }) {
     // Uncover recovery instead of leaving the native launch screen pinned.
     void SplashScreen.hide().catch(() => undefined);
   }, []);
+  // Opacity audit: safety -- recovery stays opaque and independent of the theme's preferences.
   return (
     <View style={[styles.shell, { backgroundColor: colors.background }]}>
       <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}>
