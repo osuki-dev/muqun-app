@@ -1,7 +1,14 @@
 import type { SplashRenderContext } from '@osuki-dev/react-native-splash';
 import { useSplashMirror } from '@osuki-dev/react-native-splash';
 import { useThemeMode, useThemeTokens } from '@osuki-dev/ui';
-import { Canvas, ColorShader, Fill, Shader } from 'react-native-skia';
+import {
+  Canvas,
+  ColorShader,
+  Fill,
+  makeImageFromView,
+  Shader,
+  type SkImage,
+} from 'react-native-skia';
 import { Image } from 'expo-image';
 import { useCallback, useEffect, useEffectEvent, useMemo, useRef, useState } from 'react';
 import {
@@ -29,6 +36,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 
+import { LaunchSnap } from '@/components/launch-snap';
 import { useAppliedCustomTheme } from '@/components/theme-candidate';
 import { useLaunchArtwork, useLaunchBackground } from '@/hooks/use-launch-artwork';
 import { useLaunchHeroEdge } from '@/hooks/use-launch-hero-edge';
@@ -102,10 +110,14 @@ import { resolveThemeImage } from '@/theme/resolve';
  *    belong to a terminal app, and it is deliberately small.
  *
  * By the hold, this sheet and Home are drawing the same wallpaper with the same
- * picture in the same place, so the exit is a cross-fade between two identical
- * compositions -- which is to say it is invisible. The cover does not transition
- * to Home; it stops existing, and the first thing the reader notices is Home's
- * cards rising through where the prompt was.
+ * picture in the same place. Then the picture comes apart: the finished sheet
+ * is captured as one image and cut into small tiles that drift off up and to
+ * the right and fade, swept from left to right, and what they leave behind is
+ * Home (`launch-snap.tsx`, numbers in `snap-dissolve.ts`). The rule still
+ * holds on the way out -- nothing is laid over the artwork; the artwork itself
+ * is what leaves. Under Reduce Motion, or if the capture fails, the exit is
+ * the old cross-fade between two identical compositions, which is to say
+ * invisible, with Home's cards rising through where the prompt was.
  *
  * ## Where every pixel comes from
  *
@@ -230,6 +242,16 @@ const CURSOR_HEIGHT = 1.18;
 const IRIS_RIM = 2;
 
 const FALLBACK_MONO = Platform.OS === 'ios' ? 'Menlo' : 'monospace';
+
+/**
+ * How long the exit will wait for the snapshot the snap is cut from before
+ * settling for the cross-fade.
+ *
+ * The snapshot is a few milliseconds of native work; the live sheet holds,
+ * finished and still, while it runs. A capture still out after this is a
+ * capture going wrong, and the hold is not allowed to become a hang.
+ */
+const SNAPSHOT_PATIENCE_MS = 250;
 
 /** A style dimension that is actually a number, or the fallback. */
 function points(value: unknown, fallback: number): number {
@@ -466,6 +488,18 @@ export function LaunchSceneIntro({
   const blink = useSharedValue(0);
   const hold = useSharedValue(0);
   const exit = useSharedValue(0);
+  // The snap: the sheet's own picture, captured as the exit starts, and how
+  // far it has come apart. The live sheet is hidden the frame this leaves 0.
+  const sheetRef = useRef<View>(null);
+  const snapProgress = useSharedValue(0);
+  const [snapImage, setSnapImage] = useState<SkImage | null>(null);
+  const mounted = useRef(true);
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
 
   const skip = useCallback(() => {
     if (!canSkipLaunchIntro(Date.now() - startedAt.current, beats)) return;
@@ -521,11 +555,44 @@ export function LaunchSceneIntro({
       return;
     }
     if (phase !== 'exiting') return;
-    // Likewise a dissolve rather than a cut, at either setting.
-    exit.set(
-      withTiming(1, timing(beats.exit.ms, { reduceMotion: ReduceMotion.Never }), (finished) => {
-        if (finished) scheduleOnRN(finish);
-      })
+    // Likewise a dissolve rather than a cut, at either setting -- and the
+    // dissolve is also what the snap falls back to.
+    let settled = false;
+    const fade = () => {
+      if (settled) return;
+      settled = true;
+      exit.set(
+        withTiming(1, timing(beats.exit.ms, { reduceMotion: ReduceMotion.Never }), (finished) => {
+          if (finished) scheduleOnRN(finish);
+        })
+      );
+    };
+    // Reduce Motion keeps the plain cross-fade: tiles flying off is exactly
+    // the movement the setting asks us not to make.
+    if (reduced) {
+      fade();
+      return;
+    }
+    // Otherwise the picture comes apart. Capture the finished sheet, then hand
+    // it to the snap, which hides this sheet the moment its tiles start to
+    // move. Any failure -- a rejection, no image, or no answer in time -- is
+    // the cross-fade instead, never a sheet stuck on screen.
+    const patience = setTimeout(fade, SNAPSHOT_PATIENCE_MS);
+    makeImageFromView(sheetRef).then(
+      (image) => {
+        if (settled || !mounted.current || !image) {
+          image?.dispose();
+          fade();
+          return;
+        }
+        settled = true;
+        clearTimeout(patience);
+        setSnapImage(image);
+      },
+      () => {
+        clearTimeout(patience);
+        fade();
+      }
     );
   });
   useEffect(() => {
@@ -639,6 +706,7 @@ export function LaunchSceneIntro({
 
   const sheetStyle = useAnimatedStyle(() => ({
     opacity:
+      (snapProgress.value > 0 ? 0 : 1) *
       (1 - exit.value) *
       (canLand || reduced
         ? 1
@@ -667,110 +735,114 @@ export function LaunchSceneIntro({
     world.kind === 'palette' || (world.kind === 'painted' && !(frontGone && world.ready));
 
   return (
-    <Animated.View
-      needsOffscreenAlphaCompositing={phase === 'exiting'}
-      style={[mirror.container.style, sheetStyle]}>
-      {/* The paper, which is the pack's own and is under everything. */}
-      <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: paper }]} />
+    <>
+      <Animated.View
+        ref={sheetRef}
+        collapsable={false}
+        pointerEvents={snapImage ? 'none' : 'auto'}
+        needsOffscreenAlphaCompositing={phase === 'exiting' && snapImage === null}
+        style={[mirror.container.style, sheetStyle]}>
+        {/* The paper, which is the pack's own and is under everything. */}
+        <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: paper }]} />
 
-      {/*
+        {/*
         The world itself, drawn the way Home draws it. It is under the cover
         from the first frame, so it is loading and decoding while the rim is
         still breathing, and the front does not reveal it until `onLoad` says
         there is something to reveal.
       */}
-      {showWorldImage && wallpaperUri ? (
-        <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, worldStyle]}>
-          <Image
-            accessible={false}
-            autoplay={false}
-            cachePolicy="memory"
-            contentFit={wallpaper?.fit === 'tile' ? 'contain' : (wallpaper?.fit ?? 'cover')}
-            contentPosition={
-              wallpaper?.focalPoint
-                ? {
-                    left: `${wallpaper.focalPoint.x * 100}%`,
-                    top: `${wallpaper.focalPoint.y * 100}%`,
-                  }
-                : 'center'
-            }
-            onError={onImageSettled}
-            onLoad={onImageSettled}
-            source={{ uri: wallpaperUri }}
-            style={[StyleSheet.absoluteFill, { opacity: worldAlpha }]}
-          />
-        </Animated.View>
-      ) : null}
+        {showWorldImage && wallpaperUri ? (
+          <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, worldStyle]}>
+            <Image
+              accessible={false}
+              autoplay={false}
+              cachePolicy="memory"
+              contentFit={wallpaper?.fit === 'tile' ? 'contain' : (wallpaper?.fit ?? 'cover')}
+              contentPosition={
+                wallpaper?.focalPoint
+                  ? {
+                      left: `${wallpaper.focalPoint.x * 100}%`,
+                      top: `${wallpaper.focalPoint.y * 100}%`,
+                    }
+                  : 'center'
+              }
+              onError={onImageSettled}
+              onLoad={onImageSettled}
+              source={{ uri: wallpaperUri }}
+              style={[StyleSheet.absoluteFill, { opacity: worldAlpha }]}
+            />
+          </Animated.View>
+        ) : null}
 
-      {/*
+        {/*
         The cover, with the hole in it. `androidWarmup` pays the GL context
         cost while the native splash is still up rather than on the first frame
         anybody sees; the canvas itself has been drawing (invisibly, under that
         splash) since the first commit, so the SkSL program is compiled and
         warm long before the front starts to move.
       */}
-      {showCanvas && INK_BLOOM_EFFECT ? (
-        <Canvas androidWarmup style={StyleSheet.absoluteFill}>
-          <Fill>
-            <Shader source={INK_BLOOM_EFFECT} uniforms={uniforms}>
-              {/*
+        {showCanvas && INK_BLOOM_EFFECT ? (
+          <Canvas androidWarmup style={StyleSheet.absoluteFill}>
+            <Fill>
+              <Shader source={INK_BLOOM_EFFECT} uniforms={uniforms}>
+                {/*
                 The effect declares a cover image and a runtime effect must be
                 given every child it declares, but this caller's cover is flat
                 paper -- so this is bound and never evaluated.
               */}
-              <ColorShader color={paper} />
-            </Shader>
-          </Fill>
-        </Canvas>
-      ) : null}
+                <ColorShader color={paper} />
+              </Shader>
+            </Fill>
+          </Canvas>
+        ) : null}
 
-      {world.kind === 'iris' && wallpaperUri ? (
-        <IrisReveal
-          bloom={bloom}
-          settle={settle}
-          centre={launchCentre}
-          radius={maxRadius * BLOOM_OVERSHOOT}
-          restRadius={restRadius}
-          rimColor={theme.colors.primary}
-          screen={{ width, height }}
-          source={wallpaperUri}
-          fit={wallpaper?.fit}
-          focalPoint={wallpaper?.focalPoint}
-          opacity={worldAlpha}
-        />
-      ) : null}
+        {world.kind === 'iris' && wallpaperUri ? (
+          <IrisReveal
+            bloom={bloom}
+            settle={settle}
+            centre={launchCentre}
+            radius={maxRadius * BLOOM_OVERSHOOT}
+            restRadius={restRadius}
+            rimColor={theme.colors.primary}
+            screen={{ width, height }}
+            source={wallpaperUri}
+            fit={wallpaper?.fit}
+            focalPoint={wallpaper?.focalPoint}
+            opacity={worldAlpha}
+          />
+        ) : null}
 
-      {/* Keep the native paper through the handoff, then reveal the selected
+        {/* Keep the native paper through the handoff, then reveal the selected
           pack's paper and artwork without a one-frame light/dark cut. */}
-      {paper !== mirror.backgroundColor ? (
-        <Animated.View
-          pointerEvents="none"
-          style={[
-            StyleSheet.absoluteFill,
-            { backgroundColor: mirror.backgroundColor },
-            handoffPaperStyle,
-          ]}
+        {paper !== mirror.backgroundColor ? (
+          <Animated.View
+            pointerEvents="none"
+            style={[
+              StyleSheet.absoluteFill,
+              { backgroundColor: mirror.backgroundColor },
+              handoffPaperStyle,
+            ]}
+          />
+        ) : null}
+
+        <LaunchPrompt
+          blink={blink}
+          bottom={height * PROMPT_BOTTOM_FRACTION}
+          characterWidth={characterWidth}
+          exit={exit}
+          fontFamily={fonts.mono ?? FALLBACK_MONO}
+          fontSize={promptSize}
+          line={line}
+          lineWidth={characterWidth * characters.length}
+          onLineLayout={onLineLayout}
+          scrimColor={paper}
+          scrimFullWidth={scrimFullWidth}
+          sigilColor={theme.colors.primary}
+          textColor={theme.colors.text}
+          type={type}
         />
-      ) : null}
 
-      <LaunchPrompt
-        blink={blink}
-        bottom={height * PROMPT_BOTTOM_FRACTION}
-        characterWidth={characterWidth}
-        exit={exit}
-        fontFamily={fonts.mono ?? FALLBACK_MONO}
-        fontSize={promptSize}
-        line={line}
-        lineWidth={characterWidth * characters.length}
-        onLineLayout={onLineLayout}
-        scrimColor={paper}
-        scrimFullWidth={scrimFullWidth}
-        sigilColor={theme.colors.primary}
-        textColor={theme.colors.text}
-        type={type}
-      />
-
-      {/*
+        {/*
         The picture, exactly as native drew it, travelling into Home's band --
         and two ghosts a beat behind it. Each is a full-bleed centring view
         rather than a positioned image, so the transform's origin is the same
@@ -779,29 +851,29 @@ export function LaunchSceneIntro({
         the compiled launch screen is paper alone, and painting one here would
         be this sheet adding something the frame before it did not have.
       */}
-      {mirror.hasLogo ? (
-        <>
-          {canLand &&
-            GHOST_LAG.map((lag, index) => (
-              <HeroGhost
-                key={lag}
-                frame={heroFrame}
-                hero={hero}
-                lag={lag}
-                landingCentre={landingCentre}
-                landingScale={landingScale}
-                launchCentre={launchCentre}
-                logo={mirror.logo}
-                peak={GHOST_OPACITY[index] ?? 0}
-              />
-            ))}
-          <Animated.View pointerEvents="none" style={[styles.hero, heroFrame, heroStyle]}>
-            <Animated.Image {...mirror.logo} style={mirror.logo.style} />
-          </Animated.View>
-        </>
-      ) : null}
+        {mirror.hasLogo ? (
+          <>
+            {canLand &&
+              GHOST_LAG.map((lag, index) => (
+                <HeroGhost
+                  key={lag}
+                  frame={heroFrame}
+                  hero={hero}
+                  lag={lag}
+                  landingCentre={landingCentre}
+                  landingScale={landingScale}
+                  launchCentre={launchCentre}
+                  logo={mirror.logo}
+                  peak={GHOST_OPACITY[index] ?? 0}
+                />
+              ))}
+            <Animated.View pointerEvents="none" style={[styles.hero, heroFrame, heroStyle]}>
+              <Animated.Image {...mirror.logo} style={mirror.logo.style} />
+            </Animated.View>
+          </>
+        ) : null}
 
-      {/*
+        {/*
         The skip. Full-bleed and unlabelled: there is nothing here to read, so
         a button would be a second thing to look at during a sequence that
         lasts less than a second and a half.
@@ -816,16 +888,32 @@ export function LaunchSceneIntro({
         merely having its `pointerEvents` turned off, so a tap during the exit
         lands on the app rather than on a dissolving cover.
       */}
-      {phase === 'visible' ? (
-        <Pressable
-          accessible={false}
-          importantForAccessibility="no"
-          onPress={skip}
-          style={StyleSheet.absoluteFill}
-          testID="launch-scene-skip"
+        {phase === 'visible' ? (
+          <Pressable
+            accessible={false}
+            importantForAccessibility="no"
+            onPress={skip}
+            style={StyleSheet.absoluteFill}
+            testID="launch-scene-skip"
+          />
+        ) : null}
+      </Animated.View>
+      {/*
+      The exit, when it is the snap: this sheet's own picture coming apart
+      over Home. A sibling of the sheet rather than a child, because the sheet
+      is hidden while it plays and the snap is what is left on screen.
+    */}
+      {snapImage ? (
+        <LaunchSnap
+          durationMs={beats.snap.ms}
+          height={height}
+          image={snapImage}
+          onFinish={finish}
+          progress={snapProgress}
+          width={width}
         />
       ) : null}
-    </Animated.View>
+    </>
   );
 }
 

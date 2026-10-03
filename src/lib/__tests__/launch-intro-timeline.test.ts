@@ -24,7 +24,23 @@ describe('launchIntroTimeline', () => {
     expect(beats.totalMs).toBeLessThanOrEqual(LAUNCH_INTRO_BUDGET_MS);
     // And the budget is a limit rather than a description: an opening that has
     // grown to exactly fill it has grown too far to notice it did.
-    expect(beats.totalMs).toBe(1300);
+    expect(beats.totalMs).toBe(1700);
+  });
+
+  test('the app is in hand when the exit starts, which the snap has not moved', () => {
+    // The overlay stops taking touches the moment it exits, so the budget's
+    // growth for the snap is drift over a live app, not waiting.
+    const beats = launchIntroTimeline(DURATIONS);
+    expect(beats.snap.at).toBe(beats.exit.at);
+    expect(beats.snap.at + beats.bloomStallCapMs).toBe(1300);
+  });
+
+  test('the snap runs long enough to be seen, and its fallback is the old cross-fade', () => {
+    const beats = launchIntroTimeline(DURATIONS);
+    expect(beats.snap.ms).toBe(700);
+    expect(beats.snap.ms).toBeGreaterThanOrEqual(600);
+    expect(beats.snap.ms).toBeLessThanOrEqual(800);
+    expect(beats.exit.ms).toBe(DURATIONS.medium);
   });
 
   test('even a front that stalls for the whole cap cannot pass the budget', () => {
@@ -81,7 +97,8 @@ describe('launchIntroTimeline', () => {
   test('the exit begins where the hold ends and is the last thing that happens', () => {
     const beats = launchIntroTimeline(DURATIONS);
     expect(beats.exit.at).toBe(beats.holdUntil);
-    expect(beats.exit.at + beats.exit.ms).toBe(beats.totalMs);
+    expect(beats.snap.at + beats.snap.ms).toBe(beats.totalMs);
+    expect(beats.exit.at + beats.exit.ms).toBeLessThan(beats.totalMs);
   });
 
   test('the skip arms partway in, so an early tap is a reach rather than a refusal', () => {
@@ -93,7 +110,7 @@ describe('launchIntroTimeline', () => {
 
   test('the opening is stated in tokens, so retuning the scale retunes the launch', () => {
     const doubled = launchIntroTimeline({ micro: 300, short: 400, medium: 600, long: 800 });
-    expect(doubled.totalMs).toBe(2600);
+    expect(doubled.totalMs).toBe(3400);
     expect(doubled.skipArmedAt).toBe(800);
   });
 
@@ -123,6 +140,7 @@ describe('reducedLaunchIntroTimeline', () => {
   test('the cross-fade is kept, because opacity is not travel', () => {
     const beats = reducedLaunchIntroTimeline(DURATIONS);
     expect(beats.exit.ms).toBe(DURATIONS.short);
+    expect(beats.snap).toEqual(beats.exit);
     expect(beats.totalMs).toBe(400);
     expect(beats.totalMs).toBeLessThan(launchIntroTimeline(DURATIONS).totalMs);
   });
