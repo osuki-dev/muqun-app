@@ -145,7 +145,8 @@ type VirtualKeyboardProps = {
   /** A printable character, sent as text. */
   onText: (text: string) => void;
   /** A named key -- enter, backspace, esc, tab, an arrow -- sent as keys. */
-  onKey: (key: string) => void;
+  /** A pane may answer how the key went; `'unsupported'` is the gateway refusing the chord. */
+  onKey: (key: string) => void | Promise<'sent' | 'unsupported' | 'failed'>;
   /** Return to the compact key row. */
   onClose: () => void;
   /**
@@ -244,15 +245,26 @@ export function VirtualKeyboard({
     return resolveKeyboardInput(value, kind, modifiers, vocabulary);
   }
 
+  function flagRefused(chord: string) {
+    setRefused((previous) => ({ chord, count: (previous?.count ?? 0) + 1 }));
+  }
+
   function send(input: KeyboardInput | null, chord: string) {
     if (disabled) return;
     if (!input) {
       // Muted, not inert: the press is the moment to say why nothing happened.
-      setRefused((previous) => ({ chord, count: (previous?.count ?? 0) + 1 }));
+      flagRefused(chord);
       return;
     }
     if ('text' in input) onText(input.text);
-    else onKey(input.key);
+    else {
+      const sent = onKey(input.key);
+      if (sent) {
+        void sent.then((outcome) => {
+          if (outcome === 'unsupported') flagRefused(chord);
+        });
+      }
+    }
     setCtrlState(consumeModifier);
     setAltState(consumeModifier);
     setWideShift(consumeModifier);

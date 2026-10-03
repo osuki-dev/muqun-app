@@ -3,6 +3,7 @@ import { describe, expect, test } from 'bun:test';
 import {
   allowChord,
   chordGlyph,
+  isKeyUnsupportedError,
   parseKeyboardVocabulary,
   vocabularyForSession,
   type KeyboardVocabulary,
@@ -164,4 +165,25 @@ test('a chord is drawn the way a menu writes it', () => {
   expect(chordGlyph('alt+x')).toBe('⌥X');
   expect(chordGlyph('ctrl+f5')).toBe('⌃F5');
   expect(chordGlyph('ctrl+pageup')).toBe('⌃PgUp');
+});
+
+describe('isKeyUnsupportedError', () => {
+  const body = '{"error":{"code":"key_unsupported","message":"tmux would deliver a bare Enter"}}';
+
+  test('recognises the gateway refusal as the request helper throws it', () => {
+    expect(isKeyUnsupportedError(new Error(`HTTP 400: ${body}`))).toBe(true);
+  });
+
+  test('needs both the 400 and the code', () => {
+    expect(isKeyUnsupportedError(new Error(`HTTP 500: ${body}`))).toBe(false);
+    expect(
+      isKeyUnsupportedError(new Error('HTTP 400: {"error":{"code":"bad_request","message":"x"}}'))
+    ).toBe(false);
+    expect(isKeyUnsupportedError(new Error('HTTP 400: nope'))).toBe(false);
+  });
+
+  test('ignores transport failures and non-errors', () => {
+    expect(isKeyUnsupportedError(new Error('Network request failed'))).toBe(false);
+    expect(isKeyUnsupportedError(undefined)).toBe(false);
+  });
 });

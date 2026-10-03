@@ -1,3 +1,4 @@
+import { agentRequestErrorDetail } from '@/lib/agent-request-error';
 import { encodeTerminalKey } from '@/lib/ssh-key-bytes';
 
 /**
@@ -131,4 +132,14 @@ export function chordGlyph(key: string): string {
     .map((mod) => MODIFIER_GLYPHS[mod] ?? mod)
     .join('');
   return `${mods}${BASE_GLYPHS[base] ?? base.toUpperCase()}`;
+}
+
+/**
+ * The gateway refused a chord its pane cannot take: `400 key_unsupported`.
+ * The request helper throws `HTTP <status>: <body>` with the body's
+ * `{ error: { code, message } }` left in the text.
+ */
+export function isKeyUnsupportedError(err: unknown): boolean {
+  const { status, code } = agentRequestErrorDetail(err);
+  return status === 400 && code === 'key_unsupported';
 }
