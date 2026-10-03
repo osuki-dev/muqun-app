@@ -163,6 +163,7 @@ import {
   PANE_OUTPUT_PAGE_LINES,
   loadAgentProfiles,
   loadPaneShortcuts,
+  samePaneShortcuts,
   readAssetBytes,
   gatewaySupportsAgentEvents,
   gatewaySupportsAgentSpawn,
@@ -285,7 +286,12 @@ import {
 import { useServerCapabilities } from '@/stores/server-capabilities';
 import { useAgents } from '@/stores/agents';
 import { useAgentsDiscoveryRefresh } from '@/hooks/use-agent-features';
-import { allowChord, isKeyUnsupportedError, vocabularyForSession } from '@/lib/key-vocabulary';
+import {
+  allowChord,
+  isKeyUnsupportedError,
+  paneVocabulary,
+  vocabularyForSession,
+} from '@/lib/key-vocabulary';
 import { useServerReachability } from '@/stores/server-reachability';
 import { useServerSession } from '@/stores/server-session';
 import { useSshHostsStore } from '@/stores/ssh-hosts';
@@ -1135,6 +1141,16 @@ export function ServerTerminalWorkspace({
   // that types straight into the pane -- the way to drive a TUI like nvim from
   // a phone. Off by default so the output stays visible.
   const [keyboardMode, setKeyboardMode] = useState(false);
+  // Bumped each time the on-screen keyboard opens, so the pane's shortcuts --
+  // and with them whether it takes extended keys right now -- are asked again:
+  // a shell that has just started Claude Code gets its chords back without a
+  // pane switch.
+  const [keyboardOpens, setKeyboardOpens] = useState(0);
+  const openKeyboard = useCallback(() => {
+    Keyboard.dismiss();
+    setKeyboardMode(true);
+    setKeyboardOpens((count) => count + 1);
+  }, []);
   // Asked for, per visit to the keyboard: an editor's composer stands down so
   // the file gets the height, and this is the reader saying they want it back
   // for one line. Cleared whenever the keyboard closes or the pane changes,
@@ -2297,7 +2313,26 @@ export function ServerTerminalWorkspace({
   // than the field, which keeps the SSH encoder as the judge.
   useAgentsDiscoveryRefresh(serverId, ready && connection.phase === 'connected');
   const terminalPlane = useAgents((state) => state.index.servers[serverId]?.terminal ?? null);
-  const keyVocabulary = vocabularyForSession(terminalPlane, data.sessionId);
+  const backendVocabulary = vocabularyForSession(terminalPlane, data.sessionId);
+  // Narrowed by the pane's own answer: tmux can speak extended keys and the
+  // program in this pane may still not have asked for them.
+  const paneExtended = shortcuts?.keyboard?.extended;
+  const keyVocabulary = useMemo(
+    () => paneVocabulary(backendVocabulary, paneExtended),
+    [backendVocabulary, paneExtended]
+  );
+
+  // The gateway lists a key like `⌃↵` whatever the backend can deliver; a key
+  // this pane cannot take is left off the row rather than drawn as a tap that
+  // fails. A sequence (`["\\", "enter"]`) is offered when each of its keys is.
+  // Only with a vocabulary: without one, nothing was filtered before.
+  const deliverableKey = useCallback(
+    (item: TerminalKey) =>
+      !keyVocabulary ||
+      item.text !== undefined ||
+      (item.keys ?? [item.key]).every((key) => allowChord(key, keyVocabulary)),
+    [keyVocabulary]
+  );
 
   // The row follows what the pane is actually running: an agent's own actions,
   // an editor's motions, or shell line editing.
@@ -2312,16 +2347,9 @@ export function ServerTerminalWorkspace({
     // is the one case that does not go through the usual resolve-then-merge
     // below: the usage-ordered row is deliberately not used here either, so
     // Esc stays first no matter how often the other keys have been pressed.
-    // The gateway lists a key like `⌃↵` whatever the backend can deliver; a key
-    // this pane cannot take is left off the row rather than drawn as a tap that
-    // fails. Only with a vocabulary: without one, nothing was filtered before.
-    const deliverable = (item: TerminalKey) =>
-      !keyVocabulary ||
-      item.text !== undefined ||
-      (item.keys ?? [item.key]).every((key) => allowChord(key, keyVocabulary));
     if (fullScreenPane && nvimMode === 'insert') {
       return (shortcuts ? terminalKeysFromGateway(shortcuts.keys) : [])
-        .filter(deliverable)
+        .filter(deliverableKey)
         .filter((item) => ['esc', 'enter', 'tab', 'ctrl+c', 'backspace'].includes(item.key))
         .map((item) => (item.key === 'esc' ? { ...item, emphasis: true } : item));
     }
@@ -2342,11 +2370,11 @@ export function ServerTerminalWorkspace({
         : resolved;
     const scope = shortcuts ? usageScope(serverId, shortcuts.profile, 'keys') : null;
     return orderByUsage(
-      base.filter(deliverable),
+      base.filter(deliverableKey),
       scope ? loadUsage()[scope] : undefined,
       (item) => item.key
     );
-  }, [fullScreenPane, keyVocabulary, nvimMode, serverId, shortcuts]);
+  }, [deliverableKey, fullScreenPane, nvimMode, serverId, shortcuts]);
   const keyScope = shortcuts ? usageScope(serverId, shortcuts.profile, 'keys') : null;
   // Typing "/" in an agent pane offers what that agent actually accepts.
   //
@@ -2932,7 +2960,11 @@ export function ServerTerminalWorkspace({
     const requestPaneId = selection.paneId;
     void loadPaneShortcuts(data.sessionId, requestPaneId)
       .then((value) => {
-        if (!cancelled && activePaneRef.current === requestPaneId) setShortcuts(value);
+        // Asked again on every keyboard open; an unchanged answer keeps the
+        // same object so the usage-ordered row does not reshuffle under a thumb.
+        if (!cancelled && activePaneRef.current === requestPaneId) {
+          setShortcuts((previous) => (samePaneShortcuts(previous, value) ? previous : value));
+        }
       })
       .catch(() => {
         if (!cancelled) setShortcuts(null);
@@ -2940,7 +2972,15 @@ export function ServerTerminalWorkspace({
     return () => {
       cancelled = true;
     };
-  }, [connection.phase, data.sessionId, ready, selection.paneId, selectedPaneTitle, t]);
+  }, [
+    connection.phase,
+    data.sessionId,
+    keyboardOpens,
+    ready,
+    selection.paneId,
+    selectedPaneTitle,
+    t,
+  ]);
 
   // A quick action that needs an argument typed comes back as a draft rather
   // than as a sent message.
@@ -4548,7 +4588,11 @@ export function ServerTerminalWorkspace({
         style={isPadLayout ? styles.padTerminalKeyViewport : undefined}
         contentContainerStyle={styles.terminalKeyList}>
         {renderTerminalKeyButtons(
-          keyboardCombinationKeys(terminalKeys, shortcuts?.keyActions === undefined)
+          // The fallback chords this adds for an older gateway (alt+arrows)
+          // pass the same test as the row they join.
+          keyboardCombinationKeys(terminalKeys, shortcuts?.keyActions === undefined).filter(
+            deliverableKey
+          )
         )}
       </ScrollView>
       {dock.composerEntry ? composerEntry : null}
@@ -5350,10 +5394,7 @@ export function ServerTerminalWorkspace({
               {dock.editorMode ? (
                 <EditorControls
                   expanded={dock.editorPanel}
-                  onExpand={() => {
-                    Keyboard.dismiss();
-                    setKeyboardMode(true);
-                  }}
+                  onExpand={openKeyboard}
                   offsetX={editorHandleX}
                   offsetY={editorHandleY}
                   keyboardOffset={keyboardOffset}
@@ -5567,10 +5608,7 @@ export function ServerTerminalWorkspace({
                                   accessibilityLabel={t`Open on-screen keyboard`}
                                   feedback="selection"
                                   pressedScale={0.9}
-                                  onPress={() => {
-                                    Keyboard.dismiss();
-                                    setKeyboardMode(true);
-                                  }}
+                                  onPress={openKeyboard}
                                   style={[
                                     styles.keyRowToggle,
                                     { borderRadius: profile.chrome.control },

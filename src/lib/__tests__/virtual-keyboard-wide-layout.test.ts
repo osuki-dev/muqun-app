@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import type { KeyboardVocabulary } from '../key-vocabulary';
+import { paneVocabulary, type KeyboardVocabulary } from '../key-vocabulary';
 import {
   DOUBLE_TAP_MS,
   MAIN_UNITS,
@@ -137,23 +137,33 @@ describe('shift', () => {
       expect(resolveWideKey(item, { ...none, shift: true }, vocabulary)).toEqual({
         text: item.shiftLabel ?? item.value,
       });
-      expect(resolveWideKey(item, none, vocabulary)).toEqual({ text: item.value });
+      expect(resolveWideKey(item, none, vocabulary)).toEqual({
+        text: item.value,
+      });
     }
   });
 });
 
 describe('what a key sends', () => {
   test('ctrl armed then enter is ctrl+enter on an extended backend', () => {
-    expect(resolveWideKey(find('key-enter'), ctrl, vocabulary)).toEqual({ key: 'ctrl+enter' });
+    expect(resolveWideKey(find('key-enter'), ctrl, vocabulary)).toEqual({
+      key: 'ctrl+enter',
+    });
     expect(resolveWideKey(find('key-enter'), { ...none, shift: true }, vocabulary)).toEqual({
       key: 'shift+enter',
     });
     expect(resolveWideKey(find('char-x'), { ...none, alt: true }, vocabulary)).toEqual({
       key: 'alt+x',
     });
-    expect(resolveWideKey(find('key-f5'), none, vocabulary)).toEqual({ key: 'f5' });
-    expect(resolveWideKey(find('char-space'), ctrl, classicOnly)).toEqual({ key: 'ctrl+space' });
-    expect(resolveWideKey(find('char-c'), ctrl, classicOnly)).toEqual({ key: 'ctrl+c' });
+    expect(resolveWideKey(find('key-f5'), none, vocabulary)).toEqual({
+      key: 'f5',
+    });
+    expect(resolveWideKey(find('char-space'), ctrl, classicOnly)).toEqual({
+      key: 'ctrl+space',
+    });
+    expect(resolveWideKey(find('char-c'), ctrl, classicOnly)).toEqual({
+      key: 'ctrl+c',
+    });
   });
 
   test('modifiers and controls send nothing', () => {
@@ -199,6 +209,75 @@ describe('which keys are muted', () => {
   test('without a vocabulary the SSH encoder decides: ctrl+enter is muted', () => {
     expect(wideKeyEnabled(find('key-enter'), ctrl, undefined)).toBe(false);
     expect(wideKeyEnabled(find('key-up'), ctrl, undefined)).toBe(true);
+  });
+});
+
+describe('a pane that has not asked for extended keys', () => {
+  // An extended tmux, but the program in this pane never enabled extended keys.
+  const plainPane = paneVocabulary(vocabulary, false);
+  const live = (modifiers: typeof none) =>
+    allKeys
+      .filter((item) => item.kind === 'char' || item.kind === 'key')
+      .filter((item) => wideKeyEnabled(item, modifiers, plainPane))
+      .map((item) => item.id)
+      .sort();
+
+  test('ctrl armed: the classic chords and esc stay, enter and the rest are disabled', () => {
+    expect(live(ctrl)).toEqual(
+      [
+        'key-esc',
+        'char-space',
+        'char-[',
+        'char-]',
+        'char-\\',
+        ...Array.from('abcdefghijklmnopqrstuvwxyz', (letter) => `char-${letter}`),
+      ].sort()
+    );
+    expect(wideKeyEnabled(find('key-enter'), ctrl, plainPane)).toBe(false);
+    expect(wideKeyEnabled(find('char-c'), ctrl, plainPane)).toBe(true);
+  });
+
+  test('shift armed: characters still type, special keys but shift+tab are disabled', () => {
+    const shift = { ...none, shift: true };
+    const disabled = allKeys
+      .filter((item) => item.kind === 'key')
+      .filter((item) => !wideKeyEnabled(item, shift, plainPane))
+      .map((item) => item.value)
+      .sort();
+    expect(disabled).toEqual(
+      [
+        'backspace',
+        'enter',
+        'up',
+        'down',
+        'left',
+        'right',
+        'home',
+        'end',
+        'pageup',
+        'pagedown',
+        'insert',
+        'delete',
+        ...Array.from({ length: 12 }, (_, index) => `f${index + 1}`),
+      ].sort()
+    );
+    expect(
+      allKeys
+        .filter((item) => item.kind === 'char')
+        .every((item) => wideKeyEnabled(item, shift, plainPane))
+    ).toBe(true);
+  });
+
+  test('alt armed: only esc is left', () => {
+    expect(live({ ...none, alt: true })).toEqual(['key-esc']);
+  });
+
+  test('nothing armed: every key is live, and the same pane extended mutes nothing under ctrl', () => {
+    expect(live(none).length).toBe(
+      allKeys.filter((item) => item.kind === 'char' || item.kind === 'key').length
+    );
+    const extendedPane = paneVocabulary(vocabulary, true);
+    expect(allKeys.every((item) => wideKeyEnabled(item, ctrl, extendedPane))).toBe(true);
   });
 });
 
