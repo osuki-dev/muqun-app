@@ -32,6 +32,7 @@ import {
   type TerminalDiscovery,
   type TransportsDiscovery,
 } from './agent-protocol';
+import { parseKeyboardVocabulary } from './key-vocabulary';
 
 export { DEFAULT_AGENT_ID, normalizeAgentId };
 
@@ -384,6 +385,7 @@ function parseMirroredTerminal(value: unknown): TerminalDiscovery | null {
   if (!isRecord(value) || !Array.isArray(value.backends)) return null;
   const backends = value.backends.flatMap((entry) => {
     if (!isRecord(entry) || typeof entry.sessionId !== 'string' || !entry.sessionId) return [];
+    const keyboard = parseKeyboardVocabulary(entry.keyboard);
     return [
       {
         sessionId: entry.sessionId,
@@ -393,6 +395,7 @@ function parseMirroredTerminal(value: unknown): TerminalDiscovery | null {
         capabilities: Array.isArray(entry.capabilities)
           ? entry.capabilities.filter((c): c is string => typeof c === 'string')
           : [],
+        ...(keyboard ? { keyboard } : {}),
       },
     ];
   });
