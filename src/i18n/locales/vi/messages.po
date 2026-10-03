@@ -280,6 +280,10 @@ msgstr "{lead}: {title} — đã xong khi bạn đi vắng"
 msgid "{messages, plural, one {# message} other {# messages}}"
 msgstr "{messages, plural, other {# tin nhắn}}"
 
+#: src/components/virtual-keyboard.tsx
+msgid "{modifierKeys} combinations need the program in this terminal to enable extended keys"
+msgstr "Tổ hợp {modifierKeys} cần chương trình trong terminal này bật phím mở rộng"
+
 #: src/components/new-task-action.tsx
 msgid "{name} needs setup. Tap for setup instructions"
 msgstr "{name} cần được thiết lập. Chạm để xem hướng dẫn thiết lập"

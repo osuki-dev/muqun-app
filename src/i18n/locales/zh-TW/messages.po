@@ -280,6 +280,10 @@ msgstr "{lead}：{title} — 在你離開時完成"
 msgid "{messages, plural, one {# message} other {# messages}}"
 msgstr "{messages, plural, other {# 則訊息}}"
 
+#: src/components/virtual-keyboard.tsx
+msgid "{modifierKeys} combinations need the program in this terminal to enable extended keys"
+msgstr "{modifierKeys} 組合鍵需要此終端機中的程式啟用延伸按鍵"
+
 #: src/components/new-task-action.tsx
 msgid "{name} needs setup. Tap for setup instructions"
 msgstr "{name} 需要設定。點一下查看設定說明"
