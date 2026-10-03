@@ -102,6 +102,7 @@ const WIRE_FILE_STATUS: Readonly<Record<string, GitFileStatus>> = {
   untracked: 'untracked',
   conflicted: 'conflicted',
   type_changed: 'type_changed',
+  typechange: 'type_changed',
 };
 
 /** The status OpenCode stated, or `null` when it stated nothing this app knows. */

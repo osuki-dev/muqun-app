@@ -149,6 +149,7 @@ describe('fileChangeFromDiffItem', () => {
     ).toBe('added');
     expect(fileStatusFromWire(undefined)).toBeNull();
     expect(fileStatusFromWire('DELETED')).toBe('deleted');
+    expect(fileStatusFromWire('typechange')).toBe('type_changed');
   });
 
   test('a binary file is marked binary', () => {
