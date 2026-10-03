@@ -21,6 +21,8 @@
  * OpenCode's payloads and stay camelCase.
  */
 
+import { parseKeyboardVocabulary, type KeyboardVocabulary } from './key-vocabulary';
+
 // ---------------------------------------------------------------------------
 // Primitives
 // ---------------------------------------------------------------------------
@@ -263,8 +265,16 @@ export interface AgentSessionFork {
 export interface AgentSessionInfo {
   asid: string;
   backend_session_id: string;
+  /**
+   * The agent that owns this session -- `opencode`, `deepseek`, ... A gateway
+   * older than multi-agent sends nothing here, and one that has just learned
+   * the field may send an empty string; both are the single OpenCode agent
+   * that was the only one there ever was, so both read as `DEFAULT_AGENT_ID`.
+   */
+  agent_id: string;
   title: string;
-  agent?: string;
+  /** The persona inside the agent -- OpenCode's `build`, `plan`, ... */
+  mode?: string;
   /**
    * `null` when OpenCode has not said which model this session runs on. The
    * gateway does not invent one, and neither does the app: a picker showing a
@@ -299,14 +309,15 @@ export function parseAgentSessionInfo(value: unknown): AgentSessionInfo | null {
   const info: AgentSessionInfo = {
     asid,
     backend_session_id: pickString(rec, ['backend_session_id']) ?? asid,
+    agent_id: normalizeAgentId(rec.agent_id),
     title: asString(rec.title) ?? '',
     model: parseModelRef(rec.model),
     status: parseRunStatus(rec.status),
     updated_ms: asFiniteNumber(rec.updated_ms) ?? 0,
   };
 
-  const agent = pickString(rec, ['agent']);
-  if (agent) info.agent = agent;
+  const mode = pickString(rec, ['mode']);
+  if (mode) info.mode = mode;
   const directory = pickString(rec, ['directory']);
   if (directory) info.directory = directory;
   const cost = asFiniteNumber(rec.cost);
@@ -928,7 +939,7 @@ export type AgentPart =
       truncated?: boolean;
     }
   | { type: 'model_switched'; model: ModelRef | null; previous: ModelRef | null }
-  | { type: 'agent_switched'; agent: string; previous?: string }
+  | { type: 'agent_switched'; mode: string; previous?: string }
   | { type: 'synthetic'; text?: string; description?: string }
   | { type: 'system'; text?: string; description?: string }
   | { type: 'location_switched'; directory: string; previous?: string }
@@ -1133,10 +1144,10 @@ export function parseAgentPart(value: unknown): AgentPart | null {
         previous: parseModelRef(rec.previous),
       };
     case 'agent_switched': {
-      const agent = pickString(rec, ['agent']);
-      if (!agent) return null;
+      const mode = pickString(rec, ['mode']);
+      if (!mode) return null;
       const previous = pickString(rec, ['previous']);
-      return { type: 'agent_switched', agent, ...(previous ? { previous } : {}) };
+      return { type: 'agent_switched', mode, ...(previous ? { previous } : {}) };
     }
     case 'synthetic':
     case 'system': {
@@ -1743,7 +1754,7 @@ export interface AgentWorktreeListing {
   missing?: WorkspaceMissing;
 }
 
-export interface AgentEngineInfo {
+export interface AgentStatusInfo {
   available: boolean;
   origin: 'adopted' | 'spawned' | 'none';
   installation?: 'installed' | 'not_found' | 'unknown';
@@ -1751,14 +1762,20 @@ export interface AgentEngineInfo {
   version?: string;
   stream_connected: boolean;
   autostart: boolean;
+  /** Which agent answered, on a gateway that drives more than one. */
+  agent_id?: string;
+  /** The agent's kind (`opencode`, `deepseek`); today the same as `agent_id`. */
+  kind?: string;
 }
 
-export function parseAgentEngineInfo(value: unknown): AgentEngineInfo {
+export function parseAgentStatusInfo(value: unknown): AgentStatusInfo {
   const rec = asRecord(value) ?? {};
   const origin = asString(rec.origin);
   const installation = asString(rec.installation);
   const url = pickString(rec, ['url']);
   const version = pickString(rec, ['version']);
+  const agentId = pickString(rec, ['agent_id']);
+  const kind = pickString(rec, ['kind']);
   return {
     available: rec.available === true,
     origin: origin === 'adopted' || origin === 'spawned' ? origin : 'none',
@@ -1769,6 +1786,469 @@ export function parseAgentEngineInfo(value: unknown): AgentEngineInfo {
     ...(version ? { version } : {}),
     stream_connected: rec.stream_connected === true,
     autostart: rec.autostart !== false,
+    ...(agentId ? { agent_id: agentId } : {}),
+    ...(kind ? { kind } : {}),
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Agents discovery
+// ---------------------------------------------------------------------------
+
+/**
+ * The agent every gateway had before it could name one.
+ *
+ * Every field, key and target that gained an agent dimension reads a missing
+ * value as this, so a device upgraded under a reader keeps every cache entry,
+ * remembered model and Home target it had.
+ */
+export const DEFAULT_AGENT_ID = 'opencode';
+
+/** An agent id as the wire spells it, or the default for nothing at all. */
+export function normalizeAgentId(value: unknown): string {
+  const id = typeof value === 'string' ? value.trim() : '';
+  return id ? id : DEFAULT_AGENT_ID;
+}
+
+/**
+ * An agent's `status` in discovery, spelled snake_case on the wire. `unknown`
+ * is this app's own word for a status it has never heard of.
+ */
+export type AgentAvailability =
+  | 'connected'
+  | 'reachable'
+  | 'offline'
+  | 'disabled'
+  | 'not_installed'
+  | 'unconfigured'
+  | 'unknown';
+
+const AGENT_AVAILABILITIES: readonly AgentAvailability[] = [
+  'connected',
+  'reachable',
+  'offline',
+  'disabled',
+  'not_installed',
+  'unconfigured',
+];
+
+export function parseAgentAvailability(value: unknown): AgentAvailability {
+  const status = asString(value);
+  return AGENT_AVAILABILITIES.find((known) => known === status) ?? 'unknown';
+}
+
+/**
+ * What an agent can do, as the gateway's `AgentFeatures` (camelCase on the
+ * wire, like the whole discovery document). Every flag is the gateway's to
+ * state; a flag it does not send reads `true` -- see `parseAgentFeatures`.
+ */
+export interface AgentFeatures {
+  streaming: boolean;
+  reasoningEffort: boolean;
+  modelSelection: boolean;
+  toolApprovals: boolean;
+  worktrees: boolean;
+  revert: boolean;
+  /**
+   * `POST …/revert/stage`: a rollback that can be previewed before it is
+   * applied. An agent with `revert` and without this only has the one-step
+   * `POST …/revert`, which the app asks the reader to confirm first.
+   */
+  stagedRevert: boolean;
+  inbox: boolean;
+  /** `POST …/compact`, and the compaction pill above the composer. */
+  compaction: boolean;
+  /** Background shells and the tray that lists them. */
+  backgroundShells: boolean;
+  /** Modes (`build`, `plan`, …): the mode sheet and `/agents`. */
+  modes: boolean;
+  /** Slash-invocable skills from the catalog. */
+  skills: boolean;
+  /** The host's own slash commands, offered for completion in the composer. */
+  slashCommands: boolean;
+  /** Files and images attached to a prompt. */
+  attachments: boolean;
+  /** Every other key the gateway sent, untouched, for a reader that knows one. */
+  extra: Record<string, unknown>;
+}
+
+/** The flags this app reads; everything else is kept as an `extra`. */
+const AGENT_FEATURE_KEYS = [
+  'streaming',
+  'reasoningEffort',
+  'modelSelection',
+  'toolApprovals',
+  'worktrees',
+  'revert',
+  'stagedRevert',
+  'inbox',
+  'compaction',
+  'backgroundShells',
+  'modes',
+  'skills',
+  'slashCommands',
+  'attachments',
+] as const;
+
+/**
+ * Every control on, which is what the app assumed before it could ask: a
+ * gateway without discovery drives the one agent every surface here was built
+ * on, and silence must not take a control away.
+ */
+export const LEGACY_AGENT_FEATURES: Readonly<AgentFeatures> = Object.freeze({
+  streaming: true,
+  reasoningEffort: true,
+  modelSelection: true,
+  toolApprovals: true,
+  worktrees: true,
+  revert: true,
+  stagedRevert: true,
+  inbox: true,
+  compaction: true,
+  backgroundShells: true,
+  modes: true,
+  skills: true,
+  slashCommands: true,
+  attachments: true,
+  extra: Object.freeze({}) as Record<string, unknown>,
+});
+
+/**
+ * What to assume of an agent whose features nobody has stated: everything.
+ *
+ * No agent kind is special here. The gateway states each agent's features in
+ * discovery; this is only the answer for a gateway that has no discovery at
+ * all, where the one agent it drives is the one this app was built on.
+ */
+export function defaultAgentFeatures(): AgentFeatures {
+  return { ...LEGACY_AGENT_FEATURES, extra: {} };
+}
+
+/** A flag by name, when the gateway sent one. */
+function pickBool(rec: Record<string, unknown>, keys: readonly string[]): boolean | undefined {
+  for (const key of keys) {
+    const value = rec[key];
+    if (typeof value === 'boolean') return value;
+  }
+  return undefined;
+}
+
+/**
+ * `features` of one agent, as the gateway stated them.
+ *
+ * A flag the gateway did not send reads `true`: an older gateway predates the
+ * flag, and taking a control away because nobody mentioned it would break the
+ * agent those gateways drive. Whatever a flag leaves open, the screen still
+ * narrows by what the agent's catalog lists -- no modes, no mode button.
+ */
+export function parseAgentFeatures(value: unknown): AgentFeatures {
+  const defaults = defaultAgentFeatures();
+  const rec = asRecord(value);
+  if (!rec) return defaults;
+  // A parsed object handed back in (the mirror re-reads its own writes)
+  // carries its extras under `extra` already; they are kept there, not nested.
+  const extra: Record<string, unknown> = { ...asRecord(rec.extra) };
+  const named = new Set<string>([...AGENT_FEATURE_KEYS, 'extra']);
+  for (const [key, entry] of Object.entries(rec)) {
+    if (!named.has(key)) extra[key] = entry;
+  }
+  const flag = (key: (typeof AGENT_FEATURE_KEYS)[number]) => pickBool(rec, [key]) ?? defaults[key];
+  return {
+    streaming: flag('streaming'),
+    reasoningEffort: flag('reasoningEffort'),
+    modelSelection: flag('modelSelection'),
+    toolApprovals: flag('toolApprovals'),
+    worktrees: flag('worktrees'),
+    revert: flag('revert'),
+    stagedRevert: flag('stagedRevert'),
+    inbox: flag('inbox'),
+    compaction: flag('compaction'),
+    backgroundShells: flag('backgroundShells'),
+    modes: flag('modes'),
+    skills: flag('skills'),
+    slashCommands: flag('slashCommands'),
+    attachments: flag('attachments'),
+    extra,
+  };
+}
+
+/** One model an agent lists in discovery. */
+export interface AgentModelSummary {
+  id: string;
+  name: string;
+  providerId: string;
+  supportsReasoning: boolean;
+  reasoningEffortTiers: string[];
+}
+
+/** One mode an agent lists in discovery. */
+export interface AgentModeSummary {
+  id: string;
+  name: string;
+  description?: string;
+}
+
+/** One agent, as `AgentDiscoveryInfo` on the gateway. */
+export interface AgentInfo {
+  id: string;
+  kind: string;
+  name: string;
+  status: AgentAvailability;
+  enabled: boolean;
+  /** Only a paired device is told these; an unauthenticated read has neither. */
+  endpoint?: string;
+  version?: string;
+  models: AgentModelSummary[];
+  modes: AgentModeSummary[];
+  features: AgentFeatures;
+}
+
+/** The agents plane, as `AgentPlaneDiscovery` on the gateway. */
+export interface AgentsDiscovery {
+  supported: boolean;
+  /** In the gateway's own order, which is its preference order. */
+  agents: AgentInfo[];
+  multiAgent: boolean;
+  catalogAggregation: boolean;
+  sessionRouting: boolean;
+}
+
+function parseAgentModelSummary(value: unknown): AgentModelSummary | null {
+  const rec = asRecord(value);
+  if (!rec) return null;
+  const id = pickString(rec, ['id']);
+  if (!id) return null;
+  return {
+    id,
+    name: pickString(rec, ['name']) ?? id,
+    providerId: pickString(rec, ['providerId']) ?? '',
+    supportsReasoning: pickBool(rec, ['supportsReasoning']) ?? false,
+    reasoningEffortTiers: asStringArray(rec.reasoningEffortTiers),
+  };
+}
+
+function parseAgentModeSummary(value: unknown): AgentModeSummary | null {
+  const rec = asRecord(value);
+  if (!rec) return null;
+  const id = pickString(rec, ['id']);
+  if (!id) return null;
+  const description = pickString(rec, ['description']);
+  return { id, name: pickString(rec, ['name']) ?? id, ...(description ? { description } : {}) };
+}
+
+export function parseAgentInfo(value: unknown): AgentInfo | null {
+  const rec = asRecord(value);
+  if (!rec) return null;
+  const id = pickString(rec, ['id']);
+  if (!id) return null;
+  const kind = pickString(rec, ['kind']) ?? id;
+  const endpoint = pickString(rec, ['endpoint']);
+  const version = pickString(rec, ['version']);
+  const models: AgentModelSummary[] = [];
+  if (Array.isArray(rec.models)) {
+    for (const entry of rec.models) {
+      const model = parseAgentModelSummary(entry);
+      if (model) models.push(model);
+    }
+  }
+  const modes: AgentModeSummary[] = [];
+  if (Array.isArray(rec.modes)) {
+    for (const entry of rec.modes) {
+      const mode = parseAgentModeSummary(entry);
+      if (mode) modes.push(mode);
+    }
+  }
+  return {
+    id,
+    kind,
+    name: pickString(rec, ['name']) ?? id,
+    status: parseAgentAvailability(rec.status),
+    // A gateway that does not say is a gateway whose agent is in the list
+    // because it is configured; only an explicit `false` disables it.
+    enabled: rec.enabled !== false,
+    ...(endpoint ? { endpoint } : {}),
+    ...(version ? { version } : {}),
+    models,
+    modes,
+    features: parseAgentFeatures(rec.features),
+  };
+}
+
+/**
+ * The agents plane, from any of the shapes it is handed in.
+ *
+ * `GET /api/discovery` answers `{ok, planes: {terminal, agents, ssh}}` with no
+ * content envelope; a caller may also hand this the whole answer wrapped in
+ * one, the `planes` object, or the plane itself. `null` when nothing in the
+ * value is an agents plane.
+ */
+export function parseAgentsDiscovery(value: unknown): AgentsDiscovery | null {
+  let rec = asRecord(value);
+  if (!rec) return null;
+  const data = asRecord(rec.data);
+  if (data && !('planes' in rec) && !Array.isArray(rec.agents)) rec = data;
+  const planes = asRecord(rec.planes);
+  if (planes) rec = asRecord(planes.agents) ?? {};
+  else if (!Array.isArray(rec.agents)) {
+    // The `planes` object itself, or the whole answer with `planes` unwrapped.
+    const nested = asRecord(rec.agents);
+    if (nested && Array.isArray(nested.agents)) rec = nested;
+  }
+  if (!Array.isArray(rec.agents)) return null;
+
+  const agents: AgentInfo[] = [];
+  const seen = new Set<string>();
+  for (const entry of rec.agents) {
+    const info = parseAgentInfo(entry);
+    if (!info || seen.has(info.id)) continue;
+    seen.add(info.id);
+    agents.push(info);
+  }
+  const features = asRecord(rec.features) ?? {};
+  return {
+    supported: rec.supported === true || agents.some((agent) => agent.status === 'connected'),
+    agents,
+    multiAgent: pickBool(features, ['multiAgent']) ?? agents.length > 1,
+    catalogAggregation: pickBool(features, ['catalogAggregation']) ?? false,
+    sessionRouting: pickBool(features, ['sessionRouting']) ?? false,
+  };
+}
+
+/** One terminal backend, as `TerminalBackendDiscoveryInfo`, without its version. */
+export interface TerminalBackendSummary {
+  sessionId: string;
+  label: string;
+  kind: string;
+  connected: boolean;
+  capabilities: string[];
+  /** The keys this backend can deliver; absent from a gateway that predates it. */
+  keyboard?: KeyboardVocabulary;
+}
+
+/** The terminal plane, as `TerminalPlaneDiscovery`, reduced to what Home projects. */
+export interface TerminalDiscovery {
+  supported: boolean;
+  mode: string;
+  activeBackend?: string;
+  backends: TerminalBackendSummary[];
+  degradedReason?: string;
+}
+
+/** The SSH plane, as `SshPlaneDiscovery`: what the phone's own transport may carry. */
+export interface SshDiscovery {
+  supported: boolean;
+  tunnelSupported: boolean;
+  pushTokenSupported: boolean;
+}
+
+/** The event WebSocket, as discovery's `transports.websocket` states it. */
+export interface WebSocketTransportDiscovery {
+  /** An absolute path on the gateway, `/api/ws` today. */
+  path: string;
+  /** The frame protocol version the gateway speaks, when it says. */
+  protocol?: number;
+}
+
+/** The App-facing transports beyond plain HTTP, keyed by name. */
+export interface TransportsDiscovery {
+  websocket?: WebSocketTransportDiscovery;
+}
+
+/** Every plane of one `GET /api/discovery` answer this app reads. */
+export interface GatewayDiscovery {
+  agents: AgentsDiscovery | null;
+  terminal: TerminalDiscovery | null;
+  ssh: SshDiscovery | null;
+  /** Absent on a gateway that predates `transports`. */
+  transports?: TransportsDiscovery;
+}
+
+/**
+ * A path the app will put after the gateway's own origin: absolute, and
+ * nothing that could name another host (`//host`) or carry a scheme.
+ */
+function isGatewayPath(value: unknown): value is string {
+  return typeof value === 'string' && /^\/(?!\/)\S*$/.test(value);
+}
+
+/**
+ * `transports` from discovery. A key this build does not know, or a value it
+ * cannot use, is left out, and the reader falls back to its own default.
+ */
+export function parseTransportsDiscovery(value: unknown): TransportsDiscovery | null {
+  const rec = asRecord(value);
+  if (!rec) return null;
+  const transports: TransportsDiscovery = {};
+  const websocket = asRecord(rec.websocket);
+  if (websocket && isGatewayPath(websocket.path)) {
+    const protocol = websocket.protocol;
+    transports.websocket = {
+      path: websocket.path,
+      ...(typeof protocol === 'number' && Number.isInteger(protocol) ? { protocol } : {}),
+    };
+  }
+  return transports;
+}
+
+export function parseTerminalDiscovery(value: unknown): TerminalDiscovery | null {
+  const rec = asRecord(value);
+  if (!rec || !Array.isArray(rec.backends)) return null;
+  const backends: TerminalBackendSummary[] = [];
+  for (const entry of rec.backends) {
+    const backend = asRecord(entry);
+    if (!backend) continue;
+    const sessionId = pickString(backend, ['sessionId']);
+    if (!sessionId) continue;
+    const keyboard = parseKeyboardVocabulary(backend.keyboard);
+    backends.push({
+      sessionId,
+      label: pickString(backend, ['label']) ?? sessionId,
+      kind: pickString(backend, ['kind']) ?? '',
+      connected: backend.connected === true,
+      capabilities: asStringArray(backend.capabilities),
+      ...(keyboard ? { keyboard } : {}),
+    });
+  }
+  const activeBackend = pickString(rec, ['activeBackend']);
+  const degradedReason = pickString(rec, ['degradedReason']);
+  return {
+    supported: rec.supported === true,
+    mode: pickString(rec, ['mode']) ?? '',
+    ...(activeBackend ? { activeBackend } : {}),
+    backends,
+    ...(degradedReason ? { degradedReason } : {}),
+  };
+}
+
+export function parseSshDiscovery(value: unknown): SshDiscovery | null {
+  const rec = asRecord(value);
+  if (!rec) return null;
+  return {
+    supported: rec.supported === true,
+    tunnelSupported: pickBool(rec, ['tunnelSupported']) ?? false,
+    pushTokenSupported: pickBool(rec, ['pushTokenSupported']) ?? false,
+  };
+}
+
+/**
+ * The whole discovery answer. `planes` may be at the top level (the route's
+ * own shape) or under `data` (a caller that unwrapped nothing and one that
+ * did both land here). A value with no `planes` at all answers `null` for
+ * every plane rather than `null` outright, so a reader can still ask.
+ */
+export function parseGatewayDiscovery(value: unknown): GatewayDiscovery {
+  let rec = asRecord(value) ?? {};
+  if (!('planes' in rec)) {
+    const data = asRecord(rec.data);
+    if (data && 'planes' in data) rec = data;
+  }
+  const planes = asRecord(rec.planes) ?? {};
+  const transports = parseTransportsDiscovery(rec.transports);
+  return {
+    agents: parseAgentsDiscovery(rec),
+    terminal: parseTerminalDiscovery(planes.terminal),
+    ssh: parseSshDiscovery(planes.ssh),
+    ...(transports ? { transports } : {}),
   };
 }
 
@@ -1883,6 +2363,141 @@ export function parseVcsDiffMode(value: unknown): VcsDiffMode {
   return raw === 'branch' || raw === 'committed' ? raw : 'working';
 }
 
+/**
+ * The gateway can list changed files without their patches, read one file's
+ * patch at a chosen context, and discard one file's changes:
+ * `…/vcs/files`, `…/vcs/file` and `POST …/vcs/discard`. A gateway without it
+ * has only `…/vcs/diff`, which answers every patch at once.
+ */
+export const AGENT_VCS_FILES_CAPABILITY = 'agent_vcs_files';
+
+export function gatewaySupportsVcsFiles(
+  capabilities: readonly string[] | undefined | null
+): boolean {
+  return Array.isArray(capabilities) && capabilities.includes(AGENT_VCS_FILES_CAPABILITY);
+}
+
+/** The two comparisons `…/vcs/files` answers: uncommitted, or against the branch's base. */
+export type VcsFilesMode = 'working' | 'branch';
+
+/** One changed file from `…/vcs/files`: a summary, never a patch. */
+export interface AgentVcsFileSummary {
+  path: string;
+  /** Where a rename or copy came from. */
+  oldPath?: string;
+  /**
+   * The wire word (`added`, `typechange`, `conflicted`, and `unchanged` from
+   * `…/vcs/file`); `agent-diff-rows.ts` maps it, and an unknown one is
+   * `modified`.
+   */
+  status?: string;
+  /** `null` when the gateway would not count, e.g. an untracked file too large to read. */
+  additions: number | null;
+  deletions: number | null;
+  binary: boolean;
+}
+
+/** What `GET …/vcs/files` answered. */
+export interface AgentVcsFiles {
+  files: AgentVcsFileSummary[];
+  mode: VcsFilesMode;
+  /** The ref `branch` compares against; absent when there is none to offer. */
+  base?: string;
+  /** The gateway cut the list at its cap. */
+  truncated: boolean;
+  vcs?: 'git' | null;
+  /**
+   * `no_default_branch`: `mode=branch` was asked of a repository with nothing
+   * to compare against.
+   */
+  reason?: 'not_a_repository' | 'no_default_branch' | 'workspace_missing';
+  missing?: WorkspaceMissing;
+}
+
+/** A count, `null` when the gateway said `null`, and zero when it said nothing. */
+function countOf(value: unknown): number | null {
+  return value === null ? null : (asFiniteNumber(value) ?? 0);
+}
+
+function parseVcsFileSummary(value: unknown): AgentVcsFileSummary | null {
+  const rec = asRecord(value);
+  if (!rec) return null;
+  const path = asString(rec.path);
+  if (!path) return null;
+  const oldPath = asString(rec.old_path) ?? asString(rec.oldPath);
+  const status = asString(rec.status);
+  return {
+    path,
+    ...(oldPath ? { oldPath } : {}),
+    ...(status ? { status } : {}),
+    additions: countOf(rec.additions),
+    deletions: countOf(rec.deletions),
+    binary: asBool(rec.binary) ?? false,
+  };
+}
+
+/**
+ * The `200` body of `…/vcs/files`, or `null` for anything that is not one.
+ *
+ * `null` is what sends the sheet back to `…/vcs/diff`: a gateway that
+ * advertised the capability and then answered something else is better read
+ * through the route every gateway has than shown as an empty list.
+ */
+export function parseAgentVcsFiles(value: unknown): AgentVcsFiles | null {
+  const rec = asRecord(value);
+  if (!rec || !Array.isArray(rec.files)) return null;
+  const files: AgentVcsFileSummary[] = [];
+  for (const entry of rec.files) {
+    const file = parseVcsFileSummary(entry);
+    if (file) files.push(file);
+  }
+  const base = asString(rec.base);
+  const vcs: 'git' | null = !('vcs' in rec) || asString(rec.vcs) === 'git' ? 'git' : null;
+  const reason = asString(rec.reason);
+  return {
+    files,
+    mode: asString(rec.mode) === 'branch' ? 'branch' : 'working',
+    ...(base ? { base } : {}),
+    truncated: asBool(rec.truncated) ?? false,
+    vcs,
+    ...(files.length === 0 && (reason === 'not_a_repository' || reason === 'no_default_branch')
+      ? { reason }
+      : {}),
+  };
+}
+
+/** What `GET …/vcs/file` answered: one file's patch at the context asked for. */
+export interface AgentVcsFilePatch extends AgentVcsFileSummary {
+  patch: string;
+  /** The gateway cut the patch at its cap. */
+  truncated: boolean;
+}
+
+export function parseAgentVcsFilePatch(value: unknown): AgentVcsFilePatch | null {
+  const summary = parseVcsFileSummary(value);
+  const rec = asRecord(value);
+  if (!summary || !rec) return null;
+  return {
+    ...summary,
+    patch: asString(rec.patch) ?? '',
+    truncated: asBool(rec.truncated) ?? false,
+  };
+}
+
+/** What `POST …/vcs/discard` did: put a tracked file back, or delete an untracked one. */
+export interface AgentVcsDiscard {
+  path: string;
+  action: 'restored' | 'deleted';
+}
+
+export function parseAgentVcsDiscard(value: unknown): AgentVcsDiscard | null {
+  const rec = asRecord(value);
+  const path = rec ? asString(rec.path) : undefined;
+  const action = rec ? asString(rec.action) : undefined;
+  if (!path || (action !== 'restored' && action !== 'deleted')) return null;
+  return { path, action };
+}
+
 // ---------------------------------------------------------------------------
 // Catalog
 // ---------------------------------------------------------------------------
@@ -1907,12 +2522,18 @@ export interface ModelInfo {
 
 export interface ProviderInfo {
   id: string;
+  /** The display name the gateway gave it; the id when it gave none. */
   name: string;
   activation?: 'auto' | 'enabled' | 'disabled';
+  /**
+   * Whether a session can start on it now. `false` is listed so the sheet can
+   * say what the host needs; absent (an older gateway) means available.
+   */
+  available?: boolean;
   models: ModelInfo[];
 }
 
-export interface AgentInfo {
+export interface ModeInfo {
   id: string;
   name: string;
   model?: ModelRef;
@@ -1958,18 +2579,19 @@ export function isSlashSkill(skill: SkillInfo): boolean {
 export interface CommandInfo {
   name: string;
   description?: string;
-  agent?: string;
+  /** The mode (persona) the command runs under, when it names one. */
+  mode?: string;
   template?: string;
 }
 
 export interface CatalogDefaults {
   model?: ModelRef;
-  agent?: string;
+  mode?: string;
 }
 
 export interface AgentCatalog {
   models: ModelInfo[];
-  agents: AgentInfo[];
+  modes: ModeInfo[];
   mcp: McpServerInfo[];
   skills: SkillInfo[];
   providers: ProviderInfo[];
@@ -1979,7 +2601,7 @@ export interface AgentCatalog {
 
 export const EMPTY_CATALOG: AgentCatalog = Object.freeze({
   models: Object.freeze([]) as unknown as ModelInfo[],
-  agents: Object.freeze([]) as unknown as AgentInfo[],
+  modes: Object.freeze([]) as unknown as ModeInfo[],
   mcp: Object.freeze([]) as unknown as McpServerInfo[],
   skills: Object.freeze([]) as unknown as SkillInfo[],
   providers: Object.freeze([]) as unknown as ProviderInfo[],
@@ -2078,6 +2700,7 @@ export function parseAgentCatalog(value: unknown): AgentCatalog {
         ...(activation === 'auto' || activation === 'enabled' || activation === 'disabled'
           ? { activation }
           : {}),
+        ...(typeof providerRec.available === 'boolean' ? { available: providerRec.available } : {}),
         models: providerModels,
       });
       // The flat list is what every picker in the app reads; a provider-only
@@ -2109,25 +2732,25 @@ export function parseAgentCatalog(value: unknown): AgentCatalog {
     }
   }
 
-  const agents: AgentInfo[] = [];
-  if (Array.isArray(rec.agents)) {
-    for (const entry of rec.agents) {
-      const agentRec = asRecord(entry);
-      if (!agentRec) continue;
-      const id = pickString(agentRec, ['id']);
+  const modes: ModeInfo[] = [];
+  if (Array.isArray(rec.modes)) {
+    for (const entry of rec.modes) {
+      const modeRec = asRecord(entry);
+      if (!modeRec) continue;
+      const id = pickString(modeRec, ['id']);
       if (!id) continue;
-      const description = pickString(agentRec, ['description']);
-      const mode = pickString(agentRec, ['mode']);
-      const color = pickString(agentRec, ['color']);
-      const model = parseModelRef(agentRec.model);
-      agents.push({
+      const description = pickString(modeRec, ['description']);
+      const mode = pickString(modeRec, ['mode']);
+      const color = pickString(modeRec, ['color']);
+      const model = parseModelRef(modeRec.model);
+      modes.push({
         id,
-        name: pickString(agentRec, ['name']) ?? id,
+        name: pickString(modeRec, ['name']) ?? id,
         ...(model ? { model } : {}),
         ...(description ? { description } : {}),
         ...(mode ? { mode } : {}),
         ...(color ? { color } : {}),
-        hidden: agentRec.hidden === true,
+        hidden: modeRec.hidden === true,
       });
     }
   }
@@ -2175,12 +2798,12 @@ export function parseAgentCatalog(value: unknown): AgentCatalog {
       const name = pickString(commandRec, ['name']);
       if (!name) continue;
       const description = pickString(commandRec, ['description']);
-      const agent = pickString(commandRec, ['agent']);
+      const mode = pickString(commandRec, ['mode']);
       const template = pickString(commandRec, ['template']);
       commands.push({
         name,
         ...(description ? { description } : {}),
-        ...(agent ? { agent } : {}),
+        ...(mode ? { mode } : {}),
         ...(template ? { template } : {}),
       });
     }
@@ -2188,25 +2811,25 @@ export function parseAgentCatalog(value: unknown): AgentCatalog {
 
   const defaultsRec = asRecord(rec.defaults) ?? {};
   const defaultModel = parseModelRef(defaultsRec.model);
-  const defaultAgent = pickString(defaultsRec, ['agent']);
+  const defaultMode = pickString(defaultsRec, ['mode']);
 
   return {
     models,
-    agents,
+    modes,
     mcp,
     skills,
     providers,
     commands,
     defaults: {
       ...(defaultModel ? { model: defaultModel } : {}),
-      ...(defaultAgent ? { agent: defaultAgent } : {}),
+      ...(defaultMode ? { mode: defaultMode } : {}),
     },
   };
 }
 
-/** A picker hides hidden agents and subagent-mode entries. */
-export function selectableAgents(agents: readonly AgentInfo[]): AgentInfo[] {
-  return agents.filter((agent) => !agent.hidden && agent.mode !== 'subagent');
+/** A picker hides hidden modes and subagent entries. */
+export function selectableModes(modes: readonly ModeInfo[]): ModeInfo[] {
+  return modes.filter((mode) => !mode.hidden && mode.mode !== 'subagent');
 }
 
 // ---------------------------------------------------------------------------

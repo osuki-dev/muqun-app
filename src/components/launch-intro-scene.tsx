@@ -1,7 +1,7 @@
 import type { SplashRenderContext } from '@osuki-dev/react-native-splash';
 import { useSplashMirror } from '@osuki-dev/react-native-splash';
 import { useThemeMode, useThemeTokens } from '@osuki-dev/ui';
-import { Canvas, ColorShader, Fill, Shader } from '@shopify/react-native-skia';
+import { Canvas, ColorShader, Fill, Shader } from 'react-native-skia';
 import { Image } from 'expo-image';
 import { useCallback, useEffect, useEffectEvent, useMemo, useRef, useState } from 'react';
 import {

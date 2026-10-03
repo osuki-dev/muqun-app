@@ -66,7 +66,7 @@ export function AppDrawerContent({ navigation }: DrawerContentComponentProps) {
     },
     {
       key: 'agent',
-      label: t`OpenCode Agent`,
+      label: t`Agents`,
       detail: t`AI coding assistant`,
       icon: Bot,
       href: '/agent' as Href,

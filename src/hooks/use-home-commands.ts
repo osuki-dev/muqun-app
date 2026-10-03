@@ -2,16 +2,20 @@ import { useCallback, useEffect } from 'react';
 import { useLingui } from '@lingui/react/macro';
 import { useNavigation, useRouter, type Href } from 'expo-router';
 import { useToast } from '@osuki-dev/ui';
+import { useWindowDimensions } from 'react-native';
 
 import { useGatewayRecord } from '@/hooks/use-gateway-record';
 import { useLatestRef, useLazyRef } from '@/hooks/use-render-refs';
 import { loadRecordSessions } from '@/lib/gateway-client';
 import type { GatewayRecord } from '@/lib/gateway-storage';
-import { checkOpenCodeServer } from '@/lib/home-opencode-readiness';
+import { checkAgentServer } from '@/lib/home-agent-readiness';
 import { loadWorkspaceSnapshot } from '@/lib/workspace-snapshot';
 import {
+  type HomeAgentEntry,
   type HomeCommand,
+  agentOpensInPlace,
   createHomeCommandController,
+  embeddedResumeRoute,
   isHomeSshTargetAvailable,
   type HomeCommandResult,
   type HomeServerEntry,
@@ -23,6 +27,8 @@ import { encodeSessionChoices, resolveSessionId, sessionChoices } from '@/lib/se
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';
 import { isDemoRecord } from '@/lib/demo-gateway';
 import { useServerSession } from '@/stores/server-session';
+import { homeAgentHref } from '@/lib/pad-detail';
+import { responsiveWorkspaceLayout } from '@/lib/responsive-layout';
 import { useSshHostsStore } from '@/stores/ssh-hosts';
 import { homeWorkspaceHandoffStore } from '@/lib/home-workspace-handoff';
 
@@ -43,6 +49,11 @@ export type HomeCommandOptions = {
   routeBound?: boolean;
   /** Stable Home route liveness, separate from an owner subtree's lifetime. */
   sourceRouteActive?: () => boolean;
+  /**
+   * A Pad workspace that shows agent sessions in its own detail column.
+   * With it, an agent destination never leaves the route.
+   */
+  openAgentInPlace?: (target: HomeAgentEntry, intent: 'existing' | 'new') => void;
 };
 
 export type HomeCommands = {
@@ -56,13 +67,14 @@ export type HomeCommands = {
     workspaceId?: string,
     tabId?: string
   ) => Promise<HomeCommandResult>;
-  openOpenCode: (
+  openAgent: (
     serverId: string,
     asid?: string,
     directory?: string,
-    sessionId?: string
+    sessionId?: string,
+    agentId?: string
   ) => Promise<HomeCommandResult>;
-  newOpenCode: (serverId: string, directory?: string) => Promise<HomeCommandResult>;
+  newAgent: (serverId: string, directory?: string, agentId?: string) => Promise<HomeCommandResult>;
   newTerminal: (serverId: string, workspaceId?: string) => Promise<HomeCommandResult>;
   openSsh: (hostId?: string) => Promise<HomeCommandResult>;
   pairGateway: () => Promise<HomeCommandResult>;
@@ -83,6 +95,8 @@ export function useHomeCommands(options: HomeCommandOptions = {}): HomeCommands 
   const navigation = useNavigation();
   const router = useRouter();
   const { record, records, selectRecordNow, selectRecord } = useGatewayRecord();
+  // The same test `/agent` makes: on a Pad the workspace owns agent detail.
+  const isPad = responsiveWorkspaceLayout(useWindowDimensions().width).mode === 'pad';
   const latest = useLatestRef({
     record,
     records,
@@ -91,6 +105,7 @@ export function useHomeCommands(options: HomeCommandOptions = {}): HomeCommands 
     router,
     navigation,
     options,
+    isPad,
   });
   const controller = useLazyRef(() =>
     createHomeCommandController({
@@ -104,10 +119,10 @@ export function useHomeCommands(options: HomeCommandOptions = {}): HomeCommands 
       sourceRouteActive: () =>
         latest.current.options.sourceRouteActive?.() ?? latest.current.navigation.isFocused(),
       loadTerminalSelection: (serverId) => loadTerminalSelection(latest.current.records, serverId),
-      prepareNewOpenCode: async (serverId) => {
+      prepareNewAgent: async (serverId, _directory, agentId) => {
         const state = useGatewayConnectionStore.getState();
         const target = state.records.find((item) => item.serverId === serverId);
-        return checkOpenCodeServer(target);
+        return checkAgentServer(target, agentId);
       },
       validateTarget: async (target) => {
         switch (target.kind) {
@@ -134,8 +149,19 @@ export function useHomeCommands(options: HomeCommandOptions = {}): HomeCommands 
           }
         }
       },
-      navigate: (destination) =>
-        navigateHome(latest.current.router, destination, latest.current.options.embedded === true),
+      navigate: (destination) => {
+        const inPlace = latest.current.options.openAgentInPlace;
+        if (inPlace && agentOpensInPlace(destination, true)) {
+          inPlace(destination.target, destination.intent);
+          return;
+        }
+        navigateHome(
+          latest.current.router,
+          destination,
+          latest.current.options.embedded === true,
+          latest.current.isPad
+        );
+      },
       resumeServer: async (target, isCurrent) => {
         if (latest.current.options.embedded) {
           // Plain server cards have no controller selection step. Select here,
@@ -147,7 +173,13 @@ export function useHomeCommands(options: HomeCommandOptions = {}): HomeCommands 
             if (!selected) return 'missing' satisfies HomeResumeServerResult;
             if (!isCurrent()) return false satisfies HomeResumeServerResult;
           }
-          if (latest.current.options.routeBound) {
+          if (
+            embeddedResumeRoute({
+              routeBound: latest.current.options.routeBound === true,
+              workspaceServerId: selectedServerId,
+              targetServerId: target.serverId,
+            }) === 'route'
+          ) {
             if (!isCurrent()) return false;
             navigateHome(latest.current.router, { type: 'server', target });
             return true;
@@ -189,11 +221,16 @@ export function useHomeCommands(options: HomeCommandOptions = {}): HomeCommands 
           title: t`Could not open destination`,
           message: t`The destination could not be opened.`,
         });
-      } else if (result.status === 'setup-required' && command.type === 'new-opencode') {
+      } else if (result.status === 'setup-required' && command.type === 'new-agent') {
+        const label = useGatewayConnectionStore
+          .getState()
+          .records.find((item) => item.serverId === command.serverId)?.label;
         router.push({
-          pathname: '/opencode-guide',
+          pathname: '/agent-guide',
           params: {
             serverId: command.serverId,
+            ...(label ? { label } : {}),
+            agentId: result.readiness.agentId,
             ...(command.directory ? { directory: command.directory } : {}),
             intent: 'new',
             status: result.readiness.status,
@@ -225,23 +262,29 @@ export function useHomeCommands(options: HomeCommandOptions = {}): HomeCommands 
       }),
     [resumeServer]
   );
-  const openOpenCode = useCallback(
-    (serverId: string, asid?: string, directory?: string, sessionId?: string) =>
+  const openAgent = useCallback(
+    (serverId: string, asid?: string, directory?: string, sessionId?: string, agentId?: string) =>
       dispatch({
-        type: 'open-opencode',
+        type: 'open-agent',
         target: {
-          kind: 'opencode-session',
+          kind: 'agent-session',
           serverId,
           ...(sessionId ? { sessionId } : {}),
           ...(directory ? { directory } : {}),
           ...(asid ? { asid } : {}),
+          ...(agentId ? { agentId } : {}),
         },
       }),
     [dispatch]
   );
-  const newOpenCode = useCallback(
-    (serverId: string, directory?: string) =>
-      dispatch({ type: 'new-opencode', serverId, ...(directory ? { directory } : {}) }),
+  const newAgent = useCallback(
+    (serverId: string, directory?: string, agentId?: string) =>
+      dispatch({
+        type: 'new-agent',
+        serverId,
+        ...(directory ? { directory } : {}),
+        ...(agentId ? { agentId } : {}),
+      }),
     [dispatch]
   );
   const newTerminal = useCallback(
@@ -261,8 +304,8 @@ export function useHomeCommands(options: HomeCommandOptions = {}): HomeCommands 
     resumeServer,
     resumeTarget,
     openServer,
-    openOpenCode,
-    newOpenCode,
+    openAgent,
+    newAgent,
     newTerminal,
     openSsh,
     pairGateway,
@@ -287,7 +330,8 @@ async function loadTerminalSelection(records: readonly GatewayRecord[], serverId
 function navigateHome(
   router: ReturnType<typeof useRouter>,
   destination: HomeNavigation,
-  embedded = false
+  embedded = false,
+  isPad = false
 ): void {
   switch (destination.type) {
     case 'server':
@@ -304,18 +348,15 @@ function navigateHome(
         },
       } as Href);
       return;
-    case 'opencode':
-      router.push({
-        pathname: '/agent',
-        params: {
-          server: destination.target.serverId,
-          ...(destination.target.sessionId ? { sessionId: destination.target.sessionId } : {}),
-          ...(destination.target.asid ? { asid: destination.target.asid } : {}),
-          ...(destination.target.directory ? { directory: destination.target.directory } : {}),
-          ...(destination.intent === 'new' ? { intent: 'new' } : {}),
-        },
-      });
+    case 'agent': {
+      const href = homeAgentHref(destination.target, destination.intent, isPad);
+      // `navigate`, not `push`: when the top route is already this server's
+      // workspace it takes the params in place rather than stacking a second
+      // one. A different server's workspace is still pushed.
+      if (isPad) router.navigate(href as Href);
+      else router.push(href as Href);
       return;
+    }
     case 'panels':
       router.push({
         pathname: '/panels',

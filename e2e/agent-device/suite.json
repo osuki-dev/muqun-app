@@ -345,7 +345,7 @@
           "text": "Acacia Afterglow|Could not reach the theme catalogue"
         },
         "mode": "visible",
-        "timeout": 20000,
+        "timeout": 40000,
         "run": "flows/custom-themes.ad#visible"
       },
       {
@@ -3608,6 +3608,29 @@
         ]
       },
       {
+        "when": {
+          "target": { "id": "pad-server-rail-workbench" },
+          "absent": false
+        },
+        "steps": [
+          { "run": "flows/pad-workspace.ad#home-navigation" },
+          {
+            "point": [0.82, 0.8],
+            "delta": [0, -0.6],
+            "run": "flows/pad-workspace.ad#home-navigation-work-column"
+          },
+          {
+            "target": { "id": "home-connection-gateway-muqun-demo" },
+            "mode": "scroll",
+            "direction": "down",
+            "timeout": 20000,
+            "run": "flows/pad-workspace.ad#home-navigation-scroll"
+          },
+          { "run": "flows/pad-workspace.ad#home-navigation-connect" },
+          { "run": "flows/pad-workspace.ad#pad-agent-in-place" }
+        ]
+      },
+      {
         "target": {
           "text": "Switch to nvim"
         },
@@ -5395,7 +5418,7 @@
       },
       {
         "target": {
-          "text": "How to use Muqun, Guides for pairing, the terminal, OpenCode and themes"
+          "text": "How to use Muqun, Guides for pairing, the terminal, agents and themes"
         },
         "mode": "visible",
         "timeout": 8000,

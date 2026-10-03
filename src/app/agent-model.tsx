@@ -10,7 +10,13 @@ import { useAgentSheetBridge } from '@/stores/agent-sheet-bridge';
  */
 export default function AgentModelScreen() {
   const router = useRouter();
-  const params = useLocalSearchParams<{ sessionId?: string; directory?: string }>();
+  const params = useLocalSearchParams<{
+    sessionId?: string;
+    directory?: string;
+    agentId?: string;
+  }>();
+  /** The agent whose models are listed; see `catalogAgentId` in the bridge. */
+  const bridgeAgentId = useAgentSheetBridge((state) => state.catalogAgentId);
   const bridgeSessionId = useAgentSheetBridge((state) => state.sessionId);
   /** The workspace to read the catalog for; see `agent-mode.tsx`. */
   const bridgeDirectory = useAgentSheetBridge((state) => state.activeDirectory);
@@ -21,6 +27,7 @@ export default function AgentModelScreen() {
     <AgentModelSheet
       sessionId={params.sessionId || bridgeSessionId || undefined}
       directory={params.directory || bridgeDirectory || undefined}
+      agentId={params.agentId || bridgeAgentId || undefined}
       selectedModel={selectedModel}
       onSelectModel={(model) => {
         selectModel(model);

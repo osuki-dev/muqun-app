@@ -219,6 +219,7 @@ export async function warmConfiguredWorkspace(
     {
       void useServerAgents.getState().record({
         serverId,
+        sessionId: snapshot.sessionId,
         checkedAtMs: Date.now(),
         agents: mirroredServerPanes(snapshot.panes, snapshot.agents),
       });

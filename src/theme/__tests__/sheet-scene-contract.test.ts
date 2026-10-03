@@ -49,7 +49,7 @@ const SHEET_FRAMES = [
   'src/components/agent-vcs-diff-sheet.tsx',
   'src/components/agent-tasks-sheet.tsx',
   'src/components/agent-background-tray.tsx',
-  'src/components/opencode-guide-sheet.tsx',
+  'src/components/agent-guide-sheet.tsx',
   'src/components/settings-theme-sheet.tsx',
   'src/components/settings-font-sheet.tsx',
   'src/components/settings-home-layout-sheet.tsx',
@@ -217,8 +217,12 @@ test('text drawn straight onto a sheet ground takes the plate the shell gives it
   expect(scene).toContain('<SheetFrame testID={testID} tint="surface" frosted>');
   expect(scene).not.toContain('useSheetGroundPlate');
 
-  // The frost is a floor the reader's opacity slider cannot take a sheet below.
-  expect(ground).toContain('export const SHEET_FROST_ALPHA = 0.82;');
+  // The frost follows the reader's opacity slider, down to a floor it cannot
+  // take a sheet below.
+  expect(readFileSync('src/theme/surface-background.ts', 'utf8')).toContain(
+    'export const SHEET_FROST_ALPHA = 0.82;'
+  );
+  expect(ground).toContain('sheetFrostAlpha(opacity)');
   expect(ground).toContain('frosted && hasShell');
 });
 

@@ -15,6 +15,7 @@ import {
 import { recallWorkspaceSelection, rememberWorkspaceSelection } from '../workspace-cycle';
 import { recallTabPane, rememberTabPane } from '../tab-swipe';
 import type { GatewayRecord } from '../gateway-storage';
+import { GatewayTransportRefusalError, retryReplayedRead } from '../gateway-refusal';
 import * as queue from '../attachment-queue';
 import type { AttachmentUploads } from '../../hooks/use-attachment-uploads';
 
@@ -36,6 +37,59 @@ const a: GatewayRecord = {
 };
 const b: GatewayRecord = { ...a, serverId: 'b', url: 'https://b.invalid', token: 'token-b' };
 const turn = () => new Promise<void>((resolve) => setImmediate(resolve));
+
+test('a fresh encrypted read retains its original credentials across a server switch', async () => {
+  const calls: GatewayRecord[] = [];
+  const globals = {
+    currentBaseUrl: a.url,
+    currentToken: a.token,
+    currentDeviceId: 'device-a',
+    currentTransportKey: 'key-a',
+    REQUEST_TIMEOUT_MS: 100,
+    retryReplayedRead,
+    sendEncryptedGatewayRequest: async (
+      _input: unknown,
+      _init: unknown,
+      _budget: number,
+      endpoint: GatewayRecord
+    ) => {
+      calls.push(endpoint);
+      if (calls.length === 1) {
+        globals.currentToken = b.token;
+        globals.currentTransportKey = 'key-b';
+        throw new GatewayTransportRefusalError(
+          409,
+          JSON.stringify({ error: { code: 'replayed_request' } })
+        );
+      }
+      return 'response';
+    },
+  };
+  const source = declaration('src/lib/gateway-client.ts', 'encryptedGatewayFetch');
+  const run = runInNewContext(transpile(`${source}\nencryptedGatewayFetch`), globals);
+  expect(await run(a.url)).toBe('response');
+  expect(calls).toHaveLength(2);
+  expect(calls.every((endpoint) => endpoint.token === a.token)).toBe(true);
+});
+
+test('an encrypted Request carrying a write method cannot enter the read retry', async () => {
+  let attempts = 0;
+  const source = declaration('src/lib/gateway-client.ts', 'encryptedGatewayFetch');
+  const run = runInNewContext(transpile(`${source}\nencryptedGatewayFetch`), {
+    REQUEST_TIMEOUT_MS: 100,
+    retryReplayedRead,
+    sendEncryptedGatewayRequest: async (_input: unknown, init: { method: string }) => {
+      attempts++;
+      expect(init.method).toBe('POST');
+      throw new GatewayTransportRefusalError(
+        409,
+        JSON.stringify({ error: { code: 'replayed_request' } })
+      );
+    },
+  });
+  await expect(run({ url: a.url, method: 'POST' }, {}, 100, a)).rejects.toThrow('HTTP 409');
+  expect(attempts).toBe(1);
+});
 
 function client() {
   const calls: { url: string; token: string; endpoint?: GatewayRecord }[] = [];
@@ -224,8 +278,8 @@ test('failed ACK or failed tunnel cleanup never retries a delivery', async () =>
 });
 
 test('explicit incomplete encrypted credentials do not borrow global credentials', async () => {
-  const source = declaration('src/lib/gateway-client.ts', 'encryptedGatewayFetch');
-  const run = runInNewContext(transpile(`${source}\nencryptedGatewayFetch`), {
+  const source = declaration('src/lib/gateway-client.ts', 'sendEncryptedGatewayRequest');
+  const run = runInNewContext(transpile(`${source}\nsendEncryptedGatewayRequest`), {
     currentToken: 'b',
     currentDeviceId: 'b',
     currentTransportKey: 'b',
@@ -262,8 +316,8 @@ test('switching during tunnel resolution prevents upload and still releases the 
 test('encrypted serialization rechecks ownership before any network transmission', async () => {
   const serialization = deferred<{ bytes: Uint8Array; contentType: string }>();
   const owner = new DeliveryOwnership();
-  const source = declaration('src/lib/gateway-client.ts', 'encryptedGatewayFetch');
-  const run = runInNewContext(transpile(`${source}\nencryptedGatewayFetch`), {
+  const source = declaration('src/lib/gateway-client.ts', 'sendEncryptedGatewayRequest');
+  const run = runInNewContext(transpile(`${source}\nsendEncryptedGatewayRequest`), {
     REQUEST_TIMEOUT_MS: 1,
     assertDeliveryCurrent,
     isStreamingRequest: () => false,

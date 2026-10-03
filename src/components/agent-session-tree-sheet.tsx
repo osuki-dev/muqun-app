@@ -48,7 +48,7 @@ function SessionTreeRow({
   const level = t`Level ${depth}`;
   // react-doctor-disable-next-line react-hooks-js/todo -- Lingui expands this macro before React Compiler runs.
   const parent = parentTitle ? t`Parent: ${parentTitle}` : '';
-  const caption = [session.agent, status, depth > 0 ? level : '', parent]
+  const caption = [session.mode, status, depth > 0 ? level : '', parent]
     .filter(Boolean)
     .join(' · ');
 
@@ -92,7 +92,7 @@ export function AgentSessionTreeSheet({
 }) {
   const { t } = useLingui();
   const insets = useSafeAreaInsets();
-  const nodes = flattenSessionTree(root, childrenByParent);
+  const nodes = flattenSessionTree(root, childrenByParent, root?.agent_id ?? undefined);
   const titles = new Map(
     nodes.map(({ session }) => [session.asid, sessionTitleOr(session, t`Untitled session`)])
   );

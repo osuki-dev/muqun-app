@@ -1,5 +1,5 @@
 import { homeTargetKey, type HomeTarget } from '@/lib/home-recents';
-import type { OpenCodeReadiness } from '@/lib/home-opencode-readiness';
+import type { AgentReadiness } from '@/lib/home-agent-readiness';
 import { homeWorkspaceHandoffStore } from '@/lib/home-workspace-handoff';
 import { DEMO_SSH_HOST_ID } from '@/lib/demo-ssh-transcript';
 
@@ -38,21 +38,23 @@ export type HomeServerEntry = {
   paneId?: string;
 };
 
-export type HomeOpenCodeEntry = {
-  kind: 'opencode-session';
+export type HomeAgentEntry = {
+  kind: 'agent-session';
   serverId: string;
   /** Gateway routing session, when a recent target supplies it. */
   sessionId?: string;
   directory?: string;
-  /** OpenCode agent session identity, when a recent target supplies it. */
+  /** The agent's own session identity, when a recent target supplies it. */
   asid?: string;
+  /** The agentId to open or create on; the server's own choice when absent. */
+  agentId?: string;
 };
 
 export type HomeCommand =
   | { type: 'resume-server'; target: HomeServerEntry }
   | { type: 'resume-target'; target: HomeTarget }
-  | { type: 'open-opencode'; target: HomeOpenCodeEntry }
-  | { type: 'new-opencode'; serverId: string; directory?: string }
+  | { type: 'open-agent'; target: HomeAgentEntry }
+  | { type: 'new-agent'; serverId: string; directory?: string; agentId?: string }
   | { type: 'new-terminal'; serverId: string; workspaceId?: string }
   | { type: 'open-ssh'; hostId?: string }
   | { type: 'pair-gateway' }
@@ -75,8 +77,8 @@ export type HomeTerminalSelection = {
 export type HomeNavigation =
   | { type: 'server'; target: HomeServerEntry }
   | {
-      type: 'opencode';
-      target: HomeOpenCodeEntry;
+      type: 'agent';
+      target: HomeAgentEntry;
       intent: 'existing' | 'new';
     }
   | {
@@ -89,7 +91,35 @@ export type HomeNavigation =
   | { type: 'pair' }
   | { type: 'manage' };
 
+/** A Pad shell can swap its detail to an agent session instead of routing to `/agent`. */
+export function agentOpensInPlace(
+  destination: HomeNavigation,
+  hasHandler: boolean
+): destination is Extract<HomeNavigation, { type: 'agent' }> {
+  return hasHandler && destination.type === 'agent';
+}
+
 export type HomeResumeServerResult = boolean | 'missing' | void;
+
+/**
+ * How an overview embedded in a workspace resumes a terminal target.
+ *
+ * `handoff` publishes it for the mounted workspace, which closes the overview
+ * and selects the pane; `route` navigates to `/servers/[serverId]`. A
+ * route-bound workspace used to navigate for every target, and for its own
+ * server that is the route it already is: the params changed, the overview
+ * stayed up, and the Continue row looked as if it could not be tapped. Only a
+ * target on another server needs the route, because this owner is keyed to
+ * the route's server and will not consume a handoff for a different one.
+ */
+export function embeddedResumeRoute(options: {
+  routeBound: boolean;
+  workspaceServerId: string | null | undefined;
+  targetServerId: string;
+}): 'handoff' | 'route' {
+  if (!options.routeBound) return 'handoff';
+  return options.workspaceServerId === options.targetServerId ? 'handoff' : 'route';
+}
 
 export type HomeCommandPorts = {
   /** Whether a server target is still present in the current paired records. */
@@ -105,11 +135,15 @@ export type HomeCommandPorts = {
   /** Read the existing server/session API needed by the panels picker. */
   loadTerminalSelection: (serverId: string) => Promise<HomeTerminalSelection | null>;
   /** Validate persisted terminal and SSH targets before routing to them. */
-  validateTarget?: (target: Exclude<HomeTarget, { kind: 'opencode-session' }>) => Promise<boolean>;
+  validateTarget?: (target: Exclude<HomeTarget, { kind: 'agent-session' }>) => Promise<boolean>;
   /** An adapter owns actual route calls and any transport warm ordering. */
   navigate: (destination: HomeNavigation) => void;
-  /** Optional shared capability/setup gate for creating a new OpenCode session. */
-  prepareNewOpenCode?: (serverId: string, directory?: string) => Promise<OpenCodeReadiness>;
+  /** Optional shared capability/setup gate for creating a new agent session. */
+  prepareNewAgent?: (
+    serverId: string,
+    directory?: string,
+    agentId?: string
+  ) => Promise<AgentReadiness>;
   /**
    * Optional adapter for the existing server-open path. The guard remains
    * valid when the source Home owner unmounts, so an embedded adapter can
@@ -127,7 +161,7 @@ export type HomeCommandResult =
   | { status: 'superseded'; operationId: number }
   | { status: 'missing-target'; operationId: number; target: string }
   | { status: 'unavailable'; operationId: number; message: string }
-  | { status: 'setup-required'; operationId: number; readiness: OpenCodeReadiness }
+  | { status: 'setup-required'; operationId: number; readiness: AgentReadiness }
   | { status: 'failed'; operationId: number; message: string };
 
 type PendingOperation = { id: number; key: string; owner: symbol; survivesDispose: boolean };
@@ -145,10 +179,10 @@ let pendingOperation: PendingOperation | null = null;
  * Expo Router has mounted the first `/agent` route; the second must not become
  * a second creation request. The destination consumes the claim on mount.
  */
-const newOpenCodeIntentClaims = new Map<string, number>();
+const newAgentIntentClaims = new Map<string, number>();
 
-export function consumeNewOpenCodeIntent(serverId: string, directory?: string): void {
-  newOpenCodeIntentClaims.delete(newOpenCodeIntentKey(serverId, directory));
+export function consumeNewAgentIntent(serverId: string, directory?: string): void {
+  newAgentIntentClaims.delete(newAgentIntentKey(serverId, directory));
 }
 
 /**
@@ -221,7 +255,7 @@ export function createHomeCommandController(ports: HomeCommandPorts) {
 
   function setupRequired(
     operation: PendingOperation,
-    readiness: OpenCodeReadiness
+    readiness: AgentReadiness
   ): HomeCommandResult {
     finish(operation);
     return { status: 'setup-required', operationId: operation.id, readiness };
@@ -259,8 +293,8 @@ export function createHomeCommandController(ports: HomeCommandPorts) {
       commandKey(command),
       command.type === 'resume-server' ||
         (command.type === 'resume-target' && command.target.kind !== 'ssh-host') ||
-        command.type === 'open-opencode' ||
-        command.type === 'new-opencode' ||
+        command.type === 'open-agent' ||
+        command.type === 'new-agent' ||
         command.type === 'new-terminal'
     );
     if (!isOperation(operation)) return operation;
@@ -320,53 +354,58 @@ export function createHomeCommandController(ports: HomeCommandPorts) {
             return { status: 'dispatched', operationId: operation.id };
           }
           ports.navigate({
-            type: 'opencode',
+            type: 'agent',
             target,
             intent: 'existing',
           });
           finish(operation);
           return { status: 'dispatched', operationId: operation.id };
         }
-        case 'open-opencode': {
+        case 'open-agent': {
           const selection = await selectBeforeNavigate(operation, command.target.serverId);
           if (selection) return selection;
           const ownership = selectedServerStillOwns(operation, command.target.serverId);
           if (ownership) return ownership;
-          ports.navigate({ type: 'opencode', target: command.target, intent: 'existing' });
+          ports.navigate({ type: 'agent', target: command.target, intent: 'existing' });
           finish(operation);
           return { status: 'dispatched', operationId: operation.id };
         }
-        case 'new-opencode': {
+        case 'new-agent': {
           const selection = await selectBeforeNavigate(operation, command.serverId);
           if (selection) return selection;
           const ownership = selectedServerStillOwns(operation, command.serverId);
           if (ownership) return ownership;
-          if (ports.prepareNewOpenCode) {
-            const readiness = await ports.prepareNewOpenCode(command.serverId, command.directory);
+          if (ports.prepareNewAgent) {
+            const readiness = await ports.prepareNewAgent(
+              command.serverId,
+              command.directory,
+              command.agentId
+            );
             if (!current(operation)) return superseded(operation);
             const preparedOwnership = selectedServerStillOwns(operation, command.serverId);
             if (preparedOwnership) return preparedOwnership;
             if (readiness.status !== 'ready') return setupRequired(operation, readiness);
           }
-          const intentKey = newOpenCodeIntentKey(command.serverId, command.directory);
-          const claimedBy = newOpenCodeIntentClaims.get(intentKey);
+          const intentKey = newAgentIntentKey(command.serverId, command.directory);
+          const claimedBy = newAgentIntentClaims.get(intentKey);
           if (claimedBy !== undefined) {
             finish(operation);
             return { status: 'duplicate', operationId: claimedBy };
           }
-          newOpenCodeIntentClaims.set(intentKey, operation.id);
+          newAgentIntentClaims.set(intentKey, operation.id);
           try {
             ports.navigate({
-              type: 'opencode',
+              type: 'agent',
               target: {
-                kind: 'opencode-session',
+                kind: 'agent-session',
                 serverId: command.serverId,
                 ...(command.directory ? { directory: command.directory } : {}),
+                ...(command.agentId ? { agentId: command.agentId } : {}),
               },
               intent: 'new',
             });
           } catch (error) {
-            newOpenCodeIntentClaims.delete(intentKey);
+            newAgentIntentClaims.delete(intentKey);
             throw error;
           }
           finish(operation);
@@ -427,10 +466,10 @@ function commandKey(command: HomeCommand): string {
       return key(['resume-server', command.target]);
     case 'resume-target':
       return key(['resume-target', homeTargetKey(command.target)]);
-    case 'open-opencode':
-      return key(['open-opencode', command.target]);
-    case 'new-opencode':
-      return key(['new-opencode', command.serverId, command.directory ?? '']);
+    case 'open-agent':
+      return key(['open-agent', command.target]);
+    case 'new-agent':
+      return key(['new-agent', command.serverId, command.directory ?? '', command.agentId ?? '']);
     case 'new-terminal':
       return key(['new-terminal', command.serverId, command.workspaceId ?? '']);
     case 'open-ssh':
@@ -446,6 +485,6 @@ function key(value: unknown): string {
   return JSON.stringify(value);
 }
 
-function newOpenCodeIntentKey(serverId: string, directory?: string): string {
-  return key(['new-opencode-intent', serverId, directory ?? '']);
+function newAgentIntentKey(serverId: string, directory?: string): string {
+  return key(['new-agent-intent', serverId, directory ?? '']);
 }

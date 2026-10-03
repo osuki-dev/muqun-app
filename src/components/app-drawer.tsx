@@ -77,6 +77,14 @@ type AppDrawerProps = {
    * `detailTitlePillStyle` so the header still reads as one row.
    */
   detailTitleSlot?: ReactNode;
+  /**
+   * A layer over the whole frame, rail included -- the Pad's Home. Covering
+   * the rail rather than removing it keeps the detail column's width, so
+   * showing and hiding the layer never re-lays out the pane underneath.
+   */
+  overlay?: ReactNode;
+  /** Whether `overlay` is showing: what it covers leaves the accessibility tree. */
+  overlayVisible?: boolean;
 };
 
 export default function AppDrawer({
@@ -90,6 +98,8 @@ export default function AppDrawer({
   detailFadeColor,
   detailAccessory,
   detailTitleSlot,
+  overlay,
+  overlayVisible = false,
 }: AppDrawerProps) {
   // `t` from the hook, not the global `t` from `@lingui/core/macro`.
   //
@@ -146,6 +156,8 @@ export default function AppDrawer({
       {showsPadRail ? (
         <Animated.View
           testID="pad-server-rail-container"
+          accessibilityElementsHidden={overlayVisible}
+          importantForAccessibility={overlayVisible ? 'no-hide-descendants' : 'auto'}
           entering={fadeInLeft()}
           exiting={fadeOutLeft()}
           style={[
@@ -197,7 +209,11 @@ export default function AppDrawer({
       {/* The layout transition is what makes the rail leaving read as the
           workspace widening, rather than as a column blinking out and the rest
           jumping sideways to fill the hole. */}
-      <Animated.View style={styles.main} layout={listLayout()}>
+      <Animated.View
+        style={styles.main}
+        layout={listLayout()}
+        accessibilityElementsHidden={overlayVisible}
+        importantForAccessibility={overlayVisible ? 'no-hide-descendants' : 'auto'}>
         {children}
 
         {/*
@@ -291,11 +307,22 @@ export default function AppDrawer({
           </SafeAreaView>
         ) : null}
       </Animated.View>
+      {overlay !== undefined ? (
+        <View pointerEvents="box-none" style={styles.overlay}>
+          {overlay}
+        </View>
+      ) : null}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  overlay: {
+    ...StyleSheet.absoluteFill,
+    // Above the rail (30) and the detail header (20).
+    zIndex: 40,
+    elevation: 40,
+  },
   shell: {
     flex: 1,
     flexDirection: 'row',

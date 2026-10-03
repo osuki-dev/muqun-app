@@ -2,13 +2,13 @@ import { createStore, type StateCreator } from 'zustand/vanilla';
 
 import { homeTargetKey, type HomeTarget } from '@/lib/home-recents';
 
-type OpenCodeTarget = Extract<HomeTarget, { kind: 'opencode-session' }>;
+type AgentSessionTarget = Extract<HomeTarget, { kind: 'agent-session' }>;
 
 const MAX_ATTENTION_TARGETS = 24;
 const MAX_REQUEST_IDS = 32;
 
 export type HomeAttentionSnapshot = {
-  target: OpenCodeTarget;
+  target: AgentSessionTarget;
   requestIds: readonly string[];
   observedAt: number;
 };
@@ -19,15 +19,15 @@ export type HomeAttentionState = {
   reserve: () => number;
   /** Only authoritative permission snapshots may publish an empty list. */
   observe: (
-    target: OpenCodeTarget,
+    target: AgentSessionTarget,
     requestIds: readonly string[],
     observedAt: number,
     ticket?: number
   ) => void;
   /** A pending event adds one exact request to the scoped target. */
-  pending: (target: OpenCodeTarget, requestId: string, observedAt?: number) => void;
+  pending: (target: AgentSessionTarget, requestId: string, observedAt?: number) => void;
   /** A confirmed decision resolves only the exact request and target. */
-  resolve: (target: OpenCodeTarget, requestId: string, observedAt?: number) => void;
+  resolve: (target: AgentSessionTarget, requestId: string, observedAt?: number) => void;
   keepOnly: (serverIds: readonly string[]) => void;
 };
 
@@ -61,7 +61,7 @@ export const homeAttentionState: StateCreator<HomeAttentionState> = (set, get) =
   };
 
   const publish = (
-    target: OpenCodeTarget,
+    target: AgentSessionTarget,
     key: string,
     requestIds: readonly string[],
     observedAt: number,

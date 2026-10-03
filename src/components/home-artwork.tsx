@@ -10,7 +10,7 @@ import {
   useImage,
   vec,
   Image as SkiaImage,
-} from '@shopify/react-native-skia';
+} from 'react-native-skia';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { StyleSheet, useWindowDimensions, View, type LayoutChangeEvent } from 'react-native';
 import Animated, {

@@ -8,7 +8,7 @@ import {
   Rect,
   useImage,
   vec,
-} from '@shopify/react-native-skia';
+} from 'react-native-skia';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet, View, type LayoutChangeEvent } from 'react-native';
 import Animated from 'react-native-reanimated';

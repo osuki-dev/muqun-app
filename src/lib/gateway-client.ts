@@ -53,7 +53,7 @@ import {
   normalizeGatewayEntity,
   type GatewayEntity,
 } from './gateway-entities';
-import { GatewayTransportRefusalError } from './gateway-refusal';
+import { GatewayTransportRefusalError, retryReplayedRead } from './gateway-refusal';
 import {
   decodeSealedBody,
   ENVELOPE_ACCEPT_ENCODINGS,
@@ -356,6 +356,34 @@ async function encryptedGatewayFetch(
   endpoint?: GatewayEndpoint,
   isCurrent: () => boolean = () => true
 ): Promise<Response> {
+  const started = Date.now();
+  const method = (
+    init.method ?? (typeof input === 'object' && 'method' in input ? input.method : 'GET')
+  ).toUpperCase();
+  const capturedEndpoint = endpoint ?? {
+    url: currentBaseUrl,
+    token: currentToken ?? '',
+    deviceId: currentDeviceId ?? undefined,
+    transportKey: currentTransportKey ?? undefined,
+  };
+  return retryReplayedRead(method, () =>
+    sendEncryptedGatewayRequest(
+      input,
+      { ...init, method },
+      Math.max(1, timeoutMs - (Date.now() - started)),
+      capturedEndpoint,
+      isCurrent
+    )
+  );
+}
+
+async function sendEncryptedGatewayRequest(
+  input: RequestInfo | URL,
+  init: RequestInit = {},
+  timeoutMs = REQUEST_TIMEOUT_MS,
+  endpoint?: GatewayEndpoint,
+  isCurrent: () => boolean = () => true
+): Promise<Response> {
   const token = endpoint ? endpoint.token : currentToken;
   const deviceId = endpoint ? endpoint.deviceId : currentDeviceId;
   const transportKey = endpoint ? endpoint.transportKey : currentTransportKey;
@@ -645,6 +673,12 @@ export interface PaneShortcuts {
   /** Optional multi-key and text actions; older Gateways omit this. */
   keyActions?: ShortcutKey[];
   commands: SlashCommand[];
+  /**
+   * What this pane can take right now: `extended` is false when the program in
+   * a tmux pane has not asked for extended keys, so `ctrl+enter` and the like
+   * cannot reach it. Older Gateways omit this, which narrows nothing.
+   */
+  keyboard?: { extended: boolean };
 }
 
 export interface PaneOutputResponse {
@@ -1019,6 +1053,15 @@ export const ASSET_CONTENT_TIMEOUT_MS = 15_000;
 export function assetTextTimeoutMs(bytes: number): number {
   const megabytes = Math.ceil(Math.max(0, bytes) / (1024 * 1024));
   return Math.min(90_000, ASSET_CONTENT_TIMEOUT_MS + megabytes * 10_000);
+}
+
+/**
+ * The local id of the record the shared client is configured for, or null.
+ * The event socket is per server record and opens with this client's base URL
+ * and credentials, so it checks it is still talking about the same server.
+ */
+export function configuredGatewayServerId(): string | null {
+  return currentRecord?.serverId ?? null;
 }
 
 export function isGatewayConfigured(): boolean {
@@ -2803,8 +2846,19 @@ export async function loadPaneShortcuts(sessionId: string, paneId: string): Prom
     version: typeof value?.version === 'number' ? value.version : 0,
     profile: typeof value?.profile === 'string' ? value.profile : 'shell',
     keys: Array.isArray(value?.keys) ? value.keys.filter(isShortcutKey) : [],
+    ...(Array.isArray(value?.keyActions)
+      ? { keyActions: value.keyActions.filter(isShortcutKey) }
+      : {}),
     commands: Array.isArray(value?.commands) ? value.commands.filter(isSlashCommand) : [],
+    ...(typeof value?.keyboard?.extended === 'boolean'
+      ? { keyboard: { extended: value.keyboard.extended } }
+      : {}),
   };
+}
+
+/** Two shortcut answers say the same thing (the fields are plain JSON, in wire order). */
+export function samePaneShortcuts(a: PaneShortcuts | null, b: PaneShortcuts | null): boolean {
+  return a === b || (a !== null && b !== null && JSON.stringify(a) === JSON.stringify(b));
 }
 
 function isShortcutKey(value: unknown): value is ShortcutKey {

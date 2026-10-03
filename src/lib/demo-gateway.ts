@@ -114,8 +114,9 @@ export function demoAgentSessionTree(): {
   const session = (asid: string, parent_id?: string, title = ''): AgentSessionInfo => ({
     asid,
     backend_session_id: asid,
+    agent_id: 'opencode',
     title,
-    agent: 'build',
+    mode: 'build',
     model: { provider_id: 'openai', model_id: 'gpt-5.4' },
     tokens: { input: 1000, output: 200, reasoning: 100, cache_read: 500, cache_write: 200 },
     status: 'idle',

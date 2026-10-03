@@ -14,13 +14,13 @@ import {
   sheetSceneStyles,
 } from '@/components/sheet-scene';
 import { fadeIn, listLayout, riseIn, STAGGER } from '@/lib/motion';
-import { getAgentCatalog, selectableAgents, type AgentInfo } from '@/lib/agent-session';
+import { getAgentCatalog, selectableModes, type ModeInfo } from '@/lib/agent-session';
 import { effectiveAgentId } from '@/lib/agent-session-defaults';
 
 const STAGGERED_ROWS = 8;
 
 /**
- * Choose an agent, as a native form sheet route.
+ * Choose a mode of one agent, as a native form sheet route.
  *
  * `sheet-scene.tsx`'s shape. The mode -- primary or subagent -- is part of the
  * row's caption rather than a coloured chip: it is a fact about the agent, and
@@ -37,6 +37,13 @@ export interface AgentModeSheetProps {
    * is not in it -- which is what made this sheet unable to offer one.
    */
   directory?: string;
+  /**
+   * The agent whose modes are listed. Named on a gateway with discovery,
+   * where a read without it merges every agent's modes into one list.
+   */
+  agentId?: string;
+  /** What the caption calls that agent -- "Modes of DeepSeek". */
+  agentName: string;
   selectedAgent?: string;
   onSelectAgent: (agent: string) => void;
   onClose: () => void;
@@ -60,6 +67,8 @@ function agentIcon(id: string, color: string) {
 export const AgentModeSheet = memo(function AgentModeSheet({
   sessionId,
   directory,
+  agentId,
+  agentName,
   selectedAgent,
   onSelectAgent,
   onClose: _onClose,
@@ -68,7 +77,7 @@ export const AgentModeSheet = memo(function AgentModeSheet({
   const theme = useThemeTokens();
   const insets = useSafeAreaInsets();
   const [loading, setLoading] = useState(false);
-  const [agents, setAgents] = useState<AgentInfo[]>([]);
+  const [agents, setAgents] = useState<ModeInfo[]>([]);
   /**
    * The agent the host runs when nobody has picked one.
    *
@@ -80,7 +89,7 @@ export const AgentModeSheet = memo(function AgentModeSheet({
    */
   const [defaultAgent, setDefaultAgent] = useState<string | undefined>(undefined);
 
-  const builtinAgents = useMemo<AgentInfo[]>(
+  const builtinAgents = useMemo<ModeInfo[]>(
     () => [
       {
         id: 'build',
@@ -115,7 +124,13 @@ export const AgentModeSheet = memo(function AgentModeSheet({
   useEffect(() => {
     let active = true;
     setLoading(true);
-    getAgentCatalog(sessionId, undefined, directory ? { directory } : {})
+    // The built-in list is the legacy single-agent gateway's; an agent that
+    // discovery named lists its own modes or none.
+    const fallbackModes = agentId ? [] : builtinAgents;
+    getAgentCatalog(sessionId, undefined, {
+      ...(directory ? { directory } : {}),
+      ...(agentId ? { agentId } : {}),
+    })
       .then((catalog) => {
         if (!active) return;
         /*
@@ -123,18 +138,18 @@ export const AgentModeSheet = memo(function AgentModeSheet({
           `Title`, `Summary` -- marked `hidden`, and its subagents marked
           `mode: "subagent"`. Both were listed here as things to switch the
           session to, which for the hidden three is switching the session to an
-          internal routine. `selectableAgents` is the filter the protocol
+          internal routine. `selectableModes` is the filter the protocol
           already states; a host whose whole catalogue is hidden still gets a
           picker rather than an empty sheet.
          */
-        const listed = selectableAgents(catalog?.agents ?? []);
-        const fallback = catalog?.agents && catalog.agents.length > 0 ? catalog.agents : [];
-        setAgents(listed.length > 0 ? listed : fallback.length > 0 ? fallback : builtinAgents);
-        setDefaultAgent(catalog?.defaults?.agent);
+        const listed = selectableModes(catalog?.modes ?? []);
+        const fallback = catalog?.modes && catalog.modes.length > 0 ? catalog.modes : [];
+        setAgents(listed.length > 0 ? listed : fallback.length > 0 ? fallback : fallbackModes);
+        setDefaultAgent(catalog?.defaults?.mode);
       })
       .catch((err) => {
         console.warn('Failed to load agent catalog:', err);
-        if (active) setAgents(builtinAgents);
+        if (active) setAgents(fallbackModes);
       })
       .finally(() => {
         if (active) setLoading(false);
@@ -142,11 +157,11 @@ export const AgentModeSheet = memo(function AgentModeSheet({
     return () => {
       active = false;
     };
-  }, [sessionId, directory, builtinAgents]);
+  }, [sessionId, directory, agentId, builtinAgents]);
 
   const displayAgents = agents.length > 0 ? agents : builtinAgents;
 
-  const modeLabel = (agent: AgentInfo): string => {
+  const modeLabel = (agent: ModeInfo): string => {
     const mode = agent.mode?.toLowerCase();
     if (mode === 'subagent' || agent.id === 'explore') return t`Subagent`;
     if (mode === 'primary' || BUILTIN_IDS.includes(agent.id)) return t`Primary`;
@@ -160,13 +175,12 @@ export const AgentModeSheet = memo(function AgentModeSheet({
    * `effectiveAgentId`'s, which is the order a create is sent in.
    */
   const effectiveAgent = effectiveAgentId(selectedAgent, defaultAgent);
-  const current = displayAgents.find((agent) => agent.id === effectiveAgent);
 
   const contentSized = displayAgents.length <= 4;
 
   const content = (
     <>
-      <SheetSceneGroupHeading title={t`Agents on this host`} first />
+      <SheetSceneGroupHeading title={t`Available modes`} first />
       {displayAgents.map((agent, index) => {
         const isSelected = effectiveAgent === agent.id;
         return (
@@ -195,8 +209,8 @@ export const AgentModeSheet = memo(function AgentModeSheet({
   return (
     <SheetScene
       testID="agent-mode-sheet"
-      title={t`Choose an agent`}
-      caption={current ? current.name || current.id : effectiveAgent}
+      title={t`Choose a mode`}
+      caption={t`Modes of ${agentName}`}
       contentSized={contentSized}>
       {loading ? (
         <View style={styles.loading}>

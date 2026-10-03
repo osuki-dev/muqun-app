@@ -25,6 +25,9 @@ import type { GitFileStatus } from '@/lib/git-diff';
 import type { NamedApprovalDecision } from '@/lib/pane-approval';
 import type { PaneViewMode } from '@/lib/pane-view-mode';
 import type { ServerReachability } from '@/lib/server-reachability';
+import type { LaunchAgentCaption } from '@/lib/home-launch-model';
+import type { AgentSessionStatusWord } from '@/lib/home-continue';
+import { OPENCODE_INSTALL_URL } from '@/constants/links';
 
 /**
  * What the card says out loud next to the dot.
@@ -367,3 +370,81 @@ export const agentClientCommandDescription: Record<AgentClientCommandId, Message
 export const agentHostCommandDescription: Record<string, MessageDescriptor> = {
   init: msg({ message: 'Guided AGENTS.md setup', context: 'agent slash command' }),
 };
+
+/**
+ * What an agent tile on Home says under the agent's name. A state is a word,
+ * never only a colour, so the reader who cannot see the dim tile still knows
+ * why it is dim.
+ */
+/** An agent session's status on a Continue row; `agentSessionStatusPresentation` picks the word. */
+export const agentSessionStatusWord: Record<AgentSessionStatusWord, MessageDescriptor> = {
+  running: msg`Running`,
+  idle: msg`Idle`,
+  failed: msg`The turn failed`,
+  stopped: msg`Stopped`,
+  retrying: msg`Retrying…`,
+  unknown: msg`Status unknown`,
+};
+
+export const agentLaunchCaption: Record<LaunchAgentCaption, MessageDescriptor> = {
+  'new-session': msg`New session`,
+  'not-installed': msg`Not installed`,
+  'needs-setup': msg`Needs setup`,
+  offline: msg`Offline`,
+};
+
+/** What the readiness guide tells the reader to do for one kind of agent. */
+export type AgentGuideCopy = {
+  /** The sentence above the command: how to start this agent on the gateway host. */
+  start: MessageDescriptor;
+  /**
+   * The sentence to show instead when the agent is running but needs setup
+   * (`needs-setup`), when that step differs from starting it.
+   */
+  setupStart?: MessageDescriptor;
+  /** The command to copy, when the kind has one. Shell text, never translated. */
+  command?: string;
+  /**
+   * The command to copy instead when the agent is running but needs setup
+   * (`needs-setup`), when that step differs from starting it.
+   */
+  setupCommand?: string;
+  /** Where the agent is installed from, when the kind has a page for it. */
+  installUrl?: string;
+};
+
+/**
+ * The guide's copy, per agent `kind`. A new kind ships with the fallback
+ * below and nothing else; a row here is only for a kind that has something
+ * more useful to say.
+ */
+export const agentGuideCopy: Record<string, AgentGuideCopy> = {
+  opencode: {
+    start: msg`Start the OpenCode service on the gateway host, then check again.`,
+    command: 'opencode service start',
+    installUrl: OPENCODE_INSTALL_URL,
+  },
+  deepseek: {
+    start: msg`Enable deepseek in the gateway config, start DeepSeek Harness on the host, then restart the gateway.`,
+    command: 'bunx @deepseek-ai/dsh web --no-open',
+  },
+  // T3 is not `connected` until the gateway holds a pairing token. A stopped T3
+  // is offered the command that starts it; one that is running but unpaired
+  // (`needs-setup`) gets the pairing sentence and `t3 pair`. Never both at once: pasted as two lines, `t3 pair` would wait
+  // behind the server.
+  t3: {
+    start: msg`Open T3 Code on the gateway host (or run t3 service install), then check again.`,
+    setupStart: msg`Run t3 pair on the host, set the printed token as t3.pairing_token in the gateway config, and restart the gateway within 5 minutes.`,
+    command: 't3 service install',
+    setupCommand: 't3 pair',
+  },
+};
+
+/** The guide for a kind this build has never heard of. */
+export const agentGuideFallback: AgentGuideCopy = {
+  start: msg`Start the agent on the gateway host, then check again.`,
+};
+
+export function agentGuideFor(kind: string | undefined): AgentGuideCopy {
+  return (kind ? agentGuideCopy[kind] : undefined) ?? agentGuideFallback;
+}

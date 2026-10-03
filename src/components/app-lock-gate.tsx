@@ -197,6 +197,7 @@ export function AppLockGate({ children }: { children: ReactNode }) {
     return () => subscription.remove();
   }, [hydrated, locked, requestUnlock]);
 
+  // Opacity audit: safety -- the lock screen's fills stay opaque so nothing shows through it.
   if (!hydrated) {
     return (
       <View style={[styles.loading, { backgroundColor: theme.colors.background }]}>

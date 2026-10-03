@@ -43,6 +43,7 @@ wait text "Choose an assistant" 10000
 is visible "label=\"Send to agent\""
 # Closing puts it back exactly as it was.
 press "id=\"assignment-bar-close\""
+wait stable 400 5000
 wait "role=button text=\"Open quick actions\"" 10000
 is hidden "id=\"assignment-bar-close\""
 is visible "label=\"Send to agent\""

@@ -198,6 +198,7 @@ export function GlassChrome({
           importantForAccessibility="no-hide-descendants"
           style={[
             StyleSheet.absoluteFill,
+            // Opacity audit: glass -- the pack's explicit glass material keeps its base.
             material === 'glass' && { backgroundColor: theme.colors.surfaceRaised },
           ]}>
           <ThemeArtwork slot={slot} opacityLimit={opacityLimit} />
@@ -214,6 +215,19 @@ export function GlassChrome({
   useEffect(() => {
     if (!settled) setSettled(true);
   }, [settled]);
+
+  // Android has no live blur, and a filled pill over the header fade reads as a
+  // grey slab rather than as glass. Navigation chrome (the title pill and the
+  // header buttons) therefore draws no fill of its own on Android: the header's
+  // fade behind it carries legibility, the way it does on iOS under real glass.
+  // A theme that supplies a background image for this surface still gets it.
+  if (Platform.OS === 'android' && surface === 'navigation' && !hasImage) {
+    return (
+      <Animated.View entering={entering} exiting={exiting} style={chromeStyle}>
+        {content}
+      </Animated.View>
+    );
+  }
 
   if (material === 'solid') {
     // The slider may thin the page; chrome keeps a frosted floor under it.
@@ -288,12 +302,17 @@ export function GlassChrome({
           // opaque fill: otherwise labels on a scrolled Settings card remain
           // legible through the title and back controls. Other floating chrome
           // keeps a trace of the live content behind its themed raised fill.
-          {
-            backgroundColor: withAlpha(
-              theme.colors.surfaceRaised,
-              surface === 'navigation' ? 1 : appChrome.opacity.glassAndroidFill
-            ),
-          },
+          // Navigation chrome (the title pill and header buttons) sits on the
+          // header's own fade, so it draws no fill at all; other floating
+          // chrome keeps a trace of the live content behind its raised fill.
+          surface === 'navigation'
+            ? null
+            : {
+                backgroundColor: withAlpha(
+                  theme.colors.surfaceRaised,
+                  appChrome.opacity.glassAndroidFill
+                ),
+              },
         ]}>
         {content}
       </Animated.View>

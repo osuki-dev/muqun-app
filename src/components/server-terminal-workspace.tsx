@@ -80,6 +80,16 @@ import { PaneChatView } from '@/components/pane-chat-view';
 import { AgentWorkbench } from '@/components/agent-workbench';
 import { gatewaySupportsAgentSessions } from '@/lib/agent-session';
 import { PadServerRail } from '@/components/pad-server-rail';
+import { PadHomeOverlay } from '@/components/pad-home-overlay';
+import {
+  PadAgentDetail,
+  PadAgentSessionAction,
+  usePadAgentOpener,
+  usePadAgentSessionControls,
+  usePadAgentTitle,
+} from '@/components/pad-agent-detail';
+import { usePadDetail } from '@/hooks/use-pad-detail';
+import { phoneAgentParams } from '@/lib/pad-detail';
 import { GatewayTunnelBadge } from '@/components/gateway-tunnel-badge';
 import { PressableScale } from '@/components/pressable-scale';
 import { StatusDot } from '@/components/status-dot';
@@ -153,6 +163,7 @@ import {
   PANE_OUTPUT_PAGE_LINES,
   loadAgentProfiles,
   loadPaneShortcuts,
+  samePaneShortcuts,
   readAssetBytes,
   gatewaySupportsAgentEvents,
   gatewaySupportsAgentSpawn,
@@ -230,7 +241,6 @@ import {
   timing,
 } from '@/lib/motion';
 import { mirroredServerAgents, mirroredServerPanes } from '@/lib/server-agents';
-import type { ServerAgent } from '@/lib/server-agents';
 import { resolveServerReachability, type ServerReachability } from '@/lib/server-reachability';
 import { responsiveWorkspaceLayout } from '@/lib/responsive-layout';
 import { loadUsage, orderByUsage, recordUsage, usageScope } from '@/lib/shortcut-usage';
@@ -266,13 +276,22 @@ import { initialSelection, reconcileSelection, type Selection } from '@/lib/work
 import { useAppActive } from '@/hooks/use-app-active';
 import { useServerAgents } from '@/stores/server-agents';
 import { useHomeRecentsStore } from '@/stores/home-recents';
-import { homeTargetKey, type HomeTarget } from '@/lib/home-recents';
+import { homeTargetKey, isLiveHomeTerminalVisit, type HomeTarget } from '@/lib/home-recents';
+import { HOME_CONTINUE_REFRESH_MS } from '@/lib/home-continue-refresh';
 import {
   classifyHomeTargetAvailability,
   isHomeTargetReady,
   type HomeTargetAvailability,
 } from '@/lib/home-target-availability';
 import { useServerCapabilities } from '@/stores/server-capabilities';
+import { useAgents } from '@/stores/agents';
+import { useAgentsDiscoveryRefresh } from '@/hooks/use-agent-features';
+import {
+  allowChord,
+  isKeyUnsupportedError,
+  paneVocabulary,
+  vocabularyForSession,
+} from '@/lib/key-vocabulary';
 import { useServerReachability } from '@/stores/server-reachability';
 import { useServerSession } from '@/stores/server-session';
 import { useSshHostsStore } from '@/stores/ssh-hosts';
@@ -771,6 +790,11 @@ export function ServerTerminalWorkspace({
     workspaceId?: string;
     tabId?: string;
     notificationId?: string;
+    overview?: string;
+    asid?: string;
+    directory?: string;
+    agentId?: string;
+    intent?: string;
   }>();
   // A template literal rather than the bare `??` chain: the value is the same
   // string, and it is what tells React Compiler this is a primitive -- without
@@ -830,8 +854,48 @@ export function ServerTerminalWorkspace({
   const toggleSimfarmSplit = useSimfarmSplit((state) => state.toggle);
   const workspaceLayout = responsiveWorkspaceLayout(windowWidth, previewOpen);
   const isPadLayout = workspaceLayout.mode === 'pad';
-  const [overviewVisible, setOverviewVisible] = useState(false);
-  const [overviewWidth, setOverviewWidth] = useState(0);
+  // The detail column (a pane or an agent session) and whether Home covers it.
+  // `overview=home` and agent deep-link params are applied by the hook itself.
+  const padShell = usePadDetail(serverId, {
+    asid: routeParams.asid,
+    sessionId: routeParams.sessionId,
+    directory: routeParams.directory,
+    agentId: routeParams.agentId,
+    intent: routeParams.intent,
+    overview: routeParams.overview,
+  });
+  const padDispatch = padShell.dispatch;
+  const overviewVisible = padShell.state.overviewVisible;
+  const padDetail = padShell.state.detail;
+  const padDetailIsPane = padDetail.kind === 'pane';
+  const paneHidden = overviewVisible || !padDetailIsPane;
+  const setOverviewVisible = (visible: boolean) =>
+    padDispatch({ type: visible ? 'show-home' : 'hide-home' });
+  // The root Home route's owner, as opposed to a `/servers/[serverId]` route.
+  const rootOwned = providedServerId !== undefined;
+  const openAgentInPlace = usePadAgentOpener(serverId, padDispatch, rootOwned);
+  // A Pad narrowed below Pad width while it shows an agent session has no rail
+  // and no agent header -- a dead end. The phone shows agent sessions on
+  // `/agent`, so the session moves there and this workspace returns to its
+  // pane. A route-bound workspace is replaced (as the phone would have it);
+  // the root Home owner stays under the pushed screen.
+  const compactAgentDetail =
+    !isPadLayout && isFocused && !overviewVisible && padDetail.kind === 'agent' ? padDetail : null;
+  useEffect(() => {
+    if (!compactAgentDetail) return;
+    padDispatch({ type: 'open-pane' });
+    const href = { pathname: '/agent', params: phoneAgentParams(compactAgentDetail) } as Href;
+    if (rootOwned) router.push(href);
+    else router.replace(href);
+  }, [compactAgentDetail, padDispatch, rootOwned, router]);
+  const padAgentTitle = usePadAgentTitle();
+  const padAgentControls = usePadAgentSessionControls();
+  // Spent once the hook has read it, so the next `overview=home` navigation
+  // is a change it sees rather than the same value it already applied.
+  const routeOverview = routeParams.overview;
+  useEffect(() => {
+    if (routeOverview === 'home') router.setParams({ overview: undefined });
+  }, [routeOverview, router]);
   const overviewTargetRequest = useRef(0);
   const workspaceHandoff = useSyncExternalStore(
     homeWorkspaceHandoffStore.subscribe,
@@ -974,6 +1038,9 @@ export function ServerTerminalWorkspace({
   useEffect(() => {
     if (routeTargetKeyRef.current === routeTargetKey) return;
     routeTargetKeyRef.current = routeTargetKey;
+    // A link naming a pane brings the pane back from an agent detail. Not a
+    // bare sessionId: agent links carry one too.
+    if (routePaneId || routeWorkspaceId || routeTabId) padDispatch({ type: 'open-pane' });
     if (routeSessionId || routeWorkspaceId || routeTabId || routePaneId) {
       setStrictTarget({
         serverId,
@@ -987,7 +1054,15 @@ export function ServerTerminalWorkspace({
       setStrictTarget(null);
     }
     setMissingRequestedTarget(null);
-  }, [routePaneId, routeSessionId, routeTabId, routeTargetKey, routeWorkspaceId, serverId]);
+  }, [
+    padDispatch,
+    routePaneId,
+    routeSessionId,
+    routeTabId,
+    routeTargetKey,
+    routeWorkspaceId,
+    serverId,
+  ]);
   const [deliveryOwnership] = useState(() => new DeliveryOwnership());
   const [selectionOwner] = useState(
     () => new DeliverySelection(initialSelection, sameSelection, deliveryOwnership)
@@ -1016,9 +1091,6 @@ export function ServerTerminalWorkspace({
     (!strictRequestedWorkspaceId || selection.workspaceId === strictRequestedWorkspaceId) &&
     (!strictRequestedTabId || selection.tabId === strictRequestedTabId);
   const targetPending = Boolean(activeStrictTarget) && !targetUnavailable && !targetReady;
-  // Gives the in-memory Demo mirror one stable freshness boundary for this
-  // mounted workspace. Real servers continue to use their persisted mirror.
-  const [demoRailCheckedAtMs] = useState(() => Date.now());
   // Seeded from the prefetch when it read the pane this screen is about to
   // land on, in the shape this screen reads. Everything else about the
   // workspace already painted from that snapshot on the first frame; without
@@ -1069,6 +1141,16 @@ export function ServerTerminalWorkspace({
   // that types straight into the pane -- the way to drive a TUI like nvim from
   // a phone. Off by default so the output stays visible.
   const [keyboardMode, setKeyboardMode] = useState(false);
+  // Bumped each time the on-screen keyboard opens, so the pane's shortcuts --
+  // and with them whether it takes extended keys right now -- are asked again:
+  // a shell that has just started Claude Code gets its chords back without a
+  // pane switch.
+  const [keyboardOpens, setKeyboardOpens] = useState(0);
+  const openKeyboard = useCallback(() => {
+    Keyboard.dismiss();
+    setKeyboardMode(true);
+    setKeyboardOpens((count) => count + 1);
+  }, []);
   // Asked for, per visit to the keyboard: an editor's composer stands down so
   // the file gets the height, and this is the reader saying they want it back
   // for one line. Cleared whenever the keyboard closes or the pane changes,
@@ -1313,7 +1395,7 @@ export function ServerTerminalWorkspace({
   const tunnel = useGatewayTunnel(record, selectedServer);
   const tunnelReady = !tunnel.tunnelled || tunnel.phase === 'open';
   const appActive = useAppActive();
-  const ready = !overviewVisible && isFocused && selectedServer && tunnelReady;
+  const ready = !overviewVisible && padDetailIsPane && isFocused && selectedServer && tunnelReady;
   /**
    * Whether the reader can still see this screen -- which is not whether it is
    * focused.
@@ -1499,6 +1581,7 @@ export function ServerTerminalWorkspace({
               if (!isDemoRecord(record)) {
                 void useServerAgents.getState().record({
                   serverId,
+                  sessionId,
                   checkedAtMs: Date.now(),
                   agents: mirroredServerPanes(next.panes, next.agents),
                 });
@@ -1650,7 +1733,7 @@ export function ServerTerminalWorkspace({
   // session already open costs nothing.
   useEffect(() => {
     if (!sessionPick || sessionPick.serverId !== serverId) return;
-    setOverviewVisible(false);
+    padDispatch({ type: 'open-pane' });
     resolvedSessionRef.current = null;
     clearSessionPick();
     setMissingRequestedTarget(null);
@@ -1660,7 +1743,7 @@ export function ServerTerminalWorkspace({
       afterGeneration: snapshotGenerationRef.current + 1,
     });
     setChosenSessionId(sessionPick.sessionId);
-  }, [clearSessionPick, serverId, sessionPick]);
+  }, [clearSessionPick, padDispatch, serverId, sessionPick]);
 
   /**
    * Switching session, as a navigation.
@@ -1713,8 +1796,13 @@ export function ServerTerminalWorkspace({
     [data.agents, selection.paneId]
   );
   const lastHomeVisit = useRef<string | null>(null);
+  const homeVisit = useRef<{ target: HomeTarget; title: string } | null>(null);
+  // `resolvedSessionRef` is not reactive: a session pick clears it, and the
+  // refresh that confirms the session again may leave `data` unchanged. The
+  // snapshot generation it bumps right after is what re-runs this effect.
   useEffect(() => {
-    if (!isFocused || overviewVisible) {
+    homeVisit.current = null;
+    if (!isFocused || overviewVisible || !padDetailIsPane) {
       lastHomeVisit.current = null;
       return;
     }
@@ -1730,6 +1818,7 @@ export function ServerTerminalWorkspace({
       paneId: selectedPane.id,
     };
     const key = homeTargetKey(target);
+    homeVisit.current = { target, title: panelTitle(selectedPane, selectedAgent) };
     if (lastHomeVisit.current === key) return;
     lastHomeVisit.current = key;
     void useHomeRecentsStore.getState().visit(target, panelTitle(selectedPane, selectedAgent));
@@ -1739,12 +1828,49 @@ export function ServerTerminalWorkspace({
     demoMode,
     isFocused,
     overviewVisible,
+    padDetailIsPane,
     selectedAgent,
     selectedPane,
     selectedServer,
     serverId,
+    snapshotGeneration,
     targetReady,
   ]);
+  // A visit is stamped once per selection, but agents keep refreshing their
+  // own times. While the pane stays in use, touch it in memory on Continue's
+  // cadence (no keychain write); persist one real visit when it is left.
+  useEffect(() => {
+    if (
+      !appActive ||
+      !isFocused ||
+      overviewVisible ||
+      !padDetailIsPane ||
+      connection.phase !== 'connected'
+    )
+      return;
+    const timer = setInterval(() => {
+      const visit = homeVisit.current;
+      if (visit) useHomeRecentsStore.getState().touch(visit.target);
+    }, HOME_CONTINUE_REFRESH_MS);
+    return () => clearInterval(timer);
+  }, [appActive, connection.phase, isFocused, overviewVisible, padDetailIsPane]);
+  const homePanes = useRef({ sessionId: data.sessionId, panes: data.panes });
+  useEffect(() => {
+    homePanes.current = { sessionId: data.sessionId, panes: data.panes };
+  }, [data.panes, data.sessionId]);
+  // Leaving: blur, overview, background, another server, or unmount. A pane
+  // switch is not a leave -- the new pane's own visit covers it. React runs
+  // every cleanup of a commit before any setup, so `homeVisit` and `homePanes`
+  // still describe the pane being left when this cleanup reads them.
+  useEffect(() => {
+    if (!appActive || !isFocused || overviewVisible || !padDetailIsPane) return;
+    return () => {
+      const visit = homeVisit.current;
+      const { sessionId, panes } = homePanes.current;
+      if (visit && isLiveHomeTerminalVisit(visit.target, sessionId, panes))
+        void useHomeRecentsStore.getState().visit(visit.target, visit.title);
+    };
+  }, [appActive, isFocused, overviewVisible, padDetailIsPane, serverId]);
   const agentKind = useMemo(() => {
     if (!selectedAgent) return '';
     return (
@@ -1954,6 +2080,9 @@ export function ServerTerminalWorkspace({
   // Deliberately without teardown on unmount: the card is meant to outlive this
   // screen, which is the whole point of glancing at it while the app is away.
   useEffect(() => {
+    // An agent session in the detail column is not a pane being watched; the
+    // card is left as it was rather than cleared, as Home leaves it.
+    if (!padDetailIsPane) return;
     if (!liveActivityEnabled || !watchedAgentId) {
       void syncAgentActivity(null);
       return;
@@ -1966,6 +2095,7 @@ export function ServerTerminalWorkspace({
     });
   }, [
     liveActivityEnabled,
+    padDetailIsPane,
     watchedAgentDetail,
     watchedAgentId,
     watchedAgentName,
@@ -1999,7 +2129,6 @@ export function ServerTerminalWorkspace({
   // above record all panes with their resolved titles; initial/reset state and
   // cached first frames do not become new observations. The shared Home model
   // applies the reader's agent-only filter without rewriting stored snapshots.
-  const agentsByServer = useServerAgents((state) => state.byServer);
   const hydrateServerAgents = useServerAgents((state) => state.hydrate);
   const reachabilityProbes = useServerReachability((state) => state.probes);
 
@@ -2178,6 +2307,33 @@ export function ServerTerminalWorkspace({
     );
   }, [fullScreenPane, output, selectedPaneColumns]);
 
+  // What this pane's backend says it can deliver, from the discovery mirror.
+  // Asked again whenever the screen connects, so a tmux whose extended-keys
+  // option changed is seen on the next visit. Undefined on a gateway older
+  // than the field, which keeps the SSH encoder as the judge.
+  useAgentsDiscoveryRefresh(serverId, ready && connection.phase === 'connected');
+  const terminalPlane = useAgents((state) => state.index.servers[serverId]?.terminal ?? null);
+  const backendVocabulary = vocabularyForSession(terminalPlane, data.sessionId);
+  // Narrowed by the pane's own answer: tmux can speak extended keys and the
+  // program in this pane may still not have asked for them.
+  const paneExtended = shortcuts?.keyboard?.extended;
+  const keyVocabulary = useMemo(
+    () => paneVocabulary(backendVocabulary, paneExtended),
+    [backendVocabulary, paneExtended]
+  );
+
+  // The gateway lists a key like `⌃↵` whatever the backend can deliver; a key
+  // this pane cannot take is left off the row rather than drawn as a tap that
+  // fails. A sequence (`["\\", "enter"]`) is offered when each of its keys is.
+  // Only with a vocabulary: without one, nothing was filtered before.
+  const deliverableKey = useCallback(
+    (item: TerminalKey) =>
+      !keyVocabulary ||
+      item.text !== undefined ||
+      (item.keys ?? [item.key]).every((key) => allowChord(key, keyVocabulary)),
+    [keyVocabulary]
+  );
+
   // The row follows what the pane is actually running: an agent's own actions,
   // an editor's motions, or shell line editing.
   // Ordered by how often these keys have actually been pressed, for this server
@@ -2193,6 +2349,7 @@ export function ServerTerminalWorkspace({
     // Esc stays first no matter how often the other keys have been pressed.
     if (fullScreenPane && nvimMode === 'insert') {
       return (shortcuts ? terminalKeysFromGateway(shortcuts.keys) : [])
+        .filter(deliverableKey)
         .filter((item) => ['esc', 'enter', 'tab', 'ctrl+c', 'backspace'].includes(item.key))
         .map((item) => (item.key === 'esc' ? { ...item, emphasis: true } : item));
     }
@@ -2212,8 +2369,12 @@ export function ServerTerminalWorkspace({
           : withCommonTerminalCombinations(resolved)
         : resolved;
     const scope = shortcuts ? usageScope(serverId, shortcuts.profile, 'keys') : null;
-    return orderByUsage(base, scope ? loadUsage()[scope] : undefined, (item) => item.key);
-  }, [fullScreenPane, nvimMode, serverId, shortcuts]);
+    return orderByUsage(
+      base.filter(deliverableKey),
+      scope ? loadUsage()[scope] : undefined,
+      (item) => item.key
+    );
+  }, [deliverableKey, fullScreenPane, nvimMode, serverId, shortcuts]);
   const keyScope = shortcuts ? usageScope(serverId, shortcuts.profile, 'keys') : null;
   // Typing "/" in an agent pane offers what that agent actually accepts.
   //
@@ -2699,7 +2860,7 @@ export function ServerTerminalWorkspace({
   // one frame where it was guaranteed to look wrong.
   useEffect(() => {
     if (panelPick?.serverId !== serverId) return;
-    setOverviewVisible(false);
+    padDispatch({ type: 'open-pane' });
     setMissingRequestedTarget(null);
     setStrictTarget({
       serverId,
@@ -2707,13 +2868,13 @@ export function ServerTerminalWorkspace({
       paneId: panelPick.paneId,
       afterGeneration: snapshotGenerationRef.current + 1,
     });
-  }, [data.sessionId, panelPick, serverId]);
+  }, [data.sessionId, padDispatch, panelPick, serverId]);
 
   useEffect(() => {
     if (!panelPick || panelPick.serverId !== serverId) return;
     const target = selectionForPane(data, panelPick.paneId);
     if (target.paneId === panelPick.paneId) {
-      setOverviewVisible(false);
+      padDispatch({ type: 'open-pane' });
       clearPanelPick();
       setMissingRequestedTarget(null);
       setStrictTarget({
@@ -2725,7 +2886,7 @@ export function ServerTerminalWorkspace({
       setSelection(target);
       setError(null);
     }
-  }, [clearPanelPick, data, panelPick, serverId, setSelection]);
+  }, [clearPanelPick, data, padDispatch, panelPick, serverId, setSelection]);
 
   // Keep this read loop independent of data renders. The old 200ms timers
   // launched overlapping refreshes and exhausted all attempts before a slow
@@ -2745,7 +2906,7 @@ export function ServerTerminalWorkspace({
     }, cancelled)
       .then((target) => {
         if (cancelled()) return;
-        setOverviewVisible(false);
+        padDispatch({ type: 'open-pane' });
         clearPanelPick();
         if (target) {
           setMissingRequestedTarget(null);
@@ -2767,7 +2928,17 @@ export function ServerTerminalWorkspace({
     return () => {
       disposed = true;
     };
-  }, [clearPanelPick, data.sessionId, panelPick, ready, refreshData, serverId, t, setSelection]);
+  }, [
+    clearPanelPick,
+    data.sessionId,
+    padDispatch,
+    panelPick,
+    ready,
+    refreshData,
+    serverId,
+    t,
+    setSelection,
+  ]);
 
   // Which keys and slash commands this pane responds to is the gateway's
   // answer, so a newly supported agent needs a gateway update rather than an
@@ -2789,7 +2960,11 @@ export function ServerTerminalWorkspace({
     const requestPaneId = selection.paneId;
     void loadPaneShortcuts(data.sessionId, requestPaneId)
       .then((value) => {
-        if (!cancelled && activePaneRef.current === requestPaneId) setShortcuts(value);
+        // Asked again on every keyboard open; an unchanged answer keeps the
+        // same object so the usage-ordered row does not reshuffle under a thumb.
+        if (!cancelled && activePaneRef.current === requestPaneId) {
+          setShortcuts((previous) => (samePaneShortcuts(previous, value) ? previous : value));
+        }
       })
       .catch(() => {
         if (!cancelled) setShortcuts(null);
@@ -2797,7 +2972,15 @@ export function ServerTerminalWorkspace({
     return () => {
       cancelled = true;
     };
-  }, [connection.phase, data.sessionId, ready, selection.paneId, selectedPaneTitle, t]);
+  }, [
+    connection.phase,
+    data.sessionId,
+    keyboardOpens,
+    ready,
+    selection.paneId,
+    selectedPaneTitle,
+    t,
+  ]);
 
   // A quick action that needs an argument typed comes back as a draft rather
   // than as a sent message.
@@ -3355,6 +3538,14 @@ export function ServerTerminalWorkspace({
     if (dock.approvalOnly) Keyboard.dismiss();
   }, [dock.approvalOnly]);
 
+  // Home or an agent session covering the pane hides it by opacity, which
+  // leaves the composer mounted. Its field must not keep focus underneath: a
+  // hardware keyboard would type into a field no one can see, and Enter would
+  // send it to the pane.
+  useEffect(() => {
+    if (paneHidden) Keyboard.dismiss();
+  }, [paneHidden]);
+
   // Which pane the stream is opened against, which trails the selection by
   // `PANE_STREAM_SETTLE_MS`. See that constant for why it trails at all; the
   // short version is that re-pointing the stream is a reconnect, and a pane
@@ -3603,6 +3794,7 @@ export function ServerTerminalWorkspace({
   });
 
   function choosePane(pane: HerdrEntity) {
+    padDispatch({ type: 'open-pane' });
     setMissingRequestedTarget(null);
     setStrictTarget({
       serverId,
@@ -3620,7 +3812,7 @@ export function ServerTerminalWorkspace({
   const openTaskTarget = useCallback(
     (target: HomeServerEntry) => {
       const request = ++overviewTargetRequest.current;
-      setOverviewVisible(false);
+      padDispatch({ type: 'open-pane' });
       setMissingRequestedTarget(null);
       setStrictTarget({
         serverId: target.serverId,
@@ -3674,7 +3866,7 @@ export function ServerTerminalWorkspace({
       selectRecord,
       serverId,
       setSelection,
-      setOverviewVisible,
+      padDispatch,
       setMissingRequestedTarget,
       setStrictTarget,
       setPadRequestedPaneId,
@@ -3695,8 +3887,17 @@ export function ServerTerminalWorkspace({
     }
     if (!isFocused) return;
     const handoff = homeWorkspaceHandoffStore.getState().consume(workspaceHandoff.id);
-    if (handoff) openTaskTarget(handoff.target);
-  }, [isFocused, openTaskTarget, selectedServer, serverId, workspaceHandoff]);
+    if (!handoff) return;
+    // An agent route handed to this owner opens in the detail column; the
+    // terminal selection stays where it was.
+    if (handoff.agent)
+      padDispatch({
+        type: 'open-agent',
+        target: handoff.agent.target,
+        intent: handoff.agent.intent,
+      });
+    else openTaskTarget(handoff.target);
+  }, [isFocused, openTaskTarget, padDispatch, selectedServer, serverId, workspaceHandoff]);
 
   // The saved SSH hosts, for the rail's own group under the servers. Hydrated
   // here as well as on the home list, since on a Pad this screen *is* the
@@ -3717,18 +3918,6 @@ export function ServerTerminalWorkspace({
     }
     return [routeRecord, ...records];
   }, [records, routeRecord]);
-
-  const railAgentsByServer = useMemo(() => {
-    if (!routeRecord || !isDemoRecord(routeRecord)) return agentsByServer;
-    return {
-      ...agentsByServer,
-      [routeRecord.serverId]: {
-        serverId: routeRecord.serverId,
-        checkedAtMs: demoRailCheckedAtMs,
-        agents: mirroredServerAgents(data.agents, data.panes),
-      },
-    };
-  }, [agentsByServer, data.agents, data.panes, demoRailCheckedAtMs, routeRecord]);
 
   const railReachabilityByServer = useMemo<Record<string, ServerReachability>>(
     () =>
@@ -3752,7 +3941,7 @@ export function ServerTerminalWorkspace({
 
   function selectPadServer(server: GatewayRecord) {
     ++overviewTargetRequest.current;
-    setOverviewVisible(false);
+    padDispatch({ type: 'open-pane' });
     homeWorkspaceHandoffStore.getState().clear();
     setPadRequestedPaneId(undefined);
     setStrictTarget(null);
@@ -3760,58 +3949,10 @@ export function ServerTerminalWorkspace({
     if (server.serverId === serverId) return;
     void selectRecord(server.serverId);
 
-    // A compact detail can become wide during rotation or Stage Manager. Keep
-    // that already-visible composition in place while its dynamic segment is
-    // updated; the persistent Home workspace needs no route mutation at all.
-    if (providedServerId === undefined) {
-      router.replace({
-        pathname: '/servers/[serverId]',
-        params: { serverId: server.serverId },
-      } as Href);
-    }
-  }
-
-  function selectPadAgent(server: GatewayRecord, agent: ServerAgent) {
-    setOverviewVisible(false);
-    if (!agent.paneId) {
-      selectPadServer(server);
-      return;
-    }
-
-    const request = ++overviewTargetRequest.current;
-
-    if (server.serverId === serverId) {
-      setPadRequestedPaneId(agent.paneId);
-      setMissingRequestedTarget(null);
-      setStrictTarget({
-        serverId: server.serverId,
-        paneId: agent.paneId,
-        afterGeneration: snapshotGenerationRef.current,
-      });
-      const pane = data.panes.find((item) => item.id === agent.paneId);
-      if (pane) choosePane(pane);
-      return;
-    }
-
-    const target: HomeServerEntry = {
-      kind: 'gateway-terminal',
-      serverId: server.serverId,
-      paneId: agent.paneId,
-    };
-    const handoffId = homeWorkspaceHandoffStore
-      .getState()
-      .publish(target, () => request === overviewTargetRequest.current, serverId);
-    void selectRecord(server.serverId).then((selected) => {
-      if (request !== overviewTargetRequest.current || selected) return;
-      const pending = homeWorkspaceHandoffStore.getState().handoff;
-      if (pending?.id === handoffId) homeWorkspaceHandoffStore.getState().clear();
-    });
-    if (providedServerId === undefined) {
-      router.replace({
-        pathname: '/servers/[serverId]',
-        params: { serverId: server.serverId, paneId: agent.paneId },
-      } as Href);
-    }
+    router.replace({
+      pathname: '/servers/[serverId]',
+      params: { serverId: server.serverId },
+    } as Href);
   }
 
   /**
@@ -3984,10 +4125,17 @@ export function ServerTerminalWorkspace({
   // without waiting on the event stream.
   function typeKey(key: string) {
     const requestPaneId = selection.paneId;
-    if (!targetReady || connection.phase !== 'connected' || !ready || !requestPaneId) return;
-    void sendPaneKeys(data.sessionId, requestPaneId, [key])
-      .then(() => refreshOutputRef.current())
-      .catch(() => {});
+    if (!targetReady || connection.phase !== 'connected' || !ready || !requestPaneId) {
+      return Promise.resolve('failed' as const);
+    }
+    return sendPaneKeys(data.sessionId, requestPaneId, [key]).then(
+      () => {
+        refreshOutputRef.current();
+        return 'sent' as const;
+      },
+      (err: unknown) =>
+        isKeyUnsupportedError(err) ? ('unsupported' as const) : ('failed' as const)
+    );
   }
 
   function typeText(text: string) {
@@ -4302,6 +4450,9 @@ export function ServerTerminalWorkspace({
   const detailTitle = selectedPane
     ? panelTitle(selectedPane, selectedAgent)
     : (routeRecord?.label ?? record?.label ?? t`Server`);
+  const shellTitle = padDetailIsPane
+    ? detailTitle
+    : (padAgentTitle ?? routeRecord?.label ?? record?.label ?? t`Server`);
 
   // The pane's two entries: what goes into the session, and what came out of
   // it. Written once because they are the same two buttons whether they sit in
@@ -4437,7 +4588,11 @@ export function ServerTerminalWorkspace({
         style={isPadLayout ? styles.padTerminalKeyViewport : undefined}
         contentContainerStyle={styles.terminalKeyList}>
         {renderTerminalKeyButtons(
-          keyboardCombinationKeys(terminalKeys, shortcuts?.keyActions === undefined)
+          // The fallback chords this adds for an older gateway (alt+arrows)
+          // pass the same test as the row they join.
+          keyboardCombinationKeys(terminalKeys, shortcuts?.keyActions === undefined).filter(
+            deliverableKey
+          )
         )}
       </ScrollView>
       {dock.composerEntry ? composerEntry : null}
@@ -4523,7 +4678,11 @@ export function ServerTerminalWorkspace({
           setCaret(event.nativeEvent.selection.start);
         },
         editable:
-          targetReady && connection.phase === 'connected' && Boolean(selectedPane) && !sending,
+          !paneHidden &&
+          targetReady &&
+          connection.phase === 'connected' &&
+          Boolean(selectedPane) &&
+          !sending,
         maxLength: 64 * 1024,
         // Summoned into the editor panel, the field arrives *instead of* the
         // app's keyboard rather than on top of it, so a reader who still had
@@ -4557,6 +4716,7 @@ export function ServerTerminalWorkspace({
         armed: Boolean(hasSendableContent && selectedPane),
         sending,
         disabled:
+          paneHidden ||
           !targetReady ||
           connection.phase !== 'connected' ||
           !hasSendableContent ||
@@ -4591,6 +4751,8 @@ export function ServerTerminalWorkspace({
           onKey={typeKey}
           onClose={() => setKeyboardMode(false)}
           shortcuts={keyboardShortcuts}
+          vocabulary={keyVocabulary}
+          wide={isPadLayout}
         />
       ) : null}
       {dock.keyRow ? (
@@ -4751,17 +4913,19 @@ export function ServerTerminalWorkspace({
       // Not `previewOpen`: the layout is what decides, and it declines the
       // preview on a window too narrow to hold both. Reading its answer keeps
       // the rail from standing down for a preview that never opened.
-      padRailCollapsed={workspaceLayout.previewWidth > 0}
+      padRailCollapsed={padDetailIsPane && workspaceLayout.previewWidth > 0}
       padRail={
         <PadServerRail
           servers={railServers}
-          agentsByServer={railAgentsByServer}
           reachabilityByServer={railReachabilityByServer}
           selectedServerId={record?.serverId ?? null}
-          selectedPaneId={selection.paneId || null}
-          workbenchSelected={overviewVisible}
+          activeConnection={{ serverId, phase: connection.phase }}
+          selectedPaneId={padDetailIsPane ? selection.paneId || null : null}
+          selectedAsid={padDetail.kind === 'agent' ? padDetail.asid : undefined}
+          workbenchSelected={false}
+          commandOptions={{ embedded: true, routeBound, sourceRouteActive, openAgentInPlace }}
           onOpenWorkbench={() => setOverviewVisible(true)}
-          onSelectAgent={selectPadAgent}
+          onSelectServer={selectPadServer}
           onPairServer={() => router.push('/explore')}
           onOpenSettings={() => router.push('/settings')}
           onOpenSsh={() => router.push('/ssh')}
@@ -4771,11 +4935,29 @@ export function ServerTerminalWorkspace({
           onSelectSshHost={(host) => router.navigate(`/ssh/${host.id}`)}
         />
       }
-      detailTitle={overviewVisible ? undefined : detailTitle}
-      onDetailBack={!overviewVisible && demoMode ? leaveDetail : undefined}
-      detailFadeColor={terminalBackground}
+      // Home covers the whole frame, rail included, and stays mounted between
+      // visits: the rail and the detail keep their layout under it.
+      overlayVisible={overviewVisible}
+      overlay={
+        <PadHomeOverlay visible={overviewVisible}>
+          <HomeOverview
+            width={workspaceLayout.availableWidth}
+            layoutMode={workspaceLayout.mode}
+            embedded
+            routeBound={routeBound}
+            sourceRouteActive={sourceRouteActive}
+            activeConnection={{ serverId, phase: connection.phase }}
+            onExitOverview={() => padDispatch({ type: 'hide-home' })}
+            onOpenAgentInPlace={openAgentInPlace}
+          />
+        </PadHomeOverlay>
+      }
+      // The header stays mounted under Home; the overlay covers it.
+      detailTitle={shellTitle}
+      onDetailBack={demoMode ? leaveDetail : undefined}
+      detailFadeColor={padDetailIsPane ? terminalBackground : theme.colors.background}
       detailTitleSlot={
-        overviewVisible ? undefined : (
+        !padDetailIsPane ? undefined : (
           // The title carries the workspace switch, so it replaces the header's
           // plain pill. It draws the same pill either way -- with one workspace
           // the gesture is simply off.
@@ -4788,7 +4970,7 @@ export function ServerTerminalWorkspace({
           />
         )
       }
-      onDetailAction={!overviewVisible && hasLoadedData ? openPanelPicker : undefined}
+      onDetailAction={padDetailIsPane && hasLoadedData ? openPanelPicker : undefined}
       /*
         The way out of the split, beside the control that arranges panes.
 
@@ -4800,15 +4982,15 @@ export function ServerTerminalWorkspace({
         close and nothing else the header could mean by it.
       */
       detailAccessory={
-        overviewVisible
-          ? []
+        !padDetailIsPane
+          ? [<PadAgentSessionAction key="agent-session" controls={padAgentControls} />]
           : [
               // No machine button beside the panels one. Two glyphs in this corner
               // were two halves of one question -- which machine, which backend,
               // which workspace, which panel -- and a reader had to know which half
               // theirs was in before they could press anything. `onDetailAction`
               // above is the one button, and the whole address is inside it.
-              simfarmSplit.previewWidth > 0 ? (
+              padDetailIsPane && simfarmSplit.previewWidth > 0 ? (
                 <PressableScale
                   key="simulator"
                   accessibilityLabel={t`Hide the simulator`}
@@ -4827,11 +5009,13 @@ export function ServerTerminalWorkspace({
           or the window is too narrow to keep both halves usable, so this is a
           row of one for the whole of the compact layout and most of the Pad. */}
       <View style={styles.workspaceHost}>
+        {/* Hidden, not unmounted, under an agent detail as under Home: the
+            terminal keeps its scrollback and view state for the way back. */}
         <View
-          pointerEvents={overviewVisible ? 'none' : 'auto'}
-          accessibilityElementsHidden={overviewVisible}
-          importantForAccessibility={overviewVisible ? 'no-hide-descendants' : 'auto'}
-          style={[StyleSheet.absoluteFill, { opacity: overviewVisible ? 0 : 1 }]}>
+          pointerEvents={paneHidden ? 'none' : 'auto'}
+          accessibilityElementsHidden={paneHidden}
+          importantForAccessibility={paneHidden ? 'no-hide-descendants' : 'auto'}
+          style={[StyleSheet.absoluteFill, { opacity: paneHidden ? 0 : 1 }]}>
           <View style={styles.workspaceSplit}>
             {/* No background and no wallpaper of its own. `AppDrawer` wraps this
             screen and already paints both, and painting them again here drew a
@@ -4974,21 +5158,25 @@ export function ServerTerminalWorkspace({
                       </View>
                     ) : chatViewShown ? (
                       supportsAgentSessions && isOpenCodeAgent ? (
-                        <AgentWorkbench
-                          // The home route mounts this workspace from its warm or
-                          // placeholder data first. `data.sessionId` can change
-                          // from the placeholder to the real gateway session
-                          // after the first snapshot arrives. A pane-only key
-                          // kept the AgentWorkbench's old transcript store alive
-                          // across that identity change, so the header could show
-                          // the real session while its message list stayed empty.
-                          key={JSON.stringify([serverId, data.sessionId, selection.paneId])}
-                          serverId={serverId}
-                          sessionId={data.sessionId}
-                          visible={!overviewVisible}
-                          topInset={insets.top + NAV_HEADER_TOP_GAP + 54}
-                          bottomInset={insets.bottom}
-                        />
+                        // One workbench at a time: under an agent detail the
+                        // shell's own owns the agent session store.
+                        !padDetailIsPane ? null : (
+                          <AgentWorkbench
+                            // The home route mounts this workspace from its warm or
+                            // placeholder data first. `data.sessionId` can change
+                            // from the placeholder to the real gateway session
+                            // after the first snapshot arrives. A pane-only key
+                            // kept the AgentWorkbench's old transcript store alive
+                            // across that identity change, so the header could show
+                            // the real session while its message list stayed empty.
+                            key={JSON.stringify([serverId, data.sessionId, selection.paneId])}
+                            serverId={serverId}
+                            sessionId={data.sessionId}
+                            visible={!overviewVisible}
+                            topInset={insets.top + NAV_HEADER_TOP_GAP + 54}
+                            bottomInset={insets.bottom}
+                          />
+                        )
                       ) : (
                         <PaneChatView
                           // Remounted per pane: the follow-the-latest position and which
@@ -5206,10 +5394,7 @@ export function ServerTerminalWorkspace({
               {dock.editorMode ? (
                 <EditorControls
                   expanded={dock.editorPanel}
-                  onExpand={() => {
-                    Keyboard.dismiss();
-                    setKeyboardMode(true);
-                  }}
+                  onExpand={openKeyboard}
                   offsetX={editorHandleX}
                   offsetY={editorHandleY}
                   keyboardOffset={keyboardOffset}
@@ -5368,6 +5553,8 @@ export function ServerTerminalWorkspace({
                             onKey={typeKey}
                             onClose={() => setKeyboardMode(false)}
                             shortcuts={keyboardShortcuts}
+                            vocabulary={keyVocabulary}
+                            wide={isPadLayout}
                           />
                         </Animated.View>
                       ) : null}
@@ -5421,10 +5608,7 @@ export function ServerTerminalWorkspace({
                                   accessibilityLabel={t`Open on-screen keyboard`}
                                   feedback="selection"
                                   pressedScale={0.9}
-                                  onPress={() => {
-                                    Keyboard.dismiss();
-                                    setKeyboardMode(true);
-                                  }}
+                                  onPress={openKeyboard}
                                   style={[
                                     styles.keyRowToggle,
                                     { borderRadius: profile.chrome.control },
@@ -5519,19 +5703,17 @@ export function ServerTerminalWorkspace({
             ) : null}
           </View>
         </View>
-        {overviewVisible ? (
+        {padDetail.kind === 'agent' ? (
           <View
-            testID="home-overview-overlay"
-            style={styles.overviewLayer}
-            onLayout={(event) => setOverviewWidth(event.nativeEvent.layout.width)}>
-            <HomeOverview
-              width={overviewWidth || workspaceLayout.terminalWidth}
-              layoutMode={workspaceLayout.mode}
-              embedded
-              routeBound={routeBound}
-              sourceRouteActive={sourceRouteActive}
-              activeConnection={{ serverId, phase: connection.phase }}
-              onExitOverview={() => setOverviewVisible(false)}
+            pointerEvents={overviewVisible ? 'none' : 'auto'}
+            accessibilityElementsHidden={overviewVisible}
+            importantForAccessibility={overviewVisible ? 'no-hide-descendants' : 'auto'}
+            style={[StyleSheet.absoluteFill, { opacity: overviewVisible ? 0 : 1 }]}>
+            <PadAgentDetail
+              detail={padDetail}
+              ready={selectedServer && tunnelReady}
+              visible={!overviewVisible}
+              controls={padAgentControls}
             />
           </View>
         ) : null}
@@ -6049,11 +6231,6 @@ const styles = StyleSheet.create({
   workspaceHost: {
     flex: 1,
     position: 'relative',
-  },
-  overviewLayer: {
-    ...StyleSheet.absoluteFill,
-    zIndex: 20,
-    elevation: 20,
   },
   previewColumn: {
     // A hairline is the whole of the seam. The two halves are one machine's

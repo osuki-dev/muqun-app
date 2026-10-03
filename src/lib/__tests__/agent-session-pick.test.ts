@@ -7,6 +7,7 @@ function session(asid: string, updated_ms: number): AgentSessionInfo {
   return {
     asid,
     backend_session_id: `backend-${asid}`,
+    agent_id: 'opencode',
     title: asid,
     model: null,
     status: 'idle',

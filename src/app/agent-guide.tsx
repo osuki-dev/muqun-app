@@ -5,19 +5,22 @@ import { Text } from '@/components/text';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 
-import { OpenCodeGuideSheet } from '@/components/opencode-guide-sheet';
+import { AgentGuideSheet } from '@/components/agent-guide-sheet';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
-import { checkOpenCodeServer, type OpenCodeReadiness } from '@/lib/home-opencode-readiness';
+import { checkAgentServer, type AgentReadiness } from '@/lib/home-agent-readiness';
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';
 import { useServerCapabilities } from '@/stores/server-capabilities';
+import { DEFAULT_AGENT_ID, findAgent } from '@/lib/agent-discovery';
+import { agentDisplayName } from '@/lib/home-launch-model';
+import { useAgents } from '@/stores/agents';
 
 /**
- * The OpenCode setup sheet's route owns the re-check. That keeps Editorial's
+ * The agent setup sheet's route owns the re-check. That keeps Editorial's
  * command path independent from whichever server card happens to be mounted
  * and lets a successful check replace this route with the exact server and
  * original new-session intent.
  */
-export default function OpenCodeGuideScreen() {
+export default function AgentGuideScreen() {
   const router = useRouter();
   const { t } = useLingui();
   const theme = useThemeTokens();
@@ -29,8 +32,16 @@ export default function OpenCodeGuideScreen() {
     intent?: string;
     status?: string;
     cause?: string;
+    agentId?: string;
   }>();
   const serverId = params.serverId;
+  const agentId =
+    typeof params.agentId === 'string' && params.agentId ? params.agentId : DEFAULT_AGENT_ID;
+  const mirroredAgents = useAgents((state) =>
+    serverId ? state.index.servers[serverId]?.agents?.agents : undefined
+  );
+  const agentName = agentDisplayName(mirroredAgents, agentId);
+  const agentKind = findAgent(mirroredAgents, agentId)?.kind ?? agentId;
   const selectedRecord = useGatewayConnectionStore((state) => state.record);
   const records = useGatewayConnectionStore((state) => state.records);
   const server =
@@ -39,21 +50,24 @@ export default function OpenCodeGuideScreen() {
       : serverId
         ? records.find((record) => record.serverId === serverId)
         : undefined;
-  const [readiness, setReadiness] = useState<OpenCodeReadiness>(() =>
+  const [readiness, setReadiness] = useState<AgentReadiness>(() =>
     params.status === 'unsupported'
-      ? { status: 'unsupported', capabilities: [] }
+      ? { status: 'unsupported', capabilities: [], agentId }
       : params.status === 'not-installed'
-        ? { status: 'not-installed', capabilities: [] }
-        : {
-            status: 'offline',
-            capabilities: [],
-            cause:
-              params.cause === 'service' || params.cause === 'catalog' ? params.cause : 'health',
-          }
+        ? { status: 'not-installed', capabilities: [], agentId }
+        : params.status === 'needs-setup'
+          ? { status: 'needs-setup', capabilities: [], agentId }
+          : {
+              status: 'offline',
+              capabilities: [],
+              agentId,
+              cause:
+                params.cause === 'service' || params.cause === 'catalog' ? params.cause : 'health',
+            }
   );
 
-  const checkAgain = async (): Promise<OpenCodeReadiness> => {
-    const result = await checkOpenCodeServer(server);
+  const checkAgain = async (): Promise<AgentReadiness> => {
+    const result = await checkAgentServer(server, agentId);
     setReadiness(result);
     if (serverId && result.capabilities.length > 0) {
       void useServerCapabilities.getState().record(serverId, result.capabilities);
@@ -68,6 +82,7 @@ export default function OpenCodeGuideScreen() {
       params: {
         server: serverId,
         ...(params.directory ? { directory: params.directory } : {}),
+        ...(agentId !== DEFAULT_AGENT_ID ? { agentId } : {}),
         ...(params.intent === 'new' ? { intent: 'new' } : {}),
       },
     });
@@ -84,8 +99,10 @@ export default function OpenCodeGuideScreen() {
   }
 
   return (
-    <OpenCodeGuideSheet
+    <AgentGuideSheet
       serverLabel={params.label || t`Server`}
+      agentName={agentName}
+      agentKind={agentKind}
       onClose={() => router.back()}
       readiness={readiness}
       onCheckAgain={checkAgain}
