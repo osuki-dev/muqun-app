@@ -246,10 +246,13 @@ describe('heldBackModifiers: the hint while a modifier is armed', () => {
   test('names the armed modifiers when the pane takes no extended keys', () => {
     expect(heldBackModifiers({ ...none, ctrl: true }, classicOnly)).toBe('Ctrl');
     expect(heldBackModifiers({ ...none, alt: true }, classicOnly)).toBe('Alt');
-    expect(heldBackModifiers({ ...none, shift: true }, classicOnly)).toBe('Shift');
     expect(heldBackModifiers({ ctrl: true, alt: false, shift: true }, classicOnly)).toBe(
       'Ctrl+Shift'
     );
+  });
+
+  test('shift on its own is a capital on a phone, never a hint', () => {
+    expect(heldBackModifiers({ ...none, shift: true }, classicOnly)).toBeNull();
   });
 
   test('nothing armed, an extended pane, or no vocabulary: no hint', () => {
