@@ -52,11 +52,6 @@ msgstr "{0, plural, other {# 文字は非表示}}"
 msgid "{0, plural, one {# day} other {# days}}"
 msgstr "{0, plural, other {# 日}}"
 
-#. placeholder {0}: pending.files.length
-#: src/components/git-diff-view.tsx
-msgid "{0, plural, one {# file changed} other {# files changed}}"
-msgstr "{0, plural, other {# 件のファイルが変更されました}}"
-
 #. placeholder {0}: files.length
 #: src/components/agent-revert-plate.tsx
 msgid "{0, plural, one {# file} other {# files}}"
@@ -65,7 +60,7 @@ msgstr "{0, plural, other {# 件のファイル}}"
 #. placeholder {0}: listing.changes.length
 #. placeholder {1}: totals.additions
 #. placeholder {2}: totals.deletions
-#: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/changes-sheet.tsx
 msgid "{0, plural, one {# file} other {# files}} · +{1} −{2}"
 msgstr "{0, plural, other {# 件のファイル}} · +{1} −{2}"
 
@@ -477,7 +472,6 @@ msgstr "アラート"
 msgid "Align the QR inside the frame"
 msgstr "QR コードを枠に合わせてください"
 
-#: src/components/git-diff-view.tsx
 #: src/components/session-artifacts.tsx
 #: src/components/theme-browse-sheet.tsx
 msgid "All"
@@ -835,9 +829,9 @@ msgstr "カメラへのアクセスが必要です"
 #: src/components/agent-composer.tsx
 #: src/components/agent-context-sheet.tsx
 #: src/components/agent-sessions-sheet.tsx
-#: src/components/agent-vcs-diff-sheet.tsx
 #: src/components/agent-workbench.tsx
 #: src/components/agent-worktree-sheet.tsx
+#: src/components/changes-sheet.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/row-action-menu.tsx
 #: src/components/session-map.tsx
@@ -879,8 +873,7 @@ msgctxt "git file status"
 msgid "Changed"
 msgstr "変更"
 
-#: src/components/agent-vcs-diff-sheet.tsx
-#: src/components/git-diff-view.tsx
+#: src/components/changes-sheet.tsx
 msgid "Changes"
 msgstr "変更点"
 
@@ -972,7 +965,7 @@ msgstr "ホームとアプリの外観を選びます。配色はテーマに従
 msgid "Choose project"
 msgstr "プロジェクトを選択"
 
-#: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/changes-sheet.tsx
 msgid "Choose which changes to show"
 msgstr "表示する変更を選択"
 
@@ -1150,7 +1143,7 @@ msgstr "圧縮に失敗しました"
 msgid "Compaction failed — tap to dismiss"
 msgstr "圧縮に失敗しました — タップで閉じる"
 
-#: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/changes-sheet.tsx
 msgid "Compared with {base}"
 msgstr "{base} と比較"
 
@@ -1503,7 +1496,7 @@ msgstr "削除できませんでした"
 msgid "Could not detach"
 msgstr "バックグラウンドに移せませんでした"
 
-#: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/changes-sheet.tsx
 msgid "Could not discard {name}"
 msgstr "{name} を破棄できませんでした"
 
@@ -1549,7 +1542,7 @@ msgstr "モデルを読み込めませんでした"
 msgid "Could not load the session"
 msgstr "セッションを読み込めませんでした"
 
-#: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/changes-sheet.tsx
 msgid "Could not load this file's changes."
 msgstr "このファイルの変更を読み込めませんでした"
 
@@ -1626,7 +1619,7 @@ msgstr "このサーバーに接続できませんでした"
 msgid "Could not read saved servers. Your saved data has not been changed. Unlock this device and retry."
 msgstr "保存済みサーバーを読み取れませんでした。保存データは変更されていません。デバイスのロックを解除して再試行してください"
 
-#: src/components/git-diff-view.tsx
+#: src/components/changes-sheet.tsx
 msgid "Could not read the changes."
 msgstr "変更点を読み込めませんでした"
 
@@ -1635,7 +1628,7 @@ msgstr "変更点を読み込めませんでした"
 msgid "Could not read the terminal."
 msgstr "ターミナルを読み取れませんでした"
 
-#: src/components/git-diff-view.tsx
+#: src/components/changes-sheet.tsx
 msgid "Could not read this file."
 msgstr "このファイルを読み込めませんでした"
 
@@ -1822,12 +1815,12 @@ msgid "Defaults to theme.json at the repository root"
 msgstr "既定はリポジトリ直下の theme.json です"
 
 #: src/components/agent-sessions-sheet.tsx
-#: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/changes-sheet.tsx
 #: src/components/row-action-menu.tsx
 msgid "Delete"
 msgstr "削除"
 
-#: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/changes-sheet.tsx
 msgid "Delete {discardName}?"
 msgstr "{discardName} を削除しますか？"
 
@@ -1905,7 +1898,7 @@ msgstr "方向"
 msgid "Directory"
 msgstr "ディレクトリ"
 
-#: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/changes-sheet.tsx
 msgid "Discard"
 msgstr "破棄"
 
@@ -1913,7 +1906,7 @@ msgstr "破棄"
 msgid "Discard changes"
 msgstr "変更を破棄"
 
-#: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/changes-sheet.tsx
 msgid "Discard changes to {discardName}?"
 msgstr "{discardName} の変更を破棄しますか？"
 
@@ -3089,18 +3082,14 @@ msgstr "スキャンできるカメラがありません"
 msgid "No camera was found on this device."
 msgstr "このデバイスでカメラが見つかりませんでした"
 
-#: src/components/agent-vcs-diff-sheet.tsx
 #: src/components/change-tree-rows.tsx
+#: src/components/changes-sheet.tsx
 msgid "No changes"
 msgstr "変更なし"
 
-#: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/changes-sheet.tsx
 msgid "No changes compared with {base}."
 msgstr "{base} と比べて変更はありません"
-
-#: src/components/git-diff-view.tsx
-msgid "No changes. The working tree matches HEAD."
-msgstr "変更はありません。作業ツリーは HEAD と一致しています"
 
 #: src/components/session-artifacts.tsx
 msgid "No files match."
@@ -3231,7 +3220,7 @@ msgstr "このモデルのウィンドウは不明です"
 msgid "No worktrees yet. Make one below to work on a branch without disturbing this checkout."
 msgstr "ワークツリーはまだありません。下で作成すると、このチェックアウトを触らずにブランチで作業できます"
 
-#: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/changes-sheet.tsx
 msgid "Not a git repository"
 msgstr "Git リポジトリではありません"
 
@@ -3311,11 +3300,11 @@ msgstr "まだ表示するものはありません"
 msgid "Nothing to undo"
 msgstr "元に戻せるものがありません"
 
-#: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/changes-sheet.tsx
 msgid "Nothing uncommitted in this project."
 msgstr "このプロジェクトに未コミットの変更はありません"
 
-#: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/changes-sheet.tsx
 msgid "Nothing was changed."
 msgstr "何も変更されていません"
 
@@ -3774,9 +3763,9 @@ msgstr "プロジェクト · {0}"
 #. placeholder {0}: gone.directory
 #. placeholder {0}: listing.missing?.directory ?? ''
 #. placeholder {0}: missing.directory
-#: src/components/agent-vcs-diff-sheet.tsx
 #: src/components/agent-workbench.tsx
 #: src/components/agent-worktree-sheet.tsx
+#: src/components/changes-sheet.tsx
 msgid "Project folder is missing: {0}"
 msgstr "プロジェクトのフォルダが見つかりません: {0}"
 
@@ -3934,7 +3923,7 @@ msgstr "再接続中 · {0}"
 msgid "Refresh"
 msgstr "更新"
 
-#: src/components/git-diff-view.tsx
+#: src/components/changes-sheet.tsx
 msgid "Refresh changes"
 msgstr "変更点を再読み込み"
 
@@ -4425,7 +4414,6 @@ msgstr "送信先"
 
 #: src/app/agent-guide.tsx
 #: src/app/artifacts.tsx
-#: src/app/git-diff.tsx
 #: src/app/panels.tsx
 #: src/components/app-drawer.tsx
 #: src/components/server-terminal-workspace.tsx
@@ -4626,10 +4614,6 @@ msgstr "ターミナルの文字の背後にアプリの背景を表示"
 msgid "Show the editor keyboard"
 msgstr "エディタ用キーボードを表示"
 
-#: src/components/git-diff-view.tsx
-msgid "Show the newer list of changes"
-msgstr "新しい変更一覧を表示"
-
 #: src/components/agent-tool-card.tsx
 msgid "Show the rest of this output"
 msgstr "この出力の残りを表示"
@@ -4770,7 +4754,6 @@ msgid "SSH tunnel through {host} is down"
 msgstr "{host} 経由の SSH トンネルが切断されています"
 
 #: src/components/diff-rows.tsx
-#: src/components/git-diff-view.tsx
 msgid "Staged"
 msgstr "ステージ済み"
 
@@ -5198,7 +5181,7 @@ msgstr "その目的地を開けませんでした"
 msgid "The font file is missing. Add it again."
 msgstr "フォントファイルが見つかりません。もう一度追加してください"
 
-#: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/changes-sheet.tsx
 msgid "The gateway could not be reached."
 msgstr "ゲートウェイに接続できませんでした"
 
@@ -5354,7 +5337,7 @@ msgstr "思考中…"
 msgid "This agent did not offer that answer."
 msgstr "このエージェントはその選択肢を提示していません"
 
-#: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/changes-sheet.tsx
 msgid "This cannot be undone."
 msgstr "この操作は元に戻せません"
 
@@ -5442,10 +5425,6 @@ msgstr "このリンクの先には何もありません"
 #: src/components/agent-form-card.tsx
 msgid "This one is required."
 msgstr "この項目は必須です"
-
-#: src/components/git-diff-view.tsx
-msgid "This pane is not working inside a git repository, so there is nothing to compare."
-msgstr "このパネルは git リポジトリの中で作業していないため、比較するものがありません"
 
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/agent-worktree-sheet.tsx
@@ -5576,8 +5555,7 @@ msgstr "トークン使用量とコスト"
 msgid "Too large to highlight — showing plain text."
 msgstr "大きすぎてハイライトできません。プレーンテキストで表示しています"
 
-#: src/components/agent-vcs-diff-sheet.tsx
-#: src/components/git-diff-view.tsx
+#: src/components/changes-sheet.tsx
 msgid "Too many changes to list. This is the start of them, not all of them."
 msgstr "変更が多すぎて一覧にできません。これは先頭部分で、すべてではありません"
 
@@ -5594,7 +5572,7 @@ msgstr "信頼する"
 #: src/components/agent-subagent-detail-sheet.tsx
 #: src/components/app-error-boundary.tsx
 #: src/components/asset-viewer.tsx
-#: src/components/git-diff-view.tsx
+#: src/components/changes-sheet.tsx
 #: src/components/theme-browse-sheet.tsx
 msgid "Try again"
 msgstr "もう一度試す"
@@ -5650,7 +5628,7 @@ msgstr "入力するか、キーボードの音声入力キーを使ってくだ
 msgid "Type on the simulator"
 msgstr "シミュレータに入力する"
 
-#: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/changes-sheet.tsx
 msgid "Uncommitted changes"
 msgstr "未コミットの変更"
 
@@ -5731,7 +5709,6 @@ msgid "Unpairing…"
 msgstr "解除しています…"
 
 #: src/components/diff-rows.tsx
-#: src/components/git-diff-view.tsx
 msgid "Unstaged"
 msgstr "未ステージ"
 

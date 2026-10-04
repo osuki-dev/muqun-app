@@ -52,11 +52,6 @@ msgstr "{0, plural, one {# caractere não exibido} other {# caracteres não exib
 msgid "{0, plural, one {# day} other {# days}}"
 msgstr "{0, plural, one {# dia} other {# dias}}"
 
-#. placeholder {0}: pending.files.length
-#: src/components/git-diff-view.tsx
-msgid "{0, plural, one {# file changed} other {# files changed}}"
-msgstr "{0, plural, one {# arquivo alterado} other {# arquivos alterados}}"
-
 #. placeholder {0}: files.length
 #: src/components/agent-revert-plate.tsx
 msgid "{0, plural, one {# file} other {# files}}"
@@ -65,7 +60,7 @@ msgstr "{0, plural, one {# arquivo} other {# arquivos}}"
 #. placeholder {0}: listing.changes.length
 #. placeholder {1}: totals.additions
 #. placeholder {2}: totals.deletions
-#: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/changes-sheet.tsx
 msgid "{0, plural, one {# file} other {# files}} · +{1} −{2}"
 msgstr "{0, plural, one {# arquivo} other {# arquivos}} · +{1} −{2}"
 
@@ -477,7 +472,6 @@ msgstr "Alertas"
 msgid "Align the QR inside the frame"
 msgstr "Alinhe o código QR dentro da moldura"
 
-#: src/components/git-diff-view.tsx
 #: src/components/session-artifacts.tsx
 #: src/components/theme-browse-sheet.tsx
 msgid "All"
@@ -835,9 +829,9 @@ msgstr "É preciso acesso à câmara"
 #: src/components/agent-composer.tsx
 #: src/components/agent-context-sheet.tsx
 #: src/components/agent-sessions-sheet.tsx
-#: src/components/agent-vcs-diff-sheet.tsx
 #: src/components/agent-workbench.tsx
 #: src/components/agent-worktree-sheet.tsx
+#: src/components/changes-sheet.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/row-action-menu.tsx
 #: src/components/session-map.tsx
@@ -879,8 +873,7 @@ msgctxt "git file status"
 msgid "Changed"
 msgstr "Alterado"
 
-#: src/components/agent-vcs-diff-sheet.tsx
-#: src/components/git-diff-view.tsx
+#: src/components/changes-sheet.tsx
 msgid "Changes"
 msgstr "Alterações"
 
@@ -972,7 +965,7 @@ msgstr "Escolha o início e o estilo da interface. As cores continuam a seguir o
 msgid "Choose project"
 msgstr "Escolher projeto"
 
-#: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/changes-sheet.tsx
 msgid "Choose which changes to show"
 msgstr "Escolher quais alterações mostrar"
 
@@ -1150,7 +1143,7 @@ msgstr "A compactação falhou"
 msgid "Compaction failed — tap to dismiss"
 msgstr "A compactação falhou — toque para dispensar"
 
-#: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/changes-sheet.tsx
 msgid "Compared with {base}"
 msgstr "Comparado com {base}"
 
@@ -1503,7 +1496,7 @@ msgstr "Não foi possível excluir"
 msgid "Could not detach"
 msgstr "Não foi possível desanexar"
 
-#: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/changes-sheet.tsx
 msgid "Could not discard {name}"
 msgstr "Não foi possível descartar {name}"
 
@@ -1549,7 +1542,7 @@ msgstr "Não foi possível carregar os modelos"
 msgid "Could not load the session"
 msgstr "Não foi possível carregar a sessão"
 
-#: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/changes-sheet.tsx
 msgid "Could not load this file's changes."
 msgstr "Não foi possível carregar as alterações deste arquivo"
 
@@ -1626,7 +1619,7 @@ msgstr "Não foi possível contactar este servidor"
 msgid "Could not read saved servers. Your saved data has not been changed. Unlock this device and retry."
 msgstr "Não foi possível ler os servidores salvos. Seus dados salvos não foram alterados. Desbloqueie este dispositivo e tente novamente"
 
-#: src/components/git-diff-view.tsx
+#: src/components/changes-sheet.tsx
 msgid "Could not read the changes."
 msgstr "Não foi possível ler as alterações"
 
@@ -1635,7 +1628,7 @@ msgstr "Não foi possível ler as alterações"
 msgid "Could not read the terminal."
 msgstr "Não foi possível ler o terminal"
 
-#: src/components/git-diff-view.tsx
+#: src/components/changes-sheet.tsx
 msgid "Could not read this file."
 msgstr "Não foi possível ler este arquivo"
 
@@ -1822,12 +1815,12 @@ msgid "Defaults to theme.json at the repository root"
 msgstr "Por padrão, theme.json na raiz do repositório"
 
 #: src/components/agent-sessions-sheet.tsx
-#: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/changes-sheet.tsx
 #: src/components/row-action-menu.tsx
 msgid "Delete"
 msgstr "Eliminar"
 
-#: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/changes-sheet.tsx
 msgid "Delete {discardName}?"
 msgstr "Excluir {discardName}?"
 
@@ -1905,7 +1898,7 @@ msgstr "Direção"
 msgid "Directory"
 msgstr "Diretório"
 
-#: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/changes-sheet.tsx
 msgid "Discard"
 msgstr "Descartar"
 
@@ -1913,7 +1906,7 @@ msgstr "Descartar"
 msgid "Discard changes"
 msgstr "Descartar alterações"
 
-#: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/changes-sheet.tsx
 msgid "Discard changes to {discardName}?"
 msgstr "Descartar as alterações em {discardName}?"
 
@@ -3089,18 +3082,14 @@ msgstr "Sem câmara para digitalizar"
 msgid "No camera was found on this device."
 msgstr "Não foi encontrada nenhuma câmara neste dispositivo"
 
-#: src/components/agent-vcs-diff-sheet.tsx
 #: src/components/change-tree-rows.tsx
+#: src/components/changes-sheet.tsx
 msgid "No changes"
 msgstr "Sem alterações"
 
-#: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/changes-sheet.tsx
 msgid "No changes compared with {base}."
 msgstr "Sem alterações em relação a {base}"
-
-#: src/components/git-diff-view.tsx
-msgid "No changes. The working tree matches HEAD."
-msgstr "Sem alterações. A árvore de trabalho corresponde a HEAD"
 
 #: src/components/session-artifacts.tsx
 msgid "No files match."
@@ -3231,7 +3220,7 @@ msgstr "nenhuma janela indicada para este modelo"
 msgid "No worktrees yet. Make one below to work on a branch without disturbing this checkout."
 msgstr "Ainda não há worktrees. Cria um abaixo para trabalhar num ramo sem mexer neste checkout"
 
-#: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/changes-sheet.tsx
 msgid "Not a git repository"
 msgstr "Não é um repositório Git"
 
@@ -3311,11 +3300,11 @@ msgstr "Ainda não há nada para mostrar"
 msgid "Nothing to undo"
 msgstr "Nada para desfazer"
 
-#: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/changes-sheet.tsx
 msgid "Nothing uncommitted in this project."
 msgstr "Nada por confirmar neste projeto"
 
-#: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/changes-sheet.tsx
 msgid "Nothing was changed."
 msgstr "Nada foi alterado"
 
@@ -3774,9 +3763,9 @@ msgstr "Projeto · {0}"
 #. placeholder {0}: gone.directory
 #. placeholder {0}: listing.missing?.directory ?? ''
 #. placeholder {0}: missing.directory
-#: src/components/agent-vcs-diff-sheet.tsx
 #: src/components/agent-workbench.tsx
 #: src/components/agent-worktree-sheet.tsx
+#: src/components/changes-sheet.tsx
 msgid "Project folder is missing: {0}"
 msgstr "A pasta do projeto não existe: {0}"
 
@@ -3934,7 +3923,7 @@ msgstr "A ligar novamente · {0}"
 msgid "Refresh"
 msgstr "Atualizar"
 
-#: src/components/git-diff-view.tsx
+#: src/components/changes-sheet.tsx
 msgid "Refresh changes"
 msgstr "Atualizar as alterações"
 
@@ -4425,7 +4414,6 @@ msgstr "Enviando para"
 
 #: src/app/agent-guide.tsx
 #: src/app/artifacts.tsx
-#: src/app/git-diff.tsx
 #: src/app/panels.tsx
 #: src/components/app-drawer.tsx
 #: src/components/server-terminal-workspace.tsx
@@ -4626,10 +4614,6 @@ msgstr "Mostrar o fundo do app atrás do texto do terminal"
 msgid "Show the editor keyboard"
 msgstr "Mostrar o teclado do editor"
 
-#: src/components/git-diff-view.tsx
-msgid "Show the newer list of changes"
-msgstr "Mostrar a lista de alterações mais recente"
-
 #: src/components/agent-tool-card.tsx
 msgid "Show the rest of this output"
 msgstr "Mostrar o restante desta saída"
@@ -4770,7 +4754,6 @@ msgid "SSH tunnel through {host} is down"
 msgstr "O túnel SSH por {host} caiu"
 
 #: src/components/diff-rows.tsx
-#: src/components/git-diff-view.tsx
 msgid "Staged"
 msgstr "Preparado"
 
@@ -5198,7 +5181,7 @@ msgstr "Não foi possível abrir esse destino"
 msgid "The font file is missing. Add it again."
 msgstr "O ficheiro do tipo de letra não existe. Adicione-o outra vez"
 
-#: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/changes-sheet.tsx
 msgid "The gateway could not be reached."
 msgstr "Não foi possível acessar o gateway"
 
@@ -5354,7 +5337,7 @@ msgstr "Pensando…"
 msgid "This agent did not offer that answer."
 msgstr "Este agente não ofereceu essa resposta"
 
-#: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/changes-sheet.tsx
 msgid "This cannot be undone."
 msgstr "Isso não pode ser desfeito"
 
@@ -5442,10 +5425,6 @@ msgstr "Esta ligação não leva a lado nenhum"
 #: src/components/agent-form-card.tsx
 msgid "This one is required."
 msgstr "Este campo é obrigatório"
-
-#: src/components/git-diff-view.tsx
-msgid "This pane is not working inside a git repository, so there is nothing to compare."
-msgstr "Este painel não está trabalhando dentro de um repositório git, portanto não há nada a comparar"
 
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/agent-worktree-sheet.tsx
@@ -5576,8 +5555,7 @@ msgstr "Uso de tokens e custo"
 msgid "Too large to highlight — showing plain text."
 msgstr "Demasiado grande para realçar — mostrado como texto simples"
 
-#: src/components/agent-vcs-diff-sheet.tsx
-#: src/components/git-diff-view.tsx
+#: src/components/changes-sheet.tsx
 msgid "Too many changes to list. This is the start of them, not all of them."
 msgstr "Alterações demais para listar. Este é o início delas, não o total"
 
@@ -5594,7 +5572,7 @@ msgstr "Confiar"
 #: src/components/agent-subagent-detail-sheet.tsx
 #: src/components/app-error-boundary.tsx
 #: src/components/asset-viewer.tsx
-#: src/components/git-diff-view.tsx
+#: src/components/changes-sheet.tsx
 #: src/components/theme-browse-sheet.tsx
 msgid "Try again"
 msgstr "Tentar novamente"
@@ -5650,7 +5628,7 @@ msgstr "Escreva-o ou use a tecla de ditado do teclado"
 msgid "Type on the simulator"
 msgstr "Escrever no simulador"
 
-#: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/changes-sheet.tsx
 msgid "Uncommitted changes"
 msgstr "Alterações não confirmadas"
 
@@ -5731,7 +5709,6 @@ msgid "Unpairing…"
 msgstr "A desemparelhar…"
 
 #: src/components/diff-rows.tsx
-#: src/components/git-diff-view.tsx
 msgid "Unstaged"
 msgstr "Não preparado"
 

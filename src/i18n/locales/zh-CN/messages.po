@@ -52,11 +52,6 @@ msgstr "{0, plural, other {未显示 # 个字符}}"
 msgid "{0, plural, one {# day} other {# days}}"
 msgstr "{0, plural, other {# 天}}"
 
-#. placeholder {0}: pending.files.length
-#: src/components/git-diff-view.tsx
-msgid "{0, plural, one {# file changed} other {# files changed}}"
-msgstr "{0, plural, other {# 个文件有改动}}"
-
 #. placeholder {0}: files.length
 #: src/components/agent-revert-plate.tsx
 msgid "{0, plural, one {# file} other {# files}}"
@@ -65,7 +60,7 @@ msgstr "{0, plural, other {# 个文件}}"
 #. placeholder {0}: listing.changes.length
 #. placeholder {1}: totals.additions
 #. placeholder {2}: totals.deletions
-#: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/changes-sheet.tsx
 msgid "{0, plural, one {# file} other {# files}} · +{1} −{2}"
 msgstr "{0, plural, other {# 个文件}} · +{1} −{2}"
 
@@ -477,7 +472,6 @@ msgstr "提醒"
 msgid "Align the QR inside the frame"
 msgstr "将二维码对准框内"
 
-#: src/components/git-diff-view.tsx
 #: src/components/session-artifacts.tsx
 #: src/components/theme-browse-sheet.tsx
 msgid "All"
@@ -835,9 +829,9 @@ msgstr "需要相机访问权限"
 #: src/components/agent-composer.tsx
 #: src/components/agent-context-sheet.tsx
 #: src/components/agent-sessions-sheet.tsx
-#: src/components/agent-vcs-diff-sheet.tsx
 #: src/components/agent-workbench.tsx
 #: src/components/agent-worktree-sheet.tsx
+#: src/components/changes-sheet.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/row-action-menu.tsx
 #: src/components/session-map.tsx
@@ -879,8 +873,7 @@ msgctxt "git file status"
 msgid "Changed"
 msgstr "已更改"
 
-#: src/components/agent-vcs-diff-sheet.tsx
-#: src/components/git-diff-view.tsx
+#: src/components/changes-sheet.tsx
 msgid "Changes"
 msgstr "改动"
 
@@ -972,7 +965,7 @@ msgstr "选择主页和应用界面样式。配色仍由主题决定"
 msgid "Choose project"
 msgstr "选择项目"
 
-#: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/changes-sheet.tsx
 msgid "Choose which changes to show"
 msgstr "选择要显示的更改"
 
@@ -1150,7 +1143,7 @@ msgstr "压缩失败"
 msgid "Compaction failed — tap to dismiss"
 msgstr "压缩失败 — 点按关闭"
 
-#: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/changes-sheet.tsx
 msgid "Compared with {base}"
 msgstr "与 {base} 比较"
 
@@ -1503,7 +1496,7 @@ msgstr "无法删除"
 msgid "Could not detach"
 msgstr "无法转入后台"
 
-#: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/changes-sheet.tsx
 msgid "Could not discard {name}"
 msgstr "无法放弃 {name}"
 
@@ -1549,7 +1542,7 @@ msgstr "无法加载模型"
 msgid "Could not load the session"
 msgstr "无法加载会话"
 
-#: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/changes-sheet.tsx
 msgid "Could not load this file's changes."
 msgstr "无法加载此文件的更改"
 
@@ -1626,7 +1619,7 @@ msgstr "无法连接到这台服务器"
 msgid "Could not read saved servers. Your saved data has not been changed. Unlock this device and retry."
 msgstr "无法读取已保存的服务器，保存的数据未被修改，请解锁此设备后重试"
 
-#: src/components/git-diff-view.tsx
+#: src/components/changes-sheet.tsx
 msgid "Could not read the changes."
 msgstr "无法读取改动"
 
@@ -1635,7 +1628,7 @@ msgstr "无法读取改动"
 msgid "Could not read the terminal."
 msgstr "无法读取终端"
 
-#: src/components/git-diff-view.tsx
+#: src/components/changes-sheet.tsx
 msgid "Could not read this file."
 msgstr "无法读取此文件"
 
@@ -1822,12 +1815,12 @@ msgid "Defaults to theme.json at the repository root"
 msgstr "默认为仓库根目录下的 theme.json"
 
 #: src/components/agent-sessions-sheet.tsx
-#: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/changes-sheet.tsx
 #: src/components/row-action-menu.tsx
 msgid "Delete"
 msgstr "删除"
 
-#: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/changes-sheet.tsx
 msgid "Delete {discardName}?"
 msgstr "删除 {discardName}？"
 
@@ -1905,7 +1898,7 @@ msgstr "方向"
 msgid "Directory"
 msgstr "目录"
 
-#: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/changes-sheet.tsx
 msgid "Discard"
 msgstr "放弃"
 
@@ -1913,7 +1906,7 @@ msgstr "放弃"
 msgid "Discard changes"
 msgstr "放弃更改"
 
-#: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/changes-sheet.tsx
 msgid "Discard changes to {discardName}?"
 msgstr "放弃对 {discardName} 的更改？"
 
@@ -3089,18 +3082,14 @@ msgstr "没有可用于扫描的相机"
 msgid "No camera was found on this device."
 msgstr "在本设备上找不到相机"
 
-#: src/components/agent-vcs-diff-sheet.tsx
 #: src/components/change-tree-rows.tsx
+#: src/components/changes-sheet.tsx
 msgid "No changes"
 msgstr "没有更改"
 
-#: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/changes-sheet.tsx
 msgid "No changes compared with {base}."
 msgstr "与 {base} 相比没有更改"
-
-#: src/components/git-diff-view.tsx
-msgid "No changes. The working tree matches HEAD."
-msgstr "没有改动。工作区与 HEAD 一致"
 
 #: src/components/session-artifacts.tsx
 msgid "No files match."
@@ -3231,7 +3220,7 @@ msgstr "该模型未提供上下文窗口"
 msgid "No worktrees yet. Make one below to work on a branch without disturbing this checkout."
 msgstr "还没有工作树。在下面创建一个，就能在某个分支上工作而不打扰这份检出"
 
-#: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/changes-sheet.tsx
 msgid "Not a git repository"
 msgstr "不是 Git 仓库"
 
@@ -3311,11 +3300,11 @@ msgstr "目前还没有内容"
 msgid "Nothing to undo"
 msgstr "没有可撤销的内容"
 
-#: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/changes-sheet.tsx
 msgid "Nothing uncommitted in this project."
 msgstr "本项目没有未提交的改动"
 
-#: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/changes-sheet.tsx
 msgid "Nothing was changed."
 msgstr "没有做任何更改"
 
@@ -3774,9 +3763,9 @@ msgstr "项目 · {0}"
 #. placeholder {0}: gone.directory
 #. placeholder {0}: listing.missing?.directory ?? ''
 #. placeholder {0}: missing.directory
-#: src/components/agent-vcs-diff-sheet.tsx
 #: src/components/agent-workbench.tsx
 #: src/components/agent-worktree-sheet.tsx
+#: src/components/changes-sheet.tsx
 msgid "Project folder is missing: {0}"
 msgstr "项目文件夹不存在：{0}"
 
@@ -3934,7 +3923,7 @@ msgstr "重新连接中 · {0}"
 msgid "Refresh"
 msgstr "刷新"
 
-#: src/components/git-diff-view.tsx
+#: src/components/changes-sheet.tsx
 msgid "Refresh changes"
 msgstr "刷新改动"
 
@@ -4425,7 +4414,6 @@ msgstr "发送给"
 
 #: src/app/agent-guide.tsx
 #: src/app/artifacts.tsx
-#: src/app/git-diff.tsx
 #: src/app/panels.tsx
 #: src/components/app-drawer.tsx
 #: src/components/server-terminal-workspace.tsx
@@ -4626,10 +4614,6 @@ msgstr "在终端文字后显示 App 背景"
 msgid "Show the editor keyboard"
 msgstr "显示编辑器键盘"
 
-#: src/components/git-diff-view.tsx
-msgid "Show the newer list of changes"
-msgstr "显示最新的改动列表"
-
 #: src/components/agent-tool-card.tsx
 msgid "Show the rest of this output"
 msgstr "显示其余输出"
@@ -4770,7 +4754,6 @@ msgid "SSH tunnel through {host} is down"
 msgstr "通过 {host} 的 SSH 隧道已断开"
 
 #: src/components/diff-rows.tsx
-#: src/components/git-diff-view.tsx
 msgid "Staged"
 msgstr "已暂存"
 
@@ -5198,7 +5181,7 @@ msgstr "无法打开该目标"
 msgid "The font file is missing. Add it again."
 msgstr "找不到字体文件。请重新添加"
 
-#: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/changes-sheet.tsx
 msgid "The gateway could not be reached."
 msgstr "无法连接到网关"
 
@@ -5354,7 +5337,7 @@ msgstr "正在思考…"
 msgid "This agent did not offer that answer."
 msgstr "这个代理没有提供那个选项"
 
-#: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/changes-sheet.tsx
 msgid "This cannot be undone."
 msgstr "此操作无法撤销"
 
@@ -5442,10 +5425,6 @@ msgstr "这个链接没有指向任何地方"
 #: src/components/agent-form-card.tsx
 msgid "This one is required."
 msgstr "此项为必填"
-
-#: src/components/git-diff-view.tsx
-msgid "This pane is not working inside a git repository, so there is nothing to compare."
-msgstr "此面板不在 git 仓库中工作，因此没有可比较的内容"
 
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/agent-worktree-sheet.tsx
@@ -5576,8 +5555,7 @@ msgstr "Token 用量与花费"
 msgid "Too large to highlight — showing plain text."
 msgstr "文件太大，无法着色，显示为纯文本"
 
-#: src/components/agent-vcs-diff-sheet.tsx
-#: src/components/git-diff-view.tsx
+#: src/components/changes-sheet.tsx
 msgid "Too many changes to list. This is the start of them, not all of them."
 msgstr "改动太多，无法全部列出。这只是开头，不是全部"
 
@@ -5594,7 +5572,7 @@ msgstr "信任"
 #: src/components/agent-subagent-detail-sheet.tsx
 #: src/components/app-error-boundary.tsx
 #: src/components/asset-viewer.tsx
-#: src/components/git-diff-view.tsx
+#: src/components/changes-sheet.tsx
 #: src/components/theme-browse-sheet.tsx
 msgid "Try again"
 msgstr "重试"
@@ -5650,7 +5628,7 @@ msgstr "可以直接打字，或使用键盘上的语音输入键"
 msgid "Type on the simulator"
 msgstr "在模拟器上输入"
 
-#: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/changes-sheet.tsx
 msgid "Uncommitted changes"
 msgstr "未提交的更改"
 
@@ -5731,7 +5709,6 @@ msgid "Unpairing…"
 msgstr "正在取消配对…"
 
 #: src/components/diff-rows.tsx
-#: src/components/git-diff-view.tsx
 msgid "Unstaged"
 msgstr "未暂存"
 
