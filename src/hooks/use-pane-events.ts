@@ -88,6 +88,12 @@ type PaneEventHandlers = {
    * transport and does not know what an approval is.
    */
   onApprovalChanged?: (event: ApprovalEventName, payload: unknown) => void;
+  /**
+   * The stream's `hello`, sent once at connect. Its `generation` names the
+   * gateway process; the payload is handed up parsed and unchecked, and a
+   * gateway that sends no `hello` never calls this.
+   */
+  onHello?: (payload: unknown) => void;
 };
 
 type HerdrEventPayload = {
@@ -185,8 +191,20 @@ export function usePaneEvents(
       }
     };
 
+    const handleHello = (data: string) => {
+      const handler = handlersRef.current.onHello;
+      if (!handler) return;
+      try {
+        handler(JSON.parse(data));
+      } catch {
+        // An unreadable hello names no generation, which is a gateway too old
+        // to name one: nothing to act on.
+      }
+    };
+
     const dispatch = (name: string, data: string) => {
       if (name === 'herdr') handleHerdrEvent(data);
+      else if (name === 'hello') handleHello(data);
       else if (approvalNames.has(name)) handleApprovalEvent(name, data);
     };
 

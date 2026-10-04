@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 
 import { probeGatewayReachable, type HealthResponse } from '@/lib/gateway-client';
+import { noteGatewayGeneration } from '@/stores/gateway-connection-generation';
 import { assertSupportedHerdr } from '@/lib/herdr-compatibility';
 import { directGatewayBaseUrl } from '@/lib/ssh-tunnel';
 import type { GatewayRecord } from '@/lib/gateway-storage';
@@ -120,6 +121,7 @@ export const useServerReachability = create<ServerReachabilityState>((set, get) 
       let health: HealthResponse | null = null;
       const ok = await probeGatewayReachable(endpoint, REACHABILITY_TIMEOUT_MS, (body) => {
         const answer = body as HealthResponse & Parameters<typeof assertSupportedHerdr>[0];
+        noteGatewayGeneration(serverId, answer);
         if (answer?.capabilities) {
           void useServerCapabilities.getState().record(serverId, answer.capabilities);
         }

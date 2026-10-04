@@ -100,7 +100,11 @@ export async function refreshAgentsDiscovery(
 ): Promise<void> {
   if (!serverId) return;
   const capabilities = useServerCapabilities.getState().byServer[serverId];
-  const discovery = await getAgentsDiscovery({ capabilities, ...(endpoint ? { endpoint } : {}) });
+  const discovery = await getAgentsDiscovery({
+    capabilities,
+    serverId,
+    ...(endpoint ? { endpoint } : {}),
+  });
   if (discovery) useAgents.getState().record(serverId, discovery);
 }
 

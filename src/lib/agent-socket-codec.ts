@@ -202,7 +202,7 @@ export class SealedAgentSocketCodec implements AgentSocketCodec {
 // ---------------------------------------------------------------------------
 
 export type AgentSocketServerFrame =
-  | { t: 'hello'; connectionId: string; protocol: number }
+  | { t: 'hello'; connectionId: string; protocol: number; generation?: string }
   | { t: 'subscribed'; asid: string }
   | { t: 'subscribed'; all: true }
   /** `event` already parsed; null when this build has no branch for it. */
@@ -240,7 +240,14 @@ export function parseAgentSocketFrame(plaintext: string): AgentSocketServerFrame
     case 'hello': {
       const connectionId = str(rec.connection_id);
       if (!connectionId || typeof rec.protocol !== 'number') return null;
-      return { t: 'hello', connectionId, protocol: rec.protocol };
+      // The gateway process's run, absent before gateways named one.
+      const generation = str(rec.generation);
+      return {
+        t: 'hello',
+        connectionId,
+        protocol: rec.protocol,
+        ...(generation ? { generation } : {}),
+      };
     }
     case 'subscribed': {
       if (rec.all === true) return { t: 'subscribed', all: true };
