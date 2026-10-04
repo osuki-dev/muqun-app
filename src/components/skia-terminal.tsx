@@ -1,6 +1,6 @@
 import { useAppActive } from '@/hooks/use-app-active';
 import {
-  Canvas,
+  Canvas as DefaultCanvas,
   Fill,
   FontSlant,
   FontWeight,
@@ -114,19 +114,14 @@ import {
   terminalTouchTapBytes,
   type TerminalTouchModes,
 } from '@/terminal/touch-input';
-import { readTerminalSurface } from '@/terminal/surface';
+import { readTerminalSurface, type TerminalSurface } from '@/terminal/surface';
 import { useTerminalTheme, useThemePack } from '@/hooks/use-theme-pack';
 import { useUserFontProblem } from '@/hooks/use-user-fonts';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { glyphMetrics, renderingIdentity } from '@/terminal/glyph-cache';
 import { useAppSettings } from '@/stores/app-settings';
 import { slotFontFamily, userFontUri } from '@/theme/user-fonts';
-import {
-  paintsCellBackground,
-  blendedTerminalFill,
-  terminalBackgroundFill,
-  terminalBackgroundOpacity,
-} from '@/terminal/background';
+import { paintsCellBackground, terminalCanvasPaint } from '@/terminal/background';
 import {
   TERMINAL_LONG_PRESS_MS,
   TERMINAL_LONG_PRESS_SLOP,
@@ -329,6 +324,53 @@ export type TerminalCellMetrics = {
   cellWidth: number;
   lineHeight: number;
 };
+
+/**
+ * The canvas the terminal draws on.
+ *
+ * By default the package's `Canvas`, which on a Graphite build (this app ships
+ * one: `react-native-skia/libs/.graphite`) *is* `GraphiteCanvas`: the JS thread
+ * records once per commit, the UI runtime only reads shared values, a native
+ * pool replays at most once per presented frame and the view presents on
+ * vsync -- so the draw and the swap are off the main thread. On a non-Graphite
+ * build it falls back to the picture view by itself, where an unconditional
+ * `GraphiteCanvas` would render nothing.
+ *
+ * `EXPO_PUBLIC_TERMINAL_GRAPHITE_CANVAS=0` is the kill switch back to the
+ * picture view (main-thread replay), for A/B on a real phone. Read once at
+ * module load, so a pane can never change canvas -- and therefore native view
+ * -- while it lives; the same reason `terminalCanvasPaint` keeps `opaque`
+ * stable, and it applies to both views (both are `SkiaBaseView`s).
+ *
+ * `colorSpace`, `android` and `androidWarmup` are ignored by the Graphite view;
+ * the terminal sets none of them.
+ */
+const TerminalCanvas: typeof DefaultCanvas =
+  process.env.EXPO_PUBLIC_TERMINAL_GRAPHITE_CANVAS === '0'
+    ? // The picture-view canvas `DefaultCanvas` stands in front of. Not exported
+      // from the package root, and required rather than imported because the
+      // package's `src/` does not type-check against its own published types
+      // (two copies of `NodeType`). Same file Metro already bundles for
+      // `DefaultCanvas`, so it is the same module instance, not a second Skia.
+      // oxlint-disable-next-line typescript/no-require-imports -- see above
+      (require('react-native-skia/src/renderer/Canvas') as { Canvas: typeof DefaultCanvas }).Canvas
+    : DefaultCanvas;
+
+/**
+ * Logs one line per committed frame -- how many blocks it drew, how many it had
+ * to record, the theme identity and the canvas kind -- so a release build can
+ * count re-records on a device (`adb logcat -s ReactNativeJS`). Off unless the
+ * bundle is built with `EXPO_PUBLIC_TERMINAL_TRACE=1`.
+ */
+const TERMINAL_TRACE = process.env.EXPO_PUBLIC_TERMINAL_TRACE === '1';
+
+/** The commit effect's one write to `surfaceBox`; see `recordCommittedHead`. */
+function recordCommittedSurface(
+  box: { current: TerminalSurface | undefined },
+  surface: TerminalSurface | undefined
+): void {
+  box.current = surface;
+}
 
 /**
  * The commit effect's one write to `headBox`.
@@ -745,23 +787,39 @@ export function SkiaTerminal({
   // for the fix. Measured on the repro capture (64x242, 104 runs) the scan is
   // 0.054 ms against the 2.24 ms parse standing beside it -- 2.4% -- so even
   // the panes that do run it are not paying for it in any way a frame notices.
-  const paneTheme = useMemo(() => {
-    if (!ownsScreen) return terminalTheme;
-    return terminalPaneTheme(
-      themePack,
-      terminalTheme,
-      readTerminalSurface(frame, screenRows),
-      true
-    );
-  }, [frame, ownsScreen, screenRows, terminalTheme, themePack]);
+  //
+  // The read is relative to the surface the pane is already wearing (the last
+  // *committed* read, so a render React throws away cannot move it): adoption
+  // has hysteresis, and without it an editor whose paint hovered near half the
+  // screen flipped the whole pane's colours snapshot to snapshot. See
+  // `readTerminalSurface`.
+  const [surfaceBox] = useState<{ current: TerminalSurface | undefined }>(() => ({
+    current: undefined,
+  }));
+  const surface = useMemo(
+    () => (ownsScreen ? readTerminalSurface(frame, screenRows, surfaceBox.current) : undefined),
+    [frame, ownsScreen, screenRows, surfaceBox]
+  );
+  useLayoutEffect(() => {
+    recordCommittedSurface(surfaceBox, surface);
+  }, [surface, surfaceBox]);
+  const paneTheme = useMemo(
+    () => (surface ? terminalPaneTheme(themePack, terminalTheme, surface, true) : terminalTheme),
+    [surface, terminalTheme, themePack]
+  );
   // Which canvas this pane gets, decided once from the two things that decide
   // it. Keeping it out of the render body keeps the two halves -- the flag and
   // the fill -- from ever disagreeing about which path is being taken.
-  const paneOpacity = terminalBackgroundOpacity(paneTheme.backgroundOpacity);
-  const canvasIsOpaque = paneOpacity === 1 || !wallpaperBehind;
-  const canvasFill = canvasIsOpaque
-    ? blendedTerminalFill(paneTheme.background, theme.colors.background, paneOpacity)
-    : terminalBackgroundFill(paneTheme);
+  // `opaque` follows the app theme and the wallpaper, never the pane theme:
+  // flipping it swaps the native view and shows a blank frame, and the pane
+  // theme flips whenever a program's surface is adopted. See
+  // `terminalCanvasPaint`.
+  const { opaque: canvasIsOpaque, fill: canvasFill } = terminalCanvasPaint(
+    terminalTheme,
+    paneTheme,
+    theme.colors.background,
+    wallpaperBehind
+  );
 
   const links = useMemo(() => terminalFrameLinks(frame), [frame]);
   const cellWidth = useMemo(
@@ -911,6 +969,7 @@ export function SkiaTerminal({
       draws,
       keys: plans.map((plan) => plan.key),
       head: nextHeadRecording(plans, frame.lines, previousHead),
+      recorded: plans.reduce((count, plan) => count + (plan.stale ? 1 : 0), 0),
     };
   }, [
     cellWidth,
@@ -942,6 +1001,12 @@ export function SkiaTerminal({
   // to the GC when the component goes. `picture-cache.ts` has the reasoning, and
   // it is the reason this pane stopped taking the process down with it.
   const sweepFrame = useRef<number | null>(null);
+  useLayoutEffect(() => {
+    if (!TERMINAL_TRACE) return;
+    console.log(
+      `[terminal] committed blocks=${chunkFrame.draws.length} recorded=${chunkFrame.recorded} theme=${chunkLayoutKey.split('|')[4]} opaque=${canvasIsOpaque}`
+    );
+  }, [canvasIsOpaque, chunkFrame, chunkLayoutKey]);
   useLayoutEffect(() => {
     chunkCache.retain(chunkFrame.keys);
     recordCommittedHead(headBox, chunkFrame.head);
@@ -3226,8 +3291,13 @@ export function SkiaTerminal({
             flat and opaque-pre-blended are the same pixels, so the canvas keeps
             the fast path and the fill carries the blend. With wallpaper behind
             it, each pixel meets a different colour and no single fill can stand
-            in, so the translucent path is taken and paid for. */}
-        <Canvas opaque={canvasIsOpaque} style={styles.canvas}>
+            in, so the translucent path is taken and paid for.
+
+            The kind is fixed for as long as the app theme is: it never follows
+            the pane theme, because changing `opaque` replaces the native view
+            (SurfaceView <-> TextureView) and the replacement's first frame is
+            blank. See `terminalCanvasPaint`. */}
+        <TerminalCanvas opaque={canvasIsOpaque} style={styles.canvas}>
           <Fill color={canvasFill} />
           <Group transform={contentTransform}>
             {chunkDraws.map((chunk) => (
@@ -3283,7 +3353,7 @@ export function SkiaTerminal({
               />
             ) : null}
           </Group>
-        </Canvas>
+        </TerminalCanvas>
       </GestureDetector>
       {canLoadEarlier || loadingEarlier ? (
         <Animated.View
@@ -3466,9 +3536,11 @@ type TerminalChunkFrame = {
   draws: TerminalChunkDraw[];
   keys: string[];
   head: TerminalHeadRecording | undefined;
+  /** Blocks this frame had to record rather than found cached; for the trace. */
+  recorded: number;
 };
 
-const noChunkFrame: TerminalChunkFrame = { draws: [], keys: [], head: undefined };
+const noChunkFrame: TerminalChunkFrame = { draws: [], keys: [], head: undefined, recorded: 0 };
 
 /**
  * Splits the frame's links across the planned blocks.
