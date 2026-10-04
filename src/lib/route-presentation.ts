@@ -463,3 +463,18 @@ export function sheetRouteOptions(
     ...(reduceMotion ? { animation: 'none', animationDuration: 0 } : {}),
   };
 }
+
+/**
+ * Whether a screen with `routesAbove` stacked over it can still be seen.
+ *
+ * Navigation blurs a screen the moment anything is pushed over it, but every
+ * route in `sheetRoutePresentations` that is shown as a sheet is a form sheet
+ * that leaves the screen underneath in view -- above its top edge, and through
+ * its whole slide down on the way out. Only a full-screen route (or a work
+ * surface a Pad shows full-screen) actually takes the screen away.
+ */
+export function seenThroughRoutes(routesAbove: readonly string[], isPad: boolean): boolean {
+  return routesAbove.every(
+    (route) => sheetRoutePresentations[route] === 'sheet' && !isFullscreenSheetRoute(route, isPad)
+  );
+}
