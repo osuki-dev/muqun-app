@@ -542,6 +542,24 @@ export function prettyJson(value: unknown, maxDepth = TOOL_INPUT_MAX_DEPTH): Cap
   return capped;
 }
 
+/**
+ * The request as JSON to show, or '' when there is none yet.
+ *
+ * A call's first event carries no input: the gateway sends JSON `null` (or the
+ * field is absent), and `JSON.stringify(null)` is the four letters "null" --
+ * which a card drew as a code block while a subagent had not yet been given its
+ * task. An empty object and an empty array say nothing either.
+ */
+export function toolInputJson(input: unknown): CappedText | null {
+  if (input === null || input === undefined) return null;
+  const pretty = prettyJson(input);
+  const text = pretty.text.trim();
+  if (!text || text === 'null' || text === 'undefined' || text === '{}' || text === '[]') {
+    return null;
+  }
+  return pretty;
+}
+
 function safeStringify(value: unknown, maxDepth: number): string {
   const seen = new WeakSet<object>();
   const walk = (input: unknown, depth: number): unknown => {
