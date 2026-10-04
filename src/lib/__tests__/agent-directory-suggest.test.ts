@@ -43,7 +43,33 @@ describe('both gateways answer', () => {
     });
   });
 
-  test('a newer gateway: directories, home and truncated', () => {
+  test('a newer gateway: the array as data, home and truncated beside it', () => {
+    const data = [{ name: 'Work', path: '/home/u/Work' }];
+    const listing = parseDirectoryListing(data, {
+      schema_version: 1,
+      data,
+      home: '/home/u',
+      truncated: false,
+    });
+    expect(listing).toEqual({
+      directories: data,
+      home: '/home/u',
+      truncated: false,
+      legacy: false,
+    });
+    expect(parseDirectoryListing(data, { data, truncated: true })).toEqual({
+      directories: data,
+      truncated: true,
+      legacy: false,
+    });
+  });
+
+  test('an older gateway inside an envelope is still the older gateway', () => {
+    const data = [{ name: 'Work', path: '/home/u/Work' }];
+    expect(parseDirectoryListing(data, { schema_version: 1, data }).legacy).toBe(true);
+  });
+
+  test('an object data with directories, home and truncated', () => {
     const listing = parseDirectoryListing({
       directories: [{ name: 'Work', path: '/home/u/Work' }, { name: 'bad' }],
       home: '/home/u',

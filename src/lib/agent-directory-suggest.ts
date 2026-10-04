@@ -1,11 +1,11 @@
 /**
  * The folder completer behind "Switch project", as pure readings.
  *
- * Two gateways answer `GET /api/agent-directories`. An older one answers a bare
- * array of every folder in the parent of what was typed, unfiltered, and knows
- * nothing of a home directory beyond expanding a leading `~`. A newer one
- * matches the last segment itself, caps the answer, and says where home is:
- * `{ directories, home, truncated }`. The sheet reads both through here.
+ * Two gateways answer `GET /api/agent-directories`, both with the folders as
+ * the envelope's `data` array. An older one lists every folder in the parent of
+ * what was typed, unfiltered, and says nothing else. A newer one matches the
+ * last segment itself, caps the answer, and puts `home` and `truncated` beside
+ * `data` in the envelope. The sheet reads both through here.
  */
 
 export interface DirectoryItem {
@@ -48,18 +48,28 @@ function directoryItems(value: unknown): DirectoryItem[] {
   });
 }
 
-/** Either gateway's answer, envelope already removed. */
-export function parseDirectoryListing(value: unknown): DirectoryListing {
-  if (Array.isArray(value)) {
-    return { directories: directoryItems(value), truncated: false, legacy: true };
-  }
-  if (!value || typeof value !== 'object') return EMPTY_DIRECTORY_LISTING;
-  const rec = value as { directories?: unknown; home?: unknown; truncated?: unknown };
+/**
+ * Either gateway's answer: `data` is the envelope's data, `envelope` the whole
+ * body, where a newer gateway puts `home` and `truncated`. An object `data`
+ * carrying the same three fields is read too.
+ */
+export function parseDirectoryListing(data: unknown, envelope?: unknown): DirectoryListing {
+  const fields = (value: unknown) =>
+    value && typeof value === 'object' && !Array.isArray(value)
+      ? (value as { directories?: unknown; home?: unknown; truncated?: unknown })
+      : {};
+  const inner = fields(data);
+  const outer = fields(envelope);
+  const home = typeof outer.home === 'string' ? outer.home : inner.home;
+  const truncated = typeof outer.truncated === 'boolean' ? outer.truncated : inner.truncated;
+  const said = typeof home === 'string' || typeof truncated === 'boolean';
+  if (!Array.isArray(data) && !Array.isArray(inner.directories)) return EMPTY_DIRECTORY_LISTING;
   return {
-    directories: directoryItems(rec.directories),
-    ...(typeof rec.home === 'string' && rec.home.startsWith('/') ? { home: rec.home } : {}),
-    truncated: rec.truncated === true,
-    legacy: false,
+    directories: directoryItems(Array.isArray(data) ? data : inner.directories),
+    ...(typeof home === 'string' && home.startsWith('/') ? { home } : {}),
+    truncated: truncated === true,
+    // An array and nothing beside it is the older gateway, which matched nothing.
+    legacy: Array.isArray(data) && !said,
   };
 }
 
