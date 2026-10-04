@@ -43,9 +43,13 @@ describe('re-skin shader contract', () => {
   for (const [name, builder] of [
     ['THEME_WASH_SKSL', 'themeWashUniforms'],
     ['FONT_HALFTONE_SKSL', 'fontHalftoneUniforms'],
+    ['THEME_RIPPLE_SKSL', 'themeRippleUniforms'],
+    ['FONT_SCAN_SKSL', 'fontScanUniforms'],
   ] as const) {
     test(`${name} declares exactly what ${builder} writes`, () => {
-      const uniforms = declared(SHADERS, name).filter((uniform) => uniform !== 'uCover');
+      const uniforms = declared(SHADERS, name).filter(
+        (uniform) => uniform !== 'uCover' && uniform !== 'uNext'
+      );
       const keys = written(SHADERS, builder);
       expect(uniforms.length).toBeGreaterThan(0);
       expect(keys.length).toBeGreaterThan(0);
@@ -61,19 +65,40 @@ describe('re-skin shader contract', () => {
     });
   }
 
-  test('both programs leave early before they touch the expensive half', () => {
+  test('every program leaves early before it touches the expensive half', () => {
     // The launch opening's rule: a pixel that is not near the front pays for a
-    // comparison and nothing else. Both early-outs must come before any noise,
-    // dot arithmetic or rim light in the text of `main`.
-    for (const name of ['THEME_WASH_SKSL', 'FONT_HALFTONE_SKSL'] as const) {
+    // comparison and nothing else. Every early-out must come before any noise,
+    // dot arithmetic, ring or rim light in the text of `main`.
+    for (const name of [
+      'THEME_WASH_SKSL',
+      'FONT_HALFTONE_SKSL',
+      'THEME_RIPPLE_SKSL',
+      'FONT_SCAN_SKSL',
+    ] as const) {
       const main = program(SHADERS, name).split('half4 main(')[1] ?? '';
-      const returns = main.indexOf('return half4(0.0);');
+      const returns = main.indexOf('half4(0.0)');
       expect(returns).toBeGreaterThan(0);
-      for (const expensive of ['fbm(', 'rimLight(', 'floor(q / uCell)']) {
+      for (const expensive of [
+        'fbm(',
+        'hash21(',
+        'rimLight(',
+        'exp(',
+        'sin(',
+        'floor(q / uCell)',
+        'floor(p / uCell)',
+      ]) {
         const at = main.indexOf(expensive);
         if (at >= 0) expect(at).toBeGreaterThan(returns);
       }
     }
+  });
+
+  test('the ripple has a second picture to bend and the scan travels in y alone', () => {
+    const ripple = program(SHADERS, 'THEME_RIPPLE_SKSL');
+    expect(ripple).toContain('uniform shader uNext;');
+    // The cover is declared first: the overlay binds its children in order.
+    expect(ripple.indexOf('uCover')).toBeLessThan(ripple.indexOf('uNext'));
+    expect(program(SHADERS, 'FONT_SCAN_SKSL')).toContain('abs(p.y - uOriginY)');
   });
 
   test('the wash travels along a line and the halftone does not', () => {
@@ -109,7 +134,12 @@ describe('re-skin shader contract', () => {
     // `RuntimeEffect.Make` per mount is a compile on a frame somebody is
     // watching, and it returns null rather than throwing, so a caller that
     // never checks would discover a typo one device at a time.
-    for (const effect of ['THEME_WASH_EFFECT', 'FONT_HALFTONE_EFFECT']) {
+    for (const effect of [
+      'THEME_WASH_EFFECT',
+      'FONT_HALFTONE_EFFECT',
+      'THEME_RIPPLE_EFFECT',
+      'FONT_SCAN_EFFECT',
+    ]) {
       expect(SHADERS).toContain(`export const ${effect} = Skia.RuntimeEffect.Make(`);
     }
   });
