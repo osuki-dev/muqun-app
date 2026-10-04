@@ -82,11 +82,49 @@ export function terminalPaneTheme(
   // on it, and taking the foreground from one side and the background from the
   // other is exactly how you get dark text on a dark screen.
   const base = themeVariant(pack, isDarkSurface(background) ? 'dark' : 'light').terminal;
-  return {
-    ...base,
+  return adoptedPaneTheme(
+    base,
     background,
-    backgroundOpacity: surface.background == null ? appTheme.backgroundOpacity : 1,
-  };
+    surface.background == null ? appTheme.backgroundOpacity : 1
+  );
+}
+
+/**
+ * One object per adopted (variant, background, opacity), handed back by
+ * identity for as long as those three stay put.
+ *
+ * Identity is the contract downstream: the block cache keys every recording on
+ * `renderingIdentity(paneTheme)`, so a fresh object per call -- which is what
+ * a bare spread is, and this runs once per applied snapshot -- made every block
+ * of an adopted pane stale ten times a second. A whole re-record per frame on
+ * exactly the panes (editors, TUIs) that repaint the most.
+ *
+ * Keyed by the variant's own terminal object, so a theme pack change starts a
+ * fresh map and the old one goes with the pack. Bounded because a program can
+ * paint as many backgrounds as it likes over a session; a pane only ever
+ * alternates between a handful, so clearing at the cap costs one re-record.
+ */
+const adoptedPaneThemes = new WeakMap<TerminalTheme, Map<string, TerminalTheme>>();
+const ADOPTED_PANE_THEME_LIMIT = 32;
+
+function adoptedPaneTheme(
+  base: TerminalTheme,
+  background: string,
+  backgroundOpacity: number | undefined
+): TerminalTheme {
+  let byColor = adoptedPaneThemes.get(base);
+  if (!byColor) {
+    byColor = new Map();
+    adoptedPaneThemes.set(base, byColor);
+  }
+  const key = `${background}|${backgroundOpacity ?? ''}`;
+  let theme = byColor.get(key);
+  if (!theme) {
+    if (byColor.size >= ADOPTED_PANE_THEME_LIMIT) byColor.clear();
+    theme = { ...base, background, backgroundOpacity };
+    byColor.set(key, theme);
+  }
+  return theme;
 }
 
 export function terminalIndexedColor(
