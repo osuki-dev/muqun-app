@@ -2360,6 +2360,10 @@ msgstr "Git 状态"
 msgid "Go back"
 msgstr "返回"
 
+#: src/components/agent-workspace-sheet.tsx
+msgid "Go into {folder}"
+msgstr "进入 {folder}"
+
 #: src/i18n/labels.ts
 msgid "Go to the top of the file"
 msgstr "跳到文件开头"
@@ -2646,6 +2650,10 @@ msgstr "保留已安装的主题"
 #: src/components/settings-alerts.tsx
 msgid "Keep the terminal you are watching on the Lock Screen while its agent works."
 msgstr "代理工作时，把你正在看的终端留在锁定屏幕上"
+
+#: src/components/agent-workspace-sheet.tsx
+msgid "Keep typing to narrow down"
+msgstr "继续输入以缩小范围"
 
 #: src/app/commands.tsx
 msgid "Keys"
@@ -5421,6 +5429,10 @@ msgstr "此网关未提供 {agentName} 会话"
 #: src/lib/network-error.ts
 msgid "This Gateway does not answer to that address."
 msgstr "这个 Gateway 不接受这个地址"
+
+#: src/components/agent-workbench.tsx
+msgid "This gateway does not expand ~. Type the full path, starting with /."
+msgstr "此网关不支持展开 ~。请输入以 / 开头的完整路径"
 
 #: src/components/agent-workbench.tsx
 msgid "This gateway does not know {agentName}. Refresh the agent list and try again."
