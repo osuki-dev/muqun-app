@@ -1329,10 +1329,12 @@ const styles = StyleSheet.create({
   userBlock: {
     borderLeftWidth: 2,
   },
-  // A thought row hugs its pill; the surfaces are the pill's and the body's own.
+  // A thought row spans the message: the pill hugs itself inside it, and the
+  // expanded plate takes the full width. A row that hugged its content was
+  // only as wide as the pill on iOS, where the markdown under `flex: 1`
+  // brings no width of its own, so the reasoning wrapped a word per line.
   thoughtRow: {
-    alignSelf: 'flex-start',
-    maxWidth: '100%',
+    alignSelf: 'stretch',
     marginVertical: TRANSCRIPT_ROW_GAP / 2,
   },
   standaloneRow: {
