@@ -1016,6 +1016,10 @@ msgstr "Clearing cache"
 msgid "Clearing…"
 msgstr "Clearing…"
 
+#: src/components/sheet-scene.tsx
+msgid "Close"
+msgstr "Close"
+
 #: src/components/dev-home-ambient-controls.tsx
 msgid "Close effects"
 msgstr "Close effects"

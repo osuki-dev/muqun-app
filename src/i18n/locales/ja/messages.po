@@ -1016,6 +1016,10 @@ msgstr "キャッシュを削除しています"
 msgid "Clearing…"
 msgstr "削除しています…"
 
+#: src/components/sheet-scene.tsx
+msgid "Close"
+msgstr "閉じる"
+
 #: src/components/dev-home-ambient-controls.tsx
 msgid "Close effects"
 msgstr "エフェクトを閉じる"
