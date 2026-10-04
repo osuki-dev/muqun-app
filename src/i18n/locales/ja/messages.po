@@ -2360,6 +2360,10 @@ msgstr "Git ステータス"
 msgid "Go back"
 msgstr "戻る"
 
+#: src/components/agent-workspace-sheet.tsx
+msgid "Go into {folder}"
+msgstr "{folder} に入る"
+
 #: src/i18n/labels.ts
 msgid "Go to the top of the file"
 msgstr "ファイルの先頭へ移動"
@@ -2646,6 +2650,10 @@ msgstr "テーマを残す"
 #: src/components/settings-alerts.tsx
 msgid "Keep the terminal you are watching on the Lock Screen while its agent works."
 msgstr "エージェントの作業中、見ているターミナルをロック画面に表示し続けます"
+
+#: src/components/agent-workspace-sheet.tsx
+msgid "Keep typing to narrow down"
+msgstr "続けて入力すると絞り込めます"
 
 #: src/app/commands.tsx
 msgid "Keys"
@@ -5421,6 +5429,10 @@ msgstr "このゲートウェイは {agentName} のセッションを提供し�
 #: src/lib/network-error.ts
 msgid "This Gateway does not answer to that address."
 msgstr "この Gateway はそのアドレスに応答しません"
+
+#: src/components/agent-workbench.tsx
+msgid "This gateway does not expand ~. Type the full path, starting with /."
+msgstr "このゲートウェイは ~ を展開できません。/ から始まるフルパスを入力してください"
 
 #: src/components/agent-workbench.tsx
 msgid "This gateway does not know {agentName}. Refresh the agent list and try again."

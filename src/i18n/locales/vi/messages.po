@@ -2360,6 +2360,10 @@ msgstr "Trạng thái Git"
 msgid "Go back"
 msgstr "Quay lại"
 
+#: src/components/agent-workspace-sheet.tsx
+msgid "Go into {folder}"
+msgstr "Vào {folder}"
+
 #: src/i18n/labels.ts
 msgid "Go to the top of the file"
 msgstr "Về đầu tệp"
@@ -2646,6 +2650,10 @@ msgstr "Giữ lại giao diện đã lưu"
 #: src/components/settings-alerts.tsx
 msgid "Keep the terminal you are watching on the Lock Screen while its agent works."
 msgstr "Giữ terminal bạn đang xem trên Màn hình khóa trong khi tác tử của nó làm việc"
+
+#: src/components/agent-workspace-sheet.tsx
+msgid "Keep typing to narrow down"
+msgstr "Tiếp tục gõ để thu hẹp"
 
 #: src/app/commands.tsx
 msgid "Keys"
@@ -5421,6 +5429,10 @@ msgstr "Gateway này không cung cấp phiên {agentName}"
 #: src/lib/network-error.ts
 msgid "This Gateway does not answer to that address."
 msgstr "Gateway này không trả lời ở địa chỉ đó"
+
+#: src/components/agent-workbench.tsx
+msgid "This gateway does not expand ~. Type the full path, starting with /."
+msgstr "Gateway này không mở rộng ~. Hãy nhập đường dẫn đầy đủ, bắt đầu bằng /"
 
 #: src/components/agent-workbench.tsx
 msgid "This gateway does not know {agentName}. Refresh the agent list and try again."
