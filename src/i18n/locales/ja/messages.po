@@ -218,6 +218,10 @@ msgstr "{agentName} が見つかりませんでした。タップしてインス
 msgid "{agentName}'s installation could not be confirmed. If it is installed, start it on the host."
 msgstr "{agentName} のインストールを確認できませんでした。インストール済みの場合は、ホストで起動してください"
 
+#: src/components/changes-sheet.tsx
+msgid "{ahead} ahead"
+msgstr "{ahead} 件先行"
+
 #: src/components/away-digest-card.tsx
 msgid "{asked, plural, one {· asked once} other {· asked # times}}"
 msgstr "{asked, plural, other {· # 回確認あり}}"
@@ -225,6 +229,10 @@ msgstr "{asked, plural, other {· # 回確認あり}}"
 #: src/components/agent-composer.tsx
 msgid "{backgroundCount} running in the background"
 msgstr "バックグラウンドで {backgroundCount} 件が実行中"
+
+#: src/components/changes-sheet.tsx
+msgid "{behind} behind"
+msgstr "{behind} 件遅れ"
 
 #: src/components/agent-assignment-bar.tsx
 msgid "{commandName} · sending to"
@@ -784,6 +792,14 @@ msgstr "応答待ち"
 #: src/components/agent-workbench.tsx
 msgid "Blocked by agent safety"
 msgstr "エージェントの安全機能がブロックしました"
+
+#: src/components/changes-sheet.tsx
+msgid "Branch {branch}"
+msgstr "ブランチ {branch}"
+
+#: src/components/changes-sheet.tsx
+msgid "Branch {branch}, no commits yet"
+msgstr "ブランチ {branch}、コミットはまだありません"
 
 #: src/components/theme-link-import.tsx
 msgid "Branch and theme file came from the link. A branch can change later"
@@ -1885,6 +1901,14 @@ msgstr "密度"
 #: src/i18n/labels.ts
 msgid "Deny"
 msgstr "拒否"
+
+#: src/components/changes-sheet.tsx
+msgid "detached at {head}"
+msgstr "{head} で切り離し"
+
+#: src/components/changes-sheet.tsx
+msgid "Detached at {head}"
+msgstr "{head} で切り離し"
 
 #: src/lib/demo-gateway.ts
 msgid "Development"
@@ -3123,6 +3147,14 @@ msgstr "変更なし"
 #: src/components/changes-sheet.tsx
 msgid "No changes compared with {base}."
 msgstr "{base} と比べて変更はありません"
+
+#: src/components/changes-sheet.tsx
+msgid "no commits yet"
+msgstr "コミットはまだありません"
+
+#: src/components/changes-sheet.tsx
+msgid "No commits yet"
+msgstr "コミットはまだありません"
 
 #: src/components/session-artifacts.tsx
 msgid "No files match."
@@ -5622,6 +5654,10 @@ msgstr "大きすぎてハイライトできません。プレーンテキスト
 #: src/components/changes-sheet.tsx
 msgid "Too many changes to list. This is the start of them, not all of them."
 msgstr "変更が多すぎて一覧にできません。これは先頭部分で、すべてではありません"
+
+#: src/components/changes-sheet.tsx
+msgid "tracking {upstream}"
+msgstr "{upstream} を追跡"
 
 #: src/components/bounded-markdown.tsx
 #: src/components/embedded-terminal-tool-block.tsx

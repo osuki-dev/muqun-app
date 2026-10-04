@@ -218,6 +218,10 @@ msgstr "找不到 {agentName}。點一下查看安裝說明"
 msgid "{agentName}'s installation could not be confirmed. If it is installed, start it on the host."
 msgstr "無法確認 {agentName} 的安裝狀況。如果已安裝，請在主機上啟動它"
 
+#: src/components/changes-sheet.tsx
+msgid "{ahead} ahead"
+msgstr "領先 {ahead}"
+
 #: src/components/away-digest-card.tsx
 msgid "{asked, plural, one {· asked once} other {· asked # times}}"
 msgstr "{asked, plural, other {· 詢問 # 次}}"
@@ -225,6 +229,10 @@ msgstr "{asked, plural, other {· 詢問 # 次}}"
 #: src/components/agent-composer.tsx
 msgid "{backgroundCount} running in the background"
 msgstr "{backgroundCount} 個正在背景執行"
+
+#: src/components/changes-sheet.tsx
+msgid "{behind} behind"
+msgstr "落後 {behind}"
 
 #: src/components/agent-assignment-bar.tsx
 msgid "{commandName} · sending to"
@@ -784,6 +792,14 @@ msgstr "等待回應"
 #: src/components/agent-workbench.tsx
 msgid "Blocked by agent safety"
 msgstr "已被代理安全機制攔截"
+
+#: src/components/changes-sheet.tsx
+msgid "Branch {branch}"
+msgstr "分支 {branch}"
+
+#: src/components/changes-sheet.tsx
+msgid "Branch {branch}, no commits yet"
+msgstr "分支 {branch}，尚無提交"
 
 #: src/components/theme-link-import.tsx
 msgid "Branch and theme file came from the link. A branch can change later"
@@ -1885,6 +1901,14 @@ msgstr "疏密"
 #: src/i18n/labels.ts
 msgid "Deny"
 msgstr "拒絕"
+
+#: src/components/changes-sheet.tsx
+msgid "detached at {head}"
+msgstr "分離於 {head}"
+
+#: src/components/changes-sheet.tsx
+msgid "Detached at {head}"
+msgstr "分離於 {head}"
 
 #: src/lib/demo-gateway.ts
 msgid "Development"
@@ -3123,6 +3147,14 @@ msgstr "沒有變更"
 #: src/components/changes-sheet.tsx
 msgid "No changes compared with {base}."
 msgstr "與 {base} 相比沒有變更"
+
+#: src/components/changes-sheet.tsx
+msgid "no commits yet"
+msgstr "尚無提交"
+
+#: src/components/changes-sheet.tsx
+msgid "No commits yet"
+msgstr "尚無提交"
 
 #: src/components/session-artifacts.tsx
 msgid "No files match."
@@ -5622,6 +5654,10 @@ msgstr "檔案太大，無法上色，顯示為純文字"
 #: src/components/changes-sheet.tsx
 msgid "Too many changes to list. This is the start of them, not all of them."
 msgstr "變更太多，無法全部列出。這只是開頭，不是全部"
+
+#: src/components/changes-sheet.tsx
+msgid "tracking {upstream}"
+msgstr "追蹤 {upstream}"
 
 #: src/components/bounded-markdown.tsx
 #: src/components/embedded-terminal-tool-block.tsx

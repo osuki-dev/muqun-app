@@ -4,6 +4,7 @@ import type {
   AgentVcsFilePatch,
   AgentVcsFiles,
   VcsFilesMode,
+  VcsRepoState,
   WorkspaceMissing,
 } from './agent-protocol';
 import {
@@ -11,6 +12,7 @@ import {
   FILE_PATCH_MAX_LINES,
   type GitFileChange,
   type GitFilePatchPage,
+  type GitRepoSummary,
   type GitStatus,
 } from './git-diff';
 
@@ -47,6 +49,8 @@ export interface ChangeListing {
   missing?: WorkspaceMissing;
   /** The ref "compared with" names, when the gateway offers one. */
   base?: string;
+  /** Which branch the repository is on, when the gateway says. */
+  repo?: VcsRepoState;
 }
 
 /** One file's patch at the context asked for (`lazy` listings). */
@@ -80,6 +84,7 @@ export function listingFromVcsFiles(answer: AgentVcsFiles): ChangeListing {
     reason: answer.reason,
     missing: answer.missing,
     base: answer.base,
+    ...(answer.repo ? { repo: answer.repo } : {}),
   };
 }
 
@@ -92,6 +97,20 @@ export function listingFromAgentDiff(answer: AgentVcsDiff): ChangeListing {
     truncated: false,
     reason: answer.reason,
     missing: answer.missing,
+    ...(answer.repo ? { repo: answer.repo } : {}),
+  };
+}
+
+/** `…/git/status`'s repository summary, in the shape `…/vcs/files` says it. */
+export function repoStateFromSummary(summary: GitRepoSummary | null): VcsRepoState | undefined {
+  if (!summary || (!summary.branch && !summary.head)) return undefined;
+  return {
+    branch: summary.branch,
+    head: summary.head,
+    detached: summary.detached,
+    upstream: summary.upstream,
+    ahead: summary.ahead,
+    behind: summary.behind,
   };
 }
 
@@ -107,7 +126,65 @@ export function listingFromGitStatus(status: GitStatus): ChangeListing {
     patches: NO_PATCHES,
     truncated: status.truncated,
     ...(status.repo === null ? { reason: 'not_a_repository' as const } : {}),
+    ...withRepo(repoStateFromSummary(status.repo)),
   };
+}
+
+function withRepo(repo: VcsRepoState | undefined): { repo?: VcsRepoState } {
+  return repo ? { repo } : {};
+}
+
+/**
+ * The branch line for a pane whose gateway lists files without saying where
+ * the repository stands: `…/git/status` carries it at the top level. Asked
+ * only when the listing lacks it and names a repository; a failure is no
+ * branch line, never a failed listing.
+ */
+async function withPaneRepo(
+  listing: ChangeListing,
+  status: () => Promise<GitStatus>
+): Promise<ChangeListing> {
+  if (listing.repo || listing.reason) return listing;
+  try {
+    return { ...listing, ...withRepo(repoStateFromSummary((await status()).repo)) };
+  } catch {
+    return listing;
+  }
+}
+
+/** What the branch line under the Changes sheet's title says. */
+export type RepoLine =
+  | {
+      kind: 'branch';
+      branch: string;
+      /** `↑2 ↓1`, zeros left out; `null` when both are zero or unknown. */
+      sync: string | null;
+      /** The upstream, only when it is not `origin/<branch>`. */
+      upstream: string | null;
+      ahead: number;
+      behind: number;
+    }
+  | { kind: 'detached'; head: string }
+  | { kind: 'unborn'; branch: string | null };
+
+/** How many characters of a commit id the line shows. */
+export const SHORT_HEAD_LENGTH = 7;
+
+export function repoLine(repo: VcsRepoState | undefined): RepoLine | null {
+  if (!repo) return null;
+  if (repo.detached) {
+    return repo.head ? { kind: 'detached', head: repo.head.slice(0, SHORT_HEAD_LENGTH) } : null;
+  }
+  if (!repo.head) return { kind: 'unborn', branch: repo.branch };
+  if (!repo.branch) return null;
+  const ahead = repo.ahead ?? 0;
+  const behind = repo.behind ?? 0;
+  const sync = [ahead > 0 ? `↑${ahead}` : '', behind > 0 ? `↓${behind}` : '']
+    .filter(Boolean)
+    .join(' ');
+  const upstream =
+    repo.upstream && repo.upstream !== `origin/${repo.branch}` ? repo.upstream : null;
+  return { kind: 'branch', branch: repo.branch, sync: sync || null, upstream, ahead, behind };
 }
 
 function filePatchOf(answer: AgentVcsFilePatch): ChangesFilePatch {
@@ -178,7 +255,11 @@ export function paneChangesApi(
     async listing(mode, signal) {
       if (vcsFiles) {
         const answer = await client.files(sessionId, paneId, mode);
-        if (answer) return listingFromVcsFiles(answer);
+        if (answer) {
+          return withPaneRepo(listingFromVcsFiles(answer), () =>
+            client.status(sessionId, paneId, signal)
+          );
+        }
       }
       // `…/git/status` has no comparison with a base; the sheet only asks for
       // one when a listing named a base, so this is a gateway that stopped

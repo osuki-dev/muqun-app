@@ -218,6 +218,10 @@ msgstr "{agentName}을(를) 찾을 수 없습니다. 탭하여 설치 방법 보
 msgid "{agentName}'s installation could not be confirmed. If it is installed, start it on the host."
 msgstr "{agentName} 설치를 확인할 수 없습니다. 설치되어 있다면 호스트에서 시작하세요"
 
+#: src/components/changes-sheet.tsx
+msgid "{ahead} ahead"
+msgstr "{ahead}개 앞섬"
+
 #: src/components/away-digest-card.tsx
 msgid "{asked, plural, one {· asked once} other {· asked # times}}"
 msgstr "{asked, plural, other {· #번 확인 요청}}"
@@ -225,6 +229,10 @@ msgstr "{asked, plural, other {· #번 확인 요청}}"
 #: src/components/agent-composer.tsx
 msgid "{backgroundCount} running in the background"
 msgstr "백그라운드에서 {backgroundCount}개 실행 중"
+
+#: src/components/changes-sheet.tsx
+msgid "{behind} behind"
+msgstr "{behind}개 뒤처짐"
 
 #: src/components/agent-assignment-bar.tsx
 msgid "{commandName} · sending to"
@@ -784,6 +792,14 @@ msgstr "응답 대기"
 #: src/components/agent-workbench.tsx
 msgid "Blocked by agent safety"
 msgstr "에이전트 안전 기능이 차단함"
+
+#: src/components/changes-sheet.tsx
+msgid "Branch {branch}"
+msgstr "브랜치 {branch}"
+
+#: src/components/changes-sheet.tsx
+msgid "Branch {branch}, no commits yet"
+msgstr "브랜치 {branch}, 아직 커밋 없음"
 
 #: src/components/theme-link-import.tsx
 msgid "Branch and theme file came from the link. A branch can change later"
@@ -1885,6 +1901,14 @@ msgstr "밀도"
 #: src/i18n/labels.ts
 msgid "Deny"
 msgstr "거부"
+
+#: src/components/changes-sheet.tsx
+msgid "detached at {head}"
+msgstr "{head}에서 분리됨"
+
+#: src/components/changes-sheet.tsx
+msgid "Detached at {head}"
+msgstr "{head}에서 분리됨"
 
 #: src/lib/demo-gateway.ts
 msgid "Development"
@@ -3123,6 +3147,14 @@ msgstr "변경 사항 없음"
 #: src/components/changes-sheet.tsx
 msgid "No changes compared with {base}."
 msgstr "{base}와(과) 비교해 변경 사항이 없습니다"
+
+#: src/components/changes-sheet.tsx
+msgid "no commits yet"
+msgstr "아직 커밋 없음"
+
+#: src/components/changes-sheet.tsx
+msgid "No commits yet"
+msgstr "아직 커밋 없음"
 
 #: src/components/session-artifacts.tsx
 msgid "No files match."
@@ -5622,6 +5654,10 @@ msgstr "너무 커서 구문 강조 없이 일반 텍스트로 표시합니다"
 #: src/components/changes-sheet.tsx
 msgid "Too many changes to list. This is the start of them, not all of them."
 msgstr "변경 사항이 너무 많아 모두 나열할 수 없습니다. 전체가 아니라 앞부분입니다"
+
+#: src/components/changes-sheet.tsx
+msgid "tracking {upstream}"
+msgstr "{upstream} 추적"
 
 #: src/components/bounded-markdown.tsx
 #: src/components/embedded-terminal-tool-block.tsx

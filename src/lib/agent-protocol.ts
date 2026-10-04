@@ -2314,8 +2314,53 @@ export function parseFileDiffItems(value: unknown): FileDiffItem[] {
  * `200 {"files":[],"vcs":null,"reason":"not_a_repository"}` and a missing one
  * is the `404` above. So `reason` is carried, never inferred from emptiness.
  */
+/**
+ * Where the repository stands: its branch, the commit it is on, and how far it
+ * is from its upstream. Carried by `…/vcs/files` (agent and pane routes alike)
+ * on a gateway that has it, and absent outside a repository.
+ *
+ * `head` is `null` on an unborn branch -- a repository with no commits yet --
+ * and `branch` is `null` when `HEAD` is detached. `ahead` and `behind` are
+ * `null` when there is no upstream to count against.
+ */
+export interface VcsRepoState {
+  branch: string | null;
+  head: string | null;
+  detached: boolean;
+  upstream: string | null;
+  ahead: number | null;
+  behind: number | null;
+}
+
+/** A count, or `null` when the gateway gave none. */
+function repoCountOf(value: unknown): number | null {
+  const count = asFiniteNumber(value);
+  return count === undefined ? null : Math.max(0, Math.round(count));
+}
+
+/** The optional `repo` object of a `…/vcs/files` (or `…/vcs/diff`) answer. */
+export function parseVcsRepoState(value: unknown): VcsRepoState | undefined {
+  const rec = asRecord(value);
+  if (!rec) return undefined;
+  const branch = asString(rec.branch) || null;
+  const head = asString(rec.head) || null;
+  const detached = asBool(rec.detached) ?? false;
+  // Neither a branch nor a commit is nothing to say about where the checkout is.
+  if (!branch && !head) return undefined;
+  return {
+    branch,
+    head,
+    detached,
+    upstream: asString(rec.upstream) || null,
+    ahead: repoCountOf(rec.ahead),
+    behind: repoCountOf(rec.behind),
+  };
+}
+
 export interface AgentVcsDiff {
   files: FileDiffItem[];
+  /** Where the repository stands, when the gateway says. */
+  repo?: VcsRepoState;
   /**
    * `'git'` when the directory is inside a working tree, `null` when it is not.
    *
@@ -2354,10 +2399,11 @@ export function parseAgentVcsDiff(value: unknown): AgentVcsDiff {
   );
   const rec = Array.isArray(value) ? null : asRecord(value);
   const vcs: 'git' | null = !rec || !('vcs' in rec) || asString(rec.vcs) === 'git' ? 'git' : null;
-  if (files.length > 0) return { files, vcs };
+  const repo = rec ? parseVcsRepoState(rec.repo) : undefined;
+  if (files.length > 0) return { files, vcs, ...(repo ? { repo } : {}) };
   return rec && asString(rec.reason) === 'not_a_repository'
     ? { files, vcs, reason: 'not_a_repository' }
-    : { files, vcs };
+    : { files, vcs, ...(repo ? { repo } : {}) };
 }
 
 /** Which comparison `…/vcs/diff` is asked for; OpenCode requires one. */
@@ -2435,6 +2481,8 @@ export interface AgentVcsFiles {
    */
   reason?: 'not_a_repository' | 'no_default_branch' | 'workspace_missing' | 'unknown_pane';
   missing?: WorkspaceMissing;
+  /** Where the repository stands; absent outside one, and from an older gateway. */
+  repo?: VcsRepoState;
 }
 
 /** A count, `null` when the gateway said `null`, and zero when it said nothing. */
@@ -2477,10 +2525,12 @@ export function parseAgentVcsFiles(value: unknown): AgentVcsFiles | null {
   const base = asString(rec.base);
   const vcs: 'git' | null = !('vcs' in rec) || asString(rec.vcs) === 'git' ? 'git' : null;
   const reason = asString(rec.reason);
+  const repo = parseVcsRepoState(rec.repo);
   return {
     files,
     mode: asString(rec.mode) === 'branch' ? 'branch' : 'working',
     ...(base ? { base } : {}),
+    ...(repo ? { repo } : {}),
     truncated: asBool(rec.truncated) ?? false,
     vcs,
     ...(files.length === 0 && (reason === 'not_a_repository' || reason === 'no_default_branch')
