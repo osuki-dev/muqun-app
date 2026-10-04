@@ -44,9 +44,14 @@ type ThemeLibraryState = {
    * `library.themes`, which never holds the built-in theme.
    */
   activeAssets: Record<string, string> | undefined;
+  /** The bundled default theme, compiled, or null when it failed to load. */
+  defaultTheme: ResolvedCustomTheme | null;
+  defaultAssets: Record<string, string> | undefined;
   hydrate: () => void;
   save: (text: string, assets?: Record<string, string>) => InstalledTheme;
   apply: (selection: ThemeSelection) => void;
+  /** Clear the reader's pick, so the bundled default shows while no theme is installed. */
+  resetToDefault: () => void;
   undo: () => void;
   remove: (id: string) => void;
   exportColors: (id: string) => string;
@@ -66,6 +71,8 @@ export const useThemeLibrary = create<ThemeLibraryState>((set) => {
       library,
       active: repo.active(),
       activeAssets: repo.activeInstalled()?.assets,
+      defaultTheme: repo.builtinTheme(),
+      defaultAssets: repo.builtinAssets(),
       hydrated: true,
     });
   };
@@ -74,6 +81,8 @@ export const useThemeLibrary = create<ThemeLibraryState>((set) => {
     library: { version: 1, themes: [], selection: null, previous: null },
     active: null,
     activeAssets: undefined,
+    defaultTheme: null,
+    defaultAssets: undefined,
     hydrate() {
       try {
         publish(getRepository());
@@ -91,6 +100,11 @@ export const useThemeLibrary = create<ThemeLibraryState>((set) => {
     apply(selection) {
       const repo = getRepository();
       repo.apply(selection);
+      publish(repo);
+    },
+    resetToDefault() {
+      const repo = getRepository();
+      repo.resetToDefault();
       publish(repo);
     },
     undo() {

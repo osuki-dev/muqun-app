@@ -375,6 +375,22 @@ export class ThemeRepository {
     return this.snapshot();
   }
 
+  /** Back to the implicit default: the built-in theme while nothing else is installed. */
+  resetToDefault(): ThemeLibrary {
+    if (this.state.selection === null) return this.snapshot();
+    this.commit({ ...this.state, previous: this.state.selection, selection: null });
+    return this.snapshot();
+  }
+
+  /** The built-in theme compiled, whether or not it is the one being worn. */
+  builtinTheme(): ResolvedCustomTheme | null {
+    return this.builtin ? this.compile(this.builtin) : null;
+  }
+
+  builtinAssets(): Record<string, string> | undefined {
+    return this.builtin?.assets;
+  }
+
   undo(): ThemeLibrary {
     this.commit({
       ...this.state,
@@ -400,16 +416,15 @@ export class ThemeRepository {
   /**
    * The installation the app is wearing.
    *
-   * The owner's rule, and the whole of it: the built-in theme shows when, and
-   * only when, the reader has no theme of their own. So with an empty library
-   * it wins whatever the selection says -- a built-in colour pack picked
-   * earlier included -- and the moment one theme is installed the selection
-   * decides as it always did. Removing the last one brings it back. It is not
-   * in `themes`, so it is never counted, listed under the reader's own, or
-   * removable.
+   * The owner's rule: the built-in theme shows exactly while the reader has
+   * chosen nothing of their own -- no installed theme, and no colour pack
+   * picked (the selection is still the implicit default). A picked pack or an
+   * installed theme wins; removing every theme with nothing picked, or
+   * `resetToDefault`, brings the built-in one back. It is not in `themes`, so it
+   * is never counted, listed under the reader's own, or removable.
    */
   activeInstalled(): InstalledTheme | null {
-    if (this.state.themes.length === 0) return this.builtin;
+    if (this.state.themes.length === 0 && this.state.selection === null) return this.builtin;
     if (this.state.selection?.kind !== 'custom') return null;
     const id = this.state.selection.id;
     return this.state.themes.find((theme) => theme.id === id) ?? null;
@@ -417,7 +432,10 @@ export class ThemeRepository {
 
   active(): ResolvedCustomTheme | null {
     const installed = this.activeInstalled();
-    if (!installed) return null;
+    return installed ? this.compile(installed) : null;
+  }
+
+  private compile(installed: InstalledTheme): ResolvedCustomTheme {
     let result = this.compiled.get(installed.id);
     if (!result) {
       result = compileTheme(effectiveThemeManifest(installed), installed.id);

@@ -55,26 +55,44 @@ test('with no theme of their own the reader wears the built-in one', () => {
   });
 });
 
-test('an earlier colour-pack selection does not outrank the built-in theme', () => {
+test("a picked colour pack is the reader's own choice and outranks the built-in theme", () => {
   const repository = setup();
   repository.apply({ kind: 'builtin', id: 'dracula' });
+  expect(repository.active()).toBeNull();
+  expect(repository.snapshot().selection).toEqual({ kind: 'builtin', id: 'dracula' });
+  // Resetting the pick returns to the implicit default.
+  repository.resetToDefault();
+  expect(repository.snapshot().selection).toBeNull();
+  expect(repository.active()?.installationId).toBe(BUILTIN_THEME_INSTALLATION_ID);
+  // Undo of a pick made from the default goes back to it too.
+  repository.apply({ kind: 'builtin', id: 'dracula' });
+  repository.undo();
   expect(repository.active()?.installationId).toBe(BUILTIN_THEME_INSTALLATION_ID);
 });
 
 test('one theme of their own takes over, and removing the last brings the built-in back', () => {
   const repository = setup();
   const installed = repository.save(mine('first'));
+  // Installed but not applied, with nothing picked: the selection decides,
+  // which is the app's own palette, not the built-in theme.
+  expect(repository.active()).toBeNull();
   repository.apply({ kind: 'custom', id: installed.id });
   expect(repository.active()?.installationId).toBe(installed.id);
   expect(repository.activeInstalled()?.id).toBe(installed.id);
 
-  // With a theme of their own installed, the selection decides as it always did.
-  repository.apply({ kind: 'builtin', id: 'dracula' });
-  expect(repository.active()).toBeNull();
-
   repository.remove(installed.id);
   expect(repository.snapshot().themes).toEqual([]);
+  expect(repository.snapshot().selection).toBeNull();
   expect(repository.active()?.installationId).toBe(BUILTIN_THEME_INSTALLATION_ID);
+});
+
+test('removing the last theme keeps a colour pack the reader picked', () => {
+  const repository = setup();
+  const installed = repository.save(mine('first'));
+  repository.apply({ kind: 'builtin', id: 'dracula' });
+  repository.remove(installed.id);
+  expect(repository.active()).toBeNull();
+  expect(repository.snapshot().selection).toEqual({ kind: 'builtin', id: 'dracula' });
 });
 
 test('the built-in theme is not counted, listed, selectable or removable', () => {
@@ -84,6 +102,7 @@ test('the built-in theme is not counted, listed, selectable or removable', () =>
   expect(repository.active()?.installationId).toBe(BUILTIN_THEME_INSTALLATION_ID);
   const installed = repository.save(mine('second'));
   expect(repository.snapshot().themes.map((theme) => theme.id)).toEqual([installed.id]);
+  expect(repository.builtinTheme()?.label).toBe('Cover Courier');
 });
 
 test('a library hydrated from storage keeps the rule', () => {
