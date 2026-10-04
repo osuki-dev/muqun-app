@@ -364,13 +364,15 @@ function normalizeTableRows(value: unknown): string[][] {
 /**
  * The smallest run of parts that counts as a block the gateway wrote down twice.
  *
- * Three parts, at least three of them different and carrying text -- the parts
- * twin of `REPEAT_BLOCK_ROWS` and `SANITIZE_MIN_DISTINCT` in
- * `terminal/history.ts`. Below it a repeat is the agent's own output: Claude Code
- * prints `✻ Waiting for 2 background agents to finish` into its transcript every
- * time the count changes, and the same count twice in one session is history.
+ * Four parts, all four different and carrying text -- the parts twin of
+ * `REPEAT_BLOCK_ROWS` in `terminal/history.ts`. Below it a repeat is the agent's
+ * own output: Claude Code prints `✻ Waiting for 2 background agents to finish`
+ * into its transcript every time the count changes, and a turn that ends the
+ * way the previous one did -- a reply, that banner, a one-line summary -- is
+ * three parts that can recur verbatim with the user's message between them. A
+ * copy the gateway wrote is a screen, which is many times this.
  */
-const REPEAT_RUN_PARTS = 3;
+const REPEAT_RUN_PARTS = 4;
 
 /** What a part says, as one comparable string. */
 function partKey(part: PanePart): string {
@@ -379,6 +381,103 @@ function partKey(part: PanePart): string {
 
 function carriesText(part: PanePart): boolean {
   return part.fallback_text.trim() !== '';
+}
+
+/** The first line of a part's text, trimmed. */
+function firstLineOf(part: PanePart): string {
+  const text = part.fallback_text;
+  const newline = text.indexOf('\n');
+  return (newline === -1 ? text : text.slice(0, newline)).trim();
+}
+
+/**
+ * A line drawn entirely out of horizontal rule characters. Only the characters
+ * a terminal composer frames itself with; the chat view's own rule judgement
+ * (`pane-chat.ts`) is wider, and is about prose rather than about furniture.
+ */
+function isRuleLine(line: string): boolean {
+  const trimmed = line.trim();
+  return trimmed.length >= 3 && /^[─━═╌╍┄┅┈┉\-_]+$/.test(trimmed);
+}
+
+/** The last line of a part's text that carries anything, trimmed. */
+function lastLineOf(part: PanePart): string {
+  const lines = part.fallback_text.split('\n').filter((line) => line.trim() !== '');
+  return (lines[lines.length - 1] ?? '').trim();
+}
+
+/** A text part that is nothing but rule lines. */
+function isRulePart(part: PanePart): boolean {
+  if (part.type !== 'text') return false;
+  const lines = part.fallback_text.split('\n').filter((line) => line.trim() !== '');
+  return lines.length > 0 && lines.every(isRuleLine);
+}
+
+/**
+ * Whether the prompt at `index` is drawn as a composer box: a part ending in a
+ * rule above it (the rule, sometimes with a notice drawn over it) and a part
+ * opening with a rule below it. A prompt the user sent sits
+ * in the transcript without that frame, which is what tells a frozen composer
+ * from a turn.
+ */
+function isComposerBox(parts: readonly PanePart[], index: number): boolean {
+  const prompt = parts[index];
+  const above = parts[index - 1];
+  const below = parts[index + 1];
+  return Boolean(
+    prompt?.type === 'prompt' &&
+    above?.type === 'text' &&
+    isRuleLine(lastLineOf(above)) &&
+    below &&
+    isRuleLine(firstLineOf(below))
+  );
+}
+
+/**
+ * Indices of composer boxes a frozen screen left in the middle of history.
+ *
+ * The live tail ends in the agent's composer -- a rule, the prompt being typed,
+ * a rule and a mode line, sometimes an agent roster under that. A screen the
+ * gateway committed to history while it was frozen carries the same box, so the
+ * box turns up again mid-transcript with the status line that was spinning above
+ * it at that moment. Recognised by shape and by the prompt's own text, which is
+ * whatever was in the composer then and still is now; a prompt the user sent is
+ * never framed by rules, so a real turn cannot be taken for one.
+ */
+function frozenComposerParts(parts: readonly PanePart[]): Set<number> {
+  const dropped = new Set<number>();
+  let tail = -1;
+  for (let index = parts.length - 1; index >= 0; index -= 1) {
+    if (isComposerBox(parts, index)) {
+      tail = index;
+      break;
+    }
+  }
+  if (tail < 0) return dropped;
+
+  const live = parts[tail] as PanePart;
+  const liveRoster = parts[tail + 2] ? firstLineOf(parts[tail + 2] as PanePart) : '';
+  for (let index = 1; index < tail - 1; index += 1) {
+    const part = parts[index] as PanePart;
+    if (part.type !== 'prompt' || part.fallback_text !== live.fallback_text) continue;
+    if (!isComposerBox(parts, index)) continue;
+    dropped.add(index - 1);
+    dropped.add(index);
+    dropped.add(index + 1);
+    const roster = parts[index + 2];
+    if (roster && liveRoster && firstLineOf(roster) === liveRoster) dropped.add(index + 2);
+    // The status that was spinning above the box: past any blank or drawn
+    // parts between them, and only a status -- prose there is the transcript.
+    for (let above = index - 2; above >= 0; above -= 1) {
+      const candidate = parts[above] as PanePart;
+      if (candidate.type === 'status') {
+        dropped.add(above);
+        break;
+      }
+      if (carriesText(candidate) && !isRulePart(candidate)) break;
+    }
+  }
+  return dropped;
 }
 
 /**
@@ -391,14 +490,22 @@ function carriesText(part: PanePart): boolean {
  * is appended whole, and when the screen comes back down the newest screen is
  * appended after it again. The buffer is then `[history][an older screen][the
  * newest screen]`, and every block on both of those screens is on the list twice
- * for as long as the gateway is up.
+ * for as long as the gateway is up. A screen committed while it was frozen also
+ * leaves the composer box it was showing in the middle of history.
  *
- * Two repairs, both made only where the evidence is a block and never a line:
+ * Three repairs, all made only where the evidence is a block and never a line:
  *
+ * - a frozen composer box -- the live composer's own prompt, framed by its
+ *   rules, with the status spinning above it -- that is not the live tail is
+ *   dropped (see {@link frozenComposerParts});
  * - a run of {@link REPEAT_RUN_PARTS} or more parts that is, part for part, a
- *   run already kept above it is dropped. The first rendering stays where it
- *   was, so a streaming transcript keeps its rows and only ever grows at the
- *   tail;
+ *   run anywhere above it in what arrived is dropped. Matched against the
+ *   incoming list rather than against what was kept: copies stack (an older
+ *   screen, a frozen one, the newest), and once the middle of the first copy
+ *   has been folded against an even older one, what is left of it no longer
+ *   lines up with the next copy -- whose head then survived on its own. The
+ *   first rendering stays where it was, so a streaming transcript keeps its
+ *   rows and only ever grows at the tail;
  * - where such a run was dropped there is a seam, and the parts right after it
  *   that re-send the tail of what was kept are dropped too. That is the screen
  *   that followed the jump re-sending the rows the buffer already ends with --
@@ -408,7 +515,9 @@ function carriesText(part: PanePart): boolean {
  * Genuinely new blocks are distinct by construction: a different agent name, a
  * different elapsed time, a different count all change the part's text.
  */
-export function collapseRepeatedParts(parts: readonly PanePart[]): PanePart[] {
+export function collapseRepeatedParts(incoming: readonly PanePart[]): PanePart[] {
+  const frozen = frozenComposerParts(incoming);
+  const parts = frozen.size > 0 ? incoming.filter((_, index) => !frozen.has(index)) : incoming;
   const keys = parts.map(partKey);
   const kept: PanePart[] = [];
   const keptKeys: string[] = [];
@@ -441,16 +550,18 @@ export function collapseRepeatedParts(parts: readonly PanePart[]): PanePart[] {
       }
     }
 
-    const part = parts[index] as PanePart;
+    const key = keys[index] as string;
     let repeat = 0;
-    if (carriesText(part)) {
-      for (const start of positions.get(keys[index] as string) ?? []) {
+    if (carriesText(parts[index] as PanePart)) {
+      for (const start of positions.get(key) ?? []) {
         let run = 0;
         const distinct = new Set<string>();
+        // The earlier copy must end before this one begins: a run may not be
+        // matched against itself.
         while (
           index + run < parts.length &&
-          start + run < keptKeys.length &&
-          keptKeys[start + run] === keys[index + run]
+          start + run < index &&
+          keys[start + run] === keys[index + run]
         ) {
           if (carriesText(parts[index + run] as PanePart))
             distinct.add(keys[index + run] as string);
@@ -461,22 +572,27 @@ export function collapseRepeatedParts(parts: readonly PanePart[]): PanePart[] {
         }
       }
     }
+
+    // Every position is remembered, kept or not: the next copy is compared with
+    // what arrived, not with what survived.
+    for (let step = 0; step < Math.max(repeat, 1); step += 1) {
+      const at = index + step;
+      const seen = positions.get(keys[at] as string);
+      if (seen) seen.push(at);
+      else positions.set(keys[at] as string, [at]);
+    }
     if (repeat > 0) {
       index += repeat;
       atSeam = true;
       continue;
     }
 
-    const key = keys[index] as string;
-    const seen = positions.get(key);
-    if (seen) seen.push(kept.length);
-    else positions.set(key, [kept.length]);
-    kept.push(part);
+    kept.push(parts[index] as PanePart);
     keptKeys.push(key);
     index += 1;
   }
 
-  return kept.length === parts.length ? (parts as PanePart[]) : kept;
+  return kept.length === incoming.length ? (incoming as PanePart[]) : kept;
 }
 
 /** A transcript whose ids are stable across reads, and the shift that made them so. */
