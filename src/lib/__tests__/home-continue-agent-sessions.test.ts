@@ -6,6 +6,7 @@ import {
   gatewayAgentSessions,
   homeContinueCommand,
   homeContinueEntries,
+  goneSessionKey,
   homeContinueKind,
   HOME_CONTINUE_GATEWAY_SESSION_LIMIT,
   type GatewayAgentSession,
@@ -232,4 +233,36 @@ test('repairAgent writes the agent in place without reordering or creating a vis
   expect(entries[1].target).toEqual({ ...target, agentId: 't3' });
   expect(entries[1].atMs).toBe(20);
   expect(saved).toContain('"agentId":"t3"');
+});
+
+test('a session the gateway answered gone is neither a recent row nor a listed one', () => {
+  const recent: HomeRecentEntry = {
+    key: 'r',
+    title: 'Greeting',
+    atMs: 500,
+    target: {
+      kind: 'agent-session',
+      serverId: 'osk',
+      sessionId: 'dev',
+      directory: '/x',
+      asid: 'a',
+    },
+  };
+  const input = {
+    ...base,
+    recents: [recent],
+    gatewaySessions: snapshot([session('a', 900), session('b', 100)]),
+  };
+  const keys = (goneSessions?: ReadonlySet<string>) =>
+    homeContinueEntries({ ...input, ...(goneSessions ? { goneSessions } : {}) }).map((row) =>
+      row.destination.type === 'recent' || row.destination.type === 'agent-session'
+        ? row.destination.target.kind === 'agent-session'
+          ? row.destination.target.asid
+          : ''
+        : ''
+    );
+  expect(keys()).toEqual(['a', 'b']);
+  expect(keys(new Set([goneSessionKey('osk', 'a')]))).toEqual(['b']);
+  // Another gateway's session with the same id is a different session.
+  expect(keys(new Set([goneSessionKey('other', 'a')]))).toEqual(['a', 'b']);
 });

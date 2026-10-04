@@ -5510,6 +5510,10 @@ msgstr "本次工作階段"
 msgid "This session has no message to roll back to."
 msgstr "這個工作階段還沒有可以回復到的訊息"
 
+#: src/components/agent-workbench.tsx
+msgid "This session no longer exists"
+msgstr "此工作階段已不存在"
+
 #: src/components/virtual-keyboard.tsx
 msgid "This terminal can't send {chord}"
 msgstr "此終端機無法傳送 {chord}"
