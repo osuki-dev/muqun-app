@@ -2377,6 +2377,21 @@ export function gatewaySupportsVcsFiles(
   return Array.isArray(capabilities) && capabilities.includes(AGENT_VCS_FILES_CAPABILITY);
 }
 
+/**
+ * The same three routes for a terminal pane's directory:
+ * `…/panes/{pid}/vcs/files`, `…/vcs/file` and `POST …/vcs/discard`, with the
+ * agent routes' bodies and refusals (`404 unknown_pane` where those say
+ * `workspace_missing`). Without it, the pane has `…/git/status` and
+ * `…/git/diff`.
+ */
+export const PANE_VCS_FILES_CAPABILITY = 'pane_vcs_files';
+
+export function gatewaySupportsPaneVcsFiles(
+  capabilities: readonly string[] | undefined | null
+): boolean {
+  return Array.isArray(capabilities) && capabilities.includes(PANE_VCS_FILES_CAPABILITY);
+}
+
 /** The two comparisons `…/vcs/files` answers: uncommitted, or against the branch's base. */
 export type VcsFilesMode = 'working' | 'branch';
 

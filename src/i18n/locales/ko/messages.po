@@ -52,11 +52,6 @@ msgstr "{0, plural, other {#자 표시되지 않음}}"
 msgid "{0, plural, one {# day} other {# days}}"
 msgstr "{0, plural, other {#일}}"
 
-#. placeholder {0}: pending.files.length
-#: src/components/git-diff-view.tsx
-msgid "{0, plural, one {# file changed} other {# files changed}}"
-msgstr "{0, plural, other {파일 #개 변경됨}}"
-
 #. placeholder {0}: files.length
 #: src/components/agent-revert-plate.tsx
 msgid "{0, plural, one {# file} other {# files}}"
@@ -65,7 +60,7 @@ msgstr "{0, plural, other {파일 #개}}"
 #. placeholder {0}: listing.changes.length
 #. placeholder {1}: totals.additions
 #. placeholder {2}: totals.deletions
-#: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/changes-sheet.tsx
 msgid "{0, plural, one {# file} other {# files}} · +{1} −{2}"
 msgstr "{0, plural, other {파일 #개}} · +{1} −{2}"
 
@@ -477,7 +472,6 @@ msgstr "알림"
 msgid "Align the QR inside the frame"
 msgstr "QR 코드를 테두리 안에 맞춰 주세요"
 
-#: src/components/git-diff-view.tsx
 #: src/components/session-artifacts.tsx
 #: src/components/theme-browse-sheet.tsx
 msgid "All"
@@ -835,9 +829,9 @@ msgstr "카메라 접근 권한 필요"
 #: src/components/agent-composer.tsx
 #: src/components/agent-context-sheet.tsx
 #: src/components/agent-sessions-sheet.tsx
-#: src/components/agent-vcs-diff-sheet.tsx
 #: src/components/agent-workbench.tsx
 #: src/components/agent-worktree-sheet.tsx
+#: src/components/changes-sheet.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/row-action-menu.tsx
 #: src/components/session-map.tsx
@@ -879,8 +873,7 @@ msgctxt "git file status"
 msgid "Changed"
 msgstr "변경됨"
 
-#: src/components/agent-vcs-diff-sheet.tsx
-#: src/components/git-diff-view.tsx
+#: src/components/changes-sheet.tsx
 msgid "Changes"
 msgstr "변경 사항"
 
@@ -972,7 +965,7 @@ msgstr "홈과 앱 인터페이스 스타일을 선택하세요. 색상은 테�
 msgid "Choose project"
 msgstr "프로젝트 선택"
 
-#: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/changes-sheet.tsx
 msgid "Choose which changes to show"
 msgstr "표시할 변경 사항 선택"
 
@@ -1150,7 +1143,7 @@ msgstr "압축에 실패했습니다"
 msgid "Compaction failed — tap to dismiss"
 msgstr "압축에 실패했습니다 — 탭하여 닫기"
 
-#: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/changes-sheet.tsx
 msgid "Compared with {base}"
 msgstr "{base}와(과) 비교"
 
@@ -1503,7 +1496,7 @@ msgstr "삭제할 수 없습니다"
 msgid "Could not detach"
 msgstr "분리하지 못했습니다"
 
-#: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/changes-sheet.tsx
 msgid "Could not discard {name}"
 msgstr "{name}을(를) 버리지 못했습니다"
 
@@ -1549,7 +1542,7 @@ msgstr "모델을 불러올 수 없습니다"
 msgid "Could not load the session"
 msgstr "세션을 불러오지 못했습니다"
 
-#: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/changes-sheet.tsx
 msgid "Could not load this file's changes."
 msgstr "이 파일의 변경 사항을 불러오지 못했습니다"
 
@@ -1626,7 +1619,7 @@ msgstr "이 서버에 연결하지 못했습니다"
 msgid "Could not read saved servers. Your saved data has not been changed. Unlock this device and retry."
 msgstr "저장된 서버를 읽을 수 없습니다. 저장된 데이터는 변경되지 않았습니다. 기기 잠금을 해제하고 다시 시도하세요"
 
-#: src/components/git-diff-view.tsx
+#: src/components/changes-sheet.tsx
 msgid "Could not read the changes."
 msgstr "변경 사항을 읽을 수 없습니다"
 
@@ -1635,7 +1628,7 @@ msgstr "변경 사항을 읽을 수 없습니다"
 msgid "Could not read the terminal."
 msgstr "터미널을 읽지 못했습니다"
 
-#: src/components/git-diff-view.tsx
+#: src/components/changes-sheet.tsx
 msgid "Could not read this file."
 msgstr "이 파일을 읽을 수 없습니다"
 
@@ -1822,12 +1815,12 @@ msgid "Defaults to theme.json at the repository root"
 msgstr "기본값은 저장소 루트의 theme.json입니다"
 
 #: src/components/agent-sessions-sheet.tsx
-#: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/changes-sheet.tsx
 #: src/components/row-action-menu.tsx
 msgid "Delete"
 msgstr "삭제"
 
-#: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/changes-sheet.tsx
 msgid "Delete {discardName}?"
 msgstr "{discardName}을(를) 삭제할까요?"
 
@@ -1905,7 +1898,7 @@ msgstr "방향"
 msgid "Directory"
 msgstr "디렉터리"
 
-#: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/changes-sheet.tsx
 msgid "Discard"
 msgstr "버리기"
 
@@ -1913,7 +1906,7 @@ msgstr "버리기"
 msgid "Discard changes"
 msgstr "변경 사항 버리기"
 
-#: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/changes-sheet.tsx
 msgid "Discard changes to {discardName}?"
 msgstr "{discardName}의 변경 사항을 버릴까요?"
 
@@ -3089,18 +3082,14 @@ msgstr "스캔할 카메라가 없습니다"
 msgid "No camera was found on this device."
 msgstr "이 기기에서 카메라를 찾지 못했습니다"
 
-#: src/components/agent-vcs-diff-sheet.tsx
 #: src/components/change-tree-rows.tsx
+#: src/components/changes-sheet.tsx
 msgid "No changes"
 msgstr "변경 사항 없음"
 
-#: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/changes-sheet.tsx
 msgid "No changes compared with {base}."
 msgstr "{base}와(과) 비교해 변경 사항이 없습니다"
-
-#: src/components/git-diff-view.tsx
-msgid "No changes. The working tree matches HEAD."
-msgstr "변경 사항이 없습니다. 작업 트리가 HEAD와 같습니다"
 
 #: src/components/session-artifacts.tsx
 msgid "No files match."
@@ -3231,7 +3220,7 @@ msgstr "이 모델의 창 크기가 보고되지 않았습니다"
 msgid "No worktrees yet. Make one below to work on a branch without disturbing this checkout."
 msgstr "아직 워크트리가 없습니다. 아래에서 하나 만들면 이 체크아웃을 건드리지 않고 브랜치에서 작업할 수 있습니다"
 
-#: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/changes-sheet.tsx
 msgid "Not a git repository"
 msgstr "Git 저장소가 아닙니다"
 
@@ -3311,11 +3300,11 @@ msgstr "아직 표시할 내용이 없습니다"
 msgid "Nothing to undo"
 msgstr "실행 취소할 것이 없습니다"
 
-#: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/changes-sheet.tsx
 msgid "Nothing uncommitted in this project."
 msgstr "이 프로젝트에 커밋되지 않은 변경이 없습니다"
 
-#: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/changes-sheet.tsx
 msgid "Nothing was changed."
 msgstr "아무것도 변경되지 않았습니다"
 
@@ -3774,9 +3763,9 @@ msgstr "프로젝트 · {0}"
 #. placeholder {0}: gone.directory
 #. placeholder {0}: listing.missing?.directory ?? ''
 #. placeholder {0}: missing.directory
-#: src/components/agent-vcs-diff-sheet.tsx
 #: src/components/agent-workbench.tsx
 #: src/components/agent-worktree-sheet.tsx
+#: src/components/changes-sheet.tsx
 msgid "Project folder is missing: {0}"
 msgstr "프로젝트 폴더가 없습니다: {0}"
 
@@ -3934,7 +3923,7 @@ msgstr "다시 연결 중 · {0}"
 msgid "Refresh"
 msgstr "새로고침"
 
-#: src/components/git-diff-view.tsx
+#: src/components/changes-sheet.tsx
 msgid "Refresh changes"
 msgstr "변경 사항 새로 고침"
 
@@ -4425,7 +4414,6 @@ msgstr "보내는 대상"
 
 #: src/app/agent-guide.tsx
 #: src/app/artifacts.tsx
-#: src/app/git-diff.tsx
 #: src/app/panels.tsx
 #: src/components/app-drawer.tsx
 #: src/components/server-terminal-workspace.tsx
@@ -4626,10 +4614,6 @@ msgstr "터미널 텍스트 뒤에 앱 배경 표시"
 msgid "Show the editor keyboard"
 msgstr "편집기 키보드 표시"
 
-#: src/components/git-diff-view.tsx
-msgid "Show the newer list of changes"
-msgstr "최신 변경 목록 보기"
-
 #: src/components/agent-tool-card.tsx
 msgid "Show the rest of this output"
 msgstr "이 출력의 나머지 보기"
@@ -4770,7 +4754,6 @@ msgid "SSH tunnel through {host} is down"
 msgstr "{host}을(를) 통한 SSH 터널이 끊어졌습니다"
 
 #: src/components/diff-rows.tsx
-#: src/components/git-diff-view.tsx
 msgid "Staged"
 msgstr "스테이징됨"
 
@@ -5198,7 +5181,7 @@ msgstr "해당 대상을 열 수 없습니다"
 msgid "The font file is missing. Add it again."
 msgstr "글꼴 파일이 없습니다. 다시 추가하세요"
 
-#: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/changes-sheet.tsx
 msgid "The gateway could not be reached."
 msgstr "게이트웨이에 연결할 수 없습니다"
 
@@ -5354,7 +5337,7 @@ msgstr "생각 중…"
 msgid "This agent did not offer that answer."
 msgstr "이 에이전트는 그 답변을 제시하지 않았습니다"
 
-#: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/changes-sheet.tsx
 msgid "This cannot be undone."
 msgstr "이 작업은 되돌릴 수 없습니다"
 
@@ -5442,10 +5425,6 @@ msgstr "이 링크는 아무 데도 연결되지 않습니다"
 #: src/components/agent-form-card.tsx
 msgid "This one is required."
 msgstr "이 항목은 필수입니다"
-
-#: src/components/git-diff-view.tsx
-msgid "This pane is not working inside a git repository, so there is nothing to compare."
-msgstr "이 패널은 git 저장소 안에서 작업하고 있지 않아 비교할 것이 없습니다"
 
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/agent-worktree-sheet.tsx
@@ -5576,8 +5555,7 @@ msgstr "토큰 사용량 및 비용"
 msgid "Too large to highlight — showing plain text."
 msgstr "너무 커서 구문 강조 없이 일반 텍스트로 표시합니다"
 
-#: src/components/agent-vcs-diff-sheet.tsx
-#: src/components/git-diff-view.tsx
+#: src/components/changes-sheet.tsx
 msgid "Too many changes to list. This is the start of them, not all of them."
 msgstr "변경 사항이 너무 많아 모두 나열할 수 없습니다. 전체가 아니라 앞부분입니다"
 
@@ -5594,7 +5572,7 @@ msgstr "신뢰"
 #: src/components/agent-subagent-detail-sheet.tsx
 #: src/components/app-error-boundary.tsx
 #: src/components/asset-viewer.tsx
-#: src/components/git-diff-view.tsx
+#: src/components/changes-sheet.tsx
 #: src/components/theme-browse-sheet.tsx
 msgid "Try again"
 msgstr "다시 시도"
@@ -5650,7 +5628,7 @@ msgstr "직접 입력하거나 키보드의 받아쓰기 키를 사용하세요"
 msgid "Type on the simulator"
 msgstr "시뮬레이터에 입력"
 
-#: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/changes-sheet.tsx
 msgid "Uncommitted changes"
 msgstr "커밋되지 않은 변경 사항"
 
@@ -5731,7 +5709,6 @@ msgid "Unpairing…"
 msgstr "해제하는 중…"
 
 #: src/components/diff-rows.tsx
-#: src/components/git-diff-view.tsx
 msgid "Unstaged"
 msgstr "스테이징 안 됨"
 

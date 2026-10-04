@@ -4841,7 +4841,6 @@ export function ServerTerminalWorkspace({
         sessionId={data.sessionId}
         paneId={selection.paneId}
         cwd={field(selectedPane, 'cwd')}
-        label={routeRecord?.label ?? record?.label ?? t`Server`}
         capabilities={data.health?.capabilities}
         disabled={!targetReady || !selectedPane}
         background={fill}

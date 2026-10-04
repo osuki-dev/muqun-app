@@ -1504,7 +1504,7 @@
       },
       {
         "target": {
-          "text": "feat/git-diff · Demo workspace"
+          "text": "Uncommitted changes"
         },
         "mode": "visible",
         "timeout": 8000,
@@ -1512,43 +1512,6 @@
       },
       {
         "run": "flows/git-diff.ad#s5"
-      },
-      {
-        "target": {
-          "id": "settings-selection:(on|off):git-diff-side-staged"
-        },
-        "mode": "press",
-        "run": "flows/git-diff.ad#s22"
-      },
-      {
-        "target": {
-          "text": "Show src/lib/git-diff.ts"
-        },
-        "mode": "visible",
-        "timeout": 8000,
-        "run": "flows/git-diff.ad#s23"
-      },
-      {
-        "target": {
-          "text": "Show src/components/git-diff-view.tsx"
-        },
-        "mode": "hidden",
-        "run": "flows/git-diff.ad#s24"
-      },
-      {
-        "target": {
-          "id": "settings-selection:(on|off):git-diff-side-all"
-        },
-        "mode": "press",
-        "run": "flows/git-diff.ad#s25"
-      },
-      {
-        "target": {
-          "text": "Show src/components/git-diff-view.tsx"
-        },
-        "mode": "visible",
-        "timeout": 8000,
-        "run": "flows/git-diff.ad#s26"
       },
       {
         "target": {

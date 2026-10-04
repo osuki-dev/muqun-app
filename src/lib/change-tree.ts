@@ -165,6 +165,34 @@ export function visibleChangeTree<T>(
 }
 
 // ---------------------------------------------------------------------------
+// Row geometry
+// ---------------------------------------------------------------------------
+
+/**
+ * A directory row's height. Fixed: a name never wraps, it is cut in the
+ * middle on one line, so the list never measures a tree row.
+ */
+export const CHANGE_TREE_DIR_ROW_HEIGHT = 40;
+/** A file row's height: its name on one line, and one line of note under it. */
+export const CHANGE_TREE_FILE_ROW_HEIGHT = 48;
+/** The row's own inset, before any indent. */
+export const CHANGE_TREE_ROW_INSET = 16;
+/** One level of the tree. */
+export const CHANGE_TREE_INDENT = 16;
+/**
+ * The deepest a row is indented. A phone's width is what a name needs, and a
+ * path six folders deep would otherwise spend a third of it on indent; deeper
+ * levels share the third indent. Single-child chains are already one row.
+ */
+export const CHANGE_TREE_MAX_INDENT_LEVELS = 3;
+
+/** Where a row at `depth` starts its content. */
+export function changeTreeIndentOf(depth: number): number {
+  const levels = Math.min(Math.max(0, depth), CHANGE_TREE_MAX_INDENT_LEVELS);
+  return CHANGE_TREE_ROW_INSET + levels * CHANGE_TREE_INDENT;
+}
+
+// ---------------------------------------------------------------------------
 // List rows
 // ---------------------------------------------------------------------------
 
@@ -301,6 +329,15 @@ export function changeTreeRows({
     }
   }
   return rows;
+}
+
+/**
+ * The rows the diff list measures rather than being told a size: the flat
+ * sheet's file header (see `fixedBodySizeOfDiffRow`) and a file's actions
+ * menu. Every tree row is exact.
+ */
+export function isMeasuredDiffRow(row: DiffListItem): boolean {
+  return row.type === 'file' || row.type === 'actions';
 }
 
 /** The context the next "Show more context" asks for, or `null` when there is no next step. */

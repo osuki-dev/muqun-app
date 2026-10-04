@@ -11,11 +11,15 @@ import type { PaneChatColors } from '@/components/pane-chat-blocks';
 import { PressableScale } from '@/components/pressable-scale';
 import { Text } from '@/components/text';
 import { gitFileStatusWord } from '@/i18n/labels';
-import type {
-  ChangeTreeActionsRow,
-  ChangeTreeContextRow,
-  ChangeTreeDirRow,
-  ChangeTreeFileRow,
+import {
+  CHANGE_TREE_DIR_ROW_HEIGHT,
+  CHANGE_TREE_FILE_ROW_HEIGHT,
+  CHANGE_TREE_ROW_INSET,
+  changeTreeIndentOf,
+  type ChangeTreeActionsRow,
+  type ChangeTreeContextRow,
+  type ChangeTreeDirRow,
+  type ChangeTreeFileRow,
 } from '@/lib/change-tree';
 
 /**
@@ -24,14 +28,13 @@ import type {
  * Each row is laid out at the list's full content width -- so a patch's
  * horizontal pan carries it -- and its visible part is counter-translated by
  * the same offset as the gutter, so a directory or a file name never pans off
- * the screen. Unlike the flat list's file row, that visible part is in flow
- * rather than absolutely placed: a long file name wraps instead of being cut,
- * and the row grows to hold it.
+ * the screen.
+ *
+ * A name is one line, always: a long one is cut in the middle, which keeps
+ * both the folder it starts with and the extension it ends with, and every
+ * row has the fixed height `change-tree.ts` gives it. A name wrapped onto two
+ * lines ("player-repo-drizzle" over ".ts") reads as two files.
  */
-
-/** One level of the tree. */
-export const CHANGE_TREE_INDENT = 16;
-const ROW_INSET = 16;
 
 /** What the tree rows ask of the screen that owns them. */
 export interface ChangeTreeHandlers {
@@ -44,10 +47,6 @@ export interface ChangeTreeHandlers {
 
 /** An `Animated.View` style that holds the row's visible part at the viewport. */
 type Pinned = React.ComponentProps<typeof Animated.View>['style'];
-
-function indentOf(depth: number): number {
-  return ROW_INSET + depth * CHANGE_TREE_INDENT;
-}
 
 export const ChangeTreeDirRowView = memo(function ChangeTreeDirRowView({
   row,
@@ -80,10 +79,16 @@ export const ChangeTreeDirRowView = memo(function ChangeTreeDirRowView({
           styles.row,
           styles.dirRow,
           pinned,
-          { width: pinnedWidth, paddingLeft: indentOf(row.depth) },
+          { width: pinnedWidth, paddingLeft: changeTreeIndentOf(row.depth) },
         ]}>
         <Icon size={15} color={colors.subtle} />
-        <Text variant="bodySmall" color={colors.muted} style={styles.flexOne}>
+        <Text
+          variant="bodySmall"
+          color={colors.muted}
+          numberOfLines={1}
+          ellipsizeMode="middle"
+          hugSlack={false}
+          style={styles.flexOne}>
           {row.name}
         </Text>
         {row.collapsed ? (
@@ -141,24 +146,26 @@ export const ChangeTreeFileRowView = memo(function ChangeTreeFileRowView({
           styles.row,
           styles.fileRow,
           pinned,
-          { width: pinnedWidth, paddingLeft: indentOf(row.depth) },
+          { width: pinnedWidth, paddingLeft: changeTreeIndentOf(row.depth) },
         ]}>
         <View style={styles.flexOne}>
-          <Text variant="bodySmall">{row.name}</Text>
+          <Text variant="bodySmall" numberOfLines={1} ellipsizeMode="middle" hugSlack={false}>
+            {row.name}
+          </Text>
           {row.note === 'error' && row.error ? (
-            <Text variant="caption" color={colors.status.error}>
+            <Text variant="caption" numberOfLines={1} color={colors.status.error}>
               {row.error}
             </Text>
           ) : row.unchanged && row.expanded ? (
-            <Text variant="caption" color={colors.subtle}>
+            <Text variant="caption" numberOfLines={1} color={colors.subtle}>
               <Trans>No changes</Trans>
             </Text>
           ) : row.note === 'empty' ? (
-            <Text variant="caption" color={colors.subtle}>
+            <Text variant="caption" numberOfLines={1} color={colors.subtle}>
               <Trans>No textual change</Trans>
             </Text>
           ) : row.truncated && row.expanded ? (
-            <Text variant="caption" color={colors.subtle}>
+            <Text variant="caption" numberOfLines={1} color={colors.subtle}>
               <Trans>Patch too long; showing the start of it.</Trans>
             </Text>
           ) : null}
@@ -297,16 +304,19 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingRight: ROW_INSET,
+    paddingRight: CHANGE_TREE_ROW_INSET,
   },
+  // Exactly the heights the list is told (`fixedBodySizeOfDiffRow`), so a
+  // row is never measured and never grows.
   dirRow: {
-    minHeight: 40,
+    height: CHANGE_TREE_DIR_ROW_HEIGHT,
     gap: 8,
+    overflow: 'hidden',
   },
   fileRow: {
-    minHeight: 48,
-    paddingVertical: 8,
+    height: CHANGE_TREE_FILE_ROW_HEIGHT,
     gap: 10,
+    overflow: 'hidden',
   },
   meta: {
     flexDirection: 'row',
@@ -318,7 +328,7 @@ const styles = StyleSheet.create({
   },
   contextRow: {
     minHeight: 44,
-    paddingLeft: ROW_INSET,
+    paddingLeft: CHANGE_TREE_ROW_INSET,
   },
   chip: {
     minHeight: 30,

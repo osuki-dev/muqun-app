@@ -1,9 +1,15 @@
 import { describe, expect, test } from 'bun:test';
+import { readFileSync } from 'node:fs';
 
 import {
+  CHANGE_TREE_DIR_ROW_HEIGHT,
+  CHANGE_TREE_FILE_ROW_HEIGHT,
+  CHANGE_TREE_MAX_INDENT_LEVELS,
   buildChangeTree,
+  changeTreeIndentOf,
   changeTreeRows,
   defaultCollapsedDirs,
+  isMeasuredDiffRow,
   listKeyOfDiffRow,
   nextDiffContext,
   stickyDiffRowsOf,
@@ -276,5 +282,41 @@ describe('stickyDiffRowsOf', () => {
     expect(listKeyOfDiffRow(open, sticky.keys)).not.toBe(open.key);
     expect(listKeyOfDiffRow(line('l:1'), sticky.keys)).toBe('l:1');
     expect(listKeyOfDiffRow(open, stickyDiffRowsOf([open]).keys)).toBe(open.key);
+  });
+});
+
+describe('tree row geometry', () => {
+  test('directory and file rows have fixed heights, and the list is told them', () => {
+    expect(CHANGE_TREE_DIR_ROW_HEIGHT).toBe(40);
+    expect(CHANGE_TREE_FILE_ROW_HEIGHT).toBe(48);
+    const dir = { type: 'dir', key: 'd:a', path: 'a', name: 'a', depth: 0 } as DiffListItem;
+    const file = { type: 'treeFile', key: 'f:a/b.ts', path: 'a/b.ts' } as DiffListItem;
+    const context = { type: 'context', key: 'c:a/b.ts', path: 'a/b.ts' } as DiffListItem;
+    expect(isMeasuredDiffRow(dir)).toBe(false);
+    expect(isMeasuredDiffRow(file)).toBe(false);
+    expect(isMeasuredDiffRow(context)).toBe(false);
+    expect(isMeasuredDiffRow({ type: 'actions', key: 'a:x', path: 'x' })).toBe(true);
+  });
+
+  test('the indent stops growing after three levels', () => {
+    expect(CHANGE_TREE_MAX_INDENT_LEVELS).toBe(3);
+    expect([0, 1, 2, 3, 4, 7].map(changeTreeIndentOf)).toEqual([16, 32, 48, 64, 64, 64]);
+    expect(changeTreeIndentOf(-1)).toBe(16);
+  });
+
+  test('names are one line, cut in the middle, at the heights the list is told', () => {
+    const rows = readFileSync(
+      new URL('../../components/change-tree-rows.tsx', import.meta.url),
+      'utf8'
+    );
+    const list = readFileSync(new URL('../../components/diff-rows.tsx', import.meta.url), 'utf8');
+    // The directory name and the file name, both.
+    expect(rows.match(/numberOfLines=\{1\}\s+ellipsizeMode="middle"/g)?.length).toBe(2);
+    expect(rows).toContain('height: CHANGE_TREE_DIR_ROW_HEIGHT');
+    expect(rows).toContain('height: CHANGE_TREE_FILE_ROW_HEIGHT');
+    expect(rows).not.toContain('minHeight: 48');
+    expect(list).toContain('dir: CHANGE_TREE_DIR_ROW_HEIGHT');
+    expect(list).toContain('treeFile: CHANGE_TREE_FILE_ROW_HEIGHT');
+    expect(list).toContain('isMeasuredDiffRow(row) ? undefined : sizeOfDiffRow(row)');
   });
 });

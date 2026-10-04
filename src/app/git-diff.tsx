@@ -1,4 +1,3 @@
-import { useLingui } from '@lingui/react/macro';
 import { useLocalSearchParams } from 'expo-router';
 
 import { GitDiffView } from '@/components/git-diff-view';
@@ -13,24 +12,25 @@ import { GitDiffView } from '@/components/git-diff-view';
  * wrote out and what it changed in place are different questions, and the
  * second one needs a surface wide enough to be a diff.
  *
+ * `vcsFiles` is `1` when the gateway advertised `pane_vcs_files`; the entry
+ * point already holds the capability list, so the route is told rather than
+ * asking again.
+ *
  * No `onClose` to hand down: the sheet has no close button, because the grabber
  * and the swipe are the close.
  */
 export default function GitDiffScreen() {
-  const { t } = useLingui();
   const params = useLocalSearchParams<{
     sessionId: string;
     paneId?: string;
-    label?: string;
-    branch?: string;
+    vcsFiles?: string;
   }>();
 
   return (
     <GitDiffView
       sessionId={params.sessionId || 'default'}
       paneId={params.paneId || ''}
-      label={params.label || t`Server`}
-      branch={params.branch || ''}
+      vcsFiles={params.vcsFiles === '1'}
     />
   );
 }

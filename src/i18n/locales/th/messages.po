@@ -52,11 +52,6 @@ msgstr "{0, plural, other {ไม่ได้แสดง # อักขระ}}
 msgid "{0, plural, one {# day} other {# days}}"
 msgstr "{0, plural, other {# วัน}}"
 
-#. placeholder {0}: pending.files.length
-#: src/components/git-diff-view.tsx
-msgid "{0, plural, one {# file changed} other {# files changed}}"
-msgstr "{0, plural, other {เปลี่ยนแปลง # ไฟล์}}"
-
 #. placeholder {0}: files.length
 #: src/components/agent-revert-plate.tsx
 msgid "{0, plural, one {# file} other {# files}}"
@@ -65,7 +60,7 @@ msgstr "{0, plural, other {# ไฟล์}}"
 #. placeholder {0}: listing.changes.length
 #. placeholder {1}: totals.additions
 #. placeholder {2}: totals.deletions
-#: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/changes-sheet.tsx
 msgid "{0, plural, one {# file} other {# files}} · +{1} −{2}"
 msgstr "{0, plural, other {# ไฟล์}} · +{1} −{2}"
 
@@ -477,7 +472,6 @@ msgstr "การแจ้งเตือน"
 msgid "Align the QR inside the frame"
 msgstr "จัด QR ให้อยู่ในกรอบ"
 
-#: src/components/git-diff-view.tsx
 #: src/components/session-artifacts.tsx
 #: src/components/theme-browse-sheet.tsx
 msgid "All"
@@ -835,9 +829,9 @@ msgstr "ต้องเข้าถึงกล้อง"
 #: src/components/agent-composer.tsx
 #: src/components/agent-context-sheet.tsx
 #: src/components/agent-sessions-sheet.tsx
-#: src/components/agent-vcs-diff-sheet.tsx
 #: src/components/agent-workbench.tsx
 #: src/components/agent-worktree-sheet.tsx
+#: src/components/changes-sheet.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/row-action-menu.tsx
 #: src/components/session-map.tsx
@@ -879,8 +873,7 @@ msgctxt "git file status"
 msgid "Changed"
 msgstr "เปลี่ยนแล้ว"
 
-#: src/components/agent-vcs-diff-sheet.tsx
-#: src/components/git-diff-view.tsx
+#: src/components/changes-sheet.tsx
 msgid "Changes"
 msgstr "การเปลี่ยนแปลง"
 
@@ -972,7 +965,7 @@ msgstr "เลือกสไตล์หน้าแรกและส่วน
 msgid "Choose project"
 msgstr "เลือกโปรเจกต์"
 
-#: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/changes-sheet.tsx
 msgid "Choose which changes to show"
 msgstr "เลือกการเปลี่ยนแปลงที่จะแสดง"
 
@@ -1150,7 +1143,7 @@ msgstr "บีบอัดไม่สำเร็จ"
 msgid "Compaction failed — tap to dismiss"
 msgstr "บีบอัดไม่สำเร็จ — แตะเพื่อปิด"
 
-#: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/changes-sheet.tsx
 msgid "Compared with {base}"
 msgstr "เทียบกับ {base}"
 
@@ -1503,7 +1496,7 @@ msgstr "ลบไม่ได้"
 msgid "Could not detach"
 msgstr "ย้ายไปเบื้องหลังไม่สำเร็จ"
 
-#: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/changes-sheet.tsx
 msgid "Could not discard {name}"
 msgstr "ไม่สามารถละทิ้ง {name}"
 
@@ -1549,7 +1542,7 @@ msgstr "ไม่สามารถโหลดโมเดลได้"
 msgid "Could not load the session"
 msgstr "โหลดเซสชันไม่สำเร็จ"
 
-#: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/changes-sheet.tsx
 msgid "Could not load this file's changes."
 msgstr "ไม่สามารถโหลดการเปลี่ยนแปลงของไฟล์นี้"
 
@@ -1626,7 +1619,7 @@ msgstr "ติดต่อเซิร์ฟเวอร์นี้ไม่ไ
 msgid "Could not read saved servers. Your saved data has not been changed. Unlock this device and retry."
 msgstr "อ่านเซิร์ฟเวอร์ที่บันทึกไว้ไม่ได้ ข้อมูลที่บันทึกยังไม่เปลี่ยนแปลง ปลดล็อกอุปกรณ์นี้แล้วลองอีกครั้ง"
 
-#: src/components/git-diff-view.tsx
+#: src/components/changes-sheet.tsx
 msgid "Could not read the changes."
 msgstr "อ่านการเปลี่ยนแปลงไม่ได้"
 
@@ -1635,7 +1628,7 @@ msgstr "อ่านการเปลี่ยนแปลงไม่ได้
 msgid "Could not read the terminal."
 msgstr "อ่านเทอร์มินัลไม่ได้"
 
-#: src/components/git-diff-view.tsx
+#: src/components/changes-sheet.tsx
 msgid "Could not read this file."
 msgstr "อ่านไฟล์นี้ไม่ได้"
 
@@ -1822,12 +1815,12 @@ msgid "Defaults to theme.json at the repository root"
 msgstr "ค่าเริ่มต้นคือ theme.json ที่รากของที่เก็บโค้ด"
 
 #: src/components/agent-sessions-sheet.tsx
-#: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/changes-sheet.tsx
 #: src/components/row-action-menu.tsx
 msgid "Delete"
 msgstr "ลบ"
 
-#: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/changes-sheet.tsx
 msgid "Delete {discardName}?"
 msgstr "ลบ {discardName} ใช่ไหม"
 
@@ -1905,7 +1898,7 @@ msgstr "ทิศทาง"
 msgid "Directory"
 msgstr "ไดเรกทอรี"
 
-#: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/changes-sheet.tsx
 msgid "Discard"
 msgstr "ละทิ้ง"
 
@@ -1913,7 +1906,7 @@ msgstr "ละทิ้ง"
 msgid "Discard changes"
 msgstr "ละทิ้งการเปลี่ยนแปลง"
 
-#: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/changes-sheet.tsx
 msgid "Discard changes to {discardName}?"
 msgstr "ละทิ้งการเปลี่ยนแปลงของ {discardName} ใช่ไหม"
 
@@ -3089,18 +3082,14 @@ msgstr "ไม่มีกล้องสำหรับสแกน"
 msgid "No camera was found on this device."
 msgstr "ไม่พบกล้องบนอุปกรณ์นี้"
 
-#: src/components/agent-vcs-diff-sheet.tsx
 #: src/components/change-tree-rows.tsx
+#: src/components/changes-sheet.tsx
 msgid "No changes"
 msgstr "ไม่มีการเปลี่ยนแปลง"
 
-#: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/changes-sheet.tsx
 msgid "No changes compared with {base}."
 msgstr "ไม่มีการเปลี่ยนแปลงเมื่อเทียบกับ {base}"
-
-#: src/components/git-diff-view.tsx
-msgid "No changes. The working tree matches HEAD."
-msgstr "ไม่มีการเปลี่ยนแปลง พื้นที่ทำงานตรงกับ HEAD"
 
 #: src/components/session-artifacts.tsx
 msgid "No files match."
@@ -3231,7 +3220,7 @@ msgstr "ไม่มีการระบุขนาดหน้าต่าง
 msgid "No worktrees yet. Make one below to work on a branch without disturbing this checkout."
 msgstr "ยังไม่มีเวิร์กทรี สร้างสักอันด้านล่างเพื่อทำงานบนสาขาโดยไม่รบกวนสำเนานี้"
 
-#: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/changes-sheet.tsx
 msgid "Not a git repository"
 msgstr "ไม่ใช่ที่เก็บโค้ด Git"
 
@@ -3311,11 +3300,11 @@ msgstr "ยังไม่มีอะไรให้แสดง"
 msgid "Nothing to undo"
 msgstr "ไม่มีอะไรให้ย้อนกลับ"
 
-#: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/changes-sheet.tsx
 msgid "Nothing uncommitted in this project."
 msgstr "ไม่มีการเปลี่ยนแปลงที่ยังไม่ได้คอมมิตในโปรเจกต์นี้"
 
-#: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/changes-sheet.tsx
 msgid "Nothing was changed."
 msgstr "ไม่มีการเปลี่ยนแปลงใด"
 
@@ -3774,9 +3763,9 @@ msgstr "โปรเจกต์ · {0}"
 #. placeholder {0}: gone.directory
 #. placeholder {0}: listing.missing?.directory ?? ''
 #. placeholder {0}: missing.directory
-#: src/components/agent-vcs-diff-sheet.tsx
 #: src/components/agent-workbench.tsx
 #: src/components/agent-worktree-sheet.tsx
+#: src/components/changes-sheet.tsx
 msgid "Project folder is missing: {0}"
 msgstr "ไม่พบโฟลเดอร์ของโปรเจกต์: {0}"
 
@@ -3934,7 +3923,7 @@ msgstr "กำลังเชื่อมต่อใหม่ · {0}"
 msgid "Refresh"
 msgstr "รีเฟรช"
 
-#: src/components/git-diff-view.tsx
+#: src/components/changes-sheet.tsx
 msgid "Refresh changes"
 msgstr "รีเฟรชการเปลี่ยนแปลง"
 
@@ -4425,7 +4414,6 @@ msgstr "กำลังส่งไปยัง"
 
 #: src/app/agent-guide.tsx
 #: src/app/artifacts.tsx
-#: src/app/git-diff.tsx
 #: src/app/panels.tsx
 #: src/components/app-drawer.tsx
 #: src/components/server-terminal-workspace.tsx
@@ -4626,10 +4614,6 @@ msgstr "แสดงพื้นหลังแอปหลังข้อคว
 msgid "Show the editor keyboard"
 msgstr "แสดงแป้นพิมพ์ตัวแก้ไข"
 
-#: src/components/git-diff-view.tsx
-msgid "Show the newer list of changes"
-msgstr "แสดงรายการการเปลี่ยนแปลงใหม่กว่า"
-
 #: src/components/agent-tool-card.tsx
 msgid "Show the rest of this output"
 msgstr "แสดงผลลัพธ์ส่วนที่เหลือ"
@@ -4770,7 +4754,6 @@ msgid "SSH tunnel through {host} is down"
 msgstr "อุโมงค์ SSH ผ่าน {host} ขัดข้อง"
 
 #: src/components/diff-rows.tsx
-#: src/components/git-diff-view.tsx
 msgid "Staged"
 msgstr "เตรียมคอมมิตแล้ว"
 
@@ -5198,7 +5181,7 @@ msgstr "เปิดปลายทางนี้ไม่ได้"
 msgid "The font file is missing. Add it again."
 msgstr "ไม่พบไฟล์ฟอนต์ กรุณาเพิ่มอีกครั้ง"
 
-#: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/changes-sheet.tsx
 msgid "The gateway could not be reached."
 msgstr "ไม่สามารถเชื่อมต่อเกตเวย์"
 
@@ -5354,7 +5337,7 @@ msgstr "กำลังคิด…"
 msgid "This agent did not offer that answer."
 msgstr "เอเจนต์นี้ไม่ได้เสนอตัวเลือกคำตอบนั้น"
 
-#: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/changes-sheet.tsx
 msgid "This cannot be undone."
 msgstr "การดำเนินการนี้ย้อนกลับไม่ได้"
 
@@ -5442,10 +5425,6 @@ msgstr "ลิงก์นี้ไม่มีปลายทาง"
 #: src/components/agent-form-card.tsx
 msgid "This one is required."
 msgstr "ต้องกรอกช่องนี้"
-
-#: src/components/git-diff-view.tsx
-msgid "This pane is not working inside a git repository, so there is nothing to compare."
-msgstr "พาเนลนี้ไม่ได้ทำงานอยู่ในที่เก็บโค้ด Git จึงไม่มีอะไรให้เปรียบเทียบ"
 
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/agent-worktree-sheet.tsx
@@ -5576,8 +5555,7 @@ msgstr "การใช้โทเค็นและค่าใช้จ่า
 msgid "Too large to highlight — showing plain text."
 msgstr "ใหญ่เกินกว่าจะไฮไลต์ — แสดงเป็นข้อความธรรมดา"
 
-#: src/components/agent-vcs-diff-sheet.tsx
-#: src/components/git-diff-view.tsx
+#: src/components/changes-sheet.tsx
 msgid "Too many changes to list. This is the start of them, not all of them."
 msgstr "มีการเปลี่ยนแปลงมากเกินกว่าจะแสดงทั้งหมด นี่เป็นเพียงส่วนแรก"
 
@@ -5594,7 +5572,7 @@ msgstr "เชื่อถือ"
 #: src/components/agent-subagent-detail-sheet.tsx
 #: src/components/app-error-boundary.tsx
 #: src/components/asset-viewer.tsx
-#: src/components/git-diff-view.tsx
+#: src/components/changes-sheet.tsx
 #: src/components/theme-browse-sheet.tsx
 msgid "Try again"
 msgstr "ลองอีกครั้ง"
@@ -5650,7 +5628,7 @@ msgstr "พิมพ์หรือใช้ปุ่มป้อนตามค
 msgid "Type on the simulator"
 msgstr "พิมพ์บนเครื่องจำลอง"
 
-#: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/changes-sheet.tsx
 msgid "Uncommitted changes"
 msgstr "การเปลี่ยนแปลงที่ยังไม่ commit"
 
@@ -5731,7 +5709,6 @@ msgid "Unpairing…"
 msgstr "กำลังเลิกจับคู่…"
 
 #: src/components/diff-rows.tsx
-#: src/components/git-diff-view.tsx
 msgid "Unstaged"
 msgstr "ยังไม่เตรียมคอมมิต"
 
