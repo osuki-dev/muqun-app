@@ -662,6 +662,7 @@ export function useReskinTransition(): { run: (options: ReskinRunOptions) => Pro
 export function ReskinSurface({ id, children }: { id: string; children: ReactNode }) {
   const context = useContext(ReskinContext);
   const ref = useRef<View>(null);
+  const frame = useRef<View>(null);
   const size = useRef<ReskinSize>({ width: 0, height: 0 });
   const touch = useRef<TouchRecord>(null);
   const [measured, setMeasured] = useState<ReskinSize>({ width: 0, height: 0 });
@@ -683,8 +684,19 @@ export function ReskinSurface({ id, children }: { id: string; children: ReactNod
    * the screen the reader is on.
    */
   const noteTouch = useCallback((event: GestureResponderEvent) => {
-    const { locationX, locationY } = event.nativeEvent;
-    touch.current = { point: { x: locationX, y: locationY }, at: Date.now() };
+    // `pageX`/`pageY`, not `locationX`/`locationY`: the location is relative
+    // to whichever child the finger landed on -- a segmented control's "Light"
+    // reads as a few points from the top-left -- so every run came from the
+    // corner. The page point is made relative to this surface once the
+    // surface has said where it is, which lands long before the tap's
+    // release starts a run.
+    const { pageX, pageY } = event.nativeEvent;
+    const at = Date.now();
+    touch.current = { point: { x: pageX, y: pageY }, at };
+    frame.current?.measure((_x, _y, _width, _height, left, top) => {
+      if (touch.current?.at !== at || !Number.isFinite(left) || !Number.isFinite(top)) return;
+      touch.current = { point: { x: pageX - left, y: pageY - top }, at };
+    });
     return false;
   }, []);
 
@@ -707,6 +719,7 @@ export function ReskinSurface({ id, children }: { id: string; children: ReactNod
       collapsable={false}
       onLayout={onLayout}
       onStartShouldSetResponderCapture={noteTouch}
+      ref={frame}
       style={styles.surface}>
       <View collapsable={false} ref={ref} style={styles.surface}>
         {children}
