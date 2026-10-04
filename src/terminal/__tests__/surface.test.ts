@@ -10,7 +10,7 @@ import { describe, expect, test } from 'bun:test';
 
 import { resolveThemePack } from '@/constants/theme-packs';
 import { createTerminalTheme, terminalPaneTheme } from '@/terminal/palette';
-import { isDarkSurface, readTerminalSurface } from '@/terminal/surface';
+import { isDarkSurface, readTerminalSurface, type TerminalSurface } from '@/terminal/surface';
 import { parseTerminalSnapshot } from '@/terminal/terminal-core';
 import type { TerminalFrame } from '@/terminal/types';
 
@@ -102,6 +102,68 @@ describe('readTerminalSurface', () => {
     const surface = readTerminalSurface(frameOf(['']));
     expect(surface.background).toBeNull();
     expect(surface.verbatim).toBe(false);
+  });
+});
+
+describe('readTerminalSurface across snapshots', () => {
+  /** Ten rows of forty columns with `painted` of them painted end to end. */
+  function screenWithPainted(painted: number): TerminalFrame {
+    return frameOf(
+      Array.from({ length: 10 }, (_, row) =>
+        row < painted ? paintedRow(`row ${row}`, 40) : transparentRow(`row ${row}`)
+      )
+    );
+  }
+
+  /** Reads `shares` in order, each against the last answer, as the pane does. */
+  function readSequence(painted: number[]): (string | null)[] {
+    let previous: TerminalSurface | undefined;
+    return painted.map((count) => {
+      previous = readTerminalSurface(screenWithPainted(count), 0, previous);
+      return previous.background;
+    });
+  }
+
+  const SURFACE = 'rgb(33, 35, 55)';
+
+  test('a screen hovering at half no longer flips the surface every snapshot', () => {
+    // The bare-majority rule answered this sequence with a flip on every read.
+    expect(readSequence([6, 5, 6, 5, 6, 5])).toEqual(Array(6).fill(SURFACE));
+    expect(readSequence([5, 6, 5, 6, 5, 6])).toEqual([null, ...Array(5).fill(SURFACE)]);
+  });
+
+  test('adopts only above the adopt share, releases only below the release share', () => {
+    expect(readSequence([5, 6, 5, 4, 5, 6])).toEqual([null, SURFACE, SURFACE, null, null, SURFACE]);
+  });
+
+  test('a cold read needs the adopt share, not a bare majority', () => {
+    expect(readTerminalSurface(screenWithPainted(5)).background).toBeNull();
+    expect(readTerminalSurface(screenWithPainted(6)).background).toBe(SURFACE);
+  });
+
+  test('a different surface that clearly owns the screen takes over at once', () => {
+    const held = readTerminalSurface(screenWithPainted(10));
+    const paper = `${CSI}0m${CSI}38;2;76;79;105m${CSI}48;2;239;241;245m${' '.repeat(40)}${CSI}0m`;
+    const repainted = frameOf(Array(10).fill(paper));
+    expect(readTerminalSurface(repainted, 0, held).background).toBe('rgb(239, 241, 245)');
+  });
+
+  test('verbatim colour is let go only after two snapshots without it', () => {
+    const plain = frameOf([`${CSI}44m${' '.repeat(40)}${CSI}0m`, 'x']);
+    const seen = readTerminalSurface(frameOf(NETRW));
+    expect(seen.verbatim).toBe(true);
+    const once = readTerminalSurface(plain, 0, seen);
+    expect(once.verbatim).toBe(true);
+    // Seen again: the miss is forgotten, and it takes two fresh misses to go.
+    const back = readTerminalSurface(frameOf(NETRW), 0, once);
+    expect(back.verbatimMissed).toBeUndefined();
+    const twice = readTerminalSurface(plain, 0, readTerminalSurface(plain, 0, back));
+    expect(twice.verbatim).toBe(false);
+    // Through it all the pane theme held still until the release.
+    expect(terminalPaneTheme(pack, light, once, true)).toBe(
+      terminalPaneTheme(pack, light, seen, true)
+    );
+    expect(terminalPaneTheme(pack, light, twice, true)).toBe(light);
   });
 });
 

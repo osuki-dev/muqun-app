@@ -114,7 +114,7 @@ import {
   terminalTouchTapBytes,
   type TerminalTouchModes,
 } from '@/terminal/touch-input';
-import { readTerminalSurface } from '@/terminal/surface';
+import { readTerminalSurface, type TerminalSurface } from '@/terminal/surface';
 import { useTerminalTheme, useThemePack } from '@/hooks/use-theme-pack';
 import { useUserFontProblem } from '@/hooks/use-user-fonts';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
@@ -329,6 +329,14 @@ export type TerminalCellMetrics = {
   cellWidth: number;
   lineHeight: number;
 };
+
+/** The commit effect's one write to `surfaceBox`; see `recordCommittedHead`. */
+function recordCommittedSurface(
+  box: { current: TerminalSurface | undefined },
+  surface: TerminalSurface | undefined
+): void {
+  box.current = surface;
+}
 
 /**
  * The commit effect's one write to `headBox`.
@@ -745,15 +753,26 @@ export function SkiaTerminal({
   // for the fix. Measured on the repro capture (64x242, 104 runs) the scan is
   // 0.054 ms against the 2.24 ms parse standing beside it -- 2.4% -- so even
   // the panes that do run it are not paying for it in any way a frame notices.
-  const paneTheme = useMemo(() => {
-    if (!ownsScreen) return terminalTheme;
-    return terminalPaneTheme(
-      themePack,
-      terminalTheme,
-      readTerminalSurface(frame, screenRows),
-      true
-    );
-  }, [frame, ownsScreen, screenRows, terminalTheme, themePack]);
+  //
+  // The read is relative to the surface the pane is already wearing (the last
+  // *committed* read, so a render React throws away cannot move it): adoption
+  // has hysteresis, and without it an editor whose paint hovered near half the
+  // screen flipped the whole pane's colours snapshot to snapshot. See
+  // `readTerminalSurface`.
+  const [surfaceBox] = useState<{ current: TerminalSurface | undefined }>(() => ({
+    current: undefined,
+  }));
+  const surface = useMemo(
+    () => (ownsScreen ? readTerminalSurface(frame, screenRows, surfaceBox.current) : undefined),
+    [frame, ownsScreen, screenRows, surfaceBox]
+  );
+  useLayoutEffect(() => {
+    recordCommittedSurface(surfaceBox, surface);
+  }, [surface, surfaceBox]);
+  const paneTheme = useMemo(
+    () => (surface ? terminalPaneTheme(themePack, terminalTheme, surface, true) : terminalTheme),
+    [surface, terminalTheme, themePack]
+  );
   // Which canvas this pane gets, decided once from the two things that decide
   // it. Keeping it out of the render body keeps the two halves -- the flag and
   // the fill -- from ever disagreeing about which path is being taken.

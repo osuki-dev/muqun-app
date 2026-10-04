@@ -28,9 +28,29 @@ export type TerminalSurface = {
    * colour come from us or from the program", with no extra bookkeeping.
    */
   verbatim: boolean;
+  /**
+   * Whether the last read saw no verbatim colour while `verbatim` was still
+   * being held -- the first of the two misses it takes to let go. See
+   * `readTerminalSurface`.
+   */
+  verbatimMissed?: boolean;
 };
 
 const EMPTY_SURFACE: TerminalSurface = { background: null, verbatim: false };
+
+/**
+ * The band a surface has to cross to change hands, as shares of the screen.
+ *
+ * A bare majority flipped on the cell: a full-screen program whose paint sat
+ * near half the screen -- a split, a half-filled list, a popup over the
+ * editor -- swapped the whole pane between the app theme and the adopted
+ * surface from one snapshot to the next, a whole-pane colour flash ten times a
+ * second. So a background is adopted only once it clearly owns the screen, and
+ * kept until it clearly does not: between the two thresholds the answer is
+ * whatever it was.
+ */
+export const SURFACE_ADOPT_SHARE = 0.55;
+export const SURFACE_RELEASE_SHARE = 0.45;
 
 /**
  * Reads the surface a frame claims.
@@ -41,11 +61,22 @@ const EMPTY_SURFACE: TerminalSurface = { background: null, verbatim: false };
  * shell prompt scrolled off an hour ago has no say in what an editor's surface
  * is now.
  *
+ * `previous` is the surface the pane is wearing now -- this function's own
+ * answer for the last committed snapshot -- and is what the read is relative
+ * to: a background is adopted above `SURFACE_ADOPT_SHARE` and released below
+ * `SURFACE_RELEASE_SHARE` (see there), and verbatim colour, once seen, is let
+ * go only after two snapshots in a row without any. Without `previous` the read
+ * is a cold one against the adopt threshold.
+ *
  * O(runs), not O(cells): a run already carries the columns it spans, so a full
  * screen costs a few hundred additions rather than one per cell. This runs once
  * per applied snapshot, beside a parse that is orders of magnitude dearer.
  */
-export function readTerminalSurface(frame: TerminalFrame, screenRows = 0): TerminalSurface {
+export function readTerminalSurface(
+  frame: TerminalFrame,
+  screenRows = 0,
+  previous?: TerminalSurface
+): TerminalSurface {
   const total = frame.lines.length;
   const start = screenRows > 0 ? Math.max(0, total - screenRows) : 0;
   const rows = total - start;
@@ -68,20 +99,35 @@ export function readTerminalSurface(frame: TerminalFrame, screenRows = 0): Termi
     }
   }
 
-  let background: string | null = null;
+  let widest: string | null = null;
   let painted = 0;
   for (const [color, cells] of coverage) {
     if (cells > painted) {
       painted = cells;
-      background = color;
+      widest = color;
     }
   }
-  // A majority of the screen, so "the surface" means the thing the program
+  // Clearly most of the screen, so "the surface" means the thing the program
   // painted everything on rather than the widest thing it painted *onto* it.
   // Cells the program left at the default are counted against it by simply not
   // being in the map: a screen of dark chips on default ground loses here, and
-  // that is the case this whole file exists for.
-  return { background: painted * 2 > rows * frame.columns ? background : null, verbatim };
+  // that is the case this whole file exists for. A surface already adopted
+  // keeps its claim until it has clearly lost it.
+  const screen = rows * frame.columns;
+  const held = previous?.background ?? null;
+  const background =
+    held !== null && (coverage.get(held) ?? 0) >= screen * SURFACE_RELEASE_SHARE
+      ? held
+      : painted > screen * SURFACE_ADOPT_SHARE
+        ? widest
+        : null;
+  if (verbatim || !previous?.verbatim) return { background, verbatim };
+  // Held through one snapshot without a verbatim colour, released on the
+  // second: a program that paints truecolour on some frames and not others
+  // must not flip the pane between its surface and the app's each time.
+  return previous.verbatimMissed
+    ? { background, verbatim: false }
+    : { background, verbatim: true, verbatimMissed: true };
 }
 
 /**
