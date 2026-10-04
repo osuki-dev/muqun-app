@@ -30,7 +30,7 @@
     "ios": {
       "bundleIdentifier": "dev.osuki.muqun",
       "supportsTablet": true,
-      "requireFullScreen": true,
+      "requireFullScreen": false,
       "icon": {
         "light": "./assets/icons/classic/icon.png",
         "dark": "./assets/icons/classic/icon-dark.png",
@@ -43,6 +43,8 @@
         "NSLocalNetworkUsageDescription": "Muqun connects to the Gateway running on your own computer, which may be on your local network.",
         "UISupportedInterfaceOrientations": ["UIInterfaceOrientationPortrait"],
         "UISupportedInterfaceOrientations~ipad": [
+          "UIInterfaceOrientationPortrait",
+          "UIInterfaceOrientationPortraitUpsideDown",
           "UIInterfaceOrientationLandscapeLeft",
           "UIInterfaceOrientationLandscapeRight"
         ],
