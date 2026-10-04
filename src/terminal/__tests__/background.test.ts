@@ -3,6 +3,7 @@ import {
   paintsCellBackground,
   terminalBackgroundFill,
   terminalBackgroundOpacity,
+  terminalCanvasPaint,
 } from '../background';
 import { createTerminalTheme, terminalPaneTheme } from '../palette';
 import { resolveThemePack } from '@/constants/theme-packs';
@@ -64,4 +65,34 @@ test('explicit program surfaces remain opaque including the exact app background
     expect(result).not.toBe(app);
   }
   expect(app.backgroundOpacity).toBe(0);
+});
+
+test('the canvas kind never follows the pane theme, so adopting a surface cannot swap the native view', () => {
+  const pack = resolveThemePack('catppuccin');
+  const translucent = { ...createTerminalTheme(pack, 'light'), backgroundOpacity: 0.6 };
+  const solid = { ...createTerminalTheme(pack, 'light'), backgroundOpacity: 1 };
+  const painted = { background: 'rgb(33, 35, 55)', verbatim: true };
+  const transparentScheme = { background: null, verbatim: true };
+  for (const app of [translucent, solid]) {
+    for (const wallpaper of [false, true]) {
+      const kinds = [
+        app,
+        terminalPaneTheme(pack, app, painted, true),
+        terminalPaneTheme(pack, app, transparentScheme, true),
+      ].map((pane) => terminalCanvasPaint(app, pane, '#eff1f5', wallpaper).opaque);
+      expect(new Set(kinds).size).toBe(1);
+    }
+  }
+  // Translucent app theme over wallpaper: the adopted surface still fills
+  // solid, so the scheme's chips sit on its own ground rather than the picture.
+  const adopted = terminalPaneTheme(pack, translucent, painted, true);
+  expect(terminalCanvasPaint(translucent, adopted, '#eff1f5', true)).toEqual({
+    opaque: false,
+    fill: 'rgb(33, 35, 55)',
+  });
+  expect(terminalCanvasPaint(translucent, translucent, '#eff1f5', true).opaque).toBe(false);
+  // No wallpaper: opaque, and the translucent app colour is pre-blended.
+  const flat = terminalCanvasPaint(translucent, translucent, '#000000', false);
+  expect(flat.opaque).toBe(true);
+  expect(flat.fill.startsWith('rgb(')).toBe(true);
 });

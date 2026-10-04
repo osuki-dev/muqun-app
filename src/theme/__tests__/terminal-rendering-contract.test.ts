@@ -6,14 +6,17 @@ test('terminal opacity affects only the default fill, never the complete termina
   const renderer = readFileSync('src/components/skia-terminal.tsx', 'utf8');
   // The canvas keeps the opaque fast path whenever nothing patterned is behind
   // it, and the fill carries the blend in that case. Both halves are derived
-  // together so they cannot disagree about which path is being taken; that they
-  // are derived from these two inputs, and only these, is the contract.
-  expect(renderer).toContain('const canvasIsOpaque = paneOpacity === 1 || !wallpaperBehind;');
+  // together (`terminalCanvasPaint`, tested in background.test.ts) so they
+  // cannot disagree about which path is being taken, and the kind is decided
+  // from the app theme, never the pane theme, so adopting a program's surface
+  // cannot swap the native view.
   expect(renderer).toContain(
-    'blendedTerminalFill(paneTheme.background, theme.colors.background, paneOpacity)'
+    'const { opaque: canvasIsOpaque, fill: canvasFill } = terminalCanvasPaint('
   );
-  expect(renderer).toContain(': terminalBackgroundFill(paneTheme);');
-  expect(renderer).toContain('<Canvas opaque={canvasIsOpaque}');
+  expect(renderer.replace(/\s+/g, ' ')).toContain(
+    'terminalCanvasPaint( terminalTheme, paneTheme, theme.colors.background, wallpaperBehind );'
+  );
+  expect(renderer).toContain('<TerminalCanvas opaque={canvasIsOpaque}');
   expect(renderer).toContain('<Fill color={canvasFill} />');
   expect(renderer).toContain(
     'paintsCellBackground(run.style, colors.background, terminalTheme.background)'
