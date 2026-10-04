@@ -26,6 +26,22 @@ export type ActiveServerConnection = {
   phase: 'connecting' | 'connected' | 'reconnecting' | 'offline';
 };
 
+/**
+ * The gateway's own phase, as the status light should read it.
+ *
+ * A workspace whose terminal backend (tmux, Herdr) is down reports `offline`,
+ * yet the gateway answered to say so: the machine is up and only the backend
+ * is missing. The light is about the gateway, so that reads as connected --
+ * the same call the in-workspace notice makes -- rather than "Offline, not
+ * answering" beside a screen that is quoting the gateway's own reply.
+ */
+export function gatewayConnectionPhase(
+  phase: ActiveServerConnection['phase'],
+  backendUnavailable?: boolean
+): ActiveServerConnection['phase'] {
+  return backendUnavailable ? 'connected' : phase;
+}
+
 /** The result of one probe, held in memory for the life of the launch. */
 export type ReachabilityProbe = {
   serverId: string;
