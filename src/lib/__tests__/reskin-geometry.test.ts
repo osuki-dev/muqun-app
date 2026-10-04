@@ -32,6 +32,7 @@ import {
   scanReach,
   selectReskinPlay,
   snapshotBudget,
+  veilWhenUnphotographed,
   shouldAttemptSnapshot,
   snapshotOutcome,
   washFront,
@@ -403,6 +404,23 @@ test('theme reveal releases touches after the covered swap, including reduced mo
   // Font metrics still move beneath the photograph during their reveal.
   expect(reskinBlocksTouches('halftone', false)).toBe(true);
   expect(reskinBlocksTouches('scan', false)).toBe(true);
+});
+
+describe('veilWhenUnphotographed', () => {
+  test('an iOS font scan whose photographs ran late still plays, over a veil', () => {
+    // iOS pass finding: two windows photographed past the budget, and the
+    // font swapped in a single frame with no scan.
+    expect(veilWhenUnphotographed('ios', 'scan')).toBe(true);
+    expect(veilWhenUnphotographed('ios', 'ripple')).toBe(true);
+    expect(veilWhenUnphotographed('ios', 'crossfade')).toBe(false);
+    expect(veilWhenUnphotographed('ios', 'halftone')).toBe(false);
+  });
+
+  test('Android always has the veil', () => {
+    for (const play of ['ripple', 'scan', 'wash', 'halftone', 'crossfade'] as const) {
+      expect(veilWhenUnphotographed('android', play)).toBe(true);
+    }
+  });
 });
 
 describe('snapshotBudget', () => {
