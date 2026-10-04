@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'bun:test';
+import { readFileSync } from 'node:fs';
 
 import {
   basename,
@@ -31,6 +32,7 @@ import {
   splitUrl,
   stripReadLineNumbers,
   stripSubagentEnvelope,
+  toolInputJson,
   subagentStatusFromMetadata,
   textFromContent,
   toolArgumentLine,
@@ -816,5 +818,33 @@ describe("an edit's per-file status reaches the file row", () => {
       const [file] = editFilesFromMetadata({ files: [{ ...REWRITE.files[0], status }] });
       expect(fileChangeFromDiffItem(file).status).toBe(status);
     }
+  });
+});
+
+describe('a subagent card at its first event', () => {
+  // The gateway's first `task` event: running, with `input: null` and nothing else.
+  const first = { name: 'task', state: 'running', input: null as unknown, content: undefined };
+
+  test('has no input to draw, so no body reads "null"', () => {
+    expect(classifyTool('task')).toBe('subagent');
+    expect(toolInputRecord(first.input)).toBeNull();
+    expect(extractTarget('subagent', first.input)).toBe('');
+    expect(toolInputJson(first.input)).toBeNull();
+    expect(toolInputJson(undefined)).toBeNull();
+    expect(toolInputJson({})).toBeNull();
+    expect(stripSubagentEnvelope('').text).toBe('');
+  });
+
+  test('wires the generic body through the null-aware reading', () => {
+    const card = readFileSync('src/components/agent-tool-card.tsx', 'utf8');
+    expect(card).toContain('toolInputJson(input)');
+    expect(card).not.toContain('prettyJson(input)');
+  });
+
+  test('once the task arrives the request is shown unchanged', () => {
+    const input = { agent: 'explore', description: 'Find usages', prompt: 'grep' };
+    expect(extractTarget('subagent', input)).toBe('Find usages');
+    const json = toolInputJson(input);
+    expect(json?.text).toBe(JSON.stringify(input, null, 2));
   });
 });
