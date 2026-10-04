@@ -33,11 +33,12 @@ import {
 } from '@/lib/gateway-client';
 import { CodeLinesView } from '@/components/code-lines-view';
 import { MarkdownDocumentView } from '@/components/markdown-document-view';
-import { HIGHLIGHT_MAX_CHARS, MAX_ASSET_TEXT_BYTES, indexTextLines } from '@/lib/text-preview';
+import { MAX_ASSET_TEXT_BYTES, indexTextLines } from '@/lib/text-preview';
+import { assetPresentation, type AssetPresentation } from '@/lib/asset-viewer-layout';
 import { describeGatewayFailure } from '@/lib/network-error';
 import { isSafeExternalLink } from '@/lib/safe-link';
 import { CustomThemeLibrary, type ThemePrimaryAction } from '@/components/custom-theme-library';
-import { SheetSceneAction } from '@/components/sheet-scene';
+import { SHEET_LADDER, SheetSceneAction, SheetSceneHeading } from '@/components/sheet-scene';
 import { ThemeImportProgress } from '@/components/theme-import-progress';
 import { prepareThemeAssets, type PreparedThemeAssets } from '@/theme/assets';
 import { ThemeImportRequest } from '@/theme/import-request';
@@ -59,7 +60,10 @@ import { settleAfter } from '@/lib/compiler-safe-control-flow';
  * a block or a line at a time.
  */
 export function AssetViewer({ asset, onClose }: { asset: SessionAsset; onClose: () => void }) {
-  if (asset.kind === 'image' && asset.previewable) {
+  // A picture goes to the lightbox and its black matte; everything else is
+  // text or a description of a file, on the frosted ground below. See
+  // `asset-viewer-layout.ts`.
+  if (assetPresentation(asset) === 'lightbox') {
     const source = assetImageSource(asset);
     if (!source) return <EncryptedImageViewer asset={asset} onClose={onClose} />;
     return (
@@ -169,19 +173,18 @@ function AssetSheet({ asset, onClose }: { asset: SessionAsset; onClose: () => vo
     () => createMarkdownStyle(theme.colors, markdownFonts),
     [theme.colors, markdownFonts]
   );
-  const textual = asset.previewable && (asset.kind === 'markdown' || asset.kind === 'text');
-  /**
-   * The one ceiling left, and it is about the phone rather than the renderer.
-   *
-   * `asset.size` is a real file size in real bytes, which is what this has to
-   * be measured in -- the renderers' own limits are in characters, because
-   * glyphs are what they lay out. Above this the file is not asked for at all:
-   * refusing after downloading five megabytes into a component that will not
-   * draw them is what the viewer used to do at a tenth of the size.
-   */
-  const tooLarge = textual && asset.size > MAX_ASSET_TEXT_BYTES;
-  const readable = textual && !tooLarge;
   const [content, setContent] = useState<string | null>(null);
+  /**
+   * Which body this file gets. `too-large` is the one ceiling left, and it is
+   * about the phone rather than the renderer: `asset.size` is a real file size
+   * in real bytes, and above `MAX_ASSET_TEXT_BYTES` the file is not asked for
+   * at all -- refusing after downloading five megabytes into a component that
+   * will not draw them is what the viewer used to do at a tenth of the size.
+   */
+  const presentation = assetPresentation(asset, content?.length);
+  const tooLarge = presentation === 'too-large';
+  const readable =
+    presentation === 'document' || presentation === 'code' || presentation === 'lines';
   const [error, setError] = useState<string | null>(null);
   /** Bumped by "Try again"; the only thing that re-runs the read. */
   const [attempt, setAttempt] = useState(0);
@@ -358,13 +361,21 @@ function AssetSheet({ asset, onClose }: { asset: SessionAsset; onClose: () => vo
           with a `shell.background` had a wallpaper everywhere except here. It
           stays a `Modal` and not a route because it is opened from *inside* the
           files form sheet, where it would be a third subview of a layout that
-          lays out two -- the constraint `session-artifacts.tsx:701` records.
-          And it keeps square corners and no grabber, for the same reason
-          `SheetHandle` draws nothing inside a fullscreen frame: this is a
-          full-bleed viewer, not a sheet that can be dragged away, and rounding
-          the top of something that fills the screen is a corner over nothing. */}
+          lays out two -- the constraint the comment over `AssetViewer` in
+          `session-artifacts.tsx` records. And it keeps square corners and no
+          grabber, for the same reason `SheetHandle` draws nothing inside a
+          fullscreen frame: this is a full-bleed viewer, not a sheet that can be
+          dragged away, and rounding the top of something that fills the screen
+          is a corner over nothing.
+
+          `frosted`, like every other sheet. Without it the wallpaper showed at
+          full strength under whatever was open -- a README's paragraphs, a
+          file's details -- and a full-cover pack made them unreadable. The
+          veil follows the reader's opacity slider down to its floor, exactly
+          as the files sheet this opened from does. A picture never lands here:
+          it opens in the lightbox, on its own black matte. */}
       <View style={styles.sheet}>
-        <SheetFrame tint="background">
+        <SheetFrame tint="background" frosted>
           <View style={[styles.sheetColumn, { paddingBottom: insets.bottom }]}>
             {/* SafeAreaView reports zero insets inside a native Modal, so pad from
             the root provider's insets instead.
@@ -375,44 +386,48 @@ function AssetSheet({ asset, onClose }: { asset: SessionAsset; onClose: () => vo
             that fills the rest of it. A viewer you cannot leave while it is
             loading is worse than one that fails. */}
             <View style={[styles.headerLayer, { paddingTop: insets.top }]}>
+              {/* The sheet's own heading, on the sheet's gutter: the file's name
+                  is the title and its size and age are the caption, and the
+                  two round controls are its trailing edge. Every body below
+                  starts on the same left edge as this name. */}
               <View style={styles.header}>
-                <View style={styles.headerText}>
-                  <Text variant="bodySmall" numberOfLines={1}>
-                    {asset.name}
-                  </Text>
-                  <Text variant="caption" color={theme.colors.textMuted} numberOfLines={1}>
-                    {subtitle}
-                  </Text>
-                </View>
-                {content ? (
-                  <PressableScale
-                    accessibilityLabel={t`Copy`}
-                    onPress={copy}
-                    style={[
-                      styles.close,
-                      { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
-                    ]}>
-                    {copied ? (
-                      <Check size={18} color={theme.colors.success} />
-                    ) : (
-                      <Copy size={18} color={theme.colors.text} />
-                    )}
-                  </PressableScale>
-                ) : null}
-                <PressableScale
-                  accessibilityLabel={t`Close file`}
-                  onPress={onClose}
-                  style={[
-                    styles.close,
-                    { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
-                  ]}>
-                  <X size={18} color={theme.colors.text} />
-                </PressableScale>
+                <SheetSceneHeading
+                  title={asset.name}
+                  caption={subtitle}
+                  trailing={
+                    <View style={styles.headerControls}>
+                      {content ? (
+                        <PressableScale
+                          accessibilityLabel={t`Copy`}
+                          onPress={copy}
+                          style={[
+                            styles.close,
+                            { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
+                          ]}>
+                          {copied ? (
+                            <Check size={18} color={theme.colors.success} />
+                          ) : (
+                            <Copy size={18} color={theme.colors.text} />
+                          )}
+                        </PressableScale>
+                      ) : null}
+                      <PressableScale
+                        accessibilityLabel={t`Close file`}
+                        onPress={onClose}
+                        style={[
+                          styles.close,
+                          { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
+                        ]}>
+                        <X size={18} color={theme.colors.text} />
+                      </PressableScale>
+                    </View>
+                  }
+                />
               </View>
             </View>
 
             {pack ? (
-              <ScrollView contentContainerStyle={{ padding: 20, gap: 16 }}>
+              <ScrollView contentContainerStyle={styles.themePreview}>
                 <CustomThemeLibrary
                   key={`${themeDocumentIdentity}:pack`}
                   initialCandidate={pack}
@@ -425,7 +440,7 @@ function AssetSheet({ asset, onClose }: { asset: SessionAsset; onClose: () => vo
                 />
               </ScrollView>
             ) : previewedThemeDocument === themeDocumentIdentity && themeManifest ? (
-              <ScrollView contentContainerStyle={{ padding: 20, gap: 16 }}>
+              <ScrollView contentContainerStyle={styles.themePreview}>
                 <CustomThemeLibrary
                   key={themeDocumentIdentity}
                   initialManifest={themeManifest}
@@ -437,7 +452,7 @@ function AssetSheet({ asset, onClose }: { asset: SessionAsset; onClose: () => vo
             ) : (
               <>
                 {themeManifest ? (
-                  <View style={{ paddingHorizontal: 20, paddingVertical: 12 }}>
+                  <View style={styles.themeEntry}>
                     <Button
                       testID="asset-preview-theme"
                       onPress={() =>
@@ -445,7 +460,7 @@ function AssetSheet({ asset, onClose }: { asset: SessionAsset; onClose: () => vo
                       }>{t`Preview`}</Button>
                   </View>
                 ) : packaged ? (
-                  <View style={{ paddingHorizontal: 20, paddingVertical: 12, gap: 8 }}>
+                  <View style={styles.themeEntry}>
                     <Button
                       testID="asset-open-theme-package"
                       disabled={Boolean(packProgress)}
@@ -462,6 +477,7 @@ function AssetSheet({ asset, onClose }: { asset: SessionAsset; onClose: () => vo
                 ) : null}
                 <AssetBody
                   asset={asset}
+                  presentation={presentation}
                   readable={readable}
                   tooLarge={tooLarge}
                   content={content}
@@ -504,6 +520,7 @@ function AssetSheet({ asset, onClose }: { asset: SessionAsset; onClose: () => vo
 
 function AssetBody({
   asset,
+  presentation,
   readable,
   tooLarge,
   content,
@@ -512,6 +529,7 @@ function AssetBody({
   onRetry,
 }: {
   asset: SessionAsset;
+  presentation: AssetPresentation;
   readable: boolean;
   /** Text, but past the size the app will hold; nothing was read. */
   tooLarge: boolean;
@@ -526,7 +544,7 @@ function AssetBody({
   const theme = useThemeTokens();
 
   /** A markdown file is a document; everything else is code, whatever it is called. */
-  const document = asset.kind === 'markdown';
+  const document = presentation === 'document';
 
   /**
    * What the highlighted renderer is handed, when it is the one drawing.
@@ -537,9 +555,9 @@ function AssetBody({
    * colours code, and above `HIGHLIGHT_MAX_CHARS` it is not the path taken.
    */
   const source = useMemo(() => {
-    if (content === null || document || content.length > HIGHLIGHT_MAX_CHARS) return '';
+    if (content === null || presentation !== 'code') return '';
     return fencedFile(content, fenceLanguageForFile(asset.name));
-  }, [asset.name, content, document]);
+  }, [asset.name, content, presentation]);
 
   /**
    * The same file as rows, when it is past the size one native pass can lay
@@ -547,9 +565,9 @@ function AssetBody({
    * newlines exactly once, and `CodeLinesView` reads the result.
    */
   const index = useMemo(() => {
-    if (content === null || document || content.length <= HIGHLIGHT_MAX_CHARS) return null;
+    if (content === null || presentation !== 'lines') return null;
     return indexTextLines(content);
-  }, [content, document]);
+  }, [content, presentation]);
 
   /**
    * The path, for a file the reader has to go and open somewhere else.
@@ -689,6 +707,7 @@ function AssetBody({
           markdown={content}
           markdownStyle={markdownStyle}
           selectionColor={theme.colors.primarySubtle}
+          contentInsets={DOCUMENT_INSETS}
         />
       </AssetBodyLayer>
     );
@@ -704,6 +723,7 @@ function AssetBody({
           lines={index.lines}
           longest={index.longest}
           markdownStyle={markdownStyle}
+          inset={SHEET_LADDER.gutter}
           note={t`Too large to highlight — showing plain text.`}
         />
       </AssetBodyLayer>
@@ -763,13 +783,19 @@ function AssetBodyLayer({ id, children }: { id: string; children: React.ReactNod
   );
 }
 
-/** For a PDF or a binary: say what it is and where it stays, and stop there. */
+/**
+ * For a PDF, a video or a binary: say what it is and where it stays, and stop
+ * there.
+ *
+ * Label and value straight on the frosted ground, a hairline between one fact
+ * and the next, on the sheet's gutter -- the sheet's own rows rather than a
+ * card. A raised card here was the one box on the viewer's ground.
+ */
 function AssetDetails({ asset }: { asset: SessionAsset }) {
   const { t } = useLingui();
   const relativeTime = useRelativeTime();
 
   const theme = useThemeTokens();
-  const surfaceBackground = useSurfaceBackground();
   const rows: { label: string; value: string }[] = [
     { label: t`Type`, value: asset.mime || asset.kind },
     { label: t`Size`, value: formatAssetSize(asset.size) || t`unknown` },
@@ -782,13 +808,16 @@ function AssetDetails({ asset }: { asset: SessionAsset }) {
       <Text variant="bodySmall" color={theme.colors.textMuted}>
         <Trans>No preview for this kind of file. It stays on the server.</Trans>
       </Text>
-      <View
-        style={[
-          styles.detailsCard,
-          { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
-        ]}>
-        {rows.map((row) => (
-          <View key={row.label} style={styles.detailsRow}>
+      <View>
+        {rows.map((row, index) => (
+          <View
+            key={row.label}
+            style={[
+              styles.detailsRow,
+              index > 0
+                ? { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.border }
+                : null,
+            ]}>
             <Text variant="caption" color={theme.colors.textMuted}>
               {row.label}
             </Text>
@@ -801,6 +830,13 @@ function AssetDetails({ asset }: { asset: SessionAsset }) {
     </ScrollView>
   );
 }
+
+/**
+ * The document's insets: the sheet's gutter either side, no lead above -- the
+ * heading's own bottom room is the lead -- and room to scroll the last block
+ * clear of the gesture bar.
+ */
+const DOCUMENT_INSETS = { top: 0, bottom: 40, horizontal: SHEET_LADDER.gutter };
 
 const styles = StyleSheet.create({
   sheet: {
@@ -821,20 +857,29 @@ const styles = StyleSheet.create({
   // The bar the theme confirm sits in: the viewer's own gutter, and enough room
   // above the column's bottom inset that the button is not on the edge.
   themeAction: {
-    paddingHorizontal: 20,
+    paddingHorizontal: SHEET_LADDER.gutter,
     paddingTop: 12,
     paddingBottom: 12,
   },
   header: {
+    paddingHorizontal: SHEET_LADDER.gutter,
+    paddingTop: SHEET_LADDER.gap,
+    paddingBottom: SHEET_LADDER.snug,
+  },
+  headerControls: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
   },
-  headerText: {
-    flex: 1,
-    minWidth: 0,
+  // A theme previewed in place: the library's own column, on the gutter.
+  themePreview: {
+    padding: SHEET_LADDER.gutter,
+    gap: 16,
+  },
+  themeEntry: {
+    paddingHorizontal: SHEET_LADDER.gutter,
+    paddingBottom: SHEET_LADDER.snug,
+    gap: 8,
   },
   close: {
     width: 38,
@@ -847,26 +892,23 @@ const styles = StyleSheet.create({
   scroll: {
     flex: 1,
   },
+  // The fenced listing on the sheet's gutter. The fence draws its own code
+  // fill and pans sideways inside it, so lines are never wrapped.
   documentContent: {
-    paddingHorizontal: 16,
-    paddingTop: 12,
+    paddingHorizontal: SHEET_LADDER.gutter,
     paddingBottom: 40,
   },
   markdown: {
     width: '100%',
   },
   detailsContent: {
-    padding: 16,
-    gap: 12,
-  },
-  detailsCard: {
-    borderRadius: 15,
-    borderCurve: 'continuous',
-    padding: 14,
-    gap: 10,
+    paddingHorizontal: SHEET_LADDER.gutter,
+    paddingBottom: 40,
+    gap: SHEET_LADDER.gap,
   },
   detailsRow: {
     gap: 2,
+    paddingVertical: SHEET_LADDER.gap,
   },
   detailsValue: {
     // Paths are long and mid-word breaks are unreadable; let it wrap instead.
@@ -880,7 +922,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
-    padding: 24,
+    paddingHorizontal: SHEET_LADDER.gutter,
+    paddingVertical: 24,
   },
   // The refusal is a sentence with two numbers in it, not a label: it wraps,
   // and it reads as prose centred under nothing rather than as a ragged column.
@@ -891,8 +934,7 @@ const styles = StyleSheet.create({
   // the paragraphs replacing them will.
   skeletonBody: {
     flex: 1,
-    paddingHorizontal: 16,
-    paddingTop: 12,
+    paddingHorizontal: SHEET_LADDER.gutter,
   },
   skeletonParagraph: {
     marginTop: 18,
