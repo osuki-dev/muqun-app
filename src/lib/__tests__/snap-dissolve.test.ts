@@ -1,164 +1,147 @@
 import { describe, expect, test } from 'bun:test';
 
 import {
-  SNAP_HOLD,
+  SNAP_DUST_SKSL,
+  SNAP_END,
   SNAP_MAX_TILES,
   SNAP_TILE_PHONE,
   SNAP_TILE_TABLET,
+  snapCellHash,
+  snapCellSize,
+  snapDustAt,
   snapGrid,
-  snapTile,
-  snapTileHash,
-  snapTileProgress,
   snapTileSize,
-  snapTileTransform,
 } from '../snap-dissolve';
 
-const PHONE = { width: 411, height: 914 };
+const PHONE = { width: 411.43, height: 914.29 };
 const RATIO = 2.625;
+const CELL = snapCellSize(PHONE.width, PHONE.height, RATIO);
 
-function tiles(width = PHONE.width, height = PHONE.height) {
-  const grid = snapGrid(width, height, snapTileSize(width, height));
-  return { grid, all: Array.from({ length: grid.count }, (_, i) => snapTile(grid, i)) };
+/** Every grain centre on the phone, every `step`th column and row. */
+function centres(step = 3) {
+  const out: [number, number][] = [];
+  for (let y = CELL / 2; y < PHONE.height; y += CELL * step) {
+    for (let x = CELL / 2; x < PHONE.width; x += CELL * step) out.push([x, y]);
+  }
+  return out;
 }
 
-describe('snapTileSize', () => {
+describe('grain size', () => {
   test('dust on a phone, a little coarser on a tablet', () => {
     expect(snapTileSize(411, 914)).toBe(SNAP_TILE_PHONE);
-    expect(snapTileSize(914, 411)).toBe(SNAP_TILE_PHONE);
     expect(snapTileSize(1280, 800)).toBe(SNAP_TILE_TABLET);
+    expect(SNAP_TILE_PHONE).toBe(6);
+    expect(SNAP_TILE_TABLET).toBe(8);
+  });
+
+  test('neither emulator reaches the cap, and a bigger screen grows the grain instead', () => {
+    expect(snapGrid(PHONE.width, PHONE.height, SNAP_TILE_PHONE).count).toBe(69 * 153);
+    expect(snapGrid(1280, 800, SNAP_TILE_TABLET).count).toBe(160 * 100);
+    const huge = snapGrid(2048, 2732, SNAP_TILE_TABLET);
+    expect(huge.count).toBeLessThanOrEqual(SNAP_MAX_TILES);
+    expect(huge.tile).toBeGreaterThan(SNAP_TILE_TABLET);
+  });
+
+  test('the drawn grain is a whole number of device pixels', () => {
+    expect((CELL * RATIO) % 1).toBeCloseTo(0, 9);
+    expect(Math.abs(CELL - SNAP_TILE_PHONE)).toBeLessThan(0.5 / RATIO + 1e-9);
   });
 });
 
-describe('snapGrid', () => {
-  test('covers the whole window, the last row and column cut to the edge', () => {
-    const grid = snapGrid(PHONE.width, PHONE.height, 18);
-    expect(grid.cols).toBe(23);
-    expect(grid.rows).toBe(51);
-    expect(grid.count).toBe(23 * 51);
-    const last = snapTile(grid, grid.count - 1);
-    expect(last.x + last.w).toBeCloseTo(PHONE.width);
-    expect(last.y + last.h).toBeCloseTo(PHONE.height);
-    expect(last.w).toBeGreaterThan(0);
-    expect(last.w).toBeLessThanOrEqual(18);
-  });
-
-  test('never asks for more sprites than the cap; the tile grows instead', () => {
-    const grid = snapGrid(2000, 2000, 10);
-    expect(grid.count).toBeLessThanOrEqual(SNAP_MAX_TILES);
-    expect(grid.tile).toBeGreaterThan(10);
-    expect(grid.cols * grid.tile).toBeGreaterThanOrEqual(2000);
-  });
-
-  test('a degenerate window is an empty grid, not NaN', () => {
-    expect(snapGrid(0, 0, 18).count).toBe(0);
-    expect(snapGrid(Number.NaN, 100, 18).count).toBe(0);
-  });
-});
-
-describe('snapTileHash', () => {
-  test('deterministic, in [0, 1), and spread out', () => {
-    const values = Array.from({ length: 2000 }, (_, i) => snapTileHash(i));
-    expect(values).toEqual(Array.from({ length: 2000 }, (_, i) => snapTileHash(i)));
+describe('snapCellHash', () => {
+  test('deterministic, in [0, 1), spread out and uncorrelated with its neighbours', () => {
+    const values: number[] = [];
+    for (let y = 0; y < 40; y++) for (let x = 0; x < 50; x++) values.push(snapCellHash(x, y));
     for (const v of values) {
       expect(v).toBeGreaterThanOrEqual(0);
       expect(v).toBeLessThan(1);
     }
+    expect(snapCellHash(7, 9)).toBe(snapCellHash(7, 9));
     const mean = values.reduce((a, b) => a + b, 0) / values.length;
     expect(mean).toBeGreaterThan(0.45);
     expect(mean).toBeLessThan(0.55);
-    // Neighbours are not correlated, or the jitter would read as stripes.
     expect(new Set(values.map((v) => Math.floor(v * 10))).size).toBe(10);
-    expect(Math.abs(snapTileHash(1) - snapTileHash(2))).toBeGreaterThan(0.01);
   });
 });
 
-describe('snapTileTransform', () => {
-  test('at p = 0 every tile is exactly where it was cut from, fully opaque', () => {
-    const { all } = tiles();
-    for (const tile of all) {
-      const t = snapTileTransform(tile, 0, RATIO);
-      expect(t.scos).toBeCloseTo(1 / RATIO, 9);
-      expect(t.ssin).toBeCloseTo(0, 9);
-      expect(t.tx).toBeCloseTo(tile.x, 6);
-      expect(t.ty).toBeCloseTo(tile.y, 6);
-      expect(t.alpha).toBe(1);
+describe('snapDustAt', () => {
+  test('at p = 0 the picture is exactly itself everywhere', () => {
+    for (const [x, y] of centres()) {
+      for (const [ox, oy] of [
+        [0, 0],
+        [-CELL * 0.49, CELL * 0.49],
+      ]) {
+        expect(snapDustAt(x + ox, y + oy, 0, PHONE, CELL)).toEqual({
+          sx: x + ox,
+          sy: y + oy,
+          alpha: 1,
+        });
+      }
     }
   });
 
-  test('at p = 1 every tile is gone, so the end of the snap is not a cut', () => {
-    const { all } = tiles();
-    for (const tile of all) expect(snapTileTransform(tile, 1, RATIO).alpha).toBe(0);
-    // And the very last tile only just finishes: the clock is not padded.
-    const latest = Math.max(...all.map((tile) => 0.55 * tile.sweep + 0.25 * tile.hash));
-    expect(latest).toBeGreaterThan(0.7);
-  });
-
-  test('tiles leave up and to the right, like dust in wind', () => {
-    const { all } = tiles();
-    for (const tile of all) {
-      const t = snapTileTransform(tile, 1, 1);
-      const centreX = t.tx + (t.scos * tile.w - t.ssin * tile.h) / 2;
-      const centreY = t.ty + (t.ssin * tile.w + t.scos * tile.h) / 2;
-      const dx = centreX - (tile.x + tile.w / 2);
-      const dy = centreY - (tile.y + tile.h / 2);
-      expect(dx).toBeGreaterThanOrEqual(40 - 24);
-      expect(dx).toBeLessThanOrEqual(100 + 24);
-      expect(dy).toBeLessThanOrEqual(-90);
-      expect(dy).toBeGreaterThanOrEqual(-160);
-      // Shrunk by about a third and turned no more than the cap either way.
-      expect(Math.hypot(t.scos, t.ssin)).toBeCloseTo(0.65, 6);
-      expect(Math.abs(Math.atan2(t.ssin, t.scos))).toBeLessThanOrEqual(0.45 + 1e-9);
-    }
+  test('at p = 1 every grain is gone, so the end of the snap is not a cut', () => {
+    for (const [x, y] of centres()) expect(snapDustAt(x, y, 1, PHONE, CELL)).toBeNull();
   });
 
   test('the sweep eats the picture from the left', () => {
-    const { grid } = tiles();
-    const row = 20;
-    const leftmost = snapTile(grid, row * grid.cols);
-    const rightmost = snapTile(grid, row * grid.cols + grid.cols - 1);
-    // Halfway through the exit, the left edge is well on its way out and the
-    // right edge has barely started, whatever their jitter.
-    expect(snapTileProgress(leftmost, 0.5)).toBeGreaterThan(0.6);
-    expect(snapTileProgress(rightmost, 0.5)).toBeLessThan(0.4);
-  });
-
-  test('a tile is carried away solid and only fades in the last stretch of its travel', () => {
-    const { all } = tiles();
-    for (const tile of all) {
-      for (let p = 0; p <= 1.0001; p += 0.01) {
-        const q = snapTileProgress(tile, p);
-        const alpha = snapTileTransform(tile, p).alpha;
-        if (q <= SNAP_HOLD) expect(alpha).toBe(1);
-        else expect(alpha).toBeLessThan(1);
-      }
+    // A third of the way in, the left edge has broken up and the right edge
+    // is still the picture.
+    let leftIntact = 0;
+    let rightIntact = 0;
+    let rows = 0;
+    for (let y = CELL / 2; y < PHONE.height; y += CELL * 2) {
+      rows += 1;
+      const left = snapDustAt(CELL / 2, y, 0.35, PHONE, CELL);
+      const right = snapDustAt(PHONE.width - CELL / 2, y, 0.35, PHONE, CELL);
+      if (left?.sx === CELL / 2 && left.sy === y) leftIntact += 1;
+      if (right?.sx === PHONE.width - CELL / 2 && right.sy === y) rightIntact += 1;
     }
-    // Ease-out: most of the fade happens early in the last stretch.
-    const tile = all[0]!;
-    const halfway = (SNAP_HOLD + 1) / 2;
-    const p = (halfway * 0.45 + 0.55 * tile.sweep + 0.25 * tile.hash) / 1.25;
-    expect(snapTileTransform(tile, p).alpha).toBeCloseTo(0.25, 2);
+    expect(leftIntact / rows).toBeLessThan(0.1);
+    expect(rightIntact / rows).toBe(1);
   });
 
-  test('alpha only ever falls, per tile, as the exit runs', () => {
-    const { all } = tiles();
-    for (const tile of all.slice(0, 200)) {
-      let previous = 1;
-      for (let p = 0; p <= 1.0001; p += 0.05) {
-        const alpha = snapTileTransform(tile, p).alpha;
-        expect(alpha).toBeLessThanOrEqual(previous + 1e-12);
-        previous = alpha;
-      }
+  test('grains carry the picture up and to the right: what a cell shows came from below-left', () => {
+    let moving = 0;
+    for (const [x, y] of centres()) {
+      const sample = snapDustAt(x, y, 0.7, PHONE, CELL);
+      if (!sample || (sample.sx === x && sample.sy === y)) continue;
+      moving += 1;
+      // Drift 0.6..1.4 x (40..100, 90..160) with up to 30 / 12 of turbulence.
+      expect(x - sample.sx).toBeGreaterThanOrEqual(-30);
+      expect(x - sample.sx).toBeLessThanOrEqual(1.4 * 100 + 30);
+      expect(sample.sy - y).toBeGreaterThanOrEqual(-12);
+      expect(sample.sy - y).toBeLessThanOrEqual(1.4 * 160 + 12);
     }
+    expect(moving).toBeGreaterThan(100);
   });
 
-  test('writes into a given object rather than allocating one', () => {
-    const { grid } = tiles();
-    const tile = snapTile(grid, 7);
-    const scratch = snapTile(grid, 0);
-    expect(snapTile(grid, 7, scratch)).toBe(scratch);
-    expect(scratch).toEqual(tile);
-    const out = { scos: 0, ssin: 0, tx: 0, ty: 0, alpha: 0 };
-    expect(snapTileTransform(tile, 0.4, RATIO, out)).toBe(out);
-    expect(out).toEqual(snapTileTransform(tile, 0.4, RATIO));
+  test('grains are solid while carried and thin out as they shrink, so Home shows through', () => {
+    // Behind the front, a grain's centre is covered and its corners are not.
+    let solidCentres = 0;
+    let bareCorners = 0;
+    let behind = 0;
+    for (const [x, y] of centres()) {
+      const centre = snapDustAt(x, y, 0.45, PHONE, CELL);
+      if (!centre || (centre.sx === x && centre.sy === y)) continue;
+      behind += 1;
+      if (centre.alpha === 1) solidCentres += 1;
+      if (snapDustAt(x + CELL * 0.49, y + CELL * 0.49, 0.45, PHONE, CELL) === null)
+        bareCorners += 1;
+    }
+    expect(behind).toBeGreaterThan(50);
+    expect(solidCentres / behind).toBeGreaterThan(0.3);
+    expect(bareCorners / behind).toBeGreaterThan(0.8);
+  });
+});
+
+describe('SNAP_DUST_SKSL', () => {
+  test('is generated from the same constants', () => {
+    expect(SNAP_DUST_SKSL).toContain(`progress * ${SNAP_END}`);
+    expect(SNAP_DUST_SKSL).toContain('uniform shader image;');
+    expect(SNAP_DUST_SKSL).toContain('half4 main(float2 pos)');
+    expect(SNAP_DUST_SKSL).not.toContain('undefined');
+    // No floating-point noise from the interpolated constants (e.g. 0.30000000000000004).
+    expect(/\d\.\d*(0000\d|9999\d)/.test(SNAP_DUST_SKSL)).toBe(false);
   });
 });
