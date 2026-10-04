@@ -144,6 +144,7 @@ import {
   useSelectedAgent,
 } from '@/hooks/use-agent-features';
 import {
+  agentRequestErrorDetail,
   classifyAgentRequestError,
   classifyAgentSessionGone,
   isAgentOfflineError,
@@ -240,6 +241,7 @@ import {
   shouldPreserveNewSessionDraft,
   type AgentWorkbenchOwner,
 } from '@/lib/agent-workbench-ownership';
+import { isHomeRelativePath, settledWorkspaceDirectory } from '@/lib/agent-directory-suggest';
 import { recoverWith, settleAfter } from '@/lib/compiler-safe-control-flow';
 
 /**
@@ -3235,6 +3237,14 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       const ownsSelection = () =>
         selection === workspaceSelectionRef.current && ownsWorkbench(capturedOwner);
       if (!ownsSelection()) return;
+      // A `~` path is the reader's spelling, not a workspace: only the
+      // gateway knows which folder it names, and an older one refuses it
+      // (`400 invalid_directory`). Kept as typed, it became a workspace of
+      // its own -- `~/Work/muqun/themes`, with no sessions in it -- and a
+      // refusal left the screen standing on it. So the session the gateway
+      // answers with names the folder, and a refusal puts the old one back.
+      const typedHome = isHomeRelativePath(directory);
+      const previousDirectory = activeDirectoryRef.current;
       activeDirectoryRef.current = directory;
       setActiveDirectory(directory);
       // Home's explicit new-session intent has no backend session yet. Keep
@@ -3260,6 +3270,12 @@ export const AgentWorkbench = memo(function AgentWorkbench({
             if (!ownsSelection()) return;
           }
           if (!ownsSelection()) return;
+          // The gateway's canonical folder wins over what was typed.
+          const settled = settledWorkspaceDirectory(directory, target.directory);
+          if (settled !== activeDirectoryRef.current) {
+            activeDirectoryRef.current = settled;
+            setActiveDirectory(settled);
+          }
           activeAsidRef.current = target.asid;
           setActiveAsid(target.asid);
           setSessionInfo(target);
@@ -3273,11 +3289,20 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         (err) => {
           console.warn('Failed to switch workspace session:', err);
           if (ownsSelection()) {
+            if (typedHome && activeDirectoryRef.current === directory) {
+              activeDirectoryRef.current = previousDirectory;
+              setActiveDirectory(previousDirectory);
+            }
             if (isAgentOfflineError(err)) setIsOffline(true);
             showToast({
               variant: 'danger',
               title: t`Could not create session`,
-              message: agentErrorRef.current(err, t`Failed to switch project`),
+              // An older gateway takes absolute paths only, and its own
+              // sentence for that does not say what to type instead.
+              message:
+                typedHome && agentRequestErrorDetail(err).code === 'invalid_directory'
+                  ? t`This gateway does not expand ~. Type the full path, starting with /.`
+                  : agentErrorRef.current(err, t`Failed to switch project`),
             });
           }
         }

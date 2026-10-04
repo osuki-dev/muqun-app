@@ -14,6 +14,11 @@ import { streamRecordCrypto } from './gateway-transport';
 import { connectAgentStream, type AgentStreamResponse } from './agent-stream';
 import { isShellNotFoundError } from './agent-shell-errors';
 import type { FileMentionHit } from './file-mentions';
+import {
+  EMPTY_DIRECTORY_LISTING,
+  parseDirectoryListing,
+  type DirectoryListing,
+} from './agent-directory-suggest';
 import { activeLocaleHeaders } from '@/i18n/active-locale';
 import {
   buildAgentCacheKey,
@@ -102,10 +107,7 @@ export { getCachedAgentCatalogSync, getCachedAgentProjectsSync, buildAgentCacheK
  */
 export * from './agent-protocol';
 
-export interface DirectoryItem {
-  name: string;
-  path: string;
-}
+export type { DirectoryItem, DirectoryListing } from './agent-directory-suggest';
 
 export function gatewaySupportsAgentSessions(capabilities: string[] | undefined | null): boolean {
   if (!Array.isArray(capabilities)) return false;
@@ -961,7 +963,7 @@ export async function getAgentDirectories(
   prefix?: string,
   query?: string,
   sessionId?: string
-): Promise<DirectoryItem[]> {
+): Promise<DirectoryListing> {
   const params = new URLSearchParams();
   if (prefix) params.set('prefix', prefix);
   if (query) params.set('query', query);
@@ -969,11 +971,7 @@ export async function getAgentDirectories(
   const path = sessionId
     ? `/api/sessions/${encodeURIComponent(sessionId)}/agent-directories${q}`
     : `/api/agent-directories${q}`;
-  return readJson(
-    path,
-    (value) => (Array.isArray(value) ? (value as DirectoryItem[]) : []),
-    [] as DirectoryItem[]
-  );
+  return readJson(path, parseDirectoryListing, EMPTY_DIRECTORY_LISTING);
 }
 
 // ---------------------------------------------------------------------------

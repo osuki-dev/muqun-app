@@ -2360,6 +2360,10 @@ msgstr "Estado do Git"
 msgid "Go back"
 msgstr "Voltar"
 
+#: src/components/agent-workspace-sheet.tsx
+msgid "Go into {folder}"
+msgstr "Entrar em {folder}"
+
 #: src/i18n/labels.ts
 msgid "Go to the top of the file"
 msgstr "Ir para o início do ficheiro"
@@ -2646,6 +2650,10 @@ msgstr "Manter os temas guardados"
 #: src/components/settings-alerts.tsx
 msgid "Keep the terminal you are watching on the Lock Screen while its agent works."
 msgstr "Manter no ecrã bloqueado o terminal que está a ver enquanto o agente trabalha"
+
+#: src/components/agent-workspace-sheet.tsx
+msgid "Keep typing to narrow down"
+msgstr "Continue digitando para filtrar"
 
 #: src/app/commands.tsx
 msgid "Keys"
@@ -5421,6 +5429,10 @@ msgstr "Este gateway não oferece sessões do {agentName}"
 #: src/lib/network-error.ts
 msgid "This Gateway does not answer to that address."
 msgstr "Este Gateway não responde nesse endereço"
+
+#: src/components/agent-workbench.tsx
+msgid "This gateway does not expand ~. Type the full path, starting with /."
+msgstr "Este gateway não expande ~. Digite o caminho completo, começando com /"
 
 #: src/components/agent-workbench.tsx
 msgid "This gateway does not know {agentName}. Refresh the agent list and try again."
