@@ -2514,7 +2514,14 @@ export function ServerTerminalWorkspace({
   // `onScreen`, not `ready`: a sheet sliding up over the composer must not also
   // unmount it, or it is seen to blink out from under the sheet -- and every
   // layout inset below is derived from this. See `onScreen`.
-  const composerVisible = onScreen && !loadingData && Boolean(selectedPane) && targetReady;
+  // Data in hand is enough. The warm snapshot Home prefetched paints the pane on
+  // the first frame, and the dock used to wait on top of it for this screen's
+  // own first refresh (health, sessions and the session snapshot -- several
+  // round trips, each a tmux fork on the gateway) before drawing at all. On a
+  // loaded Mac that was the 3-6 s the iOS pass saw the dock arrive after the
+  // terminal. Its shortcuts and vocabulary fill in as they land.
+  const composerVisible =
+    onScreen && (hasLoadedData || !loadingData) && Boolean(selectedPane) && targetReady;
   // Attachments are the gateway's own upload endpoint, which the bundled demo
   // data has no counterpart for.
   const attachmentsAvailable = composerVisible && !demoMode;
