@@ -1,4 +1,4 @@
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 
 import { AgentVcsDiffSheet } from '@/components/agent-vcs-diff-sheet';
 import { gatewaySupportsVcsFiles } from '@/lib/agent-protocol';
@@ -11,7 +11,6 @@ import { useServerCapabilities } from '@/stores/server-capabilities';
  * fetches its own.
  */
 export default function AgentVcsDiffScreen() {
-  const router = useRouter();
   const params = useLocalSearchParams<{ sessionId?: string; asid?: string; path?: string }>();
   const bridgeSessionId = useAgentSheetBridge((state) => state.sessionId);
   const bridgeAsid = useAgentSheetBridge((state) => state.activeAsid);
@@ -33,7 +32,6 @@ export default function AgentVcsDiffScreen() {
       asid={asid ?? ''}
       targetPath={params.path}
       filesApi={filesApi}
-      onClose={() => router.back()}
     />
   );
 }

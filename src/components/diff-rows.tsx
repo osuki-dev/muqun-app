@@ -34,6 +34,9 @@ import { useMonoFontFamily } from '@/hooks/use-user-fonts';
 import { gitFileStatusWord } from '@/i18n/labels';
 import { sideOfFile, type GitDiffRow } from '@/lib/git-diff';
 import {
+  CHANGE_TREE_DIR_ROW_HEIGHT,
+  CHANGE_TREE_FILE_ROW_HEIGHT,
+  isMeasuredDiffRow,
   listKeyOfDiffRow,
   stickyDiffRowsOf,
   type DiffListItem,
@@ -129,9 +132,9 @@ const ROW_HEIGHT: Record<DiffListItem['type'], number> = {
   hunk: HUNK_ROW_HEIGHT,
   line: LINE_ROW_HEIGHT,
   more: MORE_ROW_HEIGHT,
-  // The agent Changes sheet's tree rows: estimates only, all but one measured.
-  dir: 40,
-  treeFile: 48,
+  // The Changes sheet's tree rows: a name is one line, so these are exact.
+  dir: CHANGE_TREE_DIR_ROW_HEIGHT,
+  treeFile: CHANGE_TREE_FILE_ROW_HEIGHT,
   context: MORE_ROW_HEIGHT,
   actions: 50,
 };
@@ -174,15 +177,11 @@ export function sizeOfDiffRow(row: DiffListItem): number {
 }
 
 function fixedBodySizeOfDiffRow(row: DiffListItem): number | undefined {
-  // Measure file headers so a collapsed prefix does not force LegendList's
-  // initial pool to use 52px rows. The 18px hint reserves room for an expansion.
-  // Tree rows are measured too: a file name wraps rather than being cut.
-  return row.type === 'file' ||
-    row.type === 'treeFile' ||
-    row.type === 'dir' ||
-    row.type === 'actions'
-    ? undefined
-    : sizeOfDiffRow(row);
+  // Measure the flat sheet's file headers so a collapsed prefix does not force
+  // LegendList's initial pool to use 52px rows. The 18px hint reserves room for
+  // an expansion. Tree rows are exact: a name is cut in the middle on one line,
+  // never wrapped, so the row cannot grow. The actions menu is measured.
+  return isMeasuredDiffRow(row) ? undefined : sizeOfDiffRow(row);
 }
 
 /**
