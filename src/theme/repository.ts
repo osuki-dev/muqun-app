@@ -61,14 +61,15 @@ function validBackgroundOpacity(value: unknown): value is number {
 /**
  * User preferences never mutate the author's stored manifest.
  *
- * The contrast floor (`clampThemeOpacity`) is applied twice: to the author's
- * values, so a pack someone else made cannot impose unreadable surfaces, and
- * again after the owner's preferences are laid on top. The second pass used to
- * be deliberately absent -- the slider in Appearance went wherever the person
- * holding the phone put it -- until the owner asked (2026-10-03) for the floor
- * to hold on the slider as well. With the slider clamped, a stored preference
- * from before has to be read through the same floor, or the control would show
- * the minimum while the surfaces still rendered the old, thinner value.
+ * The contrast floor is applied to the author's values and only to them.
+ * `clampThemeOpacity` answers "what may a pack someone else made impose on a
+ * reader who never asked for it", and that is worth enforcing -- but it used to
+ * run last, over the whole manifest, which meant it also answered "how
+ * transparent may you make your own terminal on your own device", and there it
+ * has no standing. Clamping the author first and laying the owner's choice on
+ * top afterwards keeps the first answer and drops the second: a pack still
+ * cannot ship something unreadable, and the slider in Appearance goes wherever
+ * the person holding the phone puts it.
  */
 export function effectiveThemeManifest(installed: InstalledTheme): ThemeManifest {
   const manifest = clampThemeOpacity(cloneThemeData(installed.manifest));
@@ -101,7 +102,7 @@ export function effectiveThemeManifest(installed: InstalledTheme): ThemeManifest
         ? authored
         : { mode: 'default' };
   }
-  return clampThemeOpacity(manifest);
+  return manifest;
 }
 
 export type ThemeLibrary = {

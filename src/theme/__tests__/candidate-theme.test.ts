@@ -78,15 +78,10 @@ test("an installed candidate wears its own reader preferences, not the author's"
   );
 
   // The slider on this screen writes the installation, and the screen has to
-  // show what it did, read through the same contrast floor the slider stops
-  // at (owner's decision, 2026-10-03): a stored zero renders at the floor.
-  const floor = Math.max(
-    ...[manifest.variants.light, manifest.variants.dark].map(
-      (variant) => themeOpacityPolicy(variant).surface.minimum
-    )
-  );
-  expect(theme.manifest.variants.light.surfaces?.backgroundOpacity).toBe(floor);
-  expect(theme.manifest.variants.dark.surfaces?.backgroundOpacity).toBe(floor);
+  // show what it did -- including all the way to zero, where the author's floor
+  // has no standing over the reader's own device.
+  expect(theme.manifest.variants.light.surfaces?.backgroundOpacity).toBe(0);
+  expect(theme.manifest.variants.dark.surfaces?.backgroundOpacity).toBe(0);
   expect(theme.manifest.homeIdentity?.logo).toEqual({ mode: 'hidden' });
   expect(theme.installationId).toBe('installed');
 });
