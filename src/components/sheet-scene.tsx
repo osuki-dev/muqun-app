@@ -21,6 +21,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSurfaceBackground } from '@/hooks/use-surface-background';
 
 import { PressableScale } from '@/components/pressable-scale';
 import { AGENT_TYPE } from '@/constants/agent-type';
@@ -737,7 +738,14 @@ export function SheetSceneField({
       <Text variant="caption" color={colors.textMuted}>
         {label}
       </Text>
-      <View style={[styles.fieldValue, { borderBottomColor: colors.border }]}>{children}</View>
+      {/* `borderStrong`, a full point: the rule is the only thing that says
+          "type here" on a flush field, and `border` at a hairline is the
+          divider tone -- on a pale paper pack it is gone, and a port field read
+          as two bare lines of text. The grabber uses the same token for the
+          same reason (`sheet-route-frame.tsx`). */}
+      <View style={[styles.fieldValue, { borderBottomColor: colors.borderStrong }]}>
+        {children}
+      </View>
       {error ? (
         <Text variant="caption" color={colors.danger} style={styles.fieldNote}>
           {error}
@@ -797,6 +805,13 @@ export function SheetSceneAction({
 }) {
   const profile = useAppearanceProfile();
   const { colors } = useThemeTokens();
+  const surfaceBackground = useSurfaceBackground();
+  // Disabled reads as "not yet", not as a dimmed primary: half a dark primary
+  // over a pale ground is a grey slab heavier than the form above it. The
+  // raised surface is the chip's fill, so it goes through the theme's surface
+  // opacity like every other content surface.
+  const resting = disabled && !busy;
+  const labelColor = resting ? colors.textSubtle : colors.onPrimary;
   return (
     <PressableScale
       testID={testID}
@@ -807,11 +822,13 @@ export function SheetSceneAction({
       onPress={onPress}
       style={[
         styles.action,
-        { backgroundColor: colors.primary, borderRadius: profile.chrome.control },
-        disabled && !busy ? { opacity: appChrome.opacity.disabled } : null,
+        {
+          backgroundColor: resting ? surfaceBackground(colors.surfaceRaised) : colors.primary,
+          borderRadius: profile.chrome.control,
+        },
       ]}>
       {busy ? <ActivityIndicator size="small" color={colors.onPrimary} /> : leading}
-      <Text variant="bodySmall" weight="bold" color={colors.onPrimary}>
+      <Text variant="bodySmall" weight="bold" color={labelColor}>
         {label}
       </Text>
     </PressableScale>
@@ -1001,7 +1018,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: SHEET_LADDER.gap,
     minHeight: 40,
-    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomWidth: 1,
   },
   // The search field's face, for the same reason. No `lineHeight`: Android
   // clips a single-line input to it and the descenders go with it.
@@ -1024,5 +1041,9 @@ const styles = StyleSheet.create({
     borderCurve: 'continuous',
     marginTop: SHEET_LADDER.snug,
   },
-  quietAction: { minHeight: 44, alignItems: 'center', justifyContent: 'center' },
+  quietAction: {
+    minHeight: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
 });
