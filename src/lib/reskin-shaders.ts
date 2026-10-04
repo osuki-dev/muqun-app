@@ -286,12 +286,15 @@ half4 main(float2 p) {
     ? over(float4(light), base)
     : over(float4(0.0, 0.0, 0.0, -light * 0.7), base);
 
-  // A thin white highlight riding the crest, just behind the front.
+  // A thin white highlight riding the crest, just behind the front, and the
+  // new primary as a one-point fringe on the very edge. Both fade in over the
+  // first few points of travel: before the drop has landed -- while the cover
+  // is still arriving -- they would be a dot sitting still under the finger.
+  float landed = clamp(uFront / 12.0, 0.0, 1.0);
   float c = (x - 2.0) / 1.6;
-  float crestA = uCrest * uDepth * exp(-c * c);
+  float crestA = uCrest * uDepth * landed * exp(-c * c);
   lit = over(float4(crestA), lit);
-  // And the new primary as a one-point fringe on the very edge.
-  lit = over(rimLight(x, uRimWidth, uChroma, uRimColor), lit);
+  lit = over(rimLight(x, uRimWidth, uChroma, uRimColor) * landed, lit);
   return half4(lit);
 }
 `;
@@ -362,7 +365,9 @@ half4 main(float2 p) {
   float lineA = clamp(lines, 0.0, 1.0) * uLineAlpha * uTint.a;
   float4 lit = over(float4(uTint.rgb * lineA, lineA), base);
 
-  float edgeA = exp(-lead * lead / 0.8) * uEdgeAlpha * uTint.a;
+  // Faded in over the first few points, or the edge is a line parked on the
+  // tapped row while the cover arrives.
+  float edgeA = exp(-lead * lead / 0.8) * uEdgeAlpha * uTint.a * clamp(uFront / 12.0, 0.0, 1.0);
   return half4(over(float4(uTint.rgb * edgeA, edgeA), lit));
 }
 `;
