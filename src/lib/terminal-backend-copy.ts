@@ -19,19 +19,19 @@ export const TMUX_START_COMMAND = 'tmux new-session -d';
 export function terminalBackendCopy(backend: string): TerminalBackendCopy {
   if (backend === 'tmux') {
     return {
-      reason: t`Muqun Gateway is running, but it cannot reach a tmux server on its computer.`,
+      reason: t`Muqun Gateway is running, but it cannot reach a tmux server on its computer`,
       hint: t`Start one there, then tap Retry:`,
       command: TMUX_START_COMMAND,
     };
   }
   if (backend === 'herdr') {
     return {
-      reason: t`Muqun Gateway is running, but it cannot reach Herdr on its computer.`,
-      hint: t`Start Herdr there, then tap Retry.`,
+      reason: t`Muqun Gateway is running, but it cannot reach Herdr on its computer`,
+      hint: t`Start Herdr there, then tap Retry`,
     };
   }
   return {
-    reason: t`Muqun Gateway is running, but it cannot reach the ${backend} backend on its computer.`,
-    hint: t`Start it there, then tap Retry.`,
+    reason: t`Muqun Gateway is running, but it cannot reach the ${backend} backend on its computer`,
+    hint: t`Start it there, then tap Retry`,
   };
 }
