@@ -56,6 +56,11 @@ export type HomeContinueEntry = {
 
 type HomeAgentSessionTarget = Extract<HomeTarget, { kind: 'agent-session' }>;
 
+/** The identity a gone agent session is remembered by: one gateway's one session. */
+export function goneSessionKey(serverId: string, asid: string): string {
+  return JSON.stringify([serverId, asid]);
+}
+
 /** How many of the gateway's most recently updated agent sessions Continue merges in. */
 export const HOME_CONTINUE_GATEWAY_SESSION_LIMIT = 8;
 
@@ -210,6 +215,7 @@ export function homeContinueEntries({
   paneMode,
   nowMs,
   gatewaySessions,
+  goneSessions,
 }: {
   serverIds: readonly string[];
   hostIds: readonly string[];
@@ -220,15 +226,23 @@ export function homeContinueEntries({
   nowMs: number;
   /** The selected gateway's agent sessions; an offline or unpaired one contributes nothing. */
   gatewaySessions?: GatewayAgentSessionsSnapshot;
+  /** Sessions the gateway answered gone for (`goneSessionKey`); they are neither recents nor new rows. */
+  goneSessions?: ReadonlySet<string>;
 }): HomeContinueEntry[] {
   const rows: HomeContinueEntry[] = [];
+  const isGone = (serverId: string, asid: string) =>
+    goneSessions?.has(goneSessionKey(serverId, asid)) === true;
   const listed =
     gatewaySessions &&
     serverIds.includes(gatewaySessions.serverId) &&
     reachabilityByServer[gatewaySessions.serverId] !== 'offline'
       ? gatewaySessions
       : undefined;
-  const unclaimed = new Map(listed?.sessions.map((session) => [session.asid, session]));
+  const unclaimed = new Map(
+    listed?.sessions
+      .filter((session) => !isGone(listed.serverId, session.asid))
+      .map((session) => [session.asid, session])
+  );
   for (const serverId of serverIds) {
     if (reachabilityByServer[serverId] === 'offline') continue;
     const model = homeServerModel({
@@ -273,6 +287,7 @@ export function homeContinueEntries({
     )
       continue;
     if (target.kind !== 'ssh-host' && reachabilityByServer[target.serverId] === 'offline') continue;
+    if (target.kind === 'agent-session' && isGone(target.serverId, target.asid)) continue;
     if (
       target.kind === 'gateway-terminal' &&
       supersededTerminalRecent(target, snapshots[target.serverId], paneMode)

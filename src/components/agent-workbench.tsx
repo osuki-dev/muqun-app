@@ -143,7 +143,11 @@ import {
   useAgentsDiscoveryRefresh,
   useSelectedAgent,
 } from '@/hooks/use-agent-features';
-import { classifyAgentRequestError, isAgentOfflineError } from '@/lib/agent-request-error';
+import {
+  classifyAgentRequestError,
+  classifyAgentSessionGone,
+  isAgentOfflineError,
+} from '@/lib/agent-request-error';
 import { agentDisplayName } from '@/lib/home-launch-model';
 import { agentGuideFor } from '@/i18n/labels';
 import { agentGuideCommand, agentGuideStart } from '@/lib/home-agent-readiness';
@@ -189,6 +193,7 @@ import { useAgentSessionState } from '@/stores/agent-session-state';
 import { useAgentPermissionStore } from '@/stores/agent-permissions';
 import { useInAppNotifications } from '@/stores/in-app-notifications';
 import { useHomeAttention } from '@/stores/home-attention';
+import { useGoneAgentSessions } from '@/stores/gone-agent-sessions';
 import { useHomeRecentsStore } from '@/stores/home-recents';
 import {
   isRootSessionRecent,
@@ -1775,24 +1780,42 @@ export const AgentWorkbench = memo(function AgentWorkbench({
             (err) => {
               if (!ownsSnapshot()) return;
               console.warn('Failed to load snapshot:', err);
-              if (
-                freshSessionRef.current !== asid &&
-                err instanceof Error &&
-                (err.message.includes('404') || err.message.includes('session_not_found'))
-              ) {
-                const target = homeTargetFor(asid, activeDirectoryRef.current);
+              const gone = freshSessionRef.current !== asid ? classifyAgentSessionGone(err) : null;
+              if (gone) {
+                // The path the screen already stands on wins over the gateway's
+                // spelling of it: the notice is bound to the screen's directory.
+                const directory =
+                  activeDirectoryRef.current ??
+                  (gone.kind === 'workspace-missing' ? gone.directory : undefined);
+                const target = homeTargetFor(asid, directory);
+                // Forget it on Home, and keep the gateway's own listing from
+                // bringing the row back to open the same dead session again.
                 if (target) {
                   void useHomeRecentsStore.getState().remove(target);
                   useHomeAttention.getState().observe(target, [], Date.now(), snapshotTicket);
                 }
+                useGoneAgentSessions.getState().markGone(serverId, asid);
                 setLoading(false);
-                activeAsidRef.current = undefined;
-                setActiveAsid(undefined);
                 setSessionInfo(null);
                 setTimeline([]);
                 setWindowStart(0);
                 setPermissions([]);
                 setForms([]);
+                if (gone.kind === 'workspace-missing' && directory) {
+                  // The folder is gone, not the reader's place: stay on the
+                  // session and say so with the screen's standing notice, whose
+                  // action is the way to another project. Resetting to an empty
+                  // new-session screen read as a bug.
+                  noteWorkspaceMissing({ code: 'workspace_missing', message: '', directory }, asid);
+                  return;
+                }
+                showToast({
+                  variant: 'warning',
+                  title: t`This session no longer exists`,
+                  message: '',
+                });
+                activeAsidRef.current = undefined;
+                setActiveAsid(undefined);
                 return;
               }
               // Anything else is a session that exists and could not be read. The
@@ -1823,6 +1846,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       follow,
       handleAutoPermission,
       homeTargetFor,
+      noteWorkspaceMissing,
       syncHomeRecentTitle,
       syncHomeRecentObservation,
       serverId,

@@ -5510,6 +5510,10 @@ msgstr "เซสชันนี้"
 msgid "This session has no message to roll back to."
 msgstr "เซสชันนี้ไม่มีข้อความให้ย้อนกลับไป"
 
+#: src/components/agent-workbench.tsx
+msgid "This session no longer exists"
+msgstr "เซสชันนี้ไม่มีอยู่อีกต่อไป"
+
 #: src/components/virtual-keyboard.tsx
 msgid "This terminal can't send {chord}"
 msgstr "เทอร์มินัลนี้ส่ง {chord} ไม่ได้"
