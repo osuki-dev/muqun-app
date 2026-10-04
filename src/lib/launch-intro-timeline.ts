@@ -98,25 +98,29 @@ export type LaunchIntroTimeline = {
    * crosses the screen before the last of them goes.
    */
   snap: IntroBeat;
-  /** Handover to fully hidden, on the exit this timeline actually plays. */
+  /**
+   * Handover to the app being in hand and the cross-fade done. The snap, when
+   * it plays, ends `snap.ms - exit.ms` later -- over an app that already takes
+   * touches; see {@link LAUNCH_INTRO_BUDGET_MS}.
+   */
   totalMs: number;
 };
 
 /**
- * The ceiling, in ms, on everything between the native handover and the
- * overlay being gone.
+ * The ceiling, in ms, on everything between the native handover and the app.
  *
  * Not a target -- a limit. A cold start has already spent time the reader did
  * not choose to spend, and the opening is spending more of it. The stall
  * counts against it: `totalMs + bloomStallCapMs` is the worst case, and it is
  * this number exactly.
  *
- * It was 1600 with a 300 ms cross-fade; the snap is 700. The extra 400 ms is
- * not time the reader waits: the overlay stops taking touches the moment it
- * starts exiting, so Home is in hand from `exit.at`/`snap.at`, which has not
- * moved, and the tiles drift off over an app that already answers.
+ * The snap ({@link LaunchIntroTimeline.snap}) runs 400 ms past `totalMs` and
+ * is deliberately outside this ceiling: the overlay stops taking touches the
+ * moment it starts exiting, so the app is in hand at `exit.at` either way and
+ * the tiles drift off over an app that already answers. Counting the drift
+ * would have meant a 2000 ms ceiling for no extra waiting at all.
  */
-export const LAUNCH_INTRO_BUDGET_MS = 2000;
+export const LAUNCH_INTRO_BUDGET_MS = 1600;
 
 /**
  * How far past the far corner the front travels, as a fraction of the radius
@@ -168,7 +172,7 @@ export function launchIntroTimeline(d: MotionDurations): LaunchIntroTimeline {
     holdUntil,
     exit: { at: holdUntil, ms: d.medium },
     snap,
-    totalMs: snap.at + snap.ms,
+    totalMs: holdUntil + d.medium,
   };
 }
 
