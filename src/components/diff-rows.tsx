@@ -4,7 +4,6 @@ import {
   memo,
   useCallback,
   useContext,
-  useEffect,
   useMemo,
   useState,
   type ReactNode,
@@ -37,10 +36,7 @@ import {
   CHANGE_TREE_DIR_ROW_HEIGHT,
   CHANGE_TREE_FILE_ROW_HEIGHT,
   isMeasuredDiffRow,
-  listKeyOfDiffRow,
-  stickyDiffRowsOf,
   type DiffListItem,
-  type StickyDiffRows,
 } from '@/lib/change-tree';
 import {
   ChangeTreeActionsRowView,
@@ -63,7 +59,7 @@ import { cellsOf, gutterNumbersOf, gutterWidthOf } from '@/lib/diff-geometry';
  * Both diff surfaces in this app draw from here: the terminal's changes sheet,
  * which pages a repository's patches out of the gateway, and the agent's, which
  * is handed whole patches by `…/vcs/diff` and by an `edit` tool call. They used
- * to be two designs -- a recycled list with a gutter and sticky file headers on
+ * to be two designs -- a recycled list with a gutter and file headers on
  * one side, a plain `ScrollView` of marker-coloured `<Text>` on the other, in a
  * third set of greens and reds. A diff is the one thing in this app that must
  * look identical wherever it appears, because the reader is comparing columns.
@@ -461,9 +457,9 @@ const FileRow = memo(function FileRow({
       onPress={() => onToggle(row.path)}
       // A collapsed file is a line in a list and sits on the sheet's own
       // surface with a hairline under it; the raised fill is for the expanded
-      // file only, where the header is also the sticky one and has to read as
-      // a band over the code below it. Painting every file row raised turned
-      // a six-file list into one beige block that stopped mid-sheet.
+      // file only, where the header reads as a band over the code below it.
+      // Painting every file row raised turned a six-file list into one beige
+      // block that stopped mid-sheet.
       style={[
         styles.fileRow,
         {
@@ -712,49 +708,7 @@ function useHorizontalOffset() {
   return { scrollX, onHorizontalScroll };
 }
 
-/**
- * The sticky rows to hand LegendList: `next`, one frame after the rows it was
- * computed from have been committed.
- *
- * LegendList (3.6) drives its sticky headers from a native-driver
- * `Animated.event` on the scroll view, rebuilt whenever `stickyHeaderIndices`
- * changes. Collapsing a long patch shrinks the content and the scroll view
- * clamps its offset in the same commit, and that one scroll event lands while
- * the old native binding is detached and the new one not yet attached: the
- * JS listener sees offset 0, the animated scroll value keeps the old offset,
- * and a pinned header is left translated to where that offset put it. Letting
- * the rows commit first means the clamp goes through the binding that is
- * already there; the binding is swapped a frame later, when nothing scrolls.
- */
-function useStickyRowsAfterCommit(next: StickyDiffRows): AppliedStickyRows {
-  const [applied, setApplied] = useState<AppliedStickyRows>(() => ({ ...next, version: 0 }));
-  useEffect(() => {
-    if (sameStickyRows(applied, next)) return;
-    const frame = requestAnimationFrame(() =>
-      setApplied((current) => ({ ...next, version: current.version + 1 }))
-    );
-    return () => cancelAnimationFrame(frame);
-  }, [applied, next]);
-  return applied;
-}
-
-function sameStickyRows(a: StickyDiffRows, b: StickyDiffRows): boolean {
-  return (
-    a.indices.length === b.indices.length &&
-    a.indices.every((index, at) => index === b.indices[at]) &&
-    a.keys.size === b.keys.size &&
-    [...a.keys].every((key) => b.keys.has(key))
-  );
-}
-
-/**
- * Sticky rows as applied, with a version that changes with them: the rows'
- * keys change with stickiness, and LegendList re-reads keys only when told its
- * data changed.
- */
-interface AppliedStickyRows extends StickyDiffRows {
-  version: number;
-}
+const keyOfRow = (row: DiffListItem) => row.key;
 
 export interface DiffRowListProps {
   rows: readonly DiffListItem[];
@@ -801,14 +755,6 @@ export function DiffRowList({
     useDiffMetrics(rows);
   const { scrollX, onHorizontalScroll } = useHorizontalOffset();
 
-  const sticky = useStickyRowsAfterCommit(useMemo(() => stickyDiffRowsOf(rows), [rows]));
-  // See `listKeyOfDiffRow`: a header's key changes as it becomes sticky, so a
-  // header already on screen is moved into a sticky container straight away.
-  const keyOfListRow = useCallback(
-    (row: DiffListItem) => listKeyOfDiffRow(row, sticky.keys),
-    [sticky]
-  );
-
   const renderRow = useCallback(
     ({ item, index }: LegendListRenderItemProps<DiffListItem>) => (
       <DiffListRow
@@ -843,8 +789,7 @@ export function DiffRowList({
             nestedScrollEnabled
             ref={listRef}
             data={rows as DiffListItem[]}
-            keyExtractor={keyOfListRow}
-            dataVersion={sticky.version}
+            keyExtractor={keyOfRow}
             renderItem={renderRow}
             // Code rows have exact geometry; file headers are measured so the
             // initial container pool uses the short-row allocation hint.
@@ -859,10 +804,6 @@ export function DiffRowList({
             // move because of it.
             showsVerticalScrollIndicator={false}
             maintainVisibleContentPosition={MAINTAIN_POSITION}
-            // Use the core list's native Animated scroll view and sticky engine
-            // together. The Reanimated adapter passes web-only hook dependencies
-            // on native and logs on every recycled header render.
-            stickyHeaderIndices={sticky.indices}
             style={{ width: layout.contentWidth }}
             contentContainerStyle={styles.listContent}
           />
