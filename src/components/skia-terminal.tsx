@@ -325,6 +325,14 @@ export type TerminalCellMetrics = {
   lineHeight: number;
 };
 
+/**
+ * Logs one line per committed frame -- how many blocks it drew, how many it had
+ * to record, the theme identity and the canvas kind -- so a release build can
+ * count re-records on a device (`adb logcat -s ReactNativeJS`). Off unless the
+ * bundle is built with `EXPO_PUBLIC_TERMINAL_TRACE=1`.
+ */
+const TERMINAL_TRACE = process.env.EXPO_PUBLIC_TERMINAL_TRACE === '1';
+
 /** The commit effect's one write to `surfaceBox`; see `recordCommittedHead`. */
 function recordCommittedSurface(
   box: { current: TerminalSurface | undefined },
@@ -930,6 +938,7 @@ export function SkiaTerminal({
       draws,
       keys: plans.map((plan) => plan.key),
       head: nextHeadRecording(plans, frame.lines, previousHead),
+      recorded: plans.reduce((count, plan) => count + (plan.stale ? 1 : 0), 0),
     };
   }, [
     cellWidth,
@@ -961,6 +970,12 @@ export function SkiaTerminal({
   // to the GC when the component goes. `picture-cache.ts` has the reasoning, and
   // it is the reason this pane stopped taking the process down with it.
   const sweepFrame = useRef<number | null>(null);
+  useLayoutEffect(() => {
+    if (!TERMINAL_TRACE) return;
+    console.log(
+      `[terminal] committed blocks=${chunkFrame.draws.length} recorded=${chunkFrame.recorded} theme=${chunkLayoutKey.split('|')[4]} opaque=${canvasIsOpaque}`
+    );
+  }, [canvasIsOpaque, chunkFrame, chunkLayoutKey]);
   useLayoutEffect(() => {
     chunkCache.retain(chunkFrame.keys);
     recordCommittedHead(headBox, chunkFrame.head);
@@ -3490,9 +3505,11 @@ type TerminalChunkFrame = {
   draws: TerminalChunkDraw[];
   keys: string[];
   head: TerminalHeadRecording | undefined;
+  /** Blocks this frame had to record rather than found cached; for the trace. */
+  recorded: number;
 };
 
-const noChunkFrame: TerminalChunkFrame = { draws: [], keys: [], head: undefined };
+const noChunkFrame: TerminalChunkFrame = { draws: [], keys: [], head: undefined, recorded: 0 };
 
 /**
  * Splits the frame's links across the planned blocks.
