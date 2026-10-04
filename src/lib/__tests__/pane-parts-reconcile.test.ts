@@ -9,7 +9,13 @@
 // could not place.
 import { describe, expect, test } from 'bun:test';
 
-import { collapseRepeatedParts, panePartsFromResponse, type PanePart } from '../pane-parts';
+import { buildPaneChatItems } from '../pane-chat';
+import {
+  collapseRepeatedParts,
+  panePartsFromResponse,
+  reconcilePaneParts,
+  type PanePart,
+} from '../pane-parts';
 
 type Block = [type: 'text' | 'status' | 'prompt', text: string, rows?: number];
 
@@ -160,5 +166,55 @@ describe('a screen the gateway wrote down twice', () => {
     const blocks: Block[] = [W2, READ_TWO, IOS_REPORT, W2, READ_TWO];
 
     expect(texts(collapseRepeatedParts(read(blocks)))).toEqual(texts(read(blocks)));
+  });
+});
+
+describe('a window that slid under new output', () => {
+  test('an unchanged part keeps its id when every source row moved', () => {
+    const first = reconcilePaneParts([], 0, read(TRANSCRIPT, 0));
+    // Two new blocks printed; the gateway serves the last N rows of its buffer,
+    // so the window's top moved down by the six rows they took.
+    const slid = read([...TRANSCRIPT.slice(2), W3, APP_DONE], 0);
+    const second = reconcilePaneParts(first.parts, first.offset, slid);
+
+    // Without reconciling, every one of these would have been renumbered.
+    expect(slid[0]?.id).not.toBe(first.parts[2]?.id);
+    for (let index = 0; index < TRANSCRIPT.length - 2; index += 1) {
+      expect(second.parts[index]?.id).toBe(first.parts[index + 2]?.id as string);
+    }
+    expect(new Set(second.parts.map((part) => part.id)).size).toBe(second.parts.length);
+  });
+
+  test('so the chat rows already on screen are the same objects after the slide', () => {
+    const first = reconcilePaneParts([], 0, read(TRANSCRIPT, 0));
+    const before = buildPaneChatItems(first.parts, { detail: 'detailed' });
+    const second = reconcilePaneParts(
+      first.parts,
+      first.offset,
+      read([...TRANSCRIPT.slice(2), W3, APP_DONE], 0)
+    );
+    const after = buildPaneChatItems(second.parts, { detail: 'detailed' }, before);
+
+    const reused = after.filter((item) => before.includes(item));
+    // Everything that was on screen and still is -- all but the two that slid
+    // off the top -- is the very same row object, so the list neither remounts
+    // nor re-renders it.
+    expect(reused).toHaveLength(TRANSCRIPT.length - 2);
+  });
+
+  test('a part still being written keeps its id while it grows', () => {
+    const first = reconcilePaneParts([], 0, read([...TRANSCRIPT, ['text', '● 正在']], 0));
+    const grown = read([...TRANSCRIPT.slice(1), ['text', '● 正在构建']], 0);
+    const second = reconcilePaneParts(first.parts, first.offset, grown);
+
+    expect(second.parts.at(-1)?.id).toBe(first.parts.at(-1)?.id);
+  });
+
+  test('a first read is keyed exactly as the gateway numbered it', () => {
+    const parts = read(TRANSCRIPT, 0);
+    const first = reconcilePaneParts([], 0, parts);
+
+    expect(first.offset).toBe(0);
+    expect(first.parts).toBe(parts);
   });
 });

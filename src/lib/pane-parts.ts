@@ -478,3 +478,82 @@ export function collapseRepeatedParts(parts: readonly PanePart[]): PanePart[] {
 
   return kept.length === parts.length ? (parts as PanePart[]) : kept;
 }
+
+/** A transcript whose ids are stable across reads, and the shift that made them so. */
+export interface ReconciledPaneParts {
+  parts: PanePart[];
+  /** Added to every source row to get the id, carried to the next read. */
+  offset: number;
+}
+
+/**
+ * The incoming transcript, deduplicated and keyed in the previous read's rows.
+ *
+ * A part's id is its source rows, and those rows are counted from the top of the
+ * *window* the gateway served -- the last `lines` rows of its buffer. Once the
+ * buffer is deeper than the window, every row of new output slides the window
+ * down by one, so every part on screen comes back with a different id on every
+ * poll. Measured against a live gateway: from the moment the window filled, not
+ * one id survived from one read to the next. Every list key changed, so the chat
+ * view unmounted and remounted every row it was showing, once a second, for as
+ * long as the agent was printing -- the flicker -- and the reader's position had
+ * nothing left to anchor to.
+ *
+ * So the window's slide is measured, not assumed: each part is matched to the
+ * same text in the previous read, and the shift most of them agree on is the one
+ * the window moved by. Ids are written in the previous read's coordinates, which
+ * makes an unchanged part the same row it was, and lets the incremental builder
+ * in `pane-chat.ts` hand back the same object for it.
+ */
+export function reconcilePaneParts(
+  previous: readonly PanePart[],
+  previousOffset: number,
+  incoming: readonly PanePart[]
+): ReconciledPaneParts {
+  const parts = collapseRepeatedParts(incoming);
+
+  const before = new Map<string, number[]>();
+  for (const part of previous) {
+    if (!part.range || !carriesText(part)) continue;
+    const key = partKey(part);
+    const start = part.range.start + previousOffset;
+    const starts = before.get(key);
+    if (starts) starts.push(start);
+    else before.set(key, [start]);
+  }
+
+  let offset = previousOffset;
+  if (before.size > 0) {
+    const votes = new Map<number, number>();
+    for (const part of parts) {
+      if (!part.range || !carriesText(part)) continue;
+      for (const start of before.get(partKey(part)) ?? []) {
+        const shift = start - part.range.start;
+        votes.set(shift, (votes.get(shift) ?? 0) + 1);
+      }
+    }
+    let best = 0;
+    for (const [shift, count] of votes) {
+      if (
+        count > best ||
+        (count === best && Math.abs(shift - previousOffset) < Math.abs(offset - previousOffset))
+      ) {
+        best = count;
+        offset = shift;
+      }
+    }
+  }
+
+  if (offset === 0) return { parts, offset };
+  return {
+    parts: parts.map((part) =>
+      part.range
+        ? {
+            ...part,
+            id: `r${part.range.start + offset}-${part.range.end + offset}`,
+          }
+        : part
+    ),
+    offset,
+  };
+}
