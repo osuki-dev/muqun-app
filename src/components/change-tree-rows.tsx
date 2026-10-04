@@ -125,83 +125,85 @@ export const ChangeTreeFileRowView = memo(function ChangeTreeFileRowView({
   const { t } = useLingui();
   const { _ } = useLinguiRuntime();
   const word = _(gitFileStatusWord[row.file.status] ?? gitFileStatusWord.unknown);
+  // The toggle and the ... button are siblings, never one inside the other.
+  // Nested inside the row's own button, the ... was left out of the iOS
+  // accessibility tree for some rows (iOS pass: the terminal sheet exposed
+  // "Actions for tracked.txt" and no label for its untracked files), because
+  // an accessible element hides the accessible elements inside it.
   return (
-    <PressableScale
-      testID={`agent-changes-file-${row.path}`}
-      accessibilityRole="button"
-      accessibilityState={{ expanded: row.expanded }}
-      accessibilityLabel={row.expanded ? t`Hide ${row.path}` : t`Show ${row.path}`}
-      feedback="selection"
-      pressedScale={0.995}
-      onPress={() => onToggle(row.path)}
-      onLongPress={onActions ? () => onActions(row.path) : undefined}
+    <View
       style={{
         width,
         backgroundColor: row.expanded ? fill : 'transparent',
         borderBottomColor: colors.border,
         borderBottomWidth: hasSeparator ? StyleSheet.hairlineWidth : 0,
       }}>
-      <Animated.View
-        style={[
-          styles.row,
-          styles.fileRow,
-          pinned,
-          { width: pinnedWidth, paddingLeft: changeTreeIndentOf(row.depth) },
-        ]}>
-        <View style={styles.flexOne}>
-          <Text variant="bodySmall" numberOfLines={1} ellipsizeMode="middle" hugSlack={false}>
-            {row.name}
-          </Text>
-          {row.note === 'error' && row.error ? (
-            <Text variant="caption" numberOfLines={1} color={colors.status.error}>
-              {row.error}
+      <Animated.View style={[styles.row, styles.fileRow, pinned, { width: pinnedWidth }]}>
+        <PressableScale
+          testID={`agent-changes-file-${row.path}`}
+          accessibilityRole="button"
+          accessibilityState={{ expanded: row.expanded }}
+          accessibilityLabel={row.expanded ? t`Hide ${row.path}` : t`Show ${row.path}`}
+          feedback="selection"
+          pressedScale={0.995}
+          onPress={() => onToggle(row.path)}
+          onLongPress={onActions ? () => onActions(row.path) : undefined}
+          style={[styles.fileToggle, { paddingLeft: changeTreeIndentOf(row.depth) }]}>
+          <View style={styles.flexOne}>
+            <Text variant="bodySmall" numberOfLines={1} ellipsizeMode="middle" hugSlack={false}>
+              {row.name}
             </Text>
-          ) : row.unchanged && row.expanded ? (
-            <Text variant="caption" numberOfLines={1} color={colors.subtle}>
-              <Trans>No changes</Trans>
+            {row.note === 'error' && row.error ? (
+              <Text variant="caption" numberOfLines={1} color={colors.status.error}>
+                {row.error}
+              </Text>
+            ) : row.unchanged && row.expanded ? (
+              <Text variant="caption" numberOfLines={1} color={colors.subtle}>
+                <Trans>No changes</Trans>
+              </Text>
+            ) : row.note === 'empty' ? (
+              <Text variant="caption" numberOfLines={1} color={colors.subtle}>
+                <Trans>No textual change</Trans>
+              </Text>
+            ) : row.truncated && row.expanded ? (
+              <Text variant="caption" numberOfLines={1} color={colors.subtle}>
+                <Trans>Patch too long; showing the start of it.</Trans>
+              </Text>
+            ) : null}
+          </View>
+          {row.loading ? <ActivityIndicator size="small" color={colors.subtle} /> : null}
+          <View style={styles.meta}>
+            {/* A conflict is the one status that asks for the reader's attention. */}
+            <Text
+              variant="caption"
+              color={row.file.status === 'conflicted' ? colors.status.running : colors.subtle}>
+              {word}
             </Text>
-          ) : row.note === 'empty' ? (
-            <Text variant="caption" numberOfLines={1} color={colors.subtle}>
-              <Trans>No textual change</Trans>
-            </Text>
-          ) : row.truncated && row.expanded ? (
-            <Text variant="caption" numberOfLines={1} color={colors.subtle}>
-              <Trans>Patch too long; showing the start of it.</Trans>
-            </Text>
-          ) : null}
-        </View>
-        {row.loading ? <ActivityIndicator size="small" color={colors.subtle} /> : null}
-        <View style={styles.meta}>
-          {/* A conflict is the one status that asks for the reader's attention. */}
-          <Text
-            variant="caption"
-            color={row.file.status === 'conflicted' ? colors.status.running : colors.subtle}>
-            {word}
-          </Text>
-          {row.file.binary || row.note === 'binary' ? (
-            <Text variant="caption" color={colors.subtle}>
-              <Trans>Binary file</Trans>
-            </Text>
-          ) : row.file.added === null && row.file.removed === null ? (
-            // Too large for the gateway to count: a dash, never a made-up zero.
-            <Text variant="caption" color={colors.subtle}>
-              —
-            </Text>
-          ) : (
-            <>
-              {row.file.added ? (
-                <Text variant="caption" color={colors.added}>
-                  +{row.file.added}
-                </Text>
-              ) : null}
-              {row.file.removed ? (
-                <Text variant="caption" color={colors.removed}>
-                  −{row.file.removed}
-                </Text>
-              ) : null}
-            </>
-          )}
-        </View>
+            {row.file.binary || row.note === 'binary' ? (
+              <Text variant="caption" color={colors.subtle}>
+                <Trans>Binary file</Trans>
+              </Text>
+            ) : row.file.added === null && row.file.removed === null ? (
+              // Too large for the gateway to count: a dash, never a made-up zero.
+              <Text variant="caption" color={colors.subtle}>
+                —
+              </Text>
+            ) : (
+              <>
+                {row.file.added ? (
+                  <Text variant="caption" color={colors.added}>
+                    +{row.file.added}
+                  </Text>
+                ) : null}
+                {row.file.removed ? (
+                  <Text variant="caption" color={colors.removed}>
+                    −{row.file.removed}
+                  </Text>
+                ) : null}
+              </>
+            )}
+          </View>
+        </PressableScale>
         {onActions ? (
           <PressableScale
             testID={`agent-changes-file-menu-${row.path}`}
@@ -214,7 +216,7 @@ export const ChangeTreeFileRowView = memo(function ChangeTreeFileRowView({
           </PressableScale>
         ) : null}
       </Animated.View>
-    </PressableScale>
+    </View>
   );
 });
 
@@ -322,6 +324,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
+  },
+  fileToggle: {
+    flex: 1,
+    alignSelf: 'stretch',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    minWidth: 0,
   },
   overflow: {
     paddingLeft: 4,

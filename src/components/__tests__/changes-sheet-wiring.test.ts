@@ -45,3 +45,18 @@ test('the pane wrapper asks the pane routes, gated on pane_vcs_files', () => {
   expect(paneSheet).not.toContain('SettingsSegmented');
   expect(sheet).not.toContain('git-diff-side');
 });
+
+test("a file row's actions button is a sibling of its toggle, not inside it", () => {
+  // iOS hides accessible elements nested in an accessible one: the terminal
+  // sheet's untracked rows exposed no "Actions for ..." label.
+  const rows = read('../change-tree-rows.tsx');
+  const fileRow = rows.slice(
+    rows.indexOf('export const ChangeTreeFileRowView'),
+    rows.indexOf('export const ChangeTreeContextRowView')
+  );
+  const toggleClosed = fileRow.indexOf('</PressableScale>');
+  const menu = fileRow.indexOf('agent-changes-file-menu-');
+  expect(toggleClosed).toBeGreaterThan(-1);
+  expect(menu).toBeGreaterThan(toggleClosed);
+  expect(fileRow).toContain('accessibilityLabel={t`Actions for ${row.name}`}');
+});
