@@ -45,6 +45,41 @@ describe('terminal backend state', () => {
     expect(state.backends.map((backend) => backend.label)).toEqual(['b0']);
   });
 
+  test('a load refused for a down backend is down before anything loads', () => {
+    // `/health` says the primary backend is not connected, so the workspace's
+    // first load fails and `loaded` never turns true: the loader used to spin
+    // here forever under a banner that already said why.
+    const state = terminalBackendState({
+      loaded: false,
+      paneCount: 0,
+      backends: terminalBackendRows([], { ...tmuxPlane, backends: [] }),
+      plane: null,
+      unreachable: { backend: 'tmux' },
+    });
+    expect(state.kind).toBe('down');
+    if (state.kind !== 'down') return;
+    expect(state.backend).toBe('tmux');
+    expect(state.message).toContain('tmux');
+  });
+
+  test('a refusal that names no backend falls back to discovery, then herdr', () => {
+    const fromPlane = terminalBackendState({
+      loaded: false,
+      paneCount: 0,
+      backends: [],
+      plane: tmuxPlane,
+      unreachable: {},
+    });
+    expect(fromPlane.kind === 'down' && fromPlane.backend).toBe('tmux');
+    const bare = terminalBackendState({
+      loaded: false,
+      paneCount: 0,
+      backends: [],
+      unreachable: {},
+    });
+    expect(bare.kind === 'down' && bare.backend).toBe('herdr');
+  });
+
   test('nothing loaded yet is pending, so the loader is still right', () => {
     expect(
       terminalBackendState({ loaded: false, paneCount: 0, backends: [], plane: tmuxPlane }).kind

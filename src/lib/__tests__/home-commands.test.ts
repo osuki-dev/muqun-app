@@ -759,6 +759,7 @@ describe('new terminal with no backend running', () => {
   test('reports the backend explanation instead of a bare refusal', async () => {
     const backendDown = {
       message: 'Muqun Gateway cannot reach tmux on this server.',
+      backend: 'tmux',
       backends: [{ sessionId: 'default', label: 'b0', kind: 'tmux', connected: false }],
     };
     const adapter = ports({
