@@ -6,13 +6,13 @@ import {
   LinearGradient,
   Mask,
   Rect,
-  useImage,
   vec,
 } from 'react-native-skia';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet, View, type LayoutChangeEvent } from 'react-native';
 import Animated from 'react-native-reanimated';
 
+import { useSharedSkiaImage } from '@/lib/skia-image-cache';
 import { useLaunchHomeArtwork } from '@/hooks/use-launch-home-artwork';
 import { artworkVisibleTop, editorialArtworkRect } from '@/lib/hero-feather';
 import { fadeIn, listLayout } from '@/lib/motion';
@@ -66,7 +66,7 @@ function HomeEditorialArtworkImage({
     setFailed(true);
     onAvailabilityChange?.(false);
   }, [onAvailabilityChange]);
-  const image = useImage(resolution.source, onError);
+  const image = useSharedSkiaImage(resolution.source, onError);
   const { focalPoint, fit } = resolution.resolved.image;
   const imageRect = useMemo(
     () =>
