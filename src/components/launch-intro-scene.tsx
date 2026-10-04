@@ -39,7 +39,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 
-import { SnapAtlas } from '@/components/launch-snap';
+import { SNAP_DUST_EFFECT, SnapDust } from '@/components/launch-snap';
 import { useAppliedCustomTheme } from '@/components/theme-candidate';
 import { useLaunchHandoff } from '@/stores/launch-handoff';
 import { useLaunchArtwork, useLaunchBackground } from '@/hooks/use-launch-artwork';
@@ -122,7 +122,7 @@ import { resolveThemeImage } from '@/theme/resolve';
  * By the hold, this sheet and Home are drawing the same wallpaper with the same
  * picture in the same place. Then the picture comes apart: the canvas takes a
  * snapshot of the frame it is showing and, in the same canvas, draws that
- * frame cut into small tiles that drift off up and to the right and fade,
+ * frame turned to fine dust that blows off up and to the right and fades,
  * swept from left to right, and what they leave behind is Home
  * (`launch-snap.tsx`, numbers in `snap-dissolve.ts`). The rule holds on the
  * way out as well -- nothing is laid over the artwork; the artwork itself is
@@ -489,7 +489,8 @@ export function LaunchSceneIntro({
   const heroImage = useSharedSkiaImage(heroDrawable ? heroUri : null);
   // The exit is planned as the snap whenever motion is allowed and the canvas
   // draws the whole picture; otherwise it is the cross-fade from the start.
-  const snapAhead = !reduced && canvasWorld && (heroDrawable || !mirror.hasLogo);
+  const snapAhead =
+    !reduced && canvasWorld && SNAP_DUST_EFFECT !== null && (heroDrawable || !mirror.hasLogo);
   const [heroSwapped, setHeroSwapped] = useState(false);
   useEffect(() => {
     if (phase !== 'visible' || !heroImage || heroSwapped) return;
@@ -638,7 +639,7 @@ export function LaunchSceneIntro({
         })
       );
     };
-    // Reduce Motion keeps the plain cross-fade: tiles flying off is exactly the
+    // Reduce Motion keeps the plain cross-fade: dust blowing off is exactly the
     // movement the setting asks us not to make. And the snap can only cut up
     // what the canvas draws: with the picture still a view, or the world an
     // iris of views, a snapshot would leave them behind.
@@ -655,23 +656,23 @@ export function LaunchSceneIntro({
       return;
     }
     // The canvas's children become this frame, cut up; at progress 0 every
-    // tile is where it was cut from, so the swap is the frame already showing,
+    // grain is where it was cut from, so the swap is the frame already showing,
     // and it holds there until the sweep starts (see below).
     setSnapImage(snapshot);
   });
   // The sweep waits for two things, and holds the untouched frame until both:
   //
-  //  - the atlas is in the canvas (`onReady`). Building it takes a couple of
-  //    hundred milliseconds on a slow device, and a clock already running
-  //    would open the snap a quarter of the way in;
+  //  - the dust is in the canvas (`onReady`). Mounting it takes a frame or
+  //    more on a slow device, and a clock already running would open the snap
+  //    partway in;
   //  - Home is laid out underneath and waiting. Its entrance follows
   //    `snapProgress` (the store's driver), and it says when it has rendered
   //    with the reveal; a Home that never says (another layout, the lock gate)
   //    gets `HOME_REVEAL_PATIENCE_MS`. Then a few frames for that to reach the
-  //    screen. From there one clock drives both: the first tile leaves on the
+  //    screen. From there one clock drives both: the first grain leaves on the
   //    frame Home starts arriving, and Home is complete with the last.
-  const [atlasReady, setAtlasReady] = useState(false);
-  const onAtlasReady = useCallback(() => setAtlasReady(true), []);
+  const [dustReady, setDustReady] = useState(false);
+  const onDustReady = useCallback(() => setDustReady(true), []);
   const homeRevealed = useLaunchHandoff((state) => state.ready);
   const [homeWaitOver, setHomeWaitOver] = useState(false);
   useEffect(() => {
@@ -688,7 +689,7 @@ export function LaunchSceneIntro({
     snapProgress.set(
       withTiming(
         1,
-        // Linear on purpose: every tile eases its own departure, and an eased
+        // Linear on purpose: every grain eases its own departure, and an eased
         // clock on top would bunch the sweep at one end.
         { duration: beats.snap.ms, easing: Easing.linear, reduceMotion: ReduceMotion.Never },
         (finished) => {
@@ -698,7 +699,7 @@ export function LaunchSceneIntro({
     );
   });
   useEffect(() => {
-    if (!atlasReady || !(homeRevealed || homeWaitOver)) return;
+    if (!dustReady || !(homeRevealed || homeWaitOver)) return;
     let frames = 0;
     let request = 0;
     const tick = () => {
@@ -711,7 +712,7 @@ export function LaunchSceneIntro({
     };
     request = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(request);
-  }, [atlasReady, homeRevealed, homeWaitOver]);
+  }, [dustReady, homeRevealed, homeWaitOver]);
   useEffect(() => {
     followPhase();
   }, [phase]);
@@ -889,12 +890,12 @@ export function LaunchSceneIntro({
       needsOffscreenAlphaCompositing={phase === 'exiting' && snapImage === null}
       onLayout={onSheetLayout}
       // The sheet's own ground (the splash colour) goes with the paper when the
-      // snap has the frame, or the tiles would leave it behind instead of Home.
+      // snap has the frame, or the dust would leave it behind instead of Home.
       style={[mirror.container.style, snapImage ? styles.bare : null, sheetStyle]}>
       {/*
         The paper, which is the pack's own and is under everything. Gone once
         the snap has the frame: the canvas then draws the whole sheet, and its
-        tiles leave Home behind them, not paper.
+        grains leave Home behind them, not paper.
       */}
       <View
         pointerEvents="none"
@@ -912,14 +913,14 @@ export function LaunchSceneIntro({
         the canvas has been drawing (invisibly, under that splash) since the
         first commit, so the SkSL program is compiled and warm long before the
         front starts to move. At the exit the same canvas draws its own last
-        frame, cut into tiles, instead.
+        frame, turned to dust, instead.
       */}
       {INK_BLOOM_EFFECT ? (
         <Canvas androidWarmup ref={canvasRef} style={StyleSheet.absoluteFill}>
           {snapImage ? (
-            <SnapAtlas
+            <SnapDust
               image={snapImage}
-              onReady={onAtlasReady}
+              onReady={onDustReady}
               progress={snapProgress}
               width={sheet.width}
             />
