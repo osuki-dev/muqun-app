@@ -12,7 +12,6 @@ import { packTheme, unpackTheme } from '../package';
 import { clampThemeOpacity, themeOpacityPolicy } from '../opacity-policy';
 const starterPolicies = Object.values(createThemeStarter().variants).map(themeOpacityPolicy);
 const surfaceFloor = Math.max(...starterPolicies.map((policy) => policy.surface.minimum));
-const terminalFloor = Math.max(...starterPolicies.map((policy) => policy.terminal.minimum));
 
 function setup() {
   let value: string | undefined;
@@ -120,19 +119,13 @@ test('preferences persist independently, invalidate active state, and reset to a
   expect(repo.snapshot().themes[0].manifest).toEqual(manifest);
   const reopened = new ThemeRepository(storage, () => 'unused');
   reopened.hydrate();
-  // Stored verbatim, read through the contrast floor: the slider stops at the
-  // floor (owner's decision, 2026-10-03), so a preference below it -- 0.3 and
-  // 0.7 are chosen to sit under the starter's floors -- renders at the floor,
-  // while the stored number is kept so lowering the floor later restores it.
-  expect(reopened.snapshot().themes[0].surfaceBackgroundOpacity).toBe(0.3);
-  expect(reopened.snapshot().themes[0].terminalBackgroundOpacity).toBe(0.7);
+  // Verbatim, not raised to the contrast floor. The floor governs what an
+  // author may impose on a reader; this is the reader's own preference on
+  // their own device, and 0.3 is below `surfaceFloor` on purpose so this test
+  // fails if the clamp ever creeps back over it.
   for (const mode of ['light', 'dark'] as const) {
-    expect(reopened.active()?.manifest.variants[mode].surfaces?.backgroundOpacity).toBe(
-      Math.max(0.3, surfaceFloor)
-    );
-    expect(reopened.active()?.manifest.variants[mode].terminal.backgroundOpacity).toBe(
-      Math.max(0.7, terminalFloor)
-    );
+    expect(reopened.active()?.manifest.variants[mode].surfaces?.backgroundOpacity).toBe(0.3);
+    expect(reopened.active()?.manifest.variants[mode].terminal.backgroundOpacity).toBe(0.7);
   }
   expect(reopened.active()?.manifest.homeIdentity?.logo?.mode).toBe('hidden');
   expect(reopened.active()?.manifest.homeIdentity?.name?.mode).toBe('default');
@@ -261,13 +254,13 @@ test('package export resolves all preferences; colors-only export still excludes
   ).manifest;
   expect(exported.homeIdentity?.logo?.mode).toBe('hidden');
   expect(exported.homeIdentity?.name?.mode).toBe('hidden');
-  // An export is a copy of what this reader is looking at, and since the
-  // slider stops at the floor (owner's decision, 2026-10-03), that is their
-  // 0.15 raised to `surfaceFloor`.
-  expect(exported.variants.dark.surfaces?.backgroundOpacity).toBe(Math.max(0.15, surfaceFloor));
+  // The reader's own setting travels with the export as they set it. Their
+  // 0.15 is below `surfaceFloor`, which is the point: the floor clamps the
+  // author's value, not theirs.
+  expect(exported.variants.dark.surfaces?.backgroundOpacity).toBe(0.15);
   const colors = parseThemeManifest(repo.exportColors('theme'));
   expect(colors.homeIdentity).toBeUndefined();
-  expect(colors.variants.light.surfaces?.backgroundOpacity).toBe(Math.max(0.15, surfaceFloor));
+  expect(colors.variants.light.surfaces?.backgroundOpacity).toBe(0.15);
 });
 
 test('custom themes default to no Home branding without overwriting explicit choices', () => {

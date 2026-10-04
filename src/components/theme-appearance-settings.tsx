@@ -8,7 +8,6 @@ import { useState } from 'react';
 import { View } from 'react-native';
 
 import { OpacitySlider } from '@/components/opacity-slider';
-import { clampOpacity } from '@/components/opacity-slider.types';
 import { SettingsSegmented } from '@/components/settings-segmented';
 import { Button } from '@/components/themed-button';
 import { Toggle } from '@/components/toggle';
@@ -208,21 +207,25 @@ function OpacityControl({
   const { colors } = useThemeTokens();
   const [draft, setDraft] = useState<number | null>(null);
   /**
-   * The contrast floor holds the slider.
+   * The contrast floor advises here; it does not hold the slider.
    *
-   * `clampThemeOpacity` raises an *authored* value to this floor at install
-   * time, so a pack someone else made cannot impose unreadable surfaces. The
-   * slider used to stop at that floor only as advice, and the travel below it
-   * was the owner's; the owner asked (2026-10-03) for the floor to hold here
-   * too, because a slider that can reach 0 leaves the settings cards sitting on
-   * the bare wallpaper and the custom-theme Done button barely visible. So the
-   * slider's minimum is the policy's minimum, the shown value never reads below
-   * it, and the caption states the floor as a fact rather than a recommendation.
-   * A stored preference from before this change is not rewritten; it snaps up
-   * to the floor the first time the slider is touched.
+   * Two different things were being decided by one number. `clampThemeOpacity`
+   * raises an *authored* value to this floor at install time, and that is worth
+   * keeping: it governs what a pack someone else made can impose on a reader
+   * who never asked for it. This control is the other case entirely -- the
+   * owner of the device, moving their own slider, on a wallpaper they chose.
+   * Refusing them is not protection, it is a guess about their eyes made by a
+   * formula that assumes the worst possible backdrop (`minimumContrast` bounds
+   * every pair against pure black *and* pure white, so the floor can never
+   * reach 0 no matter how dark the picture actually is).
+   *
+   * So the number stays on screen, as the recommendation it always was, and
+   * the travel below it is theirs. Anyone who takes the terminal to nothing
+   * and cannot read it has the same slider to bring it back.
    */
-  const shown = clampOpacity(draft ?? value, minimum);
+  const shown = draft ?? value;
   const minimumPercent = Math.ceil(minimum * 100);
+  const belowRecommended = shown + 0.0001 < minimum;
   return (
     <View style={{ gap: 4 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
@@ -239,18 +242,20 @@ function OpacityControl({
       </Text>
       <OpacitySlider
         value={shown}
-        minimumValue={minimum}
+        minimumValue={0}
         disabled={disabled}
         label={label}
         testID={testID}
         onValueChange={setDraft}
         onSlidingComplete={(next) => {
           setDraft(null);
-          onCommit(clampOpacity(next, minimum));
+          onCommit(next);
         }}
       />
-      <Text variant="caption" color={colors.textMuted}>
-        {t`Minimum for readable text: ${minimumPercent}%`}
+      <Text variant="caption" color={belowRecommended ? colors.warning : colors.textMuted}>
+        {belowRecommended
+          ? t`Below ${minimumPercent}%, text is no longer guaranteed to stay readable`
+          : t`Recommended minimum for readable text: ${minimumPercent}%`}
       </Text>
     </View>
   );

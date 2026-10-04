@@ -760,6 +760,10 @@ msgstr "バックスペース"
 msgid "Behaviour"
 msgstr "動作"
 
+#: src/components/theme-appearance-settings.tsx
+msgid "Below {minimumPercent}%, text is no longer guaranteed to stay readable"
+msgstr "{minimumPercent}% を下回ると、文字が読めることは保証されません"
+
 #: src/components/change-tree-rows.tsx
 #: src/components/diff-rows.tsx
 msgid "Binary file"
@@ -2854,10 +2858,6 @@ msgstr "メッセージをクリップボードにコピーしました"
 msgid "Message not sent"
 msgstr "メッセージを送信できませんでした"
 
-#: src/components/theme-appearance-settings.tsx
-msgid "Minimum for readable text: {minimumPercent}%"
-msgstr "文字が読める下限:{minimumPercent}%"
-
 #. placeholder {0}: part.mode
 #: src/components/agent-message-block.tsx
 msgid "Mode · {0}"
@@ -3909,6 +3909,10 @@ msgstr "最近の出力"
 #: src/components/agent-model-sheet.tsx
 msgid "Recently used"
 msgstr "最近使用したモデル"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Recommended minimum for readable text: {minimumPercent}%"
+msgstr "文字が読める推奨の下限:{minimumPercent}%"
 
 #: src/components/gateway-tunnel-badge.tsx
 #: src/components/ssh-terminal-workspace.tsx
