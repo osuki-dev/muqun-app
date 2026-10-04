@@ -5510,6 +5510,10 @@ msgstr "Este terminal ya no está disponible"
 msgid "This terminal is no longer available. Choose another terminal."
 msgstr "Este terminal ya no está disponible. Elige otro terminal"
 
+#: src/components/changes-sheet.tsx
+msgid "This terminal pane is gone."
+msgstr "Este panel de terminal ya no existe"
+
 #: src/components/server-terminal-workspace.tsx
 msgid "This terminal was removed. Choose another terminal to continue."
 msgstr "Este terminal se eliminó. Elige otro terminal para continuar"

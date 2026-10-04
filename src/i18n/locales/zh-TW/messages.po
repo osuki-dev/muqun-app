@@ -5510,6 +5510,10 @@ msgstr "這個終端機已經不存在"
 msgid "This terminal is no longer available. Choose another terminal."
 msgstr "此終端機已無法使用。請選擇其他終端機"
 
+#: src/components/changes-sheet.tsx
+msgid "This terminal pane is gone."
+msgstr "這個終端窗格已不存在"
+
 #: src/components/server-terminal-workspace.tsx
 msgid "This terminal was removed. Choose another terminal to continue."
 msgstr "此終端機已被移除。請選擇其他終端機以繼續"

@@ -2423,9 +2423,10 @@ export interface AgentVcsFiles {
   vcs?: 'git' | null;
   /**
    * `no_default_branch`: `mode=branch` was asked of a repository with nothing
-   * to compare against.
+   * to compare against. `unknown_pane`: the pane route's `404` -- the
+   * terminal pane is gone.
    */
-  reason?: 'not_a_repository' | 'no_default_branch' | 'workspace_missing';
+  reason?: 'not_a_repository' | 'no_default_branch' | 'workspace_missing' | 'unknown_pane';
   missing?: WorkspaceMissing;
 }
 

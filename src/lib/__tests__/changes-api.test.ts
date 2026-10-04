@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'bun:test';
+import { readFileSync } from 'node:fs';
 
 import { gatewaySupportsPaneVcsFiles, type AgentVcsFiles } from '../agent-protocol';
 import { buildChangeTree, changeTreeRows } from '../change-tree';
@@ -220,6 +221,28 @@ describe('paneChangesApi', () => {
     expect(calls.map((call) => call[0])).toEqual(['files', 'status']);
     // `git/status` has no base to compare with: the sheet goes back to working.
     expect((await api.listing('branch')).reason).toBe('no_default_branch');
+  });
+});
+
+describe('a pane that is gone', () => {
+  test('is an answer the sheet shows, not a fallback to git/status', async () => {
+    const calls: Call[] = [];
+    const api = paneChangesApi(
+      { sessionId: 's', paneId: '%9', vcsFiles: true },
+      paneClient({ files: [], mode: 'working', truncated: false, reason: 'unknown_pane' }, calls)
+    );
+    const listing = await api.listing('working');
+    expect(listing.reason).toBe('unknown_pane');
+    expect(listing.changes).toEqual([]);
+    expect(calls.map((call) => call[0])).toEqual(['files']);
+  });
+
+  test('the sheet names it, and the gateway client answers it from a 404 unknown_pane', () => {
+    const read = (path: string) => readFileSync(new URL(path, import.meta.url), 'utf8');
+    expect(read('../../components/changes-sheet.tsx')).toContain(
+      "listing.reason === 'unknown_pane'"
+    );
+    expect(read('../gateway-client.ts')).toContain("reason: 'unknown_pane'");
   });
 });
 

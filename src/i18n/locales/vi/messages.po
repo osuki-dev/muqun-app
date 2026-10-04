@@ -5510,6 +5510,10 @@ msgstr "Terminal này không còn khả dụng"
 msgid "This terminal is no longer available. Choose another terminal."
 msgstr "Terminal này không còn khả dụng. Hãy chọn terminal khác"
 
+#: src/components/changes-sheet.tsx
+msgid "This terminal pane is gone."
+msgstr "Ô terminal này không còn nữa"
+
 #: src/components/server-terminal-workspace.tsx
 msgid "This terminal was removed. Choose another terminal to continue."
 msgstr "Terminal này đã bị xóa. Hãy chọn terminal khác để tiếp tục"

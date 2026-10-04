@@ -43,7 +43,7 @@ export interface ChangeListing {
   /** Every patch, already in hand (`eager` only); empty otherwise. */
   patches: ReadonlyMap<string, string>;
   truncated: boolean;
-  reason?: 'not_a_repository' | 'no_default_branch' | 'workspace_missing';
+  reason?: AgentVcsFiles['reason'];
   missing?: WorkspaceMissing;
   /** The ref "compared with" names, when the gateway offers one. */
   base?: string;
