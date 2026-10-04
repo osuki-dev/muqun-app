@@ -5510,6 +5510,10 @@ msgstr "本次会话"
 msgid "This session has no message to roll back to."
 msgstr "这个会话还没有可以回滚到的消息"
 
+#: src/components/agent-workbench.tsx
+msgid "This session no longer exists"
+msgstr "此会话已不存在"
+
 #: src/components/virtual-keyboard.tsx
 msgid "This terminal can't send {chord}"
 msgstr "此终端无法发送 {chord}"

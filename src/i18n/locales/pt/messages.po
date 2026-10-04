@@ -5510,6 +5510,10 @@ msgstr "Esta sessão"
 msgid "This session has no message to roll back to."
 msgstr "Esta sessão não tem nenhuma mensagem para a qual voltar"
 
+#: src/components/agent-workbench.tsx
+msgid "This session no longer exists"
+msgstr "Esta sessão já não existe"
+
 #: src/components/virtual-keyboard.tsx
 msgid "This terminal can't send {chord}"
 msgstr "Este terminal não pode enviar {chord}"

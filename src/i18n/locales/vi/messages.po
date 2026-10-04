@@ -5510,6 +5510,10 @@ msgstr "Phiên này"
 msgid "This session has no message to roll back to."
 msgstr "Phiên này không có tin nhắn nào để quay lại"
 
+#: src/components/agent-workbench.tsx
+msgid "This session no longer exists"
+msgstr "Phiên này không còn tồn tại"
+
 #: src/components/virtual-keyboard.tsx
 msgid "This terminal can't send {chord}"
 msgstr "Terminal này không gửi được {chord}"
