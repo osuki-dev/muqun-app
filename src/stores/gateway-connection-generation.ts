@@ -10,8 +10,10 @@ import { create } from 'zustand';
  * on screen until the App is reopened.
  *
  * The gateway names its process with one opaque `generation` string, sent in
- * `/health`, `/api/discovery`, every pane read and parts answer, and the
- * stream's `hello`. This store keeps the last one seen per server, and says
+ * `/health` and `/api/discovery` (top level), every pane read
+ * (`result.read.generation`) and parts answer (`data.generation`), every
+ * streamed `pane_updated` frame that inlines output (`data.generation`), and
+ * the `/api/ws` hello. This store keeps the last one seen per server, and says
  * when it changed: that is the moment every window held for that server
  * describes buffers that no longer exist, and must be dropped and read again.
  *
@@ -36,8 +38,8 @@ const WRAPPERS = ['read', 'result', 'data'] as const;
 
 /**
  * The `generation` an answer carries, wherever it sits: at the top level
- * (health, discovery, a pane read beside its data fields, a stream `hello`)
- * or inside the `read`/`result`/`data` envelope a pane read may be wrapped in.
+ * (health, discovery, the ws hello) or inside the `result`/`read`/`data`
+ * envelopes (a pane read, a parts answer, a streamed output frame).
  * `undefined` for anything without a non-empty string there.
  */
 export function readGatewayGeneration(value: unknown, depth = 0): string | undefined {

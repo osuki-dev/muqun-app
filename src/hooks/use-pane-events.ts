@@ -89,11 +89,13 @@ type PaneEventHandlers = {
    */
   onApprovalChanged?: (event: ApprovalEventName, payload: unknown) => void;
   /**
-   * The stream's `hello`, sent once at connect. Its `generation` names the
-   * gateway process; the payload is handed up parsed and unchecked, and a
-   * gateway that sends no `hello` never calls this.
+   * A `pane_updated` frame that inlined output, whole, before its output is
+   * handed to `onPaneOutput`. Such a frame carries the gateway's instance
+   * generation at `data.generation` (absent on gateways older than the field);
+   * reporting it first lets a restart drop what is held before the frame is
+   * folded into it.
    */
-  onHello?: (payload: unknown) => void;
+  onOutputFrame?: (payload: unknown) => void;
 };
 
 type HerdrEventPayload = {
@@ -166,6 +168,7 @@ export function usePaneEvents(
           const revision = pane.revision ?? 0;
           // When the gateway inlined the output, paint it directly -- no read.
           if (typeof payload.data?.output === 'string') {
+            handlersRef.current.onOutputFrame?.(payload);
             handlersRef.current.onPaneOutput(pane.pane_id, revision, payload.data.output);
           } else {
             handlersRef.current.onPaneRevision(pane.pane_id, revision);
@@ -191,20 +194,8 @@ export function usePaneEvents(
       }
     };
 
-    const handleHello = (data: string) => {
-      const handler = handlersRef.current.onHello;
-      if (!handler) return;
-      try {
-        handler(JSON.parse(data));
-      } catch {
-        // An unreadable hello names no generation, which is a gateway too old
-        // to name one: nothing to act on.
-      }
-    };
-
     const dispatch = (name: string, data: string) => {
       if (name === 'herdr') handleHerdrEvent(data);
-      else if (name === 'hello') handleHello(data);
       else if (approvalNames.has(name)) handleApprovalEvent(name, data);
     };
 
