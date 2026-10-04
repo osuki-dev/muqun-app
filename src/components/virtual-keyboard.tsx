@@ -26,7 +26,12 @@ import { useMonoFontFamily } from '@/hooks/use-user-fonts';
 import { withAlpha } from '@/lib/color';
 import { feedback } from '@/lib/feedback';
 import { timing } from '@/lib/motion';
-import { chordGlyph, heldBackModifiers, type KeyboardVocabulary } from '@/lib/key-vocabulary';
+import {
+  chordGlyph,
+  heldBackModifiers,
+  type KeyboardVocabulary,
+  type KeyOutcome,
+} from '@/lib/key-vocabulary';
 import {
   changeKeyboardLayout,
   keyboardChordName,
@@ -152,8 +157,8 @@ type VirtualKeyboardProps = {
   /** A printable character, sent as text. */
   onText: (text: string) => void;
   /** A named key -- enter, backspace, esc, tab, an arrow -- sent as keys. */
-  /** A pane may answer how the key went; `'unsupported'` is the gateway refusing the chord. */
-  onKey: (key: string) => void | Promise<'sent' | 'unsupported' | 'failed'>;
+  /** A pane may answer how the key went; `{ unsupported }` is the gateway refusing the chord. */
+  onKey: (key: string) => void | Promise<KeyOutcome>;
   /** Return to the compact key row. */
   onClose: () => void;
   /**
@@ -213,7 +218,12 @@ export function VirtualKeyboard({
   const lastModifierTap = useRef<{ modifier: string; at: number } | null>(null);
   const [functionStrip, setFunctionStrip] = useState(functionStripMemory.shown);
   /** The chord last refused, shown until the hint times out; `count` restarts it on a repeat. */
-  const [refused, setRefused] = useState<{ chord: string; count: number } | null>(null);
+  const [refused, setRefused] = useState<{
+    chord: string;
+    count: number;
+    /** The gateway's own explanation, shown verbatim as a second line. */
+    detail: string | null;
+  } | null>(null);
   const ctrl = ctrlState !== 'off';
   const alt = altState !== 'off';
 
@@ -252,8 +262,8 @@ export function VirtualKeyboard({
     return resolveKeyboardInput(value, kind, modifiers, vocabulary);
   }
 
-  function flagRefused(chord: string) {
-    setRefused((previous) => ({ chord, count: (previous?.count ?? 0) + 1 }));
+  function flagRefused(chord: string, detail: string | null = null) {
+    setRefused((previous) => ({ chord, count: (previous?.count ?? 0) + 1, detail }));
   }
 
   function send(input: KeyboardInput | null, chord: string) {
@@ -267,7 +277,7 @@ export function VirtualKeyboard({
       const sent = onKey(input.key);
       if (sent) {
         void sent.then((outcome) => {
-          if (outcome === 'unsupported') flagRefused(chord);
+          if (typeof outcome === 'object') flagRefused(chord, outcome.unsupported);
         });
       }
     }
@@ -337,6 +347,11 @@ export function VirtualKeyboard({
         <Text variant="caption" color={keyText} style={styles.hintText}>
           {hintText}
         </Text>
+        {refused?.detail ? (
+          <Text variant="caption" color={keyText} style={styles.hintText}>
+            {refused.detail}
+          </Text>
+        ) : null}
       </View>
     </View>
   ) : null;
