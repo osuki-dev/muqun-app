@@ -7,6 +7,7 @@ import {
   RIPPLE_DECAY,
   RIPPLE_FRONT_SHARE,
   RIPPLE_SETTLE_FROM,
+  RIPPLE_SNAPSHOT_BUDGET_MS,
   RIPPLE_TAIL,
   RIPPLE_THIRD_RING,
   RIPPLE_WAVELENGTH,
@@ -30,6 +31,7 @@ import {
   scanFront,
   scanReach,
   selectReskinPlay,
+  snapshotBudget,
   shouldAttemptSnapshot,
   snapshotOutcome,
   washFront,
@@ -401,4 +403,32 @@ test('theme reveal releases touches after the covered swap, including reduced mo
   // Font metrics still move beneath the photograph during their reveal.
   expect(reskinBlocksTouches('halftone', false)).toBe(true);
   expect(reskinBlocksTouches('scan', false)).toBe(true);
+});
+
+describe('snapshotBudget', () => {
+  test('iOS photographs every play on the ordinary budget', () => {
+    for (const play of ['ripple', 'scan', 'wash', 'halftone', 'crossfade'] as const) {
+      expect(snapshotBudget('ios', play)).toBe(SNAPSHOT_BUDGET_MS);
+    }
+  });
+
+  test('Android waits longer, and only for the plays that need the old picture', () => {
+    expect(snapshotBudget('android', 'ripple')).toBe(RIPPLE_SNAPSHOT_BUDGET_MS);
+    expect(snapshotBudget('android', 'scan')).toBe(RIPPLE_SNAPSHOT_BUDGET_MS);
+    expect(snapshotBudget('android', 'wash')).toBeNull();
+    expect(snapshotBudget('android', 'halftone')).toBeNull();
+    expect(snapshotBudget('android', 'crossfade')).toBeNull();
+    expect(RIPPLE_SNAPSHOT_BUDGET_MS).toBeGreaterThan(SNAPSHOT_BUDGET_MS);
+  });
+
+  test('a photograph is judged, and scored, against the budget it was given', () => {
+    const image = {};
+    expect(snapshotOutcome(image, 200)).toBe('slow');
+    expect(snapshotOutcome(image, 200, RIPPLE_SNAPSHOT_BUDGET_MS)).toBe('ok');
+    expect(snapshotOutcome(image, RIPPLE_SNAPSHOT_BUDGET_MS + 1, RIPPLE_SNAPSHOT_BUDGET_MS)).toBe(
+      'slow'
+    );
+    expect(recordSnapshotCost(1, 200, RIPPLE_SNAPSHOT_BUDGET_MS)).toBe(0);
+    expect(recordSnapshotCost(1, 403, RIPPLE_SNAPSHOT_BUDGET_MS)).toBe(2);
+  });
 });

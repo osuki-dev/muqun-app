@@ -29,6 +29,27 @@ import type { ReskinPoint, ReskinSize } from './reskin-shaders';
 export const SNAPSHOT_BUDGET_MS = 120;
 
 /**
+ * The same budget for the ripple and the scan on Android, in milliseconds.
+ *
+ * Android's view capture is a software redraw of the view tree, so it never
+ * fits {@link SNAPSHOT_BUDGET_MS}; a real phone measures roughly 60-150 ms for
+ * a full screen, a GPU-less emulator 380-640 ms. These two plays are the ones
+ * that need a picture of the old interface to read as what they are -- a
+ * ripple over flat paper is a circular reveal -- so they are allowed to wait
+ * this long for one before falling back to the veil.
+ */
+export const RIPPLE_SNAPSHOT_BUDGET_MS = 260;
+
+/**
+ * How long a play may wait for a photograph on this platform, or `null` when
+ * it does not photograph at all and goes straight to the veil.
+ */
+export function snapshotBudget(platform: string, play: ReskinPlay): number | null {
+  if (platform !== 'android') return SNAPSHOT_BUDGET_MS;
+  return play === 'ripple' || play === 'scan' ? RIPPLE_SNAPSHOT_BUDGET_MS : null;
+}
+
+/**
  * What stands over the old interface while the new one settles.
  *
  * - `photograph`: a picture of the old screen itself (`makeImageFromView`).
@@ -47,6 +68,11 @@ export const SNAPSHOT_BUDGET_MS = 120;
  * change lands underneath it, and the same front then takes the veil away. It
  * costs one small offscreen draw, blocks nothing, and therefore plays on every
  * Android device rather than on the ones fast enough to win a race.
+ *
+ * The veil is Android's *fallback*, not its rule, for the ripple and the scan:
+ * those two try for a photograph first on {@link RIPPLE_SNAPSHOT_BUDGET_MS}
+ * (see {@link snapshotBudget}), because over flat paper a ripple has nothing
+ * to bend. Everything else on Android still goes straight to the veil.
  */
 export type ReskinCoverSource = 'photograph' | 'veil';
 
@@ -446,9 +472,13 @@ export function selectReskinPlay(conditions: ReskinConditions): ReskinPlay {
 }
 
 /** Whether a snapshot that took this long is still worth using. */
-export function snapshotOutcome(image: unknown, elapsedMs: number): SnapshotOutcome {
+export function snapshotOutcome(
+  image: unknown,
+  elapsedMs: number,
+  budgetMs: number = SNAPSHOT_BUDGET_MS
+): SnapshotOutcome {
   if (!image) return 'failed';
-  return elapsedMs > SNAPSHOT_BUDGET_MS ? 'slow' : 'ok';
+  return elapsedMs > budgetMs ? 'slow' : 'ok';
 }
 
 /**
@@ -469,8 +499,12 @@ export function shouldAttemptSnapshot(strikes: number): boolean {
  * add to it: a device that has just proved it can do this is not left on
  * probation for an earlier bad moment.
  */
-export function recordSnapshotCost(strikes: number, elapsedMs: number): number {
-  if (elapsedMs <= SNAPSHOT_BUDGET_MS) return 0;
+export function recordSnapshotCost(
+  strikes: number,
+  elapsedMs: number,
+  budgetMs: number = SNAPSHOT_BUDGET_MS
+): number {
+  if (elapsedMs <= budgetMs) return 0;
   return strikes + 1;
 }
 
