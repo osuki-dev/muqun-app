@@ -595,12 +595,19 @@ export function ReskinTransitionProvider({ children }: { children: ReactNode }) 
       if (shots) {
         progress.set(0);
         veil.set(1);
-        // The cover goes up and the setting changes in the same React commit,
-        // so there is no frame in which one has happened and the other has
-        // not. The origin is where the reader last touched, on whichever
-        // surface they touched: a finger is a better record of what was
-        // tapped than a row component's idea of where it is.
+        // The cover goes up first; the setting changes under it. The origin is
+        // where the reader last touched, on whichever surface they touched: a
+        // finger is a better record of what was tapped than a row component's
+        // idea of where it is.
         setActive({ ...base, shots, veiled: false, swapping: false });
+        // Not in the same commit as the apply: a Skia canvas does not paint
+        // in the commit that mounts it -- its picture is recorded after the
+        // commit and handed to the UI thread a frame or more later. Measured on Android, applying a
+        // theme in that same commit kept the JS thread busy long enough that
+        // the live, half-repainted interface showed for some 300 ms before the
+        // photograph arrived over it. So the cover gets two frames to paint
+        // before the change it is covering is made.
+        await new Promise<void>((resolve) => afterNextPaint(() => afterNextPaint(resolve)));
         await apply();
         erase(true);
         return;
