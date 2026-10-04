@@ -357,6 +357,15 @@ const resizeSettling = new Map<string, number>();
 const RESIZE_SETTLING_WINDOWS = 8;
 
 /**
+ * Forget every window a resize was settling. For when every held window has
+ * just been thrown away at once -- the gateway restarted -- so none of the
+ * texts keyed here will ever be folded into again.
+ */
+export function forgetPaneReadSettling(): void {
+  resizeSettling.clear();
+}
+
+/**
  * Fold one read of a pane into the window the reader already has.
  *
  * The one door. See the contract at the top of this file for which source may

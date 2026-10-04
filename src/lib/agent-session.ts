@@ -2,6 +2,7 @@ import { fetch as nitroFetch } from 'react-native-nitro-fetch';
 import { agentSessionListQuery, type ListAgentSessionsQuery } from './agent-session-list-query';
 import { TextDecoder } from 'react-native-nitro-text-decoder';
 import {
+  configuredGatewayServerId,
   encryptedEventStreamRequest,
   gatewayAuthHeaders,
   gatewayEndpointFetch,
@@ -11,6 +12,7 @@ import {
   type GatewayEndpoint,
 } from './gateway-client';
 import { streamRecordCrypto } from './gateway-transport';
+import { noteGatewayGeneration } from '@/stores/gateway-connection-generation';
 import { connectAgentStream, type AgentStreamResponse } from './agent-stream';
 import { isShellNotFoundError } from './agent-shell-errors';
 import type { FileMentionHit } from './file-mentions';
@@ -1193,8 +1195,14 @@ export async function getAgentsDiscovery(options: {
   /** The server's latest `/health` capability list, which decides whether to ask at all. */
   capabilities: readonly string[] | undefined | null;
   signal?: AbortSignal;
+  /**
+   * Whose answer this is, for the gateway `generation` it carries. Defaults to
+   * the selected gateway when no `endpoint` is given.
+   */
+  serverId?: string;
 }): Promise<GatewayDiscovery | null> {
   if (!hasMultiAgent(options.capabilities)) return null;
+  const serverId = options.serverId ?? (options.endpoint ? null : configuredGatewayServerId());
   try {
     let response: Response;
     if (options.endpoint) {
@@ -1216,7 +1224,9 @@ export async function getAgentsDiscovery(options: {
       });
     }
     if (!response.ok) return null;
-    const discovery = parseGatewayDiscovery(await response.json());
+    const body: unknown = await response.json();
+    noteGatewayGeneration(serverId, body);
+    const discovery = parseGatewayDiscovery(body);
     return discovery.agents || discovery.terminal || discovery.ssh ? discovery : null;
   } catch {
     return null;

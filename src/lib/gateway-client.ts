@@ -171,6 +171,7 @@ import {
 import { assertSupportedHerdr } from './herdr-compatibility';
 import { GatewayTunnelUnavailableError, directGatewayBaseUrl } from './ssh-tunnel';
 import { MAX_ASSET_TEXT_BYTES } from './text-preview';
+import { noteGatewayGeneration } from '@/stores/gateway-connection-generation';
 
 const REQUEST_TIMEOUT_MS = 8_000;
 // An attachment is orders of magnitude larger than a control call, and the
@@ -1517,6 +1518,7 @@ export async function listPaneParts(
   if (isDemoActive()) return panePartsFromResponse(demoPaneParts(paneId));
 
   const lineLimit = Math.max(1, Math.min(MAX_PANE_OUTPUT_LINES, Math.round(lines)));
+  const serverId = configuredGatewayServerId();
   const response = await gatewayFetch(
     gatewayUrl(
       `/api/sessions/${encodeURIComponent(sessionId)}/panes/${encodeURIComponent(paneId)}/parts?lines=${lineLimit}`
@@ -1537,7 +1539,9 @@ export async function listPaneParts(
     throw new Error(`HTTP ${response.status}: ${await response.text()}`);
   }
 
-  return panePartsFromResponse(await response.json());
+  const body: unknown = await response.json();
+  noteGatewayGeneration(serverId, body);
+  return panePartsFromResponse(body);
 }
 
 /**
@@ -2353,9 +2357,14 @@ export async function probeGatewayReachable(
 }
 
 export async function loadHealth(): Promise<HealthResponse> {
-  const health = isDemoActive()
-    ? (demoHealth() as HealthResponse)
-    : ((await getHealth()) as HealthResponse);
+  if (isDemoActive()) {
+    const demo = demoHealth() as HealthResponse;
+    assertSupportedHerdr(demo);
+    return demo;
+  }
+  const serverId = configuredGatewayServerId();
+  const health = (await getHealth()) as HealthResponse;
+  noteGatewayGeneration(serverId, health);
   assertSupportedHerdr(health);
   return health;
 }
@@ -2820,10 +2829,12 @@ export async function readPaneOutput(
 ): Promise<string> {
   if (isDemoActive()) return demoPaneOutput(paneId, lines);
   const lineLimit = Math.max(1, Math.min(MAX_PANE_OUTPUT_LINES, Math.round(lines)));
+  const serverId = configuredGatewayServerId();
   const value = await getApiSessionsBySessionIdPanesByPaneIdOutput(
     { sessionId, paneId },
     { source, lines: String(lineLimit), format }
   );
+  noteGatewayGeneration(serverId, value);
   return extractPaneOutput(value);
 }
 
@@ -2899,10 +2910,12 @@ export async function readPaneTail(
 ): Promise<PaneOutputRead> {
   if (isDemoActive()) return { output: demoPaneOutput(paneId, lines), read: null };
   const lineLimit = Math.max(1, Math.min(MAX_PANE_OUTPUT_LINES, Math.round(lines)));
+  const serverId = configuredGatewayServerId();
   const value = await getApiSessionsBySessionIdPanesByPaneIdOutput(
     { sessionId, paneId },
     { source, lines: String(lineLimit), format }
   );
+  noteGatewayGeneration(serverId, value);
   return { output: extractPaneOutput(value), read: extractPaneReadEnvelope(value) };
 }
 
@@ -2922,6 +2935,7 @@ export async function readPaneRange(
   source: PaneOutputSource = 'recent-unwrapped'
 ): Promise<PaneOutputRead> {
   if (isDemoActive()) return demoPaneRange(paneId, start, end);
+  const serverId = configuredGatewayServerId();
   const value = await getApiSessionsBySessionIdPanesByPaneIdOutput(
     { sessionId, paneId },
     {
@@ -2931,6 +2945,7 @@ export async function readPaneRange(
       end: String(Math.max(0, Math.round(end))),
     }
   );
+  noteGatewayGeneration(serverId, value);
   return { output: extractPaneOutput(value), read: extractPaneReadEnvelope(value) };
 }
 

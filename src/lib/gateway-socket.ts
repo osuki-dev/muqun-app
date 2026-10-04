@@ -96,6 +96,8 @@ export interface GatewaySocketOptions {
   connectTimeoutMs?: number;
   /** How long an unwatched socket stays open, so a session switch does not reconnect. */
   lingerMs?: number;
+  /** Each accepted `hello`, for the gateway `generation` it may carry. */
+  onHello?: (hello: { generation?: string }) => void;
 }
 
 /** The `/health` capability that says `GET /api/ws` exists. */
@@ -385,6 +387,7 @@ export class GatewaySocket {
         return;
       }
       connection.hello = true;
+      this.options.onHello?.(frame);
       this.attempts = 0;
       this.failures = 0;
       this.cancelTimer?.();

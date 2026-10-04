@@ -10,6 +10,7 @@ import QuickCrypto from 'react-native-quick-crypto';
 import { activeLocaleHeaders } from '@/i18n/active-locale';
 
 import { mirroredDiscoveryFor } from '@/stores/agents';
+import { noteGatewayGeneration } from '@/stores/gateway-connection-generation';
 
 import type { SocketFrameCrypto } from './agent-socket-codec';
 import { isDemoActive } from './demo-gateway';
@@ -174,6 +175,7 @@ export function gatewaySocketFor(serverId: string): GatewaySocket {
       open: openTransport,
       crypto: socketFrameCrypto,
       appState,
+      onHello: (hello) => noteGatewayGeneration(serverId, hello),
     });
     sockets.set(serverId, socket);
   }

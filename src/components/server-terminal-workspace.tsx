@@ -14,6 +14,7 @@ import {
   useRouter,
 } from 'expo-router';
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';
+import { noteGatewayGeneration, onGatewayRestart } from '@/stores/gateway-connection-generation';
 import { useScreenVisible } from '@/hooks/use-screen-visible';
 import { DeliveryOwnership, DeliverySelection } from '@/lib/bound-delivery';
 import { StatusBar } from 'expo-status-bar';
@@ -324,6 +325,7 @@ import {
 import { parseTerminalSnapshot, terminalFrameText } from '@/terminal/terminal-core';
 import {
   foldPaneRead,
+  forgetPaneReadSettling,
   hasEarlierAfterPage,
   hasEarlierTerminalOutput,
   nextPageRange,
@@ -335,7 +337,12 @@ import {
   terminalViewportRows,
 } from '@/terminal/history';
 import { useTerminalTheme } from '@/hooks/use-theme-pack';
-import { rememberWarmWorkspace, warmWorkspace, type WarmWorkspace } from '@/lib/server-warm-cache';
+import {
+  forgetWarmWorkspace,
+  rememberWarmWorkspace,
+  warmWorkspace,
+  type WarmWorkspace,
+} from '@/lib/server-warm-cache';
 import { startWorkspacePoller } from '@/lib/workspace-poller';
 import { recoverWith, rethrow, settleAfter } from '@/lib/compiler-safe-control-flow';
 
@@ -1589,6 +1596,58 @@ export function ServerTerminalWorkspace({
     setBackendUnreachable(null);
     setChosenSessionId(null);
   }, [resetSessionState, selectedServer, serverId]);
+
+  /**
+   * The gateway restarted: every pane buffer it had is gone, and it is
+   * answering from new ones that started empty. Everything held here was
+   * folded from the old buffers, so folding the new reads under it is what
+   * left stale -- and doubled -- history on screen until the App was reopened.
+   *
+   * Narrower than `resetSessionState`: the session, the navigator and the
+   * selection are still true (herdr outlives the gateway), only what was read
+   * out of the gateway's buffers is not. So the window, the remembered windows
+   * of every other pane, the depth the next read asks at, the transcript, and
+   * the fold's own memory of windows a resize was settling all go, the
+   * terminal is pinned back to the bottom, and the selected pane is read again
+   * from scratch. Runs synchronously inside the `noteGatewayGeneration` that
+   * saw the new generation, so the bumped request ids turn the answer that
+   * carried it away before it can be folded into anything.
+   */
+  const resetPaneHistory = useCallback(() => {
+    outputRequestIdRef.current += 1;
+    partsRequestIdRef.current += 1;
+    prefetchGenerationRef.current += 1;
+    paneCacheRef.current = emptyPaneCache;
+    forgetPaneReadSettling();
+    forgetWarmWorkspace(serverId);
+    readRevisionRef.current = { paneId: '', revision: -1 };
+    setPaneRevision(-1);
+    setOutput('');
+    outputLineLimitRef.current = INITIAL_PANE_OUTPUT_LINES;
+    earlierOutputRowsRef.current = 0;
+    lastReadRef.current = null;
+    rangeUnsupportedRef.current = false;
+    loadingEarlierOutputRef.current = false;
+    setLoadingEarlierOutput(false);
+    setCanLoadEarlierOutput(false);
+    setHistoryRevision(0);
+    setStickBottomNonce((value) => value + 1);
+    readPartsKeyRef.current = { paneId: '', contentKey: '' };
+    setPartsState(initialPartsState);
+    partsLineLimitRef.current = INITIAL_PANE_OUTPUT_LINES;
+    earlierPartsRowsRef.current = 0;
+    loadingEarlierPartsRef.current = false;
+    setLoadingEarlierParts(false);
+    setCanLoadEarlierParts(false);
+    // The transcript comes back through its own effect, which sees the reset
+    // parts state as unanswered; the terminal is asked here.
+    refreshOutputRef.current();
+  }, [serverId]);
+
+  useEffect(() => {
+    if (!serverId) return;
+    return onGatewayRestart(serverId, resetPaneHistory);
+  }, [resetPaneHistory, serverId]);
 
   useEffect(() => {
     if (watching) return;
@@ -3769,8 +3828,11 @@ export function ServerTerminalWorkspace({
         },
         onApprovalChanged: (event: string, payload: unknown) =>
           approvalRef.current.handleEvent(event, payload),
+        // A changed generation here resets every held window through
+        // `resetPaneHistory`, before any frame of the new stream is folded.
+        onHello: (payload: unknown) => noteGatewayGeneration(serverId, payload),
       }),
-      [approvalRef]
+      [approvalRef, serverId]
     )
   );
 
