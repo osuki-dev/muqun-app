@@ -2360,6 +2360,10 @@ msgstr "Git 상태"
 msgid "Go back"
 msgstr "뒤로 가기"
 
+#: src/components/agent-workspace-sheet.tsx
+msgid "Go into {folder}"
+msgstr "{folder}(으)로 들어가기"
+
 #: src/i18n/labels.ts
 msgid "Go to the top of the file"
 msgstr "파일 맨 위로 이동"
@@ -2646,6 +2650,10 @@ msgstr "저장된 테마 유지"
 #: src/components/settings-alerts.tsx
 msgid "Keep the terminal you are watching on the Lock Screen while its agent works."
 msgstr "에이전트가 작업하는 동안 보고 있던 터미널을 잠금 화면에 유지합니다"
+
+#: src/components/agent-workspace-sheet.tsx
+msgid "Keep typing to narrow down"
+msgstr "계속 입력해 범위를 좁히세요"
 
 #: src/app/commands.tsx
 msgid "Keys"
@@ -5421,6 +5429,10 @@ msgstr "이 게이트웨이는 {agentName} 세션을 제공하지 않습니다"
 #: src/lib/network-error.ts
 msgid "This Gateway does not answer to that address."
 msgstr "이 Gateway는 그 주소에 응답하지 않습니다"
+
+#: src/components/agent-workbench.tsx
+msgid "This gateway does not expand ~. Type the full path, starting with /."
+msgstr "이 게이트웨이는 ~를 확장하지 않습니다. /로 시작하는 전체 경로를 입력하세요"
 
 #: src/components/agent-workbench.tsx
 msgid "This gateway does not know {agentName}. Refresh the agent list and try again."

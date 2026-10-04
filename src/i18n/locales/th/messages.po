@@ -2360,6 +2360,10 @@ msgstr "สถานะ Git"
 msgid "Go back"
 msgstr "ย้อนกลับ"
 
+#: src/components/agent-workspace-sheet.tsx
+msgid "Go into {folder}"
+msgstr "เข้าไปใน {folder}"
+
 #: src/i18n/labels.ts
 msgid "Go to the top of the file"
 msgstr "ไปที่ต้นไฟล์"
@@ -2646,6 +2650,10 @@ msgstr "เก็บธีมที่บันทึกไว้"
 #: src/components/settings-alerts.tsx
 msgid "Keep the terminal you are watching on the Lock Screen while its agent works."
 msgstr "แสดงเทอร์มินัลที่คุณกำลังดูบนหน้าจอล็อกขณะที่เอเจนต์ทำงาน"
+
+#: src/components/agent-workspace-sheet.tsx
+msgid "Keep typing to narrow down"
+msgstr "พิมพ์ต่อเพื่อจำกัดผลลัพธ์"
 
 #: src/app/commands.tsx
 msgid "Keys"
@@ -5421,6 +5429,10 @@ msgstr "เกตเวย์นี้ไม่ได้ให้บริกา
 #: src/lib/network-error.ts
 msgid "This Gateway does not answer to that address."
 msgstr "Gateway นี้ไม่ตอบกลับที่ที่อยู่นั้น"
+
+#: src/components/agent-workbench.tsx
+msgid "This gateway does not expand ~. Type the full path, starting with /."
+msgstr "เกตเวย์นี้ไม่ขยาย ~ พิมพ์พาธเต็มที่ขึ้นต้นด้วย /"
 
 #: src/components/agent-workbench.tsx
 msgid "This gateway does not know {agentName}. Refresh the agent list and try again."
