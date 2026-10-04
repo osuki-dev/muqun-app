@@ -26,7 +26,12 @@ import { useMonoFontFamily } from '@/hooks/use-user-fonts';
 import { withAlpha } from '@/lib/color';
 import { feedback } from '@/lib/feedback';
 import { timing } from '@/lib/motion';
-import { chordGlyph, heldBackModifiers, type KeyboardVocabulary } from '@/lib/key-vocabulary';
+import {
+  chordGlyph,
+  heldBackModifiers,
+  type KeyboardVocabulary,
+  type KeyOutcome,
+} from '@/lib/key-vocabulary';
 import {
   changeKeyboardLayout,
   keyboardChordName,
@@ -152,8 +157,8 @@ type VirtualKeyboardProps = {
   /** A printable character, sent as text. */
   onText: (text: string) => void;
   /** A named key -- enter, backspace, esc, tab, an arrow -- sent as keys. */
-  /** A pane may answer how the key went; `'unsupported'` is the gateway refusing the chord. */
-  onKey: (key: string) => void | Promise<'sent' | 'unsupported' | 'failed'>;
+  /** A pane may answer how the key went; `{ unsupported }` is the gateway refusing the chord. */
+  onKey: (key: string) => void | Promise<KeyOutcome>;
   /** Return to the compact key row. */
   onClose: () => void;
   /**
@@ -213,7 +218,12 @@ export function VirtualKeyboard({
   const lastModifierTap = useRef<{ modifier: string; at: number } | null>(null);
   const [functionStrip, setFunctionStrip] = useState(functionStripMemory.shown);
   /** The chord last refused, shown until the hint times out; `count` restarts it on a repeat. */
-  const [refused, setRefused] = useState<{ chord: string; count: number } | null>(null);
+  const [refused, setRefused] = useState<{
+    chord: string;
+    count: number;
+    /** The gateway's own explanation, shown verbatim as a second line. */
+    detail: string | null;
+  } | null>(null);
   const ctrl = ctrlState !== 'off';
   const alt = altState !== 'off';
 
@@ -252,23 +262,22 @@ export function VirtualKeyboard({
     return resolveKeyboardInput(value, kind, modifiers, vocabulary);
   }
 
-  function flagRefused(chord: string) {
-    setRefused((previous) => ({ chord, count: (previous?.count ?? 0) + 1 }));
+  function flagRefused(chord: string, detail: string | null = null) {
+    setRefused((previous) => ({ chord, count: (previous?.count ?? 0) + 1, detail }));
   }
 
   function send(input: KeyboardInput | null, chord: string) {
     if (disabled) return;
     if (!input) {
       // Muted, not inert: the press is the moment to say why nothing happened.
+      // It still spends a one-shot modifier below -- see `consumeModifier`.
       flagRefused(chord);
-      return;
-    }
-    if ('text' in input) onText(input.text);
+    } else if ('text' in input) onText(input.text);
     else {
       const sent = onKey(input.key);
       if (sent) {
         void sent.then((outcome) => {
-          if (outcome === 'unsupported') flagRefused(chord);
+          if (typeof outcome === 'object') flagRefused(chord, outcome.unsupported);
         });
       }
     }
@@ -323,7 +332,7 @@ export function VirtualKeyboard({
   // the dock clips its children.)
   const chord = refused ? chordGlyph(refused.chord) : '';
   // The armed modifiers this pane holds back, while they are armed: those keys
-  // are disabled rather than muted, and this is the line that says why.
+  // are drawn muted, and this is the line that says why.
   const modifierKeys = heldBackModifiers(modifiers, vocabulary);
   const hintText = refused
     ? t`This terminal can't send ${chord}`
@@ -338,11 +347,17 @@ export function VirtualKeyboard({
         <Text variant="caption" color={keyText} style={styles.hintText}>
           {hintText}
         </Text>
+        {refused?.detail ? (
+          <Text variant="caption" color={keyText} style={styles.hintText}>
+            {refused.detail}
+          </Text>
+        ) : null}
       </View>
     </View>
   ) : null;
-  /** A muted key is out of reach, not merely quiet, while the hint explains it. */
-  const keyDisabled = (muted: boolean) => disabled || (muted && modifierKeys !== null);
+  // A muted key stays pressable, even while a held-back modifier is armed:
+  // the press is a refusal that says why and spends the one-shot modifier.
+  // Disabling it swallowed the tap and left ctrl armed for the next letter.
   const refusedInput = (value: string, kind: 'character' | 'key') => inputFor(value, kind) === null;
 
   if (wide) {
@@ -361,7 +376,6 @@ export function VirtualKeyboard({
                     item={item}
                     disabled={disabled}
                     muted={!wideKeyEnabled(item, modifiers, vocabulary)}
-                    heldBack={modifierKeys !== null}
                     held={item.kind === 'modifier' ? modifierStates[item.value] : undefined}
                     shift={modifiers.shift}
                     functionStrip={functionStrip}
@@ -404,7 +418,7 @@ export function VirtualKeyboard({
           label="tab"
           color={keyText}
           fill={fnFill}
-          disabled={keyDisabled(refusedInput('tab', 'key'))}
+          disabled={disabled}
           muted={refusedInput('tab', 'key')}
           onPress={() => pressInput('tab', 'key')}
         />
@@ -467,7 +481,7 @@ export function VirtualKeyboard({
                 key={char}
                 testID={`virtual-key-${char}`}
                 accessibilityLabel={!symbols && shift ? char.toUpperCase() : char}
-                disabled={keyDisabled(refusedInput(char, 'character'))}
+                disabled={disabled}
                 onPress={() => pressInput(char, 'character')}
                 style={[
                   styles.key,
@@ -489,7 +503,7 @@ export function VirtualKeyboard({
             {last ? (
               <VirtualKey
                 accessibilityLabel={t`Backspace`}
-                disabled={keyDisabled(refusedInput('backspace', 'key'))}
+                disabled={disabled}
                 onPress={() => pressInput('backspace', 'key')}
                 style={[
                   styles.key,
@@ -524,7 +538,7 @@ export function VirtualKeyboard({
         </VirtualKey>
         <VirtualKey
           accessibilityLabel={t`Space`}
-          disabled={keyDisabled(refusedInput(' ', 'character'))}
+          disabled={disabled}
           onPress={() => pressInput(' ', 'character')}
           style={[
             styles.key,
@@ -549,7 +563,7 @@ export function VirtualKeyboard({
             <VirtualKey
               key={arrow.key}
               accessibilityLabel={_(arrow.accessibilityLabel)}
-              disabled={keyDisabled(refusedInput(arrow.key, 'key'))}
+              disabled={disabled}
               hitSlop={{ top: 6, bottom: 6 }}
               onPress={() => pressInput(arrow.key, 'key')}
               style={[
@@ -571,7 +585,7 @@ export function VirtualKeyboard({
         </View>
         <VirtualKey
           accessibilityLabel={t`Return`}
-          disabled={keyDisabled(refusedInput('enter', 'key'))}
+          disabled={disabled}
           onPress={() => pressInput('enter', 'key')}
           style={[
             styles.key,
@@ -599,7 +613,6 @@ function WideKeyCap({
   item,
   disabled,
   muted,
-  heldBack,
   held,
   shift,
   functionStrip,
@@ -614,8 +627,6 @@ function WideKeyCap({
   disabled: boolean;
   /** The pane cannot take this key in the current modifier state. */
   muted: boolean;
-  /** An armed modifier the pane holds back: a muted key is disabled, not just quiet. */
-  heldBack: boolean;
   /** A modifier's state; undefined for every other key. */
   held?: ModifierState;
   shift: boolean;
@@ -703,7 +714,7 @@ function WideKeyCap({
     <VirtualKey
       testID={`virtual-key-${item.id}`}
       accessibilityLabel={item.value === ' ' ? t`Space` : cap}
-      disabled={disabled || (muted && heldBack)}
+      disabled={disabled}
       hitSlop={item.kind === 'key' && glyph ? { top: 2, bottom: 2 } : undefined}
       onPress={onPress}
       style={[
@@ -975,7 +986,7 @@ const styles = StyleSheet.create({
   },
   /**
    * A key the pane cannot take right now: still there, quieter. Pressable, to
-   * say why on the press -- unless the hint already says so (see `heldBackModifiers`).
+   * say why on the press and to spend a one-shot modifier.
    */
   muted: {
     opacity: appChrome.opacity.disabled,

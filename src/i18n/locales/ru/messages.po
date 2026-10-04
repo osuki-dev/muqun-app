@@ -1197,6 +1197,7 @@ msgstr "Подключиться"
 #: src/app/explore.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/components/session-map.tsx
+#: src/hooks/use-home-commands.ts
 msgid "Connected"
 msgstr "Подключено"
 
@@ -3242,6 +3243,8 @@ msgstr "Недоступно"
 msgid "not connected"
 msgstr "не подключён"
 
+#: src/components/server-terminal-workspace.tsx
+#: src/hooks/use-home-commands.ts
 #: src/i18n/labels.ts
 msgid "Not connected"
 msgstr "Не подключён"

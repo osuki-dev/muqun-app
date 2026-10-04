@@ -54,6 +54,28 @@ describe('what a probe entitles the card to say', () => {
     );
   });
 
+  test('a stale answer holds while its re-check is in flight, and only then', () => {
+    // iOS pass: a theme change re-rendered Settings while the probe was past
+    // its freshness, and the current server read NOT CONNECTED for the second
+    // the re-check took before going back to ONLINE.
+    const later = NOW + REACHABILITY_FRESH_MS + 1;
+    const held = { ...probe(true, NOW), rechecking: true };
+    expect(reachabilityFromProbe(held, later)).toBe('live');
+    expect(reachabilityFromProbe({ ...probe(false, NOW), rechecking: true }, later)).toBe(
+      'offline'
+    );
+    expect(reachabilityFromProbe({ ...held, rechecking: false }, later)).toBe('unknown');
+    expect(resolveServerReachability('s1', held, undefined, later)).toBe('live');
+  });
+
+  test('a held answer is not fresh enough to seed the prewarm', () => {
+    const held = { ...probe(true, NOW), rechecking: true, health: { ok: true } };
+    expect(prewarmGate(held, NOW + REACHABILITY_FRESH_MS + 1)).toEqual({
+      warm: true,
+      health: null,
+    });
+  });
+
   test('green is unreachable without a successful probe', () => {
     const everyState = [probe(false), undefined].map((value) => reachabilityFromProbe(value, NOW));
     expect(everyState).not.toContain('live');

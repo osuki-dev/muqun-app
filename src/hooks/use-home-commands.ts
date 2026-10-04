@@ -24,6 +24,8 @@ import {
   type HomeTarget,
 } from '@/lib/home-commands';
 import { encodeSessionChoices, resolveSessionId, sessionChoices } from '@/lib/session-switcher';
+import { terminalBackendRows, terminalBackendState } from '@/lib/terminal-backend-state';
+import { useAgents } from '@/stores/agents';
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';
 import { isDemoRecord } from '@/lib/demo-gateway';
 import { useServerSession } from '@/stores/server-session';
@@ -213,7 +215,20 @@ export function useHomeCommands(options: HomeCommandOptions = {}): HomeCommands 
         showToast({
           variant: 'danger',
           title: t`Could not open destination`,
-          message: t`No terminal session is available on this server.`,
+          message: result.backendDown
+            ? // The same sentence and backend list the workspace shows, so
+              // "New terminal" explains why instead of only saying no.
+              [
+                t`No terminal session is available on this server.`,
+                result.backendDown.message,
+                ...result.backendDown.backends.map(
+                  (backend) =>
+                    `${backend.label} · ${backend.kind} · ${
+                      backend.connected ? t`Connected` : t`Not connected`
+                    }`
+                ),
+              ].join('\n')
+            : t`No terminal session is available on this server.`,
         });
       } else if (result.status === 'failed') {
         showToast({
@@ -318,7 +333,24 @@ async function loadTerminalSelection(records: readonly GatewayRecord[], serverId
   if (!record) return null;
   const sessions = await loadRecordSessions(record);
   const choices = sessionChoices(sessions.sessions);
-  if (choices.length === 0) return null;
+  if (choices.length === 0) {
+    const state = terminalBackendState({
+      loaded: true,
+      paneCount: 0,
+      backends: terminalBackendRows(
+        sessions.sessions,
+        useAgents.getState().index.servers[serverId]?.terminal
+      ),
+      plane: useAgents.getState().index.servers[serverId]?.terminal,
+    });
+    if (state.kind !== 'down') return null;
+    return {
+      sessionId: '',
+      choices,
+      label: record.label,
+      backendDown: { message: state.message, backends: state.backends },
+    };
+  }
   const remembered = useServerSession.getState().byServer[serverId];
   return {
     sessionId: resolveSessionId(choices, remembered),

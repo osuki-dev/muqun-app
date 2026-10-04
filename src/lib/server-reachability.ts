@@ -48,6 +48,15 @@ export type ReachabilityProbe = {
    * types; `stores/server-reachability` is where the shape is established.
    */
   health?: unknown;
+  /**
+   * A newer probe of this server is in flight. A stale answer keeps speaking
+   * until it lands rather than dropping to `unknown` for the length of the
+   * round trip: anything that re-rendered the row while the probe was past
+   * {@link REACHABILITY_FRESH_MS} -- a theme change re-skins every screen --
+   * otherwise flashed `NOT CONNECTED` for a second and then went back to
+   * `ONLINE` (iOS pass, finding 6).
+   */
+  rechecking?: boolean;
 };
 
 /**
@@ -132,10 +141,13 @@ export function serversToProbe<T extends { serverId: string }>(
 
 export function reachabilityFromProbe(
   probe: ReachabilityProbe | undefined,
-  nowMs: number = Date.now()
+  nowMs: number = Date.now(),
+  /** Whether a stale answer may stand in while its re-check is in flight. */
+  holdWhileRechecking = true
 ): ServerReachability {
   if (!probe) return 'unknown';
-  if (nowMs - probe.checkedAtMs > REACHABILITY_FRESH_MS) return 'unknown';
+  const stale = nowMs - probe.checkedAtMs > REACHABILITY_FRESH_MS;
+  if (stale && !(holdWhileRechecking && probe.rechecking)) return 'unknown';
   return probe.ok ? 'live' : 'offline';
 }
 
@@ -187,7 +199,8 @@ export function prewarmGate(
   probe: ReachabilityProbe | undefined,
   nowMs: number = Date.now()
 ): { warm: boolean; health: unknown } {
-  const state = reachabilityFromProbe(probe, nowMs);
+  // Strictly fresh: a held answer is good enough for a light, not for a warm.
+  const state = reachabilityFromProbe(probe, nowMs, false);
   if (state === 'offline') return { warm: false, health: null };
   if (state === 'unknown') return { warm: true, health: null };
   return { warm: true, health: probe?.health ?? null };

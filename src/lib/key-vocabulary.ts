@@ -183,3 +183,19 @@ export function isKeyUnsupportedError(err: unknown): boolean {
   const { status, code } = agentRequestErrorDetail(err);
   return status === 400 && code === 'key_unsupported';
 }
+
+/** How a pane answered one key: a refusal carries the gateway's own words when it gave any. */
+export type KeyOutcome = 'sent' | 'failed' | { unsupported: string | null };
+
+/**
+ * A key request's failure, as a `KeyOutcome`.
+ *
+ * The gateway's `key_unsupported` message names the fix -- on tmux,
+ * `tmux set -s extended-keys on` -- and the keyboard shows it verbatim under
+ * its own "can't send" line rather than leaving the reader with only the
+ * chord.
+ */
+export function keyFailureOutcome(err: unknown): KeyOutcome {
+  if (!isKeyUnsupportedError(err)) return 'failed';
+  return { unsupported: agentRequestErrorDetail(err).message ?? null };
+}

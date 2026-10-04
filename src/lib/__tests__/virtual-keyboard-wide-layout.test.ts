@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'bun:test';
+import { readFileSync } from 'node:fs';
 
 import { paneVocabulary, type KeyboardVocabulary } from '../key-vocabulary';
 import {
@@ -290,5 +291,30 @@ describe('sticky modifiers', () => {
     expect(consumeModifier('once')).toBe('off');
     expect(consumeModifier('locked')).toBe('locked');
     expect(consumeModifier('off')).toBe('off');
+  });
+  test('a refused chord spends a one-shot ctrl, so the next letter is a letter', () => {
+    // iOS pass: ⌃↵ on a pane without extended keys did nothing, ctrl stayed
+    // armed, and the next `a` went out as ^A.
+    expect(resolveWideKey(find('key-enter'), ctrl, classicOnly)).toBeNull();
+    const after = consumeModifier('once');
+    expect(after).toBe('off');
+    expect(resolveWideKey(find('char-a'), { ...none, ctrl: after !== 'off' }, classicOnly)).toEqual(
+      { text: 'a' }
+    );
+    // A double-tap lock is the reader asking for ctrl to stay; a refusal does
+    // not override that.
+    expect(consumeModifier('locked')).toBe('locked');
+  });
+
+  test('the keyboard spends modifiers on a refusal too, and keeps muted keys pressable', () => {
+    const source = readFileSync('src/components/virtual-keyboard.tsx', 'utf8');
+    const send = source.match(/function send\(input[\s\S]*?\n {2}\}\n/)?.[0] ?? '';
+    expect(send).toContain('flagRefused(chord);');
+    expect(send).toContain('setCtrlState(consumeModifier);');
+    // No early return between the refusal and the spend.
+    expect(send.slice(send.indexOf('if (!input)'), send.indexOf('setCtrlState'))).not.toContain(
+      'return;'
+    );
+    expect(source).not.toContain('muted && heldBack');
   });
 });

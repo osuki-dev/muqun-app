@@ -81,6 +81,23 @@ export function reskinCoverSource(platform: string): ReskinCoverSource {
 }
 
 /**
+ * Whether a run whose photograph did not arrive still plays, over a veil.
+ *
+ * Always on Android, where the veil is the cover. On iOS for the ripple and
+ * the scan, the two plays the reader is promised for a theme and a font
+ * change. A font change photographs two windows there -- the app and the
+ * font sheet over it -- and on a loaded device (the iOS simulator pass:
+ * iPhone 16 Pro, iOS 18.5) the pair came in over {@link SNAPSHOT_BUDGET_MS},
+ * so the run applied with no transition at all and the font swapped in one
+ * frame. The picture's time is already spent by then; the veil costs one
+ * small offscreen draw and a tenth of a second of fade.
+ */
+export function veilWhenUnphotographed(platform: string, play: ReskinPlay): boolean {
+  if (reskinCoverSource(platform) === 'veil') return true;
+  return play === 'ripple' || play === 'scan';
+}
+
+/**
  * How many over-budget snapshots a device gets before the app stops asking.
  *
  * This exists because of something measured rather than assumed, and it is the

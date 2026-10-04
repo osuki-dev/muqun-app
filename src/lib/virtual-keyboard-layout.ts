@@ -257,7 +257,15 @@ export function tapModifier(state: ModifierState, sinceLastTapMs: number): Modif
   return 'off';
 }
 
-/** A key was sent: a one-shot modifier is spent, a locked one stays. */
+/**
+ * A key was pressed: a one-shot modifier is spent, a locked one stays.
+ *
+ * Sent or refused alike. A chord the pane cannot take (muted, or refused by
+ * the gateway as `key_unsupported`) used to leave ctrl armed, so the reader who
+ * saw nothing happen and typed on sent a control character instead of the
+ * letter (iOS pass, finding 2: ⌃↵ refused, then `a` arrived as `^A`). Only a
+ * double-tap lock outlives a press.
+ */
 export function consumeModifier(state: ModifierState): ModifierState {
   return state === 'once' ? 'off' : state;
 }
