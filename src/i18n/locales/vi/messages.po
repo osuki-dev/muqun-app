@@ -218,6 +218,10 @@ msgstr "Không tìm thấy {agentName}. Chạm để xem hướng dẫn cài đ�
 msgid "{agentName}'s installation could not be confirmed. If it is installed, start it on the host."
 msgstr "Không thể xác nhận việc cài đặt {agentName}. Nếu đã cài đặt, hãy khởi động nó trên máy chủ"
 
+#: src/components/changes-sheet.tsx
+msgid "{ahead} ahead"
+msgstr "đi trước {ahead}"
+
 #: src/components/away-digest-card.tsx
 msgid "{asked, plural, one {· asked once} other {· asked # times}}"
 msgstr "{asked, plural, other {· đã hỏi # lần}}"
@@ -225,6 +229,10 @@ msgstr "{asked, plural, other {· đã hỏi # lần}}"
 #: src/components/agent-composer.tsx
 msgid "{backgroundCount} running in the background"
 msgstr "{backgroundCount} đang chạy nền"
+
+#: src/components/changes-sheet.tsx
+msgid "{behind} behind"
+msgstr "đi sau {behind}"
 
 #: src/components/agent-assignment-bar.tsx
 msgid "{commandName} · sending to"
@@ -784,6 +792,14 @@ msgstr "Đang chờ"
 #: src/components/agent-workbench.tsx
 msgid "Blocked by agent safety"
 msgstr "Bị chặn bởi tính năng an toàn của agent"
+
+#: src/components/changes-sheet.tsx
+msgid "Branch {branch}"
+msgstr "Nhánh {branch}"
+
+#: src/components/changes-sheet.tsx
+msgid "Branch {branch}, no commits yet"
+msgstr "Nhánh {branch}, chưa có commit nào"
 
 #: src/components/theme-link-import.tsx
 msgid "Branch and theme file came from the link. A branch can change later"
@@ -1885,6 +1901,14 @@ msgstr "Mật độ"
 #: src/i18n/labels.ts
 msgid "Deny"
 msgstr "Từ chối"
+
+#: src/components/changes-sheet.tsx
+msgid "detached at {head}"
+msgstr "tách rời tại {head}"
+
+#: src/components/changes-sheet.tsx
+msgid "Detached at {head}"
+msgstr "Tách rời tại {head}"
 
 #: src/lib/demo-gateway.ts
 msgid "Development"
@@ -3123,6 +3147,14 @@ msgstr "Không có thay đổi"
 #: src/components/changes-sheet.tsx
 msgid "No changes compared with {base}."
 msgstr "Không có thay đổi so với {base}"
+
+#: src/components/changes-sheet.tsx
+msgid "no commits yet"
+msgstr "chưa có commit nào"
+
+#: src/components/changes-sheet.tsx
+msgid "No commits yet"
+msgstr "Chưa có commit nào"
 
 #: src/components/session-artifacts.tsx
 msgid "No files match."
@@ -5622,6 +5654,10 @@ msgstr "Quá lớn để tô sáng cú pháp — hiển thị dưới dạng vă
 #: src/components/changes-sheet.tsx
 msgid "Too many changes to list. This is the start of them, not all of them."
 msgstr "Quá nhiều thay đổi để liệt kê. Đây là phần đầu, không phải tất cả"
+
+#: src/components/changes-sheet.tsx
+msgid "tracking {upstream}"
+msgstr "theo dõi {upstream}"
 
 #: src/components/bounded-markdown.tsx
 #: src/components/embedded-terminal-tool-block.tsx
