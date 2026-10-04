@@ -725,6 +725,10 @@ msgstr "Atrás"
 msgid "Back one word"
 msgstr "Retroceder una palabra"
 
+#: src/components/server-terminal-workspace.tsx
+msgid "Back to Home"
+msgstr "Volver a Inicio"
+
 #: src/components/app-drawer.tsx
 msgid "Back to servers"
 msgstr "Volver a los servidores"
@@ -1201,7 +1205,6 @@ msgstr "Conectar"
 #: src/app/explore.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/components/session-map.tsx
-#: src/hooks/use-home-commands.ts
 msgid "Connected"
 msgstr "Conectado"
 
@@ -2943,6 +2946,18 @@ msgstr "Muqun no pudo verificar tu identidad. Inténtalo de nuevo"
 msgid "Muqun follows the language your phone is set to."
 msgstr "Muqun sigue el idioma configurado en tu teléfono"
 
+#: src/lib/terminal-backend-copy.ts
+msgid "Muqun Gateway is running, but it cannot reach a tmux server on its computer."
+msgstr "Muqun Gateway está en marcha, pero no puede conectar con un servidor tmux en su equipo"
+
+#: src/lib/terminal-backend-copy.ts
+msgid "Muqun Gateway is running, but it cannot reach Herdr on its computer."
+msgstr "Muqun Gateway está en marcha, pero no puede conectar con Herdr en su equipo"
+
+#: src/lib/terminal-backend-copy.ts
+msgid "Muqun Gateway is running, but it cannot reach the {backend} backend on its computer."
+msgstr "Muqun Gateway está en marcha, pero no puede conectar con el backend {backend} en su equipo"
+
 #: src/components/settings-font-sheet.tsx
 msgid "Muqun has no fonts of its own. Add one and it is kept on this device."
 msgstr "Muqun no trae fuentes propias. La que añadas se guarda en este dispositivo"
@@ -3244,7 +3259,6 @@ msgid "not connected"
 msgstr "no conectado"
 
 #: src/components/server-terminal-workspace.tsx
-#: src/hooks/use-home-commands.ts
 #: src/i18n/labels.ts
 msgid "Not connected"
 msgstr "No conectado"
@@ -4072,6 +4086,7 @@ msgstr "Restaurar predeterminados ocultos"
 #: src/components/gateway-storage-error.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/components/terminal-boundary.tsx
+#: src/hooks/use-home-commands.ts
 msgid "Retry"
 msgstr "Reintentar"
 
@@ -4811,6 +4826,18 @@ msgstr "Inicia un agente y envíale lo primero que hacer"
 msgid "Start an agent and send it the first thing to do."
 msgstr "Inicia un agente y dile lo primero que debe hacer"
 
+#: src/lib/terminal-backend-copy.ts
+msgid "Start Herdr there, then tap Retry."
+msgstr "Inicia Herdr allí y luego toca Reintentar"
+
+#: src/lib/terminal-backend-copy.ts
+msgid "Start it there, then tap Retry."
+msgstr "Inícialo allí y luego toca Reintentar"
+
+#: src/lib/terminal-backend-copy.ts
+msgid "Start one there, then tap Retry:"
+msgstr "Inicia uno allí y luego toca Reintentar:"
+
 #: src/components/new-task-sheet.tsx
 msgid "Start task"
 msgstr "Iniciar tarea"
@@ -5089,6 +5116,7 @@ msgid "Terminal key row"
 msgstr "Fila de teclas del terminal"
 
 #: src/components/server-terminal-workspace.tsx
+#: src/hooks/use-home-commands.ts
 msgid "Terminal unavailable"
 msgstr "Terminal no disponible"
 

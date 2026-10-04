@@ -725,6 +725,10 @@ msgstr "Quay lại"
 msgid "Back one word"
 msgstr "Lùi một từ"
 
+#: src/components/server-terminal-workspace.tsx
+msgid "Back to Home"
+msgstr "Về Trang chủ"
+
 #: src/components/app-drawer.tsx
 msgid "Back to servers"
 msgstr "Về danh sách máy chủ"
@@ -1201,7 +1205,6 @@ msgstr "Kết nối"
 #: src/app/explore.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/components/session-map.tsx
-#: src/hooks/use-home-commands.ts
 msgid "Connected"
 msgstr "Đã kết nối"
 
@@ -2943,6 +2946,18 @@ msgstr "Muqun không thể xác minh danh tính của bạn. Hãy thử lại"
 msgid "Muqun follows the language your phone is set to."
 msgstr "Muqun theo ngôn ngữ mà điện thoại của bạn đang đặt"
 
+#: src/lib/terminal-backend-copy.ts
+msgid "Muqun Gateway is running, but it cannot reach a tmux server on its computer."
+msgstr "Muqun Gateway đang chạy nhưng không kết nối được tới máy chủ tmux trên máy của nó"
+
+#: src/lib/terminal-backend-copy.ts
+msgid "Muqun Gateway is running, but it cannot reach Herdr on its computer."
+msgstr "Muqun Gateway đang chạy nhưng không kết nối được tới Herdr trên máy của nó"
+
+#: src/lib/terminal-backend-copy.ts
+msgid "Muqun Gateway is running, but it cannot reach the {backend} backend on its computer."
+msgstr "Muqun Gateway đang chạy nhưng không kết nối được tới backend {backend} trên máy của nó"
+
 #: src/components/settings-font-sheet.tsx
 msgid "Muqun has no fonts of its own. Add one and it is kept on this device."
 msgstr "Muqun không có phông chữ riêng. Phông bạn thêm sẽ được giữ trên máy này"
@@ -3244,7 +3259,6 @@ msgid "not connected"
 msgstr "chưa kết nối"
 
 #: src/components/server-terminal-workspace.tsx
-#: src/hooks/use-home-commands.ts
 #: src/i18n/labels.ts
 msgid "Not connected"
 msgstr "Chưa kết nối"
@@ -4072,6 +4086,7 @@ msgstr "Khôi phục mặc định đã ẩn"
 #: src/components/gateway-storage-error.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/components/terminal-boundary.tsx
+#: src/hooks/use-home-commands.ts
 msgid "Retry"
 msgstr "Thử lại"
 
@@ -4811,6 +4826,18 @@ msgstr "Khởi động một tác nhân và gửi việc đầu tiên"
 msgid "Start an agent and send it the first thing to do."
 msgstr "Khởi động một tác tử và giao cho nó việc đầu tiên"
 
+#: src/lib/terminal-backend-copy.ts
+msgid "Start Herdr there, then tap Retry."
+msgstr "Hãy khởi động Herdr trên máy đó, rồi chạm Thử lại"
+
+#: src/lib/terminal-backend-copy.ts
+msgid "Start it there, then tap Retry."
+msgstr "Hãy khởi động nó trên máy đó, rồi chạm Thử lại"
+
+#: src/lib/terminal-backend-copy.ts
+msgid "Start one there, then tap Retry:"
+msgstr "Hãy khởi động một máy chủ trên máy đó, rồi chạm Thử lại:"
+
 #: src/components/new-task-sheet.tsx
 msgid "Start task"
 msgstr "Bắt đầu tác vụ"
@@ -5089,6 +5116,7 @@ msgid "Terminal key row"
 msgstr "Hàng phím terminal"
 
 #: src/components/server-terminal-workspace.tsx
+#: src/hooks/use-home-commands.ts
 msgid "Terminal unavailable"
 msgstr "Terminal không khả dụng"
 

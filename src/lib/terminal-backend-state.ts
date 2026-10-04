@@ -26,7 +26,13 @@ export interface TerminalBackendRow {
 export type TerminalBackendState =
   | { kind: 'pending' }
   | { kind: 'ready' }
-  | { kind: 'down'; backends: TerminalBackendRow[]; message: string };
+  | {
+      kind: 'down';
+      backends: TerminalBackendRow[];
+      message: string;
+      /** The backend that is down (`tmux`, `herdr`, ...), which decides the hint. */
+      backend: string;
+    };
 
 type Session = NonNullable<SessionsResponse['sessions']>[number];
 
@@ -77,8 +83,19 @@ export function terminalBackendState(input: {
   plane?: TerminalDiscovery | null;
   /** The session the workspace resolved to, whose backend the message names. */
   sessionId?: string;
+  /**
+   * The workspace's own load was refused because the backend is down
+   * (`TerminalBackendUnavailableError`), with the backend it named. That
+   * refusal comes before anything is loaded -- `/health` says the primary
+   * backend is not connected -- so without this the plane stayed `pending`
+   * and the loader spun under a banner explaining why.
+   */
+  unreachable?: { backend?: string } | null;
 }): TerminalBackendState {
-  if (!input.loaded) return { kind: 'pending' };
+  if (!input.loaded) {
+    if (!input.unreachable) return { kind: 'pending' };
+    return down(input, input.unreachable.backend);
+  }
   if (input.paneCount > 0) return { kind: 'ready' };
   const unsupported =
     input.plane?.supported === false ||
@@ -86,11 +103,24 @@ export function terminalBackendState(input: {
   const allDown =
     input.backends.length > 0 && input.backends.every((backend) => !backend.connected);
   if (!unsupported && !allDown) return { kind: 'ready' };
+  return down(input);
+}
+
+function down(
+  input: {
+    backends: readonly TerminalBackendRow[];
+    plane?: TerminalDiscovery | null;
+    sessionId?: string;
+  },
+  named?: string
+): Extract<TerminalBackendState, { kind: 'down' }> {
   const subject =
     input.backends.find((backend) => backend.sessionId === input.sessionId) ?? input.backends[0];
+  const backend = named ?? subject?.kind ?? input.plane?.activeBackend ?? 'herdr';
   return {
     kind: 'down',
     backends: [...input.backends],
-    message: explainDisconnected(subject?.kind ?? input.plane?.activeBackend),
+    message: explainDisconnected(backend),
+    backend,
   };
 }
