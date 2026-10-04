@@ -218,6 +218,10 @@ msgstr "{agentName} não foi encontrado. Toque para ver as instruções de insta
 msgid "{agentName}'s installation could not be confirmed. If it is installed, start it on the host."
 msgstr "Não foi possível confirmar a instalação do {agentName}. Se estiver instalado, inicie-o no host"
 
+#: src/components/changes-sheet.tsx
+msgid "{ahead} ahead"
+msgstr "{ahead} à frente"
+
 #: src/components/away-digest-card.tsx
 msgid "{asked, plural, one {· asked once} other {· asked # times}}"
 msgstr "{asked, plural, one {· perguntou uma vez} other {· perguntou # vezes}}"
@@ -225,6 +229,10 @@ msgstr "{asked, plural, one {· perguntou uma vez} other {· perguntou # vezes}}
 #: src/components/agent-composer.tsx
 msgid "{backgroundCount} running in the background"
 msgstr "{backgroundCount} em execução em segundo plano"
+
+#: src/components/changes-sheet.tsx
+msgid "{behind} behind"
+msgstr "{behind} atrás"
 
 #: src/components/agent-assignment-bar.tsx
 msgid "{commandName} · sending to"
@@ -784,6 +792,14 @@ msgstr "Bloqueado"
 #: src/components/agent-workbench.tsx
 msgid "Blocked by agent safety"
 msgstr "Bloqueado pela segurança do agente"
+
+#: src/components/changes-sheet.tsx
+msgid "Branch {branch}"
+msgstr "Branch {branch}"
+
+#: src/components/changes-sheet.tsx
+msgid "Branch {branch}, no commits yet"
+msgstr "Branch {branch}, ainda sem commits"
 
 #: src/components/theme-link-import.tsx
 msgid "Branch and theme file came from the link. A branch can change later"
@@ -1885,6 +1901,14 @@ msgstr "Densidade"
 #: src/i18n/labels.ts
 msgid "Deny"
 msgstr "Recusar"
+
+#: src/components/changes-sheet.tsx
+msgid "detached at {head}"
+msgstr "desanexado em {head}"
+
+#: src/components/changes-sheet.tsx
+msgid "Detached at {head}"
+msgstr "Desanexado em {head}"
 
 #: src/lib/demo-gateway.ts
 msgid "Development"
@@ -3123,6 +3147,14 @@ msgstr "Sem alterações"
 #: src/components/changes-sheet.tsx
 msgid "No changes compared with {base}."
 msgstr "Sem alterações em relação a {base}"
+
+#: src/components/changes-sheet.tsx
+msgid "no commits yet"
+msgstr "ainda sem commits"
+
+#: src/components/changes-sheet.tsx
+msgid "No commits yet"
+msgstr "Ainda sem commits"
 
 #: src/components/session-artifacts.tsx
 msgid "No files match."
@@ -5622,6 +5654,10 @@ msgstr "Demasiado grande para realçar — mostrado como texto simples"
 #: src/components/changes-sheet.tsx
 msgid "Too many changes to list. This is the start of them, not all of them."
 msgstr "Alterações demais para listar. Este é o início delas, não o total"
+
+#: src/components/changes-sheet.tsx
+msgid "tracking {upstream}"
+msgstr "segue {upstream}"
 
 #: src/components/bounded-markdown.tsx
 #: src/components/embedded-terminal-tool-block.tsx
