@@ -2984,6 +2984,10 @@ msgstr "이름을 지정한 뒤 Gateway에 표시된 코드를 입력하세요"
 msgid "Needs setup"
 msgstr "설정 필요"
 
+#: src/i18n/labels.ts
+msgid "Needs update"
+msgstr "업데이트 필요"
+
 #: src/components/collaboration-notice.tsx
 msgid "Needs your attention"
 msgstr "확인이 필요함"
@@ -5749,6 +5753,11 @@ msgstr "다른 어시스턴트에게 작업을 맡기려면 서버의 Herdr를 0
 #: src/components/agent-assignment-bar.tsx
 msgid "Update Muqun Gateway on the server, then restart it, to assign a task to another assistant"
 msgstr "다른 어시스턴트에게 작업을 맡기려면 서버의 Muqun Gateway를 업데이트한 뒤 다시 시작하세요"
+
+#: src/components/agent-guide-sheet.tsx
+#: src/components/new-task-action.tsx
+msgid "Update Muqun Gateway on this host to use {agentName}."
+msgstr "{agentName}을(를) 사용하려면 이 호스트의 Muqun Gateway를 업데이트하세요"
 
 #: src/components/update-status-banner.tsx
 msgid "Update ready · restarting…"

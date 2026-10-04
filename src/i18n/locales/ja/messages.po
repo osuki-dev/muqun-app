@@ -2984,6 +2984,10 @@ msgstr "名前を付けて、Gateway に表示されたコードを入力して�
 msgid "Needs setup"
 msgstr "要セットアップ"
 
+#: src/i18n/labels.ts
+msgid "Needs update"
+msgstr "アップデートが必要"
+
 #: src/components/collaboration-notice.tsx
 msgid "Needs your attention"
 msgstr "対応が必要です"
@@ -5749,6 +5753,11 @@ msgstr "他のアシスタントにタスクを任せるには、サーバーの
 #: src/components/agent-assignment-bar.tsx
 msgid "Update Muqun Gateway on the server, then restart it, to assign a task to another assistant"
 msgstr "他のアシスタントにタスクを任せるには、サーバーの Muqun Gateway を更新して再起動してください"
+
+#: src/components/agent-guide-sheet.tsx
+#: src/components/new-task-action.tsx
+msgid "Update Muqun Gateway on this host to use {agentName}."
+msgstr "{agentName} を使うには、このホストの Muqun Gateway をアップデートしてください"
 
 #: src/components/update-status-banner.tsx
 msgid "Update ready · restarting…"

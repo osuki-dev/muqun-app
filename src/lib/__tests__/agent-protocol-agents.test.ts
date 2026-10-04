@@ -200,6 +200,23 @@ describe('the agents plane', () => {
     expect(parsed?.supported).toBe(false);
   });
 
+  test('`unsupported` and its `reason` are read; a blank or non-string reason is dropped', () => {
+    const reason = 'T3 server speaks orchestration protocol 2; this gateway supports 1';
+    const parsed = parseAgentsDiscovery({
+      agents: [
+        { id: 't3', status: 'unsupported', reason },
+        { id: 'a', status: 'offline', reason: 'refused' },
+        { id: 'b', status: 'unsupported', reason: '  ' },
+        { id: 'c', status: 'unsupported', reason: 7 },
+      ],
+    });
+    expect(parsed?.agents[0]).toMatchObject({ status: 'unsupported', reason });
+    expect(parsed?.agents[1]?.reason).toBe('refused');
+    expect(parsed?.agents[2]?.status).toBe('unsupported');
+    expect(parsed?.agents[2]?.reason).toBeUndefined();
+    expect(parsed?.agents[3]?.reason).toBeUndefined();
+  });
+
   test('nothing that is not an agents plane reads as one', () => {
     expect(parseAgentsDiscovery(null)).toBeNull();
     expect(parseAgentsDiscovery({ ok: true, capabilities: [] })).toBeNull();

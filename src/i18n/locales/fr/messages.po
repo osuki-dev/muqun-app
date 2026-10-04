@@ -2984,6 +2984,10 @@ msgstr "Nommez-le, puis saisissez le code affiché par le Gateway"
 msgid "Needs setup"
 msgstr "Configuration requise"
 
+#: src/i18n/labels.ts
+msgid "Needs update"
+msgstr "Mise à jour requise"
+
 #: src/components/collaboration-notice.tsx
 msgid "Needs your attention"
 msgstr "Votre intervention est requise"
@@ -5749,6 +5753,11 @@ msgstr "Mettez à jour Herdr sur le serveur en 0.9.0 ou plus récent, puis redé
 #: src/components/agent-assignment-bar.tsx
 msgid "Update Muqun Gateway on the server, then restart it, to assign a task to another assistant"
 msgstr "Mettez à jour Muqun Gateway sur le serveur, puis redémarrez-le, pour confier une tâche à un autre assistant"
+
+#: src/components/agent-guide-sheet.tsx
+#: src/components/new-task-action.tsx
+msgid "Update Muqun Gateway on this host to use {agentName}."
+msgstr "Mets à jour Muqun Gateway sur cet hôte pour utiliser {agentName}"
 
 #: src/components/update-status-banner.tsx
 msgid "Update ready · restarting…"

@@ -21,7 +21,12 @@ import { agentReadiness, findAgent, normalizeAgentId } from '@/lib/agent-discove
 export const MAX_AGENT_TILES = 3;
 
 /** What an agent tile says under its name; state is never colour alone. */
-export type LaunchAgentCaption = 'new-session' | 'not-installed' | 'needs-setup' | 'offline';
+export type LaunchAgentCaption =
+  | 'new-session'
+  | 'not-installed'
+  | 'needs-setup'
+  | 'needs-update'
+  | 'offline';
 
 type LaunchEntryBase = {
   /** Stable React key. */
@@ -119,6 +124,7 @@ export function launchAgentCaption(agent: HomeAgentEntry): LaunchAgentCaption {
       return 'new-session';
     case 'not-installed':
     case 'needs-setup':
+    case 'needs-update':
       return agent.readiness;
     default:
       return 'offline';

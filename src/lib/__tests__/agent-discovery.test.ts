@@ -9,6 +9,7 @@ import {
   emptyAgentsMirror,
   hasMultiAgent,
   hiddenClientCommands,
+  isAgentReady,
   lastUsedAgent,
   MAX_MIRRORED_DISCOVERY_SERVERS,
   mirrorDiscovery,
@@ -206,6 +207,7 @@ describe('readiness', () => {
     ['not_installed', 'not-installed'],
     ['disabled', 'unsupported'],
     ['unconfigured', 'needs-setup'],
+    ['unsupported', 'needs-update'],
     ['offline', 'offline'],
     ['unknown', 'offline'],
   ] as const)('%s reads as %s', (status, readiness) => {
@@ -215,6 +217,15 @@ describe('readiness', () => {
   test('an unpaired T3 (unconfigured) needs setup, and is not where a session goes', () => {
     const t3 = agent({ id: 't3', status: 'unconfigured' });
     expect(agentReadiness(t3)).toBe('needs-setup');
+    expect(resolveSelectedAgent('t3', { agents: [t3, agent({ id: 'opencode' })] })).toBe(
+      'opencode'
+    );
+  });
+
+  test('an unsupported agent needs an update, and is not where a session goes', () => {
+    const t3 = agent({ id: 't3', status: 'unsupported' });
+    expect(agentReadiness(t3)).toBe('needs-update');
+    expect(isAgentReady(t3)).toBe(false);
     expect(resolveSelectedAgent('t3', { agents: [t3, agent({ id: 'opencode' })] })).toBe(
       'opencode'
     );
