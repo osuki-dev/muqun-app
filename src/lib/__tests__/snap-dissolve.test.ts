@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 
 import {
+  SNAP_HOLD,
   SNAP_MAX_TILES,
   SNAP_TILE_PHONE,
   SNAP_TILE_TABLET,
@@ -119,6 +120,23 @@ describe('snapTileTransform', () => {
     // right edge has barely started, whatever their jitter.
     expect(snapTileProgress(leftmost, 0.5)).toBeGreaterThan(0.6);
     expect(snapTileProgress(rightmost, 0.5)).toBeLessThan(0.4);
+  });
+
+  test('a tile is carried away solid and only fades in the last stretch of its travel', () => {
+    const { all } = tiles();
+    for (const tile of all) {
+      for (let p = 0; p <= 1.0001; p += 0.01) {
+        const q = snapTileProgress(tile, p);
+        const alpha = snapTileTransform(tile, p).alpha;
+        if (q <= SNAP_HOLD) expect(alpha).toBe(1);
+        else expect(alpha).toBeLessThan(1);
+      }
+    }
+    // Ease-out: most of the fade happens early in the last stretch.
+    const tile = all[0]!;
+    const halfway = (SNAP_HOLD + 1) / 2;
+    const p = (halfway * 0.45 + 0.55 * tile.sweep + 0.25 * tile.hash) / 1.25;
+    expect(snapTileTransform(tile, p).alpha).toBeCloseTo(0.25, 2);
   });
 
   test('alpha only ever falls, per tile, as the exit runs', () => {

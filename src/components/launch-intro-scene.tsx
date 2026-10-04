@@ -42,6 +42,7 @@ import { scheduleOnRN } from 'react-native-worklets';
 
 import { SnapAtlas } from '@/components/launch-snap';
 import { useAppliedCustomTheme } from '@/components/theme-candidate';
+import { useLaunchHandoff } from '@/stores/launch-handoff';
 import { useLaunchArtwork, useLaunchBackground } from '@/hooks/use-launch-artwork';
 import { useLaunchHeroEdge } from '@/hooks/use-launch-hero-edge';
 import {
@@ -281,6 +282,15 @@ const FALLBACK_MONO = Platform.OS === 'ios' ? 'Menlo' : 'monospace';
  * first frame with the picture in it.
  */
 const HERO_SWAP_MS = 320;
+
+/** How long the snap waits for Home to say it is laid out before going anyway. */
+const HOME_REVEAL_PATIENCE_MS = 250;
+
+/**
+ * Frames between Home saying it is laid out and the sweep starting: two for
+ * the commit to reach the UI thread and be drawn, and one to be presented.
+ */
+const HOME_PRESENT_FRAMES = 3;
 
 /** A style dimension that is actually a number, or the fallback. */
 function points(value: unknown, fallback: number): number {
@@ -547,6 +557,12 @@ export function LaunchSceneIntro({
   // it has come apart.
   const canvasRef = useCanvasRef();
   const snapProgress = useSharedValue(0);
+  // Under the snap, Home's entrance rides the snap's progress (see the store);
+  // under the cross-fade it keeps its own.
+  const setRevealDriver = useLaunchHandoff((state) => state.setRevealDriver);
+  useEffect(() => {
+    setRevealDriver(snapAhead ? snapProgress : null);
+  }, [snapAhead, snapProgress, setRevealDriver]);
   const [snapImage, setSnapImage] = useState<SkImage | null>(null);
   // The snapshot is the scene's to release, once nothing is drawing it.
   useEffect(() => () => snapImage?.dispose(), [snapImage]);
@@ -572,6 +588,10 @@ export function LaunchSceneIntro({
   // Skia does not redraw a canvas whose uniforms have stopped changing.
   const [frontGone, setFrontGone] = useState(false);
   const onFrontGone = useCallback(() => setFrontGone(true), []);
+
+  // The type line's dissolve, with whichever exit plays.
+  const dissolveLine = () =>
+    exit.set(withTiming(1, timing(beats.exit.ms, { reduceMotion: ReduceMotion.Never })));
 
   // Only the phase drives this. The beats, the reduced-motion setting and the
   // callbacks are read when it changes rather than being reasons to run, and
@@ -605,16 +625,19 @@ export function LaunchSceneIntro({
       return;
     }
     if (phase !== 'exiting') return;
-    // The type line dissolves on this whichever way the picture leaves.
-    exit.set(withTiming(1, timing(beats.exit.ms, { reduceMotion: ReduceMotion.Never })));
     // Likewise a dissolve rather than a cut, at either setting -- and the
-    // dissolve is also what the snap falls back to.
-    const fade = () =>
+    // dissolve is also what the snap falls back to. The type line dissolves
+    // with it (with the sweep, when the exit is the snap).
+    const fade = () => {
+      // Home goes back to its own entrance, under the fading sheet.
+      setRevealDriver(null);
+      dissolveLine();
       sheetFade.set(
         withTiming(1, timing(beats.exit.ms, { reduceMotion: ReduceMotion.Never }), (finished) => {
           if (finished) scheduleOnRN(finish);
         })
       );
+    };
     // Reduce Motion keeps the plain cross-fade: tiles flying off is exactly the
     // movement the setting asks us not to make. And the snap can only cut up
     // what the canvas draws: with the picture still a view, or the world an
@@ -632,13 +655,36 @@ export function LaunchSceneIntro({
       return;
     }
     // The canvas's children become this frame, cut up; at progress 0 every
-    // tile is where it was cut from, so the swap is the frame already showing.
-    // The clock starts when the atlas is in the canvas (`startSnap`), not here:
-    // building it takes a couple of hundred milliseconds on a slow device, and
-    // a clock already running would open the snap a quarter of the way in.
+    // tile is where it was cut from, so the swap is the frame already showing,
+    // and it holds there until the sweep starts (see below).
     setSnapImage(snapshot);
   });
-  const startSnap = () =>
+  // The sweep waits for two things, and holds the untouched frame until both:
+  //
+  //  - the atlas is in the canvas (`onReady`). Building it takes a couple of
+  //    hundred milliseconds on a slow device, and a clock already running
+  //    would open the snap a quarter of the way in;
+  //  - Home is laid out underneath and waiting. Its entrance follows
+  //    `snapProgress` (the store's driver), and it says when it has rendered
+  //    with the reveal; a Home that never says (another layout, the lock gate)
+  //    gets `HOME_REVEAL_PATIENCE_MS`. Then a few frames for that to reach the
+  //    screen. From there one clock drives both: the first tile leaves on the
+  //    frame Home starts arriving, and Home is complete with the last.
+  const [atlasReady, setAtlasReady] = useState(false);
+  const onAtlasReady = useCallback(() => setAtlasReady(true), []);
+  const homeRevealed = useLaunchHandoff((state) => state.ready);
+  const [homeWaitOver, setHomeWaitOver] = useState(false);
+  useEffect(() => {
+    if (!snapImage) return;
+    const timer = setTimeout(() => setHomeWaitOver(true), HOME_REVEAL_PATIENCE_MS);
+    return () => clearTimeout(timer);
+  }, [snapImage]);
+  const swept = useRef(false);
+  // Read when the moment comes; not reasons to schedule it again.
+  const sweep = useEffectEvent(() => {
+    if (swept.current) return;
+    swept.current = true;
+    dissolveLine();
     snapProgress.set(
       withTiming(
         1,
@@ -650,6 +696,22 @@ export function LaunchSceneIntro({
         }
       )
     );
+  });
+  useEffect(() => {
+    if (!atlasReady || !(homeRevealed || homeWaitOver)) return;
+    let frames = 0;
+    let request = 0;
+    const tick = () => {
+      frames += 1;
+      if (frames >= HOME_PRESENT_FRAMES) {
+        sweep();
+        return;
+      }
+      request = requestAnimationFrame(tick);
+    };
+    request = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(request);
+  }, [atlasReady, homeRevealed, homeWaitOver]);
   useEffect(() => {
     followPhase();
   }, [phase]);
@@ -857,7 +919,7 @@ export function LaunchSceneIntro({
           {snapImage ? (
             <SnapAtlas
               image={snapImage}
-              onReady={startSnap}
+              onReady={onAtlasReady}
               progress={snapProgress}
               width={sheet.width}
             />
