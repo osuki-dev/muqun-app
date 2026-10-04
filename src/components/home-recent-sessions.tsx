@@ -12,6 +12,7 @@ import { StatusDot } from '@/components/status-dot';
 import { Text } from '@/components/text';
 import { ThemeIcon } from '@/components/theme-icon';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
+import { useHomeScenePlate } from '@/hooks/use-home-scene-plate';
 import {
   HOME_CONTINUE_REFRESH_MS,
   refreshHomeContinue,
@@ -81,6 +82,7 @@ export function HomeRecentSessions({
   const theme = useThemeTokens();
   const profile = useAppearanceProfile();
   const background = useSurfaceBackground();
+  const emptyPlate = useHomeScenePlate();
   const entries = useHomeRecentsStore((state) => state.entries);
   const hydrated = useHomeRecentsStore((state) => state.hydrated);
   const [expanded, setExpanded] = useState(false);
@@ -213,7 +215,13 @@ export function HomeRecentSessions({
           <Text
             variant="bodySmall"
             color={theme.colors.textMuted}
-            style={{ paddingVertical: 16, paddingHorizontal: 0 }}>
+            // Over a pack's scene the caption takes its heading's plate, and the
+            // plate's own padding replaces the 16 above and below it.
+            style={
+              emptyPlate.backgroundColor
+                ? [emptyPlate, { marginVertical: 12 }]
+                : { paddingVertical: 16, paddingHorizontal: 0 }
+            }>
             {hydrated && snapshotsHydrated ? t`Nothing to show yet.` : t`Loading recent sessions…`}
           </Text>
         ) : null}
