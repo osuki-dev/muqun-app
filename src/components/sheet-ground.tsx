@@ -87,10 +87,13 @@ export function SheetGround({
   testID,
   tint = 'surface',
   frosted = false,
+  overdrawBottom = 0,
 }: {
   /** Kept so existing flows can still find the scene they already anchor on. */
   testID?: string;
   tint?: SheetGroundTint;
+  /** See `SheetFrame`'s prop of the same name. */
+  overdrawBottom?: number;
   /**
    * Whether the wallpaper is veiled to a reading surface.
    *
@@ -110,7 +113,11 @@ export function SheetGround({
       pointerEvents="none"
       accessible={false}
       importantForAccessibility="no-hide-descendants"
-      style={StyleSheet.absoluteFill}>
+      style={
+        overdrawBottom > 0
+          ? [StyleSheet.absoluteFill, { bottom: -overdrawBottom }]
+          : StyleSheet.absoluteFill
+      }>
       {/* Opacity audit: floor -- the sheet's opaque base (layer 1 above). */}
       <View style={[StyleSheet.absoluteFill, { backgroundColor: theme.colors.background }]} />
       <View
@@ -177,17 +184,29 @@ export function SheetFrame({
   testID,
   tint,
   frosted,
+  overdrawBottom,
   children,
 }: {
   testID?: string;
   tint?: SheetGroundTint;
   /** See `SheetGround`: the wallpaper veiled to a reading surface. */
   frosted?: boolean;
+  /**
+   * How far the ground paints past the bottom of what the sheet measured.
+   *
+   * A content-sized iOS form sheet is taller than its content: UIKit hangs the
+   * bottom safe area under a custom detent, and with the keyboard up that
+   * strip sits between the content and the keyboard. The route's background is
+   * transparent, so without this the screen underneath showed through it. The
+   * sheet clips to its own bounds, so painting further than needed is free.
+   * Costs no layout: the ground is absolutely positioned.
+   */
+  overdrawBottom?: number;
   children: ReactNode;
 }) {
   return (
     <SheetGroundTintContext.Provider value={tint ?? 'surface'}>
-      <SheetGround testID={testID} tint={tint} frosted={frosted} />
+      <SheetGround testID={testID} tint={tint} frosted={frosted} overdrawBottom={overdrawBottom} />
       {children}
     </SheetGroundTintContext.Provider>
   );
