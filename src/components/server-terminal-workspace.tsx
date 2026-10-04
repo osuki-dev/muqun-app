@@ -228,6 +228,7 @@ import {
   hasEarlierPaneParts,
   hasEarlierPartsAfterPage,
   paneTranscriptRows,
+  reconcilePaneParts,
 } from '@/lib/pane-parts';
 import { asAgentActivityStatus, syncAgentActivity } from '@/lib/live-activity';
 import { dockPresentation } from '@/lib/dock-presentation';
@@ -407,6 +408,12 @@ type PanePartsState = {
   failures: number;
   parts: PanePart[];
   /**
+   * The shift that keys `parts` in the rows of the first read, so a window that
+   * slid under new output does not hand every row a new id. See
+   * `reconcilePaneParts`.
+   */
+  partsOffset: number;
+  /**
    * What this pane's composer can offer, from the same envelope. Kept here
    * rather than fetched on its own: the probe that decides whether there is a
    * structured view already carries the descriptor, so the slash picker costs
@@ -422,6 +429,7 @@ const initialPartsState: PanePartsState = {
   failed: false,
   failures: 0,
   parts: [],
+  partsOffset: 0,
   composer: null,
 };
 
@@ -1967,14 +1975,19 @@ export function ServerTerminalWorkspace({
         async () => {
           const result = await listPaneParts(data.sessionId, requestPaneId, lineLimit);
           if (!isCurrentRequest()) return;
-          setPartsState({
-            paneId: requestPaneId,
-            answered: true,
-            supported: result.structured,
-            failed: false,
-            failures: 0,
-            parts: result.parts,
-            composer: result.composer,
+          setPartsState((current) => {
+            const held = current.paneId === requestPaneId ? current : initialPartsState;
+            const reconciled = reconcilePaneParts(held.parts, held.partsOffset, result.parts);
+            return {
+              paneId: requestPaneId,
+              answered: true,
+              supported: result.structured,
+              failed: false,
+              failures: 0,
+              parts: reconciled.parts,
+              partsOffset: reconciled.offset,
+              composer: result.composer,
+            };
           });
           const scroll = panesRef.current.find((pane) => pane.id === requestPaneId)?.raw.scroll;
           earlierPartsRowsRef.current = paneTranscriptRows(result.parts);
@@ -2038,14 +2051,19 @@ export function ServerTerminalWorkspace({
             // describes, so the next change has to re-read rather than be skipped as
             // "already have that content".
             readPartsKeyRef.current = { paneId: '', contentKey: '' };
-            setPartsState({
-              paneId: requestPaneId,
-              answered: true,
-              supported: result.structured,
-              failed: false,
-              failures: 0,
-              parts: result.parts,
-              composer: result.composer,
+            setPartsState((current) => {
+              const held = current.paneId === requestPaneId ? current : initialPartsState;
+              const reconciled = reconcilePaneParts(held.parts, held.partsOffset, result.parts);
+              return {
+                paneId: requestPaneId,
+                answered: true,
+                supported: result.structured,
+                failed: false,
+                failures: 0,
+                parts: reconciled.parts,
+                partsOffset: reconciled.offset,
+                composer: result.composer,
+              };
             });
             const scroll = panesRef.current.find((pane) => pane.id === requestPaneId)?.raw.scroll;
             const reachedRows = earlierPartsRowsRef.current;

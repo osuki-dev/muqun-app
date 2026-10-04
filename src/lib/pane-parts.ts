@@ -360,3 +360,200 @@ function normalizeTableRows(value: unknown): string[][] {
   }
   return rows;
 }
+
+/**
+ * The smallest run of parts that counts as a block the gateway wrote down twice.
+ *
+ * Three parts, at least three of them different and carrying text -- the parts
+ * twin of `REPEAT_BLOCK_ROWS` and `SANITIZE_MIN_DISTINCT` in
+ * `terminal/history.ts`. Below it a repeat is the agent's own output: Claude Code
+ * prints `✻ Waiting for 2 background agents to finish` into its transcript every
+ * time the count changes, and the same count twice in one session is history.
+ */
+const REPEAT_RUN_PARTS = 3;
+
+/** What a part says, as one comparable string. */
+function partKey(part: PanePart): string {
+  return `${part.type}\u0001${part.fallback_text}`;
+}
+
+function carriesText(part: PanePart): boolean {
+  return part.fallback_text.trim() !== '';
+}
+
+/**
+ * A transcript with the screens the gateway wrote down twice taken back out.
+ *
+ * The gateway keeps history for panes that repaint an alternate screen (Claude
+ * Code, opencode) by placing each read against the end of what it holds. A read
+ * that places nowhere -- the screen jumped further than a poll can follow, which
+ * is also what a reader scrolling the agent's own transcript back looks like --
+ * is appended whole, and when the screen comes back down the newest screen is
+ * appended after it again. The buffer is then `[history][an older screen][the
+ * newest screen]`, and every block on both of those screens is on the list twice
+ * for as long as the gateway is up.
+ *
+ * Two repairs, both made only where the evidence is a block and never a line:
+ *
+ * - a run of {@link REPEAT_RUN_PARTS} or more parts that is, part for part, a
+ *   run already kept above it is dropped. The first rendering stays where it
+ *   was, so a streaming transcript keeps its rows and only ever grows at the
+ *   tail;
+ * - where such a run was dropped there is a seam, and the parts right after it
+ *   that re-send the tail of what was kept are dropped too. That is the screen
+ *   that followed the jump re-sending the rows the buffer already ends with --
+ *   the same `already_held` rule the gateway applies, and only ever at a seam,
+ *   so two genuine adjacent `Waiting for` banners elsewhere are never touched.
+ *
+ * Genuinely new blocks are distinct by construction: a different agent name, a
+ * different elapsed time, a different count all change the part's text.
+ */
+export function collapseRepeatedParts(parts: readonly PanePart[]): PanePart[] {
+  const keys = parts.map(partKey);
+  const kept: PanePart[] = [];
+  const keptKeys: string[] = [];
+  const positions = new Map<string, number[]>();
+  let atSeam = false;
+  let index = 0;
+
+  while (index < parts.length) {
+    if (atSeam) {
+      atSeam = false;
+      const widest = Math.min(keptKeys.length, parts.length - index);
+      let resent = 0;
+      for (let count = widest; count > 0; count -= 1) {
+        const from = keptKeys.length - count;
+        let same = true;
+        for (let step = 0; step < count; step += 1) {
+          if (keptKeys[from + step] !== keys[index + step]) {
+            same = false;
+            break;
+          }
+        }
+        if (same) {
+          resent = count;
+          break;
+        }
+      }
+      if (resent > 0) {
+        index += resent;
+        continue;
+      }
+    }
+
+    const part = parts[index] as PanePart;
+    let repeat = 0;
+    if (carriesText(part)) {
+      for (const start of positions.get(keys[index] as string) ?? []) {
+        let run = 0;
+        const distinct = new Set<string>();
+        while (
+          index + run < parts.length &&
+          start + run < keptKeys.length &&
+          keptKeys[start + run] === keys[index + run]
+        ) {
+          if (carriesText(parts[index + run] as PanePart))
+            distinct.add(keys[index + run] as string);
+          run += 1;
+        }
+        if (run >= REPEAT_RUN_PARTS && distinct.size >= REPEAT_RUN_PARTS && run > repeat) {
+          repeat = run;
+        }
+      }
+    }
+    if (repeat > 0) {
+      index += repeat;
+      atSeam = true;
+      continue;
+    }
+
+    const key = keys[index] as string;
+    const seen = positions.get(key);
+    if (seen) seen.push(kept.length);
+    else positions.set(key, [kept.length]);
+    kept.push(part);
+    keptKeys.push(key);
+    index += 1;
+  }
+
+  return kept.length === parts.length ? (parts as PanePart[]) : kept;
+}
+
+/** A transcript whose ids are stable across reads, and the shift that made them so. */
+export interface ReconciledPaneParts {
+  parts: PanePart[];
+  /** Added to every source row to get the id, carried to the next read. */
+  offset: number;
+}
+
+/**
+ * The incoming transcript, deduplicated and keyed in the previous read's rows.
+ *
+ * A part's id is its source rows, and those rows are counted from the top of the
+ * *window* the gateway served -- the last `lines` rows of its buffer. Once the
+ * buffer is deeper than the window, every row of new output slides the window
+ * down by one, so every part on screen comes back with a different id on every
+ * poll. Measured against a live gateway: from the moment the window filled, not
+ * one id survived from one read to the next. Every list key changed, so the chat
+ * view unmounted and remounted every row it was showing, once a second, for as
+ * long as the agent was printing -- the flicker -- and the reader's position had
+ * nothing left to anchor to.
+ *
+ * So the window's slide is measured, not assumed: each part is matched to the
+ * same text in the previous read, and the shift most of them agree on is the one
+ * the window moved by. Ids are written in the previous read's coordinates, which
+ * makes an unchanged part the same row it was, and lets the incremental builder
+ * in `pane-chat.ts` hand back the same object for it.
+ */
+export function reconcilePaneParts(
+  previous: readonly PanePart[],
+  previousOffset: number,
+  incoming: readonly PanePart[]
+): ReconciledPaneParts {
+  const parts = collapseRepeatedParts(incoming);
+
+  const before = new Map<string, number[]>();
+  for (const part of previous) {
+    if (!part.range || !carriesText(part)) continue;
+    const key = partKey(part);
+    const start = part.range.start + previousOffset;
+    const starts = before.get(key);
+    if (starts) starts.push(start);
+    else before.set(key, [start]);
+  }
+
+  let offset = previousOffset;
+  if (before.size > 0) {
+    const votes = new Map<number, number>();
+    for (const part of parts) {
+      if (!part.range || !carriesText(part)) continue;
+      for (const start of before.get(partKey(part)) ?? []) {
+        const shift = start - part.range.start;
+        votes.set(shift, (votes.get(shift) ?? 0) + 1);
+      }
+    }
+    let best = 0;
+    for (const [shift, count] of votes) {
+      if (
+        count > best ||
+        (count === best && Math.abs(shift - previousOffset) < Math.abs(offset - previousOffset))
+      ) {
+        best = count;
+        offset = shift;
+      }
+    }
+  }
+
+  if (offset === 0) return { parts, offset };
+  return {
+    parts: parts.map((part) =>
+      part.range
+        ? {
+            ...part,
+            id: `r${part.range.start + offset}-${part.range.end + offset}`,
+          }
+        : part
+    ),
+    offset,
+  };
+}
