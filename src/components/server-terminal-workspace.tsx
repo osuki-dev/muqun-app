@@ -227,6 +227,7 @@ import {
 import {
   hasEarlierPaneParts,
   hasEarlierPartsAfterPage,
+  collapseRepeatedParts,
   paneTranscriptRows,
 } from '@/lib/pane-parts';
 import { asAgentActivityStatus, syncAgentActivity } from '@/lib/live-activity';
@@ -1958,7 +1959,7 @@ export function ServerTerminalWorkspace({
             supported: result.structured,
             failed: false,
             failures: 0,
-            parts: result.parts,
+            parts: collapseRepeatedParts(result.parts),
             composer: result.composer,
           });
           const scroll = panesRef.current.find((pane) => pane.id === requestPaneId)?.raw.scroll;
@@ -2029,7 +2030,7 @@ export function ServerTerminalWorkspace({
               supported: result.structured,
               failed: false,
               failures: 0,
-              parts: result.parts,
+              parts: collapseRepeatedParts(result.parts),
               composer: result.composer,
             });
             const scroll = panesRef.current.find((pane) => pane.id === requestPaneId)?.raw.scroll;
