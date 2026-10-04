@@ -1807,6 +1807,7 @@ msgid "default"
 msgstr "predeterminado"
 
 #: src/components/settings-terminal.tsx
+#: src/components/settings-theme-sheet.tsx
 msgid "Default"
 msgstr "Predeterminado"
 

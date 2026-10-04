@@ -7,6 +7,7 @@ import { useEffectiveCustomTheme } from '@/components/theme-candidate';
 import { resolveThemeImage } from '@/theme/resolve';
 import type { ThemeManifest, ThemeSlot } from '@/theme/schema';
 import { SkiaAmbientEffect } from '@/components/skia-ambient-effect';
+import { isRenderableThemeAsset } from '@/theme/renderable-asset';
 
 /** Use only to choose native fallback content; rendered artwork still validates its URI. */
 export function useHasThemeArtwork(slot: ThemeSlot, fallbackSlot?: ThemeSlot) {
@@ -23,7 +24,7 @@ export function useHasThemeArtwork(slot: ThemeSlot, fallbackSlot?: ThemeSlot) {
         fallbackSlot
       )
     : null;
-  return Boolean(image && assets?.[image.asset]?.startsWith('file:///'));
+  return Boolean(image && isRenderableThemeAsset(assets?.[image.asset]));
 }
 
 export function ThemeArtwork({
@@ -85,7 +86,7 @@ export function ThemeArtworkLayer({
   const size = viewport ?? (width >= 768 ? 'regular' : 'compact');
   const image = resolveThemeImage(manifest, slot, mode, size, true, fallbackSlot);
   const uri = image ? assets[image.asset] : undefined;
-  if (!image || !uri?.startsWith('file:///') || failed === uri) return null;
+  if (!image || !isRenderableThemeAsset(uri) || failed === uri) return null;
   const style = [StyleSheet.absoluteFill, { opacity: Math.min(image.opacity ?? 1, opacityLimit) }];
   return (
     <View
