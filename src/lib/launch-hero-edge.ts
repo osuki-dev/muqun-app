@@ -1,4 +1,5 @@
 import type { InkBloomEdge } from './ink-bloom-shader';
+import { isRenderableThemeAsset } from '@/theme/renderable-asset';
 
 /**
  * The shape of the launch picture, as the ink bloom's front has to know it.
@@ -463,9 +464,17 @@ export function heroEdgeAmount(front: number, max: number, scale: number): numbe
  * may be a small badge with a wide margin, and drawing a rim around the margin
  * would be a worse guess than the circle the opening used to draw. So the
  * unreadable case keeps the old behaviour exactly.
+ *
+ * The built-in theme's pictures are the exception that is a name and still
+ * readable: in an Android release build Metro hands them out as drawable
+ * names, which Skia's `Data.fromURI` resolves through the resource table. They
+ * are registered as bundled theme assets, and only those names pass.
  */
 export function isMeasurableHeroUri(uri: string | undefined | null): uri is string {
-  return typeof uri === 'string' && /^(file|content|https?|asset|data):/.test(uri);
+  return (
+    typeof uri === 'string' &&
+    (/^(file|content|https?|asset|data):/.test(uri) || isRenderableThemeAsset(uri))
+  );
 }
 
 /**

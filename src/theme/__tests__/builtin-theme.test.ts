@@ -3,6 +3,7 @@ import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { isMeasurableHeroUri } from '@/lib/launch-hero-edge';
 import { isRenderableThemeAsset, registerBundledThemeAssets } from '@/theme/renderable-asset';
 import {
   BUILTIN_THEME_INSTALLATION_ID,
@@ -106,6 +107,9 @@ test('only app-owned or registered bundled URIs are renderable', () => {
   expect(isRenderableThemeAsset('assets_themes_covercourier_assets_paperlight')).toBe(false);
   registerBundledThemeAssets(['assets_themes_covercourier_assets_paperlight']);
   expect(isRenderableThemeAsset('assets_themes_covercourier_assets_paperlight')).toBe(true);
+  // The opening decodes the built-in picture in its canvas, as it does a file.
+  expect(isMeasurableHeroUri('assets_themes_covercourier_assets_paperlight')).toBe(true);
+  expect(isMeasurableHeroUri('splashscreen_logo')).toBe(false);
   expect(isRenderableThemeAsset(undefined)).toBe(false);
 });
 
