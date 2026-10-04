@@ -26,6 +26,7 @@ import { safeArtworkOpacity } from '@/theme/artwork-contrast';
 import { jointArtworkOpacity } from '@/theme/opacity-policy';
 import { kitButtonPressMotion } from '@/lib/motion';
 import { useSurfaceBackground, useSurfaceBackgroundOpacity } from '@/hooks/use-surface-background';
+import { isRenderableThemeAsset } from '@/theme/renderable-asset';
 
 export type { ButtonProps, ButtonVariant } from '@osuki-dev/ui';
 
@@ -63,7 +64,7 @@ export function Button(props: ButtonProps) {
           width >= 768 ? 'regular' : 'compact'
         )
       : null;
-  const hasImage = Boolean(artwork && assets?.[artwork.asset]?.startsWith('file:///'));
+  const hasImage = Boolean(artwork && isRenderableThemeAsset(assets?.[artwork.asset]));
   const haptics = useHaptics();
   const pressProgress = useSharedValue(0);
   const button = theme.components.Button;

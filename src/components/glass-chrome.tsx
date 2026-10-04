@@ -24,6 +24,7 @@ import { ThemeArtwork } from '@/components/theme-artwork';
 import { useEffectiveCustomTheme } from '@/components/theme-candidate';
 import { resolveArtworkOpacity } from '@/theme/artwork-contrast';
 import { jointArtworkOpacity } from '@/theme/opacity-policy';
+import { isRenderableThemeAsset } from '@/theme/renderable-asset';
 
 const AnimatedBlurView = Animated.createAnimatedComponent(BlurView);
 
@@ -118,7 +119,7 @@ export function GlassChrome({
   const artwork = active
     ? resolveThemeImage(active.manifest, slot, resolvedMode, width >= 768 ? 'regular' : 'compact')
     : null;
-  const hasImage = Boolean(artwork && assets?.[artwork.asset]?.startsWith('file:///'));
+  const hasImage = Boolean(artwork && isRenderableThemeAsset(assets?.[artwork.asset]));
   const backgroundOpacity = useSurfaceBackgroundOpacity();
   const glassAvailable = isGlassChromeLive();
   // Native glass includes its own system fill. An explicit translucent-color

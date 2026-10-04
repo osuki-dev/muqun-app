@@ -175,10 +175,7 @@ export function HomeOverview({
   const themeLibraryHydrated = useThemeLibrary((state) => state.hydrated);
   const identity = resolveHomeIdentity(customTheme?.manifest);
   const hasScene = useHasThemeArtwork('home.wallpaper', 'shell.wallpaper');
-  const customAssets = useThemeLibrary(
-    (state) =>
-      state.library.themes.find((entry) => entry.id === state.active?.installationId)?.assets
-  );
+  const customAssets = useThemeLibrary((state) => state.activeAssets);
   const [failedLogo, setFailedLogo] = useState<string | null>(null);
   const brandMark = useBrandMark();
   const customLogo =

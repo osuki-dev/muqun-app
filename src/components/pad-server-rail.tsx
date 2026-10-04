@@ -116,10 +116,7 @@ export function PadServerRail({
   /** Anything in the rail at all -- a paired gateway, or a saved SSH host. */
   const compactActions = servers.length > 0 || (sshHosts?.length ?? 0) > 0;
   const activeTheme = useThemeLibrary((state) => state.active);
-  const themeAssets = useThemeLibrary(
-    (state) =>
-      state.library.themes.find((entry) => entry.id === state.active?.installationId)?.assets
-  );
+  const themeAssets = useThemeLibrary((state) => state.activeAssets);
   const [failedLogo, setFailedLogo] = useState<string | null>(null);
   const brandMark = useBrandMark();
   // The caller's answer when it has one, the pack's otherwise. Resolved here so
