@@ -6,6 +6,7 @@ import {
   CHANGE_TREE_FILE_ROW_HEIGHT,
   CHANGE_TREE_MAX_INDENT_LEVELS,
   buildChangeTree,
+  collapseLandsOnHeader,
   changeTreeIndentOf,
   changeTreeRows,
   defaultCollapsedDirs,
@@ -263,5 +264,20 @@ describe('tree row geometry', () => {
     expect(list).toContain('dir: CHANGE_TREE_DIR_ROW_HEIGHT');
     expect(list).toContain('treeFile: CHANGE_TREE_FILE_ROW_HEIGHT');
     expect(list).toContain('isMeasuredDiffRow(row) ? undefined : sizeOfDiffRow(row)');
+  });
+});
+
+describe('collapseLandsOnHeader', () => {
+  test('a header still on screen stays where it was tapped', () => {
+    expect(collapseLandsOnHeader(1200, 800)).toBe(false);
+    expect(collapseLandsOnHeader(800, 800)).toBe(false);
+  });
+
+  test('a header scrolled out above the viewport is landed on', () => {
+    expect(collapseLandsOnHeader(400, 800)).toBe(true);
+  });
+
+  test('a header the list has not placed is not landed on', () => {
+    expect(collapseLandsOnHeader(undefined, 800)).toBe(false);
   });
 });

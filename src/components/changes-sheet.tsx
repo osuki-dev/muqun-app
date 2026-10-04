@@ -22,6 +22,7 @@ import { diffEmptyState } from '@/lib/agent-workspace-missing';
 import {
   buildChangeTree,
   changeTreeRows,
+  collapseLandsOnHeader,
   defaultCollapsedDirs,
   nextDiffContext,
 } from '@/lib/change-tree';
@@ -492,22 +493,28 @@ export const ChangesSheet = memo(function ChangesSheet({
    * Collapsing a file the reader is deep into removes every row under the
    * viewport, and the offset is left past the end of the content: a blank
    * sheet. The header just tapped is both still there and what they asked to
-   * see.
+   * see. Only then, though: a header still on screen stays where it was
+   * tapped, held there by the list's own position keeping. Landing on it
+   * anyway pulls it to the top of the sheet, which reads as the list jumping.
    */
   const landOnRef = useRef<string | null>(null);
   const toggleFile = useCallback(
     (path: string) => {
       setMenuPath(null);
       if (expandedOrder.includes(path)) {
-        landOnRef.current = `f:${path}`;
+        const key = `f:${path}`;
+        const state = listRef.current?.getState();
+        if (state && collapseLandsOnHeader(state.positionByKey(key), state.scroll)) {
+          landOnRef.current = key;
+        }
         setExpandedOrder(closeFile(expandedOrder, path));
         if (listing.source === 'paged') dropPages([path]);
         // A failed fetch is asked again the next time the file opens.
-        const key = patchKey(scope, path);
-        if (patches[key]?.error && patches[key]?.patch === null) {
+        const entryKey = patchKey(scope, path);
+        if (patches[entryKey]?.error && patches[entryKey]?.patch === null) {
           setPatches((prev) => {
             const next = { ...prev };
-            delete next[key];
+            delete next[entryKey];
             return next;
           });
         }
