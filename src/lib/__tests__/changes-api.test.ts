@@ -1,12 +1,19 @@
 import { describe, expect, test } from 'bun:test';
 import { readFileSync } from 'node:fs';
 
-import { gatewaySupportsPaneVcsFiles, type AgentVcsFiles } from '../agent-protocol';
+import {
+  gatewaySupportsPaneVcsFiles,
+  parseAgentVcsDiff,
+  parseAgentVcsFiles,
+  type AgentVcsFiles,
+  type VcsRepoState,
+} from '../agent-protocol';
 import { buildChangeTree, changeTreeRows } from '../change-tree';
 import {
   agentChangesApi,
   listingFromGitStatus,
   paneChangesApi,
+  repoLine,
   type AgentChangesClient,
   type PaneChangesClient,
 } from '../changes-api';
@@ -23,6 +30,15 @@ const FILES: AgentVcsFiles = {
   base: 'origin/main',
   truncated: false,
   vcs: 'git',
+};
+
+const REPO: VcsRepoState = {
+  branch: 'feat/multi-harness',
+  head: 'c7733357aa',
+  detached: false,
+  upstream: 'origin/feat/multi-harness',
+  ahead: 2,
+  behind: 0,
 };
 
 function agentClient(files: AgentVcsFiles | null, calls: Call[]): AgentChangesClient {
@@ -174,9 +190,10 @@ describe('paneChangesApi', () => {
     const calls: Call[] = [];
     const api = paneChangesApi(
       { sessionId: 'default', paneId: '%3', vcsFiles: true },
-      paneClient(FILES, calls)
+      paneClient({ ...FILES, repo: REPO }, calls)
     );
     const listing = await api.listing('branch');
+    expect(listing.repo).toEqual(REPO);
     expect(listing.source).toBe('lazy');
     const patch = await api.file({ mode: 'working', path: 'src/a.ts', context: 3 });
     expect(patch).toEqual({ patch: '@@ -1 +1,2 @@\n a\n+b\n', truncated: true, unchanged: false });
@@ -288,5 +305,185 @@ describe('gatewaySupportsPaneVcsFiles', () => {
     expect(gatewaySupportsPaneVcsFiles(['git_diff', 'pane_vcs_files'])).toBe(true);
     expect(gatewaySupportsPaneVcsFiles(['agent_vcs_files', 'git_diff'])).toBe(false);
     expect(gatewaySupportsPaneVcsFiles(undefined)).toBe(false);
+  });
+});
+
+describe('the repository line', () => {
+  test('…/vcs/files carries `repo` when the gateway has it, and nothing when it does not', () => {
+    const withRepo = parseAgentVcsFiles({
+      files: [],
+      mode: 'working',
+      truncated: false,
+      repo: {
+        branch: 'main',
+        head: 'abc1234def',
+        detached: false,
+        upstream: 'origin/main',
+        ahead: 3,
+        behind: 1,
+      },
+    });
+    expect(withRepo?.repo).toEqual({
+      branch: 'main',
+      head: 'abc1234def',
+      detached: false,
+      upstream: 'origin/main',
+      ahead: 3,
+      behind: 1,
+    });
+    expect(parseAgentVcsFiles({ files: [], mode: 'working' })?.repo).toBeUndefined();
+    expect(parseAgentVcsFiles({ files: [], repo: null })?.repo).toBeUndefined();
+    // An agent's eager route reads the same object when it is there.
+    expect(parseAgentVcsDiff({ files: [], repo: { branch: 'x', head: 'h' } }).repo?.branch).toBe(
+      'x'
+    );
+    expect(parseAgentVcsDiff([]).repo).toBeUndefined();
+  });
+
+  test('an agent listing passes `repo` through, and an old gateway has none', async () => {
+    const calls: Call[] = [];
+    const lazy = agentChangesApi(
+      { sessionId: 's', asid: 'a', filesApi: true },
+      agentClient({ ...FILES, repo: REPO }, calls)
+    );
+    expect((await lazy.listing('working')).repo).toEqual(REPO);
+    const old = agentChangesApi(
+      { sessionId: 's', asid: 'a', filesApi: true },
+      agentClient(FILES, calls)
+    );
+    expect((await old.listing('working')).repo).toBeUndefined();
+    const eager = agentChangesApi(
+      { sessionId: 's', asid: 'a', filesApi: false },
+      agentClient(FILES, calls)
+    );
+    expect((await eager.listing('working')).repo).toBeUndefined();
+    // No second request for an agent session: there is no git/status to ask.
+    expect(calls.map((call) => call[0])).toEqual(['files', 'files', 'diff']);
+  });
+
+  test('a pane whose …/vcs/files lacks `repo` reads it from git/status, once', async () => {
+    const calls: Call[] = [];
+    const api = paneChangesApi(
+      { sessionId: 's', paneId: '%1', vcsFiles: true },
+      paneClient(FILES, calls)
+    );
+    const listing = await api.listing('working');
+    expect(listing.source).toBe('lazy');
+    expect(listing.repo).toEqual({
+      branch: 'main',
+      head: 'abc',
+      detached: false,
+      upstream: null,
+      ahead: null,
+      behind: null,
+    });
+    expect(calls.map((call) => call[0])).toEqual(['files', 'status']);
+  });
+
+  test('the git/status fallback is no branch line when it fails, and not asked outside a repository', async () => {
+    const calls: Call[] = [];
+    const failing: PaneChangesClient = {
+      ...paneClient(FILES, calls),
+      status: async () => {
+        calls.push(['status']);
+        throw new Error('HTTP 500');
+      },
+    };
+    const api = paneChangesApi({ sessionId: 's', paneId: '%1', vcsFiles: true }, failing);
+    const listing = await api.listing('working');
+    expect(listing.repo).toBeUndefined();
+    expect(listing.changes).toHaveLength(2);
+
+    calls.length = 0;
+    const outside = paneChangesApi(
+      { sessionId: 's', paneId: '%1', vcsFiles: true },
+      paneClient(
+        { files: [], mode: 'working', truncated: false, reason: 'not_a_repository' },
+        calls
+      )
+    );
+    expect((await outside.listing('working')).repo).toBeUndefined();
+    expect(calls.map((call) => call[0])).toEqual(['files']);
+  });
+
+  test("an old pane gateway's git/status listing carries the branch itself", () => {
+    const listing = listingFromGitStatus(
+      gitStatusFromResponse({
+        repo: {
+          toplevel: '/r',
+          branch: 'dev',
+          head: 'abc',
+          upstream: 'origin/dev',
+          ahead: 0,
+          behind: 4,
+        },
+        truncated: false,
+        files: [],
+      })
+    );
+    expect(listing.repo?.branch).toBe('dev');
+    expect(repoLine(listing.repo)).toMatchObject({ kind: 'branch', sync: '↓4', upstream: null });
+  });
+
+  test('says the branch, ahead and behind without zeros, and an upstream only when unusual', () => {
+    expect(repoLine(REPO)).toEqual({
+      kind: 'branch',
+      branch: 'feat/multi-harness',
+      sync: '↑2',
+      upstream: null,
+      ahead: 2,
+      behind: 0,
+    });
+    expect(repoLine({ ...REPO, ahead: 2, behind: 1 })).toMatchObject({ sync: '↑2 ↓1' });
+    // No upstream: `0` from `…/vcs/files`, `null` from `…/git/status`, both nothing.
+    expect(
+      repoLine(
+        parseAgentVcsFiles({
+          files: [],
+          repo: {
+            branch: 'feat/vcs-files-branch',
+            head: '052c045',
+            detached: false,
+            upstream: null,
+            ahead: 0,
+            behind: 0,
+          },
+        })?.repo
+      )
+    ).toEqual({
+      kind: 'branch',
+      branch: 'feat/vcs-files-branch',
+      sync: null,
+      upstream: null,
+      ahead: 0,
+      behind: 0,
+    });
+    expect(repoLine({ ...REPO, ahead: null, behind: null, upstream: null })).toMatchObject({
+      sync: null,
+      upstream: null,
+    });
+    expect(repoLine({ ...REPO, upstream: 'fork/feat/multi-harness' })).toMatchObject({
+      upstream: 'fork/feat/multi-harness',
+    });
+    expect(repoLine({ ...REPO, upstream: 'origin/main' })).toMatchObject({
+      upstream: 'origin/main',
+    });
+  });
+
+  test('a detached HEAD names its commit, an unborn branch says so, and nothing is no line', () => {
+    expect(
+      repoLine({ ...REPO, branch: null, detached: true, head: 'abc1234def567', upstream: null })
+    ).toEqual({ kind: 'detached', head: 'abc1234' });
+    expect(repoLine({ ...REPO, head: null, upstream: null, ahead: null, behind: null })).toEqual({
+      kind: 'unborn',
+      branch: 'feat/multi-harness',
+    });
+    // The gateway's unborn answer names no branch at all.
+    const unborn = parseAgentVcsFiles({
+      files: [],
+      repo: { branch: null, head: null, detached: false, upstream: null, ahead: 0, behind: 0 },
+    })?.repo;
+    expect(repoLine(unborn)).toEqual({ kind: 'unborn', branch: null });
+    expect(repoLine(undefined)).toBeNull();
   });
 });

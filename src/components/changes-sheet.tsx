@@ -1,11 +1,11 @@
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { type LegendListRef } from '@legendapp/list/react-native';
 import { Dialog, useThemeTokens, useToast } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
 import { plural } from '@lingui/core/macro';
 import { Trans, useLingui } from '@lingui/react/macro';
-import { Check, ChevronDown, ChevronUp, RefreshCw } from 'lucide-react-native';
+import { Check, ChevronDown, ChevronUp, GitBranch, RefreshCw } from 'lucide-react-native';
 
 import { AgentActionMenu } from '@/components/agent-action-menu';
 import type { ChangeTreeHandlers } from '@/components/change-tree-rows';
@@ -14,8 +14,9 @@ import { usePaneChatColors } from '@/components/pane-chat-blocks';
 import { PressableScale } from '@/components/pressable-scale';
 import { SheetScene, SheetSceneQuietControl, SHEET_LADDER } from '@/components/sheet-scene';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
+import { useMonoFontFamily } from '@/hooks/use-user-fonts';
 import { patchStateFromText } from '@/lib/agent-diff-rows';
-import type { VcsFilesMode } from '@/lib/agent-protocol';
+import type { VcsFilesMode, VcsRepoState } from '@/lib/agent-protocol';
 import { agentRequestErrorDetail, isAgentOfflineError } from '@/lib/agent-request-error';
 import { diffEmptyState } from '@/lib/agent-workspace-missing';
 import {
@@ -24,7 +25,7 @@ import {
   defaultCollapsedDirs,
   nextDiffContext,
 } from '@/lib/change-tree';
-import type { ChangeListing, ChangesApi } from '@/lib/changes-api';
+import { repoLine, type ChangeListing, type ChangesApi } from '@/lib/changes-api';
 import {
   applyPatchPage,
   closeFile,
@@ -57,7 +58,8 @@ import { describeGatewayFailure } from '@/lib/network-error';
  *   one file's patch at a time, with "show more" under the last page.
  *
  * The scope is uncommitted changes, and "compared with {base}" when the
- * listing names a base to compare with.
+ * listing names a base to compare with. Under the caption, one quiet line says
+ * which branch the repository is on, when the gateway says.
  */
 export interface ChangesSheetProps {
   testID: string;
@@ -90,6 +92,119 @@ function UncheckedSlot({ size = 16 }: { size?: number; color?: string }) {
   return <View style={{ width: size, height: size }} />;
 }
 
+/**
+ * Which branch the repository is on: `⎇ feat/x → fork/x ↑2 ↓1`, `detached at
+ * abc1234`, or a branch with no commits yet. The names are drawn in the mono
+ * face because they are copied character for character, cut in the middle so
+ * both the prefix and the tail of a long name survive. No fill of its own: it
+ * sits on the sheet's ground like the caption above it.
+ */
+const ChangesRepoLine = memo(function ChangesRepoLine({ repo }: { repo: VcsRepoState }) {
+  const { t } = useLingui();
+  const theme = useThemeTokens();
+  const mono = useMonoFontFamily();
+  const line = repoLine(repo);
+  if (!line) return null;
+  const color = theme.colors.textMuted;
+  const monoStyle = { fontFamily: mono };
+  let label: string;
+  let content: ReactNode;
+  if (line.kind === 'detached') {
+    const head = line.head;
+    label = t`Detached at ${head}`;
+    // The sentence is the locale's, the commit id inside it is the mono run:
+    // split at the id rather than nesting a second `Text`, whose own variant
+    // would reset the caption's size.
+    const sentence = t`detached at ${head}`;
+    const at = sentence.indexOf(head);
+    const before = at < 0 ? sentence : sentence.slice(0, at).trimEnd();
+    const after = at < 0 ? '' : sentence.slice(at + head.length).trimStart();
+    content = (
+      <>
+        {before ? (
+          <Text variant="caption" color={color} numberOfLines={1} style={styles.repoFixed}>
+            {before}
+          </Text>
+        ) : null}
+        {at < 0 ? null : (
+          <Text
+            variant="caption"
+            color={color}
+            numberOfLines={1}
+            style={[styles.repoFixed, monoStyle]}>
+            {head}
+          </Text>
+        )}
+        {after ? (
+          <Text variant="caption" color={color} numberOfLines={1} style={styles.repoFixed}>
+            {after}
+          </Text>
+        ) : null}
+      </>
+    );
+  } else if (line.kind === 'unborn') {
+    const branch = line.branch;
+    label = branch ? t`Branch ${branch}, no commits yet` : t`No commits yet`;
+    content = (
+      <>
+        {branch ? (
+          <Text
+            variant="caption"
+            color={color}
+            numberOfLines={1}
+            ellipsizeMode="middle"
+            style={[styles.repoName, monoStyle]}>
+            {branch}
+          </Text>
+        ) : null}
+        <Text variant="caption" color={color} numberOfLines={1} style={styles.repoFixed}>
+          <Trans>no commits yet</Trans>
+        </Text>
+      </>
+    );
+  } else {
+    const { branch, upstream, ahead, behind } = line;
+    const parts = [t`Branch ${branch}`];
+    if (upstream) parts.push(t`tracking ${upstream}`);
+    if (ahead > 0) parts.push(t`${ahead} ahead`);
+    if (behind > 0) parts.push(t`${behind} behind`);
+    label = parts.join(', ');
+    content = (
+      <>
+        <Text
+          variant="caption"
+          color={color}
+          numberOfLines={1}
+          ellipsizeMode="middle"
+          style={[styles.repoName, monoStyle]}>
+          {branch}
+        </Text>
+        {upstream ? (
+          <Text
+            variant="caption"
+            color={color}
+            numberOfLines={1}
+            ellipsizeMode="middle"
+            style={[styles.repoUpstream, monoStyle]}>
+            {`→ ${upstream}`}
+          </Text>
+        ) : null}
+        {line.sync ? (
+          <Text variant="caption" color={color} numberOfLines={1} style={styles.repoFixed}>
+            {line.sync}
+          </Text>
+        ) : null}
+      </>
+    );
+  }
+  return (
+    <View testID="changes-branch" accessible accessibilityLabel={label} style={styles.repoLine}>
+      <GitBranch size={12} color={color} />
+      {content}
+    </View>
+  );
+});
+
 function patchKey(scope: VcsFilesMode, path: string): string {
   return `${scope}\n${path}`;
 }
@@ -120,6 +235,8 @@ export const ChangesSheet = memo(function ChangesSheet({
   const [reload, setReload] = useState(0);
   /** The ref "compared with" names; kept across scopes once the gateway has said it. */
   const [base, setBase] = useState<string | undefined>(undefined);
+  /** Where the repository stands; kept across scopes and reloads until a listing says otherwise. */
+  const [repo, setRepo] = useState<VcsRepoState | undefined>(undefined);
   const [scopeMenuOpen, setScopeMenuOpen] = useState(false);
   /** Which files are open, oldest first: see `openFile` for the eviction rule. */
   const [expandedOrder, setExpandedOrder] = useState<readonly string[]>([]);
@@ -277,6 +394,7 @@ export const ChangesSheet = memo(function ChangesSheet({
         }
         setListing(next);
         if (next.base) setBase(next.base);
+        setRepo(next.repo);
         // Every patch in hand is now of unknown age: dropped, and refetched
         // for the files that stay open.
         patchGeneration.current += 1;
@@ -640,6 +758,7 @@ export const ChangesSheet = memo(function ChangesSheet({
       title={t`Changes`}
       // The caption line is always there, so the list under it never jumps.
       caption={loading && lastCaption ? lastCaption : summary}
+      detail={repo ? <ChangesRepoLine repo={repo} /> : undefined}
       headingTrailing={
         <View style={styles.trailing}>
           <PressableScale
@@ -786,6 +905,10 @@ const styles = StyleSheet.create({
   body: { flex: 1, minHeight: 0 },
   emptyText: { textAlign: 'center', paddingHorizontal: SHEET_LADDER.gutter },
   trailing: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  repoLine: { flexDirection: 'row', alignItems: 'center', gap: 6, minWidth: 0 },
+  repoName: { flexShrink: 1, minWidth: 0 },
+  repoUpstream: { flexShrink: 2, minWidth: 0 },
+  repoFixed: { flexShrink: 0 },
   scope: {
     flexDirection: 'row',
     alignItems: 'center',

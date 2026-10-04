@@ -146,6 +146,7 @@ export function SheetScene({
   title,
   caption,
   captionLines,
+  detail,
   topInset = 0,
   headingTrailing,
   header,
@@ -159,6 +160,8 @@ export function SheetScene({
   caption?: string;
   /** See `SheetSceneHeading`: sentence captions may wrap; zero removes the limit. */
   captionLines?: number;
+  /** One more quiet line under the caption. See `SheetSceneHeading`. */
+  detail?: ReactNode;
   /** Safe-area clearance for a sheet that can reach the status bar. */
   topInset?: number;
   /** One quiet control on the title's line. See `SheetSceneHeading`. */
@@ -190,6 +193,7 @@ export function SheetScene({
             title={title}
             caption={caption}
             captionLines={captionLines}
+            detail={detail}
             trailing={
               fullscreen ? (
                 <>
@@ -246,6 +250,7 @@ export function SheetSceneHeading({
   title,
   caption,
   captionLines = 1,
+  detail,
   trailing,
 }: {
   title: string;
@@ -262,6 +267,12 @@ export function SheetSceneHeading({
    * its own…") is the caption failing at its only job.
    */
   captionLines?: number;
+  /**
+   * A second current value under the caption, drawn by the sheet itself at
+   * caption size -- the Changes sheet's branch line. One line, quiet, and in
+   * the same column as the caption, so the trailing control stays beside both.
+   */
+  detail?: ReactNode;
   /**
    * One quiet control on the title's line -- the commands sheet's edit toggle.
    * Not a close: the grabber and the swipe are the close. Anything that lands
@@ -281,6 +292,7 @@ export function SheetSceneHeading({
             {caption}
           </Text>
         ) : null}
+        {detail}
       </View>
       {trailing}
     </View>
