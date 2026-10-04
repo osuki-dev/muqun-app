@@ -107,3 +107,13 @@ test('the home screen warms behind the probe, and not at all when it says offlin
   expect(probeAt).toBeGreaterThan(-1);
   expect(warmAt).toBeGreaterThan(probeAt);
 });
+
+test('a re-check keeps the previous answer on hand until the new one lands', () => {
+  // The previous probe is marked rather than removed, and the flag cannot
+  // outlive the flight.
+  expect(refresh).toContain('rechecking: true');
+  expect(refresh.indexOf('rechecking: true')).toBeLessThan(
+    refresh.indexOf('probeGatewayReachable')
+  );
+  expect(refresh).toContain('rechecking: false');
+});

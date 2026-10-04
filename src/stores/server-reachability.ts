@@ -110,6 +110,12 @@ export const useServerReachability = create<ServerReachabilityState>((set, get) 
     if (pending) return pending;
     if (!options?.force && !needsReachabilityProbe(get().probes[serverId])) return;
 
+    const previous = get().probes[serverId];
+    if (previous) {
+      set((state) => ({
+        probes: { ...state.probes, [serverId]: { ...previous, rechecking: true } },
+      }));
+    }
     const flight = (async () => {
       let health: HealthResponse | null = null;
       const ok = await probeGatewayReachable(endpoint, REACHABILITY_TIMEOUT_MS, (body) => {
@@ -142,6 +148,14 @@ export const useServerReachability = create<ServerReachabilityState>((set, get) 
       await flight;
     } finally {
       inFlight.delete(serverId);
+      // Only reached with the flag still set when the flight threw before
+      // writing its answer; the held answer must not outlive it.
+      const held = get().probes[serverId];
+      if (held?.rechecking) {
+        set((state) => ({
+          probes: { ...state.probes, [serverId]: { ...held, rechecking: false } },
+        }));
+      }
     }
   },
 
