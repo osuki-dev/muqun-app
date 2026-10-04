@@ -346,3 +346,15 @@ export function nextDiffContext(current: number): number | null {
   if (current < 25) return 25;
   return null;
 }
+
+/**
+ * Whether collapsing a file should scroll the list back to its header.
+ *
+ * Only when the header has scrolled out above the viewport: the rows being
+ * removed are then the ones on screen, and the offset would be left inside
+ * text that is gone. A header still on screen stays exactly where the reader
+ * tapped it -- landing on it would pull it to the top of the sheet.
+ */
+export function collapseLandsOnHeader(headerTop: number | undefined, scrollTop: number): boolean {
+  return headerTop !== undefined && headerTop < scrollTop;
+}
