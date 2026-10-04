@@ -5510,6 +5510,10 @@ msgstr "这个终端已不存在"
 msgid "This terminal is no longer available. Choose another terminal."
 msgstr "此终端已不可用。请选择其他终端"
 
+#: src/components/changes-sheet.tsx
+msgid "This terminal pane is gone."
+msgstr "这个终端窗格已不存在"
+
 #: src/components/server-terminal-workspace.tsx
 msgid "This terminal was removed. Choose another terminal to continue."
 msgstr "此终端已被移除。请选择其他终端以继续"

@@ -5510,6 +5510,10 @@ msgstr "เทอร์มินัลนี้ไม่พร้อมใช้
 msgid "This terminal is no longer available. Choose another terminal."
 msgstr "เทอร์มินัลนี้ไม่พร้อมใช้งานแล้ว เลือกเทอร์มินัลอื่น"
 
+#: src/components/changes-sheet.tsx
+msgid "This terminal pane is gone."
+msgstr "แผงเทอร์มินัลนี้ไม่มีอยู่แล้ว"
+
 #: src/components/server-terminal-workspace.tsx
 msgid "This terminal was removed. Choose another terminal to continue."
 msgstr "เทอร์มินัลนี้ถูกลบแล้ว เลือกเทอร์มินัลอื่นเพื่อดำเนินการต่อ"

@@ -1844,7 +1844,10 @@ function paneEnvelopeData(json: unknown): unknown {
  *
  * `null` means this route gave no usable answer -- a refusal, an older
  * gateway, a body that is not a listing -- and is the sheet's cue to fall
- * back to `…/git/status`, which every `git_diff` gateway answers.
+ * back to `…/git/status`, which every `git_diff` gateway answers. A pane that
+ * is gone (`404 unknown_pane`) is an answer, `reason: 'unknown_pane'`, the way
+ * the agent routes answer `workspace_missing`; outside a checkout the route
+ * answers `200` with `reason: 'not_a_repository'`.
  */
 export async function getPaneVcsFiles(
   sessionId: string,
@@ -1856,6 +1859,11 @@ export async function getPaneVcsFiles(
     const response = await gatewayFetch(paneVcsUrl(sessionId, paneId, `files?mode=${mode}`), {
       headers: gatewayAuthHeaders(),
     });
+    if (response.status === 404 && /"unknown_pane"/.test(await response.text())) {
+      // The pane is gone: an answer, not a failure, and `…/git/status` would
+      // only say the same thing less clearly.
+      return { files: [], mode, truncated: false, reason: 'unknown_pane' };
+    }
     if (!response.ok) return null;
     return parseAgentVcsFiles(paneEnvelopeData(await response.json()));
   } catch {

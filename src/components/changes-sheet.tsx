@@ -598,7 +598,10 @@ export const ChangesSheet = memo(function ChangesSheet({
   const empty = diffEmptyState({
     loading,
     fileCount,
-    reason: listing.reason === 'no_default_branch' ? undefined : listing.reason,
+    reason:
+      listing.reason === 'not_a_repository' || listing.reason === 'workspace_missing'
+        ? listing.reason
+        : undefined,
   });
   // The caption keeps what the last scope said while the next one loads, so a
   // reload never swaps the line for a blank or a third wording.
@@ -611,13 +614,15 @@ export const ChangesSheet = memo(function ChangesSheet({
     if (!loading) setLastCaption(summary);
   }, [loading, summary]);
   const emptyText =
-    empty === 'workspace-missing'
-      ? t`Project folder is missing: ${listing.missing?.directory ?? ''}`
-      : empty === 'not-a-repository'
-        ? t`Not a git repository`
-        : scope === 'branch' && base
-          ? t`No changes compared with ${base}.`
-          : t`Nothing uncommitted in this project.`;
+    empty === 'clean' && listing.reason === 'unknown_pane'
+      ? t`This terminal pane is gone.`
+      : empty === 'workspace-missing'
+        ? t`Project folder is missing: ${listing.missing?.directory ?? ''}`
+        : empty === 'not-a-repository'
+          ? t`Not a git repository`
+          : scope === 'branch' && base
+            ? t`No changes compared with ${base}.`
+            : t`Nothing uncommitted in this project.`;
 
   const workingLabel = t`Uncommitted changes`;
   const branchLabel = base ? t`Compared with ${base}` : '';
