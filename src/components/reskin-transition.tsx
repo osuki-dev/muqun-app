@@ -29,6 +29,7 @@ import {
   type LayoutChangeEvent,
 } from 'react-native';
 import Animated, {
+  Easing,
   ReduceMotion,
   runOnJS,
   useAnimatedStyle,
@@ -51,6 +52,11 @@ import {
   reskinCoverSource,
   reskinBlocksTouches,
   resolveOrigin,
+  rippleDepth,
+  rippleFront,
+  rippleReach,
+  scanFront,
+  scanReach,
   selectReskinPlay,
   shouldAttemptSnapshot,
   snapshotOutcome,
@@ -61,10 +67,14 @@ import {
 } from '@/lib/reskin-geometry';
 import {
   FONT_HALFTONE_EFFECT,
+  FONT_SCAN_EFFECT,
   HALFTONE_BAND,
+  THEME_RIPPLE_EFFECT,
   THEME_WASH_EFFECT,
   WASH_BLEED,
   fontHalftoneUniforms,
+  fontScanUniforms,
+  themeRippleUniforms,
   themeWashUniforms,
   type ReskinPoint,
   type ReskinSize,
@@ -155,6 +165,14 @@ type ActiveRun = {
   cell: number;
   shots: ReadonlyMap<string, SkImage>;
   /**
+   * Photographs of the *new* interface, per surface, for the ripple to bend.
+   * Taken once the change has settled under the cover, on platforms that
+   * photograph at all, and only when that second picture lands inside the
+   * same budget as the first. Empty is normal: the ripple then lights its
+   * rings over the live interface instead of refracting a picture of it.
+   */
+  next: ReadonlyMap<string, SkImage>;
+  /**
    * Whether the cover has to arrive before it can leave. A photograph is the
    * old screen and so is simply there; a veil is not, and fades up first.
    */
@@ -244,6 +262,49 @@ function makeVeilImage(size: ReskinSize, paper: string, raised: string): SkImage
 const ReskinContext = createContext<ReskinContextValue | null>(null);
 
 /**
+ * Photograph every surface, inside the budget, or come back with nothing.
+ *
+ * The budget is a race the apply always wins. A snapshot that arrives after it
+ * is not waited for and not used -- only released. A capture that lands is
+ * scored against `strikes` either way, so a device that cannot do this in
+ * time stops being asked; see `SNAPSHOT_STRIKES`.
+ */
+async function photographSurfaces(
+  entries: readonly (readonly [string, SurfaceEntry])[],
+  strikes: { current: number },
+  stillWanted: () => boolean
+): Promise<Map<string, SkImage> | null> {
+  const started = Date.now();
+  const capture = Promise.all(
+    entries.map(([, entry]) => makeImageFromView(entry.ref).catch((): SkImage | null => null))
+  );
+  const raced = await Promise.race([
+    capture,
+    new Promise<'slow'>((resolve) => setTimeout(() => resolve('slow'), SNAPSHOT_BUDGET_MS)),
+  ]);
+  if (raced === 'slow' || !stillWanted()) {
+    void capture.then(release);
+    return null;
+  }
+  const elapsed = Date.now() - started;
+  strikes.current = recordSnapshotCost(strikes.current, elapsed);
+  if (
+    snapshotOutcome(
+      raced.find((image) => Boolean(image)),
+      elapsed
+    ) !== 'ok'
+  ) {
+    release(raced);
+    return null;
+  }
+  const shots = bySurface(
+    entries.map(([key]) => key),
+    raced
+  );
+  return shots.size > 0 ? shots : null;
+}
+
+/**
  * How dark the damp band behind the wash's front is, as a fraction of the new
  * theme's primary.
  *
@@ -278,6 +339,53 @@ function release(images: Iterable<SkImage | null>): void {
   requestAnimationFrame(() => {
     for (const image of doomed) image?.dispose();
   });
+}
+
+/** Every picture a run holds: the cover, and the new interface if it has one. */
+function picturesOf(run: ActiveRun): SkImage[] {
+  return [...run.shots.values(), ...run.next.values()];
+}
+
+/** Pictures matched back to the surfaces they were taken of; the strays disposed. */
+function bySurface(
+  keys: readonly string[],
+  images: readonly (SkImage | null)[]
+): Map<string, SkImage> {
+  const shots = new Map<string, SkImage>();
+  images.forEach((image, index) => {
+    const key = keys[index];
+    if (image && key) shots.set(key, image);
+    else if (image) image.dispose();
+  });
+  return shots;
+}
+
+/** How a run takes its cover away: the ripple's clock is linear, the others ease out. */
+function eraseTiming(play: Exclude<ReskinPlay, 'none'>) {
+  switch (play) {
+    case 'crossfade':
+      // The one animation in the app that must ignore the reduced-motion
+      // setting, because it *is* the accommodation. `ReduceMotion.System`
+      // would collapse it to a single frame, which is the hard cut this
+      // whole module exists to prevent -- and the cut between two entire
+      // colour schemes is the most violent thing it could do to a reader
+      // who has asked for less movement.
+      return timing(DURATION.short, { reduceMotion: ReduceMotion.Never });
+    case 'ripple':
+      // Linear, because the ripple eases its own front and settles its own
+      // depth (`rippleFront`, `rippleDepth`) on different parts of the clock.
+      return {
+        duration: RESKIN_MOTION.rippleMs,
+        easing: Easing.linear,
+        reduceMotion: ReduceMotion.System,
+      };
+    case 'scan':
+      return timing(RESKIN_MOTION.scanMs);
+    case 'wash':
+      return timing(RESKIN_MOTION.washMs);
+    case 'halftone':
+      return timing(RESKIN_MOTION.halftoneMs);
+  }
 }
 
 export function ReskinTransitionProvider({ children }: { children: ReactNode }) {
@@ -325,7 +433,7 @@ export function ReskinTransitionProvider({ children }: { children: ReactNode }) 
   const finish = useCallback((id: number) => {
     const current = activeRef.current;
     if (!current || current.id !== id) return;
-    release(current.shots.values());
+    release(picturesOf(current));
     setActive(null);
   }, []);
 
@@ -337,7 +445,7 @@ export function ReskinTransitionProvider({ children }: { children: ReactNode }) 
       // Anything already on screen belongs to a run the reader has overtaken.
       const previous = activeRef.current;
       if (previous) {
-        release(previous.shots.values());
+        release(picturesOf(previous));
         setActive(null);
       }
 
@@ -353,7 +461,8 @@ export function ReskinTransitionProvider({ children }: { children: ReactNode }) 
         selectReskinPlay({
           kind,
           reduceMotion,
-          effectReady: Boolean(kind === 'theme' ? THEME_WASH_EFFECT : FONT_HALFTONE_EFFECT),
+          effectReady: Boolean(kind === 'theme' ? THEME_RIPPLE_EFFECT : FONT_SCAN_EFFECT),
+          fallbackReady: Boolean(kind === 'theme' ? THEME_WASH_EFFECT : FONT_HALFTONE_EFFECT),
           snapshot: 'ok',
           size,
         });
@@ -365,22 +474,35 @@ export function ReskinTransitionProvider({ children }: { children: ReactNode }) 
           setActive((current) =>
             current?.id === id && current.swapping ? { ...current, swapping: false } : current
           );
-          const config =
-            chosen === 'crossfade'
-              ? // The one animation in the app that must ignore the reduced-motion
-                // setting, because it *is* the accommodation. `ReduceMotion.System`
-                // would collapse it to a single frame, which is the hard cut this
-                // whole module exists to prevent -- and the cut between two entire
-                // colour schemes is the most violent thing it could do to a reader
-                // who has asked for less movement.
-                timing(DURATION.short, { reduceMotion: ReduceMotion.Never })
-              : timing(chosen === 'wash' ? RESKIN_MOTION.washMs : RESKIN_MOTION.halftoneMs);
-          progress.set(
-            withTiming(1, config, (done) => {
-              'worklet';
-              if (done) runOnJS(finish)(id);
-            })
-          );
+          const start = () => {
+            if (id !== nextId.current) return;
+            progress.set(
+              withTiming(1, eraseTiming(chosen), (done) => {
+                'worklet';
+                if (done) runOnJS(finish)(id);
+              })
+            );
+          };
+          if (chosen !== 'ripple' || COVER_SOURCE !== 'photograph') {
+            start();
+            return;
+          }
+          // The ripple bends the new interface as well as the old, so it wants
+          // a picture of the new one too -- taken now, once the change has
+          // settled under the cover, on the same budget and strikes as the
+          // first. Without it the ripple still runs, lit over the live view.
+          if (!shouldAttemptSnapshot(strikes.current)) {
+            start();
+            return;
+          }
+          void photographSurfaces(entries, strikes, () => id === nextId.current).then((next) => {
+            if (next && id === nextId.current) {
+              setActive((current) => (current?.id === id ? { ...current, next } : current));
+            } else if (next) {
+              release(next.values());
+            }
+            start();
+          });
         });
       };
 
@@ -428,6 +550,7 @@ export function ReskinTransitionProvider({ children }: { children: ReactNode }) 
           wet: dampen(accent),
           cell: halftoneCell(paint.current.body),
           shots,
+          next: new Map(),
           veiled: true,
           swapping: true,
         });
@@ -461,44 +584,10 @@ export function ReskinTransitionProvider({ children }: { children: ReactNode }) 
         return;
       }
 
-      const started = Date.now();
-      const capture = Promise.all(
-        entries.map(([, entry]) => makeImageFromView(entry.ref).catch((): SkImage | null => null))
-      );
-      // The budget is a race the apply always wins. A snapshot that arrives
-      // after it is not waited for and not used -- only released.
-      const raced = await Promise.race([
-        capture,
-        new Promise<'slow'>((resolve) => setTimeout(() => resolve('slow'), SNAPSHOT_BUDGET_MS)),
-      ]);
-      if (raced === 'slow' || id !== nextId.current) {
-        void capture.then(release);
-        await apply();
-        return;
-      }
-
-      const elapsed = Date.now() - started;
-      strikes.current = recordSnapshotCost(strikes.current, elapsed);
-
-      const primarySurface = entries[0]?.[1].size.current ?? { width: 0, height: 0 };
-      const photographed = snapshotOutcome(
-        raced.find((image) => Boolean(image)),
-        elapsed
-      );
-      const chosen = photographed === 'ok' ? play(primarySurface) : 'none';
-      if (chosen === 'none') {
-        release(raced);
-        await apply();
-        return;
-      }
-
-      const shots = new Map<string, SkImage>();
-      raced.forEach((image, index) => {
-        const key = entries[index]?.[0];
-        if (image && key) shots.set(key, image);
-        else if (image) image.dispose();
-      });
-      if (shots.size === 0) {
+      const shots = await photographSurfaces(entries, strikes, () => id === nextId.current);
+      const chosen = shots ? play(entries[0]?.[1].size.current ?? { width: 0, height: 0 }) : 'none';
+      if (!shots || chosen === 'none') {
+        if (shots) release(shots.values());
         await apply();
         return;
       }
@@ -519,6 +608,7 @@ export function ReskinTransitionProvider({ children }: { children: ReactNode }) 
         wet: dampen(accent),
         cell: halftoneCell(paint.current.body),
         shots,
+        next: new Map(),
         veiled: false,
         swapping: false,
       });
@@ -533,7 +623,7 @@ export function ReskinTransitionProvider({ children }: { children: ReactNode }) 
   useEffect(
     () => () => {
       const current = activeRef.current;
-      if (current) for (const image of current.shots.values()) image.dispose();
+      if (current) for (const image of picturesOf(current)) image.dispose();
     },
     []
   );
@@ -609,18 +699,23 @@ export function ReskinSurface({ id, children }: { id: string; children: ReactNod
   const active = context?.active ?? null;
   const image = active?.shots.get(id) ?? null;
 
+  // The photographed view is the content alone, with the overlay beside it
+  // rather than inside it: the ripple's second picture is taken while the
+  // cover is still up, and must be of the new interface, not of the cover.
   return (
     <View
       collapsable={false}
       onLayout={onLayout}
       onStartShouldSetResponderCapture={noteTouch}
-      ref={ref}
       style={styles.surface}>
-      {children}
+      <View collapsable={false} ref={ref} style={styles.surface}>
+        {children}
+      </View>
       {active && image && measured.width > 0 && context ? (
         <ReskinOverlay
           image={image}
           key={active.id}
+          next={active.next.get(id) ?? null}
           progress={context.progress}
           run={active}
           size={measured}
@@ -646,21 +741,23 @@ export function ReskinSurface({ id, children }: { id: string; children: ReactNod
  * the reader can keep scrolling the list while the new world arrives.
  *
  * A **font** change moves all of it. New metrics re-measure every line, so
- * while the halftone is up the live rows underneath have already shifted and
- * the photograph is the only thing still showing them where they were. A tap
- * would hit whatever slid under the finger, which is worse than no tap at all,
- * so the halftone swallows them for its six hundred milliseconds.
+ * while the scan (or halftone) is up the live rows underneath have already
+ * shifted and the photograph is the only thing still showing them where they
+ * were. A tap would hit whatever slid under the finger, which is worse than
+ * no tap at all, so the scan swallows them for its two thirds of a second.
  *
  * Neither choice delays the apply; both are over in well under a second.
  */
 function ReskinOverlay({
   image,
+  next,
   progress,
   run,
   size,
   veil,
 }: {
   image: SkImage;
+  next: SkImage | null;
   progress: SharedValue<number>;
   run: ActiveRun;
   size: ReskinSize;
@@ -683,7 +780,18 @@ function ReskinOverlay({
       importantForAccessibility="no"
       pointerEvents={reskinBlocksTouches(run.play, run.swapping) ? 'auto' : 'none'}
       style={[styles.cover, arriving]}>
-      {run.play === 'wash' ? (
+      {run.play === 'ripple' ? (
+        <RippleOverlay
+          image={image}
+          next={next}
+          origin={origin}
+          progress={progress}
+          run={run}
+          size={size}
+        />
+      ) : run.play === 'scan' ? (
+        <ScanOverlay image={image} origin={origin} progress={progress} run={run} size={size} />
+      ) : run.play === 'wash' ? (
         <WashOverlay image={image} origin={origin} progress={progress} run={run} size={size} />
       ) : run.play === 'halftone' ? (
         <HalftoneOverlay image={image} origin={origin} progress={progress} run={run} size={size} />
@@ -782,6 +890,95 @@ function HalftoneOverlay({
     <Canvas style={styles.overlay}>
       <Fill>
         <Shader source={FONT_HALFTONE_EFFECT} uniforms={uniforms}>
+          <ImageShader
+            fit="cover"
+            image={image}
+            rect={{ x: 0, y: 0, width: size.width, height: size.height }}
+            tx="clamp"
+            ty="clamp"
+          />
+        </Shader>
+      </Fill>
+    </Canvas>
+  );
+}
+
+/**
+ * The theme ripple. Two child shaders, in declaration order: the cover, then
+ * the new interface. With no picture of the new interface the cover is bound
+ * twice and `live` tells the program to leave the inside of the front clear.
+ */
+function RippleOverlay({
+  image,
+  next,
+  origin,
+  progress,
+  run,
+  size,
+}: {
+  image: SkImage;
+  next: SkImage | null;
+  origin: ReskinPoint;
+  progress: SharedValue<number>;
+  run: ActiveRun;
+  size: ReskinSize;
+}) {
+  const reach = useMemo(() => rippleReach(origin, size), [origin, size]);
+  const live = next === null;
+
+  const uniforms = useDerivedValue(() =>
+    themeRippleUniforms({
+      origin,
+      front: rippleFront(progress.value, reach),
+      depth: rippleDepth(progress.value),
+      live,
+      rim: run.rim,
+    })
+  );
+
+  const rect = { x: 0, y: 0, width: size.width, height: size.height };
+  if (!THEME_RIPPLE_EFFECT) return null;
+  return (
+    <Canvas style={styles.overlay}>
+      <Fill>
+        <Shader source={THEME_RIPPLE_EFFECT} uniforms={uniforms}>
+          <ImageShader fit="cover" image={image} rect={rect} tx="clamp" ty="clamp" />
+          <ImageShader fit="cover" image={next ?? image} rect={rect} tx="clamp" ty="clamp" />
+        </Shader>
+      </Fill>
+    </Canvas>
+  );
+}
+
+/** The font scan: one picture, two bands. */
+function ScanOverlay({
+  image,
+  origin,
+  progress,
+  run,
+  size,
+}: {
+  image: SkImage;
+  origin: ReskinPoint;
+  progress: SharedValue<number>;
+  run: ActiveRun;
+  size: ReskinSize;
+}) {
+  const reach = useMemo(() => scanReach(origin, size), [origin, size]);
+
+  const uniforms = useDerivedValue(() =>
+    fontScanUniforms({
+      originY: origin.y,
+      front: scanFront(progress.value, reach),
+      tint: run.rim,
+    })
+  );
+
+  if (!FONT_SCAN_EFFECT) return null;
+  return (
+    <Canvas style={styles.overlay}>
+      <Fill>
+        <Shader source={FONT_SCAN_EFFECT} uniforms={uniforms}>
           <ImageShader
             fit="cover"
             image={image}

@@ -153,6 +153,13 @@ export const RESKIN_MOTION = {
   washDrift: 0.3,
   /** The font halftone, from the tapped row out past the last corner. */
   halftoneMs: 600,
+  /**
+   * The theme ripple, drop to flat water: the front crosses in the first 720
+   * ms (`RIPPLE_FRONT_SHARE` of this) and the rings settle in the rest.
+   */
+  rippleMs: 900,
+  /** The font scan, both bands from the tapped row out past the screen's ends. */
+  scanMs: 640,
 } as const;
 
 /**
