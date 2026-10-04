@@ -1,9 +1,17 @@
 import { Skia, type Uniforms } from 'react-native-skia';
 
 import { SKSL_NOISE, SKSL_RIM, rimSlack } from './sksl-field';
+import {
+  RIPPLE_AMPLITUDE,
+  RIPPLE_BAND,
+  RIPPLE_DECAY,
+  RIPPLE_TAIL,
+  RIPPLE_WAVELENGTH,
+  SCAN_BAND,
+} from './reskin-geometry';
 
 /**
- * The two re-skin transitions: what the reader sees in the half-second after
+ * The re-skin transitions: what the reader sees in the half-second after
  * they change the theme or the font.
  *
  * ## The problem both of them solve
@@ -43,12 +51,14 @@ import { SKSL_NOISE, SKSL_RIM, rimSlack } from './sksl-field';
  * applied before it had to be learned again), and the number of pixels still
  * paying it falls to zero over the run.
  *
- * ## Neither of these is the launch's bloom
+ * ## None of these is the launch's bloom
  *
- * The bloom is a radial hole with a torn, lit edge. These are a straight front
- * crossing the screen, and a grid of dots shrinking to nothing. They share the
- * noise field, the rim helper and the uniform-builder shape -- the
- * infrastructure -- and nothing about how they look.
+ * The bloom is a radial hole with a torn, lit edge. These are a ripple of
+ * damped rings that bends the picture, two scan bands that re-encode it, and
+ * (as fallbacks) a straight front crossing the screen and a grid of dots
+ * shrinking to nothing. They share the noise field, the rim helper and the
+ * uniform-builder shape -- the infrastructure -- and nothing about how they
+ * look.
  */
 
 /* -------------------------------------------------------------------------- */
@@ -202,6 +212,169 @@ half4 main(float2 p) {
 `;
 
 /* -------------------------------------------------------------------------- */
+/* Theme and mode: a drop lands on the lake                                   */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * A circular front opens from the tapped row with a few damped rings behind
+ * it, and the old interface is on the far side of the water.
+ *
+ * The rings are a refraction, not a drawing: each one bends the *sampling
+ * coordinate* along the radius, so the interface under it swells and pinches
+ * the way a page does under a ripple. With a photograph of the new interface
+ * (`uLive` 0) that bend lands on both pictures; without one (`uLive` 1 -- every
+ * Android run, whose cover is a veil, and any run whose second photograph was
+ * late) the program has nothing to bend inside the front, so it is transparent
+ * there and the rings are carried by their light alone: the slope of the water
+ * lit from above, brighter on one face of each ring and darker on the other,
+ * over the live interface.
+ *
+ * `uDepth` takes the whole surface down to flat as the run ends, so the last
+ * frame is the new interface undisturbed and the overlay can go without a cut.
+ */
+export const THEME_RIPPLE_SKSL = `
+uniform shader uCover;        // the old interface (photograph or veil)
+uniform shader uNext;         // a photograph of the new interface, when uLive is 0
+
+uniform float2 uOrigin;       // where the drop landed, in canvas points
+uniform float  uFront;        // how far from it the front has reached
+uniform float  uBand;         // the soft edge between old and new
+uniform float  uWave;         // the distance between rings
+uniform float  uAmp;          // the first ring's bend, in points
+uniform float  uDecay;        // how fast the rings die away behind the front
+uniform float  uTail;         // past this far behind the front, nothing bends
+uniform float  uAhead;        // how far ahead of the front the fringe still lights
+uniform float  uDepth;        // 1 while the water moves, 0 once it is flat
+uniform float  uLive;         // 1: no photograph of the new interface
+uniform float  uShade;        // how much the rings' slope lights or darkens
+uniform float  uCrest;        // the crest's white highlight, at its peak
+uniform float  uRimWidth;     // the fringe's half-width
+uniform float  uChroma;       // how far its warm and cool lines separate
+uniform float4 uRimColor;     // the new theme's primary, alpha already set
+
+${SKSL_RIM}
+
+const float TAU = 6.2831853;
+
+half4 main(float2 p) {
+  float2 r = p - uOrigin;
+  float d = length(r);
+  // How far behind the front this pixel is: negative is still open water
+  // ahead of it, the old interface untouched.
+  float x = uFront - d;
+
+  // The cheap path. Ahead of the fringe: the old interface. Past the last
+  // ring: the new one -- the photograph of it, or nothing over the live one.
+  if (x < -uAhead) return half4(uCover.eval(p));
+  if (x > uTail) return uLive > 0.5 ? half4(0.0) : half4(uNext.eval(p));
+
+  float behind = max(x, 0.0);
+  // No water moves ahead of the front: zero there, or the slope at phase 0
+  // would light a thin ring ahead of it, and a dot before it has moved.
+  float env = x > 0.0 ? uAmp * uDepth * exp(-uDecay * behind) : 0.0;
+  float phase = TAU * behind / uWave;
+  float disp = env * sin(phase);
+  // The surface's slope along the radius, which is what the light catches.
+  float slope = env * (TAU / uWave * cos(phase) - uDecay * sin(phase));
+  float2 q = p + (r / max(d, 0.0001)) * disp;
+
+  // 1 on the old side of the front, 0 on the new, over a soft band.
+  float m = smoothstep(uFront - uBand, uFront, d);
+  float4 old = float4(uCover.eval(q));
+  float4 base = uLive > 0.5 ? old * m : mix(float4(uNext.eval(q)), old, m);
+
+  float light = clamp(slope * uShade, -1.0, 1.0);
+  float4 lit = light > 0.0
+    ? over(float4(light), base)
+    : over(float4(0.0, 0.0, 0.0, -light * 0.7), base);
+
+  // A thin white highlight riding the crest, just behind the front, and the
+  // new primary as a one-point fringe on the very edge. Both fade in over the
+  // first few points of travel: before the drop has landed -- while the cover
+  // is still arriving -- they would be a dot sitting still under the finger.
+  float landed = clamp(uFront / 12.0, 0.0, 1.0);
+  float c = (x - 2.0) / 1.6;
+  float crestA = uCrest * uDepth * landed * exp(-c * c);
+  lit = over(float4(crestA), lit);
+  lit = over(rimLight(x, uRimWidth, uChroma, uRimColor) * landed, lit);
+  return half4(lit);
+}
+`;
+
+/* -------------------------------------------------------------------------- */
+/* Font: a holographic scan                                                   */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * A band opens at the tapped row and splits in two, one travelling up and one
+ * down, and the page it crosses is re-encoded on the way out.
+ *
+ * Inside a band the old page drops to a coarse pixel grid with its red and
+ * blue pulled a point and a half apart -- a signal being re-sent -- and the
+ * cells blink out one by one, each at its own threshold, until the trailing
+ * edge has passed and the newly set page underneath is all that is left. Two
+ * or three faint lines in the theme's primary ride inside the band and a
+ * thin primary line marks its leading edge. Ahead of the band the page is the
+ * photograph, untouched.
+ *
+ * Distance is vertical only (`abs(p.y - uOriginY)`), which is what makes the
+ * same arithmetic two bands rather than one ring.
+ */
+export const FONT_SCAN_SKSL = `
+uniform shader uCover;        // the photograph of the old interface
+
+uniform float  uOriginY;      // the tapped row, in canvas points
+uniform float  uFront;        // how far each band's leading edge is from it
+uniform float  uBand;         // the band's height
+uniform float  uCell;         // the re-encoding grid, in points
+uniform float  uSplit;        // how far red and blue are pulled apart
+uniform float  uLineAlpha;    // the lines riding inside the band
+uniform float  uEdgeAlpha;    // the leading edge's line
+uniform float4 uTint;         // the theme's primary
+
+${SKSL_NOISE}
+${SKSL_RIM}
+
+half4 main(float2 p) {
+  // How far the leading edge is past this row: negative is ahead of the band.
+  float lead = uFront - abs(p.y - uOriginY);
+
+  // The cheap path: ahead of the band the page, behind it nothing.
+  if (lead < -2.0) return half4(uCover.eval(p));
+  if (lead > uBand + 2.0) return half4(0.0);
+
+  float w = clamp(lead / uBand, 0.0, 1.0);
+  float4 base;
+  if (lead <= 0.0) {
+    base = float4(uCover.eval(p));
+  } else {
+    float2 cell = floor(p / uCell);
+    float2 c = (cell + 0.5) * uCell;
+    float4 g = float4(uCover.eval(c));
+    float red = float4(uCover.eval(c + float2(uSplit, 0.0))).r;
+    float blue = float4(uCover.eval(c - float2(uSplit, 0.0))).b;
+    // Each cell holds until the band has carried it past its own threshold.
+    float keep = step(clamp((w - 0.12) / 0.8, 0.0, 1.0), hash21(cell));
+    base = float4(red, g.g, blue, g.a) * keep;
+  }
+
+  // Three faint lines at fixed places in the band, moving with it.
+  float lines = 0.0;
+  for (int i = 1; i <= 3; i++) {
+    float at = uBand * 0.25 * float(i);
+    lines += 1.0 - smoothstep(0.0, 1.0, abs(lead - at));
+  }
+  float lineA = clamp(lines, 0.0, 1.0) * uLineAlpha * uTint.a;
+  float4 lit = over(float4(uTint.rgb * lineA, lineA), base);
+
+  // Faded in over the first few points, or the edge is a line parked on the
+  // tapped row while the cover arrives.
+  float edgeA = exp(-lead * lead / 0.8) * uEdgeAlpha * uTint.a * clamp(uFront / 12.0, 0.0, 1.0);
+  return half4(over(float4(uTint.rgb * edgeA, edgeA), lit));
+}
+`;
+
+/* -------------------------------------------------------------------------- */
 /* Compilation                                                                */
 /* -------------------------------------------------------------------------- */
 
@@ -216,6 +389,8 @@ half4 main(float2 p) {
  */
 export const THEME_WASH_EFFECT = Skia.RuntimeEffect.Make(THEME_WASH_SKSL);
 export const FONT_HALFTONE_EFFECT = Skia.RuntimeEffect.Make(FONT_HALFTONE_SKSL);
+export const THEME_RIPPLE_EFFECT = Skia.RuntimeEffect.Make(THEME_RIPPLE_SKSL);
+export const FONT_SCAN_EFFECT = Skia.RuntimeEffect.Make(FONT_SCAN_SKSL);
 
 /* -------------------------------------------------------------------------- */
 /* The wash's numbers                                                         */
@@ -368,6 +543,115 @@ export function fontHalftoneUniforms(input: FontHalftoneInput): Uniforms {
     uCell: input.cell,
     uHalfDiag: halftoneHalfDiagonal(input.cell),
     uTintStrength: HALFTONE_TINT_STRENGTH,
+    uTint: input.tint,
+  };
+}
+
+/* -------------------------------------------------------------------------- */
+/* The ripple's light                                                         */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * How much the rings' slope lights the picture, per unit of slope, when the
+ * refraction is doing the work. The steepest ring face is about 1.3, so this
+ * is at most a tenth of white or black: a sheen on the bend, not a drawing.
+ */
+export const RIPPLE_SHADE = 0.08;
+
+/**
+ * The same, over the live interface with no photograph to bend: the light is
+ * all the rings have there, so it carries about twice as much.
+ */
+export const RIPPLE_SHADE_LIVE = 0.17;
+
+/** The crest's white highlight at its peak. Low: water catches light, it does not glow. */
+export const RIPPLE_CREST = 0.22;
+
+/** The primary fringe on the front's edge, at its peak alpha. */
+export const RIPPLE_FRINGE_ALPHA = 0.27;
+
+/** The fringe's half-width and its warm/cool separation, in points: about one pixel. */
+export const RIPPLE_FRINGE_WIDTH = 0.8;
+export const RIPPLE_FRINGE_CHROMA = 0.6;
+
+/* -------------------------------------------------------------------------- */
+/* The scan's numbers                                                         */
+/* -------------------------------------------------------------------------- */
+
+/** The re-encoding grid, in points: coarse enough to read as a signal, not as blur. */
+export const SCAN_CELL = 6;
+
+/** How far red and blue are pulled apart inside the band, in points. */
+export const SCAN_SPLIT = 1.5;
+
+/** The faint lines riding inside the band. */
+export const SCAN_LINE_ALPHA = 0.22;
+
+/** The line on the band's leading edge. */
+export const SCAN_EDGE_ALPHA = 0.85;
+
+/** Everything the ripple needs, in the caller's own words. */
+export type ThemeRippleInput = {
+  /** Where the drop landed, in canvas points. */
+  origin: ReskinPoint;
+  /** How far from it the front has reached, in points. */
+  front: number;
+  /** 1 while the water moves, 0 once it is flat. */
+  depth: number;
+  /** No photograph of the new interface: the rings are light over the live one. */
+  live: boolean;
+  /** `[r, g, b, a]`, 0..1 -- the new theme's primary. */
+  rim: number[];
+};
+
+/** The ripple's uniforms, from the caller's words. A worklet, as the others are. */
+export function themeRippleUniforms(input: ThemeRippleInput): Uniforms {
+  'worklet';
+  return {
+    uOrigin: [input.origin.x, input.origin.y],
+    uFront: input.front,
+    uBand: RIPPLE_BAND,
+    uWave: RIPPLE_WAVELENGTH,
+    uAmp: RIPPLE_AMPLITUDE,
+    uDecay: RIPPLE_DECAY,
+    uTail: RIPPLE_TAIL,
+    uAhead: rimSlack(RIPPLE_FRINGE_WIDTH, RIPPLE_FRINGE_CHROMA),
+    uDepth: input.depth,
+    uLive: input.live ? 1 : 0,
+    uShade: input.live ? RIPPLE_SHADE_LIVE : RIPPLE_SHADE,
+    uCrest: RIPPLE_CREST,
+    uRimWidth: RIPPLE_FRINGE_WIDTH,
+    uChroma: RIPPLE_FRINGE_CHROMA,
+    uRimColor: [
+      input.rim[0] ?? 0,
+      input.rim[1] ?? 0,
+      input.rim[2] ?? 0,
+      RIPPLE_FRINGE_ALPHA * (input.rim[3] ?? 1),
+    ],
+  };
+}
+
+/** Everything the scan needs, in the caller's own words. */
+export type FontScanInput = {
+  /** The tapped row, in canvas points. */
+  originY: number;
+  /** How far each band's leading edge is from it, in points. */
+  front: number;
+  /** `[r, g, b, a]`, 0..1 -- the theme's primary. */
+  tint: number[];
+};
+
+/** The scan's uniforms, from the caller's words. A worklet, as the others are. */
+export function fontScanUniforms(input: FontScanInput): Uniforms {
+  'worklet';
+  return {
+    uOriginY: input.originY,
+    uFront: input.front,
+    uBand: SCAN_BAND,
+    uCell: SCAN_CELL,
+    uSplit: SCAN_SPLIT,
+    uLineAlpha: SCAN_LINE_ALPHA,
+    uEdgeAlpha: SCAN_EDGE_ALPHA,
     uTint: input.tint,
   };
 }
