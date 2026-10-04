@@ -147,7 +147,8 @@ function envelopeData(json: unknown): unknown {
 
 /**
  * A read that answers with a value, or with `fallback` -- and with the one
- * refusal that is worth repeating to the reader.
+ * refusal that is worth repeating to the reader. `parse` gets the envelope's
+ * `data` and the whole body, for the routes that answer beside `data`.
  *
  * Reads never throw: a picker with nothing in it is a worse answer than a
  * stale one, and both are better than a red screen on a phone.
@@ -159,7 +160,7 @@ function envelopeData(json: unknown): unknown {
  */
 async function readScoped<T>(
   path: string,
-  parse: (value: unknown) => T,
+  parse: (value: unknown, envelope: unknown) => T,
   fallback: T,
   init?: { headers?: Record<string, string>; signal?: AbortSignal }
 ): Promise<{ value: T; missing?: WorkspaceMissing }> {
@@ -190,7 +191,8 @@ async function readScoped<T>(
         const missing = res.status === 404 ? parseWorkspaceMissing(await readBody(res)) : null;
         return missing ? { value: fallback, missing } : { value: fallback };
       }
-      return { value: parse(envelopeData(await res.json())) };
+      const body: unknown = await res.json();
+      return { value: parse(envelopeData(body), body) };
     } catch {
       return { value: fallback };
     }
@@ -210,7 +212,7 @@ async function readBody(res: { json: () => Promise<unknown> }): Promise<unknown>
 /** `readScoped` for the reads that have nothing to say about a missing folder. */
 async function readJson<T>(
   path: string,
-  parse: (value: unknown) => T,
+  parse: (value: unknown, envelope: unknown) => T,
   fallback: T,
   init?: { headers?: Record<string, string>; signal?: AbortSignal }
 ): Promise<T> {
