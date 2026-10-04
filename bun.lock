@@ -98,6 +98,9 @@
     "react-native-skia",
     "react-native-enriched-markdown",
   ],
+  "patchedDependencies": {
+    "react-native-enriched-markdown@1.1.0": "patches/react-native-enriched-markdown@1.1.0.patch",
+  },
   "overrides": {
     "react-native-screens": "4.28.0",
   },

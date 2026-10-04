@@ -284,6 +284,23 @@ the recorder and releases the recording when it is replaced or torn down.
 `bun install` re-extracting the package removes Skia's prebuilt `libs/`, which
 `pod install` copies back. Run it before the next iOS build.
 
+## Patched dependencies
+
+`package.json` `patchedDependencies` holds the patches bun applies on
+`bun install` (files in `patches/`, paths relative to the package). Each patch
+file starts with a comment block that says what is wrong and when to drop it.
+
+- `react-native-enriched-markdown@1.1.0` (Android): `LineHeightSpan` now leaves
+  spacer lines alone. `MarginBottomSpan` and `LineHeightSpan` both edit the
+  line's font metrics, and Android runs them in a different order for the
+  shadow-node measure than for the TextView's own layout, so a blank line before
+  a code block was measured 10 px and drawn 56 px. The markdown view came out
+  short and the last line overflowed its plate. Not a font problem: measurement
+  does use the spans' typeface. iOS measures the attributed string it draws and
+  needs no change. To regenerate: `bun patch react-native-enriched-markdown`,
+  edit, `bun patch --commit`, then strip the generated build-dir hunks and the
+  `node_modules/<pkg>/` path prefixes by hand, as the existing file does.
+
 ## agent-device
 
 Reuse the existing Android QA AVD `muqun_collaboration_qa` and iOS simulator

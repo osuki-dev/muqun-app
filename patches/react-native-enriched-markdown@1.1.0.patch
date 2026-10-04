@@ -1,0 +1,44 @@
+react-native-enriched-markdown 1.1.0 (Android): a spacer line was measured 46 px
+short, so a message plate ended a fraction of a line above its own last line.
+
+MarginBottomSpan turns a lone "\n" into a spacer exactly marginBottom tall by
+overwriting the line's FontMetrics; LineHeightSpan then grows any line with
+spare leading up to lineHeight. Both edit `fm` in place, so the result depends
+on which runs last. Android does not call them in the same order for the
+shadow-node StaticLayout (MeasurementStore.measureAndCache*, text is the raw
+SpannableStringBuilder: LineHeightSpan, then MarginBottomSpan -> 10 px) and for
+the TextView's layout (the text is the NoCopy buffer wrapped by the emoji
+transformation method: MarginBottomSpan, then LineHeightSpan -> 56 px). Yoga
+therefore sizes the view from 10 px spacers while the TextView draws 56 px ones,
+and the last line overflows the view. Every spacer (blank line before a code
+block, heading margin) is affected; a long reply adds up to about one line.
+
+Fix: LineHeightSpan leaves spacer lines alone, so the order stops mattering and
+measured height equals drawn height. Italic and custom fonts were never the
+cause: measurement does use the spans' typeface (TextSpan.updateMeasureState).
+iOS measures the attributed string it draws, so it needs no change.
+
+Remove this patch when upstream makes the two spans order-independent.
+
+diff --git a/android/src/main/java/com/swmansion/enriched/markdown/spans/LineHeightSpan.kt b/android/src/main/java/com/swmansion/enriched/markdown/spans/LineHeightSpan.kt
+--- a/android/src/main/java/com/swmansion/enriched/markdown/spans/LineHeightSpan.kt
++++ b/android/src/main/java/com/swmansion/enriched/markdown/spans/LineHeightSpan.kt
+@@ -30,6 +30,18 @@ class LineHeightSpan(
+     fm: Paint.FontMetricsInt?,
+   ) {
+     if (fm == null) return
++    // A spacer line (a lone "\n" carrying a MarginBottomSpan) is exactly
++    // marginBottom tall, whatever the line height. Both spans edit `fm` in
++    // place, so the result depends on which runs last, and Android does not
++    // call them in the same order for the shadow-node StaticLayout and for
++    // the TextView's own layout (it differs once the TextView wraps its text
++    // in a transformation method / selectable buffer). Leave spacers alone so
++    // the order stops mattering and measured height == drawn height.
++    if (text is android.text.Spanned && end - start == 1 && text[start] == '\n' &&
++      text.getSpans(start, end, MarginBottomSpan::class.java).isNotEmpty()
++    ) {
++      return
++    }
+ 
+     val leading = lineHeight - ((-fm.ascent) + fm.descent)
+     if (leading <= 0) return
