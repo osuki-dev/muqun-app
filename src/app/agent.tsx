@@ -8,9 +8,13 @@ import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { NAV_HEADER_CONTROL_SIZE } from '@/components/nav-header';
-import { ScreenHeader } from '@/components/screen-header';
-import { EdgeFade } from '@/components/edge-fade';
+import {
+  NAV_HEADER_CONTROL_SIZE,
+  NavHeaderBackButton,
+  NavHeaderCircle,
+  navHeaderButtonStyle,
+} from '@/components/nav-header';
+import { DETAIL_HEADER_HEIGHT, DetailHeader } from '@/components/detail-header';
 import { ThemeArtwork } from '@/components/theme-artwork';
 import { AgentWorkbench } from '@/components/agent-workbench';
 import AppDrawer from '@/components/app-drawer';
@@ -20,7 +24,6 @@ import { SessionActionIcon, WorkspacePillContent } from '@/components/agent-head
 import { AgentTitlePill } from '@/components/agent-title-pill';
 import { GlassChrome } from '@/components/glass-chrome';
 import { PressableScale } from '@/components/pressable-scale';
-import { NAV_HEADER_TOP_GAP } from '@/constants/nav-header';
 import { useGatewayRecord } from '@/hooks/use-gateway-record';
 import { useGatewayTunnel } from '@/hooks/use-gateway-tunnel';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
@@ -34,12 +37,6 @@ import {
   isAgentWorkbenchOwnedOverlayPath,
   isAgentWorkbenchOwnedRootRoute,
 } from '@/lib/agent-workbench-global-owner';
-
-/**
- * The header's height above the content, with generous clearance so the glass pill
- * navigation never presses down on the scrolling content.
- */
-const HEADER_INSET = NAV_HEADER_TOP_GAP + NAV_HEADER_CONTROL_SIZE + 24;
 
 /**
  * Dedicated OpenCode Agent Screen.
@@ -177,7 +174,7 @@ export default function AgentScreen() {
             initialAgentId={typeof params.agentId === 'string' ? params.agentId : undefined}
             initialIntent={newSessionIntent ? 'new' : undefined}
             visible={workbenchVisible}
-            topInset={insets.top + HEADER_INSET}
+            topInset={insets.top + DETAIL_HEADER_HEIGHT}
             bottomInset={insets.bottom}
             createNewSessionRef={createNewSessionRef}
             abortSessionRef={abortSessionRef}
@@ -191,72 +188,60 @@ export default function AgentScreen() {
           </View>
         )}
 
-        {/* Top glass fade for smooth dissolve under nav header */}
-        <EdgeFade
-          edge="top"
-          color={theme.colors.background}
-          style={[styles.topFade, { height: insets.top + HEADER_INSET + 20 }]}
-        />
-
-        {/* Pinned top navigation bar */}
-        <View pointerEvents="box-none" style={styles.header}>
-          <ScreenHeader
-            titlePill={
-              <GlassChrome
-                surface="navigation"
-                shape="navigationPill"
-                style={styles.workspaceHeaderPill}>
-                {/* The pill keeps its tap -- it opens whatever it is showing --
+        {/* The terminal's header: the same overlay, frost and pills. */}
+        <DetailHeader>
+          <NavHeaderBackButton
+            accessibilityLabel={t`Go back`}
+            onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))}
+          />
+          <GlassChrome
+            surface="navigation"
+            shape="navigationPill"
+            style={styles.workspaceHeaderPill}>
+            {/* The pill keeps its tap -- it opens whatever it is showing --
                   and gains a horizontal swipe between the workspace's
                   sessions. Both live in `AgentTitlePill`, which reads the
                   strip's order from the same store the workbench publishes it
                   to, so the header and the strip can never disagree about
                   which session is next. */}
-                <AgentTitlePill
-                  testID="agent-header-workspace-pill"
-                  // One dropdown, one sheet. It used to open the Sessions sheet
-                  // when a session's title was showing and the project sheet when
-                  // it was not, so the same control in the same place answered
-                  // with two different lists and the owner could not tell why.
-                  // Projects are reached from the first row of the Sessions
-                  // sheet, which also says which project this is.
-                  onPress={() => router.push('/agent-sessions')}
-                  accessibilityLabel={openSessionsLabel}
-                  style={styles.workspaceHeaderPillInner}>
-                  <WorkspacePillContent
-                    showSession={showSessionTitle}
-                    running={sessionRunning}
-                    sessionTitle={sessionTitle}
-                    worktreeName={activeWorktree}
-                    workspaceName={displayWorkspaceName}
-                    workspacePath={displayWorkspacePath}
-                  />
-                </AgentTitlePill>
-              </GlassChrome>
-            }
-            rightPill={
-              <GlassChrome
-                surface="navigation"
-                shape="navigationPill"
-                style={styles.newSessionCircle}>
-                <PressableScale
-                  testID="agent-header-new-session"
-                  accessibilityRole="button"
-                  accessibilityLabel={sessionRunning ? t`Stop agent` : t`New session`}
-                  onPress={() => {
-                    if (sessionRunning) {
-                      abortSessionRef.current?.();
-                    } else {
-                      createNewSessionRef.current?.();
-                    }
-                  }}
-                  style={styles.newSessionCircleInner}>
-                  <SessionActionIcon running={sessionRunning} />
-                </PressableScale>
-              </GlassChrome>
-            }
-          />
-        </View>
+            <AgentTitlePill
+              testID="agent-header-workspace-pill"
+              // One dropdown, one sheet. It used to open the Sessions sheet
+              // when a session's title was showing and the project sheet when
+              // it was not, so the same control in the same place answered
+              // with two different lists and the owner could not tell why.
+              // Projects are reached from the first row of the Sessions
+              // sheet, which also says which project this is.
+              onPress={() => router.push('/agent-sessions')}
+              accessibilityLabel={openSessionsLabel}
+              style={styles.workspaceHeaderPillInner}>
+              <WorkspacePillContent
+                showSession={showSessionTitle}
+                running={sessionRunning}
+                sessionTitle={sessionTitle}
+                worktreeName={activeWorktree}
+                workspaceName={displayWorkspaceName}
+                workspacePath={displayWorkspacePath}
+              />
+            </AgentTitlePill>
+          </GlassChrome>
+          <NavHeaderCircle>
+            <PressableScale
+              testID="agent-header-new-session"
+              accessibilityRole="button"
+              accessibilityLabel={sessionRunning ? t`Stop agent` : t`New session`}
+              onPress={() => {
+                if (sessionRunning) {
+                  abortSessionRef.current?.();
+                } else {
+                  createNewSessionRef.current?.();
+                }
+              }}
+              style={navHeaderButtonStyle}>
+              <SessionActionIcon running={sessionRunning} />
+            </PressableScale>
+          </NavHeaderCircle>
+        </DetailHeader>
       </View>
     </AppDrawer>
   );
@@ -265,14 +250,6 @@ export default function AgentScreen() {
 const styles = StyleSheet.create({
   serverWait: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 16 },
   page: { flex: 1 },
-  topFade: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    zIndex: 1,
-  },
-  header: { position: 'absolute', top: 0, left: 0, right: 0, zIndex: 2 },
   workspaceHeaderPill: {
     flex: 1,
     minWidth: 0,
@@ -287,19 +264,5 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     height: NAV_HEADER_CONTROL_SIZE,
     gap: 6,
-  },
-  newSessionCircle: {
-    width: NAV_HEADER_CONTROL_SIZE,
-    height: NAV_HEADER_CONTROL_SIZE,
-    borderCurve: 'continuous',
-    overflow: 'hidden',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  newSessionCircleInner: {
-    width: '100%',
-    height: '100%',
-    alignItems: 'center',
-    justifyContent: 'center',
   },
 });

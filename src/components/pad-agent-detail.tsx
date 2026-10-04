@@ -1,17 +1,15 @@
 import { type MutableRefObject, useEffect, useRef } from 'react';
 import { useLingui } from '@lingui/react/macro';
-import { useThemeTokens } from '@osuki-dev/ui';
 import { type Href, useIsFocused, usePathname, useRouter } from 'expo-router';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { SessionActionIcon } from '@/components/agent-header-morph';
 import { AgentWorkbench } from '@/components/agent-workbench';
-import { EdgeFade } from '@/components/edge-fade';
+import { DETAIL_HEADER_HEIGHT } from '@/components/detail-header';
 import { LogoLoader } from '@/components/logo-loader';
-import { NAV_HEADER_CONTROL_SIZE, navHeaderButtonStyle } from '@/components/nav-header';
+import { navHeaderButtonStyle } from '@/components/nav-header';
 import { PressableScale } from '@/components/pressable-scale';
-import { NAV_HEADER_TOP_GAP } from '@/constants/nav-header';
 import { hasRealSessionTitle } from '@/lib/agent-protocol';
 import { consumeNewAgentIntent, type HomeAgentEntry } from '@/lib/home-commands';
 import { padAgentRouteParams, type PadDetail, type PadShellEvent } from '@/lib/pad-detail';
@@ -22,12 +20,6 @@ import {
   isAgentWorkbenchOwnedRootRoute,
 } from '@/lib/agent-workbench-global-owner';
 import { useAgentSessionState } from '@/stores/agent-session-state';
-
-/**
- * The header's height above the timeline, the same clearance `/agent` gives:
- * the first row starts below the pills and later rows dissolve under the fade.
- */
-const HEADER_INSET = NAV_HEADER_TOP_GAP + NAV_HEADER_CONTROL_SIZE + 24;
 
 /** The workbench's header controls, shared by the shell header and the workbench. */
 export type PadAgentSessionControls = {
@@ -58,7 +50,6 @@ type Props = {
  */
 export function PadAgentDetail({ detail, ready, visible, controls }: Props) {
   const { t } = useLingui();
-  const theme = useThemeTokens();
   const insets = useSafeAreaInsets();
   const newIntent = detail.intent === 'new';
   const intentServerId = detail.serverId;
@@ -95,7 +86,7 @@ export function PadAgentDetail({ detail, ready, visible, controls }: Props) {
           initialAgentId={detail.agentId}
           initialIntent={detail.intent}
           visible={visible && routeVisible}
-          topInset={insets.top + HEADER_INSET}
+          topInset={insets.top + DETAIL_HEADER_HEIGHT}
           bottomInset={insets.bottom}
           createNewSessionRef={controls.createNewSessionRef}
           abortSessionRef={controls.abortSessionRef}
@@ -105,12 +96,6 @@ export function PadAgentDetail({ detail, ready, visible, controls }: Props) {
           <LogoLoader size={56} accessibilityLabel={t`Connecting`} />
         </View>
       )}
-      {/* The timeline dissolves under the shell header, as on `/agent`. */}
-      <EdgeFade
-        edge="top"
-        color={theme.colors.background}
-        style={[styles.topFade, { height: insets.top + HEADER_INSET + 20 }]}
-      />
     </View>
   );
 }
@@ -206,5 +191,4 @@ export function usePadAgentOpener(
 
 const styles = StyleSheet.create({
   wait: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  topFade: { position: 'absolute', top: 0, left: 0, right: 0 },
 });

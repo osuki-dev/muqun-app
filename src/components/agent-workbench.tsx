@@ -272,11 +272,11 @@ const SCREEN_NOTICE_DWELL_MS = 4200;
 /**
  * The gap between the header's bottom edge and the screen's own notice.
  *
- * `topInset` is already the first row under the header plus the timeline's own
- * clearance (`HEADER_INSET` in `src/app/agent.tsx`); a notice wants to sit a
- * little higher than the first message without ever reaching the pills.
+ * `topInset` is the header's bottom edge (`DETAIL_HEADER_HEIGHT` below the safe
+ * area, the terminal's geometry), so the notice sits just under it -- the same
+ * 4pt the terminal's notice stack leaves -- and never reaches the pills.
  */
-const SCREEN_NOTICE_HEADER_GAP = 14;
+const SCREEN_NOTICE_HEADER_GAP = 4;
 
 /** A catalog that has not answered yet, as one object rather than a new `{}`. */
 const NO_CATALOG_DEFAULTS: CatalogDefaults = {};
@@ -479,9 +479,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   const [screenNoticeHeight, setScreenNoticeHeight] = useState(0);
   const noticeReserve = useSharedValue(0);
   const reserved =
-    screenNotice || workspaceMissing
-      ? Math.max(0, topInset - SCREEN_NOTICE_HEADER_GAP) + screenNoticeHeight
-      : 0;
+    screenNotice || workspaceMissing ? topInset + SCREEN_NOTICE_HEADER_GAP + screenNoticeHeight : 0;
   const reservedWithGap = reserved > 0 ? reserved + NOTICE_RESERVE_GAP : 0;
   useEffect(() => {
     noticeReserve.set(withTiming(reservedWithGap, timing('dropdown')));
@@ -4914,10 +4912,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         <View
           pointerEvents="box-none"
           onLayout={(event) => setScreenNoticeHeight(Math.round(event.nativeEvent.layout.height))}
-          style={[
-            styles.screenNoticeWrap,
-            { top: Math.max(0, topInset - SCREEN_NOTICE_HEADER_GAP) },
-          ]}>
+          style={[styles.screenNoticeWrap, { top: topInset + SCREEN_NOTICE_HEADER_GAP }]}>
           {workspaceMissing ? (
             <Animated.View entering={fadeInDown('short')} exiting={fadeOutUp('short')}>
               <View

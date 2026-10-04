@@ -2356,6 +2356,7 @@ msgstr "はじめる"
 msgid "Git status"
 msgstr "Git ステータス"
 
+#: src/app/agent.tsx
 #: src/components/screen-header.tsx
 msgid "Go back"
 msgstr "戻る"

@@ -2356,6 +2356,7 @@ msgstr "Начать"
 msgid "Git status"
 msgstr "Статус Git"
 
+#: src/app/agent.tsx
 #: src/components/screen-header.tsx
 msgid "Go back"
 msgstr "Назад"

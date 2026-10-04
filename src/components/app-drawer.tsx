@@ -1,13 +1,11 @@
-import { useSurfaceBackground, useSurfaceBackgroundOpacity } from '@/hooks/use-surface-background';
-import { withAlpha } from '@/lib/color';
-import { sheetFrostAlpha } from '@/theme/surface-background';
+import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { ThemeArtwork } from '@/components/theme-artwork';
 import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens } from '@osuki-dev/ui';
 import { useRouter } from 'expo-router';
 import { PanelsTopLeft } from 'lucide-react-native';
 import { isValidElement, useEffect, useState, type ReactNode } from 'react';
-import { Platform, Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -16,14 +14,12 @@ import {
   NavHeaderCircle,
   NavHeaderSpacer,
   NavHeaderTitlePill,
-  navHeaderBarStyle,
   navHeaderButtonStyle,
-  navHeaderRowStyle,
   navHeaderTitlePillStyle,
   navHeaderTitleTextStyle,
 } from '@/components/nav-header';
 import { PressableScale } from '@/components/pressable-scale';
-import { EdgeFade } from '@/components/edge-fade';
+import { DetailHeader } from '@/components/detail-header';
 import { appChrome } from '@/constants/appearance';
 import { isDrawerPermanent } from '@/constants/navigation';
 import { useGatewayRecord } from '@/hooks/use-gateway-record';
@@ -120,7 +116,6 @@ export default function AppDrawer({
   const router = useRouter();
   const theme = useThemeTokens();
   const surfaceBackground = useSurfaceBackground();
-  const surfaceOpacity = useSurfaceBackgroundOpacity();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const { record } = useGatewayRecord();
@@ -250,95 +245,48 @@ export default function AppDrawer({
         ) : null}
 
         {serverDetail ? (
-          <SafeAreaView
-            edges={['top']}
-            pointerEvents="box-none"
-            style={[styles.detailHeaderOverlay, navHeaderBarStyle]}>
-            {/*
-              Android navigation chrome draws no fill of its own (no live blur,
-              and a filled pill read as a grey slab), so the fade was the only
-              thing between the title and the transcript scrolling under it --
-              still ~30% clear across the pill row, which left the text beneath
-              legible between and through the pills. There the bar gets the
-              sheets' frosted ground -- the reader's opacity, never thinner than
-              the legibility floor -- and the ramp starts below it.
-            */}
-            {Platform.OS === 'android' ? (
-              <>
-                <View
-                  pointerEvents="none"
-                  style={[
-                    styles.detailHeaderGround,
-                    {
-                      backgroundColor: withAlpha(
-                        detailFadeColor ?? theme.colors.background,
-                        sheetFrostAlpha(surfaceOpacity)
-                      ),
-                    },
-                  ]}
-                />
-                <EdgeFade
-                  edge="top"
-                  color={detailFadeColor ?? theme.colors.background}
-                  style={styles.detailHeaderGroundFade}
-                />
-              </>
-            ) : (
-              <EdgeFade
-                edge="top"
-                color={detailFadeColor ?? theme.colors.background}
-                style={styles.detailHeaderFade}
+          <DetailHeader fadeColor={detailFadeColor}>
+            {!permanent && !showsPadRail ? (
+              <NavHeaderBackButton
+                accessibilityLabel={t`Back to servers`}
+                onPress={
+                  onDetailBack ?? (() => (router.canGoBack() ? router.back() : router.replace('/')))
+                }
+              />
+            ) : !showsPadRail ? (
+              <NavHeaderSpacer />
+            ) : null}
+            {detailTitleSlot ?? (
+              <NavHeaderTitlePill
+                title={detailTitle ?? record?.label ?? t`Server`}
+                style={styles.detailHeaderTitleMeasure}
               />
             )}
-            {/*
-              Separate pills rather than one bar: the title is the only part
-              that needs the full width, and a single bar makes the buttons read
-              as part of the label rather than as controls.
-            */}
-            <View style={navHeaderRowStyle}>
-              {!permanent && !showsPadRail ? (
-                <NavHeaderBackButton
-                  accessibilityLabel={t`Back to servers`}
-                  onPress={
-                    onDetailBack ??
-                    (() => (router.canGoBack() ? router.back() : router.replace('/')))
-                  }
-                />
-              ) : !showsPadRail ? (
-                <NavHeaderSpacer />
-              ) : null}
-              {detailTitleSlot ?? (
-                <NavHeaderTitlePill
-                  title={detailTitle ?? record?.label ?? t`Server`}
-                  style={styles.detailHeaderTitleMeasure}
-                />
-              )}
-              {detailAccessories.map((accessory, slot) => (
-                // Positional, because that is what the circle is: a slot in a
-                // fixed order, not one of a collection of identified things.
-                <NavHeaderCircle
-                  key={
-                    isValidElement(accessory) && accessory.key != null
-                      ? accessory.key
-                      : `accessory-slot-${slot}`
-                  }>
-                  {accessory}
-                </NavHeaderCircle>
-              ))}
-              {onDetailAction ? (
-                <NavHeaderCircle>
-                  <PressableScale
-                    accessibilityLabel={t`Show what is running`}
-                    onPress={onDetailAction}
-                    style={navHeaderButtonStyle}>
-                    <PanelsTopLeft size={18} color={theme.colors.text} strokeWidth={2} />
-                  </PressableScale>
-                </NavHeaderCircle>
-              ) : (
-                <NavHeaderSpacer />
-              )}
-            </View>
-          </SafeAreaView>
+            {detailAccessories.map((accessory, slot) => (
+              // Positional, because that is what the circle is: a slot in a
+              // fixed order, not one of a collection of identified things.
+              <NavHeaderCircle
+                key={
+                  isValidElement(accessory) && accessory.key != null
+                    ? accessory.key
+                    : `accessory-slot-${slot}`
+                }>
+                {accessory}
+              </NavHeaderCircle>
+            ))}
+            {onDetailAction ? (
+              <NavHeaderCircle>
+                <PressableScale
+                  accessibilityLabel={t`Show what is running`}
+                  onPress={onDetailAction}
+                  style={navHeaderButtonStyle}>
+                  <PanelsTopLeft size={18} color={theme.colors.text} strokeWidth={2} />
+                </PressableScale>
+              </NavHeaderCircle>
+            ) : (
+              <NavHeaderSpacer />
+            )}
+          </DetailHeader>
         ) : null}
       </Animated.View>
       {overlay !== undefined ? (
@@ -413,35 +361,6 @@ const styles = StyleSheet.create({
     borderRadius: 22,
     borderCurve: 'continuous',
     boxShadow: appChrome.shadow.workspaceRail,
-  },
-  detailHeaderOverlay: {
-    position: 'absolute',
-    zIndex: 20,
-    elevation: 20,
-    top: 0,
-    left: 0,
-    right: 0,
-  },
-  detailHeaderFade: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: -30,
-  },
-  detailHeaderGround: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-  },
-  detailHeaderGroundFade: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: -24,
-    height: 24,
   },
   /**
    * How wide the pane's name may grow, which is this screen's question and not

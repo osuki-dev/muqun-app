@@ -2356,6 +2356,7 @@ msgstr "Bắt đầu"
 msgid "Git status"
 msgstr "Trạng thái Git"
 
+#: src/app/agent.tsx
 #: src/components/screen-header.tsx
 msgid "Go back"
 msgstr "Quay lại"
