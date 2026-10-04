@@ -1,12 +1,14 @@
-import type { ViewStyle } from 'react-native';
 import { useThemeTokens } from '@osuki-dev/ui';
 
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
+import type { SheetGroundPlate } from '@/components/sheet-ground';
 import { useHasThemeArtwork } from '@/components/theme-artwork';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 
 /** Frozen and shared, so a plateless render commits the same object every time. */
-const NO_PLATE: ViewStyle = Object.freeze({});
+// Typed as the plate's six properties, not `ViewStyle`: a plate goes on a
+// `Text` as well as a `View`, and the two style types disagree on `userSelect`.
+const NO_PLATE: SheetGroundPlate = Object.freeze({});
 
 /**
  * The plate under Home text that stands straight on a pack's scene.
@@ -20,7 +22,7 @@ const NO_PLATE: ViewStyle = Object.freeze({});
  *
  * Empty where there is no scene: a flat ground keeps exactly its old layout.
  */
-export function useHomeScenePlate(): ViewStyle {
+export function useHomeScenePlate(): SheetGroundPlate {
   const profile = useAppearanceProfile();
   const theme = useThemeTokens();
   const background = useSurfaceBackground();
