@@ -1016,6 +1016,10 @@ msgstr "กำลังล้างแคช"
 msgid "Clearing…"
 msgstr "กำลังล้าง…"
 
+#: src/components/sheet-scene.tsx
+msgid "Close"
+msgstr "ปิด"
+
 #: src/components/dev-home-ambient-controls.tsx
 msgid "Close effects"
 msgstr "ปิดเอฟเฟกต์"

@@ -30,6 +30,10 @@ export type SheetDetents = 'full' | 'expandable' | 'fitToContents' | readonly nu
  * unified, and a full-screen route has no grabber to inherit instead. They are
  * sheets now, so the grabber and the swipe are the close for all of them.
  *
+ * One exception, and it is a window size rather than a route: on a Pad the
+ * sheets that are work surfaces are shown full-screen (`sheetRouteKinds`), and
+ * `SheetScene` draws them the close button a full-screen route needs.
+ *
  * The two entries left on `fullscreen` are not sheets and never were. Each one
  * says why here, because this table is the allowlist
  * `sheet-scene-contract.test.ts` holds the app to.
@@ -77,6 +81,94 @@ export const sheetRoutePresentations: Readonly<Record<string, SheetPresentation>
   'agent-shells': 'sheet',
   'agent-guide': 'sheet',
 };
+
+/**
+ * What a sheet is for, which is what decides its shape on a Pad.
+ *
+ * A **work surface** is somewhere the reader stays and works: a diff, a file
+ * listing and its viewer, a session tree, a transcript, a catalogue, the
+ * pairing screen. A **picker** is a question with an answer -- a model, a
+ * mode, a workspace, a language -- after which the sheet is gone.
+ *
+ * On a phone the difference does not show: every sheet is a bottom sheet, and
+ * an expandable one already reaches the top of a phone. On a Pad it is the
+ * whole difference. iOS presents a form sheet on a regular-width window as a
+ * centred card of a fixed width (UIKit's `.formSheet`, which react-native-
+ * screens' `formSheet` is), and Android stretches it across the width but not
+ * up it -- so the owner's Changes sheet was a diff squeezed into a card in the
+ * middle of a 13-inch screen. A work surface takes the window instead; a
+ * picker stays a card, because a card is the right size for a question.
+ */
+export type SheetKind = 'workSurface' | 'picker';
+
+/**
+ * Every `sheet` route's kind. A route missing here is a picker, so a new sheet
+ * keeps today's shape until someone decides otherwise.
+ */
+export const sheetRouteKinds: Readonly<Record<string, SheetKind>> = {
+  // The diffs, the pane's and the agent's: one row per changed line, and the
+  // reason this table exists.
+  'git-diff': 'workSurface',
+  'agent-vcs-diff': 'workSurface',
+  // The files a session produced, and the viewer opened from them.
+  artifacts: 'workSurface',
+  // A tree of subagents, and the transcript of one of them.
+  'agent-session-tree': 'workSurface',
+  'agent-subagent-detail': 'workSurface',
+  // The published catalogue: browsed, searched, paged.
+  'settings-theme-browse': 'workSurface',
+  // Pairing: a viewfinder, two ways in and the install command -- the one
+  // screen a new reader has to get through, so it gets the whole window.
+  explore: 'workSurface',
+
+  // Switchers. A pick closes them, and the Pad already has the rail for the
+  // same question; a card is the right size.
+  commands: 'picker',
+  panels: 'picker',
+  sessions: 'picker',
+  'agent-sessions': 'picker',
+  'agent-workspace': 'picker',
+  'agent-worktree': 'picker',
+  // Choices with an answer.
+  'agent-model': 'picker',
+  'agent-mode': 'picker',
+  'settings-theme': 'picker',
+  'settings-font': 'picker',
+  'settings-language': 'picker',
+  'settings-home-layout': 'picker',
+  'home-target': 'picker',
+  'home-agents': 'picker',
+  // Short forms and inspectors: a few fields, a meter, a short list.
+  'new-task': 'picker',
+  'web-service': 'picker',
+  'agent-context': 'picker',
+  'agent-tasks': 'picker',
+  'agent-shells': 'picker',
+  'agent-guide': 'picker',
+};
+
+/**
+ * The one rule: a work surface is full-screen on a Pad, and everything else is
+ * exactly what it was. Phones never change.
+ */
+export function sheetPresentationFor(
+  kind: SheetKind,
+  { isPad }: { isPad: boolean }
+): SheetPresentation {
+  return isPad && kind === 'workSurface' ? 'fullscreen' : 'sheet';
+}
+
+/**
+ * Whether a route is a sheet that is being shown full-screen, which is the
+ * case that needs a close button drawn: a form sheet is closed by its grabber
+ * and the swipe, and a full-screen modal has neither.
+ */
+export function isFullscreenSheetRoute(route: string, isPad: boolean): boolean {
+  return (
+    (sheetRoutePresentations[route] ?? 'sheet') === 'sheet' &&
+    sheetPresentationFor(sheetRouteKinds[route] ?? 'picker', { isPad }) === 'fullscreen'
+  );
+}
 
 /**
  * How tall each sheet opens, and how much taller it drags on iOS.
@@ -347,8 +439,18 @@ export function sheetPresentationOptions(
 export function sheetRouteOptions(
   route: string,
   profile?: AppearanceProfile,
-  reduceMotion = false
+  reduceMotion = false,
+  /**
+   * Whether the window is a Pad (`responsiveWorkspaceLayout(width).mode`). A
+   * work surface is full-screen there; see `sheetRouteKinds`.
+   */
+  isPad = false
 ): NativeStackNavigationOptions {
+  if (isFullscreenSheetRoute(route, isPad))
+    return {
+      ...sheetPresentationOptions('fullscreen'),
+      ...(reduceMotion ? { animation: 'none', animationDuration: 0 } : {}),
+    };
   const options = sheetPresentationOptions(
     sheetRoutePresentations[route] ?? 'sheet',
     sheetRouteDetents[route] ?? 'full',

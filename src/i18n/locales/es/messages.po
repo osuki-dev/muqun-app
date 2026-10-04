@@ -1016,6 +1016,10 @@ msgstr "Vaciando la caché"
 msgid "Clearing…"
 msgstr "Vaciando…"
 
+#: src/components/sheet-scene.tsx
+msgid "Close"
+msgstr "Cerrar"
+
 #: src/components/dev-home-ambient-controls.tsx
 msgid "Close effects"
 msgstr "Cerrar efectos"

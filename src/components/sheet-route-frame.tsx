@@ -1,6 +1,6 @@
 import { useThemeTokens } from '@osuki-dev/ui';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
-import { type ReactNode } from 'react';
+import { createContext, useContext, type ReactNode } from 'react';
 import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import {
   SafeAreaProvider,
@@ -20,6 +20,22 @@ export function FullscreenRouteSafeArea({ children }: { children: ReactNode }) {
 }
 
 /**
+ * Whether the sheet under this subtree is being shown full-screen.
+ *
+ * Set by the root stack's `screenLayout` for a sheet route that a Pad presents
+ * as a `fullScreenModal` (`isFullscreenSheetRoute`). A full-screen modal has no
+ * grabber and no swipe, so the scene draws a close button and status-bar
+ * clearance instead, and `SheetHandle` draws nothing.
+ */
+const SheetFullscreenContext = createContext(false);
+
+export const SheetFullscreenProvider = SheetFullscreenContext.Provider;
+
+export function useSheetIsFullscreen(): boolean {
+  return useContext(SheetFullscreenContext);
+}
+
+/**
  * The grabber Android's form sheet does not draw for itself.
  *
  * The geometry and the colour are defaults rather than a caller's business:
@@ -32,7 +48,8 @@ export function FullscreenRouteSafeArea({ children }: { children: ReactNode }) {
 export function SheetHandle({ style }: { style?: StyleProp<ViewStyle> }) {
   const profile = useAppearanceProfile();
   const { colors } = useThemeTokens();
-  if (process.env.EXPO_OS !== 'android') return null;
+  const fullscreen = useSheetIsFullscreen();
+  if (process.env.EXPO_OS !== 'android' || fullscreen) return null;
   return (
     <View
       accessible={false}
