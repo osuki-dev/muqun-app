@@ -1197,6 +1197,7 @@ msgstr "Verbinden"
 #: src/app/explore.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/components/session-map.tsx
+#: src/hooks/use-home-commands.ts
 msgid "Connected"
 msgstr "Verbunden"
 
@@ -3242,6 +3243,8 @@ msgstr "Nicht verfügbar"
 msgid "not connected"
 msgstr "nicht verbunden"
 
+#: src/components/server-terminal-workspace.tsx
+#: src/hooks/use-home-commands.ts
 #: src/i18n/labels.ts
 msgid "Not connected"
 msgstr "Nicht verbunden"

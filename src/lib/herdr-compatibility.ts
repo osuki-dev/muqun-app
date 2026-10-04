@@ -80,7 +80,7 @@ function explainIncompatibility(herdr: HerdrCompatibility): string {
  * An absent `kind` still says Herdr: a gateway old enough not to send the field
  * is one from before tmux was a backend at all.
  */
-function explainDisconnected(kind: string | undefined): string {
+export function explainDisconnected(kind: string | undefined): string {
   if (kind === 'tmux') {
     return (
       'Muqun Gateway cannot reach tmux on this server. Check that a tmux server is ' +
