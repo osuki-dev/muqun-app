@@ -26,11 +26,9 @@ import Animated, {
 import { Text } from '@/components/text';
 import { homeScrollFadeOpacity } from '@/lib/home-scroll-fade';
 import { useLaunchHandoff } from '@/stores/launch-handoff';
-import { useAppearanceProfile } from '@/components/appearance-profile-provider';
-import { useSurfaceBackground } from '@/hooks/use-surface-background';
+import { useHomeScenePlate } from '@/hooks/use-home-scene-plate';
 import { useInterfaceFontFamily } from '@/hooks/use-user-fonts';
 import { USER_FONT_MAX_NATIVE_WEIGHT } from '@/theme/interface-font-registry';
-import { useHasThemeArtwork } from '@/components/theme-artwork';
 
 import {
   EDITORIAL_MAX_WIDTH,
@@ -41,6 +39,7 @@ import {
   PAD_COVER_TITLE_LINE_HEIGHT,
   PAD_WORDMARK_DESCENDER,
   padCoverKind,
+  padFirstRunPlacement,
   padLaunchLayoutEnabled,
   padWordmarkFontSize,
   padWorkColumnWidth,
@@ -98,7 +97,8 @@ export type HomeEditorialLayoutProps = {
   coverBackdrop?: ReactNode;
   /**
    * Nothing is paired yet and `launches` is the pair card: on the wordmark
-   * cover it is the page's one action, centred under the wordmark, not docked.
+   * cover (and a pack's cover in portrait) it is the page's one action, centred
+   * under the title, not docked.
    */
   firstRun?: boolean;
   style?: StyleProp<ViewStyle>;
@@ -124,28 +124,11 @@ function EditorialSection({
   spacing,
   first = false,
 }: EditorialSectionProps) {
-  const background = useSurfaceBackground();
-  const profile = useAppearanceProfile();
-  const theme = useThemeTokens();
-  const hasScene = useHasThemeArtwork('home.wallpaper', 'shell.wallpaper');
+  const plate = useHomeScenePlate();
   return (
     <View style={[styles.section, { marginTop: first ? 0 : spacing.lg, marginBottom: 0 }]}>
       <View style={[styles.sectionHeader, { borderBottomColor: borderColor }]}>
-        <Text
-          variant="heading"
-          color={textColor}
-          accessibilityRole="header"
-          style={
-            hasScene
-              ? {
-                  alignSelf: 'flex-start',
-                  backgroundColor: background(theme.colors.surface),
-                  paddingHorizontal: 8,
-                  paddingVertical: 4,
-                  borderRadius: profile.chrome.control,
-                }
-              : undefined
-          }>
+        <Text variant="heading" color={textColor} accessibilityRole="header" style={plate}>
           {title}
         </Text>
       </View>
@@ -232,6 +215,8 @@ export function HomeEditorialLayout({
   const { fontScale: windowFontScale } = useWindowDimensions();
   const fontScale = fontScaleProp ?? windowFontScale;
   const hasAside = hasSlot(attention) || hasSlot(connections);
+  // The Pad work column's headings take the same plate as the phone's sections.
+  const scenePlate = useHomeScenePlate();
   const [measuredWidth, setMeasuredWidth] = useState(0);
   const [titleMeasurement, setTitleMeasurement] = useState<{ title: string; width: number } | null>(
     null
@@ -362,8 +347,15 @@ export function HomeEditorialLayout({
     const wordmark = coverKind === 'wordmark';
     const launchWidthInCover = Math.min(coverWidth - geometry.gutter, 560);
     // The pair card is the first-run page's whole purpose, so on the wordmark
-    // cover it stands in the open under the name; the dock stays at the foot.
-    const centredLaunches = wordmark && firstRun;
+    // cover, and on a pack's cover in portrait, it stands in the open under the
+    // title; the dock stays at the foot. See `padFirstRunPlacement`.
+    const centredLaunches =
+      padFirstRunPlacement({
+        coverKind,
+        firstRun,
+        coverWidth,
+        paneHeight: padPaneHeight,
+      }) === 'centred';
     const wordmarkFontSize = padWordmarkFontSize({
       coverWidth,
       measuredWidth:
@@ -425,9 +417,7 @@ export function HomeEditorialLayout({
         <View style={styles.padColumns}>
           <View
             testID="home-pad-theme-pane"
-            onLayout={
-              wordmark ? (event) => setPadPaneHeight(event.nativeEvent.layout.height) : undefined
-            }
+            onLayout={(event) => setPadPaneHeight(event.nativeEvent.layout.height)}
             style={[styles.padThemePane, { width: coverWidth }]}>
             {wordmark ? (
               <>
@@ -505,7 +495,20 @@ export function HomeEditorialLayout({
                 testID="home-pad-first-run"
                 style={[
                   styles.padFirstRunStage,
-                  { paddingTop: wordmarkFontSize * PAD_WORDMARK_DESCENDER },
+                  wordmark
+                    ? { paddingTop: wordmarkFontSize * PAD_WORDMARK_DESCENDER }
+                    : // Over the artwork cover, which fills the column: the
+                      // stage is what the title leaves, and the figure stays
+                      // anchored at the foot behind the card.
+                      {
+                        position: 'absolute',
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        top: coverTitle ? titleHeight : 0,
+                        paddingTop: coverTitle ? titleFontSize * PAD_WORDMARK_DESCENDER : 0,
+                        zIndex: 2,
+                      },
                 ]}>
                 <View onLayout={onLaunchLayout} style={{ width: launchWidthInCover }}>
                   {launches}
@@ -539,7 +542,7 @@ export function HomeEditorialLayout({
                       variant="heading"
                       accessibilityRole="header"
                       color={theme.colors.text}
-                      style={styles.padWorkTitle}>
+                      style={[styles.padWorkTitle, scenePlate]}>
                       {t`Continue`}
                     </Text>
                     {recent}
@@ -551,7 +554,7 @@ export function HomeEditorialLayout({
                       variant="heading"
                       accessibilityRole="header"
                       color={theme.colors.text}
-                      style={styles.padWorkTitle}>
+                      style={[styles.padWorkTitle, scenePlate]}>
                       {t`Connections`}
                     </Text>
                     {connections}

@@ -8,6 +8,7 @@ import { PressableScale } from '@/components/pressable-scale';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { Text } from '@/components/text';
 import { ThemeIcon } from '@/components/theme-icon';
+import { useHomeScenePlate } from '@/hooks/use-home-scene-plate';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { reachabilityDescription } from '@/i18n/labels';
 import type { GatewayRecord } from '@/lib/gateway-storage';
@@ -43,6 +44,8 @@ export function HomeConnections({
   const background = useSurfaceBackground();
   const addresses = serverIdsNeedingAddress(servers);
   const hasConnections = servers.length > 0 || hosts.length > 0;
+  const emptyPlate = useHomeScenePlate();
+  const plated = !hasConnections && emptyPlate.backgroundColor !== undefined;
   return (
     <View testID="home-connections" style={styles.list}>
       {hasConnections ? (
@@ -93,26 +96,36 @@ export function HomeConnections({
             </PressableScale>
           ))}
         </View>
-      ) : (
-        <Text variant="bodySmall" color={theme.colors.textMuted}>
-          {t`Add a gateway or an SSH host to start working.`}
-        </Text>
-      )}
-      <PressableScale
-        testID="home-manage-connections"
-        accessibilityRole="button"
-        onPress={onManage}
-        style={[styles.manage, linkStyle]}>
-        <Text variant="bodySmall" color={theme.colors.primary}>
-          {t`Manage connections`}
-        </Text>
-        <ThemeIcon
-          name="home.arrow"
-          fallback={ChevronRight}
-          size={16}
-          color={theme.colors.primary}
-        />
-      </PressableScale>
+      ) : null}
+      {/* Over a pack's scene the empty caption and its link stand on one
+          plate, the same shape as the heading above them. */}
+      <View style={hasConnections ? undefined : emptyPlate}>
+        {hasConnections ? null : (
+          <Text variant="bodySmall" color={theme.colors.textMuted}>
+            {t`Add a gateway or an SSH host to start working.`}
+          </Text>
+        )}
+        <PressableScale
+          testID="home-manage-connections"
+          accessibilityRole="button"
+          onPress={onManage}
+          hitSlop={plated ? 12 : undefined}
+          style={[
+            styles.manage,
+            // On the plate the link sits under the caption, not inset from it.
+            plated ? styles.manageOnPlate : linkStyle,
+          ]}>
+          <Text variant="bodySmall" color={theme.colors.primary}>
+            {t`Manage connections`}
+          </Text>
+          <ThemeIcon
+            name="home.arrow"
+            fallback={ChevronRight}
+            size={16}
+            color={theme.colors.primary}
+          />
+        </PressableScale>
+      </View>
     </View>
   );
 }
@@ -199,4 +212,7 @@ const styles = StyleSheet.create({
     gap: 8,
     flexWrap: 'wrap',
   },
+  // Text-high on the plate (a wrapping row tops its line, so a 44 box left a
+  // blank strip under the link); the tap target comes back as hitSlop.
+  manageOnPlate: { marginTop: 0, minHeight: 0, paddingTop: 4 },
 });
