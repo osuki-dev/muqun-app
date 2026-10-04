@@ -688,7 +688,7 @@
         "steps": [
           {
             "target": {
-              "text": "Theme, Osuki"
+              "text": "Theme, Cover Courier"
             },
             "mode": "scroll",
             "direction": "up",
@@ -705,7 +705,7 @@
         "steps": [
           {
             "target": {
-              "text": "Theme, Osuki"
+              "text": "Theme, Cover Courier"
             },
             "mode": "scroll",
             "direction": "up",
@@ -722,7 +722,7 @@
         "steps": [
           {
             "target": {
-              "text": "Theme, Osuki"
+              "text": "Theme, Cover Courier"
             },
             "mode": "scroll",
             "direction": "up",
@@ -739,7 +739,7 @@
         "steps": [
           {
             "target": {
-              "text": "Theme, Osuki"
+              "text": "Theme, Cover Courier"
             },
             "mode": "scroll",
             "direction": "up",
@@ -3938,7 +3938,7 @@
       },
       {
         "target": {
-          "text": "Theme, Osuki"
+          "text": "Theme, .+"
         },
         "mode": "press",
         "run": "flows/settings.ad#confirm-reset"

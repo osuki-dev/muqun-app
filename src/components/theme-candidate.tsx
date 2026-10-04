@@ -87,10 +87,7 @@ export function CandidateThemeProvider({
  */
 export function useAppliedCustomTheme(): EffectiveCustomTheme {
   const active = useThemeLibrary((state) => state.active);
-  const assets = useThemeLibrary(
-    (state) =>
-      state.library.themes.find((entry) => entry.id === state.active?.installationId)?.assets
-  );
+  const assets = useThemeLibrary((state) => state.activeAssets);
   return useMemo(() => ({ theme: active, assets }), [active, assets]);
 }
 

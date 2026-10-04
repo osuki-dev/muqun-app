@@ -1803,6 +1803,7 @@ msgid "default"
 msgstr "기본값"
 
 #: src/components/settings-terminal.tsx
+#: src/components/settings-theme-sheet.tsx
 msgid "Default"
 msgstr "기본"
 

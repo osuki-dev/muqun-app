@@ -77,6 +77,7 @@ import { bloomRadius, chooseLaunchWorld, launchWorldHole } from '@/lib/launch-in
 import { DURATION, RISE_DISTANCE, timing } from '@/lib/motion';
 import { THEME_ARTWORK_REGULAR_MIN_WIDTH } from '@/lib/responsive-layout';
 import { resolveThemeImage } from '@/theme/resolve';
+import { isRenderableThemeAsset } from '@/theme/renderable-asset';
 
 /**
  * The launch every run after the first: the theme's world opens out of its own
@@ -439,7 +440,7 @@ export function LaunchSceneIntro({
         )
       : null;
   const wallpaperUri = wallpaper ? assets?.[wallpaper.asset] : undefined;
-  const hasArtwork = Boolean(wallpaperUri?.startsWith('file:///'));
+  const hasArtwork = isRenderableThemeAsset(wallpaperUri);
   const [wallpaperFailed, setWallpaperFailed] = useState<string | undefined>(undefined);
   const onWallpaperError = useCallback(() => setWallpaperFailed(wallpaperUri), [wallpaperUri]);
 

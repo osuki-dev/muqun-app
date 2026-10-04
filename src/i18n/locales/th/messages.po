@@ -1803,6 +1803,7 @@ msgid "default"
 msgstr "ค่าเริ่มต้น"
 
 #: src/components/settings-terminal.tsx
+#: src/components/settings-theme-sheet.tsx
 msgid "Default"
 msgstr "ค่าเริ่มต้น"
 
