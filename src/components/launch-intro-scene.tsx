@@ -9,7 +9,6 @@ import {
   Image as SkiaImage,
   Shader,
   useCanvasRef,
-  useImage,
   type SkImage,
 } from 'react-native-skia';
 import { Image } from 'expo-image';
@@ -57,6 +56,7 @@ import {
   inkBloomUniforms,
   type InkBloomHole,
 } from '@/lib/ink-bloom-shader';
+import { useSharedSkiaImage } from '@/lib/skia-image-cache';
 import { recoverWithSync } from '@/lib/compiler-safe-control-flow';
 import { containedImageRect, coveredImageRect } from '@/lib/hero-feather';
 import {
@@ -449,7 +449,7 @@ export function LaunchSceneIntro({
   // draw. That is a decode Home does not share (it draws through
   // `expo-image`), the price of the exit being one canvas. A painting that
   // will not decode settles the same way a loaded one does, onto paper.
-  const wallpaperImage = useImage(hasArtwork ? wallpaperUri : null, onWallpaperError);
+  const wallpaperImage = useSharedSkiaImage(hasArtwork ? wallpaperUri : null, onWallpaperError);
   const imageReady = wallpaperImage !== null || wallpaperFailed === wallpaperUri;
 
   // The front will not wait past the budget. Armed on the handover rather than
@@ -486,7 +486,7 @@ export function LaunchSceneIntro({
   // that launch ends on the cross-fade.
   const heroUri = mirror.logo.source?.uri;
   const heroDrawable = mirror.hasLogo && isMeasurableHeroUri(heroUri);
-  const heroImage = useImage(heroDrawable ? heroUri : null);
+  const heroImage = useSharedSkiaImage(heroDrawable ? heroUri : null);
   // The exit is planned as the snap whenever motion is allowed and the canvas
   // draws the whole picture; otherwise it is the cross-fade from the start.
   const snapAhead = !reduced && canvasWorld && (heroDrawable || !mirror.hasLogo);
