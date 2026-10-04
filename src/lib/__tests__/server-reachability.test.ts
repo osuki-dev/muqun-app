@@ -9,6 +9,7 @@ import { describe, expect, test } from 'bun:test';
 
 import {
   agentStatusesAreCurrent,
+  gatewayConnectionPhase,
   MAX_PROBED_SERVERS,
   needsReachabilityProbe,
   prewarmGate,
@@ -281,5 +282,20 @@ describe('what the probe tells the workspace prewarm', () => {
     // The expensive path is gated by the cheap one, so the cheap one has to be
     // the more frequent of the two. See `WARM_WORKSPACE_TTL_MS`.
     expect(REACHABILITY_FRESH_MS).toBeGreaterThanOrEqual(REACHABILITY_RECHECK_MS);
+  });
+});
+
+describe('gatewayConnectionPhase', () => {
+  test('a terminal backend that is down still reads as a gateway that answered', () => {
+    const phase = gatewayConnectionPhase('offline', true);
+    expect(phase).toBe('connected');
+    expect(resolveServerReachability('b0', undefined, { serverId: 'b0', phase })).toBe('live');
+  });
+
+  test('a gateway that is down keeps its own phase', () => {
+    expect(gatewayConnectionPhase('offline', false)).toBe('offline');
+    expect(gatewayConnectionPhase('offline')).toBe('offline');
+    expect(gatewayConnectionPhase('reconnecting')).toBe('reconnecting');
+    expect(gatewayConnectionPhase('connecting', false)).toBe('connecting');
   });
 });

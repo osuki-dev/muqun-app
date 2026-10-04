@@ -245,7 +245,11 @@ import {
   timing,
 } from '@/lib/motion';
 import { mirroredServerAgents, mirroredServerPanes } from '@/lib/server-agents';
-import { resolveServerReachability, type ServerReachability } from '@/lib/server-reachability';
+import {
+  gatewayConnectionPhase,
+  resolveServerReachability,
+  type ServerReachability,
+} from '@/lib/server-reachability';
 import { responsiveWorkspaceLayout } from '@/lib/responsive-layout';
 import { loadUsage, orderByUsage, recordUsage, usageScope } from '@/lib/shortcut-usage';
 import {
@@ -4007,13 +4011,15 @@ export function ServerTerminalWorkspace({
     return [routeRecord, ...records];
   }, [records, routeRecord]);
 
+  // The gateway's phase for the status lights: a backend that is down is not
+  // a gateway that is down. See `gatewayConnectionPhase`.
+  const gatewayPhase = gatewayConnectionPhase(connection.phase, connection.backendUnavailable);
+
   const railReachabilityByServer = useMemo<Record<string, ServerReachability>>(
     () =>
       Object.fromEntries(
         railServers.map((server) => {
-          const activeConnection = selectedServer
-            ? { serverId, phase: connection.phase }
-            : undefined;
+          const activeConnection = selectedServer ? { serverId, phase: gatewayPhase } : undefined;
           return [
             server.serverId,
             resolveServerReachability(
@@ -4024,7 +4030,7 @@ export function ServerTerminalWorkspace({
           ];
         })
       ),
-    [connection.phase, railServers, reachabilityProbes, selectedServer, serverId]
+    [gatewayPhase, railServers, reachabilityProbes, selectedServer, serverId]
   );
 
   function selectPadServer(server: GatewayRecord) {
@@ -5005,7 +5011,7 @@ export function ServerTerminalWorkspace({
           servers={railServers}
           reachabilityByServer={railReachabilityByServer}
           selectedServerId={record?.serverId ?? null}
-          activeConnection={{ serverId, phase: connection.phase }}
+          activeConnection={{ serverId, phase: gatewayPhase }}
           selectedPaneId={padDetailIsPane ? selection.paneId || null : null}
           selectedAsid={padDetail.kind === 'agent' ? padDetail.asid : undefined}
           workbenchSelected={false}
@@ -5032,7 +5038,7 @@ export function ServerTerminalWorkspace({
             embedded
             routeBound={routeBound}
             sourceRouteActive={sourceRouteActive}
-            activeConnection={{ serverId, phase: connection.phase }}
+            activeConnection={{ serverId, phase: gatewayPhase }}
             onExitOverview={() => padDispatch({ type: 'hide-home' })}
             onOpenAgentInPlace={openAgentInPlace}
           />

@@ -26,7 +26,7 @@ import { KeyboardToolbar, useThemeTokens } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
 import { Trans, useLingui } from '@lingui/react/macro';
 import { useEffect, useRef, useState } from 'react';
-import { Linking, StyleSheet, View } from 'react-native';
+import { Linking, Platform, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated from 'react-native-reanimated';
 
@@ -35,6 +35,7 @@ import {
   SheetScene,
   SheetSceneAction,
   SheetSceneField,
+  contentSizedBottomPadding,
   SHEET_LADDER,
   sheetSceneStyles,
   useSheetSceneInputStyle,
@@ -172,7 +173,7 @@ export function OpenWebServiceSheet({
         <View
           style={[
             sheetSceneStyles.column,
-            { paddingBottom: Math.max(insets.bottom, SHEET_LADDER.section) },
+            { paddingBottom: contentSizedBottomPadding(insets.bottom) },
           ]}>
           <SheetSceneField
             label={t`Port`}
@@ -267,8 +268,13 @@ export function OpenWebServiceSheet({
       </SheetScene>
       {/* One field here, so the arrows would only ever point at themselves.
         Opaque on purpose: see the same toolbar in `new-task-sheet.tsx` for why
-        kit 1.1.0's `backgroundColor` is not the pack's surface opacity here. */}
-      <KeyboardToolbar showArrows={false} doneText={t`Done`} />
+        kit 1.1.0's `backgroundColor` is not the pack's surface opacity here.
+        Android only. In an iOS form sheet the sticky toolbar is laid out
+        against the sheet, not the window: with the keyboard up it landed over
+        the Port field, and with it down it peeked out under the sheet. iOS
+        has its own bar there anyway -- React Native gives a number pad with a
+        return key type an accessory with that key, here Go. */}
+      {Platform.OS === 'ios' ? null : <KeyboardToolbar showArrows={false} doneText={t`Done`} />}
     </>
   );
 }

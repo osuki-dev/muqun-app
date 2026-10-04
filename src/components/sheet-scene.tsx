@@ -6,6 +6,7 @@ import { Search, X } from 'lucide-react-native';
 import { useEffect, useRef, type ReactNode } from 'react';
 import {
   ActivityIndicator,
+  Platform,
   StyleSheet,
   View,
   type AccessibilityProps,
@@ -59,6 +60,26 @@ import { FontedTextInput } from '@/components/fonted-text-input';
  * terminal composer's, so a sheet opened over the composer keeps the same left
  * edge.
  */
+/**
+ * The ground under a content-sized iOS sheet, past its content: the bottom
+ * safe area UIKit adds under a `fitToContents` detent. See `SheetFrame`.
+ * Android draws the sheet exactly as tall as it measured, so nothing there.
+ */
+const CONTENT_SIZED_OVERDRAW = Platform.OS === 'ios' ? 64 : 0;
+
+/**
+ * The room under a content-sized sheet's last control.
+ *
+ * On iOS UIKit already hangs the home indicator's safe area under a
+ * `fitToContents` detent, so the column only needs the ladder's section; the
+ * inset on top of that doubled it, and with the keyboard up the doubled strip
+ * read as a gap between the sheet and the keyboard. Android's sheet is exactly
+ * as tall as its content, so the column clears the gesture bar itself.
+ */
+export function contentSizedBottomPadding(bottomInset: number): number {
+  return Platform.OS === 'ios' ? SHEET_LADDER.section : Math.max(bottomInset, SHEET_LADDER.section);
+}
+
 export const SHEET_LADDER = {
   /** The lead between a title and its caption, and inside a row's stack. */
   tight: 4,
@@ -185,7 +206,11 @@ export function SheetScene({
   // clearance (the catalogue) is not given it twice.
   const top = fullscreen ? Math.max(topInset, insets.top) : topInset;
   return (
-    <SheetFrame testID={testID} tint="surface" frosted>
+    <SheetFrame
+      testID={testID}
+      tint="surface"
+      frosted
+      overdrawBottom={contentSized ? CONTENT_SIZED_OVERDRAW : 0}>
       <View collapsable={false} style={contentSized ? undefined : styles.scene}>
         <View style={[styles.fixedTop, { paddingTop: SHEET_LADDER.gap + top }]}>
           <SheetHandle />
