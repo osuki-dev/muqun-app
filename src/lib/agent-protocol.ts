@@ -1821,6 +1821,8 @@ export type AgentAvailability =
   | 'disabled'
   | 'not_installed'
   | 'unconfigured'
+  /** The gateway cannot speak to this agent's server (e.g. a protocol version mismatch); see `reason`. */
+  | 'unsupported'
   | 'unknown';
 
 const AGENT_AVAILABILITIES: readonly AgentAvailability[] = [
@@ -1830,6 +1832,7 @@ const AGENT_AVAILABILITIES: readonly AgentAvailability[] = [
   'disabled',
   'not_installed',
   'unconfigured',
+  'unsupported',
 ];
 
 export function parseAgentAvailability(value: unknown): AgentAvailability {
@@ -1995,6 +1998,8 @@ export interface AgentInfo {
   name: string;
   status: AgentAvailability;
   enabled: boolean;
+  /** Why the gateway reports this status, in its own words; sent for `unsupported`. */
+  reason?: string;
   /** Only a paired device is told these; an unauthenticated read has neither. */
   endpoint?: string;
   version?: string;
@@ -2041,6 +2046,7 @@ export function parseAgentInfo(value: unknown): AgentInfo | null {
   if (!rec) return null;
   const id = pickString(rec, ['id']);
   if (!id) return null;
+  const reason = pickString(rec, ['reason'])?.trim();
   const kind = pickString(rec, ['kind']) ?? id;
   const endpoint = pickString(rec, ['endpoint']);
   const version = pickString(rec, ['version']);
@@ -2063,6 +2069,7 @@ export function parseAgentInfo(value: unknown): AgentInfo | null {
     kind,
     name: pickString(rec, ['name']) ?? id,
     status: parseAgentAvailability(rec.status),
+    ...(reason ? { reason } : {}),
     // A gateway that does not say is a gateway whose agent is in the list
     // because it is configured; only an explicit `false` disables it.
     enabled: rec.enabled !== false,

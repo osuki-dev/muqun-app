@@ -176,7 +176,9 @@ describe('OpenCode readiness', () => {
 });
 
 describe('agents discovery', () => {
-  const discovery = (agents: Record<string, { status: string; enabled?: boolean }>) =>
+  const discovery = (
+    agents: Record<string, { status: string; enabled?: boolean; reason?: string }>
+  ) =>
     parseGatewayDiscovery({
       planes: {
         agents: {
@@ -187,6 +189,7 @@ describe('agents discovery', () => {
             kind: id,
             status: entry.status,
             enabled: entry.enabled ?? true,
+            ...(entry.reason ? { reason: entry.reason } : {}),
           })),
           features: {},
         },
@@ -241,6 +244,20 @@ describe('agents discovery', () => {
     expect(result.status).toBe(expected);
     expect(result.agentId).toBe('opencode');
     if (result.status === 'offline') expect(result.cause).toBe('service');
+  });
+
+  test('unsupported on the agent asked for needs an update, with the gateway reason', async () => {
+    const reason = 'T3 server speaks orchestration protocol 2; this gateway supports 1';
+    const result = await checkAgentReadiness(
+      ports({
+        ...multi(),
+        loadDiscovery: async () => discovery({ t3: { status: 'unsupported', reason } }),
+      }),
+      't3'
+    );
+    expect(result).toMatchObject({ status: 'needs-update', agentId: 't3', reason });
+    expect(agentGuideBlurb(result)).toBe('update');
+    expect(showsAgentSetupCommand(result)).toBe(false);
   });
 
   test('an agent the gateway does not list is unsupported', async () => {

@@ -65,3 +65,13 @@ describe('the setup commands', () => {
     expect(sentence('deepseek', 'start')).toContain('Enable deepseek in the gateway config');
   });
 });
+
+describe('the needs-update copy', () => {
+  test('is in the shipped catalog, with the gateway named', () => {
+    const catalog = enMessages as unknown as Record<string, unknown>;
+    const text = JSON.stringify(catalog);
+    expect(LABELS).toContain("'needs-update': msg`Needs update`");
+    expect(text).toContain('Needs update');
+    expect(text).toContain('Update Muqun Gateway on this host to use');
+  });
+});

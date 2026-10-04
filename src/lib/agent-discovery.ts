@@ -116,6 +116,7 @@ export type AgentReadinessStatus =
   | 'ready'
   | 'not-installed'
   | 'needs-setup'
+  | 'needs-update'
   | 'unsupported'
   | 'offline';
 
@@ -127,7 +128,10 @@ export type AgentReadinessStatus =
  * are `ready`. `not_installed` has its own guide page. `unconfigured` is an
  * agent whose server answers but which the gateway holds no credential for
  * (T3 before `t3 pair`): the host needs setup, which is what the kind's guide
- * says, so it is `needs-setup` -- shown, and not launchable. `disabled`, or an
+ * says, so it is `needs-setup` -- shown, and not launchable. `unsupported` is
+ * an agent the gateway cannot speak to (its server's protocol is one this
+ * gateway does not support): the host's gateway needs updating, so it is
+ * `needs-update` -- shown, and not launchable. `disabled`, or an
  * agent the gateway lists as not enabled, is a choice made on the host, so it
  * is `unsupported` and not offered. Everything else is a service that should
  * answer and does not.
@@ -142,6 +146,8 @@ export function agentReadiness(info: Pick<AgentInfo, 'status' | 'enabled'>): Age
       return 'not-installed';
     case 'unconfigured':
       return 'needs-setup';
+    case 'unsupported':
+      return 'needs-update';
     case 'disabled':
       return 'unsupported';
     default:
@@ -309,6 +315,7 @@ export function mirrorAgent(info: AgentInfo): MirroredAgent {
     name: info.name,
     status: info.status,
     enabled: info.enabled,
+    ...(info.reason ? { reason: info.reason } : {}),
     features: info.features,
   };
 }
@@ -358,6 +365,9 @@ function parseMirroredAgent(value: unknown): MirroredAgent | null {
     name: typeof value.name === 'string' && value.name ? value.name : id,
     status: parseAgentAvailability(value.status),
     enabled: value.enabled !== false,
+    ...(typeof value.reason === 'string' && value.reason.trim()
+      ? { reason: value.reason.trim() }
+      : {}),
     features: parseAgentFeatures(value.features),
   };
 }

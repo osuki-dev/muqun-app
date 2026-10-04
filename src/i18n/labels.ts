@@ -390,6 +390,7 @@ export const agentLaunchCaption: Record<LaunchAgentCaption, MessageDescriptor> =
   'new-session': msg`New session`,
   'not-installed': msg`Not installed`,
   'needs-setup': msg`Needs setup`,
+  'needs-update': msg`Needs update`,
   offline: msg`Offline`,
 };
 
