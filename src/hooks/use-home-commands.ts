@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { useLingui } from '@lingui/react/macro';
 import { useNavigation, useRouter, type Href } from 'expo-router';
 import { useToast } from '@osuki-dev/ui';
@@ -25,6 +25,8 @@ import {
 } from '@/lib/home-commands';
 import { encodeSessionChoices, resolveSessionId, sessionChoices } from '@/lib/session-switcher';
 import { terminalBackendRows, terminalBackendState } from '@/lib/terminal-backend-state';
+import { terminalBackendCopy } from '@/lib/terminal-backend-copy';
+import { refreshAgentsDiscovery } from '@/hooks/use-agent-features';
 import { useAgents } from '@/stores/agents';
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';
 import { isDemoRecord } from '@/lib/demo-gateway';
@@ -82,6 +84,9 @@ export type HomeCommands = {
   pairGateway: () => Promise<HomeCommandResult>;
   manageConnections: () => Promise<HomeCommandResult>;
 };
+
+/** Long enough to read the reason and copy the command; Retry stays on it. */
+const BACKEND_DOWN_TOAST_MS = 12_000;
 
 /**
  * Home's one typed action surface.
@@ -202,6 +207,10 @@ export function useHomeCommands(options: HomeCommandOptions = {}): HomeCommands 
 
   useEffect(() => () => controller.current.dispose(), [controller]);
 
+  // Retry on the backend-down notice runs the same command again through this
+  // hook, so its answer is reported the same way. A ref, because the notice is
+  // created inside `dispatch` itself.
+  const dispatchRef = useRef<((command: HomeCommand) => Promise<unknown>) | null>(null);
   const dispatch = useCallback(
     async (command: HomeCommand) => {
       const result = await controller.current.dispatch(command);
@@ -212,24 +221,31 @@ export function useHomeCommands(options: HomeCommandOptions = {}): HomeCommands 
           message: t`That destination is no longer available.`,
         });
       } else if (result.status === 'unavailable') {
-        showToast({
-          variant: 'danger',
-          title: t`Could not open destination`,
-          message: result.backendDown
-            ? // The same sentence and backend list the workspace shows, so
-              // "New terminal" explains why instead of only saying no.
-              [
-                t`No terminal session is available on this server.`,
-                result.backendDown.message,
-                ...result.backendDown.backends.map(
-                  (backend) =>
-                    `${backend.label} · ${backend.kind} · ${
-                      backend.connected ? t`Connected` : t`Not connected`
-                    }`
-                ),
-              ].join('\n')
-            : t`No terminal session is available on this server.`,
-        });
+        const down = result.backendDown;
+        if (down && command.type === 'new-terminal') {
+          // The same reason, hint and command the workspace's unavailable state
+          // shows, with a Retry that asks the gateway again -- not a silent tap.
+          const copy = terminalBackendCopy(down.backend);
+          showToast({
+            variant: 'warning',
+            title: t`Terminal unavailable`,
+            message: [copy.reason, copy.hint, copy.command].filter(Boolean).join('\n'),
+            durationMs: BACKEND_DOWN_TOAST_MS,
+            action: {
+              label: t`Retry`,
+              onPress: () => {
+                void refreshAgentsDiscovery(command.serverId);
+                void dispatchRef.current?.(command);
+              },
+            },
+          });
+        } else {
+          showToast({
+            variant: 'danger',
+            title: t`Could not open destination`,
+            message: t`No terminal session is available on this server.`,
+          });
+        }
       } else if (result.status === 'failed') {
         showToast({
           variant: 'danger',
@@ -257,6 +273,9 @@ export function useHomeCommands(options: HomeCommandOptions = {}): HomeCommands 
     },
     [controller.current, router, showToast, t]
   );
+  useEffect(() => {
+    dispatchRef.current = dispatch;
+  }, [dispatch]);
   const resumeServer = useCallback(
     (target: HomeServerEntry) => dispatch({ type: 'resume-server', target }),
     [dispatch]
@@ -348,7 +367,7 @@ async function loadTerminalSelection(records: readonly GatewayRecord[], serverId
       sessionId: '',
       choices,
       label: record.label,
-      backendDown: { message: state.message, backends: state.backends },
+      backendDown: { message: state.message, backends: state.backends, backend: state.backend },
     };
   }
   const remembered = useServerSession.getState().byServer[serverId];

@@ -725,6 +725,10 @@ msgstr "Назад"
 msgid "Back one word"
 msgstr "На слово назад"
 
+#: src/components/server-terminal-workspace.tsx
+msgid "Back to Home"
+msgstr "Вернуться на главную"
+
 #: src/components/app-drawer.tsx
 msgid "Back to servers"
 msgstr "К серверам"
@@ -1201,7 +1205,6 @@ msgstr "Подключиться"
 #: src/app/explore.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/components/session-map.tsx
-#: src/hooks/use-home-commands.ts
 msgid "Connected"
 msgstr "Подключено"
 
@@ -2943,6 +2946,18 @@ msgstr "Muqun не удалось подтвердить вашу личност
 msgid "Muqun follows the language your phone is set to."
 msgstr "Muqun использует язык, выбранный на телефоне"
 
+#: src/lib/terminal-backend-copy.ts
+msgid "Muqun Gateway is running, but it cannot reach a tmux server on its computer."
+msgstr "Muqun Gateway работает, но не может подключиться к серверу tmux на своём компьютере"
+
+#: src/lib/terminal-backend-copy.ts
+msgid "Muqun Gateway is running, but it cannot reach Herdr on its computer."
+msgstr "Muqun Gateway работает, но не может подключиться к Herdr на своём компьютере"
+
+#: src/lib/terminal-backend-copy.ts
+msgid "Muqun Gateway is running, but it cannot reach the {backend} backend on its computer."
+msgstr "Muqun Gateway работает, но не может подключиться к бэкенду {backend} на своём компьютере"
+
 #: src/components/settings-font-sheet.tsx
 msgid "Muqun has no fonts of its own. Add one and it is kept on this device."
 msgstr "У Muqun нет своих шрифтов. Добавленный останется на этом устройстве"
@@ -3244,7 +3259,6 @@ msgid "not connected"
 msgstr "не подключён"
 
 #: src/components/server-terminal-workspace.tsx
-#: src/hooks/use-home-commands.ts
 #: src/i18n/labels.ts
 msgid "Not connected"
 msgstr "Не подключён"
@@ -4072,6 +4086,7 @@ msgstr "Восстановить скрытые значения по умолч
 #: src/components/gateway-storage-error.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/components/terminal-boundary.tsx
+#: src/hooks/use-home-commands.ts
 msgid "Retry"
 msgstr "Повторить"
 
@@ -4811,6 +4826,18 @@ msgstr "Запустите агента и отправьте ему перво�
 msgid "Start an agent and send it the first thing to do."
 msgstr "Запустите агента и дайте ему первое задание"
 
+#: src/lib/terminal-backend-copy.ts
+msgid "Start Herdr there, then tap Retry."
+msgstr "Запустите там Herdr и нажмите «Повторить»"
+
+#: src/lib/terminal-backend-copy.ts
+msgid "Start it there, then tap Retry."
+msgstr "Запустите его там и нажмите «Повторить»"
+
+#: src/lib/terminal-backend-copy.ts
+msgid "Start one there, then tap Retry:"
+msgstr "Запустите его там и нажмите «Повторить»:"
+
 #: src/components/new-task-sheet.tsx
 msgid "Start task"
 msgstr "Запустить задачу"
@@ -5089,6 +5116,7 @@ msgid "Terminal key row"
 msgstr "Ряд клавиш терминала"
 
 #: src/components/server-terminal-workspace.tsx
+#: src/hooks/use-home-commands.ts
 msgid "Terminal unavailable"
 msgstr "Терминал недоступен"
 
