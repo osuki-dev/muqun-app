@@ -37,7 +37,14 @@ import {
   EDITORIAL_PAD_MAX_WIDTH,
   getEditorialLayoutGeometry,
 } from '@/lib/home-editorial-layout';
-import { padLaunchLayoutEnabled, padWorkColumnWidth } from '@/lib/home-pad-geometry';
+import {
+  PAD_COVER_TITLE_LINE_HEIGHT,
+  PAD_WORDMARK_DESCENDER,
+  padCoverKind,
+  padLaunchLayoutEnabled,
+  padWordmarkFontSize,
+  padWorkColumnWidth,
+} from '@/lib/home-pad-geometry';
 export {
   EDITORIAL_MAX_WIDTH,
   EDITORIAL_PAD_MAX_WIDTH,
@@ -80,6 +87,20 @@ export type HomeEditorialLayoutProps = {
   connections?: ReactNode;
   /** Secondary scan or pair controls, already wired by the parent. */
   controls?: ReactNode;
+  /**
+   * No theme pack: the Pad cover has no painting, so it sets `coverTitle` as a
+   * large wordmark instead. Ignored wherever a pack's artwork is showing.
+   */
+  typographicCover?: boolean;
+  /** The brand mark, at the toolbar's leading edge above the wordmark cover. */
+  coverMark?: ReactNode;
+  /** A quiet texture painted behind the wordmark cover. */
+  coverBackdrop?: ReactNode;
+  /**
+   * Nothing is paired yet and `launches` is the pair card: on the wordmark
+   * cover it is the page's one action, centred under the wordmark, not docked.
+   */
+  firstRun?: boolean;
   style?: StyleProp<ViewStyle>;
 };
 
@@ -195,6 +216,10 @@ export function HomeEditorialLayout({
   attention,
   connections,
   controls,
+  typographicCover = false,
+  coverMark,
+  coverBackdrop,
+  firstRun = false,
   style,
 }: HomeEditorialLayoutProps) {
   const { t } = useLingui();
@@ -211,6 +236,8 @@ export function HomeEditorialLayout({
   const [titleMeasurement, setTitleMeasurement] = useState<{ title: string; width: number } | null>(
     null
   );
+  const [padPaneHeight, setPadPaneHeight] = useState(0);
+  const [padLaunchHeight, setPadLaunchHeight] = useState(0);
   const maxWidth = pad ? EDITORIAL_PAD_MAX_WIDTH : EDITORIAL_MAX_WIDTH;
   const geometry = getEditorialLayoutGeometry(
     measuredWidth || Math.min(contentWidth, maxWidth),
@@ -326,6 +353,54 @@ export function HomeEditorialLayout({
     const titleHeight = titleFontSize * 1.08;
     const hasRecent = hasSlot(recent);
     const hasConnections = hasSlot(connections);
+    const coverKind = padCoverKind({
+      cover,
+      hasArtwork,
+      typographic: typographicCover,
+      hasTitle: Boolean(coverTitle),
+    });
+    const wordmark = coverKind === 'wordmark';
+    const launchWidthInCover = Math.min(coverWidth - geometry.gutter, 560);
+    // The pair card is the first-run page's whole purpose, so on the wordmark
+    // cover it stands in the open under the name; the dock stays at the foot.
+    const centredLaunches = wordmark && firstRun;
+    const wordmarkFontSize = padWordmarkFontSize({
+      coverWidth,
+      measuredWidth:
+        titleMeasurement && titleMeasurement.title === titleKey ? titleMeasurement.width : 0,
+      paneHeight: padPaneHeight,
+      reservedHeight: padLaunchHeight > 0 ? padLaunchHeight + 48 : 0,
+    });
+    const onLaunchLayout = wordmark
+      ? (event: LayoutChangeEvent) => setPadLaunchHeight(event.nativeEvent.layout.height)
+      : undefined;
+    const titleMeasure = coverTitle ? (
+      <View
+        pointerEvents="none"
+        accessibilityElementsHidden
+        importantForAccessibility="no-hide-descendants"
+        style={{ position: 'absolute', width: 10000, opacity: 0 }}>
+        <Text
+          allowFontScaling={false}
+          onTextLayout={(event) => {
+            const measured = event.nativeEvent.lines[0]?.width ?? 0;
+            if (measured > 0)
+              setTitleMeasurement((current) =>
+                current?.title === titleKey && Math.abs(current.width - measured) < 0.1
+                  ? current
+                  : { title: titleKey, width: measured }
+              );
+          }}
+          style={{
+            fontSize: 100,
+            fontFamily: chromeFontFamily,
+            fontWeight: titleWeight,
+            letterSpacing: -5,
+          }}>
+          {coverTitle}
+        </Text>
+      </View>
+    ) : null;
     return (
       <View
         testID="home-editorial-layout"
@@ -339,42 +414,48 @@ export function HomeEditorialLayout({
         {hasHeaderRow ? (
           <View testID="home-pad-toolbar" style={styles.padToolbar}>
             <View style={styles.mastheadLeadGroup}>
+              {wordmark && hasSlot(coverMark) ? (
+                <View testID="home-pad-cover-mark">{coverMark}</View>
+              ) : null}
               {hasHeaderLeading ? <View style={styles.headerLeading}>{headerLeading}</View> : null}
             </View>
             {hasHeaderAction ? <View style={styles.headerAction}>{headerAction}</View> : null}
           </View>
         ) : null}
         <View style={styles.padColumns}>
-          <View testID="home-pad-theme-pane" style={[styles.padThemePane, { width: coverWidth }]}>
-            {cover && hasArtwork ? (
-              <View style={[styles.coverScene, styles.padCoverScene]}>
-                {coverTitle ? (
-                  <View
-                    pointerEvents="none"
-                    accessibilityElementsHidden
-                    importantForAccessibility="no-hide-descendants"
-                    style={{ position: 'absolute', width: 10000, opacity: 0 }}>
-                    <Text
-                      allowFontScaling={false}
-                      onTextLayout={(event) => {
-                        const measured = event.nativeEvent.lines[0]?.width ?? 0;
-                        if (measured > 0)
-                          setTitleMeasurement((current) =>
-                            current?.title === titleKey && Math.abs(current.width - measured) < 0.1
-                              ? current
-                              : { title: titleKey, width: measured }
-                          );
-                      }}
-                      style={{
-                        fontSize: 100,
-                        fontFamily: chromeFontFamily,
-                        fontWeight: titleWeight,
-                        letterSpacing: -5,
-                      }}>
-                      {coverTitle}
-                    </Text>
+          <View
+            testID="home-pad-theme-pane"
+            onLayout={
+              wordmark ? (event) => setPadPaneHeight(event.nativeEvent.layout.height) : undefined
+            }
+            style={[styles.padThemePane, { width: coverWidth }]}>
+            {wordmark ? (
+              <>
+                {hasSlot(coverBackdrop) ? (
+                  <View pointerEvents="none" style={StyleSheet.absoluteFill}>
+                    {coverBackdrop}
                   </View>
                 ) : null}
+                {titleMeasure}
+                <Text
+                  testID="home-pad-wordmark"
+                  accessibilityRole="header"
+                  color={theme.colors.text}
+                  numberOfLines={1}
+                  allowFontScaling={false}
+                  style={{
+                    fontSize: wordmarkFontSize,
+                    lineHeight: wordmarkFontSize * PAD_COVER_TITLE_LINE_HEIGHT,
+                    fontFamily: chromeFontFamily,
+                    fontWeight: titleWeight,
+                    letterSpacing: -wordmarkFontSize * 0.05,
+                  }}>
+                  {coverTitle}
+                </Text>
+              </>
+            ) : cover && hasArtwork ? (
+              <View style={[styles.coverScene, styles.padCoverScene]}>
+                {titleMeasure}
                 {coverTitle ? (
                   <Animated.View onLayout={titleStage.onLayout} style={titleStage.style}>
                     <Text
@@ -419,14 +500,26 @@ export function HomeEditorialLayout({
                 ) : null}
               </View>
             )}
-            {hasSlot(launches) ? (
+            {hasSlot(launches) && centredLaunches ? (
+              <View
+                testID="home-pad-first-run"
+                style={[
+                  styles.padFirstRunStage,
+                  { paddingTop: wordmarkFontSize * PAD_WORDMARK_DESCENDER },
+                ]}>
+                <View onLayout={onLaunchLayout} style={{ width: launchWidthInCover }}>
+                  {launches}
+                </View>
+              </View>
+            ) : hasSlot(launches) ? (
               // Capped so the tiles stay near phone size and the figure's torso
               // at the column's right stays clear of the dock.
               <View
                 testID="home-pad-launch-dock"
+                onLayout={onLaunchLayout}
                 style={[
                   styles.padLaunchDock,
-                  { bottom: geometry.gutter, width: Math.min(coverWidth - geometry.gutter, 560) },
+                  { bottom: geometry.gutter, width: launchWidthInCover },
                 ]}>
                 {launches}
               </View>
@@ -820,6 +913,7 @@ const styles = StyleSheet.create({
   padCoverScene: { flex: 1 },
   padCoverArtwork: { position: 'absolute', right: 0, bottom: 0, zIndex: 1 },
   padLaunchDock: { position: 'absolute', left: 0, zIndex: 2 },
+  padFirstRunStage: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingBottom: 24 },
   padWorkContent: { paddingTop: 16, paddingBottom: 24, gap: 24 },
   padWorkSections: { gap: 32 },
   // The phone editorial section's heading, without its rule: title, 12, card.
