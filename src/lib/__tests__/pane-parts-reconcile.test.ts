@@ -403,3 +403,84 @@ describe('when the transcript is read again', () => {
     expect(panePartsRefreshKey(5, output)).not.toBe(panePartsRefreshKey(4, output));
   });
 });
+
+describe('stale composer boxes, whatever was typed in them', () => {
+  // `live4-walk-05` (owner's pane w17:p1, 19:19): a frozen screen mid-history
+  // with an empty `❯`, the spinner above it, the mode line and the roster under
+  // it -- and the next screen's first rows glued onto the roster with no blank
+  // row between.
+  const RULE = '─'.repeat(160);
+  const box = (prompt: string, roster: string[]): Block[] => [
+    ['text', RULE],
+    ['prompt', prompt],
+    ['text', `${RULE}\n  ⏵⏵ bypass permissions on · 1 shell · ⧉ Muqun 助手化方向`, 2],
+    ['text', ['  ● main', ...roster].join('\n'), 1 + roster.length],
+  ];
+  const BEFORE: Block[] = [
+    ['text', '  Made 2 scratchpad edits +23, pushed to feat/multi-harness'],
+    ['text', '● Finishing the gateway release note, pushing it, and installing the binary.'],
+    ['text', '● Running 1 shell command…'],
+  ];
+  const CHANNELING: Block = ['status', '✻ Channeling… (7m 6s · ↓ 10.4k tokens)'];
+  const GLUED = [
+    '  ⎿  1 file changed, 329 insertions(+), 2 deletions(-)',
+    '  ⎿  Updated src/terminal/scrollback.rs (+329 -2)',
+  ];
+  const promptRows = (parts: readonly PanePart[]) =>
+    parts.filter((part) => part.type === 'prompt').map((part) => part.fallback_text);
+
+  test('an empty frozen box goes with its spinner, mode line and roster; the rows glued under it stay', () => {
+    const frozenRoster = [
+      '  ◯ general-purpose  Checking iPad landscape hero art',
+      '  ◯ general-purpose  Checking format tooling in package.json',
+      ...GLUED,
+    ];
+    const parts = read([
+      ...BEFORE,
+      CHANNELING,
+      ...box('❯', frozenRoster),
+      ['text', '● Gateway release note pushed; installing the binary now.'],
+      W2,
+      ...box('❯ 做好了没', ['  ◯ general-purpose  Reviewing live4 walk frames']),
+    ]);
+
+    const out = collapseRepeatedParts(parts);
+    const textsOut = texts(out);
+
+    expect(promptRows(out)).toEqual(['❯ 做好了没']);
+    expect(textsOut).not.toContain(CHANNELING[1]);
+    expect(textsOut.some((text) => text.includes('Checking iPad landscape'))).toBe(false);
+    // The tool block's tail was transcript, not roster.
+    expect(textsOut).toContain(GLUED.join('\n'));
+    // The live box is whole, and the banner above it is transcript.
+    expect(textsOut.at(-1)).toContain('Reviewing live4 walk frames');
+    expect(textsOut).toContain(W2[1]);
+  });
+
+  test('a box with a sent prompt in it is still a frozen box when it is not the last', () => {
+    // `live4-hist-6`: two screens, each ending in `❯ 做好了没` between rules.
+    const parts = read([
+      ...BEFORE,
+      W2,
+      ...box('❯ 做好了没', ['  ◯ general-purpose  Opening the Primes OpenCode session']),
+      ['text', '● Agent "Observe live Claude pane for duplicates" finished · 11m 31s'],
+      ...box('❯ 再看一次', ['  ◯ general-purpose  Creating cycle4.sh and loop4.sh']),
+    ]);
+
+    const out = collapseRepeatedParts(parts);
+
+    expect(promptRows(out)).toEqual(['❯ 再看一次']);
+    expect(texts(out).filter((text) => text.includes('Waiting for 2'))).toHaveLength(1);
+  });
+
+  test('a prompt the user sent, unframed, stays; so does the only box', () => {
+    const blocks: Block[] = [
+      ['prompt', '❯ terminal是否可以优化一下'],
+      ['text', '● 可以，先看渲染路径。'],
+      CHANNELING,
+      ...box('❯', ['  ◯ general-purpose  Reading terminal surface']),
+    ];
+
+    expect(texts(collapseRepeatedParts(read(blocks)))).toEqual(texts(read(blocks)));
+  });
+});
