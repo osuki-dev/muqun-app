@@ -19,6 +19,8 @@ export type GatewayFailure = {
    * should offer it instead of a Retry that cannot succeed.
    */
   needsPairing: boolean;
+  /** For a `backend` failure: which backend the gateway could not reach. */
+  backendKind?: string;
   /**
    * `HTTP 403 · invalid_token`. Present when the gateway named a status and a
    * code. Deliberately not translated and deliberately not the message: it is
@@ -128,6 +130,7 @@ export function describeGatewayFailure(
       message: error.message,
       retryable: true,
       needsPairing: false,
+      ...(error.backendKind ? { backendKind: error.backendKind } : {}),
     };
   }
   // First, because it is the one case where the HTTP status is not enough to go
