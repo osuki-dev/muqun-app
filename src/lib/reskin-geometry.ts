@@ -254,6 +254,15 @@ export function washFront(progress: number, geometry: WashGeometry): number {
   return geometry.from + (geometry.to - geometry.from) * FRONT_OVERSHOOT * progress;
 }
 
+/** How far the corner furthest from a point is from it, in points. */
+function farthestCorner(origin: ReskinPoint, size: ReskinSize): number {
+  let farthest = 0;
+  for (const corner of corners(size)) {
+    farthest = Math.max(farthest, Math.hypot(corner.x - origin.x, corner.y - origin.y));
+  }
+  return farthest;
+}
+
 /** How far out the halftone's wave has to reach before the page is gone. */
 export function halftoneReach(
   origin: ReskinPoint,
@@ -264,13 +273,9 @@ export function halftoneReach(
   // Measured in screen space although the program measures it rotated by 45
   // degrees: a rotation about the origin preserves distance from that origin,
   // so the two are the same number and this one needs no trigonometry.
-  let farthest = 0;
-  for (const corner of corners(size)) {
-    farthest = Math.max(farthest, Math.hypot(corner.x - origin.x, corner.y - origin.y));
-  }
   // The furthest *cell centre* can sit half a diagonal beyond the furthest
   // corner, and that cell is not finished until the band has passed it too.
-  return farthest + cell * Math.SQRT1_2 + band;
+  return farthestCorner(origin, size) + cell * Math.SQRT1_2 + band;
 }
 
 /** How far out the halftone's wave has reached, at a progress. */
@@ -279,8 +284,117 @@ export function halftoneFront(progress: number, reach: number): number {
   return reach * FRONT_OVERSHOOT * progress;
 }
 
+/* -------------------------------------------------------------------------- */
+/* The ripple: a drop lands where the reader touched                          */
+/* -------------------------------------------------------------------------- */
+
+/** The distance between two rings, in points. */
+export const RIPPLE_WAVELENGTH = 48;
+
+/** How far the first ring bends what is under it, in points, at full depth. */
+export const RIPPLE_AMPLITUDE = 10;
+
+/** The soft edge between the old interface and the new one, in points. */
+export const RIPPLE_BAND = 24;
+
+/** The third ring's crest, as a fraction of the envelope at the front: faint. */
+export const RIPPLE_THIRD_RING = 0.15;
+
+/**
+ * How fast the rings die away behind the front, per point. Solved so that the
+ * envelope at the third crest -- nine quarters of a wavelength back -- is
+ * {@link RIPPLE_THIRD_RING} of what it is at the front.
+ */
+export const RIPPLE_DECAY = -Math.log(RIPPLE_THIRD_RING) / (2.25 * RIPPLE_WAVELENGTH);
+
+/**
+ * How far behind the front a ring can still bend anything, in points: where
+ * the envelope falls under a quarter of a point. Past it a pixel is the new
+ * interface and nothing else, which is the program's early-out.
+ */
+export const RIPPLE_TAIL = Math.log(RIPPLE_AMPLITUDE / 0.25) / RIPPLE_DECAY;
+
+/** The share of the run the front spends crossing; the rest is the water settling. */
+export const RIPPLE_FRONT_SHARE = 0.8;
+
+/** Where in the run the rings start to flatten out. */
+export const RIPPLE_SETTLE_FROM = 0.45;
+
+/** How far the ripple's front travels before the old interface is all gone. */
+export function rippleReach(origin: ReskinPoint, size: ReskinSize): number {
+  return farthestCorner(origin, size) + RIPPLE_BAND + 1;
+}
+
+/**
+ * How far from the drop the front has reached, at a linear progress: an
+ * ease-out over the first {@link RIPPLE_FRONT_SHARE} of the run, then parked
+ * past the far corner while the water settles.
+ */
+export function rippleFront(progress: number, reach: number): number {
+  'worklet';
+  const t = Math.min(1, Math.max(0, progress / RIPPLE_FRONT_SHARE));
+  return reach * (1 - (1 - t) * (1 - t) * (1 - t));
+}
+
+/** How much of the rings' depth is left, at a linear progress: 1, down to a flat 0. */
+export function rippleDepth(progress: number): number {
+  'worklet';
+  const t = Math.min(1, Math.max(0, (progress - RIPPLE_SETTLE_FROM) / (1 - RIPPLE_SETTLE_FROM)));
+  return 1 - t * t * (3 - 2 * t);
+}
+
+/**
+ * How far a ring bends the picture at a distance behind the front, in points
+ * along the radius. The program computes the same thing per pixel; this is
+ * the copy the tests can read.
+ */
+export function rippleDisplacement(behind: number, depth: number): number {
+  if (!(behind > 0)) return 0;
+  return (
+    RIPPLE_AMPLITUDE *
+    depth *
+    Math.exp(-RIPPLE_DECAY * behind) *
+    Math.sin((2 * Math.PI * behind) / RIPPLE_WAVELENGTH)
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/* The scan: two bands re-encode the page from the tapped row                 */
+/* -------------------------------------------------------------------------- */
+
+/** The height of each scan band, in points. */
+export const SCAN_BAND = 120;
+
+/** How far each band's leading edge travels before the page is gone. */
+export function scanReach(origin: ReskinPoint, size: ReskinSize): number {
+  return Math.max(origin.y, size.height - origin.y) + SCAN_BAND + 2;
+}
+
+/** How far each band's leading edge is from the tapped row, at a progress. */
+export function scanFront(progress: number, reach: number): number {
+  'worklet';
+  return reach * FRONT_OVERSHOOT * progress;
+}
+
+/** One band, as the rows its leading and trailing edges sit on. */
+export type ScanBand = { lead: number; trail: number };
+
+/**
+ * Where the two bands are: one travelling up from the tapped row and one
+ * travelling down. A trailing edge never crosses back over the row, which is
+ * what makes the first frames one band opening rather than two arriving.
+ */
+export function scanBands(front: number, originY: number): { up: ScanBand; down: ScanBand } {
+  const reach = Math.max(0, front);
+  const tail = Math.max(0, reach - SCAN_BAND);
+  return {
+    up: { lead: originY - reach, trail: originY - tail },
+    down: { lead: originY + reach, trail: originY + tail },
+  };
+}
+
 /** What the app is going to do about a re-skin. */
-export type ReskinPlay = 'wash' | 'halftone' | 'crossfade' | 'none';
+export type ReskinPlay = 'ripple' | 'scan' | 'wash' | 'halftone' | 'crossfade' | 'none';
 
 /** How taking the picture went. */
 export type SnapshotOutcome = 'ok' | 'failed' | 'slow';
@@ -290,8 +404,10 @@ export type ReskinConditions = {
   kind: 'theme' | 'font';
   /** The device has asked for reduced motion. */
   reduceMotion: boolean;
-  /** This kind's runtime effect compiled on this device. */
+  /** This kind's runtime effect (ripple, scan) compiled on this device. */
   effectReady: boolean;
+  /** This kind's older effect (wash, halftone) compiled, for when the new one did not. */
+  fallbackReady?: boolean;
   snapshot: SnapshotOutcome;
   size: ReskinSize;
 };
@@ -313,17 +429,20 @@ export type ReskinConditions = {
  * millisecond dissolve has no travel in it at all and still spares the reader
  * the cut.
  *
- * A device whose shader would not compile gets the same cross-fade for the
- * same reason -- the picture is already taken, and a dissolve is the part of
- * the effect that needs no GPU program.
+ * A theme or mode change is a ripple and a font change is a scan. A device
+ * whose ripple or scan would not compile gets the older wash or halftone if
+ * that one did, and the cross-fade if neither did -- the picture is already
+ * taken, and a dissolve is the part of the effect that needs no GPU program.
  */
 export function selectReskinPlay(conditions: ReskinConditions): ReskinPlay {
   const { size } = conditions;
   if (conditions.snapshot !== 'ok') return 'none';
   if (!(size.width > 0) || !(size.height > 0)) return 'none';
   if (conditions.reduceMotion) return 'crossfade';
-  if (!conditions.effectReady) return 'crossfade';
-  return conditions.kind === 'theme' ? 'wash' : 'halftone';
+  const theme = conditions.kind === 'theme';
+  if (conditions.effectReady) return theme ? 'ripple' : 'scan';
+  if (conditions.fallbackReady) return theme ? 'wash' : 'halftone';
+  return 'crossfade';
 }
 
 /** Whether a snapshot that took this long is still worth using. */
@@ -357,5 +476,5 @@ export function recordSnapshotCost(strikes: number, elapsedMs: number): number {
 
 /** Theme reveals keep the new UI interactive after its covered commit. */
 export function reskinBlocksTouches(play: ReskinPlay, swapping: boolean): boolean {
-  return swapping || play === 'halftone';
+  return swapping || play === 'halftone' || play === 'scan';
 }
