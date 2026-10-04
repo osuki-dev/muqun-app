@@ -110,10 +110,25 @@ export interface CodeLinesViewProps {
   markdownStyle: MarkdownStyle;
   /** Said once above the rows, quietly: why this file has no colour in it. */
   note?: string;
+  /**
+   * The margin either side of the pane, and of the note above it.
+   *
+   * The pane is drawn as the fenced block the smaller files get -- the theme's
+   * code fill, its hairline and its radius -- inset by the sheet's gutter, so a
+   * file past the highlighting budget sits on the same edges as one inside it.
+   */
+  inset: number;
   testID?: string;
 }
 
-export function CodeLinesView({ lines, longest, markdownStyle, note, testID }: CodeLinesViewProps) {
+export function CodeLinesView({
+  lines,
+  longest,
+  markdownStyle,
+  note,
+  inset,
+  testID,
+}: CodeLinesViewProps) {
   const theme = useThemeTokens();
 
   // The floor under the markdown theme's own answer.
@@ -238,61 +253,83 @@ export function CodeLinesView({ lines, longest, markdownStyle, note, testID }: C
     [fontFamily, fontSize, lineHeight]
   );
 
+  const paneStyle = useMemo(
+    () => [
+      baseStyles.body,
+      {
+        backgroundColor: paneFill,
+        marginHorizontal: inset,
+        marginBottom: inset,
+        borderRadius: code?.borderRadius ?? 0,
+        borderWidth: code?.borderWidth ?? 0,
+        borderColor: code?.borderColor ?? theme.colors.border,
+      },
+    ],
+    [code?.borderColor, code?.borderRadius, code?.borderWidth, inset, paneFill, theme.colors.border]
+  );
+
   return (
-    <View style={[baseStyles.body, { backgroundColor: paneFill }]} testID={testID}>
+    <View style={baseStyles.column}>
       {note ? (
-        <View style={baseStyles.note}>
+        <View style={[baseStyles.note, { paddingHorizontal: inset }]}>
           <Text variant="caption" color={theme.colors.textMuted}>
             {note}
           </Text>
         </View>
       ) : null}
-      {/* The hidden ruler: one layout pass, no space at all. */}
-      <Text
-        accessibilityElementsHidden
-        importantForAccessibility="no-hide-descendants"
-        numberOfLines={1}
-        onLayout={onRulerLayout}
-        style={rulerStyle}>
-        {RULER}
-      </Text>
-      <Animated.ScrollView
-        horizontal
-        showsHorizontalScrollIndicator
-        onScroll={onHorizontalScroll}
-        scrollEventThrottle={16}
-        onLayout={onViewportLayout}
-        style={baseStyles.scroller}
-        contentContainerStyle={baseStyles.scrollerContent}>
-        <LegendList
-          data={lines as string[]}
-          keyExtractor={keyOfLine}
-          renderItem={renderRow}
-          // One monospaced line, one exact height: the list never re-measures,
-          // so a hundred thousand rows cost the same as a hundred.
-          getFixedItemSize={rowSize}
-          estimatedItemSize={lineHeight}
-          // A row is a fixed-height strip of text with a number beside it and
-          // nothing expensive surviving a recycle -- the one shape that wants
-          // recycling, for the reason `diff-rows` gives.
-          recycleItems
-          showsVerticalScrollIndicator={false}
-          style={{ width: contentWidth }}
-          contentContainerStyle={baseStyles.listContent}
-        />
-      </Animated.ScrollView>
+      <View style={paneStyle} testID={testID}>
+        {/* The hidden ruler: one layout pass, no space at all. */}
+        <Text
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+          numberOfLines={1}
+          onLayout={onRulerLayout}
+          style={rulerStyle}>
+          {RULER}
+        </Text>
+        <Animated.ScrollView
+          horizontal
+          showsHorizontalScrollIndicator
+          onScroll={onHorizontalScroll}
+          scrollEventThrottle={16}
+          onLayout={onViewportLayout}
+          style={baseStyles.scroller}
+          contentContainerStyle={baseStyles.scrollerContent}>
+          <LegendList
+            data={lines as string[]}
+            keyExtractor={keyOfLine}
+            renderItem={renderRow}
+            // One monospaced line, one exact height: the list never re-measures,
+            // so a hundred thousand rows cost the same as a hundred.
+            getFixedItemSize={rowSize}
+            estimatedItemSize={lineHeight}
+            // A row is a fixed-height strip of text with a number beside it and
+            // nothing expensive surviving a recycle -- the one shape that wants
+            // recycling, for the reason `diff-rows` gives.
+            recycleItems
+            showsVerticalScrollIndicator={false}
+            style={{ width: contentWidth }}
+            contentContainerStyle={baseStyles.listContent}
+          />
+        </Animated.ScrollView>
+      </View>
     </View>
   );
 }
 
 const baseStyles = StyleSheet.create({
-  body: {
+  column: {
     flex: 1,
     minHeight: 0,
   },
+  body: {
+    flex: 1,
+    minHeight: 0,
+    borderCurve: 'continuous',
+    overflow: 'hidden',
+  },
   note: {
-    paddingHorizontal: 16,
-    paddingTop: 10,
+    paddingTop: 0,
     paddingBottom: 6,
   },
   scroller: {
@@ -303,9 +340,11 @@ const baseStyles = StyleSheet.create({
   scrollerContent: {
     flexGrow: 1,
   },
+  // The pane's own bottom edge is the end of the file, so the rows only need
+  // the fence's breathing room, top and bottom.
   listContent: {
     flexGrow: 1,
-    paddingBottom: 40,
+    paddingVertical: LINE_PADDING,
   },
   row: {
     justifyContent: 'center',
