@@ -433,19 +433,61 @@ function isComposerBox(parts: readonly PanePart[], index: number): boolean {
   );
 }
 
+/** The first non-space character of each line of a part that carries any. */
+function lineMarkers(part: PanePart): Set<string> {
+  const markers = new Set<string>();
+  for (const line of part.fallback_text.split('\n')) {
+    const marker = line.trim()[0];
+    if (marker) markers.add(marker);
+  }
+  return markers;
+}
+
 /**
- * Indices of composer boxes a frozen screen left in the middle of history.
+ * A frozen roster with the roster taken off its head.
+ *
+ * The rows under a composer -- the agent roster, `● main`, `◯ general-purpose
+ * …` -- arrive as one part, and when the screen after a frozen one starts with
+ * no blank row between, its first rows are glued onto that part: the tail of a
+ * tool block, `⎿ 1 file changed…`. Those are transcript. So the roster's lines
+ * come off the front -- every line opening with a character the live roster's
+ * lines open with -- and whatever follows stays, as the same part. `null` when
+ * nothing follows.
+ */
+function withoutRoster(part: PanePart, markers: ReadonlySet<string>): PanePart | null {
+  const lines = part.fallback_text.split('\n');
+  let cut = 0;
+  while (cut < lines.length) {
+    const marker = (lines[cut] as string).trim()[0];
+    if (marker !== undefined && !markers.has(marker)) break;
+    cut += 1;
+  }
+  const rest = lines.slice(cut).join('\n');
+  if (!rest.trim()) return null;
+  if (part.type === 'text') return { ...part, fallback_text: rest, markdown: rest };
+  return { ...part, fallback_text: rest };
+}
+
+/**
+ * What to take out of a transcript for the composer boxes frozen screens left
+ * in it: indices to drop, and parts to replace with what is left of them.
  *
  * The live tail ends in the agent's composer -- a rule, the prompt being typed,
  * a rule and a mode line, sometimes an agent roster under that. A screen the
- * gateway committed to history while it was frozen carries the same box, so the
- * box turns up again mid-transcript with the status line that was spinning above
- * it at that moment. Recognised by shape and by the prompt's own text, which is
- * whatever was in the composer then and still is now; a prompt the user sent is
- * never framed by rules, so a real turn cannot be taken for one.
+ * gateway committed to history while it was frozen carries a box of its own, so
+ * one turns up mid-transcript with the status line that was spinning above it
+ * at that moment. Every box but the last one is such a leftover, whatever was
+ * typed in it then -- usually nothing, an empty `❯`. Recognised by shape alone:
+ * a prompt the user sent sits in the transcript without rules around it, so a
+ * real turn cannot be taken for one. A `Waiting for N` line is transcript, not
+ * the spinner, and stays.
  */
-function frozenComposerParts(parts: readonly PanePart[]): Set<number> {
+function frozenComposerParts(parts: readonly PanePart[]): {
+  dropped: Set<number>;
+  trimmed: Map<number, PanePart>;
+} {
   const dropped = new Set<number>();
+  const trimmed = new Map<number, PanePart>();
   let tail = -1;
   for (let index = parts.length - 1; index >= 0; index -= 1) {
     if (isComposerBox(parts, index)) {
@@ -453,31 +495,36 @@ function frozenComposerParts(parts: readonly PanePart[]): Set<number> {
       break;
     }
   }
-  if (tail < 0) return dropped;
+  if (tail < 0) return { dropped, trimmed };
 
-  const live = parts[tail] as PanePart;
-  const liveRoster = parts[tail + 2] ? firstLineOf(parts[tail + 2] as PanePart) : '';
+  const liveRoster = parts[tail + 2];
+  const rosterHead = liveRoster ? firstLineOf(liveRoster) : '';
+  const rosterMarkers = liveRoster ? lineMarkers(liveRoster) : new Set<string>();
   for (let index = 1; index < tail - 1; index += 1) {
-    const part = parts[index] as PanePart;
-    if (part.type !== 'prompt' || part.fallback_text !== live.fallback_text) continue;
     if (!isComposerBox(parts, index)) continue;
     dropped.add(index - 1);
     dropped.add(index);
     dropped.add(index + 1);
     const roster = parts[index + 2];
-    if (roster && liveRoster && firstLineOf(roster) === liveRoster) dropped.add(index + 2);
-    // The status that was spinning above the box: past any blank or drawn
-    // parts between them, and only a status -- prose there is the transcript.
+    if (roster && rosterHead && firstLineOf(roster) === rosterHead) {
+      const rest = withoutRoster(roster, rosterMarkers);
+      if (rest) trimmed.set(index + 2, rest);
+      else dropped.add(index + 2);
+    }
+    // The spinner that was turning above the box: past any blank or drawn parts
+    // between them, and only a status that is not transcript -- prose there is
+    // the conversation, and Claude Code prints `Waiting for N background agents`
+    // into it on purpose.
     for (let above = index - 2; above >= 0; above -= 1) {
       const candidate = parts[above] as PanePart;
       if (candidate.type === 'status') {
-        dropped.add(above);
+        if (!/Waiting for \d+/.test(candidate.fallback_text)) dropped.add(above);
         break;
       }
       if (carriesText(candidate) && !isRulePart(candidate)) break;
     }
   }
-  return dropped;
+  return { dropped, trimmed };
 }
 
 /**
@@ -495,9 +542,9 @@ function frozenComposerParts(parts: readonly PanePart[]): Set<number> {
  *
  * Three repairs, all made only where the evidence is a block and never a line:
  *
- * - a frozen composer box -- the live composer's own prompt, framed by its
- *   rules, with the status spinning above it -- that is not the live tail is
- *   dropped (see {@link frozenComposerParts});
+ * - a frozen composer box -- a prompt framed by rules, with its mode line,
+ *   roster and the spinner above it -- that is not the last one is dropped,
+ *   whatever was typed in it (see {@link frozenComposerParts});
  * - a run of {@link REPEAT_RUN_PARTS} or more parts that is, part for part, a
  *   run anywhere above it in what arrived is dropped. Matched against the
  *   incoming list rather than against what was kept: copies stack (an older
@@ -517,7 +564,12 @@ function frozenComposerParts(parts: readonly PanePart[]): Set<number> {
  */
 export function collapseRepeatedParts(incoming: readonly PanePart[]): PanePart[] {
   const frozen = frozenComposerParts(incoming);
-  const parts = frozen.size > 0 ? incoming.filter((_, index) => !frozen.has(index)) : incoming;
+  const parts =
+    frozen.dropped.size > 0 || frozen.trimmed.size > 0
+      ? incoming.flatMap((part, index) =>
+          frozen.dropped.has(index) ? [] : [frozen.trimmed.get(index) ?? part]
+        )
+      : incoming;
   const keys = parts.map(partKey);
   const kept: PanePart[] = [];
   const keptKeys: string[] = [];
@@ -592,7 +644,7 @@ export function collapseRepeatedParts(incoming: readonly PanePart[]): PanePart[]
     index += 1;
   }
 
-  return kept.length === incoming.length ? (incoming as PanePart[]) : kept;
+  return parts === incoming && kept.length === incoming.length ? (incoming as PanePart[]) : kept;
 }
 
 /** How much of the window's tail stands for its content in {@link panePartsRefreshKey}. */
