@@ -1,5 +1,6 @@
 import { resolveThemeImage } from '@/theme/resolve';
 import type { ThemeImage, ThemeManifest, ThemeSlot } from '@/theme/schema';
+import { isRenderableThemeAsset } from '@/theme/renderable-asset';
 
 export const HOME_ARTWORK_SLOT: ThemeSlot = 'home.artwork';
 
@@ -54,5 +55,5 @@ export function resolveHomeArtworkAsset({
   const resolved = resolveHomeArtwork(options);
   if (!resolved) return null;
   const source = assets?.[resolved.image.asset];
-  return source?.startsWith('file:///') ? { resolved, source } : null;
+  return isRenderableThemeAsset(source) ? { resolved, source } : null;
 }

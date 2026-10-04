@@ -1,0 +1,341 @@
+{
+  "format": "muqun-theme",
+  "schemaVersion": 1,
+  "id": "cover-courier",
+  "name": "Cover Courier",
+  "version": "1.0.6",
+  "author": "Muqun",
+  "license": "CC0-1.0",
+  "description": "Layered manga courier artwork over ivory or midnight railway paper. Transparent character art, quiet city wallpaper, and readable work surfaces.",
+  "tags": ["editorial", "anime", "paper", "night"],
+  "preview": "preview",
+  "homePresentation": {
+    "header": "cover",
+    "toolbarBackground": false
+  },
+  "variants": {
+    "light": {
+      "colors": {
+        "background": "#F4F1EA",
+        "surface": "#FFFCF7",
+        "surfaceRaised": "#E8E4DB",
+        "border": "#E0DAD1",
+        "borderStrong": "#C2B9AE",
+        "text": "#050B12",
+        "textMuted": "#4C555C",
+        "textSubtle": "#535D64",
+        "textDisabled": "#A7ADB8",
+        "primary": "#A62A18",
+        "onPrimary": "#FFFFFF",
+        "primarySubtle": "#A62A180F",
+        "danger": "#9E1F14",
+        "dangerSubtle": "#9E1F140F",
+        "success": "#177A53",
+        "warning": "#8A5710",
+        "info": "#275CB0"
+      },
+      "surfaces": {
+        "backgroundOpacity": 1
+      },
+      "terminal": {
+        "background": "#F4F1EA",
+        "backgroundOpacity": 1,
+        "foreground": "#050B12",
+        "cursor": "#C54337",
+        "link": "#3455DC",
+        "selection": "#FF5A4A24",
+        "ansi": [
+          "#050B12",
+          "#D93025",
+          "#027A48",
+          "#B54708",
+          "#3538CD",
+          "#6941C6",
+          "#0E7090",
+          "#475467",
+          "#6A7281",
+          "#B42318",
+          "#027A48",
+          "#B54708",
+          "#3E63FF",
+          "#7F56D9",
+          "#0E7090",
+          "#050B12"
+        ]
+      }
+    },
+    "dark": {
+      "colors": {
+        "background": "#151C22",
+        "surface": "#1E2831",
+        "surfaceRaised": "#293540",
+        "border": "#1C2532",
+        "borderStrong": "#2E3A4A",
+        "text": "#F4F1EA",
+        "textMuted": "#C0CED6",
+        "textSubtle": "#ABBBC8",
+        "textDisabled": "#6B7585",
+        "primary": "#9FE4CE",
+        "onPrimary": "#101B21",
+        "primarySubtle": "#9FE4CE20",
+        "danger": "#FFABA3",
+        "dangerSubtle": "#FFABA314",
+        "success": "#34C08B",
+        "warning": "#F0A93C",
+        "info": "#A4BCFD"
+      },
+      "surfaces": {
+        "backgroundOpacity": 1
+      },
+      "terminal": {
+        "background": "#151C22",
+        "backgroundOpacity": 1,
+        "foreground": "#D8E1EA",
+        "cursor": "#9FE4CE",
+        "link": "#A4BCFD",
+        "selection": "#9FE4CE35",
+        "ansi": [
+          "#0C121A",
+          "#F2554A",
+          "#34C08B",
+          "#F0A93C",
+          "#7DA2FF",
+          "#C7A0FF",
+          "#67E3F9",
+          "#B6BDC8",
+          "#6B7585",
+          "#FDA29B",
+          "#6CE9A6",
+          "#FEC84B",
+          "#A4BCFD",
+          "#D6BBFB",
+          "#A5F0FC",
+          "#FCFBFA"
+        ]
+      }
+    }
+  },
+  "materials": {
+    "default": "solid",
+    "navigation": "solid",
+    "composer": "solid",
+    "actions": "solid"
+  },
+  "assets": {
+    "preview": {
+      "path": "assets/preview.webp"
+    },
+    "paper-light": {
+      "path": "assets/paper-light.webp"
+    },
+    "courier-light": {
+      "path": "assets/courier-light.webp"
+    },
+    "paper-dark": {
+      "path": "assets/paper-dark.webp"
+    },
+    "courier-dark": {
+      "path": "assets/courier-dark.webp"
+    },
+    "icon-back": {
+      "path": "assets/icon-back.webp"
+    },
+    "icon-send": {
+      "path": "assets/icon-send.webp"
+    },
+    "icon-attach": {
+      "path": "assets/icon-attach.webp"
+    },
+    "icon-scan": {
+      "path": "assets/icon-scan.webp"
+    },
+    "icon-settings": {
+      "path": "assets/icon-settings.webp"
+    }
+  },
+  "decoration": {},
+  "icons": {
+    "chrome.back": {
+      "asset": "icon-back",
+      "render": "template"
+    },
+    "chrome.send": {
+      "asset": "icon-send",
+      "render": "template"
+    },
+    "chrome.attach": {
+      "asset": "icon-attach",
+      "render": "template"
+    },
+    "chrome.scan": {
+      "asset": "icon-scan",
+      "render": "template"
+    },
+    "chrome.settings": {
+      "asset": "icon-settings",
+      "render": "template"
+    }
+  },
+  "variantDecorations": {
+    "light": {
+      "empty.artwork": {
+        "asset": "courier-light",
+        "fit": "contain",
+        "opacity": 1,
+        "compact": {
+          "asset": "courier-light",
+          "fit": "contain",
+          "opacity": 1
+        },
+        "regular": {
+          "asset": "courier-light",
+          "fit": "contain",
+          "opacity": 1
+        }
+      },
+      "shell.wallpaper": {
+        "asset": "paper-light",
+        "fit": "cover",
+        "opacity": 0.5,
+        "compact": {
+          "asset": "paper-light",
+          "fit": "cover",
+          "opacity": 0.5
+        },
+        "regular": {
+          "asset": "paper-light",
+          "fit": "cover",
+          "opacity": 0.5
+        }
+      },
+      "home.wallpaper": {
+        "asset": "paper-light",
+        "fit": "cover",
+        "opacity": 0.8,
+        "compact": {
+          "asset": "paper-light",
+          "fit": "cover",
+          "opacity": 0.8
+        },
+        "regular": {
+          "asset": "paper-light",
+          "fit": "cover",
+          "opacity": 0.8
+        }
+      },
+      "home.artwork": {
+        "asset": "courier-light",
+        "fit": "cover",
+        "opacity": 1,
+        "focalPoint": {
+          "x": 0.6,
+          "y": 0.45
+        },
+        "compact": {
+          "asset": "courier-light",
+          "fit": "cover",
+          "opacity": 1,
+          "focalPoint": {
+            "x": 0.6,
+            "y": 0.45
+          }
+        },
+        "regular": {
+          "asset": "courier-light",
+          "fit": "cover",
+          "opacity": 1,
+          "focalPoint": {
+            "x": 0.6,
+            "y": 0.45
+          }
+        }
+      }
+    },
+    "dark": {
+      "empty.artwork": {
+        "asset": "courier-dark",
+        "fit": "contain",
+        "opacity": 1,
+        "compact": {
+          "asset": "courier-dark",
+          "fit": "contain",
+          "opacity": 1
+        },
+        "regular": {
+          "asset": "courier-dark",
+          "fit": "contain",
+          "opacity": 1
+        }
+      },
+      "shell.wallpaper": {
+        "asset": "paper-dark",
+        "fit": "cover",
+        "opacity": 0.5,
+        "compact": {
+          "asset": "paper-dark",
+          "fit": "cover",
+          "opacity": 0.5
+        },
+        "regular": {
+          "asset": "paper-dark",
+          "fit": "cover",
+          "opacity": 0.5
+        }
+      },
+      "home.wallpaper": {
+        "asset": "paper-dark",
+        "fit": "cover",
+        "opacity": 0.8,
+        "compact": {
+          "asset": "paper-dark",
+          "fit": "cover",
+          "opacity": 0.8
+        },
+        "regular": {
+          "asset": "paper-dark",
+          "fit": "cover",
+          "opacity": 0.8
+        }
+      },
+      "home.artwork": {
+        "asset": "courier-dark",
+        "fit": "cover",
+        "opacity": 1,
+        "focalPoint": {
+          "x": 0.6,
+          "y": 0.45
+        },
+        "compact": {
+          "asset": "courier-dark",
+          "fit": "cover",
+          "opacity": 1,
+          "focalPoint": {
+            "x": 0.6,
+            "y": 0.45
+          }
+        },
+        "regular": {
+          "asset": "courier-dark",
+          "fit": "cover",
+          "opacity": 1,
+          "focalPoint": {
+            "x": 0.6,
+            "y": 0.45
+          }
+        }
+      }
+    }
+  },
+  "homeIdentity": {
+    "name": {
+      "mode": "custom",
+      "text": "MUQUN"
+    },
+    "logo": {
+      "mode": "hidden"
+    },
+    "artwork": {
+      "mode": "default"
+    }
+  }
+}

@@ -46,11 +46,12 @@ import {
 } from '@/constants/theme-packs';
 import { useRenderTally } from '@/lib/render-tally';
 import { THEME_PICKER_MAX_CONTENT_WIDTH } from '@/lib/theme-picker-layout';
-import { CustomThemeLibrary } from '@/components/custom-theme-library';
+import { CustomThemeLibrary, ROW_COVER, ThemeCover } from '@/components/custom-theme-library';
 import { useThemeLibrary } from '@/stores/theme-library';
 import { useThemePack } from '@/hooks/use-theme-pack';
 import { useOpenThemeEditor } from '@/hooks/use-open-theme-editor';
 import { useReskinTransition } from '@/components/reskin-transition';
+import { BUILTIN_THEME_INSTALLATION_ID } from '@/theme/repository';
 
 /** The focused field's clearance above the keyboard: the import link's input. */
 const KEYBOARD_BOTTOM_OFFSET = 88;
@@ -120,6 +121,7 @@ export function SettingsThemeSheet({ onClose }: { onClose: () => void }) {
           <CustomThemeLibrary tabs onOpenCandidate={openEditor}>
             {error ? <Text accessibilityRole="alert">{error}</Text> : null}
             <View testID="theme-picker-grid">
+              <BuiltinThemeRow onSelect={onClose} />
               {THEME_PACKS.map((pack) => (
                 <ThemePackRow
                   key={pack.id}
@@ -134,6 +136,36 @@ export function SettingsThemeSheet({ onClose }: { onClose: () => void }) {
         <SheetSceneFooter bottomInset={insets.bottom} />
       </KeyboardAwareScrollView>
     </SheetScene>
+  );
+}
+
+/**
+ * The built-in default theme, while it is the one being worn.
+ *
+ * It is worn exactly when the reader has no theme of their own
+ * (`ThemeRepository.activeInstalled`), so that is also exactly when it is
+ * listed: always on, and choosing it is the same confirmation as choosing the
+ * pack that is already on -- the sheet closes. Once the reader has a theme of
+ * their own it cannot be chosen at all, so it is not offered. It is never in
+ * the reader's own tab: it is not theirs to remove, and it is not counted.
+ */
+function BuiltinThemeRow({ onSelect }: { onSelect: () => void }) {
+  const { t } = useLingui();
+  const theme = useThemeLibrary((state) =>
+    state.active?.installationId === BUILTIN_THEME_INSTALLATION_ID ? state.active : null
+  );
+  const assets = useThemeLibrary((state) => state.activeAssets);
+  if (!theme) return null;
+  return (
+    <SheetSceneRow
+      title={theme.label}
+      caption={t`Default`}
+      selected
+      onPress={onSelect}
+      accessibilityLabel={theme.label}
+      testID="settings-selection:on:theme-builtin"
+      meta={<ThemeCover manifest={theme.manifest} assets={assets} pack={theme} size={ROW_COVER} />}
+    />
   );
 }
 

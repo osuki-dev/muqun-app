@@ -38,7 +38,13 @@ export function useLaunchImageSync(): void {
   const { theme } = useAppliedCustomTheme();
   const { resolvedMode } = useThemeMode();
 
-  const uri = artwork.kind === 'default' ? null : artwork.uri;
+  // The native overlay decodes a file path before JavaScript runs. A built-in
+  // theme's picture is a file only on iOS (inside the app bundle); an Android
+  // release build hands it out as a drawable name, which the native side
+  // cannot open, so there the compiled launch screen stays until the JS
+  // overlay paints the same picture.
+  const uri =
+    artwork.kind === 'default' || !artwork.uri.startsWith('file:///') ? null : artwork.uri;
   const kind = artwork.kind;
   const light = theme?.light.colors.background;
   const dark = theme?.dark.colors.background;

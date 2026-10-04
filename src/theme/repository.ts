@@ -6,6 +6,16 @@ import type { HomeArtworkPreference } from '@/theme/home-artwork';
 import { compileTheme, type ResolvedCustomTheme } from '@/theme/resolve';
 import { parseThemeManifest, type ThemeManifest } from '@/theme/schema';
 
+/**
+ * The installation id of the built-in default theme.
+ *
+ * It is never in `ThemeLibrary.themes` and never a stored selection: the
+ * library is the reader's own themes, and the built-in one is what the app
+ * wears while that list is empty. It only has to differ from every allocated
+ * (random hex) installation id, and a word does.
+ */
+export const BUILTIN_THEME_INSTALLATION_ID = 'builtin';
+
 export type ThemeSelection = { kind: 'builtin'; id: ThemePackId } | { kind: 'custom'; id: string };
 
 export type InstalledTheme = {
@@ -159,7 +169,8 @@ export class ThemeRepository {
     private storage: ThemeLibraryStorage,
     private allocateId: () => string,
     private assetAvailable: (uri: string) => boolean = (uri) => uri.startsWith('file:///'),
-    private assetPaths?: { encode: (uri: string) => string; decode: (uri: string) => string }
+    private assetPaths?: { encode: (uri: string) => string; decode: (uri: string) => string },
+    private builtin: InstalledTheme | null = null
   ) {}
 
   hydrate(): ThemeLibrary {
@@ -386,15 +397,31 @@ export class ThemeRepository {
     return this.snapshot();
   }
 
-  active(): ResolvedCustomTheme | null {
+  /**
+   * The installation the app is wearing.
+   *
+   * The owner's rule, and the whole of it: the built-in theme shows when, and
+   * only when, the reader has no theme of their own. So with an empty library
+   * it wins whatever the selection says -- a built-in colour pack picked
+   * earlier included -- and the moment one theme is installed the selection
+   * decides as it always did. Removing the last one brings it back. It is not
+   * in `themes`, so it is never counted, listed under the reader's own, or
+   * removable.
+   */
+  activeInstalled(): InstalledTheme | null {
+    if (this.state.themes.length === 0) return this.builtin;
     if (this.state.selection?.kind !== 'custom') return null;
     const id = this.state.selection.id;
-    const installed = this.state.themes.find((theme) => theme.id === id);
+    return this.state.themes.find((theme) => theme.id === id) ?? null;
+  }
+
+  active(): ResolvedCustomTheme | null {
+    const installed = this.activeInstalled();
     if (!installed) return null;
-    let result = this.compiled.get(id);
+    let result = this.compiled.get(installed.id);
     if (!result) {
-      result = compileTheme(effectiveThemeManifest(installed), id);
-      this.compiled.set(id, result);
+      result = compileTheme(effectiveThemeManifest(installed), installed.id);
+      this.compiled.set(installed.id, result);
     }
     return result;
   }

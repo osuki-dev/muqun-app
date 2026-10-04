@@ -1803,6 +1803,7 @@ msgid "default"
 msgstr "по умолчанию"
 
 #: src/components/settings-terminal.tsx
+#: src/components/settings-theme-sheet.tsx
 msgid "Default"
 msgstr "По умолчанию"
 

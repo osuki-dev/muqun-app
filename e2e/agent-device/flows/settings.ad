@@ -44,6 +44,8 @@ press "${TARGET}"
 wait stable 400 5000
 
 # section confirm-reset
+# The row is matched as "Theme, .+": on a library with no theme of the
+# reader's own the built-in default stays on whatever pack was pressed.
 press "${TARGET}"
 
 # section s9

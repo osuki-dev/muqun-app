@@ -1,5 +1,6 @@
 import type { ResolvedCustomTheme } from '@/theme/resolve';
 import { resolveHomeIdentity, resolveThemeImage } from '@/theme/resolve';
+import { isRenderableThemeAsset } from '@/theme/renderable-asset';
 
 export type LaunchArtwork =
   | { kind: 'artwork'; uri: string }
@@ -41,5 +42,5 @@ export function resolveLaunchBackground(
 
 function ownedAsset(assets: Record<string, string>, id: string): string | undefined {
   const uri = assets[id];
-  return uri?.startsWith('file:///') ? uri : undefined;
+  return isRenderableThemeAsset(uri) ? uri : undefined;
 }

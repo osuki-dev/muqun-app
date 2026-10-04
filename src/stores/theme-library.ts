@@ -13,6 +13,7 @@ import type { ResolvedCustomTheme } from '@/theme/resolve';
 import { isOwnedThemeAsset, setThemeAssetReferences, themeAssetDirectoryUri } from '@/theme/assets';
 
 import { createThemeAssetPaths } from '@/theme/asset-paths';
+import { loadBuiltinTheme } from '@/theme/builtin-theme';
 
 // Metadata is a single MMKV value, not SecureStore or a collection of partially
 // updated keys. A failed durable write must never repaint the running app.
@@ -24,7 +25,8 @@ function getRepository() {
       { read: () => storage.getString('library'), write: (value) => storage.set('library', value) },
       () => QuickCrypto.randomBytes(16).toString('hex'),
       isOwnedThemeAsset,
-      createThemeAssetPaths(themeAssetDirectoryUri())
+      createThemeAssetPaths(themeAssetDirectoryUri()),
+      loadBuiltinTheme()
     );
     restored.hydrate();
     repository = restored;
@@ -36,6 +38,12 @@ type ThemeLibraryState = {
   hydrated: boolean;
   library: ThemeLibrary;
   active: ResolvedCustomTheme | null;
+  /**
+   * The asset map of the installation behind `active` -- the reader's own
+   * theme or the built-in one. Read this rather than looking `active` up in
+   * `library.themes`, which never holds the built-in theme.
+   */
+  activeAssets: Record<string, string> | undefined;
   hydrate: () => void;
   save: (text: string, assets?: Record<string, string>) => InstalledTheme;
   apply: (selection: ThemeSelection) => void;
@@ -54,12 +62,18 @@ export const useThemeLibrary = create<ThemeLibraryState>((set) => {
   const publish = (repo: ThemeRepository) => {
     const library = repo.snapshot();
     setThemeAssetReferences(repo.hasAuthoritativeAssetReferences() ? library.themes : null);
-    set({ library, active: repo.active(), hydrated: true });
+    set({
+      library,
+      active: repo.active(),
+      activeAssets: repo.activeInstalled()?.assets,
+      hydrated: true,
+    });
   };
   return {
     hydrated: false,
     library: { version: 1, themes: [], selection: null, previous: null },
     active: null,
+    activeAssets: undefined,
     hydrate() {
       try {
         publish(getRepository());

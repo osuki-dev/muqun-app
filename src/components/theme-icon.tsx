@@ -5,6 +5,7 @@ import type { LucideIcon } from 'lucide-react-native';
 import { useEffectiveCustomTheme } from '@/components/theme-candidate';
 import type { ThemeIconDirection, ThemeIconName } from '@/theme/schema';
 import { themeIconRotation } from '@/theme/icon-direction';
+import { isRenderableThemeAsset } from '@/theme/renderable-asset';
 
 /**
  * A chrome glyph the active pack may have replaced.
@@ -43,7 +44,7 @@ export function ThemeIcon({
   const rotation = themeIconRotation(theme?.manifest.iconDirections?.[name], direction);
   // App-owned files only, the same rule every other artwork consumer applies:
   // a manifest cannot point this at an arbitrary path or a remote URL.
-  if (!icon || !uri?.startsWith('file:///') || uri === failedUri || rotation === null)
+  if (!icon || !isRenderableThemeAsset(uri) || uri === failedUri || rotation === null)
     return <Fallback size={size} color={color} strokeWidth={strokeWidth} />;
   return (
     <Image

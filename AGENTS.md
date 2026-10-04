@@ -108,6 +108,19 @@ the job payload it was invoked with, and that payload contains the Android
 keystore and its passwords in base64. Do not paste a failed local-build log
 anywhere, and delete any file it was captured into.
 
+## The built-in default theme
+
+The `cover-courier` pack from the muqun-themes repository ships inside the app
+and is worn whenever the reader has no theme of their own
+(`ThemeRepository.activeInstalled`). Its copy in `assets/themes/cover-courier/`
+and `src/theme/builtin-theme.generated.ts` (`BUILTIN_THEME_VERSION` and the
+`require` map that registers each file with Metro's asset registry on both
+platforms) are generated; do not edit them by hand. `bun scripts/sync-builtin-theme.ts`
+packs the theme with `@osuki-dev/muqun-theme@2` from `$MUQUN_THEMES_DIR` or a
+`../themes` checkout, or downloads the published package and checks it against
+the gallery index's SHA-256, validates it with the app's own `unpackTheme`,
+keeps only the files the manifest names, and is idempotent. Commit its output.
+
 ## End-to-end test gate
 
 Optional Gateway features use capability detection, not a guessed Gateway version.

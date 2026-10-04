@@ -205,6 +205,9 @@ back --in-app
 wait "id=settings-theme-row" 10000
 
 # section settings-scroll-up
+# The scroll target is "Theme, Cover Courier": removing unused themes just
+# emptied the library, and with no theme of their own the reader wears the
+# built-in default again, whatever colour pack was applied before.
 # Storage is near the end of the full Settings document. Use a viewport-sized
 # gesture inside the content: a generic scroll starts on the pinned header on
 # iOS and leaves the Settings list at the bottom.
