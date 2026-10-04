@@ -148,15 +148,21 @@ export const AgentReasoningBlock = memo(function AgentReasoningBlock({
         <Animated.View entering={fadeIn('micro')} style={[styles.body, plate]}>
           {/* The quote rule stands inside the plate, inset like a blockquote's,
               not on the plate's edge where it reads as a border. */}
-          <View style={[styles.quote, { borderLeftColor: withAlpha(theme.colors.primary, 0.35) }]}>
-            {/* Reasoning is markdown like the answer: numbered plans, backticked
-                names, the odd heading. It read as one flat italic run before. */}
-            <BoundedMarkdown
-              markdown={text}
-              markdownStyle={markdownStyle}
-              containerStyle={styles.reasoningBody}
-              openLinks={false}
+          <View style={styles.quote}>
+            <View
+              testID="agent-reasoning-rule"
+              style={[styles.rule, { backgroundColor: withAlpha(theme.colors.primary, 0.35) }]}
             />
+            <View style={styles.quoteText}>
+              {/* Reasoning is markdown like the answer: numbered plans, backticked
+                names, the odd heading. It read as one flat italic run before. */}
+              <BoundedMarkdown
+                markdown={text}
+                markdownStyle={markdownStyle}
+                containerStyle={styles.reasoningBody}
+                openLinks={false}
+              />
+            </View>
           </View>
         </Animated.View>
       ) : null}
@@ -167,8 +173,11 @@ export const AgentReasoningBlock = memo(function AgentReasoningBlock({
 const styles = StyleSheet.create({
   container: {
     marginVertical: 4,
-    alignSelf: 'flex-start',
-    maxWidth: '100%',
+    // Full row width, not shrink-to-fit: the native markdown view measures its
+    // height at the width it is offered, and a plate that sized itself around
+    // its text measured at one width and drew at another, leaving the plate
+    // (and the rule) one line tall under overflowing text.
+    alignSelf: 'stretch',
   },
   headerPill: {
     flexDirection: 'row',
@@ -192,12 +201,23 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 12,
   },
+  // A row, so the rule stretches to the text block's height however many lines
+  // it has or grows to while streaming.
   quote: {
-    paddingLeft: 6,
-    borderLeftWidth: 1.5,
-  },
-  reasoningBody: {
+    flexDirection: 'row',
+    alignItems: 'stretch',
     // The last paragraph's margin is the plate's bottom padding.
     marginBottom: -6,
   },
+  rule: {
+    width: 2,
+    alignSelf: 'stretch',
+    // Stop at the last line, not at the paragraph margin below it.
+    marginBottom: 6,
+  },
+  quoteText: {
+    flex: 1,
+    paddingLeft: 6,
+  },
+  reasoningBody: {},
 });
