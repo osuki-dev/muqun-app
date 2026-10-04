@@ -5,7 +5,7 @@ import { useThemeTokens } from '@osuki-dev/ui';
 import { useRouter } from 'expo-router';
 import { PanelsTopLeft } from 'lucide-react-native';
 import { isValidElement, useEffect, useState, type ReactNode } from 'react';
-import { Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -251,11 +251,36 @@ export default function AppDrawer({
             edges={['top']}
             pointerEvents="box-none"
             style={[styles.detailHeaderOverlay, navHeaderBarStyle]}>
-            <EdgeFade
-              edge="top"
-              color={detailFadeColor ?? theme.colors.background}
-              style={styles.detailHeaderFade}
-            />
+            {/*
+              Android navigation chrome draws no fill of its own (no live blur,
+              and a filled pill read as a grey slab), so the fade was the only
+              thing between the title and the transcript scrolling under it --
+              still ~30% clear across the pill row, which left the text beneath
+              legible between and through the pills. There the bar gets a ground
+              of its own and the ramp starts below it.
+            */}
+            {Platform.OS === 'android' ? (
+              <>
+                <View
+                  pointerEvents="none"
+                  style={[
+                    styles.detailHeaderGround,
+                    { backgroundColor: detailFadeColor ?? theme.colors.background },
+                  ]}
+                />
+                <EdgeFade
+                  edge="top"
+                  color={detailFadeColor ?? theme.colors.background}
+                  style={styles.detailHeaderGroundFade}
+                />
+              </>
+            ) : (
+              <EdgeFade
+                edge="top"
+                color={detailFadeColor ?? theme.colors.background}
+                style={styles.detailHeaderFade}
+              />
+            )}
             {/*
               Separate pills rather than one bar: the title is the only part
               that needs the full width, and a single bar makes the buttons read
@@ -394,6 +419,20 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: -30,
+  },
+  detailHeaderGround: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
+  detailHeaderGroundFade: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: -24,
+    height: 24,
   },
   /**
    * How wide the pane's name may grow, which is this screen's question and not
