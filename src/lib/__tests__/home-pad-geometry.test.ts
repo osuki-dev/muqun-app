@@ -2,8 +2,10 @@ import { describe, expect, test } from 'bun:test';
 import { EDITORIAL_PAD_MAX_WIDTH, getEditorialLayoutGeometry } from '@/lib/home-editorial-layout';
 import {
   PAD_COVER_TITLE_LINE_HEIGHT,
+  PAD_PORTRAIT_COVER_RATIO,
   PAD_WORDMARK_DESCENDER,
   padCoverKind,
+  padFirstRunPlacement,
   padLaunchLayoutEnabled,
   padWordmarkFontSize,
   padWorkColumnWidth,
@@ -103,5 +105,69 @@ describe('padWordmarkFontSize', () => {
         reservedHeight: 400,
       })
     ).toBe(48);
+  });
+});
+
+describe('padFirstRunPlacement', () => {
+  // 800x1280dp Pad in portrait: a ~463 wide cover over ~1150 of column.
+  const portrait = { coverWidth: 463, paneHeight: 1150 };
+  // The same Pad in landscape: a 808 wide cover over ~700 of column.
+  const landscape = { coverWidth: 808, paneHeight: 700 };
+
+  test('the wordmark cover centres the pair card in either orientation', () => {
+    expect(padFirstRunPlacement({ coverKind: 'wordmark', firstRun: true, ...portrait })).toBe(
+      'centred'
+    );
+    expect(padFirstRunPlacement({ coverKind: 'wordmark', firstRun: true, ...landscape })).toBe(
+      'centred'
+    );
+  });
+  test('an artwork cover centres the pair card in portrait only', () => {
+    expect(padFirstRunPlacement({ coverKind: 'artwork', firstRun: true, ...portrait })).toBe(
+      'centred'
+    );
+    expect(padFirstRunPlacement({ coverKind: 'artwork', firstRun: true, ...landscape })).toBe(
+      'dock'
+    );
+  });
+  test('an iPad in landscape (about square) keeps the dock', () => {
+    expect(
+      padFirstRunPlacement({
+        coverKind: 'artwork',
+        firstRun: true,
+        coverWidth: 894,
+        paneHeight: 900,
+      })
+    ).toBe('dock');
+  });
+  test('the portrait threshold is inclusive', () => {
+    const coverWidth = 400;
+    const paneHeight = coverWidth * PAD_PORTRAIT_COVER_RATIO;
+    expect(
+      padFirstRunPlacement({ coverKind: 'artwork', firstRun: true, coverWidth, paneHeight })
+    ).toBe('centred');
+    expect(
+      padFirstRunPlacement({
+        coverKind: 'artwork',
+        firstRun: true,
+        coverWidth,
+        paneHeight: paneHeight - 1,
+      })
+    ).toBe('dock');
+  });
+  test('an unmeasured artwork cover keeps its dock', () => {
+    expect(
+      padFirstRunPlacement({ coverKind: 'artwork', firstRun: true, coverWidth: 463, paneHeight: 0 })
+    ).toBe('dock');
+  });
+  test('a paired cover always docks', () => {
+    for (const coverKind of ['artwork', 'wordmark', 'identity'] as const) {
+      expect(padFirstRunPlacement({ coverKind, firstRun: false, ...portrait })).toBe('dock');
+    }
+  });
+  test('the identity cover docks', () => {
+    expect(padFirstRunPlacement({ coverKind: 'identity', firstRun: true, ...portrait })).toBe(
+      'dock'
+    );
   });
 });
