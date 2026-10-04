@@ -160,6 +160,12 @@ export const RESKIN_MOTION = {
   rippleMs: 900,
   /** The font scan, both bands from the tapped row out past the screen's ends. */
   scanMs: 640,
+  /**
+   * Android's veil fading up over the old interface when there is no
+   * photograph of it: the whole of the hold before the front can move, so as
+   * short as a fade can be and still read as one.
+   */
+  veilMs: 100,
 } as const;
 
 /**

@@ -42,7 +42,6 @@ import Animated, {
 
 import { DURATION, RESKIN_MOTION, timing } from '@/lib/motion';
 import {
-  SNAPSHOT_BUDGET_MS,
   denormalizeOrigin,
   halftoneCell,
   halftoneFront,
@@ -59,10 +58,12 @@ import {
   scanReach,
   selectReskinPlay,
   shouldAttemptSnapshot,
+  snapshotBudget,
   snapshotOutcome,
   washFront,
   washGeometry,
   type ReskinPlay,
+  type SnapshotOutcome,
   type WashGeometry,
 } from '@/lib/reskin-geometry';
 import {
@@ -262,6 +263,26 @@ function makeVeilImage(size: ReskinSize, paper: string, raised: string): SkImage
 const ReskinContext = createContext<ReskinContextValue | null>(null);
 
 /**
+ * Whether the re-skin says what it did in the log: which play ran, whether it
+ * had its photographs, and what they cost. On in development, and in a release
+ * bundle built with `EXPO_PUBLIC_RESKIN_TRACE=1` -- the snapshot costs that
+ * decide the Android path are only worth anything measured on a real phone.
+ */
+const TRACE = __DEV__ || process.env.EXPO_PUBLIC_RESKIN_TRACE === '1';
+
+function trace(message: string): void {
+  if (TRACE) console.log(`[reskin] ${message}`);
+}
+
+/** What one attempt at photographing the surfaces came back with. */
+type Photographs = {
+  shots: Map<string, SkImage> | null;
+  /** How long the capture took, once it finished; -1 if it never did. */
+  ms: number;
+  outcome: SnapshotOutcome | 'overtaken';
+};
+
+/**
  * Photograph every surface, inside the budget, or come back with nothing.
  *
  * The budget is a race the apply always wins. A snapshot that arrives after it
@@ -272,36 +293,40 @@ const ReskinContext = createContext<ReskinContextValue | null>(null);
 async function photographSurfaces(
   entries: readonly (readonly [string, SurfaceEntry])[],
   strikes: { current: number },
-  stillWanted: () => boolean
-): Promise<Map<string, SkImage> | null> {
+  stillWanted: () => boolean,
+  budgetMs: number
+): Promise<Photographs> {
   const started = Date.now();
   const capture = Promise.all(
     entries.map(([, entry]) => makeImageFromView(entry.ref).catch((): SkImage | null => null))
   );
   const raced = await Promise.race([
     capture,
-    new Promise<'slow'>((resolve) => setTimeout(() => resolve('slow'), SNAPSHOT_BUDGET_MS)),
+    new Promise<'slow'>((resolve) => setTimeout(() => resolve('slow'), budgetMs)),
   ]);
   if (raced === 'slow' || !stillWanted()) {
-    void capture.then(release);
-    return null;
+    void capture.then((late) => {
+      if (raced === 'slow') trace(`photo arrived late: ${Date.now() - started} ms`);
+      release(late);
+    });
+    return { shots: null, ms: -1, outcome: raced === 'slow' ? 'slow' : 'overtaken' };
   }
   const elapsed = Date.now() - started;
-  strikes.current = recordSnapshotCost(strikes.current, elapsed);
-  if (
-    snapshotOutcome(
-      raced.find((image) => Boolean(image)),
-      elapsed
-    ) !== 'ok'
-  ) {
+  strikes.current = recordSnapshotCost(strikes.current, elapsed, budgetMs);
+  const outcome = snapshotOutcome(
+    raced.find((image) => Boolean(image)),
+    elapsed,
+    budgetMs
+  );
+  if (outcome !== 'ok') {
     release(raced);
-    return null;
+    return { shots: null, ms: elapsed, outcome };
   }
   const shots = bySurface(
     entries.map(([key]) => key),
     raced
   );
-  return shots.size > 0 ? shots : null;
+  return { shots: shots.size > 0 ? shots : null, ms: elapsed, outcome };
 }
 
 /**
@@ -467,45 +492,6 @@ export function ReskinTransitionProvider({ children }: { children: ReactNode }) 
           size,
         });
 
-      /** Take the cover away: the same last beat for a photograph and a veil. */
-      const erase = (chosen: Exclude<ReskinPlay, 'none'>) => {
-        afterNextPaint(() => {
-          if (id !== nextId.current) return;
-          setActive((current) =>
-            current?.id === id && current.swapping ? { ...current, swapping: false } : current
-          );
-          const start = () => {
-            if (id !== nextId.current) return;
-            progress.set(
-              withTiming(1, eraseTiming(chosen), (done) => {
-                'worklet';
-                if (done) runOnJS(finish)(id);
-              })
-            );
-          };
-          if (chosen !== 'ripple' || COVER_SOURCE !== 'photograph') {
-            start();
-            return;
-          }
-          // The ripple bends the new interface as well as the old, so it wants
-          // a picture of the new one too -- taken now, once the change has
-          // settled under the cover, on the same budget and strikes as the
-          // first. Without it the ripple still runs, lit over the live view.
-          if (!shouldAttemptSnapshot(strikes.current)) {
-            start();
-            return;
-          }
-          void photographSurfaces(entries, strikes, () => id === nextId.current).then((next) => {
-            if (next && id === nextId.current) {
-              setActive((current) => (current?.id === id ? { ...current, next } : current));
-            } else if (next) {
-              release(next.values());
-            }
-            start();
-          });
-        });
-      };
-
       /** Where the reader last touched, as a fraction of that surface. */
       const sniffOrigin = (): ReskinPoint | undefined => {
         let sniffed: ReskinPoint | undefined;
@@ -520,100 +506,149 @@ export function ReskinTransitionProvider({ children }: { children: ReactNode }) 
         return sniffed;
       };
 
-      if (COVER_SOURCE === 'veil') {
-        const chosen = play(entries[0]?.[1].size.current ?? { width: 0, height: 0 });
-        const shots = new Map<string, SkImage>();
-        if (chosen !== 'none') {
-          for (const [key, entry] of entries) {
-            const image = makeVeilImage(
-              entry.size.current,
-              paint.current.paper,
-              paint.current.raised
-            );
-            if (image) shots.set(key, image);
-          }
-        }
-        if (chosen === 'none' || shots.size === 0) {
-          release(shots.values());
-          await apply();
-          return;
-        }
+      const chosen = play(entries[entries.length - 1]?.[1].size.current ?? { width: 0, height: 0 });
+      if (chosen === 'none') {
+        await apply();
+        return;
+      }
+      const stillWanted = () => id === nextId.current;
+      const budget = snapshotBudget(Platform.OS, chosen);
+      // On Android only the topmost surface is photographed: it is the one the
+      // reader is looking at (a font sheet covers the app behind it), and a
+      // second full-window capture there is the difference between landing
+      // inside the budget and not.
+      const targets = Platform.OS === 'android' ? entries.slice(-1) : entries;
 
-        const accent = colorVector(options.accent ?? paint.current.primary);
-        progress.set(0);
-        veil.set(0);
-        setActive({
-          id,
-          play: chosen,
-          origin: resolveOrigin(options.origin ?? sniffOrigin(), kind),
-          rim: accent,
-          wet: dampen(accent),
-          cell: halftoneCell(paint.current.body),
-          shots,
-          next: new Map(),
-          veiled: true,
-          swapping: true,
-        });
-
-        // The veil comes up over the old interface, the change lands under it
-        // once it is opaque, and only then does the front take it away. The
-        // apply is awaited by the caller as it always was; it is simply a
-        // fifth of a second later than the tap, behind a cover that is
-        // already moving.
-        await new Promise<void>((resolve) => {
-          const covered = () => resolve();
-          afterNextPaint(() => {
-            veil.set(
-              withTiming(1, timing(DURATION.short, { reduceMotion: ReduceMotion.Never }), () => {
+      /** Take the cover away: the same last beat for a photograph and a veil. */
+      const erase = (photographed: boolean) => {
+        afterNextPaint(() => {
+          if (!stillWanted()) return;
+          setActive((current) =>
+            current?.id === id && current.swapping ? { ...current, swapping: false } : current
+          );
+          const start = (mode: string) => {
+            if (!stillWanted()) return;
+            trace(`${chosen} runs (${mode})`);
+            progress.set(
+              withTiming(1, eraseTiming(chosen), (done) => {
                 'worklet';
-                runOnJS(covered)();
+                if (done) runOnJS(finish)(id);
               })
+            );
+          };
+          // The ripple bends the new interface as well as the old, so it wants
+          // a picture of the new one too -- taken now, once the change has
+          // settled under the cover, on the same budget and strikes as the
+          // first. Without it the ripple still runs, lit over the live view.
+          if (chosen !== 'ripple' || !photographed || budget === null) {
+            start(photographed ? 'photo' : 'veil');
+            return;
+          }
+          if (!shouldAttemptSnapshot(strikes.current)) {
+            start('photo, live inside: strikes');
+            return;
+          }
+          void photographSurfaces(targets, strikes, stillWanted, budget).then((taken) => {
+            const { shots: next } = taken;
+            if (next && stillWanted()) {
+              setActive((current) => (current?.id === id ? { ...current, next } : current));
+            } else if (next) {
+              release(next.values());
+            }
+            start(
+              next
+                ? `refract; new-UI photo ${taken.ms} ms`
+                : `photo, live inside; new-UI photo ${taken.outcome} ${taken.ms} ms`
             );
           });
         });
-        await apply();
-        if (id === nextId.current) erase(chosen);
-        return;
-      }
-
-      // A device that has already shown it cannot photograph itself in time is
-      // not asked again: the picture is the expensive half, and taking one we
-      // know we will discard would only make the setting slower to land.
-      if (!shouldAttemptSnapshot(strikes.current)) {
-        await apply();
-        return;
-      }
-
-      const shots = await photographSurfaces(entries, strikes, () => id === nextId.current);
-      const chosen = shots ? play(entries[0]?.[1].size.current ?? { width: 0, height: 0 }) : 'none';
-      if (!shots || chosen === 'none') {
-        if (shots) release(shots.values());
-        await apply();
-        return;
-      }
+      };
 
       const accent = colorVector(options.accent ?? paint.current.primary);
-      progress.set(0);
-      veil.set(1);
-      // The cover goes up and the setting changes in the same React commit, so
-      // there is no frame in which one has happened and the other has not.
-      // The origin is where the reader last touched, on whichever surface they
-      // touched: a finger is a better record of what was tapped than a row
-      // component's idea of where it is.
-      setActive({
+      const base = {
         id,
         play: chosen,
         origin: resolveOrigin(options.origin ?? sniffOrigin(), kind),
         rim: accent,
         wet: dampen(accent),
         cell: halftoneCell(paint.current.body),
-        shots,
-        next: new Map(),
-        veiled: false,
-        swapping: false,
+        next: new Map<string, SkImage>(),
+      };
+
+      // A device that has already shown it cannot photograph itself in time is
+      // not asked again: the picture is the expensive half, and taking one we
+      // know we will discard would only make the setting slower to land.
+      let shots: Map<string, SkImage> | null = null;
+      if (budget !== null && shouldAttemptSnapshot(strikes.current)) {
+        const taken = await photographSurfaces(targets, strikes, stillWanted, budget);
+        trace(`old-UI photo ${taken.outcome} ${taken.ms} ms (budget ${budget} ms)`);
+        if (!stillWanted()) {
+          if (taken.shots) release(taken.shots.values());
+          await apply();
+          return;
+        }
+        shots = taken.shots;
+      } else if (budget !== null) {
+        trace('old-UI photo skipped: strikes');
+      }
+
+      if (shots) {
+        progress.set(0);
+        veil.set(1);
+        // The cover goes up and the setting changes in the same React commit,
+        // so there is no frame in which one has happened and the other has
+        // not. The origin is where the reader last touched, on whichever
+        // surface they touched: a finger is a better record of what was
+        // tapped than a row component's idea of where it is.
+        setActive({ ...base, shots, veiled: false, swapping: false });
+        await apply();
+        erase(true);
+        return;
+      }
+
+      if (COVER_SOURCE !== 'veil') {
+        // A platform that photographs and could not: no transition at all.
+        await apply();
+        return;
+      }
+
+      const veils = new Map<string, SkImage>();
+      for (const [key, entry] of entries) {
+        const image = makeVeilImage(entry.size.current, paint.current.paper, paint.current.raised);
+        if (image) veils.set(key, image);
+      }
+      if (veils.size === 0) {
+        await apply();
+        return;
+      }
+
+      progress.set(0);
+      veil.set(0);
+      setActive({ ...base, shots: veils, veiled: true, swapping: true });
+
+      // The veil comes up over the old interface, the change lands under it
+      // once it is opaque, and only then does the front take it away. It has
+      // to be opaque first: the re-skin commits over several frames, and a
+      // veil that was still fading would show the half-painted interface
+      // through it. So the hold is as short as it can honestly be -- a tenth
+      // of a second of fade, then the apply's own commit.
+      await new Promise<void>((resolve) => {
+        const covered = () => resolve();
+        afterNextPaint(() => {
+          veil.set(
+            withTiming(
+              1,
+              timing(RESKIN_MOTION.veilMs, { reduceMotion: ReduceMotion.Never }),
+              () => {
+                'worklet';
+                runOnJS(covered)();
+              }
+            )
+          );
+        });
       });
       await apply();
-      erase(chosen);
+      if (stillWanted()) erase(false);
     },
     [finish, progress, reduceMotion, veil]
   );
