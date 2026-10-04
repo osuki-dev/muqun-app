@@ -1016,6 +1016,10 @@ msgstr "A limpar a cache"
 msgid "Clearing…"
 msgstr "A limpar…"
 
+#: src/components/sheet-scene.tsx
+msgid "Close"
+msgstr "Fechar"
+
 #: src/components/dev-home-ambient-controls.tsx
 msgid "Close effects"
 msgstr "Fechar efeitos"

@@ -1016,6 +1016,10 @@ msgstr "正在清除快取"
 msgid "Clearing…"
 msgstr "正在清除…"
 
+#: src/components/sheet-scene.tsx
+msgid "Close"
+msgstr "關閉"
+
 #: src/components/dev-home-ambient-controls.tsx
 msgid "Close effects"
 msgstr "關閉效果面板"

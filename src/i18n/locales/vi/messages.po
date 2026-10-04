@@ -1016,6 +1016,10 @@ msgstr "Đang xóa bộ nhớ đệm"
 msgid "Clearing…"
 msgstr "Đang xóa…"
 
+#: src/components/sheet-scene.tsx
+msgid "Close"
+msgstr "Đóng"
+
 #: src/components/dev-home-ambient-controls.tsx
 msgid "Close effects"
 msgstr "Đóng hiệu ứng"
