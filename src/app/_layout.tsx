@@ -5,10 +5,10 @@ import {
   sheetRouteOptions as resolveSheetRouteOptions,
   sheetRoutePresentations,
 } from '@/lib/route-presentation';
-import { orientationPolicy } from '@/lib/orientation-lock';
 import { responsiveWorkspaceLayout } from '@/lib/responsive-layout';
 import { SheetFullscreenProvider } from '@/components/sheet-route-frame';
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
+import * as Device from 'expo-device';
 import * as ScreenOrientation from 'expo-screen-orientation';
 import { StatusBar } from 'expo-status-bar';
 import {
@@ -22,14 +22,7 @@ import {
 import * as NavigationBar from 'expo-navigation-bar';
 import * as SecureStore from 'expo-secure-store';
 import { useEffect } from 'react';
-import {
-  AppState,
-  Dimensions,
-  LogBox,
-  Platform,
-  StyleSheet,
-  useWindowDimensions,
-} from 'react-native';
+import { AppState, LogBox, Platform, StyleSheet, useWindowDimensions } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { useReducedMotion } from 'react-native-reanimated';
@@ -130,33 +123,6 @@ const themeModeStorage: ThemeStorageAdapter = {
 useThemeLibrary.getState().hydrate();
 
 /**
- * Android's orientation lock, issued at module scope and not in an effect.
- *
- * The manifest cannot say it: `screenOrientation` is one value for every
- * device, and a resource reference there cannot vary by configuration (lint
- * rejects `values-sw600dp`, and the package manager resolves it against the
- * default configuration anyway). A phone wants portrait where a tablet wants
- * landscape, because the Pad cover spread does not survive portrait. So the
- * decision is made from the screen's metrics here, before the first render and
- * so before the first Home frame, and read from the shorter side so a tablet
- * that boots in a portrait window is still a tablet. `app.json` stays
- * `default` rather than `portrait`, because a static portrait manifest would
- * launch every tablet in portrait; the launch overlay covers the turn. iOS
- * declares its orientations in Info.plist per idiom (iPhone portrait, iPad
- * landscape), which also holds before JavaScript runs.
- */
-if (Platform.OS === 'android') {
-  const { width, height } = Dimensions.get('screen');
-  void ScreenOrientation.lockAsync(
-    orientationPolicy(width, height) === 'landscape'
-      ? ScreenOrientation.OrientationLock.LANDSCAPE
-      : ScreenOrientation.OrientationLock.PORTRAIT_UP
-  ).catch(() => {
-    // A platform that cannot answer keeps its manifest-supported shape.
-  });
-}
-
-/**
  * Listens for a theme file handed to the app from outside it.
  *
  * A component rather than a call in `RootLayout` so the listener mounts with
@@ -214,6 +180,31 @@ export default function RootLayout() {
     void NavigationBar.setVisibilityAsync('hidden');
   }, []);
 
+  // iPad follows its resizable window instead of enforcing a landscape lock.
+  // Keep the existing phone and Android tablet policies separate: an app-wide
+  // unlock would also rotate phones. Native iPad orientations are declared in
+  // app.json so launch and split-view frames work before JavaScript is ready.
+  useEffect(() => {
+    let mounted = true;
+    void Device.getDeviceTypeAsync()
+      .then((deviceType) => {
+        if (!mounted) return;
+        if (Platform.OS === 'ios' && deviceType === Device.DeviceType.TABLET) {
+          return ScreenOrientation.unlockAsync();
+        }
+        const lock =
+          deviceType === Device.DeviceType.TABLET
+            ? ScreenOrientation.OrientationLock.LANDSCAPE
+            : ScreenOrientation.OrientationLock.PORTRAIT;
+        return ScreenOrientation.lockAsync(lock);
+      })
+      .catch(() => {
+        // A platform that cannot answer keeps its manifest-supported shape.
+      });
+    return () => {
+      mounted = false;
+    };
+  }, []);
   // The pack has to be resolved above the provider, since it *is* the provider's
   // palette. A custom pack is already here -- the library hydrated at module
   // scope, above -- so the first frame carries it, and the splash overlay and
