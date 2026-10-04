@@ -1,6 +1,6 @@
 import { useAppActive } from '@/hooks/use-app-active';
 import {
-  Canvas,
+  Canvas as DefaultCanvas,
   Fill,
   FontSlant,
   FontWeight,
@@ -324,6 +324,37 @@ export type TerminalCellMetrics = {
   cellWidth: number;
   lineHeight: number;
 };
+
+/**
+ * The canvas the terminal draws on.
+ *
+ * By default the package's `Canvas`, which on a Graphite build (this app ships
+ * one: `react-native-skia/libs/.graphite`) *is* `GraphiteCanvas`: the JS thread
+ * records once per commit, the UI runtime only reads shared values, a native
+ * pool replays at most once per presented frame and the view presents on
+ * vsync -- so the draw and the swap are off the main thread. On a non-Graphite
+ * build it falls back to the picture view by itself, where an unconditional
+ * `GraphiteCanvas` would render nothing.
+ *
+ * `EXPO_PUBLIC_TERMINAL_GRAPHITE_CANVAS=0` is the kill switch back to the
+ * picture view (main-thread replay), for A/B on a real phone. Read once at
+ * module load, so a pane can never change canvas -- and therefore native view
+ * -- while it lives; the same reason `terminalCanvasPaint` keeps `opaque`
+ * stable, and it applies to both views (both are `SkiaBaseView`s).
+ *
+ * `colorSpace`, `android` and `androidWarmup` are ignored by the Graphite view;
+ * the terminal sets none of them.
+ */
+const TerminalCanvas: typeof DefaultCanvas =
+  process.env.EXPO_PUBLIC_TERMINAL_GRAPHITE_CANVAS === '0'
+    ? // The picture-view canvas `DefaultCanvas` stands in front of. Not exported
+      // from the package root, and required rather than imported because the
+      // package's `src/` does not type-check against its own published types
+      // (two copies of `NodeType`). Same file Metro already bundles for
+      // `DefaultCanvas`, so it is the same module instance, not a second Skia.
+      // oxlint-disable-next-line typescript/no-require-imports -- see above
+      (require('react-native-skia/src/renderer/Canvas') as { Canvas: typeof DefaultCanvas }).Canvas
+    : DefaultCanvas;
 
 /**
  * Logs one line per committed frame -- how many blocks it drew, how many it had
@@ -3266,7 +3297,7 @@ export function SkiaTerminal({
             the pane theme, because changing `opaque` replaces the native view
             (SurfaceView <-> TextureView) and the replacement's first frame is
             blank. See `terminalCanvasPaint`. */}
-        <Canvas opaque={canvasIsOpaque} style={styles.canvas}>
+        <TerminalCanvas opaque={canvasIsOpaque} style={styles.canvas}>
           <Fill color={canvasFill} />
           <Group transform={contentTransform}>
             {chunkDraws.map((chunk) => (
@@ -3322,7 +3353,7 @@ export function SkiaTerminal({
               />
             ) : null}
           </Group>
-        </Canvas>
+        </TerminalCanvas>
       </GestureDetector>
       {canLoadEarlier || loadingEarlier ? (
         <Animated.View
