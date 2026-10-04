@@ -117,13 +117,15 @@ export const AgentGuideSheet = memo(function AgentGuideSheet({
       ? t`${agentName} is ready on this host.`
       : blurbKind === 'unsupported'
         ? t`This gateway does not advertise ${agentName} sessions.`
-        : blurbKind === 'not-installed'
-          ? t`${agentName} was not found on this host. Install it, then check again.`
-          : blurbKind === 'health'
-            ? t`This gateway is not answering. Check the server connection, then try again.`
-            : blurbKind === 'setup'
-              ? _(agentGuideStart(agentGuideFor(agentKind), readiness.status))
-              : t`${agentName}'s installation could not be confirmed. If it is installed, start it on the host.`;
+        : blurbKind === 'update'
+          ? t`Update Muqun Gateway on this host to use ${agentName}.`
+          : blurbKind === 'not-installed'
+            ? t`${agentName} was not found on this host. Install it, then check again.`
+            : blurbKind === 'health'
+              ? t`This gateway is not answering. Check the server connection, then try again.`
+              : blurbKind === 'setup'
+                ? _(agentGuideStart(agentGuideFor(agentKind), readiness.status))
+                : t`${agentName}'s installation could not be confirmed. If it is installed, start it on the host.`;
 
   return (
     <SheetScene
@@ -133,6 +135,11 @@ export const AgentGuideSheet = memo(function AgentGuideSheet({
       contentSized>
       <View
         style={[styles.column, { paddingBottom: Math.max(insets.bottom, SHEET_LADDER.section) }]}>
+        {readiness.status === 'needs-update' && readiness.reason ? (
+          <Text selectable variant="caption" color={theme.colors.textMuted} style={styles.blurb}>
+            {readiness.reason}
+          </Text>
+        ) : null}
         <Text variant="caption" color={theme.colors.textMuted} style={styles.blurb}>
           {blurb}
         </Text>

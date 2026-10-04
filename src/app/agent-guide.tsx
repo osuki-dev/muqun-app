@@ -42,6 +42,7 @@ export default function AgentGuideScreen() {
   );
   const agentName = agentDisplayName(mirroredAgents, agentId);
   const agentKind = findAgent(mirroredAgents, agentId)?.kind ?? agentId;
+  const mirroredReason = findAgent(mirroredAgents, agentId)?.reason;
   const selectedRecord = useGatewayConnectionStore((state) => state.record);
   const records = useGatewayConnectionStore((state) => state.records);
   const server =
@@ -57,13 +58,22 @@ export default function AgentGuideScreen() {
         ? { status: 'not-installed', capabilities: [], agentId }
         : params.status === 'needs-setup'
           ? { status: 'needs-setup', capabilities: [], agentId }
-          : {
-              status: 'offline',
-              capabilities: [],
-              agentId,
-              cause:
-                params.cause === 'service' || params.cause === 'catalog' ? params.cause : 'health',
-            }
+          : params.status === 'needs-update'
+            ? {
+                status: 'needs-update',
+                capabilities: [],
+                agentId,
+                ...(mirroredReason ? { reason: mirroredReason } : {}),
+              }
+            : {
+                status: 'offline',
+                capabilities: [],
+                agentId,
+                cause:
+                  params.cause === 'service' || params.cause === 'catalog'
+                    ? params.cause
+                    : 'health',
+              }
   );
 
   const checkAgain = async (): Promise<AgentReadiness> => {

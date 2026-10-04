@@ -2984,6 +2984,10 @@ msgstr "ตั้งชื่อแล้วป้อนรหัสที่ Ga
 msgid "Needs setup"
 msgstr "ต้องตั้งค่า"
 
+#: src/i18n/labels.ts
+msgid "Needs update"
+msgstr "ต้องอัปเดต"
+
 #: src/components/collaboration-notice.tsx
 msgid "Needs your attention"
 msgstr "ต้องการความสนใจจากคุณ"
@@ -5749,6 +5753,11 @@ msgstr "อัปเดต Herdr บนเซิร์ฟเวอร์เป�
 #: src/components/agent-assignment-bar.tsx
 msgid "Update Muqun Gateway on the server, then restart it, to assign a task to another assistant"
 msgstr "อัปเดต Muqun Gateway บนเซิร์ฟเวอร์แล้วเริ่มใหม่ เพื่อมอบหมายงานให้ผู้ช่วยอื่น"
+
+#: src/components/agent-guide-sheet.tsx
+#: src/components/new-task-action.tsx
+msgid "Update Muqun Gateway on this host to use {agentName}."
+msgstr "อัปเดต Muqun Gateway บนโฮสต์นี้เพื่อใช้ {agentName}"
 
 #: src/components/update-status-banner.tsx
 msgid "Update ready · restarting…"

@@ -235,7 +235,9 @@ export function NewTaskAction({
                     serverId,
                     label,
                     agentId: agent.id,
-                    ...(agent.readiness === 'not-installed' || agent.readiness === 'needs-setup'
+                    ...(agent.readiness === 'not-installed' ||
+                    agent.readiness === 'needs-setup' ||
+                    agent.readiness === 'needs-update'
                       ? { status: agent.readiness }
                       : { status: 'offline', cause: 'service' }),
                     intent: 'existing',
@@ -266,7 +268,9 @@ export function NewTaskAction({
                   ? t`${agentName} was not found. Tap for installation instructions`
                   : readiness?.status === 'needs-setup'
                     ? t`${agentName} needs setup. Tap for setup instructions`
-                    : t`${agentName} service offline. Tap for setup instructions`
+                    : readiness?.status === 'needs-update'
+                      ? t`Update Muqun Gateway on this host to use ${agentName}.`
+                      : t`${agentName} service offline. Tap for setup instructions`
             }
             onPress={() =>
               router.push({
@@ -377,13 +381,16 @@ function AgentRowButton({
   const surfaceBackground = useSurfaceBackground();
   const ready = agent.readiness === 'ready';
   const name = agent.name;
+  const agentName = name;
   const description = ready
     ? t`Open ${name} Agent on ${label}`
     : agent.readiness === 'not-installed'
       ? t`${name} was not found. Tap for installation instructions`
       : agent.readiness === 'needs-setup'
         ? t`${name} needs setup. Tap for setup instructions`
-        : t`${name} service offline. Tap for setup instructions`;
+        : agent.readiness === 'needs-update'
+          ? t`Update Muqun Gateway on this host to use ${agentName}.`
+          : t`${name} service offline. Tap for setup instructions`;
   return (
     <PressableScale
       testID={`server-agent-action-${agent.id}`}
