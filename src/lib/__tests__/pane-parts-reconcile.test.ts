@@ -218,3 +218,145 @@ describe('a window that slid under new output', () => {
     expect(first.parts).toBe(parts);
   });
 });
+
+describe('copies that stack, and a composer frozen into history', () => {
+  // Owner's pane `w17:p1`, 2026-10-04 18:24 (`live3-raw-1`): the gateway served
+  // the screen twice over, and a stacked replay of that read behind the screen
+  // before it put three renderings of the same turn on one list, each with the
+  // composer box the screen was showing when it was committed.
+  const RULE = '─'.repeat(160);
+  const MADE_TWO: Block = [
+    'text',
+    '  Made 2 scratchpad edits +28, searched for 1 pattern, ran 8 shell commands',
+  ];
+  const BASH: Block = [
+    'text',
+    "● Bash(python3 - <<'EOF'\n      p='release-notes/v0.13.0.md'…)\n  ⎿  Updated release-notes/v0.13.0.md (+4 -0)",
+    3,
+  ];
+  const R: Block[] = [
+    ['text', '  Ran 1 shell command'],
+    ['text', '● 目录补全这项两端都已合并推送：'],
+    [
+      'text',
+      '  - gateway feat/t3-agent-adapter → 052c045（941 测试通过，PR #41 描述与 release notes 已更新）',
+      2,
+    ],
+    [
+      'text',
+      '  本机新 gateway 二进制已编好，等手机模拟器上这轮实况观察（已跑到第 8 轮）结束再安装重启',
+    ],
+    W2,
+    ['text', '● Agent "Observe live Claude pane for duplicates" finished · 11m 31s'],
+    [
+      'text',
+      '● Observation on the old gateway: the live area is clean, but history still holds one real duplicate',
+    ],
+    ['text', '  Made 1 scratchpad edit +12, ran 4 shell commands\n  ⎿  Resuming agent ad738ae', 2],
+    ['text', '  Made 1 scratchpad edit +13, ran 1 shell command'],
+    [
+      'text',
+      '● 本机 gateway 已换成 052c045 并重启（herdr/tmux 都正常连接，T3/OpenCode 已重新接上）。',
+    ],
+  ];
+  const FEEDBACK: Block = [
+    'text',
+    '╭────────\n│ ✻ Bug report drafted: iOS verification ran on stale heads\n╰────────╯',
+    3,
+  ];
+  /** The composer the pane draws under its transcript, with the mode line and roster. */
+  const composer = (roster: string): Block[] => [
+    ['text', `                                   Update available! Run: claude update\n${RULE}`, 2],
+    ['prompt', '❯ 做好了没'],
+    ['text', `${RULE}\n  ⏵⏵ bypass permissions on · ⧉ Muqun 助手化方向 · ← for agents`, 2],
+    ['text', `  ● main\n  ◯ general-purpose  ${roster}`, 2],
+  ];
+  const promptsOf = (parts: readonly PanePart[]) =>
+    parts.filter((part) => part.fallback_text.includes('做好了没')).length;
+
+  test('three stacked copies of a turn come out as one, with the composer only at the tail', () => {
+    const parts = read([
+      ...R,
+      W3,
+      FEEDBACK,
+      ...composer('Testing open-web-service-sheet keyboard gap'),
+      MADE_TWO,
+      BASH,
+      ...R,
+      FEEDBACK,
+      ...composer('Typing port into web-service sheet'),
+      BASH,
+      ...R,
+      FEEDBACK,
+      ...composer('Reviewing live3-0.png emulator screenshot'),
+    ]);
+
+    const collapsed = collapseRepeatedParts(parts);
+    const textsOut = texts(collapsed);
+
+    // Every part of the turn once. The Bash block used to survive its second
+    // copy: the copy it repeats had been folded against the first screen in its
+    // middle, so what was kept no longer lined up with it.
+    for (const [, text] of [...R.filter((block) => block !== W2), MADE_TWO, BASH]) {
+      expect(textsOut.filter((out) => out === text)).toHaveLength(1);
+    }
+    // One composer, and it is the live one at the bottom.
+    expect(promptsOf(collapsed)).toBe(1);
+    expect(textsOut.at(-1)).toContain('Reviewing live3-0.png');
+    expect(textsOut.at(-3)).toBe('❯ 做好了没');
+  });
+
+  test('a frozen composer takes the status that was spinning above it', () => {
+    const swirl: Block = ['status', '· Swirling… (1m 22s · ↓ 3.5k tokens)'];
+    const parts = read([
+      ...R,
+      swirl,
+      ...composer('Building release APK'),
+      MADE_TWO,
+      BASH,
+      ['text', '● Agent "Gateway: branch info in vcs/files" finished · 4m 2s'],
+      ...composer('Reviewing live3-0.png emulator screenshot'),
+    ]);
+
+    const textsOut = texts(collapseRepeatedParts(parts));
+
+    expect(textsOut).not.toContain(swirl[1]);
+    expect(promptsOf(read(textsOut.map((text) => ['text', text] as Block)))).toBe(1);
+    expect(textsOut).toContain(MADE_TWO[1]);
+  });
+
+  test('a prompt the user sent is a turn, not a composer, even with the same words', () => {
+    const blocks: Block[] = [
+      ['prompt', '❯ 做好了没'],
+      ['text', '● 快好了。'],
+      ...composer('Reviewing live3-0.png emulator screenshot'),
+    ];
+
+    expect(texts(collapseRepeatedParts(read(blocks)))).toEqual(texts(read(blocks)));
+  });
+
+  test('genuine repeats stay: a lone banner, counts that changed, two turns with a message between', () => {
+    const turnEnd: Block[] = [
+      ['text', '● Done. Pushed to feat/multi-harness.'],
+      W2,
+      ['text', '  Read 1 file'],
+    ];
+    const blocks: Block[] = [
+      W2,
+      ['text', '● Agent "Website update for 3.1.0" finished · 35s'],
+      W3,
+      W2,
+      ...turnEnd,
+      ['prompt', '❯ 再推一次'],
+      ...turnEnd,
+    ];
+    const parts = read(blocks);
+
+    // Two turn endings with a message between them are two turns, though they
+    // repeat part for part: three parts is a turn ending, and a copy the gateway
+    // wrote is a screen.
+    const collapsed = collapseRepeatedParts(parts);
+    expect(texts(collapsed).filter((text) => text.includes('Waiting for 2'))).toHaveLength(4);
+    expect(texts(collapsed).filter((text) => text === '❯ 再推一次')).toHaveLength(1);
+  });
+});
