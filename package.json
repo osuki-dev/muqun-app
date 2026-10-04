@@ -171,6 +171,9 @@
       ]
     }
   },
+  "patchedDependencies": {
+    "react-native-enriched-markdown@1.1.0": "patches/react-native-enriched-markdown@1.1.0.patch"
+  },
   "trustedDependencies": [
     "react-native-skia",
     "react-native-enriched-markdown"
