@@ -3828,9 +3828,9 @@ export function ServerTerminalWorkspace({
         },
         onApprovalChanged: (event: string, payload: unknown) =>
           approvalRef.current.handleEvent(event, payload),
-        // A changed generation here resets every held window through
-        // `resetPaneHistory`, before any frame of the new stream is folded.
-        onHello: (payload: unknown) => noteGatewayGeneration(serverId, payload),
+        // `data.generation` on an output frame: a changed one resets every held
+        // window through `resetPaneHistory` before this frame is folded.
+        onOutputFrame: (payload: unknown) => noteGatewayGeneration(serverId, payload),
       }),
       [approvalRef, serverId]
     )

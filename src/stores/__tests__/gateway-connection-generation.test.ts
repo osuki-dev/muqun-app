@@ -1,5 +1,6 @@
-import { afterEach, beforeEach, expect, test } from 'bun:test';
+import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
 
+import { parseAgentSocketFrame } from '@/lib/agent-socket-codec';
 import {
   noteGatewayGeneration,
   onGatewayRestart,
@@ -112,4 +113,78 @@ test('two servers are independent', () => {
 test('a note without a server id records nothing', () => {
   expect(noteGatewayGeneration(null, { generation: 'g1' })).toBe(false);
   expect(useGatewayGeneration.getState().byServer).toEqual({});
+});
+
+// The exact bodies gateway 8d1020e sends: `src/platform/openapi.rs`, its
+// `every_read_carries_one_generation_and_another_instance_has_another` and ws
+// hello tests, and docs/content-model.md "Instance generation".
+describe("the gateway's own layouts", () => {
+  test('GET /health, /api/meta, /api/discovery, /api/capabilities: top-level generation', () => {
+    expect(readGatewayGeneration({ ok: true, herdr: { ok: true }, generation: 'gen-1' })).toBe(
+      'gen-1'
+    );
+    expect(
+      readGatewayGeneration({ agents: { default: 'opencode', list: [] }, generation: 'gen-1' })
+    ).toBe('gen-1');
+  });
+
+  test('pane output: result.read.generation, beside revision', () => {
+    const body = {
+      result: {
+        type: 'pane_read',
+        read: {
+          output: '$ ls',
+          revision: 4,
+          range: { start: 0, end: 1, total: 1 },
+          generation: 'gen-1',
+        },
+      },
+    };
+    expect(readGatewayGeneration(body)).toBe('gen-1');
+    // And through the `{ code, data }` envelope the API client unwraps.
+    expect(readGatewayGeneration({ code: 0, data: body })).toBe('gen-1');
+  });
+
+  test('pane parts: data.generation, beside revision', () => {
+    expect(
+      readGatewayGeneration({
+        schema_version: '1',
+        capabilities: { parts: true, assets: true, image_upload: true, composer: true },
+        data: {
+          session_id: 'default',
+          pane_id: 'wM:p1',
+          source: 'recent-unwrapped',
+          lines: 40,
+          revision: 4,
+          generation: 'gen-1',
+          pane: { pane_id: 'wM:p1', parts: 'text', image_input: false },
+          parts: [],
+        },
+      })
+    ).toBe('gen-1');
+  });
+
+  test('terminal SSE: data.generation on a pane_updated frame carrying data.output', () => {
+    const frame: unknown = JSON.parse(
+      '{"event":"pane_updated","data":{"pane":{"pane_id":"w1:p2","revision":1},"output":"hi","generation":"gen-1"}}'
+    );
+    expect(readGatewayGeneration(frame)).toBe('gen-1');
+    // A frame without output names none, and changes nothing.
+    expect(
+      readGatewayGeneration({ event: 'pane_updated', data: { pane: { pane_id: 'w1:p2' } } })
+    ).toBeUndefined();
+  });
+
+  test('GET /api/ws: generation in the hello frame', () => {
+    const hello = parseAgentSocketFrame(
+      '{"t":"hello","connection_id":"c-1","protocol":1,"generation":"gen-1"}'
+    );
+    expect(hello).toEqual({ t: 'hello', connectionId: 'c-1', protocol: 1, generation: 'gen-1' });
+    expect(readGatewayGeneration(hello)).toBe('gen-1');
+    expect(parseAgentSocketFrame('{"t":"hello","connection_id":"c-1","protocol":1}')).toEqual({
+      t: 'hello',
+      connectionId: 'c-1',
+      protocol: 1,
+    });
+  });
 });
