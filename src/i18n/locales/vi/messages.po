@@ -760,6 +760,10 @@ msgstr "Backspace"
 msgid "Behaviour"
 msgstr "Hành vi"
 
+#: src/components/theme-appearance-settings.tsx
+msgid "Below {minimumPercent}%, text is no longer guaranteed to stay readable"
+msgstr "Dưới {minimumPercent}%, chữ không còn được bảo đảm dễ đọc"
+
 #: src/components/change-tree-rows.tsx
 #: src/components/diff-rows.tsx
 msgid "Binary file"
@@ -2854,10 +2858,6 @@ msgstr "Đã sao chép tin nhắn vào khay nhớ tạm"
 msgid "Message not sent"
 msgstr "Chưa gửi được tin nhắn"
 
-#: src/components/theme-appearance-settings.tsx
-msgid "Minimum for readable text: {minimumPercent}%"
-msgstr "Mức tối thiểu để chữ dễ đọc: {minimumPercent}%"
-
 #. placeholder {0}: part.mode
 #: src/components/agent-message-block.tsx
 msgid "Mode · {0}"
@@ -3909,6 +3909,10 @@ msgstr "Đầu ra gần đây"
 #: src/components/agent-model-sheet.tsx
 msgid "Recently used"
 msgstr "Đã dùng gần đây"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Recommended minimum for readable text: {minimumPercent}%"
+msgstr "Mức tối thiểu khuyến nghị để chữ dễ đọc: {minimumPercent}%"
 
 #: src/components/gateway-tunnel-badge.tsx
 #: src/components/ssh-terminal-workspace.tsx

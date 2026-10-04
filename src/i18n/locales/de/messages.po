@@ -760,6 +760,10 @@ msgstr "Rücktaste"
 msgid "Behaviour"
 msgstr "Verhalten"
 
+#: src/components/theme-appearance-settings.tsx
+msgid "Below {minimumPercent}%, text is no longer guaranteed to stay readable"
+msgstr "Unter {minimumPercent} % ist lesbarer Text nicht mehr garantiert"
+
 #: src/components/change-tree-rows.tsx
 #: src/components/diff-rows.tsx
 msgid "Binary file"
@@ -2854,10 +2858,6 @@ msgstr "Nachricht in Zwischenablage kopiert"
 msgid "Message not sent"
 msgstr "Nachricht nicht gesendet"
 
-#: src/components/theme-appearance-settings.tsx
-msgid "Minimum for readable text: {minimumPercent}%"
-msgstr "Minimum für lesbaren Text: {minimumPercent} %"
-
 #. placeholder {0}: part.mode
 #: src/components/agent-message-block.tsx
 msgid "Mode · {0}"
@@ -3909,6 +3909,10 @@ msgstr "Letzte Ausgabe"
 #: src/components/agent-model-sheet.tsx
 msgid "Recently used"
 msgstr "Zuletzt verwendet"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Recommended minimum for readable text: {minimumPercent}%"
+msgstr "Empfohlenes Minimum für lesbaren Text: {minimumPercent} %"
 
 #: src/components/gateway-tunnel-badge.tsx
 #: src/components/ssh-terminal-workspace.tsx

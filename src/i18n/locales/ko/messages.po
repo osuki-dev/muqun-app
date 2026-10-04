@@ -760,6 +760,10 @@ msgstr "백스페이스"
 msgid "Behaviour"
 msgstr "동작"
 
+#: src/components/theme-appearance-settings.tsx
+msgid "Below {minimumPercent}%, text is no longer guaranteed to stay readable"
+msgstr "{minimumPercent}% 아래에서는 글자의 가독성이 보장되지 않습니다"
+
 #: src/components/change-tree-rows.tsx
 #: src/components/diff-rows.tsx
 msgid "Binary file"
@@ -2854,10 +2858,6 @@ msgstr "메시지가 클립보드에 복사되었습니다"
 msgid "Message not sent"
 msgstr "메시지를 보내지 못했습니다"
 
-#: src/components/theme-appearance-settings.tsx
-msgid "Minimum for readable text: {minimumPercent}%"
-msgstr "글자를 읽을 수 있는 최솟값: {minimumPercent}%"
-
 #. placeholder {0}: part.mode
 #: src/components/agent-message-block.tsx
 msgid "Mode · {0}"
@@ -3909,6 +3909,10 @@ msgstr "최근 출력"
 #: src/components/agent-model-sheet.tsx
 msgid "Recently used"
 msgstr "최근 사용"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Recommended minimum for readable text: {minimumPercent}%"
+msgstr "글자를 읽을 수 있는 권장 최솟값: {minimumPercent}%"
 
 #: src/components/gateway-tunnel-badge.tsx
 #: src/components/ssh-terminal-workspace.tsx
