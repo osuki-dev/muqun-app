@@ -14,6 +14,7 @@ import {
   useRouter,
 } from 'expo-router';
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';
+import { useScreenVisible } from '@/hooks/use-screen-visible';
 import { DeliveryOwnership, DeliverySelection } from '@/lib/bound-delivery';
 import { StatusBar } from 'expo-status-bar';
 import {
@@ -875,6 +876,9 @@ export function ServerTerminalWorkspace({
   const toggleSimfarmSplit = useSimfarmSplit((state) => state.toggle);
   const workspaceLayout = responsiveWorkspaceLayout(windowWidth, previewOpen);
   const isPadLayout = workspaceLayout.mode === 'pad';
+  // The root stack decides sheet vs full-screen on the window alone (no
+  // preview column), so the question "is a sheet over this a sheet" does too.
+  const screenVisible = useScreenVisible(responsiveWorkspaceLayout(windowWidth).mode === 'pad');
   // The detail column (a pane or an agent session) and whether Home covers it.
   // `overview=home` and agent deep-link params are applied by the hook itself.
   const padShell = usePadDetail(serverId, {
@@ -1266,6 +1270,10 @@ export function ServerTerminalWorkspace({
   const [historyRevision, setHistoryRevision] = useState(0);
   const activeServerRef = useRef<string | null>(null);
   const activePaneRef = useRef<string | null>(null);
+  // The pane whose output is being delivered, which outlives `activePaneRef`
+  // under a sheet. See `watching`.
+  const watchedServerRef = useRef<string | null>(null);
+  const watchedPaneRef = useRef<string | null>(null);
   // Held in a ref rather than read from state so the poller does not have to be
   // rebuilt -- and the poll loop restarted -- when health first arrives.
   const healthRef = useRef<HealthResponse | null>(null);
@@ -1446,6 +1454,22 @@ export function ServerTerminalWorkspace({
    * must not move while it is still being looked at.
    */
   const onScreen = selectedServer;
+  /**
+   * Whether the selected pane's output keeps arriving -- `ready`, except that a
+   * sheet over the screen does not stop it.
+   *
+   * The pane stays in view under a sheet and through the sheet's whole slide
+   * back down, and the event stream used to be gated on `ready`: opening Quick
+   * actions closed the stream, the pane sat frozen on the frame it had when the
+   * sheet rose, and dismissing reopened the socket and re-read the whole window.
+   * The reader watched the stale frame slide back into view and then jump --
+   * by however much the pane had printed meanwhile -- the moment the socket was
+   * back: the flash on returning from a sheet. Only the output path (the
+   * stream, its safety-net poll, and the read they trigger) follows this;
+   * everything that acts on the pane still waits for `ready`.
+   */
+  const watching =
+    !overviewVisible && padDetailIsPane && screenVisible && selectedServer && tunnelReady;
   const hasLoadedData = Boolean(data.health);
 
   useLayoutEffect(() => {
@@ -1454,6 +1478,11 @@ export function ServerTerminalWorkspace({
     activePaneRef.current = ready ? selection.paneId : null;
     return () => deliveryOwnership.invalidate();
   }, [ready, selection.paneId, serverId, data.sessionId, deliveryOwnership]);
+
+  useLayoutEffect(() => {
+    watchedServerRef.current = watching ? serverId : null;
+    watchedPaneRef.current = watching ? selection.paneId : null;
+  }, [watching, selection.paneId, serverId]);
 
   useEffect(() => {
     if (isFocused && !loading && routeRecord && record?.serverId !== routeRecord.serverId) {
@@ -1562,9 +1591,13 @@ export function ServerTerminalWorkspace({
   }, [resetSessionState, selectedServer, serverId]);
 
   useEffect(() => {
+    if (watching) return;
+    outputRequestIdRef.current += 1;
+  }, [watching]);
+
+  useEffect(() => {
     if (ready) return;
     dataRequestIdRef.current += 1;
-    outputRequestIdRef.current += 1;
     composerSendGuard.reset();
     setSending(false);
     setSendingKey(null);
@@ -3113,7 +3146,7 @@ export function ServerTerminalWorkspace({
   // both paths update the window, revision and load-earlier flag identically.
   const applyPaneOutput = useCallback(
     (requestPaneId: string, value: string, revision?: number, origin: PaneReadOrigin = 'frame') => {
-      if (activePaneRef.current !== requestPaneId || loadingEarlierOutputRef.current) return;
+      if (watchedPaneRef.current !== requestPaneId || loadingEarlierOutputRef.current) return;
       readRevisionRef.current = {
         paneId: requestPaneId,
         revision: typeof revision === 'number' ? revision : readRevisionRef.current.revision,
@@ -3167,7 +3200,7 @@ export function ServerTerminalWorkspace({
 
   const refreshOutput = useCallback(async () => {
     if (
-      !ready ||
+      !watching ||
       connection.phase !== 'connected' ||
       !selection.paneId ||
       loadingEarlierOutputRef.current
@@ -3177,8 +3210,8 @@ export function ServerTerminalWorkspace({
     const requestServerId = serverId;
     const requestPaneId = selection.paneId;
     const isCurrentRequest = () =>
-      activeServerRef.current === requestServerId &&
-      activePaneRef.current === requestPaneId &&
+      watchedServerRef.current === requestServerId &&
+      watchedPaneRef.current === requestPaneId &&
       outputRequestIdRef.current === requestId;
     return recoverWith(
       async () => {
@@ -3215,10 +3248,10 @@ export function ServerTerminalWorkspace({
     connection.phase,
     data.sessionId,
     outputSource,
-    ready,
     selection.paneId,
     serverId,
     t,
+    watching,
   ]);
 
   const loadEarlierOutput = useCallback(async () => {
@@ -3433,7 +3466,7 @@ export function ServerTerminalWorkspace({
   }, [applyPaneOutput]);
 
   useEffect(() => {
-    if (!appActive || !ready || connection.phase !== 'connected' || !selection.paneId) return;
+    if (!appActive || !watching || connection.phase !== 'connected' || !selection.paneId) return;
     // First read on selecting the pane; after that the event stream drives it.
     // The interval is a safety net for a missed event or a cursor-only
     // change that does not bump the revision -- not the primary path.
@@ -3453,7 +3486,7 @@ export function ServerTerminalWorkspace({
       streamUp ? OUTPUT_POLL_STREAMING_MS : OUTPUT_POLL_FALLBACK_MS
     );
     return () => clearInterval(timer);
-  }, [appActive, connection.phase, ready, refreshOutput, selection.paneId, streamUp]);
+  }, [appActive, connection.phase, refreshOutput, selection.paneId, streamUp, watching]);
 
   /**
    * Warm the two panes a swipe can reach, so the switch onto them is a paint
@@ -3676,13 +3709,14 @@ export function ServerTerminalWorkspace({
     // it back on return, which is the path that existed for a socket the OS had
     // suspended anyway. Only the stream and the poll are gated this way -- not
     // `ready` itself, whose falling edge cancels in-flight requests and would
-    // turn backgrounding mid-send into a lost send.
-    appActive && ready && connection.phase === 'connected',
+    // turn backgrounding mid-send into a lost send. And `watching` rather than
+    // `ready`, so a sheet over the pane does not close it (see `watching`).
+    appActive && watching && connection.phase === 'connected',
     retryNonce,
     useMemo(
       () => ({
         onPaneRevision: (paneId: string, revision: number) => {
-          if (paneId !== activePaneRef.current) {
+          if (paneId !== watchedPaneRef.current) {
             // The stream is session-wide, so this is how a pane nobody is
             // looking at says it has moved on. Only its revision arrives --
             // the gateway inlines the *text* for the one pane the stream was
@@ -3699,7 +3733,7 @@ export function ServerTerminalWorkspace({
           refreshOutputRef.current();
         },
         onPaneOutput: (paneId: string, revision: number, text: string) => {
-          if (paneId !== activePaneRef.current) {
+          if (paneId !== watchedPaneRef.current) {
             // For the short interval after a switch the stream is still
             // inlining the pane just left -- the one pane other than the
             // selected one whose text is ever on the wire (see
