@@ -760,6 +760,10 @@ msgstr "Retroceso"
 msgid "Behaviour"
 msgstr "Comportamiento"
 
+#: src/components/theme-appearance-settings.tsx
+msgid "Below {minimumPercent}%, text is no longer guaranteed to stay readable"
+msgstr "Por debajo del {minimumPercent}%, ya no se garantiza que el texto siga siendo legible"
+
 #: src/components/change-tree-rows.tsx
 #: src/components/diff-rows.tsx
 msgid "Binary file"
@@ -2854,10 +2858,6 @@ msgstr "Mensaje copiado al portapapeles"
 msgid "Message not sent"
 msgstr "El mensaje no se envió"
 
-#: src/components/theme-appearance-settings.tsx
-msgid "Minimum for readable text: {minimumPercent}%"
-msgstr "Mínimo para texto legible: {minimumPercent}%"
-
 #. placeholder {0}: part.mode
 #: src/components/agent-message-block.tsx
 msgid "Mode · {0}"
@@ -3909,6 +3909,10 @@ msgstr "Salida reciente"
 #: src/components/agent-model-sheet.tsx
 msgid "Recently used"
 msgstr "Usados recientemente"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Recommended minimum for readable text: {minimumPercent}%"
+msgstr "Mínimo recomendado para texto legible: {minimumPercent}%"
 
 #: src/components/gateway-tunnel-badge.tsx
 #: src/components/ssh-terminal-workspace.tsx
