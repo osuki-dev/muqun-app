@@ -47,17 +47,22 @@ const NO_RESPONSE = ['network request failed', 'network error', 'timed out', 'ti
  */
 const STATUS_PATTERN = /^(?:HTTP (\d{3}):|[^{]*?:\s(\d{3})(?:\s|$)|[^{]*\((\d{3})\)$)/;
 
-function readBody(raw: string): { code?: string; message?: string } {
+function readBody(raw: string): { code?: string; message?: string; directory?: string } {
   const start = raw.indexOf('{');
   if (start < 0) return {};
   try {
     const parsed = JSON.parse(raw.slice(start)) as unknown;
     const error = (parsed as { error?: unknown } | null)?.error;
     if (error && typeof error === 'object') {
-      const { code, message } = error as { code?: unknown; message?: unknown };
+      const { code, message, directory } = error as {
+        code?: unknown;
+        message?: unknown;
+        directory?: unknown;
+      };
       return {
         code: typeof code === 'string' ? code : undefined,
         message: typeof message === 'string' ? message : undefined,
+        directory: typeof directory === 'string' && directory ? directory : undefined,
       };
     }
   } catch {
@@ -82,6 +87,7 @@ function readAgentRequestError(err: unknown): {
   status: number;
   code?: string;
   message?: string;
+  directory?: string;
 } {
   const raw = err instanceof Error ? err.message : String(err ?? '');
   const match = raw.match(STATUS_PATTERN);
@@ -131,4 +137,31 @@ export function classifyAgentRequestError(err: unknown): AgentRequestError {
 /** Whether a failed read should put the screen into its offline state. */
 export function isAgentOfflineError(err: unknown): boolean {
   return classifyAgentRequestError(err).kind === 'offline';
+}
+
+/**
+ * Why a session could not be opened because it is no longer there.
+ *
+ * `workspace-missing` is the gateway's `404 workspace_missing`: the folder the
+ * session stood on was deleted, and `directory` is the path it named when it
+ * said so. `session-not-found` is the session itself being unknown, either the
+ * gateway's `404 session_not_found` or the agent's own refusal relayed as
+ * `agent_error` ("Agent session not found: ..."). Anything else is a session
+ * that exists and could not be read, which is not this function's business.
+ */
+export type AgentSessionGone =
+  | { kind: 'workspace-missing'; directory?: string }
+  | { kind: 'session-not-found' };
+
+export function classifyAgentSessionGone(err: unknown): AgentSessionGone | null {
+  const { status, code, message, directory } = readAgentRequestError(err);
+  if (code === 'workspace_missing') {
+    return { kind: 'workspace-missing', ...(directory ? { directory } : {}) };
+  }
+  if (code === 'session_not_found') return { kind: 'session-not-found' };
+  if (status === 404 && !code) return { kind: 'session-not-found' };
+  if (code === 'agent_error' && /session not found/i.test(message ?? '')) {
+    return { kind: 'session-not-found' };
+  }
+  return null;
 }

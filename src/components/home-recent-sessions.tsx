@@ -46,6 +46,7 @@ import { useServerAgents } from '@/stores/server-agents';
 import { useAppSettings } from '@/stores/app-settings';
 import type { SshHostRecord } from '@/lib/ssh-hosts';
 import { useHomeRecentsStore } from '@/stores/home-recents';
+import { useGoneAgentSessions } from '@/stores/gone-agent-sessions';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { settleAfter } from '@/lib/compiler-safe-control-flow';
 
@@ -85,6 +86,7 @@ export function HomeRecentSessions({
   const emptyPlate = useHomeScenePlate();
   const entries = useHomeRecentsStore((state) => state.entries);
   const hydrated = useHomeRecentsStore((state) => state.hydrated);
+  const goneSessions = useGoneAgentSessions((state) => state.keys);
   const [expanded, setExpanded] = useState(false);
   const [observationNowMs, setObservationNowMs] = useState(Date.now);
   const snapshots = useServerAgents((state) => state.byServer);
@@ -172,6 +174,7 @@ export function HomeRecentSessions({
     paneMode,
     nowMs: observationNowMs,
     gatewaySessions: agentSessions,
+    goneSessions,
   });
   const visible = visibleHomeContinueEntries(available, expanded);
   const collapsedLimit = limit ?? (compact ? 4 : undefined);
