@@ -1197,6 +1197,7 @@ msgstr "연결"
 #: src/app/explore.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/components/session-map.tsx
+#: src/hooks/use-home-commands.ts
 msgid "Connected"
 msgstr "연결됨"
 
@@ -3242,6 +3243,8 @@ msgstr "사용 불가"
 msgid "not connected"
 msgstr "연결 안 됨"
 
+#: src/components/server-terminal-workspace.tsx
+#: src/hooks/use-home-commands.ts
 #: src/i18n/labels.ts
 msgid "Not connected"
 msgstr "연결되지 않음"

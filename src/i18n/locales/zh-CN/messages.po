@@ -1197,6 +1197,7 @@ msgstr "连接"
 #: src/app/explore.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/components/session-map.tsx
+#: src/hooks/use-home-commands.ts
 msgid "Connected"
 msgstr "已连接"
 
@@ -3242,6 +3243,8 @@ msgstr "不可用"
 msgid "not connected"
 msgstr "未连接"
 
+#: src/components/server-terminal-workspace.tsx
+#: src/hooks/use-home-commands.ts
 #: src/i18n/labels.ts
 msgid "Not connected"
 msgstr "未连接"

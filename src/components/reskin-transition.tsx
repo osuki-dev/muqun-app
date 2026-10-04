@@ -48,7 +48,7 @@ import {
   halftoneReach,
   normalizeOrigin,
   recordSnapshotCost,
-  reskinCoverSource,
+  veilWhenUnphotographed,
   reskinBlocksTouches,
   resolveOrigin,
   rippleDepth,
@@ -213,8 +213,6 @@ type ReskinContextValue = {
   veil: SharedValue<number>;
   register: (id: string, entry: SurfaceEntry) => () => void;
 };
-
-const COVER_SOURCE = reskinCoverSource(Platform.OS);
 
 /**
  * A sheet of the old theme's paper, the size of one surface.
@@ -613,8 +611,9 @@ export function ReskinTransitionProvider({ children }: { children: ReactNode }) 
         return;
       }
 
-      if (COVER_SOURCE !== 'veil') {
-        // A platform that photographs and could not: no transition at all.
+      if (!veilWhenUnphotographed(Platform.OS, chosen)) {
+        // A platform that photographs and could not, for a play that is no
+        // more than a dissolve without its picture: no transition at all.
         await apply();
         return;
       }

@@ -5,6 +5,7 @@ import {
   chordGlyph,
   heldBackModifiers,
   isKeyUnsupportedError,
+  keyFailureOutcome,
   paneVocabulary,
   parseKeyboardVocabulary,
   vocabularyForSession,
@@ -190,6 +191,18 @@ describe('isKeyUnsupportedError', () => {
       isKeyUnsupportedError(new Error('HTTP 400: {"error":{"code":"bad_request","message":"x"}}'))
     ).toBe(false);
     expect(isKeyUnsupportedError(new Error('HTTP 400: nope'))).toBe(false);
+  });
+
+  test("carries the gateway's message, which names the tmux fix, for the hint", () => {
+    const tmux =
+      '{"error":{"code":"key_unsupported","message":"\\"ctrl+enter\\" needs tmux extended keys: tmux set -s extended-keys on"}}';
+    expect(keyFailureOutcome(new Error(`HTTP 400: ${tmux}`))).toEqual({
+      unsupported: '"ctrl+enter" needs tmux extended keys: tmux set -s extended-keys on',
+    });
+    expect(keyFailureOutcome(new Error('HTTP 400: {"error":{"code":"key_unsupported"}}'))).toEqual({
+      unsupported: null,
+    });
+    expect(keyFailureOutcome(new Error('Network request failed'))).toBe('failed');
   });
 
   test('ignores transport failures and non-errors', () => {

@@ -1197,6 +1197,7 @@ msgstr "เชื่อมต่อ"
 #: src/app/explore.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/components/session-map.tsx
+#: src/hooks/use-home-commands.ts
 msgid "Connected"
 msgstr "เชื่อมต่อแล้ว"
 
@@ -3242,6 +3243,8 @@ msgstr "ไม่พร้อมใช้งาน"
 msgid "not connected"
 msgstr "ไม่ได้เชื่อมต่อ"
 
+#: src/components/server-terminal-workspace.tsx
+#: src/hooks/use-home-commands.ts
 #: src/i18n/labels.ts
 msgid "Not connected"
 msgstr "ไม่ได้เชื่อมต่อ"
