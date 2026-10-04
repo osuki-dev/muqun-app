@@ -170,6 +170,9 @@ export function HomeOverview({
   const theme = useThemeTokens();
   const background = useSurfaceBackground();
   const customTheme = useThemeLibrary((state) => state.active);
+  // Known only once the library has loaded: until then a pack's cover must not
+  // flash the app's own wordmark.
+  const themeLibraryHydrated = useThemeLibrary((state) => state.hydrated);
   const identity = resolveHomeIdentity(customTheme?.manifest);
   const hasScene = useHasThemeArtwork('home.wallpaper', 'shell.wallpaper');
   const customAssets = useThemeLibrary(
@@ -752,6 +755,32 @@ export function HomeOverview({
               cover={customTheme?.manifest.homePresentation?.header === 'cover'}
               coverTitle={showsEditorialBrand ? (identity.name ?? undefined) : undefined}
               pad={isPad}
+              typographicCover={themeLibraryHydrated && !customTheme}
+              firstRun={launchController.servers.length === 0}
+              coverMark={
+                identity.logo ? (
+                  <Image
+                    source={logoSource}
+                    contentFit="contain"
+                    style={{ width: 44, height: 44 }}
+                    onError={() => setFailedLogo(customLogo ?? null)}
+                  />
+                ) : undefined
+              }
+              coverBackdrop={
+                // The default theme has no painting and no ambient effect of
+                // its own; the static circuit traces (no clock, so nothing to
+                // reduce under reduced motion) give the cover a quiet ground.
+                hasDevEffectOverride ? undefined : (
+                  <SkiaAmbientEffect
+                    effect="scanlines"
+                    intensity={0.6}
+                    palette={['textMuted']}
+                    mode={resolvedMode}
+                    colors={theme.colors}
+                  />
+                )
+              }
               artworkTopInset={editorialArtworkTopCurrent ? editorialArtworkTop?.top : 0}
               artwork={
                 hasEditorialArtwork && editorialArtworkResolution ? (
