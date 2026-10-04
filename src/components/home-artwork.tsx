@@ -7,7 +7,6 @@ import {
   Mask,
   Rect,
   RoundedRect,
-  useImage,
   vec,
   Image as SkiaImage,
 } from 'react-native-skia';
@@ -20,6 +19,7 @@ import Animated, {
   type SharedValue,
 } from 'react-native-reanimated';
 
+import { useSharedSkiaImage } from '@/lib/skia-image-cache';
 import { heroFeatherGeometry } from '@/lib/hero-feather';
 import { hasTransparentArtworkEdges } from '@/lib/artwork-edge-alpha';
 import { useLaunchHomeArtwork } from '@/hooks/use-launch-home-artwork';
@@ -75,13 +75,14 @@ export type { ResolvedHomeArtworkAsset } from '@/theme/home-artwork';
  *   `Mask` node whose geometry is memoised and only recomputed when the band, the
  *   picture or the focal point actually changes.
  * - The mask has to follow the *drawn* image, not the band, and the drawn rect
- *   needs the picture's intrinsic size. `useImage` hands it over (`width()` /
- *   `height()`) on the object it already decoded; with a masked view the size
- *   would have to come back out of a separate `onLoad`.
+ *   needs the picture's intrinsic size. The decoded `SkImage` hands it over
+ *   (`width()` / `height()`); with a masked view the size would have to come
+ *   back out of a separate `onLoad`.
  *
- * The decode is not duplicated and does not repeat per render: `useImage` loads
- * once per URI and keeps the `SkImage` in state, so this is the same single
- * decode `expo-image`'s memory cache was providing. Nothing is fetched either
+ * The decode is not duplicated and does not repeat per render:
+ * `useSharedSkiaImage` decodes once per URI and hands every canvas the same
+ * `SkImage` -- including the launch opening, which drew this picture a moment
+ * before Home did and breaks it apart over this one. Nothing is fetched either
  * way -- `resolveHomeArtwork` only ever yields a `file:///` path the theme
  * installer already wrote to disk, so the file cache this replaces was never
  * doing any work for a hero.
@@ -151,7 +152,7 @@ function HomeArtworkImage({
     setFailed(source);
     onAvailabilityChange?.(false);
   }, [onAvailabilityChange, source]);
-  const image = useImage(source, onError);
+  const image = useSharedSkiaImage(source, onError);
   const foreground = useMemo(() => {
     if (!image || image.getImageInfo().alphaType === AlphaType.Opaque) return false;
     return hasTransparentArtworkEdges(

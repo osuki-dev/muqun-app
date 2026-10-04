@@ -14,6 +14,7 @@ import {
 
 import { AmbientCircuitLines } from '@/components/ambient-circuit-lines';
 import { useAppActive } from '@/hooks/use-app-active';
+import { useLaunchHandoff } from '@/stores/launch-handoff';
 import { useAppSettings } from '@/stores/app-settings';
 import {
   THEME_EFFECT_CAPABILITIES,
@@ -102,7 +103,12 @@ export function SkiaAmbientEffect({
   const reducedMotion = useReducedMotion();
   const progress = useSharedValue(0);
   const lastPaint = useSharedValue(-1000);
+  // Not while the launch cover is still leaving: the snap's sweep and Home's
+  // arrival own the frame until then, and the effect starts over a finished
+  // page with its ordinary start.
+  const launchSettled = useLaunchHandoff((state) => state.settled);
   const visible =
+    launchSettled &&
     ambientSurfaceVisible(pathname, focused, appActive, effectsEnabled) &&
     !hidden &&
     effect !== 'none';
