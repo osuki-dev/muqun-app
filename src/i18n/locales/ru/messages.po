@@ -2984,6 +2984,10 @@ msgstr "Назовите его, затем введите код, которы�
 msgid "Needs setup"
 msgstr "Нужна настройка"
 
+#: src/i18n/labels.ts
+msgid "Needs update"
+msgstr "Нужно обновление"
+
 #: src/components/collaboration-notice.tsx
 msgid "Needs your attention"
 msgstr "Требуется ваше внимание"
@@ -5749,6 +5753,11 @@ msgstr "Обновите Herdr на сервере до 0.9.0 или новее 
 #: src/components/agent-assignment-bar.tsx
 msgid "Update Muqun Gateway on the server, then restart it, to assign a task to another assistant"
 msgstr "Обновите Muqun Gateway на сервере и перезапустите его, чтобы поручить задачу другому ассистенту"
+
+#: src/components/agent-guide-sheet.tsx
+#: src/components/new-task-action.tsx
+msgid "Update Muqun Gateway on this host to use {agentName}."
+msgstr "Обновите Muqun Gateway на этом хосте, чтобы использовать {agentName}"
 
 #: src/components/update-status-banner.tsx
 msgid "Update ready · restarting…"

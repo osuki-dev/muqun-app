@@ -2984,6 +2984,10 @@ msgstr "Đặt tên cho nó, rồi nhập mã mà Gateway hiển thị"
 msgid "Needs setup"
 msgstr "Cần thiết lập"
 
+#: src/i18n/labels.ts
+msgid "Needs update"
+msgstr "Cần cập nhật"
+
 #: src/components/collaboration-notice.tsx
 msgid "Needs your attention"
 msgstr "Cần bạn xử lý"
@@ -5749,6 +5753,11 @@ msgstr "Cập nhật Herdr trên máy chủ lên 0.9.0 trở lên rồi khởi �
 #: src/components/agent-assignment-bar.tsx
 msgid "Update Muqun Gateway on the server, then restart it, to assign a task to another assistant"
 msgstr "Cập nhật Muqun Gateway trên máy chủ rồi khởi động lại để giao việc cho một trợ lý khác"
+
+#: src/components/agent-guide-sheet.tsx
+#: src/components/new-task-action.tsx
+msgid "Update Muqun Gateway on this host to use {agentName}."
+msgstr "Cập nhật Muqun Gateway trên máy chủ này để dùng {agentName}"
 
 #: src/components/update-status-banner.tsx
 msgid "Update ready · restarting…"

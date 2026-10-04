@@ -178,6 +178,18 @@ describe('a projected row', () => {
     });
   });
 
+  test('an unsupported agent keeps a tile that says it needs an update', () => {
+    const model = buildLaunchModel({
+      discovery: mirror([
+        agent('opencode'),
+        agent('t3', 'unsupported', { reason: 'protocol 2; this gateway supports 1' }),
+      ]),
+    });
+    expect(model.entries.find((entry) => entry.testID === 'home-new-agent-t3')).toMatchObject({
+      caption: 'needs-update',
+    });
+  });
+
   test('all offline: every agent keeps an enabled tile that says why', () => {
     const model = buildLaunchModel({
       discovery: mirror([

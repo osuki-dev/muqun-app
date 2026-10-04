@@ -34,6 +34,8 @@ export type AgentReadiness =
   | ({ status: 'not-installed' } & ReadinessCommon)
   /** Listed and answering, but the host has not finished setting it up (`unconfigured`). */
   | ({ status: 'needs-setup' } & ReadinessCommon)
+  /** Listed, but the gateway cannot speak to it (`unsupported`); `reason` is the gateway's own words. */
+  | ({ status: 'needs-update'; reason?: string } & ReadinessCommon)
   | ({ status: 'offline'; cause: 'health' | 'catalog' | 'service' } & ReadinessCommon);
 
 /**
@@ -45,6 +47,7 @@ export type AgentGuideBlurb =
   | 'ready'
   | 'unsupported'
   | 'not-installed'
+  | 'update'
   | 'health'
   | 'setup'
   | 'unconfirmed';
@@ -55,6 +58,8 @@ export function agentGuideBlurb(readiness: AgentReadiness): AgentGuideBlurb {
     case 'unsupported':
     case 'not-installed':
       return readiness.status;
+    case 'needs-update':
+      return 'update';
     case 'needs-setup':
       return 'setup';
     case 'offline':
@@ -159,6 +164,12 @@ export async function checkAgentReadiness(
             return { status: 'not-installed', ...common };
           case 'needs-setup':
             return { status: 'needs-setup', ...common };
+          case 'needs-update':
+            return {
+              status: 'needs-update',
+              ...common,
+              ...(found.reason ? { reason: found.reason } : {}),
+            };
           case 'unsupported':
             return { status: 'unsupported', ...common };
           default:
