@@ -2979,15 +2979,15 @@ msgid "Muqun follows the language your phone is set to."
 msgstr "Muqun ใช้ภาษาตามการตั้งค่าโทรศัพท์ของคุณ"
 
 #: src/lib/terminal-backend-copy.ts
-msgid "Muqun Gateway is running, but it cannot reach a tmux server on its computer."
+msgid "Muqun Gateway is running, but it cannot reach a tmux server on its computer"
 msgstr "Muqun Gateway ทำงานอยู่ แต่เชื่อมต่อเซิร์ฟเวอร์ tmux บนคอมพิวเตอร์ของมันไม่ได้"
 
 #: src/lib/terminal-backend-copy.ts
-msgid "Muqun Gateway is running, but it cannot reach Herdr on its computer."
+msgid "Muqun Gateway is running, but it cannot reach Herdr on its computer"
 msgstr "Muqun Gateway ทำงานอยู่ แต่เชื่อมต่อ Herdr บนคอมพิวเตอร์ของมันไม่ได้"
 
 #: src/lib/terminal-backend-copy.ts
-msgid "Muqun Gateway is running, but it cannot reach the {backend} backend on its computer."
+msgid "Muqun Gateway is running, but it cannot reach the {backend} backend on its computer"
 msgstr "Muqun Gateway ทำงานอยู่ แต่เชื่อมต่อแบ็กเอนด์ {backend} บนคอมพิวเตอร์ของมันไม่ได้"
 
 #: src/components/settings-font-sheet.tsx
@@ -4867,11 +4867,11 @@ msgid "Start an agent and send it the first thing to do."
 msgstr "เริ่มเอเจนต์และส่งงานแรกให้ทำ"
 
 #: src/lib/terminal-backend-copy.ts
-msgid "Start Herdr there, then tap Retry."
+msgid "Start Herdr there, then tap Retry"
 msgstr "เปิด Herdr บนเครื่องนั้น แล้วแตะ ลองอีกครั้ง"
 
 #: src/lib/terminal-backend-copy.ts
-msgid "Start it there, then tap Retry."
+msgid "Start it there, then tap Retry"
 msgstr "เปิดมันบนเครื่องนั้น แล้วแตะ ลองอีกครั้ง"
 
 #: src/lib/terminal-backend-copy.ts

@@ -2979,15 +2979,15 @@ msgid "Muqun follows the language your phone is set to."
 msgstr "牧群會跟隨手機設定的語言"
 
 #: src/lib/terminal-backend-copy.ts
-msgid "Muqun Gateway is running, but it cannot reach a tmux server on its computer."
+msgid "Muqun Gateway is running, but it cannot reach a tmux server on its computer"
 msgstr "Muqun Gateway 正在執行，但連不上它所在電腦上的 tmux 伺服器"
 
 #: src/lib/terminal-backend-copy.ts
-msgid "Muqun Gateway is running, but it cannot reach Herdr on its computer."
+msgid "Muqun Gateway is running, but it cannot reach Herdr on its computer"
 msgstr "Muqun Gateway 正在執行，但連不上它所在電腦上的 Herdr"
 
 #: src/lib/terminal-backend-copy.ts
-msgid "Muqun Gateway is running, but it cannot reach the {backend} backend on its computer."
+msgid "Muqun Gateway is running, but it cannot reach the {backend} backend on its computer"
 msgstr "Muqun Gateway 正在執行，但連不上它所在電腦上的 {backend} 後端"
 
 #: src/components/settings-font-sheet.tsx
@@ -4867,11 +4867,11 @@ msgid "Start an agent and send it the first thing to do."
 msgstr "啟動一個代理程式，並交代它第一件要做的事"
 
 #: src/lib/terminal-backend-copy.ts
-msgid "Start Herdr there, then tap Retry."
+msgid "Start Herdr there, then tap Retry"
 msgstr "在那台電腦上啟動 Herdr，然後點「重試」"
 
 #: src/lib/terminal-backend-copy.ts
-msgid "Start it there, then tap Retry."
+msgid "Start it there, then tap Retry"
 msgstr "在那台電腦上啟動它，然後點「重試」"
 
 #: src/lib/terminal-backend-copy.ts

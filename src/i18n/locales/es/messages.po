@@ -2979,15 +2979,15 @@ msgid "Muqun follows the language your phone is set to."
 msgstr "Muqun sigue el idioma configurado en tu teléfono"
 
 #: src/lib/terminal-backend-copy.ts
-msgid "Muqun Gateway is running, but it cannot reach a tmux server on its computer."
+msgid "Muqun Gateway is running, but it cannot reach a tmux server on its computer"
 msgstr "Muqun Gateway está en marcha, pero no puede conectar con un servidor tmux en su equipo"
 
 #: src/lib/terminal-backend-copy.ts
-msgid "Muqun Gateway is running, but it cannot reach Herdr on its computer."
+msgid "Muqun Gateway is running, but it cannot reach Herdr on its computer"
 msgstr "Muqun Gateway está en marcha, pero no puede conectar con Herdr en su equipo"
 
 #: src/lib/terminal-backend-copy.ts
-msgid "Muqun Gateway is running, but it cannot reach the {backend} backend on its computer."
+msgid "Muqun Gateway is running, but it cannot reach the {backend} backend on its computer"
 msgstr "Muqun Gateway está en marcha, pero no puede conectar con el backend {backend} en su equipo"
 
 #: src/components/settings-font-sheet.tsx
@@ -4867,11 +4867,11 @@ msgid "Start an agent and send it the first thing to do."
 msgstr "Inicia un agente y dile lo primero que debe hacer"
 
 #: src/lib/terminal-backend-copy.ts
-msgid "Start Herdr there, then tap Retry."
+msgid "Start Herdr there, then tap Retry"
 msgstr "Inicia Herdr allí y luego toca Reintentar"
 
 #: src/lib/terminal-backend-copy.ts
-msgid "Start it there, then tap Retry."
+msgid "Start it there, then tap Retry"
 msgstr "Inícialo allí y luego toca Reintentar"
 
 #: src/lib/terminal-backend-copy.ts
