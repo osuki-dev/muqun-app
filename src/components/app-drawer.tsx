@@ -1,11 +1,13 @@
-import { useSurfaceBackground } from '@/hooks/use-surface-background';
+import { useSurfaceBackground, useSurfaceBackgroundOpacity } from '@/hooks/use-surface-background';
+import { withAlpha } from '@/lib/color';
+import { sheetFrostAlpha } from '@/theme/surface-background';
 import { ThemeArtwork } from '@/components/theme-artwork';
 import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens } from '@osuki-dev/ui';
 import { useRouter } from 'expo-router';
 import { PanelsTopLeft } from 'lucide-react-native';
 import { isValidElement, useEffect, useState, type ReactNode } from 'react';
-import { Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -118,6 +120,7 @@ export default function AppDrawer({
   const router = useRouter();
   const theme = useThemeTokens();
   const surfaceBackground = useSurfaceBackground();
+  const surfaceOpacity = useSurfaceBackgroundOpacity();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const { record } = useGatewayRecord();
@@ -251,11 +254,42 @@ export default function AppDrawer({
             edges={['top']}
             pointerEvents="box-none"
             style={[styles.detailHeaderOverlay, navHeaderBarStyle]}>
-            <EdgeFade
-              edge="top"
-              color={detailFadeColor ?? theme.colors.background}
-              style={styles.detailHeaderFade}
-            />
+            {/*
+              Android navigation chrome draws no fill of its own (no live blur,
+              and a filled pill read as a grey slab), so the fade was the only
+              thing between the title and the transcript scrolling under it --
+              still ~30% clear across the pill row, which left the text beneath
+              legible between and through the pills. There the bar gets the
+              sheets' frosted ground -- the reader's opacity, never thinner than
+              the legibility floor -- and the ramp starts below it.
+            */}
+            {Platform.OS === 'android' ? (
+              <>
+                <View
+                  pointerEvents="none"
+                  style={[
+                    styles.detailHeaderGround,
+                    {
+                      backgroundColor: withAlpha(
+                        detailFadeColor ?? theme.colors.background,
+                        sheetFrostAlpha(surfaceOpacity)
+                      ),
+                    },
+                  ]}
+                />
+                <EdgeFade
+                  edge="top"
+                  color={detailFadeColor ?? theme.colors.background}
+                  style={styles.detailHeaderGroundFade}
+                />
+              </>
+            ) : (
+              <EdgeFade
+                edge="top"
+                color={detailFadeColor ?? theme.colors.background}
+                style={styles.detailHeaderFade}
+              />
+            )}
             {/*
               Separate pills rather than one bar: the title is the only part
               that needs the full width, and a single bar makes the buttons read
@@ -394,6 +428,20 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: -30,
+  },
+  detailHeaderGround: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
+  detailHeaderGroundFade: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: -24,
+    height: 24,
   },
   /**
    * How wide the pane's name may grow, which is this screen's question and not

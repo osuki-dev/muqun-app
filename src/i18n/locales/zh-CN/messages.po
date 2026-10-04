@@ -725,6 +725,10 @@ msgstr "返回"
 msgid "Back one word"
 msgstr "后退一个词"
 
+#: src/components/server-terminal-workspace.tsx
+msgid "Back to Home"
+msgstr "返回主页"
+
 #: src/components/app-drawer.tsx
 msgid "Back to servers"
 msgstr "回到服务器列表"
@@ -1201,7 +1205,6 @@ msgstr "连接"
 #: src/app/explore.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/components/session-map.tsx
-#: src/hooks/use-home-commands.ts
 msgid "Connected"
 msgstr "已连接"
 
@@ -2943,6 +2946,18 @@ msgstr "牧群无法验证你的身份。请重试"
 msgid "Muqun follows the language your phone is set to."
 msgstr "牧群会跟随手机设置的语言"
 
+#: src/lib/terminal-backend-copy.ts
+msgid "Muqun Gateway is running, but it cannot reach a tmux server on its computer."
+msgstr "Muqun Gateway 正在运行，但连不上它所在电脑上的 tmux 服务器"
+
+#: src/lib/terminal-backend-copy.ts
+msgid "Muqun Gateway is running, but it cannot reach Herdr on its computer."
+msgstr "Muqun Gateway 正在运行，但连不上它所在电脑上的 Herdr"
+
+#: src/lib/terminal-backend-copy.ts
+msgid "Muqun Gateway is running, but it cannot reach the {backend} backend on its computer."
+msgstr "Muqun Gateway 正在运行，但连不上它所在电脑上的 {backend} 后端"
+
 #: src/components/settings-font-sheet.tsx
 msgid "Muqun has no fonts of its own. Add one and it is kept on this device."
 msgstr "Muqun 自己不提供字体。添加后会保存在本机"
@@ -3244,7 +3259,6 @@ msgid "not connected"
 msgstr "未连接"
 
 #: src/components/server-terminal-workspace.tsx
-#: src/hooks/use-home-commands.ts
 #: src/i18n/labels.ts
 msgid "Not connected"
 msgstr "未连接"
@@ -4072,6 +4086,7 @@ msgstr "恢复隐藏的默认项"
 #: src/components/gateway-storage-error.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/components/terminal-boundary.tsx
+#: src/hooks/use-home-commands.ts
 msgid "Retry"
 msgstr "重试"
 
@@ -4811,6 +4826,18 @@ msgstr "启动一个 Agent，并交给它第一件事"
 msgid "Start an agent and send it the first thing to do."
 msgstr "启动一个代理，并告诉它第一件要做的事"
 
+#: src/lib/terminal-backend-copy.ts
+msgid "Start Herdr there, then tap Retry."
+msgstr "在那台电脑上启动 Herdr，然后点“重试”"
+
+#: src/lib/terminal-backend-copy.ts
+msgid "Start it there, then tap Retry."
+msgstr "在那台电脑上启动它，然后点“重试”"
+
+#: src/lib/terminal-backend-copy.ts
+msgid "Start one there, then tap Retry:"
+msgstr "在那台电脑上启动一个，然后点“重试”："
+
 #: src/components/new-task-sheet.tsx
 msgid "Start task"
 msgstr "开始任务"
@@ -5089,6 +5116,7 @@ msgid "Terminal key row"
 msgstr "终端按键行"
 
 #: src/components/server-terminal-workspace.tsx
+#: src/hooks/use-home-commands.ts
 msgid "Terminal unavailable"
 msgstr "终端不可用"
 
