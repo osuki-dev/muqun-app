@@ -16,6 +16,7 @@ import Animated, {
   withTiming,
   Extrapolation,
   interpolate,
+  useAnimatedReaction,
   useAnimatedStyle,
   useReducedMotion,
   useSharedValue,
@@ -229,14 +230,34 @@ export function HomeEditorialLayout({
   const sceneOrigin = useSharedValue(0);
   const animateCover = cover && hasArtwork && !reducedMotion;
   const revealing = useLaunchHandoff((state) => state.revealing);
+  // Under the launch snap, Home's entrance rides the snap's own progress, so
+  // it starts on the frame the first tile leaves and is complete with the
+  // last; under the cross-fade it keeps its own clock.
+  const revealDriver = useLaunchHandoff((state) => state.driver);
+  const markRevealReady = useLaunchHandoff((state) => state.markReady);
   const entryProgress = useSharedValue(revealing || reducedMotion ? 1 : 0);
   const timelineEnd = useSharedValue(0);
   useEffect(() => {
+    if (revealing && revealDriver) {
+      // Laid out and waiting: the snap may start.
+      markRevealReady();
+      return;
+    }
     if (revealing || reducedMotion) {
       entryProgress.set(withTiming(1, { duration: reducedMotion ? 0 : 520 }));
     }
     return () => cancelAnimation(entryProgress);
-  }, [revealing, reducedMotion, entryProgress]);
+  }, [revealing, revealDriver, reducedMotion, entryProgress, markRevealReady]);
+  useAnimatedReaction(
+    () => (revealDriver ? revealDriver.get() : -1),
+    (progress) => {
+      if (progress < 0) return;
+      // Ease-out: three quarters in by the middle of the sweep, so what shows
+      // through the gaps is Home arriving rather than a page already there.
+      const t = Math.min(1, Math.max(0, progress));
+      entryProgress.set(1 - (1 - t) * (1 - t));
+    }
+  );
   const titleStage = useScrollStage(
     scrollPosition,
     sceneOrigin,
