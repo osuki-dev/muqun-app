@@ -62,6 +62,9 @@ export const SNAP_CURL = 12;
 /** The most a tile turns, in radians, either way. */
 export const SNAP_TURN = 0.9;
 
+/** How far through its departure a tile stays fully opaque before it fades. */
+export const SNAP_HOLD = 0.6;
+
 /** How much a tile shrinks by the time it is gone. */
 export const SNAP_SHRINK = 0.35;
 
@@ -202,8 +205,10 @@ export function snapTileTransform(
   result.ssin = ssin;
   result.tx = cx - (scos * halfW - ssin * halfH);
   result.ty = cy - (ssin * halfW + scos * halfH);
-  // Fades on an ease-in, so a tile is still there to be seen drifting and is
-  // gone by the end of its travel rather than the start of it.
-  result.alpha = 1 - q * q;
+  // Solid while it is carried away -- the picture leaves, it does not thin
+  // out where it stands, so what shows through is Home where a tile has gone
+  // -- and only then fades, easing out, to nothing by the end of its travel.
+  const fade = q <= SNAP_HOLD ? 0 : (q - SNAP_HOLD) / (1 - SNAP_HOLD);
+  result.alpha = (1 - fade) * (1 - fade);
   return result;
 }
