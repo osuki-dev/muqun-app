@@ -435,7 +435,29 @@ describe('the repository line', () => {
       behind: 0,
     });
     expect(repoLine({ ...REPO, ahead: 2, behind: 1 })).toMatchObject({ sync: '↑2 ↓1' });
-    expect(repoLine({ ...REPO, ahead: 0, behind: 0 })).toMatchObject({ sync: null });
+    // No upstream: `0` from `…/vcs/files`, `null` from `…/git/status`, both nothing.
+    expect(
+      repoLine(
+        parseAgentVcsFiles({
+          files: [],
+          repo: {
+            branch: 'feat/vcs-files-branch',
+            head: '052c045',
+            detached: false,
+            upstream: null,
+            ahead: 0,
+            behind: 0,
+          },
+        })?.repo
+      )
+    ).toEqual({
+      kind: 'branch',
+      branch: 'feat/vcs-files-branch',
+      sync: null,
+      upstream: null,
+      ahead: 0,
+      behind: 0,
+    });
     expect(repoLine({ ...REPO, ahead: null, behind: null, upstream: null })).toMatchObject({
       sync: null,
       upstream: null,
@@ -456,6 +478,12 @@ describe('the repository line', () => {
       kind: 'unborn',
       branch: 'feat/multi-harness',
     });
+    // The gateway's unborn answer names no branch at all.
+    const unborn = parseAgentVcsFiles({
+      files: [],
+      repo: { branch: null, head: null, detached: false, upstream: null, ahead: 0, behind: 0 },
+    })?.repo;
+    expect(repoLine(unborn)).toEqual({ kind: 'unborn', branch: null });
     expect(repoLine(undefined)).toBeNull();
   });
 });
