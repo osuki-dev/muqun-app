@@ -111,7 +111,7 @@ test('profile wiring keeps route and workspace identities and the shared Home ac
   const root = read('app/_layout.tsx');
   expect(root).toContain('<AppearanceProfileProvider>');
   expect(root).toContain('...pageOptions');
-  expect(root).toContain('resolveSheetRouteOptions(route, profile, reduceMotion)');
+  expect(root).toContain('resolveSheetRouteOptions(route, profile, reduceMotion, isPad)');
   expect(root).not.toContain('key={profile');
   const scene = read('components/route-scene.tsx');
   expect(scene.match(/<Animated.View/g)?.length).toBe(1);

@@ -1,4 +1,6 @@
+import { useLingui } from '@lingui/react/macro';
 import { resolveFontStyle, useThemeTokens, type ResolvedFontStyle } from '@osuki-dev/ui';
+import { useRouter } from 'expo-router';
 import { Text } from '@/components/text';
 import { Search, X } from 'lucide-react-native';
 import { useEffect, useRef, type ReactNode } from 'react';
@@ -18,13 +20,14 @@ import Animated, {
   withSequence,
   withTiming,
 } from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { PressableScale } from '@/components/pressable-scale';
 import { AGENT_TYPE } from '@/constants/agent-type';
 import { appChrome } from '@/constants/appearance';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { SheetFrame } from '@/components/sheet-ground';
-import { SheetHandle } from '@/components/sheet-route-frame';
+import { SheetHandle, useSheetIsFullscreen } from '@/components/sheet-route-frame';
 import { KeyboardInset } from '@/components/keyboard-inset';
 import { fadeIn, PRESET, timing } from '@/lib/motion';
 import { FontedTextInput } from '@/components/fonted-text-input';
@@ -171,16 +174,31 @@ export function SheetScene({
   contentSized?: boolean;
   children: ReactNode;
 }) {
+  const fullscreen = useSheetIsFullscreen();
+  const insets = useSafeAreaInsets();
+  // A full-screen sheet starts at the top of the window, under the status bar,
+  // where a form sheet never reaches. A sheet that already asked for that
+  // clearance (the catalogue) is not given it twice.
+  const top = fullscreen ? Math.max(topInset, insets.top) : topInset;
   return (
     <SheetFrame testID={testID} tint="surface" frosted>
       <View collapsable={false} style={contentSized ? undefined : styles.scene}>
-        <View style={[styles.fixedTop, { paddingTop: SHEET_LADDER.gap + topInset }]}>
+        <View style={[styles.fixedTop, { paddingTop: SHEET_LADDER.gap + top }]}>
           <SheetHandle />
           <SheetSceneHeading
             title={title}
             caption={caption}
             captionLines={captionLines}
-            trailing={headingTrailing}
+            trailing={
+              fullscreen ? (
+                <>
+                  {headingTrailing}
+                  <SheetSceneClose />
+                </>
+              ) : (
+                headingTrailing
+              )
+            }
           />
           {header}
         </View>
@@ -191,12 +209,37 @@ export function SheetScene({
 }
 
 /**
+ * The way out of a sheet that a Pad shows full-screen.
+ *
+ * A form sheet is closed by its grabber and the swipe, so it draws nothing
+ * here. A `fullScreenModal` has neither -- on iOS it cannot be swiped away at
+ * all -- and a sheet promoted to one without a button is the "how do I close
+ * this page" the theme picker once shipped with. So the scene draws the glyph,
+ * as quiet as the refresh beside it, only when `useSheetIsFullscreen` says so.
+ * It pops the route, which is what Android's back already does.
+ */
+function SheetSceneClose() {
+  const { t } = useLingui();
+  const { colors } = useThemeTokens();
+  const router = useRouter();
+  return (
+    <SheetSceneQuietControl
+      testID="sheet-close"
+      accessibilityLabel={t`Close`}
+      onPress={() => router.back()}>
+      <X size={20} color={colors.text} />
+    </SheetSceneQuietControl>
+  );
+}
+
+/**
  * The title and the current value under it.
  *
  * No X circle: on a form sheet the grabber and the swipe are the close, and a
  * button that repeats a gesture the platform already gives is chrome. The X
  * survives only in fullscreen frames, where there is no grabber -- which is
- * why `SheetHandle` and this heading are a pair.
+ * why `SheetHandle` and this heading are a pair, and why `SheetScene` adds
+ * `SheetSceneClose` when a Pad shows the sheet full-screen.
  */
 export function SheetSceneHeading({
   title,

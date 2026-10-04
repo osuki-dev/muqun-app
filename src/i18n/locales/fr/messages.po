@@ -1016,6 +1016,10 @@ msgstr "Vidage du cache en cours"
 msgid "Clearing…"
 msgstr "Vidage…"
 
+#: src/components/sheet-scene.tsx
+msgid "Close"
+msgstr "Fermer"
+
 #: src/components/dev-home-ambient-controls.tsx
 msgid "Close effects"
 msgstr "Fermer les effets"

@@ -870,6 +870,18 @@ export class NativeRunner {
           throw new Error('Only the expected local-notification denial alert may be dismissed');
       }
       if (args[0] === 'back') {
+        // A Pad shows a work-surface sheet (Changes, Files, the session tree,
+        // the catalogue, pairing) as a full-screen modal: no grabber, no
+        // outside region, and iOS cannot swipe it away. Its way out is the
+        // scene's own close button. Android's system back already pops it.
+        const sheetClose =
+          env.PLATFORM === 'ios'
+            ? guardedNodes?.find((node) => node.identifier === 'sheet-close')
+            : undefined;
+        if (sheetClose) {
+          await this.invoke(['press', selector(sheetClose)]);
+          continue;
+        }
         // Android exposes controls behind the catalogue sheet in its tree.
         // Its underlying "Go back" must not steal the sheet's Back action.
         if (
