@@ -1,3 +1,4 @@
+import { Platform } from 'react-native';
 import type { SharedValue } from 'react-native-reanimated';
 import { create } from 'zustand';
 
@@ -15,9 +16,17 @@ type LaunchHandoffState = {
   driver: SharedValue<number> | null;
   /** Home has rendered with `revealing` and a driver, and waits for it. */
   ready: boolean;
+  /**
+   * The cover is gone: the snap's last frame, or the end of the cross-fade.
+   * Home's ambient effects wait for this, so they come in over a finished
+   * page instead of competing with the sweep for the frame. True from the
+   * start on the web, which has no launch cover.
+   */
+  settled: boolean;
   setRevealDriver: (driver: SharedValue<number> | null) => void;
   beginReveal: () => void;
   markReady: () => void;
+  settle: () => void;
 };
 
 /** One-way signal from the launch cover to the Home content underneath it. */
@@ -25,7 +34,9 @@ export const useLaunchHandoff = create<LaunchHandoffState>((set) => ({
   revealing: false,
   driver: null,
   ready: false,
+  settled: Platform.OS === 'web',
   setRevealDriver: (driver) => set({ driver }),
   beginReveal: () => set({ revealing: true }),
   markReady: () => set({ ready: true }),
+  settle: () => set({ revealing: true, settled: true }),
 }));
