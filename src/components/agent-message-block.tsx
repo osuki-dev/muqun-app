@@ -1315,6 +1315,9 @@ const STANDALONE_PART_TYPES: ReadonlySet<string> = new Set([
  */
 export const TRANSCRIPT_ROW_GAP = 10;
 
+/** Extra bottom padding on a prose plate, for italic overhang under the last line. */
+const PLATE_BOTTOM_INSET = 4;
+
 const styles = StyleSheet.create({
   /** The one geometry both sides share: full width, padded, on a plate. */
   messageBlock: {
@@ -1322,7 +1325,12 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     maxWidth: '100%',
     marginVertical: TRANSCRIPT_ROW_GAP / 2,
-    paddingVertical: 10,
+    paddingTop: 10,
+    // Four points more than the top: the native markdown view measures the last
+    // line without italic overhang or descender slack, and the renderer drops
+    // the last block's margin, so a plate with equal padding reads tight at the
+    // bottom. Only the plate gets it; spacing between blocks is unchanged.
+    paddingBottom: 10 + PLATE_BOTTOM_INSET,
     paddingHorizontal: 12,
     gap: 6,
   },
@@ -1429,7 +1437,8 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     maxWidth: '100%',
     marginVertical: TRANSCRIPT_ROW_GAP / 2,
-    paddingVertical: 8,
+    paddingTop: 8,
+    paddingBottom: 8 + PLATE_BOTTOM_INSET,
     paddingHorizontal: 12,
   },
   // Closed, the plate hugs its two lines; open, it is a document and takes
