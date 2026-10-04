@@ -103,7 +103,7 @@ export function listingFromAgentDiff(answer: AgentVcsDiff): ChangeListing {
 
 /** `…/git/status`'s repository summary, in the shape `…/vcs/files` says it. */
 export function repoStateFromSummary(summary: GitRepoSummary | null): VcsRepoState | undefined {
-  if (!summary || (!summary.branch && !summary.head)) return undefined;
+  if (!summary) return undefined;
   return {
     branch: summary.branch,
     head: summary.head,

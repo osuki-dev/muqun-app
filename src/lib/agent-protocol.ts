@@ -2319,9 +2319,10 @@ export function parseFileDiffItems(value: unknown): FileDiffItem[] {
  * is from its upstream. Carried by `…/vcs/files` (agent and pane routes alike)
  * on a gateway that has it, and absent outside a repository.
  *
- * `head` is `null` on an unborn branch -- a repository with no commits yet --
- * and `branch` is `null` when `HEAD` is detached. `ahead` and `behind` are
- * `null` when there is no upstream to count against.
+ * `head` is `null` on an unborn branch -- a repository with no commits yet,
+ * where the gateway also answers `branch: null` -- and `branch` is `null` when
+ * `HEAD` is detached. With no upstream, `ahead` and `behind` are `0` here and
+ * `null` from `…/git/status`; the line treats both as nothing to say.
  */
 export interface VcsRepoState {
   branch: string | null;
@@ -2345,8 +2346,6 @@ export function parseVcsRepoState(value: unknown): VcsRepoState | undefined {
   const branch = asString(rec.branch) || null;
   const head = asString(rec.head) || null;
   const detached = asBool(rec.detached) ?? false;
-  // Neither a branch nor a commit is nothing to say about where the checkout is.
-  if (!branch && !head) return undefined;
   return {
     branch,
     head,
