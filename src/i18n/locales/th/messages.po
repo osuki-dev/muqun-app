@@ -760,6 +760,10 @@ msgstr "Backspace"
 msgid "Behaviour"
 msgstr "พฤติกรรม"
 
+#: src/components/theme-appearance-settings.tsx
+msgid "Below {minimumPercent}%, text is no longer guaranteed to stay readable"
+msgstr "ต่ำกว่า {minimumPercent}% จะไม่รับประกันว่าข้อความยังอ่านได้ชัดเจน"
+
 #: src/components/change-tree-rows.tsx
 #: src/components/diff-rows.tsx
 msgid "Binary file"
@@ -2854,10 +2858,6 @@ msgstr "คัดลอกข้อความไปยังคลิปบอ
 msgid "Message not sent"
 msgstr "ยังไม่ได้ส่งข้อความ"
 
-#: src/components/theme-appearance-settings.tsx
-msgid "Minimum for readable text: {minimumPercent}%"
-msgstr "ค่าต่ำสุดเพื่อให้อ่านข้อความได้ชัดเจน: {minimumPercent}%"
-
 #. placeholder {0}: part.mode
 #: src/components/agent-message-block.tsx
 msgid "Mode · {0}"
@@ -3909,6 +3909,10 @@ msgstr "เอาต์พุตล่าสุด"
 #: src/components/agent-model-sheet.tsx
 msgid "Recently used"
 msgstr "ใช้ล่าสุด"
+
+#: src/components/theme-appearance-settings.tsx
+msgid "Recommended minimum for readable text: {minimumPercent}%"
+msgstr "ค่าต่ำสุดที่แนะนำเพื่อให้อ่านข้อความได้ชัดเจน: {minimumPercent}%"
 
 #: src/components/gateway-tunnel-badge.tsx
 #: src/components/ssh-terminal-workspace.tsx
