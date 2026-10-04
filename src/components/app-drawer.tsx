@@ -1,4 +1,6 @@
-import { useSurfaceBackground } from '@/hooks/use-surface-background';
+import { useSurfaceBackground, useSurfaceBackgroundOpacity } from '@/hooks/use-surface-background';
+import { withAlpha } from '@/lib/color';
+import { sheetFrostAlpha } from '@/theme/surface-background';
 import { ThemeArtwork } from '@/components/theme-artwork';
 import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens } from '@osuki-dev/ui';
@@ -118,6 +120,7 @@ export default function AppDrawer({
   const router = useRouter();
   const theme = useThemeTokens();
   const surfaceBackground = useSurfaceBackground();
+  const surfaceOpacity = useSurfaceBackgroundOpacity();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const { record } = useGatewayRecord();
@@ -256,8 +259,9 @@ export default function AppDrawer({
               and a filled pill read as a grey slab), so the fade was the only
               thing between the title and the transcript scrolling under it --
               still ~30% clear across the pill row, which left the text beneath
-              legible between and through the pills. There the bar gets a ground
-              of its own and the ramp starts below it.
+              legible between and through the pills. There the bar gets the
+              sheets' frosted ground -- the reader's opacity, never thinner than
+              the legibility floor -- and the ramp starts below it.
             */}
             {Platform.OS === 'android' ? (
               <>
@@ -265,7 +269,12 @@ export default function AppDrawer({
                   pointerEvents="none"
                   style={[
                     styles.detailHeaderGround,
-                    { backgroundColor: detailFadeColor ?? theme.colors.background },
+                    {
+                      backgroundColor: withAlpha(
+                        detailFadeColor ?? theme.colors.background,
+                        sheetFrostAlpha(surfaceOpacity)
+                      ),
+                    },
                   ]}
                 />
                 <EdgeFade
