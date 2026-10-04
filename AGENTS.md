@@ -111,7 +111,7 @@ anywhere, and delete any file it was captured into.
 ## The built-in default theme
 
 The `cover-courier` pack from the muqun-themes repository ships inside the app
-and is worn whenever the reader has no theme of their own
+and is worn while the reader has neither installed a theme nor picked a colour pack
 (`ThemeRepository.activeInstalled`). Its copy in `assets/themes/cover-courier/`
 and `src/theme/builtin-theme.generated.ts` (`BUILTIN_THEME_VERSION` and the
 `require` map that registers each file with Metro's asset registry on both
