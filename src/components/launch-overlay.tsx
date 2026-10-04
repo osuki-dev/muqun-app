@@ -38,6 +38,7 @@ export function LaunchOverlay() {
   const [introDone, setIntroDone] = useState(false);
   const [bootDone, setBootDone] = useState(false);
   const beginHomeReveal = useLaunchHandoff((state) => state.beginReveal);
+  const settleLaunch = useLaunchHandoff((state) => state.settle);
 
   return (
     <SplashOverlay
@@ -47,7 +48,7 @@ export function LaunchOverlay() {
       onPhaseChange={(phase) => {
         if (phase === 'exiting') beginHomeReveal();
       }}
-      onHidden={beginHomeReveal}>
+      onHidden={settleLaunch}>
       {(context) =>
         seen ? (
           <LaunchSceneIntro {...context} onDone={() => setBootDone(true)} />
