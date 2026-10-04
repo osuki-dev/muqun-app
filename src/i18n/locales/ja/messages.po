@@ -725,6 +725,10 @@ msgstr "戻る"
 msgid "Back one word"
 msgstr "1 単語戻る"
 
+#: src/components/server-terminal-workspace.tsx
+msgid "Back to Home"
+msgstr "ホームに戻る"
+
 #: src/components/app-drawer.tsx
 msgid "Back to servers"
 msgstr "サーバー一覧に戻る"
@@ -1201,7 +1205,6 @@ msgstr "接続"
 #: src/app/explore.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/components/session-map.tsx
-#: src/hooks/use-home-commands.ts
 msgid "Connected"
 msgstr "接続済み"
 
@@ -2943,6 +2946,18 @@ msgstr "牧群が本人確認できませんでした。もう一度お試しく
 msgid "Muqun follows the language your phone is set to."
 msgstr "牧群（ぼくぐん）は端末の言語設定に従います"
 
+#: src/lib/terminal-backend-copy.ts
+msgid "Muqun Gateway is running, but it cannot reach a tmux server on its computer."
+msgstr "Muqun Gateway は動作していますが、そのコンピュータ上の tmux サーバーに接続できません"
+
+#: src/lib/terminal-backend-copy.ts
+msgid "Muqun Gateway is running, but it cannot reach Herdr on its computer."
+msgstr "Muqun Gateway は動作していますが、そのコンピュータ上の Herdr に接続できません"
+
+#: src/lib/terminal-backend-copy.ts
+msgid "Muqun Gateway is running, but it cannot reach the {backend} backend on its computer."
+msgstr "Muqun Gateway は動作していますが、そのコンピュータ上の {backend} バックエンドに接続できません"
+
 #: src/components/settings-font-sheet.tsx
 msgid "Muqun has no fonts of its own. Add one and it is kept on this device."
 msgstr "Muqun 自体はフォントを持ちません。追加するとこのデバイスに保存されます"
@@ -3244,7 +3259,6 @@ msgid "not connected"
 msgstr "未接続"
 
 #: src/components/server-terminal-workspace.tsx
-#: src/hooks/use-home-commands.ts
 #: src/i18n/labels.ts
 msgid "Not connected"
 msgstr "未接続"
@@ -4072,6 +4086,7 @@ msgstr "非表示の標準を元に戻す"
 #: src/components/gateway-storage-error.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/components/terminal-boundary.tsx
+#: src/hooks/use-home-commands.ts
 msgid "Retry"
 msgstr "再試行"
 
@@ -4811,6 +4826,18 @@ msgstr "エージェントを起動して、最初にやることを送る"
 msgid "Start an agent and send it the first thing to do."
 msgstr "エージェントを起動して、最初にやることを伝えます"
 
+#: src/lib/terminal-backend-copy.ts
+msgid "Start Herdr there, then tap Retry."
+msgstr "そこで Herdr を起動してから、再試行をタップしてください"
+
+#: src/lib/terminal-backend-copy.ts
+msgid "Start it there, then tap Retry."
+msgstr "そこで起動してから、再試行をタップしてください"
+
+#: src/lib/terminal-backend-copy.ts
+msgid "Start one there, then tap Retry:"
+msgstr "そこで起動してから、再試行をタップしてください："
+
 #: src/components/new-task-sheet.tsx
 msgid "Start task"
 msgstr "タスクを開始"
@@ -5089,6 +5116,7 @@ msgid "Terminal key row"
 msgstr "ターミナルキー行"
 
 #: src/components/server-terminal-workspace.tsx
+#: src/hooks/use-home-commands.ts
 msgid "Terminal unavailable"
 msgstr "ターミナルを利用できません"
 

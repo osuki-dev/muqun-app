@@ -278,6 +278,7 @@ import {
   terminalBackendState,
   type TerminalBackendState,
 } from '@/lib/terminal-backend-state';
+import { terminalBackendCopy } from '@/lib/terminal-backend-copy';
 import { initialSelection, reconcileSelection, type Selection } from '@/lib/workspace-selection';
 import { useAppActive } from '@/hooks/use-app-active';
 import { useServerAgents } from '@/stores/server-agents';
@@ -291,7 +292,7 @@ import {
 } from '@/lib/home-target-availability';
 import { useServerCapabilities } from '@/stores/server-capabilities';
 import { useAgents } from '@/stores/agents';
-import { useAgentsDiscoveryRefresh } from '@/hooks/use-agent-features';
+import { refreshAgentsDiscovery, useAgentsDiscoveryRefresh } from '@/hooks/use-agent-features';
 import {
   allowChord,
   keyFailureOutcome,
@@ -972,6 +973,9 @@ export function ServerTerminalWorkspace({
   const [backendSessions, setBackendSessions] = useState<NonNullable<SessionsResponse['sessions']>>(
     []
   );
+  // The last load was refused because the terminal backend is down, and which
+  // backend it named. Set by a failed poll, cleared by any successful load.
+  const [backendUnreachable, setBackendUnreachable] = useState<{ backend?: string } | null>(null);
   const [chosenSessionId, setChosenSessionId] = useState<string | null>(null);
   const sessionPick = useServerSession((state) => state.pick);
   const clearSessionPick = useServerSession((state) => state.clearPick);
@@ -1539,6 +1543,7 @@ export function ServerTerminalWorkspace({
     // `resetSessionState`.
     setSessions([]);
     setBackendSessions([]);
+    setBackendUnreachable(null);
     setChosenSessionId(null);
   }, [resetSessionState, selectedServer, serverId]);
 
@@ -1632,6 +1637,7 @@ export function ServerTerminalWorkspace({
                 return sameSelection(current, reconciled) ? current : reconciled;
               });
               setError(null);
+              setBackendUnreachable(null);
               // Structural refreshes share request ownership with the watchdog. Their
               // confirmed success is readiness evidence too, even if they superseded
               // the watchdog's in-flight read.
@@ -1666,6 +1672,7 @@ export function ServerTerminalWorkspace({
       setSelection,
       setSessions,
       setBackendSessions,
+      setBackendUnreachable,
       setSnapshotGeneration,
       setData,
     ]
@@ -1696,6 +1703,14 @@ export function ServerTerminalWorkspace({
       }
 
       attempt += 1;
+      const failure = result.failure;
+      setBackendUnreachable((current) =>
+        failure.kind !== 'backend'
+          ? null
+          : current?.backend === failure.backendKind
+            ? current
+            : { backend: failure.backendKind }
+      );
       setConnection({
         phase: result.failure.retryable && attempt < 3 ? 'reconnecting' : 'offline',
         attempt,
@@ -2342,9 +2357,25 @@ export function ServerTerminalWorkspace({
         backends: terminalBackendRows(backendSessions, terminalPlane),
         plane: terminalPlane,
         sessionId: data.sessionId,
+        unreachable: backendUnreachable,
       }),
-    [backendSessions, data.panes.length, data.sessionId, hasLoadedData, terminalPlane]
+    [
+      backendSessions,
+      backendUnreachable,
+      data.panes.length,
+      data.sessionId,
+      hasLoadedData,
+      terminalPlane,
+    ]
   );
+  // Retry asks discovery again as well as the workspace: the backend rows and
+  // the hint read discovery, which the connected-only refresh above would not
+  // re-ask while the backend is down. The nonce restarts the poller, whose
+  // first read is immediate and whose result updates the state.
+  const retryBackend = useCallback(() => {
+    void refreshAgentsDiscovery(serverId);
+    setRetryNonce((value) => value + 1);
+  }, [serverId]);
   // Narrowed by the pane's own answer: tmux can speak extended keys and the
   // program in this pane may still not have asked for them.
   const paneExtended = shortcuts?.keyboard?.extended;
@@ -5114,7 +5145,10 @@ export function ServerTerminalWorkspace({
                       <GatewayTunnelBadge record={record} variant="notice" />
                     </Animated.View>
                   ) : null}
-                  {tunnelReady && (!error || connection.needsPairing) ? (
+                  {tunnelReady &&
+                  (!error || connection.needsPairing) &&
+                  // The unavailable state below says this, with its own Retry.
+                  !(backendState.kind === 'down' && connection.backendUnavailable) ? (
                     <ConnectionNotice
                       status={connection}
                       onRetry={() => setRetryNonce((value) => value + 1)}
@@ -5188,7 +5222,16 @@ export function ServerTerminalWorkspace({
                     ) : backendState.kind === 'down' ? (
                       <TerminalBackendDown
                         state={backendState}
-                        onRetry={() => void refreshData(false)}
+                        retrying={connection.phase === 'connecting'}
+                        onRetry={retryBackend}
+                        onBack={
+                          isPadLayout
+                            ? () => setOverviewVisible(true)
+                            : // The root Home route's own workspace has nowhere to go back to.
+                              rootOwned
+                              ? undefined
+                              : () => (router.canGoBack() ? router.back() : router.replace('/'))
+                        }
                       />
                     ) : targetPending ? (
                       <View style={styles.missingTargetState}>
@@ -6021,27 +6064,51 @@ function TerminalKeyButton({
 
 /**
  * The terminal plane is up at the gateway but no backend behind it is running.
- * Says so, with the gateway's own sentence for the backend and the list of
- * backends it is configured with, instead of a loader that never ends.
+ * Says so -- which backend, what to run on that computer to start it, and the
+ * backends the gateway is configured with -- instead of a loader that never
+ * ends. Retry asks again at once; the workspace keeps polling regardless, so a
+ * backend started on the host is picked up without it.
  */
 function TerminalBackendDown({
   state,
+  retrying,
   onRetry,
+  onBack,
 }: {
   state: Extract<TerminalBackendState, { kind: 'down' }>;
+  retrying: boolean;
   onRetry: () => void;
+  onBack?: () => void;
 }) {
   const { t } = useLingui();
   const theme = useThemeTokens();
   const surfaceBackground = useSurfaceBackground();
+  const mono = useMonoFontFamily();
+  const copy = terminalBackendCopy(state.backend);
   return (
     <View style={styles.missingTargetState} testID="terminal-backend-down">
       <Text variant="heading">
         <Trans>Terminal unavailable</Trans>
       </Text>
       <Text variant="bodySmall" color={theme.colors.textMuted} style={styles.backendDownText}>
-        {state.message}
+        {copy.reason}
       </Text>
+      <Text variant="bodySmall" color={theme.colors.textMuted} style={styles.backendDownText}>
+        {copy.hint}
+      </Text>
+      {copy.command ? (
+        <Text
+          selectable
+          variant="bodySmall"
+          color={theme.colors.text}
+          testID="terminal-backend-down-command"
+          style={[
+            styles.backendDownCommand,
+            { fontFamily: mono, backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
+          ]}>
+          {copy.command}
+        </Text>
+      ) : null}
       {state.backends.map((backend) => (
         <View
           key={backend.sessionId}
@@ -6056,22 +6123,40 @@ function TerminalBackendDown({
             size={7}
           />
           <Text variant="caption" color={theme.colors.textMuted}>
-            {`${backend.label} · ${backend.kind}`}
+            {backend.label === backend.kind ? backend.label : `${backend.label} · ${backend.kind}`}
           </Text>
         </View>
       ))}
-      <PressableScale
-        accessibilityRole="button"
-        accessibilityLabel={t`Retry connection`}
-        onPress={onRetry}
-        style={[
-          styles.missingTargetButton,
-          { backgroundColor: surfaceBackground(theme.colors.primarySubtle) },
-        ]}>
-        <Text variant="label" color={theme.colors.primary}>
-          <Trans>Retry</Trans>
-        </Text>
-      </PressableScale>
+      <View style={styles.backendDownActions}>
+        <PressableScale
+          accessibilityRole="button"
+          accessibilityLabel={t`Retry`}
+          accessibilityState={{ busy: retrying }}
+          disabled={retrying}
+          onPress={onRetry}
+          testID="terminal-backend-down-retry"
+          style={[
+            styles.missingTargetButton,
+            { backgroundColor: surfaceBackground(theme.colors.primarySubtle) },
+          ]}>
+          {retrying ? <Spinner size="sm" color={theme.colors.primary} /> : null}
+          <Text variant="label" color={theme.colors.primary}>
+            <Trans>Retry</Trans>
+          </Text>
+        </PressableScale>
+        {onBack ? (
+          <PressableScale
+            accessibilityRole="button"
+            accessibilityLabel={t`Back to Home`}
+            onPress={onBack}
+            testID="terminal-backend-down-back"
+            style={styles.missingTargetButton}>
+            <Text variant="label" color={theme.colors.textMuted}>
+              <Trans>Back to Home</Trans>
+            </Text>
+          </PressableScale>
+        ) : null}
+      </View>
     </View>
   );
 }
@@ -6352,6 +6437,19 @@ const styles = StyleSheet.create({
   },
   backendDownText: {
     textAlign: 'center',
+  },
+  backendDownCommand: {
+    borderRadius: appChrome.radius.control,
+    overflow: 'hidden',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  backendDownActions: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    justifyContent: 'center',
   },
   backendDownRow: {
     alignItems: 'center',
