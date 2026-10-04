@@ -294,7 +294,7 @@ import { useAgents } from '@/stores/agents';
 import { useAgentsDiscoveryRefresh } from '@/hooks/use-agent-features';
 import {
   allowChord,
-  isKeyUnsupportedError,
+  keyFailureOutcome,
   paneVocabulary,
   vocabularyForSession,
 } from '@/lib/key-vocabulary';
@@ -4171,8 +4171,7 @@ export function ServerTerminalWorkspace({
         refreshOutputRef.current();
         return 'sent' as const;
       },
-      (err: unknown) =>
-        isKeyUnsupportedError(err) ? ('unsupported' as const) : ('failed' as const)
+      (err: unknown) => keyFailureOutcome(err)
     );
   }
 
