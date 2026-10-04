@@ -269,7 +269,9 @@ half4 main(float2 p) {
   if (x > uTail) return uLive > 0.5 ? half4(0.0) : half4(uNext.eval(p));
 
   float behind = max(x, 0.0);
-  float env = uAmp * uDepth * exp(-uDecay * behind);
+  // No water moves ahead of the front: zero there, or the slope at phase 0
+  // would light a thin ring ahead of it, and a dot before it has moved.
+  float env = x > 0.0 ? uAmp * uDepth * exp(-uDecay * behind) : 0.0;
   float phase = TAU * behind / uWave;
   float disp = env * sin(phase);
   // The surface's slope along the radius, which is what the light catches.
