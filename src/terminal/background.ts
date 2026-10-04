@@ -45,6 +45,52 @@ export function blendedTerminalFill(background: string, behind: string, opacity:
   return `rgb(${mixed.join(', ')})`;
 }
 
+/**
+ * Which canvas a pane gets, and what it is filled with.
+ *
+ * `opaque` is decided from the **app** theme and the wallpaper only -- never
+ * from the pane's own theme -- so it cannot change while a pane lives unless
+ * the reader changes their theme. That is load-bearing: react-native-skia 3.0.1
+ * replaces the native view when `opaque` changes (`SkiaBaseView.updateView`:
+ * opaque is a `SurfaceView`, translucent a `TextureView`), which is a new
+ * surface, a new swap chain and a blank first frame. Keyed on the pane theme,
+ * it flipped every time a full-screen program's surface was adopted or released
+ * over a wallpaper (adopted surfaces are opacity 1, the app theme is not), and
+ * every such flip was a visible flash.
+ *
+ * It costs nothing in pixels. A pane theme can only be translucent when the app
+ * theme is (an adopted surface is opacity 1, or the app's own opacity when the
+ * program painted none), so:
+ *
+ * - no wallpaper: always opaque, and the fill pre-blends the pane's colour over
+ *   the flat app background, as before;
+ * - wallpaper, opaque app terminal: opaque, and every pane theme it can wear is
+ *   opacity 1, so the fill is the colour itself;
+ * - wallpaper, translucent app terminal: always translucent. The app theme lets
+ *   the wallpaper through exactly as before; an adopted surface fills at its own
+ *   opacity of 1, so it stays the solid, legible ground card #685 asked for
+ *   rather than a scheme's chips floating on the picture. The only cost is that
+ *   such a pane no longer gets the opaque layer while it wears its surface.
+ */
+export function terminalCanvasPaint(
+  appTheme: { backgroundOpacity?: number },
+  paneTheme: { background: string; backgroundOpacity?: number },
+  behind: string,
+  wallpaperBehind: boolean
+): { opaque: boolean; fill: string } {
+  const opaque = !wallpaperBehind || terminalBackgroundOpacity(appTheme.backgroundOpacity) === 1;
+  return {
+    opaque,
+    fill: opaque
+      ? blendedTerminalFill(
+          paneTheme.background,
+          behind,
+          terminalBackgroundOpacity(paneTheme.backgroundOpacity)
+        )
+      : terminalBackgroundFill(paneTheme),
+  };
+}
+
 /** `[r, g, b, a]` from `#RRGGBB`, `#RRGGBBAA` or `rgb()`/`rgba()`. */
 function channels(color: string): [number, number, number, number] | null {
   const hex = /^#([\da-f]{6})([\da-f]{2})?$/i.exec(color);

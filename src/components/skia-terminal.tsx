@@ -121,12 +121,7 @@ import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { glyphMetrics, renderingIdentity } from '@/terminal/glyph-cache';
 import { useAppSettings } from '@/stores/app-settings';
 import { slotFontFamily, userFontUri } from '@/theme/user-fonts';
-import {
-  paintsCellBackground,
-  blendedTerminalFill,
-  terminalBackgroundFill,
-  terminalBackgroundOpacity,
-} from '@/terminal/background';
+import { paintsCellBackground, terminalCanvasPaint } from '@/terminal/background';
 import {
   TERMINAL_LONG_PRESS_MS,
   TERMINAL_LONG_PRESS_SLOP,
@@ -776,11 +771,16 @@ export function SkiaTerminal({
   // Which canvas this pane gets, decided once from the two things that decide
   // it. Keeping it out of the render body keeps the two halves -- the flag and
   // the fill -- from ever disagreeing about which path is being taken.
-  const paneOpacity = terminalBackgroundOpacity(paneTheme.backgroundOpacity);
-  const canvasIsOpaque = paneOpacity === 1 || !wallpaperBehind;
-  const canvasFill = canvasIsOpaque
-    ? blendedTerminalFill(paneTheme.background, theme.colors.background, paneOpacity)
-    : terminalBackgroundFill(paneTheme);
+  // `opaque` follows the app theme and the wallpaper, never the pane theme:
+  // flipping it swaps the native view and shows a blank frame, and the pane
+  // theme flips whenever a program's surface is adopted. See
+  // `terminalCanvasPaint`.
+  const { opaque: canvasIsOpaque, fill: canvasFill } = terminalCanvasPaint(
+    terminalTheme,
+    paneTheme,
+    theme.colors.background,
+    wallpaperBehind
+  );
 
   const links = useMemo(() => terminalFrameLinks(frame), [frame]);
   const cellWidth = useMemo(
@@ -3245,7 +3245,12 @@ export function SkiaTerminal({
             flat and opaque-pre-blended are the same pixels, so the canvas keeps
             the fast path and the fill carries the blend. With wallpaper behind
             it, each pixel meets a different colour and no single fill can stand
-            in, so the translucent path is taken and paid for. */}
+            in, so the translucent path is taken and paid for.
+
+            The kind is fixed for as long as the app theme is: it never follows
+            the pane theme, because changing `opaque` replaces the native view
+            (SurfaceView <-> TextureView) and the replacement's first frame is
+            blank. See `terminalCanvasPaint`. */}
         <Canvas opaque={canvasIsOpaque} style={styles.canvas}>
           <Fill color={canvasFill} />
           <Group transform={contentTransform}>
