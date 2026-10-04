@@ -52,11 +52,6 @@ msgstr "{0, plural, other {# ký tự không hiển thị}}"
 msgid "{0, plural, one {# day} other {# days}}"
 msgstr "{0, plural, other {# ngày}}"
 
-#. placeholder {0}: pending.files.length
-#: src/components/git-diff-view.tsx
-msgid "{0, plural, one {# file changed} other {# files changed}}"
-msgstr "{0, plural, other {# tệp đã thay đổi}}"
-
 #. placeholder {0}: files.length
 #: src/components/agent-revert-plate.tsx
 msgid "{0, plural, one {# file} other {# files}}"
@@ -65,7 +60,7 @@ msgstr "{0, plural, other {# tệp}}"
 #. placeholder {0}: listing.changes.length
 #. placeholder {1}: totals.additions
 #. placeholder {2}: totals.deletions
-#: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/changes-sheet.tsx
 msgid "{0, plural, one {# file} other {# files}} · +{1} −{2}"
 msgstr "{0, plural, other {# tệp}} · +{1} −{2}"
 
@@ -477,7 +472,6 @@ msgstr "Cảnh báo"
 msgid "Align the QR inside the frame"
 msgstr "Căn mã QR vào trong khung"
 
-#: src/components/git-diff-view.tsx
 #: src/components/session-artifacts.tsx
 #: src/components/theme-browse-sheet.tsx
 msgid "All"
@@ -835,9 +829,9 @@ msgstr "Cần quyền truy cập camera"
 #: src/components/agent-composer.tsx
 #: src/components/agent-context-sheet.tsx
 #: src/components/agent-sessions-sheet.tsx
-#: src/components/agent-vcs-diff-sheet.tsx
 #: src/components/agent-workbench.tsx
 #: src/components/agent-worktree-sheet.tsx
+#: src/components/changes-sheet.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/row-action-menu.tsx
 #: src/components/session-map.tsx
@@ -879,8 +873,7 @@ msgctxt "git file status"
 msgid "Changed"
 msgstr "Đã thay đổi"
 
-#: src/components/agent-vcs-diff-sheet.tsx
-#: src/components/git-diff-view.tsx
+#: src/components/changes-sheet.tsx
 msgid "Changes"
 msgstr "Thay đổi"
 
@@ -972,7 +965,7 @@ msgstr "Chọn kiểu trang chủ và giao diện ứng dụng. Màu sắc vẫn
 msgid "Choose project"
 msgstr "Chọn dự án"
 
-#: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/changes-sheet.tsx
 msgid "Choose which changes to show"
 msgstr "Chọn thay đổi cần hiển thị"
 
@@ -1150,7 +1143,7 @@ msgstr "Nén thất bại"
 msgid "Compaction failed — tap to dismiss"
 msgstr "Nén thất bại — chạm để bỏ qua"
 
-#: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/changes-sheet.tsx
 msgid "Compared with {base}"
 msgstr "So với {base}"
 
@@ -1503,7 +1496,7 @@ msgstr "Không thể xóa"
 msgid "Could not detach"
 msgstr "Không thể tách ra"
 
-#: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/changes-sheet.tsx
 msgid "Could not discard {name}"
 msgstr "Không thể hủy {name}"
 
@@ -1549,7 +1542,7 @@ msgstr "Không thể tải mô hình"
 msgid "Could not load the session"
 msgstr "Không thể tải phiên"
 
-#: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/changes-sheet.tsx
 msgid "Could not load this file's changes."
 msgstr "Không thể tải thay đổi của tệp này"
 
@@ -1626,7 +1619,7 @@ msgstr "Không thể kết nối đến máy chủ này"
 msgid "Could not read saved servers. Your saved data has not been changed. Unlock this device and retry."
 msgstr "Không thể đọc các máy chủ đã lưu. Dữ liệu đã lưu không bị thay đổi. Hãy mở khóa thiết bị rồi thử lại"
 
-#: src/components/git-diff-view.tsx
+#: src/components/changes-sheet.tsx
 msgid "Could not read the changes."
 msgstr "Không đọc được các thay đổi"
 
@@ -1635,7 +1628,7 @@ msgstr "Không đọc được các thay đổi"
 msgid "Could not read the terminal."
 msgstr "Không thể đọc terminal"
 
-#: src/components/git-diff-view.tsx
+#: src/components/changes-sheet.tsx
 msgid "Could not read this file."
 msgstr "Không đọc được tệp này"
 
@@ -1822,12 +1815,12 @@ msgid "Defaults to theme.json at the repository root"
 msgstr "Mặc định là theme.json ở thư mục gốc của kho mã"
 
 #: src/components/agent-sessions-sheet.tsx
-#: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/changes-sheet.tsx
 #: src/components/row-action-menu.tsx
 msgid "Delete"
 msgstr "Xóa"
 
-#: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/changes-sheet.tsx
 msgid "Delete {discardName}?"
 msgstr "Xóa {discardName}?"
 
@@ -1905,7 +1898,7 @@ msgstr "Hướng"
 msgid "Directory"
 msgstr "Thư mục"
 
-#: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/changes-sheet.tsx
 msgid "Discard"
 msgstr "Hủy bỏ"
 
@@ -1913,7 +1906,7 @@ msgstr "Hủy bỏ"
 msgid "Discard changes"
 msgstr "Hủy thay đổi"
 
-#: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/changes-sheet.tsx
 msgid "Discard changes to {discardName}?"
 msgstr "Hủy thay đổi của {discardName}?"
 
@@ -3089,18 +3082,14 @@ msgstr "Không có camera để quét"
 msgid "No camera was found on this device."
 msgstr "Không tìm thấy camera trên thiết bị này"
 
-#: src/components/agent-vcs-diff-sheet.tsx
 #: src/components/change-tree-rows.tsx
+#: src/components/changes-sheet.tsx
 msgid "No changes"
 msgstr "Không có thay đổi"
 
-#: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/changes-sheet.tsx
 msgid "No changes compared with {base}."
 msgstr "Không có thay đổi so với {base}"
-
-#: src/components/git-diff-view.tsx
-msgid "No changes. The working tree matches HEAD."
-msgstr "Không có thay đổi. Cây làm việc trùng với HEAD"
 
 #: src/components/session-artifacts.tsx
 msgid "No files match."
@@ -3231,7 +3220,7 @@ msgstr "không có cửa sổ nào được báo cho mô hình này"
 msgid "No worktrees yet. Make one below to work on a branch without disturbing this checkout."
 msgstr "Chưa có worktree nào. Tạo một cái bên dưới để làm việc trên một nhánh mà không đụng tới bản checkout này"
 
-#: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/changes-sheet.tsx
 msgid "Not a git repository"
 msgstr "Không phải kho mã Git"
 
@@ -3311,11 +3300,11 @@ msgstr "Chưa có gì để hiển thị"
 msgid "Nothing to undo"
 msgstr "Không có gì để hoàn tác"
 
-#: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/changes-sheet.tsx
 msgid "Nothing uncommitted in this project."
 msgstr "Không có thay đổi chưa commit trong dự án này"
 
-#: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/changes-sheet.tsx
 msgid "Nothing was changed."
 msgstr "Không có gì thay đổi"
 
@@ -3774,9 +3763,9 @@ msgstr "Dự án · {0}"
 #. placeholder {0}: gone.directory
 #. placeholder {0}: listing.missing?.directory ?? ''
 #. placeholder {0}: missing.directory
-#: src/components/agent-vcs-diff-sheet.tsx
 #: src/components/agent-workbench.tsx
 #: src/components/agent-worktree-sheet.tsx
+#: src/components/changes-sheet.tsx
 msgid "Project folder is missing: {0}"
 msgstr "Thiếu thư mục dự án: {0}"
 
@@ -3934,7 +3923,7 @@ msgstr "Đang kết nối lại · {0}"
 msgid "Refresh"
 msgstr "Làm mới"
 
-#: src/components/git-diff-view.tsx
+#: src/components/changes-sheet.tsx
 msgid "Refresh changes"
 msgstr "Làm mới thay đổi"
 
@@ -4425,7 +4414,6 @@ msgstr "Đang gửi đến"
 
 #: src/app/agent-guide.tsx
 #: src/app/artifacts.tsx
-#: src/app/git-diff.tsx
 #: src/app/panels.tsx
 #: src/components/app-drawer.tsx
 #: src/components/server-terminal-workspace.tsx
@@ -4626,10 +4614,6 @@ msgstr "Hiển thị nền ứng dụng phía sau văn bản terminal"
 msgid "Show the editor keyboard"
 msgstr "Hiện bàn phím soạn thảo"
 
-#: src/components/git-diff-view.tsx
-msgid "Show the newer list of changes"
-msgstr "Hiện danh sách thay đổi mới hơn"
-
 #: src/components/agent-tool-card.tsx
 msgid "Show the rest of this output"
 msgstr "Hiện phần còn lại của kết quả"
@@ -4770,7 +4754,6 @@ msgid "SSH tunnel through {host} is down"
 msgstr "Đường hầm SSH qua {host} đã ngắt"
 
 #: src/components/diff-rows.tsx
-#: src/components/git-diff-view.tsx
 msgid "Staged"
 msgstr "Đã staged"
 
@@ -5198,7 +5181,7 @@ msgstr "Không thể mở đích đến này"
 msgid "The font file is missing. Add it again."
 msgstr "Không tìm thấy tệp phông chữ. Hãy thêm lại"
 
-#: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/changes-sheet.tsx
 msgid "The gateway could not be reached."
 msgstr "Không thể kết nối tới gateway"
 
@@ -5354,7 +5337,7 @@ msgstr "Đang suy nghĩ…"
 msgid "This agent did not offer that answer."
 msgstr "Tác tử này không đưa ra câu trả lời đó"
 
-#: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/changes-sheet.tsx
 msgid "This cannot be undone."
 msgstr "Không thể hoàn tác thao tác này"
 
@@ -5443,10 +5426,6 @@ msgstr "Liên kết này không dẫn đến đâu cả"
 msgid "This one is required."
 msgstr "Mục này là bắt buộc"
 
-#: src/components/git-diff-view.tsx
-msgid "This pane is not working inside a git repository, so there is nothing to compare."
-msgstr "Ngăn này không làm việc trong một kho git, nên không có gì để so sánh"
-
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/agent-worktree-sheet.tsx
 msgid "This project"
@@ -5531,6 +5510,10 @@ msgstr "Terminal này không còn khả dụng"
 msgid "This terminal is no longer available. Choose another terminal."
 msgstr "Terminal này không còn khả dụng. Hãy chọn terminal khác"
 
+#: src/components/changes-sheet.tsx
+msgid "This terminal pane is gone."
+msgstr "Ô terminal này không còn nữa"
+
 #: src/components/server-terminal-workspace.tsx
 msgid "This terminal was removed. Choose another terminal to continue."
 msgstr "Terminal này đã bị xóa. Hãy chọn terminal khác để tiếp tục"
@@ -5576,8 +5559,7 @@ msgstr "Mức sử dụng mã token và chi phí"
 msgid "Too large to highlight — showing plain text."
 msgstr "Quá lớn để tô sáng cú pháp — hiển thị dưới dạng văn bản thuần"
 
-#: src/components/agent-vcs-diff-sheet.tsx
-#: src/components/git-diff-view.tsx
+#: src/components/changes-sheet.tsx
 msgid "Too many changes to list. This is the start of them, not all of them."
 msgstr "Quá nhiều thay đổi để liệt kê. Đây là phần đầu, không phải tất cả"
 
@@ -5594,7 +5576,7 @@ msgstr "Tin cậy"
 #: src/components/agent-subagent-detail-sheet.tsx
 #: src/components/app-error-boundary.tsx
 #: src/components/asset-viewer.tsx
-#: src/components/git-diff-view.tsx
+#: src/components/changes-sheet.tsx
 #: src/components/theme-browse-sheet.tsx
 msgid "Try again"
 msgstr "Thử lại"
@@ -5650,7 +5632,7 @@ msgstr "Gõ vào, hoặc dùng phím đọc chính tả trên bàn phím của b
 msgid "Type on the simulator"
 msgstr "Gõ trên trình giả lập"
 
-#: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/changes-sheet.tsx
 msgid "Uncommitted changes"
 msgstr "Thay đổi chưa commit"
 
@@ -5731,7 +5713,6 @@ msgid "Unpairing…"
 msgstr "Đang hủy ghép nối…"
 
 #: src/components/diff-rows.tsx
-#: src/components/git-diff-view.tsx
 msgid "Unstaged"
 msgstr "Chưa staged"
 

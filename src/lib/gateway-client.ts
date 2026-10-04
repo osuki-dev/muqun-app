@@ -93,6 +93,15 @@ import {
   type PaneApprovalState,
 } from './pane-approval';
 import { agentEventsFromResponse, type AgentEvent } from './away-digest';
+import {
+  parseAgentVcsDiscard,
+  parseAgentVcsFilePatch,
+  parseAgentVcsFiles,
+  type AgentVcsDiscard,
+  type AgentVcsFilePatch,
+  type AgentVcsFiles,
+  type VcsFilesMode,
+} from './agent-protocol';
 // Re-exported further down as well; `export … from` binds nothing in this
 // module, and the three loaders below parse their answers with these.
 import {
@@ -1813,6 +1822,100 @@ export async function loadGitFileDiff(
   );
   if (!response.ok) throw new Error(`HTTP ${response.status}: ${await response.text()}`);
   return gitDiffPageFromResponse(await response.json(), path);
+}
+
+function paneVcsUrl(sessionId: string, paneId: string, rest: string): string {
+  return gatewayUrl(
+    `/api/sessions/${encodeURIComponent(sessionId)}/panes/${encodeURIComponent(paneId)}/vcs/${rest}`
+  );
+}
+
+/** The `data` of the gateway's envelope, or the body when it has none. */
+function paneEnvelopeData(json: unknown): unknown {
+  if (json && typeof json === 'object' && !Array.isArray(json) && 'data' in json) {
+    return (json as { data: unknown }).data;
+  }
+  return json;
+}
+
+/**
+ * The pane's changed files, without their patches (`pane_vcs_files`): the
+ * agent route `…/vcs/files`, asked of a terminal pane's directory.
+ *
+ * `null` means this route gave no usable answer -- a refusal, an older
+ * gateway, a body that is not a listing -- and is the sheet's cue to fall
+ * back to `…/git/status`, which every `git_diff` gateway answers. A pane that
+ * is gone (`404 unknown_pane`) is an answer, `reason: 'unknown_pane'`, the way
+ * the agent routes answer `workspace_missing`; outside a checkout the route
+ * answers `200` with `reason: 'not_a_repository'`.
+ */
+export async function getPaneVcsFiles(
+  sessionId: string,
+  paneId: string,
+  mode: VcsFilesMode = 'working'
+): Promise<AgentVcsFiles | null> {
+  if (isDemoActive() || !paneId) return null;
+  try {
+    const response = await gatewayFetch(paneVcsUrl(sessionId, paneId, `files?mode=${mode}`), {
+      headers: gatewayAuthHeaders(),
+    });
+    if (response.status === 404 && /"unknown_pane"/.test(await response.text())) {
+      // The pane is gone: an answer, not a failure, and `…/git/status` would
+      // only say the same thing less clearly.
+      return { files: [], mode, truncated: false, reason: 'unknown_pane' };
+    }
+    if (!response.ok) return null;
+    return parseAgentVcsFiles(paneEnvelopeData(await response.json()));
+  } catch {
+    return null;
+  }
+}
+
+/** One file's patch at `context` lines (`pane_vcs_files`). Throws when there is none to show. */
+export async function getPaneVcsFile(
+  sessionId: string,
+  paneId: string,
+  options: { mode: VcsFilesMode; path: string; context: number }
+): Promise<AgentVcsFilePatch> {
+  // Assembled by hand: React Native's URLSearchParams shim is only a partial one.
+  const query = [
+    `mode=${options.mode}`,
+    `path=${encodeURIComponent(options.path)}`,
+    `context=${Math.max(0, Math.round(options.context))}`,
+  ].join('&');
+  const response = await gatewayFetch(paneVcsUrl(sessionId, paneId, `file?${query}`), {
+    headers: gatewayAuthHeaders(),
+  });
+  if (!response.ok) throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+  const patch = parseAgentVcsFilePatch(paneEnvelopeData(await response.json()));
+  if (!patch) throw new Error(`Failed to load the patch for ${options.path}`);
+  return patch;
+}
+
+/**
+ * Throw away one file's uncommitted changes in the pane's checkout
+ * (`pane_vcs_files`): a tracked file is restored, an untracked one deleted.
+ * Irreversible; the sheet asks first. A refusal throws `HTTP <status>: <body>`,
+ * which `agentRequestErrorDetail` reads the gateway's code and sentence from.
+ */
+export async function discardPaneVcsFile(
+  sessionId: string,
+  paneId: string,
+  path: string
+): Promise<AgentVcsDiscard> {
+  const response = await gatewayFetch(paneVcsUrl(sessionId, paneId, 'discard'), {
+    method: 'POST',
+    headers: { ...gatewayAuthHeaders(), 'Content-Type': 'application/json' },
+    body: JSON.stringify({ path }),
+  });
+  if (!response.ok) throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+  let data: unknown = null;
+  try {
+    data = paneEnvelopeData(await response.json());
+  } catch {
+    // `204 No Content` is a legitimate answer.
+  }
+  return parseAgentVcsDiscard(data) ?? { path, action: 'restored' };
 }
 
 /**
