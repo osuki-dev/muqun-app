@@ -2380,6 +2380,7 @@ msgstr "Los geht's"
 msgid "Git status"
 msgstr "Git-Status"
 
+#: src/app/agent.tsx
 #: src/components/screen-header.tsx
 msgid "Go back"
 msgstr "Zurück"

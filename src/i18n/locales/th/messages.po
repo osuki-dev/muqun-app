@@ -2380,6 +2380,7 @@ msgstr "เริ่มต้นใช้งาน"
 msgid "Git status"
 msgstr "สถานะ Git"
 
+#: src/app/agent.tsx
 #: src/components/screen-header.tsx
 msgid "Go back"
 msgstr "ย้อนกลับ"

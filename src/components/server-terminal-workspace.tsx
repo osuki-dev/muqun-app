@@ -69,6 +69,7 @@ import { AttachmentStrip } from '@/components/attachment-strip';
 import { AwayDigestCard } from '@/components/away-digest-card';
 import { featureFlags } from '@/constants/feature-flags';
 import { CollaborationNotice } from '@/components/collaboration-notice';
+import { DETAIL_HEADER_HEIGHT } from '@/components/detail-header';
 import { EdgeFade } from '@/components/edge-fade';
 import { FileMentionPanel } from '@/components/file-mention-panel';
 import { GlassChrome } from '@/components/glass-chrome';
@@ -5275,7 +5276,7 @@ export function ServerTerminalWorkspace({
                             serverId={serverId}
                             sessionId={data.sessionId}
                             visible={!overviewVisible}
-                            topInset={insets.top + NAV_HEADER_TOP_GAP + 54}
+                            topInset={insets.top + DETAIL_HEADER_HEIGHT}
                             bottomInset={insets.bottom}
                           />
                         )
@@ -5290,7 +5291,7 @@ export function ServerTerminalWorkspace({
                           // this pane. Until it has, an empty transcript is a question
                           // in flight rather than an empty pane.
                           awaitingFirstParts={!partsForPane.answered}
-                          topInset={insets.top + NAV_HEADER_TOP_GAP + 54}
+                          topInset={insets.top + DETAIL_HEADER_HEIGHT}
                           bottomInset={composerVisible ? composerHeight : 0}
                           canLoadEarlier={canLoadEarlierParts}
                           loadingEarlier={loadingEarlierParts}
@@ -5325,7 +5326,7 @@ export function ServerTerminalWorkspace({
                           // on the surface rather than on "is an editor": an agent
                           // paints the whole screen too, and keying this on the editor
                           // predicate is what slid an agent's output under the pill.
-                          topInset={paneOwnsScreen ? insets.top + NAV_HEADER_TOP_GAP + 54 : 0}
+                          topInset={paneOwnsScreen ? insets.top + DETAIL_HEADER_HEIGHT : 0}
                           // How many rows of the window are the live screen, so the
                           // grid can rest an editor on the screen rather than on the
                           // oldest frame of the ring-buffer history above it.
@@ -5502,7 +5503,7 @@ export function ServerTerminalWorkspace({
                   keyboardOffset={keyboardOffset}
                   // The floating header is chrome the cluster must not disappear
                   // behind: the same clearance the grid itself takes above.
-                  topInset={insets.top + NAV_HEADER_TOP_GAP + 54}
+                  topInset={insets.top + DETAIL_HEADER_HEIGHT}
                   bottomInset={insets.bottom}
                   disabled={!targetReady || connection.phase !== 'connected' || !selectedPane}>
                   {editorPanelBody}

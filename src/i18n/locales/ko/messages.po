@@ -2380,6 +2380,7 @@ msgstr "시작하기"
 msgid "Git status"
 msgstr "Git 상태"
 
+#: src/app/agent.tsx
 #: src/components/screen-header.tsx
 msgid "Go back"
 msgstr "뒤로 가기"
