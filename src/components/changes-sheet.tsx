@@ -13,6 +13,7 @@ import { DiffRowList } from '@/components/diff-rows';
 import { usePaneChatColors } from '@/components/pane-chat-blocks';
 import { PressableScale } from '@/components/pressable-scale';
 import { SheetScene, SheetSceneQuietControl, SHEET_LADDER } from '@/components/sheet-scene';
+import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { patchStateFromText } from '@/lib/agent-diff-rows';
 import type { VcsFilesMode } from '@/lib/agent-protocol';
 import { agentRequestErrorDetail, isAgentOfflineError } from '@/lib/agent-request-error';
@@ -108,6 +109,7 @@ export const ChangesSheet = memo(function ChangesSheet({
 }: ChangesSheetProps) {
   const { t } = useLingui();
   const theme = useThemeTokens();
+  const surfaceBackground = useSurfaceBackground();
   const colors = usePaneChatColors();
 
   const [loading, setLoading] = useState(false);
@@ -728,14 +730,13 @@ export const ChangesSheet = memo(function ChangesSheet({
         <DiffRowList
           rows={rows}
           colors={colors}
-          // Both opaque, not through the artwork-opacity slider: the gutter is
-          // pinned over code panning sideways under it, and an open file's
-          // header over its own patch scrolling up; a see-through band shows
-          // that code behind the line numbers or the file name.
-          // Opacity audit: legibility -- the pinned gutter and file header sit
-          // over moving code and must hide it whatever the slider says.
+          // The gutter stays opaque, not through the artwork-opacity slider:
+          // it is pinned over code panning sideways under it, and a
+          // see-through column shows that code behind the line numbers.
+          // Opacity audit: legibility -- the gutter sits over moving code and
+          // must hide it whatever the slider says.
           gutterFill={theme.colors.surface}
-          headerFill={theme.colors.surface}
+          headerFill={surfaceBackground(theme.colors.surface)}
           surfaceFill="transparent"
           // One list of changes against `HEAD`, not a staged/unstaged split.
           showSide={false}
