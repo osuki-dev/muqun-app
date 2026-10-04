@@ -186,6 +186,7 @@ import {
   type PaneComposer,
   type PaneShortcuts,
   type SessionAsset,
+  type SessionsResponse,
 } from '@/lib/gateway-client';
 import { ComposerPopup } from '@/components/composer-popup';
 import { useComposerPopup } from '@/hooks/use-composer-popup';
@@ -272,6 +273,11 @@ import {
   type SessionChoice,
 } from '@/lib/session-switcher';
 import { loadWorkspaceSnapshot } from '@/lib/workspace-snapshot';
+import {
+  terminalBackendRows,
+  terminalBackendState,
+  type TerminalBackendState,
+} from '@/lib/terminal-backend-state';
 import { initialSelection, reconcileSelection, type Selection } from '@/lib/workspace-selection';
 import { useAppActive } from '@/hooks/use-app-active';
 import { useServerAgents } from '@/stores/server-agents';
@@ -961,6 +967,11 @@ export function ServerTerminalWorkspace({
    * what the reader was last reading here. They are ranked in that order below.
    */
   const [sessions, setSessions] = useState<SessionChoice[]>([]);
+  // Every configured session, the disconnected ones too: `sessions` above is
+  // only what can be switched to, so it cannot say *why* it is empty.
+  const [backendSessions, setBackendSessions] = useState<NonNullable<SessionsResponse['sessions']>>(
+    []
+  );
   const [chosenSessionId, setChosenSessionId] = useState<string | null>(null);
   const sessionPick = useServerSession((state) => state.pick);
   const clearSessionPick = useServerSession((state) => state.clearPick);
@@ -1527,6 +1538,7 @@ export function ServerTerminalWorkspace({
     // on the same server -- which is why they are cleared here rather than in
     // `resetSessionState`.
     setSessions([]);
+    setBackendSessions([]);
     setChosenSessionId(null);
   }, [resetSessionState, selectedServer, serverId]);
 
@@ -1566,12 +1578,16 @@ export function ServerTerminalWorkspace({
                 previous?.serverId === serverId && previous.preference === preferredSessionId
                   ? previous.sessionId
                   : preferredSessionId;
-              const { snapshot: next, choices } = await loadWorkspaceSnapshot(
-                stablePreference,
-                health
-              );
+              const {
+                snapshot: next,
+                choices,
+                allSessions,
+              } = await loadWorkspaceSnapshot(stablePreference, health);
               if (!isCurrentRequest()) return null;
               setSessions((current) => (sameSessionChoices(current, choices) ? current : choices));
+              setBackendSessions((current) =>
+                JSON.stringify(current) === JSON.stringify(allSessions) ? current : allSessions
+              );
               const { sessionId } = next;
               resolvedSessionRef.current = { serverId, preference: preferredSessionId, sessionId };
               healthRef.current = next.health;
@@ -1649,6 +1665,7 @@ export function ServerTerminalWorkspace({
       t,
       setSelection,
       setSessions,
+      setBackendSessions,
       setSnapshotGeneration,
       setData,
     ]
@@ -2314,6 +2331,20 @@ export function ServerTerminalWorkspace({
   useAgentsDiscoveryRefresh(serverId, ready && connection.phase === 'connected');
   const terminalPlane = useAgents((state) => state.index.servers[serverId]?.terminal ?? null);
   const backendVocabulary = vocabularyForSession(terminalPlane, data.sessionId);
+  // A gateway with no terminal backend running answers with an empty session
+  // rather than an error, and a pane never arrives on its own -- so without
+  // this the canvas's loader spun forever (iOS pass, finding 1).
+  const backendState = useMemo(
+    () =>
+      terminalBackendState({
+        loaded: hasLoadedData,
+        paneCount: data.panes.length,
+        backends: terminalBackendRows(backendSessions, terminalPlane),
+        plane: terminalPlane,
+        sessionId: data.sessionId,
+      }),
+    [backendSessions, data.panes.length, data.sessionId, hasLoadedData, terminalPlane]
+  );
   // Narrowed by the pane's own answer: tmux can speak extended keys and the
   // program in this pane may still not have asked for them.
   const paneExtended = shortcuts?.keyboard?.extended;
@@ -5148,6 +5179,11 @@ export function ServerTerminalWorkspace({
                           </Text>
                         </PressableScale>
                       </View>
+                    ) : backendState.kind === 'down' ? (
+                      <TerminalBackendDown
+                        state={backendState}
+                        onRetry={() => void refreshData(false)}
+                      />
                     ) : targetPending ? (
                       <View style={styles.missingTargetState}>
                         <Spinner size="sm" color={theme.colors.textMuted} />
@@ -5977,6 +6013,63 @@ function TerminalKeyButton({
   );
 }
 
+/**
+ * The terminal plane is up at the gateway but no backend behind it is running.
+ * Says so, with the gateway's own sentence for the backend and the list of
+ * backends it is configured with, instead of a loader that never ends.
+ */
+function TerminalBackendDown({
+  state,
+  onRetry,
+}: {
+  state: Extract<TerminalBackendState, { kind: 'down' }>;
+  onRetry: () => void;
+}) {
+  const { t } = useLingui();
+  const theme = useThemeTokens();
+  const surfaceBackground = useSurfaceBackground();
+  return (
+    <View style={styles.missingTargetState} testID="terminal-backend-down">
+      <Text variant="heading">
+        <Trans>Terminal unavailable</Trans>
+      </Text>
+      <Text variant="bodySmall" color={theme.colors.textMuted} style={styles.backendDownText}>
+        {state.message}
+      </Text>
+      {state.backends.map((backend) => (
+        <View
+          key={backend.sessionId}
+          style={styles.backendDownRow}
+          accessible
+          accessibilityLabel={`${backend.label}, ${backend.kind}, ${
+            backend.connected ? t`Connected` : t`Not connected`
+          }`}>
+          <StatusDot
+            color={backend.connected ? theme.colors.success : theme.colors.warning}
+            filled
+            size={7}
+          />
+          <Text variant="caption" color={theme.colors.textMuted}>
+            {`${backend.label} · ${backend.kind}`}
+          </Text>
+        </View>
+      ))}
+      <PressableScale
+        accessibilityRole="button"
+        accessibilityLabel={t`Retry connection`}
+        onPress={onRetry}
+        style={[
+          styles.missingTargetButton,
+          { backgroundColor: surfaceBackground(theme.colors.primarySubtle) },
+        ]}>
+        <Text variant="label" color={theme.colors.primary}>
+          <Trans>Retry</Trans>
+        </Text>
+      </PressableScale>
+    </View>
+  );
+}
+
 function ConnectionNotice({
   status,
   onRetry,
@@ -6250,6 +6343,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 10,
     padding: 24,
+  },
+  backendDownText: {
+    textAlign: 'center',
+  },
+  backendDownRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 6,
   },
   missingTargetButton: {
     alignItems: 'center',

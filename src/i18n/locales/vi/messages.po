@@ -1197,6 +1197,7 @@ msgstr "Kết nối"
 #: src/app/explore.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/components/session-map.tsx
+#: src/hooks/use-home-commands.ts
 msgid "Connected"
 msgstr "Đã kết nối"
 
@@ -3242,6 +3243,8 @@ msgstr "Không khả dụng"
 msgid "not connected"
 msgstr "chưa kết nối"
 
+#: src/components/server-terminal-workspace.tsx
+#: src/hooks/use-home-commands.ts
 #: src/i18n/labels.ts
 msgid "Not connected"
 msgstr "Chưa kết nối"

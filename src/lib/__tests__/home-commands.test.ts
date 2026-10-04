@@ -754,3 +754,20 @@ describe('agents on a new session', () => {
     ]);
   });
 });
+
+describe('new terminal with no backend running', () => {
+  test('reports the backend explanation instead of a bare refusal', async () => {
+    const backendDown = {
+      message: 'Muqun Gateway cannot reach tmux on this server.',
+      backends: [{ sessionId: 'default', label: 'b0', kind: 'tmux', connected: false }],
+    };
+    const adapter = ports({
+      loadTerminalSelection: async () => ({ sessionId: '', choices: [], backendDown }),
+    });
+    const controller = createHomeCommandController(adapter);
+    const result = await controller.dispatch({ type: 'new-terminal', serverId: 'server-a' });
+    expect(result.status).toBe('unavailable');
+    if (result.status === 'unavailable') expect(result.backendDown).toEqual(backendDown);
+    expect(adapter.navigations).toEqual([]);
+  });
+});

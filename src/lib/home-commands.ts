@@ -1,4 +1,5 @@
 import { homeTargetKey, type HomeTarget } from '@/lib/home-recents';
+import type { TerminalBackendState } from '@/lib/terminal-backend-state';
 import type { AgentReadiness } from '@/lib/home-agent-readiness';
 import { homeWorkspaceHandoffStore } from '@/lib/home-workspace-handoff';
 import { DEMO_SSH_HOST_ID } from '@/lib/demo-ssh-transcript';
@@ -66,12 +67,19 @@ export type HomeSessionChoice = {
   kind: string;
 };
 
+type TerminalBackendDown = Omit<Extract<TerminalBackendState, { kind: 'down' }>, 'kind'>;
+
 export type HomeTerminalSelection = {
   /** The session the existing panels route should load first. */
   sessionId: string;
   /** The gateway's complete session choices for its explicit picker rail. */
   choices: readonly HomeSessionChoice[];
   label?: string;
+  /**
+   * Set when the gateway has terminal sessions configured but none of their
+   * backends is running: why `choices` is empty, in the workspace's own words.
+   */
+  backendDown?: TerminalBackendDown;
 };
 
 export type HomeNavigation =
@@ -160,7 +168,12 @@ export type HomeCommandResult =
   | { status: 'duplicate'; operationId: number }
   | { status: 'superseded'; operationId: number }
   | { status: 'missing-target'; operationId: number; target: string }
-  | { status: 'unavailable'; operationId: number; message: string }
+  | {
+      status: 'unavailable';
+      operationId: number;
+      message: string;
+      backendDown?: TerminalBackendDown;
+    }
   | { status: 'setup-required'; operationId: number; readiness: AgentReadiness }
   | { status: 'failed'; operationId: number; message: string };
 
@@ -248,9 +261,18 @@ export function createHomeCommandController(ports: HomeCommandPorts) {
     return { status: 'missing-target', operationId: operation.id, target };
   }
 
-  function unavailable(operation: PendingOperation, message: string): HomeCommandResult {
+  function unavailable(
+    operation: PendingOperation,
+    message: string,
+    backendDown?: TerminalBackendDown
+  ): HomeCommandResult {
     finish(operation);
-    return { status: 'unavailable', operationId: operation.id, message };
+    return {
+      status: 'unavailable',
+      operationId: operation.id,
+      message,
+      ...(backendDown ? { backendDown } : {}),
+    };
   }
 
   function setupRequired(
@@ -420,7 +442,11 @@ export function createHomeCommandController(ports: HomeCommandPorts) {
             return superseded(operation);
           if (!terminal) return unavailable(operation, 'This server has no terminal session.');
           if (!terminal.sessionId || terminal.choices.length === 0)
-            return unavailable(operation, 'This server has no terminal session.');
+            return unavailable(
+              operation,
+              'This server has no terminal session.',
+              terminal.backendDown
+            );
           ports.navigate({
             type: 'panels',
             serverId: command.serverId,
