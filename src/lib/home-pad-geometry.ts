@@ -79,3 +79,43 @@ export function padWordmarkFontSize({
     (paneHeight - reservedHeight) / (PAD_COVER_TITLE_LINE_HEIGHT + PAD_WORDMARK_DESCENDER);
   return Math.max(48, Math.min(byWidth, byHeight));
 }
+
+/**
+ * How much taller than wide the cover column must be before a pack's artwork
+ * cover counts as portrait. A Pad in portrait gives a column about twice as
+ * tall as wide; in landscape it is about square.
+ */
+export const PAD_PORTRAIT_COVER_RATIO = 1.25;
+
+/**
+ * Where the first-run pair card stands on the Pad cover.
+ *
+ * - `centred`: in the open under the cover title, vertically centred in what
+ *   the title leaves. Always on the wordmark cover; on a pack's artwork cover
+ *   only in portrait, where a card at the foot leaves the middle of a tall
+ *   column as empty paper. The artwork stays anchored at the foot behind it.
+ * - `dock`: at the column's foot. Every paired cover (that is the New-session
+ *   dock), the artwork cover in landscape, where the card stands beside the
+ *   figure, and the small identity cover.
+ *
+ * `paneHeight` is 0 until the column has been measured, which reads as
+ * landscape so an unmeasured artwork cover keeps its dock.
+ */
+export function padFirstRunPlacement({
+  coverKind,
+  firstRun,
+  coverWidth,
+  paneHeight,
+}: {
+  coverKind: PadCoverKind;
+  firstRun: boolean;
+  coverWidth: number;
+  paneHeight: number;
+}): 'centred' | 'dock' {
+  if (!firstRun) return 'dock';
+  if (coverKind === 'wordmark') return 'centred';
+  if (coverKind === 'artwork' && coverWidth > 0) {
+    return paneHeight >= coverWidth * PAD_PORTRAIT_COVER_RATIO ? 'centred' : 'dock';
+  }
+  return 'dock';
+}
