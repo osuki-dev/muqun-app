@@ -227,6 +227,7 @@ import {
 import {
   hasEarlierPaneParts,
   hasEarlierPartsAfterPage,
+  panePartsRefreshKey,
   paneTranscriptRows,
   reconcilePaneParts,
 } from '@/lib/pane-parts';
@@ -1943,10 +1944,9 @@ export function ServerTerminalWorkspace({
   const chatViewShown =
     chatViewChosen && ((supportsAgentSessions && isOpenCodeAgent) || !partsForPane.failed);
   const hideTerminalDock = chatViewShown && supportsAgentSessions && isOpenCodeAgent;
-  // New content for this pane, however it was noticed: the gateway's revision
-  // where there is one, and otherwise the output itself, which `setOutput`
-  // leaves untouched when nothing changed.
-  const paneContentKey = paneRevision >= 0 ? `rev:${paneRevision}` : output;
+  // New content for this pane, however it was noticed. See `panePartsRefreshKey`
+  // for why the revision alone is not enough.
+  const paneContentKey = panePartsRefreshKey(paneRevision, output);
 
   const refreshParts = useCallback(
     async (contentKey: string) => {

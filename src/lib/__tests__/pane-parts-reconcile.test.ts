@@ -13,6 +13,7 @@ import { buildPaneChatItems } from '../pane-chat';
 import {
   collapseRepeatedParts,
   panePartsFromResponse,
+  panePartsRefreshKey,
   reconcilePaneParts,
   type PanePart,
 } from '../pane-parts';
@@ -358,5 +359,47 @@ describe('copies that stack, and a composer frozen into history', () => {
     const collapsed = collapseRepeatedParts(parts);
     expect(texts(collapsed).filter((text) => text.includes('Waiting for 2'))).toHaveLength(4);
     expect(texts(collapsed).filter((text) => text === '❯ 再推一次')).toHaveLength(1);
+  });
+});
+
+describe('a gateway that restarted under the reader', () => {
+  // The gateway keeps history in memory, so a restart answers with one screen
+  // -- the startup screen -- which sits somewhere in the middle of what the
+  // reader was holding and shares nothing with its tail.
+  const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+  const block = (letter: string): Block => ['text', `● Block ${letter}: ${letter.repeat(12)}`];
+
+  test('a window anchored mid-history replaces what was held, with no copy of it', () => {
+    const held = reconcilePaneParts([], 0, read(letters.map(block), 400));
+    const restarted = read(['H', 'I', 'J', 'K', 'L', 'M'].map(block), 0);
+
+    const next = reconcilePaneParts(held.parts, held.offset, restarted);
+
+    expect(texts(next.parts)).toEqual(texts(restarted));
+    expect(new Set(next.parts.map((part) => part.id)).size).toBe(next.parts.length);
+  });
+
+  test('a window sharing nothing with what was held replaces it too', () => {
+    const held = reconcilePaneParts([], 0, read(letters.slice(0, 10).map(block), 0));
+    const fresh = read([W2, IOS_DONE, MAC_GATEWAY], 0);
+
+    expect(texts(reconcilePaneParts(held.parts, held.offset, fresh).parts)).toEqual(texts(fresh));
+  });
+});
+
+describe('when the transcript is read again', () => {
+  test('new output re-reads even when the pane revision never moves', () => {
+    // Herdr's pane revision counts metadata: 4 for hours on a busy Claude pane.
+    const before = panePartsRefreshKey(4, '● one\n✻ Swirling… (1m 22s)');
+    const after = panePartsRefreshKey(4, '● one\n✻ Swirling… (1m 23s)');
+
+    expect(after).not.toBe(before);
+  });
+
+  test('nothing new is the same key, and a revision change alone still re-reads', () => {
+    const output = '● one\n● two';
+
+    expect(panePartsRefreshKey(4, output)).toBe(panePartsRefreshKey(4, output));
+    expect(panePartsRefreshKey(5, output)).not.toBe(panePartsRefreshKey(4, output));
   });
 });

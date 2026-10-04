@@ -595,6 +595,30 @@ export function collapseRepeatedParts(incoming: readonly PanePart[]): PanePart[]
   return kept.length === incoming.length ? (incoming as PanePart[]) : kept;
 }
 
+/** How much of the window's tail stands for its content in {@link panePartsRefreshKey}. */
+const REFRESH_KEY_TAIL = 2048;
+
+/**
+ * What decides that a pane's transcript has to be read again.
+ *
+ * This was the pane's `revision` wherever there was one, and the window
+ * otherwise -- on the assumption that the revision counts content. It does not:
+ * the `revision` on a Herdr pane counts the pane's *metadata* (title, agent
+ * status). Measured on the owner's Claude pane `w17:p1`: revision 4 for hours
+ * while the screen changed on every poll, and Herdr's own read revision is 0 on
+ * every read. Keyed on that, the chat view read the transcript once and then
+ * held it, so a reader kept looking at whatever the pane showed when they
+ * opened it -- a screen frozen mid-turn, with the old gateway's duplicates in
+ * it, long after the gateway had moved on (and been restarted).
+ *
+ * So the window's own content is always part of the key: its length and its
+ * tail, which is where a pane changes -- new output, the spinner, the timer.
+ * The revision stays in it, so a change of title or status still reads again.
+ */
+export function panePartsRefreshKey(revision: number, output: string): string {
+  return `rev:${revision}|${output.length}|${output.slice(-REFRESH_KEY_TAIL)}`;
+}
+
 /** A transcript whose ids are stable across reads, and the shift that made them so. */
 export interface ReconciledPaneParts {
   parts: PanePart[];
