@@ -112,6 +112,8 @@ export interface AgentToolCardProps {
   onOpenFile?: (file: { uri: string; mime?: string; name?: string }) => void;
   /** The virtualised changes viewer, for a patch too big to draw in a cell. */
   onOpenFullDiff?: (path?: string) => void;
+  /** The whole call in its own sheet; the header opens it. */
+  onOpenDetail?: () => void;
 }
 
 // ---------------------------------------------------------------------------
@@ -335,6 +337,7 @@ const PatchBody = memo(function PatchBody({
       colors={colors}
       gutterFill={theme.colors.surface}
       headerFill={theme.colors.surface}
+      onGrid
       {...(onOpenFullDiff ? { onOpenFullDiff } : {})}
     />
   );
@@ -353,6 +356,7 @@ export const AgentToolCard = memo(function AgentToolCard({
   onPreviewImage,
   onOpenFile,
   onOpenFullDiff,
+  onOpenDetail,
 }: AgentToolCardProps) {
   const { t } = useLingui();
   const theme = useThemeTokens();
@@ -790,6 +794,7 @@ export const AgentToolCard = memo(function AgentToolCard({
       truncated={truncated}
       {...(errorLine ? { error: errorLine } : {})}
       background={detached}
+      {...(onOpenDetail ? { onOpenDetail } : {})}
       chips={chips}
       actions={actions}
       // An edit's diff and a read's images are the content, not a detail
@@ -1120,6 +1125,7 @@ const EditDiffs = memo(function EditDiffs({
       gutterFill={theme.colors.surface}
       headerFill={theme.colors.surface}
       onToggleFile={toggle}
+      onGrid
       {...(onOpenFullDiff ? { onOpenFullDiff } : {})}
     />
   );

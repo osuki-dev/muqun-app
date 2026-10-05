@@ -892,6 +892,7 @@ msgid "Cancel this queued message"
 msgstr "대기 중인 이 메시지 취소"
 
 #: src/components/ssh-terminal-workspace.tsx
+#: src/components/tool-call-detail-sheet.tsx
 msgid "Cancelled"
 msgstr "취소됨"
 
@@ -1182,6 +1183,10 @@ msgstr "압축에 실패했습니다 — 탭하여 닫기"
 msgid "Compared with {base}"
 msgstr "{base}와(과) 비교"
 
+#: src/components/tool-call-detail-sheet.tsx
+msgid "Completed"
+msgstr "완료됨"
+
 #: src/components/settings-storage.tsx
 msgid "Confirm clear cache"
 msgstr "캐시 비우기 확인"
@@ -1431,6 +1436,7 @@ msgstr "대화형 도움말과 프로젝트에 대한 자유로운 질문"
 #: src/components/agent-message-block.tsx
 #: src/components/asset-viewer.tsx
 #: src/components/bounded-markdown.tsx
+#: src/components/tool-call-detail-sheet.tsx
 msgid "Copied"
 msgstr "복사됨"
 
@@ -1453,9 +1459,17 @@ msgstr "복사합니다. 터미널에 바로 붙여넣을 수 있습니다"
 msgid "Copy"
 msgstr "복사"
 
+#: src/components/tool-call-detail-sheet.tsx
+msgid "Copy input"
+msgstr "입력 복사"
+
 #: src/components/agent-message-block.tsx
 msgid "Copy message"
 msgstr "메시지 복사"
+
+#: src/components/tool-call-detail-sheet.tsx
+msgid "Copy output"
+msgstr "출력 복사"
 
 #: src/components/asset-viewer.tsx
 msgid "Copy path"
@@ -1902,6 +1916,7 @@ msgid "Demo workspace"
 msgstr "데모 워크스페이스"
 
 #: src/components/agent-tool-card.tsx
+#: src/components/tool-call-code-rows.tsx
 msgid "Denied by you"
 msgstr "사용자가 거부함"
 
@@ -2196,6 +2211,10 @@ msgstr "색상 내보내기"
 #: src/components/custom-theme-library.tsx
 msgid "Export theme"
 msgstr "테마 내보내기"
+
+#: src/components/tool-call-detail-sheet.tsx
+msgid "Failed"
+msgstr "실패"
 
 #. placeholder {0}: status.code
 #: src/components/ssh-terminal-workspace.tsx
@@ -2560,8 +2579,13 @@ msgid "Increase {label}"
 msgstr "{label} 높이기"
 
 #: src/components/agent-context-sheet.tsx
+#: src/components/tool-call-code-rows.tsx
 msgid "Input"
 msgstr "입력"
+
+#: src/components/tool-call-detail-sheet.tsx
+msgid "Input copied to clipboard"
+msgstr "입력을 클립보드에 복사했습니다"
 
 #. placeholder {0}: row.label
 #: src/components/composer-popup.tsx
@@ -3191,6 +3215,10 @@ msgstr "이 호스트에는 무료 모델이 없습니다"
 msgid "No Gateway yet?"
 msgstr "아직 Gateway가 없나요?"
 
+#: src/components/tool-call-code-rows.tsx
+msgid "No input"
+msgstr "입력 없음"
+
 #: src/app/commands.tsx
 msgid "No matching commands. Try another word."
 msgstr "일치하는 명령이 없습니다. 다른 단어로 검색하세요"
@@ -3207,6 +3235,10 @@ msgstr "이 호스트에는 모델이 없습니다"
 #: src/components/agent-assignment-bar.tsx
 msgid "No other assistants in this session yet."
 msgstr "이 세션에 아직 다른 어시스턴트가 없습니다"
+
+#: src/components/tool-call-code-rows.tsx
+msgid "No output"
+msgstr "출력 없음"
 
 #: src/components/agent-background-tray.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
@@ -3476,6 +3508,10 @@ msgstr "그래도 열기"
 msgid "Open as a project"
 msgstr "프로젝트로 열기"
 
+#: src/components/tool-call-detail-sheet.tsx
+msgid "Open as file"
+msgstr "파일로 열기"
+
 #: src/components/agent-message-block.tsx
 msgid "Open attachment"
 msgstr "첨부 파일 열기"
@@ -3587,6 +3623,10 @@ msgstr "이 경로 열기"
 msgid "Open to check the current state"
 msgstr "열어서 현재 상태를 확인하세요"
 
+#: src/components/embedded-terminal-tool-block.tsx
+msgid "Open tool call details"
+msgstr "도구 호출 세부 정보 열기"
+
 #. placeholder {0}: workspace.title
 #: src/components/session-map.tsx
 msgid "Open workspace {0}, {panelCount, plural, one {# running} other {# running}}. Long press to close."
@@ -3644,8 +3684,13 @@ msgid "Other"
 msgstr "기타"
 
 #: src/components/agent-context-sheet.tsx
+#: src/components/tool-call-code-rows.tsx
 msgid "Output"
 msgstr "출력"
+
+#: src/components/tool-call-detail-sheet.tsx
+msgid "Output copied to clipboard"
+msgstr "출력을 클립보드에 복사했습니다"
 
 #: src/components/home-launch-actions.tsx
 msgid "Pair a gateway"
@@ -4307,6 +4352,7 @@ msgid "Run the Gateway on your machine and scan the QR code it prints. The pairi
 msgstr "내 컴퓨터에서 Gateway를 실행하고 화면에 출력된 QR 코드를 스캔하세요. 페어링 정보는 이 기기에만 남습니다"
 
 #: src/components/agent-session-tree-sheet.tsx
+#: src/components/tool-call-detail-sheet.tsx
 #: src/i18n/labels.ts
 msgid "Running"
 msgstr "실행 중"
@@ -4969,6 +5015,10 @@ msgstr "개입 (Steer)"
 #: src/components/agent-composer.tsx
 msgid "Steer running agent"
 msgstr "실행 중인 에이전트에 실시간 개입"
+
+#: src/components/tool-call-code-rows.tsx
+msgid "Still arriving"
+msgstr "수신 중"
 
 #: src/components/pane-chat-blocks.tsx
 msgid "Still running…"
@@ -5665,6 +5715,10 @@ msgstr "이 터미널은 삭제되었습니다. 계속하려면 다른 터미널
 msgid "This theme contains images that must be installed before applying"
 msgstr "이 테마에는 이미지가 포함되어 있어 적용 전에 이미지를 설치해야 해요"
 
+#: src/components/tool-call-detail-sheet.tsx
+msgid "This tool call is no longer available."
+msgstr "이 도구 호출은 더 이상 사용할 수 없습니다"
+
 #: src/components/session-map.tsx
 msgid "This workspace has no groups yet."
 msgstr "이 작업 공간에는 아직 그룹이 없습니다"
@@ -5682,6 +5736,7 @@ msgid "Through {host}"
 msgstr "{host} 경유"
 
 #: src/components/agent-tool-card.tsx
+#: src/components/tool-call-code-rows.tsx
 msgid "timed out"
 msgstr "시간 초과"
 
@@ -5706,12 +5761,17 @@ msgstr "너무 커서 구문 강조 없이 일반 텍스트로 표시합니다"
 msgid "Too many changes to list. This is the start of them, not all of them."
 msgstr "변경 사항이 너무 많아 모두 나열할 수 없습니다. 전체가 아니라 앞부분입니다"
 
+#: src/components/tool-call-detail-sheet.tsx
+msgid "Tool call"
+msgstr "도구 호출"
+
 #: src/components/changes-sheet.tsx
 msgid "tracking {upstream}"
 msgstr "{upstream} 추적"
 
 #: src/components/bounded-markdown.tsx
 #: src/components/embedded-terminal-tool-block.tsx
+#: src/components/tool-call-code-rows.tsx
 msgid "Truncated"
 msgstr "잘림"
 

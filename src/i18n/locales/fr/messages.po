@@ -892,6 +892,7 @@ msgid "Cancel this queued message"
 msgstr "Annuler ce message en attente"
 
 #: src/components/ssh-terminal-workspace.tsx
+#: src/components/tool-call-detail-sheet.tsx
 msgid "Cancelled"
 msgstr "Annulé"
 
@@ -1182,6 +1183,10 @@ msgstr "Échec de la compaction — touchez pour masquer"
 msgid "Compared with {base}"
 msgstr "Comparé à {base}"
 
+#: src/components/tool-call-detail-sheet.tsx
+msgid "Completed"
+msgstr "Terminé"
+
 #: src/components/settings-storage.tsx
 msgid "Confirm clear cache"
 msgstr "Confirmer le vidage du cache"
@@ -1431,6 +1436,7 @@ msgstr "Aide conversationnelle et questions ouvertes sur le projet"
 #: src/components/agent-message-block.tsx
 #: src/components/asset-viewer.tsx
 #: src/components/bounded-markdown.tsx
+#: src/components/tool-call-detail-sheet.tsx
 msgid "Copied"
 msgstr "Copié"
 
@@ -1453,9 +1459,17 @@ msgstr "La copie, prête à coller dans un terminal"
 msgid "Copy"
 msgstr "Copier"
 
+#: src/components/tool-call-detail-sheet.tsx
+msgid "Copy input"
+msgstr "Copier l’entrée"
+
 #: src/components/agent-message-block.tsx
 msgid "Copy message"
 msgstr "Copier le message"
+
+#: src/components/tool-call-detail-sheet.tsx
+msgid "Copy output"
+msgstr "Copier la sortie"
 
 #: src/components/asset-viewer.tsx
 msgid "Copy path"
@@ -1902,6 +1916,7 @@ msgid "Demo workspace"
 msgstr "Espace de travail de démo"
 
 #: src/components/agent-tool-card.tsx
+#: src/components/tool-call-code-rows.tsx
 msgid "Denied by you"
 msgstr "Refusé par toi"
 
@@ -2196,6 +2211,10 @@ msgstr "Exporter les couleurs"
 #: src/components/custom-theme-library.tsx
 msgid "Export theme"
 msgstr "Exporter le thème"
+
+#: src/components/tool-call-detail-sheet.tsx
+msgid "Failed"
+msgstr "Échec"
 
 #. placeholder {0}: status.code
 #: src/components/ssh-terminal-workspace.tsx
@@ -2560,8 +2579,13 @@ msgid "Increase {label}"
 msgstr "Augmenter {label}"
 
 #: src/components/agent-context-sheet.tsx
+#: src/components/tool-call-code-rows.tsx
 msgid "Input"
 msgstr "Entrée"
+
+#: src/components/tool-call-detail-sheet.tsx
+msgid "Input copied to clipboard"
+msgstr "Entrée copiée dans le presse-papiers"
 
 #. placeholder {0}: row.label
 #: src/components/composer-popup.tsx
@@ -3191,6 +3215,10 @@ msgstr "Aucun modèle gratuit sur cet hôte"
 msgid "No Gateway yet?"
 msgstr "Pas encore de Gateway ?"
 
+#: src/components/tool-call-code-rows.tsx
+msgid "No input"
+msgstr "Aucune entrée"
+
 #: src/app/commands.tsx
 msgid "No matching commands. Try another word."
 msgstr "Aucune commande correspondante. Essayez un autre mot"
@@ -3207,6 +3235,10 @@ msgstr "Aucun modèle sur cet hôte"
 #: src/components/agent-assignment-bar.tsx
 msgid "No other assistants in this session yet."
 msgstr "Aucun autre assistant dans cette session pour l'instant"
+
+#: src/components/tool-call-code-rows.tsx
+msgid "No output"
+msgstr "Aucune sortie"
 
 #: src/components/agent-background-tray.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
@@ -3476,6 +3508,10 @@ msgstr "Ouvrir quand même"
 msgid "Open as a project"
 msgstr "Ouvrir comme projet"
 
+#: src/components/tool-call-detail-sheet.tsx
+msgid "Open as file"
+msgstr "Ouvrir comme fichier"
+
 #: src/components/agent-message-block.tsx
 msgid "Open attachment"
 msgstr "Ouvrir la pièce jointe"
@@ -3587,6 +3623,10 @@ msgstr "Ouvrir ce chemin"
 msgid "Open to check the current state"
 msgstr "Ouvrir pour vérifier l’état actuel"
 
+#: src/components/embedded-terminal-tool-block.tsx
+msgid "Open tool call details"
+msgstr "Ouvrir les détails de l’appel d’outil"
+
 #. placeholder {0}: workspace.title
 #: src/components/session-map.tsx
 msgid "Open workspace {0}, {panelCount, plural, one {# running} other {# running}}. Long press to close."
@@ -3644,8 +3684,13 @@ msgid "Other"
 msgstr "Autres"
 
 #: src/components/agent-context-sheet.tsx
+#: src/components/tool-call-code-rows.tsx
 msgid "Output"
 msgstr "Sortie"
+
+#: src/components/tool-call-detail-sheet.tsx
+msgid "Output copied to clipboard"
+msgstr "Sortie copiée dans le presse-papiers"
 
 #: src/components/home-launch-actions.tsx
 msgid "Pair a gateway"
@@ -4307,6 +4352,7 @@ msgid "Run the Gateway on your machine and scan the QR code it prints. The pairi
 msgstr "Lancez le Gateway sur votre machine et scannez le QR code qu’il affiche. L’appairage reste sur cet appareil"
 
 #: src/components/agent-session-tree-sheet.tsx
+#: src/components/tool-call-detail-sheet.tsx
 #: src/i18n/labels.ts
 msgid "Running"
 msgstr "En cours"
@@ -4969,6 +5015,10 @@ msgstr "Guider"
 #: src/components/agent-composer.tsx
 msgid "Steer running agent"
 msgstr "Guider l’agent en cours en temps réel"
+
+#: src/components/tool-call-code-rows.tsx
+msgid "Still arriving"
+msgstr "En cours de réception"
 
 #: src/components/pane-chat-blocks.tsx
 msgid "Still running…"
@@ -5665,6 +5715,10 @@ msgstr "Ce terminal a été supprimé. Choisissez un autre terminal pour continu
 msgid "This theme contains images that must be installed before applying"
 msgstr "Ce thème contient des images à installer avant de l’appliquer"
 
+#: src/components/tool-call-detail-sheet.tsx
+msgid "This tool call is no longer available."
+msgstr "Cet appel d’outil n’est plus disponible"
+
 #: src/components/session-map.tsx
 msgid "This workspace has no groups yet."
 msgstr "Cet espace de travail n'a pas encore de groupes"
@@ -5682,6 +5736,7 @@ msgid "Through {host}"
 msgstr "Via {host}"
 
 #: src/components/agent-tool-card.tsx
+#: src/components/tool-call-code-rows.tsx
 msgid "timed out"
 msgstr "délai dépassé"
 
@@ -5706,12 +5761,17 @@ msgstr "Trop volumineux pour la coloration — affiché en texte brut"
 msgid "Too many changes to list. This is the start of them, not all of them."
 msgstr "Trop de modifications à lister. Voici le début, pas la totalité"
 
+#: src/components/tool-call-detail-sheet.tsx
+msgid "Tool call"
+msgstr "Appel d’outil"
+
 #: src/components/changes-sheet.tsx
 msgid "tracking {upstream}"
 msgstr "suit {upstream}"
 
 #: src/components/bounded-markdown.tsx
 #: src/components/embedded-terminal-tool-block.tsx
+#: src/components/tool-call-code-rows.tsx
 msgid "Truncated"
 msgstr "Tronqué"
 

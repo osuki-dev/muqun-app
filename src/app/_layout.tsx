@@ -508,6 +508,10 @@ function RootContent() {
                   dangerouslySingular
                   options={sheetRouteOptions('agent-subagent-detail')}
                 />
+                <Stack.Screen
+                  name="agent-tool-detail"
+                  options={sheetRouteOptions('agent-tool-detail')}
+                />
                 <Stack.Screen name="agent-model" options={sheetRouteOptions('agent-model')} />
                 <Stack.Screen name="agent-mode" options={sheetRouteOptions('agent-mode')} />
                 <Stack.Screen

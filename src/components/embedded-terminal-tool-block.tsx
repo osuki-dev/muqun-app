@@ -37,10 +37,12 @@ import { EngineFailureText } from '@/components/engine-failure-text';
 import { ThinkingIndicator } from '@/components/agent-thinking-indicator';
 import { usePaneChatColors } from '@/components/pane-chat-blocks';
 import { useTranscriptPlate } from '@/hooks/use-transcript-plate';
+import { TRANSCRIPT_GRID } from '@/constants/transcript-grid';
 import { useMonoFontFamily } from '@/hooks/use-user-fonts';
 import { fadeIn, timing } from '@/lib/motion';
 import type { ToolCallState } from '@/lib/agent-protocol';
 import type { ToolKind } from '@/lib/agent-tool-output';
+import { formatToolDuration } from '@/lib/tool-call-detail';
 import { AGENT_TYPE } from '@/constants/agent-type';
 
 /**
@@ -99,21 +101,17 @@ export interface EmbeddedTerminalProps {
   /** Drawn when the card is expanded. */
   children?: ReactNode;
   defaultExpanded?: boolean;
+  /**
+   * The whole call in its own sheet. When given, the header opens it and the
+   * chevron alone expands the card in place.
+   */
+  onOpenDetail?: () => void;
   testID?: string;
 }
 
 /** Whether the tool is still doing something, in any of the three ways it can be. */
 export function isToolPending(status: ToolCallState): boolean {
   return status === 'pending' || status === 'streaming' || status === 'running';
-}
-
-/** `1.2s`, `340ms`, `2m 04s`: short enough to sit in a header. */
-export function formatToolDuration(ms: number): string {
-  if (ms < 1000) return `${Math.round(ms)}ms`;
-  if (ms < 60_000) return `${(ms / 1000).toFixed(ms < 10_000 ? 1 : 0)}s`;
-  const minutes = Math.floor(ms / 60_000);
-  const seconds = Math.round((ms % 60_000) / 1000);
-  return `${minutes}m ${String(seconds).padStart(2, '0')}s`;
 }
 
 export const EmbeddedTerminalToolBlock = memo(function EmbeddedTerminalToolBlock({
@@ -131,6 +129,7 @@ export const EmbeddedTerminalToolBlock = memo(function EmbeddedTerminalToolBlock
   preview,
   children,
   defaultExpanded = false,
+  onOpenDetail,
   testID,
 }: EmbeddedTerminalProps) {
   const theme = useThemeTokens();
@@ -170,12 +169,18 @@ export const EmbeddedTerminalToolBlock = memo(function EmbeddedTerminalToolBlock
       accessibilityLabel={[title, caption].filter(Boolean).join(' ') || undefined}>
       {/* Header: one line naming the tool and what it is pointed at */}
       <PressableScale
-        testID="agent-tool-toggle"
+        testID={onOpenDetail ? 'agent-tool-open-detail' : 'agent-tool-toggle'}
         accessibilityRole="button"
-        accessibilityState={{ expanded, busy: pending }}
-        accessibilityLabel={expanded ? t`Collapse tool call` : t`Expand tool call`}
-        disabled={!hasBody}
-        onPress={() => setExpanded((prev) => !prev)}
+        accessibilityState={onOpenDetail ? { busy: pending } : { expanded, busy: pending }}
+        accessibilityLabel={
+          onOpenDetail
+            ? t`Open tool call details`
+            : expanded
+              ? t`Collapse tool call`
+              : t`Expand tool call`
+        }
+        disabled={!hasBody && !onOpenDetail}
+        onPress={onOpenDetail ?? (() => setExpanded((prev) => !prev))}
         style={styles.header}>
         <View style={styles.headerIcon}>
           {createElement(TOOL_ICONS[kind], { size: 13, color: theme.colors.textMuted })}
@@ -225,7 +230,19 @@ export const EmbeddedTerminalToolBlock = memo(function EmbeddedTerminalToolBlock
             {formatToolDuration(durationMs)}
           </Text>
         ) : null}
-        {hasBody ? (
+        {hasBody && onOpenDetail ? (
+          <PressableScale
+            testID="agent-tool-toggle"
+            accessibilityRole="button"
+            accessibilityState={{ expanded }}
+            accessibilityLabel={expanded ? t`Collapse tool call` : t`Expand tool call`}
+            hitSlop={12}
+            onPress={() => setExpanded((prev) => !prev)}>
+            <Animated.View entering={fadeIn('micro')} style={chevronStyle}>
+              <ChevronDown size={12} color={theme.colors.textMuted} />
+            </Animated.View>
+          </PressableScale>
+        ) : hasBody ? (
           <Animated.View entering={fadeIn('micro')} style={chevronStyle}>
             <ChevronDown size={12} color={theme.colors.textMuted} />
           </Animated.View>
@@ -297,8 +314,8 @@ export const EmbeddedTerminalToolBlock = memo(function EmbeddedTerminalToolBlock
 });
 
 /** The icon column, and the gap after it: what the title is indented by. */
-const ICON_COLUMN = 13;
-const HEADER_GAP = 7;
+const ICON_COLUMN = TRANSCRIPT_GRID.markerWidth;
+const HEADER_GAP = TRANSCRIPT_GRID.markerGap;
 
 const styles = StyleSheet.create({
   container: {
@@ -306,8 +323,8 @@ const styles = StyleSheet.create({
     // neither of which measures inside a shrink-to-fit box.
     alignSelf: 'stretch',
     paddingVertical: 8,
-    paddingHorizontal: 10,
-    gap: 5,
+    paddingHorizontal: TRANSCRIPT_GRID.inset,
+    gap: TRANSCRIPT_GRID.attachGap,
   },
   header: {
     flexDirection: 'row',
@@ -317,6 +334,7 @@ const styles = StyleSheet.create({
   headerIcon: {
     paddingTop: 1,
     width: ICON_COLUMN,
+    alignItems: 'center',
   },
   /**
    * The column the title starts in.
