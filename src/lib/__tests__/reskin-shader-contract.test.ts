@@ -25,7 +25,9 @@ const BLOOM = readFileSync(join(LIB, 'ink-bloom-shader.ts'), 'utf8');
 /** The uniforms a program declares. */
 function declared(source: string, program: string): string[] {
   const body = source.split(`export const ${program} = \``)[1]?.split('\n`;')[0] ?? '';
-  return [...body.matchAll(/^uniform\s+\w+\s+(\w+)\s*;/gm)].map((match) => match[1] as string);
+  return [...body.matchAll(/^(?:layout\(color\)\s+)?uniform\s+\w+\s+(\w+)\s*;/gm)].map(
+    (match) => match[1] as string
+  );
 }
 
 /** The uniforms a builder sets. */

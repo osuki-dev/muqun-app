@@ -117,10 +117,13 @@ uniform float  uChroma;       // how far the rim's warm and cool lines separate
 uniform float  uHole;         // 0 through, 1 field, 2 closed
 uniform float  uCoverMode;    // 0 flat paper, 1 the child shader
 uniform float  uDrift;        // the field's one drift, 1 -> 0
-uniform float4 uPaper;        // the cover's colour, and the field's ground
-uniform float4 uAccent;       // the bank of light along the edge
-uniform float4 uRimColor;     // the thin bright line on the edge
-uniform float4 uSurface;      // the field's second stop
+// layout(color): Skia converts these from sRGB into the working colour space
+// like paint colours, so on a Display P3 surface (iOS) uPaper still matches the
+// RN background behind the opening.
+layout(color) uniform float4 uPaper;        // the cover's colour, and the field's ground
+layout(color) uniform float4 uAccent;       // the bank of light along the edge
+layout(color) uniform float4 uRimColor;     // the thin bright line on the edge
+layout(color) uniform float4 uSurface;      // the field's second stop
 
 uniform float  uEdgeMode;     // 0 a point, 1 a rounded rectangle, 2 a fitted outline
 uniform float  uEdgeAmount;   // the shape's scale, and how much of it is left in the front
