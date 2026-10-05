@@ -310,7 +310,8 @@
             "usesCleartextTraffic": true,
             "enableBundleCompression": true,
             "enableMinifyInReleaseBuilds": true,
-            "enableShrinkResourcesInReleaseBuilds": true
+            "enableShrinkResourcesInReleaseBuilds": true,
+            "extraProguardRules": "# react-native-enriched-markdown 1.1.0: consumer-rules.pro keeps views.MathContainerView, but SegmentViewCreators loads segments.MathContainerView by reflection; without this R8 renames it and block math renders empty.\n-keep class com.swmansion.enriched.markdown.segments.MathContainerView { *; }"
           }
         }
       ],
