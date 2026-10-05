@@ -909,15 +909,13 @@ export function LaunchSceneIntro({
 
       {/*
         The world, the cover with its hole, and the picture -- one canvas from
-        the first frame. `androidWarmup` pays the GL context cost while the
-        native splash is still up rather than on the first frame anybody sees;
-        the canvas has been drawing (invisibly, under that splash) since the
-        first commit, so the SkSL program is compiled and warm long before the
-        front starts to move. At the exit the same canvas draws its own last
+        the first frame. The canvas has been drawing (invisibly, under the
+        native splash) since the first commit, so the SkSL program is compiled
+        and warm long before the front starts to move. At the exit the same canvas draws its own last
         frame, turned to dust, instead.
       */}
       {INK_BLOOM_EFFECT ? (
-        <Canvas androidWarmup ref={canvasRef} style={StyleSheet.absoluteFill}>
+        <Canvas ref={canvasRef} style={StyleSheet.absoluteFill}>
           {snapImage ? (
             <SnapDust
               image={snapImage}
