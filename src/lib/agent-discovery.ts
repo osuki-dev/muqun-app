@@ -406,6 +406,7 @@ function parseMirroredTerminal(value: unknown): TerminalDiscovery | null {
           ? entry.capabilities.filter((c): c is string => typeof c === 'string')
           : [],
         ...(keyboard ? { keyboard } : {}),
+        ...(typeof entry.pagedHistory === 'boolean' ? { pagedHistory: entry.pagedHistory } : {}),
       },
     ];
   });

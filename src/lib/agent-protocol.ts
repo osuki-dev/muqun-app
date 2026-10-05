@@ -2130,6 +2130,11 @@ export interface TerminalBackendSummary {
   capabilities: string[];
   /** The keys this backend can deliver; absent from a gateway that predates it. */
   keyboard?: KeyboardVocabulary;
+  /**
+   * `features.pagedHistory`: whether a pull for earlier output can be served
+   * for this backend. Absent means the gateway did not say -- unknown, not no.
+   */
+  pagedHistory?: boolean;
 }
 
 /** The terminal plane, as `TerminalPlaneDiscovery`, reduced to what Home projects. */
@@ -2207,6 +2212,8 @@ export function parseTerminalDiscovery(value: unknown): TerminalDiscovery | null
     const sessionId = pickString(backend, ['sessionId']);
     if (!sessionId) continue;
     const keyboard = parseKeyboardVocabulary(backend.keyboard);
+    const backendFeatures = asRecord(backend.features);
+    const pagedHistory = backendFeatures ? pickBool(backendFeatures, ['pagedHistory']) : undefined;
     backends.push({
       sessionId,
       label: pickString(backend, ['label']) ?? sessionId,
@@ -2214,6 +2221,7 @@ export function parseTerminalDiscovery(value: unknown): TerminalDiscovery | null
       connected: backend.connected === true,
       capabilities: asStringArray(backend.capabilities),
       ...(keyboard ? { keyboard } : {}),
+      ...(pagedHistory !== undefined ? { pagedHistory } : {}),
     });
   }
   const activeBackend = pickString(rec, ['activeBackend']);

@@ -1553,10 +1553,6 @@ msgstr "Impossible de conserver"
 msgid "Could not list this server's agents."
 msgstr "Impossible de lister les agents de ce serveur"
 
-#: src/components/server-terminal-workspace.tsx
-msgid "Could not load earlier output."
-msgstr "Impossible de charger la sortie précédente"
-
 #: src/components/session-artifacts.tsx
 msgid "Could not load files."
 msgstr "Impossible de charger les fichiers"
@@ -1564,6 +1560,10 @@ msgstr "Impossible de charger les fichiers"
 #: src/components/agent-model-sheet.tsx
 msgid "Could not load models"
 msgstr "Impossible de charger les modèles"
+
+#: src/lib/terminal-history-pull.ts
+msgid "Could not load older history from this terminal"
+msgstr "Impossible de charger l’historique plus ancien de ce terminal"
 
 #: src/components/agent-subagent-detail-sheet.tsx
 #: src/components/agent-workbench.tsx
@@ -4140,6 +4140,10 @@ msgid "Retry drawing the terminal"
 msgstr "Réessayer de dessiner le terminal"
 
 #: src/components/server-terminal-workspace.tsx
+msgid "Retry loading earlier output"
+msgstr "Réessayer de charger la sortie précédente"
+
+#: src/components/server-terminal-workspace.tsx
 msgid "Retry the ones marked in red, or remove them, then send again."
 msgstr "Réessayez les fichiers marqués en rouge, ou retirez-les, puis renvoyez"
 
@@ -5594,6 +5598,10 @@ msgstr "Ce terminal ne peut pas envoyer {chord}"
 #: src/components/terminal-boundary.tsx
 msgid "This terminal could not be drawn."
 msgstr "Ce terminal n'a pas pu être dessiné"
+
+#: src/lib/terminal-history-pull.ts
+msgid "This terminal has no more history"
+msgstr "Ce terminal n’a pas d’historique plus ancien"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "This terminal is no longer available."

@@ -1553,10 +1553,6 @@ msgstr "เก็บไว้ไม่ได้"
 msgid "Could not list this server's agents."
 msgstr "แสดงรายการเอเจนต์ของเซิร์ฟเวอร์นี้ไม่ได้"
 
-#: src/components/server-terminal-workspace.tsx
-msgid "Could not load earlier output."
-msgstr "โหลดเอาต์พุตก่อนหน้านี้ไม่ได้"
-
 #: src/components/session-artifacts.tsx
 msgid "Could not load files."
 msgstr "โหลดไฟล์ไม่ได้"
@@ -1564,6 +1560,10 @@ msgstr "โหลดไฟล์ไม่ได้"
 #: src/components/agent-model-sheet.tsx
 msgid "Could not load models"
 msgstr "ไม่สามารถโหลดโมเดลได้"
+
+#: src/lib/terminal-history-pull.ts
+msgid "Could not load older history from this terminal"
+msgstr "โหลดประวัติก่อนหน้าของเทอร์มินัลนี้ไม่ได้"
 
 #: src/components/agent-subagent-detail-sheet.tsx
 #: src/components/agent-workbench.tsx
@@ -4140,6 +4140,10 @@ msgid "Retry drawing the terminal"
 msgstr "ลองแสดงเทอร์มินัลอีกครั้ง"
 
 #: src/components/server-terminal-workspace.tsx
+msgid "Retry loading earlier output"
+msgstr "ลองโหลดเอาต์พุตก่อนหน้าอีกครั้ง"
+
+#: src/components/server-terminal-workspace.tsx
 msgid "Retry the ones marked in red, or remove them, then send again."
 msgstr "ลองอัปโหลดรายการสีแดงอีกครั้งหรือลบออก แล้วส่งใหม่"
 
@@ -5594,6 +5598,10 @@ msgstr "เทอร์มินัลนี้ส่ง {chord} ไม่ได
 #: src/components/terminal-boundary.tsx
 msgid "This terminal could not be drawn."
 msgstr "แสดงเทอร์มินัลนี้ไม่ได้"
+
+#: src/lib/terminal-history-pull.ts
+msgid "This terminal has no more history"
+msgstr "เทอร์มินัลนี้ไม่มีประวัติเพิ่มเติมแล้ว"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "This terminal is no longer available."
