@@ -21,22 +21,29 @@ import {
   TERMINAL_MAX_FIT_SCALE,
   TERMINAL_MAX_REMEMBERED_PANE_SCALES,
   TERMINAL_MAX_SCALE,
+  TERMINAL_MIN_FONT_PT,
   TERMINAL_MIN_SCALE,
   TERMINAL_TEXT_SIZE_POINTS,
   pinchedTerminalScale,
+  terminalExactFillScale,
   terminalFitToWidthScale,
   terminalFontSize,
   terminalOpenScale,
   terminalOpenView,
   terminalPanMinX,
+  terminalPhoneGrid,
   terminalScaleOnPaneOpen,
   terminalScaleOnScreenLeave,
   terminalZoomIndicatorPercent,
   terminalZoomLabel,
   terminalZoomPercent,
+  type TerminalFitGeometry,
   type TerminalPaneScales,
   type TerminalTextSize,
 } from '../terminal-text-size';
+
+/** A canvas not measured yet: nothing is fitted against it. */
+const UNMEASURED: TerminalFitGeometry = { viewportWidth: 0, cellWidth: 0, fontSize: 13 };
 
 /** A pane whose 80 columns are narrower than the phone: it opens unscaled. */
 const viewportWidth = 400;
@@ -70,17 +77,17 @@ function terminal(
   options: {
     paneId?: string;
     store?: { current: TerminalPaneScales };
-    /** The phone's own grid, and the pane's reported width, when the walk is
+    /** The phone's canvas, and the pane's reported width, when the walk is
      * about the fit. Left out, they are the pre-fit world: no width reported,
      * so `terminalOpenScale` is `terminalScaleOnPaneOpen` and the default the
      * leave compares against is 1. */
-    phoneColumns?: number;
+    fit?: TerminalFitGeometry;
     paneColumns?: number;
   } = {}
 ) {
   const paneId = options.paneId ?? 'pane';
   const store = options.store ?? disk();
-  const phoneColumns = options.phoneColumns ?? 0;
+  const fit = options.fit ?? UNMEASURED;
   let paneColumns = options.paneColumns;
   let scale = 1;
   let content = paneContentWidth;
@@ -106,10 +113,10 @@ function terminal(
     /** The default this pane would open at with nothing remembered -- which is
      * also the number the leave below has to compare against. */
     get restingScale() {
-      return terminalFitToWidthScale(phoneColumns, paneColumns);
+      return terminalFitToWidthScale(fit, paneColumns);
     },
     openPane() {
-      scale = terminalOpenScale({ paneId, remembered: store.current, phoneColumns, paneColumns });
+      scale = terminalOpenScale({ paneId, remembered: store.current, fit, paneColumns });
     },
     /** tmux reports a new width for this pane -- the reader re-split the window
      * on the Mac while the phone was elsewhere. */
@@ -124,7 +131,7 @@ function terminal(
         paneId,
         scale,
         store.current,
-        terminalFitToWidthScale(phoneColumns, paneColumns)
+        terminalFitToWidthScale(fit, paneColumns)
       );
     },
     /** Output whose longest line has changed since the pane opened. */
@@ -394,36 +401,67 @@ describe('the pinch is remembered on its own, not folded into the settings store
 // arithmetic plus one precedence question -- does a remembered pinch win --
 // which is exactly what a walk can pin and a screenshot cannot.
 describe('a pane narrower than the phone is drawn to fill it', () => {
-  /** The lab: an 80-column tmux window split three ways, on a ~400pt phone. */
-  const PHONE_COLUMNS = 49;
+  /** The lab: an 80-column tmux window split three ways, on a ~400pt phone
+   * whose 7.8pt cells floor to 49 columns. */
+  const PHONE: TerminalFitGeometry = { viewportWidth: 402, cellWidth: 7.8, fontSize: 13 };
   const NARROW = 36;
+  /** Where a fitted pane's last column lands, padding included. */
+  const fill = (columns: number) => 402 / (columns * 7.8 + 14);
 
   test('a narrower pane opens scaled up until its columns reach the edge', () => {
-    expect(terminalFitToWidthScale(PHONE_COLUMNS, NARROW)).toBeCloseTo(49 / 36);
-    // The number the report is about: 36 columns on a 49-column phone.
-    expect(terminalFitToWidthScale(PHONE_COLUMNS, NARROW)).toBeCloseTo(1.361, 3);
+    expect(terminalFitToWidthScale(PHONE, NARROW)).toBeCloseTo(fill(NARROW), 10);
+    // The number the report is about: 36 columns across a 402pt phone.
+    expect(terminalFitToWidthScale(PHONE, NARROW)).toBeCloseTo(1.364, 3);
   });
 
-  test('a pane exactly as wide as the phone is left alone', () => {
-    expect(terminalFitToWidthScale(PHONE_COLUMNS, PHONE_COLUMNS)).toBe(1);
+  test('the fit lands exactly on the right edge, not a floored column short of it', () => {
+    // The old ratio (`49 / 36`) put the pane's edge where the phone's floored
+    // 49th column ends, so the rest of the width -- a fraction of a cell, times
+    // the scale -- was an empty strip down the right of every fitted pane.
+    for (let columns = 20; columns <= 49; columns++) {
+      const scale = terminalFitToWidthScale(PHONE, columns);
+      if (scale === TERMINAL_MAX_FIT_SCALE) continue;
+      expect((columns * 7.8 + 14) * scale).toBeCloseTo(402, 9);
+    }
+    expect(49 / 36).toBeLessThan(fill(36));
+  });
+
+  test('a pane one column wider than the floored grid is drawn a touch smaller to fit', () => {
+    // 50 columns need 404pt on a 402pt canvas: one column over, so the pane is
+    // fitted down by half a percent rather than panned for one column.
+    const scale = terminalFitToWidthScale(PHONE, 50);
+    expect(scale).toBeLessThan(1);
+    expect(scale).toBeCloseTo(fill(50), 10);
+    expect(PHONE.fontSize * scale).toBeGreaterThanOrEqual(TERMINAL_MIN_FONT_PT);
+  });
+
+  test('never below the minimum font size', () => {
+    // At 10pt the same one-column-over pane would have to drop under 10pt to
+    // fit, so it pans at 1:1 instead.
+    const small: TerminalFitGeometry = { viewportWidth: 402, cellWidth: 6, fontSize: 10 };
+    const over = Math.floor((402 - 14) / 6) + 1;
+    expect(terminalExactFillScale(small, over)).toBeLessThan(1);
+    expect(terminalFitToWidthScale(small, over)).toBe(1);
   });
 
   test('a pane wider than the phone is left alone -- #643 is not reverted', () => {
-    // The three panes that made card #643, against the phone of that report.
-    // All three are wider than it, so all three still open at 1 and the
-    // indicator still reads 100% for each: one setting, one glyph size.
+    // The three panes that made card #643, against the 45-column phone of
+    // that report. All three are wider than it by more than a column, so all
+    // three still open at 1 and the indicator still reads 100% for each: one
+    // setting, one glyph size.
+    const phone45: TerminalFitGeometry = { viewportWidth: 365, cellWidth: 7.8, fontSize: 13 };
     for (const columns of [65, 80, 242]) {
-      expect(terminalFitToWidthScale(45, columns)).toBe(1);
-      expect(terminalZoomPercent(terminalFitToWidthScale(45, columns))).toBe(100);
+      expect(terminalFitToWidthScale(phone45, columns)).toBe(1);
+      expect(terminalZoomPercent(terminalFitToWidthScale(phone45, columns))).toBe(100);
     }
   });
 
   test('the fit is capped, because scaling up spends rows', () => {
     // A 20-column pane -- the narrowest `TERMINAL_GRID_MIN_COLS` allows -- asks
-    // for 2.45 and is given 1.6. Uncapped it would trade two thirds of the
+    // for 2.3 and is given 2.0. Uncapped it would trade two thirds of the
     // pane's visible rows for width nobody asked for.
-    expect(49 / 20).toBeGreaterThan(TERMINAL_MAX_FIT_SCALE);
-    expect(terminalFitToWidthScale(PHONE_COLUMNS, 20)).toBe(TERMINAL_MAX_FIT_SCALE);
+    expect(fill(20)).toBeGreaterThan(TERMINAL_MAX_FIT_SCALE);
+    expect(terminalFitToWidthScale(PHONE, 20)).toBe(TERMINAL_MAX_FIT_SCALE);
     // And the cap stays under the pinch's own ceiling, so a reader who wants
     // more than the default still has somewhere to go in both directions.
     expect(TERMINAL_MAX_FIT_SCALE).toBeLessThan(TERMINAL_MAX_SCALE);
@@ -434,40 +472,35 @@ describe('a pane narrower than the phone is drawn to fill it', () => {
     // The fit knows nothing about what the pane runs, and that is the rule:
     // a Claude Code pane and an nvim pane in the same narrow Herdr column
     // must not open at two sizes. Measured on herdr 0.8.2: three columns
-    // side by side gave grids of 64, 32 and 31; on this phone the 32-column
-    // editor opens at 49/32 and the 31-column agent at 49/31, both under the
-    // cap, and only a pane narrower than 49/1.6 -- thirty columns -- meets
-    // it. At the cap a 30-column pane still reaches 48 of 49 columns, which
-    // is why 1.6 stands for these panes as it did for tmux's 36.
-    expect(terminalFitToWidthScale(PHONE_COLUMNS, 32)).toBeCloseTo(49 / 32);
-    expect(terminalFitToWidthScale(PHONE_COLUMNS, 31)).toBeCloseTo(49 / 31);
-    expect(terminalFitToWidthScale(PHONE_COLUMNS, 30)).toBe(TERMINAL_MAX_FIT_SCALE);
-    expect(30 * TERMINAL_MAX_FIT_SCALE).toBeGreaterThanOrEqual(PHONE_COLUMNS - 1);
+    // side by side gave grids of 64, 32 and 31; on this phone the 32- and
+    // 31-column panes both fit under the cap, and a 22-column pane meets it.
+    expect(terminalFitToWidthScale(PHONE, 32)).toBeCloseTo(fill(32), 10);
+    expect(terminalFitToWidthScale(PHONE, 31)).toBeCloseTo(fill(31), 10);
+    expect(terminalFitToWidthScale(PHONE, 22)).toBe(TERMINAL_MAX_FIT_SCALE);
   });
 
   test('a pane the gateway reported no width for is not fitted', () => {
-    // An older gateway, and every SSH shell -- whose grid *is* the PTY, so it
-    // can never differ from the phone's and there is nothing to fit.
-    expect(terminalFitToWidthScale(PHONE_COLUMNS, undefined)).toBe(1);
-    expect(terminalFitToWidthScale(PHONE_COLUMNS, 0)).toBe(1);
-    expect(terminalFitToWidthScale(PHONE_COLUMNS, Number.NaN)).toBe(1);
-    // And a phone that has not been measured yet fits nothing either.
-    expect(terminalFitToWidthScale(0, NARROW)).toBe(1);
+    // An older gateway reports none; an SSH shell's columns are its own grid.
+    expect(terminalFitToWidthScale(PHONE, undefined)).toBe(1);
+    expect(terminalFitToWidthScale(PHONE, 0)).toBe(1);
+    expect(terminalFitToWidthScale(PHONE, Number.NaN)).toBe(1);
+    // And a canvas that has not been measured yet fits nothing either.
+    expect(terminalFitToWidthScale(UNMEASURED, NARROW)).toBe(1);
   });
 
   test('the narrow pane fills the width at first open, with nothing remembered', () => {
     const pane = terminal('default', contentWidth, {
-      phoneColumns: PHONE_COLUMNS,
+      fit: PHONE,
       paneColumns: NARROW,
     });
     pane.openPane();
-    expect(pane.scale).toBeCloseTo(49 / 36);
+    expect(pane.scale).toBeCloseTo(fill(NARROW), 10);
     expect(pane.percent).toBe(136);
   });
 
   test('a remembered pinch wins over the fit', () => {
     const store = disk();
-    const options = { store, phoneColumns: PHONE_COLUMNS, paneColumns: NARROW };
+    const options = { store, fit: PHONE, paneColumns: NARROW };
     const first = terminal('default', contentWidth, options);
     first.openPane();
     // The reader disagrees with the fit and pinches down past it.
@@ -488,11 +521,11 @@ describe('a pane narrower than the phone is drawn to fill it', () => {
     const store = disk();
     const pane = terminal('default', contentWidth, {
       store,
-      phoneColumns: PHONE_COLUMNS,
+      fit: PHONE,
       paneColumns: NARROW,
     });
     pane.openPane();
-    expect(pane.scale).toBeCloseTo(49 / 36);
+    expect(pane.scale).toBeCloseTo(fill(NARROW), 10);
     // The reader never pinched: leaving stores nothing, because the scale on
     // screen is the one this pane would have opened at anyway.
     pane.leaveScreen();
@@ -501,9 +534,9 @@ describe('a pane narrower than the phone is drawn to fill it', () => {
     // They re-split the window on the Mac; the pane is 42 columns now.
     pane.resplit(42);
     pane.openPane();
-    expect(pane.scale).toBeCloseTo(49 / 42);
+    expect(pane.scale).toBeCloseTo(fill(42), 10);
     // Narrow enough and the cap answers instead, still with nothing stored.
-    pane.resplit(24);
+    pane.resplit(20);
     pane.openPane();
     expect(pane.scale).toBe(TERMINAL_MAX_FIT_SCALE);
     // And widened past the phone: back to 1:1, with nothing to invalidate.
@@ -516,7 +549,7 @@ describe('a pane narrower than the phone is drawn to fill it', () => {
     const store = disk();
     const pane = terminal('default', contentWidth, {
       store,
-      phoneColumns: PHONE_COLUMNS,
+      fit: PHONE,
       paneColumns: NARROW,
     });
     pane.openPane();
@@ -530,7 +563,7 @@ describe('a pane narrower than the phone is drawn to fill it', () => {
     pane.resplit(42);
     pane.openPane();
     expect(pane.scale).toBeCloseTo(chosen, 2);
-    expect(pane.scale).not.toBeCloseTo(49 / 42);
+    expect(pane.scale).not.toBeCloseTo(fill(42));
   });
 
   test('pinching back to the fit hands the pane back to the fit', () => {
@@ -540,7 +573,7 @@ describe('a pane narrower than the phone is drawn to fill it', () => {
     const store = disk();
     const pane = terminal('default', contentWidth, {
       store,
-      phoneColumns: PHONE_COLUMNS,
+      fit: PHONE,
       paneColumns: NARROW,
     });
     pane.openPane();
@@ -550,7 +583,7 @@ describe('a pane narrower than the phone is drawn to fill it', () => {
 
     const back = terminal('default', contentWidth, {
       store,
-      phoneColumns: PHONE_COLUMNS,
+      fit: PHONE,
       paneColumns: NARROW,
     });
     back.openPane();
@@ -567,7 +600,7 @@ describe('a pane narrower than the phone is drawn to fill it', () => {
     const store = disk();
     const wide = terminal('default', contentWidth, {
       store,
-      phoneColumns: PHONE_COLUMNS,
+      fit: PHONE,
       paneColumns: 242,
     });
     wide.openPane();
@@ -578,7 +611,7 @@ describe('a pane narrower than the phone is drawn to fill it', () => {
 
     const again = terminal('default', contentWidth, {
       store,
-      phoneColumns: PHONE_COLUMNS,
+      fit: PHONE,
       paneColumns: 242,
     });
     again.openPane();
@@ -595,10 +628,10 @@ describe('a pane narrower than the phone is drawn to fill it', () => {
       terminalOpenScale({
         paneId: 'reused',
         remembered: { reused: Number.NaN },
-        phoneColumns: PHONE_COLUMNS,
+        fit: PHONE,
         paneColumns: NARROW,
       })
-    ).toBeCloseTo(49 / 36);
+    ).toBeCloseTo(fill(NARROW), 10);
   });
 });
 
@@ -622,26 +655,20 @@ describe('a fitted pane cannot be panned into blank canvas', () => {
     expect(VIEWPORT - VIEWPORT * TERMINAL_MAX_FIT_SCALE).toBeLessThan(-240);
   });
 
-  test('the fit lands the last column inside the edge, never past it', () => {
+  test('the fit lands the last column on the edge, and leaves nothing to pan', () => {
     // The canvas draws the first column one padding in and scales that offset
-    // with everything else, so the last column's right edge is
-    // `scale * (padding + columns * cellWidth)`. The fit's ceiling is what
-    // keeps that inside the viewport for every width at once: the text is
-    // `scale * columns * cellWidth` = `phoneColumns * cellWidth` wide, which is
-    // the phone's own text width, and the scaled leading padding adds
-    // `scale * padding` against the `2 * padding` the phone left itself -- so
-    // any cap below 2 fits, and this one is 1.6.
-    expect(TERMINAL_MAX_FIT_SCALE).toBeLessThan(2);
+    // with everything else, so the right padding ends at
+    // `scale * (columns * cellWidth + 2 * padding)` -- which the fit makes the
+    // viewport's own width, for every width under the cap.
+    const geometry = { viewportWidth: VIEWPORT, cellWidth: CELL, fontSize: 13 };
     const phoneColumns = Math.floor((VIEWPORT - PADDING * 2) / CELL);
-    for (let columns = 20; columns < phoneColumns; columns++) {
-      const scale = terminalFitToWidthScale(phoneColumns, columns);
+    for (let columns = 20; columns <= phoneColumns; columns++) {
+      const scale = terminalFitToWidthScale(geometry, columns);
       const lastColumnEdge = (PADDING + columns * CELL) * scale;
       expect(lastColumnEdge).toBeLessThanOrEqual(VIEWPORT);
-      // Whatever pan is left is the grid's own trailing padding coming into
-      // view -- less than the padding itself, and never a blank column.
       const minX = terminalPanMinX(VIEWPORT, textWidth(columns), scale);
-      expect(minX).toBeLessThanOrEqual(0);
-      expect(minX).toBeGreaterThan(-PADDING * TERMINAL_MAX_FIT_SCALE);
+      if (scale < TERMINAL_MAX_FIT_SCALE) expect(Math.abs(minX)).toBeLessThan(1e-9);
+      else expect(minX).toBe(0);
     }
   });
 
@@ -764,11 +791,14 @@ describe('a pane bigger than the phone opens somewhere worth looking', () => {
 // width, and placed, because scaling up is what makes it too tall to see whole.
 describe('the fit and the placement agree about how many cells are on the glass', () => {
   test('a fitted pane is placed against the rows it actually shows', () => {
-    // 36x40 nvim on a 48x27 phone. The fit draws it at 48/36 = 1.33x, so the
+    // 36x40 nvim on a 48x27 phone. The fit draws it at about 1.33x, so the
     // glass holds 27/1.33 = 20 of its rows, not 27. Placed against 27 the pane
     // would open seven rows short of the bottom it was asked for.
-    const scale = terminalFitToWidthScale(48, 36);
-    expect(scale).toBeCloseTo(48 / 36);
+    const scale = terminalFitToWidthScale(
+      { viewportWidth: 48 * 8 + 14, cellWidth: 8, fontSize: 13 },
+      36
+    );
+    expect(scale).toBeCloseTo((48 * 8 + 14) / (36 * 8 + 14));
     const placed = terminalOpenView({
       paneColumns: 36,
       paneRows: 40,
@@ -787,7 +817,10 @@ describe('the fit and the placement agree about how many cells are on the glass'
 
   test('a pane that fits at 1:1 but not once scaled up is still placed', () => {
     // 36x24 on a 48x27 phone fits vertically at 1:1 and does not at 1.33x.
-    const scale = terminalFitToWidthScale(48, 36);
+    const scale = terminalFitToWidthScale(
+      { viewportWidth: 48 * 8 + 14, cellWidth: 8, fontSize: 13 },
+      36
+    );
     expect(
       terminalOpenView({
         paneColumns: 36,
@@ -892,7 +925,7 @@ describe('the placement counts the cells the opening scale actually shows', () =
     const scale = terminalOpenScale({
       paneId: 'pane',
       remembered,
-      phoneColumns: PHONE.phoneColumns,
+      fit: { viewportWidth: 52 * 8 + 14, cellWidth: 8, fontSize: 13 },
       paneColumns: PANE.paneColumns,
     });
     expect(scale).toBeCloseTo(1.44);
@@ -919,5 +952,46 @@ describe('the placement counts the cells the opening scale actually shows', () =
     const fitted = terminalOpenView({ ...PANE, ...PHONE, scale: 1.44 });
     const pinched = terminalOpenView({ ...PANE, ...PHONE, scale: 1.44 });
     expect(fitted).toEqual(pinched);
+  });
+});
+
+// The phone's own grid -- what an SSH PTY is sized to -- lands on the right
+// edge too: the floored column count drawn a touch larger, or one more drawn a
+// touch smaller, whichever is nearer the setting's size.
+describe('the phone grid fills its width exactly', () => {
+  test('the nearer of n and n + 1 columns, at the scale that fills the width', () => {
+    // 388pt of grid at 7.8pt cells is 49.74 columns: 49 would be drawn 1.5%
+    // larger, 50 drawn 0.5% smaller, so 50 it is.
+    const grid = terminalPhoneGrid({ viewportWidth: 402, cellWidth: 7.8, fontSize: 13 });
+    expect(grid.columns).toBe(50);
+    expect(grid.scale).toBeCloseTo(402 / (50 * 7.8 + 14), 10);
+    // 49.1 columns: 49 is the nearer, drawn a touch larger.
+    const up = terminalPhoneGrid({ viewportWidth: 49.1 * 7.8 + 14, cellWidth: 7.8, fontSize: 13 });
+    expect(up.columns).toBe(49);
+    expect(up.scale).toBeGreaterThan(1);
+  });
+
+  test('every width lands on the edge, within one column of the setting, at either size', () => {
+    for (const fontSize of [12, 13, 16]) {
+      const cellWidth = fontSize * 0.6;
+      for (let viewportWidth = 300; viewportWidth <= 1400; viewportWidth += 7) {
+        const grid = terminalPhoneGrid({ viewportWidth, cellWidth, fontSize });
+        expect((grid.columns * cellWidth + 14) * grid.scale).toBeCloseTo(viewportWidth, 9);
+        expect(Math.abs(grid.scale - 1)).toBeLessThan(1 / (grid.columns - 1));
+        expect(fontSize * grid.scale).toBeGreaterThanOrEqual(TERMINAL_MIN_FONT_PT);
+        // The canvas rests that grid at exactly the same scale.
+        expect(
+          terminalFitToWidthScale({ viewportWidth, cellWidth, fontSize }, grid.columns)
+        ).toBeCloseTo(grid.scale, 12);
+      }
+    }
+  });
+
+  test('the smaller answer is refused when it would go under the minimum font size', () => {
+    // 10pt with 49.9 columns of room: 50 would be nearer, but only at 9.98pt.
+    const geometry = { viewportWidth: 49.9 * 6 + 14, cellWidth: 6, fontSize: 10 };
+    const grid = terminalPhoneGrid(geometry);
+    expect(grid.columns).toBe(49);
+    expect(grid.scale).toBeGreaterThan(1);
   });
 });

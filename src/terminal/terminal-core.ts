@@ -855,7 +855,7 @@ export function parseTerminalSnapshot(
     const flat = parseFlatSnapshot(input, theme, columns, reportedRows, cache);
     if (flat) return flat;
   }
-  const measured = measureSnapshot(input);
+  const measured = measureSnapshot(input, columns);
   // A reported width is the pane's own; the measurement is what to do when
   // nobody said. Clamping a reported width against MAX_SNAPSHOT_COLUMNS would
   // reintroduce exactly the overflow this parameter exists to remove.
@@ -872,7 +872,10 @@ export function parseTerminalSnapshot(
   const terminal = new TerminalEmulator({
     columns: dimensions.columns,
     rows: dimensions.rows,
-    scrollback: 0,
+    // Rows the read needs past the grid cap -- a full 2000-line window whose
+    // long lines wrap onto extra rows -- are kept as scrollback rather than
+    // scrolled off the top, so the oldest lines of the window are not lost.
+    scrollback: measured.overflow,
     convertEol: true,
     theme,
   });
@@ -1510,7 +1513,10 @@ function addTextLink(
   links.push(candidate);
 }
 
-function measureSnapshot(input: string): { columns: number; rows: number } {
+function measureSnapshot(
+  input: string,
+  suppliedColumns?: number
+): { columns: number; rows: number; overflow: number } {
   const visible = input
     // An OSC string ends at ITS OWN terminator, so the payload class has to
     // exclude both characters a terminator can begin with. Excluding only BEL
@@ -1541,10 +1547,37 @@ function measureSnapshot(input: string): { columns: number; rows: number } {
     .replace(/\r\n/g, '\n')
     .replace(/\r/g, '\n');
   const lines = visible.split('\n');
-  const widest = lines.reduce((width, line) => Math.max(width, displayWidth(line)), 0);
+  const widths = lines.map((line) => displayWidth(line));
+  const widest = widths.reduce((width, line) => Math.max(width, line), 0);
+  const columns = clamp(Math.max(MIN_SNAPSHOT_COLUMNS, widest), 2, MAX_SNAPSHOT_COLUMNS);
+  // Rows as the grid will actually lay them out: a line wider than the grid
+  // the caller supplied -- a `recent-unwrapped` logical line the far side had
+  // soft-wrapped -- takes a row per grid width, not one. Counted one line per
+  // row, a single long line scrolled its own first rows off the top of a grid
+  // with no scrollback, and the start of the line was simply gone. `columns -
+  // 1` per continuation row is the worst case, a wide glyph skipping the last
+  // column at every break; the spare blank rows that can leave are trimmed by
+  // `buildTerminalFrame`.
+  const grid =
+    suppliedColumns && suppliedColumns > 0 ? clamp(suppliedColumns, 2, MAX_GRID_COLUMNS) : columns;
+  let rows = 1;
+  for (const width of widths) rows += width <= grid ? 1 : Math.ceil(width / (grid - 1));
   return {
-    columns: clamp(Math.max(MIN_SNAPSHOT_COLUMNS, widest), 2, MAX_SNAPSHOT_COLUMNS),
-    rows: clamp(Math.max(2, lines.length + 1), 2, EMULATED_ROW_CAP),
+    columns,
+    rows: clamp(Math.max(2, rows), 2, EMULATED_ROW_CAP),
+    // Bounded so the grid never holds more cells than the widest grid at the
+    // row cap already may: a narrow pane gets the rows its window needs, and
+    // nothing can size an allocation past what was already possible.
+    overflow: Math.max(
+      0,
+      Math.min(
+        rows - EMULATED_ROW_CAP,
+        // Only the rows wrapping added: a read of more lines than the cap
+        // still loses its oldest lines, as it always has.
+        rows - (lines.length + 1),
+        Math.floor((EMULATED_ROW_CAP * MAX_GRID_COLUMNS) / grid) - EMULATED_ROW_CAP
+      )
+    ),
   };
 }
 
@@ -1569,7 +1602,7 @@ const MAX_SNAPSHOT_COLUMNS = 320;
  * allocation -- the same number `TerminalEmulator` already clamps to, so a
  * width this wide behaves identically whichever path renders it.
  */
-const MAX_GRID_COLUMNS = 512;
+export const MAX_GRID_COLUMNS = 512;
 
 /**
  * Rows the emulator's grid physically holds -- the single cap the constructor

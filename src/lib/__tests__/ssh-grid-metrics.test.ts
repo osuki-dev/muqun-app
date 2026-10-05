@@ -11,6 +11,7 @@ import {
   terminalGridChanged,
   terminalGridFor,
 } from '@/lib/ssh-grid-metrics';
+import { terminalPhoneGrid } from '@/lib/terminal-text-size';
 import {
   TERMINAL_ADVANCE_RATIO,
   TERMINAL_GRID_HORIZONTAL_PADDING,
@@ -30,12 +31,16 @@ function rowsFor(height: number, lineHeight: number): number {
 describe('terminalGridFor', () => {
   test('a phone at the default size, with a measured cell', () => {
     // 402pt wide, 600pt of terminal, 13pt text: 7.8pt cells, 18.9pt rows.
+    // 388pt of grid is 49.74 columns; 50 drawn 0.5% smaller is nearer the
+    // setting than 49 drawn 1.5% larger, so the PTY is 50 wide and its rows
+    // are counted at the pitch that scale draws them at.
     const grid = terminalGridFor({ width: 402, height: 600, fontSize: 13, cellWidth: 7.8 });
+    const scale = terminalPhoneGrid({ viewportWidth: 402, cellWidth: 7.8, fontSize: 13 }).scale;
     expect(grid).toEqual({
-      cols: Math.floor((402 - TERMINAL_GRID_HORIZONTAL_PADDING * 2) / 7.8),
-      rows: rowsFor(600, terminalLineHeight(13)),
+      cols: Math.floor((402 - TERMINAL_GRID_HORIZONTAL_PADDING * 2) / 7.8) + 1,
+      rows: rowsFor(600, terminalLineHeight(13) * scale),
     });
-    expect(grid.cols).toBe(49);
+    expect(grid.cols).toBe(50);
     expect(grid.rows).toBe(30);
   });
 
@@ -43,7 +48,9 @@ describe('terminalGridFor', () => {
     const fallback = fallbackTerminalCellWidth(13, 3);
     expect(fallback).toBeCloseTo(Math.round(13 * TERMINAL_ADVANCE_RATIO * 3) / 3, 6);
     const grid = terminalGridFor({ width: 402, height: 600, fontSize: 13, pixelRatio: 3 });
-    expect(grid.cols).toBe(Math.floor((402 - TERMINAL_GRID_HORIZONTAL_PADDING * 2) / fallback));
+    expect(grid.cols).toBe(
+      terminalPhoneGrid({ viewportWidth: 402, cellWidth: fallback, fontSize: 13 }).columns
+    );
   });
 
   test('the fallback never goes under the canvas floor of 7pt', () => {

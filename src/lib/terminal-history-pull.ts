@@ -121,19 +121,61 @@ export function backendPagesHistory(
   return plane?.backends.find((backend) => backend.sessionId === sessionId)?.pagedHistory;
 }
 
-/** Whether the pull for earlier output is on offer at all. */
+/**
+ * Whether the pull for earlier output is on offer at all.
+ *
+ * Discovery's `pagedHistory` is deliberately not an input. It says whether the
+ * backend serves *range* reads, and a backend that does not -- herdr, whose
+ * `pane.read` takes no range -- still pages by the widening tail: asked for
+ * more `lines`, it answers with more. Withdrawing the pull on `false` hid
+ * history that one more read would have shown (herdr panes holding 459 lines
+ * stopped at the first 240). The pull goes when the window's own metrics say
+ * there is nothing above it, or when a tail read comes back with nothing new
+ * ({@link tailPageFoundNothing}).
+ */
 export function canOfferHistoryPull({
   canLoadEarlier,
   blocked,
-  pagedHistory,
 }: {
   /** What the window's own metrics say: there is earlier output to reach. */
   canLoadEarlier: boolean;
   blocked: boolean;
-  /** Discovery's word for this backend; `undefined` is unknown and does not withdraw it. */
-  pagedHistory: boolean | undefined;
 }): boolean {
-  return canLoadEarlier && !blocked && pagedHistory !== false;
+  return canLoadEarlier && !blocked;
+}
+
+/**
+ * Whether a pull may ask for a range page: only where discovery has not said
+ * the backend cannot serve one. `undefined` -- an older gateway -- still tries,
+ * and `pullEarlierPage` falls back to the tail if the range is refused.
+ */
+export function historyPullUsesRange(pagedHistory: boolean | undefined): boolean {
+  return pagedHistory !== false;
+}
+
+/**
+ * A widening-tail page that came back no longer than the window it was meant
+ * to deepen: the backend has no more history to give, whatever its metrics
+ * claimed (card #646: herdr plateauing below its own row count). The pull is
+ * withdrawn and the reader told so, once.
+ */
+export function tailPageFoundNothing(
+  outcome: EarlierPullOutcome,
+  rows: number,
+  previousRows: number
+): boolean {
+  return outcome.kind === 'page' && outcome.origin === 'page' && rows <= previousRows;
+}
+
+/** The notice for a pane that has given all the history it has. */
+export function historyExhaustedNotice(): HistoryPullNotice {
+  return {
+    kind: 'exhausted',
+    title: t`This terminal has no more history`,
+    caption: null,
+    retry: false,
+    dismissMs: HISTORY_EXHAUSTED_NOTICE_MS,
+  };
 }
 
 /** What the terminal's notice slot says about a pull that did not land a page. */
@@ -164,12 +206,6 @@ export function historyPullNotice(outcome: EarlierPullOutcome): HistoryPullNotic
         dismissMs: HISTORY_FAILED_NOTICE_MS,
       };
     case 'refused':
-      return {
-        kind: 'exhausted',
-        title: t`This terminal has no more history`,
-        caption: null,
-        retry: false,
-        dismissMs: HISTORY_EXHAUSTED_NOTICE_MS,
-      };
+      return historyExhaustedNotice();
   }
 }

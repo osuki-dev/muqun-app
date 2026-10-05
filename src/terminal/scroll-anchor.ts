@@ -205,10 +205,17 @@ export function measureRowsPrepended(
  * edge-to-edge chrome would otherwise sit on top of it. `max(0, minimumY)` --
  * what this was before the inset existed -- is the same expression at
  * `topInset = 0`, so nothing about a scrolling pane changed.
+ *
+ * `topClearance` is the same header seen from a scrolling pane, and it moves
+ * only this end of the range. Scrolled all the way back, the oldest rows of a
+ * stream used to sit under the frosted header with no way to bring them out;
+ * with the clearance they can be dragged fully below it. Nothing rests there --
+ * the rest and the bottom stop never read it -- so a live pane still follows
+ * its last line exactly as before.
  */
-export function terminalTopStop(minimumY: number, topInset: number): number {
+export function terminalTopStop(minimumY: number, topInset: number, topClearance = 0): number {
   'worklet';
-  return Math.max(topInset, minimumY);
+  return Math.max(topInset, topClearance, minimumY);
 }
 
 /**
@@ -292,12 +299,13 @@ export function clampScrollOffset(
   offset: number,
   minimumY: number,
   topInset = 0,
-  historyHeight = 0
+  historyHeight = 0,
+  topClearance = 0
 ): number {
   'worklet';
   return Math.max(
     terminalBottomStop(minimumY, topInset, historyHeight),
-    Math.min(terminalTopStop(minimumY, topInset), offset)
+    Math.min(terminalTopStop(minimumY, topInset, topClearance), offset)
   );
 }
 

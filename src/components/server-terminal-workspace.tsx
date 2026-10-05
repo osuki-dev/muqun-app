@@ -204,6 +204,9 @@ import { describeGatewayFailure, type GatewayFailure } from '@/lib/network-error
 import {
   backendPagesHistory,
   canOfferHistoryPull,
+  historyExhaustedNotice,
+  historyPullUsesRange,
+  tailPageFoundNothing,
   historyPullBlockedAfter,
   historyPullNotice,
   pullEarlierPage,
@@ -3391,7 +3394,13 @@ export function ServerTerminalWorkspace({
               .scroll;
             const seedRange = seedPageRange(seedScroll, currentLimit);
             const lastRange = paneReadRange(lastReadRef.current);
-            const range = rangeUnsupportedRef.current ? null : (seedRange ?? lastRange);
+            // A backend discovery says serves no range (herdr) pages by the
+            // widening tail alone; asking it for a range first would only cost
+            // a round trip it then ignores.
+            const rangeAllowed =
+              !rangeUnsupportedRef.current &&
+              historyPullUsesRange(backendPagesHistory(terminalPlane, data.sessionId));
+            const range = rangeAllowed ? (seedRange ?? lastRange) : null;
             const page = range ? nextPageRange(range, PANE_OUTPUT_PAGE_LINES) : null;
             // A range-addressed page is disjoint from the window, so it costs its
             // own rows rather than every line beneath it. Without one this is the
@@ -3467,6 +3476,11 @@ export function ServerTerminalWorkspace({
             const scroll = panesRef.current.find((pane) => pane.id === requestPaneId)?.raw.scroll;
             const reachedRows = earlierOutputRowsRef.current;
             earlierOutputRowsRef.current = terminalOutputLineCount(value);
+            // A tail read no deeper than the last one: nothing more is coming,
+            // so say so once rather than leave a pull that does nothing.
+            if (tailPageFoundNothing(outcome, earlierOutputRowsRef.current, reachedRows)) {
+              setHistoryNotice(historyExhaustedNotice());
+            }
             setCanLoadEarlierOutput(
               hasEarlierAfterPage(
                 value,
@@ -3501,7 +3515,15 @@ export function ServerTerminalWorkspace({
         }
       }
     );
-  }, [connection.phase, data.sessionId, outputSource, ready, selection.paneId, serverId]);
+  }, [
+    connection.phase,
+    data.sessionId,
+    outputSource,
+    ready,
+    selection.paneId,
+    serverId,
+    terminalPlane,
+  ]);
 
   // A pull's notice is news about one gesture, not a state of the pane: it
   // leaves on its own, and a Retry pressed in the meantime replaces it.
@@ -5489,6 +5511,9 @@ export function ServerTerminalWorkspace({
                           // paints the whole screen too, and keying this on the editor
                           // predicate is what slid an agent's output under the pill.
                           topInset={paneOwnsScreen ? insets.top + DETAIL_HEADER_HEIGHT : 0}
+                          // A stream rests at its bottom, but scrolled all the way
+                          // back its oldest rows must clear the same header.
+                          topClearance={insets.top + DETAIL_HEADER_HEIGHT}
                           // How many rows of the window are the live screen, so the
                           // grid can rest an editor on the screen rather than on the
                           // oldest frame of the ring-buffer history above it.
@@ -5536,7 +5561,6 @@ export function ServerTerminalWorkspace({
                             canOfferHistoryPull({
                               canLoadEarlier: canLoadEarlierOutput,
                               blocked: historyPullBlocked,
-                              pagedHistory: backendPagesHistory(terminalPlane, data.sessionId),
                             })
                           }
                           historyRevision={historyRevision}

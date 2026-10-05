@@ -550,8 +550,20 @@ export function foldPaneRead(
     // origin here was the bug a review caught: a widening-tail read that
     // legitimately found no overlap was being prepended as if it were older,
     // reversing the transcript's chronological order without any error.
+    //
+    // Disjoint is what was asked for, not always what arrives. The range is
+    // counted in the pane's screen rows and the window in logical lines, so
+    // every line the terminal soft-wrapped below the window makes the page
+    // reach that many lines into it -- measured on a 40-column tmux pane,
+    // eleven lines printed twice at the seam. The page's tail is therefore
+    // placed against the window's head by text first, and only what is
+    // genuinely older goes on top.
     if (overlap === 0 && origin === 'rangePage') {
-      return trimTerminalWindow(collapseRepeat([...latest, ...held]).join('\n'), maximumLines);
+      const shared = pageSeam(heldText, latestText);
+      return trimTerminalWindow(
+        collapseRepeat([...latest.slice(0, latest.length - shared), ...held]).join('\n'),
+        maximumLines
+      );
     }
     // A widening tail that could not be placed, but which demonstrably re-sends
     // history the window is already holding, is refused rather than appended.
@@ -1169,6 +1181,30 @@ function alreadyHeld(held: string[], incoming: string[]): number {
       }
     }
     if (same) return read[count - 1] + 1;
+  }
+  return 0;
+}
+
+/**
+ * How many of an older page's last rows the window already begins with: the
+ * longest run of the page's tail that is, row for row by text, the window's
+ * head. Believed only with {@link SCREEN_ANCHOR_ROWS} text rows in it, so a
+ * page that merely ends on the same blank line or prompt the window starts
+ * with is not cut -- a short coincidence costs a repeated row, never a lost one.
+ */
+function pageSeam(held: readonly string[], page: readonly string[]): number {
+  for (let count = Math.min(held.length, page.length); count >= 1; count -= 1) {
+    const start = page.length - count;
+    let same = true;
+    let text = 0;
+    for (let step = 0; step < count; step += 1) {
+      if (page[start + step] !== held[step]) {
+        same = false;
+        break;
+      }
+      if (held[step].trim() !== '') text += 1;
+    }
+    if (same && text >= SCREEN_ANCHOR_ROWS) return count;
   }
   return 0;
 }

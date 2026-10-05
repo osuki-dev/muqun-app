@@ -667,6 +667,40 @@ describe('the next page above the one held', () => {
   });
 });
 
+describe('a range page that reaches into the window is placed by its text', () => {
+  // The measured case: `seq 1 3000` and then ten lines a 40-column tmux pane
+  // soft-wrapped onto twenty rows. The range is counted in screen rows and the
+  // window in logical lines, so a page asked for "the 240 rows above the window"
+  // ends eleven lines inside it, and those lines were printed twice.
+  const numbers = (from: number, to: number) =>
+    Array.from({ length: to - from + 1 }, (_, index) => String(from + index));
+  const tail = [
+    'Build finished: the bundle for the release candidate is ready to upload to the store now.',
+    '┌──────────────┬──────────────────────┬──────────────────────┐',
+    '│ Package      │ Version              │ Notes                │',
+    '└──────────────┴──────────────────────┴──────────────────────┘',
+    '在手机上查看终端输出时，宽表格应该保持原样并可以横向拖动查看，而普通文字按宽度换行。',
+    'short line',
+  ];
+
+  test('the seam is exact: no line twice, none missing, in order', () => {
+    const window = [...numbers(2773, 3000), ...tail].join('\n');
+    const page = numbers(2545, 2784).join('\n');
+    const folded = foldPaneRead(window, page, 'rangePage', 480).split('\n');
+    expect(folded).toEqual([...numbers(2545, 3000), ...tail]);
+  });
+
+  test('a page that only ends on the window’s first line or two is not trimmed', () => {
+    // Two rows is a coincidence as easily as a seam -- a blank and a prompt --
+    // so it costs a repeated row rather than a lost one.
+    const window = ['$ make', 'ok', 'x1', 'x2'].join('\n');
+    const page = ['older', '$ make', 'ok'].join('\n');
+    expect(foldPaneRead(window, page, 'rangePage', 100)).toBe(
+      'older\n$ make\nok\n$ make\nok\nx1\nx2'
+    );
+  });
+});
+
 describe('only a genuine range page may be believed with zero overlap', () => {
   // The bug a review caught: 'page' -- the widening tail -- and 'rangePage' --
   // a disjoint absolute span -- were once the same origin. A widening-tail

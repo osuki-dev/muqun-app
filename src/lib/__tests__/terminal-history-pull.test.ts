@@ -17,6 +17,9 @@ const { parseTerminalDiscovery } = await import('../agent-protocol');
 const {
   backendPagesHistory,
   canOfferHistoryPull,
+  historyExhaustedNotice,
+  historyPullUsesRange,
+  tailPageFoundNothing,
   historyPullBlockedAfter,
   historyPullNotice,
   pullEarlierPage,
@@ -236,8 +239,7 @@ describe('pullEarlierPage', () => {
 describe('the pull gate', () => {
   test('fail, then no pull on offer, then a reconnect, then a page', async () => {
     let blocked = false;
-    const offered = () =>
-      canOfferHistoryPull({ canLoadEarlier: true, blocked, pagedHistory: undefined });
+    const offered = () => canOfferHistoryPull({ canLoadEarlier: true, blocked });
     const tail = scripted([BACKEND_ERROR, BACKEND_ERROR, tailRead]);
     const pull = () =>
       pullEarlierPage({
@@ -270,9 +272,7 @@ describe('the pull gate', () => {
   });
 
   test('nothing to reach is nothing to offer, gate or no gate', () => {
-    expect(canOfferHistoryPull({ canLoadEarlier: false, blocked: false, pagedHistory: true })).toBe(
-      false
-    );
+    expect(canOfferHistoryPull({ canLoadEarlier: false, blocked: false })).toBe(false);
   });
 });
 
@@ -293,31 +293,47 @@ describe('discovery features.pagedHistory', () => {
       ],
     });
 
-  test('false withdraws the pull for that backend only', () => {
+  test('false turns off the range read for that backend only, and keeps the pull', () => {
+    // herdr: no range reads, but a wider tail read still pages (459 lines held,
+    // 240 shown). The pull stays; only the range path goes.
     const discovered = plane({ pagedHistory: false });
     expect(backendPagesHistory(discovered, 'default')).toBe(false);
     expect(backendPagesHistory(discovered, 'herdr')).toBeUndefined();
-    expect(
-      canOfferHistoryPull({
-        canLoadEarlier: true,
-        blocked: false,
-        pagedHistory: backendPagesHistory(discovered, 'default'),
-      })
-    ).toBe(false);
+    expect(historyPullUsesRange(backendPagesHistory(discovered, 'default'))).toBe(false);
+    expect(historyPullUsesRange(backendPagesHistory(discovered, 'herdr'))).toBe(true);
+    expect(canOfferHistoryPull({ canLoadEarlier: true, blocked: false })).toBe(true);
   });
 
-  test('absent or malformed is unknown, and unknown keeps the pull', () => {
+  test('absent or malformed is unknown, and unknown still tries the range', () => {
     for (const features of [undefined, {}, { pagedHistory: 'no' }, 'nope']) {
       const pagedHistory = backendPagesHistory(plane(features), 'default');
       expect(pagedHistory).toBeUndefined();
-      expect(canOfferHistoryPull({ canLoadEarlier: true, blocked: false, pagedHistory })).toBe(
-        true
-      );
+      expect(historyPullUsesRange(pagedHistory)).toBe(true);
     }
     expect(backendPagesHistory(null, 'default')).toBeUndefined();
   });
 
   test('true is carried through', () => {
     expect(backendPagesHistory(plane({ pagedHistory: true }), 'default')).toBe(true);
+  });
+});
+
+describe('a tail page that found nothing', () => {
+  const tailPage = {
+    kind: 'page' as const,
+    fetched: tailRead,
+    origin: 'page' as const,
+    rangeUnsupported: false,
+  };
+
+  test('no new rows ends the pull with one notice', () => {
+    expect(tailPageFoundNothing(tailPage, 240, 240)).toBe(true);
+    expect(tailPageFoundNothing(tailPage, 200, 240)).toBe(true);
+    expect(historyExhaustedNotice().kind).toBe('exhausted');
+  });
+
+  test('new rows are a page, and a range page is never judged by its length', () => {
+    expect(tailPageFoundNothing(tailPage, 459, 240)).toBe(false);
+    expect(tailPageFoundNothing({ ...tailPage, origin: 'rangePage' }, 80, 240)).toBe(false);
   });
 });
