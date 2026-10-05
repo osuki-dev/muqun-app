@@ -24,6 +24,7 @@ export function TerminalPanel({
   output,
   bottomInset = 0,
   topInset = 0,
+  topClearance = 0,
   keyboardOffset,
   textSize,
   screenRows = 0,
@@ -52,6 +53,8 @@ export function TerminalPanel({
    * A pane that prints lines has nothing at its top worth seeing. An editor does.
    */
   topInset?: number;
+  /** The header's height, so a stream's oldest rows can be scrolled out from under it. */
+  topClearance?: number;
   keyboardOffset?: SharedValue<number>;
   /** The Text size setting, which is the only default the terminal has. */
   textSize?: TerminalTextSize;
@@ -125,6 +128,7 @@ export function TerminalPanel({
       terminalId={paneId}
       bottomInset={bottomInset}
       topInset={topInset}
+      topClearance={topClearance}
       keyboardOffset={keyboardOffset}
       textSize={textSize}
       screenRows={screenRows}

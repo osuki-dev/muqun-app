@@ -399,6 +399,7 @@ export function SkiaTerminal({
   terminalId,
   bottomInset = 0,
   topInset = 0,
+  topClearance = 0,
   keyboardOffset,
   textSize = 'default',
   screenRows = 0,
@@ -452,6 +453,13 @@ export function SkiaTerminal({
    * button. See `terminalRestOffset`.
    */
   topInset?: number;
+  /**
+   * The floating header's height, for a pane `topInset` leaves at zero. Scrolled
+   * all the way back, the first row can then be brought fully below the header
+   * instead of stopping under it. It only extends the top of the scroll range;
+   * where the pane rests and how it follows output are untouched.
+   */
+  topClearance?: number;
   keyboardOffset?: SharedValue<number>;
   /**
    * The Text size setting, and the only thing that decides how big the text is
@@ -1236,6 +1244,12 @@ export function SkiaTerminal({
   // disappears with what the pane is running, and a pane that switches from a
   // shell to nvim should slide its first row clear rather than jump it.
   const animatedTopInset = useSharedValue(topInset);
+  // How far below the top edge the oldest row may be brought: the header's
+  // height. Only the top stop reads it (see `terminalTopStop`).
+  const animatedTopClearance = useSharedValue(topClearance);
+  useEffect(() => {
+    animatedTopClearance.set(topClearance);
+  }, [animatedTopClearance, topClearance]);
   useEffect(() => {
     animatedTopInset.set(withTiming(topInset, timing('short')));
   }, [animatedTopInset, topInset]);
@@ -1521,7 +1535,8 @@ export function SkiaTerminal({
             translateY.get() - addedRows * lineHeight * scale.get(),
             minimumY,
             animatedTopInset.get(),
-            historyHeight * scale.get()
+            historyHeight * scale.get(),
+            animatedTopClearance.get()
           )
         );
         followOutput.set(false);
@@ -1543,7 +1558,8 @@ export function SkiaTerminal({
             translateY.get() + compensation,
             minimumY,
             animatedTopInset.get(),
-            historyHeight * scale.get()
+            historyHeight * scale.get(),
+            animatedTopClearance.get()
           )
         );
         moveSelectionRows(droppedRows, frame.lines.length);
@@ -1557,6 +1573,7 @@ export function SkiaTerminal({
     historyAnchorRef.current = { terminalId, revision: coalescedRevision, anchor };
   }, [
     animatedTopInset,
+    animatedTopClearance,
     animatedVisibleHeight,
     contentHeight,
     followOutput,
@@ -1639,7 +1656,8 @@ export function SkiaTerminal({
           bottom - placedRows * lineHeight * scale.get(),
           animatedVisibleHeight.get() - contentHeight * scale.get(),
           animatedTopInset.get(),
-          historyHeight * scale.get()
+          historyHeight * scale.get(),
+          animatedTopClearance.get()
         )
       );
       // The horizontal half, measured against this frame's own width so the
@@ -1703,6 +1721,7 @@ export function SkiaTerminal({
     );
   }, [
     animatedTopInset,
+    animatedTopClearance,
     animatedVisibleHeight,
     catchingUp,
     contentHeight,
@@ -1737,7 +1756,8 @@ export function SkiaTerminal({
               translateY.get(),
               minimumY,
               topInsetValue,
-              historyHeight * scale.get()
+              historyHeight * scale.get(),
+              animatedTopClearance.get()
             )
       );
     }
@@ -1769,7 +1789,8 @@ export function SkiaTerminal({
               translateY.get(),
               minimumY,
               topInsetValue,
-              historyHeight * scale.get()
+              historyHeight * scale.get(),
+              animatedTopClearance.get()
             )
       );
     }
@@ -1818,7 +1839,8 @@ export function SkiaTerminal({
       translateY.get() + velocity * (elapsedMs / 1000),
       minY,
       animatedTopInset.get(),
-      historyHeight * scale.get()
+      historyHeight * scale.get(),
+      animatedTopClearance.get()
     );
     if (nextY === translateY.get()) return;
     translateY.set(nextY);
@@ -2397,7 +2419,7 @@ export function SkiaTerminal({
           // See `terminalPullOvershoot`: how far past the top stop this drag is
           // asking to go, independent of where the gesture itself started.
           const minY = animatedVisibleHeight.get() - contentHeight * scale.get();
-          const topStop = terminalTopStop(minY, animatedTopInset.get());
+          const topStop = terminalTopStop(minY, animatedTopInset.get(), animatedTopClearance.get());
           const overshoot = terminalPullOvershoot(gestureStartY.get(), event.translationY, topStop);
           if (
             canLoadEarlier &&
@@ -2432,7 +2454,8 @@ export function SkiaTerminal({
                 gestureStartY.get() + event.translationY,
                 minY,
                 animatedTopInset.get(),
-                historyHeight * scale.get()
+                historyHeight * scale.get(),
+                animatedTopClearance.get()
               )
             );
             // Following is a position, not a mode the touch cancels. Clearing it the
@@ -2504,7 +2527,7 @@ export function SkiaTerminal({
                   velocity: event.velocityY,
                   clamp: [
                     terminalBottomStop(minY, animatedTopInset.get(), historyHeight * scale.get()),
-                    terminalTopStop(minY, animatedTopInset.get()),
+                    terminalTopStop(minY, animatedTopInset.get(), animatedTopClearance.get()),
                   ],
                 },
                 (finished) => {
@@ -2563,6 +2586,7 @@ export function SkiaTerminal({
       anchorColumn,
       anchorRow,
       animatedTopInset,
+      animatedTopClearance,
       animatedVisibleHeight,
       applySelection,
       beginProgramDrag,
@@ -2653,7 +2677,13 @@ export function SkiaTerminal({
           scale.set(nextScale);
           translateX.set(Math.max(minX, Math.min(0, nextX)));
           translateY.set(
-            clampScrollOffset(nextY, minY, animatedTopInset.get(), historyHeight * nextScale)
+            clampScrollOffset(
+              nextY,
+              minY,
+              animatedTopInset.get(),
+              historyHeight * nextScale,
+              animatedTopClearance.get()
+            )
           );
           // Same rule as the pan: a pinch that leaves the last line on screen is
           // still a reader watching the bottom, and zooming out used to park them.
@@ -2670,6 +2700,7 @@ export function SkiaTerminal({
         }),
     [
       animatedTopInset,
+      animatedTopClearance,
       animatedVisibleHeight,
       contentHeight,
       focalX,
@@ -3036,7 +3067,10 @@ export function SkiaTerminal({
   useAnimatedReaction(
     () => {
       const minY = animatedVisibleHeight.get() - contentHeight * scale.get();
-      return translateY.get() >= terminalTopStop(minY, animatedTopInset.get()) - 1;
+      return (
+        translateY.get() >=
+        terminalTopStop(minY, animatedTopInset.get(), animatedTopClearance.get()) - 1
+      );
     },
     (isAtTop, wasAtTop) => {
       if (!isAtTop || wasAtTop || !canLoadEarlier) return;
@@ -3165,6 +3199,7 @@ export function SkiaTerminal({
     );
   }, [
     animatedTopInset,
+    animatedTopClearance,
     animatedVisibleHeight,
     contentHeight,
     followOutput,

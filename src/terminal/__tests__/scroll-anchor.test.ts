@@ -666,3 +666,19 @@ describe('historyHintOpacity', () => {
     });
   });
 });
+
+describe('the header clearance at the top of a stream', () => {
+  const HEADER = 110;
+
+  test('scrolled all the way back, the first row can be brought below the header', () => {
+    // A long stream: without the clearance the top stop is 0, under the header.
+    expect(terminalTopStop(-4_000, 0)).toBe(0);
+    expect(terminalTopStop(-4_000, 0, HEADER)).toBe(HEADER);
+    expect(clampScrollOffset(500, -4_000, 0, 0, HEADER)).toBe(HEADER);
+  });
+
+  test('the bottom of the range, where a live pane rests, does not move', () => {
+    expect(clampScrollOffset(-9_000, -4_000, 0, 0, HEADER)).toBe(-4_000);
+    expect(clampScrollOffset(-4_000, -4_000, 0, 0, HEADER)).toBe(-4_000);
+  });
+});
