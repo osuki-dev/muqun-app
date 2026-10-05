@@ -22,6 +22,7 @@
  */
 
 import { parseKeyboardVocabulary, type KeyboardVocabulary } from './key-vocabulary';
+import { parseMessageImageAssets, type MessageImageAsset } from './message-images';
 
 // ---------------------------------------------------------------------------
 // Primitives
@@ -1213,6 +1214,11 @@ export interface TimelineItem {
   seq: number;
   updated_ms: number;
   attachments?: string[];
+  /**
+   * The images a text part's markdown embeds by host path, each resolved by
+   * the gateway to the asset URL that serves it. See `message-images.ts`.
+   */
+  image_assets?: MessageImageAsset[];
   /** Client-side only: an optimistic row that has not been acknowledged. */
   queued?: boolean;
   /**
@@ -1256,6 +1262,7 @@ export function parseTimelineItem(value: unknown): TimelineItem | null {
   const part = parseAgentPart(rec.part);
   if (!part) return null;
   const attachments = asStringArray(rec.attachments);
+  const imageAssets = parseMessageImageAssets(rec.image_assets);
   return {
     id,
     message_id: asString(rec.message_id) ?? id,
@@ -1265,6 +1272,7 @@ export function parseTimelineItem(value: unknown): TimelineItem | null {
     seq: asFiniteNumber(rec.seq) ?? 0,
     updated_ms: asFiniteNumber(rec.updated_ms) ?? 0,
     ...(attachments.length > 0 ? { attachments } : {}),
+    ...(imageAssets.length > 0 ? { image_assets: imageAssets } : {}),
   };
 }
 

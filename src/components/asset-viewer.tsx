@@ -8,13 +8,21 @@ import { Skeleton } from '@/components/themed-skeleton';
 import { Check, Copy, X } from 'lucide-react-native';
 import { EnrichedMarkdownText } from 'react-native-enriched-markdown';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Linking, Modal, ScrollView, StyleSheet, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Linking,
+  Modal,
+  ScrollView,
+  StyleSheet,
+  useWindowDimensions,
+  View,
+} from 'react-native';
 import Animated from 'react-native-reanimated';
 import { KeyboardStickyView } from 'react-native-keyboard-controller';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useMarkdownFonts } from '@/hooks/use-user-fonts';
-import { createMarkdownStyle } from '@/lib/markdown-style';
+import { createMarkdownStyle, markdownImageStyle } from '@/lib/markdown-style';
 import { ImagePreviewModal } from '@/components/image-preview-modal';
 import { SheetFrame } from '@/components/sheet-ground';
 import { PressableScale } from '@/components/pressable-scale';
@@ -47,6 +55,24 @@ import { THEME_LIMITS } from '@/theme/schema';
 import type { ThemeEditorCandidate } from '@/theme/draft-session';
 import { themeFromDocument } from '@/theme/file-preview';
 import { settleAfter } from '@/lib/compiler-safe-control-flow';
+import {
+  escapeMarkdownText,
+  messageImageResolver,
+  rewriteMessageImages,
+} from '@/lib/message-images';
+
+/**
+ * A document's images that name a path on the gateway host. The phone cannot
+ * load those, so each says so in words rather than drawing an empty box.
+ *
+ * TODO: resolve a relative image against the document's own directory. The
+ * content route only serves ids the gateway has indexed or listed, and the
+ * exact-path lookup that would list a sibling is scoped to a terminal tab,
+ * which a file opened from an agent session does not have.
+ */
+const NO_IMAGE_URIS: ReadonlyMap<string, string> = new Map();
+const NO_PENDING_IMAGES: ReadonlySet<string> = new Set();
+const documentImageResolver = messageImageResolver(NO_IMAGE_URIS, NO_PENDING_IMAGES);
 
 /**
  * Read-only view of one artifact the agent produced.
@@ -169,10 +195,14 @@ function AssetSheet({ asset, onClose }: { asset: SessionAsset; onClose: () => vo
   const theme = useThemeTokens();
   const insets = useSafeAreaInsets();
   const markdownFonts = useMarkdownFonts();
-  const markdownStyle = useMemo(
-    () => createMarkdownStyle(theme.colors, markdownFonts),
-    [theme.colors, markdownFonts]
-  );
+  const { height: viewportHeight } = useWindowDimensions();
+  const markdownStyle = useMemo(() => {
+    const base = createMarkdownStyle(theme.colors, markdownFonts);
+    return {
+      ...base,
+      image: markdownImageStyle(viewportHeight, base.codeBlock?.borderRadius ?? 0),
+    };
+  }, [theme.colors, markdownFonts, viewportHeight]);
   const [content, setContent] = useState<string | null>(null);
   /**
    * Which body this file gets. `too-large` is the one ceiling left, and it is
@@ -545,6 +575,16 @@ function AssetBody({
 
   /** A markdown file is a document; everything else is code, whatever it is called. */
   const document = presentation === 'document';
+  const documentText = useMemo(
+    () =>
+      content === null || !document
+        ? content
+        : rewriteMessageImages(content, documentImageResolver, (alt) => {
+            const label = alt.trim() ? t`Image unavailable: ${alt.trim()}` : t`Image unavailable`;
+            return `*${escapeMarkdownText(label)}*`;
+          }),
+    [content, document, t]
+  );
 
   /**
    * What the highlighted renderer is handed, when it is the one drawing.
@@ -704,7 +744,7 @@ function AssetBody({
       <AssetBodyLayer id="document">
         <MarkdownDocumentView
           testID="asset-document"
-          markdown={content}
+          markdown={documentText ?? content}
           markdownStyle={markdownStyle}
           selectionColor={theme.colors.primarySubtle}
           contentInsets={DOCUMENT_INSETS}

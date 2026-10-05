@@ -114,6 +114,13 @@ export interface BoundedMarkdownProps {
    * transcript's.
    */
   selectionColor?: string;
+  /**
+   * Headers for the renderer's own image requests: the device's credentials,
+   * when the markdown loads images from the gateway.
+   */
+  imageRequestHeaders?: Record<string, string>;
+  /** A tapped image, by the URL it was loaded from. Images are inert without it. */
+  onImagePress?: (url: string) => void;
   testID?: string;
 }
 
@@ -125,6 +132,8 @@ export const BoundedMarkdown = memo(function BoundedMarkdown({
   openLinks = true,
   latexMath = false,
   selectionColor,
+  imageRequestHeaders,
+  onImagePress,
   testID,
 }: BoundedMarkdownProps) {
   const { t } = useLingui();
@@ -196,6 +205,8 @@ export const BoundedMarkdown = memo(function BoundedMarkdown({
           })
         }
         {...(latexMath ? { md4cFlags: { latexMath: true } } : {})}
+        {...(imageRequestHeaders ? { imageRequestHeaders } : {})}
+        {...(onImagePress ? { onImagePress: ({ url }: { url: string }) => onImagePress(url) } : {})}
         {...(openLinks
           ? {
               onLinkPress: ({ url }: { url: string }) => {

@@ -287,3 +287,29 @@ export function createMarkdownStyle(colors: Colors, fonts?: MarkdownFonts): Mark
     },
   };
 }
+
+/** How much of the viewport one markdown image may take, at most. */
+export const MARKDOWN_IMAGE_MAX_HEIGHT_RATIO = 0.6;
+
+/**
+ * Block images in markdown: the full width at their own aspect ratio, never
+ * taller than `MARKDOWN_IMAGE_MAX_HEIGHT_RATIO` of the viewport, and contained
+ * -- never cropped -- inside that cap.
+ *
+ * Left unstyled, the renderer draws every image cover-fit into a fixed-height
+ * box, so a tall diagram showed as a zoomed-in strip of its middle. `maxHeight`
+ * is the renderer's own intrinsic-size knob: it reads the image's size when it
+ * loads and fits the box to it, so nothing here needs the size up front.
+ */
+export function markdownImageStyle(
+  viewportHeight: number,
+  borderRadius: number
+): NonNullable<MarkdownStyle['image']> {
+  return {
+    maxHeight: Math.max(160, Math.round(viewportHeight * MARKDOWN_IMAGE_MAX_HEIGHT_RATIO)),
+    resizeMode: 'contain',
+    borderRadius,
+    marginTop: 8,
+    marginBottom: 8,
+  };
+}

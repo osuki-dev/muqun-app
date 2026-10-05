@@ -26,8 +26,13 @@ mockModule('react-native', () => ({
   StyleSheet: { hairlineWidth: 0.5 },
 }));
 
-const { createCompactMarkdownStyle, createMarkdownStyle, createThoughtMarkdownStyle } =
-  await import('../markdown-style');
+const {
+  createCompactMarkdownStyle,
+  createMarkdownStyle,
+  createThoughtMarkdownStyle,
+  markdownImageStyle,
+  MARKDOWN_IMAGE_MAX_HEIGHT_RATIO,
+} = await import('../markdown-style');
 
 const MODES = ['light', 'dark'] as const;
 
@@ -272,5 +277,24 @@ describe('a reader-supplied face', () => {
     expect(compact.codeBlock?.fontFamily).toBe(MONO);
 
     expect(createThoughtMarkdownStyle(colors, both)).toEqual(compact);
+  });
+});
+
+describe('markdownImageStyle', () => {
+  test('fits the width at the image aspect ratio, contained under a viewport cap', () => {
+    // `maxHeight` without `aspectRatio` is the renderer's intrinsic-size mode;
+    // `contain` keeps it from cropping inside the cap.
+    expect(markdownImageStyle(1000, 12)).toEqual({
+      maxHeight: 1000 * MARKDOWN_IMAGE_MAX_HEIGHT_RATIO,
+      resizeMode: 'contain',
+      borderRadius: 12,
+      marginTop: 8,
+      marginBottom: 8,
+    });
+  });
+
+  test('a tiny or unmeasured viewport still leaves room for an image', () => {
+    expect(markdownImageStyle(0, 0).maxHeight).toBe(160);
+    expect(markdownImageStyle(333, 0).maxHeight).toBe(200);
   });
 });

@@ -1,4 +1,4 @@
-import { File } from 'expo-file-system';
+import { File, Paths } from 'expo-file-system';
 import { fetch as nitroFetch, Response as NitroResponse } from 'react-native-nitro-fetch';
 import QuickCrypto from 'react-native-quick-crypto';
 import { assertDeliveryCurrent, deliverPasteAndEnter } from './bound-delivery';
@@ -1352,6 +1352,57 @@ export async function readAssetImageSource(
     uri: `data:${mime};base64,${bytes.toString('base64')}`,
     cacheKey: `${asset.id}:${asset.modified_unix_ms}:encrypted`,
   };
+}
+
+/**
+ * Where the markdown renderer loads an image an agent embedded by host path
+ * (`image_assets`, see `message-images.ts`). On a plain transport that is the
+ * gateway URL itself, fetched by the renderer with `gatewayAuthHeaders()`. The
+ * renderer cannot open an encrypted transport's envelope, so there it is null
+ * and `readMessageImageFile` lands the authenticated bytes in a cache file.
+ */
+export function messageImageUrl(url: string): string | null {
+  if (currentTransport === GATEWAY_TRANSPORT) return null;
+  return gatewayUrl(url);
+}
+
+/** One download per image per launch, shared by every part that shows it. */
+const messageImageFiles = new Map<string, Promise<string>>();
+
+const IMAGE_EXTENSIONS: Record<string, string> = {
+  'image/png': 'png',
+  'image/jpeg': 'jpg',
+  'image/gif': 'gif',
+  'image/webp': 'webp',
+  'image/heic': 'heic',
+  'image/avif': 'avif',
+};
+
+/** The encrypted-transport path of `messageImageUrl`: a `file://` URI. */
+export function readMessageImageFile(asset: { asset_id: string; url: string }): Promise<string> {
+  const known = messageImageFiles.get(asset.asset_id);
+  if (known) return known;
+  const pending = (async () => {
+    const response = await encryptedGatewayFetch(
+      gatewayUrl(asset.url),
+      { headers: gatewayAuthHeaders() },
+      ASSET_CONTENT_TIMEOUT_MS
+    );
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const mime = response.headers.get('content-type')?.split(';')[0] ?? '';
+    const extension = IMAGE_EXTENSIONS[mime];
+    if (!extension) throw new Error('Gateway did not return an image.');
+    const bytes = new Uint8Array(await response.arrayBuffer());
+    const file = new File(Paths.cache, `message-image-${asset.asset_id}.${extension}`);
+    if (file.exists) file.delete();
+    file.create();
+    file.write(bytes);
+    return file.uri;
+  })();
+  messageImageFiles.set(asset.asset_id, pending);
+  // A failure is not remembered: the next render may find the gateway back.
+  pending.catch(() => messageImageFiles.delete(asset.asset_id));
+  return pending;
 }
 
 /**

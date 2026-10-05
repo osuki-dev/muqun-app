@@ -60,6 +60,13 @@ import {
 } from '@/lib/gateway-client';
 import { fadeIn, timing } from '@/lib/motion';
 import { plainFromMarkdown } from '@/lib/markdown-text';
+import {
+  escapeMarkdownText,
+  messageImageResolver,
+  rewriteMessageImages,
+  type MessageImageAsset,
+} from '@/lib/message-images';
+import { useMessageImages } from '@/hooks/use-message-images';
 import { countMarked, diffRowsForFence } from '@/lib/agent-diff-rows';
 import {
   formatModelName,
@@ -619,12 +626,31 @@ const AgentDiffBlock = memo(function AgentDiffBlock({
  * to a neighbouring part do not re-split and re-render it.
  */
 const MessageTextPart = memo(function MessageTextPart({
-  text,
+  text: written,
   markdownStyle,
+  imageAssets,
+  onPreviewImage,
 }: {
   text: string;
   markdownStyle: MarkdownStyle;
+  /** The gateway's resolution of the images this text embeds by host path. */
+  imageAssets?: readonly MessageImageAsset[];
+  onPreviewImage?: (uri: string) => void;
 }) {
+  const { t } = useLingui();
+  const images = useMessageImages(imageAssets);
+  // The text as drawn: each image the gateway can serve loads from it, and one
+  // that names a host path nothing can serve says so in words rather than
+  // leaving an empty box. The agent's own text -- what copy and export use --
+  // is never changed.
+  const text = useMemo(
+    () =>
+      rewriteMessageImages(written, messageImageResolver(images.uris, images.pending), (alt) => {
+        const label = alt.trim() ? t`Image unavailable: ${alt.trim()}` : t`Image unavailable`;
+        return `*${escapeMarkdownText(label)}*`;
+      }),
+    [written, images, t]
+  );
   const segments = useMemo(
     () => splitDiffFences(text).filter((seg) => seg.kind === 'diff' || seg.text.trim().length > 0),
     [text]
@@ -637,6 +663,8 @@ const MessageTextPart = memo(function MessageTextPart({
       markdownStyle={markdownStyle}
       containerStyle={styles.markdownContainer}
       latexMath
+      {...(images.headers ? { imageRequestHeaders: images.headers } : {})}
+      {...(onPreviewImage ? { onImagePress: onPreviewImage } : {})}
     />
   );
 
@@ -747,7 +775,15 @@ function renderTimelinePart(
       return <AgentNoticeRow key={item.id} part={part} />;
     case 'text':
       return (
-        <MessageTextPart key={item.id} text={part.text} markdownStyle={options.markdownStyle} />
+        <MessageTextPart
+          key={item.id}
+          text={part.text}
+          markdownStyle={options.markdownStyle}
+          {...(item.image_assets ? { imageAssets: item.image_assets } : {})}
+          {...(options.actions.onPreviewImage
+            ? { onPreviewImage: options.actions.onPreviewImage }
+            : {})}
+        />
       );
     default:
       // `approval` and `form` are drawn by the surfaces that own their state:
