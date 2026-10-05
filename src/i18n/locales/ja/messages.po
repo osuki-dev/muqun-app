@@ -2550,11 +2550,13 @@ msgid "If this continues, restart the app or check the app installation"
 msgstr "問題が続く場合は、アプリを再起動するか、インストール状態を確認してください"
 
 #: src/components/agent-message-block.tsx
+#: src/components/asset-viewer.tsx
 msgid "Image unavailable"
 msgstr "画像を表示できません"
 
 #. placeholder {0}: alt.trim()
 #: src/components/agent-message-block.tsx
+#: src/components/asset-viewer.tsx
 msgid "Image unavailable: {0}"
 msgstr "画像を表示できません：{0}"
 

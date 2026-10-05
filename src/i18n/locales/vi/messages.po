@@ -2550,11 +2550,13 @@ msgid "If this continues, restart the app or check the app installation"
 msgstr "Nếu sự cố vẫn tiếp diễn, hãy khởi động lại ứng dụng hoặc kiểm tra bản cài đặt"
 
 #: src/components/agent-message-block.tsx
+#: src/components/asset-viewer.tsx
 msgid "Image unavailable"
 msgstr "Không thể hiển thị hình ảnh"
 
 #. placeholder {0}: alt.trim()
 #: src/components/agent-message-block.tsx
+#: src/components/asset-viewer.tsx
 msgid "Image unavailable: {0}"
 msgstr "Không thể hiển thị hình ảnh: {0}"
 

@@ -2550,11 +2550,13 @@ msgid "If this continues, restart the app or check the app installation"
 msgstr "If this continues, restart the app or check the app installation"
 
 #: src/components/agent-message-block.tsx
+#: src/components/asset-viewer.tsx
 msgid "Image unavailable"
 msgstr "Image unavailable"
 
 #. placeholder {0}: alt.trim()
 #: src/components/agent-message-block.tsx
+#: src/components/asset-viewer.tsx
 msgid "Image unavailable: {0}"
 msgstr "Image unavailable: {0}"
 
