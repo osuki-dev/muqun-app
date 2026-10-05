@@ -18,6 +18,8 @@ export interface OpenedToolCall {
   part: ToolPart;
   /** The gateway session, for reading the full output file. */
   sessionId?: string;
+  /** The agent session's workspace; an output file is only offered inside it. */
+  directory?: string;
   transcript?: AgentTranscriptStore;
 }
 

@@ -130,11 +130,16 @@ export function AgentSubagentDetailSheet({
     () => ({
       onOpenChildSession: onOpenChild,
       onOpenToolDetail: (part) => {
-        useToolCallDetailStore.getState().open({ part, sessionId, transcript: store });
+        useToolCallDetailStore.getState().open({
+          part,
+          sessionId,
+          directory: info?.directory,
+          transcript: store,
+        });
         router.push('/agent-tool-detail');
       },
     }),
-    [onOpenChild, router, sessionId, store]
+    [info?.directory, onOpenChild, router, sessionId, store]
   );
   const rowProps = useMemo(
     () => ({

@@ -3499,10 +3499,15 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   /** One tool call, whole, read live out of this workbench's transcript. */
   const openToolDetail = useCallback(
     (part: ToolPart) => {
-      useToolCallDetailStore.getState().open({ part, sessionId, transcript: transcriptStore });
+      useToolCallDetailStore.getState().open({
+        part,
+        sessionId,
+        directory: activeDirectory,
+        transcript: transcriptStore,
+      });
       router.push('/agent-tool-detail');
     },
-    [router, sessionId, transcriptStore]
+    [activeDirectory, router, sessionId, transcriptStore]
   );
 
   const handleToggleReasoning = useCallback(() => {

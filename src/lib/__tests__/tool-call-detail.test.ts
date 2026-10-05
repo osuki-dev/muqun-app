@@ -7,9 +7,11 @@ import {
   isCancellation,
   LARGE_OUTPUT_CHARS,
   LARGE_OUTPUT_LINES,
+  MAX_OUTPUT_PATH_LENGTH,
   runningElapsedMs,
   toolCallDetail,
   toolCallRows,
+  workspaceOutputPath,
 } from '../tool-call-detail';
 
 function tool(overrides: Partial<ToolPart> = {}): ToolPart {
@@ -191,19 +193,28 @@ describe('output', () => {
     expect(toolCallDetail(tool({ output: lines.slice(0, 50).join('\n') })).large).toBe(false);
   });
 
-  test('the file the engine saved the whole output to is found', () => {
+  test('the file the engine saved the whole output to is found inside the workspace', () => {
+    const workspace = { workspace: '/Users/otaku/Work/app' };
     expect(
-      toolCallDetail(tool({ metadata: { truncated: true, outputPath: '/tmp/tool_1' } }))
-        .fullOutputPath
-    ).toBe('/tmp/tool_1');
+      toolCallDetail(
+        tool({ metadata: { truncated: true, outputPath: '/Users/otaku/Work/app/.out/tool_1' } }),
+        workspace
+      ).fullOutputPath
+    ).toBe('/Users/otaku/Work/app/.out/tool_1');
     expect(
       toolCallDetail(
         tool({
           output:
-            '...\nThe tool call succeeded but the output was truncated. Full output saved to: /x/tool_2\n',
-        })
+            '...\nThe tool call succeeded but the output was truncated. Full output saved to: /Users/otaku/Work/app/tool_2\n',
+        }),
+        workspace
       ).fullOutputPath
-    ).toBe('/x/tool_2');
+    ).toBe('/Users/otaku/Work/app/tool_2');
+    // No workspace known: nothing is offered.
+    expect(
+      toolCallDetail(tool({ metadata: { outputPath: '/Users/otaku/Work/app/tool_1' } }))
+        .fullOutputPath
+    ).toBeUndefined();
   });
 
   test('both sections number from one', () => {
@@ -212,6 +223,61 @@ describe('output', () => {
       row.type === 'line' ? [`${row.section}:${row.newLine}`] : []
     );
     expect(numbers).toEqual(['input:1', 'input:2', 'input:3', 'input:4', 'output:1', 'output:2']);
+  });
+});
+
+describe('workspaceOutputPath', () => {
+  const root = '/Users/otaku/Work/app';
+
+  test('inside the workspace, normalised', () => {
+    expect(workspaceOutputPath(`${root}/build/out.log`, root)).toBe(`${root}/build/out.log`);
+    expect(workspaceOutputPath(`${root}//build\\out.log`, `${root}/`)).toBe(
+      `${root}/build/out.log`
+    );
+  });
+
+  test('traversal is refused, however it is spelled', () => {
+    expect(workspaceOutputPath(`${root}/../../.ssh/id_ed25519`, root)).toBeUndefined();
+    expect(workspaceOutputPath(`${root}/a/..\\..\\secret`, root)).toBeUndefined();
+    expect(workspaceOutputPath(`${root}/./out.log`, root)).toBeUndefined();
+  });
+
+  test('a relative path is refused', () => {
+    expect(workspaceOutputPath('build/out.log', root)).toBeUndefined();
+    expect(workspaceOutputPath('~/out.log', root)).toBeUndefined();
+  });
+
+  test('control characters and newlines are refused', () => {
+    expect(workspaceOutputPath(`${root}/out.log\n/etc/passwd`, root)).toBeUndefined();
+    expect(workspaceOutputPath(`${root}/out\u0000.log`, root)).toBeUndefined();
+    expect(workspaceOutputPath(`${root}/out\u007f.log`, root)).toBeUndefined();
+  });
+
+  test('outside the workspace is refused, including a sibling sharing its prefix', () => {
+    expect(workspaceOutputPath('/etc/passwd', root)).toBeUndefined();
+    expect(workspaceOutputPath(`${root}-evil/out.log`, root)).toBeUndefined();
+    expect(workspaceOutputPath(root, root)).toBeUndefined();
+    expect(
+      workspaceOutputPath('/Users/otaku/.local/share/opencode/tool-output/tool_1', root)
+    ).toBeUndefined();
+  });
+
+  test('the gateway uploads folder is not an output location', () => {
+    expect(
+      workspaceOutputPath(
+        '/Users/otaku/Library/Application Support/muqun-gateway/uploads/a.txt',
+        root
+      )
+    ).toBeUndefined();
+  });
+
+  test('a root-of-disk workspace, an over-long path or a non-string is refused', () => {
+    expect(workspaceOutputPath('/etc/passwd', '/')).toBeUndefined();
+    expect(
+      workspaceOutputPath(`${root}/${'a'.repeat(MAX_OUTPUT_PATH_LENGTH)}`, root)
+    ).toBeUndefined();
+    expect(workspaceOutputPath(42, root)).toBeUndefined();
+    expect(workspaceOutputPath(`${root}/out.log`, undefined)).toBeUndefined();
   });
 });
 

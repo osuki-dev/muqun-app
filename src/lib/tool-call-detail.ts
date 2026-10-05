@@ -62,7 +62,10 @@ export interface ToolCallDetail {
   timedOut: boolean;
   /** The output the reader sees was clipped by the engine or the gateway. */
   truncated: boolean;
-  /** Where the engine saved the whole output, when it clipped it. */
+  /**
+   * Where the engine saved the whole output, when it clipped it -- and only
+   * when that path passed `workspaceOutputPath`. See there.
+   */
   fullOutputPath?: string;
   /** Too big to be worth reading in a sheet; offer the file instead. */
   large: boolean;
@@ -110,6 +113,56 @@ export function isCancellation(error: { name?: string; message?: string } | unde
 
 const EXIT_LINE = /\n?\s*(?:Command e|E)xited with code (-?\d+)\.?\s*$/i;
 const SAVED_TO = /Full output saved to:?\s+(\S+)/i;
+
+/** Longer than any real path a reader would open; a guard, not a measurement. */
+export const MAX_OUTPUT_PATH_LENGTH = 1024;
+
+// oxlint-disable-next-line no-control-regex -- matching control characters is the point.
+const CONTROL_CHARACTERS = /[\u0000-\u001f\u007f]/;
+
+/** Backslashes as slashes, runs of slashes as one, no trailing slash. */
+function normalisePath(path: string): string {
+  const slashed = path.replace(/\\/g, '/').replace(/\/{2,}/g, '/');
+  return slashed.length > 1 ? slashed.replace(/\/$/, '') : slashed;
+}
+
+/**
+ * The output file a call names, if it is one the sheet may offer to open.
+ *
+ * The path is the agent's to write -- `metadata.outputPath`, or a sentence in
+ * the output that anything the tool printed can imitate -- so it is treated as
+ * untrusted. It must be absolute, short, free of control characters and of any
+ * `..` or `.` segment, and inside the session's workspace directory once both
+ * are normalised. Anything else is dropped without a word: the sheet still has
+ * the whole of what it was handed, and an affordance that is not there cannot
+ * be pointed at `~/.ssh`.
+ *
+ * Not the gateway's uploads folder: that holds what the reader attached, and
+ * no engine saves its output there. OpenCode saves clipped output under its
+ * own data directory, which is outside every workspace, so on a stock
+ * install this offers nothing -- the honest answer for a file the workspace-
+ * fenced viewer would refuse anyway. A session rooted at `/` offers nothing.
+ */
+export function workspaceOutputPath(candidate: unknown, workspace: unknown): string | undefined {
+  if (typeof candidate !== 'string' || typeof workspace !== 'string') return undefined;
+  if (!candidate || candidate.length > MAX_OUTPUT_PATH_LENGTH) return undefined;
+  if (!workspace || workspace.length > MAX_OUTPUT_PATH_LENGTH) return undefined;
+  if (CONTROL_CHARACTERS.test(candidate) || CONTROL_CHARACTERS.test(workspace)) return undefined;
+  const path = normalisePath(candidate);
+  const root = normalisePath(workspace);
+  if (!path.startsWith('/') || !root.startsWith('/')) return undefined;
+  const dotted = (value: string) =>
+    value.split('/').some((segment) => segment === '..' || segment === '.');
+  // A session rooted at `/` fences nothing, so it is no fence at all.
+  if (dotted(path) || dotted(root) || root === '/') return undefined;
+  return path.startsWith(`${root}/`) ? path : undefined;
+}
+
+/** What the sheet knows about where the call ran. */
+export interface ToolCallContext {
+  /** The session's workspace directory, which an output file must be inside. */
+  workspace?: string;
+}
 
 /** Pretty JSON when `text` is a JSON object or list, otherwise `null`. */
 function prettyJsonText(text: string): string | null {
@@ -220,7 +273,7 @@ function outputText(part: ToolPart): { text: string; exitCode?: number } {
 }
 
 /** Everything the detail sheet draws for `part`. */
-export function toolCallDetail(part: ToolPart): ToolCallDetail {
+export function toolCallDetail(part: ToolPart, context: ToolCallContext = {}): ToolCallDetail {
   const kind = classifyTool(part.name);
   const { input, streaming } = inputSection(part);
   const { text: rawOutput, exitCode: printedExit } = outputText(part);
@@ -257,10 +310,10 @@ export function toolCallDetail(part: ToolPart): ToolCallDetail {
       : undefined);
 
   const metadataPath = part.metadata.outputPath ?? part.metadata.output_path;
-  const fullOutputPath =
-    typeof metadataPath === 'string' && metadataPath
-      ? metadataPath
-      : (SAVED_TO.exec(rawOutput)?.[1] ?? undefined);
+  const fullOutputPath = workspaceOutputPath(
+    typeof metadataPath === 'string' && metadataPath ? metadataPath : SAVED_TO.exec(rawOutput)?.[1],
+    context.workspace
+  );
 
   const large =
     output !== null &&

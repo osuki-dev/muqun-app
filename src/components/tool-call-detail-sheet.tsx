@@ -82,7 +82,11 @@ export function ToolCallDetailSheet() {
   const { showToast } = useToast();
   const opened = useToolCallDetailStore((state) => state.opened);
   const part = useLiveToolPart(opened);
-  const detail = useMemo(() => (part ? toolCallDetail(part) : null), [part]);
+  const workspace = opened?.directory;
+  const detail = useMemo(
+    () => (part ? toolCallDetail(part, { workspace }) : null),
+    [part, workspace]
+  );
   const rows = useMemo(() => (detail ? toolCallRows(detail) : []), [detail]);
   const [fileAsset, setFileAsset] = useState<SessionAsset | null>(null);
 
@@ -103,6 +107,10 @@ export function ToolCallDetailSheet() {
   };
   const outputCopy = [detail.error, detail.output?.text].filter(Boolean).join('\n\n');
   const fullOutputPath = detail.fullOutputPath;
+  // `fullOutputPath` is only set for a path inside the session's workspace
+  // (`workspaceOutputPath`), and it goes nowhere but the Files viewer, which
+  // reads through `GET /api/assets/{id}/content` -- the route the gateway
+  // canonicalises against the workspace root. Never a generic opener.
   const canOpenFile =
     fullOutputPath !== undefined &&
     opened?.sessionId !== undefined &&
