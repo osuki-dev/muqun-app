@@ -82,6 +82,7 @@ import {
 } from '@/lib/tab-swipe';
 import { createMMKV } from 'react-native-mmkv';
 import { terminalGridFor } from '@/lib/ssh-grid-metrics';
+import { keepNativeWidthRows } from '@/terminal/native-width';
 import {
   pinchedTerminalScale,
   terminalFitToWidthScale,
@@ -721,25 +722,27 @@ export function SkiaTerminal({
   // rows that changed (see `SnapshotLineCache`). Content-keyed and add-only
   // while parsing, so a render React throws away cannot leave it wrong.
   const [lineCache] = useState(createSnapshotLineCache);
-  const frame = useMemo(
-    () =>
-      appliedFrame ??
-      // The pane's rows are handed to the parse only for a program that owns
-      // the screen. An editor's frame IS its grid, so a read one line short of
-      // the pane would otherwise put the pane's last row somewhere it is not.
-      // A shell's frame is a tail of a stream and has no height to be wrong
-      // about, so it keeps the arithmetic it has always had. Rows are a floor
-      // rather than a size (see `parseTerminalSnapshot`), so the scrollback a
-      // read carries above the screen still arrives whole.
-      parseTerminalSnapshot(
-        coalescedOutput,
-        terminalTheme,
-        paneColumns,
-        ownsScreen ? paneRows : undefined,
-        lineCache
-      ),
-    [appliedFrame, coalescedOutput, terminalTheme, paneColumns, paneRows, ownsScreen, lineCache]
-  );
+  const frame = useMemo(() => {
+    if (appliedFrame) return appliedFrame;
+    // The pane's rows are handed to the parse only for a program that owns
+    // the screen. An editor's frame IS its grid, so a read one line short of
+    // the pane would otherwise put the pane's last row somewhere it is not.
+    // A shell's frame is a tail of a stream and has no height to be wrong
+    // about, so it keeps the arithmetic it has always had. Rows are a floor
+    // rather than a size (see `parseTerminalSnapshot`), so the scrollback a
+    // read carries above the screen still arrives whole.
+    const parsed = parseTerminalSnapshot(
+      coalescedOutput,
+      terminalTheme,
+      paneColumns,
+      ownsScreen ? paneRows : undefined,
+      lineCache
+    );
+    // Scrollback only: a table, a box or ANSI art the parse had to wrap at the
+    // pane's width goes back onto one row at its own width, and the pan reaches
+    // the rest (see `keepNativeWidthRows`). A full-screen frame is its grid.
+    return ownsScreen ? parsed : keepNativeWidthRows(parsed);
+  }, [appliedFrame, coalescedOutput, terminalTheme, paneColumns, paneRows, ownsScreen, lineCache]);
   // The pane's own colours, which are the app's unless the frame says the
   // program owns the screen and is painting in colours we never named. The
   // whole argument is on `terminalPaneTheme`; what matters here is that this is
@@ -1318,12 +1321,19 @@ export function SkiaTerminal({
     lineHeight,
   });
   const phoneColumns = phoneGrid.cols;
-  // The size this pane rests at with nothing remembered for it: 1 for every
-  // pane as wide as the phone or wider, and for every pane whose width the
-  // gateway did not report -- which is every SSH shell, whose grid *is* the
-  // PTY and can never differ from this one. Only a pane narrower than the grid
-  // above gets anything else. See `terminalFitToWidthScale`.
-  const paneRestingScale = terminalFitToWidthScale(phoneColumns, paneColumns);
+  // The canvas the fit lands the pane's last column against, at the setting's
+  // size: the viewport's whole width, not the floored grid inside it.
+  const fitGeometry = { viewportWidth: viewport.width, cellWidth, fontSize };
+  // Whose columns are fitted: the pane's own width as the gateway reports it,
+  // or -- for a frame handed in by an emulator, which is every SSH shell -- the
+  // emulator's grid, which the screen sized with `terminalGridFor` on this
+  // same geometry. A gateway pane whose width was never reported is not fitted.
+  const fitColumns = paneColumns ?? (frameProp ? frame.columns : undefined);
+  // The size this pane rests at with nothing remembered for it: the scale that
+  // puts its last column exactly on the right edge when it is narrower than
+  // the canvas (or one column over it), 1 for a wider pane, which pans. See
+  // `terminalFitToWidthScale`.
+  const paneRestingScale = terminalFitToWidthScale(fitGeometry, fitColumns);
   // The size this pane is about to open at -- the remembered pinch if it has
   // one, the fit otherwise. Computed here rather than inside the switch render
   // below because the placement needs it too: how many of the pane's cells are
@@ -1336,8 +1346,8 @@ export function SkiaTerminal({
   const paneOpenScale = terminalOpenScale({
     paneId: terminalId,
     remembered: loadPaneScales(),
-    phoneColumns,
-    paneColumns,
+    fit: fitGeometry,
+    paneColumns: fitColumns,
   });
   // Which cell of the pane the reader is put in front of. `{ 0, 0 }` for every
   // pane that is not a full-screen program bigger than this phone's grid, which
@@ -1387,7 +1397,7 @@ export function SkiaTerminal({
    * on every mount, so the first geometry worth acting on is always a later
    * render and always a change from the zero this saw first.
    */
-  const paneOpenKey = `${terminalId}:${viewport.width}x${viewport.height}:${paneColumns ?? 0}x${paneRows ?? 0}:${ownsScreen ? 1 : 0}`;
+  const paneOpenKey = `${terminalId}:${viewport.width}x${viewport.height}:${fitColumns ?? 0}x${paneRows ?? 0}:${cellWidth}:${ownsScreen ? 1 : 0}`;
   const paneOpened = useResetSignal(paneOpenKey);
   // The adjust itself lives in `useArmPaneOpen` -- the same statements, run
   // here, in this render -- so React Compiler can compile the terminal around

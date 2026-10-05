@@ -26,9 +26,9 @@
  * the PTY at nearly twice the columns that fit, and everything the shell
  * printed before the resize landed is already wrapped to the wrong width.
  */
+import { terminalPhoneGrid } from '@/lib/terminal-text-size';
 import {
   TERMINAL_ADVANCE_RATIO,
-  TERMINAL_GRID_HORIZONTAL_PADDING,
   TERMINAL_GRID_VERTICAL_PADDING,
   snapToDevicePixel,
   terminalLineHeight,
@@ -96,16 +96,22 @@ export function terminalGridFor({
     lineHeight !== undefined && Number.isFinite(lineHeight) && lineHeight > 0
       ? lineHeight
       : terminalLineHeight(fontSize);
-  const usableWidth = Math.max(0, width - TERMINAL_GRID_HORIZONTAL_PADDING * 2);
+  // Columns that land exactly on the right edge: the floored count drawn a
+  // touch larger, or one more drawn a touch smaller, whichever is nearer the
+  // setting's size (`terminalPhoneGrid`). The canvas rests the pane at the
+  // matching scale (`terminalFitToWidthScale` on these same columns), so the
+  // rows are counted at that pitch too.
+  const fill = terminalPhoneGrid({ viewportWidth: width, cellWidth: advance, fontSize });
+  const scaledPitch = pitch * fill.scale;
   // The canvas rests its last line short of the bottom edge by the clearance;
   // a PTY sized to the whole height would put its top row above the viewport.
   const usableHeight = Math.max(
     0,
-    height - TERMINAL_GRID_VERTICAL_PADDING * 2 - terminalViewportClearance(pitch)
+    height - TERMINAL_GRID_VERTICAL_PADDING * 2 - terminalViewportClearance(scaledPitch)
   );
   return {
-    cols: Math.max(TERMINAL_GRID_MIN_COLS, Math.floor(usableWidth / advance)),
-    rows: Math.max(TERMINAL_GRID_MIN_ROWS, Math.floor(usableHeight / pitch)),
+    cols: Math.max(TERMINAL_GRID_MIN_COLS, fill.columns),
+    rows: Math.max(TERMINAL_GRID_MIN_ROWS, Math.floor(usableHeight / scaledPitch)),
   };
 }
 

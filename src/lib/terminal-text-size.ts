@@ -1,4 +1,4 @@
-import { TERMINAL_TEXT_SIZES } from '@/terminal/text-scale';
+import { TERMINAL_GRID_HORIZONTAL_PADDING, TERMINAL_TEXT_SIZES } from '@/terminal/text-scale';
 /**
  * How big the terminal's text is -- one rule, in one place.
  *
@@ -103,8 +103,74 @@ export const TERMINAL_MAX_SCALE = 1.8;
 export const TERMINAL_MAX_FIT_SCALE = 1.6;
 
 /**
- * The scale at which a pane's own columns fill the phone's grid -- or 1 when
- * they already do, or more than do.
+ * The smallest glyph the fit may draw, in points.
+ *
+ * The fit below shrinks text a little when that is what it takes for the last
+ * column to land on the right edge -- one column's worth at most. It never
+ * takes the text under this to do it: below about 10pt a phone's terminal stops
+ * being something read at arm's length, and a pane one column too wide is
+ * better panned than squinted at. The pinch is the reader's own choice and is
+ * not held to this; only the size the app picks on its own is.
+ */
+export const TERMINAL_MIN_FONT_PT = 10;
+
+/**
+ * What the fit needs to know about the canvas: how wide it is, how wide a cell
+ * is at the setting's size (the measured advance, `measureCellWidth`), and the
+ * setting's point size itself, for `TERMINAL_MIN_FONT_PT`.
+ */
+export interface TerminalFitGeometry {
+  viewportWidth: number;
+  cellWidth: number;
+  fontSize: number;
+}
+
+/**
+ * The scale at which `columns` cells -- and the grid's padding on each side,
+ * which the canvas transform scales with them -- span the viewport exactly.
+ * `null` when the geometry is not known yet (no viewport, no measured cell).
+ */
+export function terminalExactFillScale(
+  { viewportWidth, cellWidth }: TerminalFitGeometry,
+  columns: number
+): number | null {
+  if (!Number.isFinite(viewportWidth) || viewportWidth <= 0) return null;
+  if (!Number.isFinite(cellWidth) || cellWidth <= 0) return null;
+  if (!Number.isFinite(columns) || columns <= 0) return null;
+  return viewportWidth / (columns * cellWidth + TERMINAL_GRID_HORIZONTAL_PADDING * 2);
+}
+
+/**
+ * How many columns this phone's grid is, and the scale at which exactly that
+ * many fill the width.
+ *
+ * Flooring `usable width / cell` -- all this used to be -- leaves up to a whole
+ * cell of empty strip down the right of every screen. Instead the grid is the
+ * floored count drawn a touch larger (`n` columns at `>= 1`) or one more column
+ * drawn a touch smaller (`n + 1` at `< 1`), whichever is closer to the size the
+ * setting asked for, so the text never moves more than one column's worth of
+ * scale away from it. The smaller answer is only taken while it keeps the text
+ * at or above `TERMINAL_MIN_FONT_PT`.
+ */
+export function terminalPhoneGrid(geometry: TerminalFitGeometry): {
+  columns: number;
+  scale: number;
+} {
+  const usable = geometry.viewportWidth - TERMINAL_GRID_HORIZONTAL_PADDING * 2;
+  const floored = Math.floor(usable / geometry.cellWidth);
+  if (!Number.isFinite(floored) || floored < 1) return { columns: 0, scale: 1 };
+  const up = terminalExactFillScale(geometry, floored);
+  const down = terminalExactFillScale(geometry, floored + 1);
+  if (up === null || down === null) return { columns: floored, scale: 1 };
+  if (1 - down < up - 1 && geometry.fontSize * down >= TERMINAL_MIN_FONT_PT) {
+    return { columns: floored + 1, scale: down };
+  }
+  return { columns: floored, scale: up };
+}
+
+/**
+ * The scale at which a pane's own columns fill the canvas edge to edge -- or 1
+ * when the pane is wider than that and is read by panning.
  *
  * The gateway reports a pane's real width and the canvas lays the snapshot out
  * at exactly that many columns, because the program on the far side hard-wrapped
@@ -112,29 +178,41 @@ export const TERMINAL_MAX_FIT_SCALE = 1.6;
  * Claude Code and nvim had already broken. So the pane's width is fixed and the
  * only free variable is how big each column is drawn.
  *
- * Columns rather than points on purpose: both numbers are counts of the same
- * cell, so their ratio is exactly the factor that puts the pane's last column
- * where the phone's last column would have been, and it needs no cell advance,
- * no padding and no viewport to say so. It is also very slightly conservative
- * -- the phone's own column count is floored -- which is the direction to err,
- * because the alternative is a fitted pane whose right-hand column sits a
- * fraction past the edge.
+ * Exact, rather than the ratio of two column counts it used to be. The ratio
+ * (`phoneColumns / paneColumns`) put the pane's last column where the phone's
+ * *floored* last column would have been -- up to a cell short of the edge, and
+ * the scale multiplied the shortfall, so a fitted pane carried an empty strip
+ * down its right side. This lands the right padding on the right edge, a mirror
+ * of the left.
  *
- * Returns 1, not a smaller number, for a pane as wide as the phone or wider.
- * Shrinking those is the question card #643 already answered: it gave panes of
- * different widths different glyph sizes under one Text size setting. A wide
- * pane keeps its 1:1 text and is read by panning across it, exactly as it is
- * today. `undefined` columns -- a gateway too old to report a width, and every
- * SSH shell, whose grid *is* the PTY and can never differ from the phone's --
- * likewise mean 1 and no fit at all.
+ * Three cases:
+ * - **Narrower than the canvas** -- scaled up until it fills it, capped at
+ *   `TERMINAL_MAX_FIT_SCALE`.
+ * - **One column over** -- the pane is the `n + 1` that `terminalPhoneGrid`
+ *   could also have picked, so it is drawn a touch smaller rather than panned
+ *   for a single column, as long as that keeps the text at or above
+ *   `TERMINAL_MIN_FONT_PT`. An SSH shell `terminalPhoneGrid` sized to `n + 1`
+ *   rests here too.
+ * - **Wider than that** -- 1, and the pane pans. Shrinking those is the
+ *   question card #643 already answered: it gave panes of different widths
+ *   different glyph sizes under one Text size setting.
+ *
+ * `undefined` columns (a gateway too old to report a width) and a canvas not
+ * measured yet both mean 1: no fit at all.
  */
-export function terminalFitToWidthScale(phoneColumns: number, paneColumns?: number): number {
-  if (typeof paneColumns !== 'number' || !Number.isFinite(paneColumns) || paneColumns <= 0) {
-    return 1;
-  }
-  if (!Number.isFinite(phoneColumns) || phoneColumns <= 0) return 1;
-  if (paneColumns >= phoneColumns) return 1;
-  return Math.min(phoneColumns / paneColumns, TERMINAL_MAX_FIT_SCALE);
+export function terminalFitToWidthScale(
+  geometry: TerminalFitGeometry,
+  paneColumns?: number
+): number {
+  if (typeof paneColumns !== 'number') return 1;
+  const exact = terminalExactFillScale(geometry, paneColumns);
+  if (exact === null) return 1;
+  if (exact >= 1) return Math.min(exact, TERMINAL_MAX_FIT_SCALE);
+  const oneColumnOver =
+    (paneColumns - 1) * geometry.cellWidth <=
+    geometry.viewportWidth - TERMINAL_GRID_HORIZONTAL_PADDING * 2;
+  if (oneColumnOver && geometry.fontSize * exact >= TERMINAL_MIN_FONT_PT) return exact;
+  return 1;
 }
 
 /** The point size the setting names, falling back to the middle one. */
@@ -208,8 +286,8 @@ export interface TerminalOpenScaleInput {
   paneId: string;
   /** The table as the canvas last loaded or saved it. */
   remembered: TerminalPaneScales;
-  /** Columns the phone would draw at this viewport and font (`terminalGridFor`). */
-  phoneColumns: number;
+  /** The canvas the pane is fitted into (`terminalFitToWidthScale`). */
+  fit: TerminalFitGeometry;
   /** The pane's own width as the gateway reports it; `undefined` if it did not. */
   paneColumns?: number;
 }
@@ -243,14 +321,14 @@ export interface TerminalOpenScaleInput {
 export function terminalOpenScale({
   paneId,
   remembered,
-  phoneColumns,
+  fit,
   paneColumns,
 }: TerminalOpenScaleInput): number {
   const value = remembered[paneId];
   if (typeof value === 'number' && Number.isFinite(value)) {
     return terminalScaleOnPaneOpen(paneId, remembered);
   }
-  return terminalFitToWidthScale(phoneColumns, paneColumns);
+  return terminalFitToWidthScale(fit, paneColumns);
 }
 
 /**
