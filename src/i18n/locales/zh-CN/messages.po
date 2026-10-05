@@ -1553,10 +1553,6 @@ msgstr "无法保留"
 msgid "Could not list this server's agents."
 msgstr "无法获取这台服务器的代理列表"
 
-#: src/components/server-terminal-workspace.tsx
-msgid "Could not load earlier output."
-msgstr "无法加载之前的输出"
-
 #: src/components/session-artifacts.tsx
 msgid "Could not load files."
 msgstr "无法加载文件"
@@ -1564,6 +1560,10 @@ msgstr "无法加载文件"
 #: src/components/agent-model-sheet.tsx
 msgid "Could not load models"
 msgstr "无法加载模型"
+
+#: src/lib/terminal-history-pull.ts
+msgid "Could not load older history from this terminal"
+msgstr "无法加载此终端更早的历史"
 
 #: src/components/agent-subagent-detail-sheet.tsx
 #: src/components/agent-workbench.tsx
@@ -4140,6 +4140,10 @@ msgid "Retry drawing the terminal"
 msgstr "重新绘制终端"
 
 #: src/components/server-terminal-workspace.tsx
+msgid "Retry loading earlier output"
+msgstr "重试加载更早的输出"
+
+#: src/components/server-terminal-workspace.tsx
 msgid "Retry the ones marked in red, or remove them, then send again."
 msgstr "请重试标为红色的项目，或移除它们后再发送"
 
@@ -5594,6 +5598,10 @@ msgstr "此终端无法发送 {chord}"
 #: src/components/terminal-boundary.tsx
 msgid "This terminal could not be drawn."
 msgstr "无法绘制这个终端"
+
+#: src/lib/terminal-history-pull.ts
+msgid "This terminal has no more history"
+msgstr "此终端没有更多历史了"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "This terminal is no longer available."

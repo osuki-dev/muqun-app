@@ -1553,10 +1553,6 @@ msgstr "유지할 수 없습니다"
 msgid "Could not list this server's agents."
 msgstr "이 서버의 에이전트 목록을 가져오지 못했습니다"
 
-#: src/components/server-terminal-workspace.tsx
-msgid "Could not load earlier output."
-msgstr "이전 출력을 불러오지 못했습니다"
-
 #: src/components/session-artifacts.tsx
 msgid "Could not load files."
 msgstr "파일을 불러오지 못했습니다"
@@ -1564,6 +1560,10 @@ msgstr "파일을 불러오지 못했습니다"
 #: src/components/agent-model-sheet.tsx
 msgid "Could not load models"
 msgstr "모델을 불러올 수 없습니다"
+
+#: src/lib/terminal-history-pull.ts
+msgid "Could not load older history from this terminal"
+msgstr "이 터미널의 이전 기록을 불러올 수 없습니다"
 
 #: src/components/agent-subagent-detail-sheet.tsx
 #: src/components/agent-workbench.tsx
@@ -4140,6 +4140,10 @@ msgid "Retry drawing the terminal"
 msgstr "터미널 다시 그리기"
 
 #: src/components/server-terminal-workspace.tsx
+msgid "Retry loading earlier output"
+msgstr "이전 출력 다시 불러오기"
+
+#: src/components/server-terminal-workspace.tsx
 msgid "Retry the ones marked in red, or remove them, then send again."
 msgstr "빨간색으로 표시된 항목을 다시 시도하거나 삭제한 뒤 다시 보내세요"
 
@@ -5594,6 +5598,10 @@ msgstr "이 터미널은 {chord}을(를) 보낼 수 없습니다"
 #: src/components/terminal-boundary.tsx
 msgid "This terminal could not be drawn."
 msgstr "이 터미널을 그릴 수 없습니다"
+
+#: src/lib/terminal-history-pull.ts
+msgid "This terminal has no more history"
+msgstr "이 터미널에는 더 이상 기록이 없습니다"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "This terminal is no longer available."

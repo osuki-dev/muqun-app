@@ -20,6 +20,8 @@ import { DeliveryOwnership, DeliverySelection } from '@/lib/bound-delivery';
 import { StatusBar } from 'expo-status-bar';
 import {
   Bot,
+  CircleAlert,
+  History,
   Keyboard as KeyboardIcon,
   PenLine,
   SquareTerminal,
@@ -199,6 +201,14 @@ import { withAlpha } from '@/lib/color';
 import { slashCommandTrigger, type PaneSlashCommand } from '@/lib/pane-composer';
 import { asAgentWidgetStatus, syncAgentWidget } from '@/lib/agent-widget';
 import { describeGatewayFailure, type GatewayFailure } from '@/lib/network-error';
+import {
+  backendPagesHistory,
+  canOfferHistoryPull,
+  historyPullBlockedAfter,
+  historyPullNotice,
+  pullEarlierPage,
+  type HistoryPullNotice,
+} from '@/lib/terminal-history-pull';
 import { DEMO_SERVER_ID, demoRecord, isDemoRecord } from '@/lib/demo-gateway';
 import type { HomeServerEntry } from '@/lib/home-commands';
 import { demoSshHost } from '@/lib/demo-ssh';
@@ -1274,6 +1284,12 @@ export function ServerTerminalWorkspace({
   const [retryNonce, setRetryNonce] = useState(0);
   const [loadingEarlierOutput, setLoadingEarlierOutput] = useState(false);
   const [canLoadEarlierOutput, setCanLoadEarlierOutput] = useState(false);
+  const [historyNotice, setHistoryNotice] = useState<HistoryPullNotice | null>(null);
+  // Closed by a pull that ended without a page (`historyPullBlockedAfter`), so
+  // the gesture is neither offered nor fired again into the same failure. The
+  // ref is what `loadEarlierOutput` reads; the state is what the terminal sees.
+  const [historyPullBlocked, setHistoryPullBlocked] = useState(false);
+  const historyPullBlockedRef = useRef(false);
   const [historyRevision, setHistoryRevision] = useState(0);
   const activeServerRef = useRef<string | null>(null);
   const activePaneRef = useRef<string | null>(null);
@@ -1562,6 +1578,9 @@ export function ServerTerminalWorkspace({
     loadingEarlierOutputRef.current = false;
     appliedNotificationTargetRef.current = null;
     setLoadingEarlierOutput(false);
+    setHistoryNotice(null);
+    historyPullBlockedRef.current = false;
+    setHistoryPullBlocked(false);
     setCanLoadEarlierOutput(false);
     setHistoryRevision(0);
     partsLineLimitRef.current = INITIAL_PANE_OUTPUT_LINES;
@@ -1629,6 +1648,9 @@ export function ServerTerminalWorkspace({
     rangeUnsupportedRef.current = false;
     loadingEarlierOutputRef.current = false;
     setLoadingEarlierOutput(false);
+    setHistoryNotice(null);
+    historyPullBlockedRef.current = false;
+    setHistoryPullBlocked(false);
     setCanLoadEarlierOutput(false);
     setHistoryRevision(0);
     setStickBottomNonce((value) => value + 1);
@@ -2939,6 +2961,9 @@ export function ServerTerminalWorkspace({
     rangeUnsupportedRef.current = restored?.rangeUnsupported ?? false;
     loadingEarlierOutputRef.current = false;
     setLoadingEarlierOutput(false);
+    setHistoryNotice(null);
+    historyPullBlockedRef.current = false;
+    setHistoryPullBlocked(false);
     setHistoryRevision(0);
     // The revision the restored window was folded to, so the refresh that
     // follows is a reconciliation rather than a repeat, and an event merely
@@ -3321,6 +3346,7 @@ export function ServerTerminalWorkspace({
       connection.phase !== 'connected' ||
       !requestPaneId ||
       loadingEarlierOutputRef.current ||
+      historyPullBlockedRef.current ||
       currentLimit >= MAX_PANE_OUTPUT_LINES
     )
       return;
@@ -3335,7 +3361,7 @@ export function ServerTerminalWorkspace({
 
     loadingEarlierOutputRef.current = true;
     setLoadingEarlierOutput(true);
-    setError(null);
+    setHistoryNotice(null);
     return settleAfter(
       async () => {
         return recoverWith(
@@ -3369,54 +3395,50 @@ export function ServerTerminalWorkspace({
             const page = range ? nextPageRange(range, PANE_OUTPUT_PAGE_LINES) : null;
             // A range-addressed page is disjoint from the window, so it costs its
             // own rows rather than every line beneath it. Without one this is the
-            // widening tail read it has always been, byte-for-byte.
-            let fetched = page
-              ? await readPaneRange(
+            // widening tail read it has always been, byte-for-byte. Which of the
+            // two answered, whether the backend honoured the range (herdr's
+            // accepts `start`/`end` and answers with its own tail; the Mac's tmux
+            // refuses it outright, `502 backend_error`, for want of `capture-pane
+            // -F`), and the one retry a transient failure gets are all decided in
+            // `pullEarlierPage`, where they can be tested without a screen.
+            const outcome = await pullEarlierPage({
+              page,
+              readRange: (start, end) =>
+                readPaneRange(
                   data.sessionId,
                   requestPaneId,
-                  page.start,
-                  page.end,
+                  start,
+                  end,
                   PANE_OUTPUT_FORMAT,
                   outputSource
-                )
-              : await readPaneTail(
-                  data.sessionId,
-                  requestPaneId,
-                  PANE_OUTPUT_FORMAT,
-                  nextLimit,
-                  outputSource
-                );
-            // A backend can accept `start`/`end` without complaint and still ignore
-            // them, always answering with its own tail (herdr's does) -- there is no
-            // capability flag that says so up front, so the only honest check is
-            // whether what came back is shaped like the page that was actually
-            // asked for. Compared on `start`, not `end`: a backend that shrank
-            // between reads (a cleared pane, a restarted session reusing a pane id)
-            // legitimately clamps `end` down while still honouring the requested
-            // `start` verbatim, and reading that clamp as "ignored my range" would
-            // punish a backend that fully supports it. A backend that ignores the
-            // request outright answers with its own tail instead, whose `start`
-            // bears no relation to the page asked for. A mismatch is remembered so
-            // it is asked at most once, and this click still makes forward progress
-            // rather than looking like it did nothing: fall back to the same
-            // widening-tail request immediately.
-            let origin: PaneReadOrigin = page ? 'rangePage' : 'page';
-            if (page) {
-              const servedRange = paneReadRange(fetched.read);
-              if (!servedRange || servedRange.start !== page.start) {
-                rangeUnsupportedRef.current = true;
-                origin = 'page';
-                fetched = await readPaneTail(
+                ),
+              readTail: () =>
+                readPaneTail(
                   data.sessionId,
                   requestPaneId,
                   PANE_OUTPUT_FORMAT,
                   nextLimit,
                   outputSource
-                );
-              }
-            }
-            const { output: value, read } = fetched;
+                ),
+              servedStart: (read) => paneReadRange(read)?.start ?? null,
+            });
             if (!isCurrentRequest()) return;
+            // Remembered so the range is asked at most once, on this pull or any
+            // later one: every page after it goes straight to the tail.
+            if (outcome.rangeUnsupported) rangeUnsupportedRef.current = true;
+            const blocked = historyPullBlockedAfter(outcome.kind);
+            historyPullBlockedRef.current = blocked;
+            setHistoryPullBlocked(blocked);
+            if (outcome.kind !== 'page') {
+              // Never the error bar: that is for the pane failing, and this is
+              // one gesture that did not land. The gate is closed above, so the
+              // reader is told once rather than on every pull.
+              setHistoryNotice(historyPullNotice(outcome));
+              return;
+            }
+            setHistoryNotice(null);
+            const { origin } = outcome;
+            const { output: value, read } = outcome.fetched;
             outputLineLimitRef.current = nextLimit;
             lastReadRef.current = read;
             // Through the same door as everything else. A page is the one source
@@ -3459,7 +3481,15 @@ export function ServerTerminalWorkspace({
           },
           (failure) => {
             if (isCurrentRequest()) {
-              setError(describeGatewayFailure(failure, t`Could not load earlier output.`).message);
+              historyPullBlockedRef.current = historyPullBlockedAfter('failed');
+              setHistoryPullBlocked(historyPullBlockedRef.current);
+              setHistoryNotice(
+                historyPullNotice({
+                  kind: 'failed',
+                  failure: describeGatewayFailure(failure),
+                  rangeUnsupported: false,
+                })
+              );
             }
           }
         );
@@ -3471,7 +3501,34 @@ export function ServerTerminalWorkspace({
         }
       }
     );
-  }, [connection.phase, data.sessionId, outputSource, ready, selection.paneId, serverId, t]);
+  }, [connection.phase, data.sessionId, outputSource, ready, selection.paneId, serverId]);
+
+  // A pull's notice is news about one gesture, not a state of the pane: it
+  // leaves on its own, and a Retry pressed in the meantime replaces it.
+  useEffect(() => {
+    if (!historyNotice) return;
+    const timer = setTimeout(() => setHistoryNotice(null), historyNotice.dismissMs);
+    return () => clearTimeout(timer);
+  }, [historyNotice]);
+
+  // A reconnect is a new chance: whatever closed the gate may have been the
+  // connection, and the gateway on the far side may be a newer one.
+  const pullPhaseRef = useRef(connection.phase);
+  useEffect(() => {
+    const previous = pullPhaseRef.current;
+    pullPhaseRef.current = connection.phase;
+    if (connection.phase !== 'connected' || previous === 'connected') return;
+    historyPullBlockedRef.current = historyPullBlockedAfter('reconnected');
+    setHistoryPullBlocked(historyPullBlockedRef.current);
+  }, [connection.phase]);
+
+  const retryEarlierOutput = useCallback(() => {
+    // The one explicit way through a closed gate: the reader asked.
+    setHistoryNotice(null);
+    historyPullBlockedRef.current = false;
+    setHistoryPullBlocked(false);
+    void loadEarlierOutput();
+  }, [loadEarlierOutput]);
 
   useEffect(() => {
     panesRef.current = data.panes;
@@ -5254,6 +5311,9 @@ export function ServerTerminalWorkspace({
                       </Text>
                     </Animated.View>
                   ) : null}
+                  {historyNotice ? (
+                    <HistoryPullNoticeView notice={historyNotice} onRetry={retryEarlierOutput} />
+                  ) : null}
                   {/* The tunnel's own status, above the gateway connection notice: a
                 tunnelled gateway cannot connect until its SSH forward is up, so
                 while it is connecting or down this is the news, and the gateway
@@ -5471,7 +5531,14 @@ export function ServerTerminalWorkspace({
                           // `false` here, but a screen-owning pane must never be
                           // able to arm this gesture on the strength of a metric
                           // alone).
-                          canLoadEarlier={fullScreenPane ? false : canLoadEarlierOutput}
+                          canLoadEarlier={
+                            !fullScreenPane &&
+                            canOfferHistoryPull({
+                              canLoadEarlier: canLoadEarlierOutput,
+                              blocked: historyPullBlocked,
+                              pagedHistory: backendPagesHistory(terminalPlane, data.sessionId),
+                            })
+                          }
                           historyRevision={historyRevision}
                           loadingEarlier={loadingEarlierOutput}
                           onLoadEarlier={loadEarlierOutput}
@@ -6279,6 +6346,62 @@ function TerminalBackendDown({
         ) : null}
       </View>
     </View>
+  );
+}
+
+/**
+ * What a pull for earlier output has to say when it did not land a page, in
+ * the same capsule as every other terminal notice: the app's sentence first,
+ * the gateway's reason under it, and a Retry when one can work. It used to be
+ * the error bar -- the gateway's raw sentence on a tinted strip with no icon,
+ * no action and no way out but the next successful request.
+ */
+function HistoryPullNoticeView({
+  notice,
+  onRetry,
+}: {
+  notice: HistoryPullNotice;
+  onRetry: () => void;
+}) {
+  const { t } = useLingui();
+  const theme = useThemeTokens();
+  const failed = notice.kind === 'failed';
+  const Icon = failed ? CircleAlert : History;
+  return (
+    <Animated.View
+      pointerEvents="box-none"
+      layout={listLayout('short')}
+      style={styles.connectionAnchor}>
+      <TerminalNotice
+        accessibilityLabel={notice.caption ? `${notice.title}. ${notice.caption}` : notice.title}>
+        <Icon
+          size={16}
+          strokeWidth={2}
+          color={failed ? theme.colors.danger : theme.colors.textMuted}
+        />
+        <View style={styles.connectionPillLabel}>
+          <Text variant="caption" numberOfLines={2} style={terminalNoticeStyles.label}>
+            {notice.title}
+          </Text>
+          {notice.caption ? (
+            <Text variant="caption" numberOfLines={2} color={theme.colors.textMuted}>
+              {notice.caption}
+            </Text>
+          ) : null}
+        </View>
+        {notice.retry ? (
+          <PressableScale
+            accessibilityLabel={t`Retry loading earlier output`}
+            onPress={onRetry}
+            style={terminalNoticeStyles.action}
+            hitSlop={8}>
+            <Text variant="caption" color={theme.colors.primary}>
+              <Trans>Retry</Trans>
+            </Text>
+          </PressableScale>
+        ) : null}
+      </TerminalNotice>
+    </Animated.View>
   );
 }
 

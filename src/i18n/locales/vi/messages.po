@@ -1553,10 +1553,6 @@ msgstr "Không thể giữ lại"
 msgid "Could not list this server's agents."
 msgstr "Không thể liệt kê các tác tử của máy chủ này"
 
-#: src/components/server-terminal-workspace.tsx
-msgid "Could not load earlier output."
-msgstr "Không thể tải đầu ra trước đó"
-
 #: src/components/session-artifacts.tsx
 msgid "Could not load files."
 msgstr "Không thể tải tệp"
@@ -1564,6 +1560,10 @@ msgstr "Không thể tải tệp"
 #: src/components/agent-model-sheet.tsx
 msgid "Could not load models"
 msgstr "Không thể tải mô hình"
+
+#: src/lib/terminal-history-pull.ts
+msgid "Could not load older history from this terminal"
+msgstr "Không thể tải lịch sử cũ hơn của terminal này"
 
 #: src/components/agent-subagent-detail-sheet.tsx
 #: src/components/agent-workbench.tsx
@@ -4140,6 +4140,10 @@ msgid "Retry drawing the terminal"
 msgstr "Thử vẽ lại terminal"
 
 #: src/components/server-terminal-workspace.tsx
+msgid "Retry loading earlier output"
+msgstr "Thử tải lại đầu ra trước đó"
+
+#: src/components/server-terminal-workspace.tsx
 msgid "Retry the ones marked in red, or remove them, then send again."
 msgstr "Thử lại những mục đánh dấu đỏ, hoặc gỡ chúng, rồi gửi lại"
 
@@ -5594,6 +5598,10 @@ msgstr "Terminal này không gửi được {chord}"
 #: src/components/terminal-boundary.tsx
 msgid "This terminal could not be drawn."
 msgstr "Không thể vẽ terminal này"
+
+#: src/lib/terminal-history-pull.ts
+msgid "This terminal has no more history"
+msgstr "Terminal này không còn lịch sử nào nữa"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "This terminal is no longer available."
