@@ -21,6 +21,7 @@ import { withAlpha } from '@/lib/color';
 import { fadeIn } from '@/lib/motion';
 import type { TodoItem } from '@/lib/agent-session';
 import { AGENT_TYPE } from '@/constants/agent-type';
+import { TRANSCRIPT_GRID } from '@/constants/transcript-grid';
 
 export interface AgentTodoBlockProps {
   items: readonly TodoItem[];
@@ -81,10 +82,12 @@ export const AgentTodoBlock = memo(function AgentTodoBlock({
         onPress={() => setExpanded((prev) => !prev)}
         style={({ pressed }) => [styles.header, pressed && { opacity: 0.7 }]}>
         <View style={styles.headerLeft}>
-          <CheckSquare
-            size={14}
-            color={allCompleted ? theme.colors.success : theme.colors.primary}
-          />
+          <View style={styles.marker}>
+            <CheckSquare
+              size={14}
+              color={allCompleted ? theme.colors.success : theme.colors.primary}
+            />
+          </View>
           <Text variant="caption" weight="semibold" color={theme.colors.text} style={styles.title}>
             {title ?? <Trans>Tasks</Trans>}
           </Text>
@@ -179,20 +182,21 @@ const styles = StyleSheet.create({
     borderCurve: 'continuous',
     borderWidth: StyleSheet.hairlineWidth,
     overflow: 'hidden',
-    marginVertical: 4,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingVertical: 8,
-    paddingHorizontal: 10,
+    paddingHorizontal: TRANSCRIPT_GRID.inset,
   },
   headerLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 7,
+    gap: TRANSCRIPT_GRID.markerGap,
   },
+  /** The transcript's marker column; see `constants/transcript-grid.ts`. */
+  marker: { width: TRANSCRIPT_GRID.markerWidth, alignItems: 'center' },
   title: {
     fontSize: AGENT_TYPE.meta.size,
   },
@@ -214,7 +218,7 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   body: {
-    paddingHorizontal: 10,
+    paddingHorizontal: TRANSCRIPT_GRID.inset,
     paddingTop: 8,
     paddingBottom: 8,
     gap: 7,
@@ -222,10 +226,12 @@ const styles = StyleSheet.create({
   itemRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    gap: 8,
+    gap: TRANSCRIPT_GRID.markerGap,
   },
   itemIcon: {
     marginTop: 1,
+    width: TRANSCRIPT_GRID.markerWidth,
+    alignItems: 'center',
   },
   itemText: {
     flex: 1,

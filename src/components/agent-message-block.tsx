@@ -73,6 +73,7 @@ import { usePermissionDecider, usePermissionForToolCall } from '@/stores/agent-p
 import type { TimelineRenderGroup } from '@/lib/agent-timeline-groups';
 import { groupRoutineToolEntries, type RoutineToolEntry } from '@/lib/agent-tool-groups';
 import { AGENT_TYPE } from '@/constants/agent-type';
+import { TRANSCRIPT_GRID, TRANSCRIPT_HANG } from '@/constants/transcript-grid';
 
 const IMAGE_DATA_URI_PREFIX = 'data:image/';
 function isImageAttachment(uri: string): boolean {
@@ -258,7 +259,9 @@ const AgentNoticeRow = memo(function AgentNoticeRow({ part }: { part: AgentPart 
         accessibilityState={foldable ? { expanded } : undefined}
         onPress={foldable ? () => setExpanded((v) => !v) : undefined}
         style={styles.noticeRow}>
-        <Icon size={11} color={theme.colors.textMuted} style={styles.noticeIcon} />
+        <View style={styles.noticeIcon}>
+          <Icon size={11} color={theme.colors.textMuted} />
+        </View>
         <View style={styles.noticeCopy}>
           {label ? (
             <Text variant="caption" weight="semibold" color={theme.colors.textMuted}>
@@ -851,7 +854,9 @@ const AgentToolGroup = memo(function AgentToolGroup({
         accessibilityLabel={[title, toolNames].filter(Boolean).join(', ')}
         onPress={() => setExpanded((previous) => !previous)}
         style={[styles.toolGroupHeader, plate]}>
-        <Layers size={13} color={theme.colors.textMuted} />
+        <View style={styles.marker}>
+          <Layers size={13} color={theme.colors.textMuted} />
+        </View>
         <View style={styles.toolGroupCopy}>
           <Text variant="caption" weight="semibold" color={theme.colors.text}>
             {title}
@@ -1313,7 +1318,7 @@ const STANDALONE_PART_TYPES: ReadonlySet<string> = new Set([
  * below, because the list put its own gap between messages on top of the
  * rows' own margins. The list's gap is zero now; this is the only spacing.
  */
-export const TRANSCRIPT_ROW_GAP = 10;
+export const TRANSCRIPT_ROW_GAP = TRANSCRIPT_GRID.rowGap;
 
 const styles = StyleSheet.create({
   /** The one geometry both sides share: full width, padded, on a plate. */
@@ -1322,8 +1327,8 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     maxWidth: '100%',
     marginVertical: TRANSCRIPT_ROW_GAP / 2,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
+    paddingVertical: TRANSCRIPT_GRID.plateInsetY,
+    paddingHorizontal: TRANSCRIPT_GRID.inset,
     gap: 6,
   },
   userBlock: {
@@ -1346,11 +1351,13 @@ const styles = StyleSheet.create({
   toolGroupHeader: {
     minHeight: 44,
     paddingVertical: 8,
-    paddingHorizontal: 10,
+    paddingHorizontal: TRANSCRIPT_GRID.inset,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 7,
+    gap: TRANSCRIPT_GRID.markerGap,
   },
+  /** The grid's marker column: icons of any width share one centre. */
+  marker: { width: TRANSCRIPT_GRID.markerWidth, alignItems: 'center' },
   toolGroupCopy: { flex: 1, minWidth: 0, gap: 1 },
   toolGroupNames: { fontSize: AGENT_TYPE.micro.size },
   toolGroupItems: { gap: TRANSCRIPT_ROW_GAP },
@@ -1423,7 +1430,8 @@ const styles = StyleSheet.create({
     fontSize: AGENT_TYPE.meta.size,
     flexShrink: 1,
   },
-  noticeIcon: { marginTop: 3 },
+  // In the marker column, level with the first line (11pt glyph, 14pt line).
+  noticeIcon: { width: TRANSCRIPT_GRID.markerWidth, alignItems: 'center', paddingTop: 3 },
   // Shrinks, never grows: inside a plate that hugs its content a `flex: 1`
   // column measures to nothing and the row collapses to its icon.
   noticeCopy: { flexShrink: 1, minWidth: 0, gap: 2 },
@@ -1432,17 +1440,21 @@ const styles = StyleSheet.create({
     maxWidth: '100%',
     marginVertical: TRANSCRIPT_ROW_GAP / 2,
     paddingVertical: 8,
-    paddingHorizontal: 12,
+    paddingHorizontal: TRANSCRIPT_GRID.inset,
   },
   // Closed, the plate hugs its two lines; open, it is a document and takes
   // the row's full width like every other block that holds prose.
   noticeOpen: { alignSelf: 'stretch' },
-  noticeBody: { marginTop: 4 },
+  // Hangs off the icon like the line that opened it.
+  noticeBody: {
+    marginTop: TRANSCRIPT_GRID.attachGap,
+    marginLeft: TRANSCRIPT_HANG,
+  },
   chevronOpen: { transform: [{ rotate: '180deg' }] },
   noticeRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    gap: 6,
+    gap: TRANSCRIPT_GRID.markerGap,
     paddingVertical: 2,
   },
   noticeText: {

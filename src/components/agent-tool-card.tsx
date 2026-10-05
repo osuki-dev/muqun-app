@@ -335,6 +335,7 @@ const PatchBody = memo(function PatchBody({
       colors={colors}
       gutterFill={theme.colors.surface}
       headerFill={theme.colors.surface}
+      onGrid
       {...(onOpenFullDiff ? { onOpenFullDiff } : {})}
     />
   );
@@ -1120,6 +1121,7 @@ const EditDiffs = memo(function EditDiffs({
       gutterFill={theme.colors.surface}
       headerFill={theme.colors.surface}
       onToggleFile={toggle}
+      onGrid
       {...(onOpenFullDiff ? { onOpenFullDiff } : {})}
     />
   );

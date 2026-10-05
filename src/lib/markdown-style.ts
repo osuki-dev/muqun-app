@@ -14,6 +14,8 @@ import { StyleSheet } from 'react-native';
 import type { MarkdownStyle } from 'react-native-enriched-markdown';
 
 import { AGENT_TYPE } from '@/constants/agent-type';
+import { TRANSCRIPT_GRID } from '@/constants/transcript-grid';
+import { withAlpha } from '@/lib/color';
 
 /**
  * The two faces a markdown block can be set in, where the reader supplied them.
@@ -214,9 +216,12 @@ export function createMarkdownStyle(colors: Colors, fonts?: MarkdownFonts): Mark
     blockquote: {
       ...base,
       color: muted,
-      borderColor: link,
-      borderWidth: 3,
-      gapWidth: 10,
+      // The transcript's one hanging rule (see `constants/transcript-grid.ts`):
+      // the thought body's width and ink. The renderer draws it at the prose
+      // edge; the gap puts the quoted text on the grid's text column.
+      borderColor: withAlpha(colors.primary, TRANSCRIPT_GRID.ruleAlpha),
+      borderWidth: TRANSCRIPT_GRID.ruleWidth,
+      gapWidth: TRANSCRIPT_GRID.textOrigin - TRANSCRIPT_GRID.inset - TRANSCRIPT_GRID.ruleWidth,
       backgroundColor: quoteBackground,
     },
     // Inline code is the body ink in the monospace face and nothing more: no

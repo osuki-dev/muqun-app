@@ -17,6 +17,7 @@ import { firstLine, type PaneChatItem, type PaneChatToolBlock } from '@/lib/pane
 import type { PanePart, PanePartStatus } from '@/lib/pane-parts';
 import { isSafeExternalLink } from '@/lib/safe-link';
 import { useTerminalTheme } from '@/hooks/use-theme-pack';
+import { TRANSCRIPT_GRID } from '@/constants/transcript-grid';
 
 /**
  * The rows of the chat view.
@@ -192,11 +193,13 @@ export const PaneChatActivityRow = memo(function PaneChatActivityRow({
         pressedScale={0.99}
         onPress={() => onToggle(item.id)}
         style={[styles.activityChip, { borderRadius: profile.chrome.control }]}>
-        {item.status === 'running' ? (
-          <ActivityIndicator size="small" color={colors.status.running} />
-        ) : (
-          <View style={[styles.statusDot, { backgroundColor: colors.status[item.status] }]} />
-        )}
+        <View style={styles.marker}>
+          {item.status === 'running' ? (
+            <ActivityIndicator size="small" color={colors.status.running} />
+          ) : (
+            <View style={[styles.statusDot, { backgroundColor: colors.status[item.status] }]} />
+          )}
+        </View>
         <Text variant="caption" color={colors.muted} numberOfLines={1} style={styles.flexOne}>
           {item.summary}
         </Text>
@@ -365,7 +368,9 @@ const PaneChatToolCard = memo(function PaneChatToolCard({
         disabled={!onToggle}
         onPress={() => onToggle?.(block.id)}
         style={styles.toolHeader}>
-        <View style={[styles.statusDot, { backgroundColor: colors.status[block.status] }]} />
+        <View style={styles.marker}>
+          <View style={[styles.statusDot, { backgroundColor: colors.status[block.status] }]} />
+        </View>
         <Text variant="bodySmall" color={colors.text} style={styles.toolName}>
           {block.tool}
         </Text>
@@ -439,16 +444,18 @@ const TodoCard = memo(function TodoCard({
       ]}>
       {part.items.map((item, itemPosition) => (
         <View key={`todo-${itemPosition}-${item.text}`} style={styles.todoItem}>
-          <View
-            style={[
-              styles.todoBox,
-              { borderRadius: profile.radius.xs },
-              {
-                borderColor: item.done ? colors.accent : colors.border,
-                backgroundColor: item.done ? colors.accent : 'transparent',
-              },
-            ]}>
-            {item.done ? <View style={styles.todoTick} /> : null}
+          <View style={styles.marker}>
+            <View
+              style={[
+                styles.todoBox,
+                { borderRadius: profile.radius.xs },
+                {
+                  borderColor: item.done ? colors.accent : colors.border,
+                  backgroundColor: item.done ? colors.accent : 'transparent',
+                },
+              ]}>
+              {item.done ? <View style={styles.todoTick} /> : null}
+            </View>
           </View>
           <Text
             variant="bodySmall"
@@ -613,10 +620,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     alignSelf: 'flex-start',
     maxWidth: '100%',
-    gap: 8,
+    gap: TRANSCRIPT_GRID.markerGap,
     borderCurve: 'continuous',
-    paddingHorizontal: 11,
+    paddingHorizontal: TRANSCRIPT_GRID.inset,
     paddingVertical: 6,
+  },
+  /**
+   * The transcript's marker column (`constants/transcript-grid.ts`): a status
+   * dot, a spinner and a checkbox share one centre, and what follows them
+   * starts on the grid's text column.
+   */
+  marker: {
+    width: TRANSCRIPT_GRID.markerWidth,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   activityBody: {
     gap: 8,
@@ -629,8 +646,8 @@ const styles = StyleSheet.create({
   toolHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    paddingHorizontal: 12,
+    gap: TRANSCRIPT_GRID.markerGap,
+    paddingHorizontal: TRANSCRIPT_GRID.inset,
     paddingVertical: 10,
   },
   statusDot: {
@@ -643,7 +660,7 @@ const styles = StyleSheet.create({
   },
   toolBody: {
     gap: 8,
-    paddingHorizontal: 12,
+    paddingHorizontal: TRANSCRIPT_GRID.inset,
     paddingBottom: 12,
     paddingTop: 10,
     borderTopWidth: StyleSheet.hairlineWidth,
@@ -656,8 +673,8 @@ const styles = StyleSheet.create({
   todoItem: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    gap: 10,
-    paddingHorizontal: 12,
+    gap: TRANSCRIPT_GRID.markerGap,
+    paddingHorizontal: TRANSCRIPT_GRID.inset,
     paddingVertical: 7,
   },
   todoBox: {

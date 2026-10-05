@@ -37,6 +37,7 @@ import { EngineFailureText } from '@/components/engine-failure-text';
 import { ThinkingIndicator } from '@/components/agent-thinking-indicator';
 import { usePaneChatColors } from '@/components/pane-chat-blocks';
 import { useTranscriptPlate } from '@/hooks/use-transcript-plate';
+import { TRANSCRIPT_GRID } from '@/constants/transcript-grid';
 import { useMonoFontFamily } from '@/hooks/use-user-fonts';
 import { fadeIn, timing } from '@/lib/motion';
 import type { ToolCallState } from '@/lib/agent-protocol';
@@ -297,8 +298,8 @@ export const EmbeddedTerminalToolBlock = memo(function EmbeddedTerminalToolBlock
 });
 
 /** The icon column, and the gap after it: what the title is indented by. */
-const ICON_COLUMN = 13;
-const HEADER_GAP = 7;
+const ICON_COLUMN = TRANSCRIPT_GRID.markerWidth;
+const HEADER_GAP = TRANSCRIPT_GRID.markerGap;
 
 const styles = StyleSheet.create({
   container: {
@@ -306,8 +307,8 @@ const styles = StyleSheet.create({
     // neither of which measures inside a shrink-to-fit box.
     alignSelf: 'stretch',
     paddingVertical: 8,
-    paddingHorizontal: 10,
-    gap: 5,
+    paddingHorizontal: TRANSCRIPT_GRID.inset,
+    gap: TRANSCRIPT_GRID.attachGap,
   },
   header: {
     flexDirection: 'row',
@@ -317,6 +318,7 @@ const styles = StyleSheet.create({
   headerIcon: {
     paddingTop: 1,
     width: ICON_COLUMN,
+    alignItems: 'center',
   },
   /**
    * The column the title starts in.
