@@ -872,7 +872,10 @@ export function parseTerminalSnapshot(
   const terminal = new TerminalEmulator({
     columns: dimensions.columns,
     rows: dimensions.rows,
-    scrollback: 0,
+    // Rows the read needs past the grid cap -- a full 2000-line window whose
+    // long lines wrap onto extra rows -- are kept as scrollback rather than
+    // scrolled off the top, so the oldest lines of the window are not lost.
+    scrollback: measured.overflow,
     convertEol: true,
     theme,
   });
@@ -1513,7 +1516,7 @@ function addTextLink(
 function measureSnapshot(
   input: string,
   suppliedColumns?: number
-): { columns: number; rows: number } {
+): { columns: number; rows: number; overflow: number } {
   const visible = input
     // An OSC string ends at ITS OWN terminator, so the payload class has to
     // exclude both characters a terminator can begin with. Excluding only BEL
@@ -1562,6 +1565,19 @@ function measureSnapshot(
   return {
     columns,
     rows: clamp(Math.max(2, rows), 2, EMULATED_ROW_CAP),
+    // Bounded so the grid never holds more cells than the widest grid at the
+    // row cap already may: a narrow pane gets the rows its window needs, and
+    // nothing can size an allocation past what was already possible.
+    overflow: Math.max(
+      0,
+      Math.min(
+        rows - EMULATED_ROW_CAP,
+        // Only the rows wrapping added: a read of more lines than the cap
+        // still loses its oldest lines, as it always has.
+        rows - (lines.length + 1),
+        Math.floor((EMULATED_ROW_CAP * MAX_GRID_COLUMNS) / grid) - EMULATED_ROW_CAP
+      )
+    ),
   };
 }
 

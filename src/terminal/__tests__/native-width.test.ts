@@ -121,6 +121,17 @@ describe('keepNativeWidthRows', () => {
     expect(logicalLines(parseTerminalSnapshot(box, undefined, PANE_COLUMNS))).toEqual([box]);
   });
 
+  test('a full window whose lines wrap past the row cap keeps its oldest line', () => {
+    // 1990 lines -- under the 2000-line read cap -- of which twenty wrap onto a
+    // second row: 2010 rows, more than the grid's 2000.
+    const lines = Array.from({ length: 1990 }, (_, index) =>
+      index % 99 === 0 ? `${index} ${'x'.repeat(60)}` : String(index)
+    );
+    const frame = parseTerminalSnapshot(lines.join('\n'), undefined, PANE_COLUMNS);
+    expect(frame.lines.length).toBeGreaterThan(2000);
+    expect(logicalLines(frame).slice(0, lines.length)).toEqual(lines);
+  });
+
   test('a wide glyph at the break keeps its place, and the column it skipped stays out', () => {
     // 39 ASCII columns and then a CJK glyph that cannot fit in the 40th: the
     // emulator leaves the 40th blank and wraps. Joined, nothing moves.
