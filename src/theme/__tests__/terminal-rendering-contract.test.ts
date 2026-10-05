@@ -16,7 +16,7 @@ test('terminal opacity affects only the default fill, never the complete termina
   expect(renderer.replace(/\s+/g, ' ')).toContain(
     'terminalCanvasPaint( terminalTheme, paneTheme, theme.colors.background, wallpaperBehind );'
   );
-  expect(renderer).toContain('<TerminalCanvas opaque={canvasIsOpaque}');
+  expect(renderer).toContain('<Canvas opaque={canvasIsOpaque}');
   expect(renderer).toContain('<Fill color={canvasFill} />');
   expect(renderer).toContain(
     'paintsCellBackground(run.style, colors.background, terminalTheme.background)'

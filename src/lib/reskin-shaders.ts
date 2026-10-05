@@ -95,8 +95,10 @@ uniform float  uWetWidth;     // how far the damp band reaches behind the front
 uniform float  uWetStrength;  // how much of it lands
 uniform float  uGlowOut;      // how far the new primary spills forward
 uniform float  uGlowStrength; // how much of that spill lands
-uniform float4 uRimColor;     // the new theme's primary
-uniform float4 uWetColor;     // the damp band's colour
+// layout(color): converted from sRGB into the working colour space (Display
+// P3 on wide-gamut iOS) like paint colours, not read as raw P3 values.
+layout(color) uniform float4 uRimColor;     // the new theme's primary
+layout(color) uniform float4 uWetColor;     // the damp band's colour
 
 ${SKSL_NOISE}
 ${SKSL_RIM}
@@ -179,7 +181,7 @@ uniform float  uBand;         // how wide the shrinking band is
 uniform float  uCell;         // the halftone cell, about one x-height
 uniform float  uHalfDiag;     // uCell * sqrt(0.5): a dot at full coverage
 uniform float  uTintStrength; // how much primary the leading band carries
-uniform float4 uTint;         // the theme's primary
+layout(color) uniform float4 uTint;         // the theme's primary
 
 // Screened at 45 degrees, where cos and sin are the same number.
 const float K = 0.70710678;
@@ -250,7 +252,7 @@ uniform float  uShade;        // how much the rings' slope lights or darkens
 uniform float  uCrest;        // the crest's white highlight, at its peak
 uniform float  uRimWidth;     // the fringe's half-width
 uniform float  uChroma;       // how far its warm and cool lines separate
-uniform float4 uRimColor;     // the new theme's primary, alpha already set
+layout(color) uniform float4 uRimColor;     // the new theme's primary, alpha already set
 
 ${SKSL_RIM}
 
@@ -330,7 +332,7 @@ uniform float  uCell;         // the re-encoding grid, in points
 uniform float  uSplit;        // how far red and blue are pulled apart
 uniform float  uLineAlpha;    // the lines riding inside the band
 uniform float  uEdgeAlpha;    // the leading edge's line
-uniform float4 uTint;         // the theme's primary
+layout(color) uniform float4 uTint;         // the theme's primary
 
 ${SKSL_NOISE}
 ${SKSL_RIM}
