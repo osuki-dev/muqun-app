@@ -1,4 +1,4 @@
-import { AlphaType, ColorType, Skia, type SkImage } from '@shopify/react-native-skia';
+import { AlphaType, ColorType, Skia, type SkImage } from 'react-native-skia';
 import { useEffect, useMemo, useState } from 'react';
 import { createMMKV } from 'react-native-mmkv';
 

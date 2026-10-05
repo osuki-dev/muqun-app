@@ -140,7 +140,11 @@
  * ## The mirror
  *
  * `muqun-gateway/src/scrollback.rs` reasons the same way about the same rows and
- * says so in its own header. The two ends of one pane must not disagree about
+ * says so in its own header. Both compare rows by what a reader sees of them
+ * ({@link rowText}) -- never by their bytes, because an agent repaints an
+ * unchanged row with its colours encoded differently -- and both place a read
+ * by the longest run of text rows it shares with what is held, blank rows
+ * skipped, and start again when the pane is resized. The two ends of one pane must not disagree about
  * where a row belongs -- when they do, the row is written twice and the reader
  * scrolls back through their own conversation past things that never happened.
  */
@@ -188,7 +192,7 @@ export function mergeTerminalWindow(
   try {
     const current = terminalLines(currentOutput);
     const latest = terminalLines(incoming);
-    const overlap = longestPrefixThatIsSuffix(latest, current);
+    const overlap = longestPrefixThatIsSuffix(latest.map(rowText), current.map(rowText));
 
     const merged =
       overlap > 0
@@ -220,29 +224,26 @@ const SCREEN_MATCH_THRESHOLD = 0.8;
 const SCREEN_MIN_MATCH_ROWS = 4;
 
 /**
- * How many rows carrying something have to agree, running from the read's own
- * head, before the anchored placement is believed.
+ * How many text rows a run has to share with the window before a read is
+ * placed by it ({@link textAlignment}).
  *
  * An agent pane is not a uniformly scrolling rectangle: Claude Code pins an
  * eight-row composer under the transcript and scrolls only what is above it, so
  * the aligned overlap always mismatches by the height of the box and
  * `SCREEN_MATCH_THRESHOLD` is unreachable once the transcript moves more than
- * about nineteen rows between reads. Every frame past that point was kept whole
- * on top of a window that already held most of it. Anchoring on the run from the
- * read's head places those frames, and refuses the alignment where the pinned
- * composer merely lines up with itself -- that match sits sixty rows from the
- * head, not at it.
+ * about nineteen rows between reads. A run of text rows places those frames;
+ * the composer is cut off both sides before the search, so it never lines up
+ * with itself and passes for one.
  *
- * The same three rows the gateway's `scrollback.rs` asks for, deliberately: the
- * two ends of one pane must not disagree about where a row belongs.
+ * Blank rows never count, which is what makes three enough: two would admit a
+ * rule and a prompt coinciding, four would miss the tightest real bursts. The
+ * same three rows the gateway's `scrollback.rs` asks for (`ANCHOR_ROWS`),
+ * deliberately: the two ends of one pane must not disagree about where a row
+ * belongs.
  */
 const SCREEN_ANCHOR_ROWS = 3;
 
-/** How far into the read the anchoring run may start, forgiving one row
- * repainted across the seam. */
-const SCREEN_ANCHOR_SKEW = 1;
-
-/** How far back the anchor may reach, as a multiple of the read: a screen does
+/** How far back a run may be looked for, as a multiple of the read: a screen does
  * not only move forward, and a re-wrap puts rows the window already promoted
  * into history back onto the screen. */
 const SCREEN_ANCHOR_REACH = 2;
@@ -336,6 +337,35 @@ const SCREEN_GAP_ROWS = 4;
 const DEEPENING_FURNITURE_ROWS = 24;
 
 /**
+ * How many screen reads replace the window after a pane is resized, the one
+ * that showed the new width included. The gateway's `RESIZE_SETTLING_READS`.
+ */
+const RESIZE_SETTLING_READS = 3;
+
+/**
+ * Windows a resize just started again, by their exact text, with how many more
+ * screen reads still replace them.
+ *
+ * The fold is a function of two strings and the caller keeps only the
+ * window, so this is the one piece of memory it holds: the window it handed
+ * back is the window it is handed next, string for string, and that identity
+ * is the key. A window nobody folds into again is dropped with the rest once
+ * {@link RESIZE_SETTLING_WINDOWS} are held -- forgetting one only means a
+ * read after a resize is placed rather than taken whole.
+ */
+const resizeSettling = new Map<string, number>();
+const RESIZE_SETTLING_WINDOWS = 8;
+
+/**
+ * Forget every window a resize was settling. For when every held window has
+ * just been thrown away at once -- the gateway restarted -- so none of the
+ * texts keyed here will ever be folded into again.
+ */
+export function forgetPaneReadSettling(): void {
+  resizeSettling.clear();
+}
+
+/**
  * Fold one read of a pane into the window the reader already has.
  *
  * The one door. See the contract at the top of this file for which source may
@@ -391,16 +421,21 @@ export function foldPaneRead(
   try {
     const held = terminalLines(currentOutput);
     const latest = terminalLines(incoming);
+    // Every comparison below is made on what a reader sees of a row, never on
+    // its bytes; the rows themselves are kept as they arrived, colours and all.
+    // See {@link rowText}.
+    const heldText = held.map(rowText);
+    const latestText = latest.map(rowText);
 
     // A shell's active input row changes in place as a person types. With a
-    // short pane there may be too few stable rows for screenPlacement to
+    // short pane there may be too few stable rows for a placement to
     // recognise the same screen, so b -> bu -> bun used to become three
     // history rows. Only replace when every preceding row in this read still
     // matches the held tail; an actual new output row must continue to append.
-    const heldLast = held.at(-1);
-    const latestLast = latest.at(-1);
-    const preceding = latest.slice(0, -1);
-    const heldPreceding = held.slice(0, -1);
+    const heldLast = heldText.at(-1);
+    const latestLast = latestText.at(-1);
+    const preceding = latestText.slice(0, -1);
+    const heldPreceding = heldText.slice(0, -1);
     if (
       (origin === 'refresh' || origin === 'frame') &&
       heldLast &&
@@ -412,7 +447,32 @@ export function foldPaneRead(
         (row, index) => row === heldPreceding[heldPreceding.length - preceding.length + index]
       )
     ) {
-      return trimTerminalWindow([...heldPreceding, latestLast].join('\n'), maximumLines);
+      return trimTerminalWindow([...held.slice(0, -1), latest.at(-1)].join('\n'), maximumLines);
+    }
+
+    // A pane resized under the reader re-wraps every row of its screen, so
+    // nothing held lines up with the read and it would go on whole -- the same
+    // transcript a second time at another width. What is held was laid out for
+    // a screen that no longer exists; the read starts the window again, as it
+    // starts the gateway's buffer again. Only a screen read: a page is history
+    // at whatever width it was printed.
+    //
+    // A resize is not one repaint, either: the read that first shows the new
+    // width can still carry rows wrapped for the old one, and the reads after
+    // it finish the job. Until {@link RESIZE_SETTLING_READS} reads have
+    // replaced the window, each replaces the last.
+    if (origin === 'refresh' || origin === 'frame') {
+      const settling = resizeSettling.get(currentOutput) ?? 0;
+      if (settling > 0 || widthChanged(heldText, latestText)) {
+        resizeSettling.delete(currentOutput);
+        const fresh = trimTerminalWindow(incoming, maximumLines);
+        const left = (settling > 0 ? settling : RESIZE_SETTLING_READS) - 1;
+        if (left > 0) {
+          if (resizeSettling.size >= RESIZE_SETTLING_WINDOWS) resizeSettling.clear();
+          resizeSettling.set(fresh, left);
+        }
+        return fresh;
+      }
     }
 
     // Deepening first, and only for a source allowed to claim depth. A read
@@ -432,28 +492,37 @@ export function foldPaneRead(
     // satisfy against an already-paged window -- effectively unreachable --
     // but "effectively" is not "provably", and the guard should say what it
     // means rather than lean on that.
-    if ((origin === 'page' || origin === 'refresh') && deepeningSeam(held, latest)) {
+    if ((origin === 'page' || origin === 'refresh') && deepeningSeam(heldText, latestText)) {
       return trimTerminalWindow(collapseRepeat(latest).join('\n'), maximumLines);
     }
 
+    // The bottom rows this read shares with the window's own tail are the
+    // pane's furniture -- a composer, a mode line and its clock -- and are left
+    // out of the search on both sides, so a pinned box lining up with itself is
+    // never taken for a placement. It is also what hides the seam: measured by
+    // the soak against a live pane, the window ended `«002420» Update(...)`
+    // followed by the pinned composer, and the read began `«002420»
+    // Update(...)` -- a one-row seam under seven rows of chrome.
+    const furniture = furnitureRows(heldText, latestText);
+    // A range page shares no text with the window by construction, so a run it
+    // happens to share -- a block printed twice -- is a coincidence, not a seam.
+    const found = origin === 'rangePage' ? null : textAlignment(heldText, latestText, furniture);
+    if (found) {
+      const skip = headSkip(heldText, latestText, found);
+      const merged = [...held.slice(0, found.heldStart), ...latest.slice(skip)];
+      return trimTerminalWindow(collapseRepeat(merged).join('\n'), maximumLines);
+    }
+
+    // No run of text rows agrees. The scored alignment keeps the tolerance a
+    // run is too strict for -- a short screen whose every other row repainted
+    // -- first against the window as it is, then with the furniture off.
     let placed = held;
-    let overlap = screenPlacement(placed, latest);
-    if (overlap === 0) {
-      // Nothing was believed: the screen moved further than one read can be
-      // followed. Before concluding that, take the furniture off -- because the
-      // furniture is what was hiding the seam.
-      //
-      // Measured by the soak against a live pane, eleven folds in: the window
-      // ended `«002420» Update(...)` followed by the pinned composer, and the
-      // read began `«002420» Update(...)`. The true seam is one row wide and
-      // sits *under* seven rows of chrome, so no alignment could reach it and
-      // the read went on top whole -- putting row 2420 in twice. Dropping the
-      // chrome first and asking again finds it exactly.
-      const furniture = furnitureRows(placed, latest);
-      if (furniture > 0) {
-        placed = placed.slice(0, placed.length - furniture);
-        overlap = screenPlacement(placed, latest);
-      }
+    let placedText = heldText;
+    let overlap = scoredPlacement(placedText, latestText);
+    if (overlap === 0 && furniture > 0) {
+      placed = held.slice(0, held.length - furniture);
+      placedText = heldText.slice(0, heldText.length - furniture);
+      overlap = scoredPlacement(placedText, latestText);
     }
     // Still nothing. Either the screen ran further than a read can be followed
     // -- in which case this read is the newest thing there is and goes on top --
@@ -461,7 +530,7 @@ export function foldPaneRead(
     // which case appending it would walk the transcript backwards. Only ask now,
     // because a backward jump *within* a placement's reach is a re-wrap and has
     // already been handled above by taking those rows back down.
-    if (overlap === 0 && staleRead(placed, latest)) {
+    if (overlap === 0 && staleRead(placedText, latestText)) {
       return trimTerminalWindow(currentOutput, maximumLines);
     }
     // A range-addressed page shares no text with the window by construction:
@@ -501,15 +570,19 @@ export function foldPaneRead(
     // enough for the pinned box in front of us. A box taller than that slack
     // costs a page its depth -- the reader pulls and gets nothing new, and the
     // next pull tries again -- where appending was a scrambled transcript.
-    if (overlap === 0 && origin === 'page' && sharesHistory(placed, latest)) {
+    if (overlap === 0 && origin === 'page' && sharesHistory(placedText, latestText)) {
       return trimTerminalWindow(currentOutput, maximumLines);
     }
-    // Whatever the placement decided, rows the window verbatim already ends
-    // with are not written down a second time. This is the last guard and it is
+    // Whatever the placement decided, text rows the window already ends with
+    // are not written down a second time. This is the last guard and it is
     // unconditional: appending rows that are already there, already in this
     // order, cannot be right whatever anything else thought.
-    const skip = overlap > 0 ? 0 : alreadyHeld(placed, latest);
-    const merged = [...placed.slice(0, placed.length - overlap), ...latest.slice(skip)];
+    const skip = overlap > 0 ? 0 : alreadyHeld(placedText, latestText);
+    let keep = placed.length - overlap;
+    // The seam is matched past blank rows on both sides; the window's own
+    // trailing blanks are the room under the screen it followed, not history.
+    if (skip > 0) while (keep > 0 && placedText[keep - 1] === '') keep -= 1;
+    const merged = [...placed.slice(0, keep), ...latest.slice(skip)];
     return trimTerminalWindow(collapseRepeat(merged).join('\n'), maximumLines);
   } catch {
     return trimTerminalWindow(incoming, maximumLines);
@@ -577,7 +650,7 @@ export function collapseScreenGaps(output: string, screenRows: number): string {
     };
     for (let index = screenStart; index < rows.length; index += 1) {
       const row = rows[index];
-      if (row.trim() === '') {
+      if (rowText(row).trim() === '') {
         blank += 1;
         continue;
       }
@@ -745,17 +818,18 @@ function furnitureRows(held: string[], incoming: string[]): number {
  * be able to say so.
  */
 function collapseRepeat(rows: string[]): string[] {
+  const texts = rows.map(rowText);
   const widest = Math.floor(rows.length / 2);
   for (let block = widest; block >= REPEAT_BLOCK_ROWS; block -= 1) {
     const head = rows.length - 2 * block;
     let same = true;
     let carried = 0;
     for (let step = 0; step < block; step += 1) {
-      if (rows[head + step] !== rows[head + block + step]) {
+      if (texts[head + step] !== texts[head + block + step]) {
         same = false;
         break;
       }
-      if (rows[head + step].trim() !== '') carried += 1;
+      if (texts[head + step].trim() !== '') carried += 1;
     }
     if (same && carried >= REPEAT_BLOCK_ROWS) return rows.slice(0, head + block);
   }
@@ -787,8 +861,9 @@ function collapseRepeat(rows: string[]): string[] {
 export function sanitizePaneRead(output: string): string {
   if (!output) return output;
   try {
-    const rows = terminalLines(output);
-    if (rows.length < 2 * REPEAT_BLOCK_ROWS) return output;
+    const lines = terminalLines(output);
+    if (lines.length < 2 * REPEAT_BLOCK_ROWS) return output;
+    const rows = lines.map(rowText);
     let cut = 0;
     for (let distance = 1; distance < rows.length; distance += 1) {
       let run = 0;
@@ -806,27 +881,238 @@ export function sanitizePaneRead(output: string): string {
       )
         cut = run;
     }
-    return cut > 0 ? rows.slice(cut).join('\n') : output;
+    return cut > 0 ? lines.slice(cut).join('\n') : output;
   } catch {
     return output;
   }
 }
 
 /**
- * Where a shorter read sits against the end of the window: how many held rows
- * it re-sends, or 0 where nothing is believed.
+ * What a reader sees of a row: its text without escape sequences, without
+ * trailing blanks. Every row comparison in this file is made on this.
  *
- * The anchored run answers first. It compares candidate alignments against each
- * other rather than taking the widest one to clear a bar, which is what lets a
- * pinned composer stop hiding the seam -- and what stops a screen with a
- * repeating shape from clearing `SCREEN_MATCH_THRESHOLD` at full overlap by
- * lining its own period up with itself, taking the whole history with it. The
- * scored alignment answers where the anchor finds nothing, keeping the tolerance
- * the anchor is too strict for on the reads it has already declined to explain.
+ * Never on the bytes. A full-screen agent repaints rows it has not changed and
+ * is free to encode the same cells differently: Claude Code draws `● ` with
+ * the space inside the colour run on one frame and `●` + reset + ` ` on the
+ * next, and leaves a blank row as `""`, `" "` or `"  "` depending on what the
+ * cells held before. Compared as bytes such a screen shares almost nothing with
+ * the frame before it, nothing places it, and the whole screen goes on the end
+ * again. The gateway's `row_text` (`scrollback.rs`) is this same function, for
+ * the same reason, measured there: one Claude pane's buffer held the same
+ * 77-row screen six times over in twelve minutes.
+ *
+ * CSI sequences run to their final byte, OSC (a hyperlink, a title) to BEL or
+ * ST, and any other escape takes the one character after it. The emulator in
+ * `terminal-core.ts` parses far more than this, but it is stateful and builds
+ * cells; this only has to agree with the gateway about which rows are equal.
  */
-function screenPlacement(held: string[], incoming: string[]): number {
-  const anchored = anchoredPlacement(held, incoming);
-  if (anchored > 0) return anchored;
+export function rowText(row: string): string {
+  if (!row.includes('\u001b')) return row.trimEnd();
+  let text = '';
+  let from = 0;
+  let index = row.indexOf('\u001b');
+  while (index !== -1) {
+    text += row.slice(from, index);
+    const kind = row[index + 1];
+    let end = index + 2;
+    if (kind === '[') {
+      while (end < row.length) {
+        const code = row.charCodeAt(end);
+        end += 1;
+        if (code >= 0x40 && code <= 0x7e) break;
+      }
+    } else if (kind === ']') {
+      while (end < row.length) {
+        if (row[end] === '\u0007') {
+          end += 1;
+          break;
+        }
+        if (row[end] === '\u001b' && row[end + 1] === '\\') {
+          end += 2;
+          break;
+        }
+        end += 1;
+      }
+    }
+    from = Math.min(end, row.length);
+    index = row.indexOf('\u001b', from);
+  }
+  return (text + row.slice(from)).trimEnd();
+}
+
+/**
+ * The width of the widest box rule on a screen (`────`, ten or more), which a
+ * full-screen agent draws edge to edge: the pane's width, where it can be read
+ * off the rows at all. `null` for a screen with no rule, whose width is unknown
+ * rather than changed. The gateway's `rule_width`.
+ */
+function ruleWidth(texts: readonly string[]): number | null {
+  let widest: number | null = null;
+  for (const text of texts) {
+    const trimmed = text.trim();
+    if (trimmed.length < 10 || !/^─+$/u.test(trimmed)) continue;
+    if (widest === null || trimmed.length > widest) widest = trimmed.length;
+  }
+  return widest;
+}
+
+/** Whether the read was drawn for a different width than the screen the window
+ * last saw: both carry an edge-to-edge rule, and the rules disagree. */
+function widthChanged(held: readonly string[], incoming: readonly string[]): boolean {
+  const now = ruleWidth(incoming);
+  if (now === null) return false;
+  const was = ruleWidth(held.slice(Math.max(0, held.length - incoming.length)));
+  return was !== null && was !== now;
+}
+
+/** Where {@link textAlignment} placed a read: held rows `heldStart..heldEnd`
+ * are the read's rows `readStart..readEnd`. */
+type Alignment = { heldStart: number; heldEnd: number; readStart: number; readEnd: number };
+
+/**
+ * Where a read agrees with the window: the longest run of text rows the two
+ * share at one alignment, blank rows left out on both sides, grown upward past
+ * rows repainted in place while {@link SCREEN_MATCH_THRESHOLD} of what it
+ * covers still agrees. `null` where no run is long enough to believe.
+ *
+ * The gateway's `alignment` (`scrollback.rs`, "Placing a read"), and the reason
+ * it replaced a run anchored at the read's head: a longest run *anywhere*
+ * survives a read taken halfway through a repaint (the top already moved, the
+ * bottom not yet), a prompt pinned to the top row (Codex), a transcript that
+ * moved down when the area under it shrank, and the runs of blank rows Claude
+ * Code leaves in its transcript and closes up again. Blank rows say nothing
+ * about where a screen is, and they are what a repaint most often adds or
+ * takes away, so they neither start a run nor break one.
+ *
+ * The bottom `furniture` rows of both sides are left out, so a pinned composer
+ * lining up with itself is never the run. The search reaches
+ * {@link SCREEN_ANCHOR_REACH} reads back from the window's end -- further back
+ * is a stale read, see {@link staleRead}. A run reaching the screen as last
+ * seen (the window's last `incoming.length` rows) needs {@link
+ * SCREEN_ANCHOR_ROWS} text rows, or every text row of a shorter read; a run
+ * wholly above it needs a quarter of the read's text rows besides. Ties go to
+ * the run nearer the end.
+ */
+function textAlignment(
+  held: readonly string[],
+  incoming: readonly string[],
+  furniture: number
+): Alignment | null {
+  const heldEnd = held.length - Math.min(furniture, held.length);
+  const bodyEnd = incoming.length - furniture;
+  const searchStart = Math.max(0, heldEnd - incoming.length * SCREEN_ANCHOR_REACH);
+  const screenStart = Math.max(0, held.length - incoming.length);
+  // Rows as small integers, so the table below compares numbers.
+  const ids = new Map<string, number>();
+  const id = (text: string) => {
+    let value = ids.get(text);
+    if (value === undefined) {
+      value = ids.size;
+      ids.set(text, value);
+    }
+    return value;
+  };
+  const kept: number[] = [];
+  const keptIds: number[] = [];
+  for (let row = searchStart; row < heldEnd; row += 1) {
+    if (held[row].trim() === '') continue;
+    kept.push(row);
+    keptIds.push(id(held[row]));
+  }
+  const read: number[] = [];
+  const readIds: number[] = [];
+  for (let row = 0; row < bodyEnd; row += 1) {
+    if (incoming[row].trim() === '') continue;
+    read.push(row);
+    readIds.push(id(incoming[row]));
+  }
+  if (kept.length === 0 || read.length === 0) return null;
+
+  // Longest common runs, by the usual table kept one row at a time: the best
+  // reaching the screen, and the best anywhere.
+  let previous = new Int32Array(read.length + 1);
+  let current = new Int32Array(read.length + 1);
+  let screenRun = 0;
+  let screenAt: [number, number] = [0, 0];
+  let anyRun = 0;
+  let anyAt: [number, number] = [0, 0];
+  for (let h = 0; h < kept.length; h += 1) {
+    for (let r = 0; r < read.length; r += 1) {
+      const run = keptIds[h] === readIds[r] ? previous[r] + 1 : 0;
+      current[r + 1] = run;
+      if (run === 0) continue;
+      if (run >= anyRun) {
+        anyRun = run;
+        anyAt = [h, r];
+      }
+      if (kept[h] >= screenStart && run >= screenRun) {
+        screenRun = run;
+        screenAt = [h, r];
+      }
+    }
+    [previous, current] = [current, previous];
+  }
+  const floor = Math.min(SCREEN_ANCHOR_ROWS, read.length, kept.length);
+  let run: number;
+  let lastHeld: number;
+  let lastRead: number;
+  if (screenRun >= floor) [run, [lastHeld, lastRead]] = [screenRun, screenAt];
+  else if (anyRun >= Math.max(floor, Math.floor(read.length / 4)))
+    [run, [lastHeld, lastRead]] = [anyRun, anyAt];
+  else return null;
+
+  // Grow upward across rows repainted in place: a counter, a spinner word.
+  let firstHeld = lastHeld + 1 - run;
+  let firstRead = lastRead + 1 - run;
+  let agreed = run;
+  let compared = run;
+  for (let h = firstHeld - 1, r = firstRead - 1; h >= 0 && r >= 0; h -= 1, r -= 1) {
+    compared += 1;
+    if (keptIds[h] === readIds[r]) {
+      agreed += 1;
+      if (agreed >= compared * SCREEN_MATCH_THRESHOLD) {
+        firstHeld = h;
+        firstRead = r;
+      }
+    } else if (agreed < compared * SCREEN_MATCH_THRESHOLD) {
+      break;
+    }
+  }
+  return {
+    heldStart: kept[firstHeld],
+    heldEnd: kept[lastHeld] + 1,
+    readStart: read[firstRead],
+    readEnd: read[lastRead] + 1,
+  };
+}
+
+/**
+ * How many of the read's rows above its aligned run are not written down: all
+ * of them, or none.
+ *
+ * All of them when they carry no text, or when half their text rows or more are
+ * already held above the run -- a prompt Codex pins to the top row while its
+ * output scrolls (and Claude Code while its transcript is scrolled back), or a
+ * run that broke on a row the window lacks. Writing them again would put the
+ * pinned row into history once per frame. None of them otherwise: rows the
+ * window never had, brought into view above the run by the screen moving down,
+ * and kept in place there. The gateway asks the frame before for the pinned
+ * case; the window is the only frame kept here, so it is asked instead.
+ */
+function headSkip(held: readonly string[], incoming: readonly string[], found: Alignment): number {
+  const head = incoming.slice(0, found.readStart).filter((row) => row.trim() !== '');
+  if (head.length === 0) return found.readStart;
+  const above = new Set(held.slice(0, found.heldStart));
+  const known = head.filter((row) => above.has(row)).length;
+  return known * 2 >= head.length ? found.readStart : 0;
+}
+
+/**
+ * The scored alignment of the read's head against the window's end: how many
+ * held rows it re-sends, or 0 where nothing is believed. Asked only where no run
+ * of text rows was long enough, keeping the tolerance a run is too strict for.
+ */
+function scoredPlacement(held: string[], incoming: string[]): number {
   const widest = Math.min(held.length, incoming.length);
   for (let overlap = widest; overlap >= 1; overlap -= 1) {
     if (rowsAgree(held, incoming, overlap)) return overlap;
@@ -834,47 +1120,6 @@ function screenPlacement(held: string[], incoming: string[]): number {
   return 0;
 }
 
-/**
- * How many rows carrying something agree, running from incoming row `skew` until
- * the first disagreement. Blank rows hold a run together but never count for
- * one: thirty aligned blank rows say only that both screens have room at the
- * bottom.
- */
-function anchorScore(held: string[], incoming: string[], overlap: number, skew: number): number {
-  if (overlap <= skew) return 0;
-  const start = held.length - overlap + skew;
-  let score = 0;
-  for (let step = 0; start + step < held.length && skew + step < incoming.length; step += 1) {
-    if (held[start + step] !== incoming[skew + step]) break;
-    if (incoming[skew + step].trim() !== '') score += 1;
-  }
-  return score;
-}
-
-/**
- * The overlap whose anchored run carries the most, or 0 where none carries
- * `SCREEN_ANCHOR_ROWS`. Ties go to the wider overlap: the alignment that
- * re-sends more of the window is the one that grows it less.
- */
-function anchoredPlacement(held: string[], incoming: string[]): number {
-  const reach = Math.min(held.length, incoming.length * SCREEN_ANCHOR_REACH);
-  let bestScore = 0;
-  let best = 0;
-  for (let overlap = 1; overlap <= reach; overlap += 1) {
-    let score = 0;
-    for (let skew = 0; skew <= SCREEN_ANCHOR_SKEW; skew += 1) {
-      const scored = anchorScore(held, incoming, overlap, skew);
-      if (scored > score) score = scored;
-    }
-    if (score >= SCREEN_ANCHOR_ROWS && score >= bestScore) {
-      bestScore = score;
-      best = overlap;
-    }
-  }
-  return best;
-}
-
-/** How much of the read the window already ends with, exactly. */
 /**
  * Whether the incoming read still carries history the window is holding.
  *
@@ -904,17 +1149,26 @@ function sharesHistory(held: string[], incoming: string[]): boolean {
   return false;
 }
 
+/**
+ * How many of the read's rows the window already ends with, by text rows: the
+ * longest run of the read's first text rows that are the window's last text
+ * rows, blank rows ignored on both sides, as the count of the read's rows
+ * through the last of them. The gateway's `text_seam`.
+ */
 function alreadyHeld(held: string[], incoming: string[]): number {
-  const widest = Math.min(held.length, incoming.length);
-  for (let count = widest; count >= 1; count -= 1) {
+  const read: number[] = [];
+  for (let row = 0; row < incoming.length; row += 1)
+    if (incoming[row].trim() !== '') read.push(row);
+  const kept = held.filter((row) => row.trim() !== '');
+  for (let count = Math.min(read.length, kept.length); count >= 1; count -= 1) {
     let same = true;
     for (let step = 0; step < count; step += 1) {
-      if (held[held.length - count + step] !== incoming[step]) {
+      if (kept[kept.length - count + step] !== incoming[read[step]]) {
         same = false;
         break;
       }
     }
-    if (same) return count;
+    if (same) return read[count - 1] + 1;
   }
   return 0;
 }

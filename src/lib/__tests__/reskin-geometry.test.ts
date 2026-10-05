@@ -2,6 +2,16 @@ import { describe, expect, test } from 'bun:test';
 
 import {
   FRONT_OVERSHOOT,
+  RIPPLE_AMPLITUDE,
+  RIPPLE_BAND,
+  RIPPLE_DECAY,
+  RIPPLE_FRONT_SHARE,
+  RIPPLE_SETTLE_FROM,
+  RIPPLE_SNAPSHOT_BUDGET_MS,
+  RIPPLE_TAIL,
+  RIPPLE_THIRD_RING,
+  RIPPLE_WAVELENGTH,
+  SCAN_BAND,
   SNAPSHOT_BUDGET_MS,
   SNAPSHOT_STRIKES,
   denormalizeOrigin,
@@ -13,7 +23,16 @@ import {
   reskinCoverSource,
   reskinBlocksTouches,
   resolveOrigin,
+  rippleDepth,
+  rippleDisplacement,
+  rippleFront,
+  rippleReach,
+  scanBands,
+  scanFront,
+  scanReach,
   selectReskinPlay,
+  snapshotBudget,
+  veilWhenUnphotographed,
   shouldAttemptSnapshot,
   snapshotOutcome,
   washFront,
@@ -178,6 +197,99 @@ test('a dot is as big as the body text it is re-setting, within reason', () => {
   expect(halftoneCell(Number.NaN)).toBe(6);
 });
 
+/* -- the ripple ---------------------------------------------------------- */
+
+test('the ripple starts at the drop and ends past the far corner and its soft edge', () => {
+  const origin = { x: 100, y: 600 };
+  const reach = rippleReach(origin, SCREEN);
+  expect(reach).toBeCloseTo(Math.hypot(300, 600) + RIPPLE_BAND + 1, 6);
+  expect(rippleFront(0, reach)).toBe(0);
+  // Arrived by the end of its share of the run, and parked there after.
+  expect(rippleFront(RIPPLE_FRONT_SHARE, reach)).toBeCloseTo(reach, 6);
+  expect(rippleFront(1, reach)).toBeCloseTo(reach, 6);
+});
+
+test('the ripple front eases out: fast off the drop, slow at the corner', () => {
+  const reach = 1_000;
+  const first = rippleFront(0.1, reach) - rippleFront(0, reach);
+  const last =
+    rippleFront(RIPPLE_FRONT_SHARE, reach) - rippleFront(RIPPLE_FRONT_SHARE - 0.1, reach);
+  expect(first).toBeGreaterThan(last * 10);
+  let previous = -1;
+  for (let i = 0; i <= 50; i += 1) {
+    const front = rippleFront(i / 50, reach);
+    expect(front).toBeGreaterThanOrEqual(previous);
+    previous = front;
+  }
+});
+
+test('the water is at full depth while the front leaves and flat at the end', () => {
+  expect(rippleDepth(0)).toBe(1);
+  expect(rippleDepth(RIPPLE_SETTLE_FROM)).toBe(1);
+  expect(rippleDepth(1)).toBe(0);
+  const middle = rippleDepth((RIPPLE_SETTLE_FROM + 1) / 2);
+  expect(middle).toBeCloseTo(0.5, 6);
+  let previous = 2;
+  for (let i = 0; i <= 50; i += 1) {
+    const depth = rippleDepth(i / 50);
+    expect(depth).toBeLessThanOrEqual(previous);
+    previous = depth;
+  }
+});
+
+test('nothing bends ahead of the front or once the water is flat', () => {
+  expect(rippleDisplacement(-10, 1)).toBe(0);
+  expect(rippleDisplacement(0, 1)).toBe(0);
+  expect(rippleDisplacement(RIPPLE_WAVELENGTH / 4, 0)).toBe(0);
+});
+
+test('the rings bend by about the amplitude at the first crest and fade by the third', () => {
+  const crest = (n: number) => rippleDisplacement(RIPPLE_WAVELENGTH * (n + 0.25), 1);
+  expect(crest(0)).toBeGreaterThan(RIPPLE_AMPLITUDE * 0.8);
+  expect(crest(0)).toBeLessThanOrEqual(RIPPLE_AMPLITUDE);
+  expect(crest(1)).toBeLessThan(crest(0));
+  // The third crest is the faint one, by construction of the decay.
+  expect(crest(2) / RIPPLE_AMPLITUDE).toBeCloseTo(RIPPLE_THIRD_RING, 6);
+  // Troughs bend the other way: a ring, not a bump.
+  expect(rippleDisplacement(RIPPLE_WAVELENGTH * 0.75, 1)).toBeLessThan(0);
+});
+
+test('past the tail no ring bends anything by a visible amount', () => {
+  expect(RIPPLE_AMPLITUDE * Math.exp(-RIPPLE_DECAY * RIPPLE_TAIL)).toBeCloseTo(0.25, 6);
+  for (let behind = RIPPLE_TAIL; behind < RIPPLE_TAIL + 200; behind += 7) {
+    expect(Math.abs(rippleDisplacement(behind, 1))).toBeLessThanOrEqual(0.25 + 1e-9);
+  }
+  // Three to four rings, not a dozen.
+  expect(RIPPLE_TAIL / RIPPLE_WAVELENGTH).toBeGreaterThan(3);
+  expect(RIPPLE_TAIL / RIPPLE_WAVELENGTH).toBeLessThan(5);
+});
+
+/* -- the scan ------------------------------------------------------------ */
+
+test('the scan reaches past the further end of the screen by a whole band', () => {
+  expect(scanReach({ x: 200, y: 200 }, SCREEN)).toBe(660 + SCAN_BAND + 2);
+  expect(scanReach({ x: 200, y: 700 }, SCREEN)).toBe(700 + SCAN_BAND + 2);
+  const reach = scanReach({ x: 200, y: 430 }, SCREEN);
+  expect(scanFront(0, reach)).toBe(0);
+  expect(scanFront(1, reach)).toBeGreaterThan(reach);
+});
+
+test('the scan opens as one band at the row and splits into two', () => {
+  const opening = scanBands(40, 430);
+  expect(opening.up).toEqual({ lead: 390, trail: 430 });
+  expect(opening.down).toEqual({ lead: 470, trail: 430 });
+  const apart = scanBands(300, 430);
+  expect(apart.up).toEqual({ lead: 130, trail: 130 + SCAN_BAND });
+  expect(apart.down).toEqual({ lead: 730, trail: 730 - SCAN_BAND });
+});
+
+test('by the end both bands have left the screen', () => {
+  const origin = { x: 200, y: 300 };
+  const { up, down } = scanBands(scanFront(1, scanReach(origin, SCREEN)), origin.y);
+  expect(up.trail).toBeLessThan(0);
+  expect(down.trail).toBeGreaterThan(SCREEN.height);
+});
+
 /* -- which transition runs, if any --------------------------------------- */
 
 const OK: ReskinConditions = {
@@ -189,8 +301,16 @@ const OK: ReskinConditions = {
 };
 
 test('each kind gets its own transition', () => {
-  expect(selectReskinPlay(OK)).toBe('wash');
-  expect(selectReskinPlay({ ...OK, kind: 'font' })).toBe('halftone');
+  expect(selectReskinPlay(OK)).toBe('ripple');
+  expect(selectReskinPlay({ ...OK, kind: 'font' })).toBe('scan');
+});
+
+test('a device whose new effect will not compile falls back to the older one', () => {
+  const fallback = { ...OK, effectReady: false, fallbackReady: true };
+  expect(selectReskinPlay(fallback)).toBe('wash');
+  expect(selectReskinPlay({ ...fallback, kind: 'font' })).toBe('halftone');
+  // And reduced motion still outranks either effect.
+  expect(selectReskinPlay({ ...fallback, reduceMotion: true })).toBe('crossfade');
 });
 
 test('no photograph means no transition, however it failed', () => {
@@ -277,10 +397,56 @@ describe('reskinCoverSource', () => {
 });
 
 test('theme reveal releases touches after the covered swap, including reduced motion', () => {
-  for (const play of ['wash', 'crossfade'] as const) {
+  for (const play of ['ripple', 'wash', 'crossfade'] as const) {
     expect(reskinBlocksTouches(play, true)).toBe(true);
     expect(reskinBlocksTouches(play, false)).toBe(false);
   }
   // Font metrics still move beneath the photograph during their reveal.
   expect(reskinBlocksTouches('halftone', false)).toBe(true);
+  expect(reskinBlocksTouches('scan', false)).toBe(true);
+});
+
+describe('veilWhenUnphotographed', () => {
+  test('an iOS font scan whose photographs ran late still plays, over a veil', () => {
+    // iOS pass finding: two windows photographed past the budget, and the
+    // font swapped in a single frame with no scan.
+    expect(veilWhenUnphotographed('ios', 'scan')).toBe(true);
+    expect(veilWhenUnphotographed('ios', 'ripple')).toBe(true);
+    expect(veilWhenUnphotographed('ios', 'crossfade')).toBe(false);
+    expect(veilWhenUnphotographed('ios', 'halftone')).toBe(false);
+  });
+
+  test('Android always has the veil', () => {
+    for (const play of ['ripple', 'scan', 'wash', 'halftone', 'crossfade'] as const) {
+      expect(veilWhenUnphotographed('android', play)).toBe(true);
+    }
+  });
+});
+
+describe('snapshotBudget', () => {
+  test('iOS photographs every play on the ordinary budget', () => {
+    for (const play of ['ripple', 'scan', 'wash', 'halftone', 'crossfade'] as const) {
+      expect(snapshotBudget('ios', play)).toBe(SNAPSHOT_BUDGET_MS);
+    }
+  });
+
+  test('Android waits longer, and only for the plays that need the old picture', () => {
+    expect(snapshotBudget('android', 'ripple')).toBe(RIPPLE_SNAPSHOT_BUDGET_MS);
+    expect(snapshotBudget('android', 'scan')).toBe(RIPPLE_SNAPSHOT_BUDGET_MS);
+    expect(snapshotBudget('android', 'wash')).toBeNull();
+    expect(snapshotBudget('android', 'halftone')).toBeNull();
+    expect(snapshotBudget('android', 'crossfade')).toBeNull();
+    expect(RIPPLE_SNAPSHOT_BUDGET_MS).toBeGreaterThan(SNAPSHOT_BUDGET_MS);
+  });
+
+  test('a photograph is judged, and scored, against the budget it was given', () => {
+    const image = {};
+    expect(snapshotOutcome(image, 200)).toBe('slow');
+    expect(snapshotOutcome(image, 200, RIPPLE_SNAPSHOT_BUDGET_MS)).toBe('ok');
+    expect(snapshotOutcome(image, RIPPLE_SNAPSHOT_BUDGET_MS + 1, RIPPLE_SNAPSHOT_BUDGET_MS)).toBe(
+      'slow'
+    );
+    expect(recordSnapshotCost(1, 200, RIPPLE_SNAPSHOT_BUDGET_MS)).toBe(0);
+    expect(recordSnapshotCost(1, 403, RIPPLE_SNAPSHOT_BUDGET_MS)).toBe(2);
+  });
 });

@@ -1,4 +1,4 @@
-import { isBusyStatus, type AgentSessionInfo } from './agent-protocol';
+import { isBusyStatus, normalizeAgentId, type AgentSessionInfo } from './agent-protocol';
 
 /** Separate projections for the root strip, nested sheet and legacy header swipe window. */
 
@@ -19,6 +19,24 @@ export const SESSION_STRIP_MAX_NODES = 60;
 
 export type ChildrenByParent = Readonly<Record<string, readonly AgentSessionInfo[]>>;
 
+/** A bounded or delayed listing must not hide the root currently being read. */
+export function includeOpenedRoot(
+  roots: readonly AgentSessionInfo[],
+  opened: AgentSessionInfo | null,
+  activeAsid: string | undefined
+): readonly AgentSessionInfo[] {
+  if (
+    !opened ||
+    opened.asid !== activeAsid ||
+    opened.parent_id ||
+    opened.deleted ||
+    roots.some((root) => root.asid === opened.asid)
+  ) {
+    return roots;
+  }
+  return [opened, ...roots];
+}
+
 /**
  * Keep live subagents visible before historical siblings without changing the
  * Gateway's order within either group. `idle` is not a completion signal.
@@ -30,6 +48,17 @@ export function activeFirstSessionChildren(
     ...children.filter((child) => isBusyStatus(child.status)),
     ...children.filter((child) => !isBusyStatus(child.status)),
   ];
+}
+
+/**
+ * Whether `child` is really a child of `parent`, by its own `parent_id` link.
+ *
+ * A `/children` inventory is not proof: an adapter that ignores the parent
+ * filter answers with every session it has, all of them roots. Trusting that
+ * listing nested every unrelated root under the previous one in the sheet.
+ */
+export function isChildSession(child: AgentSessionInfo, parent: string): boolean {
+  return child.parent_id === parent && child.asid !== parent;
 }
 
 /** Every session in hand, by id: roots and whatever children were fetched. */
@@ -119,10 +148,16 @@ export function buildRootSessionStrip(
   return { nodes, selectedRootAsid: root && seen.has(root.asid) ? root.asid : undefined };
 }
 
-/** Preorder for the virtualized sheet. No recursion, depth limit, or row cap. */
+/**
+ * Preorder of one root's subtree for the virtualized sheet. No recursion,
+ * depth limit, or row cap. Only `parent_id` links are followed, so a row filed
+ * under the wrong parent (or another agent's session, when `agentId` is
+ * given) never appears, and unrelated roots can never chain into depth.
+ */
 export function flattenSessionTree(
   root: AgentSessionInfo | undefined,
-  childrenByParent: ChildrenByParent
+  childrenByParent: ChildrenByParent,
+  agentId?: string
 ): SessionNode[] {
   const nodes: SessionNode[] = [];
   const seen = new Set<string>();
@@ -131,7 +166,11 @@ export function flattenSessionTree(
     const node = pending.pop();
     if (!node || node.session.deleted || seen.has(node.session.asid)) continue;
     seen.add(node.session.asid);
-    const children = activeFirstSessionChildren(childrenByParent[node.session.asid] ?? []);
+    const children = activeFirstSessionChildren(
+      sessionsOfAgent(childrenByParent[node.session.asid] ?? [], agentId).filter((child) =>
+        isChildSession(child, node.session.asid)
+      )
+    );
     nodes.push({
       ...node,
       hasChildren: children.some((child) => !child.deleted && !seen.has(child.asid)),
@@ -159,7 +198,7 @@ export function mergeSessionChildren(
   }
   const removed = new Set<string>();
   for (const child of incoming) {
-    if (child.asid === parent) continue;
+    if (!isChildSession(child, parent)) continue;
     if (child.deleted) {
       children.delete(child.asid);
       removed.add(child.asid);
@@ -232,7 +271,9 @@ export async function loadSessionDescendants(input: {
           ? inventory.children
           : [...(input.known[parent] ?? []), ...inventory.children];
         for (const child of discovered) {
-          if (child.deleted || scheduled.has(child.asid)) continue;
+          if (child.deleted || !isChildSession(child, parent) || scheduled.has(child.asid)) {
+            continue;
+          }
           scheduled.add(child.asid);
           pending.push(child.asid);
         }
@@ -308,4 +349,39 @@ export function sessionsInWorkspace(
     if (canonical && (dir === canonical || dir.startsWith(`${canonical}/`))) return true;
     return false;
   });
+}
+
+/**
+ * The agent whose sessions the workbench lists, or none on a gateway without
+ * agent discovery (it drives one agent, and its rows carry no `agent_id`).
+ *
+ * The open session's own agent wins. Before there is one -- a launch tile's
+ * new session -- the agent the screen was opened for, and only then the
+ * reader's pick: the pick is written from `initialAgentId` an effect later,
+ * and until then it still names whichever agent was last chosen.
+ */
+export function workbenchAgentId(input: {
+  discovered: boolean;
+  sessionAgentId?: string | null;
+  initialAgentId?: string;
+  selectedAgentId?: string;
+}): string | undefined {
+  if (!input.discovered) return undefined;
+  const id = input.sessionAgentId || input.initialAgentId || input.selectedAgentId;
+  return id ? normalizeAgentId(id) : undefined;
+}
+
+/**
+ * The sessions that belong to `agentId`, or all of them when no agent is named.
+ *
+ * Every session belongs to exactly one agent; a row without `agent_id` is the
+ * default agent's, which is what the gateway answers for when none is said.
+ */
+export function sessionsOfAgent<T extends Pick<AgentSessionInfo, 'agent_id'>>(
+  sessions: readonly T[],
+  agentId: string | undefined
+): readonly T[] {
+  if (!agentId) return sessions;
+  const id = normalizeAgentId(agentId);
+  return sessions.filter((session) => normalizeAgentId(session.agent_id) === id);
 }

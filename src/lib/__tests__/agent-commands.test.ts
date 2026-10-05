@@ -9,7 +9,7 @@ import {
 } from '../agent-commands';
 
 const SERVER: CommandInfo[] = [
-  { name: 'review', description: 'Review the branch', agent: 'plan' },
+  { name: 'review', description: 'Review the branch', mode: 'plan' },
   { name: '/deploy', description: 'Ship it' },
 ];
 

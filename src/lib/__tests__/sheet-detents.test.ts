@@ -174,7 +174,7 @@ test('the sheets the owner reported are the ones that open tall', () => {
     'agent-mode',
     'settings-language',
     'settings-font',
-    'opencode-guide',
+    'agent-guide',
   ]) {
     expect({ route, content: sheetRouteContent[route] }).toEqual({ route, content: 'list' });
   }

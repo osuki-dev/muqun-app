@@ -80,10 +80,10 @@ export function LaunchIntro({
 
   const pages: IntroPage[] = [
     {
-      key: 'opencode',
+      key: 'agents',
       icon: Bot,
-      title: t`OpenCode Agent`,
-      body: t`Direct control for OpenCode autonomous coding. Follow real-time reasoning, inspect code diffs, review step-by-step todos, and guide tasks on the go.`,
+      title: t`Agents`,
+      body: t`Direct control for autonomous coding agents. Follow real-time reasoning, inspect code diffs, review step-by-step todos, and guide tasks on the go.`,
     },
     {
       key: 'terminal',

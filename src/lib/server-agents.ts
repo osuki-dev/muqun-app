@@ -87,6 +87,12 @@ export type ServerAgent = {
 export type ServerAgentsSnapshot = {
   /** Local record id, the same one `/servers/[serverId]` routes on. */
   serverId: string;
+  /**
+   * The Herdr session these panes belong to. Absent on snapshots written
+   * before it was recorded; Home then treats the snapshot as covering every
+   * session, which is what it did before.
+   */
+  sessionId?: string;
   /** When the app last confirmed these statuses with the gateway. */
   checkedAtMs: number;
   agents: ServerAgent[];
@@ -149,6 +155,7 @@ export const SERVER_AGENTS_STALE_AFTER_MS = 5 * 60 * 1000;
 export function normalizeServerAgents(snapshot: ServerAgentsSnapshot): ServerAgentsSnapshot {
   return {
     serverId: snapshot.serverId,
+    ...(snapshot.sessionId ? { sessionId: snapshot.sessionId } : {}),
     checkedAtMs: snapshot.checkedAtMs,
     agents: snapshot.agents.slice(0, MAX_SERVER_AGENTS).map((agent) => ({
       id: agent.id,
@@ -281,6 +288,7 @@ export function sameServerAgents(
 ): boolean {
   if (!previous) return false;
   if (previous.serverId !== next.serverId) return false;
+  if (previous.sessionId !== next.sessionId) return false;
   if (previous.agents.length !== next.agents.length) return false;
   return previous.agents.every((agent, index) => {
     const other = next.agents[index];
@@ -460,6 +468,9 @@ function parseSnapshot(value: unknown): ServerAgentsSnapshot | null {
 
   return normalizeServerAgents({
     serverId: record.serverId,
+    ...(typeof record.sessionId === 'string' && record.sessionId
+      ? { sessionId: record.sessionId }
+      : {}),
     checkedAtMs: record.checkedAtMs,
     agents: record.agents.flatMap((item) => {
       if (typeof item !== 'object' || item === null) return [];

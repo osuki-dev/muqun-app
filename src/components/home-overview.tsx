@@ -24,6 +24,7 @@ import {
 import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   AppState,
+  useWindowDimensions,
   RefreshControl,
   StyleSheet,
   View,
@@ -47,7 +48,6 @@ import { useLingui as useLinguiRuntime } from '@lingui/react';
 
 import AppDrawer from '@/components/app-drawer';
 import { NewTaskAction } from '@/components/new-task-action';
-import { PadServerRail } from '@/components/pad-server-rail';
 import { PressableScale } from '@/components/pressable-scale';
 import { SectionLabel } from '@/components/settings-chrome';
 import { ServerAgentRows } from '@/components/server-agent-rows';
@@ -55,11 +55,17 @@ import { GatewayTunnelBadge } from '@/components/gateway-tunnel-badge';
 import { HomeArtwork } from '@/components/home-artwork';
 import { ThemeIcon } from '@/components/theme-icon';
 import { HomeEditorialArtwork } from '@/components/home-editorial-artwork';
-import { HomeEditorialLayout } from '@/components/home-editorial-layout';
+import {
+  EDITORIAL_MAX_WIDTH,
+  EDITORIAL_PAD_MAX_WIDTH,
+  HomeEditorialLayout,
+  getEditorialLayoutGeometry,
+} from '@/components/home-editorial-layout';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { HomeConnections } from '@/components/home-connections';
 import { HomeAttention } from '@/components/home-attention';
 import { HomeRecentSessions } from '@/components/home-recent-sessions';
+import { padLaunchLayoutEnabled } from '@/lib/home-pad-geometry';
 import {
   HomeLaunchActions,
   HomeLaunchTarget,
@@ -89,7 +95,7 @@ import {
 import { sshHomeRows } from '@/lib/ssh-home';
 import type { SshHostRecord } from '@/lib/ssh-hosts';
 import { useGatewayRecord } from '@/hooks/use-gateway-record';
-import { useHomeCommands } from '@/hooks/use-home-commands';
+import { type HomeCommandOptions, useHomeCommands } from '@/hooks/use-home-commands';
 import type { HomeServerEntry } from '@/lib/home-commands';
 import { GatewayStorageError } from '@/components/gateway-storage-error';
 import { useServerAgents } from '@/stores/server-agents';
@@ -130,7 +136,15 @@ export type HomeOverviewProps = {
   routeBound?: boolean;
   /** Live state for the exact gateway owned by an embedded workspace. */
   activeConnection?: ActiveServerConnection;
+  /** The Pad shell's detail swap: agent rows open beside it instead of on `/agent`. */
+  onOpenAgentInPlace?: HomeCommandOptions['openAgentInPlace'];
 };
+
+/**
+ * The work column's trailing links ("Sessions (N)", "Manage connections"): text
+ * 12 under the card (the 44 tap box centres it) and inset to the rows' text.
+ */
+const PAD_WORK_LINK = { marginTop: 0, paddingVertical: 0, paddingHorizontal: 12 } as const;
 
 export function HomeOverview({
   width,
@@ -140,6 +154,7 @@ export function HomeOverview({
   sourceRouteActive,
   routeBound = false,
   activeConnection,
+  onOpenAgentInPlace,
 }: HomeOverviewProps) {
   // `t` from the hook, not the global `t` from `@lingui/core/macro`.
   //
@@ -155,18 +170,20 @@ export function HomeOverview({
   const theme = useThemeTokens();
   const background = useSurfaceBackground();
   const customTheme = useThemeLibrary((state) => state.active);
+  // Known only once the library has loaded: until then a pack's cover must not
+  // flash the app's own wordmark.
+  const themeLibraryHydrated = useThemeLibrary((state) => state.hydrated);
   const identity = resolveHomeIdentity(customTheme?.manifest);
   const hasScene = useHasThemeArtwork('home.wallpaper', 'shell.wallpaper');
-  const customAssets = useThemeLibrary(
-    (state) =>
-      state.library.themes.find((entry) => entry.id === state.active?.installationId)?.assets
-  );
+  const customAssets = useThemeLibrary((state) => state.activeAssets);
   const [failedLogo, setFailedLogo] = useState<string | null>(null);
   const brandMark = useBrandMark();
   const customLogo =
     identity.logo?.mode === 'custom' ? customAssets?.[identity.logo.asset] : undefined;
   const logoSource = customLogo && customLogo !== failedLogo ? { uri: customLogo } : brandMark;
   const isPad = layoutMode === 'pad';
+  const { height: windowHeight, fontScale } = useWindowDimensions();
+  const showsEditorialBrand = identity.showBrand;
   // Renaming and unpairing live in Settings, not here: the owner asked for one
   // place that manages servers, and the tablet branch's long-press row menu was
   // a second answer to the same question. The layout work from that branch is
@@ -600,6 +617,7 @@ export function HomeOverview({
     embedded,
     routeBound,
     sourceRouteActive,
+    openAgentInPlace: onOpenAgentInPlace,
   });
   const launchController = useHomeLaunchController({
     servers: records,
@@ -657,7 +675,7 @@ export function HomeOverview({
   }
 
   const returnToTask =
-    embedded && layoutMode === 'compact' && onExitOverview ? (
+    embedded && onExitOverview ? (
       <PressableScale
         testID="home-overview-return-to-task"
         accessibilityRole="button"
@@ -679,7 +697,15 @@ export function HomeOverview({
   // optional chain in a conditional's test.
   const editorialArtworkTopCurrent =
     editorialArtworkTop?.source === editorialArtworkResolution?.source;
-  if (homeLayout !== 'classic') {
+  if (homeLayout !== 'classic' || isPad) {
+    // Same width and predicate the layout resolves for itself: the Pad cover
+    // spread lists eight Continue rows in its work column; other layouts keep theirs.
+    const editorialViewportHeight = windowHeight - insets.top - insets.bottom - 24;
+    const padGeometry = getEditorialLayoutGeometry(
+      Math.min(editorialWidth || width, isPad ? EDITORIAL_PAD_MAX_WIDTH : EDITORIAL_MAX_WIDTH)
+    );
+    const padLaunch =
+      isPad && padLaunchLayoutEnabled(padGeometry.contentWidth, fontScale, editorialViewportHeight);
     const editorialContent = (
       <View
         testID="home-editorial"
@@ -714,14 +740,44 @@ export function HomeOverview({
               progressViewOffset={insets.top}
             />
           }>
-          {returnToTask ? <View style={styles.embeddedReturnRow}>{returnToTask}</View> : null}
+          {!isPad && returnToTask ? (
+            <View style={styles.embeddedReturnRow}>{returnToTask}</View>
+          ) : null}
           {hydrationError ? <GatewayStorageError busy={loading} onRetry={retryHydration} /> : null}
           <View>
             <HomeEditorialLayout
               contentWidth={editorialWidth || width}
+              viewportHeight={editorialViewportHeight}
               scrollY={scrollY}
               cover={customTheme?.manifest.homePresentation?.header === 'cover'}
-              coverTitle={identity.name ?? undefined}
+              coverTitle={showsEditorialBrand ? (identity.name ?? undefined) : undefined}
+              pad={isPad}
+              typographicCover={themeLibraryHydrated && !customTheme}
+              firstRun={launchController.servers.length === 0}
+              coverMark={
+                identity.logo ? (
+                  <Image
+                    source={logoSource}
+                    contentFit="contain"
+                    style={{ width: 44, height: 44 }}
+                    onError={() => setFailedLogo(customLogo ?? null)}
+                  />
+                ) : undefined
+              }
+              coverBackdrop={
+                // The default theme has no painting and no ambient effect of
+                // its own; the static circuit traces (no clock, so nothing to
+                // reduce under reduced motion) give the cover a quiet ground.
+                hasDevEffectOverride ? undefined : (
+                  <SkiaAmbientEffect
+                    effect="scanlines"
+                    intensity={0.6}
+                    palette={['textMuted']}
+                    mode={resolvedMode}
+                    colors={theme.colors}
+                  />
+                )
+              }
               artworkTopInset={editorialArtworkTopCurrent ? editorialArtworkTop?.top : 0}
               artwork={
                 hasEditorialArtwork && editorialArtworkResolution ? (
@@ -737,7 +793,7 @@ export function HomeOverview({
                 ) : null
               }
               identity={
-                identity.showBrand ? (
+                showsEditorialBrand ? (
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
                     {identity.logo ? (
                       <Image
@@ -760,8 +816,10 @@ export function HomeOverview({
                 ) : undefined
               }
               headerLeading={
-                launchController.servers.length <= 1 ? undefined : (
+                // On Pad the Gateway pill lives in the New-session block only.
+                isPad || launchController.servers.length <= 1 ? undefined : (
                   <HomeLaunchTarget
+                    wide={isPad}
                     bare={customTheme?.manifest.homePresentation?.toolbarBackground === false}
                     controller={launchController}
                     loading={loading}
@@ -778,30 +836,63 @@ export function HomeOverview({
                     onDemo={openDemo}
                   />
                 ) : (
-                  <HomeLaunchActions
-                    controller={launchController}
-                    onNewOpenCode={commands.newOpenCode}
-                    onOpenOpenCode={commands.openOpenCode}
-                    onNewTerminal={commands.newTerminal}
-                    onOpenTerminal={commands.openServer}
-                    onSsh={commands.openSsh}
-                    onDemo={!loading && !hydrationError && !hasPairedServer ? openDemo : undefined}
-                  />
+                  <View style={{ gap: padLaunch ? 12 : 16 }}>
+                    {padLaunch ? null : isPad ? (
+                      <>
+                        <Text variant="heading" accessibilityRole="header">
+                          <Trans>New session</Trans>
+                        </Text>
+                        <HomeLaunchTarget
+                          wide
+                          bare={customTheme?.manifest.homePresentation?.toolbarBackground === false}
+                          controller={launchController}
+                          loading={loading}
+                          onPair={commands.pairGateway}
+                        />
+                      </>
+                    ) : null}
+                    <HomeLaunchActions
+                      controller={launchController}
+                      grid={isPad}
+                      newOnly={isPad}
+                      dock={padLaunch}
+                      dockAccessory={
+                        // The cover dock has no heading; the Gateway chip sits
+                        // beside the terminal pill, only when there is a choice.
+                        padLaunch && launchController.servers.length > 1 ? (
+                          <HomeLaunchTarget
+                            wide
+                            chip
+                            controller={launchController}
+                            loading={loading}
+                            onPair={commands.pairGateway}
+                          />
+                        ) : undefined
+                      }
+                      onNewAgent={commands.newAgent}
+                      onOpenAgent={commands.openAgent}
+                      onNewTerminal={commands.newTerminal}
+                      onOpenTerminal={commands.openServer}
+                      onSsh={commands.openSsh}
+                      onDemo={
+                        !loading && !hydrationError && !hasPairedServer ? openDemo : undefined
+                      }
+                    />
+                  </View>
                 )
               }
               recent={
                 !loading && !hydrationError ? (
                   <HomeRecentSessions
+                    limit={padLaunch ? 8 : undefined}
+                    linkStyle={padLaunch ? PAD_WORK_LINK : undefined}
                     selectedServerId={launchController.chosen?.serverId}
                     servers={records}
                     hosts={sshRows}
                     reachabilityByServer={padReachabilityByServer}
                     activeConnection={activeConnection}
-                    onOpenPane={(serverId, paneId) => {
-                      void commands.openServer(serverId, paneId);
-                    }}
-                    onOpen={(target) => {
-                      void commands.resumeTarget(target);
+                    onOpen={(command) => {
+                      void commands.dispatch(command);
                     }}
                   />
                 ) : undefined
@@ -830,38 +921,86 @@ export function HomeOverview({
                     }}
                     activeConnection={activeConnection}
                     nowMs={nowMs}
+                    linkStyle={padLaunch ? PAD_WORK_LINK : undefined}
                   />
                 ) : undefined
               }
               headerAction={
-                <View style={{ flexDirection: 'row', gap: HOME_TOOLBAR_GAP }}>
-                  <HeaderButton
-                    editorial
-                    bare={customTheme?.manifest.homePresentation?.toolbarBackground === false}
-                    label={t`Scan a gateway QR`}
-                    onPress={() => void commands.pairGateway()}>
-                    <ThemeIcon
-                      name="chrome.scan"
-                      fallback={ScanLine}
-                      size={HOME_TOOLBAR_ICON_SIZE}
-                      color={theme.colors.text}
-                      strokeWidth={1.8}
-                    />
-                  </HeaderButton>
-                  <HeaderButton
-                    editorial
-                    bare={customTheme?.manifest.homePresentation?.toolbarBackground === false}
-                    label={t`Settings`}
-                    onPress={() => void commands.manageConnections()}>
-                    <ThemeIcon
-                      name="chrome.settings"
-                      fallback={Settings}
-                      size={HOME_TOOLBAR_ICON_SIZE}
-                      color={theme.colors.text}
-                      strokeWidth={1.8}
-                    />
-                  </HeaderButton>
-                </View>
+                isPad ? (
+                  // The rail no longer sits beside Home, so its three
+                  // destinations live here, under the rail's own labels.
+                  <View
+                    testID="home-pad-toolbar-actions"
+                    style={{ flexDirection: 'row', alignItems: 'center', gap: HOME_TOOLBAR_GAP }}>
+                    <HeaderButton
+                      editorial
+                      bare={customTheme?.manifest.homePresentation?.toolbarBackground === false}
+                      label={t`Pair a server`}
+                      onPress={() => void commands.pairGateway()}>
+                      <ThemeIcon
+                        name="chrome.scan"
+                        fallback={ScanLine}
+                        size={HOME_TOOLBAR_ICON_SIZE}
+                        color={theme.colors.text}
+                        strokeWidth={1.8}
+                      />
+                    </HeaderButton>
+                    <HeaderButton
+                      editorial
+                      bare={customTheme?.manifest.homePresentation?.toolbarBackground === false}
+                      label={t`SSH`}
+                      onPress={() => void commands.openSsh()}>
+                      <SquareTerminal
+                        size={HOME_TOOLBAR_ICON_SIZE}
+                        color={theme.colors.text}
+                        strokeWidth={1.8}
+                      />
+                    </HeaderButton>
+                    <HeaderButton
+                      editorial
+                      bare={customTheme?.manifest.homePresentation?.toolbarBackground === false}
+                      label={t`Settings`}
+                      onPress={() => router.push('/settings')}>
+                      <ThemeIcon
+                        name="chrome.settings"
+                        fallback={Settings}
+                        size={HOME_TOOLBAR_ICON_SIZE}
+                        color={theme.colors.text}
+                        strokeWidth={1.8}
+                      />
+                    </HeaderButton>
+                  </View>
+                ) : (
+                  <View
+                    style={{ flexDirection: 'row', alignItems: 'center', gap: HOME_TOOLBAR_GAP }}>
+                    <HeaderButton
+                      editorial
+                      bare={customTheme?.manifest.homePresentation?.toolbarBackground === false}
+                      label={t`Scan a gateway QR`}
+                      onPress={() => void commands.pairGateway()}>
+                      <ThemeIcon
+                        name="chrome.scan"
+                        fallback={ScanLine}
+                        size={HOME_TOOLBAR_ICON_SIZE}
+                        color={theme.colors.text}
+                        strokeWidth={1.8}
+                      />
+                    </HeaderButton>
+                    <HeaderButton
+                      editorial
+                      bare={customTheme?.manifest.homePresentation?.toolbarBackground === false}
+                      label={t`Settings`}
+                      onPress={() => void commands.manageConnections()}>
+                      <ThemeIcon
+                        name="chrome.settings"
+                        fallback={Settings}
+                        size={HOME_TOOLBAR_ICON_SIZE}
+                        color={theme.colors.text}
+                        strokeWidth={1.8}
+                      />
+                    </HeaderButton>
+                  </View>
+                )
               }
             />
           </View>
@@ -869,29 +1008,14 @@ export function HomeOverview({
         {devAmbientControls}
       </View>
     );
-    return editorialContent;
+    return embedded ? (
+      editorialContent
+    ) : (
+      <AppDrawer wallpaperEffectsEnabled={!hasScene && !hasDevEffectOverride}>
+        {editorialContent}
+      </AppDrawer>
+    );
   }
-
-  const padRail = isPad ? (
-    <PadServerRail
-      homeBrand={{
-        name: identity.name,
-        logo: identity.logo ? logoSource : null,
-        visible: identity.showBrand,
-      }}
-      servers={records}
-      agentsByServer={agentsByServer}
-      reachabilityByServer={padReachabilityByServer}
-      selectedServerId={record?.serverId ?? null}
-      onSelectAgent={(server, agent) => openServer(server.serverId, agent.paneId)}
-      onPairServer={() => void commands.pairGateway()}
-      onOpenSettings={() => void commands.manageConnections()}
-      onOpenSsh={() => void commands.openSsh()}
-      sshHosts={sshRows}
-      onSelectSshHost={openSshHost}
-      nowMs={nowMs}
-    />
-  ) : undefined;
 
   const classicContent = (
     <View style={[styles.page, { backgroundColor: background(theme.colors.background) }]}>
@@ -908,70 +1032,69 @@ export function HomeOverview({
           batch4 header read as chrome. Past 82pt of scroll the brand walks up
           into the bar and the bar earns its left half. The controls never move,
           so the only thing that changes is where the brand is. */}
-      {!isPad ? (
-        <Animated.View
-          style={[styles.topBar, barFoldStyle]}
-          onLayout={(event: LayoutChangeEvent) => {
-            const { height } = event.nativeEvent.layout;
-            barHeightValue.set(height);
-            setBarHeight(height);
-          }}>
-          <SafeAreaView edges={['top']}>
-            <View style={styles.topBarRow}>
-              {identity.showBrand ? (
-                <Animated.View
-                  testID="home-brand-compact"
-                  pointerEvents="none"
-                  style={[styles.compactTitle, compactTitleStyle]}>
-                  {/* The plate hugs the name; the frame around it does not. That
+      <Animated.View
+        style={[styles.topBar, barFoldStyle]}
+        onLayout={(event: LayoutChangeEvent) => {
+          const { height } = event.nativeEvent.layout;
+          barHeightValue.set(height);
+          setBarHeight(height);
+        }}>
+        <SafeAreaView edges={['top']}>
+          <View style={styles.topBarRow}>
+            {identity.showBrand ? (
+              <Animated.View
+                testID="home-brand-compact"
+                pointerEvents="none"
+                style={[styles.compactTitle, compactTitleStyle]}>
+                {/* The plate hugs the name; the frame around it does not. That
                 frame is positioned against the action buttons, so its width is
                 the gap they leave rather than the width of anything drawn in
                 it -- painting the tint on the frame itself draws a pill the
                 length of the bar with the name stranded at one end. The
                 expanded block below hugs for the same reason. */}
-                  <View
-                    style={[
-                      styles.compactTitlePlate,
-                      hasScene && {
-                        backgroundColor: background(theme.colors.surface),
-                        borderRadius: 12,
-                        // The tint needs room around the name, and the name has
-                        // an x it travels to. Pay the padding back on the left so
-                        // the plate grows outwards and the mark still rises
-                        // straight out of the block it came from.
-                        paddingHorizontal: COMPACT_PLATE_INSET,
-                        marginLeft: -COMPACT_PLATE_INSET,
-                        overflow: 'hidden',
-                      },
-                    ]}>
-                    <ThemedSurfaceArtwork
-                      slot="navigation.background"
-                      baseColor={theme.colors.surface}
-                    />
-                    {identity.logo ? (
-                      <View
-                        style={[
-                          styles.compactIcon,
-                          { backgroundColor: background(theme.colors.surfaceRaised) },
-                        ]}>
-                        <Image
-                          source={logoSource}
-                          onError={() => setFailedLogo(customLogo ?? null)}
-                          contentFit="contain"
-                          style={styles.compactMark}
-                        />
-                      </View>
-                    ) : null}
-                    {identity.name ? (
-                      <Text variant="bodySmall" numberOfLines={1} style={styles.compactTitleText}>
-                        {identity.name}
-                      </Text>
-                    ) : null}
-                  </View>
-                </Animated.View>
-              ) : null}
+                <View
+                  style={[
+                    styles.compactTitlePlate,
+                    hasScene && {
+                      backgroundColor: background(theme.colors.surface),
+                      borderRadius: 12,
+                      // The tint needs room around the name, and the name has
+                      // an x it travels to. Pay the padding back on the left so
+                      // the plate grows outwards and the mark still rises
+                      // straight out of the block it came from.
+                      paddingHorizontal: COMPACT_PLATE_INSET,
+                      marginLeft: -COMPACT_PLATE_INSET,
+                      overflow: 'hidden',
+                    },
+                  ]}>
+                  <ThemedSurfaceArtwork
+                    slot="navigation.background"
+                    baseColor={theme.colors.surface}
+                  />
+                  {identity.logo ? (
+                    <View
+                      style={[
+                        styles.compactIcon,
+                        { backgroundColor: background(theme.colors.surfaceRaised) },
+                      ]}>
+                      <Image
+                        source={logoSource}
+                        onError={() => setFailedLogo(customLogo ?? null)}
+                        contentFit="contain"
+                        style={styles.compactMark}
+                      />
+                    </View>
+                  ) : null}
+                  {identity.name ? (
+                    <Text variant="bodySmall" numberOfLines={1} style={styles.compactTitleText}>
+                      {identity.name}
+                    </Text>
+                  ) : null}
+                </View>
+              </Animated.View>
+            ) : null}
 
-              {/* Inboard to corner: scan, then gear. The gear is the fixed landmark --
+            {/* Inboard to corner: scan, then gear. The gear is the fixed landmark --
             the app's front door to everything that is not a server -- so it
             takes the corner. Pairing sits beside the list it adds to, and it
             already has a full-width button in the empty state, so the header
@@ -982,54 +1105,53 @@ export function HomeOverview({
             selected server's avatar and loom (card #629) and to the empty
             state's one button; a coral control in the corner is exactly the
             batch4 `ADD` pill under a different icon. */}
-              <Animated.View style={[styles.headerActions, headerActionsStyle]}>
-                {/* Two doors that are only here until the first server is
+            <Animated.View style={[styles.headerActions, headerActionsStyle]}>
+              {/* Two doors that are only here until the first server is
               paired. After that they are things done once a month, standing in
               the most-used corner of the most-used screen; both live in
               Settings permanently, which is where a reader looks to add
               another machine. The demo server does not count as one. */}
-                {hasPairedServer ? null : (
-                  <>
-                    {/* A plain shell on any machine with sshd, beside the gateway
+              {hasPairedServer ? null : (
+                <>
+                  {/* A plain shell on any machine with sshd, beside the gateway
               entries rather than among them: it pairs nothing and needs no
               herdr, so it is the one door here that is not about a gateway. */}
-                    <HeaderButton
-                      testID="home-open-ssh"
-                      label={t`SSH`}
-                      onPress={() => void commands.openSsh()}>
-                      <SquareTerminal size={20} color={theme.colors.textMuted} strokeWidth={2} />
-                    </HeaderButton>
-                    <HeaderButton
-                      label={t`Scan a gateway QR`}
-                      onPress={() => void commands.pairGateway()}>
-                      {/* The same mark as the empty card's corner brackets, at a fifth of
+                  <HeaderButton
+                    testID="home-open-ssh"
+                    label={t`SSH`}
+                    onPress={() => void commands.openSsh()}>
+                    <SquareTerminal size={20} color={theme.colors.textMuted} strokeWidth={2} />
+                  </HeaderButton>
+                  <HeaderButton
+                    label={t`Scan a gateway QR`}
+                    onPress={() => void commands.pairGateway()}>
+                    {/* The same mark as the empty card's corner brackets, at a fifth of
                 the size: the one productive gesture on this screen looks the
                 same whether it is a 64pt viewfinder in the middle of an empty
                 screen or a 20pt glyph in the corner of a full one. */}
-                      <ThemeIcon
-                        name="chrome.scan"
-                        fallback={ScanLine}
-                        size={20}
-                        color={theme.colors.textMuted}
-                        strokeWidth={2}
-                      />
-                    </HeaderButton>
-                  </>
-                )}
-                <HeaderButton label={t`Settings`} onPress={() => void commands.manageConnections()}>
-                  <ThemeIcon
-                    name="chrome.settings"
-                    fallback={Settings}
-                    size={20}
-                    color={theme.colors.textMuted}
-                    strokeWidth={2}
-                  />
-                </HeaderButton>
-              </Animated.View>
-            </View>
-          </SafeAreaView>
-        </Animated.View>
-      ) : null}
+                    <ThemeIcon
+                      name="chrome.scan"
+                      fallback={ScanLine}
+                      size={20}
+                      color={theme.colors.textMuted}
+                      strokeWidth={2}
+                    />
+                  </HeaderButton>
+                </>
+              )}
+              <HeaderButton label={t`Settings`} onPress={() => void commands.manageConnections()}>
+                <ThemeIcon
+                  name="chrome.settings"
+                  fallback={Settings}
+                  size={20}
+                  color={theme.colors.textMuted}
+                  strokeWidth={2}
+                />
+              </HeaderButton>
+            </Animated.View>
+          </View>
+        </SafeAreaView>
+      </Animated.View>
 
       <KeyboardAwareScrollView
         ref={overviewScroll}
@@ -1038,8 +1160,8 @@ export function HomeOverview({
         onMomentumScrollEnd={rememberScroll}
         bottomOffset={24}
         extraKeyboardSpace={12}
-        contentInsetAdjustmentBehavior={isPad ? 'automatic' : 'never'}
-        scrollIndicatorInsets={isPad ? undefined : { top: barHeight }}
+        contentInsetAdjustmentBehavior="never"
+        scrollIndicatorInsets={{ top: barHeight }}
         contentContainerStyle={[
           styles.content,
           isPad && styles.padContent,
@@ -1047,7 +1169,7 @@ export function HomeOverview({
             paddingHorizontal: metrics.contentGutter,
             maxWidth: metrics.contentMaxWidth,
           },
-          !isPad && { paddingTop: barHeight + styles.content.paddingTop },
+          { paddingTop: barHeight + styles.content.paddingTop },
         ]}
         keyboardDismissMode={process.env.EXPO_OS === 'ios' ? 'interactive' : 'on-drag'}
         keyboardShouldPersistTaps="handled"
@@ -1070,7 +1192,7 @@ export function HomeOverview({
             came for, and the name steps back to being the top of the page.
             `listLayout` carries the one change between them, so pairing a first
             server folds the poster down rather than cutting to a smaller one. */}
-        {!isPad && identity.showBrand ? (
+        {identity.showBrand ? (
           /*
               The scroll fade is a node inside the animated one, never the same
               node: `entering` and `layout` own this view's opacity while they
@@ -1326,7 +1448,7 @@ export function HomeOverview({
   return embedded ? (
     classicContent
   ) : (
-    <AppDrawer padRail={padRail} wallpaperEffectsEnabled={!hasScene && !hasDevEffectOverride}>
+    <AppDrawer wallpaperEffectsEnabled={!hasScene && !hasDevEffectOverride}>
       {classicContent}
     </AppDrawer>
   );

@@ -3,6 +3,7 @@ import { useThemeTokens } from '@osuki-dev/ui';
 import { useEffect, useState, type ReactNode } from 'react';
 import {
   StyleSheet,
+  ScrollView,
   Platform,
   useWindowDimensions,
   View,
@@ -15,6 +16,7 @@ import Animated, {
   withTiming,
   Extrapolation,
   interpolate,
+  useAnimatedReaction,
   useAnimatedStyle,
   useReducedMotion,
   useSharedValue,
@@ -24,14 +26,27 @@ import Animated, {
 import { Text } from '@/components/text';
 import { homeScrollFadeOpacity } from '@/lib/home-scroll-fade';
 import { useLaunchHandoff } from '@/stores/launch-handoff';
-import { useAppearanceProfile } from '@/components/appearance-profile-provider';
-import { useSurfaceBackground } from '@/hooks/use-surface-background';
+import { useHomeScenePlate } from '@/hooks/use-home-scene-plate';
 import { useInterfaceFontFamily } from '@/hooks/use-user-fonts';
 import { USER_FONT_MAX_NATIVE_WEIGHT } from '@/theme/interface-font-registry';
-import { useHasThemeArtwork } from '@/components/theme-artwork';
 
-import { getEditorialLayoutGeometry } from '@/lib/home-editorial-layout';
+import {
+  EDITORIAL_MAX_WIDTH,
+  EDITORIAL_PAD_MAX_WIDTH,
+  getEditorialLayoutGeometry,
+} from '@/lib/home-editorial-layout';
+import {
+  PAD_COVER_TITLE_LINE_HEIGHT,
+  PAD_WORDMARK_DESCENDER,
+  padCoverKind,
+  padFirstRunPlacement,
+  padLaunchLayoutEnabled,
+  padWordmarkFontSize,
+  padWorkColumnWidth,
+} from '@/lib/home-pad-geometry';
 export {
+  EDITORIAL_MAX_WIDTH,
+  EDITORIAL_PAD_MAX_WIDTH,
   EDITORIAL_TWO_COLUMN_MIN_WIDTH,
   getEditorialLayoutGeometry,
   type EditorialLayoutGeometry,
@@ -41,8 +56,12 @@ export {
 export type HomeEditorialLayoutProps = {
   /** Remaining content width after the parent has accounted for its rail. */
   contentWidth: number;
+  /** Available height for the Pad theme and launch pane. */
+  viewportHeight?: number;
   /** Optional override for deterministic layout previews and tests. */
   fontScale?: number;
+  /** A tablet Home with navigation owned by the persistent left rail. */
+  pad?: boolean;
   /** The existing identity block supplied by Home data/theme composition. */
   identity?: ReactNode;
   /** Cover artwork follows the utility row and precedes work actions. */
@@ -67,6 +86,21 @@ export type HomeEditorialLayoutProps = {
   connections?: ReactNode;
   /** Secondary scan or pair controls, already wired by the parent. */
   controls?: ReactNode;
+  /**
+   * No theme pack: the Pad cover has no painting, so it sets `coverTitle` as a
+   * large wordmark instead. Ignored wherever a pack's artwork is showing.
+   */
+  typographicCover?: boolean;
+  /** The brand mark, at the toolbar's leading edge above the wordmark cover. */
+  coverMark?: ReactNode;
+  /** A quiet texture painted behind the wordmark cover. */
+  coverBackdrop?: ReactNode;
+  /**
+   * Nothing is paired yet and `launches` is the pair card: on the wordmark
+   * cover (and a pack's cover in portrait) it is the page's one action, centred
+   * under the title, not docked.
+   */
+  firstRun?: boolean;
   style?: StyleProp<ViewStyle>;
 };
 
@@ -90,28 +124,11 @@ function EditorialSection({
   spacing,
   first = false,
 }: EditorialSectionProps) {
-  const background = useSurfaceBackground();
-  const profile = useAppearanceProfile();
-  const theme = useThemeTokens();
-  const hasScene = useHasThemeArtwork('home.wallpaper', 'shell.wallpaper');
+  const plate = useHomeScenePlate();
   return (
     <View style={[styles.section, { marginTop: first ? 0 : spacing.lg, marginBottom: 0 }]}>
       <View style={[styles.sectionHeader, { borderBottomColor: borderColor }]}>
-        <Text
-          variant="heading"
-          color={textColor}
-          accessibilityRole="header"
-          style={
-            hasScene
-              ? {
-                  alignSelf: 'flex-start',
-                  backgroundColor: background(theme.colors.surface),
-                  paddingHorizontal: 8,
-                  paddingVertical: 4,
-                  borderRadius: profile.chrome.control,
-                }
-              : undefined
-          }>
+        <Text variant="heading" color={textColor} accessibilityRole="header" style={plate}>
           {title}
         </Text>
       </View>
@@ -166,7 +183,9 @@ function useScrollStage(
 
 export function HomeEditorialLayout({
   contentWidth,
+  viewportHeight,
   fontScale: fontScaleProp,
+  pad = false,
   identity,
   artwork,
   scrollY,
@@ -180,6 +199,10 @@ export function HomeEditorialLayout({
   attention,
   connections,
   controls,
+  typographicCover = false,
+  coverMark,
+  coverBackdrop,
+  firstRun = false,
   style,
 }: HomeEditorialLayoutProps) {
   const { t } = useLingui();
@@ -192,15 +215,24 @@ export function HomeEditorialLayout({
   const { fontScale: windowFontScale } = useWindowDimensions();
   const fontScale = fontScaleProp ?? windowFontScale;
   const hasAside = hasSlot(attention) || hasSlot(connections);
+  // The Pad work column's headings take the same plate as the phone's sections.
+  const scenePlate = useHomeScenePlate();
   const [measuredWidth, setMeasuredWidth] = useState(0);
   const [titleMeasurement, setTitleMeasurement] = useState<{ title: string; width: number } | null>(
     null
   );
+  const [padPaneHeight, setPadPaneHeight] = useState(0);
+  const [padLaunchHeight, setPadLaunchHeight] = useState(0);
+  const maxWidth = pad ? EDITORIAL_PAD_MAX_WIDTH : EDITORIAL_MAX_WIDTH;
   const geometry = getEditorialLayoutGeometry(
-    measuredWidth || Math.min(contentWidth, 1120),
+    measuredWidth || Math.min(contentWidth, maxWidth),
     fontScale,
-    hasAside
+    hasAside,
+    pad
   );
+  const padLaunchLayout =
+    pad && padLaunchLayoutEnabled(geometry.contentWidth, fontScale, viewportHeight);
+  const scrollPosition = scrollY;
   const hasIdentity = hasSlot(identity);
   const hasArtwork = hasSlot(artwork);
   const hasHeaderAction = hasSlot(headerAction);
@@ -210,16 +242,36 @@ export function HomeEditorialLayout({
   const sceneOrigin = useSharedValue(0);
   const animateCover = cover && hasArtwork && !reducedMotion;
   const revealing = useLaunchHandoff((state) => state.revealing);
+  // Under the launch snap, Home's entrance rides the snap's own progress, so
+  // it starts on the frame the first tile leaves and is complete with the
+  // last; under the cross-fade it keeps its own clock.
+  const revealDriver = useLaunchHandoff((state) => state.driver);
+  const markRevealReady = useLaunchHandoff((state) => state.markReady);
   const entryProgress = useSharedValue(revealing || reducedMotion ? 1 : 0);
   const timelineEnd = useSharedValue(0);
   useEffect(() => {
+    if (revealing && revealDriver) {
+      // Laid out and waiting: the snap may start.
+      markRevealReady();
+      return;
+    }
     if (revealing || reducedMotion) {
       entryProgress.set(withTiming(1, { duration: reducedMotion ? 0 : 520 }));
     }
     return () => cancelAnimation(entryProgress);
-  }, [revealing, reducedMotion, entryProgress]);
+  }, [revealing, revealDriver, reducedMotion, entryProgress, markRevealReady]);
+  useAnimatedReaction(
+    () => (revealDriver ? revealDriver.get() : -1),
+    (progress) => {
+      if (progress < 0) return;
+      // Ease-out: three quarters in by the middle of the sweep, so what shows
+      // through the gaps is Home arriving rather than a page already there.
+      const t = Math.min(1, Math.max(0, progress));
+      entryProgress.set(1 - (1 - t) * (1 - t));
+    }
+  );
   const titleStage = useScrollStage(
-    scrollY,
+    scrollPosition,
     sceneOrigin,
     entryProgress,
     timelineEnd,
@@ -227,7 +279,7 @@ export function HomeEditorialLayout({
     120
   );
   const artworkStage = useScrollStage(
-    scrollY,
+    scrollPosition,
     sceneOrigin,
     entryProgress,
     timelineEnd,
@@ -235,7 +287,7 @@ export function HomeEditorialLayout({
     160
   );
   const controlsStage = useScrollStage(
-    scrollY,
+    scrollPosition,
     sceneOrigin,
     entryProgress,
     timelineEnd,
@@ -243,7 +295,7 @@ export function HomeEditorialLayout({
     96
   );
   const launchesStage = useScrollStage(
-    scrollY,
+    scrollPosition,
     sceneOrigin,
     entryProgress,
     timelineEnd,
@@ -262,8 +314,8 @@ export function HomeEditorialLayout({
   );
 
   const animatedArtworkStyle = useAnimatedStyle(() => {
-    if (!scrollY || reducedMotion) return {};
-    const y = scrollY.value;
+    if (!scrollPosition || reducedMotion) return {};
+    const y = scrollPosition.value;
     // Pull-down stretch is independent from the measured scroll-fade stages.
     // Keep layout geometry stable while the cover scrolls away.
     const translateY = interpolate(y, [-120, 0], [18, 0], Extrapolation.CLAMP);
@@ -272,6 +324,249 @@ export function HomeEditorialLayout({
       transform: [{ translateY }, { scale }],
     };
   });
+
+  if (padLaunchLayout) {
+    // A cover spread: the cover fills the left column top to bottom with the
+    // New-session block docked at its foot; the work column beside it (Continue,
+    // Connections) scrolls on its own. The page itself does not scroll.
+    const launchWidth = padWorkColumnWidth(geometry.innerWidth);
+    const coverWidth = geometry.innerWidth - launchWidth - 24;
+    const titleFontSize =
+      titleMeasurement && titleMeasurement.title === titleKey && titleMeasurement.width > 0
+        ? Math.min(coverWidth * 0.38, ((coverWidth - 4) * 100) / titleMeasurement.width)
+        : coverWidth * 0.25;
+    const titleHeight = titleFontSize * 1.08;
+    const hasRecent = hasSlot(recent);
+    const hasConnections = hasSlot(connections);
+    const coverKind = padCoverKind({
+      cover,
+      hasArtwork,
+      typographic: typographicCover,
+      hasTitle: Boolean(coverTitle),
+    });
+    const wordmark = coverKind === 'wordmark';
+    const launchWidthInCover = Math.min(coverWidth - geometry.gutter, 560);
+    // The pair card is the first-run page's whole purpose, so on the wordmark
+    // cover, and on a pack's cover in portrait, it stands in the open under the
+    // title; the dock stays at the foot. See `padFirstRunPlacement`.
+    const centredLaunches =
+      padFirstRunPlacement({
+        coverKind,
+        firstRun,
+        coverWidth,
+        paneHeight: padPaneHeight,
+      }) === 'centred';
+    const wordmarkFontSize = padWordmarkFontSize({
+      coverWidth,
+      measuredWidth:
+        titleMeasurement && titleMeasurement.title === titleKey ? titleMeasurement.width : 0,
+      paneHeight: padPaneHeight,
+      reservedHeight: padLaunchHeight > 0 ? padLaunchHeight + 48 : 0,
+    });
+    const onLaunchLayout = wordmark
+      ? (event: LayoutChangeEvent) => setPadLaunchHeight(event.nativeEvent.layout.height)
+      : undefined;
+    const titleMeasure = coverTitle ? (
+      <View
+        pointerEvents="none"
+        accessibilityElementsHidden
+        importantForAccessibility="no-hide-descendants"
+        style={{ position: 'absolute', width: 10000, opacity: 0 }}>
+        <Text
+          allowFontScaling={false}
+          onTextLayout={(event) => {
+            const measured = event.nativeEvent.lines[0]?.width ?? 0;
+            if (measured > 0)
+              setTitleMeasurement((current) =>
+                current?.title === titleKey && Math.abs(current.width - measured) < 0.1
+                  ? current
+                  : { title: titleKey, width: measured }
+              );
+          }}
+          style={{
+            fontSize: 100,
+            fontFamily: chromeFontFamily,
+            fontWeight: titleWeight,
+            letterSpacing: -5,
+          }}>
+          {coverTitle}
+        </Text>
+      </View>
+    ) : null;
+    return (
+      <View
+        testID="home-editorial-layout"
+        onLayout={(event) => setMeasuredWidth(event.nativeEvent.layout.width)}
+        style={[
+          styles.root,
+          styles.padRoot,
+          { maxWidth, height: viewportHeight, paddingHorizontal: geometry.gutter },
+          style,
+        ]}>
+        {hasHeaderRow ? (
+          <View testID="home-pad-toolbar" style={styles.padToolbar}>
+            <View style={styles.mastheadLeadGroup}>
+              {wordmark && hasSlot(coverMark) ? (
+                <View testID="home-pad-cover-mark">{coverMark}</View>
+              ) : null}
+              {hasHeaderLeading ? <View style={styles.headerLeading}>{headerLeading}</View> : null}
+            </View>
+            {hasHeaderAction ? <View style={styles.headerAction}>{headerAction}</View> : null}
+          </View>
+        ) : null}
+        <View style={styles.padColumns}>
+          <View
+            testID="home-pad-theme-pane"
+            onLayout={(event) => setPadPaneHeight(event.nativeEvent.layout.height)}
+            style={[styles.padThemePane, { width: coverWidth }]}>
+            {wordmark ? (
+              <>
+                {hasSlot(coverBackdrop) ? (
+                  <View pointerEvents="none" style={StyleSheet.absoluteFill}>
+                    {coverBackdrop}
+                  </View>
+                ) : null}
+                {titleMeasure}
+                <Text
+                  testID="home-pad-wordmark"
+                  accessibilityRole="header"
+                  color={theme.colors.text}
+                  numberOfLines={1}
+                  allowFontScaling={false}
+                  style={{
+                    fontSize: wordmarkFontSize,
+                    lineHeight: wordmarkFontSize * PAD_COVER_TITLE_LINE_HEIGHT,
+                    fontFamily: chromeFontFamily,
+                    fontWeight: titleWeight,
+                    letterSpacing: -wordmarkFontSize * 0.05,
+                  }}>
+                  {coverTitle}
+                </Text>
+              </>
+            ) : cover && hasArtwork ? (
+              <View style={[styles.coverScene, styles.padCoverScene]}>
+                {titleMeasure}
+                {coverTitle ? (
+                  <Animated.View onLayout={titleStage.onLayout} style={titleStage.style}>
+                    <Text
+                      accessibilityRole="header"
+                      color={theme.colors.text}
+                      adjustsFontSizeToFit
+                      numberOfLines={1}
+                      allowFontScaling={false}
+                      style={{
+                        fontSize: titleFontSize,
+                        lineHeight: titleHeight,
+                        fontFamily: chromeFontFamily,
+                        fontWeight: titleWeight,
+                        letterSpacing: -titleFontSize * 0.05,
+                      }}>
+                      {coverTitle}
+                    </Text>
+                  </Animated.View>
+                ) : null}
+                {/* The figure stands on the column's bottom edge and rises over
+                    the title, as the phone cover's drawing overlaps its title. */}
+                <Animated.View
+                  onLayout={artworkStage.onLayout}
+                  pointerEvents="none"
+                  style={[
+                    styles.padCoverArtwork,
+                    // Anchored right, so the figure stands clear of the dock's leading edge.
+                    { left: Math.round(coverWidth * 0.15) },
+                    animatedArtworkStyle,
+                    artworkStage.style,
+                  ]}>
+                  {artwork}
+                </Animated.View>
+              </View>
+            ) : (
+              <View>
+                {hasIdentity ? <View style={styles.identity}>{identity}</View> : null}
+                {hasArtwork ? (
+                  <Animated.View pointerEvents="none" style={animatedArtworkStyle}>
+                    {artwork}
+                  </Animated.View>
+                ) : null}
+              </View>
+            )}
+            {hasSlot(launches) && centredLaunches ? (
+              <View
+                testID="home-pad-first-run"
+                style={[
+                  styles.padFirstRunStage,
+                  wordmark
+                    ? { paddingTop: wordmarkFontSize * PAD_WORDMARK_DESCENDER }
+                    : // Over the artwork cover, which fills the column: the
+                      // stage is what the title leaves, and the figure stays
+                      // anchored at the foot behind the card.
+                      {
+                        position: 'absolute',
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        top: coverTitle ? titleHeight : 0,
+                        paddingTop: coverTitle ? titleFontSize * PAD_WORDMARK_DESCENDER : 0,
+                        zIndex: 2,
+                      },
+                ]}>
+                <View onLayout={onLaunchLayout} style={{ width: launchWidthInCover }}>
+                  {launches}
+                </View>
+              </View>
+            ) : hasSlot(launches) ? (
+              // Capped so the tiles stay near phone size and the figure's torso
+              // at the column's right stays clear of the dock.
+              <View
+                testID="home-pad-launch-dock"
+                onLayout={onLaunchLayout}
+                style={[
+                  styles.padLaunchDock,
+                  { bottom: geometry.gutter, width: launchWidthInCover },
+                ]}>
+                {launches}
+              </View>
+            ) : null}
+          </View>
+          <ScrollView
+            testID="home-pad-launch-pane"
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            style={{ width: launchWidth, flexGrow: 0, flexShrink: 0 }}
+            contentContainerStyle={styles.padWorkContent}>
+            {hasRecent || hasConnections ? (
+              <View testID="home-pad-lower-band" style={styles.padWorkSections}>
+                {hasRecent ? (
+                  <View testID="home-pad-continue">
+                    <Text
+                      variant="heading"
+                      accessibilityRole="header"
+                      color={theme.colors.text}
+                      style={[styles.padWorkTitle, scenePlate]}>
+                      {t`Continue`}
+                    </Text>
+                    {recent}
+                  </View>
+                ) : null}
+                {hasConnections ? (
+                  <View testID="home-pad-connections">
+                    <Text
+                      variant="heading"
+                      accessibilityRole="header"
+                      color={theme.colors.text}
+                      style={[styles.padWorkTitle, scenePlate]}>
+                      {t`Connections`}
+                    </Text>
+                    {connections}
+                  </View>
+                ) : null}
+              </View>
+            ) : null}
+          </ScrollView>
+        </View>
+      </View>
+    );
+  }
 
   if (cover && hasSlot(artwork)) {
     const split = geometry.contentWidth >= 752 && fontScale < 1.35;
@@ -289,7 +584,7 @@ export function HomeEditorialLayout({
           setMeasuredWidth(event.nativeEvent.layout.width);
           sceneOrigin.set(event.nativeEvent.layout.y + 12);
         }}
-        style={[styles.root, { paddingHorizontal: geometry.gutter }, style]}>
+        style={[styles.root, { maxWidth, paddingHorizontal: geometry.gutter }, style]}>
         <View style={split ? styles.coverColumns : undefined}>
           <View style={split ? { width: coverWidth, minWidth: 0 } : undefined}>
             <View style={styles.coverScene}>
@@ -406,7 +701,12 @@ export function HomeEditorialLayout({
         key="without-artwork"
         testID="home-editorial-layout"
         onLayout={(event) => setMeasuredWidth(event.nativeEvent.layout.width)}
-        style={[styles.root, styles.noArtworkRoot, { paddingHorizontal: geometry.gutter }, style]}>
+        style={[
+          styles.root,
+          styles.noArtworkRoot,
+          { maxWidth, paddingHorizontal: geometry.gutter },
+          style,
+        ]}>
         {hasHeaderRow ? (
           <View style={styles.noArtworkToolbar}>
             <View style={[styles.mastheadLeadGroup, styles.noArtworkLeadGroup]}>
@@ -503,7 +803,7 @@ export function HomeEditorialLayout({
       key="with-artwork"
       testID="home-editorial-layout"
       onLayout={(event) => setMeasuredWidth(event.nativeEvent.layout.width)}
-      style={[styles.root, { paddingHorizontal: geometry.gutter }, style]}>
+      style={[styles.root, { maxWidth, paddingHorizontal: geometry.gutter }, style]}>
       <View style={styles.masthead}>
         {hasHeaderRow ? (
           <View style={styles.mastheadActionRow}>
@@ -603,6 +903,25 @@ function hasSlot(value: ReactNode): boolean {
 }
 
 const styles = StyleSheet.create({
+  padRoot: { paddingBottom: 0 },
+  padToolbar: {
+    minHeight: 44,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 24,
+    marginBottom: 24,
+  },
+  padColumns: { flex: 1, minHeight: 0, flexDirection: 'row', gap: 24 },
+  padThemePane: { flexShrink: 0, minWidth: 0 },
+  padCoverScene: { flex: 1 },
+  padCoverArtwork: { position: 'absolute', right: 0, bottom: 0, zIndex: 1 },
+  padLaunchDock: { position: 'absolute', left: 0, zIndex: 2 },
+  padFirstRunStage: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingBottom: 24 },
+  padWorkContent: { paddingTop: 16, paddingBottom: 24, gap: 24 },
+  padWorkSections: { gap: 32 },
+  // The phone editorial section's heading, without its rule: title, 12, card.
+  padWorkTitle: { marginBottom: 12 },
+
   coverColumns: { flexDirection: 'row', alignItems: 'flex-start', gap: 24 },
   coverReadingColumn: { flex: 1, minWidth: 0, paddingTop: 16 },
   coverScene: { position: 'relative', minWidth: 0 },
@@ -613,7 +932,7 @@ const styles = StyleSheet.create({
   root: {
     alignSelf: 'center',
     width: '100%',
-    maxWidth: 1120,
+    maxWidth: EDITORIAL_MAX_WIDTH,
     minWidth: 0,
     paddingTop: 12,
     paddingBottom: 32,

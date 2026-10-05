@@ -6,6 +6,16 @@ import type { HomeArtworkPreference } from '@/theme/home-artwork';
 import { compileTheme, type ResolvedCustomTheme } from '@/theme/resolve';
 import { parseThemeManifest, type ThemeManifest } from '@/theme/schema';
 
+/**
+ * The installation id of the built-in default theme.
+ *
+ * It is never in `ThemeLibrary.themes` and never a stored selection: the
+ * library is the reader's own themes, and the built-in one is what the app
+ * wears while that list is empty. It only has to differ from every allocated
+ * (random hex) installation id, and a word does.
+ */
+export const BUILTIN_THEME_INSTALLATION_ID = 'builtin';
+
 export type ThemeSelection = { kind: 'builtin'; id: ThemePackId } | { kind: 'custom'; id: string };
 
 export type InstalledTheme = {
@@ -160,7 +170,8 @@ export class ThemeRepository {
     private storage: ThemeLibraryStorage,
     private allocateId: () => string,
     private assetAvailable: (uri: string) => boolean = (uri) => uri.startsWith('file:///'),
-    private assetPaths?: { encode: (uri: string) => string; decode: (uri: string) => string }
+    private assetPaths?: { encode: (uri: string) => string; decode: (uri: string) => string },
+    private builtin: InstalledTheme | null = null
   ) {}
 
   hydrate(): ThemeLibrary {
@@ -365,6 +376,22 @@ export class ThemeRepository {
     return this.snapshot();
   }
 
+  /** Back to the implicit default: the built-in theme while nothing else is installed. */
+  resetToDefault(): ThemeLibrary {
+    if (this.state.selection === null) return this.snapshot();
+    this.commit({ ...this.state, previous: this.state.selection, selection: null });
+    return this.snapshot();
+  }
+
+  /** The built-in theme compiled, whether or not it is the one being worn. */
+  builtinTheme(): ResolvedCustomTheme | null {
+    return this.builtin ? this.compile(this.builtin) : null;
+  }
+
+  builtinAssets(): Record<string, string> | undefined {
+    return this.builtin?.assets;
+  }
+
   undo(): ThemeLibrary {
     this.commit({
       ...this.state,
@@ -387,15 +414,33 @@ export class ThemeRepository {
     return this.snapshot();
   }
 
-  active(): ResolvedCustomTheme | null {
+  /**
+   * The installation the app is wearing.
+   *
+   * The owner's rule: the built-in theme shows exactly while the reader has
+   * chosen nothing of their own -- no installed theme, and no colour pack
+   * picked (the selection is still the implicit default). A picked pack or an
+   * installed theme wins; removing every theme with nothing picked, or
+   * `resetToDefault`, brings the built-in one back. It is not in `themes`, so it
+   * is never counted, listed under the reader's own, or removable.
+   */
+  activeInstalled(): InstalledTheme | null {
+    if (this.state.themes.length === 0 && this.state.selection === null) return this.builtin;
     if (this.state.selection?.kind !== 'custom') return null;
     const id = this.state.selection.id;
-    const installed = this.state.themes.find((theme) => theme.id === id);
-    if (!installed) return null;
-    let result = this.compiled.get(id);
+    return this.state.themes.find((theme) => theme.id === id) ?? null;
+  }
+
+  active(): ResolvedCustomTheme | null {
+    const installed = this.activeInstalled();
+    return installed ? this.compile(installed) : null;
+  }
+
+  private compile(installed: InstalledTheme): ResolvedCustomTheme {
+    let result = this.compiled.get(installed.id);
     if (!result) {
-      result = compileTheme(effectiveThemeManifest(installed), id);
-      this.compiled.set(id, result);
+      result = compileTheme(effectiveThemeManifest(installed), installed.id);
+      this.compiled.set(installed.id, result);
     }
     return result;
   }

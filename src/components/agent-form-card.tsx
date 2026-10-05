@@ -255,7 +255,7 @@ export const AgentFormCard = memo(function AgentFormCard({
                 {
                   color: theme.colors.text,
                   borderColor: theme.colors.border,
-                  backgroundColor: withAlpha(theme.colors.surface, 0.5),
+                  backgroundColor: surfaceBackground(withAlpha(theme.colors.surface, 0.5)),
                 },
               ]}
             />
@@ -298,7 +298,7 @@ export const AgentFormCard = memo(function AgentFormCard({
                 {
                   color: theme.colors.text,
                   borderColor: theme.colors.border,
-                  backgroundColor: withAlpha(theme.colors.surface, 0.5),
+                  backgroundColor: surfaceBackground(withAlpha(theme.colors.surface, 0.5)),
                 },
               ]}
             />

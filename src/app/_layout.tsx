@@ -1,9 +1,12 @@
 import { RouteScene } from '@/components/route-scene';
 import {
+  isFullscreenSheetRoute,
   sheetPresentationOptions,
   sheetRouteOptions as resolveSheetRouteOptions,
   sheetRoutePresentations,
 } from '@/lib/route-presentation';
+import { responsiveWorkspaceLayout } from '@/lib/responsive-layout';
+import { SheetFullscreenProvider } from '@/components/sheet-route-frame';
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import * as Device from 'expo-device';
 import * as ScreenOrientation from 'expo-screen-orientation';
@@ -19,7 +22,7 @@ import {
 import * as NavigationBar from 'expo-navigation-bar';
 import * as SecureStore from 'expo-secure-store';
 import { useEffect } from 'react';
-import { AppState, LogBox, Platform, StyleSheet } from 'react-native';
+import { AppState, LogBox, Platform, StyleSheet, useWindowDimensions } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { useReducedMotion } from 'react-native-reanimated';
@@ -268,8 +271,16 @@ function RootContent() {
   const notificationSurfaceStyle = useNotificationSurfaceStyle();
   const pageOptions = profileNavigationOptions(profile, reduceMotion);
   const modalOptions = profileNavigationOptions(profile, reduceMotion, true);
-  const sheetRouteOptions = (route: string) =>
-    resolveSheetRouteOptions(route, profile, reduceMotion);
+  // A Pad is a window width, not a device: the same test the workspace uses to
+  // draw its rail. On a Pad the sheets that are work surfaces open full-screen
+  // (`sheetRouteKinds`) and take the modal transition the full-screen routes
+  // already have; phones never cross the threshold, so nothing changes there.
+  const { width: windowWidth } = useWindowDimensions();
+  const isPad = responsiveWorkspaceLayout(windowWidth).mode === 'pad';
+  const sheetRouteOptions = (route: string) => {
+    const options = resolveSheetRouteOptions(route, profile, reduceMotion, isPad);
+    return options.presentation === 'fullScreenModal' ? { ...options, ...modalOptions } : options;
+  };
   const { resolvedMode } = useThemeMode();
   const { colors } = useThemeTokens();
   const surfaceBackground = useSurfaceBackground();
@@ -360,7 +371,11 @@ function RootContent() {
                               : 'plain'
                       }
                       animated={route.name !== 'index'}>
-                      {children}
+                      {/* A sheet a Pad shows full-screen draws its own close
+                          button: there is no grabber to drag. */}
+                      <SheetFullscreenProvider value={isFullscreenSheetRoute(route.name, isPad)}>
+                        {children}
+                      </SheetFullscreenProvider>
                     </RouteScene>
                   )
                 }
@@ -454,6 +469,7 @@ function RootContent() {
                 />
                 <Stack.Screen name="new-task" options={sheetRouteOptions('new-task')} />
                 <Stack.Screen name="home-target" options={sheetRouteOptions('home-target')} />
+                <Stack.Screen name="home-agents" options={sheetRouteOptions('home-agents')} />
                 <Stack.Screen name="web-service" options={sheetRouteOptions('web-service')} />
                 {/*
               A full-screen modal, not a sheet, and the route file says why at
@@ -503,7 +519,7 @@ function RootContent() {
                 <Stack.Screen name="agent-vcs-diff" options={sheetRouteOptions('agent-vcs-diff')} />
                 <Stack.Screen name="agent-tasks" options={sheetRouteOptions('agent-tasks')} />
                 <Stack.Screen name="agent-shells" options={sheetRouteOptions('agent-shells')} />
-                <Stack.Screen name="opencode-guide" options={sheetRouteOptions('opencode-guide')} />
+                <Stack.Screen name="agent-guide" options={sheetRouteOptions('agent-guide')} />
               </Stack>
               <InAppNotificationHost />
             </AppLockGate>

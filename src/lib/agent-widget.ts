@@ -23,7 +23,28 @@ export type AgentWidgetName = (typeof AGENT_WIDGET_NAMES)[number];
 
 export type AgentWidgetStatus = 'working' | 'blocked' | 'idle' | 'done' | 'unknown';
 
-export type AgentEngineType = 'opencode' | 'tmux' | 'herdr';
+/**
+ * The subsystem behind a widget entry. `tmux` and `herdr` are terminal
+ * engines; any other value is the id of the agent that owns the session
+ * (`opencode`, `deepseek`, ...), so a new agent needs no change here. A
+ * snapshot written before agents were listed says `opencode`, which is an
+ * agent id and reads the same.
+ */
+export type AgentEngineType = string;
+
+const TERMINAL_ENGINES: readonly string[] = ['tmux', 'herdr'];
+
+/** Whether an engine value names an agent rather than a terminal engine. */
+export function isAgentEngine(engine: AgentEngineType | undefined): engine is AgentEngineType {
+  return Boolean(engine) && !TERMINAL_ENGINES.includes(engine!);
+}
+
+/** The id of the agent that owns an entry, or nothing for a terminal pane. */
+export function widgetEntryAgentId(
+  entry: Pick<AgentWidgetEntry, 'engine' | 'agentId'>
+): string | undefined {
+  return isAgentEngine(entry.engine) ? entry.agentId || entry.engine : undefined;
+}
 
 export type AgentWidgetEntry = {
   /** Gateway agent id or session id. Opaque; used only to key the row. */
@@ -32,9 +53,15 @@ export type AgentWidgetEntry = {
   status: AgentWidgetStatus;
   /** Pane the agent runs in, so a tap lands on the panel rather than the app. */
   paneId: string;
-  /** Subsystem engine behind this entry (OpenCode AI agent, tmux session/pane, or herdr daemon). */
+  /** The agent id that owns this entry, or `tmux` / `herdr` for a terminal pane. */
   engine?: AgentEngineType;
-  /** Milestone step progress for long tasks, e.g. OpenCode Todo list { done: 3, total: 5 }. */
+  /**
+   * For an agent entry, the agent that owns the session when `engine` alone
+   * does not say. Absent on every snapshot written before the gateway could
+   * name one, which reads as `engine`.
+   */
+  agentId?: string;
+  /** Milestone step progress for long tasks, e.g. an agent's todo list { done: 3, total: 5 }. */
   todoProgress?: { done: number; total: number };
   /** Current active action or phase, e.g. "Editing auth.ts", "cargo build", "Awaiting approval". */
   action?: string;
@@ -186,12 +213,16 @@ export function computeSummaryStatus(entries: AgentWidgetEntry[]): AgentWidgetSt
 
 /**
  * Deep link for a tap. Panels and agents are addressed cleanly so a tap on an
- * OpenCode agent opens the agent workbench, while a tmux pane opens the terminal workspace.
+ * agent session opens the agent workbench, while a tmux pane opens the terminal workspace.
  */
 export function agentWidgetUri(snapshot: AgentWidgetSnapshot, entry?: AgentWidgetEntry): string {
-  if (entry?.engine === 'opencode') {
+  const agentId = entry ? widgetEntryAgentId(entry) : undefined;
+  if (entry && agentId) {
     const query = [`asid=${encodeURIComponent(entry.id)}`];
     if (entry.paneId) query.push(`paneId=${encodeURIComponent(entry.paneId)}`);
+    // Only a non-default agent is named, so a link from an older snapshot
+    // and a link to an OpenCode session read the same.
+    if (agentId !== 'opencode') query.push(`agentId=${encodeURIComponent(agentId)}`);
     return `muqun://agent?${query.join('&')}`;
   }
   const query = [`sessionId=${encodeURIComponent(snapshot.sessionId)}`];
@@ -253,6 +284,7 @@ function sameContent(a: AgentWidgetSnapshot, b: AgentWidgetSnapshot): boolean {
       agent.status === other.status &&
       agent.paneId === other.paneId &&
       agent.engine === other.engine &&
+      agent.agentId === other.agentId &&
       agent.action === other.action &&
       agent.isBlocked === other.isBlocked &&
       agent.todoProgress?.done === other.todoProgress?.done &&
@@ -273,6 +305,7 @@ function normalizeSnapshot(snapshot: AgentWidgetSnapshot): AgentWidgetSnapshot {
       status: agent.status,
       paneId: agent.paneId,
       ...(agent.engine && { engine: agent.engine }),
+      ...(agent.agentId && { agentId: agent.agentId.slice(0, MAX_NAME_LENGTH) }),
       ...(agent.action && { action: agent.action.slice(0, MAX_NAME_LENGTH) }),
       ...(agent.isBlocked !== undefined && { isBlocked: agent.isBlocked }),
       ...(agent.todoProgress && {
@@ -331,6 +364,7 @@ function parseSnapshot(value: string): AgentWidgetSnapshot | null {
             ...(typeof agent.engine === 'string' && {
               engine: agent.engine as AgentEngineType,
             }),
+            ...(typeof agent.agentId === 'string' && agent.agentId && { agentId: agent.agentId }),
             ...(typeof agent.action === 'string' && {
               action: agent.action,
             }),

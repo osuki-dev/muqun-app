@@ -164,3 +164,14 @@ export function reconcileShellParts(items: TimelineItem[]): TimelineItem[] {
   });
   return next.length === items.length ? items : next;
 }
+
+/** Hide only explicitly identified internal context, keeping actionable notices. */
+export function reconcileInjectedContext(items: TimelineItem[]): TimelineItem[] {
+  const next = items.filter(
+    (item) =>
+      item.role !== 'system' ||
+      item.part.type !== 'synthetic' ||
+      !['runtime-context', 'skill-catalog', 'time-context'].includes(item.part.description ?? '')
+  );
+  return next.length === items.length ? items : next;
+}

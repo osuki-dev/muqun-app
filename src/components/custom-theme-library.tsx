@@ -47,6 +47,7 @@ import type { ThemeAppearance } from '@/constants/theme-packs';
 import type { ThemeManifest } from '@/theme/schema';
 import type { ThemeEditorCandidate } from '@/theme/draft-session';
 import { settleAfter } from '@/lib/compiler-safe-control-flow';
+import { isRenderableThemeAsset } from '@/theme/renderable-asset';
 
 /**
  * One layer of paint per pixel: under a custom theme the kit's opaque chip
@@ -56,7 +57,7 @@ import { settleAfter } from '@/lib/compiler-safe-control-flow';
 const transparentFill = { backgroundColor: 'transparent' } as const;
 
 /** The pack cover, as a row thumbnail and as the summary's larger one. Both 8:5. */
-const ROW_COVER = { width: 56, height: 35 } as const;
+export const ROW_COVER = { width: 56, height: 35 } as const;
 const SUMMARY_COVER = { width: 96, height: 60 } as const;
 
 /**
@@ -71,7 +72,7 @@ const SUMMARY_COVER = { width: 96, height: 60 } as const;
  * A pack without one falls back to the swatch pair, which is what every row
  * showed before: never a gap, and never a broken picture.
  */
-function ThemeCover({
+export function ThemeCover({
   manifest,
   assets,
   pack,
@@ -84,7 +85,7 @@ function ThemeCover({
 }) {
   const profile = useAppearanceProfile();
   const uri = manifest.preview ? assets?.[manifest.preview] : undefined;
-  if (!uri?.startsWith('file:///')) return <ThemePaletteStrip pack={pack} />;
+  if (!isRenderableThemeAsset(uri)) return <ThemePaletteStrip pack={pack} />;
   return (
     <Image
       source={{ uri }}

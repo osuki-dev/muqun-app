@@ -1,6 +1,10 @@
 import { createStore } from 'zustand/vanilla';
 import type { AgentRunStatus, TimelineItem } from '@/lib/agent-protocol';
-import { reconcileShellParts, type TimelineRenderGroup } from '@/lib/agent-timeline-groups';
+import {
+  reconcileInjectedContext,
+  reconcileShellParts,
+  type TimelineRenderGroup,
+} from '@/lib/agent-timeline-groups';
 import { classifyTool } from '@/lib/agent-tool-output';
 
 /** One canonical timeline per mounted workbench; rows are derived, never mirrored back. */
@@ -8,7 +12,7 @@ export function createAgentTranscriptStore() {
   return createStore<AgentTranscriptState>((set, get) => {
     const rebuild = (timeline: TimelineItem[], config = get().config) => {
       const previous = get();
-      const reconciled = reconcileShellParts(timeline);
+      const reconciled = reconcileInjectedContext(reconcileShellParts(timeline));
       // windowStart indexes the canonical timeline, not the deduplicated list.
       // Shell copies can occupy the entire newest page; keep a real page visible
       // instead of slicing beyond the end after those copies are removed.

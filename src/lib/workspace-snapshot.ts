@@ -6,6 +6,7 @@ import {
   type HerdrEntity,
   type PaneOutputSource,
   type SessionSnapshot,
+  type SessionsResponse,
 } from '@/lib/gateway-client';
 import { initialSelection, reconcileSelection } from '@/lib/workspace-selection';
 
@@ -38,7 +39,12 @@ const WARM_PANE_SOURCE: PaneOutputSource = 'recent-unwrapped';
  * function honours whatever it is told. On a cold start there is nothing to be
  * pulled away from, so the remembered preference is the answer outright.
  */
-type WorkspaceSnapshotResult = { snapshot: WarmWorkspace; choices: SessionChoice[] };
+type WorkspaceSnapshotResult = {
+  snapshot: WarmWorkspace;
+  choices: SessionChoice[];
+  /** Every configured session, disconnected ones included (`terminalBackendRows`). */
+  allSessions: NonNullable<SessionsResponse['sessions']>;
+};
 
 export function loadWorkspaceSnapshot(
   preference: string | undefined,
@@ -71,7 +77,11 @@ export async function loadWorkspaceSnapshot(
   );
   const { workspaces, tabs, panes, agents } = await sessionEntities(sessionId, health);
   if (!isCurrent()) return null;
-  return { snapshot: { health, sessionId, workspaces, tabs, panes, agents }, choices };
+  return {
+    snapshot: { health, sessionId, workspaces, tabs, panes, agents },
+    choices,
+    allSessions: sessions.sessions ?? [],
+  };
 }
 
 /** Every list the snapshot needs, with the agents settled one way or another. */
@@ -219,6 +229,7 @@ export async function warmConfiguredWorkspace(
     {
       void useServerAgents.getState().record({
         serverId,
+        sessionId: snapshot.sessionId,
         checkedAtMs: Date.now(),
         agents: mirroredServerPanes(snapshot.panes, snapshot.agents),
       });

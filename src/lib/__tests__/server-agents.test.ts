@@ -273,6 +273,12 @@ describe('sameServerAgents', () => {
     expect(sameServerAgents(two, one)).toBe(false);
   });
 
+  test('a move to another Herdr session is a change', () => {
+    const before = { ...snapshot('s1', [{ id: 'a', name: 'claude' }]), sessionId: 'one' };
+    const after = { ...snapshot('s1', [{ id: 'a', name: 'claude' }]), sessionId: 'two' };
+    expect(sameServerAgents(before, after)).toBe(false);
+  });
+
   test('a snapshot for a different server is never the same', () => {
     const first = snapshot('s1', [{ id: 'a', name: 'claude' }]);
     const second = snapshot('s2', [{ id: 'a', name: 'claude' }]);
@@ -382,6 +388,13 @@ describe('parseServerAgentsIndex', () => {
   test('round-trips what was written', () => {
     const index: ServerAgentsIndex = {
       s1: snapshot('s1', [{ id: 'a', name: 'claude', status: 'working' }]),
+    };
+    expect(parseServerAgentsIndex(JSON.stringify(index))).toEqual(index);
+  });
+
+  test('round-trips the Herdr session the panes belong to', () => {
+    const index: ServerAgentsIndex = {
+      s1: { ...snapshot('s1', [{ id: 'a', name: 'claude' }]), sessionId: 'routing' },
     };
     expect(parseServerAgentsIndex(JSON.stringify(index))).toEqual(index);
   });

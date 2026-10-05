@@ -152,6 +152,7 @@ export function SettingsSegmented({
             styles.pill,
             {
               width: segment,
+              // Opacity audit: deliberate -- a solid mark, per the track comment above.
               backgroundColor: theme.colors.surface,
               borderRadius: profile.chrome.segmentedOption,
             },

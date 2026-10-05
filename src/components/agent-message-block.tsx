@@ -213,9 +213,7 @@ const AgentNoticeRow = memo(function AgentNoticeRow({ part }: { part: AgentPart 
       case 'agent_switched':
         return {
           Icon: Bot,
-          text: part.previous
-            ? t`Agent · ${part.previous} → ${part.agent}`
-            : t`Agent · ${part.agent}`,
+          text: part.previous ? t`Mode · ${part.previous} → ${part.mode}` : t`Mode · ${part.mode}`,
         };
       case 'location_switched':
         return { Icon: FolderGit2, text: t`Project · ${part.directory}` };
@@ -617,38 +615,15 @@ const AgentDiffBlock = memo(function AgentDiffBlock({
  */
 const MessageTextPart = memo(function MessageTextPart({
   text,
-  prevTool,
   markdownStyle,
 }: {
   text: string;
-  prevTool?: TimelineItem;
   markdownStyle: MarkdownStyle;
 }) {
   const segments = useMemo(
     () => splitDiffFences(text).filter((seg) => seg.kind === 'diff' || seg.text.trim().length > 0),
     [text]
   );
-
-  // An assistant text that merely echoes the tool output right before it is
-  // chrome, not content; OpenCode's own output does not repeat it.
-  if (prevTool && prevTool.part.type === 'tool') {
-    const cleanText = text
-      .replace(/^```[\w]*\n/, '')
-      .replace(/\n```$/, '')
-      .replace(/Command exited with code \d+\.?/gi, '')
-      .trim();
-    const cleanOutput = (typeof prevTool.part.output === 'string' ? prevTool.part.output : '')
-      .replace(/Command exited with code \d+\.?/gi, '')
-      .trim();
-    if (
-      !cleanText ||
-      cleanText === cleanOutput ||
-      (cleanOutput && cleanText.includes(cleanOutput)) ||
-      (cleanOutput && cleanOutput.includes(cleanText))
-    ) {
-      return null;
-    }
-  }
 
   const renderMarkdown = (key: string, markdown: string) => (
     <BoundedMarkdown
@@ -767,14 +742,7 @@ function renderTimelinePart(
       return <AgentNoticeRow key={item.id} part={part} />;
     case 'text':
       return (
-        <MessageTextPart
-          key={item.id}
-          text={part.text}
-          prevTool={
-            options.prevItem && options.prevItem.part.type === 'tool' ? options.prevItem : undefined
-          }
-          markdownStyle={options.markdownStyle}
-        />
+        <MessageTextPart key={item.id} text={part.text} markdownStyle={options.markdownStyle} />
       );
     default:
       // `approval` and `form` are drawn by the surfaces that own their state:
@@ -1361,10 +1329,12 @@ const styles = StyleSheet.create({
   userBlock: {
     borderLeftWidth: 2,
   },
-  // A thought row hugs its pill; the surfaces are the pill's and the body's own.
+  // A thought row spans the message: the pill hugs itself inside it, and the
+  // expanded plate takes the full width. A row that hugged its content was
+  // only as wide as the pill on iOS, where the markdown under `flex: 1`
+  // brings no width of its own, so the reasoning wrapped a word per line.
   thoughtRow: {
-    alignSelf: 'flex-start',
-    maxWidth: '100%',
+    alignSelf: 'stretch',
     marginVertical: TRANSCRIPT_ROW_GAP / 2,
   },
   standaloneRow: {

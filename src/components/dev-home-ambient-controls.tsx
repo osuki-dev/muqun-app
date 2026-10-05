@@ -43,6 +43,7 @@ export function DevHomeAmbientControls(props: DevHomeAmbientControlsProps) {
   const { height } = useWindowDimensions();
   const capabilities = THEME_EFFECT_CAPABILITIES[props.value === 'theme' ? 'none' : props.value];
   if (!__DEV__) return null;
+  // Opacity audit: dev-only inspector, left opaque.
   const buttonStyle = {
     borderRadius: profile.chrome.control,
     backgroundColor: theme.colors.surface,

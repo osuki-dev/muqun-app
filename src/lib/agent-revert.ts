@@ -1,4 +1,5 @@
-import type { AgentSessionRevert, TimelineItem } from './agent-protocol';
+import type { AgentFeatures, AgentSessionRevert, TimelineItem } from './agent-protocol';
+import { classifyAgentRequestError } from './agent-request-error';
 
 /**
  * What a staged rollback is about to do, counted from what is on screen.
@@ -70,4 +71,52 @@ export function removeTimelineItems(
   const removed = new Set(ids);
   const kept = previous.filter((item) => !removed.has(item.id));
   return kept.length === previous.length ? (previous as TimelineItem[]) : kept;
+}
+
+/**
+ * How a rollback is taken on this agent, or `null` when it cannot be.
+ *
+ * `staged` previews the rollback on the plate above the composer and applies
+ * it only when the reader says so. `one-step` is for an agent that can roll
+ * back but not stage (T3): `POST …/revert` removes the turn at once, so the
+ * workbench asks first and says it cannot be undone.
+ */
+export type AgentRevertPath = 'staged' | 'one-step';
+
+export function agentRevertPath(
+  features: Pick<AgentFeatures, 'revert' | 'stagedRevert'>
+): AgentRevertPath | null {
+  if (!features.revert) return null;
+  return features.stagedRevert ? 'staged' : 'one-step';
+}
+
+/**
+ * Whether a failed staging means "this agent cannot stage", rather than that
+ * staging went wrong.
+ *
+ * An older gateway does not state `stagedRevert`, which reads as `true`, and
+ * answers the stage call `501 feature_unsupported` for an agent that has only
+ * the one-step rollback. That is a route to take, not an error to show.
+ */
+export function stagingUnsupported(err: unknown): boolean {
+  return Boolean(err) && classifyAgentRequestError(err).kind === 'unsupported';
+}
+
+/** A one-step rollback the reader is being asked about, pinned to its session. */
+export interface OneStepRevertRequest {
+  asid: string;
+  messageId: string;
+}
+
+/**
+ * The rollback to perform once the reader confirms, or `null` when it must
+ * not run: the screen has moved to another session (or to none) since the
+ * question was asked, and the message id belongs to the session it came from.
+ */
+export function oneStepRevertTarget(
+  request: OneStepRevertRequest | null,
+  activeAsid: string | undefined
+): OneStepRevertRequest | null {
+  if (!request || !activeAsid || request.asid !== activeAsid) return null;
+  return request;
 }

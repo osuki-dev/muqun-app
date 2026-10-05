@@ -9,6 +9,9 @@ import { PressableScale } from '@/components/pressable-scale';
 import { useNotificationSurfaceStyle } from '@/components/notification-surface';
 import { fadeIn, listLayout } from '@/lib/motion';
 import { noticeDeckPage } from '@/lib/notice-deck';
+import { appChrome } from '@/constants/appearance';
+import { useSurfaceBackgroundOpacity } from '@/hooks/use-surface-background';
+import { surfaceBackgroundFill } from '@/theme/surface-background';
 
 /** Keep condition-driven notices mounted, but expose only one page's text/actions.
  * Empty children measure zero; they must not create a blank notification page.
@@ -16,6 +19,13 @@ import { noticeDeckPage } from '@/lib/notice-deck';
 export function NoticeDeck({ children }: { children: ReactNode }) {
   const notificationSurfaceStyle = useNotificationSurfaceStyle(false);
   const { colors } = useThemeTokens();
+  const surfaceOpacity = useSurfaceBackgroundOpacity();
+  // A notice floats over live content: the reader's opacity, never thinner
+  // than the chrome floor, like `GlassChrome`'s solid material.
+  const plate = surfaceBackgroundFill(
+    colors.surfaceRaised,
+    Math.max(surfaceOpacity, appChrome.opacity.glassSolidFloor)
+  );
   const { t } = useLingui();
   const [heights, setHeights] = useState<Record<string, number>>({});
   const [widths, setWidths] = useState<Record<string, number>>({});
@@ -41,7 +51,7 @@ export function NoticeDeck({ children }: { children: ReactNode }) {
               notificationSurfaceStyle,
               {
                 width: front ? widths[front] : undefined,
-                backgroundColor: colors.surfaceRaised,
+                backgroundColor: plate,
                 borderColor: colors.border,
                 transform: [
                   { translateY: depth * 6 },
@@ -64,12 +74,7 @@ export function NoticeDeck({ children }: { children: ReactNode }) {
             importantForAccessibility={active ? 'auto' : 'no-hide-descendants'}
             style={
               active
-                ? [
-                    styles.page,
-                    styles.front,
-                    notificationSurfaceStyle,
-                    { backgroundColor: colors.surfaceRaised },
-                  ]
+                ? [styles.page, styles.front, notificationSurfaceStyle, { backgroundColor: plate }]
                 : styles.measuring
             }>
             <View
@@ -94,11 +99,7 @@ export function NoticeDeck({ children }: { children: ReactNode }) {
           accessibilityRole="button"
           accessibilityLabel={t`Next notification`}
           onPress={() => setSelected(next)}
-          style={[
-            styles.next,
-            notificationSurfaceStyle,
-            { backgroundColor: colors.surfaceRaised },
-          ]}>
+          style={[styles.next, notificationSurfaceStyle, { backgroundColor: plate }]}>
           <Text variant="caption" color={colors.textMuted}>
             {position + 1} / {visible.length}
           </Text>

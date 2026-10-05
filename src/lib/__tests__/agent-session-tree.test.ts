@@ -8,9 +8,12 @@ import {
   buildSessionStrip,
   flattenSessionTree,
   indexSessions,
+  includeOpenedRoot,
   parentOf,
   rootOf,
   sessionsInWorkspace,
+  sessionsOfAgent,
+  workbenchAgentId,
   SESSION_STRIP_MAX_NODES,
   loadSessionDescendants,
   mergeSessionChildren,
@@ -26,6 +29,7 @@ function session(asid: string, extra: Partial<AgentSessionInfo> = {}): AgentSess
     status: 'idle',
     updated_ms: 0,
     ...extra,
+    agent_id: extra.agent_id ?? 'opencode',
   };
 }
 
@@ -43,6 +47,20 @@ const CHILDREN = {
 };
 
 describe('root-only strip and uncapped sheet projection', () => {
+  test('an open root remains selected when a bounded listing omits it', () => {
+    const roots = includeOpenedRoot([ROOT_B], ROOT_A, ROOT_A.asid);
+    const strip = buildRootSessionStrip(roots, {}, ROOT_A.asid);
+    expect(strip.selectedRootAsid).toBe(ROOT_A.asid);
+    expect(strip.nodes.map((node) => node.session.asid)).toEqual(['ses_a', 'ses_b']);
+  });
+
+  test('opening cannot duplicate roots or promote children, deleted or stale snapshots', () => {
+    const roots = [ROOT_B];
+    expect(includeOpenedRoot(roots, ROOT_B, ROOT_B.asid)).toBe(roots);
+    expect(includeOpenedRoot(roots, CHILD_A1, CHILD_A1.asid)).toBe(roots);
+    expect(includeOpenedRoot(roots, { ...ROOT_A, deleted: true }, ROOT_A.asid)).toBe(roots);
+    expect(includeOpenedRoot(roots, ROOT_A, ROOT_B.asid)).toBe(roots);
+  });
   test('a delayed inventory cannot erase a child announced while the request was in flight', async () => {
     const observed: ChildrenByParent = { ses_a: [CHILD_A2] };
     let current = observed;
@@ -432,5 +450,138 @@ describe('sessionsInWorkspace', () => {
 
   test('with no workspace at all nothing matches, rather than everything', () => {
     expect(sessionsInWorkspace(sessions, {})).toEqual([]);
+  });
+});
+
+describe('workbench agent scoping', () => {
+  const opencode = { asid: 'o1', agent_id: 'opencode' };
+  const deepseek = { asid: 'd1', agent_id: 'deepseek' };
+  const t3 = { asid: 't1', agent_id: 't3' };
+  const all = [opencode, deepseek, t3];
+
+  test('a new session from a launch tile scopes to initialAgentId over a stale pick', () => {
+    const agent = workbenchAgentId({
+      discovered: true,
+      sessionAgentId: undefined,
+      initialAgentId: 'deepseek',
+      selectedAgentId: 'opencode',
+    });
+    expect(agent).toBe('deepseek');
+    expect(sessionsOfAgent(all, agent)).toEqual([deepseek]);
+  });
+
+  test('without an initial agent the pick decides', () => {
+    expect(workbenchAgentId({ discovered: true, selectedAgentId: 't3' })).toBe('t3');
+  });
+
+  test('once the session exists its own agent wins', () => {
+    const agent = workbenchAgentId({
+      discovered: true,
+      sessionAgentId: 't3',
+      initialAgentId: 'deepseek',
+      selectedAgentId: 'opencode',
+    });
+    expect(agent).toBe('t3');
+    expect(sessionsOfAgent(all, agent)).toEqual([t3]);
+  });
+
+  test('a gateway without agent discovery is not filtered', () => {
+    const agent = workbenchAgentId({
+      discovered: false,
+      sessionAgentId: 'opencode',
+      initialAgentId: 'deepseek',
+      selectedAgentId: 'deepseek',
+    });
+    expect(agent).toBeUndefined();
+    expect(sessionsOfAgent(all, agent)).toEqual(all);
+  });
+
+  test('a row without agent_id is the default agent', () => {
+    const legacy = { asid: 'x', agent_id: '' };
+    expect(sessionsOfAgent([legacy, deepseek], 'opencode')).toEqual([legacy]);
+  });
+});
+
+describe('the sheet shows one root subtree, linked only by parent_id', () => {
+  const OPENED = session('ses_effect');
+  const REAL_CHILD = session('ses_effect_child', { parent_id: 'ses_effect' });
+  const UNRELATED = [
+    session('ses_hello', { agent_id: 'deepseek' }),
+    session('ses_ds_qa', { agent_id: 'deepseek' }),
+    session('ses_t3', { agent_id: 't3' }),
+    session('ses_test'),
+  ];
+
+  /** An adapter that ignores the parent filter answers every parent with all its roots. */
+  const unfiltered = (parent: string) =>
+    parent === OPENED.asid ? [REAL_CHILD, ...UNRELATED] : UNRELATED;
+
+  test('unrelated roots from an unfiltered /children never nest or chain', async () => {
+    let children: ChildrenByParent = {};
+    await loadSessionDescendants({
+      rootAsid: OPENED.asid,
+      known: {},
+      listChildren: async (asid) => ({ children: unfiltered(asid), authoritative: true }),
+      isCurrent: () => true,
+      onChildren: (parent, inventory) => {
+        children = mergeSessionChildren(
+          children,
+          parent,
+          inventory.children,
+          inventory.authoritative
+        );
+      },
+    });
+    const nodes = flattenSessionTree(OPENED, children);
+    expect(nodes.map((node) => [node.session.asid, node.depth])).toEqual([
+      ['ses_effect', 0],
+      ['ses_effect_child', 1],
+    ]);
+  });
+
+  test('a row filed under the wrong parent is not drawn, even if already stored', () => {
+    const polluted: ChildrenByParent = {
+      ses_effect: [REAL_CHILD, ...UNRELATED],
+      ses_effect_child: UNRELATED,
+      ses_hello: UNRELATED,
+    };
+    const nodes = flattenSessionTree(OPENED, polluted);
+    expect(nodes.map((node) => node.session.asid)).toEqual(['ses_effect', 'ses_effect_child']);
+    expect(nodes[0]?.hasChildren).toBe(true);
+    expect(nodes[1]?.hasChildren).toBe(false);
+  });
+
+  test('an unknown parent_id stays a root at depth 0 and gains no foreign children', () => {
+    const orphan = session('ses_orphan', { parent_id: 'ses_missing' });
+    expect(rootOf(orphan.asid, indexSessions([orphan, ...UNRELATED], {}))?.asid).toBe(orphan.asid);
+    const strip = buildRootSessionStrip(UNRELATED, { ses_missing: [orphan] }, orphan.asid);
+    expect(strip.nodes.every((node) => node.depth === 0)).toBe(true);
+    const nodes = flattenSessionTree(orphan, { ses_orphan: UNRELATED });
+    expect(nodes.map((node) => [node.session.asid, node.depth])).toEqual([['ses_orphan', 0]]);
+  });
+
+  test('descendants get their real depth', () => {
+    const nodes = flattenSessionTree(ROOT_A, CHILDREN);
+    expect(nodes.map((node) => [node.session.asid, node.depth])).toEqual([
+      ['ses_a', 0],
+      ['ses_a1', 1],
+      ['ses_a1x', 2],
+      ['ses_a1xy', 3],
+      ['ses_a2', 1],
+    ]);
+  });
+
+  test("another agent's session is excluded when an agent is given", () => {
+    const foreign = session('ses_foreign', { parent_id: 'ses_effect', agent_id: 'deepseek' });
+    const children = { ses_effect: [REAL_CHILD, foreign] };
+    expect(flattenSessionTree(OPENED, children).map((n) => n.session.asid)).toEqual([
+      'ses_effect',
+      'ses_effect_child',
+      'ses_foreign',
+    ]);
+    expect(flattenSessionTree(OPENED, children, 'opencode').map((n) => n.session.asid)).toEqual([
+      'ses_effect',
+      'ses_effect_child',
+    ]);
   });
 });

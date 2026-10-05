@@ -9,6 +9,7 @@ import { resolveThemeImage } from '@/theme/resolve';
 import type { ThemeSlot } from '@/theme/schema';
 import { useSurfaceBackground, useSurfaceBackgroundOpacity } from '@/hooks/use-surface-background';
 import { jointArtworkOpacity } from '@/theme/opacity-policy';
+import { isRenderableThemeAsset } from '@/theme/renderable-asset';
 
 type ArtworkProps = {
   slot: ThemeSlot;
@@ -28,7 +29,7 @@ export function ThemedSurfaceArtwork({ slot, baseColor, disabled, selected }: Ar
   const artwork = active
     ? resolveThemeImage(active.manifest, slot, resolvedMode, width >= 768 ? 'regular' : 'compact')
     : null;
-  const hasImage = Boolean(artwork && assets?.[artwork.asset]?.startsWith('file:///'));
+  const hasImage = Boolean(artwork && isRenderableThemeAsset(assets?.[artwork.asset]));
   const opacity = useMemo(() => {
     if (!active || !hasImage || disabled || selected) return 0;
     const { colors } = active.manifest.variants[resolvedMode];

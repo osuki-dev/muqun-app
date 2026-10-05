@@ -1,8 +1,8 @@
 import { expect, test } from 'bun:test';
-import { homeContinueEntries } from '../home-continue';
+import { homeContinueEntries, supersededTerminalRecent } from '../home-continue';
 import { homeServerModel } from '../home-server-model';
 import type { HomeRecentEntry } from '../home-recents';
-import type { ServerAgentsIndex } from '../server-agents';
+import { MAX_SERVER_AGENTS, type ServerAgentsIndex } from '../server-agents';
 
 const snapshots: ServerAgentsIndex = {
   a: {
@@ -92,7 +92,7 @@ test('OpenCode recents show only current Gateway observations and keep honest ag
     title: 'Build release',
     atMs: 20,
     target: {
-      kind: 'opencode-session',
+      kind: 'agent-session',
       serverId: 'a',
       sessionId: 'routing',
       directory: '/workspace',
@@ -107,7 +107,7 @@ test('OpenCode recents show only current Gateway observations and keep honest ag
     nowMs: 70_000,
   })[0]?.observation;
   expect(current).toEqual({
-    kind: 'opencode-session',
+    kind: 'agent-session',
     status: 'busy',
     age: { unit: 'now', value: 0 },
     stale: false,
@@ -130,7 +130,7 @@ test('OpenCode recents show only current Gateway observations and keep honest ag
     nowMs: 400_001,
   })[0]?.observation;
   expect(stale).toMatchObject({
-    kind: 'opencode-session',
+    kind: 'agent-session',
     age: { unit: 'minute', value: 6 },
     stale: true,
   });
@@ -144,12 +144,7 @@ test('history changes ranking without duplicating panes or replacing authoritati
   expect(history.title).toBe('Old name');
 });
 
-test('Classic agent filtering and authoritative deletion win over pane history', () => {
-  expect(
-    homeContinueEntries({ ...input, recents: [history], paneMode: 'agents' }).map(
-      (row) => row.title
-    )
-  ).toEqual(['Current agent title']);
+test('authoritative deletion wins over pane history', () => {
   expect(
     homeContinueEntries({
       ...input,
@@ -204,7 +199,7 @@ test('offline filtering is gateway-scoped, retains unknown and SSH entries, and 
     title: 'Offline OpenCode',
     atMs: 50,
     target: {
-      kind: 'opencode-session',
+      kind: 'agent-session',
       serverId: 'c',
       sessionId: 'routing',
       directory: '/workspace',
@@ -283,4 +278,142 @@ test('plain panes and history-only entries never receive agent status', () => {
   expect(
     homeContinueEntries({ ...input, snapshots: {}, recents: [history] })[0]?.observation
   ).toBeUndefined();
+});
+
+const T = 1_700_000_000_000;
+const terminalVisit: HomeRecentEntry = {
+  key: 'visit',
+  title: 'zsh',
+  atMs: T,
+  target: { kind: 'gateway-terminal', serverId: 'a', sessionId: 'routing', paneId: 'p2' },
+};
+function gatewayAgent(asid: string, updatedMs: number) {
+  return {
+    asid,
+    agentId: 'opencode',
+    title: `${asid} task`,
+    directory: '/w',
+    status: 'idle' as const,
+    updatedMs,
+  };
+}
+const rankingInput = {
+  ...input,
+  snapshots: { a: { ...snapshots.a, sessionId: 'routing', checkedAtMs: T } },
+  nowMs: T + 1_000,
+  gatewaySessions: {
+    serverId: 'a',
+    sessionId: 'routing',
+    observedAtMs: T,
+    sessions: [gatewayAgent('newer', T + 1_000), gatewayAgent('older', T - 1_000)],
+  },
+};
+
+test('a terminal visited at T ranks between agents updated at T+1s and T-1s', () => {
+  const rows = homeContinueEntries({ ...rankingInput, recents: [terminalVisit] });
+  expect(rows.map((row) => row.title)).toEqual([
+    'newer task',
+    'Shell',
+    'older task',
+    'Current agent title',
+  ]);
+});
+
+test('a terminal with neither a visit nor activity ranks last', () => {
+  const rows = homeContinueEntries(rankingInput);
+  expect(rows.at(-1)?.atMs).toBe(0);
+  expect(rows.slice(0, 2).map((row) => row.title)).toEqual(['newer task', 'older task']);
+});
+
+test('a visited plain terminal survives the agents-only pane filter', () => {
+  const rows = homeContinueEntries({
+    ...rankingInput,
+    paneMode: 'agents',
+    recents: [terminalVisit],
+  });
+  expect(rows.map((row) => row.title)).toEqual([
+    'newer task',
+    'zsh',
+    'older task',
+    'Current agent title',
+  ]);
+  expect(rows[1]?.destination).toEqual({ type: 'recent', target: terminalVisit.target });
+  // Unvisited plain panes still follow the filter.
+  expect(
+    homeContinueEntries({ ...rankingInput, paneMode: 'agents' }).some(
+      (row) => row.title === 'Shell'
+    )
+  ).toBe(false);
+});
+
+test('a recent for a pane in another Herdr session than the snapshot is kept', () => {
+  const elsewhere: HomeRecentEntry = {
+    ...terminalVisit,
+    key: 'elsewhere',
+    title: 'Other session shell',
+    target: { kind: 'gateway-terminal', serverId: 'a', sessionId: 'other', paneId: 'gone' },
+  };
+  const rows = homeContinueEntries({
+    ...input,
+    snapshots: rankingInput.snapshots,
+    recents: [elsewhere],
+  });
+  expect(rows.map((row) => row.title)).toContain('Other session shell');
+  // The same pane id in the snapshot's own session is a closed pane and is dropped.
+  const closed = { ...elsewhere, target: { ...elsewhere.target, sessionId: 'routing' } };
+  expect(
+    homeContinueEntries({ ...input, snapshots: rankingInput.snapshots, recents: [closed] }).map(
+      (row) => row.title
+    )
+  ).not.toContain('Other session shell');
+});
+
+test('supersededTerminalRecent keeps the old filter for a snapshot without a session', () => {
+  const legacy = { ...snapshots.a, sessionId: undefined };
+  const shell = {
+    kind: 'gateway-terminal' as const,
+    serverId: 'a',
+    sessionId: 'any',
+    paneId: 'p2',
+  };
+  expect(supersededTerminalRecent(shell, legacy, 'agents')).toBe(true);
+});
+
+test('supersededTerminalRecent drops a recent whose pane is already a snapshot row', () => {
+  const session = { ...snapshots.a, sessionId: 'routing' };
+  const shell = {
+    kind: 'gateway-terminal' as const,
+    serverId: 'a',
+    sessionId: 'routing',
+    paneId: 'p2',
+  };
+  expect(supersededTerminalRecent(shell, session, 'all')).toBe(true);
+  expect(supersededTerminalRecent(shell, session, 'agents')).toBe(false);
+});
+
+test('a recent missing from a snapshot cut at the mirror cap is kept, not taken as closed', () => {
+  const panes = (count: number) =>
+    Array.from({ length: count }, (_, index) => ({
+      id: `w${index}`,
+      paneId: `w${index}`,
+      name: `pane ${index}`,
+      hasAgent: true,
+      status: 'idle' as const,
+    }));
+  const shell = {
+    kind: 'gateway-terminal' as const,
+    serverId: 'a',
+    sessionId: 'routing',
+    paneId: 'w-newest',
+  };
+  const full = { ...snapshots.a, sessionId: 'routing', agents: panes(MAX_SERVER_AGENTS) };
+  expect(supersededTerminalRecent(shell, full, 'all')).toBe(false);
+  const partial = { ...full, agents: panes(MAX_SERVER_AGENTS - 1) };
+  expect(supersededTerminalRecent(shell, partial, 'all')).toBe(true);
+  const rows = homeContinueEntries({
+    ...input,
+    snapshots: { a: full },
+    recents: [{ key: 'newest', title: 'ryu@osk:~/app', atMs: 50, target: shell }],
+  });
+  expect(rows[0]?.title).toBe('ryu@osk:~/app');
 });

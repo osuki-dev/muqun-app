@@ -108,6 +108,19 @@ the job payload it was invoked with, and that payload contains the Android
 keystore and its passwords in base64. Do not paste a failed local-build log
 anywhere, and delete any file it was captured into.
 
+## The built-in default theme
+
+The `cover-courier` pack from the muqun-themes repository ships inside the app
+and is worn while the reader has neither installed a theme nor picked a colour pack
+(`ThemeRepository.activeInstalled`). Its copy in `assets/themes/cover-courier/`
+and `src/theme/builtin-theme.generated.ts` (`BUILTIN_THEME_VERSION` and the
+`require` map that registers each file with Metro's asset registry on both
+platforms) are generated; do not edit them by hand. `bun scripts/sync-builtin-theme.ts`
+packs the theme with `@osuki-dev/muqun-theme@2` from `$MUQUN_THEMES_DIR` or a
+`../themes` checkout, or downloads the published package and checks it against
+the gallery index's SHA-256, validates it with the app's own `unpackTheme`,
+keeps only the files the manifest names, and is idempotent. Commit its output.
+
 ## End-to-end test gate
 
 Optional Gateway features use capability detection, not a guessed Gateway version.
@@ -262,13 +275,31 @@ gauge on a Debug build is hundreds of megabytes of Hermes compiler state.
   from the same app state. Run each side at least twice before calling a
   difference.
 
-`@shopify/react-native-skia` carries
-`patches/@shopify%2Freact-native-skia@2.12.0.patch`, which disposes the Canvas
-recorders and pictures it retired. Upstream this is Shopify/react-native-skia#4079
-and #4080; drop the patch once a release carries the fix.
+Skia is `react-native-skia` 3.x (the unscoped successor of
+`@shopify/react-native-skia`) on the Graphite backend: Vulkan on Android, which
+needs minSdk 26. Paths are immutable; build them with `Skia.PathBuilder` and
+`detach()`. The old Canvas recorder patch is gone: in 3.x the native view owns
+the recorder and releases the recording when it is replaced or torn down.
 
 `bun install` re-extracting the package removes Skia's prebuilt `libs/`, which
 `pod install` copies back. Run it before the next iOS build.
+
+## Patched dependencies
+
+`package.json` `patchedDependencies` holds the patches bun applies on
+`bun install` (files in `patches/`, paths relative to the package). Each patch
+file starts with a comment block that says what is wrong and when to drop it.
+
+- `react-native-enriched-markdown@1.1.0` (Android): `LineHeightSpan` now leaves
+  spacer lines alone. `MarginBottomSpan` and `LineHeightSpan` both edit the
+  line's font metrics, and Android runs them in a different order for the
+  shadow-node measure than for the TextView's own layout, so a blank line before
+  a code block was measured 10 px and drawn 56 px. The markdown view came out
+  short and the last line overflowed its plate. Not a font problem: measurement
+  does use the spans' typeface. iOS measures the attributed string it draws and
+  needs no change. To regenerate: `bun patch react-native-enriched-markdown`,
+  edit, `bun patch --commit`, then strip the generated build-dir hunks and the
+  `node_modules/<pkg>/` path prefixes by hand, as the existing file does.
 
 ## agent-device
 

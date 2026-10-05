@@ -11,12 +11,59 @@
 // still land somewhere honest.
 import { describe, expect, test } from 'bun:test';
 
-import { classifyTransportRefusal, GatewayTransportRefusalError } from '../gateway-refusal';
+import {
+  classifyTransportRefusal,
+  GatewayTransportRefusalError,
+  retryReplayedRead,
+} from '../gateway-refusal';
 
 /** The shape the gateway's `api_error` writes, verbatim. */
 function apiError(code: string, message = 'refused'): string {
   return JSON.stringify({ error: { code, message } });
 }
+
+describe('fresh reads after a native replay', () => {
+  test('a replayed GET makes one fresh request and returns its response', async () => {
+    let attempts = 0;
+    const answer = await retryReplayedRead('GET', async () => {
+      attempts++;
+      if (attempts === 1) throw new GatewayTransportRefusalError(409, apiError('replayed_request'));
+      return 'fresh response';
+    });
+    expect(answer).toBe('fresh response');
+    expect(attempts).toBe(2);
+  });
+
+  test('writes, unknown refusals and network failures never repeat delivery', async () => {
+    for (const [method, failure] of [
+      ['POST', new GatewayTransportRefusalError(409, apiError('replayed_request'))],
+      ['DELETE', new GatewayTransportRefusalError(409, apiError('replayed_request'))],
+      ['GET', new GatewayTransportRefusalError(409, apiError('other_conflict'))],
+      ['GET', new Error('connection lost')],
+    ] as const) {
+      let attempts = 0;
+      await expect(
+        retryReplayedRead(method, async () => {
+          attempts++;
+          throw failure;
+        })
+      ).rejects.toThrow(failure);
+      expect(attempts).toBe(1);
+    }
+  });
+
+  test('a second replay refusal is surfaced without a retry loop', async () => {
+    let attempts = 0;
+    const failure = new GatewayTransportRefusalError(409, apiError('replayed_request'));
+    await expect(
+      retryReplayedRead('HEAD', async () => {
+        attempts++;
+        throw failure;
+      })
+    ).rejects.toThrow(failure);
+    expect(attempts).toBe(2);
+  });
+});
 
 describe('the pairing family', () => {
   // The reported incident exactly: the device record was destroyed by a gateway

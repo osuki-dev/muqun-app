@@ -2,7 +2,7 @@
   "expo": {
     "name": "Muqun",
     "slug": "muqun",
-    "version": "3.0.0",
+    "version": "3.1.0",
     "orientation": "default",
     "icon": "./assets/icons/classic/icon.png",
     "scheme": "muqun",
@@ -304,6 +304,7 @@
             "enableSceneSupport": true
           },
           "android": {
+            "minSdkVersion": 26,
             "buildArchs": ["arm64-v8a"],
             "useLegacyPackaging": true,
             "usesCleartextTraffic": true,

@@ -46,11 +46,12 @@ import {
 } from '@/constants/theme-packs';
 import { useRenderTally } from '@/lib/render-tally';
 import { THEME_PICKER_MAX_CONTENT_WIDTH } from '@/lib/theme-picker-layout';
-import { CustomThemeLibrary } from '@/components/custom-theme-library';
+import { CustomThemeLibrary, ROW_COVER, ThemeCover } from '@/components/custom-theme-library';
 import { useThemeLibrary } from '@/stores/theme-library';
 import { useThemePack } from '@/hooks/use-theme-pack';
 import { useOpenThemeEditor } from '@/hooks/use-open-theme-editor';
 import { useReskinTransition } from '@/components/reskin-transition';
+import { BUILTIN_THEME_INSTALLATION_ID } from '@/theme/repository';
 
 /** The focused field's clearance above the keyboard: the import link's input. */
 const KEYBOARD_BOTTOM_OFFSET = 88;
@@ -96,6 +97,24 @@ export function SettingsThemeSheet({ onClose }: { onClose: () => void }) {
     });
   }
 
+  /** The same apply-then-leave as `choose`, back to the bundled default. */
+  function chooseDefault() {
+    const builtin = useThemeLibrary.getState().defaultTheme;
+    if (!builtin) return;
+    void reskin.run({
+      kind: 'theme',
+      accent: themeVariant(builtin, resolvedMode).colors.primary,
+      apply: () => {
+        try {
+          useThemeLibrary.getState().resetToDefault();
+          onClose();
+        } catch {
+          setError(t`Could not save theme`);
+        }
+      },
+    });
+  }
+
   return (
     <SheetScene
       testID="settings-theme-sheet"
@@ -120,6 +139,7 @@ export function SettingsThemeSheet({ onClose }: { onClose: () => void }) {
           <CustomThemeLibrary tabs onOpenCandidate={openEditor}>
             {error ? <Text accessibilityRole="alert">{error}</Text> : null}
             <View testID="theme-picker-grid">
+              <BuiltinThemeRow onSelect={chooseDefault} />
               {THEME_PACKS.map((pack) => (
                 <ThemePackRow
                   key={pack.id}
@@ -134,6 +154,38 @@ export function SettingsThemeSheet({ onClose }: { onClose: () => void }) {
         <SheetSceneFooter bottomInset={insets.bottom} />
       </KeyboardAwareScrollView>
     </SheetScene>
+  );
+}
+
+/**
+ * The built-in default theme, while the reader has no theme of their own.
+ *
+ * It is worn while nothing is installed and no pack has been picked
+ * (`ThemeRepository.activeInstalled`). Choosing it clears the pick, which is
+ * how a reader who tried a colour pack gets back to it. Once a theme is
+ * installed it cannot be worn at all, so it is not offered. It is never in the
+ * reader's own tab: it is not theirs to remove, and it is not counted.
+ */
+function BuiltinThemeRow({ onSelect }: { onSelect: () => void }) {
+  const { t } = useLingui();
+  const theme = useThemeLibrary((state) =>
+    state.library.themes.length === 0 ? state.defaultTheme : null
+  );
+  const selected = useThemeLibrary(
+    (state) => state.active?.installationId === BUILTIN_THEME_INSTALLATION_ID
+  );
+  const assets = useThemeLibrary((state) => state.defaultAssets);
+  if (!theme) return null;
+  return (
+    <SheetSceneRow
+      title={theme.label}
+      caption={t`Default`}
+      selected={selected}
+      onPress={onSelect}
+      accessibilityLabel={theme.label}
+      testID={`settings-selection:${selected ? 'on' : 'off'}:theme-builtin`}
+      meta={<ThemeCover manifest={theme.manifest} assets={assets} pack={theme} size={ROW_COVER} />}
+    />
   );
 }
 

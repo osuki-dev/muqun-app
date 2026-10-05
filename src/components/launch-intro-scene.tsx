@@ -1,7 +1,16 @@
 import type { SplashRenderContext } from '@osuki-dev/react-native-splash';
 import { useSplashMirror } from '@osuki-dev/react-native-splash';
 import { useThemeMode, useThemeTokens } from '@osuki-dev/ui';
-import { Canvas, ColorShader, Fill, Shader } from '@shopify/react-native-skia';
+import {
+  Canvas,
+  ColorShader,
+  Fill,
+  Group,
+  Image as SkiaImage,
+  Shader,
+  useCanvasRef,
+  type SkImage,
+} from 'react-native-skia';
 import { Image } from 'expo-image';
 import { useCallback, useEffect, useEffectEvent, useMemo, useRef, useState } from 'react';
 import {
@@ -14,6 +23,7 @@ import {
   type LayoutChangeEvent,
 } from 'react-native';
 import Animated, {
+  Easing,
   Extrapolation,
   interpolate,
   ReduceMotion,
@@ -29,7 +39,9 @@ import Animated, {
 } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 
+import { SNAP_DUST_EFFECT, SnapDust } from '@/components/launch-snap';
 import { useAppliedCustomTheme } from '@/components/theme-candidate';
+import { useLaunchHandoff } from '@/stores/launch-handoff';
 import { useLaunchArtwork, useLaunchBackground } from '@/hooks/use-launch-artwork';
 import { useLaunchHeroEdge } from '@/hooks/use-launch-hero-edge';
 import {
@@ -44,8 +56,14 @@ import {
   inkBloomUniforms,
   type InkBloomHole,
 } from '@/lib/ink-bloom-shader';
-import { containedImageRect } from '@/lib/hero-feather';
-import { heroEdgeAmount, HERO_EDGE_REST_FRACTION } from '@/lib/launch-hero-edge';
+import { useSharedSkiaImage } from '@/lib/skia-image-cache';
+import { recoverWithSync } from '@/lib/compiler-safe-control-flow';
+import { containedImageRect, coveredImageRect } from '@/lib/hero-feather';
+import {
+  heroEdgeAmount,
+  HERO_EDGE_REST_FRACTION,
+  isMeasurableHeroUri,
+} from '@/lib/launch-hero-edge';
 import { subscribeLaunchArtworkRect, type LaunchArtworkRect } from '@/lib/launch-artwork-rect';
 import { cursorOpacity, launchPromptLine, scrimWidth, typedCount } from '@/lib/launch-intro-prompt';
 import {
@@ -59,6 +77,7 @@ import { bloomRadius, chooseLaunchWorld, launchWorldHole } from '@/lib/launch-in
 import { DURATION, RISE_DISTANCE, timing } from '@/lib/motion';
 import { THEME_ARTWORK_REGULAR_MIN_WIDTH } from '@/lib/responsive-layout';
 import { resolveThemeImage } from '@/theme/resolve';
+import { isRenderableThemeAsset } from '@/theme/renderable-asset';
 
 /**
  * The launch every run after the first: the theme's world opens out of its own
@@ -102,10 +121,31 @@ import { resolveThemeImage } from '@/theme/resolve';
  *    belong to a terminal app, and it is deliberately small.
  *
  * By the hold, this sheet and Home are drawing the same wallpaper with the same
- * picture in the same place, so the exit is a cross-fade between two identical
- * compositions -- which is to say it is invisible. The cover does not transition
- * to Home; it stops existing, and the first thing the reader notices is Home's
- * cards rising through where the prompt was.
+ * picture in the same place. Then the picture comes apart: the canvas takes a
+ * snapshot of the frame it is showing and, in the same canvas, draws that
+ * frame turned to fine dust that blows off up and to the right and fades,
+ * swept from left to right, and what they leave behind is Home
+ * (`launch-snap.tsx`, numbers in `snap-dissolve.ts`). The rule holds on the
+ * way out as well -- nothing is laid over the artwork; the artwork itself is
+ * what leaves. Under Reduce Motion, or when there is no snapshot to cut, the
+ * exit is the cross-fade between two identical compositions it always was,
+ * with Home's cards rising through where the prompt was.
+ *
+ * ## One canvas
+ *
+ * The wallpaper, the cover and the hero are all drawn by one Skia canvas,
+ * mounted from the first frame, in that order -- the paper, the world, the
+ * cover with its hole, the picture on top. That is what lets the exit be a
+ * swap of that canvas's children rather than a second surface replacing a
+ * stack of views: a second surface cannot be timed against the views it
+ * replaces, and on a slow GPU the reader saw bare Home between the two.
+ *
+ * The picture still starts as the React Native image the splash mirror drew,
+ * because that is the frame native handed over and it has to match it to the
+ * pixel. Once the same file has decoded in Skia, and the handover's paper has
+ * faded, the view is hidden and the canvas's copy -- drawn underneath it at
+ * the same rectangle all along -- is what is left. The type line and its
+ * scrim stay views: they are text, not the picture, and they fade.
  *
  * ## Where every pixel comes from
  *
@@ -136,9 +176,10 @@ import { resolveThemeImage } from '@/theme/resolve';
  * block some packs hide, plus a banner slot. When Home has not reported one --
  * no servers paired yet, the hero switched off, the lock gate up, a
  * notification deep-linking past Home -- there is nothing to land in, so the
- * hero holds where it is and the opening ends on a cross-fade. That is the
- * documented fallback, not a failure; the world still blooms, because the world
- * arriving is true of every first screen.
+ * hero holds where it is and the opening ends with it coming apart where it
+ * stands (or, without the snap, on a cross-fade). That is the documented
+ * fallback, not a failure; the world still blooms, because the world arriving
+ * is true of every first screen.
  *
  * ## The picture's edge
  *
@@ -230,6 +271,27 @@ const CURSOR_HEIGHT = 1.18;
 const IRIS_RIM = 2;
 
 const FALLBACK_MONO = Platform.OS === 'ios' ? 'Menlo' : 'monospace';
+
+/**
+ * How long after the handover the picture moves from the splash mirror's view
+ * into the canvas, once the canvas has it decoded.
+ *
+ * After the handover's paper has faded (220 ms), and with a margin: until then
+ * that paper lies over the canvas and under the view, so the canvas's copy
+ * would be under it. Both copies are drawn at the same rectangle, so the swap
+ * itself is invisible; the margin only has to cover the canvas presenting its
+ * first frame with the picture in it.
+ */
+const HERO_SWAP_MS = 320;
+
+/** How long the snap waits for Home to say it is laid out before going anyway. */
+const HOME_REVEAL_PATIENCE_MS = 250;
+
+/**
+ * Frames between Home saying it is laid out and the sweep starting: two for
+ * the commit to reach the UI thread and be drawn, and one to be presented.
+ */
+const HOME_PRESENT_FRAMES = 3;
 
 /** A style dimension that is actually a number, or the fallback. */
 function points(value: unknown, fallback: number): number {
@@ -378,15 +440,18 @@ export function LaunchSceneIntro({
         )
       : null;
   const wallpaperUri = wallpaper ? assets?.[wallpaper.asset] : undefined;
-  const hasArtwork = Boolean(wallpaperUri?.startsWith('file:///'));
+  const hasArtwork = isRenderableThemeAsset(wallpaperUri);
+  const [wallpaperFailed, setWallpaperFailed] = useState<string | undefined>(undefined);
+  const onWallpaperError = useCallback(() => setWallpaperFailed(wallpaperUri), [wallpaperUri]);
 
-  // The painting is an ordinary image layer under the canvas, not something
-  // the shader samples -- see the note atop `launch-bloom-shader.ts`. That is
-  // why readiness is `expo-image`'s `onLoad` rather than a second decode of
-  // our own: Home is about to draw this exact file through the same loader, so
-  // a cold start now decodes the pack's wallpaper once instead of twice.
-  const [imageReady, setImageReady] = useState(false);
-  const onImageSettled = useCallback(() => setImageReady(true), []);
+  // The painting is a layer in the same canvas, drawn under the cover, not
+  // something the shader samples -- see the note atop `launch-bloom-shader.ts`.
+  // Readiness is Skia's own decode: the front reveals what the canvas can
+  // draw. That is a decode Home does not share (it draws through
+  // `expo-image`), the price of the exit being one canvas. A painting that
+  // will not decode settles the same way a loaded one does, onto paper.
+  const wallpaperImage = useSharedSkiaImage(hasArtwork ? wallpaperUri : null, onWallpaperError);
+  const imageReady = wallpaperImage !== null || wallpaperFailed === wallpaperUri;
 
   // The front will not wait past the budget. Armed on the handover rather than
   // on mount, because the handover is when the reader starts counting.
@@ -413,6 +478,27 @@ export function LaunchSceneIntro({
   useEffect(() => {
     if (worldKind === 'iris') setIrisLatched(true);
   }, [worldKind]);
+
+  // Whether the world is drawn by the canvas -- everything but the iris, which
+  // is the fallback built from views for a painting that came too late.
+  const canvasWorld = INK_BLOOM_EFFECT !== null && world.kind !== 'iris';
+  // The picture, decoded for the canvas. Only a file the canvas can open: a
+  // compiled launch drawable stays the splash mirror's view throughout, and
+  // that launch ends on the cross-fade.
+  const heroUri = mirror.logo.source?.uri;
+  const heroDrawable = mirror.hasLogo && isMeasurableHeroUri(heroUri);
+  const heroImage = useSharedSkiaImage(heroDrawable ? heroUri : null);
+  // The exit is planned as the snap whenever motion is allowed and the canvas
+  // draws the whole picture; otherwise it is the cross-fade from the start.
+  const snapAhead =
+    !reduced && canvasWorld && SNAP_DUST_EFFECT !== null && (heroDrawable || !mirror.hasLogo);
+  const [heroSwapped, setHeroSwapped] = useState(false);
+  useEffect(() => {
+    if (phase !== 'visible' || !heroImage || heroSwapped) return;
+    const timer = setTimeout(() => setHeroSwapped(true), HERO_SWAP_MS);
+    return () => clearTimeout(timer);
+  }, [phase, heroImage, heroSwapped]);
+  const heroInCanvas = canvasWorld && heroImage !== null && heroSwapped;
 
   // The far corner from wherever the hero is, taken over both ends of its
   // travel: the front has to have covered the screen at the end of the beat no
@@ -466,6 +552,22 @@ export function LaunchSceneIntro({
   const blink = useSharedValue(0);
   const hold = useSharedValue(0);
   const exit = useSharedValue(0);
+  // The whole sheet's cross-fade, when the exit is one. The type line rides
+  // `exit` either way; the canvas rides this only when it is not snapping.
+  const sheetFade = useSharedValue(0);
+  // The snap: the canvas's own frame at the moment the exit began, and how far
+  // it has come apart.
+  const canvasRef = useCanvasRef();
+  const snapProgress = useSharedValue(0);
+  // Under the snap, Home's entrance rides the snap's progress (see the store);
+  // under the cross-fade it keeps its own.
+  const setRevealDriver = useLaunchHandoff((state) => state.setRevealDriver);
+  useEffect(() => {
+    setRevealDriver(snapAhead ? snapProgress : null);
+  }, [snapAhead, snapProgress, setRevealDriver]);
+  const [snapImage, setSnapImage] = useState<SkImage | null>(null);
+  // The snapshot is the scene's to release, once nothing is drawing it.
+  useEffect(() => () => snapImage?.dispose(), [snapImage]);
 
   const skip = useCallback(() => {
     if (!canSkipLaunchIntro(Date.now() - startedAt.current, beats)) return;
@@ -488,6 +590,10 @@ export function LaunchSceneIntro({
   // Skia does not redraw a canvas whose uniforms have stopped changing.
   const [frontGone, setFrontGone] = useState(false);
   const onFrontGone = useCallback(() => setFrontGone(true), []);
+
+  // The type line's dissolve, with whichever exit plays.
+  const dissolveLine = () =>
+    exit.set(withTiming(1, timing(beats.exit.ms, { reduceMotion: ReduceMotion.Never })));
 
   // Only the phase drives this. The beats, the reduced-motion setting and the
   // callbacks are read when it changes rather than being reasons to run, and
@@ -521,13 +627,93 @@ export function LaunchSceneIntro({
       return;
     }
     if (phase !== 'exiting') return;
-    // Likewise a dissolve rather than a cut, at either setting.
-    exit.set(
-      withTiming(1, timing(beats.exit.ms, { reduceMotion: ReduceMotion.Never }), (finished) => {
-        if (finished) scheduleOnRN(finish);
-      })
+    // Likewise a dissolve rather than a cut, at either setting -- and the
+    // dissolve is also what the snap falls back to. The type line dissolves
+    // with it (with the sweep, when the exit is the snap).
+    const fade = () => {
+      // Home goes back to its own entrance, under the fading sheet.
+      setRevealDriver(null);
+      dissolveLine();
+      sheetFade.set(
+        withTiming(1, timing(beats.exit.ms, { reduceMotion: ReduceMotion.Never }), (finished) => {
+          if (finished) scheduleOnRN(finish);
+        })
+      );
+    };
+    // Reduce Motion keeps the plain cross-fade: dust blowing off is exactly the
+    // movement the setting asks us not to make. And the snap can only cut up
+    // what the canvas draws: with the picture still a view, or the world an
+    // iris of views, a snapshot would leave them behind.
+    if (!snapAhead || (mirror.hasLogo && !heroInCanvas)) {
+      fade();
+      return;
+    }
+    const snapshot = recoverWithSync(
+      () => canvasRef.current?.makeImageSnapshot() ?? null,
+      () => null
+    );
+    if (!snapshot) {
+      fade();
+      return;
+    }
+    // The canvas's children become this frame, cut up; at progress 0 every
+    // grain is where it was cut from, so the swap is the frame already showing,
+    // and it holds there until the sweep starts (see below).
+    setSnapImage(snapshot);
+  });
+  // The sweep waits for two things, and holds the untouched frame until both:
+  //
+  //  - the dust is in the canvas (`onReady`). Mounting it takes a frame or
+  //    more on a slow device, and a clock already running would open the snap
+  //    partway in;
+  //  - Home is laid out underneath and waiting. Its entrance follows
+  //    `snapProgress` (the store's driver), and it says when it has rendered
+  //    with the reveal; a Home that never says (another layout, the lock gate)
+  //    gets `HOME_REVEAL_PATIENCE_MS`. Then a few frames for that to reach the
+  //    screen. From there one clock drives both: the first grain leaves on the
+  //    frame Home starts arriving, and Home is complete with the last.
+  const [dustReady, setDustReady] = useState(false);
+  const onDustReady = useCallback(() => setDustReady(true), []);
+  const homeRevealed = useLaunchHandoff((state) => state.ready);
+  const [homeWaitOver, setHomeWaitOver] = useState(false);
+  useEffect(() => {
+    if (!snapImage) return;
+    const timer = setTimeout(() => setHomeWaitOver(true), HOME_REVEAL_PATIENCE_MS);
+    return () => clearTimeout(timer);
+  }, [snapImage]);
+  const swept = useRef(false);
+  // Read when the moment comes; not reasons to schedule it again.
+  const sweep = useEffectEvent(() => {
+    if (swept.current) return;
+    swept.current = true;
+    dissolveLine();
+    snapProgress.set(
+      withTiming(
+        1,
+        // Linear on purpose: every grain eases its own departure, and an eased
+        // clock on top would bunch the sweep at one end.
+        { duration: beats.snap.ms, easing: Easing.linear, reduceMotion: ReduceMotion.Never },
+        (finished) => {
+          if (finished) scheduleOnRN(finish);
+        }
+      )
     );
   });
+  useEffect(() => {
+    if (!dustReady || !(homeRevealed || homeWaitOver)) return;
+    let frames = 0;
+    let request = 0;
+    const tick = () => {
+      frames += 1;
+      if (frames >= HOME_PRESENT_FRAMES) {
+        sweep();
+        return;
+      }
+      request = requestAnimationFrame(tick);
+    };
+    request = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(request);
+  }, [dustReady, homeRevealed, homeWaitOver]);
   useEffect(() => {
     followPhase();
   }, [phase]);
@@ -639,8 +825,12 @@ export function LaunchSceneIntro({
 
   const sheetStyle = useAnimatedStyle(() => ({
     opacity:
-      (1 - exit.value) *
-      (canLand || reduced
+      (1 - sheetFade.value) *
+      // Artwork that cannot land used to take the whole sheet with it as it
+      // travelled, so the mismatch never met Home. With the snap ahead the
+      // sheet stays whole instead and the picture comes apart at the exit: a
+      // sheet already gone would leave the snap nothing to break.
+      (canLand || reduced || snapAhead
         ? 1
         : interpolate(hero.value, [0, 0.55, 1], [1, 1, 0], Extrapolation.CLAMP)),
   }));
@@ -652,75 +842,162 @@ export function LaunchSceneIntro({
     ],
   }));
 
-  // The arrival zoom is a transform on the image layer now, not a matrix
-  // inside a sampler: one composited scale instead of per-pixel arithmetic.
-  const worldStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: WORLD_ARRIVAL_ZOOM + (1 - WORLD_ARRIVAL_ZOOM) * settle.value }],
-  }));
+  // The arrival zoom is a transform on the world's layer in the canvas, not a
+  // matrix inside a sampler: one scale for the whole image rather than
+  // per-pixel arithmetic.
+  // The same three motions for the canvas's copies: the world's arrival zoom
+  // about the sheet's centre, and the picture's flight about its own.
+  const [sheetBox, setSheetBox] = useState<{ width: number; height: number } | null>(null);
+  const onSheetLayout = useCallback((event: LayoutChangeEvent) => {
+    const { width: w, height: h } = event.nativeEvent.layout;
+    setSheetBox((previous) =>
+      previous?.width === w && previous.height === h ? previous : { width: w, height: h }
+    );
+  }, []);
+  const sheet = sheetBox ?? { width, height };
+  const worldTransform = useDerivedValue(() => [
+    { scale: WORLD_ARRIVAL_ZOOM + (1 - WORLD_ARRIVAL_ZOOM) * settle.value },
+  ]);
+  const heroTransform = useDerivedValue(() => [
+    { translateX: (landingCentre.x - launchCentre.x) * hero.value },
+    { translateY: (landingCentre.y - launchCentre.y) * hero.value },
+    { scale: 1 + (landingScale - 1) * hero.value },
+  ]);
+  // The view's copy goes once the canvas's is the one on screen.
+  const heroViewStyle = heroInCanvas ? styles.gone : null;
+  // The wallpaper where `expo-image` would have put it: `cover` (or `contain`
+  // for `contain` and `tile`) at the pack's focal point, over the sheet.
+  const wallpaperRect = wallpaperImage
+    ? (wallpaper?.fit === 'contain' || wallpaper?.fit === 'tile'
+        ? containedImageRect
+        : coveredImageRect)(
+        sheet,
+        { width: wallpaperImage.width(), height: wallpaperImage.height() },
+        wallpaper?.focalPoint
+      )
+    : null;
 
-  const showWorldImage = world.kind === 'painted' && Boolean(wallpaperUri);
-  // The cover may only leave once it has something to leave behind. Unmounting
+  // The cover may only leave once it has something to leave behind. Dropping
   // it while the painting has still not loaded would swap a covered screen for
   // an uncovered one in a single frame -- the hard cut this opening exists to
   // avoid -- so `ready` is part of the condition and not merely `frontGone`.
-  const showCanvas =
+  // Only the cover leaves: the canvas stays, because the world and the picture
+  // are in it.
+  const showCover =
     world.kind === 'palette' || (world.kind === 'painted' && !(frontGone && world.ready));
 
   return (
     <Animated.View
-      needsOffscreenAlphaCompositing={phase === 'exiting'}
-      style={[mirror.container.style, sheetStyle]}>
-      {/* The paper, which is the pack's own and is under everything. */}
-      <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: paper }]} />
+      needsOffscreenAlphaCompositing={phase === 'exiting' && snapImage === null}
+      onLayout={onSheetLayout}
+      // The sheet's own ground (the splash colour) goes with the paper when the
+      // snap has the frame, or the dust would leave it behind instead of Home.
+      style={[mirror.container.style, snapImage ? styles.bare : null, sheetStyle]}>
+      {/*
+        The paper, which is the pack's own and is under everything. Gone once
+        the snap has the frame: the canvas then draws the whole sheet, and its
+        grains leave Home behind them, not paper.
+      */}
+      <View
+        pointerEvents="none"
+        style={[
+          StyleSheet.absoluteFill,
+          { backgroundColor: paper },
+          snapImage ? styles.gone : null,
+        ]}
+      />
 
       {/*
-        The world itself, drawn the way Home draws it. It is under the cover
-        from the first frame, so it is loading and decoding while the rim is
-        still breathing, and the front does not reveal it until `onLoad` says
-        there is something to reveal.
+        The world, the cover with its hole, and the picture -- one canvas from
+        the first frame. `androidWarmup` pays the GL context cost while the
+        native splash is still up rather than on the first frame anybody sees;
+        the canvas has been drawing (invisibly, under that splash) since the
+        first commit, so the SkSL program is compiled and warm long before the
+        front starts to move. At the exit the same canvas draws its own last
+        frame, turned to dust, instead.
       */}
-      {showWorldImage && wallpaperUri ? (
-        <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, worldStyle]}>
-          <Image
-            accessible={false}
-            autoplay={false}
-            cachePolicy="memory"
-            contentFit={wallpaper?.fit === 'tile' ? 'contain' : (wallpaper?.fit ?? 'cover')}
-            contentPosition={
-              wallpaper?.focalPoint
-                ? {
-                    left: `${wallpaper.focalPoint.x * 100}%`,
-                    top: `${wallpaper.focalPoint.y * 100}%`,
-                  }
-                : 'center'
-            }
-            onError={onImageSettled}
-            onLoad={onImageSettled}
-            source={{ uri: wallpaperUri }}
-            style={[StyleSheet.absoluteFill, { opacity: worldAlpha }]}
-          />
-        </Animated.View>
-      ) : null}
-
-      {/*
-        The cover, with the hole in it. `androidWarmup` pays the GL context
-        cost while the native splash is still up rather than on the first frame
-        anybody sees; the canvas itself has been drawing (invisibly, under that
-        splash) since the first commit, so the SkSL program is compiled and
-        warm long before the front starts to move.
-      */}
-      {showCanvas && INK_BLOOM_EFFECT ? (
-        <Canvas androidWarmup style={StyleSheet.absoluteFill}>
-          <Fill>
-            <Shader source={INK_BLOOM_EFFECT} uniforms={uniforms}>
+      {INK_BLOOM_EFFECT ? (
+        <Canvas androidWarmup ref={canvasRef} style={StyleSheet.absoluteFill}>
+          {snapImage ? (
+            <SnapDust
+              image={snapImage}
+              onReady={onDustReady}
+              progress={snapProgress}
+              width={sheet.width}
+            />
+          ) : canvasWorld ? (
+            <>
+              <Fill color={paper} />
               {/*
-                The effect declares a cover image and a runtime effect must be
-                given every child it declares, but this caller's cover is flat
-                paper -- so this is bound and never evaluated.
+                The world, drawn the way Home draws it. It is under the cover
+                from the moment it decodes, and the front does not reveal it
+                until it has.
               */}
-              <ColorShader color={paper} />
-            </Shader>
-          </Fill>
+              {world.kind === 'painted' && wallpaperImage && wallpaperRect ? (
+                <Group
+                  origin={{ x: sheet.width / 2, y: sheet.height / 2 }}
+                  transform={worldTransform}>
+                  <SkiaImage
+                    fit="fill"
+                    height={wallpaperRect.height}
+                    image={wallpaperImage}
+                    opacity={worldAlpha}
+                    width={wallpaperRect.width}
+                    x={wallpaperRect.x}
+                    y={wallpaperRect.y}
+                  />
+                </Group>
+              ) : null}
+              {showCover ? (
+                <Fill>
+                  <Shader source={INK_BLOOM_EFFECT} uniforms={uniforms}>
+                    {/*
+                      The effect declares a cover image and a runtime effect
+                      must be given every child it declares, but this caller's
+                      cover is flat paper -- so this is bound and never
+                      evaluated.
+                    */}
+                    <ColorShader color={paper} />
+                  </Shader>
+                </Fill>
+              ) : null}
+              {/*
+                The picture, at exactly the rectangle the splash mirror's view
+                draws it in, flying with the same values. Drawn as soon as it
+                has decoded, under the view, so that hiding the view later
+                changes nothing anybody can see.
+              */}
+              {heroImage ? (
+                <>
+                  {heroInCanvas && canLand
+                    ? GHOST_LAG.map((lag, index) => (
+                        <CanvasHeroGhost
+                          key={lag}
+                          frame={heroFrame}
+                          hero={hero}
+                          image={heroImage}
+                          lag={lag}
+                          landingCentre={landingCentre}
+                          landingScale={landingScale}
+                          launchCentre={launchCentre}
+                          peak={GHOST_OPACITY[index] ?? 0}
+                        />
+                      ))
+                    : null}
+                  <Group origin={launchCentre} transform={heroTransform}>
+                    <SkiaImage
+                      fit="contain"
+                      height={heroFrame.height}
+                      image={heroImage}
+                      width={heroFrame.width}
+                      x={heroFrame.left}
+                      y={heroFrame.top}
+                    />
+                  </Group>
+                </>
+              ) : null}
+            </>
+          ) : null}
         </Canvas>
       ) : null}
 
@@ -782,6 +1059,7 @@ export function LaunchSceneIntro({
       {mirror.hasLogo ? (
         <>
           {canLand &&
+            !heroInCanvas &&
             GHOST_LAG.map((lag, index) => (
               <HeroGhost
                 key={lag}
@@ -795,7 +1073,9 @@ export function LaunchSceneIntro({
                 peak={GHOST_OPACITY[index] ?? 0}
               />
             ))}
-          <Animated.View pointerEvents="none" style={[styles.hero, heroFrame, heroStyle]}>
+          <Animated.View
+            pointerEvents="none"
+            style={[styles.hero, heroFrame, heroStyle, heroViewStyle]}>
             <Animated.Image {...mirror.logo} style={mirror.logo.style} />
           </Animated.View>
         </>
@@ -873,6 +1153,54 @@ function HeroGhost({
     <Animated.View pointerEvents="none" style={[styles.hero, frame, style]}>
       <Animated.Image {...logo} style={logo.style} />
     </Animated.View>
+  );
+}
+
+/**
+ * {@link HeroGhost}, drawn by the canvas: the same journey, started later, at
+ * the same falling opacity, once the picture itself has moved into the canvas.
+ */
+function CanvasHeroGhost({
+  frame,
+  hero,
+  image,
+  lag,
+  landingCentre,
+  landingScale,
+  launchCentre,
+  peak,
+}: {
+  frame: { left: number; top: number; width: number; height: number };
+  hero: SharedValue<number>;
+  image: SkImage;
+  lag: number;
+  landingCentre: { x: number; y: number };
+  landingScale: number;
+  launchCentre: { x: number; y: number };
+  peak: number;
+}) {
+  const opacity = useDerivedValue(() =>
+    interpolate(hero.value, [0, 0.14, 0.62, 1], [0, peak, peak, 0], Extrapolation.CLAMP)
+  );
+  const transform = useDerivedValue(() => {
+    const behind = Math.max(0, hero.value - lag);
+    return [
+      { translateX: (landingCentre.x - launchCentre.x) * behind },
+      { translateY: (landingCentre.y - launchCentre.y) * behind },
+      { scale: 1 + (landingScale - 1) * behind },
+    ];
+  });
+  return (
+    <Group opacity={opacity} origin={launchCentre} transform={transform}>
+      <SkiaImage
+        fit="contain"
+        height={frame.height}
+        image={image}
+        width={frame.width}
+        x={frame.left}
+        y={frame.top}
+      />
+    </Group>
   );
 }
 
@@ -1107,6 +1435,12 @@ function IrisReveal({
 }
 
 const styles = StyleSheet.create({
+  gone: {
+    opacity: 0,
+  },
+  bare: {
+    backgroundColor: 'transparent',
+  },
   hero: {
     position: 'absolute',
     alignItems: 'center',

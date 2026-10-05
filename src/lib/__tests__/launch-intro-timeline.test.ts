@@ -27,6 +27,23 @@ describe('launchIntroTimeline', () => {
     expect(beats.totalMs).toBe(1300);
   });
 
+  test('the snap starts with the exit and only drifts past the budget over a live app', () => {
+    // The overlay stops taking touches the moment it exits, so the snap's
+    // extra 400 ms is drift over an app that already answers, not waiting.
+    const beats = launchIntroTimeline(DURATIONS);
+    expect(beats.snap.at).toBe(beats.exit.at);
+    expect(beats.snap.at + beats.bloomStallCapMs).toBeLessThan(LAUNCH_INTRO_BUDGET_MS);
+    expect(beats.snap.at + beats.snap.ms - beats.totalMs).toBe(400);
+  });
+
+  test('the snap runs long enough to be seen, and its fallback is the old cross-fade', () => {
+    const beats = launchIntroTimeline(DURATIONS);
+    expect(beats.snap.ms).toBe(700);
+    expect(beats.snap.ms).toBeGreaterThanOrEqual(600);
+    expect(beats.snap.ms).toBeLessThanOrEqual(800);
+    expect(beats.exit.ms).toBe(DURATIONS.medium);
+  });
+
   test('even a front that stalls for the whole cap cannot pass the budget', () => {
     // The front waits, breathing around the hero, for the pack's wallpaper to
     // decode. That wait is the one thing here that depends on a disk read
@@ -82,6 +99,7 @@ describe('launchIntroTimeline', () => {
     const beats = launchIntroTimeline(DURATIONS);
     expect(beats.exit.at).toBe(beats.holdUntil);
     expect(beats.exit.at + beats.exit.ms).toBe(beats.totalMs);
+    expect(beats.snap.at + beats.snap.ms).toBeGreaterThan(beats.totalMs);
   });
 
   test('the skip arms partway in, so an early tap is a reach rather than a refusal', () => {
@@ -123,6 +141,7 @@ describe('reducedLaunchIntroTimeline', () => {
   test('the cross-fade is kept, because opacity is not travel', () => {
     const beats = reducedLaunchIntroTimeline(DURATIONS);
     expect(beats.exit.ms).toBe(DURATIONS.short);
+    expect(beats.snap).toEqual(beats.exit);
     expect(beats.totalMs).toBe(400);
     expect(beats.totalMs).toBeLessThan(launchIntroTimeline(DURATIONS).totalMs);
   });

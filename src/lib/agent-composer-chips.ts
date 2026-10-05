@@ -29,6 +29,11 @@ export type ComposerChipId =
 export interface ComposerChipState {
   /** The all-sessions button, when the screen offers the sheet. */
   canOpenSessions: boolean;
+  /**
+   * The mode chip, when the session's agent has modes to pick from: its
+   * features say so and its catalog lists some. Absent means yes.
+   */
+  canPickMode?: boolean;
   /** The model picker, when the screen offers the sheet. */
   canOpenModel: boolean;
   /** How many todos the run has published. */
@@ -54,8 +59,9 @@ export function composerChipIds(state: ComposerChipState): ComposerChipId[] {
   const ids: ComposerChipId[] = [];
   if (state.canOpenSessions) ids.push('sessions');
   // The two choices that define a new turn come before its live state.
-  // The agent chip is unconditional: it is what the session is running.
-  ids.push('mode');
+  // The mode chip is what the session is running -- for an agent that has
+  // modes. One without them has nothing to show there.
+  if (state.canPickMode !== false) ids.push('mode');
   if (state.canOpenModel) ids.push('model');
   if (state.inboxCount > 0) ids.push('inbox');
   if (state.backgroundCount > 0 && state.canOpenBackground) ids.push('background');

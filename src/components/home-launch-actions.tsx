@@ -2,9 +2,17 @@ import { HOME_TOOLBAR_PAIR_WIDTH, HOME_TOOLBAR_ICON_INSET } from '@/constants/ho
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens } from '@osuki-dev/ui';
-import { ArrowUpRight, ChevronDown, Link, Play, SquareTerminal } from 'lucide-react-native';
-import { useRouter } from 'expo-router';
-import { useEffect, useState, type ReactNode } from 'react';
+import {
+  ArrowUpRight,
+  ChevronDown,
+  Ellipsis,
+  Link,
+  MessagesSquare,
+  Play,
+  SquareTerminal,
+} from 'lucide-react-native';
+import { useIsFocused, useRouter } from 'expo-router';
+import { useEffect, useEffectEvent, useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, {
   useAnimatedStyle,
@@ -13,18 +21,37 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
-import { OpenCodeIcon } from '@/components/opencode-icon';
+import { AgentMark } from '@/components/agent-mark';
 import { PressableScale } from '@/components/pressable-scale';
 import { Text } from '@/components/text';
 import { ThemeIcon } from '@/components/theme-icon';
+import { useAppActive } from '@/hooks/use-app-active';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
+import { isDemoRecord } from '@/lib/demo-gateway';
+import { refreshAgentServerDiscovery } from '@/lib/home-agent-readiness';
+import {
+  buildLaunchModel,
+  groupLaunchCells,
+  LAUNCH_GRID_GAP,
+  launchGridCellStyle,
+  launchRowLayout,
+  type LaunchEntry,
+} from '@/lib/home-launch-model';
+import { useAgents } from '@/stores/agents';
+import { useHomeAgentPicker } from '@/stores/home-agent-picker';
 import { PRESS, timing } from '@/lib/motion';
 import type { GatewayRecord } from '@/lib/gateway-storage';
-import { reachabilityDescription } from '@/i18n/labels';
+import { agentLaunchCaption, reachabilityDescription } from '@/i18n/labels';
 import type { ServerReachability } from '@/lib/server-reachability';
 import { useHomeTargetPicker } from '@/stores/home-target-picker';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { settleAfter } from '@/lib/compiler-safe-control-flow';
+
+/** Agent chips and utility rows in the wide Pad cover's launch dock share one height. */
+const DOCK_ROW_HEIGHT = 56;
+
+/** Discovery is refreshed on the same cadence Continue uses. */
+const HOME_AGENTS_REFRESH_MS = 30_000;
 
 /** Target choice is local to Home; a selection alone never switches a live connection. */
 export function useHomeLaunchController({
@@ -128,11 +155,16 @@ export function HomeLaunchTarget({
   controller,
   loading = false,
   bare = false,
+  wide = false,
+  chip = false,
   onPair,
 }: {
   controller: HomeLaunchController;
   loading?: boolean;
   bare?: boolean;
+  wide?: boolean;
+  /** A short chip, for the wide Pad cover's launch dock. */
+  chip?: boolean;
   onPair: () => Promise<unknown>;
 }) {
   const profile = useAppearanceProfile();
@@ -159,6 +191,11 @@ export function HomeLaunchTarget({
         styles.target,
         !bare &&
           servers.length > 0 && { width: HOME_TOOLBAR_PAIR_WIDTH, paddingHorizontal: 8, gap: 4 },
+        wide && { width: undefined, minWidth: 160, maxWidth: 300, paddingHorizontal: 16, gap: 12 },
+        chip && [
+          styles.targetChip,
+          { borderColor: theme.colors.border, backgroundColor: background(theme.colors.surface) },
+        ],
         bare && { minWidth: 0 },
         bare && { paddingHorizontal: HOME_TOOLBAR_ICON_INSET },
         {
@@ -198,16 +235,34 @@ export function HomeLaunchTarget({
 
 export function HomeLaunchActions({
   controller,
-  onNewOpenCode,
-  onOpenOpenCode,
+  onNewAgent,
+  onOpenAgent,
   onNewTerminal,
   onOpenTerminal,
   onSsh,
   onDemo,
+  grid = false,
+  newOnly = false,
+  dock = false,
+  dockAccessory,
 }: {
   controller: HomeLaunchController;
-  onNewOpenCode: (serverId: string) => Promise<unknown>;
-  onOpenOpenCode: (serverId: string) => Promise<unknown>;
+  /**
+   * The Pad's embedded Home: every agent in a row of its own and the
+   * utilities in compact tiles under it, with no sideways scroll.
+   */
+  grid?: boolean;
+  /** Existing destinations live in the Pad's persistent navigation. */
+  newOnly?: boolean;
+  /**
+   * The wide Pad cover's launch dock: up to three agents (plus More agents) as
+   * one row of equal chips, then the utilities as full-width rows.
+   */
+  dock?: boolean;
+  /** Drawn beside the dock's terminal pill (the Gateway chip, when there is a choice). */
+  dockAccessory?: ReactNode;
+  onNewAgent: (serverId: string, directory?: string, agentId?: string) => Promise<unknown>;
+  onOpenAgent: (serverId: string) => Promise<unknown>;
   onNewTerminal: (serverId: string) => Promise<unknown>;
   onOpenTerminal: (serverId: string) => Promise<unknown>;
   onSsh: () => Promise<unknown>;
@@ -216,9 +271,210 @@ export function HomeLaunchActions({
   const { t } = useLingui();
   const { _ } = useLinguiRuntime();
   const theme = useThemeTokens();
-  const { chosenOffline, launchOnChosen, opening, run } = controller;
+  const router = useRouter();
+  const { chosen, chosenOffline, launchOnChosen, opening, run } = controller;
   const [availableWidth, setAvailableWidth] = useState(0);
-  const horizontal = availableWidth < 560;
+
+  // The row is a projection of what the chosen gateway said about itself; a
+  // gateway never asked, or too old to be asked, projects to the fixed five.
+  const chosenId = chosen?.serverId;
+  const discovery = useAgents((state) => (chosenId ? state.index.servers[chosenId] : undefined));
+  const lastUsedAgentId = useAgents((state) =>
+    chosenId ? state.index.lastUsed[chosenId] : undefined
+  );
+  const model = buildLaunchModel({
+    discovery,
+    lastUsedAgentId,
+    ...(grid && !dock ? { maxAgentTiles: Number.POSITIVE_INFINITY } : {}),
+  });
+  const entries = newOnly
+    ? model.entries.filter((entry) => isAgentEntry(entry) || entry.kind === 'new-terminal')
+    : model.entries;
+  const cells = groupLaunchCells(entries);
+  const agentEntries = entries.filter(isAgentEntry);
+  const utilityEntries = entries.filter((entry) => !isAgentEntry(entry));
+  const layout = launchRowLayout({
+    width: availableWidth,
+    grid,
+    agentCount: agentEntries.length,
+    utilityCount: utilityEntries.length,
+  });
+  const horizontal = layout.mode === 'scroll';
+
+  // Fresh on focus and on Continue's own cadence, for the chosen gateway only,
+  // and never in the way of a render: the row draws from the mirror.
+  const focused = useIsFocused();
+  const appActive = useAppActive();
+  useEffect(() => {
+    if (!chosen || chosenOffline || !focused || !appActive || isDemoRecord(chosen)) return;
+    void refreshAgentServerDiscovery(chosen);
+    const timer = setInterval(() => {
+      void refreshAgentServerDiscovery(chosen);
+    }, HOME_AGENTS_REFRESH_MS);
+    return () => clearInterval(timer);
+  }, [appActive, chosen, chosenOffline, focused]);
+
+  // "More agents" answers through a store, as the gateway picker does: the
+  // sheet only says which agent, and the command that starts it runs here.
+  const [agentsRequestId, setAgentsRequestId] = useState<number | null>(null);
+  const beginAgentsPicker = useHomeAgentPicker((state) => state.begin);
+  const agentsCompletedRequestId = useHomeAgentPicker((state) => state.completedRequestId);
+  const agentsCompletedAgentId = useHomeAgentPicker((state) => state.completedAgentId);
+  const startChosenAgent = useEffectEvent((agentId: string) => {
+    launchOnChosen((serverId) => onNewAgent(serverId, undefined, agentId));
+  });
+  useEffect(() => {
+    if (agentsRequestId === null || agentsCompletedRequestId !== agentsRequestId) return;
+    setAgentsRequestId(null);
+    if (agentsCompletedAgentId) startChosenAgent(agentsCompletedAgentId);
+  }, [agentsCompletedAgentId, agentsCompletedRequestId, agentsRequestId]);
+  function openAgentsPicker() {
+    if (!chosenId) return;
+    const requestId = beginAgentsPicker(chosenId);
+    setAgentsRequestId(requestId);
+    router.push({ pathname: '/home-agents', params: { requestId: String(requestId) } });
+  }
+
+  /** `cell` is the Pad grid's fixed width and whether the tile is drawn compact there. */
+  function renderEntry(entry: LaunchEntry, cell?: { width: number; compact: boolean }) {
+    const common = {
+      testID: entry.testID,
+      marker: entry.marker,
+      horizontal,
+      ...(cell ? { width: cell.width } : {}),
+      ...(dock ? { rowHeight: DOCK_ROW_HEIGHT } : {}),
+    };
+    const utilityCompact = dock || (cell?.compact ?? false);
+    switch (entry.kind) {
+      case 'agent': {
+        if (dock) {
+          // Not ready: muted, with its state after the name instead of a second line.
+          const ready = entry.caption === 'new-session';
+          const filled = entry.primary && ready;
+          return (
+            <LaunchTile
+              key={entry.key}
+              {...common}
+              chip
+              aliasTestID={entry.aliasTestID}
+              primary={filled}
+              muted={!ready}
+              title={entry.name}
+              caption={_(agentLaunchCaption[entry.caption])}
+              inlineCaption={ready ? undefined : _(agentLaunchCaption[entry.caption])}
+              icon={
+                <AgentMark
+                  kind={entry.agentKind}
+                  size={18}
+                  color={
+                    filled
+                      ? theme.colors.onPrimary
+                      : ready
+                        ? theme.colors.primary
+                        : theme.colors.textMuted
+                  }
+                />
+              }
+              disabled={opening || chosenOffline}
+              onPress={() =>
+                launchOnChosen((serverId) => onNewAgent(serverId, undefined, entry.agentId))
+              }
+            />
+          );
+        }
+        const ink = entry.primary ? theme.colors.onPrimary : theme.colors.primary;
+        return (
+          <LaunchTile
+            key={entry.key}
+            {...common}
+            aliasTestID={entry.aliasTestID}
+            primary={entry.primary}
+            title={entry.name}
+            caption={_(agentLaunchCaption[entry.caption])}
+            icon={<AgentMark kind={entry.agentKind} size={entry.primary ? 24 : 22} color={ink} />}
+            disabled={opening || chosenOffline}
+            onPress={() =>
+              launchOnChosen((serverId) => onNewAgent(serverId, undefined, entry.agentId))
+            }
+          />
+        );
+      }
+      case 'more-agents': {
+        const hidden = entry.hidden;
+        return (
+          <LaunchTile
+            key={entry.key}
+            {...common}
+            chip={dock}
+            title={t`More agents`}
+            caption={t`${hidden} more`}
+            icon={<Ellipsis size={dock ? 18 : 22} color={theme.colors.primary} />}
+            disabled={opening || chosenOffline}
+            onPress={openAgentsPicker}
+          />
+        );
+      }
+      case 'sessions':
+        return (
+          <LaunchTile
+            key={entry.key}
+            {...common}
+            aliasTestID={entry.aliasTestID}
+            compact
+            title={t`Sessions`}
+            icon={<MessagesSquare size={16} color={theme.colors.primary} />}
+            disabled={opening || chosenOffline}
+            onPress={() => launchOnChosen(onOpenAgent)}
+          />
+        );
+      case 'terminal':
+        return (
+          <LaunchTile
+            key={entry.key}
+            {...common}
+            compact
+            title={t`Terminal`}
+            icon={<SquareTerminal size={16} color={theme.colors.primary} />}
+            disabled={opening || chosenOffline}
+            onPress={() => launchOnChosen(onOpenTerminal)}
+          />
+        );
+      case 'new-terminal':
+        return (
+          <LaunchTile
+            key={entry.key}
+            {...common}
+            pill={dock}
+            compact={utilityCompact}
+            title={t`New terminal`}
+            caption={entry.backend}
+            icon={
+              <SquareTerminal
+                size={dock ? 18 : utilityCompact ? 16 : 22}
+                color={theme.colors.primary}
+              />
+            }
+            disabled={opening || chosenOffline}
+            onPress={() => launchOnChosen(onNewTerminal)}
+          />
+        );
+      case 'ssh':
+        return (
+          <LaunchTile
+            key={entry.key}
+            {...common}
+            compact={utilityCompact}
+            title={t`SSH`}
+            caption={t`SSH hosts`}
+            icon={<Link size={utilityCompact ? 16 : 22} color={theme.colors.primary} />}
+            disabled={opening}
+            onPress={() => {
+              void run(onSsh);
+            }}
+          />
+        );
+    }
+  }
 
   return (
     <View
@@ -249,7 +505,36 @@ export function HomeLaunchActions({
           </Text>
         </PressableScale>
       ) : null}
-      <View>
+      {dock ? (
+        <View testID="home-launch-actions-dock" style={styles.dock}>
+          {agentEntries.length ? (
+            <View style={styles.dockChips}>{agentEntries.map((entry) => renderEntry(entry))}</View>
+          ) : null}
+          <View style={styles.dockPills}>
+            {utilityEntries.map((entry) => renderEntry(entry))}
+            {dockAccessory}
+          </View>
+        </View>
+      ) : layout.mode === 'grid' ? (
+        <View testID="home-launch-actions-grid" style={styles.grid}>
+          {layout.agentWidth > 0 ? (
+            <>
+              {agentEntries.length ? (
+                <View style={styles.gridRow}>
+                  {agentEntries.map((entry) =>
+                    renderEntry(entry, { width: layout.agentWidth, compact: false })
+                  )}
+                </View>
+              ) : null}
+              <View style={styles.gridRow}>
+                {utilityEntries.map((entry) =>
+                  renderEntry(entry, { width: layout.utilityWidth, compact: true })
+                )}
+              </View>
+            </>
+          ) : null}
+        </View>
+      ) : (
         <View>
           <Animated.ScrollView
             horizontal={horizontal}
@@ -259,64 +544,27 @@ export function HomeLaunchActions({
             showsHorizontalScrollIndicator={false}
             testID="home-launch-actions-scroll"
             contentContainerStyle={[styles.actions, horizontal && styles.horizontalActions]}>
-            <LaunchTile
-              horizontal={horizontal}
-              testID="home-new-opencode"
-              marker="01"
-              primary
-              title="OpenCode"
-              caption={t`New session`}
-              icon={<OpenCodeIcon size={24} color={theme.colors.onPrimary} />}
-              disabled={opening || chosenOffline}
-              onPress={() => launchOnChosen(onNewOpenCode)}
-            />
-            <View style={[styles.stackedActions, horizontal && styles.horizontalStack]}>
-              <LaunchTile
-                compact
-                testID="home-open-opencode"
-                marker="02"
-                title={t`Sessions`}
-                icon={<OpenCodeIcon size={16} color={theme.colors.primary} />}
-                disabled={opening || chosenOffline}
-                onPress={() => launchOnChosen(onOpenOpenCode)}
-              />
-              <LaunchTile
-                compact
-                testID="home-open-terminal"
-                marker="03"
-                title={t`Terminal`}
-                icon={<SquareTerminal size={16} color={theme.colors.primary} />}
-                disabled={opening || chosenOffline}
-                onPress={() => launchOnChosen(onOpenTerminal)}
-              />
-            </View>
-            <LaunchTile
-              horizontal={horizontal}
-              testID="home-new-terminal"
-              marker="04"
-              title={t`New terminal`}
-              icon={<SquareTerminal size={22} color={theme.colors.primary} />}
-              disabled={opening || chosenOffline}
-              onPress={() => launchOnChosen(onNewTerminal)}
-            />
-            <LaunchTile
-              horizontal={horizontal}
-              testID="home-open-ssh"
-              marker="05"
-              title={t`SSH`}
-              caption={t`SSH hosts`}
-              icon={<Link size={22} color={theme.colors.primary} />}
-              disabled={opening}
-              onPress={() => {
-                void run(onSsh);
-              }}
-            />
+            {cells.map((cell) =>
+              cell.entries[0]?.layout === 'compact' ? (
+                <View
+                  key={cell.key}
+                  style={[styles.stackedActions, horizontal && styles.horizontalStack]}>
+                  {cell.entries.map((entry) => renderEntry(entry))}
+                </View>
+              ) : (
+                renderEntry(cell.entries[0]!)
+              )
+            )}
           </Animated.ScrollView>
         </View>
-      </View>
+      )}
       {opening ? <Text variant="caption" color={theme.colors.textMuted}>{t`Opening…`}</Text> : null}
     </View>
   );
+}
+
+function isAgentEntry(entry: LaunchEntry): boolean {
+  return entry.kind === 'agent' || entry.kind === 'more-agents';
 }
 
 function LaunchTile({
@@ -327,9 +575,16 @@ function LaunchTile({
   onPress,
   primary = false,
   compact = false,
+  chip = false,
+  pill = false,
+  muted = false,
+  inlineCaption,
+  rowHeight,
   horizontal = false,
+  width,
   disabled,
   testID,
+  aliasTestID,
 }: {
   title: string;
   marker: string;
@@ -338,9 +593,26 @@ function LaunchTile({
   onPress: () => void;
   primary?: boolean;
   compact?: boolean;
+  /** One line, icon + name, sharing a row equally: the Pad cover dock's agent chip. */
+  chip?: boolean;
+  /**
+   * An auto-width outlined pill, a step below the chips: the Pad dock's terminal
+   * action. The caption (a backend, only when there is a choice) is a muted suffix.
+   */
+  pill?: boolean;
+  /** A chip for an agent that is not ready to start. */
+  muted?: boolean;
+  /** Shown after a chip's name ("T3 Code · Not installed"); `caption` stays the a11y text. */
+  inlineCaption?: string;
+  /** A fixed height for chips and compact rows. */
+  rowHeight?: number;
   horizontal?: boolean;
+  /** A fixed cell width, from the Pad grid; the phone row sizes tiles by flex. */
+  width?: number;
   disabled: boolean;
   testID: string;
+  /** The id this tile answered to before it was projected; kept for the e2e manifest. */
+  aliasTestID?: string;
 }) {
   const profile = useAppearanceProfile();
   const theme = useThemeTokens();
@@ -359,10 +631,78 @@ function LaunchTile({
       withTiming(pressed && !reduceMotion ? 2 : 0, timing(pressed ? PRESS.in : PRESS.out))
     );
   };
+  if (pill) {
+    return (
+      <PressableScale
+        testID={testID}
+        nativeID={aliasTestID}
+        accessibilityRole="button"
+        accessibilityLabel={caption ? `${title}, ${caption}` : title}
+        accessibilityState={{ disabled }}
+        disabled={disabled}
+        onPress={onPress}
+        style={[
+          styles.pill,
+          {
+            borderRadius: profile.chrome.control,
+            borderColor: theme.colors.border,
+            backgroundColor: background(theme.colors.surface),
+            opacity: disabled ? 0.6 : 1,
+          },
+        ]}>
+        {icon}
+        <Text variant="bodySmall" weight="semibold" color={theme.colors.text}>
+          {title}
+        </Text>
+        {caption ? (
+          <Text variant="bodySmall" color={theme.colors.textMuted}>
+            {`· ${caption}`}
+          </Text>
+        ) : null}
+      </PressableScale>
+    );
+  }
+  if (chip) {
+    const chipInk = primary
+      ? theme.colors.onPrimary
+      : muted
+        ? theme.colors.textMuted
+        : theme.colors.text;
+    return (
+      <PressableScale
+        testID={testID}
+        nativeID={aliasTestID}
+        accessibilityRole="button"
+        accessibilityLabel={caption ? `${title}, ${caption}` : title}
+        accessibilityState={{ disabled }}
+        disabled={disabled}
+        onPress={onPress}
+        style={[
+          styles.chip,
+          { borderRadius: profile.chrome.control },
+          rowHeight !== undefined && { height: rowHeight },
+          {
+            backgroundColor: background(primary ? theme.colors.primary : theme.colors.surface),
+            opacity: disabled ? 0.6 : 1,
+          },
+        ]}>
+        {icon}
+        <Text
+          variant="bodySmall"
+          weight="semibold"
+          color={chipInk}
+          numberOfLines={1}
+          style={styles.chipTitle}>
+          {inlineCaption ? `${title} · ${inlineCaption}` : title}
+        </Text>
+      </PressableScale>
+    );
+  }
   if (compact) {
     return (
       <PressableScale
         testID={testID}
+        nativeID={aliasTestID}
         accessibilityRole="button"
         accessibilityLabel={caption ? `${title}, ${caption}` : title}
         accessibilityState={{ disabled }}
@@ -373,6 +713,8 @@ function LaunchTile({
         style={[
           styles.compactTile,
           { borderRadius: profile.chrome.control },
+          rowHeight !== undefined && { minHeight: rowHeight },
+          width !== undefined && launchGridCellStyle(width),
           {
             backgroundColor: background(theme.colors.surface),
             opacity: disabled ? 0.6 : 1,
@@ -408,6 +750,7 @@ function LaunchTile({
   return (
     <PressableScale
       testID={testID}
+      nativeID={aliasTestID}
       accessibilityRole="button"
       accessibilityLabel={caption ? `${title}, ${caption}` : title}
       accessibilityState={{ disabled }}
@@ -428,6 +771,7 @@ function LaunchTile({
           minHeight: 92,
           padding: 6,
         },
+        width !== undefined && launchGridCellStyle(width),
         {
           backgroundColor: background(primary ? theme.colors.primary : theme.colors.surface),
           opacity: disabled ? 0.6 : 1,
@@ -487,6 +831,35 @@ const styles = StyleSheet.create({
     maxWidth: '100%',
   },
   targetName: { minWidth: 0, flexShrink: 1 },
+  targetChip: {
+    minWidth: 0,
+    height: 44,
+    minHeight: 44,
+    paddingVertical: 0,
+    paddingHorizontal: 14,
+    borderWidth: StyleSheet.hairlineWidth,
+  },
+  dock: { gap: 12, minWidth: 0 },
+  dockChips: { flexDirection: 'row', gap: LAUNCH_GRID_GAP, minWidth: 0 },
+  chip: {
+    flex: 1,
+    minWidth: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 12,
+  },
+  chipTitle: { minWidth: 0, flexShrink: 1 },
+  dockPills: { flexDirection: 'row', alignItems: 'center', gap: LAUNCH_GRID_GAP, minWidth: 0 },
+  pill: {
+    height: 44,
+    flexShrink: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 14,
+    borderWidth: StyleSheet.hairlineWidth,
+  },
   demoAction: {
     minWidth: 44,
     minHeight: 44,
@@ -500,6 +873,8 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   demoLabel: { minWidth: 0, flexShrink: 1 },
+  grid: { gap: LAUNCH_GRID_GAP, minWidth: 0 },
+  gridRow: { flexDirection: 'row', flexWrap: 'wrap', gap: LAUNCH_GRID_GAP, minWidth: 0 },
   actions: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'stretch', gap: 6 },
   horizontalActions: { flexWrap: 'nowrap', gap: 4, paddingRight: 2 },
   horizontalStack: { flexGrow: 0, flexBasis: 'auto', width: 152, minHeight: 92, gap: 4 },

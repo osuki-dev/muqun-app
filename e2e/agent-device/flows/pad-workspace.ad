@@ -63,3 +63,53 @@ is visible "${TARGET}"
 
 # section s20
 is hidden "${TARGET}"
+
+# section home-navigation
+# Home covers the whole window; the rail belongs to the workspace.
+press "id=\"pad-server-rail-workbench\""
+wait "id=\"home-overview-overlay\"" 10000
+wait stable 400 5000
+is visible "id=\"home-pad-toolbar-actions\""
+is hidden "id=\"server-agent-pane-1\""
+is visible "id=\"home-pad-launch-pane\""
+is visible "id=\"home-pad-lower-band\""
+is visible "text=\"Pair your first server\""
+wait "role=button label=\"Settings\"" 10000
+press "role=button label=\"Settings\""
+wait text "SERVERS" 10000
+is visible "role=button label=\"Go back\""
+back --system
+wait "id=\"home-pad-launch-pane\"" 10000
+
+# section home-navigation-work-column
+# Only the work column (right of the cover) scrolls on wide Pad Home; pan inside it.
+# Two passes: the column holds New session, six Continue rows, then Connections.
+gesture pan "${X}" "${Y}" "${DX}" "${DY}" 500
+gesture pan "${X}" "${Y}" "${DX}" "${DY}" 500
+wait stable 400 5000
+
+# section home-navigation-scroll
+scroll down --pixels 320
+
+# section home-navigation-connect
+press "id=\"home-connection-gateway-muqun-demo\""
+wait absent "id=\"home-overview-overlay\"" 10000
+wait "id=\"pad-server-rail-container\"" 10000
+is visible "label=\"Switch to nvim\""
+
+# section pad-agent-in-place
+# A Continue agent row swaps the detail; the rail stays.
+wait "text=\"Root session\"" 10000
+press "text=\"Root session\""
+wait "id=\"pad-agent-detail\"" 10000
+is visible "id=\"pad-server-rail-container\""
+is hidden "id=\"home-overview-overlay\""
+# The rail's row for this gateway brings its pane back; the rail stays.
+press "id=\"home-connection-gateway-muqun-demo\""
+wait absent "id=\"pad-agent-detail\"" 10000
+wait "label=\"Switch to nvim\"" 10000
+is visible "label=\"Switch to nvim\""
+is visible "id=\"pad-server-rail-container\""
+press "id=\"pad-server-rail-workbench\""
+wait "id=\"home-overview-overlay\"" 10000
+is visible "id=\"home-pad-toolbar-actions\""

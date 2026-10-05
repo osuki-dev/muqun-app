@@ -266,7 +266,7 @@ export default function SettingsScreen() {
                       trailing={ExternalLink}
                       accessibilityRole="link"
                       label={t`How to use Muqun`}
-                      detail={t`Guides for pairing, the terminal, OpenCode and themes`}
+                      detail={t`Guides for pairing, the terminal, agents and themes`}
                       testID="settings-guide-row"
                       onPress={() => void openGuide()}
                     />

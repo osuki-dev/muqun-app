@@ -45,6 +45,30 @@ export class GatewayTransportRefusalError extends Error {
 }
 
 /**
+ * Native HTTP clients can resend a GET after losing its response. Its sealed
+ * nonce has already been consumed, so issue one fresh read. Never repeat a
+ * command, approval or prompt: their first delivery may have succeeded.
+ */
+export async function retryReplayedRead<T>(
+  method: string,
+  freshRequest: () => Promise<T>
+): Promise<T> {
+  try {
+    return await freshRequest();
+  } catch (failure) {
+    if (
+      (method !== 'GET' && method !== 'HEAD') ||
+      !(failure instanceof GatewayTransportRefusalError) ||
+      failure.status !== 409 ||
+      classifyTransportRefusal(failure.status, failure.body).code !== 'replayed_request'
+    ) {
+      throw failure;
+    }
+    return freshRequest();
+  }
+}
+
+/**
  * The situations a pre-sealing refusal can describe, named for what the reader
  * is in rather than for the code that reported it. Several codes share a reason
  * because they share a remedy; `unknown_host` and `invalid_token` are both 403

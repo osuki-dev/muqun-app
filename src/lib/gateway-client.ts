@@ -53,7 +53,7 @@ import {
   normalizeGatewayEntity,
   type GatewayEntity,
 } from './gateway-entities';
-import { GatewayTransportRefusalError } from './gateway-refusal';
+import { GatewayTransportRefusalError, retryReplayedRead } from './gateway-refusal';
 import {
   decodeSealedBody,
   ENVELOPE_ACCEPT_ENCODINGS,
@@ -93,6 +93,15 @@ import {
   type PaneApprovalState,
 } from './pane-approval';
 import { agentEventsFromResponse, type AgentEvent } from './away-digest';
+import {
+  parseAgentVcsDiscard,
+  parseAgentVcsFilePatch,
+  parseAgentVcsFiles,
+  type AgentVcsDiscard,
+  type AgentVcsFilePatch,
+  type AgentVcsFiles,
+  type VcsFilesMode,
+} from './agent-protocol';
 // Re-exported further down as well; `export … from` binds nothing in this
 // module, and the three loaders below parse their answers with these.
 import {
@@ -162,6 +171,7 @@ import {
 import { assertSupportedHerdr } from './herdr-compatibility';
 import { GatewayTunnelUnavailableError, directGatewayBaseUrl } from './ssh-tunnel';
 import { MAX_ASSET_TEXT_BYTES } from './text-preview';
+import { noteGatewayGeneration } from '@/stores/gateway-connection-generation';
 
 const REQUEST_TIMEOUT_MS = 8_000;
 // An attachment is orders of magnitude larger than a control call, and the
@@ -350,6 +360,34 @@ async function serializeBody(body: BodyInit | null | undefined, contentType?: st
 }
 
 async function encryptedGatewayFetch(
+  input: RequestInfo | URL,
+  init: RequestInit = {},
+  timeoutMs = REQUEST_TIMEOUT_MS,
+  endpoint?: GatewayEndpoint,
+  isCurrent: () => boolean = () => true
+): Promise<Response> {
+  const started = Date.now();
+  const method = (
+    init.method ?? (typeof input === 'object' && 'method' in input ? input.method : 'GET')
+  ).toUpperCase();
+  const capturedEndpoint = endpoint ?? {
+    url: currentBaseUrl,
+    token: currentToken ?? '',
+    deviceId: currentDeviceId ?? undefined,
+    transportKey: currentTransportKey ?? undefined,
+  };
+  return retryReplayedRead(method, () =>
+    sendEncryptedGatewayRequest(
+      input,
+      { ...init, method },
+      Math.max(1, timeoutMs - (Date.now() - started)),
+      capturedEndpoint,
+      isCurrent
+    )
+  );
+}
+
+async function sendEncryptedGatewayRequest(
   input: RequestInfo | URL,
   init: RequestInit = {},
   timeoutMs = REQUEST_TIMEOUT_MS,
@@ -645,6 +683,12 @@ export interface PaneShortcuts {
   /** Optional multi-key and text actions; older Gateways omit this. */
   keyActions?: ShortcutKey[];
   commands: SlashCommand[];
+  /**
+   * What this pane can take right now: `extended` is false when the program in
+   * a tmux pane has not asked for extended keys, so `ctrl+enter` and the like
+   * cannot reach it. Older Gateways omit this, which narrows nothing.
+   */
+  keyboard?: { extended: boolean };
 }
 
 export interface PaneOutputResponse {
@@ -1019,6 +1063,15 @@ export const ASSET_CONTENT_TIMEOUT_MS = 15_000;
 export function assetTextTimeoutMs(bytes: number): number {
   const megabytes = Math.ceil(Math.max(0, bytes) / (1024 * 1024));
   return Math.min(90_000, ASSET_CONTENT_TIMEOUT_MS + megabytes * 10_000);
+}
+
+/**
+ * The local id of the record the shared client is configured for, or null.
+ * The event socket is per server record and opens with this client's base URL
+ * and credentials, so it checks it is still talking about the same server.
+ */
+export function configuredGatewayServerId(): string | null {
+  return currentRecord?.serverId ?? null;
 }
 
 export function isGatewayConfigured(): boolean {
@@ -1465,6 +1518,7 @@ export async function listPaneParts(
   if (isDemoActive()) return panePartsFromResponse(demoPaneParts(paneId));
 
   const lineLimit = Math.max(1, Math.min(MAX_PANE_OUTPUT_LINES, Math.round(lines)));
+  const serverId = configuredGatewayServerId();
   const response = await gatewayFetch(
     gatewayUrl(
       `/api/sessions/${encodeURIComponent(sessionId)}/panes/${encodeURIComponent(paneId)}/parts?lines=${lineLimit}`
@@ -1485,7 +1539,9 @@ export async function listPaneParts(
     throw new Error(`HTTP ${response.status}: ${await response.text()}`);
   }
 
-  return panePartsFromResponse(await response.json());
+  const body: unknown = await response.json();
+  noteGatewayGeneration(serverId, body);
+  return panePartsFromResponse(body);
 }
 
 /**
@@ -1770,6 +1826,100 @@ export async function loadGitFileDiff(
   );
   if (!response.ok) throw new Error(`HTTP ${response.status}: ${await response.text()}`);
   return gitDiffPageFromResponse(await response.json(), path);
+}
+
+function paneVcsUrl(sessionId: string, paneId: string, rest: string): string {
+  return gatewayUrl(
+    `/api/sessions/${encodeURIComponent(sessionId)}/panes/${encodeURIComponent(paneId)}/vcs/${rest}`
+  );
+}
+
+/** The `data` of the gateway's envelope, or the body when it has none. */
+function paneEnvelopeData(json: unknown): unknown {
+  if (json && typeof json === 'object' && !Array.isArray(json) && 'data' in json) {
+    return (json as { data: unknown }).data;
+  }
+  return json;
+}
+
+/**
+ * The pane's changed files, without their patches (`pane_vcs_files`): the
+ * agent route `…/vcs/files`, asked of a terminal pane's directory.
+ *
+ * `null` means this route gave no usable answer -- a refusal, an older
+ * gateway, a body that is not a listing -- and is the sheet's cue to fall
+ * back to `…/git/status`, which every `git_diff` gateway answers. A pane that
+ * is gone (`404 unknown_pane`) is an answer, `reason: 'unknown_pane'`, the way
+ * the agent routes answer `workspace_missing`; outside a checkout the route
+ * answers `200` with `reason: 'not_a_repository'`.
+ */
+export async function getPaneVcsFiles(
+  sessionId: string,
+  paneId: string,
+  mode: VcsFilesMode = 'working'
+): Promise<AgentVcsFiles | null> {
+  if (isDemoActive() || !paneId) return null;
+  try {
+    const response = await gatewayFetch(paneVcsUrl(sessionId, paneId, `files?mode=${mode}`), {
+      headers: gatewayAuthHeaders(),
+    });
+    if (response.status === 404 && /"unknown_pane"/.test(await response.text())) {
+      // The pane is gone: an answer, not a failure, and `…/git/status` would
+      // only say the same thing less clearly.
+      return { files: [], mode, truncated: false, reason: 'unknown_pane' };
+    }
+    if (!response.ok) return null;
+    return parseAgentVcsFiles(paneEnvelopeData(await response.json()));
+  } catch {
+    return null;
+  }
+}
+
+/** One file's patch at `context` lines (`pane_vcs_files`). Throws when there is none to show. */
+export async function getPaneVcsFile(
+  sessionId: string,
+  paneId: string,
+  options: { mode: VcsFilesMode; path: string; context: number }
+): Promise<AgentVcsFilePatch> {
+  // Assembled by hand: React Native's URLSearchParams shim is only a partial one.
+  const query = [
+    `mode=${options.mode}`,
+    `path=${encodeURIComponent(options.path)}`,
+    `context=${Math.max(0, Math.round(options.context))}`,
+  ].join('&');
+  const response = await gatewayFetch(paneVcsUrl(sessionId, paneId, `file?${query}`), {
+    headers: gatewayAuthHeaders(),
+  });
+  if (!response.ok) throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+  const patch = parseAgentVcsFilePatch(paneEnvelopeData(await response.json()));
+  if (!patch) throw new Error(`Failed to load the patch for ${options.path}`);
+  return patch;
+}
+
+/**
+ * Throw away one file's uncommitted changes in the pane's checkout
+ * (`pane_vcs_files`): a tracked file is restored, an untracked one deleted.
+ * Irreversible; the sheet asks first. A refusal throws `HTTP <status>: <body>`,
+ * which `agentRequestErrorDetail` reads the gateway's code and sentence from.
+ */
+export async function discardPaneVcsFile(
+  sessionId: string,
+  paneId: string,
+  path: string
+): Promise<AgentVcsDiscard> {
+  const response = await gatewayFetch(paneVcsUrl(sessionId, paneId, 'discard'), {
+    method: 'POST',
+    headers: { ...gatewayAuthHeaders(), 'Content-Type': 'application/json' },
+    body: JSON.stringify({ path }),
+  });
+  if (!response.ok) throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+  let data: unknown = null;
+  try {
+    data = paneEnvelopeData(await response.json());
+  } catch {
+    // `204 No Content` is a legitimate answer.
+  }
+  return parseAgentVcsDiscard(data) ?? { path, action: 'restored' };
 }
 
 /**
@@ -2207,9 +2357,14 @@ export async function probeGatewayReachable(
 }
 
 export async function loadHealth(): Promise<HealthResponse> {
-  const health = isDemoActive()
-    ? (demoHealth() as HealthResponse)
-    : ((await getHealth()) as HealthResponse);
+  if (isDemoActive()) {
+    const demo = demoHealth() as HealthResponse;
+    assertSupportedHerdr(demo);
+    return demo;
+  }
+  const serverId = configuredGatewayServerId();
+  const health = (await getHealth()) as HealthResponse;
+  noteGatewayGeneration(serverId, health);
   assertSupportedHerdr(health);
   return health;
 }
@@ -2674,10 +2829,12 @@ export async function readPaneOutput(
 ): Promise<string> {
   if (isDemoActive()) return demoPaneOutput(paneId, lines);
   const lineLimit = Math.max(1, Math.min(MAX_PANE_OUTPUT_LINES, Math.round(lines)));
+  const serverId = configuredGatewayServerId();
   const value = await getApiSessionsBySessionIdPanesByPaneIdOutput(
     { sessionId, paneId },
     { source, lines: String(lineLimit), format }
   );
+  noteGatewayGeneration(serverId, value);
   return extractPaneOutput(value);
 }
 
@@ -2753,10 +2910,12 @@ export async function readPaneTail(
 ): Promise<PaneOutputRead> {
   if (isDemoActive()) return { output: demoPaneOutput(paneId, lines), read: null };
   const lineLimit = Math.max(1, Math.min(MAX_PANE_OUTPUT_LINES, Math.round(lines)));
+  const serverId = configuredGatewayServerId();
   const value = await getApiSessionsBySessionIdPanesByPaneIdOutput(
     { sessionId, paneId },
     { source, lines: String(lineLimit), format }
   );
+  noteGatewayGeneration(serverId, value);
   return { output: extractPaneOutput(value), read: extractPaneReadEnvelope(value) };
 }
 
@@ -2776,6 +2935,7 @@ export async function readPaneRange(
   source: PaneOutputSource = 'recent-unwrapped'
 ): Promise<PaneOutputRead> {
   if (isDemoActive()) return demoPaneRange(paneId, start, end);
+  const serverId = configuredGatewayServerId();
   const value = await getApiSessionsBySessionIdPanesByPaneIdOutput(
     { sessionId, paneId },
     {
@@ -2785,6 +2945,7 @@ export async function readPaneRange(
       end: String(Math.max(0, Math.round(end))),
     }
   );
+  noteGatewayGeneration(serverId, value);
   return { output: extractPaneOutput(value), read: extractPaneReadEnvelope(value) };
 }
 
@@ -2803,8 +2964,19 @@ export async function loadPaneShortcuts(sessionId: string, paneId: string): Prom
     version: typeof value?.version === 'number' ? value.version : 0,
     profile: typeof value?.profile === 'string' ? value.profile : 'shell',
     keys: Array.isArray(value?.keys) ? value.keys.filter(isShortcutKey) : [],
+    ...(Array.isArray(value?.keyActions)
+      ? { keyActions: value.keyActions.filter(isShortcutKey) }
+      : {}),
     commands: Array.isArray(value?.commands) ? value.commands.filter(isSlashCommand) : [],
+    ...(typeof value?.keyboard?.extended === 'boolean'
+      ? { keyboard: { extended: value.keyboard.extended } }
+      : {}),
   };
+}
+
+/** Two shortcut answers say the same thing (the fields are plain JSON, in wire order). */
+export function samePaneShortcuts(a: PaneShortcuts | null, b: PaneShortcuts | null): boolean {
+  return a === b || (a !== null && b !== null && JSON.stringify(a) === JSON.stringify(b));
 }
 
 function isShortcutKey(value: unknown): value is ShortcutKey {

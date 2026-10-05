@@ -12,6 +12,7 @@ import {
   diffTotals,
   fileChangeFromDiffItem,
   fileStatusFromPatch,
+  fileChangeFromSummary,
   fileStatusFromWire,
   INLINE_DIFF_MAX_ROWS,
   oldPathFromPatch,
@@ -149,6 +150,7 @@ describe('fileChangeFromDiffItem', () => {
     ).toBe('added');
     expect(fileStatusFromWire(undefined)).toBeNull();
     expect(fileStatusFromWire('DELETED')).toBe('deleted');
+    expect(fileStatusFromWire('typechange')).toBe('type_changed');
   });
 
   test('a binary file is marked binary', () => {
@@ -353,5 +355,47 @@ describe('large collapsed diffs', () => {
         patch: 'diff --git a/image.png b/image.png\nGIT binary patch\nliteral 3\nabc',
       }).binary
     ).toBe(true);
+  });
+});
+
+describe('fileChangeFromSummary', () => {
+  test('takes the gateway status, and modified when it gave none it knows', () => {
+    expect(
+      fileChangeFromSummary({
+        path: 'b.ts',
+        oldPath: 'a.ts',
+        status: 'renamed',
+        additions: 2,
+        deletions: 1,
+        binary: false,
+      })
+    ).toEqual({
+      path: 'b.ts',
+      oldPath: 'a.ts',
+      status: 'renamed',
+      staged: false,
+      unstaged: true,
+      binary: false,
+      added: 2,
+      removed: 1,
+    });
+    expect(
+      fileChangeFromSummary({
+        path: 'x',
+        status: 'typechange',
+        additions: 0,
+        deletions: 0,
+        binary: true,
+      }).status
+    ).toBe('type_changed');
+    expect(
+      fileChangeFromSummary({
+        path: 'x',
+        status: 'weird',
+        additions: 0,
+        deletions: 0,
+        binary: false,
+      }).status
+    ).toBe('modified');
   });
 });

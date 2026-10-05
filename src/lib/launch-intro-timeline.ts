@@ -86,9 +86,23 @@ export type LaunchIntroTimeline = {
   /**
    * The cross-fade into the app's first frame, during which the prompt line
    * dissolves and Home's first card rises through where it was.
+   *
+   * The opening's exit only under Reduce Motion, or when the snapshot the
+   * {@link LaunchIntroTimeline.snap} needs could not be taken.
    */
   exit: IntroBeat;
-  /** Handover to fully hidden. */
+  /**
+   * The snap: the finished composition breaking into tiles that drift off
+   * and fade over Home (`snap-dissolve.ts`). Longer than the cross-fade it
+   * replaces because each tile needs time to be seen leaving, and the sweep
+   * crosses the screen before the last of them goes.
+   */
+  snap: IntroBeat;
+  /**
+   * Handover to the app being in hand and the cross-fade done. The snap, when
+   * it plays, ends `snap.ms - exit.ms` later -- over an app that already takes
+   * touches; see {@link LAUNCH_INTRO_BUDGET_MS}.
+   */
   totalMs: number;
 };
 
@@ -99,6 +113,12 @@ export type LaunchIntroTimeline = {
  * not choose to spend, and the opening is spending more of it. The stall
  * counts against it: `totalMs + bloomStallCapMs` is the worst case, and it is
  * this number exactly.
+ *
+ * The snap ({@link LaunchIntroTimeline.snap}) runs 400 ms past `totalMs` and
+ * is deliberately outside this ceiling: the overlay stops taking touches the
+ * moment it starts exiting, so the app is in hand at `exit.at` either way and
+ * the tiles drift off over an app that already answers. Counting the drift
+ * would have meant a 2000 ms ceiling for no extra waiting at all.
  */
 export const LAUNCH_INTRO_BUDGET_MS = 1600;
 
@@ -138,6 +158,7 @@ export function launchIntroTimeline(d: MotionDurations): LaunchIntroTimeline {
   const type: IntroBeat = { at: d.medium, ms: d.long + d.micro };
   const blink: IntroBeat = { at: type.at + type.ms, ms: d.micro };
   const holdUntil = blink.at + blink.ms;
+  const snap: IntroBeat = { at: holdUntil, ms: d.long + d.medium };
   return {
     ignite,
     bloom,
@@ -150,6 +171,7 @@ export function launchIntroTimeline(d: MotionDurations): LaunchIntroTimeline {
     skipArmedAt: d.long,
     holdUntil,
     exit: { at: holdUntil, ms: d.medium },
+    snap,
     totalMs: holdUntil + d.medium,
   };
 }
@@ -183,6 +205,9 @@ export function reducedLaunchIntroTimeline(d: MotionDurations): LaunchIntroTimel
     skipArmedAt: 0,
     holdUntil: d.short,
     exit: { at: d.short, ms: d.short },
+    // Never played: the reduced opening does not snap. Stated as the
+    // cross-fade so nothing reading the beat sees a longer exit than it gets.
+    snap: { at: d.short, ms: d.short },
     totalMs: d.short + d.short,
   };
 }

@@ -36,7 +36,7 @@ const SHEET_FRAMES = [
   'src/app/commands.tsx',
   'src/components/session-map.tsx',
   'src/components/session-artifacts.tsx',
-  'src/components/git-diff-view.tsx',
+  'src/components/changes-sheet.tsx',
   'src/components/new-task-sheet.tsx',
   'src/components/open-web-service-sheet.tsx',
   'src/components/agent-sessions-sheet.tsx',
@@ -46,10 +46,9 @@ const SHEET_FRAMES = [
   'src/components/agent-workspace-sheet.tsx',
   'src/components/agent-worktree-sheet.tsx',
   'src/components/agent-context-sheet.tsx',
-  'src/components/agent-vcs-diff-sheet.tsx',
   'src/components/agent-tasks-sheet.tsx',
   'src/components/agent-background-tray.tsx',
-  'src/components/opencode-guide-sheet.tsx',
+  'src/components/agent-guide-sheet.tsx',
   'src/components/settings-theme-sheet.tsx',
   'src/components/settings-font-sheet.tsx',
   'src/components/settings-home-layout-sheet.tsx',
@@ -163,7 +162,9 @@ test('every form sheet is built in the one shared frame', () => {
   }
   // The frame is the only thing that mounts the ground.
   const ground = readFileSync('src/components/sheet-ground.tsx', 'utf8');
-  expect(ground).toContain('<SheetGround testID={testID} tint={tint} frosted={frosted} />');
+  expect(ground).toContain(
+    '<SheetGround testID={testID} tint={tint} frosted={frosted} overdrawBottom={overdrawBottom} />'
+  );
 });
 
 test('text drawn straight onto a sheet ground takes the plate the shell gives it', () => {
@@ -214,11 +215,15 @@ test('text drawn straight onto a sheet ground takes the plate the shell gives it
   // a fact rather than an exemption -- by frosting the ground rather than by
   // plating each run, which is the thing this system is not.
   const scene = readFileSync('src/components/sheet-scene.tsx', 'utf8');
-  expect(scene).toContain('<SheetFrame testID={testID} tint="surface" frosted>');
+  expect(/<SheetFrame\s+testID=\{testID\}\s+tint="surface"\s+frosted\s/.test(scene)).toBe(true);
   expect(scene).not.toContain('useSheetGroundPlate');
 
-  // The frost is a floor the reader's opacity slider cannot take a sheet below.
-  expect(ground).toContain('export const SHEET_FROST_ALPHA = 0.82;');
+  // The frost follows the reader's opacity slider, down to a floor it cannot
+  // take a sheet below.
+  expect(readFileSync('src/theme/surface-background.ts', 'utf8')).toContain(
+    'export const SHEET_FROST_ALPHA = 0.82;'
+  );
+  expect(ground).toContain('sheetFrostAlpha(opacity)');
   expect(ground).toContain('frosted && hasShell');
 });
 

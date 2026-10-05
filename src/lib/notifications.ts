@@ -10,7 +10,7 @@ import * as Device from 'expo-device';
 import * as Notifications from 'expo-notifications';
 import { router, type Href } from 'expo-router';
 import { useEffect } from 'react';
-import { AppState, Platform } from 'react-native';
+import { AppState, Dimensions, Platform } from 'react-native';
 
 import { warmNotificationTarget } from '@/lib/workspace-snapshot';
 
@@ -26,7 +26,8 @@ import {
 } from '@/lib/approval-notifications';
 import { feedback } from '@/lib/feedback';
 import type { GatewayRecord } from '@/lib/gateway-storage';
-import { notificationRoute } from '@/lib/notification-route';
+import { notificationRoute, notificationRouteServer } from '@/lib/notification-route';
+import { responsiveWorkspaceLayout } from '@/lib/responsive-layout';
 import {
   forgetRegisteredPushToken,
   pushTokenNeedsSending,
@@ -49,7 +50,10 @@ Notifications.setNotificationHandler({
       AppState.currentState === 'active'
     );
     if (presentation.inApp) {
-      const notice = noticeFromPush(notification.request.identifier, notification.request.content);
+      const notice = noticeFromPush(notification.request.identifier, notification.request.content, {
+        isPad: windowIsPad(),
+        questionTitle: i18n._(msg`Needs your input`),
+      });
       if (notice) useInAppNotifications.getState().enqueue(notice);
     }
     return {
@@ -92,12 +96,18 @@ function endpointForServer(serverId: string): GatewayEndpoint | null {
     : null;
 }
 
+/** The same Pad decision the workspace makes, read outside render for a push. */
+function windowIsPad(): boolean {
+  return responsiveWorkspaceLayout(Dimensions.get('window').width).mode === 'pad';
+}
+
 export function useNotificationObserver() {
   useEffect(() => {
     function redirect(notification: Notifications.Notification) {
       const route = notificationRoute(
         notification.request.content.data,
-        notification.request.identifier
+        notification.request.identifier,
+        { isPad: windowIsPad() }
       );
       if (!route) return;
       // The same fetch-on-intent the home screen's cards make, for the other
@@ -110,8 +120,10 @@ export function useNotificationObserver() {
       //
       // Never awaited and never reported: a failure here costs the head start
       // and nothing else, since the screen connects exactly as it did before.
-      if (typeof route === 'object' && route.params.serverId)
-        void warmNotificationTarget(route.params.serverId, route.params.sessionId);
+      if (typeof route === 'object') {
+        const { serverId, sessionId } = notificationRouteServer(route);
+        void warmNotificationTarget(serverId, sessionId);
+      }
       router.navigate(route as Href);
     }
 
