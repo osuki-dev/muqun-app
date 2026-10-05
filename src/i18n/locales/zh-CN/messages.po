@@ -376,6 +376,10 @@ msgstr "模拟器不只能看，还能操作，因此预览只在 Tailscale 或 
 msgid "A simulator that was shut down can take a minute to come up."
 msgstr "已关机的模拟器可能需要一分钟才能启动"
 
+#: src/components/launch-intro.tsx
+msgid "A spread on the Pad"
+msgstr "平板上的双页布局"
+
 #: src/components/server-terminal-workspace.tsx
 msgid "A terminal was created. Check it before sending again — your task is still here."
 msgstr "已经创建了一个终端。再次发送前先查看一下——你的任务还在"
@@ -463,7 +467,6 @@ msgid "Agent panes open in"
 msgstr "代理面板的默认视图"
 
 #: src/components/app-drawer-content.tsx
-#: src/components/launch-intro.tsx
 #: src/components/settings-servers.tsx
 msgid "Agents"
 msgstr "代理"
@@ -616,8 +619,8 @@ msgid "Approval required"
 msgstr "需要批准"
 
 #: src/lib/release-notes.ts
-msgid "Approvals and status changes for every session now arrive over one live connection per computer, not only for the session you have open."
-msgstr "所有会话的审批和状态变化现在通过每台电脑一条实时连接送达，而不只是当前打开的会话"
+msgid "Approvals and status changes for every session arrive over one live connection per computer, not only for the session you have open."
+msgstr "每台电脑只用一条实时连接，所有会话的审批请求和状态变化都会送达，不再只限于你正打开的那个会话"
 
 #: src/components/agent-mode-sheet.tsx
 msgid "Architecture, design proposals, step-by-step roadmaps."
@@ -900,6 +903,10 @@ msgstr "已更改"
 #: src/components/changes-sheet.tsx
 msgid "Changes"
 msgstr "改动"
+
+#: src/components/launch-intro.tsx
+msgid "Changes as a tree"
+msgstr "改动一目了然"
 
 #: src/components/theme-appearance-settings.tsx
 msgid "Changes coloured backgrounds, not text, icons or artwork"
@@ -1295,10 +1302,6 @@ msgstr "上下文占用"
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Continue"
 msgstr "继续"
-
-#: src/lib/release-notes.ts
-msgid "Continue and the offline and empty-state messages now name the agent they mean, and a new session asks which agent when more than one is ready."
-msgstr "“继续”以及离线和空状态提示现在会写明所指的智能体，多个智能体就绪时，新会话会询问使用哪一个"
 
 #: src/i18n/labels.ts
 msgid "Continue task"
@@ -1785,6 +1788,14 @@ msgstr "无法更新会话"
 msgid "Could not upload the file."
 msgstr "无法上传文件"
 
+#: src/components/launch-intro.tsx
+msgid "Cover Courier comes built in. Install a theme or pick a colour pack, and the whole app follows."
+msgstr "内置 Cover Courier 主题。安装一个主题或选一套配色，整个应用随之改变"
+
+#: src/lib/release-notes.ts
+msgid "Cover Courier is built in and worn until you pick a theme, and Interface background opacity now reaches every sheet and notice."
+msgstr "内置 Cover Courier 主题，在你选定主题前默认使用；界面背景不透明度现在也作用于所有面板和通知"
+
 #: src/components/agent-worktree-sheet.tsx
 msgid "Create and move"
 msgstr "创建并移动"
@@ -1923,10 +1934,6 @@ msgstr "设备验证"
 msgid "Diff summary"
 msgstr "Diff 摘要"
 
-#: src/components/launch-intro.tsx
-msgid "Direct control for autonomous coding agents. Follow real-time reasoning, inspect code diffs, review step-by-step todos, and guide tasks on the go."
-msgstr "专为自主编程智能体打造。手机端实时跟进思考过程、审查代码变更、跟进多步任务，随时掌控远程智能体"
-
 #: src/components/dev-home-ambient-controls.tsx
 msgid "Direction"
 msgstr "方向"
@@ -2039,9 +2046,9 @@ msgstr "正在下载…"
 msgid "Draft the notes for the next build"
 msgstr "草拟下一个版本的发布说明"
 
-#: src/lib/release-notes.ts
-msgid "Each agent's screen shows only what it supports, and the model picker groups models by provider and greys out the ones you are not signed in to."
-msgstr "每个智能体的界面只显示它所支持的功能，模型选择器按提供方分组，并将你尚未登录的提供方置灰"
+#: src/components/launch-intro.tsx
+msgid "Drawn on the GPU with Skia, with real keys and full tmux control. nvim, less and REPLs behave."
+msgstr "由 Skia 在 GPU 上绘制，按键真实，完整掌控 tmux。nvim、less 和各种 REPL 都能正常使用"
 
 #. placeholder {0}: server.label
 #: src/components/settings-servers.tsx
@@ -2134,6 +2141,14 @@ msgstr "按两次 Escape"
 #: src/components/agent-context-sheet.tsx
 msgid "Estimated cost"
 msgstr "预计费用"
+
+#: src/components/launch-intro.tsx
+msgid "Every agent on your computer, in your hand."
+msgstr "电脑上的每个智能体，尽在掌中"
+
+#: src/components/launch-intro.tsx
+msgid "Every changed file in one folder tree with line totals. Open a patch, or discard a file from its menu."
+msgstr "所有改动的文件汇成一棵目录树，附带增删行数。打开查看补丁，或从文件菜单里放弃改动"
 
 #: src/components/settings-font-sheet.tsx
 msgid "Every screen in the app."
@@ -2254,6 +2269,10 @@ msgstr "第一条指令"
 #: src/components/custom-theme-library.tsx
 msgid "Fix text contrast before applying this theme"
 msgstr "请先修正文字对比度再应用此主题"
+
+#: src/lib/release-notes.ts
+msgid "Fixes for terminals that stayed on their loading logo, flickered under full-screen programs or froze under a sheet."
+msgstr "修复了终端卡在加载标志、运行全屏程序时闪烁，以及被面板盖住时停止刷新的问题"
 
 #: src/components/pane-chat-view.tsx
 msgid "Fold the tool steps away"
@@ -2857,6 +2876,10 @@ msgstr "Mac mini · 办公室"
 msgid "Machines"
 msgstr "机器"
 
+#: src/components/launch-intro.tsx
+msgid "Make it yours"
+msgstr "打造你的专属风格"
+
 #: src/components/home-overview.tsx
 msgid "Manage"
 msgstr "管理"
@@ -2999,9 +3022,9 @@ msgstr "Muqun 自己不提供字体。添加后会保存在本机"
 msgid "Muqun is locked"
 msgstr "牧群已锁定"
 
-#: src/lib/release-notes.ts
-msgid "Muqun now works with several coding agents on one computer. OpenCode, DeepSeek and T3 Code each get their own tile on Home, with their own mark."
-msgstr "Muqun 现在可以在同一台电脑上使用多个编程智能体。OpenCode、DeepSeek 和 T3 Code 在主页上各有自己的图块和标志"
+#: src/components/launch-intro.tsx
+msgid "Muqun pairs with a Gateway on your own machine and puts its coding agents and terminals on your phone or tablet."
+msgstr "Muqun 与你自己电脑上的 Gateway 配对，把那里的编程智能体和终端搬到你的手机或平板上"
 
 #: src/components/pairing-camera.tsx
 msgid "Muqun reads the Gateway's QR code through the camera. Nothing is recorded."
@@ -3107,7 +3130,6 @@ msgid "New worktree…"
 msgstr "新建工作树…"
 
 #: src/components/agent-composer.tsx
-#: src/components/launch-intro.tsx
 msgid "Next"
 msgstr "下一步"
 
@@ -3400,8 +3422,16 @@ msgid "On"
 msgstr "开启"
 
 #: src/lib/release-notes.ts
-msgid "On a tablet, Continue rows now open their terminal panes. An older Gateway keeps working with OpenCode as before."
-msgstr "在平板上，“继续”的条目现在会打开各自的终端窗格。旧版 Gateway 仍像以前一样配合 OpenCode 使用"
+msgid "On a tablet, Home is a two-page spread, work sheets fill the screen, and the on-screen keyboard is a whole keyboard with F-keys and sticky modifiers."
+msgstr "在平板上，主页以双页展开，工作面板铺满全屏，屏幕键盘也成了带 F 键和粘滞修饰键的完整键盘"
+
+#: src/components/launch-intro.tsx
+msgid "On a tablet, Home opens as a two-page spread and the on-screen keyboard is a whole keyboard."
+msgstr "在平板上，主页以双页展开，屏幕键盘也是一整副完整的键盘"
+
+#: src/lib/release-notes.ts
+msgid "One Changes sheet for terminals and agent sessions: the changed files as a tree with line totals, the branch under the title, and Discard on a file's menu."
+msgstr "终端和智能体会话共用同一个改动面板：改动的文件以目录树呈现并附带行数，标题下显示分支，文件菜单里可以放弃改动"
 
 #: src/i18n/labels.ts
 msgid "Online"
@@ -3562,6 +3592,10 @@ msgstr "打开以检查当前状态"
 msgid "Open workspace {0}, {panelCount, plural, one {# running} other {# running}}. Long press to close."
 msgstr "打开工作区 {0}，{panelCount, plural, one {# 个运行中} other {# 个运行中}}。长按可关闭"
 
+#: src/components/launch-intro.tsx
+msgid "OpenCode, DeepSeek and T3 Code side by side, each with its own tile, sessions and workbench."
+msgstr "OpenCode、DeepSeek 和 T3 Code 并排登场，各有自己的启动磁贴、会话和工作台"
+
 #: src/app/+not-found.tsx
 msgid "Opening"
 msgstr "正在打开"
@@ -3612,10 +3646,6 @@ msgstr "其他"
 #: src/components/agent-context-sheet.tsx
 msgid "Output"
 msgstr "输出"
-
-#: src/components/launch-intro.tsx
-msgid "Output lands on a hardware-accelerated terminal grid with instant-response keys and full tmux control. nvim, less and REPLs behave."
-msgstr "硬件加速字符网格，保留真实色彩与排版，配合即按即发的专业按键行与多会话 tmux 管理，nvim、less 和 REPL 运转如初"
 
 #: src/components/home-launch-actions.tsx
 msgid "Pair a gateway"
@@ -4360,8 +4390,8 @@ msgid "Scan the Gateway’s QR code, or enter its address."
 msgstr "扫描 Gateway 的二维码，或输入它的地址"
 
 #: src/components/launch-intro.tsx
-msgid "Scan the QR code of a Gateway running on your own computer. No account, no relay, end-to-end encrypted, and 32 handcrafted themes to make it yours."
-msgstr "扫描自己电脑上 Gateway 的二维码即可直连。无需注册账号，无任何云端中继，全链路端到端加密，并搭配 32 套专属赛博机械主题"
+msgid "Scan the QR code of a Gateway on your own computer. No account, no relay, end-to-end encrypted."
+msgstr "扫描你自己电脑上 Gateway 的二维码即可。无需账号，没有中转，端到端加密"
 
 #: src/components/pairing-camera.tsx
 msgid "Scanning needs a camera, which this browser does not offer."
@@ -4595,9 +4625,17 @@ msgstr "请在主机上配置"
 msgid "Settings"
 msgstr "设置"
 
+#: src/components/launch-intro.tsx
+msgid "Several agents, one computer"
+msgstr "一台电脑，多个智能体"
+
 #: src/components/agent-tool-card.tsx
 msgid "Several answers"
 msgstr "可多选"
+
+#: src/lib/release-notes.ts
+msgid "Several coding agents on one computer: OpenCode, DeepSeek and T3 Code each get their own tile on Home, with their own sessions and workbench."
+msgstr "一台电脑可接入多个编程智能体：OpenCode、DeepSeek 和 T3 Code 在主页各有自己的磁贴，也各有自己的会话和工作台"
 
 #: src/i18n/labels.ts
 msgctxt "agent slash command"
@@ -5367,6 +5405,10 @@ msgstr "终端请求可能已成功。请刷新列表并确认后再试"
 msgid "The terminal, and code in a reply."
 msgstr "终端，以及回复里的代码"
 
+#: src/lib/release-notes.ts
+msgid "The terminal, the opening and Home artwork draw with a new GPU renderer, and theme and font changes have transitions of their own."
+msgstr "终端、开场动画和主页插画改用全新的 GPU 渲染器绘制，切换主题和字体也有了各自的过渡动画"
+
 #: src/components/custom-theme-library.tsx
 msgid "The theme will be removed from this device"
 msgstr "此主题将从当前设备移除"
@@ -5984,8 +6026,8 @@ msgid "What's new"
 msgstr "新功能"
 
 #: src/components/launch-intro.tsx
-msgid "When an agent halts for confirmation, the prompt arrives as a push. Approve or deny from the Lock Screen, and track live progress on Dynamic Island and widgets."
-msgstr "当智能体暂停请求权限时，通知直达锁屏。一键批准或拒绝高危操作，更能通过灵动岛实时活动与桌面小组件抬手即览进度"
+msgid "When an agent stops for a decision, it arrives as a push. Approve or deny from the Lock Screen."
+msgstr "智能体停下来等你决定时，问题会以推送送达。在锁屏上就能批准或拒绝"
 
 #: src/components/away-digest-card.tsx
 msgid "While you were away"

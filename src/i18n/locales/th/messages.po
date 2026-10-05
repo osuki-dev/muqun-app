@@ -376,6 +376,10 @@ msgstr "เครื่องจำลองสามารถควบคุม
 msgid "A simulator that was shut down can take a minute to come up."
 msgstr "เครื่องจำลองที่ปิดไปแล้วอาจใช้เวลาประมาณหนึ่งนาทีในการเริ่ม"
 
+#: src/components/launch-intro.tsx
+msgid "A spread on the Pad"
+msgstr "หน้าคู่บนแท็บเล็ต"
+
 #: src/components/server-terminal-workspace.tsx
 msgid "A terminal was created. Check it before sending again — your task is still here."
 msgstr "สร้างเทอร์มินัลแล้ว ตรวจสอบก่อนส่งอีกครั้ง งานของคุณยังอยู่ที่นี่"
@@ -463,7 +467,6 @@ msgid "Agent panes open in"
 msgstr "เปิดพาเนลเอเจนต์ใน"
 
 #: src/components/app-drawer-content.tsx
-#: src/components/launch-intro.tsx
 #: src/components/settings-servers.tsx
 msgid "Agents"
 msgstr "เอเจนต์"
@@ -616,8 +619,8 @@ msgid "Approval required"
 msgstr "ต้องการการอนุมัติ"
 
 #: src/lib/release-notes.ts
-msgid "Approvals and status changes for every session now arrive over one live connection per computer, not only for the session you have open."
-msgstr "การขออนุมัติและการเปลี่ยนสถานะของทุกเซสชันตอนนี้มาถึงผ่านการเชื่อมต่อสดหนึ่งเส้นต่อคอมพิวเตอร์หนึ่งเครื่อง ไม่ใช่แค่เซสชันที่เปิดอยู่"
+msgid "Approvals and status changes for every session arrive over one live connection per computer, not only for the session you have open."
+msgstr "คำขออนุมัติและการเปลี่ยนสถานะของทุกเซสชันมาถึงผ่านการเชื่อมต่อสดเพียงเส้นเดียวต่อคอมพิวเตอร์ ไม่ใช่แค่เซสชันที่คุณเปิดอยู่"
 
 #: src/components/agent-mode-sheet.tsx
 msgid "Architecture, design proposals, step-by-step roadmaps."
@@ -900,6 +903,10 @@ msgstr "เปลี่ยนแล้ว"
 #: src/components/changes-sheet.tsx
 msgid "Changes"
 msgstr "การเปลี่ยนแปลง"
+
+#: src/components/launch-intro.tsx
+msgid "Changes as a tree"
+msgstr "การเปลี่ยนแปลงแบบต้นไม้"
 
 #: src/components/theme-appearance-settings.tsx
 msgid "Changes coloured backgrounds, not text, icons or artwork"
@@ -1295,10 +1302,6 @@ msgstr "บริบทที่ใช้ไป"
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Continue"
 msgstr "ดำเนินการต่อ"
-
-#: src/lib/release-notes.ts
-msgid "Continue and the offline and empty-state messages now name the agent they mean, and a new session asks which agent when more than one is ready."
-msgstr "ปุ่มดำเนินการต่อ รวมถึงข้อความออฟไลน์และสถานะว่าง ตอนนี้ระบุชื่อเอเจนต์ที่เกี่ยวข้อง และเซสชันใหม่จะถามว่าจะใช้เอเจนต์ตัวไหนเมื่อพร้อมใช้งานมากกว่าหนึ่งตัว"
 
 #: src/i18n/labels.ts
 msgid "Continue task"
@@ -1785,6 +1788,14 @@ msgstr "อัปเดตเซสชันไม่ได้"
 msgid "Could not upload the file."
 msgstr "อัปโหลดไฟล์ไม่ได้"
 
+#: src/components/launch-intro.tsx
+msgid "Cover Courier comes built in. Install a theme or pick a colour pack, and the whole app follows."
+msgstr "มี Cover Courier ติดมาในตัว ติดตั้งธีมหรือเลือกชุดสี แล้วทั้งแอปจะเปลี่ยนตาม"
+
+#: src/lib/release-notes.ts
+msgid "Cover Courier is built in and worn until you pick a theme, and Interface background opacity now reaches every sheet and notice."
+msgstr "มี Cover Courier ติดมาในตัวและใช้จนกว่าคุณจะเลือกธีม และความทึบของพื้นหลังส่วนติดต่อตอนนี้มีผลกับทุกชีตและทุกการแจ้งเตือน"
+
 #: src/components/agent-worktree-sheet.tsx
 msgid "Create and move"
 msgstr "สร้างแล้วย้ายไป"
@@ -1923,10 +1934,6 @@ msgstr "การยืนยันตัวตนของอุปกรณ์
 msgid "Diff summary"
 msgstr "สรุปความแตกต่าง"
 
-#: src/components/launch-intro.tsx
-msgid "Direct control for autonomous coding agents. Follow real-time reasoning, inspect code diffs, review step-by-step todos, and guide tasks on the go."
-msgstr "ควบคุมเอเจนต์เขียนโค้ด ได้โดยตรง ติดตามการคิดแบบเรียลไทม์ ตรวจสอบความเปลี่ยนแปลงของโค้ด และติดตามงานได้จากทุกที่"
-
 #: src/components/dev-home-ambient-controls.tsx
 msgid "Direction"
 msgstr "ทิศทาง"
@@ -2039,9 +2046,9 @@ msgstr "กำลังดาวน์โหลด…"
 msgid "Draft the notes for the next build"
 msgstr "ร่างบันทึกสำหรับบิลด์ถัดไป"
 
-#: src/lib/release-notes.ts
-msgid "Each agent's screen shows only what it supports, and the model picker groups models by provider and greys out the ones you are not signed in to."
-msgstr "หน้าจอของเอเจนต์แต่ละตัวแสดงเฉพาะสิ่งที่รองรับ และตัวเลือกโมเดลจัดกลุ่มโมเดลตามผู้ให้บริการ พร้อมทำให้ผู้ให้บริการที่คุณยังไม่ได้ลงชื่อเข้าใช้เป็นสีจาง"
+#: src/components/launch-intro.tsx
+msgid "Drawn on the GPU with Skia, with real keys and full tmux control. nvim, less and REPLs behave."
+msgstr "วาดบน GPU ด้วย Skia พร้อมปุ่มจริงและควบคุม tmux ได้เต็มที่ nvim, less และ REPL ทำงานได้ตามปกติ"
 
 #. placeholder {0}: server.label
 #: src/components/settings-servers.tsx
@@ -2134,6 +2141,14 @@ msgstr "Escape สองครั้ง"
 #: src/components/agent-context-sheet.tsx
 msgid "Estimated cost"
 msgstr "ค่าใช้จ่ายโดยประมาณ"
+
+#: src/components/launch-intro.tsx
+msgid "Every agent on your computer, in your hand."
+msgstr "ทุกเอเจนต์บนคอมพิวเตอร์ของคุณ อยู่ในมือคุณ"
+
+#: src/components/launch-intro.tsx
+msgid "Every changed file in one folder tree with line totals. Open a patch, or discard a file from its menu."
+msgstr "ทุกไฟล์ที่เปลี่ยนแปลงรวมอยู่ในต้นไม้โฟลเดอร์เดียวพร้อมจำนวนบรรทัด เปิดดูแพตช์ หรือละทิ้งไฟล์จากเมนูของไฟล์นั้น"
 
 #: src/components/settings-font-sheet.tsx
 msgid "Every screen in the app."
@@ -2254,6 +2269,10 @@ msgstr "คำสั่งแรก"
 #: src/components/custom-theme-library.tsx
 msgid "Fix text contrast before applying this theme"
 msgstr "แก้ไขความต่างระดับสีของข้อความก่อนใช้ธีมนี้"
+
+#: src/lib/release-notes.ts
+msgid "Fixes for terminals that stayed on their loading logo, flickered under full-screen programs or froze under a sheet."
+msgstr "แก้ไขเทอร์มินัลที่ค้างอยู่ที่โลโก้กำลังโหลด กะพริบเมื่อรันโปรแกรมเต็มหน้าจอ หรือหยุดนิ่งเมื่ออยู่ใต้ชีต"
 
 #: src/components/pane-chat-view.tsx
 msgid "Fold the tool steps away"
@@ -2857,6 +2876,10 @@ msgstr "Mac mini · สำนักงาน"
 msgid "Machines"
 msgstr "เครื่อง"
 
+#: src/components/launch-intro.tsx
+msgid "Make it yours"
+msgstr "ทำให้เป็นของคุณ"
+
 #: src/components/home-overview.tsx
 msgid "Manage"
 msgstr "จัดการ"
@@ -2999,9 +3022,9 @@ msgstr "Muqun ไม่มีฟอนต์ของตัวเอง ฟอ�
 msgid "Muqun is locked"
 msgstr "Muqun ถูกล็อก"
 
-#: src/lib/release-notes.ts
-msgid "Muqun now works with several coding agents on one computer. OpenCode, DeepSeek and T3 Code each get their own tile on Home, with their own mark."
-msgstr "Muqun ทำงานกับเอเจนต์เขียนโค้ดหลายตัวบนคอมพิวเตอร์เครื่องเดียวได้แล้ว OpenCode, DeepSeek และ T3 Code แต่ละตัวมีไทล์ของตัวเองบนหน้าหลัก พร้อมสัญลักษณ์ประจำตัว"
+#: src/components/launch-intro.tsx
+msgid "Muqun pairs with a Gateway on your own machine and puts its coding agents and terminals on your phone or tablet."
+msgstr "Muqun จับคู่กับ Gateway บนเครื่องของคุณเอง แล้วนำเอเจนต์เขียนโค้ดและเทอร์มินัลของเครื่องนั้นมาไว้บนโทรศัพท์หรือแท็บเล็ตของคุณ"
 
 #: src/components/pairing-camera.tsx
 msgid "Muqun reads the Gateway's QR code through the camera. Nothing is recorded."
@@ -3107,7 +3130,6 @@ msgid "New worktree…"
 msgstr "เวิร์กทรีใหม่…"
 
 #: src/components/agent-composer.tsx
-#: src/components/launch-intro.tsx
 msgid "Next"
 msgstr "ถัดไป"
 
@@ -3400,8 +3422,16 @@ msgid "On"
 msgstr "เปิด"
 
 #: src/lib/release-notes.ts
-msgid "On a tablet, Continue rows now open their terminal panes. An older Gateway keeps working with OpenCode as before."
-msgstr "บนแท็บเล็ต แถวดำเนินการต่อจะเปิดแผงเทอร์มินัลของตัวเองแล้ว Gateway รุ่นเก่ายังใช้งานกับ OpenCode ได้เหมือนเดิม"
+msgid "On a tablet, Home is a two-page spread, work sheets fill the screen, and the on-screen keyboard is a whole keyboard with F-keys and sticky modifiers."
+msgstr "บนแท็บเล็ต หน้าแรกเป็นหน้าคู่ ชีตงานเปิดเต็มหน้าจอ และแป้นพิมพ์บนหน้าจอเป็นแป้นพิมพ์เต็มรูปแบบพร้อมปุ่ม F และปุ่มปรับแต่งแบบค้างได้"
+
+#: src/components/launch-intro.tsx
+msgid "On a tablet, Home opens as a two-page spread and the on-screen keyboard is a whole keyboard."
+msgstr "บนแท็บเล็ต หน้าแรกจะเปิดเป็นหน้าคู่ และแป้นพิมพ์บนหน้าจอเป็นแป้นพิมพ์เต็มรูปแบบ"
+
+#: src/lib/release-notes.ts
+msgid "One Changes sheet for terminals and agent sessions: the changed files as a tree with line totals, the branch under the title, and Discard on a file's menu."
+msgstr "ชีตการเปลี่ยนแปลงเดียวสำหรับเทอร์มินัลและเซสชันเอเจนต์: ไฟล์ที่เปลี่ยนแสดงเป็นต้นไม้พร้อมจำนวนบรรทัด สาขาอยู่ใต้ชื่อเรื่อง และมีละทิ้งในเมนูของไฟล์"
 
 #: src/i18n/labels.ts
 msgid "Online"
@@ -3562,6 +3592,10 @@ msgstr "เปิดเพื่อตรวจสอบสถานะปัจ
 msgid "Open workspace {0}, {panelCount, plural, one {# running} other {# running}}. Long press to close."
 msgstr "เปิดพื้นที่ทำงาน {0} {panelCount, plural, other {กำลังทำงาน # รายการ}} กดค้างเพื่อปิด"
 
+#: src/components/launch-intro.tsx
+msgid "OpenCode, DeepSeek and T3 Code side by side, each with its own tile, sessions and workbench."
+msgstr "OpenCode, DeepSeek และ T3 Code อยู่เคียงข้างกัน แต่ละตัวมีไทล์ เซสชัน และพื้นที่ทำงานของตัวเอง"
+
 #: src/app/+not-found.tsx
 msgid "Opening"
 msgstr "กำลังเปิด"
@@ -3612,10 +3646,6 @@ msgstr "อื่นๆ"
 #: src/components/agent-context-sheet.tsx
 msgid "Output"
 msgstr "เอาต์พุต"
-
-#: src/components/launch-intro.tsx
-msgid "Output lands on a hardware-accelerated terminal grid with instant-response keys and full tmux control. nvim, less and REPLs behave."
-msgstr "แสดงผลบนตารางเทอร์มินัลเร่งความเร็วด้วยฮาร์ดแวร์ พร้อมแถวคีย์ที่ตอบสนองทันทีและการควบคุม tmux สำหรับ nvim, less และ REPL"
 
 #: src/components/home-launch-actions.tsx
 msgid "Pair a gateway"
@@ -4360,8 +4390,8 @@ msgid "Scan the Gateway’s QR code, or enter its address."
 msgstr "สแกน QR code ของ Gateway หรือพิมพ์ที่อยู่"
 
 #: src/components/launch-intro.tsx
-msgid "Scan the QR code of a Gateway running on your own computer. No account, no relay, end-to-end encrypted, and 32 handcrafted themes to make it yours."
-msgstr "สแกนรหัส QR ของ Gateway ที่ทำงานบนคอมพิวเตอร์ของคุณเพื่อเชื่อมต่อโดยตรง ไม่มีบัญชี ไม่ต้องผ่านรีเลย์ เข้ารหัสแบบต้นทางถึงปลายทาง พร้อม 32 ธีมพิเศษ"
+msgid "Scan the QR code of a Gateway on your own computer. No account, no relay, end-to-end encrypted."
+msgstr "สแกนคิวอาร์โค้ดของ Gateway บนคอมพิวเตอร์ของคุณเอง ไม่ต้องมีบัญชี ไม่มีรีเลย์ เข้ารหัสตั้งแต่ต้นทางถึงปลายทาง"
 
 #: src/components/pairing-camera.tsx
 msgid "Scanning needs a camera, which this browser does not offer."
@@ -4595,9 +4625,17 @@ msgstr "ตั้งค่าบนโฮสต์"
 msgid "Settings"
 msgstr "การตั้งค่า"
 
+#: src/components/launch-intro.tsx
+msgid "Several agents, one computer"
+msgstr "หลายเอเจนต์ ในคอมพิวเตอร์เครื่องเดียว"
+
 #: src/components/agent-tool-card.tsx
 msgid "Several answers"
 msgstr "หลายคำตอบ"
+
+#: src/lib/release-notes.ts
+msgid "Several coding agents on one computer: OpenCode, DeepSeek and T3 Code each get their own tile on Home, with their own sessions and workbench."
+msgstr "เอเจนต์เขียนโค้ดหลายตัวบนคอมพิวเตอร์เครื่องเดียว: OpenCode, DeepSeek และ T3 Code มีไทล์ของตัวเองในหน้าแรก พร้อมเซสชันและพื้นที่ทำงานของตัวเอง"
 
 #: src/i18n/labels.ts
 msgctxt "agent slash command"
@@ -5367,6 +5405,10 @@ msgstr "คำขอสร้างเทอร์มินัลอาจสำ
 msgid "The terminal, and code in a reply."
 msgstr "เทอร์มินัล และโค้ดในคำตอบ"
 
+#: src/lib/release-notes.ts
+msgid "The terminal, the opening and Home artwork draw with a new GPU renderer, and theme and font changes have transitions of their own."
+msgstr "เทอร์มินัล ฉากเปิด และภาพประกอบหน้าแรกวาดด้วยตัวเรนเดอร์ GPU ใหม่ และการเปลี่ยนธีมและฟอนต์ก็มีทรานซิชันของตัวเอง"
+
 #: src/components/custom-theme-library.tsx
 msgid "The theme will be removed from this device"
 msgstr "ธีมจะถูกลบจากอุปกรณ์นี้"
@@ -5984,8 +6026,8 @@ msgid "What's new"
 msgstr "มีอะไรใหม่"
 
 #: src/components/launch-intro.tsx
-msgid "When an agent halts for confirmation, the prompt arrives as a push. Approve or deny from the Lock Screen, and track live progress on Dynamic Island and widgets."
-msgstr "เมื่อเอเจนต์หยุดเพื่อขอการยืนยัน ข้อความจะแจ้งเตือนมายังหน้าจอล็อก อนุมัติหรือปฏิเสธได้ทันที พร้อมติดตามความคืบหน้าผ่าน Dynamic Island และวิดเจ็ต"
+msgid "When an agent stops for a decision, it arrives as a push. Approve or deny from the Lock Screen."
+msgstr "เมื่อเอเจนต์หยุดรอการตัดสินใจ คำถามจะมาเป็นการแจ้งเตือนแบบพุช อนุมัติหรือปฏิเสธได้จากหน้าจอล็อก"
 
 #: src/components/away-digest-card.tsx
 msgid "While you were away"

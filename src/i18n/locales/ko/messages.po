@@ -376,6 +376,10 @@ msgstr "시뮬레이터는 보기만 하는 것이 아니라 조작할 수도 �
 msgid "A simulator that was shut down can take a minute to come up."
 msgstr "종료되어 있던 시뮬레이터는 시작하는 데 1분 정도 걸릴 수 있습니다"
 
+#: src/components/launch-intro.tsx
+msgid "A spread on the Pad"
+msgstr "태블릿에서는 펼친 두 페이지로"
+
 #: src/components/server-terminal-workspace.tsx
 msgid "A terminal was created. Check it before sending again — your task is still here."
 msgstr "터미널이 생성되었습니다. 다시 보내기 전에 확인하세요. 작업 내용은 그대로 남아 있습니다"
@@ -463,7 +467,6 @@ msgid "Agent panes open in"
 msgstr "에이전트 패널 기본 보기"
 
 #: src/components/app-drawer-content.tsx
-#: src/components/launch-intro.tsx
 #: src/components/settings-servers.tsx
 msgid "Agents"
 msgstr "에이전트"
@@ -616,8 +619,8 @@ msgid "Approval required"
 msgstr "승인 필요"
 
 #: src/lib/release-notes.ts
-msgid "Approvals and status changes for every session now arrive over one live connection per computer, not only for the session you have open."
-msgstr "모든 세션의 승인과 상태 변경이 열려 있는 세션만이 아니라 컴퓨터당 하나의 실시간 연결로 도착합니다"
+msgid "Approvals and status changes for every session arrive over one live connection per computer, not only for the session you have open."
+msgstr "컴퓨터마다 하나의 실시간 연결로, 열어 둔 세션뿐 아니라 모든 세션의 승인 요청과 상태 변화가 도착합니다"
 
 #: src/components/agent-mode-sheet.tsx
 msgid "Architecture, design proposals, step-by-step roadmaps."
@@ -900,6 +903,10 @@ msgstr "변경됨"
 #: src/components/changes-sheet.tsx
 msgid "Changes"
 msgstr "변경 사항"
+
+#: src/components/launch-intro.tsx
+msgid "Changes as a tree"
+msgstr "변경 사항을 트리로"
 
 #: src/components/theme-appearance-settings.tsx
 msgid "Changes coloured backgrounds, not text, icons or artwork"
@@ -1295,10 +1302,6 @@ msgstr "사용한 컨텍스트"
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Continue"
 msgstr "계속"
-
-#: src/lib/release-notes.ts
-msgid "Continue and the offline and empty-state messages now name the agent they mean, and a new session asks which agent when more than one is ready."
-msgstr "이어하기와 오프라인·빈 상태 메시지가 이제 해당 에이전트의 이름을 표시하며, 준비된 에이전트가 둘 이상이면 새 세션에서 어떤 에이전트를 쓸지 묻습니다"
 
 #: src/i18n/labels.ts
 msgid "Continue task"
@@ -1785,6 +1788,14 @@ msgstr "세션을 업데이트하지 못했습니다"
 msgid "Could not upload the file."
 msgstr "파일을 업로드하지 못했습니다"
 
+#: src/components/launch-intro.tsx
+msgid "Cover Courier comes built in. Install a theme or pick a colour pack, and the whole app follows."
+msgstr "Cover Courier가 기본 내장되어 있습니다. 테마를 설치하거나 색상 팩을 고르면 앱 전체가 따라 바뀝니다"
+
+#: src/lib/release-notes.ts
+msgid "Cover Courier is built in and worn until you pick a theme, and Interface background opacity now reaches every sheet and notice."
+msgstr "Cover Courier가 내장되어 테마를 고르기 전까지 기본으로 쓰이며, 화면 배경 불투명도가 이제 모든 시트와 알림에 적용됩니다"
+
 #: src/components/agent-worktree-sheet.tsx
 msgid "Create and move"
 msgstr "생성하고 이동"
@@ -1923,10 +1934,6 @@ msgstr "기기 인증"
 msgid "Diff summary"
 msgstr "변경 요약"
 
-#: src/components/launch-intro.tsx
-msgid "Direct control for autonomous coding agents. Follow real-time reasoning, inspect code diffs, review step-by-step todos, and guide tasks on the go."
-msgstr "자율 코딩 에이전트를 모바일에서 직접 제어하세요. 실시간 추론 스트림, 코드 변경 사항, 작업 체크리스트를 확인하고 관리합니다"
-
 #: src/components/dev-home-ambient-controls.tsx
 msgid "Direction"
 msgstr "방향"
@@ -2039,9 +2046,9 @@ msgstr "다운로드 중…"
 msgid "Draft the notes for the next build"
 msgstr "다음 빌드의 릴리스 노트 초안을 작성합니다"
 
-#: src/lib/release-notes.ts
-msgid "Each agent's screen shows only what it supports, and the model picker groups models by provider and greys out the ones you are not signed in to."
-msgstr "각 에이전트 화면에는 지원하는 기능만 표시되며, 모델 선택기는 모델을 제공자별로 묶고 로그인하지 않은 제공자는 흐리게 표시합니다"
+#: src/components/launch-intro.tsx
+msgid "Drawn on the GPU with Skia, with real keys and full tmux control. nvim, less and REPLs behave."
+msgstr "Skia로 GPU에서 그리고, 진짜 키 입력과 tmux를 완전히 제어합니다. nvim, less, REPL도 제대로 동작합니다"
 
 #. placeholder {0}: server.label
 #: src/components/settings-servers.tsx
@@ -2134,6 +2141,14 @@ msgstr "Escape 두 번"
 #: src/components/agent-context-sheet.tsx
 msgid "Estimated cost"
 msgstr "예상 비용"
+
+#: src/components/launch-intro.tsx
+msgid "Every agent on your computer, in your hand."
+msgstr "내 컴퓨터의 모든 에이전트를 손안에"
+
+#: src/components/launch-intro.tsx
+msgid "Every changed file in one folder tree with line totals. Open a patch, or discard a file from its menu."
+msgstr "변경된 모든 파일을 줄 수 합계와 함께 하나의 폴더 트리로 보여 줍니다. 패치를 열거나 메뉴에서 파일을 버릴 수 있습니다"
 
 #: src/components/settings-font-sheet.tsx
 msgid "Every screen in the app."
@@ -2254,6 +2269,10 @@ msgstr "첫 지시"
 #: src/components/custom-theme-library.tsx
 msgid "Fix text contrast before applying this theme"
 msgstr "이 테마를 적용하기 전에 텍스트 대비를 조정하세요"
+
+#: src/lib/release-notes.ts
+msgid "Fixes for terminals that stayed on their loading logo, flickered under full-screen programs or froze under a sheet."
+msgstr "터미널이 로딩 로고에서 멈추거나, 전체 화면 프로그램에서 깜박이거나, 시트 아래에서 멈추던 문제를 고쳤습니다"
 
 #: src/components/pane-chat-view.tsx
 msgid "Fold the tool steps away"
@@ -2857,6 +2876,10 @@ msgstr "Mac mini · 사무실"
 msgid "Machines"
 msgstr "머신"
 
+#: src/components/launch-intro.tsx
+msgid "Make it yours"
+msgstr "나만의 스타일로"
+
 #: src/components/home-overview.tsx
 msgid "Manage"
 msgstr "관리"
@@ -2999,9 +3022,9 @@ msgstr "Muqun에는 자체 글꼴이 없습니다. 추가하면 이 기기에 �
 msgid "Muqun is locked"
 msgstr "Muqun 잠김"
 
-#: src/lib/release-notes.ts
-msgid "Muqun now works with several coding agents on one computer. OpenCode, DeepSeek and T3 Code each get their own tile on Home, with their own mark."
-msgstr "Muqun이 한 컴퓨터의 여러 코딩 에이전트와 함께 동작합니다. OpenCode, DeepSeek, T3 Code가 각자의 마크와 함께 홈에 별도 타일로 표시됩니다"
+#: src/components/launch-intro.tsx
+msgid "Muqun pairs with a Gateway on your own machine and puts its coding agents and terminals on your phone or tablet."
+msgstr "Muqun은 내 컴퓨터의 Gateway와 페어링해 그곳의 코딩 에이전트와 터미널을 휴대폰이나 태블릿으로 가져옵니다"
 
 #: src/components/pairing-camera.tsx
 msgid "Muqun reads the Gateway's QR code through the camera. Nothing is recorded."
@@ -3107,7 +3130,6 @@ msgid "New worktree…"
 msgstr "새 워크트리…"
 
 #: src/components/agent-composer.tsx
-#: src/components/launch-intro.tsx
 msgid "Next"
 msgstr "다음"
 
@@ -3400,8 +3422,16 @@ msgid "On"
 msgstr "켜짐"
 
 #: src/lib/release-notes.ts
-msgid "On a tablet, Continue rows now open their terminal panes. An older Gateway keeps working with OpenCode as before."
-msgstr "태블릿에서 이어하기 항목이 이제 해당 터미널 패널을 엽니다. 이전 Gateway도 예전처럼 OpenCode로 계속 동작합니다"
+msgid "On a tablet, Home is a two-page spread, work sheets fill the screen, and the on-screen keyboard is a whole keyboard with F-keys and sticky modifiers."
+msgstr "태블릿에서는 홈이 두 페이지로 펼쳐지고, 작업 시트가 전체 화면을 채우며, 화면 키보드는 F 키와 고정 보조 키를 갖춘 완전한 키보드가 됩니다"
+
+#: src/components/launch-intro.tsx
+msgid "On a tablet, Home opens as a two-page spread and the on-screen keyboard is a whole keyboard."
+msgstr "태블릿에서는 홈이 두 페이지로 펼쳐지고, 화면 키보드도 완전한 키보드가 됩니다"
+
+#: src/lib/release-notes.ts
+msgid "One Changes sheet for terminals and agent sessions: the changed files as a tree with line totals, the branch under the title, and Discard on a file's menu."
+msgstr "터미널과 에이전트 세션이 하나의 변경 사항 시트를 함께 씁니다. 변경된 파일은 줄 수와 함께 트리로, 제목 아래에는 브랜치가, 파일 메뉴에는 버리기가 있습니다"
 
 #: src/i18n/labels.ts
 msgid "Online"
@@ -3562,6 +3592,10 @@ msgstr "열어서 현재 상태를 확인하세요"
 msgid "Open workspace {0}, {panelCount, plural, one {# running} other {# running}}. Long press to close."
 msgstr "작업 공간 {0} 열기, {panelCount, plural, one {# 실행 중} other {# 실행 중}}. 길게 눌러 닫기"
 
+#: src/components/launch-intro.tsx
+msgid "OpenCode, DeepSeek and T3 Code side by side, each with its own tile, sessions and workbench."
+msgstr "OpenCode, DeepSeek, T3 Code를 나란히 사용하세요. 각자 전용 타일, 세션, 작업대가 있습니다"
+
 #: src/app/+not-found.tsx
 msgid "Opening"
 msgstr "여는 중"
@@ -3612,10 +3646,6 @@ msgstr "기타"
 #: src/components/agent-context-sheet.tsx
 msgid "Output"
 msgstr "출력"
-
-#: src/components/launch-intro.tsx
-msgid "Output lands on a hardware-accelerated terminal grid with instant-response keys and full tmux control. nvim, less and REPLs behave."
-msgstr "하드웨어 가속 터미널 그리드와 즉각 반응하는 키보드 바, 강력한 tmux 세션 관리를 제공합니다. nvim, less 및 REPL이 완벽하게 작동합니다"
 
 #: src/components/home-launch-actions.tsx
 msgid "Pair a gateway"
@@ -4360,8 +4390,8 @@ msgid "Scan the Gateway’s QR code, or enter its address."
 msgstr "Gateway의 QR 코드를 스캔하거나 주소를 입력하세요"
 
 #: src/components/launch-intro.tsx
-msgid "Scan the QR code of a Gateway running on your own computer. No account, no relay, end-to-end encrypted, and 32 handcrafted themes to make it yours."
-msgstr "내 컴퓨터에서 실행 중인 Gateway의 QR 코드를 스캔하여 직접 연결하세요. 계정도, 클라우드 중계도 없으며, 종단간 암호화와 32가지 전용 테마를 제공합니다"
+msgid "Scan the QR code of a Gateway on your own computer. No account, no relay, end-to-end encrypted."
+msgstr "내 컴퓨터에서 실행 중인 Gateway의 QR 코드를 스캔하세요. 계정도, 중계 서버도 없이 종단 간 암호화됩니다"
 
 #: src/components/pairing-camera.tsx
 msgid "Scanning needs a camera, which this browser does not offer."
@@ -4595,9 +4625,17 @@ msgstr "호스트에서 설정하세요"
 msgid "Settings"
 msgstr "설정"
 
+#: src/components/launch-intro.tsx
+msgid "Several agents, one computer"
+msgstr "한 컴퓨터에 여러 에이전트"
+
 #: src/components/agent-tool-card.tsx
 msgid "Several answers"
 msgstr "복수 응답"
+
+#: src/lib/release-notes.ts
+msgid "Several coding agents on one computer: OpenCode, DeepSeek and T3 Code each get their own tile on Home, with their own sessions and workbench."
+msgstr "한 컴퓨터에서 여러 코딩 에이전트를 쓸 수 있습니다. OpenCode, DeepSeek, T3 Code가 홈에 각자의 타일을 갖고, 세션과 작업대도 따로 둡니다"
 
 #: src/i18n/labels.ts
 msgctxt "agent slash command"
@@ -5367,6 +5405,10 @@ msgstr "터미널 요청이 성공했을 수 있습니다. 다시 시도하기 �
 msgid "The terminal, and code in a reply."
 msgstr "터미널과 답변 속 코드"
 
+#: src/lib/release-notes.ts
+msgid "The terminal, the opening and Home artwork draw with a new GPU renderer, and theme and font changes have transitions of their own."
+msgstr "터미널, 오프닝, 홈 아트워크를 새 GPU 렌더러로 그리고, 테마와 글꼴 변경에도 각자의 전환 효과가 생겼습니다"
+
 #: src/components/custom-theme-library.tsx
 msgid "The theme will be removed from this device"
 msgstr "이 기기에서 테마가 삭제됩니다"
@@ -5984,8 +6026,8 @@ msgid "What's new"
 msgstr "새로운 기능"
 
 #: src/components/launch-intro.tsx
-msgid "When an agent halts for confirmation, the prompt arrives as a push. Approve or deny from the Lock Screen, and track live progress on Dynamic Island and widgets."
-msgstr "에이전트가 승인을 요청하면 알림이 잠금 화면으로 바로 전달됩니다. 탭 한 번으로 승인 또는 거부하고, 라이브 액티비티와 위젯으로 실시간 진행 상황을 확인하세요"
+msgid "When an agent stops for a decision, it arrives as a push. Approve or deny from the Lock Screen."
+msgstr "에이전트가 결정을 기다리며 멈추면 푸시로 알려 드립니다. 잠금 화면에서 바로 승인하거나 거부하세요"
 
 #: src/components/away-digest-card.tsx
 msgid "While you were away"
