@@ -473,10 +473,10 @@ describe('a pane narrower than the phone is drawn to fill it', () => {
     // a Claude Code pane and an nvim pane in the same narrow Herdr column
     // must not open at two sizes. Measured on herdr 0.8.2: three columns
     // side by side gave grids of 64, 32 and 31; on this phone the 32- and
-    // 31-column panes both fit under the cap, and a 30-column pane meets it.
+    // 31-column panes both fit under the cap, and a 22-column pane meets it.
     expect(terminalFitToWidthScale(PHONE, 32)).toBeCloseTo(fill(32), 10);
     expect(terminalFitToWidthScale(PHONE, 31)).toBeCloseTo(fill(31), 10);
-    expect(terminalFitToWidthScale(PHONE, 30)).toBe(TERMINAL_MAX_FIT_SCALE);
+    expect(terminalFitToWidthScale(PHONE, 22)).toBe(TERMINAL_MAX_FIT_SCALE);
   });
 
   test('a pane the gateway reported no width for is not fitted', () => {
@@ -536,7 +536,7 @@ describe('a pane narrower than the phone is drawn to fill it', () => {
     pane.openPane();
     expect(pane.scale).toBeCloseTo(fill(42), 10);
     // Narrow enough and the cap answers instead, still with nothing stored.
-    pane.resplit(24);
+    pane.resplit(20);
     pane.openPane();
     expect(pane.scale).toBe(TERMINAL_MAX_FIT_SCALE);
     // And widened past the phone: back to 1:1, with nothing to invalidate.

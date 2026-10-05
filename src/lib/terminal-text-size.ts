@@ -69,7 +69,7 @@ export const TERMINAL_TEXT_SIZE_NAMES: Record<TerminalTextSize, string> = {
 export const TERMINAL_MIN_SCALE = 0.62;
 
 /** How far in a pinch may zoom -- roughly three words to a line at 1.8. */
-export const TERMINAL_MAX_SCALE = 1.8;
+export const TERMINAL_MAX_SCALE = 2.4;
 
 /**
  * How far the fit below may zoom a pane that is narrower than the phone's grid.
