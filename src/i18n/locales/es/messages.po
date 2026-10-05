@@ -2549,6 +2549,15 @@ msgstr "Inactivo"
 msgid "If this continues, restart the app or check the app installation"
 msgstr "Si el problema persiste, reinicia la app o comprueba su instalación"
 
+#: src/components/agent-message-block.tsx
+msgid "Image unavailable"
+msgstr "Imagen no disponible"
+
+#. placeholder {0}: alt.trim()
+#: src/components/agent-message-block.tsx
+msgid "Image unavailable: {0}"
+msgstr "Imagen no disponible: {0}"
+
 #: src/components/session-artifacts.tsx
 #: src/components/settings-storage.tsx
 msgid "Images"

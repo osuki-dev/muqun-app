@@ -2549,6 +2549,15 @@ msgstr "待機"
 msgid "If this continues, restart the app or check the app installation"
 msgstr "問題が続く場合は、アプリを再起動するか、インストール状態を確認してください"
 
+#: src/components/agent-message-block.tsx
+msgid "Image unavailable"
+msgstr "画像を表示できません"
+
+#. placeholder {0}: alt.trim()
+#: src/components/agent-message-block.tsx
+msgid "Image unavailable: {0}"
+msgstr "画像を表示できません：{0}"
+
 #: src/components/session-artifacts.tsx
 #: src/components/settings-storage.tsx
 msgid "Images"

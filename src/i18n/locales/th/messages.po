@@ -2549,6 +2549,15 @@ msgstr "ว่าง"
 msgid "If this continues, restart the app or check the app installation"
 msgstr "หากยังเกิดปัญหา ให้เริ่มแอปใหม่หรือตรวจสอบการติดตั้งแอป"
 
+#: src/components/agent-message-block.tsx
+msgid "Image unavailable"
+msgstr "ไม่สามารถแสดงรูปภาพ"
+
+#. placeholder {0}: alt.trim()
+#: src/components/agent-message-block.tsx
+msgid "Image unavailable: {0}"
+msgstr "ไม่สามารถแสดงรูปภาพ: {0}"
+
 #: src/components/session-artifacts.tsx
 #: src/components/settings-storage.tsx
 msgid "Images"
