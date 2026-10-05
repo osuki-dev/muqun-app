@@ -35,6 +35,7 @@ import Animated, {
   useAnimatedStyle,
   useSharedValue,
   cancelAnimation,
+  useReducedMotion,
   withRepeat,
   withSequence,
   withTiming,
@@ -65,6 +66,7 @@ import {
   type FileMentionTrigger,
 } from '@/lib/file-mentions';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
+import { useAppActive } from '@/hooks/use-app-active';
 import { useInterfaceFontFamily } from '@/hooks/use-user-fonts';
 import { useAttachmentUploads } from '@/hooks/use-attachment-uploads';
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';
@@ -95,7 +97,7 @@ import {
   listAgentFiles,
   inboxItemText,
   type AgentContextUsage,
-  type AgentInfo,
+  type ModeInfo,
   type CommandInfo,
   type InboxItem,
   type AgentProject,
@@ -110,6 +112,56 @@ import {
 import { AGENT_TYPE } from '@/constants/agent-type';
 import { settleAfter } from '@/lib/compiler-safe-control-flow';
 
+/** What a root's subtasks are doing; `blocked` ones are waiting on the reader. */
+export interface SubtaskActivity {
+  running: number;
+  blocked: number;
+}
+
+/**
+ * The fork on a root chip. It breathes while a subtask runs, in the attention
+ * colour while one waits on the reader, and is still otherwise. Under reduce
+ * motion, or with the app in the background, the state is colour alone.
+ */
+function TreeMark({
+  color,
+  state,
+  testID,
+}: {
+  color: string;
+  state: 'idle' | 'running' | 'waiting';
+  testID?: string;
+}) {
+  const theme = useThemeTokens();
+  const reduceMotion = useReducedMotion();
+  const appActive = useAppActive();
+  const animate = state !== 'idle' && !reduceMotion && appActive;
+  const glow = useSharedValue(1);
+  useEffect(() => {
+    if (!animate) {
+      cancelAnimation(glow);
+      glow.set(1);
+      return;
+    }
+    glow.set(
+      withRepeat(withSequence(withTiming(0.35, timing('long')), withTiming(1, timing('long'))), -1)
+    );
+    return () => cancelAnimation(glow);
+  }, [animate, glow]);
+  const style = useAnimatedStyle(() => ({ opacity: glow.value }));
+  const tone =
+    state === 'waiting'
+      ? theme.colors.warning
+      : state === 'running' && reduceMotion
+        ? theme.colors.info
+        : color;
+  return (
+    <Animated.View testID={testID} style={style}>
+      <GitFork size={13} color={tone} />
+    </Animated.View>
+  );
+}
+
 /**
  * One root in Row 1. An inactive root selects; the root already on screen opens
  * its known descendants. Untitled sessions never show their raw id, and titles
@@ -119,23 +171,27 @@ const SessionChip = memo(function SessionChip({
   node,
   active,
   current,
-  fallbackAgent,
-  nameOfAgent,
+  lead,
   onPress,
   onOpenTree,
   onMeasure,
+  subtaskActivity,
 }: {
   node: SessionNode;
   active: boolean;
   /** This root is the session on screen, not merely a highlighted ancestor. */
   current: boolean;
-  fallbackAgent?: string;
-  /** An agent's id to the name the host gave it: `plan` to `Plan`. */
-  nameOfAgent: (id: string) => string;
+  /**
+   * What the chip leads with: the mode, or another agent's name, or nothing.
+   * See `lib/agent-session-chip.ts`.
+   */
+  lead?: string;
   onPress: (asid: string) => void;
   onOpenTree?: (asid: string) => void;
   /** Where this chip sits in the strip, so the strip can bring it into view. */
   onMeasure?: (asid: string, x: number, width: number) => void;
+  /** What the sessions under this root are doing, for its tree mark. */
+  subtaskActivity?: SubtaskActivity | undefined;
 }) {
   const { t } = useLingui();
   const theme = useThemeTokens();
@@ -143,10 +199,6 @@ const SessionChip = memo(function SessionChip({
   const surfaceBackground = useSurfaceBackground();
 
   const session = node.session;
-  // The name the host publishes, which is what the agent sheet lists. The chip
-  // drew the id, so the same agent read "Plan" in the list and "plan" here.
-  const agentId = session.agent || fallbackAgent || 'build';
-  const agentName = agentId ? nameOfAgent(agentId) : t`subagent`;
   const titled = hasRealSessionTitle(session);
   // Untitled reads as untitled; the time is the caption a listing shows, not
   // the name a chip stands under.
@@ -154,6 +206,8 @@ const SessionChip = memo(function SessionChip({
   // The gateway's two numbers, and nothing else: a chip never says "unread"
   // because this app thought something had happened over there.
   const unread = isSessionUnread(session);
+  const running = subtaskActivity?.running ?? 0;
+  const waiting = subtaskActivity?.blocked ?? 0;
   const pressSession = () => {
     if (current && node.hasChildren && onOpenTree) {
       onOpenTree(session.asid);
@@ -185,8 +239,12 @@ const SessionChip = memo(function SessionChip({
         }}
         accessibilityLabel={
           unread
-            ? t`${agentName}: ${title} — finished while you were away`
-            : `${agentName}: ${title}`
+            ? lead
+              ? t`${lead}: ${title} — finished while you were away`
+              : t`${title} — finished while you were away`
+            : lead
+              ? `${lead}: ${title}`
+              : title
         }
         style={[
           styles.sessionChip,
@@ -207,23 +265,27 @@ const SessionChip = memo(function SessionChip({
             {...(active ? { tone: theme.colors.onPrimary } : {})}
           />
         ) : null}
-        {/* `agentName` is whatever the host called the agent, so it can be
-            `code-reviewer-specialist`. It gives way before the title does:
+        {/* `lead` is whatever the host called the mode or the agent, so it can
+            be `code-reviewer-specialist`. It gives way before the title does:
             the title is what tells two sessions apart. */}
-        <Text
-          variant="caption"
-          weight="semibold"
-          numberOfLines={1}
-          color={active ? theme.colors.onPrimary : theme.colors.primary}
-          style={styles.sessionChipAgentBadge}>
-          {agentName}
-        </Text>
-        <Text
-          variant="caption"
-          color={active ? withAlpha(theme.colors.onPrimary, 0.6) : theme.colors.textMuted}
-          style={styles.sessionChipDot}>
-          •
-        </Text>
+        {lead ? (
+          <>
+            <Text
+              variant="caption"
+              weight="semibold"
+              numberOfLines={1}
+              color={active ? theme.colors.onPrimary : theme.colors.primary}
+              style={styles.sessionChipAgentBadge}>
+              {lead}
+            </Text>
+            <Text
+              variant="caption"
+              color={active ? withAlpha(theme.colors.onPrimary, 0.6) : theme.colors.textMuted}
+              style={styles.sessionChipDot}>
+              •
+            </Text>
+          </>
+        ) : null}
         {/* Keyed on the title so the arriving auto-title fades in where the
             placeholder was, rather than replacing it between two frames. */}
         <Animated.View key={title} entering={fadeIn('short')} style={styles.sessionChipTitleSlot}>
@@ -239,7 +301,11 @@ const SessionChip = memo(function SessionChip({
           </Text>
         </Animated.View>
         {node.hasChildren ? (
-          <GitFork size={13} color={active ? theme.colors.onPrimary : theme.colors.primary} />
+          <TreeMark
+            testID={`agent-composer-session-tree-mark-${session.asid}`}
+            color={active ? theme.colors.onPrimary : theme.colors.primary}
+            state={waiting > 0 ? 'waiting' : running > 0 ? 'running' : 'idle'}
+          />
         ) : null}
       </PressableScale>
     </View>
@@ -252,9 +318,11 @@ export interface AgentComposerProps {
   sessionStrip?: readonly SessionNode[];
   selectedRootAsid?: string;
   onOpenSessionTree?: (asid: string) => void;
+  /** What the selected root's descendants are doing, for its chip's tree mark. */
+  rootSubtaskActivity?: SubtaskActivity;
   /** The session above the one on screen, for the way back out of a subagent. */
   parentSession?: AgentSessionInfo;
-  availableAgents?: AgentInfo[];
+  availableAgents?: ModeInfo[];
   skills?: SkillInfo[];
   sessionId?: string;
   activeAsid?: string;
@@ -322,8 +390,19 @@ export interface AgentComposerProps {
   onCreateNewSession?: () => void;
   onOpenModelSheet?: () => void;
   onOpenModeSheet?: () => void;
+  /**
+   * Whether the session's agent has modes: the mode chip is drawn only then.
+   * Absent means yes.
+   */
+  canPickMode?: boolean;
+  /** Whether the session's agent takes attachments. Absent means yes. */
+  canAttach?: boolean;
+  /** What a session chip leads with; see `lib/agent-session-chip.ts`. */
+  sessionLead?: (session: AgentSessionInfo) => string | undefined;
   onOpenDiffSheet: () => void;
   disabled?: boolean;
+  /** The agent's display name, for the offline placeholder. */
+  agentName?: string;
   onOpenSessionsSheet?: () => void;
   onOpenTasksSheet?: () => void;
   /** How many running shells the Background tasks sheet can show. */
@@ -342,6 +421,8 @@ export interface AgentComposerProps {
   onInvokeSkill?: (skill: string, args: string) => Promise<boolean | void>;
   /** One of the app's own commands, dispatched by the screen that owns them. */
   onClientCommand?: (name: AgentClientCommandId) => void;
+  /** The app's own commands the session's agent cannot answer; not listed. */
+  hiddenClientCommands?: readonly AgentClientCommandId[];
   /** What is waiting behind the current turn. */
   inbox?: readonly InboxItem[];
   onCancelInboxItem?: (inboxId: string) => void;
@@ -373,6 +454,7 @@ export const AgentComposer = memo(function AgentComposer({
   sessionStrip = EMPTY_STRIP,
   selectedRootAsid,
   onOpenSessionTree,
+  rootSubtaskActivity,
   parentSession,
   availableAgents: availableAgentsProp,
   skills = [],
@@ -404,8 +486,12 @@ export const AgentComposer = memo(function AgentComposer({
   onSelectAgentMode,
   onCreateNewSession,
   disabled,
+  agentName,
   onOpenModelSheet,
   onOpenModeSheet,
+  canPickMode = true,
+  canAttach = true,
+  sessionLead,
   onOpenDiffSheet,
   onOpenSessionsSheet,
   onOpenTasksSheet,
@@ -415,6 +501,7 @@ export const AgentComposer = memo(function AgentComposer({
   onRunCommand,
   onInvokeSkill,
   onClientCommand,
+  hiddenClientCommands = NO_HIDDEN_COMMANDS,
   inbox = EMPTY_INBOX,
   onCancelInboxItem,
   onSetInboxDelivery,
@@ -525,13 +612,15 @@ export const AgentComposer = memo(function AgentComposer({
    */
   const builtinCommands: PaneSlashCommand[] = useMemo(
     () =>
-      AGENT_CLIENT_COMMANDS.map((command) => ({
-        name: command.name,
-        description: _(agentClientCommandDescription[command.id]),
-        argsHint: '',
-        source: 'builtin' as const,
-      })),
-    [_]
+      AGENT_CLIENT_COMMANDS.filter((command) => !hiddenClientCommands.includes(command.id)).map(
+        (command) => ({
+          name: command.name,
+          description: _(agentClientCommandDescription[command.id]),
+          argsHint: '',
+          source: 'builtin' as const,
+        })
+      ),
+    [_, hiddenClientCommands]
   );
 
   const serverCommands: PaneSlashCommand[] = useMemo(
@@ -541,7 +630,7 @@ export const AgentComposer = memo(function AgentComposer({
         const known = agentHostCommandDescription[key];
         return {
           name: command.name.startsWith('/') ? command.name : `/${command.name}`,
-          description: known ? _(known) : (command.description ?? command.agent ?? ''),
+          description: known ? _(known) : (command.description ?? command.mode ?? ''),
           argsHint: command.template ? '…' : '',
           source: 'workspace' as const,
         };
@@ -588,6 +677,7 @@ export const AgentComposer = memo(function AgentComposer({
       new Set(
         composerChipIds({
           canOpenSessions: Boolean(onOpenSessionsSheet),
+          canPickMode,
           canOpenModel: Boolean(onOpenModelSheet),
           taskCount: tasks?.length ?? 0,
           canOpenTasks: Boolean(onOpenTasksSheet),
@@ -601,6 +691,7 @@ export const AgentComposer = memo(function AgentComposer({
       ),
     [
       onOpenSessionsSheet,
+      canPickMode,
       onOpenModelSheet,
       tasks,
       onOpenTasksSheet,
@@ -1165,11 +1256,17 @@ export const AgentComposer = memo(function AgentComposer({
                     node={node}
                     active={node.session.asid === selectedRootAsid}
                     current={node.session.asid === activeAsid}
-                    {...(selectedAgent ? { fallbackAgent: selectedAgent } : {})}
-                    nameOfAgent={nameOfAgent}
+                    lead={
+                      sessionLead
+                        ? sessionLead(node.session)
+                        : nameOfAgent(node.session.mode || selectedAgent || 'build')
+                    }
                     onPress={handleSelectSession}
                     onOpenTree={onOpenSessionTree}
                     onMeasure={measureChip}
+                    subtaskActivity={
+                      node.session.asid === selectedRootAsid ? rootSubtaskActivity : undefined
+                    }
                   />
                 ))}
               </ScrollView>
@@ -1521,21 +1618,25 @@ export const AgentComposer = memo(function AgentComposer({
               <TerminalComposer
                 inputRef={inputRef}
                 leading={
-                  <ComposerAttachmentButton
-                    testID="agent-composer-attach"
-                    label={attachmentMenuOpen ? t`Close the attachment menu` : t`Attach a file`}
-                    expanded={attachmentMenuOpen}
-                    disabled={sending || disabled}
-                    onPress={() => setAttachmentMenuOpen((open) => !open)}
-                    size={16}
-                    color={attachmentMenuOpen ? theme.colors.primary : chromeText}
-                  />
+                  canAttach ? (
+                    <ComposerAttachmentButton
+                      testID="agent-composer-attach"
+                      label={attachmentMenuOpen ? t`Close the attachment menu` : t`Attach a file`}
+                      expanded={attachmentMenuOpen}
+                      disabled={sending || disabled}
+                      onPress={() => setAttachmentMenuOpen((open) => !open)}
+                      size={16}
+                      color={attachmentMenuOpen ? theme.colors.primary : chromeText}
+                    />
+                  ) : undefined
                 }
                 inputProps={{
                   value: text,
                   onChangeText: setText,
                   placeholder: disabled
-                    ? t`OpenCode service offline`
+                    ? agentName
+                      ? t`${agentName} is offline`
+                      : t`The agent is offline`
                     : t`Send a message, type / for commands, @ for files…`,
                   editable: !sending && !disabled,
                   testID: 'agent-composer-input',
@@ -1675,6 +1776,7 @@ const SESSION_CHIP_REVEAL_MARGIN = 24;
 const EMPTY_STRIP: readonly SessionNode[] = Object.freeze([]);
 const EMPTY_COMMANDS: readonly CommandInfo[] = Object.freeze([]);
 const EMPTY_INBOX: readonly InboxItem[] = Object.freeze([]);
+const NO_HIDDEN_COMMANDS: readonly AgentClientCommandId[] = Object.freeze([]);
 
 const styles = StyleSheet.create({
   dockOuter: {

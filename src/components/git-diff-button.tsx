@@ -10,6 +10,7 @@ import { Keyboard, StyleSheet, View } from 'react-native';
 import { PressableScale } from '@/components/pressable-scale';
 import { KEY_ROW_HEIGHT } from '@/constants/key-row';
 import { useGitRepoStatus } from '@/hooks/use-git-repo-status';
+import { gatewaySupportsPaneVcsFiles } from '@/lib/agent-protocol';
 import { badgeCount } from '@/lib/git-diff';
 
 /**
@@ -36,7 +37,6 @@ export function GitDiffButton({
   sessionId,
   paneId,
   cwd,
-  label,
   capabilities,
   disabled,
   background,
@@ -47,8 +47,6 @@ export function GitDiffButton({
   paneId: string;
   /** The pane's working directory: the cache key, and the whole question. */
   cwd: string | null | undefined;
-  /** The server's name, carried through to the sheet's subtitle. */
-  label: string;
   /** `health.capabilities`, as the workspace already holds it. */
   capabilities: readonly string[] | undefined | null;
   disabled?: boolean;
@@ -99,7 +97,11 @@ export function GitDiffButton({
         // See `artifacts-button.tsx`, where this was diagnosed.
         router.navigate({
           pathname: '/git-diff',
-          params: { sessionId, paneId, label, branch: repo.branch ?? '' },
+          params: {
+            sessionId,
+            paneId,
+            vcsFiles: gatewaySupportsPaneVcsFiles(capabilities) ? '1' : '0',
+          },
         } as unknown as Href);
       }}
       style={[

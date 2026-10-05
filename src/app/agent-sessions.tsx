@@ -1,9 +1,11 @@
 import { useRouter } from 'expo-router';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { AgentSessionsSheet } from '@/components/agent-sessions-sheet';
+import { canMoveSessionToWorktree } from '@/lib/agent-discovery';
 import { listAgentSessions, type AgentSessionInfo } from '@/lib/agent-session';
 import { useAgentSheetBridge } from '@/stores/agent-sheet-bridge';
+import { useAgents } from '@/stores/agents';
 
 /**
  * How many of the host's root sessions the sheet asks for.
@@ -36,6 +38,19 @@ export default function AgentSessionsScreen() {
   const models = useAgentSheetBridge((state) => state.models);
   const actions = useAgentSheetBridge((state) => state.actions);
   const sessionId = useAgentSheetBridge((state) => state.sessionId);
+  const serverId = useAgentSheetBridge((state) => state.serverId);
+  // Each row asks of its own session's agent: the list spans agents, and only
+  // one that reports `worktrees` can have a session moved into one.
+  const discoveredAgents = useAgents(
+    useCallback(
+      (state) => (serverId ? state.index.servers[serverId]?.agents?.agents : undefined),
+      [serverId]
+    )
+  );
+  const canMoveSession = useCallback(
+    (session: AgentSessionInfo) => canMoveSessionToWorktree(discoveredAgents, session.agent_id),
+    [discoveredAgents]
+  );
 
   // The bridge carries the workbench's list, which is one workspace's. "All
   // workspaces" showed exactly that list and so never showed another
@@ -97,6 +112,7 @@ export default function AgentSessionsScreen() {
       // Replaces rather than stacks: two form sheets deep is two grabbers and
       // one question, and the reader asked to go from this list to that one.
       onMoveSession={() => router.replace('/agent-worktree')}
+      canMoveSession={canMoveSession}
       onOpenProjects={() => router.replace({ pathname: '/agent-workspace', params: { sessionId } })}
       onClose={() => router.back()}
     />

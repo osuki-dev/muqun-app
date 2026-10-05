@@ -5,7 +5,7 @@
  * (`contentStyle: { backgroundColor: 'transparent' }` in `src/app/_layout.tsx`,
  * so the native sheet keeps its corners), which means a sheet has to paint its
  * own floor or it is a window onto whatever route it was opened from. Three
- * layers, and the order is the whole point:
+ * layers (and a fourth on frosted sheets), and the order is the whole point:
  *
  * 1. **The floor.** `colors.background`, opaque, always. A sheet is a new
  *    scene, and the reader's opacity slider is about the theme's own surfaces,
@@ -14,6 +14,14 @@
  *    slider, so lowering it reveals the theme's background colour rather than
  *    the previous route.
  * 3. **The wallpaper**, `shell.background`, at the strength the pack asked for.
+ * 4. **The frost**, on `frosted` sheets over a shell wallpaper: the tint again,
+ *    over the picture, at `sheetFrostAlpha(opacity)` -- the reader's slider,
+ *    never thinner than `SHEET_FROST_ALPHA` (both in
+ *    `@/theme/surface-background`, testable without React Native). At the
+ *    default 1 the sheet is opaque and the wallpaper does not show; a pack at
+ *    0.88-0.97 gets its own 3-12% of texture; a slider dragged under 0.82
+ *    stops at 0.82. It used to be a fixed 0.82, which made the slider do
+ *    nothing in a sheet and meant 1 was not opaque.
  *
  * The bug this component exists to end is that 2 and 3 were the other way
  * round. The settings sheet (since retired) and the two that copied it painted the
@@ -43,8 +51,9 @@ import { createContext, useContext, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { ThemeArtwork, useHasThemeArtwork } from '@/components/theme-artwork';
-import { useSurfaceBackground } from '@/hooks/use-surface-background';
+import { useSurfaceBackground, useSurfaceBackgroundOpacity } from '@/hooks/use-surface-background';
 import { withAlpha } from '@/lib/color';
+import { sheetFrostAlpha } from '@/theme/surface-background';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 
 /**
@@ -74,31 +83,17 @@ export type SheetGroundTint = 'surface' | 'background';
  */
 const SheetGroundTintContext = createContext<SheetGroundTint>('background');
 
-/**
- * How much of the sheet's own surface stands between the wallpaper and a row.
- *
- * A sheet is a reading surface laid over live content, and the picture is
- * decoration on it -- so the picture gets the remaining 18%, which is enough
- * for it to read as texture and not enough for it to read as a photograph
- * behind text. This is the frosted material the navigation pills already have,
- * arrived at by fill rather than by blur so both platforms land in the same
- * place: `GlassChrome`'s own Android fallback is a fill at 0.94 for the same
- * reason.
- *
- * It is a floor, not the reader's slider. The slider moves the tint *under* the
- * artwork, which is what it was always for; this layer is above the artwork and
- * is the app promising that a sheet is legible whatever pack is applied.
- */
-export const SHEET_FROST_ALPHA = 0.82;
-
 export function SheetGround({
   testID,
   tint = 'surface',
   frosted = false,
+  overdrawBottom = 0,
 }: {
   /** Kept so existing flows can still find the scene they already anchor on. */
   testID?: string;
   tint?: SheetGroundTint;
+  /** See `SheetFrame`'s prop of the same name. */
+  overdrawBottom?: number;
   /**
    * Whether the wallpaper is veiled to a reading surface.
    *
@@ -110,6 +105,7 @@ export function SheetGround({
 }) {
   const theme = useThemeTokens();
   const surfaceBackground = useSurfaceBackground();
+  const opacity = useSurfaceBackgroundOpacity();
   const hasShell = useHasThemeArtwork('shell.wallpaper');
   return (
     <View
@@ -117,7 +113,12 @@ export function SheetGround({
       pointerEvents="none"
       accessible={false}
       importantForAccessibility="no-hide-descendants"
-      style={StyleSheet.absoluteFill}>
+      style={
+        overdrawBottom > 0
+          ? [StyleSheet.absoluteFill, { bottom: -overdrawBottom }]
+          : StyleSheet.absoluteFill
+      }>
+      {/* Opacity audit: floor -- the sheet's opaque base (layer 1 above). */}
       <View style={[StyleSheet.absoluteFill, { backgroundColor: theme.colors.background }]} />
       <View
         style={[
@@ -133,7 +134,7 @@ export function SheetGround({
             {
               backgroundColor: withAlpha(
                 sheetGroundTintColor(theme.colors, tint),
-                SHEET_FROST_ALPHA
+                sheetFrostAlpha(opacity)
               ),
             },
           ]}
@@ -183,17 +184,29 @@ export function SheetFrame({
   testID,
   tint,
   frosted,
+  overdrawBottom,
   children,
 }: {
   testID?: string;
   tint?: SheetGroundTint;
   /** See `SheetGround`: the wallpaper veiled to a reading surface. */
   frosted?: boolean;
+  /**
+   * How far the ground paints past the bottom of what the sheet measured.
+   *
+   * A content-sized iOS form sheet is taller than its content: UIKit hangs the
+   * bottom safe area under a custom detent, and with the keyboard up that
+   * strip sits between the content and the keyboard. The route's background is
+   * transparent, so without this the screen underneath showed through it. The
+   * sheet clips to its own bounds, so painting further than needed is free.
+   * Costs no layout: the ground is absolutely positioned.
+   */
+  overdrawBottom?: number;
   children: ReactNode;
 }) {
   return (
     <SheetGroundTintContext.Provider value={tint ?? 'surface'}>
-      <SheetGround testID={testID} tint={tint} frosted={frosted} />
+      <SheetGround testID={testID} tint={tint} frosted={frosted} overdrawBottom={overdrawBottom} />
       {children}
     </SheetGroundTintContext.Provider>
   );

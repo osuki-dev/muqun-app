@@ -946,6 +946,7 @@ export function SshTerminalWorkspace({ hostId }: { hostId: string }) {
 
   if (!record) {
     return (
+      // Opacity audit: floor -- the screen's opaque base.
       <View style={[styles.screen, { backgroundColor: theme.colors.background }]}>
         <ThemeArtwork slot="shell.wallpaper" />
         <ScreenHeader title={t`SSH`} />
@@ -1122,6 +1123,7 @@ export function SshTerminalWorkspace({ hostId }: { hostId: string }) {
     </>
   );
 
+  // Opacity audit: floor -- the screen's opaque base.
   return (
     <View style={[styles.screen, { backgroundColor: theme.colors.background }]}>
       <ThemeArtwork slot="shell.wallpaper" />

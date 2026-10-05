@@ -796,6 +796,7 @@ const AssetRow = memo(function AssetRow({
         <View
           style={[
             styles.assetIcon,
+            // Opacity audit: decorative -- the matte behind a thumbnail image.
             thumbnail ? { backgroundColor: theme.colors.background } : null,
           ]}>
           {thumbnail ? (

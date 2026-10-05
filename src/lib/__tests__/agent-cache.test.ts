@@ -54,7 +54,7 @@ describe('agent cache storage and memory fallback', () => {
 
     const mockCatalog = {
       models: [{ id: 'gemini-3.8', name: 'Gemini', provider_id: 'google', enabled: true }],
-      agents: [{ id: 'build', name: 'Build' }],
+      modes: [{ id: 'build', name: 'Build' }],
       mcp: [],
       skills: [],
       providers: [],
@@ -85,7 +85,7 @@ describe('agent cache storage and memory fallback', () => {
     const key = 'catalog:test:touch';
     setCachedEntry(key, {
       models: [],
-      agents: [],
+      modes: [],
       mcp: [],
       skills: [],
       providers: [],

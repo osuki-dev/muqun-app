@@ -3,7 +3,7 @@ import { refreshHomeContinue } from '../home-continue-refresh';
 import type { HomeRecentEntry } from '../home-recents';
 
 const target = {
-  kind: 'opencode-session' as const,
+  kind: 'agent-session' as const,
   serverId: 'chosen',
   sessionId: 'dev',
   directory: '/work',
@@ -139,4 +139,70 @@ test('one failed gateway does not stop others, and leaving Home stops queued rea
     },
   });
   expect(stopped).toEqual(['a']);
+});
+
+test("the selected gateway's merged agent sessions are recorded and repair a recent's agent", async () => {
+  const paths: string[] = [];
+  const recorded: unknown[] = [];
+  const repaired: unknown[] = [];
+  await refreshHomeContinue({
+    serverId: 'chosen',
+    sessionId: 'dev',
+    entries,
+    read: async (path) => {
+      paths.push(path);
+      if (path.startsWith('/api/agent-sessions'))
+        return {
+          data: [
+            {
+              asid: 'agent-1',
+              agent_id: 't3',
+              title: 'Pong Response',
+              status: 'idle',
+              updated_ms: 5,
+            },
+            {
+              asid: 'agent-2',
+              agent_id: 'deepseek',
+              title: 'Other',
+              status: 'busy',
+              updated_ms: 9,
+            },
+          ],
+        };
+      if (path.includes('agent-sessions'))
+        return { data: [{ asid: 'agent-1', agent_id: 't3', title: 'Pong Response' }] };
+      return { items: [] };
+    },
+    isCurrent: () => true,
+    recordPanes: async () => {},
+    observe: async () => {},
+    updateTitle: async () => {},
+    repairAgent: async (target, agentId) => {
+      repaired.push({ asid: target.kind === 'agent-session' ? target.asid : '', agentId });
+    },
+    recordAgentSessions: (snapshot) => recorded.push(snapshot),
+  });
+  expect(paths).toContain('/api/agent-sessions?roots=true&limit=8&order=desc');
+  expect(recorded).toHaveLength(1);
+  expect(recorded[0]).toMatchObject({
+    serverId: 'chosen',
+    sessionId: 'dev',
+    sessions: [
+      { asid: 'agent-2', agentId: 'deepseek' },
+      { asid: 'agent-1', agentId: 't3' },
+    ],
+  });
+  expect(JSON.stringify(repaired)).toContain('{"asid":"agent-1","agentId":"t3"}');
+  expect(repaired.every((value) => (value as { agentId: string }).agentId === 't3')).toBe(true);
+});
+
+test('a gateway that is not selected lists no agent sessions', async () => {
+  const paths: string[] = [];
+  const { run } = setup(async (path) => {
+    paths.push(path);
+    return { items: [] };
+  });
+  await run();
+  expect(paths.some((path) => path.startsWith('/api/agent-sessions'))).toBe(false);
 });

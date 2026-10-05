@@ -1,9 +1,12 @@
+import { useLingui } from '@lingui/react/macro';
 import { resolveFontStyle, useThemeTokens, type ResolvedFontStyle } from '@osuki-dev/ui';
+import { useRouter } from 'expo-router';
 import { Text } from '@/components/text';
 import { Search, X } from 'lucide-react-native';
 import { useEffect, useRef, type ReactNode } from 'react';
 import {
   ActivityIndicator,
+  Platform,
   StyleSheet,
   View,
   type AccessibilityProps,
@@ -18,13 +21,15 @@ import Animated, {
   withSequence,
   withTiming,
 } from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSurfaceBackground } from '@/hooks/use-surface-background';
 
 import { PressableScale } from '@/components/pressable-scale';
 import { AGENT_TYPE } from '@/constants/agent-type';
 import { appChrome } from '@/constants/appearance';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { SheetFrame } from '@/components/sheet-ground';
-import { SheetHandle } from '@/components/sheet-route-frame';
+import { SheetHandle, useSheetIsFullscreen } from '@/components/sheet-route-frame';
 import { KeyboardInset } from '@/components/keyboard-inset';
 import { fadeIn, PRESET, timing } from '@/lib/motion';
 import { FontedTextInput } from '@/components/fonted-text-input';
@@ -55,6 +60,26 @@ import { FontedTextInput } from '@/components/fonted-text-input';
  * terminal composer's, so a sheet opened over the composer keeps the same left
  * edge.
  */
+/**
+ * The ground under a content-sized iOS sheet, past its content: the bottom
+ * safe area UIKit adds under a `fitToContents` detent. See `SheetFrame`.
+ * Android draws the sheet exactly as tall as it measured, so nothing there.
+ */
+const CONTENT_SIZED_OVERDRAW = Platform.OS === 'ios' ? 64 : 0;
+
+/**
+ * The room under a content-sized sheet's last control.
+ *
+ * On iOS UIKit already hangs the home indicator's safe area under a
+ * `fitToContents` detent, so the column only needs the ladder's section; the
+ * inset on top of that doubled it, and with the keyboard up the doubled strip
+ * read as a gap between the sheet and the keyboard. Android's sheet is exactly
+ * as tall as its content, so the column clears the gesture bar itself.
+ */
+export function contentSizedBottomPadding(bottomInset: number): number {
+  return Platform.OS === 'ios' ? SHEET_LADDER.section : Math.max(bottomInset, SHEET_LADDER.section);
+}
+
 export const SHEET_LADDER = {
   /** The lead between a title and its caption, and inside a row's stack. */
   tight: 4,
@@ -142,6 +167,7 @@ export function SheetScene({
   title,
   caption,
   captionLines,
+  detail,
   topInset = 0,
   headingTrailing,
   header,
@@ -155,6 +181,8 @@ export function SheetScene({
   caption?: string;
   /** See `SheetSceneHeading`: sentence captions may wrap; zero removes the limit. */
   captionLines?: number;
+  /** One more quiet line under the caption. See `SheetSceneHeading`. */
+  detail?: ReactNode;
   /** Safe-area clearance for a sheet that can reach the status bar. */
   topInset?: number;
   /** One quiet control on the title's line. See `SheetSceneHeading`. */
@@ -171,16 +199,36 @@ export function SheetScene({
   contentSized?: boolean;
   children: ReactNode;
 }) {
+  const fullscreen = useSheetIsFullscreen();
+  const insets = useSafeAreaInsets();
+  // A full-screen sheet starts at the top of the window, under the status bar,
+  // where a form sheet never reaches. A sheet that already asked for that
+  // clearance (the catalogue) is not given it twice.
+  const top = fullscreen ? Math.max(topInset, insets.top) : topInset;
   return (
-    <SheetFrame testID={testID} tint="surface" frosted>
+    <SheetFrame
+      testID={testID}
+      tint="surface"
+      frosted
+      overdrawBottom={contentSized ? CONTENT_SIZED_OVERDRAW : 0}>
       <View collapsable={false} style={contentSized ? undefined : styles.scene}>
-        <View style={[styles.fixedTop, { paddingTop: SHEET_LADDER.gap + topInset }]}>
+        <View style={[styles.fixedTop, { paddingTop: SHEET_LADDER.gap + top }]}>
           <SheetHandle />
           <SheetSceneHeading
             title={title}
             caption={caption}
             captionLines={captionLines}
-            trailing={headingTrailing}
+            detail={detail}
+            trailing={
+              fullscreen ? (
+                <>
+                  {headingTrailing}
+                  <SheetSceneClose />
+                </>
+              ) : (
+                headingTrailing
+              )
+            }
           />
           {header}
         </View>
@@ -191,17 +239,43 @@ export function SheetScene({
 }
 
 /**
+ * The way out of a sheet that a Pad shows full-screen.
+ *
+ * A form sheet is closed by its grabber and the swipe, so it draws nothing
+ * here. A `fullScreenModal` has neither -- on iOS it cannot be swiped away at
+ * all -- and a sheet promoted to one without a button is the "how do I close
+ * this page" the theme picker once shipped with. So the scene draws the glyph,
+ * as quiet as the refresh beside it, only when `useSheetIsFullscreen` says so.
+ * It pops the route, which is what Android's back already does.
+ */
+function SheetSceneClose() {
+  const { t } = useLingui();
+  const { colors } = useThemeTokens();
+  const router = useRouter();
+  return (
+    <SheetSceneQuietControl
+      testID="sheet-close"
+      accessibilityLabel={t`Close`}
+      onPress={() => router.back()}>
+      <X size={20} color={colors.text} />
+    </SheetSceneQuietControl>
+  );
+}
+
+/**
  * The title and the current value under it.
  *
  * No X circle: on a form sheet the grabber and the swipe are the close, and a
  * button that repeats a gesture the platform already gives is chrome. The X
  * survives only in fullscreen frames, where there is no grabber -- which is
- * why `SheetHandle` and this heading are a pair.
+ * why `SheetHandle` and this heading are a pair, and why `SheetScene` adds
+ * `SheetSceneClose` when a Pad shows the sheet full-screen.
  */
 export function SheetSceneHeading({
   title,
   caption,
   captionLines = 1,
+  detail,
   trailing,
 }: {
   title: string;
@@ -218,6 +292,12 @@ export function SheetSceneHeading({
    * its own…") is the caption failing at its only job.
    */
   captionLines?: number;
+  /**
+   * A second current value under the caption, drawn by the sheet itself at
+   * caption size -- the Changes sheet's branch line. One line, quiet, and in
+   * the same column as the caption, so the trailing control stays beside both.
+   */
+  detail?: ReactNode;
   /**
    * One quiet control on the title's line -- the commands sheet's edit toggle.
    * Not a close: the grabber and the swipe are the close. Anything that lands
@@ -237,6 +317,7 @@ export function SheetSceneHeading({
             {caption}
           </Text>
         ) : null}
+        {detail}
       </View>
       {trailing}
     </View>
@@ -694,7 +775,14 @@ export function SheetSceneField({
       <Text variant="caption" color={colors.textMuted}>
         {label}
       </Text>
-      <View style={[styles.fieldValue, { borderBottomColor: colors.border }]}>{children}</View>
+      {/* `borderStrong`, a full point: the rule is the only thing that says
+          "type here" on a flush field, and `border` at a hairline is the
+          divider tone -- on a pale paper pack it is gone, and a port field read
+          as two bare lines of text. The grabber uses the same token for the
+          same reason (`sheet-route-frame.tsx`). */}
+      <View style={[styles.fieldValue, { borderBottomColor: colors.borderStrong }]}>
+        {children}
+      </View>
       {error ? (
         <Text variant="caption" color={colors.danger} style={styles.fieldNote}>
           {error}
@@ -754,6 +842,13 @@ export function SheetSceneAction({
 }) {
   const profile = useAppearanceProfile();
   const { colors } = useThemeTokens();
+  const surfaceBackground = useSurfaceBackground();
+  // Disabled reads as "not yet", not as a dimmed primary: half a dark primary
+  // over a pale ground is a grey slab heavier than the form above it. The
+  // raised surface is the chip's fill, so it goes through the theme's surface
+  // opacity like every other content surface.
+  const resting = disabled && !busy;
+  const labelColor = resting ? colors.textSubtle : colors.onPrimary;
   return (
     <PressableScale
       testID={testID}
@@ -764,11 +859,13 @@ export function SheetSceneAction({
       onPress={onPress}
       style={[
         styles.action,
-        { backgroundColor: colors.primary, borderRadius: profile.chrome.control },
-        disabled && !busy ? { opacity: appChrome.opacity.disabled } : null,
+        {
+          backgroundColor: resting ? surfaceBackground(colors.surfaceRaised) : colors.primary,
+          borderRadius: profile.chrome.control,
+        },
       ]}>
       {busy ? <ActivityIndicator size="small" color={colors.onPrimary} /> : leading}
-      <Text variant="bodySmall" weight="bold" color={colors.onPrimary}>
+      <Text variant="bodySmall" weight="bold" color={labelColor}>
         {label}
       </Text>
     </PressableScale>
@@ -958,7 +1055,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: SHEET_LADDER.gap,
     minHeight: 40,
-    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomWidth: 1,
   },
   // The search field's face, for the same reason. No `lineHeight`: Android
   // clips a single-line input to it and the descenders go with it.
@@ -981,5 +1078,9 @@ const styles = StyleSheet.create({
     borderCurve: 'continuous',
     marginTop: SHEET_LADDER.snug,
   },
-  quietAction: { minHeight: 44, alignItems: 'center', justifyContent: 'center' },
+  quietAction: {
+    minHeight: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
 });

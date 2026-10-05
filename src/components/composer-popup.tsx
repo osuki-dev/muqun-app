@@ -186,6 +186,7 @@ export function ComposerPopup({
                       // -- the stacking `themed-tabs.tsx` takes apart. One
                       // layer per pixel, so under a custom theme the badge
                       // gives up its fill and keeps its muted label.
+                      // Opacity audit: already slider-aware -- drops the fill below 1.
                       <View
                         style={[
                           styles.badge,

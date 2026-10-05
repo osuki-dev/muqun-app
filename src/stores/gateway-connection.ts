@@ -2,6 +2,7 @@ import { create } from 'zustand';
 
 import { configureGateway, revokeOwnGatewayPairing, setGatewayLabel } from '@/lib/gateway-client';
 import { demoRecord, DEMO_SERVER_ID } from '@/lib/demo-gateway';
+import { seedDemoAgentRecent } from '@/lib/demo-recents';
 import { forgetWarmWorkspace } from '@/lib/server-warm-cache';
 import { describeGatewayFailure } from '@/lib/network-error';
 import { GatewayTunnelUnavailableError } from '@/lib/ssh-tunnel';
@@ -169,6 +170,7 @@ export const useGatewayConnectionStore = create<GatewayConnectionState>((set, ge
       if (serverId === DEMO_SERVER_ID) {
         configureGateway(demoRecord);
         set({ record: demoRecord, loading: false, hydrationError: null });
+        seedDemoAgentRecent();
         return true;
       }
       const record = await selectGateway(serverId);

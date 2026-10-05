@@ -27,6 +27,11 @@ describe('composerChipIds', () => {
     ]);
   });
 
+  test('an agent without modes has no mode chip', () => {
+    expect(composerChipIds({ ...quiet, canPickMode: false })).toEqual(['sessions', 'model']);
+    expect(composerChipIds({ ...quiet, canPickMode: true })).toEqual(['sessions', 'mode', 'model']);
+  });
+
   test('the changes chip survives the context pill', () => {
     // The bug this file exists for: the changes chip was last in a chain of
     // conditionals and went missing on exactly the sessions that had spent

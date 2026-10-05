@@ -52,20 +52,15 @@ msgstr "{0, plural, other {未显示 # 个字符}}"
 msgid "{0, plural, one {# day} other {# days}}"
 msgstr "{0, plural, other {# 天}}"
 
-#. placeholder {0}: pending.files.length
-#: src/components/git-diff-view.tsx
-msgid "{0, plural, one {# file changed} other {# files changed}}"
-msgstr "{0, plural, other {# 个文件有改动}}"
-
 #. placeholder {0}: files.length
 #: src/components/agent-revert-plate.tsx
 msgid "{0, plural, one {# file} other {# files}}"
 msgstr "{0, plural, other {# 个文件}}"
 
-#. placeholder {0}: diffs.length
+#. placeholder {0}: listing.changes.length
 #. placeholder {1}: totals.additions
 #. placeholder {2}: totals.deletions
-#: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/changes-sheet.tsx
 msgid "{0, plural, one {# file} other {# files}} · +{1} −{2}"
 msgstr "{0, plural, other {# 个文件}} · +{1} −{2}"
 
@@ -170,9 +165,62 @@ msgstr "{0} 小时前"
 msgid "{0}m ago"
 msgstr "{0} 分钟前"
 
+#: src/components/agent-workbench.tsx
+msgid "{agentName} cannot preview a rollback. This removes the message and everything after it, the whole turn, and it cannot be undone."
+msgstr "{agentName} 无法预览回滚。这会删除这条消息及其之后的全部内容，即整轮对话，且无法恢复"
+
+#: src/components/agent-workbench.tsx
+msgid "{agentName} does not support that action."
+msgstr "{agentName} 不支持此操作"
+
 #: src/components/agent-composer.tsx
-msgid "{agentName}: {title} — finished while you were away"
-msgstr "{agentName}：{title} — 在你离开时完成"
+#: src/components/agent-workbench.tsx
+msgid "{agentName} is offline"
+msgstr "{agentName} 已离线"
+
+#: src/components/agent-guide-sheet.tsx
+msgid "{agentName} is ready on this host."
+msgstr "{agentName} 已在此主机上就绪"
+
+#: src/components/new-task-action.tsx
+msgid "{agentName} needs setup. Tap for setup instructions"
+msgstr "{agentName} 需要设置。点按查看设置说明"
+
+#: src/components/new-task-action.tsx
+msgid "{agentName} ready"
+msgstr "{agentName} 已就绪"
+
+#: src/components/agent-workbench.tsx
+msgid "{agentName} refused the request: {message}"
+msgstr "{agentName} 拒绝了请求：{message}"
+
+#: src/components/new-task-action.tsx
+msgid "{agentName} service offline. Tap for setup instructions"
+msgstr "{agentName} 服务已离线。点按查看设置说明"
+
+#: src/components/home-recent-sessions.tsx
+msgid "{agentName} session"
+msgstr "{agentName} 会话"
+
+#: src/components/new-task-action.tsx
+msgid "{agentName} sessions are not supported. Tap for details"
+msgstr "不支持 {agentName} 会话。点按查看详情"
+
+#: src/components/agent-guide-sheet.tsx
+msgid "{agentName} was not found on this host. Install it, then check again."
+msgstr "在此主机上未找到 {agentName}。请先安装，然后重新检查"
+
+#: src/components/new-task-action.tsx
+msgid "{agentName} was not found. Tap for installation instructions"
+msgstr "未找到 {agentName}。点按查看安装说明"
+
+#: src/components/agent-guide-sheet.tsx
+msgid "{agentName}'s installation could not be confirmed. If it is installed, start it on the host."
+msgstr "无法确认 {agentName} 的安装情况。如果已安装，请在主机上启动它"
+
+#: src/components/changes-sheet.tsx
+msgid "{ahead} ahead"
+msgstr "领先 {ahead}"
 
 #: src/components/away-digest-card.tsx
 msgid "{asked, plural, one {· asked once} other {· asked # times}}"
@@ -181,6 +229,10 @@ msgstr "{asked, plural, other {· 询问了 # 次}}"
 #: src/components/agent-composer.tsx
 msgid "{backgroundCount} running in the background"
 msgstr "{backgroundCount} 个正在后台运行"
+
+#: src/components/changes-sheet.tsx
+msgid "{behind} behind"
+msgstr "落后 {behind}"
 
 #: src/components/agent-assignment-bar.tsx
 msgid "{commandName} · sending to"
@@ -198,6 +250,10 @@ msgstr "最近观察到 {count} 个请求"
 #: src/components/agent-tasks-sheet.tsx
 msgid "{done} of {0} done"
 msgstr "已完成 {done}/{0}"
+
+#: src/components/home-launch-actions.tsx
+msgid "{hidden} more"
+msgstr "另外 {hidden} 个"
 
 #: src/components/bounded-markdown.tsx
 msgid "{hiddenKb} KB not shown"
@@ -219,9 +275,29 @@ msgstr "{label} 已暂时锁定。请改用系统备用方式，或稍后再试"
 msgid "{language} code copied to clipboard"
 msgstr "已复制 {language} 代码到剪贴板"
 
+#: src/components/agent-composer.tsx
+msgid "{lead}: {title} — finished while you were away"
+msgstr "{lead}：{title} — 在你离开时完成"
+
 #: src/components/agent-revert-plate.tsx
 msgid "{messages, plural, one {# message} other {# messages}}"
 msgstr "{messages, plural, other {# 条消息}}"
+
+#: src/components/virtual-keyboard.tsx
+msgid "{modifierKeys} combinations need the program in this terminal to enable extended keys"
+msgstr "{modifierKeys} 组合键需要此终端中的程序启用扩展按键"
+
+#: src/components/new-task-action.tsx
+msgid "{name} needs setup. Tap for setup instructions"
+msgstr "{name} 需要设置。点按查看设置说明"
+
+#: src/components/new-task-action.tsx
+msgid "{name} service offline. Tap for setup instructions"
+msgstr "{name} 服务已离线。点按查看设置说明"
+
+#: src/components/new-task-action.tsx
+msgid "{name} was not found. Tap for installation instructions"
+msgstr "未找到 {name}。点按查看安装说明"
 
 #: src/components/session-map.tsx
 msgid "{panelCount, plural, one {# running} other {# running}}"
@@ -236,6 +312,7 @@ msgstr "{removeLabel}：{label}"
 msgid "{running} running of {0}"
 msgstr "{0} 个中有 {running} 个正在运行"
 
+#: src/components/agent-composer.tsx
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-sessions-sheet.tsx
 msgid "{title} — finished while you were away"
@@ -287,10 +364,6 @@ msgstr "在任何你能连上的机器上开一个普通 shell，不需要 Gatew
 msgid "A second checkout of this repository"
 msgstr "此仓库的第二份检出"
 
-#: src/lib/release-notes.ts
-msgid "A server's key is remembered the first time and checked every time after, and a key that changed stops the connection until you say otherwise."
-msgstr "服务器的密钥第一次就会记住，之后每次都会核对；密钥变了就会中止连接，除非你另行确认"
-
 #: src/components/pad-server-rail.tsx
 msgid "A shell on any machine with sshd"
 msgstr "任何装有 sshd 的机器上的 shell"
@@ -319,10 +392,12 @@ msgstr "操作这个终端，或给它发一条命令"
 msgid "Act on this terminal, or send its agent a prompt"
 msgstr "操作这个终端，或给它的 Agent 下一条指令"
 
+#. placeholder {0}: row.name
 #. placeholder {0}: sessionTitleOr(session, t`Untitled session`)
 #. placeholder {0}: worktreeDisplayName(directory)
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/agent-worktree-sheet.tsx
+#: src/components/change-tree-rows.tsx
 msgid "Actions for {0}"
 msgstr "{0} 的操作"
 
@@ -368,17 +443,6 @@ msgstr "新增"
 msgid "Agent"
 msgstr "Agent"
 
-#. placeholder {0}: part.agent
-#: src/components/agent-message-block.tsx
-msgid "Agent · {0}"
-msgstr "Agent · {0}"
-
-#. placeholder {0}: part.previous
-#. placeholder {1}: part.agent
-#: src/components/agent-message-block.tsx
-msgid "Agent · {0} → {1}"
-msgstr "Agent · {0} → {1}"
-
 #: src/app/commands.tsx
 #: src/components/agent-command-delivery-picker.tsx
 #: src/components/collaboration-notice.tsx
@@ -398,13 +462,11 @@ msgstr "代理已退出"
 msgid "Agent panes open in"
 msgstr "代理面板的默认视图"
 
+#: src/components/app-drawer-content.tsx
+#: src/components/launch-intro.tsx
 #: src/components/settings-servers.tsx
 msgid "Agents"
 msgstr "代理"
-
-#: src/components/agent-mode-sheet.tsx
-msgid "Agents on this host"
-msgstr "此主机上的 Agent"
 
 #: src/components/app-drawer-content.tsx
 msgid "AI coding assistant"
@@ -418,7 +480,6 @@ msgstr "提醒"
 msgid "Align the QR inside the frame"
 msgstr "将二维码对准框内"
 
-#: src/components/git-diff-view.tsx
 #: src/components/session-artifacts.tsx
 #: src/components/theme-browse-sheet.tsx
 msgid "All"
@@ -554,6 +615,10 @@ msgstr "正在应用…"
 msgid "Approval required"
 msgstr "需要批准"
 
+#: src/lib/release-notes.ts
+msgid "Approvals and status changes for every session now arrive over one live connection per computer, not only for the session you have open."
+msgstr "所有会话的审批和状态变化现在通过每台电脑一条实时连接送达，而不只是当前打开的会话"
+
 #: src/components/agent-mode-sheet.tsx
 msgid "Architecture, design proposals, step-by-step roadmaps."
 msgstr "架构设计、方案建议与分步实施路线"
@@ -655,6 +720,10 @@ msgstr "自动"
 msgid "Autonomous software engineering: edits files, runs commands, tests."
 msgstr "自主软件工程：编辑文件、执行命令、运行测试"
 
+#: src/components/agent-mode-sheet.tsx
+msgid "Available modes"
+msgstr "可用模式"
+
 #: src/components/simfarm-stage.tsx
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Back"
@@ -663,6 +732,10 @@ msgstr "返回"
 #: src/i18n/labels.ts
 msgid "Back one word"
 msgstr "后退一个词"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Back to Home"
+msgstr "返回主页"
 
 #: src/components/app-drawer.tsx
 msgid "Back to servers"
@@ -703,6 +776,7 @@ msgstr "行为"
 msgid "Below {minimumPercent}%, text is no longer guaranteed to stay readable"
 msgstr "低于 {minimumPercent}% 后,文字不再保证可读"
 
+#: src/components/change-tree-rows.tsx
 #: src/components/diff-rows.tsx
 msgid "Binary file"
 msgstr "二进制文件"
@@ -719,9 +793,13 @@ msgstr "等待回应"
 msgid "Blocked by agent safety"
 msgstr "已被智能体安全机制拦截"
 
-#: src/components/agent-vcs-diff-sheet.tsx
-msgid "Branch"
-msgstr "分支"
+#: src/components/changes-sheet.tsx
+msgid "Branch {branch}"
+msgstr "分支 {branch}"
+
+#: src/components/changes-sheet.tsx
+msgid "Branch {branch}, no commits yet"
+msgstr "分支 {branch}，尚无提交"
 
 #: src/components/theme-link-import.tsx
 msgid "Branch and theme file came from the link. A branch can change later"
@@ -775,7 +853,9 @@ msgstr "需要相机访问权限"
 #: src/components/agent-composer.tsx
 #: src/components/agent-context-sheet.tsx
 #: src/components/agent-sessions-sheet.tsx
+#: src/components/agent-workbench.tsx
 #: src/components/agent-worktree-sheet.tsx
+#: src/components/changes-sheet.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/row-action-menu.tsx
 #: src/components/session-map.tsx
@@ -817,8 +897,7 @@ msgctxt "git file status"
 msgid "Changed"
 msgstr "已更改"
 
-#: src/components/agent-vcs-diff-sheet.tsx
-#: src/components/git-diff-view.tsx
+#: src/components/changes-sheet.tsx
 msgid "Changes"
 msgstr "改动"
 
@@ -830,8 +909,8 @@ msgstr "只调整背景颜色，不影响文字、图标或装饰图片"
 msgid "Chat"
 msgstr "聊天"
 
+#: src/components/agent-guide-sheet.tsx
 #: src/components/agent-workbench.tsx
-#: src/components/opencode-guide-sheet.tsx
 msgid "Check again"
 msgstr "重新检查"
 
@@ -865,6 +944,10 @@ msgstr "检查中…"
 msgid "Choose a gateway"
 msgstr "选择 Gateway"
 
+#: src/components/agent-mode-sheet.tsx
+msgid "Choose a mode"
+msgstr "选择模式"
+
 #: src/components/agent-model-sheet.tsx
 #: src/components/agent-workbench.tsx
 msgid "Choose a model"
@@ -878,7 +961,7 @@ msgstr "选择模拟器"
 msgid "Choose a simulator from the menu."
 msgstr "请从菜单中选择模拟器"
 
-#: src/components/agent-mode-sheet.tsx
+#: src/components/home-agents-sheet.tsx
 msgid "Choose an agent"
 msgstr "选择 Agent"
 
@@ -905,6 +988,10 @@ msgstr "选择主页和应用界面样式。配色仍由主题决定"
 #: src/components/agent-workbench.tsx
 msgid "Choose project"
 msgstr "选择项目"
+
+#: src/components/changes-sheet.tsx
+msgid "Choose which changes to show"
+msgstr "选择要显示的更改"
 
 #: src/components/simfarm-stage.tsx
 msgid "Choose which simulator to show"
@@ -952,6 +1039,10 @@ msgstr "正在清除缓存"
 #: src/components/settings-storage.tsx
 msgid "Clearing…"
 msgstr "正在清除…"
+
+#: src/components/sheet-scene.tsx
+msgid "Close"
+msgstr "关闭"
 
 #: src/components/dev-home-ambient-controls.tsx
 msgid "Close effects"
@@ -1054,10 +1145,6 @@ msgstr "提交"
 msgid "Commit & push"
 msgstr "提交并推送"
 
-#: src/components/agent-vcs-diff-sheet.tsx
-msgid "Committed"
-msgstr "已提交"
-
 #: src/components/settings-terminal.tsx
 msgid "Compact"
 msgstr "紧凑"
@@ -1083,6 +1170,10 @@ msgstr "压缩失败"
 #: src/components/agent-composer.tsx
 msgid "Compaction failed — tap to dismiss"
 msgstr "压缩失败 — 点按关闭"
+
+#: src/components/changes-sheet.tsx
+msgid "Compared with {base}"
+msgstr "与 {base} 比较"
 
 #: src/components/settings-storage.tsx
 msgid "Confirm clear cache"
@@ -1145,6 +1236,7 @@ msgstr "已连接到 {address}"
 #: src/app/explore.tsx
 #: src/app/new-task.tsx
 #: src/components/agent-transcript-skeleton.tsx
+#: src/components/pad-agent-detail.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/components/session-map.tsx
 #: src/components/simfarm-stage.tsx
@@ -1168,6 +1260,7 @@ msgid "Connecting…"
 msgstr "连接中…"
 
 #: src/components/home-editorial-layout.tsx
+#: src/components/pad-server-rail.tsx
 msgid "Connections"
 msgstr "连接"
 
@@ -1198,9 +1291,14 @@ msgstr "上下文占用"
 
 #: src/app/explore.tsx
 #: src/components/home-editorial-layout.tsx
+#: src/components/pad-server-rail.tsx
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Continue"
 msgstr "继续"
+
+#: src/lib/release-notes.ts
+msgid "Continue and the offline and empty-state messages now name the agent they mean, and a new session asks which agent when more than one is ready."
+msgstr "“继续”以及离线和空状态提示现在会写明所指的智能体，多个智能体就绪时，新会话会询问使用哪一个"
 
 #: src/i18n/labels.ts
 msgid "Continue task"
@@ -1326,10 +1424,10 @@ msgstr "控制"
 msgid "Conversational help and open-ended project questions."
 msgstr "对话式帮助，以及关于项目的开放式问题"
 
+#: src/components/agent-guide-sheet.tsx
 #: src/components/agent-message-block.tsx
 #: src/components/asset-viewer.tsx
 #: src/components/bounded-markdown.tsx
-#: src/components/opencode-guide-sheet.tsx
 msgid "Copied"
 msgstr "已复制"
 
@@ -1364,7 +1462,7 @@ msgstr "复制路径"
 msgid "Copy public key"
 msgstr "复制公钥"
 
-#: src/components/opencode-guide-sheet.tsx
+#: src/components/agent-guide-sheet.tsx
 msgid "Copy the command"
 msgstr "复制命令"
 
@@ -1426,6 +1524,10 @@ msgstr "无法删除"
 msgid "Could not detach"
 msgstr "无法转入后台"
 
+#: src/components/changes-sheet.tsx
+msgid "Could not discard {name}"
+msgstr "无法放弃 {name}"
+
 #. placeholder {0}: problem.status
 #: src/components/settings-font-sheet.tsx
 msgid "Could not download: {0}"
@@ -1451,10 +1553,6 @@ msgstr "无法保留"
 msgid "Could not list this server's agents."
 msgstr "无法获取这台服务器的代理列表"
 
-#: src/components/server-terminal-workspace.tsx
-msgid "Could not load earlier output."
-msgstr "无法加载之前的输出"
-
 #: src/components/session-artifacts.tsx
 msgid "Could not load files."
 msgstr "无法加载文件"
@@ -1463,10 +1561,18 @@ msgstr "无法加载文件"
 msgid "Could not load models"
 msgstr "无法加载模型"
 
+#: src/lib/terminal-history-pull.ts
+msgid "Could not load older history from this terminal"
+msgstr "无法加载此终端更早的历史"
+
 #: src/components/agent-subagent-detail-sheet.tsx
 #: src/components/agent-workbench.tsx
 msgid "Could not load the session"
 msgstr "无法加载会话"
+
+#: src/components/changes-sheet.tsx
+msgid "Could not load this file's changes."
+msgstr "无法加载此文件的更改"
 
 #: src/components/session-map.tsx
 msgid "Could not load what is running."
@@ -1541,7 +1647,7 @@ msgstr "无法连接到这台服务器"
 msgid "Could not read saved servers. Your saved data has not been changed. Unlock this device and retry."
 msgstr "无法读取已保存的服务器，保存的数据未被修改，请解锁此设备后重试"
 
-#: src/components/git-diff-view.tsx
+#: src/components/changes-sheet.tsx
 msgid "Could not read the changes."
 msgstr "无法读取改动"
 
@@ -1550,7 +1656,7 @@ msgstr "无法读取改动"
 msgid "Could not read the terminal."
 msgstr "无法读取终端"
 
-#: src/components/git-diff-view.tsx
+#: src/components/changes-sheet.tsx
 msgid "Could not read this file."
 msgstr "无法读取此文件"
 
@@ -1703,10 +1809,6 @@ msgstr "当前机器"
 msgid "Current path"
 msgstr "当前路径"
 
-#: src/components/pad-server-rail.tsx
-msgid "Current task"
-msgstr "当前任务"
-
 #: src/components/custom-theme-library.tsx
 msgid "Current theme"
 msgstr "当前主题"
@@ -1729,6 +1831,7 @@ msgid "default"
 msgstr "默认"
 
 #: src/components/settings-terminal.tsx
+#: src/components/settings-theme-sheet.tsx
 msgid "Default"
 msgstr "默认"
 
@@ -1741,9 +1844,14 @@ msgid "Defaults to theme.json at the repository root"
 msgstr "默认为仓库根目录下的 theme.json"
 
 #: src/components/agent-sessions-sheet.tsx
+#: src/components/changes-sheet.tsx
 #: src/components/row-action-menu.tsx
 msgid "Delete"
 msgstr "删除"
+
+#: src/components/changes-sheet.tsx
+msgid "Delete {discardName}?"
+msgstr "删除 {discardName}？"
 
 #: src/app/commands.tsx
 msgid "Delete {name}"
@@ -1794,6 +1902,14 @@ msgstr "疏密"
 msgid "Deny"
 msgstr "拒绝"
 
+#: src/components/changes-sheet.tsx
+msgid "detached at {head}"
+msgstr "分离于 {head}"
+
+#: src/components/changes-sheet.tsx
+msgid "Detached at {head}"
+msgstr "分离于 {head}"
+
 #: src/lib/demo-gateway.ts
 msgid "Development"
 msgstr "开发"
@@ -1808,8 +1924,8 @@ msgid "Diff summary"
 msgstr "Diff 摘要"
 
 #: src/components/launch-intro.tsx
-msgid "Direct control for OpenCode autonomous coding. Follow real-time reasoning, inspect code diffs, review step-by-step todos, and guide tasks on the go."
-msgstr "专为 OpenCode 自主编程打造。手机端实时跟进思考过程、审查代码变更、跟进多步任务，随时掌控远程智能体"
+msgid "Direct control for autonomous coding agents. Follow real-time reasoning, inspect code diffs, review step-by-step todos, and guide tasks on the go."
+msgstr "专为自主编程智能体打造。手机端实时跟进思考过程、审查代码变更、跟进多步任务，随时掌控远程智能体"
 
 #: src/components/dev-home-ambient-controls.tsx
 msgid "Direction"
@@ -1818,6 +1934,18 @@ msgstr "方向"
 #: src/components/new-task-sheet.tsx
 msgid "Directory"
 msgstr "目录"
+
+#: src/components/changes-sheet.tsx
+msgid "Discard"
+msgstr "放弃"
+
+#: src/components/change-tree-rows.tsx
+msgid "Discard changes"
+msgstr "放弃更改"
+
+#: src/components/changes-sheet.tsx
+msgid "Discard changes to {discardName}?"
+msgstr "放弃对 {discardName} 的更改？"
 
 #. placeholder {0}: record.label
 #: src/components/ssh-terminal-workspace.tsx
@@ -1911,6 +2039,10 @@ msgstr "正在下载…"
 msgid "Draft the notes for the next build"
 msgstr "草拟下一个版本的发布说明"
 
+#: src/lib/release-notes.ts
+msgid "Each agent's screen shows only what it supports, and the model picker groups models by provider and greys out the ones you are not signed in to."
+msgstr "每个智能体的界面只显示它所支持的功能，模型选择器按提供方分组，并将你尚未登录的提供方置灰"
+
 #. placeholder {0}: server.label
 #: src/components/settings-servers.tsx
 msgid "Each device holds its own token for {0}."
@@ -1952,6 +2084,10 @@ msgstr "编辑部"
 #: src/components/dev-home-ambient-controls.tsx
 msgid "Effects · {0}"
 msgstr "效果 · {0}"
+
+#: src/i18n/labels.ts
+msgid "Enable deepseek in the gateway config, start DeepSeek Harness on the host, then restart the gateway."
+msgstr "请在网关配置中启用 deepseek，在主机上启动 DeepSeek Harness，然后重启网关"
 
 #: src/i18n/labels.ts
 msgid "Enter"
@@ -2178,6 +2314,10 @@ msgstr "常用"
 msgid "Front camera. Hold the QR up to the screen"
 msgstr "前置摄像头。将二维码朝向屏幕"
 
+#: src/components/virtual-keyboard.tsx
+msgid "Function keys"
+msgstr "功能键"
+
 #: src/app/explore.tsx
 msgid "Gateway"
 msgstr "Gateway"
@@ -2240,9 +2380,14 @@ msgstr "开始使用"
 msgid "Git status"
 msgstr "Git 状态"
 
+#: src/app/agent.tsx
 #: src/components/screen-header.tsx
 msgid "Go back"
 msgstr "返回"
+
+#: src/components/agent-workspace-sheet.tsx
+msgid "Go into {folder}"
+msgstr "进入 {folder}"
 
 #: src/i18n/labels.ts
 msgid "Go to the top of the file"
@@ -2271,8 +2416,8 @@ msgid "Guided AGENTS.md setup"
 msgstr "引导式 AGENTS.md 设置"
 
 #: src/app/settings.tsx
-msgid "Guides for pairing, the terminal, OpenCode and themes"
-msgstr "配对、终端、OpenCode 和主题的指南"
+msgid "Guides for pairing, the terminal, agents and themes"
+msgstr "配对、终端、Agent 和主题的使用指南"
 
 #: src/components/settings-alerts.tsx
 msgid "Haptic feedback"
@@ -2284,6 +2429,7 @@ msgstr "隐藏"
 
 #. placeholder {0}: item.summary
 #. placeholder {0}: row.path
+#: src/components/change-tree-rows.tsx
 #: src/components/diff-rows.tsx
 #: src/components/pane-chat-blocks.tsx
 msgid "Hide {0}"
@@ -2310,6 +2456,7 @@ msgstr "隐藏服务器列表"
 msgid "Hide the simulator"
 msgstr "隐藏模拟器"
 
+#: src/components/pad-server-rail.tsx
 #: src/components/simfarm-stage.tsx
 msgid "Home"
 msgstr "主页"
@@ -2347,7 +2494,6 @@ msgstr "主机"
 msgid "Host key changed"
 msgstr "主机密钥已改变"
 
-#: src/components/pad-server-rail.tsx
 #: src/components/ssh-host-row.tsx
 msgid "Host key trusted"
 msgstr "主机密钥已信任"
@@ -2357,7 +2503,6 @@ msgid "How to use Muqun"
 msgstr "如何使用 Muqun"
 
 #: src/components/agent-session-tree-sheet.tsx
-#: src/components/home-recent-sessions.tsx
 #: src/i18n/labels.ts
 msgid "Idle"
 msgstr "空闲"
@@ -2531,13 +2676,13 @@ msgstr "保留已安装的主题"
 msgid "Keep the terminal you are watching on the Lock Screen while its agent works."
 msgstr "代理工作时，把你正在看的终端留在锁定屏幕上"
 
+#: src/components/agent-workspace-sheet.tsx
+msgid "Keep typing to narrow down"
+msgstr "继续输入以缩小范围"
+
 #: src/app/commands.tsx
 msgid "Keys"
 msgstr "按键"
-
-#: src/lib/release-notes.ts
-msgid "Keys are generated on the device and never leave it."
-msgstr "密钥在设备上生成，绝不外传"
 
 #: src/components/settings-appearance.tsx
 #: src/components/settings-language-sheet.tsx
@@ -2598,8 +2743,8 @@ msgid "Latest"
 msgstr "最新"
 
 #: src/components/agent-worktree-sheet.tsx
-msgid "Leave it empty and OpenCode picks a name."
-msgstr "留空则由 OpenCode 取名"
+msgid "Leave it empty and the agent picks a name."
+msgstr "留空则由 Agent 自动命名"
 
 #: src/components/new-task-sheet.tsx
 msgid "Leave it empty to start where the session already is."
@@ -2644,7 +2789,6 @@ msgid "Load more"
 msgstr "加载更多"
 
 #: src/components/gateway-storage-error.tsx
-#: src/components/home-recent-sessions.tsx
 #: src/components/list-load-more-footer.tsx
 #: src/components/session-map.tsx
 #: src/components/ssh-host-list.tsx
@@ -2750,6 +2894,17 @@ msgstr "消息已复制到剪贴板"
 msgid "Message not sent"
 msgstr "消息未发送"
 
+#. placeholder {0}: part.mode
+#: src/components/agent-message-block.tsx
+msgid "Mode · {0}"
+msgstr "模式 · {0}"
+
+#. placeholder {0}: part.previous
+#. placeholder {1}: part.mode
+#: src/components/agent-message-block.tsx
+msgid "Mode · {0} → {1}"
+msgstr "模式 · {0} → {1}"
+
 #: src/components/agent-context-sheet.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
 msgid "Model"
@@ -2763,6 +2918,10 @@ msgstr "模型 · {0} → {next}"
 #: src/components/agent-message-block.tsx
 msgid "Model · {next}"
 msgstr "模型 · {next}"
+
+#: src/components/agent-mode-sheet.tsx
+msgid "Modes of {agentName}"
+msgstr "{agentName} 的模式"
 
 #: src/components/asset-viewer.tsx
 msgid "Modified"
@@ -2780,6 +2939,10 @@ msgstr "等宽"
 #: src/components/custom-theme-library.tsx
 msgid "More actions"
 msgstr "更多操作"
+
+#: src/components/home-launch-actions.tsx
+msgid "More agents"
+msgstr "更多代理"
 
 #: src/components/virtual-keyboard.tsx
 msgid "More symbols"
@@ -2816,6 +2979,18 @@ msgstr "牧群无法验证你的身份。请重试"
 msgid "Muqun follows the language your phone is set to."
 msgstr "牧群会跟随手机设置的语言"
 
+#: src/lib/terminal-backend-copy.ts
+msgid "Muqun Gateway is running, but it cannot reach a tmux server on its computer"
+msgstr "Muqun Gateway 正在运行，但连不上它所在电脑上的 tmux 服务器"
+
+#: src/lib/terminal-backend-copy.ts
+msgid "Muqun Gateway is running, but it cannot reach Herdr on its computer"
+msgstr "Muqun Gateway 正在运行，但连不上它所在电脑上的 Herdr"
+
+#: src/lib/terminal-backend-copy.ts
+msgid "Muqun Gateway is running, but it cannot reach the {backend} backend on its computer"
+msgstr "Muqun Gateway 正在运行，但连不上它所在电脑上的 {backend} 后端"
+
 #: src/components/settings-font-sheet.tsx
 msgid "Muqun has no fonts of its own. Add one and it is kept on this device."
 msgstr "Muqun 自己不提供字体。添加后会保存在本机"
@@ -2824,6 +2999,10 @@ msgstr "Muqun 自己不提供字体。添加后会保存在本机"
 msgid "Muqun is locked"
 msgstr "牧群已锁定"
 
+#: src/lib/release-notes.ts
+msgid "Muqun now works with several coding agents on one computer. OpenCode, DeepSeek and T3 Code each get their own tile on Home, with their own mark."
+msgstr "Muqun 现在可以在同一台电脑上使用多个编程智能体。OpenCode、DeepSeek 和 T3 Code 在主页上各有自己的图块和标志"
+
 #: src/components/pairing-camera.tsx
 msgid "Muqun reads the Gateway's QR code through the camera. Nothing is recorded."
 msgstr "Muqun 通过相机读取 Gateway 的二维码，不会录制任何内容"
@@ -2831,10 +3010,6 @@ msgstr "Muqun 通过相机读取 Gateway 的二维码，不会录制任何内容
 #: src/app/settings.tsx
 msgid "Muqun settings stay on this device."
 msgstr "牧群的设置只保存在本设备上"
-
-#: src/lib/release-notes.ts
-msgid "Muqun speaks SSH. Save a host, tap it on the home screen, and you are in a real shell — password, key or a code from your authenticator."
-msgstr "Muqun 会说 SSH。保存一台主机，在主页点一下，就进入真正的 shell — 密码、密钥，或验证器上的验证码"
 
 #: src/components/settings-appearance.tsx
 msgid "Muqun stays in this language whatever the phone is set to."
@@ -2859,9 +3034,21 @@ msgstr "名称"
 msgid "Name it, then enter the code shown by the Gateway."
 msgstr "为它命名，然后输入 Gateway 显示的代码"
 
+#: src/i18n/labels.ts
+msgid "Needs setup"
+msgstr "需要设置"
+
+#: src/i18n/labels.ts
+msgid "Needs update"
+msgstr "需要更新"
+
 #: src/components/collaboration-notice.tsx
 msgid "Needs your attention"
 msgstr "需要你处理"
+
+#: src/lib/notifications.ts
+msgid "Needs your input"
+msgstr "需要你的输入"
 
 #: src/components/settings-servers.tsx
 #: src/components/ssh-host-row.tsx
@@ -2886,7 +3073,9 @@ msgstr "有新输出 · 点击刷新"
 
 #: src/app/agent.tsx
 #: src/components/agent-workbench.tsx
-#: src/components/home-launch-actions.tsx
+#: src/components/home-overview.tsx
+#: src/components/pad-agent-detail.tsx
+#: src/i18n/labels.ts
 msgid "New session"
 msgstr "新建会话"
 
@@ -2951,13 +3140,22 @@ msgstr "没有可用于扫描的相机"
 msgid "No camera was found on this device."
 msgstr "在本设备上找不到相机"
 
-#: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/change-tree-rows.tsx
+#: src/components/changes-sheet.tsx
 msgid "No changes"
 msgstr "没有更改"
 
-#: src/components/git-diff-view.tsx
-msgid "No changes. The working tree matches HEAD."
-msgstr "没有改动。工作区与 HEAD 一致"
+#: src/components/changes-sheet.tsx
+msgid "No changes compared with {base}."
+msgstr "与 {base} 相比没有更改"
+
+#: src/components/changes-sheet.tsx
+msgid "no commits yet"
+msgstr "尚无提交"
+
+#: src/components/changes-sheet.tsx
+msgid "No commits yet"
+msgstr "尚无提交"
 
 #: src/components/session-artifacts.tsx
 msgid "No files match."
@@ -3026,7 +3224,6 @@ msgstr "没有匹配“{0}”的项目"
 msgid "No server to start a task on."
 msgstr "没有可以开始任务的服务器"
 
-#: src/components/pad-server-rail.tsx
 #: src/components/settings-servers.tsx
 msgid "No servers paired yet"
 msgstr "尚未配对任何服务器"
@@ -3067,6 +3264,7 @@ msgstr "此会话还没有任务"
 msgid "No terminal session is available on this server."
 msgstr "此服务器没有可用的终端会话"
 
+#: src/components/change-tree-rows.tsx
 #: src/components/diff-rows.tsx
 msgid "No textual change"
 msgstr "没有文本改动"
@@ -3088,7 +3286,7 @@ msgstr "该模型未提供上下文窗口"
 msgid "No worktrees yet. Make one below to work on a branch without disturbing this checkout."
 msgstr "还没有工作树。在下面创建一个，就能在某个分支上工作而不打扰这份检出"
 
-#: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/changes-sheet.tsx
 msgid "Not a git repository"
 msgstr "不是 Git 仓库"
 
@@ -3101,6 +3299,7 @@ msgstr "不可用"
 msgid "not connected"
 msgstr "未连接"
 
+#: src/components/server-terminal-workspace.tsx
 #: src/i18n/labels.ts
 msgid "Not connected"
 msgstr "未连接"
@@ -3114,6 +3313,10 @@ msgstr "未连接"
 msgid "Not found"
 msgstr "未找到"
 
+#: src/i18n/labels.ts
+msgid "Not installed"
+msgstr "未安装"
+
 #: src/components/settings-font-sheet.tsx
 msgid "Not monospace — the terminal may look uneven"
 msgstr "不是等宽字体 — 终端可能显示不齐"
@@ -3125,6 +3328,10 @@ msgstr "未运行"
 #: src/components/agent-context-sheet.tsx
 msgid "Not set"
 msgstr "未设置"
+
+#: src/components/agent-model-sheet.tsx
+msgid "Not signed in on the host"
+msgstr "未在主机上登录"
 
 #: src/components/ssh-host-form.tsx
 msgid "Not valid."
@@ -3160,9 +3367,13 @@ msgstr "目前还没有内容"
 msgid "Nothing to undo"
 msgstr "没有可撤销的内容"
 
-#: src/components/agent-vcs-diff-sheet.tsx
+#: src/components/changes-sheet.tsx
 msgid "Nothing uncommitted in this project."
 msgstr "本项目没有未提交的改动"
+
+#: src/components/changes-sheet.tsx
+msgid "Nothing was changed."
+msgstr "没有做任何更改"
 
 #: src/components/agent-context-sheet.tsx
 msgid "Nothing yet — an “Always allow” reply lands here, for this project."
@@ -3171,6 +3382,10 @@ msgstr "还没有内容——选择“始终允许”后，规则会出现在这
 #: src/components/toggle.tsx
 msgid "Off"
 msgstr "关闭"
+
+#: src/i18n/labels.ts
+msgid "Offline"
+msgstr "离线"
 
 #: src/i18n/labels.ts
 msgid "OFFLINE"
@@ -3183,6 +3398,10 @@ msgstr "离线，没有响应"
 #: src/components/toggle.tsx
 msgid "On"
 msgstr "开启"
+
+#: src/lib/release-notes.ts
+msgid "On a tablet, Continue rows now open their terminal panes. An older Gateway keeps working with OpenCode as before."
+msgstr "在平板上，“继续”的条目现在会打开各自的终端窗格。旧版 Gateway 仍像以前一样配合 OpenCode 使用"
 
 #: src/i18n/labels.ts
 msgid "Online"
@@ -3206,6 +3425,14 @@ msgstr "打开"
 #: src/components/session-artifacts.tsx
 msgid "Open {0}"
 msgstr "打开 {0}"
+
+#: src/components/new-task-action.tsx
+msgid "Open {agentName} Agent on {label}"
+msgstr "在 {label} 上打开 {agentName} 代理"
+
+#: src/components/new-task-action.tsx
+msgid "Open {name} Agent on {label}"
+msgstr "在 {label} 上打开 {name} 代理"
 
 #: src/components/session-map.tsx
 msgid "Open {title}. Long press to close."
@@ -3256,7 +3483,7 @@ msgstr "在浏览器中打开"
 msgid "Open in your browser, unavailable over the SSH tunnel"
 msgstr "在浏览器中打开，通过 SSH 隧道时不可用"
 
-#: src/components/opencode-guide-sheet.tsx
+#: src/components/agent-guide-sheet.tsx
 msgid "Open installation guide"
 msgstr "打开安装指南"
 
@@ -3272,10 +3499,6 @@ msgstr "打开牧群以连接"
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Open on-screen keyboard"
 msgstr "打开屏幕键盘"
-
-#: src/components/new-task-action.tsx
-msgid "Open OpenCode Agent on {label}"
-msgstr "在 {label} 上打开 OpenCode Agent"
 
 #: src/components/agent-sessions-sheet.tsx
 msgid "Open parent"
@@ -3297,24 +3520,26 @@ msgstr "打开会话"
 msgid "Open session tree"
 msgstr "打开会话树"
 
-#. placeholder {0}: host.label
 #. placeholder {0}: record.label
-#: src/components/pad-server-rail.tsx
 #: src/components/ssh-host-row.tsx
 msgid "Open SSH host {0}"
 msgstr "打开 SSH 主机 {0}"
+
+#: src/i18n/labels.ts
+msgid "Open T3 Code on the gateway host (or run t3 service install), then check again."
+msgstr "请在网关主机上打开 T3 Code（或运行 t3 service install），然后重新检查"
 
 #: src/components/collaboration-notice.tsx
 msgid "Open terminal"
 msgstr "查看终端"
 
+#: src/components/agent-guide-sheet.tsx
+msgid "Open the {agentName} installation guide"
+msgstr "打开 {agentName} 安装指南"
+
 #: src/i18n/labels.ts
 msgid "Open the file explorer"
 msgstr "打开文件浏览器"
-
-#: src/components/opencode-guide-sheet.tsx
-msgid "Open the OpenCode installation guide"
-msgstr "打开 OpenCode 安装指南"
 
 #: src/components/agent-tool-card.tsx
 msgid "Open the subagent's session"
@@ -3336,60 +3561,6 @@ msgstr "打开以检查当前状态"
 #: src/components/session-map.tsx
 msgid "Open workspace {0}, {panelCount, plural, one {# running} other {# running}}. Long press to close."
 msgstr "打开工作区 {0}，{panelCount, plural, one {# 个运行中} other {# 个运行中}}。长按可关闭"
-
-#: src/components/app-drawer-content.tsx
-#: src/components/launch-intro.tsx
-msgid "OpenCode Agent"
-msgstr "OpenCode 智能体"
-
-#: src/components/agent-workbench.tsx
-msgid "OpenCode agent daemon is not running on this host. Run `opencode serve --service` to start it."
-msgstr "此主机上未运行 OpenCode 服务。请运行 `opencode serve --service` 启动"
-
-#: src/components/opencode-guide-sheet.tsx
-msgid "OpenCode is installed, but its service is not answering. Run this command on the host."
-msgstr "OpenCode 已安装，但其服务没有响应。请在主机上运行此命令"
-
-#: src/components/opencode-guide-sheet.tsx
-msgid "OpenCode is ready on this host."
-msgstr "OpenCode 已在此主机上准备就绪"
-
-#: src/components/new-task-action.tsx
-msgid "OpenCode ready"
-msgstr "OpenCode 已就绪"
-
-#: src/components/agent-workbench.tsx
-msgid "OpenCode service is offline"
-msgstr "OpenCode 服务当前离线"
-
-#: src/components/agent-composer.tsx
-#: src/components/agent-workbench.tsx
-msgid "OpenCode service offline"
-msgstr "OpenCode 服务离线"
-
-#: src/components/new-task-action.tsx
-msgid "OpenCode service offline. Tap for setup instructions"
-msgstr "OpenCode 服务离线。点击查看启动引导"
-
-#: src/components/home-recent-sessions.tsx
-msgid "OpenCode session"
-msgstr "OpenCode 会话"
-
-#: src/components/new-task-action.tsx
-msgid "OpenCode sessions are not supported. Tap for details"
-msgstr "不支持 OpenCode 会话。点击查看详情"
-
-#: src/components/opencode-guide-sheet.tsx
-msgid "OpenCode was not found on this host. Install OpenCode 2, then check again."
-msgstr "在此主机上未找到 OpenCode。请安装 OpenCode 2，然后再次检查"
-
-#: src/components/new-task-action.tsx
-msgid "OpenCode was not found. Tap for installation instructions"
-msgstr "未找到 OpenCode。轻点查看安装说明"
-
-#: src/components/opencode-guide-sheet.tsx
-msgid "OpenCode's installation could not be confirmed. If it is installed, run this command on the host."
-msgstr "无法确认 OpenCode 是否已安装。如果已安装，请在主机上运行此命令"
 
 #: src/app/+not-found.tsx
 msgid "Opening"
@@ -3546,6 +3717,10 @@ msgstr "粘贴公开的主题链接或 GitHub 仓库链接"
 msgid "Paste a URL…"
 msgstr "粘贴链接…"
 
+#: src/components/change-tree-rows.tsx
+msgid "Patch too long; showing the start of it."
+msgstr "补丁太长，仅显示开头部分"
+
 #: src/components/asset-viewer.tsx
 #: src/components/new-task-sheet.tsx
 msgid "Path"
@@ -3574,10 +3749,6 @@ msgstr "规划 (Plan)"
 #: src/components/agent-composer.tsx
 msgid "Please retry or remove failed attachments."
 msgstr "请重试或移除上传失败的附件"
-
-#: src/components/agent-workbench.tsx
-msgid "Please start OpenCode on the server: opencode serve --service"
-msgstr "请在服务器上启动 OpenCode：opencode serve --service"
 
 #: src/components/open-web-service-sheet.tsx
 #: src/components/simfarm-preview.tsx
@@ -3656,12 +3827,12 @@ msgstr "项目"
 msgid "Project · {0}"
 msgstr "项目 · {0}"
 
-#. placeholder {0}: answer.missing?.directory ?? ''
 #. placeholder {0}: gone.directory
+#. placeholder {0}: listing.missing?.directory ?? ''
 #. placeholder {0}: missing.directory
-#: src/components/agent-vcs-diff-sheet.tsx
 #: src/components/agent-workbench.tsx
 #: src/components/agent-worktree-sheet.tsx
+#: src/components/changes-sheet.tsx
 msgid "Project folder is missing: {0}"
 msgstr "项目文件夹不存在：{0}"
 
@@ -3823,7 +3994,7 @@ msgstr "重新连接中 · {0}"
 msgid "Refresh"
 msgstr "刷新"
 
-#: src/components/git-diff-view.tsx
+#: src/components/changes-sheet.tsx
 msgid "Refresh changes"
 msgstr "刷新改动"
 
@@ -3956,6 +4127,7 @@ msgstr "恢复隐藏的默认项"
 #: src/components/gateway-storage-error.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/components/terminal-boundary.tsx
+#: src/hooks/use-home-commands.ts
 msgid "Retry"
 msgstr "重试"
 
@@ -3968,6 +4140,10 @@ msgid "Retry drawing the terminal"
 msgstr "重新绘制终端"
 
 #: src/components/server-terminal-workspace.tsx
+msgid "Retry loading earlier output"
+msgstr "重试加载更早的输出"
+
+#: src/components/server-terminal-workspace.tsx
 msgid "Retry the ones marked in red, or remove them, then send again."
 msgstr "请重试标为红色的项目，或移除它们后再发送"
 
@@ -3978,7 +4154,7 @@ msgstr "重试上传 {0}"
 
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-workbench.tsx
-#: src/components/home-recent-sessions.tsx
+#: src/i18n/labels.ts
 msgid "Retrying…"
 msgstr "正在重试…"
 
@@ -4084,7 +4260,7 @@ msgstr "运行命令"
 msgid "Run in background"
 msgstr "转入后台运行"
 
-#: src/components/opencode-guide-sheet.tsx
+#: src/components/agent-guide-sheet.tsx
 msgid "Run it under systemd or tmux to keep it up after you log out."
 msgstr "用 systemd 或 tmux 运行，退出登录后它才会继续跑"
 
@@ -4092,12 +4268,16 @@ msgstr "用 systemd 或 tmux 运行，退出登录后它才会继续跑"
 msgid "Run relevant tests"
 msgstr "运行相关测试"
 
+#: src/i18n/labels.ts
+msgid "Run t3 pair on the host, set the printed token as t3.pairing_token in the gateway config, and restart the gateway within 5 minutes."
+msgstr "请在主机上运行 t3 pair，将输出的令牌设为网关配置中的 t3.pairing_token，并在 5 分钟内重启网关"
+
 #: src/components/home-overview.tsx
 msgid "Run the Gateway on your machine and scan the QR code it prints. The pairing stays on this device."
 msgstr "在你的电脑上运行 Gateway，然后扫描它打印出的二维码。配对信息只保存在本设备上"
 
 #: src/components/agent-session-tree-sheet.tsx
-#: src/components/home-recent-sessions.tsx
+#: src/i18n/labels.ts
 msgid "Running"
 msgstr "运行中"
 
@@ -4308,9 +4488,8 @@ msgstr "下一个发送：{0}"
 msgid "Sending to"
 msgstr "发送给"
 
+#: src/app/agent-guide.tsx
 #: src/app/artifacts.tsx
-#: src/app/git-diff.tsx
-#: src/app/opencode-guide.tsx
 #: src/app/panels.tsx
 #: src/components/app-drawer.tsx
 #: src/components/server-terminal-workspace.tsx
@@ -4337,7 +4516,6 @@ msgstr "服务器不可用"
 
 #: src/app/settings.tsx
 #: src/components/app-drawer-content.tsx
-#: src/components/pad-server-rail.tsx
 msgid "Servers"
 msgstr "服务器"
 
@@ -4448,6 +4626,7 @@ msgstr "Shift Tab 键，循环切换模式"
 
 #. placeholder {0}: item.summary
 #. placeholder {0}: row.path
+#: src/components/change-tree-rows.tsx
 #: src/components/diff-rows.tsx
 #: src/components/pane-chat-blocks.tsx
 msgid "Show {0}"
@@ -4491,6 +4670,10 @@ msgstr "显示更少"
 msgid "Show more"
 msgstr "显示更多"
 
+#: src/components/change-tree-rows.tsx
+msgid "Show more context"
+msgstr "显示更多上下文"
+
 #: src/components/agent-model-sheet.tsx
 msgid "Show more models"
 msgstr "显示更多模型"
@@ -4506,10 +4689,6 @@ msgstr "在终端文字后显示 App 背景"
 #: src/components/editor-controls.tsx
 msgid "Show the editor keyboard"
 msgstr "显示编辑器键盘"
-
-#: src/components/git-diff-view.tsx
-msgid "Show the newer list of changes"
-msgstr "显示最新的改动列表"
 
 #: src/components/agent-tool-card.tsx
 msgid "Show the rest of this output"
@@ -4642,7 +4821,6 @@ msgstr "SSH 主机"
 
 #: src/components/home-launch-actions.tsx
 #: src/components/home-overview.tsx
-#: src/components/pad-server-rail.tsx
 #: src/components/settings-servers.tsx
 msgid "SSH hosts"
 msgstr "SSH 主机"
@@ -4652,7 +4830,6 @@ msgid "SSH tunnel through {host} is down"
 msgstr "通过 {host} 的 SSH 隧道已断开"
 
 #: src/components/diff-rows.tsx
-#: src/components/git-diff-view.tsx
 msgid "Staged"
 msgstr "已暂存"
 
@@ -4663,6 +4840,10 @@ msgstr "已暂存和未暂存"
 #: src/lib/agent-widget-layout.tsx
 msgid "stale · {age}"
 msgstr "数据过旧 · {age}"
+
+#: src/components/agent-guide-sheet.tsx
+msgid "Start {agentName}"
+msgstr "启动 {agentName}"
 
 #. placeholder {0}: profile.kind
 #: src/components/agent-assignment-bar.tsx
@@ -4690,13 +4871,29 @@ msgstr "启动一个 Agent，并交给它第一件事"
 msgid "Start an agent and send it the first thing to do."
 msgstr "启动一个代理，并告诉它第一件要做的事"
 
-#: src/components/opencode-guide-sheet.tsx
-msgid "Start OpenCode"
-msgstr "启动 OpenCode"
+#: src/lib/terminal-backend-copy.ts
+msgid "Start Herdr there, then tap Retry"
+msgstr "在那台电脑上启动 Herdr，然后点“重试”"
+
+#: src/lib/terminal-backend-copy.ts
+msgid "Start it there, then tap Retry"
+msgstr "在那台电脑上启动它，然后点“重试”"
+
+#: src/lib/terminal-backend-copy.ts
+msgid "Start one there, then tap Retry:"
+msgstr "在那台电脑上启动一个，然后点“重试”："
 
 #: src/components/new-task-sheet.tsx
 msgid "Start task"
 msgstr "开始任务"
+
+#: src/i18n/labels.ts
+msgid "Start the agent on the gateway host, then check again."
+msgstr "请在网关主机上启动该代理，然后重新检查"
+
+#: src/i18n/labels.ts
+msgid "Start the OpenCode service on the gateway host, then check again."
+msgstr "请在网关主机上启动 OpenCode 服务，然后重新检查"
 
 #: src/components/agent-workbench.tsx
 msgid "Started with a clean context."
@@ -4723,7 +4920,7 @@ msgstr "暂时无法获取状态"
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-workbench.tsx
 #: src/components/collaboration-notice.tsx
-#: src/components/home-recent-sessions.tsx
+#: src/i18n/labels.ts
 msgid "Status unknown"
 msgstr "状态未知"
 
@@ -4745,6 +4942,7 @@ msgid "Stop"
 msgstr "停止"
 
 #: src/app/agent.tsx
+#: src/components/pad-agent-detail.tsx
 msgid "Stop agent"
 msgstr "停止智能体"
 
@@ -4767,17 +4965,13 @@ msgstr "停止这条命令"
 
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-workbench.tsx
-#: src/components/home-recent-sessions.tsx
+#: src/i18n/labels.ts
 msgid "Stopped"
 msgstr "已停止"
 
 #: src/app/settings.tsx
 msgid "Storage"
 msgstr "存储空间"
-
-#: src/components/agent-composer.tsx
-msgid "subagent"
-msgstr "子智能体"
 
 #: src/components/agent-mode-sheet.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
@@ -4967,6 +5161,7 @@ msgid "Terminal key row"
 msgstr "终端按键行"
 
 #: src/components/server-terminal-workspace.tsx
+#: src/hooks/use-home-commands.ts
 msgid "Terminal unavailable"
 msgstr "终端不可用"
 
@@ -5015,10 +5210,6 @@ msgstr "这是内置的示例 shell，也是这里唯一的主机。添加你自
 msgid "That link opens a web page, not the font file. Use the file's direct download link."
 msgstr "这个链接打开的是网页，不是字体文件。请使用文件的直接下载链接"
 
-#: src/lib/release-notes.ts
-msgid "That shell is the terminal you already know: the same keyboard, the same key row, the same colours, and your phone's own keyboard for anything you would rather type."
-msgstr "那个 shell 就是你熟悉的终端：同样的键盘、同样的按键行、同样的配色，想打字时也能用手机自己的输入法"
-
 #: src/components/simfarm-stage.tsx
 msgid "That simulator cannot be started from here. Start it on the machine and it appears in the list."
 msgstr "无法从这里启动该模拟器。请在那台机器上启动它，它就会出现在列表中"
@@ -5038,6 +5229,10 @@ msgstr "代理现在问的是别的问题"
 #: src/i18n/labels.ts
 msgid "The agent is no longer waiting."
 msgstr "代理已经不再等待了"
+
+#: src/components/agent-composer.tsx
+msgid "The agent is offline"
+msgstr "Agent 已离线"
 
 #: src/components/agent-context-sheet.tsx
 msgid "The agent stops asking; irreversibly destructive commands stay blocked"
@@ -5074,6 +5269,10 @@ msgstr "无法打开该目标"
 #: src/components/settings-font-sheet.tsx
 msgid "The font file is missing. Add it again."
 msgstr "找不到字体文件。请重新添加"
+
+#: src/components/changes-sheet.tsx
+msgid "The gateway could not be reached."
+msgstr "无法连接到网关"
 
 #: src/components/agent-worktree-sheet.tsx
 msgid "The host made a worktree but did not say where."
@@ -5178,7 +5377,7 @@ msgstr "把对话记录当成聊天呈现，并收起工具步骤"
 
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-workbench.tsx
-#: src/components/home-recent-sessions.tsx
+#: src/i18n/labels.ts
 msgid "The turn failed"
 msgstr "这一轮执行失败"
 
@@ -5227,6 +5426,10 @@ msgstr "正在思考…"
 msgid "This agent did not offer that answer."
 msgstr "这个代理没有提供那个选项"
 
+#: src/components/changes-sheet.tsx
+msgid "This cannot be undone."
+msgstr "此操作无法撤销"
+
 #: src/lib/attachments.ts
 msgid "This device has no camera available."
 msgstr "本设备没有可用的相机"
@@ -5256,13 +5459,21 @@ msgstr "这个文件太大了"
 msgid "This font could not be read."
 msgstr "无法读取这个字体"
 
-#: src/components/opencode-guide-sheet.tsx
-msgid "This gateway does not advertise OpenCode sessions."
-msgstr "此 Gateway 未提供 OpenCode 会话"
+#: src/components/agent-guide-sheet.tsx
+msgid "This gateway does not advertise {agentName} sessions."
+msgstr "此网关未提供 {agentName} 会话"
 
 #: src/lib/network-error.ts
 msgid "This Gateway does not answer to that address."
 msgstr "这个 Gateway 不接受这个地址"
+
+#: src/components/agent-workbench.tsx
+msgid "This gateway does not expand ~. Type the full path, starting with /."
+msgstr "此网关不支持展开 ~。请输入以 / 开头的完整路径"
+
+#: src/components/agent-workbench.tsx
+msgid "This gateway does not know {agentName}. Refresh the agent list and try again."
+msgstr "此网关不认识 {agentName}。请刷新代理列表后重试"
 
 #: src/components/session-artifacts.tsx
 msgid "This gateway does not serve files yet. Update the Muqun gateway plugin to browse what a session writes."
@@ -5272,7 +5483,7 @@ msgstr "这个 Gateway 尚未提供文件服务。更新牧群的 Gateway 插件
 msgid "This gateway has not listed any paired devices."
 msgstr "这个 Gateway 尚未列出任何已配对的设备"
 
-#: src/components/opencode-guide-sheet.tsx
+#: src/components/agent-guide-sheet.tsx
 msgid "This gateway is not answering. Check the server connection, then try again."
 msgstr "此网关没有响应。请检查服务器连接，然后重试"
 
@@ -5307,10 +5518,6 @@ msgstr "这个链接没有指向任何地方"
 #: src/components/agent-form-card.tsx
 msgid "This one is required."
 msgstr "此项为必填"
-
-#: src/components/git-diff-view.tsx
-msgid "This pane is not working inside a git repository, so there is nothing to compare."
-msgstr "此面板不在 git 仓库中工作，因此没有可比较的内容"
 
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/agent-worktree-sheet.tsx
@@ -5357,8 +5564,8 @@ msgstr "这台服务器已经处理过这个请求了"
 msgid "This server has no session to start an agent in."
 msgstr "这台服务器没有可以启动代理的会话"
 
+#: src/app/agent-guide.tsx
 #: src/app/new-task.tsx
-#: src/app/opencode-guide.tsx
 #: src/app/simfarm.tsx
 #: src/app/web-service.tsx
 msgid "This server is no longer paired."
@@ -5380,9 +5587,21 @@ msgstr "本次会话"
 msgid "This session has no message to roll back to."
 msgstr "这个会话还没有可以回滚到的消息"
 
+#: src/components/agent-workbench.tsx
+msgid "This session no longer exists"
+msgstr "此会话已不存在"
+
+#: src/components/virtual-keyboard.tsx
+msgid "This terminal can't send {chord}"
+msgstr "此终端无法发送 {chord}"
+
 #: src/components/terminal-boundary.tsx
 msgid "This terminal could not be drawn."
 msgstr "无法绘制这个终端"
+
+#: src/lib/terminal-history-pull.ts
+msgid "This terminal has no more history"
+msgstr "此终端没有更多历史了"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "This terminal is no longer available."
@@ -5391,6 +5610,10 @@ msgstr "这个终端已不存在"
 #: src/components/server-terminal-workspace.tsx
 msgid "This terminal is no longer available. Choose another terminal."
 msgstr "此终端已不可用。请选择其他终端"
+
+#: src/components/changes-sheet.tsx
+msgid "This terminal pane is gone."
+msgstr "这个终端窗格已不存在"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "This terminal was removed. Choose another terminal to continue."
@@ -5437,9 +5660,13 @@ msgstr "Token 用量与花费"
 msgid "Too large to highlight — showing plain text."
 msgstr "文件太大，无法着色，显示为纯文本"
 
-#: src/components/git-diff-view.tsx
+#: src/components/changes-sheet.tsx
 msgid "Too many changes to list. This is the start of them, not all of them."
 msgstr "改动太多，无法全部列出。这只是开头，不是全部"
+
+#: src/components/changes-sheet.tsx
+msgid "tracking {upstream}"
+msgstr "跟踪 {upstream}"
 
 #: src/components/bounded-markdown.tsx
 #: src/components/embedded-terminal-tool-block.tsx
@@ -5454,7 +5681,7 @@ msgstr "信任"
 #: src/components/agent-subagent-detail-sheet.tsx
 #: src/components/app-error-boundary.tsx
 #: src/components/asset-viewer.tsx
-#: src/components/git-diff-view.tsx
+#: src/components/changes-sheet.tsx
 #: src/components/theme-browse-sheet.tsx
 msgid "Try again"
 msgstr "重试"
@@ -5510,7 +5737,12 @@ msgstr "可以直接打字，或使用键盘上的语音输入键"
 msgid "Type on the simulator"
 msgstr "在模拟器上输入"
 
+#: src/components/changes-sheet.tsx
+msgid "Uncommitted changes"
+msgstr "未提交的更改"
+
 #: src/components/agent-revert-plate.tsx
+#: src/components/agent-workbench.tsx
 #: src/components/custom-theme-library.tsx
 #: src/i18n/labels.ts
 msgid "Undo"
@@ -5523,6 +5755,10 @@ msgstr "撤销 {summary}"
 #: src/components/agent-revert-plate.tsx
 msgid "Undo back to the staged message"
 msgstr "撤销到已准备的消息"
+
+#: src/components/agent-workbench.tsx
+msgid "Undo this turn?"
+msgstr "撤销这一轮？"
 
 #: src/components/agent-message-block.tsx
 msgid "Undo to here"
@@ -5582,7 +5818,6 @@ msgid "Unpairing…"
 msgstr "正在取消配对…"
 
 #: src/components/diff-rows.tsx
-#: src/components/git-diff-view.tsx
 msgid "Unstaged"
 msgstr "未暂存"
 
@@ -5619,6 +5854,11 @@ msgstr "请将服务器上的 Herdr 更新到 0.9.0 或更高版本并重启会�
 #: src/components/agent-assignment-bar.tsx
 msgid "Update Muqun Gateway on the server, then restart it, to assign a task to another assistant"
 msgstr "请更新服务器上的 Muqun Gateway 并重启，才能把任务交给其他助手"
+
+#: src/components/agent-guide-sheet.tsx
+#: src/components/new-task-action.tsx
+msgid "Update Muqun Gateway on this host to use {agentName}."
+msgstr "请更新此主机上的 Muqun Gateway 以使用 {agentName}"
 
 #: src/components/update-status-banner.tsx
 msgid "Update ready · restarting…"
@@ -5732,8 +5972,8 @@ msgid "Waiting to send"
 msgstr "等待发送"
 
 #: src/components/agent-workbench.tsx
-msgid "Welcome to OpenCode Agent"
-msgstr "欢迎使用 OpenCode 智能体"
+msgid "Welcome to {agentName}"
+msgstr "欢迎使用 {agentName}"
 
 #: src/components/session-map.tsx
 msgid "What is running"
@@ -5751,11 +5991,6 @@ msgstr "当智能体暂停请求权限时，通知直达锁屏。一键批准或
 msgid "While you were away"
 msgstr "离开期间"
 
-#: src/components/pad-server-rail.tsx
-msgid "Workbench"
-msgstr "工作台"
-
-#: src/components/agent-vcs-diff-sheet.tsx
 #: src/components/collaboration-notice.tsx
 #: src/i18n/labels.ts
 msgid "Working"

@@ -10,7 +10,7 @@ import { createHomeRecentsStore } from '../home-recents-state';
 import { createHomeRecentEntry, serializeHomeRecents, type HomeTarget } from '../home-recents';
 
 const target = (asid: string, serverId = 'server-a', directory = '/workspace'): HomeTarget => ({
-  kind: 'opencode-session',
+  kind: 'agent-session',
   serverId,
   sessionId: 'gateway-session',
   directory,
@@ -28,6 +28,7 @@ describe('authoritative subagent Home exclusion', () => {
     const session = (asid: string, parent_id?: string): AgentSessionInfo => ({
       asid,
       backend_session_id: asid,
+      agent_id: 'opencode',
       title: asid,
       model: null,
       status: 'idle',

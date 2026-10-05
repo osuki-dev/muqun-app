@@ -1,8 +1,20 @@
 import { describe, expect, test } from 'bun:test';
 
-import { removeTimelineItems, revertedFileCount, revertedMessageCount } from '../agent-revert';
+import {
+  agentRevertPath,
+  oneStepRevertTarget,
+  removeTimelineItems,
+  revertedFileCount,
+  revertedMessageCount,
+  stagingUnsupported,
+} from '../agent-revert';
 import { buildTimelineGroupsCached, createTimelineGroupCache } from '../agent-timeline-groups';
-import { parseAgentDomainEvent, parseAgentSessionInfo, type TimelineItem } from '../agent-protocol';
+import {
+  LEGACY_AGENT_FEATURES,
+  parseAgentDomainEvent,
+  parseAgentSessionInfo,
+  type TimelineItem,
+} from '../agent-protocol';
 
 function row(
   id: string,
@@ -173,5 +185,61 @@ describe('agent.revert.changed', () => {
       state: 'staged',
       revert: null,
     });
+  });
+});
+
+describe('which rollback an agent gets', () => {
+  test('an agent that can stage one stages it', () => {
+    expect(agentRevertPath({ ...LEGACY_AGENT_FEATURES })).toBe('staged');
+  });
+
+  test('an agent that reverts but cannot stage goes one step, behind a confirmation', () => {
+    expect(agentRevertPath({ ...LEGACY_AGENT_FEATURES, stagedRevert: false })).toBe('one-step');
+  });
+
+  test('an agent that cannot revert at all is offered nothing', () => {
+    expect(agentRevertPath({ ...LEGACY_AGENT_FEATURES, revert: false })).toBeNull();
+    expect(
+      agentRevertPath({ ...LEGACY_AGENT_FEATURES, revert: false, stagedRevert: false })
+    ).toBeNull();
+  });
+});
+
+describe('a staging the agent refused as unsupported', () => {
+  const failure = (status: number, code: string) =>
+    new Error(
+      `Failed to stage revert: ${status} ${JSON.stringify({
+        error: { code, message: 'This agent does not support: stage_revert' },
+      })}`
+    );
+
+  test('a 501 feature_unsupported falls back to the one-step rollback', () => {
+    expect(stagingUnsupported(failure(501, 'feature_unsupported'))).toBe(true);
+  });
+
+  test('either half alone is enough', () => {
+    expect(stagingUnsupported(failure(400, 'feature_unsupported'))).toBe(true);
+    expect(stagingUnsupported(new Error('Failed to stage revert: 501 '))).toBe(true);
+  });
+
+  test('any other failure is reported, not worked around', () => {
+    expect(stagingUnsupported(failure(502, 'agent_error'))).toBe(false);
+    expect(stagingUnsupported(new Error('Failed to stage revert: 500 boom'))).toBe(false);
+    expect(stagingUnsupported(new TypeError('Network request failed'))).toBe(false);
+    expect(stagingUnsupported(undefined)).toBe(false);
+  });
+});
+
+describe('a confirmed one-step rollback', () => {
+  const asked = { asid: 'ses-1', messageId: 'msg-3' };
+
+  test('goes ahead on the session it was asked about', () => {
+    expect(oneStepRevertTarget(asked, 'ses-1')).toEqual(asked);
+  });
+
+  test('does nothing once the reader is on another session, or on none', () => {
+    expect(oneStepRevertTarget(asked, 'ses-2')).toBeNull();
+    expect(oneStepRevertTarget(asked, undefined)).toBeNull();
+    expect(oneStepRevertTarget(null, 'ses-1')).toBeNull();
   });
 });

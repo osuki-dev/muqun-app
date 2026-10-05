@@ -113,6 +113,12 @@ export interface AgentSessionsSheetProps {
    * first is the same guarantee with nothing hidden.
    */
   onMoveSession?: (asid: string) => void;
+  /**
+   * Whether one session's agent can be moved into a worktree. A session whose
+   * agent reports `worktrees: false` is not offered the move; without this,
+   * every row is.
+   */
+  canMoveSession?: (session: AgentSessionInfo) => boolean;
   /** Open the project sheet, where the reader switches project or opens a path. */
   onOpenProjects?: () => void;
   onClose: () => void;
@@ -129,6 +135,7 @@ export const AgentSessionsSheet = memo(function AgentSessionsSheet({
   onRenameSession,
   onDeleteSession,
   onMoveSession,
+  canMoveSession,
   onOpenProjects,
   onClose,
 }: AgentSessionsSheetProps) {
@@ -228,14 +235,14 @@ export const AgentSessionsSheet = memo(function AgentSessionsSheet({
     return list.filter((root) => {
       const hit =
         root.title?.toLowerCase().includes(q) ||
-        root.agent?.toLowerCase().includes(q) ||
+        root.mode?.toLowerCase().includes(q) ||
         root.directory?.toLowerCase().includes(q) ||
         root.asid.toLowerCase().includes(q);
       if (hit) return true;
       return (subagentMap.get(root.asid) ?? []).some(
         (sub) =>
           sub.title?.toLowerCase().includes(q) ||
-          sub.agent?.toLowerCase().includes(q) ||
+          sub.mode?.toLowerCase().includes(q) ||
           sub.asid.toLowerCase().includes(q)
       );
     });
@@ -406,7 +413,7 @@ export const AgentSessionsSheet = memo(function AgentSessionsSheet({
         testID: `agent-session-open-parent-${session.asid}`,
       });
     }
-    if (onMoveSession) {
+    if (onMoveSession && (canMoveSession?.(session) ?? true)) {
       items.push({
         id: 'worktree',
         // No trailing ellipsis. It is the desktop convention for "this opens
@@ -586,7 +593,7 @@ export const AgentSessionsSheet = memo(function AgentSessionsSheet({
                 <SheetSceneRow
                   testID={`agent-session-row-${root.asid}`}
                   title={sessionTitleOr(root, t`Untitled session`)}
-                  caption={[root.agent || 'build', modelNameOf(root.model), projectName]
+                  caption={[root.mode || 'build', modelNameOf(root.model), projectName]
                     .filter(Boolean)
                     .join(' · ')}
                   selected={root.asid === activeAsid}
@@ -615,7 +622,7 @@ export const AgentSessionsSheet = memo(function AgentSessionsSheet({
                     key={sub.asid}
                     testID={`agent-subagent-row-${sub.asid}`}
                     title={sessionTitleOr(sub, t`Untitled session`)}
-                    caption={sub.agent || 'subagent'}
+                    caption={sub.mode || 'subagent'}
                     selected={sub.asid === activeAsid}
                     style={styles.subagentRow}
                     accessibilityLabel={rowLabel(sub)}

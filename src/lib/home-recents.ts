@@ -17,13 +17,20 @@ const MAX_HOME_TARGET_FIELD_LENGTH = 1024;
 /** A stable, routeable Home destination. */
 export type HomeTarget =
   | {
-      kind: 'opencode-session';
+      kind: 'agent-session';
       serverId: string;
       /** Gateway/Herdr routing session, not the OpenCode agent session id. */
       sessionId: string;
       directory: string;
       /** OpenCode agent session identity. */
       asid: string;
+      /**
+       * The agent that owns the session. Absent on every target written
+       * before the gateway could name one, and read as `opencode` then -- see
+       * `homeTargetAgentId`. Not part of the key: the asid already names the
+       * session, and an agent learned later must not make a second row.
+       */
+      agentId?: string;
     }
   | {
       kind: 'gateway-terminal';
@@ -79,7 +86,7 @@ export type HomeRecentsParseResult =
  */
 export function homeTargetKey(target: HomeTarget): string {
   switch (target.kind) {
-    case 'opencode-session':
+    case 'agent-session':
       return JSON.stringify([
         target.kind,
         target.serverId,
@@ -94,18 +101,55 @@ export function homeTargetKey(target: HomeTarget): string {
   }
 }
 
+/**
+ * Whether a remembered terminal still names a pane the workspace can see: the
+ * same Herdr session, and the pane still listed. Stamping a pane that was
+ * closed (or a pane id from another session) would put a dead row on Home.
+ */
+export function isLiveHomeTerminalVisit(
+  target: HomeTarget,
+  sessionId: string,
+  panes: readonly { id: string }[]
+): boolean {
+  return (
+    target.kind === 'gateway-terminal' &&
+    target.sessionId === sessionId &&
+    panes.some((pane) => pane.id === target.paneId)
+  );
+}
+
+/** What every agent target was before the gateway could name a agentId. */
+export const DEFAULT_HOME_TARGET_AGENT_ID = 'opencode';
+
+/** The agent an agent target names, or the default for one written before agents. */
+export function homeTargetAgentId(target: { agentId?: string } | null | undefined): string {
+  const agentId = target?.agentId?.trim();
+  return agentId ? agentId : DEFAULT_HOME_TARGET_AGENT_ID;
+}
+
 /** Validate and copy an untrusted target from a persisted or external value. */
 export function normalizeHomeTarget(value: unknown): HomeTarget | null {
   if (!isRecord(value) || typeof value.kind !== 'string') return null;
 
   switch (value.kind) {
-    case 'opencode-session': {
+    // `opencode-session` is what every agent target was called before the
+    // gateway could name an agent; a stored one is the default agent's.
+    case 'opencode-session':
+    case 'agent-session': {
       const serverId = targetField(value.serverId);
       const sessionId = targetField(value.sessionId);
       const directory = targetField(value.directory, true);
       const asid = targetField(value.asid);
       if (!serverId || !sessionId || directory === null || !asid) return null;
-      return { kind: value.kind, serverId, sessionId, directory, asid };
+      const agentId = targetField(value.agentId);
+      return {
+        kind: 'agent-session',
+        serverId,
+        sessionId,
+        directory,
+        asid,
+        ...(agentId ? { agentId } : {}),
+      };
     }
     case 'gateway-terminal': {
       const serverId = targetField(value.serverId);
@@ -143,7 +187,7 @@ export function createHomeRecentEntry(
   const normalizedTarget = normalizeHomeTarget(target);
   if (!normalizedTarget || !isTimestamp(atMs)) return null;
   const normalizedObservation =
-    normalizedTarget.kind === 'opencode-session'
+    normalizedTarget.kind === 'agent-session'
       ? normalizeHomeSessionObservation(sessionObservation)
       : undefined;
   return {

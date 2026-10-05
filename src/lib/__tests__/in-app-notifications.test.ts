@@ -3,6 +3,7 @@ import { describe, expect, test } from 'bun:test';
 import {
   dismissNotice,
   dismissNoticeKind,
+  dismissSessionQuestions,
   enqueueNotice,
   MAX_NOTICES,
   MAX_SEEN_NOTICES,
@@ -342,5 +343,94 @@ describe('notice title', () => {
       suffix: '',
     });
     expect(noticeTitleParts(' \u00b7 osk')).toEqual({ lead: '\u00b7 osk', suffix: '' });
+  });
+});
+
+describe('question pushes', () => {
+  const data = {
+    type: 'question',
+    category: 'question',
+    form_id: 'form-1',
+    fingerprint: 'fp-1',
+    server_id: 'server-1',
+    asid: 'asid-1',
+    agent_id: 'claude',
+  };
+
+  test('a question with no title shows the needs-your-input title and opens the session', () => {
+    const notice = noticeFromPush(
+      'q-1',
+      { data },
+      { isPad: false, questionTitle: 'Needs your input' }
+    );
+    expect(notice).toMatchObject({
+      title: 'Needs your input',
+      kind: 'approval',
+      question: { asid: 'asid-1', formId: 'form-1' },
+      route: {
+        pathname: '/agent',
+        params: { server: 'server-1', asid: 'asid-1', agentId: 'claude' },
+      },
+    });
+  });
+
+  test('the gateway title wins and a Pad gets the workspace route', () => {
+    const notice = noticeFromPush(
+      'q-2',
+      { title: 'Claude needs your input · osk', body: 'Which branch?', data },
+      { isPad: true, questionTitle: 'Needs your input' }
+    );
+    expect(notice?.title).toBe('Claude needs your input · osk');
+    expect(notice?.route).toEqual({
+      pathname: '/servers/[serverId]',
+      params: { serverId: 'server-1', asid: 'asid-1', agentId: 'claude' },
+    });
+  });
+
+  test('questions about different sessions are separate cards', () => {
+    const a = noticeFromPush('q-a', { title: 'Needs your input', data })!;
+    const b = noticeFromPush('q-b', {
+      title: 'Needs your input',
+      data: { ...data, asid: 'asid-2' },
+    })!;
+    expect(enqueueNotice(enqueueNotice(empty(), a), b).items).toHaveLength(2);
+  });
+
+  test('a question stays on screen like an approval', () => {
+    const notice = noticeFromPush('q-s', { title: 'Needs your input', data })!;
+    expect(noticeAutoDismissDelay(notice.kind, true)).toBeNull();
+  });
+
+  test('the same question asked again replaces its card', () => {
+    const first = noticeFromPush('q-1', { title: 'Needs your input', data })!;
+    const again = noticeFromPush('q-2', { title: 'Needs your input', data })!;
+    const other = noticeFromPush('q-3', {
+      title: 'Needs your input',
+      data: { ...data, form_id: 'form-2' },
+    })!;
+    const queue = enqueueNotice(enqueueNotice(enqueueNotice(empty(), first), other), again);
+    expect(queue.items.map((item) => item.id)).toEqual(['q-3', 'q-2']);
+  });
+
+  test('opening the session dismisses its questions only', () => {
+    let queue = enqueueNotice(empty(), noticeFromPush('q-1', { title: 'Q', data })!);
+    queue = enqueueNotice(
+      queue,
+      noticeFromPush('q-2', { title: 'Q', data: { ...data, asid: 'asid-2' } })!
+    );
+    expect(dismissSessionQuestions(queue, 'asid-1').items.map((item) => item.id)).toEqual(['q-2']);
+  });
+
+  test('an answered approval leaves questions on screen', () => {
+    let queue = enqueueNotice(empty(), noticeFromPush('q-1', { title: 'Q', data })!);
+    queue = enqueueNotice(
+      queue,
+      noticeFromPush('ap-1', {
+        title: 'Approval required',
+        body: 'bash: ls',
+        data: { category: 'approval', server_id: 'server-1', asid: 'asid-1' },
+      })!
+    );
+    expect(dismissNoticeKind(queue, 'approval').items.map((item) => item.id)).toEqual(['q-1']);
   });
 });

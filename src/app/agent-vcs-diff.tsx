@@ -1,7 +1,9 @@
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 
 import { AgentVcsDiffSheet } from '@/components/agent-vcs-diff-sheet';
+import { gatewaySupportsVcsFiles } from '@/lib/agent-protocol';
 import { useAgentSheetBridge } from '@/stores/agent-sheet-bridge';
+import { useServerCapabilities } from '@/stores/server-capabilities';
 
 /**
  * The agent's working-tree diff route: which session, plus an optional file to
@@ -9,10 +11,15 @@ import { useAgentSheetBridge } from '@/stores/agent-sheet-bridge';
  * fetches its own.
  */
 export default function AgentVcsDiffScreen() {
-  const router = useRouter();
   const params = useLocalSearchParams<{ sessionId?: string; asid?: string; path?: string }>();
   const bridgeSessionId = useAgentSheetBridge((state) => state.sessionId);
   const bridgeAsid = useAgentSheetBridge((state) => state.activeAsid);
+  const serverId = useAgentSheetBridge((state) => state.serverId);
+  // What `/health` last said this gateway can do: lazy per-file patches and
+  // discard, or the one `…/vcs/diff` answer every gateway has.
+  const filesApi = useServerCapabilities((state) =>
+    serverId ? gatewaySupportsVcsFiles(state.byServer[serverId]) : false
+  );
 
   const sessionId = params.sessionId || bridgeSessionId;
   const asid = params.asid || bridgeAsid;
@@ -24,7 +31,7 @@ export default function AgentVcsDiffScreen() {
       sessionId={sessionId}
       asid={asid ?? ''}
       targetPath={params.path}
-      onClose={() => router.back()}
+      filesApi={filesApi}
     />
   );
 }

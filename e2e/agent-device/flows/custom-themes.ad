@@ -125,7 +125,9 @@ back --system
 gesture pan 201 237 0 520 500
 
 # section browse-close-ipad
-gesture pan 605 95 0 600 500
+# A Pad shows the catalogue full-screen: no grabber to drag, so the scene's
+# own close button is the way out.
+press "id=sheet-close"
 
 # section browse-closed
 wait stable 400 5000

@@ -12,6 +12,7 @@ import { resolveArtworkOpacity, safeArtworkOpacity } from '@/theme/artwork-contr
 import { terminalBackgroundFill } from '@/terminal/background';
 import { surfaceBackgroundFill, surfaceBackgroundOpacity } from '@/theme/surface-background';
 import { clampThemeOpacity, jointArtworkOpacity } from '@/theme/opacity-policy';
+import { isRenderableThemeAsset } from '@/theme/renderable-asset';
 
 /** Fictional, noninteractive content: preview never changes global providers or connects a terminal. */
 const ANSI_SLOT_NAMES = [
@@ -52,7 +53,7 @@ export function CustomThemePreview({
   const logoFor = (mode: 'light' | 'dark') =>
     identity.logo?.mode === 'default'
       ? brandMark(mode)
-      : identity.logo?.mode === 'custom' && assets[identity.logo.asset]?.startsWith('file:///')
+      : identity.logo?.mode === 'custom' && isRenderableThemeAsset(assets[identity.logo.asset])
         ? { uri: assets[identity.logo.asset] }
         : null;
   return (
@@ -72,6 +73,7 @@ export function CustomThemePreview({
               gap: 12,
               padding: 16,
               borderRadius: profile.chrome.card,
+              // Opacity audit: floor -- the previewed screen's base; its surfaces use `background()`.
               backgroundColor: colors.background,
               overflow: 'hidden',
             }}>

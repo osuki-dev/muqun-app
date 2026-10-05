@@ -16,12 +16,14 @@ export default function AgentWorkspaceScreen() {
   const bridgeSessionId = useAgentSheetBridge((state) => state.sessionId);
   const activeDirectory = useAgentSheetBridge((state) => state.activeDirectory);
   const knownProjects = useAgentSheetBridge((state) => state.knownProjects);
+  const catalogAgentId = useAgentSheetBridge((state) => state.catalogAgentId);
   const selectWorkspace = useAgentSheetBridge((state) => state.actions.selectWorkspace);
 
   return (
     <AgentWorkspaceSheet
       sessionId={params.sessionId || bridgeSessionId || undefined}
       activeDirectory={activeDirectory}
+      agentId={catalogAgentId}
       initialProjects={knownProjects}
       onSelectWorkspace={selectWorkspace}
       onClose={() => router.back()}

@@ -24,6 +24,12 @@ import type { SwipeableSession } from '@/lib/session-swipe';
 interface AgentSessionState {
   running: boolean;
   title?: string;
+  /**
+   * The agent the open session runs on, as its `AgentSessionInfo` says.
+   * A screen outside the workbench -- a sheet route, the header -- gates a
+   * control on this through `useAgentFeatures`.
+   */
+  agentId?: string;
   directory?: string;
   project?: AgentProject;
   /**
@@ -55,7 +61,7 @@ interface AgentSessionState {
    * and the stream all follow it as they already do.
    */
   switchSession?: (asid: string) => void;
-  setSessionStatus: (state: { running: boolean; title?: string }) => void;
+  setSessionStatus: (state: { running: boolean; title?: string; agentId?: string }) => void;
   setWorkspace: (directory?: string, project?: AgentProject, worktree?: string) => void;
   setSessionRouting: (routing: {
     sessionOrder: readonly SwipeableSession[];
@@ -70,6 +76,7 @@ const NO_SESSIONS: readonly SwipeableSession[] = [];
 export const useAgentSessionState = create<AgentSessionState>((set) => ({
   running: false,
   title: undefined,
+  agentId: undefined,
   directory: undefined,
   project: undefined,
   worktree: undefined,
@@ -77,7 +84,8 @@ export const useAgentSessionState = create<AgentSessionState>((set) => ({
   activeAsid: undefined,
   switching: false,
   switchSession: undefined,
-  setSessionStatus: (state) => set({ running: state.running, title: state.title }),
+  setSessionStatus: (state) =>
+    set({ running: state.running, title: state.title, agentId: state.agentId }),
   setWorkspace: (directory, project, worktree) => set({ directory, project, worktree }),
   setSessionRouting: (routing) =>
     set({

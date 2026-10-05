@@ -48,7 +48,6 @@ import {
   parsePatchSections,
   parseToolOutput,
   parseToolQuestions,
-  prettyJson,
   questionAnswersFromMetadata,
   QUESTION_MAX,
   QUESTION_OPTION_MAX,
@@ -65,6 +64,7 @@ import {
   subagentStatusFromMetadata,
   textFromContent,
   toolArgumentLine,
+  toolInputJson,
   toolInputRecord,
   type ToolKind,
   type ToolQuestion,
@@ -1494,8 +1494,7 @@ const GenericToolBody = memo(function GenericToolBody({
   // grey monospace wall.
   const markdownStyle = usePaneChatMarkdownStyle();
   const proseStyle = useCompactMarkdownStyle('body');
-  const pretty = useMemo(() => prettyJson(input), [input]);
-  const hasInput = pretty.text && pretty.text !== 'undefined' && pretty.text !== '{}';
+  const pretty = useMemo(() => toolInputJson(input), [input]);
   // An MCP server answers with whatever it likes: one returns a written
   // summary, the next returns a log. A heading, a list, a table or a backtick
   // is somebody writing markdown on purpose and is read as such; anything else
@@ -1503,7 +1502,7 @@ const GenericToolBody = memo(function GenericToolBody({
   const prose = hasMarkdownMarks(outputText);
   return (
     <>
-      {hasInput ? (
+      {pretty ? (
         <CodeBody body={pretty.text} language="json" markdownStyle={markdownStyle} />
       ) : null}
       {prose ? (

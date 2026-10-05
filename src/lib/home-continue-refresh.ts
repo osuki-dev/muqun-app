@@ -1,7 +1,18 @@
 import { hasRealSessionTitle, parseAgentSessionList } from './agent-protocol';
 import { normalizeGatewayEntities } from './gateway-entities';
+import {
+  gatewayAgentSessions,
+  HOME_CONTINUE_GATEWAY_SESSION_LIMIT,
+  type GatewayAgentSessionsSnapshot,
+} from './home-continue';
 import type { HomeRecentEntry, HomeTarget, HomeSessionObservation } from './home-recents';
 import { mirroredServerPanes, type ServerAgentsSnapshot } from './server-agents';
+
+/**
+ * How often Home re-reads Continue, and how often an open terminal re-stamps
+ * its visit so it keeps ranking as recent while the user stays on it.
+ */
+export const HOME_CONTINUE_REFRESH_MS = 30_000;
 
 /** Bound reads and publication to one explicit Home selection, never the live connection. */
 export async function refreshHomeContinue({
@@ -13,6 +24,9 @@ export async function refreshHomeContinue({
   recordPanes,
   observe,
   updateTitle,
+  repairAgent,
+  recordAgentSessions,
+  agentSessionLimit = HOME_CONTINUE_GATEWAY_SESSION_LIMIT,
 }: {
   serverId: string;
   sessionId: string;
@@ -22,10 +36,22 @@ export async function refreshHomeContinue({
   recordPanes: (snapshot: ServerAgentsSnapshot) => Promise<void>;
   observe: (target: HomeTarget, observation: HomeSessionObservation) => Promise<void>;
   updateTitle: (target: HomeTarget, title: string) => Promise<void>;
+  /** Writes the gateway's agent onto a remembered session that names another. */
+  repairAgent?: (target: HomeTarget, agentId: string) => Promise<void>;
+  /**
+   * Present for the selected gateway only: its merged agent-session listing
+   * goes here, so Continue shows sessions this device never opened.
+   */
+  recordAgentSessions?: (snapshot: GatewayAgentSessionsSnapshot) => void;
+  agentSessionLimit?: number;
 }) {
+  const repair = async (target: HomeTarget, agentId: string) => {
+    if (repairAgent && target.kind === 'agent-session' && target.agentId !== agentId)
+      await repairAgent(target, agentId);
+  };
   const scopes = new Map<string, { sessionId: string; directory: string }>();
   for (const { target } of entries) {
-    if (target.kind === 'opencode-session' && target.serverId === serverId) {
+    if (target.kind === 'agent-session' && target.serverId === serverId) {
       scopes.set(JSON.stringify([target.sessionId, target.directory]), target);
     }
   }
@@ -36,6 +62,7 @@ export async function refreshHomeContinue({
       if (!isCurrent()) return;
       await recordPanes({
         serverId,
+        sessionId,
         checkedAtMs: Date.now(),
         agents: mirroredServerPanes(
           normalizeGatewayEntities(panes, ['panes', 'items']),
@@ -61,7 +88,7 @@ export async function refreshHomeContinue({
       for (const { target } of entries) {
         if (!isCurrent()) return;
         if (
-          target.kind !== 'opencode-session' ||
+          target.kind !== 'agent-session' ||
           target.serverId !== serverId ||
           target.sessionId !== scope.sessionId ||
           target.directory !== scope.directory
@@ -71,8 +98,37 @@ export async function refreshHomeContinue({
         if (!info || info.parent_id || info.deleted) continue;
         if (hasRealSessionTitle(info)) await updateTitle(target, info.title);
         if (isCurrent()) await observe(target, { status: info.status, observedAtMs });
+        if (isCurrent()) await repair(target, info.agent_id);
       }
     }),
+    ...(recordAgentSessions
+      ? [
+          (async () => {
+            // No `agent_id`: a multi-agent gateway merges every agent's list
+            // and tags each row with its owner.
+            const query = new URLSearchParams({
+              roots: 'true',
+              limit: String(agentSessionLimit),
+              order: 'desc',
+            });
+            const response = await read(`/api/agent-sessions?${query}`);
+            if (!isCurrent()) return;
+            const data =
+              response && typeof response === 'object' && 'data' in response
+                ? response.data
+                : response;
+            const sessions = gatewayAgentSessions(parseAgentSessionList(data), agentSessionLimit);
+            recordAgentSessions({ serverId, sessionId, observedAtMs: Date.now(), sessions });
+            const owners = new Map(sessions.map((session) => [session.asid, session.agentId]));
+            for (const { target } of entries) {
+              if (!isCurrent()) return;
+              if (target.kind !== 'agent-session' || target.serverId !== serverId) continue;
+              const agentId = owners.get(target.asid);
+              if (agentId) await repair(target, agentId);
+            }
+          })(),
+        ]
+      : []),
   ]);
 }
 

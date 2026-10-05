@@ -3,39 +3,52 @@ import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens } from '@osuki-dev/ui';
 import { ChevronRight } from 'lucide-react-native';
 import { useCallback, useRef, useState } from 'react';
-import { AppState, StyleSheet, View } from 'react-native';
+import { AppState, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 
+import { AgentMark } from '@/components/agent-mark';
 import { PressableScale } from '@/components/pressable-scale';
 import { StatusDot } from '@/components/status-dot';
 import { Text } from '@/components/text';
 import { ThemeIcon } from '@/components/theme-icon';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
-import { refreshHomeContinue, refreshHomeGateways } from '@/lib/home-continue-refresh';
+import { useHomeScenePlate } from '@/hooks/use-home-scene-plate';
+import {
+  HOME_CONTINUE_REFRESH_MS,
+  refreshHomeContinue,
+  refreshHomeGateways,
+} from '@/lib/home-continue-refresh';
 import { useAppActive } from '@/hooks/use-app-active';
 import { loadRecordSessions, readGatewayRecordJson } from '@/lib/gateway-client';
 import { resolveSessionId, sessionChoices } from '@/lib/session-switcher';
 import { useServerSession } from '@/stores/server-session';
 import { isDemoRecord } from '@/lib/demo-gateway';
 import type { GatewayRecord } from '@/lib/gateway-storage';
-import type { HomeTarget } from '@/lib/home-recents';
+import type { HomeCommand } from '@/lib/home-commands';
+import { findAgent } from '@/lib/agent-discovery';
+import { agentDisplayName } from '@/lib/home-launch-model';
+import { useAgents } from '@/stores/agents';
+import { useHomeAgentSessions } from '@/stores/home-agent-sessions';
 import {
+  agentSessionStatusPresentation,
+  homeContinueCommand,
   homeContinueEntries,
+  homeContinueKind,
+  homeContinueTarget,
   shouldShowHomeContinueOverflow,
   visibleHomeContinueEntries,
   type HomeContinueEntry,
 } from '@/lib/home-continue';
-import { agentStatusWord } from '@/i18n/labels';
+import { agentSessionStatusWord, agentStatusWord } from '@/i18n/labels';
 import { agentStatusTone } from '@/lib/herdr-entity';
 import type { ActiveServerConnection, ServerReachability } from '@/lib/server-reachability';
 import { useServerAgents } from '@/stores/server-agents';
 import { useAppSettings } from '@/stores/app-settings';
 import type { SshHostRecord } from '@/lib/ssh-hosts';
 import { useHomeRecentsStore } from '@/stores/home-recents';
+import { useGoneAgentSessions } from '@/stores/gone-agent-sessions';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { settleAfter } from '@/lib/compiler-safe-control-flow';
-
-const HOME_SESSION_REFRESH_MS = 30_000;
 
 /** Shared Classic pane inventory, ranked by explicit visits without recording synthetic visits. */
 export function HomeRecentSessions({
@@ -44,29 +57,45 @@ export function HomeRecentSessions({
   reachabilityByServer,
   activeConnection,
   selectedServerId,
+  compact = false,
+  limit,
+  linkStyle,
+  selectedPaneId,
+  selectedAsid,
   onOpen,
-  onOpenPane,
 }: {
   servers: readonly GatewayRecord[];
   hosts: readonly SshHostRecord[];
   reachabilityByServer: Readonly<Record<string, ServerReachability | undefined>>;
   activeConnection?: ActiveServerConnection;
   selectedServerId?: string;
-  onOpen: (target: HomeTarget) => void;
-  onOpenPane: (serverId: string, paneId?: string) => void;
+  compact?: boolean;
+  /** Rows shown before the `Sessions (N)` toggle; compact lists default to four. */
+  limit?: number;
+  /** Overrides the `Sessions (N)` link's box, e.g. to inset it like the rows. */
+  linkStyle?: StyleProp<ViewStyle>;
+  selectedPaneId?: string;
+  selectedAsid?: string;
+  /** Runs the row's Home command; see `homeContinueCommand`. */
+  onOpen: (command: HomeCommand) => void;
 }) {
   const { t } = useLingui();
   const theme = useThemeTokens();
   const profile = useAppearanceProfile();
   const background = useSurfaceBackground();
+  const emptyPlate = useHomeScenePlate();
   const entries = useHomeRecentsStore((state) => state.entries);
   const hydrated = useHomeRecentsStore((state) => state.hydrated);
+  const goneSessions = useGoneAgentSessions((state) => state.keys);
   const [expanded, setExpanded] = useState(false);
   const [observationNowMs, setObservationNowMs] = useState(Date.now);
   const snapshots = useServerAgents((state) => state.byServer);
   const snapshotsHydrated = useServerAgents((state) => state.hydrated);
   const paneMode = useAppSettings((state) => state.serverCardPanes);
   const targetId = selectedServerId ?? activeConnection?.serverId;
+  const agentSessions = useHomeAgentSessions((state) =>
+    targetId ? state.byServer[targetId] : undefined
+  );
   const appActive = useAppActive();
   const refreshFlight = useRef<Promise<void>>(Promise.resolve());
   useFocusEffect(
@@ -103,6 +132,13 @@ export function HomeRecentSessions({
                 recordPanes: useServerAgents.getState().record,
                 observe: recent.observeSession,
                 updateTitle: recent.updateTitle,
+                repairAgent: recent.repairAgent,
+                // The chosen gateway's own sessions, including ones this
+                // device never opened; every other gateway keeps its recents.
+                recordAgentSessions:
+                  targetRecord.serverId === targetId
+                    ? useHomeAgentSessions.getState().record
+                    : undefined,
               });
             },
           });
@@ -122,7 +158,7 @@ export function HomeRecentSessions({
       void refresh();
       const timer = setInterval(() => {
         void refresh();
-      }, HOME_SESSION_REFRESH_MS);
+      }, HOME_CONTINUE_REFRESH_MS);
       return () => {
         current = false;
         clearInterval(timer);
@@ -137,8 +173,13 @@ export function HomeRecentSessions({
     reachabilityByServer,
     paneMode,
     nowMs: observationNowMs,
+    gatewaySessions: agentSessions,
+    goneSessions,
   });
-  const displayed = visibleHomeContinueEntries(available, expanded);
+  const visible = visibleHomeContinueEntries(available, expanded);
+  const collapsedLimit = limit ?? (compact ? 4 : undefined);
+  const displayed =
+    collapsedLimit !== undefined && !expanded ? visible.slice(0, collapsedLimit) : visible;
   return (
     <View testID="home-recent-sessions" style={styles.root}>
       <View
@@ -154,6 +195,10 @@ export function HomeRecentSessions({
             key={entry.key}
             entry={entry}
             number={index + 1}
+            compact={compact}
+            selectedServerId={selectedServerId}
+            selectedPaneId={selectedPaneId}
+            selectedAsid={selectedAsid}
             hasSeparator={index < displayed.length - 1}
             serverLabel={
               servers.find(
@@ -166,28 +211,31 @@ export function HomeRecentSessions({
                       : entry.destination.target.serverId)
               )?.label
             }
-            onOpen={() => {
-              if (entry.destination.type === 'pane')
-                onOpenPane(entry.destination.serverId, entry.destination.paneId);
-              else onOpen(entry.destination.target);
-            }}
+            onOpen={() => onOpen(homeContinueCommand(entry.destination))}
           />
         ))}
         {available.length === 0 ? (
           <Text
             variant="bodySmall"
             color={theme.colors.textMuted}
-            style={{ paddingVertical: 16, paddingHorizontal: 0 }}>
+            // Over a pack's scene the caption takes its heading's plate, and the
+            // plate's own padding replaces the 16 above and below it.
+            style={
+              emptyPlate.backgroundColor
+                ? [emptyPlate, { marginVertical: 12 }]
+                : { paddingVertical: 16, paddingHorizontal: 0 }
+            }>
             {hydrated && snapshotsHydrated ? t`Nothing to show yet.` : t`Loading recent sessions…`}
           </Text>
         ) : null}
       </View>
-      {shouldShowHomeContinueOverflow(available) ? (
+      {shouldShowHomeContinueOverflow(available) ||
+      (collapsedLimit !== undefined && available.length > collapsedLimit) ? (
         <PressableScale
           testID="home-recent-sessions-more"
           accessibilityRole="button"
           onPress={() => setExpanded(!expanded)}
-          style={styles.more}>
+          style={[styles.more, linkStyle]}>
           <Text variant="bodySmall" color={theme.colors.primary}>
             {expanded ? t`Show less` : `${t`Sessions`} (${available.length})`}
           </Text>
@@ -202,60 +250,75 @@ function RecentSessionRow({
   number,
   hasSeparator,
   serverLabel,
+  compact,
+  selectedServerId,
+  selectedPaneId,
+  selectedAsid,
   onOpen,
 }: {
   entry: HomeContinueEntry;
   number: number;
   hasSeparator: boolean;
   serverLabel?: string;
+  compact: boolean;
+  selectedServerId?: string;
+  selectedPaneId?: string;
+  selectedAsid?: string;
   onOpen: () => void;
 }) {
   const { t } = useLingui();
   const { _ } = useLinguiRuntime();
   const theme = useThemeTokens();
   const background = useSurfaceBackground();
-  const target = entry.destination.type === 'recent' ? entry.destination.target : undefined;
+  const target = homeContinueTarget(entry.destination);
+  const selected =
+    target?.kind === 'agent-session'
+      ? target.serverId === selectedServerId && target.asid === selectedAsid
+      : target?.kind === 'gateway-terminal'
+        ? target.serverId === selectedServerId &&
+          Boolean(selectedPaneId) &&
+          target.paneId === selectedPaneId
+        : entry.destination.type === 'pane' &&
+          entry.destination.serverId === selectedServerId &&
+          Boolean(selectedPaneId) &&
+          entry.destination.paneId === selectedPaneId;
+  const rowKind = homeContinueKind(entry.destination);
   const cwd =
     entry.destination.type === 'pane'
       ? entry.destination.cwd
-      : target?.kind === 'opencode-session'
+      : target?.kind === 'agent-session'
         ? target.directory
         : undefined;
+  // The agent's own name from the last discovery, so a DeepSeek session does
+  // not say it is an OpenCode one.
+  const mirroredAgents = useAgents((state) =>
+    target?.kind === 'agent-session'
+      ? state.index.servers[target.serverId]?.agents?.agents
+      : undefined
+  );
+  const agentId = rowKind.kind === 'agent' ? rowKind.agentId : undefined;
+  const agentName = agentId ? agentDisplayName(mirroredAgents, agentId) : '';
+  const agentKind = agentId ? (findAgent(mirroredAgents, agentId)?.kind ?? agentId) : undefined;
   const kind =
-    target?.kind === 'opencode-session'
-      ? t`OpenCode session`
-      : !target || target.kind === 'gateway-terminal'
+    rowKind.kind === 'agent'
+      ? t`${agentName} session`
+      : rowKind.kind === 'terminal'
         ? t`Terminal`
         : t`SSH host`;
   const title = entry.title || kind;
   const metadataKind = entry.agentLabel ? `${kind} · ${entry.agentLabel}` : kind;
   const observation = entry.observation;
   const status = observation?.status;
+  const sessionStatus =
+    observation?.kind === 'agent-session' && observation.status
+      ? agentSessionStatusPresentation(observation.status)
+      : undefined;
   const statusLabel = status
-    ? observation?.kind === 'opencode-session'
-      ? status === 'busy'
-        ? t`Running`
-        : status === 'idle'
-          ? t`Idle`
-          : status === 'failed'
-            ? t`The turn failed`
-            : status === 'interrupted'
-              ? t`Stopped`
-              : status === 'retry'
-                ? t`Retrying…`
-                : t`Status unknown`
+    ? sessionStatus
+      ? _(agentSessionStatusWord[sessionStatus.word])
       : _(agentStatusWord[status] ?? agentStatusWord.unknown)
     : undefined;
-  const statusTone =
-    observation?.kind === 'opencode-session'
-      ? status === 'busy' || status === 'retry'
-        ? 'info'
-        : status === 'failed'
-          ? 'danger'
-          : status === 'interrupted'
-            ? 'warning'
-            : 'textSubtle'
-      : agentStatusTone(status);
+  const statusTone = sessionStatus ? sessionStatus.tone : agentStatusTone(status);
   const age = observation?.age;
   let seenLabel: string | undefined;
   if (age?.unit === 'now') seenLabel = t`Seen just now`;
@@ -275,6 +338,8 @@ function RecentSessionRow({
       testID="home-recent-open"
       accessibilityRole="button"
       accessibilityLabel={`${title}, ${metadataKind}${serverLabel ? `, ${serverLabel}` : ''}${observationLabel ? `, ${observationLabel}` : ''}`}
+      accessibilityHint={cwd}
+      accessibilityState={{ selected }}
       onPress={onOpen}
       style={[
         styles.row,
@@ -283,22 +348,35 @@ function RecentSessionRow({
           borderBottomWidth: StyleSheet.hairlineWidth,
         },
         {
-          backgroundColor: background(theme.colors.surface),
+          backgroundColor: background(selected ? theme.colors.primarySubtle : theme.colors.surface),
         },
       ]}>
       <View style={styles.open}>
-        <Text variant="heading" color={theme.colors.primary} style={styles.number}>
-          {String(number).padStart(2, '0')}
-        </Text>
-        <View style={styles.copy}>
-          <Text variant="bodySmall" weight="semibold" numberOfLines={2}>
-            {title}
+        {compact ? null : (
+          <Text variant="heading" color={theme.colors.primary} style={styles.number}>
+            {String(number).padStart(2, '0')}
           </Text>
+        )}
+        <View style={styles.copy}>
+          {agentKind ? (
+            <View style={styles.titleLine}>
+              <View style={styles.titleMark}>
+                <AgentMark kind={agentKind} size={14} color={theme.colors.primary} />
+              </View>
+              <Text variant="bodySmall" weight="semibold" numberOfLines={2} style={styles.title}>
+                {title}
+              </Text>
+            </View>
+          ) : (
+            <Text variant="bodySmall" weight="semibold" numberOfLines={2}>
+              {title}
+            </Text>
+          )}
           <Text variant="caption" color={theme.colors.textMuted} numberOfLines={2}>
             {metadataKind}
             {serverLabel ? ` · ${serverLabel}` : ''}
           </Text>
-          {cwd ? (
+          {cwd && !compact ? (
             <Text variant="caption" color={theme.colors.textSubtle} numberOfLines={1}>
               {cwd}
             </Text>
@@ -346,6 +424,10 @@ const styles = StyleSheet.create({
   },
   number: { minWidth: 48, fontSize: 36, lineHeight: 44, letterSpacing: -1 },
   copy: { minWidth: 0, flex: 1, gap: 4 },
+  titleLine: { minWidth: 0, flexDirection: 'row', alignItems: 'flex-start', gap: 6 },
+  // Centred on the title's first line (bodySmall's 20pt line box).
+  titleMark: { height: 20, justifyContent: 'center' },
+  title: { minWidth: 0, flex: 1 },
   observation: { minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: 6 },
   observationText: { minWidth: 0, flex: 1 },
   more: {

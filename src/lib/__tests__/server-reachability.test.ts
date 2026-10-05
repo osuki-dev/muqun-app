@@ -9,6 +9,7 @@ import { describe, expect, test } from 'bun:test';
 
 import {
   agentStatusesAreCurrent,
+  gatewayConnectionPhase,
   MAX_PROBED_SERVERS,
   needsReachabilityProbe,
   prewarmGate,
@@ -52,6 +53,28 @@ describe('what a probe entitles the card to say', () => {
     expect(reachabilityFromProbe(probe(false, NOW), NOW + REACHABILITY_FRESH_MS + 1)).toBe(
       'unknown'
     );
+  });
+
+  test('a stale answer holds while its re-check is in flight, and only then', () => {
+    // iOS pass: a theme change re-rendered Settings while the probe was past
+    // its freshness, and the current server read NOT CONNECTED for the second
+    // the re-check took before going back to ONLINE.
+    const later = NOW + REACHABILITY_FRESH_MS + 1;
+    const held = { ...probe(true, NOW), rechecking: true };
+    expect(reachabilityFromProbe(held, later)).toBe('live');
+    expect(reachabilityFromProbe({ ...probe(false, NOW), rechecking: true }, later)).toBe(
+      'offline'
+    );
+    expect(reachabilityFromProbe({ ...held, rechecking: false }, later)).toBe('unknown');
+    expect(resolveServerReachability('s1', held, undefined, later)).toBe('live');
+  });
+
+  test('a held answer is not fresh enough to seed the prewarm', () => {
+    const held = { ...probe(true, NOW), rechecking: true, health: { ok: true } };
+    expect(prewarmGate(held, NOW + REACHABILITY_FRESH_MS + 1)).toEqual({
+      warm: true,
+      health: null,
+    });
   });
 
   test('green is unreachable without a successful probe', () => {
@@ -259,5 +282,20 @@ describe('what the probe tells the workspace prewarm', () => {
     // The expensive path is gated by the cheap one, so the cheap one has to be
     // the more frequent of the two. See `WARM_WORKSPACE_TTL_MS`.
     expect(REACHABILITY_FRESH_MS).toBeGreaterThanOrEqual(REACHABILITY_RECHECK_MS);
+  });
+});
+
+describe('gatewayConnectionPhase', () => {
+  test('a terminal backend that is down still reads as a gateway that answered', () => {
+    const phase = gatewayConnectionPhase('offline', true);
+    expect(phase).toBe('connected');
+    expect(resolveServerReachability('b0', undefined, { serverId: 'b0', phase })).toBe('live');
+  });
+
+  test('a gateway that is down keeps its own phase', () => {
+    expect(gatewayConnectionPhase('offline', false)).toBe('offline');
+    expect(gatewayConnectionPhase('offline')).toBe('offline');
+    expect(gatewayConnectionPhase('reconnecting')).toBe('reconnecting');
+    expect(gatewayConnectionPhase('connecting', false)).toBe('connecting');
   });
 });

@@ -1,4 +1,5 @@
 import { createMMKV } from 'react-native-mmkv';
+import { agentCacheVariant } from './agent-discovery';
 import type { AgentCatalog, AgentProject } from './agent-session';
 
 const STORE_ID = 'muqun.agent-cache';
@@ -64,12 +65,19 @@ export function buildAgentCacheKey(
    * one's `If-None-Match` carries the first one's ETag and a `304` hands back
    * the wrong list entirely.
    */
-  variant?: string | null
+  variant?: string | null,
+  /**
+   * The agent the read names. Absent or the default agent leaves the key
+   * exactly as it was, so nothing written before agents existed is lost;
+   * any other agent is another resource with its own ETag.
+   */
+  agentId?: string | null
 ): string {
   const ep = endpointKey ? endpointKey.replace(/\/$/, '') : 'default_gateway';
   const sid = sessionId || 'global';
   const base = `${type}@${AGENT_CACHE_SCHEMA}:${ep}:${sid}`;
-  return variant ? `${base}:${variant}` : base;
+  const scoped = agentCacheVariant(variant, agentId);
+  return scoped ? `${base}:${scoped}` : base;
 }
 
 export function getCachedEntry<T>(key: string): AgentCacheEntry<T> | null {

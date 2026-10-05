@@ -1,9 +1,10 @@
+import { scopedAgentCacheVariant } from '@/lib/agent-discovery';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
 import { Spinner, useThemeTokens } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
 import { useLingui } from '@lingui/react/macro';
-import { Folder, FolderGit2 } from 'lucide-react-native';
+import { CornerDownRight, Folder, FolderGit2 } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated from 'react-native-reanimated';
 
@@ -24,8 +25,15 @@ import {
   getCachedAgentProjectsSync,
   workspaceDisplayName,
   type AgentProject,
-  type DirectoryItem,
 } from '@/lib/agent-session';
+import {
+  descendQuery,
+  EMPTY_DIRECTORY_LISTING,
+  narrowLegacyListing,
+  shouldSuggestDirectories,
+  visibleSuggestions,
+  type DirectoryListing,
+} from '@/lib/agent-directory-suggest';
 import { PressableScale } from '@/components/pressable-scale';
 import { appChrome } from '@/constants/appearance';
 import { withAlpha } from '@/lib/color';
@@ -40,7 +48,8 @@ const STAGGERED_ROWS = 8;
  *
  * `sheet-scene.tsx`'s shape: one ground, no cards, the left rule on the
  * repository the session is in. The filter doubles as a path field -- type a
- * `/` and the first group becomes the directory you typed.
+ * `/` or a `~` and the first group becomes the directory you typed, with the
+ * folders under it to open or to go into.
  */
 /**
  * A directory the engine has no named project for, as a row.
@@ -62,6 +71,8 @@ function directoryAsProject(directory: string): AgentProject {
 export interface AgentWorkspaceSheetProps {
   activeDirectory?: string;
   sessionId?: string;
+  /** The agent whose projects are listed; absent on a gateway without discovery. */
+  agentId?: string;
   initialProjects?: readonly AgentProject[];
   onSelectWorkspace: (directory: string, project?: AgentProject) => void;
   onClose: () => void;
@@ -74,6 +85,7 @@ function withoutGlobalRoot(projects: readonly AgentProject[]): AgentProject[] {
 export const AgentWorkspaceSheet = memo(function AgentWorkspaceSheet({
   activeDirectory,
   sessionId,
+  agentId,
   initialProjects,
   onSelectWorkspace,
   onClose,
@@ -84,7 +96,9 @@ export const AgentWorkspaceSheet = memo(function AgentWorkspaceSheet({
 
   const [projects, setProjects] = useState<AgentProject[]>(() => {
     if (initialProjects && initialProjects.length > 0) return withoutGlobalRoot(initialProjects);
-    const cached = getCachedAgentProjectsSync(buildAgentCacheKey('projects', null, sessionId));
+    const cached = getCachedAgentProjectsSync(
+      buildAgentCacheKey('projects', null, sessionId, scopedAgentCacheVariant(null, agentId))
+    );
     return cached ? withoutGlobalRoot(cached) : [];
   });
   /**
@@ -94,7 +108,9 @@ export const AgentWorkspaceSheet = memo(function AgentWorkspaceSheet({
    */
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [suggestions, setSuggestions] = useState<DirectoryItem[]>([]);
+  const [listing, setListing] = useState<DirectoryListing>(EMPTY_DIRECTORY_LISTING);
+  /** The query the field holds now, so an answer to an older one is dropped. */
+  const currentQueryRef = useRef('');
 
   // A route mounts when it opens and unmounts when it is dismissed, so search
   // state starts clean and the project list is fetched once per opening.
@@ -108,11 +124,10 @@ export const AgentWorkspaceSheet = memo(function AgentWorkspaceSheet({
             async () => {
               // A retry that reads the cached answer again is not a retry; the first
               // read of an opening is still allowed to be instant.
-              const list = await getAgentProjects(
-                sessionId,
-                undefined,
-                options?.forceRefresh ? { forceRefresh: true } : undefined
-              );
+              const list = await getAgentProjects(sessionId, undefined, {
+                ...(options?.forceRefresh ? { forceRefresh: true } : {}),
+                ...(agentId ? { agentId } : {}),
+              });
               setProjects(withoutGlobalRoot(list ?? []));
               loadedOnceRef.current = true;
             },
@@ -126,7 +141,7 @@ export const AgentWorkspaceSheet = memo(function AgentWorkspaceSheet({
         }
       );
     },
-    [sessionId]
+    [sessionId, agentId]
   );
 
   useEffect(() => {
@@ -134,18 +149,21 @@ export const AgentWorkspaceSheet = memo(function AgentWorkspaceSheet({
   }, [loadProjects]);
 
   useEffect(() => {
-    if (!searchQuery.trim().startsWith('/')) {
-      setSuggestions([]);
+    const query = searchQuery.trim();
+    currentQueryRef.current = query;
+    if (!shouldSuggestDirectories(query)) {
+      setListing(EMPTY_DIRECTORY_LISTING);
       return;
     }
     let active = true;
+    const current = () => active && currentQueryRef.current === query;
     const timer = setTimeout(() => {
-      getAgentDirectories(searchQuery.trim(), undefined, sessionId)
-        .then((hits) => {
-          if (active) setSuggestions(hits);
+      getAgentDirectories(query, undefined, sessionId)
+        .then((answer) => {
+          if (current()) setListing(narrowLegacyListing(answer, query));
         })
         .catch(() => {
-          if (active) setSuggestions([]);
+          if (current()) setListing(EMPTY_DIRECTORY_LISTING);
         });
     }, 150);
     return () => {
@@ -187,6 +205,8 @@ export const AgentWorkspaceSheet = memo(function AgentWorkspaceSheet({
     onSelectWorkspace(directory, project);
     onClose();
   };
+
+  const { rows: suggestions, more: moreSuggestions } = visibleSuggestions(listing);
 
   const typedPath = searchQuery.trim();
   // Never for the workspace already open: "Open this path" on the path you are
@@ -238,16 +258,41 @@ export const AgentWorkspaceSheet = memo(function AgentWorkspaceSheet({
             <Animated.View layout={listLayout('short')}>
               <SheetSceneGroupRule />
               <SheetSceneGroupHeading title={t`Folders`} />
-              {suggestions.map((item) => (
-                <SheetSceneRow
-                  key={item.path}
-                  title={item.name || item.path}
-                  caption={item.path}
-                  captionKind="path"
-                  leading={<Folder size={16} color={theme.colors.textSubtle} />}
-                  onPress={() => choose(item.path)}
-                />
-              ))}
+              {suggestions.map((item) => {
+                const folder = item.name || item.path;
+                return (
+                  <SheetSceneRow
+                    key={item.path}
+                    title={folder}
+                    caption={item.path}
+                    captionKind="path"
+                    leading={<Folder size={16} color={theme.colors.textSubtle} />}
+                    // The row opens the folder; this goes into it, so the
+                    // folders under it are the next answer.
+                    meta={
+                      <PressableScale
+                        testID="agent-workspace-descend"
+                        accessibilityRole="button"
+                        accessibilityLabel={t`Go into ${folder}`}
+                        hitSlop={10}
+                        onPress={() => setSearchQuery(descendQuery(item.path, listing.home))}
+                        style={styles.descend}>
+                        <CornerDownRight size={16} color={theme.colors.textSubtle} />
+                      </PressableScale>
+                    }
+                    onPress={() => choose(item.path)}
+                  />
+                );
+              })}
+              {moreSuggestions ? (
+                <Text
+                  testID="agent-workspace-suggestions-more"
+                  variant="caption"
+                  color={theme.colors.textSubtle}
+                  style={styles.more}>
+                  {t`Keep typing to narrow down`}
+                </Text>
+              ) : null}
             </Animated.View>
           ) : null}
 
@@ -347,5 +392,7 @@ const styles = StyleSheet.create({
     borderRadius: appChrome.radius.control,
     borderCurve: 'continuous',
   },
+  descend: { padding: 6 },
+  more: { paddingVertical: 8 },
   emptyText: { textAlign: 'center', maxWidth: 260, lineHeight: AGENT_TYPE.mono.lineHeight },
 });

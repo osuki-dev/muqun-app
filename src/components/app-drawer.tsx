@@ -14,14 +14,12 @@ import {
   NavHeaderCircle,
   NavHeaderSpacer,
   NavHeaderTitlePill,
-  navHeaderBarStyle,
   navHeaderButtonStyle,
-  navHeaderRowStyle,
   navHeaderTitlePillStyle,
   navHeaderTitleTextStyle,
 } from '@/components/nav-header';
 import { PressableScale } from '@/components/pressable-scale';
-import { EdgeFade } from '@/components/edge-fade';
+import { DetailHeader } from '@/components/detail-header';
 import { appChrome } from '@/constants/appearance';
 import { isDrawerPermanent } from '@/constants/navigation';
 import { useGatewayRecord } from '@/hooks/use-gateway-record';
@@ -77,6 +75,14 @@ type AppDrawerProps = {
    * `detailTitlePillStyle` so the header still reads as one row.
    */
   detailTitleSlot?: ReactNode;
+  /**
+   * A layer over the whole frame, rail included -- the Pad's Home. Covering
+   * the rail rather than removing it keeps the detail column's width, so
+   * showing and hiding the layer never re-lays out the pane underneath.
+   */
+  overlay?: ReactNode;
+  /** Whether `overlay` is showing: what it covers leaves the accessibility tree. */
+  overlayVisible?: boolean;
 };
 
 export default function AppDrawer({
@@ -90,6 +96,8 @@ export default function AppDrawer({
   detailFadeColor,
   detailAccessory,
   detailTitleSlot,
+  overlay,
+  overlayVisible = false,
 }: AppDrawerProps) {
   // `t` from the hook, not the global `t` from `@lingui/core/macro`.
   //
@@ -146,6 +154,8 @@ export default function AppDrawer({
       {showsPadRail ? (
         <Animated.View
           testID="pad-server-rail-container"
+          accessibilityElementsHidden={overlayVisible}
+          importantForAccessibility={overlayVisible ? 'no-hide-descendants' : 'auto'}
           entering={fadeInLeft()}
           exiting={fadeOutLeft()}
           style={[
@@ -197,7 +207,11 @@ export default function AppDrawer({
       {/* The layout transition is what makes the rail leaving read as the
           workspace widening, rather than as a column blinking out and the rest
           jumping sideways to fill the hole. */}
-      <Animated.View style={styles.main} layout={listLayout()}>
+      <Animated.View
+        style={styles.main}
+        layout={listLayout()}
+        accessibilityElementsHidden={overlayVisible}
+        importantForAccessibility={overlayVisible ? 'no-hide-descendants' : 'auto'}>
         {children}
 
         {/*
@@ -231,71 +245,66 @@ export default function AppDrawer({
         ) : null}
 
         {serverDetail ? (
-          <SafeAreaView
-            edges={['top']}
-            pointerEvents="box-none"
-            style={[styles.detailHeaderOverlay, navHeaderBarStyle]}>
-            <EdgeFade
-              edge="top"
-              color={detailFadeColor ?? theme.colors.background}
-              style={styles.detailHeaderFade}
-            />
-            {/*
-              Separate pills rather than one bar: the title is the only part
-              that needs the full width, and a single bar makes the buttons read
-              as part of the label rather than as controls.
-            */}
-            <View style={navHeaderRowStyle}>
-              {!permanent && !showsPadRail ? (
-                <NavHeaderBackButton
-                  accessibilityLabel={t`Back to servers`}
-                  onPress={
-                    onDetailBack ??
-                    (() => (router.canGoBack() ? router.back() : router.replace('/')))
-                  }
-                />
-              ) : !showsPadRail ? (
-                <NavHeaderSpacer />
-              ) : null}
-              {detailTitleSlot ?? (
-                <NavHeaderTitlePill
-                  title={detailTitle ?? record?.label ?? t`Server`}
-                  style={styles.detailHeaderTitleMeasure}
-                />
-              )}
-              {detailAccessories.map((accessory, slot) => (
-                // Positional, because that is what the circle is: a slot in a
-                // fixed order, not one of a collection of identified things.
-                <NavHeaderCircle
-                  key={
-                    isValidElement(accessory) && accessory.key != null
-                      ? accessory.key
-                      : `accessory-slot-${slot}`
-                  }>
-                  {accessory}
-                </NavHeaderCircle>
-              ))}
-              {onDetailAction ? (
-                <NavHeaderCircle>
-                  <PressableScale
-                    accessibilityLabel={t`Show what is running`}
-                    onPress={onDetailAction}
-                    style={navHeaderButtonStyle}>
-                    <PanelsTopLeft size={18} color={theme.colors.text} strokeWidth={2} />
-                  </PressableScale>
-                </NavHeaderCircle>
-              ) : (
-                <NavHeaderSpacer />
-              )}
-            </View>
-          </SafeAreaView>
+          <DetailHeader fadeColor={detailFadeColor}>
+            {!permanent && !showsPadRail ? (
+              <NavHeaderBackButton
+                accessibilityLabel={t`Back to servers`}
+                onPress={
+                  onDetailBack ?? (() => (router.canGoBack() ? router.back() : router.replace('/')))
+                }
+              />
+            ) : !showsPadRail ? (
+              <NavHeaderSpacer />
+            ) : null}
+            {detailTitleSlot ?? (
+              <NavHeaderTitlePill
+                title={detailTitle ?? record?.label ?? t`Server`}
+                style={styles.detailHeaderTitleMeasure}
+              />
+            )}
+            {detailAccessories.map((accessory, slot) => (
+              // Positional, because that is what the circle is: a slot in a
+              // fixed order, not one of a collection of identified things.
+              <NavHeaderCircle
+                key={
+                  isValidElement(accessory) && accessory.key != null
+                    ? accessory.key
+                    : `accessory-slot-${slot}`
+                }>
+                {accessory}
+              </NavHeaderCircle>
+            ))}
+            {onDetailAction ? (
+              <NavHeaderCircle>
+                <PressableScale
+                  accessibilityLabel={t`Show what is running`}
+                  onPress={onDetailAction}
+                  style={navHeaderButtonStyle}>
+                  <PanelsTopLeft size={18} color={theme.colors.text} strokeWidth={2} />
+                </PressableScale>
+              </NavHeaderCircle>
+            ) : (
+              <NavHeaderSpacer />
+            )}
+          </DetailHeader>
         ) : null}
       </Animated.View>
+      {overlay !== undefined ? (
+        <View pointerEvents="box-none" style={styles.overlay}>
+          {overlay}
+        </View>
+      ) : null}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  overlay: {
+    ...StyleSheet.absoluteFill,
+    // Above the rail (30) and the detail header (20).
+    zIndex: 40,
+    elevation: 40,
+  },
   shell: {
     flex: 1,
     flexDirection: 'row',
@@ -352,21 +361,6 @@ const styles = StyleSheet.create({
     borderRadius: 22,
     borderCurve: 'continuous',
     boxShadow: appChrome.shadow.workspaceRail,
-  },
-  detailHeaderOverlay: {
-    position: 'absolute',
-    zIndex: 20,
-    elevation: 20,
-    top: 0,
-    left: 0,
-    right: 0,
-  },
-  detailHeaderFade: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: -30,
   },
   /**
    * How wide the pane's name may grow, which is this screen's question and not

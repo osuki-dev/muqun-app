@@ -30,7 +30,7 @@
  * be tested without a device, and is re-exported here so a caller has one
  * import.
  */
-import { Skia } from '@shopify/react-native-skia';
+import { Skia } from 'react-native-skia';
 import { Directory, File, FileMode, Paths } from 'expo-file-system';
 import * as Font from 'expo-font';
 import QuickCrypto from 'react-native-quick-crypto';

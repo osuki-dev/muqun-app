@@ -1,0 +1,7 @@
+# This project installs from the public npm registry only, never from a mirror.
+# The lockfile pins tarballs on registry.npmjs.org; a mirror that lags behind
+# (react-native-skia-graphite-android is ~300 MB and syncs late) breaks EAS and
+# CI with 404s. A project bunfig overrides the machine's ~/.bunfig.toml registry;
+# scoped registries configured there still apply.
+[install]
+registry = "https://registry.npmjs.org"
