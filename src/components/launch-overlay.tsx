@@ -14,8 +14,8 @@ import { useLaunchHandoff } from '@/stores/launch-handoff';
  * native view in the same frame; from there the overlay is ours. Which of
  * two things it shows is decided once, synchronously, on the first render:
  *
- *  - **The intro**, on the first launch of an install. Four pages and a
- *    button; `ready` is that button, so the overlay stays for as long as the
+ *  - **The intro**, on the first launch of an install. One page and a
+ *    button; `ready` is that button (or Skip), so the overlay stays for as long as the
  *    reader reads, and the safety cap is off (`timeout={0}`) because a cap
  *    would cut someone off mid-sentence.
  *  - **The opening**, every launch after. Nothing to wait for, so it runs

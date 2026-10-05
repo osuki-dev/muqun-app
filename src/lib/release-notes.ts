@@ -22,10 +22,12 @@ import type { MessageDescriptor } from '@lingui/core';
 export const RELEASE_NOTES: { title: MessageDescriptor; items: MessageDescriptor[] } = {
   title: msg`What's new`,
   items: [
-    msg`Muqun now works with several coding agents on one computer. OpenCode, DeepSeek and T3 Code each get their own tile on Home, with their own mark.`,
-    msg`Continue and the offline and empty-state messages now name the agent they mean, and a new session asks which agent when more than one is ready.`,
-    msg`Approvals and status changes for every session now arrive over one live connection per computer, not only for the session you have open.`,
-    msg`Each agent's screen shows only what it supports, and the model picker groups models by provider and greys out the ones you are not signed in to.`,
-    msg`On a tablet, Continue rows now open their terminal panes. An older Gateway keeps working with OpenCode as before.`,
+    msg`Several coding agents on one computer: OpenCode, DeepSeek and T3 Code each get their own tile on Home, with their own sessions and workbench.`,
+    msg`Approvals and status changes for every session arrive over one live connection per computer, not only for the session you have open.`,
+    msg`The terminal, the opening and Home artwork draw with a new GPU renderer, and theme and font changes have transitions of their own.`,
+    msg`One Changes sheet for terminals and agent sessions: the changed files as a tree with line totals, the branch under the title, and Discard on a file's menu.`,
+    msg`On a tablet, Home is a two-page spread, work sheets fill the screen, and the on-screen keyboard is a whole keyboard with F-keys and sticky modifiers.`,
+    msg`Cover Courier is built in and worn until you pick a theme, and Interface background opacity now reaches every sheet and notice.`,
+    msg`Fixes for terminals that stayed on their loading logo, flickered under full-screen programs or froze under a sheet.`,
   ],
 };
