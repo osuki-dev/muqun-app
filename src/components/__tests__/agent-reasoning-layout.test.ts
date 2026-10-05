@@ -31,7 +31,13 @@ test('the pill keeps hugging its label', () => {
 });
 
 test('the rule still runs the full height of the text', () => {
-  expect(styleBlock(REASONING, 'quote')).toContain("alignItems: 'stretch'");
-  expect(styleBlock(REASONING, 'rule')).toContain("alignSelf: 'stretch'");
-  expect(styleBlock(REASONING, 'quoteText')).toContain('flex: 1');
+  // Pinned to the plate's top and bottom, not sized by a row: it is the text's
+  // height however many lines stream in.
+  const rule = styleBlock(REASONING, 'rule');
+  expect(rule).toContain("position: 'absolute'");
+  expect(rule).toContain('top: TRANSCRIPT_GRID.plateInsetY + RULE_TRIM.top');
+  expect(rule).toContain('bottom: TRANSCRIPT_GRID.plateInsetY + RULE_TRIM.bottom');
+  expect(styleBlock(REASONING, 'quoteText')).toContain("alignSelf: 'stretch'");
+  // A `flex: 1` child of an auto-height column measures to nothing.
+  expect(styleBlock(REASONING, 'quoteText')).not.toContain('flex: 1');
 });

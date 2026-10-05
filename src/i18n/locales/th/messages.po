@@ -892,6 +892,7 @@ msgid "Cancel this queued message"
 msgstr "ยกเลิกข้อความที่อยู่ในคิวนี้"
 
 #: src/components/ssh-terminal-workspace.tsx
+#: src/components/tool-call-detail-sheet.tsx
 msgid "Cancelled"
 msgstr "ยกเลิกแล้ว"
 
@@ -1182,6 +1183,10 @@ msgstr "บีบอัดไม่สำเร็จ — แตะเพื่�
 msgid "Compared with {base}"
 msgstr "เทียบกับ {base}"
 
+#: src/components/tool-call-detail-sheet.tsx
+msgid "Completed"
+msgstr "เสร็จสิ้น"
+
 #: src/components/settings-storage.tsx
 msgid "Confirm clear cache"
 msgstr "ยืนยันการล้างแคช"
@@ -1431,6 +1436,7 @@ msgstr "ความช่วยเหลือแบบสนทนาและ
 #: src/components/agent-message-block.tsx
 #: src/components/asset-viewer.tsx
 #: src/components/bounded-markdown.tsx
+#: src/components/tool-call-detail-sheet.tsx
 msgid "Copied"
 msgstr "คัดลอกแล้ว"
 
@@ -1453,9 +1459,17 @@ msgstr "คัดลอกให้พร้อมวางในเทอร์
 msgid "Copy"
 msgstr "คัดลอก"
 
+#: src/components/tool-call-detail-sheet.tsx
+msgid "Copy input"
+msgstr "คัดลอกอินพุต"
+
 #: src/components/agent-message-block.tsx
 msgid "Copy message"
 msgstr "คัดลอกข้อความ"
+
+#: src/components/tool-call-detail-sheet.tsx
+msgid "Copy output"
+msgstr "คัดลอกเอาต์พุต"
 
 #: src/components/asset-viewer.tsx
 msgid "Copy path"
@@ -1902,6 +1916,7 @@ msgid "Demo workspace"
 msgstr "พื้นที่ทำงานสาธิต"
 
 #: src/components/agent-tool-card.tsx
+#: src/components/tool-call-code-rows.tsx
 msgid "Denied by you"
 msgstr "คุณปฏิเสธแล้ว"
 
@@ -2196,6 +2211,10 @@ msgstr "ส่งออกสี"
 #: src/components/custom-theme-library.tsx
 msgid "Export theme"
 msgstr "ส่งออกธีม"
+
+#: src/components/tool-call-detail-sheet.tsx
+msgid "Failed"
+msgstr "ล้มเหลว"
 
 #. placeholder {0}: status.code
 #: src/components/ssh-terminal-workspace.tsx
@@ -2560,8 +2579,13 @@ msgid "Increase {label}"
 msgstr "เพิ่ม {label}"
 
 #: src/components/agent-context-sheet.tsx
+#: src/components/tool-call-code-rows.tsx
 msgid "Input"
 msgstr "อินพุต"
+
+#: src/components/tool-call-detail-sheet.tsx
+msgid "Input copied to clipboard"
+msgstr "คัดลอกอินพุตไปยังคลิปบอร์ดแล้ว"
 
 #. placeholder {0}: row.label
 #: src/components/composer-popup.tsx
@@ -3191,6 +3215,10 @@ msgstr "ไม่มีโมเดลฟรีบนโฮสต์นี้"
 msgid "No Gateway yet?"
 msgstr "ยังไม่มี Gateway ใช่ไหม?"
 
+#: src/components/tool-call-code-rows.tsx
+msgid "No input"
+msgstr "ไม่มีอินพุต"
+
 #: src/app/commands.tsx
 msgid "No matching commands. Try another word."
 msgstr "ไม่มีคำสั่งที่ตรงกัน ลองใช้คำอื่น"
@@ -3207,6 +3235,10 @@ msgstr "ไม่มีโมเดลบนโฮสต์นี้"
 #: src/components/agent-assignment-bar.tsx
 msgid "No other assistants in this session yet."
 msgstr "ยังไม่มีผู้ช่วยอื่นในเซสชันนี้"
+
+#: src/components/tool-call-code-rows.tsx
+msgid "No output"
+msgstr "ไม่มีเอาต์พุต"
 
 #: src/components/agent-background-tray.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
@@ -3476,6 +3508,10 @@ msgstr "เปิดต่อไป"
 msgid "Open as a project"
 msgstr "เปิดเป็นโปรเจกต์"
 
+#: src/components/tool-call-detail-sheet.tsx
+msgid "Open as file"
+msgstr "เปิดเป็นไฟล์"
+
 #: src/components/agent-message-block.tsx
 msgid "Open attachment"
 msgstr "เปิดไฟล์แนบ"
@@ -3587,6 +3623,10 @@ msgstr "เปิดพาธนี้"
 msgid "Open to check the current state"
 msgstr "เปิดเพื่อตรวจสอบสถานะปัจจุบัน"
 
+#: src/components/embedded-terminal-tool-block.tsx
+msgid "Open tool call details"
+msgstr "เปิดรายละเอียดการเรียกใช้เครื่องมือ"
+
 #. placeholder {0}: workspace.title
 #: src/components/session-map.tsx
 msgid "Open workspace {0}, {panelCount, plural, one {# running} other {# running}}. Long press to close."
@@ -3644,8 +3684,13 @@ msgid "Other"
 msgstr "อื่นๆ"
 
 #: src/components/agent-context-sheet.tsx
+#: src/components/tool-call-code-rows.tsx
 msgid "Output"
 msgstr "เอาต์พุต"
+
+#: src/components/tool-call-detail-sheet.tsx
+msgid "Output copied to clipboard"
+msgstr "คัดลอกเอาต์พุตไปยังคลิปบอร์ดแล้ว"
 
 #: src/components/home-launch-actions.tsx
 msgid "Pair a gateway"
@@ -4307,6 +4352,7 @@ msgid "Run the Gateway on your machine and scan the QR code it prints. The pairi
 msgstr "เรียกใช้ Gateway บนเครื่องของคุณแล้วสแกน QR ที่แสดง การจับคู่จะเก็บอยู่บนอุปกรณ์นี้"
 
 #: src/components/agent-session-tree-sheet.tsx
+#: src/components/tool-call-detail-sheet.tsx
 #: src/i18n/labels.ts
 msgid "Running"
 msgstr "กำลังทำงาน"
@@ -4969,6 +5015,10 @@ msgstr "แทรกแซง"
 #: src/components/agent-composer.tsx
 msgid "Steer running agent"
 msgstr "แทรกแซงเอเจนต์ที่กำลังทำงานแบบเรียลไทม์"
+
+#: src/components/tool-call-code-rows.tsx
+msgid "Still arriving"
+msgstr "กำลังรับข้อมูล"
 
 #: src/components/pane-chat-blocks.tsx
 msgid "Still running…"
@@ -5665,6 +5715,10 @@ msgstr "เทอร์มินัลนี้ถูกลบแล้ว เ�
 msgid "This theme contains images that must be installed before applying"
 msgstr "ธีมนี้มีรูปภาพที่ต้องติดตั้งก่อนใช้งาน"
 
+#: src/components/tool-call-detail-sheet.tsx
+msgid "This tool call is no longer available."
+msgstr "การเรียกใช้เครื่องมือนี้ไม่มีอยู่แล้ว"
+
 #: src/components/session-map.tsx
 msgid "This workspace has no groups yet."
 msgstr "พื้นที่ทำงานนี้ยังไม่มีกลุ่ม"
@@ -5682,6 +5736,7 @@ msgid "Through {host}"
 msgstr "ผ่าน {host}"
 
 #: src/components/agent-tool-card.tsx
+#: src/components/tool-call-code-rows.tsx
 msgid "timed out"
 msgstr "หมดเวลา"
 
@@ -5706,12 +5761,17 @@ msgstr "ใหญ่เกินกว่าจะไฮไลต์ — แส�
 msgid "Too many changes to list. This is the start of them, not all of them."
 msgstr "มีการเปลี่ยนแปลงมากเกินกว่าจะแสดงทั้งหมด นี่เป็นเพียงส่วนแรก"
 
+#: src/components/tool-call-detail-sheet.tsx
+msgid "Tool call"
+msgstr "การเรียกใช้เครื่องมือ"
+
 #: src/components/changes-sheet.tsx
 msgid "tracking {upstream}"
 msgstr "ติดตาม {upstream}"
 
 #: src/components/bounded-markdown.tsx
 #: src/components/embedded-terminal-tool-block.tsx
+#: src/components/tool-call-code-rows.tsx
 msgid "Truncated"
 msgstr "ตัดบางส่วน"
 

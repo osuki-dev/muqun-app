@@ -15,6 +15,12 @@ import { withAlpha } from '@/lib/color';
 import { useMarkdownFonts } from '@/hooks/use-user-fonts';
 import { createThoughtMarkdownStyle } from '@/lib/markdown-style';
 import { AGENT_TYPE } from '@/constants/agent-type';
+import {
+  TRANSCRIPT_GRID,
+  TRANSCRIPT_HANG,
+  TRANSCRIPT_RULE_X,
+  transcriptRuleTrim,
+} from '@/constants/transcript-grid';
 
 /** A live status label needs whole seconds, not a ten-Hz stopwatch. */
 const TICK_MS = 1000;
@@ -85,8 +91,10 @@ export const AgentReasoningBlock = memo(function AgentReasoningBlock({
   useEffect(() => {
     chevronProgress.value = withTiming(expanded ? 1 : 0, timing('micro'));
   }, [expanded, chevronProgress]);
+  // Closed points down, open points up, like every other fold in the
+  // transcript. It turned 90 degrees and pointed left when open.
   const chevronStyle = useAnimatedStyle(() => ({
-    transform: [{ rotate: `${chevronProgress.value * 90}deg` }],
+    transform: [{ rotate: `${chevronProgress.value * 180}deg` }],
   }));
 
   // Settled beats live: the moment the engine reports a real duration, that
@@ -123,46 +131,51 @@ export const AgentReasoningBlock = memo(function AgentReasoningBlock({
           { backgroundColor: withAlpha(theme.colors.primary, 0.08) },
           pressed && { opacity: 0.7 },
         ]}>
-        {/* The same mark the assistant thinks with, only while it is
-            thinking: a settled block is a title and a duration, nothing else. */}
-        {pending ? (
-          <Animated.View exiting={fadeOut('micro')}>
-            <ThinkingIndicator size={12} color={theme.colors.primary} />
-          </Animated.View>
-        ) : null}
+        {/* The marker column every transcript row has: the same mark the
+            assistant thinks with while it is thinking, the fold's chevron once
+            it has settled. The column keeps its width when it is empty, so
+            the label always starts where a tool's name does. */}
+        <View style={styles.marker}>
+          {pending ? (
+            <Animated.View exiting={fadeOut('micro')}>
+              <ThinkingIndicator size={12} color={theme.colors.primary} />
+            </Animated.View>
+          ) : text ? (
+            <Animated.View style={chevronStyle}>
+              <ChevronDown size={12} color={theme.colors.primary} style={styles.chevron} />
+            </Animated.View>
+          ) : null}
+        </View>
         {/* Update the same text node. Keying by the clock restarted the fade
             before it could finish, making a running thought flash forever. */}
         <Text variant="caption" weight="medium" color={theme.colors.primary} style={styles.title}>
           {label}
         </Text>
-        {text ? (
-          <Animated.View style={chevronStyle}>
-            <ChevronDown size={12} color={theme.colors.primary} style={styles.chevron} />
-          </Animated.View>
-        ) : null}
       </Pressable>
 
       {/* The body brings its own ground: the pill sits on the wallpaper, and
           only the paragraph it opens onto needs a surface to be read on. */}
       {expanded && text ? (
         <Animated.View entering={fadeIn('micro')} style={[styles.body, plate]}>
-          {/* The quote rule stands inside the plate, inset like a blockquote's,
-              not on the plate's edge where it reads as a border. */}
-          <View style={styles.quote}>
-            <View
-              testID="agent-reasoning-rule"
-              style={[styles.rule, { backgroundColor: withAlpha(theme.colors.primary, 0.35) }]}
-            />
-            <View style={styles.quoteText}>
-              {/* Reasoning is markdown like the answer: numbered plans, backticked
+          {/* The rule hangs in the marker column, under the chevron that
+              opened it, and runs from the first line's cap height to the last
+              line's baseline -- the text box, not the line boxes around it. */}
+          <View
+            testID="agent-reasoning-rule"
+            style={[
+              styles.rule,
+              { backgroundColor: withAlpha(theme.colors.primary, TRANSCRIPT_GRID.ruleAlpha) },
+            ]}
+          />
+          <View style={styles.quoteText}>
+            {/* Reasoning is markdown like the answer: numbered plans, backticked
                 names, the odd heading. It read as one flat italic run before. */}
-              <BoundedMarkdown
-                markdown={text}
-                markdownStyle={markdownStyle}
-                containerStyle={styles.reasoningBody}
-                openLinks={false}
-              />
-            </View>
+            <BoundedMarkdown
+              markdown={text}
+              markdownStyle={markdownStyle}
+              containerStyle={styles.reasoningBody}
+              openLinks={false}
+            />
           </View>
         </Animated.View>
       ) : null}
@@ -170,9 +183,11 @@ export const AgentReasoningBlock = memo(function AgentReasoningBlock({
   );
 });
 
+/** The thought body's rule stops at its text box: cap height to baseline. */
+const RULE_TRIM = transcriptRuleTrim(AGENT_TYPE.meta.size, AGENT_TYPE.mono.lineHeight);
+
 const styles = StyleSheet.create({
   container: {
-    marginVertical: 4,
     // Full row width, not shrink-to-fit: the native markdown view measures its
     // height at the width it is offered, and a plate that sized itself around
     // its text measured at one width and drew at another, leaving the plate
@@ -182,11 +197,16 @@ const styles = StyleSheet.create({
   headerPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: TRANSCRIPT_GRID.markerGap,
     paddingVertical: 5,
-    paddingHorizontal: 10,
+    paddingHorizontal: TRANSCRIPT_GRID.inset,
     borderCurve: 'continuous',
     alignSelf: 'flex-start',
+  },
+  marker: {
+    width: TRANSCRIPT_GRID.markerWidth,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   title: {
     fontSize: AGENT_TYPE.meta.size,
@@ -195,29 +215,28 @@ const styles = StyleSheet.create({
   chevron: {
     opacity: 0.75,
   },
+  // The markdown's last block margin is not part of its measured height, so
+  // the plate's padding is the whole of the space under the last line, and
+  // it is the same as the space over the first.
   body: {
-    marginTop: 6,
-    marginBottom: 4,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
+    marginTop: TRANSCRIPT_GRID.attachGap,
+    paddingVertical: TRANSCRIPT_GRID.plateInsetY,
+    paddingHorizontal: TRANSCRIPT_GRID.inset,
   },
-  // A row, so the rule stretches to the text block's height however many lines
-  // it has or grows to while streaming.
-  quote: {
-    flexDirection: 'row',
-    alignItems: 'stretch',
-    // The last paragraph's margin is the plate's bottom padding.
-    marginBottom: -6,
-  },
+  // Pinned to the plate's top and bottom, so it is the text's height however
+  // many lines it has or grows to while streaming.
   rule: {
-    width: 2,
-    alignSelf: 'stretch',
-    // Stop at the last line, not at the paragraph margin below it.
-    marginBottom: 6,
+    position: 'absolute',
+    left: TRANSCRIPT_RULE_X,
+    width: TRANSCRIPT_GRID.ruleWidth,
+    top: TRANSCRIPT_GRID.plateInsetY + RULE_TRIM.top,
+    bottom: TRANSCRIPT_GRID.plateInsetY + RULE_TRIM.bottom,
   },
+  // Stretched across the plate rather than shrink-wrapped: the markdown brings
+  // no intrinsic width of its own on iOS.
   quoteText: {
-    flex: 1,
-    paddingLeft: 6,
+    alignSelf: 'stretch',
+    marginLeft: TRANSCRIPT_HANG,
   },
   reasoningBody: {},
 });

@@ -52,6 +52,7 @@ import {
   stepDiffLimit,
 } from '@/lib/agent-diff-rows';
 import { cellsOf, gutterNumbersOf, gutterWidthOf } from '@/lib/diff-geometry';
+import { TRANSCRIPT_GRID, TRANSCRIPT_HANG } from '@/constants/transcript-grid';
 
 /**
  * A diff, as rows.
@@ -118,7 +119,7 @@ const HUNK_ROW_HEIGHT = 26;
 const FILE_ROW_HEIGHT = 52;
 const MORE_ROW_HEIGHT = 44;
 const LINE_PADDING = 10;
-const GUTTER_NUMBER_FONT_SIZE = 9.5;
+export const GUTTER_NUMBER_FONT_SIZE = 9.5;
 const GUTTER_INSET = 6;
 const GUTTER_GAP = 2;
 const MARKER_WIDTH = 8;
@@ -154,6 +155,15 @@ export interface DiffLayout {
   /** The width of one number column. */
   numberWidth: number;
   numberColumns: 1 | 2;
+  /** The gutter's leading padding: where the first line number starts. */
+  gutterInset: number;
+  /**
+   * Drawn inside a transcript card, on the transcript's gutter grid
+   * (`constants/transcript-grid.ts`): the file's chevron in the marker column,
+   * and its name, the hunk header and the line numbers on the text column.
+   * The Changes sheet is a page of its own and keeps its own margins.
+   */
+  onGrid: boolean;
 }
 
 const DiffLayoutContext = createContext<DiffLayout>({
@@ -162,6 +172,8 @@ const DiffLayoutContext = createContext<DiffLayout>({
   gutterWidth: 44,
   numberWidth: 12,
   numberColumns: 2,
+  gutterInset: GUTTER_INSET,
+  onGrid: false,
 });
 
 export function typeOfDiffRow(row: DiffListItem): DiffListItem['type'] {
@@ -249,7 +261,7 @@ export const DiffListRow = memo(function DiffListRow({
   // for once and torn down by React rather than by hand.
   const pinned = usePinnedStyle(scrollX);
   const mono = useMonoFontFamily();
-  const { contentWidth: width, pinnedWidth } = useContext(DiffLayoutContext);
+  const { contentWidth: width, pinnedWidth, onGrid } = useContext(DiffLayoutContext);
 
   if (row.type === 'dir') {
     return tree ? (
@@ -324,7 +336,10 @@ export const DiffListRow = memo(function DiffListRow({
             variant="caption"
             color={colors.subtle}
             numberOfLines={1}
-            style={[styles.hunkText, { fontFamily: mono }]}>
+            style={[
+              styles.hunkText,
+              { fontFamily: mono, ...(onGrid ? styles.hunkTextOnGrid : null) },
+            ]}>
             {row.header}
           </Text>
         </Animated.View>
@@ -362,7 +377,7 @@ const LineRow = memo(function LineRow({
   pinned: PinnedStyle;
 }) {
   const mono = useMonoFontFamily();
-  const { gutterWidth, numberWidth, numberColumns } = useContext(DiffLayoutContext);
+  const { gutterWidth, numberWidth, numberColumns, gutterInset } = useContext(DiffLayoutContext);
   const added = row.kind === 'added';
   const removed = row.kind === 'removed';
   const tint = added ? colors.addedBackground : removed ? colors.removedBackground : 'transparent';
@@ -386,7 +401,11 @@ const LineRow = memo(function LineRow({
         {row.text || ' '}
       </Text>
       <Animated.View
-        style={[styles.gutter, pinned, { width: gutterWidth, backgroundColor: gutterFill }]}>
+        style={[
+          styles.gutter,
+          pinned,
+          { width: gutterWidth, paddingLeft: gutterInset, backgroundColor: gutterFill },
+        ]}>
         {numberColumns === 2 ? (
           <>
             <Text hugSlack={false} color={colors.subtle} style={numberStyle}>
@@ -435,6 +454,7 @@ const FileRow = memo(function FileRow({
   const { t } = useLingui();
   const { _ } = useLinguiRuntime();
   const mono = useMonoFontFamily();
+  const { onGrid } = useContext(DiffLayoutContext);
   // Closed points down, open points up: the same chevron rule as the rest of
   // the transcript.
   const Chevron = row.expanded ? ChevronUp : ChevronDown;
@@ -469,8 +489,17 @@ const FileRow = memo(function FileRow({
           borderBottomWidth: hasSeparator ? StyleSheet.hairlineWidth : 0,
         },
       ]}>
-      <Animated.View style={[styles.pinned, styles.fileBody, pinned, { width: pinnedWidth }]}>
-        <Chevron size={15} color={colors.subtle} />
+      <Animated.View
+        style={[
+          styles.pinned,
+          styles.fileBody,
+          onGrid && styles.fileBodyOnGrid,
+          pinned,
+          { width: pinnedWidth },
+        ]}>
+        <View style={onGrid ? styles.fileMarker : undefined}>
+          <Chevron size={15} color={colors.subtle} />
+        </View>
         <View style={styles.flexOne}>
           {/* The tail of a path identifies it on a phone, so the head is what
               gets cut. */}
@@ -633,7 +662,7 @@ const DiffRulers = memo(function DiffRulers({
  * 0.6 em is the ratio every common monospace face is within a few percent of,
  * so the first paint is never wildly wrong and the correction is never visible.
  */
-function useDiffMetrics(rows: readonly DiffListItem[]) {
+function useDiffMetrics(rows: readonly DiffListItem[], onGrid = false) {
   const [advance, setAdvance] = useState(LINE_FONT_SIZE * 0.6);
   const onCodeRulerLayout = useCallback((event: LayoutChangeEvent) => {
     const width = event.nativeEvent.layout.width;
@@ -656,12 +685,13 @@ function useDiffMetrics(rows: readonly DiffListItem[]) {
   const widest = useMemo(() => widestRow(rows), [rows]);
 
   const layout = useMemo((): DiffLayout => {
+    const gutterInset = onGrid ? TRANSCRIPT_HANG : GUTTER_INSET;
     const gutter = gutterWidthOf({
       digits,
       numberColumns,
       numberAdvance,
       markerWidth: MARKER_WIDTH,
-      inset: GUTTER_INSET,
+      inset: gutterInset,
       gap: GUTTER_GAP,
     });
     return {
@@ -677,8 +707,10 @@ function useDiffMetrics(rows: readonly DiffListItem[]) {
       gutterWidth: gutter.width,
       numberWidth: gutter.numberWidth,
       numberColumns,
+      gutterInset,
+      onGrid,
     };
-  }, [advance, digits, numberAdvance, numberColumns, viewportWidth, widest]);
+  }, [advance, digits, numberAdvance, numberColumns, onGrid, viewportWidth, widest]);
 
   return {
     onCodeRulerLayout,
@@ -833,6 +865,11 @@ export interface InlineDiffRowsProps {
    * there is more and given no way to it.
    */
   onOpenFullDiff?: (path?: string) => void;
+  /**
+   * Laid out on the transcript's gutter grid, for a diff that sits inside a
+   * tool card's content box (see `DiffLayout.onGrid`).
+   */
+  onGrid?: boolean;
 }
 
 /**
@@ -858,12 +895,15 @@ export function InlineDiffRows({
   limit,
   onToggleFile,
   onOpenFullDiff,
+  onGrid = false,
 }: InlineDiffRowsProps) {
   const profile = useAppearanceProfile();
   const { t } = useLingui();
   const [shownLimit, setShownLimit] = useState(limit ?? INLINE_DIFF_MAX_ROWS);
-  const { onCodeRulerLayout, onNumberRulerLayout, onViewportLayout, layout, pans } =
-    useDiffMetrics(rows);
+  const { onCodeRulerLayout, onNumberRulerLayout, onViewportLayout, layout, pans } = useDiffMetrics(
+    rows,
+    onGrid
+  );
   const { scrollX, onHorizontalScroll } = useHorizontalOffset();
 
   const capped = useMemo(() => capDiffRows(rows, shownLimit), [rows, shownLimit]);
@@ -1021,6 +1061,17 @@ const styles = StyleSheet.create({
     gap: 10,
     paddingHorizontal: LINE_PADDING + 4,
   },
+  // In a transcript card the chevron takes the grid's marker column and the
+  // name starts on its text column, under the card's own title.
+  fileBodyOnGrid: {
+    gap: TRANSCRIPT_GRID.markerGap,
+    paddingLeft: 0,
+    paddingRight: LINE_PADDING,
+  },
+  fileMarker: {
+    width: TRANSCRIPT_GRID.markerWidth,
+    alignItems: 'center',
+  },
   fileMeta: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1040,6 +1091,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: LINE_PADDING,
     fontSize: 10.5,
   },
+  hunkTextOnGrid: {
+    paddingLeft: TRANSCRIPT_HANG,
+  },
   lineRow: {
     height: LINE_ROW_HEIGHT,
     justifyContent: 'center',
@@ -1056,7 +1110,6 @@ const styles = StyleSheet.create({
     bottom: 0,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingLeft: GUTTER_INSET,
     gap: GUTTER_GAP,
   },
   gutterNumber: {

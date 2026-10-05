@@ -61,6 +61,10 @@ const MONO_SURFACES = new Set([
   // slot through `fonts.mono`, and a proportional face would give away that
   // the prompt is a picture of one.
   'src/components/launch-intro-scene.tsx',
+  // A tool call's input and output as numbered, coloured code lines: each
+  // coloured run is a nested native span, because the app's `Text` is a
+  // stateful component and a screenful of tokens is thousands of them.
+  'src/components/tool-call-code-rows.tsx',
 ]);
 
 test('no reader-facing copy is drawn with React Native’s Text', () => {

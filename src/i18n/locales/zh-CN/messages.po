@@ -892,6 +892,7 @@ msgid "Cancel this queued message"
 msgstr "取消这条排队的消息"
 
 #: src/components/ssh-terminal-workspace.tsx
+#: src/components/tool-call-detail-sheet.tsx
 msgid "Cancelled"
 msgstr "已取消"
 
@@ -1182,6 +1183,10 @@ msgstr "压缩失败 — 点按关闭"
 msgid "Compared with {base}"
 msgstr "与 {base} 比较"
 
+#: src/components/tool-call-detail-sheet.tsx
+msgid "Completed"
+msgstr "已完成"
+
 #: src/components/settings-storage.tsx
 msgid "Confirm clear cache"
 msgstr "确认清除缓存"
@@ -1431,6 +1436,7 @@ msgstr "对话式帮助，以及关于项目的开放式问题"
 #: src/components/agent-message-block.tsx
 #: src/components/asset-viewer.tsx
 #: src/components/bounded-markdown.tsx
+#: src/components/tool-call-detail-sheet.tsx
 msgid "Copied"
 msgstr "已复制"
 
@@ -1453,9 +1459,17 @@ msgstr "复制命令，可直接粘贴到终端"
 msgid "Copy"
 msgstr "复制"
 
+#: src/components/tool-call-detail-sheet.tsx
+msgid "Copy input"
+msgstr "复制输入"
+
 #: src/components/agent-message-block.tsx
 msgid "Copy message"
 msgstr "复制消息"
+
+#: src/components/tool-call-detail-sheet.tsx
+msgid "Copy output"
+msgstr "复制输出"
 
 #: src/components/asset-viewer.tsx
 msgid "Copy path"
@@ -1902,6 +1916,7 @@ msgid "Demo workspace"
 msgstr "示例工作区"
 
 #: src/components/agent-tool-card.tsx
+#: src/components/tool-call-code-rows.tsx
 msgid "Denied by you"
 msgstr "已被你拒绝"
 
@@ -2196,6 +2211,10 @@ msgstr "导出颜色"
 #: src/components/custom-theme-library.tsx
 msgid "Export theme"
 msgstr "导出主题"
+
+#: src/components/tool-call-detail-sheet.tsx
+msgid "Failed"
+msgstr "失败"
 
 #. placeholder {0}: status.code
 #: src/components/ssh-terminal-workspace.tsx
@@ -2560,8 +2579,13 @@ msgid "Increase {label}"
 msgstr "提高{label}"
 
 #: src/components/agent-context-sheet.tsx
+#: src/components/tool-call-code-rows.tsx
 msgid "Input"
 msgstr "输入"
+
+#: src/components/tool-call-detail-sheet.tsx
+msgid "Input copied to clipboard"
+msgstr "输入已复制到剪贴板"
 
 #. placeholder {0}: row.label
 #: src/components/composer-popup.tsx
@@ -3191,6 +3215,10 @@ msgstr "该主机上没有免费模型"
 msgid "No Gateway yet?"
 msgstr "还没有 Gateway？"
 
+#: src/components/tool-call-code-rows.tsx
+msgid "No input"
+msgstr "无输入"
+
 #: src/app/commands.tsx
 msgid "No matching commands. Try another word."
 msgstr "没有匹配的命令，换个关键词试试"
@@ -3207,6 +3235,10 @@ msgstr "该主机上没有模型"
 #: src/components/agent-assignment-bar.tsx
 msgid "No other assistants in this session yet."
 msgstr "这个会话里还没有其他助手"
+
+#: src/components/tool-call-code-rows.tsx
+msgid "No output"
+msgstr "无输出"
 
 #: src/components/agent-background-tray.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
@@ -3476,6 +3508,10 @@ msgstr "仍要打开"
 msgid "Open as a project"
 msgstr "作为项目打开"
 
+#: src/components/tool-call-detail-sheet.tsx
+msgid "Open as file"
+msgstr "以文件打开"
+
 #: src/components/agent-message-block.tsx
 msgid "Open attachment"
 msgstr "打开附件"
@@ -3587,6 +3623,10 @@ msgstr "打开此路径"
 msgid "Open to check the current state"
 msgstr "打开以检查当前状态"
 
+#: src/components/embedded-terminal-tool-block.tsx
+msgid "Open tool call details"
+msgstr "打开工具调用详情"
+
 #. placeholder {0}: workspace.title
 #: src/components/session-map.tsx
 msgid "Open workspace {0}, {panelCount, plural, one {# running} other {# running}}. Long press to close."
@@ -3644,8 +3684,13 @@ msgid "Other"
 msgstr "其他"
 
 #: src/components/agent-context-sheet.tsx
+#: src/components/tool-call-code-rows.tsx
 msgid "Output"
 msgstr "输出"
+
+#: src/components/tool-call-detail-sheet.tsx
+msgid "Output copied to clipboard"
+msgstr "输出已复制到剪贴板"
 
 #: src/components/home-launch-actions.tsx
 msgid "Pair a gateway"
@@ -4307,6 +4352,7 @@ msgid "Run the Gateway on your machine and scan the QR code it prints. The pairi
 msgstr "在你的电脑上运行 Gateway，然后扫描它打印出的二维码。配对信息只保存在本设备上"
 
 #: src/components/agent-session-tree-sheet.tsx
+#: src/components/tool-call-detail-sheet.tsx
 #: src/i18n/labels.ts
 msgid "Running"
 msgstr "运行中"
@@ -4969,6 +5015,10 @@ msgstr "插话"
 #: src/components/agent-composer.tsx
 msgid "Steer running agent"
 msgstr "对运行中的智能体进行插话指导"
+
+#: src/components/tool-call-code-rows.tsx
+msgid "Still arriving"
+msgstr "仍在接收"
 
 #: src/components/pane-chat-blocks.tsx
 msgid "Still running…"
@@ -5665,6 +5715,10 @@ msgstr "此终端已被移除。请选择其他终端以继续"
 msgid "This theme contains images that must be installed before applying"
 msgstr "此主题包含图片，应用前需要先安装图片"
 
+#: src/components/tool-call-detail-sheet.tsx
+msgid "This tool call is no longer available."
+msgstr "此工具调用已不可用"
+
 #: src/components/session-map.tsx
 msgid "This workspace has no groups yet."
 msgstr "这个工作区还没有分组"
@@ -5682,6 +5736,7 @@ msgid "Through {host}"
 msgstr "通过 {host}"
 
 #: src/components/agent-tool-card.tsx
+#: src/components/tool-call-code-rows.tsx
 msgid "timed out"
 msgstr "已超时"
 
@@ -5706,12 +5761,17 @@ msgstr "文件太大，无法着色，显示为纯文本"
 msgid "Too many changes to list. This is the start of them, not all of them."
 msgstr "改动太多，无法全部列出。这只是开头，不是全部"
 
+#: src/components/tool-call-detail-sheet.tsx
+msgid "Tool call"
+msgstr "工具调用"
+
 #: src/components/changes-sheet.tsx
 msgid "tracking {upstream}"
 msgstr "跟踪 {upstream}"
 
 #: src/components/bounded-markdown.tsx
 #: src/components/embedded-terminal-tool-block.tsx
+#: src/components/tool-call-code-rows.tsx
 msgid "Truncated"
 msgstr "已截断"
 

@@ -26,6 +26,12 @@
       "platforms": ["ios", "android"]
     },
     {
+      "name": "agent-tool-detail",
+      "program": "flows/agent-tool-detail",
+      "tags": ["full", "agents"],
+      "platforms": ["ios", "android"]
+    },
+    {
       "name": "demo-tour",
       "program": "flows/demo-tour",
       "tags": ["smoke", "full", "workspace"],
@@ -8097,6 +8103,58 @@
         "mode": "hidden",
         "run": "flows/agent-session-tree.ad#closed"
       }
+    ],
+    "flows/agent-tool-detail": [
+      { "include": "subflows/open-demo" },
+      { "run": "flows/agent-tool-detail.ad#open" },
+      {
+        "target": { "id": "agent-session-tree-row-demo-tree-branch" },
+        "mode": "press",
+        "timeout": 10000,
+        "run": "flows/agent-tool-detail.ad#open-branch"
+      },
+      {
+        "target": { "id": "agent-subagent-detail-transcript" },
+        "mode": "visible",
+        "timeout": 10000,
+        "run": "flows/agent-tool-detail.ad#transcript-visible"
+      },
+      {
+        "target": { "id": "agent-tool-open-detail" },
+        "mode": "press",
+        "timeout": 10000,
+        "run": "flows/agent-tool-detail.ad#open-tool"
+      },
+      {
+        "target": { "id": "agent-tool-detail-sheet" },
+        "mode": "visible",
+        "timeout": 10000,
+        "run": "flows/agent-tool-detail.ad#sheet-visible"
+      },
+      {
+        "target": { "text": "Completed" },
+        "mode": "visible",
+        "run": "flows/agent-tool-detail.ad#status"
+      },
+      {
+        "target": { "text": "Input" },
+        "mode": "visible",
+        "run": "flows/agent-tool-detail.ad#input"
+      },
+      {
+        "target": { "id": "agent-tool-detail-copy-input" },
+        "mode": "press",
+        "run": "flows/agent-tool-detail.ad#copy-input"
+      },
+      { "run": "flows/agent-tool-detail.ad#close-tool" },
+      {
+        "target": { "id": "agent-subagent-detail-transcript" },
+        "mode": "visible",
+        "timeout": 10000,
+        "run": "flows/agent-tool-detail.ad#transcript-restored"
+      },
+      { "run": "flows/agent-tool-detail.ad#close-detail" },
+      { "run": "flows/agent-tool-detail.ad#close-tree" }
     ],
     "flows/thai-language": [
       {

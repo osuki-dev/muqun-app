@@ -71,6 +71,7 @@ export const sheetRoutePresentations: Readonly<Record<string, SheetPresentation>
   'agent-sessions': 'sheet',
   'agent-session-tree': 'sheet',
   'agent-subagent-detail': 'sheet',
+  'agent-tool-detail': 'sheet',
   'agent-model': 'sheet',
   'agent-mode': 'sheet',
   'agent-workspace': 'sheet',
@@ -115,6 +116,8 @@ export const sheetRouteKinds: Readonly<Record<string, SheetKind>> = {
   // A tree of subagents, and the transcript of one of them.
   'agent-session-tree': 'workSurface',
   'agent-subagent-detail': 'workSurface',
+  // One tool call's input and output, numbered and panning like a diff.
+  'agent-tool-detail': 'workSurface',
   // The published catalogue: browsed, searched, paged.
   'settings-theme-browse': 'workSurface',
   // Pairing: a viewfinder, two ways in and the install command -- the one
@@ -219,6 +222,9 @@ export const sheetRouteDetents: Readonly<Record<string, SheetDetents>> = {
   // A contextual transcript above the tree or workbench. It is always the
   // largest sheet and replaces its target in place rather than stacking peers.
   'agent-subagent-detail': 'full',
+  // A tool call's input and output: as tall as the screen, like the diff it
+  // is drawn as.
+  'agent-tool-detail': 'full',
   // A model list is usually browsed and sometimes filtered to two rows. At the
   // expandable detent those two rows sat at the top of a sheet that was 82% of
   // the screen, and the rest was ground. It opens at just over half and drags to
@@ -298,6 +304,7 @@ export const sheetRouteContent: Readonly<Record<string, SheetContent>> = {
   'agent-sessions': 'list',
   'agent-session-tree': 'list',
   'agent-subagent-detail': 'list',
+  'agent-tool-detail': 'list',
   'agent-worktree': 'list',
   // What is still running after the agent moved on.
   'agent-shells': 'list',
