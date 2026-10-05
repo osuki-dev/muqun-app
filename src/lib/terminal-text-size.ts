@@ -100,10 +100,10 @@ export const TERMINAL_MAX_SCALE = 1.8;
  * width and keeping the pane readable are two different requests, and the one
  * the reader made was to read the pane.
  */
-// PRODUCT DECISION PENDING (owner): a pane narrower than 1/1.6 of the canvas -- a
-// 40-column pane on a tablet -- stops at this cap and keeps an empty strip on the
-// right. Raising it fills the width at the cost of rows; see the note above.
-export const TERMINAL_MAX_FIT_SCALE = 1.6;
+// 2.0 (owner's call, 2026-10-06): a 40-column pane fills a tablet's width instead
+// of stopping at 1.6 with an empty strip on the right; rows get larger in return,
+// which is what a reader opening a narrow pane on a big screen is asking for.
+export const TERMINAL_MAX_FIT_SCALE = 2.0;
 
 /**
  * The smallest glyph the fit may draw, in points.

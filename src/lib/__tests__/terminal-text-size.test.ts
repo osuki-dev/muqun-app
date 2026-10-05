@@ -458,7 +458,7 @@ describe('a pane narrower than the phone is drawn to fill it', () => {
 
   test('the fit is capped, because scaling up spends rows', () => {
     // A 20-column pane -- the narrowest `TERMINAL_GRID_MIN_COLS` allows -- asks
-    // for 2.3 and is given 1.6. Uncapped it would trade two thirds of the
+    // for 2.3 and is given 2.0. Uncapped it would trade two thirds of the
     // pane's visible rows for width nobody asked for.
     expect(fill(20)).toBeGreaterThan(TERMINAL_MAX_FIT_SCALE);
     expect(terminalFitToWidthScale(PHONE, 20)).toBe(TERMINAL_MAX_FIT_SCALE);
