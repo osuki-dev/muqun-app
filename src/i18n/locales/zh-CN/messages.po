@@ -2549,6 +2549,17 @@ msgstr "空闲"
 msgid "If this continues, restart the app or check the app installation"
 msgstr "如果问题仍然存在，请重启 App 或检查 App 安装"
 
+#: src/components/agent-message-block.tsx
+#: src/components/asset-viewer.tsx
+msgid "Image unavailable"
+msgstr "图片无法显示"
+
+#. placeholder {0}: alt.trim()
+#: src/components/agent-message-block.tsx
+#: src/components/asset-viewer.tsx
+msgid "Image unavailable: {0}"
+msgstr "图片无法显示：{0}"
+
 #: src/components/session-artifacts.tsx
 #: src/components/settings-storage.tsx
 msgid "Images"

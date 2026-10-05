@@ -2549,6 +2549,17 @@ msgstr "대기"
 msgid "If this continues, restart the app or check the app installation"
 msgstr "문제가 계속되면 앱을 다시 시작하거나 앱 설치 상태를 확인하세요"
 
+#: src/components/agent-message-block.tsx
+#: src/components/asset-viewer.tsx
+msgid "Image unavailable"
+msgstr "이미지를 표시할 수 없음"
+
+#. placeholder {0}: alt.trim()
+#: src/components/agent-message-block.tsx
+#: src/components/asset-viewer.tsx
+msgid "Image unavailable: {0}"
+msgstr "이미지를 표시할 수 없음: {0}"
+
 #: src/components/session-artifacts.tsx
 #: src/components/settings-storage.tsx
 msgid "Images"

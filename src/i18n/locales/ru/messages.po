@@ -2549,6 +2549,17 @@ msgstr "Простаивает"
 msgid "If this continues, restart the app or check the app installation"
 msgstr "Если проблема сохраняется, перезапустите приложение или проверьте его установку"
 
+#: src/components/agent-message-block.tsx
+#: src/components/asset-viewer.tsx
+msgid "Image unavailable"
+msgstr "Изображение недоступно"
+
+#. placeholder {0}: alt.trim()
+#: src/components/agent-message-block.tsx
+#: src/components/asset-viewer.tsx
+msgid "Image unavailable: {0}"
+msgstr "Изображение недоступно: {0}"
+
 #: src/components/session-artifacts.tsx
 #: src/components/settings-storage.tsx
 msgid "Images"
