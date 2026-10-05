@@ -1,5 +1,6 @@
 import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens } from '@osuki-dev/ui';
+import { useRouter } from 'expo-router';
 import { RefreshCw } from 'lucide-react-native';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
@@ -32,6 +33,7 @@ import { contextTokenTotal, formatModelName } from '@/lib/agent-protocol';
 import { createAgentTranscriptStore } from '@/stores/agent-transcript';
 import { useAgentSheetBridge } from '@/stores/agent-sheet-bridge';
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';
+import { useToolCallDetailStore } from '@/stores/tool-call-detail';
 
 const doNothing = () => {};
 
@@ -60,6 +62,7 @@ export function AgentSubagentDetailSheet({
 }) {
   const { t } = useLingui();
   const { colors } = useThemeTokens();
+  const router = useRouter();
   const insets = useSafeAreaInsets();
   const markdownStyle = usePaneChatMarkdownStyle();
   const serverId = useGatewayConnectionStore((state) => state.record?.serverId);
@@ -124,8 +127,14 @@ export function AgentSubagentDetailSheet({
   const info = activeLoaded?.snapshot.info ?? fallbackInfo;
   const title = info ? sessionTitleOr(info, t`Untitled session`) : t`Subagent`;
   const actions = useMemo<AgentToolActions>(
-    () => ({ onOpenChildSession: onOpenChild }),
-    [onOpenChild]
+    () => ({
+      onOpenChildSession: onOpenChild,
+      onOpenToolDetail: (part) => {
+        useToolCallDetailStore.getState().open({ part, sessionId, transcript: store });
+        router.push('/agent-tool-detail');
+      },
+    }),
+    [onOpenChild, router, sessionId, store]
   );
   const rowProps = useMemo(
     () => ({

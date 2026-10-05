@@ -1,6 +1,7 @@
 import { useRootRouteName } from '@/hooks/use-root-route-name';
 import { useStore } from 'zustand';
 import { createAgentTranscriptStore } from '@/stores/agent-transcript';
+import { useToolCallDetailStore } from '@/stores/tool-call-detail';
 import { AgentTranscriptList } from '@/components/agent-transcript-list';
 import { useLatestRef } from '@/hooks/use-render-refs';
 import {
@@ -112,6 +113,7 @@ import {
   type CompactionReason,
   type InboxItem,
   type TimelineItem,
+  type ToolPart,
   type PermissionRequest,
   type FormRequest,
   type ModelRef,
@@ -3494,6 +3496,15 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     [router, sessionId, activeAsid]
   );
 
+  /** One tool call, whole, read live out of this workbench's transcript. */
+  const openToolDetail = useCallback(
+    (part: ToolPart) => {
+      useToolCallDetailStore.getState().open({ part, sessionId, transcript: transcriptStore });
+      router.push('/agent-tool-detail');
+    },
+    [router, sessionId, transcriptStore]
+  );
+
   const handleToggleReasoning = useCallback(() => {
     setShowReasoning((prev) => !prev);
   }, []);
@@ -3807,6 +3818,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       onOpenFile: handleOpenToolFile,
       ...(canRunInBackground ? { onOpenBackgroundTray: openBackgroundTray } : {}),
       onOpenFullDiff: openDiffSheet,
+      onOpenToolDetail: openToolDetail,
       childStatuses,
     }),
     [
@@ -3815,6 +3827,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       handleOpenToolFile,
       openBackgroundTray,
       openDiffSheet,
+      openToolDetail,
       childStatuses,
       openSubagentDetail,
     ]

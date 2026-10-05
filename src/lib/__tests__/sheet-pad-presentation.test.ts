@@ -17,6 +17,7 @@ import {
 const WORK_SURFACES = [
   'agent-session-tree',
   'agent-subagent-detail',
+  'agent-tool-detail',
   'agent-vcs-diff',
   'artifacts',
   'explore',
@@ -101,6 +102,7 @@ const WORK_SURFACE_FRAMES: Record<string, string> = {
   artifacts: 'src/components/session-artifacts.tsx',
   'agent-session-tree': 'src/components/agent-session-tree-sheet.tsx',
   'agent-subagent-detail': 'src/components/agent-subagent-detail-sheet.tsx',
+  'agent-tool-detail': 'src/components/tool-call-detail-sheet.tsx',
   'settings-theme-browse': 'src/components/theme-browse-sheet.tsx',
   explore: 'src/app/explore.tsx',
 };

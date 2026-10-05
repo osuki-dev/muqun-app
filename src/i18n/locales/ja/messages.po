@@ -892,6 +892,7 @@ msgid "Cancel this queued message"
 msgstr "待機中のこのメッセージを取り消す"
 
 #: src/components/ssh-terminal-workspace.tsx
+#: src/components/tool-call-detail-sheet.tsx
 msgid "Cancelled"
 msgstr "キャンセルしました"
 
@@ -1182,6 +1183,10 @@ msgstr "圧縮に失敗しました — タップで閉じる"
 msgid "Compared with {base}"
 msgstr "{base} と比較"
 
+#: src/components/tool-call-detail-sheet.tsx
+msgid "Completed"
+msgstr "完了"
+
 #: src/components/settings-storage.tsx
 msgid "Confirm clear cache"
 msgstr "キャッシュの削除を確認"
@@ -1431,6 +1436,7 @@ msgstr "対話形式のヘルプと、プロジェクトに関する自由な質
 #: src/components/agent-message-block.tsx
 #: src/components/asset-viewer.tsx
 #: src/components/bounded-markdown.tsx
+#: src/components/tool-call-detail-sheet.tsx
 msgid "Copied"
 msgstr "コピー完了"
 
@@ -1453,9 +1459,17 @@ msgstr "コピーします。ターミナルにそのまま貼り付けられま
 msgid "Copy"
 msgstr "コピー"
 
+#: src/components/tool-call-detail-sheet.tsx
+msgid "Copy input"
+msgstr "入力をコピー"
+
 #: src/components/agent-message-block.tsx
 msgid "Copy message"
 msgstr "メッセージをコピー"
+
+#: src/components/tool-call-detail-sheet.tsx
+msgid "Copy output"
+msgstr "出力をコピー"
 
 #: src/components/asset-viewer.tsx
 msgid "Copy path"
@@ -1902,6 +1916,7 @@ msgid "Demo workspace"
 msgstr "デモワークスペース"
 
 #: src/components/agent-tool-card.tsx
+#: src/components/tool-call-code-rows.tsx
 msgid "Denied by you"
 msgstr "あなたが拒否しました"
 
@@ -2196,6 +2211,10 @@ msgstr "色をエクスポート"
 #: src/components/custom-theme-library.tsx
 msgid "Export theme"
 msgstr "テーマをエクスポート"
+
+#: src/components/tool-call-detail-sheet.tsx
+msgid "Failed"
+msgstr "失敗"
 
 #. placeholder {0}: status.code
 #: src/components/ssh-terminal-workspace.tsx
@@ -2560,8 +2579,13 @@ msgid "Increase {label}"
 msgstr "{label}を上げる"
 
 #: src/components/agent-context-sheet.tsx
+#: src/components/tool-call-code-rows.tsx
 msgid "Input"
 msgstr "入力"
+
+#: src/components/tool-call-detail-sheet.tsx
+msgid "Input copied to clipboard"
+msgstr "入力をクリップボードにコピーしました"
 
 #. placeholder {0}: row.label
 #: src/components/composer-popup.tsx
@@ -3191,6 +3215,10 @@ msgstr "このホストに無料のモデルはありません"
 msgid "No Gateway yet?"
 msgstr "Gateway がまだありませんか？"
 
+#: src/components/tool-call-code-rows.tsx
+msgid "No input"
+msgstr "入力なし"
+
 #: src/app/commands.tsx
 msgid "No matching commands. Try another word."
 msgstr "一致するコマンドがありません。別の語句で検索してください"
@@ -3207,6 +3235,10 @@ msgstr "このホストにモデルはありません"
 #: src/components/agent-assignment-bar.tsx
 msgid "No other assistants in this session yet."
 msgstr "このセッションには他のアシスタントがまだいません"
+
+#: src/components/tool-call-code-rows.tsx
+msgid "No output"
+msgstr "出力なし"
 
 #: src/components/agent-background-tray.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
@@ -3476,6 +3508,10 @@ msgstr "それでも開く"
 msgid "Open as a project"
 msgstr "プロジェクトとして開く"
 
+#: src/components/tool-call-detail-sheet.tsx
+msgid "Open as file"
+msgstr "ファイルとして開く"
+
 #: src/components/agent-message-block.tsx
 msgid "Open attachment"
 msgstr "添付ファイルを開く"
@@ -3587,6 +3623,10 @@ msgstr "このパスを開く"
 msgid "Open to check the current state"
 msgstr "開いて現在の状態を確認"
 
+#: src/components/embedded-terminal-tool-block.tsx
+msgid "Open tool call details"
+msgstr "ツール呼び出しの詳細を開く"
+
 #. placeholder {0}: workspace.title
 #: src/components/session-map.tsx
 msgid "Open workspace {0}, {panelCount, plural, one {# running} other {# running}}. Long press to close."
@@ -3644,8 +3684,13 @@ msgid "Other"
 msgstr "その他"
 
 #: src/components/agent-context-sheet.tsx
+#: src/components/tool-call-code-rows.tsx
 msgid "Output"
 msgstr "出力"
+
+#: src/components/tool-call-detail-sheet.tsx
+msgid "Output copied to clipboard"
+msgstr "出力をクリップボードにコピーしました"
 
 #: src/components/home-launch-actions.tsx
 msgid "Pair a gateway"
@@ -4307,6 +4352,7 @@ msgid "Run the Gateway on your machine and scan the QR code it prints. The pairi
 msgstr "自分のマシンで Gateway を起動し、表示された QR コードをスキャンします。ペアリング情報はこのデバイスの中だけに残ります"
 
 #: src/components/agent-session-tree-sheet.tsx
+#: src/components/tool-call-detail-sheet.tsx
 #: src/i18n/labels.ts
 msgid "Running"
 msgstr "実行中"
@@ -4969,6 +5015,10 @@ msgstr "ステア (Steer)"
 #: src/components/agent-composer.tsx
 msgid "Steer running agent"
 msgstr "実行中のエージェントにリアルタイムで指示"
+
+#: src/components/tool-call-code-rows.tsx
+msgid "Still arriving"
+msgstr "受信中"
 
 #: src/components/pane-chat-blocks.tsx
 msgid "Still running…"
@@ -5665,6 +5715,10 @@ msgstr "このターミナルは削除されました。続行するには別の
 msgid "This theme contains images that must be installed before applying"
 msgstr "このテーマには画像が含まれています。適用する前に画像をインストールしてください"
 
+#: src/components/tool-call-detail-sheet.tsx
+msgid "This tool call is no longer available."
+msgstr "このツール呼び出しはもう利用できません"
+
 #: src/components/session-map.tsx
 msgid "This workspace has no groups yet."
 msgstr "このワークスペースにはまだグループがありません"
@@ -5682,6 +5736,7 @@ msgid "Through {host}"
 msgstr "{host} 経由"
 
 #: src/components/agent-tool-card.tsx
+#: src/components/tool-call-code-rows.tsx
 msgid "timed out"
 msgstr "タイムアウト"
 
@@ -5706,12 +5761,17 @@ msgstr "大きすぎてハイライトできません。プレーンテキスト
 msgid "Too many changes to list. This is the start of them, not all of them."
 msgstr "変更が多すぎて一覧にできません。これは先頭部分で、すべてではありません"
 
+#: src/components/tool-call-detail-sheet.tsx
+msgid "Tool call"
+msgstr "ツール呼び出し"
+
 #: src/components/changes-sheet.tsx
 msgid "tracking {upstream}"
 msgstr "{upstream} を追跡"
 
 #: src/components/bounded-markdown.tsx
 #: src/components/embedded-terminal-tool-block.tsx
+#: src/components/tool-call-code-rows.tsx
 msgid "Truncated"
 msgstr "途中まで"
 

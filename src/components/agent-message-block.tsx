@@ -338,6 +338,8 @@ export interface AgentToolActions {
   onOpenFullDiff?: (path?: string) => void;
   /** Live status per child session, from that session's own status events. */
   childStatuses?: Readonly<Record<string, AgentRunStatus>>;
+  /** The whole call in the tool detail sheet. */
+  onOpenToolDetail?: (part: ToolPart) => void;
 }
 
 const NO_TOOL_ACTIONS: AgentToolActions = Object.freeze({});
@@ -777,6 +779,11 @@ const ToolPartCard = memo(function ToolPartCard({
   const childStatus = part.child_session_id
     ? actions.childStatuses?.[part.child_session_id]
     : undefined;
+  const openToolDetail = actions.onOpenToolDetail;
+  const handleOpenDetail = useMemo(
+    () => (openToolDetail ? () => openToolDetail(part) : undefined),
+    [openToolDetail, part]
+  );
 
   // Subscribed by call id rather than searched out of a list handed to every
   // card: one pending permission used to change the object every memoised tool
@@ -805,6 +812,7 @@ const ToolPartCard = memo(function ToolPartCard({
         {...(actions.onPreviewImage ? { onPreviewImage: actions.onPreviewImage } : {})}
         {...(actions.onOpenFile ? { onOpenFile: actions.onOpenFile } : {})}
         {...(actions.onOpenFullDiff ? { onOpenFullDiff: actions.onOpenFullDiff } : {})}
+        {...(handleOpenDetail ? { onOpenDetail: handleOpenDetail } : {})}
       />
       {attachedPermission && handleDecision ? (
         <AgentPermissionCard attached request={attachedPermission} onDecision={handleDecision} />

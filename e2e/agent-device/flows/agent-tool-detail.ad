@@ -1,0 +1,38 @@
+# A tool call opened whole from a transcript's tool row, through the demo fixture.
+
+# section open
+open "muqun://agent-session-tree?rootAsid=demo-tree-root"
+wait stable 400 5000
+
+# section open-branch
+press "${TARGET}"
+
+# section transcript-visible
+is visible "${TARGET}"
+
+# section open-tool
+press "${TARGET}"
+
+# section sheet-visible
+is visible "${TARGET}"
+
+# section status
+is visible "${TARGET}"
+
+# section input
+is visible "${TARGET}"
+
+# section copy-input
+press "${TARGET}"
+
+# section close-tool
+back --system
+
+# section transcript-restored
+is visible "${TARGET}"
+
+# section close-detail
+back --system
+
+# section close-tree
+back --system

@@ -892,6 +892,7 @@ msgid "Cancel this queued message"
 msgstr "Huỷ tin nhắn đang chờ này"
 
 #: src/components/ssh-terminal-workspace.tsx
+#: src/components/tool-call-detail-sheet.tsx
 msgid "Cancelled"
 msgstr "Đã hủy"
 
@@ -1182,6 +1183,10 @@ msgstr "Nén thất bại — chạm để bỏ qua"
 msgid "Compared with {base}"
 msgstr "So với {base}"
 
+#: src/components/tool-call-detail-sheet.tsx
+msgid "Completed"
+msgstr "Đã hoàn tất"
+
 #: src/components/settings-storage.tsx
 msgid "Confirm clear cache"
 msgstr "Xác nhận xóa bộ nhớ đệm"
@@ -1431,6 +1436,7 @@ msgstr "Trợ giúp dạng hội thoại và các câu hỏi mở về dự án"
 #: src/components/agent-message-block.tsx
 #: src/components/asset-viewer.tsx
 #: src/components/bounded-markdown.tsx
+#: src/components/tool-call-detail-sheet.tsx
 msgid "Copied"
 msgstr "Đã sao chép"
 
@@ -1453,9 +1459,17 @@ msgstr "Sao chép lệnh, sẵn sàng dán vào terminal"
 msgid "Copy"
 msgstr "Sao chép"
 
+#: src/components/tool-call-detail-sheet.tsx
+msgid "Copy input"
+msgstr "Sao chép đầu vào"
+
 #: src/components/agent-message-block.tsx
 msgid "Copy message"
 msgstr "Sao chép tin nhắn"
+
+#: src/components/tool-call-detail-sheet.tsx
+msgid "Copy output"
+msgstr "Sao chép đầu ra"
 
 #: src/components/asset-viewer.tsx
 msgid "Copy path"
@@ -1902,6 +1916,7 @@ msgid "Demo workspace"
 msgstr "Không gian làm việc demo"
 
 #: src/components/agent-tool-card.tsx
+#: src/components/tool-call-code-rows.tsx
 msgid "Denied by you"
 msgstr "Bạn đã từ chối"
 
@@ -2196,6 +2211,10 @@ msgstr "Xuất màu sắc"
 #: src/components/custom-theme-library.tsx
 msgid "Export theme"
 msgstr "Xuất giao diện"
+
+#: src/components/tool-call-detail-sheet.tsx
+msgid "Failed"
+msgstr "Thất bại"
 
 #. placeholder {0}: status.code
 #: src/components/ssh-terminal-workspace.tsx
@@ -2560,8 +2579,13 @@ msgid "Increase {label}"
 msgstr "Tăng {label}"
 
 #: src/components/agent-context-sheet.tsx
+#: src/components/tool-call-code-rows.tsx
 msgid "Input"
 msgstr "Đầu vào"
+
+#: src/components/tool-call-detail-sheet.tsx
+msgid "Input copied to clipboard"
+msgstr "Đã sao chép đầu vào vào bảng nhớ tạm"
 
 #. placeholder {0}: row.label
 #: src/components/composer-popup.tsx
@@ -3191,6 +3215,10 @@ msgstr "Không có mô hình miễn phí trên máy chủ này"
 msgid "No Gateway yet?"
 msgstr "Chưa có Gateway?"
 
+#: src/components/tool-call-code-rows.tsx
+msgid "No input"
+msgstr "Không có đầu vào"
+
 #: src/app/commands.tsx
 msgid "No matching commands. Try another word."
 msgstr "Không tìm thấy lệnh phù hợp. Thử từ khác"
@@ -3207,6 +3235,10 @@ msgstr "Không có mô hình trên máy chủ này"
 #: src/components/agent-assignment-bar.tsx
 msgid "No other assistants in this session yet."
 msgstr "Phiên này chưa có trợ lý nào khác"
+
+#: src/components/tool-call-code-rows.tsx
+msgid "No output"
+msgstr "Không có đầu ra"
 
 #: src/components/agent-background-tray.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
@@ -3476,6 +3508,10 @@ msgstr "Vẫn mở"
 msgid "Open as a project"
 msgstr "Mở làm dự án"
 
+#: src/components/tool-call-detail-sheet.tsx
+msgid "Open as file"
+msgstr "Mở dưới dạng tệp"
+
 #: src/components/agent-message-block.tsx
 msgid "Open attachment"
 msgstr "Mở tệp đính kèm"
@@ -3587,6 +3623,10 @@ msgstr "Mở đường dẫn này"
 msgid "Open to check the current state"
 msgstr "Mở để kiểm tra trạng thái hiện tại"
 
+#: src/components/embedded-terminal-tool-block.tsx
+msgid "Open tool call details"
+msgstr "Mở chi tiết lệnh gọi công cụ"
+
 #. placeholder {0}: workspace.title
 #: src/components/session-map.tsx
 msgid "Open workspace {0}, {panelCount, plural, one {# running} other {# running}}. Long press to close."
@@ -3644,8 +3684,13 @@ msgid "Other"
 msgstr "Khác"
 
 #: src/components/agent-context-sheet.tsx
+#: src/components/tool-call-code-rows.tsx
 msgid "Output"
 msgstr "Đầu ra"
+
+#: src/components/tool-call-detail-sheet.tsx
+msgid "Output copied to clipboard"
+msgstr "Đã sao chép đầu ra vào bảng nhớ tạm"
 
 #: src/components/home-launch-actions.tsx
 msgid "Pair a gateway"
@@ -4307,6 +4352,7 @@ msgid "Run the Gateway on your machine and scan the QR code it prints. The pairi
 msgstr "Chạy Gateway trên máy của bạn và quét mã QR nó in ra. Việc ghép nối ở lại trên thiết bị này"
 
 #: src/components/agent-session-tree-sheet.tsx
+#: src/components/tool-call-detail-sheet.tsx
 #: src/i18n/labels.ts
 msgid "Running"
 msgstr "Đang chạy"
@@ -4969,6 +5015,10 @@ msgstr "Can thiệp"
 #: src/components/agent-composer.tsx
 msgid "Steer running agent"
 msgstr "Can thiệp vào tác nhân đang chạy theo thời gian thực"
+
+#: src/components/tool-call-code-rows.tsx
+msgid "Still arriving"
+msgstr "Đang nhận"
 
 #: src/components/pane-chat-blocks.tsx
 msgid "Still running…"
@@ -5665,6 +5715,10 @@ msgstr "Terminal này đã bị xóa. Hãy chọn terminal khác để tiếp t�
 msgid "This theme contains images that must be installed before applying"
 msgstr "Giao diện này chứa hình ảnh cần được cài đặt trước khi áp dụng"
 
+#: src/components/tool-call-detail-sheet.tsx
+msgid "This tool call is no longer available."
+msgstr "Lệnh gọi công cụ này không còn khả dụng"
+
 #: src/components/session-map.tsx
 msgid "This workspace has no groups yet."
 msgstr "Không gian làm việc này chưa có nhóm nào"
@@ -5682,6 +5736,7 @@ msgid "Through {host}"
 msgstr "Qua {host}"
 
 #: src/components/agent-tool-card.tsx
+#: src/components/tool-call-code-rows.tsx
 msgid "timed out"
 msgstr "hết thời gian"
 
@@ -5706,12 +5761,17 @@ msgstr "Quá lớn để tô sáng cú pháp — hiển thị dưới dạng vă
 msgid "Too many changes to list. This is the start of them, not all of them."
 msgstr "Quá nhiều thay đổi để liệt kê. Đây là phần đầu, không phải tất cả"
 
+#: src/components/tool-call-detail-sheet.tsx
+msgid "Tool call"
+msgstr "Lệnh gọi công cụ"
+
 #: src/components/changes-sheet.tsx
 msgid "tracking {upstream}"
 msgstr "theo dõi {upstream}"
 
 #: src/components/bounded-markdown.tsx
 #: src/components/embedded-terminal-tool-block.tsx
+#: src/components/tool-call-code-rows.tsx
 msgid "Truncated"
 msgstr "Đã cắt bớt"
 

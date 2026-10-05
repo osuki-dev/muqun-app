@@ -833,7 +833,13 @@ describe('native end-to-end gate', () => {
         'large-file-preview',
         'git-diff',
       ],
-      agents: ['agent-collaboration', 'agent-session-tree', 'away-digest', 'agent-shortcuts'],
+      agents: [
+        'agent-collaboration',
+        'agent-session-tree',
+        'agent-tool-detail',
+        'away-digest',
+        'agent-shortcuts',
+      ],
       workspace: [
         'agent-session-tree',
         'demo-tour',
