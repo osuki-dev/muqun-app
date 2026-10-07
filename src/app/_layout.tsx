@@ -1,3 +1,4 @@
+import { AppDiagramProvider } from '@/components/app-diagram-provider';
 import { RouteScene } from '@/components/route-scene';
 import {
   isFullscreenSheetRoute,
@@ -254,7 +255,11 @@ export default function RootLayout() {
                 already wearing the reader's typography -- there is no frame in
                 the system font for anything to cache.
               */}
-                  {fontsReady ? <RootContent /> : null}
+                  {fontsReady ? (
+                    <AppDiagramProvider>
+                      <RootContent />
+                    </AppDiagramProvider>
+                  ) : null}
                 </AppI18nProvider>
               </AppErrorBoundary>
             </HugSlackProvider>
@@ -490,6 +495,10 @@ function RootContent() {
                   }}
                 />
                 <Stack.Screen name="explore" options={sheetRouteOptions('explore')} />
+                <Stack.Screen
+                  name="diagram-viewer"
+                  options={sheetPresentationOptions(sheetRoutePresentations['diagram-viewer'])}
+                />
                 {/*
               The agent surface's pickers. They were `<Modal transparent>`
               components mounted inside the workbench, each with its own

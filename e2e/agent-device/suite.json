@@ -2,6 +2,12 @@
   "version": 1,
   "flows": [
     {
+      "name": "mermaid-output",
+      "program": "flows/mermaid-output",
+      "tags": ["full", "agents"],
+      "platforms": ["ios", "android"]
+    },
+    {
       "name": "theme-document",
       "program": "flows/theme-document",
       "tags": ["full", "themes", "files"],
@@ -208,6 +214,92 @@
     }
   ],
   "programs": {
+    "flows/mermaid-output": [
+      {
+        "include": "subflows/open-demo"
+      },
+      {
+        "run": "flows/mermaid-output.ad#open"
+      },
+      {
+        "target": {
+          "id": "agent-subagent-detail-transcript"
+        },
+        "mode": "visible",
+        "timeout": 15000,
+        "run": "flows/mermaid-output.ad#visible"
+      },
+      {
+        "target": {
+          "id": "mermaid-diagram-0-canvas"
+        },
+        "mode": "visible",
+        "timeout": 15000,
+        "run": "flows/mermaid-output.ad#visible"
+      },
+      {
+        "run": "flows/mermaid-output.ad#scroll"
+      },
+      {
+        "target": {
+          "id": "mermaid-diagram-0-expand"
+        },
+        "mode": "press",
+        "timeout": 15000,
+        "run": "flows/mermaid-output.ad#press"
+      },
+      {
+        "target": {
+          "id": "diagram-viewer-canvas"
+        },
+        "mode": "visible",
+        "timeout": 15000,
+        "run": "flows/mermaid-output.ad#visible"
+      },
+      {
+        "target": {
+          "id": "diagram-actual-size"
+        },
+        "mode": "press",
+        "timeout": 15000,
+        "run": "flows/mermaid-output.ad#press"
+      },
+      {
+        "target": {
+          "id": "diagram-fit"
+        },
+        "mode": "press",
+        "timeout": 15000,
+        "run": "flows/mermaid-output.ad#press"
+      },
+      {
+        "target": {
+          "text": "Copy"
+        },
+        "mode": "press",
+        "timeout": 15000,
+        "run": "flows/mermaid-output.ad#press"
+      },
+      {
+        "target": {
+          "id": "diagram-close"
+        },
+        "mode": "press",
+        "timeout": 15000,
+        "run": "flows/mermaid-output.ad#press"
+      },
+      {
+        "target": {
+          "id": "agent-subagent-detail-transcript"
+        },
+        "mode": "visible",
+        "timeout": 15000,
+        "run": "flows/mermaid-output.ad#visible"
+      },
+      {
+        "run": "flows/mermaid-output.ad#close"
+      }
+    ],
     "subflows/open-editor-composer": [
       {
         "run": "subflows/open-editor-composer.ad#open"

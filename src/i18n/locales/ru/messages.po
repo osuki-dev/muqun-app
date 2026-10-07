@@ -405,6 +405,10 @@ msgstr "Действуйте в этом терминале или дайте з
 msgid "Actions for {0}"
 msgstr "Действия для {0}"
 
+#: src/app/diagram-viewer.tsx
+msgid "Actual size"
+msgstr "Исходный размер"
+
 #: src/components/home-connections.tsx
 msgid "Add a gateway or an SSH host to start working."
 msgstr "Добавьте Gateway или SSH-хост, чтобы начать работу"
@@ -1048,6 +1052,7 @@ msgstr "Очищаем кэш"
 msgid "Clearing…"
 msgstr "Очищаем…"
 
+#: src/app/diagram-viewer.tsx
 #: src/components/sheet-scene.tsx
 msgid "Close"
 msgstr "Закрыть"
@@ -1454,6 +1459,7 @@ msgstr "Скопировано в буфер обмена"
 msgid "Copies it, ready to paste into a terminal"
 msgstr "Копирует её, чтобы вставить в терминал"
 
+#: src/app/diagram-viewer.tsx
 #: src/components/asset-viewer.tsx
 #: src/components/skia-terminal.tsx
 msgid "Copy"
@@ -2285,6 +2291,10 @@ msgstr "Отпечаток"
 msgid "First prompt"
 msgstr "Первое задание"
 
+#: src/app/diagram-viewer.tsx
+msgid "Fit diagram"
+msgstr "Вписать диаграмму"
+
 #: src/components/custom-theme-library.tsx
 msgid "Fix text contrast before applying this theme"
 msgstr "Исправьте контраст текста перед применением этой темы"
@@ -2858,10 +2868,6 @@ msgstr "Загружаем команды"
 msgid "Loading paired devices…"
 msgstr "Загружаем привязанные устройства…"
 
-#: src/components/home-recent-sessions.tsx
-msgid "Loading recent sessions…"
-msgstr "Загружаем последние сеансы…"
-
 #: src/app/servers/[serverId].tsx
 #: src/components/home-launch-actions.tsx
 #: src/components/home-overview.tsx
@@ -3423,7 +3429,6 @@ msgstr "В фоне ничего не выполняется. Отсоедини
 msgid "Nothing staged"
 msgstr "Ничего не подготовлено"
 
-#: src/components/home-recent-sessions.tsx
 #: src/components/pane-chat-view.tsx
 msgid "Nothing to show yet."
 msgstr "Пока нечего показать"

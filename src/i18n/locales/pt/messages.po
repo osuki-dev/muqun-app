@@ -405,6 +405,10 @@ msgstr "Age sobre este terminal, ou envia uma instrução ao seu agente"
 msgid "Actions for {0}"
 msgstr "Ações para {0}"
 
+#: src/app/diagram-viewer.tsx
+msgid "Actual size"
+msgstr "Tamanho real"
+
 #: src/components/home-connections.tsx
 msgid "Add a gateway or an SSH host to start working."
 msgstr "Adicione um gateway ou um host SSH para começar a trabalhar"
@@ -1048,6 +1052,7 @@ msgstr "A limpar a cache"
 msgid "Clearing…"
 msgstr "A limpar…"
 
+#: src/app/diagram-viewer.tsx
 #: src/components/sheet-scene.tsx
 msgid "Close"
 msgstr "Fechar"
@@ -1454,6 +1459,7 @@ msgstr "Copiado para a área de transferência"
 msgid "Copies it, ready to paste into a terminal"
 msgstr "Copia-o, pronto a colar num terminal"
 
+#: src/app/diagram-viewer.tsx
 #: src/components/asset-viewer.tsx
 #: src/components/skia-terminal.tsx
 msgid "Copy"
@@ -2285,6 +2291,10 @@ msgstr "Impressão digital"
 msgid "First prompt"
 msgstr "Primeira instrução"
 
+#: src/app/diagram-viewer.tsx
+msgid "Fit diagram"
+msgstr "Ajustar diagrama"
+
 #: src/components/custom-theme-library.tsx
 msgid "Fix text contrast before applying this theme"
 msgstr "Corrija o contraste do texto antes de aplicar este tema"
@@ -2858,10 +2868,6 @@ msgstr "A carregar comandos"
 msgid "Loading paired devices…"
 msgstr "A carregar dispositivos emparelhados…"
 
-#: src/components/home-recent-sessions.tsx
-msgid "Loading recent sessions…"
-msgstr "A carregar sessões recentes…"
-
 #: src/app/servers/[serverId].tsx
 #: src/components/home-launch-actions.tsx
 #: src/components/home-overview.tsx
@@ -3423,7 +3429,6 @@ msgstr "Nada em execução em segundo plano. Desanexe um comando longo do cartã
 msgid "Nothing staged"
 msgstr "Nada preparado"
 
-#: src/components/home-recent-sessions.tsx
 #: src/components/pane-chat-view.tsx
 msgid "Nothing to show yet."
 msgstr "Ainda não há nada para mostrar"

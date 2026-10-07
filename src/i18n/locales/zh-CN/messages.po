@@ -405,6 +405,10 @@ msgstr "操作这个终端，或给它的 Agent 下一条指令"
 msgid "Actions for {0}"
 msgstr "{0} 的操作"
 
+#: src/app/diagram-viewer.tsx
+msgid "Actual size"
+msgstr "原始尺寸"
+
 #: src/components/home-connections.tsx
 msgid "Add a gateway or an SSH host to start working."
 msgstr "添加 Gateway 或 SSH 主机即可开始工作"
@@ -1048,6 +1052,7 @@ msgstr "正在清除缓存"
 msgid "Clearing…"
 msgstr "正在清除…"
 
+#: src/app/diagram-viewer.tsx
 #: src/components/sheet-scene.tsx
 msgid "Close"
 msgstr "关闭"
@@ -1454,6 +1459,7 @@ msgstr "已复制到剪贴板"
 msgid "Copies it, ready to paste into a terminal"
 msgstr "复制命令，可直接粘贴到终端"
 
+#: src/app/diagram-viewer.tsx
 #: src/components/asset-viewer.tsx
 #: src/components/skia-terminal.tsx
 msgid "Copy"
@@ -2285,6 +2291,10 @@ msgstr "指纹"
 msgid "First prompt"
 msgstr "第一条指令"
 
+#: src/app/diagram-viewer.tsx
+msgid "Fit diagram"
+msgstr "适应画面"
+
 #: src/components/custom-theme-library.tsx
 msgid "Fix text contrast before applying this theme"
 msgstr "请先修正文字对比度再应用此主题"
@@ -2858,10 +2868,6 @@ msgstr "正在加载命令"
 msgid "Loading paired devices…"
 msgstr "正在加载已配对的设备…"
 
-#: src/components/home-recent-sessions.tsx
-msgid "Loading recent sessions…"
-msgstr "正在加载最近会话…"
-
 #: src/app/servers/[serverId].tsx
 #: src/components/home-launch-actions.tsx
 #: src/components/home-overview.tsx
@@ -3423,7 +3429,6 @@ msgstr "后台没有任何任务。从工具卡片里把长命令转入后台，
 msgid "Nothing staged"
 msgstr "没有待处理的回滚"
 
-#: src/components/home-recent-sessions.tsx
 #: src/components/pane-chat-view.tsx
 msgid "Nothing to show yet."
 msgstr "目前还没有内容"

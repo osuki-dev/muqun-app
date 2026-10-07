@@ -307,12 +307,13 @@ test('a sheet built on the scene has no cards, no radios and no close button', (
  * the scene the reader is leaving, and neither of these is.
  */
 const FULLSCREEN_ALLOWLIST: Record<string, string> = {
+  'diagram-viewer': 'a native diagram canvas with pan and pinch gestures and its own close control',
   'custom-theme':
     'a whole app screen wearing the theme being judged -- floor, wallpaper and header glass -- which a panel over the previous theme cannot be; its sliders and long editor column also pan vertically, which is the gesture a form sheet reads as dismiss',
   simfarm: 'a Skia canvas that takes every touch on it, edge to edge',
 };
 
-test('the fullscreen allowlist is two routes, and both say why', () => {
+test('every fullscreen route explains why it owns the whole screen', () => {
   const fullscreen = Object.entries(sheetRoutePresentations)
     .filter(([, presentation]) => presentation === 'fullscreen')
     .map(([route]) => route)

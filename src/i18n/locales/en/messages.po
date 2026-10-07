@@ -405,6 +405,10 @@ msgstr "Act on this terminal, or send its agent a prompt"
 msgid "Actions for {0}"
 msgstr "Actions for {0}"
 
+#: src/app/diagram-viewer.tsx
+msgid "Actual size"
+msgstr "Actual size"
+
 #: src/components/home-connections.tsx
 msgid "Add a gateway or an SSH host to start working."
 msgstr "Add a gateway or an SSH host to start working"
@@ -1048,6 +1052,7 @@ msgstr "Clearing cache"
 msgid "Clearing…"
 msgstr "Clearing…"
 
+#: src/app/diagram-viewer.tsx
 #: src/components/sheet-scene.tsx
 msgid "Close"
 msgstr "Close"
@@ -1454,6 +1459,7 @@ msgstr "Copied to clipboard"
 msgid "Copies it, ready to paste into a terminal"
 msgstr "Copies it, ready to paste into a terminal"
 
+#: src/app/diagram-viewer.tsx
 #: src/components/asset-viewer.tsx
 #: src/components/skia-terminal.tsx
 msgid "Copy"
@@ -2285,6 +2291,10 @@ msgstr "Fingerprint"
 msgid "First prompt"
 msgstr "First prompt"
 
+#: src/app/diagram-viewer.tsx
+msgid "Fit diagram"
+msgstr "Fit diagram"
+
 #: src/components/custom-theme-library.tsx
 msgid "Fix text contrast before applying this theme"
 msgstr "Fix text contrast before applying this theme"
@@ -2858,10 +2868,6 @@ msgstr "Loading commands"
 msgid "Loading paired devices…"
 msgstr "Loading paired devices…"
 
-#: src/components/home-recent-sessions.tsx
-msgid "Loading recent sessions…"
-msgstr "Loading recent sessions…"
-
 #: src/app/servers/[serverId].tsx
 #: src/components/home-launch-actions.tsx
 #: src/components/home-overview.tsx
@@ -3423,7 +3429,6 @@ msgstr "Nothing is running in the background — detach a long command from its 
 msgid "Nothing staged"
 msgstr "Nothing staged"
 
-#: src/components/home-recent-sessions.tsx
 #: src/components/pane-chat-view.tsx
 msgid "Nothing to show yet."
 msgstr "Nothing to show yet"

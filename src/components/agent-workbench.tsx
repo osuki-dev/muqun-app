@@ -438,6 +438,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   const surfaceBackground = useSurfaceBackground();
   const markdownStyle = usePaneChatMarkdownStyle();
   const listRef = useRef<LegendListRef>(null);
+  const [scrollToSentRow, setScrollToSentRow] = useState<string>();
   const injectDraftRef = useRef<((text: string) => void) | null>(null);
 
   /**
@@ -2740,17 +2741,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       order: orderKeyAfter(transcriptStore.getState().timeline),
     };
     setTimeline((prev) => [...prev, tempUserItem]);
-    // Sending is an explicit request to see the newest message, even when the
-    // reader was browsing history. Keep the keyboard in place: dismissing it
-    // while appending and animating an end scroll changes the viewport and
-    // offset together. Stream updates still respect the normal end threshold.
-    requestAnimationFrame(() => {
-      if (!ownsRoute() || activeAsidRef.current !== promptAsid) return;
-      // Keep keyboard reactions live while LegendList measures the appended
-      // row. Freezing until scrollToEnd resolves can miss a keyboard dismissal
-      // and leave the native offset one keyboard-height beyond the new end.
-      void listRef.current?.scrollToEnd({ animated: false });
-    });
+    setScrollToSentRow(`grp_${tempKey}`);
 
     // No optimistic title. Auto-titling happens on the engine's first turn and
     // arrives as `agent.session.updated`; a client-side guess made from the
@@ -4854,6 +4845,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
               store={transcriptStore}
               rowProps={rowProps}
               ref={listRef}
+              scrollToSentRow={scrollToSentRow}
               /*
             Lift only for a reader at the latest message. Someone who has
             scrolled up to read is not moved by a keyboard any more than by

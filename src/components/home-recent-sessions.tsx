@@ -12,7 +12,6 @@ import { StatusDot } from '@/components/status-dot';
 import { Text } from '@/components/text';
 import { ThemeIcon } from '@/components/theme-icon';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
-import { useHomeScenePlate } from '@/hooks/use-home-scene-plate';
 import {
   HOME_CONTINUE_REFRESH_MS,
   refreshHomeContinue,
@@ -50,47 +49,25 @@ import { useGoneAgentSessions } from '@/stores/gone-agent-sessions';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { settleAfter } from '@/lib/compiler-safe-control-flow';
 
-/** Shared Classic pane inventory, ranked by explicit visits without recording synthetic visits. */
-export function HomeRecentSessions({
+/** Keep discovery active even when the empty section is omitted from the layout. */
+export function useHomeRecentEntries({
   servers,
   hosts,
   reachabilityByServer,
   activeConnection,
   selectedServerId,
-  compact = false,
-  limit,
-  linkStyle,
-  selectedPaneId,
-  selectedAsid,
-  onOpen,
 }: {
   servers: readonly GatewayRecord[];
   hosts: readonly SshHostRecord[];
   reachabilityByServer: Readonly<Record<string, ServerReachability | undefined>>;
   activeConnection?: ActiveServerConnection;
   selectedServerId?: string;
-  compact?: boolean;
-  /** Rows shown before the `Sessions (N)` toggle; compact lists default to four. */
-  limit?: number;
-  /** Overrides the `Sessions (N)` link's box, e.g. to inset it like the rows. */
-  linkStyle?: StyleProp<ViewStyle>;
-  selectedPaneId?: string;
-  selectedAsid?: string;
-  /** Runs the row's Home command; see `homeContinueCommand`. */
-  onOpen: (command: HomeCommand) => void;
 }) {
-  const { t } = useLingui();
-  const theme = useThemeTokens();
-  const profile = useAppearanceProfile();
-  const background = useSurfaceBackground();
-  const emptyPlate = useHomeScenePlate();
   const entries = useHomeRecentsStore((state) => state.entries);
   const hydrated = useHomeRecentsStore((state) => state.hydrated);
   const goneSessions = useGoneAgentSessions((state) => state.keys);
-  const [expanded, setExpanded] = useState(false);
   const [observationNowMs, setObservationNowMs] = useState(Date.now);
   const snapshots = useServerAgents((state) => state.byServer);
-  const snapshotsHydrated = useServerAgents((state) => state.hydrated);
   const paneMode = useAppSettings((state) => state.serverCardPanes);
   const targetId = selectedServerId ?? activeConnection?.serverId;
   const agentSessions = useHomeAgentSessions((state) =>
@@ -176,6 +153,41 @@ export function HomeRecentSessions({
     gatewaySessions: agentSessions,
     goneSessions,
   });
+  return available;
+}
+
+/** Shared Classic pane inventory, ranked by explicit visits without recording synthetic visits. */
+export function HomeRecentSessions({
+  servers,
+  hosts,
+  available,
+  selectedServerId,
+  compact = false,
+  limit,
+  linkStyle,
+  selectedPaneId,
+  selectedAsid,
+  onOpen,
+}: {
+  servers: readonly GatewayRecord[];
+  hosts: readonly SshHostRecord[];
+  available: readonly HomeContinueEntry[];
+  selectedServerId?: string;
+  compact?: boolean;
+  /** Rows shown before the `Sessions (N)` toggle; compact lists default to four. */
+  limit?: number;
+  /** Overrides the `Sessions (N)` link's box, e.g. to inset it like the rows. */
+  linkStyle?: StyleProp<ViewStyle>;
+  selectedPaneId?: string;
+  selectedAsid?: string;
+  /** Runs the row's Home command; see `homeContinueCommand`. */
+  onOpen: (command: HomeCommand) => void;
+}) {
+  const { t } = useLingui();
+  const theme = useThemeTokens();
+  const profile = useAppearanceProfile();
+  const background = useSurfaceBackground();
+  const [expanded, setExpanded] = useState(false);
   const visible = visibleHomeContinueEntries(available, expanded);
   const collapsedLimit = limit ?? (compact ? 4 : undefined);
   const displayed =
@@ -214,20 +226,6 @@ export function HomeRecentSessions({
             onOpen={() => onOpen(homeContinueCommand(entry.destination))}
           />
         ))}
-        {available.length === 0 ? (
-          <Text
-            variant="bodySmall"
-            color={theme.colors.textMuted}
-            // Over a pack's scene the caption takes its heading's plate, and the
-            // plate's own padding replaces the 16 above and below it.
-            style={
-              emptyPlate.backgroundColor
-                ? [emptyPlate, { marginVertical: 12 }]
-                : { paddingVertical: 16, paddingHorizontal: 0 }
-            }>
-            {hydrated && snapshotsHydrated ? t`Nothing to show yet.` : t`Loading recent sessions…`}
-          </Text>
-        ) : null}
       </View>
       {shouldShowHomeContinueOverflow(available) ||
       (collapsedLimit !== undefined && available.length > collapsedLimit) ? (

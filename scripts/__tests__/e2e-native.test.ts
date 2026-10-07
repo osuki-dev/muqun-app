@@ -834,6 +834,7 @@ describe('native end-to-end gate', () => {
         'git-diff',
       ],
       agents: [
+        'mermaid-output',
         'agent-collaboration',
         'agent-session-tree',
         'agent-tool-detail',

@@ -16,6 +16,33 @@ const item = (id: string, extra: Partial<TimelineItem> = {}): TimelineItem => ({
 });
 
 describe('agent transcript ownership', () => {
+  test('31 diagrams become independently virtualized rows without changing the canonical message', () => {
+    const store = createAgentTranscriptStore();
+    const text = Array.from(
+      { length: 31 },
+      (_, i) => `Diagram ${i}\n\n\`\`\`mermaid\nflowchart LR\nA${i} --> B${i}\n\`\`\`\n`
+    ).join('\n');
+    const message = item('diagrams', { part: { type: 'text', text } });
+    store.getState().setTimeline([message]);
+    const state = store.getState();
+    const rows = state.keys.map((key) => state.rows[key]);
+    expect(state.timeline).toEqual([message]);
+    expect(
+      rows
+        .flatMap((row) => row.items)
+        .map((row) => (row.part.type === 'text' ? row.part.text : ''))
+        .join('')
+    ).toBe(text);
+    expect(
+      rows.filter(
+        (row) =>
+          row.items[0].part.type === 'text' && row.items[0].part.text.startsWith('```mermaid')
+      )
+    ).toHaveLength(31);
+    expect(new Set(state.keys).size).toBe(state.keys.length);
+    store.getState().configure({ windowStart: 0, status: 'busy' });
+    for (const key of state.keys) expect(store.getState().rows[key]).toBe(state.rows[key]);
+  });
   test('session replacement publishes its window and rows in one notification', () => {
     const store = createAgentTranscriptStore();
     store.getState().setTimeline(

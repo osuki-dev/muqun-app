@@ -405,6 +405,10 @@ msgstr "이 터미널을 조작하거나 에이전트에게 지시 보내기"
 msgid "Actions for {0}"
 msgstr "{0} 작업"
 
+#: src/app/diagram-viewer.tsx
+msgid "Actual size"
+msgstr "실제 크기"
+
 #: src/components/home-connections.tsx
 msgid "Add a gateway or an SSH host to start working."
 msgstr "Gateway 또는 SSH 호스트를 추가하여 작업을 시작하세요"
@@ -1048,6 +1052,7 @@ msgstr "캐시를 비우는 중"
 msgid "Clearing…"
 msgstr "비우는 중…"
 
+#: src/app/diagram-viewer.tsx
 #: src/components/sheet-scene.tsx
 msgid "Close"
 msgstr "닫기"
@@ -1454,6 +1459,7 @@ msgstr "클립보드에 복사됨"
 msgid "Copies it, ready to paste into a terminal"
 msgstr "복사합니다. 터미널에 바로 붙여넣을 수 있습니다"
 
+#: src/app/diagram-viewer.tsx
 #: src/components/asset-viewer.tsx
 #: src/components/skia-terminal.tsx
 msgid "Copy"
@@ -2285,6 +2291,10 @@ msgstr "지문"
 msgid "First prompt"
 msgstr "첫 지시"
 
+#: src/app/diagram-viewer.tsx
+msgid "Fit diagram"
+msgstr "화면에 맞춤"
+
 #: src/components/custom-theme-library.tsx
 msgid "Fix text contrast before applying this theme"
 msgstr "이 테마를 적용하기 전에 텍스트 대비를 조정하세요"
@@ -2858,10 +2868,6 @@ msgstr "명령 불러오는 중"
 msgid "Loading paired devices…"
 msgstr "페어링된 기기를 불러오는 중…"
 
-#: src/components/home-recent-sessions.tsx
-msgid "Loading recent sessions…"
-msgstr "최근 세션을 불러오는 중…"
-
 #: src/app/servers/[serverId].tsx
 #: src/components/home-launch-actions.tsx
 #: src/components/home-overview.tsx
@@ -3423,7 +3429,6 @@ msgstr "백그라운드에서 실행 중인 것이 없습니다. 도구 카드�
 msgid "Nothing staged"
 msgstr "준비된 것이 없습니다"
 
-#: src/components/home-recent-sessions.tsx
 #: src/components/pane-chat-view.tsx
 msgid "Nothing to show yet."
 msgstr "아직 표시할 내용이 없습니다"

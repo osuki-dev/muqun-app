@@ -64,7 +64,7 @@ import {
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { HomeConnections } from '@/components/home-connections';
 import { HomeAttention } from '@/components/home-attention';
-import { HomeRecentSessions } from '@/components/home-recent-sessions';
+import { HomeRecentSessions, useHomeRecentEntries } from '@/components/home-recent-sessions';
 import { padLaunchLayoutEnabled } from '@/lib/home-pad-geometry';
 import {
   HomeLaunchActions,
@@ -626,6 +626,14 @@ export function HomeOverview({
     onPair: commands.pairGateway,
   });
 
+  const recentEntries = useHomeRecentEntries({
+    servers: records,
+    hosts: sshRows,
+    selectedServerId: launchController.chosen?.serverId,
+    reachabilityByServer: padReachabilityByServer,
+    activeConnection,
+  });
+
   function openServer(serverId: string, paneId?: string) {
     void commands.openServer(serverId, paneId);
   }
@@ -882,15 +890,14 @@ export function HomeOverview({
                 )
               }
               recent={
-                !loading && !hydrationError ? (
+                !loading && !hydrationError && recentEntries.length > 0 ? (
                   <HomeRecentSessions
                     limit={padLaunch ? 8 : undefined}
                     linkStyle={padLaunch ? PAD_WORK_LINK : undefined}
                     selectedServerId={launchController.chosen?.serverId}
                     servers={records}
                     hosts={sshRows}
-                    reachabilityByServer={padReachabilityByServer}
-                    activeConnection={activeConnection}
+                    available={recentEntries}
                     onOpen={(command) => {
                       void commands.dispatch(command);
                     }}
@@ -908,7 +915,10 @@ export function HomeOverview({
                 ) : undefined
               }
               connections={
-                !loading && !hydrationError && !sshLoading ? (
+                !loading &&
+                !hydrationError &&
+                !sshLoading &&
+                (records.length > 0 || sshRows.length > 0) ? (
                   <HomeConnections
                     servers={records}
                     hosts={sshRows}
