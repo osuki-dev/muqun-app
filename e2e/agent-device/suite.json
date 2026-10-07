@@ -8158,7 +8158,7 @@
       },
       {
         "target": {
-          "text": "Snapshot output for demo-tree-leaf-24."
+          "id": "mermaid-diagram-0-canvas"
         },
         "mode": "visible",
         "timeout": 10000,
