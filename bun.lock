@@ -14,7 +14,7 @@
         "@lingui/react": "^6.9.0",
         "@osuki-dev/react-native-splash": "0.4.0",
         "@osuki-dev/react-native-ssh": "0.3.0",
-        "@osuki-dev/skia-diagrams": "0.1.3",
+        "@osuki-dev/skia-diagrams": "0.1.4",
         "@osuki-dev/ui": "^1.1.0",
         "expo": "~57.0.27",
         "expo-alternate-app-icons": "^8.0.0",
@@ -69,7 +69,7 @@
         "react-native-reanimated": "4.7.1",
         "react-native-safe-area-context": "~5.10.1",
         "react-native-screens": "4.28.0",
-        "react-native-skia": "3.0.5",
+        "react-native-skia": "3.0.8",
         "react-native-svg": "15.15.5",
         "react-native-vision-camera": "^5.2.3",
         "react-native-vision-camera-barcode-scanner": "^5.2.3",
@@ -100,8 +100,8 @@
     "react-native-enriched-markdown",
   ],
   "patchedDependencies": {
+    "react-native-skia@3.0.8": "patches/react-native-skia@3.0.8.patch",
     "react-native-enriched-markdown@1.1.1": "patches/react-native-enriched-markdown@1.1.1.patch",
-    "react-native-skia@3.0.5": "patches/react-native-skia@3.0.5.patch",
   },
   "overrides": {
     "react-native-screens": "4.28.0",
@@ -455,7 +455,7 @@
 
     "@osuki-dev/react-native-ssh": ["@osuki-dev/react-native-ssh@0.3.0", "", { "peerDependencies": { "react": "*", "react-native": "*", "react-native-nitro-modules": "*" } }, "sha512-2dCbyddwoMMYfTkCyjMbREVw8sjFI2gpEOeIojoB+BDzww4YmBalIjiZLh2aD1Uf1Nxk919d2wG+1hcs71yOaQ=="],
 
-    "@osuki-dev/skia-diagrams": ["@osuki-dev/skia-diagrams@0.1.3", "", { "dependencies": { "@dagrejs/dagre": "^3.1.1", "@mermaid-js/parser": "2.0.1", "js-yaml": "5.4.3" }, "peerDependencies": { "react": ">=19", "react-native": ">=0.83", "react-native-gesture-handler": ">=3.3", "react-native-reanimated": ">=4", "react-native-skia": ">=3.0.3" }, "optionalPeers": ["react", "react-native", "react-native-gesture-handler", "react-native-reanimated", "react-native-skia"] }, "sha512-G2Nk0LeRH8nnx+WZL6DFST9H3W0KRpd7WJmW3vX+XlZaBCf+QE8YHBvUnD9j3hPHPiuCE+tqt6ENNZmUEhdFoA=="],
+    "@osuki-dev/skia-diagrams": ["@osuki-dev/skia-diagrams@0.1.4", "", { "dependencies": { "@dagrejs/dagre": "^3.1.1", "@mermaid-js/parser": "2.0.1", "js-yaml": "5.4.3" }, "peerDependencies": { "react": ">=19", "react-native": ">=0.83", "react-native-gesture-handler": ">=3.3", "react-native-reanimated": ">=4", "react-native-skia": ">=3.0.3" }, "optionalPeers": ["react", "react-native", "react-native-gesture-handler", "react-native-reanimated", "react-native-skia"] }, "sha512-9V6OY122NPF61gVsNGg5nnfASLM1dU+2Ah47yb4Gtbl0O66YaA5OVX/ENuM7xVkVlP23hjAh6fHgKbJ09pzX9Q=="],
 
     "@osuki-dev/ui": ["@osuki-dev/ui@1.1.0", "", { "peerDependencies": { "@expo/ui": ">=57.0.4", "expo-font": ">=57.0.0", "expo-image": ">=56.0.0", "expo-router": ">=57.0.4", "lucide-react-native": "^0.487.0 || ^1.0.0", "react": ">=19.2.3", "react-native": ">=0.85.0", "react-native-keyboard-controller": ">=1.21.6", "react-native-reanimated": ">=4.3.1", "react-native-safe-area-context": ">=5.7.0", "react-native-svg": ">=15.15.4" } }, "sha512-CYKS7fAeJAoc14YOpSnUvsUmRp3TIZ4SJuOHYRdmRM7StIt9AF11Q5MFZENpfv73cQ+PIM+QD6dzNHzefNpWnQ=="],
 
@@ -1623,13 +1623,13 @@
 
     "react-native-screens": ["react-native-screens@4.28.0", "", { "dependencies": { "react-freeze": "^1.0.0", "warn-once": "^0.1.0" }, "peerDependencies": { "react": "*", "react-native": "*" } }, "sha512-0/79Z8RCibuaAHti+DJ2Dq0m6UFWh4+p1bH58K3cjiQ7IDWs5kU9tCAj4lXcJMHHonbF2mIE2BeaPSEvOpIiFg=="],
 
-    "react-native-skia": ["react-native-skia@3.0.5", "", { "dependencies": { "canvaskit-wasm": "0.41.0", "react-native-skia-graphite-android": "154.0.1", "react-native-skia-graphite-apple-ios": "154.0.1", "react-native-skia-graphite-apple-macos": "154.0.1", "react-reconciler": "0.31.0" }, "peerDependencies": { "react": ">=19.0", "react-native": ">=0.78", "react-native-reanimated": ">=4.0.0", "react-native-worklets": ">=0.7.0" }, "optionalPeers": ["react-native", "react-native-reanimated", "react-native-worklets"], "bin": { "setup-skia-web": "scripts/setup-canvaskit.js" } }, "sha512-I7WmsQZmf1uopqUjgBlfeOjStg6OKyviqp70wZGel3PBqOXVOoY9FP+ktBGc6PX4YCYQmXvgXXAj1o/nELJu4g=="],
+    "react-native-skia": ["react-native-skia@3.0.8", "", { "dependencies": { "canvaskit-wasm": "0.41.0", "react-native-skia-graphite-android": "154.1.0", "react-native-skia-graphite-apple-ios": "154.1.0", "react-native-skia-graphite-apple-macos": "154.1.0", "react-reconciler": "0.31.0" }, "peerDependencies": { "react": ">=19.0", "react-native": ">=0.78", "react-native-reanimated": ">=4.0.0", "react-native-worklets": ">=0.7.0" }, "optionalPeers": ["react-native", "react-native-reanimated", "react-native-worklets"], "bin": { "setup-skia-web": "scripts/setup-canvaskit.js" } }, "sha512-HMLu4QOHmbNpibj/Rfe1moB7195Qjid9e0up57Rx0V4cxWp29PAv2WNqvtqPxi/SpVqLyb8fCC2hIdh0siapIQ=="],
 
-    "react-native-skia-graphite-android": ["react-native-skia-graphite-android@154.0.1", "", {}, "sha512-22sqPJHe/ljcKBD2Ow7vHPiv+clf9Esz7DzL7X0nn2zQXthRXcjU2UQg0P5rx8jNoAJO7CigMtDYaxxNfTWyAA=="],
+    "react-native-skia-graphite-android": ["react-native-skia-graphite-android@154.1.0", "", {}, "sha512-6J+OWRxUoiFXlhaC3+Cym6luvReH+ohYJA8IJ/IvkW8fUokcDsJvT3lKtASMdACg1TDGKJTHWhUbPMWe8wtZgw=="],
 
-    "react-native-skia-graphite-apple-ios": ["react-native-skia-graphite-apple-ios@154.0.1", "", {}, "sha512-KvPzw0icwyUvuZM1zhnXv2MPrrPIDJRD9bDrgFq65WzcimB0upf3Vkr4wchxulHkHdGHfqdO6qtCQuL0IRx21A=="],
+    "react-native-skia-graphite-apple-ios": ["react-native-skia-graphite-apple-ios@154.1.0", "", {}, "sha512-tyG1LuojhZyqqMeuD3NKiiWWQu3pE5M523u9reGTRMQ8zhxrEFWZU/HFn0cuZAa6JtvQJQFJ1wQtY4PwR0O52A=="],
 
-    "react-native-skia-graphite-apple-macos": ["react-native-skia-graphite-apple-macos@154.0.1", "", {}, "sha512-+B6UtcqXM7jNVn7fB0g2z954nf4kp7DFifkyz8i2b0yprDa051KPl5o/vZG9dnKHR5pFmZAtYLV1dxl0iLTYkA=="],
+    "react-native-skia-graphite-apple-macos": ["react-native-skia-graphite-apple-macos@154.1.0", "", {}, "sha512-pdnOPvSfrmDMXekIS9+LDzNRpCVRtCKpip5t93aWCvBRk3DvDStNJVOcJg9sDi/x/cSdOQce+2BGY5Wymtj8/A=="],
 
     "react-native-svg": ["react-native-svg@15.15.5", "", { "dependencies": { "css-select": "^5.1.0", "css-tree": "^1.1.3" }, "peerDependencies": { "react": "*", "react-native": "*" } }, "sha512-L4go5jA+GWutdJ/JucuN20cjAbMg1HmMtAP+wZ+3JLCf6Jd0bhXQHxciRP/AQm/FlrIEZwkMcHNZP+FXAiic0w=="],
 

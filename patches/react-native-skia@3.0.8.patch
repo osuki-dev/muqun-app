@@ -1,10 +1,9 @@
-react-native-skia 3.0.5 (Android): avoid the optional Vulkan render-to-single-sampled
+react-native-skia 3.0.8 (Android): avoid the optional Vulkan render-to-single-sampled
 path on Adreno, which can crash in vkCreateFramebuffer. Ordinary MSAA remains
 enabled. Remove when the upstream driver/Dawn workaround is available.
 Tracking: https://github.com/wcandillon/react-native-skia/issues/4148
 
 diff --git a/cpp/rnskia/RNDawnUtils.h b/cpp/rnskia/RNDawnUtils.h
-index 553c23853e1c6c86d8fb6b216215bd7bd7a4e94f..e7235ab29441a5520507806ef72b3869d2512416 100644
 --- a/cpp/rnskia/RNDawnUtils.h
 +++ b/cpp/rnskia/RNDawnUtils.h
 @@ -285,7 +285,6 @@ createDawnBackendContext(dawn::native::Instance *instance) {

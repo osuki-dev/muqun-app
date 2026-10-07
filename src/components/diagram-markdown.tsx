@@ -22,6 +22,8 @@ export function DiagramMarkdown(props: ComponentProps<typeof EnrichedMarkdownTex
         part.source !== undefined ? (
           <Diagram
             active={active}
+            expandControl="on-tap"
+            fitToViewport
             key={part.start}
             source={part.source}
             testID={`mermaid-diagram-${part.start}`}
