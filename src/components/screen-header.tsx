@@ -20,7 +20,9 @@ import {
 import { NAV_HEADER_TOP_GAP } from '@/constants/nav-header';
 
 /** How far past the pills the fade reaches before it is fully transparent. */
-const FADE_HEIGHT = 96;
+// Pushed screens reserve an 8-point gap after the controls. Keep the fade in
+// that gap so stationary headings and rows retain their full contrast.
+const FADE_HEIGHT = 8;
 
 /**
  * The nav header for pushed screens (Settings, etc.).

@@ -816,6 +816,7 @@ describe('native end-to-end gate', () => {
         'settings-guide',
         'settings-font',
         'settings-home-layout',
+        'settings-sheets',
       ],
       terminal: [
         'terminal-interactions',
@@ -983,7 +984,15 @@ describe('native end-to-end gate', () => {
       await rm(directory, { recursive: true, force: true });
     }
   });
-  test('catalogue Back ignores an exposed underlying navigation button', async () => {
+  test.each([
+    'theme-browse-list',
+    'settings-servers-sheet',
+    'settings-appearance-sheet',
+    'settings-terminal-sheet',
+    'settings-alerts-sheet',
+    'settings-storage-sheet',
+    'settings-about-sheet',
+  ])('%s Back ignores an exposed underlying navigation button', async (identifier) => {
     const directory = await mkdtemp(path.join(tmpdir(), 'muqun-e2e-catalogue-'));
     try {
       await writeFile(path.join(directory, 'dismiss.ad'), '# section close\nback --system\n');
@@ -997,7 +1006,7 @@ describe('native end-to-end gate', () => {
           if (args[0] === 'snapshot')
             return {
               nodes: [
-                { ...node, identifier: 'theme-browse-list', type: 'android.widget.ScrollView' },
+                { ...node, identifier, type: 'android.widget.ScrollView' },
                 { ...node, label: 'Go back', type: 'android.widget.Button' },
               ],
             };
@@ -1005,7 +1014,7 @@ describe('native end-to-end gate', () => {
         },
         {}
       );
-      await runner.runSection('dismiss.ad#close', {});
+      await runner.runSection('dismiss.ad#close', { PLATFORM: 'android' });
       expect(calls.filter((args) => args[0] === 'back')).toEqual([['back', '--system']]);
       expect(calls.some((args) => args[0] === 'press')).toBe(false);
     } finally {

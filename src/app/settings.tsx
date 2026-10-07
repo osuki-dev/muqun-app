@@ -2,23 +2,22 @@ import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { ThemeArtwork, useHasThemeArtwork } from '@/components/theme-artwork';
 import { brandMark } from '@/components/brand-mark';
-import { useThemeMode, useThemeTokens, useToast } from '@osuki-dev/ui';
+import { useThemeMode, useThemeTokens } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
 import * as Application from 'expo-application';
 import Constants from 'expo-constants';
 import { useRouter } from 'expo-router';
 import { Image } from 'expo-image';
 import { StatusBar } from 'expo-status-bar';
-import { openBrowserAsync, WebBrowserPresentationStyle } from 'expo-web-browser';
 import {
-  BookOpen,
-  Code,
+  HardDrive,
+  Info,
+  Palette,
+  Bell,
+  Terminal,
   ChevronRight,
   Server,
-  ExternalLink,
-  MessageSquare,
   Settings2,
-  ShieldCheck,
 } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
@@ -29,15 +28,9 @@ import { Trans, useLingui } from '@lingui/react/macro';
 import { NAV_HEADER_CONTROL_SIZE } from '@/components/nav-header';
 import { ScreenHeader } from '@/components/screen-header';
 import { SettingsRegistration } from '@/components/settings-registration';
-import { SettingsAlerts } from '@/components/settings-alerts';
-import { SettingsAppearance } from '@/components/settings-appearance';
 import { LADDER, SettingsNavRow, SettingsSection } from '@/components/settings-chrome';
 import { SettingsSecurity } from '@/components/settings-security';
-import { SettingsStorage } from '@/components/settings-storage';
-import { SettingsTerminal } from '@/components/settings-terminal';
-import { FEEDBACK_URL, PRIVACY_POLICY_URL, SOURCE_URL, SUPPORT_GUIDE_URL } from '@/constants/links';
 import { NAV_HEADER_TOP_GAP } from '@/constants/nav-header';
-import { feedback } from '@/lib/feedback';
 import { RenderTally, useRenderTally } from '@/lib/render-tally';
 import { responsiveWorkspaceLayout } from '@/lib/responsive-layout';
 
@@ -83,7 +76,6 @@ export default function SettingsScreen() {
   const { resolvedMode } = useThemeMode();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
-  const { showToast } = useToast();
   const isPadLayout = responsiveWorkspaceLayout(width).mode === 'pad';
   // The hugging plate `SettingsSection` already gives its instrument labels,
   // for the two bare strings at the end of the page that have no card of their
@@ -101,30 +93,7 @@ export default function SettingsScreen() {
     : null;
   useRenderTally('SettingsScreen');
 
-  /**
-   * Whether the five sections below the fold have been built yet.
-   *
-   * A phone shows SERVERS and the top of APPEARANCE when this page arrives;
-   * TERMINAL, ALERTS, SECURITY, STORAGE and ABOUT are off the bottom of the
-   * screen, and building them on the same frame as the ones the reader can see
-   * costs about a third of the page's mount for nothing they are looking at.
-   * `SECURITY` is the worst of them -- it asks the OS what kind of
-   * authentication this device has the moment it mounts -- with `STORAGE`
-   * behind it, which would otherwise start walking the cache directory on the
-   * frame the push is still animating.
-   *
-   * `requestIdleCallback` rather than a timer, because the beat being waited
-   * for is "the push has stopped asking for frames", not a number of
-   * milliseconds -- and not `InteractionManager.runAfterInteractions`, which
-   * says the same thing and is deprecated in React Native 0.86. The `timeout`
-   * is the guarantee: a device that never goes idle still builds the rest of
-   * the page a quarter of a second in.
-   *
-   * The scroll handler is the escape hatch, because a reader who flicks before
-   * the push has finished is exactly the person this must not keep waiting --
-   * one `setState` on the first scroll event, and the handler is dropped after
-   * it.
-   */
+  // Defer the lower entries and native security check until navigation settles.
   const [deep, setDeep] = useState(false);
   useEffect(() => {
     const handle = requestIdleCallback(() => setDeep(true), { timeout: 250 });
@@ -133,51 +102,6 @@ export default function SettingsScreen() {
 
   const version = Constants.expoConfig?.version ?? Application.nativeApplicationVersion ?? '1.1.0';
   const build = Application.nativeBuildVersion;
-
-  /**
-   * The manual, and the one row on this page that can fail in the reader's hand.
-   *
-   * The three rows under it open with the same call and do not guard it, which
-   * is a gap rather than a precedent -- but this is the row a reader reaches
-   * *because* something is already not working, and a rejected promise on that
-   * row is a tap that does nothing and says nothing. The toast is the app's
-   * existing one; it never throws, and the row stays where it was.
-   */
-  async function openGuide() {
-    await feedback('selection');
-    try {
-      await openBrowserAsync(SUPPORT_GUIDE_URL, {
-        presentationStyle: WebBrowserPresentationStyle.AUTOMATIC,
-      });
-    } catch {
-      showToast({
-        variant: 'warning',
-        title: t`Could not open the guide`,
-        message: t`No app on this phone opens web pages. The guide is at muqun.dev/support.`,
-      });
-    }
-  }
-
-  async function openPrivacyPolicy() {
-    await feedback('selection');
-    await openBrowserAsync(PRIVACY_POLICY_URL, {
-      presentationStyle: WebBrowserPresentationStyle.AUTOMATIC,
-    });
-  }
-
-  async function openFeedback() {
-    await feedback('selection');
-    await openBrowserAsync(FEEDBACK_URL, {
-      presentationStyle: WebBrowserPresentationStyle.AUTOMATIC,
-    });
-  }
-
-  async function openSource() {
-    await feedback('selection');
-    await openBrowserAsync(SOURCE_URL, {
-      presentationStyle: WebBrowserPresentationStyle.AUTOMATIC,
-    });
-  }
 
   return (
     <View style={[styles.page, { backgroundColor: surfaceBackground(theme.colors.background) }]}>
@@ -200,79 +124,70 @@ export default function SettingsScreen() {
               onPress={() => router.push('/settings-servers')}
             />
           </SettingsSection>
-          <SettingsAppearance title={t`Appearance`} />
+          <SettingsSection title={t`Appearance`}>
+            <SettingsNavRow
+              icon={Palette}
+              trailing={ChevronRight}
+              label={t`Appearance`}
+              testID="settings-appearance-row"
+              onPress={() => router.push('/settings-appearance')}
+            />
+          </SettingsSection>
 
           {/* Everything below here is off the bottom of a phone when the page
               opens, so it is built on the frame after the push finishes rather
               than on the frame the reader is waiting for. See `deep`. */}
           {deep ? (
             <>
-              {/* Appearance keeps its segmented controls at their intended
-                  width. The independent sections below can share rows on Pad;
-                  their source order stays the compact reading order. */}
+              {/* The remaining groups share columns on tablets. */}
               <View
                 testID="settings-responsive-grid"
                 style={[styles.deepSections, isPadLayout && styles.deepSectionsPad]}>
                 <View style={[styles.deepSection, isPadLayout && styles.deepSectionPad]}>
-                  <SettingsTerminal title={t`Terminal`} />
+                  <SettingsSection title={t`Terminal`}>
+                    <SettingsNavRow
+                      icon={Terminal}
+                      trailing={ChevronRight}
+                      label={t`Terminal`}
+                      testID="settings-terminal-row"
+                      onPress={() => router.push('/settings-terminal')}
+                    />
+                  </SettingsSection>
                 </View>
                 <View style={[styles.deepSection, isPadLayout && styles.deepSectionPad]}>
-                  <SettingsAlerts title={t`Alerts`} />
+                  <SettingsSection title={t`Alerts`}>
+                    <SettingsNavRow
+                      icon={Bell}
+                      trailing={ChevronRight}
+                      label={t`Alerts`}
+                      testID="settings-alerts-row"
+                      onPress={() => router.push('/settings-alerts')}
+                    />
+                  </SettingsSection>
                 </View>
                 <View style={[styles.deepSection, isPadLayout && styles.deepSectionPad]}>
                   <SettingsSecurity title={t`Security`} />
                 </View>
 
-                {/* After the lock and before the app itself. Storage is
-                    housekeeping rather than a setting -- nothing here changes
-                    how Muqun behaves -- so it sits at the end of the sections
-                    that do, next to the version and the privacy policy a
-                    reader is already looking at when they are asking the app
-                    about itself. */}
                 <View style={[styles.deepSection, isPadLayout && styles.deepSectionPad]}>
-                  <SettingsStorage title={t`Storage`} />
+                  <SettingsSection title={t`Storage`}>
+                    <SettingsNavRow
+                      icon={HardDrive}
+                      trailing={ChevronRight}
+                      label={t`Storage`}
+                      testID="settings-storage-row"
+                      onPress={() => router.push('/settings-storage')}
+                    />
+                  </SettingsSection>
                 </View>
-
-                {/* `Feedback and support` used to be a section of its own
-                    directly above this one. Two two-row groups, both of them "the
-                    app itself rather than anything it does", stacked with a
-                    heading between them: one group, in the order a reader needs
-                    them -- tell us something, ask us something, read the policy,
-                    quote the build. */}
                 <View style={[styles.deepSection, isPadLayout && styles.deepSectionPad]}>
                   <SettingsSection title={t`About`}>
-                    {/* First in the group, and above "report a bug" on purpose:
-                        a reader who cannot work something out should meet the
-                        manual before they meet the issue tracker. It carries a
-                        glyph like every other row in this card, so the four
-                        labels keep one left edge. */}
                     <SettingsNavRow
-                      icon={BookOpen}
-                      trailing={ExternalLink}
-                      accessibilityRole="link"
-                      label={t`How to use Muqun`}
-                      detail={t`Guides for pairing, the terminal, agents and themes`}
-                      testID="settings-guide-row"
-                      onPress={() => void openGuide()}
-                    />
-                    <SettingsNavRow
-                      icon={MessageSquare}
-                      trailing={ExternalLink}
-                      label={t`Report a bug or request a feature`}
-                      detail={t`Opens the Muqun issue tracker on GitHub.`}
-                      onPress={() => void openFeedback()}
-                    />
-                    <SettingsNavRow
-                      icon={Code}
-                      trailing={ExternalLink}
-                      label={t`Source code`}
-                      onPress={() => void openSource()}
-                    />
-                    <SettingsNavRow
-                      icon={ShieldCheck}
-                      trailing={ExternalLink}
-                      label={t`Privacy policy`}
-                      onPress={() => void openPrivacyPolicy()}
+                      icon={Info}
+                      trailing={ChevronRight}
+                      label={t`About`}
+                      testID="settings-about-row"
+                      onPress={() => router.push('/settings-about')}
                     />
                   </SettingsSection>
                 </View>

@@ -16,7 +16,7 @@ import {
   LADDER,
   SettingsBlock,
   SettingsChoiceRow,
-  SettingsSection,
+  SettingsCard,
   SettingsSeparator,
 } from '@/components/settings-chrome';
 import { SettingsSegmented } from '@/components/settings-segmented';
@@ -42,8 +42,8 @@ import { useServerReachability } from '@/stores/server-reachability';
 import type { ServerAgentsSnapshot } from '@/lib/server-agents';
 import { settleAfter } from '@/lib/compiler-safe-control-flow';
 
-/** Server management is mounted only when its dedicated settings page opens. */
-export function SettingsServers({ title }: { title: string }) {
+/** Server management is mounted only when its settings sheet opens. */
+export function SettingsServers() {
   // `t` from the hook, not the global `t` from `@lingui/core/macro` -- see the
   // note at the top of the settings screen for why.
   const { t } = useLingui();
@@ -117,7 +117,7 @@ export function SettingsServers({ title }: { title: string }) {
   }
 
   return (
-    <SettingsSection title={title}>
+    <SettingsCard flush>
       {hydrationError ? (
         <GatewayStorageError busy={loading} onRetry={retryHydration} />
       ) : loading ? (
@@ -217,7 +217,7 @@ export function SettingsServers({ title }: { title: string }) {
           onChange={(value) => void update({ serverCardPanes: value as ServerCardPanes })}
         />
       </SettingsBlock>
-    </SettingsSection>
+    </SettingsCard>
   );
 }
 
