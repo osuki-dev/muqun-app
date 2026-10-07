@@ -42,41 +42,7 @@ import { useServerReachability } from '@/stores/server-reachability';
 import type { ServerAgentsSnapshot } from '@/lib/server-agents';
 import { settleAfter } from '@/lib/compiler-safe-control-flow';
 
-/**
- * The full account of every paired server, and the one preference about how
- * they are drawn elsewhere. First on the settings page, because it is the
- * subject the app is about: a reader who opens Settings is far more often
- * asking "which machine am I on, and what is its address" than "what colour is
- * this".
- *
- * The home screen deliberately says less: a card there carries a name, a light
- * and the agents that were running, and it prints an address only when a second
- * machine answers to the same name (`lib/server-address.ts`). This is where the
- * rest of it lives -- every address, always; which server the app is currently
- * attached to; and the switch, the device list and the unpair for each one.
- *
- * `Panes on server cards` used to be a section of its own, one row long,
- * titled `Home screen`, sitting directly under this list with a comment
- * apologising for it. It is a preference about how *this* list is drawn on the
- * other screen, so it is in here now, under the thing it describes -- and it
- * used to be a plain on/off (`Show agents on server cards`), which answered
- * the wrong question: a card never had a reason to show nothing, only a
- * reason to show a narrower or a wider slice of the same session.
- *
- * Nothing here is a second implementation of anything. Selecting and removing
- * go through `useGatewayRecord`; the status comes from the same reachability
- * store and the same words as the home card's light; the device list is the
- * block that used to sit, untranslated and unattached, under Security.
- *
- * Editing joins them for the same reason: a name, an address and a port are
- * all properties of *this* record, so changing any of them is a write through
- * `useGatewayRecord().editRecord`, not a new code path. It is also why the
- * home card's `...` menu is gone -- rename and unpair used to live there
- * *and* here, two places for the same two actions, agreeing only because
- * nobody had renamed a card in a while. Now there is one place, and it is
- * this one, because a server's whole account -- what it is called, where it
- * lives, whether it should stay paired -- already belongs on this screen.
- */
+/** Server management is mounted only when its dedicated settings page opens. */
 export function SettingsServers({ title }: { title: string }) {
   // `t` from the hook, not the global `t` from `@lingui/core/macro` -- see the
   // note at the top of the settings screen for why.

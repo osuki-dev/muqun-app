@@ -33,7 +33,7 @@ describe('settings responsive grid', () => {
 
   test('preserves the compact reading order', () => {
     const sectionOrder = [
-      '<SettingsServers',
+      '<SettingsSection title={t`Servers`}',
       '<SettingsAppearance',
       '<SettingsTerminal',
       '<SettingsAlerts',

@@ -445,6 +445,7 @@ function RootContent() {
                 <Stack.Screen name="sessions" options={sheetRouteOptions('sessions')} />
                 <Stack.Screen name="artifacts" options={sheetRouteOptions('artifacts')} />
                 <Stack.Screen name="git-diff" options={sheetRouteOptions('git-diff')} />
+                <Stack.Screen name="settings-servers" options={pageOptions} />
                 <Stack.Screen name="settings-theme" options={sheetRouteOptions('settings-theme')} />
                 <Stack.Screen
                   name="settings-theme-browse"

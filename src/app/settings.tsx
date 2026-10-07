@@ -6,12 +6,15 @@ import { useThemeMode, useThemeTokens, useToast } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
 import * as Application from 'expo-application';
 import Constants from 'expo-constants';
+import { useRouter } from 'expo-router';
 import { Image } from 'expo-image';
 import { StatusBar } from 'expo-status-bar';
 import { openBrowserAsync, WebBrowserPresentationStyle } from 'expo-web-browser';
 import {
   BookOpen,
   Code,
+  ChevronRight,
+  Server,
   ExternalLink,
   MessageSquare,
   Settings2,
@@ -30,7 +33,6 @@ import { SettingsAlerts } from '@/components/settings-alerts';
 import { SettingsAppearance } from '@/components/settings-appearance';
 import { LADDER, SettingsNavRow, SettingsSection } from '@/components/settings-chrome';
 import { SettingsSecurity } from '@/components/settings-security';
-import { SettingsServers } from '@/components/settings-servers';
 import { SettingsStorage } from '@/components/settings-storage';
 import { SettingsTerminal } from '@/components/settings-terminal';
 import { FEEDBACK_URL, PRIVACY_POLICY_URL, SOURCE_URL, SUPPORT_GUIDE_URL } from '@/constants/links';
@@ -58,33 +60,9 @@ const SETTINGS_CONTENT_MAX_WIDTH = 760;
  */
 const HEADER_INSET = NAV_HEADER_TOP_GAP + NAV_HEADER_CONTROL_SIZE + 8 + LADDER.gap;
 
-/**
- * Everything the app can be told, in the order a reader asks for it.
- *
- * The order is the whole of the redesign's argument and it is worth stating.
- * The page this replaces was in the order the features landed: appearance,
- * security, alerts, servers, a one-row `Home screen`, terminal, feedback,
- * about. Five theme cards and a nine-language grid -- two decisions made once
- * per install -- occupied the entire first screen, and the paired machines, the
- * only thing on the page that changes week to week, sat below the fold under
- * two sections about switches.
- *
- * Now: the machines first, because that is what the app is about and what a
- * returning reader comes here for. Appearance second rather than last, for one
- * reason -- it holds the language list, and a reader who launched the app in a
- * language they cannot read cannot scroll past six English headings looking for
- * it. Then the two sections about how the app behaves (the terminal, then what
- * it is allowed to do when nobody is watching), then the lock on the front
- * door, then the housekeeping, then the app itself. Nine sections became six:
- * `Home screen` moved inside SERVERS, next to the list it describes, and
- * `Feedback and support` merged into ABOUT, which is where a reader looks for a
- * way to reach a human. STORAGE is the one addition since, and it is last
- * before ABOUT for the same reason ABOUT is last: it is about the app rather
- * than about anything the app does.
- *
- * Nothing was dropped. Every control the old page could reach, this one can.
- */
+/** Settings keeps server management behind a single entry above appearance. */
 export default function SettingsScreen() {
+  const router = useRouter();
   const profile = useAppearanceProfile();
   const surfaceBackground = useSurfaceBackground();
   // Loose text on this page -- the two lines below the last card -- has no card
@@ -213,7 +191,15 @@ export default function SettingsScreen() {
           onScroll={deep ? undefined : () => setDeep(true)}
           scrollEventThrottle={16}
           showsVerticalScrollIndicator={false}>
-          <SettingsServers title={t`Servers`} />
+          <SettingsSection title={t`Servers`}>
+            <SettingsNavRow
+              icon={Server}
+              trailing={ChevronRight}
+              label={t`Servers`}
+              testID="settings-servers-row"
+              onPress={() => router.push('/settings-servers')}
+            />
+          </SettingsSection>
           <SettingsAppearance title={t`Appearance`} />
 
           {/* Everything below here is off the bottom of a phone when the page
@@ -221,8 +207,7 @@ export default function SettingsScreen() {
               than on the frame the reader is waiting for. See `deep`. */}
           {deep ? (
             <>
-              {/* Servers stay full-width because their count is dynamic, and
-                  Appearance keeps its segmented controls at their intended
+              {/* Appearance keeps its segmented controls at their intended
                   width. The independent sections below can share rows on Pad;
                   their source order stays the compact reading order. */}
               <View

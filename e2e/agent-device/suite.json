@@ -6129,6 +6129,14 @@
       },
       {
         "target": {
+          "id": "settings-servers-row"
+        },
+        "mode": "press",
+        "timeout": 8000,
+        "run": "flows/ssh.ad#s1"
+      },
+      {
+        "target": {
           "id": "settings-ssh-row"
         },
         "mode": "press",
