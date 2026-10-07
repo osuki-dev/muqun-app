@@ -53,7 +53,7 @@
     "@lingui/react": "^6.9.0",
     "@osuki-dev/react-native-splash": "0.4.0",
     "@osuki-dev/react-native-ssh": "0.3.0",
-    "@osuki-dev/skia-diagrams": "0.1.2",
+    "@osuki-dev/skia-diagrams": "0.1.3",
     "@osuki-dev/ui": "^1.1.0",
     "expo": "~57.0.27",
     "expo-alternate-app-icons": "^8.0.0",
