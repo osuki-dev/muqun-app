@@ -52,7 +52,8 @@ press "${TARGET}"
 wait stable 400 15000
 
 # section s15
-scroll up --pixels 320
+# Match the downward paging distance when returning through the expanded diff.
+scroll up --pixels 900
 
 # section s16
 is visible "${TARGET}"
