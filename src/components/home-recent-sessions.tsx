@@ -1,12 +1,13 @@
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens } from '@osuki-dev/ui';
-import { ChevronRight } from 'lucide-react-native';
+import { ChevronRight, Search, X } from 'lucide-react-native';
 import { useCallback, useRef, useState } from 'react';
 import { AppState, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 
 import { AgentMark } from '@/components/agent-mark';
+import { FontedTextInput } from '@/components/fonted-text-input';
 import { PressableScale } from '@/components/pressable-scale';
 import { StatusDot } from '@/components/status-dot';
 import { Text } from '@/components/text';
@@ -35,7 +36,6 @@ import {
   homeContinueKind,
   homeContinueTarget,
   shouldShowHomeContinueOverflow,
-  visibleHomeContinueEntries,
   type HomeContinueEntry,
 } from '@/lib/home-continue';
 import { agentSessionStatusWord, agentStatusWord } from '@/i18n/labels';
@@ -48,6 +48,50 @@ import { useHomeRecentsStore } from '@/stores/home-recents';
 import { useGoneAgentSessions } from '@/stores/gone-agent-sessions';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { settleAfter } from '@/lib/compiler-safe-control-flow';
+import { homeProviderTextColor, searchedHomeContinueEntries } from '@/lib/home-continue-search';
+
+export function HomeContinueSearch({
+  query,
+  onChange,
+}: {
+  query: string;
+  onChange: (query: string) => void;
+}) {
+  const { t } = useLingui();
+  const theme = useThemeTokens();
+  const background = useSurfaceBackground();
+  return (
+    <View
+      style={[
+        styles.search,
+        { backgroundColor: background(theme.colors.surface), borderColor: theme.colors.border },
+      ]}>
+      <Search size={16} color={theme.colors.textMuted} />
+      <FontedTextInput
+        testID="home-continue-search"
+        accessibilityLabel={t`Search sessions`}
+        placeholder={t`Search sessions`}
+        placeholderTextColor={theme.colors.textMuted}
+        value={query}
+        onChangeText={onChange}
+        autoCapitalize="none"
+        autoCorrect={false}
+        returnKeyType="search"
+        style={[styles.searchInput, { color: theme.colors.text }]}
+      />
+      {query.length ? (
+        <PressableScale
+          testID="home-continue-search-clear"
+          accessibilityRole="button"
+          accessibilityLabel={t`Clear session search`}
+          onPress={() => onChange('')}
+          style={styles.searchClear}>
+          <X size={16} color={theme.colors.textMuted} />
+        </PressableScale>
+      ) : null}
+    </View>
+  );
+}
 
 /** Keep discovery active even when the empty section is omitted from the layout. */
 export function useHomeRecentEntries({
@@ -168,6 +212,7 @@ export function HomeRecentSessions({
   selectedPaneId,
   selectedAsid,
   onOpen,
+  query = '',
 }: {
   servers: readonly GatewayRecord[];
   hosts: readonly SshHostRecord[];
@@ -182,16 +227,24 @@ export function HomeRecentSessions({
   selectedAsid?: string;
   /** Runs the row's Home command; see `homeContinueCommand`. */
   onOpen: (command: HomeCommand) => void;
+  query?: string;
 }) {
   const { t } = useLingui();
   const theme = useThemeTokens();
   const profile = useAppearanceProfile();
   const background = useSurfaceBackground();
   const [expanded, setExpanded] = useState(false);
-  const visible = visibleHomeContinueEntries(available, expanded);
+  const discovery = useAgents((state) => state.index.servers);
   const collapsedLimit = limit ?? (compact ? 4 : undefined);
-  const displayed =
-    collapsedLimit !== undefined && !expanded ? visible.slice(0, collapsedLimit) : visible;
+  const searching = query.trim().length > 0;
+  const displayed = searchedHomeContinueEntries(
+    available,
+    query,
+    expanded,
+    collapsedLimit,
+    discovery,
+    Object.fromEntries(servers.map((server) => [server.serverId, server.label]))
+  );
   return (
     <View testID="home-recent-sessions" style={styles.root}>
       <View
@@ -227,8 +280,18 @@ export function HomeRecentSessions({
           />
         ))}
       </View>
-      {shouldShowHomeContinueOverflow(available) ||
-      (collapsedLimit !== undefined && available.length > collapsedLimit) ? (
+      {searching && !displayed.length ? (
+        <Text
+          testID="home-continue-no-matches"
+          variant="bodySmall"
+          color={theme.colors.textMuted}
+          style={{ padding: 12 }}>
+          {t`No matching sessions`}
+        </Text>
+      ) : null}
+      {!searching &&
+      (shouldShowHomeContinueOverflow(available) ||
+        (collapsedLimit !== undefined && available.length > collapsedLimit)) ? (
         <PressableScale
           testID="home-recent-sessions-more"
           accessibilityRole="button"
@@ -304,6 +367,7 @@ function RecentSessionRow({
         ? t`Terminal`
         : t`SSH host`;
   const title = entry.title || kind;
+  const providerAt = agentName ? kind.indexOf(agentName) : -1;
   const metadataKind = entry.agentLabel ? `${kind} · ${entry.agentLabel}` : kind;
   const observation = entry.observation;
   const status = observation?.status;
@@ -371,7 +435,38 @@ function RecentSessionRow({
             </Text>
           )}
           <Text variant="caption" color={theme.colors.textMuted} numberOfLines={2}>
-            {metadataKind}
+            {agentKind && providerAt >= 0 ? (
+              <>
+                {kind.slice(0, providerAt)}
+                <Text
+                  variant="caption"
+                  color={homeProviderTextColor(
+                    agentKind,
+                    theme.colors,
+                    selected ? theme.colors.primarySubtle : theme.colors.surface
+                  )}>
+                  {agentName}
+                </Text>
+                {kind.slice(providerAt + agentName.length)}
+              </>
+            ) : (
+              kind
+            )}
+            {entry.agentLabel ? (
+              <>
+                {' '}
+                ·{' '}
+                <Text
+                  variant="caption"
+                  color={homeProviderTextColor(
+                    entry.agentLabel,
+                    theme.colors,
+                    selected ? theme.colors.primarySubtle : theme.colors.surface
+                  )}>
+                  {entry.agentLabel}
+                </Text>
+              </>
+            ) : null}
             {serverLabel ? ` · ${serverLabel}` : ''}
           </Text>
           {cwd && !compact ? (
@@ -404,6 +499,19 @@ function RecentSessionRow({
 }
 
 const styles = StyleSheet.create({
+  search: {
+    width: '100%',
+    minWidth: 0,
+    minHeight: 44,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingLeft: 12,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: 8,
+  },
+  searchInput: { flex: 1, minWidth: 0, fontSize: 14, paddingVertical: 10 },
+  searchClear: { minWidth: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center' },
   root: { minWidth: 0 },
   list: { minWidth: 0, overflow: 'hidden' },
   row: {

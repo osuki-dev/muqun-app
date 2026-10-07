@@ -1031,6 +1031,10 @@ msgstr "컨텍스트를 비우고 새로 시작"
 msgid "Clear line"
 msgstr "줄 지우기"
 
+#: src/components/home-recent-sessions.tsx
+msgid "Clear session search"
+msgstr "세션 검색 지우기"
+
 #: src/i18n/labels.ts
 msgid "Clear terminal"
 msgstr "터미널 지우기"
@@ -3240,6 +3244,10 @@ msgstr "입력 없음"
 msgid "No matching commands. Try another word."
 msgstr "일치하는 명령이 없습니다. 다른 단어로 검색하세요"
 
+#: src/components/home-recent-sessions.tsx
+msgid "No matching sessions"
+msgstr "일치하는 세션이 없습니다"
+
 #. placeholder {0}: searchQuery.trim()
 #: src/components/agent-model-sheet.tsx
 msgid "No models match “{0}”."
@@ -4488,6 +4496,7 @@ msgid "Search models or providers"
 msgstr "모델이나 제공자 검색"
 
 #: src/components/agent-sessions-sheet.tsx
+#: src/components/home-recent-sessions.tsx
 msgid "Search sessions"
 msgstr "세션 검색"
 
@@ -6122,6 +6131,14 @@ msgstr "워크스페이스"
 #: src/components/session-map.tsx
 msgid "Workspaces"
 msgstr "워크스페이스"
+
+#: src/components/changes-sheet.tsx
+msgid "Worktree {name}"
+msgstr "워크트리 {name}"
+
+#: src/components/changes-sheet.tsx
+msgid "Worktree {name}, {directory}"
+msgstr "워크트리 {name}, {directory}"
 
 #: src/components/agent-worktree-sheet.tsx
 msgid "Worktree name"

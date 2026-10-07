@@ -1031,6 +1031,10 @@ msgstr "Xoá ngữ cảnh và bắt đầu lại"
 msgid "Clear line"
 msgstr "Xóa dòng"
 
+#: src/components/home-recent-sessions.tsx
+msgid "Clear session search"
+msgstr "Xóa tìm kiếm phiên"
+
 #: src/i18n/labels.ts
 msgid "Clear terminal"
 msgstr "Xóa màn hình terminal"
@@ -3240,6 +3244,10 @@ msgstr "Không có đầu vào"
 msgid "No matching commands. Try another word."
 msgstr "Không tìm thấy lệnh phù hợp. Thử từ khác"
 
+#: src/components/home-recent-sessions.tsx
+msgid "No matching sessions"
+msgstr "Không có phiên phù hợp"
+
 #. placeholder {0}: searchQuery.trim()
 #: src/components/agent-model-sheet.tsx
 msgid "No models match “{0}”."
@@ -4488,6 +4496,7 @@ msgid "Search models or providers"
 msgstr "Tìm mô hình hoặc nhà cung cấp"
 
 #: src/components/agent-sessions-sheet.tsx
+#: src/components/home-recent-sessions.tsx
 msgid "Search sessions"
 msgstr "Tìm kiếm phiên"
 
@@ -6122,6 +6131,14 @@ msgstr "Không gian làm việc"
 #: src/components/session-map.tsx
 msgid "Workspaces"
 msgstr "Không gian làm việc"
+
+#: src/components/changes-sheet.tsx
+msgid "Worktree {name}"
+msgstr "Worktree tên {name}"
+
+#: src/components/changes-sheet.tsx
+msgid "Worktree {name}, {directory}"
+msgstr "Worktree tên {name}, {directory}"
 
 #: src/components/agent-worktree-sheet.tsx
 msgid "Worktree name"

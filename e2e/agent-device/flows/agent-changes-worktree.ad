@@ -1,0 +1,25 @@
+# Offline agent Changes context, using an isolated managed-worktree fixture.
+# Run after the suite's normal demo bootstrap; no real gateway or session moves.
+
+# section open
+open "muqun://agent-vcs-diff?sessionId=demo-agent-changes&asid=demo-worktree-changes"
+wait stable 400 8000
+
+# section sheet-visible
+is visible "${TARGET}"
+
+# section worktree-context
+is visible "${TARGET}"
+
+# section branch-context
+is visible "${TARGET}"
+
+# section refresh
+press "${TARGET}"
+wait stable 400 8000
+
+# section worktree-after-refresh
+is visible "${TARGET}"
+
+# section close
+back --system

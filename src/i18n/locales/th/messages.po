@@ -1031,6 +1031,10 @@ msgstr "ล้างบริบทแล้วเริ่มใหม่"
 msgid "Clear line"
 msgstr "ล้างบรรทัด"
 
+#: src/components/home-recent-sessions.tsx
+msgid "Clear session search"
+msgstr "ล้างการค้นหาเซสชัน"
+
 #: src/i18n/labels.ts
 msgid "Clear terminal"
 msgstr "ล้างเทอร์มินัล"
@@ -3240,6 +3244,10 @@ msgstr "ไม่มีอินพุต"
 msgid "No matching commands. Try another word."
 msgstr "ไม่มีคำสั่งที่ตรงกัน ลองใช้คำอื่น"
 
+#: src/components/home-recent-sessions.tsx
+msgid "No matching sessions"
+msgstr "ไม่มีเซสชันที่ตรงกัน"
+
 #. placeholder {0}: searchQuery.trim()
 #: src/components/agent-model-sheet.tsx
 msgid "No models match “{0}”."
@@ -4488,6 +4496,7 @@ msgid "Search models or providers"
 msgstr "ค้นหาโมเดลหรือผู้ให้บริการ"
 
 #: src/components/agent-sessions-sheet.tsx
+#: src/components/home-recent-sessions.tsx
 msgid "Search sessions"
 msgstr "ค้นหาเซสชัน"
 
@@ -6122,6 +6131,14 @@ msgstr "พื้นที่ทำงาน"
 #: src/components/session-map.tsx
 msgid "Workspaces"
 msgstr "พื้นที่ทำงาน"
+
+#: src/components/changes-sheet.tsx
+msgid "Worktree {name}"
+msgstr "เวิร์กทรี {name}"
+
+#: src/components/changes-sheet.tsx
+msgid "Worktree {name}, {directory}"
+msgstr "เวิร์กทรี {name}, {directory}"
 
 #: src/components/agent-worktree-sheet.tsx
 msgid "Worktree name"

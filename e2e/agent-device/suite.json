@@ -2,6 +2,18 @@
   "version": 1,
   "flows": [
     {
+      "name": "home-continue-search",
+      "program": "flows/home-continue-search",
+      "tags": ["full", "workspace", "agents"],
+      "platforms": ["ios", "android"]
+    },
+    {
+      "name": "agent-changes-worktree",
+      "program": "flows/agent-changes-worktree",
+      "tags": ["full", "agents", "files"],
+      "platforms": ["ios", "android"]
+    },
+    {
       "name": "mermaid-output",
       "program": "flows/mermaid-output",
       "tags": ["full", "agents"],
@@ -214,6 +226,214 @@
     }
   ],
   "programs": {
+    "flows/home-continue-search": [
+      { "include": "subflows/open-demo" },
+      { "run": "flows/home-continue-search.ad#choose-editorial" },
+      {
+        "target": { "id": "settings-home-layout-sheet" },
+        "mode": "visible",
+        "timeout": 15000,
+        "run": "flows/home-continue-search.ad#picker-ready"
+      },
+      {
+        "target": { "id": "settings-selection:(on|off):home-layout-editorial" },
+        "mode": "press",
+        "timeout": 15000,
+        "run": "flows/home-continue-search.ad#select-editorial"
+      },
+      {
+        "target": { "id": "settings-home-layout-sheet" },
+        "mode": "hidden",
+        "timeout": 15000,
+        "run": "flows/home-continue-search.ad#picker-closed"
+      },
+      { "run": "flows/home-continue-search.ad#fifteen" },
+      {
+        "target": { "id": "home-editorial" },
+        "mode": "visible",
+        "timeout": 15000,
+        "run": "flows/home-continue-search.ad#assert-visible"
+      },
+      {
+        "target": { "text": "Continue" },
+        "mode": "scroll",
+        "direction": "down",
+        "run": "flows/settings-home-layout.ad#seek-down"
+      },
+      {
+        "target": { "text": "Continue" },
+        "mode": "visible",
+        "run": "flows/home-continue-search.ad#assert-visible"
+      },
+      {
+        "target": { "id": "home-continue-search" },
+        "mode": "hidden",
+        "run": "flows/home-continue-search.ad#assert-hidden"
+      },
+      {
+        "target": { "text": "Sessions \\(15\\)" },
+        "mode": "scroll",
+        "direction": "down",
+        "run": "flows/settings-home-layout.ad#seek-down"
+      },
+      {
+        "target": { "text": "Sessions \\(15\\)" },
+        "mode": "visible",
+        "run": "flows/home-continue-search.ad#assert-visible"
+      },
+      { "run": "flows/home-continue-search.ad#scroll-top" },
+      { "run": "flows/home-continue-search.ad#sixteen" },
+      {
+        "target": { "id": "home-editorial" },
+        "mode": "visible",
+        "timeout": 15000,
+        "run": "flows/home-continue-search.ad#assert-visible"
+      },
+      {
+        "target": { "id": "home-continue-search" },
+        "mode": "scroll",
+        "direction": "down",
+        "run": "flows/settings-home-layout.ad#seek-down"
+      },
+      {
+        "target": { "id": "home-continue-search" },
+        "mode": "visible",
+        "run": "flows/home-continue-search.ad#assert-visible"
+      },
+      {
+        "target": { "text": "Continue" },
+        "mode": "hidden",
+        "run": "flows/home-continue-search.ad#assert-hidden"
+      },
+      {
+        "target": { "text": "Demo search hidden leaf" },
+        "mode": "hidden",
+        "run": "flows/home-continue-search.ad#assert-hidden"
+      },
+      { "run": "flows/home-continue-search.ad#hidden-match" },
+      {
+        "target": { "text": "Demo search hidden leaf" },
+        "mode": "visible",
+        "run": "flows/home-continue-search.ad#assert-visible"
+      },
+      {
+        "target": { "text": "Demo search leaf 1" },
+        "mode": "hidden",
+        "run": "flows/home-continue-search.ad#assert-hidden"
+      },
+      { "run": "flows/home-continue-search.ad#no-match" },
+      {
+        "target": { "id": "home-continue-no-matches" },
+        "mode": "visible",
+        "run": "flows/home-continue-search.ad#assert-visible"
+      },
+      { "run": "flows/home-continue-search.ad#clear" },
+      {
+        "target": { "id": "home-continue-no-matches" },
+        "mode": "hidden",
+        "run": "flows/home-continue-search.ad#assert-hidden"
+      },
+      {
+        "target": { "text": "Demo search leaf 1" },
+        "mode": "visible",
+        "run": "flows/home-continue-search.ad#assert-visible"
+      },
+      {
+        "target": { "text": "Demo search hidden leaf" },
+        "mode": "hidden",
+        "run": "flows/home-continue-search.ad#assert-hidden"
+      },
+      { "run": "flows/home-continue-search.ad#whitespace" },
+      {
+        "target": { "text": "Demo search leaf 1" },
+        "mode": "visible",
+        "run": "flows/home-continue-search.ad#assert-visible"
+      },
+      {
+        "target": { "text": "Demo search hidden leaf" },
+        "mode": "hidden",
+        "run": "flows/home-continue-search.ad#assert-hidden"
+      },
+      { "run": "flows/home-continue-search.ad#provider" },
+      {
+        "target": { "text": "Demo search leaf 1" },
+        "mode": "visible",
+        "run": "flows/home-continue-search.ad#assert-visible"
+      },
+      { "run": "flows/home-continue-search.ad#directory" },
+      {
+        "target": { "text": "Demo search leaf 1" },
+        "mode": "visible",
+        "run": "flows/home-continue-search.ad#assert-visible"
+      },
+      { "run": "flows/home-continue-search.ad#hidden-match" },
+      {
+        "target": { "text": "Demo search hidden leaf.*" },
+        "mode": "press",
+        "run": "flows/home-continue-search.ad#open-hidden-match"
+      },
+      {
+        "target": { "id": "agent-subagent-detail-transcript" },
+        "mode": "visible",
+        "timeout": 10000,
+        "run": "flows/home-continue-search.ad#assert-visible"
+      },
+      { "run": "flows/home-continue-search.ad#restore-layout" },
+      {
+        "target": { "id": "settings-home-layout-sheet" },
+        "mode": "visible",
+        "timeout": 15000,
+        "run": "flows/home-continue-search.ad#picker-ready"
+      },
+      {
+        "target": { "id": "settings-selection:(on|off):home-layout-classic" },
+        "mode": "press",
+        "timeout": 15000,
+        "run": "flows/home-continue-search.ad#select-classic"
+      },
+      {
+        "target": { "id": "settings-home-layout-sheet" },
+        "mode": "hidden",
+        "timeout": 15000,
+        "run": "flows/home-continue-search.ad#picker-closed"
+      },
+      { "run": "flows/home-continue-search.ad#cleanup" }
+    ],
+    "flows/agent-changes-worktree": [
+      { "include": "subflows/open-demo" },
+      { "run": "flows/agent-changes-worktree.ad#open" },
+      {
+        "target": { "id": "agent-vcs-diff-sheet" },
+        "mode": "visible",
+        "timeout": 10000,
+        "run": "flows/agent-changes-worktree.ad#sheet-visible"
+      },
+      {
+        "target": { "text": "Worktree quiet-river, /demo/worktrees/quiet-river" },
+        "mode": "visible",
+        "timeout": 10000,
+        "run": "flows/agent-changes-worktree.ad#worktree-context"
+      },
+      {
+        "target": { "text": "Branch feat/diff-context" },
+        "mode": "visible",
+        "timeout": 10000,
+        "run": "flows/agent-changes-worktree.ad#branch-context"
+      },
+      {
+        "target": { "id": "changes-refresh" },
+        "mode": "press",
+        "timeout": 10000,
+        "run": "flows/agent-changes-worktree.ad#refresh"
+      },
+      {
+        "target": { "text": "Worktree quiet-river, /demo/worktrees/quiet-river" },
+        "mode": "visible",
+        "timeout": 10000,
+        "run": "flows/agent-changes-worktree.ad#worktree-after-refresh"
+      },
+      { "run": "flows/agent-changes-worktree.ad#close" }
+    ],
     "flows/mermaid-output": [
       {
         "include": "subflows/open-demo"

@@ -1031,6 +1031,10 @@ msgstr "Очистить контекст и начать заново"
 msgid "Clear line"
 msgstr "Очистить строку"
 
+#: src/components/home-recent-sessions.tsx
+msgid "Clear session search"
+msgstr "Очистить поиск сессий"
+
 #: src/i18n/labels.ts
 msgid "Clear terminal"
 msgstr "Очистить терминал"
@@ -3240,6 +3244,10 @@ msgstr "Нет входных данных"
 msgid "No matching commands. Try another word."
 msgstr "Команды не найдены. Попробуйте другое слово"
 
+#: src/components/home-recent-sessions.tsx
+msgid "No matching sessions"
+msgstr "Нет подходящих сессий"
+
 #. placeholder {0}: searchQuery.trim()
 #: src/components/agent-model-sheet.tsx
 msgid "No models match “{0}”."
@@ -4488,6 +4496,7 @@ msgid "Search models or providers"
 msgstr "Поиск моделей или провайдеров"
 
 #: src/components/agent-sessions-sheet.tsx
+#: src/components/home-recent-sessions.tsx
 msgid "Search sessions"
 msgstr "Поиск сессий"
 
@@ -6122,6 +6131,14 @@ msgstr "Пространство"
 #: src/components/session-map.tsx
 msgid "Workspaces"
 msgstr "Пространства"
+
+#: src/components/changes-sheet.tsx
+msgid "Worktree {name}"
+msgstr "Worktree с именем {name}"
+
+#: src/components/changes-sheet.tsx
+msgid "Worktree {name}, {directory}"
+msgstr "Worktree с именем {name}, {directory}"
 
 #: src/components/agent-worktree-sheet.tsx
 msgid "Worktree name"

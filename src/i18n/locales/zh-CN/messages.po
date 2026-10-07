@@ -1031,6 +1031,10 @@ msgstr "清空上下文，重新开始"
 msgid "Clear line"
 msgstr "清除当前行"
 
+#: src/components/home-recent-sessions.tsx
+msgid "Clear session search"
+msgstr "清空会话搜索"
+
 #: src/i18n/labels.ts
 msgid "Clear terminal"
 msgstr "清屏"
@@ -3240,6 +3244,10 @@ msgstr "无输入"
 msgid "No matching commands. Try another word."
 msgstr "没有匹配的命令，换个关键词试试"
 
+#: src/components/home-recent-sessions.tsx
+msgid "No matching sessions"
+msgstr "没有匹配的会话"
+
 #. placeholder {0}: searchQuery.trim()
 #: src/components/agent-model-sheet.tsx
 msgid "No models match “{0}”."
@@ -4488,6 +4496,7 @@ msgid "Search models or providers"
 msgstr "搜索模型或提供方"
 
 #: src/components/agent-sessions-sheet.tsx
+#: src/components/home-recent-sessions.tsx
 msgid "Search sessions"
 msgstr "搜索会话"
 
@@ -6122,6 +6131,14 @@ msgstr "工作区"
 #: src/components/session-map.tsx
 msgid "Workspaces"
 msgstr "工作区"
+
+#: src/components/changes-sheet.tsx
+msgid "Worktree {name}"
+msgstr "工作树 {name}"
+
+#: src/components/changes-sheet.tsx
+msgid "Worktree {name}, {directory}"
+msgstr "工作树 {name}，{directory}"
 
 #: src/components/agent-worktree-sheet.tsx
 msgid "Worktree name"

@@ -4073,7 +4073,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         // The composer is an absolute dock and grows with session chips,
         // controls, approvals and the input row. A fixed 185pt reserve left
         // the last tool/image row underneath it on a tall dock.
-        paddingBottom: Math.max(bottomInset + 185, dockHeight + 16),
+        paddingBottom: Math.max(bottomInset + 185, dockHeight + 16) + 16,
       },
     ],
     [topInset, bottomInset, dockHeight]

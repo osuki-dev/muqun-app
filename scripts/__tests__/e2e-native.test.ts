@@ -826,6 +826,7 @@ describe('native end-to-end gate', () => {
         'soft-keyboard',
       ],
       files: [
+        'agent-changes-worktree',
         'theme-document',
         'file-mentions',
         'attachments-ui',
@@ -834,6 +835,8 @@ describe('native end-to-end gate', () => {
         'git-diff',
       ],
       agents: [
+        'home-continue-search',
+        'agent-changes-worktree',
         'mermaid-output',
         'agent-collaboration',
         'agent-session-tree',
@@ -842,6 +845,7 @@ describe('native end-to-end gate', () => {
         'agent-shortcuts',
       ],
       workspace: [
+        'home-continue-search',
         'agent-session-tree',
         'demo-tour',
         'settings-home-layout',
