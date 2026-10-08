@@ -102,11 +102,6 @@ msgstr "{0, plural, other {และอีก # เอเจนต์}}"
 msgid "{0, plural, one {Question} other {Questions}}"
 msgstr "{0, plural, other {คำถาม}}"
 
-#. placeholder {0}: formatCacheSize(totals.other)
-#: src/components/settings-storage.tsx
-msgid "{0} · Managed by the system. Clear cache leaves it alone."
-msgstr "{0} · จัดการโดยระบบ การล้างแคชจะไม่กระทบส่วนนี้"
-
 #. placeholder {0}: device.name
 #: src/components/settings-servers.tsx
 msgid "{0} (this device)"
@@ -3848,10 +3843,6 @@ msgstr "เปิดเทอร์มินัลของเอเจนต์
 #: src/components/settings-servers.tsx
 msgid "Options for {0}"
 msgstr "ตัวเลือกสำหรับ {0}"
-
-#: src/components/settings-storage.tsx
-msgid "Other"
-msgstr "อื่นๆ"
 
 #: src/components/agent-context-sheet.tsx
 #: src/components/tool-call-code-rows.tsx

@@ -102,11 +102,6 @@ msgstr "{0, plural, other {另有 # 个代理}}"
 msgid "{0, plural, one {Question} other {Questions}}"
 msgstr "{0, plural, other {问题}}"
 
-#. placeholder {0}: formatCacheSize(totals.other)
-#: src/components/settings-storage.tsx
-msgid "{0} · Managed by the system. Clear cache leaves it alone."
-msgstr "{0} · 由系统管理，清除缓存不会动它"
-
 #. placeholder {0}: device.name
 #: src/components/settings-servers.tsx
 msgid "{0} (this device)"
@@ -3848,10 +3843,6 @@ msgstr "打开这个代理的终端"
 #: src/components/settings-servers.tsx
 msgid "Options for {0}"
 msgstr "{0} 的选项"
-
-#: src/components/settings-storage.tsx
-msgid "Other"
-msgstr "其他"
 
 #: src/components/agent-context-sheet.tsx
 #: src/components/tool-call-code-rows.tsx

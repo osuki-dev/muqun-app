@@ -306,6 +306,7 @@ wait stable 300 5000
 
 # section storage-visible
 is visible "${TARGET}"
+is hidden "id=\"settings-storage-other-row\""
 
 # section storage-anchor
 # Where the two taps below are made from, and never the position the flick

@@ -1,3 +1,4 @@
+import { cleanupPreviousMediaCache } from '@/lib/cache-cleanup';
 import { AppDiagramProvider } from '@/components/app-diagram-provider';
 import { RouteScene } from '@/components/route-scene';
 import {
@@ -170,6 +171,10 @@ export default function RootLayout() {
    * at either way, and it holds for longer than the registration takes.
    */
   const fontsReady = useUserFontsReady();
+
+  useEffect(() => {
+    void cleanupPreviousMediaCache();
+  }, []);
 
   // The system bar overlays the app under edge-to-edge (targetSdk 36) and its
   // strip swallows every touch in it -- on a three-button device that strip sat

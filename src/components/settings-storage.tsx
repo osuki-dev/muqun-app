@@ -1,14 +1,11 @@
+import { CACHE_PROCESS_STARTED_AT } from '@/lib/cache-cleanup';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 /**
  * How much room Muqun's cache is taking, and the two buttons that give some of
  * it back.
  *
- * Three rows that only state facts, and two that do something. The three are
- * split the way a reader's question is: pictures, copies the app made to hand a
- * file to something else, and everything else -- which on both platforms is
- * mostly the HTTP engine's own store, held open by the engine and not Muqun's
- * to delete. Saying so in the row is cheaper than fielding "why is there still
- * 40 MB after I cleared it".
+ * Only reclaimable categories are shown: images and temporary copies. Engine
+ * caches and persistent user data are not presented as a cleaning action.
  *
  * The clear is an allow-list, decided in `lib/cache-storage.ts` and not here.
  * Nothing on this screen may reach outside `Paths.cache`: the paired gateways,
@@ -39,7 +36,7 @@ import { Text } from '@/components/text';
 import { Image } from 'expo-image';
 import { Directory, Paths } from 'expo-file-system';
 import { useFocusEffect } from 'expo-router';
-import { ChevronRight, FileClock, HardDrive, Images, Palette, Trash2 } from 'lucide-react-native';
+import { ChevronRight, FileClock, Images, Palette, Trash2 } from 'lucide-react-native';
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated from 'react-native-reanimated';
@@ -151,11 +148,12 @@ async function deletePlannedCacheEntries(): Promise<boolean> {
   let failed = false;
   try {
     const { root, entries } = await readCacheRoot();
-    for (const entry of planCacheDeletions(entries, root)) {
+    const items = new Map(Paths.cache.list().map((item) => [item.uri, item]));
+    for (const entry of planCacheDeletions(entries, root, CACHE_PROCESS_STARTED_AT)) {
       await whenIdle(100);
       try {
-        const directory = new Directory(entry.uri);
-        if (directory.exists) directory.delete();
+        const item = items.get(entry.uri);
+        if (item?.exists) item.delete();
       } catch {
         failed = true;
       }
@@ -366,9 +364,6 @@ export function SettingsStorage() {
   const calculating = t`Calculating…`;
   const images = totals ? formatCacheSize(totals.images) : calculating;
   const temporary = totals ? formatCacheSize(totals.temporary) : calculating;
-  const other = totals
-    ? t`${formatCacheSize(totals.other)} · Managed by the system. Clear cache leaves it alone.`
-    : calculating;
   const clearable = totals ? formatCacheSize(clearableCacheBytes(totals)) : calculating;
   const clearDetail = incomplete ? t`Some files could not be removed · ${clearable}` : clearable;
   // The count comes from the library and the bytes from the walk, so this is
@@ -393,12 +388,6 @@ export function SettingsStorage() {
         label={t`Temporary files`}
         detail={temporary}
         testID="settings-storage-temporary-row"
-      />
-      <SettingsInfoRow
-        icon={HardDrive}
-        label={t`Other`}
-        detail={other}
-        testID="settings-storage-other-row"
       />
       <StorageActionTransition mode={armed === 'cache' ? 'confirm' : 'idle'}>
         {armed === 'cache' ? (

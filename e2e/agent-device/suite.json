@@ -5104,22 +5104,6 @@
       },
       {
         "target": {
-          "text": "Other"
-        },
-        "mode": "scroll",
-        "direction": "up",
-        "timeout": 30000,
-        "run": "flows/settings.ad#storage-seek"
-      },
-      {
-        "target": {
-          "text": "Other"
-        },
-        "mode": "visible",
-        "run": "flows/settings.ad#storage-visible"
-      },
-      {
-        "target": {
           "text": "Clear cache, [0-9].*"
         },
         "mode": "scroll",

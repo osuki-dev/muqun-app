@@ -102,11 +102,6 @@ msgstr "{0, plural, other {외 #개 에이전트}}"
 msgid "{0, plural, one {Question} other {Questions}}"
 msgstr "{0, plural, other {질문}}"
 
-#. placeholder {0}: formatCacheSize(totals.other)
-#: src/components/settings-storage.tsx
-msgid "{0} · Managed by the system. Clear cache leaves it alone."
-msgstr "{0} · 시스템이 관리하므로 캐시를 비워도 지워지지 않습니다"
-
 #. placeholder {0}: device.name
 #: src/components/settings-servers.tsx
 msgid "{0} (this device)"
@@ -3848,10 +3843,6 @@ msgstr "이 에이전트의 터미널을 엽니다"
 #: src/components/settings-servers.tsx
 msgid "Options for {0}"
 msgstr "{0} 옵션"
-
-#: src/components/settings-storage.tsx
-msgid "Other"
-msgstr "기타"
 
 #: src/components/agent-context-sheet.tsx
 #: src/components/tool-call-code-rows.tsx
