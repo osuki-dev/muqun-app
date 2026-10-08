@@ -102,11 +102,6 @@ msgstr "{0, plural, other {và # tác tử nữa}}"
 msgid "{0, plural, one {Question} other {Questions}}"
 msgstr "{0, plural, other {Câu hỏi}}"
 
-#. placeholder {0}: formatCacheSize(totals.other)
-#: src/components/settings-storage.tsx
-msgid "{0} · Managed by the system. Clear cache leaves it alone."
-msgstr "{0} · Do hệ thống quản lý, xóa bộ nhớ đệm không đụng tới phần này"
-
 #. placeholder {0}: device.name
 #: src/components/settings-servers.tsx
 msgid "{0} (this device)"
@@ -3848,10 +3843,6 @@ msgstr "Mở terminal của tác tử này"
 #: src/components/settings-servers.tsx
 msgid "Options for {0}"
 msgstr "Tùy chọn cho {0}"
-
-#: src/components/settings-storage.tsx
-msgid "Other"
-msgstr "Khác"
 
 #: src/components/agent-context-sheet.tsx
 #: src/components/tool-call-code-rows.tsx

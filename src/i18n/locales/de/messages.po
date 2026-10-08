@@ -102,11 +102,6 @@ msgstr "{0, plural, one {und # weiterer Agent} other {und # weitere Agents}}"
 msgid "{0, plural, one {Question} other {Questions}}"
 msgstr "{0, plural, one {Frage} other {Fragen}}"
 
-#. placeholder {0}: formatCacheSize(totals.other)
-#: src/components/settings-storage.tsx
-msgid "{0} · Managed by the system. Clear cache leaves it alone."
-msgstr "{0} · Wird vom System verwaltet und beim Leeren des Caches nicht entfernt"
-
 #. placeholder {0}: device.name
 #: src/components/settings-servers.tsx
 msgid "{0} (this device)"
@@ -3848,10 +3843,6 @@ msgstr "Öffnet das Terminal dieses Agenten"
 #: src/components/settings-servers.tsx
 msgid "Options for {0}"
 msgstr "Optionen für {0}"
-
-#: src/components/settings-storage.tsx
-msgid "Other"
-msgstr "Sonstiges"
 
 #: src/components/agent-context-sheet.tsx
 #: src/components/tool-call-code-rows.tsx

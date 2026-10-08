@@ -102,11 +102,6 @@ msgstr "{0, plural, other {ほか # 件のエージェント}}"
 msgid "{0, plural, one {Question} other {Questions}}"
 msgstr "{0, plural, other {質問}}"
 
-#. placeholder {0}: formatCacheSize(totals.other)
-#: src/components/settings-storage.tsx
-msgid "{0} · Managed by the system. Clear cache leaves it alone."
-msgstr "{0} · システムが管理しているため、キャッシュを削除しても残ります"
-
 #. placeholder {0}: device.name
 #: src/components/settings-servers.tsx
 msgid "{0} (this device)"
@@ -3848,10 +3843,6 @@ msgstr "このエージェントのターミナルを開きます"
 #: src/components/settings-servers.tsx
 msgid "Options for {0}"
 msgstr "{0} のオプション"
-
-#: src/components/settings-storage.tsx
-msgid "Other"
-msgstr "その他"
 
 #: src/components/agent-context-sheet.tsx
 #: src/components/tool-call-code-rows.tsx
