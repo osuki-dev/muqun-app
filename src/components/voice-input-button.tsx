@@ -11,14 +11,14 @@ import {
   type VoiceServiceConfig,
 } from '@/stores/voice-settings';
 import { SheetHandle } from '@/components/sheet-route-frame';
-import { SheetGround } from '@/components/sheet-ground';
+import { SheetFrame } from '@/components/sheet-ground';
 import { timing } from '@/lib/motion';
 import { useVoiceInput, clearVoiceInput } from '@/stores/voice-input';
 import { useRouter } from 'expo-router';
 import { VoiceRecordingVisual } from '@/components/voice-recording-visual';
-import { Mic, MicOff, Square, X } from 'lucide-react-native';
+import { MicOff, Square, X } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
-import { AppState, Platform, ScrollView, StyleSheet, View } from 'react-native';
+import { AppState, Keyboard, Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { useSharedValue, withTiming } from 'react-native-reanimated';
 import { PressableScale } from '@/components/pressable-scale';
 import { useLatestReader } from '@/hooks/use-render-refs';
@@ -141,15 +141,15 @@ function VoiceRecording({
   );
 }
 
-export function VoiceInputButton({
+export function useVoiceInputTrigger({
+  context,
   onText,
   disabled,
 }: {
+  context?: string;
   onText: (text: string) => void;
   disabled: boolean;
 }) {
-  const { t } = useLingui();
-  const theme = useThemeTokens();
   const router = useRouter();
   const [owner] = useState(() => ({}));
   const enabled = useVoiceSettings((state) => state.config !== null);
@@ -157,23 +157,14 @@ export function VoiceInputButton({
   useEffect(() => {
     if (Platform.OS !== 'web') void loadVoiceSettings();
   }, []);
-  useEffect(() => () => clearVoiceInput(owner), [owner]);
-  if (!voiceRecorderAvailable() || !enabled) return null;
-  return (
-    <PressableScale
-      accessibilityRole="button"
-      accessibilityLabel={t`Voice to text`}
-      disabled={disabled}
-      testID="voice-input-open"
-      onPress={() => {
-        if (useVoiceInput.getState().request) return;
-        useVoiceInput.setState({ request: { owner, deliver: (text) => read()(text) } });
-        router.push('/voice-input');
-      }}
-      style={styles.mic}>
-      <Mic size={19} color={theme.colors.primary} />
-    </PressableScale>
-  );
+  useEffect(() => () => clearVoiceInput(owner), [owner, context]);
+  if (!context || disabled || !voiceRecorderAvailable() || !enabled) return undefined;
+  return () => {
+    if (!useVoiceSettings.getState().config || useVoiceInput.getState().request) return;
+    Keyboard.dismiss();
+    useVoiceInput.setState({ request: { owner, deliver: (text) => read()(text) } });
+    router.push('/voice-input');
+  };
 }
 
 export function VoiceInputPanel({
@@ -196,9 +187,11 @@ export function VoiceInputPanel({
     setAttempt((value) => value + 1);
   };
   return (
-    <>
-      <SheetGround overdrawBottom={40} frosted />
-      <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+    <ScrollView
+      nestedScrollEnabled
+      keyboardShouldPersistTaps="handled"
+      showsVerticalScrollIndicator={false}>
+      <SheetFrame overdrawBottom={40} frosted>
         <View style={styles.content}>
           <SheetHandle />
           <View style={styles.panelHeader}>
@@ -271,8 +264,8 @@ export function VoiceInputPanel({
             />
           )}
         </View>
-      </ScrollView>
-    </>
+      </SheetFrame>
+    </ScrollView>
   );
 }
 

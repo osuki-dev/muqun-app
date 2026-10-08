@@ -17,19 +17,24 @@ back --system
 back --system
 
 # section record
-wait "id=\"voice-input-open\"" 10000
-press "id=\"voice-input-open\""
+wait "id=\"composer-send\"" 10000
+# An empty draft can record, but an ordinary tap must not open the voice sheet.
+press "id=\"composer-send\""
+is hidden "id=\"voice-recording-stop\""
+longpress "id=\"composer-send\"" 700
 wait "label=\"Listening…\"" 15000
 is visible "id=\"voice-recording-stop\""
 screenshot "shots/voice-recording.png"
 press "id=\"voice-recording-cancel\""
 wait "id=\"terminal-composer-input\"" 10000
 is hidden "id=\"voice-recording-stop\""
-# A second recording proves cancel released the first recorder.
-press "id=\"voice-input-open\""
+# A populated draft survives holding Send and cancelling; it is never sent.
+fill "id=\"terminal-composer-input\"" "Keep this voice recording draft"
+longpress "id=\"composer-send\"" 700
 wait "label=\"Listening…\"" 15000
 press "id=\"voice-recording-cancel\""
 wait "id=\"terminal-composer-input\"" 10000
+is visible "id=\"terminal-composer-input\" value=\"Keep this voice recording draft\""
 
 # section clear
 wait "id=\"settings-voice-sheet\"" 10000
