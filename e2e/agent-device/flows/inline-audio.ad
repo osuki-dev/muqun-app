@@ -6,6 +6,8 @@ open "muqun://agent-subagent-detail?asid=demo-tree-leaf-22"
 is visible "${TARGET}"
 
 # section playback
+# Split the long transcript into bounded searches without pulling the sheet header.
+scroll up 0.3 --until "text=\"Playback note 20: scroll away from the audio output to stop playback. Returning to it requires pressing Play again.\""
 scroll up 0.3 --until "id=\"inline-audio-output\""
 wait "id=\"inline-audio-output\"" 10000
 wait "id=\"audio-playback-toggle\" label=\"Play audio\"" 10000
@@ -13,8 +15,10 @@ press "id=\"audio-playback-toggle\" label=\"Play audio\""
 wait "id=\"audio-playback-toggle\" label=\"Pause audio\"" 10000
 screenshot "shots/inline-audio-playing.png"
 # Rows can remain buffered after scrolling. They must still release playback.
+scroll down 0.3 --until "text=\"Playback note 20: scroll away from the audio output to stop playback. Returning to it requires pressing Play again.\""
 scroll down 0.3 --until "text=\"Playback note 40: scroll away from the audio output to stop playback. Returning to it requires pressing Play again.\""
 is hidden "id=\"audio-playback-toggle\" label=\"Pause audio\""
+scroll up 0.3 --until "text=\"Playback note 20: scroll away from the audio output to stop playback. Returning to it requires pressing Play again.\""
 scroll up 0.3 --until "id=\"inline-audio-output\""
 wait "id=\"audio-playback-toggle\" label=\"Play audio\"" 10000
 is hidden "id=\"audio-playback-toggle\" label=\"Pause audio\""
