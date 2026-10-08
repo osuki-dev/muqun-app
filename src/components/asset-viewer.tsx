@@ -5,7 +5,7 @@ import { Text } from '@/components/text';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { Button } from '@/components/themed-button';
 import { Skeleton } from '@/components/themed-skeleton';
-import { Check, Copy, X } from 'lucide-react-native';
+import { Check, Copy, Download, X } from 'lucide-react-native';
 import { EnrichedMarkdownText } from 'react-native-enriched-markdown';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -24,7 +24,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useMarkdownFonts } from '@/hooks/use-user-fonts';
 import { createMarkdownStyle, markdownImageStyle } from '@/lib/markdown-style';
 import { ImagePreviewModal } from '@/components/image-preview-modal';
+import { VideoAssetPreview } from '@/components/video-asset-preview';
 import { AudioAssetPreview } from '@/components/audio-asset-preview';
+import { useFileActions } from '@/hooks/use-file-actions';
+import { saveSessionAsset } from '@/lib/save-file';
 import { SheetFrame } from '@/components/sheet-ground';
 import { PressableScale } from '@/components/pressable-scale';
 import { formatAssetSize } from '@/lib/asset-display';
@@ -179,6 +182,7 @@ const COPIED_FEEDBACK_MS = 1_600;
 /** Everything that is not an image: a document, some text, or a file we can only describe. */
 function AssetSheet({ asset, onClose }: { asset: SessionAsset; onClose: () => void }) {
   const surfaceBackground = useSurfaceBackground();
+  const fileActions = useFileActions(asset.name, () => saveSessionAsset(asset));
   // `t` from the hook, not the global `t` from `@lingui/core/macro`.
   //
   // React Compiler is enabled, and it will memoize a global `t` call whose
@@ -424,6 +428,15 @@ function AssetSheet({ asset, onClose }: { asset: SessionAsset; onClose: () => vo
                   caption={subtitle}
                   trailing={
                     <View style={styles.headerControls}>
+                      <PressableScale
+                        accessibilityLabel={t`Save file`}
+                        onPress={fileActions.show}
+                        style={[
+                          styles.close,
+                          { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
+                        ]}>
+                        <Download size={18} color={theme.colors.text} />
+                      </PressableScale>
                       {content ? (
                         <PressableScale
                           accessibilityLabel={t`Copy`}
@@ -454,6 +467,7 @@ function AssetSheet({ asset, onClose }: { asset: SessionAsset; onClose: () => vo
               </View>
             </View>
 
+            {fileActions.menu}
             {pack ? (
               <ScrollView contentContainerStyle={styles.themePreview}>
                 <CustomThemeLibrary
@@ -630,6 +644,7 @@ function AssetBody({
   // short fade -- which is what makes a document read as having arrived rather
   // than as having replaced something.
   if (presentation === 'audio') return <AudioAssetPreview asset={asset} />;
+  if (presentation === 'video') return <VideoAssetPreview asset={asset} />;
   if (tooLarge) {
     // The one refusal left, and the only one that says a number. It is reached
     // before a byte is read, so what it offers is the way to the file rather

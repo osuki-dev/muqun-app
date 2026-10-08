@@ -1,4 +1,4 @@
-# A tool returns actual WAV bytes into a conversation, using the live renderer.
+# An assistant returns a local WAV link into a conversation, using the live renderer.
 # section open-output
 open "muqun://agent-subagent-detail?asid=demo-tree-leaf-22"
 

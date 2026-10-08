@@ -13,7 +13,11 @@ export class AudioPlaybackError extends Error {
 
 export interface AudioPlaybackRuntime {
   prepare(signal: AbortSignal): Promise<void>;
-  start(onProgress: (position: number, duration: number) => void, onEnd: () => void): Promise<void>;
+  start(
+    onProgress: (position: number, duration: number) => void,
+    onEnd: () => void,
+    onError: (error: Error) => void
+  ): Promise<void>;
   pause(): Promise<void>;
   resume(): Promise<void>;
   seek(position: number): Promise<void>;
@@ -91,6 +95,11 @@ export class AudioPlaybackSession {
           },
           () => {
             if (!this.closed) this.update({ phase: 'ended', position: this.state.duration });
+          },
+          (error) => {
+            void this.enqueue(async () => {
+              throw error;
+            });
           }
         );
       }

@@ -1,6 +1,8 @@
 import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens } from '@osuki-dev/ui';
-import { Headphones, Pause, Play, RotateCcw } from 'lucide-react-native';
+import { Download, Headphones, Pause, Play, RotateCcw } from 'lucide-react-native';
+import { useFileActions } from '@/hooks/use-file-actions';
+import { saveSessionAsset } from '@/lib/save-file';
 import { useContext, useEffect, useMemo, useState } from 'react';
 import { AppState, StyleSheet, useWindowDimensions, View } from 'react-native';
 import Animated, {
@@ -139,6 +141,10 @@ function AudioPlayer({
 }: { asset: SessionAsset; onRetry: () => void } & AudioOptions) {
   const { t } = useLingui();
   const theme = useThemeTokens();
+  const fileActions = useFileActions(asset.name, async () => {
+    const resolved = resolve ? await resolve(new AbortController().signal) : asset;
+    await saveSessionAsset(resolved, false);
+  });
   const [state, setState] = useState<AudioPlaybackState>({
     phase: 'idle',
     position: 0,
@@ -238,12 +244,20 @@ function AudioPlayer({
           {asset.name}
         </Text>
         {timeline}
+        {fileActions.menu}
         {error && (
           <Text variant="caption" color={theme.colors.textMuted}>
             {failureText}
           </Text>
         )}
       </View>
+      <PressableScale
+        accessibilityRole="button"
+        accessibilityLabel={t`Save file`}
+        onPress={fileActions.show}
+        style={styles.inlineAction}>
+        <Download size={18} color={theme.colors.textMuted} />
+      </PressableScale>
     </View>
   ) : (
     <View style={styles.player} testID="audio-asset-preview">
@@ -253,6 +267,14 @@ function AudioPlayer({
       <Text variant="label">{t`Audio preview`}</Text>
       {timeline}
       {button}
+      {fileActions.menu}
+      <PressableScale
+        accessibilityRole="button"
+        accessibilityLabel={t`Save file`}
+        onPress={fileActions.show}
+        style={styles.action}>
+        <Download size={18} color={theme.colors.textMuted} />
+      </PressableScale>
       {error && (
         <Text color={theme.colors.textMuted} style={styles.notice}>
           {failureText}

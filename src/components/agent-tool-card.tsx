@@ -1,3 +1,4 @@
+import { InlineVideoFile } from '@/components/video-asset-preview';
 import { InlineAudioFile } from '@/components/audio-asset-preview';
 import { memo, useCallback, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -286,6 +287,15 @@ const ToolFiles = memo(function ToolFiles({
   return (
     <View style={styles.fileRow}>
       {files.map((file) => {
+        if (audioSessionId && file.mime?.startsWith('video/')) {
+          return (
+            <InlineVideoFile
+              key={`${audioSessionId}:${file.uri}`}
+              file={file}
+              asid={audioSessionId}
+            />
+          );
+        }
         if (audioSessionId && file.mime?.startsWith('audio/')) {
           return (
             <InlineAudioFile

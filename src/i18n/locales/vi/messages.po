@@ -917,6 +917,7 @@ msgstr "Cần quyền truy cập camera"
 #: src/components/ssh-host-key-dialog.tsx
 #: src/components/theme-link-import.tsx
 #: src/components/voice-input-button.tsx
+#: src/hooks/use-file-actions.tsx
 #: src/hooks/use-lazygit.ts
 #: src/lib/local-authentication.ts
 msgid "Cancel"
@@ -1670,6 +1671,10 @@ msgstr "Không thể chuyển phiên này"
 msgid "Could not open destination"
 msgstr "Không thể mở đích đến"
 
+#: src/components/inline-file-link.tsx
+msgid "Could not open file"
+msgstr "Không thể mở tệp"
+
 #: src/hooks/use-theme-file-open.ts
 msgid "Could not open that theme"
 msgstr "Không thể mở giao diện đó"
@@ -1710,6 +1715,10 @@ msgstr "Không mở được chủ đề này"
 #: src/components/audio-asset-preview.tsx
 msgid "Could not play this audio file."
 msgstr "Không thể phát tệp âm thanh này"
+
+#: src/components/video-asset-preview.tsx
+msgid "Could not play video. Try another file or retry."
+msgstr "Không thể phát video. Hãy chọn tệp khác hoặc thử lại"
 
 #: src/app/explore.tsx
 msgid "Could not reach that address. Check it and make sure the Gateway is running."
@@ -1787,6 +1796,10 @@ msgstr "Không thể chạy kỹ năng đó"
 #: src/components/settings-servers.tsx
 msgid "Could not save changes"
 msgstr "Không thể lưu thay đổi"
+
+#: src/hooks/use-file-actions.tsx
+msgid "Could not save file"
+msgstr "Không thể lưu tệp"
 
 #: src/components/settings-home-layout-sheet.tsx
 msgid "Could not save Home layout"
@@ -2443,6 +2456,10 @@ msgstr "Thường dùng"
 #: src/app/explore.tsx
 msgid "Front camera. Hold the QR up to the screen"
 msgstr "Camera trước. Giơ mã QR lên trước màn hình"
+
+#: src/components/video-asset-preview.tsx
+msgid "Fullscreen"
+msgstr "Toàn màn hình"
 
 #: src/components/virtual-keyboard.tsx
 msgid "Function keys"
@@ -3626,10 +3643,11 @@ msgid "Open"
 msgstr "Mở"
 
 #. placeholder {0}: asset.name
+#. placeholder {0}: file.name
 #. placeholder {0}: file.name ?? basename(file.uri)
-#. placeholder {0}: part.fallback_text || part.asset_id
 #: src/components/agent-tool-card.tsx
 #: src/components/home-overview.tsx
+#: src/components/inline-file-link.tsx
 #: src/components/pane-chat-blocks.tsx
 #: src/components/session-artifacts.tsx
 msgid "Open {0}"
@@ -3951,6 +3969,10 @@ msgstr "Bản vá quá dài; chỉ hiển thị phần đầu"
 msgid "Path"
 msgstr "Đường dẫn"
 
+#: src/components/video-asset-preview.tsx
+msgid "Pause"
+msgstr "Tạm dừng"
+
 #: src/components/audio-asset-preview.tsx
 msgid "Pause audio"
 msgstr "Tạm dừng âm thanh"
@@ -3975,11 +3997,16 @@ msgstr "Commit đã ghim"
 msgid "Plan"
 msgstr "Kế hoạch"
 
+#: src/components/video-asset-preview.tsx
+msgid "Play"
+msgstr "Phát"
+
 #: src/components/audio-asset-preview.tsx
 msgid "Play audio"
 msgstr "Phát âm thanh"
 
 #: src/components/audio-asset-preview.tsx
+#: src/components/video-asset-preview.tsx
 msgid "Playback position"
 msgstr "Vị trí phát"
 
@@ -4562,9 +4589,21 @@ msgstr "Lưu một prompt bạn hay gửi cho tác tử này"
 msgid "Save changes to {0}"
 msgstr "Lưu thay đổi vào {0}"
 
+#: src/components/asset-viewer.tsx
+#: src/components/audio-asset-preview.tsx
+#: src/components/video-asset-preview.tsx
+#: src/hooks/use-file-actions.tsx
+msgid "Save file"
+msgstr "Lưu tệp"
+
 #: src/components/ssh-host-form.tsx
 msgid "Save host"
 msgstr "Lưu host"
+
+#: src/components/image-preview-modal.tsx
+#: src/hooks/use-file-actions.tsx
+msgid "Save image"
+msgstr "Lưu ảnh"
 
 #: src/app/commands.tsx
 msgid "Save shortcut"
@@ -5994,8 +6033,11 @@ msgstr "Tin cậy"
 #: src/components/asset-viewer.tsx
 #: src/components/audio-asset-preview.tsx
 #: src/components/changes-sheet.tsx
+#: src/components/inline-file-link.tsx
 #: src/components/theme-browse-sheet.tsx
+#: src/components/video-asset-preview.tsx
 #: src/components/voice-input-button.tsx
+#: src/hooks/use-file-actions.tsx
 msgid "Try again"
 msgstr "Thử lại"
 
@@ -6180,6 +6222,12 @@ msgstr "Bản cập nhật đã sẵn sàng · đang khởi động lại…"
 #: src/components/theme-link-import.tsx
 msgid "Update the app to import public theme links. You can still import a file"
 msgstr "Cập nhật ứng dụng để nhập giao diện từ liên kết công khai. Bạn vẫn có thể nhập từ tệp"
+
+#: src/components/inline-file-link.tsx
+#: src/components/video-asset-preview.tsx
+#: src/hooks/use-file-actions.tsx
+msgid "Update the Gateway to open or save this file."
+msgstr "Cập nhật Gateway để mở hoặc lưu tệp này"
 
 #: src/components/audio-asset-preview.tsx
 msgid "Update the Gateway to preview audio output."

@@ -917,6 +917,7 @@ msgstr "카메라 접근 권한 필요"
 #: src/components/ssh-host-key-dialog.tsx
 #: src/components/theme-link-import.tsx
 #: src/components/voice-input-button.tsx
+#: src/hooks/use-file-actions.tsx
 #: src/hooks/use-lazygit.ts
 #: src/lib/local-authentication.ts
 msgid "Cancel"
@@ -1670,6 +1671,10 @@ msgstr "이 세션을 옮길 수 없습니다"
 msgid "Could not open destination"
 msgstr "대상을 열 수 없습니다"
 
+#: src/components/inline-file-link.tsx
+msgid "Could not open file"
+msgstr "파일을 열 수 없습니다"
+
 #: src/hooks/use-theme-file-open.ts
 msgid "Could not open that theme"
 msgstr "해당 테마를 열 수 없습니다"
@@ -1710,6 +1715,10 @@ msgstr "이 테마를 열 수 없습니다"
 #: src/components/audio-asset-preview.tsx
 msgid "Could not play this audio file."
 msgstr "이 오디오 파일을 재생할 수 없습니다"
+
+#: src/components/video-asset-preview.tsx
+msgid "Could not play video. Try another file or retry."
+msgstr "동영상을 재생할 수 없습니다. 다른 파일을 선택하거나 다시 시도하세요"
 
 #: src/app/explore.tsx
 msgid "Could not reach that address. Check it and make sure the Gateway is running."
@@ -1787,6 +1796,10 @@ msgstr "해당 스킬을 실행할 수 없습니다"
 #: src/components/settings-servers.tsx
 msgid "Could not save changes"
 msgstr "변경 사항을 저장하지 못했습니다"
+
+#: src/hooks/use-file-actions.tsx
+msgid "Could not save file"
+msgstr "파일을 저장할 수 없습니다"
 
 #: src/components/settings-home-layout-sheet.tsx
 msgid "Could not save Home layout"
@@ -2443,6 +2456,10 @@ msgstr "자주 사용"
 #: src/app/explore.tsx
 msgid "Front camera. Hold the QR up to the screen"
 msgstr "전면 카메라입니다. QR 코드를 화면 쪽으로 들어 주세요"
+
+#: src/components/video-asset-preview.tsx
+msgid "Fullscreen"
+msgstr "전체 화면"
 
 #: src/components/virtual-keyboard.tsx
 msgid "Function keys"
@@ -3626,10 +3643,11 @@ msgid "Open"
 msgstr "열기"
 
 #. placeholder {0}: asset.name
+#. placeholder {0}: file.name
 #. placeholder {0}: file.name ?? basename(file.uri)
-#. placeholder {0}: part.fallback_text || part.asset_id
 #: src/components/agent-tool-card.tsx
 #: src/components/home-overview.tsx
+#: src/components/inline-file-link.tsx
 #: src/components/pane-chat-blocks.tsx
 #: src/components/session-artifacts.tsx
 msgid "Open {0}"
@@ -3951,6 +3969,10 @@ msgstr "패치가 너무 길어 앞부분만 표시합니다"
 msgid "Path"
 msgstr "경로"
 
+#: src/components/video-asset-preview.tsx
+msgid "Pause"
+msgstr "일시 정지"
+
 #: src/components/audio-asset-preview.tsx
 msgid "Pause audio"
 msgstr "오디오 일시 정지"
@@ -3975,11 +3997,16 @@ msgstr "고정된 커밋"
 msgid "Plan"
 msgstr "계획 (Plan)"
 
+#: src/components/video-asset-preview.tsx
+msgid "Play"
+msgstr "재생"
+
 #: src/components/audio-asset-preview.tsx
 msgid "Play audio"
 msgstr "오디오 재생"
 
 #: src/components/audio-asset-preview.tsx
+#: src/components/video-asset-preview.tsx
 msgid "Playback position"
 msgstr "재생 위치"
 
@@ -4562,9 +4589,21 @@ msgstr "이 에이전트에 자주 보내는 프롬프트를 저장합니다"
 msgid "Save changes to {0}"
 msgstr "{0}에 대한 변경 사항 저장"
 
+#: src/components/asset-viewer.tsx
+#: src/components/audio-asset-preview.tsx
+#: src/components/video-asset-preview.tsx
+#: src/hooks/use-file-actions.tsx
+msgid "Save file"
+msgstr "파일 저장"
+
 #: src/components/ssh-host-form.tsx
 msgid "Save host"
 msgstr "호스트 저장"
+
+#: src/components/image-preview-modal.tsx
+#: src/hooks/use-file-actions.tsx
+msgid "Save image"
+msgstr "이미지 저장"
 
 #: src/app/commands.tsx
 msgid "Save shortcut"
@@ -5994,8 +6033,11 @@ msgstr "신뢰"
 #: src/components/asset-viewer.tsx
 #: src/components/audio-asset-preview.tsx
 #: src/components/changes-sheet.tsx
+#: src/components/inline-file-link.tsx
 #: src/components/theme-browse-sheet.tsx
+#: src/components/video-asset-preview.tsx
 #: src/components/voice-input-button.tsx
+#: src/hooks/use-file-actions.tsx
 msgid "Try again"
 msgstr "다시 시도"
 
@@ -6180,6 +6222,12 @@ msgstr "업데이트 준비 완료 · 다시 실행 중…"
 #: src/components/theme-link-import.tsx
 msgid "Update the app to import public theme links. You can still import a file"
 msgstr "공개 링크로 테마를 가져오려면 앱을 업데이트하세요. 파일 가져오기는 계속 사용할 수 있습니다"
+
+#: src/components/inline-file-link.tsx
+#: src/components/video-asset-preview.tsx
+#: src/hooks/use-file-actions.tsx
+msgid "Update the Gateway to open or save this file."
+msgstr "이 파일을 열거나 저장하려면 Gateway를 업데이트하세요"
 
 #: src/components/audio-asset-preview.tsx
 msgid "Update the Gateway to preview audio output."

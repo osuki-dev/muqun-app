@@ -20,14 +20,16 @@ function fixture(overrides: Partial<AudioPlaybackRuntime> = {}) {
   const states: AudioPlaybackState[] = [];
   let progress!: (position: number, duration: number) => void;
   let end!: () => void;
+  let fail!: (error: Error) => void;
   const runtime: AudioPlaybackRuntime = {
     async prepare() {
       calls.push('prepare');
     },
-    async start(onProgress, onEnd) {
+    async start(onProgress, onEnd, onError) {
       calls.push('start');
       progress = onProgress;
       end = onEnd;
+      fail = onError;
     },
     async pause() {
       calls.push('pause');
@@ -53,10 +55,21 @@ function fixture(overrides: Partial<AudioPlaybackRuntime> = {}) {
     states,
     progress: (position: number, duration: number) => progress(position, duration),
     end: () => end(),
+    fail: (error: Error) => fail(error),
   };
 }
 
 describe('audio playback ownership', () => {
+  test('a decoder failure after startup releases playback and reports an error', async () => {
+    const h = fixture();
+    await h.session.play();
+    h.fail(new Error('Decoder failed'));
+    await h.session.pause();
+    expect(h.calls.slice(-2)).toEqual(['stop', 'release']);
+    expect(h.states.at(-1)?.phase).toBe('error');
+    await h.session.close();
+    expect(h.calls.filter((call) => call === 'release')).toHaveLength(1);
+  });
   test('does not autoplay; coalesces play, pauses, resumes and clamps seeking', async () => {
     const player = fixture();
     expect(player.calls).toEqual([]);

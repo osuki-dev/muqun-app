@@ -9,7 +9,7 @@
  */
 
 /** What the gateway sniffed the file to be; decides which viewer opens. */
-export type AssetKind = 'image' | 'audio' | 'markdown' | 'text' | 'pdf' | 'binary';
+export type AssetKind = 'image' | 'audio' | 'video' | 'markdown' | 'text' | 'pdf' | 'binary';
 
 export interface SessionAsset {
   id: string;
@@ -28,7 +28,15 @@ export interface SessionAsset {
   previewable: boolean;
 }
 
-const ASSET_KINDS: readonly AssetKind[] = ['image', 'audio', 'markdown', 'text', 'pdf', 'binary'];
+const ASSET_KINDS: readonly AssetKind[] = [
+  'image',
+  'audio',
+  'video',
+  'markdown',
+  'text',
+  'pdf',
+  'binary',
+];
 
 /**
  * The `kind=` value for a listing request, or null for "ask for everything".
@@ -178,6 +186,7 @@ export function assetFromContentHeaders(
 function assetKindFromMime(mime: string): AssetKind {
   if (mime.startsWith('image/')) return 'image';
   if (mime.startsWith('audio/')) return 'audio';
+  if (mime.startsWith('video/')) return 'video';
   if (mime === 'application/pdf') return 'pdf';
   if (mime === 'text/markdown') return 'markdown';
   if (mime.startsWith('text/') || mime === 'application/json') return 'text';

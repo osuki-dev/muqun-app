@@ -917,6 +917,7 @@ msgstr "Kamerazugriff erforderlich"
 #: src/components/ssh-host-key-dialog.tsx
 #: src/components/theme-link-import.tsx
 #: src/components/voice-input-button.tsx
+#: src/hooks/use-file-actions.tsx
 #: src/hooks/use-lazygit.ts
 #: src/lib/local-authentication.ts
 msgid "Cancel"
@@ -1670,6 +1671,10 @@ msgstr "Sitzung konnte nicht verschoben werden"
 msgid "Could not open destination"
 msgstr "Ziel konnte nicht geöffnet werden"
 
+#: src/components/inline-file-link.tsx
+msgid "Could not open file"
+msgstr "Datei konnte nicht geöffnet werden"
+
 #: src/hooks/use-theme-file-open.ts
 msgid "Could not open that theme"
 msgstr "Dieses Theme konnte nicht geöffnet werden"
@@ -1710,6 +1715,10 @@ msgstr "Dieses Theme konnte nicht geöffnet werden"
 #: src/components/audio-asset-preview.tsx
 msgid "Could not play this audio file."
 msgstr "Diese Audiodatei konnte nicht abgespielt werden"
+
+#: src/components/video-asset-preview.tsx
+msgid "Could not play video. Try another file or retry."
+msgstr "Video konnte nicht abgespielt werden. Versuche eine andere Datei oder erneut"
 
 #: src/app/explore.tsx
 msgid "Could not reach that address. Check it and make sure the Gateway is running."
@@ -1787,6 +1796,10 @@ msgstr "Skill konnte nicht ausgeführt werden"
 #: src/components/settings-servers.tsx
 msgid "Could not save changes"
 msgstr "Änderungen konnten nicht gespeichert werden"
+
+#: src/hooks/use-file-actions.tsx
+msgid "Could not save file"
+msgstr "Datei konnte nicht gespeichert werden"
 
 #: src/components/settings-home-layout-sheet.tsx
 msgid "Could not save Home layout"
@@ -2443,6 +2456,10 @@ msgstr "Häufig verwendet"
 #: src/app/explore.tsx
 msgid "Front camera. Hold the QR up to the screen"
 msgstr "Frontkamera. Halte den QR-Code vor den Bildschirm"
+
+#: src/components/video-asset-preview.tsx
+msgid "Fullscreen"
+msgstr "Vollbild"
 
 #: src/components/virtual-keyboard.tsx
 msgid "Function keys"
@@ -3626,10 +3643,11 @@ msgid "Open"
 msgstr "Öffnen"
 
 #. placeholder {0}: asset.name
+#. placeholder {0}: file.name
 #. placeholder {0}: file.name ?? basename(file.uri)
-#. placeholder {0}: part.fallback_text || part.asset_id
 #: src/components/agent-tool-card.tsx
 #: src/components/home-overview.tsx
+#: src/components/inline-file-link.tsx
 #: src/components/pane-chat-blocks.tsx
 #: src/components/session-artifacts.tsx
 msgid "Open {0}"
@@ -3951,6 +3969,10 @@ msgstr "Patch zu lang; der Anfang wird angezeigt"
 msgid "Path"
 msgstr "Pfad"
 
+#: src/components/video-asset-preview.tsx
+msgid "Pause"
+msgstr "Pause"
+
 #: src/components/audio-asset-preview.tsx
 msgid "Pause audio"
 msgstr "Audio pausieren"
@@ -3975,11 +3997,16 @@ msgstr "Festgelegter Commit"
 msgid "Plan"
 msgstr "Planen"
 
+#: src/components/video-asset-preview.tsx
+msgid "Play"
+msgstr "Abspielen"
+
 #: src/components/audio-asset-preview.tsx
 msgid "Play audio"
 msgstr "Audio abspielen"
 
 #: src/components/audio-asset-preview.tsx
+#: src/components/video-asset-preview.tsx
 msgid "Playback position"
 msgstr "Wiedergabeposition"
 
@@ -4562,9 +4589,21 @@ msgstr "Speichere einen Prompt, den du diesem Agent oft schickst"
 msgid "Save changes to {0}"
 msgstr "Änderungen an {0} speichern"
 
+#: src/components/asset-viewer.tsx
+#: src/components/audio-asset-preview.tsx
+#: src/components/video-asset-preview.tsx
+#: src/hooks/use-file-actions.tsx
+msgid "Save file"
+msgstr "Datei speichern"
+
 #: src/components/ssh-host-form.tsx
 msgid "Save host"
 msgstr "Host speichern"
+
+#: src/components/image-preview-modal.tsx
+#: src/hooks/use-file-actions.tsx
+msgid "Save image"
+msgstr "Bild speichern"
 
 #: src/app/commands.tsx
 msgid "Save shortcut"
@@ -5994,8 +6033,11 @@ msgstr "Vertrauen"
 #: src/components/asset-viewer.tsx
 #: src/components/audio-asset-preview.tsx
 #: src/components/changes-sheet.tsx
+#: src/components/inline-file-link.tsx
 #: src/components/theme-browse-sheet.tsx
+#: src/components/video-asset-preview.tsx
 #: src/components/voice-input-button.tsx
+#: src/hooks/use-file-actions.tsx
 msgid "Try again"
 msgstr "Erneut versuchen"
 
@@ -6180,6 +6222,12 @@ msgstr "Update bereit · Neustart…"
 #: src/components/theme-link-import.tsx
 msgid "Update the app to import public theme links. You can still import a file"
 msgstr "Aktualisiere die App, um öffentliche Theme-Links zu importieren. Dateien kannst du weiterhin importieren"
+
+#: src/components/inline-file-link.tsx
+#: src/components/video-asset-preview.tsx
+#: src/hooks/use-file-actions.tsx
+msgid "Update the Gateway to open or save this file."
+msgstr "Aktualisiere das Gateway, um diese Datei zu öffnen oder zu speichern"
 
 #: src/components/audio-asset-preview.tsx
 msgid "Update the Gateway to preview audio output."

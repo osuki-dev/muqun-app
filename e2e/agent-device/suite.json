@@ -2,6 +2,12 @@
   "version": 1,
   "flows": [
     {
+      "name": "inline-video",
+      "program": "flows/inline-video",
+      "tags": ["full", "agents", "files"],
+      "platforms": ["ios", "android"]
+    },
+    {
       "name": "inline-audio",
       "program": "flows/inline-audio",
       "tags": ["full", "agents", "files"],
@@ -275,6 +281,25 @@
     }
   ],
   "programs": {
+    "flows/inline-video": [
+      {
+        "include": "subflows/open-demo"
+      },
+      {
+        "run": "flows/inline-video.ad#open-output"
+      },
+      {
+        "target": {
+          "id": "agent-subagent-detail-transcript"
+        },
+        "mode": "visible",
+        "timeout": 15000,
+        "run": "flows/inline-video.ad#arrived"
+      },
+      {
+        "run": "flows/inline-video.ad#playback"
+      }
+    ],
     "flows/inline-audio": [
       { "include": "subflows/open-demo" },
       { "run": "flows/inline-audio.ad#open-output" },

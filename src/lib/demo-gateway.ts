@@ -1,3 +1,4 @@
+import { DEMO_VIDEO_BASE64 } from '@/lib/demo-video.generated';
 import { i18n } from '@lingui/core';
 import { msg } from '@lingui/core/macro';
 import { Image } from 'react-native';
@@ -221,25 +222,18 @@ export function demoAgentSessionSnapshot(asid: string): AgentSessionSnapshot | n
         message_id: 'audio-result',
         role: 'assistant',
         ordinal: 0,
-        part: {
-          type: 'tool',
-          id: 'demo-audio-call',
-          name: 'audio',
-          input: {},
-          output: '',
-          content: [
-            {
-              type: 'file',
-              uri: 'file:///demo/muqun/out/sample-tone.wav',
-              mime: 'audio/wav',
-              name: 'sample-tone.wav',
-            },
-          ],
-          metadata: {},
-          state: 'completed',
-        },
+        part: { type: 'text', text: '[sample-tone.wav](./out/sample-tone.wav)' },
         seq: 2,
         updated_ms: 2,
+      },
+      {
+        id: 'demo-video-result',
+        message_id: 'video-result',
+        role: 'assistant',
+        ordinal: 0,
+        part: { type: 'text', text: '[sample-video.mp4](./out/sample-video.mp4)' },
+        seq: 3,
+        updated_ms: 3,
       },
       ...Array.from({ length: 40 }, (_, index): TimelineItem => ({
         id: `audio-note-${index}`,
@@ -250,8 +244,8 @@ export function demoAgentSessionSnapshot(asid: string): AgentSessionSnapshot | n
           type: 'text',
           text: `Playback note ${index + 1}: scroll away from the audio output to stop playback. Returning to it requires pressing Play again.`,
         },
-        seq: index + 3,
-        updated_ms: index + 3,
+        seq: index + 4,
+        updated_ms: index + 4,
       })),
     ];
     return { info, timeline, permissions: [], forms: [], inbox: [], seq: timeline.length };
@@ -857,6 +851,17 @@ export function demoSessionAssets(): SessionAsset[] {
   const origin = { session_id: SESSION_ID, pane_id: 'pane-1', workspace_id: 'ws-1' };
   return [
     {
+      id: 'as-demo-video',
+      path: '~/code/muqun/out/sample-video.mp4',
+      name: 'sample-video.mp4',
+      kind: 'video',
+      mime: 'video/mp4',
+      size: 94150,
+      modified_unix_ms: Date.now(),
+      previewable: true,
+      ...origin,
+    },
+    {
       id: 'as-demo-audio',
       path: '~/code/muqun/out/sample-tone.wav',
       name: 'sample-tone.wav',
@@ -1187,6 +1192,8 @@ export function demoAssetText(assetId: string): string {
  */
 /** A quiet eight-second tone sequence for offline playback, with real WAV bytes. */
 export function demoAudioBytes(assetId: string): Uint8Array | null {
+  if (assetId === 'as-demo-video')
+    return Uint8Array.from(atob(DEMO_VIDEO_BASE64), (char) => char.charCodeAt(0));
   if (assetId !== 'as-demo-audio') return null;
   const rate = 16_000;
   const samples = rate * 8;

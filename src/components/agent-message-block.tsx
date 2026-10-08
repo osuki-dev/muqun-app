@@ -41,6 +41,10 @@ import Animated, {
 import { PressableScale } from '@/components/pressable-scale';
 import { AgentActionMenu, type AgentActionMenuItem } from '@/components/agent-action-menu';
 import { BoundedMarkdown } from '@/components/bounded-markdown';
+import { InlineVideoFile } from '@/components/video-asset-preview';
+import { InlineFileLink } from '@/components/inline-file-link';
+import { InlineAudioFile } from '@/components/audio-asset-preview';
+import { splitAudioMarkdown } from '@/lib/audio-markdown';
 import { splitDiagramMarkdown } from '@/lib/diagram-markdown';
 import { EngineFailureText } from '@/components/engine-failure-text';
 import { AgentReasoningBlock } from '@/components/agent-reasoning-block';
@@ -631,12 +635,14 @@ const MessageTextPart = memo(function MessageTextPart({
   text: written,
   markdownStyle,
   imageAssets,
+  audioSessionId,
   onPreviewImage,
 }: {
   text: string;
   markdownStyle: MarkdownStyle;
   /** The gateway's resolution of the images this text embeds by host path. */
   imageAssets?: readonly MessageImageAsset[];
+  audioSessionId?: string;
   onPreviewImage?: (uri: string) => void;
 }) {
   const { t } = useLingui();
@@ -658,17 +664,49 @@ const MessageTextPart = memo(function MessageTextPart({
     [text]
   );
 
-  const renderMarkdown = (key: string, markdown: string) => (
-    <BoundedMarkdown
-      key={key}
-      markdown={markdown}
-      markdownStyle={markdownStyle}
-      containerStyle={styles.markdownContainer}
-      latexMath
-      {...(images.headers ? { imageRequestHeaders: images.headers } : {})}
-      {...(onPreviewImage ? { onImagePress: onPreviewImage } : {})}
-    />
-  );
+  const renderMarkdown = (key: string, markdown: string) => {
+    const parts = audioSessionId ? splitAudioMarkdown(markdown) : [];
+    const renderText = (partKey: string, content: string) => (
+      <BoundedMarkdown
+        key={partKey}
+        markdown={content}
+        markdownStyle={markdownStyle}
+        containerStyle={styles.markdownContainer}
+        latexMath
+        {...(images.headers ? { imageRequestHeaders: images.headers } : {})}
+        {...(onPreviewImage ? { onImagePress: onPreviewImage } : {})}
+      />
+    );
+    if (!audioSessionId || !parts.some((part) => part.kind !== 'markdown'))
+      return renderText(key, markdown);
+    return (
+      <View key={key} style={styles.markdownSegments}>
+        {parts.map((part) =>
+          part.kind === 'video' ? (
+            <InlineVideoFile
+              key={part.start}
+              asid={audioSessionId}
+              file={{ uri: part.uri, name: part.name }}
+            />
+          ) : part.kind === 'file' ? (
+            <InlineFileLink
+              key={part.start}
+              asid={audioSessionId}
+              file={{ uri: part.uri, name: part.name }}
+            />
+          ) : part.kind === 'audio' ? (
+            <InlineAudioFile
+              key={part.start}
+              asid={audioSessionId}
+              file={{ uri: part.uri, name: part.name }}
+            />
+          ) : (
+            renderText(`${key}:${part.start}`, part.text)
+          )
+        )}
+      </View>
+    );
+  };
 
   if (segments.length === 1 && segments[0].kind === 'md') {
     return renderMarkdown('body', text);
@@ -781,6 +819,7 @@ function renderTimelinePart(
           key={item.id}
           text={part.text}
           markdownStyle={options.markdownStyle}
+          audioSessionId={options.actions.audioSessionId}
           {...(item.image_assets ? { imageAssets: item.image_assets } : {})}
           {...(options.actions.onPreviewImage
             ? { onPreviewImage: options.actions.onPreviewImage }
