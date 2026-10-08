@@ -178,7 +178,7 @@ function AudioPlayer({
       : t`Could not play this audio file.`;
   const progress = draft ?? (state.duration ? state.position / state.duration : 0);
   const timeline = (
-    <View style={styles.timeline}>
+    <View style={compact ? styles.inlineTimeline : styles.timeline}>
       <AudioProgress
         peaks={peaks}
         playing={playing}
@@ -273,6 +273,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   inlineBody: { flex: 1, minWidth: 0 },
+  inlineTimeline: { width: '100%' },
   inlineAction: {
     width: 44,
     height: 44,
