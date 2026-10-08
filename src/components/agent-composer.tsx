@@ -1616,6 +1616,7 @@ export const AgentComposer = memo(function AgentComposer({
             {/* TerminalComposer reused for agent prompt */}
             <View onLayout={(event) => setInputRowHeight(event.nativeEvent.layout.height)}>
               <TerminalComposer
+                voiceContext={`${sessionId}:${activeAsid ?? 'new'}`}
                 inputRef={inputRef}
                 leading={
                   canAttach ? (

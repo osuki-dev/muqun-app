@@ -2,6 +2,43 @@
   "version": 1,
   "flows": [
     {
+      "name": "inline-audio",
+      "program": "flows/inline-audio",
+      "tags": ["full", "agents", "files"],
+      "platforms": ["ios", "android"]
+    },
+    {
+      "name": "voice-recording",
+      "program": "flows/voice-recording",
+      "cleanup": "subflows/clear-voice-recording",
+      "tags": ["full", "settings", "terminal"],
+      "platforms": ["ios", "android"]
+    },
+    {
+      "name": "audio-preview",
+      "program": "flows/audio-preview",
+      "tags": ["full", "files", "agents"],
+      "platforms": ["ios", "android"]
+    },
+    {
+      "name": "voice-settings",
+      "program": "flows/voice-settings",
+      "tags": ["full", "settings", "terminal"],
+      "platforms": ["ios", "android"]
+    },
+    {
+      "name": "lazygit-quick-actions",
+      "program": "flows/lazygit-quick-actions",
+      "tags": ["full", "terminal", "files"],
+      "platforms": ["ios", "android"]
+    },
+    {
+      "name": "lazygit-changes",
+      "program": "flows/lazygit-changes",
+      "tags": ["full", "terminal", "files"],
+      "platforms": ["ios", "android"]
+    },
+    {
       "name": "home-continue-search",
       "program": "flows/home-continue-search",
       "tags": ["full", "workspace", "agents"],
@@ -238,6 +275,61 @@
     }
   ],
   "programs": {
+    "flows/inline-audio": [{ "include": "subflows/open-demo" }, { "run": "flows/inline-audio.ad" }],
+    "subflows/open-voice-settings": [
+      { "include": "subflows/launch-home" },
+      {
+        "target": { "text": "Settings" },
+        "mode": "press",
+        "timeout": 15000,
+        "run": "flows/settings-sheets.ad#press"
+      },
+      {
+        "target": { "id": "settings-voice-row" },
+        "mode": "press",
+        "run": "flows/settings-sheets.ad#press"
+      }
+    ],
+    "subflows/clear-voice-recording": [
+      { "include": "subflows/open-voice-settings" },
+      { "run": "flows/voice-recording.ad#clear" }
+    ],
+    "flows/voice-recording": [
+      { "include": "subflows/open-voice-settings" },
+      { "run": "flows/voice-recording.ad#configure" },
+      { "include": "subflows/open-demo" },
+      { "run": "flows/voice-recording.ad#record" }
+    ],
+    "flows/audio-preview": [
+      { "include": "subflows/open-demo" },
+      { "run": "flows/audio-preview.ad" }
+    ],
+    "flows/voice-settings": [
+      {
+        "include": "subflows/launch-home"
+      },
+      {
+        "target": {
+          "text": "Settings"
+        },
+        "mode": "press",
+        "timeout": 15000,
+        "run": "flows/settings-sheets.ad#press"
+      },
+      {
+        "target": {
+          "id": "settings-voice-row"
+        },
+        "mode": "press",
+        "run": "flows/settings-sheets.ad#press"
+      },
+      {
+        "run": "flows/voice-settings.ad#verify"
+      },
+      {
+        "run": "flows/voice-settings.ad#close"
+      }
+    ],
     "flows/home-continue-search": [
       { "include": "subflows/open-demo" },
       { "run": "flows/home-continue-search.ad#choose-editorial" },
@@ -1085,6 +1177,18 @@
           }
         ]
       }
+    ],
+    "flows/lazygit-quick-actions": [
+      { "include": "subflows/open-demo" },
+      { "run": "flows/lazygit.ad#quick-actions" },
+      { "run": "flows/lazygit.ad#verify" },
+      { "run": "flows/lazygit.ad#close" }
+    ],
+    "flows/lazygit-changes": [
+      { "include": "subflows/open-demo" },
+      { "run": "flows/lazygit.ad#changes" },
+      { "run": "flows/lazygit.ad#verify" },
+      { "run": "flows/lazygit.ad#close" }
     ],
     "flows/agent-collaboration": [
       { "include": "subflows/open-demo" },

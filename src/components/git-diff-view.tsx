@@ -1,4 +1,9 @@
 import { useMemo } from 'react';
+import { useLingui } from '@lingui/react/macro';
+import { useThemeTokens } from '@osuki-dev/ui';
+import { GitBranch } from 'lucide-react-native';
+import { SheetSceneQuietControl } from '@/components/sheet-scene';
+import { useLazygit } from '@/hooks/use-lazygit';
 
 import { ChangesSheet } from '@/components/changes-sheet';
 import {
@@ -38,15 +43,38 @@ export function GitDiffView({
   sessionId,
   paneId,
   vcsFiles,
+  serverId,
+  canLazygit = false,
 }: {
   sessionId: string;
   paneId: string;
   /** The gateway advertised `pane_vcs_files`. */
   vcsFiles: boolean;
+  serverId?: string;
+  canLazygit?: boolean;
 }) {
+  const { t } = useLingui();
+  const theme = useThemeTokens();
+  const lazygit = useLazygit({ enabled: canLazygit, sessionId, paneId, serverId });
   const api = useMemo(
     () => paneChangesApi({ sessionId, paneId, vcsFiles }, PANE_CLIENT),
     [paneId, sessionId, vcsFiles]
   );
-  return <ChangesSheet testID="git-diff-view" api={api} />;
+  return (
+    <ChangesSheet
+      testID="git-diff-view"
+      api={api}
+      headingActions={
+        lazygit.available ? (
+          <SheetSceneQuietControl
+            testID="changes-lazygit"
+            accessibilityLabel={t`Open Lazygit`}
+            busy={lazygit.busy}
+            onPress={() => void lazygit.open()}>
+            <GitBranch size={17} color={theme.colors.textMuted} />
+          </SheetSceneQuietControl>
+        ) : undefined
+      }
+    />
+  );
 }

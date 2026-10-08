@@ -340,6 +340,7 @@ function humaniseTag(tag: string): string {
  * workbench behind it draws the same cards, minus the buttons.
  */
 export interface AgentToolActions {
+  audioSessionId?: string;
   onOpenChildSession?: (asid: string) => void;
   onRunInBackground?: (toolCallId: string) => void;
   onOpenBackgroundTray?: (shellId?: string) => void;
@@ -841,6 +842,7 @@ const ToolPartCard = memo(function ToolPartCard({
   return (
     <>
       <AgentToolCard
+        audioSessionId={actions.audioSessionId}
         part={part}
         markdownStyle={markdownStyle}
         {...(childStatus ? { childStatus } : {})}

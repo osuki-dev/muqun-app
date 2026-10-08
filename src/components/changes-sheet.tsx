@@ -71,6 +71,7 @@ export interface ChangesSheetProps {
   targetPath?: string;
   /** Verified checkout context, not a branch or an inferred workspace label. */
   worktree?: ChangesWorktreeContext;
+  headingActions?: ReactNode;
 }
 
 /** One file's fetched patch, per scope and path (`lazy` listings). */
@@ -251,6 +252,7 @@ export const ChangesSheet = memo(function ChangesSheet({
   api,
   targetPath,
   worktree,
+  headingActions,
 }: ChangesSheetProps) {
   const { t } = useLingui();
   const theme = useThemeTokens();
@@ -804,6 +806,7 @@ export const ChangesSheet = memo(function ChangesSheet({
       }
       headingTrailing={
         <View style={styles.trailing}>
+          {headingActions}
           <PressableScale
             testID="agent-changes-scope"
             accessibilityRole="button"

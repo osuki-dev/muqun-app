@@ -24,6 +24,8 @@ export default function GitDiffScreen() {
     sessionId: string;
     paneId?: string;
     vcsFiles?: string;
+    serverId?: string;
+    canLazygit?: string;
   }>();
 
   return (
@@ -31,6 +33,8 @@ export default function GitDiffScreen() {
       sessionId={params.sessionId || 'default'}
       paneId={params.paneId || ''}
       vcsFiles={params.vcsFiles === '1'}
+      serverId={params.serverId}
+      canLazygit={params.canLazygit === '1'}
     />
   );
 }

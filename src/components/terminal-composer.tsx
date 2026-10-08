@@ -1,3 +1,5 @@
+import { VoiceInputButton } from '@/components/voice-input-button';
+import { useLatestReader } from '@/hooks/use-render-refs';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { Spinner, useThemeTokens } from '@osuki-dev/ui';
 import { Send } from 'lucide-react-native';
@@ -52,6 +54,7 @@ export interface TerminalComposerSend {
 }
 
 export interface TerminalComposerProps {
+  voiceContext?: string;
   /** A control in front of the field: the gateway's paperclip. */
   leading?: ReactNode;
   inputRef?: Ref<TextInput>;
@@ -64,6 +67,7 @@ export interface TerminalComposerProps {
 }
 
 export function TerminalComposer({
+  voiceContext,
   leading,
   inputRef,
   inputProps,
@@ -72,6 +76,7 @@ export function TerminalComposer({
   exiting,
   layout,
 }: TerminalComposerProps) {
+  const readInput = useLatestReader(inputProps);
   const profile = useAppearanceProfile();
   const surfaceBackground = useSurfaceBackground();
   const theme = useThemeTokens();
@@ -115,6 +120,17 @@ export function TerminalComposer({
     (typeof bottomPadding === 'number' ? bottomPadding : 10);
   const controls = (
     <>
+      {voiceContext && (
+        <VoiceInputButton
+          key={voiceContext}
+          disabled={send.sending || inputProps.editable === false}
+          onText={(transcript) => {
+            const current = readInput();
+            const value = current.value ?? '';
+            current.onChangeText?.(value + (value && !/\s$/.test(value) ? ' ' : '') + transcript);
+          }}
+        />
+      )}
       <ComposerSendButton
         accessibilityLabel={send.accessibilityLabel}
         armed={send.armed}

@@ -1,0 +1,22 @@
+# Launch the offline Git TUI from each terminal sheet and expose its keyboard.
+
+# section quick-actions
+wait "role=button text=\"Open quick actions\"" 15000
+press "role=button text=\"Open quick actions\""
+wait "role=button label=\"Open Lazygit\"" 15000
+press "role=button label=\"Open Lazygit\""
+
+# section changes
+wait "role=button text=\"Open changes\"" 15000
+press "role=button text=\"Open changes\""
+wait "id=changes-lazygit" 15000
+press "id=changes-lazygit"
+
+# section verify
+wait "id=virtual-key-q" 15000
+is visible "id=virtual-key-q"
+is hidden "id=terminal-composer-input"
+screenshot "shots/lazygit-keyboard.png"
+
+# section close
+back --system

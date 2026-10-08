@@ -384,6 +384,11 @@ msgstr "A spread on the Pad"
 msgid "A terminal was created. Check it before sending again — your task is still here."
 msgstr "A terminal was created. Check it before sending again — your task is still here"
 
+#: src/hooks/use-lazygit.ts
+msgid "A terminal was created. Open it to inspect startup; launching again could create a duplicate."
+msgstr "A terminal was created. Open it to inspect startup; launching again could create a duplicate"
+
+#: src/app/settings-about.tsx
 #: src/app/settings.tsx
 msgid "About"
 msgstr "About"
@@ -479,6 +484,7 @@ msgstr "Agents"
 msgid "AI coding assistant"
 msgstr "AI coding assistant"
 
+#: src/app/settings-alerts.tsx
 #: src/app/settings.tsx
 msgid "Alerts"
 msgstr "Alerts"
@@ -519,6 +525,10 @@ msgstr "Allow"
 #: src/components/pairing-camera.tsx
 msgid "Allow camera"
 msgstr "Allow camera"
+
+#: src/components/voice-input-button.tsx
+msgid "Allow microphone access in system settings."
+msgstr "Allow microphone access in system settings"
 
 #: src/app/explore.tsx
 msgid "Allow the camera, or enter the address instead."
@@ -574,6 +584,10 @@ msgstr "Answer"
 msgid "Answer: {0}"
 msgstr "Answer: {0}"
 
+#: src/app/settings-voice.tsx
+msgid "API key"
+msgstr "API key"
+
 #: src/components/settings-appearance.tsx
 msgid "App icon"
 msgstr "App icon"
@@ -595,6 +609,7 @@ msgstr "App Lock unavailable"
 msgid "App name and tagline"
 msgstr "App name and tagline"
 
+#: src/app/settings-appearance.tsx
 #: src/app/settings.tsx
 msgid "Appearance"
 msgstr "Appearance"
@@ -691,6 +706,22 @@ msgstr "Attach a file"
 msgid "Attachment"
 msgstr "Attachment"
 
+#: src/components/session-artifacts.tsx
+msgid "Audio"
+msgstr "Audio"
+
+#: src/components/voice-input-button.tsx
+msgid "Audio is sent to your configured speech service"
+msgstr "Audio is sent to your configured speech service"
+
+#: src/components/audio-asset-preview.tsx
+msgid "Audio preview"
+msgstr "Audio preview"
+
+#: src/components/audio-asset-preview.tsx
+msgid "Audio preview supports files up to {ceiling}."
+msgstr "Audio preview supports files up to {ceiling}"
+
 #: src/components/app-lock-gate.tsx
 msgid "Authenticate with {authLabel} to continue."
 msgstr "Authenticate with {authLabel} to continue"
@@ -718,6 +749,10 @@ msgstr "Authentication is unavailable. Try again or check system settings"
 #: src/components/agent-context-sheet.tsx
 msgid "Auto-approve every action"
 msgstr "Auto-approve every action"
+
+#: src/app/settings-voice.tsx
+msgid "Auto-detect"
+msgstr "Auto-detect"
 
 #: src/components/dev-home-ambient-controls.tsx
 msgid "Automatic"
@@ -774,6 +809,10 @@ msgstr "Background tasks"
 #: src/i18n/labels.ts
 msgid "Backspace"
 msgstr "Backspace"
+
+#: src/app/settings-voice.tsx
+msgid "Base URL"
+msgstr "Base URL"
 
 #: src/components/agent-context-sheet.tsx
 msgid "Behaviour"
@@ -873,6 +912,8 @@ msgstr "Camera access needed"
 #: src/components/ssh-host-form.tsx
 #: src/components/ssh-host-key-dialog.tsx
 #: src/components/theme-link-import.tsx
+#: src/components/voice-input-button.tsx
+#: src/hooks/use-lazygit.ts
 #: src/lib/local-authentication.ts
 msgid "Cancel"
 msgstr "Cancel"
@@ -929,6 +970,10 @@ msgstr "Check again"
 #: src/components/settings-security.tsx
 msgid "Check device authentication settings and try again."
 msgstr "Check device authentication settings and try again"
+
+#: src/hooks/use-lazygit.ts
+msgid "Check that lazygit is installed on the Gateway host and this pane is in a Git repository."
+msgstr "Check that lazygit is installed on the Gateway host and this pane is in a Git repository"
 
 #: src/hooks/use-agent-command-delivery.ts
 msgid "Check the assistant before sending again; it may have received the request."
@@ -1021,6 +1066,10 @@ msgstr "Clear"
 #: src/components/settings-storage.tsx
 msgid "Clear cache"
 msgstr "Clear cache"
+
+#: src/app/settings-voice.tsx
+msgid "Clear configuration"
+msgstr "Clear configuration"
 
 #: src/i18n/labels.ts
 msgctxt "agent slash command"
@@ -1195,6 +1244,10 @@ msgstr "Compared with {base}"
 #: src/components/tool-call-detail-sheet.tsx
 msgid "Completed"
 msgstr "Completed"
+
+#: src/app/settings-voice.tsx
+msgid "Configure your speech service to show the microphone in message inputs"
+msgstr "Configure your speech service to show the microphone in message inputs"
 
 #: src/components/settings-storage.tsx
 msgid "Confirm clear cache"
@@ -1621,7 +1674,7 @@ msgstr "Could not open that theme"
 msgid "Could not open the file"
 msgstr "Could not open the file"
 
-#: src/app/settings.tsx
+#: src/app/settings-about.tsx
 msgid "Could not open the guide"
 msgstr "Could not open the guide"
 
@@ -1649,6 +1702,10 @@ msgstr "Could not open this file"
 #: src/components/server-terminal-workspace.tsx
 msgid "Could not open this theme."
 msgstr "Could not open this theme"
+
+#: src/components/audio-asset-preview.tsx
+msgid "Could not play this audio file."
+msgstr "Could not play this audio file"
 
 #: src/app/explore.tsx
 msgid "Could not reach that address. Check it and make sure the Gateway is running."
@@ -1686,6 +1743,10 @@ msgstr "Could not read the terminal"
 #: src/components/changes-sheet.tsx
 msgid "Could not read this file."
 msgstr "Could not read this file"
+
+#: src/app/settings-voice.tsx
+msgid "Could not read voice settings. Save your configuration again."
+msgstr "Could not read voice settings. Save your configuration again"
 
 #: src/components/ssh-host-form.tsx
 msgid "Could not remove host"
@@ -1743,6 +1804,10 @@ msgstr "Could not save theme"
 msgid "Could not save this setting. Try again."
 msgstr "Could not save this setting. Try again"
 
+#: src/app/settings-voice.tsx
+msgid "Could not save voice settings. Please try again."
+msgstr "Could not save voice settings. Please try again"
+
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Could not send"
 msgstr "Could not send"
@@ -1772,6 +1837,7 @@ msgid "Could not start a session"
 msgstr "Could not start a session"
 
 #: src/app/commands.tsx
+#: src/hooks/use-lazygit.ts
 msgid "Could not start a terminal."
 msgstr "Could not start a terminal"
 
@@ -2134,6 +2200,10 @@ msgstr "Enter a gateway URL"
 msgid "Enter a name."
 msgstr "Enter a name"
 
+#: src/app/settings-voice.tsx
+msgid "Enter an HTTPS base URL, API key and model"
+msgstr "Enter an HTTPS base URL, API key and model"
+
 #: src/app/explore.tsx
 msgid "Enter the {PAIRING_CODE_CHARACTER_COUNT}-character code."
 msgstr "Enter the {PAIRING_CODE_CHARACTER_COUNT}-character code"
@@ -2319,6 +2389,10 @@ msgstr "Folder is missing"
 msgid "Folders"
 msgstr "Folders"
 
+#: src/app/settings-voice.tsx
+msgid "Follow App language"
+msgstr "Follow App language"
+
 #: src/components/settings-language-sheet.tsx
 msgid "Follow the language your phone is set to"
 msgstr "Follow the language your phone is set to"
@@ -2467,7 +2541,7 @@ msgctxt "agent slash command"
 msgid "Guided AGENTS.md setup"
 msgstr "Guided AGENTS.md setup"
 
-#: src/app/settings.tsx
+#: src/app/settings-about.tsx
 msgid "Guides for pairing, the terminal, agents and themes"
 msgstr "Guides for pairing, the terminal, agents and themes"
 
@@ -2550,7 +2624,7 @@ msgstr "Host key changed"
 msgid "Host key trusted"
 msgstr "Host key trusted"
 
-#: src/app/settings.tsx
+#: src/app/settings-about.tsx
 msgid "How to use Muqun"
 msgstr "How to use Muqun"
 
@@ -2627,9 +2701,25 @@ msgstr "Insert {0} {1}"
 msgid "Insert mode"
 msgstr "Insert mode"
 
+#: src/app/settings-voice.tsx
+msgid "Insert recognized text into the draft without sending. Turn off to review first."
+msgstr "Insert recognized text into the draft without sending. Turn off to review first"
+
+#: src/app/settings-voice.tsx
+msgid "Insert text automatically"
+msgstr "Insert text automatically"
+
 #: src/i18n/labels.ts
 msgid "Install a package"
 msgstr "Install a package"
+
+#: src/components/audio-asset-preview.tsx
+msgid "Install an app build with audio support to preview this file."
+msgstr "Install an app build with audio support to preview this file"
+
+#: src/app/settings-voice.tsx
+msgid "Install an app build with voice recording support to use the microphone."
+msgstr "Install an app build with voice recording support to use the microphone"
 
 #: src/app/explore.tsx
 msgid "Install command copied"
@@ -2810,6 +2900,14 @@ msgstr "Last seen just now"
 msgid "Latest"
 msgstr "Latest"
 
+#: src/app/commands.tsx
+msgid "Lazygit"
+msgstr "Lazygit"
+
+#: src/hooks/use-lazygit.ts
+msgid "Lazygit startup could not be confirmed"
+msgstr "Lazygit startup could not be confirmed"
+
 #: src/components/agent-worktree-sheet.tsx
 msgid "Leave it empty and the agent picks a name."
 msgstr "Leave it empty and the agent picks a name"
@@ -2848,6 +2946,10 @@ msgstr "List every pane, agent or not"
 msgid "List only the panes running a recognised agent."
 msgstr "List only the panes running a recognised agent"
 
+#: src/components/voice-input-button.tsx
+msgid "Listening…"
+msgstr "Listening…"
+
 #: src/components/settings-alerts.tsx
 msgid "Live Activity"
 msgstr "Live Activity"
@@ -2863,6 +2965,10 @@ msgstr "Load more"
 #: src/components/theme-link-import.tsx
 msgid "Loading"
 msgstr "Loading"
+
+#: src/components/audio-asset-preview.tsx
+msgid "Loading audio…"
+msgstr "Loading audio…"
 
 #: src/app/commands.tsx
 msgid "Loading commands"
@@ -2895,6 +3001,10 @@ msgstr "Loading the transcript"
 #: src/components/theme-browse-sheet.tsx
 msgid "Loading themes…"
 msgstr "Loading themes…"
+
+#: src/app/settings-voice.tsx
+msgid "Loading…"
+msgstr "Loading…"
 
 #: src/lib/demo-gateway.ts
 msgid "Logs"
@@ -2973,6 +3083,7 @@ msgstr "Mode · {0}"
 msgid "Mode · {0} → {1}"
 msgstr "Mode · {0} → {1}"
 
+#: src/app/settings-voice.tsx
 #: src/components/agent-context-sheet.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
 msgid "Model"
@@ -3195,7 +3306,7 @@ msgstr "No agents running"
 msgid "No app on this phone opens web pages."
 msgstr "No app on this phone opens web pages"
 
-#: src/app/settings.tsx
+#: src/app/settings-about.tsx
 msgid "No app on this phone opens web pages. The guide is at muqun.dev/support."
 msgstr "No app on this phone opens web pages. The guide is at muqun.dev/support"
 
@@ -3322,6 +3433,10 @@ msgstr "No simulator on port {port}"
 #: src/components/simfarm-stage.tsx
 msgid "No simulators on that machine."
 msgstr "No simulators on that machine"
+
+#: src/components/voice-input-button.tsx
+msgid "No speech detected. Please try again."
+msgstr "No speech detected. Please try again"
 
 #: src/app/explore.tsx
 msgid "No SSH hosts saved yet."
@@ -3577,6 +3692,8 @@ msgstr "Open in your browser, unavailable over the SSH tunnel"
 msgid "Open installation guide"
 msgstr "Open installation guide"
 
+#: src/app/commands.tsx
+#: src/components/git-diff-view.tsx
 #: src/i18n/labels.ts
 msgid "Open Lazygit"
 msgstr "Open Lazygit"
@@ -3620,6 +3737,7 @@ msgid "Open T3 Code on the gateway host (or run t3 service install), then check 
 msgstr "Open T3 Code on the gateway host (or run t3 service install), then check again"
 
 #: src/components/collaboration-notice.tsx
+#: src/hooks/use-lazygit.ts
 msgid "Open terminal"
 msgstr "Open terminal"
 
@@ -3686,7 +3804,7 @@ msgstr "Opening…"
 msgid "Opens the keyboard, the editor keys and the composer over this editor. Drag to move."
 msgstr "Opens the keyboard, the editor keys and the composer over this editor. Drag to move"
 
-#: src/app/settings.tsx
+#: src/app/settings-about.tsx
 msgid "Opens the Muqun issue tracker on GitHub."
 msgstr "Opens the Muqun issue tracker on GitHub"
 
@@ -3825,6 +3943,10 @@ msgstr "Patch too long; showing the start of it"
 msgid "Path"
 msgstr "Path"
 
+#: src/components/audio-asset-preview.tsx
+msgid "Pause audio"
+msgstr "Pause audio"
+
 #: src/components/agent-context-sheet.tsx
 msgid "Permission"
 msgstr "Permission"
@@ -3845,6 +3967,14 @@ msgstr "Pinned commit"
 msgid "Plan"
 msgstr "Plan"
 
+#: src/components/audio-asset-preview.tsx
+msgid "Play audio"
+msgstr "Play audio"
+
+#: src/components/audio-asset-preview.tsx
+msgid "Playback position"
+msgstr "Playback position"
+
 #: src/components/agent-composer.tsx
 msgid "Please retry or remove failed attachments."
 msgstr "Please retry or remove failed attachments"
@@ -3859,6 +3989,10 @@ msgstr "Port"
 #: src/components/theme-link-import.tsx
 msgid "Preparing images"
 msgstr "Preparing images"
+
+#: src/components/voice-input-button.tsx
+msgid "Preparing microphone…"
+msgstr "Preparing microphone…"
 
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Presented now"
@@ -3902,7 +4036,7 @@ msgstr "Previous session"
 msgid "Primary"
 msgstr "Primary"
 
-#: src/app/settings.tsx
+#: src/app/settings-about.tsx
 msgid "Privacy policy"
 msgstr "Privacy policy"
 
@@ -4064,6 +4198,10 @@ msgstr "Recent output"
 msgid "Recently used"
 msgstr "Recently used"
 
+#: src/app/settings-voice.tsx
+msgid "Recognition language"
+msgstr "Recognition language"
+
 #: src/components/theme-appearance-settings.tsx
 msgid "Recommended minimum for readable text: {minimumPercent}%"
 msgstr "Recommended minimum for readable text: {minimumPercent}%"
@@ -4086,6 +4224,14 @@ msgstr "Reconnect to {0}"
 #: src/components/server-terminal-workspace.tsx
 msgid "Reconnecting · {0}"
 msgstr "Reconnecting · {0}"
+
+#: src/components/voice-input-button.tsx
+msgid "Record again"
+msgstr "Record again"
+
+#: src/components/voice-input-button.tsx
+msgid "Recording failed."
+msgstr "Recording failed"
 
 #: src/components/agent-background-tray.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
@@ -4189,7 +4335,11 @@ msgstr "Renamed"
 msgid "Replace key"
 msgstr "Replace key"
 
-#: src/app/settings.tsx
+#: src/components/audio-asset-preview.tsx
+msgid "Replay audio"
+msgstr "Replay audio"
+
+#: src/app/settings-about.tsx
 msgid "Report a bug or request a feature"
 msgstr "Report a bug or request a feature"
 
@@ -4381,6 +4531,7 @@ msgstr "Run the Gateway on your machine and scan the QR code it prints. The pair
 msgid "Running"
 msgstr "Running"
 
+#: src/app/settings-voice.tsx
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/session-map.tsx
 #: src/components/settings-servers.tsx
@@ -4419,6 +4570,7 @@ msgstr "Save the new name"
 msgid "Save theme"
 msgstr "Save theme"
 
+#: src/app/settings-voice.tsx
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Saved"
 msgstr "Saved"
@@ -4615,6 +4767,7 @@ msgstr "Server offline"
 msgid "Server unavailable."
 msgstr "Server unavailable"
 
+#: src/app/settings-servers.tsx
 #: src/app/settings.tsx
 #: src/components/app-drawer-content.tsx
 msgid "Servers"
@@ -4896,13 +5049,14 @@ msgstr "Some files did not upload"
 msgid "Some theme colors need more contrast"
 msgstr "Some theme colors need more contrast"
 
+#: src/app/diagram-viewer.tsx
 #: src/components/app-error-boundary.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/theme-link-import.tsx
 msgid "Something went wrong"
 msgstr "Something went wrong"
 
-#: src/app/settings.tsx
+#: src/app/settings-about.tsx
 msgid "Source code"
 msgstr "Source code"
 
@@ -5063,6 +5217,10 @@ msgstr "Stop agent"
 msgid "Stop agent execution"
 msgstr "Stop agent execution"
 
+#: src/components/voice-input-button.tsx
+msgid "Stop and transcribe"
+msgstr "Stop and transcribe"
+
 #: src/components/agent-assignment-bar.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Stop assigning a task"
@@ -5082,6 +5240,7 @@ msgstr "Stop this command"
 msgid "Stopped"
 msgstr "Stopped"
 
+#: src/app/settings-storage.tsx
 #: src/app/settings.tsx
 msgid "Storage"
 msgstr "Storage"
@@ -5245,6 +5404,7 @@ msgid "Temporary files"
 msgstr "Temporary files"
 
 #: src/app/commands.tsx
+#: src/app/settings-terminal.tsx
 #: src/app/settings.tsx
 #: src/components/home-launch-actions.tsx
 #: src/components/home-recent-sessions.tsx
@@ -5467,6 +5627,10 @@ msgstr "The simulator did not come up in time"
 #: src/components/simfarm-stage.tsx
 msgid "The simulator did not shut down in time."
 msgstr "The simulator did not shut down in time"
+
+#: src/components/voice-input-button.tsx
+msgid "The speech service returned an invalid transcript."
+msgstr "The speech service returned an invalid transcript"
 
 #: src/app/commands.tsx
 msgid "The SSH tunnel carries the Gateway's port and no other, so the simulator and the browser cannot be reached from here. Connect over the local network or Tailscale."
@@ -5794,6 +5958,18 @@ msgstr "Tool call"
 msgid "tracking {upstream}"
 msgstr "tracking {upstream}"
 
+#: src/components/voice-input-button.tsx
+msgid "Transcribing…"
+msgstr "Transcribing…"
+
+#: src/components/voice-input-button.tsx
+msgid "Transcript"
+msgstr "Transcript"
+
+#: src/components/voice-input-button.tsx
+msgid "Transcription failed. Check your speech service and try again."
+msgstr "Transcription failed. Check your speech service and try again"
+
 #: src/components/bounded-markdown.tsx
 #: src/components/embedded-terminal-tool-block.tsx
 #: src/components/tool-call-code-rows.tsx
@@ -5808,8 +5984,10 @@ msgstr "Trust"
 #: src/components/agent-subagent-detail-sheet.tsx
 #: src/components/app-error-boundary.tsx
 #: src/components/asset-viewer.tsx
+#: src/components/audio-asset-preview.tsx
 #: src/components/changes-sheet.tsx
 #: src/components/theme-browse-sheet.tsx
+#: src/components/voice-input-button.tsx
 msgid "Try again"
 msgstr "Try again"
 
@@ -5995,6 +6173,10 @@ msgstr "Update ready · restarting…"
 msgid "Update the app to import public theme links. You can still import a file"
 msgstr "Update the app to import public theme links. You can still import a file"
 
+#: src/components/audio-asset-preview.tsx
+msgid "Update the Gateway to preview audio output."
+msgstr "Update the Gateway to preview audio output"
+
 #: src/components/update-status-banner.tsx
 msgid "Updating Muqun…"
 msgstr "Updating Muqun…"
@@ -6028,6 +6210,10 @@ msgstr "Use device passcode"
 msgid "Use system font"
 msgstr "Use system font"
 
+#: src/components/voice-input-button.tsx
+msgid "Use text"
+msgstr "Use text"
+
 #: src/components/session-map.tsx
 msgid "Use the {name} session, {kind}"
 msgstr "Use the {name} session, {kind}"
@@ -6051,6 +6237,10 @@ msgstr "Use your own font for the app and the terminal"
 #: src/components/ssh-host-form.tsx
 msgid "Username"
 msgstr "Username"
+
+#: src/app/settings-voice.tsx
+msgid "Uses the OpenAI-compatible /audio/transcriptions API. Your API key is stored securely on this device."
+msgstr "Uses the OpenAI-compatible /audio/transcriptions API. Your API key is stored securely on this device"
 
 #: src/components/theme-appearance-settings.tsx
 msgid "Uses the theme's Home artwork in the position chosen by your Home layout. Themes without Home artwork show no illustration."
@@ -6076,6 +6266,16 @@ msgstr "Visual mode"
 #: src/lib/demo-gateway.ts
 msgid "Visualise current context usage as a coloured grid"
 msgstr "Visualise current context usage as a coloured grid"
+
+#: src/app/settings-voice.tsx
+#: src/app/settings.tsx
+#: src/components/voice-input-button.tsx
+msgid "Voice to text"
+msgstr "Voice to text"
+
+#: src/app/settings-voice.tsx
+msgid "Voice to text disabled"
+msgstr "Voice to text disabled"
 
 #: src/components/skia-terminal.web.tsx
 msgid "Waiting for output…"

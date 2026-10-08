@@ -3811,6 +3811,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   const canRunInBackground = agentFeatures.backgroundShells;
   const toolActions = useMemo<AgentToolActions>(
     () => ({
+      audioSessionId: activeAsid ?? undefined,
       onOpenChildSession: openSubagentDetail,
       ...(canRunInBackground ? { onRunInBackground: handleRunInBackground } : {}),
       onPreviewImage: setPreviewImageUri,
@@ -3821,6 +3822,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       childStatuses,
     }),
     [
+      activeAsid,
       canRunInBackground,
       handleRunInBackground,
       handleOpenToolFile,

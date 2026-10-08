@@ -375,6 +375,7 @@ export function NewTaskSheet({
                   />
                 </View>
                 <TerminalComposer
+                  voiceContext={`new-task:${sessionId}`}
                   inputRef={promptInput}
                   leading={
                     <ComposerAttachmentButton

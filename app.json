@@ -92,7 +92,11 @@
     "android": {
       "package": "dev.osuki.muqun",
       "googleServicesFile": "./google-services.json",
-      "permissions": ["android.permission.CAMERA", "android.permission.POST_NOTIFICATIONS"],
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.POST_NOTIFICATIONS",
+        "android.permission.RECORD_AUDIO"
+      ],
       "blockedPermissions": [
         "android.permission.READ_MEDIA_IMAGES",
         "android.permission.READ_MEDIA_VIDEO"
@@ -287,7 +291,7 @@
         {
           "photosPermission": "Muqun sends photos you pick to the paired Gateway so an agent can read them.",
           "cameraPermission": "Muqun scans the Gateway's QR code to pair securely, and takes photos you attach to a terminal session.",
-          "microphonePermission": false
+          "microphonePermission": "Allow Muqun to record speech and send it to the speech service you configure."
         }
       ],
       [
