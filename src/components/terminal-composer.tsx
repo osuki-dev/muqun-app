@@ -1,8 +1,15 @@
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { Spinner, useThemeTokens } from '@osuki-dev/ui';
 import { Send } from 'lucide-react-native';
-import { useEffect, type ComponentProps, type ReactNode, type Ref } from 'react';
-import { StyleSheet, TextInput, type TextInputProps } from 'react-native';
+import { useEffect, useState, type ComponentProps, type ReactNode, type Ref } from 'react';
+import {
+  StyleSheet,
+  TextInput,
+  View,
+  useWindowDimensions,
+  type TextInputProps,
+  type TextStyle,
+} from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
@@ -92,34 +99,22 @@ export function TerminalComposer({
   // here rather than naming a colour is what keeps the two from drifting apart.
   const placeholderText = theme.colors[theme.components.Input.placeholder];
   const fieldFont = { color: chromeText, fontFamily: mono };
-
-  return (
-    <Animated.View
-      entering={entering}
-      exiting={exiting}
-      layout={layout}
-      style={[
-        composerStyles.composer,
-        { borderRadius: profile.chrome.composerField },
-        { backgroundColor: surfaceBackground(chromeGlassQuiet) },
-      ]}>
-      {leading}
-      <FontedTextInput
-        ref={inputRef}
-        multiline
-        autoCorrect={false}
-        placeholderTextColor={placeholderText}
-        selectionColor={theme.colors.primary}
-        {...inputProps}
-        // The family sits ahead of `inputProps.style` so a caller may still
-        // override it -- the agent composer does, with the interface face.
-        style={[
-          composerStyles.input,
-          !leading && composerStyles.inputWithoutLeading,
-          fieldFont,
-          inputProps.style,
-        ]}
-      />
+  const { fontScale } = useWindowDimensions();
+  const [wrapped, setWrapped] = useState(false);
+  const hasText = Boolean(inputProps.value ?? inputProps.defaultValue);
+  const expanded = hasText && wrapped;
+  useEffect(() => {
+    if (!hasText) setWrapped(false);
+  }, [hasText]);
+  const inputStyle = StyleSheet.flatten<TextStyle>([composerStyles.input, inputProps.style]);
+  const lineHeight = inputStyle.lineHeight ?? 19;
+  const topPadding = inputStyle.paddingTop ?? inputStyle.paddingVertical;
+  const bottomPadding = inputStyle.paddingBottom ?? inputStyle.paddingVertical;
+  const verticalPadding =
+    (typeof topPadding === 'number' ? topPadding : 10) +
+    (typeof bottomPadding === 'number' ? bottomPadding : 10);
+  const controls = (
+    <>
       <ComposerSendButton
         accessibilityLabel={send.accessibilityLabel}
         armed={send.armed}
@@ -130,6 +125,55 @@ export function TerminalComposer({
         restText={theme.colors.textMuted}
         activeText={theme.colors.onPrimary}
       />
+    </>
+  );
+
+  return (
+    <Animated.View
+      entering={entering}
+      exiting={exiting}
+      layout={layout}
+      style={[
+        composerStyles.composer,
+        expanded && composerStyles.expandedComposer,
+        { borderRadius: profile.chrome.composerField },
+        { backgroundColor: surfaceBackground(chromeGlassQuiet) },
+      ]}>
+      {!expanded && leading}
+      <FontedTextInput
+        ref={inputRef}
+        multiline
+        autoCorrect={false}
+        placeholderTextColor={placeholderText}
+        selectionColor={theme.colors.primary}
+        {...inputProps}
+        textBreakStrategy={inputProps.textBreakStrategy ?? 'simple'}
+        onContentSizeChange={(event) => {
+          // Keep the expanded layout until the draft clears. Collapsing as soon
+          // as wider text fits would oscillate between the two widths.
+          if (
+            hasText &&
+            event.nativeEvent.contentSize.height > lineHeight * fontScale * 1.5 + verticalPadding
+          )
+            setWrapped(true);
+          inputProps.onContentSizeChange?.(event);
+        }}
+        // The family sits ahead of `inputProps.style` so a caller may still
+        // override it -- the agent composer does, with the interface face.
+        style={[
+          composerStyles.input,
+          !leading && composerStyles.inputWithoutLeading,
+          fieldFont,
+          inputProps.style,
+          expanded && composerStyles.expandedInput,
+        ]}
+      />
+      <View
+        testID={expanded ? 'composer-expanded-actions' : undefined}
+        style={expanded ? composerStyles.expandedActions : composerStyles.compactActions}>
+        {expanded && <View style={composerStyles.expandedLeading}>{leading}</View>}
+        {controls}
+      </View>
     </Animated.View>
   );
 }
@@ -248,6 +292,26 @@ export const composerStyles = StyleSheet.create({
   },
   inputWithoutLeading: {
     paddingLeft: 12,
+  },
+  expandedComposer: {
+    flexDirection: 'column',
+    alignItems: 'stretch',
+    maxHeight: 190,
+  },
+  expandedInput: {
+    flex: 0,
+    width: '100%',
+    paddingHorizontal: 12,
+  },
+  compactActions: { flexDirection: 'row', alignItems: 'center' },
+  expandedActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 4,
+  },
+  expandedLeading: {
+    flex: 1,
+    alignItems: 'flex-start',
   },
   button: {
     width: 40,

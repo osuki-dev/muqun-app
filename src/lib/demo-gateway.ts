@@ -128,7 +128,11 @@ export function demoAgentSessionTree(): {
   const branch = session('demo-tree-branch', root.asid, 'Research branch');
   const nested = session('demo-tree-nested', branch.asid, 'Nested investigation');
   const leaves = Array.from({ length: 24 }, (_, index) =>
-    session(`demo-tree-leaf-${index + 1}`, nested.asid, `Leaf ${index + 1}`)
+    session(
+      `demo-tree-leaf-${index + 1}`,
+      nested.asid,
+      index === 23 ? 'Diagram examples' : index === 22 ? 'Diagram stress test' : `Leaf ${index + 1}`
+    )
   );
   return {
     root,
@@ -139,6 +143,46 @@ export function demoAgentSessionTree(): {
     },
   };
 }
+
+/** One long assistant message exercises diagram-row virtualization. */
+const DEMO_DIAGRAM_STRESS_OUTPUT = Array.from({ length: 31 }, (_, index) =>
+  [
+    `### Diagram ${index + 1}`,
+    '```mermaid',
+    `flowchart ${index % 2 === 0 ? 'TD' : 'LR'}`,
+    `  A[Request ${index + 1}] --> B{Valid?}`,
+    '  B -->|Yes| C[Process request]',
+    '  B -->|No| D[Return error]',
+    '  C --> E[Send response]',
+    '```',
+  ].join('\n')
+).join('\n\n');
+
+/** Diagram examples travel through the same message renderer as agent output. */
+const DEMO_DIAGRAM_OUTPUT = [
+  '```mermaid',
+  'flowchart LR',
+  '  A[Receive request] --> B{Valid?}',
+  '  B -->|Yes| C[Process request]',
+  '  B -->|No| D[Return error]',
+  '  C --> E[Send response]',
+  '```',
+  '',
+  'The request flow stays interactive inside this conversation.',
+  '',
+  '```mermaid',
+  'pie title Request outcomes',
+  '  "Completed": 75',
+  '  "Retried": 20',
+  '  "Failed": 5',
+  '```',
+  '',
+  'An invalid diagram keeps its source available:',
+  '',
+  '```mermaid',
+  'not-a-diagram',
+  '```',
+].join('\n');
 
 /** Read-only transcript fixture for the detail sheet reached from the tree above. */
 export function demoAgentSessionSnapshot(asid: string): AgentSessionSnapshot | null {
@@ -162,7 +206,15 @@ export function demoAgentSessionSnapshot(asid: string): AgentSessionSnapshot | n
       message_id: `${asid}-message-assistant`,
       role: 'assistant',
       ordinal: 0,
-      part: { type: 'text', text: `Snapshot output for ${asid}.` },
+      part: {
+        type: 'text',
+        text:
+          asid === 'demo-tree-leaf-23'
+            ? DEMO_DIAGRAM_STRESS_OUTPUT
+            : asid === 'demo-tree-leaf-24'
+              ? DEMO_DIAGRAM_OUTPUT
+              : `Snapshot output for ${asid}.`,
+      },
       seq: 2,
       updated_ms: 2,
     },

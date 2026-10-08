@@ -12,12 +12,12 @@ import { useThemeTokens, useToast } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
 import { useLingui } from '@lingui/react/macro';
 import { plural } from '@lingui/core/macro';
-import { EnrichedMarkdownText, type MarkdownStyle } from 'react-native-enriched-markdown';
+import { type MarkdownStyle } from 'react-native-enriched-markdown';
+import { DiagramMarkdown } from '@/components/diagram-markdown';
 
 import { PressableScale } from '@/components/pressable-scale';
 import { usePaneChatColors } from '@/components/pane-chat-blocks';
 import { useMonoFontFamily } from '@/hooks/use-user-fonts';
-import { markdownPaletteKey } from '@/lib/markdown-palette';
 import { isSafeExternalLink } from '@/lib/safe-link';
 import { MARKDOWN_CHUNK_CHARS, MARKDOWN_NATIVE_CEILING, capMarkdown } from '@/lib/markdown-cap';
 import { AGENT_TYPE } from '@/constants/agent-type';
@@ -182,8 +182,7 @@ export const BoundedMarkdown = memo(function BoundedMarkdown({
 
   return (
     <View style={[styles.stretch, containerStyle]} testID={testID}>
-      <EnrichedMarkdownText
-        key={markdownPaletteKey(markdownStyle)}
+      <DiagramMarkdown
         flavor={flavor}
         markdown={capped.text}
         markdownStyle={markdownStyle}

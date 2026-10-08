@@ -405,6 +405,10 @@ msgstr "Tác động lên terminal này, hoặc gửi yêu cầu cho tác nhân 
 msgid "Actions for {0}"
 msgstr "Thao tác cho {0}"
 
+#: src/app/diagram-viewer.tsx
+msgid "Actual size"
+msgstr "Kích thước thực"
+
 #: src/components/home-connections.tsx
 msgid "Add a gateway or an SSH host to start working."
 msgstr "Thêm Gateway hoặc host SSH để bắt đầu làm việc"
@@ -1027,6 +1031,10 @@ msgstr "Xoá ngữ cảnh và bắt đầu lại"
 msgid "Clear line"
 msgstr "Xóa dòng"
 
+#: src/components/home-recent-sessions.tsx
+msgid "Clear session search"
+msgstr "Xóa tìm kiếm phiên"
+
 #: src/i18n/labels.ts
 msgid "Clear terminal"
 msgstr "Xóa màn hình terminal"
@@ -1048,6 +1056,7 @@ msgstr "Đang xóa bộ nhớ đệm"
 msgid "Clearing…"
 msgstr "Đang xóa…"
 
+#: src/app/diagram-viewer.tsx
 #: src/components/sheet-scene.tsx
 msgid "Close"
 msgstr "Đóng"
@@ -1454,6 +1463,7 @@ msgstr "Đã sao chép vào bảng nhớ tạm"
 msgid "Copies it, ready to paste into a terminal"
 msgstr "Sao chép lệnh, sẵn sàng dán vào terminal"
 
+#: src/app/diagram-viewer.tsx
 #: src/components/asset-viewer.tsx
 #: src/components/skia-terminal.tsx
 msgid "Copy"
@@ -2285,6 +2295,10 @@ msgstr "Dấu vân tay"
 msgid "First prompt"
 msgstr "Yêu cầu đầu tiên"
 
+#: src/app/diagram-viewer.tsx
+msgid "Fit diagram"
+msgstr "Vừa khung hình"
+
 #: src/components/custom-theme-library.tsx
 msgid "Fix text contrast before applying this theme"
 msgstr "Điều chỉnh độ tương phản văn bản trước khi áp dụng giao diện này"
@@ -2858,10 +2872,6 @@ msgstr "Đang tải lệnh"
 msgid "Loading paired devices…"
 msgstr "Đang tải các thiết bị đã ghép nối…"
 
-#: src/components/home-recent-sessions.tsx
-msgid "Loading recent sessions…"
-msgstr "Đang tải các phiên gần đây…"
-
 #: src/app/servers/[serverId].tsx
 #: src/components/home-launch-actions.tsx
 #: src/components/home-overview.tsx
@@ -3234,6 +3244,10 @@ msgstr "Không có đầu vào"
 msgid "No matching commands. Try another word."
 msgstr "Không tìm thấy lệnh phù hợp. Thử từ khác"
 
+#: src/components/home-recent-sessions.tsx
+msgid "No matching sessions"
+msgstr "Không có phiên phù hợp"
+
 #. placeholder {0}: searchQuery.trim()
 #: src/components/agent-model-sheet.tsx
 msgid "No models match “{0}”."
@@ -3423,7 +3437,6 @@ msgstr "Không có gì đang chạy nền. Tách một lệnh dài khỏi thẻ 
 msgid "Nothing staged"
 msgstr "Chưa chuẩn bị gì"
 
-#: src/components/home-recent-sessions.tsx
 #: src/components/pane-chat-view.tsx
 msgid "Nothing to show yet."
 msgstr "Chưa có gì để hiển thị"
@@ -4483,6 +4496,7 @@ msgid "Search models or providers"
 msgstr "Tìm mô hình hoặc nhà cung cấp"
 
 #: src/components/agent-sessions-sheet.tsx
+#: src/components/home-recent-sessions.tsx
 msgid "Search sessions"
 msgstr "Tìm kiếm phiên"
 
@@ -6117,6 +6131,14 @@ msgstr "Không gian làm việc"
 #: src/components/session-map.tsx
 msgid "Workspaces"
 msgstr "Không gian làm việc"
+
+#: src/components/changes-sheet.tsx
+msgid "Worktree {name}"
+msgstr "Worktree tên {name}"
+
+#: src/components/changes-sheet.tsx
+msgid "Worktree {name}, {directory}"
+msgstr "Worktree tên {name}, {directory}"
 
 #: src/components/agent-worktree-sheet.tsx
 msgid "Worktree name"

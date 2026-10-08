@@ -1,0 +1,31 @@
+react-native-skia 3.0.8 (Android): avoid the optional Vulkan render-to-single-sampled
+path on Adreno, which can crash in vkCreateFramebuffer. Ordinary MSAA remains
+enabled. Remove when the upstream driver/Dawn workaround is available.
+Tracking: https://github.com/wcandillon/react-native-skia/issues/4148
+
+diff --git a/cpp/rnskia/RNDawnUtils.h b/cpp/rnskia/RNDawnUtils.h
+--- a/cpp/rnskia/RNDawnUtils.h
++++ b/cpp/rnskia/RNDawnUtils.h
+@@ -285,7 +285,6 @@ createDawnBackendContext(dawn::native::Instance *instance) {
+ 
+   // Primary device features — request everything Skia/Graphite can use
+   std::vector<wgpu::FeatureName> features = {
+-      wgpu::FeatureName::MSAARenderToSingleSampled,
+       wgpu::FeatureName::TransientAttachments,
+       wgpu::FeatureName::Unorm16TextureFormats,
+       wgpu::FeatureName::DualSourceBlending,
+@@ -329,6 +328,14 @@ createDawnBackendContext(dawn::native::Instance *instance) {
+       wgpu::FeatureName::OpaqueYCbCrAndroidForExternalTexture,
+ #endif
+   };
++  // Adreno 830 Vulkan crashes in vkCreateFramebuffer with this optional
++  // render-to-single-sampled path. Keep ordinary multisample attachments
++  // (and anti-aliasing) on Adreno until the driver/Dawn path is fixed.
++  if (adapterInfo.backendType != wgpu::BackendType::Vulkan ||
++      deviceName.find("Adreno") == std::string::npos) {
++    features.push_back(wgpu::FeatureName::MSAARenderToSingleSampled);
++  }
++
+ 
+   wgpu::Device device = requestDevice(matchedAdapter, features, true);
+   SkASSERT(device);

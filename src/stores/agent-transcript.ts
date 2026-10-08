@@ -6,10 +6,35 @@ import {
   type TimelineRenderGroup,
 } from '@/lib/agent-timeline-groups';
 import { classifyTool } from '@/lib/agent-tool-output';
+import { splitDiagramMarkdown } from '@/lib/diagram-markdown';
 
 /** One canonical timeline per mounted workbench; rows are derived, never mirrored back. */
 export function createAgentTranscriptStore() {
   return createStore<AgentTranscriptState>((set, get) => {
+    const markdownRows = new WeakMap<TimelineItem, TimelineItem[]>();
+    const renderItems = (item: TimelineItem): TimelineItem[] => {
+      if (item.role !== 'assistant' || item.part.type !== 'text') return [item];
+      const cached = markdownRows.get(item);
+      if (cached) return cached;
+      const parts = splitDiagramMarkdown(item.part.text);
+      // Virtualize each diagram in the existing list, never nest another list
+      // inside a message. Keep the canonical timeline intact for sync/copy.
+      const rows =
+        parts.length > 1 && parts.some((part) => part.source !== undefined)
+          ? parts
+              .filter((part) => part.markdown.trim().length > 0)
+              .map((part) => ({
+                ...item,
+                row_key:
+                  part.start === 0
+                    ? (item.row_key ?? item.id)
+                    : `${item.row_key ?? item.id}:markdown:${part.start}`,
+                part: { type: 'text' as const, text: part.markdown },
+              }))
+          : [item];
+      markdownRows.set(item, rows);
+      return rows;
+    };
     const rebuild = (timeline: TimelineItem[], config = get().config) => {
       const previous = get();
       const reconciled = reconcileInjectedContext(reconcileShellParts(timeline));
@@ -30,6 +55,7 @@ export function createAgentTranscriptStore() {
         const visibleStart = anchor >= 0 ? Math.min(anchor, fallbackStart) : fallbackStart;
         visible = reconciled.slice(visibleStart);
       }
+      visible = visible.flatMap(renderItems);
       const nextRows: Record<string, TimelineRenderGroup> = {};
       const keys: string[] = [];
       let preceding: TimelineItem | undefined;

@@ -48,7 +48,7 @@ import {
   LADDER,
   SettingsInfoRow,
   SettingsNavRow,
-  SettingsSection,
+  SettingsCard,
 } from '@/components/settings-chrome';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import {
@@ -164,7 +164,7 @@ async function deletePlannedCacheEntries(): Promise<boolean> {
   return failed;
 }
 
-export function SettingsStorage({ title }: { title: string }) {
+export function SettingsStorage() {
   const { t } = useLingui();
   const profile = useAppearanceProfile();
   const theme = useThemeTokens();
@@ -367,7 +367,7 @@ export function SettingsStorage({ title }: { title: string }) {
     : calculating;
 
   return (
-    <SettingsSection title={title}>
+    <SettingsCard flush>
       <SettingsInfoRow
         icon={Images}
         label={t`Images`}
@@ -519,7 +519,7 @@ export function SettingsStorage({ title }: { title: string }) {
           onPress={() => setArmed('themes')}
         />
       )}
-    </SettingsSection>
+    </SettingsCard>
   );
 }
 

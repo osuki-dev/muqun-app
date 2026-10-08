@@ -290,7 +290,7 @@ the recorder and releases the recording when it is replaced or torn down.
 `bun install` (files in `patches/`, paths relative to the package). Each patch
 file starts with a comment block that says what is wrong and when to drop it.
 
-- `react-native-enriched-markdown@1.1.0` (Android): `LineHeightSpan` now leaves
+- `react-native-enriched-markdown@1.1.1` (Android): `LineHeightSpan` now leaves
   spacer lines alone. `MarginBottomSpan` and `LineHeightSpan` both edit the
   line's font metrics, and Android runs them in a different order for the
   shadow-node measure than for the TextView's own layout, so a blank line before

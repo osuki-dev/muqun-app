@@ -405,6 +405,10 @@ msgstr "สั่งงานเทอร์มินัลนี้ หรื�
 msgid "Actions for {0}"
 msgstr "การดำเนินการกับ {0}"
 
+#: src/app/diagram-viewer.tsx
+msgid "Actual size"
+msgstr "ขนาดจริง"
+
 #: src/components/home-connections.tsx
 msgid "Add a gateway or an SSH host to start working."
 msgstr "เพิ่ม Gateway หรือโฮสต์ SSH เพื่อเริ่มทำงาน"
@@ -1027,6 +1031,10 @@ msgstr "ล้างบริบทแล้วเริ่มใหม่"
 msgid "Clear line"
 msgstr "ล้างบรรทัด"
 
+#: src/components/home-recent-sessions.tsx
+msgid "Clear session search"
+msgstr "ล้างการค้นหาเซสชัน"
+
 #: src/i18n/labels.ts
 msgid "Clear terminal"
 msgstr "ล้างเทอร์มินัล"
@@ -1048,6 +1056,7 @@ msgstr "กำลังล้างแคช"
 msgid "Clearing…"
 msgstr "กำลังล้าง…"
 
+#: src/app/diagram-viewer.tsx
 #: src/components/sheet-scene.tsx
 msgid "Close"
 msgstr "ปิด"
@@ -1454,6 +1463,7 @@ msgstr "คัดลอกไปยังคลิปบอร์ดแล้ว
 msgid "Copies it, ready to paste into a terminal"
 msgstr "คัดลอกให้พร้อมวางในเทอร์มินัล"
 
+#: src/app/diagram-viewer.tsx
 #: src/components/asset-viewer.tsx
 #: src/components/skia-terminal.tsx
 msgid "Copy"
@@ -2285,6 +2295,10 @@ msgstr "ลายนิ้วมือ"
 msgid "First prompt"
 msgstr "คำสั่งแรก"
 
+#: src/app/diagram-viewer.tsx
+msgid "Fit diagram"
+msgstr "ปรับแผนภาพให้พอดี"
+
 #: src/components/custom-theme-library.tsx
 msgid "Fix text contrast before applying this theme"
 msgstr "แก้ไขความต่างระดับสีของข้อความก่อนใช้ธีมนี้"
@@ -2858,10 +2872,6 @@ msgstr "กำลังโหลดคำสั่ง"
 msgid "Loading paired devices…"
 msgstr "กำลังโหลดอุปกรณ์ที่จับคู่…"
 
-#: src/components/home-recent-sessions.tsx
-msgid "Loading recent sessions…"
-msgstr "กำลังโหลดเซสชันล่าสุด…"
-
 #: src/app/servers/[serverId].tsx
 #: src/components/home-launch-actions.tsx
 #: src/components/home-overview.tsx
@@ -3234,6 +3244,10 @@ msgstr "ไม่มีอินพุต"
 msgid "No matching commands. Try another word."
 msgstr "ไม่มีคำสั่งที่ตรงกัน ลองใช้คำอื่น"
 
+#: src/components/home-recent-sessions.tsx
+msgid "No matching sessions"
+msgstr "ไม่มีเซสชันที่ตรงกัน"
+
 #. placeholder {0}: searchQuery.trim()
 #: src/components/agent-model-sheet.tsx
 msgid "No models match “{0}”."
@@ -3423,7 +3437,6 @@ msgstr "ยังไม่มีอะไรทำงานเบื้องห
 msgid "Nothing staged"
 msgstr "ไม่มีอะไรที่เตรียมไว้"
 
-#: src/components/home-recent-sessions.tsx
 #: src/components/pane-chat-view.tsx
 msgid "Nothing to show yet."
 msgstr "ยังไม่มีอะไรให้แสดง"
@@ -4483,6 +4496,7 @@ msgid "Search models or providers"
 msgstr "ค้นหาโมเดลหรือผู้ให้บริการ"
 
 #: src/components/agent-sessions-sheet.tsx
+#: src/components/home-recent-sessions.tsx
 msgid "Search sessions"
 msgstr "ค้นหาเซสชัน"
 
@@ -6117,6 +6131,14 @@ msgstr "พื้นที่ทำงาน"
 #: src/components/session-map.tsx
 msgid "Workspaces"
 msgstr "พื้นที่ทำงาน"
+
+#: src/components/changes-sheet.tsx
+msgid "Worktree {name}"
+msgstr "เวิร์กทรี {name}"
+
+#: src/components/changes-sheet.tsx
+msgid "Worktree {name}, {directory}"
+msgstr "เวิร์กทรี {name}, {directory}"
 
 #: src/components/agent-worktree-sheet.tsx
 msgid "Worktree name"

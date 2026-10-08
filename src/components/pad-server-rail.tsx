@@ -10,7 +10,7 @@ import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
-import { HomeRecentSessions } from '@/components/home-recent-sessions';
+import { HomeRecentSessions, useHomeRecentEntries } from '@/components/home-recent-sessions';
 import { useHomeCommands, type HomeCommandOptions } from '@/hooks/use-home-commands';
 import { useHomeRecentsStore } from '@/stores/home-recents';
 import { SectionLabel } from '@/components/settings-chrome';
@@ -115,6 +115,13 @@ export function PadServerRail({
   const background = useSurfaceBackground();
   /** Anything in the rail at all -- a paired gateway, or a saved SSH host. */
   const compactActions = servers.length > 0 || (sshHosts?.length ?? 0) > 0;
+  const recentEntries = useHomeRecentEntries({
+    servers,
+    hosts: sshHosts ?? [],
+    selectedServerId: selectedServerId ?? undefined,
+    activeConnection,
+    reachabilityByServer,
+  });
   const activeTheme = useThemeLibrary((state) => state.active);
   const themeAssets = useThemeLibrary((state) => state.activeAssets);
   const [failedLogo, setFailedLogo] = useState<string | null>(null);
@@ -234,36 +241,43 @@ export function PadServerRail({
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[styles.content, { gap: profile.rail.contentGap }]}
         keyboardShouldPersistTaps="handled">
-        <SectionLabel title={<Trans>Continue</Trans>} color={theme.colors.textMuted} />
-        <HomeRecentSessions
-          compact
-          servers={servers}
-          hosts={sshHosts ?? []}
-          selectedServerId={selectedServerId ?? undefined}
-          selectedPaneId={workbenchSelected ? undefined : (selectedPaneId ?? undefined)}
-          selectedAsid={workbenchSelected ? undefined : selectedAsid}
-          activeConnection={activeConnection}
-          reachabilityByServer={reachabilityByServer}
-          onOpen={(command) => {
-            void commands.dispatch(command);
-          }}
-        />
-        <SectionLabel title={<Trans>Connections</Trans>} color={theme.colors.textMuted} />
-        <HomeConnections
-          servers={servers}
-          hosts={sshHosts ?? []}
-          onOpenServer={(serverId) => {
-            const server = servers.find((item) => item.serverId === serverId);
-            if (server) onSelectServer(server);
-          }}
-          onOpenHost={(hostId) => {
-            const host = sshHosts?.find((item) => item.id === hostId);
-            if (host && onSelectSshHost) onSelectSshHost(host);
-          }}
-          onManage={() => void commands.manageConnections()}
-          nowMs={nowMs}
-          activeConnection={activeConnection}
-        />
+        {recentEntries.length > 0 ? (
+          <>
+            <SectionLabel title={<Trans>Continue</Trans>} color={theme.colors.textMuted} />
+            <HomeRecentSessions
+              compact
+              servers={servers}
+              hosts={sshHosts ?? []}
+              selectedServerId={selectedServerId ?? undefined}
+              selectedPaneId={workbenchSelected ? undefined : (selectedPaneId ?? undefined)}
+              selectedAsid={workbenchSelected ? undefined : selectedAsid}
+              available={recentEntries}
+              onOpen={(command) => {
+                void commands.dispatch(command);
+              }}
+            />
+          </>
+        ) : null}
+        {compactActions ? (
+          <>
+            <SectionLabel title={<Trans>Connections</Trans>} color={theme.colors.textMuted} />
+            <HomeConnections
+              servers={servers}
+              hosts={sshHosts ?? []}
+              onOpenServer={(serverId) => {
+                const server = servers.find((item) => item.serverId === serverId);
+                if (server) onSelectServer(server);
+              }}
+              onOpenHost={(hostId) => {
+                const host = sshHosts?.find((item) => item.id === hostId);
+                if (host && onSelectSshHost) onSelectSshHost(host);
+              }}
+              onManage={() => void commands.manageConnections()}
+              nowMs={nowMs}
+              activeConnection={activeConnection}
+            />
+          </>
+        ) : null}
       </ScrollView>
 
       {/* Three explained rows while the rail is empty, three glyphs once it is

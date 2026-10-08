@@ -1,0 +1,24 @@
+# A long draft uses the full field width; sending in offline demo restores the compact row.
+
+# section focus
+press "${TARGET}"
+
+# section type
+type "A long draft should use the full composer width rather than reserve an empty column above the attachment and send buttons. More words keep the message naturally wrapped while the controls sit below the text."
+wait stable 400 5000
+
+# section visible
+is visible "${TARGET}"
+
+# section hidden
+is hidden "${TARGET}"
+
+# section shot
+screenshot "shots/composer-wrapped.png"
+
+# section send
+press "${TARGET}"
+wait stable 400 5000
+
+# section close
+back --system

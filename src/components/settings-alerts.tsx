@@ -9,13 +9,13 @@
 import { useLingui } from '@lingui/react/macro';
 import { Platform } from 'react-native';
 
-import { SettingsSection, SettingsToggleRow } from '@/components/settings-chrome';
+import { SettingsCard, SettingsToggleRow } from '@/components/settings-chrome';
 import { clearAgentWidget, isAgentWidgetSupported } from '@/lib/agent-widget';
 import { endAgentActivity, isLiveActivitySupported } from '@/lib/live-activity';
 import { useRenderTally } from '@/lib/render-tally';
 import { useAppSettings } from '@/stores/app-settings';
 
-export function SettingsAlerts({ title }: { title: string }) {
+export function SettingsAlerts() {
   const { t } = useLingui();
   useRenderTally('SettingsAlerts');
 
@@ -28,7 +28,7 @@ export function SettingsAlerts({ title }: { title: string }) {
   const liveActivitySupported = isLiveActivitySupported();
   const agentWidgetSupported = isAgentWidgetSupported();
   return (
-    <SettingsSection title={title}>
+    <SettingsCard flush>
       <SettingsToggleRow
         label={t`Haptic feedback`}
         detail={t`Confirm taps, pairing, and gateway events.`}
@@ -77,6 +77,6 @@ export function SettingsAlerts({ title }: { title: string }) {
           }}
         />
       ) : null}
-    </SettingsSection>
+    </SettingsCard>
   );
 }

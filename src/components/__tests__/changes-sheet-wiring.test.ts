@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 
 const read = (path: string) => readFileSync(new URL(path, import.meta.url), 'utf8');
 const agentSheet = read('../agent-vcs-diff-sheet.tsx');
+const agentRoute = read('../../app/agent-vcs-diff.tsx');
 const paneSheet = read('../git-diff-view.tsx');
 const paneRoute = read('../../app/git-diff.tsx');
 const paneButton = read('../git-diff-button.tsx');
@@ -30,6 +31,24 @@ test('the agent wrapper asks the agent session routes', () => {
   expect(agentSheet).toContain('discard: discardAgentVcsFile');
   expect(agentSheet).toContain('diff: getAgentVcsDiff');
   expect(agentSheet).toContain('agentChangesApi(');
+});
+
+test('worktree context belongs only to the agent diff and follows its selected source', () => {
+  expect(agentRoute).toContain("changesSessionDirectory(sessionId, asid ?? '', state)");
+  expect(agentSheet).toContain('demoFixture.listWorktrees : listAgentWorktrees');
+  expect(agentSheet).toContain('void read(directory)');
+  expect(agentSheet).toContain('if (active)');
+  expect(agentSheet).toContain('inventory?.sessionId === sessionId && inventory.asid === asid');
+  expect(agentSheet).toContain("key={`${sessionId}:${asid}:${directory ?? ''}`}");
+  expect(agentSheet).toContain('worktree={worktree}');
+  expect(agentSheet).toContain('revision: worktreeRevision');
+  expect(agentSheet).toContain('changesWorktreeContext(directory, inventory, worktreeRevision)');
+  expect(agentRoute).toContain(
+    "isDemoActive() ? demoAgentChangesFixture(sessionId, asid ?? '') : undefined"
+  );
+  expect(sheet).toContain('testID="changes-worktree"');
+  expect(paneSheet).not.toContain('worktree=');
+  expect(paneRoute).not.toContain('worktree');
 });
 
 test('the pane wrapper asks the pane routes, gated on pane_vcs_files', () => {

@@ -27,6 +27,7 @@ import {
   nextDiffContext,
 } from '@/lib/change-tree';
 import { repoLine, type ChangeListing, type ChangesApi } from '@/lib/changes-api';
+import type { ChangesWorktreeContext } from '@/lib/changes-worktree-context';
 import {
   applyPatchPage,
   closeFile,
@@ -68,6 +69,8 @@ export interface ChangesSheetProps {
   api: ChangesApi;
   /** A file to open and land on once the uncommitted listing has it. */
   targetPath?: string;
+  /** Verified checkout context, not a branch or an inferred workspace label. */
+  worktree?: ChangesWorktreeContext;
 }
 
 /** One file's fetched patch, per scope and path (`lazy` listings). */
@@ -206,6 +209,31 @@ const ChangesRepoLine = memo(function ChangesRepoLine({ repo }: { repo: VcsRepoS
   );
 });
 
+function ChangesWorktreeLine({ worktree }: { worktree: ChangesWorktreeContext }) {
+  const { t } = useLingui();
+  const theme = useThemeTokens();
+  const mono = useMonoFontFamily();
+  const { name, directory } = worktree;
+  return (
+    <View
+      testID="changes-worktree"
+      accessible
+      accessibilityLabel={t`Worktree ${name}, ${directory}`}>
+      <Text variant="caption" color={theme.colors.text} numberOfLines={1} ellipsizeMode="middle">
+        <Trans>Worktree {name}</Trans>
+      </Text>
+      <Text
+        variant="caption"
+        color={theme.colors.textMuted}
+        numberOfLines={1}
+        ellipsizeMode="middle"
+        style={{ fontFamily: mono }}>
+        {directory}
+      </Text>
+    </View>
+  );
+}
+
 function patchKey(scope: VcsFilesMode, path: string): string {
   return `${scope}\n${path}`;
 }
@@ -222,6 +250,7 @@ export const ChangesSheet = memo(function ChangesSheet({
   testID,
   api,
   targetPath,
+  worktree,
 }: ChangesSheetProps) {
   const { t } = useLingui();
   const theme = useThemeTokens();
@@ -765,7 +794,14 @@ export const ChangesSheet = memo(function ChangesSheet({
       title={t`Changes`}
       // The caption line is always there, so the list under it never jumps.
       caption={loading && lastCaption ? lastCaption : summary}
-      detail={repo ? <ChangesRepoLine repo={repo} /> : undefined}
+      detail={
+        worktree || repo ? (
+          <View style={{ gap: 4 }}>
+            {worktree ? <ChangesWorktreeLine worktree={worktree} /> : null}
+            {repo ? <ChangesRepoLine repo={repo} /> : null}
+          </View>
+        ) : undefined
+      }
       headingTrailing={
         <View style={styles.trailing}>
           <PressableScale

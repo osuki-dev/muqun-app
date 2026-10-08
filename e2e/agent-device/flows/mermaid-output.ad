@@ -1,0 +1,13 @@
+# Closed Mermaid fences render inside an agent transcript and open the native viewer.
+# section open
+open "muqun://agent-subagent-detail?asid=demo-tree-leaf-24"
+wait stable 400 5000
+
+# section visible
+is visible "${TARGET}"
+
+# section press
+press "${TARGET}"
+
+# section close
+back --system

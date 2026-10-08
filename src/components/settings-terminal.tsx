@@ -16,7 +16,7 @@ import { ChevronRight } from 'lucide-react-native';
 import {
   SettingsBlock,
   SettingsNavRow,
-  SettingsSection,
+  SettingsCard,
   SettingsToggleRow,
 } from '@/components/settings-chrome';
 import { SettingsSegmented } from '@/components/settings-segmented';
@@ -29,7 +29,7 @@ import {
 import { useRenderTally } from '@/lib/render-tally';
 import { useAppSettings, type TerminalTextSize } from '@/stores/app-settings';
 
-export function SettingsTerminal({ title }: { title: string }) {
+export function SettingsTerminal() {
   const { t } = useLingui();
   // The runtime `_`, for the message descriptors in `@/i18n/labels`. Same
   // reason as `t`: it comes from the context, so React Compiler can see it
@@ -45,7 +45,7 @@ export function SettingsTerminal({ title }: { title: string }) {
   const update = useAppSettings((state) => state.update);
 
   return (
-    <SettingsSection title={title}>
+    <SettingsCard flush>
       <SettingsToggleRow
         label={t`Terminal key row`}
         detail={t`Show Esc, Tab, Ctrl and navigation keys above input.`}
@@ -101,6 +101,6 @@ export function SettingsTerminal({ title }: { title: string }) {
         detail={t`Add commands and custom key combinations.`}
         onPress={() => router.push('/commands?mode=terminal&manage=1' as Href)}
       />
-    </SettingsSection>
+    </SettingsCard>
   );
 }

@@ -2,6 +2,24 @@
   "version": 1,
   "flows": [
     {
+      "name": "home-continue-search",
+      "program": "flows/home-continue-search",
+      "tags": ["full", "workspace", "agents"],
+      "platforms": ["ios", "android"]
+    },
+    {
+      "name": "agent-changes-worktree",
+      "program": "flows/agent-changes-worktree",
+      "tags": ["full", "agents", "files"],
+      "platforms": ["ios", "android"]
+    },
+    {
+      "name": "mermaid-output",
+      "program": "flows/mermaid-output",
+      "tags": ["full", "agents"],
+      "platforms": ["ios", "android"]
+    },
+    {
       "name": "theme-document",
       "program": "flows/theme-document",
       "tags": ["full", "themes", "files"],
@@ -205,9 +223,319 @@
       "program": "flows/thai-language",
       "tags": ["full", "localization"],
       "platforms": ["ios", "android"]
+    },
+    {
+      "name": "settings-sheets",
+      "program": "flows/settings-sheets",
+      "tags": ["full", "settings"],
+      "platforms": ["ios", "android"]
+    },
+    {
+      "name": "composer-wrap",
+      "program": "flows/composer-wrap",
+      "tags": ["full", "terminal", "agents"],
+      "platforms": ["ios", "android"]
     }
   ],
   "programs": {
+    "flows/home-continue-search": [
+      { "include": "subflows/open-demo" },
+      { "run": "flows/home-continue-search.ad#choose-editorial" },
+      {
+        "target": { "id": "settings-home-layout-sheet" },
+        "mode": "visible",
+        "timeout": 15000,
+        "run": "flows/home-continue-search.ad#picker-ready"
+      },
+      {
+        "target": { "id": "settings-selection:(on|off):home-layout-editorial" },
+        "mode": "press",
+        "timeout": 15000,
+        "run": "flows/home-continue-search.ad#select-editorial"
+      },
+      {
+        "target": { "id": "settings-home-layout-sheet" },
+        "mode": "hidden",
+        "timeout": 15000,
+        "run": "flows/home-continue-search.ad#picker-closed"
+      },
+      { "run": "flows/home-continue-search.ad#fifteen" },
+      {
+        "target": { "id": "home-editorial" },
+        "mode": "visible",
+        "timeout": 15000,
+        "run": "flows/home-continue-search.ad#assert-visible"
+      },
+      {
+        "target": { "text": "Continue" },
+        "mode": "scroll",
+        "direction": "down",
+        "run": "flows/settings-home-layout.ad#seek-down"
+      },
+      {
+        "target": { "text": "Continue" },
+        "mode": "visible",
+        "run": "flows/home-continue-search.ad#assert-visible"
+      },
+      {
+        "target": { "id": "home-continue-search" },
+        "mode": "hidden",
+        "run": "flows/home-continue-search.ad#assert-hidden"
+      },
+      {
+        "target": { "text": "Sessions \\(15\\)" },
+        "mode": "scroll",
+        "direction": "down",
+        "run": "flows/settings-home-layout.ad#seek-down"
+      },
+      {
+        "target": { "text": "Sessions \\(15\\)" },
+        "mode": "visible",
+        "run": "flows/home-continue-search.ad#assert-visible"
+      },
+      { "run": "flows/home-continue-search.ad#scroll-top" },
+      { "run": "flows/home-continue-search.ad#sixteen" },
+      {
+        "target": { "id": "home-editorial" },
+        "mode": "visible",
+        "timeout": 15000,
+        "run": "flows/home-continue-search.ad#assert-visible"
+      },
+      {
+        "target": { "id": "home-continue-search" },
+        "mode": "scroll",
+        "direction": "down",
+        "run": "flows/settings-home-layout.ad#seek-down"
+      },
+      {
+        "target": { "id": "home-continue-search" },
+        "mode": "visible",
+        "run": "flows/home-continue-search.ad#assert-visible"
+      },
+      {
+        "target": { "text": "Continue" },
+        "mode": "hidden",
+        "run": "flows/home-continue-search.ad#assert-hidden"
+      },
+      {
+        "target": { "text": "Demo search hidden leaf" },
+        "mode": "hidden",
+        "run": "flows/home-continue-search.ad#assert-hidden"
+      },
+      { "run": "flows/home-continue-search.ad#hidden-match" },
+      {
+        "target": { "text": "Demo search hidden leaf" },
+        "mode": "visible",
+        "run": "flows/home-continue-search.ad#assert-visible"
+      },
+      {
+        "target": { "text": "Demo search leaf 1" },
+        "mode": "hidden",
+        "run": "flows/home-continue-search.ad#assert-hidden"
+      },
+      { "run": "flows/home-continue-search.ad#no-match" },
+      {
+        "target": { "id": "home-continue-no-matches" },
+        "mode": "visible",
+        "run": "flows/home-continue-search.ad#assert-visible"
+      },
+      { "run": "flows/home-continue-search.ad#clear" },
+      {
+        "target": { "id": "home-continue-no-matches" },
+        "mode": "hidden",
+        "run": "flows/home-continue-search.ad#assert-hidden"
+      },
+      {
+        "target": { "text": "Demo search leaf 1" },
+        "mode": "visible",
+        "run": "flows/home-continue-search.ad#assert-visible"
+      },
+      {
+        "target": { "text": "Demo search hidden leaf" },
+        "mode": "hidden",
+        "run": "flows/home-continue-search.ad#assert-hidden"
+      },
+      { "run": "flows/home-continue-search.ad#whitespace" },
+      {
+        "target": { "text": "Demo search leaf 1" },
+        "mode": "visible",
+        "run": "flows/home-continue-search.ad#assert-visible"
+      },
+      {
+        "target": { "text": "Demo search hidden leaf" },
+        "mode": "hidden",
+        "run": "flows/home-continue-search.ad#assert-hidden"
+      },
+      { "run": "flows/home-continue-search.ad#provider" },
+      {
+        "target": { "text": "Demo search leaf 1" },
+        "mode": "visible",
+        "run": "flows/home-continue-search.ad#assert-visible"
+      },
+      { "run": "flows/home-continue-search.ad#directory" },
+      {
+        "target": { "text": "Demo search leaf 1" },
+        "mode": "visible",
+        "run": "flows/home-continue-search.ad#assert-visible"
+      },
+      { "run": "flows/home-continue-search.ad#hidden-match" },
+      {
+        "target": { "text": "Demo search hidden leaf.*" },
+        "mode": "press",
+        "run": "flows/home-continue-search.ad#open-hidden-match"
+      },
+      {
+        "target": { "id": "agent-subagent-detail-transcript" },
+        "mode": "visible",
+        "timeout": 10000,
+        "run": "flows/home-continue-search.ad#assert-visible"
+      },
+      { "run": "flows/home-continue-search.ad#restore-layout" },
+      {
+        "target": { "id": "settings-home-layout-sheet" },
+        "mode": "visible",
+        "timeout": 15000,
+        "run": "flows/home-continue-search.ad#picker-ready"
+      },
+      {
+        "target": { "id": "settings-selection:(on|off):home-layout-classic" },
+        "mode": "press",
+        "timeout": 15000,
+        "run": "flows/home-continue-search.ad#select-classic"
+      },
+      {
+        "target": { "id": "settings-home-layout-sheet" },
+        "mode": "hidden",
+        "timeout": 15000,
+        "run": "flows/home-continue-search.ad#picker-closed"
+      },
+      { "run": "flows/home-continue-search.ad#cleanup" }
+    ],
+    "flows/agent-changes-worktree": [
+      { "include": "subflows/open-demo" },
+      { "run": "flows/agent-changes-worktree.ad#open" },
+      {
+        "target": { "id": "agent-vcs-diff-sheet" },
+        "mode": "visible",
+        "timeout": 10000,
+        "run": "flows/agent-changes-worktree.ad#sheet-visible"
+      },
+      {
+        "target": { "text": "Worktree quiet-river, /demo/worktrees/quiet-river" },
+        "mode": "visible",
+        "timeout": 10000,
+        "run": "flows/agent-changes-worktree.ad#worktree-context"
+      },
+      {
+        "target": { "text": "Branch feat/diff-context" },
+        "mode": "visible",
+        "timeout": 10000,
+        "run": "flows/agent-changes-worktree.ad#branch-context"
+      },
+      {
+        "target": { "id": "changes-refresh" },
+        "mode": "press",
+        "timeout": 10000,
+        "run": "flows/agent-changes-worktree.ad#refresh"
+      },
+      {
+        "target": { "text": "Worktree quiet-river, /demo/worktrees/quiet-river" },
+        "mode": "visible",
+        "timeout": 10000,
+        "run": "flows/agent-changes-worktree.ad#worktree-after-refresh"
+      },
+      { "run": "flows/agent-changes-worktree.ad#close" }
+    ],
+    "flows/mermaid-output": [
+      { "include": "subflows/open-demo" },
+      {
+        "run": "flows/mermaid-output.ad#open"
+      },
+      {
+        "target": {
+          "id": "agent-subagent-detail-transcript"
+        },
+        "mode": "visible",
+        "timeout": 15000,
+        "run": "flows/mermaid-output.ad#visible"
+      },
+      {
+        "target": {
+          "id": "mermaid-diagram-0-canvas"
+        },
+        "mode": "visible",
+        "timeout": 15000,
+        "run": "flows/mermaid-output.ad#visible"
+      },
+      {
+        "target": {
+          "id": "mermaid-diagram-0",
+          "text": "flowchart diagram.*"
+        },
+        "mode": "press",
+        "timeout": 15000,
+        "run": "flows/mermaid-output.ad#press"
+      },
+      {
+        "target": {
+          "id": "mermaid-diagram-0-expand"
+        },
+        "mode": "press",
+        "timeout": 15000,
+        "run": "flows/mermaid-output.ad#press"
+      },
+      {
+        "target": {
+          "id": "diagram-viewer-canvas"
+        },
+        "mode": "visible",
+        "timeout": 15000,
+        "run": "flows/mermaid-output.ad#visible"
+      },
+      {
+        "target": {
+          "id": "diagram-actual-size"
+        },
+        "mode": "press",
+        "timeout": 15000,
+        "run": "flows/mermaid-output.ad#press"
+      },
+      {
+        "target": {
+          "id": "diagram-fit"
+        },
+        "mode": "press",
+        "timeout": 15000,
+        "run": "flows/mermaid-output.ad#press"
+      },
+      {
+        "target": {
+          "text": "Copy"
+        },
+        "mode": "press",
+        "timeout": 15000,
+        "run": "flows/mermaid-output.ad#press"
+      },
+      {
+        "target": {
+          "id": "diagram-close"
+        },
+        "mode": "press",
+        "timeout": 15000,
+        "run": "flows/mermaid-output.ad#press"
+      },
+      {
+        "target": {
+          "id": "agent-subagent-detail-transcript"
+        },
+        "mode": "visible",
+        "timeout": 15000,
+        "run": "flows/mermaid-output.ad#visible"
+      },
+      {
+        "run": "flows/mermaid-output.ad#close"
+      }
+    ],
     "subflows/open-editor-composer": [
       {
         "run": "subflows/open-editor-composer.ad#open"
@@ -224,9 +552,7 @@
       }
     ],
     "flows/theme-document": [
-      {
-        "include": "subflows/open-demo"
-      },
+      { "include": "subflows/open-demo" },
       {
         "run": "flows/theme-document.ad#open"
       },
@@ -248,9 +574,7 @@
       }
     ],
     "flows/custom-themes": [
-      {
-        "include": "subflows/open-demo"
-      },
+      { "include": "subflows/open-demo" },
       {
         "when": {
           "env": "DEVICE_KIND",
@@ -309,6 +633,12 @@
         },
         "mode": "press",
         "run": "flows/custom-themes.ad#press"
+      },
+      {
+        "include": "subflows/open-settings-sheet",
+        "env": {
+          "SETTINGS_GROUP": "appearance"
+        }
       },
       {
         "target": {
@@ -457,6 +787,18 @@
         "run": "flows/custom-themes.ad#return-settings"
       },
       {
+        "include": "subflows/close-settings-sheet",
+        "env": {
+          "SETTINGS_GROUP": "appearance"
+        }
+      },
+      {
+        "include": "subflows/open-settings-sheet",
+        "env": {
+          "SETTINGS_GROUP": "storage"
+        }
+      },
+      {
         "target": {
           "id": "settings-remove-themes-row"
         },
@@ -472,6 +814,18 @@
         "mode": "visible",
         "timeout": 20000,
         "run": "flows/custom-themes.ad#storage-visible"
+      },
+      {
+        "include": "subflows/close-settings-sheet",
+        "env": {
+          "SETTINGS_GROUP": "storage"
+        }
+      },
+      {
+        "include": "subflows/open-settings-sheet",
+        "env": {
+          "SETTINGS_GROUP": "appearance"
+        }
       },
       {
         "when": {
@@ -542,50 +896,6 @@
         ]
       },
       {
-        "when": {
-          "env": "DEVICE_KIND",
-          "equals": "android-phone"
-        },
-        "steps": [
-          {
-            "run": "flows/custom-themes.ad#theme-row-clear-header-android"
-          }
-        ]
-      },
-      {
-        "when": {
-          "env": "DEVICE_KIND",
-          "equals": "android-tablet"
-        },
-        "steps": [
-          {
-            "run": "flows/custom-themes.ad#theme-row-clear-header-android-tablet"
-          }
-        ]
-      },
-      {
-        "when": {
-          "env": "DEVICE_KIND",
-          "equals": "iphone"
-        },
-        "steps": [
-          {
-            "run": "flows/custom-themes.ad#theme-row-clear-header"
-          }
-        ]
-      },
-      {
-        "when": {
-          "env": "DEVICE_KIND",
-          "equals": "ipad"
-        },
-        "steps": [
-          {
-            "run": "flows/custom-themes.ad#theme-row-clear-header"
-          }
-        ]
-      },
-      {
         "target": {
           "id": "settings-theme-row"
         },
@@ -627,6 +937,18 @@
         "run": "flows/custom-themes.ad#visible"
       },
       {
+        "include": "subflows/close-settings-sheet",
+        "env": {
+          "SETTINGS_GROUP": "appearance"
+        }
+      },
+      {
+        "include": "subflows/open-settings-sheet",
+        "env": {
+          "SETTINGS_GROUP": "storage"
+        }
+      },
+      {
         "target": {
           "id": "settings-remove-themes-row"
         },
@@ -642,9 +964,6 @@
         "mode": "visible",
         "timeout": 20000,
         "run": "flows/custom-themes.ad#storage-visible"
-      },
-      {
-        "run": "flows/custom-themes.ad#storage-anchor"
       },
       {
         "target": {
@@ -685,6 +1004,18 @@
         "mode": "visible",
         "timeout": 20000,
         "run": "flows/custom-themes.ad#storage-visible"
+      },
+      {
+        "include": "subflows/close-settings-sheet",
+        "env": {
+          "SETTINGS_GROUP": "storage"
+        }
+      },
+      {
+        "include": "subflows/open-settings-sheet",
+        "env": {
+          "SETTINGS_GROUP": "appearance"
+        }
       },
       {
         "when": {
@@ -756,17 +1087,15 @@
       }
     ],
     "flows/agent-collaboration": [
-      {
-        "include": "subflows/open-demo"
-      },
+      { "include": "subflows/open-demo" },
+      { "include": "subflows/restore-key-row" },
+      { "include": "subflows/open-demo" },
       {
         "run": "flows/agent-collaboration.ad"
       }
     ],
     "flows/large-file-preview": [
-      {
-        "include": "subflows/open-demo"
-      },
+      { "include": "subflows/open-demo" },
       {
         "include": "subflows/dismiss-logbox"
       },
@@ -1003,13 +1332,6 @@
       },
       {
         "target": {
-          "text": "Copied"
-        },
-        "mode": "visible",
-        "run": "flows/large-file-preview.ad#visible"
-      },
-      {
-        "target": {
           "text": "Close file"
         },
         "mode": "press",
@@ -1025,9 +1347,7 @@
       }
     ],
     "flows/artifacts": [
-      {
-        "include": "subflows/open-demo"
-      },
+      { "include": "subflows/open-demo" },
       {
         "include": "subflows/dismiss-logbox"
       },
@@ -1143,13 +1463,6 @@
       },
       {
         "run": "flows/artifacts.ad#s17"
-      },
-      {
-        "target": {
-          "text": "Open files"
-        },
-        "mode": "press",
-        "run": "flows/artifacts.ad#s1"
       },
       {
         "target": {
@@ -1484,9 +1797,7 @@
       }
     ],
     "flows/git-diff": [
-      {
-        "include": "subflows/open-demo"
-      },
+      { "include": "subflows/open-demo" },
       {
         "include": "subflows/dismiss-logbox"
       },
@@ -1528,15 +1839,6 @@
       },
       {
         "run": "flows/git-diff.ad#s7"
-      },
-      {
-        "run": "flows/git-diff.ad#s8"
-      },
-      {
-        "run": "flows/git-diff.ad#s9"
-      },
-      {
-        "run": "flows/git-diff.ad#s10"
       },
       {
         "run": "flows/git-diff.ad#s11"
@@ -1621,22 +1923,6 @@
       },
       {
         "target": {
-          "text": "Hide src/lib/demo-terminal-history.ts"
-        },
-        "mode": "scroll",
-        "direction": "up",
-        "timeout": 30000,
-        "run": "flows/git-diff.ad#s15"
-      },
-      {
-        "target": {
-          "text": "Hide src/lib/demo-terminal-history.ts"
-        },
-        "mode": "visible",
-        "run": "flows/git-diff.ad#s16"
-      },
-      {
-        "target": {
           "text": "Refresh changes"
         },
         "mode": "press",
@@ -1666,9 +1952,7 @@
       }
     ],
     "flows/attachments-ui": [
-      {
-        "include": "subflows/open-demo"
-      },
+      { "include": "subflows/open-demo" },
       {
         "target": {
           "text": "Send to agent"
@@ -1927,7 +2211,7 @@
       },
       {
         "target": {
-          "text": "APPEARANCE"
+          "id": "settings-appearance-row"
         },
         "mode": "visible",
         "timeout": 8000,
@@ -2192,6 +2476,12 @@
         "run": "flows/demo-tour.ad#s34"
       },
       {
+        "include": "subflows/open-settings-sheet",
+        "env": {
+          "SETTINGS_GROUP": "appearance"
+        }
+      },
+      {
         "target": {
           "text": "Colour mode"
         },
@@ -2207,6 +2497,18 @@
       },
       {
         "run": "flows/demo-tour.ad#s37"
+      },
+      {
+        "include": "subflows/close-settings-sheet",
+        "env": {
+          "SETTINGS_GROUP": "appearance"
+        }
+      },
+      {
+        "include": "subflows/open-settings-sheet",
+        "env": {
+          "SETTINGS_GROUP": "terminal"
+        }
       },
       {
         "target": {
@@ -2226,6 +2528,12 @@
       },
       {
         "run": "flows/demo-tour.ad#s40"
+      },
+      {
+        "include": "subflows/close-settings-sheet",
+        "env": {
+          "SETTINGS_GROUP": "terminal"
+        }
       },
       {
         "target": {
@@ -2329,9 +2637,7 @@
       }
     ],
     "flows/file-mentions": [
-      {
-        "include": "subflows/open-demo"
-      },
+      { "include": "subflows/open-demo" },
       {
         "run": "subflows/open-agent-pane.ad"
       },
@@ -2581,6 +2887,12 @@
         "run": "flows/i18n-shots.ad#s6"
       },
       {
+        "include": "subflows/open-settings-sheet",
+        "env": {
+          "SETTINGS_GROUP": "appearance"
+        }
+      },
+      {
         "target": {
           "text": "^(Colour mode|色彩模式)$"
         },
@@ -2593,6 +2905,22 @@
       },
       {
         "include": "subflows/dismiss-logbox"
+      },
+      {
+        "target": {
+          "id": "settings-language-row"
+        },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 15000,
+        "run": "flows/settings-sheets.ad#seek"
+      },
+      {
+        "target": {
+          "id": "settings-language-row"
+        },
+        "mode": "press",
+        "run": "flows/settings-sheets.ad#press"
       },
       {
         "target": {
@@ -2620,6 +2948,12 @@
       },
       {
         "include": "subflows/dismiss-logbox"
+      },
+      {
+        "include": "subflows/close-settings-sheet",
+        "env": {
+          "SETTINGS_GROUP": "appearance"
+        }
       },
       {
         "target": {
@@ -2744,6 +3078,12 @@
         "run": "flows/i18n-shots.ad#s28"
       },
       {
+        "include": "subflows/open-settings-sheet",
+        "env": {
+          "SETTINGS_GROUP": "appearance"
+        }
+      },
+      {
         "target": {
           "text": "Colour mode"
         },
@@ -2759,7 +3099,7 @@
       },
       {
         "target": {
-          "text": "Language, System"
+          "id": "settings-language-row"
         },
         "mode": "press",
         "run": "flows/i18n-shots.ad#s30"
@@ -2798,6 +3138,9 @@
       },
       {
         "include": "subflows/dismiss-logbox"
+      },
+      {
+        "run": "flows/settings-sheets.ad#close"
       },
       {
         "target": {
@@ -2930,6 +3273,22 @@
       },
       {
         "target": {
+          "id": "settings-appearance-row"
+        },
+        "mode": "scroll",
+        "direction": "down",
+        "run": "flows/settings-sheets.ad#seek",
+        "timeout": 15000
+      },
+      {
+        "target": {
+          "id": "settings-appearance-row"
+        },
+        "mode": "press",
+        "run": "flows/settings-sheets.ad#press"
+      },
+      {
+        "target": {
           "text": "色彩模式"
         },
         "mode": "visible",
@@ -3009,6 +3368,12 @@
         "run": "flows/light-shots.ad#s5"
       },
       {
+        "include": "subflows/open-settings-sheet",
+        "env": {
+          "SETTINGS_GROUP": "appearance"
+        }
+      },
+      {
         "target": {
           "text": "Colour mode"
         },
@@ -3030,43 +3395,73 @@
         "run": "flows/light-shots.ad#s8"
       },
       {
+        "include": "subflows/close-settings-sheet",
+        "env": {
+          "SETTINGS_GROUP": "appearance"
+        }
+      },
+      {
         "run": "flows/light-shots.ad#s9"
       },
       {
-        "run": "flows/light-shots.ad#s10"
+        "include": "subflows/open-settings-sheet",
+        "env": {
+          "SETTINGS_GROUP": "appearance"
+        }
       },
       {
         "run": "flows/light-shots.ad#s11"
       },
       {
-        "run": "flows/light-shots.ad#s12"
+        "include": "subflows/close-settings-sheet",
+        "env": {
+          "SETTINGS_GROUP": "appearance"
+        }
       },
       {
-        "run": "flows/light-shots.ad#s13"
+        "include": "subflows/open-settings-sheet",
+        "env": {
+          "SETTINGS_GROUP": "alerts"
+        }
       },
       {
         "run": "flows/light-shots.ad#s14"
       },
       {
-        "run": "flows/light-shots.ad#s15"
+        "include": "subflows/close-settings-sheet",
+        "env": {
+          "SETTINGS_GROUP": "alerts"
+        }
       },
       {
-        "run": "flows/light-shots.ad#s16"
+        "include": "subflows/open-settings-sheet",
+        "env": {
+          "SETTINGS_GROUP": "terminal"
+        }
       },
       {
         "run": "flows/light-shots.ad#s17"
       },
       {
-        "run": "flows/light-shots.ad#s18"
+        "include": "subflows/close-settings-sheet",
+        "env": {
+          "SETTINGS_GROUP": "terminal"
+        }
       },
       {
-        "run": "flows/light-shots.ad#s19"
+        "include": "subflows/open-settings-sheet",
+        "env": {
+          "SETTINGS_GROUP": "about"
+        }
       },
       {
         "run": "flows/light-shots.ad#s20"
       },
       {
-        "include": "subflows/dismiss-logbox"
+        "include": "subflows/close-settings-sheet",
+        "env": {
+          "SETTINGS_GROUP": "about"
+        }
       },
       {
         "target": {
@@ -3166,9 +3561,7 @@
       }
     ],
     "flows/new-task": [
-      {
-        "include": "subflows/open-demo"
-      },
+      { "include": "subflows/open-demo" },
       {
         "target": {
           "text": "Claude Code"
@@ -3495,9 +3888,7 @@
       }
     ],
     "flows/pad-workspace": [
-      {
-        "include": "subflows/open-demo"
-      },
+      { "include": "subflows/open-demo" },
       {
         "target": {
           "text": "(?i).*(don.?t allow|不允許|不允许).*"
@@ -3842,13 +4233,6 @@
         },
         "mode": "press",
         "run": "flows/pairing-manual.ad#s16"
-      },
-      {
-        "target": {
-          "text": "Install command copied"
-        },
-        "mode": "visible",
-        "run": "flows/pairing-manual.ad#s17"
       }
     ],
     "flows/settings": [
@@ -3864,7 +4248,7 @@
       },
       {
         "target": {
-          "text": "SERVERS"
+          "id": "settings-servers-row"
         },
         "mode": "visible",
         "timeout": 8000,
@@ -3872,6 +4256,12 @@
       },
       {
         "include": "subflows/dismiss-logbox"
+      },
+      {
+        "include": "subflows/open-settings-sheet",
+        "env": {
+          "SETTINGS_GROUP": "servers"
+        }
       },
       {
         "target": {
@@ -3895,13 +4285,25 @@
         "run": "flows/settings.ad#s5"
       },
       {
+        "include": "subflows/close-settings-sheet",
+        "env": {
+          "SETTINGS_GROUP": "servers"
+        }
+      },
+      {
         "target": {
-          "text": "APPEARANCE"
+          "id": "settings-appearance-row"
         },
         "mode": "scroll",
         "direction": "down",
         "timeout": 20000,
         "run": "flows/settings.ad#s6"
+      },
+      {
+        "include": "subflows/open-settings-sheet",
+        "env": {
+          "SETTINGS_GROUP": "appearance"
+        }
       },
       {
         "target": {
@@ -4238,13 +4640,25 @@
         "run": "flows/settings.ad#s45"
       },
       {
+        "include": "subflows/close-settings-sheet",
+        "env": {
+          "SETTINGS_GROUP": "appearance"
+        }
+      },
+      {
         "target": {
-          "text": "TERMINAL"
+          "id": "settings-terminal-row"
         },
         "mode": "scroll",
         "direction": "down",
         "timeout": 20000,
         "run": "flows/settings.ad#s46"
+      },
+      {
+        "include": "subflows/open-settings-sheet",
+        "env": {
+          "SETTINGS_GROUP": "terminal"
+        }
       },
       {
         "target": {
@@ -4374,13 +4788,25 @@
         "run": "flows/settings.ad#s55"
       },
       {
+        "include": "subflows/close-settings-sheet",
+        "env": {
+          "SETTINGS_GROUP": "terminal"
+        }
+      },
+      {
         "target": {
-          "text": "ALERTS"
+          "id": "settings-alerts-row"
         },
         "mode": "scroll",
         "direction": "down",
         "timeout": 20000,
         "run": "flows/settings.ad#s56"
+      },
+      {
+        "include": "subflows/open-settings-sheet",
+        "env": {
+          "SETTINGS_GROUP": "alerts"
+        }
       },
       {
         "target": {
@@ -4399,6 +4825,28 @@
         "direction": "down",
         "timeout": 20000,
         "run": "flows/settings.ad#scroll-notifications"
+      },
+      {
+        "when": {
+          "target": {
+            "id": "toggle-Haptic feedback",
+            "checked": false
+          },
+          "absent": false
+        },
+        "steps": [
+          {
+            "target": {
+              "id": "toggle-Haptic feedback",
+              "checked": false
+            },
+            "mode": "press",
+            "run": "flows/settings.ad#s60"
+          },
+          {
+            "run": "flows/settings.ad#s61"
+          }
+        ]
       },
       {
         "target": {
@@ -4445,6 +4893,12 @@
         "run": "flows/settings.ad#s65"
       },
       {
+        "include": "subflows/close-settings-sheet",
+        "env": {
+          "SETTINGS_GROUP": "alerts"
+        }
+      },
+      {
         "target": {
           "text": "SECURITY"
         },
@@ -4464,12 +4918,18 @@
       },
       {
         "target": {
-          "text": "STORAGE"
+          "id": "settings-storage-row"
         },
         "mode": "scroll",
         "direction": "down",
         "timeout": 20000,
         "run": "flows/settings.ad#storage-scroll"
+      },
+      {
+        "include": "subflows/open-settings-sheet",
+        "env": {
+          "SETTINGS_GROUP": "storage"
+        }
       },
       {
         "target": {
@@ -4527,9 +4987,6 @@
         "direction": "down",
         "timeout": 20000,
         "run": "flows/settings.ad#storage-scroll"
-      },
-      {
-        "run": "flows/settings.ad#storage-anchor"
       },
       {
         "target": {
@@ -4580,13 +5037,25 @@
         "run": "flows/settings.ad#storage-visible"
       },
       {
+        "include": "subflows/close-settings-sheet",
+        "env": {
+          "SETTINGS_GROUP": "storage"
+        }
+      },
+      {
         "target": {
-          "text": "ABOUT"
+          "id": "settings-about-row"
         },
         "mode": "scroll",
         "direction": "down",
         "timeout": 20000,
         "run": "flows/settings.ad#s68"
+      },
+      {
+        "include": "subflows/open-settings-sheet",
+        "env": {
+          "SETTINGS_GROUP": "about"
+        }
       },
       {
         "target": {
@@ -4616,6 +5085,12 @@
         "run": "flows/settings.ad#s71"
       },
       {
+        "include": "subflows/close-settings-sheet",
+        "env": {
+          "SETTINGS_GROUP": "about"
+        }
+      },
+      {
         "target": {
           "text": "Muqun settings stay on this device"
         },
@@ -4634,15 +5109,15 @@
         "include": "subflows/dismiss-logbox"
       },
       {
-        "target": {
-          "text": "Settings"
-        },
+        "target": { "text": "Settings" },
         "mode": "press",
         "run": "flows/settings.ad#s75"
       },
       {
         "when": {
-          "target": { "text": "SERVERS" },
+          "target": {
+            "id": "settings-servers-row"
+          },
           "absent": true
         },
         "steps": [
@@ -4655,11 +5130,17 @@
       },
       {
         "target": {
-          "text": "SERVERS"
+          "id": "settings-servers-row"
         },
         "mode": "visible",
         "timeout": 8000,
         "run": "flows/settings.ad#s76"
+      },
+      {
+        "include": "subflows/open-settings-sheet",
+        "env": {
+          "SETTINGS_GROUP": "appearance"
+        }
       },
       {
         "target": {
@@ -4737,6 +5218,18 @@
         "mode": "visible",
         "timeout": 8000,
         "run": "flows/settings.ad#s83"
+      },
+      {
+        "include": "subflows/close-settings-sheet",
+        "env": {
+          "SETTINGS_GROUP": "appearance"
+        }
+      },
+      {
+        "include": "subflows/open-settings-sheet",
+        "env": {
+          "SETTINGS_GROUP": "terminal"
+        }
       },
       {
         "when": {
@@ -4831,99 +5324,6 @@
         "run": "flows/settings.ad#s88"
       },
       {
-        "run": "flows/settings.ad#quick-actions-bottom"
-      },
-      {
-        "when": {
-          "env": "PLATFORM",
-          "equals": "ios"
-        },
-        "steps": [
-          {
-            "target": {
-              "text": "Quick actions, Add commands and custom key combinations"
-            },
-            "mode": "scroll",
-            "direction": "up",
-            "timeout": 45000,
-            "run": "flows/settings.ad#quick-actions-seek"
-          }
-        ]
-      },
-      {
-        "when": {
-          "env": "DEVICE_KIND",
-          "equals": "android-phone"
-        },
-        "steps": [
-          {
-            "target": {
-              "text": "Quick actions, Add commands and custom key combinations"
-            },
-            "mode": "scroll",
-            "direction": "up",
-            "timeout": 20000,
-            "run": "flows/settings.ad#quick-actions-seek-android-phone"
-          }
-        ]
-      },
-      {
-        "when": {
-          "env": "DEVICE_KIND",
-          "equals": "android-tablet"
-        },
-        "steps": [
-          {
-            "target": {
-              "text": "Quick actions, Add commands and custom key combinations"
-            },
-            "mode": "scroll",
-            "direction": "up",
-            "timeout": 20000,
-            "run": "flows/settings.ad#quick-actions-seek-android-tablet"
-          }
-        ]
-      },
-      {
-        "when": {
-          "env": "DEVICE_KIND",
-          "equals": "iphone"
-        },
-        "steps": [
-          {
-            "run": "flows/settings.ad#s89"
-          },
-          {
-            "run": "flows/settings.ad#clear-native-header"
-          }
-        ]
-      },
-      {
-        "when": {
-          "env": "DEVICE_KIND",
-          "equals": "ipad"
-        },
-        "steps": [
-          {
-            "run": "flows/settings.ad#s89-ipad"
-          },
-          {
-            "run": "flows/settings.ad#clear-native-header"
-          }
-        ]
-      },
-      {
-        "when": {
-          "env": "PLATFORM",
-          "equals": "android"
-        },
-        "steps": [
-          {
-            "run": "flows/settings.ad#s89-android"
-          }
-        ]
-      },
-      {
         "target": {
           "text": "Quick actions, Add commands and custom key combinations"
         },
@@ -4947,6 +5347,12 @@
       },
       {
         "run": "flows/settings.ad#s93"
+      },
+      {
+        "include": "subflows/close-settings-sheet",
+        "env": {
+          "SETTINGS_GROUP": "terminal"
+        }
       },
       {
         "target": {
@@ -4985,7 +5391,7 @@
       },
       {
         "target": {
-          "text": "SERVERS"
+          "id": "settings-servers-row"
         },
         "mode": "visible",
         "timeout": 8000,
@@ -4993,6 +5399,12 @@
       },
       {
         "include": "subflows/dismiss-logbox"
+      },
+      {
+        "include": "subflows/open-settings-sheet",
+        "env": {
+          "SETTINGS_GROUP": "appearance"
+        }
       },
       {
         "target": {
@@ -5138,7 +5550,7 @@
       },
       {
         "target": {
-          "text": "SERVERS"
+          "id": "settings-servers-row"
         },
         "mode": "visible",
         "timeout": 8000,
@@ -5146,6 +5558,12 @@
       },
       {
         "include": "subflows/dismiss-logbox"
+      },
+      {
+        "include": "subflows/open-settings-sheet",
+        "env": {
+          "SETTINGS_GROUP": "appearance"
+        }
       },
       {
         "target": {
@@ -5229,6 +5647,12 @@
         "run": "flows/settings-home-layout.ad#editorial-selected"
       },
       {
+        "include": "subflows/close-settings-sheet",
+        "env": {
+          "SETTINGS_GROUP": "appearance"
+        }
+      },
+      {
         "target": {
           "text": "Go back"
         },
@@ -5289,7 +5713,7 @@
       },
       {
         "target": {
-          "text": "SERVERS"
+          "id": "settings-servers-row"
         },
         "mode": "visible",
         "timeout": 8000,
@@ -5297,6 +5721,12 @@
       },
       {
         "include": "subflows/dismiss-logbox"
+      },
+      {
+        "include": "subflows/open-settings-sheet",
+        "env": {
+          "SETTINGS_GROUP": "appearance"
+        }
       },
       {
         "target": {
@@ -5330,6 +5760,12 @@
         "run": "flows/settings-home-layout.ad#classic-selected"
       },
       {
+        "include": "subflows/close-settings-sheet",
+        "env": {
+          "SETTINGS_GROUP": "appearance"
+        }
+      },
+      {
         "target": {
           "text": "Go back"
         },
@@ -5358,7 +5794,7 @@
       },
       {
         "target": {
-          "text": "SERVERS"
+          "id": "settings-servers-row"
         },
         "mode": "visible",
         "timeout": 8000,
@@ -5369,12 +5805,18 @@
       },
       {
         "target": {
-          "text": "ABOUT"
+          "id": "settings-about-row"
         },
         "mode": "scroll",
         "direction": "down",
         "timeout": 20000,
         "run": "flows/settings-guide.ad#seek"
+      },
+      {
+        "include": "subflows/open-settings-sheet",
+        "env": {
+          "SETTINGS_GROUP": "about"
+        }
       },
       {
         "target": {
@@ -5395,9 +5837,7 @@
       }
     ],
     "flows/slash-commands": [
-      {
-        "include": "subflows/open-demo"
-      },
+      { "include": "subflows/open-demo" },
       {
         "target": {
           "text": "Send to agent"
@@ -5702,9 +6142,7 @@
         "mode": "visible",
         "run": "flows/slash-commands.ad#s46"
       },
-      {
-        "include": "subflows/open-demo"
-      },
+      { "include": "subflows/open-demo" },
       {
         "target": {
           "text": "Switch to Claude Code"
@@ -5749,9 +6187,7 @@
         "mode": "visible",
         "run": "flows/slash-commands.ad#s54"
       },
-      {
-        "include": "subflows/open-demo"
-      },
+      { "include": "subflows/open-demo" },
       {
         "target": {
           "text": "Switch to zsh"
@@ -5810,6 +6246,14 @@
       {
         "target": {
           "text": "(?i)settings"
+        },
+        "mode": "press",
+        "timeout": 8000,
+        "run": "flows/ssh.ad#s1"
+      },
+      {
+        "target": {
+          "id": "settings-servers-row"
         },
         "mode": "press",
         "timeout": 8000,
@@ -6086,7 +6530,7 @@
       },
       {
         "target": {
-          "text": "SERVERS"
+          "id": "settings-servers-row"
         },
         "mode": "visible",
         "timeout": 8000,
@@ -6094,6 +6538,12 @@
       },
       {
         "include": "subflows/dismiss-logbox"
+      },
+      {
+        "include": "subflows/open-settings-sheet",
+        "env": {
+          "SETTINGS_GROUP": "appearance"
+        }
       },
       {
         "target": {
@@ -6131,6 +6581,12 @@
       },
       {
         "include": "subflows/dismiss-logbox"
+      },
+      {
+        "include": "subflows/close-settings-sheet",
+        "env": {
+          "SETTINGS_GROUP": "appearance"
+        }
       },
       {
         "run": "flows/store-shot-actions.ad#s11"
@@ -6223,9 +6679,7 @@
       }
     ],
     "flows/terminal-interactions": [
-      {
-        "include": "subflows/open-demo"
-      },
+      { "include": "subflows/open-demo" },
       {
         "point": [0.8, 0.45],
         "delta": [-0.55, 0],
@@ -6440,11 +6894,17 @@
       },
       {
         "target": {
-          "text": "APPEARANCE"
+          "id": "settings-appearance-row"
         },
         "mode": "visible",
         "timeout": 8000,
         "run": "flows/terminal-interactions.ad#s35"
+      },
+      {
+        "include": "subflows/open-settings-sheet",
+        "env": {
+          "SETTINGS_GROUP": "terminal"
+        }
       },
       {
         "target": {
@@ -6473,6 +6933,12 @@
       },
       {
         "run": "flows/terminal-interactions.ad#s39"
+      },
+      {
+        "include": "subflows/close-settings-sheet",
+        "env": {
+          "SETTINGS_GROUP": "terminal"
+        }
       },
       {
         "target": {
@@ -7094,6 +7560,12 @@
         "run": "flows/theme-shots.ad#s1"
       },
       {
+        "include": "subflows/open-settings-sheet",
+        "env": {
+          "SETTINGS_GROUP": "appearance"
+        }
+      },
+      {
         "target": {
           "text": "Colour mode"
         },
@@ -7265,6 +7737,12 @@
         "run": "subflows/capture-theme.ad#s1"
       },
       {
+        "include": "subflows/open-settings-sheet",
+        "env": {
+          "SETTINGS_GROUP": "appearance"
+        }
+      },
+      {
         "target": {
           "text": "Colour mode"
         },
@@ -7339,6 +7817,12 @@
       },
       {
         "include": "subflows/dismiss-logbox"
+      },
+      {
+        "include": "subflows/close-settings-sheet",
+        "env": {
+          "SETTINGS_GROUP": "appearance"
+        }
       },
       {
         "target": {
@@ -7640,9 +8124,7 @@
       }
     ],
     "subflows/motion-p2-capture": [
-      {
-        "include": "subflows/open-demo"
-      },
+      { "include": "subflows/open-demo" },
       {
         "target": {
           "text": "Show what is running"
@@ -7909,6 +8391,12 @@
         "run": "subflows/restore-key-row.ad#settings"
       },
       {
+        "include": "subflows/open-settings-sheet",
+        "env": {
+          "SETTINGS_GROUP": "terminal"
+        }
+      },
+      {
         "target": {
           "id": "toggle-Terminal key row"
         },
@@ -7933,12 +8421,16 @@
         },
         "mode": "visible",
         "run": "subflows/restore-key-row.ad#verify"
+      },
+      {
+        "include": "subflows/close-settings-sheet",
+        "env": {
+          "SETTINGS_GROUP": "terminal"
+        }
       }
     ],
     "flows/agent-shortcuts": [
-      {
-        "include": "subflows/open-demo"
-      },
+      { "include": "subflows/open-demo" },
       {
         "target": {
           "text": "Open quick actions"
@@ -7996,9 +8488,7 @@
       }
     ],
     "flows/switcher-sheet": [
-      {
-        "include": "subflows/open-demo"
-      },
+      { "include": "subflows/open-demo" },
       {
         "run": "flows/switcher-sheet.ad"
       }
@@ -8010,25 +8500,19 @@
       {
         "include": "subflows/restore-key-row"
       },
-      {
-        "include": "subflows/open-demo"
-      },
+      { "include": "subflows/open-demo" },
       {
         "run": "flows/soft-keyboard.ad"
       }
     ],
     "flows/personal-workspace": [
-      {
-        "include": "subflows/open-demo"
-      },
+      { "include": "subflows/open-demo" },
       {
         "run": "flows/personal-workspace.ad"
       }
     ],
     "flows/agent-session-tree": [
-      {
-        "include": "subflows/open-demo"
-      },
+      { "include": "subflows/open-demo" },
       {
         "run": "flows/agent-session-tree.ad#open"
       },
@@ -8066,7 +8550,7 @@
       },
       {
         "target": {
-          "text": "Snapshot output for demo-tree-leaf-24."
+          "id": "mermaid-diagram-0-canvas"
         },
         "mode": "visible",
         "timeout": 10000,
@@ -8171,6 +8655,12 @@
         "run": "flows/thai-language.ad#press"
       },
       {
+        "include": "subflows/open-settings-sheet",
+        "env": {
+          "SETTINGS_GROUP": "appearance"
+        }
+      },
+      {
         "include": "subflows/dismiss-logbox"
       },
       {
@@ -8221,15 +8711,15 @@
         "run": "flows/thai-language.ad#relaunch"
       },
       {
-        "target": {
-          "text": "การตั้งค่า"
-        },
+        "target": { "text": "การตั้งค่า" },
         "mode": "press",
         "run": "flows/thai-language.ad#press"
       },
       {
         "when": {
-          "target": { "id": "settings-home-layout-row" },
+          "target": {
+            "id": "settings-appearance-row"
+          },
           "absent": true
         },
         "steps": [
@@ -8239,6 +8729,12 @@
             "run": "flows/thai-language.ad#press"
           }
         ]
+      },
+      {
+        "include": "subflows/open-settings-sheet",
+        "env": {
+          "SETTINGS_GROUP": "appearance"
+        }
       },
       {
         "target": {
@@ -8299,6 +8795,304 @@
       },
       {
         "run": "flows/thai-language.ad#verify-english"
+      }
+    ],
+    "flows/settings-sheets": [
+      {
+        "include": "subflows/launch-home"
+      },
+      {
+        "target": {
+          "text": "Settings"
+        },
+        "mode": "press",
+        "timeout": 15000,
+        "run": "flows/settings-sheets.ad#press"
+      },
+      {
+        "target": {
+          "id": "settings-servers-row"
+        },
+        "mode": "visible",
+        "timeout": 15000,
+        "run": "flows/settings-sheets.ad#visible"
+      },
+      {
+        "include": "subflows/open-settings-sheet",
+        "env": {
+          "SETTINGS_GROUP": "servers"
+        }
+      },
+      {
+        "target": {
+          "text": "Panes on server cards"
+        },
+        "mode": "visible",
+        "timeout": 15000,
+        "run": "flows/settings-sheets.ad#visible"
+      },
+      {
+        "run": "flows/settings-sheets.ad#shot-servers"
+      },
+      {
+        "include": "subflows/close-settings-sheet",
+        "env": {
+          "SETTINGS_GROUP": "servers"
+        }
+      },
+      {
+        "target": {
+          "id": "settings-servers-row"
+        },
+        "mode": "visible",
+        "timeout": 15000,
+        "run": "flows/settings-sheets.ad#visible"
+      },
+      {
+        "include": "subflows/open-settings-sheet",
+        "env": {
+          "SETTINGS_GROUP": "appearance"
+        }
+      },
+      {
+        "target": {
+          "text": "Colour mode"
+        },
+        "mode": "visible",
+        "timeout": 15000,
+        "run": "flows/settings-sheets.ad#visible"
+      },
+      {
+        "run": "flows/settings-sheets.ad#shot-appearance"
+      },
+      {
+        "include": "subflows/close-settings-sheet",
+        "env": {
+          "SETTINGS_GROUP": "appearance"
+        }
+      },
+      {
+        "target": {
+          "id": "settings-appearance-row"
+        },
+        "mode": "visible",
+        "timeout": 15000,
+        "run": "flows/settings-sheets.ad#visible"
+      },
+      {
+        "include": "subflows/open-settings-sheet",
+        "env": {
+          "SETTINGS_GROUP": "terminal"
+        }
+      },
+      {
+        "target": {
+          "text": "Terminal key row"
+        },
+        "mode": "visible",
+        "timeout": 15000,
+        "run": "flows/settings-sheets.ad#visible"
+      },
+      {
+        "run": "flows/settings-sheets.ad#shot-terminal"
+      },
+      {
+        "include": "subflows/close-settings-sheet",
+        "env": {
+          "SETTINGS_GROUP": "terminal"
+        }
+      },
+      {
+        "target": {
+          "id": "settings-terminal-row"
+        },
+        "mode": "visible",
+        "timeout": 15000,
+        "run": "flows/settings-sheets.ad#visible"
+      },
+      {
+        "include": "subflows/open-settings-sheet",
+        "env": {
+          "SETTINGS_GROUP": "alerts"
+        }
+      },
+      {
+        "target": {
+          "id": "toggle-Haptic feedback"
+        },
+        "mode": "visible",
+        "timeout": 15000,
+        "run": "flows/settings-sheets.ad#visible"
+      },
+      {
+        "run": "flows/settings-sheets.ad#shot-alerts"
+      },
+      {
+        "include": "subflows/close-settings-sheet",
+        "env": {
+          "SETTINGS_GROUP": "alerts"
+        }
+      },
+      {
+        "target": {
+          "id": "settings-alerts-row"
+        },
+        "mode": "visible",
+        "timeout": 15000,
+        "run": "flows/settings-sheets.ad#visible"
+      },
+      {
+        "include": "subflows/open-settings-sheet",
+        "env": {
+          "SETTINGS_GROUP": "storage"
+        }
+      },
+      {
+        "target": {
+          "text": "Images"
+        },
+        "mode": "visible",
+        "timeout": 15000,
+        "run": "flows/settings-sheets.ad#visible"
+      },
+      {
+        "run": "flows/settings-sheets.ad#shot-storage"
+      },
+      {
+        "include": "subflows/close-settings-sheet",
+        "env": {
+          "SETTINGS_GROUP": "storage"
+        }
+      },
+      {
+        "target": {
+          "id": "settings-storage-row"
+        },
+        "mode": "visible",
+        "timeout": 15000,
+        "run": "flows/settings-sheets.ad#visible"
+      },
+      {
+        "include": "subflows/open-settings-sheet",
+        "env": {
+          "SETTINGS_GROUP": "about"
+        }
+      },
+      {
+        "target": {
+          "id": "settings-guide-row"
+        },
+        "mode": "visible",
+        "timeout": 15000,
+        "run": "flows/settings-sheets.ad#visible"
+      },
+      {
+        "run": "flows/settings-sheets.ad#shot-about"
+      },
+      {
+        "include": "subflows/close-settings-sheet",
+        "env": {
+          "SETTINGS_GROUP": "about"
+        }
+      },
+      {
+        "target": {
+          "id": "settings-about-row"
+        },
+        "mode": "visible",
+        "timeout": 15000,
+        "run": "flows/settings-sheets.ad#visible"
+      }
+    ],
+    "subflows/open-settings-sheet": [
+      {
+        "target": {
+          "id": "settings-${SETTINGS_GROUP}-row"
+        },
+        "mode": "scroll",
+        "timeout": 15000,
+        "run": "flows/settings-sheets.ad#seek",
+        "direction": "down"
+      },
+      {
+        "target": {
+          "id": "settings-${SETTINGS_GROUP}-row"
+        },
+        "mode": "press",
+        "timeout": 15000,
+        "run": "flows/settings-sheets.ad#press"
+      },
+      {
+        "target": {
+          "id": "settings-${SETTINGS_GROUP}-sheet"
+        },
+        "mode": "visible",
+        "timeout": 15000,
+        "run": "flows/settings-sheets.ad#visible"
+      }
+    ],
+    "subflows/close-settings-sheet": [
+      {
+        "run": "flows/settings-sheets.ad#close"
+      },
+      {
+        "target": {
+          "id": "settings-${SETTINGS_GROUP}-sheet"
+        },
+        "mode": "hidden",
+        "timeout": 15000,
+        "run": "flows/settings-sheets.ad#hidden"
+      }
+    ],
+    "flows/composer-wrap": [
+      { "include": "subflows/open-demo" },
+      {
+        "target": {
+          "id": "terminal-composer-input"
+        },
+        "mode": "press",
+        "run": "flows/composer-wrap.ad#focus"
+      },
+      {
+        "run": "flows/composer-wrap.ad#type"
+      },
+      {
+        "target": {
+          "id": "composer-expanded-actions"
+        },
+        "mode": "visible",
+        "timeout": 15000,
+        "run": "flows/composer-wrap.ad#visible"
+      },
+      {
+        "target": {
+          "id": "terminal-composer-input",
+          "text": "A long draft.*"
+        },
+        "mode": "visible",
+        "timeout": 15000,
+        "run": "flows/composer-wrap.ad#visible"
+      },
+      {
+        "run": "flows/composer-wrap.ad#shot"
+      },
+      {
+        "target": {
+          "text": "Send to agent"
+        },
+        "mode": "press",
+        "run": "flows/composer-wrap.ad#send"
+      },
+      {
+        "target": {
+          "id": "composer-expanded-actions"
+        },
+        "mode": "hidden",
+        "timeout": 15000,
+        "run": "flows/composer-wrap.ad#hidden"
+      },
+      {
+        "run": "flows/composer-wrap.ad#close"
       }
     ]
   }

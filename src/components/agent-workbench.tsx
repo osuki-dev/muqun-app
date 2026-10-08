@@ -1,3 +1,4 @@
+import { PAD_LAYOUT_MIN_WIDTH } from '@/lib/responsive-layout';
 import { useRootRouteName } from '@/hooks/use-root-route-name';
 import { useStore } from 'zustand';
 import { createAgentTranscriptStore } from '@/stores/agent-transcript';
@@ -23,6 +24,7 @@ import {
   NativeSyntheticEvent,
   RefreshControl,
   Share,
+  useWindowDimensions,
 } from 'react-native';
 import { useIsFocused, usePathname, useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
@@ -381,6 +383,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   const routeFocused = useIsFocused();
   const pathname = usePathname();
   const rootRouteName = useRootRouteName();
+  const { width } = useWindowDimensions();
   const globalOwnerRef = useRef<AgentWorkbenchGlobalOwner | null>(null);
   const [globalOwnerEpoch, setGlobalOwnerEpoch] = useState(0);
   const isGlobalOwner = useCallback(
@@ -438,6 +441,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   const surfaceBackground = useSurfaceBackground();
   const markdownStyle = usePaneChatMarkdownStyle();
   const listRef = useRef<LegendListRef>(null);
+  const [scrollToSentRow, setScrollToSentRow] = useState<string>();
   const injectDraftRef = useRef<((text: string) => void) | null>(null);
 
   /**
@@ -2740,17 +2744,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       order: orderKeyAfter(transcriptStore.getState().timeline),
     };
     setTimeline((prev) => [...prev, tempUserItem]);
-    // Sending is an explicit request to see the newest message, even when the
-    // reader was browsing history. Keep the keyboard in place: dismissing it
-    // while appending and animating an end scroll changes the viewport and
-    // offset together. Stream updates still respect the normal end threshold.
-    requestAnimationFrame(() => {
-      if (!ownsRoute() || activeAsidRef.current !== promptAsid) return;
-      // Keep keyboard reactions live while LegendList measures the appended
-      // row. Freezing until scrollToEnd resolves can miss a keyboard dismissal
-      // and leave the native offset one keyboard-height beyond the new end.
-      void listRef.current?.scrollToEnd({ animated: false });
-    });
+    setScrollToSentRow(`grp_${tempKey}`);
 
     // No optimistic title. Auto-titling happens on the engine's first turn and
     // arrives as `agent.session.updated`; a client-side guess made from the
@@ -4079,13 +4073,14 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       styles.timelineContent,
       {
         paddingTop: topInset + 10,
+        paddingHorizontal: width < PAD_LAYOUT_MIN_WIDTH ? 8 : 14,
         // The composer is an absolute dock and grows with session chips,
         // controls, approvals and the input row. A fixed 185pt reserve left
         // the last tool/image row underneath it on a tall dock.
-        paddingBottom: Math.max(bottomInset + 185, dockHeight + 16),
+        paddingBottom: Math.max(bottomInset + 185, dockHeight + 16) + 16,
       },
     ],
-    [topInset, bottomInset, dockHeight]
+    [topInset, bottomInset, dockHeight, width]
   );
 
   // Keep floating actions above the measured dock rather than above a guessed
@@ -4854,6 +4849,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
               store={transcriptStore}
               rowProps={rowProps}
               ref={listRef}
+              scrollToSentRow={scrollToSentRow}
               /*
             Lift only for a reader at the latest message. Someone who has
             scrolled up to read is not moved by a keyboard any more than by
@@ -5305,7 +5301,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   timelineContent: {
-    paddingHorizontal: 14,
     // The rows carry their own rhythm (`TRANSCRIPT_ROW_GAP`); a gap here as
     // well is what made a message boundary twice the gap of a row boundary.
     gap: 0,

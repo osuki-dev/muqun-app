@@ -1,5 +1,34 @@
 import { sortTimeline, timelineOrderKey, type TimelineItem } from './agent-protocol';
 
+/** Match the Gateway's exact ByPath transport suffix, never a loose text prefix. */
+function acknowledgeAttachments(
+  item: TimelineItem,
+  before: TimelineItem
+): TimelineItem | undefined {
+  if (item.part.type !== 'text' || before.part.type !== 'text') return;
+  const attachments = before.attachments;
+  if (
+    item.attachments?.length &&
+    attachments?.length &&
+    (item.attachments.length !== attachments.length ||
+      item.attachments.some((path, index) => path !== attachments[index]))
+  )
+    return;
+  const expected = attachments?.length
+    ? `${before.part.text}\n\nAttached files (on this host):${attachments.map((path) => `\n- ${path}`).join('')}`
+    : before.part.text;
+  if (
+    item.part.text.trim() !== before.part.text.trim() &&
+    item.part.text.trim() !== expected.trim()
+  )
+    return;
+  return {
+    ...item,
+    part: { ...item.part, text: before.part.text },
+    attachments: item.attachments?.length ? item.attachments : attachments,
+  };
+}
+
 /** Merge full part revisions; text-only updates keep the existing order. */
 export function upsertTimelineItems(
   previous: readonly TimelineItem[],
@@ -19,7 +48,7 @@ export function upsertTimelineItems(
       reordered ||=
         timelineOrderKey(before) !== timelineOrderKey(item) || before.ordinal !== item.ordinal;
       next[existing] = {
-        ...item,
+        ...(before.role === 'user' ? (acknowledgeAttachments(item, before) ?? item) : item),
         ...(before.order === undefined ? {} : { order: before.order }),
         ...(before.row_key === undefined ? {} : { row_key: before.row_key }),
       };
@@ -27,13 +56,12 @@ export function upsertTimelineItems(
       continue;
     }
     if (item.role === 'user' && item.part.type === 'text') {
-      const text = item.part.text.trim();
       const optimistic = next.findIndex(
         (it) =>
           it.id.startsWith('temp_') &&
           it.role === 'user' &&
           it.part.type === 'text' &&
-          it.part.text.trim() === text
+          acknowledgeAttachments(item, it) !== undefined
       );
       if (optimistic >= 0) {
         // The acknowledged row takes the optimistic row's place, exactly: its
@@ -45,7 +73,7 @@ export function upsertTimelineItems(
         // measured and remounts the row the moment the send is acknowledged.
         const { order, row_key: rowKey } = next[optimistic];
         next[optimistic] = {
-          ...item,
+          ...acknowledgeAttachments(item, next[optimistic])!,
           ...(order === undefined ? {} : { order }),
           row_key: rowKey ?? next[optimistic].id,
         };

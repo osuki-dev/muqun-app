@@ -25,6 +25,36 @@ function update(items: TimelineItem[], asid = 'session'): AgentDomainEvent {
 }
 
 describe('stream presentation batches', () => {
+  test('a ByPath attachment acknowledgement replaces the optimistic bubble and survives replay', () => {
+    const pending = item('temp_photo', 1, {
+      role: 'user',
+      part: { type: 'text', text: 'Look at this' },
+      attachments: ['/uploads/photo.webp'],
+      row_key: 'temp_photo',
+    });
+    const confirmed = item('confirmed_photo', 2, {
+      role: 'user',
+      part: {
+        type: 'text',
+        text: 'Look at this\n\nAttached files (on this host):\n- /uploads/photo.webp',
+      },
+    });
+    const result = upsertTimelineItems([pending], [confirmed]);
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe('confirmed_photo');
+    expect(result[0].row_key).toBe('temp_photo');
+    expect(result[0].part).toEqual(pending.part);
+    expect(result[0].attachments).toEqual(pending.attachments);
+    expect(upsertTimelineItems(result, [confirmed])).toEqual(result);
+    const different = {
+      ...confirmed,
+      part: {
+        type: 'text' as const,
+        text: 'Look at this\n\nAttached files (on this host):\n- /uploads/other.webp',
+      },
+    };
+    expect(upsertTimelineItems([pending], [different])).toHaveLength(2);
+  });
   test('200 revisions of two parts produce one update with the complete latest values', () => {
     const events: AgentDomainEvent[] = [];
     const batch = createAgentStreamBatch((event) => events.push(event));
