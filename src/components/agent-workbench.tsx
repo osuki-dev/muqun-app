@@ -1,3 +1,4 @@
+import { PAD_LAYOUT_MIN_WIDTH } from '@/lib/responsive-layout';
 import { useRootRouteName } from '@/hooks/use-root-route-name';
 import { useStore } from 'zustand';
 import { createAgentTranscriptStore } from '@/stores/agent-transcript';
@@ -23,6 +24,7 @@ import {
   NativeSyntheticEvent,
   RefreshControl,
   Share,
+  useWindowDimensions,
 } from 'react-native';
 import { useIsFocused, usePathname, useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
@@ -381,6 +383,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   const routeFocused = useIsFocused();
   const pathname = usePathname();
   const rootRouteName = useRootRouteName();
+  const { width } = useWindowDimensions();
   const globalOwnerRef = useRef<AgentWorkbenchGlobalOwner | null>(null);
   const [globalOwnerEpoch, setGlobalOwnerEpoch] = useState(0);
   const isGlobalOwner = useCallback(
@@ -4070,13 +4073,14 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       styles.timelineContent,
       {
         paddingTop: topInset + 10,
+        paddingHorizontal: width < PAD_LAYOUT_MIN_WIDTH ? 8 : 14,
         // The composer is an absolute dock and grows with session chips,
         // controls, approvals and the input row. A fixed 185pt reserve left
         // the last tool/image row underneath it on a tall dock.
         paddingBottom: Math.max(bottomInset + 185, dockHeight + 16) + 16,
       },
     ],
-    [topInset, bottomInset, dockHeight]
+    [topInset, bottomInset, dockHeight, width]
   );
 
   // Keep floating actions above the measured dock rather than above a guessed
@@ -5297,7 +5301,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   timelineContent: {
-    paddingHorizontal: 14,
     // The rows carry their own rhythm (`TRANSCRIPT_ROW_GAP`); a gap here as
     // well is what made a message boundary twice the gap of a row boundary.
     gap: 0,
