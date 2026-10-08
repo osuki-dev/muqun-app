@@ -24,6 +24,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useMarkdownFonts } from '@/hooks/use-user-fonts';
 import { createMarkdownStyle, markdownImageStyle } from '@/lib/markdown-style';
 import { ImagePreviewModal } from '@/components/image-preview-modal';
+import { AudioAssetPreview } from '@/components/audio-asset-preview';
 import { SheetFrame } from '@/components/sheet-ground';
 import { PressableScale } from '@/components/pressable-scale';
 import { formatAssetSize } from '@/lib/asset-display';
@@ -77,13 +78,10 @@ const documentImageResolver = messageImageResolver(NO_IMAGE_URIS, NO_PENDING_IMA
 /**
  * Read-only view of one artifact the agent produced.
  *
- * Every kind is displayed straight from the gateway rather than copied to a
- * cache file first: an image is fetched by the image library, which sends the
- * bearer token itself and owns the decode and the disk cache, and text is read
- * into a string because that is what the renderers want anyway. Nothing here
- * holds a whole file in the JS heap except text, which is size-capped by
- * `readAssetText` -- and that cap is now the only one: what arrives is drawn,
- * a block or a line at a time.
+ * Images use the image library's authenticated fetch and decode. Text is read
+ * through the bounded text reader. Audio is downloaded through the same
+ * authenticated transport into an owned temporary file, with a 10 MiB ceiling,
+ * so the native player can seek without exposing Gateway credentials to it.
  */
 export function AssetViewer({ asset, onClose }: { asset: SessionAsset; onClose: () => void }) {
   // A picture goes to the lightbox and its black matte; everything else is
@@ -631,6 +629,7 @@ function AssetBody({
   // one down rather than reusing it, and the two overlap for the length of a
   // short fade -- which is what makes a document read as having arrived rather
   // than as having replaced something.
+  if (presentation === 'audio') return <AudioAssetPreview asset={asset} />;
   if (tooLarge) {
     // The one refusal left, and the only one that says a number. It is reached
     // before a byte is read, so what it offers is the way to the file rather

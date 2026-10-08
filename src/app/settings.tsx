@@ -17,6 +17,7 @@ import {
   Terminal,
   ChevronRight,
   Server,
+  Mic,
   Settings2,
 } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
@@ -117,6 +118,7 @@ export default function SettingsScreen() {
               [
                 { route: '/settings-appearance', icon: Palette, label: t`Appearance` },
                 { route: '/settings-terminal', icon: Terminal, label: t`Terminal` },
+                { route: '/settings-voice', icon: Mic, label: t`Voice to text` },
                 { route: '/settings-alerts', icon: Bell, label: t`Alerts` },
                 { route: '/settings-servers', icon: Server, label: t`Servers` },
                 { route: '/settings-storage', icon: HardDrive, label: t`Storage` },

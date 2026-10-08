@@ -80,6 +80,12 @@ export const demoRecord: GatewayRecord = {
 };
 
 let active = false;
+let demoLazygit = false;
+
+export function demoLaunchLazygit(): string {
+  demoLazygit = true;
+  return 'pane-lazygit';
+}
 let demoAssistant: { kind: string; prompt: string; startedAt: number; instanceId: string } | null =
   null;
 
@@ -94,7 +100,10 @@ export function demoSendAgentText(target: string, text: string): void {
 }
 
 export function setDemoActive(value: boolean): void {
-  if (!value) demoAssistant = null;
+  if (!value) {
+    demoAssistant = null;
+    demoLazygit = false;
+  }
   active = value;
 }
 
@@ -131,7 +140,13 @@ export function demoAgentSessionTree(): {
     session(
       `demo-tree-leaf-${index + 1}`,
       nested.asid,
-      index === 23 ? 'Diagram examples' : index === 22 ? 'Diagram stress test' : `Leaf ${index + 1}`
+      index === 23
+        ? 'Diagram examples'
+        : index === 22
+          ? 'Diagram stress test'
+          : index === 21
+            ? 'Audio output preview'
+            : `Leaf ${index + 1}`
     )
   );
   return {
@@ -190,6 +205,57 @@ export function demoAgentSessionSnapshot(asid: string): AgentSessionSnapshot | n
   const sessions = [tree.root, ...Object.values(tree.childrenByParent).flat()];
   const info = sessions.find((session) => session.asid === asid);
   if (!info) return null;
+  if (asid === 'demo-tree-leaf-22') {
+    const timeline: TimelineItem[] = [
+      {
+        id: 'demo-audio-request',
+        message_id: 'audio-request',
+        role: 'user',
+        ordinal: 0,
+        part: { type: 'text', text: 'Create a short audio sample for playback.' },
+        seq: 1,
+        updated_ms: 1,
+      },
+      {
+        id: 'demo-audio-result',
+        message_id: 'audio-result',
+        role: 'assistant',
+        ordinal: 0,
+        part: {
+          type: 'tool',
+          id: 'demo-audio-call',
+          name: 'audio',
+          input: {},
+          output: '',
+          content: [
+            {
+              type: 'file',
+              uri: 'file:///demo/muqun/out/sample-tone.wav',
+              mime: 'audio/wav',
+              name: 'sample-tone.wav',
+            },
+          ],
+          metadata: {},
+          state: 'completed',
+        },
+        seq: 2,
+        updated_ms: 2,
+      },
+      ...Array.from({ length: 14 }, (_, index): TimelineItem => ({
+        id: `audio-note-${index}`,
+        message_id: `audio-note-${index}`,
+        role: index % 2 ? 'assistant' : 'user',
+        ordinal: 0,
+        part: {
+          type: 'text',
+          text: `Playback note ${index + 1}: scroll away from the audio output to stop playback. Returning to it requires pressing Play again.`,
+        },
+        seq: index + 3,
+        updated_ms: index + 3,
+      })),
+    ];
+    return { info, timeline, permissions: [], forms: [], inbox: [], seq: timeline.length };
+  }
   const child = tree.childrenByParent[asid]?.[0];
   const timeline: TimelineItem[] = [
     {
@@ -277,6 +343,9 @@ const workspacesRaw: RawEntity[] = [
  */
 function tabsRaw(): RawEntity[] {
   return [
+    ...(demoLazygit
+      ? [{ id: 'tab-lazygit', tab_id: 'tab-lazygit', workspace_id: 'ws-1', label: 'lazygit' }]
+      : []),
     {
       id: 'tab-1',
       tab_id: 'tab-1',
@@ -440,6 +509,16 @@ function demoPaneRows(paneId: string, advance: boolean): string[] {
         : i18n._(msg`Review finished. The theme fallback has test coverage. No changes were made.`),
     ].flatMap((line) => line.split('\n'));
   }
+  if (paneId === 'pane-lazygit')
+    return [
+      'lazygit · offline demo',
+      'Branch: fix/settings',
+      'Files                         Diff',
+      ' M src/app/settings.tsx       + Unified settings entries',
+      ' M src/components/composer.tsx',
+      '',
+      'Tab: next panel   Enter: open   ?: help   q: quit',
+    ];
   if (paneId === 'pane-2') return NVIM_OUTPUT;
   if (paneId === 'pane-3') return ZSH_OUTPUT;
   if (paneId === 'pane-4') return GIT_OUTPUT;
@@ -598,6 +677,15 @@ function editorCommands() {
 }
 
 export function demoShortcuts(paneId: string) {
+  if (paneId === 'pane-lazygit')
+    return {
+      version: 8,
+      profile: 'lazygit',
+      configured: false,
+      keys: [...BASE_KEYS, { label: 'q', key: 'q', description: 'Quit' }, ...NAV_KEYS],
+      keyActions: [],
+      commands: [],
+    };
   if (paneId === 'pane-1') {
     return {
       version: 3,
@@ -768,6 +856,17 @@ function demoAssetModifiedAt(id: string): number {
 export function demoSessionAssets(): SessionAsset[] {
   const origin = { session_id: SESSION_ID, pane_id: 'pane-1', workspace_id: 'ws-1' };
   return [
+    {
+      id: 'as-demo-audio',
+      path: '~/code/muqun/out/sample-tone.wav',
+      name: 'sample-tone.wav',
+      kind: 'audio',
+      mime: 'audio/wav',
+      size: 256_044,
+      modified_unix_ms: demoAssetModifiedAt('as-demo-audio'),
+      origin,
+      previewable: true,
+    },
     {
       id: 'as-demo-report',
       path: '~/code/muqun/notes/dark-mode.md',
@@ -1086,6 +1185,43 @@ export function demoAssetText(assetId: string): string {
  * detour `expo-asset`'s own `Asset.fx` transformer makes React Native's
  * `<Image source={require(...)}>` take for exactly this case.
  */
+/** A quiet eight-second tone sequence for offline playback, with real WAV bytes. */
+export function demoAudioBytes(assetId: string): Uint8Array | null {
+  if (assetId !== 'as-demo-audio') return null;
+  const rate = 16_000;
+  const samples = rate * 8;
+  const bytes = new Uint8Array(44 + samples * 2);
+  const view = new DataView(bytes.buffer);
+  const writeTag = (offset: number, tag: string) => {
+    for (let index = 0; index < tag.length; index++) bytes[offset + index] = tag.charCodeAt(index);
+  };
+  writeTag(0, 'RIFF');
+  view.setUint32(4, bytes.length - 8, true);
+  writeTag(8, 'WAVE');
+  writeTag(12, 'fmt ');
+  view.setUint32(16, 16, true);
+  view.setUint16(20, 1, true);
+  view.setUint16(22, 1, true);
+  view.setUint32(24, rate, true);
+  view.setUint32(28, rate * 2, true);
+  view.setUint16(32, 2, true);
+  view.setUint16(34, 16, true);
+  writeTag(36, 'data');
+  view.setUint32(40, samples * 2, true);
+  for (let index = 0; index < samples; index++) {
+    const time = index / rate;
+    const beat = time % 2;
+    const envelope = Math.max(0, Math.min(1, beat / 0.05, (1.5 - beat) / 0.15));
+    const frequency = [261.63, 329.63, 392, 523.25][Math.floor(time / 2)];
+    view.setInt16(
+      44 + index * 2,
+      Math.round(Math.sin(time * frequency * Math.PI * 2) * envelope * 2000),
+      true
+    );
+  }
+  return bytes;
+}
+
 export function demoAssetContentUri(assetId: string): string {
   if (assetId !== 'as-demo-shot') return '';
   // The `?.` is not belt-and-braces: React Native's `.d.ts` declares a
@@ -1119,6 +1255,8 @@ export function demoHealth() {
       'agent_collaboration',
       PANE_CONTEXT_CAPABILITY,
       GIT_DIFF_CAPABILITY,
+      'pane_lazygit',
+      'agent_audio_assets',
     ],
     // The per-session capability list a current gateway answers with. The demo
     // session is a Herdr 0.9.0, so it carries collaboration; a demo that only
@@ -1158,21 +1296,36 @@ export function demoTabs(): GatewayEntity[] {
 }
 export function demoPanes(): GatewayEntity[] {
   return normalizeGatewayEntities(
-    demoAssistant
-      ? [
-          ...panesRaw,
-          {
-            id: 'pane-assistant',
-            pane_id: 'pane-assistant',
-            tab_id: 'tab-1',
-            workspace_id: 'ws-1',
-            label: i18n._(msg`Review assistant`),
-            agent: demoAssistant.kind,
-            agent_status: demoAssistantStatus(),
-            cwd: '~/code/muqun',
-          },
-        ]
-      : panesRaw,
+    [
+      ...(demoLazygit
+        ? [
+            {
+              id: 'pane-lazygit',
+              pane_id: 'pane-lazygit',
+              tab_id: 'tab-lazygit',
+              workspace_id: 'ws-1',
+              label: 'lazygit',
+              foreground_command: 'lazygit',
+              cwd: '~/code/muqun',
+            },
+          ]
+        : []),
+      ...(demoAssistant
+        ? [
+            ...panesRaw,
+            {
+              id: 'pane-assistant',
+              pane_id: 'pane-assistant',
+              tab_id: 'tab-1',
+              workspace_id: 'ws-1',
+              label: i18n._(msg`Review assistant`),
+              agent: demoAssistant.kind,
+              agent_status: demoAssistantStatus(),
+              cwd: '~/code/muqun',
+            },
+          ]
+        : panesRaw),
+    ],
     []
   );
 }

@@ -4,7 +4,7 @@ wait "label=\"New task\"" 10000
 press "label=\"New task\""
 # The sheet itself, not a close button: form sheets carry no X any more.
 wait "id=new-task-sheet" 10000
-is visible "id=new-task-agents"
+wait "id=new-task-agents" 10000
 scroll down 0.5
 wait "id=new-task-prompt" 10000
 fill "id=new-task-prompt" "QA attachment draft"

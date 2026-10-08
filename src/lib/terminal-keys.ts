@@ -287,10 +287,23 @@ export function isFullScreenTuiPane(
   paneTitle?: string | null,
   foregroundCommand?: string | null
 ): boolean {
+  if (isLazygitPane(profile, paneTitle, foregroundCommand)) return true;
   if (profile === 'editor') return true;
   if (foregroundCommand && EDITOR_TITLES.test(foregroundCommand.trim())) return true;
   if (profile) return false;
   return Boolean(paneTitle && EDITOR_TITLES.test(paneTitle.trim()));
+}
+
+/** Git TUIs own the screen but must never receive Vim editing commands. */
+export function isLazygitPane(
+  profile: string | null | undefined,
+  paneTitle?: string | null,
+  foregroundCommand?: string | null
+): boolean {
+  if (profile === 'lazygit') return true;
+  const program = foregroundCommand?.trim().split(/\s+/)[0]?.split('/').pop();
+  if (program === 'lazygit') return true;
+  return !profile && Boolean(paneTitle && /^(?:.*\/)?lazygit(?:\s|$)/.test(paneTitle.trim()));
 }
 
 /**

@@ -549,6 +549,14 @@ function RootContent() {
                   options={sheetRouteOptions('agent-workspace')}
                 />
                 <Stack.Screen name="agent-worktree" options={sheetRouteOptions('agent-worktree')} />
+                <Stack.Screen name="settings-voice" options={sheetRouteOptions('settings-voice')} />
+                <Stack.Screen
+                  name="voice-input"
+                  options={{
+                    ...sheetRouteOptions('voice-input'),
+                    sheetElevation: 0,
+                  }}
+                />
                 <Stack.Screen name="agent-context" options={sheetRouteOptions('agent-context')} />
                 <Stack.Screen name="agent-vcs-diff" options={sheetRouteOptions('agent-vcs-diff')} />
                 <Stack.Screen name="agent-tasks" options={sheetRouteOptions('agent-tasks')} />

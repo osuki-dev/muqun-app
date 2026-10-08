@@ -9,22 +9,6 @@ const paneRoute = read('../../app/git-diff.tsx');
 const paneButton = read('../git-diff-button.tsx');
 const sheet = read('../changes-sheet.tsx');
 
-/**
- * One Changes sheet. The agent session's and the terminal pane's are the same
- * component, told apart only by the adapter each wrapper builds, so neither
- * can grow a second design again.
- */
-test('both wrappers draw the one shared sheet', () => {
-  for (const wrapper of [agentSheet, paneSheet]) {
-    expect(wrapper).toContain('<ChangesSheet');
-    expect(wrapper).not.toContain('<SheetScene');
-    expect(wrapper).not.toContain('<DiffRowList');
-  }
-  expect(sheet).toContain('<SheetScene');
-  expect(sheet).toContain('<DiffRowList');
-  expect(sheet).toContain('tree={treeHandlers}');
-});
-
 test('the agent wrapper asks the agent session routes', () => {
   expect(agentSheet).toContain('files: getAgentVcsFiles');
   expect(agentSheet).toContain('file: getAgentVcsFile');

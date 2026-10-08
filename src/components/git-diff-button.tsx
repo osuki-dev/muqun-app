@@ -41,6 +41,7 @@ export function GitDiffButton({
   disabled,
   background,
   compact = false,
+  serverId,
 }: {
   sessionId: string;
   /** The selected pane, so the sheet asks about this checkout only. */
@@ -54,6 +55,7 @@ export function GitDiffButton({
   background: string;
   /** Pad docks have less vertical chrome even though they have more width. */
   compact?: boolean;
+  serverId?: string;
 }) {
   // `t` from the hook, not the global `t` from `@lingui/core/macro`.
   //
@@ -100,6 +102,8 @@ export function GitDiffButton({
           params: {
             sessionId,
             paneId,
+            serverId,
+            canLazygit: capabilities?.includes('pane_lazygit') ? '1' : '0',
             vcsFiles: gatewaySupportsPaneVcsFiles(capabilities) ? '1' : '0',
           },
         } as unknown as Href);

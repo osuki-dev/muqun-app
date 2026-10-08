@@ -101,6 +101,7 @@
     "react-native-nitro-fetch": "1.8.0",
     "react-native-nitro-image": "^0.15.2",
     "react-native-nitro-modules": "0.37.1",
+    "react-native-nitro-sound": "0.2.20",
     "react-native-nitro-text-decoder": "0.1.2",
     "react-native-nitro-websockets": "1.3.1",
     "react-native-quick-base64": "^3.0.1",
@@ -174,7 +175,8 @@
   },
   "patchedDependencies": {
     "react-native-enriched-markdown@1.1.1": "patches/react-native-enriched-markdown@1.1.1.patch",
-    "react-native-skia@3.0.8": "patches/react-native-skia@3.0.8.patch"
+    "react-native-skia@3.0.8": "patches/react-native-skia@3.0.8.patch",
+    "react-native-nitro-sound@0.2.20": "patches/react-native-nitro-sound@0.2.20.patch"
   },
   "trustedDependencies": [
     "react-native-skia",

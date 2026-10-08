@@ -1,0 +1,26 @@
+# Offline WAV playback exercises the real native decoder, without autoplay.
+wait "label=\"Open files\"" 10000
+press "label=\"Open files\""
+wait "id=\"artifacts-search\"" 10000
+fill "id=\"artifacts-search\"" "sample-tone"
+keyboard dismiss
+wait "label=\"Open sample-tone.wav\"" 10000
+press "label=\"Open sample-tone.wav\""
+wait "id=\"audio-playback-toggle\" label=\"Play audio\"" 10000
+press "id=\"audio-playback-toggle\" label=\"Play audio\""
+wait "id=\"audio-playback-toggle\" label=\"Pause audio\"" 10000
+press "id=\"audio-playback-toggle\" label=\"Pause audio\""
+wait "id=\"audio-playback-toggle\" label=\"Play audio\"" 10000
+screenshot "shots/audio-paused.png"
+press "id=\"audio-playback-toggle\" label=\"Play audio\""
+wait "id=\"audio-playback-toggle\" label=\"Replay audio\"" 15000
+press "id=\"audio-playback-toggle\" label=\"Replay audio\""
+wait "id=\"audio-playback-toggle\" label=\"Pause audio\"" 10000
+# Closing a playing preview must stop it and restore the file list.
+back --system
+wait "id=\"artifacts-search\"" 10000
+press "label=\"Open sample-tone.wav\""
+wait "id=\"audio-playback-toggle\" label=\"Play audio\"" 10000
+is hidden "id=\"audio-playback-toggle\" label=\"Pause audio\""
+back --system
+back --system

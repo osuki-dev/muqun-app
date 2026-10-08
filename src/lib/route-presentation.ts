@@ -71,6 +71,8 @@ export const sheetRoutePresentations: Readonly<Record<string, SheetPresentation>
   // The Skia farm: a canvas that takes every touch on it, edge to edge.
   simfarm: 'fullscreen',
   'new-task': 'sheet',
+  'voice-input': 'sheet',
+  'settings-voice': 'sheet',
   'home-target': 'sheet',
   'home-agents': 'sheet',
   // The agent's pickers. Every one of them is a destination -- pick a model,
@@ -159,6 +161,8 @@ export const sheetRouteKinds: Readonly<Record<string, SheetKind>> = {
   'new-task': 'picker',
   'web-service': 'picker',
   'agent-context': 'picker',
+  'voice-input': 'picker',
+  'settings-voice': 'picker',
   'agent-tasks': 'picker',
   'agent-shells': 'picker',
   'agent-guide': 'picker',
@@ -257,6 +261,8 @@ export const sheetRouteDetents: Readonly<Record<string, SheetDetents>> = {
   // have somewhere to come up to.
   'agent-worktree': 'expandable',
   'agent-context': 'expandable',
+  'voice-input': 'fitToContents',
+  'settings-voice': 'expandable',
   'agent-vcs-diff': 'expandable',
   // A short list with its own scroll root, so it takes a bounded viewport rather
   // than circular fit-to-content sizing.
@@ -348,6 +354,8 @@ export const sheetRouteContent: Readonly<Record<string, SheetContent>> = {
   // language sheet is twelve languages; the agent list grows with whatever the
   // reader has defined under `.opencode/agent`; the guide is a page of prose.
   'agent-context': 'list',
+  'voice-input': 'short',
+  'settings-voice': 'list',
   'agent-mode': 'list',
   'settings-font': 'list',
   'settings-language': 'list',

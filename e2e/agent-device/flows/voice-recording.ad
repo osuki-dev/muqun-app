@@ -1,0 +1,39 @@
+# A configured service enables native recording; cancel never uploads audio.
+
+# section configure
+wait "id=\"settings-voice-sheet\"" 10000
+fill "id=\"voice-service-url\"" "https://example.invalid/v1"
+keyboard dismiss
+fill "id=\"voice-service-key\"" "qa-placeholder-token"
+keyboard dismiss
+scroll down --until "id=\"voice-service-model\""
+fill "id=\"voice-service-model\"" "qa-transcription"
+keyboard dismiss
+scroll down --until "id=\"voice-settings-save\""
+press "id=\"voice-settings-save\""
+scroll down --until "label=\"Saved\""
+wait "label=\"Saved\"" 5000
+back --system
+back --system
+
+# section record
+wait "id=\"voice-input-open\"" 10000
+press "id=\"voice-input-open\""
+wait "label=\"Listening…\"" 15000
+is visible "id=\"voice-recording-stop\""
+screenshot "shots/voice-recording.png"
+press "id=\"voice-recording-cancel\""
+wait "id=\"terminal-composer-input\"" 10000
+is hidden "id=\"voice-recording-stop\""
+# A second recording proves cancel released the first recorder.
+press "id=\"voice-input-open\""
+wait "label=\"Listening…\"" 15000
+press "id=\"voice-recording-cancel\""
+wait "id=\"terminal-composer-input\"" 10000
+
+# section clear
+wait "id=\"settings-voice-sheet\"" 10000
+scroll down --until "id=\"voice-settings-clear\""
+press "id=\"voice-settings-clear\""
+wait "label=\"Voice to text disabled\"" 5000
+back --system
