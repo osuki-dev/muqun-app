@@ -1,7 +1,7 @@
 import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens } from '@osuki-dev/ui';
 import { useEffect, useRef, useState } from 'react';
-import { AppState, StyleSheet, View } from 'react-native';
+import { AppState, BackHandler, Platform, StyleSheet, View } from 'react-native';
 import { Image, type ImageSource } from 'expo-image';
 import Animated from 'react-native-reanimated';
 import { VideoView, type VideoPlayer, type VideoViewRef } from 'react-native-video';
@@ -114,6 +114,15 @@ function VideoPlayerCard({
   useEffect(() => {
     void session.setVisible(visible);
   }, [session, visible]);
+  useEffect(() => {
+    if (Platform.OS !== 'android' || !fullscreen) return;
+    // Subscribe when fullscreen opens so this takes priority over route back.
+    const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
+      video.current?.exitFullscreen();
+      return true;
+    });
+    return () => subscription.remove();
+  }, [fullscreen]);
   const playing = state.phase === 'playing';
   const error = state.phase === 'error';
   const loading = state.phase === 'loading';
