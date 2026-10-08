@@ -977,6 +977,36 @@ describe('native end-to-end gate', () => {
       await rm(directory, { recursive: true, force: true });
     }
   });
+  test('a small-phone sheet dismissal stays within the screen', async () => {
+    const directory = await mkdtemp(path.join(tmpdir(), 'muqun-e2e-phone-dismiss-'));
+    try {
+      await writeFile(path.join(directory, 'dismiss.ad'), 'back --system\n');
+      const calls: string[][] = [];
+      const runner = new NativeRunner(
+        suite,
+        directory,
+        directory,
+        async (args) => {
+          calls.push(args);
+          if (args[0] === 'snapshot')
+            return {
+              nodes: [
+                { ...node, type: 'Application', rect: { x: 0, y: 0, width: 390, height: 844 } },
+                { ...node, label: 'Sheet Grabber', rect: { x: 0, y: 0, width: 390, height: 844 } },
+              ],
+            };
+          return {};
+        },
+        {}
+      );
+      await runner.runSection('dismiss.ad', { PLATFORM: 'ios' });
+      const gesture = calls.find((args) => args[0] === 'gesture')!;
+      expect(Number(gesture[3]) + Number(gesture[5])).toBeLessThan(844);
+      expect(Number(gesture[5])).toBeGreaterThan(0);
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
+  });
   test('iPad sheet scrolling starts inside the form sheet', async () => {
     const directory = await mkdtemp(path.join(tmpdir(), 'muqun-e2e-sheet-scroll-'));
     try {
