@@ -1,0 +1,38 @@
+# Shared settings sheet navigation. Each guard verifies the destination frame.
+
+# section seek
+scroll down --pixels 160 --duration-ms 300
+
+# section press
+press "${TARGET}"
+
+# section visible
+is visible "${TARGET}"
+
+# section hidden
+is hidden "${TARGET}"
+
+# section close
+back --system
+wait stable 400 5000
+
+# section shot
+screenshot "shots/settings-sheets.png"
+
+# section shot-servers
+screenshot "shots/settings-servers.png"
+
+# section shot-appearance
+screenshot "shots/settings-appearance.png"
+
+# section shot-terminal
+screenshot "shots/settings-terminal.png"
+
+# section shot-alerts
+screenshot "shots/settings-alerts.png"
+
+# section shot-storage
+screenshot "shots/settings-storage.png"
+
+# section shot-about
+screenshot "shots/settings-about.png"

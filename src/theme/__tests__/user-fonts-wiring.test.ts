@@ -32,7 +32,11 @@ test('the router does not mount until the fonts have been registered', () => {
   // keeps the native splash up rather than showing a blank frame -- which is
   // the only reason gating the whole subtree is affordable.
   expect(layout).toContain('const fontsReady = useUserFontsReady();');
-  expect(layout).toContain('{fontsReady ? <RootContent /> : null}');
+  expect(
+    /fontsReady\s*\?\s*\(\s*<AppDiagramProvider>\s*<RootContent \/>\s*<\/AppDiagramProvider>\s*\)\s*:\s*null/.test(
+      layout
+    )
+  ).toBe(true);
 
   const hook = read('src/hooks/use-user-fonts.ts');
   // Settings hydration is inside the same effect as the registration: as two

@@ -8,14 +8,9 @@
  * selector on one component, and every change to any of them re-rendered all
  * of it.
  *
- * Card #683 took the two big controls out of this file entirely. The theme grid
- * and the language list were five preview cards and nine radio options built on
- * every visit to Settings, for two choices made once per install -- so each is
- * now a row that names its current answer and opens a sheet, and only the sheet
- * pays for the list. What is left inline is colour mode, which is the one
- * control here somebody flips on a Tuesday evening: it is a frequent toggle,
- * not a once-per-install decision, and a segmented control that is one tap from
- * the page should not become two.
+ * Mounted only when the Appearance sheet opens. Theme, font, language and Home
+ * layout retain their own selection sheets; colour mode and app icon stay in
+ * this group alongside the current selections.
  *
  * Theme and colour mode stay together, followed by font, app icon, and language.
  */
@@ -26,7 +21,7 @@ import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { Appearance, ScrollView, StyleSheet, View } from 'react-native';
 
-import { SettingsBlock, SettingsChoiceRow, SettingsSection } from '@/components/settings-chrome';
+import { SettingsBlock, SettingsChoiceRow, SettingsCard } from '@/components/settings-chrome';
 import { PressableScale } from '@/components/pressable-scale';
 import { useReskinTransition } from '@/components/reskin-transition';
 import { SettingsSegmented } from '@/components/settings-segmented';
@@ -39,7 +34,7 @@ import { useRenderTally } from '@/lib/render-tally';
 import { useAppSettings } from '@/stores/app-settings';
 import { themeVariant } from '@/constants/theme-packs';
 
-export function SettingsAppearance({ title }: { title: string }) {
+export function SettingsAppearance() {
   // `t` from the hook, not the global `t` from `@lingui/core/macro` -- see the
   // note at the top of the settings screen for why.
   const { t } = useLingui();
@@ -99,7 +94,7 @@ export function SettingsAppearance({ title }: { title: string }) {
   const fontValue = interfaceName === monoName ? interfaceName : interfaceName + ' / ' + monoName;
 
   return (
-    <SettingsSection title={title}>
+    <SettingsCard flush>
       <SettingsChoiceRow
         label={t`Home layout`}
         value={homeLayoutLabel}
@@ -164,7 +159,7 @@ export function SettingsAppearance({ title }: { title: string }) {
         testID="settings-language-row"
         onPress={() => router.push('/settings-language')}
       />
-    </SettingsSection>
+    </SettingsCard>
   );
 }
 

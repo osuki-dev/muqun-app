@@ -405,6 +405,10 @@ msgstr "이 터미널을 조작하거나 에이전트에게 지시 보내기"
 msgid "Actions for {0}"
 msgstr "{0} 작업"
 
+#: src/app/diagram-viewer.tsx
+msgid "Actual size"
+msgstr "실제 크기"
+
 #: src/components/home-connections.tsx
 msgid "Add a gateway or an SSH host to start working."
 msgstr "Gateway 또는 SSH 호스트를 추가하여 작업을 시작하세요"
@@ -1027,6 +1031,10 @@ msgstr "컨텍스트를 비우고 새로 시작"
 msgid "Clear line"
 msgstr "줄 지우기"
 
+#: src/components/home-recent-sessions.tsx
+msgid "Clear session search"
+msgstr "세션 검색 지우기"
+
 #: src/i18n/labels.ts
 msgid "Clear terminal"
 msgstr "터미널 지우기"
@@ -1048,6 +1056,7 @@ msgstr "캐시를 비우는 중"
 msgid "Clearing…"
 msgstr "비우는 중…"
 
+#: src/app/diagram-viewer.tsx
 #: src/components/sheet-scene.tsx
 msgid "Close"
 msgstr "닫기"
@@ -1454,6 +1463,7 @@ msgstr "클립보드에 복사됨"
 msgid "Copies it, ready to paste into a terminal"
 msgstr "복사합니다. 터미널에 바로 붙여넣을 수 있습니다"
 
+#: src/app/diagram-viewer.tsx
 #: src/components/asset-viewer.tsx
 #: src/components/skia-terminal.tsx
 msgid "Copy"
@@ -2285,6 +2295,10 @@ msgstr "지문"
 msgid "First prompt"
 msgstr "첫 지시"
 
+#: src/app/diagram-viewer.tsx
+msgid "Fit diagram"
+msgstr "화면에 맞춤"
+
 #: src/components/custom-theme-library.tsx
 msgid "Fix text contrast before applying this theme"
 msgstr "이 테마를 적용하기 전에 텍스트 대비를 조정하세요"
@@ -2858,10 +2872,6 @@ msgstr "명령 불러오는 중"
 msgid "Loading paired devices…"
 msgstr "페어링된 기기를 불러오는 중…"
 
-#: src/components/home-recent-sessions.tsx
-msgid "Loading recent sessions…"
-msgstr "최근 세션을 불러오는 중…"
-
 #: src/app/servers/[serverId].tsx
 #: src/components/home-launch-actions.tsx
 #: src/components/home-overview.tsx
@@ -3234,6 +3244,10 @@ msgstr "입력 없음"
 msgid "No matching commands. Try another word."
 msgstr "일치하는 명령이 없습니다. 다른 단어로 검색하세요"
 
+#: src/components/home-recent-sessions.tsx
+msgid "No matching sessions"
+msgstr "일치하는 세션이 없습니다"
+
 #. placeholder {0}: searchQuery.trim()
 #: src/components/agent-model-sheet.tsx
 msgid "No models match “{0}”."
@@ -3423,7 +3437,6 @@ msgstr "백그라운드에서 실행 중인 것이 없습니다. 도구 카드�
 msgid "Nothing staged"
 msgstr "준비된 것이 없습니다"
 
-#: src/components/home-recent-sessions.tsx
 #: src/components/pane-chat-view.tsx
 msgid "Nothing to show yet."
 msgstr "아직 표시할 내용이 없습니다"
@@ -4483,6 +4496,7 @@ msgid "Search models or providers"
 msgstr "모델이나 제공자 검색"
 
 #: src/components/agent-sessions-sheet.tsx
+#: src/components/home-recent-sessions.tsx
 msgid "Search sessions"
 msgstr "세션 검색"
 
@@ -6117,6 +6131,14 @@ msgstr "워크스페이스"
 #: src/components/session-map.tsx
 msgid "Workspaces"
 msgstr "워크스페이스"
+
+#: src/components/changes-sheet.tsx
+msgid "Worktree {name}"
+msgstr "워크트리 {name}"
+
+#: src/components/changes-sheet.tsx
+msgid "Worktree {name}, {directory}"
+msgstr "워크트리 {name}, {directory}"
 
 #: src/components/agent-worktree-sheet.tsx
 msgid "Worktree name"

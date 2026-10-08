@@ -405,6 +405,10 @@ msgstr "操作這個終端機，或給它的 Agent 下一條指令"
 msgid "Actions for {0}"
 msgstr "{0} 的操作"
 
+#: src/app/diagram-viewer.tsx
+msgid "Actual size"
+msgstr "原始尺寸"
+
 #: src/components/home-connections.tsx
 msgid "Add a gateway or an SSH host to start working."
 msgstr "新增 Gateway 或 SSH 主機即可開始工作"
@@ -1027,6 +1031,10 @@ msgstr "清空脈絡，重新開始"
 msgid "Clear line"
 msgstr "清除目前行"
 
+#: src/components/home-recent-sessions.tsx
+msgid "Clear session search"
+msgstr "清空會話搜尋"
+
 #: src/i18n/labels.ts
 msgid "Clear terminal"
 msgstr "清除終端機"
@@ -1048,6 +1056,7 @@ msgstr "正在清除快取"
 msgid "Clearing…"
 msgstr "正在清除…"
 
+#: src/app/diagram-viewer.tsx
 #: src/components/sheet-scene.tsx
 msgid "Close"
 msgstr "關閉"
@@ -1454,6 +1463,7 @@ msgstr "已複製到剪貼簿"
 msgid "Copies it, ready to paste into a terminal"
 msgstr "複製指令，可直接貼到終端機"
 
+#: src/app/diagram-viewer.tsx
 #: src/components/asset-viewer.tsx
 #: src/components/skia-terminal.tsx
 msgid "Copy"
@@ -2285,6 +2295,10 @@ msgstr "指紋"
 msgid "First prompt"
 msgstr "第一條指令"
 
+#: src/app/diagram-viewer.tsx
+msgid "Fit diagram"
+msgstr "符合畫面"
+
 #: src/components/custom-theme-library.tsx
 msgid "Fix text contrast before applying this theme"
 msgstr "請先修正文字對比度再套用此主題"
@@ -2858,10 +2872,6 @@ msgstr "正在載入指令"
 msgid "Loading paired devices…"
 msgstr "正在載入已配對的裝置…"
 
-#: src/components/home-recent-sessions.tsx
-msgid "Loading recent sessions…"
-msgstr "正在載入最近的工作階段…"
-
 #: src/app/servers/[serverId].tsx
 #: src/components/home-launch-actions.tsx
 #: src/components/home-overview.tsx
@@ -3234,6 +3244,10 @@ msgstr "無輸入"
 msgid "No matching commands. Try another word."
 msgstr "沒有符合的指令，換個關鍵字試試"
 
+#: src/components/home-recent-sessions.tsx
+msgid "No matching sessions"
+msgstr "沒有符合的會話"
+
 #. placeholder {0}: searchQuery.trim()
 #: src/components/agent-model-sheet.tsx
 msgid "No models match “{0}”."
@@ -3423,7 +3437,6 @@ msgstr "背景沒有任何工作。從工具卡片把長命令轉入背景，它
 msgid "Nothing staged"
 msgstr "沒有待處理的回溯"
 
-#: src/components/home-recent-sessions.tsx
 #: src/components/pane-chat-view.tsx
 msgid "Nothing to show yet."
 msgstr "目前還沒有內容"
@@ -4483,6 +4496,7 @@ msgid "Search models or providers"
 msgstr "搜尋模型或提供者"
 
 #: src/components/agent-sessions-sheet.tsx
+#: src/components/home-recent-sessions.tsx
 msgid "Search sessions"
 msgstr "搜尋會話"
 
@@ -6117,6 +6131,14 @@ msgstr "工作區"
 #: src/components/session-map.tsx
 msgid "Workspaces"
 msgstr "工作區"
+
+#: src/components/changes-sheet.tsx
+msgid "Worktree {name}"
+msgstr "工作樹 {name}"
+
+#: src/components/changes-sheet.tsx
+msgid "Worktree {name}, {directory}"
+msgstr "工作樹 {name}，{directory}"
 
 #: src/components/agent-worktree-sheet.tsx
 msgid "Worktree name"

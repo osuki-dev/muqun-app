@@ -12,7 +12,13 @@ import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { Button } from '@/components/themed-button';
 import { Skeleton } from '@/components/themed-skeleton';
 import { Image } from 'expo-image';
-import { type Href, useFocusEffect, useIsFocused, useRouter } from 'expo-router';
+import {
+  type Href,
+  useFocusEffect,
+  useIsFocused,
+  useLocalSearchParams,
+  useRouter,
+} from 'expo-router';
 import {
   ChevronRight,
   Play,
@@ -64,7 +70,13 @@ import {
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { HomeConnections } from '@/components/home-connections';
 import { HomeAttention } from '@/components/home-attention';
-import { HomeRecentSessions } from '@/components/home-recent-sessions';
+import {
+  HomeContinueSearch,
+  HomeRecentSessions,
+  useHomeRecentEntries,
+} from '@/components/home-recent-sessions';
+import { homeContinueSearchEnabled } from '@/lib/home-continue-search';
+import { demoContinueSearchEntries } from '@/lib/demo-recents';
 import { padLaunchLayoutEnabled } from '@/lib/home-pad-geometry';
 import {
   HomeLaunchActions,
@@ -626,6 +638,23 @@ export function HomeOverview({
     onPair: commands.pairGateway,
   });
 
+  const availableRecentEntries = useHomeRecentEntries({
+    servers: records,
+    hosts: sshRows,
+    selectedServerId: launchController.chosen?.serverId,
+    reachabilityByServer: padReachabilityByServer,
+    activeConnection,
+  });
+  const { homeContinueFixture } = useLocalSearchParams<{ homeContinueFixture?: string }>();
+  const demoSearchEntries = demoContinueSearchEntries(homeContinueFixture, isDemoRecord(record));
+  const recentEntries = demoSearchEntries ?? availableRecentEntries;
+  const [continueQuery, setContinueQuery] = useState('');
+  const searchContinue = homeContinueSearchEnabled(recentEntries.length);
+  const recentHeading = searchContinue ? (
+    <HomeContinueSearch query={continueQuery} onChange={setContinueQuery} />
+  ) : undefined;
+  const recentQuery = searchContinue ? continueQuery : '';
+
   function openServer(serverId: string, paneId?: string) {
     void commands.openServer(serverId, paneId);
   }
@@ -719,6 +748,7 @@ export function HomeOverview({
         {devAmbientLayer}
         <KeyboardAwareScrollView
           ref={overviewScroll}
+          keyboardShouldPersistTaps="handled"
           onContentSizeChange={restoreScroll}
           onScrollEndDrag={rememberScroll}
           onMomentumScrollEnd={rememberScroll}
@@ -882,21 +912,31 @@ export function HomeOverview({
                 )
               }
               recent={
-                !loading && !hydrationError ? (
+                !loading && !hydrationError && recentEntries.length > 0 ? (
                   <HomeRecentSessions
                     limit={padLaunch ? 8 : undefined}
                     linkStyle={padLaunch ? PAD_WORK_LINK : undefined}
                     selectedServerId={launchController.chosen?.serverId}
                     servers={records}
                     hosts={sshRows}
-                    reachabilityByServer={padReachabilityByServer}
-                    activeConnection={activeConnection}
+                    available={recentEntries}
+                    query={recentQuery}
                     onOpen={(command) => {
+                      // QA-only leaves already have read-only snapshots in the demo
+                      // detail sheet; never send them to a live agent workbench.
+                      if (demoSearchEntries && command.type === 'open-agent') {
+                        router.push({
+                          pathname: '/agent-subagent-detail',
+                          params: { asid: command.target.asid, sessionId: 'demo' },
+                        });
+                        return;
+                      }
                       void commands.dispatch(command);
                     }}
                   />
                 ) : undefined
               }
+              recentHeading={recentHeading}
               attention={
                 !loading && !hydrationError ? (
                   <HomeAttention
@@ -908,7 +948,10 @@ export function HomeOverview({
                 ) : undefined
               }
               connections={
-                !loading && !hydrationError && !sshLoading ? (
+                !loading &&
+                !hydrationError &&
+                !sshLoading &&
+                (records.length > 0 || sshRows.length > 0) ? (
                   <HomeConnections
                     servers={records}
                     hosts={sshRows}

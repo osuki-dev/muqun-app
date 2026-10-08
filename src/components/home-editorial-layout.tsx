@@ -80,6 +80,8 @@ export type HomeEditorialLayoutProps = {
   launches?: ReactNode;
   /** Recent sessions or panes, already wired by the parent. */
   recent?: ReactNode;
+  /** Replaces the Continue heading with a search control when inventory is large. */
+  recentHeading?: ReactNode;
   /** Genuine pending approvals or requests, already wired by the parent. */
   attention?: ReactNode;
   /** Reachable gateways and saved SSH hosts, already wired by the parent. */
@@ -106,6 +108,7 @@ export type HomeEditorialLayoutProps = {
 
 type EditorialSectionProps = {
   title: ReactNode;
+  heading?: ReactNode;
   children: ReactNode;
   borderColor: string;
   textColor: string;
@@ -118,6 +121,7 @@ type EditorialSectionProps = {
 
 function EditorialSection({
   title,
+  heading,
   children,
   borderColor,
   textColor,
@@ -128,9 +132,11 @@ function EditorialSection({
   return (
     <View style={[styles.section, { marginTop: first ? 0 : spacing.lg, marginBottom: 0 }]}>
       <View style={[styles.sectionHeader, { borderBottomColor: borderColor }]}>
-        <Text variant="heading" color={textColor} accessibilityRole="header" style={plate}>
-          {title}
-        </Text>
+        {heading ?? (
+          <Text variant="heading" color={textColor} accessibilityRole="header" style={plate}>
+            {title}
+          </Text>
+        )}
       </View>
       <View style={[styles.sectionContent, { marginTop: 8 }]}>{children}</View>
     </View>
@@ -196,6 +202,7 @@ export function HomeEditorialLayout({
   headerLeading,
   launches,
   recent,
+  recentHeading,
   attention,
   connections,
   controls,
@@ -538,13 +545,17 @@ export function HomeEditorialLayout({
               <View testID="home-pad-lower-band" style={styles.padWorkSections}>
                 {hasRecent ? (
                   <View testID="home-pad-continue">
-                    <Text
-                      variant="heading"
-                      accessibilityRole="header"
-                      color={theme.colors.text}
-                      style={[styles.padWorkTitle, scenePlate]}>
-                      {t`Continue`}
-                    </Text>
+                    {recentHeading ? (
+                      <View style={styles.padWorkTitle}>{recentHeading}</View>
+                    ) : (
+                      <Text
+                        variant="heading"
+                        accessibilityRole="header"
+                        color={theme.colors.text}
+                        style={[styles.padWorkTitle, scenePlate]}>
+                        {t`Continue`}
+                      </Text>
+                    )}
                     {recent}
                   </View>
                 ) : null}
@@ -674,6 +685,7 @@ export function HomeEditorialLayout({
                 textColor={theme.colors.text}
                 spacing={theme.spacing}
                 title={t`Continue`}
+                heading={recentHeading}
                 first={split}>
                 {recent}
               </EditorialSection>
@@ -754,6 +766,7 @@ export function HomeEditorialLayout({
                 textColor={theme.colors.text}
                 spacing={theme.spacing}
                 title={t`Continue`}
+                heading={recentHeading}
                 first>
                 {recent}
               </EditorialSection>
@@ -854,7 +867,8 @@ export function HomeEditorialLayout({
               textColor={theme.colors.text}
               spacing={theme.spacing}
               first={!hasArtwork}
-              title={t`Continue`}>
+              title={t`Continue`}
+              heading={recentHeading}>
               {recent}
             </EditorialSection>
           ) : null}

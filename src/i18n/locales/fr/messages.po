@@ -405,6 +405,10 @@ msgstr "Agir sur ce terminal, ou envoyer une consigne à son agent"
 msgid "Actions for {0}"
 msgstr "Actions pour {0}"
 
+#: src/app/diagram-viewer.tsx
+msgid "Actual size"
+msgstr "Taille réelle"
+
 #: src/components/home-connections.tsx
 msgid "Add a gateway or an SSH host to start working."
 msgstr "Ajoutez une passerelle ou un hôte SSH pour commencer"
@@ -1027,6 +1031,10 @@ msgstr "Vider le contexte et repartir de zéro"
 msgid "Clear line"
 msgstr "Effacer la ligne"
 
+#: src/components/home-recent-sessions.tsx
+msgid "Clear session search"
+msgstr "Effacer la recherche de sessions"
+
 #: src/i18n/labels.ts
 msgid "Clear terminal"
 msgstr "Effacer le terminal"
@@ -1048,6 +1056,7 @@ msgstr "Vidage du cache en cours"
 msgid "Clearing…"
 msgstr "Vidage…"
 
+#: src/app/diagram-viewer.tsx
 #: src/components/sheet-scene.tsx
 msgid "Close"
 msgstr "Fermer"
@@ -1454,6 +1463,7 @@ msgstr "Copié dans le presse-papiers"
 msgid "Copies it, ready to paste into a terminal"
 msgstr "La copie, prête à coller dans un terminal"
 
+#: src/app/diagram-viewer.tsx
 #: src/components/asset-viewer.tsx
 #: src/components/skia-terminal.tsx
 msgid "Copy"
@@ -2285,6 +2295,10 @@ msgstr "Empreinte"
 msgid "First prompt"
 msgstr "Première consigne"
 
+#: src/app/diagram-viewer.tsx
+msgid "Fit diagram"
+msgstr "Ajuster le diagramme"
+
 #: src/components/custom-theme-library.tsx
 msgid "Fix text contrast before applying this theme"
 msgstr "Corrigez le contraste du texte avant d’appliquer ce thème"
@@ -2858,10 +2872,6 @@ msgstr "Chargement des commandes"
 msgid "Loading paired devices…"
 msgstr "Chargement des appareils appairés…"
 
-#: src/components/home-recent-sessions.tsx
-msgid "Loading recent sessions…"
-msgstr "Chargement des sessions récentes…"
-
 #: src/app/servers/[serverId].tsx
 #: src/components/home-launch-actions.tsx
 #: src/components/home-overview.tsx
@@ -3234,6 +3244,10 @@ msgstr "Aucune entrée"
 msgid "No matching commands. Try another word."
 msgstr "Aucune commande correspondante. Essayez un autre mot"
 
+#: src/components/home-recent-sessions.tsx
+msgid "No matching sessions"
+msgstr "Aucune session correspondante"
+
 #. placeholder {0}: searchQuery.trim()
 #: src/components/agent-model-sheet.tsx
 msgid "No models match “{0}”."
@@ -3423,7 +3437,6 @@ msgstr "Rien ne tourne en arrière-plan. Détachez une commande longue depuis sa
 msgid "Nothing staged"
 msgstr "Rien de préparé"
 
-#: src/components/home-recent-sessions.tsx
 #: src/components/pane-chat-view.tsx
 msgid "Nothing to show yet."
 msgstr "Rien à afficher pour l’instant"
@@ -4483,6 +4496,7 @@ msgid "Search models or providers"
 msgstr "Rechercher des modèles ou des fournisseurs"
 
 #: src/components/agent-sessions-sheet.tsx
+#: src/components/home-recent-sessions.tsx
 msgid "Search sessions"
 msgstr "Rechercher des sessions"
 
@@ -6117,6 +6131,14 @@ msgstr "Espace de travail"
 #: src/components/session-map.tsx
 msgid "Workspaces"
 msgstr "Espaces de travail"
+
+#: src/components/changes-sheet.tsx
+msgid "Worktree {name}"
+msgstr "Worktree nommé {name}"
+
+#: src/components/changes-sheet.tsx
+msgid "Worktree {name}, {directory}"
+msgstr "Worktree nommé {name}, {directory}"
 
 #: src/components/agent-worktree-sheet.tsx
 msgid "Worktree name"

@@ -34,11 +34,13 @@ export type SheetDetents = 'full' | 'expandable' | 'fitToContents' | readonly nu
  * sheets that are work surfaces are shown full-screen (`sheetRouteKinds`), and
  * `SheetScene` draws them the close button a full-screen route needs.
  *
- * The two entries left on `fullscreen` are not sheets and never were. Each one
+ * The entries on `fullscreen` are not sheets and never were. Each one
  * says why here, because this table is the allowlist
  * `sheet-scene-contract.test.ts` holds the app to.
  */
 export const sheetRoutePresentations: Readonly<Record<string, SheetPresentation>> = {
+  // The diagram canvas owns pan/pinch gestures and provides its own close control.
+  'diagram-viewer': 'fullscreen',
   commands: 'sheet',
   panels: 'sheet',
   // The machines sheet's old address. It renders the same screen as `panels`
@@ -47,6 +49,12 @@ export const sheetRoutePresentations: Readonly<Record<string, SheetPresentation>
   sessions: 'sheet',
   artifacts: 'sheet',
   'git-diff': 'sheet',
+  'settings-servers': 'sheet',
+  'settings-terminal': 'sheet',
+  'settings-appearance': 'sheet',
+  'settings-alerts': 'sheet',
+  'settings-storage': 'sheet',
+  'settings-about': 'sheet',
   'settings-language': 'sheet',
   'settings-home-layout': 'sheet',
   'web-service': 'sheet',
@@ -136,6 +144,12 @@ export const sheetRouteKinds: Readonly<Record<string, SheetKind>> = {
   'agent-model': 'picker',
   'agent-mode': 'picker',
   'settings-theme': 'picker',
+  'settings-servers': 'picker',
+  'settings-terminal': 'picker',
+  'settings-appearance': 'picker',
+  'settings-alerts': 'picker',
+  'settings-storage': 'picker',
+  'settings-about': 'picker',
   'settings-font': 'picker',
   'settings-language': 'picker',
   'settings-home-layout': 'picker',
@@ -200,8 +214,14 @@ export const sheetRouteDetents: Readonly<Record<string, SheetDetents>> = {
   // whole screen.
   'settings-theme': 'expandable',
   'settings-theme-browse': 'expandable',
-  // Two groups of four rows, with a URL field that opens inside one of them and
-  // a keyboard over it. Expandable, so the field has somewhere to come up to.
+  // Settings groups retain a bounded, scrollable window as text size grows.
+  'settings-servers': 'expandable',
+  'settings-terminal': 'expandable',
+  'settings-appearance': 'expandable',
+  'settings-alerts': 'expandable',
+  'settings-storage': 'expandable',
+  'settings-about': 'expandable',
+  // Two font groups, including a URL field that needs room above the keyboard.
   'settings-font': 'expandable',
   // One short list of languages: as tall as it is, and no taller.
   'settings-language': 'fitToContents',
@@ -282,6 +302,12 @@ export type SheetContent = 'list' | 'short';
  * taller or shorter than it wants, never a row nobody can reach.
  */
 export const sheetRouteContent: Readonly<Record<string, SheetContent>> = {
+  'settings-servers': 'list',
+  'settings-terminal': 'list',
+  'settings-appearance': 'list',
+  'settings-alerts': 'list',
+  'settings-storage': 'list',
+  'settings-about': 'list',
   // The quick actions: tiles, then a grouped list that grows with the machine.
   commands: 'list',
   // Machines, backends, workspaces and panels in one column -- "what is

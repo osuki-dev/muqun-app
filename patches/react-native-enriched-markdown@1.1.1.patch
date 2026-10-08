@@ -1,4 +1,4 @@
-react-native-enriched-markdown 1.1.0 (Android): a spacer line was measured 46 px
+react-native-enriched-markdown 1.1.1 (Android): a spacer line was measured 46 px
 short, so a message plate ended a fraction of a line above its own last line.
 
 MarginBottomSpan turns a lone "\n" into a spacer exactly marginBottom tall by

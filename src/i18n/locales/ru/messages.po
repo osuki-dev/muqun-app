@@ -405,6 +405,10 @@ msgstr "Действуйте в этом терминале или дайте з
 msgid "Actions for {0}"
 msgstr "Действия для {0}"
 
+#: src/app/diagram-viewer.tsx
+msgid "Actual size"
+msgstr "Исходный размер"
+
 #: src/components/home-connections.tsx
 msgid "Add a gateway or an SSH host to start working."
 msgstr "Добавьте Gateway или SSH-хост, чтобы начать работу"
@@ -1027,6 +1031,10 @@ msgstr "Очистить контекст и начать заново"
 msgid "Clear line"
 msgstr "Очистить строку"
 
+#: src/components/home-recent-sessions.tsx
+msgid "Clear session search"
+msgstr "Очистить поиск сессий"
+
 #: src/i18n/labels.ts
 msgid "Clear terminal"
 msgstr "Очистить терминал"
@@ -1048,6 +1056,7 @@ msgstr "Очищаем кэш"
 msgid "Clearing…"
 msgstr "Очищаем…"
 
+#: src/app/diagram-viewer.tsx
 #: src/components/sheet-scene.tsx
 msgid "Close"
 msgstr "Закрыть"
@@ -1454,6 +1463,7 @@ msgstr "Скопировано в буфер обмена"
 msgid "Copies it, ready to paste into a terminal"
 msgstr "Копирует её, чтобы вставить в терминал"
 
+#: src/app/diagram-viewer.tsx
 #: src/components/asset-viewer.tsx
 #: src/components/skia-terminal.tsx
 msgid "Copy"
@@ -2285,6 +2295,10 @@ msgstr "Отпечаток"
 msgid "First prompt"
 msgstr "Первое задание"
 
+#: src/app/diagram-viewer.tsx
+msgid "Fit diagram"
+msgstr "Вписать диаграмму"
+
 #: src/components/custom-theme-library.tsx
 msgid "Fix text contrast before applying this theme"
 msgstr "Исправьте контраст текста перед применением этой темы"
@@ -2858,10 +2872,6 @@ msgstr "Загружаем команды"
 msgid "Loading paired devices…"
 msgstr "Загружаем привязанные устройства…"
 
-#: src/components/home-recent-sessions.tsx
-msgid "Loading recent sessions…"
-msgstr "Загружаем последние сеансы…"
-
 #: src/app/servers/[serverId].tsx
 #: src/components/home-launch-actions.tsx
 #: src/components/home-overview.tsx
@@ -3234,6 +3244,10 @@ msgstr "Нет входных данных"
 msgid "No matching commands. Try another word."
 msgstr "Команды не найдены. Попробуйте другое слово"
 
+#: src/components/home-recent-sessions.tsx
+msgid "No matching sessions"
+msgstr "Нет подходящих сессий"
+
 #. placeholder {0}: searchQuery.trim()
 #: src/components/agent-model-sheet.tsx
 msgid "No models match “{0}”."
@@ -3423,7 +3437,6 @@ msgstr "В фоне ничего не выполняется. Отсоедини
 msgid "Nothing staged"
 msgstr "Ничего не подготовлено"
 
-#: src/components/home-recent-sessions.tsx
 #: src/components/pane-chat-view.tsx
 msgid "Nothing to show yet."
 msgstr "Пока нечего показать"
@@ -4483,6 +4496,7 @@ msgid "Search models or providers"
 msgstr "Поиск моделей или провайдеров"
 
 #: src/components/agent-sessions-sheet.tsx
+#: src/components/home-recent-sessions.tsx
 msgid "Search sessions"
 msgstr "Поиск сессий"
 
@@ -6117,6 +6131,14 @@ msgstr "Пространство"
 #: src/components/session-map.tsx
 msgid "Workspaces"
 msgstr "Пространства"
+
+#: src/components/changes-sheet.tsx
+msgid "Worktree {name}"
+msgstr "Worktree с именем {name}"
+
+#: src/components/changes-sheet.tsx
+msgid "Worktree {name}, {directory}"
+msgstr "Worktree с именем {name}, {directory}"
 
 #: src/components/agent-worktree-sheet.tsx
 msgid "Worktree name"

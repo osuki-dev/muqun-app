@@ -1,3 +1,4 @@
+import { AppDiagramProvider } from '@/components/app-diagram-provider';
 import { RouteScene } from '@/components/route-scene';
 import {
   isFullscreenSheetRoute,
@@ -254,7 +255,11 @@ export default function RootLayout() {
                 already wearing the reader's typography -- there is no frame in
                 the system font for anything to cache.
               */}
-                  {fontsReady ? <RootContent /> : null}
+                  {fontsReady ? (
+                    <AppDiagramProvider>
+                      <RootContent />
+                    </AppDiagramProvider>
+                  ) : null}
                 </AppI18nProvider>
               </AppErrorBoundary>
             </HugSlackProvider>
@@ -440,6 +445,27 @@ function RootContent() {
                 <Stack.Screen name="sessions" options={sheetRouteOptions('sessions')} />
                 <Stack.Screen name="artifacts" options={sheetRouteOptions('artifacts')} />
                 <Stack.Screen name="git-diff" options={sheetRouteOptions('git-diff')} />
+                <Stack.Screen
+                  name="settings-servers"
+                  options={sheetRouteOptions('settings-servers')}
+                />
+                <Stack.Screen
+                  name="settings-appearance"
+                  options={sheetRouteOptions('settings-appearance')}
+                />
+                <Stack.Screen
+                  name="settings-alerts"
+                  options={sheetRouteOptions('settings-alerts')}
+                />
+                <Stack.Screen
+                  name="settings-storage"
+                  options={sheetRouteOptions('settings-storage')}
+                />
+                <Stack.Screen name="settings-about" options={sheetRouteOptions('settings-about')} />
+                <Stack.Screen
+                  name="settings-terminal"
+                  options={sheetRouteOptions('settings-terminal')}
+                />
                 <Stack.Screen name="settings-theme" options={sheetRouteOptions('settings-theme')} />
                 <Stack.Screen
                   name="settings-theme-browse"
@@ -490,6 +516,10 @@ function RootContent() {
                   }}
                 />
                 <Stack.Screen name="explore" options={sheetRouteOptions('explore')} />
+                <Stack.Screen
+                  name="diagram-viewer"
+                  options={sheetPresentationOptions(sheetRoutePresentations['diagram-viewer'])}
+                />
                 {/*
               The agent surface's pickers. They were `<Modal transparent>`
               components mounted inside the workbench, each with its own
