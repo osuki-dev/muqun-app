@@ -16,6 +16,15 @@ wait "id=\"video-playback-toggle\" label=\"Pause\"" 10000
 press "id=\"video-playback-toggle\" label=\"Pause\""
 wait "id=\"video-playback-toggle\" label=\"Play\"" 10000
 screenshot "shots/inline-video-paused.png"
+# Fullscreen back must restore this inline player, not pop the conversation.
+press "label=\"Fullscreen\""
+wait stable 400 5000
+is hidden "id=\"video-playback-toggle\""
+screenshot "shots/inline-video-fullscreen.png"
+back --system
+wait "id=\"video-playback-toggle\" label=\"Play\"" 10000
+is visible "id=\"inline-video-output\""
+screenshot "shots/inline-video-fullscreen-returned.png"
 # The six-second clip can reach its end during native evidence capture.
 # Seek within the paused video before testing resume so Pause stays observable.
 press "id=\"audio-playback-position\""
