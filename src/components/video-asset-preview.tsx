@@ -60,22 +60,23 @@ export function VideoAssetPreview({ asset, visible = true, resolve }: VideoOptio
     const listener = AppState.addEventListener('change', (state) => setActive(state === 'active'));
     return () => listener.remove();
   }, []);
-  return active && !recording && visible ? (
+  return (
     <VideoPlayerCard
       key={attempt}
       asset={asset}
+      visible={active && !recording && visible}
       resolve={resolve}
       onRetry={() => setAttempt((value) => value + 1)}
     />
-  ) : (
-    <View style={styles.poster}>
-      <Text color="white">{asset.name}</Text>
-      <Play size={24} color="white" />
-    </View>
   );
 }
 
-function VideoPlayerCard({ asset, resolve, onRetry }: VideoOptions & { onRetry: () => void }) {
+function VideoPlayerCard({
+  asset,
+  visible = true,
+  resolve,
+  onRetry,
+}: VideoOptions & { onRetry: () => void }) {
   const { t } = useLingui();
   const theme = useThemeTokens();
   const video = useRef<VideoViewRef>(null);
@@ -103,6 +104,9 @@ function VideoPlayerCard({ asset, resolve, onRetry }: VideoOptions & { onRetry: 
     },
     [session]
   );
+  useEffect(() => {
+    void session.setVisible(visible);
+  }, [session, visible]);
   const playing = state.phase === 'playing';
   const error = state.phase === 'error';
   const loading = state.phase === 'loading';
@@ -132,7 +136,7 @@ function VideoPlayerCard({ asset, resolve, onRetry }: VideoOptions & { onRetry: 
           testID="video-playback-toggle"
           accessibilityRole="button"
           accessibilityLabel={label}
-          disabled={loading}
+          disabled={!visible || loading}
           onPress={() => {
             if (error) onRetry();
             else if (playing) void session.pause();
@@ -153,7 +157,7 @@ function VideoPlayerCard({ asset, resolve, onRetry }: VideoOptions & { onRetry: 
             value={draft ?? (state.duration ? state.position / state.duration : 0)}
             peaks={null}
             playing={playing}
-            disabled={loading || !state.duration}
+            disabled={!visible || loading || !state.duration}
             label={t`Playback position`}
             onChange={setDraft}
             onCommit={(value) => {

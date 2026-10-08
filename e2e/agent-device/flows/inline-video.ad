@@ -14,6 +14,9 @@ wait "id=\"video-playback-toggle\" label=\"Pause\"" 10000
 press "id=\"video-playback-toggle\" label=\"Pause\""
 wait "id=\"video-playback-toggle\" label=\"Play\"" 10000
 screenshot "shots/inline-video-paused.png"
+# The six-second clip can reach its end during native evidence capture.
+# Seek within the paused video before testing resume so Pause stays observable.
+press "id=\"audio-playback-position\""
 press "id=\"video-playback-toggle\" label=\"Play\""
 wait "id=\"video-playback-toggle\" label=\"Pause\"" 10000
 scroll down 0.3 --until "text=\"Playback note 20: scroll away from the audio output to stop playback. Returning to it requires pressing Play again.\""

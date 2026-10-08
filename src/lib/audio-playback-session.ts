@@ -27,6 +27,7 @@ export interface AudioPlaybackRuntime {
 
 let activePlayback: AudioPlaybackSession | undefined;
 let recordingOwner: object | undefined;
+let playbackOperation = Promise.resolve();
 
 function claimPlayback(session: AudioPlaybackSession) {
   const previous = activePlayback;
@@ -38,7 +39,7 @@ export async function prepareRecordingAudio(owner: object) {
   recordingOwner = owner;
   const previous = activePlayback;
   activePlayback = undefined;
-  await previous?.close();
+  await previous?.pause();
 }
 
 export function releaseRecordingAudio(owner: object) {
@@ -56,6 +57,7 @@ export class AudioPlaybackSession {
   private released = false;
   private prepared = false;
   private started = false;
+  private visible = true;
 
   constructor(
     private runtime: AudioPlaybackRuntime,
@@ -63,19 +65,30 @@ export class AudioPlaybackSession {
   ) {}
 
   play() {
+    // Serialize ownership transfers before entering a player's own operation queue.
+    // Otherwise simultaneous A/B/A presses can make each player await the other.
+    playbackOperation = playbackOperation.then(() => this.startPlayback());
+    return playbackOperation;
+  }
+
+  private startPlayback() {
     return this.enqueue(async () => {
+      if (!this.visible) return;
       if (this.state.phase === 'playing') return;
       if (recordingOwner) throw new Error('Microphone is in use.');
       const previous = claimPlayback(this);
-      if (previous && previous !== this) await previous.close();
-      if (this.closed) return;
+      if (previous && previous !== this) await previous.pause();
+      if (this.closed || !this.visible) return;
       if (recordingOwner) throw new Error('Microphone is in use.');
       if (!this.prepared) {
         this.update({ phase: 'loading' });
         await this.runtime.prepare(this.abort.signal);
         this.prepared = true;
       }
-      if (this.closed) return;
+      if (this.closed || !this.visible) {
+        if (!this.closed) this.update({ phase: 'paused' });
+        return;
+      }
       if (this.state.phase === 'ended') {
         await this.runtime.stop();
         this.started = false;
@@ -108,11 +121,19 @@ export class AudioPlaybackSession {
   }
 
   pause() {
+    // Native completion may arrive while the pause operation is pending.
+    const hasEnded = () => this.state.phase === 'ended';
     return this.enqueue(async () => {
       if (this.state.phase !== 'playing') return;
       await this.runtime.pause();
-      if (!this.closed) this.update({ phase: 'paused' });
+      if (!this.closed && !hasEnded()) this.update({ phase: 'paused' });
     });
+  }
+
+  setVisible(visible: boolean) {
+    this.visible = visible;
+    // Returning to the viewport only restores controls; playback needs a tap.
+    return visible ? Promise.resolve() : this.pause();
   }
 
   seek(position: number) {
