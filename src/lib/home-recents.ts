@@ -81,19 +81,14 @@ export type HomeRecentsParseResult =
   | { kind: 'valid'; entries: HomeRecentEntry[] };
 
 /**
- * Build an unambiguous key from the discriminant and every opaque identity
- * field. JSON arrays avoid delimiter collisions when ids contain `:` or `/`.
+ * Build an unambiguous key from the target's identity. An agent session is
+ * scoped to its gateway; its directory and Herdr routing session are mutable
+ * navigation context. JSON arrays avoid delimiter collisions in opaque ids.
  */
 export function homeTargetKey(target: HomeTarget): string {
   switch (target.kind) {
     case 'agent-session':
-      return JSON.stringify([
-        target.kind,
-        target.serverId,
-        target.sessionId,
-        target.directory,
-        target.asid,
-      ]);
+      return JSON.stringify([target.kind, target.serverId, target.asid]);
     case 'gateway-terminal':
       return JSON.stringify([target.kind, target.serverId, target.sessionId, target.paneId]);
     case 'ssh-host':
