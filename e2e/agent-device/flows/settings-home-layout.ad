@@ -12,6 +12,7 @@ is visible "${TARGET}"
 
 # section open-row
 press "${TARGET}"
+wait "id=\"settings-home-layout-sheet\"" 8000
 
 # section reset-classic
 press "${TARGET}"
@@ -56,6 +57,7 @@ press "${TARGET}"
 
 # section open-row-again
 press "${TARGET}"
+wait "id=\"settings-home-layout-sheet\"" 8000
 
 # section choose-classic
 press "${TARGET}"
