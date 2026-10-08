@@ -5056,7 +5056,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         <Animated.View
           entering={fadeIn('micro')}
           exiting={fadeOut('micro')}
-          style={[styles.agentPickerWrap, { bottom: latestBottom + 42 }]}
+          style={[styles.agentPickerWrap, { top: topInset + 4 }]}
           pointerEvents="box-none">
           <AgentActionMenu testID="agent-new-session-picker" items={agentPickerItems} />
         </Animated.View>
