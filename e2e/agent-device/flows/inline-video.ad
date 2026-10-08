@@ -1,0 +1,27 @@
+# A local MP4 link uses the native decoder and explicit inline controls.
+# section open-output
+open "muqun://agent-subagent-detail?asid=demo-tree-leaf-22"
+
+# section arrived
+is visible "${TARGET}"
+
+# section playback
+scroll up 0.3 --until "text=\"Playback note 20: scroll away from the audio output to stop playback. Returning to it requires pressing Play again.\""
+scroll up 0.3 --until "id=\"inline-video-output\""
+wait "id=\"video-playback-toggle\" label=\"Play\"" 10000
+press "id=\"video-playback-toggle\" label=\"Play\""
+wait "id=\"video-playback-toggle\" label=\"Pause\"" 10000
+press "id=\"video-playback-toggle\" label=\"Pause\""
+wait "id=\"video-playback-toggle\" label=\"Play\"" 10000
+screenshot "shots/inline-video-paused.png"
+press "id=\"video-playback-toggle\" label=\"Play\""
+wait "id=\"video-playback-toggle\" label=\"Pause\"" 10000
+scroll down 0.3 --until "text=\"Playback note 20: scroll away from the audio output to stop playback. Returning to it requires pressing Play again.\""
+scroll down 0.3 --until "text=\"Playback note 40: scroll away from the audio output to stop playback. Returning to it requires pressing Play again.\""
+is hidden "id=\"video-playback-toggle\" label=\"Pause\""
+scroll up 0.3 --until "text=\"Playback note 20: scroll away from the audio output to stop playback. Returning to it requires pressing Play again.\""
+scroll up 0.3 --until "id=\"inline-video-output\""
+wait "id=\"video-playback-toggle\" label=\"Play\"" 10000
+is hidden "id=\"video-playback-toggle\" label=\"Pause\""
+screenshot "shots/inline-video-returned.png"
+back --system

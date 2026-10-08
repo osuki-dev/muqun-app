@@ -10,6 +10,7 @@ import {
   FileImage,
   FileText,
   FileType,
+  Film,
   Headphones,
   RefreshCw,
 } from 'lucide-react-native';
@@ -26,6 +27,8 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AssetViewer } from '@/components/asset-viewer';
+import { useFileActions } from '@/hooks/use-file-actions';
+import { saveSessionAsset } from '@/lib/save-file';
 import { appChrome } from '@/constants/appearance';
 import { SettingsSegmented } from '@/components/settings-segmented';
 import {
@@ -775,6 +778,11 @@ const AssetRow = memo(function AssetRow({
   separated: boolean;
 }) {
   const { t } = useLingui();
+  const fileActions = useFileActions(
+    asset.name,
+    () => saveSessionAsset(asset),
+    asset.kind === 'image'
+  );
   useRenderTally('ArtifactRow');
   const relativeTime = useRelativeTime();
   const theme = useThemeTokens();
@@ -784,43 +792,48 @@ const AssetRow = memo(function AssetRow({
     .join(' \u00b7 ');
 
   return (
-    <SheetSceneRow
-      title={asset.name}
-      caption={detail}
-      accessibilityLabel={t`Open ${asset.name}`}
-      onPress={() => onOpen(asset)}
-      style={
-        separated
-          ? { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.border }
-          : undefined
-      }
-      leading={
-        /* A picture of the file beats a glyph that says "this is a picture". */
-        <View
-          style={[
-            styles.assetIcon,
-            // Opacity audit: decorative -- the matte behind a thumbnail image.
-            thumbnail ? { backgroundColor: theme.colors.background } : null,
-          ]}>
-          {thumbnail ? (
-            <Image
-              source={{ uri: thumbnail.uri, headers: thumbnail.headers }}
-              cachePolicy="memory-disk"
-              recyclingKey={thumbnail.cacheKey}
-              contentFit="cover"
-              style={styles.thumbnail}
-            />
-          ) : (
-            <AssetKindIcon kind={asset.kind} color={theme.colors.textMuted} />
-          )}
-        </View>
-      }
-    />
+    <View>
+      <SheetSceneRow
+        title={asset.name}
+        caption={detail}
+        accessibilityLabel={t`Open ${asset.name}`}
+        onPress={() => onOpen(asset)}
+        onLongPress={fileActions.show}
+        style={
+          separated
+            ? { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.border }
+            : undefined
+        }
+        leading={
+          /* A picture of the file beats a glyph that says "this is a picture". */
+          <View
+            style={[
+              styles.assetIcon,
+              // Opacity audit: decorative -- the matte behind a thumbnail image.
+              thumbnail ? { backgroundColor: theme.colors.background } : null,
+            ]}>
+            {thumbnail ? (
+              <Image
+                source={{ uri: thumbnail.uri, headers: thumbnail.headers }}
+                cachePolicy="memory-disk"
+                recyclingKey={thumbnail.cacheKey}
+                contentFit="cover"
+                style={styles.thumbnail}
+              />
+            ) : (
+              <AssetKindIcon kind={asset.kind} color={theme.colors.textMuted} />
+            )}
+          </View>
+        }
+      />
+      {fileActions.menu}
+    </View>
   );
 });
 
 function AssetKindIcon({ kind, color }: { kind: AssetKind; color: string }) {
   if (kind === 'audio') return <Headphones size={18} color={color} />;
+  if (kind === 'video') return <Film size={18} color={color} />;
   if (kind === 'image') return <FileImage size={18} color={color} />;
   if (kind === 'markdown') return <FileText size={18} color={color} />;
   if (kind === 'text') return <FileCode size={18} color={color} />;

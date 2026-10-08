@@ -917,6 +917,7 @@ msgstr "カメラへのアクセスが必要です"
 #: src/components/ssh-host-key-dialog.tsx
 #: src/components/theme-link-import.tsx
 #: src/components/voice-input-button.tsx
+#: src/hooks/use-file-actions.tsx
 #: src/hooks/use-lazygit.ts
 #: src/lib/local-authentication.ts
 msgid "Cancel"
@@ -1670,6 +1671,10 @@ msgstr "このセッションを移動できませんでした"
 msgid "Could not open destination"
 msgstr "目的地を開けませんでした"
 
+#: src/components/inline-file-link.tsx
+msgid "Could not open file"
+msgstr "ファイルを開けませんでした"
+
 #: src/hooks/use-theme-file-open.ts
 msgid "Could not open that theme"
 msgstr "そのテーマを開けませんでした"
@@ -1710,6 +1715,10 @@ msgstr "このテーマを開けませんでした"
 #: src/components/audio-asset-preview.tsx
 msgid "Could not play this audio file."
 msgstr "この音声ファイルを再生できませんでした"
+
+#: src/components/video-asset-preview.tsx
+msgid "Could not play video. Try another file or retry."
+msgstr "動画を再生できません。別のファイルを選ぶか、再試行してください"
 
 #: src/app/explore.tsx
 msgid "Could not reach that address. Check it and make sure the Gateway is running."
@@ -1787,6 +1796,10 @@ msgstr "そのスキルを実行できませんでした"
 #: src/components/settings-servers.tsx
 msgid "Could not save changes"
 msgstr "変更を保存できませんでした"
+
+#: src/hooks/use-file-actions.tsx
+msgid "Could not save file"
+msgstr "ファイルを保存できませんでした"
 
 #: src/components/settings-home-layout-sheet.tsx
 msgid "Could not save Home layout"
@@ -2443,6 +2456,10 @@ msgstr "よく使う"
 #: src/app/explore.tsx
 msgid "Front camera. Hold the QR up to the screen"
 msgstr "フロントカメラです。QR コードを画面に向けてください"
+
+#: src/components/video-asset-preview.tsx
+msgid "Fullscreen"
+msgstr "全画面"
 
 #: src/components/virtual-keyboard.tsx
 msgid "Function keys"
@@ -3626,10 +3643,11 @@ msgid "Open"
 msgstr "開く"
 
 #. placeholder {0}: asset.name
+#. placeholder {0}: file.name
 #. placeholder {0}: file.name ?? basename(file.uri)
-#. placeholder {0}: part.fallback_text || part.asset_id
 #: src/components/agent-tool-card.tsx
 #: src/components/home-overview.tsx
+#: src/components/inline-file-link.tsx
 #: src/components/pane-chat-blocks.tsx
 #: src/components/session-artifacts.tsx
 msgid "Open {0}"
@@ -3951,6 +3969,10 @@ msgstr "パッチが長すぎるため、先頭のみ表示しています"
 msgid "Path"
 msgstr "パス"
 
+#: src/components/video-asset-preview.tsx
+msgid "Pause"
+msgstr "一時停止"
+
 #: src/components/audio-asset-preview.tsx
 msgid "Pause audio"
 msgstr "音声を一時停止"
@@ -3975,11 +3997,16 @@ msgstr "固定したコミット"
 msgid "Plan"
 msgstr "計画 (Plan)"
 
+#: src/components/video-asset-preview.tsx
+msgid "Play"
+msgstr "再生"
+
 #: src/components/audio-asset-preview.tsx
 msgid "Play audio"
 msgstr "音声を再生"
 
 #: src/components/audio-asset-preview.tsx
+#: src/components/video-asset-preview.tsx
 msgid "Playback position"
 msgstr "再生位置"
 
@@ -4562,9 +4589,21 @@ msgstr "このエージェントによく送るプロンプトを保存します
 msgid "Save changes to {0}"
 msgstr "{0} への変更を保存"
 
+#: src/components/asset-viewer.tsx
+#: src/components/audio-asset-preview.tsx
+#: src/components/video-asset-preview.tsx
+#: src/hooks/use-file-actions.tsx
+msgid "Save file"
+msgstr "ファイルを保存"
+
 #: src/components/ssh-host-form.tsx
 msgid "Save host"
 msgstr "ホストを保存"
+
+#: src/components/image-preview-modal.tsx
+#: src/hooks/use-file-actions.tsx
+msgid "Save image"
+msgstr "画像を保存"
 
 #: src/app/commands.tsx
 msgid "Save shortcut"
@@ -5994,8 +6033,11 @@ msgstr "信頼する"
 #: src/components/asset-viewer.tsx
 #: src/components/audio-asset-preview.tsx
 #: src/components/changes-sheet.tsx
+#: src/components/inline-file-link.tsx
 #: src/components/theme-browse-sheet.tsx
+#: src/components/video-asset-preview.tsx
 #: src/components/voice-input-button.tsx
+#: src/hooks/use-file-actions.tsx
 msgid "Try again"
 msgstr "もう一度試す"
 
@@ -6180,6 +6222,12 @@ msgstr "更新の準備完了 · 再起動中…"
 #: src/components/theme-link-import.tsx
 msgid "Update the app to import public theme links. You can still import a file"
 msgstr "公開リンクからテーマをインポートするにはアプリを更新してください。ファイルからのインポートは引き続き利用できます"
+
+#: src/components/inline-file-link.tsx
+#: src/components/video-asset-preview.tsx
+#: src/hooks/use-file-actions.tsx
+msgid "Update the Gateway to open or save this file."
+msgstr "このファイルを開くか保存するには、Gateway を更新してください"
 
 #: src/components/audio-asset-preview.tsx
 msgid "Update the Gateway to preview audio output."

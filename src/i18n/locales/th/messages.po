@@ -917,6 +917,7 @@ msgstr "ต้องเข้าถึงกล้อง"
 #: src/components/ssh-host-key-dialog.tsx
 #: src/components/theme-link-import.tsx
 #: src/components/voice-input-button.tsx
+#: src/hooks/use-file-actions.tsx
 #: src/hooks/use-lazygit.ts
 #: src/lib/local-authentication.ts
 msgid "Cancel"
@@ -1670,6 +1671,10 @@ msgstr "ย้ายเซสชันนี้ไม่ได้"
 msgid "Could not open destination"
 msgstr "เปิดปลายทางไม่ได้"
 
+#: src/components/inline-file-link.tsx
+msgid "Could not open file"
+msgstr "เปิดไฟล์ไม่ได้"
+
 #: src/hooks/use-theme-file-open.ts
 msgid "Could not open that theme"
 msgstr "เปิดธีมนั้นไม่ได้"
@@ -1710,6 +1715,10 @@ msgstr "เปิดธีมนี้ไม่ได้"
 #: src/components/audio-asset-preview.tsx
 msgid "Could not play this audio file."
 msgstr "ไม่สามารถเล่นไฟล์เสียงนี้ได้"
+
+#: src/components/video-asset-preview.tsx
+msgid "Could not play video. Try another file or retry."
+msgstr "เล่นวิดีโอไม่ได้ โปรดลองไฟล์อื่นหรือลองอีกครั้ง"
 
 #: src/app/explore.tsx
 msgid "Could not reach that address. Check it and make sure the Gateway is running."
@@ -1787,6 +1796,10 @@ msgstr "เรียกใช้สกิลนี้ไม่ได้"
 #: src/components/settings-servers.tsx
 msgid "Could not save changes"
 msgstr "บันทึกการเปลี่ยนแปลงไม่ได้"
+
+#: src/hooks/use-file-actions.tsx
+msgid "Could not save file"
+msgstr "บันทึกไฟล์ไม่ได้"
 
 #: src/components/settings-home-layout-sheet.tsx
 msgid "Could not save Home layout"
@@ -2443,6 +2456,10 @@ msgstr "ใช้บ่อย"
 #: src/app/explore.tsx
 msgid "Front camera. Hold the QR up to the screen"
 msgstr "กล้องหน้า ถือ QR หันเข้าหาหน้าจอ"
+
+#: src/components/video-asset-preview.tsx
+msgid "Fullscreen"
+msgstr "เต็มหน้าจอ"
 
 #: src/components/virtual-keyboard.tsx
 msgid "Function keys"
@@ -3626,10 +3643,11 @@ msgid "Open"
 msgstr "เปิด"
 
 #. placeholder {0}: asset.name
+#. placeholder {0}: file.name
 #. placeholder {0}: file.name ?? basename(file.uri)
-#. placeholder {0}: part.fallback_text || part.asset_id
 #: src/components/agent-tool-card.tsx
 #: src/components/home-overview.tsx
+#: src/components/inline-file-link.tsx
 #: src/components/pane-chat-blocks.tsx
 #: src/components/session-artifacts.tsx
 msgid "Open {0}"
@@ -3951,6 +3969,10 @@ msgstr "แพตช์ยาวเกินไป แสดงเฉพาะ�
 msgid "Path"
 msgstr "พาธ"
 
+#: src/components/video-asset-preview.tsx
+msgid "Pause"
+msgstr "หยุดชั่วคราว"
+
 #: src/components/audio-asset-preview.tsx
 msgid "Pause audio"
 msgstr "หยุดเสียงชั่วคราว"
@@ -3975,11 +3997,16 @@ msgstr "คอมมิตที่ตรึงไว้"
 msgid "Plan"
 msgstr "วางแผน (Plan)"
 
+#: src/components/video-asset-preview.tsx
+msgid "Play"
+msgstr "เล่น"
+
 #: src/components/audio-asset-preview.tsx
 msgid "Play audio"
 msgstr "เล่นเสียง"
 
 #: src/components/audio-asset-preview.tsx
+#: src/components/video-asset-preview.tsx
 msgid "Playback position"
 msgstr "ตำแหน่งการเล่น"
 
@@ -4562,9 +4589,21 @@ msgstr "บันทึกพรอมต์ที่ส่งให้เอเ
 msgid "Save changes to {0}"
 msgstr "บันทึกการเปลี่ยนแปลงใน {0}"
 
+#: src/components/asset-viewer.tsx
+#: src/components/audio-asset-preview.tsx
+#: src/components/video-asset-preview.tsx
+#: src/hooks/use-file-actions.tsx
+msgid "Save file"
+msgstr "บันทึกไฟล์"
+
 #: src/components/ssh-host-form.tsx
 msgid "Save host"
 msgstr "บันทึกโฮสต์"
+
+#: src/components/image-preview-modal.tsx
+#: src/hooks/use-file-actions.tsx
+msgid "Save image"
+msgstr "บันทึกรูปภาพ"
 
 #: src/app/commands.tsx
 msgid "Save shortcut"
@@ -5994,8 +6033,11 @@ msgstr "เชื่อถือ"
 #: src/components/asset-viewer.tsx
 #: src/components/audio-asset-preview.tsx
 #: src/components/changes-sheet.tsx
+#: src/components/inline-file-link.tsx
 #: src/components/theme-browse-sheet.tsx
+#: src/components/video-asset-preview.tsx
 #: src/components/voice-input-button.tsx
+#: src/hooks/use-file-actions.tsx
 msgid "Try again"
 msgstr "ลองอีกครั้ง"
 
@@ -6180,6 +6222,12 @@ msgstr "อัปเดตพร้อมแล้ว · กำลังเร�
 #: src/components/theme-link-import.tsx
 msgid "Update the app to import public theme links. You can still import a file"
 msgstr "อัปเดตแอปเพื่อนำเข้าลิงก์ธีมสาธารณะ คุณยังนำเข้าไฟล์ได้"
+
+#: src/components/inline-file-link.tsx
+#: src/components/video-asset-preview.tsx
+#: src/hooks/use-file-actions.tsx
+msgid "Update the Gateway to open or save this file."
+msgstr "อัปเดต Gateway เพื่อเปิดหรือบันทึกไฟล์นี้"
 
 #: src/components/audio-asset-preview.tsx
 msgid "Update the Gateway to preview audio output."

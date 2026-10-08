@@ -1499,10 +1499,43 @@ export async function resolveAgentAudioAsset(
   return asset;
 }
 
+export async function resolveAgentFileAsset(
+  asid: string,
+  uri: string,
+  signal: AbortSignal
+): Promise<SessionAsset> {
+  if (isDemoActive()) {
+    const asset = demoSessionAssets().find((entry) => uri.endsWith(entry.name));
+    if (!asset) throw new Error('File output unavailable.');
+    return asset;
+  }
+  const health = await gatewayFetch(gatewayUrl('/health'), {
+    headers: gatewayAuthHeaders(),
+    signal,
+  });
+  if (!health.ok) throw new Error(`HTTP ${health.status}`);
+  const capabilities = (await health.json()).capabilities;
+  if (!Array.isArray(capabilities) || !capabilities.includes('agent_file_assets')) {
+    throw new AudioPlaybackError('unsupported');
+  }
+  const response = await gatewayFetch(
+    gatewayUrl(
+      `/api/agent-sessions/${encodeURIComponent(asid)}/file-asset?uri=${encodeURIComponent(uri)}`
+    ),
+    { headers: gatewayAuthHeaders(), signal }
+  );
+  if (!response.ok) throw new Error(`HTTP ${response.status}`);
+  const envelope = await response.json();
+  const asset = sessionAssetsFromResponse({ data: { assets: [envelope?.data?.asset] } })[0];
+  if (!asset) throw new Error('File output unavailable.');
+  return asset;
+}
+
 export async function readAssetBytes(
   asset: SessionAsset,
   options: {
     signal?: AbortSignal;
+    download?: boolean;
     maxBytes: number;
     onProgress?: (received: number, total: number | null) => void;
   }
@@ -1515,7 +1548,19 @@ export async function readAssetBytes(
     options.onProgress?.(demoBytes.length, demoBytes.length);
     return demoBytes;
   }
-  const url = assetContentUrl(asset.id);
+  if (options.download) {
+    const health = await gatewayFetch(gatewayUrl('/health'), {
+      headers: gatewayAuthHeaders(),
+      signal: options.signal,
+    });
+    if (!health.ok) throw new Error(`HTTP ${health.status}`);
+    const capabilities = (await health.json()).capabilities;
+    if (!Array.isArray(capabilities) || !capabilities.includes('asset_download'))
+      throw new AudioPlaybackError('unsupported');
+  }
+  const url = options.download
+    ? assetContentUrl(asset.id).replace(/\/content$/, '/download')
+    : assetContentUrl(asset.id);
   const init = { headers: gatewayAuthHeaders(), signal: options.signal };
   const response =
     currentTransport === GATEWAY_TRANSPORT

@@ -917,6 +917,7 @@ msgstr "需要相機存取權"
 #: src/components/ssh-host-key-dialog.tsx
 #: src/components/theme-link-import.tsx
 #: src/components/voice-input-button.tsx
+#: src/hooks/use-file-actions.tsx
 #: src/hooks/use-lazygit.ts
 #: src/lib/local-authentication.ts
 msgid "Cancel"
@@ -1670,6 +1671,10 @@ msgstr "無法移動此會話"
 msgid "Could not open destination"
 msgstr "無法開啟目的地"
 
+#: src/components/inline-file-link.tsx
+msgid "Could not open file"
+msgstr "無法開啟檔案"
+
 #: src/hooks/use-theme-file-open.ts
 msgid "Could not open that theme"
 msgstr "無法開啟這個主題"
@@ -1710,6 +1715,10 @@ msgstr "無法開啟這個主題"
 #: src/components/audio-asset-preview.tsx
 msgid "Could not play this audio file."
 msgstr "無法播放此音訊檔案"
+
+#: src/components/video-asset-preview.tsx
+msgid "Could not play video. Try another file or retry."
+msgstr "無法播放影片，請重試或選擇其他檔案"
 
 #: src/app/explore.tsx
 msgid "Could not reach that address. Check it and make sure the Gateway is running."
@@ -1787,6 +1796,10 @@ msgstr "無法執行該技能"
 #: src/components/settings-servers.tsx
 msgid "Could not save changes"
 msgstr "無法儲存變更"
+
+#: src/hooks/use-file-actions.tsx
+msgid "Could not save file"
+msgstr "無法儲存檔案"
 
 #: src/components/settings-home-layout-sheet.tsx
 msgid "Could not save Home layout"
@@ -2443,6 +2456,10 @@ msgstr "常用"
 #: src/app/explore.tsx
 msgid "Front camera. Hold the QR up to the screen"
 msgstr "前鏡頭。將 QR code 朝向螢幕"
+
+#: src/components/video-asset-preview.tsx
+msgid "Fullscreen"
+msgstr "全螢幕"
 
 #: src/components/virtual-keyboard.tsx
 msgid "Function keys"
@@ -3626,10 +3643,11 @@ msgid "Open"
 msgstr "開啟"
 
 #. placeholder {0}: asset.name
+#. placeholder {0}: file.name
 #. placeholder {0}: file.name ?? basename(file.uri)
-#. placeholder {0}: part.fallback_text || part.asset_id
 #: src/components/agent-tool-card.tsx
 #: src/components/home-overview.tsx
+#: src/components/inline-file-link.tsx
 #: src/components/pane-chat-blocks.tsx
 #: src/components/session-artifacts.tsx
 msgid "Open {0}"
@@ -3951,6 +3969,10 @@ msgstr "修補檔太長，僅顯示開頭部分"
 msgid "Path"
 msgstr "路徑"
 
+#: src/components/video-asset-preview.tsx
+msgid "Pause"
+msgstr "暫停"
+
 #: src/components/audio-asset-preview.tsx
 msgid "Pause audio"
 msgstr "暫停音訊"
@@ -3975,11 +3997,16 @@ msgstr "固定提交"
 msgid "Plan"
 msgstr "規劃 (Plan)"
 
+#: src/components/video-asset-preview.tsx
+msgid "Play"
+msgstr "播放"
+
 #: src/components/audio-asset-preview.tsx
 msgid "Play audio"
 msgstr "播放音訊"
 
 #: src/components/audio-asset-preview.tsx
+#: src/components/video-asset-preview.tsx
 msgid "Playback position"
 msgstr "播放進度"
 
@@ -4562,9 +4589,21 @@ msgstr "儲存你常傳給這個代理程式的提示詞"
 msgid "Save changes to {0}"
 msgstr "儲存對 {0} 的變更"
 
+#: src/components/asset-viewer.tsx
+#: src/components/audio-asset-preview.tsx
+#: src/components/video-asset-preview.tsx
+#: src/hooks/use-file-actions.tsx
+msgid "Save file"
+msgstr "儲存檔案"
+
 #: src/components/ssh-host-form.tsx
 msgid "Save host"
 msgstr "儲存主機"
+
+#: src/components/image-preview-modal.tsx
+#: src/hooks/use-file-actions.tsx
+msgid "Save image"
+msgstr "儲存圖片"
 
 #: src/app/commands.tsx
 msgid "Save shortcut"
@@ -5994,8 +6033,11 @@ msgstr "信任"
 #: src/components/asset-viewer.tsx
 #: src/components/audio-asset-preview.tsx
 #: src/components/changes-sheet.tsx
+#: src/components/inline-file-link.tsx
 #: src/components/theme-browse-sheet.tsx
+#: src/components/video-asset-preview.tsx
 #: src/components/voice-input-button.tsx
+#: src/hooks/use-file-actions.tsx
 msgid "Try again"
 msgstr "再試一次"
 
@@ -6180,6 +6222,12 @@ msgstr "更新已就緒 · 正在重新啟動…"
 #: src/components/theme-link-import.tsx
 msgid "Update the app to import public theme links. You can still import a file"
 msgstr "更新 App 後即可從公開連結匯入主題，你仍然可以從檔案匯入"
+
+#: src/components/inline-file-link.tsx
+#: src/components/video-asset-preview.tsx
+#: src/hooks/use-file-actions.tsx
+msgid "Update the Gateway to open or save this file."
+msgstr "請更新 Gateway 後開啟或儲存此檔案"
 
 #: src/components/audio-asset-preview.tsx
 msgid "Update the Gateway to preview audio output."
