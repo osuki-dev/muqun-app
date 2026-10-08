@@ -588,6 +588,10 @@ msgstr "응답: {0}"
 msgid "API key"
 msgstr "API 키"
 
+#: src/app/settings-voice.tsx
+msgid "API key (optional)"
+msgstr "API 키 (선택 사항)"
+
 #: src/components/settings-appearance.tsx
 msgid "App icon"
 msgstr "앱 아이콘"
@@ -1246,8 +1250,8 @@ msgid "Completed"
 msgstr "완료됨"
 
 #: src/app/settings-voice.tsx
-msgid "Configure your speech service to show the microphone in message inputs"
-msgstr "음성 서비스를 설정하면 입력란에 마이크가 표시됩니다"
+msgid "Configure your speech service, then hold Send to record. Tap the animation to stop and transcribe."
+msgstr "음성 서비스를 설정한 후 보내기를 길게 눌러 녹음하세요. 애니메이션을 탭하면 녹음을 멈추고 텍스트로 변환합니다"
 
 #: src/components/settings-storage.tsx
 msgid "Confirm clear cache"
@@ -2201,8 +2205,8 @@ msgid "Enter a name."
 msgstr "이름을 입력하세요"
 
 #: src/app/settings-voice.tsx
-msgid "Enter an HTTPS base URL, API key and model"
-msgstr "HTTPS 기본 URL, API 키 및 모델을 입력하세요"
+msgid "Enter a valid HTTPS base URL. API key and model are optional."
+msgstr "유효한 HTTPS 기본 URL을 입력하세요. API 키와 모델은 선택 사항입니다"
 
 #: src/app/explore.tsx
 msgid "Enter the {PAIRING_CODE_CHARACTER_COUNT}-character code."
@@ -3097,6 +3101,10 @@ msgstr "모델 · {0} → {next}"
 #: src/components/agent-message-block.tsx
 msgid "Model · {next}"
 msgstr "모델 · {next}"
+
+#: src/app/settings-voice.tsx
+msgid "Model (optional)"
+msgstr "모델 (선택 사항)"
 
 #: src/components/agent-mode-sheet.tsx
 msgid "Modes of {agentName}"
@@ -6175,7 +6183,7 @@ msgstr "공개 링크로 테마를 가져오려면 앱을 업데이트하세요.
 
 #: src/components/audio-asset-preview.tsx
 msgid "Update the Gateway to preview audio output."
-msgstr "오디오 출력을 미리 들으려면 Gateway를 업데이트하세요."
+msgstr "오디오 출력을 미리 들으려면 Gateway를 업데이트하세요"
 
 #: src/components/update-status-banner.tsx
 msgid "Updating Muqun…"
@@ -6269,6 +6277,7 @@ msgstr "현재 컨텍스트 사용량을 색상 격자로 보여 줍니다"
 
 #: src/app/settings-voice.tsx
 #: src/app/settings.tsx
+#: src/components/terminal-composer.tsx
 #: src/components/voice-input-button.tsx
 msgid "Voice to text"
 msgstr "음성을 텍스트로"

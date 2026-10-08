@@ -588,6 +588,10 @@ msgstr "Answer: {0}"
 msgid "API key"
 msgstr "API key"
 
+#: src/app/settings-voice.tsx
+msgid "API key (optional)"
+msgstr "API key (optional)"
+
 #: src/components/settings-appearance.tsx
 msgid "App icon"
 msgstr "App icon"
@@ -1246,8 +1250,8 @@ msgid "Completed"
 msgstr "Completed"
 
 #: src/app/settings-voice.tsx
-msgid "Configure your speech service to show the microphone in message inputs"
-msgstr "Configure your speech service to show the microphone in message inputs"
+msgid "Configure your speech service, then hold Send to record. Tap the animation to stop and transcribe."
+msgstr "Configure your speech service, then hold Send to record. Tap the animation to stop and transcribe"
 
 #: src/components/settings-storage.tsx
 msgid "Confirm clear cache"
@@ -2201,8 +2205,8 @@ msgid "Enter a name."
 msgstr "Enter a name"
 
 #: src/app/settings-voice.tsx
-msgid "Enter an HTTPS base URL, API key and model"
-msgstr "Enter an HTTPS base URL, API key and model"
+msgid "Enter a valid HTTPS base URL. API key and model are optional."
+msgstr "Enter a valid HTTPS base URL. API key and model are optional"
 
 #: src/app/explore.tsx
 msgid "Enter the {PAIRING_CODE_CHARACTER_COUNT}-character code."
@@ -3097,6 +3101,10 @@ msgstr "Model · {0} → {next}"
 #: src/components/agent-message-block.tsx
 msgid "Model · {next}"
 msgstr "Model · {next}"
+
+#: src/app/settings-voice.tsx
+msgid "Model (optional)"
+msgstr "Model (optional)"
 
 #: src/components/agent-mode-sheet.tsx
 msgid "Modes of {agentName}"
@@ -6269,6 +6277,7 @@ msgstr "Visualise current context usage as a coloured grid"
 
 #: src/app/settings-voice.tsx
 #: src/app/settings.tsx
+#: src/components/terminal-composer.tsx
 #: src/components/voice-input-button.tsx
 msgid "Voice to text"
 msgstr "Voice to text"

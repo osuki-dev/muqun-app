@@ -588,6 +588,10 @@ msgstr "Ответ: {0}"
 msgid "API key"
 msgstr "API-ключ"
 
+#: src/app/settings-voice.tsx
+msgid "API key (optional)"
+msgstr "Ключ API (необязательно)"
+
 #: src/components/settings-appearance.tsx
 msgid "App icon"
 msgstr "Значок приложения"
@@ -1246,8 +1250,8 @@ msgid "Completed"
 msgstr "Выполнено"
 
 #: src/app/settings-voice.tsx
-msgid "Configure your speech service to show the microphone in message inputs"
-msgstr "Настройте голосовой сервис, чтобы в полях ввода появился микрофон"
+msgid "Configure your speech service, then hold Send to record. Tap the animation to stop and transcribe."
+msgstr "Настройте речевой сервис и удерживайте кнопку отправки для записи. Нажмите на анимацию, чтобы остановить запись и получить текст"
 
 #: src/components/settings-storage.tsx
 msgid "Confirm clear cache"
@@ -2201,8 +2205,8 @@ msgid "Enter a name."
 msgstr "Введите имя"
 
 #: src/app/settings-voice.tsx
-msgid "Enter an HTTPS base URL, API key and model"
-msgstr "Введите базовый HTTPS URL, ключ API и модель"
+msgid "Enter a valid HTTPS base URL. API key and model are optional."
+msgstr "Введите корректный базовый URL HTTPS. Ключ API и модель необязательны"
 
 #: src/app/explore.tsx
 msgid "Enter the {PAIRING_CODE_CHARACTER_COUNT}-character code."
@@ -3097,6 +3101,10 @@ msgstr "Модель · {0} → {next}"
 #: src/components/agent-message-block.tsx
 msgid "Model · {next}"
 msgstr "Модель · {next}"
+
+#: src/app/settings-voice.tsx
+msgid "Model (optional)"
+msgstr "Модель (необязательно)"
 
 #: src/components/agent-mode-sheet.tsx
 msgid "Modes of {agentName}"
@@ -6175,7 +6183,7 @@ msgstr "Обновите приложение для импорта тем по 
 
 #: src/components/audio-asset-preview.tsx
 msgid "Update the Gateway to preview audio output."
-msgstr "Обновите Gateway для прослушивания аудиовывода."
+msgstr "Обновите Gateway для прослушивания аудиовывода"
 
 #: src/components/update-status-banner.tsx
 msgid "Updating Muqun…"
@@ -6269,6 +6277,7 @@ msgstr "Показать текущее использование контек�
 
 #: src/app/settings-voice.tsx
 #: src/app/settings.tsx
+#: src/components/terminal-composer.tsx
 #: src/components/voice-input-button.tsx
 msgid "Voice to text"
 msgstr "Голос в текст"

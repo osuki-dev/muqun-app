@@ -71,13 +71,13 @@ function recordingRuntime(config: VoiceServiceConfig, language: string): VoiceRe
     async transcribe(signal) {
       const body = new FormData();
       body.append('file', file, 'dictation.m4a');
-      body.append('model', config.model);
+      if (config.model) body.append('model', config.model);
       body.append('response_format', 'json');
       if (language !== 'auto') body.append('language', language.split('-')[0]);
       try {
         const response = await fetch(`${config.url}/audio/transcriptions`, {
           method: 'POST',
-          headers: { Authorization: `Bearer ${config.apiKey}` },
+          headers: config.apiKey ? { Authorization: `Bearer ${config.apiKey}` } : undefined,
           redirect: 'error',
           body,
           signal,

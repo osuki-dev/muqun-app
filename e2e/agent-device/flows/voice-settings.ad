@@ -4,15 +4,11 @@
 wait "id=\"settings-voice-sheet\"" 10000
 fill "id=\"voice-service-url\"" "http://example.invalid/v1"
 keyboard enter
-fill "id=\"voice-service-key\"" "qa-placeholder-token"
-keyboard enter
-scroll down --until "id=\"voice-service-model\""
-fill "id=\"voice-service-model\"" "qa-transcription"
-keyboard enter
+# API key and model remain empty: URL-only configuration must save.
 scroll down --until "id=\"voice-settings-save\""
 press "id=\"voice-settings-save\""
-scroll down --until "label=\"Enter an HTTPS base URL, API key and model\""
-wait "label=\"Enter an HTTPS base URL, API key and model\"" 5000
+scroll down --until "label=\"Enter a valid HTTPS base URL. API key and model are optional\""
+wait "label=\"Enter a valid HTTPS base URL. API key and model are optional\"" 5000
 scroll up --until "id=\"voice-service-url\""
 fill "id=\"voice-service-url\"" "https://example.invalid/v1"
 keyboard enter

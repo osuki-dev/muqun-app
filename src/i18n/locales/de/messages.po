@@ -588,6 +588,10 @@ msgstr "Antwort: {0}"
 msgid "API key"
 msgstr "API-Schlüssel"
 
+#: src/app/settings-voice.tsx
+msgid "API key (optional)"
+msgstr "API-Schlüssel (optional)"
+
 #: src/components/settings-appearance.tsx
 msgid "App icon"
 msgstr "App-Symbol"
@@ -1246,8 +1250,8 @@ msgid "Completed"
 msgstr "Abgeschlossen"
 
 #: src/app/settings-voice.tsx
-msgid "Configure your speech service to show the microphone in message inputs"
-msgstr "Konfiguriere deinen Sprachdienst, um das Mikrofon in Eingabefeldern anzuzeigen"
+msgid "Configure your speech service, then hold Send to record. Tap the animation to stop and transcribe."
+msgstr "Richte deinen Sprachdienst ein und halte Senden gedrückt, um aufzunehmen. Tippe auf die Animation, um zu stoppen und zu transkribieren"
 
 #: src/components/settings-storage.tsx
 msgid "Confirm clear cache"
@@ -2201,8 +2205,8 @@ msgid "Enter a name."
 msgstr "Gib einen Namen ein"
 
 #: src/app/settings-voice.tsx
-msgid "Enter an HTTPS base URL, API key and model"
-msgstr "HTTPS-Basis-URL, API-Schlüssel und Modell eingeben"
+msgid "Enter a valid HTTPS base URL. API key and model are optional."
+msgstr "Gib eine gültige HTTPS-Basis-URL ein. API-Schlüssel und Modell sind optional"
 
 #: src/app/explore.tsx
 msgid "Enter the {PAIRING_CODE_CHARACTER_COUNT}-character code."
@@ -3097,6 +3101,10 @@ msgstr "Modell · {0} → {next}"
 #: src/components/agent-message-block.tsx
 msgid "Model · {next}"
 msgstr "Modell · {next}"
+
+#: src/app/settings-voice.tsx
+msgid "Model (optional)"
+msgstr "Modell (optional)"
 
 #: src/components/agent-mode-sheet.tsx
 msgid "Modes of {agentName}"
@@ -6175,7 +6183,7 @@ msgstr "Aktualisiere die App, um öffentliche Theme-Links zu importieren. Dateie
 
 #: src/components/audio-asset-preview.tsx
 msgid "Update the Gateway to preview audio output."
-msgstr "Aktualisiere das Gateway, um Audioausgaben anzuhören."
+msgstr "Aktualisiere das Gateway, um Audioausgaben anzuhören"
 
 #: src/components/update-status-banner.tsx
 msgid "Updating Muqun…"
@@ -6269,6 +6277,7 @@ msgstr "Stellt die aktuelle Kontextnutzung als farbiges Raster dar"
 
 #: src/app/settings-voice.tsx
 #: src/app/settings.tsx
+#: src/components/terminal-composer.tsx
 #: src/components/voice-input-button.tsx
 msgid "Voice to text"
 msgstr "Sprache zu Text"
