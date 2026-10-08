@@ -31,7 +31,7 @@ wait "id=custom-theme-preview" 15000
 # settings in the asset viewer.
 scroll down --pixels 900
 press "id=theme-apply"
-wait stable 400 5000
+wait "label=\"Close file\"" 15000
 press "label=\"Close file\""
 # The files sheet has no X circle any more -- the grabber and the swipe are the
 # close -- so the header anchor is its refresh, and the dismissal is the
@@ -144,8 +144,7 @@ is visible "id=\"settings-selection:on:theme-tab-mine\""
 is visible "id=theme-row-my-theme"
 
 # section builtin-tab
-wait stable 400 5000
-is visible "id=\"settings-selection:on:theme-tab-builtin\""
+wait "id=\"settings-selection:on:theme-tab-builtin\"" 15000
 
 # section opacity-enable
 # This theme's palette leaves a terminal floor of 97%, so the whole track spans
