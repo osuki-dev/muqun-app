@@ -16,7 +16,7 @@ import { timing } from '@/lib/motion';
 import { useVoiceInput, clearVoiceInput } from '@/stores/voice-input';
 import { useRouter } from 'expo-router';
 import { VoiceRecordingVisual } from '@/components/voice-recording-visual';
-import { MicOff, Square, X } from 'lucide-react-native';
+import { MicOff, X } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import { AppState, Keyboard, Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { useSharedValue, withTiming } from 'react-native-reanimated';
@@ -93,7 +93,16 @@ function VoiceRecording({
   const busy = state !== 'recording';
   return (
     <View style={styles.recording}>
-      <View style={styles.stage}>
+      <PressableScale
+        accessibilityRole="button"
+        accessibilityLabel={error ? t`Try again` : t`Stop and transcribe`}
+        testID="voice-recording-stop"
+        disabled={busy && !error}
+        onPress={() => {
+          if (error) onRetry();
+          else void session.finish();
+        }}
+        style={styles.stage}>
         {error ? (
           <View style={[styles.errorIcon, { backgroundColor: theme.colors.surface }]}>
             <MicOff size={32} color={theme.colors.textMuted} />
@@ -101,7 +110,7 @@ function VoiceRecording({
         ) : (
           <VoiceRecordingVisual level={level} processing={state !== 'recording'} />
         )}
-      </View>
+      </PressableScale>
       <View style={styles.status}>
         <Text variant="label" color={theme.colors.text}>
           {error
@@ -116,24 +125,6 @@ function VoiceRecording({
           {error || `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')} / 2:00`}
         </Text>
       </View>
-      <PressableScale
-        accessibilityRole="button"
-        accessibilityLabel={error ? t`Try again` : t`Stop and transcribe`}
-        testID="voice-recording-stop"
-        disabled={busy && !error}
-        onPress={() => {
-          if (error) onRetry();
-          else void session.finish();
-        }}
-        style={[
-          styles.recordingAction,
-          { backgroundColor: theme.colors.primary, opacity: busy && !error ? 0.45 : 1 },
-        ]}>
-        {!error && (
-          <Square size={14} fill={theme.colors.onPrimary} color={theme.colors.onPrimary} />
-        )}
-        <Text color={theme.colors.onPrimary}>{error ? t`Try again` : t`Stop and transcribe`}</Text>
-      </PressableScale>
       <Text color={theme.colors.textMuted} style={styles.privacy}>
         {t`Audio is sent to your configured speech service`}
       </Text>
@@ -300,24 +291,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingBottom: 8,
   },
-  stage: { width: 280, height: 196, alignItems: 'center', justifyContent: 'center' },
+  stage: { width: 280, height: 260, alignItems: 'center', justifyContent: 'center' },
   errorIcon: {
     width: 104,
     height: 104,
     borderRadius: 52,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  recordingAction: {
-    minWidth: 220,
-    minHeight: 48,
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 24,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 10,
   },
   status: { alignItems: 'center', gap: 8 },
   statusDetail: { textAlign: 'center' },

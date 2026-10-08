@@ -588,6 +588,10 @@ msgstr "Trả lời: {0}"
 msgid "API key"
 msgstr "Khóa API"
 
+#: src/app/settings-voice.tsx
+msgid "API key (optional)"
+msgstr "Khóa API (không bắt buộc)"
+
 #: src/components/settings-appearance.tsx
 msgid "App icon"
 msgstr "Biểu tượng ứng dụng"
@@ -1246,8 +1250,8 @@ msgid "Completed"
 msgstr "Đã hoàn tất"
 
 #: src/app/settings-voice.tsx
-msgid "Configure your speech service to show the microphone in message inputs"
-msgstr "Cấu hình dịch vụ giọng nói để hiển thị micrô trong ô nhập"
+msgid "Configure your speech service, then hold Send to record. Tap the animation to stop and transcribe."
+msgstr "Cấu hình dịch vụ giọng nói, rồi nhấn giữ Gửi để ghi âm. Chạm vào hiệu ứng để dừng và chuyển thành văn bản"
 
 #: src/components/settings-storage.tsx
 msgid "Confirm clear cache"
@@ -2201,8 +2205,8 @@ msgid "Enter a name."
 msgstr "Nhập tên"
 
 #: src/app/settings-voice.tsx
-msgid "Enter an HTTPS base URL, API key and model"
-msgstr "Nhập URL cơ sở HTTPS, khóa API và mô hình"
+msgid "Enter a valid HTTPS base URL. API key and model are optional."
+msgstr "Nhập URL cơ sở HTTPS hợp lệ. Khóa API và mô hình không bắt buộc"
 
 #: src/app/explore.tsx
 msgid "Enter the {PAIRING_CODE_CHARACTER_COUNT}-character code."
@@ -3097,6 +3101,10 @@ msgstr "Mô hình · {0} → {next}"
 #: src/components/agent-message-block.tsx
 msgid "Model · {next}"
 msgstr "Mô hình · {next}"
+
+#: src/app/settings-voice.tsx
+msgid "Model (optional)"
+msgstr "Mô hình (không bắt buộc)"
 
 #: src/components/agent-mode-sheet.tsx
 msgid "Modes of {agentName}"
@@ -6175,7 +6183,7 @@ msgstr "Cập nhật ứng dụng để nhập giao diện từ liên kết côn
 
 #: src/components/audio-asset-preview.tsx
 msgid "Update the Gateway to preview audio output."
-msgstr "Cập nhật Gateway để nghe đầu ra âm thanh."
+msgstr "Cập nhật Gateway để nghe đầu ra âm thanh"
 
 #: src/components/update-status-banner.tsx
 msgid "Updating Muqun…"
@@ -6269,6 +6277,7 @@ msgstr "Hiển thị mức dùng ngữ cảnh hiện tại dưới dạng lướ
 
 #: src/app/settings-voice.tsx
 #: src/app/settings.tsx
+#: src/components/terminal-composer.tsx
 #: src/components/voice-input-button.tsx
 msgid "Voice to text"
 msgstr "Giọng nói thành văn bản"

@@ -25,6 +25,10 @@ longpress "id=\"composer-send\"" 700
 wait "label=\"Listening…\"" 15000
 is visible "id=\"voice-recording-stop\""
 screenshot "shots/voice-recording.png"
+# The animation itself stops recording. The isolated invalid service fails safely.
+press "id=\"voice-recording-stop\""
+wait "label=\"Try again\"" 20000
+is visible "id=\"voice-recording-stop\""
 press "id=\"voice-recording-cancel\""
 wait "id=\"terminal-composer-input\"" 10000
 is hidden "id=\"voice-recording-stop\""

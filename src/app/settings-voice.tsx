@@ -53,7 +53,7 @@ function VoiceSettingsForm() {
   async function save(clear = false) {
     const next = clear ? null : normalizeVoiceConfig(url, apiKey, model, language, autoInsert);
     if (!clear && !next) {
-      setMessage(t`Enter an HTTPS base URL, API key and model`);
+      setMessage(t`Enter a valid HTTPS base URL. API key and model are optional.`);
       return;
     }
     setBusy(true);
@@ -140,7 +140,7 @@ function VoiceSettingsForm() {
         <Text
           color={
             theme.colors.textMuted
-          }>{t`Configure your speech service to show the microphone in message inputs`}</Text>
+          }>{t`Configure your speech service, then hold Send to record. Tap the animation to stop and transcribe.`}</Text>
         <Text>{t`Base URL`}</Text>
         <FontedTextInput
           testID="voice-service-url"
@@ -154,7 +154,7 @@ function VoiceSettingsForm() {
           placeholder="https://api.openai.com/v1"
           style={field}
         />
-        <Text>{t`API key`}</Text>
+        <Text>{t`API key (optional)`}</Text>
         <FontedTextInput
           testID="voice-service-key"
           accessibilityLabel={t`API key`}
@@ -167,7 +167,7 @@ function VoiceSettingsForm() {
           autoComplete="off"
           style={field}
         />
-        <Text>{t`Model`}</Text>
+        <Text>{t`Model (optional)`}</Text>
         <FontedTextInput
           testID="voice-service-model"
           accessibilityLabel={t`Model`}

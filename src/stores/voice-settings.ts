@@ -30,7 +30,7 @@ export function normalizeVoiceConfig(
     )
       return null;
     const key = apiKey.trim();
-    if (!key || /[\r\n]/.test(key) || !model.trim() || /[\r\n]/.test(model)) return null;
+    if (/[\r\n]/.test(apiKey) || /[\r\n]/.test(model)) return null;
     return {
       url: parsed.toString().replace(/\/+$/, ''),
       apiKey: key,

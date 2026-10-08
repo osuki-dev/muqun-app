@@ -12,17 +12,20 @@ import {
 import { timing } from '@/lib/motion';
 
 const WIDTH = 280;
-const HEIGHT = 196;
+const HEIGHT = 260;
 
-// A quiet liquid surface surrounds an actual microphone-driven waveform.
-// Processing replaces the waveform with a travelling arc, rather than fake speech.
+// A luminous instrument: measured speech drives the waveform and orbit energy.
+// Processing uses a scanner instead of inventing microphone activity.
 const effect = Skia.RuntimeEffect.Make(`
 uniform float2 size;
 uniform float time;
 uniform float level;
 uniform float processing;
 uniform float3 tint;
-uniform float3 ink;
+
+float beam(float distance, float width) {
+  return exp(-abs(distance) / width);
+}
 
 half4 main(float2 coord) {
   float2 p = (coord - size * 0.5) / min(size.x, size.y);
@@ -30,42 +33,50 @@ half4 main(float2 coord) {
   float r = length(p);
   float angle = atan(p.y, p.x);
   float voice = clamp(level, 0.0, 1.0) * (1.0 - processing);
-  float radius = 0.31 + voice * 0.012;
-  float mask = 1.0 - smoothstep(radius - aa, radius + aa, r);
+  float radius = 0.31;
+  float core = 1.0 - smoothstep(radius - aa, radius + aa, r);
+  float3 cyan = float3(0.08, 0.86, 1.0);
+  float3 violet = float3(0.55, 0.32, 1.0);
+  float palette = 0.5 + 0.5 * sin(angle + time * 0.35);
+  float3 neon = mix(cyan, violet, palette);
+  neon = mix(neon, tint, 0.12);
 
-  // Slow layers of light give the surface depth without orbiting particles.
-  float bend = sin(p.x * 6.0 + time * 0.45) * 0.038;
-  float ribbon = exp(-pow((p.y - bend - 0.04) * 10.0, 2.0));
-  float light = clamp(0.22 - p.y * 0.6 + ribbon * 0.18, 0.0, 0.65);
-  float3 surface = mix(tint, ink, light);
-  float edge = smoothstep(radius * 0.65, radius, r);
-  surface = mix(surface, tint * 0.78, edge * 0.28);
+  // A dark recessed core makes the light readable on any theme wallpaper.
+  float3 color = float3(0.018, 0.035, 0.075) * core;
+  float alpha = core;
+  float gridX = pow(0.5 + 0.5 * cos(p.x * 140.0), 24.0);
+  float gridY = pow(0.5 + 0.5 * cos(p.y * 140.0), 24.0);
+  color += cyan * (gridX + gridY) * 0.023 * core;
 
-  // Silence stays nearly flat; the measured input controls each bar's height.
-  float bars = 0.0;
-  for (int i = 0; i < 7; i++) {
-    float n = float(i) - 3.0;
-    float envelope = 1.0 - abs(n) * 0.16;
-    float variation = 0.72 + 0.28 * sin(time * 4.5 + n * 1.2);
-    float height = 0.007 + voice * envelope * variation * 0.084;
-    float2 q = float2(p.x - n * 0.033, max(abs(p.y) - height, 0.0));
-    bars += 1.0 - smoothstep(0.005, 0.005 + aa, length(q));
+  // Segmented outer rails and two travelling scan arcs.
+  float rail = beam(r - 0.385, aa * 0.8);
+  float segments = smoothstep(-0.25, 0.2, sin(angle * 32.0));
+  float scanner = pow(0.5 + 0.5 * cos(angle - time * 1.4), 14.0);
+  float counter = pow(0.5 + 0.5 * cos(angle + time * 0.9 + 2.4), 18.0);
+  float orbit = beam(r - 0.348, aa) * (0.2 + scanner * 0.8);
+  float outer = rail * segments * (0.22 + counter * 0.78);
+  float edge = beam(r - radius, aa * 1.1);
+  float halo = beam(r - radius, 0.018 + voice * 0.012) * (0.14 + voice * 0.2);
+  float energy = edge * (0.5 + voice * 0.5) + orbit + outer + halo;
+  color += neon * energy;
+  alpha = max(alpha, clamp(energy, 0.0, 1.0));
+
+  // Real metering controls the envelope; silence never looks like speech.
+  float wave = 0.0;
+  for (int i = 0; i < 17; i++) {
+    float n = float(i) - 8.0;
+    float envelope = exp(-n * n * 0.027);
+    float variation = 0.65 + 0.35 * sin(time * 7.0 + n * 0.9);
+    float height = 0.007 + voice * envelope * variation * 0.11;
+    float2 q = float2(p.x - n * 0.023, max(abs(p.y) - height, 0.0));
+    wave += beam(length(q), 0.0036);
   }
-  bars = clamp(bars, 0.0, 1.0) * (1.0 - processing);
-
-  float arcRadius = 0.10;
-  float arcLine = 1.0 - smoothstep(aa, aa * 2.0, abs(r - arcRadius));
-  float sweep = pow(0.5 + 0.5 * cos(angle - time * 2.0), 3.0);
-  float arc = arcLine * (0.14 + sweep * 0.86) * processing;
-  surface = mix(surface, ink, clamp(bars + arc, 0.0, 1.0) * 0.94);
-
-  float ringRadius = radius + 0.036 + voice * 0.017;
-  float ring = 1.0 - smoothstep(aa * 0.4, aa * 1.1, abs(r - ringRadius));
-  float halo = exp(-pow((r - radius) * 26.0, 2.0)) * (0.05 + voice * 0.08);
-  float outsideAlpha = (ring * (0.16 + voice * 0.2) + halo) * (1.0 - mask);
-  float alpha = mask + outsideAlpha;
-  float3 color = surface * mask + tint * outsideAlpha;
-  return half4(color, alpha);
+  wave *= 1.0 - processing;
+  float sweep = pow(0.5 + 0.5 * cos(angle - time * 2.2), 6.0);
+  float scan = beam(r - 0.105, aa * 1.2) * (0.12 + sweep) * processing;
+  color += mix(cyan, float3(0.8, 0.96, 1.0), 0.55) * (wave + scan);
+  // Premultiplied output preserves transparent edges around the instrument.
+  return half4(min(color, float3(alpha)), alpha);
 }`);
 
 export function VoiceRecordingVisual({
@@ -86,14 +97,12 @@ export function VoiceRecordingVisual({
     if (!reduced) clock.set((frame.timeSinceFirstFrame ?? 0) / 1000);
   });
   const tint = Array.from(Skia.Color(theme.colors.primary)).slice(0, 3);
-  const ink = Array.from(Skia.Color(theme.colors.onPrimary)).slice(0, 3);
   const uniforms = useDerivedValue(() => ({
     size: [WIDTH, HEIGHT],
     time: clock.get(),
     level: level.get(),
     processing: phase.get(),
     tint,
-    ink,
   }));
   if (!effect) return null;
   return (

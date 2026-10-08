@@ -588,6 +588,10 @@ msgstr "回答：{0}"
 msgid "API key"
 msgstr "API キー"
 
+#: src/app/settings-voice.tsx
+msgid "API key (optional)"
+msgstr "API キー（任意）"
+
 #: src/components/settings-appearance.tsx
 msgid "App icon"
 msgstr "アプリアイコン"
@@ -1246,8 +1250,8 @@ msgid "Completed"
 msgstr "完了"
 
 #: src/app/settings-voice.tsx
-msgid "Configure your speech service to show the microphone in message inputs"
-msgstr "音声サービスを設定すると入力欄にマイクが表示されます"
+msgid "Configure your speech service, then hold Send to record. Tap the animation to stop and transcribe."
+msgstr "音声サービスを設定し、送信を長押しして録音します。アニメーションをタップすると停止して文字起こしします"
 
 #: src/components/settings-storage.tsx
 msgid "Confirm clear cache"
@@ -2201,8 +2205,8 @@ msgid "Enter a name."
 msgstr "名前を入力してください"
 
 #: src/app/settings-voice.tsx
-msgid "Enter an HTTPS base URL, API key and model"
-msgstr "HTTPS ベース URL、API キー、モデルを入力してください"
+msgid "Enter a valid HTTPS base URL. API key and model are optional."
+msgstr "有効な HTTPS ベース URL を入力してください。API キーとモデルは任意です"
 
 #: src/app/explore.tsx
 msgid "Enter the {PAIRING_CODE_CHARACTER_COUNT}-character code."
@@ -3097,6 +3101,10 @@ msgstr "モデル · {0} → {next}"
 #: src/components/agent-message-block.tsx
 msgid "Model · {next}"
 msgstr "モデル · {next}"
+
+#: src/app/settings-voice.tsx
+msgid "Model (optional)"
+msgstr "モデル（任意）"
 
 #: src/components/agent-mode-sheet.tsx
 msgid "Modes of {agentName}"
@@ -6175,7 +6183,7 @@ msgstr "公開リンクからテーマをインポートするにはアプリを
 
 #: src/components/audio-asset-preview.tsx
 msgid "Update the Gateway to preview audio output."
-msgstr "音声出力を再生するには Gateway を更新してください。"
+msgstr "音声出力を再生するには Gateway を更新してください"
 
 #: src/components/update-status-banner.tsx
 msgid "Updating Muqun…"
@@ -6269,6 +6277,7 @@ msgstr "現在のコンテキスト使用量を色分けしたグリッドで表
 
 #: src/app/settings-voice.tsx
 #: src/app/settings.tsx
+#: src/components/terminal-composer.tsx
 #: src/components/voice-input-button.tsx
 msgid "Voice to text"
 msgstr "音声を文字に変換"

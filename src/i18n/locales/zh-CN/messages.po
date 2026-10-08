@@ -588,6 +588,10 @@ msgstr "回答：{0}"
 msgid "API key"
 msgstr "API 密钥"
 
+#: src/app/settings-voice.tsx
+msgid "API key (optional)"
+msgstr "API Key（选填）"
+
 #: src/components/settings-appearance.tsx
 msgid "App icon"
 msgstr "应用图标"
@@ -1246,8 +1250,8 @@ msgid "Completed"
 msgstr "已完成"
 
 #: src/app/settings-voice.tsx
-msgid "Configure your speech service to show the microphone in message inputs"
-msgstr "配置语音服务后，输入框中将显示麦克风按钮"
+msgid "Configure your speech service, then hold Send to record. Tap the animation to stop and transcribe."
+msgstr "配置语音服务后，长按发送开始录音。点击动画停止并转写"
 
 #: src/components/settings-storage.tsx
 msgid "Confirm clear cache"
@@ -2201,8 +2205,8 @@ msgid "Enter a name."
 msgstr "请输入名称"
 
 #: src/app/settings-voice.tsx
-msgid "Enter an HTTPS base URL, API key and model"
-msgstr "请输入 HTTPS 基础 URL、API Key 和模型"
+msgid "Enter a valid HTTPS base URL. API key and model are optional."
+msgstr "请输入有效的 HTTPS 服务地址，API Key 和模型为选填"
 
 #: src/app/explore.tsx
 msgid "Enter the {PAIRING_CODE_CHARACTER_COUNT}-character code."
@@ -3097,6 +3101,10 @@ msgstr "模型 · {0} → {next}"
 #: src/components/agent-message-block.tsx
 msgid "Model · {next}"
 msgstr "模型 · {next}"
+
+#: src/app/settings-voice.tsx
+msgid "Model (optional)"
+msgstr "模型（选填）"
 
 #: src/components/agent-mode-sheet.tsx
 msgid "Modes of {agentName}"
@@ -6175,7 +6183,7 @@ msgstr "更新 App 后即可从公开链接导入主题，你仍然可以从文�
 
 #: src/components/audio-asset-preview.tsx
 msgid "Update the Gateway to preview audio output."
-msgstr "更新 Gateway 后即可预览音频输出。"
+msgstr "更新 Gateway 后即可预览音频输出"
 
 #: src/components/update-status-banner.tsx
 msgid "Updating Muqun…"
@@ -6269,6 +6277,7 @@ msgstr "以彩色网格显示当前的上下文用量"
 
 #: src/app/settings-voice.tsx
 #: src/app/settings.tsx
+#: src/components/terminal-composer.tsx
 #: src/components/voice-input-button.tsx
 msgid "Voice to text"
 msgstr "语音转文字"
