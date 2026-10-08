@@ -241,7 +241,7 @@ export function demoAgentSessionSnapshot(asid: string): AgentSessionSnapshot | n
         seq: 2,
         updated_ms: 2,
       },
-      ...Array.from({ length: 14 }, (_, index): TimelineItem => ({
+      ...Array.from({ length: 40 }, (_, index): TimelineItem => ({
         id: `audio-note-${index}`,
         message_id: `audio-note-${index}`,
         role: index % 2 ? 'assistant' : 'user',

@@ -917,10 +917,12 @@ export class NativeRunner {
           }
         }
         const grabber = guardedNodes?.find((node) => node.label === 'Sheet Grabber');
-        if (grabber?.rect) {
+        if (grabber?.rect && guardedNodes) {
           const x = Math.round(grabber.rect.x + grabber.rect.width / 2);
           const y = Math.round(grabber.rect.y + grabber.rect.height / 2);
-          await this.invoke(['gesture', 'pan', String(x), String(y), '0', '500', '350']);
+          const viewport = appViewport(guardedNodes);
+          const distance = Math.max(1, Math.min(500, viewport.y + viewport.height - y - 24));
+          await this.invoke(['gesture', 'pan', String(x), String(y), '0', String(distance), '350']);
           continue;
         }
         const goBack = guardedNodes?.find(

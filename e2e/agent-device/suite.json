@@ -275,7 +275,17 @@
     }
   ],
   "programs": {
-    "flows/inline-audio": [{ "include": "subflows/open-demo" }, { "run": "flows/inline-audio.ad" }],
+    "flows/inline-audio": [
+      { "include": "subflows/open-demo" },
+      { "run": "flows/inline-audio.ad#open-output" },
+      {
+        "target": { "id": "agent-subagent-detail-transcript" },
+        "mode": "visible",
+        "timeout": 15000,
+        "run": "flows/inline-audio.ad#arrived"
+      },
+      { "run": "flows/inline-audio.ad#playback" }
+    ],
     "subflows/open-voice-settings": [
       { "include": "subflows/launch-home" },
       {
@@ -8055,6 +8065,20 @@
         "run": "subflows/launch-home.ad#s8"
       },
       {
+        "target": { "text": "(?i)(Skip intro|Try the demo)" },
+        "mode": "visible",
+        "timeout": 20000,
+        "run": "subflows/launch-home.ad#startup-ready"
+      },
+      {
+        "target": {
+          "id": "launch-intro-skip"
+        },
+        "mode": "press",
+        "optional": true,
+        "run": "subflows/launch-home.ad#s9"
+      },
+      {
         "target": {
           "text": "Got it"
         },
@@ -8106,14 +8130,6 @@
       },
       {
         "include": "subflows/dismiss-logbox"
-      },
-      {
-        "target": {
-          "id": "launch-intro-skip"
-        },
-        "mode": "press",
-        "optional": true,
-        "run": "subflows/launch-home.ad#s9"
       }
     ],
     "subflows/motion-618-close-capture": [
