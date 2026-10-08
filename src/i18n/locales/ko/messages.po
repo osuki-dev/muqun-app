@@ -1713,8 +1713,8 @@ msgid "Could not play this audio file."
 msgstr "이 오디오 파일을 재생할 수 없습니다"
 
 #: src/components/video-asset-preview.tsx
-msgid "Could not play video. Try another file or retry."
-msgstr "동영상을 재생할 수 없습니다. 다른 파일을 선택하거나 다시 시도하세요"
+msgid "Could not play this video file."
+msgstr "이 동영상 파일을 재생할 수 없습니다"
 
 #: src/app/explore.tsx
 msgid "Could not reach that address. Check it and make sure the Gateway is running."
@@ -2654,8 +2654,13 @@ msgstr "대기"
 msgid "If this continues, restart the app or check the app installation"
 msgstr "문제가 계속되면 앱을 다시 시작하거나 앱 설치 상태를 확인하세요"
 
+#: src/components/transcript-block-image.tsx
+msgid "Image"
+msgstr "이미지"
+
 #: src/components/agent-message-block.tsx
 #: src/components/asset-viewer.tsx
+#: src/components/transcript-block-image.tsx
 msgid "Image unavailable"
 msgstr "이미지를 표시할 수 없음"
 
@@ -2664,6 +2669,10 @@ msgstr "이미지를 표시할 수 없음"
 #: src/components/asset-viewer.tsx
 msgid "Image unavailable: {0}"
 msgstr "이미지를 표시할 수 없음: {0}"
+
+#: src/components/transcript-block-image.tsx
+msgid "Image unavailable: {alt}"
+msgstr "이미지를 표시할 수 없음: {alt}"
 
 #: src/components/session-artifacts.tsx
 #: src/components/settings-storage.tsx
@@ -3016,6 +3025,7 @@ msgid "Loading themes…"
 msgstr "테마를 불러오는 중…"
 
 #: src/app/settings-voice.tsx
+#: src/components/transcript-block-image.tsx
 msgid "Loading…"
 msgstr "불러오는 중…"
 
@@ -6216,7 +6226,6 @@ msgid "Update the app to import public theme links. You can still import a file"
 msgstr "공개 링크로 테마를 가져오려면 앱을 업데이트하세요. 파일 가져오기는 계속 사용할 수 있습니다"
 
 #: src/components/inline-file-link.tsx
-#: src/components/video-asset-preview.tsx
 #: src/hooks/use-file-actions.tsx
 msgid "Update the Gateway to open or save this file."
 msgstr "이 파일을 열거나 저장하려면 Gateway를 업데이트하세요"
@@ -6224,6 +6233,10 @@ msgstr "이 파일을 열거나 저장하려면 Gateway를 업데이트하세요
 #: src/components/audio-asset-preview.tsx
 msgid "Update the Gateway to preview audio output."
 msgstr "오디오 출력을 미리 들으려면 Gateway를 업데이트하세요"
+
+#: src/components/video-asset-preview.tsx
+msgid "Update the Gateway to preview video output."
+msgstr "동영상 출력을 미리 보려면 Gateway를 업데이트하세요"
 
 #: src/components/update-status-banner.tsx
 msgid "Updating Muqun…"

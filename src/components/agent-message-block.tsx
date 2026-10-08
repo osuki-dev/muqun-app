@@ -41,6 +41,7 @@ import Animated, {
 import { PressableScale } from '@/components/pressable-scale';
 import { AgentActionMenu, type AgentActionMenuItem } from '@/components/agent-action-menu';
 import { BoundedMarkdown } from '@/components/bounded-markdown';
+import { TranscriptBlockImage } from '@/components/transcript-block-image';
 import { InlineVideoFile } from '@/components/video-asset-preview';
 import { InlineFileLink } from '@/components/inline-file-link';
 import { InlineAudioFile } from '@/components/audio-asset-preview';
@@ -69,6 +70,7 @@ import {
   escapeMarkdownText,
   messageImageResolver,
   rewriteMessageImages,
+  splitBlockImages,
   type MessageImageAsset,
 } from '@/lib/message-images';
 import { useMessageImages } from '@/hooks/use-message-images';
@@ -666,17 +668,48 @@ const MessageTextPart = memo(function MessageTextPart({
 
   const renderMarkdown = (key: string, markdown: string) => {
     const parts = audioSessionId ? splitAudioMarkdown(markdown) : [];
-    const renderText = (partKey: string, content: string) => (
-      <BoundedMarkdown
-        key={partKey}
-        markdown={content}
-        markdownStyle={markdownStyle}
-        containerStyle={styles.markdownContainer}
-        latexMath
-        {...(images.headers ? { imageRequestHeaders: images.headers } : {})}
-        {...(onPreviewImage ? { onImagePress: onPreviewImage } : {})}
-      />
-    );
+    const cover =
+      parts.filter((part) => part.kind === 'video').length === 1
+        ? splitBlockImages(markdown).find(
+            (block) => block.kind === 'image' && /cover|poster|封面/i.test(block.alt)
+          )
+        : undefined;
+    const coverUri =
+      cover?.kind === 'image' && !images.pending.has(cover.uri) ? cover.uri : undefined;
+    const coverMetadata = imageAssets?.find((asset) => images.uris.get(asset.src) === coverUri);
+    const renderText = (partKey: string, content: string) => {
+      const blocks = splitBlockImages(content);
+      return blocks.map((block) => {
+        if (block.kind === 'image') {
+          if (block.uri === coverUri) return null;
+          const metadata = imageAssets?.find((asset) => images.uris.get(asset.src) === block.uri);
+          return (
+            <TranscriptBlockImage
+              key={`${partKey}:${block.start}:${block.uri}`}
+              uri={block.uri}
+              alt={block.alt}
+              headers={metadata ? images.headers : undefined}
+              pending={images.pending.has(block.uri)}
+              width={metadata?.width}
+              height={metadata?.height}
+              onPress={onPreviewImage}
+            />
+          );
+        }
+        if (!block.text.trim()) return null;
+        return (
+          <BoundedMarkdown
+            key={`${partKey}:${block.start}`}
+            markdown={block.text}
+            markdownStyle={markdownStyle}
+            containerStyle={styles.markdownContainer}
+            latexMath
+            {...(images.headers ? { imageRequestHeaders: images.headers } : {})}
+            {...(onPreviewImage ? { onImagePress: onPreviewImage } : {})}
+          />
+        );
+      });
+    };
     if (!audioSessionId || !parts.some((part) => part.kind !== 'markdown'))
       return renderText(key, markdown);
     return (
@@ -687,6 +720,14 @@ const MessageTextPart = memo(function MessageTextPart({
               key={part.start}
               asid={audioSessionId}
               file={{ uri: part.uri, name: part.name }}
+              poster={
+                coverUri
+                  ? {
+                      uri: coverUri,
+                      ...(coverMetadata && images.headers ? { headers: images.headers } : {}),
+                    }
+                  : undefined
+              }
             />
           ) : part.kind === 'file' ? (
             <InlineFileLink
@@ -1318,17 +1359,23 @@ export const AgentAssistantMessage = memo(function AgentAssistantMessage({
   let run: ReactNode[] = [];
   let runKey = '';
   let runNeedsFullWidth = false;
+  let runHasOnlyAudio = true;
   const flush = () => {
     if (run.length === 0) return;
     rows.push(
       <View
         key={`run:${runKey}`}
-        style={[styles.messageBlock, runNeedsFullWidth && styles.fullWidthMessage, plate]}>
+        style={
+          runHasOnlyAudio
+            ? styles.standaloneRow
+            : [styles.messageBlock, runNeedsFullWidth && styles.fullWidthMessage, plate]
+        }>
         {run}
       </View>
     );
     run = [];
     runNeedsFullWidth = false;
+    runHasOnlyAudio = true;
   };
   displayEntries.forEach((displayEntry) => {
     if (displayEntry.kind === 'tool-group') {
@@ -1377,8 +1424,19 @@ export const AgentAssistantMessage = memo(function AgentAssistantMessage({
       runNeedsFullWidth =
         runNeedsFullWidth ||
         splitDiagramMarkdown(entry.item.part.text).some((part) => part.source !== undefined) ||
+        splitBlockImages(entry.item.part.text).some((part) => part.kind === 'image') ||
         (Boolean(actions.audioSessionId) &&
           splitAudioMarkdown(entry.item.part.text).some((part) => part.kind !== 'markdown'));
+    const audioParts =
+      entry.item.part.type === 'text' && actions.audioSessionId
+        ? splitAudioMarkdown(entry.item.part.text)
+        : [];
+    runHasOnlyAudio =
+      runHasOnlyAudio &&
+      audioParts.some((part) => part.kind === 'audio') &&
+      audioParts.every((part) =>
+        part.kind === 'markdown' ? !part.text.trim() : part.kind === 'audio'
+      );
     run.push(<Fragment key={entry.item.id}>{drawn}</Fragment>);
   });
   flush();

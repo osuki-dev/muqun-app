@@ -1713,8 +1713,8 @@ msgid "Could not play this audio file."
 msgstr "ไม่สามารถเล่นไฟล์เสียงนี้ได้"
 
 #: src/components/video-asset-preview.tsx
-msgid "Could not play video. Try another file or retry."
-msgstr "เล่นวิดีโอไม่ได้ โปรดลองไฟล์อื่นหรือลองอีกครั้ง"
+msgid "Could not play this video file."
+msgstr "ไม่สามารถเล่นไฟล์วิดีโอนี้ได้"
 
 #: src/app/explore.tsx
 msgid "Could not reach that address. Check it and make sure the Gateway is running."
@@ -2654,8 +2654,13 @@ msgstr "ว่าง"
 msgid "If this continues, restart the app or check the app installation"
 msgstr "หากยังเกิดปัญหา ให้เริ่มแอปใหม่หรือตรวจสอบการติดตั้งแอป"
 
+#: src/components/transcript-block-image.tsx
+msgid "Image"
+msgstr "รูปภาพ"
+
 #: src/components/agent-message-block.tsx
 #: src/components/asset-viewer.tsx
+#: src/components/transcript-block-image.tsx
 msgid "Image unavailable"
 msgstr "ไม่สามารถแสดงรูปภาพ"
 
@@ -2664,6 +2669,10 @@ msgstr "ไม่สามารถแสดงรูปภาพ"
 #: src/components/asset-viewer.tsx
 msgid "Image unavailable: {0}"
 msgstr "ไม่สามารถแสดงรูปภาพ: {0}"
+
+#: src/components/transcript-block-image.tsx
+msgid "Image unavailable: {alt}"
+msgstr "ไม่สามารถแสดงรูปภาพ: {alt}"
 
 #: src/components/session-artifacts.tsx
 #: src/components/settings-storage.tsx
@@ -3016,6 +3025,7 @@ msgid "Loading themes…"
 msgstr "กำลังโหลดธีม…"
 
 #: src/app/settings-voice.tsx
+#: src/components/transcript-block-image.tsx
 msgid "Loading…"
 msgstr "กำลังโหลด…"
 
@@ -6216,7 +6226,6 @@ msgid "Update the app to import public theme links. You can still import a file"
 msgstr "อัปเดตแอปเพื่อนำเข้าลิงก์ธีมสาธารณะ คุณยังนำเข้าไฟล์ได้"
 
 #: src/components/inline-file-link.tsx
-#: src/components/video-asset-preview.tsx
 #: src/hooks/use-file-actions.tsx
 msgid "Update the Gateway to open or save this file."
 msgstr "อัปเดต Gateway เพื่อเปิดหรือบันทึกไฟล์นี้"
@@ -6224,6 +6233,10 @@ msgstr "อัปเดต Gateway เพื่อเปิดหรือบั
 #: src/components/audio-asset-preview.tsx
 msgid "Update the Gateway to preview audio output."
 msgstr "อัปเดต Gateway เพื่อฟังตัวอย่างเอาต์พุตเสียง"
+
+#: src/components/video-asset-preview.tsx
+msgid "Update the Gateway to preview video output."
+msgstr "อัปเดต Gateway เพื่อดูตัวอย่างวิดีโอ"
 
 #: src/components/update-status-banner.tsx
 msgid "Updating Muqun…"
