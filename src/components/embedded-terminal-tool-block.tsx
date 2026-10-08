@@ -6,7 +6,7 @@ import {
   type ComponentType,
   type ReactNode,
 } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, useWindowDimensions } from 'react-native';
 import { useThemeTokens } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
 import { useLingui } from '@lingui/react/macro';
@@ -37,6 +37,7 @@ import { EngineFailureText } from '@/components/engine-failure-text';
 import { ThinkingIndicator } from '@/components/agent-thinking-indicator';
 import { usePaneChatColors } from '@/components/pane-chat-blocks';
 import { useTranscriptPlate } from '@/hooks/use-transcript-plate';
+import { PAD_LAYOUT_MIN_WIDTH } from '@/lib/responsive-layout';
 import { TRANSCRIPT_GRID } from '@/constants/transcript-grid';
 import { useMonoFontFamily } from '@/hooks/use-user-fonts';
 import { fadeIn, timing } from '@/lib/motion';
@@ -138,6 +139,8 @@ export const EmbeddedTerminalToolBlock = memo(function EmbeddedTerminalToolBlock
   const { t } = useLingui();
   const raised = useTranscriptPlate();
   const mono = useMonoFontFamily();
+  const { width } = useWindowDimensions();
+  const compact = width < PAD_LAYOUT_MIN_WIDTH;
   const [expanded, setExpanded] = useState(defaultExpanded);
 
   const pending = isToolPending(status);
@@ -167,7 +170,7 @@ export const EmbeddedTerminalToolBlock = memo(function EmbeddedTerminalToolBlock
       testID={testID}
       // A screen reader hears the call, not the engine's id for it.
       accessibilityLabel={[title, caption].filter(Boolean).join(' ') || undefined}>
-      {/* Header: one line naming the tool and what it is pointed at */}
+      {/* Keep controls on the first line; narrow-screen paths get the full card width. */}
       <PressableScale
         testID={onOpenDetail ? 'agent-tool-open-detail' : 'agent-tool-toggle'}
         accessibilityRole="button"
@@ -182,70 +185,96 @@ export const EmbeddedTerminalToolBlock = memo(function EmbeddedTerminalToolBlock
         disabled={!hasBody && !onOpenDetail}
         onPress={onOpenDetail ?? (() => setExpanded((prev) => !prev))}
         style={styles.header}>
-        <View style={styles.headerIcon}>
-          {createElement(TOOL_ICONS[kind], { size: 13, color: theme.colors.textMuted })}
-        </View>
-        <View style={styles.headerText}>
-          <View style={styles.headerLine}>
-            <Text
-              variant="caption"
-              weight="semibold"
-              color={theme.colors.text}
-              style={styles.toolName}>
-              {toolName}
-            </Text>
-            {title ? (
+        <View style={styles.headerRow}>
+          <View style={styles.headerIcon}>
+            {createElement(TOOL_ICONS[kind], { size: 13, color: theme.colors.textMuted })}
+          </View>
+          <View style={styles.headerText}>
+            <View style={styles.headerLine}>
+              <Text
+                variant="caption"
+                weight="semibold"
+                color={theme.colors.text}
+                style={styles.toolName}>
+                {toolName}
+              </Text>
+              {!compact && title ? (
+                <Text
+                  variant="caption"
+                  numberOfLines={1}
+                  // A long file name keeps its start and its extension; the
+                  // caption under it carries the folder rather than the name
+                  // again.
+                  ellipsizeMode="middle"
+                  color={theme.colors.textMuted}
+                  style={[styles.target, { fontFamily: mono }]}>
+                  {title}
+                </Text>
+              ) : null}
+            </View>
+            {!compact && caption ? (
               <Text
                 variant="caption"
                 numberOfLines={1}
-                // A long file name keeps its start and its extension; the
-                // caption under it carries the folder rather than the name
-                // again.
+                ellipsizeMode="head"
+                color={theme.colors.textSubtle}
+                style={[styles.caption, { fontFamily: mono }]}>
+                {caption}
+              </Text>
+            ) : null}
+          </View>
+          {/* A soft pulse rather than a spinner: a tool that is thinking reads
+            the same way the assistant does while it thinks. */}
+          {pending ? (
+            <ThinkingIndicator size={12} color={statusColor} />
+          ) : failed ? (
+            <AlertCircle size={12} color={statusColor} />
+          ) : durationMs !== undefined ? (
+            <Text variant="caption" color={theme.colors.textSubtle} style={styles.duration}>
+              {formatToolDuration(durationMs)}
+            </Text>
+          ) : null}
+          {hasBody && onOpenDetail ? (
+            <PressableScale
+              testID="agent-tool-toggle"
+              accessibilityRole="button"
+              accessibilityState={{ expanded }}
+              accessibilityLabel={expanded ? t`Collapse tool call` : t`Expand tool call`}
+              hitSlop={12}
+              onPress={() => setExpanded((prev) => !prev)}>
+              <Animated.View entering={fadeIn('micro')} style={chevronStyle}>
+                <ChevronDown size={12} color={theme.colors.textMuted} />
+              </Animated.View>
+            </PressableScale>
+          ) : hasBody ? (
+            <Animated.View entering={fadeIn('micro')} style={chevronStyle}>
+              <ChevronDown size={12} color={theme.colors.textMuted} />
+            </Animated.View>
+          ) : null}
+        </View>
+        {compact && (title || caption) ? (
+          <View style={styles.compactHeaderCopy}>
+            {title ? (
+              <Text
+                variant="caption"
+                numberOfLines={2}
                 ellipsizeMode="middle"
                 color={theme.colors.textMuted}
                 style={[styles.target, { fontFamily: mono }]}>
                 {title}
               </Text>
             ) : null}
+            {caption ? (
+              <Text
+                variant="caption"
+                numberOfLines={2}
+                ellipsizeMode="head"
+                color={theme.colors.textSubtle}
+                style={[styles.caption, { fontFamily: mono }]}>
+                {caption}
+              </Text>
+            ) : null}
           </View>
-          {caption ? (
-            <Text
-              variant="caption"
-              numberOfLines={1}
-              ellipsizeMode="head"
-              color={theme.colors.textSubtle}
-              style={[styles.caption, { fontFamily: mono }]}>
-              {caption}
-            </Text>
-          ) : null}
-        </View>
-        {/* A soft pulse rather than a spinner: a tool that is thinking reads
-            the same way the assistant does while it thinks. */}
-        {pending ? (
-          <ThinkingIndicator size={12} color={statusColor} />
-        ) : failed ? (
-          <AlertCircle size={12} color={statusColor} />
-        ) : durationMs !== undefined ? (
-          <Text variant="caption" color={theme.colors.textSubtle} style={styles.duration}>
-            {formatToolDuration(durationMs)}
-          </Text>
-        ) : null}
-        {hasBody && onOpenDetail ? (
-          <PressableScale
-            testID="agent-tool-toggle"
-            accessibilityRole="button"
-            accessibilityState={{ expanded }}
-            accessibilityLabel={expanded ? t`Collapse tool call` : t`Expand tool call`}
-            hitSlop={12}
-            onPress={() => setExpanded((prev) => !prev)}>
-            <Animated.View entering={fadeIn('micro')} style={chevronStyle}>
-              <ChevronDown size={12} color={theme.colors.textMuted} />
-            </Animated.View>
-          </PressableScale>
-        ) : hasBody ? (
-          <Animated.View entering={fadeIn('micro')} style={chevronStyle}>
-            <ChevronDown size={12} color={theme.colors.textMuted} />
-          </Animated.View>
         ) : null}
       </PressableScale>
 
@@ -286,11 +315,8 @@ export const EmbeddedTerminalToolBlock = memo(function EmbeddedTerminalToolBlock
       ) : null}
 
       {preview ? (
-        // Diffs already carry a file header and a line-number gutter. Keeping
-        // the tool icon's indent here takes that width away from the code.
-        <View style={kind === 'edit' || kind === 'patch' ? undefined : styles.underTitle}>
-          {preview}
-        </View>
+        // Code, images and streaming arguments use the full content width.
+        <View>{preview}</View>
       ) : null}
 
       {actions ? <View style={[styles.actionRow, styles.underTitle]}>{actions}</View> : null}
@@ -326,7 +352,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: TRANSCRIPT_GRID.inset,
     gap: TRANSCRIPT_GRID.attachGap,
   },
-  header: {
+  header: { gap: 4 },
+  compactHeaderCopy: { gap: 1 },
+  headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: HEADER_GAP,

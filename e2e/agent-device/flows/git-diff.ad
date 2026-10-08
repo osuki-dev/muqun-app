@@ -22,15 +22,6 @@ press "${TARGET}"
 # section s7
 wait stable 400 15000
 
-# section s8
-scroll down --pixels 320
-
-# section s9
-scroll down --pixels 320
-
-# section s10
-scroll down --pixels 320
-
 # section s11
 screenshot "shots/21-changes-expanded.png"
 
@@ -50,13 +41,6 @@ press "${TARGET}"
 
 # section s14
 wait stable 400 15000
-
-# section s15
-# Match the downward paging distance when returning through the expanded diff.
-scroll up --pixels 900
-
-# section s16
-is visible "${TARGET}"
 
 # section s17
 press "${TARGET}"

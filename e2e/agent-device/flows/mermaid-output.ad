@@ -9,8 +9,5 @@ is visible "${TARGET}"
 # section press
 press "${TARGET}"
 
-# section scroll
-scroll down 550
-
 # section close
 back --system

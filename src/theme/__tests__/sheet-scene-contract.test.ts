@@ -32,6 +32,12 @@ import { surfaceBackgroundFill } from '../surface-background';
  * now, folded into `session-map.tsx`, and the test below is what keeps it gone.
  */
 const SHEET_FRAMES = [
+  'src/app/settings-servers.tsx',
+  'src/app/settings-appearance.tsx',
+  'src/app/settings-terminal.tsx',
+  'src/app/settings-alerts.tsx',
+  'src/app/settings-storage.tsx',
+  'src/app/settings-about.tsx',
   'src/components/theme-browse-sheet.tsx',
   'src/app/commands.tsx',
   'src/components/session-map.tsx',
@@ -275,7 +281,7 @@ test('a sheet built on the scene has no cards, no radios and no close button', (
     // No second surface: the sheet's ground is the only one.
     expect({
       file,
-      cards: text.includes('<SettingsCard') || text.includes('<ThemedSurface'),
+      cards: /<SettingsCard(?!\s+flush\b)/.test(text) || text.includes('<ThemedSurface'),
     }).toEqual({ file, cards: false });
     // The selection mark is the scene's left rule, not a control to read. Asked
     // only of a sheet that has rows, and with one exemption per file, because

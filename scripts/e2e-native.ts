@@ -889,7 +889,11 @@ export class NativeRunner {
             (node) =>
               node.identifier === 'theme-browse-list' ||
               (env.PLATFORM === 'android' &&
-                (node.identifier === 'theme-tab' || node.label === 'Quick action settings'))
+                (node.identifier === 'theme-tab' ||
+                  /^settings-(servers|appearance|terminal|alerts|storage|about)-sheet$/.test(
+                    node.identifier ?? ''
+                  ) ||
+                  node.label === 'Quick action settings'))
           )
         ) {
           await this.invoke(['back', '--system']);
@@ -1039,8 +1043,15 @@ export class NativeRunner {
           if (step.optional) continue;
           throw new Error(`Expected visible: ${JSON.stringify(target)}`);
         }
-        if (step.mode !== 'scroll')
-          await this.runSection(step.run!, { ...env, TARGET: selector(node) });
+        if (step.mode !== 'scroll') {
+          // Keep an explicitly requested text constraint when IDs are reused.
+          const labelConstraint =
+            target.id && target.text && node.label ? ` label=${JSON.stringify(node.label)}` : '';
+          await this.runSection(step.run!, {
+            ...env,
+            TARGET: selector(node) + labelConstraint,
+          });
+        }
         continue;
       }
       if (step.point) {
