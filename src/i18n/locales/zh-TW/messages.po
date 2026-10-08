@@ -719,10 +719,6 @@ msgid "Audio is sent to your configured speech service"
 msgstr "錄音將傳送至你設定的語音服務"
 
 #: src/components/audio-asset-preview.tsx
-msgid "Audio preview"
-msgstr "音訊預覽"
-
-#: src/components/audio-asset-preview.tsx
 msgid "Audio preview supports files up to {ceiling}."
 msgstr "音訊預覽支援最大 {ceiling} 的檔案"
 
@@ -2986,10 +2982,6 @@ msgstr "載入更多"
 #: src/components/theme-link-import.tsx
 msgid "Loading"
 msgstr "載入中"
-
-#: src/components/audio-asset-preview.tsx
-msgid "Loading audio…"
-msgstr "正在載入音訊…"
 
 #: src/app/commands.tsx
 msgid "Loading commands"

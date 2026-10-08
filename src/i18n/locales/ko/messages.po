@@ -719,10 +719,6 @@ msgid "Audio is sent to your configured speech service"
 msgstr "오디오는 설정한 음성 서비스로 전송됩니다"
 
 #: src/components/audio-asset-preview.tsx
-msgid "Audio preview"
-msgstr "오디오 미리보기"
-
-#: src/components/audio-asset-preview.tsx
 msgid "Audio preview supports files up to {ceiling}."
 msgstr "오디오 미리보기는 최대 {ceiling} 파일을 지원합니다"
 
@@ -2986,10 +2982,6 @@ msgstr "더 불러오기"
 #: src/components/theme-link-import.tsx
 msgid "Loading"
 msgstr "불러오는 중"
-
-#: src/components/audio-asset-preview.tsx
-msgid "Loading audio…"
-msgstr "오디오 불러오는 중…"
 
 #: src/app/commands.tsx
 msgid "Loading commands"

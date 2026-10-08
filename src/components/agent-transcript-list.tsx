@@ -23,18 +23,22 @@ import { AgentAssistantMessage, AgentUserMessage } from './agent-message-block';
 import { DiagramVisibility } from './diagram-visibility';
 import { useIsFocused } from 'expo-router';
 import { useAppActive } from '@/hooks/use-app-active';
+import { AudioPlaybackContext } from '@/components/audio-playback-context';
+import { AudioPlaybackPool } from '@/lib/audio-playback-pool';
+import { useGatewayConnectionStore } from '@/stores/gateway-connection';
 
 type UserProps = ComponentProps<typeof AgentUserMessage>;
 interface RowContextValue extends Omit<UserProps, 'group'> {
   store: AgentTranscriptStore;
   diagramsActive: boolean;
   visibility: StoreApi<ReadonlySet<string>>;
+  playback: { pool: AudioPlaybackPool; namespace: string };
 }
 const RowContext = createContext<RowContextValue | null>(null);
 
 const TranscriptRow = memo(function TranscriptRow({ id }: { id: string }) {
   const context = useContext(RowContext)!;
-  const { store, diagramsActive, visibility, ...props } = context;
+  const { store, diagramsActive, visibility, playback, ...props } = context;
   const group = useStore(store, (state) => state.rows[id]);
   const reasoningLive = useStore(store, (state) => state.reasoningKey === id);
   const visible = useStore(visibility, (keys) => keys.has(id));
@@ -45,17 +49,19 @@ const TranscriptRow = memo(function TranscriptRow({ id }: { id: string }) {
   return group.role === 'user' ? (
     <AgentUserMessage key={id} group={group} {...props} />
   ) : (
-    <DiagramVisibility.Provider value={visible && diagramsActive}>
-      <AgentAssistantMessage
-        key={id}
-        group={group}
-        reasoningLive={reasoningLive}
-        showReasoning={props.showReasoning}
-        markdownStyle={props.markdownStyle}
-        actions={props.actions}
-        readOnly={props.readOnly}
-      />
-    </DiagramVisibility.Provider>
+    <AudioPlaybackContext.Provider value={{ ...playback, row: id }}>
+      <DiagramVisibility.Provider value={visible && diagramsActive}>
+        <AgentAssistantMessage
+          key={id}
+          group={group}
+          reasoningLive={reasoningLive}
+          showReasoning={props.showReasoning}
+          markdownStyle={props.markdownStyle}
+          actions={props.actions}
+          readOnly={props.readOnly}
+        />
+      </DiagramVisibility.Provider>
+    </AudioPlaybackContext.Provider>
   );
 });
 
@@ -86,6 +92,15 @@ export const AgentTranscriptList = memo(function AgentTranscriptList({
   const focused = useIsFocused();
   const appActive = useAppActive();
   const diagramsActive = focused && appActive;
+  const serverId = useGatewayConnectionStore((state) => state.record?.serverId ?? '');
+  const namespace = `${serverId}:${rowProps.actions?.audioSessionId ?? ''}`;
+  const [pool] = useState(() => new AudioPlaybackPool());
+  useEffect(
+    () => () => {
+      void pool.clear(namespace);
+    },
+    [pool, namespace]
+  );
   const [visibility] = useState(() => createStore<ReadonlySet<string>>(() => new Set()));
   const onViewableItemsChanged = useCallback<NonNullable<ListProps['onViewableItemsChanged']>>(
     ({ viewableItems }) => {
@@ -114,8 +129,8 @@ export const AgentTranscriptList = memo(function AgentTranscriptList({
     void listRef.current?.scrollToEnd({ animated: true });
   }, [scrollToSentRow, keys]);
   const context = useMemo(
-    () => ({ store, diagramsActive, visibility, ...rowProps }),
-    [store, diagramsActive, visibility, rowProps]
+    () => ({ store, diagramsActive, visibility, playback: { pool, namespace }, ...rowProps }),
+    [store, diagramsActive, visibility, pool, namespace, rowProps]
   );
   const List = keyboardAware ? KeyboardAwareLegendList<string> : LegendList<string>;
   return (

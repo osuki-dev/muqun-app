@@ -17,6 +17,7 @@ export function videoPreviewRuntime(
     `video-preview-${Date.now()}-${sequence++}.${asset.mime === 'video/quicktime' ? 'mov' : 'mp4'}`
   );
   let player: VideoPlayer | undefined;
+  let initialized = false;
   let subscriptions: { remove: () => void }[] = [];
   return {
     async prepare(signal) {
@@ -38,7 +39,10 @@ export function videoPreviewRuntime(
         player.addEventListener('onEnd', onEnd),
         player.addEventListener('onError', onError),
       ];
-      await player.initialize();
+      if (!initialized) {
+        await player.initialize();
+        initialized = true;
+      }
       player.play();
     },
     async pause() {

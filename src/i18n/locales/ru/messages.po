@@ -719,10 +719,6 @@ msgid "Audio is sent to your configured speech service"
 msgstr "Аудио отправляется в настроенный вами голосовой сервис"
 
 #: src/components/audio-asset-preview.tsx
-msgid "Audio preview"
-msgstr "Прослушивание аудио"
-
-#: src/components/audio-asset-preview.tsx
 msgid "Audio preview supports files up to {ceiling}."
 msgstr "Прослушивание доступно для файлов до {ceiling}"
 
@@ -2986,10 +2982,6 @@ msgstr "Загрузить еще"
 #: src/components/theme-link-import.tsx
 msgid "Loading"
 msgstr "Загрузка"
-
-#: src/components/audio-asset-preview.tsx
-msgid "Loading audio…"
-msgstr "Загрузка аудио…"
 
 #: src/app/commands.tsx
 msgid "Loading commands"

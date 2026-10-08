@@ -719,10 +719,6 @@ msgid "Audio is sent to your configured speech service"
 msgstr "Âm thanh được gửi đến dịch vụ giọng nói bạn đã cấu hình"
 
 #: src/components/audio-asset-preview.tsx
-msgid "Audio preview"
-msgstr "Xem trước âm thanh"
-
-#: src/components/audio-asset-preview.tsx
 msgid "Audio preview supports files up to {ceiling}."
 msgstr "Xem trước âm thanh hỗ trợ tệp tối đa {ceiling}"
 
@@ -2986,10 +2982,6 @@ msgstr "Tải thêm"
 #: src/components/theme-link-import.tsx
 msgid "Loading"
 msgstr "Đang tải"
-
-#: src/components/audio-asset-preview.tsx
-msgid "Loading audio…"
-msgstr "Đang tải âm thanh…"
 
 #: src/app/commands.tsx
 msgid "Loading commands"

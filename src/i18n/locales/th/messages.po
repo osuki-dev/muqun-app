@@ -719,10 +719,6 @@ msgid "Audio is sent to your configured speech service"
 msgstr "เสียงจะถูกส่งไปยังบริการเสียงที่คุณตั้งค่าไว้"
 
 #: src/components/audio-asset-preview.tsx
-msgid "Audio preview"
-msgstr "ตัวอย่างเสียง"
-
-#: src/components/audio-asset-preview.tsx
 msgid "Audio preview supports files up to {ceiling}."
 msgstr "ตัวอย่างเสียงรองรับไฟล์ขนาดไม่เกิน {ceiling}"
 
@@ -2986,10 +2982,6 @@ msgstr "โหลดเพิ่มเติม"
 #: src/components/theme-link-import.tsx
 msgid "Loading"
 msgstr "กำลังโหลด"
-
-#: src/components/audio-asset-preview.tsx
-msgid "Loading audio…"
-msgstr "กำลังโหลดเสียง…"
 
 #: src/app/commands.tsx
 msgid "Loading commands"

@@ -1317,18 +1317,18 @@ export const AgentAssistantMessage = memo(function AgentAssistantMessage({
   const rows: ReactNode[] = [];
   let run: ReactNode[] = [];
   let runKey = '';
-  let runHasDiagram = false;
+  let runNeedsFullWidth = false;
   const flush = () => {
     if (run.length === 0) return;
     rows.push(
       <View
         key={`run:${runKey}`}
-        style={[styles.messageBlock, runHasDiagram && styles.diagramMessage, plate]}>
+        style={[styles.messageBlock, runNeedsFullWidth && styles.fullWidthMessage, plate]}>
         {run}
       </View>
     );
     run = [];
-    runHasDiagram = false;
+    runNeedsFullWidth = false;
   };
   displayEntries.forEach((displayEntry) => {
     if (displayEntry.kind === 'tool-group') {
@@ -1374,9 +1374,11 @@ export const AgentAssistantMessage = memo(function AgentAssistantMessage({
     }
     if (run.length === 0) runKey = entry.item.id;
     if (entry.item.part.type === 'text')
-      runHasDiagram =
-        runHasDiagram ||
-        splitDiagramMarkdown(entry.item.part.text).some((part) => part.source !== undefined);
+      runNeedsFullWidth =
+        runNeedsFullWidth ||
+        splitDiagramMarkdown(entry.item.part.text).some((part) => part.source !== undefined) ||
+        (Boolean(actions.audioSessionId) &&
+          splitAudioMarkdown(entry.item.part.text).some((part) => part.kind !== 'markdown'));
     run.push(<Fragment key={entry.item.id}>{drawn}</Fragment>);
   });
   flush();
@@ -1428,7 +1430,8 @@ const styles = StyleSheet.create({
   userBlock: {
     borderLeftWidth: 2,
   },
-  diagramMessage: { alignSelf: 'stretch', width: '100%' },
+  // Percentage-width media cannot measure inside a plate that hugs its contents.
+  fullWidthMessage: { alignSelf: 'stretch', width: '100%' },
   // A thought row spans the message: the pill hugs itself inside it, and the
   // expanded plate takes the full width. A row that hugged its content was
   // only as wide as the pill on iOS, where the markdown under `flex: 1`

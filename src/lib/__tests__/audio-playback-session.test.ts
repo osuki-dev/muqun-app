@@ -116,7 +116,7 @@ describe('audio playback ownership', () => {
     expect(player.states.some((state) => state.phase === 'error')).toBe(false);
   });
 
-  test('replacement waits for pending native startup and cleanup', async () => {
+  test('replacement waits for pending native startup and pauses the previous player', async () => {
     const entered = deferred();
     const started = deferred();
     const order: string[] = [];
@@ -126,11 +126,8 @@ describe('audio playback ownership', () => {
         entered.resolve();
         await started.promise;
       },
-      async stop() {
-        order.push('first:stop');
-      },
-      release() {
-        order.push('first:release');
+      async pause() {
+        order.push('first:pause');
       },
     });
     const second = fixture({
@@ -145,26 +142,104 @@ describe('audio playback ownership', () => {
     expect(order).toEqual(['first:start']);
     started.resolve();
     await Promise.all([firstPlay, secondPlay]);
-    expect(order).toEqual(['first:start', 'first:stop', 'first:release', 'second:start']);
+    expect(order).toEqual(['first:start', 'first:pause', 'second:start']);
+    await first.session.close();
     await second.session.close();
   });
 
-  test('recording stops playback and blocks it until the matching owner releases', async () => {
+  test('recording pauses playback and blocks it until the matching owner releases', async () => {
     const owner = {};
     const player = fixture();
     await player.session.play();
     await prepareRecordingAudio(owner);
-    expect(player.calls.slice(-2)).toEqual(['stop', 'release']);
+    expect(player.calls.at(-1)).toBe('pause');
     releaseRecordingAudio({});
     const blocked = fixture();
     await blocked.session.play();
     expect(blocked.calls).toEqual(['stop', 'release']);
     expect(blocked.states.at(-1)?.phase).toBe('error');
     releaseRecordingAudio(owner);
+    await player.session.play();
+    expect(player.calls.at(-1)).toBe('resume');
+    await player.session.close();
     const next = fixture();
     await next.session.play();
     expect(next.states.at(-1)?.phase).toBe('playing');
     await next.session.close();
+  });
+
+  test('scrolling out pauses without releasing or resetting timing and return never autoplays', async () => {
+    const player = fixture();
+    await player.session.play();
+    player.progress(2500, 8000);
+    await player.session.setVisible(false);
+    expect(player.states.at(-1)).toEqual({ phase: 'paused', position: 2500, duration: 8000 });
+    expect(player.calls).toEqual(['prepare', 'start', 'pause']);
+    await player.session.play();
+    expect(player.calls).toEqual(['prepare', 'start', 'pause']);
+    await player.session.setVisible(true);
+    expect(player.states.at(-1)?.phase).toBe('paused');
+    await player.session.play();
+    expect(player.calls).toEqual(['prepare', 'start', 'pause', 'resume']);
+    await player.session.close();
+    expect(player.calls.slice(-2)).toEqual(['stop', 'release']);
+  });
+
+  test('a download finishing out of view never starts playback and is reused on return', async () => {
+    const entered = deferred();
+    const downloaded = deferred();
+    let downloads = 0;
+    const player = fixture({
+      async prepare() {
+        downloads++;
+        entered.resolve();
+        await downloaded.promise;
+      },
+    });
+    const play = player.session.play();
+    await entered.promise;
+    const pause = player.session.setVisible(false);
+    downloaded.resolve();
+    await Promise.all([play, pause]);
+    expect(player.calls).toEqual([]);
+    await player.session.setVisible(true);
+    expect(player.calls).toEqual([]);
+    await player.session.play();
+    expect(downloads).toBe(1);
+    expect(player.calls).toEqual(['start']);
+    await player.session.close();
+  });
+
+  test('rapid A/B/A playback switches serialize and preserve both paused players', async () => {
+    const first = fixture();
+    const second = fixture();
+    await Promise.all([first.session.play(), second.session.play(), first.session.play()]);
+    expect(first.calls).toEqual(['prepare', 'start', 'pause', 'resume']);
+    expect(second.calls).toEqual(['prepare', 'start', 'pause']);
+    await Promise.all([first.session.close(), second.session.close()]);
+  });
+
+  test('completion during a pending pause stays ended so the next tap replays', async () => {
+    const pausing = deferred();
+    const entered = deferred();
+    const player = fixture({
+      async pause() {
+        entered.resolve();
+        await pausing.promise;
+      },
+    });
+    await player.session.play();
+    player.progress(8000, 8000);
+    const pause = player.session.pause();
+    await entered.promise;
+    player.end();
+    pausing.resolve();
+    await pause;
+    expect(player.states.at(-1)?.phase).toBe('ended');
+    await player.session.play();
+    expect(player.calls).toEqual(['prepare', 'start', 'stop', 'start']);
+    expect(player.states.at(-1)?.position).toBe(0);
+    await player.session.close();
   });
 
   test('replay reuses downloaded bytes and starts from the beginning', async () => {
