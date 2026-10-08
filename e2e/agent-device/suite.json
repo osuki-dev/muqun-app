@@ -229,6 +229,12 @@
       "program": "flows/settings-sheets",
       "tags": ["full", "settings"],
       "platforms": ["ios", "android"]
+    },
+    {
+      "name": "composer-wrap",
+      "program": "flows/composer-wrap",
+      "tags": ["full", "terminal", "agents"],
+      "platforms": ["ios", "android"]
     }
   ],
   "programs": {
@@ -1082,6 +1088,8 @@
     ],
     "flows/agent-collaboration": [
       { "include": "subflows/open-demo" },
+      { "include": "subflows/restore-key-row" },
+      { "include": "subflows/open-demo" },
       {
         "run": "flows/agent-collaboration.ad"
       }
@@ -1455,13 +1463,6 @@
       },
       {
         "run": "flows/artifacts.ad#s17"
-      },
-      {
-        "target": {
-          "text": "Open files"
-        },
-        "mode": "press",
-        "run": "flows/artifacts.ad#s1"
       },
       {
         "target": {
@@ -2210,7 +2211,7 @@
       },
       {
         "target": {
-          "text": "APPEARANCE"
+          "id": "settings-appearance-row"
         },
         "mode": "visible",
         "timeout": 8000,
@@ -4247,7 +4248,7 @@
       },
       {
         "target": {
-          "text": "SERVERS"
+          "id": "settings-servers-row"
         },
         "mode": "visible",
         "timeout": 8000,
@@ -4291,7 +4292,7 @@
       },
       {
         "target": {
-          "text": "APPEARANCE"
+          "id": "settings-appearance-row"
         },
         "mode": "scroll",
         "direction": "down",
@@ -4646,7 +4647,7 @@
       },
       {
         "target": {
-          "text": "TERMINAL"
+          "id": "settings-terminal-row"
         },
         "mode": "scroll",
         "direction": "down",
@@ -4794,7 +4795,7 @@
       },
       {
         "target": {
-          "text": "ALERTS"
+          "id": "settings-alerts-row"
         },
         "mode": "scroll",
         "direction": "down",
@@ -4917,7 +4918,7 @@
       },
       {
         "target": {
-          "text": "STORAGE"
+          "id": "settings-storage-row"
         },
         "mode": "scroll",
         "direction": "down",
@@ -5043,7 +5044,7 @@
       },
       {
         "target": {
-          "text": "ABOUT"
+          "id": "settings-about-row"
         },
         "mode": "scroll",
         "direction": "down",
@@ -5114,7 +5115,9 @@
       },
       {
         "when": {
-          "target": { "text": "SERVERS" },
+          "target": {
+            "id": "settings-servers-row"
+          },
           "absent": true
         },
         "steps": [
@@ -5127,7 +5130,7 @@
       },
       {
         "target": {
-          "text": "SERVERS"
+          "id": "settings-servers-row"
         },
         "mode": "visible",
         "timeout": 8000,
@@ -5388,7 +5391,7 @@
       },
       {
         "target": {
-          "text": "SERVERS"
+          "id": "settings-servers-row"
         },
         "mode": "visible",
         "timeout": 8000,
@@ -5547,7 +5550,7 @@
       },
       {
         "target": {
-          "text": "SERVERS"
+          "id": "settings-servers-row"
         },
         "mode": "visible",
         "timeout": 8000,
@@ -5710,7 +5713,7 @@
       },
       {
         "target": {
-          "text": "SERVERS"
+          "id": "settings-servers-row"
         },
         "mode": "visible",
         "timeout": 8000,
@@ -5791,7 +5794,7 @@
       },
       {
         "target": {
-          "text": "SERVERS"
+          "id": "settings-servers-row"
         },
         "mode": "visible",
         "timeout": 8000,
@@ -5802,7 +5805,7 @@
       },
       {
         "target": {
-          "text": "ABOUT"
+          "id": "settings-about-row"
         },
         "mode": "scroll",
         "direction": "down",
@@ -6527,7 +6530,7 @@
       },
       {
         "target": {
-          "text": "SERVERS"
+          "id": "settings-servers-row"
         },
         "mode": "visible",
         "timeout": 8000,
@@ -6891,7 +6894,7 @@
       },
       {
         "target": {
-          "text": "APPEARANCE"
+          "id": "settings-appearance-row"
         },
         "mode": "visible",
         "timeout": 8000,
@@ -9039,6 +9042,57 @@
         "mode": "hidden",
         "timeout": 15000,
         "run": "flows/settings-sheets.ad#hidden"
+      }
+    ],
+    "flows/composer-wrap": [
+      { "include": "subflows/open-demo" },
+      {
+        "target": {
+          "id": "terminal-composer-input"
+        },
+        "mode": "press",
+        "run": "flows/composer-wrap.ad#focus"
+      },
+      {
+        "run": "flows/composer-wrap.ad#type"
+      },
+      {
+        "target": {
+          "id": "composer-expanded-actions"
+        },
+        "mode": "visible",
+        "timeout": 15000,
+        "run": "flows/composer-wrap.ad#visible"
+      },
+      {
+        "target": {
+          "id": "terminal-composer-input",
+          "text": "A long draft.*"
+        },
+        "mode": "visible",
+        "timeout": 15000,
+        "run": "flows/composer-wrap.ad#visible"
+      },
+      {
+        "run": "flows/composer-wrap.ad#shot"
+      },
+      {
+        "target": {
+          "text": "Send to agent"
+        },
+        "mode": "press",
+        "run": "flows/composer-wrap.ad#send"
+      },
+      {
+        "target": {
+          "id": "composer-expanded-actions"
+        },
+        "mode": "hidden",
+        "timeout": 15000,
+        "run": "flows/composer-wrap.ad#hidden"
+      },
+      {
+        "run": "flows/composer-wrap.ad#close"
       }
     ]
   }

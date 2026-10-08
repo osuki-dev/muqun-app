@@ -20,7 +20,7 @@ import {
   Settings2,
 } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Trans, useLingui } from '@lingui/react/macro';
@@ -28,11 +28,10 @@ import { Trans, useLingui } from '@lingui/react/macro';
 import { NAV_HEADER_CONTROL_SIZE } from '@/components/nav-header';
 import { ScreenHeader } from '@/components/screen-header';
 import { SettingsRegistration } from '@/components/settings-registration';
-import { LADDER, SettingsNavRow, SettingsSection } from '@/components/settings-chrome';
+import { LADDER, SettingsNavRow, SettingsCard } from '@/components/settings-chrome';
 import { SettingsSecurity } from '@/components/settings-security';
 import { NAV_HEADER_TOP_GAP } from '@/constants/nav-header';
 import { RenderTally, useRenderTally } from '@/lib/render-tally';
-import { responsiveWorkspaceLayout } from '@/lib/responsive-layout';
 
 /**
  * Settings stay comfortably readable when the route fills a tablet window.
@@ -53,7 +52,7 @@ const SETTINGS_CONTENT_MAX_WIDTH = 760;
  */
 const HEADER_INSET = NAV_HEADER_TOP_GAP + NAV_HEADER_CONTROL_SIZE + 8 + LADDER.gap;
 
-/** Settings keeps server management behind a single entry above appearance. */
+/** Settings gathers everyday preferences and app management into one entry list. */
 export default function SettingsScreen() {
   const router = useRouter();
   const profile = useAppearanceProfile();
@@ -75,8 +74,6 @@ export default function SettingsScreen() {
   const theme = useThemeTokens();
   const { resolvedMode } = useThemeMode();
   const insets = useSafeAreaInsets();
-  const { width } = useWindowDimensions();
-  const isPadLayout = responsiveWorkspaceLayout(width).mode === 'pad';
   // The hugging plate `SettingsSection` already gives its instrument labels,
   // for the two bare strings at the end of the page that have no card of their
   // own. `null` when no pack supplies a wallpaper: on a flat ground the text is
@@ -93,7 +90,7 @@ export default function SettingsScreen() {
     : null;
   useRenderTally('SettingsScreen');
 
-  // Defer the lower entries and native security check until navigation settles.
+  // The native security probe runs after the page transition settles.
   const [deep, setDeep] = useState(false);
   useEffect(() => {
     const handle = requestIdleCallback(() => setDeep(true), { timeout: 250 });
@@ -115,83 +112,31 @@ export default function SettingsScreen() {
           onScroll={deep ? undefined : () => setDeep(true)}
           scrollEventThrottle={16}
           showsVerticalScrollIndicator={false}>
-          <SettingsSection title={t`Servers`}>
-            <SettingsNavRow
-              icon={Server}
-              trailing={ChevronRight}
-              label={t`Servers`}
-              testID="settings-servers-row"
-              onPress={() => router.push('/settings-servers')}
-            />
-          </SettingsSection>
-          <SettingsSection title={t`Appearance`}>
-            <SettingsNavRow
-              icon={Palette}
-              trailing={ChevronRight}
-              label={t`Appearance`}
-              testID="settings-appearance-row"
-              onPress={() => router.push('/settings-appearance')}
-            />
-          </SettingsSection>
+          <SettingsCard>
+            {(
+              [
+                { route: '/settings-appearance', icon: Palette, label: t`Appearance` },
+                { route: '/settings-terminal', icon: Terminal, label: t`Terminal` },
+                { route: '/settings-alerts', icon: Bell, label: t`Alerts` },
+                { route: '/settings-servers', icon: Server, label: t`Servers` },
+                { route: '/settings-storage', icon: HardDrive, label: t`Storage` },
+                { route: '/settings-about', icon: Info, label: t`About` },
+              ] as const
+            ).map(({ route, icon, label }) => (
+              <SettingsNavRow
+                key={route}
+                icon={icon}
+                trailing={ChevronRight}
+                label={label}
+                testID={route.slice(1) + '-row'}
+                onPress={() => router.push(route)}
+              />
+            ))}
+          </SettingsCard>
 
-          {/* Everything below here is off the bottom of a phone when the page
-              opens, so it is built on the frame after the push finishes rather
-              than on the frame the reader is waiting for. See `deep`. */}
           {deep ? (
             <>
-              {/* The remaining groups share columns on tablets. */}
-              <View
-                testID="settings-responsive-grid"
-                style={[styles.deepSections, isPadLayout && styles.deepSectionsPad]}>
-                <View style={[styles.deepSection, isPadLayout && styles.deepSectionPad]}>
-                  <SettingsSection title={t`Terminal`}>
-                    <SettingsNavRow
-                      icon={Terminal}
-                      trailing={ChevronRight}
-                      label={t`Terminal`}
-                      testID="settings-terminal-row"
-                      onPress={() => router.push('/settings-terminal')}
-                    />
-                  </SettingsSection>
-                </View>
-                <View style={[styles.deepSection, isPadLayout && styles.deepSectionPad]}>
-                  <SettingsSection title={t`Alerts`}>
-                    <SettingsNavRow
-                      icon={Bell}
-                      trailing={ChevronRight}
-                      label={t`Alerts`}
-                      testID="settings-alerts-row"
-                      onPress={() => router.push('/settings-alerts')}
-                    />
-                  </SettingsSection>
-                </View>
-                <View style={[styles.deepSection, isPadLayout && styles.deepSectionPad]}>
-                  <SettingsSecurity title={t`Security`} />
-                </View>
-
-                <View style={[styles.deepSection, isPadLayout && styles.deepSectionPad]}>
-                  <SettingsSection title={t`Storage`}>
-                    <SettingsNavRow
-                      icon={HardDrive}
-                      trailing={ChevronRight}
-                      label={t`Storage`}
-                      testID="settings-storage-row"
-                      onPress={() => router.push('/settings-storage')}
-                    />
-                  </SettingsSection>
-                </View>
-                <View style={[styles.deepSection, isPadLayout && styles.deepSectionPad]}>
-                  <SettingsSection title={t`About`}>
-                    <SettingsNavRow
-                      icon={Info}
-                      trailing={ChevronRight}
-                      label={t`About`}
-                      testID="settings-about-row"
-                      onPress={() => router.push('/settings-about')}
-                    />
-                  </SettingsSection>
-                </View>
-              </View>
+              <SettingsSecurity title={t`Security`} />
 
               <View style={[styles.footer, plate ? { ...plate, alignSelf: 'flex-start' } : null]}>
                 <Settings2 size={16} color={theme.colors.textMuted} strokeWidth={2} />
@@ -200,14 +145,7 @@ export default function SettingsScreen() {
                 </Text>
               </View>
 
-              {/* The end of the page, and the only thing on this screen that is
-                  the app rather than a setting. The version used to be a row in
-                  `About`, which is where a reader looks for it deliberately --
-                  but it is also the thing anyone is asked to quote in a bug
-                  report, and a centred line under the mark is easier to find
-                  and to read back than the trailing detail of a list row.
-                  It is here *instead of* there, not as well: the same string
-                  twice on one screen is a question about whether they agree. */}
+              {/* Keep version information easy to find without a second navigation row. */}
               <View style={styles.brand}>
                 <Image
                   // The rendered mascot with a real alpha channel, not the
@@ -219,15 +157,14 @@ export default function SettingsScreen() {
                   source={brandMark(resolvedMode)}
                   style={styles.brandMark}
                   contentFit="contain"
-                  // Decorative: the version beneath it already names the app,
+                  // Decorative: the version alongside it already names the app,
                   // and the screen is titled `Settings`.
                   accessible={false}
                 />
                 <Text
                   variant="caption"
                   color={theme.colors.textMuted}
-                  // Centred under the mark, so the plate hugs from the middle
-                  // rather than from the leading edge.
+                  // Keep the version plate aligned with the mark.
                   style={
                     plate
                       ? { ...styles.brandVersion, ...plate, alignSelf: 'center' }
@@ -268,19 +205,6 @@ const styles = StyleSheet.create({
     paddingBottom: LADDER.section + LADDER.gutter,
     gap: LADDER.section,
   },
-  deepSections: {
-    gap: LADDER.section,
-  },
-  deepSectionsPad: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    columnGap: LADDER.gutter,
-  },
-  deepSection: { minWidth: 0 },
-  deepSectionPad: {
-    flexBasis: '48%',
-    flexGrow: 1,
-  },
   footer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -294,15 +218,17 @@ const styles = StyleSheet.create({
   // because `flexShrink` alone will not take a box below its content width.
   footerText: { flexShrink: 1, minWidth: 0 },
   brand: {
+    flexDirection: 'row',
     alignItems: 'center',
-    gap: LADDER.tight,
+    justifyContent: 'center',
+    gap: LADDER.snug,
     // The page's own `gap: LADDER.section` already sits above this, so the mark
     // is not crowded by the line about settings staying on the device.
     paddingBottom: LADDER.gutter,
   },
   // Larger than the flat mark was: this artwork is rendered with depth and
   // reads as a smudge below about this size.
-  brandMark: { width: 88, height: 88 },
+  brandMark: { width: 64, height: 64 },
   // Centred even when the string wraps, which it does in the locales that spell
   // `Version` out at length.
   brandVersion: { textAlign: 'center' },

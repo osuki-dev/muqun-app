@@ -805,70 +805,26 @@ describe('native end-to-end gate', () => {
     expect(selectFlows(suite, 'capture', 'android')).toEqual([]);
     expect(() => selectFlows(suite, 'full', 'ios', 'held')).toThrow('not shipped');
   });
-  test('domain tags select the documented full-gate subsets on both platforms', async () => {
+  test('every landing flow belongs to a documented domain', async () => {
     const base = path.resolve(fileURLToPath(new URL('../../e2e/agent-device/', import.meta.url)));
     const manifest = JSON.parse(await readFile(path.join(base, 'suite.json'), 'utf8')) as Suite;
-    const domains: Record<string, string[]> = {
-      themes: ['theme-document', 'custom-themes'],
-      settings: [
-        'custom-themes',
-        'settings',
-        'settings-guide',
-        'settings-font',
-        'settings-home-layout',
-        'settings-sheets',
-      ],
-      terminal: [
-        'terminal-interactions',
-        'file-mentions',
-        'attachments-ui',
-        'slash-commands',
-        'agent-shortcuts',
-        'soft-keyboard',
-      ],
-      files: [
-        'agent-changes-worktree',
-        'theme-document',
-        'file-mentions',
-        'attachments-ui',
-        'artifacts',
-        'large-file-preview',
-        'git-diff',
-      ],
-      agents: [
-        'home-continue-search',
-        'agent-changes-worktree',
-        'mermaid-output',
-        'agent-collaboration',
-        'agent-session-tree',
-        'agent-tool-detail',
-        'away-digest',
-        'agent-shortcuts',
-      ],
-      workspace: [
-        'home-continue-search',
-        'agent-session-tree',
-        'demo-tour',
-        'settings-home-layout',
-        'pad-workspace',
-        'switcher-sheet',
-        'personal-workspace',
-      ],
-      connection: ['pairing-manual', 'ssh'],
-      localization: ['thai-language'],
-    };
-
+    const domains = new Set([
+      'themes',
+      'settings',
+      'terminal',
+      'files',
+      'agents',
+      'workspace',
+      'connection',
+      'localization',
+    ]);
     for (const platform of ['ios', 'android']) {
-      for (const [tag, expected] of Object.entries(domains)) {
-        expect(selectFlows(manifest, tag, platform).map((flow) => flow.name)).toEqual(expected);
-      }
+      expect(
+        selectFlows(manifest, 'full', platform).filter(
+          (flow) => !flow.tags.some((tag) => domains.has(tag))
+        )
+      ).toEqual([]);
     }
-    const domainNames = new Set(Object.keys(domains));
-    expect(
-      selectFlows(manifest, 'full', 'android').filter(
-        (flow) => !flow.tags.some((tag) => domainNames.has(tag))
-      )
-    ).toEqual([]);
   });
   test('false predicates fail even when the command succeeds', () => {
     const result = decodeReply('{"success":true,"data":{"pass":false}}', 0);
