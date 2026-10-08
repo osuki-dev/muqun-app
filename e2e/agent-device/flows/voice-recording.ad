@@ -24,6 +24,7 @@ is hidden "id=\"voice-recording-stop\""
 longpress "id=\"composer-send\"" 700
 wait "label=\"Listening…\"" 15000
 is visible "id=\"voice-recording-stop\""
+wait "id=\"voice-recording-logo\"" 10000
 screenshot "shots/voice-recording.png"
 # The animation itself stops recording. The isolated invalid service fails safely.
 press "id=\"voice-recording-stop\""
