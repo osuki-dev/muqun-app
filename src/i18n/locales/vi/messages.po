@@ -1713,8 +1713,8 @@ msgid "Could not play this audio file."
 msgstr "Không thể phát tệp âm thanh này"
 
 #: src/components/video-asset-preview.tsx
-msgid "Could not play video. Try another file or retry."
-msgstr "Không thể phát video. Hãy chọn tệp khác hoặc thử lại"
+msgid "Could not play this video file."
+msgstr "Không thể phát tệp video này"
 
 #: src/app/explore.tsx
 msgid "Could not reach that address. Check it and make sure the Gateway is running."
@@ -2654,8 +2654,13 @@ msgstr "Rảnh"
 msgid "If this continues, restart the app or check the app installation"
 msgstr "Nếu sự cố vẫn tiếp diễn, hãy khởi động lại ứng dụng hoặc kiểm tra bản cài đặt"
 
+#: src/components/transcript-block-image.tsx
+msgid "Image"
+msgstr "Hình ảnh"
+
 #: src/components/agent-message-block.tsx
 #: src/components/asset-viewer.tsx
+#: src/components/transcript-block-image.tsx
 msgid "Image unavailable"
 msgstr "Không thể hiển thị hình ảnh"
 
@@ -2664,6 +2669,10 @@ msgstr "Không thể hiển thị hình ảnh"
 #: src/components/asset-viewer.tsx
 msgid "Image unavailable: {0}"
 msgstr "Không thể hiển thị hình ảnh: {0}"
+
+#: src/components/transcript-block-image.tsx
+msgid "Image unavailable: {alt}"
+msgstr "Không thể hiển thị hình ảnh: {alt}"
 
 #: src/components/session-artifacts.tsx
 #: src/components/settings-storage.tsx
@@ -3016,6 +3025,7 @@ msgid "Loading themes…"
 msgstr "Đang tải giao diện…"
 
 #: src/app/settings-voice.tsx
+#: src/components/transcript-block-image.tsx
 msgid "Loading…"
 msgstr "Đang tải…"
 
@@ -6216,7 +6226,6 @@ msgid "Update the app to import public theme links. You can still import a file"
 msgstr "Cập nhật ứng dụng để nhập giao diện từ liên kết công khai. Bạn vẫn có thể nhập từ tệp"
 
 #: src/components/inline-file-link.tsx
-#: src/components/video-asset-preview.tsx
 #: src/hooks/use-file-actions.tsx
 msgid "Update the Gateway to open or save this file."
 msgstr "Cập nhật Gateway để mở hoặc lưu tệp này"
@@ -6224,6 +6233,10 @@ msgstr "Cập nhật Gateway để mở hoặc lưu tệp này"
 #: src/components/audio-asset-preview.tsx
 msgid "Update the Gateway to preview audio output."
 msgstr "Cập nhật Gateway để nghe đầu ra âm thanh"
+
+#: src/components/video-asset-preview.tsx
+msgid "Update the Gateway to preview video output."
+msgstr "Cập nhật Gateway để xem trước video"
 
 #: src/components/update-status-banner.tsx
 msgid "Updating Muqun…"

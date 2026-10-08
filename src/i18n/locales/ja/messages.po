@@ -1713,8 +1713,8 @@ msgid "Could not play this audio file."
 msgstr "この音声ファイルを再生できませんでした"
 
 #: src/components/video-asset-preview.tsx
-msgid "Could not play video. Try another file or retry."
-msgstr "動画を再生できません。別のファイルを選ぶか、再試行してください"
+msgid "Could not play this video file."
+msgstr "この動画ファイルを再生できません"
 
 #: src/app/explore.tsx
 msgid "Could not reach that address. Check it and make sure the Gateway is running."
@@ -2654,8 +2654,13 @@ msgstr "待機"
 msgid "If this continues, restart the app or check the app installation"
 msgstr "問題が続く場合は、アプリを再起動するか、インストール状態を確認してください"
 
+#: src/components/transcript-block-image.tsx
+msgid "Image"
+msgstr "画像"
+
 #: src/components/agent-message-block.tsx
 #: src/components/asset-viewer.tsx
+#: src/components/transcript-block-image.tsx
 msgid "Image unavailable"
 msgstr "画像を表示できません"
 
@@ -2664,6 +2669,10 @@ msgstr "画像を表示できません"
 #: src/components/asset-viewer.tsx
 msgid "Image unavailable: {0}"
 msgstr "画像を表示できません：{0}"
+
+#: src/components/transcript-block-image.tsx
+msgid "Image unavailable: {alt}"
+msgstr "画像を表示できません: {alt}"
 
 #: src/components/session-artifacts.tsx
 #: src/components/settings-storage.tsx
@@ -3016,6 +3025,7 @@ msgid "Loading themes…"
 msgstr "テーマを読み込んでいます…"
 
 #: src/app/settings-voice.tsx
+#: src/components/transcript-block-image.tsx
 msgid "Loading…"
 msgstr "読み込み中…"
 
@@ -6216,7 +6226,6 @@ msgid "Update the app to import public theme links. You can still import a file"
 msgstr "公開リンクからテーマをインポートするにはアプリを更新してください。ファイルからのインポートは引き続き利用できます"
 
 #: src/components/inline-file-link.tsx
-#: src/components/video-asset-preview.tsx
 #: src/hooks/use-file-actions.tsx
 msgid "Update the Gateway to open or save this file."
 msgstr "このファイルを開くか保存するには、Gateway を更新してください"
@@ -6224,6 +6233,10 @@ msgstr "このファイルを開くか保存するには、Gateway を更新し�
 #: src/components/audio-asset-preview.tsx
 msgid "Update the Gateway to preview audio output."
 msgstr "音声出力を再生するには Gateway を更新してください"
+
+#: src/components/video-asset-preview.tsx
+msgid "Update the Gateway to preview video output."
+msgstr "動画出力をプレビューするには Gateway を更新してください"
 
 #: src/components/update-status-banner.tsx
 msgid "Updating Muqun…"

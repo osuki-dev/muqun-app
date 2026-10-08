@@ -4,12 +4,13 @@ import * as Sharing from 'expo-sharing';
 import { fetch } from 'expo/fetch';
 import { Platform } from 'react-native';
 import { readAssetBytes, type SessionAsset } from '@/lib/gateway-client';
+import { FILE_CONTENT_LIMIT, fileContentLimit } from '@/lib/media-limits';
 
-const LIMIT = 10 * 1024 * 1024;
+const LIMIT = FILE_CONTENT_LIMIT;
 let sequence = 0;
 
 export async function exportFile(name: string, mime: string, bytes: Uint8Array, photos = false) {
-  if (bytes.length > LIMIT) throw new Error('File exceeds the download limit');
+  if (bytes.length > fileContentLimit(mime)) throw new Error('File exceeds the download limit');
   const leaf =
     name
       .split(/[\\/]/)
@@ -43,7 +44,10 @@ export async function exportFile(name: string, mime: string, bytes: Uint8Array, 
 }
 
 export async function saveSessionAsset(asset: SessionAsset, photos = asset.kind === 'image') {
-  const bytes = await readAssetBytes(asset, { maxBytes: LIMIT, download: true });
+  const bytes = await readAssetBytes(asset, {
+    maxBytes: fileContentLimit(asset.mime),
+    download: true,
+  });
   await exportFile(asset.name, asset.mime, bytes, photos);
 }
 

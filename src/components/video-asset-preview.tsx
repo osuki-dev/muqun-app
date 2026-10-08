@@ -2,6 +2,7 @@ import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens } from '@osuki-dev/ui';
 import { useEffect, useRef, useState } from 'react';
 import { AppState, StyleSheet, View } from 'react-native';
+import { Image, type ImageSource } from 'expo-image';
 import Animated from 'react-native-reanimated';
 import { VideoView, type VideoPlayer, type VideoViewRef } from 'react-native-video';
 import { Download, Maximize2, Pause, Play } from 'lucide-react-native';
@@ -21,14 +22,17 @@ type VideoOptions = {
   asset: SessionAsset;
   visible?: boolean;
   resolve?: (signal: AbortSignal) => Promise<SessionAsset>;
+  poster?: ImageSource;
 };
 
 export function InlineVideoFile({
   file,
   asid,
+  poster,
 }: {
   file: { uri: string; name?: string; mime?: string };
   asid: string;
+  poster?: ImageSource;
 }) {
   const { ref, visible } = useInlineMediaVisibility();
   const asset: SessionAsset = {
@@ -46,13 +50,14 @@ export function InlineVideoFile({
       <VideoAssetPreview
         asset={asset}
         visible={visible}
+        poster={poster}
         resolve={(signal) => resolveAgentFileAsset(asid, file.uri, signal)}
       />
     </Animated.View>
   );
 }
 
-export function VideoAssetPreview({ asset, visible = true, resolve }: VideoOptions) {
+export function VideoAssetPreview({ asset, visible = true, resolve, poster }: VideoOptions) {
   const [active, setActive] = useState(AppState.currentState === 'active');
   const recording = useVoiceInput((state) => state.request !== null);
   const [attempt, setAttempt] = useState(0);
@@ -66,6 +71,7 @@ export function VideoAssetPreview({ asset, visible = true, resolve }: VideoOptio
       asset={asset}
       visible={active && !recording && visible}
       resolve={resolve}
+      poster={poster}
       onRetry={() => setAttempt((value) => value + 1)}
     />
   );
@@ -76,6 +82,7 @@ function VideoPlayerCard({
   visible = true,
   resolve,
   onRetry,
+  poster,
 }: VideoOptions & { onRetry: () => void }) {
   const { t } = useLingui();
   const theme = useThemeTokens();
@@ -127,9 +134,20 @@ function VideoPlayerCard({
           style={styles.video}
         />
       ) : (
-        <View style={styles.poster}>
-          <Play size={32} color="white" />
-        </View>
+        <PressableScale
+          accessibilityRole="button"
+          accessibilityLabel={label}
+          disabled={!visible || loading}
+          onPress={() => {
+            if (error) onRetry();
+            else void session.play();
+          }}
+          style={styles.poster}>
+          {poster && <VideoPoster key={poster.uri} source={poster} />}
+          <View style={styles.posterAction}>
+            <Play size={32} color="white" />
+          </View>
+        </PressableScale>
       )}
       <View style={styles.controls}>
         <PressableScale
@@ -189,14 +207,26 @@ function VideoPlayerCard({
         </PressableScale>
       </View>
       {error && (
-        <Text variant="caption">
+        <Text variant="caption" color={theme.colors.textMuted} style={styles.error}>
           {state.failure === 'unsupported'
-            ? t`Update the Gateway to open or save this file.`
-            : t`Could not play video. Try another file or retry.`}
+            ? t`Update the Gateway to preview video output.`
+            : t`Could not play this video file.`}
         </Text>
       )}
       {fileActions.menu}
     </View>
+  );
+}
+function VideoPoster({ source }: { source: ImageSource }) {
+  const [loaded, setLoaded] = useState(false);
+  return (
+    <Image
+      source={source}
+      contentFit="contain"
+      style={StyleSheet.absoluteFill}
+      testID={loaded ? 'video-poster-ready' : 'video-poster-loading'}
+      onLoad={() => setLoaded(true)}
+    />
   );
 }
 const styles = StyleSheet.create({
@@ -213,4 +243,6 @@ const styles = StyleSheet.create({
   controls: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 8, gap: 4 },
   timeline: { flex: 1, minWidth: 0 },
   action: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
+  posterAction: { backgroundColor: '#08101dbb', borderRadius: 32, padding: 14 },
+  error: { paddingHorizontal: 56 },
 });

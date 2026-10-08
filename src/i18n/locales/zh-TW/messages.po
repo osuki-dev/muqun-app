@@ -1713,8 +1713,8 @@ msgid "Could not play this audio file."
 msgstr "無法播放此音訊檔案"
 
 #: src/components/video-asset-preview.tsx
-msgid "Could not play video. Try another file or retry."
-msgstr "無法播放影片，請重試或選擇其他檔案"
+msgid "Could not play this video file."
+msgstr "無法播放此影片檔案"
 
 #: src/app/explore.tsx
 msgid "Could not reach that address. Check it and make sure the Gateway is running."
@@ -2654,8 +2654,13 @@ msgstr "閒置"
 msgid "If this continues, restart the app or check the app installation"
 msgstr "如果問題仍然存在，請重新啟動 App 或檢查 App 安裝"
 
+#: src/components/transcript-block-image.tsx
+msgid "Image"
+msgstr "圖片"
+
 #: src/components/agent-message-block.tsx
 #: src/components/asset-viewer.tsx
+#: src/components/transcript-block-image.tsx
 msgid "Image unavailable"
 msgstr "圖片無法顯示"
 
@@ -2664,6 +2669,10 @@ msgstr "圖片無法顯示"
 #: src/components/asset-viewer.tsx
 msgid "Image unavailable: {0}"
 msgstr "圖片無法顯示：{0}"
+
+#: src/components/transcript-block-image.tsx
+msgid "Image unavailable: {alt}"
+msgstr "圖片無法顯示：{alt}"
 
 #: src/components/session-artifacts.tsx
 #: src/components/settings-storage.tsx
@@ -3016,6 +3025,7 @@ msgid "Loading themes…"
 msgstr "正在載入佈景主題…"
 
 #: src/app/settings-voice.tsx
+#: src/components/transcript-block-image.tsx
 msgid "Loading…"
 msgstr "載入中…"
 
@@ -6216,7 +6226,6 @@ msgid "Update the app to import public theme links. You can still import a file"
 msgstr "更新 App 後即可從公開連結匯入主題，你仍然可以從檔案匯入"
 
 #: src/components/inline-file-link.tsx
-#: src/components/video-asset-preview.tsx
 #: src/hooks/use-file-actions.tsx
 msgid "Update the Gateway to open or save this file."
 msgstr "請更新 Gateway 後開啟或儲存此檔案"
@@ -6224,6 +6233,10 @@ msgstr "請更新 Gateway 後開啟或儲存此檔案"
 #: src/components/audio-asset-preview.tsx
 msgid "Update the Gateway to preview audio output."
 msgstr "更新 Gateway 後即可預覽音訊輸出"
+
+#: src/components/video-asset-preview.tsx
+msgid "Update the Gateway to preview video output."
+msgstr "更新 Gateway 後即可預覽影片輸出"
 
 #: src/components/update-status-banner.tsx
 msgid "Updating Muqun…"

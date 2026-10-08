@@ -1,4 +1,4 @@
-import { DEMO_VIDEO_BASE64 } from '@/lib/demo-video.generated';
+import { DEMO_VIDEO_BASE64, DEMO_VIDEO_POSTER } from '@/lib/demo-video.generated';
 import { i18n } from '@lingui/core';
 import { msg } from '@lingui/core/macro';
 import { Image } from 'react-native';
@@ -231,7 +231,10 @@ export function demoAgentSessionSnapshot(asid: string): AgentSessionSnapshot | n
         message_id: 'video-result',
         role: 'assistant',
         ordinal: 0,
-        part: { type: 'text', text: '[sample-video.mp4](./out/sample-video.mp4)' },
+        part: {
+          type: 'text',
+          text: `![Video cover](${DEMO_VIDEO_POSTER})\n\n[sample-video.mp4](./out/sample-video.mp4)`,
+        },
         seq: 3,
         updated_ms: 3,
       },

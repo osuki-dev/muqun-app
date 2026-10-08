@@ -6,10 +6,23 @@ import {
   messageImageResolver,
   parseMessageImageAssets,
   rewriteMessageImages,
+  splitBlockImages,
   type ImageResolution,
 } from '../message-images';
 
 const GW = 'https://gw.test';
+describe('splitBlockImages', () => {
+  test('separates a cover from its body without changing the text', () => {
+    const result = splitBlockImages('Before\n\n![cover](a.png)\n\n## Specifications');
+    expect(result.map((part) => part.kind)).toEqual(['markdown', 'image', 'markdown']);
+    expect(result[1]).toMatchObject({ uri: 'a.png', alt: 'cover', start: 8 });
+    expect(result[2]).toMatchObject({ text: '\n## Specifications' });
+  });
+  test('preserves fenced examples, inline images and indented code', () => {
+    const text = '```md\n![cover](a.png)\n```\nText ![inline](b.png) here\n    ![code](c.png)';
+    expect(splitBlockImages(text)).toEqual([{ kind: 'markdown', text, start: 0 }]);
+  });
+});
 const caption = (alt: string) => `_[no image: ${escapeMarkdownText(alt)}]_`;
 
 /** Resolve from a plain map of src -> URI; everything else follows the transcript rule. */

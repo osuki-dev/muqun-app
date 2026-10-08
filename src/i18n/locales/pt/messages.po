@@ -1713,8 +1713,8 @@ msgid "Could not play this audio file."
 msgstr "Não foi possível reproduzir este arquivo de áudio"
 
 #: src/components/video-asset-preview.tsx
-msgid "Could not play video. Try another file or retry."
-msgstr "Não foi possível reproduzir o vídeo. Tente outro arquivo ou tente novamente"
+msgid "Could not play this video file."
+msgstr "Não foi possível reproduzir este arquivo de vídeo"
 
 #: src/app/explore.tsx
 msgid "Could not reach that address. Check it and make sure the Gateway is running."
@@ -2654,8 +2654,13 @@ msgstr "Inativo"
 msgid "If this continues, restart the app or check the app installation"
 msgstr "Se o problema continuar, reinicie o app ou verifique a instalação"
 
+#: src/components/transcript-block-image.tsx
+msgid "Image"
+msgstr "Imagem"
+
 #: src/components/agent-message-block.tsx
 #: src/components/asset-viewer.tsx
+#: src/components/transcript-block-image.tsx
 msgid "Image unavailable"
 msgstr "Imagem indisponível"
 
@@ -2664,6 +2669,10 @@ msgstr "Imagem indisponível"
 #: src/components/asset-viewer.tsx
 msgid "Image unavailable: {0}"
 msgstr "Imagem indisponível: {0}"
+
+#: src/components/transcript-block-image.tsx
+msgid "Image unavailable: {alt}"
+msgstr "Imagem indisponível: {alt}"
 
 #: src/components/session-artifacts.tsx
 #: src/components/settings-storage.tsx
@@ -3016,6 +3025,7 @@ msgid "Loading themes…"
 msgstr "Carregando temas…"
 
 #: src/app/settings-voice.tsx
+#: src/components/transcript-block-image.tsx
 msgid "Loading…"
 msgstr "Carregando…"
 
@@ -6216,7 +6226,6 @@ msgid "Update the app to import public theme links. You can still import a file"
 msgstr "Atualize o app para importar temas por links públicos. Você ainda pode importar um arquivo"
 
 #: src/components/inline-file-link.tsx
-#: src/components/video-asset-preview.tsx
 #: src/hooks/use-file-actions.tsx
 msgid "Update the Gateway to open or save this file."
 msgstr "Atualize o Gateway para abrir ou salvar este arquivo"
@@ -6224,6 +6233,10 @@ msgstr "Atualize o Gateway para abrir ou salvar este arquivo"
 #: src/components/audio-asset-preview.tsx
 msgid "Update the Gateway to preview audio output."
 msgstr "Atualize o Gateway para reproduzir a saída de áudio"
+
+#: src/components/video-asset-preview.tsx
+msgid "Update the Gateway to preview video output."
+msgstr "Atualize o Gateway para visualizar vídeos"
 
 #: src/components/update-status-banner.tsx
 msgid "Updating Muqun…"

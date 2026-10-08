@@ -2,6 +2,7 @@ import { File, Paths } from 'expo-file-system';
 import { VideoPlayer } from 'react-native-video';
 import { readAssetBytes, type SessionAsset } from '@/lib/gateway-client';
 import type { AudioPlaybackRuntime } from '@/lib/audio-playback-session';
+import { VIDEO_CONTENT_LIMIT } from '@/lib/media-limits';
 
 let sequence = 0;
 /** The shared media session owns the player, download and cache file together. */
@@ -22,7 +23,7 @@ export function videoPreviewRuntime(
   return {
     async prepare(signal) {
       const resolved = options.resolve ? await options.resolve(signal) : asset;
-      const bytes = await readAssetBytes(resolved, { signal, maxBytes: 10 * 1024 * 1024 });
+      const bytes = await readAssetBytes(resolved, { signal, maxBytes: VIDEO_CONTENT_LIMIT });
       if (signal.aborted) throw new Error('Operation cancelled');
       file.create();
       file.write(bytes);
