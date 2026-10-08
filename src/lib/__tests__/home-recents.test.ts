@@ -424,6 +424,25 @@ describe('home recents state', () => {
 });
 
 describe('agents on a target', () => {
+  test('stored visits to the same agent session collapse across routing and directory changes', () => {
+    const target = opencode('srv');
+    const newer = { ...target, sessionId: 'new-routing', directory: '/new/worktree' };
+    expect(homeTargetKey(newer)).toBe(homeTargetKey(target));
+    const parsed = parseHomeRecentsDocument(
+      JSON.stringify({
+        version: HOME_RECENTS_STORAGE_VERSION,
+        entries: [
+          { target: newer, title: 'Latest', atMs: 20 },
+          { target, title: 'Earlier', atMs: 10 },
+          { target: { ...target, asid: 'another-session' }, title: 'Latest', atMs: 5 },
+          { target: { ...target, serverId: 'another-gateway' }, title: 'Latest', atMs: 4 },
+        ],
+      })
+    );
+    expect(parsed.entries).toHaveLength(3);
+    expect(parsed.entries[0]).toMatchObject({ target: newer, title: 'Latest', atMs: 20 });
+  });
+
   test('a target written as `opencode-session` reads as the default agent under the new kind', () => {
     const doc = JSON.stringify({
       version: HOME_RECENTS_STORAGE_VERSION,
