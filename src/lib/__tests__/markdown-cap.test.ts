@@ -6,6 +6,7 @@ import {
   capBodyLines,
   capMarkdown,
   capToolBody,
+  inlineMarkdown,
 } from '../markdown-cap';
 
 describe('capMarkdown', () => {
@@ -71,5 +72,16 @@ describe('capToolBody', () => {
   test('a body inside both caps is untouched', () => {
     const body = 'one\ntwo\nthree';
     expect(capToolBody(body)).toEqual({ text: body, hidden: 0 });
+  });
+});
+
+describe('inlineMarkdown', () => {
+  test.each([
+    ['make `manage` TUI usable', 'make `manage` TUI usable'],
+    ['Wrote it to [docs/a.md](docs/a.md)', 'Wrote it to [docs/a.md](docs/a.md)'],
+    ['# Fix the login\n- empty state', '\\# Fix the login \\- empty state'],
+    ['1. first\n> quoted', '\\1. first \\> quoted'],
+  ])('%s', (input, expected) => {
+    expect(inlineMarkdown(input)).toBe(expected);
   });
 });

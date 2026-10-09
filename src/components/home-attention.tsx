@@ -6,7 +6,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { useTaskIndexFor } from '@/components/use-task-index';
 import { PressableScale } from '@/components/pressable-scale';
-import { TaskStateIcon, useTaskRowLine } from '@/components/task-row';
+import { RowMarkdown, TaskStateIcon, useTaskRowLine } from '@/components/task-row';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { Text } from '@/components/text';
 import { ThemeIcon } from '@/components/theme-icon';
@@ -126,12 +126,8 @@ function WaitingTaskRow({
       ]}>
       <TaskStateIcon visual={visual} size={20} />
       <View style={styles.copy}>
-        <Text weight="semibold" variant="bodySmall" numberOfLines={2}>
-          {title}
-        </Text>
-        <Text variant="caption" color={line.color} numberOfLines={1}>
-          {meta}
-        </Text>
+        <RowMarkdown text={title} ink={theme.colors.text} kind="title" />
+        <RowMarkdown text={meta} ink={line.color} kind="line" />
       </View>
       <ThemeIcon name="home.arrow" fallback={ChevronRight} size={16} color={theme.colors.primary} />
     </PressableScale>

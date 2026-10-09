@@ -104,3 +104,18 @@ export function capToolBody(
     hidden: byLines.hidden + (rest ? rest.split('\n').length : 0),
   };
 }
+
+/**
+ * Agent-written markdown made one inline run for a row: line breaks become
+ * spaces, and a line that would open a block (a heading, a list item, a quote,
+ * a fence, a rule) has its marker escaped, so the renderer draws it as the
+ * text it is -- inline code, emphasis and link text survive.
+ */
+export function inlineMarkdown(text: string): string {
+  return text
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => line.replace(/^(#{1,6}\s|>|[-*+]\s|\d+[.)]\s|```|~~~|[-*_]{3,}$)/, '\\$1'))
+    .join(' ');
+}
