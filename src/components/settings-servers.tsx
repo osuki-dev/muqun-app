@@ -29,7 +29,7 @@ import { useGatewayRecord } from '@/hooks/use-gateway-record';
 import { useMonoFontFamily } from '@/hooks/use-user-fonts';
 import { GatewayStorageError } from '@/components/gateway-storage-error';
 import { reachabilityDescription, reachabilityLabel } from '@/i18n/labels';
-import { DEMO_SERVER_ID, demoRecord, isDemoActive } from '@/lib/demo-gateway';
+import { DEMO_SERVER_ID, demoCapabilities, demoRecord, isDemoActive } from '@/lib/demo-gateway';
 import { feedback } from '@/lib/feedback';
 import { loadPairedDevices, revokePairedDevice, type PairedDevice } from '@/lib/gateway-client';
 import type { GatewayRecord } from '@/lib/gateway-storage';
@@ -417,9 +417,9 @@ function ServerRow({
           style={styles.actions}>
           {demo ? (
             <>
-              <ServerTasksNavRow serverId={server.serverId} />
-              <ServerCapabilities serverId={server.serverId} />
-              <McpTokens serverId={server.serverId} />
+              <ServerTasksNavRow serverId={server.serverId} capabilities={demoCapabilities()} />
+              <ServerCapabilities serverId={server.serverId} capabilities={demoCapabilities()} />
+              <McpTokens serverId={server.serverId} capabilities={demoCapabilities()} />
             </>
           ) : current ? (
             <>
@@ -464,10 +464,18 @@ function ServerRow({
  * The way into the server's task ledger, only on a gateway that keeps one: an
  * older gateway shows nothing here rather than an entry that would 404.
  */
-function ServerTasksNavRow({ serverId }: { serverId: string }) {
+function ServerTasksNavRow({
+  serverId,
+  capabilities,
+}: {
+  serverId: string;
+  /** Gates on this list instead of the store, for the demo server. */
+  capabilities?: readonly string[];
+}) {
   const { t } = useLingui();
   const router = useRouter();
-  const ledger = useServerCapabilities((state) => hasTaskLedger(state.byServer[serverId]));
+  const stored = useServerCapabilities((state) => state.byServer[serverId]);
+  const ledger = hasTaskLedger(capabilities ?? stored);
   const count = useServerTasksStore((state) => activeTaskCount(state.index[serverId]?.tasks ?? []));
   if (!ledger) return null;
   return (
