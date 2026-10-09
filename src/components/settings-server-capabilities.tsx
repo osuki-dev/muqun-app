@@ -107,8 +107,12 @@ function CapabilityRows({ manifest }: { manifest: FleetManifest }) {
         return t`Connected`;
       case 'reachable':
         return t`Reachable`;
+      case 'online':
+        return t`Online`;
       case 'offline':
         return t`Offline`;
+      case 'disabled':
+        return t`Not configured`;
       default:
         return t`Unavailable`;
     }

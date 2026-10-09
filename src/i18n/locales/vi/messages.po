@@ -3708,6 +3708,10 @@ msgstr "Không phải kho mã Git"
 msgid "Not available"
 msgstr "Không khả dụng"
 
+#: src/components/settings-server-capabilities.tsx
+msgid "Not configured"
+msgstr "Chưa cấu hình"
+
 #: src/lib/agent-widget-layout.tsx
 msgid "not connected"
 msgstr "chưa kết nối"
@@ -3825,6 +3829,7 @@ msgstr "Trên máy tính bảng, Trang chủ mở thành trang đôi và bàn ph
 msgid "One Changes sheet for terminals and agent sessions: the changed files as a tree with line totals, the branch under the title, and Discard on a file's menu."
 msgstr "Một bảng Thay đổi chung cho terminal và phiên tác nhân: các tệp thay đổi dạng cây kèm tổng số dòng, nhánh dưới tiêu đề, và Hủy bỏ trong menu của tệp"
 
+#: src/components/settings-server-capabilities.tsx
 #: src/i18n/labels.ts
 msgid "Online"
 msgstr "Trực tuyến"

@@ -3708,6 +3708,10 @@ msgstr "Не Git-репозиторий"
 msgid "Not available"
 msgstr "Недоступно"
 
+#: src/components/settings-server-capabilities.tsx
+msgid "Not configured"
+msgstr "Не настроен"
+
 #: src/lib/agent-widget-layout.tsx
 msgid "not connected"
 msgstr "не подключён"
@@ -3825,6 +3829,7 @@ msgstr "На планшете главный экран открывается �
 msgid "One Changes sheet for terminals and agent sessions: the changed files as a tree with line totals, the branch under the title, and Discard on a file's menu."
 msgstr "Один лист изменений для терминалов и сессий агентов: изменённые файлы деревом с подсчётом строк, ветка под заголовком и «Отменить» в меню файла"
 
+#: src/components/settings-server-capabilities.tsx
 #: src/i18n/labels.ts
 msgid "Online"
 msgstr "В сети"
