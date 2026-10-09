@@ -226,6 +226,13 @@ export class GatewaySocket {
    * refusal start a new run.
    */
   private authChecked = false;
+  /**
+   * `retryAfterRefusal` already reopened the socket and no `hello` has arrived
+   * since. One network change can bring the evidence twice -- an ok-probe,
+   * then the upgrade flapping back to 401 -- and the second must not reconnect
+   * again on top of the first.
+   */
+  private refusalRetried = false;
   private readonly releaseAppState: (() => void) | null;
 
   constructor(options: GatewaySocketOptions) {
@@ -355,8 +362,9 @@ export class GatewaySocket {
    * otherwise stand down to `idle` so the row stops saying the pairing expired.
    */
   retryAfterRefusal(): void {
-    if (this.currentState !== 'unauthorized') return;
+    if (this.currentState !== 'unauthorized' || this.refusalRetried) return;
     if (this.hasDemand() && this.active) {
+      this.refusalRetried = true;
       this.reconnect();
       return;
     }
@@ -541,6 +549,7 @@ export class GatewaySocket {
       this.options.onHello?.(frame);
       this.attempts = 0;
       this.failures = 0;
+      this.refusalRetried = false;
       this.authChecked = false;
       this.cancelTimer?.();
       this.cancelTimer = null;
