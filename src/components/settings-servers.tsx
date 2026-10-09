@@ -6,7 +6,15 @@ import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { Spinner, useThemeTokens, useToast } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { Check, ChevronDown, ChevronRight, ListTodo, Pencil, Trash2 } from 'lucide-react-native';
+import {
+  Bot,
+  Check,
+  ChevronDown,
+  ChevronRight,
+  ListTodo,
+  Pencil,
+  Trash2,
+} from 'lucide-react-native';
 import { Fragment, useCallback, useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
@@ -48,10 +56,13 @@ import { settleAfter } from '@/lib/compiler-safe-control-flow';
 import { activeTaskCount } from '@/lib/server-tasks-state';
 import { hasTaskLedger } from '@/lib/task-ledger';
 import { useServerCapabilities } from '@/stores/server-capabilities';
+import { useAgents } from '@/stores/agents';
+import { useHomeAgentChoice } from '@/stores/home-agent-choice';
+import { homeAgentOptions, resolveHomeAgent } from '@/lib/home-agent-choice';
 import { useServerTasksStore } from '@/stores/server-tasks';
 
 /** Server management is mounted only when its settings sheet opens. */
-export function SettingsServers() {
+export function SettingsServers({ initialOpenId }: { initialOpenId?: string } = {}) {
   // `t` from the hook, not the global `t` from `@lingui/core/macro` -- see the
   // note at the top of the settings screen for why.
   const { t } = useLingui();
@@ -83,7 +94,7 @@ export function SettingsServers() {
   // One row is open at a time. Two open rows on a settings screen is a list of
   // panels rather than a list of servers, and only one of them can ever be the
   // one in use anyway.
-  const [openId, setOpenId] = useState<string | null>(null);
+  const [openId, setOpenId] = useState<string | null>(initialOpenId ?? null);
 
   // The same question the home screen asks, asked the same way: only of the
   // server the app is already configured for, because every other record's
@@ -422,12 +433,14 @@ function ServerRow({
           {current ? (
             <>
               <ServerTasksNavRow serverId={server.serverId} />
+              <HomeAgentNavRow serverId={server.serverId} />
               <PairedDevices server={server} />
               <ServerCapabilities serverId={server.serverId} />
               <McpTokens serverId={server.serverId} />
             </>
           ) : (
             <>
+              <HomeAgentNavRow serverId={server.serverId} />
               <PressableScale
                 accessibilityRole="button"
                 accessibilityLabel={t`Use ${server.label}`}
@@ -476,6 +489,29 @@ function ServerTasksNavRow({ serverId }: { serverId: string }) {
       detail={count > 0 ? t`${count} in progress` : undefined}
       trailing={ChevronRight}
       onPress={() => router.push('/server-tasks')}
+    />
+  );
+}
+
+/**
+ * Which agent Home's dock starts work with on this computer. The reader's
+ * choice, or the first agent the computer says is ready.
+ */
+function HomeAgentNavRow({ serverId }: { serverId: string }) {
+  const { t } = useLingui();
+  const router = useRouter();
+  const discovery = useAgents((state) => state.index.servers[serverId]);
+  const terminal = useHomeAgentChoice((state) => state.terminalByServer[serverId]);
+  const chosenKey = useHomeAgentChoice((state) => state.byServer[serverId]);
+  const agent = resolveHomeAgent(homeAgentOptions(discovery, terminal), chosenKey);
+  return (
+    <SettingsNavRow
+      testID="settings-server-home-agent"
+      icon={Bot}
+      label={t`Home agent`}
+      detail={agent?.name}
+      trailing={ChevronRight}
+      onPress={() => router.push({ pathname: '/home-agent', params: { serverId } })}
     />
   );
 }

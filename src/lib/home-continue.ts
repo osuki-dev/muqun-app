@@ -412,3 +412,32 @@ function observationAgeParts(observedAtMs: number, nowMs: number): HomeContinueA
   if (seconds < 86400) return { unit: 'hour', value: Math.floor(seconds / 3600) };
   return { unit: 'day', value: Math.floor(seconds / 86400) };
 }
+
+/** The computer a Recent row belongs to; `undefined` for an SSH host. */
+export function homeContinueServerId(entry: HomeContinueEntry): string | undefined {
+  if (entry.destination.type === 'pane') return entry.destination.serverId;
+  const target = entry.destination.target;
+  return target.kind === 'ssh-host' ? undefined : target.serverId;
+}
+
+/**
+ * The computers Recent offers a filter chip for, in the reader's own order:
+ * only those with a row, and none at all unless there are two to choose from.
+ */
+export function homeRecentFilterIds(
+  entries: readonly HomeContinueEntry[],
+  serverIds: readonly string[]
+): string[] {
+  const present = new Set(entries.map(homeContinueServerId));
+  const ids = serverIds.filter((serverId) => present.has(serverId));
+  return ids.length > 1 ? ids : [];
+}
+
+/** Recent narrowed to one computer; every row when no chip is picked. */
+export function filterHomeRecent(
+  entries: readonly HomeContinueEntry[],
+  serverId: string | null
+): readonly HomeContinueEntry[] {
+  if (!serverId) return entries;
+  return entries.filter((entry) => homeContinueServerId(entry) === serverId);
+}

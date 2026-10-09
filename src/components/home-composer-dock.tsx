@@ -1,7 +1,7 @@
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens, useToast } from '@osuki-dev/ui';
-import { useRouter } from 'expo-router';
+import { useRouter, type Href } from 'expo-router';
 import { ArrowRight } from 'lucide-react-native';
 import { useEffect, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -43,8 +43,8 @@ import { recoverWith, settleAfter } from '@/lib/compiler-safe-control-flow';
 import { checkAgentServer } from '@/lib/home-agent-readiness';
 import {
   HOME_AGENT_SESSION_ID,
-  homeComposerAgent,
   homeGuideParams,
+  ledgerModelId,
   homeHiddenClientCommands,
   homeSessionParams,
   homeSessionReuse,
@@ -53,7 +53,16 @@ import {
 } from '@/lib/home-composer';
 import type { HomeCommandResult } from '@/lib/home-commands';
 import { markPromptedSession } from '@/lib/prompted-agent-sessions';
-import { buildLaunchModel } from '@/lib/home-launch-model';
+import { useTerminalAgentCatalog } from '@/components/home-agent-sheet';
+import { agentSpawnRequest } from '@/lib/agent-spawn';
+import { loadSessions, spawnAgent } from '@/lib/gateway-client';
+import { homeAgentOptions, resolveHomeAgent } from '@/lib/home-agent-choice';
+import { describeGatewayFailure } from '@/lib/network-error';
+import { createLedgerTask, hasTaskLedgerCreate } from '@/lib/task-ledger';
+import { useHomeAgentChoice } from '@/stores/home-agent-choice';
+import { useHomeTaskCards } from '@/stores/home-task-cards';
+import { useServerCapabilities } from '@/stores/server-capabilities';
+import { useServerTasksStore } from '@/stores/server-tasks';
 import type { ServerReachability } from '@/lib/server-reachability';
 import { useAgents } from '@/stores/agents';
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';
@@ -148,17 +157,26 @@ export function HomeComposerDock({
   useAgentsDiscoveryRefresh(targetId, ready && selected);
 
   const discovery = useAgents((state) => (targetId ? state.index.servers[targetId] : undefined));
-  const lastUsedAgentId = useAgents((state) =>
-    targetId ? state.index.lastUsed[targetId] : undefined
-  );
   const markAgentUsed = useAgents((state) => state.markUsed);
-  const agent = homeComposerAgent(buildLaunchModel({ discovery, lastUsedAgentId }).entries);
+  // The reader's Home agent for this computer, or its first ready agent.
+  const terminalCatalog = useTerminalAgentCatalog(targetId, ready && selected);
+  const chosenAgentKey = useHomeAgentChoice((state) =>
+    targetId ? state.byServer[targetId] : undefined
+  );
+  const agent = resolveHomeAgent(homeAgentOptions(discovery, terminalCatalog), chosenAgentKey);
+  const terminalAgent = agent?.kind === 'terminal' ? agent : null;
   const agentsDiscovered = Boolean(discovery?.agents);
-  const agentId = agentsDiscovered ? normalizeAgentId(agent?.agentId) : undefined;
+  const agentId =
+    agentsDiscovered && agent?.kind === 'session' ? normalizeAgentId(agent.agentId) : undefined;
   const features = useAgentFeatures(targetId, agentId);
   const computerLabel = targetServer?.label ?? '';
   const agentName = agent?.name ?? '';
   const agentLabel = agentName || computerLabel;
+  // A gateway that opens ledger tasks gets the goal as one: Home's cards then
+  // see the work, and the work it delegates, live.
+  const ledgerCreate = useServerCapabilities((state) =>
+    targetId ? hasTaskLedgerCreate(state.byServer[targetId]) : false
+  );
 
   // The catalog behind the pills, read for the computer and agent on the bar.
   // Kept with the key it was read for, so another target never shows it.
@@ -167,7 +185,7 @@ export function HomeComposerDock({
     null
   );
   useEffect(() => {
-    if (!ready || !selected) return;
+    if (!ready || !selected || terminalAgent) return;
     let current = true;
     getAgentCatalog(HOME_AGENT_SESSION_ID, undefined, agentId ? { agentId } : undefined)
       .then((catalog) => {
@@ -179,7 +197,7 @@ export function HomeComposerDock({
     return () => {
       current = false;
     };
-  }, [ready, selected, agentId, catalogKey]);
+  }, [ready, selected, agentId, catalogKey, terminalAgent]);
   const catalog = catalogRead?.key === catalogKey ? catalogRead.catalog : undefined;
   const models = catalog?.models ?? [];
   const modes = catalog?.modes ?? [];
@@ -378,7 +396,140 @@ export function HomeComposerDock({
     );
   }
 
+  /**
+   * `POST /api/tasks`: the gateway creates the session, sends the goal and
+   * records the ledger task in one step, so the target's card shows the work
+   * from the first frame. The card holds a "Sent" row until the answer lands.
+   */
+  async function openLedgerTask(text: string): Promise<boolean> {
+    if (inFlightRef.current) return false;
+    inFlightRef.current = true;
+    let pendingId: string | null = null;
+    return settleAfter(
+      async () => {
+        setError(null);
+        const serverId = await sendTarget();
+        if (!serverId) return false;
+        const params = sessionParams;
+        const owns = () => useGatewayConnectionStore.getState().record?.serverId === serverId;
+        return recoverWith(
+          async () => {
+            if (!owns()) {
+              setError(t`Computer unavailable.`);
+              return false;
+            }
+            pendingId = useHomeTaskCards.getState().dispatched(serverId, text);
+            const { task, asid } = await createLedgerTask({
+              goal: text,
+              ...(params.agentId ? { agentId: params.agentId } : {}),
+              ...(params.mode ? { mode: params.mode } : {}),
+              ...(params.model ? { model: ledgerModelId(params.model) } : {}),
+            });
+            useServerTasksStore.getState().upsert(serverId, task);
+            // The gateway answers 200 for a task whose session failed while it
+            // was being opened; the draft stays and the reason is said here.
+            if (task.state === 'failed') {
+              setError(task.summary ?? t`Could not start the task.`);
+              return false;
+            }
+            if (task.binding.kind === 'agent_session')
+              markAgentUsed(serverId, task.binding.agentId);
+            markPromptedSession(serverId, asid);
+            // The route names a model without its variant (reasoning effort),
+            // so the first turn runs at the agent's default one; the session
+            // takes the picked variant for every turn after.
+            const pickedModel = params.model;
+            if (pickedModel?.variant) {
+              void switchAgentModel(HOME_AGENT_SESSION_ID, asid, pickedModel).catch(
+                (failure: unknown) => console.warn('Home could not set the model variant:', failure)
+              );
+            }
+            void onOpenAgent(
+              serverId,
+              asid,
+              undefined,
+              HOME_AGENT_SESSION_ID,
+              task.binding.kind === 'agent_session' ? task.binding.agentId : params.agentId
+            );
+            return true;
+          },
+          async (failure) => {
+            console.warn('Home could not open a task:', failure);
+            const record = useGatewayConnectionStore
+              .getState()
+              .records.find((item) => item.serverId === serverId);
+            const readiness = await checkAgentServer(record, params.agentId);
+            const guide = homeGuideParams(readiness, {
+              serverId,
+              ...(record?.label ? { label: record.label } : {}),
+            });
+            if (guide) {
+              router.push({ pathname: '/agent-guide', params: guide });
+              return false;
+            }
+            setError(describeFailure(failure));
+            return false;
+          }
+        );
+      },
+      () => {
+        if (pendingId) useHomeTaskCards.getState().settle(pendingId);
+        inFlightRef.current = false;
+      }
+    );
+  }
+
+  /**
+   * A terminal agent (Codex, Claude Code) chosen as Home agent: started in a
+   * pane with the goal as its first prompt -- Quick actions' New task -- with
+   * the gateway's own launch arguments. Opens that pane.
+   */
+  async function startTerminalAgent(kind: string, text: string): Promise<boolean> {
+    if (inFlightRef.current) return false;
+    inFlightRef.current = true;
+    return settleAfter(
+      async () => {
+        setError(null);
+        const serverId = await sendTarget();
+        if (!serverId) return false;
+        return recoverWith(
+          async () => {
+            const sessions = await loadSessions();
+            const sessionId = sessions.sessions?.[0]?.id;
+            if (!sessionId) {
+              setError(t`This computer has no session to start an agent in.`);
+              return false;
+            }
+            const spawned = await spawnAgent(
+              sessionId,
+              agentSpawnRequest({ agent: kind, prompt: text })
+            );
+            router.navigate({
+              pathname: '/servers/[serverId]',
+              params: { serverId, paneId: spawned.paneId },
+            } as Href);
+            return true;
+          },
+          (failure) => {
+            setError(describeGatewayFailure(failure, t`Could not start the task.`).message);
+            return false;
+          }
+        );
+      },
+      () => {
+        inFlightRef.current = false;
+      }
+    );
+  }
+
   function sendPrompt(text: string, attachments?: string[]) {
+    if (terminalAgent) return startTerminalAgent(terminalAgent.agentKind, text);
+    // Attachments ride on a prompt to a session; the ledger route takes text
+    // only, so a send with files keeps the session path. So does a retry onto
+    // the session a failed send left.
+    if (ledgerCreate && !attachments?.length && !startedRef.current) {
+      return openLedgerTask(text);
+    }
     return startSession((asid) =>
       sendAgentPrompt(HOME_AGENT_SESSION_ID, asid, {
         text,
@@ -468,7 +619,7 @@ export function HomeComposerDock({
               numberOfLines={1}
               color={ready ? theme.colors.text : theme.colors.textMuted}
               style={styles.barLabel}>
-              {agentName ? `${computerLabel} · ${agentName}` : computerLabel}
+              {computerLabel}
             </Text>
             {target.kind === 'offline' ? (
               <Text variant="caption" color={theme.colors.textMuted} numberOfLines={1}>
@@ -482,6 +633,31 @@ export function HomeComposerDock({
           </Text>
         )}
       </PressableScale>
+      {targetServer && agentName ? (
+        <PressableScale
+          testID="home-composer-agent"
+          accessibilityRole="button"
+          accessibilityLabel={t`Home agent: ${agentName}`}
+          accessibilityHint={t`Choose the agent Home starts on this computer`}
+          hitSlop={{ top: 6, bottom: 6 }}
+          onPress={() =>
+            router.push({ pathname: '/home-agent', params: { serverId: targetServer.serverId } })
+          }
+          style={[
+            styles.bar,
+            styles.agentSegment,
+            { borderRadius: profile.chrome.navigationPill },
+          ]}>
+          <Text
+            variant="bodySmall"
+            weight="semibold"
+            numberOfLines={1}
+            color={ready ? theme.colors.primary : theme.colors.textMuted}
+            style={styles.barLabel}>
+            {`· ${agentName}`}
+          </Text>
+        </PressableScale>
+      ) : null}
     </View>
   );
 
@@ -495,21 +671,26 @@ export function HomeComposerDock({
       agentName={agentLabel}
       sessionId={HOME_AGENT_SESSION_ID}
       availableAgents={modes}
-      skills={features.skills ? (catalog?.skills ?? NO_SKILLS) : NO_SKILLS}
-      commands={features.slashCommands ? (catalog?.commands ?? NO_COMMANDS) : NO_COMMANDS}
+      skills={features.skills && !terminalAgent ? (catalog?.skills ?? NO_SKILLS) : NO_SKILLS}
+      commands={
+        features.slashCommands && !terminalAgent ? (catalog?.commands ?? NO_COMMANDS) : NO_COMMANDS
+      }
       hiddenClientCommands={homeHiddenClientCommands(features)}
       selectedAgent={sessionParams.mode}
       selectedModel={selectedModel}
       modelName={modelName}
-      canPickMode={canPickMode}
-      canAttach={features.attachments}
+      canPickMode={canPickMode && !terminalAgent}
+      canAttach={features.attachments && !terminalAgent}
+      placeholder={
+        terminalAgent ? t`Goal for ${agentName} · no attachments in a terminal` : undefined
+      }
       bottomInset={bottomInset}
       topInset={topInset}
       onDockHeight={onDockHeight}
       onSend={sendPrompt}
       onAbort={async () => {}}
       onSelectAgentMode={selectMode}
-      onOpenModelSheet={features.modelSelection ? openModelSheet : undefined}
+      onOpenModelSheet={features.modelSelection && !terminalAgent ? openModelSheet : undefined}
       onOpenDiffSheet={() => {}}
       onRunCommand={runCommand}
       onInvokeSkill={invokeSkill}
@@ -521,7 +702,15 @@ export function HomeComposerDock({
 
 const styles = StyleSheet.create({
   // The dock's first row: its glass and gutter are the composer's own.
-  accessory: { paddingBottom: 6, gap: 6, alignItems: 'flex-start' },
+  accessory: {
+    paddingBottom: 6,
+    columnGap: 0,
+    rowGap: 6,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+  },
+  agentSegment: { flexShrink: 1 },
   bar: {
     minHeight: 32,
     maxWidth: '100%',
@@ -533,5 +722,5 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   barLabel: { minWidth: 0, flexShrink: 1 },
-  error: { paddingHorizontal: 4 },
+  error: { paddingHorizontal: 4, width: '100%' },
 });

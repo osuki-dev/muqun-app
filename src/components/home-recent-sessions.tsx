@@ -2,7 +2,7 @@ import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens } from '@osuki-dev/ui';
 import { ChevronRight, X } from 'lucide-react-native';
-import { Fragment, useCallback, useRef, useState } from 'react';
+import { Fragment, useCallback, useRef, useState, type ReactNode } from 'react';
 import {
   AppState,
   StyleSheet,
@@ -226,6 +226,8 @@ export function HomeRecentSessions({
   onOpen,
   query = '',
   pad = false,
+  moreLabel = 'count',
+  header,
 }: {
   servers: readonly GatewayRecord[];
   hosts: readonly SshHostRecord[];
@@ -243,6 +245,10 @@ export function HomeRecentSessions({
   query?: string;
   /** Pad keeps the large ordinal; a phone shrinks it so the title has the row. */
   pad?: boolean;
+  /** What the collapsed list's toggle says: `Sessions (N)` or Home's `Show all`. */
+  moreLabel?: 'count' | 'show-all';
+  /** Drawn above the rows, e.g. Home's per-computer filter chips. */
+  header?: ReactNode;
 }) {
   const { t } = useLingui();
   const theme = useThemeTokens();
@@ -270,6 +276,7 @@ export function HomeRecentSessions({
   );
   return (
     <View testID="home-recent-sessions" style={styles.root}>
+      {header}
       <View
         onLayout={(event) => setListWidth(event.nativeEvent.layout.width)}
         style={[
@@ -314,7 +321,11 @@ export function HomeRecentSessions({
           onPress={() => setExpanded(!expanded)}
           style={[styles.more, linkStyle]}>
           <Text variant="bodySmall" color={theme.colors.primary}>
-            {expanded ? t`Show less` : `${t`Sessions`} (${available.length})`}
+            {expanded
+              ? t`Show less`
+              : moreLabel === 'show-all'
+                ? t`Show all`
+                : `${t`Sessions`} (${available.length})`}
           </Text>
         </PressableScale>
       ) : null}

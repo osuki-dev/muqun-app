@@ -75,6 +75,7 @@ export const sheetRoutePresentations: Readonly<Record<string, SheetPresentation>
   'settings-voice': 'sheet',
   'home-target': 'sheet',
   'home-agents': 'sheet',
+  'home-agent': 'sheet',
   // The agent's pickers. Every one of them is a destination -- pick a model,
   // pick a workspace, read a diff -- so every one is a route rather than a
   // `<Modal>` the workbench keeps mounted whether it is open or not.
@@ -158,6 +159,7 @@ export const sheetRouteKinds: Readonly<Record<string, SheetKind>> = {
   'settings-home-layout': 'picker',
   'home-target': 'picker',
   'home-agents': 'picker',
+  'home-agent': 'picker',
   // Short forms and inspectors: a few fields, a meter, a short list.
   'new-task': 'picker',
   'web-service': 'picker',
@@ -237,6 +239,7 @@ export const sheetRouteDetents: Readonly<Record<string, SheetDetents>> = {
   'new-task': 'expandable',
   'home-target': 'fitToContents',
   'home-agents': 'fitToContents',
+  'home-agent': 'fitToContents',
   // Open a web service (card #829). One field with a row of shortcuts over it:
   // a full-height sheet for a port number would be the app implying the task is
   // bigger than typing four digits.
@@ -373,6 +376,7 @@ export const sheetRouteContent: Readonly<Record<string, SheetContent>> = {
   'new-task': 'short',
   'home-target': 'short',
   'home-agents': 'short',
+  'home-agent': 'short',
   'settings-home-layout': 'short',
   'web-service': 'short',
 };

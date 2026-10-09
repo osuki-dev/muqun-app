@@ -16,7 +16,6 @@ import {
 } from '@/lib/agent-session-defaults';
 import type { GatewayRecord } from '@/lib/gateway-storage';
 import type { AgentReadiness } from '@/lib/home-agent-readiness';
-import type { LaunchEntry } from '@/lib/home-launch-model';
 import type { ServerReachability } from '@/lib/server-reachability';
 
 type Reachability = Readonly<Record<string, ServerReachability | undefined>>;
@@ -58,17 +57,6 @@ export function resolveHomeComposerTarget(input: {
     reachable.find((server) => reachabilityOf(reachabilityByServer, server.serverId) === 'live') ??
     reachable[0]!;
   return { kind: 'ready', server: first };
-}
-
-/** The agent a goal starts: the first agent tile Home's launch row shows for that computer. */
-export function homeComposerAgent(
-  entries: readonly LaunchEntry[]
-): { agentId?: string; name: string } | null {
-  for (const entry of entries) {
-    if (entry.kind === 'agent')
-      return { name: entry.name, ...(entry.agentId ? { agentId: entry.agentId } : {}) };
-  }
-  return null;
 }
 
 /**
@@ -198,4 +186,13 @@ export function homeGuideParams(
     ...(readiness.status === 'offline' ? { cause: readiness.cause } : {}),
     origin: 'home',
   };
+}
+
+/**
+ * The model as `POST /api/tasks` names it: `provider_id/model_id`, or the
+ * bare catalog id. A variant has no spelling there; the dock sets it on the
+ * session once the route has answered.
+ */
+export function ledgerModelId(model: ModelRef): string {
+  return model.provider_id ? `${model.provider_id}/${model.model_id}` : model.model_id;
 }

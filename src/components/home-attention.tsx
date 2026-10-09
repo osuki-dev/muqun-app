@@ -4,7 +4,7 @@ import { useThemeTokens } from '@osuki-dev/ui';
 import { ChevronRight, CircleAlert } from 'lucide-react-native';
 import { StyleSheet, View } from 'react-native';
 
-import { useTaskIndexFor } from '@/components/home-in-progress';
+import { useTaskIndexFor } from '@/components/use-task-index';
 import { PressableScale } from '@/components/pressable-scale';
 import { TaskStatusGlyph } from '@/components/task-status-glyph';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';

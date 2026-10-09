@@ -133,6 +133,19 @@ msgstr "{0} รายการบนโฮสต์นี้"
 msgid "{0} queued"
 msgstr "{0} รายการในคิว"
 
+#. placeholder {0}: rollup.total
+#: src/components/home-computer-cards.tsx
+#: src/components/server-tasks-sheet.tsx
+msgid "{0} sub-tasks"
+msgstr "งานย่อย {0} งาน"
+
+#. placeholder {0}: rollup.total
+#. placeholder {1}: rollup.waiting
+#: src/components/home-computer-cards.tsx
+#: src/components/server-tasks-sheet.tsx
+msgid "{0} sub-tasks ({1} waiting)"
+msgstr "งานย่อย {0} งาน (รอ {1} งาน)"
+
 #. placeholder {0}: compact(inContext)
 #: src/components/agent-context-sheet.tsx
 msgid "{0} tokens the model last read"
@@ -281,6 +294,10 @@ msgstr "{host} แสดงคีย์ที่แอปนี้ยังไ�
 msgid "{label} is temporarily locked. Use the system fallback or try later."
 msgstr "{label} ถูกล็อกชั่วคราว ใช้วิธีสำรองของระบบหรือลองอีกครั้งภายหลัง"
 
+#: src/components/home-computer-cards.tsx
+msgid "{label} settings, {footer}"
+msgstr "การตั้งค่า {label}, {footer}"
+
 #: src/components/bounded-markdown.tsx
 msgid "{language} code copied to clipboard"
 msgstr "คัดลอกโค้ด {language} ไปยังคลิปบอร์ดแล้ว"
@@ -322,11 +339,24 @@ msgstr "{removeLabel}: {label}"
 msgid "{running} running of {0}"
 msgstr "กำลังทำงาน {running} จาก {0}"
 
+#: src/components/home-computer-cards.tsx
+msgid "{sessions} sessions"
+msgstr "{sessions} เซสชัน"
+
+#: src/components/home-computer-cards.tsx
+msgid "{terminals} terminals"
+msgstr "{terminals} เทอร์มินัล"
+
 #: src/components/agent-composer.tsx
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-sessions-sheet.tsx
 msgid "{title} — finished while you were away"
 msgstr "{title} — ทำงานเสร็จตอนที่คุณไม่อยู่"
+
+#. placeholder {0}: card.nowTotal - card.now.length
+#: src/components/home-computer-cards.tsx
+msgid "+{0} more"
+msgstr "อีก {0} รายการ"
 
 #: src/lib/agent-widget-layout.tsx
 msgid "+{overflow} more"
@@ -402,6 +432,10 @@ msgstr "สร้างเทอร์มินัลแล้ว เปิด�
 #: src/app/settings.tsx
 msgid "About"
 msgstr "เกี่ยวกับ"
+
+#: src/components/server-tasks-sheet.tsx
+msgid "Acknowledge"
+msgstr "ทำเครื่องหมายว่ารับทราบ"
 
 #: src/app/commands.tsx
 msgid "Act on this terminal, or send it a command"
@@ -514,6 +548,7 @@ msgstr "การแจ้งเตือน"
 msgid "Align the QR inside the frame"
 msgstr "จัด QR ให้อยู่ในกรอบ"
 
+#: src/components/home-recent-chips.tsx
 #: src/components/session-artifacts.tsx
 #: src/components/theme-browse-sheet.tsx
 msgid "All"
@@ -1101,6 +1136,10 @@ msgstr "เลือกสไตล์หน้าแรกและส่วน
 msgid "Choose project"
 msgstr "เลือกโปรเจกต์"
 
+#: src/components/home-composer-dock.tsx
+msgid "Choose the agent Home starts on this computer"
+msgstr "เลือกเอเจนต์ที่หน้าแรกจะเริ่มบนคอมพิวเตอร์เครื่องนี้"
+
 #: src/components/changes-sheet.tsx
 msgid "Choose which changes to show"
 msgstr "เลือกการเปลี่ยนแปลงที่จะแสดง"
@@ -1327,6 +1366,10 @@ msgstr "ไม่พบคอมพิวเตอร์"
 msgid "Computer offline"
 msgstr "คอมพิวเตอร์ออฟไลน์"
 
+#: src/components/home-computer-cards.tsx
+msgid "Computer settings"
+msgstr "การตั้งค่าคอมพิวเตอร์"
+
 #: src/components/home-composer-dock.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Computer unavailable."
@@ -1436,6 +1479,7 @@ msgstr "กำลังเชื่อมต่อกับ {address}"
 msgid "Connecting…"
 msgstr "กำลังเชื่อมต่อ…"
 
+#: src/components/home-editorial-layout.tsx
 #: src/components/pad-server-rail.tsx
 msgid "Connections"
 msgstr "การเชื่อมต่อ"
@@ -1466,7 +1510,6 @@ msgid "Context used"
 msgstr "บริบทที่ใช้ไป"
 
 #: src/app/explore.tsx
-#: src/components/home-editorial-layout.tsx
 #: src/components/pad-server-rail.tsx
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Continue"
@@ -1975,6 +2018,7 @@ msgstr "เริ่มเซสชันไม่สำเร็จ"
 msgid "Could not start a terminal."
 msgstr "เริ่มเทอร์มินัลไม่ได้"
 
+#: src/components/home-composer-dock.tsx
 #: src/components/new-task-sheet.tsx
 msgid "Could not start the task."
 msgstr "เริ่มงานไม่ได้"
@@ -2402,10 +2446,12 @@ msgstr "ทุกไฟล์ที่เปลี่ยนแปลงรวม
 msgid "Every screen in the app."
 msgstr "ทุกหน้าจอในแอป"
 
+#: src/components/home-computer-cards.tsx
 #: src/components/server-tasks-sheet.tsx
 msgid "exit {code}"
 msgstr "ออก {code}"
 
+#. placeholder {0}: result.code
 #. placeholder {0}: task.exitCode
 #: src/components/server-tasks-sheet.tsx
 msgid "Exit code {0}"
@@ -2722,6 +2768,10 @@ msgstr "ไปยังคอมพิวเตอร์ของคุณ"
 msgid "Goal continuation"
 msgstr "ดำเนินเป้าหมายต่อ"
 
+#: src/components/home-composer-dock.tsx
+msgid "Goal for {agentName} · no attachments in a terminal"
+msgstr "เป้าหมายสำหรับ {agentName} · แนบไฟล์ในเทอร์มินัลไม่ได้"
+
 #: src/app/commands.tsx
 msgid "Group"
 msgstr "กลุ่ม"
@@ -2786,6 +2836,15 @@ msgstr "ประวัติ"
 msgid "Home"
 msgstr "หน้าแรก"
 
+#: src/components/home-agent-sheet.tsx
+#: src/components/settings-servers.tsx
+msgid "Home agent"
+msgstr "เอเจนต์ของหน้าแรก"
+
+#: src/components/home-composer-dock.tsx
+msgid "Home agent: {agentName}"
+msgstr "เอเจนต์ของหน้าแรก: {agentName}"
+
 #: src/components/dev-home-ambient-controls.tsx
 msgid "Home effects · development only"
 msgstr "เอฟเฟกต์หน้าหลัก · สำหรับการพัฒนาเท่านั้น"
@@ -2828,9 +2887,14 @@ msgid "How to use Muqun"
 msgstr "วิธีใช้ Muqun"
 
 #: src/components/agent-session-tree-sheet.tsx
+#: src/components/home-computer-cards.tsx
 #: src/i18n/labels.ts
 msgid "Idle"
 msgstr "ว่าง"
+
+#: src/components/home-computer-cards.tsx
+msgid "Idle · last finished {lastTitle} {lastAge}"
+msgstr "ว่าง · เสร็จล่าสุด: {lastTitle} {lastAge}"
 
 #: src/i18n/labels.ts
 msgctxt "task state"
@@ -2886,7 +2950,6 @@ msgstr "นำเข้าไฟล์"
 msgid "Import link"
 msgstr "นำเข้าลิงก์"
 
-#: src/components/home-editorial-layout.tsx
 #: src/components/server-tasks-sheet.tsx
 msgid "In progress"
 msgstr "กำลังดำเนินการ"
@@ -3024,6 +3087,10 @@ msgstr "อุปกรณ์ที่จับคู่จะแสดงเม
 #: src/components/skia-terminal.tsx
 msgid "Jump to latest output"
 msgstr "ข้ามไปยังเอาต์พุตล่าสุด"
+
+#: src/components/home-computer-cards.tsx
+msgid "Just finished"
+msgstr "เพิ่งเสร็จ"
 
 #: src/components/agent-sessions-sheet.tsx
 #: src/hooks/use-relative-time.ts
@@ -3842,6 +3909,10 @@ msgstr "ไม่มีการเปลี่ยนแปลงใด"
 msgid "Nothing yet — an “Always allow” reply lands here, for this project."
 msgstr "ยังไม่มี — คำตอบ “อนุญาตเสมอ” จะมาอยู่ที่นี่ สำหรับโปรเจกต์นี้"
 
+#: src/components/home-computer-cards.tsx
+msgid "Now"
+msgstr "ตอนนี้"
+
 #: src/components/toggle.tsx
 msgid "Off"
 msgstr "ปิด"
@@ -3884,6 +3955,7 @@ msgstr "ออนไลน์"
 msgid "ONLINE"
 msgstr "ออนไลน์"
 
+#: src/components/home-computer-cards.tsx
 #: src/components/home-connections.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/open-web-service-sheet.tsx
@@ -4494,6 +4566,7 @@ msgid "Receive agent blocks and gateway updates."
 msgstr "รับแจ้งเมื่อเอเจนต์ติดขัดและเมื่อ Gateway มีอัปเดต"
 
 #: src/components/agent-sessions-sheet.tsx
+#: src/components/home-editorial-layout.tsx
 msgid "Recent"
 msgstr "ล่าสุด"
 
@@ -5090,9 +5163,14 @@ msgstr "จะส่งถัดไป: {0}"
 msgid "Sending to"
 msgstr "กำลังส่งไปยัง"
 
+#: src/components/home-computer-cards.tsx
 #: src/components/home-connections.tsx
 msgid "Sends your next goal here. Long press to open it."
 msgstr "ส่งเป้าหมายถัดไปมาที่นี่ กดค้างเพื่อเปิด"
+
+#: src/components/home-computer-cards.tsx
+msgid "Sent · waiting for the computer"
+msgstr "ส่งแล้ว · รอคอมพิวเตอร์"
 
 #: src/components/agent-sessions-sheet.tsx
 msgid "Session name"
@@ -5218,6 +5296,10 @@ msgstr "แสดง {0}"
 #: src/components/settings-alerts.tsx
 msgid "Show agents and their status on the home screen. Updates while Muqun is open."
 msgstr "แสดงเอเจนต์และสถานะบนหน้าจอหลัก อัปเดตขณะ Muqun เปิดอยู่"
+
+#: src/components/home-recent-sessions.tsx
+msgid "Show all"
+msgstr "แสดงทั้งหมด"
 
 #: src/components/theme-appearance-settings.tsx
 msgid "Show artwork on Home"
@@ -5503,6 +5585,10 @@ msgstr "กำลังเริ่มกล้อง"
 msgid "Starting…"
 msgstr "กำลังเริ่ม…"
 
+#: src/components/home-agent-sheet.tsx
+msgid "Starts in a terminal"
+msgstr "เริ่มในเทอร์มินัล"
+
 #: src/components/collaboration-notice.tsx
 msgid "Status unavailable"
 msgstr "สถานะไม่พร้อมใช้งาน"
@@ -5740,6 +5826,7 @@ msgstr "ไฟล์ชั่วคราว"
 #: src/app/commands.tsx
 #: src/app/settings-terminal.tsx
 #: src/app/settings.tsx
+#: src/components/home-computer-cards.tsx
 #: src/components/home-launch-actions.tsx
 #: src/components/home-recent-sessions.tsx
 #: src/components/settings-server-capabilities.tsx
@@ -6088,6 +6175,7 @@ msgid "This computer has already handled that request."
 msgstr "คอมพิวเตอร์นี้จัดการคำขอนั้นไปแล้ว"
 
 #: src/app/new-task.tsx
+#: src/components/home-composer-dock.tsx
 msgid "This computer has no session to start an agent in."
 msgstr "คอมพิวเตอร์นี้ไม่มีเซสชันสำหรับเริ่มเอเจนต์"
 
@@ -6113,6 +6201,10 @@ msgstr "คอมพิวเตอร์นี้ไม่รู้จักอ
 #: src/lib/network-error.ts
 msgid "This computer refused the request."
 msgstr "คอมพิวเตอร์นี้ปฏิเสธคำขอ"
+
+#: src/components/home-computer-cards.tsx
+msgid "This computer’s Gateway does not keep a task list yet."
+msgstr "Gateway ของคอมพิวเตอร์เครื่องนี้ยังไม่เก็บรายการงาน"
 
 #: src/lib/attachments.ts
 msgid "This device has no camera available."
@@ -6622,10 +6714,6 @@ msgstr "กำลังใช้"
 msgid "Version {version}{0}"
 msgstr "เวอร์ชัน {version}{0}"
 
-#: src/components/home-in-progress.tsx
-msgid "View all ({total})"
-msgstr "ดูทั้งหมด ({total})"
-
 #: src/components/agent-composer.tsx
 msgid "View file changes"
 msgstr "ดูการเปลี่ยนแปลงของไฟล์"
@@ -6677,6 +6765,10 @@ msgstr "เว็บ"
 #: src/components/agent-workbench.tsx
 msgid "Welcome to {agentName}"
 msgstr "ยินดีต้อนรับสู่ {agentName}"
+
+#: src/components/home-agent-sheet.tsx
+msgid "What Home starts when you send from here"
+msgstr "สิ่งที่หน้าแรกเริ่มเมื่อคุณส่งจากที่นี่"
 
 #: src/components/session-map.tsx
 msgid "What is running"

@@ -71,11 +71,11 @@ import {
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { HomeConnections } from '@/components/home-connections';
 import { HomeAttention } from '@/components/home-attention';
-import {
-  HomeInProgress,
-  HomeServerTasksSync,
-  useHomeInProgressCount,
-} from '@/components/home-in-progress';
+import { HomeComputerCards, HomeTaskSync } from '@/components/home-computer-cards';
+import { HomeRecentChips } from '@/components/home-recent-chips';
+import { filterHomeRecent, homeRecentFilterIds } from '@/lib/home-continue';
+import { taskSubscriptionServerIds } from '@/lib/home-computer-cards';
+import { hasTaskLedger, isTerminalTaskState } from '@/lib/task-ledger';
 import {
   HomeContinueSearch,
   HomeRecentSessions,
@@ -210,10 +210,26 @@ export function HomeOverview({
   // kept; its row menu is not.
   const { record, records, loading, hydrationError, retryHydration, selectRecord, enterDemo } =
     useGatewayRecord();
-  // The ledger Home reads is the selected computer's: the store holds no other
-  // computer's tasks fresh (one gateway is connected at a time).
-  const taskServerIds = useMemo(() => (record ? [record.serverId] : []), [record]);
-  const inProgressCount = useHomeInProgressCount(taskServerIds);
+  // The ledgers Home keeps live: up to four computers, the selected one first,
+  // each over its own task-only socket while Home is mounted (see
+  // `taskSubscriptionServerIds`). Needs you and the cards read them all.
+  const capabilitiesByServer = useServerCapabilities((state) => state.byServer);
+  const taskServerIds = useMemo(
+    () =>
+      taskSubscriptionServerIds({
+        servers: records,
+        selectedId: record?.serverId,
+        hasLedger: (serverId) => hasTaskLedger(capabilitiesByServer[serverId]),
+        isDemo: (serverId) => serverId === DEMO_SERVER_ID,
+      }),
+    [records, record?.serverId, capabilitiesByServer]
+  );
+  // One card per paired computer; the demo has no ledger and no card.
+  const cardServers = useMemo(
+    () => records.filter((server) => server.serverId !== DEMO_SERVER_ID),
+    [records]
+  );
+  const [recentServerId, setRecentServerId] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const profile = useAppearanceProfile();
   const homeLayout = profile.id;
@@ -298,6 +314,13 @@ export function HomeOverview({
   const hasPairedServer = records.some((server) => server.serverId !== DEMO_SERVER_ID);
   const appActive = useAppActive();
   const isFocused = useIsFocused();
+  // The other computers' task sockets live only while Home is on screen; the
+  // selected one's ledger stays current as it always has (the dock, Needs you
+  // and the Continue status read it).
+  const liveTaskServerIds = useMemo(
+    () => (isFocused ? taskServerIds : taskServerIds.filter((id) => id === record?.serverId)),
+    [isFocused, taskServerIds, record?.serverId]
+  );
   const scrollY = useSharedValue(0);
   // Save only at gesture boundaries, never once per frame on the JS thread.
   // A composition can replace the list chrome, not the reader's scroll intent.
@@ -697,6 +720,15 @@ export function HomeOverview({
     <HomeContinueSearch query={continueQuery} onChange={setContinueQuery} />
   ) : undefined;
   const recentQuery = searchContinue ? continueQuery : '';
+  // Recent narrowed to one computer by its chip; a chip whose computer has no
+  // rows any more is let go of.
+  const recentFilterIds = homeRecentFilterIds(
+    recentEntries,
+    records.map((server) => server.serverId)
+  );
+  const recentFilter =
+    recentServerId && recentFilterIds.includes(recentServerId) ? recentServerId : null;
+  const recentShown = filterHomeRecent(recentEntries, recentFilter);
 
   function openServer(serverId: string, paneId?: string) {
     void commands.openServer(serverId, paneId);
@@ -810,7 +842,7 @@ export function HomeOverview({
           effectsEnabled={!hasDevEffectOverride}
         />
         {devAmbientLayer}
-        <HomeServerTasksSync serverId={record?.serverId ?? null} />
+        <HomeTaskSync serverIds={liveTaskServerIds} />
         <KeyboardAwareScrollView
           ref={overviewScroll}
           keyboardShouldPersistTaps="handled"
@@ -974,13 +1006,24 @@ export function HomeOverview({
                 !loading && !hydrationError && recentEntries.length > 0 ? (
                   <HomeRecentSessions
                     pad={isPad}
-                    limit={padLaunch ? 8 : undefined}
+                    limit={3}
+                    moreLabel="show-all"
                     linkStyle={padLaunch ? PAD_WORK_LINK : undefined}
                     selectedServerId={launchController.chosen?.serverId}
                     servers={records}
                     hosts={sshRows}
-                    available={recentEntries}
+                    available={recentShown}
                     query={recentQuery}
+                    header={
+                      recentFilterIds.length > 0 ? (
+                        <HomeRecentChips
+                          servers={records}
+                          serverIds={recentFilterIds}
+                          value={recentFilter}
+                          onChange={setRecentServerId}
+                        />
+                      ) : undefined
+                    }
                     onOpen={(command) => {
                       // QA-only leaves already have read-only snapshots in the demo
                       // detail sheet; never send them to a live agent workbench.
@@ -1018,33 +1061,46 @@ export function HomeOverview({
                         );
                         return;
                       }
-                      router.push({ pathname: '/server-tasks', params: { taskId: task.taskId } });
+                      router.push({
+                        pathname: '/server-tasks',
+                        params: { serverId, taskId: task.taskId },
+                      });
                     }}
                   />
                 ) : undefined
               }
               progress={
-                !loading && !hydrationError && inProgressCount > 0 ? (
-                  <HomeInProgress
-                    servers={records}
-                    serverIds={taskServerIds}
-                    onOpenTask={(row) =>
+                !loading && !hydrationError && cardServers.length > 0 ? (
+                  <HomeComputerCards
+                    servers={cardServers}
+                    activeConnection={activeConnection}
+                    nowMs={nowMs}
+                    onSelectServer={targetComposer}
+                    onOpenServer={openServer}
+                    onOpenTask={({ serverId, task }) =>
                       router.push({
                         pathname: '/server-tasks',
-                        params: { taskId: row.task.taskId },
+                        params:
+                          task.parentTaskId || isTerminalTaskState(task.state)
+                            ? { serverId, taskId: task.taskId }
+                            : { serverId, root: task.taskId },
                       })
                     }
-                    onViewAll={() => router.push('/server-tasks')}
+                    onOpenComputer={(serverId) =>
+                      router.push({ pathname: '/settings-servers', params: { serverId } })
+                    }
                   />
                 ) : undefined
               }
               connections={
+                // The cards are the computers now; this keeps the SSH hosts
+                // and the way to manage connections.
                 !loading &&
                 !hydrationError &&
                 !sshLoading &&
-                (records.length > 0 || sshRows.length > 0) ? (
+                (sshRows.length > 0 || (cardServers.length === 0 && records.length > 0)) ? (
                   <HomeConnections
-                    servers={records}
+                    servers={cardServers.length > 0 ? [] : records}
                     hosts={sshRows}
                     onOpenServer={openServer}
                     onSelectServer={targetComposer}
@@ -1161,7 +1217,7 @@ export function HomeOverview({
         effectsEnabled={!hasDevEffectOverride}
       />
       {devAmbientLayer}
-      <HomeServerTasksSync serverId={record?.serverId ?? null} />
+      <HomeTaskSync serverIds={liveTaskServerIds} />
       {/* The bar and the brand block below it are one header in two states, not
           two rows. At rest the bar's left half is deliberately empty -- no
           hamburger, no title, no rule, no blur -- because the brand block ten

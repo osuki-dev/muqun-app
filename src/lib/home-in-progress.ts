@@ -1,26 +1,13 @@
 /**
  * Which ledger tasks Home lists, and in what order.
  *
- * Pure, so the selection rules are pinned by Bun tests; `home-in-progress.tsx`
- * (In progress) and `home-attention.tsx` (Needs you) are the views.
+ * Pure, so the selection rules are pinned by Bun tests; `home-attention.tsx`
+ * (Needs you) and the Continue rows are the views. The computer cards'
+ * "Now" block is `home-computer-cards.ts`.
  */
 
 import type { ServerTasksIndex } from './server-tasks-state';
 import { isTerminalTaskState, type TaskState, type TaskView } from './task-ledger';
-
-/** The rows In progress shows before it hands the rest to the Tasks sheet. */
-export const HOME_IN_PROGRESS_LIMIT = 5;
-
-/**
- * Running or about to run. `waiting` asks for the reader and goes to Needs you;
- * `idle_unconfirmed` is not claimed as progress -- an idle agent is not proof
- * of anything -- and stays in the Tasks sheet.
- */
-const IN_PROGRESS: ReadonlySet<TaskState> = new Set<TaskState>([
-  'working',
-  'dispatching',
-  'queued',
-]);
 
 export type HomeTaskRow = { serverId: string; task: TaskView };
 
@@ -36,16 +23,6 @@ function rowsWhere(
     }
   }
   return rows.sort((a, b) => b.task.updatedMs - a.task.updatedMs);
-}
-
-/** In progress on the given computers, newest change first, capped; `total` counts them all. */
-export function homeInProgressTasks(
-  index: ServerTasksIndex,
-  serverIds: readonly string[],
-  limit = HOME_IN_PROGRESS_LIMIT
-): { rows: HomeTaskRow[]; total: number } {
-  const all = rowsWhere(index, serverIds, (task) => IN_PROGRESS.has(task.state));
-  return { rows: all.slice(0, Math.max(0, limit)), total: all.length };
 }
 
 /** An agent session Needs you already lists for its own pending request. */

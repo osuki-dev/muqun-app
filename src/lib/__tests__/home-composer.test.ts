@@ -3,15 +3,14 @@ import { describe, expect, test } from 'bun:test';
 import type { ModeInfo, ModelInfo } from '../agent-session';
 import type { GatewayRecord } from '../gateway-storage';
 import {
-  homeComposerAgent,
   homeGuideParams,
   homeHiddenClientCommands,
   homeSessionParams,
   homeSessionReuse,
+  ledgerModelId,
   resolveHomeComposerTarget,
   type HomeStartedSession,
 } from '../home-composer';
-import { buildLaunchModel } from '../home-launch-model';
 
 function computer(serverId: string, label = serverId): GatewayRecord {
   return { serverId, label, url: `https://${serverId}.invalid`, token: 't' } as GatewayRecord;
@@ -74,12 +73,6 @@ describe('resolveHomeComposerTarget', () => {
     expect(resolveHomeComposerTarget({ servers: [], reachabilityByServer: {} })).toEqual({
       kind: 'none',
     });
-  });
-});
-
-describe('homeComposerAgent', () => {
-  test('the fallback row leads with OpenCode and names no agent id', () => {
-    expect(homeComposerAgent(buildLaunchModel().entries)).toEqual({ name: 'OpenCode' });
   });
 });
 
@@ -223,5 +216,14 @@ describe('homeGuideParams', () => {
       cause: 'service',
       origin: 'home',
     });
+  });
+});
+
+describe('ledgerModelId', () => {
+  test('provider/model, or the bare catalog id', () => {
+    expect(ledgerModelId({ provider_id: 'anthropic', model_id: 'claude-haiku-5-5' })).toBe(
+      'anthropic/claude-haiku-5-5'
+    );
+    expect(ledgerModelId({ provider_id: '', model_id: 'm' })).toBe('m');
   });
 });

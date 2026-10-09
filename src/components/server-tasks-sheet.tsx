@@ -25,13 +25,24 @@ import { useTaskAge } from '@/hooks/use-task-age';
 import { useMonoFontFamily } from '@/hooks/use-user-fonts';
 import { taskKindWord, taskStateWord } from '@/i18n/labels';
 import { settleAfter } from '@/lib/compiler-safe-control-flow';
-import { summaryTail } from '@/lib/server-tasks-state';
+import { taskRouteFor } from '@/hooks/use-server-tasks';
+import {
+  buildTaskTree,
+  dismissedKey,
+  taskResultLine,
+  taskRollup,
+  taskTitle,
+} from '@/lib/home-computer-cards';
+import { groupTasks, summaryTail } from '@/lib/server-tasks-state';
+import { useHomeTaskCards } from '@/stores/home-task-cards';
 import { getTask, isTerminalTaskState, type TaskEvent, type TaskView } from '@/lib/task-ledger';
 import { acceptsCancel, acceptsConfirm, unpairView } from '@/lib/unpair-action';
 
 type Item =
   | { type: 'heading'; key: string; title: string; first: boolean }
   | { type: 'task'; key: string; task: TaskView }
+  /** Work a task started, one level under it. */
+  | { type: 'child'; key: string; task: TaskView }
   | { type: 'empty'; key: string };
 
 const itemKey = (item: Item) => item.key;
@@ -64,25 +75,34 @@ function ExitChip({ code }: { code: number }) {
 function ServerTaskRow({
   task,
   nowMs,
+  nested = false,
   onOpen,
 }: {
   task: TaskView;
   nowMs: number;
+  nested?: boolean;
   onOpen: (taskId: string) => void;
 }) {
+  const { t } = useLingui();
   const { _ } = useLinguiRuntime();
   const age = useTaskAge();
+  const rollup = taskRollup(task);
   const caption = [
     _(taskKindWord[task.kind]),
     _(taskStateWord[task.state]),
     age(task.updatedMs, nowMs),
+    rollup
+      ? rollup.waiting > 0
+        ? t`${rollup.total} sub-tasks (${rollup.waiting} waiting)`
+        : t`${rollup.total} sub-tasks`
+      : '',
   ]
     .filter(Boolean)
     .join(' · ');
-  return (
+  const row = (
     <SheetSceneRow
       testID={`server-tasks-row-${task.taskId}`}
-      title={task.goal || task.taskId}
+      title={taskTitle(task)}
       caption={caption}
       accessibilityValue={{ text: caption }}
       busy={task.state === 'working' || task.state === 'dispatching'}
@@ -99,6 +119,7 @@ function ServerTaskRow({
       }
     />
   );
+  return nested ? <View style={styles.nested}>{row}</View> : row;
 }
 
 /**
@@ -106,14 +127,19 @@ function ServerTaskRow({
  * place of them when a row is pressed.
  */
 export function ServerTasksSheet({
+  serverId,
   serverLabel,
   state,
   initialTaskId,
+  rootTaskId,
 }: {
+  serverId: string | null;
   serverLabel: string;
   state: ServerTasks;
   /** Open on this task's detail; back still leads to the whole list. */
   initialTaskId?: string;
+  /** List only this task and the work it started. */
+  rootTaskId?: string;
 }) {
   const { t } = useLingui();
   const theme = useThemeTokens();
@@ -137,16 +163,27 @@ export function ServerTasksSheet({
     return () => subscription.remove();
   }, [detailOpen]);
 
+  // Roots grouped by their own state, each with the work it started nested
+  // one level under it, newest first.
+  const tree = buildTaskTree(state.tasks);
+  const shownTree = rootTaskId ? tree.filter((row) => row.task.taskId === rootTaskId) : tree;
+  const childrenOf = new Map(shownTree.map((row) => [row.task.taskId, row.children]));
+  const groups = groupTasks(shownTree.map((row) => row.task));
   const items: Item[] = [];
   const sections: [string, string, TaskView[]][] = [
-    ['attention', t`Needs you`, state.groups.attention],
-    ['active', t`In progress`, state.groups.active],
-    ['finished', t`Finished`, state.groups.finished],
+    ['attention', t`Needs you`, groups.attention],
+    ['active', t`In progress`, groups.active],
+    ['finished', t`Finished`, groups.finished],
   ];
   for (const [key, title, tasks] of sections) {
     if (tasks.length === 0) continue;
     items.push({ type: 'heading', key: `heading-${key}`, title, first: items.length === 0 });
-    for (const task of tasks) items.push({ type: 'task', key: task.taskId, task });
+    for (const task of tasks) {
+      items.push({ type: 'task', key: task.taskId, task });
+      for (const child of childrenOf.get(task.taskId) ?? []) {
+        items.push({ type: 'child', key: child.taskId, task: child });
+      }
+    }
   }
   const firstLoad = state.loading && state.tasks.length === 0;
   if (items.length === 0 && !firstLoad) items.push({ type: 'empty', key: 'empty' });
@@ -184,6 +221,7 @@ export function ServerTasksSheet({
           taskId={openTaskId}
           listed={listedTask}
           nowMs={nowMs}
+          serverId={serverId}
           onBack={() => setOpenTaskId(null)}
           onCancel={state.cancel}
         />
@@ -207,6 +245,8 @@ export function ServerTasksSheet({
               <SheetSceneGroupHeading title={item.title} first={item.first} />
             ) : item.type === 'task' ? (
               <ServerTaskRow task={item.task} nowMs={nowMs} onOpen={setOpenTaskId} />
+            ) : item.type === 'child' ? (
+              <ServerTaskRow task={item.task} nowMs={nowMs} nested onOpen={setOpenTaskId} />
             ) : (
               <SheetSceneRow testID="server-tasks-empty" title={t`No tasks yet`} />
             )
@@ -222,6 +262,7 @@ function ServerTaskDetail({
   taskId,
   listed,
   nowMs,
+  serverId,
   onBack,
   onCancel,
 }: {
@@ -229,6 +270,7 @@ function ServerTaskDetail({
   /** The task as the list has it, which socket frames keep current. */
   listed: TaskView | undefined;
   nowMs: number;
+  serverId: string | null;
   onBack: () => void;
   onCancel: (taskId: string) => Promise<void>;
 }) {
@@ -249,7 +291,8 @@ function ServerTaskDetail({
   // Again whenever the task changes, so the history includes the change.
   useEffect(() => {
     let active = true;
-    void getTask(taskId)
+    const route = serverId ? taskRouteFor(serverId) : null;
+    void getTask(taskId, route?.kind === 'endpoint' ? route.endpoint : undefined)
       .then((answer) => {
         if (!active) return;
         setDetail(answer);
@@ -261,7 +304,11 @@ function ServerTaskDetail({
     return () => {
       active = false;
     };
-  }, [taskId, updatedMs]);
+  }, [taskId, updatedMs, serverId]);
+  const acknowledged = useHomeTaskCards((cards) =>
+    serverId ? cards.dismissed.includes(dismissedKey(serverId, taskId)) : true
+  );
+  const acknowledge = useHomeTaskCards((cards) => cards.acknowledge);
 
   const task = listed ?? detail?.task;
   if (!task) {
@@ -288,6 +335,7 @@ function ServerTaskDetail({
         ? t`Agent ${task.binding.agentId}, session ${task.binding.asid}`
         : null;
   const events = [...(detail?.events ?? [])].sort((a, b) => b.seq - a.seq);
+  const result = taskResultLine(task);
 
   return (
     <ScrollView
@@ -311,6 +359,15 @@ function ServerTaskDetail({
       <Text selectable variant="body">
         {task.goal || task.taskId}
       </Text>
+      {result && isTerminalTaskState(task.state) ? (
+        <Text
+          testID="server-tasks-result"
+          selectable
+          variant="bodySmall"
+          color={task.state === 'failed' ? theme.colors.danger : theme.colors.textMuted}>
+          {result.kind === 'summary' ? result.text : t`Exit code ${result.code}`}
+        </Text>
+      ) : null}
       {binding ? (
         <Text selectable variant="caption" color={theme.colors.textSubtle} numberOfLines={2}>
           {binding}
@@ -340,7 +397,18 @@ function ServerTaskDetail({
           </Text>
         </View>
       ) : null}
-      {isTerminalTaskState(task.state) ? null : (
+      {isTerminalTaskState(task.state) ? (
+        !acknowledged && serverId ? (
+          <SheetSceneQuietAction
+            testID="server-tasks-acknowledge"
+            label={t`Acknowledge`}
+            onPress={() => {
+              acknowledge(serverId, task.taskId);
+              onBack();
+            }}
+          />
+        ) : null
+      ) : (
         <CancelTaskAction key={task.taskId} onConfirm={() => onCancel(task.taskId)} />
       )}
       {events.length > 0 ? (
@@ -443,4 +511,5 @@ const styles = StyleSheet.create({
   output: { padding: 12 },
   outputText: { fontSize: 12, lineHeight: 17 },
   actions: { gap: SHEET_LADDER.tight, marginTop: SHEET_LADDER.tight },
+  nested: { paddingLeft: 24 },
 });
