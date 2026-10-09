@@ -413,7 +413,7 @@ test('a recent missing from a snapshot cut at the mirror cap is kept, not taken 
   const rows = homeContinueEntries({
     ...input,
     snapshots: { a: full },
-    recents: [{ key: 'newest', title: 'ryu@osk:~/app', atMs: 50, target: shell }],
+    recents: [{ key: 'newest', title: 'me@desk:~/app', atMs: 50, target: shell }],
   });
-  expect(rows[0]?.title).toBe('ryu@osk:~/app');
+  expect(rows[0]?.title).toBe('me@desk:~/app');
 });

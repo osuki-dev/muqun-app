@@ -393,8 +393,8 @@ export function visibleServerAgents(
  * already said it.
  *
  * A plain pane is usually named by its shell prompt, and a prompt very often
- * *is* the path -- `ryu@osk:~/.osuki/draw` over a cwd of
- * `/home/ryu/.osuki/draw`. Drawing both puts the same fact on the card twice
+ * *is* the path -- `me@desk:~/.osuki/draw` over a cwd of
+ * `/home/me/.osuki/draw`. Drawing both puts the same fact on the card twice
  * and makes that row half again as tall as the rows around it, which is the
  * single loudest thing left in a list once it has no connector lines holding it
  * together. The cwd still earns its line whenever it distinguishes two panes

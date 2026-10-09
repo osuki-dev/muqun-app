@@ -619,7 +619,7 @@ describe('unauthorized', () => {
       'Connection reset by peer',
       "Expected HTTP 101 response but was '502 Bad Gateway'",
       // A bare number or a proxy's prose is not an HTTP status.
-      'connect to 10.0.0.4:401 timed out',
+      'connect to 192.0.2.4:401 timed out',
       'read 401 bytes then EOF',
       'forbidden by policy',
       'unauthorized network',

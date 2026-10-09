@@ -538,10 +538,10 @@ export function SheetSceneRow({
    *
    * Prose wraps to two lines and clips at the end, because the start of a
    * sentence is the part that says what it is about. A filesystem path is the
-   * other way round: `/Users/ryu/Work/muqun/app-worktrees/opencode-c3` and
-   * `/Users/ryu/Work/muqun/app-worktrees/opencode-b2` differ only in the run
+   * other way round: `/Users/me/Work/muqun/app-worktrees/opencode-c3` and
+   * `/Users/me/Work/muqun/app-worktrees/opencode-b2` differ only in the run
    * that a tail clip throws away, and two rows reading
-   * `/Users/ryu/Work/muqun/app-worktre…` are two rows the reader cannot tell
+   * `/Users/me/Work/muqun/app-worktre…` are two rows the reader cannot tell
    * apart. So a path keeps its tail, loses its head, and stays on one line --
    * wrapping a path to two lines breaks it at no meaningful boundary and
    * doubles the row for a string the reader scans rather than reads.

@@ -27,16 +27,19 @@ function session(asid: string, updatedMs: number, extra: Partial<GatewayAgentSes
   };
 }
 
-function snapshot(sessions: GatewayAgentSession[], serverId = 'osk'): GatewayAgentSessionsSnapshot {
+function snapshot(
+  sessions: GatewayAgentSession[],
+  serverId = 'desk'
+): GatewayAgentSessionsSnapshot {
   return { serverId, sessionId: 'dev', observedAtMs: 1_000, sessions };
 }
 
 const base = {
-  serverIds: ['osk'],
+  serverIds: ['desk'],
   hostIds: [],
   snapshots: {},
   recents: [] as HomeRecentEntry[],
-  reachabilityByServer: { osk: 'live' as const },
+  reachabilityByServer: { desk: 'live' as const },
   paneMode: 'all' as const,
   nowMs: 1_000,
 };
@@ -86,7 +89,7 @@ test('gateway sessions join Continue as agent-session rows ranked by their updat
     type: 'agent-session',
     target: {
       kind: 'agent-session',
-      serverId: 'osk',
+      serverId: 'desk',
       sessionId: 'dev',
       directory: '/work',
       asid: 'a',
@@ -103,7 +106,7 @@ test('a gateway session a recent already points at is that recent, not a second 
     atMs: 50,
     target: {
       kind: 'agent-session',
-      serverId: 'osk',
+      serverId: 'desk',
       sessionId: 'other-routing',
       directory: '/elsewhere',
       asid: 'a',
@@ -132,7 +135,7 @@ test("the gateway's agent wins over a recent recorded before agents were tagged"
     atMs: 50,
     target: {
       kind: 'agent-session',
-      serverId: 'osk',
+      serverId: 'desk',
       sessionId: 'dev',
       directory: '/work',
       asid: '9cedff14',
@@ -159,7 +162,7 @@ test('an offline, unpaired or unselected gateway contributes nothing', () => {
   expect(
     homeContinueEntries({
       ...base,
-      reachabilityByServer: { osk: 'offline' },
+      reachabilityByServer: { desk: 'offline' },
       gatewaySessions: listed,
     })
   ).toEqual([]);
@@ -174,7 +177,7 @@ test('tapping a gateway session opens the workbench on it with its agent', () =>
     type: 'open-agent',
     target: {
       kind: 'agent-session',
-      serverId: 'osk',
+      serverId: 'desk',
       sessionId: 'dev',
       directory: '/work',
       asid: 'a',
@@ -184,7 +187,7 @@ test('tapping a gateway session opens the workbench on it with its agent', () =>
 });
 
 test('captions name the agent only for agent rows', () => {
-  expect(homeContinueKind({ type: 'pane', serverId: 'osk', paneId: 'p' })).toEqual({
+  expect(homeContinueKind({ type: 'pane', serverId: 'desk', paneId: 'p' })).toEqual({
     kind: 'terminal',
   });
   expect(homeContinueKind({ type: 'recent', target: { kind: 'ssh-host', hostId: 'box' } })).toEqual(
@@ -219,7 +222,7 @@ test('repairAgent writes the agent in place without reordering or creating a vis
   });
   const target = {
     kind: 'agent-session' as const,
-    serverId: 'osk',
+    serverId: 'desk',
     sessionId: 'dev',
     directory: '/work',
     asid: '9cedff14',
@@ -242,7 +245,7 @@ test('a session the gateway answered gone is neither a recent row nor a listed o
     atMs: 500,
     target: {
       kind: 'agent-session',
-      serverId: 'osk',
+      serverId: 'desk',
       sessionId: 'dev',
       directory: '/x',
       asid: 'a',
@@ -262,7 +265,7 @@ test('a session the gateway answered gone is neither a recent row nor a listed o
         : ''
     );
   expect(keys()).toEqual(['a', 'b']);
-  expect(keys(new Set([goneSessionKey('osk', 'a')]))).toEqual(['b']);
+  expect(keys(new Set([goneSessionKey('desk', 'a')]))).toEqual(['b']);
   // Another gateway's session with the same id is a different session.
   expect(keys(new Set([goneSessionKey('other', 'a')]))).toEqual(['a', 'b']);
 });

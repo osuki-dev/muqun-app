@@ -74,7 +74,7 @@ describe('isFullScreenTuiPane', () => {
 
   // Card #795, defect 1: a shell running under tmux never rewrites its OSC
   // pane title when a foreground program takes over, so a real nvim pane's
-  // title is still the shell's -- `ryu@osk:~/.osuki/draw`, measured on the
+  // title is still the shell's -- `me@desk:~/.osuki/draw`, measured on the
   // reporting device -- and the gateway resolves the same stale title into a
   // `shell` profile (`muqun-gateway/src/shortcuts.rs`, title-based itself).
   // Both signals agree and both are wrong. `foreground_command`
@@ -82,7 +82,7 @@ describe('isFullScreenTuiPane', () => {
   // already on the wire (`muqun-gateway/src/backend/compat.rs`'s `pane()`) --
   // nothing new needs fetching, only reading.
   test('a foreground command overrules a stale shell profile or title', () => {
-    expect(isFullScreenTuiPane('shell', 'ryu@osk:~/.osuki/draw', 'nvim')).toBe(true);
+    expect(isFullScreenTuiPane('shell', 'me@desk:~/.osuki/draw', 'nvim')).toBe(true);
     expect(isFullScreenTuiPane('shell', null, 'nvim')).toBe(true);
     expect(isFullScreenTuiPane(undefined, null, 'nvim')).toBe(true);
     expect(isFullScreenTuiPane(undefined, 'you@mac:~/code/muqun', 'vim')).toBe(true);
@@ -101,7 +101,7 @@ describe('isFullScreenTuiPane', () => {
   test('agent panes are unaffected by the foreground-command signal', () => {
     expect(isFullScreenTuiPane('claude', null, 'claude')).toBe(false);
     expect(isFullScreenTuiPane('claude', null, 'node')).toBe(false);
-    expect(isFullScreenTuiPane(undefined, 'ryu@osk:~/Work', 'codex')).toBe(false);
+    expect(isFullScreenTuiPane(undefined, 'me@desk:~/Work', 'codex')).toBe(false);
   });
 });
 

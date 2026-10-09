@@ -69,7 +69,7 @@ const DRAG_SLOP = 6;
  *
  * What it says is the gateway's; how it reads is the app's. A push arrives as
  * a title and a body, and the banner draws them the way the rest of Muqun
- * draws a thing and its provenance -- "Agent done" in the app's ink and "osk"
+ * draws a thing and its provenance -- "Agent done" in the app's ink and "desk"
  * muted behind it, on one line, with the sentence underneath.
  *
  * ## Why the close button went

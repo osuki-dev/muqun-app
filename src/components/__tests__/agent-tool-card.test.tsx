@@ -146,20 +146,20 @@ describe('the patch card', () => {
 describe('the pending card', () => {
   // `input_partial` is `session.tool.input.delta` concatenated: the arguments
   // as text, in the order the model wrote them.
-  const FULL = '{"workdir":"/home/ryu/probe","command":"echo probe-done"}';
+  const FULL = '{"workdir":"/home/dev/probe","command":"echo probe-done"}';
 
   test('the header names the call before the call is made', () => {
     // Nothing but a brace: the tool name is all there is to say.
-    expect(extractTarget('shell', '{"workdir":"/home/ryu/pro')).toBe('');
+    expect(extractTarget('shell', '{"workdir":"/home/dev/pro')).toBe('');
     // The workdir has landed, the command is still coming.
-    expect(extractCaption('shell', FULL.slice(0, 30))).toBe('/home/ryu/probe');
+    expect(extractCaption('shell', FULL.slice(0, 30))).toBe('/home/dev/probe');
     expect(extractTarget('shell', FULL.slice(0, 48))).toBe('echo pro');
     expect(extractTarget('shell', FULL)).toBe('echo probe-done');
   });
 
   test('the argument line under the header is the arguments, not the payload', () => {
     const line = toolArgumentLine(toolInputRecord(FULL.slice(0, 48)));
-    expect(line).toBe('workdir /home/ryu/probe  command echo pro');
+    expect(line).toBe('workdir /home/dev/probe  command echo pro');
     expect(line).not.toContain('{');
     expect(line).not.toContain('"');
   });

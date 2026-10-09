@@ -170,7 +170,7 @@ export function SectionLabel({
    * The label's text starts where the card's row text starts.
    *
    * It used to start at the card's outer edge, so "Servers" sat twelve points
-   * to the left of the `osk` row it names -- two left edges on a page whose
+   * to the left of the `desk` row it names -- two left edges on a page whose
    * whole argument is that there is one. The card insets its rows by
    * `LADDER.gutter`, so the label is pushed in by the same amount, less
    * whatever horizontal padding it is already carrying.

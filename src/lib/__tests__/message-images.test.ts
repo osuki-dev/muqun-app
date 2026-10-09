@@ -69,8 +69,8 @@ describe('isHostPathSource', () => {
   test.each<[string, boolean]>([
     ['./shot.png', true],
     ['out/flow.png', true],
-    ['/home/ryu/Work/x.png', true],
-    ['file:///home/ryu/x.png', true],
+    ['/home/me/Work/x.png', true],
+    ['file:///home/me/x.png', true],
     ['FILE:///x.png', true],
     ['图 表/深色 流程.png', true],
     ['https://example.com/a.png', false],

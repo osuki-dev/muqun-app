@@ -8,7 +8,7 @@ import { readFileSync } from 'node:fs';
  * Prose says what it is about in its first words, so it wraps to two lines and
  * loses its tail. A path says what it is in its *last* segment: every workspace
  * on one machine shares a prefix, and two rows reading
- * `/Users/ryu/Work/muqun/app-worktre…` are two rows the reader cannot tell
+ * `/Users/me/Work/muqun/app-worktre…` are two rows the reader cannot tell
  * apart -- which is exactly what the workspace switcher showed the owner.
  *
  * So `SheetSceneRow` takes a `captionKind`, and the sheets that list paths say

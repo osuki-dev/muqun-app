@@ -23,18 +23,18 @@ describe('agentCatalogPath', () => {
   test('names the workspace, so project-scoped entries can come back', () => {
     // This is the bug: without `?directory=` OpenCode answers with the global
     // agents only and a user's own `.opencode/agent` entry is never listed.
-    expect(agentCatalogPath(undefined, '/home/ryu/Work/muqun/app')).toBe(
-      '/api/agent-catalog?directory=%2Fhome%2Fryu%2FWork%2Fmuqun%2Fapp'
+    expect(agentCatalogPath(undefined, '/home/me/Work/muqun/app')).toBe(
+      '/api/agent-catalog?directory=%2Fhome%2Fme%2FWork%2Fmuqun%2Fapp'
     );
   });
 
   test('the directory is encoded, spaces and all', () => {
-    const path = agentCatalogPath('sess-1', '/Users/ryu/My Projects/a&b');
+    const path = agentCatalogPath('sess-1', '/Users/me/My Projects/a&b');
     expect(path).toBe(
-      '/api/sessions/sess-1/agent-catalog?directory=%2FUsers%2Fryu%2FMy%20Projects%2Fa%26b'
+      '/api/sessions/sess-1/agent-catalog?directory=%2FUsers%2Fme%2FMy%20Projects%2Fa%26b'
     );
     // Decodable back to exactly what was asked for.
-    expect(decodeURIComponent(path.split('directory=')[1])).toBe('/Users/ryu/My Projects/a&b');
+    expect(decodeURIComponent(path.split('directory=')[1])).toBe('/Users/me/My Projects/a&b');
   });
 
   test('a caller with no directory asks the route it always did', () => {
@@ -46,22 +46,12 @@ describe('agentCatalogPath', () => {
 
 describe('the cache key carries the directory', () => {
   test('two workspaces on one host never share a cached catalog', () => {
-    const a = buildAgentCacheKey(
-      'catalog',
-      null,
-      'sess-1',
-      agentCatalogCacheVariant('/home/ryu/a')
-    );
-    const b = buildAgentCacheKey(
-      'catalog',
-      null,
-      'sess-1',
-      agentCatalogCacheVariant('/home/ryu/b')
-    );
+    const a = buildAgentCacheKey('catalog', null, 'sess-1', agentCatalogCacheVariant('/home/me/a'));
+    const b = buildAgentCacheKey('catalog', null, 'sess-1', agentCatalogCacheVariant('/home/me/b'));
     expect(a).not.toBe(b);
     // The key is also the in-flight dedupe key, so two workspaces asking at
     // once are two requests rather than one answer handed to both.
-    expect(a).toBe(`catalog@${AGENT_CACHE_SCHEMA}:default_gateway:sess-1:dir=/home/ryu/a`);
+    expect(a).toBe(`catalog@${AGENT_CACHE_SCHEMA}:default_gateway:sess-1:dir=/home/me/a`);
   });
 
   test('no directory keeps the key a caller without one always had', () => {
