@@ -451,6 +451,18 @@ const MODIFIER_WORDS: Record<string, string> = {
   meta: 'Cmd',
 };
 
+/**
+ * A shortcut chip's stable test id: `terminal-shortcut-shift-tab` for
+ * `shift+tab`, `terminal-shortcut-nvim-w` for `nvim:w`.
+ */
+export function terminalShortcutTestId(key: string): string {
+  const slug = key
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+  return `terminal-shortcut-${slug || 'key'}`;
+}
+
 export function keyCap(key: string, cap?: string): string {
   // An action that types characters already knows what it looks like: `:w` is
   // not a key name and there is nothing to derive it from.

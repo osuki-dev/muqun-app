@@ -145,24 +145,24 @@ msgstr "{0}, nicht im PATH dieses Computers gefunden"
 
 #. placeholder {0}: age.value
 #. placeholder {0}: parts.value
-#: src/components/server-tasks-sheet.tsx
 #: src/hooks/use-relative-time.ts
+#: src/hooks/use-task-age.ts
 #: src/lib/agent-widget-layout.tsx
 msgid "{0}d ago"
 msgstr "vor {0} T"
 
 #. placeholder {0}: age.value
 #. placeholder {0}: parts.value
-#: src/components/server-tasks-sheet.tsx
 #: src/hooks/use-relative-time.ts
+#: src/hooks/use-task-age.ts
 #: src/lib/agent-widget-layout.tsx
 msgid "{0}h ago"
 msgstr "vor {0} Std"
 
 #. placeholder {0}: age.value
 #. placeholder {0}: parts.value
-#: src/components/server-tasks-sheet.tsx
 #: src/hooks/use-relative-time.ts
+#: src/hooks/use-task-age.ts
 #: src/lib/agent-widget-layout.tsx
 msgid "{0}m ago"
 msgstr "vor {0} Min"
@@ -2886,6 +2886,7 @@ msgstr "Datei importieren"
 msgid "Import link"
 msgstr "Link importieren"
 
+#: src/components/home-editorial-layout.tsx
 #: src/components/server-tasks-sheet.tsx
 msgid "In progress"
 msgstr "In Arbeit"
@@ -3025,8 +3026,8 @@ msgid "Jump to latest output"
 msgstr "Zur neuesten Ausgabe springen"
 
 #: src/components/agent-sessions-sheet.tsx
-#: src/components/server-tasks-sheet.tsx
 #: src/hooks/use-relative-time.ts
+#: src/hooks/use-task-age.ts
 #: src/lib/agent-widget-layout.tsx
 msgid "just now"
 msgstr "gerade eben"
@@ -6620,6 +6621,10 @@ msgstr "In Verwendung"
 #: src/app/settings.tsx
 msgid "Version {version}{0}"
 msgstr "Version {version}{0}"
+
+#: src/components/home-in-progress.tsx
+msgid "View all ({total})"
+msgstr "Alle anzeigen ({total})"
 
 #: src/components/agent-composer.tsx
 msgid "View file changes"

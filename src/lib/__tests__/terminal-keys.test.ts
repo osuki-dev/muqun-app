@@ -9,6 +9,7 @@
 import { describe, expect, test } from 'bun:test';
 
 import {
+  terminalShortcutTestId,
   EDITOR_ACTIONS,
   INSERT_MODE_KEYS,
   isFullScreenTuiPane,
@@ -288,5 +289,15 @@ describe('INSERT_MODE_KEYS', () => {
     expect(INSERT_MODE_KEYS[0].key).toBe('esc');
     expect(INSERT_MODE_KEYS[0].emphasis).toBe(true);
     expect(INSERT_MODE_KEYS.slice(1).every((item) => !item.emphasis)).toBe(true);
+  });
+});
+
+describe('terminalShortcutTestId', () => {
+  test('slugs the key so automation can find each chip', () => {
+    expect(terminalShortcutTestId('enter')).toBe('terminal-shortcut-enter');
+    expect(terminalShortcutTestId('shift+tab')).toBe('terminal-shortcut-shift-tab');
+    expect(terminalShortcutTestId('ctrl+j')).toBe('terminal-shortcut-ctrl-j');
+    expect(terminalShortcutTestId('nvim:w')).toBe('terminal-shortcut-nvim-w');
+    expect(terminalShortcutTestId('::')).toBe('terminal-shortcut-key');
   });
 });

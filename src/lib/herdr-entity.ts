@@ -11,6 +11,50 @@ export function numberField(entity: HerdrEntity, key: string): number {
   return typeof value === 'number' ? value : 0;
 }
 
+/** Brand spellings for the agents a pane can run, keyed by the gateway's id. */
+const AGENT_NAMES: Readonly<Record<string, string>> = {
+  claude: 'Claude Code',
+  codex: 'Codex',
+  opencode: 'OpenCode',
+  gemini: 'Gemini CLI',
+  deepseek: 'DeepSeek',
+  pi: 'Pi',
+};
+
+/**
+ * What to call the agent a pane runs: the gateway's display name, else the
+ * brand spelling of its id, else the id itself.
+ */
+export function agentEntityName(agent: HerdrEntity | undefined): string {
+  const display = field(agent, 'display_agent').trim();
+  if (display) return display;
+  return agentBrandName(field(agent, 'agent') || field(agent, 'kind'));
+}
+
+/**
+ * An agent id (`codex`) as its brand spells it (`Codex`). Anything else -- a
+ * display name, or a program this build has no spelling for (`nvim`) -- passes
+ * through as the gateway wrote it.
+ */
+export function agentBrandName(id: string): string {
+  const trimmed = id.trim();
+  return AGENT_NAMES[trimmed.toLowerCase()] ?? trimmed;
+}
+
+/**
+ * A title that is only the command the pane was started with -- a terminal
+ * names the pane after its process until the program sets a title, so a Codex
+ * pane reads `'/opt/homebrew/bin/codex'`, quotes and all. A path says nothing
+ * a reader looks for; for an agent's pane the agent's own name does.
+ */
+export function isCommandPathTitle(title: string): boolean {
+  const unquoted = title
+    .trim()
+    .replace(/^(['"])(.*)\1$/, '$2')
+    .trim();
+  return /^(?:~|\.{0,2})?\/[^\s]*$/.test(unquoted);
+}
+
 /**
  * The same read, for a field whose 0 is a real value rather than a miss.
  *
@@ -39,8 +83,13 @@ export function panelTitle(pane?: HerdrEntity, agent?: HerdrEntity): string {
   // home card then set as the row's most prominent element. The separator is
   // punctuation between two names; with one name it is not punctuation, it is a
   // stray glyph.
-  const agentTitle = agent?.title.trim() ?? '';
-  const paneTitle = pane?.title.trim() ?? '';
+  // An agent's pane is never named after its binary's path.
+  const sayable = (title: string | undefined) => {
+    const trimmed = title?.trim() ?? '';
+    return agent && isCommandPathTitle(trimmed) ? '' : trimmed;
+  };
+  const agentTitle = sayable(agent?.title);
+  const paneTitle = sayable(pane?.title);
   if (agentTitle && paneTitle && agentTitle.toLowerCase() !== paneTitle.toLowerCase()) {
     return `${agentTitle} · ${paneTitle}`;
   }
@@ -48,7 +97,7 @@ export function panelTitle(pane?: HerdrEntity, agent?: HerdrEntity): string {
   // The trimmed value or nothing. Falling back to the untrimmed one would let a
   // pane titled "   " past every guard above and set three spaces as the row's
   // name, which is the same defect as the stray separator wearing a disguise.
-  return paneTitle || pane?.id || 'Panel';
+  return paneTitle || agentEntityName(agent) || pane?.id || 'Panel';
 }
 
 /**

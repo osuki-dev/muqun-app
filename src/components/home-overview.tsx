@@ -72,6 +72,11 @@ import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { HomeConnections } from '@/components/home-connections';
 import { HomeAttention } from '@/components/home-attention';
 import {
+  HomeInProgress,
+  HomeServerTasksSync,
+  useHomeInProgressCount,
+} from '@/components/home-in-progress';
+import {
   HomeContinueSearch,
   HomeRecentSessions,
   useHomeRecentEntries,
@@ -205,6 +210,10 @@ export function HomeOverview({
   // kept; its row menu is not.
   const { record, records, loading, hydrationError, retryHydration, selectRecord, enterDemo } =
     useGatewayRecord();
+  // The ledger Home reads is the selected computer's: the store holds no other
+  // computer's tasks fresh (one gateway is connected at a time).
+  const taskServerIds = useMemo(() => (record ? [record.serverId] : []), [record]);
+  const inProgressCount = useHomeInProgressCount(taskServerIds);
   const [refreshing, setRefreshing] = useState(false);
   const profile = useAppearanceProfile();
   const homeLayout = profile.id;
@@ -801,6 +810,7 @@ export function HomeOverview({
           effectsEnabled={!hasDevEffectOverride}
         />
         {devAmbientLayer}
+        <HomeServerTasksSync serverId={record?.serverId ?? null} />
         <KeyboardAwareScrollView
           ref={overviewScroll}
           keyboardShouldPersistTaps="handled"
@@ -991,9 +1001,28 @@ export function HomeOverview({
                 !loading && !hydrationError ? (
                   <HomeAttention
                     servers={records}
+                    taskServerIds={taskServerIds}
                     onOpen={(target) => {
                       void commands.resumeTarget(target);
                     }}
+                    onOpenTask={(taskId) =>
+                      router.push({ pathname: '/server-tasks', params: { taskId } })
+                    }
+                  />
+                ) : undefined
+              }
+              progress={
+                !loading && !hydrationError && inProgressCount > 0 ? (
+                  <HomeInProgress
+                    servers={records}
+                    serverIds={taskServerIds}
+                    onOpenTask={(row) =>
+                      router.push({
+                        pathname: '/server-tasks',
+                        params: { taskId: row.task.taskId },
+                      })
+                    }
+                    onViewAll={() => router.push('/server-tasks')}
                   />
                 ) : undefined
               }
@@ -1120,6 +1149,7 @@ export function HomeOverview({
         effectsEnabled={!hasDevEffectOverride}
       />
       {devAmbientLayer}
+      <HomeServerTasksSync serverId={record?.serverId ?? null} />
       {/* The bar and the brand block below it are one header in two states, not
           two rows. At rest the bar's left half is deliberately empty -- no
           hamburger, no title, no rule, no blur -- because the brand block ten

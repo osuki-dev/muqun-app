@@ -525,7 +525,8 @@ export class GatewaySocket {
         for (const l of [...this.taskListeners]) l.onTaskUpdated?.(frame.task, frame.seq);
         return;
       case 'resync':
-        this.notify(this.targets(frame.asid), (l) => l.onResync?.());
+        // Only task events lagged: the session timelines are intact.
+        if (!frame.tasks) this.notify(this.targets(frame.asid), (l) => l.onResync?.());
         // Events were dropped; a task may have changed in them.
         if (!frame.asid) for (const l of [...this.taskListeners]) l.onResync?.();
         return;

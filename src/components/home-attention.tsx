@@ -5,10 +5,12 @@ import { ChevronRight, CircleAlert } from 'lucide-react-native';
 import { StyleSheet, View } from 'react-native';
 
 import { PressableScale } from '@/components/pressable-scale';
+import { TaskStatusGlyph } from '@/components/task-status-glyph';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { Text } from '@/components/text';
 import { ThemeIcon } from '@/components/theme-icon';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
+import { taskKindWord, taskStateWord } from '@/i18n/labels';
 import type { GatewayRecord } from '@/lib/gateway-storage';
 import {
   homeContinueComputerLabel,
@@ -19,8 +21,10 @@ import {
 import { agentDisplayName } from '@/lib/home-launch-model';
 import { homeTargetAgentId, type HomeTarget } from '@/lib/home-recents';
 import type { HomeAttentionSnapshot } from '@/lib/home-attention';
+import { homeWaitingTasks, type HomeTaskRow } from '@/lib/home-in-progress';
 import { useAgents } from '@/stores/agents';
 import { useHomeAttention } from '@/stores/home-attention';
+import { useServerTasksStore } from '@/stores/server-tasks';
 
 const OBSERVATION_DATE_FORMAT: Intl.DateTimeFormatOptions = {
   month: 'short',
@@ -29,21 +33,31 @@ const OBSERVATION_DATE_FORMAT: Intl.DateTimeFormatOptions = {
   minute: '2-digit',
 };
 
-/** An open-only summary. Permission decisions remain in the source workbench. */
+/**
+ * An open-only summary. Permission decisions remain in the source workbench;
+ * a ledger task waiting on the reader opens in the Tasks sheet.
+ */
 export function HomeAttention({
   servers,
+  taskServerIds = [],
   onOpen,
+  onOpenTask,
 }: {
   servers: readonly GatewayRecord[];
+  /** The computers whose task ledger Home holds fresh. */
+  taskServerIds?: readonly string[];
   onOpen: (target: HomeTarget) => void;
+  onOpenTask?: (taskId: string) => void;
 }) {
   const observations = useHomeAttention((state) => state.byTarget);
+  const taskIndex = useServerTasksStore((state) => state.index);
   const pending = Object.entries(observations).filter(
     ([, snapshot]) =>
       snapshot.requestIds.length > 0 &&
       servers.some((server) => server.serverId === snapshot.target.serverId)
   );
-  if (pending.length === 0) {
+  const waiting = onOpenTask ? homeWaitingTasks(taskIndex, taskServerIds) : [];
+  if (pending.length === 0 && waiting.length === 0) {
     return null;
   }
   return (
@@ -51,7 +65,69 @@ export function HomeAttention({
       {pending.map(([key, snapshot]) => (
         <AttentionRow key={key} snapshot={snapshot} servers={servers} onOpen={onOpen} />
       ))}
+      {onOpenTask
+        ? waiting.map((row) => (
+            <WaitingTaskRow
+              key={`${row.serverId}:${row.task.taskId}`}
+              row={row}
+              servers={servers}
+              onOpen={() => onOpenTask(row.task.taskId)}
+            />
+          ))
+        : null}
     </View>
+  );
+}
+
+/** A ledger task in `waiting`: the agent asked something only the reader can answer. */
+function WaitingTaskRow({
+  row,
+  servers,
+  onOpen,
+}: {
+  row: HomeTaskRow;
+  servers: readonly GatewayRecord[];
+  onOpen: () => void;
+}) {
+  const profile = useAppearanceProfile();
+  const { _ } = useLinguiRuntime();
+  const theme = useThemeTokens();
+  const background = useSurfaceBackground();
+  const { task } = row;
+  const title = task.goal || task.taskId;
+  const meta = homeContinueMetaParts({
+    kind: _(taskKindWord[task.kind]),
+    computer: homeContinueComputerLabel(servers, row.serverId),
+    status: _(taskStateWord[task.state]),
+  })
+    .map((part) => part.text)
+    .join(META_SEPARATOR);
+  return (
+    <PressableScale
+      testID={`home-attention-task-${task.taskId}`}
+      accessibilityRole="button"
+      accessibilityLabel={`${title}, ${meta}`}
+      onPress={onOpen}
+      style={[
+        styles.row,
+        {
+          backgroundColor: background(theme.colors.surface),
+          borderColor: theme.colors.borderStrong,
+          borderLeftColor: theme.colors.warning,
+          borderRadius: profile.chrome.noticeCard,
+        },
+      ]}>
+      <TaskStatusGlyph state={task.state} size={20} />
+      <View style={styles.copy}>
+        <Text weight="semibold" variant="bodySmall" numberOfLines={2}>
+          {title}
+        </Text>
+        <Text variant="caption" color={theme.colors.textMuted} numberOfLines={1}>
+          {meta}
+        </Text>
+      </View>
+      <ThemeIcon name="home.arrow" fallback={ChevronRight} size={16} color={theme.colors.primary} />
+    </PressableScale>
   );
 }
 

@@ -145,24 +145,24 @@ msgstr "{0}, не найден в PATH этого компьютера"
 
 #. placeholder {0}: age.value
 #. placeholder {0}: parts.value
-#: src/components/server-tasks-sheet.tsx
 #: src/hooks/use-relative-time.ts
+#: src/hooks/use-task-age.ts
 #: src/lib/agent-widget-layout.tsx
 msgid "{0}d ago"
 msgstr "{0} д. назад"
 
 #. placeholder {0}: age.value
 #. placeholder {0}: parts.value
-#: src/components/server-tasks-sheet.tsx
 #: src/hooks/use-relative-time.ts
+#: src/hooks/use-task-age.ts
 #: src/lib/agent-widget-layout.tsx
 msgid "{0}h ago"
 msgstr "{0} ч. назад"
 
 #. placeholder {0}: age.value
 #. placeholder {0}: parts.value
-#: src/components/server-tasks-sheet.tsx
 #: src/hooks/use-relative-time.ts
+#: src/hooks/use-task-age.ts
 #: src/lib/agent-widget-layout.tsx
 msgid "{0}m ago"
 msgstr "{0} мин. назад"
@@ -2886,6 +2886,7 @@ msgstr "Импортировать файл"
 msgid "Import link"
 msgstr "Импорт по ссылке"
 
+#: src/components/home-editorial-layout.tsx
 #: src/components/server-tasks-sheet.tsx
 msgid "In progress"
 msgstr "В работе"
@@ -3025,8 +3026,8 @@ msgid "Jump to latest output"
 msgstr "К последнему выводу"
 
 #: src/components/agent-sessions-sheet.tsx
-#: src/components/server-tasks-sheet.tsx
 #: src/hooks/use-relative-time.ts
+#: src/hooks/use-task-age.ts
 #: src/lib/agent-widget-layout.tsx
 msgid "just now"
 msgstr "только что"
@@ -6620,6 +6621,10 @@ msgstr "Используется"
 #: src/app/settings.tsx
 msgid "Version {version}{0}"
 msgstr "Версия {version}{0}"
+
+#: src/components/home-in-progress.tsx
+msgid "View all ({total})"
+msgstr "Показать все ({total})"
 
 #: src/components/agent-composer.tsx
 msgid "View file changes"

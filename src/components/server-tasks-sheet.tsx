@@ -21,10 +21,11 @@ import { TaskStatusGlyph } from '@/components/task-status-glyph';
 import { Text } from '@/components/text';
 import type { ServerTasks } from '@/hooks/use-server-tasks';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
+import { useTaskAge } from '@/hooks/use-task-age';
 import { useMonoFontFamily } from '@/hooks/use-user-fonts';
 import { taskKindWord, taskStateWord } from '@/i18n/labels';
 import { settleAfter } from '@/lib/compiler-safe-control-flow';
-import { summaryTail, taskAgeParts } from '@/lib/server-tasks-state';
+import { summaryTail } from '@/lib/server-tasks-state';
 import { getTask, isTerminalTaskState, type TaskEvent, type TaskView } from '@/lib/task-ledger';
 import { acceptsCancel, acceptsConfirm, unpairView } from '@/lib/unpair-action';
 
@@ -35,18 +36,6 @@ type Item =
 
 const itemKey = (item: Item) => item.key;
 const itemType = (item: Item) => item.type;
-
-/** "5m ago" said whole, so a translator can write their own sentence. */
-function useTaskAge() {
-  const { t } = useLingui();
-  return (updatedMs: number, nowMs: number) => {
-    const age = taskAgeParts(updatedMs, nowMs);
-    if (age.unit === 'now') return t`just now`;
-    if (age.unit === 'minute') return t`${age.value}m ago`;
-    if (age.unit === 'hour') return t`${age.value}h ago`;
-    return t`${age.value}d ago`;
-  };
-}
 
 /** Exit code as a chip: quiet when zero, in the danger tone otherwise. */
 function ExitChip({ code }: { code: number }) {
@@ -119,14 +108,17 @@ function ServerTaskRow({
 export function ServerTasksSheet({
   serverLabel,
   state,
+  initialTaskId,
 }: {
   serverLabel: string;
   state: ServerTasks;
+  /** Open on this task's detail; back still leads to the whole list. */
+  initialTaskId?: string;
 }) {
   const { t } = useLingui();
   const theme = useThemeTokens();
   const insets = useSafeAreaInsets();
-  const [openTaskId, setOpenTaskId] = useState<string | null>(null);
+  const [openTaskId, setOpenTaskId] = useState<string | null>(initialTaskId ?? null);
   // Ages are relative to now: a tick keeps a sheet left open from saying
   // "just now" for a task that changed minutes ago.
   const [nowMs, setNowMs] = useState(() => Date.now());

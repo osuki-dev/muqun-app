@@ -79,6 +79,28 @@ describe('terminalRowTitle', () => {
       terminalRowTitle({ paneTitle: 'me@box:~/srv/app', cwd: '/srv/app', hasAgent: true })
     ).toBe('app');
   });
+
+  test('an agent pane titled with its binary path is named by the agent', () => {
+    expect(
+      terminalRowTitle({
+        paneTitle: "'/opt/homebrew/bin/codex'",
+        cwd: '/Users/me/code/app',
+        hasAgent: true,
+        agentName: 'Codex',
+      })
+    ).toBe('Codex');
+    expect(
+      terminalRowTitle({ paneTitle: '/usr/local/bin/claude', hasAgent: true, agentName: 'Claude' })
+    ).toBe('Claude');
+    // No name to give it: the folder, as before, never the path.
+    expect(
+      terminalRowTitle({
+        paneTitle: "'/opt/homebrew/bin/codex'",
+        cwd: '/srv/app',
+        hasAgent: true,
+      })
+    ).toBe('app');
+  });
 });
 
 describe('terminalRowPath', () => {
