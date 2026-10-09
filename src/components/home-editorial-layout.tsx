@@ -1,9 +1,9 @@
 import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens } from '@osuki-dev/ui';
 import { useEffect, useState, type ReactNode } from 'react';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import {
   StyleSheet,
-  ScrollView,
   Platform,
   useWindowDimensions,
   View,
@@ -550,10 +550,14 @@ export function HomeEditorialLayout({
           <View
             testID="home-pad-work-column"
             style={{ width: launchWidth, flexGrow: 0, flexShrink: 0 }}>
-            <ScrollView
+            {/* Keyboard-aware on its own: the page's view only lifts fields
+                whose nearest scroll view it is, and the Continue search here
+                has this one. It is kept clear of the dock as well. */}
+            <KeyboardAwareScrollView
               testID="home-pad-launch-pane"
               showsVerticalScrollIndicator={false}
               keyboardShouldPersistTaps="handled"
+              bottomOffset={hasSlot(padComposer) ? padComposerHeight : undefined}
               style={styles.padWorkScroll}
               contentContainerStyle={[
                 styles.padWorkContent,
@@ -592,7 +596,7 @@ export function HomeEditorialLayout({
                   ) : null}
                 </View>
               ) : null}
-            </ScrollView>
+            </KeyboardAwareScrollView>
             {hasSlot(padComposer) ? padComposer : null}
           </View>
         </View>

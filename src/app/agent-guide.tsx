@@ -33,6 +33,11 @@ export default function AgentGuideScreen() {
     status?: string;
     cause?: string;
     agentId?: string;
+    /**
+     * `home`: opened by Home's dock after a create failed. The draft is still
+     * in the dock, so "Open" goes back to it rather than to an empty session.
+     */
+    origin?: string;
   }>();
   const serverId = params.serverId;
   const agentId =
@@ -87,6 +92,10 @@ export default function AgentGuideScreen() {
 
   const openAgent = () => {
     if (!serverId) return;
+    if (params.origin === 'home') {
+      router.back();
+      return;
+    }
     router.replace({
       pathname: '/agent',
       params: {

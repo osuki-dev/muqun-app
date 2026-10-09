@@ -23,6 +23,7 @@ msgid "“{0}” has changes that have not been committed. Removing it throws th
 msgstr "“{0}”에 커밋하지 않은 변경이 있습니다. 제거하면 사라집니다"
 
 #: src/components/agent-workbench.tsx
+#: src/components/home-composer-dock.tsx
 msgid "“{args}” was not sent: a skill takes no arguments."
 msgstr "“{args}”은(는) 전송되지 않았습니다. 스킬은 인자를 받지 않습니다"
 
@@ -5349,6 +5350,7 @@ msgid "Skill loaded · {0}"
 msgstr "스킬 불러옴 · {0}"
 
 #: src/components/agent-workbench.tsx
+#: src/components/home-composer-dock.tsx
 msgid "Skill started"
 msgstr "스킬을 시작했습니다"
 

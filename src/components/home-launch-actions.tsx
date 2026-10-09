@@ -250,7 +250,6 @@ export function HomeLaunchActions({
   grid = false,
   newOnly = false,
   dock = false,
-  dockAccessory,
 }: {
   controller: HomeLaunchController;
   /**
@@ -265,8 +264,6 @@ export function HomeLaunchActions({
    * one row of equal chips, then the utilities as full-width rows.
    */
   dock?: boolean;
-  /** Drawn beside the dock's terminal pill (the Gateway chip, when there is a choice). */
-  dockAccessory?: ReactNode;
   onNewAgent: (serverId: string, directory?: string, agentId?: string) => Promise<unknown>;
   onOpenAgent: (serverId: string) => Promise<unknown>;
   onNewTerminal: (serverId: string) => Promise<unknown>;
@@ -516,10 +513,7 @@ export function HomeLaunchActions({
           {agentEntries.length ? (
             <View style={styles.dockChips}>{agentEntries.map((entry) => renderEntry(entry))}</View>
           ) : null}
-          <View style={styles.dockPills}>
-            {utilityEntries.map((entry) => renderEntry(entry))}
-            {dockAccessory}
-          </View>
+          <View style={styles.dockPills}>{utilityEntries.map((entry) => renderEntry(entry))}</View>
         </View>
       ) : layout.mode === 'grid' ? (
         <View testID="home-launch-actions-grid" style={styles.grid}>

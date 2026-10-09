@@ -1,6 +1,6 @@
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { useLingui } from '@lingui/react/macro';
-import { useThemeTokens } from '@osuki-dev/ui';
+import { useThemeTokens, useToast } from '@osuki-dev/ui';
 import { useRouter } from 'expo-router';
 import { ArrowRight } from 'lucide-react-native';
 import { useEffect, useRef, useState } from 'react';
@@ -35,17 +35,22 @@ import {
   normalizeAgentId,
   sendAgentCommand,
   sendAgentPrompt,
+  switchAgentMode,
+  switchAgentModel,
   type AgentCatalog,
-  type AgentSessionInfo,
   type ModelRef,
 } from '@/lib/agent-session';
-import { recoverWith } from '@/lib/compiler-safe-control-flow';
+import { recoverWith, settleAfter } from '@/lib/compiler-safe-control-flow';
+import { checkAgentServer } from '@/lib/home-agent-readiness';
 import {
   HOME_AGENT_SESSION_ID,
   homeComposerAgent,
+  homeGuideParams,
   homeHiddenClientCommands,
   homeSessionParams,
+  homeSessionReuse,
   resolveHomeComposerTarget,
+  type HomeStartedSession,
 } from '@/lib/home-composer';
 import type { HomeCommandResult } from '@/lib/home-commands';
 import { buildLaunchModel } from '@/lib/home-launch-model';
@@ -109,6 +114,7 @@ export function HomeComposerDock({
   const profile = useAppearanceProfile();
   const background = useSurfaceBackground();
   const router = useRouter();
+  const { showToast } = useToast();
   const { servers, chosen, openTargetPicker } = controller;
   const { record, selectRecord, selectRecordNow } = useGatewayRecord();
   const [error, setError] = useState<string | null>(null);
@@ -152,6 +158,7 @@ export function HomeComposerDock({
   const features = useAgentFeatures(targetId, agentId);
   const computerLabel = targetServer?.label ?? '';
   const agentName = agent?.name ?? '';
+  const agentLabel = agentName || computerLabel;
 
   // The catalog behind the pills, read for the computer and agent on the bar.
   // Kept with the key it was read for, so another target never shows it.
@@ -233,6 +240,8 @@ export function HomeComposerDock({
 
   /** The workbench's own sentences for a failed request, in this agent's name. */
   function describeFailure(failure: unknown): string {
+    // No agent tile to name: the computer stands in, never an empty name.
+    const agentName = agentLabel;
     const reading = classifyAgentRequestError(failure);
     switch (reading.kind) {
       case 'offline':
@@ -251,11 +260,15 @@ export function HomeComposerDock({
   }
 
   /**
-   * A session made for a send whose prompt did not land. The next Send on the
-   * same computer and agent goes to it rather than leaving an empty session
-   * behind each attempt.
+   * A session made for a send whose act did not land. The next Send on the
+   * same computer and agent goes to it (see `homeSessionReuse`) rather than
+   * leaving an empty session behind each attempt.
    */
-  const startedRef = useRef<{ key: string; session: AgentSessionInfo } | null>(null);
+  const startedRef = useRef<HomeStartedSession | null>(null);
+  /** Two taps in one frame are one send: React state cannot lock that. */
+  const inFlightRef = useRef(false);
+  /** The composer's own draft, for a command that failed after it was cleared. */
+  const injectDraftRef = useRef<((text: string) => void) | null>(null);
 
   /** The computer Send goes to, selected; or `null` with the reason shown. */
   async function sendTarget(): Promise<string | null> {
@@ -274,35 +287,91 @@ export function HomeComposerDock({
     return serverId;
   }
 
-  /** Create the session (or reuse the one a failed send left), act on it, open it. */
+  /**
+   * Create the session (or reuse the one a failed send left), act on it, open
+   * it. A create that fails on an agent that is not ready opens its setup
+   * guide, as a launch tile does; every other failure is said under the bar.
+   */
   async function startSession(act: (asid: string) => Promise<void>): Promise<boolean> {
-    setError(null);
-    const serverId = await sendTarget();
-    if (!serverId) return false;
-    const key = `${serverId}\u0000${sessionParams.agentId ?? ''}`;
-    return recoverWith(
+    if (inFlightRef.current) return false;
+    inFlightRef.current = true;
+    return settleAfter(
       async () => {
-        const reused = startedRef.current?.key === key ? startedRef.current.session : null;
-        const session = reused ?? (await createAgentSession(HOME_AGENT_SESSION_ID, sessionParams));
-        if (!reused) {
-          markAgentUsed(serverId, session.agent_id);
-          startedRef.current = { key, session };
-        }
-        await act(session.asid);
-        startedRef.current = null;
-        void onOpenAgent(
-          serverId,
-          session.asid,
-          session.directory,
-          HOME_AGENT_SESSION_ID,
-          session.agent_id
+        setError(null);
+        const serverId = await sendTarget();
+        if (!serverId) return false;
+        const params = sessionParams;
+        const key = `${serverId}\u0000${params.agentId ?? ''}`;
+        // The selection moved while this was in flight: the session and its
+        // prompt would go to a computer the bar no longer names.
+        const owns = () => useGatewayConnectionStore.getState().record?.serverId === serverId;
+        let creating = false;
+        return recoverWith(
+          async () => {
+            if (!owns()) {
+              setError(t`Computer unavailable.`);
+              return false;
+            }
+            const plan = homeSessionReuse(startedRef.current, key, params);
+            let started: HomeStartedSession;
+            if (plan.kind === 'reuse') {
+              const { asid } = plan.started;
+              if (plan.switchMode) await switchAgentMode(asid, plan.switchMode);
+              if (plan.switchModel)
+                await switchAgentModel(HOME_AGENT_SESSION_ID, asid, plan.switchModel);
+              started = { ...plan.started, params };
+            } else {
+              creating = true;
+              const created = await createAgentSession(HOME_AGENT_SESSION_ID, params);
+              creating = false;
+              markAgentUsed(serverId, created.agent_id);
+              started = {
+                key,
+                asid: created.asid,
+                ...(created.directory ? { directory: created.directory } : {}),
+                sessionAgentId: created.agent_id,
+                params,
+              };
+            }
+            startedRef.current = started;
+            if (!owns()) {
+              setError(t`Computer unavailable.`);
+              return false;
+            }
+            await act(started.asid);
+            startedRef.current = null;
+            void onOpenAgent(
+              serverId,
+              started.asid,
+              started.directory,
+              HOME_AGENT_SESSION_ID,
+              started.sessionAgentId
+            );
+            return true;
+          },
+          async (failure) => {
+            console.warn('Home could not start a session:', failure);
+            if (creating) {
+              const record = useGatewayConnectionStore
+                .getState()
+                .records.find((item) => item.serverId === serverId);
+              const readiness = await checkAgentServer(record, params.agentId);
+              const guide = homeGuideParams(readiness, {
+                serverId,
+                ...(record?.label ? { label: record.label } : {}),
+              });
+              if (guide) {
+                router.push({ pathname: '/agent-guide', params: guide });
+                return false;
+              }
+            }
+            setError(describeFailure(failure));
+            return false;
+          }
         );
-        return true;
       },
-      (failure) => {
-        console.warn('Home could not start a session:', failure);
-        setError(describeFailure(failure));
-        return false;
+      () => {
+        inFlightRef.current = false;
       }
     );
   }
@@ -315,13 +384,29 @@ export function HomeComposerDock({
       })
     );
   }
+  // The composer empties the field as it hands a command over, so a command
+  // that did not run puts its line back.
   function runCommand(name: string, args: string) {
     void startSession((asid) =>
       sendAgentCommand(asid, { name, ...(args ? { arguments: args } : {}) })
-    );
+    ).then((accepted) => {
+      if (!accepted)
+        injectDraftRef.current?.(`/${name.replace(/^\//, '')}${args ? ` ${args}` : ''}`);
+    });
   }
-  function invokeSkill(skill: string) {
-    return startSession((asid) => invokeAgentSkill(HOME_AGENT_SESSION_ID, asid, { skill }));
+  async function invokeSkill(skill: string, args: string) {
+    const accepted = await startSession((asid) =>
+      invokeAgentSkill(HOME_AGENT_SESSION_ID, asid, { skill })
+    );
+    // A skill takes no arguments on the wire; what was typed after it is said
+    // out loud rather than dropped in silence.
+    if (accepted && args)
+      showToast({
+        variant: 'info',
+        title: t`Skill started`,
+        message: t`“${args}” was not sent: a skill takes no arguments.`,
+      });
+    return accepted;
   }
   function clientCommand(name: AgentClientCommandId) {
     if (name === 'models') openModelSheet();
@@ -417,7 +502,7 @@ export function HomeComposerDock({
       sendTestID="home-composer-send"
       running={false}
       disabled={target.kind === 'none'}
-      agentName={agentName || computerLabel}
+      agentName={agentLabel}
       sessionId={HOME_AGENT_SESSION_ID}
       availableAgents={modes}
       skills={features.skills ? (catalog?.skills ?? NO_SKILLS) : NO_SKILLS}
@@ -439,6 +524,7 @@ export function HomeComposerDock({
       onRunCommand={runCommand}
       onInvokeSkill={invokeSkill}
       onClientCommand={clientCommand}
+      injectDraftRef={injectDraftRef}
     />
   );
 }

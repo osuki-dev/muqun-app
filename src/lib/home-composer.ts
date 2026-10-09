@@ -15,6 +15,7 @@ import {
   type RememberedAgentDefaults,
 } from '@/lib/agent-session-defaults';
 import type { GatewayRecord } from '@/lib/gateway-storage';
+import type { AgentReadiness } from '@/lib/home-agent-readiness';
 import type { LaunchEntry } from '@/lib/home-launch-model';
 import type { ServerReachability } from '@/lib/server-reachability';
 
@@ -128,5 +129,73 @@ export function homeSessionParams(input: {
   return {
     ...resolved,
     ...(input.agentsDiscovered && input.agentId ? { agentId: input.agentId } : {}),
+  };
+}
+
+export type HomeSessionParams = ReturnType<typeof homeSessionParams>;
+
+/** A session Home made for a send whose act (prompt, command, skill) did not land. */
+export interface HomeStartedSession {
+  /** The computer and agent it was made on. */
+  key: string;
+  asid: string;
+  /** Where the gateway put it, and the agent it says owns it, for opening it. */
+  directory?: string;
+  sessionAgentId?: string;
+  /** What it was created with, or last switched to. */
+  params: HomeSessionParams;
+}
+
+function sameModel(a: ModelRef | undefined, b: ModelRef | undefined): boolean {
+  return (
+    a?.provider_id === b?.provider_id && a?.model_id === b?.model_id && a?.variant === b?.variant
+  );
+}
+
+/**
+ * Whether the next Send makes a session or goes to the one a failed send left.
+ *
+ * Reused only on the same computer and agent, so retries do not pile up empty
+ * sessions; a mode or model changed on the pills since is switched on it first,
+ * as the workbench does for a session that exists.
+ */
+export function homeSessionReuse(
+  started: HomeStartedSession | null,
+  key: string,
+  params: HomeSessionParams
+):
+  | { kind: 'create' }
+  | { kind: 'reuse'; started: HomeStartedSession; switchMode?: string; switchModel?: ModelRef } {
+  if (!started || started.key !== key) return { kind: 'create' };
+  const switchMode = params.mode && params.mode !== started.params.mode ? params.mode : undefined;
+  const switchModel =
+    params.model && !sameModel(params.model, started.params.model) ? params.model : undefined;
+  return {
+    kind: 'reuse',
+    started,
+    ...(switchMode ? { switchMode } : {}),
+    ...(switchModel ? { switchModel } : {}),
+  };
+}
+
+/**
+ * Where a failed create goes: the agent setup guide when the agent is not
+ * ready (not installed, needs setup or an update, offline), the same sheet a
+ * launch tile opens -- with `origin=home`, so its "Open" comes back to the
+ * dock and the draft rather than to an empty session. `null` when the agent
+ * is ready, and the failure is the request's own to explain.
+ */
+export function homeGuideParams(
+  readiness: AgentReadiness,
+  server: { serverId: string; label?: string }
+): Record<string, string> | null {
+  if (readiness.status === 'ready') return null;
+  return {
+    serverId: server.serverId,
+    ...(server.label ? { label: server.label } : {}),
+    agentId: readiness.agentId,
+    status: readiness.status,
+    ...(readiness.status === 'offline' ? { cause: readiness.cause } : {}),
+    origin: 'home',
   };
 }
