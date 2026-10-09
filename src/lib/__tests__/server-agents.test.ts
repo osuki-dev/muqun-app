@@ -547,7 +547,7 @@ describe("a plain pane's cwd", () => {
 describe('the location shown under a pane name', () => {
   test('is the cwd when the name says nothing about where the pane is', () => {
     expect(paneLocationCaption('zsh', '/home/me/.osuki/draw')).toBe('/home/me/.osuki/draw');
-    expect(paneLocationCaption('osk', '/home/me/.osuki/Muqun')).toBe('/home/me/.osuki/Muqun');
+    expect(paneLocationCaption('studio', '/home/me/.osuki/Muqun')).toBe('/home/me/.osuki/Muqun');
   });
 
   test('drops out when a shell prompt already spells the same path', () => {

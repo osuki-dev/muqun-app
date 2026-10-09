@@ -316,9 +316,9 @@ describe('approval notices', () => {
 
 describe('notice title', () => {
   test("the gateway's middle dot separates the event from where it happened", () => {
-    expect(noticeTitleParts('Agent done \u00b7 osk')).toEqual({
+    expect(noticeTitleParts('Agent done \u00b7 studio')).toEqual({
       lead: 'Agent done',
-      suffix: 'osk',
+      suffix: 'studio',
     });
   });
 
