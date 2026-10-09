@@ -245,7 +245,7 @@ import {
   shouldPreserveNewSessionDraft,
   type AgentWorkbenchOwner,
 } from '@/lib/agent-workbench-ownership';
-import { claimInitialPrompt, initialPromptAction } from '@/lib/initial-prompt';
+import { claimInitialPrompt, initialPromptAction, recallInitialPrompt } from '@/lib/initial-prompt';
 import { isHomeRelativePath, settledWorkspaceDirectory } from '@/lib/agent-directory-suggest';
 import { recoverWith, settleAfter } from '@/lib/compiler-safe-control-flow';
 
@@ -352,11 +352,6 @@ export interface AgentWorkbenchProps {
    * (`initial-prompt.ts`).
    */
   initialPromptId?: string;
-  /**
-   * The route's readable copy of that goal. Never sent from here: it only fills
-   * the composer when the ledger offer is gone (`initialPromptAction`).
-   */
-  initialPrompt?: string;
   /** A retained task under the Home overview is mounted, but is not being read. */
   visible?: boolean;
   topInset?: number;
@@ -374,7 +369,6 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   initialAgentId,
   initialIntent,
   initialPromptId,
-  initialPrompt,
   visible = true,
   topInset = 0,
   bottomInset = 0,
@@ -2846,7 +2840,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     initialPromptHandledRef.current = true;
     const action = initialPromptAction({
       claimed: claimInitialPrompt(initialPromptId, serverId),
-      routePrompt: initialPrompt,
+      recalled: recallInitialPrompt(initialPromptId, serverId),
       sessionHasContent: Boolean(activeAsid) || !timelineEmpty,
     });
     if (action.kind === 'none') return;

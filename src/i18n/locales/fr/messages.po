@@ -3850,6 +3850,7 @@ msgstr "En ligne"
 msgid "ONLINE"
 msgstr "EN LIGNE"
 
+#: src/components/home-connections.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/open-web-service-sheet.tsx
 msgid "Open"

@@ -180,9 +180,6 @@ export default function AgentScreen() {
                 ? params.promptId
                 : undefined
             }
-            initialPrompt={
-              newSessionIntent && typeof params.prompt === 'string' ? params.prompt : undefined
-            }
             visible={workbenchVisible}
             topInset={insets.top + DETAIL_HEADER_HEIGHT}
             bottomInset={insets.bottom}

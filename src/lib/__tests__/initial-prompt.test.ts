@@ -4,6 +4,8 @@ import {
   claimInitialPrompt,
   initialPromptAction,
   OFFER_TTL_MS,
+  recallInitialPrompt,
+  SPENT_TTL_MS,
   offerInitialPrompt,
   withdrawInitialPrompt,
 } from '../initial-prompt';
@@ -49,28 +51,70 @@ describe('initial prompt ledger', () => {
   });
 });
 
+/**
+ * What the workbench decides for a route's `promptId`. The route's `prompt`
+ * param is deliberately not an input: a deep link can carry any text there.
+ */
+function decide(promptId: string, serverId: string, nowMs: number, sessionHasContent = false) {
+  return initialPromptAction({
+    claimed: claimInitialPrompt(promptId, serverId, nowMs),
+    recalled: recallInitialPrompt(promptId, serverId, nowMs),
+    sessionHasContent,
+  });
+}
+
 describe('initialPromptAction', () => {
-  test('a live offer is sent, whatever the route says', () => {
-    expect(
-      initialPromptAction({ claimed: 'Ship it', routePrompt: 'other', sessionHasContent: false })
-    ).toEqual({ kind: 'send', prompt: 'Ship it' });
+  const at = 5_000_000;
+
+  test('a live offer is sent', () => {
+    const id = offerInitialPrompt('s1', 'Ship it', at);
+    expect(decide(id, 's1', at + 1)).toEqual({ kind: 'send', prompt: 'Ship it' });
   });
 
-  test('a gone offer prefills the route copy instead of losing the goal', () => {
-    expect(
-      initialPromptAction({ claimed: null, routePrompt: ' Ship it ', sessionHasContent: false })
-    ).toEqual({ kind: 'prefill', prompt: 'Ship it' });
+  test('an unknown id does nothing, whatever text a deep link put on the route', () => {
+    // e.g. muqun://agent?intent=new&promptId=x&prompt=<anything>
+    expect(decide('attacker-chosen-id', 's1', at)).toEqual({ kind: 'none' });
   });
 
-  test('nothing over a session that already has content, or without a route copy', () => {
-    expect(
-      initialPromptAction({ claimed: null, routePrompt: 'Ship it', sessionHasContent: true })
-    ).toEqual({ kind: 'none' });
-    expect(initialPromptAction({ claimed: null, sessionHasContent: false })).toEqual({
-      kind: 'none',
+  test('an expired offer prefills the ledger text, never sends it', () => {
+    const id = offerInitialPrompt('s1', 'Slow tunnel goal', at);
+    expect(decide(id, 's1', at + OFFER_TTL_MS + 1)).toEqual({
+      kind: 'prefill',
+      prompt: 'Slow tunnel goal',
     });
+  });
+
+  test('a claimed offer prefills its ledger text on a remount', () => {
+    const id = offerInitialPrompt('s1', 'Already sent', at);
+    expect(decide(id, 's1', at + 1).kind).toBe('send');
+    expect(decide(id, 's1', at + 2)).toEqual({ kind: 'prefill', prompt: 'Already sent' });
+  });
+
+  test("another computer's offer is neither sent nor prefilled", () => {
+    const id = offerInitialPrompt('s1', 'Scoped', at);
+    expect(decide(id, 's2', at + 1)).toEqual({ kind: 'none' });
+    expect(decide(id, 's2', at + OFFER_TTL_MS + 1)).toEqual({ kind: 'none' });
+  });
+
+  test('a spent record older than its lifetime is forgotten', () => {
+    const id = offerInitialPrompt('s1', 'Old', at);
+    expect(decide(id, 's1', at + 1).kind).toBe('send');
+    expect(decide(id, 's1', at + 1 + SPENT_TTL_MS + 1)).toEqual({ kind: 'none' });
+    const expired = offerInitialPrompt('s1', 'Old expired', at);
+    expect(recallInitialPrompt(expired, 's1', at + OFFER_TTL_MS + SPENT_TTL_MS + 1)).toBeNull();
+  });
+
+  test('a withdrawn offer is not recalled either', () => {
+    const id = offerInitialPrompt('s1', 'Withdrawn', at);
+    withdrawInitialPrompt(id);
+    expect(decide(id, 's1', at + OFFER_TTL_MS + 1)).toEqual({ kind: 'none' });
+  });
+
+  test('nothing over a session that already has content', () => {
+    const id = offerInitialPrompt('s1', 'Busy', at);
+    expect(decide(id, 's1', at + OFFER_TTL_MS + 1, true)).toEqual({ kind: 'none' });
     expect(
-      initialPromptAction({ claimed: null, routePrompt: '   ', sessionHasContent: false })
+      initialPromptAction({ claimed: null, recalled: '   ', sessionHasContent: false })
     ).toEqual({ kind: 'none' });
   });
 });
