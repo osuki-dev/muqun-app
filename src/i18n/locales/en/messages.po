@@ -166,6 +166,10 @@ msgstr "{0}h ago"
 msgid "{0}m ago"
 msgstr "{0}m ago"
 
+#: src/components/settings-mcp-tokens.tsx
+msgid "{agentId} service"
+msgstr "{agentId} service"
+
 #: src/components/agent-workbench.tsx
 msgid "{agentName} cannot preview a rollback. This removes the message and everything after it, the whole turn, and it cannot be undone."
 msgstr "{agentName} cannot preview a rollback. This removes the message and everything after it, the whole turn, and it cannot be undone"
@@ -492,6 +496,7 @@ msgid "Agent panes open in"
 msgstr "Agent panes open in"
 
 #: src/components/app-drawer-content.tsx
+#: src/components/settings-server-capabilities.tsx
 #: src/components/settings-servers.tsx
 msgid "Agents"
 msgstr "Agents"
@@ -594,6 +599,10 @@ msgstr "Always allowed"
 #: src/components/agent-revert-plate.tsx
 msgid "and {rest} more"
 msgstr "and {rest} more"
+
+#: src/components/settings-server-capabilities.tsx
+msgid "Android builds"
+msgstr "Android builds"
 
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Answer"
@@ -975,6 +984,10 @@ msgstr "Cancelled"
 msgid "Cancelling…"
 msgstr "Cancelling…"
 
+#: src/components/settings-server-capabilities.tsx
+msgid "Capabilities"
+msgstr "Capabilities"
+
 #: src/i18n/labels.ts
 msgctxt "git file status"
 msgid "Changed"
@@ -1314,6 +1327,10 @@ msgstr "Confirm removing {0}"
 msgid "Confirm revoke {0}"
 msgstr "Confirm revoke {0}"
 
+#: src/components/settings-mcp-tokens.tsx
+msgid "Confirm revoke {title}"
+msgstr "Confirm revoke {title}"
+
 #: src/components/settings-alerts.tsx
 msgid "Confirm taps, pairing, and gateway events."
 msgstr "Confirm taps, pairing, and gateway events"
@@ -1338,6 +1355,7 @@ msgstr "Connect"
 #: src/app/explore.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/components/session-map.tsx
+#: src/components/settings-server-capabilities.tsx
 msgid "Connected"
 msgstr "Connected"
 
@@ -1680,6 +1698,10 @@ msgstr "Could not keep it"
 msgid "Could not list this server's agents."
 msgstr "Could not list this server's agents"
 
+#: src/components/settings-server-capabilities.tsx
+msgid "Could not load capabilities"
+msgstr "Could not load capabilities"
+
 #: src/components/session-artifacts.tsx
 msgid "Could not load files."
 msgstr "Could not load files"
@@ -1704,6 +1726,10 @@ msgstr "Could not load the session"
 #: src/components/changes-sheet.tsx
 msgid "Could not load this file's changes."
 msgstr "Could not load this file's changes"
+
+#: src/components/settings-mcp-tokens.tsx
+msgid "Could not load tokens"
+msgstr "Could not load tokens"
 
 #: src/components/session-map.tsx
 msgid "Could not load what is running."
@@ -1830,6 +1856,10 @@ msgstr "Could not revoke"
 #: src/components/settings-servers.tsx
 msgid "Could not revoke device"
 msgstr "Could not revoke device"
+
+#: src/components/settings-mcp-tokens.tsx
+msgid "Could not revoke token"
+msgstr "Could not revoke token"
 
 #: src/components/agent-workbench.tsx
 msgid "Could not run that"
@@ -2365,11 +2395,27 @@ msgstr "Expand tasks"
 msgid "Expand tool call"
 msgstr "Expand tool call"
 
+#: src/components/settings-mcp-tokens.tsx
+msgid "Expired"
+msgstr "Expired"
+
 #. placeholder {0}: Math.floor(secondsRemaining / 60)
 #. placeholder {1}: String(secondsRemaining % 60).padStart(2, '0')
 #: src/app/explore.tsx
 msgid "Expires in {0}:{1}"
 msgstr "Expires in {0}:{1}"
+
+#: src/components/settings-mcp-tokens.tsx
+msgid "Expires in {days}d"
+msgstr "Expires in {days}d"
+
+#: src/components/settings-mcp-tokens.tsx
+msgid "Expires in {hours}h"
+msgstr "Expires in {hours}h"
+
+#: src/components/settings-mcp-tokens.tsx
+msgid "Expires in {minutes}m"
+msgstr "Expires in {minutes}m"
 
 #: src/components/agent-mode-sheet.tsx
 msgid "Explore"
@@ -2581,6 +2627,10 @@ msgstr "Gateway URL"
 #: src/components/settings-servers.tsx
 msgid "Gateway URL is not valid."
 msgstr "Gateway URL is not valid"
+
+#: src/components/settings-server-capabilities.tsx
+msgid "gateway v{gatewayVersion}"
+msgstr "gateway v{gatewayVersion}"
 
 #: src/components/ssh-host-form.tsx
 msgid "Gateways reached through this host"
@@ -2893,6 +2943,10 @@ msgstr "Interrupt process"
 msgid "Interrupt what this agent is doing."
 msgstr "Interrupt what this agent is doing"
 
+#: src/components/settings-server-capabilities.tsx
+msgid "iOS builds"
+msgstr "iOS builds"
+
 #: src/lib/local-authentication.ts
 msgid "iris recognition"
 msgstr "iris recognition"
@@ -3029,6 +3083,10 @@ msgstr "Last seen {minutes}m ago"
 #: src/components/settings-servers.tsx
 msgid "Last seen just now"
 msgstr "Last seen just now"
+
+#: src/components/settings-mcp-tokens.tsx
+msgid "Last used {when}"
+msgstr "Last used {when}"
 
 #: src/components/agent-workbench.tsx
 #: src/components/skia-terminal.tsx
@@ -3186,6 +3244,10 @@ msgstr "Mark reviewed"
 #: src/components/settings-appearance.tsx
 msgid "Mascot"
 msgstr "Mascot"
+
+#: src/components/settings-mcp-tokens.tsx
+msgid "MCP tokens"
+msgstr "MCP tokens"
 
 #. placeholder {0}: hit.path
 #: src/components/file-mention-panel.tsx
@@ -3375,9 +3437,17 @@ msgstr "Needs your input"
 msgid "Never connected"
 msgstr "Never connected"
 
+#: src/components/settings-mcp-tokens.tsx
+msgid "Never expires"
+msgstr "Never expires"
+
 #: src/components/settings-servers.tsx
 msgid "Never seen"
 msgstr "Never seen"
+
+#: src/components/settings-mcp-tokens.tsx
+msgid "Never used"
+msgstr "Never used"
 
 #: src/app/commands.tsx
 msgid "New group"
@@ -3617,6 +3687,10 @@ msgstr "No themes are published yet"
 msgid "No themes match “{0}”."
 msgstr "No themes match “{0}”"
 
+#: src/components/settings-mcp-tokens.tsx
+msgid "No tokens"
+msgstr "No tokens"
+
 #: src/components/agent-context-sheet.tsx
 msgid "no window reported for this model"
 msgstr "no window reported for this model"
@@ -3639,6 +3713,7 @@ msgid "not connected"
 msgstr "not connected"
 
 #: src/components/server-terminal-workspace.tsx
+#: src/components/settings-server-capabilities.tsx
 #: src/i18n/labels.ts
 msgid "Not connected"
 msgstr "Not connected"
@@ -3721,6 +3796,7 @@ msgstr "Nothing yet — an “Always allow” reply lands here, for this project
 msgid "Off"
 msgstr "Off"
 
+#: src/components/settings-server-capabilities.tsx
 #: src/i18n/labels.ts
 msgid "Offline"
 msgstr "Offline"
@@ -4046,6 +4122,10 @@ msgstr "Palette (up to 4)"
 msgid "Pane {0} in session {1}"
 msgstr "Pane {0} in session {1}"
 
+#: src/components/settings-mcp-tokens.tsx
+msgid "Pane {paneId}"
+msgstr "Pane {paneId}"
+
 #: src/components/settings-servers.tsx
 msgid "Panes on server cards"
 msgstr "Panes on server cards"
@@ -4290,6 +4370,10 @@ msgstr "Quit"
 #: src/i18n/labels.ts
 msgid "Reach the network"
 msgstr "Reach the network"
+
+#: src/components/settings-server-capabilities.tsx
+msgid "Reachable"
+msgstr "Reachable"
 
 #: src/components/gateway-tunnel-badge.tsx
 msgid "Reached through SSH host {host}"
@@ -4638,6 +4722,7 @@ msgid "Reviewing the changes and checking the tests…"
 msgstr "Reviewing the changes and checking the tests…"
 
 #: src/components/agent-context-sheet.tsx
+#: src/components/settings-mcp-tokens.tsx
 #: src/components/settings-servers.tsx
 msgid "Revoke"
 msgstr "Revoke"
@@ -4649,6 +4734,11 @@ msgstr "Revoke"
 msgid "Revoke {0}"
 msgstr "Revoke {0}"
 
+#: src/components/settings-mcp-tokens.tsx
+msgid "Revoke {title}"
+msgstr "Revoke {title}"
+
+#: src/components/settings-mcp-tokens.tsx
 #: src/components/settings-servers.tsx
 msgid "Revoking…"
 msgstr "Revoking…"
@@ -4705,6 +4795,10 @@ msgstr "Run the Gateway on your machine and scan the QR code it prints. The pair
 #: src/i18n/labels.ts
 msgid "Running"
 msgstr "Running"
+
+#: src/components/settings-server-capabilities.tsx
+msgid "Rust"
+msgstr "Rust"
 
 #: src/app/settings-voice.tsx
 #: src/components/agent-sessions-sheet.tsx
@@ -5445,6 +5539,10 @@ msgstr "Subagent"
 msgid "Submit"
 msgstr "Submit"
 
+#: src/components/settings-server-capabilities.tsx
+msgid "Suitable for"
+msgstr "Suitable for"
+
 #: src/i18n/labels.ts
 msgid "Summarise progress"
 msgstr "Summarise progress"
@@ -5516,6 +5614,7 @@ msgstr "Symbols"
 
 #: src/components/settings-appearance.tsx
 #: src/components/settings-language-sheet.tsx
+#: src/components/settings-server-capabilities.tsx
 msgid "System"
 msgstr "System"
 
@@ -5601,6 +5700,7 @@ msgstr "Temporary files"
 #: src/app/settings.tsx
 #: src/components/home-launch-actions.tsx
 #: src/components/home-recent-sessions.tsx
+#: src/components/settings-server-capabilities.tsx
 #: src/i18n/labels.ts
 msgid "Terminal"
 msgstr "Terminal"
@@ -6126,6 +6226,10 @@ msgstr "timed out"
 msgid "Today"
 msgstr "Today"
 
+#: src/components/settings-mcp-tokens.tsx
+msgid "Tokens coding agents use to reach this gateway from this computer."
+msgstr "Tokens coding agents use to reach this gateway from this computer"
+
 #: src/components/agent-context-sheet.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
 msgid "Tokens this session"
@@ -6146,6 +6250,10 @@ msgstr "Too many changes to list. This is the start of them, not all of them"
 #: src/components/tool-call-detail-sheet.tsx
 msgid "Tool call"
 msgstr "Tool call"
+
+#: src/components/settings-server-capabilities.tsx
+msgid "Toolchains"
+msgstr "Toolchains"
 
 #: src/components/changes-sheet.tsx
 msgid "tracking {upstream}"
@@ -6191,6 +6299,8 @@ msgstr "Trust"
 msgid "Try again"
 msgstr "Try again"
 
+#: src/components/settings-mcp-tokens.tsx
+#: src/components/settings-server-capabilities.tsx
 #: src/components/settings-servers.tsx
 msgid "Try again once the gateway responds."
 msgstr "Try again once the gateway responds"
@@ -6241,6 +6351,10 @@ msgstr "Type it, or use your keyboard's dictation key"
 #: src/components/simfarm-stage.tsx
 msgid "Type on the simulator"
 msgstr "Type on the simulator"
+
+#: src/components/settings-server-capabilities.tsx
+msgid "Unavailable"
+msgstr "Unavailable"
 
 #: src/components/changes-sheet.tsx
 msgid "Uncommitted changes"
@@ -6507,6 +6621,10 @@ msgstr "Waiting for your answer"
 #: src/components/agent-composer.tsx
 msgid "Waiting to send"
 msgstr "Waiting to send"
+
+#: src/components/settings-server-capabilities.tsx
+msgid "Web"
+msgstr "Web"
 
 #: src/components/agent-workbench.tsx
 msgid "Welcome to {agentName}"

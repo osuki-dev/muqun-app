@@ -20,6 +20,8 @@ import {
   SettingsNavRow,
   SettingsSeparator,
 } from '@/components/settings-chrome';
+import { McpTokens } from '@/components/settings-mcp-tokens';
+import { ServerCapabilities } from '@/components/settings-server-capabilities';
 import { SettingsSegmented } from '@/components/settings-segmented';
 import { GatewayTunnelBadge } from '@/components/gateway-tunnel-badge';
 import { StatusDot } from '@/components/status-dot';
@@ -396,6 +398,8 @@ function ServerRow({
             <>
               <ServerTasksNavRow serverId={server.serverId} />
               <PairedDevices server={server} />
+              <ServerCapabilities serverId={server.serverId} />
+              <McpTokens serverId={server.serverId} />
             </>
           ) : (
             <>

@@ -166,6 +166,10 @@ msgstr "{0} giờ trước"
 msgid "{0}m ago"
 msgstr "{0} phút trước"
 
+#: src/components/settings-mcp-tokens.tsx
+msgid "{agentId} service"
+msgstr "Dịch vụ {agentId}"
+
 #: src/components/agent-workbench.tsx
 msgid "{agentName} cannot preview a rollback. This removes the message and everything after it, the whole turn, and it cannot be undone."
 msgstr "{agentName} không thể xem trước thao tác hoàn tác. Thao tác này xoá tin nhắn và mọi thứ sau nó, tức cả lượt, và không thể khôi phục"
@@ -492,6 +496,7 @@ msgid "Agent panes open in"
 msgstr "Ngăn tác tử mở ở"
 
 #: src/components/app-drawer-content.tsx
+#: src/components/settings-server-capabilities.tsx
 #: src/components/settings-servers.tsx
 msgid "Agents"
 msgstr "Tác tử"
@@ -594,6 +599,10 @@ msgstr "Luôn cho phép"
 #: src/components/agent-revert-plate.tsx
 msgid "and {rest} more"
 msgstr "và {rest} nữa"
+
+#: src/components/settings-server-capabilities.tsx
+msgid "Android builds"
+msgstr "Bản dựng Android"
 
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Answer"
@@ -975,6 +984,10 @@ msgstr "Đã hủy"
 msgid "Cancelling…"
 msgstr "Đang hủy…"
 
+#: src/components/settings-server-capabilities.tsx
+msgid "Capabilities"
+msgstr "Khả năng"
+
 #: src/i18n/labels.ts
 msgctxt "git file status"
 msgid "Changed"
@@ -1314,6 +1327,10 @@ msgstr "Xác nhận gỡ {0}"
 msgid "Confirm revoke {0}"
 msgstr "Xác nhận thu hồi {0}"
 
+#: src/components/settings-mcp-tokens.tsx
+msgid "Confirm revoke {title}"
+msgstr "Xác nhận thu hồi {title}"
+
 #: src/components/settings-alerts.tsx
 msgid "Confirm taps, pairing, and gateway events."
 msgstr "Phản hồi khi chạm, ghép nối và các sự kiện của gateway"
@@ -1338,6 +1355,7 @@ msgstr "Kết nối"
 #: src/app/explore.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/components/session-map.tsx
+#: src/components/settings-server-capabilities.tsx
 msgid "Connected"
 msgstr "Đã kết nối"
 
@@ -1680,6 +1698,10 @@ msgstr "Không thể giữ lại"
 msgid "Could not list this server's agents."
 msgstr "Không thể liệt kê các tác tử của máy chủ này"
 
+#: src/components/settings-server-capabilities.tsx
+msgid "Could not load capabilities"
+msgstr "Không tải được khả năng"
+
 #: src/components/session-artifacts.tsx
 msgid "Could not load files."
 msgstr "Không thể tải tệp"
@@ -1704,6 +1726,10 @@ msgstr "Không thể tải phiên"
 #: src/components/changes-sheet.tsx
 msgid "Could not load this file's changes."
 msgstr "Không thể tải thay đổi của tệp này"
+
+#: src/components/settings-mcp-tokens.tsx
+msgid "Could not load tokens"
+msgstr "Không tải được token"
 
 #: src/components/session-map.tsx
 msgid "Could not load what is running."
@@ -1830,6 +1856,10 @@ msgstr "Không thể thu hồi"
 #: src/components/settings-servers.tsx
 msgid "Could not revoke device"
 msgstr "Không thể thu hồi thiết bị"
+
+#: src/components/settings-mcp-tokens.tsx
+msgid "Could not revoke token"
+msgstr "Không thu hồi được token"
 
 #: src/components/agent-workbench.tsx
 msgid "Could not run that"
@@ -2365,11 +2395,27 @@ msgstr "Mở rộng nhiệm vụ"
 msgid "Expand tool call"
 msgstr "Mở rộng lệnh gọi công cụ"
 
+#: src/components/settings-mcp-tokens.tsx
+msgid "Expired"
+msgstr "Đã hết hạn"
+
 #. placeholder {0}: Math.floor(secondsRemaining / 60)
 #. placeholder {1}: String(secondsRemaining % 60).padStart(2, '0')
 #: src/app/explore.tsx
 msgid "Expires in {0}:{1}"
 msgstr "Hết hạn sau {0}:{1}"
+
+#: src/components/settings-mcp-tokens.tsx
+msgid "Expires in {days}d"
+msgstr "Hết hạn sau {days} ngày"
+
+#: src/components/settings-mcp-tokens.tsx
+msgid "Expires in {hours}h"
+msgstr "Hết hạn sau {hours} giờ"
+
+#: src/components/settings-mcp-tokens.tsx
+msgid "Expires in {minutes}m"
+msgstr "Hết hạn sau {minutes} phút"
 
 #: src/components/agent-mode-sheet.tsx
 msgid "Explore"
@@ -2581,6 +2627,10 @@ msgstr "URL Gateway"
 #: src/components/settings-servers.tsx
 msgid "Gateway URL is not valid."
 msgstr "URL Gateway không hợp lệ"
+
+#: src/components/settings-server-capabilities.tsx
+msgid "gateway v{gatewayVersion}"
+msgstr "Gateway v{gatewayVersion}"
 
 #: src/components/ssh-host-form.tsx
 msgid "Gateways reached through this host"
@@ -2893,6 +2943,10 @@ msgstr "Ngắt tiến trình"
 msgid "Interrupt what this agent is doing."
 msgstr "Ngắt việc tác tử này đang làm"
 
+#: src/components/settings-server-capabilities.tsx
+msgid "iOS builds"
+msgstr "Bản dựng iOS"
+
 #: src/lib/local-authentication.ts
 msgid "iris recognition"
 msgstr "nhận dạng mống mắt"
@@ -3029,6 +3083,10 @@ msgstr "Thấy lần cuối {minutes} phút trước"
 #: src/components/settings-servers.tsx
 msgid "Last seen just now"
 msgstr "Thấy lần cuối vừa xong"
+
+#: src/components/settings-mcp-tokens.tsx
+msgid "Last used {when}"
+msgstr "Dùng lần cuối {when}"
 
 #: src/components/agent-workbench.tsx
 #: src/components/skia-terminal.tsx
@@ -3186,6 +3244,10 @@ msgstr "Đánh dấu đã xem"
 #: src/components/settings-appearance.tsx
 msgid "Mascot"
 msgstr "Linh vật"
+
+#: src/components/settings-mcp-tokens.tsx
+msgid "MCP tokens"
+msgstr "Token MCP"
 
 #. placeholder {0}: hit.path
 #: src/components/file-mention-panel.tsx
@@ -3375,9 +3437,17 @@ msgstr "Cần bạn trả lời"
 msgid "Never connected"
 msgstr "Chưa từng kết nối"
 
+#: src/components/settings-mcp-tokens.tsx
+msgid "Never expires"
+msgstr "Không bao giờ hết hạn"
+
 #: src/components/settings-servers.tsx
 msgid "Never seen"
 msgstr "Chưa từng thấy"
+
+#: src/components/settings-mcp-tokens.tsx
+msgid "Never used"
+msgstr "Chưa từng dùng"
 
 #: src/app/commands.tsx
 msgid "New group"
@@ -3617,6 +3687,10 @@ msgstr "Chưa có giao diện nào được công bố"
 msgid "No themes match “{0}”."
 msgstr "Không có chủ đề nào khớp “{0}”"
 
+#: src/components/settings-mcp-tokens.tsx
+msgid "No tokens"
+msgstr "Không có token"
+
 #: src/components/agent-context-sheet.tsx
 msgid "no window reported for this model"
 msgstr "không có cửa sổ nào được báo cho mô hình này"
@@ -3639,6 +3713,7 @@ msgid "not connected"
 msgstr "chưa kết nối"
 
 #: src/components/server-terminal-workspace.tsx
+#: src/components/settings-server-capabilities.tsx
 #: src/i18n/labels.ts
 msgid "Not connected"
 msgstr "Chưa kết nối"
@@ -3721,6 +3796,7 @@ msgstr "Chưa có gì — câu trả lời “Luôn cho phép” sẽ nằm ở 
 msgid "Off"
 msgstr "Tắt"
 
+#: src/components/settings-server-capabilities.tsx
 #: src/i18n/labels.ts
 msgid "Offline"
 msgstr "Ngoại tuyến"
@@ -4046,6 +4122,10 @@ msgstr "Bảng màu (tối đa 4)"
 msgid "Pane {0} in session {1}"
 msgstr "Ô {0} trong phiên {1}"
 
+#: src/components/settings-mcp-tokens.tsx
+msgid "Pane {paneId}"
+msgstr "Pane {paneId}"
+
 #: src/components/settings-servers.tsx
 msgid "Panes on server cards"
 msgstr "Ngăn trên thẻ máy chủ"
@@ -4290,6 +4370,10 @@ msgstr "Thoát"
 #: src/i18n/labels.ts
 msgid "Reach the network"
 msgstr "Truy cập mạng"
+
+#: src/components/settings-server-capabilities.tsx
+msgid "Reachable"
+msgstr "Có thể truy cập"
 
 #: src/components/gateway-tunnel-badge.tsx
 msgid "Reached through SSH host {host}"
@@ -4638,6 +4722,7 @@ msgid "Reviewing the changes and checking the tests…"
 msgstr "Đang rà soát thay đổi và kiểm tra kiểm thử…"
 
 #: src/components/agent-context-sheet.tsx
+#: src/components/settings-mcp-tokens.tsx
 #: src/components/settings-servers.tsx
 msgid "Revoke"
 msgstr "Thu hồi"
@@ -4649,6 +4734,11 @@ msgstr "Thu hồi"
 msgid "Revoke {0}"
 msgstr "Thu hồi {0}"
 
+#: src/components/settings-mcp-tokens.tsx
+msgid "Revoke {title}"
+msgstr "Thu hồi {title}"
+
+#: src/components/settings-mcp-tokens.tsx
 #: src/components/settings-servers.tsx
 msgid "Revoking…"
 msgstr "Đang thu hồi…"
@@ -4705,6 +4795,10 @@ msgstr "Chạy Gateway trên máy của bạn và quét mã QR nó in ra. Việc
 #: src/i18n/labels.ts
 msgid "Running"
 msgstr "Đang chạy"
+
+#: src/components/settings-server-capabilities.tsx
+msgid "Rust"
+msgstr "Rust"
 
 #: src/app/settings-voice.tsx
 #: src/components/agent-sessions-sheet.tsx
@@ -5445,6 +5539,10 @@ msgstr "Tác nhân phụ"
 msgid "Submit"
 msgstr "Gửi"
 
+#: src/components/settings-server-capabilities.tsx
+msgid "Suitable for"
+msgstr "Phù hợp cho"
+
 #: src/i18n/labels.ts
 msgid "Summarise progress"
 msgstr "Tóm tắt tiến độ"
@@ -5516,6 +5614,7 @@ msgstr "Ký hiệu"
 
 #: src/components/settings-appearance.tsx
 #: src/components/settings-language-sheet.tsx
+#: src/components/settings-server-capabilities.tsx
 msgid "System"
 msgstr "Hệ thống"
 
@@ -5601,6 +5700,7 @@ msgstr "Tệp tạm"
 #: src/app/settings.tsx
 #: src/components/home-launch-actions.tsx
 #: src/components/home-recent-sessions.tsx
+#: src/components/settings-server-capabilities.tsx
 #: src/i18n/labels.ts
 msgid "Terminal"
 msgstr "Terminal"
@@ -6126,6 +6226,10 @@ msgstr "hết thời gian"
 msgid "Today"
 msgstr "Hôm nay"
 
+#: src/components/settings-mcp-tokens.tsx
+msgid "Tokens coding agents use to reach this gateway from this computer."
+msgstr "Token mà các agent lập trình dùng để truy cập gateway này từ máy tính này"
+
 #: src/components/agent-context-sheet.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
 msgid "Tokens this session"
@@ -6146,6 +6250,10 @@ msgstr "Quá nhiều thay đổi để liệt kê. Đây là phần đầu, khô
 #: src/components/tool-call-detail-sheet.tsx
 msgid "Tool call"
 msgstr "Lệnh gọi công cụ"
+
+#: src/components/settings-server-capabilities.tsx
+msgid "Toolchains"
+msgstr "Toolchain"
 
 #: src/components/changes-sheet.tsx
 msgid "tracking {upstream}"
@@ -6191,6 +6299,8 @@ msgstr "Tin cậy"
 msgid "Try again"
 msgstr "Thử lại"
 
+#: src/components/settings-mcp-tokens.tsx
+#: src/components/settings-server-capabilities.tsx
 #: src/components/settings-servers.tsx
 msgid "Try again once the gateway responds."
 msgstr "Hãy thử lại khi gateway phản hồi"
@@ -6241,6 +6351,10 @@ msgstr "Gõ vào, hoặc dùng phím đọc chính tả trên bàn phím của b
 #: src/components/simfarm-stage.tsx
 msgid "Type on the simulator"
 msgstr "Gõ trên trình giả lập"
+
+#: src/components/settings-server-capabilities.tsx
+msgid "Unavailable"
+msgstr "Không khả dụng"
 
 #: src/components/changes-sheet.tsx
 msgid "Uncommitted changes"
@@ -6507,6 +6621,10 @@ msgstr "Đang chờ bạn trả lời"
 #: src/components/agent-composer.tsx
 msgid "Waiting to send"
 msgstr "Chờ gửi"
+
+#: src/components/settings-server-capabilities.tsx
+msgid "Web"
+msgstr "Web"
 
 #: src/components/agent-workbench.tsx
 msgid "Welcome to {agentName}"

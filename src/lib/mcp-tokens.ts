@@ -64,11 +64,21 @@ function parseTokenList(value: unknown): McpToken[] {
   return out;
 }
 
-export async function listMcpTokens(): Promise<McpToken[]> {
+/**
+ * The live tokens, or null when the read failed. `readJson` folds every
+ * failure into its fallback, so a null fallback is how a failed read stays
+ * apart from a gateway that has issued none.
+ */
+export async function fetchMcpTokens(): Promise<McpToken[] | null> {
   const { readJson } = await import('./agent-session');
   const { demoMcpTokens, isDemoActive } = await import('./demo-gateway');
   if (isDemoActive()) return parseTokenList({ tokens: demoMcpTokens() });
-  return readJson('/api/mcp/tokens', parseTokenList, []);
+  return readJson<McpToken[] | null>('/api/mcp/tokens', parseTokenList, null);
+}
+
+/** Like `fetchMcpTokens`, with a failed read shown as an empty list. */
+export async function listMcpTokens(): Promise<McpToken[]> {
+  return (await fetchMcpTokens()) ?? [];
 }
 
 /** True when the gateway revoked it; false when it no longer knows the token. */
