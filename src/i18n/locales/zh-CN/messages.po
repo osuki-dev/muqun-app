@@ -6376,6 +6376,7 @@ msgstr "可以直接打字，或使用键盘上的语音输入键"
 msgid "Type on the simulator"
 msgstr "在模拟器上输入"
 
+#: src/components/server-tasks-sheet.tsx
 #: src/components/settings-server-capabilities.tsx
 msgid "Unavailable"
 msgstr "不可用"

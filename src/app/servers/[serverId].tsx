@@ -33,7 +33,6 @@ export default function ServerScreen() {
     directory: rawDirectory,
     agentId: rawAgentId,
     intent: rawIntent,
-    prompt: rawPrompt,
     promptId: rawPromptId,
   } = useLocalSearchParams<{
     serverId: string;
@@ -45,7 +44,6 @@ export default function ServerScreen() {
     directory?: string;
     agentId?: string;
     intent?: string;
-    prompt?: string;
     promptId?: string;
   }>();
   const serverId = param(rawServerId);
@@ -57,7 +55,6 @@ export default function ServerScreen() {
   const directory = param(rawDirectory);
   const agentId = param(rawAgentId);
   const intent = param(rawIntent);
-  const prompt = param(rawPrompt);
   const promptId = param(rawPromptId);
   const router = useRouter();
   const { selectRecord, selectRecordNow } = useGatewayRecord();
@@ -96,7 +93,6 @@ export default function ServerScreen() {
       directory,
       agentId,
       intent,
-      prompt,
       promptId,
     });
     if (!agent && sessionId) useServerSession.getState().chooseSession({ serverId, sessionId });
@@ -158,7 +154,6 @@ export default function ServerScreen() {
     directory,
     intent,
     paneId,
-    prompt,
     promptId,
     routeMode,
     rootOwnerServerId,

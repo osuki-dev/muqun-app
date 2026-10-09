@@ -6376,6 +6376,7 @@ msgstr "Наберите его или используйте клавишу д�
 msgid "Type on the simulator"
 msgstr "Ввод на симуляторе"
 
+#: src/components/server-tasks-sheet.tsx
 #: src/components/settings-server-capabilities.tsx
 msgid "Unavailable"
 msgstr "Недоступно"

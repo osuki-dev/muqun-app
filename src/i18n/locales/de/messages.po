@@ -6376,6 +6376,7 @@ msgstr "Tippe ihn ein oder nutze die Diktiertaste deiner Tastatur"
 msgid "Type on the simulator"
 msgstr "Auf dem Simulator tippen"
 
+#: src/components/server-tasks-sheet.tsx
 #: src/components/settings-server-capabilities.tsx
 msgid "Unavailable"
 msgstr "Nicht verfügbar"

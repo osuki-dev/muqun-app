@@ -14,7 +14,7 @@ export const DEMO_CAPABILITIES: readonly string[] = [
   GIT_DIFF_CAPABILITY,
   'pane_lazygit',
   'agent_audio_assets',
-  // The P1 companion surfaces: the fixtures at the end of this file answer them.
+  // The P1 companion surfaces: `demo-gateway.ts` answers them (`demoTasks`, `demoFleetSelf`, `demoMcpTokens`).
   'task_ledger',
   'fleet',
   'mcp_server',

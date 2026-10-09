@@ -5,6 +5,7 @@ import {
   hasTaskLedger,
   isTerminalTaskState,
   parseTaskEvent,
+  parseTaskList,
   parseTaskView,
 } from '../task-ledger';
 
@@ -93,4 +94,16 @@ test('terminal states and the capability', () => {
   expect(hasTaskLedger([TASK_LEDGER_CAPABILITY])).toBe(true);
   expect(hasTaskLedger(['ws_events'])).toBe(false);
   expect(hasTaskLedger(undefined)).toBe(false);
+});
+
+describe('parseTaskList', () => {
+  test('a body without a tasks array is a failed read, not an empty list', () => {
+    expect(parseTaskList({})).toBeNull();
+    expect(parseTaskList({ tasks: 'x' })).toBeNull();
+    expect(parseTaskList(null)).toBeNull();
+  });
+
+  test('an empty tasks array is a real empty list', () => {
+    expect(parseTaskList({ tasks: [] })).toEqual([]);
+  });
 });

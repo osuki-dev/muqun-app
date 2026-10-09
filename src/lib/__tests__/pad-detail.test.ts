@@ -197,7 +197,6 @@ describe('a new session with a first prompt', () => {
     kind: 'agent-session',
     serverId: 's1',
     agentId: 'opencode',
-    prompt: 'Say hello',
     promptId: 'p1',
   } as const;
 
@@ -208,7 +207,6 @@ describe('a new session with a first prompt', () => {
         server: 's1',
         agentId: 'opencode',
         intent: 'new',
-        prompt: 'Say hello',
         promptId: 'p1',
       },
     });
@@ -218,7 +216,6 @@ describe('a new session with a first prompt', () => {
         serverId: 's1',
         agentId: 'opencode',
         intent: 'new',
-        prompt: 'Say hello',
         promptId: 'p1',
       },
     });
@@ -232,30 +229,29 @@ describe('a new session with a first prompt', () => {
         target: promptTarget,
         intent: 'new',
       }).detail
-    ).toMatchObject({ kind: 'agent', intent: 'new', prompt: 'Say hello', promptId: 'p1' });
+    ).toMatchObject({ kind: 'agent', intent: 'new', promptId: 'p1' });
     expect(
       padShellReducer(initialPadShellState, {
         type: 'route',
         serverId: 's1',
-        params: { intent: 'new', prompt: 'Say hello', promptId: 'p1' },
+        params: { intent: 'new', promptId: 'p1' },
       }).detail
-    ).toMatchObject({ kind: 'agent', intent: 'new', prompt: 'Say hello', promptId: 'p1' });
+    ).toMatchObject({ kind: 'agent', intent: 'new', promptId: 'p1' });
     expect(
-      padRouteHandoff({ serverId: 's1', intent: 'new', prompt: 'Say hello', promptId: 'p1' }).agent
-        ?.target
-    ).toMatchObject({ prompt: 'Say hello', promptId: 'p1' });
+      padRouteHandoff({ serverId: 's1', intent: 'new', promptId: 'p1' }).agent?.target
+    ).toMatchObject({ promptId: 'p1' });
     expect(
       padShellReducer(initialPadShellState, {
         type: 'open-agent',
         target: promptTarget,
         intent: 'existing',
       }).detail
-    ).toMatchObject({ prompt: undefined, promptId: undefined });
+    ).toMatchObject({ promptId: undefined });
   });
 
   test('the same goal sent twice is two route landings', () => {
-    const first = padRouteKey('s1', { intent: 'new', prompt: 'same', promptId: 'p1' });
-    const second = padRouteKey('s1', { intent: 'new', prompt: 'same', promptId: 'p2' });
+    const first = padRouteKey('s1', { intent: 'new', promptId: 'p1' });
+    const second = padRouteKey('s1', { intent: 'new', promptId: 'p2' });
     expect(second).not.toBe(first);
     expect(shouldApplyRoute(first, second)).toBe(true);
   });

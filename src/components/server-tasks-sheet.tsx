@@ -249,6 +249,9 @@ function ServerTaskDetail({
   const mono = useMonoFontFamily();
   const age = useTaskAge();
   const [detail, setDetail] = useState<{ task: TaskView; events: TaskEvent[] } | null>(null);
+  // The first answer has come back, whatever it was: past this a task the list
+  // no longer has and the gateway does not know settles instead of spinning.
+  const [answered, setAnswered] = useState(false);
   const updatedMs = listed?.updatedMs;
 
   // Again whenever the task changes, so the history includes the change.
@@ -256,9 +259,13 @@ function ServerTaskDetail({
     let active = true;
     void getTask(taskId)
       .then((answer) => {
-        if (active) setDetail(answer);
+        if (!active) return;
+        setDetail(answer);
+        setAnswered(true);
       })
-      .catch(() => {});
+      .catch(() => {
+        if (active) setAnswered(true);
+      });
     return () => {
       active = false;
     };
@@ -268,7 +275,16 @@ function ServerTaskDetail({
   if (!task) {
     return (
       <View style={styles.centre}>
-        <ActivityIndicator size="small" color={theme.colors.primary} />
+        {answered ? (
+          <Text
+            testID="server-tasks-detail-unavailable"
+            variant="caption"
+            color={theme.colors.textSubtle}>
+            {t`Unavailable`}
+          </Text>
+        ) : (
+          <ActivityIndicator size="small" color={theme.colors.primary} />
+        )}
       </View>
     );
   }

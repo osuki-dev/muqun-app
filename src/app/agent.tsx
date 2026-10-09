@@ -67,7 +67,6 @@ export default function AgentScreen() {
     directory?: string;
     intent?: string;
     agentId?: string;
-    prompt?: string;
     promptId?: string;
   }>();
 
