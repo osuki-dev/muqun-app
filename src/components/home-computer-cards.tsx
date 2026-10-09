@@ -1,5 +1,7 @@
 import { useLingui as useLinguiRuntime } from '@lingui/react';
+import { plural } from '@lingui/core/macro';
 import { useLingui } from '@lingui/react/macro';
+import { useIsFocused } from 'expo-router';
 import { useThemeTokens } from '@osuki-dev/ui';
 import { ChevronRight, Server } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
@@ -39,7 +41,7 @@ import type { TaskView } from '@/lib/task-ledger';
 import { useAgents } from '@/stores/agents';
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';
 import { useHomeAgentSessions } from '@/stores/home-agent-sessions';
-import { useHomeTaskCards } from '@/stores/home-task-cards';
+import { PENDING_DISPATCH_TTL_MS, useHomeTaskCards } from '@/stores/home-task-cards';
 import { useServerAgents } from '@/stores/server-agents';
 import { useServerCapabilities } from '@/stores/server-capabilities';
 import { useServerChannels } from '@/stores/server-channels';
@@ -66,6 +68,20 @@ export function HomeTaskSync({ serverIds }: { serverIds: readonly string[] }) {
 function ServerTaskSync({ serverId }: { serverId: string }) {
   useServerTasks(serverId);
   return null;
+}
+
+/** A root's roll-up, `2 sub-tasks (1 waiting)`, said with each locale's plurals. */
+export function useRollupText() {
+  const { t } = useLingui();
+  return (task: TaskView): string => {
+    const rollup = taskRollup(task);
+    if (!rollup) return '';
+    const total = rollup.total;
+    const waiting = rollup.waiting;
+    return waiting > 0
+      ? t`${plural(total, { one: '# sub-task', other: '# sub-tasks' })} (${plural(waiting, { one: '# waiting', other: '# waiting' })})`
+      : t`${plural(total, { one: '# sub-task', other: '# sub-tasks' })}`;
+  };
 }
 
 export type CardTaskTarget = { serverId: string; task: TaskView };
@@ -104,13 +120,19 @@ export function HomeComputerCards({
   const streams = useServerChannels((state) => state.streams);
   const selectedId = useGatewayConnectionStore((state) => state.record?.serverId);
   const dismissedList = useHomeTaskCards((state) => state.dismissed);
-  const pending = useHomeTaskCards((state) => state.pending);
-  // Ages are relative to now; a tick keeps "just now" from going stale.
+  const pendingAll = useHomeTaskCards((state) => state.pending);
+  // Ages are relative to now; a tick keeps "just now" from going stale. Only
+  // while Home is on screen: under a pushed screen nobody reads the ages.
+  const focused = useIsFocused();
   const [tickMs, setTickMs] = useState(() => Date.now());
   useEffect(() => {
+    if (!focused) return;
+    setTickMs(Date.now());
     const timer = setInterval(() => setTickMs(Date.now()), 30_000);
     return () => clearInterval(timer);
-  }, []);
+  }, [focused]);
+  // A Sent row no task ever answered stops claiming the computer is busy.
+  const pending = pendingAll.filter((item) => tickMs - item.atMs < PENDING_DISPATCH_TTL_MS);
   const statusOf = (serverId: string): ConnectionStatus =>
     resolveConnectionStatus({
       serverId,
@@ -215,8 +237,12 @@ function ComputerCardView({
   const footer =
     sessions !== undefined || terminals !== undefined
       ? [
-          sessions !== undefined ? t`${sessions} sessions` : '',
-          terminals !== undefined ? t`${terminals} terminals` : '',
+          sessions !== undefined
+            ? t`${plural(sessions, { one: '# session', other: '# sessions' })}`
+            : '',
+          terminals !== undefined
+            ? t`${plural(terminals, { one: '# terminal', other: '# terminals' })}`
+            : '',
         ]
           .filter(Boolean)
           .join(' · ')
@@ -396,12 +422,7 @@ function NowRow({
   const theme = useThemeTokens();
   const age = useTaskAge();
   const { task } = row;
-  const rollup = taskRollup(task);
-  const rollupText = rollup
-    ? rollup.waiting > 0
-      ? t`${rollup.total} sub-tasks (${rollup.waiting} waiting)`
-      : t`${rollup.total} sub-tasks`
-    : '';
+  const rollupText = useRollupText()(task);
   const meta = [
     task.state === 'waiting' ? _(taskStateWord.waiting) : '',
     age(task.updatedMs, nowMs),

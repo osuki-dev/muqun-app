@@ -26,14 +26,15 @@ import { useMonoFontFamily } from '@/hooks/use-user-fonts';
 import { taskKindWord, taskStateWord } from '@/i18n/labels';
 import { settleAfter } from '@/lib/compiler-safe-control-flow';
 import { taskRouteFor } from '@/hooks/use-server-tasks';
+import { useRollupText } from '@/components/home-computer-cards';
 import {
   buildTaskTree,
   dismissedKey,
+  groupTaskTree,
   taskResultLine,
-  taskRollup,
   taskTitle,
 } from '@/lib/home-computer-cards';
-import { groupTasks, summaryTail } from '@/lib/server-tasks-state';
+import { summaryTail } from '@/lib/server-tasks-state';
 import { useHomeTaskCards } from '@/stores/home-task-cards';
 import { getTask, isTerminalTaskState, type TaskEvent, type TaskView } from '@/lib/task-ledger';
 import { acceptsCancel, acceptsConfirm, unpairView } from '@/lib/unpair-action';
@@ -83,19 +84,14 @@ function ServerTaskRow({
   nested?: boolean;
   onOpen: (taskId: string) => void;
 }) {
-  const { t } = useLingui();
   const { _ } = useLinguiRuntime();
   const age = useTaskAge();
-  const rollup = taskRollup(task);
+  const rollupText = useRollupText();
   const caption = [
     _(taskKindWord[task.kind]),
     _(taskStateWord[task.state]),
     age(task.updatedMs, nowMs),
-    rollup
-      ? rollup.waiting > 0
-        ? t`${rollup.total} sub-tasks (${rollup.waiting} waiting)`
-        : t`${rollup.total} sub-tasks`
-      : '',
+    rollupText(task),
   ]
     .filter(Boolean)
     .join(' · ');
@@ -168,7 +164,9 @@ export function ServerTasksSheet({
   const tree = buildTaskTree(state.tasks);
   const shownTree = rootTaskId ? tree.filter((row) => row.task.taskId === rootTaskId) : tree;
   const childrenOf = new Map(shownTree.map((row) => [row.task.taskId, row.children]));
-  const groups = groupTasks(shownTree.map((row) => row.task));
+  // A root goes where its most urgent work is: a waiting sub-task puts its
+  // root under Needs you, open sub-work keeps a finished root In progress.
+  const groups = groupTaskTree(shownTree);
   const items: Item[] = [];
   const sections: [string, string, TaskView[]][] = [
     ['attention', t`Needs you`, groups.attention],

@@ -133,19 +133,6 @@ msgstr "이 호스트에 {0}개"
 msgid "{0} queued"
 msgstr "{0}개 대기 중"
 
-#. placeholder {0}: rollup.total
-#: src/components/home-computer-cards.tsx
-#: src/components/server-tasks-sheet.tsx
-msgid "{0} sub-tasks"
-msgstr "하위 작업 {0}개"
-
-#. placeholder {0}: rollup.total
-#. placeholder {1}: rollup.waiting
-#: src/components/home-computer-cards.tsx
-#: src/components/server-tasks-sheet.tsx
-msgid "{0} sub-tasks ({1} waiting)"
-msgstr "하위 작업 {0}개 ({1}개 대기 중)"
-
 #. placeholder {0}: compact(inContext)
 #: src/components/agent-context-sheet.tsx
 msgid "{0} tokens the model last read"
@@ -340,18 +327,26 @@ msgid "{running} running of {0}"
 msgstr "{0}개 중 {running}개 실행 중"
 
 #: src/components/home-computer-cards.tsx
-msgid "{sessions} sessions"
-msgstr "세션 {sessions}개"
+msgid "{sessions, plural, one {# session} other {# sessions}}"
+msgstr "{sessions, plural, other {세션 #개}}"
 
 #: src/components/home-computer-cards.tsx
-msgid "{terminals} terminals"
-msgstr "터미널 {terminals}개"
+msgid "{terminals, plural, one {# terminal} other {# terminals}}"
+msgstr "{terminals, plural, other {터미널 #개}}"
 
 #: src/components/agent-composer.tsx
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-sessions-sheet.tsx
 msgid "{title} — finished while you were away"
 msgstr "{title} — 자리를 비운 사이에 끝났습니다"
+
+#: src/components/home-computer-cards.tsx
+msgid "{total, plural, one {# sub-task} other {# sub-tasks}}"
+msgstr "{total, plural, other {하위 작업 #개}}"
+
+#: src/components/home-computer-cards.tsx
+msgid "{total, plural, one {# sub-task} other {# sub-tasks}} ({waiting, plural, one {# waiting} other {# waiting}})"
+msgstr "{total, plural, other {하위 작업 #개}} ({waiting, plural, other {#개 대기 중}})"
 
 #. placeholder {0}: card.nowTotal - card.now.length
 #: src/components/home-computer-cards.tsx
@@ -6204,7 +6199,7 @@ msgstr "이 컴퓨터가 요청을 거부했습니다"
 
 #: src/components/home-computer-cards.tsx
 msgid "This computer’s Gateway does not keep a task list yet."
-msgstr "이 컴퓨터의 Gateway는 아직 작업 목록을 기록하지 않습니다."
+msgstr "이 컴퓨터의 Gateway는 아직 작업 목록을 기록하지 않습니다"
 
 #: src/lib/attachments.ts
 msgid "This device has no camera available."

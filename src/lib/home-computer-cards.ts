@@ -9,7 +9,7 @@
  */
 
 import type { ServerReachability } from './server-reachability';
-import type { ServerTasksIndex } from './server-tasks-state';
+import { FINISHED_TASKS_SHOWN, type ServerTasksIndex } from './server-tasks-state';
 import { isTerminalTaskState, type TaskState, type TaskView } from './task-ledger';
 
 /** Computers that get a task socket while Home or the Tasks sheet is up. */
@@ -172,6 +172,64 @@ export function taskTitle(task: TaskView): string {
   return task.label || task.goal.split('\n')[0]?.trim() || task.taskId;
 }
 
+/**
+ * Whether a root row is still work in progress: the root itself, any
+ * descendant the ledger holds, or -- for children beyond the page read -- the
+ * gateway's own count of open direct children.
+ */
+export function treeRowIsOpen(row: CardTaskRow): boolean {
+  if (NOW.has(row.task.state)) return true;
+  if (row.children.some((child) => NOW.has(child.state))) return true;
+  const counts = row.task.children;
+  return Boolean(counts && counts.active + counts.waiting > 0);
+}
+
+/** Whether a root row, or work under it, is waiting on the reader. */
+export function treeRowIsWaiting(row: CardTaskRow): boolean {
+  return (
+    row.task.state === 'waiting' ||
+    row.children.some((child) => child.state === 'waiting') ||
+    (row.task.children?.waiting ?? 0) > 0
+  );
+}
+
+/**
+ * The Tasks sheet's groups over roots: Needs you when the root or work under
+ * it waits on the reader, In progress while any of it is open, else Finished
+ * (capped as the flat list was). Newest first within each.
+ */
+export function groupTaskTree(rows: readonly CardTaskRow[]): {
+  attention: TaskView[];
+  active: TaskView[];
+  finished: TaskView[];
+} {
+  const attention: TaskView[] = [];
+  const active: TaskView[] = [];
+  const finished: TaskView[] = [];
+  for (const row of [...rows].sort((a, b) => newest(a.task, b.task))) {
+    if (treeRowIsWaiting(row)) attention.push(row.task);
+    else if (treeRowIsOpen(row) || !isTerminalTaskState(row.task.state)) active.push(row.task);
+    else if (finished.length < FINISHED_TASKS_SHOWN) finished.push(row.task);
+  }
+  return { attention, active, finished };
+}
+
+/**
+ * A sent goal is answered by a task with that goal that changed at or after
+ * the send -- an older task that happens to share the goal (a retry, a
+ * routine "run the tests") does not count. A device-opened task is preferred:
+ * one the gateway says came from elsewhere never settles it.
+ */
+function settlesPending(tasks: readonly TaskView[], item: PendingDispatch): boolean {
+  const goal = item.goal.trim();
+  return tasks.some(
+    (task) =>
+      task.goal.trim() === goal &&
+      task.updatedMs >= item.atMs &&
+      (task.origin === undefined || task.origin === 'device')
+  );
+}
+
 const ACTIVITY_RANK: Record<CardActivity, number> = {
   'needs-you': 0,
   working: 1,
@@ -196,20 +254,21 @@ export function buildComputerCards(input: {
     const entry = input.index[server.serverId];
     const tasks = entry?.tasks ?? [];
     const tree = buildTaskTree(tasks);
-    const open = tree.filter((row) => NOW.has(row.task.state));
+    // A root stays in Now while any work it started is still open, even after
+    // the root itself finished: a delegating turn can end before its
+    // sub-tasks do, and an idle parent is not finished work.
+    const open = tree.filter(treeRowIsOpen);
     const finishedAll = tree
-      .map((row) => row.task)
-      .filter((task) => isTerminalTaskState(task.state));
+      .filter((row) => !treeRowIsOpen(row) && isTerminalTaskState(row.task.state))
+      .map((row) => row.task);
     const finished = finishedAll.filter(
       (task) => !input.dismissed.has(dismissedKey(server.serverId, task.taskId))
     );
-    // A pending send is settled once a task with its goal shows up.
-    const goals = new Set(tasks.map((task) => task.goal.trim()));
     const pending = (input.pending ?? []).filter(
-      (item) => item.serverId === server.serverId && !goals.has(item.goal.trim())
+      (item) => item.serverId === server.serverId && !settlesPending(tasks, item)
     );
     const waiting = tasks.some((task) => task.state === 'waiting');
-    const working = open.length > 0 || pending.length > 0;
+    const working = tasks.some((task) => NOW.has(task.state)) || pending.length > 0;
     const activity: CardActivity =
       input.reachability(server.serverId) === 'offline'
         ? 'offline'

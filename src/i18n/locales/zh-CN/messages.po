@@ -133,19 +133,6 @@ msgstr "此主机上共 {0} 个"
 msgid "{0} queued"
 msgstr "{0} 条排队中"
 
-#. placeholder {0}: rollup.total
-#: src/components/home-computer-cards.tsx
-#: src/components/server-tasks-sheet.tsx
-msgid "{0} sub-tasks"
-msgstr "{0} 个子任务"
-
-#. placeholder {0}: rollup.total
-#. placeholder {1}: rollup.waiting
-#: src/components/home-computer-cards.tsx
-#: src/components/server-tasks-sheet.tsx
-msgid "{0} sub-tasks ({1} waiting)"
-msgstr "{0} 个子任务（{1} 个等待中）"
-
 #. placeholder {0}: compact(inContext)
 #: src/components/agent-context-sheet.tsx
 msgid "{0} tokens the model last read"
@@ -340,18 +327,26 @@ msgid "{running} running of {0}"
 msgstr "{0} 个中有 {running} 个正在运行"
 
 #: src/components/home-computer-cards.tsx
-msgid "{sessions} sessions"
-msgstr "{sessions} 个会话"
+msgid "{sessions, plural, one {# session} other {# sessions}}"
+msgstr "{sessions, plural, other {# 个会话}}"
 
 #: src/components/home-computer-cards.tsx
-msgid "{terminals} terminals"
-msgstr "{terminals} 个终端"
+msgid "{terminals, plural, one {# terminal} other {# terminals}}"
+msgstr "{terminals, plural, other {# 个终端}}"
 
 #: src/components/agent-composer.tsx
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-sessions-sheet.tsx
 msgid "{title} — finished while you were away"
 msgstr "{title} — 在你离开时完成"
+
+#: src/components/home-computer-cards.tsx
+msgid "{total, plural, one {# sub-task} other {# sub-tasks}}"
+msgstr "{total, plural, other {# 个子任务}}"
+
+#: src/components/home-computer-cards.tsx
+msgid "{total, plural, one {# sub-task} other {# sub-tasks}} ({waiting, plural, one {# waiting} other {# waiting}})"
+msgstr "{total, plural, other {# 个子任务}}（{waiting, plural, other {# 个等待中}}）"
 
 #. placeholder {0}: card.nowTotal - card.now.length
 #: src/components/home-computer-cards.tsx
@@ -6204,7 +6199,7 @@ msgstr "这台电脑拒绝了这个请求"
 
 #: src/components/home-computer-cards.tsx
 msgid "This computer’s Gateway does not keep a task list yet."
-msgstr "这台电脑的 Gateway 还不记录任务列表。"
+msgstr "这台电脑的 Gateway 还不记录任务列表"
 
 #: src/lib/attachments.ts
 msgid "This device has no camera available."
