@@ -5,12 +5,7 @@ import { isDemoActive, isDemoRecord } from '@/lib/demo-gateway';
 import { configuredGatewayServerId } from '@/lib/gateway-client';
 import { WS_EVENTS_CAPABILITY, type GatewaySocketState } from '@/lib/gateway-socket';
 import { gatewaySocketFor } from '@/lib/gateway-socket-runtime';
-import {
-  applyListAnswer,
-  groupTasks,
-  isTaskChannelLive,
-  type TaskGroups,
-} from '@/lib/server-tasks-state';
+import { applyListAnswer, isTaskChannelLive } from '@/lib/server-tasks-state';
 import {
   cancelTask,
   completeTask,
@@ -49,7 +44,6 @@ const noSubscription = () => () => {};
 
 export type ServerTasks = {
   tasks: TaskView[];
-  groups: TaskGroups;
   loading: boolean;
   error: string | null;
   refresh: () => Promise<void>;
@@ -166,7 +160,6 @@ export function useServerTasks(serverId: string | null): ServerTasks {
 
   return {
     tasks,
-    groups: groupTasks(tasks),
     loading,
     error,
     refresh,
@@ -182,18 +175,34 @@ export function useTaskAction(
   serverId: string | null
 ): (task: TaskView, action: 'cancel' | 'complete') => Promise<void> {
   const upsert = useServerTasksStore((state) => state.upsert);
+  const replace = useServerTasksStore((state) => state.replace);
   return useCallback(
     async (task: TaskView, action: 'cancel' | 'complete') => {
       if (!serverId) return;
-      // At the task's own time: a newer frame from the gateway still wins, and
-      // putting the old view back on failure replaces only this guess.
-      upsert(serverId, { ...task, state: action === 'cancel' ? 'cancelled' : 'done' });
+      // A computer this device cannot reach directly (a tunnel no longer
+      // selected) is not asked through the shared client, which is another one.
       const route = taskRouteFor(serverId);
-      const endpoint = route?.kind === 'endpoint' ? route.endpoint : undefined;
+      if (!route) throw new Error('This computer is not reachable from here.');
+      const endpoint = route.kind === 'endpoint' ? route.endpoint : undefined;
+      // At the task's own time: a newer frame from the gateway still wins, and
+      // putting the old view back on failure replaces only this guess. Settled
+      // now, so an old task does not leave Home before the gateway answers.
+      upsert(serverId, {
+        ...task,
+        state: action === 'cancel' ? 'cancelled' : 'done',
+        settledAtMs: Date.now(),
+      });
       const call = action === 'cancel' ? cancelTask : completeTask;
       return call(task.taskId, endpoint).then(
         (answer) => {
-          if (answer) upsert(serverId, answer);
+          if (answer) {
+            upsert(serverId, answer);
+            return;
+          }
+          // The gateway no longer knows the task: read the list again.
+          void fetchTaskList({ limit: 100, ...(endpoint ? { endpoint } : {}) }).then((list) => {
+            if (list) replace(serverId, list);
+          });
         },
         (failure: unknown) => {
           upsert(serverId, task);
@@ -201,6 +210,6 @@ export function useTaskAction(
         }
       );
     },
-    [serverId, upsert]
+    [serverId, upsert, replace]
   );
 }

@@ -3,7 +3,6 @@ import { describe, expect, test } from 'bun:test';
 import {
   activeTaskCount,
   applyListAnswer,
-  groupTasks,
   isTaskChannelLive,
   replaceTasks,
   taskAgeParts,
@@ -72,31 +71,6 @@ describe('replaceTasks', () => {
   });
 });
 
-describe('groupTasks', () => {
-  test('buckets by state', () => {
-    const groups = groupTasks([
-      task('w', 'waiting', 1),
-      task('q', 'queued', 2),
-      task('d', 'dispatching', 3),
-      task('k', 'working', 4),
-      task('i', 'idle_unconfirmed', 5),
-      task('ok', 'done', 6),
-      task('f', 'failed', 7),
-      task('c', 'cancelled', 8),
-    ]);
-    expect(groups.attention.map((t) => t.taskId)).toEqual(['w']);
-    expect(groups.active.map((t) => t.taskId)).toEqual(['i', 'k', 'd', 'q']);
-    expect(groups.finished.map((t) => t.taskId)).toEqual(['c', 'f', 'ok']);
-  });
-
-  test('caps the finished group at fifty', () => {
-    const many = Array.from({ length: 60 }, (_, i) => task(`t${i}`, 'done', i));
-    const groups = groupTasks(many);
-    expect(groups.finished).toHaveLength(50);
-    expect(groups.finished[0]?.taskId).toBe('t59');
-  });
-});
-
 describe('activeTaskCount', () => {
   test('counts every task that has not finished', () => {
     expect(
@@ -108,15 +82,6 @@ describe('activeTaskCount', () => {
       ])
     ).toBe(2);
     expect(activeTaskCount([])).toBe(0);
-  });
-});
-
-describe('review focus 2: a frame for a task the list has not loaded', () => {
-  test('lands in the active group, ordered by updatedMs', () => {
-    let index = replaceTasks({}, 's1', [task('old', 'working', 10), task('new', 'queued', 50)], 1);
-    index = upsertTask(index, 's1', task('mcp-made', 'working', 30));
-    const groups = groupTasks(index.s1?.tasks ?? []);
-    expect(groups.active.map((t) => t.taskId)).toEqual(['new', 'mcp-made', 'old']);
   });
 });
 

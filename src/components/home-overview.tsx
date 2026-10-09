@@ -74,7 +74,7 @@ import { HomeAttention } from '@/components/home-attention';
 import {
   HomeComputerCards,
   HomeTaskSync,
-  useHomeComputerCards,
+  useHasComputerCards,
 } from '@/components/home-computer-cards';
 import { HomeRecentChips } from '@/components/home-recent-chips';
 import { filterHomeRecent, homeRecentFilterIds } from '@/lib/home-continue';
@@ -362,12 +362,6 @@ export function HomeOverview({
   // nothing else caused never came, so a probe's window used to run out
   // unnoticed. A standalone Home has no active connection override.
   const [nowMs, setNowMs] = useState(() => Date.now());
-  // Only computers with work get a card; with none the section is left out.
-  const computerCards = useHomeComputerCards({
-    servers: cardServers,
-    activeConnection,
-    nowMs,
-  });
   // The live channels (agent socket, terminal stream) are evidence too.
   const channelSockets = useServerChannels((state) => state.sockets);
   const channelStreams = useServerChannels((state) => state.streams);
@@ -382,6 +376,13 @@ export function HomeOverview({
     void hydrateLastViewed();
     void hydrateServerCapabilities();
   }, [hydrateLastViewed, hydrateServerCapabilities]);
+  // Only computers with work get a card; with none the section is left out.
+  // A boolean, so task frames do not re-render all of Home.
+  const hasComputerCards = useHasComputerCards({
+    servers: cardServers,
+    activeConnection,
+    nowMs,
+  });
   const padReachabilityByServer = useMemo(
     () =>
       Object.fromEntries(
@@ -1058,30 +1059,30 @@ export function HomeOverview({
                     onOpen={(target) => {
                       void commands.resumeTarget(target);
                     }}
-                    onOpenTask={({ serverId, task }) => {
-                      // A request is answered where the task runs: its
-                      // session or its pane.
-                      if (openTaskWork(commands, serverId, task)) return;
-                      router.push({ pathname: '/server-tasks', params: { serverId } });
-                    }}
+                    // A request is answered where the task runs: its session
+                    // or its pane, on its own computer.
+                    onOpenTask={({ serverId, task }) => openTaskWork(commands, serverId, task)}
                   />
                 ) : undefined
               }
               progress={
-                !loading && !hydrationError && computerCards.cards.length > 0 ? (
+                !loading && !hydrationError && hasComputerCards ? (
                   <HomeComputerCards
-                    model={computerCards}
                     servers={cardServers}
+                    activeConnection={activeConnection}
+                    nowMs={nowMs}
                     onSelectServer={targetComposer}
                     onOpenTask={({ serverId, task, tree }) => {
-                      // A row opens the session or pane the task runs in; the
-                      // Tasks sheet is for the work under it, or a task that
-                      // has nothing to open.
-                      if (!tree && openTaskWork(commands, serverId, task)) return;
-                      router.push({
-                        pathname: '/server-tasks',
-                        params: { serverId, root: task.parentTaskId ?? task.taskId },
-                      });
+                      // A row opens the session or pane the task runs in; only
+                      // the sub-task count opens the list of the work under it.
+                      if (tree) {
+                        router.push({
+                          pathname: '/server-tasks',
+                          params: { serverId, root: task.parentTaskId ?? task.taskId },
+                        });
+                        return;
+                      }
+                      openTaskWork(commands, serverId, task);
                     }}
                     onOpenTasks={(serverId) =>
                       router.push({ pathname: '/server-tasks', params: { serverId } })

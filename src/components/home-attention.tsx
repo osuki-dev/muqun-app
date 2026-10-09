@@ -3,6 +3,7 @@ import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { useThemeTokens } from '@osuki-dev/ui';
 import { ChevronRight, CircleAlert } from 'lucide-react-native';
 import { StyleSheet, View } from 'react-native';
+import Animated, { LayoutAnimationConfig } from 'react-native-reanimated';
 
 import { useTaskIndexFor } from '@/components/use-task-index';
 import { PressableScale } from '@/components/pressable-scale';
@@ -11,6 +12,7 @@ import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { Text } from '@/components/text';
 import { ThemeIcon } from '@/components/theme-icon';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
+import { pulseOnce } from '@/lib/motion';
 import { taskRowVisual, taskTitle } from '@/lib/home-computer-cards';
 import type { GatewayRecord } from '@/lib/gateway-storage';
 import {
@@ -68,21 +70,24 @@ export function HomeAttention({
     return null;
   }
   return (
-    <View testID="home-attention" style={styles.list}>
-      {pending.map(([key, snapshot]) => (
-        <AttentionRow key={key} snapshot={snapshot} servers={servers} onOpen={onOpen} />
-      ))}
-      {onOpenTask
-        ? waiting.map((row) => (
-            <WaitingTaskRow
-              key={`${row.serverId}:${row.task.taskId}`}
-              row={row}
-              servers={servers}
-              onOpen={() => onOpenTask(row)}
-            />
-          ))
-        : null}
-    </View>
+    // A remount (back from a sub-screen) replays no arrival pulse.
+    <LayoutAnimationConfig skipEntering>
+      <View testID="home-attention" style={styles.list}>
+        {pending.map(([key, snapshot]) => (
+          <AttentionRow key={key} snapshot={snapshot} servers={servers} onOpen={onOpen} />
+        ))}
+        {onOpenTask
+          ? waiting.map((row) => (
+              <WaitingTaskRow
+                key={`${row.serverId}:${row.task.taskId}`}
+                row={row}
+                servers={servers}
+                onOpen={() => onOpenTask(row)}
+              />
+            ))
+          : null}
+      </View>
+    </LayoutAnimationConfig>
   );
 }
 
@@ -104,9 +109,8 @@ function WaitingTaskRow({
   // The same icon and line as the row on its computer's card (`taskRowVisual`),
   // with the computer named, since this list spans every computer.
   const visual = taskRowVisual(task, { canComplete: false, acknowledged: true });
-  // A waiting line names no age, so no clock is needed.
-  const line = useTaskRowLine(discovery)(task, visual, task.updatedMs);
-  const title = taskTitle(task);
+  const line = useTaskRowLine(discovery)(task, visual);
+  const title = taskTitle(task) || line.text;
   const computer = homeContinueComputerLabel(servers, row.serverId);
   const meta = [computer, line.text].filter(Boolean).join(META_SEPARATOR);
   return (
@@ -120,14 +124,27 @@ function WaitingTaskRow({
         {
           backgroundColor: background(theme.colors.surface),
           borderColor: theme.colors.borderStrong,
-          borderLeftColor: theme.colors.warning,
           borderRadius: profile.chrome.noticeCard,
         },
       ]}>
+      {/* A row arriving here pulses its edge once (skipped on a remount). */}
+      <Animated.View
+        pointerEvents="none"
+        entering={pulseOnce()}
+        style={[styles.edge, { backgroundColor: theme.colors.warning }]}
+      />
       <TaskStateIcon visual={visual} size={20} />
       <View style={styles.copy}>
         <RowMarkdown text={title} ink={theme.colors.text} kind="title" />
-        <RowMarkdown text={meta} ink={line.color} kind="line" />
+        <View style={styles.metaLine}>
+          {/* The computer's label is the reader's own text, never markdown. */}
+          {computer ? (
+            <Text variant="caption" color={line.color} numberOfLines={1}>
+              {`${computer}${META_SEPARATOR}`}
+            </Text>
+          ) : null}
+          <RowMarkdown text={line.text} ink={line.color} kind="line" />
+        </View>
       </View>
       <ThemeIcon name="home.arrow" fallback={ChevronRight} size={16} color={theme.colors.primary} />
     </PressableScale>
@@ -206,4 +223,7 @@ const styles = StyleSheet.create({
     borderLeftWidth: 4,
   },
   copy: { flex: 1, minWidth: 0, gap: 4 },
+  metaLine: { flexDirection: 'row', alignItems: 'center', minWidth: 0 },
+  // Over the row's own left border, which a waiting row leaves to this edge.
+  edge: { position: 'absolute', left: -4, top: 0, bottom: 0, width: 4 },
 });

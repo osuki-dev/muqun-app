@@ -28,12 +28,14 @@ import Animated, {
 
 import { AgentActionMenu, type AgentActionMenuItem } from '@/components/agent-action-menu';
 import { AgentMark } from '@/components/agent-mark';
+import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { BoundedMarkdown } from '@/components/bounded-markdown';
 import { PressableScale } from '@/components/pressable-scale';
 import { Text } from '@/components/text';
 import { useTaskAction } from '@/hooks/use-server-tasks';
 import { useRowMarkdownStyle } from '@/hooks/use-markdown-style';
-import { useTaskAge } from '@/hooks/use-task-age';
+import { useSurfaceBackground } from '@/hooks/use-surface-background';
+import { useTaskAge, useTaskElapsed } from '@/hooks/use-task-age';
 import { taskStateWord } from '@/i18n/labels';
 import { findAgent, type MirroredServerDiscovery } from '@/lib/agent-discovery';
 import { agentBrandName } from '@/lib/herdr-entity';
@@ -45,11 +47,15 @@ import {
   type TaskRowIcon,
   type TaskRowVisual,
 } from '@/lib/home-computer-cards';
-import { fadeIn, fadeOut, listLayout, travelTiming, zoomIn } from '@/lib/motion';
+import { fadeIn, fadeOut, listLayout, pulseOnce, travelTiming, zoomIn } from '@/lib/motion';
+import { describeGatewayFailure } from '@/lib/network-error';
 import { canMarkTaskDone, type TaskView } from '@/lib/task-ledger';
 import { useHomeTaskCards } from '@/stores/home-task-cards';
 import { useServerCapabilities } from '@/stores/server-capabilities';
 import { plural } from '@lingui/core/macro';
+
+/** Inline markup worth the markdown renderer: code, emphasis, links, escapes, html. */
+const MARKDOWN_SYNTAX = /[`*_[\\<]/;
 
 const ICONS: Record<TaskRowIcon, LucideIcon> = {
   send: Send,
@@ -81,12 +87,14 @@ export function TaskStateIcon({ visual, size = 16 }: { visual: TaskRowVisual; si
   }, [spins, turn]);
   const spinStyle = useAnimatedStyle(() => ({ transform: [{ rotate: `${turn.get() * 360}deg` }] }));
   const Icon = ICONS[visual.icon];
+  // The rotation lives on an inner view that exists only while spinning, so a
+  // check or cross never arrives at the spinner's last angle.
+  const glyph = <Icon size={size} color={theme.colors[visual.tone]} strokeWidth={2.2} />;
   return (
     <Animated.View
       key={visual.icon}
-      entering={visual.icon === 'check' || visual.icon === 'x' ? zoomIn('short') : fadeIn('micro')}
-      style={spinStyle}>
-      <Icon size={size} color={theme.colors[visual.tone]} strokeWidth={2.2} />
+      entering={visual.icon === 'check' || visual.icon === 'x' ? zoomIn('short') : fadeIn('micro')}>
+      {visual.spins ? <Animated.View style={spinStyle}>{glyph}</Animated.View> : glyph}
     </Animated.View>
   );
 }
@@ -135,12 +143,10 @@ export function useTaskRowLine(discovery: MirroredServerDiscovery | undefined) {
   const { t } = useLingui();
   const { _ } = useLinguiRuntime();
   const theme = useThemeTokens();
-  const age = useTaskAge();
   const whereName = useTaskWhereName(discovery);
   return (
     task: TaskView | null,
     visual: TaskRowVisual,
-    nowMs: number,
     computer = ''
   ): { text: string; color: string } => {
     const muted = theme.colors.textMuted;
@@ -154,13 +160,8 @@ export function useTaskRowLine(discovery: MirroredServerDiscovery | undefined) {
         return { text: agent ? t`Starting ${agent}…` : stateWord, color: muted };
       case 'progress':
         return { text: line.text, color: muted };
-      case 'elapsed':
-        return {
-          text: [agent || stateWord, task ? age(task.updatedMs, nowMs) : '']
-            .filter(Boolean)
-            .join(' · '),
-          color: muted,
-        };
+      case 'agent':
+        return { text: agent || stateWord, color: muted };
       case 'waiting':
         return {
           text: [_(taskStateWord.waiting), line.text].filter(Boolean).join(' · '),
@@ -206,6 +207,21 @@ export function RowMarkdown({
   testID?: string;
 }) {
   const markdownStyle = useRowMarkdownStyle(ink, kind);
+  // Most lines are the app's own copy ("Starting Codex…", "Cancelled"): plain
+  // text, and no native markdown view, unless the string carries markup.
+  if (!MARKDOWN_SYNTAX.test(text)) {
+    return (
+      <Text
+        testID={testID}
+        variant={kind === 'title' ? 'bodySmall' : 'caption'}
+        weight={kind === 'title' ? 'semibold' : undefined}
+        color={ink}
+        numberOfLines={kind === 'title' ? 2 : 1}
+        style={styles.grow}>
+        {text}
+      </Text>
+    );
+  }
   return (
     <BoundedMarkdown
       markdown={text}
@@ -261,8 +277,11 @@ export function TaskRow({
 }) {
   const { t } = useLingui();
   const theme = useThemeTokens();
+  const profile = useAppearanceProfile();
+  const background = useSurfaceBackground();
   const { showToast } = useToast();
   const age = useTaskAge();
+  const elapsed = useTaskElapsed();
   const rowLine = useTaskRowLine(discovery);
   const whereName = useTaskWhereName(discovery);
   const rollupText = useRollupText()(task);
@@ -277,15 +296,21 @@ export function TaskRow({
     canComplete: canMarkTaskDone(task, capabilities),
     acknowledged,
   });
-  const line = rowLine(task, visual, nowMs);
-  const title = taskTitle(task);
-  // The elapsed line says how long already; the column would say it twice.
-  const trailingAge = visual.line.kind === 'elapsed' ? '' : age(task.updatedMs, nowMs);
+  const line = rowLine(task, visual);
+  const title = taskTitle(task) || whereName(task) || line.text;
+  // Open work says how long it has run (`14m`), finished work how long ago.
+  const trailingAge =
+    visual.clock === 'elapsed'
+      ? elapsed(task.updatedMs, nowMs)
+      : visual.clock === 'ago'
+        ? age(task.updatedMs, nowMs)
+        : '';
+  // The reader is told what failed in words, never the gateway's raw answer.
   const fail = (title: string) => (failure: unknown) =>
     showToast({
       variant: 'danger',
       title,
-      message: failure instanceof Error ? failure.message : String(failure),
+      message: describeGatewayFailure(failure, title).message,
     });
   const run = (action: () => void) => () => {
     setMenuOpen(false);
@@ -332,7 +357,23 @@ export function TaskRow({
       entering={fadeIn('micro')}
       exiting={fadeOut('micro')}
       layout={listLayout()}
-      style={nested ? styles.nested : undefined}>
+      style={[
+        nested ? styles.nested : undefined,
+        visual.plate
+          ? {
+              backgroundColor: background(theme.colors[visual.plate]),
+              borderRadius: profile.chrome.control,
+            }
+          : undefined,
+      ]}>
+      {visual.edge ? (
+        // Arriving at needs-you pulses the edge once (skipped on a remount).
+        <Animated.View
+          pointerEvents="none"
+          entering={pulseOnce()}
+          style={[styles.edge, { backgroundColor: theme.colors[visual.edge] }]}
+        />
+      ) : null}
       <PressableScale
         testID={`task-row-${task.taskId}`}
         accessibilityRole="button"
@@ -357,7 +398,7 @@ export function TaskRow({
             </Text>
           ) : null}
         </View>
-        <Animated.View key={line.text} entering={fadeIn('micro')} style={styles.line}>
+        <Animated.View key={visual.line.kind} entering={fadeIn('micro')} style={styles.line}>
           <RowMarkdown
             testID={`task-row-line-${task.taskId}`}
             text={line.text}
@@ -396,7 +437,6 @@ export function TaskRow({
           key={child.taskId}
           task={child}
           discovery={discovery}
-          nowMs={nowMs}
           whereName={whereName(child)}
           onOpen={onOpen}
         />
@@ -409,20 +449,18 @@ export function TaskRow({
 function SubTaskRow({
   task,
   discovery,
-  nowMs,
   whereName,
   onOpen,
 }: {
   task: TaskView;
   discovery: MirroredServerDiscovery | undefined;
-  nowMs: number;
   whereName: string;
   onOpen: (task: TaskView) => void;
 }) {
   const theme = useThemeTokens();
   const rowLine = useTaskRowLine(discovery);
   const visual = taskRowVisual(task, { canComplete: false, acknowledged: true });
-  const line = rowLine(task, visual, nowMs);
+  const line = rowLine(task, visual);
   return (
     <PressableScale
       testID={`task-row-${task.taskId}`}
@@ -443,7 +481,7 @@ export function SentTaskRow({ goal, computer }: { goal: string; computer: string
   const theme = useThemeTokens();
   const rowLine = useTaskRowLine(undefined);
   const visual = taskRowVisual({ state: 'sent' }, { canComplete: false, acknowledged: true });
-  const line = rowLine(null, visual, 0, computer);
+  const line = rowLine(null, visual, computer);
   return (
     <Animated.View
       testID="home-card-pending"
@@ -472,6 +510,7 @@ const styles = StyleSheet.create({
   grow: { flex: 1, minWidth: 0 },
   line: { paddingLeft: 24, flexDirection: 'row', alignItems: 'center' },
   nested: { paddingLeft: 24 },
+  edge: { position: 'absolute', left: 0, top: 0, bottom: 0, width: 3 },
   child: {
     minHeight: 28,
     paddingLeft: 24,

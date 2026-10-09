@@ -27,7 +27,7 @@ import type { PaneViewMode } from '@/lib/pane-view-mode';
 import type { ConnectionStatus, ServerReachability } from '@/lib/server-reachability';
 import type { LaunchAgentCaption } from '@/lib/home-launch-model';
 import type { AgentSessionStatusWord } from '@/lib/home-continue';
-import type { TaskKind, TaskState } from '@/lib/task-ledger';
+import type { TaskState } from '@/lib/task-ledger';
 import { OPENCODE_INSTALL_URL } from '@/constants/links';
 
 /**
@@ -414,12 +414,6 @@ export const taskStateWord: Record<TaskState, MessageDescriptor> = {
   done: msg({ message: 'Done', context: 'task state' }),
   failed: msg({ message: 'Failed', context: 'task state' }),
   cancelled: msg({ message: 'Cancelled', context: 'task state' }),
-};
-
-/** What kind of work a ledger task is. */
-export const taskKindWord: Record<TaskKind, MessageDescriptor> = {
-  delegation: msg({ message: 'Delegation', context: 'task kind' }),
-  command: msg({ message: 'Command', context: 'task kind' }),
 };
 
 export const agentLaunchCaption: Record<LaunchAgentCaption, MessageDescriptor> = {

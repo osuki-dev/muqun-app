@@ -172,7 +172,7 @@ export function taskResultLine(
 
 /** The title a task row shows: the requester's label, else the goal. */
 export function taskTitle(task: TaskView): string {
-  return task.label || task.goal.split('\n')[0]?.trim() || task.taskId;
+  return task.label || task.goal.split('\n')[0]?.trim() || '';
 }
 
 /**
@@ -263,6 +263,21 @@ function settlesPending(tasks: readonly TaskView[], item: PendingDispatch): bool
 /** How long a finished task, not yet acknowledged, keeps its computer's card on Home. */
 export const RECENT_FINISHED_MS = 30 * 60_000;
 
+/**
+ * Repeated cancelled attempts at one goal say one thing: only the newest of
+ * them is kept (`tasks` is newest first).
+ */
+function collapseCancelled(tasks: readonly TaskView[]): TaskView[] {
+  const seen = new Set<string>();
+  return tasks.filter((task) => {
+    if (task.state !== 'cancelled') return true;
+    const title = taskTitle(task);
+    if (seen.has(title)) return false;
+    seen.add(title);
+    return true;
+  });
+}
+
 const ACTIVITY_RANK: Record<CardActivity, number> = {
   'needs-you': 0,
   working: 1,
@@ -299,13 +314,19 @@ export function buildComputerCards(input: {
     // the root itself finished: a delegating turn can end before its
     // sub-tasks do, and an idle parent is not finished work.
     const open = byUrgency(tree.filter(treeRowIsOpen));
-    const finishedAll = tree
-      .filter((row) => !treeRowIsOpen(row) && isTerminalTaskState(row.task.state))
-      .map((row) => row.task);
-    const finished = finishedAll.filter(
-      (task) =>
-        !input.dismissed.has(dismissedKey(server.serverId, task.taskId)) &&
-        input.nowMs - task.updatedMs <= RECENT_FINISHED_MS
+    const finished = collapseCancelled(
+      tree
+        .filter((row) => !treeRowIsOpen(row) && isTerminalTaskState(row.task.state))
+        .map((row) => row.task)
+        .filter(
+          (task) =>
+            !input.dismissed.has(dismissedKey(server.serverId, task.taskId)) &&
+            // A row the reader just settled counts from that moment, so an
+            // old paused task marked done does not vanish until the gateway
+            // answers with its own fresh time.
+            input.nowMs - Math.max(task.updatedMs, task.settledAtMs ?? task.updatedMs) <=
+              RECENT_FINISHED_MS
+        )
     );
     const pending = (input.pending ?? []).filter(
       (item) => item.serverId === server.serverId && !settlesPending(tasks, item)
@@ -354,24 +375,24 @@ export function buildComputerCards(input: {
 
 /**
  * What a task row opens: the thing the task runs in. A session-bound task
- * opens its agent session, a pane-bound one its pane -- unless it failed,
- * when the pane may be gone and the row's result line already says why.
- * Null when there is nothing to open (not bound yet, or failed in a pane).
+ * opens its agent session, a pane-bound one its pane -- a failed one too, so
+ * the reader sees why (a pane that is gone leaves the computer's screen with
+ * the error on the row). A task not bound yet opens its computer.
  */
 export function taskRowDestination(
   task: TaskView
 ):
   | { kind: 'session'; asid: string; agentId: string }
   | { kind: 'pane'; paneId: string; sessionId: string }
-  | null {
+  | { kind: 'computer' } {
   const binding = task.binding;
   if (binding.kind === 'agent_session') {
     return { kind: 'session', asid: binding.asid, agentId: binding.agentId };
   }
-  if (binding.kind === 'pane' && task.state !== 'failed') {
+  if (binding.kind === 'pane') {
     return { kind: 'pane', paneId: binding.paneId, sessionId: binding.sessionId };
   }
-  return null;
+  return { kind: 'computer' };
 }
 
 /**
@@ -409,16 +430,16 @@ export type TaskOpeners = {
   openServer: (serverId: string, paneId?: string, sessionId?: string) => unknown;
 };
 
-/** Open what a task runs in; false when it has nothing to open. */
-export function openTaskWork(commands: TaskOpeners, serverId: string, task: TaskView): boolean {
+/** Open what a task runs in, on its own computer. */
+export function openTaskWork(commands: TaskOpeners, serverId: string, task: TaskView): void {
   const destination = taskRowDestination(task);
-  if (!destination) return false;
   if (destination.kind === 'session') {
     void commands.openAgent(serverId, destination.asid, undefined, undefined, destination.agentId);
-  } else {
+  } else if (destination.kind === 'pane') {
     void commands.openServer(serverId, destination.paneId, destination.sessionId);
+  } else {
+    void commands.openServer(serverId);
   }
-  return true;
 }
 
 /** A row's state: the ledger's, or `sent` for a goal the computer has not reported yet. */
@@ -434,7 +455,7 @@ export type TaskRowLine =
   | { kind: 'sent' }
   | { kind: 'starting' }
   | { kind: 'progress'; text: string }
-  | { kind: 'elapsed' }
+  | { kind: 'agent' }
   | { kind: 'waiting'; text?: string }
   | { kind: 'paused'; text?: string }
   | { kind: 'result'; text: string }
@@ -453,6 +474,16 @@ export type TaskRowVisual = {
   /** Only the working icon moves, and only while the reader allows motion. */
   spins: boolean;
   line: TaskRowLine;
+  /** The right-hand time: how long open work has run, or how long ago it ended. */
+  clock: 'elapsed' | 'ago' | 'none';
+  /** Paused rows sit on the raised plate (§3: textMuted on surfaceRaised). */
+  plate?: 'surfaceRaised';
+  /**
+   * A row that needs the reader carries the warning edge (§3), pulsed once on
+   * arrival. `warning`, not §3's `warningSubtle`: the theme schema has no such
+   * token, and adding one is a theme-package change.
+   */
+  edge?: 'warning';
   actions: TaskRowAction[];
 };
 
@@ -467,7 +498,14 @@ export function taskRowVisual(
   opts: { canComplete: boolean; acknowledged: boolean }
 ): TaskRowVisual {
   if (task.state === 'sent') {
-    return { icon: 'send', tone: 'textMuted', spins: false, line: { kind: 'sent' }, actions: [] };
+    return {
+      icon: 'send',
+      tone: 'textMuted',
+      spins: false,
+      line: { kind: 'sent' },
+      clock: 'none',
+      actions: [],
+    };
   }
   const result = taskResultLine(task);
   const said = result?.kind === 'summary' ? result.text : undefined;
@@ -476,10 +514,9 @@ export function taskRowVisual(
     : result?.kind === 'exit'
       ? { kind: 'exit', code: result.code }
       : { kind: 'state' };
-  const open: TaskRowAction[] = taskRowDestination(task) ? ['open'] : [];
-  const live: TaskRowAction[] = [...open, 'cancel'];
+  const live: TaskRowAction[] = ['open', 'cancel'];
   const confirmable: TaskRowAction[] = opts.canComplete ? [...live, 'markDone'] : live;
-  const finished: TaskRowAction[] = opts.acknowledged ? open : [...open, 'acknowledge'];
+  const finished: TaskRowAction[] = opts.acknowledged ? ['open'] : ['open', 'acknowledge'];
   switch (task.state) {
     case 'queued':
     case 'dispatching':
@@ -488,6 +525,7 @@ export function taskRowVisual(
         tone: 'textMuted',
         spins: true,
         line: { kind: 'starting' },
+        clock: 'elapsed',
         actions: live,
       };
     case 'working':
@@ -500,7 +538,8 @@ export function taskRowVisual(
         line:
           task.progress && /[\p{L}\p{N}]/u.test(task.progress)
             ? { kind: 'progress', text: task.progress }
-            : { kind: 'elapsed' },
+            : { kind: 'agent' },
+        clock: 'elapsed',
         actions: live,
       };
     case 'waiting':
@@ -509,6 +548,8 @@ export function taskRowVisual(
         tone: 'warning',
         spins: false,
         line: said ? { kind: 'waiting', text: said } : { kind: 'waiting' },
+        clock: 'elapsed',
+        edge: 'warning',
         actions: confirmable,
       };
     case 'idle_unconfirmed':
@@ -517,16 +558,26 @@ export function taskRowVisual(
         tone: 'textMuted',
         spins: false,
         line: said ? { kind: 'paused', text: said } : { kind: 'paused' },
+        clock: 'elapsed',
+        plate: 'surfaceRaised',
         actions: confirmable,
       };
     case 'done':
-      return { icon: 'check', tone: 'success', spins: false, line: ended, actions: finished };
+      return {
+        icon: 'check',
+        tone: 'success',
+        spins: false,
+        line: ended,
+        clock: 'ago',
+        actions: finished,
+      };
     case 'failed':
       return {
         icon: 'x',
         tone: 'danger',
         spins: false,
         line: said ? { kind: 'error', text: said } : ended,
+        clock: 'ago',
         actions: finished,
       };
     case 'cancelled':
@@ -535,6 +586,7 @@ export function taskRowVisual(
         tone: 'textMuted',
         spins: false,
         line: { kind: 'state' },
+        clock: 'ago',
         actions: finished,
       };
   }

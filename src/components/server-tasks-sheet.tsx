@@ -3,6 +3,7 @@ import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens } from '@osuki-dev/ui';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { LayoutAnimationConfig } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import {
@@ -104,33 +105,36 @@ export function ServerTasksSheet({
           <ActivityIndicator size="small" color={theme.colors.primary} />
         </View>
       ) : (
-        <LegendList
-          nestedScrollEnabled
-          testID="server-tasks-list"
-          data={items}
-          keyExtractor={itemKey}
-          getItemType={itemType}
-          estimatedItemSize={64}
-          style={sheetSceneStyles.scroller}
-          contentContainerStyle={sheetSceneStyles.scrollerContent}
-          renderItem={({ item }) =>
-            item.type === 'heading' ? (
-              <SheetSceneGroupHeading title={item.title} first={item.first} />
-            ) : item.type === 'task' ? (
-              <TaskRow
-                task={item.task}
-                serverId={serverId ?? ''}
-                nested={item.nested}
-                nowMs={nowMs}
-                discovery={discovery}
-                onOpen={onOpen}
-              />
-            ) : (
-              <SheetSceneRow testID="server-tasks-empty" title={t`No tasks yet`} />
-            )
-          }
-          ListFooterComponent={<SheetSceneFooter bottomInset={insets.bottom} />}
-        />
+        // Rows already there when the sheet opens do not replay their arrival.
+        <LayoutAnimationConfig skipEntering>
+          <LegendList
+            nestedScrollEnabled
+            testID="server-tasks-list"
+            data={items}
+            keyExtractor={itemKey}
+            getItemType={itemType}
+            estimatedItemSize={64}
+            style={sheetSceneStyles.scroller}
+            contentContainerStyle={sheetSceneStyles.scrollerContent}
+            renderItem={({ item }) =>
+              item.type === 'heading' ? (
+                <SheetSceneGroupHeading title={item.title} first={item.first} />
+              ) : item.type === 'task' ? (
+                <TaskRow
+                  task={item.task}
+                  serverId={serverId ?? ''}
+                  nested={item.nested}
+                  nowMs={nowMs}
+                  discovery={discovery}
+                  onOpen={onOpen}
+                />
+              ) : (
+                <SheetSceneRow testID="server-tasks-empty" title={t`No tasks yet`} />
+              )
+            }
+            ListFooterComponent={<SheetSceneFooter bottomInset={insets.bottom} />}
+          />
+        </LayoutAnimationConfig>
       )}
     </SheetScene>
   );
