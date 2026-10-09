@@ -175,11 +175,13 @@ msgid "{agentName} cannot preview a rollback. This removes the message and every
 msgstr "{agentName} không thể xem trước thao tác hoàn tác. Thao tác này xoá tin nhắn và mọi thứ sau nó, tức cả lượt, và không thể khôi phục"
 
 #: src/components/agent-workbench.tsx
+#: src/components/home-composer-dock.tsx
 msgid "{agentName} does not support that action."
 msgstr "{agentName} không hỗ trợ thao tác này"
 
 #: src/components/agent-composer.tsx
 #: src/components/agent-workbench.tsx
+#: src/components/home-composer-dock.tsx
 msgid "{agentName} is offline"
 msgstr "{agentName} đang ngoại tuyến"
 
@@ -196,6 +198,7 @@ msgid "{agentName} ready"
 msgstr "{agentName} sẵn sàng"
 
 #: src/components/agent-workbench.tsx
+#: src/components/home-composer-dock.tsx
 msgid "{agentName} refused the request: {message}"
 msgstr "{agentName} đã từ chối yêu cầu: {message}"
 
@@ -702,7 +705,7 @@ msgstr "Đang hỏi Gateway về mã đó"
 msgid "Assign this to an assistant"
 msgstr "Giao việc này cho một trợ lý"
 
-#: src/components/home-composer.tsx
+#: src/components/home-composer-dock.tsx
 msgid "Assigned to {computerLabel}, {agentName}"
 msgstr "Giao cho {computerLabel}, {agentName}"
 
@@ -1077,7 +1080,7 @@ msgstr "Chọn một trợ lý"
 msgid "Choose an SSH host."
 msgstr "Chọn một host SSH"
 
-#: src/components/home-composer.tsx
+#: src/components/home-composer-dock.tsx
 msgid "Choose another computer"
 msgstr "Chọn máy tính khác"
 
@@ -1323,6 +1326,7 @@ msgstr "Không tìm thấy máy tính"
 msgid "Computer offline"
 msgstr "Máy tính ngoại tuyến"
 
+#: src/components/home-composer-dock.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Computer unavailable."
 msgstr "Máy tính không khả dụng"
@@ -1330,7 +1334,6 @@ msgstr "Máy tính không khả dụng"
 #: src/app/settings-servers.tsx
 #: src/app/settings.tsx
 #: src/components/app-drawer-content.tsx
-#: src/components/home-composer.tsx
 #: src/components/home-editorial-layout.tsx
 msgid "Computers"
 msgstr "Máy tính"
@@ -3583,7 +3586,7 @@ msgstr "chưa có commit nào"
 msgid "No commits yet"
 msgstr "Chưa có commit nào"
 
-#: src/components/home-composer.tsx
+#: src/components/home-composer-dock.tsx
 msgid "No computer online"
 msgstr "Không có máy tính nào trực tuyến"
 
@@ -5068,7 +5071,7 @@ msgstr "Gửi văn bản"
 msgid "Send this task to {assignmentLabel}"
 msgstr "Gửi tác vụ này đến {assignmentLabel}"
 
-#: src/components/home-composer.tsx
+#: src/components/home-composer-dock.tsx
 msgid "Send to {computerLabel}"
 msgstr "Gửi đến {computerLabel}"
 
@@ -5727,10 +5730,6 @@ msgstr "Nhiệm vụ ({0}/{1})"
 msgid "Tasks progress"
 msgstr "Tiến độ nhiệm vụ"
 
-#: src/components/home-composer.tsx
-msgid "Tell a computer what to do"
-msgstr "Bảo máy tính cần làm gì"
-
 #: src/components/settings-storage.tsx
 msgid "Temporary files"
 msgstr "Tệp tạm"
@@ -6069,6 +6068,7 @@ msgid "This computer does not expand ~. Type the full path, starting with /."
 msgstr "Máy tính này không mở rộng ký hiệu ~. Hãy nhập đường dẫn đầy đủ, bắt đầu bằng /"
 
 #: src/components/agent-workbench.tsx
+#: src/components/home-composer-dock.tsx
 msgid "This computer does not know {agentName}. Refresh the agent list and try again."
 msgstr "Máy tính này không biết {agentName}. Hãy làm mới danh sách tác tử rồi thử lại"
 

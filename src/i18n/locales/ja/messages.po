@@ -175,11 +175,13 @@ msgid "{agentName} cannot preview a rollback. This removes the message and every
 msgstr "{agentName} はロールバックをプレビューできません。このメッセージ以降、ターン全体が削除され、元に戻せません"
 
 #: src/components/agent-workbench.tsx
+#: src/components/home-composer-dock.tsx
 msgid "{agentName} does not support that action."
 msgstr "{agentName} はこの操作に対応していません"
 
 #: src/components/agent-composer.tsx
 #: src/components/agent-workbench.tsx
+#: src/components/home-composer-dock.tsx
 msgid "{agentName} is offline"
 msgstr "{agentName} はオフラインです"
 
@@ -196,6 +198,7 @@ msgid "{agentName} ready"
 msgstr "{agentName} の準備完了"
 
 #: src/components/agent-workbench.tsx
+#: src/components/home-composer-dock.tsx
 msgid "{agentName} refused the request: {message}"
 msgstr "{agentName} がリクエストを拒否しました: {message}"
 
@@ -702,7 +705,7 @@ msgstr "そのコードを Gateway に確認しています"
 msgid "Assign this to an assistant"
 msgstr "アシスタントに任せる"
 
-#: src/components/home-composer.tsx
+#: src/components/home-composer-dock.tsx
 msgid "Assigned to {computerLabel}, {agentName}"
 msgstr "割り当て先：{computerLabel}、{agentName}"
 
@@ -1077,7 +1080,7 @@ msgstr "アシスタントを選択"
 msgid "Choose an SSH host."
 msgstr "SSH ホストを選んでください"
 
-#: src/components/home-composer.tsx
+#: src/components/home-composer-dock.tsx
 msgid "Choose another computer"
 msgstr "別のコンピュータを選択"
 
@@ -1323,6 +1326,7 @@ msgstr "コンピュータが見つかりません"
 msgid "Computer offline"
 msgstr "コンピュータはオフライン"
 
+#: src/components/home-composer-dock.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Computer unavailable."
 msgstr "コンピュータを利用できません"
@@ -1330,7 +1334,6 @@ msgstr "コンピュータを利用できません"
 #: src/app/settings-servers.tsx
 #: src/app/settings.tsx
 #: src/components/app-drawer-content.tsx
-#: src/components/home-composer.tsx
 #: src/components/home-editorial-layout.tsx
 msgid "Computers"
 msgstr "コンピュータ"
@@ -3583,7 +3586,7 @@ msgstr "コミットはまだありません"
 msgid "No commits yet"
 msgstr "コミットはまだありません"
 
-#: src/components/home-composer.tsx
+#: src/components/home-composer-dock.tsx
 msgid "No computer online"
 msgstr "オンラインのコンピュータがありません"
 
@@ -5068,7 +5071,7 @@ msgstr "文字を送る"
 msgid "Send this task to {assignmentLabel}"
 msgstr "このタスクを {assignmentLabel} に送る"
 
-#: src/components/home-composer.tsx
+#: src/components/home-composer-dock.tsx
 msgid "Send to {computerLabel}"
 msgstr "{computerLabel} に送信"
 
@@ -5727,10 +5730,6 @@ msgstr "タスク ({0}/{1})"
 msgid "Tasks progress"
 msgstr "タスクの進行状況"
 
-#: src/components/home-composer.tsx
-msgid "Tell a computer what to do"
-msgstr "コンピュータにやることを伝える"
-
 #: src/components/settings-storage.tsx
 msgid "Temporary files"
 msgstr "一時ファイル"
@@ -6069,6 +6068,7 @@ msgid "This computer does not expand ~. Type the full path, starting with /."
 msgstr "このコンピュータは ~ を展開しません。/ で始まる完全なパスを入力してください"
 
 #: src/components/agent-workbench.tsx
+#: src/components/home-composer-dock.tsx
 msgid "This computer does not know {agentName}. Refresh the agent list and try again."
 msgstr "このコンピュータは {agentName} を認識していません。エージェント一覧を更新してから、もう一度お試しください"
 

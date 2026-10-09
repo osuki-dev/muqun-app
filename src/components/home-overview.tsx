@@ -84,7 +84,7 @@ import {
   HomeLaunchTarget,
   useHomeLaunchController,
 } from '@/components/home-launch-actions';
-import { HomeComposer } from '@/components/home-composer';
+import { HomeComposerDock } from '@/components/home-composer-dock';
 import { SshHostRow } from '@/components/ssh-host-row';
 import { StatusDot } from '@/components/status-dot';
 import { NAV_HEADER_TOP_GAP } from '@/constants/nav-header';
@@ -161,15 +161,6 @@ export type HomeOverviewProps = {
  * 12 under the card (the 44 tap box centres it) and inset to the rows' text.
  */
 const PAD_WORK_LINK = { marginTop: 0, paddingVertical: 0, paddingHorizontal: 12 } as const;
-/**
- * How far above the keyboard the focused Home composer field is kept on a
- * phone. The field's bottom is what the scroll view aligns; Send sits beside it,
- * or -- once the draft wraps -- on its own 40pt row under it, so the offset
- * clears that row, the composer's padding, and the band at the keyboard's top
- * edge where iOS swallows taps.
- */
-const HOME_COMPOSER_KEYBOARD_OFFSET = 72;
-
 export function HomeOverview({
   width,
   layoutMode,
@@ -304,8 +295,9 @@ export function HomeOverview({
   const overviewScroll = useRef<React.ComponentRef<typeof KeyboardAwareScrollView>>(null);
   const restoredScroll = useRef<React.ComponentRef<typeof KeyboardAwareScrollView>>(null);
   const savedScrollY = useRef(0);
-  const composerAnchor = useRef<View>(null);
   const [composerPulse, setComposerPulse] = useState(0);
+  // The phone dock floats over the page; the page's foot clears it.
+  const [dockHeight, setDockHeight] = useState(0);
   const rememberScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
     savedScrollY.current = event.nativeEvent.contentOffset.y;
   };
@@ -778,32 +770,25 @@ export function HomeOverview({
     const padLaunch =
       isPad && padLaunchLayoutEnabled(padGeometry.contentWidth, fontScale, editorialViewportHeight);
     // Hidden with nothing paired: the pair card is that page's one action.
-    const composer =
-      hydrationError || loading || launchController.servers.length === 0 ? null : (
-        <View ref={composerAnchor} collapsable={false}>
-          <HomeComposer
-            controller={launchController}
-            reachabilityByServer={padReachabilityByServer}
-            currentServerId={record?.serverId}
-            targetPulse={composerPulse}
-            onNewAgent={commands.newAgent}
-          />
-        </View>
-      );
-    // A computer row tapped below the fold: bring the composer it now feeds
-    // back into view. The Pad work column scrolls on its own and keeps it near.
+    const showDock = !hydrationError && !loading && launchController.servers.length > 0;
+    // The session screen's own dock, at the foot of the page -- or, on the
+    // wide Pad cover, at the foot of the work column.
+    const dock = showDock ? (
+      <HomeComposerDock
+        controller={launchController}
+        reachabilityByServer={padReachabilityByServer}
+        targetPulse={composerPulse}
+        bottomInset={padLaunch ? 0 : insets.bottom}
+        topInset={insets.top}
+        onDockHeight={setDockHeight}
+        onOpenAgent={commands.openAgent}
+      />
+    ) : null;
+    // A computer row sets the dock's target; the bar flashes to say so.
     const targetComposer = (serverId: string) => {
       launchController.choose(serverId);
       void Haptics.selectionAsync();
       setComposerPulse((pulse) => pulse + 1);
-      if (padLaunch) return;
-      composerAnchor.current?.measureInWindow((_x, y, _width, height) => {
-        if (y >= insets.top && y + height <= windowHeight - insets.bottom) return;
-        overviewScroll.current?.scrollTo({
-          y: Math.max(0, scrollY.get() + y - insets.top - 16),
-          animated: true,
-        });
-      });
     };
     const editorialContent = (
       <View
@@ -819,8 +804,13 @@ export function HomeOverview({
         <KeyboardAwareScrollView
           ref={overviewScroll}
           keyboardShouldPersistTaps="handled"
-          // Phone only: the Pad composer sits in its own work column.
-          bottomOffset={isPad ? undefined : HOME_COMPOSER_KEYBOARD_OFFSET}
+          // The wide Pad cover holds the dock inside this page, and the dock
+          // rides the keyboard by itself; this view must not move it twice.
+          enabled={!padLaunch}
+          // Elsewhere the dock floats over the page's foot and rises with the
+          // keyboard: a field in the page is kept clear of it, not just of the
+          // keyboard.
+          bottomOffset={dock && !padLaunch ? dockHeight : undefined}
           onContentSizeChange={restoreScroll}
           onScrollEndDrag={rememberScroll}
           onMomentumScrollEnd={rememberScroll}
@@ -829,7 +819,7 @@ export function HomeOverview({
           contentContainerStyle={{
             flexGrow: 1,
             paddingTop: insets.top,
-            paddingBottom: insets.bottom + 24,
+            paddingBottom: (dock && !padLaunch ? dockHeight : insets.bottom) + 24,
           }}
           onScroll={onScroll}
           scrollEventThrottle={16}
@@ -922,7 +912,7 @@ export function HomeOverview({
                 // a header dropdown beside it said the same thing twice (and
                 // truncated the name to fit). Only while no composer is drawn
                 // -- a storage error -- does the header keep the choice.
-                isPad || composer !== null || launchController.servers.length <= 1 ? undefined : (
+                isPad || showDock || launchController.servers.length <= 1 ? undefined : (
                   <HomeLaunchTarget
                     wide={isPad}
                     bare={customTheme?.manifest.homePresentation?.toolbarBackground === false}
@@ -932,7 +922,8 @@ export function HomeOverview({
                   />
                 )
               }
-              padComposer={padLaunch ? composer : undefined}
+              padComposer={padLaunch ? dock : undefined}
+              padComposerHeight={dockHeight}
               launches={
                 hydrationError || loading ? undefined : launchController.servers.length === 0 ? (
                   <EmptyState
@@ -945,14 +936,13 @@ export function HomeOverview({
                   <View style={{ gap: padLaunch ? 12 : 16 }}>
                     {padLaunch ? null : isPad ? (
                       <>
-                        {/* No computer picker here: the composer below carries
-                            the assignment bar, the one place a target is chosen. */}
+                        {/* No computer picker here: the dock carries the
+                            assignment bar, the one place a target is chosen. */}
                         <Text variant="heading" accessibilityRole="header">
                           <Trans>New session</Trans>
                         </Text>
                       </>
                     ) : null}
-                    {padLaunch ? null : composer}
                     <HomeLaunchActions
                       controller={launchController}
                       grid={isPad}
@@ -1122,6 +1112,7 @@ export function HomeOverview({
             />
           </View>
         </KeyboardAwareScrollView>
+        {padLaunch ? null : dock}
         {devAmbientControls}
       </View>
     );

@@ -175,11 +175,13 @@ msgid "{agentName} cannot preview a rollback. This removes the message and every
 msgstr "{agentName} แสดงตัวอย่างการย้อนกลับไม่ได้ การดำเนินการนี้จะลบข้อความนี้และทุกอย่างหลังจากนั้นทั้งรอบ และเลิกทำไม่ได้"
 
 #: src/components/agent-workbench.tsx
+#: src/components/home-composer-dock.tsx
 msgid "{agentName} does not support that action."
 msgstr "{agentName} ไม่รองรับการดำเนินการนี้"
 
 #: src/components/agent-composer.tsx
 #: src/components/agent-workbench.tsx
+#: src/components/home-composer-dock.tsx
 msgid "{agentName} is offline"
 msgstr "{agentName} ออฟไลน์"
 
@@ -196,6 +198,7 @@ msgid "{agentName} ready"
 msgstr "{agentName} พร้อมแล้ว"
 
 #: src/components/agent-workbench.tsx
+#: src/components/home-composer-dock.tsx
 msgid "{agentName} refused the request: {message}"
 msgstr "{agentName} ปฏิเสธคำขอ: {message}"
 
@@ -702,7 +705,7 @@ msgstr "กำลังสอบถาม Gateway เกี่ยวกับร
 msgid "Assign this to an assistant"
 msgstr "มอบหมายงานนี้ให้ผู้ช่วย"
 
-#: src/components/home-composer.tsx
+#: src/components/home-composer-dock.tsx
 msgid "Assigned to {computerLabel}, {agentName}"
 msgstr "มอบหมายให้ {computerLabel}, {agentName}"
 
@@ -1077,7 +1080,7 @@ msgstr "เลือกผู้ช่วย"
 msgid "Choose an SSH host."
 msgstr "เลือกโฮสต์ SSH"
 
-#: src/components/home-composer.tsx
+#: src/components/home-composer-dock.tsx
 msgid "Choose another computer"
 msgstr "เลือกคอมพิวเตอร์เครื่องอื่น"
 
@@ -1323,6 +1326,7 @@ msgstr "ไม่พบคอมพิวเตอร์"
 msgid "Computer offline"
 msgstr "คอมพิวเตอร์ออฟไลน์"
 
+#: src/components/home-composer-dock.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Computer unavailable."
 msgstr "คอมพิวเตอร์ไม่พร้อมใช้งาน"
@@ -1330,7 +1334,6 @@ msgstr "คอมพิวเตอร์ไม่พร้อมใช้งา
 #: src/app/settings-servers.tsx
 #: src/app/settings.tsx
 #: src/components/app-drawer-content.tsx
-#: src/components/home-composer.tsx
 #: src/components/home-editorial-layout.tsx
 msgid "Computers"
 msgstr "คอมพิวเตอร์"
@@ -3583,7 +3586,7 @@ msgstr "ยังไม่มีคอมมิต"
 msgid "No commits yet"
 msgstr "ยังไม่มีคอมมิต"
 
-#: src/components/home-composer.tsx
+#: src/components/home-composer-dock.tsx
 msgid "No computer online"
 msgstr "ไม่มีคอมพิวเตอร์ที่ออนไลน์"
 
@@ -5068,7 +5071,7 @@ msgstr "ส่งข้อความ"
 msgid "Send this task to {assignmentLabel}"
 msgstr "ส่งงานนี้ให้ {assignmentLabel}"
 
-#: src/components/home-composer.tsx
+#: src/components/home-composer-dock.tsx
 msgid "Send to {computerLabel}"
 msgstr "ส่งไปยัง {computerLabel}"
 
@@ -5727,10 +5730,6 @@ msgstr "งาน ({0}/{1})"
 msgid "Tasks progress"
 msgstr "ความคืบหน้าของงาน"
 
-#: src/components/home-composer.tsx
-msgid "Tell a computer what to do"
-msgstr "บอกคอมพิวเตอร์ว่าต้องทำอะไร"
-
 #: src/components/settings-storage.tsx
 msgid "Temporary files"
 msgstr "ไฟล์ชั่วคราว"
@@ -6069,6 +6068,7 @@ msgid "This computer does not expand ~. Type the full path, starting with /."
 msgstr "คอมพิวเตอร์เครื่องนี้ไม่ขยาย ~ โปรดพิมพ์พาธแบบเต็มที่ขึ้นต้นด้วย /"
 
 #: src/components/agent-workbench.tsx
+#: src/components/home-composer-dock.tsx
 msgid "This computer does not know {agentName}. Refresh the agent list and try again."
 msgstr "คอมพิวเตอร์เครื่องนี้ไม่รู้จัก {agentName} รีเฟรชรายการเอเจนต์แล้วลองอีกครั้ง"
 

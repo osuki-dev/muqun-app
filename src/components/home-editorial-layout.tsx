@@ -79,11 +79,14 @@ export type HomeEditorialLayoutProps = {
   /** Start-new-work actions, already wired by the parent. */
   launches?: ReactNode;
   /**
-   * Home's composer on the wide Pad cover, at the top of the work column. The
-   * cover's dock keeps only the launch tiles, so the wordmark's measured room
-   * is unchanged; every other layout carries the composer inside `launches`.
+   * Home's dock on the wide Pad cover, at the foot of the work column, where
+   * the session screen keeps its own. It floats over the column's foot, so the
+   * column's scroll clears it by `padComposerHeight`. Every other layout draws
+   * the dock over the page itself.
    */
   padComposer?: ReactNode;
+  /** The dock's measured height, which the work column's foot clears. */
+  padComposerHeight?: number;
   /** Recent sessions or panes, already wired by the parent. */
   recent?: ReactNode;
   /** Replaces the Continue heading with a search control when inventory is large. */
@@ -208,6 +211,7 @@ export function HomeEditorialLayout({
   headerLeading,
   launches,
   padComposer,
+  padComposerHeight = 0,
   recent,
   recentHeading,
   attention,
@@ -543,47 +547,54 @@ export function HomeEditorialLayout({
               </View>
             ) : null}
           </View>
-          <ScrollView
-            testID="home-pad-launch-pane"
-            showsVerticalScrollIndicator={false}
-            keyboardShouldPersistTaps="handled"
-            style={{ width: launchWidth, flexGrow: 0, flexShrink: 0 }}
-            contentContainerStyle={styles.padWorkContent}>
-            {hasSlot(padComposer) ? <View testID="home-pad-composer">{padComposer}</View> : null}
-            {hasSlot(attention) ? attention : null}
-            {hasRecent || hasConnections ? (
-              <View testID="home-pad-lower-band" style={styles.padWorkSections}>
-                {hasRecent ? (
-                  <View testID="home-pad-continue">
-                    {recentHeading ? (
-                      <View style={styles.padWorkTitle}>{recentHeading}</View>
-                    ) : (
+          <View
+            testID="home-pad-work-column"
+            style={{ width: launchWidth, flexGrow: 0, flexShrink: 0 }}>
+            <ScrollView
+              testID="home-pad-launch-pane"
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+              style={styles.padWorkScroll}
+              contentContainerStyle={[
+                styles.padWorkContent,
+                hasSlot(padComposer) ? { paddingBottom: padComposerHeight + 24 } : null,
+              ]}>
+              {hasSlot(attention) ? attention : null}
+              {hasRecent || hasConnections ? (
+                <View testID="home-pad-lower-band" style={styles.padWorkSections}>
+                  {hasRecent ? (
+                    <View testID="home-pad-continue">
+                      {recentHeading ? (
+                        <View style={styles.padWorkTitle}>{recentHeading}</View>
+                      ) : (
+                        <Text
+                          variant="heading"
+                          accessibilityRole="header"
+                          color={theme.colors.text}
+                          style={[styles.padWorkTitle, scenePlate]}>
+                          {t`Continue`}
+                        </Text>
+                      )}
+                      {recent}
+                    </View>
+                  ) : null}
+                  {hasConnections ? (
+                    <View testID="home-pad-connections">
                       <Text
                         variant="heading"
                         accessibilityRole="header"
                         color={theme.colors.text}
                         style={[styles.padWorkTitle, scenePlate]}>
-                        {t`Continue`}
+                        {t`Computers`}
                       </Text>
-                    )}
-                    {recent}
-                  </View>
-                ) : null}
-                {hasConnections ? (
-                  <View testID="home-pad-connections">
-                    <Text
-                      variant="heading"
-                      accessibilityRole="header"
-                      color={theme.colors.text}
-                      style={[styles.padWorkTitle, scenePlate]}>
-                      {t`Computers`}
-                    </Text>
-                    {connections}
-                  </View>
-                ) : null}
-              </View>
-            ) : null}
-          </ScrollView>
+                      {connections}
+                    </View>
+                  ) : null}
+                </View>
+              ) : null}
+            </ScrollView>
+            {hasSlot(padComposer) ? padComposer : null}
+          </View>
         </View>
       </View>
     );
@@ -939,6 +950,7 @@ const styles = StyleSheet.create({
   padCoverArtwork: { position: 'absolute', right: 0, bottom: 0, zIndex: 1 },
   padLaunchDock: { position: 'absolute', left: 0, zIndex: 2 },
   padFirstRunStage: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingBottom: 24 },
+  padWorkScroll: { flex: 1 },
   padWorkContent: { paddingTop: 16, paddingBottom: 24, gap: 24 },
   padWorkSections: { gap: 32 },
   // The phone editorial section's heading, without its rule: title, 12, card.

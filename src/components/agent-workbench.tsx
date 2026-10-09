@@ -245,7 +245,6 @@ import {
   shouldPreserveNewSessionDraft,
   type AgentWorkbenchOwner,
 } from '@/lib/agent-workbench-ownership';
-import { claimInitialPrompt, initialPromptAction, recallInitialPrompt } from '@/lib/initial-prompt';
 import { isHomeRelativePath, settledWorkspaceDirectory } from '@/lib/agent-directory-suggest';
 import { recoverWith, settleAfter } from '@/lib/compiler-safe-control-flow';
 
@@ -354,12 +353,6 @@ export interface AgentWorkbenchProps {
   initialAgentId?: string;
   /** A route intent is consumed by this screen; opening `/agent` alone resumes. */
   initialIntent?: 'new';
-  /**
-   * The ledger id of the goal Home's composer started this `new` session with.
-   * The goal is claimed by it and sent once, when the workbench is ready
-   * (`initial-prompt.ts`).
-   */
-  initialPromptId?: string;
   /** A retained task under the Home overview is mounted, but is not being read. */
   visible?: boolean;
   topInset?: number;
@@ -376,7 +369,6 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   initialDirectory,
   initialAgentId,
   initialIntent,
-  initialPromptId,
   visible = true,
   topInset = 0,
   bottomInset = 0,
@@ -1147,8 +1139,6 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   const catalogScopeRef = useRef<AgentCatalogScope | null>(null);
   /** The agent the catalog on screen was read for; `null` until one answers. */
   const [catalogAnsweredFor, setCatalogAnsweredFor] = useState<string | null>(null);
-  /** The agent whose catalog request finished either way; Home's first prompt waits for it. */
-  const [catalogSettledFor, setCatalogSettledFor] = useState<string | null>(null);
   useEffect(() => {
     const scope: AgentCatalogScope = {
       sessionId,
@@ -1176,7 +1166,6 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         if (!mounted) return;
         setAvailableAgents(catalog?.modes ?? []);
         setCatalogAnsweredFor(scope.agentId ?? '');
-        setCatalogSettledFor(scope.agentId ?? '');
         if (agentChanged) setSkills(catalog?.skills ?? []);
         else if (catalog?.skills && catalog.skills.length > 0) {
           setSkills(catalog.skills);
@@ -1197,7 +1186,6 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       })
       .catch((err) => {
         console.warn('Failed to load agent catalog:', err);
-        if (mounted) setCatalogSettledFor(scope.agentId ?? '');
       });
     return () => {
       mounted = false;
@@ -2857,50 +2845,6 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   useEffect(() => {
     handleSendPromptRef.current = handleSendPrompt;
   });
-
-  /**
-   * Home's composer goal, sent as this new session's first prompt.
-   *
-   * Waits for the listing (which settles `loading` for a new intent) and the
-   * agent's catalog, so the session is created with the same defaults a typed
-   * first message would get. Claimed from the ledger, so a remount of this
-   * workbench under the same route never sends it twice; and never retried: a
-   * prompt that was not accepted, or a host that is offline, leaves the goal
-   * in the composer for the reader to send.
-   */
-  const initialPromptHandledRef = useRef(false);
-  const initialPromptReady =
-    initialIntent === 'new' &&
-    Boolean(initialPromptId) &&
-    !loading &&
-    !activeAsid &&
-    (isOffline || catalogSettledFor === (catalogAgentId ?? ''));
-  const sendInitialPrompt = useEffectEvent(() => {
-    if (initialPromptHandledRef.current || !initialPromptId) return;
-    initialPromptHandledRef.current = true;
-    const action = initialPromptAction({
-      claimed: claimInitialPrompt(initialPromptId, serverId),
-      recalled: recallInitialPrompt(initialPromptId, serverId),
-      sessionHasContent: Boolean(activeAsid) || !timelineEmpty,
-    });
-    if (action.kind === 'none') return;
-    const prompt = action.prompt;
-    if (action.kind === 'prefill') {
-      injectDraftRef.current?.(prompt);
-      return;
-    }
-    const send = handleSendPromptRef.current;
-    if (isOffline || !send) {
-      injectDraftRef.current?.(prompt);
-      return;
-    }
-    void send(prompt).then((accepted) => {
-      if (!accepted && mountedRef.current) injectDraftRef.current?.(prompt);
-    });
-  });
-  useEffect(() => {
-    if (initialPromptReady) sendInitialPrompt();
-  }, [initialPromptReady]);
 
   /**
    * Stop, and then wait to be told what happened.

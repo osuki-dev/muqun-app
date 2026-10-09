@@ -1,11 +1,11 @@
 import { describe, expect, test } from 'bun:test';
 
-import { findFileMentionTrigger as findHomeComposerMention } from '../file-mentions';
+import type { ModeInfo, ModelInfo } from '../agent-session';
 import type { GatewayRecord } from '../gateway-storage';
 import {
   homeComposerAgent,
-  homeComposerMentionCandidates,
-  removeHomeComposerMention,
+  homeHiddenClientCommands,
+  homeSessionParams,
   resolveHomeComposerTarget,
 } from '../home-composer';
 import { buildLaunchModel } from '../home-launch-model';
@@ -84,67 +84,80 @@ describe('homeComposerAgent', () => {
   });
 });
 
-describe('homeComposerMentionCandidates', () => {
-  const reachability = { studio: 'live', laptop: 'offline', build: 'unknown' } as const;
+describe('homeSessionParams', () => {
+  const sonnet = { provider_id: 'anthropic', model_id: 'sonnet' };
+  const haiku = { provider_id: 'anthropic', model_id: 'haiku' };
+  const gone = { provider_id: 'anthropic', model_id: 'retired' };
+  const models = [
+    { id: 'sonnet', provider_id: 'anthropic', name: 'Sonnet' },
+    { id: 'haiku', provider_id: 'anthropic', name: 'Haiku' },
+  ] as ModelInfo[];
+  const modes = [
+    { id: 'build', name: 'build' },
+    { id: 'plan', name: 'plan', model: haiku },
+  ] as ModeInfo[];
 
-  test('live computers plus the connected one', () => {
-    expect(
-      homeComposerMentionCandidates({
-        servers: [studio, laptop, build],
-        reachabilityByServer: reachability,
-        currentServerId: 'build',
-        query: '',
-      }).map((server) => server.serverId)
-    ).toEqual(['studio', 'build']);
-  });
-
-  test('filters by label or id, ignoring case', () => {
-    expect(
-      homeComposerMentionCandidates({
-        servers: [studio, laptop, build],
-        reachabilityByServer: reachability,
-        currentServerId: 'build',
-        query: 'BOX',
-      }).map((server) => server.serverId)
-    ).toEqual(['build']);
-  });
-
-  test('the demo workspace is the single row in demo mode', () => {
-    const demo = computer('muqun-demo', 'Demo workspace');
-    expect(
-      homeComposerMentionCandidates({
-        servers: [demo],
-        reachabilityByServer: {},
-        currentServerId: 'muqun-demo',
-        query: '',
-      })
-    ).toEqual([demo]);
-  });
-});
-
-describe('mention token removal', () => {
-  test('a leading @query goes with its following space', () => {
-    const text = '@stu fix the build';
-    const trigger = findHomeComposerMention(text, 4)!;
-    expect(removeHomeComposerMention(text, trigger)).toEqual({ text: 'fix the build', caret: 0 });
-  });
-
-  test('a mid-sentence @query leaves a single space', () => {
-    const text = 'fix @stu the build';
-    const trigger = findHomeComposerMention(text, 8)!;
-    expect(removeHomeComposerMention(text, trigger)).toEqual({ text: 'fix the build', caret: 4 });
-  });
-
-  test('a trailing @ keeps the space before it for the next word', () => {
-    const text = 'fix the build @';
-    const trigger = findHomeComposerMention(text, text.length)!;
-    expect(removeHomeComposerMention(text, trigger)).toEqual({
-      text: 'fix the build ',
-      caret: 14,
+  test('the dock pick wins, and the agent is named only on a discovering gateway', () => {
+    const base = {
+      picked: { model: sonnet, mode: 'build' },
+      remembered: { server: { model: haiku, mode: 'plan' } },
+      catalogDefaults: {},
+      models,
+      modes,
+      agentId: 'opencode',
+    };
+    expect(homeSessionParams({ ...base, agentsDiscovered: true })).toEqual({
+      model: sonnet,
+      mode: 'build',
+      agentId: 'opencode',
+    });
+    expect(homeSessionParams({ ...base, agentsDiscovered: false })).toEqual({
+      model: sonnet,
+      mode: 'build',
     });
   });
 
-  test('an @ inside a word is not a mention', () => {
-    expect(findHomeComposerMention('mail me@host', 12)).toBeNull();
+  test('a picked mode brings its own model; a model the catalog dropped is not sent', () => {
+    expect(
+      homeSessionParams({
+        picked: { mode: 'plan' },
+        remembered: { server: { model: gone } },
+        catalogDefaults: { model: sonnet },
+        models,
+        modes,
+        agentsDiscovered: false,
+      })
+    ).toEqual({ model: haiku, mode: 'plan' });
+    expect(
+      homeSessionParams({
+        picked: {},
+        remembered: { server: { model: gone } },
+        catalogDefaults: { model: sonnet },
+        models,
+        modes: [],
+        agentsDiscovered: false,
+      })
+    ).toEqual({ model: sonnet });
+  });
+
+  test('before the catalog answers nothing is guessed', () => {
+    expect(
+      homeSessionParams({
+        picked: {},
+        remembered: { server: { model: sonnet, mode: 'build' } },
+        catalogDefaults: {},
+        models: [],
+        modes: [],
+        agentsDiscovered: false,
+      })
+    ).toEqual({});
+  });
+});
+
+describe('homeHiddenClientCommands', () => {
+  test('only /models is offered before a session exists, and only with model choice', () => {
+    expect(homeHiddenClientCommands({ modelSelection: true })).not.toContain('models');
+    expect(homeHiddenClientCommands({ modelSelection: true })).toContain('undo');
+    expect(homeHiddenClientCommands({ modelSelection: false })).toContain('models');
   });
 });
