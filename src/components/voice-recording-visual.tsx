@@ -1,5 +1,5 @@
 import { useThemeTokens } from '@osuki-dev/ui';
-import { Canvas, Fill, Image, ImageShader, Shader, Skia, useImage } from 'react-native-skia';
+import { Canvas, Fill, Path, Shader, Skia } from 'react-native-skia';
 import { useEffect } from 'react';
 import Animated, {
   useDerivedValue,
@@ -13,124 +13,116 @@ import { fadeOut, timing } from '@/lib/motion';
 
 const WIDTH = 280;
 const HEIGHT = 260;
-const MARK = { x: 60, y: 50, width: 160, height: 160 };
 
-// A split magnetic field follows the Cyber mark's angular geometry. Speech
-// opens its two filaments; transcription gathers them back into the core.
+// The monogram is geometry, not a composited bitmap. Its signed-distance field
+// drives the liquid silhouette, rounded metal, travelling light and echoes.
 const source = `
-uniform shader logo;
 uniform float2 size;
 uniform float time;
 uniform float level;
 uniform float processing;
 uniform float reveal;
 uniform float motion;
-uniform float3 tint;
+uniform float dark;
 
-float beam(float distance, float width) {
-  return exp(-abs(distance) / width);
+float segment(float2 p, float2 a, float2 b) {
+  float2 v = b - a;
+  return length(p - a - v * clamp(dot(p - a, v) / dot(v, v), 0.0, 1.0));
 }
 
-float hull(float2 point) {
-  float2 q = abs(point);
-  return max(max(q.x * 0.98, q.y * 1.04), (q.x + q.y) * 0.74);
+float join(float a, float b, float k) {
+  float h = max(k - abs(a - b), 0.0) / k;
+  return min(a, b) - h * h * k * 0.25;
 }
 
-float halo(float2 point, float spread) {
-  float2 x = float2(spread, 0.0);
-  float2 y = float2(0.0, spread);
-  float2 diagonal = float2(spread * 0.7071);
-  return (logo.eval(point + x).a + logo.eval(point - x).a
-    + logo.eval(point + y).a + logo.eval(point - y).a
-    + logo.eval(point + diagonal).a + logo.eval(point - diagonal).a
-    + logo.eval(point + float2(diagonal.x, -diagonal.y)).a
-    + logo.eval(point + float2(-diagonal.x, diagonal.y)).a) / 8.0;
+float monogram(float2 p) {
+  float m = segment(p, float2(-0.31, 0.16), float2(-0.31, -0.17));
+  m = join(m, segment(p, float2(-0.31, -0.17), float2(-0.15, 0.035)), 0.025);
+  m = join(m, segment(p, float2(-0.15, 0.035), float2(0.01, -0.17)), 0.025);
+  m = join(m, segment(p, float2(0.01, -0.17), float2(0.01, 0.16)), 0.025);
+  float2 q = (p - float2(0.155, -0.005)) / float2(0.15, 0.175);
+  float ring = abs(length(q) - 1.0) * 0.15;
+  float tail = segment(p, float2(0.19, 0.09), float2(0.32, 0.22));
+  return join(m, join(ring, tail, 0.028), 0.025);
 }
 
 half4 main(float2 coord) {
-  float2 center = size * 0.5;
   float unit = min(size.x, size.y);
-  float2 p = (coord - center) / unit;
-  float aa = 1.0 / unit;
-  float r = length(p);
-  float angle = atan(p.y, p.x);
+  float aa = 0.75 / unit;
   float voice = sqrt(clamp(level, 0.0, 1.0)) * (1.0 - processing);
-  float breath = 0.5 + 0.5 * sin(time * 1.15);
-  float scale = 0.94 + reveal * 0.06 + motion * (voice * 0.018 + breath * 0.003);
-  float2 point = center + (coord - center) / scale;
-  half4 mark = logo.eval(point);
-  float3 cyan = mix(float3(0.03, 0.85, 1.0), tint, 0.12);
-  float3 pink = float3(0.98, 0.22, 0.64);
-  float3 neon = mix(cyan, pink, smoothstep(-0.22, 0.32, p.x));
+  float energy = motion * voice;
+  float breath = sin(time * 1.35);
+  float scale = 0.90 + reveal * 0.10 + energy * 0.07
+    + motion * breath * 0.009 - processing * 0.045;
+  float2 p = (coord - size * float2(0.5, 0.49)) / (unit * scale);
 
-  // A chamfered shadow echoes the logo's facets instead of enclosing it in a
-  // generic orb. Its feathered edge leaves the surrounding sheet untouched.
-  float contour = hull(p);
-  float plate = 1.0 - smoothstep(0.315, 0.365, contour);
-  float alpha = plate * 0.95;
-  float3 color = float3(0.014, 0.025, 0.046) * alpha;
-  float haze = exp(-r * r / 0.10) * (0.055 + voice * 0.12);
-  color += neon * haze * plate;
+  // Slow domain flow bends the actual strokes. The microphone opens the mark;
+  // transcription settles its silhouette while the light keeps circulating.
+  float flow = motion * (0.0035 + voice * 0.017) * (1.0 - processing * 0.8);
+  p += flow * float2(sin(p.y * 10.0 + time * 1.8),
+    sin(p.x * 11.0 - time * 1.6));
+  float width = 0.023 + energy * 0.004;
+  float d = monogram(p);
+  float edge = d - width;
+  float shape = 1.0 - smoothstep(-aa, aa, edge);
 
-  // Two opposing currents travel along the angular perimeter. The field
-  // contracts during transcription, handing the motion to the core's scan.
-  float radius = 0.376 + motion * voice * 0.012 - processing * 0.023;
-  float current = pow(0.5 + 0.5 * cos(angle - time * 0.62), 8.0);
-  float returning = pow(0.5 + 0.5 * cos(angle + time * 0.43 + 2.6), 10.0);
-  float contourLight = beam(contour - radius, aa * 0.9)
-    * (0.055 + current * 0.43 + returning * 0.18);
-  float contourGlow = beam(contour - radius, 0.018) * current * 0.075;
+  // A rounded cross-section and grazing highlight give the ribbon depth. No
+  // opaque plate: negative space and the sheet's own theme remain visible.
+  float e = 0.001;
+  float2 gradient = float2(monogram(p + float2(e, 0.0)) - monogram(p - float2(e, 0.0)),
+    monogram(p + float2(0.0, e)) - monogram(p - float2(0.0, e)));
+  gradient /= max(length(gradient), 0.0001);
+  float radial = clamp(d / width, 0.0, 1.0);
+  float3 normal = float3(gradient * radial, sqrt(max(0.0, 1.0 - radial * radial)));
+  float diffuse = max(dot(normal, normalize(float3(-0.5, -0.65, 1.0))), 0.0);
+  float specular = pow(max(dot(normal, normalize(float3(-0.4, -0.55, 0.76))), 0.0), 24.0);
+  float hue = 0.5 + 0.5 * sin(p.x * 7.5 - p.y * 5.0 - time * 0.55);
+  float3 cyan = float3(0.05, 0.80, 0.86);
+  float3 violet = float3(0.43, 0.33, 0.95);
+  float3 spectrum = mix(cyan, violet, hue);
+  float traveling = pow(0.5 + 0.5 * sin(p.x * 12.0 + p.y * 9.0
+    - time * mix(1.25, 2.3, processing)), 9.0);
+  float3 metal = mix(float3(0.018, 0.10, 0.17), spectrum, 0.28 + diffuse * 0.52);
+  metal += float3(0.65, 0.92, 1.0) * specular * 0.85;
+  metal += spectrum * traveling * (0.18 + energy * 0.28 + processing * 0.18);
+  float rim = exp(-abs(edge) / (aa * 1.35));
+  metal += float3(0.65, 0.95, 1.0) * rim * (0.25 + traveling * 0.42);
 
-  // The left and right filaments emerge from the mark, rather than floating
-  // independently. Voice drives their spread; a quiet microphone stays calm.
-  float side = abs(p.x);
-  float envelope = smoothstep(0.25, 0.34, side)
-    * (1.0 - smoothstep(0.47, 0.52, side));
-  float amplitude = (0.014 + motion * voice * 0.043) * (1.0 - processing * 0.86);
-  float wave = sin(side * 24.0 - time * 1.35) * amplitude
-    + sin(side * 43.0 + time * 0.62) * amplitude * 0.24;
-  float filament = (beam(p.y - wave, aa * 0.85)
-    + beam(p.y + wave + 0.014, aa * 0.7) * 0.42) * envelope;
-  float filamentGlow = beam(p.y - wave, 0.017) * envelope * 0.13;
-  float light = contourLight + contourGlow
-    + (filament * (0.20 + voice * 0.50) + filamentGlow) * (1.0 - processing * 0.7);
-
-  // Sparse paired motes follow those same currents. Constant loop bounds keep
-  // this compatible with the Android runtime shader compiler.
-  for (int i = 0; i < 5; i++) {
-    float index = float(i);
-    float travel = fract(index * 0.2 + time * 0.065);
-    float x = 0.32 + travel * 0.17;
-    float y = sin(x * 24.0 - time * 1.35) * amplitude;
-    float2 delta = float2(side - x, p.y - y);
-    float mote = exp(-dot(delta, delta) / (aa * aa * 1.6));
-    light += mote * sin(travel * 3.14159) * (0.12 + voice * 0.30)
-      * (1.0 - processing);
+  // Quiet echoes follow the MQ silhouette itself. Speech releases them farther
+  // out; processing draws them inward. No periodic on/off flash or fake progress.
+  float echoes = 0.0;
+  for (int i = 0; i < 3; i++) {
+    float offset = float(i) / 3.0;
+    float travel = fract(time * 0.18 + offset);
+    float spread = mix(travel, 1.0 - travel, processing);
+    float distance = 0.014 + spread * (0.044 + energy * 0.065);
+    float envelope = sin(travel * 3.141593);
+    float visibility = 0.5 + 0.5 * sin(p.x * 9.0 - p.y * 6.0 + offset * 6.283185 + time);
+    echoes += exp(-abs(edge - distance) / (aa * 0.8))
+      * envelope * envelope * visibility * (0.10 + energy * 0.16);
   }
-
-  float glow = (halo(point, 5.0) * 0.28 + halo(point, 11.0) * 0.14)
-    * (1.0 - mark.a) * (0.40 + voice * 1.05 + processing * 0.16);
-  float lightAlpha = clamp(light + glow, 0.0, 0.78);
-  color = neon * lightAlpha + color * (1.0 - lightAlpha);
-  alpha = lightAlpha + alpha * (1.0 - lightAlpha);
-
-  // A single broad scan reads as work in progress, not a fabricated percentage.
-  float sweep = beam(p.y - sin(time * 0.9) * 0.26, 0.038);
-  float sheen = 0.025 + voice * 0.065 + processing * sweep * 0.26;
-  float3 metal = min(float3(mark.rgb) + cyan * sheen * mark.a, float3(mark.a));
-  color = metal + color * (1.0 - mark.a);
-  alpha = mark.a + alpha * (1.0 - mark.a);
+  float halo = exp(-max(edge, 0.0) / 0.023) * (0.11 + energy * 0.15);
+  float shadow = exp(-abs(monogram(p - float2(0.005, 0.012)) - width) / 0.016) * 0.10;
+  float auraAlpha = clamp(echoes + halo + shadow, 0.0, 0.55) * (1.0 - shape);
+  float3 aura = mix(spectrum * 0.60, spectrum, dark);
+  float3 color = clamp(metal, 0.0, 1.0) * shape + aura * auraAlpha;
+  float alpha = shape + auraAlpha;
   float arrival = smoothstep(0.0, 1.0, reveal);
-  return half4(min(color, float3(alpha)) * arrival, alpha * arrival);
+  return half4(color * arrival, alpha * arrival);
 }`;
 
+// A shader compilation failure still leaves an identifiable, tappable mark.
+const fallback = Skia.Path.MakeFromSVGString(
+  'M59.4 169 L59.4 83.2 L101 136.5 L142.6 83.2 L142.6 169 ' +
+    'M219.3 125.9 A39 45.5 0 1 1 141.3 125.9 A39 45.5 0 1 1 219.3 125.9 ' +
+    'M189.4 150.6 L223.2 184.4'
+);
 const departure = fadeOut('short');
 
 function compileEffect() {
   try {
     return Skia.RuntimeEffect.Make(source);
   } catch {
-    // Decorative lighting must never prevent recording or hide the mark.
     return null;
   }
 }
@@ -144,7 +136,6 @@ export function VoiceRecordingVisual({
   processing: boolean;
 }) {
   const theme = useThemeTokens();
-  const image = useImage(require('../../assets/icons/cyber/mark.png'));
   const reduced = useReducedMotion();
   const clock = useSharedValue(0);
   const reveal = useSharedValue(reduced ? 1 : 0);
@@ -155,41 +146,46 @@ export function VoiceRecordingVisual({
   useEffect(() => {
     phase.set(reduced ? (processing ? 1 : 0) : withTiming(processing ? 1 : 0, timing('medium')));
   }, [phase, processing, reduced]);
-  useFrameCallback((frame) => {
-    if (!reduced) clock.set((frame.timeSinceFirstFrame ?? 0) / 1000);
-  });
-  const tint = Array.from(Skia.Color(theme.colors.primary)).slice(0, 3);
+  const frameCallback = useFrameCallback((frame) => {
+    clock.set((frame.timeSinceFirstFrame ?? 0) / 1000);
+  }, false);
+  useEffect(() => {
+    frameCallback.setActive(!reduced);
+    return () => frameCallback.setActive(false);
+  }, [frameCallback, reduced]);
+  const background = Skia.Color(theme.colors.background);
+  const dark = background[0] * 0.2126 + background[1] * 0.7152 + background[2] * 0.0722 < 0.5;
   const uniforms = useDerivedValue(() => ({
     size: [WIDTH, HEIGHT],
-    time: clock.get(),
-    level: level.get(),
+    time: reduced ? 0 : clock.get(),
+    level: reduced ? 0 : level.get(),
     processing: phase.get(),
     reveal: reveal.get(),
     motion: reduced ? 0 : 1,
-    tint,
+    dark: dark ? 1 : 0,
   }));
   return (
     <Animated.View exiting={departure} pointerEvents="none">
       <Canvas
-        testID={
-          image
-            ? effect
-              ? 'voice-recording-logo'
-              : 'voice-recording-logo-fallback'
-            : 'voice-recording-loading'
-        }
+        testID={effect ? 'voice-recording-logo' : 'voice-recording-logo-fallback'}
         style={{ width: WIDTH, height: HEIGHT }}
         pointerEvents="none">
-        {image &&
-          (effect ? (
-            <Fill>
-              <Shader source={effect} uniforms={uniforms}>
-                <ImageShader image={image} fit="contain" rect={MARK} tx="decal" ty="decal" />
-              </Shader>
-            </Fill>
-          ) : (
-            <Image image={image} fit="contain" {...MARK} />
-          ))}
+        {effect ? (
+          <Fill>
+            <Shader source={effect} uniforms={uniforms} />
+          </Fill>
+        ) : (
+          fallback && (
+            <Path
+              path={fallback}
+              style="stroke"
+              strokeWidth={12}
+              strokeCap="round"
+              strokeJoin="round"
+              color={theme.colors.primary}
+            />
+          )
+        )}
       </Canvas>
     </Animated.View>
   );
