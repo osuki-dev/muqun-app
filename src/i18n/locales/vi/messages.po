@@ -1358,6 +1358,7 @@ msgstr "Máy tính ngoại tuyến"
 
 #: src/components/home-composer-dock.tsx
 #: src/components/server-terminal-workspace.tsx
+#: src/hooks/use-server-tasks.ts
 msgid "Computer unavailable."
 msgstr "Máy tính không khả dụng"
 

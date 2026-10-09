@@ -1358,6 +1358,7 @@ msgstr "Computador offline"
 
 #: src/components/home-composer-dock.tsx
 #: src/components/server-terminal-workspace.tsx
+#: src/hooks/use-server-tasks.ts
 msgid "Computer unavailable."
 msgstr "Computador indisponível"
 

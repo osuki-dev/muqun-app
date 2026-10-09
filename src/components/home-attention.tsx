@@ -66,27 +66,28 @@ export function HomeAttention({
         pending.map(([, snapshot]) => snapshot.target)
       )
     : [];
-  if (pending.length === 0 && waiting.length === 0) {
-    return null;
-  }
+  // The config stays mounted while the list is empty, so the first row to
+  // arrive is an arrival (it enters and pulses), not part of a fresh mount.
   return (
     // A remount (back from a sub-screen) replays no arrival pulse.
     <LayoutAnimationConfig skipEntering>
-      <View testID="home-attention" style={styles.list}>
-        {pending.map(([key, snapshot]) => (
-          <AttentionRow key={key} snapshot={snapshot} servers={servers} onOpen={onOpen} />
-        ))}
-        {onOpenTask
-          ? waiting.map((row) => (
-              <WaitingTaskRow
-                key={`${row.serverId}:${row.task.taskId}`}
-                row={row}
-                servers={servers}
-                onOpen={() => onOpenTask(row)}
-              />
-            ))
-          : null}
-      </View>
+      {pending.length === 0 && waiting.length === 0 ? null : (
+        <View testID="home-attention" style={styles.list}>
+          {pending.map(([key, snapshot]) => (
+            <AttentionRow key={key} snapshot={snapshot} servers={servers} onOpen={onOpen} />
+          ))}
+          {onOpenTask
+            ? waiting.map((row) => (
+                <WaitingTaskRow
+                  key={`${row.serverId}:${row.task.taskId}`}
+                  row={row}
+                  servers={servers}
+                  onOpen={() => onOpenTask(row)}
+                />
+              ))
+            : null}
+        </View>
+      )}
     </LayoutAnimationConfig>
   );
 }

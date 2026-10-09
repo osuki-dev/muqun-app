@@ -265,13 +265,16 @@ export const RECENT_FINISHED_MS = 30 * 60_000;
 
 /**
  * Repeated cancelled attempts at one goal say one thing: only the newest of
- * them is kept (`tasks` is newest first).
+ * them is kept (`tasks` is newest first). Applied before acknowledgements, so
+ * acknowledging that row takes the whole group with it. A task with no title
+ * is nobody's repeat.
  */
 function collapseCancelled(tasks: readonly TaskView[]): TaskView[] {
   const seen = new Set<string>();
   return tasks.filter((task) => {
     if (task.state !== 'cancelled') return true;
     const title = taskTitle(task);
+    if (!title) return true;
     if (seen.has(title)) return false;
     seen.add(title);
     return true;
@@ -318,15 +321,14 @@ export function buildComputerCards(input: {
       tree
         .filter((row) => !treeRowIsOpen(row) && isTerminalTaskState(row.task.state))
         .map((row) => row.task)
-        .filter(
-          (task) =>
-            !input.dismissed.has(dismissedKey(server.serverId, task.taskId)) &&
-            // A row the reader just settled counts from that moment, so an
-            // old paused task marked done does not vanish until the gateway
-            // answers with its own fresh time.
-            input.nowMs - Math.max(task.updatedMs, task.settledAtMs ?? task.updatedMs) <=
-              RECENT_FINISHED_MS
-        )
+    ).filter(
+      (task) =>
+        !input.dismissed.has(dismissedKey(server.serverId, task.taskId)) &&
+        // A row the reader just settled counts from that moment, so an old
+        // paused task marked done does not vanish until the gateway answers
+        // with its own fresh time.
+        input.nowMs - Math.max(task.updatedMs, task.settledAtMs ?? task.updatedMs) <=
+          RECENT_FINISHED_MS
     );
     const pending = (input.pending ?? []).filter(
       (item) => item.serverId === server.serverId && !settlesPending(tasks, item)

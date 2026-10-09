@@ -273,20 +273,25 @@ describe('which computers get a card', () => {
     expect(cards.length > 0).toBe(shown);
   });
 
-  test('repeated cancelled attempts at one goal show once, the newest', () => {
-    const [card] = buildComputerCards({
-      servers: [{ serverId: 'a' }],
-      index: index({
-        a: [
-          task('old', 'cancelled', 1, { goal: 'retry it' }),
-          task('new', 'cancelled', 2, { goal: 'retry it' }),
-        ],
-      }),
-      reachability: () => 'live',
-      dismissed: new Set(),
-      nowMs: NOW,
-    });
-    expect(card!.finished.map((t) => t.taskId)).toEqual(['new']);
+  test('repeated cancelled attempts at one goal show once; acknowledging it takes the group', () => {
+    const finishedIds = (dismissed: Set<string>) =>
+      buildComputerCards({
+        servers: [{ serverId: 'a' }],
+        index: index({
+          a: [
+            task('old', 'cancelled', 1, { goal: 'retry it' }),
+            task('new', 'cancelled', 2, { goal: 'retry it' }),
+            task('untitled-1', 'cancelled', 3, { goal: '' }),
+            task('untitled-2', 'cancelled', 4, { goal: '' }),
+          ],
+        }),
+        reachability: () => 'live',
+        dismissed,
+        nowMs: NOW,
+        limits: { now: 5, finished: 5 },
+      })[0]?.finished.map((t) => t.taskId) ?? [];
+    expect(finishedIds(new Set())).toEqual(['untitled-2', 'untitled-1', 'new']);
+    expect(finishedIds(new Set([dismissedKey('a', 'new')]))).toEqual(['untitled-2', 'untitled-1']);
   });
 });
 

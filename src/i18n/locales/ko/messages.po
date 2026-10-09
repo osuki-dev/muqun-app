@@ -1358,6 +1358,7 @@ msgstr "컴퓨터 오프라인"
 
 #: src/components/home-composer-dock.tsx
 #: src/components/server-terminal-workspace.tsx
+#: src/hooks/use-server-tasks.ts
 msgid "Computer unavailable."
 msgstr "컴퓨터를 사용할 수 없습니다"
 

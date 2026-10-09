@@ -1358,6 +1358,7 @@ msgstr "Ordenador sin conexión"
 
 #: src/components/home-composer-dock.tsx
 #: src/components/server-terminal-workspace.tsx
+#: src/hooks/use-server-tasks.ts
 msgid "Computer unavailable."
 msgstr "Ordenador no disponible"
 
