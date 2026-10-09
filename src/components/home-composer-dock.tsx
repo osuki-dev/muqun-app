@@ -802,7 +802,7 @@ export function HomeComposerDock({
               // A long name keeps both ends: the start says which, the end
               // tells siblings (`app-web`, `app-ios`) apart.
               ellipsizeMode="middle"
-              color={ready ? theme.colors.textMuted : theme.colors.textSubtle}
+              color={ready && selected ? theme.colors.textMuted : theme.colors.textSubtle}
               style={styles.barLabel}>
               {`· ${folderLabel}`}
             </Text>

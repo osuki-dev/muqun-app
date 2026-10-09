@@ -130,6 +130,9 @@ export type HomeEditorialLayoutProps = {
  */
 const HOME_SECTION_COUNT = 5;
 
+/** The Pad band's wordmark: the toolbar's height, not the cover's. */
+const PAD_BAND_TITLE_SIZE = 40;
+
 type EditorialSectionProps = {
   title: ReactNode;
   entering?: ReturnType<typeof entryRise>;
@@ -621,7 +624,9 @@ export function HomeEditorialLayout({
             ) : null}
           </View>
           <Animated.View style={[split ? styles.coverReadingColumn : undefined, readingEntryStyle]}>
-            <Animated.View entering={rise(1)}>{attention}</Animated.View>
+            {hasSlot(attention) ? (
+              <Animated.View entering={rise(1)}>{attention}</Animated.View>
+            ) : null}
             {hasProgress ? (
               <EditorialSection
                 borderColor={theme.colors.border}
@@ -923,7 +928,13 @@ const styles = StyleSheet.create({
     gap: 24,
     marginBottom: 8,
   },
-  padBandTitle: { fontSize: 40, lineHeight: 44, letterSpacing: -2, flexShrink: 1 },
+  // The cover title at band size, with the cover's own leading and tracking.
+  padBandTitle: {
+    fontSize: PAD_BAND_TITLE_SIZE,
+    lineHeight: PAD_BAND_TITLE_SIZE * 1.1,
+    letterSpacing: -PAD_BAND_TITLE_SIZE * 0.05,
+    flexShrink: 1,
+  },
   padBackdrop: { position: 'absolute', left: 0, top: 0 },
   padColumns: { flex: 1, minHeight: 0, flexDirection: 'row', gap: PAD_COLUMN_GAP },
   padRecentColumn: { flex: 1, minWidth: 0 },

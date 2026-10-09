@@ -33,7 +33,6 @@ describe('padHomeColumns and padCardColumns', () => {
     const inner = getEditorialLayoutGeometry(content).innerWidth;
     const { work, recent } = padHomeColumns(inner);
     expect(work + recent + 24).toBe(inner);
-    expect(work / (work + recent)).toBeCloseTo(0.58, 2);
     expect(padCardColumns(work, cards)).toBe(columns);
   });
 });

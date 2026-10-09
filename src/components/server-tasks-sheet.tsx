@@ -1,7 +1,7 @@
 import { LegendList } from '@legendapp/list/react-native';
 import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens } from '@osuki-dev/ui';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ComponentProps } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { LayoutAnimationConfig } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -105,41 +105,75 @@ export function ServerTasksSheet({
           <ActivityIndicator size="small" color={theme.colors.primary} />
         </View>
       ) : (
-        <LegendList
-          nestedScrollEnabled
-          testID="server-tasks-list"
-          data={items}
-          keyExtractor={itemKey}
-          getItemType={itemType}
-          estimatedItemSize={64}
-          style={sheetSceneStyles.scroller}
-          contentContainerStyle={sheetSceneStyles.scrollerContent}
-          renderItem={({ item }) =>
-            item.type === 'heading' ? (
-              <SheetSceneGroupHeading title={item.title} first={item.first} />
-            ) : item.type === 'task' ? (
-              // Per row, because the list mounts rows as they scroll into
-              // view: one there when the sheet opened, or one scrolled to,
-              // does not replay its arrival (fade, pulse, icon). A state
-              // change inside a mounted row still animates.
-              <LayoutAnimationConfig skipEntering>
-                <TaskRow
-                  task={item.task}
-                  serverId={serverId ?? ''}
-                  nested={item.nested}
-                  nowMs={nowMs}
-                  discovery={discovery}
-                  onOpen={onOpen}
-                />
-              </LayoutAnimationConfig>
-            ) : (
-              <SheetSceneRow testID="server-tasks-empty" title={t`No tasks yet`} />
-            )
-          }
-          ListFooterComponent={<SheetSceneFooter bottomInset={insets.bottom} />}
+        <ServerTaskList
+          items={items}
+          serverId={serverId ?? ''}
+          nowMs={nowMs}
+          discovery={discovery}
+          bottomInset={insets.bottom}
+          onOpen={onOpen}
         />
       )}
     </SheetScene>
+  );
+}
+
+/**
+ * The list, mounted once the first read has answered, so it knows which tasks
+ * the reader opened the sheet onto. Those rows -- also when the list mounts
+ * them again as they scroll into view -- do not replay their arrival; a task
+ * that arrives while the sheet is open fades in. A state change inside a
+ * mounted row animates either way.
+ */
+function ServerTaskList({
+  items,
+  serverId,
+  nowMs,
+  discovery,
+  bottomInset,
+  onOpen,
+}: {
+  items: Item[];
+  serverId: string;
+  nowMs: number;
+  discovery: ComponentProps<typeof TaskRow>['discovery'];
+  bottomInset: number;
+  onOpen: (task: TaskView) => void;
+}) {
+  const { t } = useLingui();
+  const [openedWith] = useState(
+    () => new Set(items.flatMap((item) => (item.type === 'task' ? [item.task.taskId] : [])))
+  );
+  return (
+    <LegendList
+      nestedScrollEnabled
+      testID="server-tasks-list"
+      data={items}
+      keyExtractor={itemKey}
+      getItemType={itemType}
+      estimatedItemSize={64}
+      style={sheetSceneStyles.scroller}
+      contentContainerStyle={sheetSceneStyles.scrollerContent}
+      renderItem={({ item }) =>
+        item.type === 'heading' ? (
+          <SheetSceneGroupHeading title={item.title} first={item.first} />
+        ) : item.type === 'task' ? (
+          <LayoutAnimationConfig skipEntering={openedWith.has(item.task.taskId)}>
+            <TaskRow
+              task={item.task}
+              serverId={serverId}
+              nested={item.nested}
+              nowMs={nowMs}
+              discovery={discovery}
+              onOpen={onOpen}
+            />
+          </LayoutAnimationConfig>
+        ) : (
+          <SheetSceneRow testID="server-tasks-empty" title={t`No tasks yet`} />
+        )
+      }
+      ListFooterComponent={<SheetSceneFooter bottomInset={bottomInset} />}
+    />
   );
 }
 
