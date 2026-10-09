@@ -839,7 +839,6 @@ export function ServerTerminalWorkspace({
     directory?: string;
     agentId?: string;
     intent?: string;
-    prompt?: string;
     promptId?: string;
   }>();
   // A template literal rather than the bare `??` chain: the value is the same
@@ -911,7 +910,6 @@ export function ServerTerminalWorkspace({
     directory: routeParams.directory,
     agentId: routeParams.agentId,
     intent: routeParams.intent,
-    prompt: routeParams.prompt,
     promptId: routeParams.promptId,
     overview: routeParams.overview,
   });

@@ -51,11 +51,9 @@ export type HomeAgentEntry = {
   /** The agentId to open or create on; the server's own choice when absent. */
   agentId?: string;
   /**
-   * The goal a new session starts with (Home's composer). Only meaningful with
-   * a `new` intent; the workbench sends it once, see `initial-prompt.ts`.
+   * The one-off ledger id the workbench claims the new session's first goal by
+   * (`initial-prompt.ts`). The goal text itself never travels in the route.
    */
-  prompt?: string;
-  /** The one-off ledger id the workbench claims `prompt` by. */
   promptId?: string;
 };
 
@@ -442,7 +440,7 @@ export function createHomeCommandController(ports: HomeCommandPorts) {
                 serverId: command.serverId,
                 ...(command.directory ? { directory: command.directory } : {}),
                 ...(command.agentId ? { agentId: command.agentId } : {}),
-                ...(prompt && promptId ? { prompt, promptId } : {}),
+                ...(promptId ? { promptId } : {}),
               },
               intent: 'new',
             });

@@ -801,7 +801,6 @@ describe('new-agent with a first prompt', () => {
           kind: 'agent-session',
           serverId: 'server-a',
           agentId: 'opencode',
-          prompt: 'Say hello',
           promptId,
         },
         intent: 'new',

@@ -6376,6 +6376,7 @@ msgstr "Escreva-o ou use a tecla de ditado do teclado"
 msgid "Type on the simulator"
 msgstr "Escrever no simulador"
 
+#: src/components/server-tasks-sheet.tsx
 #: src/components/settings-server-capabilities.tsx
 msgid "Unavailable"
 msgstr "Indisponível"

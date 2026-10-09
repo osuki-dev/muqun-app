@@ -78,11 +78,6 @@ export async function fetchMcpTokens(): Promise<McpToken[] | null> {
   return readJson<McpToken[] | null>('/api/mcp/tokens', parseTokenList, null);
 }
 
-/** Like `fetchMcpTokens`, with a failed read shown as an empty list. */
-export async function listMcpTokens(): Promise<McpToken[]> {
-  return (await fetchMcpTokens()) ?? [];
-}
-
 /** True when the gateway revoked it; false when it no longer knows the token. */
 export async function revokeMcpToken(id: string): Promise<boolean> {
   const { writeJson } = await import('./agent-session');

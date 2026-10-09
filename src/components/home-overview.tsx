@@ -382,7 +382,7 @@ export function HomeOverview({
     : sshHomeRows(sshHosts, isDemoRecord(record) ? demoSshHost() : null);
 
   // Unpairing a server has to take its agent names and its status with it, and
-  // this catches every route to that -- Settings > SERVERS, the drawer, a
+  // this catches every route to that -- Settings > Computers, the drawer, a
   // wiped install -- because it follows the record list rather than any one
   // action.
   const serverIds = useMemo(() => records.map((server) => server.serverId), [records]);
@@ -403,7 +403,7 @@ export function HomeOverview({
 
   // An address is a disambiguator, so it is on screen exactly when it is
   // disambiguating -- which for most installs is never. See
-  // `lib/server-address.ts`; Settings > SERVERS lists every address regardless.
+  // `lib/server-address.ts`; Settings > Computers lists every address regardless.
   const addressNeeded = useMemo(() => serverIdsNeedingAddress(records), [records]);
 
   useEffect(() => {
@@ -1670,7 +1670,7 @@ function ServerCard({
         ]}>
         <View collapsable={false} style={styles.identityRow}>
           {/* No long press, and no menu: renaming, editing the address and
-              unpairing all moved to Settings > SERVERS once that screen could
+              unpairing all moved to Settings > Computers once that screen could
               do everything a card's old `...` menu could -- see the note on
               `SettingsServers`. A card is a link now, and nothing else. */}
           <PressableScale
@@ -1752,7 +1752,7 @@ function ServerCard({
               {/* Only when a second machine answers to the same name. On every
                   other install this line was a constant the reader had already
                   read -- and on a one-server screen it was the address of the
-                  only address there is. It is not lost: Settings > SERVERS
+                  only address there is. It is not lost: Settings > Computers
                   lists every server with its address, always. */}
               {showAddress ? (
                 <Text
@@ -1772,7 +1772,7 @@ function ServerCard({
 
           {/* The one action a card still offers directly: everything else
               that used to live behind the `...` menu -- rename, unpair -- now
-              lives in Settings > SERVERS, but New Task has no equivalent
+              lives in Settings > Computers, but New Task has no equivalent
               there. It is not a fact about the server's identity the way a
               name or an address is; it is a shortcut to starting work on it
               without opening it first, which only makes sense from a list of

@@ -125,9 +125,9 @@ export function hasTaskLedger(capabilities: readonly string[] | undefined): bool
 // The fetchers load the transport lazily: it pulls in React Native, and the
 // parsers above must stay importable from plain unit tests.
 
-function parseTaskList(value: unknown): TaskView[] {
+export function parseTaskList(value: unknown): TaskView[] | null {
   const list = asRecord(value)?.tasks;
-  if (!Array.isArray(list)) return [];
+  if (!Array.isArray(list)) return null;
   const out: TaskView[] = [];
   for (const entry of list) {
     const task = parseTaskView(entry);
@@ -167,14 +167,6 @@ export async function fetchTaskList(opts?: {
   if (opts?.limit !== undefined) query.push(`limit=${opts.limit}`);
   const path = `/api/tasks${query.length ? `?${query.join('&')}` : ''}`;
   return readJson<TaskView[] | null>(path, parseTaskList, null);
-}
-
-/** Like `fetchTaskList`, with a failed read shown as an empty list. */
-export async function listTasks(opts?: {
-  states?: TaskState[];
-  limit?: number;
-}): Promise<TaskView[]> {
-  return (await fetchTaskList(opts)) ?? [];
 }
 
 export async function getTask(

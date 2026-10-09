@@ -6376,6 +6376,7 @@ msgstr "직접 입력하거나 키보드의 받아쓰기 키를 사용하세요"
 msgid "Type on the simulator"
 msgstr "시뮬레이터에 입력"
 
+#: src/components/server-tasks-sheet.tsx
 #: src/components/settings-server-capabilities.tsx
 msgid "Unavailable"
 msgstr "사용할 수 없음"

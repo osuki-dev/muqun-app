@@ -6376,6 +6376,7 @@ msgstr "Gõ vào, hoặc dùng phím đọc chính tả trên bàn phím của b
 msgid "Type on the simulator"
 msgstr "Gõ trên trình giả lập"
 
+#: src/components/server-tasks-sheet.tsx
 #: src/components/settings-server-capabilities.tsx
 msgid "Unavailable"
 msgstr "Không khả dụng"

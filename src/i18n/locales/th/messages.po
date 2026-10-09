@@ -6376,6 +6376,7 @@ msgstr "พิมพ์หรือใช้ปุ่มป้อนตามค
 msgid "Type on the simulator"
 msgstr "พิมพ์บนเครื่องจำลอง"
 
+#: src/components/server-tasks-sheet.tsx
 #: src/components/settings-server-capabilities.tsx
 msgid "Unavailable"
 msgstr "ไม่พร้อมใช้งาน"
