@@ -160,8 +160,6 @@ export async function fetchTaskList(opts?: {
   limit?: number;
 }): Promise<TaskView[] | null> {
   const { readJson } = await import('./agent-session');
-  const { demoTasks, isDemoActive } = await import('./demo-gateway');
-  if (isDemoActive()) return parseTaskList({ tasks: demoTasks(opts?.states, opts?.limit) });
   const query: string[] = [];
   if (opts?.states?.length) query.push(`state=${opts.states.join(',')}`);
   if (opts?.limit !== undefined) query.push(`limit=${opts.limit}`);
@@ -173,16 +171,12 @@ export async function getTask(
   taskId: string
 ): Promise<{ task: TaskView; events: TaskEvent[] } | null> {
   const { readJson } = await import('./agent-session');
-  const { demoTaskDetail, isDemoActive } = await import('./demo-gateway');
-  if (isDemoActive()) return parseTaskDetail(demoTaskDetail(taskId));
   return readJson(`/api/tasks/${encodeURIComponent(taskId)}`, parseTaskDetail, null);
 }
 
 /** The task as the gateway now has it; null when it no longer knows the task. */
 export async function cancelTask(taskId: string): Promise<TaskView | null> {
   const { writeJson } = await import('./agent-session');
-  const { demoCancelTask, isDemoActive } = await import('./demo-gateway');
-  if (isDemoActive()) return parseTaskView(demoCancelTask(taskId));
   try {
     return parseTaskView(
       await writeJson(`/api/tasks/${encodeURIComponent(taskId)}/cancel`, 'Cancel task')

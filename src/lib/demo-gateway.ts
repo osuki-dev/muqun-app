@@ -4,13 +4,13 @@ import { msg } from '@lingui/core/macro';
 import { Image } from 'react-native';
 import { createThemeStarter } from '@/theme/starter';
 
-import { DEMO_CAPABILITIES } from '@/lib/demo-capabilities';
+import { AGENT_SPAWN_CAPABILITY } from '@/lib/agent-spawn';
+import { GIT_DIFF_CAPABILITY, PANE_CONTEXT_CAPABILITY } from '@/lib/git-diff';
 import { DEMO_REFUSED_LOG_BYTES, demoBundleText, demoChangelogText } from '@/lib/demo-large-files';
 import { normalizeGatewayEntities, type GatewayEntity } from '@/lib/gateway-entities';
 import type { SessionAsset } from '@/lib/gateway-client';
 import type { GatewayRecord } from '@/lib/gateway-storage';
 import type { AgentSessionInfo, AgentSessionSnapshot, TimelineItem } from '@/lib/agent-protocol';
-import type { TaskState } from '@/lib/task-ledger';
 import { DEMO_PAIRING_SERVER_ID } from '@/lib/pairing';
 import {
   buildDemoTerminalRows,
@@ -104,8 +104,6 @@ export function setDemoActive(value: boolean): void {
   if (!value) {
     demoAssistant = null;
     demoLazygit = false;
-    demoCancelledTasks = new Map();
-    demoRevokedTokens = new Set();
   }
   active = value;
 }
@@ -1246,11 +1244,6 @@ export function demoAssetContentUri(assetId: string): string {
 
 export const demoSessionId = SESSION_ID;
 
-/** The demo gateway's capability list, for surfaces that gate on it without the store. */
-export function demoCapabilities(): readonly string[] {
-  return DEMO_CAPABILITIES;
-}
-
 export function demoHealth() {
   return {
     ok: true,
@@ -1266,7 +1259,15 @@ export function demoHealth() {
     // the two diff capabilities because `demoPaneContext`, `demoGitStatus` and
     // `demoGitDiff` answer all three routes -- including the paging one, which
     // is the whole reason the large fixture exists.
-    capabilities: DEMO_CAPABILITIES,
+    capabilities: [
+      'agent_events',
+      AGENT_SPAWN_CAPABILITY,
+      'agent_collaboration',
+      PANE_CONTEXT_CAPABILITY,
+      GIT_DIFF_CAPABILITY,
+      'pane_lazygit',
+      'agent_audio_assets',
+    ],
     // The per-session capability list a current gateway answers with. The demo
     // session is a Herdr 0.9.0, so it carries collaboration; a demo that only
     // set the gateway-wide array would exercise the fallback path rather than
@@ -1847,178 +1848,4 @@ export function demoGitDiff(
     // Every line is newline-terminated, as git writes them.
     patch: end > start ? `${all.slice(start, end).join('\n')}\n` : '',
   });
-}
-
-// ---------------------------------------------------------------------------
-// P1 companion: task ledger, fleet manifest, MCP tokens
-// ---------------------------------------------------------------------------
-//
-// Raw wire shapes, so demo mode runs the real parsers. The ids are stable
-// strings the `.ad` flows select on; do not rename them.
-
-const MINUTE_MS = 60_000;
-const DAY_MS = 24 * 60 * MINUTE_MS;
-
-type DemoTask = Record<string, unknown> & { task_id: string; state: TaskState };
-
-function demoTaskFixtures(now: number): DemoTask[] {
-  return [
-    {
-      task_id: 'demo-task-working',
-      state: 'working',
-      kind: 'command',
-      goal: 'npm run build',
-      binding: { kind: 'pane', session_id: SESSION_ID, pane_id: 'pane-shell', shell_pid: 4242 },
-      updated_ms: now - 2 * MINUTE_MS,
-    },
-    {
-      task_id: 'demo-task-waiting',
-      state: 'waiting',
-      kind: 'delegation',
-      goal: 'Add dark mode to the settings screen',
-      binding: { kind: 'agent_session', agent_id: 'claude', asid: 'demo-asid-root' },
-      updated_ms: now - 5 * MINUTE_MS,
-    },
-    {
-      task_id: 'demo-task-done',
-      state: 'done',
-      kind: 'delegation',
-      goal: 'Rename the profile module',
-      summary: 'Renamed profile to account across 14 files; tests pass.',
-      binding: { kind: 'agent_session', agent_id: 'codex', asid: 'demo-asid-done' },
-      updated_ms: now - 40 * MINUTE_MS,
-    },
-    {
-      task_id: 'demo-task-failed',
-      state: 'failed',
-      kind: 'command',
-      goal: 'cargo test',
-      summary: 'exit 3\nthread main panicked at src/lib.rs:42',
-      exit_code: 3,
-      binding: { kind: 'pane', session_id: SESSION_ID, pane_id: 'pane-shell' },
-      updated_ms: now - 3 * 60 * MINUTE_MS,
-    },
-  ];
-}
-
-// What cancel did, so the list and the detail agree for the rest of the run.
-let demoCancelledTasks = new Map<string, number>();
-let demoRevokedTokens = new Set<string>();
-
-function currentDemoTasks(): DemoTask[] {
-  return demoTaskFixtures(Date.now()).map((task) => {
-    const cancelledAt = demoCancelledTasks.get(task.task_id);
-    return cancelledAt === undefined
-      ? task
-      : { ...task, state: 'cancelled' as TaskState, updated_ms: cancelledAt };
-  });
-}
-
-/** `GET /api/tasks?state=&limit=`, newest first. */
-export function demoTasks(states?: readonly string[], limit?: number): unknown[] {
-  const tasks = currentDemoTasks()
-    .filter((task) => !states?.length || states.includes(task.state))
-    .sort((a, b) => Number(b.updated_ms) - Number(a.updated_ms));
-  return limit === undefined ? tasks : tasks.slice(0, limit);
-}
-
-/** `GET /api/tasks/{id}`: the task and three events, or null for an unknown id. */
-export function demoTaskDetail(taskId: string): unknown {
-  const task = currentDemoTasks().find((entry) => entry.task_id === taskId);
-  if (!task) return null;
-  const updated = Number(task.updated_ms);
-  return {
-    task,
-    events: [
-      { task_id: taskId, seq: 1, at_ms: updated - 30 * MINUTE_MS, to: 'queued', source: 'gateway' },
-      {
-        task_id: taskId,
-        seq: 2,
-        at_ms: updated - 29 * MINUTE_MS,
-        from: 'queued',
-        to: 'working',
-        source: 'mcp',
-      },
-      {
-        task_id: taskId,
-        seq: 3,
-        at_ms: updated,
-        from: 'working',
-        to: task.state,
-        source: 'gateway',
-        ...(typeof task.summary === 'string' ? { note: task.summary.split('\n')[0] } : {}),
-      },
-    ],
-  };
-}
-
-/** `POST /api/tasks/{id}/cancel`: the task as cancelled; a finished one is answered as it is. */
-export function demoCancelTask(taskId: string): unknown {
-  const task = currentDemoTasks().find((entry) => entry.task_id === taskId);
-  if (!task) return null;
-  const finished = task.state === 'done' || task.state === 'failed' || task.state === 'cancelled';
-  if (finished) return task;
-  demoCancelledTasks.set(taskId, Date.now());
-  return currentDemoTasks().find((entry) => entry.task_id === taskId) ?? null;
-}
-
-/** `GET /api/fleet/self`, a macOS-looking machine. */
-export function demoFleetSelf(): Record<string, unknown> {
-  return {
-    machineId: 'demo-machine',
-    label: 'Demo Mac',
-    hostname: 'demo-mac.local',
-    os: 'macos',
-    arch: 'aarch64',
-    gatewayVersion: '1.0.0',
-    agents: [
-      { id: 'claude', kind: 'claude', label: 'Claude Code', status: 'connected' },
-      { id: 'codex', kind: 'codex', label: 'Codex', status: 'connected' },
-    ],
-    terminal: [
-      {
-        sessionId: SESSION_ID,
-        label: 'Demo session',
-        kind: 'herdr',
-        connected: true,
-        capabilities: ['agent_collaboration'],
-      },
-    ],
-    toolchains: [
-      { id: 'xcode', version: '16.2', path: '/Applications/Xcode.app' },
-      { id: 'node', version: '22.11.0', path: '/usr/local/bin/node' },
-      { id: 'rust', version: '1.83.0', path: '/usr/local/bin/rustc' },
-    ],
-    tasks: { active: 1, waiting: 1 },
-    suitableFor: ['ios-build', 'web', 'rust', 'terminal'],
-  };
-}
-
-/** The `tokens` of `GET /api/mcp/tokens`, without the revoked. */
-export function demoMcpTokens(): unknown[] {
-  const now = Date.now();
-  return [
-    {
-      id: 'demo-token-pane',
-      binding: { kind: 'pane', session_id: SESSION_ID, pane_id: 'pane-shell' },
-      label: 'Shell pane',
-      issued_ms: now - DAY_MS,
-      expires_ms: now + 6 * DAY_MS,
-      last_used_ms: now - 10 * MINUTE_MS,
-    },
-    {
-      id: 'demo-token-agent',
-      binding: { kind: 'agent', agent_id: 'claude' },
-      label: 'Claude Code',
-      issued_ms: now - 3 * DAY_MS,
-      expires_ms: null,
-    },
-  ].filter((token) => !demoRevokedTokens.has(token.id));
-}
-
-/** `DELETE /api/mcp/tokens/{id}`: true once revoked, false for one already gone. */
-export function demoRevokeMcpToken(id: string): boolean {
-  if (!demoMcpTokens().some((token) => (token as { id: string }).id === id)) return false;
-  demoRevokedTokens.add(id);
-  return true;
 }

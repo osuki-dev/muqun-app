@@ -6,7 +6,7 @@ import { useGatewayConnectionStore } from '@/stores/gateway-connection';
 
 /**
  * The selected server's task ledger, as a sheet route. Also the deep link
- * `muqun://server-tasks`, which in the demo opens the demo server's tasks.
+ * `muqun://server-tasks`.
  * `?taskId=` opens straight on that task's detail (Home's task rows).
  */
 export default function ServerTasksScreen() {

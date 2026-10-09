@@ -79,7 +79,5 @@ export function hasFleet(capabilities: readonly string[] | undefined): boolean {
 
 export async function getFleetManifest(): Promise<FleetManifest | null> {
   const { readJson } = await import('./agent-session');
-  const { demoFleetSelf, isDemoActive } = await import('./demo-gateway');
-  if (isDemoActive()) return parseFleetManifest(demoFleetSelf());
   return readJson('/api/fleet/self', parseFleetManifest, null);
 }

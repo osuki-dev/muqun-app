@@ -23,16 +23,9 @@ type Load =
  * Absent entirely on a gateway without `fleet`: an older gateway would 404 here,
  * and a section that can only ever say "could not load" is worse than none.
  */
-export function ServerCapabilities({
-  serverId,
-  capabilities,
-}: {
-  serverId: string;
-  /** Gates on this list instead of the store, for the demo server. */
-  capabilities?: readonly string[];
-}) {
-  const stored = useServerCapabilities((state) => state.byServer[serverId]);
-  if (!hasFleet(capabilities ?? stored)) return null;
+export function ServerCapabilities({ serverId }: { serverId: string }) {
+  const fleet = useServerCapabilities((state) => hasFleet(state.byServer[serverId]));
+  if (!fleet) return null;
   return <CapabilitiesSection />;
 }
 
