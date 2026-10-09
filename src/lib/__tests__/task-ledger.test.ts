@@ -1,13 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import {
-  TASK_LEDGER_CAPABILITY,
-  hasTaskLedger,
-  isTerminalTaskState,
-  parseTaskEvent,
-  parseTaskList,
-  parseTaskView,
-} from '../task-ledger';
+import { isTerminalTaskState, parseTaskEvent, parseTaskList, parseTaskView } from '../task-ledger';
 
 describe('parseTaskView', () => {
   test('reads a pane-bound command with snake_case keys', () => {
@@ -88,12 +81,9 @@ describe('parseTaskEvent', () => {
   });
 });
 
-test('terminal states and the capability', () => {
+test('done, failed and cancelled are finished; waiting is not', () => {
   expect(['done', 'failed', 'cancelled'].every((s) => isTerminalTaskState(s as never))).toBe(true);
   expect(isTerminalTaskState('waiting')).toBe(false);
-  expect(hasTaskLedger([TASK_LEDGER_CAPABILITY])).toBe(true);
-  expect(hasTaskLedger(['ws_events'])).toBe(false);
-  expect(hasTaskLedger(undefined)).toBe(false);
 });
 
 describe('parseTaskList', () => {

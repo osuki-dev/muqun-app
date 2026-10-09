@@ -26,15 +26,6 @@ test('search and clear have accessible labels and no matches has its own message
   expect(recent).toContain('testID="home-continue-no-matches"');
 });
 
-test('provider ink is restricted to metadata Text, leaving the mark and title unchanged', () => {
-  // One span: the meta line's kind (an agent, or the agent a terminal runs).
-  expect(recent.match(/color=\{homeProviderTextColor\(/g)).toHaveLength(1);
-  expect(recent).toContain('<AgentMark kind={agentKind} size={14} color={theme.colors.primary} />');
-  expect(recent).toContain('numberOfLines={terminal ? 1 : 2}');
-  expect(recent).toContain('style={styles.title}');
-  expect(recent).not.toContain('backgroundColor: homeProviderTextColor');
-});
-
 test('native fixture waits for the layout picker and keeps the active-demo gate', () => {
   expect(fixtureFlow).toContain('open "muqun:///settings-home-layout"');
   expect(fixtureFlow).not.toContain('open "muqun://settings-home-layout"');

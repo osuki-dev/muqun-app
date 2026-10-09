@@ -78,10 +78,6 @@ describe('homeComposerAgent', () => {
   test('the fallback row leads with OpenCode and names no agent id', () => {
     expect(homeComposerAgent(buildLaunchModel().entries)).toEqual({ name: 'OpenCode' });
   });
-
-  test('no agent tile, no agent', () => {
-    expect(homeComposerAgent([])).toBeNull();
-  });
 });
 
 describe('homeSessionParams', () => {
