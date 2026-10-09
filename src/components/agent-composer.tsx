@@ -447,6 +447,18 @@ export interface AgentComposerProps {
    * optional. It is the same measurement the popups already take, handed up.
    */
   onDockHeight?: (height: number) => void;
+  /**
+   * A line drawn on top of the dock, inside it: it rides the keyboard with the
+   * dock and is counted in `onDockHeight`. Home's assignment bar -- where Send
+   * is about to go, before there is a session to say so -- is the one caller.
+   */
+  accessory?: React.ReactNode;
+  /**
+   * The field's and Send's test ids. Home hosts this same dock beside a Pad
+   * workspace whose own composers keep the defaults, so it names its own.
+   */
+  inputTestID?: string;
+  sendTestID?: string;
 }
 
 export const AgentComposer = memo(function AgentComposer({
@@ -508,6 +520,9 @@ export const AgentComposer = memo(function AgentComposer({
   onPressTokens,
   injectDraftRef,
   onDockHeight,
+  accessory,
+  inputTestID = 'agent-composer-input',
+  sendTestID,
 }: AgentComposerProps) {
   const { t } = useLingui();
   const { _ } = useLinguiRuntime();
@@ -1222,6 +1237,7 @@ export const AgentComposer = memo(function AgentComposer({
           setDockHeight(height);
           onDockHeight?.(height);
         }}>
+        {accessory}
         <GlassChrome surface="composer" shape="sheet" style={styles.composerDock}>
           <View style={[styles.composerInner, { paddingBottom: dockBottomPadding }]}>
             {/* Row 1: roots only. Tapping the current root opens its tree. */}
@@ -1640,7 +1656,7 @@ export const AgentComposer = memo(function AgentComposer({
                       : t`The agent is offline`
                     : t`Send a message, type / for commands, @ for files…`,
                   editable: !sending && !disabled,
-                  testID: 'agent-composer-input',
+                  testID: inputTestID,
                   selection: slashPopup.inputProps.selection,
                   onSelectionChange: handleSelectionChange,
                   onKeyPress: slashPopup.inputProps.onKeyPress,
@@ -1663,6 +1679,7 @@ export const AgentComposer = memo(function AgentComposer({
                     disabled ||
                     (!text.trim() && attachmentUploads.attachments.length === 0),
                   onPress: handleSend,
+                  ...(sendTestID ? { testID: sendTestID } : {}),
                 }}
               />
             </View>

@@ -175,11 +175,13 @@ msgid "{agentName} cannot preview a rollback. This removes the message and every
 msgstr "{agentName} no puede mostrar una vista previa de la reversión. Esto elimina el mensaje y todo lo posterior, el turno completo, y no se puede deshacer"
 
 #: src/components/agent-workbench.tsx
+#: src/components/home-composer-dock.tsx
 msgid "{agentName} does not support that action."
 msgstr "{agentName} no admite esa acción"
 
 #: src/components/agent-composer.tsx
 #: src/components/agent-workbench.tsx
+#: src/components/home-composer-dock.tsx
 msgid "{agentName} is offline"
 msgstr "{agentName} está sin conexión"
 
@@ -196,6 +198,7 @@ msgid "{agentName} ready"
 msgstr "{agentName} listo"
 
 #: src/components/agent-workbench.tsx
+#: src/components/home-composer-dock.tsx
 msgid "{agentName} refused the request: {message}"
 msgstr "{agentName} rechazó la solicitud: {message}"
 
@@ -702,7 +705,7 @@ msgstr "Consultando ese código con el Gateway"
 msgid "Assign this to an assistant"
 msgstr "Asignar esto a un asistente"
 
-#: src/components/home-composer.tsx
+#: src/components/home-composer-dock.tsx
 msgid "Assigned to {computerLabel}, {agentName}"
 msgstr "Asignado a {computerLabel}, {agentName}"
 
@@ -1077,7 +1080,7 @@ msgstr "Elige un asistente"
 msgid "Choose an SSH host."
 msgstr "Elige un host SSH"
 
-#: src/components/home-composer.tsx
+#: src/components/home-composer-dock.tsx
 msgid "Choose another computer"
 msgstr "Elegir otro ordenador"
 
@@ -1323,6 +1326,7 @@ msgstr "Ordenador no encontrado"
 msgid "Computer offline"
 msgstr "Ordenador sin conexión"
 
+#: src/components/home-composer-dock.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Computer unavailable."
 msgstr "Ordenador no disponible"
@@ -1330,7 +1334,6 @@ msgstr "Ordenador no disponible"
 #: src/app/settings-servers.tsx
 #: src/app/settings.tsx
 #: src/components/app-drawer-content.tsx
-#: src/components/home-composer.tsx
 #: src/components/home-editorial-layout.tsx
 msgid "Computers"
 msgstr "Ordenadores"
@@ -3583,7 +3586,7 @@ msgstr "aún sin commits"
 msgid "No commits yet"
 msgstr "Aún sin commits"
 
-#: src/components/home-composer.tsx
+#: src/components/home-composer-dock.tsx
 msgid "No computer online"
 msgstr "Ningún ordenador en línea"
 
@@ -5068,7 +5071,7 @@ msgstr "Enviar el texto"
 msgid "Send this task to {assignmentLabel}"
 msgstr "Enviar esta tarea a {assignmentLabel}"
 
-#: src/components/home-composer.tsx
+#: src/components/home-composer-dock.tsx
 msgid "Send to {computerLabel}"
 msgstr "Enviar a {computerLabel}"
 
@@ -5727,10 +5730,6 @@ msgstr "Tareas ({0}/{1})"
 msgid "Tasks progress"
 msgstr "Progreso de tareas"
 
-#: src/components/home-composer.tsx
-msgid "Tell a computer what to do"
-msgstr "Dile a un ordenador qué hacer"
-
 #: src/components/settings-storage.tsx
 msgid "Temporary files"
 msgstr "Archivos temporales"
@@ -6069,6 +6068,7 @@ msgid "This computer does not expand ~. Type the full path, starting with /."
 msgstr "Este ordenador no expande ~. Escribe la ruta completa, empezando por /"
 
 #: src/components/agent-workbench.tsx
+#: src/components/home-composer-dock.tsx
 msgid "This computer does not know {agentName}. Refresh the agent list and try again."
 msgstr "Este ordenador no conoce {agentName}. Actualiza la lista de agentes e inténtalo de nuevo"
 

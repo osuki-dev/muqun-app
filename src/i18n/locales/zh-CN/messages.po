@@ -175,11 +175,13 @@ msgid "{agentName} cannot preview a rollback. This removes the message and every
 msgstr "{agentName} 无法预览回滚。这会删除这条消息及其之后的全部内容，即整轮对话，且无法恢复"
 
 #: src/components/agent-workbench.tsx
+#: src/components/home-composer-dock.tsx
 msgid "{agentName} does not support that action."
 msgstr "{agentName} 不支持此操作"
 
 #: src/components/agent-composer.tsx
 #: src/components/agent-workbench.tsx
+#: src/components/home-composer-dock.tsx
 msgid "{agentName} is offline"
 msgstr "{agentName} 已离线"
 
@@ -196,6 +198,7 @@ msgid "{agentName} ready"
 msgstr "{agentName} 已就绪"
 
 #: src/components/agent-workbench.tsx
+#: src/components/home-composer-dock.tsx
 msgid "{agentName} refused the request: {message}"
 msgstr "{agentName} 拒绝了请求：{message}"
 
@@ -702,7 +705,7 @@ msgstr "正在向 Gateway 确认这个代码"
 msgid "Assign this to an assistant"
 msgstr "交给一个助手去做"
 
-#: src/components/home-composer.tsx
+#: src/components/home-composer-dock.tsx
 msgid "Assigned to {computerLabel}, {agentName}"
 msgstr "指派给 {computerLabel}，{agentName}"
 
@@ -1077,7 +1080,7 @@ msgstr "选择助手"
 msgid "Choose an SSH host."
 msgstr "请选择 SSH 主机"
 
-#: src/components/home-composer.tsx
+#: src/components/home-composer-dock.tsx
 msgid "Choose another computer"
 msgstr "选择其他电脑"
 
@@ -1323,6 +1326,7 @@ msgstr "找不到电脑"
 msgid "Computer offline"
 msgstr "电脑离线"
 
+#: src/components/home-composer-dock.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Computer unavailable."
 msgstr "电脑不可用"
@@ -1330,7 +1334,6 @@ msgstr "电脑不可用"
 #: src/app/settings-servers.tsx
 #: src/app/settings.tsx
 #: src/components/app-drawer-content.tsx
-#: src/components/home-composer.tsx
 #: src/components/home-editorial-layout.tsx
 msgid "Computers"
 msgstr "电脑"
@@ -3583,7 +3586,7 @@ msgstr "尚无提交"
 msgid "No commits yet"
 msgstr "尚无提交"
 
-#: src/components/home-composer.tsx
+#: src/components/home-composer-dock.tsx
 msgid "No computer online"
 msgstr "没有在线的电脑"
 
@@ -5068,7 +5071,7 @@ msgstr "发送文字"
 msgid "Send this task to {assignmentLabel}"
 msgstr "把这个任务发给 {assignmentLabel}"
 
-#: src/components/home-composer.tsx
+#: src/components/home-composer-dock.tsx
 msgid "Send to {computerLabel}"
 msgstr "发送到 {computerLabel}"
 
@@ -5727,10 +5730,6 @@ msgstr "任务 ({0}/{1})"
 msgid "Tasks progress"
 msgstr "任务进度"
 
-#: src/components/home-composer.tsx
-msgid "Tell a computer what to do"
-msgstr "告诉电脑要做什么"
-
 #: src/components/settings-storage.tsx
 msgid "Temporary files"
 msgstr "临时文件"
@@ -6069,6 +6068,7 @@ msgid "This computer does not expand ~. Type the full path, starting with /."
 msgstr "这台电脑不会展开 ~。请输入以 / 开头的完整路径"
 
 #: src/components/agent-workbench.tsx
+#: src/components/home-composer-dock.tsx
 msgid "This computer does not know {agentName}. Refresh the agent list and try again."
 msgstr "这台电脑不认识 {agentName}。请刷新智能体列表后重试"
 

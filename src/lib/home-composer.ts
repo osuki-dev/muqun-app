@@ -1,11 +1,19 @@
 /**
- * Home's composer: which computer a typed goal goes to, which agent starts
- * it, and what an `@computer` mention does to the draft.
+ * Home's dock: which computer a typed goal goes to, which agent starts it,
+ * and what the new session is created with.
  *
- * Pure, so the rules are pinned by Bun tests; `home-composer.tsx` is the view.
+ * Pure, so the rules are pinned by Bun tests; `home-composer-dock.tsx` is the
+ * view, and it hosts the session screen's own `AgentComposer`.
  */
 
-import type { FileMentionTrigger } from '@/lib/file-mentions';
+import type { AgentClientCommandId } from '@/lib/agent-commands';
+import type { AgentFeatures } from '@/lib/agent-protocol';
+import type { CatalogDefaults, ModeInfo, ModelInfo, ModelRef } from '@/lib/agent-session';
+import {
+  resolveNewSessionDefaults,
+  type RememberedAgentChoice,
+  type RememberedAgentDefaults,
+} from '@/lib/agent-session-defaults';
 import type { GatewayRecord } from '@/lib/gateway-storage';
 import type { LaunchEntry } from '@/lib/home-launch-model';
 import type { ServerReachability } from '@/lib/server-reachability';
@@ -63,42 +71,62 @@ export function homeComposerAgent(
 }
 
 /**
- * The computers an `@` offers: those answering right now, plus the one this
- * app is connected to (in demo mode, the demo workspace). Filtered by what was
- * typed after the `@`, against the label and the id, ignoring case.
+ * The gateway session Home's new agent sessions are made under: the one the
+ * `/agent` route and the Pad detail default to when a link names none, so the
+ * session Home starts is the session those screens then open.
  */
-export function homeComposerMentionCandidates(input: {
-  servers: readonly GatewayRecord[];
-  reachabilityByServer: Reachability;
-  currentServerId?: string | null;
-  query: string;
-}): GatewayRecord[] {
-  const needle = input.query.trim().toLowerCase();
-  return input.servers.filter((server) => {
-    const offered =
-      reachabilityOf(input.reachabilityByServer, server.serverId) === 'live' ||
-      server.serverId === input.currentServerId;
-    if (!offered) return false;
-    if (!needle) return true;
-    return (
-      server.label.toLowerCase().includes(needle) || server.serverId.toLowerCase().includes(needle)
-    );
-  });
+export const HOME_AGENT_SESSION_ID = 'herdr';
+
+/**
+ * The app's own `/` commands Home leaves out: every one of them acts on a
+ * session that exists (undo, compact, export...) or on the session screen's own
+ * sheets. `/models` stays, because Home has the model picker -- unless the
+ * agent cannot switch models at all.
+ */
+export function homeHiddenClientCommands(
+  features: Pick<AgentFeatures, 'modelSelection'>
+): AgentClientCommandId[] {
+  const hidden: AgentClientCommandId[] = [
+    'new',
+    'sessions',
+    'agents',
+    'undo',
+    'keep',
+    'compact',
+    'clear',
+    'export',
+  ];
+  if (!features.modelSelection) hidden.push('models');
+  return hidden;
 }
 
 /**
- * Take an `@query` out of the draft once its computer is chosen: the choice
- * lives in the assignment bar, not in the text the agent is sent. One of the
- * spaces either side goes with it, so no double space is left behind.
+ * What `POST /api/agent-sessions` carries for a goal sent from Home, which is
+ * also what the dock's mode and model pills show before it is sent.
+ *
+ * The workbench's own ladder (`resolveNewSessionDefaults`): the reader's pick
+ * in the dock, then what this server remembers, then the catalog's defaults.
+ * The agent is named only on a gateway that has said which agents it drives;
+ * an older gateway has one and no `agent_id` to read.
  */
-export function removeHomeComposerMention(
-  text: string,
-  trigger: FileMentionTrigger
-): { text: string; caret: number } {
-  const start = Math.max(0, Math.min(trigger.start, text.length));
-  let end = Math.max(start, Math.min(trigger.end, text.length));
-  const before = start === 0 ? '' : text[start - 1]!;
-  const after = text[end] ?? '';
-  if ((start === 0 || /\s/.test(before)) && /[ \t]/.test(after)) end += 1;
-  return { text: text.slice(0, start) + text.slice(end), caret: start };
+export function homeSessionParams(input: {
+  picked: RememberedAgentChoice;
+  remembered: RememberedAgentDefaults;
+  catalogDefaults: CatalogDefaults;
+  models: readonly ModelInfo[];
+  modes: readonly ModeInfo[];
+  agentId?: string;
+  agentsDiscovered: boolean;
+}): { mode?: string; model?: ModelRef; agentId?: string } {
+  const resolved = resolveNewSessionDefaults({
+    picked: input.picked,
+    ...input.remembered,
+    catalogDefaults: input.catalogDefaults,
+    models: input.models,
+    modes: input.modes,
+  });
+  return {
+    ...resolved,
+    ...(input.agentsDiscovered && input.agentId ? { agentId: input.agentId } : {}),
+  };
 }

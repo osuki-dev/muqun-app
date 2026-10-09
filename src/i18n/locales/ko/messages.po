@@ -175,11 +175,13 @@ msgid "{agentName} cannot preview a rollback. This removes the message and every
 msgstr "{agentName}은(는) 롤백을 미리 볼 수 없습니다. 이 메시지와 그 이후의 모든 내용, 즉 턴 전체가 삭제되며 되돌릴 수 없습니다"
 
 #: src/components/agent-workbench.tsx
+#: src/components/home-composer-dock.tsx
 msgid "{agentName} does not support that action."
 msgstr "{agentName}은(는) 이 작업을 지원하지 않습니다"
 
 #: src/components/agent-composer.tsx
 #: src/components/agent-workbench.tsx
+#: src/components/home-composer-dock.tsx
 msgid "{agentName} is offline"
 msgstr "{agentName}이(가) 오프라인입니다"
 
@@ -196,6 +198,7 @@ msgid "{agentName} ready"
 msgstr "{agentName} 준비됨"
 
 #: src/components/agent-workbench.tsx
+#: src/components/home-composer-dock.tsx
 msgid "{agentName} refused the request: {message}"
 msgstr "{agentName}이(가) 요청을 거부했습니다: {message}"
 
@@ -702,7 +705,7 @@ msgstr "Gateway에 해당 코드를 확인하는 중입니다"
 msgid "Assign this to an assistant"
 msgstr "어시스턴트에게 맡기기"
 
-#: src/components/home-composer.tsx
+#: src/components/home-composer-dock.tsx
 msgid "Assigned to {computerLabel}, {agentName}"
 msgstr "할당 대상: {computerLabel}, {agentName}"
 
@@ -1077,7 +1080,7 @@ msgstr "어시스턴트 선택"
 msgid "Choose an SSH host."
 msgstr "SSH 호스트를 선택하세요"
 
-#: src/components/home-composer.tsx
+#: src/components/home-composer-dock.tsx
 msgid "Choose another computer"
 msgstr "다른 컴퓨터 선택"
 
@@ -1323,6 +1326,7 @@ msgstr "컴퓨터를 찾을 수 없음"
 msgid "Computer offline"
 msgstr "컴퓨터 오프라인"
 
+#: src/components/home-composer-dock.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Computer unavailable."
 msgstr "컴퓨터를 사용할 수 없습니다"
@@ -1330,7 +1334,6 @@ msgstr "컴퓨터를 사용할 수 없습니다"
 #: src/app/settings-servers.tsx
 #: src/app/settings.tsx
 #: src/components/app-drawer-content.tsx
-#: src/components/home-composer.tsx
 #: src/components/home-editorial-layout.tsx
 msgid "Computers"
 msgstr "컴퓨터"
@@ -3583,7 +3586,7 @@ msgstr "아직 커밋 없음"
 msgid "No commits yet"
 msgstr "아직 커밋 없음"
 
-#: src/components/home-composer.tsx
+#: src/components/home-composer-dock.tsx
 msgid "No computer online"
 msgstr "온라인 컴퓨터 없음"
 
@@ -5068,7 +5071,7 @@ msgstr "텍스트 보내기"
 msgid "Send this task to {assignmentLabel}"
 msgstr "이 작업을 {assignmentLabel}(으)로 보내기"
 
-#: src/components/home-composer.tsx
+#: src/components/home-composer-dock.tsx
 msgid "Send to {computerLabel}"
 msgstr "{computerLabel}(으)로 보내기"
 
@@ -5727,10 +5730,6 @@ msgstr "작업 ({0}/{1})"
 msgid "Tasks progress"
 msgstr "작업 진행률"
 
-#: src/components/home-composer.tsx
-msgid "Tell a computer what to do"
-msgstr "컴퓨터에게 할 일을 알려 주세요"
-
 #: src/components/settings-storage.tsx
 msgid "Temporary files"
 msgstr "임시 파일"
@@ -6069,6 +6068,7 @@ msgid "This computer does not expand ~. Type the full path, starting with /."
 msgstr "이 컴퓨터는 ~를 확장하지 않습니다. /로 시작하는 전체 경로를 입력하세요"
 
 #: src/components/agent-workbench.tsx
+#: src/components/home-composer-dock.tsx
 msgid "This computer does not know {agentName}. Refresh the agent list and try again."
 msgstr "이 컴퓨터는 {agentName}을(를) 알지 못합니다. 에이전트 목록을 새로 고친 뒤 다시 시도하세요"
 
