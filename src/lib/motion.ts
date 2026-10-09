@@ -15,7 +15,7 @@
  * different interaction when a theme adds artwork.
  */
 import { motion as tokens } from '@osuki-dev/ui';
-import { staggerDelay } from '@/lib/stagger';
+import { entryDelay } from '@/lib/stagger';
 import {
   Easing,
   FadeIn,
@@ -504,12 +504,13 @@ export const riseIn = (delay = 0, maxDelay = 120) =>
  * `riseIn` on the `STAGGER.entry` beat, with the beat compressed by
  * `staggerDelay` so that the last of `count` rows has landed inside
  * `ENTRY_BUDGET_MS`. `after` shifts the whole sequence, for a group that
- * should follow one already on its way.
+ * should follow one already on its way; `entryDelay` clamps the result so every
+ * caller, offset or not, has landed inside the budget.
  */
 export const entryRise = (index: number, count: number, after = 0) =>
   riseIn(
-    after + staggerDelay(index, count, STAGGER.entry, DURATION.short, ENTRY_BUDGET_MS),
-    ENTRY_BUDGET_MS
+    entryDelay(index, count, after, STAGGER.entry, DURATION.short, ENTRY_BUDGET_MS),
+    ENTRY_BUDGET_MS - DURATION.short
   );
 
 /**

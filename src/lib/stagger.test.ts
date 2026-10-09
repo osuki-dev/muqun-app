@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { staggerDelay } from '@/lib/stagger';
+import { entryDelay, staggerDelay } from '@/lib/stagger';
 
 describe('staggerDelay', () => {
   test('keeps the preferred beat while the sequence fits its budget', () => {
@@ -29,5 +29,29 @@ describe('staggerDelay', () => {
   test('no room in the budget means no stagger', () => {
     expect(staggerDelay(4, 7, 32, 400, 400)).toBe(0);
     expect(staggerDelay(4, 7, 32, 500, 400)).toBe(0);
+  });
+});
+
+describe('entryDelay', () => {
+  // The Settings numbers: a 32 ms beat, 200 ms rises, a 400 ms budget.
+  const at = (index: number, count: number, after = 0) =>
+    entryDelay(index, count, after, 32, 200, 400);
+
+  test('without an offset it is the stagger itself', () => {
+    expect(at(3, 7)).toBe(staggerDelay(3, 7, 32, 200, 400));
+  });
+
+  test('the tail after seven rows still lands inside the budget', () => {
+    const rowsSettled = staggerDelay(6, 7, 32, 200, 400);
+    expect(rowsSettled).toBe(192);
+    const tail = [0, 1].map((index) => at(index, 2, rowsSettled));
+    expect(tail).toEqual([192, 200]);
+    for (const delay of tail) expect(delay + 200).toBeLessThanOrEqual(400);
+  });
+
+  test('any offset is clamped to the latest start that still fits', () => {
+    expect(at(2, 3, 192)).toBe(200);
+    expect(at(0, 1, 10_000)).toBe(200);
+    expect(entryDelay(0, 1, 50, 32, 500, 400)).toBe(0);
   });
 });

@@ -22,3 +22,20 @@ export function staggerDelay(
   const beat = Math.min(step, room / (count - 1));
   return Math.round(Math.min(index, count - 1) * beat);
 }
+
+/**
+ * `staggerDelay` shifted by `after`, for a group that follows another, and
+ * clamped so the item still finishes inside `budgetMs`: the latest any item may
+ * start is `budgetMs - durationMs`, whatever the offset asked for.
+ */
+export function entryDelay(
+  index: number,
+  count: number,
+  after: number,
+  step: number,
+  durationMs: number,
+  budgetMs: number
+): number {
+  const delay = after + staggerDelay(index, count, step, durationMs, budgetMs);
+  return Math.min(delay, Math.max(0, budgetMs - durationMs));
+}
