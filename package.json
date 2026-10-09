@@ -59,6 +59,7 @@
     "expo-alternate-app-icons": "^8.0.0",
     "expo-application": "~57.0.3",
     "expo-asset": "~57.0.19",
+    "expo-audio": "~57.0.5",
     "expo-blur": "~57.0.3",
     "expo-build-properties": "~57.0.22",
     "expo-clipboard": "~57.0.2",

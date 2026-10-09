@@ -447,6 +447,10 @@ msgctxt "git file status"
 msgid "Added"
 msgstr "Đã thêm"
 
+#: src/app/settings-voice.tsx
+msgid "After recording"
+msgstr "Sau khi ghi âm"
+
 #: src/components/new-task-sheet.tsx
 msgid "Agent"
 msgstr "Tác nhân"
@@ -2213,6 +2217,10 @@ msgstr "Nhập tên"
 msgid "Enter a valid HTTPS API URL. API key and model are optional."
 msgstr "Nhập URL API HTTPS hợp lệ. Khóa API và mô hình là tùy chọn"
 
+#: src/app/settings-voice.tsx
+msgid "Enter a valid WSS realtime URL. API key and model are optional."
+msgstr "Nhập URL WSS thời gian thực hợp lệ. Khóa API và mô hình là tùy chọn"
+
 #: src/app/explore.tsx
 msgid "Enter the {PAIRING_CODE_CHARACTER_COUNT}-character code."
 msgstr "Nhập mã gồm {PAIRING_CODE_CHARACTER_COUNT} ký tự"
@@ -2746,6 +2754,10 @@ msgstr "Cài đặt phiên bản ứng dụng hỗ trợ âm thanh để nghe t�
 #: src/app/settings-voice.tsx
 msgid "Install an app build with voice recording support to use the microphone."
 msgstr "Cài bản ứng dụng hỗ trợ ghi âm giọng nói để sử dụng micrô"
+
+#: src/components/voice-input-button.tsx
+msgid "Install an updated app build to use realtime transcription."
+msgstr "Cài đặt phiên bản ứng dụng mới để dùng phiên âm thời gian thực"
 
 #: src/app/explore.tsx
 msgid "Install command copied"
@@ -4203,6 +4215,14 @@ msgstr "Đang chờ nhập"
 msgid "Ready to preview. Nothing is applied until you say so."
 msgstr "Sẵn sàng để xem. Không có gì được áp dụng cho đến khi bạn quyết định"
 
+#: src/app/settings-voice.tsx
+msgid "Realtime"
+msgstr "Thời gian thực"
+
+#: src/components/voice-input-button.tsx
+msgid "Realtime transcription disconnected. Check your connection and speech service, then try again."
+msgstr "Phiên âm thời gian thực đã ngắt kết nối. Kiểm tra kết nối và dịch vụ giọng nói rồi thử lại"
+
 #: src/components/agent-context-sheet.tsx
 msgid "Reasoning"
 msgstr "Lý luận"
@@ -4383,6 +4403,10 @@ msgstr "Yêu cầu khi khởi động và sau 30 giây ở nền"
 #: src/components/ssh-host-form.tsx
 msgid "Required."
 msgstr "Bắt buộc"
+
+#: src/app/settings-voice.tsx
+msgid "Requires an OpenAI Realtime-compatible WebSocket endpoint and a live transcription model. Text appears as you speak; tap to stop and finish. Other streaming protocols are not supported."
+msgstr "Cần điểm cuối WebSocket tương thích OpenAI Realtime và mô hình phiên âm trực tiếp. Văn bản xuất hiện khi bạn nói; chạm để dừng và hoàn tất. Không hỗ trợ các giao thức truyền phát khác"
 
 #: src/components/settings-alerts.tsx
 msgid "Requires iOS 16.1 or later."
@@ -6009,6 +6033,10 @@ msgstr "Văn bản nhận dạng"
 #: src/components/voice-input-button.tsx
 msgid "Transcription failed. Check your speech service and try again."
 msgstr "Phiên âm thất bại. Kiểm tra dịch vụ giọng nói và thử lại"
+
+#: src/app/settings-voice.tsx
+msgid "Transcription mode"
+msgstr "Chế độ phiên âm"
 
 #: src/components/bounded-markdown.tsx
 #: src/components/embedded-terminal-tool-block.tsx

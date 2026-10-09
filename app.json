@@ -295,6 +295,14 @@
         }
       ],
       [
+        "expo-audio",
+        {
+          "enableBackgroundPlayback": false,
+          "enableBackgroundRecording": false,
+          "microphonePermission": "Allow Muqun to record speech and send it to the speech service you configure."
+        }
+      ],
+      [
         "expo-notifications",
         {
           "color": "#FF5A4A",

@@ -67,6 +67,12 @@ declare module 'bun:test' {
   export function beforeAll(fn: () => void | Promise<void>): void;
   export function afterAll(fn: () => void | Promise<void>): void;
 
+  export const jest: {
+    useFakeTimers(): void;
+    useRealTimers(): void;
+    advanceTimersByTime(milliseconds: number): void;
+  };
+
   export const mock: {
     /**
      * Replace a module's exports for every importer in this test file.

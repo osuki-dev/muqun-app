@@ -1,5 +1,7 @@
 export class VoiceInputError extends Error {
-  constructor(public code: 'permission' | 'transcription' | 'response') {
+  constructor(
+    public code: 'permission' | 'transcription' | 'response' | 'unsupported' | 'connection'
+  ) {
     super(code);
   }
 }
@@ -18,10 +20,14 @@ function claimRecorder() {
 export type VoiceState = 'starting' | 'recording' | 'processing';
 
 export interface VoiceRecordingRuntime {
-  start(signal: AbortSignal, onMeter: (level: number, seconds: number) => void): Promise<void>;
+  start(
+    signal: AbortSignal,
+    onMeter: (level: number, seconds: number) => void,
+    onFailure: (error: unknown) => void
+  ): Promise<void>;
   stop(): Promise<void>;
   transcribe(signal: AbortSignal): Promise<string>;
-  release(): void;
+  release(): void | Promise<void>;
 }
 
 /** Serializes native recorder ownership across stop, cancellation and upload. */
@@ -32,7 +38,7 @@ export class VoiceRecordingSession {
   private cleanup: Promise<void> | undefined;
   private cancelled = false;
   private ownsRecorder = false;
-  private released = false;
+  private releasing: Promise<void> | undefined;
   private releaseLease: (() => void) | undefined;
   private timer: ReturnType<typeof setTimeout> | undefined;
 
@@ -53,13 +59,23 @@ export class VoiceRecordingSession {
     if (this.cancelled) return;
     this.releaseLease = await claimRecorder();
     if (this.cancelled) {
-      this.release();
+      await this.release();
       return;
     }
     this.ownsRecorder = true;
-    await this.runtime.start(this.abort.signal, (level, seconds) => {
-      if (!this.cancelled) this.onMeter(level, seconds);
-    });
+    await this.runtime.start(
+      this.abort.signal,
+      (level, seconds) => {
+        if (!this.cancelled) this.onMeter(level, seconds);
+      },
+      (error) => {
+        if (this.cancelled || this.releasing) return;
+        this.onError(error);
+        // Wait for startup/stop before releasing a recorder after an asynchronous
+        // transport or microphone failure. Never dispose it during native startup.
+        void this.cancel();
+      }
+    );
     if (this.cancelled) return;
     this.onState('recording');
     this.timer = setTimeout(() => void this.finish(), 120_000);
@@ -83,7 +99,7 @@ export class VoiceRecordingSession {
       if (!this.cancelled) this.onText(text);
     } finally {
       clearTimeout(timeout);
-      this.release();
+      await this.release();
     }
   }
 
@@ -106,7 +122,7 @@ export class VoiceRecordingSession {
     await this.starting;
     await this.finishing;
     await this.stop().catch(() => undefined);
-    this.release();
+    await this.release();
   }
 
   private fail(error: unknown) {
@@ -120,10 +136,15 @@ export class VoiceRecordingSession {
   }
 
   private release() {
-    if (this.released) return;
-    this.released = true;
+    this.releasing ??= this.releaseRuntime();
+    return this.releasing;
+  }
+
+  private async releaseRuntime() {
     try {
-      this.runtime.release();
+      await this.runtime.release();
+    } catch {
+      // Cleanup is best effort, but must not retain the global microphone lease.
     } finally {
       this.releaseLease?.();
     }

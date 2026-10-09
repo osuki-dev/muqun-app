@@ -161,3 +161,60 @@ test('a new recording waits until the cancelled recorder has released its native
   expect(second.events).toEqual(['start', 'recording']);
   await second.session.cancel();
 });
+
+test('an asynchronous transport failure stops capture and never delivers provisional text', async () => {
+  let fail!: (error: unknown) => void;
+  const { session, events } = fixture({
+    start: async (_signal, _meter, onFailure) => {
+      fail = onFailure;
+    },
+  });
+  await session.start();
+  fail(new Error('disconnected'));
+  fail(new Error('duplicate close event'));
+  await session.cancel();
+  expect(events).toEqual(['recording', 'error', 'stop', 'release']);
+});
+
+test('a new recorder waits for asynchronous audio session deactivation', async () => {
+  const released = deferred<void>();
+  const entered = deferred<void>();
+  const first = fixture({
+    release: () => {
+      entered.resolve();
+      return released.promise;
+    },
+  });
+  const second = fixture();
+  await first.session.start();
+  const cancel = first.session.cancel();
+  await entered.promise;
+  const start = second.session.start();
+  await Promise.resolve();
+  expect(second.events).toEqual([]);
+  released.resolve();
+  await Promise.all([cancel, start]);
+  expect(second.events).toEqual(['start', 'recording']);
+  await second.session.cancel();
+});
+
+test('transport failure during native startup waits before stopping the microphone', async () => {
+  const entered = deferred<void>();
+  const started = deferred<void>();
+  let fail!: (error: unknown) => void;
+  const { session, events } = fixture({
+    start: (_signal, _meter, onFailure) => {
+      fail = onFailure;
+      entered.resolve();
+      return started.promise;
+    },
+  });
+  const start = session.start();
+  await entered.promise;
+  fail(new Error('disconnected'));
+  expect(events).toEqual(['error']);
+  started.resolve();
+  await start;
+  await session.cancel();
+  expect(events).toEqual(['error', 'stop', 'release']);
+});
