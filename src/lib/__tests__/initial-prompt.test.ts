@@ -1,35 +1,49 @@
 import { describe, expect, test } from 'bun:test';
 
-import { claimInitialPrompt, offerInitialPrompt, withdrawInitialPrompt } from '../initial-prompt';
+import {
+  claimInitialPrompt,
+  OFFER_TTL_MS,
+  offerInitialPrompt,
+  withdrawInitialPrompt,
+} from '../initial-prompt';
 
 describe('initial prompt ledger', () => {
-  test('a prompt never offered is never claimed (a bare deep link does not send)', () => {
-    expect(claimInitialPrompt('s1', 'not offered')).toBe(false);
+  test('an id never offered claims nothing (a bare deep link does not send)', () => {
+    expect(claimInitialPrompt('no-such-offer', 's1')).toBeNull();
   });
 
   test('one offer is one claim, so a remounted workbench does not send twice', () => {
-    offerInitialPrompt('s1', 'goal');
-    expect(claimInitialPrompt('s1', 'goal')).toBe(true);
-    expect(claimInitialPrompt('s1', 'goal')).toBe(false);
+    const id = offerInitialPrompt('s1', 'goal');
+    expect(claimInitialPrompt(id, 's1')).toBe('goal');
+    expect(claimInitialPrompt(id, 's1')).toBeNull();
   });
 
-  test('the same goal sent twice is two sends', () => {
-    offerInitialPrompt('s1', 'twice');
-    offerInitialPrompt('s1', 'twice');
-    expect(claimInitialPrompt('s1', 'twice')).toBe(true);
-    expect(claimInitialPrompt('s1', 'twice')).toBe(true);
-    expect(claimInitialPrompt('s1', 'twice')).toBe(false);
+  test('an abandoned offer is never claimed by a later request for the same goal', () => {
+    const abandoned = offerInitialPrompt('s1', 'same goal');
+    const later = offerInitialPrompt('s1', 'same goal');
+    expect(later).not.toBe(abandoned);
+    expect(claimInitialPrompt(later, 's1')).toBe('same goal');
+    // A remount under the later route's params finds its own id spent.
+    expect(claimInitialPrompt(later, 's1')).toBeNull();
   });
 
-  test('offers are scoped to their computer', () => {
-    offerInitialPrompt('s1', 'scoped');
-    expect(claimInitialPrompt('s2', 'scoped')).toBe(false);
-    expect(claimInitialPrompt('s1', 'scoped')).toBe(true);
+  test('an offer is claimed only for its own computer', () => {
+    const id = offerInitialPrompt('s1', 'scoped');
+    expect(claimInitialPrompt(id, 's2')).toBeNull();
+    expect(claimInitialPrompt(id, 's1')).toBe('scoped');
   });
 
   test('a withdrawn offer cannot be claimed', () => {
-    offerInitialPrompt('s1', 'withdrawn');
-    withdrawInitialPrompt('s1', 'withdrawn');
-    expect(claimInitialPrompt('s1', 'withdrawn')).toBe(false);
+    const id = offerInitialPrompt('s1', 'withdrawn');
+    withdrawInitialPrompt(id);
+    expect(claimInitialPrompt(id, 's1')).toBeNull();
+  });
+
+  test('an offer expires after its lifetime', () => {
+    const at = 1_000_000;
+    const fresh = offerInitialPrompt('s1', 'fresh', at);
+    expect(claimInitialPrompt(fresh, 's1', at + OFFER_TTL_MS)).toBe('fresh');
+    const stale = offerInitialPrompt('s1', 'stale', at);
+    expect(claimInitialPrompt(stale, 's1', at + OFFER_TTL_MS + 1)).toBeNull();
   });
 });

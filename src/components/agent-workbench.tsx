@@ -347,10 +347,11 @@ export interface AgentWorkbenchProps {
   /** A route intent is consumed by this screen; opening `/agent` alone resumes. */
   initialIntent?: 'new';
   /**
-   * The goal Home's composer started this `new` session with. Sent once, when
-   * the workbench is ready, if Home's command offered it (`initial-prompt.ts`).
+   * The ledger id of the goal Home's composer started this `new` session with.
+   * The goal is claimed by it and sent once, when the workbench is ready
+   * (`initial-prompt.ts`).
    */
-  initialPrompt?: string;
+  initialPromptId?: string;
   /** A retained task under the Home overview is mounted, but is not being read. */
   visible?: boolean;
   topInset?: number;
@@ -367,7 +368,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   initialDirectory,
   initialAgentId,
   initialIntent,
-  initialPrompt,
+  initialPromptId,
   visible = true,
   topInset = 0,
   bottomInset = 0,
@@ -2830,21 +2831,22 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   const initialPromptHandledRef = useRef(false);
   const initialPromptReady =
     initialIntent === 'new' &&
-    Boolean(initialPrompt) &&
+    Boolean(initialPromptId) &&
     !loading &&
     !activeAsid &&
     (isOffline || catalogSettledFor === (catalogAgentId ?? ''));
   const sendInitialPrompt = useEffectEvent(() => {
-    if (initialPromptHandledRef.current || !initialPrompt) return;
+    if (initialPromptHandledRef.current || !initialPromptId) return;
     initialPromptHandledRef.current = true;
-    if (!claimInitialPrompt(serverId, initialPrompt)) return;
+    const prompt = claimInitialPrompt(initialPromptId, serverId);
+    if (prompt === null) return;
     const send = handleSendPromptRef.current;
     if (isOffline || !send) {
-      injectDraftRef.current?.(initialPrompt);
+      injectDraftRef.current?.(prompt);
       return;
     }
-    void send(initialPrompt).then((accepted) => {
-      if (!accepted && mountedRef.current) injectDraftRef.current?.(initialPrompt);
+    void send(prompt).then((accepted) => {
+      if (!accepted && mountedRef.current) injectDraftRef.current?.(prompt);
     });
   });
   useEffect(() => {
