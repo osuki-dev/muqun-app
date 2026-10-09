@@ -327,11 +327,11 @@ msgstr "{running} running of {0}"
 msgid "{title} — finished while you were away"
 msgstr "{title} — finished while you were away"
 
-#: src/components/home-computer-cards.tsx
+#: src/components/task-row.tsx
 msgid "{total, plural, one {# sub-task} other {# sub-tasks}}"
 msgstr "{total, plural, one {# sub-task} other {# sub-tasks}}"
 
-#: src/components/home-computer-cards.tsx
+#: src/components/task-row.tsx
 msgid "{total, plural, one {# sub-task} other {# sub-tasks}} ({waiting, plural, one {# waiting} other {# waiting}})"
 msgstr "{total, plural, one {# sub-task} other {# sub-tasks}} ({waiting, plural, one {# waiting} other {# waiting}})"
 
@@ -415,7 +415,7 @@ msgstr "A terminal was created. Open it to inspect startup; launching again coul
 msgid "About"
 msgstr "About"
 
-#: src/components/server-tasks-sheet.tsx
+#: src/components/task-row.tsx
 msgid "Acknowledge"
 msgstr "Acknowledge"
 
@@ -426,6 +426,10 @@ msgstr "Act on this terminal, or send it a command"
 #: src/app/commands.tsx
 msgid "Act on this terminal, or send its agent a prompt"
 msgstr "Act on this terminal, or send its agent a prompt"
+
+#: src/components/task-row.tsx
+msgid "Actions"
+msgstr "Actions"
 
 #. placeholder {0}: row.name
 #. placeholder {0}: sessionTitleOr(session, t`Untitled session`)
@@ -977,6 +981,10 @@ msgstr "Cancel editing {0}"
 msgid "Cancel queued message"
 msgstr "Cancel queued message"
 
+#: src/components/task-row.tsx
+msgid "Cancel task"
+msgstr "Cancel task"
+
 #: src/components/agent-composer.tsx
 msgid "Cancel this queued message"
 msgstr "Cancel this queued message"
@@ -1350,6 +1358,10 @@ msgstr "Computers"
 msgid "Configure your speech service, then hold Send to record. Tap the animation to stop and transcribe."
 msgstr "Configure your speech service, then hold Send to record. Tap the animation to stop and transcribe"
 
+#: src/components/task-row.tsx
+msgid "Confirm cancel"
+msgstr "Confirm cancel"
+
 #: src/components/settings-storage.tsx
 msgid "Confirm clear cache"
 msgstr "Confirm clear cache"
@@ -1673,6 +1685,10 @@ msgstr "Copying…"
 msgid "Could not add a file"
 msgstr "Could not add a file"
 
+#: src/components/task-row.tsx
+msgid "Could not cancel the task"
+msgstr "Could not cancel the task"
+
 #: src/components/agent-workbench.tsx
 msgid "Could not change delivery"
 msgstr "Could not change delivery"
@@ -1775,8 +1791,7 @@ msgstr "Could not load tokens"
 msgid "Could not load what is running."
 msgstr "Could not load what is running"
 
-#: src/components/home-computer-cards.tsx
-#: src/components/server-tasks-sheet.tsx
+#: src/components/task-row.tsx
 msgid "Could not mark the task done"
 msgstr "Could not mark the task done"
 
@@ -2407,7 +2422,7 @@ msgstr "Every changed file in one folder tree with line totals. Open a patch, or
 msgid "Every screen in the app."
 msgstr "Every screen in the app"
 
-#: src/components/home-computer-cards.tsx
+#: src/components/task-row.tsx
 msgid "exit {code}"
 msgstr "exit {code}"
 
@@ -3282,8 +3297,7 @@ msgstr "Manage machines"
 msgid "Manage SSH hosts"
 msgstr "Manage SSH hosts"
 
-#: src/components/home-computer-cards.tsx
-#: src/components/server-tasks-sheet.tsx
+#: src/components/task-row.tsx
 msgid "Mark done"
 msgstr "Mark done"
 
@@ -3896,10 +3910,10 @@ msgstr "Online"
 msgid "ONLINE"
 msgstr "ONLINE"
 
-#: src/components/home-computer-cards.tsx
 #: src/components/home-connections.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/open-web-service-sheet.tsx
+#: src/components/task-row.tsx
 msgid "Open"
 msgstr "Open"
 
@@ -5103,11 +5117,14 @@ msgid "Sending to"
 msgstr "Sending to"
 
 #: src/components/home-computer-cards.tsx
+msgid "Sends your next goal here."
+msgstr "Sends your next goal here"
+
 #: src/components/home-connections.tsx
 msgid "Sends your next goal here. Long press to open it."
 msgstr "Sends your next goal here. Long press to open it"
 
-#: src/components/home-computer-cards.tsx
+#: src/components/task-row.tsx
 msgid "Sent · waiting for {computer}"
 msgstr "Sent · waiting for {computer}"
 
@@ -5510,7 +5527,7 @@ msgctxt "task state"
 msgid "Starting"
 msgstr "Starting"
 
-#: src/components/home-computer-cards.tsx
+#: src/components/task-row.tsx
 msgid "Starting {agent}…"
 msgstr "Starting {agent}…"
 
@@ -5768,10 +5785,10 @@ msgstr "Temporary files"
 #: src/app/commands.tsx
 #: src/app/settings-terminal.tsx
 #: src/app/settings.tsx
-#: src/components/home-computer-cards.tsx
 #: src/components/home-launch-actions.tsx
 #: src/components/home-recent-sessions.tsx
 #: src/components/settings-server-capabilities.tsx
+#: src/components/task-row.tsx
 #: src/i18n/labels.ts
 msgid "Terminal"
 msgstr "Terminal"

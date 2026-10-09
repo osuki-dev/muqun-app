@@ -1,41 +1,23 @@
 import { LegendList } from '@legendapp/list/react-native';
-import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { useLingui } from '@lingui/react/macro';
-import { useThemeTokens, useToast } from '@osuki-dev/ui';
+import { useThemeTokens } from '@osuki-dev/ui';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import {
-  TaskWhereMark,
-  useRollupText,
-  useTaskRowLine,
-  useTaskWhereName,
-} from '@/components/home-computer-cards';
-import {
   SheetScene,
   SheetSceneFooter,
   SheetSceneGroupHeading,
-  SheetSceneQuietAction,
   SheetSceneRow,
   sheetSceneStyles,
 } from '@/components/sheet-scene';
+import { TaskRow } from '@/components/task-row';
 import { Text } from '@/components/text';
 import type { ServerTasks } from '@/hooks/use-server-tasks';
-import { useTaskAge } from '@/hooks/use-task-age';
-import { taskStateWord } from '@/i18n/labels';
-import type { MirroredServerDiscovery } from '@/lib/agent-discovery';
-import {
-  buildTaskTree,
-  dismissedKey,
-  groupTaskTree,
-  taskRowDestination,
-  taskTitle,
-} from '@/lib/home-computer-cards';
-import { canMarkTaskDone, isTerminalTaskState, type TaskView } from '@/lib/task-ledger';
+import { buildTaskTree, groupTaskTree } from '@/lib/home-computer-cards';
+import type { TaskView } from '@/lib/task-ledger';
 import { useAgents } from '@/stores/agents';
-import { useHomeTaskCards } from '@/stores/home-task-cards';
-import { useServerCapabilities } from '@/stores/server-capabilities';
 
 type Item =
   | { type: 'heading'; key: string; title: string; first: boolean }
@@ -46,83 +28,11 @@ const itemKey = (item: Item) => item.key;
 const itemType = (item: Item) => item.type;
 
 /**
- * One task: where it runs, its goal, its state and age, and for a finished
- * one the line it left. Tapping opens the session or pane it runs in. The one
- * quiet action is what the reader can say about it: Acknowledge a finished
- * task (it leaves Home's card), Mark done a paused one.
- *
- * Stateless apart from the stores, so a recycled cell is correct for
- * whichever task it is handed.
- */
-function ServerTaskRow({
-  task,
-  serverId,
-  nested,
-  nowMs,
-  discovery,
-  capabilities,
-  onOpen,
-  onComplete,
-}: {
-  task: TaskView;
-  serverId: string | null;
-  nested: boolean;
-  nowMs: number;
-  discovery: MirroredServerDiscovery | undefined;
-  capabilities: readonly string[] | undefined;
-  onOpen: (task: TaskView) => void;
-  onComplete: (task: TaskView) => void;
-}) {
-  const { t } = useLingui();
-  const { _ } = useLinguiRuntime();
-  const age = useTaskAge();
-  const whereName = useTaskWhereName(discovery);
-  const rollupText = useRollupText();
-  const rowLine = useTaskRowLine(discovery);
-  const acknowledged = useHomeTaskCards((cards) =>
-    serverId ? cards.dismissed.includes(dismissedKey(serverId, task.taskId)) : true
-  );
-  const acknowledge = useHomeTaskCards((cards) => cards.acknowledge);
-  const finished = isTerminalTaskState(task.state);
-  // Where it runs and when it last moved, then what became of it -- the same
-  // line Home's card says.
-  const firstLine = [whereName(task), age(task.updatedMs, nowMs), rollupText(task)]
-    .filter(Boolean)
-    .join(' · ');
-  const caption = `${firstLine}\n${rowLine(task, nowMs).text}`;
-  const opens = taskRowDestination(task) !== null;
-  const action = canMarkTaskDone(task, capabilities) ? (
-    <SheetSceneQuietAction
-      testID={`server-tasks-mark-done-${task.taskId}`}
-      label={t`Mark done`}
-      onPress={() => onComplete(task)}
-    />
-  ) : finished && !acknowledged && serverId ? (
-    <SheetSceneQuietAction
-      testID={`server-tasks-acknowledge-${task.taskId}`}
-      label={t`Acknowledge`}
-      onPress={() => acknowledge(serverId, task.taskId)}
-    />
-  ) : undefined;
-  const row = (
-    <SheetSceneRow
-      testID={`server-tasks-row-${task.taskId}`}
-      title={taskTitle(task)}
-      caption={caption}
-      accessibilityValue={{ text: `${_(taskStateWord[task.state])}, ${caption}` }}
-      busy={task.state === 'working' || task.state === 'dispatching'}
-      onPress={opens ? () => onOpen(task) : undefined}
-      leading={<TaskWhereMark task={task} discovery={discovery} size={16} />}
-      meta={action}
-    />
-  );
-  return nested ? <View style={styles.nested}>{row}</View> : row;
-}
-
-/**
  * A computer's tasks as a plain list: roots grouped by their most urgent
  * work, the work each started indented one level under it, newest first.
- * Socket frames keep it live.
+ * Socket frames keep it live. Rows are Home's own (`TaskRow`): tap opens the
+ * session or pane, long press lists the actions. Not recycled: a row holds
+ * its open action menu.
  */
 export function ServerTasksSheet({
   serverId,
@@ -142,11 +52,7 @@ export function ServerTasksSheet({
   const { t } = useLingui();
   const theme = useThemeTokens();
   const insets = useSafeAreaInsets();
-  const { showToast } = useToast();
   const discovery = useAgents((agents) => (serverId ? agents.index.servers[serverId] : undefined));
-  const capabilities = useServerCapabilities((caps) =>
-    serverId ? caps.byServer[serverId] : undefined
-  );
   // Ages are relative to now: a tick keeps a sheet left open from saying
   // "just now" for a task that changed minutes ago.
   const [nowMs, setNowMs] = useState(() => Date.now());
@@ -181,16 +87,6 @@ export function ServerTasksSheet({
   const firstLoad = state.loading && state.tasks.length === 0;
   if (items.length === 0 && !firstLoad) items.push({ type: 'empty', key: 'empty' });
 
-  const complete = (task: TaskView) => {
-    void state.complete(task).catch((failure: unknown) => {
-      showToast({
-        variant: 'danger',
-        title: t`Could not mark the task done`,
-        message: failure instanceof Error ? failure.message : String(failure),
-      });
-    });
-  };
-
   const detailLine = state.error ? (
     <Text variant="caption" color={theme.colors.danger} numberOfLines={2}>
       {t`Could not load tasks`}
@@ -214,7 +110,6 @@ export function ServerTasksSheet({
           data={items}
           keyExtractor={itemKey}
           getItemType={itemType}
-          recycleItems
           estimatedItemSize={64}
           style={sheetSceneStyles.scroller}
           contentContainerStyle={sheetSceneStyles.scrollerContent}
@@ -222,15 +117,13 @@ export function ServerTasksSheet({
             item.type === 'heading' ? (
               <SheetSceneGroupHeading title={item.title} first={item.first} />
             ) : item.type === 'task' ? (
-              <ServerTaskRow
+              <TaskRow
                 task={item.task}
-                serverId={serverId}
+                serverId={serverId ?? ''}
                 nested={item.nested}
                 nowMs={nowMs}
                 discovery={discovery}
-                capabilities={capabilities}
                 onOpen={onOpen}
-                onComplete={complete}
               />
             ) : (
               <SheetSceneRow testID="server-tasks-empty" title={t`No tasks yet`} />
@@ -245,5 +138,4 @@ export function ServerTasksSheet({
 
 const styles = StyleSheet.create({
   centre: { paddingVertical: 40, alignItems: 'center', justifyContent: 'center' },
-  nested: { paddingLeft: 24 },
 });

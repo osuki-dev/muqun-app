@@ -195,11 +195,17 @@ function treeRowIsActive(row: CardTaskRow): boolean {
   return Boolean(counts && counts.active + counts.waiting > 0);
 }
 
-/** Open rows with work running first, paused ones after; newest first within each. */
-function activeBeforePaused(rows: readonly CardTaskRow[]): CardTaskRow[] {
-  return [...rows].sort(
-    (a, b) => Number(treeRowIsActive(b)) - Number(treeRowIsActive(a)) || newest(a.task, b.task)
-  );
+/** How urgent a root row is: its most urgent open work, by {@link taskRowRank}. */
+function treeRowRank(row: CardTaskRow): number {
+  if (treeRowIsWaiting(row)) return 0;
+  const open = [row.task, ...row.children].filter((task) => NOW.has(task.state));
+  const counted = (row.task.children?.active ?? 0) > 0 ? 1 : 3;
+  return Math.min(counted, ...open.map((task) => taskRowRank(task.state)));
+}
+
+/** Rows by urgency (waiting, working, starting, paused), newest first within each. */
+function byUrgency(rows: readonly CardTaskRow[]): CardTaskRow[] {
+  return [...rows].sort((a, b) => treeRowRank(a) - treeRowRank(b) || newest(a.task, b.task));
 }
 
 /** Whether a root row, or work under it, is waiting on the reader. */
@@ -224,7 +230,7 @@ export function groupTaskTree(rows: readonly CardTaskRow[]): {
   const attention: TaskView[] = [];
   const active: TaskView[] = [];
   const finished: TaskView[] = [];
-  for (const row of activeBeforePaused(rows)) {
+  for (const row of byUrgency(rows)) {
     if (treeRowIsWaiting(row)) attention.push(row.task);
     else if (treeRowIsOpen(row) || !isTerminalTaskState(row.task.state)) active.push(row.task);
     else if (finished.length < FINISHED_TASKS_SHOWN) finished.push(row.task);
@@ -292,7 +298,7 @@ export function buildComputerCards(input: {
     // A root stays in Now while any work it started is still open, even after
     // the root itself finished: a delegating turn can end before its
     // sub-tasks do, and an idle parent is not finished work.
-    const open = activeBeforePaused(tree.filter(treeRowIsOpen));
+    const open = byUrgency(tree.filter(treeRowIsOpen));
     const finishedAll = tree
       .filter((row) => !treeRowIsOpen(row) && isTerminalTaskState(row.task.state))
       .map((row) => row.task);
@@ -415,13 +421,17 @@ export function openTaskWork(commands: TaskOpeners, serverId: string, task: Task
   return true;
 }
 
+/** A row's state: the ledger's, or `sent` for a goal the computer has not reported yet. */
+export type TaskRowState = TaskState | 'sent';
+
 /**
  * The second line of a task row: what the computer saw and is doing, one
- * state at a time -- starting the agent, its live progress, the question it
- * asks, the hint where it paused, the result it left, or why it failed.
+ * state at a time -- sent, starting the agent, its live progress, the
+ * question it asks, the hint where it paused, the result it left, or why it
+ * failed.
  */
 export type TaskRowLine =
-  | { kind: 'state' }
+  | { kind: 'sent' }
   | { kind: 'starting' }
   | { kind: 'progress'; text: string }
   | { kind: 'elapsed' }
@@ -429,28 +439,114 @@ export type TaskRowLine =
   | { kind: 'paused'; text?: string }
   | { kind: 'result'; text: string }
   | { kind: 'exit'; code: number }
-  | { kind: 'error'; text: string };
+  | { kind: 'error'; text: string }
+  | { kind: 'state' };
 
-export function taskRowLine(task: TaskView): TaskRowLine {
+export type TaskRowIcon = 'send' | 'loader' | 'help' | 'pause' | 'check' | 'x' | 'ban';
+export type TaskRowTone = 'textMuted' | 'primary' | 'warning' | 'success' | 'danger';
+export type TaskRowAction = 'open' | 'cancel' | 'markDone' | 'acknowledge';
+
+/** Everything a row shows for its state: one icon, one tone, one line, its actions. */
+export type TaskRowVisual = {
+  icon: TaskRowIcon;
+  tone: TaskRowTone;
+  /** Only the working icon moves, and only while the reader allows motion. */
+  spins: boolean;
+  line: TaskRowLine;
+  actions: TaskRowAction[];
+};
+
+/**
+ * The one state → visual table (home-dispatch-ux.md §3), used by Home's
+ * cards, the Tasks list and Needs you alike. `canComplete`: the gateway takes
+ * Mark done for this task (`canMarkTaskDone`); `acknowledged`: the reader
+ * already took it off Home.
+ */
+export function taskRowVisual(
+  task: TaskView | { state: 'sent' },
+  opts: { canComplete: boolean; acknowledged: boolean }
+): TaskRowVisual {
+  if (task.state === 'sent') {
+    return { icon: 'send', tone: 'textMuted', spins: false, line: { kind: 'sent' }, actions: [] };
+  }
   const result = taskResultLine(task);
   const said = result?.kind === 'summary' ? result.text : undefined;
+  const ended: TaskRowLine = said
+    ? { kind: 'result', text: said }
+    : result?.kind === 'exit'
+      ? { kind: 'exit', code: result.code }
+      : { kind: 'state' };
+  const open: TaskRowAction[] = taskRowDestination(task) ? ['open'] : [];
+  const live: TaskRowAction[] = [...open, 'cancel'];
+  const confirmable: TaskRowAction[] = opts.canComplete ? [...live, 'markDone'] : live;
+  const finished: TaskRowAction[] = opts.acknowledged ? open : [...open, 'acknowledge'];
   switch (task.state) {
     case 'queued':
-      return { kind: 'state' };
     case 'dispatching':
-      return { kind: 'starting' };
+      return {
+        icon: 'loader',
+        tone: 'textMuted',
+        spins: true,
+        line: { kind: 'starting' },
+        actions: live,
+      };
     case 'working':
-      return task.progress ? { kind: 'progress', text: task.progress } : { kind: 'elapsed' };
+      return {
+        icon: 'loader',
+        tone: 'primary',
+        spins: true,
+        line: task.progress ? { kind: 'progress', text: task.progress } : { kind: 'elapsed' },
+        actions: live,
+      };
     case 'waiting':
-      return said ? { kind: 'waiting', text: said } : { kind: 'waiting' };
+      return {
+        icon: 'help',
+        tone: 'warning',
+        spins: false,
+        line: said ? { kind: 'waiting', text: said } : { kind: 'waiting' },
+        actions: confirmable,
+      };
     case 'idle_unconfirmed':
-      return said ? { kind: 'paused', text: said } : { kind: 'paused' };
-    case 'failed':
-      if (said) return { kind: 'error', text: said };
-      return result?.kind === 'exit' ? { kind: 'exit', code: result.code } : { kind: 'state' };
+      return {
+        icon: 'pause',
+        tone: 'textMuted',
+        spins: false,
+        line: said ? { kind: 'paused', text: said } : { kind: 'paused' },
+        actions: confirmable,
+      };
     case 'done':
+      return { icon: 'check', tone: 'success', spins: false, line: ended, actions: finished };
+    case 'failed':
+      return {
+        icon: 'x',
+        tone: 'danger',
+        spins: false,
+        line: said ? { kind: 'error', text: said } : ended,
+        actions: finished,
+      };
     case 'cancelled':
-      if (said) return { kind: 'result', text: said };
-      return result?.kind === 'exit' ? { kind: 'exit', code: result.code } : { kind: 'state' };
+      return {
+        icon: 'ban',
+        tone: 'textMuted',
+        spins: false,
+        line: { kind: 'state' },
+        actions: finished,
+      };
+  }
+}
+
+/** Order inside a card: waiting, then working, then starting, then paused (§3). */
+export function taskRowRank(state: TaskRowState): number {
+  switch (state) {
+    case 'waiting':
+      return 0;
+    case 'working':
+      return 1;
+    case 'queued':
+    case 'dispatching':
+    case 'sent':
+      return 2;
+    default:
+      return 3;
   }
 }

@@ -327,11 +327,11 @@ msgstr "{0} 个中有 {running} 个正在运行"
 msgid "{title} — finished while you were away"
 msgstr "{title} — 在你离开时完成"
 
-#: src/components/home-computer-cards.tsx
+#: src/components/task-row.tsx
 msgid "{total, plural, one {# sub-task} other {# sub-tasks}}"
 msgstr "{total, plural, other {# 个子任务}}"
 
-#: src/components/home-computer-cards.tsx
+#: src/components/task-row.tsx
 msgid "{total, plural, one {# sub-task} other {# sub-tasks}} ({waiting, plural, one {# waiting} other {# waiting}})"
 msgstr "{total, plural, other {# 个子任务}}（{waiting, plural, other {# 个等待中}}）"
 
@@ -415,7 +415,7 @@ msgstr "已创建终端。请打开查看启动情况；再次启动可能产生
 msgid "About"
 msgstr "关于"
 
-#: src/components/server-tasks-sheet.tsx
+#: src/components/task-row.tsx
 msgid "Acknowledge"
 msgstr "标记为已查看"
 
@@ -426,6 +426,10 @@ msgstr "操作这个终端，或给它发一条命令"
 #: src/app/commands.tsx
 msgid "Act on this terminal, or send its agent a prompt"
 msgstr "操作这个终端，或给它的 Agent 下一条指令"
+
+#: src/components/task-row.tsx
+msgid "Actions"
+msgstr "操作"
 
 #. placeholder {0}: row.name
 #. placeholder {0}: sessionTitleOr(session, t`Untitled session`)
@@ -977,6 +981,10 @@ msgstr "取消编辑 {0}"
 msgid "Cancel queued message"
 msgstr "取消排队消息"
 
+#: src/components/task-row.tsx
+msgid "Cancel task"
+msgstr "取消任务"
+
 #: src/components/agent-composer.tsx
 msgid "Cancel this queued message"
 msgstr "取消这条排队的消息"
@@ -1350,6 +1358,10 @@ msgstr "电脑"
 msgid "Configure your speech service, then hold Send to record. Tap the animation to stop and transcribe."
 msgstr "配置语音服务后，长按发送开始录音。点击动画停止并转写"
 
+#: src/components/task-row.tsx
+msgid "Confirm cancel"
+msgstr "确认取消"
+
 #: src/components/settings-storage.tsx
 msgid "Confirm clear cache"
 msgstr "确认清除缓存"
@@ -1673,6 +1685,10 @@ msgstr "复制中…"
 msgid "Could not add a file"
 msgstr "无法添加文件"
 
+#: src/components/task-row.tsx
+msgid "Could not cancel the task"
+msgstr "无法取消任务"
+
 #: src/components/agent-workbench.tsx
 msgid "Could not change delivery"
 msgstr "无法更改发送方式"
@@ -1775,8 +1791,7 @@ msgstr "无法加载令牌"
 msgid "Could not load what is running."
 msgstr "无法加载正在运行的项目"
 
-#: src/components/home-computer-cards.tsx
-#: src/components/server-tasks-sheet.tsx
+#: src/components/task-row.tsx
 msgid "Could not mark the task done"
 msgstr "无法确认任务完成"
 
@@ -2407,7 +2422,7 @@ msgstr "所有改动的文件汇成一棵目录树，附带增删行数。打开
 msgid "Every screen in the app."
 msgstr "应用的每一个界面"
 
-#: src/components/home-computer-cards.tsx
+#: src/components/task-row.tsx
 msgid "exit {code}"
 msgstr "退出码 {code}"
 
@@ -3282,8 +3297,7 @@ msgstr "管理机器"
 msgid "Manage SSH hosts"
 msgstr "管理 SSH 主机"
 
-#: src/components/home-computer-cards.tsx
-#: src/components/server-tasks-sheet.tsx
+#: src/components/task-row.tsx
 msgid "Mark done"
 msgstr "确认完成"
 
@@ -3896,10 +3910,10 @@ msgstr "在线"
 msgid "ONLINE"
 msgstr "在线"
 
-#: src/components/home-computer-cards.tsx
 #: src/components/home-connections.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/open-web-service-sheet.tsx
+#: src/components/task-row.tsx
 msgid "Open"
 msgstr "打开"
 
@@ -5103,11 +5117,14 @@ msgid "Sending to"
 msgstr "发送给"
 
 #: src/components/home-computer-cards.tsx
+msgid "Sends your next goal here."
+msgstr "下一个目标将发送到这里"
+
 #: src/components/home-connections.tsx
 msgid "Sends your next goal here. Long press to open it."
 msgstr "下一个目标将发送到这里。长按可打开"
 
-#: src/components/home-computer-cards.tsx
+#: src/components/task-row.tsx
 msgid "Sent · waiting for {computer}"
 msgstr "已发送 · 等待 {computer} 响应"
 
@@ -5510,7 +5527,7 @@ msgctxt "task state"
 msgid "Starting"
 msgstr "启动中"
 
-#: src/components/home-computer-cards.tsx
+#: src/components/task-row.tsx
 msgid "Starting {agent}…"
 msgstr "正在启动 {agent}…"
 
@@ -5768,10 +5785,10 @@ msgstr "临时文件"
 #: src/app/commands.tsx
 #: src/app/settings-terminal.tsx
 #: src/app/settings.tsx
-#: src/components/home-computer-cards.tsx
 #: src/components/home-launch-actions.tsx
 #: src/components/home-recent-sessions.tsx
 #: src/components/settings-server-capabilities.tsx
+#: src/components/task-row.tsx
 #: src/i18n/labels.ts
 msgid "Terminal"
 msgstr "终端"

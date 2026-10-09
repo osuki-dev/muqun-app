@@ -327,11 +327,11 @@ msgstr "กำลังทำงาน {running} จาก {0}"
 msgid "{title} — finished while you were away"
 msgstr "{title} — ทำงานเสร็จตอนที่คุณไม่อยู่"
 
-#: src/components/home-computer-cards.tsx
+#: src/components/task-row.tsx
 msgid "{total, plural, one {# sub-task} other {# sub-tasks}}"
 msgstr "{total, plural, other {งานย่อย # งาน}}"
 
-#: src/components/home-computer-cards.tsx
+#: src/components/task-row.tsx
 msgid "{total, plural, one {# sub-task} other {# sub-tasks}} ({waiting, plural, one {# waiting} other {# waiting}})"
 msgstr "{total, plural, other {งานย่อย # งาน}} ({waiting, plural, other {รอ # งาน}})"
 
@@ -415,7 +415,7 @@ msgstr "สร้างเทอร์มินัลแล้ว เปิด�
 msgid "About"
 msgstr "เกี่ยวกับ"
 
-#: src/components/server-tasks-sheet.tsx
+#: src/components/task-row.tsx
 msgid "Acknowledge"
 msgstr "ทำเครื่องหมายว่ารับทราบ"
 
@@ -426,6 +426,10 @@ msgstr "สั่งงานเทอร์มินัลนี้ หรื�
 #: src/app/commands.tsx
 msgid "Act on this terminal, or send its agent a prompt"
 msgstr "สั่งงานเทอร์มินัลนี้ หรือส่งคำสั่งให้เอเจนต์ของมัน"
+
+#: src/components/task-row.tsx
+msgid "Actions"
+msgstr "การทำงาน"
 
 #. placeholder {0}: row.name
 #. placeholder {0}: sessionTitleOr(session, t`Untitled session`)
@@ -977,6 +981,10 @@ msgstr "ยกเลิกการแก้ไข {0}"
 msgid "Cancel queued message"
 msgstr "ยกเลิกข้อความในคิว"
 
+#: src/components/task-row.tsx
+msgid "Cancel task"
+msgstr "ยกเลิกงาน"
+
 #: src/components/agent-composer.tsx
 msgid "Cancel this queued message"
 msgstr "ยกเลิกข้อความที่อยู่ในคิวนี้"
@@ -1350,6 +1358,10 @@ msgstr "คอมพิวเตอร์"
 msgid "Configure your speech service, then hold Send to record. Tap the animation to stop and transcribe."
 msgstr "ตั้งค่าบริการเสียง แล้วกดส่งค้างไว้เพื่อบันทึก แตะภาพเคลื่อนไหวเพื่อหยุดและแปลงเป็นข้อความ"
 
+#: src/components/task-row.tsx
+msgid "Confirm cancel"
+msgstr "ยืนยันการยกเลิก"
+
 #: src/components/settings-storage.tsx
 msgid "Confirm clear cache"
 msgstr "ยืนยันการล้างแคช"
@@ -1673,6 +1685,10 @@ msgstr "กำลังคัดลอก…"
 msgid "Could not add a file"
 msgstr "เพิ่มไฟล์ไม่ได้"
 
+#: src/components/task-row.tsx
+msgid "Could not cancel the task"
+msgstr "ยกเลิกงานไม่ได้"
+
 #: src/components/agent-workbench.tsx
 msgid "Could not change delivery"
 msgstr "เปลี่ยนวิธีส่งไม่ได้"
@@ -1775,8 +1791,7 @@ msgstr "โหลดโทเค็นไม่ได้"
 msgid "Could not load what is running."
 msgstr "โหลดรายการที่กำลังทำงานไม่ได้"
 
-#: src/components/home-computer-cards.tsx
-#: src/components/server-tasks-sheet.tsx
+#: src/components/task-row.tsx
 msgid "Could not mark the task done"
 msgstr "ทำเครื่องหมายว่างานเสร็จไม่ได้"
 
@@ -2407,7 +2422,7 @@ msgstr "ทุกไฟล์ที่เปลี่ยนแปลงรวม
 msgid "Every screen in the app."
 msgstr "ทุกหน้าจอในแอป"
 
-#: src/components/home-computer-cards.tsx
+#: src/components/task-row.tsx
 msgid "exit {code}"
 msgstr "ออก {code}"
 
@@ -3282,8 +3297,7 @@ msgstr "จัดการเครื่อง"
 msgid "Manage SSH hosts"
 msgstr "จัดการโฮสต์ SSH"
 
-#: src/components/home-computer-cards.tsx
-#: src/components/server-tasks-sheet.tsx
+#: src/components/task-row.tsx
 msgid "Mark done"
 msgstr "ทำเครื่องหมายว่าเสร็จ"
 
@@ -3896,10 +3910,10 @@ msgstr "ออนไลน์"
 msgid "ONLINE"
 msgstr "ออนไลน์"
 
-#: src/components/home-computer-cards.tsx
 #: src/components/home-connections.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/open-web-service-sheet.tsx
+#: src/components/task-row.tsx
 msgid "Open"
 msgstr "เปิด"
 
@@ -5103,11 +5117,14 @@ msgid "Sending to"
 msgstr "กำลังส่งไปยัง"
 
 #: src/components/home-computer-cards.tsx
+msgid "Sends your next goal here."
+msgstr "ส่งเป้าหมายถัดไปมาที่นี่"
+
 #: src/components/home-connections.tsx
 msgid "Sends your next goal here. Long press to open it."
 msgstr "ส่งเป้าหมายถัดไปมาที่นี่ กดค้างเพื่อเปิด"
 
-#: src/components/home-computer-cards.tsx
+#: src/components/task-row.tsx
 msgid "Sent · waiting for {computer}"
 msgstr "ส่งแล้ว · รอ {computer}"
 
@@ -5510,7 +5527,7 @@ msgctxt "task state"
 msgid "Starting"
 msgstr "กำลังเริ่ม"
 
-#: src/components/home-computer-cards.tsx
+#: src/components/task-row.tsx
 msgid "Starting {agent}…"
 msgstr "กำลังเริ่ม {agent}…"
 
@@ -5768,10 +5785,10 @@ msgstr "ไฟล์ชั่วคราว"
 #: src/app/commands.tsx
 #: src/app/settings-terminal.tsx
 #: src/app/settings.tsx
-#: src/components/home-computer-cards.tsx
 #: src/components/home-launch-actions.tsx
 #: src/components/home-recent-sessions.tsx
 #: src/components/settings-server-capabilities.tsx
+#: src/components/task-row.tsx
 #: src/i18n/labels.ts
 msgid "Terminal"
 msgstr "เทอร์มินัล"

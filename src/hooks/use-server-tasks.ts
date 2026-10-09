@@ -12,6 +12,7 @@ import {
   type TaskGroups,
 } from '@/lib/server-tasks-state';
 import {
+  cancelTask,
   completeTask,
   fetchTaskList,
   TASK_WS_SUBSCRIPTION_CAPABILITY,
@@ -52,8 +53,6 @@ export type ServerTasks = {
   loading: boolean;
   error: string | null;
   refresh: () => Promise<void>;
-  /** Mark a paused task done; shown at once, put back if the gateway refuses. */
-  complete: (task: TaskView) => Promise<void>;
   /** Whether changes arrive by themselves; false means "updates when you reopen". */
   live: boolean;
 };
@@ -165,34 +164,34 @@ export function useServerTasks(serverId: string | null): ServerTasks {
     () => socket?.state ?? null
   );
 
-  const complete = useMarkTaskDone(serverId);
-
   return {
     tasks,
     groups: groupTasks(tasks),
     loading,
     error,
     refresh,
-    complete,
     live: isTaskChannelLive({ wsEvents, demo, socketState }),
   };
 }
 
 /**
- * Confirm a paused task is done: shown at once, put back if the gateway
- * refuses (the caller says why).
+ * Cancel an open task or confirm a paused one done: the row shows the outcome
+ * at once and goes back if the gateway refuses (the caller says why).
  */
-export function useMarkTaskDone(serverId: string | null): (task: TaskView) => Promise<void> {
+export function useTaskAction(
+  serverId: string | null
+): (task: TaskView, action: 'cancel' | 'complete') => Promise<void> {
   const upsert = useServerTasksStore((state) => state.upsert);
   return useCallback(
-    async (task: TaskView) => {
+    async (task: TaskView, action: 'cancel' | 'complete') => {
       if (!serverId) return;
       // At the task's own time: a newer frame from the gateway still wins, and
       // putting the old view back on failure replaces only this guess.
-      upsert(serverId, { ...task, state: 'done' });
+      upsert(serverId, { ...task, state: action === 'cancel' ? 'cancelled' : 'done' });
       const route = taskRouteFor(serverId);
       const endpoint = route?.kind === 'endpoint' ? route.endpoint : undefined;
-      return completeTask(task.taskId, endpoint).then(
+      const call = action === 'cancel' ? cancelTask : completeTask;
+      return call(task.taskId, endpoint).then(
         (answer) => {
           if (answer) upsert(serverId, answer);
         },
