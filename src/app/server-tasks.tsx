@@ -56,6 +56,8 @@ export default function ServerTasksScreen() {
       rootTaskId={root}
       onOpen={(task) => {
         if (!serverId) return;
+        // Every row opens something (its session, its pane, or its
+        // computer), so the sheet always makes way for it.
         router.back();
         openTaskWork(commands, serverId, task);
       }}

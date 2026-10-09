@@ -144,6 +144,11 @@ msgid "{0}, not found on this computer's PATH"
 msgstr "{0}, không có trong PATH của máy tính này"
 
 #. placeholder {0}: age.value
+#: src/hooks/use-task-age.ts
+msgid "{0}d"
+msgstr "{0} ngày"
+
+#. placeholder {0}: age.value
 #. placeholder {0}: parts.value
 #: src/hooks/use-relative-time.ts
 #: src/hooks/use-task-age.ts
@@ -152,12 +157,22 @@ msgid "{0}d ago"
 msgstr "{0} ngày trước"
 
 #. placeholder {0}: age.value
+#: src/hooks/use-task-age.ts
+msgid "{0}h"
+msgstr "{0} giờ"
+
+#. placeholder {0}: age.value
 #. placeholder {0}: parts.value
 #: src/hooks/use-relative-time.ts
 #: src/hooks/use-task-age.ts
 #: src/lib/agent-widget-layout.tsx
 msgid "{0}h ago"
 msgstr "{0} giờ trước"
+
+#. placeholder {0}: age.value
+#: src/hooks/use-task-age.ts
+msgid "{0}m"
+msgstr "{0} phút"
 
 #. placeholder {0}: age.value
 #. placeholder {0}: parts.value
@@ -343,6 +358,10 @@ msgstr "+{0} nữa"
 #: src/lib/agent-widget-layout.tsx
 msgid "+{overflow} more"
 msgstr "+{overflow} nữa"
+
+#: src/hooks/use-task-age.ts
+msgid "<1m"
+msgstr "<1 phút"
 
 #: src/components/dev-home-ambient-controls.tsx
 msgid "0 speed pauses motion. Theme default restores the theme."
@@ -1265,11 +1284,6 @@ msgstr "Chế độ màu"
 msgid "Command"
 msgstr "Lệnh"
 
-#: src/i18n/labels.ts
-msgctxt "task kind"
-msgid "Command"
-msgstr "Lệnh"
-
 #: src/components/simfarm-preview.tsx
 msgid "Command copied"
 msgstr "Đã sao chép lệnh"
@@ -2097,11 +2111,6 @@ msgstr "MẶC ĐỊNH"
 #: src/components/theme-link-import.tsx
 msgid "Defaults to theme.json at the repository root"
 msgstr "Mặc định là theme.json ở thư mục gốc của kho mã"
-
-#: src/i18n/labels.ts
-msgctxt "task kind"
-msgid "Delegation"
-msgstr "Ủy thác"
 
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/changes-sheet.tsx

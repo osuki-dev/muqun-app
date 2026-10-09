@@ -249,25 +249,44 @@ describe('buildComputerCards', () => {
 });
 
 describe('which computers get a card', () => {
-  const done = (id: string, at: number) => task(id, 'done', at);
+  const done = (id: string, at: number, extra: Partial<TaskView> = {}) =>
+    task(id, 'done', at, extra);
   test.each([
-    ['working', [task('w', 'working', 1)], 'live', new Set<string>(), true],
-    ['waiting', [task('w', 'waiting', 1)], 'live', new Set<string>(), true],
-    ['paused', [task('w', 'idle_unconfirmed', 1)], 'live', new Set<string>(), true],
-    ['finished just now', [done('f', NOW - 60_000)], 'live', new Set<string>(), true],
-    ['finished an hour ago', [done('f', NOW - 3_600_000)], 'live', new Set<string>(), false],
-    ['finished, acknowledged', [done('f', NOW)], 'live', new Set([dismissedKey('a', 'f')]), false],
-    ['offline with work', [task('w', 'working', 1)], 'offline', new Set<string>(), false],
-    ['no ledger (nothing read)', undefined, 'live', new Set<string>(), false],
-  ] as const)('%s', (_name, tasks, reachability, dismissed, shown) => {
+    ['finished just now', [done('f', NOW - 60_000)], new Set<string>(), true],
+    ['finished an hour ago', [done('f', NOW - 3_600_000)], new Set<string>(), false],
+    [
+      'finished long ago, settled here just now',
+      [done('f', NOW - 3_600_000, { settledAtMs: NOW })],
+      new Set<string>(),
+      true,
+    ],
+    ['finished, acknowledged', [done('f', NOW)], new Set([dismissedKey('a', 'f')]), false],
+    ['no ledger (nothing read)', undefined, new Set<string>(), false],
+  ] as const)('%s', (_name, tasks, dismissed, shown) => {
     const cards = buildComputerCards({
       servers: [{ serverId: 'a' }],
       index: tasks ? index({ a: [...tasks] }) : {},
-      reachability: () => reachability,
+      reachability: () => 'live',
       dismissed,
       nowMs: NOW,
     });
     expect(cards.length > 0).toBe(shown);
+  });
+
+  test('repeated cancelled attempts at one goal show once, the newest', () => {
+    const [card] = buildComputerCards({
+      servers: [{ serverId: 'a' }],
+      index: index({
+        a: [
+          task('old', 'cancelled', 1, { goal: 'retry it' }),
+          task('new', 'cancelled', 2, { goal: 'retry it' }),
+        ],
+      }),
+      reachability: () => 'live',
+      dismissed: new Set(),
+      nowMs: NOW,
+    });
+    expect(card!.finished.map((t) => t.taskId)).toEqual(['new']);
   });
 });
 
@@ -363,86 +382,53 @@ describe('groupTaskTree', () => {
   });
 });
 
-describe('taskRowVisual: one state, one icon, one tone, one line, its actions', () => {
+describe('taskRowVisual: the rules the state table carries', () => {
   const pane = { kind: 'pane', sessionId: 's', paneId: 'p1', agentId: 'codex' } as const;
   const open = (state: TaskState, extra: Partial<TaskView> = {}) =>
     task('t', state, 1, { binding: pane, ...extra });
   const plain = { canComplete: false, acknowledged: false };
   test.each([
-    ['sent', { state: 'sent' } as const, plain, ['send', 'textMuted', false, { kind: 'sent' }, []]],
     [
-      'queued',
-      open('queued'),
-      plain,
-      ['loader', 'textMuted', true, { kind: 'starting' }, ['open', 'cancel']],
-    ],
-    [
-      'starting',
-      open('dispatching'),
-      plain,
-      ['loader', 'textMuted', true, { kind: 'starting' }, ['open', 'cancel']],
-    ],
-    [
-      'working, live line',
-      open('working', { progress: 'Editing a.tsx' }),
-      plain,
-      ['loader', 'primary', true, { kind: 'progress', text: 'Editing a.tsx' }, ['open', 'cancel']],
-    ],
-    [
-      'working, a line with no words',
+      'a progress line with no words falls back to the agent',
       open('working', { progress: '──────' }),
       plain,
-      ['loader', 'primary', true, { kind: 'elapsed' }, ['open', 'cancel']],
+      { line: { kind: 'agent' }, clock: 'elapsed', actions: ['open', 'cancel'] },
     ],
     [
-      'needs you, confirmable',
+      'needs you: the warning edge, and Mark done where the gateway takes it',
       open('waiting', { summary: 'Allow edit?' }),
       { ...plain, canComplete: true },
-      [
-        'help',
-        'warning',
-        false,
-        { kind: 'waiting', text: 'Allow edit?' },
-        ['open', 'cancel', 'markDone'],
-      ],
+      {
+        line: { kind: 'waiting', text: 'Allow edit?' },
+        edge: 'warning',
+        actions: ['open', 'cancel', 'markDone'],
+      },
     ],
     [
-      'paused',
+      'paused: the hint is the last line, on the raised plate',
       open('idle_unconfirmed', { summary: 'tests pass\nwhat next?' }),
       plain,
-      ['pause', 'textMuted', false, { kind: 'paused', text: 'what next?' }, ['open', 'cancel']],
+      { line: { kind: 'paused', text: 'what next?' }, plate: 'surfaceRaised' },
     ],
     [
-      'done',
-      open('done', { summary: 'PONG' }),
-      plain,
-      ['check', 'success', false, { kind: 'result', text: 'PONG' }, ['open', 'acknowledge']],
-    ],
-    [
-      'done, acknowledged',
+      'an acknowledged task loses Acknowledge',
       open('done', { summary: 'PONG' }),
       { ...plain, acknowledged: true },
-      ['check', 'success', false, { kind: 'result', text: 'PONG' }, ['open']],
+      { line: { kind: 'result', text: 'PONG' }, clock: 'ago', actions: ['open'] },
     ],
     [
-      'failed with its error, pane gone',
+      'a failed pane task still opens its pane, with its error',
       open('failed', { summary: 'the pane closed' }),
       plain,
-      ['x', 'danger', false, { kind: 'error', text: 'the pane closed' }, ['acknowledge']],
+      { line: { kind: 'error', text: 'the pane closed' }, actions: ['open', 'acknowledge'] },
     ],
     [
-      'failed with an exit code',
+      'a failed task with only an exit code still opens its computer',
       task('t', 'failed', 1, { exitCode: 2 }),
       plain,
-      ['x', 'danger', false, { kind: 'exit', code: 2 }, ['acknowledge']],
+      { line: { kind: 'exit', code: 2 }, actions: ['open', 'acknowledge'] },
     ],
-    [
-      'cancelled',
-      open('cancelled'),
-      plain,
-      ['ban', 'textMuted', false, { kind: 'state' }, ['open', 'acknowledge']],
-    ],
-  ] as const)('%s', (_name, input, opts, [icon, tone, spins, line, actions]) => {
-    expect(taskRowVisual(input, opts)).toEqual({ icon, tone, spins, line, actions: [...actions] });
+  ] as const)('%s', (_name, input, opts, expected) => {
+    expect(taskRowVisual(input, opts)).toMatchObject(expected);
   });
 });

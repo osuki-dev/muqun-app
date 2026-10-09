@@ -144,6 +144,11 @@ msgid "{0}, not found on this computer's PATH"
 msgstr "{0}, nicht im PATH dieses Computers gefunden"
 
 #. placeholder {0}: age.value
+#: src/hooks/use-task-age.ts
+msgid "{0}d"
+msgstr "{0} T"
+
+#. placeholder {0}: age.value
 #. placeholder {0}: parts.value
 #: src/hooks/use-relative-time.ts
 #: src/hooks/use-task-age.ts
@@ -152,12 +157,22 @@ msgid "{0}d ago"
 msgstr "vor {0} T"
 
 #. placeholder {0}: age.value
+#: src/hooks/use-task-age.ts
+msgid "{0}h"
+msgstr "{0} Std"
+
+#. placeholder {0}: age.value
 #. placeholder {0}: parts.value
 #: src/hooks/use-relative-time.ts
 #: src/hooks/use-task-age.ts
 #: src/lib/agent-widget-layout.tsx
 msgid "{0}h ago"
 msgstr "vor {0} Std"
+
+#. placeholder {0}: age.value
+#: src/hooks/use-task-age.ts
+msgid "{0}m"
+msgstr "{0} Min"
 
 #. placeholder {0}: age.value
 #. placeholder {0}: parts.value
@@ -343,6 +358,10 @@ msgstr "+{0} weitere"
 #: src/lib/agent-widget-layout.tsx
 msgid "+{overflow} more"
 msgstr "+{overflow} weitere"
+
+#: src/hooks/use-task-age.ts
+msgid "<1m"
+msgstr "<1 Min"
 
 #: src/components/dev-home-ambient-controls.tsx
 msgid "0 speed pauses motion. Theme default restores the theme."
@@ -1265,11 +1284,6 @@ msgstr "Farbmodus"
 msgid "Command"
 msgstr "Befehl"
 
-#: src/i18n/labels.ts
-msgctxt "task kind"
-msgid "Command"
-msgstr "Befehl"
-
 #: src/components/simfarm-preview.tsx
 msgid "Command copied"
 msgstr "Befehl kopiert"
@@ -2097,11 +2111,6 @@ msgstr "STANDARD"
 #: src/components/theme-link-import.tsx
 msgid "Defaults to theme.json at the repository root"
 msgstr "Standardmäßig theme.json im Stammverzeichnis des Repositorys"
-
-#: src/i18n/labels.ts
-msgctxt "task kind"
-msgid "Delegation"
-msgstr "Delegierung"
 
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/changes-sheet.tsx

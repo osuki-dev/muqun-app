@@ -144,6 +144,11 @@ msgid "{0}, not found on this computer's PATH"
 msgstr "{0}，在這台電腦的 PATH 中找不到"
 
 #. placeholder {0}: age.value
+#: src/hooks/use-task-age.ts
+msgid "{0}d"
+msgstr "{0} 天"
+
+#. placeholder {0}: age.value
 #. placeholder {0}: parts.value
 #: src/hooks/use-relative-time.ts
 #: src/hooks/use-task-age.ts
@@ -152,12 +157,22 @@ msgid "{0}d ago"
 msgstr "{0} 天前"
 
 #. placeholder {0}: age.value
+#: src/hooks/use-task-age.ts
+msgid "{0}h"
+msgstr "{0} 小時"
+
+#. placeholder {0}: age.value
 #. placeholder {0}: parts.value
 #: src/hooks/use-relative-time.ts
 #: src/hooks/use-task-age.ts
 #: src/lib/agent-widget-layout.tsx
 msgid "{0}h ago"
 msgstr "{0} 小時前"
+
+#. placeholder {0}: age.value
+#: src/hooks/use-task-age.ts
+msgid "{0}m"
+msgstr "{0} 分鐘"
 
 #. placeholder {0}: age.value
 #. placeholder {0}: parts.value
@@ -343,6 +358,10 @@ msgstr "還有 {0} 個"
 #: src/lib/agent-widget-layout.tsx
 msgid "+{overflow} more"
 msgstr "還有 {overflow} 個"
+
+#: src/hooks/use-task-age.ts
+msgid "<1m"
+msgstr "不到 1 分鐘"
 
 #: src/components/dev-home-ambient-controls.tsx
 msgid "0 speed pauses motion. Theme default restores the theme."
@@ -1265,11 +1284,6 @@ msgstr "色彩模式"
 msgid "Command"
 msgstr "指令"
 
-#: src/i18n/labels.ts
-msgctxt "task kind"
-msgid "Command"
-msgstr "指令"
-
 #: src/components/simfarm-preview.tsx
 msgid "Command copied"
 msgstr "已複製指令"
@@ -2097,11 +2111,6 @@ msgstr "預設"
 #: src/components/theme-link-import.tsx
 msgid "Defaults to theme.json at the repository root"
 msgstr "預設為儲存庫根目錄下的 theme.json"
-
-#: src/i18n/labels.ts
-msgctxt "task kind"
-msgid "Delegation"
-msgstr "委派"
 
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/changes-sheet.tsx
@@ -4260,7 +4269,7 @@ msgstr "暫停音訊"
 #: src/i18n/labels.ts
 msgctxt "task state"
 msgid "Paused"
-msgstr "暫停 · 等確認"
+msgstr "已暫停"
 
 #: src/components/agent-context-sheet.tsx
 msgid "Permission"

@@ -144,6 +144,11 @@ msgid "{0}, not found on this computer's PATH"
 msgstr "{0} ไม่พบใน PATH ของคอมพิวเตอร์นี้"
 
 #. placeholder {0}: age.value
+#: src/hooks/use-task-age.ts
+msgid "{0}d"
+msgstr "{0} วัน"
+
+#. placeholder {0}: age.value
 #. placeholder {0}: parts.value
 #: src/hooks/use-relative-time.ts
 #: src/hooks/use-task-age.ts
@@ -152,12 +157,22 @@ msgid "{0}d ago"
 msgstr "{0} วันที่แล้ว"
 
 #. placeholder {0}: age.value
+#: src/hooks/use-task-age.ts
+msgid "{0}h"
+msgstr "{0} ชั่วโมง"
+
+#. placeholder {0}: age.value
 #. placeholder {0}: parts.value
 #: src/hooks/use-relative-time.ts
 #: src/hooks/use-task-age.ts
 #: src/lib/agent-widget-layout.tsx
 msgid "{0}h ago"
 msgstr "{0} ชั่วโมงที่แล้ว"
+
+#. placeholder {0}: age.value
+#: src/hooks/use-task-age.ts
+msgid "{0}m"
+msgstr "{0} นาที"
 
 #. placeholder {0}: age.value
 #. placeholder {0}: parts.value
@@ -343,6 +358,10 @@ msgstr "อีก {0} รายการ"
 #: src/lib/agent-widget-layout.tsx
 msgid "+{overflow} more"
 msgstr "อีก +{overflow} รายการ"
+
+#: src/hooks/use-task-age.ts
+msgid "<1m"
+msgstr "<1 นาที"
 
 #: src/components/dev-home-ambient-controls.tsx
 msgid "0 speed pauses motion. Theme default restores the theme."
@@ -1265,11 +1284,6 @@ msgstr "โหมดสี"
 msgid "Command"
 msgstr "คำสั่ง"
 
-#: src/i18n/labels.ts
-msgctxt "task kind"
-msgid "Command"
-msgstr "คำสั่ง"
-
 #: src/components/simfarm-preview.tsx
 msgid "Command copied"
 msgstr "คัดลอกคำสั่งแล้ว"
@@ -2097,11 +2111,6 @@ msgstr "ค่าเริ่มต้น"
 #: src/components/theme-link-import.tsx
 msgid "Defaults to theme.json at the repository root"
 msgstr "ค่าเริ่มต้นคือ theme.json ที่รากของที่เก็บโค้ด"
-
-#: src/i18n/labels.ts
-msgctxt "task kind"
-msgid "Delegation"
-msgstr "การมอบหมาย"
 
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/changes-sheet.tsx

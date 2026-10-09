@@ -112,10 +112,14 @@ export function capToolBody(
  * text it is -- inline code, emphasis and link text survive.
  */
 export function inlineMarkdown(text: string): string {
-  return text
+  const joined = text
     .split('\n')
     .map((line) => line.trim())
     .filter(Boolean)
-    .map((line) => line.replace(/^(#{1,6}\s|>|[-*+]\s|\d+[.)]\s|```|~~~|[-*_]{3,}$)/, '\\$1'))
     .join(' ');
+  // Joined, only the start can open a block. CommonMark escapes punctuation,
+  // not digits, so a numbered line has its `.`/`)` escaped, not its number.
+  return joined
+    .replace(/^(\d+)([.)])(\s)/, '$1\\$2$3')
+    .replace(/^(#{1,6}\s|>|[-*+]\s|```|~~~|[-*_]{3,}$)/, '\\$1');
 }

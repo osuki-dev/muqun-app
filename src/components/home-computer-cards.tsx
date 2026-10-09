@@ -1,11 +1,10 @@
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { useLingui } from '@lingui/react/macro';
-import { useIsFocused } from 'expo-router';
 import { useThemeTokens } from '@osuki-dev/ui';
 import { ChevronRight, Server } from 'lucide-react-native';
-import { Fragment, useEffect, useState } from 'react';
+import { Fragment } from 'react';
 import { StyleSheet, View } from 'react-native';
-import Animated from 'react-native-reanimated';
+import Animated, { LayoutAnimationConfig } from 'react-native-reanimated';
 import { useShallow } from 'zustand/react/shallow';
 
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
@@ -19,11 +18,12 @@ import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { connectionStatusDescription, connectionStatusLabel } from '@/i18n/labels';
 import type { GatewayRecord } from '@/lib/gateway-storage';
 import { buildComputerCards, taskRowRank, type ComputerCard } from '@/lib/home-computer-cards';
-import { fadeIn, fadeOut, listLayout, riseIn } from '@/lib/motion';
+import { fadeOut, listLayout, pulseOnce, riseIn } from '@/lib/motion';
 import {
   resolveConnectionStatus,
   type ActiveServerConnection,
   type ConnectionStatus,
+  type ServerReachability,
 } from '@/lib/server-reachability';
 import type { TaskView } from '@/lib/task-ledger';
 import { useAgents } from '@/stores/agents';
@@ -57,49 +57,17 @@ function ServerTaskSync({ serverId }: { serverId: string }) {
 /** `tree`: the reader asked for the work under it (the sub-task count), not the task's own session or pane. */
 export type CardTaskTarget = { serverId: string; task: TaskView; tree?: boolean };
 
-export type HomeComputerCardsModel = {
-  cards: ComputerCard[];
-  statusOf: (serverId: string) => ConnectionStatus;
-  tickMs: number;
-};
-
 /**
- * The cards Home shows: only computers with work -- something open, or a
- * finished task not yet acknowledged from the last half hour. Home leaves
- * the whole section out when there are none.
+ * What every card decision reads besides the ledger: each computer's
+ * connection, the reader's acknowledgements, and the goals still on their way.
  */
-export function useHomeComputerCards({
-  servers,
-  activeConnection,
-  nowMs,
-}: {
-  servers: readonly GatewayRecord[];
-  activeConnection?: ActiveServerConnection;
-  /** The focus tick Home resolves probe freshness against. */
-  nowMs?: number;
-}): HomeComputerCardsModel {
-  const serverIds = servers.map((server) => server.serverId);
-  const entries = useServerTasksStore(
-    useShallow((state) => serverIds.map((serverId) => state.index[serverId]))
-  );
+function useCardInputs(activeConnection: ActiveServerConnection | undefined, nowMs: number) {
   const probes = useServerReachability((state) => state.probes);
   const sockets = useServerChannels((state) => state.sockets);
   const streams = useServerChannels((state) => state.streams);
   const selectedId = useGatewayConnectionStore((state) => state.record?.serverId);
   const dismissedList = useHomeTaskCards((state) => state.dismissed);
   const pendingAll = useHomeTaskCards((state) => state.pending);
-  // Ages are relative to now; a tick keeps "just now" from going stale. Only
-  // while Home is on screen: under a pushed screen nobody reads the ages.
-  const focused = useIsFocused();
-  const [tickMs, setTickMs] = useState(() => Date.now());
-  useEffect(() => {
-    if (!focused) return;
-    setTickMs(Date.now());
-    const timer = setInterval(() => setTickMs(Date.now()), 30_000);
-    return () => clearInterval(timer);
-  }, [focused]);
-  // A Sent row no task ever answered stops claiming the computer is busy.
-  const pending = pendingAll.filter((item) => tickMs - item.atMs < PENDING_DISPATCH_TTL_MS);
   const statusOf = (serverId: string): ConnectionStatus =>
     resolveConnectionStatus({
       serverId,
@@ -107,25 +75,48 @@ export function useHomeComputerCards({
       activeConnection,
       channels: { socket: sockets[serverId], stream: streams[serverId] },
       selected: serverId === selectedId,
-      nowMs: nowMs ?? tickMs,
+      nowMs,
     });
-  const index: Record<string, NonNullable<(typeof entries)[number]>> = {};
-  serverIds.forEach((serverId, position) => {
-    const entry = entries[position];
-    if (entry) index[serverId] = entry;
-  });
-  const cards = buildComputerCards({
-    servers,
-    index,
-    reachability: (serverId) => {
-      const status = statusOf(serverId);
-      return status === 'live' ? 'live' : status === 'offline' ? 'offline' : 'unknown';
-    },
+  const reachability = (serverId: string): ServerReachability => {
+    const status = statusOf(serverId);
+    return status === 'live' ? 'live' : status === 'offline' ? 'offline' : 'unknown';
+  };
+  return {
+    statusOf,
+    reachability,
     dismissed: new Set(dismissedList),
-    pending,
-    nowMs: tickMs,
-  });
-  return { cards, statusOf, tickMs };
+    // A Sent row no task ever answered stops claiming the computer is busy.
+    pending: pendingAll.filter((item) => nowMs - item.atMs < PENDING_DISPATCH_TTL_MS),
+  };
+}
+
+/**
+ * Whether any computer has a card. Home asks only this: the store selector
+ * returns a boolean, so a task frame re-renders Home only when the section
+ * appears or goes, and the cards re-render inside their own tree.
+ */
+export function useHasComputerCards({
+  servers,
+  activeConnection,
+  nowMs,
+}: {
+  servers: readonly GatewayRecord[];
+  activeConnection?: ActiveServerConnection;
+  /** Home's focus tick. */
+  nowMs: number;
+}): boolean {
+  const inputs = useCardInputs(activeConnection, nowMs);
+  return useServerTasksStore(
+    (state) =>
+      buildComputerCards({
+        servers,
+        index: state.index,
+        reachability: inputs.reachability,
+        dismissed: inputs.dismissed,
+        pending: inputs.pending,
+        nowMs,
+      }).length > 0
+  );
 }
 
 /**
@@ -135,49 +126,75 @@ export function useHomeComputerCards({
  * opens the session or pane it runs in; the footer opens the computer's task
  * list. A card fades and rises in when its computer starts having work and
  * fades out when it stops; the others move with the shared layout transition.
+ * Entering animations are skipped when the list itself mounts (a return from
+ * a sub-screen), so only real arrivals move.
  */
 export function HomeComputerCards({
-  model,
   servers,
+  activeConnection,
+  nowMs,
   onSelectServer,
   onOpenTask,
   onOpenTasks,
 }: {
-  model: HomeComputerCardsModel;
   servers: readonly GatewayRecord[];
+  activeConnection?: ActiveServerConnection;
+  /** Home's focus tick: ages, the Sent row's lifetime and probe freshness. */
+  nowMs: number;
   onSelectServer: (serverId: string) => void;
   onOpenTask: (target: CardTaskTarget) => void;
   /** The computer's whole task list. */
   onOpenTasks: (serverId: string) => void;
 }) {
-  const { cards, statusOf, tickMs } = model;
+  const serverIds = servers.map((server) => server.serverId);
+  const entries = useServerTasksStore(
+    useShallow((state) => serverIds.map((serverId) => state.index[serverId]))
+  );
+  const inputs = useCardInputs(activeConnection, nowMs);
+  const index: Record<string, NonNullable<(typeof entries)[number]>> = {};
+  serverIds.forEach((serverId, position) => {
+    const entry = entries[position];
+    if (entry) index[serverId] = entry;
+  });
+  const cards = buildComputerCards({
+    servers,
+    index,
+    reachability: inputs.reachability,
+    dismissed: inputs.dismissed,
+    pending: inputs.pending,
+    nowMs,
+  });
+  const statusOf = inputs.statusOf;
+  const tickMs = nowMs;
   if (cards.length === 0) return null;
   return (
-    <View testID="home-computer-cards" style={styles.cards}>
-      {cards.map((card) => {
-        const server = servers.find((item) => item.serverId === card.serverId);
-        if (!server) return null;
-        return (
-          <Animated.View
-            key={card.serverId}
-            entering={riseIn()}
-            exiting={fadeOut('micro')}
-            layout={listLayout()}>
-            <ComputerCardView
-              card={card}
-              server={server}
-              status={statusOf(card.serverId)}
-              nowMs={tickMs}
-              onSelect={() => onSelectServer(card.serverId)}
-              onOpenTask={(task, tree) =>
-                onOpenTask({ serverId: card.serverId, task, ...(tree ? { tree } : {}) })
-              }
-              onOpenTasks={() => onOpenTasks(card.serverId)}
-            />
-          </Animated.View>
-        );
-      })}
-    </View>
+    <LayoutAnimationConfig skipEntering>
+      <View testID="home-computer-cards" style={styles.cards}>
+        {cards.map((card) => {
+          const server = servers.find((item) => item.serverId === card.serverId);
+          if (!server) return null;
+          return (
+            <Animated.View
+              key={card.serverId}
+              entering={riseIn()}
+              exiting={fadeOut('micro')}
+              layout={listLayout()}>
+              <ComputerCardView
+                card={card}
+                server={server}
+                status={statusOf(card.serverId)}
+                nowMs={tickMs}
+                onSelect={() => onSelectServer(card.serverId)}
+                onOpenTask={(task, tree) =>
+                  onOpenTask({ serverId: card.serverId, task, ...(tree ? { tree } : {}) })
+                }
+                onOpenTasks={() => onOpenTasks(card.serverId)}
+              />
+            </Animated.View>
+          );
+        })}
+      </View>
+    </LayoutAnimationConfig>
   );
 }
 
@@ -241,11 +258,11 @@ function ComputerCardView({
         },
       ]}>
       {card.activity === 'needs-you' ? (
-        // The needs-you edge arrives once, a single fade on `medium`, then
-        // stays still; reduce-motion makes it instant.
+        // The needs-you edge pulses once when the card starts needing the
+        // reader (`pulseOnce`), then stays still; instant under reduce-motion.
         <Animated.View
           pointerEvents="none"
-          entering={fadeIn('medium')}
+          entering={pulseOnce()}
           style={[styles.needsYou, { backgroundColor: theme.colors.warning }]}
         />
       ) : null}

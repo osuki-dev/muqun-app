@@ -27,6 +27,7 @@ import {
   FadeOutLeft,
   FadeOutRight,
   FadeOutUp,
+  Keyframe,
   LinearTransition,
   ReduceMotion,
   withSpring,
@@ -512,6 +513,23 @@ export const entryRise = (index: number, count: number, after = 0) =>
     entryDelay(index, count, after, STAGGER.entry, DURATION.short, ENTRY_BUDGET_MS),
     ENTRY_BUDGET_MS - DURATION.short
   );
+
+/**
+ * One gentle pulse when something arrives that needs the reader: the view
+ * fades in, dips once and settles at full strength, `short` each way, then
+ * stays still. An entering animation rather than an effect, so inside a
+ * `LayoutAnimationConfig skipEntering` it plays for an arrival and not for a
+ * screen that merely mounted again. Instant under reduce-motion.
+ */
+export const pulseOnce = () =>
+  new Keyframe({
+    0: { opacity: 0 },
+    40: { opacity: 1, easing: EASE_OUT },
+    70: { opacity: 0.4, easing: EASE_OUT },
+    100: { opacity: 1, easing: EASE_OUT },
+  })
+    .duration(DURATION.short * 2)
+    .reduceMotion(ReduceMotion.System);
 
 /**
  * The list/stack reflow: rows closing the gap after a delete, a banner column

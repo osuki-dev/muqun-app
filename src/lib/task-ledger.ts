@@ -78,6 +78,11 @@ export interface TaskView {
   /** The device that opened it, for `origin: device`. */
   requestedBy?: { id: string; name: string };
   children?: TaskChildren;
+  /**
+   * This device's clock when the reader settled the task here (Mark done,
+   * Cancel), before the gateway answered. Local only; never on the wire.
+   */
+  settledAtMs?: number;
 }
 
 function parseState(value: unknown): TaskState | null {
@@ -328,7 +333,10 @@ async function endpointRequest(
   );
 }
 
-/** Stop an open task (the device route): the task as the gateway now has it, or null. */
+/**
+ * Stop an open task (the device route): the task as the gateway now has it,
+ * or null when it no longer knows the task.
+ */
 export async function cancelTask(
   taskId: string,
   endpoint?: TaskEndpoint
@@ -356,10 +364,14 @@ async function postTaskAction(
   const path = `/api/tasks/${encodeURIComponent(taskId)}/${action}`;
   if (endpoint) {
     const response = await endpointRequest(endpoint, path, 'POST', {});
+    if (response.status === 404) return null;
     if (!response.ok) throw new Error(`${what}: ${response.status} ${await response.text()}`);
     const body = (await response.json().catch(() => null)) as unknown;
     return parseTaskView(asRecord(body)?.data ?? body);
   }
   const { writeJson } = await import('./agent-session');
-  return parseTaskView(await writeJson(path, what, {}));
+  return writeJson(path, what, {}).then(parseTaskView, (error: unknown) => {
+    if (error instanceof Error && /: 404\b/.test(error.message)) return null;
+    throw error;
+  });
 }

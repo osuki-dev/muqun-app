@@ -12,8 +12,6 @@ import { isTerminalTaskState, type TaskView } from './task-ledger';
 export type ServerTasksEntry = { tasks: TaskView[]; fetchedAt: number | null };
 export type ServerTasksIndex = Record<string, ServerTasksEntry>;
 
-export type TaskGroups = { attention: TaskView[]; active: TaskView[]; finished: TaskView[] };
-
 /** How many finished tasks the sheet keeps; the ledger itself keeps more. */
 export const FINISHED_TASKS_SHOWN = 50;
 
@@ -52,25 +50,6 @@ export function replaceTasks(
   nowMs: number
 ): ServerTasksIndex {
   return { ...index, [serverId]: { tasks: newestFirst(tasks), fetchedAt: nowMs } };
-}
-
-/**
- * Waiting is the one state that asks for the reader; everything else that has
- * not finished is in progress, `idle_unconfirmed` included -- an idle agent is
- * not a finished task.
- */
-export function groupTasks(tasks: readonly TaskView[]): TaskGroups {
-  const sorted = newestFirst(tasks);
-  const attention: TaskView[] = [];
-  const active: TaskView[] = [];
-  const finished: TaskView[] = [];
-  for (const task of sorted) {
-    if (task.state === 'waiting') attention.push(task);
-    else if (isTerminalTaskState(task.state)) {
-      if (finished.length < FINISHED_TASKS_SHOWN) finished.push(task);
-    } else active.push(task);
-  }
-  return { attention, active, finished };
 }
 
 /** Tasks that have not finished, waiting ones included. */
