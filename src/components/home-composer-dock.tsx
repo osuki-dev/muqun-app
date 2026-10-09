@@ -18,7 +18,6 @@ import type { HomeLaunchController } from '@/components/home-launch-actions';
 import { PressableScale } from '@/components/pressable-scale';
 import { Text } from '@/components/text';
 import { ThemeIcon } from '@/components/theme-icon';
-import { appChrome } from '@/constants/appearance';
 import { useAgentFeatures, useAgentsDiscoveryRefresh } from '@/hooks/use-agent-features';
 import { useGatewayRecord } from '@/hooks/use-gateway-record';
 import { useStableHandler } from '@/hooks/use-render-refs';
@@ -53,6 +52,7 @@ import {
   type HomeStartedSession,
 } from '@/lib/home-composer';
 import type { HomeCommandResult } from '@/lib/home-commands';
+import { markPromptedSession } from '@/lib/prompted-agent-sessions';
 import { buildLaunchModel } from '@/lib/home-launch-model';
 import type { ServerReachability } from '@/lib/server-reachability';
 import { useAgents } from '@/stores/agents';
@@ -340,6 +340,8 @@ export function HomeComposerDock({
             }
             await act(started.asid);
             startedRef.current = null;
+            // Its first snapshot may predate the prompt: no welcome card for it.
+            markPromptedSession(serverId, started.asid);
             void onOpenAgent(
               serverId,
               started.asid,
@@ -422,13 +424,7 @@ export function HomeComposerDock({
           variant="caption"
           color={theme.colors.danger}
           accessibilityLiveRegion="polite"
-          style={[
-            styles.error,
-            {
-              borderRadius: profile.chrome.control,
-              backgroundColor: background(theme.colors.surface),
-            },
-          ]}>
+          style={styles.error}>
           {error}
         </Text>
       ) : null}
@@ -445,13 +441,7 @@ export function HomeComposerDock({
         accessibilityHint={t`Choose another computer`}
         hitSlop={{ top: 6, bottom: 6 }}
         onPress={openTargetPicker}
-        style={[
-          styles.bar,
-          {
-            borderRadius: profile.chrome.navigationPill,
-            backgroundColor: background(theme.colors.surface),
-          },
-        ]}>
+        style={[styles.bar, { borderRadius: profile.chrome.navigationPill }]}>
         <Animated.View
           pointerEvents="none"
           style={[
@@ -530,18 +520,18 @@ export function HomeComposerDock({
 }
 
 const styles = StyleSheet.create({
-  accessory: { paddingHorizontal: 12, paddingBottom: 6, gap: 6, alignItems: 'flex-start' },
+  // The dock's first row: its glass and gutter are the composer's own.
+  accessory: { paddingBottom: 6, gap: 6, alignItems: 'flex-start' },
   bar: {
     minHeight: 32,
     maxWidth: '100%',
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    paddingHorizontal: 12,
+    paddingHorizontal: 4,
     borderCurve: 'continuous',
     overflow: 'hidden',
-    boxShadow: appChrome.shadow.popover,
   },
   barLabel: { minWidth: 0, flexShrink: 1 },
-  error: { paddingHorizontal: 12, paddingVertical: 6, overflow: 'hidden' },
+  error: { paddingHorizontal: 4 },
 });

@@ -80,9 +80,9 @@ export type HomeEditorialLayoutProps = {
   launches?: ReactNode;
   /**
    * Home's dock on the wide Pad cover, at the foot of the work column, where
-   * the session screen keeps its own. It floats over the column's foot, so the
-   * column's scroll clears it by `padComposerHeight`. Every other layout draws
-   * the dock over the page itself.
+   * the session screen keeps its own: the list stops `padComposerHeight` above
+   * the column's foot and the dock stands there. Every other layout draws the
+   * dock over the page itself.
    */
   padComposer?: ReactNode;
   /** The dock's measured height, which the work column's foot clears. */
@@ -559,10 +559,7 @@ export function HomeEditorialLayout({
               keyboardShouldPersistTaps="handled"
               bottomOffset={hasSlot(padComposer) ? padComposerHeight : undefined}
               style={styles.padWorkScroll}
-              contentContainerStyle={[
-                styles.padWorkContent,
-                hasSlot(padComposer) ? { paddingBottom: padComposerHeight + 24 } : null,
-              ]}>
+              contentContainerStyle={styles.padWorkContent}>
               {hasSlot(attention) ? attention : null}
               {hasRecent || hasConnections ? (
                 <View testID="home-pad-lower-band" style={styles.padWorkSections}>
@@ -597,7 +594,13 @@ export function HomeEditorialLayout({
                 </View>
               ) : null}
             </KeyboardAwareScrollView>
-            {hasSlot(padComposer) ? padComposer : null}
+            {/* In flow under the list, sized to the measured dock: the list
+                ends where the dock begins, so no row can sit under it. */}
+            {hasSlot(padComposer) ? (
+              <View testID="home-pad-composer" style={{ height: padComposerHeight }}>
+                {padComposer}
+              </View>
+            ) : null}
           </View>
         </View>
       </View>
