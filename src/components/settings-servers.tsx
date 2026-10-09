@@ -6,15 +6,7 @@ import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { Spinner, useThemeTokens, useToast } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
 import { useFocusEffect, useRouter } from 'expo-router';
-import {
-  Bot,
-  Check,
-  ChevronDown,
-  ChevronRight,
-  ListTodo,
-  Pencil,
-  Trash2,
-} from 'lucide-react-native';
+import { Bot, Check, ChevronDown, ChevronRight, Pencil, Trash2 } from 'lucide-react-native';
 import { Fragment, useCallback, useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
@@ -53,14 +45,10 @@ import { useServerChannels } from '@/stores/server-channels';
 import { useServerReachability } from '@/stores/server-reachability';
 import type { ServerAgentsSnapshot } from '@/lib/server-agents';
 import { settleAfter } from '@/lib/compiler-safe-control-flow';
-import { activeTaskCount } from '@/lib/server-tasks-state';
-import { hasTaskLedger } from '@/lib/task-ledger';
-import { useServerCapabilities } from '@/stores/server-capabilities';
 import { useAgents } from '@/stores/agents';
 import { useHomeAgentChoice } from '@/stores/home-agent-choice';
 import { useTerminalAgentCatalog } from '@/hooks/use-terminal-agent-catalog';
 import { homeAgentOptions, resolveHomeAgent } from '@/lib/home-agent-choice';
-import { useServerTasksStore } from '@/stores/server-tasks';
 
 /** Server management is mounted only when its settings sheet opens. */
 export function SettingsServers({ initialOpenId }: { initialOpenId?: string } = {}) {
@@ -433,7 +421,6 @@ function ServerRow({
           style={styles.actions}>
           {current ? (
             <>
-              <ServerTasksNavRow serverId={server.serverId} />
               <HomeAgentNavRow serverId={server.serverId} />
               <PairedDevices server={server} />
               <ServerCapabilities serverId={server.serverId} />
@@ -469,28 +456,6 @@ function ServerRow({
         </Animated.View>
       ) : null}
     </Animated.View>
-  );
-}
-
-/**
- * The way into the server's task ledger, only on a gateway that keeps one: an
- * older gateway shows nothing here rather than an entry that would 404.
- */
-function ServerTasksNavRow({ serverId }: { serverId: string }) {
-  const { t } = useLingui();
-  const router = useRouter();
-  const ledger = useServerCapabilities((state) => hasTaskLedger(state.byServer[serverId]));
-  const count = useServerTasksStore((state) => activeTaskCount(state.index[serverId]?.tasks ?? []));
-  if (!ledger) return null;
-  return (
-    <SettingsNavRow
-      testID="settings-server-tasks"
-      icon={ListTodo}
-      label={t`Tasks`}
-      detail={count > 0 ? t`${count} in progress` : undefined}
-      trailing={ChevronRight}
-      onPress={() => router.push('/server-tasks')}
-    />
   );
 }
 

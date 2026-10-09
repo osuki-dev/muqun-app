@@ -248,7 +248,6 @@ msgid "{count, plural, one {# result} other {# results}}"
 msgstr "{count, plural, other {# 件の結果}}"
 
 #: src/components/home-connections.tsx
-#: src/components/settings-servers.tsx
 msgid "{count} in progress"
 msgstr "{count} 件進行中"
 
@@ -280,10 +279,6 @@ msgstr "{host} はこのアプリが初めて見る鍵を提示しました。�
 #: src/components/app-lock-gate.tsx
 msgid "{label} is temporarily locked. Use the system fallback or try later."
 msgstr "{label} は一時的にロックされています。システムの代替認証を使うか、しばらくしてからお試しください"
-
-#: src/components/home-computer-cards.tsx
-msgid "{label} settings, {footer}"
-msgstr "{label} の設定、{footer}"
 
 #: src/components/bounded-markdown.tsx
 msgid "{language} code copied to clipboard"
@@ -325,14 +320,6 @@ msgstr "{removeLabel}：{label}"
 #: src/components/agent-background-tray.tsx
 msgid "{running} running of {0}"
 msgstr "{0} 件中 {running} 件が実行中"
-
-#: src/components/home-computer-cards.tsx
-msgid "{sessions, plural, one {# session} other {# sessions}}"
-msgstr "{sessions, plural, other {セッション # 件}}"
-
-#: src/components/home-computer-cards.tsx
-msgid "{terminals, plural, one {# terminal} other {# terminals}}"
-msgstr "{terminals, plural, other {ターミナル # 個}}"
 
 #: src/components/agent-composer.tsx
 #: src/components/agent-session-tree-sheet.tsx
@@ -499,12 +486,6 @@ msgstr "録音後に変換"
 msgid "Agent"
 msgstr "エージェント"
 
-#. placeholder {0}: task.binding.agentId
-#. placeholder {1}: task.binding.asid
-#: src/components/server-tasks-sheet.tsx
-msgid "Agent {0}, session {1}"
-msgstr "エージェント {0}、セッション {1}"
-
 #: src/app/commands.tsx
 #: src/components/agent-command-delivery-picker.tsx
 #: src/components/collaboration-notice.tsx
@@ -569,7 +550,7 @@ msgstr "すべてのプロジェクト"
 msgid "All sessions"
 msgstr "すべてのセッション"
 
-#: src/components/server-tasks-sheet.tsx
+#: src/components/home-computer-cards.tsx
 msgid "All tasks"
 msgstr "すべてのタスク"
 
@@ -996,10 +977,6 @@ msgstr "{0} の編集をキャンセル"
 msgid "Cancel queued message"
 msgstr "キュー内のメッセージを取り消す"
 
-#: src/components/server-tasks-sheet.tsx
-msgid "Cancel task"
-msgstr "タスクをキャンセル"
-
 #: src/components/agent-composer.tsx
 msgid "Cancel this queued message"
 msgstr "待機中のこのメッセージを取り消す"
@@ -1013,10 +990,6 @@ msgstr "キャンセルしました"
 msgctxt "task state"
 msgid "Cancelled"
 msgstr "キャンセル済み"
-
-#: src/components/server-tasks-sheet.tsx
-msgid "Cancelling…"
-msgstr "キャンセル中…"
 
 #: src/components/settings-server-capabilities.tsx
 msgid "Capabilities"
@@ -1361,10 +1334,6 @@ msgstr "コンピュータが見つかりません"
 msgid "Computer offline"
 msgstr "コンピュータはオフライン"
 
-#: src/components/home-computer-cards.tsx
-msgid "Computer settings"
-msgstr "コンピュータの設定"
-
 #: src/components/home-composer-dock.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Computer unavailable."
@@ -1380,10 +1349,6 @@ msgstr "コンピュータ"
 #: src/app/settings-voice.tsx
 msgid "Configure your speech service, then hold Send to record. Tap the animation to stop and transcribe."
 msgstr "音声サービスを設定し、送信を長押しして録音します。アニメーションをタップすると停止して文字起こしします"
-
-#: src/components/server-tasks-sheet.tsx
-msgid "Confirm cancel"
-msgstr "キャンセルを確定"
 
 #: src/components/settings-storage.tsx
 msgid "Confirm clear cache"
@@ -1708,10 +1673,6 @@ msgstr "コピー中…"
 msgid "Could not add a file"
 msgstr "ファイルを追加できませんでした"
 
-#: src/components/server-tasks-sheet.tsx
-msgid "Could not cancel the task"
-msgstr "タスクをキャンセルできませんでした"
-
 #: src/components/agent-workbench.tsx
 msgid "Could not change delivery"
 msgstr "配信方法を変更できませんでした"
@@ -1813,6 +1774,11 @@ msgstr "トークンを読み込めませんでした"
 #: src/components/session-map.tsx
 msgid "Could not load what is running."
 msgstr "実行中のものを読み込めませんでした"
+
+#: src/components/home-computer-cards.tsx
+#: src/components/server-tasks-sheet.tsx
+msgid "Could not mark the task done"
+msgstr "タスクを完了にできませんでした"
 
 #: src/components/agent-workbench.tsx
 msgid "Could not move this session"
@@ -2442,15 +2408,8 @@ msgid "Every screen in the app."
 msgstr "アプリのすべての画面"
 
 #: src/components/home-computer-cards.tsx
-#: src/components/server-tasks-sheet.tsx
 msgid "exit {code}"
 msgstr "終了 {code}"
-
-#. placeholder {0}: result.code
-#. placeholder {0}: task.exitCode
-#: src/components/server-tasks-sheet.tsx
-msgid "Exit code {0}"
-msgstr "終了コード {0}"
 
 #. placeholder {0}: block.tool
 #: src/components/pane-chat-blocks.tsx
@@ -2822,10 +2781,6 @@ msgstr "コンピュータ一覧を隠す"
 msgid "Hide the simulator"
 msgstr "シミュレータを隠す"
 
-#: src/components/server-tasks-sheet.tsx
-msgid "History"
-msgstr "履歴"
-
 #: src/components/pad-server-rail.tsx
 #: src/components/simfarm-stage.tsx
 msgid "Home"
@@ -2882,19 +2837,9 @@ msgid "How to use Muqun"
 msgstr "Muqun の使い方"
 
 #: src/components/agent-session-tree-sheet.tsx
-#: src/components/home-computer-cards.tsx
 #: src/i18n/labels.ts
 msgid "Idle"
 msgstr "待機"
-
-#: src/components/home-computer-cards.tsx
-msgid "Idle · last finished {lastTitle} {lastAge}"
-msgstr "待機 · 最後に完了: {lastTitle}（{lastAge}）"
-
-#: src/i18n/labels.ts
-msgctxt "task state"
-msgid "Idle, not confirmed"
-msgstr "アイドル（未確認）"
 
 #: src/components/gateway-storage-error.tsx
 msgid "If this continues, restart the app or check the app installation"
@@ -3114,10 +3059,6 @@ msgstr "すべて残して、準備中のロールバックを破棄"
 msgctxt "agent slash command"
 msgid "Keep everything and drop the staged rollback"
 msgstr "すべて残して、準備中のロールバックを破棄"
-
-#: src/components/server-tasks-sheet.tsx
-msgid "Keep it running"
-msgstr "実行を続ける"
 
 #: src/components/settings-storage.tsx
 msgid "Keep saved themes"
@@ -3340,6 +3281,11 @@ msgstr "マシンを管理"
 #: src/components/home-overview.tsx
 msgid "Manage SSH hosts"
 msgstr "SSH ホストを管理"
+
+#: src/components/home-computer-cards.tsx
+#: src/components/server-tasks-sheet.tsx
+msgid "Mark done"
+msgstr "完了にする"
 
 #: src/components/collaboration-notice.tsx
 msgid "Mark reviewed"
@@ -4240,12 +4186,6 @@ msgstr "ペアリングに失敗しました"
 msgid "Palette (up to 4)"
 msgstr "パレット（最大4色）"
 
-#. placeholder {0}: task.binding.paneId
-#. placeholder {1}: task.binding.sessionId
-#: src/components/server-tasks-sheet.tsx
-msgid "Pane {0} in session {1}"
-msgstr "セッション {1} のペイン {0}"
-
 #: src/components/settings-mcp-tokens.tsx
 msgid "Pane {paneId}"
 msgstr "ペイン {paneId}"
@@ -4302,6 +4242,11 @@ msgstr "一時停止"
 #: src/components/audio-asset-preview.tsx
 msgid "Pause audio"
 msgstr "音声を一時停止"
+
+#: src/i18n/labels.ts
+msgctxt "task state"
+msgid "Paused"
+msgstr "一時停止"
 
 #: src/components/agent-context-sheet.tsx
 msgid "Permission"
@@ -4622,7 +4567,6 @@ msgstr "録音に失敗しました"
 
 #: src/components/agent-background-tray.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
-#: src/components/server-tasks-sheet.tsx
 #: src/components/session-map.tsx
 msgid "Refresh"
 msgstr "更新"
@@ -5164,8 +5108,8 @@ msgid "Sends your next goal here. Long press to open it."
 msgstr "次の目標をここに送ります。長押しで開きます"
 
 #: src/components/home-computer-cards.tsx
-msgid "Sent · waiting for the computer"
-msgstr "送信済み · コンピュータの応答待ち"
+msgid "Sent · waiting for {computer}"
+msgstr "送信済み · {computer} の応答待ち"
 
 #: src/components/agent-sessions-sheet.tsx
 msgid "Session name"
@@ -5566,6 +5510,10 @@ msgctxt "task state"
 msgid "Starting"
 msgstr "開始中"
 
+#: src/components/home-computer-cards.tsx
+msgid "Starting {agent}…"
+msgstr "{agent} を開始中…"
+
 #: src/components/simfarm-stage.tsx
 msgid "Starting {name}"
 msgstr "{name} を起動しています"
@@ -5800,7 +5748,6 @@ msgstr "新しい {0} へのタスク"
 #: src/components/agent-tasks-sheet.tsx
 #: src/components/agent-todo-block.tsx
 #: src/components/server-tasks-sheet.tsx
-#: src/components/settings-servers.tsx
 msgid "Tasks"
 msgstr "タスク"
 
@@ -6197,10 +6144,6 @@ msgstr "このコンピュータはこのデバイスを認識しなくなりま
 msgid "This computer refused the request."
 msgstr "このコンピュータはリクエストを拒否しました"
 
-#: src/components/home-computer-cards.tsx
-msgid "This computer’s Gateway does not keep a task list yet."
-msgstr "このコンピュータの Gateway はまだタスク一覧を記録していません"
-
 #: src/lib/attachments.ts
 msgid "This device has no camera available."
 msgstr "このデバイスには使用できるカメラがありません"
@@ -6482,7 +6425,6 @@ msgstr "入力するか、キーボードの音声入力キーを使ってくだ
 msgid "Type on the simulator"
 msgstr "シミュレータに入力する"
 
-#: src/components/server-tasks-sheet.tsx
 #: src/components/settings-server-capabilities.tsx
 msgid "Unavailable"
 msgstr "利用不可"

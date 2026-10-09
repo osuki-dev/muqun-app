@@ -11,6 +11,8 @@ import {
   taskResultLine,
   taskRollup,
   taskSubscriptionServerIds,
+  taskRowDestination,
+  taskRowLine,
   taskTitle,
 } from '../home-computer-cards';
 import type { ServerTasksIndex } from '../server-tasks-state';
@@ -32,6 +34,9 @@ function task(
     ...extra,
   };
 }
+
+/** The phone's clock in these tests: every task below finished "just now". */
+const NOW = 100;
 
 function index(byServer: Record<string, TaskView[]>): ServerTasksIndex {
   return Object.fromEntries(
@@ -168,28 +173,30 @@ describe('buildComputerCards', () => {
     { serverId: 'off' },
   ];
 
-  test('sorted needs-you, working, idle, offline', () => {
+  test('sorted needs-you, working, paused, idle; offline gets no card', () => {
     const cards = buildComputerCards({
-      servers,
+      servers: [...servers, { serverId: 'paused' }],
       index: index({
         idle: [task('d', 'done', 1)],
         busy: [task('w', 'working', 2)],
         asks: [task('r', 'working', 3), task('c', 'waiting', 4, { parentTaskId: 'r' })],
         off: [task('w2', 'working', 5)],
+        paused: [task('p', 'idle_unconfirmed', 6)],
       }),
       reachability: (id) => (id === 'off' ? 'offline' : 'live'),
       dismissed: new Set(),
+      nowMs: NOW,
     });
     expect(cards.map((card) => [card.serverId, card.activity])).toEqual([
       ['asks', 'needs-you'],
       ['busy', 'working'],
+      ['paused', 'paused'],
       ['idle', 'idle'],
-      ['off', 'offline'],
     ]);
     expect(cards[0]!.now[0]!.children.map((child) => child.taskId)).toEqual(['c']);
   });
 
-  test('now holds open roots only, capped; finished leaves out acknowledged tasks', () => {
+  test('now holds open roots, paused last, capped; finished leaves out acknowledged tasks', () => {
     const tasks = [
       task('w1', 'working', 10),
       task('w2', 'queued', 9),
@@ -205,11 +212,12 @@ describe('buildComputerCards', () => {
       index: index({ a: tasks }),
       reachability: () => 'live',
       dismissed: new Set([dismissedKey('a', 'f1')]),
+      nowMs: NOW,
     });
-    expect(card!.now.map((row) => row.task.taskId)).toEqual(['w1', 'w2', 'w3']);
-    expect(card!.nowTotal).toBe(4);
+    // b has no work and no card, so a's is the only one and gets the room.
+    expect(card!.now.map((row) => row.task.taskId)).toEqual(['w1', 'w2', 'w3', 'w4', 'idle']);
+    expect(card!.nowTotal).toBe(5);
     expect(card!.finished.map((done) => done.taskId)).toEqual(['f2', 'f3']);
-    expect(card!.lastFinished?.taskId).toBe('f1');
   });
 
   test('one computer gets more room', () => {
@@ -224,19 +232,43 @@ describe('buildComputerCards', () => {
       index: {},
       reachability: () => 'live',
       dismissed: new Set(),
+      nowMs: NOW,
       pending,
     });
     expect(waiting[0]!.pending).toEqual(pending);
     expect(waiting[0]!.activity).toBe('working');
-    expect(waiting[0]!.known).toBe(false);
     const arrived = buildComputerCards({
       servers: [{ serverId: 'a' }],
       index: index({ a: [task('x', 'working', 2)] }),
       reachability: () => 'live',
       dismissed: new Set(),
+      nowMs: NOW,
       pending,
     });
     expect(arrived[0]!.pending).toEqual([]);
+  });
+});
+
+describe('which computers get a card', () => {
+  const done = (id: string, at: number) => task(id, 'done', at);
+  test.each([
+    ['working', [task('w', 'working', 1)], 'live', new Set<string>(), true],
+    ['waiting', [task('w', 'waiting', 1)], 'live', new Set<string>(), true],
+    ['paused', [task('w', 'idle_unconfirmed', 1)], 'live', new Set<string>(), true],
+    ['finished just now', [done('f', NOW - 60_000)], 'live', new Set<string>(), true],
+    ['finished an hour ago', [done('f', NOW - 3_600_000)], 'live', new Set<string>(), false],
+    ['finished, acknowledged', [done('f', NOW)], 'live', new Set([dismissedKey('a', 'f')]), false],
+    ['offline with work', [task('w', 'working', 1)], 'offline', new Set<string>(), false],
+    ['no ledger (nothing read)', undefined, 'live', new Set<string>(), false],
+  ] as const)('%s', (_name, tasks, reachability, dismissed, shown) => {
+    const cards = buildComputerCards({
+      servers: [{ serverId: 'a' }],
+      index: tasks ? index({ a: [...tasks] }) : {},
+      reachability: () => reachability,
+      dismissed,
+      nowMs: NOW,
+    });
+    expect(cards.length > 0).toBe(shown);
   });
 });
 
@@ -249,13 +281,13 @@ describe('work that outlives its root', () => {
       }),
       reachability: () => 'live',
       dismissed: new Set(),
+      nowMs: NOW,
     });
     expect(card!.activity).toBe('working');
     expect(card!.now.map((row) => [row.task.taskId, row.children.map((c) => c.taskId)])).toEqual([
       ['root', ['child']],
     ]);
     expect(card!.finished).toEqual([]);
-    expect(card!.lastFinished).toBeUndefined();
   });
 
   test('the gateway count keeps a finished root open for children beyond the page', () => {
@@ -266,6 +298,7 @@ describe('work that outlives its root', () => {
       }),
       reachability: () => 'live',
       dismissed: new Set(),
+      nowMs: NOW,
     });
     expect(card!.now.map((row) => row.task.taskId)).toEqual(['root']);
     expect(card!.finished).toEqual([]);
@@ -280,6 +313,7 @@ describe('work that outlives its root', () => {
       }),
       reachability: () => 'live',
       dismissed: new Set(),
+      nowMs: NOW,
     });
     expect(card!.activity).toBe('working');
   });
@@ -293,6 +327,7 @@ describe('the Sent row', () => {
       index: index({ a: tasks }),
       reachability: () => 'live',
       dismissed: new Set(),
+      nowMs: NOW,
       pending,
     })[0]!;
 
@@ -326,5 +361,63 @@ describe('groupTaskTree', () => {
     expect(groups.attention.map((t) => t.taskId)).toEqual(['asks']);
     expect(groups.active.map((t) => t.taskId)).toEqual(['busy']);
     expect(groups.finished.map((t) => t.taskId)).toEqual(['over']);
+  });
+});
+
+describe('taskRowDestination', () => {
+  const session = { kind: 'agent_session', agentId: 'deepseek', asid: 'ses_1' } as const;
+  const pane = { kind: 'pane', sessionId: 's', paneId: 'p1', agentId: 'codex' } as const;
+  test.each([
+    [
+      'a session task opens its session',
+      task('t', 'done', 1, { binding: session }),
+      { kind: 'session', asid: 'ses_1', agentId: 'deepseek' },
+    ],
+    [
+      'a pane task opens its pane',
+      task('t', 'idle_unconfirmed', 1, { binding: pane }),
+      { kind: 'pane', paneId: 'p1', sessionId: 's' },
+    ],
+    ['a failed pane task has no pane to open', task('t', 'failed', 1, { binding: pane }), null],
+    ['an unbound task opens nothing', task('t', 'queued', 1), null],
+  ] as const)('%s', (_name, input, expected) => {
+    expect(taskRowDestination(input)).toEqual(expected);
+  });
+});
+
+describe('taskRowLine', () => {
+  test.each([
+    ['queued', task('t', 'queued', 1), { kind: 'state' }],
+    ['starting', task('t', 'dispatching', 1), { kind: 'starting' }],
+    [
+      'working, with progress',
+      task('t', 'working', 1, { progress: 'running tests' }),
+      { kind: 'progress', text: 'running tests' },
+    ],
+    ['working, without', task('t', 'working', 1), { kind: 'elapsed' }],
+    [
+      'waiting on a question',
+      task('t', 'waiting', 1, { summary: 'Allow edit?' }),
+      { kind: 'waiting', text: 'Allow edit?' },
+    ],
+    [
+      'paused with a hint',
+      task('t', 'idle_unconfirmed', 1, { summary: 'tests pass\nwhat next?' }),
+      { kind: 'paused', text: 'what next?' },
+    ],
+    ['done', task('t', 'done', 1, { summary: 'PONG' }), { kind: 'result', text: 'PONG' }],
+    [
+      'failed with a reason',
+      task('t', 'failed', 1, { summary: 'the pane closed' }),
+      { kind: 'error', text: 'the pane closed' },
+    ],
+    [
+      'failed with an exit code',
+      task('t', 'failed', 1, { exitCode: 2 }),
+      { kind: 'exit', code: 2 },
+    ],
+    ['cancelled, nothing said', task('t', 'cancelled', 1), { kind: 'state' }],
+  ] as const)('%s', (_name, input, expected) => {
+    expect(taskRowLine(input)).toEqual(expected);
   });
 });

@@ -9,6 +9,18 @@ export const TASK_LEDGER_CAPABILITY = 'task_ledger';
  */
 export const TASK_LEDGER_CREATE_CAPABILITY = 'task_ledger_create';
 
+/**
+ * `POST /api/tasks` also takes a terminal agent (Codex, Claude Code, ...): the
+ * gateway opens a pane for it, types the goal and follows it as a ledger task.
+ */
+export const TASK_LEDGER_PANE_CAPABILITY = 'task_ledger_pane';
+
+/** `{"t":"subscribe_tasks"}` on `/api/ws`: task frames without any session's traffic. */
+export const TASK_WS_SUBSCRIPTION_CAPABILITY = 'task_ws_subscription';
+
+/** `POST /api/tasks/{id}/complete`: the device confirms a paused task is done. */
+export const TASK_LEDGER_COMPLETE_CAPABILITY = 'task_ledger_complete';
+
 export const TASK_STATES = [
   'queued',
   'dispatching',
@@ -25,7 +37,15 @@ export type TaskKind = 'delegation' | 'command';
 export type TaskBinding =
   | { kind: 'none' }
   | { kind: 'agent_session'; agentId: string; asid: string }
-  | { kind: 'pane'; sessionId: string; paneId: string; tabId?: string; shellPid?: number };
+  | {
+      kind: 'pane';
+      sessionId: string;
+      paneId: string;
+      tabId?: string;
+      shellPid?: number;
+      /** Set for a terminal agent the task started; absent for a command. */
+      agentId?: string;
+    };
 
 export type TaskOrigin = 'device' | 'agent' | 'mcp';
 
@@ -45,6 +65,8 @@ export interface TaskView {
   goal: string;
   /** One line: the agent's last message, a command's tail, or why it failed. */
   summary?: string;
+  /** What a working task is doing right now, one short line (Gateway Task 17). */
+  progress?: string;
   exitCode?: number;
   binding: TaskBinding;
   updatedMs: number;
@@ -56,16 +78,6 @@ export interface TaskView {
   /** The device that opened it, for `origin: device`. */
   requestedBy?: { id: string; name: string };
   children?: TaskChildren;
-}
-
-export interface TaskEvent {
-  taskId: string;
-  seq: number;
-  atMs: number;
-  from?: TaskState;
-  to: TaskState;
-  source: string;
-  note?: string;
 }
 
 function parseState(value: unknown): TaskState | null {
@@ -87,12 +99,14 @@ function parseBinding(value: unknown): TaskBinding {
     if (sessionId && paneId) {
       const tabId = asString(rec.tab_id);
       const shellPid = asFiniteNumber(rec.shell_pid);
+      const agentId = asString(rec.agent_id);
       return {
         kind: 'pane',
         sessionId,
         paneId,
         ...(tabId ? { tabId } : {}),
         ...(shellPid !== undefined ? { shellPid } : {}),
+        ...(agentId ? { agentId } : {}),
       };
     }
   }
@@ -130,6 +144,7 @@ export function parseTaskView(value: unknown): TaskView | null {
   const state = parseState(rec.state);
   if (!taskId || !state) return null;
   const summary = asString(rec.summary);
+  const progress = asString(rec.progress)?.trim().slice(0, 120);
   const exitCode = asFiniteNumber(rec.exit_code);
   const parentTaskId = asString(rec.parent_task_id);
   const origin = parseOrigin(rec.origin);
@@ -142,6 +157,7 @@ export function parseTaskView(value: unknown): TaskView | null {
     kind: rec.kind === 'command' ? 'command' : 'delegation',
     goal: asString(rec.goal) ?? '',
     ...(summary ? { summary } : {}),
+    ...(progress ? { progress } : {}),
     ...(exitCode !== undefined ? { exitCode } : {}),
     binding: parseBinding(rec.binding),
     updatedMs: asFiniteNumber(rec.updated_ms) ?? 0,
@@ -150,26 +166,6 @@ export function parseTaskView(value: unknown): TaskView | null {
     ...(label ? { label } : {}),
     ...(requestedBy ? { requestedBy } : {}),
     ...(children ? { children } : {}),
-  };
-}
-
-export function parseTaskEvent(value: unknown): TaskEvent | null {
-  const rec = asRecord(value);
-  if (!rec) return null;
-  const taskId = asString(rec.task_id);
-  const to = parseState(rec.to);
-  const seq = asFiniteNumber(rec.seq);
-  if (!taskId || !to || seq === undefined) return null;
-  const from = parseState(rec.from);
-  const note = asString(rec.note);
-  return {
-    taskId,
-    seq,
-    atMs: asFiniteNumber(rec.at_ms) ?? 0,
-    ...(from ? { from } : {}),
-    to,
-    source: asString(rec.source) ?? '',
-    ...(note ? { note } : {}),
   };
 }
 
@@ -183,6 +179,22 @@ export function hasTaskLedger(capabilities: readonly string[] | undefined): bool
 
 export function hasTaskLedgerCreate(capabilities: readonly string[] | undefined): boolean {
   return capabilities?.includes(TASK_LEDGER_CREATE_CAPABILITY) === true;
+}
+
+/**
+ * Whether the reader can say a task is done: one this device's owner opened,
+ * stopped without saying it finished (`idle_unconfirmed`) or asking
+ * (`waiting`), on a gateway that takes the confirmation.
+ */
+export function canMarkTaskDone(
+  task: TaskView,
+  capabilities: readonly string[] | undefined
+): boolean {
+  return (
+    capabilities?.includes(TASK_LEDGER_COMPLETE_CAPABILITY) === true &&
+    task.origin === 'device' &&
+    (task.state === 'idle_unconfirmed' || task.state === 'waiting')
+  );
 }
 
 /** What `POST /api/tasks` takes. `model` is a catalog id or `provider_id/model_id`. */
@@ -209,17 +221,22 @@ export function ledgerTaskBody(request: LedgerTaskRequest): Record<string, strin
   };
 }
 
+export type CreatedLedgerTask = { task: TaskView; asid?: string; paneId?: string };
+
 /**
- * The answer to `POST /api/tasks`: the task, flattened, plus the session it
- * opened -- which a task that failed while being opened may not have.
+ * The answer to `POST /api/tasks`: the task, flattened, plus the session or,
+ * for a terminal agent, the pane it opened -- which a task that failed while
+ * being opened may not have.
  */
-export function parseCreatedLedgerTask(value: unknown): { task: TaskView; asid?: string } | null {
+export function parseCreatedLedgerTask(value: unknown): CreatedLedgerTask | null {
   const task = parseTaskView(value);
   if (!task) return null;
+  const rec = asRecord(value);
   const asid =
-    asString(asRecord(value)?.asid) ??
-    (task.binding.kind === 'agent_session' ? task.binding.asid : undefined);
-  return asid ? { task, asid } : { task };
+    asString(rec?.asid) ?? (task.binding.kind === 'agent_session' ? task.binding.asid : undefined);
+  const paneId =
+    asString(rec?.pane_id) ?? (task.binding.kind === 'pane' ? task.binding.paneId : undefined);
+  return { task, ...(asid ? { asid } : {}), ...(paneId ? { paneId } : {}) };
 }
 
 // The fetchers load the transport lazily: it pulls in React Native, and the
@@ -234,20 +251,6 @@ export function parseTaskList(value: unknown): TaskView[] | null {
     if (task) out.push(task);
   }
   return out;
-}
-
-function parseTaskDetail(value: unknown): { task: TaskView; events: TaskEvent[] } | null {
-  const rec = asRecord(value);
-  const task = parseTaskView(rec?.task);
-  if (!rec || !task) return null;
-  const events: TaskEvent[] = [];
-  if (Array.isArray(rec.events)) {
-    for (const entry of rec.events) {
-      const event = parseTaskEvent(entry);
-      if (event) events.push(event);
-    }
-  }
-  return { task, events };
 }
 
 /**
@@ -296,9 +299,7 @@ export async function fetchTaskList(opts?: {
  * Open a ledger task on the selected computer: the gateway creates the agent
  * session, sends the goal and records the task in one step.
  */
-export async function createLedgerTask(
-  request: LedgerTaskRequest
-): Promise<{ task: TaskView; asid?: string }> {
+export async function createLedgerTask(request: LedgerTaskRequest): Promise<CreatedLedgerTask> {
   const { postLedgerTask } = await import('./gateway-client');
   const created = parseCreatedLedgerTask(await postLedgerTask(ledgerTaskBody(request)));
   if (!created) throw new Error('The computer did not say which task it opened.');
@@ -308,53 +309,40 @@ export async function createLedgerTask(
 async function endpointRequest(
   endpoint: TaskEndpoint,
   path: string,
-  method: 'GET' | 'POST'
+  method: 'GET' | 'POST',
+  body?: unknown
 ): Promise<Response> {
   const { gatewayEndpointFetch } = await import('./gateway-client');
   const base = endpoint.url.replace(/\/$/, '');
   return gatewayEndpointFetch(
     endpoint as Parameters<typeof gatewayEndpointFetch>[0],
     `${base}${path}`,
-    { method, headers: { Authorization: `Bearer ${endpoint.token}` } }
+    {
+      method,
+      headers: {
+        Authorization: `Bearer ${endpoint.token}`,
+        ...(body === undefined ? {} : { 'Content-Type': 'application/json' }),
+      },
+      ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+    }
   );
 }
 
-export async function getTask(
-  taskId: string,
-  endpoint?: TaskEndpoint
-): Promise<{ task: TaskView; events: TaskEvent[] } | null> {
-  const path = `/api/tasks/${encodeURIComponent(taskId)}`;
-  if (endpoint) {
-    try {
-      const response = await endpointRequest(endpoint, path, 'GET');
-      return response.ok ? parseTaskDetail(await response.json()) : null;
-    } catch {
-      return null;
-    }
-  }
-  const { readJson } = await import('./agent-session');
-  return readJson(path, parseTaskDetail, null);
-}
-
-/** The task as the gateway now has it; null when it no longer knows the task. */
-export async function cancelTask(
+/**
+ * Confirm a paused task is done (`task_ledger_complete`). The task as the
+ * gateway now has it; null when the answer did not carry one.
+ */
+export async function completeTask(
   taskId: string,
   endpoint?: TaskEndpoint
 ): Promise<TaskView | null> {
-  const path = `/api/tasks/${encodeURIComponent(taskId)}/cancel`;
+  const path = `/api/tasks/${encodeURIComponent(taskId)}/complete`;
   if (endpoint) {
-    const response = await endpointRequest(endpoint, path, 'POST');
-    if (response.status === 404) return null;
-    if (!response.ok) throw new Error(`Cancel task: ${response.status} ${await response.text()}`);
-    const body = (await response.json()) as unknown;
-    const data = asRecord(body)?.data;
-    return parseTaskView(data ?? body);
+    const response = await endpointRequest(endpoint, path, 'POST', {});
+    if (!response.ok) throw new Error(`Complete task: ${response.status} ${await response.text()}`);
+    const body = (await response.json().catch(() => null)) as unknown;
+    return parseTaskView(asRecord(body)?.data ?? body);
   }
   const { writeJson } = await import('./agent-session');
-  try {
-    return parseTaskView(await writeJson(path, 'Cancel task'));
-  } catch (error) {
-    if (error instanceof Error && /: 404\b/.test(error.message)) return null;
-    throw error;
-  }
+  return parseTaskView(await writeJson(path, 'Complete task', {}));
 }

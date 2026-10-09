@@ -71,11 +71,15 @@ import {
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { HomeConnections } from '@/components/home-connections';
 import { HomeAttention } from '@/components/home-attention';
-import { HomeComputerCards, HomeTaskSync } from '@/components/home-computer-cards';
+import {
+  HomeComputerCards,
+  HomeTaskSync,
+  useHomeComputerCards,
+} from '@/components/home-computer-cards';
 import { HomeRecentChips } from '@/components/home-recent-chips';
 import { filterHomeRecent, homeRecentFilterIds } from '@/lib/home-continue';
-import { taskSubscriptionServerIds } from '@/lib/home-computer-cards';
-import { hasTaskLedger, isTerminalTaskState } from '@/lib/task-ledger';
+import { openTaskWork, taskSubscriptionServerIds } from '@/lib/home-computer-cards';
+import { hasTaskLedger } from '@/lib/task-ledger';
 import {
   HomeContinueSearch,
   HomeRecentSessions,
@@ -358,6 +362,12 @@ export function HomeOverview({
   // nothing else caused never came, so a probe's window used to run out
   // unnoticed. A standalone Home has no active connection override.
   const [nowMs, setNowMs] = useState(() => Date.now());
+  // Only computers with work get a card; with none the section is left out.
+  const computerCards = useHomeComputerCards({
+    servers: cardServers,
+    activeConnection,
+    nowMs,
+  });
   // The live channels (agent socket, terminal stream) are evidence too.
   const channelSockets = useServerChannels((state) => state.sockets);
   const channelStreams = useServerChannels((state) => state.streams);
@@ -1049,45 +1059,33 @@ export function HomeOverview({
                       void commands.resumeTarget(target);
                     }}
                     onOpenTask={({ serverId, task }) => {
-                      // A session's request is answered in the session; the
-                      // Tasks sheet can only show it.
-                      if (task.binding.kind === 'agent_session') {
-                        void commands.openAgent(
-                          serverId,
-                          task.binding.asid,
-                          undefined,
-                          undefined,
-                          task.binding.agentId
-                        );
-                        return;
-                      }
-                      router.push({
-                        pathname: '/server-tasks',
-                        params: { serverId, taskId: task.taskId },
-                      });
+                      // A request is answered where the task runs: its
+                      // session or its pane.
+                      if (openTaskWork(commands, serverId, task)) return;
+                      router.push({ pathname: '/server-tasks', params: { serverId } });
                     }}
                   />
                 ) : undefined
               }
               progress={
-                !loading && !hydrationError && cardServers.length > 0 ? (
+                !loading && !hydrationError && computerCards.cards.length > 0 ? (
                   <HomeComputerCards
+                    model={computerCards}
                     servers={cardServers}
-                    activeConnection={activeConnection}
-                    nowMs={nowMs}
                     onSelectServer={targetComposer}
                     onOpenServer={openServer}
-                    onOpenTask={({ serverId, task }) =>
+                    onOpenTask={({ serverId, task, tree }) => {
+                      // A row opens the session or pane the task runs in; the
+                      // Tasks sheet is for the work under it, or a task that
+                      // has nothing to open.
+                      if (!tree && openTaskWork(commands, serverId, task)) return;
                       router.push({
                         pathname: '/server-tasks',
-                        params:
-                          task.parentTaskId || isTerminalTaskState(task.state)
-                            ? { serverId, taskId: task.taskId }
-                            : { serverId, root: task.taskId },
-                      })
-                    }
-                    onOpenComputer={(serverId) =>
-                      router.push({ pathname: '/settings-servers', params: { serverId } })
+                        params: { serverId, root: task.parentTaskId ?? task.taskId },
+                      });
+                    }}
+                    onOpenTasks={(serverId) =>
+                      router.push({ pathname: '/server-tasks', params: { serverId } })
                     }
                   />
                 ) : undefined

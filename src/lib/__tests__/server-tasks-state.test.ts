@@ -2,12 +2,10 @@ import { describe, expect, test } from 'bun:test';
 
 import {
   activeTaskCount,
-  applyCancelAnswer,
   applyListAnswer,
   groupTasks,
   isTaskChannelLive,
   replaceTasks,
-  summaryTail,
   taskAgeParts,
   upsertTask,
   type ServerTasksIndex,
@@ -122,41 +120,6 @@ describe('review focus 2: a frame for a task the list has not loaded', () => {
   });
 });
 
-describe('review focus 4: cancel on a task that just finished', () => {
-  test('the answer is upserted as it is, done and not cancelled', async () => {
-    let index = replaceTasks({}, 's1', [task('a', 'working', 10)], 1);
-    let refreshed = 0;
-    await applyCancelAnswer('a', {
-      cancel: async () => task('a', 'done', 20),
-      upsert: (answer) => {
-        index = upsertTask(index, 's1', answer);
-      },
-      refresh: async () => {
-        refreshed += 1;
-      },
-    });
-    expect(index.s1?.tasks[0]?.state).toBe('done');
-    expect(groupTasks(index.s1?.tasks ?? []).finished.map((t) => t.taskId)).toEqual(['a']);
-    expect(refreshed).toBe(0);
-  });
-
-  test('a gateway that no longer knows the task makes the list refetch', async () => {
-    let refreshed = 0;
-    let upserts = 0;
-    await applyCancelAnswer('gone', {
-      cancel: async () => null,
-      upsert: () => {
-        upserts += 1;
-      },
-      refresh: async () => {
-        refreshed += 1;
-      },
-    });
-    expect(upserts).toBe(0);
-    expect(refreshed).toBe(1);
-  });
-});
-
 describe('review focus 1: whether the socket channel is live', () => {
   test('only with ws_events, outside demo, on an open socket', () => {
     expect(isTaskChannelLive({ wsEvents: true, demo: false, socketState: 'open' })).toBe(true);
@@ -167,17 +130,12 @@ describe('review focus 1: whether the socket channel is live', () => {
   });
 });
 
-describe('taskAgeParts and summaryTail', () => {
+describe('taskAgeParts', () => {
   test('buckets the age', () => {
     expect(taskAgeParts(0, 30_000)).toEqual({ unit: 'now', value: 0 });
     expect(taskAgeParts(0, 5 * 60_000)).toEqual({ unit: 'minute', value: 5 });
     expect(taskAgeParts(0, 3 * 3_600_000)).toEqual({ unit: 'hour', value: 3 });
     expect(taskAgeParts(0, 2 * 86_400_000)).toEqual({ unit: 'day', value: 2 });
-  });
-
-  test('keeps the last lines of a summary', () => {
-    expect(summaryTail('a\nb\nc\n', 2)).toBe('b\nc');
-    expect(summaryTail('only', 2)).toBe('only');
   });
 });
 

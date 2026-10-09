@@ -56,6 +56,20 @@ export function isCommandPathTitle(title: string): boolean {
 }
 
 /**
+ * A title that is the whole command line an agent was launched with -- the
+ * gateway starts Codex and Claude Code with their bypass flags, and the
+ * terminal names the pane after that line (`/usr/bin/codex
+ * --dangerously-bypass-approvals-and-sandbox ...`) until the agent sets one.
+ */
+export function isLaunchCommandTitle(title: string): boolean {
+  const unquoted = title.trim().replace(/^['"]/, '');
+  return (
+    /^(?:~|\.{0,2})?\/\S*\/(?:codex|claude)['"]?(?:\s|$)/.test(unquoted) ||
+    /--dangerously/.test(title)
+  );
+}
+
+/**
  * The same read, for a field whose 0 is a real value rather than a miss.
  *
  * `numberField` answers 0 for "absent", which is exactly right for a width or a

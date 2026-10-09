@@ -1,8 +1,10 @@
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect } from 'react';
 
 import { ServerTasksSheet } from '@/components/server-tasks-sheet';
+import { useHomeCommands } from '@/hooks/use-home-commands';
 import { taskRouteFor, useServerTasks } from '@/hooks/use-server-tasks';
+import { openTaskWork } from '@/lib/home-computer-cards';
 import { fetchTaskList } from '@/lib/task-ledger';
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';
 import { useServerTasksStore } from '@/stores/server-tasks';
@@ -11,11 +13,14 @@ import { useServerTasksStore } from '@/stores/server-tasks';
  * A computer's task ledger, as a sheet route. Also the deep link
  * `muqun://server-tasks`.
  * - `?serverId=` names the computer (Home's cards); the selected one when absent.
- * - `?taskId=` opens straight on that task's detail.
  * - `?root=` lists only that task and the work it started.
  */
 export default function ServerTasksScreen() {
-  const params = useLocalSearchParams<{ taskId?: string; serverId?: string; root?: string }>();
+  const params = useLocalSearchParams<{ serverId?: string; root?: string }>();
+  const router = useRouter();
+  // The sheet closes first, so the session or pane opens where Home would
+  // open it; the command must not wait on this route staying focused.
+  const commands = useHomeCommands({ sourceRouteActive: () => true });
   const selected = useGatewayConnectionStore((state) => state.record);
   const records = useGatewayConnectionStore((state) => state.records);
   const serverId = params.serverId || selected?.serverId || null;
@@ -49,7 +54,11 @@ export default function ServerTasksScreen() {
       serverLabel={record?.label ?? ''}
       state={tasks}
       rootTaskId={root}
-      initialTaskId={typeof params.taskId === 'string' && params.taskId ? params.taskId : undefined}
+      onOpen={(task) => {
+        if (!serverId) return;
+        router.back();
+        openTaskWork(commands, serverId, task);
+      }}
     />
   );
 }

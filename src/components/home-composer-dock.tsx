@@ -59,7 +59,11 @@ import { agentSpawnRequest } from '@/lib/agent-spawn';
 import { loadSessions, spawnAgent } from '@/lib/gateway-client';
 import { homeAgentOptions, resolveHomeAgent } from '@/lib/home-agent-choice';
 import { describeGatewayFailure } from '@/lib/network-error';
-import { createLedgerTask, hasTaskLedgerCreate } from '@/lib/task-ledger';
+import {
+  createLedgerTask,
+  hasTaskLedgerCreate,
+  TASK_LEDGER_PANE_CAPABILITY,
+} from '@/lib/task-ledger';
 import { useHomeAgentChoice } from '@/stores/home-agent-choice';
 import { useHomeTaskCards } from '@/stores/home-task-cards';
 import { useServerCapabilities } from '@/stores/server-capabilities';
@@ -182,6 +186,11 @@ export function HomeComposerDock({
   // see the work, and the work it delegates, live.
   const ledgerCreate = useServerCapabilities((state) =>
     targetId ? hasTaskLedgerCreate(state.byServer[targetId]) : false
+  );
+  // ... and a terminal agent's goal as one too: the gateway opens the pane,
+  // types the goal and follows the agent as the task's state.
+  const ledgerPane = useServerCapabilities((state) =>
+    targetId ? state.byServer[targetId]?.includes(TASK_LEDGER_PANE_CAPABILITY) === true : false
   );
 
   // The catalog behind the pills, read for the computer and agent on the bar.
@@ -495,17 +504,21 @@ export function HomeComposerDock({
 
   /**
    * A terminal agent (Codex, Claude Code) chosen as Home agent: started in a
-   * pane with the goal as its first prompt -- Quick actions' New task -- with
-   * the gateway's own launch arguments. Opens that pane.
+   * pane with the goal as its first prompt, with the gateway's own launch
+   * arguments, and that pane opened. On a gateway with `task_ledger_pane`
+   * through `POST /api/tasks`, so the card follows it as a task; otherwise
+   * Quick actions' New task path (spawn).
    */
   async function startTerminalAgent(
     kind: string,
     name: string,
     confirmed: boolean,
-    text: string
+    text: string,
+    viaLedger: boolean
   ): Promise<boolean> {
     if (inFlightRef.current) return false;
     inFlightRef.current = true;
+    let pendingId: string | null = null;
     return settleAfter(
       async () => {
         setError(null);
@@ -542,6 +555,22 @@ export function HomeComposerDock({
               setError(t`Computer unavailable.`);
               return false;
             }
+            if (viaLedger) {
+              pendingId = useHomeTaskCards.getState().dispatched(serverId, text);
+              const { task, paneId } = await createLedgerTask({ goal: text, agentId: kind });
+              useServerTasksStore.getState().upsert(serverId, task);
+              // A 200 whose task already failed: the agent did not start or
+              // the goal was not typed. The draft stays and the reason is said.
+              if (task.state === 'failed' || !paneId) {
+                setError(task.summary ?? t`Could not start the task.`);
+                return false;
+              }
+              router.navigate({
+                pathname: '/servers/[serverId]',
+                params: { serverId, paneId },
+              } as Href);
+              return true;
+            }
             // One Herdr session per gateway today, and the first is the one
             // every other screen uses -- the same choice `new-task.tsx` makes.
             const sessions = await loadSessions();
@@ -573,6 +602,7 @@ export function HomeComposerDock({
         );
       },
       () => {
+        if (pendingId) useHomeTaskCards.getState().settle(pendingId);
         inFlightRef.current = false;
       }
     );
@@ -584,7 +614,8 @@ export function HomeComposerDock({
         terminalAgent.agentKind,
         terminalAgent.name,
         terminalAgent.confirmed,
-        text
+        text,
+        ledgerPane
       );
     // Attachments ride on a prompt to a session; the ledger route takes text
     // only, so a send with files keeps the session path. So does a retry onto

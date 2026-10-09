@@ -263,6 +263,40 @@ describe('subscribing', () => {
     expect(tasks).toHaveLength(1);
   });
 
+  test('a gateway with task_ws_subscription gets task frames alone until a session is watched', () => {
+    const h = harness();
+    const heard: string[] = [];
+    h.socket.watchTasks(
+      {
+        onSubscribed: () => heard.push('subscribed'),
+        onTaskUpdated: (task) => heard.push(task.taskId),
+      },
+      { tasksOnly: true }
+    );
+    h.latest().deliver(hello());
+    h.latest().deliver('{"t":"subscribed","tasks":true}');
+    h.latest().deliver(
+      JSON.stringify({
+        t: 'task',
+        asid: null,
+        seq: 4,
+        event: 'task.updated',
+        data: { task_id: 't8', state: 'idle_unconfirmed', kind: 'delegation', goal: 'g' },
+      })
+    );
+    expect(heard).toEqual(['subscribed', 't8']);
+    // `subscribe` alone would end the task delivery: widen first, then narrow back.
+    const release = h.socket.watch('ses_1', recorder().listener);
+    release();
+    expect(h.latest().sent).toEqual([
+      '{"t":"subscribe_tasks"}',
+      '{"t":"subscribe_all"}',
+      '{"t":"subscribe","asid":"ses_1"}',
+      '{"t":"unsubscribe","asid":"ses_1"}',
+      '{"t":"subscribe_tasks"}',
+    ]);
+  });
+
   test('a task-only resync refreshes tasks and leaves session timelines alone', () => {
     const h = harness();
     const session = recorder();

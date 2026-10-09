@@ -168,6 +168,8 @@ export function gatewaySocketPath(
 }
 
 const ALL = '*';
+/** The task listeners' demand, apart from any session's. */
+const TASKS = '#tasks';
 
 /** The longest wait between reconnects, before jitter. */
 export const MAX_RECONNECT_DELAY_MS = 30_000;
@@ -193,16 +195,21 @@ interface Connection {
   codec: AgentSocketCodec;
   hello: boolean;
   heardSincePing: boolean;
+  /** The last subscription frame sent was `subscribe_tasks`: no session traffic. */
+  tasksOnly: boolean;
 }
 
 export class GatewaySocket {
   private readonly options: GatewaySocketOptions;
   private readonly schedule: (run: () => void, ms: number) => () => void;
   private readonly listeners = new Map<string, Set<GatewaySocketListener>>();
-  /** `watchTasks` listeners; never reached through `targets`. */
-  private readonly taskListeners = new Set<GatewaySocketListener>();
+  /**
+   * `watchTasks` listeners, each with whether its gateway takes
+   * `subscribe_tasks`; never reached through `targets`.
+   */
+  private readonly taskListeners = new Map<GatewaySocketListener, boolean>();
   private readonly stateListeners = new Set<(state: GatewaySocketState) => void>();
-  /** Reference counts; `*` is `subscribe_all`. */
+  /** Reference counts; `*` is `subscribe_all`, `#tasks` the task listeners. */
   private readonly wanted = new Map<string, number>();
   private connection: Connection | null = null;
   private currentState: GatewaySocketState = 'idle';
@@ -266,23 +273,33 @@ export class GatewaySocket {
       released = true;
       removeListener();
       this.release(ALL);
+      this.narrowToTasks();
     };
   }
 
   /**
-   * `subscribe_all` and listen to task changes only. Kept apart from the
-   * session listeners: those are keyed by session, and "every session" must
-   * not reach a listener that wants tasks.
+   * Listen to task changes only. Kept apart from the session listeners: those
+   * are keyed by session, and "every session" must not reach a listener that
+   * wants tasks.
+   *
+   * With `tasksOnly` (the gateway advertises `task_ws_subscription`) and no
+   * session watched on this socket, it asks for `subscribe_tasks`, so the
+   * gateway sends task frames and nothing else. Otherwise -- an older gateway,
+   * or the selected computer's socket that also carries sessions -- it is
+   * `subscribe_all`, the only subscription that carries tasks beside sessions,
+   * and the session traffic is left unheard. The socket moves between the two
+   * as session watches come and go.
    */
-  watchTasks(listener: GatewaySocketListener): () => void {
-    this.taskListeners.add(listener);
-    this.subscribeAll();
+  watchTasks(listener: GatewaySocketListener, options?: { tasksOnly?: boolean }): () => void {
+    this.taskListeners.set(listener, options?.tasksOnly === true);
+    this.want(TASKS, this.taskOnly() ? { t: 'subscribe_tasks' } : { t: 'subscribe_all' });
     let released = false;
     return () => {
       if (released) return;
       released = true;
       this.taskListeners.delete(listener);
-      this.release(ALL);
+      this.release(TASKS);
+      this.narrowToTasks();
     };
   }
 
@@ -311,6 +328,7 @@ export class GatewaySocket {
   unsubscribe(asid: string): void {
     if (this.release(asid) && this.currentState === 'open') {
       this.send({ t: 'unsubscribe', asid });
+      this.narrowToTasks();
     }
   }
 
@@ -359,11 +377,30 @@ export class GatewaySocket {
 
   // -------------------------------------------------------------------------
 
+  /** Whether this socket can carry tasks alone: only task listeners, all on a gateway that can. */
+  private taskOnly(): boolean {
+    if (this.taskListeners.size === 0) return false;
+    for (const ok of this.taskListeners.values()) if (!ok) return false;
+    for (const key of this.wanted.keys()) if (key !== TASKS) return false;
+    return true;
+  }
+
+  /** The last session watch went: back to task frames alone, when the gateway can. */
+  private narrowToTasks(): void {
+    if (this.currentState !== 'open' || this.connection?.tasksOnly || !this.taskOnly()) return;
+    this.send({ t: 'subscribe_tasks' });
+  }
+
   private want(key: string, frame: AgentSocketClientFrame): void {
     this.wanted.set(key, (this.wanted.get(key) ?? 0) + 1);
     this.cancelLinger?.();
     this.cancelLinger = null;
     if (this.currentState === 'open') {
+      // A session watch on a task-only socket: `subscribe` alone would end
+      // the task delivery, so the socket widens to `subscribe_all` first.
+      if (frame.t === 'subscribe' && this.connection?.tasksOnly && this.taskListeners.size > 0) {
+        this.send({ t: 'subscribe_all' });
+      }
       // Sent on every call, not only the first: the ack is what tells this
       // caller to catch up, and the gateway answers a repeat as readily.
       this.send(frame);
@@ -449,7 +486,13 @@ export class GatewaySocket {
     const codec: AgentSocketCodec = upgrade.seal
       ? new SealedAgentSocketCodec({ crypto: this.options.crypto, ...upgrade.seal })
       : new PlainAgentSocketCodec();
-    const connection: Connection = { transport, codec, hello: false, heardSincePing: true };
+    const connection: Connection = {
+      transport,
+      codec,
+      hello: false,
+      heardSincePing: true,
+      tasksOnly: false,
+    };
     this.connection = connection;
     this.setState('connecting');
 
@@ -502,9 +545,13 @@ export class GatewaySocket {
       this.cancelTimer?.();
       this.cancelTimer = null;
       this.setState('open');
-      if (this.wanted.has(ALL)) this.send({ t: 'subscribe_all' });
-      for (const key of this.wanted.keys()) {
-        if (key !== ALL) this.send({ t: 'subscribe', asid: key });
+      if (this.taskOnly()) {
+        this.send({ t: 'subscribe_tasks' });
+      } else {
+        if (this.wanted.has(ALL) || this.wanted.has(TASKS)) this.send({ t: 'subscribe_all' });
+        for (const key of this.wanted.keys()) {
+          if (key !== ALL && key !== TASKS) this.send({ t: 'subscribe', asid: key });
+        }
       }
       this.armPing(connection);
       return;
@@ -512,8 +559,12 @@ export class GatewaySocket {
     if (!frame) return;
     switch (frame.t) {
       case 'subscribed':
-        this.notify('asid' in frame ? [frame.asid] : [ALL], (l) => l.onSubscribed?.());
-        if (!('asid' in frame)) for (const l of [...this.taskListeners]) l.onSubscribed?.();
+        if ('asid' in frame) {
+          this.notify([frame.asid], (l) => l.onSubscribed?.());
+          return;
+        }
+        if ('all' in frame) this.notify([ALL], (l) => l.onSubscribed?.());
+        for (const l of [...this.taskListeners.keys()]) l.onSubscribed?.();
         return;
       case 'event':
         if (frame.event) {
@@ -522,13 +573,13 @@ export class GatewaySocket {
         }
         return;
       case 'task':
-        for (const l of [...this.taskListeners]) l.onTaskUpdated?.(frame.task, frame.seq);
+        for (const l of [...this.taskListeners.keys()]) l.onTaskUpdated?.(frame.task, frame.seq);
         return;
       case 'resync':
         // Only task events lagged: the session timelines are intact.
         if (!frame.tasks) this.notify(this.targets(frame.asid), (l) => l.onResync?.());
         // Events were dropped; a task may have changed in them.
-        if (!frame.asid) for (const l of [...this.taskListeners]) l.onResync?.();
+        if (!frame.asid) for (const l of [...this.taskListeners.keys()]) l.onResync?.();
         return;
       case 'error':
         if (frame.code === 'superseded') {
@@ -562,12 +613,14 @@ export class GatewaySocket {
 
   private allListeners(call: (listener: GatewaySocketListener) => void): void {
     this.notify([...this.listeners.keys()], call);
-    for (const listener of [...this.taskListeners]) call(listener);
+    for (const listener of [...this.taskListeners.keys()]) call(listener);
   }
 
   private send(frame: AgentSocketClientFrame): void {
     const connection = this.connection;
     if (!connection?.hello) return;
+    if (frame.t === 'subscribe_tasks') connection.tasksOnly = true;
+    else if (frame.t === 'subscribe' || frame.t === 'subscribe_all') connection.tasksOnly = false;
     try {
       connection.transport.send(connection.codec.sealClient(serializeAgentSocketFrame(frame)));
     } catch {

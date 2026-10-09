@@ -5,6 +5,7 @@ import type { GatewayEntity } from '@/lib/gateway-entities';
 import {
   agentBrandName,
   isCommandPathTitle,
+  isLaunchCommandTitle,
   numberField,
   optionalNumberField,
   panelTitle,
@@ -108,5 +109,17 @@ describe('optionalNumberField', () => {
       optionalNumberField(entity({ raw: { cursor_x: Number.NaN } }), 'cursor_x')
     ).toBeUndefined();
     expect(optionalNumberField(entity({ raw: { cursor_x: null } }), 'cursor_x')).toBeUndefined();
+  });
+});
+
+describe('isLaunchCommandTitle', () => {
+  test.each([
+    ['/usr/local/bin/codex --dangerously-bypass-approvals-and-sandbox', true],
+    ["'/opt/homebrew/bin/claude' --permission-mode bypassPermissions", true],
+    ['Codex · /usr/bin/codex --dangerously-bypass-approvals-and-sandbox', true],
+    ['fix the flaky login test', false],
+    ['/home/me/project', false],
+  ] as const)('%s', (title, expected) => {
+    expect(isLaunchCommandTitle(title)).toBe(expected);
   });
 });
