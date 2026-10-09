@@ -63,12 +63,12 @@ describe('foreground notification queue', () => {
 
   test('matching general events keep only the latest content without moving the card', () => {
     const first = noticeFromPush('first', {
-      title: 'Agent done · osk',
+      title: 'Agent done · studio',
       body: 'codex finished running.',
       data: { server_id: 'server', session_id: 'session', pane_id: 'pane' },
     })!;
     const latest = noticeFromPush('latest', {
-      title: 'Agent done · osk',
+      title: 'Agent done · studio',
       body: 'codex finished running.',
       data: { server_id: 'server', session_id: 'session', pane_id: 'pane' },
     })!;
@@ -84,7 +84,7 @@ describe('foreground notification queue', () => {
 
   test('different agents, destinations and approval requests remain distinct', () => {
     const base = {
-      title: 'Agent done · osk',
+      title: 'Agent done · studio',
       body: 'codex finished running.',
       data: { server_id: 'server', session_id: 'session', pane_id: 'pane' },
     };
@@ -323,9 +323,9 @@ describe('notice title', () => {
   });
 
   test('only the first separator counts, so a suffix keeps its own dots', () => {
-    expect(noticeTitleParts('Agent done \u00b7 osk \u00b7 claude')).toEqual({
+    expect(noticeTitleParts('Agent done \u00b7 studio \u00b7 claude')).toEqual({
       lead: 'Agent done',
-      suffix: 'osk \u00b7 claude',
+      suffix: 'studio \u00b7 claude',
     });
   });
 
@@ -342,7 +342,7 @@ describe('notice title', () => {
       lead: 'Agent done \u00b7',
       suffix: '',
     });
-    expect(noticeTitleParts(' \u00b7 osk')).toEqual({ lead: '\u00b7 osk', suffix: '' });
+    expect(noticeTitleParts(' \u00b7 studio')).toEqual({ lead: '\u00b7 studio', suffix: '' });
   });
 });
 
@@ -377,10 +377,10 @@ describe('question pushes', () => {
   test('the gateway title wins and a Pad gets the workspace route', () => {
     const notice = noticeFromPush(
       'q-2',
-      { title: 'Claude needs your input · osk', body: 'Which branch?', data },
+      { title: 'Claude needs your input · studio', body: 'Which branch?', data },
       { isPad: true, questionTitle: 'Needs your input' }
     );
-    expect(notice?.title).toBe('Claude needs your input · osk');
+    expect(notice?.title).toBe('Claude needs your input · studio');
     expect(notice?.route).toEqual({
       pathname: '/servers/[serverId]',
       params: { serverId: 'server-1', asid: 'asid-1', agentId: 'claude' },

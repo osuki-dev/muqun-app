@@ -1,8 +1,10 @@
 import { describe, expect, test } from 'bun:test';
+import { createStore } from 'zustand/vanilla';
 
 import {
   activeTaskCount,
   applyListAnswer,
+  createServerTasksState,
   isTaskChannelLive,
   replaceTasks,
   taskAgeParts,
@@ -175,5 +177,21 @@ describe('applyListAnswer', () => {
     });
     expect(index.s1?.tasks).toEqual([]);
     expect(error).toBeNull();
+  });
+});
+
+describe('createServerTasksState', () => {
+  // A frame arrives at clock 50; a list read sent at `requestedAtMs` lands at 200 without it.
+  test.each<[string, number, string[]]>([
+    ['a frame that arrived after the read left survives it', 40, ['n', 'a']],
+    ['a frame from before the read left is gone with it', 60, ['a']],
+  ])('%s', (_name, requestedAtMs, kept) => {
+    let clock = 50;
+    const store = createStore(createServerTasksState(() => clock));
+    store.getState().upsert('s1', task('n', 'queued', 30));
+    expect(store.getState().index.s1?.tasks[0]?.receivedAtMs).toBe(50);
+    clock = 200;
+    store.getState().replace('s1', [task('a', 'done', 10)], requestedAtMs);
+    expect(store.getState().index.s1?.tasks.map((t) => t.taskId)).toEqual(kept);
   });
 });
