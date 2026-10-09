@@ -383,6 +383,12 @@ export function HomeOverview({
     activeConnection,
     nowMs,
   });
+  // Cards on screen when Home mounts are not arrivals; once the section has
+  // emptied, the next card to come is one and enters (and pulses) as such.
+  const [cardsSkipEntering, setCardsSkipEntering] = useState(hasComputerCards);
+  useEffect(() => {
+    if (!hasComputerCards) setCardsSkipEntering(false);
+  }, [hasComputerCards]);
   const padReachabilityByServer = useMemo(
     () =>
       Object.fromEntries(
@@ -1071,6 +1077,7 @@ export function HomeOverview({
                     servers={cardServers}
                     activeConnection={activeConnection}
                     nowMs={nowMs}
+                    skipEntering={cardsSkipEntering}
                     onSelectServer={targetComposer}
                     onOpenTask={({ serverId, task, tree }) => {
                       // A row opens the session or pane the task runs in; only

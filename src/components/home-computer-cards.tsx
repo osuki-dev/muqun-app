@@ -133,6 +133,7 @@ export function HomeComputerCards({
   servers,
   activeConnection,
   nowMs,
+  skipEntering,
   onSelectServer,
   onOpenTask,
   onOpenTasks,
@@ -141,6 +142,11 @@ export function HomeComputerCards({
   activeConnection?: ActiveServerConnection;
   /** Home's focus tick: ages, the Sent row's lifetime and probe freshness. */
   nowMs: number;
+  /**
+   * The cards were already there when Home mounted: they are not arrivals.
+   * Home owns this because the section itself only mounts with its first card.
+   */
+  skipEntering: boolean;
   onSelectServer: (serverId: string) => void;
   onOpenTask: (target: CardTaskTarget) => void;
   /** The computer's whole task list. */
@@ -166,34 +172,35 @@ export function HomeComputerCards({
   });
   const statusOf = inputs.statusOf;
   const tickMs = nowMs;
-  if (cards.length === 0) return null;
   return (
-    <LayoutAnimationConfig skipEntering>
-      <View testID="home-computer-cards" style={styles.cards}>
-        {cards.map((card) => {
-          const server = servers.find((item) => item.serverId === card.serverId);
-          if (!server) return null;
-          return (
-            <Animated.View
-              key={card.serverId}
-              entering={riseIn()}
-              exiting={fadeOut('micro')}
-              layout={listLayout()}>
-              <ComputerCardView
-                card={card}
-                server={server}
-                status={statusOf(card.serverId)}
-                nowMs={tickMs}
-                onSelect={() => onSelectServer(card.serverId)}
-                onOpenTask={(task, tree) =>
-                  onOpenTask({ serverId: card.serverId, task, ...(tree ? { tree } : {}) })
-                }
-                onOpenTasks={() => onOpenTasks(card.serverId)}
-              />
-            </Animated.View>
-          );
-        })}
-      </View>
+    <LayoutAnimationConfig skipEntering={skipEntering}>
+      {cards.length === 0 ? null : (
+        <View testID="home-computer-cards" style={styles.cards}>
+          {cards.map((card) => {
+            const server = servers.find((item) => item.serverId === card.serverId);
+            if (!server) return null;
+            return (
+              <Animated.View
+                key={card.serverId}
+                entering={riseIn()}
+                exiting={fadeOut('micro')}
+                layout={listLayout()}>
+                <ComputerCardView
+                  card={card}
+                  server={server}
+                  status={statusOf(card.serverId)}
+                  nowMs={tickMs}
+                  onSelect={() => onSelectServer(card.serverId)}
+                  onOpenTask={(task, tree) =>
+                    onOpenTask({ serverId: card.serverId, task, ...(tree ? { tree } : {}) })
+                  }
+                  onOpenTasks={() => onOpenTasks(card.serverId)}
+                />
+              </Animated.View>
+            );
+          })}
+        </View>
+      )}
     </LayoutAnimationConfig>
   );
 }

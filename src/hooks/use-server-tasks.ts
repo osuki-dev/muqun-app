@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { AppState } from 'react-native';
+import { useLingui } from '@lingui/react/macro';
 
 import { isDemoActive, isDemoRecord } from '@/lib/demo-gateway';
 import { configuredGatewayServerId } from '@/lib/gateway-client';
@@ -174,6 +175,7 @@ export function useServerTasks(serverId: string | null): ServerTasks {
 export function useTaskAction(
   serverId: string | null
 ): (task: TaskView, action: 'cancel' | 'complete') => Promise<void> {
+  const { t } = useLingui();
   const upsert = useServerTasksStore((state) => state.upsert);
   const replace = useServerTasksStore((state) => state.replace);
   return useCallback(
@@ -182,7 +184,7 @@ export function useTaskAction(
       // A computer this device cannot reach directly (a tunnel no longer
       // selected) is not asked through the shared client, which is another one.
       const route = taskRouteFor(serverId);
-      if (!route) throw new Error('This computer is not reachable from here.');
+      if (!route) throw new Error(t`Computer unavailable.`);
       const endpoint = route.kind === 'endpoint' ? route.endpoint : undefined;
       // At the task's own time: a newer frame from the gateway still wins, and
       // putting the old view back on failure replaces only this guess. Settled
@@ -200,8 +202,10 @@ export function useTaskAction(
             return;
           }
           // The gateway no longer knows the task: read the list again.
+          // If that read fails too, the guess is taken back.
           void fetchTaskList({ limit: 100, ...(endpoint ? { endpoint } : {}) }).then((list) => {
             if (list) replace(serverId, list);
+            else upsert(serverId, task);
           });
         },
         (failure: unknown) => {
@@ -210,6 +214,6 @@ export function useTaskAction(
         }
       );
     },
-    [serverId, upsert, replace]
+    [serverId, upsert, replace, t]
   );
 }
