@@ -203,10 +203,6 @@ msgstr "{agentName} ปฏิเสธคำขอ: {message}"
 msgid "{agentName} service offline. Tap for setup instructions"
 msgstr "บริการ {agentName} ออฟไลน์ แตะเพื่อดูวิธีตั้งค่า"
 
-#: src/components/home-recent-sessions.tsx
-msgid "{agentName} session"
-msgstr "เซสชัน {agentName}"
-
 #: src/components/new-task-action.tsx
 msgid "{agentName} sessions are not supported. Tap for details"
 msgstr "ไม่รองรับเซสชัน {agentName} แตะเพื่อดูรายละเอียด"
@@ -1306,6 +1302,7 @@ msgid "Completed"
 msgstr "เสร็จสิ้น"
 
 #: src/components/home-composer.tsx
+#: src/components/home-editorial-layout.tsx
 msgid "Computers"
 msgstr "คอมพิวเตอร์"
 
@@ -1406,7 +1403,6 @@ msgstr "กำลังเชื่อมต่อกับ {address}"
 msgid "Connecting…"
 msgstr "กำลังเชื่อมต่อ…"
 
-#: src/components/home-editorial-layout.tsx
 #: src/components/pad-server-rail.tsx
 msgid "Connections"
 msgstr "การเชื่อมต่อ"
@@ -5045,6 +5041,10 @@ msgstr "จะส่งถัดไป: {0}"
 #: src/components/agent-assignment-bar.tsx
 msgid "Sending to"
 msgstr "กำลังส่งไปยัง"
+
+#: src/components/home-connections.tsx
+msgid "Sends your next goal here. Long press to open it."
+msgstr "ส่งเป้าหมายถัดไปมาที่นี่ กดค้างเพื่อเปิด"
 
 #: src/app/agent-guide.tsx
 #: src/app/artifacts.tsx

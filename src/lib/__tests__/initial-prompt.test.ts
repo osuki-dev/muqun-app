@@ -2,6 +2,7 @@ import { describe, expect, test } from 'bun:test';
 
 import {
   claimInitialPrompt,
+  initialPromptAction,
   OFFER_TTL_MS,
   offerInitialPrompt,
   withdrawInitialPrompt,
@@ -45,5 +46,31 @@ describe('initial prompt ledger', () => {
     expect(claimInitialPrompt(fresh, 's1', at + OFFER_TTL_MS)).toBe('fresh');
     const stale = offerInitialPrompt('s1', 'stale', at);
     expect(claimInitialPrompt(stale, 's1', at + OFFER_TTL_MS + 1)).toBeNull();
+  });
+});
+
+describe('initialPromptAction', () => {
+  test('a live offer is sent, whatever the route says', () => {
+    expect(
+      initialPromptAction({ claimed: 'Ship it', routePrompt: 'other', sessionHasContent: false })
+    ).toEqual({ kind: 'send', prompt: 'Ship it' });
+  });
+
+  test('a gone offer prefills the route copy instead of losing the goal', () => {
+    expect(
+      initialPromptAction({ claimed: null, routePrompt: ' Ship it ', sessionHasContent: false })
+    ).toEqual({ kind: 'prefill', prompt: 'Ship it' });
+  });
+
+  test('nothing over a session that already has content, or without a route copy', () => {
+    expect(
+      initialPromptAction({ claimed: null, routePrompt: 'Ship it', sessionHasContent: true })
+    ).toEqual({ kind: 'none' });
+    expect(initialPromptAction({ claimed: null, sessionHasContent: false })).toEqual({
+      kind: 'none',
+    });
+    expect(
+      initialPromptAction({ claimed: null, routePrompt: '   ', sessionHasContent: false })
+    ).toEqual({ kind: 'none' });
   });
 });

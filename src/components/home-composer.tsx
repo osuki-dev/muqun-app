@@ -3,7 +3,14 @@ import { Trans, useLingui } from '@lingui/react/macro';
 import { useThemeTokens } from '@osuki-dev/ui';
 import { ArrowRight } from 'lucide-react-native';
 import { useEffect, useRef, useState } from 'react';
+import * as Haptics from 'expo-haptics';
 import { ScrollView, StyleSheet, View } from 'react-native';
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withSequence,
+  withTiming,
+} from 'react-native-reanimated';
 
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import type { HomeLaunchController } from '@/components/home-launch-actions';
@@ -30,6 +37,8 @@ import { useAgents } from '@/stores/agents';
 
 const MENTION_ROW_HEIGHT = 48;
 const MENTION_VISIBLE_ROWS = 4;
+const FLASH_IN_MS = 120;
+const FLASH_OUT_MS = 600;
 
 /**
  * Home's own composer: a goal, a computer to give it to, and Send.
@@ -49,12 +58,18 @@ export function HomeComposer({
   controller,
   reachabilityByServer,
   currentServerId,
+  targetPulse = 0,
   onNewAgent,
 }: {
   controller: HomeLaunchController;
   reachabilityByServer: Readonly<Record<string, ServerReachability | undefined>>;
   /** The computer this app is connected to now (the demo workspace in demo mode). */
   currentServerId?: string | null;
+  /**
+   * Bumped when Home sets the target from outside the composer (a tap on a
+   * computer row); each bump flashes the assignment bar.
+   */
+  targetPulse?: number;
   onNewAgent: (
     serverId: string,
     directory?: string,
@@ -70,7 +85,22 @@ export function HomeComposer({
   const { servers, chosen, opening, openTargetPicker, run, choose } = controller;
   const [text, setText] = useState('');
   const [caret, setCaret] = useState<number | null>(null);
+  const [mentionPulse, setMentionPulse] = useState(0);
   const mountedRef = useRef(true);
+  // The assignment bar lights up for a moment whenever the target is set by
+  // hand -- a computer row or an `@` pick -- so the change is seen, not inferred.
+  const flash = useSharedValue(0);
+  const pulse = targetPulse + mentionPulse;
+  useEffect(() => {
+    if (pulse === 0) return;
+    flash.set(
+      withSequence(
+        withTiming(1, { duration: FLASH_IN_MS }),
+        withTiming(0, { duration: FLASH_OUT_MS })
+      )
+    );
+  }, [pulse, flash]);
+  const flashStyle = useAnimatedStyle(() => ({ opacity: flash.get() }));
   useEffect(() => {
     mountedRef.current = true;
     return () => {
@@ -107,6 +137,8 @@ export function HomeComposer({
   function chooseComputer(server: GatewayRecord) {
     if (!mention) return;
     choose(server.serverId);
+    void Haptics.selectionAsync();
+    setMentionPulse((count) => count + 1);
     const next = removeHomeComposerMention(text, mention);
     setText(next.text);
     setCaret(next.caret);
@@ -148,6 +180,17 @@ export function HomeComposer({
         hitSlop={{ top: 6, bottom: 6 }}
         onPress={openTargetPicker}
         style={styles.bar}>
+        <Animated.View
+          pointerEvents="none"
+          style={[
+            StyleSheet.absoluteFill,
+            {
+              borderRadius: profile.chrome.control,
+              backgroundColor: background(theme.colors.primarySubtle),
+            },
+            flashStyle,
+          ]}
+        />
         {targetServer ? (
           <>
             <ThemeIcon

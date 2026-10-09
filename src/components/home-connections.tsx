@@ -27,6 +27,7 @@ export function HomeConnections({
   servers,
   hosts,
   onOpenServer,
+  onSelectServer,
   onOpenHost,
   onManage,
   activeConnection,
@@ -36,6 +37,11 @@ export function HomeConnections({
   servers: readonly GatewayRecord[];
   hosts: readonly SshHostRecord[];
   onOpenServer: (serverId: string) => void;
+  /**
+   * When given, a tap makes the computer the composer's target and a long
+   * press opens it; without it (the Pad rail) a tap opens it, as before.
+   */
+  onSelectServer?: (serverId: string) => void;
   onOpenHost: (hostId: string) => void;
   onManage: () => void;
   activeConnection?: ActiveServerConnection;
@@ -62,6 +68,7 @@ export function HomeConnections({
               showAddress={addresses.has(server.serverId)}
               hasSeparator={index < servers.length + hosts.length - 1}
               onOpen={onOpenServer}
+              onSelect={onSelectServer}
               activeConnection={activeConnection}
               nowMs={nowMs}
             />
@@ -141,6 +148,7 @@ function GatewayConnectionRow({
   showAddress,
   hasSeparator,
   onOpen,
+  onSelect,
   activeConnection,
   nowMs,
 }: {
@@ -148,9 +156,11 @@ function GatewayConnectionRow({
   showAddress: boolean;
   hasSeparator: boolean;
   onOpen: (serverId: string) => void;
+  onSelect?: (serverId: string) => void;
   activeConnection?: ActiveServerConnection;
   nowMs?: number;
 }) {
+  const { t } = useLingui();
   const { _ } = useLinguiRuntime();
   const theme = useThemeTokens();
   const background = useSurfaceBackground();
@@ -162,7 +172,11 @@ function GatewayConnectionRow({
       testID={`home-connection-gateway-${server.serverId}`}
       accessibilityRole="button"
       accessibilityLabel={`${server.label}, ${status}`}
-      onPress={() => onOpen(server.serverId)}
+      accessibilityHint={
+        onSelect ? t`Sends your next goal here. Long press to open it.` : undefined
+      }
+      onPress={() => (onSelect ? onSelect(server.serverId) : onOpen(server.serverId))}
+      onLongPress={onSelect ? () => onOpen(server.serverId) : undefined}
       style={[
         styles.row,
         hasSeparator && {

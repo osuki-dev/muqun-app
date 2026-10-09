@@ -2,14 +2,20 @@ import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens } from '@osuki-dev/ui';
 import { ChevronRight, X } from 'lucide-react-native';
-import { useCallback, useRef, useState } from 'react';
-import { AppState, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
+import { Fragment, useCallback, useRef, useState } from 'react';
+import {
+  AppState,
+  StyleSheet,
+  useWindowDimensions,
+  View,
+  type StyleProp,
+  type ViewStyle,
+} from 'react-native';
 import { useFocusEffect } from 'expo-router';
 
 import { AgentMark } from '@/components/agent-mark';
 import { FontedTextInput } from '@/components/fonted-text-input';
 import { PressableScale } from '@/components/pressable-scale';
-import { StatusDot } from '@/components/status-dot';
 import { Text } from '@/components/text';
 import { ThemeIcon } from '@/components/theme-icon';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
@@ -49,6 +55,15 @@ import { useGoneAgentSessions } from '@/stores/gone-agent-sessions';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { settleAfter } from '@/lib/compiler-safe-control-flow';
 import { homeProviderTextColor, searchedHomeContinueEntries } from '@/lib/home-continue-search';
+import {
+  homeContinueComputerLabel,
+  homeContinueMetaChars,
+  homeContinueMetaParts,
+  homePathLabel,
+  META_SEPARATOR,
+  terminalRowPath,
+  terminalRowTitle,
+} from '@/lib/home-continue-row';
 
 export function HomeContinueSearch({
   query,
@@ -208,6 +223,7 @@ export function HomeRecentSessions({
   selectedAsid,
   onOpen,
   query = '',
+  pad = false,
 }: {
   servers: readonly GatewayRecord[];
   hosts: readonly SshHostRecord[];
@@ -223,12 +239,22 @@ export function HomeRecentSessions({
   /** Runs the row's Home command; see `homeContinueCommand`. */
   onOpen: (command: HomeCommand) => void;
   query?: string;
+  /** Pad keeps the large ordinal; a phone shrinks it so the title has the row. */
+  pad?: boolean;
 }) {
   const { t } = useLingui();
   const theme = useThemeTokens();
   const profile = useAppearanceProfile();
   const background = useSurfaceBackground();
+  const { fontScale } = useWindowDimensions();
   const [expanded, setExpanded] = useState(false);
+  const [listWidth, setListWidth] = useState(0);
+  // What the meta line has across: the row less its padding, ordinal, gaps and arrow.
+  const ordinalWidth = compact ? 0 : (pad ? 48 : 30) + 12;
+  const metaChars = homeContinueMetaChars(
+    listWidth - 24 - ordinalWidth - 12 - 16,
+    theme.typography.caption.fontSize * fontScale
+  );
   const discovery = useAgents((state) => state.index.servers);
   const collapsedLimit = limit ?? (compact ? 4 : undefined);
   const searching = query.trim().length > 0;
@@ -243,6 +269,7 @@ export function HomeRecentSessions({
   return (
     <View testID="home-recent-sessions" style={styles.root}>
       <View
+        onLayout={(event) => setListWidth(event.nativeEvent.layout.width)}
         style={[
           styles.list,
           {
@@ -260,17 +287,9 @@ export function HomeRecentSessions({
             selectedPaneId={selectedPaneId}
             selectedAsid={selectedAsid}
             hasSeparator={index < displayed.length - 1}
-            serverLabel={
-              servers.find(
-                (server) =>
-                  server.serverId ===
-                  (entry.destination.type === 'pane'
-                    ? entry.destination.serverId
-                    : entry.destination.target.kind === 'ssh-host'
-                      ? undefined
-                      : entry.destination.target.serverId)
-              )?.label
-            }
+            servers={servers}
+            pad={pad}
+            metaChars={metaChars}
             onOpen={() => onOpen(homeContinueCommand(entry.destination))}
           />
         ))}
@@ -305,8 +324,10 @@ function RecentSessionRow({
   entry,
   number,
   hasSeparator,
-  serverLabel,
+  servers,
   compact,
+  pad,
+  metaChars,
   selectedServerId,
   selectedPaneId,
   selectedAsid,
@@ -315,8 +336,10 @@ function RecentSessionRow({
   entry: HomeContinueEntry;
   number: number;
   hasSeparator: boolean;
-  serverLabel?: string;
+  servers: readonly GatewayRecord[];
   compact: boolean;
+  pad: boolean;
+  metaChars: number;
   selectedServerId?: string;
   selectedPaneId?: string;
   selectedAsid?: string;
@@ -339,6 +362,13 @@ function RecentSessionRow({
           Boolean(selectedPaneId) &&
           entry.destination.paneId === selectedPaneId;
   const rowKind = homeContinueKind(entry.destination);
+  const serverId =
+    entry.destination.type === 'pane'
+      ? entry.destination.serverId
+      : target?.kind === 'ssh-host'
+        ? undefined
+        : target?.serverId;
+  const computer = homeContinueComputerLabel(servers, serverId);
   const cwd =
     entry.destination.type === 'pane'
       ? entry.destination.cwd
@@ -355,15 +385,19 @@ function RecentSessionRow({
   const agentId = rowKind.kind === 'agent' ? rowKind.agentId : undefined;
   const agentName = agentId ? agentDisplayName(mirroredAgents, agentId) : '';
   const agentKind = agentId ? (findAgent(mirroredAgents, agentId)?.kind ?? agentId) : undefined;
+  // A terminal an agent runs in is named by that agent.
   const kind =
     rowKind.kind === 'agent'
-      ? t`${agentName} session`
+      ? agentName
       : rowKind.kind === 'terminal'
-        ? t`Terminal`
+        ? (entry.agentLabel ?? t`Terminal`)
         : t`SSH host`;
-  const title = entry.title || kind;
-  const providerAt = agentName ? kind.indexOf(agentName) : -1;
-  const metadataKind = entry.agentLabel ? `${kind} · ${entry.agentLabel}` : kind;
+  const providerInk = agentKind ?? entry.agentLabel;
+  const terminal = rowKind.kind === 'terminal';
+  const title = terminal
+    ? terminalRowTitle({ paneTitle: entry.title, cwd, hasAgent: Boolean(entry.agentLabel) }) || kind
+    : entry.title || kind;
+  const path = terminal ? terminalRowPath(title, cwd) : cwd ? homePathLabel(cwd) : undefined;
   const observation = entry.observation;
   const status = observation?.status;
   const sessionStatus =
@@ -389,12 +423,20 @@ function RecentSessionRow({
     // react-doctor-disable-next-line react-hooks-js/todo -- Lingui expands this macro before React Compiler runs.
     seenLabel = t`Seen ${age.value}d ago`;
   }
-  const observationLabel = [statusLabel, seenLabel].filter(Boolean).join(' · ');
+  const meta = homeContinueMetaParts({
+    kind,
+    computer,
+    path,
+    status: statusLabel,
+    seen: seenLabel,
+    maxChars: metaChars,
+  });
+  const surface = selected ? theme.colors.primarySubtle : theme.colors.surface;
   return (
     <PressableScale
       testID="home-recent-open"
       accessibilityRole="button"
-      accessibilityLabel={`${title}, ${metadataKind}${serverLabel ? `, ${serverLabel}` : ''}${observationLabel ? `, ${observationLabel}` : ''}`}
+      accessibilityLabel={[title, ...meta.map((part) => part.text)].join(', ')}
       accessibilityHint={cwd}
       accessibilityState={{ selected }}
       onPress={onOpen}
@@ -405,82 +447,61 @@ function RecentSessionRow({
           borderBottomWidth: StyleSheet.hairlineWidth,
         },
         {
-          backgroundColor: background(selected ? theme.colors.primarySubtle : theme.colors.surface),
+          backgroundColor: background(surface),
         },
       ]}>
       <View style={styles.open}>
         {compact ? null : (
-          <Text variant="heading" color={theme.colors.primary} style={styles.number}>
+          <Text
+            variant="heading"
+            color={theme.colors.primary}
+            style={pad ? styles.number : styles.phoneNumber}>
             {String(number).padStart(2, '0')}
           </Text>
         )}
         <View style={styles.copy}>
-          {agentKind ? (
-            <View style={styles.titleLine}>
+          <View style={styles.titleLine}>
+            {agentKind ? (
               <View style={styles.titleMark}>
                 <AgentMark kind={agentKind} size={14} color={theme.colors.primary} />
               </View>
-              <Text variant="bodySmall" weight="semibold" numberOfLines={2} style={styles.title}>
-                {title}
-              </Text>
-            </View>
-          ) : (
-            <Text variant="bodySmall" weight="semibold" numberOfLines={2}>
+            ) : null}
+            <Text
+              variant="bodySmall"
+              weight="semibold"
+              numberOfLines={terminal ? 1 : 2}
+              style={styles.title}>
               {title}
             </Text>
-          )}
-          <Text variant="caption" color={theme.colors.textMuted} numberOfLines={2}>
-            {agentKind && providerAt >= 0 ? (
-              <>
-                {kind.slice(0, providerAt)}
-                <Text
-                  variant="caption"
-                  color={homeProviderTextColor(
-                    agentKind,
-                    theme.colors,
-                    selected ? theme.colors.primarySubtle : theme.colors.surface
-                  )}>
-                  {agentName}
-                </Text>
-                {kind.slice(providerAt + agentName.length)}
-              </>
-            ) : (
-              kind
-            )}
-            {entry.agentLabel ? (
-              <>
-                {' '}
-                ·{' '}
-                <Text
-                  variant="caption"
-                  color={homeProviderTextColor(
-                    entry.agentLabel,
-                    theme.colors,
-                    selected ? theme.colors.primarySubtle : theme.colors.surface
-                  )}>
-                  {entry.agentLabel}
-                </Text>
-              </>
-            ) : null}
-            {serverLabel ? ` · ${serverLabel}` : ''}
+          </View>
+          <Text
+            testID="home-recent-meta"
+            variant="caption"
+            color={theme.colors.textMuted}
+            numberOfLines={1}>
+            {meta.map((part, index) => (
+              <Fragment key={part.role}>
+                {index > 0 ? META_SEPARATOR : null}
+                {part.role === 'status' && status ? (
+                  <Text variant="caption" color={theme.colors[statusTone]}>
+                    {`\u25CF ${part.text}`}
+                  </Text>
+                ) : part.role === 'kind' && providerInk ? (
+                  <Text
+                    variant="caption"
+                    color={homeProviderTextColor(providerInk, theme.colors, surface)}>
+                    {part.text}
+                  </Text>
+                ) : part.role === 'path' ? (
+                  <Text variant="caption" color={theme.colors.textSubtle}>
+                    {part.text}
+                  </Text>
+                ) : (
+                  part.text
+                )}
+              </Fragment>
+            ))}
           </Text>
-          {cwd && !compact ? (
-            <Text variant="caption" color={theme.colors.textSubtle} numberOfLines={1}>
-              {cwd}
-            </Text>
-          ) : null}
-          {observationLabel ? (
-            <View style={styles.observation}>
-              {status ? <StatusDot color={theme.colors[statusTone]} filled size={6} /> : null}
-              <Text
-                variant="caption"
-                color={status ? theme.colors[statusTone] : theme.colors.textSubtle}
-                style={styles.observationText}
-                numberOfLines={1}>
-                {observationLabel}
-              </Text>
-            </View>
-          ) : null}
         </View>
         <ThemeIcon
           name="home.arrow"
@@ -521,13 +542,13 @@ const styles = StyleSheet.create({
     minHeight: 64,
   },
   number: { minWidth: 48, fontSize: 36, lineHeight: 44, letterSpacing: -1 },
+  // The heading token's own size: on a phone the title keeps most of the row.
+  phoneNumber: { minWidth: 30, letterSpacing: -0.5 },
   copy: { minWidth: 0, flex: 1, gap: 4 },
   titleLine: { minWidth: 0, flexDirection: 'row', alignItems: 'flex-start', gap: 6 },
   // Centred on the title's first line (bodySmall's 20pt line box).
   titleMark: { height: 20, justifyContent: 'center' },
   title: { minWidth: 0, flex: 1 },
-  observation: { minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: 6 },
-  observationText: { minWidth: 0, flex: 1 },
   more: {
     alignSelf: 'flex-start',
     minHeight: 44,

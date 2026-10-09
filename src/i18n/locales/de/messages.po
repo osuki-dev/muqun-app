@@ -203,10 +203,6 @@ msgstr "{agentName} hat die Anfrage abgelehnt: {message}"
 msgid "{agentName} service offline. Tap for setup instructions"
 msgstr "{agentName}-Dienst offline. Tippen Sie für Einrichtungshinweise"
 
-#: src/components/home-recent-sessions.tsx
-msgid "{agentName} session"
-msgstr "{agentName}-Sitzung"
-
 #: src/components/new-task-action.tsx
 msgid "{agentName} sessions are not supported. Tap for details"
 msgstr "{agentName}-Sitzungen werden nicht unterstützt. Tippen Sie für Details"
@@ -1306,6 +1302,7 @@ msgid "Completed"
 msgstr "Abgeschlossen"
 
 #: src/components/home-composer.tsx
+#: src/components/home-editorial-layout.tsx
 msgid "Computers"
 msgstr "Computer"
 
@@ -1406,7 +1403,6 @@ msgstr "Verbinde mit {address}"
 msgid "Connecting…"
 msgstr "Verbindungsaufbau…"
 
-#: src/components/home-editorial-layout.tsx
 #: src/components/pad-server-rail.tsx
 msgid "Connections"
 msgstr "Verbindungen"
@@ -5045,6 +5041,10 @@ msgstr "Wird als Nächstes gesendet: {0}"
 #: src/components/agent-assignment-bar.tsx
 msgid "Sending to"
 msgstr "Senden an"
+
+#: src/components/home-connections.tsx
+msgid "Sends your next goal here. Long press to open it."
+msgstr "Sendet dein nächstes Ziel hierhin. Lange drücken zum Öffnen"
 
 #: src/app/agent-guide.tsx
 #: src/app/artifacts.tsx

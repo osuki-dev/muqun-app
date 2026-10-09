@@ -203,10 +203,6 @@ msgstr "{agentName}이(가) 요청을 거부했습니다: {message}"
 msgid "{agentName} service offline. Tap for setup instructions"
 msgstr "{agentName} 서비스가 오프라인입니다. 탭하여 설정 방법 보기"
 
-#: src/components/home-recent-sessions.tsx
-msgid "{agentName} session"
-msgstr "{agentName} 세션"
-
 #: src/components/new-task-action.tsx
 msgid "{agentName} sessions are not supported. Tap for details"
 msgstr "{agentName} 세션은 지원되지 않습니다. 탭하여 자세히 보기"
@@ -1306,6 +1302,7 @@ msgid "Completed"
 msgstr "완료됨"
 
 #: src/components/home-composer.tsx
+#: src/components/home-editorial-layout.tsx
 msgid "Computers"
 msgstr "컴퓨터"
 
@@ -1406,7 +1403,6 @@ msgstr "{address}에 연결하는 중"
 msgid "Connecting…"
 msgstr "연결 중…"
 
-#: src/components/home-editorial-layout.tsx
 #: src/components/pad-server-rail.tsx
 msgid "Connections"
 msgstr "연결"
@@ -5045,6 +5041,10 @@ msgstr "다음에 보냄: {0}"
 #: src/components/agent-assignment-bar.tsx
 msgid "Sending to"
 msgstr "보내는 대상"
+
+#: src/components/home-connections.tsx
+msgid "Sends your next goal here. Long press to open it."
+msgstr "다음 목표를 여기로 보냅니다. 길게 눌러 엽니다"
 
 #: src/app/agent-guide.tsx
 #: src/app/artifacts.tsx
