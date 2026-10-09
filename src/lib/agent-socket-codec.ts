@@ -210,8 +210,11 @@ export type AgentSocketServerFrame =
   | { t: 'event'; asid: string; seq: number; event: AgentDomainEvent | null }
   /** `task.updated`, which the gateway sends on no session; only `subscribe_all` sockets get it. */
   | { t: 'task'; seq: number; task: TaskView }
-  /** `asid` "" means every session. */
-  | { t: 'resync'; asid: string }
+  /**
+   * `asid` "" means every session. `tasks` with an empty `asid` is the task
+   * channel alone falling behind: refresh the task list, not every timeline.
+   */
+  | { t: 'resync'; asid: string; tasks?: true }
   | { t: 'pong' }
   | { t: 'error'; code: string };
 
@@ -274,7 +277,10 @@ export function parseAgentSocketFrame(plaintext: string): AgentSocketServerFrame
     }
     case 'resync': {
       const asid = str(rec.asid);
-      return asid === null ? null : { t: 'resync', asid };
+      if (asid === null) return null;
+      return rec.tasks === true && !asid
+        ? { t: 'resync', asid, tasks: true }
+        : { t: 'resync', asid };
     }
     case 'pong':
       return { t: 'pong' };

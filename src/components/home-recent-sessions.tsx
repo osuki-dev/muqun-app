@@ -44,8 +44,10 @@ import {
   shouldShowHomeContinueOverflow,
   type HomeContinueEntry,
 } from '@/lib/home-continue';
-import { agentSessionStatusWord, agentStatusWord } from '@/i18n/labels';
-import { agentStatusTone } from '@/lib/herdr-entity';
+import { agentSessionStatusWord, agentStatusWord, taskStateWord } from '@/i18n/labels';
+import { boundTaskState, taskStateTone } from '@/lib/home-in-progress';
+import { useServerTasksStore } from '@/stores/server-tasks';
+import { agentBrandName, agentStatusTone } from '@/lib/herdr-entity';
 import type { ActiveServerConnection, ServerReachability } from '@/lib/server-reachability';
 import { useServerAgents } from '@/stores/server-agents';
 import { useAppSettings } from '@/stores/app-settings';
@@ -386,30 +388,49 @@ function RecentSessionRow({
   const agentName = agentId ? agentDisplayName(mirroredAgents, agentId) : '';
   const agentKind = agentId ? (findAgent(mirroredAgents, agentId)?.kind ?? agentId) : undefined;
   // A terminal an agent runs in is named by that agent.
+  const paneAgentName = entry.agentLabel ? agentBrandName(entry.agentLabel) : undefined;
   const kind =
     rowKind.kind === 'agent'
       ? agentName
       : rowKind.kind === 'terminal'
-        ? (entry.agentLabel ?? t`Terminal`)
+        ? (paneAgentName ?? t`Terminal`)
         : t`SSH host`;
   const providerInk = agentKind ?? entry.agentLabel;
   const terminal = rowKind.kind === 'terminal';
   const title = terminal
-    ? terminalRowTitle({ paneTitle: entry.title, cwd, hasAgent: Boolean(entry.agentLabel) }) || kind
+    ? terminalRowTitle({
+        paneTitle: entry.title,
+        cwd,
+        hasAgent: Boolean(entry.agentLabel),
+        agentName: paneAgentName,
+      }) || kind
     : entry.title || kind;
   const path = terminal ? terminalRowPath(title, cwd) : cwd ? homePathLabel(cwd) : undefined;
   const observation = entry.observation;
-  const status = observation?.status;
+  // A session a ledger task is running in says what the task says: the
+  // session's own status lags it (it read "Idle" under a working delegation).
+  const taskState = useServerTasksStore((state) =>
+    target?.kind === 'agent-session'
+      ? boundTaskState(state.index[target.serverId]?.tasks, target.asid)
+      : undefined
+  );
+  const status = taskState ?? observation?.status;
   const sessionStatus =
-    observation?.kind === 'agent-session' && observation.status
+    !taskState && observation?.kind === 'agent-session' && observation.status
       ? agentSessionStatusPresentation(observation.status)
       : undefined;
-  const statusLabel = status
-    ? sessionStatus
-      ? _(agentSessionStatusWord[sessionStatus.word])
-      : _(agentStatusWord[status] ?? agentStatusWord.unknown)
-    : undefined;
-  const statusTone = sessionStatus ? sessionStatus.tone : agentStatusTone(status);
+  const statusLabel = taskState
+    ? _(taskStateWord[taskState])
+    : status
+      ? sessionStatus
+        ? _(agentSessionStatusWord[sessionStatus.word])
+        : _(agentStatusWord[status] ?? agentStatusWord.unknown)
+      : undefined;
+  const statusTone = taskState
+    ? taskStateTone(taskState)
+    : sessionStatus
+      ? sessionStatus.tone
+      : agentStatusTone(observation?.status);
   const age = observation?.age;
   let seenLabel: string | undefined;
   if (age?.unit === 'now') seenLabel = t`Seen just now`;

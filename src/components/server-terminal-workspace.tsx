@@ -333,6 +333,7 @@ import {
   isLazygitPane,
   keyCap,
   parseNvimMode,
+  terminalShortcutTestId,
   keyboardCombinationKeys,
   terminalKeysFromGateway,
   withCommonTerminalCombinations,
@@ -6268,7 +6269,12 @@ function TerminalKeyButton({
 
   return (
     <PressableScale
+      // Spelled out: a chip with only a label never reached the accessibility
+      // tree on the Pad, so neither a screen reader nor automation could press it.
+      accessible
+      accessibilityRole="button"
       accessibilityLabel={t`Send ${spoken}`}
+      testID={terminalShortcutTestId(item.key)}
       disabled={disabled}
       pressedScale={0.94}
       hitSlop={{ top: 8, bottom: 8, left: 2, right: 2 }}

@@ -145,24 +145,24 @@ msgstr "{0}, 이 컴퓨터의 PATH에서 찾을 수 없음"
 
 #. placeholder {0}: age.value
 #. placeholder {0}: parts.value
-#: src/components/server-tasks-sheet.tsx
 #: src/hooks/use-relative-time.ts
+#: src/hooks/use-task-age.ts
 #: src/lib/agent-widget-layout.tsx
 msgid "{0}d ago"
 msgstr "{0}일 전"
 
 #. placeholder {0}: age.value
 #. placeholder {0}: parts.value
-#: src/components/server-tasks-sheet.tsx
 #: src/hooks/use-relative-time.ts
+#: src/hooks/use-task-age.ts
 #: src/lib/agent-widget-layout.tsx
 msgid "{0}h ago"
 msgstr "{0}시간 전"
 
 #. placeholder {0}: age.value
 #. placeholder {0}: parts.value
-#: src/components/server-tasks-sheet.tsx
 #: src/hooks/use-relative-time.ts
+#: src/hooks/use-task-age.ts
 #: src/lib/agent-widget-layout.tsx
 msgid "{0}m ago"
 msgstr "{0}분 전"
@@ -2886,6 +2886,7 @@ msgstr "파일 가져오기"
 msgid "Import link"
 msgstr "링크로 가져오기"
 
+#: src/components/home-editorial-layout.tsx
 #: src/components/server-tasks-sheet.tsx
 msgid "In progress"
 msgstr "진행 중"
@@ -3025,8 +3026,8 @@ msgid "Jump to latest output"
 msgstr "최신 출력으로 이동"
 
 #: src/components/agent-sessions-sheet.tsx
-#: src/components/server-tasks-sheet.tsx
 #: src/hooks/use-relative-time.ts
+#: src/hooks/use-task-age.ts
 #: src/lib/agent-widget-layout.tsx
 msgid "just now"
 msgstr "방금"
@@ -6620,6 +6621,10 @@ msgstr "사용 중"
 #: src/app/settings.tsx
 msgid "Version {version}{0}"
 msgstr "버전 {version}{0}"
+
+#: src/components/home-in-progress.tsx
+msgid "View all ({total})"
+msgstr "모두 보기 ({total})"
 
 #: src/components/agent-composer.tsx
 msgid "View file changes"

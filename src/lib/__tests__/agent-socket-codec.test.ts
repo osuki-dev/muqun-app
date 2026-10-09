@@ -174,6 +174,16 @@ describe('frames', () => {
       all: true,
     });
     expect(parseAgentSocketFrame('{"t":"resync","asid":""}')).toEqual({ t: 'resync', asid: '' });
+    expect(parseAgentSocketFrame('{"t":"resync","asid":"","tasks":true}')).toEqual({
+      t: 'resync',
+      asid: '',
+      tasks: true,
+    });
+    // `tasks` only narrows an every-session resync; a session's own stays a session's.
+    expect(parseAgentSocketFrame('{"t":"resync","asid":"ses_1","tasks":true}')).toEqual({
+      t: 'resync',
+      asid: 'ses_1',
+    });
     expect(parseAgentSocketFrame('{"t":"pong"}')).toEqual({ t: 'pong' });
     expect(parseAgentSocketFrame('{"t":"error","code":"superseded"}')).toEqual({
       t: 'error',

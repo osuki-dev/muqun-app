@@ -263,6 +263,26 @@ describe('subscribing', () => {
     expect(tasks).toHaveLength(1);
   });
 
+  test('a task-only resync refreshes tasks and leaves session timelines alone', () => {
+    const h = harness();
+    const session = recorder();
+    const all = recorder();
+    const tasks: string[] = [];
+    h.socket.watch('ses_1', session.listener);
+    h.socket.watchAll(all.listener);
+    h.socket.watchTasks({ onResync: () => tasks.push('resync') });
+    h.latest().deliver(hello());
+    h.latest().deliver('{"t":"resync","asid":"","tasks":true}');
+    expect(tasks).toEqual(['resync']);
+    expect(session.log).toEqual([]);
+    expect(all.log).toEqual([]);
+    // A plain every-session resync still reaches both.
+    h.latest().deliver('{"t":"resync","asid":""}');
+    expect(tasks).toEqual(['resync', 'resync']);
+    expect(session.log).toEqual(['resync']);
+    expect(all.log).toEqual(['resync']);
+  });
+
   test('an unwatched socket lingers, then closes', () => {
     const h = harness();
     const release = h.socket.watch('ses_1', recorder().listener);

@@ -93,6 +93,12 @@ export type HomeEditorialLayoutProps = {
   recentHeading?: ReactNode;
   /** Genuine pending approvals or requests, already wired by the parent. */
   attention?: ReactNode;
+  /**
+   * The rows of tasks running on the computers, already wired by the parent;
+   * the layout gives them their "In progress" heading, between needs-you and
+   * Continue. Omit it when there is nothing running.
+   */
+  progress?: ReactNode;
   /** Reachable gateways and saved SSH hosts, already wired by the parent. */
   connections?: ReactNode;
   /** Secondary scan or pair controls, already wired by the parent. */
@@ -164,6 +170,7 @@ function EditorialSection({
  *   launches={<HomeLaunches />}
  *   recent={<HomeRecent />}
  *   attention={<HomeAttention />}
+ *   progress={<HomeInProgress />}
  *   connections={<HomeConnections />}
  *   controls={<HomeControls />}
  * />
@@ -215,6 +222,7 @@ export function HomeEditorialLayout({
   recent,
   recentHeading,
   attention,
+  progress,
   connections,
   controls,
   typographicCover = false,
@@ -234,6 +242,7 @@ export function HomeEditorialLayout({
   const fontScale = fontScaleProp ?? windowFontScale;
   // Needs-you leads the main column on every layout, so only Computers is aside.
   const hasAside = hasSlot(connections);
+  const hasProgress = hasSlot(progress);
   // The Pad work column's headings take the same plate as the phone's sections.
   const scenePlate = useHomeScenePlate();
   const [measuredWidth, setMeasuredWidth] = useState(0);
@@ -561,8 +570,20 @@ export function HomeEditorialLayout({
               style={styles.padWorkScroll}
               contentContainerStyle={styles.padWorkContent}>
               {hasSlot(attention) ? attention : null}
-              {hasRecent || hasConnections ? (
+              {hasProgress || hasRecent || hasConnections ? (
                 <View testID="home-pad-lower-band" style={styles.padWorkSections}>
+                  {hasProgress ? (
+                    <View testID="home-pad-in-progress">
+                      <Text
+                        variant="heading"
+                        accessibilityRole="header"
+                        color={theme.colors.text}
+                        style={[styles.padWorkTitle, scenePlate]}>
+                        {t`In progress`}
+                      </Text>
+                      {progress}
+                    </View>
+                  ) : null}
                   {hasRecent ? (
                     <View testID="home-pad-continue">
                       {recentHeading ? (
@@ -708,6 +729,16 @@ export function HomeEditorialLayout({
           </View>
           <Animated.View style={[split ? styles.coverReadingColumn : undefined, readingEntryStyle]}>
             {attention}
+            {hasProgress ? (
+              <EditorialSection
+                borderColor={theme.colors.border}
+                textColor={theme.colors.text}
+                spacing={theme.spacing}
+                title={t`In progress`}
+                first={split}>
+                {progress}
+              </EditorialSection>
+            ) : null}
             {hasSlot(recent) ? (
               <EditorialSection
                 borderColor={theme.colors.border}
@@ -715,7 +746,7 @@ export function HomeEditorialLayout({
                 spacing={theme.spacing}
                 title={t`Continue`}
                 heading={recentHeading}
-                first={split}>
+                first={split && !hasProgress}>
                 {recent}
               </EditorialSection>
             ) : null}
@@ -788,6 +819,16 @@ export function HomeEditorialLayout({
               geometry.mode === 'two-column' ? { width: geometry.mainWidth } : styles.fullWidth,
             ]}>
             {hasSlot(attention) ? attention : null}
+            {hasProgress ? (
+              <EditorialSection
+                borderColor={theme.colors.border}
+                textColor={theme.colors.text}
+                spacing={theme.spacing}
+                title={t`In progress`}
+                first>
+                {progress}
+              </EditorialSection>
+            ) : null}
             {hasSlot(recent) ? (
               <EditorialSection
                 borderColor={theme.colors.border}
@@ -795,7 +836,7 @@ export function HomeEditorialLayout({
                 spacing={theme.spacing}
                 title={t`Continue`}
                 heading={recentHeading}
-                first>
+                first={!hasProgress}>
                 {recent}
               </EditorialSection>
             ) : null}
@@ -888,12 +929,22 @@ export function HomeEditorialLayout({
           ]}>
           {hasArtwork && hasSlot(launches) ? <View style={styles.launches}>{launches}</View> : null}
           {hasSlot(attention) ? attention : null}
+          {hasProgress ? (
+            <EditorialSection
+              borderColor={theme.colors.border}
+              textColor={theme.colors.text}
+              spacing={theme.spacing}
+              title={t`In progress`}
+              first={!hasArtwork}>
+              {progress}
+            </EditorialSection>
+          ) : null}
           {hasSlot(recent) ? (
             <EditorialSection
               borderColor={theme.colors.border}
               textColor={theme.colors.text}
               spacing={theme.spacing}
-              first={!hasArtwork}
+              first={!hasArtwork && !hasProgress}
               title={t`Continue`}
               heading={recentHeading}>
               {recent}

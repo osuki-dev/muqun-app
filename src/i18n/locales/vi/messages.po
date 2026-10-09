@@ -145,24 +145,24 @@ msgstr "{0}, không có trong PATH của máy tính này"
 
 #. placeholder {0}: age.value
 #. placeholder {0}: parts.value
-#: src/components/server-tasks-sheet.tsx
 #: src/hooks/use-relative-time.ts
+#: src/hooks/use-task-age.ts
 #: src/lib/agent-widget-layout.tsx
 msgid "{0}d ago"
 msgstr "{0} ngày trước"
 
 #. placeholder {0}: age.value
 #. placeholder {0}: parts.value
-#: src/components/server-tasks-sheet.tsx
 #: src/hooks/use-relative-time.ts
+#: src/hooks/use-task-age.ts
 #: src/lib/agent-widget-layout.tsx
 msgid "{0}h ago"
 msgstr "{0} giờ trước"
 
 #. placeholder {0}: age.value
 #. placeholder {0}: parts.value
-#: src/components/server-tasks-sheet.tsx
 #: src/hooks/use-relative-time.ts
+#: src/hooks/use-task-age.ts
 #: src/lib/agent-widget-layout.tsx
 msgid "{0}m ago"
 msgstr "{0} phút trước"
@@ -2886,6 +2886,7 @@ msgstr "Nhập tệp"
 msgid "Import link"
 msgstr "Nhập từ liên kết"
 
+#: src/components/home-editorial-layout.tsx
 #: src/components/server-tasks-sheet.tsx
 msgid "In progress"
 msgstr "Đang chạy"
@@ -3025,8 +3026,8 @@ msgid "Jump to latest output"
 msgstr "Nhảy đến đầu ra mới nhất"
 
 #: src/components/agent-sessions-sheet.tsx
-#: src/components/server-tasks-sheet.tsx
 #: src/hooks/use-relative-time.ts
+#: src/hooks/use-task-age.ts
 #: src/lib/agent-widget-layout.tsx
 msgid "just now"
 msgstr "vừa xong"
@@ -6620,6 +6621,10 @@ msgstr "Đang dùng"
 #: src/app/settings.tsx
 msgid "Version {version}{0}"
 msgstr "Phiên bản {version}{0}"
+
+#: src/components/home-in-progress.tsx
+msgid "View all ({total})"
+msgstr "Xem tất cả ({total})"
 
 #: src/components/agent-composer.tsx
 msgid "View file changes"

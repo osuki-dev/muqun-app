@@ -7,6 +7,7 @@
  */
 
 import type { GatewayRecord } from './gateway-storage';
+import { isCommandPathTitle } from './herdr-entity';
 
 /** The ellipsis a shortened path carries where its middle was. */
 export const PATH_ELLIPSIS = '…';
@@ -70,18 +71,26 @@ function isPathLike(value: string): boolean {
  * the whole path, and wraps; the folder is what the reader recognises.
  *
  * A pane an agent runs in keeps its own title when that title is not a prompt
- * or a path -- it is usually the agent's task. With no cwd, the title has its
- * `user@host:` prefix removed, and a path left behind gives its last folder.
+ * or a path -- it is usually the agent's task. Otherwise it is named by the
+ * agent (`Codex`), never by the binary's path the terminal put there
+ * (`'/opt/homebrew/bin/codex'`). With no cwd, the title has its `user@host:`
+ * prefix removed, and a path left behind gives its last folder.
  */
 export function terminalRowTitle(input: {
   paneTitle: string;
   cwd?: string;
   hasAgent?: boolean;
+  /** The agent's display name, for a pane whose own title says nothing. */
+  agentName?: string;
 }): string {
   const raw = input.paneTitle.trim();
   const prompt = SHELL_PROMPT.test(raw);
   const stripped = raw.replace(SHELL_PROMPT, '').trim();
-  if (input.hasAgent && stripped && !prompt && !isPathLike(stripped)) return stripped;
+  if (input.hasAgent) {
+    if (stripped && !prompt && !isCommandPathTitle(stripped)) return stripped;
+    const name = input.agentName?.trim();
+    if (name) return name;
+  }
   const cwd = input.cwd ? homePathLabel(input.cwd) : '';
   if (cwd) return lastSegment(cwd);
   return isPathLike(stripped) ? lastSegment(stripped) : stripped;
