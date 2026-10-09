@@ -127,7 +127,7 @@ export function SettingsServers() {
   }
 
   return (
-    <SettingsCard flush>
+    <SettingsCard flush reflow>
       {hydrationError ? (
         <GatewayStorageError busy={loading} onRetry={retryHydration} />
       ) : loading ? (
@@ -151,7 +151,13 @@ export function SettingsServers() {
             const current = server.serverId === record?.serverId;
             return (
               <Fragment key={server.serverId}>
-                {index > 0 ? <SettingsSeparator /> : null}
+                {/* On the rows' own layout transition, or it would stay where
+                    it was while the row above it opened. */}
+                {index > 0 ? (
+                  <Animated.View layout={listLayout()}>
+                    <SettingsSeparator />
+                  </Animated.View>
+                ) : null}
                 <ServerRow
                   server={server}
                   current={current}
@@ -318,7 +324,7 @@ function ServerRow({
     turn.set(withTiming(open ? 1 : 0, timing('short')));
   }, [open, turn]);
   const chevronStyle = useAnimatedStyle(() => ({
-    transform: [{ rotate: `${turn.value * 180}deg` }],
+    transform: [{ rotate: `${turn.get() * 180}deg` }],
   }));
 
   // A refused pairing needs the reader to act, so it is not the same quiet

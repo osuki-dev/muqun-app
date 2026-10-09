@@ -15,6 +15,7 @@
  * different interaction when a theme adds artwork.
  */
 import { motion as tokens } from '@osuki-dev/ui';
+import { staggerDelay } from '@/lib/stagger';
 import {
   Easing,
   FadeIn,
@@ -102,7 +103,23 @@ export const STAGGER = {
   card: 28,
   /** Between pane rows filling in under one card. */
   row: 18,
+  /**
+   * Between the rows of a page's own entry list arriving once, on first mount.
+   *
+   * Longer than `row`: these are the page, not a list growing inside it, and
+   * the beat is what lets the eye run down them. `ENTRY_BUDGET_MS` bounds the
+   * whole sequence, so more rows tighten the beat instead of taking longer.
+   */
+  entry: 32,
 } as const;
+
+/**
+ * The time by which the last row of an entry list has finished arriving.
+ *
+ * Under half a second, so a page that animates in is never a page the reader
+ * waits for.
+ */
+export const ENTRY_BUDGET_MS = 400;
 
 /** Muqun navigation: fluid cyber-mechanical transitions, depth reveals, and responsive header arrival. */
 export const NAVIGATION_MOTION = {
@@ -474,12 +491,26 @@ export const zoomOut = (duration: DurationToken | PresetToken | number = 'micro'
  * Takes its delay in milliseconds because that is what a stagger produces --
  * `index * STAGGER.card` -- and there is no token for the seventh card.
  */
-export const riseIn = (delay = 0) =>
+export const riseIn = (delay = 0, maxDelay = 120) =>
   FadeInDown.duration(DURATION.short)
-    .delay(Math.min(delay, 120))
+    .delay(Math.min(delay, maxDelay))
     .easing(EASE_OUT)
     .reduceMotion(ReduceMotion.System)
     .withInitialValues({ transform: [{ translateY: RISE_DISTANCE }] });
+
+/**
+ * One row of a page's entry list rising in on first mount.
+ *
+ * `riseIn` on the `STAGGER.entry` beat, with the beat compressed by
+ * `staggerDelay` so that the last of `count` rows has landed inside
+ * `ENTRY_BUDGET_MS`. `after` shifts the whole sequence, for a group that
+ * should follow one already on its way.
+ */
+export const entryRise = (index: number, count: number, after = 0) =>
+  riseIn(
+    after + staggerDelay(index, count, STAGGER.entry, DURATION.short, ENTRY_BUDGET_MS),
+    ENTRY_BUDGET_MS
+  );
 
 /**
  * The list/stack reflow: rows closing the gap after a delete, a banner column

@@ -26,6 +26,7 @@ import {
 } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
+import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Trans, useLingui } from '@lingui/react/macro';
@@ -36,6 +37,7 @@ import { SettingsRegistration } from '@/components/settings-registration';
 import { LADDER, SettingsNavRow, SettingsCard } from '@/components/settings-chrome';
 import { SettingsSecurity } from '@/components/settings-security';
 import { NAV_HEADER_TOP_GAP } from '@/constants/nav-header';
+import { entryRise, STAGGER } from '@/lib/motion';
 import { RenderTally, useRenderTally } from '@/lib/render-tally';
 
 /**
@@ -56,6 +58,16 @@ const SETTINGS_CONTENT_MAX_WIDTH = 760;
  * below the navigation on both phones and tablets.
  */
 const HEADER_INSET = NAV_HEADER_TOP_GAP + NAV_HEADER_CONTROL_SIZE + 8 + LADDER.section;
+
+/** The Security card, the footer line and the version block: what follows the rows. */
+const TAIL_COUNT = 3;
+
+/**
+ * Where the rows' own sequence has its last row on the way, which the tail
+ * waits out from its own mount. Six beats of seven rows; `entryRise` still
+ * bounds every delay by `ENTRY_BUDGET_MS`.
+ */
+const ROWS_SETTLED_MS = 6 * STAGGER.entry;
 
 /** Settings gathers everyday preferences and app management into one entry list. */
 export default function SettingsScreen() {
@@ -128,61 +140,81 @@ export default function SettingsScreen() {
                 { route: '/settings-storage', icon: HardDrive, label: t`Storage` },
                 { route: '/settings-about', icon: Info, label: t`About` },
               ] as const
-            ).map(({ route, icon, label }) => (
-              <SettingsNavRow
-                key={route}
-                icon={icon}
-                trailing={ChevronRight}
-                label={label}
-                testID={route.slice(1) + '-row'}
-                onPress={() => router.push(route)}
-              />
+            ).map(({ route, icon, label }, index, rows) => (
+              // First mount only: `entering` runs when the row mounts, and the
+              // page stays mounted under its sub-pages, so coming back from one
+              // does not replay the sequence. `riseIn` carries the system
+              // reduce-motion check, so with it on the rows are simply there.
+              <Animated.View key={route} entering={entryRise(index, rows.length)}>
+                <SettingsNavRow
+                  icon={icon}
+                  trailing={ChevronRight}
+                  label={label}
+                  testID={route.slice(1) + '-row'}
+                  onPress={() => router.push(route)}
+                />
+              </Animated.View>
             ))}
           </SettingsCard>
 
           {deep ? (
             <>
-              <SettingsSecurity title={t`Security`} />
+              {/* Mounted after the idle callback, so already behind the rows;
+                  `after` keeps them behind the last row even when the callback
+                  comes early. */}
+              <Animated.View entering={entryRise(0, TAIL_COUNT, ROWS_SETTLED_MS)}>
+                <SettingsSecurity title={t`Security`} />
+              </Animated.View>
 
-              <View style={[styles.footer, plate ? { ...plate, alignSelf: 'flex-start' } : null]}>
+              <Animated.View
+                entering={entryRise(1, TAIL_COUNT, ROWS_SETTLED_MS)}
+                style={[styles.footer, plate ? { ...plate, alignSelf: 'flex-start' } : null]}>
                 <Settings2 size={16} color={theme.colors.textMuted} strokeWidth={2} />
                 <Text variant="caption" color={theme.colors.textMuted} style={styles.footerText}>
                   <Trans>Muqun settings stay on this device.</Trans>
                 </Text>
-              </View>
+              </Animated.View>
 
-              {/* Keep version information easy to find without a second navigation row. */}
-              <View style={styles.brand}>
-                <Image
-                  // The rendered mascot with a real alpha channel, not the
-                  // launcher icon: that one carries an opaque plate, which on a
-                  // themed page reads as a square nobody asked for. Two cuts,
-                  // because the dark master is lit for a dark ground and its
-                  // rim would fringe on a light one. `resolvedMode` rather than
-                  // the system scheme, so a theme chosen in Appearance counts.
-                  source={brandMark(resolvedMode)}
-                  style={styles.brandMark}
-                  contentFit="contain"
-                  // Decorative: the version alongside it already names the app,
-                  // and the screen is titled `Settings`.
-                  accessible={false}
-                />
-                <Text
-                  variant="caption"
-                  color={theme.colors.textMuted}
-                  // Keep the version plate aligned with the mark.
-                  style={
-                    plate
-                      ? { ...styles.brandVersion, ...plate, alignSelf: 'center' }
-                      : styles.brandVersion
-                  }>
-                  <Trans>
-                    Version {version}
-                    {build ? ` (${build})` : ''}
-                  </Trans>
-                </Text>
-              </View>
-              <SettingsRegistration />
+              {/* The mark, the version and the registration line arrive as one:
+                  a wrapper with the page's own gap, because the registration
+                  link renders nothing outside mainland China and an empty
+                  animated box of its own would still take a gap. */}
+              <Animated.View
+                entering={entryRise(2, TAIL_COUNT, ROWS_SETTLED_MS)}
+                style={styles.tail}>
+                {/* Keep version information easy to find without a second navigation row. */}
+                <View style={styles.brand}>
+                  <Image
+                    // The rendered mascot with a real alpha channel, not the
+                    // launcher icon: that one carries an opaque plate, which on a
+                    // themed page reads as a square nobody asked for. Two cuts,
+                    // because the dark master is lit for a dark ground and its
+                    // rim would fringe on a light one. `resolvedMode` rather than
+                    // the system scheme, so a theme chosen in Appearance counts.
+                    source={brandMark(resolvedMode)}
+                    style={styles.brandMark}
+                    contentFit="contain"
+                    // Decorative: the version alongside it already names the app,
+                    // and the screen is titled `Settings`.
+                    accessible={false}
+                  />
+                  <Text
+                    variant="caption"
+                    color={theme.colors.textMuted}
+                    // Keep the version plate aligned with the mark.
+                    style={
+                      plate
+                        ? { ...styles.brandVersion, ...plate, alignSelf: 'center' }
+                        : styles.brandVersion
+                    }>
+                    <Trans>
+                      Version {version}
+                      {build ? ` (${build})` : ''}
+                    </Trans>
+                  </Text>
+                </View>
+                <SettingsRegistration />
+              </Animated.View>
             </>
           ) : null}
         </ScrollView>
@@ -223,6 +255,9 @@ const styles = StyleSheet.create({
   // wide. Shrinking is what lets it wrap instead. `minWidth: 0` goes with it
   // because `flexShrink` alone will not take a box below its content width.
   footerText: { flexShrink: 1, minWidth: 0 },
+  // The page's own gap, carried inside the one animated box the brand block and
+  // the registration line now share.
+  tail: { gap: LADDER.section },
   brand: {
     flexDirection: 'row',
     alignItems: 'center',
