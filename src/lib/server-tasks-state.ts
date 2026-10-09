@@ -42,14 +42,37 @@ export function upsertTask(
   };
 }
 
-/** A whole list answer, which is the truth as of `nowMs`. */
+/**
+ * A whole list answer, read from a request sent at `requestedAtMs` (this
+ * device's clock) and landing at `nowMs`.
+ *
+ * Frames keep arriving while the read is in flight, so the answer is merged,
+ * not swapped in: a task the store holds in a newer view (`updatedMs`, the
+ * gateway's clock) keeps it, and a task the list does not name is kept only if
+ * it reached this device after the request left -- a frame or the dock's own
+ * POST answer the read could not have seen. Anything else the list leaves out
+ * is gone from the ledger.
+ */
 export function replaceTasks(
   index: ServerTasksIndex,
   serverId: string,
   tasks: readonly TaskView[],
-  nowMs: number
+  nowMs: number,
+  requestedAtMs: number = nowMs
 ): ServerTasksIndex {
-  return { ...index, [serverId]: { tasks: newestFirst(tasks), fetchedAt: nowMs } };
+  const held = new Map((index[serverId]?.tasks ?? []).map((task) => [task.taskId, task]));
+  const listed = tasks.map((task) => {
+    const known = held.get(task.taskId);
+    return known && known.updatedMs > task.updatedMs ? known : task;
+  });
+  const named = new Set(tasks.map((task) => task.taskId));
+  const arrived = [...held.values()].filter(
+    (task) => !named.has(task.taskId) && (task.receivedAtMs ?? -Infinity) >= requestedAtMs
+  );
+  return {
+    ...index,
+    [serverId]: { tasks: newestFirst([...listed, ...arrived]), fetchedAt: nowMs },
+  };
 }
 
 /** Tasks that have not finished, waiting ones included. */
@@ -89,7 +112,8 @@ export function isTaskChannelLive(input: {
 
 export type ServerTasksState = {
   index: ServerTasksIndex;
-  replace: (serverId: string, tasks: readonly TaskView[]) => void;
+  /** A list answer to a request sent at `requestedAtMs` (see `replaceTasks`). */
+  replace: (serverId: string, tasks: readonly TaskView[], requestedAtMs: number) => void;
   upsert: (serverId: string, task: TaskView) => void;
 };
 
@@ -98,10 +122,14 @@ export function createServerTasksState(
 ): StateCreator<ServerTasksState> {
   return (set) => ({
     index: {},
-    replace: (serverId, tasks) =>
-      set((state) => ({ index: replaceTasks(state.index, serverId, tasks, now()) })),
+    replace: (serverId, tasks, requestedAtMs) =>
+      set((state) => ({
+        index: replaceTasks(state.index, serverId, tasks, now(), requestedAtMs),
+      })),
     upsert: (serverId, task) =>
-      set((state) => ({ index: upsertTask(state.index, serverId, task) })),
+      set((state) => ({
+        index: upsertTask(state.index, serverId, { ...task, receivedAtMs: now() }),
+      })),
   });
 }
 

@@ -2832,6 +2832,10 @@ msgstr "Home-Agent: {agentName}"
 msgid "Home effects · development only"
 msgstr "Home-Effekte · nur Entwicklung"
 
+#: src/components/home-composer-dock.tsx
+msgid "Home folder"
+msgstr "Benutzerordner"
+
 #: src/components/settings-appearance.tsx
 #: src/components/settings-home-layout-sheet.tsx
 msgid "Home layout"

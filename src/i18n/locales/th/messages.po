@@ -2832,6 +2832,10 @@ msgstr "เอเจนต์ของหน้าแรก: {agentName}"
 msgid "Home effects · development only"
 msgstr "เอฟเฟกต์หน้าหลัก · สำหรับการพัฒนาเท่านั้น"
 
+#: src/components/home-composer-dock.tsx
+msgid "Home folder"
+msgstr "โฟลเดอร์หลัก"
+
 #: src/components/settings-appearance.tsx
 #: src/components/settings-home-layout-sheet.tsx
 msgid "Home layout"

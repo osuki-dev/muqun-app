@@ -208,7 +208,7 @@
       [
         "expo-local-authentication",
         {
-          "faceIDPermission": "Muqun uses Face ID to protect paired servers and terminal sessions."
+          "faceIDPermission": "Muqun uses Face ID to protect paired computers and terminal sessions."
         }
       ],
       [

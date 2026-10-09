@@ -69,6 +69,41 @@ describe('replaceTasks', () => {
     expect(index.s1?.tasks.map((t) => t.taskId)).toEqual(['b', 'a']);
     expect(index.s1?.fetchedAt).toBe(42);
   });
+
+  // held before the answer (view, received at), list answer -> what stays; the request left at 100
+  test.each<[string, TaskView[], TaskView[], [string, TaskState][]]>([
+    [
+      'a done frame newer than the list keeps done',
+      [{ ...task('a', 'done', 30), receivedAtMs: 110 }],
+      [task('a', 'working', 20)],
+      [['a', 'done']],
+    ],
+    [
+      'a newer list replaces an older held view',
+      [{ ...task('a', 'working', 20), receivedAtMs: 50 }],
+      [task('a', 'done', 30)],
+      [['a', 'done']],
+    ],
+    [
+      'a task posted after the request left stays though the list misses it',
+      [{ ...task('n', 'queued', 40), receivedAtMs: 120 }],
+      [task('a', 'done', 10)],
+      [
+        ['n', 'queued'],
+        ['a', 'done'],
+      ],
+    ],
+    [
+      'a task the list no longer names, held from before the request, is gone',
+      [{ ...task('old', 'done', 5), receivedAtMs: 90 }],
+      [task('a', 'done', 10)],
+      [['a', 'done']],
+    ],
+  ])('%s', (_name, held, list, kept) => {
+    const before: ServerTasksIndex = { s1: { tasks: held, fetchedAt: null } };
+    const index = replaceTasks(before, 's1', list, 200, 100);
+    expect(index.s1?.tasks.map((t) => [t.taskId, t.state])).toEqual(kept);
+  });
 });
 
 describe('activeTaskCount', () => {

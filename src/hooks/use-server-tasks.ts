@@ -89,6 +89,7 @@ export function useServerTasks(serverId: string | null): ServerTasks {
       return;
     }
     const request = ++requestRef.current;
+    const requestedAtMs = Date.now();
     setLoading(true);
     const query = {
       limit: 100,
@@ -99,7 +100,7 @@ export function useServerTasks(serverId: string | null): ServerTasks {
       if (request !== requestRef.current) return;
       // A failed read keeps the list already held and says so.
       applyListAnswer(list, {
-        replace: (tasks) => replace(serverId, tasks),
+        replace: (tasks) => replace(serverId, tasks, requestedAtMs),
         ok: () => setError(null),
         fail: () => setError('unavailable'),
       });
@@ -203,8 +204,9 @@ export function useTaskAction(
           }
           // The gateway no longer knows the task: read the list again.
           // If that read fails too, the guess is taken back.
+          const requestedAtMs = Date.now();
           void fetchTaskList({ limit: 100, ...(endpoint ? { endpoint } : {}) }).then((list) => {
-            if (list) replace(serverId, list);
+            if (list) replace(serverId, list, requestedAtMs);
             else upsert(serverId, task);
           });
         },

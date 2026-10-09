@@ -2832,6 +2832,10 @@ msgstr "主页智能体：{agentName}"
 msgid "Home effects · development only"
 msgstr "首页效果 · 仅开发模式"
 
+#: src/components/home-composer-dock.tsx
+msgid "Home folder"
+msgstr "主文件夹"
+
 #: src/components/settings-appearance.tsx
 #: src/components/settings-home-layout-sheet.tsx
 msgid "Home layout"

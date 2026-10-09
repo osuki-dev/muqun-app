@@ -186,7 +186,8 @@ export function HomeComposerDock({
     agentsDiscovered && agent?.kind === 'session' ? normalizeAgentId(agent.agentId) : undefined;
   const features = useAgentFeatures(targetId, agentId);
   const computerLabel = targetServer?.label ?? '';
-  const folderLabel = homeFolderLabel(folder);
+  // The agent's own default is named in words; `~` alone reads as a glyph.
+  const folderLabel = folder ? homeFolderLabel(folder) : t`Home folder`;
   const agentName = agent?.name ?? '';
   const agentLabel = agentName || computerLabel;
   // A gateway that opens ledger tasks gets the goal as one: Home's cards then
@@ -445,7 +446,7 @@ export function HomeComposerDock({
               return false;
             }
             pendingId = useHomeTaskCards.getState().dispatched(serverId, text);
-            const { task, asid } = await createLedgerTask({
+            const created = await createLedgerTask({
               goal: text,
               ...(params.agentId ? { agentId: params.agentId } : {}),
               ...(folder ? { cwd: folder } : {}),
@@ -455,6 +456,11 @@ export function HomeComposerDock({
               // Task 15); an older one ignores it, and the switch below sets it.
               ...(params.model?.variant ? { variant: params.model.variant } : {}),
             });
+            if (!created) {
+              setError(t`Could not start the task.`);
+              return false;
+            }
+            const { task, asid } = created;
             useServerTasksStore.getState().upsert(serverId, task);
             // The gateway answers 200 for a task whose session failed while it
             // was being opened; the draft stays and the reason is said here.
@@ -570,11 +576,16 @@ export function HomeComposerDock({
             }
             if (viaLedger) {
               pendingId = useHomeTaskCards.getState().dispatched(serverId, text);
-              const { task, paneId } = await createLedgerTask({
+              const created = await createLedgerTask({
                 goal: text,
                 agentId: kind,
                 ...(cwd ? { cwd } : {}),
               });
+              if (!created) {
+                setError(t`Could not start the task.`);
+                return false;
+              }
+              const { task, paneId } = created;
               useServerTasksStore.getState().upsert(serverId, task);
               // A 200 whose task already failed: the agent did not start or
               // the goal was not typed. The draft stays and the reason is said.

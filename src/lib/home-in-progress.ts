@@ -7,7 +7,7 @@
  */
 
 import type { ServerTasksIndex } from './server-tasks-state';
-import { isTerminalTaskState, type TaskState, type TaskView } from './task-ledger';
+import { isTerminalTaskState, type TaskView } from './task-ledger';
 
 export type HomeTaskRow = { serverId: string; task: TaskView };
 
@@ -54,14 +54,14 @@ export function homeWaitingTasks(
 }
 
 /**
- * The ledger's state for the task an agent session is running, when one is
- * open: a Continue row reads its status from here rather than from a session
- * status that lags it. The newest such task wins.
+ * The open ledger task an agent session is running, if any: a Continue row
+ * reads its status (word and tone, from the one state table) from it rather
+ * than from a session status that lags it. The newest such task wins.
  */
-export function boundTaskState(
+export function boundTask(
   tasks: readonly TaskView[] | undefined,
   asid: string | undefined
-): TaskState | undefined {
+): TaskView | undefined {
   if (!asid || !tasks) return undefined;
   let found: TaskView | undefined;
   for (const task of tasks) {
@@ -74,12 +74,5 @@ export function boundTaskState(
       found = task;
     }
   }
-  return found?.state;
-}
-
-/** The meta-line colour an open task's state wears, in the Continue row's tones. */
-export function taskStateTone(state: TaskState): 'info' | 'warning' | 'textSubtle' {
-  if (state === 'working' || state === 'dispatching') return 'info';
-  if (state === 'waiting') return 'warning';
-  return 'textSubtle';
+  return found;
 }

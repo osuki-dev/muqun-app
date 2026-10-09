@@ -225,11 +225,10 @@ export function homeFolderPick(directory: string): string | undefined {
 }
 
 /**
- * The bar's folder segment: the folder's basename (design §6 names a folder
- * by basename), `~` for the agent's default, `/` for the root.
+ * The bar's folder segment for a picked folder: its basename (design §6 names
+ * a folder by basename), `/` for the root.
  */
-export function homeFolderLabel(folder: string | undefined): string {
-  if (!folder) return '~';
+export function homeFolderLabel(folder: string): string {
   const trimmed = folder.replace(/\/+$/, '');
   if (!trimmed) return '/';
   return trimmed.slice(trimmed.lastIndexOf('/') + 1) || trimmed;

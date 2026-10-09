@@ -2832,6 +2832,10 @@ msgstr "主畫面代理程式：{agentName}"
 msgid "Home effects · development only"
 msgstr "首頁效果 · 僅開發模式"
 
+#: src/components/home-composer-dock.tsx
+msgid "Home folder"
+msgstr "主資料夾"
+
 #: src/components/settings-appearance.tsx
 #: src/components/settings-home-layout-sheet.tsx
 msgid "Home layout"

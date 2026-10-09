@@ -2832,6 +2832,10 @@ msgstr "Agente de Inicio: {agentName}"
 msgid "Home effects · development only"
 msgstr "Efectos de inicio · solo desarrollo"
 
+#: src/components/home-composer-dock.tsx
+msgid "Home folder"
+msgstr "Carpeta personal"
+
 #: src/components/settings-appearance.tsx
 #: src/components/settings-home-layout-sheet.tsx
 msgid "Home layout"
@@ -6361,7 +6365,7 @@ msgstr "Llamada de herramienta"
 
 #: src/components/settings-server-capabilities.tsx
 msgid "Toolchains"
-msgstr "Toolchains"
+msgstr "Cadenas de herramientas"
 
 #: src/components/changes-sheet.tsx
 msgid "tracking {upstream}"

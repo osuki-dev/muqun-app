@@ -2832,6 +2832,10 @@ msgstr "Агент Главной: {agentName}"
 msgid "Home effects · development only"
 msgstr "Эффекты главного экрана · для разработки"
 
+#: src/components/home-composer-dock.tsx
+msgid "Home folder"
+msgstr "Домашняя папка"
+
 #: src/components/settings-appearance.tsx
 #: src/components/settings-home-layout-sheet.tsx
 msgid "Home layout"
