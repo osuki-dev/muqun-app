@@ -918,8 +918,11 @@ export function HomeOverview({
                 ) : undefined
               }
               headerLeading={
-                // On Pad the Gateway pill lives in the New-session block only.
-                isPad || launchController.servers.length <= 1 ? undefined : (
+                // The composer's assignment bar is where a computer is picked;
+                // a header dropdown beside it said the same thing twice (and
+                // truncated the name to fit). Only while no composer is drawn
+                // -- a storage error -- does the header keep the choice.
+                isPad || composer !== null || launchController.servers.length <= 1 ? undefined : (
                   <HomeLaunchTarget
                     wide={isPad}
                     bare={customTheme?.manifest.homePresentation?.toolbarBackground === false}
@@ -942,16 +945,11 @@ export function HomeOverview({
                   <View style={{ gap: padLaunch ? 12 : 16 }}>
                     {padLaunch ? null : isPad ? (
                       <>
+                        {/* No computer picker here: the composer below carries
+                            the assignment bar, the one place a target is chosen. */}
                         <Text variant="heading" accessibilityRole="header">
                           <Trans>New session</Trans>
                         </Text>
-                        <HomeLaunchTarget
-                          wide
-                          bare={customTheme?.manifest.homePresentation?.toolbarBackground === false}
-                          controller={launchController}
-                          loading={loading}
-                          onPair={commands.pairGateway}
-                        />
                       </>
                     ) : null}
                     {padLaunch ? null : composer}
