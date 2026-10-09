@@ -132,7 +132,9 @@ test('the sheet ground paints its wallpaper above its tint, never under it', () 
   const text = readFileSync('src/components/sheet-ground.tsx', 'utf8');
   const floor = text.indexOf('backgroundColor: theme.colors.background');
   const tint = text.indexOf('backgroundColor: surfaceBackground(');
-  const artwork = text.indexOf('<ThemeArtwork slot="shell.wallpaper" />');
+  const artwork = text.indexOf(
+    '<ThemeArtwork slot="shell.wallpaper" fallbackSlot={SHELL_WALLPAPER_FALLBACK} />'
+  );
   expect(floor).toBeGreaterThan(-1);
   expect(tint).toBeGreaterThan(floor);
   expect(artwork).toBeGreaterThan(tint);
@@ -178,7 +180,8 @@ test('every form sheet is built in the one shared frame', () => {
 test('text drawn straight onto a sheet ground takes the plate the shell gives it', () => {
   const ground = readFileSync('src/components/sheet-ground.tsx', 'utf8');
   // The plate is only there when there is a picture to be protected from.
-  expect(ground).toContain("useHasThemeArtwork('shell.wallpaper')");
+  // The same picture the ground paints, home wallpaper fallback included.
+  expect(ground).toContain("useHasThemeArtwork('shell.wallpaper', SHELL_WALLPAPER_FALLBACK)");
 
   // One plate, and this is the file that decides what it is. `SettingsSection`
   // used to mix its own from `colors.background`, which is right on the

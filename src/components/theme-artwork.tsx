@@ -9,6 +9,22 @@ import type { ThemeManifest, ThemeSlot } from '@/theme/schema';
 import { SkiaAmbientEffect } from '@/components/skia-ambient-effect';
 import { isRenderableThemeAsset } from '@/theme/renderable-asset';
 
+/**
+ * What a shell surface paints when the pack has no `shell.wallpaper` of its own.
+ *
+ * Home asks for `home.wallpaper` and falls back to the shell's picture; the
+ * shell surfaces -- Settings and its sheets, the agent page -- ask the other
+ * way round. Without it a pack that ships only a home wallpaper showed its
+ * picture on Home and a bare ground everywhere else, which reads as the theme
+ * having switched itself off. The fallback is resolved with its own slot's
+ * opacity, fit and focal point (see `resolveThemeImage`). A pack that declares
+ * neither, only a `home.artwork` illustration, stays undecorated by design.
+ *
+ * Not for the terminal: what sits behind terminal text is the terminal's own
+ * decision, and `skia-terminal` asks for the shell slot alone.
+ */
+export const SHELL_WALLPAPER_FALLBACK: ThemeSlot = 'home.wallpaper';
+
 /** Use only to choose native fallback content; rendered artwork still validates its URI. */
 export function useHasThemeArtwork(slot: ThemeSlot, fallbackSlot?: ThemeSlot) {
   const { resolvedMode } = useThemeMode();
