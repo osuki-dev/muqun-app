@@ -76,7 +76,7 @@ is visible "id=\"home-pad-lower-band\""
 is visible "text=\"Pair your first computer\""
 wait "role=button label=\"Settings\"" 10000
 press "role=button label=\"Settings\""
-wait text "SERVERS" 10000
+wait text "Computers" 10000
 is visible "role=button label=\"Go back\""
 back --system
 wait "id=\"home-pad-launch-pane\"" 10000

@@ -23,7 +23,7 @@ import type { SshHostRecord } from '@/lib/ssh-hosts';
  * One message per unit rather than a template with a unit letter in a hole,
  * for the reason `server-agent-rows.tsx` gives: "5m ago" is English's
  * abbreviation, and a translator needs the whole sentence. The messages are
- * the ones Settings > SERVERS already says about a gateway, so a host and a
+ * the ones Settings > Computers already says about a gateway, so a host and a
  * server describe their age in the same words. A hook rather than a helper
  * because the macro only expands a `t` it can trace to `useLingui()`.
  */
