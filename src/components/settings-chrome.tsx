@@ -575,7 +575,9 @@ export function SettingsInfoRow({
         {/* Text stays a string's wrapper; a node (chips, a status dot) is
             laid out by its own View, because a View inside Text is inline
             and unreliable across the two platforms. */}
-        {typeof detail === 'string' || typeof detail === 'number' ? (
+        {isValidElement(detail) ? (
+          detail
+        ) : (
           <Text
             selectable
             variant="caption"
@@ -584,8 +586,6 @@ export function SettingsInfoRow({
             style={styles.rowDetail}>
             {detail}
           </Text>
-        ) : (
-          detail
         )}
       </View>
     </View>

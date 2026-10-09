@@ -38,7 +38,9 @@ export function parseMcpToken(value: unknown): McpToken | null {
   const binding = parseBinding(rec?.binding);
   if (!rec || !id || !binding) return null;
   if (asFiniteNumber(rec.revoked_ms) !== undefined) return null;
-  const lastUsedMs = asFiniteNumber(rec.last_used_ms);
+  const rawLastUsed = asFiniteNumber(rec.last_used_ms);
+  // 0 is the gateway's "never"; it must not read as the epoch.
+  const lastUsedMs = rawLastUsed !== undefined && rawLastUsed > 0 ? rawLastUsed : undefined;
   return {
     id,
     binding,
@@ -53,9 +55,9 @@ export function hasMcpServer(capabilities: readonly string[] | undefined): boole
   return capabilities?.includes(MCP_SERVER_CAPABILITY) === true;
 }
 
-function parseTokenList(value: unknown): McpToken[] {
+export function parseTokenList(value: unknown): McpToken[] | null {
   const list = asRecord(value)?.tokens;
-  if (!Array.isArray(list)) return [];
+  if (!Array.isArray(list)) return null;
   const out: McpToken[] = [];
   for (const entry of list) {
     const token = parseMcpToken(entry);
