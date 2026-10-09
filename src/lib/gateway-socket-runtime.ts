@@ -31,6 +31,7 @@ import {
   type GatewaySocketUpgrade,
   type SocketAuthorization,
 } from './gateway-socket';
+import { authorizationFromProbe } from './server-reachability';
 import { streamRecordCrypto } from './gateway-transport';
 import { onNetworkChange } from './network-events';
 
@@ -188,10 +189,27 @@ function probeableSelectedRecord(serverId?: string) {
 async function checkAuthorization(serverId: string): Promise<SocketAuthorization> {
   const record = probeableSelectedRecord(serverId);
   if (!record) return 'unknown';
+  const before = useServerReachability.getState().probes[serverId]?.checkedAtMs;
   await useServerReachability.getState().refresh(record, { force: true });
-  const probe = useServerReachability.getState().probes[serverId];
-  if (probe?.ok) return 'authorized';
-  return probe?.unauthorized ? 'unauthorized' : 'unknown';
+  return authorizationFromProbe(before, useServerReachability.getState().probes[serverId]);
+}
+
+let watchingProbes = false;
+
+/**
+ * A computer whose socket stood down as refused, answering a probe after all
+ * (re-paired, or the refusal was a middlebox), gets its socket back.
+ */
+function watchProbesForRecovery(): void {
+  if (watchingProbes) return;
+  watchingProbes = true;
+  useServerReachability.subscribe((state, previous) => {
+    for (const [serverId, socket] of sockets) {
+      const probe = state.probes[serverId];
+      if (!probe?.ok || probe.checkedAtMs === previous.probes[serverId]?.checkedAtMs) continue;
+      socket.retryAfterRefusal();
+    }
+  });
 }
 
 /** The one event socket for a paired server, created on first use. */
@@ -209,6 +227,7 @@ export function gatewaySocketFor(serverId: string): GatewaySocket {
     // The Home dot reads the socket as evidence the computer is answering.
     created.onStateChange((state) => useServerChannels.getState().setSocket(serverId, state));
     sockets.set(serverId, created);
+    watchProbesForRecovery();
     socket = created;
   }
   return socket;
@@ -223,8 +242,10 @@ export function gatewaySocketFor(serverId: string): GatewaySocket {
 export function startNetworkReactions(): () => void {
   return onNetworkChange(() => {
     for (const socket of sockets.values()) {
-      // A refused pairing is not cured by a new network.
-      if (socket.state !== 'unauthorized') socket.reconnect();
+      // A refused socket gets one more try per change: a captive portal's 403
+      // looked like a revoked pairing, and the new network may not have one.
+      if (socket.state === 'unauthorized') socket.retryAfterRefusal();
+      else socket.reconnect();
     }
     const record = probeableSelectedRecord();
     if (record) void useServerReachability.getState().refresh(record, { force: true });

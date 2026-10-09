@@ -3849,8 +3849,19 @@ export function ServerTerminalWorkspace({
   const setStreamChannel = useServerChannels((state) => state.setStream);
   useEffect(() => {
     if (!streamWanted) return;
-    setStreamChannel(serverId, streamUp ? 'open' : 'retrying');
     return () => setStreamChannel(serverId, null);
+  }, [serverId, setStreamChannel, streamWanted]);
+  useEffect(() => {
+    if (!streamWanted) return;
+    if (streamUp) {
+      setStreamChannel(serverId, 'open');
+      return;
+    }
+    // `retrying` only once the stream has been up while wanted: the first
+    // connect is not a reconnect, and the selected row would flash
+    // "Reconnecting…" on every visit. The entry is cleared when the stream
+    // stops being wanted, so its presence is that "been up once".
+    if (useServerChannels.getState().streams[serverId]) setStreamChannel(serverId, 'retrying');
   }, [serverId, setStreamChannel, streamUp, streamWanted]);
 
   // The live event stream. `pane_updated` for the selected pane reads its

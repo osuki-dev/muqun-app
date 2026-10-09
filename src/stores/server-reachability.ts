@@ -163,6 +163,7 @@ export const useServerReachability = create<ServerReachabilityState>((set, get) 
             ok,
             checkedAtMs: Date.now(),
             health: ok ? health : null,
+            status: heard.status,
             ...(unauthorized ? { unauthorized } : {}),
           },
         },

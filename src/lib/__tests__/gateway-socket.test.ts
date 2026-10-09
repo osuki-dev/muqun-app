@@ -524,26 +524,29 @@ describe('the upgrade path', () => {
 
 describe('unauthorized', () => {
   test('classifies a refused upgrade apart from a network failure', () => {
-    expect(
-      socketFailureIsUnauthorized({
-        message: "Expected HTTP 101 response but was '401 Unauthorized'",
-      })
-    ).toBe(true);
-    expect(socketFailureIsUnauthorized({ message: 'Invalid HTTP status 403' })).toBe(true);
-    expect(socketFailureIsUnauthorized({ message: 'forbidden' })).toBe(true);
+    for (const message of [
+      "Expected HTTP 101 response but was '401 Unauthorized'",
+      'Invalid HTTP status 403',
+      'Unexpected response code: 401',
+      '403 Forbidden',
+    ]) {
+      expect(socketFailureIsUnauthorized({ message })).toBe(true);
+    }
     expect(socketFailureIsUnauthorized({ closeCode: 4401 })).toBe(true);
     expect(socketFailureIsUnauthorized({ closeCode: 4403, message: '' })).toBe(true);
+    for (const message of [
+      '',
+      'Connection reset by peer',
+      "Expected HTTP 101 response but was '502 Bad Gateway'",
+      // A bare number or a proxy's prose is not an HTTP status.
+      'connect to 10.0.0.4:401 timed out',
+      'read 401 bytes then EOF',
+      'forbidden by policy',
+      'unauthorized network',
+    ]) {
+      expect(socketFailureIsUnauthorized({ message })).toBe(false);
+    }
     expect(socketFailureIsUnauthorized({ closeCode: 1006, message: '' })).toBe(false);
-    expect(socketFailureIsUnauthorized({ message: 'Connection reset by peer' })).toBe(false);
-    expect(
-      socketFailureIsUnauthorized({
-        message: "Expected HTTP 101 response but was '502 Bad Gateway'",
-      })
-    ).toBe(false);
-    // A port or a byte count with the same digits inside it is not a status.
-    expect(socketFailureIsUnauthorized({ message: 'connect to 10.0.0.4:14013 timed out' })).toBe(
-      false
-    );
     expect(socketFailureIsUnauthorized({})).toBe(false);
   });
 
@@ -565,7 +568,7 @@ describe('unauthorized', () => {
     expect(h.transports).toHaveLength(2);
   });
 
-  test('opaque failures ask the gateway, and a refusal stops the backoff', async () => {
+  test('opaque failures ask the gateway once per run of failures', async () => {
     let asked = 0;
     let answer: SocketAuthorization = 'unknown';
     const h = harness({
@@ -582,18 +585,57 @@ describe('unauthorized', () => {
     expect(asked).toBe(1);
     await Promise.resolve();
     await Promise.resolve();
-    // Not a refusal: the backoff carries on.
+    // Not a refusal: the backoff carries on, and the run is not asked again.
+    expect(h.socket.state).toBe('backoff');
+    answer = 'unauthorized';
+    for (const delay of [800, 1600, 3200, 6400]) {
+      h.clock.advance(delay);
+      h.latest().drop();
+    }
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(asked).toBe(1);
     expect(h.socket.state).toBe('backoff');
 
-    answer = 'unauthorized';
+    // `hello` ends the run; the next run gets its own ask, and its refusal stops the socket.
+    h.clock.advance(12_800);
+    h.latest().deliver(hello());
+    h.latest().drop();
+    h.clock.advance(400);
+    h.latest().drop();
     h.clock.advance(800);
     h.latest().drop();
     expect(asked).toBe(2);
     await Promise.resolve();
     await Promise.resolve();
     expect(h.socket.state).toBe('unauthorized');
+    const opened = h.transports.length;
     h.clock.advance(120_000);
-    expect(h.transports).toHaveLength(3);
+    expect(h.transports).toHaveLength(opened);
+  });
+
+  test('a refused socket comes back on evidence the refusal no longer holds', () => {
+    const h = harness();
+    h.socket.watch('ses_1', recorder().listener);
+    h.latest().onerror?.('Invalid HTTP status 403');
+    expect(h.socket.state).toBe('unauthorized');
+    h.socket.retryAfterRefusal();
+    expect(h.transports).toHaveLength(2);
+    expect(h.socket.state).toBe('connecting');
+    // Only a refused socket is touched.
+    h.socket.retryAfterRefusal();
+    expect(h.transports).toHaveLength(2);
+  });
+
+  test('a refused socket nothing wants stands down to idle', () => {
+    const h = harness();
+    const release = h.socket.watch('ses_1', recorder().listener);
+    h.latest().onerror?.('Invalid HTTP status 401');
+    release();
+    expect(h.socket.state).toBe('unauthorized');
+    h.socket.retryAfterRefusal();
+    expect(h.socket.state).toBe('idle');
+    expect(h.transports).toHaveLength(1);
   });
 
   test('a socket that reached hello meanwhile ignores a late refusal', async () => {
