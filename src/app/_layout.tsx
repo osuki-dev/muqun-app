@@ -565,6 +565,7 @@ function RootContent() {
                 <Stack.Screen name="agent-context" options={sheetRouteOptions('agent-context')} />
                 <Stack.Screen name="agent-vcs-diff" options={sheetRouteOptions('agent-vcs-diff')} />
                 <Stack.Screen name="agent-tasks" options={sheetRouteOptions('agent-tasks')} />
+                <Stack.Screen name="server-tasks" options={sheetRouteOptions('server-tasks')} />
                 <Stack.Screen name="agent-shells" options={sheetRouteOptions('agent-shells')} />
                 <Stack.Screen name="agent-guide" options={sheetRouteOptions('agent-guide')} />
               </Stack>

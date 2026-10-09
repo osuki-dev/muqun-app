@@ -142,19 +142,25 @@ msgstr "{0} токенов, прочитанных моделью в после�
 msgid "{0}, not found on this server's PATH"
 msgstr "{0}, не найден в PATH этого сервера"
 
+#. placeholder {0}: age.value
 #. placeholder {0}: parts.value
+#: src/components/server-tasks-sheet.tsx
 #: src/hooks/use-relative-time.ts
 #: src/lib/agent-widget-layout.tsx
 msgid "{0}d ago"
 msgstr "{0} д. назад"
 
+#. placeholder {0}: age.value
 #. placeholder {0}: parts.value
+#: src/components/server-tasks-sheet.tsx
 #: src/hooks/use-relative-time.ts
 #: src/lib/agent-widget-layout.tsx
 msgid "{0}h ago"
 msgstr "{0} ч. назад"
 
+#. placeholder {0}: age.value
 #. placeholder {0}: parts.value
+#: src/components/server-tasks-sheet.tsx
 #: src/hooks/use-relative-time.ts
 #: src/lib/agent-widget-layout.tsx
 msgid "{0}m ago"
@@ -236,6 +242,11 @@ msgstr "{commandName} · отправка"
 #: src/components/agent-tool-card.tsx
 msgid "{count, plural, one {# result} other {# results}}"
 msgstr "{count, plural, one {# результат} few {# результата} many {# результатов} other {# результата}}"
+
+#: src/components/home-connections.tsx
+#: src/components/settings-servers.tsx
+msgid "{count} in progress"
+msgstr "В работе: {count}"
 
 #: src/components/home-attention.tsx
 msgid "{count} requests last observed"
@@ -455,6 +466,12 @@ msgstr "После записи"
 msgid "Agent"
 msgstr "Агент"
 
+#. placeholder {0}: task.binding.agentId
+#. placeholder {1}: task.binding.asid
+#: src/components/server-tasks-sheet.tsx
+msgid "Agent {0}, session {1}"
+msgstr "Агент {0}, сеанс {1}"
+
 #: src/app/commands.tsx
 #: src/components/agent-command-delivery-picker.tsx
 #: src/components/collaboration-notice.tsx
@@ -516,6 +533,10 @@ msgstr "Все проекты"
 #: src/components/agent-composer.tsx
 msgid "All sessions"
 msgstr "Все сессии"
+
+#: src/components/server-tasks-sheet.tsx
+msgid "All tasks"
+msgstr "Все задачи"
 
 #: src/i18n/labels.ts
 msgid "Allow"
@@ -932,6 +953,10 @@ msgstr "Отменить правку {0}"
 msgid "Cancel queued message"
 msgstr "Отменить сообщение в очереди"
 
+#: src/components/server-tasks-sheet.tsx
+msgid "Cancel task"
+msgstr "Отменить задачу"
+
 #: src/components/agent-composer.tsx
 msgid "Cancel this queued message"
 msgstr "Отменить это сообщение из очереди"
@@ -940,6 +965,15 @@ msgstr "Отменить это сообщение из очереди"
 #: src/components/tool-call-detail-sheet.tsx
 msgid "Cancelled"
 msgstr "Отменено"
+
+#: src/i18n/labels.ts
+msgctxt "task state"
+msgid "Cancelled"
+msgstr "Отменена"
+
+#: src/components/server-tasks-sheet.tsx
+msgid "Cancelling…"
+msgstr "Отмена…"
 
 #: src/i18n/labels.ts
 msgctxt "git file status"
@@ -1195,6 +1229,11 @@ msgstr "Цветовой режим"
 msgid "Command"
 msgstr "Команда"
 
+#: src/i18n/labels.ts
+msgctxt "task kind"
+msgid "Command"
+msgstr "Команда"
+
 #: src/components/simfarm-preview.tsx
 msgid "Command copied"
 msgstr "Команда скопирована"
@@ -1248,6 +1287,10 @@ msgstr "Выполнено"
 #: src/app/settings-voice.tsx
 msgid "Configure your speech service, then hold Send to record. Tap the animation to stop and transcribe."
 msgstr "Настройте речевой сервис и удерживайте кнопку отправки для записи. Нажмите на анимацию, чтобы остановить запись и получить текст"
+
+#: src/components/server-tasks-sheet.tsx
+msgid "Confirm cancel"
+msgstr "Подтвердить отмену"
 
 #: src/components/settings-storage.tsx
 msgid "Confirm clear cache"
@@ -1568,6 +1611,10 @@ msgstr "Копирование…"
 msgid "Could not add a file"
 msgstr "Не удалось добавить файл"
 
+#: src/components/server-tasks-sheet.tsx
+msgid "Could not cancel the task"
+msgstr "Не удалось отменить задачу"
+
 #: src/components/agent-workbench.tsx
 msgid "Could not change delivery"
 msgstr "Не удалось изменить доставку"
@@ -1644,6 +1691,10 @@ msgstr "Не удалось загрузить модели"
 #: src/lib/terminal-history-pull.ts
 msgid "Could not load older history from this terminal"
 msgstr "Не удалось загрузить более раннюю историю этого терминала"
+
+#: src/components/server-tasks-sheet.tsx
+msgid "Could not load tasks"
+msgstr "Не удалось загрузить задачи"
 
 #: src/components/agent-subagent-detail-sheet.tsx
 #: src/components/agent-workbench.tsx
@@ -1956,6 +2007,11 @@ msgstr "ПО УМОЛЧАНИЮ"
 msgid "Defaults to theme.json at the repository root"
 msgstr "По умолчанию — theme.json в корне репозитория"
 
+#: src/i18n/labels.ts
+msgctxt "task kind"
+msgid "Delegation"
+msgstr "Делегирование"
+
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/changes-sheet.tsx
 #: src/components/row-action-menu.tsx
@@ -2103,6 +2159,11 @@ msgstr "Скрыть новости"
 #: src/components/open-web-service-sheet.tsx
 #: src/components/voice-input-button.tsx
 #: src/i18n/labels.ts
+msgid "Done"
+msgstr "Готово"
+
+#: src/i18n/labels.ts
+msgctxt "task state"
 msgid "Done"
 msgstr "Готово"
 
@@ -2270,6 +2331,15 @@ msgstr "Все изменённые файлы в одном дереве пап
 msgid "Every screen in the app."
 msgstr "Все экраны приложения"
 
+#: src/components/server-tasks-sheet.tsx
+msgid "exit {code}"
+msgstr "выход {code}"
+
+#. placeholder {0}: task.exitCode
+#: src/components/server-tasks-sheet.tsx
+msgid "Exit code {0}"
+msgstr "Код выхода {0}"
+
 #. placeholder {0}: block.tool
 #: src/components/pane-chat-blocks.tsx
 msgid "Expand {0}"
@@ -2314,6 +2384,11 @@ msgid "Export theme"
 msgstr "Экспортировать тему"
 
 #: src/components/tool-call-detail-sheet.tsx
+msgid "Failed"
+msgstr "Ошибка"
+
+#: src/i18n/labels.ts
+msgctxt "task state"
 msgid "Failed"
 msgstr "Ошибка"
 
@@ -2381,6 +2456,10 @@ msgstr "Найти файл по имени"
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Fingerprint"
 msgstr "Отпечаток"
+
+#: src/components/server-tasks-sheet.tsx
+msgid "Finished"
+msgstr "Завершённые"
 
 #: src/components/new-task-sheet.tsx
 msgid "First prompt"
@@ -2607,6 +2686,10 @@ msgstr "Скрыть список серверов"
 msgid "Hide the simulator"
 msgstr "Скрыть симулятор"
 
+#: src/components/server-tasks-sheet.tsx
+msgid "History"
+msgstr "История"
+
 #: src/components/pad-server-rail.tsx
 #: src/components/simfarm-stage.tsx
 msgid "Home"
@@ -2658,6 +2741,11 @@ msgstr "Как пользоваться Muqun"
 msgid "Idle"
 msgstr "Простаивает"
 
+#: src/i18n/labels.ts
+msgctxt "task state"
+msgid "Idle, not confirmed"
+msgstr "Простаивает, не подтверждено"
+
 #: src/components/gateway-storage-error.tsx
 msgid "If this continues, restart the app or check the app installation"
 msgstr "Если проблема сохраняется, перезапустите приложение или проверьте его установку"
@@ -2706,6 +2794,10 @@ msgstr "Импортировать файл"
 #: src/components/custom-theme-library.tsx
 msgid "Import link"
 msgstr "Импорт по ссылке"
+
+#: src/components/server-tasks-sheet.tsx
+msgid "In progress"
+msgstr "В работе"
 
 #: src/components/dev-home-ambient-controls.tsx
 msgid "Increase {label}"
@@ -2838,6 +2930,7 @@ msgid "Jump to latest output"
 msgstr "К последнему выводу"
 
 #: src/components/agent-sessions-sheet.tsx
+#: src/components/server-tasks-sheet.tsx
 #: src/hooks/use-relative-time.ts
 #: src/lib/agent-widget-layout.tsx
 msgid "just now"
@@ -2863,6 +2956,10 @@ msgstr "Оставить всё и отменить подготовленный
 msgctxt "agent slash command"
 msgid "Keep everything and drop the staged rollback"
 msgstr "Оставить всё и отменить подготовленный откат"
+
+#: src/components/server-tasks-sheet.tsx
+msgid "Keep it running"
+msgstr "Оставить работать"
 
 #: src/components/settings-storage.tsx
 msgid "Keep saved themes"
@@ -3256,6 +3353,15 @@ msgstr "Нужна настройка"
 msgid "Needs update"
 msgstr "Нужно обновление"
 
+#: src/components/server-tasks-sheet.tsx
+msgid "Needs you"
+msgstr "Нужны вы"
+
+#: src/i18n/labels.ts
+msgctxt "task state"
+msgid "Needs you"
+msgstr "Нужны вы"
+
 #: src/components/collaboration-notice.tsx
 msgid "Needs your attention"
 msgstr "Требуется ваше внимание"
@@ -3488,6 +3594,10 @@ msgstr "Нет стоп-кадров"
 #: src/components/agent-tasks-sheet.tsx
 msgid "No tasks in this session yet."
 msgstr "В этой сессии пока нет задач"
+
+#: src/components/server-tasks-sheet.tsx
+msgid "No tasks yet"
+msgstr "Задач пока нет"
 
 #: src/hooks/use-home-commands.ts
 msgid "No terminal session is available on this server."
@@ -3930,6 +4040,12 @@ msgstr "Привязка не удалась"
 msgid "Palette (up to 4)"
 msgstr "Палитра (до 4)"
 
+#. placeholder {0}: task.binding.paneId
+#. placeholder {1}: task.binding.sessionId
+#: src/components/server-tasks-sheet.tsx
+msgid "Pane {0} in session {1}"
+msgstr "Панель {0} в сеансе {1}"
+
 #: src/components/settings-servers.tsx
 msgid "Panes on server cards"
 msgstr "Панели на карточках серверов"
@@ -4143,6 +4259,11 @@ msgstr "Поставить сообщение в очередь для аген�
 msgid "Queued"
 msgstr "В очереди"
 
+#: src/i18n/labels.ts
+msgctxt "task state"
+msgid "Queued"
+msgstr "В очереди"
+
 #: src/components/attachment-strip.tsx
 msgid "queued to upload"
 msgstr "в очереди на загрузку"
@@ -4284,6 +4405,7 @@ msgstr "Ошибка записи"
 
 #: src/components/agent-background-tray.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
+#: src/components/server-tasks-sheet.tsx
 #: src/components/session-map.tsx
 msgid "Refresh"
 msgstr "Обновить"
@@ -5226,6 +5348,11 @@ msgstr "Запустите службу OpenCode на хосте шлюза и �
 msgid "Started with a clean context."
 msgstr "Начата с чистым контекстом"
 
+#: src/i18n/labels.ts
+msgctxt "task state"
+msgid "Starting"
+msgstr "Запускается"
+
 #: src/components/simfarm-stage.tsx
 msgid "Starting {name}"
 msgstr "Запускаем {name}"
@@ -5450,6 +5577,8 @@ msgstr "Задача для нового {0}"
 #: src/components/agent-composer.tsx
 #: src/components/agent-tasks-sheet.tsx
 #: src/components/agent-todo-block.tsx
+#: src/components/server-tasks-sheet.tsx
+#: src/components/settings-servers.tsx
 msgid "Tasks"
 msgstr "Задачи"
 
@@ -6257,6 +6386,10 @@ msgstr "Обновите Gateway для прослушивания аудиов�
 msgid "Update the Gateway to preview video output."
 msgstr "Обновите Gateway для просмотра видео"
 
+#: src/components/server-tasks-sheet.tsx
+msgid "Updates when you reopen"
+msgstr "Обновится при повторном открытии"
+
 #: src/components/update-status-banner.tsx
 msgid "Updating Muqun…"
 msgstr "Обновляем Muqun…"
@@ -6399,6 +6532,11 @@ msgstr "Пока вас не было"
 #: src/i18n/labels.ts
 msgid "Working"
 msgstr "Работает"
+
+#: src/i18n/labels.ts
+msgctxt "task state"
+msgid "Working"
+msgstr "Выполняется"
 
 #: src/components/composer-popup.tsx
 #: src/components/session-map.tsx

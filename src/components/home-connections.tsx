@@ -15,7 +15,12 @@ import type { GatewayRecord } from '@/lib/gateway-storage';
 import { serverIdsNeedingAddress } from '@/lib/server-address';
 import { resolveServerReachability, type ActiveServerConnection } from '@/lib/server-reachability';
 import type { SshHostRecord } from '@/lib/ssh-hosts';
+import { activeTaskCount } from '@/lib/server-tasks-state';
+import { hasTaskLedger } from '@/lib/task-ledger';
+import { useGatewayConnectionStore } from '@/stores/gateway-connection';
+import { useServerCapabilities } from '@/stores/server-capabilities';
 import { useServerReachability } from '@/stores/server-reachability';
+import { useServerTasksStore } from '@/stores/server-tasks';
 
 /** Saved destinations, independent of task status and the selected Home layout. */
 export function HomeConnections({
@@ -181,6 +186,7 @@ function GatewayConnectionRow({
             {server.url}
           </Text>
         ) : null}
+        <GatewayTasksPill serverId={server.serverId} />
       </View>
       <ThemeIcon
         name="home.arrow"
@@ -192,7 +198,41 @@ function GatewayConnectionRow({
   );
 }
 
+/**
+ * How many tasks the selected server's ledger has open, as last seen.
+ *
+ * A store read only: Home does not fetch the ledger. The pill appears once the
+ * tasks sheet or a socket frame has filled the store, only for the selected
+ * server, and only on a gateway that keeps a ledger.
+ */
+function GatewayTasksPill({ serverId }: { serverId: string }) {
+  const { t } = useLingui();
+  const profile = useAppearanceProfile();
+  const theme = useThemeTokens();
+  const background = useSurfaceBackground();
+  const selected = useGatewayConnectionStore((state) => state.record?.serverId === serverId);
+  const ledger = useServerCapabilities((state) => hasTaskLedger(state.byServer[serverId]));
+  const count = useServerTasksStore((state) => activeTaskCount(state.index[serverId]?.tasks ?? []));
+  if (!selected || !ledger || count === 0) return null;
+  return (
+    <View
+      testID={`home-connection-tasks-${serverId}`}
+      style={[
+        styles.pill,
+        {
+          borderRadius: profile.chrome.control,
+          backgroundColor: background(theme.colors.primarySubtle),
+        },
+      ]}>
+      <Text variant="caption" weight="semibold" color={theme.colors.primary}>
+        {t`${count} in progress`}
+      </Text>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
+  pill: { alignSelf: 'flex-start', paddingHorizontal: 8, paddingVertical: 2 },
   list: { minWidth: 0 },
   connectionGroup: { minWidth: 0, overflow: 'hidden' },
   row: {

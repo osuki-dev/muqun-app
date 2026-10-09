@@ -142,19 +142,25 @@ msgstr "{0} โทเค็นที่โมเดลอ่านครั้�
 msgid "{0}, not found on this server's PATH"
 msgstr "{0} ไม่พบใน PATH ของเซิร์ฟเวอร์นี้"
 
+#. placeholder {0}: age.value
 #. placeholder {0}: parts.value
+#: src/components/server-tasks-sheet.tsx
 #: src/hooks/use-relative-time.ts
 #: src/lib/agent-widget-layout.tsx
 msgid "{0}d ago"
 msgstr "{0} วันที่แล้ว"
 
+#. placeholder {0}: age.value
 #. placeholder {0}: parts.value
+#: src/components/server-tasks-sheet.tsx
 #: src/hooks/use-relative-time.ts
 #: src/lib/agent-widget-layout.tsx
 msgid "{0}h ago"
 msgstr "{0} ชั่วโมงที่แล้ว"
 
+#. placeholder {0}: age.value
 #. placeholder {0}: parts.value
+#: src/components/server-tasks-sheet.tsx
 #: src/hooks/use-relative-time.ts
 #: src/lib/agent-widget-layout.tsx
 msgid "{0}m ago"
@@ -236,6 +242,11 @@ msgstr "{commandName} · กำลังส่งไปยัง"
 #: src/components/agent-tool-card.tsx
 msgid "{count, plural, one {# result} other {# results}}"
 msgstr "{count, plural, other {# รายการ}}"
+
+#: src/components/home-connections.tsx
+#: src/components/settings-servers.tsx
+msgid "{count} in progress"
+msgstr "กำลังทำ {count} รายการ"
 
 #: src/components/home-attention.tsx
 msgid "{count} requests last observed"
@@ -455,6 +466,12 @@ msgstr "หลังบันทึกเสียง"
 msgid "Agent"
 msgstr "เอเจนต์"
 
+#. placeholder {0}: task.binding.agentId
+#. placeholder {1}: task.binding.asid
+#: src/components/server-tasks-sheet.tsx
+msgid "Agent {0}, session {1}"
+msgstr "เอเจนต์ {0} เซสชัน {1}"
+
 #: src/app/commands.tsx
 #: src/components/agent-command-delivery-picker.tsx
 #: src/components/collaboration-notice.tsx
@@ -516,6 +533,10 @@ msgstr "ทุกโปรเจกต์"
 #: src/components/agent-composer.tsx
 msgid "All sessions"
 msgstr "เซสชันทั้งหมด"
+
+#: src/components/server-tasks-sheet.tsx
+msgid "All tasks"
+msgstr "งานทั้งหมด"
 
 #: src/i18n/labels.ts
 msgid "Allow"
@@ -932,6 +953,10 @@ msgstr "ยกเลิกการแก้ไข {0}"
 msgid "Cancel queued message"
 msgstr "ยกเลิกข้อความในคิว"
 
+#: src/components/server-tasks-sheet.tsx
+msgid "Cancel task"
+msgstr "ยกเลิกงาน"
+
 #: src/components/agent-composer.tsx
 msgid "Cancel this queued message"
 msgstr "ยกเลิกข้อความที่อยู่ในคิวนี้"
@@ -940,6 +965,15 @@ msgstr "ยกเลิกข้อความที่อยู่ในคิ
 #: src/components/tool-call-detail-sheet.tsx
 msgid "Cancelled"
 msgstr "ยกเลิกแล้ว"
+
+#: src/i18n/labels.ts
+msgctxt "task state"
+msgid "Cancelled"
+msgstr "ยกเลิกแล้ว"
+
+#: src/components/server-tasks-sheet.tsx
+msgid "Cancelling…"
+msgstr "กำลังยกเลิก…"
 
 #: src/i18n/labels.ts
 msgctxt "git file status"
@@ -1195,6 +1229,11 @@ msgstr "โหมดสี"
 msgid "Command"
 msgstr "คำสั่ง"
 
+#: src/i18n/labels.ts
+msgctxt "task kind"
+msgid "Command"
+msgstr "คำสั่ง"
+
 #: src/components/simfarm-preview.tsx
 msgid "Command copied"
 msgstr "คัดลอกคำสั่งแล้ว"
@@ -1248,6 +1287,10 @@ msgstr "เสร็จสิ้น"
 #: src/app/settings-voice.tsx
 msgid "Configure your speech service, then hold Send to record. Tap the animation to stop and transcribe."
 msgstr "ตั้งค่าบริการเสียง แล้วกดส่งค้างไว้เพื่อบันทึก แตะภาพเคลื่อนไหวเพื่อหยุดและแปลงเป็นข้อความ"
+
+#: src/components/server-tasks-sheet.tsx
+msgid "Confirm cancel"
+msgstr "ยืนยันการยกเลิก"
 
 #: src/components/settings-storage.tsx
 msgid "Confirm clear cache"
@@ -1568,6 +1611,10 @@ msgstr "กำลังคัดลอก…"
 msgid "Could not add a file"
 msgstr "เพิ่มไฟล์ไม่ได้"
 
+#: src/components/server-tasks-sheet.tsx
+msgid "Could not cancel the task"
+msgstr "ยกเลิกงานไม่ได้"
+
 #: src/components/agent-workbench.tsx
 msgid "Could not change delivery"
 msgstr "เปลี่ยนวิธีส่งไม่ได้"
@@ -1644,6 +1691,10 @@ msgstr "ไม่สามารถโหลดโมเดลได้"
 #: src/lib/terminal-history-pull.ts
 msgid "Could not load older history from this terminal"
 msgstr "โหลดประวัติก่อนหน้าของเทอร์มินัลนี้ไม่ได้"
+
+#: src/components/server-tasks-sheet.tsx
+msgid "Could not load tasks"
+msgstr "โหลดงานไม่ได้"
 
 #: src/components/agent-subagent-detail-sheet.tsx
 #: src/components/agent-workbench.tsx
@@ -1956,6 +2007,11 @@ msgstr "ค่าเริ่มต้น"
 msgid "Defaults to theme.json at the repository root"
 msgstr "ค่าเริ่มต้นคือ theme.json ที่รากของที่เก็บโค้ด"
 
+#: src/i18n/labels.ts
+msgctxt "task kind"
+msgid "Delegation"
+msgstr "การมอบหมาย"
+
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/changes-sheet.tsx
 #: src/components/row-action-menu.tsx
@@ -2105,6 +2161,11 @@ msgstr "ปิดข่าวสารล่าสุด"
 #: src/i18n/labels.ts
 msgid "Done"
 msgstr "เสร็จสิ้น"
+
+#: src/i18n/labels.ts
+msgctxt "task state"
+msgid "Done"
+msgstr "เสร็จแล้ว"
 
 #: src/app/commands.tsx
 msgid "Done editing shortcuts"
@@ -2270,6 +2331,15 @@ msgstr "ทุกไฟล์ที่เปลี่ยนแปลงรวม
 msgid "Every screen in the app."
 msgstr "ทุกหน้าจอในแอป"
 
+#: src/components/server-tasks-sheet.tsx
+msgid "exit {code}"
+msgstr "ออก {code}"
+
+#. placeholder {0}: task.exitCode
+#: src/components/server-tasks-sheet.tsx
+msgid "Exit code {0}"
+msgstr "รหัสออก {0}"
+
 #. placeholder {0}: block.tool
 #: src/components/pane-chat-blocks.tsx
 msgid "Expand {0}"
@@ -2314,6 +2384,11 @@ msgid "Export theme"
 msgstr "ส่งออกธีม"
 
 #: src/components/tool-call-detail-sheet.tsx
+msgid "Failed"
+msgstr "ล้มเหลว"
+
+#: src/i18n/labels.ts
+msgctxt "task state"
 msgid "Failed"
 msgstr "ล้มเหลว"
 
@@ -2381,6 +2456,10 @@ msgstr "ค้นหาไฟล์ตามชื่อ"
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Fingerprint"
 msgstr "ลายนิ้วมือ"
+
+#: src/components/server-tasks-sheet.tsx
+msgid "Finished"
+msgstr "เสร็จสิ้น"
 
 #: src/components/new-task-sheet.tsx
 msgid "First prompt"
@@ -2607,6 +2686,10 @@ msgstr "ซ่อนรายการเซิร์ฟเวอร์"
 msgid "Hide the simulator"
 msgstr "ซ่อนเครื่องจำลอง"
 
+#: src/components/server-tasks-sheet.tsx
+msgid "History"
+msgstr "ประวัติ"
+
 #: src/components/pad-server-rail.tsx
 #: src/components/simfarm-stage.tsx
 msgid "Home"
@@ -2658,6 +2741,11 @@ msgstr "วิธีใช้ Muqun"
 msgid "Idle"
 msgstr "ว่าง"
 
+#: src/i18n/labels.ts
+msgctxt "task state"
+msgid "Idle, not confirmed"
+msgstr "ว่าง ยังไม่ยืนยัน"
+
 #: src/components/gateway-storage-error.tsx
 msgid "If this continues, restart the app or check the app installation"
 msgstr "หากยังเกิดปัญหา ให้เริ่มแอปใหม่หรือตรวจสอบการติดตั้งแอป"
@@ -2706,6 +2794,10 @@ msgstr "นำเข้าไฟล์"
 #: src/components/custom-theme-library.tsx
 msgid "Import link"
 msgstr "นำเข้าลิงก์"
+
+#: src/components/server-tasks-sheet.tsx
+msgid "In progress"
+msgstr "กำลังดำเนินการ"
 
 #: src/components/dev-home-ambient-controls.tsx
 msgid "Increase {label}"
@@ -2838,6 +2930,7 @@ msgid "Jump to latest output"
 msgstr "ข้ามไปยังเอาต์พุตล่าสุด"
 
 #: src/components/agent-sessions-sheet.tsx
+#: src/components/server-tasks-sheet.tsx
 #: src/hooks/use-relative-time.ts
 #: src/lib/agent-widget-layout.tsx
 msgid "just now"
@@ -2863,6 +2956,10 @@ msgstr "เก็บทุกอย่างไว้และทิ้งกา
 msgctxt "agent slash command"
 msgid "Keep everything and drop the staged rollback"
 msgstr "เก็บทุกอย่างไว้และทิ้งการย้อนกลับที่เตรียมไว้"
+
+#: src/components/server-tasks-sheet.tsx
+msgid "Keep it running"
+msgstr "ให้ทำงานต่อ"
 
 #: src/components/settings-storage.tsx
 msgid "Keep saved themes"
@@ -3256,6 +3353,15 @@ msgstr "ต้องตั้งค่า"
 msgid "Needs update"
 msgstr "ต้องอัปเดต"
 
+#: src/components/server-tasks-sheet.tsx
+msgid "Needs you"
+msgstr "รอคุณ"
+
+#: src/i18n/labels.ts
+msgctxt "task state"
+msgid "Needs you"
+msgstr "รอคุณ"
+
 #: src/components/collaboration-notice.tsx
 msgid "Needs your attention"
 msgstr "ต้องการความสนใจจากคุณ"
@@ -3488,6 +3594,10 @@ msgstr "ไม่มีภาพนิ่ง"
 #: src/components/agent-tasks-sheet.tsx
 msgid "No tasks in this session yet."
 msgstr "ยังไม่มีงานในเซสชันนี้"
+
+#: src/components/server-tasks-sheet.tsx
+msgid "No tasks yet"
+msgstr "ยังไม่มีงาน"
 
 #: src/hooks/use-home-commands.ts
 msgid "No terminal session is available on this server."
@@ -3930,6 +4040,12 @@ msgstr "จับคู่ไม่สำเร็จ"
 msgid "Palette (up to 4)"
 msgstr "ชุดสี (สูงสุด 4 สี)"
 
+#. placeholder {0}: task.binding.paneId
+#. placeholder {1}: task.binding.sessionId
+#: src/components/server-tasks-sheet.tsx
+msgid "Pane {0} in session {1}"
+msgstr "แพน {0} ในเซสชัน {1}"
+
 #: src/components/settings-servers.tsx
 msgid "Panes on server cards"
 msgstr "พาเนลบนการ์ดเซิร์ฟเวอร์"
@@ -4143,6 +4259,11 @@ msgstr "จัดคิวข้อความสำหรับเอเจน
 msgid "Queued"
 msgstr "อยู่ในคิว"
 
+#: src/i18n/labels.ts
+msgctxt "task state"
+msgid "Queued"
+msgstr "อยู่ในคิว"
+
 #: src/components/attachment-strip.tsx
 msgid "queued to upload"
 msgstr "รออัปโหลด"
@@ -4284,6 +4405,7 @@ msgstr "บันทึกเสียงไม่สำเร็จ"
 
 #: src/components/agent-background-tray.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
+#: src/components/server-tasks-sheet.tsx
 #: src/components/session-map.tsx
 msgid "Refresh"
 msgstr "รีเฟรช"
@@ -5226,6 +5348,11 @@ msgstr "เริ่มบริการ OpenCode บนโฮสต์ขอ�
 msgid "Started with a clean context."
 msgstr "เริ่มต้นด้วยบริบทที่ว่างเปล่า"
 
+#: src/i18n/labels.ts
+msgctxt "task state"
+msgid "Starting"
+msgstr "กำลังเริ่ม"
+
 #: src/components/simfarm-stage.tsx
 msgid "Starting {name}"
 msgstr "กำลังเริ่ม {name}"
@@ -5450,6 +5577,8 @@ msgstr "งานสำหรับ {0} ใหม่"
 #: src/components/agent-composer.tsx
 #: src/components/agent-tasks-sheet.tsx
 #: src/components/agent-todo-block.tsx
+#: src/components/server-tasks-sheet.tsx
+#: src/components/settings-servers.tsx
 msgid "Tasks"
 msgstr "งาน"
 
@@ -6257,6 +6386,10 @@ msgstr "อัปเดต Gateway เพื่อฟังตัวอย่า
 msgid "Update the Gateway to preview video output."
 msgstr "อัปเดต Gateway เพื่อดูตัวอย่างวิดีโอ"
 
+#: src/components/server-tasks-sheet.tsx
+msgid "Updates when you reopen"
+msgstr "อัปเดตเมื่อเปิดใหม่"
+
 #: src/components/update-status-banner.tsx
 msgid "Updating Muqun…"
 msgstr "กำลังอัปเดต Muqun…"
@@ -6397,6 +6530,11 @@ msgstr "ขณะที่คุณไม่อยู่"
 
 #: src/components/collaboration-notice.tsx
 #: src/i18n/labels.ts
+msgid "Working"
+msgstr "กำลังทำงาน"
+
+#: src/i18n/labels.ts
+msgctxt "task state"
 msgid "Working"
 msgstr "กำลังทำงาน"
 
