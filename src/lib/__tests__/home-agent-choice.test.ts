@@ -2,6 +2,7 @@ import { describe, expect, test } from 'bun:test';
 
 import type { MirroredServerDiscovery } from '../agent-discovery';
 import {
+  catalogRetryDelay,
   homeAgentOptions,
   parseHomeAgentChoices,
   resolveHomeAgent,
@@ -96,5 +97,13 @@ describe('a stored terminal agent before the catalog is read', () => {
 
   test('once the catalog is read and lacks it, the first ready agent takes over', () => {
     expect(resolveHomeAgent(sessionsOnly, 'terminal:codex', true)?.key).toBe('session:opencode');
+  });
+});
+
+describe('catalogRetryDelay', () => {
+  test('15 s, doubling, capped at 60 s', () => {
+    expect([1, 2, 3, 4, 9].map(catalogRetryDelay)).toEqual([
+      15_000, 30_000, 60_000, 60_000, 60_000,
+    ]);
   });
 });

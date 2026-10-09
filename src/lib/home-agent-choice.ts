@@ -164,3 +164,11 @@ export function parseHomeAgentChoices(value: string | null | undefined): Record<
     return {};
   }
 }
+
+/**
+ * How long a failed terminal-catalog read waits before asking again while
+ * someone is looking: 15 s, doubling to a 60 s ceiling.
+ */
+export function catalogRetryDelay(failures: number): number {
+  return Math.min(15_000 * 2 ** Math.max(0, failures - 1), 60_000);
+}

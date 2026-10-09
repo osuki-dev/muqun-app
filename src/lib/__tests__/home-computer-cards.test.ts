@@ -7,6 +7,7 @@ import {
   dismissedKey,
   groupTaskTree,
   MAX_TASK_SUBSCRIPTIONS,
+  PENDING_CLOCK_SKEW_MS,
   taskResultLine,
   taskRollup,
   taskSubscriptionServerIds,
@@ -268,6 +269,19 @@ describe('work that outlives its root', () => {
     });
     expect(card!.now.map((row) => row.task.taskId)).toEqual(['root']);
     expect(card!.finished).toEqual([]);
+    expect(card!.activity).toBe('needs-you');
+  });
+
+  test('an open child known only from the count makes the card working', () => {
+    const [card] = buildComputerCards({
+      servers: [{ serverId: 'a' }],
+      index: index({
+        a: [task('root', 'done', 5, { children: { total: 1, active: 1, waiting: 0, failed: 0 } })],
+      }),
+      reachability: () => 'live',
+      dismissed: new Set(),
+    });
+    expect(card!.activity).toBe('working');
   });
 });
 
@@ -283,7 +297,13 @@ describe('the Sent row', () => {
     })[0]!;
 
   test('an older task with the same goal does not settle it', () => {
-    expect(cardFor([task('x', 'failed', 50)]).pending).toEqual(pending);
+    expect(cardFor([task('x', 'failed', 100 - PENDING_CLOCK_SKEW_MS - 1)]).pending).toEqual(
+      pending
+    );
+  });
+
+  test('a computer clock a little behind the phone still settles it', () => {
+    expect(cardFor([task('x', 'working', 100 - 30_000, { origin: 'device' })]).pending).toEqual([]);
   });
 
   test('a task from elsewhere does not settle it; a device task does', () => {
