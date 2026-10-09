@@ -2,8 +2,8 @@ import { LegendList } from '@legendapp/list/react-native';
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens, useToast } from '@osuki-dev/ui';
-import { useEffect, useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, BackHandler, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
@@ -127,10 +127,23 @@ export function ServerTasksSheet({
   const theme = useThemeTokens();
   const insets = useSafeAreaInsets();
   const [openTaskId, setOpenTaskId] = useState<string | null>(null);
-  // Read at render: the ages are relative to now, and a row that sat open for
-  // a minute must not keep saying "just now".
-  // oxlint-disable-next-line react/purity -- deliberate: see above.
-  const nowMs = Date.now();
+  // Ages are relative to now: a tick keeps a sheet left open from saying
+  // "just now" for a task that changed minutes ago.
+  const [nowMs, setNowMs] = useState(() => Date.now());
+  useEffect(() => {
+    const timer = setInterval(() => setNowMs(Date.now()), 30_000);
+    return () => clearInterval(timer);
+  }, []);
+  // Hardware back from a task's detail returns to the list, not out of the sheet.
+  const detailOpen = openTaskId !== null;
+  useEffect(() => {
+    if (!detailOpen) return;
+    const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
+      setOpenTaskId(null);
+      return true;
+    });
+    return () => subscription.remove();
+  }, [detailOpen]);
 
   const items: Item[] = [];
   const sections: [string, string, TaskView[]][] = [
@@ -352,6 +365,14 @@ function CancelTaskAction({ onConfirm }: { onConfirm: () => Promise<void> }) {
   const { showToast } = useToast();
   const [armed, setArmed] = useState(false);
   const [pending, setPending] = useState(false);
+  // The action unmounts once the task goes terminal; settling then is a no-op to avoid.
+  const mounted = useRef(true);
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
   const view = unpairView({ armed, pending });
 
   async function confirm() {
@@ -370,6 +391,7 @@ function CancelTaskAction({ onConfirm }: { onConfirm: () => Promise<void> }) {
         }
       },
       () => {
+        if (!mounted.current) return;
         setPending(false);
         setArmed(false);
       }

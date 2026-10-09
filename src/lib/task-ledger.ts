@@ -150,10 +150,15 @@ function parseTaskDetail(value: unknown): { task: TaskView; events: TaskEvent[] 
   return { task, events };
 }
 
-export async function listTasks(opts?: {
+/**
+ * The task list, or null when it could not be read (offline, refused, no
+ * gateway). `readJson` folds every failure into its fallback, so a null
+ * fallback is how a failed read stays apart from an empty ledger.
+ */
+export async function fetchTaskList(opts?: {
   states?: TaskState[];
   limit?: number;
-}): Promise<TaskView[]> {
+}): Promise<TaskView[] | null> {
   const { readJson } = await import('./agent-session');
   const { demoTasks, isDemoActive } = await import('./demo-gateway');
   if (isDemoActive()) return parseTaskList({ tasks: demoTasks(opts?.states, opts?.limit) });
@@ -161,7 +166,15 @@ export async function listTasks(opts?: {
   if (opts?.states?.length) query.push(`state=${opts.states.join(',')}`);
   if (opts?.limit !== undefined) query.push(`limit=${opts.limit}`);
   const path = `/api/tasks${query.length ? `?${query.join('&')}` : ''}`;
-  return readJson(path, parseTaskList, []);
+  return readJson<TaskView[] | null>(path, parseTaskList, null);
+}
+
+/** Like `fetchTaskList`, with a failed read shown as an empty list. */
+export async function listTasks(opts?: {
+  states?: TaskState[];
+  limit?: number;
+}): Promise<TaskView[]> {
+  return (await fetchTaskList(opts)) ?? [];
 }
 
 export async function getTask(

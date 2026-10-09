@@ -7,11 +7,12 @@ import { WS_EVENTS_CAPABILITY, type GatewaySocketState } from '@/lib/gateway-soc
 import { gatewaySocketFor } from '@/lib/gateway-socket-runtime';
 import {
   applyCancelAnswer,
+  applyListAnswer,
   groupTasks,
   isTaskChannelLive,
   type TaskGroups,
 } from '@/lib/server-tasks-state';
-import { cancelTask, listTasks, type TaskView } from '@/lib/task-ledger';
+import { cancelTask, fetchTaskList, type TaskView } from '@/lib/task-ledger';
 import { useServerCapabilities } from '@/stores/server-capabilities';
 import { useServerTasksStore } from '@/stores/server-tasks';
 
@@ -62,10 +63,14 @@ export function useServerTasks(serverId: string | null): ServerTasks {
     const request = ++requestRef.current;
     setLoading(true);
     try {
-      const list = await listTasks({ limit: 100 });
+      const list = await fetchTaskList({ limit: 100 });
       if (request !== requestRef.current) return;
-      replace(serverId, list);
-      setError(null);
+      // A failed read keeps the list already held and says so.
+      applyListAnswer(list, {
+        replace: (tasks) => replace(serverId, tasks),
+        ok: () => setError(null),
+        fail: () => setError('unavailable'),
+      });
     } catch (failure) {
       if (request !== requestRef.current) return;
       setError(failure instanceof Error ? failure.message : String(failure));
@@ -78,7 +83,11 @@ export function useServerTasks(serverId: string | null): ServerTasks {
     const subscription = AppState.addEventListener('change', (next) => {
       if (next === 'active') void refresh();
     });
-    return () => subscription.remove();
+    return () => {
+      subscription.remove();
+      // Discard an answer that lands after this effect is gone.
+      requestRef.current += 1;
+    };
   }, [refresh]);
 
   const demo = isDemoActive();

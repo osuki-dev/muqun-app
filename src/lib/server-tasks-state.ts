@@ -90,6 +90,22 @@ export async function applyCancelAnswer(
 }
 
 /**
+ * A list answer lands only when the read succeeded (`list` non-null). A failed
+ * read leaves what the store already holds and reports the failure instead.
+ */
+export function applyListAnswer(
+  list: readonly TaskView[] | null,
+  deps: { replace: (tasks: readonly TaskView[]) => void; fail: () => void; ok: () => void }
+): void {
+  if (list === null) {
+    deps.fail();
+    return;
+  }
+  deps.replace(list);
+  deps.ok();
+}
+
+/**
  * Whether task changes arrive by themselves. Without `ws_events`, in the demo,
  * or while the socket is not open, the sheet says it updates on reopen.
  */
