@@ -187,7 +187,7 @@ export const FontedTextInput = forwardRef<TextInput, TextInputProps>(function Fo
           starts at the top. The overlay does the same. */}
       <View
         pointerEvents="none"
-        style={[StyleSheet.absoluteFill, multiline ? styles.top : styles.centre]}>
+        style={[StyleSheet.absoluteFill, multiline ? styles.top : styles.centre, styles.caretGap]}>
         <FieldPlaceholder
           text={placeholder}
           visible={empty}
@@ -202,4 +202,7 @@ export const FontedTextInput = forwardRef<TextInput, TextInputProps>(function Fo
 const styles = StyleSheet.create({
   top: { justifyContent: 'flex-start' },
   centre: { justifyContent: 'center' },
+  // Room for the native caret beside the separately drawn hint. Applied in every
+  // state, never only on focus, so the placeholder does not move when focused.
+  caretGap: { paddingLeft: 3 },
 });

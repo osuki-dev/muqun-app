@@ -30,3 +30,10 @@ test('the shared field keeps the hint for the screen reader and hides it from th
   expect(source).toContain('placeholder={placeholder}');
   expect(source).toContain('placeholderTextColor="transparent"');
 });
+
+test('the placeholder overlay offset does not depend on focus', () => {
+  const source = readFileSync('src/components/fonted-text-input.tsx', 'utf8');
+  expect(/focused/u.test(source.replace(/\/\*[\s\S]*?\*\/|\/\/.*$/gmu, ''))).toBe(false);
+  expect(/styles\.centre,\s*styles\.caretGap\]/u.test(source)).toBe(true);
+  expect(/caretGap: \{ paddingLeft: 3 \}/u.test(source)).toBe(true);
+});
