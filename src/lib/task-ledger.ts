@@ -328,6 +328,14 @@ async function endpointRequest(
   );
 }
 
+/** Stop an open task (the device route): the task as the gateway now has it, or null. */
+export async function cancelTask(
+  taskId: string,
+  endpoint?: TaskEndpoint
+): Promise<TaskView | null> {
+  return postTaskAction(taskId, 'cancel', 'Cancel task', endpoint);
+}
+
 /**
  * Confirm a paused task is done (`task_ledger_complete`). The task as the
  * gateway now has it; null when the answer did not carry one.
@@ -336,13 +344,22 @@ export async function completeTask(
   taskId: string,
   endpoint?: TaskEndpoint
 ): Promise<TaskView | null> {
-  const path = `/api/tasks/${encodeURIComponent(taskId)}/complete`;
+  return postTaskAction(taskId, 'complete', 'Complete task', endpoint);
+}
+
+async function postTaskAction(
+  taskId: string,
+  action: 'cancel' | 'complete',
+  what: string,
+  endpoint?: TaskEndpoint
+): Promise<TaskView | null> {
+  const path = `/api/tasks/${encodeURIComponent(taskId)}/${action}`;
   if (endpoint) {
     const response = await endpointRequest(endpoint, path, 'POST', {});
-    if (!response.ok) throw new Error(`Complete task: ${response.status} ${await response.text()}`);
+    if (!response.ok) throw new Error(`${what}: ${response.status} ${await response.text()}`);
     const body = (await response.json().catch(() => null)) as unknown;
     return parseTaskView(asRecord(body)?.data ?? body);
   }
   const { writeJson } = await import('./agent-session');
-  return parseTaskView(await writeJson(path, 'Complete task', {}));
+  return parseTaskView(await writeJson(path, what, {}));
 }

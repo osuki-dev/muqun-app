@@ -12,7 +12,7 @@ import {
   taskRollup,
   taskSubscriptionServerIds,
   taskRowDestination,
-  taskRowLine,
+  taskRowVisual,
   taskTitle,
 } from '../home-computer-cards';
 import type { ServerTasksIndex } from '../server-tasks-state';
@@ -196,7 +196,7 @@ describe('buildComputerCards', () => {
     expect(cards[0]!.now[0]!.children.map((child) => child.taskId)).toEqual(['c']);
   });
 
-  test('now holds open roots, paused last, capped; finished leaves out acknowledged tasks', () => {
+  test('now holds open roots by urgency (working, starting, paused), capped; finished leaves out acknowledged tasks', () => {
     const tasks = [
       task('w1', 'working', 10),
       task('w2', 'queued', 9),
@@ -215,7 +215,7 @@ describe('buildComputerCards', () => {
       nowMs: NOW,
     });
     // b has no work and no card, so a's is the only one and gets the room.
-    expect(card!.now.map((row) => row.task.taskId)).toEqual(['w1', 'w2', 'w3', 'w4', 'idle']);
+    expect(card!.now.map((row) => row.task.taskId)).toEqual(['w1', 'w4', 'w2', 'w3', 'idle']);
     expect(card!.nowTotal).toBe(5);
     expect(card!.finished.map((done) => done.taskId)).toEqual(['f2', 'f3']);
   });
@@ -385,39 +385,86 @@ describe('taskRowDestination', () => {
   });
 });
 
-describe('taskRowLine', () => {
+describe('taskRowVisual: one state, one icon, one tone, one line, its actions', () => {
+  const pane = { kind: 'pane', sessionId: 's', paneId: 'p1', agentId: 'codex' } as const;
+  const open = (state: TaskState, extra: Partial<TaskView> = {}) =>
+    task('t', state, 1, { binding: pane, ...extra });
+  const plain = { canComplete: false, acknowledged: false };
   test.each([
-    ['queued', task('t', 'queued', 1), { kind: 'state' }],
-    ['starting', task('t', 'dispatching', 1), { kind: 'starting' }],
+    ['sent', { state: 'sent' } as const, plain, ['send', 'textMuted', false, { kind: 'sent' }, []]],
     [
-      'working, with progress',
-      task('t', 'working', 1, { progress: 'running tests' }),
-      { kind: 'progress', text: 'running tests' },
-    ],
-    ['working, without', task('t', 'working', 1), { kind: 'elapsed' }],
-    [
-      'waiting on a question',
-      task('t', 'waiting', 1, { summary: 'Allow edit?' }),
-      { kind: 'waiting', text: 'Allow edit?' },
+      'queued',
+      open('queued'),
+      plain,
+      ['loader', 'textMuted', true, { kind: 'starting' }, ['open', 'cancel']],
     ],
     [
-      'paused with a hint',
-      task('t', 'idle_unconfirmed', 1, { summary: 'tests pass\nwhat next?' }),
-      { kind: 'paused', text: 'what next?' },
+      'starting',
+      open('dispatching'),
+      plain,
+      ['loader', 'textMuted', true, { kind: 'starting' }, ['open', 'cancel']],
     ],
-    ['done', task('t', 'done', 1, { summary: 'PONG' }), { kind: 'result', text: 'PONG' }],
     [
-      'failed with a reason',
-      task('t', 'failed', 1, { summary: 'the pane closed' }),
-      { kind: 'error', text: 'the pane closed' },
+      'working, live line',
+      open('working', { progress: 'Editing a.tsx' }),
+      plain,
+      ['loader', 'primary', true, { kind: 'progress', text: 'Editing a.tsx' }, ['open', 'cancel']],
+    ],
+    [
+      'working, no line',
+      open('working'),
+      plain,
+      ['loader', 'primary', true, { kind: 'elapsed' }, ['open', 'cancel']],
+    ],
+    [
+      'needs you, confirmable',
+      open('waiting', { summary: 'Allow edit?' }),
+      { ...plain, canComplete: true },
+      [
+        'help',
+        'warning',
+        false,
+        { kind: 'waiting', text: 'Allow edit?' },
+        ['open', 'cancel', 'markDone'],
+      ],
+    ],
+    [
+      'paused',
+      open('idle_unconfirmed', { summary: 'tests pass\nwhat next?' }),
+      plain,
+      ['pause', 'textMuted', false, { kind: 'paused', text: 'what next?' }, ['open', 'cancel']],
+    ],
+    [
+      'done',
+      open('done', { summary: 'PONG' }),
+      plain,
+      ['check', 'success', false, { kind: 'result', text: 'PONG' }, ['open', 'acknowledge']],
+    ],
+    [
+      'done, acknowledged',
+      open('done', { summary: 'PONG' }),
+      { ...plain, acknowledged: true },
+      ['check', 'success', false, { kind: 'result', text: 'PONG' }, ['open']],
+    ],
+    [
+      'failed with its error, pane gone',
+      open('failed', { summary: 'the pane closed' }),
+      plain,
+      ['x', 'danger', false, { kind: 'error', text: 'the pane closed' }, ['acknowledge']],
     ],
     [
       'failed with an exit code',
       task('t', 'failed', 1, { exitCode: 2 }),
-      { kind: 'exit', code: 2 },
+      plain,
+      ['x', 'danger', false, { kind: 'exit', code: 2 }, ['acknowledge']],
     ],
-    ['cancelled, nothing said', task('t', 'cancelled', 1), { kind: 'state' }],
-  ] as const)('%s', (_name, input, expected) => {
-    expect(taskRowLine(input)).toEqual(expected);
+    [
+      'cancelled',
+      open('cancelled'),
+      plain,
+      ['ban', 'textMuted', false, { kind: 'state' }, ['open', 'acknowledge']],
+    ],
+  ] as const)('%s', (_name, input, opts, [icon, tone, spins, line, actions]) => {
+    expect(taskRowVisual(input, opts)).toEqual({ icon, tone, spins, line, actions: [...actions] });
   });
 });

@@ -327,11 +327,11 @@ msgstr "{0} 件中 {running} 件が実行中"
 msgid "{title} — finished while you were away"
 msgstr "{title} — 離れている間に完了しました"
 
-#: src/components/home-computer-cards.tsx
+#: src/components/task-row.tsx
 msgid "{total, plural, one {# sub-task} other {# sub-tasks}}"
 msgstr "{total, plural, other {サブタスク # 件}}"
 
-#: src/components/home-computer-cards.tsx
+#: src/components/task-row.tsx
 msgid "{total, plural, one {# sub-task} other {# sub-tasks}} ({waiting, plural, one {# waiting} other {# waiting}})"
 msgstr "{total, plural, other {サブタスク # 件}}（{waiting, plural, other {# 件が対応待ち}}）"
 
@@ -415,7 +415,7 @@ msgstr "ターミナルを作成しました。開いて起動状態を確認し
 msgid "About"
 msgstr "アプリについて"
 
-#: src/components/server-tasks-sheet.tsx
+#: src/components/task-row.tsx
 msgid "Acknowledge"
 msgstr "確認済みにする"
 
@@ -426,6 +426,10 @@ msgstr "このターミナルを操作するか、コマンドを送る"
 #: src/app/commands.tsx
 msgid "Act on this terminal, or send its agent a prompt"
 msgstr "このターミナルを操作するか、エージェントに指示を送る"
+
+#: src/components/task-row.tsx
+msgid "Actions"
+msgstr "操作"
 
 #. placeholder {0}: row.name
 #. placeholder {0}: sessionTitleOr(session, t`Untitled session`)
@@ -977,6 +981,10 @@ msgstr "{0} の編集をキャンセル"
 msgid "Cancel queued message"
 msgstr "キュー内のメッセージを取り消す"
 
+#: src/components/task-row.tsx
+msgid "Cancel task"
+msgstr "タスクをキャンセル"
+
 #: src/components/agent-composer.tsx
 msgid "Cancel this queued message"
 msgstr "待機中のこのメッセージを取り消す"
@@ -1350,6 +1358,10 @@ msgstr "コンピュータ"
 msgid "Configure your speech service, then hold Send to record. Tap the animation to stop and transcribe."
 msgstr "音声サービスを設定し、送信を長押しして録音します。アニメーションをタップすると停止して文字起こしします"
 
+#: src/components/task-row.tsx
+msgid "Confirm cancel"
+msgstr "キャンセルを確定"
+
 #: src/components/settings-storage.tsx
 msgid "Confirm clear cache"
 msgstr "キャッシュの削除を確認"
@@ -1673,6 +1685,10 @@ msgstr "コピー中…"
 msgid "Could not add a file"
 msgstr "ファイルを追加できませんでした"
 
+#: src/components/task-row.tsx
+msgid "Could not cancel the task"
+msgstr "タスクをキャンセルできませんでした"
+
 #: src/components/agent-workbench.tsx
 msgid "Could not change delivery"
 msgstr "配信方法を変更できませんでした"
@@ -1775,8 +1791,7 @@ msgstr "トークンを読み込めませんでした"
 msgid "Could not load what is running."
 msgstr "実行中のものを読み込めませんでした"
 
-#: src/components/home-computer-cards.tsx
-#: src/components/server-tasks-sheet.tsx
+#: src/components/task-row.tsx
 msgid "Could not mark the task done"
 msgstr "タスクを完了にできませんでした"
 
@@ -2407,7 +2422,7 @@ msgstr "変更されたファイルを行数の合計つきのフォルダーツ
 msgid "Every screen in the app."
 msgstr "アプリのすべての画面"
 
-#: src/components/home-computer-cards.tsx
+#: src/components/task-row.tsx
 msgid "exit {code}"
 msgstr "終了 {code}"
 
@@ -3282,8 +3297,7 @@ msgstr "マシンを管理"
 msgid "Manage SSH hosts"
 msgstr "SSH ホストを管理"
 
-#: src/components/home-computer-cards.tsx
-#: src/components/server-tasks-sheet.tsx
+#: src/components/task-row.tsx
 msgid "Mark done"
 msgstr "完了にする"
 
@@ -3896,10 +3910,10 @@ msgstr "オンラインです"
 msgid "ONLINE"
 msgstr "オンライン"
 
-#: src/components/home-computer-cards.tsx
 #: src/components/home-connections.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/open-web-service-sheet.tsx
+#: src/components/task-row.tsx
 msgid "Open"
 msgstr "開く"
 
@@ -5103,11 +5117,14 @@ msgid "Sending to"
 msgstr "送信先"
 
 #: src/components/home-computer-cards.tsx
+msgid "Sends your next goal here."
+msgstr "次の目標をここに送ります"
+
 #: src/components/home-connections.tsx
 msgid "Sends your next goal here. Long press to open it."
 msgstr "次の目標をここに送ります。長押しで開きます"
 
-#: src/components/home-computer-cards.tsx
+#: src/components/task-row.tsx
 msgid "Sent · waiting for {computer}"
 msgstr "送信済み · {computer} の応答待ち"
 
@@ -5510,7 +5527,7 @@ msgctxt "task state"
 msgid "Starting"
 msgstr "開始中"
 
-#: src/components/home-computer-cards.tsx
+#: src/components/task-row.tsx
 msgid "Starting {agent}…"
 msgstr "{agent} を開始中…"
 
@@ -5768,10 +5785,10 @@ msgstr "一時ファイル"
 #: src/app/commands.tsx
 #: src/app/settings-terminal.tsx
 #: src/app/settings.tsx
-#: src/components/home-computer-cards.tsx
 #: src/components/home-launch-actions.tsx
 #: src/components/home-recent-sessions.tsx
 #: src/components/settings-server-capabilities.tsx
+#: src/components/task-row.tsx
 #: src/i18n/labels.ts
 msgid "Terminal"
 msgstr "ターミナル"

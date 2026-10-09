@@ -327,11 +327,11 @@ msgstr "{0} 個中有 {running} 個正在執行"
 msgid "{title} — finished while you were away"
 msgstr "{title} — 在你離開時完成"
 
-#: src/components/home-computer-cards.tsx
+#: src/components/task-row.tsx
 msgid "{total, plural, one {# sub-task} other {# sub-tasks}}"
 msgstr "{total, plural, other {# 個子任務}}"
 
-#: src/components/home-computer-cards.tsx
+#: src/components/task-row.tsx
 msgid "{total, plural, one {# sub-task} other {# sub-tasks}} ({waiting, plural, one {# waiting} other {# waiting}})"
 msgstr "{total, plural, other {# 個子任務}}（{waiting, plural, other {# 個等待中}}）"
 
@@ -415,7 +415,7 @@ msgstr "已建立終端機。請開啟查看啟動情況；再次啟動可能產
 msgid "About"
 msgstr "關於"
 
-#: src/components/server-tasks-sheet.tsx
+#: src/components/task-row.tsx
 msgid "Acknowledge"
 msgstr "標記為已查看"
 
@@ -426,6 +426,10 @@ msgstr "操作這個終端機，或給它送一條指令"
 #: src/app/commands.tsx
 msgid "Act on this terminal, or send its agent a prompt"
 msgstr "操作這個終端機，或給它的 Agent 下一條指令"
+
+#: src/components/task-row.tsx
+msgid "Actions"
+msgstr "操作"
 
 #. placeholder {0}: row.name
 #. placeholder {0}: sessionTitleOr(session, t`Untitled session`)
@@ -977,6 +981,10 @@ msgstr "取消編輯 {0}"
 msgid "Cancel queued message"
 msgstr "取消排隊訊息"
 
+#: src/components/task-row.tsx
+msgid "Cancel task"
+msgstr "取消任務"
+
 #: src/components/agent-composer.tsx
 msgid "Cancel this queued message"
 msgstr "取消這則排隊的訊息"
@@ -1350,6 +1358,10 @@ msgstr "電腦"
 msgid "Configure your speech service, then hold Send to record. Tap the animation to stop and transcribe."
 msgstr "設定語音服務後，長按傳送開始錄音。點擊動畫停止並轉寫"
 
+#: src/components/task-row.tsx
+msgid "Confirm cancel"
+msgstr "確認取消"
+
 #: src/components/settings-storage.tsx
 msgid "Confirm clear cache"
 msgstr "確認清除快取"
@@ -1673,6 +1685,10 @@ msgstr "複製中…"
 msgid "Could not add a file"
 msgstr "無法加入檔案"
 
+#: src/components/task-row.tsx
+msgid "Could not cancel the task"
+msgstr "無法取消任務"
+
 #: src/components/agent-workbench.tsx
 msgid "Could not change delivery"
 msgstr "無法變更傳送方式"
@@ -1775,8 +1791,7 @@ msgstr "無法載入權杖"
 msgid "Could not load what is running."
 msgstr "無法載入正在執行的項目"
 
-#: src/components/home-computer-cards.tsx
-#: src/components/server-tasks-sheet.tsx
+#: src/components/task-row.tsx
 msgid "Could not mark the task done"
 msgstr "無法確認任務完成"
 
@@ -2407,7 +2422,7 @@ msgstr "所有變更的檔案匯成一棵目錄樹，附帶增刪行數。打開
 msgid "Every screen in the app."
 msgstr "App 的每一個畫面"
 
-#: src/components/home-computer-cards.tsx
+#: src/components/task-row.tsx
 msgid "exit {code}"
 msgstr "結束碼 {code}"
 
@@ -3282,8 +3297,7 @@ msgstr "管理機器"
 msgid "Manage SSH hosts"
 msgstr "管理 SSH 主機"
 
-#: src/components/home-computer-cards.tsx
-#: src/components/server-tasks-sheet.tsx
+#: src/components/task-row.tsx
 msgid "Mark done"
 msgstr "確認完成"
 
@@ -3896,10 +3910,10 @@ msgstr "線上"
 msgid "ONLINE"
 msgstr "線上"
 
-#: src/components/home-computer-cards.tsx
 #: src/components/home-connections.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/open-web-service-sheet.tsx
+#: src/components/task-row.tsx
 msgid "Open"
 msgstr "開啟"
 
@@ -5103,11 +5117,14 @@ msgid "Sending to"
 msgstr "傳送給"
 
 #: src/components/home-computer-cards.tsx
+msgid "Sends your next goal here."
+msgstr "下一個目標會送到這裡"
+
 #: src/components/home-connections.tsx
 msgid "Sends your next goal here. Long press to open it."
 msgstr "下一個目標會送到這裡。長按可開啟"
 
-#: src/components/home-computer-cards.tsx
+#: src/components/task-row.tsx
 msgid "Sent · waiting for {computer}"
 msgstr "已傳送 · 等待 {computer} 回應"
 
@@ -5510,7 +5527,7 @@ msgctxt "task state"
 msgid "Starting"
 msgstr "啟動中"
 
-#: src/components/home-computer-cards.tsx
+#: src/components/task-row.tsx
 msgid "Starting {agent}…"
 msgstr "正在啟動 {agent}…"
 
@@ -5768,10 +5785,10 @@ msgstr "暫存檔案"
 #: src/app/commands.tsx
 #: src/app/settings-terminal.tsx
 #: src/app/settings.tsx
-#: src/components/home-computer-cards.tsx
 #: src/components/home-launch-actions.tsx
 #: src/components/home-recent-sessions.tsx
 #: src/components/settings-server-capabilities.tsx
+#: src/components/task-row.tsx
 #: src/i18n/labels.ts
 msgid "Terminal"
 msgstr "終端機"

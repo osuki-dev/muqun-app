@@ -327,11 +327,11 @@ msgstr "{running} trong {0} đang chạy"
 msgid "{title} — finished while you were away"
 msgstr "{title} — đã xong khi bạn đi vắng"
 
-#: src/components/home-computer-cards.tsx
+#: src/components/task-row.tsx
 msgid "{total, plural, one {# sub-task} other {# sub-tasks}}"
 msgstr "{total, plural, other {# nhiệm vụ con}}"
 
-#: src/components/home-computer-cards.tsx
+#: src/components/task-row.tsx
 msgid "{total, plural, one {# sub-task} other {# sub-tasks}} ({waiting, plural, one {# waiting} other {# waiting}})"
 msgstr "{total, plural, other {# nhiệm vụ con}} ({waiting, plural, other {# đang chờ}})"
 
@@ -415,7 +415,7 @@ msgstr "Đã tạo một terminal. Mở để kiểm tra việc khởi động; 
 msgid "About"
 msgstr "Giới thiệu"
 
-#: src/components/server-tasks-sheet.tsx
+#: src/components/task-row.tsx
 msgid "Acknowledge"
 msgstr "Đánh dấu đã xem"
 
@@ -426,6 +426,10 @@ msgstr "Tác động lên terminal này, hoặc gửi cho nó một lệnh"
 #: src/app/commands.tsx
 msgid "Act on this terminal, or send its agent a prompt"
 msgstr "Tác động lên terminal này, hoặc gửi yêu cầu cho tác nhân của nó"
+
+#: src/components/task-row.tsx
+msgid "Actions"
+msgstr "Thao tác"
 
 #. placeholder {0}: row.name
 #. placeholder {0}: sessionTitleOr(session, t`Untitled session`)
@@ -977,6 +981,10 @@ msgstr "Hủy chỉnh sửa {0}"
 msgid "Cancel queued message"
 msgstr "Hủy tin nhắn đang chờ"
 
+#: src/components/task-row.tsx
+msgid "Cancel task"
+msgstr "Hủy tác vụ"
+
 #: src/components/agent-composer.tsx
 msgid "Cancel this queued message"
 msgstr "Huỷ tin nhắn đang chờ này"
@@ -1350,6 +1358,10 @@ msgstr "Máy tính"
 msgid "Configure your speech service, then hold Send to record. Tap the animation to stop and transcribe."
 msgstr "Cấu hình dịch vụ giọng nói, rồi nhấn giữ Gửi để ghi âm. Chạm vào hiệu ứng để dừng và chuyển thành văn bản"
 
+#: src/components/task-row.tsx
+msgid "Confirm cancel"
+msgstr "Xác nhận hủy"
+
 #: src/components/settings-storage.tsx
 msgid "Confirm clear cache"
 msgstr "Xác nhận xóa bộ nhớ đệm"
@@ -1673,6 +1685,10 @@ msgstr "Đang sao chép…"
 msgid "Could not add a file"
 msgstr "Không thể thêm tệp"
 
+#: src/components/task-row.tsx
+msgid "Could not cancel the task"
+msgstr "Không thể hủy tác vụ"
+
 #: src/components/agent-workbench.tsx
 msgid "Could not change delivery"
 msgstr "Không thể đổi cách gửi"
@@ -1775,8 +1791,7 @@ msgstr "Không tải được token"
 msgid "Could not load what is running."
 msgstr "Không thể tải những gì đang chạy"
 
-#: src/components/home-computer-cards.tsx
-#: src/components/server-tasks-sheet.tsx
+#: src/components/task-row.tsx
 msgid "Could not mark the task done"
 msgstr "Không thể đánh dấu tác vụ đã xong"
 
@@ -2407,7 +2422,7 @@ msgstr "Mọi tệp đã thay đổi trong một cây thư mục kèm tổng s�
 msgid "Every screen in the app."
 msgstr "Mọi màn hình trong ứng dụng"
 
-#: src/components/home-computer-cards.tsx
+#: src/components/task-row.tsx
 msgid "exit {code}"
 msgstr "thoát {code}"
 
@@ -3282,8 +3297,7 @@ msgstr "Quản lý máy"
 msgid "Manage SSH hosts"
 msgstr "Quản lý host SSH"
 
-#: src/components/home-computer-cards.tsx
-#: src/components/server-tasks-sheet.tsx
+#: src/components/task-row.tsx
 msgid "Mark done"
 msgstr "Đánh dấu đã xong"
 
@@ -3896,10 +3910,10 @@ msgstr "Trực tuyến"
 msgid "ONLINE"
 msgstr "TRỰC TUYẾN"
 
-#: src/components/home-computer-cards.tsx
 #: src/components/home-connections.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/open-web-service-sheet.tsx
+#: src/components/task-row.tsx
 msgid "Open"
 msgstr "Mở"
 
@@ -5103,11 +5117,14 @@ msgid "Sending to"
 msgstr "Đang gửi đến"
 
 #: src/components/home-computer-cards.tsx
+msgid "Sends your next goal here."
+msgstr "Gửi mục tiêu tiếp theo tới đây"
+
 #: src/components/home-connections.tsx
 msgid "Sends your next goal here. Long press to open it."
 msgstr "Gửi mục tiêu tiếp theo tới đây. Nhấn giữ để mở"
 
-#: src/components/home-computer-cards.tsx
+#: src/components/task-row.tsx
 msgid "Sent · waiting for {computer}"
 msgstr "Đã gửi · đang chờ {computer}"
 
@@ -5510,7 +5527,7 @@ msgctxt "task state"
 msgid "Starting"
 msgstr "Đang khởi động"
 
-#: src/components/home-computer-cards.tsx
+#: src/components/task-row.tsx
 msgid "Starting {agent}…"
 msgstr "Đang khởi động {agent}…"
 
@@ -5768,10 +5785,10 @@ msgstr "Tệp tạm"
 #: src/app/commands.tsx
 #: src/app/settings-terminal.tsx
 #: src/app/settings.tsx
-#: src/components/home-computer-cards.tsx
 #: src/components/home-launch-actions.tsx
 #: src/components/home-recent-sessions.tsx
 #: src/components/settings-server-capabilities.tsx
+#: src/components/task-row.tsx
 #: src/i18n/labels.ts
 msgid "Terminal"
 msgstr "Terminal"

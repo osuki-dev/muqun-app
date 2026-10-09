@@ -1073,7 +1073,6 @@ export function HomeOverview({
                     model={computerCards}
                     servers={cardServers}
                     onSelectServer={targetComposer}
-                    onOpenServer={openServer}
                     onOpenTask={({ serverId, task, tree }) => {
                       // A row opens the session or pane the task runs in; the
                       // Tasks sheet is for the work under it, or a task that

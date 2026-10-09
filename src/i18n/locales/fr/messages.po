@@ -327,11 +327,11 @@ msgstr "{running} sur {0} en cours"
 msgid "{title} — finished while you were away"
 msgstr "{title} — terminé pendant votre absence"
 
-#: src/components/home-computer-cards.tsx
+#: src/components/task-row.tsx
 msgid "{total, plural, one {# sub-task} other {# sub-tasks}}"
 msgstr "{total, plural, one {# sous-tâche} other {# sous-tâches}}"
 
-#: src/components/home-computer-cards.tsx
+#: src/components/task-row.tsx
 msgid "{total, plural, one {# sub-task} other {# sub-tasks}} ({waiting, plural, one {# waiting} other {# waiting}})"
 msgstr "{total, plural, one {# sous-tâche} other {# sous-tâches}} ({waiting, plural, one {# en attente} other {# en attente}})"
 
@@ -415,7 +415,7 @@ msgstr "Un terminal a été créé. Ouvrez-le pour vérifier le démarrage ; rel
 msgid "About"
 msgstr "À propos"
 
-#: src/components/server-tasks-sheet.tsx
+#: src/components/task-row.tsx
 msgid "Acknowledge"
 msgstr "Marquer comme vu"
 
@@ -426,6 +426,10 @@ msgstr "Agir sur ce terminal, ou lui envoyer une commande"
 #: src/app/commands.tsx
 msgid "Act on this terminal, or send its agent a prompt"
 msgstr "Agir sur ce terminal, ou envoyer une consigne à son agent"
+
+#: src/components/task-row.tsx
+msgid "Actions"
+msgstr "Actions"
 
 #. placeholder {0}: row.name
 #. placeholder {0}: sessionTitleOr(session, t`Untitled session`)
@@ -977,6 +981,10 @@ msgstr "Annuler la modification de {0}"
 msgid "Cancel queued message"
 msgstr "Annuler le message en attente"
 
+#: src/components/task-row.tsx
+msgid "Cancel task"
+msgstr "Annuler la tâche"
+
 #: src/components/agent-composer.tsx
 msgid "Cancel this queued message"
 msgstr "Annuler ce message en attente"
@@ -1350,6 +1358,10 @@ msgstr "Ordinateurs"
 msgid "Configure your speech service, then hold Send to record. Tap the animation to stop and transcribe."
 msgstr "Configurez votre service vocal, puis maintenez Envoyer pour enregistrer. Touchez l’animation pour arrêter et transcrire"
 
+#: src/components/task-row.tsx
+msgid "Confirm cancel"
+msgstr "Confirmer l’annulation"
+
 #: src/components/settings-storage.tsx
 msgid "Confirm clear cache"
 msgstr "Confirmer le vidage du cache"
@@ -1673,6 +1685,10 @@ msgstr "Copie…"
 msgid "Could not add a file"
 msgstr "Impossible d’ajouter le fichier"
 
+#: src/components/task-row.tsx
+msgid "Could not cancel the task"
+msgstr "Impossible d’annuler la tâche"
+
 #: src/components/agent-workbench.tsx
 msgid "Could not change delivery"
 msgstr "Impossible de changer la remise"
@@ -1775,8 +1791,7 @@ msgstr "Impossible de charger les jetons"
 msgid "Could not load what is running."
 msgstr "Impossible de charger ce qui tourne"
 
-#: src/components/home-computer-cards.tsx
-#: src/components/server-tasks-sheet.tsx
+#: src/components/task-row.tsx
 msgid "Could not mark the task done"
 msgstr "Impossible de marquer la tâche comme terminée"
 
@@ -2407,7 +2422,7 @@ msgstr "Chaque fichier modifié dans une arborescence avec le total des lignes. 
 msgid "Every screen in the app."
 msgstr "Tous les écrans de l'app"
 
-#: src/components/home-computer-cards.tsx
+#: src/components/task-row.tsx
 msgid "exit {code}"
 msgstr "sortie {code}"
 
@@ -3282,8 +3297,7 @@ msgstr "Gérer les machines"
 msgid "Manage SSH hosts"
 msgstr "Gérer les hôtes SSH"
 
-#: src/components/home-computer-cards.tsx
-#: src/components/server-tasks-sheet.tsx
+#: src/components/task-row.tsx
 msgid "Mark done"
 msgstr "Marquer comme terminée"
 
@@ -3896,10 +3910,10 @@ msgstr "En ligne"
 msgid "ONLINE"
 msgstr "EN LIGNE"
 
-#: src/components/home-computer-cards.tsx
 #: src/components/home-connections.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/open-web-service-sheet.tsx
+#: src/components/task-row.tsx
 msgid "Open"
 msgstr "Ouvrir"
 
@@ -5103,11 +5117,14 @@ msgid "Sending to"
 msgstr "Envoi à"
 
 #: src/components/home-computer-cards.tsx
+msgid "Sends your next goal here."
+msgstr "Envoie ici votre prochain objectif"
+
 #: src/components/home-connections.tsx
 msgid "Sends your next goal here. Long press to open it."
 msgstr "Envoie ici votre prochain objectif. Appui long pour l’ouvrir"
 
-#: src/components/home-computer-cards.tsx
+#: src/components/task-row.tsx
 msgid "Sent · waiting for {computer}"
 msgstr "Envoyé · en attente de {computer}"
 
@@ -5510,7 +5527,7 @@ msgctxt "task state"
 msgid "Starting"
 msgstr "Démarrage"
 
-#: src/components/home-computer-cards.tsx
+#: src/components/task-row.tsx
 msgid "Starting {agent}…"
 msgstr "Démarrage de {agent}…"
 
@@ -5768,10 +5785,10 @@ msgstr "Fichiers temporaires"
 #: src/app/commands.tsx
 #: src/app/settings-terminal.tsx
 #: src/app/settings.tsx
-#: src/components/home-computer-cards.tsx
 #: src/components/home-launch-actions.tsx
 #: src/components/home-recent-sessions.tsx
 #: src/components/settings-server-capabilities.tsx
+#: src/components/task-row.tsx
 #: src/i18n/labels.ts
 msgid "Terminal"
 msgstr "Terminal"

@@ -6,12 +6,12 @@ import { StyleSheet, View } from 'react-native';
 
 import { useTaskIndexFor } from '@/components/use-task-index';
 import { PressableScale } from '@/components/pressable-scale';
-import { TaskStatusGlyph } from '@/components/task-status-glyph';
+import { TaskStateIcon, useTaskRowLine } from '@/components/task-row';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { Text } from '@/components/text';
 import { ThemeIcon } from '@/components/theme-icon';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
-import { taskKindWord, taskStateWord } from '@/i18n/labels';
+import { taskRowVisual, taskTitle } from '@/lib/home-computer-cards';
 import type { GatewayRecord } from '@/lib/gateway-storage';
 import {
   homeContinueComputerLabel,
@@ -97,18 +97,18 @@ function WaitingTaskRow({
   onOpen: () => void;
 }) {
   const profile = useAppearanceProfile();
-  const { _ } = useLinguiRuntime();
   const theme = useThemeTokens();
   const background = useSurfaceBackground();
   const { task } = row;
-  const title = task.goal || task.taskId;
-  const meta = homeContinueMetaParts({
-    kind: _(taskKindWord[task.kind]),
-    computer: homeContinueComputerLabel(servers, row.serverId),
-    status: _(taskStateWord[task.state]),
-  })
-    .map((part) => part.text)
-    .join(META_SEPARATOR);
+  const discovery = useAgents((state) => state.index.servers[row.serverId]);
+  // The same icon and line as the row on its computer's card (`taskRowVisual`),
+  // with the computer named, since this list spans every computer.
+  const visual = taskRowVisual(task, { canComplete: false, acknowledged: true });
+  // A waiting line names no age, so no clock is needed.
+  const line = useTaskRowLine(discovery)(task, visual, task.updatedMs);
+  const title = taskTitle(task);
+  const computer = homeContinueComputerLabel(servers, row.serverId);
+  const meta = [computer, line.text].filter(Boolean).join(META_SEPARATOR);
   return (
     <PressableScale
       testID={`home-attention-task-${task.taskId}`}
@@ -124,12 +124,12 @@ function WaitingTaskRow({
           borderRadius: profile.chrome.noticeCard,
         },
       ]}>
-      <TaskStatusGlyph state={task.state} size={20} />
+      <TaskStateIcon visual={visual} size={20} />
       <View style={styles.copy}>
         <Text weight="semibold" variant="bodySmall" numberOfLines={2}>
           {title}
         </Text>
-        <Text variant="caption" color={theme.colors.textMuted} numberOfLines={1}>
+        <Text variant="caption" color={line.color} numberOfLines={1}>
           {meta}
         </Text>
       </View>
