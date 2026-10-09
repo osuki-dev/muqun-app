@@ -1,6 +1,14 @@
 import { describe, expect, test } from 'bun:test';
 
-import { isTerminalTaskState, parseTaskEvent, parseTaskList, parseTaskView } from '../task-ledger';
+import {
+  isTerminalTaskState,
+  ledgerTaskBody,
+  parseCreatedLedgerTask,
+  parseTaskEvent,
+  parseTaskList,
+  parseTaskView,
+  taskListPath,
+} from '../task-ledger';
 
 describe('parseTaskView', () => {
   test('reads a pane-bound command with snake_case keys', () => {
@@ -95,5 +103,77 @@ describe('parseTaskList', () => {
 
   test('an empty tasks array is a real empty list', () => {
     expect(parseTaskList({ tasks: [] })).toEqual([]);
+  });
+});
+
+describe('the task tree fields', () => {
+  test('parent, origin, label, requester and children are read', () => {
+    expect(
+      parseTaskView({
+        task_id: 't2',
+        state: 'working',
+        kind: 'delegation',
+        goal: 'fix the failing test',
+        binding: { kind: 'agent_session', agent_id: 'opencode', asid: 'ses_1' },
+        updated_ms: 5,
+        parent_task_id: 't1',
+        origin: 'device',
+        label: ' fix test ',
+        requested_by: { kind: 'device', id: 'dev-1', name: 'Tablet' },
+        children: { total: 2, active: 1, waiting: 1, failed: 0 },
+      })
+    ).toMatchObject({
+      parentTaskId: 't1',
+      origin: 'device',
+      label: 'fix test',
+      requestedBy: { id: 'dev-1', name: 'Tablet' },
+      children: { total: 2, active: 1, waiting: 1, failed: 0 },
+    });
+  });
+
+  test('an older gateway leaves them out, and an unknown origin is dropped', () => {
+    const view = parseTaskView({
+      task_id: 't',
+      state: 'done',
+      kind: 'command',
+      goal: 'x',
+      updated_ms: 1,
+      parent_task_id: null,
+      origin: 'somewhere',
+      label: null,
+    });
+    expect(Object.keys(view ?? {}).sort()).toEqual(
+      ['binding', 'goal', 'kind', 'state', 'taskId', 'updatedMs'].sort()
+    );
+  });
+});
+
+describe('POST /api/tasks', () => {
+  test('the body is snake_case and leaves out what was not given', () => {
+    expect(ledgerTaskBody({ goal: 'g', agentId: 'opencode', model: 'p/m', label: '  ' })).toEqual({
+      goal: 'g',
+      agent_id: 'opencode',
+      model: 'p/m',
+    });
+  });
+
+  test('the answer is the task plus the session it opened', () => {
+    const created = parseCreatedLedgerTask({
+      task_id: 't',
+      state: 'working',
+      kind: 'delegation',
+      goal: 'g',
+      binding: { kind: 'agent_session', agent_id: 'opencode', asid: 'ses_9' },
+      updated_ms: 1,
+      asid: 'ses_9',
+    });
+    expect(created?.asid).toBe('ses_9');
+    expect(created?.task.taskId).toBe('t');
+    expect(parseCreatedLedgerTask({ task_id: 't', state: 'failed', updated_ms: 1 })).toBeNull();
+  });
+
+  test('a root query is encoded', () => {
+    expect(taskListPath({ limit: 100, root: 't 1' })).toBe('/api/tasks?limit=100&root=t%201');
+    expect(taskListPath()).toBe('/api/tasks');
   });
 });

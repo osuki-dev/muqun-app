@@ -283,6 +283,32 @@ describe('subscribing', () => {
     expect(all.log).toEqual(['resync']);
   });
 
+  test('a task-only socket drops session frames and closes when the cards let go', () => {
+    const h = harness();
+    const tasks: string[] = [];
+    const release = h.socket.watchTasks({
+      onTaskUpdated: (task) => tasks.push(task.taskId),
+    });
+    h.latest().deliver(hello());
+    expect(h.latest().sent).toEqual(['{"t":"subscribe_all"}']);
+    // subscribe_all carries every session's events too; nothing listens to them.
+    expect(() => h.latest().deliver(statusEvent('ses_9', 1))).not.toThrow();
+    h.latest().deliver(
+      JSON.stringify({
+        t: 'event',
+        asid: null,
+        seq: 3,
+        event: 'task.updated',
+        data: { task_id: 't7', state: 'working', kind: 'delegation', goal: 'g', updated_ms: 1 },
+      })
+    );
+    expect(tasks).toEqual(['t7']);
+    release();
+    h.clock.advance(1_500);
+    expect(h.latest().closed).toBe(true);
+    expect(h.socket.state).toBe('idle');
+  });
+
   test('an unwatched socket lingers, then closes', () => {
     const h = harness();
     const release = h.socket.watch('ses_1', recorder().listener);

@@ -47,6 +47,17 @@ describe('upsertTask', () => {
     expect(index.s1?.fetchedAt).toBe(100);
   });
 
+  test('an older frame arriving late does not replace a newer view; a tie takes the later frame', () => {
+    let index = upsertTask({}, 's1', task('p', 'working', 20));
+    const late = upsertTask(index, 's1', task('p', 'queued', 10));
+    expect(late).toBe(index);
+    index = upsertTask(index, 's1', {
+      ...task('p', 'working', 20),
+      children: { total: 1, active: 1, waiting: 0, failed: 0 },
+    });
+    expect(index.s1?.tasks[0]?.children?.total).toBe(1);
+  });
+
   test('leaves other servers alone and does not mutate its input', () => {
     const before = replaceTasks({}, 's2', [task('x', 'done', 1)], 5);
     const after = upsertTask(before, 's1', task('a', 'working', 10));
