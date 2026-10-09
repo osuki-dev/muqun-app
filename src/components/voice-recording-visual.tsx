@@ -14,8 +14,9 @@ import { fadeOut, timing } from '@/lib/motion';
 const WIDTH = 280;
 const HEIGHT = 260;
 
-// The monogram is geometry, not a composited bitmap. Its signed-distance field
-// drives the liquid silhouette, rounded metal, travelling light and echoes.
+// Three folded sheets of light form an open spatial field. The mark is
+// suggested by paired crests and a returning loop, never drawn as letterforms.
+// Analytic curves keep the work bounded: no ray marching or texture sampling.
 const source = `
 uniform float2 size;
 uniform float time;
@@ -25,97 +26,88 @@ uniform float reveal;
 uniform float motion;
 uniform float dark;
 
-float segment(float2 p, float2 a, float2 b) {
-  float2 v = b - a;
-  return length(p - a - v * clamp(dot(p - a, v) / dot(v, v), 0.0, 1.0));
+float2 turn(float2 p, float angle) {
+  float c = cos(angle);
+  float s = sin(angle);
+  return float2(c * p.x - s * p.y, s * p.x + c * p.y);
 }
 
-float join(float a, float b, float k) {
-  float h = max(k - abs(a - b), 0.0) / k;
-  return min(a, b) - h * h * k * 0.25;
-}
-
-float monogram(float2 p) {
-  float m = segment(p, float2(-0.31, 0.16), float2(-0.31, -0.17));
-  m = join(m, segment(p, float2(-0.31, -0.17), float2(-0.15, 0.035)), 0.025);
-  m = join(m, segment(p, float2(-0.15, 0.035), float2(0.01, -0.17)), 0.025);
-  m = join(m, segment(p, float2(0.01, -0.17), float2(0.01, 0.16)), 0.025);
-  float2 q = (p - float2(0.155, -0.005)) / float2(0.15, 0.175);
-  float ring = abs(length(q) - 1.0) * 0.15;
-  float tail = segment(p, float2(0.19, 0.09), float2(0.32, 0.22));
-  return join(m, join(ring, tail, 0.028), 0.025);
+float hash(float2 p) {
+  return fract(sin(dot(p, float2(127.1, 311.7))) * 43758.5453);
 }
 
 half4 main(float2 coord) {
   float unit = min(size.x, size.y);
-  float aa = 0.75 / unit;
-  float voice = sqrt(clamp(level, 0.0, 1.0)) * (1.0 - processing);
-  float energy = motion * voice;
-  float breath = sin(time * 1.35);
-  float scale = 0.90 + reveal * 0.10 + energy * 0.07
-    + motion * breath * 0.009 - processing * 0.045;
-  float2 p = (coord - size * float2(0.5, 0.49)) / (unit * scale);
+  float aa = 0.65 / unit;
+  float voice = sqrt(clamp(level, 0.0, 1.0)) * motion * (1.0 - processing);
+  float t = time;
+  float expansion = 0.90 + reveal * 0.10 + voice * 0.12 - processing * 0.07;
+  float2 p = (coord - size * 0.5) / (unit * expansion);
+  float r = length(p);
+  float3 light = float3(0.0);
+  float density = 0.0;
+  float3 ice = float3(0.12, 0.87, 1.0);
+  float3 violet = float3(0.48, 0.32, 0.96);
 
-  // Slow domain flow bends the actual strokes. The microphone opens the mark;
-  // transcription settles its silhouette while the light keeps circulating.
-  float flow = motion * (0.0035 + voice * 0.017) * (1.0 - processing * 0.8);
-  p += flow * float2(sin(p.y * 10.0 + time * 1.8),
-    sin(p.x * 11.0 - time * 1.6));
-  float width = 0.023 + energy * 0.004;
-  float d = monogram(p);
-  float edge = d - width;
-  float shape = 1.0 - smoothstep(-aa, aa, edge);
-
-  // A rounded cross-section and grazing highlight give the ribbon depth. No
-  // opaque plate: negative space and the sheet's own theme remain visible.
-  float e = 0.001;
-  float2 gradient = float2(monogram(p + float2(e, 0.0)) - monogram(p - float2(e, 0.0)),
-    monogram(p + float2(0.0, e)) - monogram(p - float2(0.0, e)));
-  gradient /= max(length(gradient), 0.0001);
-  float radial = clamp(d / width, 0.0, 1.0);
-  float3 normal = float3(gradient * radial, sqrt(max(0.0, 1.0 - radial * radial)));
-  float diffuse = max(dot(normal, normalize(float3(-0.5, -0.65, 1.0))), 0.0);
-  float specular = pow(max(dot(normal, normalize(float3(-0.4, -0.55, 0.76))), 0.0), 24.0);
-  float hue = 0.5 + 0.5 * sin(p.x * 7.5 - p.y * 5.0 - time * 0.55);
-  float3 cyan = float3(0.05, 0.80, 0.86);
-  float3 violet = float3(0.43, 0.33, 0.95);
-  float3 spectrum = mix(cyan, violet, hue);
-  float traveling = pow(0.5 + 0.5 * sin(p.x * 12.0 + p.y * 9.0
-    - time * mix(1.25, 2.3, processing)), 9.0);
-  float3 metal = mix(float3(0.018, 0.10, 0.17), spectrum, 0.28 + diffuse * 0.52);
-  metal += float3(0.65, 0.92, 1.0) * specular * 0.85;
-  metal += spectrum * traveling * (0.18 + energy * 0.28 + processing * 0.18);
-  float rim = exp(-abs(edge) / (aa * 1.35));
-  metal += float3(0.65, 0.95, 1.0) * rim * (0.25 + traveling * 0.42);
-
-  // Quiet echoes follow the MQ silhouette itself. Speech releases them farther
-  // out; processing draws them inward. No periodic on/off flash or fake progress.
-  float echoes = 0.0;
+  // Folded sheets are composed of fine parallel filaments, rather than solid
+  // tubes. Opposing flows cross with varying depth and expose the hollow core.
   for (int i = 0; i < 3; i++) {
-    float offset = float(i) / 3.0;
-    float travel = fract(time * 0.18 + offset);
-    float spread = mix(travel, 1.0 - travel, processing);
-    float distance = 0.014 + spread * (0.044 + energy * 0.065);
-    float envelope = sin(travel * 3.141593);
-    float visibility = 0.5 + 0.5 * sin(p.x * 9.0 - p.y * 6.0 + offset * 6.283185 + time);
-    echoes += exp(-abs(edge - distance) / (aa * 0.8))
-      * envelope * envelope * visibility * (0.10 + energy * 0.16);
+    float k = float(i);
+    float2 q = turn(p, k * 1.05 + t * (0.075 - k * 0.055));
+    q.y /= 0.88 + k * 0.055;
+    float angle = atan(q.y, q.x);
+    float radius = 0.235 + k * 0.012;
+    float fold = sin(angle * 2.0 + t * 0.55 + k * 1.8) * (0.028 + voice * 0.026);
+    fold += sin(angle * 3.0 - t * 0.4 + k * 2.2) * 0.017;
+    radius += fold * (1.0 - processing * 0.50);
+    float d = length(q) - radius;
+    float depth = 0.5 + 0.5 * sin(angle * 2.0 + k * 2.0 + t * 0.22);
+    float width = 0.018 + depth * 0.020 + voice * 0.010;
+    float u = d / width;
+    float veil = exp(-u * u * 1.4);
+    float phase = u * 22.0 + angle * 8.0 - t * (1.1 + processing * 1.2) + k * 2.1;
+    float strandDistance = abs(fract(phase / 6.283185 + 0.5) - 0.5) * 6.283185 * width / 22.0;
+    float fibers = 1.0 - smoothstep(aa * 0.12, aa * 0.82, strandDistance);
+    float edge = exp(-abs(d - width * 0.75) / (aa * 0.85));
+    float wake = exp(-abs(d) / (width * 1.4));
+    float current = pow(0.5 + 0.5 * cos(angle - t * (0.6 + processing * 0.6)
+      + k * 2.1), 10.0);
+    float front = 0.24 + depth * 0.76;
+    float glow = veil * (0.13 + fibers * 0.65) * front
+      + edge * (0.10 + current * 0.8) + wake * 0.055;
+    float3 hue = mix(ice, violet, 0.5 + 0.5 * sin(angle + k * 1.3 - t * 0.22));
+    float3 ink = hue * float3(0.34, 0.48, 0.78);
+    float3 color = mix(ink, hue, dark * 0.78 + depth * 0.16);
+    color = mix(color, float3(0.78, 0.98, 1.0), current * depth * 0.65);
+    light += color * glow;
+    density += glow;
   }
-  float halo = exp(-max(edge, 0.0) / 0.023) * (0.11 + energy * 0.15);
-  float shadow = exp(-abs(monogram(p - float2(0.005, 0.012)) - width) / 0.016) * 0.10;
-  float auraAlpha = clamp(echoes + halo + shadow, 0.0, 0.55) * (1.0 - shape);
-  float3 aura = mix(spectrum * 0.60, spectrum, dark);
-  float3 color = clamp(metal, 0.0, 1.0) * shape + aura * auraAlpha;
-  float alpha = shape + auraAlpha;
+
+  // A diffuse inner field adds depth without an opaque disc. Sparse particles
+  // orbit within it; the mask disappears smoothly before the canvas boundary.
+  float core = exp(-r * r / 0.023) * (0.07 + voice * 0.08);
+  float2 dust = turn(p, -t * 0.07) * 85.0;
+  float2 cell = floor(dust);
+  float seed = hash(cell);
+  float2 center = float2(0.2 + 0.6 * seed, 0.2 + 0.6 * hash(cell + 7.0));
+  float2 delta = fract(dust) - center;
+  float star = exp(-dot(delta, delta) * 140.0) * step(0.92, seed);
+  star *= smoothstep(0.12, 0.19, r) * (1.0 - smoothstep(0.31, 0.40, r));
+  star *= 0.16 + 0.14 * sin(t * 0.7 + seed * 20.0);
+  light += ice * (core + star) * mix(0.48, 0.9, dark);
+  density += core + star;
+
+  float alpha = 1.0 - exp(-density * 1.5);
+  float3 color = light / max(density, 0.0001);
   float arrival = smoothstep(0.0, 1.0, reveal);
-  return half4(color * arrival, alpha * arrival);
+  return half4(clamp(color, 0.0, 1.0) * alpha * arrival, alpha * arrival);
 }`;
 
-// A shader compilation failure still leaves an identifiable, tappable mark.
+// Preserve the same abstract silhouette if a device cannot compile the effect.
 const fallback = Skia.Path.MakeFromSVGString(
-  'M59.4 169 L59.4 83.2 L101 136.5 L142.6 83.2 L142.6 169 ' +
-    'M219.3 125.9 A39 45.5 0 1 1 141.3 125.9 A39 45.5 0 1 1 219.3 125.9 ' +
-    'M189.4 150.6 L223.2 184.4'
+  'M74 107 C93 57 208 99 206 145 C204 187 63 158 74 107 ' +
+    'M103 65 C159 57 193 193 142 195 C90 195 53 73 103 65 ' +
+    'M66 156 C49 113 182 55 208 101 C234 149 87 199 66 156'
 );
 const departure = fadeOut('short');
 
@@ -179,7 +171,7 @@ export function VoiceRecordingVisual({
             <Path
               path={fallback}
               style="stroke"
-              strokeWidth={12}
+              strokeWidth={2}
               strokeCap="round"
               strokeJoin="round"
               color={theme.colors.primary}
