@@ -203,10 +203,6 @@ msgstr "{agentName} がリクエストを拒否しました: {message}"
 msgid "{agentName} service offline. Tap for setup instructions"
 msgstr "{agentName} のサービスがオフラインです。タップしてセットアップ手順を表示"
 
-#: src/components/home-recent-sessions.tsx
-msgid "{agentName} session"
-msgstr "{agentName} のセッション"
-
 #: src/components/new-task-action.tsx
 msgid "{agentName} sessions are not supported. Tap for details"
 msgstr "{agentName} のセッションはサポートされていません。タップして詳細を表示"
@@ -1306,6 +1302,7 @@ msgid "Completed"
 msgstr "完了"
 
 #: src/components/home-composer.tsx
+#: src/components/home-editorial-layout.tsx
 msgid "Computers"
 msgstr "コンピュータ"
 
@@ -1406,7 +1403,6 @@ msgstr "{address} に接続しています"
 msgid "Connecting…"
 msgstr "接続中…"
 
-#: src/components/home-editorial-layout.tsx
 #: src/components/pad-server-rail.tsx
 msgid "Connections"
 msgstr "接続"
@@ -5045,6 +5041,10 @@ msgstr "次に送信: {0}"
 #: src/components/agent-assignment-bar.tsx
 msgid "Sending to"
 msgstr "送信先"
+
+#: src/components/home-connections.tsx
+msgid "Sends your next goal here. Long press to open it."
+msgstr "次の目標をここに送ります。長押しで開きます"
 
 #: src/app/agent-guide.tsx
 #: src/app/artifacts.tsx

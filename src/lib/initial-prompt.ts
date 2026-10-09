@@ -60,3 +60,26 @@ export function claimInitialPrompt(
   offers.delete(promptId);
   return offer.prompt;
 }
+
+export type InitialPromptAction =
+  | { kind: 'send'; prompt: string }
+  | { kind: 'prefill'; prompt: string }
+  | { kind: 'none' };
+
+/**
+ * What a ready workbench does with Home's goal. A live offer is sent. An offer
+ * that is gone -- expired while a slow tunnel came up, or already claimed --
+ * must not lose the goal either: the route's readable copy is put in the
+ * composer, unsent, for the reader to send. Never over a session that already
+ * shows something, where the goal would read as a reply to it.
+ */
+export function initialPromptAction(input: {
+  claimed: string | null;
+  routePrompt?: string;
+  sessionHasContent: boolean;
+}): InitialPromptAction {
+  if (input.claimed !== null) return { kind: 'send', prompt: input.claimed };
+  const fallback = input.routePrompt?.trim();
+  if (!fallback || input.sessionHasContent) return { kind: 'none' };
+  return { kind: 'prefill', prompt: fallback };
+}

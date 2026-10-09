@@ -203,10 +203,6 @@ msgstr "{agentName} đã từ chối yêu cầu: {message}"
 msgid "{agentName} service offline. Tap for setup instructions"
 msgstr "Dịch vụ {agentName} ngoại tuyến. Chạm để xem hướng dẫn thiết lập"
 
-#: src/components/home-recent-sessions.tsx
-msgid "{agentName} session"
-msgstr "Phiên {agentName}"
-
 #: src/components/new-task-action.tsx
 msgid "{agentName} sessions are not supported. Tap for details"
 msgstr "Phiên {agentName} không được hỗ trợ. Chạm để xem chi tiết"
@@ -1306,6 +1302,7 @@ msgid "Completed"
 msgstr "Đã hoàn tất"
 
 #: src/components/home-composer.tsx
+#: src/components/home-editorial-layout.tsx
 msgid "Computers"
 msgstr "Máy tính"
 
@@ -1406,7 +1403,6 @@ msgstr "Đang kết nối đến {address}"
 msgid "Connecting…"
 msgstr "Đang kết nối…"
 
-#: src/components/home-editorial-layout.tsx
 #: src/components/pad-server-rail.tsx
 msgid "Connections"
 msgstr "Kết nối"
@@ -5045,6 +5041,10 @@ msgstr "Gửi tiếp theo: {0}"
 #: src/components/agent-assignment-bar.tsx
 msgid "Sending to"
 msgstr "Đang gửi đến"
+
+#: src/components/home-connections.tsx
+msgid "Sends your next goal here. Long press to open it."
+msgstr "Gửi mục tiêu tiếp theo tới đây. Nhấn giữ để mở"
 
 #: src/app/agent-guide.tsx
 #: src/app/artifacts.tsx

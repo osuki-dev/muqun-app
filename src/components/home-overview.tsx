@@ -11,6 +11,7 @@ import { Card } from '@/components/themed-card';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { Button } from '@/components/themed-button';
 import { Skeleton } from '@/components/themed-skeleton';
+import * as Haptics from 'expo-haptics';
 import { Image } from 'expo-image';
 import {
   type Href,
@@ -158,6 +159,14 @@ export type HomeOverviewProps = {
  * 12 under the card (the 44 tap box centres it) and inset to the rows' text.
  */
 const PAD_WORK_LINK = { marginTop: 0, paddingVertical: 0, paddingHorizontal: 12 } as const;
+/**
+ * How far above the keyboard the focused Home composer field is kept on a
+ * phone. The field's bottom is what the scroll view aligns; Send sits beside it,
+ * or -- once the draft wraps -- on its own 40pt row under it, so the offset
+ * clears that row, the composer's padding, and the band at the keyboard's top
+ * edge where iOS swallows taps.
+ */
+const HOME_COMPOSER_KEYBOARD_OFFSET = 72;
 
 export function HomeOverview({
   width,
@@ -293,6 +302,8 @@ export function HomeOverview({
   const overviewScroll = useRef<React.ComponentRef<typeof KeyboardAwareScrollView>>(null);
   const restoredScroll = useRef<React.ComponentRef<typeof KeyboardAwareScrollView>>(null);
   const savedScrollY = useRef(0);
+  const composerAnchor = useRef<View>(null);
+  const [composerPulse, setComposerPulse] = useState(0);
   const rememberScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
     savedScrollY.current = event.nativeEvent.contentOffset.y;
   };
@@ -739,13 +750,31 @@ export function HomeOverview({
     // Hidden with nothing paired: the pair card is that page's one action.
     const composer =
       hydrationError || loading || launchController.servers.length === 0 ? null : (
-        <HomeComposer
-          controller={launchController}
-          reachabilityByServer={padReachabilityByServer}
-          currentServerId={record?.serverId}
-          onNewAgent={commands.newAgent}
-        />
+        <View ref={composerAnchor} collapsable={false}>
+          <HomeComposer
+            controller={launchController}
+            reachabilityByServer={padReachabilityByServer}
+            currentServerId={record?.serverId}
+            targetPulse={composerPulse}
+            onNewAgent={commands.newAgent}
+          />
+        </View>
       );
+    // A computer row tapped below the fold: bring the composer it now feeds
+    // back into view. The Pad work column scrolls on its own and keeps it near.
+    const targetComposer = (serverId: string) => {
+      launchController.choose(serverId);
+      void Haptics.selectionAsync();
+      setComposerPulse((pulse) => pulse + 1);
+      if (padLaunch) return;
+      composerAnchor.current?.measureInWindow((_x, y, _width, height) => {
+        if (y >= insets.top && y + height <= windowHeight - insets.bottom) return;
+        overviewScroll.current?.scrollTo({
+          y: Math.max(0, scrollY.get() + y - insets.top - 16),
+          animated: true,
+        });
+      });
+    };
     const editorialContent = (
       <View
         testID="home-editorial"
@@ -760,6 +789,8 @@ export function HomeOverview({
         <KeyboardAwareScrollView
           ref={overviewScroll}
           keyboardShouldPersistTaps="handled"
+          // Phone only: the Pad composer sits in its own work column.
+          bottomOffset={isPad ? undefined : HOME_COMPOSER_KEYBOARD_OFFSET}
           onContentSizeChange={restoreScroll}
           onScrollEndDrag={rememberScroll}
           onMomentumScrollEnd={rememberScroll}
@@ -927,6 +958,7 @@ export function HomeOverview({
               recent={
                 !loading && !hydrationError && recentEntries.length > 0 ? (
                   <HomeRecentSessions
+                    pad={isPad}
                     limit={padLaunch ? 8 : undefined}
                     linkStyle={padLaunch ? PAD_WORK_LINK : undefined}
                     selectedServerId={launchController.chosen?.serverId}
@@ -969,6 +1001,7 @@ export function HomeOverview({
                     servers={records}
                     hosts={sshRows}
                     onOpenServer={openServer}
+                    onSelectServer={targetComposer}
                     onOpenHost={(hostId) => {
                       void commands.openSsh(hostId);
                     }}

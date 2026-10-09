@@ -10,7 +10,16 @@ import { Text } from '@/components/text';
 import { ThemeIcon } from '@/components/theme-icon';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import type { GatewayRecord } from '@/lib/gateway-storage';
-import type { HomeTarget } from '@/lib/home-recents';
+import {
+  homeContinueComputerLabel,
+  homeContinueMetaParts,
+  homePathLabel,
+  META_SEPARATOR,
+} from '@/lib/home-continue-row';
+import { agentDisplayName } from '@/lib/home-launch-model';
+import { homeTargetAgentId, type HomeTarget } from '@/lib/home-recents';
+import type { HomeAttentionSnapshot } from '@/lib/home-attention';
+import { useAgents } from '@/stores/agents';
 import { useHomeAttention } from '@/stores/home-attention';
 
 const OBSERVATION_DATE_FORMAT: Intl.DateTimeFormatOptions = {
@@ -28,11 +37,6 @@ export function HomeAttention({
   servers: readonly GatewayRecord[];
   onOpen: (target: HomeTarget) => void;
 }) {
-  const { t } = useLingui();
-  const profile = useAppearanceProfile();
-  const { i18n } = useLinguiRuntime();
-  const theme = useThemeTokens();
-  const background = useSurfaceBackground();
   const observations = useHomeAttention((state) => state.byTarget);
   const pending = Object.entries(observations).filter(
     ([, snapshot]) =>
@@ -44,53 +48,70 @@ export function HomeAttention({
   }
   return (
     <View testID="home-attention" style={styles.list}>
-      {pending.map(([key, snapshot]) => {
-        const count = snapshot.requestIds.length;
-        const when = new Date(snapshot.observedAt).toLocaleString(
-          i18n.locale,
-          OBSERVATION_DATE_FORMAT
-        );
-        const server = servers.find((entry) => entry.serverId === snapshot.target.serverId);
-        return (
-          <PressableScale
-            key={key}
-            testID="home-attention-open"
-            accessibilityRole="button"
-            onPress={() => onOpen(snapshot.target)}
-            style={[
-              styles.row,
-              {
-                backgroundColor: background(theme.colors.surface),
-                borderColor: theme.colors.borderStrong,
-                borderLeftColor: theme.colors.warning,
-                borderRadius: profile.chrome.noticeCard,
-              },
-            ]}>
-            <CircleAlert size={20} color={theme.colors.warning} />
-            <View style={styles.copy}>
-              <Text weight="semibold" variant="bodySmall">
-                {t`${count} requests last observed`}
-              </Text>
-              <Text variant="caption" color={theme.colors.textMuted} numberOfLines={2}>
-                {server?.label} · {snapshot.target.directory}
-              </Text>
-              <Text variant="caption" color={theme.colors.textSubtle}>
-                {t`Last checked ${when}`}
-              </Text>
-              <Text variant="caption" color={theme.colors.textSubtle}>
-                {t`Open to check the current state`}
-              </Text>
-            </View>
-            <ThemeIcon
-              name="home.arrow"
-              fallback={ChevronRight}
-              size={16}
-              color={theme.colors.primary}
-            />
-          </PressableScale>
-        );
-      })}
+      {pending.map(([key, snapshot]) => (
+        <AttentionRow key={key} snapshot={snapshot} servers={servers} onOpen={onOpen} />
+      ))}
     </View>
+  );
+}
+
+function AttentionRow({
+  snapshot,
+  servers,
+  onOpen,
+}: {
+  snapshot: HomeAttentionSnapshot;
+  servers: readonly GatewayRecord[];
+  onOpen: (target: HomeTarget) => void;
+}) {
+  const { t } = useLingui();
+  const profile = useAppearanceProfile();
+  const { i18n } = useLinguiRuntime();
+  const theme = useThemeTokens();
+  const background = useSurfaceBackground();
+  const { target } = snapshot;
+  const agents = useAgents((state) => state.index.servers[target.serverId]?.agents?.agents);
+  const count = snapshot.requestIds.length;
+  const when = new Date(snapshot.observedAt).toLocaleString(i18n.locale, OBSERVATION_DATE_FORMAT);
+  // The same meta line as a Continue row: agent · computer · path.
+  const meta = homeContinueMetaParts({
+    kind: agentDisplayName(agents, homeTargetAgentId(target)),
+    computer: homeContinueComputerLabel(servers, target.serverId),
+    path: target.directory ? homePathLabel(target.directory) : undefined,
+  })
+    .map((part) => part.text)
+    .join(META_SEPARATOR);
+  return (
+    <PressableScale
+      testID="home-attention-open"
+      accessibilityRole="button"
+      onPress={() => onOpen(target)}
+      style={[
+        styles.row,
+        {
+          backgroundColor: background(theme.colors.surface),
+          borderColor: theme.colors.borderStrong,
+          borderLeftColor: theme.colors.warning,
+          borderRadius: profile.chrome.noticeCard,
+        },
+      ]}>
+      <CircleAlert size={20} color={theme.colors.warning} />
+      <View style={styles.copy}>
+        <Text weight="semibold" variant="bodySmall">
+          {t`${count} requests last observed`}
+        </Text>
+        <Text variant="caption" color={theme.colors.textMuted} numberOfLines={1}>
+          {meta}
+        </Text>
+        <Text variant="caption" color={theme.colors.textSubtle}>
+          {t`Last checked ${when}`}
+        </Text>
+        <Text variant="caption" color={theme.colors.textSubtle}>
+          {t`Open to check the current state`}
+        </Text>
+      </View>
+      <ThemeIcon name="home.arrow" fallback={ChevronRight} size={16} color={theme.colors.primary} />
+    </PressableScale>
   );
 }
 

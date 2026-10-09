@@ -203,10 +203,6 @@ msgstr "{agentName} 拒絕了請求：{message}"
 msgid "{agentName} service offline. Tap for setup instructions"
 msgstr "{agentName} 服務已離線。點一下查看設定說明"
 
-#: src/components/home-recent-sessions.tsx
-msgid "{agentName} session"
-msgstr "{agentName} 工作階段"
-
 #: src/components/new-task-action.tsx
 msgid "{agentName} sessions are not supported. Tap for details"
 msgstr "不支援 {agentName} 工作階段。點一下查看詳細資料"
@@ -1306,6 +1302,7 @@ msgid "Completed"
 msgstr "已完成"
 
 #: src/components/home-composer.tsx
+#: src/components/home-editorial-layout.tsx
 msgid "Computers"
 msgstr "電腦"
 
@@ -1406,7 +1403,6 @@ msgstr "正在連線至 {address}"
 msgid "Connecting…"
 msgstr "連線中…"
 
-#: src/components/home-editorial-layout.tsx
 #: src/components/pad-server-rail.tsx
 msgid "Connections"
 msgstr "連線"
@@ -5045,6 +5041,10 @@ msgstr "下一個傳送：{0}"
 #: src/components/agent-assignment-bar.tsx
 msgid "Sending to"
 msgstr "傳送給"
+
+#: src/components/home-connections.tsx
+msgid "Sends your next goal here. Long press to open it."
+msgstr "下一個目標會送到這裡。長按可開啟"
 
 #: src/app/agent-guide.tsx
 #: src/app/artifacts.tsx

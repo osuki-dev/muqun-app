@@ -27,11 +27,11 @@ test('search and clear have accessible labels and no matches has its own message
 });
 
 test('provider ink is restricted to metadata Text, leaving the mark and title unchanged', () => {
-  expect(recent.match(/color=\{homeProviderTextColor\(/g)).toHaveLength(2);
+  // One span: the meta line's kind (an agent, or the agent a terminal runs).
+  expect(recent.match(/color=\{homeProviderTextColor\(/g)).toHaveLength(1);
   expect(recent).toContain('<AgentMark kind={agentKind} size={14} color={theme.colors.primary} />');
-  expect(recent).toContain(
-    'variant="bodySmall" weight="semibold" numberOfLines={2} style={styles.title}'
-  );
+  expect(recent).toContain('numberOfLines={terminal ? 1 : 2}');
+  expect(recent).toContain('style={styles.title}');
   expect(recent).not.toContain('backgroundColor: homeProviderTextColor');
 });
 

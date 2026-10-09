@@ -228,7 +228,8 @@ export function HomeEditorialLayout({
   const titleKey = `${coverTitle ?? ''}:${chromeFontFamily ?? 'system'}:${titleWeight}`;
   const { fontScale: windowFontScale } = useWindowDimensions();
   const fontScale = fontScaleProp ?? windowFontScale;
-  const hasAside = hasSlot(attention) || hasSlot(connections);
+  // Needs-you leads the main column on every layout, so only Computers is aside.
+  const hasAside = hasSlot(connections);
   // The Pad work column's headings take the same plate as the phone's sections.
   const scenePlate = useHomeScenePlate();
   const [measuredWidth, setMeasuredWidth] = useState(0);
@@ -341,8 +342,8 @@ export function HomeEditorialLayout({
 
   if (padLaunchLayout) {
     // A cover spread: the cover fills the left column top to bottom with the
-    // New-session block docked at its foot; the work column beside it (Continue,
-    // Connections) scrolls on its own. The page itself does not scroll.
+    // New-session block docked at its foot; the work column beside it (composer,
+    // needs-you, Continue, Computers) scrolls on its own. The page itself does not scroll.
     const launchWidth = padWorkColumnWidth(geometry.innerWidth);
     const coverWidth = geometry.innerWidth - launchWidth - 24;
     const titleFontSize =
@@ -549,6 +550,7 @@ export function HomeEditorialLayout({
             style={{ width: launchWidth, flexGrow: 0, flexShrink: 0 }}
             contentContainerStyle={styles.padWorkContent}>
             {hasSlot(padComposer) ? <View testID="home-pad-composer">{padComposer}</View> : null}
+            {hasSlot(attention) ? attention : null}
             {hasRecent || hasConnections ? (
               <View testID="home-pad-lower-band" style={styles.padWorkSections}>
                 {hasRecent ? (
@@ -574,7 +576,7 @@ export function HomeEditorialLayout({
                       accessibilityRole="header"
                       color={theme.colors.text}
                       style={[styles.padWorkTitle, scenePlate]}>
-                      {t`Connections`}
+                      {t`Computers`}
                     </Text>
                     {connections}
                   </View>
@@ -687,6 +689,7 @@ export function HomeEditorialLayout({
             ) : null}
           </View>
           <Animated.View style={[split ? styles.coverReadingColumn : undefined, readingEntryStyle]}>
+            {attention}
             {hasSlot(recent) ? (
               <EditorialSection
                 borderColor={theme.colors.border}
@@ -698,13 +701,12 @@ export function HomeEditorialLayout({
                 {recent}
               </EditorialSection>
             ) : null}
-            {attention}
             {hasSlot(connections) ? (
               <EditorialSection
                 borderColor={theme.colors.border}
                 textColor={theme.colors.text}
                 spacing={theme.spacing}
-                title={t`Connections`}>
+                title={t`Computers`}>
                 {connections}
               </EditorialSection>
             ) : null}
@@ -767,7 +769,7 @@ export function HomeEditorialLayout({
               styles.main,
               geometry.mode === 'two-column' ? { width: geometry.mainWidth } : styles.fullWidth,
             ]}>
-            {geometry.mode === 'one-column' && hasSlot(attention) ? attention : null}
+            {hasSlot(attention) ? attention : null}
             {hasSlot(recent) ? (
               <EditorialSection
                 borderColor={theme.colors.border}
@@ -784,7 +786,7 @@ export function HomeEditorialLayout({
                 borderColor={theme.colors.border}
                 textColor={theme.colors.text}
                 spacing={theme.spacing}
-                title={t`Connections`}>
+                title={t`Computers`}>
                 {connections}
               </EditorialSection>
             ) : null}
@@ -792,13 +794,12 @@ export function HomeEditorialLayout({
 
           {geometry.mode === 'two-column' ? (
             <View style={[styles.aside, { width: geometry.asideWidth }]}>
-              {hasSlot(attention) ? attention : null}
               {hasSlot(connections) ? (
                 <EditorialSection
                   borderColor={theme.colors.border}
                   textColor={theme.colors.text}
                   spacing={theme.spacing}
-                  title={t`Connections`}
+                  title={t`Computers`}
                   first>
                   {connections}
                 </EditorialSection>
@@ -868,7 +869,7 @@ export function HomeEditorialLayout({
             geometry.mode === 'two-column' ? { width: geometry.mainWidth } : styles.fullWidth,
           ]}>
           {hasArtwork && hasSlot(launches) ? <View style={styles.launches}>{launches}</View> : null}
-          {geometry.mode === 'one-column' && hasSlot(attention) ? attention : null}
+          {hasSlot(attention) ? attention : null}
           {hasSlot(recent) ? (
             <EditorialSection
               borderColor={theme.colors.border}
@@ -885,7 +886,7 @@ export function HomeEditorialLayout({
               borderColor={theme.colors.border}
               textColor={theme.colors.text}
               spacing={theme.spacing}
-              title={t`Connections`}>
+              title={t`Computers`}>
               {connections}
             </EditorialSection>
           ) : null}
@@ -893,14 +894,13 @@ export function HomeEditorialLayout({
 
         {geometry.mode === 'two-column' ? (
           <View style={[styles.aside, { width: geometry.asideWidth }]}>
-            {hasSlot(attention) ? attention : null}
             {hasSlot(connections) ? (
               <EditorialSection
                 borderColor={theme.colors.border}
                 textColor={theme.colors.text}
                 spacing={theme.spacing}
                 first
-                title={t`Connections`}>
+                title={t`Computers`}>
                 {connections}
               </EditorialSection>
             ) : null}

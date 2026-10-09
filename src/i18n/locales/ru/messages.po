@@ -203,10 +203,6 @@ msgstr "{agentName} отклонил запрос: {message}"
 msgid "{agentName} service offline. Tap for setup instructions"
 msgstr "Сервис {agentName} не в сети. Нажмите, чтобы открыть инструкции по настройке"
 
-#: src/components/home-recent-sessions.tsx
-msgid "{agentName} session"
-msgstr "Сессия {agentName}"
-
 #: src/components/new-task-action.tsx
 msgid "{agentName} sessions are not supported. Tap for details"
 msgstr "Сессии {agentName} не поддерживаются. Нажмите, чтобы узнать подробности"
@@ -1306,6 +1302,7 @@ msgid "Completed"
 msgstr "Выполнено"
 
 #: src/components/home-composer.tsx
+#: src/components/home-editorial-layout.tsx
 msgid "Computers"
 msgstr "Компьютеры"
 
@@ -1406,7 +1403,6 @@ msgstr "Подключаемся к {address}"
 msgid "Connecting…"
 msgstr "Подключение…"
 
-#: src/components/home-editorial-layout.tsx
 #: src/components/pad-server-rail.tsx
 msgid "Connections"
 msgstr "Подключения"
@@ -5045,6 +5041,10 @@ msgstr "Отправится следующим: {0}"
 #: src/components/agent-assignment-bar.tsx
 msgid "Sending to"
 msgstr "Отправка"
+
+#: src/components/home-connections.tsx
+msgid "Sends your next goal here. Long press to open it."
+msgstr "Следующая цель уйдёт сюда. Долгое нажатие — открыть"
 
 #: src/app/agent-guide.tsx
 #: src/app/artifacts.tsx

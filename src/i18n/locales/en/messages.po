@@ -203,10 +203,6 @@ msgstr "{agentName} refused the request: {message}"
 msgid "{agentName} service offline. Tap for setup instructions"
 msgstr "{agentName} service offline. Tap for setup instructions"
 
-#: src/components/home-recent-sessions.tsx
-msgid "{agentName} session"
-msgstr "{agentName} session"
-
 #: src/components/new-task-action.tsx
 msgid "{agentName} sessions are not supported. Tap for details"
 msgstr "{agentName} sessions are not supported. Tap for details"
@@ -1306,6 +1302,7 @@ msgid "Completed"
 msgstr "Completed"
 
 #: src/components/home-composer.tsx
+#: src/components/home-editorial-layout.tsx
 msgid "Computers"
 msgstr "Computers"
 
@@ -1406,7 +1403,6 @@ msgstr "Connecting to {address}"
 msgid "Connecting…"
 msgstr "Connecting…"
 
-#: src/components/home-editorial-layout.tsx
 #: src/components/pad-server-rail.tsx
 msgid "Connections"
 msgstr "Connections"
@@ -5045,6 +5041,10 @@ msgstr "Sending next: {0}"
 #: src/components/agent-assignment-bar.tsx
 msgid "Sending to"
 msgstr "Sending to"
+
+#: src/components/home-connections.tsx
+msgid "Sends your next goal here. Long press to open it."
+msgstr "Sends your next goal here. Long press to open it"
 
 #: src/app/agent-guide.tsx
 #: src/app/artifacts.tsx

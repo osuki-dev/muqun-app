@@ -245,7 +245,7 @@ import {
   shouldPreserveNewSessionDraft,
   type AgentWorkbenchOwner,
 } from '@/lib/agent-workbench-ownership';
-import { claimInitialPrompt } from '@/lib/initial-prompt';
+import { claimInitialPrompt, initialPromptAction } from '@/lib/initial-prompt';
 import { isHomeRelativePath, settledWorkspaceDirectory } from '@/lib/agent-directory-suggest';
 import { recoverWith, settleAfter } from '@/lib/compiler-safe-control-flow';
 
@@ -352,6 +352,11 @@ export interface AgentWorkbenchProps {
    * (`initial-prompt.ts`).
    */
   initialPromptId?: string;
+  /**
+   * The route's readable copy of that goal. Never sent from here: it only fills
+   * the composer when the ledger offer is gone (`initialPromptAction`).
+   */
+  initialPrompt?: string;
   /** A retained task under the Home overview is mounted, but is not being read. */
   visible?: boolean;
   topInset?: number;
@@ -369,6 +374,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   initialAgentId,
   initialIntent,
   initialPromptId,
+  initialPrompt,
   visible = true,
   topInset = 0,
   bottomInset = 0,
@@ -2838,8 +2844,17 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   const sendInitialPrompt = useEffectEvent(() => {
     if (initialPromptHandledRef.current || !initialPromptId) return;
     initialPromptHandledRef.current = true;
-    const prompt = claimInitialPrompt(initialPromptId, serverId);
-    if (prompt === null) return;
+    const action = initialPromptAction({
+      claimed: claimInitialPrompt(initialPromptId, serverId),
+      routePrompt: initialPrompt,
+      sessionHasContent: Boolean(activeAsid) || !timelineEmpty,
+    });
+    if (action.kind === 'none') return;
+    const prompt = action.prompt;
+    if (action.kind === 'prefill') {
+      injectDraftRef.current?.(prompt);
+      return;
+    }
     const send = handleSendPromptRef.current;
     if (isOffline || !send) {
       injectDraftRef.current?.(prompt);
