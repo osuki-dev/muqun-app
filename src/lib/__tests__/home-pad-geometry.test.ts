@@ -1,14 +1,10 @@
 import { describe, expect, test } from 'bun:test';
 import { EDITORIAL_PAD_MAX_WIDTH, getEditorialLayoutGeometry } from '@/lib/home-editorial-layout';
 import {
-  PAD_COVER_TITLE_LINE_HEIGHT,
-  PAD_PORTRAIT_COVER_RATIO,
-  PAD_WORDMARK_DESCENDER,
+  padCardColumns,
   padCoverKind,
-  padFirstRunPlacement,
+  padHomeColumns,
   padLaunchLayoutEnabled,
-  padWordmarkFontSize,
-  padWorkColumnWidth,
 } from '@/lib/home-pad-geometry';
 
 describe('padLaunchLayoutEnabled', () => {
@@ -26,17 +22,19 @@ describe('padLaunchLayoutEnabled', () => {
   });
 });
 
-describe('padWorkColumnWidth', () => {
-  test('a 1280dp Pad is not capped: 400 work column, 808 cover', () => {
-    expect(EDITORIAL_PAD_MAX_WIDTH).toBeGreaterThanOrEqual(1280);
-    const inner = getEditorialLayoutGeometry(Math.min(1280, EDITORIAL_PAD_MAX_WIDTH)).innerWidth;
-    expect(inner).toBe(1232);
-    expect(padWorkColumnWidth(inner)).toBe(400);
-    expect(inner - padWorkColumnWidth(inner) - 24).toBe(808);
-  });
-  test('narrower Pads give the work column 36%', () => {
-    expect(padWorkColumnWidth(1000)).toBe(360);
-    expect(padWorkColumnWidth(800)).toBe(288);
+describe('padHomeColumns and padCardColumns', () => {
+  // inner width (1280dp landscape, 800dp portrait), cards -> work/recent widths, card columns
+  test.each<[number, number, 1 | 2]>([
+    [Math.min(1280, EDITORIAL_PAD_MAX_WIDTH), 1, 1],
+    [Math.min(1280, EDITORIAL_PAD_MAX_WIDTH), 2, 2],
+    [Math.min(1280, EDITORIAL_PAD_MAX_WIDTH), 4, 2],
+    [800, 2, 1],
+  ])('content %p with %p cards', (content, cards, columns) => {
+    const inner = getEditorialLayoutGeometry(content).innerWidth;
+    const { work, recent } = padHomeColumns(inner);
+    expect(work + recent + 24).toBe(inner);
+    expect(work / (work + recent)).toBeCloseTo(0.58, 2);
+    expect(padCardColumns(work, cards)).toBe(columns);
   });
 });
 
@@ -58,116 +56,5 @@ describe('padCoverKind', () => {
   test('no wordmark without a title, or over artwork', () => {
     expect(padCoverKind({ ...base, typographic: true, hasTitle: false })).toBe('identity');
     expect(padCoverKind({ ...base, typographic: true, hasArtwork: true })).toBe('identity');
-  });
-});
-
-describe('padWordmarkFontSize', () => {
-  test('before measuring: a quarter of the column', () => {
-    expect(
-      padWordmarkFontSize({ coverWidth: 800, measuredWidth: 0, paneHeight: 0, reservedHeight: 0 })
-    ).toBe(200);
-  });
-  test('fits the measured title to the column, capped at 38%', () => {
-    // 300 at 100pt fills 796 at about 265.
-    expect(
-      padWordmarkFontSize({ coverWidth: 800, measuredWidth: 300, paneHeight: 0, reservedHeight: 0 })
-    ).toBeCloseTo(265.33, 1);
-    expect(
-      padWordmarkFontSize({ coverWidth: 800, measuredWidth: 100, paneHeight: 0, reservedHeight: 0 })
-    ).toBe(304);
-  });
-  test('a short column gives the block below it room first', () => {
-    const size = padWordmarkFontSize({
-      coverWidth: 800,
-      measuredWidth: 300,
-      paneHeight: 600,
-      reservedHeight: 380,
-    });
-    // The line box and the descender together take what the block leaves.
-    expect(size * (PAD_COVER_TITLE_LINE_HEIGHT + PAD_WORDMARK_DESCENDER)).toBeCloseTo(220, 5);
-  });
-  test('a tall column leaves the width fit alone', () => {
-    expect(
-      padWordmarkFontSize({
-        coverWidth: 800,
-        measuredWidth: 300,
-        paneHeight: 900,
-        reservedHeight: 380,
-      })
-    ).toBeCloseTo(265.33, 1);
-  });
-  test('never collapses below 48', () => {
-    expect(
-      padWordmarkFontSize({
-        coverWidth: 800,
-        measuredWidth: 300,
-        paneHeight: 300,
-        reservedHeight: 400,
-      })
-    ).toBe(48);
-  });
-});
-
-describe('padFirstRunPlacement', () => {
-  // 800x1280dp Pad in portrait: a ~463 wide cover over ~1150 of column.
-  const portrait = { coverWidth: 463, paneHeight: 1150 };
-  // The same Pad in landscape: a 808 wide cover over ~700 of column.
-  const landscape = { coverWidth: 808, paneHeight: 700 };
-
-  test('the wordmark cover centres the pair card in either orientation', () => {
-    expect(padFirstRunPlacement({ coverKind: 'wordmark', firstRun: true, ...portrait })).toBe(
-      'centred'
-    );
-    expect(padFirstRunPlacement({ coverKind: 'wordmark', firstRun: true, ...landscape })).toBe(
-      'centred'
-    );
-  });
-  test('an artwork cover centres the pair card in portrait only', () => {
-    expect(padFirstRunPlacement({ coverKind: 'artwork', firstRun: true, ...portrait })).toBe(
-      'centred'
-    );
-    expect(padFirstRunPlacement({ coverKind: 'artwork', firstRun: true, ...landscape })).toBe(
-      'dock'
-    );
-  });
-  test('an iPad in landscape (about square) keeps the dock', () => {
-    expect(
-      padFirstRunPlacement({
-        coverKind: 'artwork',
-        firstRun: true,
-        coverWidth: 894,
-        paneHeight: 900,
-      })
-    ).toBe('dock');
-  });
-  test('the portrait threshold is inclusive', () => {
-    const coverWidth = 400;
-    const paneHeight = coverWidth * PAD_PORTRAIT_COVER_RATIO;
-    expect(
-      padFirstRunPlacement({ coverKind: 'artwork', firstRun: true, coverWidth, paneHeight })
-    ).toBe('centred');
-    expect(
-      padFirstRunPlacement({
-        coverKind: 'artwork',
-        firstRun: true,
-        coverWidth,
-        paneHeight: paneHeight - 1,
-      })
-    ).toBe('dock');
-  });
-  test('an unmeasured artwork cover keeps its dock', () => {
-    expect(
-      padFirstRunPlacement({ coverKind: 'artwork', firstRun: true, coverWidth: 463, paneHeight: 0 })
-    ).toBe('dock');
-  });
-  test('a paired cover always docks', () => {
-    for (const coverKind of ['artwork', 'wordmark', 'identity'] as const) {
-      expect(padFirstRunPlacement({ coverKind, firstRun: false, ...portrait })).toBe('dock');
-    }
-  });
-  test('the identity cover docks', () => {
-    expect(padFirstRunPlacement({ coverKind: 'identity', firstRun: true, ...portrait })).toBe(
-      'dock'
-    );
   });
 });

@@ -87,7 +87,9 @@ import {
 } from '@/components/home-recent-sessions';
 import { homeContinueSearchEnabled } from '@/lib/home-continue-search';
 import { demoContinueSearchEntries } from '@/lib/demo-recents';
-import { padLaunchLayoutEnabled } from '@/lib/home-pad-geometry';
+import { claimHomeFirstEntry } from '@/lib/home-first-entry';
+import { padCardColumns, padHomeColumns, padLaunchLayoutEnabled } from '@/lib/home-pad-geometry';
+import { sortHoldScroll, sortHoldTouches } from '@/stores/home-sort-hold';
 import {
   HomeLaunchActions,
   HomeLaunchTarget,
@@ -101,7 +103,15 @@ import { reachabilityDescription, reachabilityLabel } from '@/i18n/labels';
 import { DEMO_SERVER_ID, isDemoRecord } from '@/lib/demo-gateway';
 import { demoSshHost } from '@/lib/demo-ssh';
 import type { GatewayRecord } from '@/lib/gateway-storage';
-import { fadeIn, fadeOut, listLayout, riseIn, STAGGER, timing } from '@/lib/motion';
+import {
+  ENTRY_BUDGET_MS,
+  fadeIn,
+  fadeOut,
+  listLayout,
+  riseIn,
+  STAGGER,
+  timing,
+} from '@/lib/motion';
 import {
   homeServerListLayout,
   THEME_ARTWORK_REGULAR_MIN_WIDTH,
@@ -389,6 +399,16 @@ export function HomeOverview({
   useEffect(() => {
     if (!hasComputerCards) setCardsSkipEntering(false);
   }, [hasComputerCards]);
+  // The launch's first Home: its sections rise in once the records have
+  // loaded, and the window closes with the entry budget. A return from a
+  // sub-screen (or the Pad shell's Home replacing the first one later) is not
+  // an entry.
+  const [entering, setEntering] = useState(claimHomeFirstEntry);
+  useEffect(() => {
+    if (!entering || loading) return;
+    const timer = setTimeout(() => setEntering(false), ENTRY_BUDGET_MS);
+    return () => clearTimeout(timer);
+  }, [entering, loading]);
   const padReachabilityByServer = useMemo(
     () =>
       Object.fromEntries(
@@ -827,6 +847,10 @@ export function HomeOverview({
     );
     const padLaunch =
       isPad && padLaunchLayoutEnabled(padGeometry.contentWidth, fontScale, editorialViewportHeight);
+    // Two cards abreast when the Pad's work column has room for two.
+    const cardColumns = padLaunch
+      ? padCardColumns(padHomeColumns(padGeometry.innerWidth).work, 2)
+      : 1;
     // Hidden with nothing paired: the pair card is that page's one action.
     const showDock = !hydrationError && !loading && launchController.servers.length > 0;
     // The session screen's own dock, at the foot of the page -- or, on the
@@ -852,6 +876,8 @@ export function HomeOverview({
       <View
         testID="home-editorial"
         onLayout={(event) => setEditorialWidth(event.nativeEvent.layout.width)}
+        // Any finger on the page holds the cards' order (design §9).
+        {...sortHoldTouches}
         style={[styles.page, { backgroundColor: background(theme.colors.background) }]}>
         <ThemeArtwork
           slot="home.wallpaper"
@@ -871,8 +897,16 @@ export function HomeOverview({
           // keyboard.
           bottomOffset={dock && !padLaunch ? dockHeight : undefined}
           onContentSizeChange={restoreScroll}
-          onScrollEndDrag={rememberScroll}
-          onMomentumScrollEnd={rememberScroll}
+          onScrollBeginDrag={sortHoldScroll.onScrollBeginDrag}
+          onScrollEndDrag={(event) => {
+            rememberScroll(event);
+            sortHoldScroll.onScrollEndDrag();
+          }}
+          onMomentumScrollBegin={sortHoldScroll.onMomentumScrollBegin}
+          onMomentumScrollEnd={(event) => {
+            rememberScroll(event);
+            sortHoldScroll.onMomentumScrollEnd();
+          }}
           contentInsetAdjustmentBehavior="never"
           style={styles.page}
           contentContainerStyle={{
@@ -904,7 +938,6 @@ export function HomeOverview({
               coverTitle={showsEditorialBrand ? (identity.name ?? undefined) : undefined}
               pad={isPad}
               typographicCover={themeLibraryHydrated && !customTheme}
-              firstRun={launchController.servers.length === 0}
               coverMark={
                 identity.logo ? (
                   <Image
@@ -983,6 +1016,8 @@ export function HomeOverview({
               }
               padComposer={padLaunch ? dock : undefined}
               padComposerHeight={dockHeight}
+              workScrollEvents={sortHoldScroll}
+              entering={entering}
               launches={
                 hydrationError || loading ? undefined : launchController.servers.length === 0 ? (
                   <EmptyState
@@ -1078,6 +1113,7 @@ export function HomeOverview({
                     activeConnection={activeConnection}
                     nowMs={nowMs}
                     skipEntering={cardsSkipEntering}
+                    columns={cardColumns}
                     onSelectServer={targetComposer}
                     onOpenTask={({ serverId, task, tree }) => {
                       // A row opens the session or pane the task runs in; only

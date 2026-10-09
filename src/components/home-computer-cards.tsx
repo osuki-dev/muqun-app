@@ -13,11 +13,18 @@ import { StatusDot } from '@/components/status-dot';
 import { SentTaskRow, TaskRow } from '@/components/task-row';
 import { Text } from '@/components/text';
 import { ThemeIcon } from '@/components/theme-icon';
+import { useFrozenValue } from '@/hooks/use-frozen-value';
 import { useServerTasks } from '@/hooks/use-server-tasks';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { connectionStatusDescription, connectionStatusLabel } from '@/i18n/labels';
 import type { GatewayRecord } from '@/lib/gateway-storage';
-import { buildComputerCards, taskRowRank, type ComputerCard } from '@/lib/home-computer-cards';
+import {
+  buildComputerCards,
+  heldCardOrder,
+  taskRowRank,
+  type ComputerCard,
+} from '@/lib/home-computer-cards';
+import { PAD_CARD_GAP } from '@/lib/home-pad-geometry';
 import { fadeOut, listLayout, pulseOnce, riseIn } from '@/lib/motion';
 import {
   resolveConnectionStatus,
@@ -31,6 +38,7 @@ import { useGatewayConnectionStore } from '@/stores/gateway-connection';
 import { PENDING_DISPATCH_TTL_MS, useHomeTaskCards } from '@/stores/home-task-cards';
 import { useServerChannels } from '@/stores/server-channels';
 import { useServerReachability } from '@/stores/server-reachability';
+import { useHomeSortHold } from '@/stores/home-sort-hold';
 import { useServerTasksStore } from '@/stores/server-tasks';
 
 /**
@@ -127,13 +135,15 @@ export function useHasComputerCards({
  * list. A card fades and rises in when its computer starts having work and
  * fades out when it stops; the others move with the shared layout transition.
  * Entering animations are skipped when the list itself mounts (a return from
- * a sub-screen), so only real arrivals move.
+ * a sub-screen), so only real arrivals move. A re-sort waits while a finger is
+ * on the page and for a moment after a scroll (`useHomeSortHold`).
  */
 export function HomeComputerCards({
   servers,
   activeConnection,
   nowMs,
   skipEntering,
+  columns = 1,
   onSelectServer,
   onOpenTask,
   onOpenTasks,
@@ -147,6 +157,8 @@ export function HomeComputerCards({
    * Home owns this because the section itself only mounts with its first card.
    */
   skipEntering: boolean;
+  /** Two abreast on the Pad's work column (see `padCardColumns`). */
+  columns?: 1 | 2;
   onSelectServer: (serverId: string) => void;
   onOpenTask: (target: CardTaskTarget) => void;
   /** The computer's whole task list. */
@@ -162,7 +174,7 @@ export function HomeComputerCards({
     const entry = entries[position];
     if (entry) index[serverId] = entry;
   });
-  const cards = buildComputerCards({
+  const sorted = buildComputerCards({
     servers,
     index,
     reachability: inputs.reachability,
@@ -170,12 +182,21 @@ export function HomeComputerCards({
     pending: inputs.pending,
     nowMs,
   });
+  // The order on screen, held while the reader's finger or eye is on it.
+  const held = useHomeSortHold((state) => state.held);
+  const shownIds = useFrozenValue(
+    sorted.map((card) => card.serverId),
+    held,
+    null
+  );
+  const cards = heldCardOrder(shownIds, sorted);
+  const grid = columns === 2 && cards.length > 1;
   const statusOf = inputs.statusOf;
   const tickMs = nowMs;
   return (
     <LayoutAnimationConfig skipEntering={skipEntering}>
       {cards.length === 0 ? null : (
-        <View testID="home-computer-cards" style={styles.cards}>
+        <View testID="home-computer-cards" style={grid ? styles.grid : styles.cards}>
           {cards.map((card) => {
             const server = servers.find((item) => item.serverId === card.serverId);
             if (!server) return null;
@@ -184,7 +205,8 @@ export function HomeComputerCards({
                 key={card.serverId}
                 entering={riseIn()}
                 exiting={fadeOut('micro')}
-                layout={listLayout()}>
+                layout={listLayout()}
+                style={grid ? styles.gridCell : undefined}>
                 <ComputerCardView
                   card={card}
                   server={server}
@@ -258,6 +280,7 @@ function ComputerCardView({
       testID={`home-card-${server.serverId}`}
       style={[
         styles.card,
+        styles.fill,
         {
           backgroundColor: background(theme.colors.surface),
           borderColor: theme.colors.border,
@@ -362,7 +385,17 @@ function ComputerCardView({
 }
 
 const styles = StyleSheet.create({
-  cards: { gap: 12, minWidth: 0 },
+  cards: { gap: PAD_CARD_GAP, minWidth: 0 },
+  // Half-width cells with the gap split between neighbours, so two cards sit
+  // abreast and a row's cards share its height.
+  grid: {
+    minWidth: 0,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    rowGap: PAD_CARD_GAP,
+    marginHorizontal: -PAD_CARD_GAP / 2,
+  },
+  gridCell: { width: '50%', paddingHorizontal: PAD_CARD_GAP / 2 },
   card: {
     minWidth: 0,
     overflow: 'hidden',
@@ -382,6 +415,7 @@ const styles = StyleSheet.create({
   statusLine: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   block: { gap: 2, paddingBottom: 8 },
   grow: { flex: 1, minWidth: 0 },
+  fill: { flexGrow: 1 },
   footer: {
     minHeight: 40,
     flexDirection: 'row',
