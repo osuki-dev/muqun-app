@@ -8,16 +8,35 @@ import { create } from 'zustand';
 type PanelPick = {
   serverId: string;
   paneId: string;
+  returnTo?: { sessionId: string; paneId: string };
 };
 
 type PanelPickerState = {
   pick: PanelPick | null;
+  returnTarget: {
+    serverId: string;
+    sessionId: string;
+    paneId: string;
+    previousPaneId: string;
+  } | null;
   choosePanel: (pick: PanelPick) => void;
   clearPick: () => void;
 };
 
 export const usePanelPickerStore = create<PanelPickerState>((set) => ({
   pick: null,
-  choosePanel: (pick) => set({ pick }),
+  returnTarget: null,
+  choosePanel: (pick) =>
+    set({
+      pick,
+      returnTarget: pick.returnTo
+        ? {
+            serverId: pick.serverId,
+            sessionId: pick.returnTo.sessionId,
+            paneId: pick.paneId,
+            previousPaneId: pick.returnTo.paneId,
+          }
+        : null,
+    }),
   clearPick: () => set({ pick: null }),
 }));

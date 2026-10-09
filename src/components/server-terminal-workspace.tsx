@@ -39,6 +39,7 @@ import {
 } from 'react';
 import {
   AppState,
+  BackHandler,
   Keyboard,
   type LayoutChangeEvent,
   Pressable,
@@ -997,6 +998,7 @@ export function ServerTerminalWorkspace({
     awaitUploads,
   } = useAttachmentUploads(record, attachmentDestination);
   const panelPick = usePanelPickerStore((state) => state.pick);
+  const panelReturn = usePanelPickerStore((state) => state.returnTarget);
   const clearPanelPick = usePanelPickerStore((state) => state.clearPick);
   /**
    * Which of this gateway's sessions the reader is in, and how they said so.
@@ -2368,8 +2370,8 @@ export function ServerTerminalWorkspace({
     if (!paneId || !fullScreenPane) return;
     if (autoKeyboardPaneRef.current === paneId) return;
     autoKeyboardPaneRef.current = paneId;
-    setKeyboardMode(lazygitPane);
-  }, [fullScreenPane, lazygitPane, selection.paneId]);
+    setKeyboardMode(false);
+  }, [fullScreenPane, selection.paneId]);
 
   /**
    * Where the reader parked the editor's floating button. Two axes, because
@@ -4039,6 +4041,31 @@ export function ServerTerminalWorkspace({
     [announceSwitch, data]
   );
 
+  const canReturnToPane = Boolean(
+    padDetailIsPane &&
+    !overviewVisible &&
+    panelReturn &&
+    panelReturn.serverId === serverId &&
+    panelReturn.sessionId === data.sessionId &&
+    panelReturn.paneId === selection.paneId &&
+    selectionForPane(data, panelReturn.previousPaneId).paneId === panelReturn.previousPaneId
+  );
+  const returnToPreviousPane = useCallback(() => {
+    if (!canReturnToPane || !panelReturn) return false;
+    usePanelPickerStore.getState().choosePanel({
+      serverId,
+      paneId: panelReturn.previousPaneId,
+    });
+    setKeyboardMode(false);
+    return true;
+  }, [canReturnToPane, panelReturn, serverId]);
+
+  useEffect(() => {
+    if (!isFocused || overviewVisible || !padDetailIsPane || !canReturnToPane) return;
+    const subscription = BackHandler.addEventListener('hardwareBackPress', returnToPreviousPane);
+    return () => subscription.remove();
+  }, [canReturnToPane, isFocused, overviewVisible, padDetailIsPane, returnToPreviousPane]);
+
   /**
    * Leaving the demo is leaving the screen (card #672).
    *
@@ -5230,7 +5257,7 @@ export function ServerTerminalWorkspace({
       }
       // The header stays mounted under Home; the overlay covers it.
       detailTitle={shellTitle}
-      onDetailBack={demoMode ? leaveDetail : undefined}
+      onDetailBack={canReturnToPane ? returnToPreviousPane : demoMode ? leaveDetail : undefined}
       detailFadeColor={padDetailIsPane ? terminalBackground : theme.colors.background}
       detailTitleSlot={
         !padDetailIsPane ? undefined : (

@@ -1,4 +1,4 @@
-# Launch the offline Git TUI from each terminal sheet and expose its keyboard.
+# Launch the offline Git TUI with a collapsed keyboard, then expand and return.
 
 # section quick-actions
 wait "role=button text=\"Open quick actions\"" 15000
@@ -13,6 +13,10 @@ wait "id=changes-lazygit" 15000
 press "id=changes-lazygit"
 
 # section verify
+wait "label=\"Show the editor keyboard\"" 15000
+is hidden "id=virtual-key-q"
+screenshot "shots/lazygit-collapsed.png"
+press "label=\"Show the editor keyboard\""
 wait "id=virtual-key-q" 15000
 is visible "id=virtual-key-q"
 is hidden "id=terminal-composer-input"
@@ -20,3 +24,17 @@ screenshot "shots/lazygit-keyboard.png"
 
 # section close
 back --system
+wait "id=workspace-title-switcher label=\"Claude Code\"" 15000
+is visible "label=\"Back to servers\""
+is visible "id=workspace-title-switcher label=\"Claude Code\""
+screenshot "shots/lazygit-returned.png"
+
+
+# section close-header
+press "label=\"Hide keyboard\""
+wait "label=\"Show the editor keyboard\"" 15000
+press "label=\"Back to servers\""
+wait "id=workspace-title-switcher label=\"Claude Code\"" 15000
+is visible "label=\"Back to servers\""
+is visible "id=workspace-title-switcher label=\"Claude Code\""
+screenshot "shots/lazygit-header-returned.png"

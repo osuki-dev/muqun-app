@@ -1223,7 +1223,7 @@
       { "include": "subflows/open-demo" },
       { "run": "flows/lazygit.ad#changes" },
       { "run": "flows/lazygit.ad#verify" },
-      { "run": "flows/lazygit.ad#close" }
+      { "run": "flows/lazygit.ad#close-header" }
     ],
     "flows/agent-collaboration": [
       { "include": "subflows/open-demo" },
