@@ -20,6 +20,7 @@
  */
 import { parseAgentDomainEvent, type AgentDomainEvent } from './agent-protocol';
 import { streamRecordNonce } from './sse-record';
+import { parseTaskView, type TaskView } from './task-ledger';
 
 export const AGENT_SOCKET_PATH = '/api/ws';
 /** The frame vocabulary this build speaks; `hello` must name the same. */
@@ -207,6 +208,8 @@ export type AgentSocketServerFrame =
   | { t: 'subscribed'; all: true }
   /** `event` already parsed; null when this build has no branch for it. */
   | { t: 'event'; asid: string; seq: number; event: AgentDomainEvent | null }
+  /** `task.updated`, which the gateway sends on no session; only `subscribe_all` sockets get it. */
+  | { t: 'task'; seq: number; task: TaskView }
   /** `asid` "" means every session. */
   | { t: 'resync'; asid: string }
   | { t: 'pong' }
@@ -257,8 +260,14 @@ export function parseAgentSocketFrame(plaintext: string): AgentSocketServerFrame
     case 'event': {
       const asid = str(rec.asid);
       const name = str(rec.event);
-      if (asid === null || name === null) return null;
+      if (name === null) return null;
       const seq = typeof rec.seq === 'number' && Number.isFinite(rec.seq) ? rec.seq : 0;
+      if (asid === null) {
+        // Not about a session. The one event this build reads is a task's.
+        if (name !== 'task.updated') return null;
+        const task = parseTaskView(rec.data);
+        return task ? { t: 'task', seq, task } : null;
+      }
       // `data` is the SSE `data:` payload embedded as JSON; the parser the SSE
       // path uses takes it from here unchanged.
       return { t: 'event', asid, seq, event: parseAgentDomainEvent(name, rec.data) };

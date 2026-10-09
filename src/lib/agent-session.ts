@@ -212,7 +212,7 @@ async function readBody(res: { json: () => Promise<unknown> }): Promise<unknown>
 }
 
 /** `readScoped` for the reads that have nothing to say about a missing folder. */
-async function readJson<T>(
+export async function readJson<T>(
   path: string,
   parse: (value: unknown, envelope: unknown) => T,
   fallback: T,
@@ -228,7 +228,7 @@ async function readJson<T>(
  * bare `void`. The message carries the gateway's body because
  * `formatAgentErrorMessage` reads it to recognise an offline engine.
  */
-async function writeJson(
+export async function writeJson(
   path: string,
   what: string,
   body?: unknown,
