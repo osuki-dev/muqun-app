@@ -8,6 +8,7 @@ import {
   homeSessionParams,
   homeSessionReuse,
   ledgerModelId,
+  sameComputer,
   resolveHomeComposerTarget,
   type HomeStartedSession,
 } from '../home-composer';
@@ -225,5 +226,20 @@ describe('ledgerModelId', () => {
       'anthropic/claude-haiku-5-5'
     );
     expect(ledgerModelId({ provider_id: '', model_id: 'm' })).toBe('m');
+  });
+});
+
+describe('sameComputer', () => {
+  const owner = { serverId: 'a', url: 'https://a.invalid', transportKey: 'k' };
+
+  test('a republished copy of the same record is the same computer', () => {
+    expect(sameComputer({ ...owner }, owner)).toBe(true);
+  });
+
+  test('another computer, a re-paired one, or none is not', () => {
+    expect(sameComputer({ ...owner, serverId: 'b' }, owner)).toBe(false);
+    expect(sameComputer({ ...owner, transportKey: 'k2' }, owner)).toBe(false);
+    expect(sameComputer({ ...owner, url: 'https://moved.invalid' }, owner)).toBe(false);
+    expect(sameComputer(null, owner)).toBe(false);
   });
 });
