@@ -495,7 +495,12 @@ export function taskRowVisual(
         icon: 'loader',
         tone: 'primary',
         spins: true,
-        line: task.progress ? { kind: 'progress', text: task.progress } : { kind: 'elapsed' },
+        // A progress line that says nothing (a TUI rule the gateway read off the
+        // screen) is no progress: the agent and elapsed time say more.
+        line:
+          task.progress && /[\p{L}\p{N}]/u.test(task.progress)
+            ? { kind: 'progress', text: task.progress }
+            : { kind: 'elapsed' },
         actions: live,
       };
     case 'waiting':

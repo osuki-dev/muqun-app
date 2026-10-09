@@ -11,7 +11,6 @@ import {
   taskResultLine,
   taskRollup,
   taskSubscriptionServerIds,
-  taskRowDestination,
   taskRowVisual,
   taskTitle,
 } from '../home-computer-cards';
@@ -364,27 +363,6 @@ describe('groupTaskTree', () => {
   });
 });
 
-describe('taskRowDestination', () => {
-  const session = { kind: 'agent_session', agentId: 'deepseek', asid: 'ses_1' } as const;
-  const pane = { kind: 'pane', sessionId: 's', paneId: 'p1', agentId: 'codex' } as const;
-  test.each([
-    [
-      'a session task opens its session',
-      task('t', 'done', 1, { binding: session }),
-      { kind: 'session', asid: 'ses_1', agentId: 'deepseek' },
-    ],
-    [
-      'a pane task opens its pane',
-      task('t', 'idle_unconfirmed', 1, { binding: pane }),
-      { kind: 'pane', paneId: 'p1', sessionId: 's' },
-    ],
-    ['a failed pane task has no pane to open', task('t', 'failed', 1, { binding: pane }), null],
-    ['an unbound task opens nothing', task('t', 'queued', 1), null],
-  ] as const)('%s', (_name, input, expected) => {
-    expect(taskRowDestination(input)).toEqual(expected);
-  });
-});
-
 describe('taskRowVisual: one state, one icon, one tone, one line, its actions', () => {
   const pane = { kind: 'pane', sessionId: 's', paneId: 'p1', agentId: 'codex' } as const;
   const open = (state: TaskState, extra: Partial<TaskView> = {}) =>
@@ -411,8 +389,8 @@ describe('taskRowVisual: one state, one icon, one tone, one line, its actions', 
       ['loader', 'primary', true, { kind: 'progress', text: 'Editing a.tsx' }, ['open', 'cancel']],
     ],
     [
-      'working, no line',
-      open('working'),
+      'working, a line with no words',
+      open('working', { progress: '──────' }),
       plain,
       ['loader', 'primary', true, { kind: 'elapsed' }, ['open', 'cancel']],
     ],
