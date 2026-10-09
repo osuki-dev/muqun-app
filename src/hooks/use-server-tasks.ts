@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { AppState } from 'react-native';
 
-import { isDemoActive } from '@/lib/demo-gateway';
+import { isDemoActive, isDemoRecord } from '@/lib/demo-gateway';
 import { configuredGatewayServerId } from '@/lib/gateway-client';
 import { WS_EVENTS_CAPABILITY, type GatewaySocketState } from '@/lib/gateway-socket';
 import { gatewaySocketFor } from '@/lib/gateway-socket-runtime';
@@ -12,11 +12,33 @@ import {
   isTaskChannelLive,
   type TaskGroups,
 } from '@/lib/server-tasks-state';
-import { cancelTask, fetchTaskList, type TaskView } from '@/lib/task-ledger';
+import { cancelTask, fetchTaskList, type TaskEndpoint, type TaskView } from '@/lib/task-ledger';
+import { useGatewayConnectionStore } from '@/stores/gateway-connection';
 import { useServerCapabilities } from '@/stores/server-capabilities';
 import { useServerTasksStore } from '@/stores/server-tasks';
 
 const NO_TASKS: TaskView[] = [];
+
+/** How a computer's ledger is reached from here, if at all. */
+export function taskRouteFor(
+  serverId: string
+): { kind: 'shared' } | { kind: 'endpoint'; endpoint: TaskEndpoint } | null {
+  if (configuredGatewayServerId() === serverId) return { kind: 'shared' };
+  const record = useGatewayConnectionStore
+    .getState()
+    .records.find((entry) => entry.serverId === serverId);
+  if (!record || record.sshTunnel || isDemoRecord(record)) return null;
+  return {
+    kind: 'endpoint',
+    endpoint: {
+      url: record.url,
+      token: record.token,
+      ...(record.deviceId ? { deviceId: record.deviceId } : {}),
+      ...(record.transportKey ? { transportKey: record.transportKey } : {}),
+      ...(record.transport ? { transport: record.transport } : {}),
+    },
+  };
+}
 const noSubscription = () => () => {};
 
 export type ServerTasks = {
@@ -31,7 +53,7 @@ export type ServerTasks = {
 };
 
 /**
- * The selected server's task ledger: fetched on mount and whenever the app
+ * A paired computer's task ledger: fetched on mount and whenever the app
  * returns to the foreground, and kept current by `task.updated` frames while
  * the gateway's socket is open.
  *
@@ -54,16 +76,22 @@ export function useServerTasks(serverId: string | null): ServerTasks {
   const requestRef = useRef(0);
 
   const refresh = useCallback(async () => {
-    // The fetchers talk to the shared client's server; asking it about another
-    // record would file one server's tasks under another's id.
-    if (!serverId || configuredGatewayServerId() !== serverId) {
+    // The selected computer is asked through the shared client; any other one
+    // through its own stored address, so its tasks are filed under its own id.
+    // A computer reached only through an SSH tunnel is not asked from here.
+    const route = serverId ? taskRouteFor(serverId) : null;
+    if (!serverId || !route) {
       setLoading(false);
       return;
     }
     const request = ++requestRef.current;
     setLoading(true);
+    const query = {
+      limit: 100,
+      ...(route.kind === 'endpoint' ? { endpoint: route.endpoint } : {}),
+    };
     try {
-      const list = await fetchTaskList({ limit: 100 });
+      const list = await fetchTaskList(query);
       if (request !== requestRef.current) return;
       // A failed read keeps the list already held and says so.
       applyListAnswer(list, {
@@ -91,10 +119,11 @@ export function useServerTasks(serverId: string | null): ServerTasks {
   }, [refresh]);
 
   const demo = isDemoActive();
+  // One socket per computer: the selected one's is the workbench's own, and
+  // any other is the same class opened against the stored record, carrying
+  // task frames only (nothing else listens to it).
   const socket =
-    serverId && wsEvents && !demo && configuredGatewayServerId() === serverId
-      ? gatewaySocketFor(serverId)
-      : null;
+    serverId && wsEvents && !demo && taskRouteFor(serverId) ? gatewaySocketFor(serverId) : null;
 
   useEffect(() => {
     if (!socket || !serverId) return;
@@ -127,7 +156,10 @@ export function useServerTasks(serverId: string | null): ServerTasks {
     async (taskId: string) => {
       if (!serverId) return;
       await applyCancelAnswer(taskId, {
-        cancel: cancelTask,
+        cancel: (id) => {
+          const route = taskRouteFor(serverId);
+          return cancelTask(id, route?.kind === 'endpoint' ? route.endpoint : undefined);
+        },
         upsert: (task) => upsert(serverId, task),
         refresh,
       });

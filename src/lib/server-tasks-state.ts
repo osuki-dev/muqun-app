@@ -21,13 +21,22 @@ function newestFirst(tasks: readonly TaskView[]): TaskView[] {
   return [...tasks].sort((a, b) => b.updatedMs - a.updatedMs);
 }
 
-/** One task as the gateway now has it, replacing any older view of it. */
+/**
+ * One task as the gateway now has it, replacing any older view of it.
+ *
+ * Frames can arrive out of order: the gateway re-publishes a parent with
+ * fresh `children` after a child changes, and that frame may land after a
+ * newer one for the parent. The view with the larger `updatedMs` is kept; on
+ * a tie the later frame wins.
+ */
 export function upsertTask(
   index: ServerTasksIndex,
   serverId: string,
   task: TaskView
 ): ServerTasksIndex {
   const entry = index[serverId];
+  const known = entry?.tasks.find((candidate) => candidate.taskId === task.taskId);
+  if (known && known.updatedMs > task.updatedMs) return index;
   const others = (entry?.tasks ?? []).filter((known) => known.taskId !== task.taskId);
   return {
     ...index,

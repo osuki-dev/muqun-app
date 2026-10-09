@@ -2319,26 +2319,29 @@ export interface EncryptedStreamRequest {
  * stream that never ends cannot ride the one-envelope response path. Answers
  * null when the connected gateway does not use the encrypted transport.
  */
-export function encryptedEventStreamRequest(url: string): EncryptedStreamRequest | null {
-  if (
-    !currentToken ||
-    !currentDeviceId ||
-    !currentTransportKey ||
-    currentTransport !== GATEWAY_TRANSPORT
-  ) {
+export function encryptedEventStreamRequest(
+  url: string,
+  /** Another paired computer's stored credentials; the selected one's when omitted. */
+  endpoint?: GatewayEndpoint
+): EncryptedStreamRequest | null {
+  const token = endpoint ? endpoint.token : currentToken;
+  const deviceId = endpoint ? endpoint.deviceId : currentDeviceId;
+  const transportKey = endpoint ? endpoint.transportKey : currentTransportKey;
+  const transport = endpoint ? endpoint.transport : currentTransport;
+  if (!token || !deviceId || !transportKey || transport !== GATEWAY_TRANSPORT) {
     return null;
   }
   const aad = requestAad(url, 'GET');
-  const material = transportKeyMaterial(currentTransportKey);
+  const material = transportKeyMaterial(transportKey);
   const plaintext: EncryptedRequestPayload = {
-    token: currentToken,
+    token,
     body: base64Url(QuickCrypto.Buffer.alloc(0)),
   };
   const envelope = encryptJson(material, 'request', aad, plaintext);
   return {
     headers: {
       'X-Muqun-Transport': '1',
-      'X-Muqun-Device': currentDeviceId,
+      'X-Muqun-Device': deviceId,
       'X-Muqun-Envelope': base64Url(QuickCrypto.Buffer.from(JSON.stringify(envelope), 'utf8')),
     },
     requestAad: aad,
@@ -2825,6 +2828,21 @@ export async function spawnBoundAgent(
     if (acknowledged) return acknowledged;
     throw failure;
   }
+}
+
+/**
+ * `POST /api/tasks` on the selected computer. The gateway creates the agent
+ * session and sends the goal before it answers, so this gets the spawn's
+ * budget rather than the ordinary read's.
+ */
+export async function postLedgerTask(body: Record<string, string>): Promise<unknown> {
+  const response = await gatewayFetchWithin(60_000, gatewayUrl('/api/tasks'), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...gatewayAuthHeaders() },
+    body: JSON.stringify(body),
+  });
+  if (!response.ok) throw new Error(`Open task: ${response.status} ${await response.text()}`);
+  return response.json();
 }
 
 export async function spawnAgent(

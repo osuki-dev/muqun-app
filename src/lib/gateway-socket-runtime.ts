@@ -20,6 +20,7 @@ import { isDemoActive, isDemoRecord } from './demo-gateway';
 import {
   configuredGatewayServerId,
   encryptedEventStreamRequest,
+  type GatewayEndpoint,
   gatewayAuthHeaders,
   gatewayUrl,
   isGatewayConfigured,
@@ -79,8 +80,10 @@ export const socketFrameCrypto: SocketFrameCrypto = {
  * is pointed at another server, at the demo, or at nothing.
  */
 function prepareUpgrade(serverId: string): GatewaySocketUpgrade | null {
-  if (isDemoActive() || !isGatewayConfigured()) return null;
-  if (configuredGatewayServerId() !== serverId) return null;
+  if (isDemoActive()) return null;
+  if (!isGatewayConfigured() || configuredGatewayServerId() !== serverId) {
+    return prepareStoredUpgrade(serverId);
+  }
   // Read per attempt, so a reconnect follows a discovery answered since.
   const path = gatewaySocketPath(mirroredDiscoveryFor(serverId)?.transports);
   if (!path) return null;
@@ -101,6 +104,57 @@ function prepareUpgrade(serverId: string): GatewaySocketUpgrade | null {
       material: sealed.material,
     },
   };
+}
+
+/**
+ * A paired computer that is not the selected one, reached through its own
+ * stored address and credentials: Home's computer cards keep a task-only
+ * socket open to it. Never for a tunnelled record -- its stored address is
+ * the gateway's on the SSH host, and from here that is the phone's own
+ * loopback -- nor for the demo.
+ */
+function prepareStoredUpgrade(serverId: string): GatewaySocketUpgrade | null {
+  const record = directRecord(serverId);
+  if (!record) return null;
+  const path = gatewaySocketPath(mirroredDiscoveryFor(serverId)?.transports);
+  if (!path) return null;
+  const httpUrl = `${record.url.replace(/\/$/, '')}${path}`;
+  const url = httpUrl.replace(/^http(s?):\/\//i, (_, secure: string) => `ws${secure}://`);
+  if (!/^wss?:\/\//i.test(url)) return null;
+  const endpoint: GatewayEndpoint = {
+    url: record.url,
+    token: record.token,
+    ...(record.deviceId ? { deviceId: record.deviceId } : {}),
+    ...(record.transportKey ? { transportKey: record.transportKey } : {}),
+    ...(record.transport ? { transport: record.transport } : {}),
+  };
+  const sealed = encryptedEventStreamRequest(httpUrl, endpoint);
+  if (!sealed) {
+    return {
+      url,
+      headers: { ...activeLocaleHeaders(), Authorization: `Bearer ${record.token}` },
+      seal: null,
+    };
+  }
+  return {
+    url,
+    headers: { ...activeLocaleHeaders(), ...sealed.headers },
+    seal: {
+      requestAad: sealed.requestAad,
+      requestNonce: sealed.requestNonce,
+      material: sealed.material,
+    },
+  };
+}
+
+/** A stored record this device may reach directly: paired, not tunnelled, not the demo. */
+function directRecord(serverId: string) {
+  const { record, records } = useGatewayConnectionStore.getState();
+  const match =
+    records.find((entry) => entry.serverId === serverId) ??
+    (record?.serverId === serverId ? record : null);
+  if (!match || isDemoRecord(match) || match.sshTunnel) return null;
+  return match;
 }
 
 interface NitroWebSocketLike {
@@ -173,10 +227,9 @@ const appState = {
 const sockets = new Map<string, GatewaySocket>();
 
 /** The selected record, when it is one this device may probe directly. */
-function probeableSelectedRecord(serverId?: string) {
+function probeableSelectedRecord() {
   const record = useGatewayConnectionStore.getState().record;
   if (!record || isDemoRecord(record) || record.sshTunnel) return null;
-  if (serverId !== undefined && record.serverId !== serverId) return null;
   return record;
 }
 
@@ -187,7 +240,9 @@ function probeableSelectedRecord(serverId?: string) {
  * flight per server) apply to it.
  */
 async function checkAuthorization(serverId: string): Promise<SocketAuthorization> {
-  const record = probeableSelectedRecord(serverId);
+  // Any paired computer this device reaches directly: the cards' task sockets
+  // are refused the same way the selected one's is.
+  const record = directRecord(serverId);
   if (!record) return 'unknown';
   const before = useServerReachability.getState().probes[serverId]?.checkedAtMs;
   await useServerReachability.getState().refresh(record, { force: true });
