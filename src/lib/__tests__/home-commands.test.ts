@@ -775,7 +775,13 @@ describe('new terminal with no backend running', () => {
 });
 
 describe('new-agent with a first prompt', () => {
-  test('carries the trimmed prompt on the target and offers it once', async () => {
+  function promptIdOf(navigation: HomeNavigation | undefined): string {
+    if (navigation?.type !== 'agent' || !navigation.target.promptId)
+      throw new Error('no promptId on the agent target');
+    return navigation.target.promptId;
+  }
+
+  test('carries the trimmed prompt and a one-off id that claims it once', async () => {
     const adapter = ports();
     const controller = createHomeCommandController(adapter);
 
@@ -787,6 +793,7 @@ describe('new-agent with a first prompt', () => {
     });
 
     expect(result.status).toBe('dispatched');
+    const promptId = promptIdOf(adapter.navigations[0]);
     expect(adapter.navigations).toEqual([
       {
         type: 'agent',
@@ -795,18 +802,34 @@ describe('new-agent with a first prompt', () => {
           serverId: 'server-a',
           agentId: 'opencode',
           prompt: 'Say hello',
+          promptId,
         },
         intent: 'new',
       },
     ]);
-    expect(claimInitialPrompt('server-a', 'Say hello')).toBe(true);
-    expect(claimInitialPrompt('server-a', 'Say hello')).toBe(false);
+    expect(claimInitialPrompt(promptId, 'server-a')).toBe('Say hello');
+    expect(claimInitialPrompt(promptId, 'server-a')).toBeNull();
     consumeNewAgentIntent('server-a');
   });
 
+  test('the same goal twice gets two distinct ids', async () => {
+    const adapter = ports();
+    const controller = createHomeCommandController(adapter);
+
+    await controller.dispatch({ type: 'new-agent', serverId: 'server-a', prompt: 'Again' });
+    consumeNewAgentIntent('server-a');
+    await controller.dispatch({ type: 'new-agent', serverId: 'server-a', prompt: 'Again' });
+    consumeNewAgentIntent('server-a');
+
+    const [first, second] = adapter.navigations.map(promptIdOf);
+    expect(first).not.toBe(second);
+  });
+
   test('a navigation that throws withdraws the offer', async () => {
+    let attempted: HomeNavigation | undefined;
     const adapter = ports({
-      navigate: () => {
+      navigate: (destination) => {
+        attempted = destination;
         throw new Error('router gone');
       },
     });
@@ -819,28 +842,6 @@ describe('new-agent with a first prompt', () => {
     });
 
     expect(result.status).toBe('failed');
-    expect(claimInitialPrompt('server-b', 'Withdrawn goal')).toBe(false);
-  });
-
-  test('a duplicate tap offers nothing more', async () => {
-    const adapter = ports();
-    const controller = createHomeCommandController(adapter);
-
-    const first = await controller.dispatch({
-      type: 'new-agent',
-      serverId: 'server-a',
-      prompt: 'Once',
-    });
-    const second = await controller.dispatch({
-      type: 'new-agent',
-      serverId: 'server-a',
-      prompt: 'Once',
-    });
-
-    expect(first.status).toBe('dispatched');
-    expect(second.status).toBe('duplicate');
-    expect(claimInitialPrompt('server-a', 'Once')).toBe(true);
-    expect(claimInitialPrompt('server-a', 'Once')).toBe(false);
-    consumeNewAgentIntent('server-a');
+    expect(claimInitialPrompt(promptIdOf(attempted), 'server-b')).toBeNull();
   });
 });

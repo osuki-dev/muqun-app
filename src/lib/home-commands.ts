@@ -55,6 +55,8 @@ export type HomeAgentEntry = {
    * a `new` intent; the workbench sends it once, see `initial-prompt.ts`.
    */
   prompt?: string;
+  /** The one-off ledger id the workbench claims `prompt` by. */
+  promptId?: string;
 };
 
 export type HomeCommand =
@@ -431,7 +433,7 @@ export function createHomeCommandController(ports: HomeCommandPorts) {
           // Offered before the route exists, so the workbench that mounts for
           // it can claim the prompt exactly once.
           const prompt = command.prompt?.trim() || undefined;
-          if (prompt) offerInitialPrompt(command.serverId, prompt);
+          const promptId = prompt ? offerInitialPrompt(command.serverId, prompt) : undefined;
           try {
             ports.navigate({
               type: 'agent',
@@ -440,13 +442,13 @@ export function createHomeCommandController(ports: HomeCommandPorts) {
                 serverId: command.serverId,
                 ...(command.directory ? { directory: command.directory } : {}),
                 ...(command.agentId ? { agentId: command.agentId } : {}),
-                ...(prompt ? { prompt } : {}),
+                ...(prompt && promptId ? { prompt, promptId } : {}),
               },
               intent: 'new',
             });
           } catch (error) {
             newAgentIntentClaims.delete(intentKey);
-            if (prompt) withdrawInitialPrompt(command.serverId, prompt);
+            if (promptId) withdrawInitialPrompt(promptId);
             throw error;
           }
           finish(operation);

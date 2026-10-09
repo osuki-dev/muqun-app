@@ -198,18 +198,31 @@ describe('a new session with a first prompt', () => {
     serverId: 's1',
     agentId: 'opencode',
     prompt: 'Say hello',
+    promptId: 'p1',
   } as const;
 
   test('rides the phone /agent and the Pad workspace route, only with a new intent', () => {
     expect(homeAgentHref(promptTarget, 'new', false)).toEqual({
       pathname: '/agent',
-      params: { server: 's1', agentId: 'opencode', intent: 'new', prompt: 'Say hello' },
+      params: {
+        server: 's1',
+        agentId: 'opencode',
+        intent: 'new',
+        prompt: 'Say hello',
+        promptId: 'p1',
+      },
     });
     expect(homeAgentHref(promptTarget, 'new', true)).toEqual({
       pathname: '/servers/[serverId]',
-      params: { serverId: 's1', agentId: 'opencode', intent: 'new', prompt: 'Say hello' },
+      params: {
+        serverId: 's1',
+        agentId: 'opencode',
+        intent: 'new',
+        prompt: 'Say hello',
+        promptId: 'p1',
+      },
     });
-    expect(homeAgentHref(promptTarget, 'existing', false).params.prompt).toBeUndefined();
+    expect(homeAgentHref(promptTarget, 'existing', false).params.promptId).toBeUndefined();
   });
 
   test('reaches the Pad detail by open-agent, route and handoff', () => {
@@ -219,29 +232,31 @@ describe('a new session with a first prompt', () => {
         target: promptTarget,
         intent: 'new',
       }).detail
-    ).toMatchObject({ kind: 'agent', intent: 'new', prompt: 'Say hello' });
+    ).toMatchObject({ kind: 'agent', intent: 'new', prompt: 'Say hello', promptId: 'p1' });
     expect(
       padShellReducer(initialPadShellState, {
         type: 'route',
         serverId: 's1',
-        params: { intent: 'new', prompt: 'Say hello' },
+        params: { intent: 'new', prompt: 'Say hello', promptId: 'p1' },
       }).detail
-    ).toMatchObject({ kind: 'agent', intent: 'new', prompt: 'Say hello' });
+    ).toMatchObject({ kind: 'agent', intent: 'new', prompt: 'Say hello', promptId: 'p1' });
     expect(
-      padRouteHandoff({ serverId: 's1', intent: 'new', prompt: 'Say hello' }).agent?.target.prompt
-    ).toBe('Say hello');
+      padRouteHandoff({ serverId: 's1', intent: 'new', prompt: 'Say hello', promptId: 'p1' }).agent
+        ?.target
+    ).toMatchObject({ prompt: 'Say hello', promptId: 'p1' });
     expect(
       padShellReducer(initialPadShellState, {
         type: 'open-agent',
         target: promptTarget,
         intent: 'existing',
       }).detail
-    ).toMatchObject({ prompt: undefined });
+    ).toMatchObject({ prompt: undefined, promptId: undefined });
   });
 
-  test('a different goal is a different route landing', () => {
-    expect(padRouteKey('s1', { intent: 'new', prompt: 'a' })).not.toBe(
-      padRouteKey('s1', { intent: 'new', prompt: 'b' })
-    );
+  test('the same goal sent twice is two route landings', () => {
+    const first = padRouteKey('s1', { intent: 'new', prompt: 'same', promptId: 'p1' });
+    const second = padRouteKey('s1', { intent: 'new', prompt: 'same', promptId: 'p2' });
+    expect(second).not.toBe(first);
+    expect(shouldApplyRoute(first, second)).toBe(true);
   });
 });

@@ -485,10 +485,29 @@
         "run": "flows/home-composer.ad#assert-hidden"
       },
       {
-        "target": { "text": "Say hello to the fleet" },
+        "target": { "id": "home-composer-send" },
         "mode": "visible",
         "timeout": 10000,
         "run": "flows/home-composer.ad#assert-visible"
+      },
+      {
+        "target": { "id": "home-composer-send" },
+        "mode": "press",
+        "timeout": 10000,
+        "run": "flows/home-composer.ad#press"
+      },
+      {
+        "target": { "id": "agent-guide-sheet" },
+        "mode": "visible",
+        "timeout": 20000,
+        "run": "flows/home-composer.ad#assert-visible"
+      },
+      { "run": "flows/home-composer.ad#close-guide" },
+      {
+        "target": { "id": "agent-guide-sheet" },
+        "mode": "hidden",
+        "timeout": 10000,
+        "run": "flows/home-composer.ad#assert-hidden"
       },
       { "run": "flows/home-composer.ad#cleanup" },
       { "run": "flows/home-composer.ad#restore-layout" },

@@ -1,7 +1,9 @@
 # Home's composer, offline demo: `@` assigns the demo workspace, Send runs the
 # new-agent command with the goal. The demo record has no reachable agent host,
 # so the command stops at the agent setup sheet and the goal stays in the
-# composer. Delivery to a real agent needs a paired gateway (see AGENTS.md).
+# composer: pressing Send again reopens the sheet, which an empty draft cannot
+# (no TextInput value is read; iOS may not expose it). Delivery to a real agent
+# needs a paired gateway (see AGENTS.md).
 
 # section choose-editorial
 open "muqun:///settings-home-layout"
@@ -36,6 +38,10 @@ wait stable 300 5000
 
 # section goal
 fill id="home-composer-input" "Say hello to the fleet"
+wait stable 300 5000
+# The IME is down before the guide opens, so `back` below closes the sheet
+# rather than the keyboard on Android.
+keyboard dismiss
 wait stable 300 5000
 
 # section close-guide

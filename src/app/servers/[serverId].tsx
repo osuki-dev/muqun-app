@@ -34,6 +34,7 @@ export default function ServerScreen() {
     agentId: rawAgentId,
     intent: rawIntent,
     prompt: rawPrompt,
+    promptId: rawPromptId,
   } = useLocalSearchParams<{
     serverId: string;
     sessionId?: string;
@@ -45,6 +46,7 @@ export default function ServerScreen() {
     agentId?: string;
     intent?: string;
     prompt?: string;
+    promptId?: string;
   }>();
   const serverId = param(rawServerId);
   const sessionId = param(rawSessionId);
@@ -56,6 +58,7 @@ export default function ServerScreen() {
   const agentId = param(rawAgentId);
   const intent = param(rawIntent);
   const prompt = param(rawPrompt);
+  const promptId = param(rawPromptId);
   const router = useRouter();
   const { selectRecord, selectRecordNow } = useGatewayRecord();
   const rootOwnerServerId = useSyncExternalStore(
@@ -94,6 +97,7 @@ export default function ServerScreen() {
       agentId,
       intent,
       prompt,
+      promptId,
     });
     if (!agent && sessionId) useServerSession.getState().chooseSession({ serverId, sessionId });
     if (!agent && paneId) usePanelPickerStore.getState().choosePanel({ serverId, paneId });
@@ -155,6 +159,7 @@ export default function ServerScreen() {
     intent,
     paneId,
     prompt,
+    promptId,
     routeMode,
     rootOwnerServerId,
     router,
