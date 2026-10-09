@@ -136,7 +136,6 @@ export const FontedTextInput = forwardRef<TextInput, TextInputProps>(function Fo
 ) {
   // An uncontrolled field still has to know when it is empty.
   const [typed, setTyped] = useState(defaultValue ?? '');
-  const [focused, setFocused] = useState(false);
   const handleChangeText = useCallback(
     (next: string) => {
       setTyped(next);
@@ -178,14 +177,8 @@ export const FontedTextInput = forwardRef<TextInput, TextInputProps>(function Fo
         value={value}
         defaultValue={defaultValue}
         onChangeText={handleChangeText}
-        onFocus={(event) => {
-          setFocused(true);
-          onFocus?.(event);
-        }}
-        onBlur={(event) => {
-          setFocused(false);
-          onBlur?.(event);
-        }}
+        onFocus={onFocus}
+        onBlur={onBlur}
         placeholder={placeholder}
         placeholderTextColor="transparent"
         style={parts.input}
@@ -194,11 +187,7 @@ export const FontedTextInput = forwardRef<TextInput, TextInputProps>(function Fo
           starts at the top. The overlay does the same. */}
       <View
         pointerEvents="none"
-        style={[
-          StyleSheet.absoluteFill,
-          multiline ? styles.top : styles.centre,
-          focused && styles.caretGap,
-        ]}>
+        style={[StyleSheet.absoluteFill, multiline ? styles.top : styles.centre]}>
         <FieldPlaceholder
           text={placeholder}
           visible={empty}
@@ -213,6 +202,4 @@ export const FontedTextInput = forwardRef<TextInput, TextInputProps>(function Fo
 const styles = StyleSheet.create({
   top: { justifyContent: 'flex-start' },
   centre: { justifyContent: 'center' },
-  // The native caret and the separately drawn hint need distinct leading edges.
-  caretGap: { paddingLeft: 3 },
 });

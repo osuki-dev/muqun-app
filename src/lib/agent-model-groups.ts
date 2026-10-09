@@ -12,6 +12,17 @@
  * Pure, so the grouping and its order are tested without the sheet.
  */
 
+import { isFreeModel } from '@/lib/agent-protocol';
+
+/**
+ * Whether the "Free only" segment has anything to show. A catalog with no free
+ * model gets no segmented control at all: a filter that can only empty the
+ * list is noise. Decided by the same `isFreeModel` the filter applies.
+ */
+export function hasFreeModel(models: readonly Parameters<typeof isFreeModel>[0][]): boolean {
+  return models.some((model) => isFreeModel(model));
+}
+
 export interface ProviderGroupModel {
   id: string;
   provider_id: string;

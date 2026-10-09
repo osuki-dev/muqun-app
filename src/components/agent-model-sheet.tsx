@@ -23,7 +23,7 @@ import { recentCatalogModels } from '@/lib/recent-agent-models';
 import { appChrome } from '@/constants/appearance';
 import { withAlpha } from '@/lib/color';
 import { fadeIn, listLayout, riseIn, STAGGER } from '@/lib/motion';
-import { groupModelsByProvider } from '@/lib/agent-model-groups';
+import { groupModelsByProvider, hasFreeModel } from '@/lib/agent-model-groups';
 import { SECTION_PAGE_SIZE, nearListEnd, pageSections } from '@/lib/paged-sections';
 import { findAgentModelPosition } from '@/lib/agent-model-position';
 import {
@@ -166,7 +166,10 @@ export const AgentModelSheet = memo(function AgentModelSheet({
   const [providers, setProviders] = useState<readonly ProviderInfo[]>([]);
   const [defaults, setDefaults] = useState<CatalogDefaults>({});
   const [searchQuery, setSearchQuery] = useState('');
-  const [filterMode, setFilterMode] = useState<'all' | 'free'>('all');
+  const [pickedFilter, setFilterMode] = useState<'all' | 'free'>('all');
+  const showFilter = hasFreeModel(models);
+  // Without the control there is no way back from "free", so it reads as "all".
+  const filterMode = showFilter ? pickedFilter : 'all';
   const [pickedProvider, setPickedProvider] = useState<string | null>(null);
   const modelListRef = useRef<ScrollView>(null);
   const sectionOffsetsRef = useRef(new Map<number, number>());
@@ -252,7 +255,14 @@ export const AgentModelSheet = memo(function AgentModelSheet({
       recent?: boolean;
       unavailable?: boolean;
     }[] = recent.length
-      ? [{ providerId: '__recent__', title: t`Recently used`, models: recent, recent: true }]
+      ? [
+          {
+            providerId: '__recent__',
+            title: t`Recently used`,
+            models: recent,
+            recent: true,
+          },
+        ]
       : [];
     // Titled by the catalog's provider names; a provider the host has not
     // signed in is still a group, greyed, so the reader learns why it is empty.
@@ -422,18 +432,20 @@ export const AgentModelSheet = memo(function AgentModelSheet({
               setSearchQuery(query);
             }}
           />
-          <SettingsSegmented
-            testID="agent-model-filter"
-            options={[
-              { label: t`All models`, value: 'all' },
-              { label: t`Free only`, value: 'free' },
-            ]}
-            value={filterMode}
-            onChange={(next) => {
-              autoRevealCancelledRef.current = true;
-              setFilterMode(next === 'free' ? 'free' : 'all');
-            }}
-          />
+          {showFilter && (
+            <SettingsSegmented
+              testID="agent-model-filter"
+              options={[
+                { label: t`All models`, value: 'all' },
+                { label: t`Free only`, value: 'free' },
+              ]}
+              value={filterMode}
+              onChange={(next) => {
+                autoRevealCancelledRef.current = true;
+                setFilterMode(next === 'free' ? 'free' : 'all');
+              }}
+            />
+          )}
         </>
       }>
       {loading ? (
@@ -534,7 +546,9 @@ export const AgentModelSheet = memo(function AgentModelSheet({
                     onPress={() => setReloadToken((token) => token + 1)}
                     style={[
                       styles.retry,
-                      { backgroundColor: withAlpha(theme.colors.primary, 0.09) },
+                      {
+                        backgroundColor: withAlpha(theme.colors.primary, 0.09),
+                      },
                     ]}>
                     <Text variant="caption" weight="semibold" color={theme.colors.primary}>
                       {t`Retry`}
@@ -618,7 +632,9 @@ export const AgentModelSheet = memo(function AgentModelSheet({
                                   <View
                                     style={[
                                       styles.freeChip,
-                                      { backgroundColor: withAlpha(theme.colors.success, 0.14) },
+                                      {
+                                        backgroundColor: withAlpha(theme.colors.success, 0.14),
+                                      },
                                     ]}>
                                     <Text
                                       variant="caption"
@@ -712,7 +728,10 @@ export const AgentModelSheet = memo(function AgentModelSheet({
 const styles = StyleSheet.create({
   columns: { flex: 1, minHeight: 0, flexDirection: 'row' },
   providers: { width: '29%', maxWidth: 160, flexGrow: 0, flexShrink: 0 },
-  providerContent: { paddingLeft: SHEET_LADDER.gap, paddingBottom: SHEET_LADDER.section },
+  providerContent: {
+    paddingLeft: SHEET_LADDER.gap,
+    paddingBottom: SHEET_LADDER.section,
+  },
   providerRow: {
     minHeight: 48,
     justifyContent: 'center',
