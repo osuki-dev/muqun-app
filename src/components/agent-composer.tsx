@@ -448,8 +448,8 @@ export interface AgentComposerProps {
    */
   onDockHeight?: (height: number) => void;
   /**
-   * A line drawn on top of the dock, inside it: it rides the keyboard with the
-   * dock and is counted in `onDockHeight`. Home's assignment bar -- where Send
+   * A line drawn as the dock's first row, inside its glass: it rides the
+   * keyboard with the dock and is counted in `onDockHeight`. Home's assignment bar -- where Send
    * is about to go, before there is a session to say so -- is the one caller.
    */
   accessory?: React.ReactNode;
@@ -1237,9 +1237,9 @@ export const AgentComposer = memo(function AgentComposer({
           setDockHeight(height);
           onDockHeight?.(height);
         }}>
-        {accessory}
         <GlassChrome surface="composer" shape="sheet" style={styles.composerDock}>
           <View style={[styles.composerInner, { paddingBottom: dockBottomPadding }]}>
+            {accessory}
             {/* Row 1: roots only. Tapping the current root opens its tree. */}
             {sessionStrip.length > 0 ? (
               <ScrollView

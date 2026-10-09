@@ -247,6 +247,7 @@ import {
 } from '@/lib/agent-workbench-ownership';
 import { isHomeRelativePath, settledWorkspaceDirectory } from '@/lib/agent-directory-suggest';
 import { recoverWith, settleAfter } from '@/lib/compiler-safe-control-flow';
+import { promptedSessionWaitMs } from '@/lib/prompted-agent-sessions';
 
 /**
  * How many history timeline items the workbench reveals per page. The gateway
@@ -862,6 +863,24 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     [setTimeline]
   );
   const [loading, setLoading] = useState(true);
+  /**
+   * Home's dock opened this session right after creating it and sending its
+   * first prompt. Its first snapshot can be empty -- the engine has not
+   * mirrored the prompt yet -- and an empty timeline is not a new session, so
+   * the transcript keeps its loading shape until a row arrives or the short
+   * wait runs out (`prompted-agent-sessions.ts`).
+   */
+  const [awaitingFirstRow, setAwaitingFirstRow] = useState(
+    () => promptedSessionWaitMs(serverId, initialAsid) > 0
+  );
+  useEffect(() => {
+    if (!awaitingFirstRow) return;
+    const timer = setTimeout(
+      () => setAwaitingFirstRow(false),
+      promptedSessionWaitMs(serverId, initialAsid)
+    );
+    return () => clearTimeout(timer);
+  }, [awaitingFirstRow, serverId, initialAsid]);
   const [hasDiffs, setHasDiffs] = useState(false);
   const [isOffline, setIsOffline] = useState(false);
   const [checkingHealth, setCheckingHealth] = useState(false);
@@ -4724,7 +4743,12 @@ export const AgentWorkbench = memo(function AgentWorkbench({
               <Trans>Creating session…</Trans>
             </Text>
           </View>
-        ) : loading ? (
+        ) : loading ||
+          (awaitingFirstRow &&
+            activeAsid === initialAsid &&
+            timelineEmpty &&
+            permissions.length === 0 &&
+            forms.length === 0) ? (
           /*
             The shape of what is coming, which is what every other surface in
             this app answers a wait with. This branch is also the whole of the
