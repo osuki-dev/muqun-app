@@ -62,6 +62,8 @@ export interface TerminalComposerSend {
   sending: boolean;
   disabled: boolean;
   onPress: () => void;
+  /** Defaults to `composer-send`; a second composer on screen names its own. */
+  testID?: string;
 }
 
 export interface TerminalComposerProps {
@@ -147,6 +149,7 @@ export function TerminalComposer({
         sending={send.sending}
         disabled={send.disabled}
         onPress={send.onPress}
+        testID={send.testID}
         onLongPress={openVoice}
         longPressLabel={t`Voice to text`}
         armedFill={theme.colors.primary}
@@ -226,6 +229,7 @@ export function ComposerSendButton({
   armedFill,
   restText,
   activeText,
+  testID = 'composer-send',
 }: {
   accessibilityLabel: string;
   /** There is something to send, and somewhere to send it. */
@@ -238,6 +242,7 @@ export function ComposerSendButton({
   armedFill: string;
   restText: string;
   activeText: string;
+  testID?: string;
 }) {
   const profile = useAppearanceProfile();
   const surfaceBackground = useSurfaceBackground();
@@ -274,7 +279,7 @@ export function ComposerSendButton({
     <PressableScale
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
-      testID="composer-send"
+      testID={testID}
       accessibilityActions={
         onLongPress ? [{ name: 'longpress', label: longPressLabel }] : undefined
       }

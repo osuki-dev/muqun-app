@@ -135,7 +135,13 @@ export function useHomeLaunchController({
     else void launch(onPair);
   }
 
+  /** Choose a target directly, as Home's composer does from an `@` mention. */
+  function choose(serverId: string) {
+    if (servers.some((server) => server.serverId === serverId)) setChosenId(serverId);
+  }
+
   return {
+    choose,
     chosen,
     chosenOffline,
     launchOnChosen,

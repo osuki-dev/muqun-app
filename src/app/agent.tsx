@@ -67,6 +67,7 @@ export default function AgentScreen() {
     directory?: string;
     intent?: string;
     agentId?: string;
+    prompt?: string;
   }>();
 
   const sessionId = params.sessionId || 'herdr';
@@ -173,6 +174,11 @@ export default function AgentScreen() {
             initialDirectory={params.directory}
             initialAgentId={typeof params.agentId === 'string' ? params.agentId : undefined}
             initialIntent={newSessionIntent ? 'new' : undefined}
+            initialPrompt={
+              newSessionIntent && typeof params.prompt === 'string' && params.prompt
+                ? params.prompt
+                : undefined
+            }
             visible={workbenchVisible}
             topInset={insets.top + DETAIL_HEADER_HEIGHT}
             bottomInset={insets.bottom}

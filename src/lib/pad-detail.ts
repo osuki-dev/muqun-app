@@ -10,6 +10,8 @@ export type PadDetail =
       directory?: string;
       agentId?: string;
       intent?: 'new';
+      /** The goal a `new` session starts with, sent once by the workbench. */
+      prompt?: string;
       /**
        * Set on every `new` request so a second request for the same directory
        * is a different detail: a fresh workbench, and a fresh release of the
@@ -26,6 +28,8 @@ export type PadRouteParams = {
   directory?: string;
   agentId?: string;
   intent?: string;
+  /** The first prompt of a `new` session (Home's composer). */
+  prompt?: string;
   overview?: string;
 };
 
@@ -59,6 +63,7 @@ export function padShellReducer(state: PadShellState, event: PadShellEvent): Pad
           directory: t.directory,
           agentId: t.agentId,
           intent: event.intent === 'new' ? 'new' : undefined,
+          prompt: event.intent === 'new' ? t.prompt : undefined,
           nonce: event.intent === 'new' ? nextNonce(state.detail) : undefined,
         },
         overviewVisible: false,
@@ -84,6 +89,7 @@ export function padShellReducer(state: PadShellState, event: PadShellEvent): Pad
           directory: p.directory,
           agentId: p.agentId,
           intent: p.intent === 'new' ? 'new' : undefined,
+          prompt: p.intent === 'new' ? p.prompt : undefined,
           nonce: p.intent === 'new' ? nextNonce(state.detail) : undefined,
         },
         overviewVisible: false,
@@ -101,6 +107,7 @@ export function padRouteKey(serverId: string, params: PadRouteParams): string {
     params.directory ?? '',
     params.agentId ?? '',
     params.intent ?? '',
+    params.prompt ?? '',
     params.overview ?? '',
   ].join('\u0000');
 }
@@ -118,6 +125,7 @@ export function padAgentRedirectParams(params: {
   directory?: string;
   agentId?: string;
   intent?: string;
+  prompt?: string;
 }): Record<string, string> {
   const out: Record<string, string> = {};
   if (params.server) out.serverId = params.server;
@@ -126,6 +134,7 @@ export function padAgentRedirectParams(params: {
   if (params.directory) out.directory = params.directory;
   if (params.agentId) out.agentId = params.agentId;
   if (params.intent === 'new') out.intent = 'new';
+  if (params.intent === 'new' && params.prompt) out.prompt = params.prompt;
   return out;
 }
 
@@ -141,6 +150,7 @@ export function padAgentRouteParams(
     directory: target.directory,
     agentId: target.agentId,
     intent: intent === 'new' ? 'new' : undefined,
+    prompt: intent === 'new' ? target.prompt : undefined,
   });
 }
 
@@ -183,6 +193,7 @@ export function padRouteHandoff(params: {
   directory?: string;
   agentId?: string;
   intent?: string;
+  prompt?: string;
 }): { target: HomeServerEntry; agent?: PadAgentHandoff } {
   const { serverId } = params;
   if (params.asid || params.intent === 'new') {
@@ -197,6 +208,7 @@ export function padRouteHandoff(params: {
           ...(params.asid && intent !== 'new' ? { asid: params.asid } : {}),
           ...(params.directory ? { directory: params.directory } : {}),
           ...(params.agentId ? { agentId: params.agentId } : {}),
+          ...(intent === 'new' && params.prompt ? { prompt: params.prompt } : {}),
         },
         intent,
       },

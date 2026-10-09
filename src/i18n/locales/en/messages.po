@@ -706,6 +706,10 @@ msgstr "Asking the server what it can run…"
 msgid "Assign this to an assistant"
 msgstr "Assign this to an assistant"
 
+#: src/components/home-composer.tsx
+msgid "Assigned to {computerLabel}, {agentName}"
+msgstr "Assigned to {computerLabel}, {agentName}"
+
 #: src/components/agent-assignment-bar.tsx
 msgid "Assigning a task is unavailable"
 msgstr "Assigning a task is unavailable"
@@ -1077,6 +1081,10 @@ msgstr "Choose an assistant"
 msgid "Choose an SSH host."
 msgstr "Choose an SSH host"
 
+#: src/components/home-composer.tsx
+msgid "Choose another computer"
+msgstr "Choose another computer"
+
 #: src/components/server-terminal-workspace.tsx
 msgid "Choose another terminal"
 msgstr "Choose another terminal"
@@ -1296,6 +1304,10 @@ msgstr "Compared with {base}"
 #: src/components/tool-call-detail-sheet.tsx
 msgid "Completed"
 msgstr "Completed"
+
+#: src/components/home-composer.tsx
+msgid "Computers"
+msgstr "Computers"
 
 #: src/app/settings-voice.tsx
 msgid "Configure your speech service, then hold Send to record. Tap the animation to stop and transcribe."
@@ -3546,6 +3558,10 @@ msgstr "no commits yet"
 msgid "No commits yet"
 msgstr "No commits yet"
 
+#: src/components/home-composer.tsx
+msgid "No computer online"
+msgstr "No computer online"
+
 #: src/components/session-artifacts.tsx
 msgid "No files match."
 msgstr "No files match"
@@ -5013,6 +5029,10 @@ msgstr "Send the text"
 msgid "Send this task to {assignmentLabel}"
 msgstr "Send this task to {assignmentLabel}"
 
+#: src/components/home-composer.tsx
+msgid "Send to {computerLabel}"
+msgstr "Send to {computerLabel}"
+
 #: src/components/server-terminal-workspace.tsx
 msgid "Send to agent"
 msgstr "Send to agent"
@@ -5695,6 +5715,10 @@ msgstr "Tasks ({0}/{1})"
 #: src/components/agent-composer.tsx
 msgid "Tasks progress"
 msgstr "Tasks progress"
+
+#: src/components/home-composer.tsx
+msgid "Tell a computer what to do"
+msgstr "Tell a computer what to do"
 
 #: src/components/settings-storage.tsx
 msgid "Temporary files"

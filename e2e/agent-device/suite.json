@@ -58,6 +58,12 @@
       "platforms": ["ios", "android"]
     },
     {
+      "name": "home-composer",
+      "program": "flows/home-composer",
+      "tags": ["full", "agents"],
+      "platforms": ["ios", "android"]
+    },
+    {
       "name": "agent-changes-worktree",
       "program": "flows/agent-changes-worktree",
       "tags": ["full", "agents", "files"],
@@ -389,6 +395,122 @@
       {
         "run": "flows/voice-settings.ad#close"
       }
+    ],
+    "flows/home-composer": [
+      { "include": "subflows/open-demo" },
+      { "run": "flows/home-composer.ad#choose-editorial" },
+      {
+        "target": { "id": "settings-home-layout-sheet" },
+        "mode": "visible",
+        "timeout": 15000,
+        "run": "flows/home-composer.ad#picker-ready"
+      },
+      {
+        "target": { "id": "settings-selection:(on|off):home-layout-editorial" },
+        "mode": "press",
+        "timeout": 15000,
+        "run": "flows/home-composer.ad#select-editorial"
+      },
+      {
+        "target": { "id": "settings-home-layout-sheet" },
+        "mode": "hidden",
+        "timeout": 15000,
+        "run": "flows/home-composer.ad#picker-closed"
+      },
+      { "run": "flows/home-composer.ad#home" },
+      {
+        "target": { "id": "home-editorial" },
+        "mode": "visible",
+        "timeout": 15000,
+        "run": "flows/home-composer.ad#assert-visible"
+      },
+      {
+        "target": { "id": "home-composer" },
+        "mode": "scroll",
+        "direction": "down",
+        "run": "flows/settings-home-layout.ad#seek-down"
+      },
+      {
+        "target": { "id": "home-composer" },
+        "mode": "visible",
+        "run": "flows/home-composer.ad#assert-visible"
+      },
+      {
+        "target": { "id": "home-composer-target" },
+        "mode": "visible",
+        "run": "flows/home-composer.ad#assert-visible"
+      },
+      { "run": "flows/home-composer.ad#mention" },
+      {
+        "target": { "id": "home-composer-mentions" },
+        "mode": "visible",
+        "timeout": 10000,
+        "run": "flows/home-composer.ad#assert-visible"
+      },
+      {
+        "target": { "id": "home-composer-mention-muqun-demo" },
+        "mode": "press",
+        "timeout": 10000,
+        "run": "flows/home-composer.ad#press"
+      },
+      {
+        "target": { "id": "home-composer-mentions" },
+        "mode": "hidden",
+        "timeout": 10000,
+        "run": "flows/home-composer.ad#assert-hidden"
+      },
+      {
+        "target": { "id": "home-composer-target" },
+        "mode": "visible",
+        "run": "flows/home-composer.ad#assert-visible"
+      },
+      { "run": "flows/home-composer.ad#goal" },
+      {
+        "target": { "id": "home-composer-send" },
+        "mode": "press",
+        "timeout": 10000,
+        "run": "flows/home-composer.ad#press"
+      },
+      {
+        "target": { "id": "agent-guide-sheet" },
+        "mode": "visible",
+        "timeout": 20000,
+        "run": "flows/home-composer.ad#assert-visible"
+      },
+      { "run": "flows/home-composer.ad#close-guide" },
+      {
+        "target": { "id": "agent-guide-sheet" },
+        "mode": "hidden",
+        "timeout": 10000,
+        "run": "flows/home-composer.ad#assert-hidden"
+      },
+      {
+        "target": { "text": "Say hello to the fleet" },
+        "mode": "visible",
+        "timeout": 10000,
+        "run": "flows/home-composer.ad#assert-visible"
+      },
+      { "run": "flows/home-composer.ad#cleanup" },
+      { "run": "flows/home-composer.ad#restore-layout" },
+      {
+        "target": { "id": "settings-home-layout-sheet" },
+        "mode": "visible",
+        "timeout": 15000,
+        "run": "flows/home-composer.ad#picker-ready"
+      },
+      {
+        "target": { "id": "settings-selection:(on|off):home-layout-classic" },
+        "mode": "press",
+        "timeout": 15000,
+        "run": "flows/home-composer.ad#select-editorial"
+      },
+      {
+        "target": { "id": "settings-home-layout-sheet" },
+        "mode": "hidden",
+        "timeout": 15000,
+        "run": "flows/home-composer.ad#picker-closed"
+      },
+      { "run": "flows/home-composer.ad#cleanup" }
     ],
     "flows/home-continue-search": [
       { "include": "subflows/open-demo" },

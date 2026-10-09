@@ -78,6 +78,12 @@ export type HomeEditorialLayoutProps = {
   headerLeading?: ReactNode;
   /** Start-new-work actions, already wired by the parent. */
   launches?: ReactNode;
+  /**
+   * Home's composer on the wide Pad cover, at the top of the work column. The
+   * cover's dock keeps only the launch tiles, so the wordmark's measured room
+   * is unchanged; every other layout carries the composer inside `launches`.
+   */
+  padComposer?: ReactNode;
   /** Recent sessions or panes, already wired by the parent. */
   recent?: ReactNode;
   /** Replaces the Continue heading with a search control when inventory is large. */
@@ -201,6 +207,7 @@ export function HomeEditorialLayout({
   headerAction,
   headerLeading,
   launches,
+  padComposer,
   recent,
   recentHeading,
   attention,
@@ -541,6 +548,7 @@ export function HomeEditorialLayout({
             keyboardShouldPersistTaps="handled"
             style={{ width: launchWidth, flexGrow: 0, flexShrink: 0 }}
             contentContainerStyle={styles.padWorkContent}>
+            {hasSlot(padComposer) ? <View testID="home-pad-composer">{padComposer}</View> : null}
             {hasRecent || hasConnections ? (
               <View testID="home-pad-lower-band" style={styles.padWorkSections}>
                 {hasRecent ? (

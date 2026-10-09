@@ -8,6 +8,7 @@ import {
   type HomeNavigation,
 } from '../home-commands';
 import { homeWorkspaceHandoffStore } from '../home-workspace-handoff';
+import { claimInitialPrompt } from '../initial-prompt';
 
 type Deferred<T> = {
   promise: Promise<T>;
@@ -770,5 +771,76 @@ describe('new terminal with no backend running', () => {
     expect(result.status).toBe('unavailable');
     if (result.status === 'unavailable') expect(result.backendDown).toEqual(backendDown);
     expect(adapter.navigations).toEqual([]);
+  });
+});
+
+describe('new-agent with a first prompt', () => {
+  test('carries the trimmed prompt on the target and offers it once', async () => {
+    const adapter = ports();
+    const controller = createHomeCommandController(adapter);
+
+    const result = await controller.dispatch({
+      type: 'new-agent',
+      serverId: 'server-a',
+      agentId: 'opencode',
+      prompt: '  Say hello  ',
+    });
+
+    expect(result.status).toBe('dispatched');
+    expect(adapter.navigations).toEqual([
+      {
+        type: 'agent',
+        target: {
+          kind: 'agent-session',
+          serverId: 'server-a',
+          agentId: 'opencode',
+          prompt: 'Say hello',
+        },
+        intent: 'new',
+      },
+    ]);
+    expect(claimInitialPrompt('server-a', 'Say hello')).toBe(true);
+    expect(claimInitialPrompt('server-a', 'Say hello')).toBe(false);
+    consumeNewAgentIntent('server-a');
+  });
+
+  test('a navigation that throws withdraws the offer', async () => {
+    const adapter = ports({
+      navigate: () => {
+        throw new Error('router gone');
+      },
+    });
+    const controller = createHomeCommandController(adapter);
+
+    const result = await controller.dispatch({
+      type: 'new-agent',
+      serverId: 'server-b',
+      prompt: 'Withdrawn goal',
+    });
+
+    expect(result.status).toBe('failed');
+    expect(claimInitialPrompt('server-b', 'Withdrawn goal')).toBe(false);
+  });
+
+  test('a duplicate tap offers nothing more', async () => {
+    const adapter = ports();
+    const controller = createHomeCommandController(adapter);
+
+    const first = await controller.dispatch({
+      type: 'new-agent',
+      serverId: 'server-a',
+      prompt: 'Once',
+    });
+    const second = await controller.dispatch({
+      type: 'new-agent',
+      serverId: 'server-a',
+      prompt: 'Once',
+    });
+
+    expect(first.status).toBe('dispatched');
+    expect(second.status).toBe('duplicate');
+    expect(claimInitialPrompt('server-a', 'Once')).toBe(true);
+    expect(claimInitialPrompt('server-a', 'Once')).toBe(false);
+    consumeNewAgentIntent('server-a');
   });
 });

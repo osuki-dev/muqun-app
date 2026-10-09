@@ -85,6 +85,7 @@ export function PadAgentDetail({ detail, ready, visible, controls }: Props) {
           initialDirectory={detail.directory}
           initialAgentId={detail.agentId}
           initialIntent={detail.intent}
+          initialPrompt={detail.prompt}
           visible={visible && routeVisible}
           topInset={insets.top + DETAIL_HEADER_HEIGHT}
           bottomInset={insets.bottom}
