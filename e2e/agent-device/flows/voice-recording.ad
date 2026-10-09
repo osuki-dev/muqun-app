@@ -2,7 +2,7 @@
 
 # section configure
 wait "id=\"settings-voice-sheet\"" 10000
-fill "id=\"voice-service-url\"" "https://example.invalid/v1"
+fill "id=\"voice-service-url\"" "https://example.invalid/custom/transcribe"
 keyboard enter
 fill "id=\"voice-service-key\"" "qa-placeholder-token"
 keyboard enter
@@ -11,9 +11,8 @@ fill "id=\"voice-service-model\"" "qa-transcription"
 keyboard enter
 scroll down --until "id=\"voice-settings-save\""
 press "id=\"voice-settings-save\""
-scroll down --until "label=\"Saved\""
-wait "label=\"Saved\"" 5000
-back --system
+wait "id=\"settings-voice-row\"" 5000
+wait absent "id=\"settings-voice-sheet\"" 5000
 back --system
 
 # section record
@@ -22,13 +21,15 @@ wait "id=\"composer-send\"" 10000
 press "id=\"composer-send\""
 is hidden "id=\"voice-recording-stop\""
 longpress "id=\"composer-send\"" 700
-wait "label=\"Listening…\"" 15000
+wait "id=\"voice-visual-recording\"" 15000
 is visible "id=\"voice-recording-stop\""
 wait "id=\"voice-recording-logo\"" 10000
 screenshot "shots/voice-recording.png"
 # The animation itself stops recording. The isolated invalid service fails safely.
 press "id=\"voice-recording-stop\""
 wait "label=\"Try again\"" 20000
+is visible "id=\"voice-visual-error\""
+screenshot "shots/voice-error.png"
 is visible "id=\"voice-recording-stop\""
 press "id=\"voice-recording-cancel\""
 wait "id=\"terminal-composer-input\"" 10000
@@ -36,7 +37,7 @@ is hidden "id=\"voice-recording-stop\""
 # A populated draft survives holding Send and cancelling; it is never sent.
 fill "id=\"terminal-composer-input\"" "Keep this voice recording draft"
 longpress "id=\"composer-send\"" 700
-wait "label=\"Listening…\"" 15000
+wait "id=\"voice-visual-recording\"" 15000
 press "id=\"voice-recording-cancel\""
 wait "id=\"terminal-composer-input\"" 10000
 is visible "id=\"terminal-composer-input\" value=\"Keep this voice recording draft\""

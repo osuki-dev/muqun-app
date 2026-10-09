@@ -1,7 +1,8 @@
 import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens } from '@osuki-dev/ui';
+import { useNavigation } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { Keyboard, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text } from '@/components/text';
 import { SettingsToggleRow } from '@/components/settings-chrome';
@@ -33,12 +34,13 @@ export default function SettingsVoiceScreen() {
 
 function VoiceSettingsForm() {
   const { t } = useLingui();
+  const navigation = useNavigation();
   const theme = useThemeTokens();
   const fontFamily = useInterfaceFontFamily() ?? undefined;
   const insets = useSafeAreaInsets();
   const config = useVoiceSettings((state) => state.config);
   const loadError = useVoiceSettings((state) => state.loadError);
-  const [url, setUrl] = useState(config?.url ?? 'https://api.openai.com/v1');
+  const [url, setUrl] = useState(config?.url ?? '');
   const [apiKey, setApiKey] = useState(config?.apiKey ?? '');
   const [model, setModel] = useState(config?.model ?? '');
   const [language, setLanguage] = useState<AppLocale | 'auto' | null>(config?.language ?? null);
@@ -53,7 +55,7 @@ function VoiceSettingsForm() {
   async function save(clear = false) {
     const next = clear ? null : normalizeVoiceConfig(url, apiKey, model, language, autoInsert);
     if (!clear && !next) {
-      setMessage(t`Enter a valid HTTPS base URL. API key and model are optional.`);
+      setMessage(t`Enter a valid HTTPS API URL. API key and model are optional.`);
       return;
     }
     setBusy(true);
@@ -71,8 +73,13 @@ function VoiceSettingsForm() {
     setModel(next?.model ?? '');
     setLanguage(next?.language ?? null);
     setAutoInsert(next?.autoInsert ?? true);
-    setMessage(clear ? t`Voice to text disabled` : t`Saved`);
     setBusy(false);
+    if (clear) {
+      setMessage(t`Voice to text disabled`);
+    } else if (navigation.isFocused() && navigation.canGoBack()) {
+      Keyboard.dismiss();
+      navigation.goBack();
+    }
   }
   return (
     <ScrollView
@@ -141,17 +148,17 @@ function VoiceSettingsForm() {
           color={
             theme.colors.textMuted
           }>{t`Configure your speech service, then hold Send to record. Tap the animation to stop and transcribe.`}</Text>
-        <Text>{t`Base URL`}</Text>
+        <Text>{t`API URL`}</Text>
         <FontedTextInput
           testID="voice-service-url"
-          accessibilityLabel={t`Base URL`}
+          accessibilityLabel={t`API URL`}
           value={url}
           onChangeText={setUrl}
           editable={!busy}
           autoCapitalize="none"
           autoCorrect={false}
           keyboardType="url"
-          placeholder="https://api.openai.com/v1"
+          placeholder="https://openrouter.ai/api/v1/audio/transcriptions"
           style={field}
         />
         <Text>{t`API key (optional)`}</Text>
@@ -182,7 +189,7 @@ function VoiceSettingsForm() {
         <Text
           color={
             theme.colors.textMuted
-          }>{t`Uses the OpenAI-compatible /audio/transcriptions API. Your API key is stored securely on this device.`}</Text>
+          }>{t`Enter the full transcription endpoint. Muqun uses this URL as entered with an OpenAI-compatible request. Your API key is stored securely on this device.`}</Text>
         <View style={styles.actions}>
           <PressableScale
             accessibilityRole="button"

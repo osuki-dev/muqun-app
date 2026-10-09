@@ -7,15 +7,19 @@ keyboard enter
 # API key and model remain empty: URL-only configuration must save.
 scroll down --until "id=\"voice-settings-save\""
 press "id=\"voice-settings-save\""
-scroll down --until "label=\"Enter a valid HTTPS base URL. API key and model are optional\""
-wait "label=\"Enter a valid HTTPS base URL. API key and model are optional\"" 5000
+scroll down --until "label=\"Enter a valid HTTPS API URL. API key and model are optional\""
+wait "label=\"Enter a valid HTTPS API URL. API key and model are optional\"" 5000
 scroll up --until "id=\"voice-service-url\""
-fill "id=\"voice-service-url\"" "https://example.invalid/v1"
+fill "id=\"voice-service-url\"" ""
+fill "id=\"voice-service-url\"" "https://example.invalid/custom/speech/?api-version=2026-01" --delay-ms 30
 keyboard enter
 scroll down --until "id=\"voice-settings-save\""
 press "id=\"voice-settings-save\""
-scroll down --until "label=\"Saved\""
-wait "label=\"Saved\"" 5000
+wait "id=\"settings-voice-row\"" 5000
+wait absent "id=\"settings-voice-sheet\"" 5000
+press "id=\"settings-voice-row\""
+wait "id=\"voice-service-url\" value=\"https://example.invalid/custom/speech/?api-version=2026-01\"" 5000
+scroll down --until "id=\"voice-settings-clear\""
 press "id=\"voice-settings-clear\""
 wait "label=\"Voice to text disabled\"" 5000
 screenshot "shots/voice-settings.png"

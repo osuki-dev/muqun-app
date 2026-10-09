@@ -587,6 +587,10 @@ msgstr "คีย์ API"
 msgid "API key (optional)"
 msgstr "คีย์ API (ไม่บังคับ)"
 
+#: src/app/settings-voice.tsx
+msgid "API URL"
+msgstr "URL ของ API"
+
 #: src/components/settings-appearance.tsx
 msgid "App icon"
 msgstr "ไอคอนแอป"
@@ -804,10 +808,6 @@ msgstr "งานเบื้องหลัง"
 #: src/i18n/labels.ts
 msgid "Backspace"
 msgstr "Backspace"
-
-#: src/app/settings-voice.tsx
-msgid "Base URL"
-msgstr "URL ฐาน"
 
 #: src/components/agent-context-sheet.tsx
 msgid "Behaviour"
@@ -2097,6 +2097,7 @@ msgstr "ปิดข่าวสารล่าสุด"
 #: src/components/asset-viewer.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/open-web-service-sheet.tsx
+#: src/components/voice-input-button.tsx
 #: src/i18n/labels.ts
 msgid "Done"
 msgstr "เสร็จสิ้น"
@@ -2209,12 +2210,16 @@ msgid "Enter a name."
 msgstr "ป้อนชื่อ"
 
 #: src/app/settings-voice.tsx
-msgid "Enter a valid HTTPS base URL. API key and model are optional."
-msgstr "ป้อน URL หลัก HTTPS ที่ถูกต้อง คีย์ API และโมเดลไม่จำเป็นต้องระบุ"
+msgid "Enter a valid HTTPS API URL. API key and model are optional."
+msgstr "ป้อน URL ของ API แบบ HTTPS ที่ถูกต้อง ไม่จำเป็นต้องระบุคีย์ API และโมเดล"
 
 #: src/app/explore.tsx
 msgid "Enter the {PAIRING_CODE_CHARACTER_COUNT}-character code."
 msgstr "ป้อนรหัส {PAIRING_CODE_CHARACTER_COUNT} ตัวอักษร"
+
+#: src/app/settings-voice.tsx
+msgid "Enter the full transcription endpoint. Muqun uses this URL as entered with an OpenAI-compatible request. Your API key is stored securely on this device."
+msgstr "ป้อน URL ของบริการถอดเสียงแบบเต็ม Muqun จะส่งคำขอที่เข้ากันได้กับ OpenAI ไปยัง URL ที่ป้อนโดยไม่แก้ไข คีย์ API ของคุณจะถูกเก็บไว้อย่างปลอดภัยบนอุปกรณ์นี้"
 
 #: src/app/explore.tsx
 msgid "Enter the Gateway's address instead."
@@ -2966,10 +2971,6 @@ msgstr "แสดงทุกพาเนล ไม่ว่าจะมีเ�
 #: src/components/settings-servers.tsx
 msgid "List only the panes running a recognised agent."
 msgstr "แสดงเฉพาะพาเนลที่กำลังเรียกใช้เอเจนต์ที่รู้จัก"
-
-#: src/components/voice-input-button.tsx
-msgid "Listening…"
-msgstr "กำลังฟัง…"
 
 #: src/components/settings-alerts.tsx
 msgid "Live Activity"
@@ -4610,7 +4611,6 @@ msgstr "บันทึกชื่อใหม่"
 msgid "Save theme"
 msgstr "บันทึกธีม"
 
-#: src/app/settings-voice.tsx
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Saved"
 msgstr "บันทึกแล้ว"
@@ -6289,10 +6289,6 @@ msgstr "ใช้ฟอนต์ของคุณเองในแอปแล
 #: src/components/ssh-host-form.tsx
 msgid "Username"
 msgstr "ชื่อผู้ใช้"
-
-#: src/app/settings-voice.tsx
-msgid "Uses the OpenAI-compatible /audio/transcriptions API. Your API key is stored securely on this device."
-msgstr "ใช้ API /audio/transcriptions ที่เข้ากันได้กับ OpenAI คีย์ API จะถูกเก็บอย่างปลอดภัยบนอุปกรณ์นี้"
 
 #: src/components/theme-appearance-settings.tsx
 msgid "Uses the theme's Home artwork in the position chosen by your Home layout. Themes without Home artwork show no illustration."

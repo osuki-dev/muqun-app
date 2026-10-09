@@ -587,6 +587,10 @@ msgstr "API 키"
 msgid "API key (optional)"
 msgstr "API 키 (선택 사항)"
 
+#: src/app/settings-voice.tsx
+msgid "API URL"
+msgstr "API URL"
+
 #: src/components/settings-appearance.tsx
 msgid "App icon"
 msgstr "앱 아이콘"
@@ -804,10 +808,6 @@ msgstr "백그라운드 작업"
 #: src/i18n/labels.ts
 msgid "Backspace"
 msgstr "백스페이스"
-
-#: src/app/settings-voice.tsx
-msgid "Base URL"
-msgstr "기본 URL"
 
 #: src/components/agent-context-sheet.tsx
 msgid "Behaviour"
@@ -2097,6 +2097,7 @@ msgstr "새로운 기능 닫기"
 #: src/components/asset-viewer.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/open-web-service-sheet.tsx
+#: src/components/voice-input-button.tsx
 #: src/i18n/labels.ts
 msgid "Done"
 msgstr "완료"
@@ -2209,12 +2210,16 @@ msgid "Enter a name."
 msgstr "이름을 입력하세요"
 
 #: src/app/settings-voice.tsx
-msgid "Enter a valid HTTPS base URL. API key and model are optional."
-msgstr "유효한 HTTPS 기본 URL을 입력하세요. API 키와 모델은 선택 사항입니다"
+msgid "Enter a valid HTTPS API URL. API key and model are optional."
+msgstr "유효한 HTTPS API URL을 입력하세요. API 키와 모델은 선택 사항입니다"
 
 #: src/app/explore.tsx
 msgid "Enter the {PAIRING_CODE_CHARACTER_COUNT}-character code."
 msgstr "{PAIRING_CODE_CHARACTER_COUNT}자리 코드를 입력하세요"
+
+#: src/app/settings-voice.tsx
+msgid "Enter the full transcription endpoint. Muqun uses this URL as entered with an OpenAI-compatible request. Your API key is stored securely on this device."
+msgstr "전체 음성 변환 엔드포인트를 입력하세요. Muqun은 입력한 URL로 OpenAI 호환 요청을 보냅니다. API 키는 이 기기에 안전하게 저장됩니다"
 
 #: src/app/explore.tsx
 msgid "Enter the Gateway's address instead."
@@ -2966,10 +2971,6 @@ msgstr "에이전트 유무와 관계없이 모든 패널을 나열합니다"
 #: src/components/settings-servers.tsx
 msgid "List only the panes running a recognised agent."
 msgstr "인식된 에이전트가 실행 중인 패널만 나열합니다"
-
-#: src/components/voice-input-button.tsx
-msgid "Listening…"
-msgstr "듣는 중…"
 
 #: src/components/settings-alerts.tsx
 msgid "Live Activity"
@@ -4610,7 +4611,6 @@ msgstr "새 이름 저장"
 msgid "Save theme"
 msgstr "테마 저장"
 
-#: src/app/settings-voice.tsx
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Saved"
 msgstr "저장됨"
@@ -6289,10 +6289,6 @@ msgstr "앱과 터미널에 원하는 글꼴을 사용하세요"
 #: src/components/ssh-host-form.tsx
 msgid "Username"
 msgstr "사용자 이름"
-
-#: src/app/settings-voice.tsx
-msgid "Uses the OpenAI-compatible /audio/transcriptions API. Your API key is stored securely on this device."
-msgstr "OpenAI 호환 /audio/transcriptions API를 사용합니다. API 키는 이 기기에 안전하게 저장됩니다"
 
 #: src/components/theme-appearance-settings.tsx
 msgid "Uses the theme's Home artwork in the position chosen by your Home layout. Themes without Home artwork show no illustration."

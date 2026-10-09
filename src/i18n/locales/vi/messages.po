@@ -587,6 +587,10 @@ msgstr "Khóa API"
 msgid "API key (optional)"
 msgstr "Khóa API (không bắt buộc)"
 
+#: src/app/settings-voice.tsx
+msgid "API URL"
+msgstr "URL API"
+
 #: src/components/settings-appearance.tsx
 msgid "App icon"
 msgstr "Biểu tượng ứng dụng"
@@ -804,10 +808,6 @@ msgstr "Tác vụ nền"
 #: src/i18n/labels.ts
 msgid "Backspace"
 msgstr "Backspace"
-
-#: src/app/settings-voice.tsx
-msgid "Base URL"
-msgstr "URL cơ sở"
 
 #: src/components/agent-context-sheet.tsx
 msgid "Behaviour"
@@ -2097,6 +2097,7 @@ msgstr "Bỏ qua có gì mới"
 #: src/components/asset-viewer.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/open-web-service-sheet.tsx
+#: src/components/voice-input-button.tsx
 #: src/i18n/labels.ts
 msgid "Done"
 msgstr "Xong"
@@ -2209,12 +2210,16 @@ msgid "Enter a name."
 msgstr "Nhập tên"
 
 #: src/app/settings-voice.tsx
-msgid "Enter a valid HTTPS base URL. API key and model are optional."
-msgstr "Nhập URL cơ sở HTTPS hợp lệ. Khóa API và mô hình không bắt buộc"
+msgid "Enter a valid HTTPS API URL. API key and model are optional."
+msgstr "Nhập URL API HTTPS hợp lệ. Khóa API và mô hình là tùy chọn"
 
 #: src/app/explore.tsx
 msgid "Enter the {PAIRING_CODE_CHARACTER_COUNT}-character code."
 msgstr "Nhập mã gồm {PAIRING_CODE_CHARACTER_COUNT} ký tự"
+
+#: src/app/settings-voice.tsx
+msgid "Enter the full transcription endpoint. Muqun uses this URL as entered with an OpenAI-compatible request. Your API key is stored securely on this device."
+msgstr "Nhập đầy đủ địa chỉ dịch vụ phiên âm. Muqun gửi yêu cầu tương thích OpenAI đến đúng URL đã nhập. Khóa API được lưu an toàn trên thiết bị này"
 
 #: src/app/explore.tsx
 msgid "Enter the Gateway's address instead."
@@ -2966,10 +2971,6 @@ msgstr "Liệt kê mọi ngăn, có tác tử hay không"
 #: src/components/settings-servers.tsx
 msgid "List only the panes running a recognised agent."
 msgstr "Chỉ liệt kê các ngăn đang chạy một tác tử được nhận diện"
-
-#: src/components/voice-input-button.tsx
-msgid "Listening…"
-msgstr "Đang nghe…"
 
 #: src/components/settings-alerts.tsx
 msgid "Live Activity"
@@ -4610,7 +4611,6 @@ msgstr "Lưu tên mới"
 msgid "Save theme"
 msgstr "Lưu giao diện"
 
-#: src/app/settings-voice.tsx
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Saved"
 msgstr "Đã lưu"
@@ -6289,10 +6289,6 @@ msgstr "Dùng phông chữ của riêng bạn cho ứng dụng và terminal"
 #: src/components/ssh-host-form.tsx
 msgid "Username"
 msgstr "Tên người dùng"
-
-#: src/app/settings-voice.tsx
-msgid "Uses the OpenAI-compatible /audio/transcriptions API. Your API key is stored securely on this device."
-msgstr "Sử dụng API /audio/transcriptions tương thích OpenAI. Khóa API được lưu an toàn trên thiết bị này"
 
 #: src/components/theme-appearance-settings.tsx
 msgid "Uses the theme's Home artwork in the position chosen by your Home layout. Themes without Home artwork show no illustration."
