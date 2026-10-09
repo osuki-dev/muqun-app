@@ -3708,6 +3708,10 @@ msgstr "不是 Git 仓库"
 msgid "Not available"
 msgstr "不可用"
 
+#: src/components/settings-server-capabilities.tsx
+msgid "Not configured"
+msgstr "未配置"
+
 #: src/lib/agent-widget-layout.tsx
 msgid "not connected"
 msgstr "未连接"
@@ -3825,6 +3829,7 @@ msgstr "在平板上，主页以双页展开，屏幕键盘也是一整副完整
 msgid "One Changes sheet for terminals and agent sessions: the changed files as a tree with line totals, the branch under the title, and Discard on a file's menu."
 msgstr "终端和智能体会话共用同一个改动面板：改动的文件以目录树呈现并附带行数，标题下显示分支，文件菜单里可以放弃改动"
 
+#: src/components/settings-server-capabilities.tsx
 #: src/i18n/labels.ts
 msgid "Online"
 msgstr "在线"

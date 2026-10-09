@@ -3708,6 +3708,10 @@ msgstr "ไม่ใช่ที่เก็บโค้ด Git"
 msgid "Not available"
 msgstr "ไม่พร้อมใช้งาน"
 
+#: src/components/settings-server-capabilities.tsx
+msgid "Not configured"
+msgstr "ยังไม่ได้กำหนดค่า"
+
 #: src/lib/agent-widget-layout.tsx
 msgid "not connected"
 msgstr "ไม่ได้เชื่อมต่อ"
@@ -3825,6 +3829,7 @@ msgstr "บนแท็บเล็ต หน้าแรกจะเปิด�
 msgid "One Changes sheet for terminals and agent sessions: the changed files as a tree with line totals, the branch under the title, and Discard on a file's menu."
 msgstr "ชีตการเปลี่ยนแปลงเดียวสำหรับเทอร์มินัลและเซสชันเอเจนต์: ไฟล์ที่เปลี่ยนแสดงเป็นต้นไม้พร้อมจำนวนบรรทัด สาขาอยู่ใต้ชื่อเรื่อง และมีละทิ้งในเมนูของไฟล์"
 
+#: src/components/settings-server-capabilities.tsx
 #: src/i18n/labels.ts
 msgid "Online"
 msgstr "ออนไลน์"

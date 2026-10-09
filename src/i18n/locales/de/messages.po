@@ -3708,6 +3708,10 @@ msgstr "Kein Git-Repository"
 msgid "Not available"
 msgstr "Nicht verfügbar"
 
+#: src/components/settings-server-capabilities.tsx
+msgid "Not configured"
+msgstr "Nicht konfiguriert"
+
 #: src/lib/agent-widget-layout.tsx
 msgid "not connected"
 msgstr "nicht verbunden"
@@ -3825,6 +3829,7 @@ msgstr "Auf dem Tablet öffnet sich Home als Doppelseite, und die Bildschirmtast
 msgid "One Changes sheet for terminals and agent sessions: the changed files as a tree with line totals, the branch under the title, and Discard on a file's menu."
 msgstr "Ein Änderungen-Sheet für Terminals und Agentensitzungen: geänderte Dateien als Baum mit Zeilensummen, der Branch unter dem Titel und Verwerfen im Menü einer Datei"
 
+#: src/components/settings-server-capabilities.tsx
 #: src/i18n/labels.ts
 msgid "Online"
 msgstr "Online"

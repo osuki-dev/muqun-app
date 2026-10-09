@@ -29,7 +29,7 @@ import { useGatewayRecord } from '@/hooks/use-gateway-record';
 import { useMonoFontFamily } from '@/hooks/use-user-fonts';
 import { GatewayStorageError } from '@/components/gateway-storage-error';
 import { reachabilityDescription, reachabilityLabel } from '@/i18n/labels';
-import { DEMO_SERVER_ID } from '@/lib/demo-gateway';
+import { DEMO_SERVER_ID, demoRecord, isDemoActive } from '@/lib/demo-gateway';
 import { feedback } from '@/lib/feedback';
 import { loadPairedDevices, revokePairedDevice, type PairedDevice } from '@/lib/gateway-client';
 import type { GatewayRecord } from '@/lib/gateway-storage';
@@ -100,6 +100,9 @@ export function SettingsServers() {
     }, [record, refreshReachability])
   );
 
+  // Demo is exclusive: it stands in only when there are no real records.
+  const showDemo = records.length === 0 && isDemoActive();
+
   async function use(server: GatewayRecord) {
     if (server.serverId === record?.serverId) return;
     await selectRecord(server.serverId);
@@ -132,6 +135,20 @@ export function SettingsServers() {
           <Text variant="caption" color={theme.colors.textMuted}>
             <Trans>Loading servers</Trans>
           </Text>
+        </View>
+      ) : showDemo ? (
+        <View>
+          <ServerRow
+            server={demoRecord}
+            current
+            demo
+            reachability="live"
+            lastConnected={undefined}
+            open={openId === DEMO_SERVER_ID}
+            onToggle={() => setOpenId((id) => (id === DEMO_SERVER_ID ? null : DEMO_SERVER_ID))}
+            onUse={() => {}}
+            onUnpair={async () => {}}
+          />
         </View>
       ) : records.length === 0 ? (
         <View style={styles.note}>
@@ -244,6 +261,7 @@ export function SettingsServers() {
 function ServerRow({
   server,
   current,
+  demo = false,
   reachability,
   lastConnected,
   open,
@@ -254,6 +272,8 @@ function ServerRow({
   server: GatewayRecord;
   /** The server the app is attached to, which is the one with a device list. */
   current: boolean;
+  /** The demo workspace: no paired devices, edit or unpair, only the capability sections. */
+  demo?: boolean;
   reachability: ServerReachability;
   /**
    * What `/servers/[serverId]` last mirrored for this record, or `undefined`
@@ -395,7 +415,13 @@ function ServerRow({
           exiting={fadeOut('micro')}
           layout={listLayout()}
           style={styles.actions}>
-          {current ? (
+          {demo ? (
+            <>
+              <ServerTasksNavRow serverId={server.serverId} />
+              <ServerCapabilities serverId={server.serverId} />
+              <McpTokens serverId={server.serverId} />
+            </>
+          ) : current ? (
             <>
               <ServerTasksNavRow serverId={server.serverId} />
               <PairedDevices server={server} />
@@ -427,7 +453,7 @@ function ServerRow({
               </Text>
             </>
           )}
-          <ServerRowEditor server={server} onUnpair={onUnpair} />
+          {demo ? null : <ServerRowEditor server={server} onUnpair={onUnpair} />}
         </Animated.View>
       ) : null}
     </Animated.View>

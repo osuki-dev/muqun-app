@@ -3708,6 +3708,10 @@ msgstr "Git リポジトリではありません"
 msgid "Not available"
 msgstr "利用できません"
 
+#: src/components/settings-server-capabilities.tsx
+msgid "Not configured"
+msgstr "未設定"
+
 #: src/lib/agent-widget-layout.tsx
 msgid "not connected"
 msgstr "未接続"
@@ -3825,6 +3829,7 @@ msgstr "タブレットではホームが見開きの2ページで開き、オ�
 msgid "One Changes sheet for terminals and agent sessions: the changed files as a tree with line totals, the branch under the title, and Discard on a file's menu."
 msgstr "ターミナルとエージェントのセッションで同じ変更点シートを使います。変更ファイルは行数つきのツリーで表示、タイトルの下にブランチ、ファイルのメニューに破棄があります"
 
+#: src/components/settings-server-capabilities.tsx
 #: src/i18n/labels.ts
 msgid "Online"
 msgstr "オンラインです"

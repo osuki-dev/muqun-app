@@ -3708,6 +3708,10 @@ msgstr "Pas un dépôt Git"
 msgid "Not available"
 msgstr "Non disponible"
 
+#: src/components/settings-server-capabilities.tsx
+msgid "Not configured"
+msgstr "Non configuré"
+
 #: src/lib/agent-widget-layout.tsx
 msgid "not connected"
 msgstr "non connecté"
@@ -3825,6 +3829,7 @@ msgstr "Sur tablette, l’accueil s’ouvre en double page et le clavier à l’
 msgid "One Changes sheet for terminals and agent sessions: the changed files as a tree with line totals, the branch under the title, and Discard on a file's menu."
 msgstr "Une seule feuille Modifications pour les terminaux et les sessions d’agent : les fichiers modifiés en arbre avec le total des lignes, la branche sous le titre et Rejeter dans le menu d’un fichier"
 
+#: src/components/settings-server-capabilities.tsx
 #: src/i18n/labels.ts
 msgid "Online"
 msgstr "En ligne"
