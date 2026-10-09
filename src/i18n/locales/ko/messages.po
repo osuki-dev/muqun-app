@@ -166,6 +166,10 @@ msgstr "{0}시간 전"
 msgid "{0}m ago"
 msgstr "{0}분 전"
 
+#: src/components/settings-mcp-tokens.tsx
+msgid "{agentId} service"
+msgstr "{agentId} 서비스"
+
 #: src/components/agent-workbench.tsx
 msgid "{agentName} cannot preview a rollback. This removes the message and everything after it, the whole turn, and it cannot be undone."
 msgstr "{agentName}은(는) 롤백을 미리 볼 수 없습니다. 이 메시지와 그 이후의 모든 내용, 즉 턴 전체가 삭제되며 되돌릴 수 없습니다"
@@ -492,6 +496,7 @@ msgid "Agent panes open in"
 msgstr "에이전트 패널 기본 보기"
 
 #: src/components/app-drawer-content.tsx
+#: src/components/settings-server-capabilities.tsx
 #: src/components/settings-servers.tsx
 msgid "Agents"
 msgstr "에이전트"
@@ -594,6 +599,10 @@ msgstr "항상 허용"
 #: src/components/agent-revert-plate.tsx
 msgid "and {rest} more"
 msgstr "외 {rest}개"
+
+#: src/components/settings-server-capabilities.tsx
+msgid "Android builds"
+msgstr "Android 빌드"
 
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Answer"
@@ -975,6 +984,10 @@ msgstr "취소됨"
 msgid "Cancelling…"
 msgstr "취소하는 중…"
 
+#: src/components/settings-server-capabilities.tsx
+msgid "Capabilities"
+msgstr "기능"
+
 #: src/i18n/labels.ts
 msgctxt "git file status"
 msgid "Changed"
@@ -1314,6 +1327,10 @@ msgstr "{0} 제거 확인"
 msgid "Confirm revoke {0}"
 msgstr "{0} 해제 확인"
 
+#: src/components/settings-mcp-tokens.tsx
+msgid "Confirm revoke {title}"
+msgstr "{title} 해지 확인"
+
 #: src/components/settings-alerts.tsx
 msgid "Confirm taps, pairing, and gateway events."
 msgstr "탭, 페어링, Gateway 이벤트를 진동으로 알립니다"
@@ -1338,6 +1355,7 @@ msgstr "연결"
 #: src/app/explore.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/components/session-map.tsx
+#: src/components/settings-server-capabilities.tsx
 msgid "Connected"
 msgstr "연결됨"
 
@@ -1680,6 +1698,10 @@ msgstr "유지할 수 없습니다"
 msgid "Could not list this server's agents."
 msgstr "이 서버의 에이전트 목록을 가져오지 못했습니다"
 
+#: src/components/settings-server-capabilities.tsx
+msgid "Could not load capabilities"
+msgstr "기능을 불러올 수 없습니다"
+
 #: src/components/session-artifacts.tsx
 msgid "Could not load files."
 msgstr "파일을 불러오지 못했습니다"
@@ -1704,6 +1726,10 @@ msgstr "세션을 불러오지 못했습니다"
 #: src/components/changes-sheet.tsx
 msgid "Could not load this file's changes."
 msgstr "이 파일의 변경 사항을 불러오지 못했습니다"
+
+#: src/components/settings-mcp-tokens.tsx
+msgid "Could not load tokens"
+msgstr "토큰을 불러올 수 없습니다"
 
 #: src/components/session-map.tsx
 msgid "Could not load what is running."
@@ -1830,6 +1856,10 @@ msgstr "해제할 수 없습니다"
 #: src/components/settings-servers.tsx
 msgid "Could not revoke device"
 msgstr "기기를 해제하지 못했습니다"
+
+#: src/components/settings-mcp-tokens.tsx
+msgid "Could not revoke token"
+msgstr "토큰을 해지할 수 없습니다"
 
 #: src/components/agent-workbench.tsx
 msgid "Could not run that"
@@ -2365,11 +2395,27 @@ msgstr "작업 펼치기"
 msgid "Expand tool call"
 msgstr "도구 호출 펼치기"
 
+#: src/components/settings-mcp-tokens.tsx
+msgid "Expired"
+msgstr "만료됨"
+
 #. placeholder {0}: Math.floor(secondsRemaining / 60)
 #. placeholder {1}: String(secondsRemaining % 60).padStart(2, '0')
 #: src/app/explore.tsx
 msgid "Expires in {0}:{1}"
 msgstr "{0}:{1} 후 만료"
+
+#: src/components/settings-mcp-tokens.tsx
+msgid "Expires in {days}d"
+msgstr "{days}일 후 만료"
+
+#: src/components/settings-mcp-tokens.tsx
+msgid "Expires in {hours}h"
+msgstr "{hours}시간 후 만료"
+
+#: src/components/settings-mcp-tokens.tsx
+msgid "Expires in {minutes}m"
+msgstr "{minutes}분 후 만료"
 
 #: src/components/agent-mode-sheet.tsx
 msgid "Explore"
@@ -2581,6 +2627,10 @@ msgstr "Gateway URL"
 #: src/components/settings-servers.tsx
 msgid "Gateway URL is not valid."
 msgstr "Gateway URL이 올바르지 않습니다"
+
+#: src/components/settings-server-capabilities.tsx
+msgid "gateway v{gatewayVersion}"
+msgstr "Gateway v{gatewayVersion}"
 
 #: src/components/ssh-host-form.tsx
 msgid "Gateways reached through this host"
@@ -2893,6 +2943,10 @@ msgstr "프로세스 중단"
 msgid "Interrupt what this agent is doing."
 msgstr "이 에이전트가 하고 있는 작업을 중단합니다"
 
+#: src/components/settings-server-capabilities.tsx
+msgid "iOS builds"
+msgstr "iOS 빌드"
+
 #: src/lib/local-authentication.ts
 msgid "iris recognition"
 msgstr "홍채 인식"
@@ -3029,6 +3083,10 @@ msgstr "마지막 확인: {minutes}분 전"
 #: src/components/settings-servers.tsx
 msgid "Last seen just now"
 msgstr "마지막 확인: 방금"
+
+#: src/components/settings-mcp-tokens.tsx
+msgid "Last used {when}"
+msgstr "마지막 사용 {when}"
 
 #: src/components/agent-workbench.tsx
 #: src/components/skia-terminal.tsx
@@ -3186,6 +3244,10 @@ msgstr "확인 완료로 표시"
 #: src/components/settings-appearance.tsx
 msgid "Mascot"
 msgstr "마스코트"
+
+#: src/components/settings-mcp-tokens.tsx
+msgid "MCP tokens"
+msgstr "MCP 토큰"
 
 #. placeholder {0}: hit.path
 #: src/components/file-mention-panel.tsx
@@ -3375,9 +3437,17 @@ msgstr "입력이 필요합니다"
 msgid "Never connected"
 msgstr "연결된 적 없음"
 
+#: src/components/settings-mcp-tokens.tsx
+msgid "Never expires"
+msgstr "만료되지 않음"
+
 #: src/components/settings-servers.tsx
 msgid "Never seen"
 msgstr "확인된 적 없음"
+
+#: src/components/settings-mcp-tokens.tsx
+msgid "Never used"
+msgstr "사용된 적 없음"
 
 #: src/app/commands.tsx
 msgid "New group"
@@ -3617,6 +3687,10 @@ msgstr "아직 공개된 테마가 없습니다"
 msgid "No themes match “{0}”."
 msgstr "“{0}”와 일치하는 테마가 없습니다"
 
+#: src/components/settings-mcp-tokens.tsx
+msgid "No tokens"
+msgstr "토큰 없음"
+
 #: src/components/agent-context-sheet.tsx
 msgid "no window reported for this model"
 msgstr "이 모델의 창 크기가 보고되지 않았습니다"
@@ -3639,6 +3713,7 @@ msgid "not connected"
 msgstr "연결 안 됨"
 
 #: src/components/server-terminal-workspace.tsx
+#: src/components/settings-server-capabilities.tsx
 #: src/i18n/labels.ts
 msgid "Not connected"
 msgstr "연결되지 않음"
@@ -3721,6 +3796,7 @@ msgstr "아직 없습니다 — “항상 허용” 응답이 이 프로젝트�
 msgid "Off"
 msgstr "꺼짐"
 
+#: src/components/settings-server-capabilities.tsx
 #: src/i18n/labels.ts
 msgid "Offline"
 msgstr "오프라인"
@@ -4046,6 +4122,10 @@ msgstr "팔레트 (최대 4개)"
 msgid "Pane {0} in session {1}"
 msgstr "세션 {1}의 창 {0}"
 
+#: src/components/settings-mcp-tokens.tsx
+msgid "Pane {paneId}"
+msgstr "창 {paneId}"
+
 #: src/components/settings-servers.tsx
 msgid "Panes on server cards"
 msgstr "서버 카드의 패널"
@@ -4290,6 +4370,10 @@ msgstr "종료"
 #: src/i18n/labels.ts
 msgid "Reach the network"
 msgstr "네트워크에 접속"
+
+#: src/components/settings-server-capabilities.tsx
+msgid "Reachable"
+msgstr "연결 가능"
 
 #: src/components/gateway-tunnel-badge.tsx
 msgid "Reached through SSH host {host}"
@@ -4638,6 +4722,7 @@ msgid "Reviewing the changes and checking the tests…"
 msgstr "변경 사항과 테스트를 확인하는 중…"
 
 #: src/components/agent-context-sheet.tsx
+#: src/components/settings-mcp-tokens.tsx
 #: src/components/settings-servers.tsx
 msgid "Revoke"
 msgstr "해제"
@@ -4649,6 +4734,11 @@ msgstr "해제"
 msgid "Revoke {0}"
 msgstr "{0} 해제"
 
+#: src/components/settings-mcp-tokens.tsx
+msgid "Revoke {title}"
+msgstr "{title} 해지"
+
+#: src/components/settings-mcp-tokens.tsx
 #: src/components/settings-servers.tsx
 msgid "Revoking…"
 msgstr "해제 중…"
@@ -4705,6 +4795,10 @@ msgstr "내 컴퓨터에서 Gateway를 실행하고 화면에 출력된 QR 코�
 #: src/i18n/labels.ts
 msgid "Running"
 msgstr "실행 중"
+
+#: src/components/settings-server-capabilities.tsx
+msgid "Rust"
+msgstr "Rust"
 
 #: src/app/settings-voice.tsx
 #: src/components/agent-sessions-sheet.tsx
@@ -5445,6 +5539,10 @@ msgstr "서브에이전트"
 msgid "Submit"
 msgstr "제출"
 
+#: src/components/settings-server-capabilities.tsx
+msgid "Suitable for"
+msgstr "적합한 작업"
+
 #: src/i18n/labels.ts
 msgid "Summarise progress"
 msgstr "진행 상황 요약"
@@ -5516,6 +5614,7 @@ msgstr "기호"
 
 #: src/components/settings-appearance.tsx
 #: src/components/settings-language-sheet.tsx
+#: src/components/settings-server-capabilities.tsx
 msgid "System"
 msgstr "시스템"
 
@@ -5601,6 +5700,7 @@ msgstr "임시 파일"
 #: src/app/settings.tsx
 #: src/components/home-launch-actions.tsx
 #: src/components/home-recent-sessions.tsx
+#: src/components/settings-server-capabilities.tsx
 #: src/i18n/labels.ts
 msgid "Terminal"
 msgstr "터미널"
@@ -6126,6 +6226,10 @@ msgstr "시간 초과"
 msgid "Today"
 msgstr "오늘"
 
+#: src/components/settings-mcp-tokens.tsx
+msgid "Tokens coding agents use to reach this gateway from this computer."
+msgstr "코딩 에이전트가 이 컴퓨터에서 이 게이트웨이에 접속할 때 쓰는 토큰입니다"
+
 #: src/components/agent-context-sheet.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
 msgid "Tokens this session"
@@ -6146,6 +6250,10 @@ msgstr "변경 사항이 너무 많아 모두 나열할 수 없습니다. 전체
 #: src/components/tool-call-detail-sheet.tsx
 msgid "Tool call"
 msgstr "도구 호출"
+
+#: src/components/settings-server-capabilities.tsx
+msgid "Toolchains"
+msgstr "툴체인"
 
 #: src/components/changes-sheet.tsx
 msgid "tracking {upstream}"
@@ -6191,6 +6299,8 @@ msgstr "신뢰"
 msgid "Try again"
 msgstr "다시 시도"
 
+#: src/components/settings-mcp-tokens.tsx
+#: src/components/settings-server-capabilities.tsx
 #: src/components/settings-servers.tsx
 msgid "Try again once the gateway responds."
 msgstr "Gateway가 응답하면 다시 시도하세요"
@@ -6241,6 +6351,10 @@ msgstr "직접 입력하거나 키보드의 받아쓰기 키를 사용하세요"
 #: src/components/simfarm-stage.tsx
 msgid "Type on the simulator"
 msgstr "시뮬레이터에 입력"
+
+#: src/components/settings-server-capabilities.tsx
+msgid "Unavailable"
+msgstr "사용할 수 없음"
 
 #: src/components/changes-sheet.tsx
 msgid "Uncommitted changes"
@@ -6507,6 +6621,10 @@ msgstr "답변을 기다리는 중"
 #: src/components/agent-composer.tsx
 msgid "Waiting to send"
 msgstr "전송 대기 중"
+
+#: src/components/settings-server-capabilities.tsx
+msgid "Web"
+msgstr "웹"
 
 #: src/components/agent-workbench.tsx
 msgid "Welcome to {agentName}"

@@ -1,0 +1,24 @@
+# The current server's capabilities and MCP tokens, opened by deep link against the demo fixtures.
+
+# section open
+open "muqun://settings-servers"
+wait stable 400 5000
+
+# section expand
+press "${TARGET}"
+
+# section scroll
+scroll down --pixels 300 --duration-ms 300
+wait stable 300 5000
+
+# section visible
+is visible "${TARGET}"
+
+# section press
+press "${TARGET}"
+
+# section gone
+is hidden "${TARGET}"
+
+# section close
+back --system

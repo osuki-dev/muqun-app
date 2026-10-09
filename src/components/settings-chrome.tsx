@@ -572,14 +572,21 @@ export function SettingsInfoRow({
         <Text variant="bodySmall" style={styles.rowLabel}>
           {label}
         </Text>
-        <Text
-          selectable
-          variant="caption"
-          color={theme.colors.textMuted}
-          numberOfLines={3}
-          style={styles.rowDetail}>
-          {detail}
-        </Text>
+        {/* Text stays a string's wrapper; a node (chips, a status dot) is
+            laid out by its own View, because a View inside Text is inline
+            and unreliable across the two platforms. */}
+        {typeof detail === 'string' || typeof detail === 'number' ? (
+          <Text
+            selectable
+            variant="caption"
+            color={theme.colors.textMuted}
+            numberOfLines={3}
+            style={styles.rowDetail}>
+            {detail}
+          </Text>
+        ) : (
+          detail
+        )}
       </View>
     </View>
   );

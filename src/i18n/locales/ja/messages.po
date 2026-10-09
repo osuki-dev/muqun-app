@@ -166,6 +166,10 @@ msgstr "{0}時間前"
 msgid "{0}m ago"
 msgstr "{0}分前"
 
+#: src/components/settings-mcp-tokens.tsx
+msgid "{agentId} service"
+msgstr "{agentId} サービス"
+
 #: src/components/agent-workbench.tsx
 msgid "{agentName} cannot preview a rollback. This removes the message and everything after it, the whole turn, and it cannot be undone."
 msgstr "{agentName} はロールバックをプレビューできません。このメッセージ以降、ターン全体が削除され、元に戻せません"
@@ -492,6 +496,7 @@ msgid "Agent panes open in"
 msgstr "エージェントのパネルの初期表示"
 
 #: src/components/app-drawer-content.tsx
+#: src/components/settings-server-capabilities.tsx
 #: src/components/settings-servers.tsx
 msgid "Agents"
 msgstr "エージェント"
@@ -594,6 +599,10 @@ msgstr "常に許可"
 #: src/components/agent-revert-plate.tsx
 msgid "and {rest} more"
 msgstr "ほか {rest} 件"
+
+#: src/components/settings-server-capabilities.tsx
+msgid "Android builds"
+msgstr "Android ビルド"
 
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Answer"
@@ -975,6 +984,10 @@ msgstr "キャンセル済み"
 msgid "Cancelling…"
 msgstr "キャンセル中…"
 
+#: src/components/settings-server-capabilities.tsx
+msgid "Capabilities"
+msgstr "機能"
+
 #: src/i18n/labels.ts
 msgctxt "git file status"
 msgid "Changed"
@@ -1314,6 +1327,10 @@ msgstr "{0} の削除を確認"
 msgid "Confirm revoke {0}"
 msgstr "{0} の取り消しを確認"
 
+#: src/components/settings-mcp-tokens.tsx
+msgid "Confirm revoke {title}"
+msgstr "{title} の取り消しを確認"
+
 #: src/components/settings-alerts.tsx
 msgid "Confirm taps, pairing, and gateway events."
 msgstr "タップ、ペアリング、Gateway のイベントを触覚で知らせます"
@@ -1338,6 +1355,7 @@ msgstr "接続"
 #: src/app/explore.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/components/session-map.tsx
+#: src/components/settings-server-capabilities.tsx
 msgid "Connected"
 msgstr "接続済み"
 
@@ -1680,6 +1698,10 @@ msgstr "保持できませんでした"
 msgid "Could not list this server's agents."
 msgstr "このサーバーのエージェント一覧を取得できませんでした"
 
+#: src/components/settings-server-capabilities.tsx
+msgid "Could not load capabilities"
+msgstr "機能を読み込めませんでした"
+
 #: src/components/session-artifacts.tsx
 msgid "Could not load files."
 msgstr "ファイルを読み込めませんでした"
@@ -1704,6 +1726,10 @@ msgstr "セッションを読み込めませんでした"
 #: src/components/changes-sheet.tsx
 msgid "Could not load this file's changes."
 msgstr "このファイルの変更を読み込めませんでした"
+
+#: src/components/settings-mcp-tokens.tsx
+msgid "Could not load tokens"
+msgstr "トークンを読み込めませんでした"
 
 #: src/components/session-map.tsx
 msgid "Could not load what is running."
@@ -1830,6 +1856,10 @@ msgstr "取り消せませんでした"
 #: src/components/settings-servers.tsx
 msgid "Could not revoke device"
 msgstr "デバイスを取り消せませんでした"
+
+#: src/components/settings-mcp-tokens.tsx
+msgid "Could not revoke token"
+msgstr "トークンを取り消せませんでした"
 
 #: src/components/agent-workbench.tsx
 msgid "Could not run that"
@@ -2365,11 +2395,27 @@ msgstr "タスクを展開"
 msgid "Expand tool call"
 msgstr "ツール呼び出しを展開"
 
+#: src/components/settings-mcp-tokens.tsx
+msgid "Expired"
+msgstr "期限切れ"
+
 #. placeholder {0}: Math.floor(secondsRemaining / 60)
 #. placeholder {1}: String(secondsRemaining % 60).padStart(2, '0')
 #: src/app/explore.tsx
 msgid "Expires in {0}:{1}"
 msgstr "あと {0}:{1} で期限切れ"
+
+#: src/components/settings-mcp-tokens.tsx
+msgid "Expires in {days}d"
+msgstr "あと {days} 日で期限切れ"
+
+#: src/components/settings-mcp-tokens.tsx
+msgid "Expires in {hours}h"
+msgstr "あと {hours} 時間で期限切れ"
+
+#: src/components/settings-mcp-tokens.tsx
+msgid "Expires in {minutes}m"
+msgstr "あと {minutes} 分で期限切れ"
 
 #: src/components/agent-mode-sheet.tsx
 msgid "Explore"
@@ -2581,6 +2627,10 @@ msgstr "Gateway の URL"
 #: src/components/settings-servers.tsx
 msgid "Gateway URL is not valid."
 msgstr "Gateway の URL が正しくありません"
+
+#: src/components/settings-server-capabilities.tsx
+msgid "gateway v{gatewayVersion}"
+msgstr "Gateway v{gatewayVersion}"
 
 #: src/components/ssh-host-form.tsx
 msgid "Gateways reached through this host"
@@ -2893,6 +2943,10 @@ msgstr "プロセスを中断"
 msgid "Interrupt what this agent is doing."
 msgstr "このエージェントが進めている作業を中断します"
 
+#: src/components/settings-server-capabilities.tsx
+msgid "iOS builds"
+msgstr "iOS ビルド"
+
 #: src/lib/local-authentication.ts
 msgid "iris recognition"
 msgstr "虹彩認証"
@@ -3029,6 +3083,10 @@ msgstr "最終確認: {minutes}分前"
 #: src/components/settings-servers.tsx
 msgid "Last seen just now"
 msgstr "最終確認: たった今"
+
+#: src/components/settings-mcp-tokens.tsx
+msgid "Last used {when}"
+msgstr "最終使用 {when}"
 
 #: src/components/agent-workbench.tsx
 #: src/components/skia-terminal.tsx
@@ -3186,6 +3244,10 @@ msgstr "確認済みにする"
 #: src/components/settings-appearance.tsx
 msgid "Mascot"
 msgstr "マスコット"
+
+#: src/components/settings-mcp-tokens.tsx
+msgid "MCP tokens"
+msgstr "MCP トークン"
 
 #. placeholder {0}: hit.path
 #: src/components/file-mention-panel.tsx
@@ -3375,9 +3437,17 @@ msgstr "入力が必要です"
 msgid "Never connected"
 msgstr "一度も接続されていません"
 
+#: src/components/settings-mcp-tokens.tsx
+msgid "Never expires"
+msgstr "無期限"
+
 #: src/components/settings-servers.tsx
 msgid "Never seen"
 msgstr "一度も確認されていません"
+
+#: src/components/settings-mcp-tokens.tsx
+msgid "Never used"
+msgstr "未使用"
 
 #: src/app/commands.tsx
 msgid "New group"
@@ -3617,6 +3687,10 @@ msgstr "公開されているテーマはまだありません"
 msgid "No themes match “{0}”."
 msgstr "「{0}」に一致するテーマはありません"
 
+#: src/components/settings-mcp-tokens.tsx
+msgid "No tokens"
+msgstr "トークンはありません"
+
 #: src/components/agent-context-sheet.tsx
 msgid "no window reported for this model"
 msgstr "このモデルのウィンドウは不明です"
@@ -3639,6 +3713,7 @@ msgid "not connected"
 msgstr "未接続"
 
 #: src/components/server-terminal-workspace.tsx
+#: src/components/settings-server-capabilities.tsx
 #: src/i18n/labels.ts
 msgid "Not connected"
 msgstr "未接続"
@@ -3721,6 +3796,7 @@ msgstr "まだありません。「常に許可」の回答は、このプロジ
 msgid "Off"
 msgstr "オフ"
 
+#: src/components/settings-server-capabilities.tsx
 #: src/i18n/labels.ts
 msgid "Offline"
 msgstr "オフライン"
@@ -4046,6 +4122,10 @@ msgstr "パレット（最大4色）"
 msgid "Pane {0} in session {1}"
 msgstr "セッション {1} のペイン {0}"
 
+#: src/components/settings-mcp-tokens.tsx
+msgid "Pane {paneId}"
+msgstr "ペイン {paneId}"
+
 #: src/components/settings-servers.tsx
 msgid "Panes on server cards"
 msgstr "サーバーカードのパネル"
@@ -4290,6 +4370,10 @@ msgstr "終了"
 #: src/i18n/labels.ts
 msgid "Reach the network"
 msgstr "ネットワークにアクセスする"
+
+#: src/components/settings-server-capabilities.tsx
+msgid "Reachable"
+msgstr "到達可能"
 
 #: src/components/gateway-tunnel-badge.tsx
 msgid "Reached through SSH host {host}"
@@ -4638,6 +4722,7 @@ msgid "Reviewing the changes and checking the tests…"
 msgstr "変更とテストを確認中…"
 
 #: src/components/agent-context-sheet.tsx
+#: src/components/settings-mcp-tokens.tsx
 #: src/components/settings-servers.tsx
 msgid "Revoke"
 msgstr "取り消す"
@@ -4649,6 +4734,11 @@ msgstr "取り消す"
 msgid "Revoke {0}"
 msgstr "{0} を取り消す"
 
+#: src/components/settings-mcp-tokens.tsx
+msgid "Revoke {title}"
+msgstr "{title} を取り消す"
+
+#: src/components/settings-mcp-tokens.tsx
 #: src/components/settings-servers.tsx
 msgid "Revoking…"
 msgstr "取り消し中…"
@@ -4705,6 +4795,10 @@ msgstr "自分のマシンで Gateway を起動し、表示された QR コー�
 #: src/i18n/labels.ts
 msgid "Running"
 msgstr "実行中"
+
+#: src/components/settings-server-capabilities.tsx
+msgid "Rust"
+msgstr "Rust"
 
 #: src/app/settings-voice.tsx
 #: src/components/agent-sessions-sheet.tsx
@@ -5445,6 +5539,10 @@ msgstr "サブエージェント"
 msgid "Submit"
 msgstr "送信"
 
+#: src/components/settings-server-capabilities.tsx
+msgid "Suitable for"
+msgstr "適した用途"
+
 #: src/i18n/labels.ts
 msgid "Summarise progress"
 msgstr "進捗を要約"
@@ -5516,6 +5614,7 @@ msgstr "記号"
 
 #: src/components/settings-appearance.tsx
 #: src/components/settings-language-sheet.tsx
+#: src/components/settings-server-capabilities.tsx
 msgid "System"
 msgstr "システム設定"
 
@@ -5601,6 +5700,7 @@ msgstr "一時ファイル"
 #: src/app/settings.tsx
 #: src/components/home-launch-actions.tsx
 #: src/components/home-recent-sessions.tsx
+#: src/components/settings-server-capabilities.tsx
 #: src/i18n/labels.ts
 msgid "Terminal"
 msgstr "ターミナル"
@@ -6126,6 +6226,10 @@ msgstr "タイムアウト"
 msgid "Today"
 msgstr "今日"
 
+#: src/components/settings-mcp-tokens.tsx
+msgid "Tokens coding agents use to reach this gateway from this computer."
+msgstr "コーディングエージェントがこのコンピュータからこのゲートウェイに接続するためのトークンです"
+
 #: src/components/agent-context-sheet.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
 msgid "Tokens this session"
@@ -6146,6 +6250,10 @@ msgstr "変更が多すぎて一覧にできません。これは先頭部分で
 #: src/components/tool-call-detail-sheet.tsx
 msgid "Tool call"
 msgstr "ツール呼び出し"
+
+#: src/components/settings-server-capabilities.tsx
+msgid "Toolchains"
+msgstr "ツールチェーン"
 
 #: src/components/changes-sheet.tsx
 msgid "tracking {upstream}"
@@ -6191,6 +6299,8 @@ msgstr "信頼する"
 msgid "Try again"
 msgstr "もう一度試す"
 
+#: src/components/settings-mcp-tokens.tsx
+#: src/components/settings-server-capabilities.tsx
 #: src/components/settings-servers.tsx
 msgid "Try again once the gateway responds."
 msgstr "Gateway が応答したらもう一度試してください"
@@ -6241,6 +6351,10 @@ msgstr "入力するか、キーボードの音声入力キーを使ってくだ
 #: src/components/simfarm-stage.tsx
 msgid "Type on the simulator"
 msgstr "シミュレータに入力する"
+
+#: src/components/settings-server-capabilities.tsx
+msgid "Unavailable"
+msgstr "利用不可"
 
 #: src/components/changes-sheet.tsx
 msgid "Uncommitted changes"
@@ -6507,6 +6621,10 @@ msgstr "回答を待っています"
 #: src/components/agent-composer.tsx
 msgid "Waiting to send"
 msgstr "送信待ち"
+
+#: src/components/settings-server-capabilities.tsx
+msgid "Web"
+msgstr "Web"
 
 #: src/components/agent-workbench.tsx
 msgid "Welcome to {agentName}"

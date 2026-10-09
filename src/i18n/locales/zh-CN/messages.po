@@ -166,6 +166,10 @@ msgstr "{0} 小时前"
 msgid "{0}m ago"
 msgstr "{0} 分钟前"
 
+#: src/components/settings-mcp-tokens.tsx
+msgid "{agentId} service"
+msgstr "{agentId} 服务"
+
 #: src/components/agent-workbench.tsx
 msgid "{agentName} cannot preview a rollback. This removes the message and everything after it, the whole turn, and it cannot be undone."
 msgstr "{agentName} 无法预览回滚。这会删除这条消息及其之后的全部内容，即整轮对话，且无法恢复"
@@ -492,6 +496,7 @@ msgid "Agent panes open in"
 msgstr "代理面板的默认视图"
 
 #: src/components/app-drawer-content.tsx
+#: src/components/settings-server-capabilities.tsx
 #: src/components/settings-servers.tsx
 msgid "Agents"
 msgstr "代理"
@@ -594,6 +599,10 @@ msgstr "始终允许"
 #: src/components/agent-revert-plate.tsx
 msgid "and {rest} more"
 msgstr "还有 {rest} 个"
+
+#: src/components/settings-server-capabilities.tsx
+msgid "Android builds"
+msgstr "Android 构建"
 
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Answer"
@@ -975,6 +984,10 @@ msgstr "已取消"
 msgid "Cancelling…"
 msgstr "正在取消…"
 
+#: src/components/settings-server-capabilities.tsx
+msgid "Capabilities"
+msgstr "功能"
+
 #: src/i18n/labels.ts
 msgctxt "git file status"
 msgid "Changed"
@@ -1314,6 +1327,10 @@ msgstr "确认移除 {0}"
 msgid "Confirm revoke {0}"
 msgstr "确认吊销 {0}"
 
+#: src/components/settings-mcp-tokens.tsx
+msgid "Confirm revoke {title}"
+msgstr "确认撤销 {title}"
+
 #: src/components/settings-alerts.tsx
 msgid "Confirm taps, pairing, and gateway events."
 msgstr "为点按、配对和 Gateway 事件提供触感反馈"
@@ -1338,6 +1355,7 @@ msgstr "连接"
 #: src/app/explore.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/components/session-map.tsx
+#: src/components/settings-server-capabilities.tsx
 msgid "Connected"
 msgstr "已连接"
 
@@ -1680,6 +1698,10 @@ msgstr "无法保留"
 msgid "Could not list this server's agents."
 msgstr "无法获取这台服务器的代理列表"
 
+#: src/components/settings-server-capabilities.tsx
+msgid "Could not load capabilities"
+msgstr "无法加载功能"
+
 #: src/components/session-artifacts.tsx
 msgid "Could not load files."
 msgstr "无法加载文件"
@@ -1704,6 +1726,10 @@ msgstr "无法加载会话"
 #: src/components/changes-sheet.tsx
 msgid "Could not load this file's changes."
 msgstr "无法加载此文件的更改"
+
+#: src/components/settings-mcp-tokens.tsx
+msgid "Could not load tokens"
+msgstr "无法加载令牌"
 
 #: src/components/session-map.tsx
 msgid "Could not load what is running."
@@ -1830,6 +1856,10 @@ msgstr "无法撤销授权"
 #: src/components/settings-servers.tsx
 msgid "Could not revoke device"
 msgstr "无法吊销设备"
+
+#: src/components/settings-mcp-tokens.tsx
+msgid "Could not revoke token"
+msgstr "无法撤销令牌"
 
 #: src/components/agent-workbench.tsx
 msgid "Could not run that"
@@ -2365,11 +2395,27 @@ msgstr "展开任务"
 msgid "Expand tool call"
 msgstr "展开工具调用"
 
+#: src/components/settings-mcp-tokens.tsx
+msgid "Expired"
+msgstr "已过期"
+
 #. placeholder {0}: Math.floor(secondsRemaining / 60)
 #. placeholder {1}: String(secondsRemaining % 60).padStart(2, '0')
 #: src/app/explore.tsx
 msgid "Expires in {0}:{1}"
 msgstr "将在 {0}:{1} 后过期"
+
+#: src/components/settings-mcp-tokens.tsx
+msgid "Expires in {days}d"
+msgstr "{days} 天后过期"
+
+#: src/components/settings-mcp-tokens.tsx
+msgid "Expires in {hours}h"
+msgstr "{hours} 小时后过期"
+
+#: src/components/settings-mcp-tokens.tsx
+msgid "Expires in {minutes}m"
+msgstr "{minutes} 分钟后过期"
 
 #: src/components/agent-mode-sheet.tsx
 msgid "Explore"
@@ -2581,6 +2627,10 @@ msgstr "Gateway 网址"
 #: src/components/settings-servers.tsx
 msgid "Gateway URL is not valid."
 msgstr "Gateway 网址无效"
+
+#: src/components/settings-server-capabilities.tsx
+msgid "gateway v{gatewayVersion}"
+msgstr "Gateway v{gatewayVersion}"
 
 #: src/components/ssh-host-form.tsx
 msgid "Gateways reached through this host"
@@ -2893,6 +2943,10 @@ msgstr "中断进程"
 msgid "Interrupt what this agent is doing."
 msgstr "中断这个代理正在做的事"
 
+#: src/components/settings-server-capabilities.tsx
+msgid "iOS builds"
+msgstr "iOS 构建"
+
 #: src/lib/local-authentication.ts
 msgid "iris recognition"
 msgstr "虹膜识别"
@@ -3029,6 +3083,10 @@ msgstr "上次在线于 {minutes} 分钟前"
 #: src/components/settings-servers.tsx
 msgid "Last seen just now"
 msgstr "刚刚在线"
+
+#: src/components/settings-mcp-tokens.tsx
+msgid "Last used {when}"
+msgstr "上次使用 {when}"
 
 #: src/components/agent-workbench.tsx
 #: src/components/skia-terminal.tsx
@@ -3186,6 +3244,10 @@ msgstr "标记已查看"
 #: src/components/settings-appearance.tsx
 msgid "Mascot"
 msgstr "吉祥物"
+
+#: src/components/settings-mcp-tokens.tsx
+msgid "MCP tokens"
+msgstr "MCP 令牌"
 
 #. placeholder {0}: hit.path
 #: src/components/file-mention-panel.tsx
@@ -3375,9 +3437,17 @@ msgstr "需要你的输入"
 msgid "Never connected"
 msgstr "从未连接过"
 
+#: src/components/settings-mcp-tokens.tsx
+msgid "Never expires"
+msgstr "永不过期"
+
 #: src/components/settings-servers.tsx
 msgid "Never seen"
 msgstr "从未在线"
+
+#: src/components/settings-mcp-tokens.tsx
+msgid "Never used"
+msgstr "从未使用"
 
 #: src/app/commands.tsx
 msgid "New group"
@@ -3617,6 +3687,10 @@ msgstr "还没有已发布的主题"
 msgid "No themes match “{0}”."
 msgstr "没有匹配“{0}”的主题"
 
+#: src/components/settings-mcp-tokens.tsx
+msgid "No tokens"
+msgstr "没有令牌"
+
 #: src/components/agent-context-sheet.tsx
 msgid "no window reported for this model"
 msgstr "该模型未提供上下文窗口"
@@ -3639,6 +3713,7 @@ msgid "not connected"
 msgstr "未连接"
 
 #: src/components/server-terminal-workspace.tsx
+#: src/components/settings-server-capabilities.tsx
 #: src/i18n/labels.ts
 msgid "Not connected"
 msgstr "未连接"
@@ -3721,6 +3796,7 @@ msgstr "还没有内容——选择“始终允许”后，规则会出现在这
 msgid "Off"
 msgstr "关闭"
 
+#: src/components/settings-server-capabilities.tsx
 #: src/i18n/labels.ts
 msgid "Offline"
 msgstr "离线"
@@ -4046,6 +4122,10 @@ msgstr "配色（最多 4 色）"
 msgid "Pane {0} in session {1}"
 msgstr "会话 {1} 中的窗格 {0}"
 
+#: src/components/settings-mcp-tokens.tsx
+msgid "Pane {paneId}"
+msgstr "窗格 {paneId}"
+
 #: src/components/settings-servers.tsx
 msgid "Panes on server cards"
 msgstr "服务器卡片上的面板"
@@ -4290,6 +4370,10 @@ msgstr "退出"
 #: src/i18n/labels.ts
 msgid "Reach the network"
 msgstr "访问网络"
+
+#: src/components/settings-server-capabilities.tsx
+msgid "Reachable"
+msgstr "可连接"
 
 #: src/components/gateway-tunnel-badge.tsx
 msgid "Reached through SSH host {host}"
@@ -4638,6 +4722,7 @@ msgid "Reviewing the changes and checking the tests…"
 msgstr "正在审查改动并检查测试…"
 
 #: src/components/agent-context-sheet.tsx
+#: src/components/settings-mcp-tokens.tsx
 #: src/components/settings-servers.tsx
 msgid "Revoke"
 msgstr "吊销"
@@ -4649,6 +4734,11 @@ msgstr "吊销"
 msgid "Revoke {0}"
 msgstr "吊销 {0}"
 
+#: src/components/settings-mcp-tokens.tsx
+msgid "Revoke {title}"
+msgstr "撤销 {title}"
+
+#: src/components/settings-mcp-tokens.tsx
 #: src/components/settings-servers.tsx
 msgid "Revoking…"
 msgstr "吊销中…"
@@ -4705,6 +4795,10 @@ msgstr "在你的电脑上运行 Gateway，然后扫描它打印出的二维码�
 #: src/i18n/labels.ts
 msgid "Running"
 msgstr "运行中"
+
+#: src/components/settings-server-capabilities.tsx
+msgid "Rust"
+msgstr "Rust"
 
 #: src/app/settings-voice.tsx
 #: src/components/agent-sessions-sheet.tsx
@@ -5445,6 +5539,10 @@ msgstr "子代理"
 msgid "Submit"
 msgstr "提交"
 
+#: src/components/settings-server-capabilities.tsx
+msgid "Suitable for"
+msgstr "适合"
+
 #: src/i18n/labels.ts
 msgid "Summarise progress"
 msgstr "总结进度"
@@ -5516,6 +5614,7 @@ msgstr "符号"
 
 #: src/components/settings-appearance.tsx
 #: src/components/settings-language-sheet.tsx
+#: src/components/settings-server-capabilities.tsx
 msgid "System"
 msgstr "系统"
 
@@ -5601,6 +5700,7 @@ msgstr "临时文件"
 #: src/app/settings.tsx
 #: src/components/home-launch-actions.tsx
 #: src/components/home-recent-sessions.tsx
+#: src/components/settings-server-capabilities.tsx
 #: src/i18n/labels.ts
 msgid "Terminal"
 msgstr "终端"
@@ -6126,6 +6226,10 @@ msgstr "已超时"
 msgid "Today"
 msgstr "今天"
 
+#: src/components/settings-mcp-tokens.tsx
+msgid "Tokens coding agents use to reach this gateway from this computer."
+msgstr "编程智能体从这台电脑访问此网关所用的令牌"
+
 #: src/components/agent-context-sheet.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
 msgid "Tokens this session"
@@ -6146,6 +6250,10 @@ msgstr "改动太多，无法全部列出。这只是开头，不是全部"
 #: src/components/tool-call-detail-sheet.tsx
 msgid "Tool call"
 msgstr "工具调用"
+
+#: src/components/settings-server-capabilities.tsx
+msgid "Toolchains"
+msgstr "工具链"
 
 #: src/components/changes-sheet.tsx
 msgid "tracking {upstream}"
@@ -6191,6 +6299,8 @@ msgstr "信任"
 msgid "Try again"
 msgstr "重试"
 
+#: src/components/settings-mcp-tokens.tsx
+#: src/components/settings-server-capabilities.tsx
 #: src/components/settings-servers.tsx
 msgid "Try again once the gateway responds."
 msgstr "等 Gateway 响应后再重试"
@@ -6241,6 +6351,10 @@ msgstr "可以直接打字，或使用键盘上的语音输入键"
 #: src/components/simfarm-stage.tsx
 msgid "Type on the simulator"
 msgstr "在模拟器上输入"
+
+#: src/components/settings-server-capabilities.tsx
+msgid "Unavailable"
+msgstr "不可用"
 
 #: src/components/changes-sheet.tsx
 msgid "Uncommitted changes"
@@ -6507,6 +6621,10 @@ msgstr "正在等待你的回答"
 #: src/components/agent-composer.tsx
 msgid "Waiting to send"
 msgstr "等待发送"
+
+#: src/components/settings-server-capabilities.tsx
+msgid "Web"
+msgstr "网页"
 
 #: src/components/agent-workbench.tsx
 msgid "Welcome to {agentName}"

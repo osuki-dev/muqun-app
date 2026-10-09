@@ -100,6 +100,12 @@
       "platforms": ["ios", "android"]
     },
     {
+      "name": "settings-server-capabilities",
+      "program": "flows/settings-server-capabilities",
+      "tags": ["full", "settings"],
+      "platforms": ["ios", "android"]
+    },
+    {
       "name": "agent-tool-detail",
       "program": "flows/agent-tool-detail",
       "tags": ["full", "agents"],
@@ -8802,6 +8808,78 @@
         "mode": "hidden",
         "run": "flows/server-tasks.ad#closed"
       }
+    ],
+    "flows/settings-server-capabilities": [
+      { "include": "subflows/open-demo" },
+      { "run": "flows/settings-server-capabilities.ad#open" },
+      {
+        "target": { "text": "Options for Demo workspace" },
+        "mode": "press",
+        "timeout": 10000,
+        "run": "flows/settings-server-capabilities.ad#expand"
+      },
+      {
+        "target": { "id": "server-capabilities" },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 20000,
+        "run": "flows/settings-server-capabilities.ad#scroll"
+      },
+      {
+        "target": { "id": "server-capabilities" },
+        "mode": "visible",
+        "timeout": 10000,
+        "run": "flows/settings-server-capabilities.ad#visible"
+      },
+      {
+        "target": { "id": "server-capabilities-toolchains" },
+        "mode": "visible",
+        "timeout": 10000,
+        "run": "flows/settings-server-capabilities.ad#visible"
+      },
+      {
+        "target": { "id": "mcp-tokens" },
+        "mode": "scroll",
+        "direction": "down",
+        "timeout": 20000,
+        "run": "flows/settings-server-capabilities.ad#scroll"
+      },
+      {
+        "target": { "id": "mcp-tokens" },
+        "mode": "visible",
+        "timeout": 10000,
+        "run": "flows/settings-server-capabilities.ad#visible"
+      },
+      {
+        "target": { "id": "mcp-tokens-row-demo-token-pane" },
+        "mode": "visible",
+        "timeout": 10000,
+        "run": "flows/settings-server-capabilities.ad#visible"
+      },
+      {
+        "target": { "id": "mcp-tokens-row-demo-token-agent" },
+        "mode": "visible",
+        "run": "flows/settings-server-capabilities.ad#visible"
+      },
+      {
+        "target": { "id": "mcp-tokens-revoke-demo-token-pane" },
+        "mode": "press",
+        "timeout": 10000,
+        "run": "flows/settings-server-capabilities.ad#press"
+      },
+      {
+        "target": { "id": "mcp-tokens-revoke-demo-token-pane" },
+        "mode": "press",
+        "timeout": 10000,
+        "run": "flows/settings-server-capabilities.ad#press"
+      },
+      {
+        "target": { "id": "mcp-tokens-row-demo-token-pane" },
+        "mode": "hidden",
+        "timeout": 10000,
+        "run": "flows/settings-server-capabilities.ad#gone"
+      },
+      { "run": "flows/settings-server-capabilities.ad#close" }
     ],
     "flows/agent-tool-detail": [
       { "include": "subflows/open-demo" },

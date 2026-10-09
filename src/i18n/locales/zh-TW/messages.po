@@ -166,6 +166,10 @@ msgstr "{0} 小時前"
 msgid "{0}m ago"
 msgstr "{0} 分鐘前"
 
+#: src/components/settings-mcp-tokens.tsx
+msgid "{agentId} service"
+msgstr "{agentId} 服務"
+
 #: src/components/agent-workbench.tsx
 msgid "{agentName} cannot preview a rollback. This removes the message and everything after it, the whole turn, and it cannot be undone."
 msgstr "{agentName} 無法預覽回溯。這會刪除這則訊息及其之後的所有內容，也就是整輪對話，且無法還原"
@@ -492,6 +496,7 @@ msgid "Agent panes open in"
 msgstr "代理程式面板的預設檢視"
 
 #: src/components/app-drawer-content.tsx
+#: src/components/settings-server-capabilities.tsx
 #: src/components/settings-servers.tsx
 msgid "Agents"
 msgstr "代理程式"
@@ -594,6 +599,10 @@ msgstr "一律允許"
 #: src/components/agent-revert-plate.tsx
 msgid "and {rest} more"
 msgstr "還有 {rest} 個"
+
+#: src/components/settings-server-capabilities.tsx
+msgid "Android builds"
+msgstr "Android 建置"
 
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Answer"
@@ -975,6 +984,10 @@ msgstr "已取消"
 msgid "Cancelling…"
 msgstr "正在取消…"
 
+#: src/components/settings-server-capabilities.tsx
+msgid "Capabilities"
+msgstr "功能"
+
 #: src/i18n/labels.ts
 msgctxt "git file status"
 msgid "Changed"
@@ -1314,6 +1327,10 @@ msgstr "確認移除 {0}"
 msgid "Confirm revoke {0}"
 msgstr "確認撤銷 {0}"
 
+#: src/components/settings-mcp-tokens.tsx
+msgid "Confirm revoke {title}"
+msgstr "確認撤銷 {title}"
+
 #: src/components/settings-alerts.tsx
 msgid "Confirm taps, pairing, and gateway events."
 msgstr "為點按、配對與 Gateway 事件提供觸覺回饋"
@@ -1338,6 +1355,7 @@ msgstr "連線"
 #: src/app/explore.tsx
 #: src/components/server-terminal-workspace.tsx
 #: src/components/session-map.tsx
+#: src/components/settings-server-capabilities.tsx
 msgid "Connected"
 msgstr "已連線"
 
@@ -1680,6 +1698,10 @@ msgstr "無法保留"
 msgid "Could not list this server's agents."
 msgstr "無法取得這台伺服器的代理程式清單"
 
+#: src/components/settings-server-capabilities.tsx
+msgid "Could not load capabilities"
+msgstr "無法載入功能"
+
 #: src/components/session-artifacts.tsx
 msgid "Could not load files."
 msgstr "無法載入檔案"
@@ -1704,6 +1726,10 @@ msgstr "無法載入工作階段"
 #: src/components/changes-sheet.tsx
 msgid "Could not load this file's changes."
 msgstr "無法載入此檔案的變更"
+
+#: src/components/settings-mcp-tokens.tsx
+msgid "Could not load tokens"
+msgstr "無法載入權杖"
 
 #: src/components/session-map.tsx
 msgid "Could not load what is running."
@@ -1830,6 +1856,10 @@ msgstr "無法撤銷授權"
 #: src/components/settings-servers.tsx
 msgid "Could not revoke device"
 msgstr "無法撤銷裝置"
+
+#: src/components/settings-mcp-tokens.tsx
+msgid "Could not revoke token"
+msgstr "無法撤銷權杖"
 
 #: src/components/agent-workbench.tsx
 msgid "Could not run that"
@@ -2365,11 +2395,27 @@ msgstr "展開工作"
 msgid "Expand tool call"
 msgstr "展開工具呼叫"
 
+#: src/components/settings-mcp-tokens.tsx
+msgid "Expired"
+msgstr "已過期"
+
 #. placeholder {0}: Math.floor(secondsRemaining / 60)
 #. placeholder {1}: String(secondsRemaining % 60).padStart(2, '0')
 #: src/app/explore.tsx
 msgid "Expires in {0}:{1}"
 msgstr "將於 {0}:{1} 後過期"
+
+#: src/components/settings-mcp-tokens.tsx
+msgid "Expires in {days}d"
+msgstr "{days} 天後過期"
+
+#: src/components/settings-mcp-tokens.tsx
+msgid "Expires in {hours}h"
+msgstr "{hours} 小時後過期"
+
+#: src/components/settings-mcp-tokens.tsx
+msgid "Expires in {minutes}m"
+msgstr "{minutes} 分鐘後過期"
 
 #: src/components/agent-mode-sheet.tsx
 msgid "Explore"
@@ -2581,6 +2627,10 @@ msgstr "Gateway 網址"
 #: src/components/settings-servers.tsx
 msgid "Gateway URL is not valid."
 msgstr "Gateway 網址無效"
+
+#: src/components/settings-server-capabilities.tsx
+msgid "gateway v{gatewayVersion}"
+msgstr "Gateway v{gatewayVersion}"
 
 #: src/components/ssh-host-form.tsx
 msgid "Gateways reached through this host"
@@ -2893,6 +2943,10 @@ msgstr "中斷程序"
 msgid "Interrupt what this agent is doing."
 msgstr "中斷這個代理程式正在做的事"
 
+#: src/components/settings-server-capabilities.tsx
+msgid "iOS builds"
+msgstr "iOS 建置"
+
 #: src/lib/local-authentication.ts
 msgid "iris recognition"
 msgstr "虹膜辨識"
@@ -3029,6 +3083,10 @@ msgstr "上次連線於 {minutes} 分鐘前"
 #: src/components/settings-servers.tsx
 msgid "Last seen just now"
 msgstr "剛剛連線過"
+
+#: src/components/settings-mcp-tokens.tsx
+msgid "Last used {when}"
+msgstr "上次使用 {when}"
 
 #: src/components/agent-workbench.tsx
 #: src/components/skia-terminal.tsx
@@ -3186,6 +3244,10 @@ msgstr "標記已查看"
 #: src/components/settings-appearance.tsx
 msgid "Mascot"
 msgstr "吉祥物"
+
+#: src/components/settings-mcp-tokens.tsx
+msgid "MCP tokens"
+msgstr "MCP 權杖"
 
 #. placeholder {0}: hit.path
 #: src/components/file-mention-panel.tsx
@@ -3375,9 +3437,17 @@ msgstr "需要你的輸入"
 msgid "Never connected"
 msgstr "從未連接過"
 
+#: src/components/settings-mcp-tokens.tsx
+msgid "Never expires"
+msgstr "永不過期"
+
 #: src/components/settings-servers.tsx
 msgid "Never seen"
 msgstr "從未連線"
+
+#: src/components/settings-mcp-tokens.tsx
+msgid "Never used"
+msgstr "從未使用"
 
 #: src/app/commands.tsx
 msgid "New group"
@@ -3617,6 +3687,10 @@ msgstr "尚未有已發布的佈景主題"
 msgid "No themes match “{0}”."
 msgstr "沒有符合「{0}」的主題"
 
+#: src/components/settings-mcp-tokens.tsx
+msgid "No tokens"
+msgstr "沒有權杖"
+
 #: src/components/agent-context-sheet.tsx
 msgid "no window reported for this model"
 msgstr "此模型未提供上下文視窗"
@@ -3639,6 +3713,7 @@ msgid "not connected"
 msgstr "未連線"
 
 #: src/components/server-terminal-workspace.tsx
+#: src/components/settings-server-capabilities.tsx
 #: src/i18n/labels.ts
 msgid "Not connected"
 msgstr "未連線"
@@ -3721,6 +3796,7 @@ msgstr "還沒有內容——選擇「一律允許」後，規則會出現在這
 msgid "Off"
 msgstr "關閉"
 
+#: src/components/settings-server-capabilities.tsx
 #: src/i18n/labels.ts
 msgid "Offline"
 msgstr "離線"
@@ -4046,6 +4122,10 @@ msgstr "配色（最多 4 色）"
 msgid "Pane {0} in session {1}"
 msgstr "工作階段 {1} 中的窗格 {0}"
 
+#: src/components/settings-mcp-tokens.tsx
+msgid "Pane {paneId}"
+msgstr "窗格 {paneId}"
+
 #: src/components/settings-servers.tsx
 msgid "Panes on server cards"
 msgstr "伺服器卡片上的面板"
@@ -4290,6 +4370,10 @@ msgstr "離開"
 #: src/i18n/labels.ts
 msgid "Reach the network"
 msgstr "存取網路"
+
+#: src/components/settings-server-capabilities.tsx
+msgid "Reachable"
+msgstr "可連線"
 
 #: src/components/gateway-tunnel-badge.tsx
 msgid "Reached through SSH host {host}"
@@ -4638,6 +4722,7 @@ msgid "Reviewing the changes and checking the tests…"
 msgstr "正在審查改動並檢查測試…"
 
 #: src/components/agent-context-sheet.tsx
+#: src/components/settings-mcp-tokens.tsx
 #: src/components/settings-servers.tsx
 msgid "Revoke"
 msgstr "撤銷"
@@ -4649,6 +4734,11 @@ msgstr "撤銷"
 msgid "Revoke {0}"
 msgstr "撤銷 {0}"
 
+#: src/components/settings-mcp-tokens.tsx
+msgid "Revoke {title}"
+msgstr "撤銷 {title}"
+
+#: src/components/settings-mcp-tokens.tsx
 #: src/components/settings-servers.tsx
 msgid "Revoking…"
 msgstr "撤銷中…"
@@ -4705,6 +4795,10 @@ msgstr "在你的電腦上執行 Gateway，然後掃描它印出的 QR code。�
 #: src/i18n/labels.ts
 msgid "Running"
 msgstr "執行中"
+
+#: src/components/settings-server-capabilities.tsx
+msgid "Rust"
+msgstr "Rust"
 
 #: src/app/settings-voice.tsx
 #: src/components/agent-sessions-sheet.tsx
@@ -5445,6 +5539,10 @@ msgstr "子代理"
 msgid "Submit"
 msgstr "提交"
 
+#: src/components/settings-server-capabilities.tsx
+msgid "Suitable for"
+msgstr "適合"
+
 #: src/i18n/labels.ts
 msgid "Summarise progress"
 msgstr "總結進度"
@@ -5516,6 +5614,7 @@ msgstr "符號"
 
 #: src/components/settings-appearance.tsx
 #: src/components/settings-language-sheet.tsx
+#: src/components/settings-server-capabilities.tsx
 msgid "System"
 msgstr "系統"
 
@@ -5601,6 +5700,7 @@ msgstr "暫存檔案"
 #: src/app/settings.tsx
 #: src/components/home-launch-actions.tsx
 #: src/components/home-recent-sessions.tsx
+#: src/components/settings-server-capabilities.tsx
 #: src/i18n/labels.ts
 msgid "Terminal"
 msgstr "終端機"
@@ -6126,6 +6226,10 @@ msgstr "已逾時"
 msgid "Today"
 msgstr "今天"
 
+#: src/components/settings-mcp-tokens.tsx
+msgid "Tokens coding agents use to reach this gateway from this computer."
+msgstr "程式設計代理從這台電腦存取此閘道所用的權杖"
+
 #: src/components/agent-context-sheet.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
 msgid "Tokens this session"
@@ -6146,6 +6250,10 @@ msgstr "變更太多，無法全部列出。這只是開頭，不是全部"
 #: src/components/tool-call-detail-sheet.tsx
 msgid "Tool call"
 msgstr "工具呼叫"
+
+#: src/components/settings-server-capabilities.tsx
+msgid "Toolchains"
+msgstr "工具鏈"
 
 #: src/components/changes-sheet.tsx
 msgid "tracking {upstream}"
@@ -6191,6 +6299,8 @@ msgstr "信任"
 msgid "Try again"
 msgstr "再試一次"
 
+#: src/components/settings-mcp-tokens.tsx
+#: src/components/settings-server-capabilities.tsx
 #: src/components/settings-servers.tsx
 msgid "Try again once the gateway responds."
 msgstr "等 Gateway 回應後再試一次"
@@ -6241,6 +6351,10 @@ msgstr "可以直接打字，或用鍵盤上的語音輸入鍵"
 #: src/components/simfarm-stage.tsx
 msgid "Type on the simulator"
 msgstr "在模擬器上輸入"
+
+#: src/components/settings-server-capabilities.tsx
+msgid "Unavailable"
+msgstr "無法使用"
 
 #: src/components/changes-sheet.tsx
 msgid "Uncommitted changes"
@@ -6507,6 +6621,10 @@ msgstr "正在等待你的回答"
 #: src/components/agent-composer.tsx
 msgid "Waiting to send"
 msgstr "等待傳送"
+
+#: src/components/settings-server-capabilities.tsx
+msgid "Web"
+msgstr "網頁"
 
 #: src/components/agent-workbench.tsx
 msgid "Welcome to {agentName}"
