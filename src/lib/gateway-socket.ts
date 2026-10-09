@@ -136,9 +136,11 @@ export interface SocketFailure {
 export function socketFailureIsUnauthorized(failure: SocketFailure): boolean {
   if (failure.closeCode === 4401 || failure.closeCode === 4403) return true;
   const message = failure.message ?? '';
+  // Only a status in an HTTP context: a bare "401" (a port, a byte count) or a
+  // proxy's prose saying "forbidden" must not stop the socket.
   return (
-    /(^|[^0-9])(401|403)([^0-9]|$)/.test(message) ||
-    /\b(unauthori[sz]ed|forbidden)\b/i.test(message)
+    /\b(HTTP|status|response)\b[^0-9]{0,20}\b40[13]\b/i.test(message) ||
+    /\b40[13] (Unauthori[sz]ed|Forbidden)\b/i.test(message)
   );
 }
 
@@ -211,6 +213,12 @@ export class GatewaySocket {
   private cancelPing: (() => void) | null = null;
   private cancelLinger: (() => void) | null = null;
   private checkingAuthorization = false;
+  /**
+   * The gateway was already asked during this run of failed opens. Each ask is
+   * a forced `/health`, so a run gets one, not one per failure; `hello` and a
+   * refusal start a new run.
+   */
+  private authChecked = false;
   private readonly releaseAppState: (() => void) | null;
 
   constructor(options: GatewaySocketOptions) {
@@ -317,8 +325,24 @@ export class GatewaySocket {
   reconnect(): void {
     if (!this.hasDemand() || !this.active) return;
     this.attempts = 0;
+    this.authChecked = false;
     this.drop();
     this.connect();
+  }
+
+  /**
+   * Evidence that the refusal no longer holds -- the gateway answered this
+   * device, or the network under it changed (a captive portal's 403 looks
+   * exactly like a revoked pairing). Reopen if anything wants the socket,
+   * otherwise stand down to `idle` so the row stops saying the pairing expired.
+   */
+  retryAfterRefusal(): void {
+    if (this.currentState !== 'unauthorized') return;
+    if (this.hasDemand() && this.active) {
+      this.reconnect();
+      return;
+    }
+    this.setState(this.hasDemand() ? 'paused' : 'idle');
   }
 
   dispose(): void {
@@ -474,6 +498,7 @@ export class GatewaySocket {
       this.options.onHello?.(frame);
       this.attempts = 0;
       this.failures = 0;
+      this.authChecked = false;
       this.cancelTimer?.();
       this.cancelTimer = null;
       this.setState('open');
@@ -602,8 +627,9 @@ export class GatewaySocket {
    */
   private checkAuthorization(): void {
     const check = this.options.checkAuthorization;
-    if (!check || this.checkingAuthorization) return;
+    if (!check || this.checkingAuthorization || this.authChecked) return;
     this.checkingAuthorization = true;
+    this.authChecked = true;
     void check()
       .catch((): SocketAuthorization => 'unknown')
       .then((answer) => {
@@ -622,6 +648,7 @@ export class GatewaySocket {
     this.drop();
     this.attempts = 0;
     this.failures = 0;
+    this.authChecked = false;
     this.setState('unauthorized');
     this.allListeners((l) => l.onUnavailable?.());
   }

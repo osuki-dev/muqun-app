@@ -341,7 +341,14 @@ function ServerRow({
     transform: [{ rotate: `${turn.value * 180}deg` }],
   }));
 
-  const statusColor = reachability === 'live' ? theme.colors.success : theme.colors.textSubtle;
+  // A refused pairing needs the reader to act, so it is not the same quiet
+  // grey as "not asked".
+  const statusColor =
+    reachability === 'live'
+      ? theme.colors.success
+      : reachability === 'unauthorized'
+        ? theme.colors.warning
+        : theme.colors.textSubtle;
   // Read at render, like `PairedDevices`' own `nowMs` below: "last connected"
   // is relative to *now*, and a value captured once in state would go stale
   // the moment the row sat open for a minute.

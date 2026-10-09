@@ -2388,7 +2388,8 @@ export const AgentWorkbench = memo(function AgentWorkbench({
      * this session on SSE -- and not for good: every
      * `SOCKET_RETRY_AFTER_FALLBACK_MS` the socket is tried again beside the
      * stream, and the first `subscribed` moves the session back onto it and
-     * closes the stream. A refused pairing (`unauthorized`) is not retried.
+     * closes the stream. A refused pairing (`unauthorized`) or an unusable
+     * socket (`unavailable`) is not retried.
      */
     let releaseSocket: (() => void) | null = null;
     let socketRetryTimer: ReturnType<typeof setTimeout> | null = null;
@@ -2396,7 +2397,10 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     const scheduleSocketRetry = () => {
       if (socketRetryTimer) clearTimeout(socketRetryTimer);
       socketRetryTimer = null;
-      if (!mounted || gatewaySocketFor(serverId).state === 'unauthorized') return;
+      const state = gatewaySocketFor(serverId).state;
+      // Neither a refused pairing nor a socket this build cannot use comes
+      // back on a timer.
+      if (!mounted || state === 'unauthorized' || state === 'unavailable') return;
       socketRetryTimer = setTimeout(() => {
         socketRetryTimer = null;
         if (mounted && !onSocket && !releaseSocket) watchSocket();

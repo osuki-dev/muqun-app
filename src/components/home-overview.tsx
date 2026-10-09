@@ -948,19 +948,6 @@ export function HomeOverview({
                       grid={isPad}
                       newOnly={isPad}
                       dock={padLaunch}
-                      dockAccessory={
-                        // The cover dock has no heading; the Gateway chip sits
-                        // beside the terminal pill, only when there is a choice.
-                        padLaunch && launchController.servers.length > 1 ? (
-                          <HomeLaunchTarget
-                            wide
-                            chip
-                            controller={launchController}
-                            loading={loading}
-                            onPair={commands.pairGateway}
-                          />
-                        ) : undefined
-                      }
                       onNewAgent={commands.newAgent}
                       onOpenAgent={commands.openAgent}
                       onNewTerminal={commands.newTerminal}

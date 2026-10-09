@@ -6,6 +6,7 @@
 import { describe, expect, test } from 'bun:test';
 
 import {
+  authorizationFromProbe,
   REACHABILITY_FRESH_MS,
   reachabilityOfStatus,
   resolveConnectionStatus,
@@ -142,5 +143,28 @@ describe('folding back for decisions', () => {
     expect(
       resolveServerReachability(ID, undefined, undefined, NOW, { socket: 'unauthorized' })
     ).toBe('offline');
+  });
+});
+
+describe('the socket authorization check', () => {
+  test('only an answer this probe heard decides', () => {
+    const before = NOW - 60_000;
+    expect(authorizationFromProbe(before, fresh(true, { status: 200 }))).toBe('authorized');
+    expect(authorizationFromProbe(before, fresh(false, { status: 401 }))).toBe('unauthorized');
+    expect(authorizationFromProbe(before, fresh(false, { status: 403 }))).toBe('unauthorized');
+    expect(authorizationFromProbe(before, fresh(false, { status: 502 }))).toBe('unknown');
+  });
+
+  test('a timed-out probe carrying an earlier 401 does not refuse', () => {
+    const before = NOW - 60_000;
+    expect(authorizationFromProbe(before, fresh(false, { unauthorized: true, status: null }))).toBe(
+      'unknown'
+    );
+  });
+
+  test('a probe that did not run (joined nothing new) says nothing', () => {
+    const held = fresh(false, { unauthorized: true, status: 401 });
+    expect(authorizationFromProbe(held.checkedAtMs, held)).toBe('unknown');
+    expect(authorizationFromProbe(undefined, undefined)).toBe('unknown');
   });
 });

@@ -94,6 +94,11 @@ export type ReachabilityProbe = {
    */
   unauthorized?: boolean;
   /**
+   * The HTTP status *this* probe heard; `null` when it got no answer. Unlike
+   * `unauthorized`, never carried over from an earlier probe.
+   */
+  status?: number | null;
+  /**
    * A newer probe of this server is in flight. A stale answer keeps speaking
    * until it lands rather than dropping to `unknown` for the length of the
    * round trip: anything that re-rendered the row while the probe was past
@@ -269,6 +274,21 @@ export function resolveConnectionStatus(input: {
 /** A gateway refusing this device's pairing, rather than failing to answer. */
 export function statusRefusesPairing(status: number | null | undefined): boolean {
   return status === 401 || status === 403;
+}
+
+/**
+ * What one forced probe says about this device's pairing, for the socket's
+ * authorization check. Only an answer the probe just produced counts: a
+ * probe that timed out keeps an earlier 401 in `unauthorized`, and that must
+ * not stand down a socket now.
+ */
+export function authorizationFromProbe(
+  checkedAtBeforeMs: number | undefined,
+  probe: ReachabilityProbe | undefined
+): 'authorized' | 'unauthorized' | 'unknown' {
+  if (!probe || probe.checkedAtMs === checkedAtBeforeMs) return 'unknown';
+  if (probe.ok) return 'authorized';
+  return statusRefusesPairing(probe.status) ? 'unauthorized' : 'unknown';
 }
 
 /** What the rest of the app decides with: a row's richer word, folded back. */
