@@ -214,6 +214,43 @@ describe('subscribing', () => {
     expect(r.log).toEqual(['subscribed', 'event:ses_9:1']);
   });
 
+  test('watchTasks subscribes to all and only its listener hears task.updated', () => {
+    const h = harness();
+    const tasks: string[] = [];
+    const session = recorder();
+    const all = recorder();
+    h.socket.watch('ses_1', session.listener);
+    h.socket.watchAll(all.listener);
+    const release = h.socket.watchTasks({
+      onTaskUpdated: (task, seq) => tasks.push(`${task.taskId}:${task.state}:${seq}`),
+    });
+    h.latest().deliver(hello());
+    expect(h.latest().sent).toContain('{"t":"subscribe_all"}');
+    h.latest().deliver(
+      JSON.stringify({
+        t: 'event',
+        asid: null,
+        seq: 9,
+        event: 'task.updated',
+        data: { task_id: 't1', state: 'done', kind: 'command', goal: 'g', updated_ms: 1 },
+      })
+    );
+    expect(tasks).toEqual(['t1:done:9']);
+    expect(session.log).toEqual([]);
+    expect(all.log).toEqual([]);
+    release();
+    h.latest().deliver(
+      JSON.stringify({
+        t: 'event',
+        asid: null,
+        seq: 10,
+        event: 'task.updated',
+        data: { task_id: 't1', state: 'done', kind: 'command', goal: 'g', updated_ms: 2 },
+      })
+    );
+    expect(tasks).toHaveLength(1);
+  });
+
   test('an unwatched socket lingers, then closes', () => {
     const h = harness();
     const release = h.socket.watch('ses_1', recorder().listener);

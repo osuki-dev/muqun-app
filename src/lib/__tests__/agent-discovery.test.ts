@@ -387,6 +387,14 @@ describe('the mirror', () => {
     expect('transports' in mirrored).toBe(false);
   });
 
+  test('keeps the advertised MCP transport through storage', () => {
+    const mcp = { path: '/mcp', loopbackOnly: true, tokenHelper: 'muqun-mcp-token' };
+    const withMcp = mirrorDiscovery({ ...discovery, transports: { mcp } }, 1);
+    const index = withMirroredDiscovery(emptyAgentsMirror(), 'srv-1', withMcp);
+    const back = parseAgentsMirrorIndex(serializeAgentsMirrorIndex(index));
+    expect(back.servers['srv-1']?.transports).toEqual({ mcp });
+  });
+
   test('a document from a newer version, or an unreadable one, is empty rather than misread', () => {
     expect(parseAgentsMirrorIndex(JSON.stringify({ version: 2, servers: { x: {} } }))).toEqual(
       emptyAgentsMirror()

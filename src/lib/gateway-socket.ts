@@ -20,6 +20,7 @@
  * the real ones.
  */
 import type { AgentDomainEvent, TransportsDiscovery } from './agent-protocol';
+import type { TaskView } from './task-ledger';
 import {
   AGENT_SOCKET_PATH,
   AGENT_SOCKET_PROTOCOL,
@@ -76,6 +77,8 @@ export interface GatewaySocketListener {
   /** The subscription is in effect; catch up now. Fires again after every reconnect. */
   onSubscribed?: () => void;
   onEvent?: (event: AgentDomainEvent) => void;
+  /** A task changed. Only `watchTasks` listeners hear it. */
+  onTaskUpdated?: (task: TaskView, seq: number) => void;
   /** The gateway dropped events for this session; refetch it. */
   onResync?: () => void;
   /** Consecutive connection attempts that ended before `hello`. */
@@ -143,6 +146,8 @@ export class GatewaySocket {
   private readonly options: GatewaySocketOptions;
   private readonly schedule: (run: () => void, ms: number) => () => void;
   private readonly listeners = new Map<string, Set<GatewaySocketListener>>();
+  /** `watchTasks` listeners; never reached through `targets`. */
+  private readonly taskListeners = new Set<GatewaySocketListener>();
   private readonly stateListeners = new Set<(state: GatewaySocketState) => void>();
   /** Reference counts; `*` is `subscribe_all`. */
   private readonly wanted = new Map<string, number>();
@@ -204,6 +209,23 @@ export class GatewaySocket {
     };
   }
 
+  /**
+   * `subscribe_all` and listen to task changes only. Kept apart from the
+   * session listeners: those are keyed by session, and "every session" must
+   * not reach a listener that wants tasks.
+   */
+  watchTasks(listener: GatewaySocketListener): () => void {
+    this.taskListeners.add(listener);
+    this.subscribeAll();
+    let released = false;
+    return () => {
+      if (released) return;
+      released = true;
+      this.taskListeners.delete(listener);
+      this.release(ALL);
+    };
+  }
+
   addListener(asid: string, listener: GatewaySocketListener): () => void {
     let set = this.listeners.get(asid);
     if (!set) {
@@ -250,6 +272,7 @@ export class GatewaySocket {
     this.cancelLinger = null;
     this.wanted.clear();
     this.listeners.clear();
+    this.taskListeners.clear();
     this.drop();
     this.setState('idle');
     this.stateListeners.clear();
@@ -404,6 +427,7 @@ export class GatewaySocket {
     switch (frame.t) {
       case 'subscribed':
         this.notify('asid' in frame ? [frame.asid] : [ALL], (l) => l.onSubscribed?.());
+        if (!('asid' in frame)) for (const l of [...this.taskListeners]) l.onSubscribed?.();
         return;
       case 'event':
         if (frame.event) {
@@ -411,8 +435,13 @@ export class GatewaySocket {
           this.notify(this.targets(frame.asid), (l) => l.onEvent?.(domainEvent));
         }
         return;
+      case 'task':
+        for (const l of [...this.taskListeners]) l.onTaskUpdated?.(frame.task, frame.seq);
+        return;
       case 'resync':
         this.notify(this.targets(frame.asid), (l) => l.onResync?.());
+        // Events were dropped; a task may have changed in them.
+        if (!frame.asid) for (const l of [...this.taskListeners]) l.onResync?.();
         return;
       case 'error':
         if (frame.code === 'superseded') {
@@ -446,6 +475,7 @@ export class GatewaySocket {
 
   private allListeners(call: (listener: GatewaySocketListener) => void): void {
     this.notify([...this.listeners.keys()], call);
+    for (const listener of [...this.taskListeners]) call(listener);
   }
 
   private send(frame: AgentSocketClientFrame): void {

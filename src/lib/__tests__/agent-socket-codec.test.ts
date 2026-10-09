@@ -193,6 +193,44 @@ describe('frames', () => {
     });
   });
 
+  test('task.updated on no session becomes a task frame', () => {
+    const task = {
+      task_id: 't1',
+      state: 'working',
+      kind: 'command',
+      goal: 'g',
+      binding: { kind: 'none' },
+      updated_ms: 7,
+    };
+    expect(
+      parseAgentSocketFrame(
+        JSON.stringify({ t: 'event', asid: null, seq: 3, event: 'task.updated', data: task })
+      )
+    ).toEqual({
+      t: 'task',
+      seq: 3,
+      task: {
+        taskId: 't1',
+        state: 'working',
+        kind: 'command',
+        goal: 'g',
+        binding: { kind: 'none' },
+        updatedMs: 7,
+      },
+    });
+  });
+
+  test('any other event on no session, or a task with an unknown state, is ignored', () => {
+    expect(
+      parseAgentSocketFrame('{"t":"event","asid":null,"seq":1,"event":"fleet.changed","data":{}}')
+    ).toBeNull();
+    expect(
+      parseAgentSocketFrame(
+        '{"t":"event","asid":null,"seq":1,"event":"task.updated","data":{"task_id":"t","state":"nope"}}'
+      )
+    ).toBeNull();
+  });
+
   test('an unknown frame is ignored and rubbish throws', () => {
     expect(parseAgentSocketFrame('{"t":"request","id":1}')).toBeNull();
     expectProtocolError(() => parseAgentSocketFrame('not json'));
