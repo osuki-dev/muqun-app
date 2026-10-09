@@ -11,6 +11,8 @@ import {
   sameComputer,
   resolveHomeComposerTarget,
   type HomeStartedSession,
+  homeFolderLabel,
+  homeFolderPick,
 } from '../home-composer';
 
 function computer(serverId: string, label = serverId): GatewayRecord {
@@ -241,5 +243,19 @@ describe('sameComputer', () => {
     expect(sameComputer({ ...owner, transportKey: 'k2' }, owner)).toBe(false);
     expect(sameComputer({ ...owner, url: 'https://moved.invalid' }, owner)).toBe(false);
     expect(sameComputer(null, owner)).toBe(false);
+  });
+});
+
+describe('the folder segment', () => {
+  // what the picker answered -> what is stored -> what the bar says
+  test.each<[string, string | undefined, string]>([
+    ['/Users/me/Work/app', '/Users/me/Work/app', 'app'],
+    ['~/Work/app/', '~/Work/app', 'app'],
+    ['~', undefined, '~'],
+    ['  ', undefined, '~'],
+    ['/', '/', '/'],
+  ])('%p', (picked, stored, label) => {
+    expect(homeFolderPick(picked)).toBe(stored);
+    expect(homeFolderLabel(stored)).toBe(label);
   });
 });
