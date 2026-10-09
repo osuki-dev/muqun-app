@@ -28,6 +28,7 @@ const fleet = discovery([
 describe('homeAgentOptions', () => {
   test('session agents in the gateway order, then installed terminal agents', () => {
     const options = homeAgentOptions(fleet, [
+      { kind: 'amp', command: 'amp', available: true },
       { kind: 'claude', command: 'claude', available: true },
       { kind: 'codex', command: 'codex', available: true },
       { kind: 'gemini', command: 'gemini', available: false },
@@ -37,8 +38,9 @@ describe('homeAgentOptions', () => {
       sessionAgentKey('deepseek'),
       sessionAgentKey('opencode'),
       sessionAgentKey('t3'),
-      terminalAgentKey('claude'),
       terminalAgentKey('codex'),
+      terminalAgentKey('claude'),
+      terminalAgentKey('amp'),
     ]);
     expect(options.find((option) => option.key === 'terminal:claude')?.name).toBe('Claude Code');
   });
@@ -80,5 +82,19 @@ describe('parseHomeAgentChoices', () => {
     ).toEqual({ a: 'session:opencode', b: 'terminal:codex' });
     expect(parseHomeAgentChoices('not json')).toEqual({});
     expect(parseHomeAgentChoices(undefined)).toEqual({});
+  });
+});
+
+describe('a stored terminal agent before the catalog is read', () => {
+  const sessionsOnly = homeAgentOptions(fleet, undefined);
+
+  test('is shown by name, unconfirmed, never replaced by another agent', () => {
+    const agent = resolveHomeAgent(sessionsOnly, 'terminal:codex', false);
+    expect(agent).toMatchObject({ key: 'terminal:codex', kind: 'terminal', name: 'Codex' });
+    expect(agent?.kind === 'terminal' && agent.confirmed).toBe(false);
+  });
+
+  test('once the catalog is read and lacks it, the first ready agent takes over', () => {
+    expect(resolveHomeAgent(sessionsOnly, 'terminal:codex', true)?.key).toBe('session:opencode');
   });
 });

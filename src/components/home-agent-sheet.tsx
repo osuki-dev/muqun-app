@@ -2,7 +2,6 @@ import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens } from '@osuki-dev/ui';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect } from 'react';
 import { ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -14,37 +13,10 @@ import {
   sheetSceneStyles,
 } from '@/components/sheet-scene';
 import { agentLaunchCaption } from '@/i18n/labels';
-import { configuredGatewayServerId, loadAgentProfiles } from '@/lib/gateway-client';
+import { useTerminalAgentCatalog } from '@/hooks/use-terminal-agent-catalog';
 import { homeAgentOptions, resolveHomeAgent } from '@/lib/home-agent-choice';
 import { useAgents } from '@/stores/agents';
 import { useHomeAgentChoice } from '@/stores/home-agent-choice';
-
-/**
- * The terminal agents a computer has installed, asked once per launch of the
- * picker or the dock, and only of the selected computer: the catalog is read
- * through the shared client.
- */
-export function useTerminalAgentCatalog(serverId: string | undefined, enabled = true) {
-  const known = useHomeAgentChoice((state) =>
-    serverId ? state.terminalByServer[serverId] : undefined
-  );
-  const record = useHomeAgentChoice((state) => state.recordTerminal);
-  useEffect(() => {
-    if (!enabled || !serverId || known || configuredGatewayServerId() !== serverId) return;
-    let current = true;
-    void loadAgentProfiles()
-      .then((profiles) => {
-        if (current) record(serverId, profiles);
-      })
-      .catch(() => {
-        // An older gateway, or none answering: session agents only.
-      });
-    return () => {
-      current = false;
-    };
-  }, [enabled, serverId, known, record]);
-  return known;
-}
 
 /** Settings → Computers' "Home agent" row and the dock's bar open this. */
 export function HomeAgentSheet() {
@@ -58,8 +30,12 @@ export function HomeAgentSheet() {
   const terminal = useTerminalAgentCatalog(serverId);
   const chosenKey = useHomeAgentChoice((state) => state.byServer[serverId]);
   const choose = useHomeAgentChoice((state) => state.choose);
-  const options = homeAgentOptions(discovery, terminal);
-  const current = resolveHomeAgent(options, chosenKey);
+  const listed = homeAgentOptions(discovery, terminal);
+  const current = resolveHomeAgent(listed, chosenKey, terminal !== undefined);
+  // A stored terminal agent the catalog has not confirmed yet is still listed,
+  // as the selected row, rather than vanishing until the catalog answers.
+  const options =
+    current && !listed.some((option) => option.key === current.key) ? [current, ...listed] : listed;
 
   const rows = options.map((option) => {
     const caption =

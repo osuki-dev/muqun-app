@@ -192,6 +192,8 @@ export interface LedgerTaskRequest {
   cwd?: string;
   mode?: string;
   model?: string;
+  /** The model variant (reasoning effort), applied at session creation. */
+  variant?: string;
   label?: string;
 }
 
@@ -202,18 +204,22 @@ export function ledgerTaskBody(request: LedgerTaskRequest): Record<string, strin
     ...(request.cwd ? { cwd: request.cwd } : {}),
     ...(request.mode ? { mode: request.mode } : {}),
     ...(request.model ? { model: request.model } : {}),
+    ...(request.model && request.variant ? { variant: request.variant } : {}),
     ...(request.label?.trim() ? { label: request.label.trim() } : {}),
   };
 }
 
-/** The answer to `POST /api/tasks`: the task, flattened, plus the session it opened. */
-export function parseCreatedLedgerTask(value: unknown): { task: TaskView; asid: string } | null {
+/**
+ * The answer to `POST /api/tasks`: the task, flattened, plus the session it
+ * opened -- which a task that failed while being opened may not have.
+ */
+export function parseCreatedLedgerTask(value: unknown): { task: TaskView; asid?: string } | null {
   const task = parseTaskView(value);
   if (!task) return null;
   const asid =
     asString(asRecord(value)?.asid) ??
     (task.binding.kind === 'agent_session' ? task.binding.asid : undefined);
-  return asid ? { task, asid } : null;
+  return asid ? { task, asid } : { task };
 }
 
 // The fetchers load the transport lazily: it pulls in React Native, and the
@@ -292,10 +298,10 @@ export async function fetchTaskList(opts?: {
  */
 export async function createLedgerTask(
   request: LedgerTaskRequest
-): Promise<{ task: TaskView; asid: string }> {
+): Promise<{ task: TaskView; asid?: string }> {
   const { postLedgerTask } = await import('./gateway-client');
   const created = parseCreatedLedgerTask(await postLedgerTask(ledgerTaskBody(request)));
-  if (!created) throw new Error('The computer did not say which session it opened.');
+  if (!created) throw new Error('The computer did not say which task it opened.');
   return created;
 }
 

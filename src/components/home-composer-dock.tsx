@@ -53,7 +53,7 @@ import {
 } from '@/lib/home-composer';
 import type { HomeCommandResult } from '@/lib/home-commands';
 import { markPromptedSession } from '@/lib/prompted-agent-sessions';
-import { useTerminalAgentCatalog } from '@/components/home-agent-sheet';
+import { loadTerminalCatalog, useTerminalAgentCatalog } from '@/hooks/use-terminal-agent-catalog';
 import { agentSpawnRequest } from '@/lib/agent-spawn';
 import { loadSessions, spawnAgent } from '@/lib/gateway-client';
 import { homeAgentOptions, resolveHomeAgent } from '@/lib/home-agent-choice';
@@ -159,11 +159,16 @@ export function HomeComposerDock({
   const discovery = useAgents((state) => (targetId ? state.index.servers[targetId] : undefined));
   const markAgentUsed = useAgents((state) => state.markUsed);
   // The reader's Home agent for this computer, or its first ready agent.
-  const terminalCatalog = useTerminalAgentCatalog(targetId, ready && selected);
+  // Read for whichever computer the bar names, selected or not.
+  const terminalCatalog = useTerminalAgentCatalog(targetId, ready);
   const chosenAgentKey = useHomeAgentChoice((state) =>
     targetId ? state.byServer[targetId] : undefined
   );
-  const agent = resolveHomeAgent(homeAgentOptions(discovery, terminalCatalog), chosenAgentKey);
+  const agent = resolveHomeAgent(
+    homeAgentOptions(discovery, terminalCatalog),
+    chosenAgentKey,
+    terminalCatalog !== undefined
+  );
   const terminalAgent = agent?.kind === 'terminal' ? agent : null;
   const agentsDiscovered = Boolean(discovery?.agents);
   const agentId =
@@ -424,6 +429,9 @@ export function HomeComposerDock({
               ...(params.agentId ? { agentId: params.agentId } : {}),
               ...(params.mode ? { mode: params.mode } : {}),
               ...(params.model ? { model: ledgerModelId(params.model) } : {}),
+              // Applied at session creation by a gateway that takes it (Gateway
+              // Task 15); an older one ignores it, and the switch below sets it.
+              ...(params.model?.variant ? { variant: params.model.variant } : {}),
             });
             useServerTasksStore.getState().upsert(serverId, task);
             // The gateway answers 200 for a task whose session failed while it
@@ -432,12 +440,14 @@ export function HomeComposerDock({
               setError(task.summary ?? t`Could not start the task.`);
               return false;
             }
+            if (!asid) throw new Error('The computer did not say which session it opened.');
             if (task.binding.kind === 'agent_session')
               markAgentUsed(serverId, task.binding.agentId);
             markPromptedSession(serverId, asid);
-            // The route names a model without its variant (reasoning effort),
-            // so the first turn runs at the agent's default one; the session
-            // takes the picked variant for every turn after.
+            // Fallback for a gateway that ignores `variant` in the body: its
+            // first turn ran at the agent's default effort, and the session
+            // takes the picked variant for every turn after. On one that
+            // applied it, this sets what is already set.
             const pickedModel = params.model;
             if (pickedModel?.variant) {
               void switchAgentModel(HOME_AGENT_SESSION_ID, asid, pickedModel).catch(
@@ -484,7 +494,12 @@ export function HomeComposerDock({
    * pane with the goal as its first prompt -- Quick actions' New task -- with
    * the gateway's own launch arguments. Opens that pane.
    */
-  async function startTerminalAgent(kind: string, text: string): Promise<boolean> {
+  async function startTerminalAgent(
+    kind: string,
+    name: string,
+    confirmed: boolean,
+    text: string
+  ): Promise<boolean> {
     if (inFlightRef.current) return false;
     inFlightRef.current = true;
     return settleAfter(
@@ -492,10 +507,42 @@ export function HomeComposerDock({
         setError(null);
         const serverId = await sendTarget();
         if (!serverId) return false;
+        // The New task sheet's guard: every await below talks to the shared
+        // client, so a selection that moved meanwhile would start the agent
+        // (with its bypass flags) on another computer.
+        const owner = useGatewayConnectionStore.getState().record;
+        const owns = () =>
+          owner?.serverId === serverId && useGatewayConnectionStore.getState().record === owner;
         return recoverWith(
           async () => {
+            // A stored choice the catalog has not confirmed is checked first:
+            // Send never starts an agent other than the one the bar names.
+            if (!confirmed) {
+              const profiles = await loadTerminalCatalog(serverId);
+              if (!owns()) {
+                setError(t`Computer unavailable.`);
+                return false;
+              }
+              if (!profiles?.some((profile) => profile.kind === kind && profile.available)) {
+                const agentName = name;
+                setError(
+                  t`This computer does not know ${agentName}. Refresh the agent list and try again.`
+                );
+                return false;
+              }
+            }
+            if (!owns()) {
+              setError(t`Computer unavailable.`);
+              return false;
+            }
+            // One Herdr session per gateway today, and the first is the one
+            // every other screen uses -- the same choice `new-task.tsx` makes.
             const sessions = await loadSessions();
             const sessionId = sessions.sessions?.[0]?.id;
+            if (!owns()) {
+              setError(t`Computer unavailable.`);
+              return false;
+            }
             if (!sessionId) {
               setError(t`This computer has no session to start an agent in.`);
               return false;
@@ -504,6 +551,10 @@ export function HomeComposerDock({
               sessionId,
               agentSpawnRequest({ agent: kind, prompt: text })
             );
+            if (!owns()) {
+              setError(t`Computer unavailable.`);
+              return false;
+            }
             router.navigate({
               pathname: '/servers/[serverId]',
               params: { serverId, paneId: spawned.paneId },
@@ -523,7 +574,13 @@ export function HomeComposerDock({
   }
 
   function sendPrompt(text: string, attachments?: string[]) {
-    if (terminalAgent) return startTerminalAgent(terminalAgent.agentKind, text);
+    if (terminalAgent)
+      return startTerminalAgent(
+        terminalAgent.agentKind,
+        terminalAgent.name,
+        terminalAgent.confirmed,
+        text
+      );
     // Attachments ride on a prompt to a session; the ledger route takes text
     // only, so a send with files keeps the session path. So does a retry onto
     // the session a failed send left.
