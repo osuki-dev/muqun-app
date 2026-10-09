@@ -58,6 +58,7 @@ import { hasTaskLedger } from '@/lib/task-ledger';
 import { useServerCapabilities } from '@/stores/server-capabilities';
 import { useAgents } from '@/stores/agents';
 import { useHomeAgentChoice } from '@/stores/home-agent-choice';
+import { useTerminalAgentCatalog } from '@/hooks/use-terminal-agent-catalog';
 import { homeAgentOptions, resolveHomeAgent } from '@/lib/home-agent-choice';
 import { useServerTasksStore } from '@/stores/server-tasks';
 
@@ -501,9 +502,13 @@ function HomeAgentNavRow({ serverId }: { serverId: string }) {
   const { t } = useLingui();
   const router = useRouter();
   const discovery = useAgents((state) => state.index.servers[serverId]);
-  const terminal = useHomeAgentChoice((state) => state.terminalByServer[serverId]);
+  const terminal = useTerminalAgentCatalog(serverId);
   const chosenKey = useHomeAgentChoice((state) => state.byServer[serverId]);
-  const agent = resolveHomeAgent(homeAgentOptions(discovery, terminal), chosenKey);
+  const agent = resolveHomeAgent(
+    homeAgentOptions(discovery, terminal),
+    chosenKey,
+    terminal !== undefined
+  );
   return (
     <SettingsNavRow
       testID="settings-server-home-agent"

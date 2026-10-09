@@ -2737,12 +2737,23 @@ export async function loadAgents(sessionId: string): Promise<HerdrEntity[]> {
  * per-session, because what is installed on a machine is a fact about the
  * machine.
  */
-export async function loadAgentProfiles(): Promise<AgentProfile[]> {
+export async function loadAgentProfiles(
+  /** Another paired computer, asked through its stored address. */
+  endpoint?: GatewayEndpoint
+): Promise<AgentProfile[]> {
   if (isDemoActive()) return agentProfilesFromResponse(demoAgentProfiles());
 
-  const response = await gatewayFetch(gatewayUrl('/api/agents/catalog'), {
-    headers: gatewayAuthHeaders(),
-  });
+  const response = endpoint
+    ? await gatewayEndpointFetch(
+        endpoint,
+        `${endpoint.url.replace(/\/$/, '')}/api/agents/catalog`,
+        {
+          headers: { Authorization: `Bearer ${endpoint.token}` },
+        }
+      )
+    : await gatewayFetch(gatewayUrl('/api/agents/catalog'), {
+        headers: gatewayAuthHeaders(),
+      });
   if (!response.ok) throw new Error(`HTTP ${response.status}: ${await response.text()}`);
 
   return agentProfilesFromResponse(await response.json());

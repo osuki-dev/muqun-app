@@ -190,8 +190,7 @@ export function homeGuideParams(
 
 /**
  * The model as `POST /api/tasks` names it: `provider_id/model_id`, or the
- * bare catalog id. A variant has no spelling there; the dock sets it on the
- * session once the route has answered.
+ * bare catalog id. The variant travels beside it as `variant`.
  */
 export function ledgerModelId(model: ModelRef): string {
   return model.provider_id ? `${model.provider_id}/${model.model_id}` : model.model_id;

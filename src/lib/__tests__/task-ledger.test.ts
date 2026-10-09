@@ -155,6 +155,13 @@ describe('POST /api/tasks', () => {
       agent_id: 'opencode',
       model: 'p/m',
     });
+    expect(ledgerTaskBody({ goal: 'g', model: 'p/m', variant: 'high' })).toEqual({
+      goal: 'g',
+      model: 'p/m',
+      variant: 'high',
+    });
+    // A variant means nothing without the model it belongs to.
+    expect(ledgerTaskBody({ goal: 'g', variant: 'high' })).toEqual({ goal: 'g' });
   });
 
   test('the answer is the task plus the session it opened', () => {
@@ -169,7 +176,14 @@ describe('POST /api/tasks', () => {
     });
     expect(created?.asid).toBe('ses_9');
     expect(created?.task.taskId).toBe('t');
-    expect(parseCreatedLedgerTask({ task_id: 't', state: 'failed', updated_ms: 1 })).toBeNull();
+    // A task that failed while being opened has no session, and is still the answer.
+    const failed = parseCreatedLedgerTask({ task_id: 't', state: 'failed', updated_ms: 1 });
+    expect([failed?.task.taskId, failed?.task.state, failed?.asid]).toEqual([
+      't',
+      'failed',
+      undefined,
+    ]);
+    expect(parseCreatedLedgerTask({ state: 'failed' })).toBeNull();
   });
 
   test('a root query is encoded', () => {

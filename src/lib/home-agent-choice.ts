@@ -41,6 +41,11 @@ export type HomeAgentOption =
       agentKind: string;
       name: string;
       ready: boolean;
+      /**
+       * False while the computer's catalog has not been read: the stored
+       * choice is shown by name, and Send reads the catalog before starting.
+       */
+      confirmed: boolean;
     };
 
 /** The agent an old gateway (no agent plane) has. */
@@ -52,6 +57,9 @@ const FALLBACK: HomeAgentOption = {
   ready: true,
   caption: 'new-session',
 };
+
+/** Listed first among a computer's terminal agents. */
+const PREFERRED_TERMINAL_KINDS = ['codex', 'claude'];
 
 export function sessionAgentKey(agentId: string): string {
   return `session:${agentId}`;
@@ -99,8 +107,15 @@ export function homeAgentOptions(
       agentKind: kind,
       name: agentBrandName(kind),
       ready: true,
+      confirmed: true,
     });
   }
+  // The two coding agents people pick first, then the rest in catalog order.
+  const rank = (option: HomeAgentOption) => {
+    const at = PREFERRED_TERMINAL_KINDS.indexOf(option.agentKind.toLowerCase());
+    return at < 0 ? PREFERRED_TERMINAL_KINDS.length : at;
+  };
+  terminals.sort((a, b) => rank(a) - rank(b));
   return [...sessions, ...terminals];
 }
 
@@ -110,11 +125,26 @@ export function homeAgentOptions(
  */
 export function resolveHomeAgent(
   options: readonly HomeAgentOption[],
-  chosenKey: string | undefined
+  chosenKey: string | undefined,
+  /** Whether the computer's terminal catalog has been read this launch. */
+  terminalCatalogKnown = true
 ): HomeAgentOption | null {
   if (chosenKey) {
     const chosen = options.find((option) => option.key === chosenKey);
     if (chosen) return chosen;
+    // A terminal agent cannot be confirmed until the catalog is read; until
+    // then it is still the reader's choice, never silently another agent.
+    const kind = chosenKey.startsWith('terminal:') ? chosenKey.slice(9) : '';
+    if (kind && !terminalCatalogKnown) {
+      return {
+        key: chosenKey,
+        kind: 'terminal',
+        agentKind: kind,
+        name: agentBrandName(kind),
+        ready: true,
+        confirmed: false,
+      };
+    }
   }
   return options.find((option) => option.ready) ?? options[0] ?? null;
 }
