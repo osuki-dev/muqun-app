@@ -195,3 +195,20 @@ export function homeGuideParams(
 export function ledgerModelId(model: ModelRef): string {
   return model.provider_id ? `${model.provider_id}/${model.model_id}` : model.model_id;
 }
+
+/**
+ * Whether the selected record is still the computer a send started on: the
+ * same id, address and transport key. Not object identity -- the connection
+ * store republishes an unchanged record (a reachability update) mid-send.
+ */
+export function sameComputer(
+  current: Pick<GatewayRecord, 'serverId' | 'url' | 'transportKey'> | null | undefined,
+  owner: Pick<GatewayRecord, 'serverId' | 'url' | 'transportKey'> | null | undefined
+): boolean {
+  if (!current || !owner) return false;
+  return (
+    current.serverId === owner.serverId &&
+    current.url === owner.url &&
+    current.transportKey === owner.transportKey
+  );
+}

@@ -45,6 +45,7 @@ import {
   HOME_AGENT_SESSION_ID,
   homeGuideParams,
   ledgerModelId,
+  sameComputer,
   homeHiddenClientCommands,
   homeSessionParams,
   homeSessionReuse,
@@ -513,9 +514,12 @@ export function HomeComposerDock({
         // The New task sheet's guard: every await below talks to the shared
         // client, so a selection that moved meanwhile would start the agent
         // (with its bypass flags) on another computer.
+        // By computer, not by object: the store republishes the same record
+        // (a status update) during slow awaits, and that is not a move.
         const owner = useGatewayConnectionStore.getState().record;
         const owns = () =>
-          owner?.serverId === serverId && useGatewayConnectionStore.getState().record === owner;
+          owner?.serverId === serverId &&
+          sameComputer(useGatewayConnectionStore.getState().record, owner);
         return recoverWith(
           async () => {
             // A stored choice the catalog has not confirmed is checked first:
@@ -554,10 +558,8 @@ export function HomeComposerDock({
               sessionId,
               agentSpawnRequest({ agent: kind, prompt: text })
             );
-            if (!owns()) {
-              setError(t`Computer unavailable.`);
-              return false;
-            }
+            // The agent is running on `serverId` now, whatever the selection
+            // did since: open its pane there rather than call it unavailable.
             router.navigate({
               pathname: '/servers/[serverId]',
               params: { serverId, paneId: spawned.paneId },
