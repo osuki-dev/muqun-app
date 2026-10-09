@@ -1,7 +1,7 @@
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens } from '@osuki-dev/ui';
-import { ChevronRight, Search, X } from 'lucide-react-native';
+import { ChevronRight, X } from 'lucide-react-native';
 import { useCallback, useRef, useState } from 'react';
 import { AppState, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import { useFocusEffect } from 'expo-router';
@@ -59,14 +59,8 @@ export function HomeContinueSearch({
 }) {
   const { t } = useLingui();
   const theme = useThemeTokens();
-  const background = useSurfaceBackground();
   return (
-    <View
-      style={[
-        styles.search,
-        { backgroundColor: background(theme.colors.surface), borderColor: theme.colors.border },
-      ]}>
-      <Search size={16} color={theme.colors.textMuted} />
+    <View style={styles.search}>
       <FontedTextInput
         testID="home-continue-search"
         accessibilityLabel={t`Search sessions`}
@@ -77,6 +71,7 @@ export function HomeContinueSearch({
         autoCapitalize="none"
         autoCorrect={false}
         returnKeyType="search"
+        underlineColorAndroid="transparent"
         style={[styles.searchInput, { color: theme.colors.text }]}
       />
       {query.length ? (
@@ -506,11 +501,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    paddingLeft: 12,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: 8,
   },
-  searchInput: { flex: 1, minWidth: 0, fontSize: 14, paddingVertical: 10 },
+  searchInput: { flex: 1, minWidth: 0, fontSize: 14, paddingVertical: 10, paddingHorizontal: 0 },
   searchClear: { minWidth: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center' },
   root: { minWidth: 0 },
   list: { minWidth: 0, overflow: 'hidden' },
