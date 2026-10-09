@@ -707,6 +707,35 @@ describe('unauthorized', () => {
     expect(h.transports).toHaveLength(2);
   });
 
+  test('one network change retries a refusal once, until hello says the route is back', () => {
+    const h = harness();
+    h.socket.watch('ses_1', recorder().listener);
+    h.latest().onerror?.('Invalid HTTP status 401');
+    expect(h.socket.state).toBe('unauthorized');
+    // The ok-probe after a network change asks for a retry...
+    h.socket.retryAfterRefusal();
+    expect(h.transports).toHaveLength(2);
+    // ...and the upgrade flaps back to 401 on the new route.
+    h.latest().onerror?.('Invalid HTTP status 401');
+    expect(h.socket.state).toBe('unauthorized');
+    // The same change's second call is not a second reconnect.
+    h.socket.retryAfterRefusal();
+    expect(h.transports).toHaveLength(2);
+    expect(h.socket.state).toBe('unauthorized');
+    // A user action still reopens, and a hello ends the retry.
+    h.socket.reconnect();
+    expect(h.transports).toHaveLength(3);
+    h.latest().deliver(hello());
+    expect(h.socket.state).toBe('open');
+    h.latest().drop();
+    h.clock.advance(400);
+    h.latest().onerror?.('Invalid HTTP status 401');
+    expect(h.socket.state).toBe('unauthorized');
+    h.socket.retryAfterRefusal();
+    expect(h.transports).toHaveLength(5);
+    expect(h.socket.state).toBe('connecting');
+  });
+
   test('a refused socket nothing wants stands down to idle', () => {
     const h = harness();
     const release = h.socket.watch('ses_1', recorder().listener);
