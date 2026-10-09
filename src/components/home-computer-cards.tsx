@@ -256,7 +256,10 @@ function ComputerCardView({
             <StatusDot
               color={statusColor}
               filled={status !== 'unknown' && status !== 'reconnecting'}
-              pulse={status === 'live'}
+              // No ripple: up to four cards rippling forever keeps Home's UI
+              // thread from ever going idle (uiautomator could not dump it)
+              // and costs battery on the screen people leave open.
+              pulse={false}
             />
             <Text variant="caption" color={statusColor} numberOfLines={1}>
               {statusWord}
