@@ -4,9 +4,12 @@ import type { ModeInfo, ModelInfo } from '../agent-session';
 import type { GatewayRecord } from '../gateway-storage';
 import {
   homeComposerAgent,
+  homeGuideParams,
   homeHiddenClientCommands,
   homeSessionParams,
+  homeSessionReuse,
   resolveHomeComposerTarget,
+  type HomeStartedSession,
 } from '../home-composer';
 import { buildLaunchModel } from '../home-launch-model';
 
@@ -155,5 +158,70 @@ describe('homeHiddenClientCommands', () => {
     expect(homeHiddenClientCommands({ modelSelection: true })).not.toContain('models');
     expect(homeHiddenClientCommands({ modelSelection: true })).toContain('undo');
     expect(homeHiddenClientCommands({ modelSelection: false })).toContain('models');
+  });
+});
+
+describe('homeSessionReuse', () => {
+  const sonnet = { provider_id: 'anthropic', model_id: 'sonnet' };
+  const haiku = { provider_id: 'anthropic', model_id: 'haiku' };
+  const started: HomeStartedSession = {
+    key: 'studio\u0000opencode',
+    asid: 'as-1',
+    params: { mode: 'build', model: sonnet, agentId: 'opencode' },
+  };
+
+  test('nothing left over, or another computer or agent: a new session', () => {
+    expect(homeSessionReuse(null, started.key, started.params)).toEqual({ kind: 'create' });
+    expect(homeSessionReuse(started, 'laptop\u0000opencode', started.params)).toEqual({
+      kind: 'create',
+    });
+  });
+
+  test('the same pills reuse the session as it is', () => {
+    expect(homeSessionReuse(started, started.key, { ...started.params })).toEqual({
+      kind: 'reuse',
+      started,
+    });
+  });
+
+  test('a mode or model changed since is switched on the reused session', () => {
+    expect(
+      homeSessionReuse(started, started.key, { mode: 'plan', model: haiku, agentId: 'opencode' })
+    ).toEqual({ kind: 'reuse', started, switchMode: 'plan', switchModel: haiku });
+    expect(
+      homeSessionReuse(started, started.key, {
+        mode: 'build',
+        model: { ...sonnet, variant: 'thinking' },
+      })
+    ).toMatchObject({ switchModel: { ...sonnet, variant: 'thinking' } });
+  });
+});
+
+describe('homeGuideParams', () => {
+  const server = { serverId: 'studio', label: 'Studio' };
+  const common = { capabilities: [], agentId: 'claude' };
+
+  test('a ready agent keeps the failure inline', () => {
+    expect(homeGuideParams({ status: 'ready', ...common }, server)).toBeNull();
+  });
+
+  test('every other state opens the guide, which comes back to Home', () => {
+    for (const status of ['not-installed', 'needs-setup', 'needs-update', 'unsupported'] as const)
+      expect(homeGuideParams({ status, ...common }, server)).toEqual({
+        serverId: 'studio',
+        label: 'Studio',
+        agentId: 'claude',
+        status,
+        origin: 'home',
+      });
+    expect(
+      homeGuideParams({ status: 'offline', cause: 'service', ...common }, { serverId: 'studio' })
+    ).toEqual({
+      serverId: 'studio',
+      agentId: 'claude',
+      status: 'offline',
+      cause: 'service',
+      origin: 'home',
+    });
   });
 });

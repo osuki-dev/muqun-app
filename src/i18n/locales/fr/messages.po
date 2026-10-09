@@ -23,6 +23,7 @@ msgid "“{0}” has changes that have not been committed. Removing it throws th
 msgstr "« {0} » contient des modifications non validées. Le supprimer les jette"
 
 #: src/components/agent-workbench.tsx
+#: src/components/home-composer-dock.tsx
 msgid "“{args}” was not sent: a skill takes no arguments."
 msgstr "« {args} » n’a pas été envoyé : une compétence ne prend pas d’arguments"
 
@@ -5349,6 +5350,7 @@ msgid "Skill loaded · {0}"
 msgstr "Compétence chargée · {0}"
 
 #: src/components/agent-workbench.tsx
+#: src/components/home-composer-dock.tsx
 msgid "Skill started"
 msgstr "Compétence lancée"
 

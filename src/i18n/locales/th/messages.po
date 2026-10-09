@@ -23,6 +23,7 @@ msgid "“{0}” has changes that have not been committed. Removing it throws th
 msgstr "“{0}” มีการเปลี่ยนแปลงที่ยังไม่ได้คอมมิต ถ้าลบออกจะหายไปทั้งหมด"
 
 #: src/components/agent-workbench.tsx
+#: src/components/home-composer-dock.tsx
 msgid "“{args}” was not sent: a skill takes no arguments."
 msgstr "ไม่ได้ส่ง “{args}” เพราะสกิลไม่รับอาร์กิวเมนต์"
 
@@ -5349,6 +5350,7 @@ msgid "Skill loaded · {0}"
 msgstr "โหลดสกิลแล้ว · {0}"
 
 #: src/components/agent-workbench.tsx
+#: src/components/home-composer-dock.tsx
 msgid "Skill started"
 msgstr "เริ่มสกิลแล้ว"
 

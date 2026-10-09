@@ -23,6 +23,7 @@ msgid "“{0}” has changes that have not been committed. Removing it throws th
 msgstr "„{0}“ hat Änderungen, die nicht committet sind. Beim Entfernen gehen sie verloren"
 
 #: src/components/agent-workbench.tsx
+#: src/components/home-composer-dock.tsx
 msgid "“{args}” was not sent: a skill takes no arguments."
 msgstr "„{args}“ wurde nicht gesendet: Ein Skill nimmt keine Argumente"
 
@@ -5349,6 +5350,7 @@ msgid "Skill loaded · {0}"
 msgstr "Skill geladen · {0}"
 
 #: src/components/agent-workbench.tsx
+#: src/components/home-composer-dock.tsx
 msgid "Skill started"
 msgstr "Skill gestartet"
 
