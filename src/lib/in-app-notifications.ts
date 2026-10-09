@@ -212,7 +212,7 @@ export function noticePresentation(enabled: boolean, active: boolean) {
 /**
  * The separator the gateway puts between what happened and where.
  *
- * A push arrives titled "Agent done · osk": one sentence of subject and one
+ * A push arrives titled "Agent done · desk": one sentence of subject and one
  * word of provenance, joined by a middle dot. The banner draws them as two
  * weights on one line rather than as one string, so the eye reaches the event
  * first and the machine second.

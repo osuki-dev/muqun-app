@@ -203,15 +203,15 @@ describe('homeContinueComputerLabel with more than one computer', () => {
   test("a row's own computer wins, never another record's label", () => {
     const servers = [
       { serverId: 'host-default', label: 'workstation' },
-      { serverId: 'renamed', label: 'coding' },
+      { serverId: 'renamed', label: 'Studio' },
     ];
-    expect(homeContinueComputerLabel(servers, 'renamed')).toBe('coding');
+    expect(homeContinueComputerLabel(servers, 'renamed')).toBe('Studio');
     expect(homeContinueComputerLabel(servers, 'host-default')).toBe('workstation');
   });
 
   test('a serverId no paired record has gets no label at all', () => {
     expect(
-      homeContinueComputerLabel([{ serverId: 'renamed', label: 'coding' }], 'workstation')
+      homeContinueComputerLabel([{ serverId: 'renamed', label: 'Studio' }], 'workstation')
     ).toBe(undefined);
   });
 });

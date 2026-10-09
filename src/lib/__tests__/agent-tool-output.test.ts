@@ -630,7 +630,7 @@ describe('the diffs a payload carries', () => {
 
 describe('an input that is still arriving', () => {
   // The real one, from a captured `session.tool.input.ended` for `shell`.
-  const FULL = '{"workdir":"/home/ryu/.cache/tmp/scratchpad/probe","command":"echo probe-done"}';
+  const FULL = '{"workdir":"/home/dev/.cache/tmp/scratchpad/probe","command":"echo probe-done"}';
 
   test('every prefix of a real shell input is read without throwing', () => {
     for (let length = 0; length <= FULL.length; length += 1) {
@@ -654,16 +654,16 @@ describe('an input that is still arriving', () => {
     // The workdir is the caption from the frame it completes in, whole rather
     // than clipped: it is a finished value, not a growing one.
     expect(extractCaption('shell', FULL.slice(0, 50))).toBe(
-      '/home/ryu/.cache/tmp/scratchpad/probe'
+      '/home/dev/.cache/tmp/scratchpad/probe'
     );
   });
 
   test('the argument line holds every field that has landed, in order', () => {
     expect(toolArgumentLine(toolInputRecord(FULL.slice(0, 66)))).toBe(
-      'workdir /home/ryu/.cache/tmp/scratchpad/probe  command echo'
+      'workdir /home/dev/.cache/tmp/scratchpad/probe  command echo'
     );
     expect(toolArgumentLine(toolInputRecord(FULL))).toBe(
-      'workdir /home/ryu/.cache/tmp/scratchpad/probe  command echo probe-done'
+      'workdir /home/dev/.cache/tmp/scratchpad/probe  command echo probe-done'
     );
     expect(toolArgumentLine(null)).toBe('');
   });
@@ -693,9 +693,9 @@ describe('an input that is still arriving', () => {
 
 describe('what a skill and a web call are called', () => {
   test('a skill is its name and where it came from, not its id', () => {
-    const metadata = { name: 'PDF forms', directory: '/home/ryu/.config/opencode/skills/pdf' };
+    const metadata = { name: 'PDF forms', directory: '/home/dev/.config/opencode/skills/pdf' };
     expect(skillNameFromMetadata(metadata)).toBe('PDF forms');
-    expect(skillDirectoryFromMetadata(metadata)).toBe('/home/ryu/.config/opencode/skills/pdf');
+    expect(skillDirectoryFromMetadata(metadata)).toBe('/home/dev/.config/opencode/skills/pdf');
     // Nothing said: the id the skill was asked for by is still the fallback.
     expect(skillNameFromMetadata({})).toBe('');
     expect(skillDirectoryFromMetadata({})).toBe('');
@@ -731,17 +731,17 @@ describe('what a skill and a web call are called', () => {
 describe('groupPathsByDirectory', () => {
   test('one path per line becomes folders and the names in them', () => {
     const output = [
-      '/home/ryu/app/src/lib/agent-tool-output.ts',
-      '/home/ryu/app/src/lib/agent-session.ts',
-      '/home/ryu/app/src/components/agent-tool-card.tsx',
-      '/home/ryu/app/src/lib/motion.ts',
+      '/home/dev/app/src/lib/agent-tool-output.ts',
+      '/home/dev/app/src/lib/agent-session.ts',
+      '/home/dev/app/src/components/agent-tool-card.tsx',
+      '/home/dev/app/src/lib/motion.ts',
     ].join('\n');
     expect(groupPathsByDirectory(output)).toEqual([
       {
-        directory: '/home/ryu/app/src/lib',
+        directory: '/home/dev/app/src/lib',
         files: ['agent-tool-output.ts', 'agent-session.ts', 'motion.ts'],
       },
-      { directory: '/home/ryu/app/src/components', files: ['agent-tool-card.tsx'] },
+      { directory: '/home/dev/app/src/components', files: ['agent-tool-card.tsx'] },
     ]);
   });
 
@@ -751,10 +751,10 @@ describe('groupPathsByDirectory', () => {
   });
 
   test('a real captured glob answer, of one file', () => {
-    const output = '/home/ryu/.cache/tmp/claude-1000/scratchpad/probe/sample.txt';
+    const output = '/home/dev/.cache/tmp/claude-1000/scratchpad/probe/sample.txt';
     expect(groupPathsByDirectory(output)).toEqual([
       {
-        directory: '/home/ryu/.cache/tmp/claude-1000/scratchpad/probe',
+        directory: '/home/dev/.cache/tmp/claude-1000/scratchpad/probe',
         files: ['sample.txt'],
       },
     ]);

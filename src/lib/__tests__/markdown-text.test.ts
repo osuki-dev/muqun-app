@@ -102,7 +102,7 @@ describe('hasMarkdownMarks', () => {
     // as likely to be a payload as prose, and "it has newlines" describes
     // every payload there is.
     expect(hasMarkdownMarks('starting\nlistening on 3000\nready')).toBe(false);
-    expect(hasMarkdownMarks('total 24\ndrwxr-xr-x 3 ryu ryu 4096 .')).toBe(false);
+    expect(hasMarkdownMarks('total 24\ndrwxr-xr-x 3 dev dev 4096 .')).toBe(false);
   });
 
   test('a mark somebody wrote on purpose is markdown', () => {

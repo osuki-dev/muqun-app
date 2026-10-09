@@ -149,7 +149,7 @@ export const useSshHostsStore = create<SshHostsState>((set) => ({
         username: input.username,
       };
       // A different address is a different machine as far as the host key is
-      // concerned: the key that proved 10.0.0.5 says nothing about 10.0.0.6.
+      // concerned: the key that proved 192.0.2.5 says nothing about 192.0.2.6.
       if (current.host !== record.host || current.port !== record.port) {
         delete record.trustedHostKey;
       }

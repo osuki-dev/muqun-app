@@ -14,8 +14,8 @@ import type { AgentProject } from '../agent-protocol';
 const REFUSAL = {
   error: {
     code: 'workspace_missing',
-    message: 'The workspace folder is gone: /home/ryu/throwaway',
-    directory: '/home/ryu/throwaway',
+    message: 'The workspace folder is gone: /home/me/throwaway',
+    directory: '/home/me/throwaway',
   },
 };
 
@@ -23,14 +23,14 @@ describe('parseWorkspaceMissing', () => {
   test('reads the documented body', () => {
     expect(parseWorkspaceMissing(REFUSAL)).toEqual({
       code: 'workspace_missing',
-      message: 'The workspace folder is gone: /home/ryu/throwaway',
-      directory: '/home/ryu/throwaway',
+      message: 'The workspace folder is gone: /home/me/throwaway',
+      directory: '/home/me/throwaway',
     });
   });
 
   test('reads it through the gateway envelope and out of the bare error', () => {
-    expect(parseWorkspaceMissing({ data: REFUSAL })?.directory).toBe('/home/ryu/throwaway');
-    expect(parseWorkspaceMissing(REFUSAL.error)?.directory).toBe('/home/ryu/throwaway');
+    expect(parseWorkspaceMissing({ data: REFUSAL })?.directory).toBe('/home/me/throwaway');
+    expect(parseWorkspaceMissing(REFUSAL.error)?.directory).toBe('/home/me/throwaway');
   });
 
   test('a message is optional; a directory is not', () => {
@@ -122,8 +122,8 @@ describe('workspaceMissingState', () => {
   test('binds the refusal to the session it was about', () => {
     expect(workspaceMissingState(parseWorkspaceMissing(REFUSAL), 'as_1')).toEqual({
       asid: 'as_1',
-      directory: '/home/ryu/throwaway',
-      message: 'The workspace folder is gone: /home/ryu/throwaway',
+      directory: '/home/me/throwaway',
+      message: 'The workspace folder is gone: /home/me/throwaway',
     });
   });
 
@@ -136,38 +136,38 @@ describe('workspaceMissingState', () => {
 describe('badgeLoadsAllowed', () => {
   const missing = {
     asid: 'as_1',
-    directory: '/home/ryu/throwaway',
-    message: 'The workspace folder is gone: /home/ryu/throwaway',
+    directory: '/home/me/throwaway',
+    message: 'The workspace folder is gone: /home/me/throwaway',
   };
 
   test('allowed until something refuses', () => {
-    expect(badgeLoadsAllowed({ asid: 'as_1', directory: '/home/ryu/throwaway' })).toBe(true);
+    expect(badgeLoadsAllowed({ asid: 'as_1', directory: '/home/me/throwaway' })).toBe(true);
     expect(
-      badgeLoadsAllowed({ asid: 'as_1', directory: '/home/ryu/throwaway', missing: null })
+      badgeLoadsAllowed({ asid: 'as_1', directory: '/home/me/throwaway', missing: null })
     ).toBe(true);
   });
 
   test('stopped for the session standing on the folder that is gone', () => {
-    expect(badgeLoadsAllowed({ asid: 'as_1', directory: '/home/ryu/throwaway', missing })).toBe(
+    expect(badgeLoadsAllowed({ asid: 'as_1', directory: '/home/me/throwaway', missing })).toBe(
       false
     );
   });
 
   test('a trailing slash is the same folder', () => {
-    expect(badgeLoadsAllowed({ asid: 'as_1', directory: '/home/ryu/throwaway/', missing })).toBe(
+    expect(badgeLoadsAllowed({ asid: 'as_1', directory: '/home/me/throwaway/', missing })).toBe(
       false
     );
   });
 
   test('another session on the same host loads as usual', () => {
-    expect(badgeLoadsAllowed({ asid: 'as_2', directory: '/home/ryu/throwaway', missing })).toBe(
+    expect(badgeLoadsAllowed({ asid: 'as_2', directory: '/home/me/throwaway', missing })).toBe(
       true
     );
   });
 
   test('a move to a worktree resumes the reads', () => {
     expect(
-      badgeLoadsAllowed({ asid: 'as_1', directory: '/home/ryu/repo/.worktree/x', missing })
+      badgeLoadsAllowed({ asid: 'as_1', directory: '/home/me/repo/.worktree/x', missing })
     ).toBe(true);
   });
 
@@ -197,16 +197,16 @@ describe('diffEmptyState', () => {
 });
 
 describe('listableWorkspaces', () => {
-  const app: AgentProject = { id: 'a', canonical: '/home/ryu/Work/app', name: 'app' };
+  const app: AgentProject = { id: 'a', canonical: '/home/me/Work/app', name: 'app' };
   const gone: AgentProject = {
     id: 'b',
-    canonical: '/home/ryu/throwaway',
+    canonical: '/home/me/throwaway',
     name: 'throwaway',
     missing: true,
   };
   const here: AgentProject = {
     id: 'c',
-    canonical: '/home/ryu/Work/website',
+    canonical: '/home/me/Work/website',
     name: 'website',
     missing: true,
   };
@@ -216,7 +216,7 @@ describe('listableWorkspaces', () => {
   });
 
   test('the workspace the reader is standing in stays, and says so', () => {
-    expect(listableWorkspaces([app, gone, here], '/home/ryu/Work/website')).toEqual([app, here]);
+    expect(listableWorkspaces([app, gone, here], '/home/me/Work/website')).toEqual([app, here]);
     expect(workspaceProjectMissing(here)).toBe(true);
     expect(workspaceProjectMissing(app)).toBe(false);
   });
@@ -229,6 +229,6 @@ describe('listableWorkspaces', () => {
   });
 
   test('a trailing slash is the same folder, not another one', () => {
-    expect(listableWorkspaces([here], '/home/ryu/Work/website/')).toEqual([here]);
+    expect(listableWorkspaces([here], '/home/me/Work/website/')).toEqual([here]);
   });
 });

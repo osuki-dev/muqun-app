@@ -26,7 +26,7 @@ import {
   SIMFARM_RUN_COMMAND,
 } from '@/lib/simfarm';
 
-const GATEWAY = 'https://mac-mini.example.ts.net:23847';
+const GATEWAY = 'https://tower.example.ts.net:23847';
 
 describe('allowsSimfarmPreview', () => {
   test('yes on the two connections that vouch for the network', () => {
@@ -51,7 +51,7 @@ describe('allowsSimfarmPreview', () => {
 describe('the URLs', () => {
   test('take the gateway host and put the simfarm port on it', () => {
     expect(simfarmClientUrl(GATEWAY, SIMFARM_DEFAULT_PORT)).toBe(
-      'https://mac-mini.example.ts.net:8801/'
+      'https://tower.example.ts.net:8801/'
     );
   });
 
@@ -62,12 +62,12 @@ describe('the URLs', () => {
 
   test('the device list asks only for what is running', () => {
     expect(simfarmDevicesUrl(GATEWAY, 8801)).toBe(
-      'https://mac-mini.example.ts.net:8801/devices?booted=1'
+      'https://tower.example.ts.net:8801/devices?booted=1'
     );
   });
 
   test('health is its own path', () => {
-    expect(simfarmHealthUrl(GATEWAY, 8801)).toBe('https://mac-mini.example.ts.net:8801/healthz');
+    expect(simfarmHealthUrl(GATEWAY, 8801)).toBe('https://tower.example.ts.net:8801/healthz');
   });
 
   test('no gateway, or a port that is not one, is no URL at all', () => {
@@ -195,8 +195,8 @@ describe('parseSimfarmDevices', () => {
 
 describe('simfarmSocketUrl', () => {
   test('is the client URL with the scheme and the path the protocol names', () => {
-    expect(simfarmSocketUrl('http://mac-mini.example.ts.net:23847', 8801)).toBe(
-      'ws://mac-mini.example.ts.net:8801/v1'
+    expect(simfarmSocketUrl('http://tower.example.ts.net:23847', 8801)).toBe(
+      'ws://tower.example.ts.net:8801/v1'
     );
   });
 
@@ -205,7 +205,7 @@ describe('simfarmSocketUrl', () => {
     // still streams, and hands an unauthenticated remote-control channel to
     // anything on the path. `webServiceUrl` refuses to invent a downgrade for
     // the browser and this must not invent one either.
-    expect(simfarmSocketUrl(GATEWAY, 8801)).toBe('wss://mac-mini.example.ts.net:8801/v1');
+    expect(simfarmSocketUrl(GATEWAY, 8801)).toBe('wss://tower.example.ts.net:8801/v1');
   });
 
   test('carries an IPv6 literal in its brackets, and no gateway means no socket', () => {
