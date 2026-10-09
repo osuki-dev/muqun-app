@@ -160,3 +160,28 @@ test('theme operation messages retain a shared readable surface without fading t
   expect(message).toContain('{notice}');
   expect(/\bopacity\s*:/.test(message ?? '')).toBe(false);
 });
+
+test('shell surfaces fall back to the home wallpaper, and the terminal does not', () => {
+  // Settings, its sheets and the agent page paint `shell.wallpaper` with
+  // `home.wallpaper` behind it, so a pack with only a home picture is not
+  // switched off everywhere but Home. The plates that protect text on those
+  // grounds ask the same question, or a fallback picture would sit under bare
+  // captions.
+  const painted = '<ThemeArtwork slot="shell.wallpaper" fallbackSlot={SHELL_WALLPAPER_FALLBACK} />';
+  const asked = "useHasThemeArtwork('shell.wallpaper', SHELL_WALLPAPER_FALLBACK)";
+  for (const file of ['src/app/settings.tsx', 'src/components/sheet-ground.tsx']) {
+    const source = readFileSync(file, 'utf8');
+    expect(source).toContain(painted);
+    expect(source).not.toContain("useHasThemeArtwork('shell.wallpaper')");
+    expect(source).toContain(asked);
+  }
+  expect(readFileSync('src/app/agent.tsx', 'utf8')).toContain(painted);
+  expect(readFileSync('src/components/settings-registration.tsx', 'utf8')).toContain(asked);
+  expect(readFileSync('src/components/theme-artwork.tsx', 'utf8')).toContain(
+    "export const SHELL_WALLPAPER_FALLBACK: ThemeSlot = 'home.wallpaper';"
+  );
+  // What sits behind terminal text is the terminal's own decision.
+  expect(readFileSync('src/components/skia-terminal.tsx', 'utf8')).not.toContain(
+    'SHELL_WALLPAPER_FALLBACK'
+  );
+});

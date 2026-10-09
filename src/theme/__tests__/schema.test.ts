@@ -266,6 +266,26 @@ describe('shared component resolution', () => {
     expect(resolve()).toBeNull();
   });
 
+  test('shell surfaces wear a home-only wallpaper with its own opacity and fit', () => {
+    // A pack that ships only `home.wallpaper` showed its picture on Home and a
+    // bare ground on Settings. The shell asks the other way round, and what it
+    // gets is the home entry as the pack wrote it, not a shell default.
+    const manifest = createThemeStarter();
+    manifest.decoration = {
+      'home.wallpaper': { asset: 'home', opacity: 0.6, fit: 'contain' },
+      'home.artwork': { asset: 'figure' },
+    };
+    const resolve = () =>
+      resolveThemeImage(manifest, 'shell.wallpaper', 'light', 'regular', true, 'home.wallpaper');
+    expect(resolve()).toEqual({ asset: 'home', opacity: 0.6, fit: 'contain' });
+    // A shell picture of its own still wins.
+    manifest.decoration['shell.wallpaper'] = { asset: 'shell' };
+    expect(resolve()).toEqual({ asset: 'shell' });
+    // An illustration alone is not a wallpaper: the shell stays undecorated.
+    manifest.decoration = { 'home.artwork': { asset: 'figure' } };
+    expect(resolve()).toBeNull();
+  });
+
   test('undefined inherits; null disables; responsive overrides are final', () => {
     const manifest = parse({
       ...createThemeStarter(),
