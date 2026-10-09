@@ -13,6 +13,7 @@ import {
   taskSubscriptionServerIds,
   taskRowVisual,
   taskTitle,
+  heldCardOrder,
 } from '../home-computer-cards';
 import type { ServerTasksIndex } from '../server-tasks-state';
 import type { TaskState, TaskView } from '../task-ledger';
@@ -435,5 +436,18 @@ describe('taskRowVisual: the rules the state table carries', () => {
     ],
   ] as const)('%s', (_name, input, opts, expected) => {
     expect(taskRowVisual(input, opts)).toMatchObject(expected);
+  });
+});
+
+describe('heldCardOrder', () => {
+  const cards = (...ids: string[]) => ids.map((serverId) => ({ serverId }));
+  // shown order, newly sorted cards -> what is drawn
+  test.each<[string, string[], string[], string[]]>([
+    ['nothing held: the sort as given', ['a', 'b'], ['a', 'b'], ['a', 'b']],
+    ['a card that rose keeps its old place', ['a', 'b', 'c'], ['c', 'a', 'b'], ['a', 'b', 'c']],
+    ['an arrival joins at the end', ['a', 'b'], ['n', 'b', 'a'], ['a', 'b', 'n']],
+    ['a card that went is dropped', ['a', 'b', 'c'], ['c', 'a'], ['a', 'c']],
+  ])('%s', (_name, shown, sorted, drawn) => {
+    expect(heldCardOrder(shown, cards(...sorted)).map((card) => card.serverId)).toEqual(drawn);
   });
 });

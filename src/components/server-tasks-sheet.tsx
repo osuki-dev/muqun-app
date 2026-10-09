@@ -105,21 +105,24 @@ export function ServerTasksSheet({
           <ActivityIndicator size="small" color={theme.colors.primary} />
         </View>
       ) : (
-        // Rows already there when the sheet opens do not replay their arrival.
-        <LayoutAnimationConfig skipEntering>
-          <LegendList
-            nestedScrollEnabled
-            testID="server-tasks-list"
-            data={items}
-            keyExtractor={itemKey}
-            getItemType={itemType}
-            estimatedItemSize={64}
-            style={sheetSceneStyles.scroller}
-            contentContainerStyle={sheetSceneStyles.scrollerContent}
-            renderItem={({ item }) =>
-              item.type === 'heading' ? (
-                <SheetSceneGroupHeading title={item.title} first={item.first} />
-              ) : item.type === 'task' ? (
+        <LegendList
+          nestedScrollEnabled
+          testID="server-tasks-list"
+          data={items}
+          keyExtractor={itemKey}
+          getItemType={itemType}
+          estimatedItemSize={64}
+          style={sheetSceneStyles.scroller}
+          contentContainerStyle={sheetSceneStyles.scrollerContent}
+          renderItem={({ item }) =>
+            item.type === 'heading' ? (
+              <SheetSceneGroupHeading title={item.title} first={item.first} />
+            ) : item.type === 'task' ? (
+              // Per row, because the list mounts rows as they scroll into
+              // view: one there when the sheet opened, or one scrolled to,
+              // does not replay its arrival (fade, pulse, icon). A state
+              // change inside a mounted row still animates.
+              <LayoutAnimationConfig skipEntering>
                 <TaskRow
                   task={item.task}
                   serverId={serverId ?? ''}
@@ -128,13 +131,13 @@ export function ServerTasksSheet({
                   discovery={discovery}
                   onOpen={onOpen}
                 />
-              ) : (
-                <SheetSceneRow testID="server-tasks-empty" title={t`No tasks yet`} />
-              )
-            }
-            ListFooterComponent={<SheetSceneFooter bottomInset={insets.bottom} />}
-          />
-        </LayoutAnimationConfig>
+              </LayoutAnimationConfig>
+            ) : (
+              <SheetSceneRow testID="server-tasks-empty" title={t`No tasks yet`} />
+            )
+          }
+          ListFooterComponent={<SheetSceneFooter bottomInset={insets.bottom} />}
+        />
       )}
     </SheetScene>
   );

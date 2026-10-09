@@ -609,3 +609,20 @@ export function taskRowRank(state: TaskRowState): number {
       return 3;
   }
 }
+
+/**
+ * The cards in the order the reader is looking at (`shownIds`), while a
+ * re-sort is held: a card keeps its place, a card that went is dropped, and a
+ * card that arrived joins at the end, so nothing above it moves. With nothing
+ * held `shownIds` is the sorted order itself and the cards come back as given.
+ */
+export function heldCardOrder<T extends { serverId: string }>(
+  shownIds: readonly string[],
+  cards: readonly T[]
+): T[] {
+  const place = new Map(shownIds.map((serverId, position) => [serverId, position]));
+  const kept = cards
+    .filter((card) => place.has(card.serverId))
+    .sort((a, b) => place.get(a.serverId)! - place.get(b.serverId)!);
+  return [...kept, ...cards.filter((card) => !place.has(card.serverId))];
+}
