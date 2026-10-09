@@ -6,6 +6,8 @@ import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { EdgeFade } from '@/components/edge-fade';
+import { SHELL_WALLPAPER_FALLBACK, useHasThemeArtwork } from '@/components/theme-artwork';
+import { withAlpha } from '@/lib/color';
 import Animated from 'react-native-reanimated';
 import { useNavigationArrival } from '@/hooks/use-navigation-arrival';
 import {
@@ -67,6 +69,12 @@ export function ScreenHeader({
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const arrivalStyle = useNavigationArrival();
+  // The plane below is there to stop scrolled labels showing through the
+  // controls' material, and on a flat ground it can be the ground itself. On a
+  // pack's wallpaper an opaque plane is a band of plain colour across the top
+  // of the picture, so there it goes translucent: the labels still dim to
+  // nothing under the controls, and the paper reads through.
+  const hasWallpaper = useHasThemeArtwork('shell.wallpaper', SHELL_WALLPAPER_FALLBACK);
 
   const handleBack = onBack ?? (() => (router.canGoBack() ? router.back() : router.replace('/')));
 
@@ -88,7 +96,9 @@ export function ScreenHeader({
             top: -insets.top,
             height: insets.top * 2 + NAV_HEADER_TOP_GAP + NAV_HEADER_CONTROL_SIZE + 8,
             // Opacity audit: scrim -- stops scrolled text bleeding under the header controls.
-            backgroundColor: theme.colors.background,
+            backgroundColor: hasWallpaper
+              ? withAlpha(theme.colors.background, 0.72)
+              : theme.colors.background,
           },
         ]}
       />
