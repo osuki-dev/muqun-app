@@ -185,7 +185,12 @@ function ComputerCardView({
   const profile = useAppearanceProfile();
   const background = useSurfaceBackground();
   const age = useTaskAge();
-  const ledger = useServerCapabilities((state) => hasTaskLedger(state.byServer[server.serverId]));
+  // Unknown until the computer has answered once: a never-probed computer is
+  // not one without a ledger.
+  const ledger = useServerCapabilities((state) => {
+    const capabilities = state.byServer[server.serverId];
+    return capabilities ? hasTaskLedger(capabilities) : undefined;
+  });
   const discovery = useAgents((state) => state.index.servers[server.serverId]);
   const sessions = useHomeAgentSessions(
     (state) => state.byServer[server.serverId]?.sessions.length
@@ -277,7 +282,7 @@ function ComputerCardView({
         </View>
       </PressableScale>
 
-      {!ledger ? (
+      {ledger === undefined ? null : !ledger ? (
         <Text variant="caption" color={theme.colors.textSubtle} style={styles.note}>
           {t`This computer’s Gateway does not keep a task list yet.`}
         </Text>
