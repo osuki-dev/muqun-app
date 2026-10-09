@@ -84,10 +84,20 @@ describe('initialPromptAction', () => {
     });
   });
 
-  test('a claimed offer prefills its ledger text on a remount', () => {
+  test('a claimed (sent) offer never comes back, on a remount or after its lifetime', () => {
     const id = offerInitialPrompt('s1', 'Already sent', at);
     expect(decide(id, 's1', at + 1).kind).toBe('send');
-    expect(decide(id, 's1', at + 2)).toEqual({ kind: 'prefill', prompt: 'Already sent' });
+    expect(recallInitialPrompt(id, 's1', at + 2)).toBeNull();
+    expect(decide(id, 's1', at + 2)).toEqual({ kind: 'none' });
+    expect(decide(id, 's1', at + OFFER_TTL_MS + 1)).toEqual({ kind: 'none' });
+  });
+
+  test('an expired (never sent) offer is recalled for its own computer only', () => {
+    const id = offerInitialPrompt('s1', 'Never sent', at);
+    expect(recallInitialPrompt(id, 's1', at + OFFER_TTL_MS + 1)).toBe('Never sent');
+    expect(recallInitialPrompt(id, 's2', at + OFFER_TTL_MS + 1)).toBeNull();
+    // Recall does not spend it: a second late mount still gets the goal.
+    expect(recallInitialPrompt(id, 's1', at + OFFER_TTL_MS + 2)).toBe('Never sent');
   });
 
   test("another computer's offer is neither sent nor prefilled", () => {
@@ -96,12 +106,11 @@ describe('initialPromptAction', () => {
     expect(decide(id, 's2', at + OFFER_TTL_MS + 1)).toEqual({ kind: 'none' });
   });
 
-  test('a spent record older than its lifetime is forgotten', () => {
-    const id = offerInitialPrompt('s1', 'Old', at);
-    expect(decide(id, 's1', at + 1).kind).toBe('send');
-    expect(decide(id, 's1', at + 1 + SPENT_TTL_MS + 1)).toEqual({ kind: 'none' });
+  test('an expired record older than its lifetime is forgotten', () => {
     const expired = offerInitialPrompt('s1', 'Old expired', at);
-    expect(recallInitialPrompt(expired, 's1', at + OFFER_TTL_MS + SPENT_TTL_MS + 1)).toBeNull();
+    const expiredAt = at + OFFER_TTL_MS;
+    expect(recallInitialPrompt(expired, 's1', expiredAt + SPENT_TTL_MS)).toBe('Old expired');
+    expect(recallInitialPrompt(expired, 's1', expiredAt + SPENT_TTL_MS + 1)).toBeNull();
   });
 
   test('a withdrawn offer is not recalled either', () => {
