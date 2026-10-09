@@ -133,19 +133,6 @@ msgstr "{0} на этом хосте"
 msgid "{0} queued"
 msgstr "{0} в очереди"
 
-#. placeholder {0}: rollup.total
-#: src/components/home-computer-cards.tsx
-#: src/components/server-tasks-sheet.tsx
-msgid "{0} sub-tasks"
-msgstr "Подзадач: {0}"
-
-#. placeholder {0}: rollup.total
-#. placeholder {1}: rollup.waiting
-#: src/components/home-computer-cards.tsx
-#: src/components/server-tasks-sheet.tsx
-msgid "{0} sub-tasks ({1} waiting)"
-msgstr "Подзадач: {0} (ждут: {1})"
-
 #. placeholder {0}: compact(inContext)
 #: src/components/agent-context-sheet.tsx
 msgid "{0} tokens the model last read"
@@ -340,18 +327,26 @@ msgid "{running} running of {0}"
 msgstr "{running} из {0} выполняется"
 
 #: src/components/home-computer-cards.tsx
-msgid "{sessions} sessions"
-msgstr "Сессий: {sessions}"
+msgid "{sessions, plural, one {# session} other {# sessions}}"
+msgstr "{sessions, plural, one {# сессия} few {# сессии} many {# сессий} other {# сессии}}"
 
 #: src/components/home-computer-cards.tsx
-msgid "{terminals} terminals"
-msgstr "Терминалов: {terminals}"
+msgid "{terminals, plural, one {# terminal} other {# terminals}}"
+msgstr "{terminals, plural, one {# терминал} few {# терминала} many {# терминалов} other {# терминала}}"
 
 #: src/components/agent-composer.tsx
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-sessions-sheet.tsx
 msgid "{title} — finished while you were away"
 msgstr "{title} — завершилось, пока вас не было"
+
+#: src/components/home-computer-cards.tsx
+msgid "{total, plural, one {# sub-task} other {# sub-tasks}}"
+msgstr "{total, plural, one {# подзадача} few {# подзадачи} many {# подзадач} other {# подзадачи}}"
+
+#: src/components/home-computer-cards.tsx
+msgid "{total, plural, one {# sub-task} other {# sub-tasks}} ({waiting, plural, one {# waiting} other {# waiting}})"
+msgstr "{total, plural, one {# подзадача} few {# подзадачи} many {# подзадач} other {# подзадачи}} ({waiting, plural, one {# ждёт} few {# ждут} many {# ждут} other {# ждут}})"
 
 #. placeholder {0}: card.nowTotal - card.now.length
 #: src/components/home-computer-cards.tsx
@@ -6204,7 +6199,7 @@ msgstr "Этот компьютер отклонил запрос"
 
 #: src/components/home-computer-cards.tsx
 msgid "This computer’s Gateway does not keep a task list yet."
-msgstr "Gateway этого компьютера пока не ведёт список задач."
+msgstr "Gateway этого компьютера пока не ведёт список задач"
 
 #: src/lib/attachments.ts
 msgid "This device has no camera available."

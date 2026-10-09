@@ -133,19 +133,6 @@ msgstr "{0} trên máy chủ này"
 msgid "{0} queued"
 msgstr "{0} đang chờ"
 
-#. placeholder {0}: rollup.total
-#: src/components/home-computer-cards.tsx
-#: src/components/server-tasks-sheet.tsx
-msgid "{0} sub-tasks"
-msgstr "{0} nhiệm vụ con"
-
-#. placeholder {0}: rollup.total
-#. placeholder {1}: rollup.waiting
-#: src/components/home-computer-cards.tsx
-#: src/components/server-tasks-sheet.tsx
-msgid "{0} sub-tasks ({1} waiting)"
-msgstr "{0} nhiệm vụ con ({1} đang chờ)"
-
 #. placeholder {0}: compact(inContext)
 #: src/components/agent-context-sheet.tsx
 msgid "{0} tokens the model last read"
@@ -340,18 +327,26 @@ msgid "{running} running of {0}"
 msgstr "{running} trong {0} đang chạy"
 
 #: src/components/home-computer-cards.tsx
-msgid "{sessions} sessions"
-msgstr "{sessions} phiên"
+msgid "{sessions, plural, one {# session} other {# sessions}}"
+msgstr "{sessions, plural, other {# phiên}}"
 
 #: src/components/home-computer-cards.tsx
-msgid "{terminals} terminals"
-msgstr "{terminals} terminal"
+msgid "{terminals, plural, one {# terminal} other {# terminals}}"
+msgstr "{terminals, plural, other {# terminal}}"
 
 #: src/components/agent-composer.tsx
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-sessions-sheet.tsx
 msgid "{title} — finished while you were away"
 msgstr "{title} — đã xong khi bạn đi vắng"
+
+#: src/components/home-computer-cards.tsx
+msgid "{total, plural, one {# sub-task} other {# sub-tasks}}"
+msgstr "{total, plural, other {# nhiệm vụ con}}"
+
+#: src/components/home-computer-cards.tsx
+msgid "{total, plural, one {# sub-task} other {# sub-tasks}} ({waiting, plural, one {# waiting} other {# waiting}})"
+msgstr "{total, plural, other {# nhiệm vụ con}} ({waiting, plural, other {# đang chờ}})"
 
 #. placeholder {0}: card.nowTotal - card.now.length
 #: src/components/home-computer-cards.tsx
@@ -6204,7 +6199,7 @@ msgstr "Máy tính này đã từ chối yêu cầu"
 
 #: src/components/home-computer-cards.tsx
 msgid "This computer’s Gateway does not keep a task list yet."
-msgstr "Gateway của máy tính này chưa lưu danh sách nhiệm vụ."
+msgstr "Gateway của máy tính này chưa lưu danh sách nhiệm vụ"
 
 #: src/lib/attachments.ts
 msgid "This device has no camera available."

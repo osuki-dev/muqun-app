@@ -133,19 +133,6 @@ msgstr "{0} sur cet hôte"
 msgid "{0} queued"
 msgstr "{0} en file d'attente"
 
-#. placeholder {0}: rollup.total
-#: src/components/home-computer-cards.tsx
-#: src/components/server-tasks-sheet.tsx
-msgid "{0} sub-tasks"
-msgstr "{0} sous-tâches"
-
-#. placeholder {0}: rollup.total
-#. placeholder {1}: rollup.waiting
-#: src/components/home-computer-cards.tsx
-#: src/components/server-tasks-sheet.tsx
-msgid "{0} sub-tasks ({1} waiting)"
-msgstr "{0} sous-tâches ({1} en attente)"
-
 #. placeholder {0}: compact(inContext)
 #: src/components/agent-context-sheet.tsx
 msgid "{0} tokens the model last read"
@@ -340,18 +327,26 @@ msgid "{running} running of {0}"
 msgstr "{running} sur {0} en cours"
 
 #: src/components/home-computer-cards.tsx
-msgid "{sessions} sessions"
-msgstr "{sessions} sessions"
+msgid "{sessions, plural, one {# session} other {# sessions}}"
+msgstr "{sessions, plural, one {# session} other {# sessions}}"
 
 #: src/components/home-computer-cards.tsx
-msgid "{terminals} terminals"
-msgstr "{terminals} terminaux"
+msgid "{terminals, plural, one {# terminal} other {# terminals}}"
+msgstr "{terminals, plural, one {# terminal} other {# terminaux}}"
 
 #: src/components/agent-composer.tsx
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-sessions-sheet.tsx
 msgid "{title} — finished while you were away"
 msgstr "{title} — terminé pendant votre absence"
+
+#: src/components/home-computer-cards.tsx
+msgid "{total, plural, one {# sub-task} other {# sub-tasks}}"
+msgstr "{total, plural, one {# sous-tâche} other {# sous-tâches}}"
+
+#: src/components/home-computer-cards.tsx
+msgid "{total, plural, one {# sub-task} other {# sub-tasks}} ({waiting, plural, one {# waiting} other {# waiting}})"
+msgstr "{total, plural, one {# sous-tâche} other {# sous-tâches}} ({waiting, plural, one {# en attente} other {# en attente}})"
 
 #. placeholder {0}: card.nowTotal - card.now.length
 #: src/components/home-computer-cards.tsx
@@ -6204,7 +6199,7 @@ msgstr "Cet ordinateur a refusé la requête"
 
 #: src/components/home-computer-cards.tsx
 msgid "This computer’s Gateway does not keep a task list yet."
-msgstr "Le Gateway de cet ordinateur ne tient pas encore de liste de tâches."
+msgstr "Le Gateway de cet ordinateur ne tient pas encore de liste de tâches"
 
 #: src/lib/attachments.ts
 msgid "This device has no camera available."

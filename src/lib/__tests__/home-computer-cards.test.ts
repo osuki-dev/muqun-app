@@ -5,6 +5,7 @@ import {
   buildTaskTree,
   cardLimits,
   dismissedKey,
+  groupTaskTree,
   MAX_TASK_SUBSCRIPTIONS,
   taskResultLine,
   taskRollup,
@@ -235,5 +236,75 @@ describe('buildComputerCards', () => {
       pending,
     });
     expect(arrived[0]!.pending).toEqual([]);
+  });
+});
+
+describe('work that outlives its root', () => {
+  test('a finished root with a working child stays in Now and the card is working', () => {
+    const [card] = buildComputerCards({
+      servers: [{ serverId: 'a' }],
+      index: index({
+        a: [task('root', 'done', 5), task('child', 'working', 6, { parentTaskId: 'root' })],
+      }),
+      reachability: () => 'live',
+      dismissed: new Set(),
+    });
+    expect(card!.activity).toBe('working');
+    expect(card!.now.map((row) => [row.task.taskId, row.children.map((c) => c.taskId)])).toEqual([
+      ['root', ['child']],
+    ]);
+    expect(card!.finished).toEqual([]);
+    expect(card!.lastFinished).toBeUndefined();
+  });
+
+  test('the gateway count keeps a finished root open for children beyond the page', () => {
+    const [card] = buildComputerCards({
+      servers: [{ serverId: 'a' }],
+      index: index({
+        a: [task('root', 'done', 5, { children: { total: 1, active: 0, waiting: 1, failed: 0 } })],
+      }),
+      reachability: () => 'live',
+      dismissed: new Set(),
+    });
+    expect(card!.now.map((row) => row.task.taskId)).toEqual(['root']);
+    expect(card!.finished).toEqual([]);
+  });
+});
+
+describe('the Sent row', () => {
+  const pending = [{ id: 'p', serverId: 'a', goal: 'goal x', atMs: 100 }];
+  const cardFor = (tasks: TaskView[]) =>
+    buildComputerCards({
+      servers: [{ serverId: 'a' }],
+      index: index({ a: tasks }),
+      reachability: () => 'live',
+      dismissed: new Set(),
+      pending,
+    })[0]!;
+
+  test('an older task with the same goal does not settle it', () => {
+    expect(cardFor([task('x', 'failed', 50)]).pending).toEqual(pending);
+  });
+
+  test('a task from elsewhere does not settle it; a device task does', () => {
+    expect(cardFor([task('x', 'working', 150, { origin: 'mcp' })]).pending).toEqual(pending);
+    expect(cardFor([task('x', 'working', 150, { origin: 'device' })]).pending).toEqual([]);
+  });
+});
+
+describe('groupTaskTree', () => {
+  test('a root goes where its most urgent work is', () => {
+    const groups = groupTaskTree(
+      buildTaskTree([
+        task('asks', 'working', 1),
+        task('asks-child', 'waiting', 2, { parentTaskId: 'asks' }),
+        task('busy', 'done', 3),
+        task('busy-child', 'working', 4, { parentTaskId: 'busy' }),
+        task('over', 'done', 5),
+      ])
+    );
+    expect(groups.attention.map((t) => t.taskId)).toEqual(['asks']);
+    expect(groups.active.map((t) => t.taskId)).toEqual(['busy']);
+    expect(groups.finished.map((t) => t.taskId)).toEqual(['over']);
   });
 });
