@@ -321,6 +321,7 @@ function ServerRow({
     <Animated.View layout={listLayout()} style={styles.row}>
       <PressableScale
         accessibilityRole="button"
+        testID={`settings-server-row-${server.serverId}`}
         accessibilityLabel={t`Options for ${server.label}`}
         accessibilityState={{ expanded: open }}
         onPress={onToggle}

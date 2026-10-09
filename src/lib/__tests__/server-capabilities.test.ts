@@ -14,6 +14,16 @@ import {
 } from '../server-capabilities';
 
 describe('reading a health answer', () => {
+  test('keeps every name of a long list', () => {
+    const names = Array.from({ length: 60 }, (_, i) => `cap_${i}`);
+    expect(normalizeCapabilities(names)).toEqual(names);
+  });
+
+  test('bounds a hostile list at 128, keeping the first in order', () => {
+    const names = Array.from({ length: 200 }, (_, i) => `cap_${i}`);
+    expect(normalizeCapabilities(names)).toEqual(names.slice(0, 128));
+  });
+
   test('keeps the names, in order, once each', () => {
     expect(normalizeCapabilities(['agent_spawn', ' assets ', 'assets'])).toEqual([
       'agent_spawn',
