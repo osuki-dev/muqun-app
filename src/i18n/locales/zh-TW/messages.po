@@ -1135,6 +1135,10 @@ msgstr "選擇專案"
 msgid "Choose the agent Home starts on this computer"
 msgstr "選擇主畫面在這台電腦上啟動的代理程式"
 
+#: src/components/home-composer-dock.tsx
+msgid "Choose the folder this computer starts work in"
+msgstr "選擇這台電腦開始工作的資料夾"
+
 #: src/components/changes-sheet.tsx
 msgid "Choose which changes to show"
 msgstr "選擇要顯示的變更"
@@ -2596,6 +2600,10 @@ msgstr "收合工具步驟"
 #: src/components/agent-workspace-sheet.tsx
 msgid "Folder is missing"
 msgstr "資料夾已不存在"
+
+#: src/components/home-composer-dock.tsx
+msgid "Folder: {folderLabel}"
+msgstr "資料夾：{folderLabel}"
 
 #: src/components/agent-workspace-sheet.tsx
 msgid "Folders"

@@ -1135,6 +1135,10 @@ msgstr "プロジェクトを選択"
 msgid "Choose the agent Home starts on this computer"
 msgstr "ホームがこのコンピュータで起動するエージェントを選びます"
 
+#: src/components/home-composer-dock.tsx
+msgid "Choose the folder this computer starts work in"
+msgstr "このコンピュータで作業を始めるフォルダーを選びます"
+
 #: src/components/changes-sheet.tsx
 msgid "Choose which changes to show"
 msgstr "表示する変更を選択"
@@ -2596,6 +2600,10 @@ msgstr "ツールの手順を折りたたむ"
 #: src/components/agent-workspace-sheet.tsx
 msgid "Folder is missing"
 msgstr "フォルダーがありません"
+
+#: src/components/home-composer-dock.tsx
+msgid "Folder: {folderLabel}"
+msgstr "フォルダー: {folderLabel}"
 
 #: src/components/agent-workspace-sheet.tsx
 msgid "Folders"

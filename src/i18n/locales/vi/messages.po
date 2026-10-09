@@ -1135,6 +1135,10 @@ msgstr "Chọn dự án"
 msgid "Choose the agent Home starts on this computer"
 msgstr "Chọn tác tử mà Trang chủ khởi động trên máy tính này"
 
+#: src/components/home-composer-dock.tsx
+msgid "Choose the folder this computer starts work in"
+msgstr "Chọn thư mục mà máy tính này bắt đầu công việc"
+
 #: src/components/changes-sheet.tsx
 msgid "Choose which changes to show"
 msgstr "Chọn thay đổi cần hiển thị"
@@ -2596,6 +2600,10 @@ msgstr "Thu gọn các bước công cụ"
 #: src/components/agent-workspace-sheet.tsx
 msgid "Folder is missing"
 msgstr "Thư mục không còn"
+
+#: src/components/home-composer-dock.tsx
+msgid "Folder: {folderLabel}"
+msgstr "Thư mục: {folderLabel}"
 
 #: src/components/agent-workspace-sheet.tsx
 msgid "Folders"

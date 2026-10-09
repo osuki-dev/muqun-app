@@ -1135,6 +1135,10 @@ msgstr "选择项目"
 msgid "Choose the agent Home starts on this computer"
 msgstr "选择主页在这台电脑上启动的智能体"
 
+#: src/components/home-composer-dock.tsx
+msgid "Choose the folder this computer starts work in"
+msgstr "选择这台电脑开始工作的文件夹"
+
 #: src/components/changes-sheet.tsx
 msgid "Choose which changes to show"
 msgstr "选择要显示的更改"
@@ -2596,6 +2600,10 @@ msgstr "收起工具步骤"
 #: src/components/agent-workspace-sheet.tsx
 msgid "Folder is missing"
 msgstr "文件夹已不存在"
+
+#: src/components/home-composer-dock.tsx
+msgid "Folder: {folderLabel}"
+msgstr "文件夹：{folderLabel}"
 
 #: src/components/agent-workspace-sheet.tsx
 msgid "Folders"

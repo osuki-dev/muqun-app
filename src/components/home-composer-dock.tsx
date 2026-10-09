@@ -43,6 +43,7 @@ import { recoverWith, settleAfter } from '@/lib/compiler-safe-control-flow';
 import { checkAgentServer } from '@/lib/home-agent-readiness';
 import {
   HOME_AGENT_SESSION_ID,
+  homeFolderLabel,
   homeGuideParams,
   ledgerModelId,
   sameComputer,
@@ -175,11 +176,17 @@ export function HomeComposerDock({
     terminalCatalog !== undefined
   );
   const terminalAgent = agent?.kind === 'terminal' ? agent : null;
+  // Where the goal runs on this computer: the folder last picked here, or the
+  // agent's own default. Sent as `cwd` (ledger, spawn) or `directory` (session).
+  const folder = useHomeAgentChoice((state) =>
+    targetId ? state.folderByServer[targetId] : undefined
+  );
   const agentsDiscovered = Boolean(discovery?.agents);
   const agentId =
     agentsDiscovered && agent?.kind === 'session' ? normalizeAgentId(agent.agentId) : undefined;
   const features = useAgentFeatures(targetId, agentId);
   const computerLabel = targetServer?.label ?? '';
+  const folderLabel = homeFolderLabel(folder);
   const agentName = agent?.name ?? '';
   const agentLabel = agentName || computerLabel;
   // A gateway that opens ledger tasks gets the goal as one: Home's cards then
@@ -334,7 +341,8 @@ export function HomeComposerDock({
         const serverId = await sendTarget();
         if (!serverId) return false;
         const params = sessionParams;
-        const key = `${serverId}\u0000${params.agentId ?? ''}`;
+        // A retry reuses the session only where it would have made it.
+        const key = `${serverId}\u0000${params.agentId ?? ''}\u0000${folder ?? ''}`;
         // The selection moved while this was in flight: the session and its
         // prompt would go to a computer the bar no longer names.
         const owns = () => useGatewayConnectionStore.getState().record?.serverId === serverId;
@@ -355,7 +363,10 @@ export function HomeComposerDock({
               started = { ...plan.started, params };
             } else {
               creating = true;
-              const created = await createAgentSession(HOME_AGENT_SESSION_ID, params);
+              const created = await createAgentSession(HOME_AGENT_SESSION_ID, {
+                ...params,
+                ...(folder ? { directory: folder } : {}),
+              });
               creating = false;
               markAgentUsed(serverId, created.agent_id);
               started = {
@@ -437,6 +448,7 @@ export function HomeComposerDock({
             const { task, asid } = await createLedgerTask({
               goal: text,
               ...(params.agentId ? { agentId: params.agentId } : {}),
+              ...(folder ? { cwd: folder } : {}),
               ...(params.mode ? { mode: params.mode } : {}),
               ...(params.model ? { model: ledgerModelId(params.model) } : {}),
               // Applied at session creation by a gateway that takes it (Gateway
@@ -514,7 +526,8 @@ export function HomeComposerDock({
     name: string,
     confirmed: boolean,
     text: string,
-    viaLedger: boolean
+    viaLedger: boolean,
+    cwd: string | undefined
   ): Promise<boolean> {
     if (inFlightRef.current) return false;
     inFlightRef.current = true;
@@ -557,7 +570,11 @@ export function HomeComposerDock({
             }
             if (viaLedger) {
               pendingId = useHomeTaskCards.getState().dispatched(serverId, text);
-              const { task, paneId } = await createLedgerTask({ goal: text, agentId: kind });
+              const { task, paneId } = await createLedgerTask({
+                goal: text,
+                agentId: kind,
+                ...(cwd ? { cwd } : {}),
+              });
               useServerTasksStore.getState().upsert(serverId, task);
               // A 200 whose task already failed: the agent did not start or
               // the goal was not typed. The draft stays and the reason is said.
@@ -585,7 +602,7 @@ export function HomeComposerDock({
             }
             const spawned = await spawnAgent(
               sessionId,
-              agentSpawnRequest({ agent: kind, prompt: text })
+              agentSpawnRequest({ agent: kind, prompt: text, ...(cwd ? { cwd } : {}) })
             );
             // The agent is running on `serverId` now, whatever the selection
             // did since: open its pane there rather than call it unavailable.
@@ -615,7 +632,8 @@ export function HomeComposerDock({
         terminalAgent.name,
         terminalAgent.confirmed,
         text,
-        ledgerPane
+        ledgerPane,
+        folder
       );
     // Attachments ride on a prompt to a session; the ledger route takes text
     // only, so a send with files keeps the session path. So does a retry onto
@@ -672,85 +690,125 @@ export function HomeComposerDock({
           {error}
         </Text>
       ) : null}
-      <PressableScale
-        testID="home-composer-target"
-        accessibilityRole="button"
-        accessibilityLabel={
-          targetServer
-            ? agentName
-              ? t`Assigned to ${computerLabel}, ${agentName}`
-              : t`Send to ${computerLabel}`
-            : t`No computer online`
-        }
-        accessibilityHint={t`Choose another computer`}
-        hitSlop={{ top: 6, bottom: 6 }}
-        onPress={openTargetPicker}
-        style={[styles.bar, { borderRadius: profile.chrome.navigationPill }]}>
-        <Animated.View
-          pointerEvents="none"
-          style={[
-            StyleSheet.absoluteFill,
-            {
-              borderRadius: profile.chrome.navigationPill,
-              backgroundColor: background(theme.colors.primarySubtle),
-            },
-            flashStyle,
-          ]}
-        />
-        {targetServer ? (
-          <>
-            <ThemeIcon
-              name="home.arrow"
-              direction="right"
-              fallback={ArrowRight}
-              size={14}
-              color={ready ? theme.colors.primary : theme.colors.textMuted}
-            />
+      <View style={styles.segments}>
+        <PressableScale
+          testID="home-composer-target"
+          accessibilityRole="button"
+          accessibilityLabel={
+            targetServer
+              ? agentName
+                ? t`Assigned to ${computerLabel}, ${agentName}`
+                : t`Send to ${computerLabel}`
+              : t`No computer online`
+          }
+          accessibilityHint={t`Choose another computer`}
+          hitSlop={{ top: 6, bottom: 6 }}
+          onPress={openTargetPicker}
+          style={[styles.bar, { borderRadius: profile.chrome.navigationPill }]}>
+          <Animated.View
+            pointerEvents="none"
+            style={[
+              StyleSheet.absoluteFill,
+              {
+                borderRadius: profile.chrome.navigationPill,
+                backgroundColor: background(theme.colors.primarySubtle),
+              },
+              flashStyle,
+            ]}
+          />
+          {targetServer ? (
+            <>
+              <ThemeIcon
+                name="home.arrow"
+                direction="right"
+                fallback={ArrowRight}
+                size={14}
+                color={ready ? theme.colors.primary : theme.colors.textMuted}
+              />
+              <Text
+                variant="bodySmall"
+                weight="semibold"
+                numberOfLines={1}
+                color={ready ? theme.colors.text : theme.colors.textMuted}
+                style={styles.barLabel}>
+                {computerLabel}
+              </Text>
+              {target.kind === 'offline' ? (
+                <Text variant="caption" color={theme.colors.textMuted} numberOfLines={1}>
+                  {_(reachabilityDescription.offline)}
+                </Text>
+              ) : null}
+            </>
+          ) : (
+            <Text variant="bodySmall" color={theme.colors.textMuted} numberOfLines={1}>
+              {t`No computer online`}
+            </Text>
+          )}
+        </PressableScale>
+        {targetServer && agentName ? (
+          <PressableScale
+            testID="home-composer-agent"
+            accessibilityRole="button"
+            accessibilityLabel={t`Home agent: ${agentName}`}
+            accessibilityHint={t`Choose the agent Home starts on this computer`}
+            hitSlop={{ top: 6, bottom: 6 }}
+            onPress={() =>
+              router.push({ pathname: '/home-agent', params: { serverId: targetServer.serverId } })
+            }
+            style={[
+              styles.bar,
+              styles.agentSegment,
+              { borderRadius: profile.chrome.navigationPill },
+            ]}>
             <Text
               variant="bodySmall"
               weight="semibold"
               numberOfLines={1}
-              color={ready ? theme.colors.text : theme.colors.textMuted}
+              color={ready ? theme.colors.primary : theme.colors.textMuted}
               style={styles.barLabel}>
-              {computerLabel}
+              {`· ${agentName}`}
             </Text>
-            {target.kind === 'offline' ? (
-              <Text variant="caption" color={theme.colors.textMuted} numberOfLines={1}>
-                {_(reachabilityDescription.offline)}
-              </Text>
-            ) : null}
-          </>
-        ) : (
-          <Text variant="bodySmall" color={theme.colors.textMuted} numberOfLines={1}>
-            {t`No computer online`}
-          </Text>
-        )}
-      </PressableScale>
-      {targetServer && agentName ? (
-        <PressableScale
-          testID="home-composer-agent"
-          accessibilityRole="button"
-          accessibilityLabel={t`Home agent: ${agentName}`}
-          accessibilityHint={t`Choose the agent Home starts on this computer`}
-          hitSlop={{ top: 6, bottom: 6 }}
-          onPress={() =>
-            router.push({ pathname: '/home-agent', params: { serverId: targetServer.serverId } })
-          }
-          style={[
-            styles.bar,
-            styles.agentSegment,
-            { borderRadius: profile.chrome.navigationPill },
-          ]}>
-          <Text
-            variant="bodySmall"
-            weight="semibold"
-            numberOfLines={1}
-            color={ready ? theme.colors.primary : theme.colors.textMuted}
-            style={styles.barLabel}>
-            {`· ${agentName}`}
-          </Text>
-        </PressableScale>
-      ) : null}
+          </PressableScale>
+        ) : null}
+        {targetServer ? (
+          <PressableScale
+            testID="home-composer-folder"
+            accessibilityRole="button"
+            accessibilityLabel={t`Folder: ${folderLabel}`}
+            accessibilityHint={t`Choose the folder this computer starts work in`}
+            hitSlop={{ top: 6, bottom: 6 }}
+            // The picker lists the selected computer's folders, so it opens only
+            // once the bar's computer is the one selected.
+            disabled={!ready || !selected}
+            onPress={() =>
+              router.push({
+                pathname: '/agent-workspace',
+                params: {
+                  owner: 'home',
+                  serverId: targetServer.serverId,
+                  sessionId: HOME_AGENT_SESSION_ID,
+                  ...(agentId ? { agentId } : {}),
+                },
+              })
+            }
+            style={[
+              styles.bar,
+              styles.folderSegment,
+              { borderRadius: profile.chrome.navigationPill },
+            ]}>
+            <Text
+              variant="bodySmall"
+              numberOfLines={1}
+              // A long name keeps both ends: the start says which, the end
+              // tells siblings (`app-web`, `app-ios`) apart.
+              ellipsizeMode="middle"
+              color={ready ? theme.colors.textMuted : theme.colors.textSubtle}
+              style={styles.barLabel}>
+              {`· ${folderLabel}`}
+            </Text>
+          </PressableScale>
+        ) : null}
+      </View>
     </View>
   );
 
@@ -803,9 +861,16 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     alignItems: 'center',
   },
+  // One line: computer, agent and folder share it, each shrinking to an
+  // ellipsis rather than pushing the next onto a row of its own.
+  segments: { width: '100%', minWidth: 0, flexDirection: 'row', alignItems: 'center' },
   agentSegment: { flexShrink: 1 },
+  // Capped, so a long name gives way before the computer and agent do.
+  folderSegment: { maxWidth: '50%' },
   bar: {
     minHeight: 32,
+    minWidth: 0,
+    flexShrink: 1,
     maxWidth: '100%',
     flexDirection: 'row',
     alignItems: 'center',

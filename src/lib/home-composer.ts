@@ -212,3 +212,42 @@ export function sameComputer(
     current.transportKey === owner.transportKey
   );
 }
+
+/**
+ * The folder a pick sets for a computer: the path as typed or chosen, or
+ * `undefined` for the agent's own default -- what `~` (alone) stands for, so
+ * picking `~` goes back to it rather than handing the host a literal tilde.
+ */
+export function homeFolderPick(directory: string): string | undefined {
+  const path = directory.trim();
+  if (!path || /^~\/*$/.test(path)) return undefined;
+  return path.length > 1 ? path.replace(/\/+$/, '') : path;
+}
+
+/**
+ * The bar's folder segment: the folder's basename (design §6 names a folder
+ * by basename), `~` for the agent's default, `/` for the root.
+ */
+export function homeFolderLabel(folder: string | undefined): string {
+  if (!folder) return '~';
+  const trimmed = folder.replace(/\/+$/, '');
+  if (!trimmed) return '/';
+  return trimmed.slice(trimmed.lastIndexOf('/') + 1) || trimmed;
+}
+
+/** The persisted `{ [serverId]: folder }`, dropping anything that is not one. */
+export function parseHomeFolders(value: string | null | undefined): Record<string, string> {
+  if (!value) return {};
+  try {
+    const parsed = JSON.parse(value) as unknown;
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return {};
+    const out: Record<string, string> = {};
+    for (const [serverId, folder] of Object.entries(parsed)) {
+      const path = typeof folder === 'string' ? homeFolderPick(folder) : undefined;
+      if (path) out[serverId] = path;
+    }
+    return out;
+  } catch {
+    return {};
+  }
+}
