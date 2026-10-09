@@ -447,6 +447,10 @@ msgctxt "git file status"
 msgid "Added"
 msgstr "Ajouté"
 
+#: src/app/settings-voice.tsx
+msgid "After recording"
+msgstr "Après enregistrement"
+
 #: src/components/new-task-sheet.tsx
 msgid "Agent"
 msgstr "Agent"
@@ -2213,6 +2217,10 @@ msgstr "Saisissez un nom"
 msgid "Enter a valid HTTPS API URL. API key and model are optional."
 msgstr "Saisissez une URL d’API HTTPS valide. La clé API et le modèle sont facultatifs"
 
+#: src/app/settings-voice.tsx
+msgid "Enter a valid WSS realtime URL. API key and model are optional."
+msgstr "Saisissez une URL WSS valide pour le temps réel. La clé API et le modèle sont facultatifs"
+
 #: src/app/explore.tsx
 msgid "Enter the {PAIRING_CODE_CHARACTER_COUNT}-character code."
 msgstr "Saisissez le code de {PAIRING_CODE_CHARACTER_COUNT} caractères"
@@ -2746,6 +2754,10 @@ msgstr "Installez une version de l’app prenant en charge l’audio pour écout
 #: src/app/settings-voice.tsx
 msgid "Install an app build with voice recording support to use the microphone."
 msgstr "Installez une version de l’app prenant en charge l’enregistrement vocal pour utiliser le microphone"
+
+#: src/components/voice-input-button.tsx
+msgid "Install an updated app build to use realtime transcription."
+msgstr "Installez une version à jour de l’app pour utiliser la transcription en temps réel"
 
 #: src/app/explore.tsx
 msgid "Install command copied"
@@ -4203,6 +4215,14 @@ msgstr "En attente de saisie"
 msgid "Ready to preview. Nothing is applied until you say so."
 msgstr "Prêt à être vu. Rien n'est appliqué tant que vous ne le dites pas"
 
+#: src/app/settings-voice.tsx
+msgid "Realtime"
+msgstr "En temps réel"
+
+#: src/components/voice-input-button.tsx
+msgid "Realtime transcription disconnected. Check your connection and speech service, then try again."
+msgstr "La transcription en temps réel a été déconnectée. Vérifiez votre connexion et votre service vocal, puis réessayez"
+
 #: src/components/agent-context-sheet.tsx
 msgid "Reasoning"
 msgstr "Raisonnement"
@@ -4383,6 +4403,10 @@ msgstr "Requis au lancement et après 30 secondes en arrière-plan"
 #: src/components/ssh-host-form.tsx
 msgid "Required."
 msgstr "Obligatoire"
+
+#: src/app/settings-voice.tsx
+msgid "Requires an OpenAI Realtime-compatible WebSocket endpoint and a live transcription model. Text appears as you speak; tap to stop and finish. Other streaming protocols are not supported."
+msgstr "Nécessite un point de terminaison WebSocket compatible avec OpenAI Realtime et un modèle de transcription en direct. Le texte apparaît pendant que vous parlez ; touchez pour arrêter et terminer. Les autres protocoles de streaming ne sont pas pris en charge"
 
 #: src/components/settings-alerts.tsx
 msgid "Requires iOS 16.1 or later."
@@ -6009,6 +6033,10 @@ msgstr "Transcription"
 #: src/components/voice-input-button.tsx
 msgid "Transcription failed. Check your speech service and try again."
 msgstr "La transcription a échoué. Vérifiez votre service vocal et réessayez"
+
+#: src/app/settings-voice.tsx
+msgid "Transcription mode"
+msgstr "Mode de transcription"
 
 #: src/components/bounded-markdown.tsx
 #: src/components/embedded-terminal-tool-block.tsx

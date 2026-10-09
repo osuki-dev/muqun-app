@@ -3,6 +3,7 @@ import { fetch } from 'expo/fetch';
 import { PermissionsAndroid, Platform } from 'react-native';
 import type { VoiceServiceConfig } from '@/stores/voice-settings';
 import { prepareRecordingAudio, releaseRecordingAudio } from '@/lib/audio-playback-session';
+import { realtimeRecordingRuntime } from '@/lib/voice-realtime';
 import {
   AudioEncoderAndroidType,
   AVEncoderAudioQualityIOSType,
@@ -117,8 +118,17 @@ export class VoiceInputSession extends VoiceRecordingSession {
     onState: ConstructorParameters<typeof VoiceRecordingSession>[1],
     onMeter: ConstructorParameters<typeof VoiceRecordingSession>[2],
     onText: ConstructorParameters<typeof VoiceRecordingSession>[3],
-    onError: ConstructorParameters<typeof VoiceRecordingSession>[4]
+    onError: ConstructorParameters<typeof VoiceRecordingSession>[4],
+    onPartial: (text: string) => void = () => {}
   ) {
-    super(recordingRuntime(config, language), onState, onMeter, onText, onError);
+    super(
+      config.mode === 'realtime'
+        ? realtimeRecordingRuntime(config, language, onPartial)
+        : recordingRuntime(config, language),
+      onState,
+      onMeter,
+      onText,
+      onError
+    );
   }
 }

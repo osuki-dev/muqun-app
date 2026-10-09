@@ -447,6 +447,10 @@ msgctxt "git file status"
 msgid "Added"
 msgstr "追加"
 
+#: src/app/settings-voice.tsx
+msgid "After recording"
+msgstr "録音後に変換"
+
 #: src/components/new-task-sheet.tsx
 msgid "Agent"
 msgstr "エージェント"
@@ -2213,6 +2217,10 @@ msgstr "名前を入力してください"
 msgid "Enter a valid HTTPS API URL. API key and model are optional."
 msgstr "有効な HTTPS API URL を入力してください。API キーとモデルは任意です"
 
+#: src/app/settings-voice.tsx
+msgid "Enter a valid WSS realtime URL. API key and model are optional."
+msgstr "有効な WSS リアルタイム URL を入力してください。API キーとモデルは任意です"
+
 #: src/app/explore.tsx
 msgid "Enter the {PAIRING_CODE_CHARACTER_COUNT}-character code."
 msgstr "{PAIRING_CODE_CHARACTER_COUNT} 文字のコードを入力してください"
@@ -2746,6 +2754,10 @@ msgstr "このファイルを再生するには、音声に対応したアプリ
 #: src/app/settings-voice.tsx
 msgid "Install an app build with voice recording support to use the microphone."
 msgstr "マイクを使うには、音声録音に対応したアプリをインストールしてください"
+
+#: src/components/voice-input-button.tsx
+msgid "Install an updated app build to use realtime transcription."
+msgstr "リアルタイム文字起こしを利用するには、最新のアプリをインストールしてください"
 
 #: src/app/explore.tsx
 msgid "Install command copied"
@@ -4203,6 +4215,14 @@ msgstr "入力待ち"
 msgid "Ready to preview. Nothing is applied until you say so."
 msgstr "プレビューの準備ができました。あなたが決めるまで何も適用しません"
 
+#: src/app/settings-voice.tsx
+msgid "Realtime"
+msgstr "リアルタイム"
+
+#: src/components/voice-input-button.tsx
+msgid "Realtime transcription disconnected. Check your connection and speech service, then try again."
+msgstr "リアルタイム文字起こしが切断されました。接続と音声サービスを確認して、もう一度お試しください"
+
 #: src/components/agent-context-sheet.tsx
 msgid "Reasoning"
 msgstr "推論プロセス"
@@ -4383,6 +4403,10 @@ msgstr "起動時と、バックグラウンドで 30 秒経過した後に認�
 #: src/components/ssh-host-form.tsx
 msgid "Required."
 msgstr "必須です"
+
+#: src/app/settings-voice.tsx
+msgid "Requires an OpenAI Realtime-compatible WebSocket endpoint and a live transcription model. Text appears as you speak; tap to stop and finish. Other streaming protocols are not supported."
+msgstr "OpenAI Realtime 互換の WebSocket エンドポイントとライブ文字起こしモデルが必要です。話すと文字が表示され、タップすると停止して確定します。他のストリーミングプロトコルには対応していません"
 
 #: src/components/settings-alerts.tsx
 msgid "Requires iOS 16.1 or later."
@@ -6009,6 +6033,10 @@ msgstr "認識結果"
 #: src/components/voice-input-button.tsx
 msgid "Transcription failed. Check your speech service and try again."
 msgstr "文字起こしに失敗しました。音声サービスを確認して再試行してください"
+
+#: src/app/settings-voice.tsx
+msgid "Transcription mode"
+msgstr "文字起こしモード"
 
 #: src/components/bounded-markdown.tsx
 #: src/components/embedded-terminal-tool-block.tsx

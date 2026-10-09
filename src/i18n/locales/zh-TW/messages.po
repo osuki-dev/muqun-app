@@ -447,6 +447,10 @@ msgctxt "git file status"
 msgid "Added"
 msgstr "新增"
 
+#: src/app/settings-voice.tsx
+msgid "After recording"
+msgstr "錄完轉錄"
+
 #: src/components/new-task-sheet.tsx
 msgid "Agent"
 msgstr "Agent"
@@ -2213,6 +2217,10 @@ msgstr "請輸入名稱"
 msgid "Enter a valid HTTPS API URL. API key and model are optional."
 msgstr "請輸入有效的 HTTPS API 位址。API Key 和模型為選填"
 
+#: src/app/settings-voice.tsx
+msgid "Enter a valid WSS realtime URL. API key and model are optional."
+msgstr "請輸入有效的 WSS 即時介面網址。API 金鑰和模型為選填"
+
 #: src/app/explore.tsx
 msgid "Enter the {PAIRING_CODE_CHARACTER_COUNT}-character code."
 msgstr "請輸入 {PAIRING_CODE_CHARACTER_COUNT} 個字元的代碼"
@@ -2746,6 +2754,10 @@ msgstr "請安裝支援音訊的 App 版本來預覽此檔案"
 #: src/app/settings-voice.tsx
 msgid "Install an app build with voice recording support to use the microphone."
 msgstr "請安裝支援語音錄音的 App 版本以使用麥克風"
+
+#: src/components/voice-input-button.tsx
+msgid "Install an updated app build to use realtime transcription."
+msgstr "請安裝新版 App 以使用即時轉錄"
 
 #: src/app/explore.tsx
 msgid "Install command copied"
@@ -4203,6 +4215,14 @@ msgstr "等待輸入"
 msgid "Ready to preview. Nothing is applied until you say so."
 msgstr "可以預覽了。你不點,什麼都不會被套用"
 
+#: src/app/settings-voice.tsx
+msgid "Realtime"
+msgstr "即時轉錄"
+
+#: src/components/voice-input-button.tsx
+msgid "Realtime transcription disconnected. Check your connection and speech service, then try again."
+msgstr "即時轉錄已中斷。請檢查網路和語音服務後重試"
+
 #: src/components/agent-context-sheet.tsx
 msgid "Reasoning"
 msgstr "思考過程"
@@ -4383,6 +4403,10 @@ msgstr "啟動時，以及在背景超過 30 秒後都會要求驗證"
 #: src/components/ssh-host-form.tsx
 msgid "Required."
 msgstr "必填"
+
+#: src/app/settings-voice.tsx
+msgid "Requires an OpenAI Realtime-compatible WebSocket endpoint and a live transcription model. Text appears as you speak; tap to stop and finish. Other streaming protocols are not supported."
+msgstr "需要相容 OpenAI Realtime 的 WebSocket 介面和即時轉錄模型。文字會隨說話出現，點一下即可停止並完成轉錄。暫不支援其他串流協定"
 
 #: src/components/settings-alerts.tsx
 msgid "Requires iOS 16.1 or later."
@@ -6009,6 +6033,10 @@ msgstr "辨識結果"
 #: src/components/voice-input-button.tsx
 msgid "Transcription failed. Check your speech service and try again."
 msgstr "轉寫失敗。請檢查語音服務後重試"
+
+#: src/app/settings-voice.tsx
+msgid "Transcription mode"
+msgstr "轉錄模式"
 
 #: src/components/bounded-markdown.tsx
 #: src/components/embedded-terminal-tool-block.tsx

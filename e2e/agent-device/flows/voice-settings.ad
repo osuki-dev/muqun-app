@@ -2,6 +2,7 @@
 
 # section verify
 wait "id=\"settings-voice-sheet\"" 10000
+scroll down --until "id=\"voice-service-url\""
 fill "id=\"voice-service-url\"" "http://example.invalid/v1"
 keyboard enter
 # API key and model remain empty: URL-only configuration must save.
@@ -18,7 +19,32 @@ press "id=\"voice-settings-save\""
 wait "id=\"settings-voice-row\"" 5000
 wait absent "id=\"settings-voice-sheet\"" 5000
 press "id=\"settings-voice-row\""
+scroll down --until "id=\"voice-service-url\""
 wait "id=\"voice-service-url\" value=\"https://example.invalid/custom/speech/?api-version=2026-01\"" 5000
+scroll down --until "id=\"voice-settings-clear\""
+press "id=\"voice-settings-clear\""
+wait "label=\"Voice to text disabled\"" 5000
+# Realtime is explicit; switching modes never guesses or rewrites the endpoint.
+scroll up --until "id=\"settings-selection:off:voice-service-mode-realtime\""
+press "id=\"settings-selection:off:voice-service-mode-realtime\""
+scroll down --until "id=\"voice-service-url\""
+fill "id=\"voice-service-url\"" "https://example.invalid/transcribe"
+keyboard enter
+scroll down --until "id=\"voice-settings-save\""
+press "id=\"voice-settings-save\""
+scroll down --until "label=\"Enter a valid WSS realtime URL. API key and model are optional\""
+wait "label=\"Enter a valid WSS realtime URL. API key and model are optional\"" 5000
+scroll up --until "id=\"voice-service-url\""
+fill "id=\"voice-service-url\"" "wss://example.invalid/custom/live?intent=transcription" --delay-ms 30
+keyboard enter
+scroll down --until "id=\"voice-settings-save\""
+press "id=\"voice-settings-save\""
+wait "id=\"settings-voice-row\"" 5000
+press "id=\"settings-voice-row\""
+scroll down --until "id=\"voice-service-url\""
+wait "id=\"voice-service-url\" value=\"wss://example.invalid/custom/live?intent=transcription\"" 5000
+scroll up --until "id=\"settings-selection:on:voice-service-mode-realtime\""
+wait "id=\"settings-selection:on:voice-service-mode-realtime\"" 5000
 scroll down --until "id=\"voice-settings-clear\""
 press "id=\"voice-settings-clear\""
 wait "label=\"Voice to text disabled\"" 5000

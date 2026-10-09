@@ -447,6 +447,10 @@ msgctxt "git file status"
 msgid "Added"
 msgstr "추가됨"
 
+#: src/app/settings-voice.tsx
+msgid "After recording"
+msgstr "녹음 후 변환"
+
 #: src/components/new-task-sheet.tsx
 msgid "Agent"
 msgstr "에이전트"
@@ -2213,6 +2217,10 @@ msgstr "이름을 입력하세요"
 msgid "Enter a valid HTTPS API URL. API key and model are optional."
 msgstr "유효한 HTTPS API URL을 입력하세요. API 키와 모델은 선택 사항입니다"
 
+#: src/app/settings-voice.tsx
+msgid "Enter a valid WSS realtime URL. API key and model are optional."
+msgstr "유효한 WSS 실시간 URL을 입력하세요. API 키와 모델은 선택 사항입니다"
+
 #: src/app/explore.tsx
 msgid "Enter the {PAIRING_CODE_CHARACTER_COUNT}-character code."
 msgstr "{PAIRING_CODE_CHARACTER_COUNT}자리 코드를 입력하세요"
@@ -2746,6 +2754,10 @@ msgstr "이 파일을 미리 보려면 오디오를 지원하는 앱 버전을 �
 #: src/app/settings-voice.tsx
 msgid "Install an app build with voice recording support to use the microphone."
 msgstr "마이크를 사용하려면 음성 녹음을 지원하는 앱 빌드를 설치하세요"
+
+#: src/components/voice-input-button.tsx
+msgid "Install an updated app build to use realtime transcription."
+msgstr "실시간 변환을 사용하려면 최신 앱을 설치하세요"
 
 #: src/app/explore.tsx
 msgid "Install command copied"
@@ -4203,6 +4215,14 @@ msgstr "입력 대기 중"
 msgid "Ready to preview. Nothing is applied until you say so."
 msgstr "미리 볼 준비가 됐습니다. 직접 결정하기 전에는 아무것도 적용하지 않습니다"
 
+#: src/app/settings-voice.tsx
+msgid "Realtime"
+msgstr "실시간"
+
+#: src/components/voice-input-button.tsx
+msgid "Realtime transcription disconnected. Check your connection and speech service, then try again."
+msgstr "실시간 변환 연결이 끊어졌습니다. 네트워크와 음성 서비스를 확인한 후 다시 시도하세요"
+
 #: src/components/agent-context-sheet.tsx
 msgid "Reasoning"
 msgstr "추론 과정"
@@ -4383,6 +4403,10 @@ msgstr "앱을 실행할 때와 백그라운드에서 30초가 지난 뒤에 인
 #: src/components/ssh-host-form.tsx
 msgid "Required."
 msgstr "필수입니다"
+
+#: src/app/settings-voice.tsx
+msgid "Requires an OpenAI Realtime-compatible WebSocket endpoint and a live transcription model. Text appears as you speak; tap to stop and finish. Other streaming protocols are not supported."
+msgstr "OpenAI Realtime 호환 WebSocket 엔드포인트와 실시간 변환 모델이 필요합니다. 말하는 동안 텍스트가 표시되며, 탭하면 중지하고 완료합니다. 다른 스트리밍 프로토콜은 지원하지 않습니다"
 
 #: src/components/settings-alerts.tsx
 msgid "Requires iOS 16.1 or later."
@@ -6009,6 +6033,10 @@ msgstr "인식 결과"
 #: src/components/voice-input-button.tsx
 msgid "Transcription failed. Check your speech service and try again."
 msgstr "음성 인식에 실패했습니다. 음성 서비스를 확인하고 다시 시도하세요"
+
+#: src/app/settings-voice.tsx
+msgid "Transcription mode"
+msgstr "변환 모드"
 
 #: src/components/bounded-markdown.tsx
 #: src/components/embedded-terminal-tool-block.tsx

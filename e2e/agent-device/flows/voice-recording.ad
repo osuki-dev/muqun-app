@@ -2,6 +2,7 @@
 
 # section configure
 wait "id=\"settings-voice-sheet\"" 10000
+scroll down --until "id=\"voice-service-url\""
 fill "id=\"voice-service-url\"" "https://example.invalid/custom/transcribe"
 keyboard enter
 fill "id=\"voice-service-key\"" "qa-placeholder-token"

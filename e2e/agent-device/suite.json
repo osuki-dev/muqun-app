@@ -21,6 +21,13 @@
       "platforms": ["ios", "android"]
     },
     {
+      "name": "voice-realtime",
+      "program": "flows/voice-realtime",
+      "cleanup": "subflows/clear-voice-recording",
+      "tags": ["full", "settings", "terminal"],
+      "platforms": ["ios", "android"]
+    },
+    {
       "name": "audio-preview",
       "program": "flows/audio-preview",
       "tags": ["full", "files", "agents"],
@@ -334,6 +341,12 @@
       { "run": "flows/voice-recording.ad#configure" },
       { "include": "subflows/open-demo" },
       { "run": "flows/voice-recording.ad#record" }
+    ],
+    "flows/voice-realtime": [
+      { "include": "subflows/open-voice-settings" },
+      { "run": "flows/voice-realtime.ad#configure" },
+      { "include": "subflows/open-demo" },
+      { "run": "flows/voice-realtime.ad#disconnected" }
     ],
     "flows/audio-preview": [
       { "include": "subflows/open-demo" },

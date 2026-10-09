@@ -17,7 +17,7 @@ import { useVoiceInput, clearVoiceInput } from '@/stores/voice-input';
 import { useRouter } from 'expo-router';
 import { VoiceRecordingVisual } from '@/components/voice-recording-visual';
 import { Check, RotateCcw, X } from 'lucide-react-native';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { AppState, Keyboard, Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { useSharedValue, withTiming } from 'react-native-reanimated';
 import { PressableScale } from '@/components/pressable-scale';
@@ -25,6 +25,33 @@ import { useLatestReader } from '@/hooks/use-render-refs';
 import { VoiceInputError } from '@/lib/voice-input-session';
 import { voiceRecorderAvailable } from '@/lib/voice-recorder-capability';
 import { VoiceInputSession, type VoiceState } from '@/lib/voice-input';
+
+function LiveTranscript({ text }: { text: string }) {
+  const theme = useThemeTokens();
+  const scroll = useRef<ScrollView>(null);
+  const following = useRef(true);
+  return (
+    <ScrollView
+      ref={scroll}
+      nestedScrollEnabled
+      style={styles.liveTranscript}
+      scrollEventThrottle={100}
+      onScroll={({ nativeEvent }) => {
+        following.current =
+          nativeEvent.contentSize.height -
+            nativeEvent.layoutMeasurement.height -
+            nativeEvent.contentOffset.y <
+          32;
+      }}
+      onContentSizeChange={() => {
+        if (following.current) scroll.current?.scrollToEnd({ animated: false });
+      }}>
+      <Text testID="voice-live-transcript" color={theme.colors.text} style={styles.liveText}>
+        {text}
+      </Text>
+    </ScrollView>
+  );
+}
 
 function VoiceRecording({
   config,
@@ -45,6 +72,7 @@ function VoiceRecording({
   const [seconds, setSeconds] = useState(0);
   const [error, setError] = useState('');
   const [result, setResult] = useState<string | null>(null);
+  const [partial, setPartial] = useState('');
   const level = useSharedValue(0);
   const latest = useLatestReader({ onText, onClose });
   const [session] = useState(
@@ -73,9 +101,14 @@ function VoiceRecording({
                 ? t`Allow microphone access in system settings.`
                 : failure.code === 'response'
                   ? t`The speech service returned an invalid transcript.`
-                  : t`Transcription failed. Check your speech service and try again.`
+                  : failure.code === 'unsupported'
+                    ? t`Install an updated app build to use realtime transcription.`
+                    : failure.code === 'connection'
+                      ? t`Realtime transcription disconnected. Check your connection and speech service, then try again.`
+                      : t`Transcription failed. Check your speech service and try again.`
               : t`Recording failed.`
-          )
+          ),
+        setPartial
       )
   );
   useEffect(() => {
@@ -149,6 +182,9 @@ function VoiceRecording({
           )}
         </View>
       </PressableScale>
+      {config.mode === 'realtime' && !!partial && !error && (
+        <LiveTranscript text={result ?? partial} />
+      )}
       {!!error && (
         <Text
           accessibilityLiveRegion="polite"
@@ -293,6 +329,8 @@ export function VoiceInputPanel({
 }
 
 const styles = StyleSheet.create({
+  liveTranscript: { width: '100%', maxWidth: 560, maxHeight: 160 },
+  liveText: { fontSize: 18, lineHeight: 28, textAlign: 'center', paddingVertical: 8 },
   mic: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
   content: { alignItems: 'center', paddingTop: 12, paddingBottom: 24 },
   panelHeader: {

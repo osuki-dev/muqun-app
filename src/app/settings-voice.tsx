@@ -6,6 +6,7 @@ import { Keyboard, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text } from '@/components/text';
 import { SettingsToggleRow } from '@/components/settings-chrome';
+import { SettingsSegmented } from '@/components/settings-segmented';
 import { FontedTextInput } from '@/components/fonted-text-input';
 import { PressableScale } from '@/components/pressable-scale';
 import { SheetScene, SheetSceneFooter, SheetSceneRow } from '@/components/sheet-scene';
@@ -17,6 +18,7 @@ import {
   normalizeVoiceConfig,
   saveVoiceSettings,
   useVoiceSettings,
+  type VoiceMode,
 } from '@/stores/voice-settings';
 
 export default function SettingsVoiceScreen() {
@@ -45,6 +47,7 @@ function VoiceSettingsForm() {
   const [model, setModel] = useState(config?.model ?? '');
   const [language, setLanguage] = useState<AppLocale | 'auto' | null>(config?.language ?? null);
   const [autoInsert, setAutoInsert] = useState(config?.autoInsert ?? true);
+  const [mode, setMode] = useState<VoiceMode>(config?.mode ?? 'file');
   const [choosingLanguage, setChoosingLanguage] = useState(false);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
@@ -53,9 +56,15 @@ function VoiceSettingsForm() {
     { color: theme.colors.text, backgroundColor: theme.colors.surface, fontFamily },
   ];
   async function save(clear = false) {
-    const next = clear ? null : normalizeVoiceConfig(url, apiKey, model, language, autoInsert);
+    const next = clear
+      ? null
+      : normalizeVoiceConfig(url, apiKey, model, language, autoInsert, mode);
     if (!clear && !next) {
-      setMessage(t`Enter a valid HTTPS API URL. API key and model are optional.`);
+      setMessage(
+        mode === 'realtime'
+          ? t`Enter a valid WSS realtime URL. API key and model are optional.`
+          : t`Enter a valid HTTPS API URL. API key and model are optional.`
+      );
       return;
     }
     setBusy(true);
@@ -73,6 +82,7 @@ function VoiceSettingsForm() {
     setModel(next?.model ?? '');
     setLanguage(next?.language ?? null);
     setAutoInsert(next?.autoInsert ?? true);
+    setMode(next?.mode ?? 'file');
     setBusy(false);
     if (clear) {
       setMessage(t`Voice to text disabled`);
@@ -148,6 +158,26 @@ function VoiceSettingsForm() {
           color={
             theme.colors.textMuted
           }>{t`Configure your speech service, then hold Send to record. Tap the animation to stop and transcribe.`}</Text>
+        <Text>{t`Transcription mode`}</Text>
+        <SettingsSegmented
+          testID="voice-service-mode"
+          value={mode}
+          options={[
+            { value: 'file', label: t`After recording` },
+            { value: 'realtime', label: t`Realtime` },
+          ]}
+          onChange={(value) => {
+            if (!busy && (value === 'file' || value === 'realtime')) {
+              setMode(value);
+              setMessage('');
+            }
+          }}
+        />
+        {mode === 'realtime' && (
+          <Text color={theme.colors.textMuted}>
+            {t`Requires an OpenAI Realtime-compatible WebSocket endpoint and a live transcription model. Text appears as you speak; tap to stop and finish. Other streaming protocols are not supported.`}
+          </Text>
+        )}
         <Text>{t`API URL`}</Text>
         <FontedTextInput
           testID="voice-service-url"
@@ -158,7 +188,11 @@ function VoiceSettingsForm() {
           autoCapitalize="none"
           autoCorrect={false}
           keyboardType="url"
-          placeholder="https://openrouter.ai/api/v1/audio/transcriptions"
+          placeholder={
+            mode === 'realtime'
+              ? 'wss://api.openai.com/v1/realtime?intent=transcription'
+              : 'https://openrouter.ai/api/v1/audio/transcriptions'
+          }
           style={field}
         />
         <Text>{t`API key (optional)`}</Text>
@@ -183,7 +217,7 @@ function VoiceSettingsForm() {
           editable={!busy}
           autoCapitalize="none"
           autoCorrect={false}
-          placeholder="gpt-4o-mini-transcribe"
+          placeholder={mode === 'realtime' ? 'gpt-live-transcribe' : 'gpt-4o-mini-transcribe'}
           style={field}
         />
         <Text
