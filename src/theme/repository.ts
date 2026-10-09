@@ -1,6 +1,7 @@
 import { isThemePackId, type ThemePackId } from '@/constants/theme-packs';
 import { auditThemeContrast } from '@/theme/contrast';
 import { cloneThemeData } from '@/theme/clone';
+import { compareThemeVersions } from '@/theme/version';
 import { clampThemeOpacity } from '@/theme/opacity-policy';
 import type { HomeArtworkPreference } from '@/theme/home-artwork';
 import { compileTheme, type ResolvedCustomTheme } from '@/theme/resolve';
@@ -428,7 +429,27 @@ export class ThemeRepository {
     if (this.state.themes.length === 0 && this.state.selection === null) return this.builtin;
     if (this.state.selection?.kind !== 'custom') return null;
     const id = this.state.selection.id;
-    return this.state.themes.find((theme) => theme.id === id) ?? null;
+    const theme = this.state.themes.find((theme) => theme.id === id);
+    return theme ? this.newestCopy(theme) : null;
+  }
+
+  /**
+   * The binary's copy of a pack the reader also installed, when the binary's
+   * is newer.
+   *
+   * The built-in pack was on the gallery before it was in the app, so a
+   * library can hold an older copy under the same author id -- and that copy,
+   * not the bundled one, is what the reader is wearing. The newer manifest and
+   * its files win at read time. The stored record is not rewritten: it keeps
+   * its installation id, the reader's appearance preferences and its own
+   * files, so a later install from the gallery still replaces it in place,
+   * and a copy newer than the binary's stays the reader's.
+   */
+  private newestCopy(theme: InstalledTheme): InstalledTheme {
+    const builtin = this.builtin;
+    if (!builtin || theme.manifest.id !== builtin.manifest.id) return theme;
+    if (compareThemeVersions(builtin.manifest.version, theme.manifest.version) <= 0) return theme;
+    return { ...theme, manifest: builtin.manifest, assets: builtin.assets };
   }
 
   active(): ResolvedCustomTheme | null {
