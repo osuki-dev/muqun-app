@@ -8813,7 +8813,7 @@
       { "include": "subflows/open-demo" },
       { "run": "flows/settings-server-capabilities.ad#open" },
       {
-        "target": { "text": "Options for Demo workspace" },
+        "target": { "id": "settings-server-row-muqun-demo" },
         "mode": "press",
         "timeout": 10000,
         "run": "flows/settings-server-capabilities.ad#expand"
