@@ -37,7 +37,8 @@ import { SettingsRegistration } from '@/components/settings-registration';
 import { LADDER, SettingsNavRow, SettingsCard } from '@/components/settings-chrome';
 import { SettingsSecurity } from '@/components/settings-security';
 import { NAV_HEADER_TOP_GAP } from '@/constants/nav-header';
-import { entryRise, STAGGER } from '@/lib/motion';
+import { DURATION, ENTRY_BUDGET_MS, entryRise, STAGGER } from '@/lib/motion';
+import { staggerDelay } from '@/lib/stagger';
 import { RenderTally, useRenderTally } from '@/lib/render-tally';
 
 /**
@@ -59,15 +60,32 @@ const SETTINGS_CONTENT_MAX_WIDTH = 760;
  */
 const HEADER_INSET = NAV_HEADER_TOP_GAP + NAV_HEADER_CONTROL_SIZE + 8 + LADDER.section;
 
-/** The Security card, the footer line and the version block: what follows the rows. */
-const TAIL_COUNT = 3;
+/** The entry list. Labels are translated in the component, with the hook's `t`. */
+const ROWS = [
+  { route: '/settings-appearance', icon: Palette },
+  { route: '/settings-terminal', icon: Terminal },
+  { route: '/settings-voice', icon: Mic },
+  { route: '/settings-alerts', icon: Bell },
+  { route: '/settings-servers', icon: Server },
+  { route: '/settings-storage', icon: HardDrive },
+  { route: '/settings-about', icon: Info },
+] as const;
+
+/** Security, then the footer line with the version block: what follows the rows. */
+const TAIL_COUNT = 2;
 
 /**
- * Where the rows' own sequence has its last row on the way, which the tail
- * waits out from its own mount. Six beats of seven rows; `entryRise` still
- * bounds every delay by `ENTRY_BUDGET_MS`.
+ * When the last row starts rising, which the tail waits out from its own
+ * mount. Derived from the row count, and `entryRise` clamps whatever it adds
+ * up to inside `ENTRY_BUDGET_MS`.
  */
-const ROWS_SETTLED_MS = 6 * STAGGER.entry;
+const ROWS_SETTLED_MS = staggerDelay(
+  ROWS.length - 1,
+  ROWS.length,
+  STAGGER.entry,
+  DURATION.short,
+  ENTRY_BUDGET_MS
+);
 
 /** Settings gathers everyday preferences and app management into one entry list. */
 export default function SettingsScreen() {
@@ -88,6 +106,15 @@ export default function SettingsScreen() {
   // call keeps the old language. The hook's `t` is bound to the Lingui context,
   // so the compiler sees a dependency that actually changes.
   const { t } = useLingui();
+  const labels = {
+    '/settings-appearance': t`Appearance`,
+    '/settings-terminal': t`Terminal`,
+    '/settings-voice': t`Voice to text`,
+    '/settings-alerts': t`Alerts`,
+    '/settings-servers': t`Computers`,
+    '/settings-storage': t`Storage`,
+    '/settings-about': t`About`,
+  } satisfies Record<(typeof ROWS)[number]['route'], string>;
   const theme = useThemeTokens();
   const { resolvedMode } = useThemeMode();
   const insets = useSafeAreaInsets();
@@ -129,31 +156,20 @@ export default function SettingsScreen() {
           onScroll={deep ? undefined : () => setDeep(true)}
           scrollEventThrottle={16}
           showsVerticalScrollIndicator={false}>
-          <SettingsCard>
-            {(
-              [
-                { route: '/settings-appearance', icon: Palette, label: t`Appearance` },
-                { route: '/settings-terminal', icon: Terminal, label: t`Terminal` },
-                { route: '/settings-voice', icon: Mic, label: t`Voice to text` },
-                { route: '/settings-alerts', icon: Bell, label: t`Alerts` },
-                { route: '/settings-servers', icon: Server, label: t`Computers` },
-                { route: '/settings-storage', icon: HardDrive, label: t`Storage` },
-                { route: '/settings-about', icon: Info, label: t`About` },
-              ] as const
-            ).map(({ route, icon, label }, index, rows) => (
-              // First mount only: `entering` runs when the row mounts, and the
-              // page stays mounted under its sub-pages, so coming back from one
-              // does not replay the sequence. `riseIn` carries the system
-              // reduce-motion check, so with it on the rows are simply there.
-              <Animated.View key={route} entering={entryRise(index, rows.length)}>
-                <SettingsNavRow
-                  icon={icon}
-                  trailing={ChevronRight}
-                  label={label}
-                  testID={route.slice(1) + '-row'}
-                  onPress={() => router.push(route)}
-                />
-              </Animated.View>
+          {/* First mount only: `entering` runs when a row mounts, and the page
+              stays mounted under its sub-pages, so coming back from one does
+              not replay the sequence. `riseIn` carries the system
+              reduce-motion check, so with it on the rows are simply there. */}
+          <SettingsCard enter={entryRise}>
+            {ROWS.map(({ route, icon }) => (
+              <SettingsNavRow
+                key={route}
+                icon={icon}
+                trailing={ChevronRight}
+                label={labels[route]}
+                testID={route.slice(1) + '-row'}
+                onPress={() => router.push(route)}
+              />
             ))}
           </SettingsCard>
 
@@ -166,22 +182,21 @@ export default function SettingsScreen() {
                 <SettingsSecurity title={t`Security`} />
               </Animated.View>
 
+              {/* The footer line, the mark, the version and the registration
+                  line arrive as one beat: a wrapper with the page's own gap,
+                  because the registration link renders nothing outside
+                  mainland China and an empty animated box of its own would
+                  still take a gap. */}
               <Animated.View
                 entering={entryRise(1, TAIL_COUNT, ROWS_SETTLED_MS)}
-                style={[styles.footer, plate ? { ...plate, alignSelf: 'flex-start' } : null]}>
-                <Settings2 size={16} color={theme.colors.textMuted} strokeWidth={2} />
-                <Text variant="caption" color={theme.colors.textMuted} style={styles.footerText}>
-                  <Trans>Muqun settings stay on this device.</Trans>
-                </Text>
-              </Animated.View>
-
-              {/* The mark, the version and the registration line arrive as one:
-                  a wrapper with the page's own gap, because the registration
-                  link renders nothing outside mainland China and an empty
-                  animated box of its own would still take a gap. */}
-              <Animated.View
-                entering={entryRise(2, TAIL_COUNT, ROWS_SETTLED_MS)}
                 style={styles.tail}>
+                <View style={[styles.footer, plate ? { ...plate, alignSelf: 'flex-start' } : null]}>
+                  <Settings2 size={16} color={theme.colors.textMuted} strokeWidth={2} />
+                  <Text variant="caption" color={theme.colors.textMuted} style={styles.footerText}>
+                    <Trans>Muqun settings stay on this device.</Trans>
+                  </Text>
+                </View>
+
                 {/* Keep version information easy to find without a second navigation row. */}
                 <View style={styles.brand}>
                   <Image
@@ -255,8 +270,8 @@ const styles = StyleSheet.create({
   // wide. Shrinking is what lets it wrap instead. `minWidth: 0` goes with it
   // because `flexShrink` alone will not take a box below its content width.
   footerText: { flexShrink: 1, minWidth: 0 },
-  // The page's own gap, carried inside the one animated box the brand block and
-  // the registration line now share.
+  // The page's own gap, carried inside the one animated box the footer line,
+  // the brand block and the registration line share.
   tail: { gap: LADDER.section },
   brand: {
     flexDirection: 'row',

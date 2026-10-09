@@ -22,6 +22,7 @@ import { ChevronRight, type LucideIcon } from 'lucide-react-native';
 import { Children, Fragment, isValidElement, type ReactNode } from 'react';
 import { StyleSheet, type TextStyle, View } from 'react-native';
 import Animated, {
+  type EntryOrExitLayoutType,
   useAnimatedStyle,
   useReducedMotion,
   useSharedValue,
@@ -248,8 +249,16 @@ export function SettingsCard({
   children,
   flush = false,
   reflow = false,
+  enter,
 }: {
   children: ReactNode;
+  /**
+   * How each row arrives on mount, given its position and the row count.
+   *
+   * The row and the hairline above it share one animated box, so a rule never
+   * stands on the card ahead of the row it belongs to.
+   */
+  enter?: (index: number, count: number) => EntryOrExitLayoutType;
   /**
    * Rows and hairlines slide to their new places when one row changes height,
    * instead of jumping there.
@@ -274,11 +283,15 @@ export function SettingsCard({
 }) {
   const profile = useAppearanceProfile();
   const theme = useThemeTokens();
-  const rows = Children.toArray(children).map((row, position) => {
+  const items = Children.toArray(children);
+  const rows = items.map((row, position) => {
     const key = isValidElement(row) && row.key != null ? row.key : `settings-row-${position}`;
     const separator = position > 0 ? <SettingsSeparator /> : null;
-    return reflow ? (
-      <Animated.View key={key} layout={listLayout()}>
+    return reflow || enter ? (
+      <Animated.View
+        key={key}
+        entering={enter?.(position, items.length)}
+        layout={reflow ? listLayout() : undefined}>
         {separator}
         {row}
       </Animated.View>
