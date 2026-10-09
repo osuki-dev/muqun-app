@@ -12,11 +12,11 @@ import {
 } from '@/stores/voice-settings';
 import { SheetHandle } from '@/components/sheet-route-frame';
 import { SheetFrame } from '@/components/sheet-ground';
-import { timing } from '@/lib/motion';
+import { DURATION, timing } from '@/lib/motion';
 import { useVoiceInput, clearVoiceInput } from '@/stores/voice-input';
 import { useRouter } from 'expo-router';
 import { VoiceRecordingVisual } from '@/components/voice-recording-visual';
-import { MicOff, X } from 'lucide-react-native';
+import { Check, RotateCcw, X } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import { AppState, Keyboard, Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { useSharedValue, withTiming } from 'react-native-reanimated';
@@ -44,6 +44,7 @@ function VoiceRecording({
   const [state, setState] = useState<VoiceState>('starting');
   const [seconds, setSeconds] = useState(0);
   const [error, setError] = useState('');
+  const [result, setResult] = useState<string | null>(null);
   const level = useSharedValue(0);
   const latest = useLatestReader({ onText, onClose });
   const [session] = useState(
@@ -60,7 +61,7 @@ function VoiceRecording({
         },
         (text) => {
           if (text.trim()) {
-            latest().onText(text.trim());
+            setResult(text.trim());
           } else {
             setError(t`No speech detected. Please try again.`);
           }
@@ -90,12 +91,39 @@ function VoiceRecording({
       session.cancel();
     };
   }, [session, latest]);
-  const busy = state !== 'recording';
+  // Give the completed visual one transition before delivering the draft. A
+  // cancelled/unmounted sheet must never insert a late transcript.
+  useEffect(() => {
+    if (result === null || error) return;
+    const timeout = setTimeout(() => latest().onText(result), DURATION.long);
+    return () => clearTimeout(timeout);
+  }, [result, error, latest]);
+  const visualState = error
+    ? 'error'
+    : result !== null
+      ? 'success'
+      : state === 'starting'
+        ? 'idle'
+        : state;
+  const busy = state !== 'recording' || result !== null;
   return (
     <View style={styles.recording}>
       <PressableScale
         accessibilityRole="button"
-        accessibilityLabel={error ? t`Try again` : t`Stop and transcribe`}
+        accessibilityLabel={
+          error
+            ? t`Try again`
+            : result !== null
+              ? t`Done`
+              : state === 'starting'
+                ? t`Preparing microphone…`
+                : state === 'processing'
+                  ? t`Transcribing…`
+                  : t`Stop and transcribe`
+        }
+        accessibilityState={{
+          busy: state === 'starting' || (state === 'processing' && !error && result === null),
+        }}
         testID="voice-recording-stop"
         disabled={busy && !error}
         onPress={() => {
@@ -103,29 +131,33 @@ function VoiceRecording({
           else void session.finish();
         }}
         style={styles.stage}>
-        {error ? (
-          <View style={[styles.errorIcon, { backgroundColor: theme.colors.surface }]}>
-            <MicOff size={32} color={theme.colors.textMuted} />
-          </View>
-        ) : (
-          <VoiceRecordingVisual level={level} processing={state !== 'recording'} />
-        )}
+        <VoiceRecordingVisual level={level} state={visualState} />
+        <View pointerEvents="none" style={styles.visualReadout}>
+          {error ? (
+            <RotateCcw size={22} color={theme.colors.danger} strokeWidth={1.5} />
+          ) : result !== null ? (
+            <Check size={24} color={theme.colors.success} strokeWidth={1.5} />
+          ) : (
+            <>
+              <Text color={theme.colors.textMuted} style={styles.elapsed}>
+                {`${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`}
+              </Text>
+              <Text color={theme.colors.textSubtle} style={styles.limit}>
+                / 2:00
+              </Text>
+            </>
+          )}
+        </View>
       </PressableScale>
-      <View style={styles.status}>
-        <Text variant="label" color={theme.colors.text}>
-          {error
-            ? t`Try again`
-            : state === 'starting'
-              ? t`Preparing microphone…`
-              : state === 'processing'
-                ? t`Transcribing…`
-                : t`Listening…`}
+      {!!error && (
+        <Text
+          accessibilityLiveRegion="polite"
+          color={theme.colors.textMuted}
+          style={styles.statusDetail}>
+          {error}
         </Text>
-        <Text color={theme.colors.textMuted} style={styles.statusDetail}>
-          {error || `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')} / 2:00`}
-        </Text>
-      </View>
-      <Text color={theme.colors.textMuted} style={styles.privacy}>
+      )}
+      <Text color={theme.colors.textSubtle} style={styles.privacy}>
         {t`Audio is sent to your configured speech service`}
       </Text>
     </View>
@@ -292,14 +324,14 @@ const styles = StyleSheet.create({
     paddingBottom: 8,
   },
   stage: { width: 280, height: 260, alignItems: 'center', justifyContent: 'center' },
-  errorIcon: {
-    width: 104,
-    height: 104,
-    borderRadius: 52,
+  visualReadout: {
+    ...StyleSheet.absoluteFill,
     alignItems: 'center',
     justifyContent: 'center',
+    gap: 2,
   },
-  status: { alignItems: 'center', gap: 8 },
+  elapsed: { fontSize: 19, lineHeight: 25, fontVariant: ['tabular-nums'] },
+  limit: { fontSize: 11, lineHeight: 15, fontVariant: ['tabular-nums'] },
   statusDetail: { textAlign: 'center' },
   privacy: { maxWidth: 320, textAlign: 'center' },
 });

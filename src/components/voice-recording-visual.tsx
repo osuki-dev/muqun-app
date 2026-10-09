@@ -1,5 +1,5 @@
 import { useThemeTokens } from '@osuki-dev/ui';
-import { Canvas, Fill, Path, Shader, Skia } from 'react-native-skia';
+import { Canvas, Fill, Group, Path, Shader, Skia } from 'react-native-skia';
 import { useEffect } from 'react';
 import Animated, {
   useDerivedValue,
@@ -13,6 +13,9 @@ import { fadeOut, timing } from '@/lib/motion';
 
 const WIDTH = 280;
 const HEIGHT = 260;
+const VISUAL_SCALE = 0.85;
+const CENTER = { x: WIDTH / 2, y: HEIGHT / 2 };
+const FALLBACK_TRANSFORM = [{ scale: VISUAL_SCALE }];
 
 // Three folded sheets of light form an open spatial field. The mark is
 // suggested by paired crests and a returning loop, never drawn as letterforms.
@@ -21,10 +24,17 @@ const source = `
 uniform float2 size;
 uniform float time;
 uniform float level;
-uniform float processing;
+uniform float4 activity;
+uniform float3 primaryColor;
+uniform float3 accentColor;
+uniform float3 successColor;
+uniform float3 dangerColor;
+uniform float3 inkColor;
+uniform float3 lightColor;
 uniform float reveal;
 uniform float motion;
 uniform float dark;
+uniform float visualScale;
 
 float2 turn(float2 p, float angle) {
   float c = cos(angle);
@@ -32,22 +42,25 @@ float2 turn(float2 p, float angle) {
   return float2(c * p.x - s * p.y, s * p.x + c * p.y);
 }
 
-float hash(float2 p) {
-  return fract(sin(dot(p, float2(127.1, 311.7))) * 43758.5453);
-}
-
 half4 main(float2 coord) {
   float unit = min(size.x, size.y);
-  float aa = 0.65 / unit;
-  float voice = sqrt(clamp(level, 0.0, 1.0)) * motion * (1.0 - processing);
+  float aa = 0.8 / (unit * visualScale);
+  float recording = activity.x;
+  float processing = activity.y;
+  float success = activity.z;
+  float failure = activity.w;
+  float idle = max(0.0, 1.0 - recording - processing - success - failure);
+  float voice = sqrt(clamp(level, 0.0, 1.0)) * motion * recording;
   float t = time;
-  float expansion = 0.90 + reveal * 0.10 + voice * 0.12 - processing * 0.07;
+  float expansion = visualScale * (0.90 + reveal * 0.10 + voice * 0.12 - processing * 0.09
+    - idle * 0.12 + success * 0.12);
   float2 p = (coord - size * 0.5) / (unit * expansion);
   float r = length(p);
   float3 light = float3(0.0);
   float density = 0.0;
-  float3 ice = float3(0.12, 0.87, 1.0);
-  float3 violet = float3(0.48, 0.32, 0.96);
+  float3 base = mix(mix(primaryColor, successColor, success), dangerColor, failure);
+  float3 accent = mix(accentColor, base, max(success, failure));
+  float3 highlight = mix(base, lightColor, 0.65);
 
   // Folded sheets are composed of fine parallel filaments, rather than solid
   // tubes. Opposing flows cross with varying depth and expose the hollow core.
@@ -59,43 +72,41 @@ half4 main(float2 coord) {
     float radius = 0.235 + k * 0.012;
     float fold = sin(angle * 2.0 + t * 0.55 + k * 1.8) * (0.028 + voice * 0.026);
     fold += sin(angle * 3.0 - t * 0.4 + k * 2.2) * 0.017;
-    radius += fold * (1.0 - processing * 0.50);
+    radius += fold * (1.0 - processing * 0.65 - success * 0.92 - failure * 0.65 - idle * 0.65);
+    radius += success * k * 0.008;
     float d = length(q) - radius;
     float depth = 0.5 + 0.5 * sin(angle * 2.0 + k * 2.0 + t * 0.22);
-    float width = 0.018 + depth * 0.020 + voice * 0.010;
+    float width = (0.018 + depth * 0.020 + voice * 0.010)
+      * (1.0 - success * 0.65 - failure * 0.35 - idle * 0.25);
     float u = d / width;
     float veil = exp(-u * u * 1.4);
-    float phase = u * 22.0 + angle * 8.0 - t * (1.1 + processing * 1.2) + k * 2.1;
-    float strandDistance = abs(fract(phase / 6.283185 + 0.5) - 0.5) * 6.283185 * width / 22.0;
-    float fibers = 1.0 - smoothstep(aa * 0.12, aa * 0.82, strandDistance);
-    float edge = exp(-abs(d - width * 0.75) / (aa * 0.85));
+    float phase = u * 14.0 + angle * 6.0 - t * 1.1 + k * 2.1;
+    float strandDistance = abs(fract(phase / 6.283185 + 0.5) - 0.5) * 6.283185 * width / 14.0;
+    float strandWidth = aa * 0.72;
+    float fibers = exp(-strandDistance * strandDistance / (strandWidth * strandWidth));
+    float edgeDistance = d - width * 0.75;
+    float edge = exp(-edgeDistance * edgeDistance / (aa * aa * 1.4));
     float wake = exp(-abs(d) / (width * 1.4));
-    float current = pow(0.5 + 0.5 * cos(angle - t * (0.6 + processing * 0.6)
+    float current = pow(0.5 + 0.5 * cos(angle - t * 0.6
       + k * 2.1), 10.0);
     float front = 0.24 + depth * 0.76;
-    float glow = veil * (0.13 + fibers * 0.65) * front
+    float glow = veil * (0.18 + fibers * 0.55) * front
       + edge * (0.10 + current * 0.8) + wake * 0.055;
-    float3 hue = mix(ice, violet, 0.5 + 0.5 * sin(angle + k * 1.3 - t * 0.22));
-    float3 ink = hue * float3(0.34, 0.48, 0.78);
+    float gaps = smoothstep(0.10, 0.35, abs(sin(angle * 1.5 + k * 0.18)));
+    glow *= mix(1.0, gaps, failure) * (1.0 - idle * 0.35);
+    float3 hue = mix(base, accent, 0.5 + 0.5 * sin(angle + k * 1.3 - t * 0.22));
+    float3 ink = mix(hue, inkColor, 0.28);
     float3 color = mix(ink, hue, dark * 0.78 + depth * 0.16);
-    color = mix(color, float3(0.78, 0.98, 1.0), current * depth * 0.65);
+    color = mix(color, highlight, current * depth * 0.65);
     light += color * glow;
     density += glow;
   }
 
-  // A diffuse inner field adds depth without an opaque disc. Sparse particles
-  // orbit within it; the mask disappears smoothly before the canvas boundary.
-  float core = exp(-r * r / 0.023) * (0.07 + voice * 0.08);
-  float2 dust = turn(p, -t * 0.07) * 85.0;
-  float2 cell = floor(dust);
-  float seed = hash(cell);
-  float2 center = float2(0.2 + 0.6 * seed, 0.2 + 0.6 * hash(cell + 7.0));
-  float2 delta = fract(dust) - center;
-  float star = exp(-dot(delta, delta) * 140.0) * step(0.92, seed);
-  star *= smoothstep(0.12, 0.19, r) * (1.0 - smoothstep(0.31, 0.40, r));
-  star *= 0.16 + 0.14 * sin(t * 0.7 + seed * 20.0);
-  light += ice * (core + star) * mix(0.48, 0.9, dark);
-  density += core + star;
+  // A continuous inner glow supports the filaments. No discrete dust: small
+  // moving dots and overly dense lines shimmer on compact phone displays.
+  float core = exp(-r * r / 0.023) * (0.07 + voice * 0.08) * (1.0 - failure * 0.8);
+  light += base * core * mix(0.48, 0.9, dark);
+  density += core;
 
   float alpha = 1.0 - exp(-density * 1.5);
   float3 color = light / max(density, 0.0001);
@@ -120,12 +131,23 @@ function compileEffect() {
 }
 const effect = compileEffect();
 
+export type VoiceVisualState = 'idle' | 'recording' | 'processing' | 'success' | 'error';
+
+function activityFor(state: VoiceVisualState) {
+  return [
+    state === 'recording' ? 1 : 0,
+    state === 'processing' ? 1 : 0,
+    state === 'success' ? 1 : 0,
+    state === 'error' ? 1 : 0,
+  ];
+}
+
 export function VoiceRecordingVisual({
   level,
-  processing,
+  state,
 }: {
   level: SharedValue<number>;
-  processing: boolean;
+  state: VoiceVisualState;
 }) {
   const theme = useThemeTokens();
   const reduced = useReducedMotion();
@@ -134,30 +156,51 @@ export function VoiceRecordingVisual({
   useEffect(() => {
     reveal.set(reduced ? 1 : withTiming(1, timing('medium')));
   }, [reveal, reduced]);
-  const phase = useSharedValue(processing ? 1 : 0);
+  const phase = useSharedValue(activityFor(state));
   useEffect(() => {
-    phase.set(reduced ? (processing ? 1 : 0) : withTiming(processing ? 1 : 0, timing('medium')));
-  }, [phase, processing, reduced]);
+    phase.set(reduced ? activityFor(state) : withTiming(activityFor(state), timing('medium')));
+  }, [phase, state, reduced]);
   const frameCallback = useFrameCallback((frame) => {
-    clock.set((frame.timeSinceFirstFrame ?? 0) / 1000);
+    const weights = phase.get();
+    const speed = 0.22 + weights[0] * 0.78 + weights[1] * 1.48;
+    clock.set(clock.get() + (Math.min(frame.timeSincePreviousFrame ?? 0, 64) / 1000) * speed);
   }, false);
   useEffect(() => {
-    frameCallback.setActive(!reduced);
+    frameCallback.setActive(!reduced && state !== 'error');
     return () => frameCallback.setActive(false);
-  }, [frameCallback, reduced]);
+  }, [frameCallback, reduced, state]);
   const background = Skia.Color(theme.colors.background);
   const dark = background[0] * 0.2126 + background[1] * 0.7152 + background[2] * 0.0722 < 0.5;
+  const primaryColor = Array.from(Skia.Color(theme.colors.primary)).slice(0, 3);
+  const mutedColor = Array.from(Skia.Color(theme.colors.textMuted)).slice(0, 3);
+  const accentColor = primaryColor.map(
+    (channel, index) => channel * 0.75 + mutedColor[index] * 0.25
+  );
+  const successColor = Array.from(Skia.Color(theme.colors.success)).slice(0, 3);
+  const dangerColor = Array.from(Skia.Color(theme.colors.danger)).slice(0, 3);
+  const inkColor = Array.from(Skia.Color(theme.colors.text)).slice(0, 3);
+  const lightColor = Array.from(Skia.Color(dark ? theme.colors.text : theme.colors.surface)).slice(
+    0,
+    3
+  );
   const uniforms = useDerivedValue(() => ({
     size: [WIDTH, HEIGHT],
+    visualScale: VISUAL_SCALE,
     time: reduced ? 0 : clock.get(),
     level: reduced ? 0 : level.get(),
-    processing: phase.get(),
+    activity: phase.get(),
+    primaryColor,
+    accentColor,
+    successColor,
+    dangerColor,
+    inkColor,
+    lightColor,
     reveal: reveal.get(),
     motion: reduced ? 0 : 1,
     dark: dark ? 1 : 0,
   }));
   return (
-    <Animated.View exiting={departure} pointerEvents="none">
+    <Animated.View testID={`voice-visual-${state}`} exiting={departure} pointerEvents="none">
       <Canvas
         testID={effect ? 'voice-recording-logo' : 'voice-recording-logo-fallback'}
         style={{ width: WIDTH, height: HEIGHT }}
@@ -168,14 +211,22 @@ export function VoiceRecordingVisual({
           </Fill>
         ) : (
           fallback && (
-            <Path
-              path={fallback}
-              style="stroke"
-              strokeWidth={2}
-              strokeCap="round"
-              strokeJoin="round"
-              color={theme.colors.primary}
-            />
+            <Group origin={CENTER} transform={FALLBACK_TRANSFORM}>
+              <Path
+                path={fallback}
+                style="stroke"
+                strokeWidth={2}
+                strokeCap="round"
+                strokeJoin="round"
+                color={
+                  state === 'error'
+                    ? theme.colors.danger
+                    : state === 'success'
+                      ? theme.colors.success
+                      : theme.colors.primary
+                }
+              />
+            </Group>
           )
         )}
       </Canvas>

@@ -75,7 +75,7 @@ function recordingRuntime(config: VoiceServiceConfig, language: string): VoiceRe
       body.append('response_format', 'json');
       if (language !== 'auto') body.append('language', language.split('-')[0]);
       try {
-        const response = await fetch(`${config.url}/audio/transcriptions`, {
+        const response = await fetch(config.url, {
           method: 'POST',
           headers: config.apiKey ? { Authorization: `Bearer ${config.apiKey}` } : undefined,
           redirect: 'error',

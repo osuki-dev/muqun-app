@@ -21,18 +21,12 @@ export function normalizeVoiceConfig(
 ): VoiceServiceConfig | null {
   try {
     const parsed = new URL(url.trim());
-    if (
-      parsed.protocol !== 'https:' ||
-      parsed.username ||
-      parsed.password ||
-      parsed.search ||
-      parsed.hash
-    )
+    if (parsed.protocol !== 'https:' || parsed.username || parsed.password || parsed.hash)
       return null;
     const key = apiKey.trim();
     if (/[\r\n]/.test(apiKey) || /[\r\n]/.test(model)) return null;
     return {
-      url: parsed.toString().replace(/\/+$/, ''),
+      url: url.trim(),
       apiKey: key,
       model: model.trim(),
       language:
@@ -65,7 +59,10 @@ export function loadVoiceSettings() {
         'model' in value &&
         typeof value.model === 'string'
           ? normalizeVoiceConfig(
-              value.url,
+              // Older configurations stored a base URL; new ones store the exact endpoint.
+              'version' in value && value.version === 2
+                ? value.url
+                : `${value.url.replace(/\/+$/, '').replace(/\/audio\/transcriptions$/, '')}/audio/transcriptions`,
               value.apiKey,
               value.model,
               'language' in value ? value.language : null,
@@ -83,7 +80,7 @@ export function loadVoiceSettings() {
 export async function saveVoiceSettings(config: VoiceServiceConfig | null) {
   await loadVoiceSettings();
   if (config) {
-    await SecureStore.setItemAsync(STORAGE_KEY, JSON.stringify(config), {
+    await SecureStore.setItemAsync(STORAGE_KEY, JSON.stringify({ ...config, version: 2 }), {
       keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
     });
   } else {

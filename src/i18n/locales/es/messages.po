@@ -587,6 +587,10 @@ msgstr "Clave API"
 msgid "API key (optional)"
 msgstr "Clave API (opcional)"
 
+#: src/app/settings-voice.tsx
+msgid "API URL"
+msgstr "URL de la API"
+
 #: src/components/settings-appearance.tsx
 msgid "App icon"
 msgstr "Icono de la app"
@@ -804,10 +808,6 @@ msgstr "Tareas en segundo plano"
 #: src/i18n/labels.ts
 msgid "Backspace"
 msgstr "Retroceso"
-
-#: src/app/settings-voice.tsx
-msgid "Base URL"
-msgstr "URL base"
 
 #: src/components/agent-context-sheet.tsx
 msgid "Behaviour"
@@ -2097,6 +2097,7 @@ msgstr "Descartar las novedades"
 #: src/components/asset-viewer.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/open-web-service-sheet.tsx
+#: src/components/voice-input-button.tsx
 #: src/i18n/labels.ts
 msgid "Done"
 msgstr "Hecho"
@@ -2209,12 +2210,16 @@ msgid "Enter a name."
 msgstr "Introduce un nombre"
 
 #: src/app/settings-voice.tsx
-msgid "Enter a valid HTTPS base URL. API key and model are optional."
-msgstr "Introduce una URL base HTTPS válida. La clave API y el modelo son opcionales"
+msgid "Enter a valid HTTPS API URL. API key and model are optional."
+msgstr "Introduce una URL de API HTTPS válida. La clave API y el modelo son opcionales"
 
 #: src/app/explore.tsx
 msgid "Enter the {PAIRING_CODE_CHARACTER_COUNT}-character code."
 msgstr "Introduce el código de {PAIRING_CODE_CHARACTER_COUNT} caracteres"
+
+#: src/app/settings-voice.tsx
+msgid "Enter the full transcription endpoint. Muqun uses this URL as entered with an OpenAI-compatible request. Your API key is stored securely on this device."
+msgstr "Introduce la URL completa del servicio de transcripción. Muqun envía una solicitud compatible con OpenAI a esa URL sin modificarla. Tu clave API se guarda de forma segura en este dispositivo"
 
 #: src/app/explore.tsx
 msgid "Enter the Gateway's address instead."
@@ -2966,10 +2971,6 @@ msgstr "Muestra todos los paneles, con o sin agente"
 #: src/components/settings-servers.tsx
 msgid "List only the panes running a recognised agent."
 msgstr "Muestra solo los paneles con un agente reconocido"
-
-#: src/components/voice-input-button.tsx
-msgid "Listening…"
-msgstr "Escuchando…"
 
 #: src/components/settings-alerts.tsx
 msgid "Live Activity"
@@ -4610,7 +4611,6 @@ msgstr "Guardar el nuevo nombre"
 msgid "Save theme"
 msgstr "Guardar tema"
 
-#: src/app/settings-voice.tsx
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Saved"
 msgstr "Guardada"
@@ -6289,10 +6289,6 @@ msgstr "Usa tu propia fuente en la app y en la terminal"
 #: src/components/ssh-host-form.tsx
 msgid "Username"
 msgstr "Usuario"
-
-#: src/app/settings-voice.tsx
-msgid "Uses the OpenAI-compatible /audio/transcriptions API. Your API key is stored securely on this device."
-msgstr "Usa la API /audio/transcriptions compatible con OpenAI. Tu clave API se guarda de forma segura en este dispositivo"
 
 #: src/components/theme-appearance-settings.tsx
 msgid "Uses the theme's Home artwork in the position chosen by your Home layout. Themes without Home artwork show no illustration."

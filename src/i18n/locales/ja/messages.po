@@ -587,6 +587,10 @@ msgstr "API キー"
 msgid "API key (optional)"
 msgstr "API キー（任意）"
 
+#: src/app/settings-voice.tsx
+msgid "API URL"
+msgstr "API URL"
+
 #: src/components/settings-appearance.tsx
 msgid "App icon"
 msgstr "アプリアイコン"
@@ -804,10 +808,6 @@ msgstr "バックグラウンドタスク"
 #: src/i18n/labels.ts
 msgid "Backspace"
 msgstr "バックスペース"
-
-#: src/app/settings-voice.tsx
-msgid "Base URL"
-msgstr "ベース URL"
 
 #: src/components/agent-context-sheet.tsx
 msgid "Behaviour"
@@ -2097,6 +2097,7 @@ msgstr "新着情報を閉じる"
 #: src/components/asset-viewer.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/open-web-service-sheet.tsx
+#: src/components/voice-input-button.tsx
 #: src/i18n/labels.ts
 msgid "Done"
 msgstr "完了"
@@ -2209,12 +2210,16 @@ msgid "Enter a name."
 msgstr "名前を入力してください"
 
 #: src/app/settings-voice.tsx
-msgid "Enter a valid HTTPS base URL. API key and model are optional."
-msgstr "有効な HTTPS ベース URL を入力してください。API キーとモデルは任意です"
+msgid "Enter a valid HTTPS API URL. API key and model are optional."
+msgstr "有効な HTTPS API URL を入力してください。API キーとモデルは任意です"
 
 #: src/app/explore.tsx
 msgid "Enter the {PAIRING_CODE_CHARACTER_COUNT}-character code."
 msgstr "{PAIRING_CODE_CHARACTER_COUNT} 文字のコードを入力してください"
+
+#: src/app/settings-voice.tsx
+msgid "Enter the full transcription endpoint. Muqun uses this URL as entered with an OpenAI-compatible request. Your API key is stored securely on this device."
+msgstr "文字起こしエンドポイントの完全な URL を入力してください。Muqun は入力された URL に OpenAI 互換のリクエストを送信します。API キーはこの端末に安全に保存されます"
 
 #: src/app/explore.tsx
 msgid "Enter the Gateway's address instead."
@@ -2966,10 +2971,6 @@ msgstr "エージェントの有無にかかわらず、すべてのパネルを
 #: src/components/settings-servers.tsx
 msgid "List only the panes running a recognised agent."
 msgstr "認識済みのエージェントが動作しているパネルのみを一覧表示します"
-
-#: src/components/voice-input-button.tsx
-msgid "Listening…"
-msgstr "聞き取り中…"
 
 #: src/components/settings-alerts.tsx
 msgid "Live Activity"
@@ -4610,7 +4611,6 @@ msgstr "新しい名前を保存"
 msgid "Save theme"
 msgstr "テーマを保存"
 
-#: src/app/settings-voice.tsx
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Saved"
 msgstr "保存済み"
@@ -6289,10 +6289,6 @@ msgstr "アプリとターミナルに自分のフォントを使えます"
 #: src/components/ssh-host-form.tsx
 msgid "Username"
 msgstr "ユーザー名"
-
-#: src/app/settings-voice.tsx
-msgid "Uses the OpenAI-compatible /audio/transcriptions API. Your API key is stored securely on this device."
-msgstr "OpenAI 互換の /audio/transcriptions API を使用します。API キーはこの端末に安全に保存されます"
 
 #: src/components/theme-appearance-settings.tsx
 msgid "Uses the theme's Home artwork in the position chosen by your Home layout. Themes without Home artwork show no illustration."

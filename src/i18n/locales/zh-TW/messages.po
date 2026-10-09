@@ -587,6 +587,10 @@ msgstr "API 金鑰"
 msgid "API key (optional)"
 msgstr "API Key（選填）"
 
+#: src/app/settings-voice.tsx
+msgid "API URL"
+msgstr "API 位址"
+
 #: src/components/settings-appearance.tsx
 msgid "App icon"
 msgstr "App 圖示"
@@ -804,10 +808,6 @@ msgstr "背景工作"
 #: src/i18n/labels.ts
 msgid "Backspace"
 msgstr "退格鍵"
-
-#: src/app/settings-voice.tsx
-msgid "Base URL"
-msgstr "基礎 URL"
 
 #: src/components/agent-context-sheet.tsx
 msgid "Behaviour"
@@ -2097,6 +2097,7 @@ msgstr "關閉新功能卡片"
 #: src/components/asset-viewer.tsx
 #: src/components/custom-theme-library.tsx
 #: src/components/open-web-service-sheet.tsx
+#: src/components/voice-input-button.tsx
 #: src/i18n/labels.ts
 msgid "Done"
 msgstr "完成"
@@ -2209,12 +2210,16 @@ msgid "Enter a name."
 msgstr "請輸入名稱"
 
 #: src/app/settings-voice.tsx
-msgid "Enter a valid HTTPS base URL. API key and model are optional."
-msgstr "請輸入有效的 HTTPS 服務網址，API Key 和模型為選填"
+msgid "Enter a valid HTTPS API URL. API key and model are optional."
+msgstr "請輸入有效的 HTTPS API 位址。API Key 和模型為選填"
 
 #: src/app/explore.tsx
 msgid "Enter the {PAIRING_CODE_CHARACTER_COUNT}-character code."
 msgstr "請輸入 {PAIRING_CODE_CHARACTER_COUNT} 個字元的代碼"
+
+#: src/app/settings-voice.tsx
+msgid "Enter the full transcription endpoint. Muqun uses this URL as entered with an OpenAI-compatible request. Your API key is stored securely on this device."
+msgstr "填寫完整的轉寫介面位址。Muqun 依原位址傳送相容 OpenAI 的請求。API Key 安全儲存在此裝置上"
 
 #: src/app/explore.tsx
 msgid "Enter the Gateway's address instead."
@@ -2966,10 +2971,6 @@ msgstr "列出所有面板，無論是否有代理程式"
 #: src/components/settings-servers.tsx
 msgid "List only the panes running a recognised agent."
 msgstr "只列出正在執行可辨識代理程式的面板"
-
-#: src/components/voice-input-button.tsx
-msgid "Listening…"
-msgstr "正在聆聽…"
 
 #: src/components/settings-alerts.tsx
 msgid "Live Activity"
@@ -4610,7 +4611,6 @@ msgstr "儲存新名稱"
 msgid "Save theme"
 msgstr "儲存主題"
 
-#: src/app/settings-voice.tsx
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Saved"
 msgstr "已儲存"
@@ -6289,10 +6289,6 @@ msgstr "在 App 和終端機裡使用你自己的字型"
 #: src/components/ssh-host-form.tsx
 msgid "Username"
 msgstr "使用者名稱"
-
-#: src/app/settings-voice.tsx
-msgid "Uses the OpenAI-compatible /audio/transcriptions API. Your API key is stored securely on this device."
-msgstr "使用相容 OpenAI 的 /audio/transcriptions 介面。API Key 安全儲存在此裝置上"
 
 #: src/components/theme-appearance-settings.tsx
 msgid "Uses the theme's Home artwork in the position chosen by your Home layout. Themes without Home artwork show no illustration."
