@@ -3,6 +3,7 @@ import { describe, expect, test } from 'bun:test';
 import {
   activeTaskCount,
   applyCancelAnswer,
+  applyListAnswer,
   groupTasks,
   isTaskChannelLive,
   replaceTasks,
@@ -166,5 +167,44 @@ describe('taskAgeParts and summaryTail', () => {
   test('keeps the last lines of a summary', () => {
     expect(summaryTail('a\nb\nc\n', 2)).toBe('b\nc');
     expect(summaryTail('only', 2)).toBe('only');
+  });
+});
+
+describe('applyListAnswer', () => {
+  test('a failed refresh keeps the held list and reports the error', () => {
+    let index: ServerTasksIndex = replaceTasks({}, 's1', [task('a', 'working', 10)], 1);
+    let error = null as string | null;
+    applyListAnswer(null, {
+      replace: (tasks) => {
+        index = replaceTasks(index, 's1', tasks, 2);
+      },
+      ok: () => {
+        error = null;
+      },
+      fail: () => {
+        error = 'unavailable';
+      },
+    });
+    expect(index.s1?.tasks.map((t) => t.taskId)).toEqual(['a']);
+    expect(index.s1?.fetchedAt).toBe(1);
+    expect(error).toBe('unavailable');
+  });
+
+  test('an empty successful answer does clear the list and the error', () => {
+    let index: ServerTasksIndex = replaceTasks({}, 's1', [task('a', 'working', 10)], 1);
+    let error = 'unavailable' as string | null;
+    applyListAnswer([], {
+      replace: (tasks) => {
+        index = replaceTasks(index, 's1', tasks, 2);
+      },
+      ok: () => {
+        error = null;
+      },
+      fail: () => {
+        error = 'unavailable';
+      },
+    });
+    expect(index.s1?.tasks).toEqual([]);
+    expect(error).toBeNull();
   });
 });
