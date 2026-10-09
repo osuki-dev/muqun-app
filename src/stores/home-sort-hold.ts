@@ -40,6 +40,16 @@ function report(event: SortHoldEvent) {
   useHomeSortHold.setState({ ...next, held: sortHeld(next) });
 }
 
+/**
+ * Back to idle, for Home going away: a scroll view unmounted mid-drag or
+ * mid-fling never reports its end.
+ */
+export function resetSortHold() {
+  if (settleTimer) clearTimeout(settleTimer);
+  settleTimer = null;
+  useHomeSortHold.setState({ ...SORT_HOLD_IDLE, held: false });
+}
+
 /** For the page that holds the cards: any finger on it. */
 export const sortHoldTouches = {
   onTouchStart: () => report('touch-start'),

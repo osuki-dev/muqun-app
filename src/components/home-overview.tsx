@@ -88,8 +88,8 @@ import {
 import { homeContinueSearchEnabled } from '@/lib/home-continue-search';
 import { demoContinueSearchEntries } from '@/lib/demo-recents';
 import { claimHomeFirstEntry } from '@/lib/home-first-entry';
-import { padCardColumns, padHomeColumns, padLaunchLayoutEnabled } from '@/lib/home-pad-geometry';
-import { sortHoldScroll, sortHoldTouches } from '@/stores/home-sort-hold';
+import { padHomeColumns, padLaunchLayoutEnabled } from '@/lib/home-pad-geometry';
+import { resetSortHold, sortHoldScroll, sortHoldTouches } from '@/stores/home-sort-hold';
 import {
   HomeLaunchActions,
   HomeLaunchTarget,
@@ -403,6 +403,8 @@ export function HomeOverview({
   // loaded, and the window closes with the entry budget. A return from a
   // sub-screen (or the Pad shell's Home replacing the first one later) is not
   // an entry.
+  // A scroll view that leaves mid-drag never reports its end: let go with Home.
+  useEffect(() => resetSortHold, []);
   const [entering, setEntering] = useState(claimHomeFirstEntry);
   useEffect(() => {
     if (!entering || loading) return;
@@ -847,10 +849,8 @@ export function HomeOverview({
     );
     const padLaunch =
       isPad && padLaunchLayoutEnabled(padGeometry.contentWidth, fontScale, editorialViewportHeight);
-    // Two cards abreast when the Pad's work column has room for two.
-    const cardColumns = padLaunch
-      ? padCardColumns(padHomeColumns(padGeometry.innerWidth).work, 2)
-      : 1;
+    // The Pad work column's width, which decides whether cards sit two abreast.
+    const cardGridWidth = padLaunch ? padHomeColumns(padGeometry.innerWidth).work : undefined;
     // Hidden with nothing paired: the pair card is that page's one action.
     const showDock = !hydrationError && !loading && launchController.servers.length > 0;
     // The session screen's own dock, at the foot of the page -- or, on the
@@ -1113,7 +1113,7 @@ export function HomeOverview({
                     activeConnection={activeConnection}
                     nowMs={nowMs}
                     skipEntering={cardsSkipEntering}
-                    columns={cardColumns}
+                    gridWidth={cardGridWidth}
                     onSelectServer={targetComposer}
                     onOpenTask={({ serverId, task, tree }) => {
                       // A row opens the session or pane the task runs in; only

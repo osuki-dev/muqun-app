@@ -24,7 +24,7 @@ import {
   taskRowRank,
   type ComputerCard,
 } from '@/lib/home-computer-cards';
-import { PAD_CARD_GAP } from '@/lib/home-pad-geometry';
+import { PAD_CARD_GAP, padCardColumns } from '@/lib/home-pad-geometry';
 import { fadeOut, listLayout, pulseOnce, riseIn } from '@/lib/motion';
 import {
   resolveConnectionStatus,
@@ -143,7 +143,7 @@ export function HomeComputerCards({
   activeConnection,
   nowMs,
   skipEntering,
-  columns = 1,
+  gridWidth,
   onSelectServer,
   onOpenTask,
   onOpenTasks,
@@ -157,8 +157,8 @@ export function HomeComputerCards({
    * Home owns this because the section itself only mounts with its first card.
    */
   skipEntering: boolean;
-  /** Two abreast on the Pad's work column (see `padCardColumns`). */
-  columns?: 1 | 2;
+  /** The Pad work column's width: cards sit two abreast when it has room (`padCardColumns`). */
+  gridWidth?: number;
   onSelectServer: (serverId: string) => void;
   onOpenTask: (target: CardTaskTarget) => void;
   /** The computer's whole task list. */
@@ -190,7 +190,7 @@ export function HomeComputerCards({
     null
   );
   const cards = heldCardOrder(shownIds, sorted);
-  const grid = columns === 2 && cards.length > 1;
+  const grid = gridWidth !== undefined && padCardColumns(gridWidth, cards.length) === 2;
   const statusOf = inputs.statusOf;
   const tickMs = nowMs;
   return (
