@@ -215,6 +215,12 @@ export function groupTaskTree(rows: readonly CardTaskRow[]): {
 }
 
 /**
+ * How far the computer's clock may run behind the phone's: `updatedMs` is the
+ * gateway's time, `atMs` the device's.
+ */
+export const PENDING_CLOCK_SKEW_MS = 60_000;
+
+/**
  * A sent goal is answered by a task with that goal that changed at or after
  * the send -- an older task that happens to share the goal (a retry, a
  * routine "run the tests") does not count. A device-opened task is preferred:
@@ -225,7 +231,7 @@ function settlesPending(tasks: readonly TaskView[], item: PendingDispatch): bool
   return tasks.some(
     (task) =>
       task.goal.trim() === goal &&
-      task.updatedMs >= item.atMs &&
+      task.updatedMs >= item.atMs - PENDING_CLOCK_SKEW_MS &&
       (task.origin === undefined || task.origin === 'device')
   );
 }
@@ -267,8 +273,11 @@ export function buildComputerCards(input: {
     const pending = (input.pending ?? []).filter(
       (item) => item.serverId === server.serverId && !settlesPending(tasks, item)
     );
-    const waiting = tasks.some((task) => task.state === 'waiting');
-    const working = tasks.some((task) => NOW.has(task.state)) || pending.length > 0;
+    // The same predicates Now uses, so work known only from the gateway's
+    // child counts moves the card as well as listing it.
+    const waiting = tasks.some((task) => task.state === 'waiting') || tree.some(treeRowIsWaiting);
+    const working =
+      tasks.some((task) => NOW.has(task.state)) || tree.some(treeRowIsOpen) || pending.length > 0;
     const activity: CardActivity =
       input.reachability(server.serverId) === 'offline'
         ? 'offline'

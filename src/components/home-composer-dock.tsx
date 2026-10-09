@@ -440,7 +440,10 @@ export function HomeComposerDock({
               setError(task.summary ?? t`Could not start the task.`);
               return false;
             }
-            if (!asid) throw new Error('The computer did not say which session it opened.');
+            if (!asid) {
+              setError(t`Could not start the task.`);
+              return false;
+            }
             if (task.binding.kind === 'agent_session')
               markAgentUsed(serverId, task.binding.agentId);
             markPromptedSession(serverId, asid);
