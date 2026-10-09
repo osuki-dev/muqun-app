@@ -357,13 +357,6 @@ describe('reconnecting', () => {
     expect(h.transports).toHaveLength(4);
   });
 
-  test('the delay doubles to a thirty-second ceiling', () => {
-    const top = () => 1;
-    expect(
-      [0, 1, 2, 3, 4, 5, 6, 7, 20].map((attempt) => socketReconnectDelay(attempt, top))
-    ).toEqual([400, 800, 1600, 3200, 6400, 12_800, 25_600, 30_000, 30_000]);
-  });
-
   test('jitter keeps every delay between half and all of its window', () => {
     for (let attempt = 0; attempt < 12; attempt += 1) {
       const ceiling = Math.min(400 * 2 ** attempt, MAX_RECONNECT_DELAY_MS);

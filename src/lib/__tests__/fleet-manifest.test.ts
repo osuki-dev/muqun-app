@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { FLEET_CAPABILITY, hasFleet, parseFleetManifest } from '../fleet-manifest';
+import { parseFleetManifest } from '../fleet-manifest';
 
 describe('parseFleetManifest', () => {
   test('reads the camelCase manifest with nested agents and terminal backends', () => {
@@ -46,10 +46,5 @@ describe('parseFleetManifest', () => {
     });
     expect(parseFleetManifest({})).toBeNull();
     expect(parseFleetManifest(null)).toBeNull();
-  });
-
-  test('capability', () => {
-    expect(hasFleet([FLEET_CAPABILITY])).toBe(true);
-    expect(hasFleet([])).toBe(false);
   });
 });

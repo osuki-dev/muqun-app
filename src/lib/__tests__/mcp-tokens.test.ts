@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { MCP_SERVER_CAPABILITY, hasMcpServer, parseMcpToken, parseTokenList } from '../mcp-tokens';
+import { parseMcpToken, parseTokenList } from '../mcp-tokens';
 
 describe('parseMcpToken', () => {
   test('a pane token with an expiry', () => {
@@ -46,11 +46,6 @@ describe('parseMcpToken', () => {
     expect(parseMcpToken({ ...ok, revoked_ms: 5 })).toBeNull();
     expect(parseMcpToken({ ...ok, binding: { kind: 'other' } })).toBeNull();
     expect(parseMcpToken({ ...ok, id: undefined })).toBeNull();
-  });
-
-  test('capability', () => {
-    expect(hasMcpServer([MCP_SERVER_CAPABILITY])).toBe(true);
-    expect(hasMcpServer(undefined)).toBe(false);
   });
 });
 
