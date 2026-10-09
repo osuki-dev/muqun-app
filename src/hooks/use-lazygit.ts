@@ -48,7 +48,9 @@ export function useLazygit({
     setBusy(true);
     Keyboard.dismiss();
     const select = (createdPaneId: string) => {
-      usePanelPickerStore.getState().choosePanel({ serverId, paneId: createdPaneId });
+      usePanelPickerStore
+        .getState()
+        .choosePanel({ serverId, paneId: createdPaneId, returnTo: { sessionId, paneId } });
       router.back();
     };
     return settleAfter(
