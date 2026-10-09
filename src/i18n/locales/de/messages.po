@@ -133,6 +133,19 @@ msgstr "{0} auf diesem Host"
 msgid "{0} queued"
 msgstr "{0} in der Warteschlange"
 
+#. placeholder {0}: rollup.total
+#: src/components/home-computer-cards.tsx
+#: src/components/server-tasks-sheet.tsx
+msgid "{0} sub-tasks"
+msgstr "{0} Unteraufgaben"
+
+#. placeholder {0}: rollup.total
+#. placeholder {1}: rollup.waiting
+#: src/components/home-computer-cards.tsx
+#: src/components/server-tasks-sheet.tsx
+msgid "{0} sub-tasks ({1} waiting)"
+msgstr "{0} Unteraufgaben ({1} warten)"
+
 #. placeholder {0}: compact(inContext)
 #: src/components/agent-context-sheet.tsx
 msgid "{0} tokens the model last read"
@@ -281,6 +294,10 @@ msgstr "{host} hat einen Schlüssel vorgezeigt, den diese App noch nie gesehen h
 msgid "{label} is temporarily locked. Use the system fallback or try later."
 msgstr "{label} ist vorübergehend gesperrt. Nutze die Systemalternative oder versuche es später"
 
+#: src/components/home-computer-cards.tsx
+msgid "{label} settings, {footer}"
+msgstr "Einstellungen für {label}, {footer}"
+
 #: src/components/bounded-markdown.tsx
 msgid "{language} code copied to clipboard"
 msgstr "{language}-Code in die Zwischenablage kopiert"
@@ -322,11 +339,24 @@ msgstr "{removeLabel}: {label}"
 msgid "{running} running of {0}"
 msgstr "{running} von {0} laufen"
 
+#: src/components/home-computer-cards.tsx
+msgid "{sessions} sessions"
+msgstr "{sessions} Sitzungen"
+
+#: src/components/home-computer-cards.tsx
+msgid "{terminals} terminals"
+msgstr "{terminals} Terminals"
+
 #: src/components/agent-composer.tsx
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-sessions-sheet.tsx
 msgid "{title} — finished while you were away"
 msgstr "{title} – wurde fertig, während Sie weg waren"
+
+#. placeholder {0}: card.nowTotal - card.now.length
+#: src/components/home-computer-cards.tsx
+msgid "+{0} more"
+msgstr "+{0} weitere"
 
 #: src/lib/agent-widget-layout.tsx
 msgid "+{overflow} more"
@@ -402,6 +432,10 @@ msgstr "Ein Terminal wurde erstellt. Öffne es, um den Start zu prüfen. Ein ern
 #: src/app/settings.tsx
 msgid "About"
 msgstr "Über"
+
+#: src/components/server-tasks-sheet.tsx
+msgid "Acknowledge"
+msgstr "Zur Kenntnis nehmen"
 
 #: src/app/commands.tsx
 msgid "Act on this terminal, or send it a command"
@@ -514,6 +548,7 @@ msgstr "Mitteilungen"
 msgid "Align the QR inside the frame"
 msgstr "Richte den QR-Code im Rahmen aus"
 
+#: src/components/home-recent-chips.tsx
 #: src/components/session-artifacts.tsx
 #: src/components/theme-browse-sheet.tsx
 msgid "All"
@@ -1101,6 +1136,10 @@ msgstr "Startseite und App-Oberfläche wählen. Die Farben bestimmt weiterhin de
 msgid "Choose project"
 msgstr "Projekt wählen"
 
+#: src/components/home-composer-dock.tsx
+msgid "Choose the agent Home starts on this computer"
+msgstr "Wählt den Agenten, den Home auf diesem Computer startet"
+
 #: src/components/changes-sheet.tsx
 msgid "Choose which changes to show"
 msgstr "Angezeigte Änderungen wählen"
@@ -1327,6 +1366,10 @@ msgstr "Computer nicht gefunden"
 msgid "Computer offline"
 msgstr "Computer offline"
 
+#: src/components/home-computer-cards.tsx
+msgid "Computer settings"
+msgstr "Computereinstellungen"
+
 #: src/components/home-composer-dock.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Computer unavailable."
@@ -1436,6 +1479,7 @@ msgstr "Verbinde mit {address}"
 msgid "Connecting…"
 msgstr "Verbindungsaufbau…"
 
+#: src/components/home-editorial-layout.tsx
 #: src/components/pad-server-rail.tsx
 msgid "Connections"
 msgstr "Verbindungen"
@@ -1466,7 +1510,6 @@ msgid "Context used"
 msgstr "Kontext belegt"
 
 #: src/app/explore.tsx
-#: src/components/home-editorial-layout.tsx
 #: src/components/pad-server-rail.tsx
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Continue"
@@ -1975,6 +2018,7 @@ msgstr "Sitzung konnte nicht gestartet werden"
 msgid "Could not start a terminal."
 msgstr "Terminal konnte nicht gestartet werden"
 
+#: src/components/home-composer-dock.tsx
 #: src/components/new-task-sheet.tsx
 msgid "Could not start the task."
 msgstr "Die Aufgabe konnte nicht gestartet werden"
@@ -2402,10 +2446,12 @@ msgstr "Jede geänderte Datei in einem Ordnerbaum mit Zeilensummen. Öffne einen
 msgid "Every screen in the app."
 msgstr "Jeder Bildschirm der App"
 
+#: src/components/home-computer-cards.tsx
 #: src/components/server-tasks-sheet.tsx
 msgid "exit {code}"
 msgstr "Exit {code}"
 
+#. placeholder {0}: result.code
 #. placeholder {0}: task.exitCode
 #: src/components/server-tasks-sheet.tsx
 msgid "Exit code {0}"
@@ -2722,6 +2768,10 @@ msgstr "Zu deinen Computern"
 msgid "Goal continuation"
 msgstr "Zielfortsetzung"
 
+#: src/components/home-composer-dock.tsx
+msgid "Goal for {agentName} · no attachments in a terminal"
+msgstr "Ziel für {agentName} · im Terminal keine Anhänge"
+
 #: src/app/commands.tsx
 msgid "Group"
 msgstr "Gruppe"
@@ -2786,6 +2836,15 @@ msgstr "Verlauf"
 msgid "Home"
 msgstr "Home"
 
+#: src/components/home-agent-sheet.tsx
+#: src/components/settings-servers.tsx
+msgid "Home agent"
+msgstr "Home-Agent"
+
+#: src/components/home-composer-dock.tsx
+msgid "Home agent: {agentName}"
+msgstr "Home-Agent: {agentName}"
+
 #: src/components/dev-home-ambient-controls.tsx
 msgid "Home effects · development only"
 msgstr "Home-Effekte · nur Entwicklung"
@@ -2828,9 +2887,14 @@ msgid "How to use Muqun"
 msgstr "Muqun verwenden"
 
 #: src/components/agent-session-tree-sheet.tsx
+#: src/components/home-computer-cards.tsx
 #: src/i18n/labels.ts
 msgid "Idle"
 msgstr "Inaktiv"
+
+#: src/components/home-computer-cards.tsx
+msgid "Idle · last finished {lastTitle} {lastAge}"
+msgstr "Inaktiv · zuletzt fertig: {lastTitle} {lastAge}"
 
 #: src/i18n/labels.ts
 msgctxt "task state"
@@ -2886,7 +2950,6 @@ msgstr "Datei importieren"
 msgid "Import link"
 msgstr "Link importieren"
 
-#: src/components/home-editorial-layout.tsx
 #: src/components/server-tasks-sheet.tsx
 msgid "In progress"
 msgstr "In Arbeit"
@@ -3024,6 +3087,10 @@ msgstr "Seine gekoppelten Geräte erscheinen, sobald er der genutzte Computer is
 #: src/components/skia-terminal.tsx
 msgid "Jump to latest output"
 msgstr "Zur neuesten Ausgabe springen"
+
+#: src/components/home-computer-cards.tsx
+msgid "Just finished"
+msgstr "Gerade fertig"
 
 #: src/components/agent-sessions-sheet.tsx
 #: src/hooks/use-relative-time.ts
@@ -3842,6 +3909,10 @@ msgstr "Es wurde nichts geändert"
 msgid "Nothing yet — an “Always allow” reply lands here, for this project."
 msgstr "Noch nichts – eine Antwort „Immer erlauben“ landet hier, für dieses Projekt"
 
+#: src/components/home-computer-cards.tsx
+msgid "Now"
+msgstr "Jetzt"
+
 #: src/components/toggle.tsx
 msgid "Off"
 msgstr "Aus"
@@ -3884,6 +3955,7 @@ msgstr "Online"
 msgid "ONLINE"
 msgstr "ONLINE"
 
+#: src/components/home-computer-cards.tsx
 #: src/components/home-connections.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/open-web-service-sheet.tsx
@@ -4494,6 +4566,7 @@ msgid "Receive agent blocks and gateway updates."
 msgstr "Empfange Meldungen, wenn ein Agent blockiert, und Gateway-Updates"
 
 #: src/components/agent-sessions-sheet.tsx
+#: src/components/home-editorial-layout.tsx
 msgid "Recent"
 msgstr "Zuletzt"
 
@@ -5090,9 +5163,14 @@ msgstr "Wird als Nächstes gesendet: {0}"
 msgid "Sending to"
 msgstr "Senden an"
 
+#: src/components/home-computer-cards.tsx
 #: src/components/home-connections.tsx
 msgid "Sends your next goal here. Long press to open it."
 msgstr "Sendet dein nächstes Ziel hierhin. Lange drücken zum Öffnen"
+
+#: src/components/home-computer-cards.tsx
+msgid "Sent · waiting for the computer"
+msgstr "Gesendet · wartet auf den Computer"
 
 #: src/components/agent-sessions-sheet.tsx
 msgid "Session name"
@@ -5218,6 +5296,10 @@ msgstr "{0} anzeigen"
 #: src/components/settings-alerts.tsx
 msgid "Show agents and their status on the home screen. Updates while Muqun is open."
 msgstr "Zeigt Agenten und ihren Status auf dem Startbildschirm. Wird aktualisiert, solange Muqun geöffnet ist"
+
+#: src/components/home-recent-sessions.tsx
+msgid "Show all"
+msgstr "Alle anzeigen"
 
 #: src/components/theme-appearance-settings.tsx
 msgid "Show artwork on Home"
@@ -5503,6 +5585,10 @@ msgstr "Kamera wird gestartet"
 msgid "Starting…"
 msgstr "Wird gestartet…"
 
+#: src/components/home-agent-sheet.tsx
+msgid "Starts in a terminal"
+msgstr "Startet in einem Terminal"
+
 #: src/components/collaboration-notice.tsx
 msgid "Status unavailable"
 msgstr "Status nicht verfügbar"
@@ -5740,6 +5826,7 @@ msgstr "Temporäre Dateien"
 #: src/app/commands.tsx
 #: src/app/settings-terminal.tsx
 #: src/app/settings.tsx
+#: src/components/home-computer-cards.tsx
 #: src/components/home-launch-actions.tsx
 #: src/components/home-recent-sessions.tsx
 #: src/components/settings-server-capabilities.tsx
@@ -6088,6 +6175,7 @@ msgid "This computer has already handled that request."
 msgstr "Dieser Computer hat diese Anfrage bereits bearbeitet"
 
 #: src/app/new-task.tsx
+#: src/components/home-composer-dock.tsx
 msgid "This computer has no session to start an agent in."
 msgstr "Dieser Computer hat keine Session, in der ein Agent starten könnte"
 
@@ -6113,6 +6201,10 @@ msgstr "Dieser Computer kennt dieses Gerät nicht mehr. Koppel es erneut, um die
 #: src/lib/network-error.ts
 msgid "This computer refused the request."
 msgstr "Dieser Computer hat die Anfrage abgelehnt"
+
+#: src/components/home-computer-cards.tsx
+msgid "This computer’s Gateway does not keep a task list yet."
+msgstr "Das Gateway dieses Computers führt noch keine Aufgabenliste."
 
 #: src/lib/attachments.ts
 msgid "This device has no camera available."
@@ -6622,10 +6714,6 @@ msgstr "In Verwendung"
 msgid "Version {version}{0}"
 msgstr "Version {version}{0}"
 
-#: src/components/home-in-progress.tsx
-msgid "View all ({total})"
-msgstr "Alle anzeigen ({total})"
-
 #: src/components/agent-composer.tsx
 msgid "View file changes"
 msgstr "Dateiänderungen anzeigen"
@@ -6677,6 +6765,10 @@ msgstr "Web"
 #: src/components/agent-workbench.tsx
 msgid "Welcome to {agentName}"
 msgstr "Willkommen bei {agentName}"
+
+#: src/components/home-agent-sheet.tsx
+msgid "What Home starts when you send from here"
+msgstr "Was Home startet, wenn du von hier sendest"
 
 #: src/components/session-map.tsx
 msgid "What is running"

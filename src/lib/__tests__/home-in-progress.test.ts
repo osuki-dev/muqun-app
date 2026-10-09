@@ -1,12 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import {
-  boundTaskState,
-  HOME_IN_PROGRESS_LIMIT,
-  homeInProgressTasks,
-  homeWaitingTasks,
-  taskStateTone,
-} from '../home-in-progress';
+import { boundTaskState, homeWaitingTasks, taskStateTone } from '../home-in-progress';
 import type { ServerTasksIndex } from '../server-tasks-state';
 import type { TaskBinding, TaskState, TaskView } from '../task-ledger';
 
@@ -24,56 +18,6 @@ function index(byServer: Record<string, TaskView[]>): ServerTasksIndex {
     Object.entries(byServer).map(([serverId, tasks]) => [serverId, { tasks, fetchedAt: 1 }])
   );
 }
-
-describe('homeInProgressTasks', () => {
-  test('working, starting and queued only; waiting, idle and finished stay out', () => {
-    const tasks = index({
-      a: [
-        task('w', 'working', 9),
-        task('d', 'dispatching', 8),
-        task('q', 'queued', 7),
-        task('wait', 'waiting', 6),
-        task('idle', 'idle_unconfirmed', 5),
-        task('done', 'done', 4),
-        task('fail', 'failed', 3),
-        task('cxl', 'cancelled', 2),
-      ],
-    });
-    const { rows, total } = homeInProgressTasks(tasks, ['a']);
-    expect(rows.map((row) => row.task.taskId)).toEqual(['w', 'd', 'q']);
-    expect(total).toBe(3);
-  });
-
-  test('only the computers asked for, newest change first across them', () => {
-    const tasks = index({
-      a: [task('a1', 'working', 1), task('a2', 'working', 5)],
-      b: [task('b1', 'queued', 3)],
-      gone: [task('x', 'working', 99)],
-    });
-    const { rows } = homeInProgressTasks(tasks, ['a', 'b', 'missing']);
-    expect(rows.map((row) => `${row.serverId}:${row.task.taskId}`)).toEqual([
-      'a:a2',
-      'b:b1',
-      'a:a1',
-    ]);
-  });
-
-  test('capped at the limit, with the whole count for "View all"', () => {
-    const many = Array.from({ length: 8 }, (_, i) => task(`t${i}`, 'working', i));
-    const { rows, total } = homeInProgressTasks(index({ a: many }), ['a']);
-    expect(rows).toHaveLength(HOME_IN_PROGRESS_LIMIT);
-    expect(rows[0]!.task.taskId).toBe('t7');
-    expect(total).toBe(8);
-  });
-
-  test('nothing known is an empty group', () => {
-    expect(homeInProgressTasks({}, ['a'])).toEqual({ rows: [], total: 0 });
-    expect(homeInProgressTasks(index({ a: [task('d', 'done', 1)] }), [])).toEqual({
-      rows: [],
-      total: 0,
-    });
-  });
-});
 
 describe('homeWaitingTasks', () => {
   test('waiting tasks only, newest first', () => {

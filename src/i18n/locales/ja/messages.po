@@ -133,6 +133,19 @@ msgstr "このホストに {0} 件"
 msgid "{0} queued"
 msgstr "{0} 件が待機中"
 
+#. placeholder {0}: rollup.total
+#: src/components/home-computer-cards.tsx
+#: src/components/server-tasks-sheet.tsx
+msgid "{0} sub-tasks"
+msgstr "サブタスク {0} 件"
+
+#. placeholder {0}: rollup.total
+#. placeholder {1}: rollup.waiting
+#: src/components/home-computer-cards.tsx
+#: src/components/server-tasks-sheet.tsx
+msgid "{0} sub-tasks ({1} waiting)"
+msgstr "サブタスク {0} 件（{1} 件が対応待ち）"
+
 #. placeholder {0}: compact(inContext)
 #: src/components/agent-context-sheet.tsx
 msgid "{0} tokens the model last read"
@@ -281,6 +294,10 @@ msgstr "{host} はこのアプリが初めて見る鍵を提示しました。�
 msgid "{label} is temporarily locked. Use the system fallback or try later."
 msgstr "{label} は一時的にロックされています。システムの代替認証を使うか、しばらくしてからお試しください"
 
+#: src/components/home-computer-cards.tsx
+msgid "{label} settings, {footer}"
+msgstr "{label} の設定、{footer}"
+
 #: src/components/bounded-markdown.tsx
 msgid "{language} code copied to clipboard"
 msgstr "{language} のコードをクリップボードにコピーしました"
@@ -322,11 +339,24 @@ msgstr "{removeLabel}：{label}"
 msgid "{running} running of {0}"
 msgstr "{0} 件中 {running} 件が実行中"
 
+#: src/components/home-computer-cards.tsx
+msgid "{sessions} sessions"
+msgstr "セッション {sessions} 件"
+
+#: src/components/home-computer-cards.tsx
+msgid "{terminals} terminals"
+msgstr "ターミナル {terminals} 個"
+
 #: src/components/agent-composer.tsx
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-sessions-sheet.tsx
 msgid "{title} — finished while you were away"
 msgstr "{title} — 離れている間に完了しました"
+
+#. placeholder {0}: card.nowTotal - card.now.length
+#: src/components/home-computer-cards.tsx
+msgid "+{0} more"
+msgstr "他 {0} 件"
 
 #: src/lib/agent-widget-layout.tsx
 msgid "+{overflow} more"
@@ -402,6 +432,10 @@ msgstr "ターミナルを作成しました。開いて起動状態を確認し
 #: src/app/settings.tsx
 msgid "About"
 msgstr "アプリについて"
+
+#: src/components/server-tasks-sheet.tsx
+msgid "Acknowledge"
+msgstr "確認済みにする"
 
 #: src/app/commands.tsx
 msgid "Act on this terminal, or send it a command"
@@ -514,6 +548,7 @@ msgstr "アラート"
 msgid "Align the QR inside the frame"
 msgstr "QR コードを枠に合わせてください"
 
+#: src/components/home-recent-chips.tsx
 #: src/components/session-artifacts.tsx
 #: src/components/theme-browse-sheet.tsx
 msgid "All"
@@ -1101,6 +1136,10 @@ msgstr "ホームとアプリの外観を選びます。配色はテーマに従
 msgid "Choose project"
 msgstr "プロジェクトを選択"
 
+#: src/components/home-composer-dock.tsx
+msgid "Choose the agent Home starts on this computer"
+msgstr "ホームがこのコンピュータで起動するエージェントを選びます"
+
 #: src/components/changes-sheet.tsx
 msgid "Choose which changes to show"
 msgstr "表示する変更を選択"
@@ -1327,6 +1366,10 @@ msgstr "コンピュータが見つかりません"
 msgid "Computer offline"
 msgstr "コンピュータはオフライン"
 
+#: src/components/home-computer-cards.tsx
+msgid "Computer settings"
+msgstr "コンピュータの設定"
+
 #: src/components/home-composer-dock.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Computer unavailable."
@@ -1436,6 +1479,7 @@ msgstr "{address} に接続しています"
 msgid "Connecting…"
 msgstr "接続中…"
 
+#: src/components/home-editorial-layout.tsx
 #: src/components/pad-server-rail.tsx
 msgid "Connections"
 msgstr "接続"
@@ -1466,7 +1510,6 @@ msgid "Context used"
 msgstr "コンテキスト使用量"
 
 #: src/app/explore.tsx
-#: src/components/home-editorial-layout.tsx
 #: src/components/pad-server-rail.tsx
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Continue"
@@ -1975,6 +2018,7 @@ msgstr "セッションを開始できませんでした"
 msgid "Could not start a terminal."
 msgstr "ターミナルを開始できませんでした"
 
+#: src/components/home-composer-dock.tsx
 #: src/components/new-task-sheet.tsx
 msgid "Could not start the task."
 msgstr "タスクを開始できませんでした"
@@ -2402,10 +2446,12 @@ msgstr "変更されたファイルを行数の合計つきのフォルダーツ
 msgid "Every screen in the app."
 msgstr "アプリのすべての画面"
 
+#: src/components/home-computer-cards.tsx
 #: src/components/server-tasks-sheet.tsx
 msgid "exit {code}"
 msgstr "終了 {code}"
 
+#. placeholder {0}: result.code
 #. placeholder {0}: task.exitCode
 #: src/components/server-tasks-sheet.tsx
 msgid "Exit code {0}"
@@ -2722,6 +2768,10 @@ msgstr "コンピュータ一覧へ"
 msgid "Goal continuation"
 msgstr "目標の継続"
 
+#: src/components/home-composer-dock.tsx
+msgid "Goal for {agentName} · no attachments in a terminal"
+msgstr "{agentName} への指示 · ターミナルでは添付できません"
+
 #: src/app/commands.tsx
 msgid "Group"
 msgstr "グループ"
@@ -2786,6 +2836,15 @@ msgstr "履歴"
 msgid "Home"
 msgstr "ホーム"
 
+#: src/components/home-agent-sheet.tsx
+#: src/components/settings-servers.tsx
+msgid "Home agent"
+msgstr "ホームのエージェント"
+
+#: src/components/home-composer-dock.tsx
+msgid "Home agent: {agentName}"
+msgstr "ホームのエージェント: {agentName}"
+
 #: src/components/dev-home-ambient-controls.tsx
 msgid "Home effects · development only"
 msgstr "ホームのエフェクト · 開発用"
@@ -2828,9 +2887,14 @@ msgid "How to use Muqun"
 msgstr "Muqun の使い方"
 
 #: src/components/agent-session-tree-sheet.tsx
+#: src/components/home-computer-cards.tsx
 #: src/i18n/labels.ts
 msgid "Idle"
 msgstr "待機"
+
+#: src/components/home-computer-cards.tsx
+msgid "Idle · last finished {lastTitle} {lastAge}"
+msgstr "待機 · 最後に完了: {lastTitle}（{lastAge}）"
 
 #: src/i18n/labels.ts
 msgctxt "task state"
@@ -2886,7 +2950,6 @@ msgstr "ファイルをインポート"
 msgid "Import link"
 msgstr "リンクからインポート"
 
-#: src/components/home-editorial-layout.tsx
 #: src/components/server-tasks-sheet.tsx
 msgid "In progress"
 msgstr "進行中"
@@ -3024,6 +3087,10 @@ msgstr "使用中のコンピュータになると、ペアリング済みのデ
 #: src/components/skia-terminal.tsx
 msgid "Jump to latest output"
 msgstr "最新の出力へ移動"
+
+#: src/components/home-computer-cards.tsx
+msgid "Just finished"
+msgstr "完了したばかり"
 
 #: src/components/agent-sessions-sheet.tsx
 #: src/hooks/use-relative-time.ts
@@ -3842,6 +3909,10 @@ msgstr "何も変更されていません"
 msgid "Nothing yet — an “Always allow” reply lands here, for this project."
 msgstr "まだありません。「常に許可」の回答は、このプロジェクトのものとしてここに入ります"
 
+#: src/components/home-computer-cards.tsx
+msgid "Now"
+msgstr "実行中"
+
 #: src/components/toggle.tsx
 msgid "Off"
 msgstr "オフ"
@@ -3884,6 +3955,7 @@ msgstr "オンラインです"
 msgid "ONLINE"
 msgstr "オンライン"
 
+#: src/components/home-computer-cards.tsx
 #: src/components/home-connections.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/open-web-service-sheet.tsx
@@ -4494,6 +4566,7 @@ msgid "Receive agent blocks and gateway updates."
 msgstr "エージェントが応答待ちになった通知と Gateway の更新を受け取ります"
 
 #: src/components/agent-sessions-sheet.tsx
+#: src/components/home-editorial-layout.tsx
 msgid "Recent"
 msgstr "最近"
 
@@ -5090,9 +5163,14 @@ msgstr "次に送信: {0}"
 msgid "Sending to"
 msgstr "送信先"
 
+#: src/components/home-computer-cards.tsx
 #: src/components/home-connections.tsx
 msgid "Sends your next goal here. Long press to open it."
 msgstr "次の目標をここに送ります。長押しで開きます"
+
+#: src/components/home-computer-cards.tsx
+msgid "Sent · waiting for the computer"
+msgstr "送信済み · コンピュータの応答待ち"
 
 #: src/components/agent-sessions-sheet.tsx
 msgid "Session name"
@@ -5218,6 +5296,10 @@ msgstr "{0} を表示"
 #: src/components/settings-alerts.tsx
 msgid "Show agents and their status on the home screen. Updates while Muqun is open."
 msgstr "ホーム画面にエージェントとその状態を表示します。牧群（ぼくぐん）を開いている間は更新され続けます"
+
+#: src/components/home-recent-sessions.tsx
+msgid "Show all"
+msgstr "すべて表示"
 
 #: src/components/theme-appearance-settings.tsx
 msgid "Show artwork on Home"
@@ -5503,6 +5585,10 @@ msgstr "カメラを起動しています"
 msgid "Starting…"
 msgstr "開始しています…"
 
+#: src/components/home-agent-sheet.tsx
+msgid "Starts in a terminal"
+msgstr "ターミナルで起動"
+
 #: src/components/collaboration-notice.tsx
 msgid "Status unavailable"
 msgstr "状態を取得できません"
@@ -5740,6 +5826,7 @@ msgstr "一時ファイル"
 #: src/app/commands.tsx
 #: src/app/settings-terminal.tsx
 #: src/app/settings.tsx
+#: src/components/home-computer-cards.tsx
 #: src/components/home-launch-actions.tsx
 #: src/components/home-recent-sessions.tsx
 #: src/components/settings-server-capabilities.tsx
@@ -6088,6 +6175,7 @@ msgid "This computer has already handled that request."
 msgstr "このコンピュータはそのリクエストをすでに処理しています"
 
 #: src/app/new-task.tsx
+#: src/components/home-composer-dock.tsx
 msgid "This computer has no session to start an agent in."
 msgstr "このコンピュータにはエージェントを起動できるセッションがありません"
 
@@ -6113,6 +6201,10 @@ msgstr "このコンピュータはこのデバイスを認識しなくなりま
 #: src/lib/network-error.ts
 msgid "This computer refused the request."
 msgstr "このコンピュータはリクエストを拒否しました"
+
+#: src/components/home-computer-cards.tsx
+msgid "This computer’s Gateway does not keep a task list yet."
+msgstr "このコンピュータの Gateway はまだタスク一覧を記録していません。"
 
 #: src/lib/attachments.ts
 msgid "This device has no camera available."
@@ -6622,10 +6714,6 @@ msgstr "使用中"
 msgid "Version {version}{0}"
 msgstr "バージョン {version}{0}"
 
-#: src/components/home-in-progress.tsx
-msgid "View all ({total})"
-msgstr "すべて表示（{total}）"
-
 #: src/components/agent-composer.tsx
 msgid "View file changes"
 msgstr "ファイルの変更を表示"
@@ -6677,6 +6765,10 @@ msgstr "Web"
 #: src/components/agent-workbench.tsx
 msgid "Welcome to {agentName}"
 msgstr "{agentName} へようこそ"
+
+#: src/components/home-agent-sheet.tsx
+msgid "What Home starts when you send from here"
+msgstr "ここから送信したときにホームが起動するもの"
 
 #: src/components/session-map.tsx
 msgid "What is running"

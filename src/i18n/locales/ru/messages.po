@@ -133,6 +133,19 @@ msgstr "{0} на этом хосте"
 msgid "{0} queued"
 msgstr "{0} в очереди"
 
+#. placeholder {0}: rollup.total
+#: src/components/home-computer-cards.tsx
+#: src/components/server-tasks-sheet.tsx
+msgid "{0} sub-tasks"
+msgstr "Подзадач: {0}"
+
+#. placeholder {0}: rollup.total
+#. placeholder {1}: rollup.waiting
+#: src/components/home-computer-cards.tsx
+#: src/components/server-tasks-sheet.tsx
+msgid "{0} sub-tasks ({1} waiting)"
+msgstr "Подзадач: {0} (ждут: {1})"
+
 #. placeholder {0}: compact(inContext)
 #: src/components/agent-context-sheet.tsx
 msgid "{0} tokens the model last read"
@@ -281,6 +294,10 @@ msgstr "{host} предъявил ключ, которого это прилож
 msgid "{label} is temporarily locked. Use the system fallback or try later."
 msgstr "{label} временно заблокирован. Используйте системный запасной способ или повторите позже"
 
+#: src/components/home-computer-cards.tsx
+msgid "{label} settings, {footer}"
+msgstr "Настройки {label}, {footer}"
+
 #: src/components/bounded-markdown.tsx
 msgid "{language} code copied to clipboard"
 msgstr "Код {language} скопирован в буфер обмена"
@@ -322,11 +339,24 @@ msgstr "{removeLabel}: {label}"
 msgid "{running} running of {0}"
 msgstr "{running} из {0} выполняется"
 
+#: src/components/home-computer-cards.tsx
+msgid "{sessions} sessions"
+msgstr "Сессий: {sessions}"
+
+#: src/components/home-computer-cards.tsx
+msgid "{terminals} terminals"
+msgstr "Терминалов: {terminals}"
+
 #: src/components/agent-composer.tsx
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-sessions-sheet.tsx
 msgid "{title} — finished while you were away"
 msgstr "{title} — завершилось, пока вас не было"
+
+#. placeholder {0}: card.nowTotal - card.now.length
+#: src/components/home-computer-cards.tsx
+msgid "+{0} more"
+msgstr "Ещё {0}"
 
 #: src/lib/agent-widget-layout.tsx
 msgid "+{overflow} more"
@@ -402,6 +432,10 @@ msgstr "Терминал создан. Откройте его, чтобы пр�
 #: src/app/settings.tsx
 msgid "About"
 msgstr "О приложении"
+
+#: src/components/server-tasks-sheet.tsx
+msgid "Acknowledge"
+msgstr "Отметить как просмотренное"
 
 #: src/app/commands.tsx
 msgid "Act on this terminal, or send it a command"
@@ -514,6 +548,7 @@ msgstr "Уведомления"
 msgid "Align the QR inside the frame"
 msgstr "Наведите рамку на QR-код"
 
+#: src/components/home-recent-chips.tsx
 #: src/components/session-artifacts.tsx
 #: src/components/theme-browse-sheet.tsx
 msgid "All"
@@ -1101,6 +1136,10 @@ msgstr "Выберите вид главной и интерфейса. Цвет
 msgid "Choose project"
 msgstr "Выбрать проект"
 
+#: src/components/home-composer-dock.tsx
+msgid "Choose the agent Home starts on this computer"
+msgstr "Выбрать агента, которого Главная запускает на этом компьютере"
+
 #: src/components/changes-sheet.tsx
 msgid "Choose which changes to show"
 msgstr "Выбрать, какие изменения показывать"
@@ -1327,6 +1366,10 @@ msgstr "Компьютер не найден"
 msgid "Computer offline"
 msgstr "Компьютер не в сети"
 
+#: src/components/home-computer-cards.tsx
+msgid "Computer settings"
+msgstr "Настройки компьютера"
+
 #: src/components/home-composer-dock.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Computer unavailable."
@@ -1436,6 +1479,7 @@ msgstr "Подключаемся к {address}"
 msgid "Connecting…"
 msgstr "Подключение…"
 
+#: src/components/home-editorial-layout.tsx
 #: src/components/pad-server-rail.tsx
 msgid "Connections"
 msgstr "Подключения"
@@ -1466,7 +1510,6 @@ msgid "Context used"
 msgstr "Контекст занят"
 
 #: src/app/explore.tsx
-#: src/components/home-editorial-layout.tsx
 #: src/components/pad-server-rail.tsx
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Continue"
@@ -1975,6 +2018,7 @@ msgstr "Не удалось начать сессию"
 msgid "Could not start a terminal."
 msgstr "Не удалось запустить терминал"
 
+#: src/components/home-composer-dock.tsx
 #: src/components/new-task-sheet.tsx
 msgid "Could not start the task."
 msgstr "Не удалось запустить задачу"
@@ -2402,10 +2446,12 @@ msgstr "Все изменённые файлы в одном дереве пап
 msgid "Every screen in the app."
 msgstr "Все экраны приложения"
 
+#: src/components/home-computer-cards.tsx
 #: src/components/server-tasks-sheet.tsx
 msgid "exit {code}"
 msgstr "выход {code}"
 
+#. placeholder {0}: result.code
 #. placeholder {0}: task.exitCode
 #: src/components/server-tasks-sheet.tsx
 msgid "Exit code {0}"
@@ -2722,6 +2768,10 @@ msgstr "К вашим компьютерам"
 msgid "Goal continuation"
 msgstr "Продолжение цели"
 
+#: src/components/home-composer-dock.tsx
+msgid "Goal for {agentName} · no attachments in a terminal"
+msgstr "Цель для {agentName} · в терминале без вложений"
+
 #: src/app/commands.tsx
 msgid "Group"
 msgstr "Группа"
@@ -2786,6 +2836,15 @@ msgstr "История"
 msgid "Home"
 msgstr "Главная"
 
+#: src/components/home-agent-sheet.tsx
+#: src/components/settings-servers.tsx
+msgid "Home agent"
+msgstr "Агент Главной"
+
+#: src/components/home-composer-dock.tsx
+msgid "Home agent: {agentName}"
+msgstr "Агент Главной: {agentName}"
+
 #: src/components/dev-home-ambient-controls.tsx
 msgid "Home effects · development only"
 msgstr "Эффекты главного экрана · для разработки"
@@ -2828,9 +2887,14 @@ msgid "How to use Muqun"
 msgstr "Как пользоваться Muqun"
 
 #: src/components/agent-session-tree-sheet.tsx
+#: src/components/home-computer-cards.tsx
 #: src/i18n/labels.ts
 msgid "Idle"
 msgstr "Простаивает"
+
+#: src/components/home-computer-cards.tsx
+msgid "Idle · last finished {lastTitle} {lastAge}"
+msgstr "Простаивает · последнее завершено: {lastTitle} {lastAge}"
 
 #: src/i18n/labels.ts
 msgctxt "task state"
@@ -2886,7 +2950,6 @@ msgstr "Импортировать файл"
 msgid "Import link"
 msgstr "Импорт по ссылке"
 
-#: src/components/home-editorial-layout.tsx
 #: src/components/server-tasks-sheet.tsx
 msgid "In progress"
 msgstr "В работе"
@@ -3024,6 +3087,10 @@ msgstr "Его привязанные устройства появятся, к�
 #: src/components/skia-terminal.tsx
 msgid "Jump to latest output"
 msgstr "К последнему выводу"
+
+#: src/components/home-computer-cards.tsx
+msgid "Just finished"
+msgstr "Только что завершено"
 
 #: src/components/agent-sessions-sheet.tsx
 #: src/hooks/use-relative-time.ts
@@ -3842,6 +3909,10 @@ msgstr "Ничего не изменено"
 msgid "Nothing yet — an “Always allow” reply lands here, for this project."
 msgstr "Пока пусто — ответ «Разрешать всегда» появится здесь, для этого проекта"
 
+#: src/components/home-computer-cards.tsx
+msgid "Now"
+msgstr "Сейчас"
+
 #: src/components/toggle.tsx
 msgid "Off"
 msgstr "Выключено"
@@ -3884,6 +3955,7 @@ msgstr "В сети"
 msgid "ONLINE"
 msgstr "В СЕТИ"
 
+#: src/components/home-computer-cards.tsx
 #: src/components/home-connections.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/open-web-service-sheet.tsx
@@ -4494,6 +4566,7 @@ msgid "Receive agent blocks and gateway updates."
 msgstr "Получать сообщения о том, что агент ждёт, и обновления Gateway"
 
 #: src/components/agent-sessions-sheet.tsx
+#: src/components/home-editorial-layout.tsx
 msgid "Recent"
 msgstr "Недавние"
 
@@ -5090,9 +5163,14 @@ msgstr "Отправится следующим: {0}"
 msgid "Sending to"
 msgstr "Отправка"
 
+#: src/components/home-computer-cards.tsx
 #: src/components/home-connections.tsx
 msgid "Sends your next goal here. Long press to open it."
 msgstr "Следующая цель уйдёт сюда. Долгое нажатие — открыть"
+
+#: src/components/home-computer-cards.tsx
+msgid "Sent · waiting for the computer"
+msgstr "Отправлено · ждём компьютер"
 
 #: src/components/agent-sessions-sheet.tsx
 msgid "Session name"
@@ -5218,6 +5296,10 @@ msgstr "Показать {0}"
 #: src/components/settings-alerts.tsx
 msgid "Show agents and their status on the home screen. Updates while Muqun is open."
 msgstr "Показывать агентов и их статус на экране «Домой». Обновляется, пока Muqun открыт"
+
+#: src/components/home-recent-sessions.tsx
+msgid "Show all"
+msgstr "Показать все"
 
 #: src/components/theme-appearance-settings.tsx
 msgid "Show artwork on Home"
@@ -5503,6 +5585,10 @@ msgstr "Запускаем камеру"
 msgid "Starting…"
 msgstr "Запуск…"
 
+#: src/components/home-agent-sheet.tsx
+msgid "Starts in a terminal"
+msgstr "Запускается в терминале"
+
 #: src/components/collaboration-notice.tsx
 msgid "Status unavailable"
 msgstr "Состояние недоступно"
@@ -5740,6 +5826,7 @@ msgstr "Временные файлы"
 #: src/app/commands.tsx
 #: src/app/settings-terminal.tsx
 #: src/app/settings.tsx
+#: src/components/home-computer-cards.tsx
 #: src/components/home-launch-actions.tsx
 #: src/components/home-recent-sessions.tsx
 #: src/components/settings-server-capabilities.tsx
@@ -6088,6 +6175,7 @@ msgid "This computer has already handled that request."
 msgstr "Этот компьютер уже обработал этот запрос"
 
 #: src/app/new-task.tsx
+#: src/components/home-composer-dock.tsx
 msgid "This computer has no session to start an agent in."
 msgstr "На этом компьютере нет сеанса, в котором можно запустить агента"
 
@@ -6113,6 +6201,10 @@ msgstr "Этот компьютер больше не узнаёт это уст
 #: src/lib/network-error.ts
 msgid "This computer refused the request."
 msgstr "Этот компьютер отклонил запрос"
+
+#: src/components/home-computer-cards.tsx
+msgid "This computer’s Gateway does not keep a task list yet."
+msgstr "Gateway этого компьютера пока не ведёт список задач."
 
 #: src/lib/attachments.ts
 msgid "This device has no camera available."
@@ -6622,10 +6714,6 @@ msgstr "Используется"
 msgid "Version {version}{0}"
 msgstr "Версия {version}{0}"
 
-#: src/components/home-in-progress.tsx
-msgid "View all ({total})"
-msgstr "Показать все ({total})"
-
 #: src/components/agent-composer.tsx
 msgid "View file changes"
 msgstr "Просмотреть изменения файлов"
@@ -6677,6 +6765,10 @@ msgstr "Веб"
 #: src/components/agent-workbench.tsx
 msgid "Welcome to {agentName}"
 msgstr "Добро пожаловать в {agentName}"
+
+#: src/components/home-agent-sheet.tsx
+msgid "What Home starts when you send from here"
+msgstr "Что запускает Главная, когда вы отправляете отсюда"
 
 #: src/components/session-map.tsx
 msgid "What is running"

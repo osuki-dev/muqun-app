@@ -94,9 +94,8 @@ export type HomeEditorialLayoutProps = {
   /** Genuine pending approvals or requests, already wired by the parent. */
   attention?: ReactNode;
   /**
-   * The rows of tasks running on the computers, already wired by the parent;
-   * the layout gives them their "In progress" heading, between needs-you and
-   * Continue. Omit it when there is nothing running.
+   * The computer cards, already wired by the parent; the layout gives them
+   * their "Computers" heading, between needs-you and Recent.
    */
   progress?: ReactNode;
   /** Reachable gateways and saved SSH hosts, already wired by the parent. */
@@ -170,7 +169,7 @@ function EditorialSection({
  *   launches={<HomeLaunches />}
  *   recent={<HomeRecent />}
  *   attention={<HomeAttention />}
- *   progress={<HomeInProgress />}
+ *   progress={<HomeComputerCards />}
  *   connections={<HomeConnections />}
  *   controls={<HomeControls />}
  * />
@@ -579,7 +578,7 @@ export function HomeEditorialLayout({
                         accessibilityRole="header"
                         color={theme.colors.text}
                         style={[styles.padWorkTitle, scenePlate]}>
-                        {t`In progress`}
+                        {t`Computers`}
                       </Text>
                       {progress}
                     </View>
@@ -594,7 +593,7 @@ export function HomeEditorialLayout({
                           accessibilityRole="header"
                           color={theme.colors.text}
                           style={[styles.padWorkTitle, scenePlate]}>
-                          {t`Continue`}
+                          {t`Recent`}
                         </Text>
                       )}
                       {recent}
@@ -607,7 +606,7 @@ export function HomeEditorialLayout({
                         accessibilityRole="header"
                         color={theme.colors.text}
                         style={[styles.padWorkTitle, scenePlate]}>
-                        {t`Computers`}
+                        {t`Connections`}
                       </Text>
                       {connections}
                     </View>
@@ -734,7 +733,7 @@ export function HomeEditorialLayout({
                 borderColor={theme.colors.border}
                 textColor={theme.colors.text}
                 spacing={theme.spacing}
-                title={t`In progress`}
+                title={t`Computers`}
                 first={split}>
                 {progress}
               </EditorialSection>
@@ -744,7 +743,7 @@ export function HomeEditorialLayout({
                 borderColor={theme.colors.border}
                 textColor={theme.colors.text}
                 spacing={theme.spacing}
-                title={t`Continue`}
+                title={t`Recent`}
                 heading={recentHeading}
                 first={split && !hasProgress}>
                 {recent}
@@ -755,7 +754,7 @@ export function HomeEditorialLayout({
                 borderColor={theme.colors.border}
                 textColor={theme.colors.text}
                 spacing={theme.spacing}
-                title={t`Computers`}>
+                title={t`Connections`}>
                 {connections}
               </EditorialSection>
             ) : null}
@@ -824,7 +823,7 @@ export function HomeEditorialLayout({
                 borderColor={theme.colors.border}
                 textColor={theme.colors.text}
                 spacing={theme.spacing}
-                title={t`In progress`}
+                title={t`Computers`}
                 first>
                 {progress}
               </EditorialSection>
@@ -834,7 +833,7 @@ export function HomeEditorialLayout({
                 borderColor={theme.colors.border}
                 textColor={theme.colors.text}
                 spacing={theme.spacing}
-                title={t`Continue`}
+                title={t`Recent`}
                 heading={recentHeading}
                 first={!hasProgress}>
                 {recent}
@@ -845,7 +844,7 @@ export function HomeEditorialLayout({
                 borderColor={theme.colors.border}
                 textColor={theme.colors.text}
                 spacing={theme.spacing}
-                title={t`Computers`}>
+                title={t`Connections`}>
                 {connections}
               </EditorialSection>
             ) : null}
@@ -858,7 +857,7 @@ export function HomeEditorialLayout({
                   borderColor={theme.colors.border}
                   textColor={theme.colors.text}
                   spacing={theme.spacing}
-                  title={t`Computers`}
+                  title={t`Connections`}
                   first>
                   {connections}
                 </EditorialSection>
@@ -934,7 +933,7 @@ export function HomeEditorialLayout({
               borderColor={theme.colors.border}
               textColor={theme.colors.text}
               spacing={theme.spacing}
-              title={t`In progress`}
+              title={t`Computers`}
               first={!hasArtwork}>
               {progress}
             </EditorialSection>
@@ -945,7 +944,7 @@ export function HomeEditorialLayout({
               textColor={theme.colors.text}
               spacing={theme.spacing}
               first={!hasArtwork && !hasProgress}
-              title={t`Continue`}
+              title={t`Recent`}
               heading={recentHeading}>
               {recent}
             </EditorialSection>
@@ -955,7 +954,7 @@ export function HomeEditorialLayout({
               borderColor={theme.colors.border}
               textColor={theme.colors.text}
               spacing={theme.spacing}
-              title={t`Computers`}>
+              title={t`Connections`}>
               {connections}
             </EditorialSection>
           ) : null}
@@ -969,7 +968,7 @@ export function HomeEditorialLayout({
                 textColor={theme.colors.text}
                 spacing={theme.spacing}
                 first
-                title={t`Computers`}>
+                title={t`Connections`}>
                 {connections}
               </EditorialSection>
             ) : null}

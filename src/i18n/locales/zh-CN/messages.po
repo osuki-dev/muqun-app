@@ -133,6 +133,19 @@ msgstr "此主机上共 {0} 个"
 msgid "{0} queued"
 msgstr "{0} 条排队中"
 
+#. placeholder {0}: rollup.total
+#: src/components/home-computer-cards.tsx
+#: src/components/server-tasks-sheet.tsx
+msgid "{0} sub-tasks"
+msgstr "{0} 个子任务"
+
+#. placeholder {0}: rollup.total
+#. placeholder {1}: rollup.waiting
+#: src/components/home-computer-cards.tsx
+#: src/components/server-tasks-sheet.tsx
+msgid "{0} sub-tasks ({1} waiting)"
+msgstr "{0} 个子任务（{1} 个等待中）"
+
 #. placeholder {0}: compact(inContext)
 #: src/components/agent-context-sheet.tsx
 msgid "{0} tokens the model last read"
@@ -281,6 +294,10 @@ msgstr "{host} 出示了此应用从未见过的密钥。信任之前，请先�
 msgid "{label} is temporarily locked. Use the system fallback or try later."
 msgstr "{label} 已暂时锁定。请改用系统备用方式，或稍后再试"
 
+#: src/components/home-computer-cards.tsx
+msgid "{label} settings, {footer}"
+msgstr "{label} 设置，{footer}"
+
 #: src/components/bounded-markdown.tsx
 msgid "{language} code copied to clipboard"
 msgstr "已复制 {language} 代码到剪贴板"
@@ -322,11 +339,24 @@ msgstr "{removeLabel}：{label}"
 msgid "{running} running of {0}"
 msgstr "{0} 个中有 {running} 个正在运行"
 
+#: src/components/home-computer-cards.tsx
+msgid "{sessions} sessions"
+msgstr "{sessions} 个会话"
+
+#: src/components/home-computer-cards.tsx
+msgid "{terminals} terminals"
+msgstr "{terminals} 个终端"
+
 #: src/components/agent-composer.tsx
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-sessions-sheet.tsx
 msgid "{title} — finished while you were away"
 msgstr "{title} — 在你离开时完成"
+
+#. placeholder {0}: card.nowTotal - card.now.length
+#: src/components/home-computer-cards.tsx
+msgid "+{0} more"
+msgstr "还有 {0} 个"
 
 #: src/lib/agent-widget-layout.tsx
 msgid "+{overflow} more"
@@ -402,6 +432,10 @@ msgstr "已创建终端。请打开查看启动情况；再次启动可能产生
 #: src/app/settings.tsx
 msgid "About"
 msgstr "关于"
+
+#: src/components/server-tasks-sheet.tsx
+msgid "Acknowledge"
+msgstr "标记为已查看"
 
 #: src/app/commands.tsx
 msgid "Act on this terminal, or send it a command"
@@ -514,6 +548,7 @@ msgstr "提醒"
 msgid "Align the QR inside the frame"
 msgstr "将二维码对准框内"
 
+#: src/components/home-recent-chips.tsx
 #: src/components/session-artifacts.tsx
 #: src/components/theme-browse-sheet.tsx
 msgid "All"
@@ -1101,6 +1136,10 @@ msgstr "选择主页和应用界面样式。配色仍由主题决定"
 msgid "Choose project"
 msgstr "选择项目"
 
+#: src/components/home-composer-dock.tsx
+msgid "Choose the agent Home starts on this computer"
+msgstr "选择主页在这台电脑上启动的智能体"
+
 #: src/components/changes-sheet.tsx
 msgid "Choose which changes to show"
 msgstr "选择要显示的更改"
@@ -1327,6 +1366,10 @@ msgstr "找不到电脑"
 msgid "Computer offline"
 msgstr "电脑离线"
 
+#: src/components/home-computer-cards.tsx
+msgid "Computer settings"
+msgstr "电脑设置"
+
 #: src/components/home-composer-dock.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Computer unavailable."
@@ -1436,6 +1479,7 @@ msgstr "正在连接到 {address}"
 msgid "Connecting…"
 msgstr "连接中…"
 
+#: src/components/home-editorial-layout.tsx
 #: src/components/pad-server-rail.tsx
 msgid "Connections"
 msgstr "连接"
@@ -1466,7 +1510,6 @@ msgid "Context used"
 msgstr "上下文占用"
 
 #: src/app/explore.tsx
-#: src/components/home-editorial-layout.tsx
 #: src/components/pad-server-rail.tsx
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Continue"
@@ -1975,6 +2018,7 @@ msgstr "无法开始会话"
 msgid "Could not start a terminal."
 msgstr "无法启动终端"
 
+#: src/components/home-composer-dock.tsx
 #: src/components/new-task-sheet.tsx
 msgid "Could not start the task."
 msgstr "无法开始这个任务"
@@ -2402,10 +2446,12 @@ msgstr "所有改动的文件汇成一棵目录树，附带增删行数。打开
 msgid "Every screen in the app."
 msgstr "应用的每一个界面"
 
+#: src/components/home-computer-cards.tsx
 #: src/components/server-tasks-sheet.tsx
 msgid "exit {code}"
 msgstr "退出码 {code}"
 
+#. placeholder {0}: result.code
 #. placeholder {0}: task.exitCode
 #: src/components/server-tasks-sheet.tsx
 msgid "Exit code {0}"
@@ -2722,6 +2768,10 @@ msgstr "前往你的电脑"
 msgid "Goal continuation"
 msgstr "目标续接"
 
+#: src/components/home-composer-dock.tsx
+msgid "Goal for {agentName} · no attachments in a terminal"
+msgstr "给 {agentName} 的目标 · 终端中不能附加文件"
+
 #: src/app/commands.tsx
 msgid "Group"
 msgstr "分组"
@@ -2786,6 +2836,15 @@ msgstr "记录"
 msgid "Home"
 msgstr "主页"
 
+#: src/components/home-agent-sheet.tsx
+#: src/components/settings-servers.tsx
+msgid "Home agent"
+msgstr "主页智能体"
+
+#: src/components/home-composer-dock.tsx
+msgid "Home agent: {agentName}"
+msgstr "主页智能体：{agentName}"
+
 #: src/components/dev-home-ambient-controls.tsx
 msgid "Home effects · development only"
 msgstr "首页效果 · 仅开发模式"
@@ -2828,9 +2887,14 @@ msgid "How to use Muqun"
 msgstr "如何使用 Muqun"
 
 #: src/components/agent-session-tree-sheet.tsx
+#: src/components/home-computer-cards.tsx
 #: src/i18n/labels.ts
 msgid "Idle"
 msgstr "空闲"
+
+#: src/components/home-computer-cards.tsx
+msgid "Idle · last finished {lastTitle} {lastAge}"
+msgstr "空闲 · 最近完成：{lastTitle}（{lastAge}）"
 
 #: src/i18n/labels.ts
 msgctxt "task state"
@@ -2886,7 +2950,6 @@ msgstr "导入文件"
 msgid "Import link"
 msgstr "从链接导入"
 
-#: src/components/home-editorial-layout.tsx
 #: src/components/server-tasks-sheet.tsx
 msgid "In progress"
 msgstr "进行中"
@@ -3024,6 +3087,10 @@ msgstr "等它成为正在使用的电脑后，就会列出它已配对的设备
 #: src/components/skia-terminal.tsx
 msgid "Jump to latest output"
 msgstr "跳到最新输出"
+
+#: src/components/home-computer-cards.tsx
+msgid "Just finished"
+msgstr "刚完成"
 
 #: src/components/agent-sessions-sheet.tsx
 #: src/hooks/use-relative-time.ts
@@ -3842,6 +3909,10 @@ msgstr "没有做任何更改"
 msgid "Nothing yet — an “Always allow” reply lands here, for this project."
 msgstr "还没有内容——选择“始终允许”后，规则会出现在这里，属于本项目"
 
+#: src/components/home-computer-cards.tsx
+msgid "Now"
+msgstr "正在进行"
+
 #: src/components/toggle.tsx
 msgid "Off"
 msgstr "关闭"
@@ -3884,6 +3955,7 @@ msgstr "在线"
 msgid "ONLINE"
 msgstr "在线"
 
+#: src/components/home-computer-cards.tsx
 #: src/components/home-connections.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/open-web-service-sheet.tsx
@@ -4494,6 +4566,7 @@ msgid "Receive agent blocks and gateway updates."
 msgstr "接收代理的等待回应事件和 Gateway 更新"
 
 #: src/components/agent-sessions-sheet.tsx
+#: src/components/home-editorial-layout.tsx
 msgid "Recent"
 msgstr "最近"
 
@@ -5090,9 +5163,14 @@ msgstr "下一个发送：{0}"
 msgid "Sending to"
 msgstr "发送给"
 
+#: src/components/home-computer-cards.tsx
 #: src/components/home-connections.tsx
 msgid "Sends your next goal here. Long press to open it."
 msgstr "下一个目标将发送到这里。长按可打开"
+
+#: src/components/home-computer-cards.tsx
+msgid "Sent · waiting for the computer"
+msgstr "已发送 · 等待电脑响应"
 
 #: src/components/agent-sessions-sheet.tsx
 msgid "Session name"
@@ -5218,6 +5296,10 @@ msgstr "显示 {0}"
 #: src/components/settings-alerts.tsx
 msgid "Show agents and their status on the home screen. Updates while Muqun is open."
 msgstr "在主屏幕上显示代理及其状态。牧群打开时会持续更新"
+
+#: src/components/home-recent-sessions.tsx
+msgid "Show all"
+msgstr "显示全部"
 
 #: src/components/theme-appearance-settings.tsx
 msgid "Show artwork on Home"
@@ -5503,6 +5585,10 @@ msgstr "正在启动相机"
 msgid "Starting…"
 msgstr "启动中…"
 
+#: src/components/home-agent-sheet.tsx
+msgid "Starts in a terminal"
+msgstr "在终端中启动"
+
 #: src/components/collaboration-notice.tsx
 msgid "Status unavailable"
 msgstr "暂时无法获取状态"
@@ -5740,6 +5826,7 @@ msgstr "临时文件"
 #: src/app/commands.tsx
 #: src/app/settings-terminal.tsx
 #: src/app/settings.tsx
+#: src/components/home-computer-cards.tsx
 #: src/components/home-launch-actions.tsx
 #: src/components/home-recent-sessions.tsx
 #: src/components/settings-server-capabilities.tsx
@@ -6088,6 +6175,7 @@ msgid "This computer has already handled that request."
 msgstr "这台电脑已经处理过这个请求了"
 
 #: src/app/new-task.tsx
+#: src/components/home-composer-dock.tsx
 msgid "This computer has no session to start an agent in."
 msgstr "这台电脑没有可以启动代理的会话"
 
@@ -6113,6 +6201,10 @@ msgstr "这台电脑已经不认识本设备了。请重新配对以恢复连接
 #: src/lib/network-error.ts
 msgid "This computer refused the request."
 msgstr "这台电脑拒绝了这个请求"
+
+#: src/components/home-computer-cards.tsx
+msgid "This computer’s Gateway does not keep a task list yet."
+msgstr "这台电脑的 Gateway 还不记录任务列表。"
 
 #: src/lib/attachments.ts
 msgid "This device has no camera available."
@@ -6622,10 +6714,6 @@ msgstr "使用中"
 msgid "Version {version}{0}"
 msgstr "版本 {version}{0}"
 
-#: src/components/home-in-progress.tsx
-msgid "View all ({total})"
-msgstr "查看全部（{total}）"
-
 #: src/components/agent-composer.tsx
 msgid "View file changes"
 msgstr "查看文件变更"
@@ -6677,6 +6765,10 @@ msgstr "网页"
 #: src/components/agent-workbench.tsx
 msgid "Welcome to {agentName}"
 msgstr "欢迎使用 {agentName}"
+
+#: src/components/home-agent-sheet.tsx
+msgid "What Home starts when you send from here"
+msgstr "从这里发送时主页启动的智能体"
 
 #: src/components/session-map.tsx
 msgid "What is running"

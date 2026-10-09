@@ -133,6 +133,19 @@ msgstr "{0} trên máy chủ này"
 msgid "{0} queued"
 msgstr "{0} đang chờ"
 
+#. placeholder {0}: rollup.total
+#: src/components/home-computer-cards.tsx
+#: src/components/server-tasks-sheet.tsx
+msgid "{0} sub-tasks"
+msgstr "{0} nhiệm vụ con"
+
+#. placeholder {0}: rollup.total
+#. placeholder {1}: rollup.waiting
+#: src/components/home-computer-cards.tsx
+#: src/components/server-tasks-sheet.tsx
+msgid "{0} sub-tasks ({1} waiting)"
+msgstr "{0} nhiệm vụ con ({1} đang chờ)"
+
 #. placeholder {0}: compact(inContext)
 #: src/components/agent-context-sheet.tsx
 msgid "{0} tokens the model last read"
@@ -281,6 +294,10 @@ msgstr "{host} đưa ra một khóa mà ứng dụng này chưa từng thấy. H
 msgid "{label} is temporarily locked. Use the system fallback or try later."
 msgstr "{label} tạm thời bị khóa. Hãy dùng cách dự phòng của hệ thống hoặc thử lại sau"
 
+#: src/components/home-computer-cards.tsx
+msgid "{label} settings, {footer}"
+msgstr "Cài đặt {label}, {footer}"
+
 #: src/components/bounded-markdown.tsx
 msgid "{language} code copied to clipboard"
 msgstr "Đã sao chép mã {language} vào bộ nhớ tạm"
@@ -322,11 +339,24 @@ msgstr "{removeLabel}: {label}"
 msgid "{running} running of {0}"
 msgstr "{running} trong {0} đang chạy"
 
+#: src/components/home-computer-cards.tsx
+msgid "{sessions} sessions"
+msgstr "{sessions} phiên"
+
+#: src/components/home-computer-cards.tsx
+msgid "{terminals} terminals"
+msgstr "{terminals} terminal"
+
 #: src/components/agent-composer.tsx
 #: src/components/agent-session-tree-sheet.tsx
 #: src/components/agent-sessions-sheet.tsx
 msgid "{title} — finished while you were away"
 msgstr "{title} — đã xong khi bạn đi vắng"
+
+#. placeholder {0}: card.nowTotal - card.now.length
+#: src/components/home-computer-cards.tsx
+msgid "+{0} more"
+msgstr "+{0} nữa"
 
 #: src/lib/agent-widget-layout.tsx
 msgid "+{overflow} more"
@@ -402,6 +432,10 @@ msgstr "Đã tạo một terminal. Mở để kiểm tra việc khởi động; 
 #: src/app/settings.tsx
 msgid "About"
 msgstr "Giới thiệu"
+
+#: src/components/server-tasks-sheet.tsx
+msgid "Acknowledge"
+msgstr "Đánh dấu đã xem"
 
 #: src/app/commands.tsx
 msgid "Act on this terminal, or send it a command"
@@ -514,6 +548,7 @@ msgstr "Cảnh báo"
 msgid "Align the QR inside the frame"
 msgstr "Căn mã QR vào trong khung"
 
+#: src/components/home-recent-chips.tsx
 #: src/components/session-artifacts.tsx
 #: src/components/theme-browse-sheet.tsx
 msgid "All"
@@ -1101,6 +1136,10 @@ msgstr "Chọn kiểu trang chủ và giao diện ứng dụng. Màu sắc vẫn
 msgid "Choose project"
 msgstr "Chọn dự án"
 
+#: src/components/home-composer-dock.tsx
+msgid "Choose the agent Home starts on this computer"
+msgstr "Chọn tác tử mà Trang chủ khởi động trên máy tính này"
+
 #: src/components/changes-sheet.tsx
 msgid "Choose which changes to show"
 msgstr "Chọn thay đổi cần hiển thị"
@@ -1327,6 +1366,10 @@ msgstr "Không tìm thấy máy tính"
 msgid "Computer offline"
 msgstr "Máy tính ngoại tuyến"
 
+#: src/components/home-computer-cards.tsx
+msgid "Computer settings"
+msgstr "Cài đặt máy tính"
+
 #: src/components/home-composer-dock.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Computer unavailable."
@@ -1436,6 +1479,7 @@ msgstr "Đang kết nối đến {address}"
 msgid "Connecting…"
 msgstr "Đang kết nối…"
 
+#: src/components/home-editorial-layout.tsx
 #: src/components/pad-server-rail.tsx
 msgid "Connections"
 msgstr "Kết nối"
@@ -1466,7 +1510,6 @@ msgid "Context used"
 msgstr "Ngữ cảnh đã dùng"
 
 #: src/app/explore.tsx
-#: src/components/home-editorial-layout.tsx
 #: src/components/pad-server-rail.tsx
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Continue"
@@ -1975,6 +2018,7 @@ msgstr "Không thể bắt đầu phiên"
 msgid "Could not start a terminal."
 msgstr "Không thể khởi động terminal"
 
+#: src/components/home-composer-dock.tsx
 #: src/components/new-task-sheet.tsx
 msgid "Could not start the task."
 msgstr "Không thể bắt đầu tác vụ"
@@ -2402,10 +2446,12 @@ msgstr "Mọi tệp đã thay đổi trong một cây thư mục kèm tổng s�
 msgid "Every screen in the app."
 msgstr "Mọi màn hình trong ứng dụng"
 
+#: src/components/home-computer-cards.tsx
 #: src/components/server-tasks-sheet.tsx
 msgid "exit {code}"
 msgstr "thoát {code}"
 
+#. placeholder {0}: result.code
 #. placeholder {0}: task.exitCode
 #: src/components/server-tasks-sheet.tsx
 msgid "Exit code {0}"
@@ -2722,6 +2768,10 @@ msgstr "Đến các máy tính của bạn"
 msgid "Goal continuation"
 msgstr "Tiếp tục mục tiêu"
 
+#: src/components/home-composer-dock.tsx
+msgid "Goal for {agentName} · no attachments in a terminal"
+msgstr "Mục tiêu cho {agentName} · không đính kèm trong terminal"
+
 #: src/app/commands.tsx
 msgid "Group"
 msgstr "Nhóm"
@@ -2786,6 +2836,15 @@ msgstr "Lịch sử"
 msgid "Home"
 msgstr "Trang chủ"
 
+#: src/components/home-agent-sheet.tsx
+#: src/components/settings-servers.tsx
+msgid "Home agent"
+msgstr "Tác tử Trang chủ"
+
+#: src/components/home-composer-dock.tsx
+msgid "Home agent: {agentName}"
+msgstr "Tác tử Trang chủ: {agentName}"
+
 #: src/components/dev-home-ambient-controls.tsx
 msgid "Home effects · development only"
 msgstr "Hiệu ứng trang chủ · chỉ dành cho phát triển"
@@ -2828,9 +2887,14 @@ msgid "How to use Muqun"
 msgstr "Cách dùng Muqun"
 
 #: src/components/agent-session-tree-sheet.tsx
+#: src/components/home-computer-cards.tsx
 #: src/i18n/labels.ts
 msgid "Idle"
 msgstr "Rảnh"
+
+#: src/components/home-computer-cards.tsx
+msgid "Idle · last finished {lastTitle} {lastAge}"
+msgstr "Rảnh · xong gần nhất: {lastTitle} {lastAge}"
 
 #: src/i18n/labels.ts
 msgctxt "task state"
@@ -2886,7 +2950,6 @@ msgstr "Nhập tệp"
 msgid "Import link"
 msgstr "Nhập từ liên kết"
 
-#: src/components/home-editorial-layout.tsx
 #: src/components/server-tasks-sheet.tsx
 msgid "In progress"
 msgstr "Đang chạy"
@@ -3024,6 +3087,10 @@ msgstr "Các thiết bị đã ghép nối của nó sẽ được liệt kê kh
 #: src/components/skia-terminal.tsx
 msgid "Jump to latest output"
 msgstr "Nhảy đến đầu ra mới nhất"
+
+#: src/components/home-computer-cards.tsx
+msgid "Just finished"
+msgstr "Vừa xong"
 
 #: src/components/agent-sessions-sheet.tsx
 #: src/hooks/use-relative-time.ts
@@ -3842,6 +3909,10 @@ msgstr "Không có gì thay đổi"
 msgid "Nothing yet — an “Always allow” reply lands here, for this project."
 msgstr "Chưa có gì — câu trả lời “Luôn cho phép” sẽ nằm ở đây, cho dự án này"
 
+#: src/components/home-computer-cards.tsx
+msgid "Now"
+msgstr "Hiện tại"
+
 #: src/components/toggle.tsx
 msgid "Off"
 msgstr "Tắt"
@@ -3884,6 +3955,7 @@ msgstr "Trực tuyến"
 msgid "ONLINE"
 msgstr "TRỰC TUYẾN"
 
+#: src/components/home-computer-cards.tsx
 #: src/components/home-connections.tsx
 #: src/components/in-app-notification-host.tsx
 #: src/components/open-web-service-sheet.tsx
@@ -4494,6 +4566,7 @@ msgid "Receive agent blocks and gateway updates."
 msgstr "Nhận thông báo khi tác tử chờ và các cập nhật của gateway"
 
 #: src/components/agent-sessions-sheet.tsx
+#: src/components/home-editorial-layout.tsx
 msgid "Recent"
 msgstr "Gần đây"
 
@@ -5090,9 +5163,14 @@ msgstr "Gửi tiếp theo: {0}"
 msgid "Sending to"
 msgstr "Đang gửi đến"
 
+#: src/components/home-computer-cards.tsx
 #: src/components/home-connections.tsx
 msgid "Sends your next goal here. Long press to open it."
 msgstr "Gửi mục tiêu tiếp theo tới đây. Nhấn giữ để mở"
+
+#: src/components/home-computer-cards.tsx
+msgid "Sent · waiting for the computer"
+msgstr "Đã gửi · đang chờ máy tính"
 
 #: src/components/agent-sessions-sheet.tsx
 msgid "Session name"
@@ -5218,6 +5296,10 @@ msgstr "Hiện {0}"
 #: src/components/settings-alerts.tsx
 msgid "Show agents and their status on the home screen. Updates while Muqun is open."
 msgstr "Hiện các tác tử và trạng thái của chúng trên màn hình chính. Cập nhật khi Muqun đang mở"
+
+#: src/components/home-recent-sessions.tsx
+msgid "Show all"
+msgstr "Hiện tất cả"
 
 #: src/components/theme-appearance-settings.tsx
 msgid "Show artwork on Home"
@@ -5503,6 +5585,10 @@ msgstr "Đang khởi động camera"
 msgid "Starting…"
 msgstr "Đang bắt đầu…"
 
+#: src/components/home-agent-sheet.tsx
+msgid "Starts in a terminal"
+msgstr "Khởi động trong terminal"
+
 #: src/components/collaboration-notice.tsx
 msgid "Status unavailable"
 msgstr "Không lấy được trạng thái"
@@ -5740,6 +5826,7 @@ msgstr "Tệp tạm"
 #: src/app/commands.tsx
 #: src/app/settings-terminal.tsx
 #: src/app/settings.tsx
+#: src/components/home-computer-cards.tsx
 #: src/components/home-launch-actions.tsx
 #: src/components/home-recent-sessions.tsx
 #: src/components/settings-server-capabilities.tsx
@@ -6088,6 +6175,7 @@ msgid "This computer has already handled that request."
 msgstr "Máy tính này đã xử lý yêu cầu đó rồi"
 
 #: src/app/new-task.tsx
+#: src/components/home-composer-dock.tsx
 msgid "This computer has no session to start an agent in."
 msgstr "Máy tính này không có phiên nào để khởi động tác tử"
 
@@ -6113,6 +6201,10 @@ msgstr "Máy tính này không còn nhận ra thiết bị này. Hãy ghép nố
 #: src/lib/network-error.ts
 msgid "This computer refused the request."
 msgstr "Máy tính này đã từ chối yêu cầu"
+
+#: src/components/home-computer-cards.tsx
+msgid "This computer’s Gateway does not keep a task list yet."
+msgstr "Gateway của máy tính này chưa lưu danh sách nhiệm vụ."
 
 #: src/lib/attachments.ts
 msgid "This device has no camera available."
@@ -6622,10 +6714,6 @@ msgstr "Đang dùng"
 msgid "Version {version}{0}"
 msgstr "Phiên bản {version}{0}"
 
-#: src/components/home-in-progress.tsx
-msgid "View all ({total})"
-msgstr "Xem tất cả ({total})"
-
 #: src/components/agent-composer.tsx
 msgid "View file changes"
 msgstr "Xem các thay đổi tệp"
@@ -6677,6 +6765,10 @@ msgstr "Web"
 #: src/components/agent-workbench.tsx
 msgid "Welcome to {agentName}"
 msgstr "Chào mừng đến với {agentName}"
+
+#: src/components/home-agent-sheet.tsx
+msgid "What Home starts when you send from here"
+msgstr "Thứ Trang chủ khởi động khi bạn gửi từ đây"
 
 #: src/components/session-map.tsx
 msgid "What is running"

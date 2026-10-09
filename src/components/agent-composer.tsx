@@ -397,6 +397,8 @@ export interface AgentComposerProps {
   canPickMode?: boolean;
   /** Whether the session's agent takes attachments. Absent means yes. */
   canAttach?: boolean;
+  /** Replaces the field's own invitation, e.g. to say why attaching is off. */
+  placeholder?: string;
   /** What a session chip leads with; see `lib/agent-session-chip.ts`. */
   sessionLead?: (session: AgentSessionInfo) => string | undefined;
   onOpenDiffSheet: () => void;
@@ -503,6 +505,7 @@ export const AgentComposer = memo(function AgentComposer({
   onOpenModeSheet,
   canPickMode = true,
   canAttach = true,
+  placeholder,
   sessionLead,
   onOpenDiffSheet,
   onOpenSessionsSheet,
@@ -1654,7 +1657,7 @@ export const AgentComposer = memo(function AgentComposer({
                     ? agentName
                       ? t`${agentName} is offline`
                       : t`The agent is offline`
-                    : t`Send a message, type / for commands, @ for files…`,
+                    : (placeholder ?? t`Send a message, type / for commands, @ for files…`),
                   editable: !sending && !disabled,
                   testID: inputTestID,
                   selection: slashPopup.inputProps.selection,
