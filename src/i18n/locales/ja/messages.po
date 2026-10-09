@@ -672,7 +672,7 @@ msgstr "承認が必要です"
 
 #: src/lib/release-notes.ts
 msgid "Approvals and status changes for every session arrive over one live connection per computer, not only for the session you have open."
-msgstr "コンピューターごとに1本のライブ接続で、開いているセッションだけでなく、すべてのセッションの承認と状態の変化が届きます"
+msgstr "コンピュータごとに1本のライブ接続で、開いているセッションだけでなく、すべてのセッションの承認と状態の変化が届きます"
 
 #: src/components/agent-mode-sheet.tsx
 msgid "Architecture, design proposals, step-by-step roadmaps."
@@ -2388,7 +2388,7 @@ msgstr "推定コスト"
 
 #: src/components/launch-intro.tsx
 msgid "Every agent on your computer, in your hand."
-msgstr "コンピューターのすべてのエージェントを、手のひらに"
+msgstr "コンピュータのすべてのエージェントを、手のひらに"
 
 #: src/components/launch-intro.tsx
 msgid "Every changed file in one folder tree with line totals. Open a patch, or discard a file from its menu."
@@ -4937,7 +4937,7 @@ msgstr "Gateway の QR コードをスキャンするか、アドレスを入力
 
 #: src/components/launch-intro.tsx
 msgid "Scan the QR code of a Gateway on your own computer. No account, no relay, end-to-end encrypted."
-msgstr "自分のコンピューターで動く Gateway の QR コードを読み取るだけ。アカウント不要、中継サーバーなし、エンドツーエンド暗号化"
+msgstr "自分のコンピュータで動く Gateway の QR コードを読み取るだけ。アカウント不要、中継サーバーなし、エンドツーエンド暗号化"
 
 #: src/components/pairing-camera.tsx
 msgid "Scanning needs a camera, which this browser does not offer."
@@ -5113,7 +5113,7 @@ msgstr "アプリロックを使う前に、デバイスのパスコードを設
 
 #: src/app/explore.tsx
 msgid "Set one up on your computer"
-msgstr "自分のパソコンに用意する"
+msgstr "自分のコンピュータに用意する"
 
 #: src/lib/demo-gateway.ts
 msgid "Set the AI model for Claude Code"
@@ -5136,7 +5136,7 @@ msgstr "先にシステム設定で {label} を設定してください"
 
 #: src/app/explore.tsx
 msgid "Set up a Gateway on your computer"
-msgstr "自分のパソコンに Gateway を用意する"
+msgstr "自分のコンピュータに Gateway を用意する"
 
 #: src/components/agent-model-sheet.tsx
 msgid "Set up on the host"
@@ -5151,7 +5151,7 @@ msgstr "設定"
 
 #: src/components/launch-intro.tsx
 msgid "Several agents, one computer"
-msgstr "1台のコンピューターに複数のエージェント"
+msgstr "1台のコンピュータに複数のエージェント"
 
 #: src/components/agent-tool-card.tsx
 msgid "Several answers"
@@ -5159,7 +5159,7 @@ msgstr "複数回答可"
 
 #: src/lib/release-notes.ts
 msgid "Several coding agents on one computer: OpenCode, DeepSeek and T3 Code each get their own tile on Home, with their own sessions and workbench."
-msgstr "1台のコンピューターで複数のコーディングエージェントを使えます。OpenCode、DeepSeek、T3 Code はホームにそれぞれのタイルを持ち、セッションとワークベンチも別々です"
+msgstr "1台のコンピュータで複数のコーディングエージェントを使えます。OpenCode、DeepSeek、T3 Code はホームにそれぞれのタイルを持ち、セッションとワークベンチも別々です"
 
 #: src/i18n/labels.ts
 msgctxt "agent slash command"
