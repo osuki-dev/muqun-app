@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { MCP_SERVER_CAPABILITY, hasMcpServer, parseMcpToken } from '../mcp-tokens';
+import { MCP_SERVER_CAPABILITY, hasMcpServer, parseMcpToken, parseTokenList } from '../mcp-tokens';
 
 describe('parseMcpToken', () => {
   test('a pane token with an expiry', () => {
@@ -51,5 +51,29 @@ describe('parseMcpToken', () => {
   test('capability', () => {
     expect(hasMcpServer([MCP_SERVER_CAPABILITY])).toBe(true);
     expect(hasMcpServer(undefined)).toBe(false);
+  });
+});
+
+describe('last_used_ms of zero', () => {
+  test('reads as never used', () => {
+    const token = parseMcpToken({
+      id: 'k3',
+      binding: { kind: 'agent', agent_id: 'claude' },
+      last_used_ms: 0,
+    });
+    expect(token?.lastUsedMs).toBeUndefined();
+    expect(token && 'lastUsedMs' in token).toBe(false);
+  });
+});
+
+describe('parseTokenList', () => {
+  test('a body without a tokens array is a failure, not an empty list', () => {
+    expect(parseTokenList({})).toBeNull();
+    expect(parseTokenList({ tokens: 'x' })).toBeNull();
+    expect(parseTokenList(null)).toBeNull();
+  });
+
+  test('an empty array is an empty list', () => {
+    expect(parseTokenList({ tokens: [] })).toEqual([]);
   });
 });
