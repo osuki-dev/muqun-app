@@ -18,15 +18,32 @@
  */
 
 export const OFFER_TTL_MS = 2 * 60_000;
+/** How long a claimed or expired offer can still be recalled into the composer. */
+export const SPENT_TTL_MS = 10 * 60_000;
 
 type Offer = { serverId: string; prompt: string; offeredAtMs: number };
+type Spent = { serverId: string; prompt: string; atMs: number };
 
 const offers = new Map<string, Offer>();
+/**
+ * Offers that were claimed or expired, kept a while so a workbench that came up
+ * too late (or a remount) can put the goal back in its composer, unsent. This is
+ * the only source a prefill reads: the route's `prompt` param is never trusted,
+ * since any deep link can set it.
+ */
+const spent = new Map<string, Spent>();
 let nextOffer = 0;
 
 function prune(nowMs: number): void {
   for (const [id, offer] of offers) {
-    if (nowMs - offer.offeredAtMs > OFFER_TTL_MS) offers.delete(id);
+    const expiredAtMs = offer.offeredAtMs + OFFER_TTL_MS;
+    if (nowMs > expiredAtMs) {
+      offers.delete(id);
+      spent.set(id, { serverId: offer.serverId, prompt: offer.prompt, atMs: expiredAtMs });
+    }
+  }
+  for (const [id, record] of spent) {
+    if (nowMs - record.atMs > SPENT_TTL_MS) spent.delete(id);
   }
 }
 
@@ -39,9 +56,10 @@ export function offerInitialPrompt(serverId: string, prompt: string, nowMs = Dat
   return id;
 }
 
-/** The navigation that offered `promptId` did not happen. */
+/** The navigation that offered `promptId` did not happen: forget it entirely. */
 export function withdrawInitialPrompt(promptId: string): void {
   offers.delete(promptId);
+  spent.delete(promptId);
 }
 
 /**
@@ -58,7 +76,24 @@ export function claimInitialPrompt(
   const offer = offers.get(promptId);
   if (!offer || offer.serverId !== serverId) return null;
   offers.delete(promptId);
+  spent.set(promptId, { serverId, prompt: offer.prompt, atMs: nowMs });
   return offer.prompt;
+}
+
+/**
+ * The text of an offer that was claimed or expired, for prefilling -- never
+ * sending. Null for an id this app never offered, another computer's offer, or
+ * one spent more than `SPENT_TTL_MS` ago.
+ */
+export function recallInitialPrompt(
+  promptId: string,
+  serverId: string,
+  nowMs = Date.now()
+): string | null {
+  prune(nowMs);
+  const record = spent.get(promptId);
+  if (!record || record.serverId !== serverId) return null;
+  return record.prompt;
 }
 
 export type InitialPromptAction =
@@ -69,17 +104,18 @@ export type InitialPromptAction =
 /**
  * What a ready workbench does with Home's goal. A live offer is sent. An offer
  * that is gone -- expired while a slow tunnel came up, or already claimed --
- * must not lose the goal either: the route's readable copy is put in the
- * composer, unsent, for the reader to send. Never over a session that already
- * shows something, where the goal would read as a reply to it.
+ * must not lose the goal either: the ledger's own copy (`recallInitialPrompt`)
+ * is put in the composer, unsent, for the reader to send. Never over a session
+ * that already shows something, where the goal would read as a reply to it.
+ * The route's `prompt` param plays no part: any deep link can set it.
  */
 export function initialPromptAction(input: {
   claimed: string | null;
-  routePrompt?: string;
+  recalled: string | null;
   sessionHasContent: boolean;
 }): InitialPromptAction {
   if (input.claimed !== null) return { kind: 'send', prompt: input.claimed };
-  const fallback = input.routePrompt?.trim();
+  const fallback = input.recalled?.trim();
   if (!fallback || input.sessionHasContent) return { kind: 'none' };
   return { kind: 'prefill', prompt: fallback };
 }

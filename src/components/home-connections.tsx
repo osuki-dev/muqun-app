@@ -177,6 +177,16 @@ function GatewayConnectionRow({
       }
       onPress={() => (onSelect ? onSelect(server.serverId) : onOpen(server.serverId))}
       onLongPress={onSelect ? () => onOpen(server.serverId) : undefined}
+      // The long press as a named action, so a screen reader can reach it
+      // without performing the gesture.
+      accessibilityActions={onSelect ? [{ name: 'longpress', label: t`Open` }] : undefined}
+      onAccessibilityAction={
+        onSelect
+          ? (event) => {
+              if (event.nativeEvent.actionName === 'longpress') onOpen(server.serverId);
+            }
+          : undefined
+      }
       style={[
         styles.row,
         hasSeparator && {

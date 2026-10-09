@@ -35,3 +35,17 @@ test('a Home computer row targets the composer; a long press opens it', () => {
 test('the phone composer is kept clear of the keyboard; the Pad keeps its own column', () => {
   expect(overview).toContain('bottomOffset={isPad ? undefined : HOME_COMPOSER_KEYBOARD_OFFSET}');
 });
+
+test('the workbench never reads the route prompt; prefill comes from the ledger only', () => {
+  const workbench = readFileSync(new URL('../agent-workbench.tsx', import.meta.url), 'utf8');
+  const agentRoute = readFileSync(new URL('../../app/agent.tsx', import.meta.url), 'utf8');
+  const padDetail = readFileSync(new URL('../pad-agent-detail.tsx', import.meta.url), 'utf8');
+  expect(/\binitialPrompt\b/.test(workbench)).toBe(false);
+  expect(workbench).toContain('recalled: recallInitialPrompt(initialPromptId, serverId)');
+  expect(/\binitialPrompt=/.test(agentRoute)).toBe(false);
+  expect(/\binitialPrompt=/.test(padDetail)).toBe(false);
+});
+
+test('the long press is reachable as a named accessibility action', () => {
+  expect(connections).toContain("[{ name: 'longpress', label: t`Open` }]");
+});

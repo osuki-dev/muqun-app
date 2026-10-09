@@ -165,3 +165,20 @@ describe('homeContinueMetaChars', () => {
     expect(homeContinueMetaChars(300, 16)).toBeLessThan(homeContinueMetaChars(300, 12));
   });
 });
+
+describe('homeContinueComputerLabel with more than one computer', () => {
+  test("a row's own computer wins, never another record's label", () => {
+    const servers = [
+      { serverId: 'host-default', label: 'osk' },
+      { serverId: 'renamed', label: 'coding' },
+    ];
+    expect(homeContinueComputerLabel(servers, 'renamed')).toBe('coding');
+    expect(homeContinueComputerLabel(servers, 'host-default')).toBe('osk');
+  });
+
+  test('a serverId no paired record has gets no label at all', () => {
+    expect(homeContinueComputerLabel([{ serverId: 'renamed', label: 'coding' }], 'osk')).toBe(
+      undefined
+    );
+  });
+});
