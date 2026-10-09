@@ -19,7 +19,12 @@ import { PressableScale } from '@/components/pressable-scale';
 import { usePaneChatColors } from '@/components/pane-chat-blocks';
 import { useMonoFontFamily } from '@/hooks/use-user-fonts';
 import { isSafeExternalLink } from '@/lib/safe-link';
-import { MARKDOWN_CHUNK_CHARS, MARKDOWN_NATIVE_CEILING, capMarkdown } from '@/lib/markdown-cap';
+import {
+  MARKDOWN_CHUNK_CHARS,
+  MARKDOWN_NATIVE_CEILING,
+  capMarkdown,
+  inlineMarkdown,
+} from '@/lib/markdown-cap';
 import { AGENT_TYPE } from '@/constants/agent-type';
 
 /**
@@ -121,6 +126,12 @@ export interface BoundedMarkdownProps {
   imageRequestHeaders?: Record<string, string>;
   /** A tapped image, by the URL it was loaded from. Images are inert without it. */
   onImagePress?: (url: string) => void;
+  /**
+   * The row variant: one inline run (`inlineMarkdown`) clamped to this many
+   * lines with a tail ellipsis, not selectable, links drawn as text and
+   * touches passed to the row underneath. For a task's title or state line.
+   */
+  clampLines?: number;
   testID?: string;
 }
 
@@ -134,6 +145,7 @@ export const BoundedMarkdown = memo(function BoundedMarkdown({
   selectionColor,
   imageRequestHeaders,
   onImagePress,
+  clampLines,
   testID,
 }: BoundedMarkdownProps) {
   const { t } = useLingui();
@@ -161,6 +173,23 @@ export const BoundedMarkdown = memo(function BoundedMarkdown({
         showMoreLabel={t`Show more`}
       />
     ) : null;
+
+  if (clampLines) {
+    return (
+      <View pointerEvents="none" style={containerStyle} testID={testID}>
+        <DiagramMarkdown
+          flavor="commonmark"
+          markdown={inlineMarkdown(capped.text)}
+          markdownStyle={markdownStyle}
+          numberOfLines={clampLines}
+          ellipsizeMode="tail"
+          selectable={false}
+          streamingAnimation={false}
+          textBreakStrategy="simple"
+        />
+      </View>
+    );
+  }
 
   if (plain) {
     return (

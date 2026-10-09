@@ -28,9 +28,11 @@ import Animated, {
 
 import { AgentActionMenu, type AgentActionMenuItem } from '@/components/agent-action-menu';
 import { AgentMark } from '@/components/agent-mark';
+import { BoundedMarkdown } from '@/components/bounded-markdown';
 import { PressableScale } from '@/components/pressable-scale';
 import { Text } from '@/components/text';
 import { useTaskAction } from '@/hooks/use-server-tasks';
+import { useRowMarkdownStyle } from '@/hooks/use-markdown-style';
 import { useTaskAge } from '@/hooks/use-task-age';
 import { taskStateWord } from '@/i18n/labels';
 import { findAgent, type MirroredServerDiscovery } from '@/lib/agent-discovery';
@@ -186,6 +188,35 @@ export function useTaskRowLine(discovery: MirroredServerDiscovery | undefined) {
   };
 }
 
+/**
+ * Agent-written text in a row -- a goal, a summary, a progress or failure
+ * line -- through the app's markdown renderer in its clamped inline variant:
+ * inline code and emphasis drawn, links shown as their text, the row's tap
+ * left to the row.
+ */
+export function RowMarkdown({
+  text,
+  ink,
+  kind,
+  testID,
+}: {
+  text: string;
+  ink: string;
+  kind: 'title' | 'line';
+  testID?: string;
+}) {
+  const markdownStyle = useRowMarkdownStyle(ink, kind);
+  return (
+    <BoundedMarkdown
+      markdown={text}
+      markdownStyle={markdownStyle}
+      clampLines={kind === 'title' ? 2 : 1}
+      containerStyle={styles.grow}
+      {...(testID ? { testID } : {})}
+    />
+  );
+}
+
 /** A root's roll-up, `2 sub-tasks (1 waiting)`, said with each locale's plurals. */
 export function useRollupText() {
   const { t } = useLingui();
@@ -319,9 +350,7 @@ export function TaskRow({
           <View style={styles.icon}>
             <TaskStateIcon visual={visual} />
           </View>
-          <Text variant="bodySmall" weight="semibold" numberOfLines={2} style={styles.grow}>
-            {title}
-          </Text>
+          <RowMarkdown text={title} ink={theme.colors.text} kind="title" />
           {trailingAge ? (
             <Text variant="caption" color={theme.colors.textSubtle}>
               {trailingAge}
@@ -329,25 +358,30 @@ export function TaskRow({
           ) : null}
         </View>
         <Animated.View key={line.text} entering={fadeIn('micro')} style={styles.line}>
-          <Text testID={`task-row-line-${task.taskId}`} variant="caption" numberOfLines={1}>
-            <Text variant="caption" color={line.color}>
-              {line.text}
+          <RowMarkdown
+            testID={`task-row-line-${task.taskId}`}
+            text={line.text}
+            ink={line.color}
+            kind="line"
+          />
+          {rollupText ? (
+            <Text variant="caption" numberOfLines={1}>
+              {onOpenTree ? (
+                <Text
+                  testID={`task-row-subtasks-${task.taskId}`}
+                  variant="caption"
+                  color={theme.colors.primary}
+                  accessibilityRole="link"
+                  onPress={() => onOpenTree(task)}>
+                  {` · ${rollupText}`}
+                </Text>
+              ) : (
+                <Text variant="caption" color={theme.colors.textMuted}>
+                  {` · ${rollupText}`}
+                </Text>
+              )}
             </Text>
-            {rollupText && onOpenTree ? (
-              <Text
-                testID={`task-row-subtasks-${task.taskId}`}
-                variant="caption"
-                color={theme.colors.primary}
-                accessibilityRole="link"
-                onPress={() => onOpenTree(task)}>
-                {` · ${rollupText}`}
-              </Text>
-            ) : rollupText ? (
-              <Text variant="caption" color={theme.colors.textMuted}>
-                {` · ${rollupText}`}
-              </Text>
-            ) : null}
-          </Text>
+          ) : null}
         </Animated.View>
       </PressableScale>
       {menuOpen && menuItems.length > 0 ? (
@@ -398,20 +432,15 @@ function SubTaskRow({
       style={styles.child}>
       <TaskStateIcon visual={visual} size={12} />
       <WhereMark task={task} discovery={discovery} />
-      <Text variant="caption" numberOfLines={1} style={styles.grow}>
-        <Text variant="caption" weight="semibold" color={theme.colors.textMuted}>
-          {taskTitle(task)}
-        </Text>
-        <Text variant="caption" color={line.color}>
-          {` · ${line.text}`}
-        </Text>
-      </Text>
+      <RowMarkdown text={taskTitle(task)} ink={theme.colors.textMuted} kind="line" />
+      <RowMarkdown text={line.text} ink={line.color} kind="line" />
     </PressableScale>
   );
 }
 
 /** A goal the dock sent, before the computer has said it has it. */
 export function SentTaskRow({ goal, computer }: { goal: string; computer: string }) {
+  const theme = useThemeTokens();
   const rowLine = useTaskRowLine(undefined);
   const visual = taskRowVisual({ state: 'sent' }, { canComplete: false, acknowledged: true });
   const line = rowLine(null, visual, 0, computer);
@@ -427,13 +456,11 @@ export function SentTaskRow({ goal, computer }: { goal: string; computer: string
         <View style={styles.icon}>
           <TaskStateIcon visual={visual} />
         </View>
-        <Text variant="bodySmall" weight="semibold" numberOfLines={2} style={styles.grow}>
-          {goal.split('\n')[0]}
-        </Text>
+        <RowMarkdown text={goal.split('\n')[0] ?? ''} ink={theme.colors.text} kind="title" />
       </View>
-      <Text variant="caption" color={line.color} numberOfLines={1} style={styles.line}>
-        {line.text}
-      </Text>
+      <View style={styles.line}>
+        <RowMarkdown text={line.text} ink={line.color} kind="line" />
+      </View>
     </Animated.View>
   );
 }
@@ -443,7 +470,7 @@ const styles = StyleSheet.create({
   titleLine: { minHeight: 28, flexDirection: 'row', alignItems: 'center', gap: 8 },
   icon: { width: 16, alignItems: 'center' },
   grow: { flex: 1, minWidth: 0 },
-  line: { paddingLeft: 24 },
+  line: { paddingLeft: 24, flexDirection: 'row', alignItems: 'center' },
   nested: { paddingLeft: 24 },
   child: {
     minHeight: 28,
