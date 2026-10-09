@@ -248,7 +248,6 @@ msgid "{count, plural, one {# result} other {# results}}"
 msgstr "{count, plural, one {# resultado} other {# resultados}}"
 
 #: src/components/home-connections.tsx
-#: src/components/settings-servers.tsx
 msgid "{count} in progress"
 msgstr "{count} em andamento"
 
@@ -280,10 +279,6 @@ msgstr "{host} apresentou uma chave que este app nunca viu. Compare a impressão
 #: src/components/app-lock-gate.tsx
 msgid "{label} is temporarily locked. Use the system fallback or try later."
 msgstr "{label} está temporariamente bloqueado. Use a alternativa do sistema ou tente mais tarde"
-
-#: src/components/home-computer-cards.tsx
-msgid "{label} settings, {footer}"
-msgstr "Definições de {label}, {footer}"
 
 #: src/components/bounded-markdown.tsx
 msgid "{language} code copied to clipboard"
@@ -325,14 +320,6 @@ msgstr "{removeLabel}: {label}"
 #: src/components/agent-background-tray.tsx
 msgid "{running} running of {0}"
 msgstr "{running} de {0} em execução"
-
-#: src/components/home-computer-cards.tsx
-msgid "{sessions, plural, one {# session} other {# sessions}}"
-msgstr "{sessions, plural, one {# sessão} other {# sessões}}"
-
-#: src/components/home-computer-cards.tsx
-msgid "{terminals, plural, one {# terminal} other {# terminals}}"
-msgstr "{terminals, plural, one {# terminal} other {# terminais}}"
 
 #: src/components/agent-composer.tsx
 #: src/components/agent-session-tree-sheet.tsx
@@ -499,12 +486,6 @@ msgstr "Após gravar"
 msgid "Agent"
 msgstr "Agente"
 
-#. placeholder {0}: task.binding.agentId
-#. placeholder {1}: task.binding.asid
-#: src/components/server-tasks-sheet.tsx
-msgid "Agent {0}, session {1}"
-msgstr "Agente {0}, sessão {1}"
-
 #: src/app/commands.tsx
 #: src/components/agent-command-delivery-picker.tsx
 #: src/components/collaboration-notice.tsx
@@ -569,7 +550,7 @@ msgstr "Todos os projetos"
 msgid "All sessions"
 msgstr "Todas as sessões"
 
-#: src/components/server-tasks-sheet.tsx
+#: src/components/home-computer-cards.tsx
 msgid "All tasks"
 msgstr "Todas as tarefas"
 
@@ -996,10 +977,6 @@ msgstr "Cancelar edição de {0}"
 msgid "Cancel queued message"
 msgstr "Cancelar mensagem na fila"
 
-#: src/components/server-tasks-sheet.tsx
-msgid "Cancel task"
-msgstr "Cancelar tarefa"
-
 #: src/components/agent-composer.tsx
 msgid "Cancel this queued message"
 msgstr "Cancelar esta mensagem na fila"
@@ -1013,10 +990,6 @@ msgstr "Cancelado"
 msgctxt "task state"
 msgid "Cancelled"
 msgstr "Cancelada"
-
-#: src/components/server-tasks-sheet.tsx
-msgid "Cancelling…"
-msgstr "Cancelando…"
 
 #: src/components/settings-server-capabilities.tsx
 msgid "Capabilities"
@@ -1361,10 +1334,6 @@ msgstr "Computador não encontrado"
 msgid "Computer offline"
 msgstr "Computador offline"
 
-#: src/components/home-computer-cards.tsx
-msgid "Computer settings"
-msgstr "Definições do computador"
-
 #: src/components/home-composer-dock.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Computer unavailable."
@@ -1380,10 +1349,6 @@ msgstr "Computadores"
 #: src/app/settings-voice.tsx
 msgid "Configure your speech service, then hold Send to record. Tap the animation to stop and transcribe."
 msgstr "Configure seu serviço de voz e mantenha Enviar pressionado para gravar. Toque na animação para parar e transcrever"
-
-#: src/components/server-tasks-sheet.tsx
-msgid "Confirm cancel"
-msgstr "Confirmar cancelamento"
 
 #: src/components/settings-storage.tsx
 msgid "Confirm clear cache"
@@ -1708,10 +1673,6 @@ msgstr "A copiar…"
 msgid "Could not add a file"
 msgstr "Não foi possível adicionar o ficheiro"
 
-#: src/components/server-tasks-sheet.tsx
-msgid "Could not cancel the task"
-msgstr "Não foi possível cancelar a tarefa"
-
 #: src/components/agent-workbench.tsx
 msgid "Could not change delivery"
 msgstr "Não foi possível alterar a entrega"
@@ -1813,6 +1774,11 @@ msgstr "Não foi possível carregar os tokens"
 #: src/components/session-map.tsx
 msgid "Could not load what is running."
 msgstr "Não foi possível carregar o que está a correr"
+
+#: src/components/home-computer-cards.tsx
+#: src/components/server-tasks-sheet.tsx
+msgid "Could not mark the task done"
+msgstr "Não foi possível marcar a tarefa como concluída"
 
 #: src/components/agent-workbench.tsx
 msgid "Could not move this session"
@@ -2442,15 +2408,8 @@ msgid "Every screen in the app."
 msgstr "Todos os ecrãs da app"
 
 #: src/components/home-computer-cards.tsx
-#: src/components/server-tasks-sheet.tsx
 msgid "exit {code}"
 msgstr "saída {code}"
-
-#. placeholder {0}: result.code
-#. placeholder {0}: task.exitCode
-#: src/components/server-tasks-sheet.tsx
-msgid "Exit code {0}"
-msgstr "Código de saída {0}"
 
 #. placeholder {0}: block.tool
 #: src/components/pane-chat-blocks.tsx
@@ -2822,10 +2781,6 @@ msgstr "Ocultar a lista de computadores"
 msgid "Hide the simulator"
 msgstr "Ocultar o simulador"
 
-#: src/components/server-tasks-sheet.tsx
-msgid "History"
-msgstr "Histórico"
-
 #: src/components/pad-server-rail.tsx
 #: src/components/simfarm-stage.tsx
 msgid "Home"
@@ -2882,19 +2837,9 @@ msgid "How to use Muqun"
 msgstr "Como usar o Muqun"
 
 #: src/components/agent-session-tree-sheet.tsx
-#: src/components/home-computer-cards.tsx
 #: src/i18n/labels.ts
 msgid "Idle"
 msgstr "Inativo"
-
-#: src/components/home-computer-cards.tsx
-msgid "Idle · last finished {lastTitle} {lastAge}"
-msgstr "Inativo · último concluído: {lastTitle} {lastAge}"
-
-#: src/i18n/labels.ts
-msgctxt "task state"
-msgid "Idle, not confirmed"
-msgstr "Ociosa, não confirmada"
 
 #: src/components/gateway-storage-error.tsx
 msgid "If this continues, restart the app or check the app installation"
@@ -3114,10 +3059,6 @@ msgstr "Manter tudo e descartar a reversão preparada"
 msgctxt "agent slash command"
 msgid "Keep everything and drop the staged rollback"
 msgstr "Manter tudo e descartar a reversão preparada"
-
-#: src/components/server-tasks-sheet.tsx
-msgid "Keep it running"
-msgstr "Manter em execução"
 
 #: src/components/settings-storage.tsx
 msgid "Keep saved themes"
@@ -3340,6 +3281,11 @@ msgstr "Gerenciar máquinas"
 #: src/components/home-overview.tsx
 msgid "Manage SSH hosts"
 msgstr "Gerenciar hosts SSH"
+
+#: src/components/home-computer-cards.tsx
+#: src/components/server-tasks-sheet.tsx
+msgid "Mark done"
+msgstr "Marcar como concluída"
 
 #: src/components/collaboration-notice.tsx
 msgid "Mark reviewed"
@@ -4240,12 +4186,6 @@ msgstr "O emparelhamento falhou"
 msgid "Palette (up to 4)"
 msgstr "Paleta (até 4)"
 
-#. placeholder {0}: task.binding.paneId
-#. placeholder {1}: task.binding.sessionId
-#: src/components/server-tasks-sheet.tsx
-msgid "Pane {0} in session {1}"
-msgstr "Painel {0} na sessão {1}"
-
 #: src/components/settings-mcp-tokens.tsx
 msgid "Pane {paneId}"
 msgstr "Painel {paneId}"
@@ -4302,6 +4242,11 @@ msgstr "Pausar"
 #: src/components/audio-asset-preview.tsx
 msgid "Pause audio"
 msgstr "Pausar áudio"
+
+#: src/i18n/labels.ts
+msgctxt "task state"
+msgid "Paused"
+msgstr "Em pausa"
 
 #: src/components/agent-context-sheet.tsx
 msgid "Permission"
@@ -4622,7 +4567,6 @@ msgstr "Falha na gravação"
 
 #: src/components/agent-background-tray.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
-#: src/components/server-tasks-sheet.tsx
 #: src/components/session-map.tsx
 msgid "Refresh"
 msgstr "Atualizar"
@@ -5164,8 +5108,8 @@ msgid "Sends your next goal here. Long press to open it."
 msgstr "Envia o seu próximo objetivo para aqui. Toque longo para abrir"
 
 #: src/components/home-computer-cards.tsx
-msgid "Sent · waiting for the computer"
-msgstr "Enviado · à espera do computador"
+msgid "Sent · waiting for {computer}"
+msgstr "Enviado · aguardando {computer}"
 
 #: src/components/agent-sessions-sheet.tsx
 msgid "Session name"
@@ -5566,6 +5510,10 @@ msgctxt "task state"
 msgid "Starting"
 msgstr "Iniciando"
 
+#: src/components/home-computer-cards.tsx
+msgid "Starting {agent}…"
+msgstr "Iniciando {agent}…"
+
 #: src/components/simfarm-stage.tsx
 msgid "Starting {name}"
 msgstr "A iniciar {name}"
@@ -5800,7 +5748,6 @@ msgstr "Tarefa para um novo {0}"
 #: src/components/agent-tasks-sheet.tsx
 #: src/components/agent-todo-block.tsx
 #: src/components/server-tasks-sheet.tsx
-#: src/components/settings-servers.tsx
 msgid "Tasks"
 msgstr "Tarefas"
 
@@ -6197,10 +6144,6 @@ msgstr "Este computador já não reconhece este dispositivo. Emparelhe-o novamen
 msgid "This computer refused the request."
 msgstr "Este computador recusou o pedido"
 
-#: src/components/home-computer-cards.tsx
-msgid "This computer’s Gateway does not keep a task list yet."
-msgstr "O Gateway deste computador ainda não mantém uma lista de tarefas"
-
 #: src/lib/attachments.ts
 msgid "This device has no camera available."
 msgstr "Este dispositivo não tem câmara disponível"
@@ -6482,7 +6425,6 @@ msgstr "Escreva-o ou use a tecla de ditado do teclado"
 msgid "Type on the simulator"
 msgstr "Escrever no simulador"
 
-#: src/components/server-tasks-sheet.tsx
 #: src/components/settings-server-capabilities.tsx
 msgid "Unavailable"
 msgstr "Indisponível"

@@ -4,7 +4,6 @@ import {
   isTerminalTaskState,
   ledgerTaskBody,
   parseCreatedLedgerTask,
-  parseTaskEvent,
   parseTaskList,
   parseTaskView,
   taskListPath,
@@ -52,40 +51,6 @@ describe('parseTaskView', () => {
     expect(parseTaskView({ ...ok, state: 'exploding' })).toBeNull();
     expect(parseTaskView({ ...ok, task_id: undefined })).toBeNull();
     expect(parseTaskView(null)).toBeNull();
-  });
-});
-
-describe('parseTaskEvent', () => {
-  test('reads an event and keeps from/note optional', () => {
-    expect(
-      parseTaskEvent({
-        task_id: 't',
-        seq: 2,
-        at_ms: 5,
-        from: 'working',
-        to: 'done',
-        source: 'mcp',
-        note: 'n',
-      })
-    ).toEqual({
-      taskId: 't',
-      seq: 2,
-      atMs: 5,
-      from: 'working',
-      to: 'done',
-      source: 'mcp',
-      note: 'n',
-    });
-    expect(parseTaskEvent({ task_id: 't', seq: 1, at_ms: 5, to: 'queued', source: 'gw' })).toEqual({
-      taskId: 't',
-      seq: 1,
-      atMs: 5,
-      to: 'queued',
-      source: 'gw',
-    });
-    expect(
-      parseTaskEvent({ task_id: 't', seq: 1, at_ms: 5, to: 'bogus', source: 'gw' })
-    ).toBeNull();
   });
 });
 

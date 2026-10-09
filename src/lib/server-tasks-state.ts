@@ -81,24 +81,6 @@ export function activeTaskCount(tasks: readonly TaskView[]): number {
 }
 
 /**
- * Cancel, then show whatever the gateway answered -- which may be `done` for a
- * task that finished first, and that is shown as done rather than as an error.
- * A gateway that no longer knows the task (404) makes the list ask again.
- */
-export async function applyCancelAnswer(
-  taskId: string,
-  deps: {
-    cancel: (taskId: string) => Promise<TaskView | null>;
-    upsert: (task: TaskView) => void;
-    refresh: () => Promise<void>;
-  }
-): Promise<void> {
-  const answer = await deps.cancel(taskId);
-  if (answer) deps.upsert(answer);
-  else await deps.refresh();
-}
-
-/**
  * A list answer lands only when the read succeeded (`list` non-null). A failed
  * read leaves what the store already holds and reports the failure instead.
  */
@@ -154,10 +136,4 @@ export function taskAgeParts(
   if (seconds < 3600) return { unit: 'minute', value: Math.floor(seconds / 60) };
   if (seconds < 86400) return { unit: 'hour', value: Math.floor(seconds / 3600) };
   return { unit: 'day', value: Math.floor(seconds / 86400) };
-}
-
-/** The last lines of a task's summary: the tail is where a command says how it ended. */
-export function summaryTail(summary: string, lines = 12): string {
-  const all = summary.replace(/\s+$/, '').split('\n');
-  return all.length > lines ? all.slice(all.length - lines).join('\n') : all.join('\n');
 }

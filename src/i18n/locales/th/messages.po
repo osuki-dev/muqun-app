@@ -248,7 +248,6 @@ msgid "{count, plural, one {# result} other {# results}}"
 msgstr "{count, plural, other {# รายการ}}"
 
 #: src/components/home-connections.tsx
-#: src/components/settings-servers.tsx
 msgid "{count} in progress"
 msgstr "กำลังทำ {count} รายการ"
 
@@ -280,10 +279,6 @@ msgstr "{host} แสดงคีย์ที่แอปนี้ยังไ�
 #: src/components/app-lock-gate.tsx
 msgid "{label} is temporarily locked. Use the system fallback or try later."
 msgstr "{label} ถูกล็อกชั่วคราว ใช้วิธีสำรองของระบบหรือลองอีกครั้งภายหลัง"
-
-#: src/components/home-computer-cards.tsx
-msgid "{label} settings, {footer}"
-msgstr "การตั้งค่า {label}, {footer}"
 
 #: src/components/bounded-markdown.tsx
 msgid "{language} code copied to clipboard"
@@ -325,14 +320,6 @@ msgstr "{removeLabel}: {label}"
 #: src/components/agent-background-tray.tsx
 msgid "{running} running of {0}"
 msgstr "กำลังทำงาน {running} จาก {0}"
-
-#: src/components/home-computer-cards.tsx
-msgid "{sessions, plural, one {# session} other {# sessions}}"
-msgstr "{sessions, plural, other {# เซสชัน}}"
-
-#: src/components/home-computer-cards.tsx
-msgid "{terminals, plural, one {# terminal} other {# terminals}}"
-msgstr "{terminals, plural, other {# เทอร์มินัล}}"
 
 #: src/components/agent-composer.tsx
 #: src/components/agent-session-tree-sheet.tsx
@@ -499,12 +486,6 @@ msgstr "หลังบันทึกเสียง"
 msgid "Agent"
 msgstr "เอเจนต์"
 
-#. placeholder {0}: task.binding.agentId
-#. placeholder {1}: task.binding.asid
-#: src/components/server-tasks-sheet.tsx
-msgid "Agent {0}, session {1}"
-msgstr "เอเจนต์ {0} เซสชัน {1}"
-
 #: src/app/commands.tsx
 #: src/components/agent-command-delivery-picker.tsx
 #: src/components/collaboration-notice.tsx
@@ -569,7 +550,7 @@ msgstr "ทุกโปรเจกต์"
 msgid "All sessions"
 msgstr "เซสชันทั้งหมด"
 
-#: src/components/server-tasks-sheet.tsx
+#: src/components/home-computer-cards.tsx
 msgid "All tasks"
 msgstr "งานทั้งหมด"
 
@@ -996,10 +977,6 @@ msgstr "ยกเลิกการแก้ไข {0}"
 msgid "Cancel queued message"
 msgstr "ยกเลิกข้อความในคิว"
 
-#: src/components/server-tasks-sheet.tsx
-msgid "Cancel task"
-msgstr "ยกเลิกงาน"
-
 #: src/components/agent-composer.tsx
 msgid "Cancel this queued message"
 msgstr "ยกเลิกข้อความที่อยู่ในคิวนี้"
@@ -1013,10 +990,6 @@ msgstr "ยกเลิกแล้ว"
 msgctxt "task state"
 msgid "Cancelled"
 msgstr "ยกเลิกแล้ว"
-
-#: src/components/server-tasks-sheet.tsx
-msgid "Cancelling…"
-msgstr "กำลังยกเลิก…"
 
 #: src/components/settings-server-capabilities.tsx
 msgid "Capabilities"
@@ -1361,10 +1334,6 @@ msgstr "ไม่พบคอมพิวเตอร์"
 msgid "Computer offline"
 msgstr "คอมพิวเตอร์ออฟไลน์"
 
-#: src/components/home-computer-cards.tsx
-msgid "Computer settings"
-msgstr "การตั้งค่าคอมพิวเตอร์"
-
 #: src/components/home-composer-dock.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Computer unavailable."
@@ -1380,10 +1349,6 @@ msgstr "คอมพิวเตอร์"
 #: src/app/settings-voice.tsx
 msgid "Configure your speech service, then hold Send to record. Tap the animation to stop and transcribe."
 msgstr "ตั้งค่าบริการเสียง แล้วกดส่งค้างไว้เพื่อบันทึก แตะภาพเคลื่อนไหวเพื่อหยุดและแปลงเป็นข้อความ"
-
-#: src/components/server-tasks-sheet.tsx
-msgid "Confirm cancel"
-msgstr "ยืนยันการยกเลิก"
 
 #: src/components/settings-storage.tsx
 msgid "Confirm clear cache"
@@ -1708,10 +1673,6 @@ msgstr "กำลังคัดลอก…"
 msgid "Could not add a file"
 msgstr "เพิ่มไฟล์ไม่ได้"
 
-#: src/components/server-tasks-sheet.tsx
-msgid "Could not cancel the task"
-msgstr "ยกเลิกงานไม่ได้"
-
 #: src/components/agent-workbench.tsx
 msgid "Could not change delivery"
 msgstr "เปลี่ยนวิธีส่งไม่ได้"
@@ -1813,6 +1774,11 @@ msgstr "โหลดโทเค็นไม่ได้"
 #: src/components/session-map.tsx
 msgid "Could not load what is running."
 msgstr "โหลดรายการที่กำลังทำงานไม่ได้"
+
+#: src/components/home-computer-cards.tsx
+#: src/components/server-tasks-sheet.tsx
+msgid "Could not mark the task done"
+msgstr "ทำเครื่องหมายว่างานเสร็จไม่ได้"
 
 #: src/components/agent-workbench.tsx
 msgid "Could not move this session"
@@ -2442,15 +2408,8 @@ msgid "Every screen in the app."
 msgstr "ทุกหน้าจอในแอป"
 
 #: src/components/home-computer-cards.tsx
-#: src/components/server-tasks-sheet.tsx
 msgid "exit {code}"
 msgstr "ออก {code}"
-
-#. placeholder {0}: result.code
-#. placeholder {0}: task.exitCode
-#: src/components/server-tasks-sheet.tsx
-msgid "Exit code {0}"
-msgstr "รหัสออก {0}"
 
 #. placeholder {0}: block.tool
 #: src/components/pane-chat-blocks.tsx
@@ -2822,10 +2781,6 @@ msgstr "ซ่อนรายการคอมพิวเตอร์"
 msgid "Hide the simulator"
 msgstr "ซ่อนเครื่องจำลอง"
 
-#: src/components/server-tasks-sheet.tsx
-msgid "History"
-msgstr "ประวัติ"
-
 #: src/components/pad-server-rail.tsx
 #: src/components/simfarm-stage.tsx
 msgid "Home"
@@ -2882,19 +2837,9 @@ msgid "How to use Muqun"
 msgstr "วิธีใช้ Muqun"
 
 #: src/components/agent-session-tree-sheet.tsx
-#: src/components/home-computer-cards.tsx
 #: src/i18n/labels.ts
 msgid "Idle"
 msgstr "ว่าง"
-
-#: src/components/home-computer-cards.tsx
-msgid "Idle · last finished {lastTitle} {lastAge}"
-msgstr "ว่าง · เสร็จล่าสุด: {lastTitle} {lastAge}"
-
-#: src/i18n/labels.ts
-msgctxt "task state"
-msgid "Idle, not confirmed"
-msgstr "ว่าง ยังไม่ยืนยัน"
 
 #: src/components/gateway-storage-error.tsx
 msgid "If this continues, restart the app or check the app installation"
@@ -3114,10 +3059,6 @@ msgstr "เก็บทุกอย่างไว้และทิ้งกา
 msgctxt "agent slash command"
 msgid "Keep everything and drop the staged rollback"
 msgstr "เก็บทุกอย่างไว้และทิ้งการย้อนกลับที่เตรียมไว้"
-
-#: src/components/server-tasks-sheet.tsx
-msgid "Keep it running"
-msgstr "ให้ทำงานต่อ"
 
 #: src/components/settings-storage.tsx
 msgid "Keep saved themes"
@@ -3340,6 +3281,11 @@ msgstr "จัดการเครื่อง"
 #: src/components/home-overview.tsx
 msgid "Manage SSH hosts"
 msgstr "จัดการโฮสต์ SSH"
+
+#: src/components/home-computer-cards.tsx
+#: src/components/server-tasks-sheet.tsx
+msgid "Mark done"
+msgstr "ทำเครื่องหมายว่าเสร็จ"
 
 #: src/components/collaboration-notice.tsx
 msgid "Mark reviewed"
@@ -4240,12 +4186,6 @@ msgstr "จับคู่ไม่สำเร็จ"
 msgid "Palette (up to 4)"
 msgstr "ชุดสี (สูงสุด 4 สี)"
 
-#. placeholder {0}: task.binding.paneId
-#. placeholder {1}: task.binding.sessionId
-#: src/components/server-tasks-sheet.tsx
-msgid "Pane {0} in session {1}"
-msgstr "แพน {0} ในเซสชัน {1}"
-
 #: src/components/settings-mcp-tokens.tsx
 msgid "Pane {paneId}"
 msgstr "เพน {paneId}"
@@ -4302,6 +4242,11 @@ msgstr "หยุดชั่วคราว"
 #: src/components/audio-asset-preview.tsx
 msgid "Pause audio"
 msgstr "หยุดเสียงชั่วคราว"
+
+#: src/i18n/labels.ts
+msgctxt "task state"
+msgid "Paused"
+msgstr "หยุดชั่วคราว"
 
 #: src/components/agent-context-sheet.tsx
 msgid "Permission"
@@ -4622,7 +4567,6 @@ msgstr "บันทึกเสียงไม่สำเร็จ"
 
 #: src/components/agent-background-tray.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
-#: src/components/server-tasks-sheet.tsx
 #: src/components/session-map.tsx
 msgid "Refresh"
 msgstr "รีเฟรช"
@@ -5164,8 +5108,8 @@ msgid "Sends your next goal here. Long press to open it."
 msgstr "ส่งเป้าหมายถัดไปมาที่นี่ กดค้างเพื่อเปิด"
 
 #: src/components/home-computer-cards.tsx
-msgid "Sent · waiting for the computer"
-msgstr "ส่งแล้ว · รอคอมพิวเตอร์"
+msgid "Sent · waiting for {computer}"
+msgstr "ส่งแล้ว · รอ {computer}"
 
 #: src/components/agent-sessions-sheet.tsx
 msgid "Session name"
@@ -5566,6 +5510,10 @@ msgctxt "task state"
 msgid "Starting"
 msgstr "กำลังเริ่ม"
 
+#: src/components/home-computer-cards.tsx
+msgid "Starting {agent}…"
+msgstr "กำลังเริ่ม {agent}…"
+
 #: src/components/simfarm-stage.tsx
 msgid "Starting {name}"
 msgstr "กำลังเริ่ม {name}"
@@ -5800,7 +5748,6 @@ msgstr "งานสำหรับ {0} ใหม่"
 #: src/components/agent-tasks-sheet.tsx
 #: src/components/agent-todo-block.tsx
 #: src/components/server-tasks-sheet.tsx
-#: src/components/settings-servers.tsx
 msgid "Tasks"
 msgstr "งาน"
 
@@ -6197,10 +6144,6 @@ msgstr "คอมพิวเตอร์นี้ไม่รู้จักอ
 msgid "This computer refused the request."
 msgstr "คอมพิวเตอร์นี้ปฏิเสธคำขอ"
 
-#: src/components/home-computer-cards.tsx
-msgid "This computer’s Gateway does not keep a task list yet."
-msgstr "Gateway ของคอมพิวเตอร์เครื่องนี้ยังไม่เก็บรายการงาน"
-
 #: src/lib/attachments.ts
 msgid "This device has no camera available."
 msgstr "อุปกรณ์นี้ไม่มีกล้องที่พร้อมใช้งาน"
@@ -6482,7 +6425,6 @@ msgstr "พิมพ์หรือใช้ปุ่มป้อนตามค
 msgid "Type on the simulator"
 msgstr "พิมพ์บนเครื่องจำลอง"
 
-#: src/components/server-tasks-sheet.tsx
 #: src/components/settings-server-capabilities.tsx
 msgid "Unavailable"
 msgstr "ไม่พร้อมใช้งาน"

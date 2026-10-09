@@ -2,19 +2,21 @@ import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { plural } from '@lingui/core/macro';
 import { useLingui } from '@lingui/react/macro';
 import { useIsFocused } from 'expo-router';
-import { useThemeTokens } from '@osuki-dev/ui';
-import { ChevronRight, Server } from 'lucide-react-native';
+import { useThemeTokens, useToast } from '@osuki-dev/ui';
+import { ChevronRight, Server, SquareTerminal } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useShallow } from 'zustand/react/shallow';
 
+import { AgentMark } from '@/components/agent-mark';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { PressableScale } from '@/components/pressable-scale';
+import { SheetSceneQuietAction } from '@/components/sheet-scene';
 import { StatusDot } from '@/components/status-dot';
 import { TaskStatusGlyph } from '@/components/task-status-glyph';
 import { Text } from '@/components/text';
 import { ThemeIcon } from '@/components/theme-icon';
-import { useServerTasks } from '@/hooks/use-server-tasks';
+import { useMarkTaskDone, useServerTasks } from '@/hooks/use-server-tasks';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { useTaskAge } from '@/hooks/use-task-age';
 import { connectionStatusDescription, connectionStatusLabel, taskStateWord } from '@/i18n/labels';
@@ -23,31 +25,25 @@ import type { GatewayRecord } from '@/lib/gateway-storage';
 import { agentBrandName } from '@/lib/herdr-entity';
 import {
   buildComputerCards,
-  cardLimits,
-  taskResultLine,
   taskRollup,
+  taskRowLine,
   taskTitle,
-  type CardTaskRow,
   type ComputerCard,
   type PendingDispatch,
 } from '@/lib/home-computer-cards';
-import { projectLaunchAgents } from '@/lib/home-launch-model';
 import {
   resolveConnectionStatus,
   type ActiveServerConnection,
   type ConnectionStatus,
 } from '@/lib/server-reachability';
-import type { TaskView } from '@/lib/task-ledger';
+import { canMarkTaskDone, type TaskView } from '@/lib/task-ledger';
 import { useAgents } from '@/stores/agents';
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';
-import { useHomeAgentSessions } from '@/stores/home-agent-sessions';
 import { PENDING_DISPATCH_TTL_MS, useHomeTaskCards } from '@/stores/home-task-cards';
-import { useServerAgents } from '@/stores/server-agents';
 import { useServerCapabilities } from '@/stores/server-capabilities';
 import { useServerChannels } from '@/stores/server-channels';
 import { useServerReachability } from '@/stores/server-reachability';
 import { useServerTasksStore } from '@/stores/server-tasks';
-import { hasTaskLedger } from '@/lib/task-ledger';
 
 /**
  * Keeps the ledgers of these computers live while Home is up: a list read on
@@ -84,33 +80,30 @@ export function useRollupText() {
   };
 }
 
-export type CardTaskTarget = { serverId: string; task: TaskView };
+/** `tree`: the reader asked for the work under it (the sub-task count), not the task's own session or pane. */
+export type CardTaskTarget = { serverId: string; task: TaskView; tree?: boolean };
+
+export type HomeComputerCardsModel = {
+  cards: ComputerCard[];
+  statusOf: (serverId: string) => ConnectionStatus;
+  tickMs: number;
+};
 
 /**
- * One card per paired computer: what it is doing now, what it just finished,
- * and whether it needs the reader. Sorted needs-you → working → idle →
- * offline. The header picks the computer as the dock's target (long press
- * opens it); a task row opens the Tasks sheet on that task's tree; the
- * footer opens the computer's own settings.
+ * The cards Home shows: only computers with work -- something open, or a
+ * finished task not yet acknowledged from the last half hour. Home leaves
+ * the whole section out when there are none.
  */
-export function HomeComputerCards({
+export function useHomeComputerCards({
   servers,
   activeConnection,
   nowMs,
-  onSelectServer,
-  onOpenServer,
-  onOpenTask,
-  onOpenComputer,
 }: {
   servers: readonly GatewayRecord[];
   activeConnection?: ActiveServerConnection;
   /** The focus tick Home resolves probe freshness against. */
   nowMs?: number;
-  onSelectServer: (serverId: string) => void;
-  onOpenServer: (serverId: string) => void;
-  onOpenTask: (target: CardTaskTarget) => void;
-  onOpenComputer: (serverId: string) => void;
-}) {
+}): HomeComputerCardsModel {
   const serverIds = servers.map((server) => server.serverId);
   const entries = useServerTasksStore(
     useShallow((state) => serverIds.map((serverId) => state.index[serverId]))
@@ -156,8 +149,35 @@ export function HomeComputerCards({
     },
     dismissed: new Set(dismissedList),
     pending,
-    limits: cardLimits(servers.length),
+    nowMs: tickMs,
   });
+  return { cards, statusOf, tickMs };
+}
+
+/**
+ * The cards: what each computer with work is doing now, what it just
+ * finished, and whether it needs the reader. Sorted needs-you → working →
+ * paused → idle. The header picks the computer as the dock's target (long
+ * press opens it); a task row opens where its work is (long press: its
+ * detail); the footer opens the computer's whole task list.
+ */
+export function HomeComputerCards({
+  model,
+  servers,
+  onSelectServer,
+  onOpenServer,
+  onOpenTask,
+  onOpenTasks,
+}: {
+  model: HomeComputerCardsModel;
+  servers: readonly GatewayRecord[];
+  onSelectServer: (serverId: string) => void;
+  onOpenServer: (serverId: string) => void;
+  onOpenTask: (target: CardTaskTarget) => void;
+  /** The computer's whole task list. */
+  onOpenTasks: (serverId: string) => void;
+}) {
+  const { cards, statusOf, tickMs } = model;
   if (cards.length === 0) return null;
   return (
     <View testID="home-computer-cards" style={styles.cards}>
@@ -173,8 +193,10 @@ export function HomeComputerCards({
             nowMs={tickMs}
             onSelect={() => onSelectServer(card.serverId)}
             onOpen={() => onOpenServer(card.serverId)}
-            onOpenTask={(task) => onOpenTask({ serverId: card.serverId, task })}
-            onOpenComputer={() => onOpenComputer(card.serverId)}
+            onOpenTask={(task, tree) =>
+              onOpenTask({ serverId: card.serverId, task, ...(tree ? { tree } : {}) })
+            }
+            onOpenTasks={() => onOpenTasks(card.serverId)}
           />
         );
       })}
@@ -190,7 +212,7 @@ function ComputerCardView({
   onSelect,
   onOpen,
   onOpenTask,
-  onOpenComputer,
+  onOpenTasks,
 }: {
   card: ComputerCard;
   server: GatewayRecord;
@@ -198,30 +220,15 @@ function ComputerCardView({
   nowMs: number;
   onSelect: () => void;
   onOpen: () => void;
-  onOpenTask: (task: TaskView) => void;
-  onOpenComputer: () => void;
+  onOpenTask: (task: TaskView, tree?: boolean) => void;
+  onOpenTasks: () => void;
 }) {
   const { t } = useLingui();
   const { _ } = useLinguiRuntime();
   const theme = useThemeTokens();
   const profile = useAppearanceProfile();
   const background = useSurfaceBackground();
-  const age = useTaskAge();
-  // Unknown until the computer has answered once: a never-probed computer is
-  // not one without a ledger.
-  const ledger = useServerCapabilities((state) => {
-    const capabilities = state.byServer[server.serverId];
-    return capabilities ? hasTaskLedger(capabilities) : undefined;
-  });
   const discovery = useAgents((state) => state.index.servers[server.serverId]);
-  const sessions = useHomeAgentSessions(
-    (state) => state.byServer[server.serverId]?.sessions.length
-  );
-  const terminals = useServerAgents((state) => state.byServer[server.serverId]?.agents.length);
-  const badges = projectLaunchAgents(discovery)
-    .filter((agent) => agent.readiness === 'ready')
-    .slice(0, 3)
-    .map((agent) => agent.name);
   const statusWord = _(connectionStatusLabel[status]);
   const statusColor =
     status === 'live'
@@ -231,22 +238,8 @@ function ComputerCardView({
         : theme.colors.textSubtle;
   const idle = card.now.length === 0 && card.pending.length === 0;
   const label = server.label;
-  const lastFinished = card.lastFinished;
-  const lastTitle = lastFinished ? taskTitle(lastFinished) : '';
-  const lastAge = lastFinished ? age(lastFinished.updatedMs, nowMs) : '';
-  const footer =
-    sessions !== undefined || terminals !== undefined
-      ? [
-          sessions !== undefined
-            ? t`${plural(sessions, { one: '# session', other: '# sessions' })}`
-            : '',
-          terminals !== undefined
-            ? t`${plural(terminals, { one: '# terminal', other: '# terminals' })}`
-            : '',
-        ]
-          .filter(Boolean)
-          .join(' · ')
-      : t`Computer settings`;
+  // The footer is the way into this computer's whole task list.
+  const footer = t`All tasks`;
   return (
     <View
       testID={`home-card-${server.serverId}`}
@@ -292,57 +285,26 @@ function ComputerCardView({
             </Text>
           </View>
         </View>
-        <View style={styles.badges}>
-          {badges.map((name) => (
-            <View
-              key={name}
-              style={[
-                styles.badge,
-                {
-                  borderRadius: profile.chrome.control,
-                  backgroundColor: background(theme.colors.primarySubtle),
-                },
-              ]}>
-              <Text variant="caption" color={theme.colors.primary} numberOfLines={1}>
-                {name}
-              </Text>
-            </View>
-          ))}
-        </View>
       </PressableScale>
 
-      {ledger === undefined ? null : !ledger ? (
-        <Text variant="caption" color={theme.colors.textSubtle} style={styles.note}>
-          {t`This computer’s Gateway does not keep a task list yet.`}
-        </Text>
-      ) : idle ? (
-        card.known ? (
-          <Text
-            testID={`home-card-idle-${server.serverId}`}
-            variant="caption"
-            color={theme.colors.textMuted}
-            numberOfLines={1}
-            style={styles.note}>
-            {lastFinished && card.finished.length === 0
-              ? t`Idle · last finished ${lastTitle} ${lastAge}`
-              : t`Idle`}
-          </Text>
-        ) : null
-      ) : (
+      {idle ? null : (
         <View style={styles.block}>
           <Text variant="caption" weight="semibold" color={theme.colors.textSubtle}>
             {t`Now`}
           </Text>
           {card.pending.map((item) => (
-            <PendingRow key={item.id} item={item} />
+            <PendingRow key={item.id} item={item} computer={server.label} />
           ))}
           {card.now.map((row) => (
-            <NowRow
+            <TaskRow
               key={row.task.taskId}
-              row={row}
+              task={row.task}
+              subTasks={row.children}
+              serverId={server.serverId}
               discovery={discovery}
               nowMs={nowMs}
-              onOpen={onOpenTask}
+              onOpen={(task) => onOpenTask(task)}
+              onOpenTree={(task) => onOpenTask(task, true)}
             />
           ))}
           {card.nowTotal > card.now.length ? (
@@ -353,13 +315,21 @@ function ComputerCardView({
         </View>
       )}
 
-      {ledger && card.finished.length > 0 ? (
+      {card.finished.length > 0 ? (
         <View style={styles.block}>
           <Text variant="caption" weight="semibold" color={theme.colors.textSubtle}>
             {t`Just finished`}
           </Text>
           {card.finished.map((task) => (
-            <FinishedRow key={task.taskId} task={task} nowMs={nowMs} onOpen={onOpenTask} />
+            <TaskRow
+              key={task.taskId}
+              task={task}
+              serverId={server.serverId}
+              discovery={discovery}
+              nowMs={nowMs}
+              onOpen={(finished) => onOpenTask(finished)}
+              onOpenTree={(finished) => onOpenTask(finished, true)}
+            />
           ))}
         </View>
       ) : null}
@@ -367,8 +337,8 @@ function ComputerCardView({
       <PressableScale
         testID={`home-card-footer-${server.serverId}`}
         accessibilityRole="button"
-        accessibilityLabel={t`${label} settings, ${footer}`}
-        onPress={onOpenComputer}
+        accessibilityLabel={`${label}, ${footer}`}
+        onPress={onOpenTasks}
         style={[styles.footer, { borderTopColor: theme.colors.border }]}>
         <Text
           variant="caption"
@@ -388,142 +358,242 @@ function ComputerCardView({
   );
 }
 
-function PendingRow({ item }: { item: PendingDispatch }) {
+/** A goal the dock sent, before the computer has said it has it. */
+function PendingRow({ item, computer }: { item: PendingDispatch; computer: string }) {
   const { t } = useLingui();
   const theme = useThemeTokens();
   return (
-    <View testID="home-card-pending" accessibilityLiveRegion="polite" style={styles.row}>
-      <TaskStatusGlyph state="dispatching" size={14} />
-      <Text variant="bodySmall" numberOfLines={1} style={styles.grow}>
-        <Text variant="bodySmall" weight="semibold">
+    <View testID="home-card-pending" accessibilityLiveRegion="polite" style={styles.taskRow}>
+      <View style={styles.row}>
+        <View style={styles.mark}>
+          <TaskStatusGlyph state="dispatching" size={14} />
+        </View>
+        <Text variant="bodySmall" weight="semibold" numberOfLines={2} style={styles.grow}>
           {item.goal.split('\n')[0]}
         </Text>
-        <Text variant="caption" color={theme.colors.textMuted}>
-          {` · ${t`Sent · waiting for the computer`}`}
-        </Text>
+      </View>
+      <Text
+        variant="caption"
+        color={theme.colors.textMuted}
+        numberOfLines={1}
+        style={styles.result}>
+        {t`Sent · waiting for ${computer}`}
       </Text>
     </View>
   );
 }
 
-function NowRow({
-  row,
+/**
+ * Where a task runs, as the Recent rows say it: a session's agent by its own
+ * mark, a pane by the terminal glyph. Shared with the Tasks sheet.
+ */
+export function TaskWhereMark({
+  task,
   discovery,
-  nowMs,
-  onOpen,
+  size = 14,
 }: {
-  row: CardTaskRow;
+  task: TaskView;
   discovery: MirroredServerDiscovery | undefined;
-  nowMs: number;
-  onOpen: (task: TaskView) => void;
+  size?: number;
 }) {
+  const theme = useThemeTokens();
+  const binding = task.binding;
+  if (binding.kind === 'agent_session') {
+    const kind = findAgent(discovery?.agents?.agents, binding.agentId)?.kind ?? binding.agentId;
+    return <AgentMark kind={kind} size={size} color={theme.colors.primary} />;
+  }
+  if (binding.kind === 'pane') {
+    return <SquareTerminal size={size} color={theme.colors.textMuted} strokeWidth={2} />;
+  }
+  return <TaskStatusGlyph state={task.state} size={size} />;
+}
+
+/** The name beside the mark: the session's agent, the terminal agent, or `Terminal`. */
+export function useTaskWhereName(discovery: MirroredServerDiscovery | undefined) {
+  const { t } = useLingui();
+  return (task: TaskView): string => {
+    const binding = task.binding;
+    if (binding.kind === 'agent_session') {
+      return (
+        findAgent(discovery?.agents?.agents, binding.agentId)?.name ??
+        agentBrandName(binding.agentId)
+      );
+    }
+    if (binding.kind === 'pane') {
+      return binding.agentId ? agentBrandName(binding.agentId) : t`Terminal`;
+    }
+    return '';
+  };
+}
+
+/**
+ * A task row's second line, in words and a tone from the theme: what the
+ * computer is doing with the goal now (`taskRowLine`). Shared with the Tasks
+ * sheet.
+ */
+export function useTaskRowLine(discovery: MirroredServerDiscovery | undefined) {
   const { t } = useLingui();
   const { _ } = useLinguiRuntime();
   const theme = useThemeTokens();
   const age = useTaskAge();
-  const { task } = row;
+  const whereName = useTaskWhereName(discovery);
+  return (task: TaskView, nowMs: number): { text: string; color: string } => {
+    const line = taskRowLine(task);
+    const agent = whereName(task);
+    const muted = theme.colors.textMuted;
+    switch (line.kind) {
+      case 'starting':
+        return { text: agent ? t`Starting ${agent}…` : _(taskStateWord.dispatching), color: muted };
+      case 'progress':
+        return { text: line.text, color: muted };
+      case 'elapsed':
+        return {
+          text: [agent, _(taskStateWord.working), age(task.updatedMs, nowMs)]
+            .filter(Boolean)
+            .join(' · '),
+          color: muted,
+        };
+      case 'waiting':
+        return {
+          text: [_(taskStateWord.waiting), line.text].filter(Boolean).join(' · '),
+          color: theme.colors.warning,
+        };
+      case 'paused':
+        return {
+          text: [_(taskStateWord.idle_unconfirmed), line.text].filter(Boolean).join(' · '),
+          color: muted,
+        };
+      case 'result':
+        return { text: line.text, color: muted };
+      case 'exit': {
+        const code = line.code;
+        return {
+          text: t`exit ${code}`,
+          color: task.state === 'failed' ? theme.colors.danger : muted,
+        };
+      }
+      case 'error':
+        return { text: line.text, color: theme.colors.danger };
+      case 'state':
+        return {
+          text: _(taskStateWord[task.state]),
+          color: task.state === 'failed' ? theme.colors.danger : muted,
+        };
+    }
+  };
+}
+
+/**
+ * One task on a card, Now or Just finished: where it runs, the goal as typed,
+ * its age, and the line saying what became of it. Tapping opens the session
+ * or pane it runs in; the sub-task count opens the work under it; a paused
+ * task the reader may confirm carries the quiet Mark done.
+ */
+function TaskRow({
+  task,
+  subTasks,
+  serverId,
+  discovery,
+  nowMs,
+  onOpen,
+  onOpenTree,
+}: {
+  task: TaskView;
+  /** Its open sub-tasks, one level under it. */
+  subTasks?: readonly TaskView[];
+  serverId: string;
+  discovery: MirroredServerDiscovery | undefined;
+  nowMs: number;
+  onOpen: (task: TaskView) => void;
+  onOpenTree: (task: TaskView) => void;
+}) {
+  const { t } = useLingui();
+  const theme = useThemeTokens();
+  const { showToast } = useToast();
+  const age = useTaskAge();
+  const rowLine = useTaskRowLine(discovery);
   const rollupText = useRollupText()(task);
-  const meta = [
-    task.state === 'waiting' ? _(taskStateWord.waiting) : '',
-    age(task.updatedMs, nowMs),
-    rollupText,
-  ]
-    .filter(Boolean)
-    .join(' · ');
+  const capabilities = useServerCapabilities((state) => state.byServer[serverId]);
+  const markDone = useMarkTaskDone(serverId);
+  const line = rowLine(task, nowMs);
   const title = taskTitle(task);
-  const agentOf = (child: TaskView) =>
-    child.binding.kind === 'agent_session'
-      ? (findAgent(discovery?.agents?.agents, child.binding.agentId)?.name ??
-        agentBrandName(child.binding.agentId))
-      : child.binding.kind === 'pane'
-        ? t`Terminal`
-        : _(taskStateWord[child.state]);
   return (
     <View>
       <PressableScale
         testID={`home-card-task-${task.taskId}`}
         accessibilityRole="button"
-        accessibilityLabel={`${title}, ${_(taskStateWord[task.state])}, ${meta}`}
+        accessibilityLabel={[title, line.text, age(task.updatedMs, nowMs), rollupText]
+          .filter(Boolean)
+          .join(', ')}
         onPress={() => onOpen(task)}
-        style={styles.row}>
-        <TaskStatusGlyph state={task.state} size={14} />
-        <Text variant="bodySmall" numberOfLines={1} style={styles.grow}>
-          <Text variant="bodySmall" weight="semibold">
+        style={styles.taskRow}>
+        <View style={styles.row}>
+          <View style={styles.mark}>
+            <TaskWhereMark task={task} discovery={discovery} />
+          </View>
+          <Text variant="bodySmall" weight="semibold" numberOfLines={2} style={styles.grow}>
             {title}
           </Text>
-          <Text variant="caption" color={theme.colors.textMuted}>
-            {` · ${meta}`}
+          <Text variant="caption" color={theme.colors.textSubtle}>
+            {age(task.updatedMs, nowMs)}
           </Text>
+        </View>
+        <Text
+          testID={`home-card-line-${task.taskId}`}
+          variant="caption"
+          color={line.color}
+          numberOfLines={1}
+          style={styles.result}>
+          {line.text}
+          {rollupText ? (
+            <Text
+              testID={`home-card-subtasks-${task.taskId}`}
+              variant="caption"
+              color={theme.colors.primary}
+              accessibilityRole="link"
+              onPress={() => onOpenTree(task)}>
+              {` · ${rollupText}`}
+            </Text>
+          ) : null}
         </Text>
       </PressableScale>
-      {row.children.map((child) => (
+      {canMarkTaskDone(task, capabilities) ? (
+        <View style={styles.result}>
+          <SheetSceneQuietAction
+            testID={`home-card-mark-done-${task.taskId}`}
+            label={t`Mark done`}
+            onPress={() => {
+              void markDone(task).catch((failure: unknown) => {
+                showToast({
+                  variant: 'danger',
+                  title: t`Could not mark the task done`,
+                  message: failure instanceof Error ? failure.message : String(failure),
+                });
+              });
+            }}
+          />
+        </View>
+      ) : null}
+      {(subTasks ?? []).map((child) => (
         <PressableScale
           key={child.taskId}
           testID={`home-card-task-${child.taskId}`}
           accessibilityRole="button"
-          accessibilityLabel={`${agentOf(child)}, ${taskTitle(child)}, ${_(taskStateWord[child.state])}`}
+          accessibilityLabel={`${taskTitle(child)}, ${rowLine(child, nowMs).text}`}
           onPress={() => onOpen(child)}
           style={[styles.row, styles.child]}>
-          <TaskStatusGlyph state={child.state} size={12} />
+          <TaskWhereMark task={child} discovery={discovery} size={12} />
           <Text variant="caption" numberOfLines={1} style={styles.grow}>
             <Text variant="caption" weight="semibold" color={theme.colors.textMuted}>
-              {agentOf(child)}
+              {taskTitle(child)}
             </Text>
-            <Text variant="caption" color={theme.colors.textMuted}>
-              {` · ${taskTitle(child)}`}
+            <Text variant="caption" color={rowLine(child, nowMs).color}>
+              {` · ${rowLine(child, nowMs).text}`}
             </Text>
           </Text>
         </PressableScale>
       ))}
     </View>
-  );
-}
-
-function FinishedRow({
-  task,
-  nowMs,
-  onOpen,
-}: {
-  task: TaskView;
-  nowMs: number;
-  onOpen: (task: TaskView) => void;
-}) {
-  const { t } = useLingui();
-  const { _ } = useLinguiRuntime();
-  const theme = useThemeTokens();
-  const age = useTaskAge();
-  const result = taskResultLine(task);
-  const code = result?.kind === 'exit' ? result.code : 0;
-  const resultText = result
-    ? result.kind === 'summary'
-      ? result.text
-      : t`exit ${code}`
-    : _(taskStateWord[task.state]);
-  const title = taskTitle(task);
-  return (
-    <PressableScale
-      testID={`home-card-finished-${task.taskId}`}
-      accessibilityRole="button"
-      accessibilityLabel={`${title}, ${_(taskStateWord[task.state])}, ${resultText}`}
-      onPress={() => onOpen(task)}
-      style={styles.finished}>
-      <View style={styles.row}>
-        <TaskStatusGlyph state={task.state} size={14} />
-        <Text variant="bodySmall" weight="semibold" numberOfLines={1} style={styles.grow}>
-          {title}
-        </Text>
-        <Text variant="caption" color={theme.colors.textSubtle}>
-          {age(task.updatedMs, nowMs)}
-        </Text>
-      </View>
-      <Text
-        variant="caption"
-        color={task.state === 'failed' ? theme.colors.danger : theme.colors.textMuted}
-        numberOfLines={1}
-        style={styles.result}>
-        {resultText}
-      </Text>
-    </PressableScale>
   );
 }
 
@@ -545,19 +615,11 @@ const styles = StyleSheet.create({
   },
   headerCopy: { flexShrink: 1, minWidth: 0, gap: 2 },
   statusLine: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  badges: {
-    flex: 1,
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'flex-end',
-    gap: 4,
-  },
-  badge: { paddingHorizontal: 6, paddingVertical: 1, maxWidth: 120 },
-  note: { paddingBottom: 10 },
   block: { gap: 2, paddingBottom: 8 },
   row: { minHeight: 32, flexDirection: 'row', alignItems: 'center', gap: 8 },
   child: { paddingLeft: 22, minHeight: 28 },
-  finished: { paddingVertical: 4 },
+  taskRow: { paddingVertical: 4 },
+  mark: { width: 14, alignItems: 'center' },
   result: { paddingLeft: 22 },
   grow: { flex: 1, minWidth: 0 },
   footer: {

@@ -248,7 +248,6 @@ msgid "{count, plural, one {# result} other {# results}}"
 msgstr "{count, plural, other {# kết quả}}"
 
 #: src/components/home-connections.tsx
-#: src/components/settings-servers.tsx
 msgid "{count} in progress"
 msgstr "{count} đang chạy"
 
@@ -280,10 +279,6 @@ msgstr "{host} đưa ra một khóa mà ứng dụng này chưa từng thấy. H
 #: src/components/app-lock-gate.tsx
 msgid "{label} is temporarily locked. Use the system fallback or try later."
 msgstr "{label} tạm thời bị khóa. Hãy dùng cách dự phòng của hệ thống hoặc thử lại sau"
-
-#: src/components/home-computer-cards.tsx
-msgid "{label} settings, {footer}"
-msgstr "Cài đặt {label}, {footer}"
 
 #: src/components/bounded-markdown.tsx
 msgid "{language} code copied to clipboard"
@@ -325,14 +320,6 @@ msgstr "{removeLabel}: {label}"
 #: src/components/agent-background-tray.tsx
 msgid "{running} running of {0}"
 msgstr "{running} trong {0} đang chạy"
-
-#: src/components/home-computer-cards.tsx
-msgid "{sessions, plural, one {# session} other {# sessions}}"
-msgstr "{sessions, plural, other {# phiên}}"
-
-#: src/components/home-computer-cards.tsx
-msgid "{terminals, plural, one {# terminal} other {# terminals}}"
-msgstr "{terminals, plural, other {# terminal}}"
 
 #: src/components/agent-composer.tsx
 #: src/components/agent-session-tree-sheet.tsx
@@ -499,12 +486,6 @@ msgstr "Sau khi ghi âm"
 msgid "Agent"
 msgstr "Tác nhân"
 
-#. placeholder {0}: task.binding.agentId
-#. placeholder {1}: task.binding.asid
-#: src/components/server-tasks-sheet.tsx
-msgid "Agent {0}, session {1}"
-msgstr "Tác tử {0}, phiên {1}"
-
 #: src/app/commands.tsx
 #: src/components/agent-command-delivery-picker.tsx
 #: src/components/collaboration-notice.tsx
@@ -569,7 +550,7 @@ msgstr "Mọi dự án"
 msgid "All sessions"
 msgstr "Tất cả các phiên"
 
-#: src/components/server-tasks-sheet.tsx
+#: src/components/home-computer-cards.tsx
 msgid "All tasks"
 msgstr "Tất cả tác vụ"
 
@@ -996,10 +977,6 @@ msgstr "Hủy chỉnh sửa {0}"
 msgid "Cancel queued message"
 msgstr "Hủy tin nhắn đang chờ"
 
-#: src/components/server-tasks-sheet.tsx
-msgid "Cancel task"
-msgstr "Hủy tác vụ"
-
 #: src/components/agent-composer.tsx
 msgid "Cancel this queued message"
 msgstr "Huỷ tin nhắn đang chờ này"
@@ -1013,10 +990,6 @@ msgstr "Đã hủy"
 msgctxt "task state"
 msgid "Cancelled"
 msgstr "Đã hủy"
-
-#: src/components/server-tasks-sheet.tsx
-msgid "Cancelling…"
-msgstr "Đang hủy…"
 
 #: src/components/settings-server-capabilities.tsx
 msgid "Capabilities"
@@ -1361,10 +1334,6 @@ msgstr "Không tìm thấy máy tính"
 msgid "Computer offline"
 msgstr "Máy tính ngoại tuyến"
 
-#: src/components/home-computer-cards.tsx
-msgid "Computer settings"
-msgstr "Cài đặt máy tính"
-
 #: src/components/home-composer-dock.tsx
 #: src/components/server-terminal-workspace.tsx
 msgid "Computer unavailable."
@@ -1380,10 +1349,6 @@ msgstr "Máy tính"
 #: src/app/settings-voice.tsx
 msgid "Configure your speech service, then hold Send to record. Tap the animation to stop and transcribe."
 msgstr "Cấu hình dịch vụ giọng nói, rồi nhấn giữ Gửi để ghi âm. Chạm vào hiệu ứng để dừng và chuyển thành văn bản"
-
-#: src/components/server-tasks-sheet.tsx
-msgid "Confirm cancel"
-msgstr "Xác nhận hủy"
 
 #: src/components/settings-storage.tsx
 msgid "Confirm clear cache"
@@ -1708,10 +1673,6 @@ msgstr "Đang sao chép…"
 msgid "Could not add a file"
 msgstr "Không thể thêm tệp"
 
-#: src/components/server-tasks-sheet.tsx
-msgid "Could not cancel the task"
-msgstr "Không thể hủy tác vụ"
-
 #: src/components/agent-workbench.tsx
 msgid "Could not change delivery"
 msgstr "Không thể đổi cách gửi"
@@ -1813,6 +1774,11 @@ msgstr "Không tải được token"
 #: src/components/session-map.tsx
 msgid "Could not load what is running."
 msgstr "Không thể tải những gì đang chạy"
+
+#: src/components/home-computer-cards.tsx
+#: src/components/server-tasks-sheet.tsx
+msgid "Could not mark the task done"
+msgstr "Không thể đánh dấu tác vụ đã xong"
 
 #: src/components/agent-workbench.tsx
 msgid "Could not move this session"
@@ -2442,15 +2408,8 @@ msgid "Every screen in the app."
 msgstr "Mọi màn hình trong ứng dụng"
 
 #: src/components/home-computer-cards.tsx
-#: src/components/server-tasks-sheet.tsx
 msgid "exit {code}"
 msgstr "thoát {code}"
-
-#. placeholder {0}: result.code
-#. placeholder {0}: task.exitCode
-#: src/components/server-tasks-sheet.tsx
-msgid "Exit code {0}"
-msgstr "Mã thoát {0}"
 
 #. placeholder {0}: block.tool
 #: src/components/pane-chat-blocks.tsx
@@ -2822,10 +2781,6 @@ msgstr "Ẩn danh sách máy tính"
 msgid "Hide the simulator"
 msgstr "Ẩn trình giả lập"
 
-#: src/components/server-tasks-sheet.tsx
-msgid "History"
-msgstr "Lịch sử"
-
 #: src/components/pad-server-rail.tsx
 #: src/components/simfarm-stage.tsx
 msgid "Home"
@@ -2882,19 +2837,9 @@ msgid "How to use Muqun"
 msgstr "Cách dùng Muqun"
 
 #: src/components/agent-session-tree-sheet.tsx
-#: src/components/home-computer-cards.tsx
 #: src/i18n/labels.ts
 msgid "Idle"
 msgstr "Rảnh"
-
-#: src/components/home-computer-cards.tsx
-msgid "Idle · last finished {lastTitle} {lastAge}"
-msgstr "Rảnh · xong gần nhất: {lastTitle} {lastAge}"
-
-#: src/i18n/labels.ts
-msgctxt "task state"
-msgid "Idle, not confirmed"
-msgstr "Nhàn rỗi, chưa xác nhận"
 
 #: src/components/gateway-storage-error.tsx
 msgid "If this continues, restart the app or check the app installation"
@@ -3114,10 +3059,6 @@ msgstr "Giữ mọi thứ và bỏ thao tác hoàn tác đã chuẩn bị"
 msgctxt "agent slash command"
 msgid "Keep everything and drop the staged rollback"
 msgstr "Giữ mọi thứ và bỏ thao tác hoàn tác đã chuẩn bị"
-
-#: src/components/server-tasks-sheet.tsx
-msgid "Keep it running"
-msgstr "Tiếp tục chạy"
 
 #: src/components/settings-storage.tsx
 msgid "Keep saved themes"
@@ -3340,6 +3281,11 @@ msgstr "Quản lý máy"
 #: src/components/home-overview.tsx
 msgid "Manage SSH hosts"
 msgstr "Quản lý host SSH"
+
+#: src/components/home-computer-cards.tsx
+#: src/components/server-tasks-sheet.tsx
+msgid "Mark done"
+msgstr "Đánh dấu đã xong"
 
 #: src/components/collaboration-notice.tsx
 msgid "Mark reviewed"
@@ -4240,12 +4186,6 @@ msgstr "Ghép nối thất bại"
 msgid "Palette (up to 4)"
 msgstr "Bảng màu (tối đa 4)"
 
-#. placeholder {0}: task.binding.paneId
-#. placeholder {1}: task.binding.sessionId
-#: src/components/server-tasks-sheet.tsx
-msgid "Pane {0} in session {1}"
-msgstr "Ô {0} trong phiên {1}"
-
 #: src/components/settings-mcp-tokens.tsx
 msgid "Pane {paneId}"
 msgstr "Pane {paneId}"
@@ -4302,6 +4242,11 @@ msgstr "Tạm dừng"
 #: src/components/audio-asset-preview.tsx
 msgid "Pause audio"
 msgstr "Tạm dừng âm thanh"
+
+#: src/i18n/labels.ts
+msgctxt "task state"
+msgid "Paused"
+msgstr "Tạm dừng"
 
 #: src/components/agent-context-sheet.tsx
 msgid "Permission"
@@ -4622,7 +4567,6 @@ msgstr "Ghi âm thất bại"
 
 #: src/components/agent-background-tray.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
-#: src/components/server-tasks-sheet.tsx
 #: src/components/session-map.tsx
 msgid "Refresh"
 msgstr "Làm mới"
@@ -5164,8 +5108,8 @@ msgid "Sends your next goal here. Long press to open it."
 msgstr "Gửi mục tiêu tiếp theo tới đây. Nhấn giữ để mở"
 
 #: src/components/home-computer-cards.tsx
-msgid "Sent · waiting for the computer"
-msgstr "Đã gửi · đang chờ máy tính"
+msgid "Sent · waiting for {computer}"
+msgstr "Đã gửi · đang chờ {computer}"
 
 #: src/components/agent-sessions-sheet.tsx
 msgid "Session name"
@@ -5566,6 +5510,10 @@ msgctxt "task state"
 msgid "Starting"
 msgstr "Đang khởi động"
 
+#: src/components/home-computer-cards.tsx
+msgid "Starting {agent}…"
+msgstr "Đang khởi động {agent}…"
+
 #: src/components/simfarm-stage.tsx
 msgid "Starting {name}"
 msgstr "Đang khởi động {name}"
@@ -5800,7 +5748,6 @@ msgstr "Tác vụ cho một {0} mới"
 #: src/components/agent-tasks-sheet.tsx
 #: src/components/agent-todo-block.tsx
 #: src/components/server-tasks-sheet.tsx
-#: src/components/settings-servers.tsx
 msgid "Tasks"
 msgstr "Nhiệm vụ"
 
@@ -6197,10 +6144,6 @@ msgstr "Máy tính này không còn nhận ra thiết bị này. Hãy ghép nố
 msgid "This computer refused the request."
 msgstr "Máy tính này đã từ chối yêu cầu"
 
-#: src/components/home-computer-cards.tsx
-msgid "This computer’s Gateway does not keep a task list yet."
-msgstr "Gateway của máy tính này chưa lưu danh sách nhiệm vụ"
-
 #: src/lib/attachments.ts
 msgid "This device has no camera available."
 msgstr "Thiết bị này không có camera khả dụng"
@@ -6482,7 +6425,6 @@ msgstr "Gõ vào, hoặc dùng phím đọc chính tả trên bàn phím của b
 msgid "Type on the simulator"
 msgstr "Gõ trên trình giả lập"
 
-#: src/components/server-tasks-sheet.tsx
 #: src/components/settings-server-capabilities.tsx
 msgid "Unavailable"
 msgstr "Không khả dụng"

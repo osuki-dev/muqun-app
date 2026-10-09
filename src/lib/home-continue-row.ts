@@ -7,7 +7,7 @@
  */
 
 import type { GatewayRecord } from './gateway-storage';
-import { isCommandPathTitle } from './herdr-entity';
+import { isCommandPathTitle, isLaunchCommandTitle } from './herdr-entity';
 
 /** The ellipsis a shortened path carries where its middle was. */
 export const PATH_ELLIPSIS = '…';
@@ -87,7 +87,13 @@ export function terminalRowTitle(input: {
   const prompt = SHELL_PROMPT.test(raw);
   const stripped = raw.replace(SHELL_PROMPT, '').trim();
   if (input.hasAgent) {
-    if (stripped && !prompt && !isPathLike(stripped) && !isCommandPathTitle(stripped)) {
+    if (
+      stripped &&
+      !prompt &&
+      !isPathLike(stripped) &&
+      !isCommandPathTitle(stripped) &&
+      !isLaunchCommandTitle(stripped)
+    ) {
       return stripped;
     }
     const name = input.agentName?.trim();

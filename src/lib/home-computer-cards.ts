@@ -46,13 +46,20 @@ export function taskSubscriptionServerIds(input: {
   return ids;
 }
 
-/** The states a card's "Now" lists: running, about to, or asking the reader. */
-const NOW: ReadonlySet<TaskState> = new Set<TaskState>([
+/** Running, about to, or asking the reader. */
+const ACTIVE: ReadonlySet<TaskState> = new Set<TaskState>([
   'queued',
   'dispatching',
   'working',
   'waiting',
 ]);
+
+/**
+ * The states a card's "Now" lists: the active ones and `idle_unconfirmed` --
+ * an agent that stopped without saying it finished is paused, not done; the
+ * work may go on, and it is never shown as a result.
+ */
+const NOW: ReadonlySet<TaskState> = new Set<TaskState>([...ACTIVE, 'idle_unconfirmed']);
 
 export type CardTaskRow = {
   task: TaskView;
@@ -63,7 +70,7 @@ export type CardTaskRow = {
 /** A goal the dock sent that the computer has not reported back yet. */
 export type PendingDispatch = { id: string; serverId: string; goal: string; atMs: number };
 
-export type CardActivity = 'needs-you' | 'working' | 'idle' | 'offline';
+export type CardActivity = 'needs-you' | 'working' | 'paused' | 'idle' | 'offline';
 
 export type ComputerCard = {
   serverId: string;
@@ -75,10 +82,6 @@ export type ComputerCard = {
   nowTotal: number;
   /** Finished roots not yet acknowledged, newest first. */
   finished: TaskView[];
-  /** The newest finished root, acknowledged or not, for the idle line. */
-  lastFinished?: TaskView;
-  /** Whether this computer's ledger is known at all (a socket or list answered). */
-  known: boolean;
 };
 
 export type CardLimits = { now: number; finished: number };
@@ -184,6 +187,21 @@ export function treeRowIsOpen(row: CardTaskRow): boolean {
   return Boolean(counts && counts.active + counts.waiting > 0);
 }
 
+/** Whether a root row, or work under it, is running or asking (not only paused). */
+function treeRowIsActive(row: CardTaskRow): boolean {
+  if (ACTIVE.has(row.task.state)) return true;
+  if (row.children.some((child) => ACTIVE.has(child.state))) return true;
+  const counts = row.task.children;
+  return Boolean(counts && counts.active + counts.waiting > 0);
+}
+
+/** Open rows with work running first, paused ones after; newest first within each. */
+function activeBeforePaused(rows: readonly CardTaskRow[]): CardTaskRow[] {
+  return [...rows].sort(
+    (a, b) => Number(treeRowIsActive(b)) - Number(treeRowIsActive(a)) || newest(a.task, b.task)
+  );
+}
+
 /** Whether a root row, or work under it, is waiting on the reader. */
 export function treeRowIsWaiting(row: CardTaskRow): boolean {
   return (
@@ -206,7 +224,7 @@ export function groupTaskTree(rows: readonly CardTaskRow[]): {
   const attention: TaskView[] = [];
   const active: TaskView[] = [];
   const finished: TaskView[] = [];
-  for (const row of [...rows].sort((a, b) => newest(a.task, b.task))) {
+  for (const row of activeBeforePaused(rows)) {
     if (treeRowIsWaiting(row)) attention.push(row.task);
     else if (treeRowIsOpen(row) || !isTerminalTaskState(row.task.state)) active.push(row.task);
     else if (finished.length < FINISHED_TASKS_SHOWN) finished.push(row.task);
@@ -236,16 +254,26 @@ function settlesPending(tasks: readonly TaskView[], item: PendingDispatch): bool
   );
 }
 
+/** How long a finished task, not yet acknowledged, keeps its computer's card on Home. */
+export const RECENT_FINISHED_MS = 30 * 60_000;
+
 const ACTIVITY_RANK: Record<CardActivity, number> = {
   'needs-you': 0,
   working: 1,
-  idle: 2,
-  offline: 3,
+  paused: 2,
+  idle: 3,
+  offline: 4,
 };
 
 /**
- * Every computer's card, sorted needs-you → working → idle → offline (the
- * reader's own order within each).
+ * The cards of the computers that have work, sorted needs-you → working →
+ * paused → idle (the reader's own order within each).
+ *
+ * A computer gets a card only while it has something to show: an open task,
+ * a goal just sent, or a finished task not yet acknowledged from the last
+ * {@link RECENT_FINISHED_MS}. One that is offline, idle with nothing recent,
+ * or keeps no ledger gets none; Settings and the dock's target picker list
+ * every computer. The room each card gets follows how many are shown.
  */
 export function buildComputerCards(input: {
   servers: readonly { serverId: string }[];
@@ -253,22 +281,25 @@ export function buildComputerCards(input: {
   reachability: (serverId: string) => ServerReachability | undefined;
   dismissed: ReadonlySet<string>;
   pending?: readonly PendingDispatch[];
+  /** The phone's clock, for what counts as recently finished. */
+  nowMs: number;
   limits?: CardLimits;
 }): ComputerCard[] {
-  const limits = input.limits ?? cardLimits(input.servers.length);
-  const cards = input.servers.map((server, order): ComputerCard & { order: number } => {
+  const all = input.servers.map((server, order): ComputerCard & { order: number } => {
     const entry = input.index[server.serverId];
     const tasks = entry?.tasks ?? [];
     const tree = buildTaskTree(tasks);
     // A root stays in Now while any work it started is still open, even after
     // the root itself finished: a delegating turn can end before its
     // sub-tasks do, and an idle parent is not finished work.
-    const open = tree.filter(treeRowIsOpen);
+    const open = activeBeforePaused(tree.filter(treeRowIsOpen));
     const finishedAll = tree
       .filter((row) => !treeRowIsOpen(row) && isTerminalTaskState(row.task.state))
       .map((row) => row.task);
     const finished = finishedAll.filter(
-      (task) => !input.dismissed.has(dismissedKey(server.serverId, task.taskId))
+      (task) =>
+        !input.dismissed.has(dismissedKey(server.serverId, task.taskId)) &&
+        input.nowMs - task.updatedMs <= RECENT_FINISHED_MS
     );
     const pending = (input.pending ?? []).filter(
       (item) => item.serverId === server.serverId && !settlesPending(tasks, item)
@@ -276,8 +307,7 @@ export function buildComputerCards(input: {
     // The same predicates Now uses, so work known only from the gateway's
     // child counts moves the card as well as listing it.
     const waiting = tasks.some((task) => task.state === 'waiting') || tree.some(treeRowIsWaiting);
-    const working =
-      tasks.some((task) => NOW.has(task.state)) || tree.some(treeRowIsOpen) || pending.length > 0;
+    const working = tree.some(treeRowIsActive) || pending.length > 0;
     const activity: CardActivity =
       input.reachability(server.serverId) === 'offline'
         ? 'offline'
@@ -285,23 +315,142 @@ export function buildComputerCards(input: {
           ? 'needs-you'
           : working
             ? 'working'
-            : 'idle';
+            : open.length > 0
+              ? 'paused'
+              : 'idle';
     return {
       order,
       serverId: server.serverId,
       activity,
       pending,
-      now: open.slice(0, Math.max(0, limits.now)).map((row) => ({
+      now: open.map((row) => ({
         task: row.task,
         children: row.children.filter((child) => !isTerminalTaskState(child.state)),
       })),
       nowTotal: open.length,
-      finished: finished.slice(0, Math.max(0, limits.finished)),
-      ...(finishedAll[0] ? { lastFinished: finishedAll[0] } : {}),
-      known: Boolean(entry),
+      finished,
     };
   });
-  return cards
+  const shown = all.filter(
+    (card) =>
+      card.activity !== 'offline' &&
+      (card.now.length > 0 || card.pending.length > 0 || card.finished.length > 0)
+  );
+  const limits = input.limits ?? cardLimits(shown.length);
+  return shown
     .sort((a, b) => ACTIVITY_RANK[a.activity] - ACTIVITY_RANK[b.activity] || a.order - b.order)
-    .map(({ order: _order, ...card }) => card);
+    .map(({ order: _order, ...card }) => ({
+      ...card,
+      now: card.now.slice(0, Math.max(0, limits.now)),
+      finished: card.finished.slice(0, Math.max(0, limits.finished)),
+    }));
+}
+
+/**
+ * What a task row opens: the thing the task runs in. A session-bound task
+ * opens its agent session, a pane-bound one its pane -- unless it failed,
+ * when the pane may be gone and the row's result line already says why.
+ * Null when there is nothing to open (not bound yet, or failed in a pane).
+ */
+export function taskRowDestination(
+  task: TaskView
+):
+  | { kind: 'session'; asid: string; agentId: string }
+  | { kind: 'pane'; paneId: string; sessionId: string }
+  | null {
+  const binding = task.binding;
+  if (binding.kind === 'agent_session') {
+    return { kind: 'session', asid: binding.asid, agentId: binding.agentId };
+  }
+  if (binding.kind === 'pane' && task.state !== 'failed') {
+    return { kind: 'pane', paneId: binding.paneId, sessionId: binding.sessionId };
+  }
+  return null;
+}
+
+/**
+ * The newest terminal-agent task bound to a pane: a Continue row for that
+ * pane can say the task's goal instead of the launch command.
+ */
+export function paneLedgerTask(
+  tasks: readonly TaskView[] | undefined,
+  paneId: string | undefined
+): TaskView | undefined {
+  if (!tasks || !paneId) return undefined;
+  let found: TaskView | undefined;
+  for (const task of tasks) {
+    if (
+      task.binding.kind === 'pane' &&
+      task.binding.agentId &&
+      task.binding.paneId === paneId &&
+      (!found || task.updatedMs > found.updatedMs)
+    ) {
+      found = task;
+    }
+  }
+  return found;
+}
+
+/** The two ways into a computer's work, as Home's commands open them. */
+export type TaskOpeners = {
+  openAgent: (
+    serverId: string,
+    asid?: string,
+    directory?: string,
+    sessionId?: string,
+    agentId?: string
+  ) => unknown;
+  openServer: (serverId: string, paneId?: string, sessionId?: string) => unknown;
+};
+
+/** Open what a task runs in; false when it has nothing to open. */
+export function openTaskWork(commands: TaskOpeners, serverId: string, task: TaskView): boolean {
+  const destination = taskRowDestination(task);
+  if (!destination) return false;
+  if (destination.kind === 'session') {
+    void commands.openAgent(serverId, destination.asid, undefined, undefined, destination.agentId);
+  } else {
+    void commands.openServer(serverId, destination.paneId, destination.sessionId);
+  }
+  return true;
+}
+
+/**
+ * The second line of a task row: what the computer saw and is doing, one
+ * state at a time -- starting the agent, its live progress, the question it
+ * asks, the hint where it paused, the result it left, or why it failed.
+ */
+export type TaskRowLine =
+  | { kind: 'state' }
+  | { kind: 'starting' }
+  | { kind: 'progress'; text: string }
+  | { kind: 'elapsed' }
+  | { kind: 'waiting'; text?: string }
+  | { kind: 'paused'; text?: string }
+  | { kind: 'result'; text: string }
+  | { kind: 'exit'; code: number }
+  | { kind: 'error'; text: string };
+
+export function taskRowLine(task: TaskView): TaskRowLine {
+  const result = taskResultLine(task);
+  const said = result?.kind === 'summary' ? result.text : undefined;
+  switch (task.state) {
+    case 'queued':
+      return { kind: 'state' };
+    case 'dispatching':
+      return { kind: 'starting' };
+    case 'working':
+      return task.progress ? { kind: 'progress', text: task.progress } : { kind: 'elapsed' };
+    case 'waiting':
+      return said ? { kind: 'waiting', text: said } : { kind: 'waiting' };
+    case 'idle_unconfirmed':
+      return said ? { kind: 'paused', text: said } : { kind: 'paused' };
+    case 'failed':
+      if (said) return { kind: 'error', text: said };
+      return result?.kind === 'exit' ? { kind: 'exit', code: result.code } : { kind: 'state' };
+    case 'done':
+    case 'cancelled':
+      if (said) return { kind: 'result', text: said };
+      return result?.kind === 'exit' ? { kind: 'exit', code: result.code } : { kind: 'state' };
+  }
 }

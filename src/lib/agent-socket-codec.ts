@@ -206,9 +206,14 @@ export type AgentSocketServerFrame =
   | { t: 'hello'; connectionId: string; protocol: number; generation?: string }
   | { t: 'subscribed'; asid: string }
   | { t: 'subscribed'; all: true }
+  /** `subscribe_tasks` is in effect: task frames only from here on. */
+  | { t: 'subscribed'; tasks: true }
   /** `event` already parsed; null when this build has no branch for it. */
   | { t: 'event'; asid: string; seq: number; event: AgentDomainEvent | null }
-  /** `task.updated`, which the gateway sends on no session; only `subscribe_all` sockets get it. */
+  /**
+   * `task.updated`, which the gateway sends on no session: as an `event` frame
+   * with no `asid` under `subscribe_all`, as a `task` frame under `subscribe_tasks`.
+   */
   | { t: 'task'; seq: number; task: TaskView }
   /**
    * `asid` "" means every session. `tasks` with an empty `asid` is the task
@@ -222,6 +227,7 @@ export type AgentSocketClientFrame =
   | { t: 'subscribe'; asid: string }
   | { t: 'unsubscribe'; asid: string }
   | { t: 'subscribe_all' }
+  | { t: 'subscribe_tasks' }
   | { t: 'ping' };
 
 function str(value: unknown): string | null {
@@ -257,6 +263,7 @@ export function parseAgentSocketFrame(plaintext: string): AgentSocketServerFrame
     }
     case 'subscribed': {
       if (rec.all === true) return { t: 'subscribed', all: true };
+      if (rec.tasks === true) return { t: 'subscribed', tasks: true };
       const asid = str(rec.asid);
       return asid ? { t: 'subscribed', asid } : null;
     }
@@ -274,6 +281,12 @@ export function parseAgentSocketFrame(plaintext: string): AgentSocketServerFrame
       // `data` is the SSE `data:` payload embedded as JSON; the parser the SSE
       // path uses takes it from here unchanged.
       return { t: 'event', asid, seq, event: parseAgentDomainEvent(name, rec.data) };
+    }
+    case 'task': {
+      if (rec.event !== 'task.updated') return null;
+      const seq = typeof rec.seq === 'number' && Number.isFinite(rec.seq) ? rec.seq : 0;
+      const task = parseTaskView(rec.data);
+      return task ? { t: 'task', seq, task } : null;
     }
     case 'resync': {
       const asid = str(rec.asid);

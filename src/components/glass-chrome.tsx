@@ -17,6 +17,7 @@ import { appChrome } from '@/constants/appearance';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import type { AppearanceProfile } from '@/lib/appearance-profile';
 import { withAlpha } from '@/lib/color';
+import { surfaceBackgroundFill } from '@/theme/surface-background';
 import { DURATION } from '@/lib/motion';
 import { resolveThemeImage } from '@/theme/resolve';
 import { resolveThemeMaterial, type ThemeSurface } from '@/theme/material';
@@ -231,16 +232,28 @@ export function GlassChrome({
   }
 
   if (material === 'solid') {
-    // The slider may thin the page; chrome keeps a frosted floor under it.
-    const alpha = Math.max(backgroundOpacity, appChrome.opacity.glassSolidFloor);
+    // The composer is a plate like the content cards around it -- Home's dock
+    // under the computer cards, the session composer under the transcript --
+    // so a solid pack draws it as they are drawn: `surface` at the reader's
+    // surface opacity, with the `border` hairline. Raised chrome (pills,
+    // buttons) keeps `surfaceRaised` and a frosted floor under the slider.
+    const plate =
+      surface === 'composer'
+        ? {
+            backgroundColor: surfaceBackgroundFill(theme.colors.surface, backgroundOpacity),
+            borderColor: theme.colors.border,
+          }
+        : {
+            backgroundColor: withAlpha(
+              theme.colors.surfaceRaised,
+              Math.max(backgroundOpacity, appChrome.opacity.glassSolidFloor)
+            ),
+          };
     return (
       <Animated.View
         entering={entering}
         exiting={exiting}
-        style={[
-          chromeStyle,
-          { backgroundColor: withAlpha(theme.colors.surfaceRaised, alpha), overflow: 'hidden' },
-        ]}>
+        style={[chromeStyle, plate, { overflow: 'hidden' }]}>
         {content}
       </Animated.View>
     );

@@ -47,7 +47,8 @@ import {
 import { agentSessionStatusWord, agentStatusWord, taskStateWord } from '@/i18n/labels';
 import { boundTaskState, taskStateTone } from '@/lib/home-in-progress';
 import { useServerTasksStore } from '@/stores/server-tasks';
-import { agentBrandName, agentStatusTone } from '@/lib/herdr-entity';
+import { agentBrandName, agentStatusTone, isLaunchCommandTitle } from '@/lib/herdr-entity';
+import { paneLedgerTask, taskTitle } from '@/lib/home-computer-cards';
 import type { ActiveServerConnection, ServerReachability } from '@/lib/server-reachability';
 import { useServerAgents } from '@/stores/server-agents';
 import { useAppSettings } from '@/stores/app-settings';
@@ -408,14 +409,26 @@ function RecentSessionRow({
         : t`SSH host`;
   const providerInk = agentKind ?? entry.agentLabel;
   const terminal = rowKind.kind === 'terminal';
-  const title = terminal
-    ? terminalRowTitle({
-        paneTitle: entry.title,
-        cwd,
-        hasAgent: Boolean(entry.agentLabel),
-        agentName: paneAgentName,
-      }) || kind
-    : entry.title || kind;
+  // A pane the gateway opened for a ledger task, still named after its launch
+  // command, says the task's goal instead.
+  const paneGoal = useServerTasksStore((state) => {
+    if (entry.destination.type !== 'pane' || !isLaunchCommandTitle(entry.title)) return undefined;
+    const task = paneLedgerTask(
+      state.index[entry.destination.serverId]?.tasks,
+      entry.destination.paneId
+    );
+    return task ? taskTitle(task) : undefined;
+  });
+  const title = paneGoal
+    ? paneGoal
+    : terminal
+      ? terminalRowTitle({
+          paneTitle: entry.title,
+          cwd,
+          hasAgent: Boolean(entry.agentLabel),
+          agentName: paneAgentName,
+        }) || kind
+      : entry.title || kind;
   const path = terminal ? terminalRowPath(title, cwd) : cwd ? homePathLabel(cwd) : undefined;
   const observation = entry.observation;
   // A session a ledger task is running in says what the task says: the

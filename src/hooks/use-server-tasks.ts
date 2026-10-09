@@ -6,13 +6,18 @@ import { configuredGatewayServerId } from '@/lib/gateway-client';
 import { WS_EVENTS_CAPABILITY, type GatewaySocketState } from '@/lib/gateway-socket';
 import { gatewaySocketFor } from '@/lib/gateway-socket-runtime';
 import {
-  applyCancelAnswer,
   applyListAnswer,
   groupTasks,
   isTaskChannelLive,
   type TaskGroups,
 } from '@/lib/server-tasks-state';
-import { cancelTask, fetchTaskList, type TaskEndpoint, type TaskView } from '@/lib/task-ledger';
+import {
+  completeTask,
+  fetchTaskList,
+  TASK_WS_SUBSCRIPTION_CAPABILITY,
+  type TaskEndpoint,
+  type TaskView,
+} from '@/lib/task-ledger';
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';
 import { useServerCapabilities } from '@/stores/server-capabilities';
 import { useServerTasksStore } from '@/stores/server-tasks';
@@ -47,7 +52,8 @@ export type ServerTasks = {
   loading: boolean;
   error: string | null;
   refresh: () => Promise<void>;
-  cancel: (taskId: string) => Promise<void>;
+  /** Mark a paused task done; shown at once, put back if the gateway refuses. */
+  complete: (task: TaskView) => Promise<void>;
   /** Whether changes arrive by themselves; false means "updates when you reopen". */
   live: boolean;
 };
@@ -69,6 +75,10 @@ export function useServerTasks(serverId: string | null): ServerTasks {
   const upsert = useServerTasksStore((state) => state.upsert);
   const wsEvents = useServerCapabilities((state) =>
     serverId ? state.byServer[serverId]?.includes(WS_EVENTS_CAPABILITY) === true : false
+  );
+  // Task frames alone, without every session's traffic, where the gateway can.
+  const tasksOnly = useServerCapabilities((state) =>
+    serverId ? state.byServer[serverId]?.includes(TASK_WS_SUBSCRIPTION_CAPABILITY) === true : false
   );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -127,15 +137,18 @@ export function useServerTasks(serverId: string | null): ServerTasks {
 
   useEffect(() => {
     if (!socket || !serverId) return;
-    return socket.watchTasks({
-      onTaskUpdated: (task) => upsert(serverId, task),
-      // After every (re)connect: whatever changed while it was down.
-      onSubscribed: () => void refresh(),
-      // The gateway dropped frames for this socket; a task may have changed
-      // in them, and the frame that said so is gone.
-      onResync: () => void refresh(),
-    });
-  }, [socket, serverId, upsert, refresh]);
+    return socket.watchTasks(
+      {
+        onTaskUpdated: (task) => upsert(serverId, task),
+        // After every (re)connect: whatever changed while it was down.
+        onSubscribed: () => void refresh(),
+        // The gateway dropped frames for this socket; a task may have changed
+        // in them, and the frame that said so is gone.
+        onResync: () => void refresh(),
+      },
+      { tasksOnly }
+    );
+  }, [socket, serverId, upsert, refresh, tasksOnly]);
 
   const subscribe = useCallback(
     (onChange: () => void) => {
@@ -152,20 +165,7 @@ export function useServerTasks(serverId: string | null): ServerTasks {
     () => socket?.state ?? null
   );
 
-  const cancel = useCallback(
-    async (taskId: string) => {
-      if (!serverId) return;
-      await applyCancelAnswer(taskId, {
-        cancel: (id) => {
-          const route = taskRouteFor(serverId);
-          return cancelTask(id, route?.kind === 'endpoint' ? route.endpoint : undefined);
-        },
-        upsert: (task) => upsert(serverId, task),
-        refresh,
-      });
-    },
-    [serverId, upsert, refresh]
-  );
+  const complete = useMarkTaskDone(serverId);
 
   return {
     tasks,
@@ -173,7 +173,35 @@ export function useServerTasks(serverId: string | null): ServerTasks {
     loading,
     error,
     refresh,
-    cancel,
+    complete,
     live: isTaskChannelLive({ wsEvents, demo, socketState }),
   };
+}
+
+/**
+ * Confirm a paused task is done: shown at once, put back if the gateway
+ * refuses (the caller says why).
+ */
+export function useMarkTaskDone(serverId: string | null): (task: TaskView) => Promise<void> {
+  const upsert = useServerTasksStore((state) => state.upsert);
+  return useCallback(
+    async (task: TaskView) => {
+      if (!serverId) return;
+      // At the task's own time: a newer frame from the gateway still wins, and
+      // putting the old view back on failure replaces only this guess.
+      upsert(serverId, { ...task, state: 'done' });
+      const route = taskRouteFor(serverId);
+      const endpoint = route?.kind === 'endpoint' ? route.endpoint : undefined;
+      return completeTask(task.taskId, endpoint).then(
+        (answer) => {
+          if (answer) upsert(serverId, answer);
+        },
+        (failure: unknown) => {
+          upsert(serverId, task);
+          throw failure;
+        }
+      );
+    },
+    [serverId, upsert]
+  );
 }
