@@ -100,7 +100,7 @@ export const AgentGuideSheet = memo(function AgentGuideSheet({
         } catch {
           void feedback('warning');
           setStatusMessage(
-            t`This gateway is not answering. Check the server connection, then try again.`
+            t`This computer is not answering. Check the computer connection, then try again.`
           );
         }
       },
@@ -116,13 +116,13 @@ export const AgentGuideSheet = memo(function AgentGuideSheet({
     blurbKind === 'ready'
       ? t`${agentName} is ready on this host.`
       : blurbKind === 'unsupported'
-        ? t`This gateway does not advertise ${agentName} sessions.`
+        ? t`This computer does not advertise ${agentName} sessions.`
         : blurbKind === 'update'
           ? t`Update Muqun Gateway on this host to use ${agentName}.`
           : blurbKind === 'not-installed'
             ? t`${agentName} was not found on this host. Install it, then check again.`
             : blurbKind === 'health'
-              ? t`This gateway is not answering. Check the server connection, then try again.`
+              ? t`This computer is not answering. Check the computer connection, then try again.`
               : blurbKind === 'setup'
                 ? _(agentGuideStart(agentGuideFor(agentKind), readiness.status))
                 : t`${agentName}'s installation could not be confirmed. If it is installed, start it on the host.`;

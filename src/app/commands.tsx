@@ -444,7 +444,7 @@ export default function QuickCommandsScreen() {
         // to send the phone to, and choosing an empty one would clear the
         // terminal instead -- so say so and stay put.
         if (!target.paneId) {
-          setError(t`The server did not say which terminal it made.`);
+          setError(t`The computer did not say which terminal it made.`);
           setCreating(null);
           return;
         }

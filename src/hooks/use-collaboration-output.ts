@@ -36,7 +36,7 @@ export function useCollaborationOutput(task: CollaborationTask | undefined, enab
     setHasNewOutput(false);
     const assertConnection = () => {
       if (useGatewayConnectionStore.getState().record?.serverId !== task.serverId)
-        throw new Error(t`Return to this server to continue.`);
+        throw new Error(t`Return to this computer to continue.`);
     };
     async function poll() {
       if (cancelled || running || AppState.currentState !== 'active') return;

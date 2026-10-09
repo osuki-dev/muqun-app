@@ -83,12 +83,12 @@ export function useAgentCommandDelivery(context: {
         if (!(failure instanceof AgentCommandDeliveryError)) throw failure;
         switch (failure.code) {
           case 'connection':
-            throw new Error(t`Return to this server to continue.`);
+            throw new Error(t`Return to this computer to continue.`);
           case 'unsupported':
             // Unreachable from here now that this surface sends. Kept because the
             // error type is shared, and a silent fall-through would be worse than
             // a sentence nobody should see.
-            throw new Error(t`This server cannot run that command yet.`);
+            throw new Error(t`This computer cannot run that command yet.`);
           case 'ambiguous':
             throw new Error(
               t`Check the assistant before sending again; it may have received the request.`

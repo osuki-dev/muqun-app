@@ -88,7 +88,7 @@ export default function NotFoundScreen() {
                 through a link leaves nothing behind to go back to, and a dead
                 button on the screen that tells you something is dead reads as a
                 second failure. */}
-            <Button onPress={() => router.dismissTo('/')}>{t`Go to your servers`}</Button>
+            <Button onPress={() => router.dismissTo('/')}>{t`Go to your computers`}</Button>
           </>
         )}
       </View>

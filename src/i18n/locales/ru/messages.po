@@ -139,8 +139,8 @@ msgstr "{0} токенов, прочитанных моделью в после�
 
 #. placeholder {0}: profile.kind
 #: src/components/new-task-sheet.tsx
-msgid "{0}, not found on this server's PATH"
-msgstr "{0}, не найден в PATH этого сервера"
+msgid "{0}, not found on this computer's PATH"
+msgstr "{0}, не найден в PATH этого компьютера"
 
 #. placeholder {0}: age.value
 #. placeholder {0}: parts.value
@@ -421,8 +421,8 @@ msgid "Actual size"
 msgstr "Исходный размер"
 
 #: src/components/home-connections.tsx
-msgid "Add a gateway or an SSH host to start working."
-msgstr "Добавьте Gateway или SSH-хост, чтобы начать работу"
+msgid "Add a computer or an SSH host to start working."
+msgstr "Добавьте компьютер или SSH-хост, чтобы начать работу"
 
 #: src/components/ssh-host-list.tsx
 msgid "Add a host"
@@ -690,13 +690,13 @@ msgstr "Задавайте вопросы, просматривайте файл
 msgid "Ask you a question"
 msgstr "Задать вам вопрос"
 
+#: src/components/new-task-sheet.tsx
+msgid "Asking the computer what it can run…"
+msgstr "Спрашиваем компьютер, что он может запустить…"
+
 #: src/app/explore.tsx
 msgid "Asking the Gateway about that code."
 msgstr "Проверяем этот код у Gateway"
-
-#: src/components/new-task-sheet.tsx
-msgid "Asking the server what it can run…"
-msgstr "Спрашиваем сервер, что он может запустить…"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Assign this to an assistant"
@@ -808,13 +808,13 @@ msgstr "Назад"
 msgid "Back one word"
 msgstr "На слово назад"
 
+#: src/components/app-drawer.tsx
+msgid "Back to computers"
+msgstr "К компьютерам"
+
 #: src/components/server-terminal-workspace.tsx
 msgid "Back to Home"
 msgstr "Вернуться на главную"
-
-#: src/components/app-drawer.tsx
-msgid "Back to servers"
-msgstr "К серверам"
 
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Back to SSH hosts"
@@ -1019,8 +1019,8 @@ msgid "Check device authentication settings and try again."
 msgstr "Проверьте настройки аутентификации устройства и попробуйте ещё раз"
 
 #: src/hooks/use-lazygit.ts
-msgid "Check that lazygit is installed on the Gateway host and this pane is in a Git repository."
-msgstr "Проверьте, что lazygit установлен на хосте Gateway и эта панель находится в репозитории Git"
+msgid "Check that lazygit is installed on this computer and this pane is in a Git repository."
+msgstr "Убедитесь, что lazygit установлен на этом компьютере, а эта панель находится в репозитории Git"
 
 #: src/hooks/use-agent-command-delivery.ts
 msgid "Check the assistant before sending again; it may have received the request."
@@ -1045,8 +1045,8 @@ msgstr "Проверка…"
 
 #: src/components/home-launch-actions.tsx
 #: src/components/home-target-sheet.tsx
-msgid "Choose a gateway"
-msgstr "Выберите Gateway"
+msgid "Choose a computer"
+msgstr "Выберите компьютер"
 
 #: src/components/agent-mode-sheet.tsx
 msgid "Choose a mode"
@@ -1301,6 +1301,35 @@ msgstr "По сравнению с {base}"
 msgid "Completed"
 msgstr "Выполнено"
 
+#: src/app/agent-guide.tsx
+#: src/app/artifacts.tsx
+#: src/app/panels.tsx
+#: src/components/app-drawer.tsx
+#: src/components/server-terminal-workspace.tsx
+msgid "Computer"
+msgstr "Компьютер"
+
+#: src/app/explore.tsx
+#: src/components/settings-servers.tsx
+msgid "Computer name"
+msgstr "Имя компьютера"
+
+#: src/app/servers/[serverId].tsx
+#: src/components/server-terminal-workspace.tsx
+msgid "Computer not found"
+msgstr "Компьютер не найден"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Computer offline"
+msgstr "Компьютер не в сети"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Computer unavailable."
+msgstr "Компьютер недоступен"
+
+#: src/app/settings-servers.tsx
+#: src/app/settings.tsx
+#: src/components/app-drawer-content.tsx
 #: src/components/home-composer.tsx
 #: src/components/home-editorial-layout.tsx
 msgid "Computers"
@@ -1703,8 +1732,8 @@ msgid "Could not keep it"
 msgstr "Не удалось оставить как есть"
 
 #: src/components/new-task-sheet.tsx
-msgid "Could not list this server's agents."
-msgstr "Не удалось получить список агентов этого сервера"
+msgid "Could not list this computer's agents."
+msgstr "Не удалось получить список агентов этого компьютера"
 
 #: src/components/settings-server-capabilities.tsx
 msgid "Could not load capabilities"
@@ -1805,24 +1834,24 @@ msgid "Could not reach that address. Check it and make sure the Gateway is runni
 msgstr "Не удалось связаться с этим адресом. Проверьте его и убедитесь, что Gateway запущен"
 
 #: src/app/explore.tsx
-msgid "Could not reach the gateway."
-msgstr "Не удалось связаться с Gateway"
+msgid "Could not reach the computer."
+msgstr "Не удалось связаться с компьютером"
 
 #: src/app/explore.tsx
-msgid "Could not reach the gateway. Make sure it is running, then refresh the QR and scan again."
-msgstr "Не удалось связаться с Gateway. Убедитесь, что он запущен, затем обновите QR-код и отсканируйте снова"
+msgid "Could not reach the computer. Make sure it is running, then refresh the QR and scan again."
+msgstr "Не удалось связаться с компьютером. Убедитесь, что он включён, затем обновите QR-код и отсканируйте снова"
 
 #: src/components/theme-browse-sheet.tsx
 msgid "Could not reach the theme catalogue"
 msgstr "Не удалось связаться с каталогом тем"
 
 #: src/app/new-task.tsx
-msgid "Could not reach this server."
-msgstr "Не удалось связаться с этим сервером"
+msgid "Could not reach this computer."
+msgstr "Не удалось связаться с этим компьютером"
 
 #: src/components/gateway-storage-error.tsx
-msgid "Could not read saved servers. Your saved data has not been changed. Unlock this device and retry."
-msgstr "Не удалось прочитать сохранённые серверы. Сохранённые данные не изменены. Разблокируйте устройство и повторите попытку"
+msgid "Could not read saved computers. Your saved data has not been changed. Unlock this device and retry."
+msgstr "Не удалось прочитать сохранённые компьютеры. Сохранённые данные не изменены. Разблокируйте устройство и повторите попытку"
 
 #: src/components/changes-sheet.tsx
 msgid "Could not read the changes."
@@ -1968,8 +1997,8 @@ msgid "Could not undo"
 msgstr "Не удалось отменить"
 
 #: src/components/settings-servers.tsx
-msgid "Could not unpair server"
-msgstr "Не удалось отвязать сервер"
+msgid "Could not unpair computer"
+msgstr "Не удалось отвязать компьютер"
 
 #: src/components/session-map.tsx
 msgid "Could not update the session."
@@ -2282,8 +2311,8 @@ msgid "Edit SSH host"
 msgstr "Изменить SSH-хост"
 
 #: src/components/settings-servers.tsx
-msgid "Edit this server"
-msgstr "Изменить этот сервер"
+msgid "Edit this computer"
+msgstr "Изменить этот компьютер"
 
 #: src/components/settings-appearance.tsx
 #: src/components/settings-home-layout-sheet.tsx
@@ -2460,8 +2489,8 @@ msgid "Failed to switch project"
 msgstr "Не удалось переключить проект"
 
 #: src/components/settings-home-layout-sheet.tsx
-msgid "Familiar server cards and quick actions."
-msgstr "Знакомые карточки серверов и быстрые действия"
+msgid "Familiar computer cards and quick actions."
+msgstr "Знакомые карточки компьютеров и быстрые действия"
 
 #: src/components/agent-composer.tsx
 msgid "Fast agent specialized for exploring codebases."
@@ -2682,8 +2711,8 @@ msgid "Go to the top of the file"
 msgstr "В начало файла"
 
 #: src/app/+not-found.tsx
-msgid "Go to your servers"
-msgstr "К вашим серверам"
+msgid "Go to your computers"
+msgstr "К вашим компьютерам"
 
 #: src/components/agent-message-block.tsx
 msgid "Goal continuation"
@@ -2736,8 +2765,8 @@ msgid "Hide output"
 msgstr "Скрыть вывод"
 
 #: src/components/app-drawer.tsx
-msgid "Hide the server list"
-msgstr "Скрыть список серверов"
+msgid "Hide the computer list"
+msgstr "Скрыть список компьютеров"
 
 #: src/app/commands.tsx
 #: src/components/server-terminal-workspace.tsx
@@ -2984,8 +3013,8 @@ msgid "Its details could not be written to secure storage."
 msgstr "Не удалось записать его данные в защищённое хранилище"
 
 #: src/components/settings-servers.tsx
-msgid "Its paired devices are listed once it is the server in use."
-msgstr "Его привязанные устройства появятся, когда он станет используемым сервером"
+msgid "Its paired devices are listed once it is the computer in use."
+msgstr "Его привязанные устройства появятся, когда он станет используемым компьютером"
 
 #: src/components/skia-terminal.tsx
 msgid "Jump to latest output"
@@ -3167,16 +3196,16 @@ msgstr "Загрузка"
 msgid "Loading commands"
 msgstr "Загружаем команды"
 
-#: src/components/settings-servers.tsx
-msgid "Loading paired devices…"
-msgstr "Загружаем привязанные устройства…"
-
 #: src/app/servers/[serverId].tsx
 #: src/components/home-launch-actions.tsx
 #: src/components/home-overview.tsx
 #: src/components/settings-servers.tsx
-msgid "Loading servers"
-msgstr "Загружаем серверы"
+msgid "Loading computers"
+msgstr "Загружаем компьютеры"
+
+#: src/components/settings-servers.tsx
+msgid "Loading paired devices…"
+msgstr "Загружаем привязанные устройства…"
 
 #: src/components/app-lock-gate.tsx
 msgid "Loading settings"
@@ -3558,6 +3587,14 @@ msgstr "Коммитов пока нет"
 msgid "No computer online"
 msgstr "Нет компьютеров в сети"
 
+#: src/app/new-task.tsx
+msgid "No computer to start a task on."
+msgstr "Нет компьютера, на котором можно запустить задачу"
+
+#: src/components/settings-servers.tsx
+msgid "No computers paired yet"
+msgstr "Пока нет привязанных компьютеров"
+
 #: src/components/session-artifacts.tsx
 msgid "No files match."
 msgstr "Нет подходящих файлов"
@@ -3617,8 +3654,8 @@ msgid "No personal themes yet. Import one, or browse the published themes."
 msgstr "Своих тем пока нет. Импортируйте тему или посмотрите опубликованные"
 
 #: src/components/asset-viewer.tsx
-msgid "No preview for this kind of file. It stays on the server."
-msgstr "Для файлов этого типа нет предпросмотра. Он остаётся на сервере"
+msgid "No preview for this kind of file. It stays on the computer."
+msgstr "Для файлов этого типа нет предпросмотра. Он остаётся на компьютере"
 
 #: src/components/simfarm-preview.tsx
 msgid "No preview on this connection"
@@ -3632,14 +3669,6 @@ msgstr "Здесь пока нет проектов. Введите путь в�
 #: src/components/agent-workspace-sheet.tsx
 msgid "No projects match “{0}”."
 msgstr "Нет проектов, подходящих под «{0}»"
-
-#: src/app/new-task.tsx
-msgid "No server to start a task on."
-msgstr "Нет сервера, на котором можно запустить задачу"
-
-#: src/components/settings-servers.tsx
-msgid "No servers paired yet"
-msgstr "Пока нет привязанных серверов"
 
 #: src/components/agent-sessions-sheet.tsx
 msgid "No sessions in this project yet. Start one from the + button."
@@ -3682,8 +3711,8 @@ msgid "No tasks yet"
 msgstr "Задач пока нет"
 
 #: src/hooks/use-home-commands.ts
-msgid "No terminal session is available on this server."
-msgstr "На этом сервере нет доступного сеанса терминала"
+msgid "No terminal session is available on this computer."
+msgstr "На этом компьютере нет доступного сеанса терминала"
 
 #: src/components/change-tree-rows.tsx
 #: src/components/diff-rows.tsx
@@ -3973,8 +4002,8 @@ msgid "Open SSH host {0}"
 msgstr "Открыть SSH-хост {0}"
 
 #: src/i18n/labels.ts
-msgid "Open T3 Code on the gateway host (or run t3 service install), then check again."
-msgstr "Откройте T3 Code на хосте шлюза (или выполните t3 service install) и проверьте снова"
+msgid "Open T3 Code on the computer (or run t3 service install), then check again."
+msgstr "Откройте T3 Code на компьютере (или выполните t3 service install) и проверьте снова"
 
 #: src/components/collaboration-notice.tsx
 #: src/hooks/use-lazygit.ts
@@ -4028,8 +4057,8 @@ msgid "Opening that file"
 msgstr "Открываем этот файл"
 
 #: src/app/explore.tsx
-msgid "Opening the server."
-msgstr "Открываем сервер"
+msgid "Opening the computer."
+msgstr "Открываем компьютер"
 
 #: src/app/explore.tsx
 msgid "Opening tunnel"
@@ -4070,36 +4099,33 @@ msgstr "Выход"
 msgid "Output copied to clipboard"
 msgstr "Вывод скопирован в буфер обмена"
 
-#: src/components/home-launch-actions.tsx
-msgid "Pair a gateway"
-msgstr "Привязать Gateway"
-
 #: src/components/app-drawer-content.tsx
+#: src/components/home-launch-actions.tsx
 #: src/components/home-overview.tsx
 #: src/components/pad-server-rail.tsx
 #: src/components/settings-servers.tsx
-msgid "Pair a server"
-msgstr "Привязать сервер"
+msgid "Pair a computer"
+msgstr "Привязать компьютер"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Pair again"
 msgstr "Привязать снова"
 
+#: src/app/explore.tsx
+msgid "Pair computer"
+msgstr "Привязать компьютер"
+
 #: src/components/settings-servers.tsx
 msgid "Pair one below."
 msgstr "Подключите сервер ниже"
 
-#: src/app/explore.tsx
-msgid "Pair server"
-msgstr "Привязать сервер"
-
 #: src/components/server-terminal-workspace.tsx
-msgid "Pair this server again"
-msgstr "Привязать этот сервер снова"
+msgid "Pair this computer again"
+msgstr "Привязать этот компьютер снова"
 
 #: src/lib/network-error.ts
-msgid "Pair this server again."
-msgstr "Привяжите этот сервер снова"
+msgid "Pair this computer again."
+msgstr "Привяжите этот компьютер снова"
 
 #. placeholder {0}: host.label
 #: src/app/explore.tsx
@@ -4111,8 +4137,8 @@ msgid "Pair through an SSH host"
 msgstr "Привязать через SSH-хост"
 
 #: src/components/home-overview.tsx
-msgid "Pair your first server"
-msgstr "Привяжите первый сервер"
+msgid "Pair your first computer"
+msgstr "Привяжите первый компьютер"
 
 #: src/app/explore.tsx
 msgid "Pairing"
@@ -4145,8 +4171,8 @@ msgid "Pane {paneId}"
 msgstr "Панель {paneId}"
 
 #: src/components/settings-servers.tsx
-msgid "Panes on server cards"
-msgstr "Панели на карточках серверов"
+msgid "Panes on computer cards"
+msgstr "Панели на карточках компьютеров"
 
 #: src/components/agent-session-tree-sheet.tsx
 msgid "Parent: {parentTitle}"
@@ -4333,8 +4359,8 @@ msgid "Prompt"
 msgstr "Промпт"
 
 #: src/components/settings-security.tsx
-msgid "Protect paired servers and terminal sessions."
-msgstr "Защищает привязанные серверы и сеансы терминала"
+msgid "Protect paired computers and terminal sessions."
+msgstr "Защищает привязанные компьютеры и сеансы терминала"
 
 #: src/components/ssh-host-form.tsx
 msgid "Public key copied"
@@ -4694,14 +4720,14 @@ msgstr "Вернуться к задаче"
 
 #: src/app/servers/[serverId].tsx
 #: src/components/server-terminal-workspace.tsx
-msgid "Return to the server list and pair again."
-msgstr "Вернитесь к списку серверов и привяжите его снова"
+msgid "Return to the computer list and pair again."
+msgstr "Вернитесь к списку компьютеров и привяжите его снова"
 
 #: src/components/collaboration-notice.tsx
 #: src/hooks/use-agent-command-delivery.ts
 #: src/hooks/use-collaboration-output.ts
-msgid "Return to this server to continue."
-msgstr "Вернитесь к этому серверу, чтобы продолжить"
+msgid "Return to this computer to continue."
+msgstr "Вернитесь к этому компьютеру, чтобы продолжить"
 
 #: src/lib/demo-gateway.ts
 msgid "Review"
@@ -5047,38 +5073,6 @@ msgstr "Отправка"
 msgid "Sends your next goal here. Long press to open it."
 msgstr "Следующая цель уйдёт сюда. Долгое нажатие — открыть"
 
-#: src/app/agent-guide.tsx
-#: src/app/artifacts.tsx
-#: src/app/panels.tsx
-#: src/components/app-drawer.tsx
-#: src/components/server-terminal-workspace.tsx
-msgid "Server"
-msgstr "Сервер"
-
-#: src/app/explore.tsx
-#: src/components/settings-servers.tsx
-msgid "Server name"
-msgstr "Имя сервера"
-
-#: src/app/servers/[serverId].tsx
-#: src/components/server-terminal-workspace.tsx
-msgid "Server not found"
-msgstr "Сервер не найден"
-
-#: src/components/server-terminal-workspace.tsx
-msgid "Server offline"
-msgstr "Сервер не в сети"
-
-#: src/components/server-terminal-workspace.tsx
-msgid "Server unavailable."
-msgstr "Сервер недоступен"
-
-#: src/app/settings-servers.tsx
-#: src/app/settings.tsx
-#: src/components/app-drawer-content.tsx
-msgid "Servers"
-msgstr "Серверы"
-
 #: src/components/agent-sessions-sheet.tsx
 msgid "Session name"
 msgstr "Имя сессии"
@@ -5254,6 +5248,10 @@ msgstr "Показать больше этих различий"
 msgid "Show the app background behind terminal text"
 msgstr "Показывать фон приложения за текстом терминала"
 
+#: src/components/app-drawer.tsx
+msgid "Show the computer list"
+msgstr "Показать список компьютеров"
+
 #: src/components/editor-controls.tsx
 msgid "Show the editor keyboard"
 msgstr "Показать клавиатуру редактора"
@@ -5261,10 +5259,6 @@ msgstr "Показать клавиатуру редактора"
 #: src/components/agent-tool-card.tsx
 msgid "Show the rest of this output"
 msgstr "Показать остальной вывод"
-
-#: src/components/app-drawer.tsx
-msgid "Show the server list"
-msgstr "Показать список серверов"
 
 #: src/components/theme-appearance-settings.tsx
 msgid "Show theme effects only while Home is visible. Turn off to reduce battery use."
@@ -5457,12 +5451,12 @@ msgid "Start task"
 msgstr "Запустить задачу"
 
 #: src/i18n/labels.ts
-msgid "Start the agent on the gateway host, then check again."
-msgstr "Запустите агента на хосте шлюза и проверьте снова"
+msgid "Start the agent on the computer, then check again."
+msgstr "Запустите агента на компьютере и проверьте снова"
 
 #: src/i18n/labels.ts
-msgid "Start the OpenCode service on the gateway host, then check again."
-msgstr "Запустите службу OpenCode на хосте шлюза и проверьте снова"
+msgid "Start the OpenCode service on the computer, then check again."
+msgstr "Запустите службу OpenCode на компьютере и проверьте снова"
 
 #: src/components/agent-workbench.tsx
 msgid "Started with a clean context."
@@ -5811,8 +5805,8 @@ msgid "That simulator cannot be started from here. Start it on the machine and i
 msgstr "Этот симулятор нельзя запустить отсюда. Запустите его на машине, и он появится в списке"
 
 #: src/components/settings-servers.tsx
-msgid "The address is where this paired server is reached. Changing it does not unpair the device."
-msgstr "Адрес — это то, где доступен этот привязанный сервер. Его изменение не отвязывает устройство"
+msgid "The address is where this paired computer is reached. Changing it does not unpair the device."
+msgstr "Адрес — это то, где доступен этот привязанный компьютер. Его изменение не отвязывает устройство"
 
 #: src/app/explore.tsx
 msgid "The address the Gateway prints when it starts."
@@ -5846,6 +5840,22 @@ msgstr "Камера не запустилась"
 msgid "The camera reported an error."
 msgstr "Камера сообщила об ошибке"
 
+#: src/components/changes-sheet.tsx
+msgid "The computer could not be reached."
+msgstr "Не удалось связаться с компьютером"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "The computer did not return it."
+msgstr "Компьютер его не вернул"
+
+#: src/app/commands.tsx
+msgid "The computer did not say which terminal it made."
+msgstr "Компьютер не сообщил, какой терминал он создал"
+
+#: src/components/settings-servers.tsx
+msgid "The computer was kept on this device. Make sure its Gateway is running, then try again."
+msgstr "Компьютер сохранён на этом устройстве. Убедитесь, что его Gateway запущен, и попробуйте ещё раз"
+
 #: src/components/ssh-terminal-workspace.tsx
 msgid "The connection dropped."
 msgstr "Соединение оборвалось"
@@ -5865,10 +5875,6 @@ msgstr "Не удалось открыть это назначение"
 #: src/components/settings-font-sheet.tsx
 msgid "The font file is missing. Add it again."
 msgstr "Файл шрифта не найден. Добавьте его снова"
-
-#: src/components/changes-sheet.tsx
-msgid "The gateway could not be reached."
-msgstr "Не удалось связаться со шлюзом"
 
 #: src/components/agent-worktree-sheet.tsx
 msgid "The host made a worktree but did not say where."
@@ -5904,28 +5910,16 @@ msgid "The real terminal"
 msgstr "Настоящий терминал"
 
 #: src/components/app-error-boundary.tsx
-msgid "The screen hit an error. Try again — your servers stay paired."
-msgstr "На этом экране произошла ошибка. Попробуйте ещё раз — ваши серверы остаются привязанными"
+msgid "The screen hit an error. Try again — your computers stay paired."
+msgstr "На этом экране произошла ошибка. Попробуйте ещё раз — ваши компьютеры остаются привязанными"
 
 #: src/components/ssh-host-form.tsx
 msgid "The server asks its own questions when you connect, a password or a one-time code, and nothing is stored on this device."
 msgstr "Сервер сам задаёт вопросы при подключении — пароль или одноразовый код, — и на этом устройстве ничего не сохраняется"
 
-#: src/components/server-terminal-workspace.tsx
-msgid "The server did not return it."
-msgstr "Сервер его не вернул"
-
-#: src/app/commands.tsx
-msgid "The server did not say which terminal it made."
-msgstr "Сервер не сообщил, какой терминал он создал"
-
 #: src/components/ssh-host-key-dialog.tsx
 msgid "The server is asking for more before it lets you in."
 msgstr "Серверу нужно что-то ещё, прежде чем впустить вас"
-
-#: src/components/settings-servers.tsx
-msgid "The server was kept on this device. Make sure its Gateway is running, then try again."
-msgstr "Сервер сохранён на этом устройстве. Убедитесь, что его Gateway запущен, и попробуйте ещё раз"
 
 #: src/components/ssh-terminal-workspace.tsx
 msgid "The shell exited."
@@ -6034,13 +6028,80 @@ msgstr "Этот агент не предлагал такой ответ"
 msgid "This cannot be undone."
 msgstr "Это действие нельзя отменить"
 
+#: src/hooks/use-agent-command-delivery.ts
+msgid "This computer cannot run that command yet."
+msgstr "Этот компьютер пока не может выполнить эту команду"
+
+#: src/lib/network-error.ts
+msgid "This computer cannot use this device's stored key. Pair it again to reconnect."
+msgstr "Этот компьютер не может использовать ключ, сохранённый на этом устройстве. Привяжите его снова, чтобы переподключиться"
+
+#: src/lib/network-error.ts
+msgid "This computer could not read the request. Check this device's date and time."
+msgstr "Этот компьютер не смог прочитать запрос. Проверьте дату и время на этом устройстве"
+
+#: src/components/new-task-sheet.tsx
+msgid "This computer did not name any agents it can start."
+msgstr "Этот компьютер не назвал ни одного агента, которого может запустить"
+
+#: src/components/agent-guide-sheet.tsx
+msgid "This computer does not advertise {agentName} sessions."
+msgstr "Этот компьютер не предоставляет сеансы {agentName}"
+
+#: src/components/agent-workbench.tsx
+msgid "This computer does not expand ~. Type the full path, starting with /."
+msgstr "Этот компьютер не раскрывает ~. Введите полный путь, начиная с /"
+
+#: src/components/agent-workbench.tsx
+msgid "This computer does not know {agentName}. Refresh the agent list and try again."
+msgstr "Этот компьютер не знает {agentName}. Обновите список агентов и повторите попытку"
+
+#: src/components/session-artifacts.tsx
+msgid "This computer does not serve files yet. Update the Muqun gateway plugin to browse what a session writes."
+msgstr "Этот компьютер пока не отдаёт файлы. Обновите плагин Muqun Gateway, чтобы просматривать, что записывает сеанс"
+
+#: src/lib/network-error.ts
+msgid "This computer had a problem answering."
+msgstr "У этого компьютера возникла проблема с ответом"
+
+#: src/lib/network-error.ts
+msgid "This computer has already handled that request."
+msgstr "Этот компьютер уже обработал этот запрос"
+
+#: src/app/new-task.tsx
+msgid "This computer has no session to start an agent in."
+msgstr "На этом компьютере нет сеанса, в котором можно запустить агента"
+
+#: src/components/settings-servers.tsx
+msgid "This computer has not listed any paired devices."
+msgstr "Этот компьютер не вернул ни одного привязанного устройства"
+
+#: src/app/agent-guide.tsx
+#: src/app/new-task.tsx
+#: src/app/simfarm.tsx
+#: src/app/web-service.tsx
+msgid "This computer is no longer paired."
+msgstr "Этот компьютер больше не привязан"
+
+#: src/components/agent-guide-sheet.tsx
+msgid "This computer is not answering. Check the computer connection, then try again."
+msgstr "Этот компьютер не отвечает. Проверьте подключение к компьютеру и повторите попытку"
+
+#: src/lib/network-error.ts
+msgid "This computer no longer recognises this device. Pair it again to reconnect."
+msgstr "Этот компьютер больше не узнаёт это устройство. Привяжите его снова, чтобы переподключиться"
+
+#: src/lib/network-error.ts
+msgid "This computer refused the request."
+msgstr "Этот компьютер отклонил запрос"
+
 #: src/lib/attachments.ts
 msgid "This device has no camera available."
 msgstr "На этом устройстве нет доступной камеры"
 
 #: src/components/asset-viewer.tsx
-msgid "This file is {size}. Muqun opens text files up to {ceiling}; larger ones stay on the server."
-msgstr "Этот файл — {size}. Muqun открывает текстовые файлы до {ceiling}; файлы больше остаются на сервере"
+msgid "This file is {size}. Muqun opens text files up to {ceiling}; larger ones stay on the computer."
+msgstr "Этот файл — {size}. Muqun открывает текстовые файлы до {ceiling}; файлы больше остаются на компьютере"
 
 #: src/components/asset-viewer.tsx
 #: src/components/settings-font-sheet.tsx
@@ -6063,33 +6124,9 @@ msgstr "Этот файл слишком большой"
 msgid "This font could not be read."
 msgstr "Не удалось прочитать этот шрифт"
 
-#: src/components/agent-guide-sheet.tsx
-msgid "This gateway does not advertise {agentName} sessions."
-msgstr "Этот шлюз не предоставляет сессии {agentName}"
-
 #: src/lib/network-error.ts
 msgid "This Gateway does not answer to that address."
 msgstr "Этот Gateway не отвечает по этому адресу"
-
-#: src/components/agent-workbench.tsx
-msgid "This gateway does not expand ~. Type the full path, starting with /."
-msgstr "Этот шлюз не раскрывает ~. Введите полный путь, начиная с /"
-
-#: src/components/agent-workbench.tsx
-msgid "This gateway does not know {agentName}. Refresh the agent list and try again."
-msgstr "Этот шлюз не знает {agentName}. Обновите список агентов и повторите попытку"
-
-#: src/components/session-artifacts.tsx
-msgid "This gateway does not serve files yet. Update the Muqun gateway plugin to browse what a session writes."
-msgstr "Этот Gateway пока не отдаёт файлы. Обновите плагин Muqun для Gateway, чтобы просматривать, что записывает сеанс"
-
-#: src/components/settings-servers.tsx
-msgid "This gateway has not listed any paired devices."
-msgstr "Этот Gateway не перечислил ни одного привязанного устройства"
-
-#: src/components/agent-guide-sheet.tsx
-msgid "This gateway is not answering. Check the server connection, then try again."
-msgstr "Этот шлюз не отвечает. Проверьте подключение к серверу и повторите попытку"
 
 #: src/components/session-map.tsx
 msgid "This group has no terminals."
@@ -6139,49 +6176,6 @@ msgstr "Чтобы ответить на этот вопрос, нужна бо�
 #: src/components/agent-context-sheet.tsx
 msgid "this rule"
 msgstr "это правило"
-
-#: src/hooks/use-agent-command-delivery.ts
-msgid "This server cannot run that command yet."
-msgstr "Этот сервер пока не может выполнить эту команду"
-
-#: src/lib/network-error.ts
-msgid "This server cannot use this device's stored key. Pair it again to reconnect."
-msgstr "Этот сервер не может использовать ключ, сохранённый на этом устройстве. Привяжите его снова, чтобы переподключиться"
-
-#: src/lib/network-error.ts
-msgid "This server could not read the request. Check this device's date and time."
-msgstr "Этот сервер не смог прочитать запрос. Проверьте дату и время на этом устройстве"
-
-#: src/components/new-task-sheet.tsx
-msgid "This server did not name any agents it can start."
-msgstr "Этот сервер не назвал ни одного агента, которого может запустить"
-
-#: src/lib/network-error.ts
-msgid "This server had a problem answering."
-msgstr "У этого сервера возникла проблема с ответом"
-
-#: src/lib/network-error.ts
-msgid "This server has already handled that request."
-msgstr "Этот сервер уже обработал этот запрос"
-
-#: src/app/new-task.tsx
-msgid "This server has no session to start an agent in."
-msgstr "На этом сервере нет сеанса, в котором можно запустить агента"
-
-#: src/app/agent-guide.tsx
-#: src/app/new-task.tsx
-#: src/app/simfarm.tsx
-#: src/app/web-service.tsx
-msgid "This server is no longer paired."
-msgstr "Этот сервер больше не привязан"
-
-#: src/lib/network-error.ts
-msgid "This server no longer recognises this device. Pair it again to reconnect."
-msgstr "Этот сервер больше не узнаёт это устройство. Привяжите его снова, чтобы переподключиться"
-
-#: src/lib/network-error.ts
-msgid "This server refused the request."
-msgstr "Этот сервер отклонил запрос"
 
 #: src/components/agent-context-sheet.tsx
 msgid "This session"
@@ -6257,8 +6251,8 @@ msgid "Today"
 msgstr "Сегодня"
 
 #: src/components/settings-mcp-tokens.tsx
-msgid "Tokens coding agents use to reach this gateway from this computer."
-msgstr "Токены, с помощью которых кодовые агенты подключаются к этому шлюзу с этого компьютера"
+msgid "Tokens coding agents use to reach this computer."
+msgstr "Токены, с помощью которых кодовые агенты подключаются к этому компьютеру"
 
 #: src/components/agent-context-sheet.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
@@ -6332,8 +6326,8 @@ msgstr "Попробовать ещё раз"
 #: src/components/settings-mcp-tokens.tsx
 #: src/components/settings-server-capabilities.tsx
 #: src/components/settings-servers.tsx
-msgid "Try again once the gateway responds."
-msgstr "Попробуйте ещё раз, когда Gateway ответит"
+msgid "Try again once the computer responds."
+msgstr "Повторите попытку, когда компьютер ответит"
 
 #: src/components/theme-browse-sheet.tsx
 msgid "Try searching for another name or tag."
@@ -6455,8 +6449,8 @@ msgid "Unpair {label}"
 msgstr "Отвязать {label}"
 
 #: src/components/settings-servers.tsx
-msgid "Unpair this server"
-msgstr "Отвязать этот сервер"
+msgid "Unpair this computer"
+msgstr "Отвязать этот компьютер"
 
 #: src/components/settings-servers.tsx
 msgid "Unpairing {label}"
@@ -6497,12 +6491,12 @@ msgid "Update"
 msgstr "Обновить"
 
 #: src/components/agent-assignment-bar.tsx
-msgid "Update Herdr on the server to 0.9.0 or newer, then restart the session, to assign a task to another assistant"
-msgstr "Обновите Herdr на сервере до 0.9.0 или новее и перезапустите сеанс, чтобы поручить задачу другому ассистенту"
+msgid "Update Herdr on the computer to 0.9.0 or newer, then restart the session, to assign a task to another assistant"
+msgstr "Обновите Herdr на компьютере до 0.9.0 или новее и перезапустите сеанс, чтобы поручить задачу другому ассистенту"
 
 #: src/components/agent-assignment-bar.tsx
-msgid "Update Muqun Gateway on the server, then restart it, to assign a task to another assistant"
-msgstr "Обновите Muqun Gateway на сервере и перезапустите его, чтобы поручить задачу другому ассистенту"
+msgid "Update Muqun Gateway on the computer, then restart it, to assign a task to another assistant"
+msgstr "Обновите Muqun Gateway на компьютере и перезапустите его, чтобы поручить задачу другому ассистенту"
 
 #: src/components/agent-guide-sheet.tsx
 #: src/components/new-task-action.tsx
@@ -6584,8 +6578,8 @@ msgid "Use theme defaults"
 msgstr "Использовать настройки темы по умолчанию"
 
 #: src/components/settings-servers.tsx
-msgid "Use this server"
-msgstr "Использовать этот сервер"
+msgid "Use this computer"
+msgstr "Использовать этот компьютер"
 
 #: src/components/settings-appearance.tsx
 msgid "Use your own font for the app and the terminal."
@@ -6772,5 +6766,5 @@ msgid "Your message"
 msgstr "Ваше сообщение"
 
 #: src/components/app-drawer-content.tsx
-msgid "Your paired gateways"
-msgstr "Ваши привязанные Gateway"
+msgid "Your paired computers"
+msgstr "Ваши привязанные компьютеры"

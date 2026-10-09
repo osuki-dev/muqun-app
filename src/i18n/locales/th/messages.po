@@ -139,8 +139,8 @@ msgstr "{0} โทเค็นที่โมเดลอ่านครั้�
 
 #. placeholder {0}: profile.kind
 #: src/components/new-task-sheet.tsx
-msgid "{0}, not found on this server's PATH"
-msgstr "{0} ไม่พบใน PATH ของเซิร์ฟเวอร์นี้"
+msgid "{0}, not found on this computer's PATH"
+msgstr "{0} ไม่พบใน PATH ของคอมพิวเตอร์นี้"
 
 #. placeholder {0}: age.value
 #. placeholder {0}: parts.value
@@ -421,8 +421,8 @@ msgid "Actual size"
 msgstr "ขนาดจริง"
 
 #: src/components/home-connections.tsx
-msgid "Add a gateway or an SSH host to start working."
-msgstr "เพิ่ม Gateway หรือโฮสต์ SSH เพื่อเริ่มทำงาน"
+msgid "Add a computer or an SSH host to start working."
+msgstr "เพิ่มคอมพิวเตอร์หรือโฮสต์ SSH เพื่อเริ่มทำงาน"
 
 #: src/components/ssh-host-list.tsx
 msgid "Add a host"
@@ -690,13 +690,13 @@ msgstr "ถามคำถาม ดูไฟล์ หรือรันคำ�
 msgid "Ask you a question"
 msgstr "ถามคำถามคุณ"
 
+#: src/components/new-task-sheet.tsx
+msgid "Asking the computer what it can run…"
+msgstr "กำลังสอบถามคอมพิวเตอร์ว่าสามารถเรียกใช้อะไรได้บ้าง…"
+
 #: src/app/explore.tsx
 msgid "Asking the Gateway about that code."
 msgstr "กำลังสอบถาม Gateway เกี่ยวกับรหัสนี้"
-
-#: src/components/new-task-sheet.tsx
-msgid "Asking the server what it can run…"
-msgstr "กำลังสอบถามเซิร์ฟเวอร์ว่าสามารถเรียกใช้อะไรได้บ้าง…"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Assign this to an assistant"
@@ -808,13 +808,13 @@ msgstr "ย้อนกลับ"
 msgid "Back one word"
 msgstr "ย้อนกลับหนึ่งคำ"
 
+#: src/components/app-drawer.tsx
+msgid "Back to computers"
+msgstr "กลับไปยังคอมพิวเตอร์"
+
 #: src/components/server-terminal-workspace.tsx
 msgid "Back to Home"
 msgstr "กลับไปหน้าแรก"
-
-#: src/components/app-drawer.tsx
-msgid "Back to servers"
-msgstr "กลับไปยังเซิร์ฟเวอร์"
 
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Back to SSH hosts"
@@ -1019,8 +1019,8 @@ msgid "Check device authentication settings and try again."
 msgstr "ตรวจสอบการตั้งค่าการยืนยันตัวตนของอุปกรณ์แล้วลองอีกครั้ง"
 
 #: src/hooks/use-lazygit.ts
-msgid "Check that lazygit is installed on the Gateway host and this pane is in a Git repository."
-msgstr "ตรวจสอบว่าติดตั้ง lazygit บนโฮสต์ Gateway แล้ว และแผงนี้อยู่ในที่เก็บ Git"
+msgid "Check that lazygit is installed on this computer and this pane is in a Git repository."
+msgstr "ตรวจสอบว่าติดตั้ง lazygit บนคอมพิวเตอร์เครื่องนี้แล้ว และแพนนี้อยู่ในที่เก็บ Git"
 
 #: src/hooks/use-agent-command-delivery.ts
 msgid "Check the assistant before sending again; it may have received the request."
@@ -1045,8 +1045,8 @@ msgstr "กำลังตรวจสอบ…"
 
 #: src/components/home-launch-actions.tsx
 #: src/components/home-target-sheet.tsx
-msgid "Choose a gateway"
-msgstr "เลือก Gateway"
+msgid "Choose a computer"
+msgstr "เลือกคอมพิวเตอร์"
 
 #: src/components/agent-mode-sheet.tsx
 msgid "Choose a mode"
@@ -1301,6 +1301,35 @@ msgstr "เทียบกับ {base}"
 msgid "Completed"
 msgstr "เสร็จสิ้น"
 
+#: src/app/agent-guide.tsx
+#: src/app/artifacts.tsx
+#: src/app/panels.tsx
+#: src/components/app-drawer.tsx
+#: src/components/server-terminal-workspace.tsx
+msgid "Computer"
+msgstr "คอมพิวเตอร์"
+
+#: src/app/explore.tsx
+#: src/components/settings-servers.tsx
+msgid "Computer name"
+msgstr "ชื่อคอมพิวเตอร์"
+
+#: src/app/servers/[serverId].tsx
+#: src/components/server-terminal-workspace.tsx
+msgid "Computer not found"
+msgstr "ไม่พบคอมพิวเตอร์"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Computer offline"
+msgstr "คอมพิวเตอร์ออฟไลน์"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Computer unavailable."
+msgstr "คอมพิวเตอร์ไม่พร้อมใช้งาน"
+
+#: src/app/settings-servers.tsx
+#: src/app/settings.tsx
+#: src/components/app-drawer-content.tsx
 #: src/components/home-composer.tsx
 #: src/components/home-editorial-layout.tsx
 msgid "Computers"
@@ -1703,8 +1732,8 @@ msgid "Could not keep it"
 msgstr "เก็บไว้ไม่ได้"
 
 #: src/components/new-task-sheet.tsx
-msgid "Could not list this server's agents."
-msgstr "แสดงรายการเอเจนต์ของเซิร์ฟเวอร์นี้ไม่ได้"
+msgid "Could not list this computer's agents."
+msgstr "แสดงรายการเอเจนต์ของคอมพิวเตอร์นี้ไม่ได้"
 
 #: src/components/settings-server-capabilities.tsx
 msgid "Could not load capabilities"
@@ -1805,24 +1834,24 @@ msgid "Could not reach that address. Check it and make sure the Gateway is runni
 msgstr "ติดต่อที่อยู่นั้นไม่ได้ ตรวจสอบที่อยู่และตรวจว่า Gateway กำลังทำงาน"
 
 #: src/app/explore.tsx
-msgid "Could not reach the gateway."
-msgstr "ติดต่อ Gateway ไม่ได้"
+msgid "Could not reach the computer."
+msgstr "ติดต่อคอมพิวเตอร์ไม่ได้"
 
 #: src/app/explore.tsx
-msgid "Could not reach the gateway. Make sure it is running, then refresh the QR and scan again."
-msgstr "ติดต่อ Gateway ไม่ได้ ตรวจว่ากำลังทำงานอยู่ จากนั้นรีเฟรช QR แล้วสแกนอีกครั้ง"
+msgid "Could not reach the computer. Make sure it is running, then refresh the QR and scan again."
+msgstr "ติดต่อคอมพิวเตอร์ไม่ได้ ตรวจสอบว่าเครื่องเปิดอยู่ จากนั้นรีเฟรช QR แล้วสแกนอีกครั้ง"
 
 #: src/components/theme-browse-sheet.tsx
 msgid "Could not reach the theme catalogue"
 msgstr "ติดต่อแค็ตตาล็อกธีมไม่ได้"
 
 #: src/app/new-task.tsx
-msgid "Could not reach this server."
-msgstr "ติดต่อเซิร์ฟเวอร์นี้ไม่ได้"
+msgid "Could not reach this computer."
+msgstr "ติดต่อคอมพิวเตอร์นี้ไม่ได้"
 
 #: src/components/gateway-storage-error.tsx
-msgid "Could not read saved servers. Your saved data has not been changed. Unlock this device and retry."
-msgstr "อ่านเซิร์ฟเวอร์ที่บันทึกไว้ไม่ได้ ข้อมูลที่บันทึกยังไม่เปลี่ยนแปลง ปลดล็อกอุปกรณ์นี้แล้วลองอีกครั้ง"
+msgid "Could not read saved computers. Your saved data has not been changed. Unlock this device and retry."
+msgstr "อ่านคอมพิวเตอร์ที่บันทึกไว้ไม่ได้ ข้อมูลที่บันทึกยังไม่เปลี่ยนแปลง ปลดล็อกอุปกรณ์นี้แล้วลองอีกครั้ง"
 
 #: src/components/changes-sheet.tsx
 msgid "Could not read the changes."
@@ -1968,8 +1997,8 @@ msgid "Could not undo"
 msgstr "ย้อนกลับไม่ได้"
 
 #: src/components/settings-servers.tsx
-msgid "Could not unpair server"
-msgstr "เลิกจับคู่เซิร์ฟเวอร์ไม่ได้"
+msgid "Could not unpair computer"
+msgstr "เลิกจับคู่คอมพิวเตอร์ไม่ได้"
 
 #: src/components/session-map.tsx
 msgid "Could not update the session."
@@ -2282,8 +2311,8 @@ msgid "Edit SSH host"
 msgstr "แก้ไขโฮสต์ SSH"
 
 #: src/components/settings-servers.tsx
-msgid "Edit this server"
-msgstr "แก้ไขเซิร์ฟเวอร์นี้"
+msgid "Edit this computer"
+msgstr "แก้ไขคอมพิวเตอร์นี้"
 
 #: src/components/settings-appearance.tsx
 #: src/components/settings-home-layout-sheet.tsx
@@ -2460,8 +2489,8 @@ msgid "Failed to switch project"
 msgstr "สลับโปรเจกต์ไม่สำเร็จ"
 
 #: src/components/settings-home-layout-sheet.tsx
-msgid "Familiar server cards and quick actions."
-msgstr "การ์ดเซิร์ฟเวอร์และการดำเนินการด่วนที่คุ้นเคย"
+msgid "Familiar computer cards and quick actions."
+msgstr "การ์ดคอมพิวเตอร์และการดำเนินการด่วนที่คุ้นเคย"
 
 #: src/components/agent-composer.tsx
 msgid "Fast agent specialized for exploring codebases."
@@ -2682,8 +2711,8 @@ msgid "Go to the top of the file"
 msgstr "ไปที่ต้นไฟล์"
 
 #: src/app/+not-found.tsx
-msgid "Go to your servers"
-msgstr "ไปยังเซิร์ฟเวอร์ของคุณ"
+msgid "Go to your computers"
+msgstr "ไปยังคอมพิวเตอร์ของคุณ"
 
 #: src/components/agent-message-block.tsx
 msgid "Goal continuation"
@@ -2736,8 +2765,8 @@ msgid "Hide output"
 msgstr "ซ่อนเอาต์พุต"
 
 #: src/components/app-drawer.tsx
-msgid "Hide the server list"
-msgstr "ซ่อนรายการเซิร์ฟเวอร์"
+msgid "Hide the computer list"
+msgstr "ซ่อนรายการคอมพิวเตอร์"
 
 #: src/app/commands.tsx
 #: src/components/server-terminal-workspace.tsx
@@ -2984,8 +3013,8 @@ msgid "Its details could not be written to secure storage."
 msgstr "เขียนรายละเอียดลงที่เก็บข้อมูลที่ปลอดภัยไม่ได้"
 
 #: src/components/settings-servers.tsx
-msgid "Its paired devices are listed once it is the server in use."
-msgstr "อุปกรณ์ที่จับคู่จะแสดงเมื่อเลือกใช้เซิร์ฟเวอร์นี้"
+msgid "Its paired devices are listed once it is the computer in use."
+msgstr "อุปกรณ์ที่จับคู่จะแสดงเมื่อเลือกใช้คอมพิวเตอร์นี้"
 
 #: src/components/skia-terminal.tsx
 msgid "Jump to latest output"
@@ -3167,16 +3196,16 @@ msgstr "กำลังโหลด"
 msgid "Loading commands"
 msgstr "กำลังโหลดคำสั่ง"
 
-#: src/components/settings-servers.tsx
-msgid "Loading paired devices…"
-msgstr "กำลังโหลดอุปกรณ์ที่จับคู่…"
-
 #: src/app/servers/[serverId].tsx
 #: src/components/home-launch-actions.tsx
 #: src/components/home-overview.tsx
 #: src/components/settings-servers.tsx
-msgid "Loading servers"
-msgstr "กำลังโหลดเซิร์ฟเวอร์"
+msgid "Loading computers"
+msgstr "กำลังโหลดคอมพิวเตอร์"
+
+#: src/components/settings-servers.tsx
+msgid "Loading paired devices…"
+msgstr "กำลังโหลดอุปกรณ์ที่จับคู่…"
 
 #: src/components/app-lock-gate.tsx
 msgid "Loading settings"
@@ -3558,6 +3587,14 @@ msgstr "ยังไม่มีคอมมิต"
 msgid "No computer online"
 msgstr "ไม่มีคอมพิวเตอร์ที่ออนไลน์"
 
+#: src/app/new-task.tsx
+msgid "No computer to start a task on."
+msgstr "ไม่มีคอมพิวเตอร์ให้เริ่มงาน"
+
+#: src/components/settings-servers.tsx
+msgid "No computers paired yet"
+msgstr "ยังไม่ได้จับคู่คอมพิวเตอร์"
+
 #: src/components/session-artifacts.tsx
 msgid "No files match."
 msgstr "ไม่พบไฟล์ที่ตรงกัน"
@@ -3617,8 +3654,8 @@ msgid "No personal themes yet. Import one, or browse the published themes."
 msgstr "ยังไม่มีธีมส่วนตัว นำเข้าธีมหรือเลือกดูธีมที่เผยแพร่แล้ว"
 
 #: src/components/asset-viewer.tsx
-msgid "No preview for this kind of file. It stays on the server."
-msgstr "ไม่มีตัวอย่างสำหรับไฟล์ประเภทนี้ ไฟล์ยังอยู่บนเซิร์ฟเวอร์"
+msgid "No preview for this kind of file. It stays on the computer."
+msgstr "ไม่มีตัวอย่างสำหรับไฟล์ประเภทนี้ ไฟล์ยังอยู่บนคอมพิวเตอร์"
 
 #: src/components/simfarm-preview.tsx
 msgid "No preview on this connection"
@@ -3632,14 +3669,6 @@ msgstr "ยังไม่มีโปรเจกต์ที่นี่ พ�
 #: src/components/agent-workspace-sheet.tsx
 msgid "No projects match “{0}”."
 msgstr "ไม่มีโปรเจกต์ที่ตรงกับ “{0}”"
-
-#: src/app/new-task.tsx
-msgid "No server to start a task on."
-msgstr "ไม่มีเซิร์ฟเวอร์ให้เริ่มงาน"
-
-#: src/components/settings-servers.tsx
-msgid "No servers paired yet"
-msgstr "ยังไม่ได้จับคู่เซิร์ฟเวอร์"
 
 #: src/components/agent-sessions-sheet.tsx
 msgid "No sessions in this project yet. Start one from the + button."
@@ -3682,8 +3711,8 @@ msgid "No tasks yet"
 msgstr "ยังไม่มีงาน"
 
 #: src/hooks/use-home-commands.ts
-msgid "No terminal session is available on this server."
-msgstr "เซิร์ฟเวอร์นี้ไม่มีเซสชันเทอร์มินัลที่พร้อมใช้งาน"
+msgid "No terminal session is available on this computer."
+msgstr "คอมพิวเตอร์นี้ไม่มีเซสชันเทอร์มินัลที่พร้อมใช้งาน"
 
 #: src/components/change-tree-rows.tsx
 #: src/components/diff-rows.tsx
@@ -3973,8 +4002,8 @@ msgid "Open SSH host {0}"
 msgstr "เปิดโฮสต์ SSH {0}"
 
 #: src/i18n/labels.ts
-msgid "Open T3 Code on the gateway host (or run t3 service install), then check again."
-msgstr "เปิด T3 Code บนโฮสต์ของเกตเวย์ (หรือรัน t3 service install) แล้วตรวจสอบอีกครั้ง"
+msgid "Open T3 Code on the computer (or run t3 service install), then check again."
+msgstr "เปิด T3 Code บนคอมพิวเตอร์ (หรือรัน t3 service install) แล้วตรวจสอบอีกครั้ง"
 
 #: src/components/collaboration-notice.tsx
 #: src/hooks/use-lazygit.ts
@@ -4028,8 +4057,8 @@ msgid "Opening that file"
 msgstr "กำลังเปิดไฟล์นั้น"
 
 #: src/app/explore.tsx
-msgid "Opening the server."
-msgstr "กำลังเปิดเซิร์ฟเวอร์"
+msgid "Opening the computer."
+msgstr "กำลังเปิดคอมพิวเตอร์"
 
 #: src/app/explore.tsx
 msgid "Opening tunnel"
@@ -4070,36 +4099,33 @@ msgstr "เอาต์พุต"
 msgid "Output copied to clipboard"
 msgstr "คัดลอกเอาต์พุตไปยังคลิปบอร์ดแล้ว"
 
-#: src/components/home-launch-actions.tsx
-msgid "Pair a gateway"
-msgstr "จับคู่ Gateway"
-
 #: src/components/app-drawer-content.tsx
+#: src/components/home-launch-actions.tsx
 #: src/components/home-overview.tsx
 #: src/components/pad-server-rail.tsx
 #: src/components/settings-servers.tsx
-msgid "Pair a server"
-msgstr "จับคู่เซิร์ฟเวอร์"
+msgid "Pair a computer"
+msgstr "จับคู่คอมพิวเตอร์"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Pair again"
 msgstr "จับคู่อีกครั้ง"
 
+#: src/app/explore.tsx
+msgid "Pair computer"
+msgstr "จับคู่คอมพิวเตอร์"
+
 #: src/components/settings-servers.tsx
 msgid "Pair one below."
 msgstr "จับคู่ได้ที่ด้านล่าง"
 
-#: src/app/explore.tsx
-msgid "Pair server"
-msgstr "จับคู่เซิร์ฟเวอร์"
-
 #: src/components/server-terminal-workspace.tsx
-msgid "Pair this server again"
-msgstr "จับคู่เซิร์ฟเวอร์นี้อีกครั้ง"
+msgid "Pair this computer again"
+msgstr "จับคู่คอมพิวเตอร์นี้อีกครั้ง"
 
 #: src/lib/network-error.ts
-msgid "Pair this server again."
-msgstr "จับคู่เซิร์ฟเวอร์นี้อีกครั้ง"
+msgid "Pair this computer again."
+msgstr "จับคู่คอมพิวเตอร์นี้อีกครั้ง"
 
 #. placeholder {0}: host.label
 #: src/app/explore.tsx
@@ -4111,8 +4137,8 @@ msgid "Pair through an SSH host"
 msgstr "จับคู่ผ่านโฮสต์ SSH"
 
 #: src/components/home-overview.tsx
-msgid "Pair your first server"
-msgstr "จับคู่เซิร์ฟเวอร์แรกของคุณ"
+msgid "Pair your first computer"
+msgstr "จับคู่คอมพิวเตอร์แรกของคุณ"
 
 #: src/app/explore.tsx
 msgid "Pairing"
@@ -4145,8 +4171,8 @@ msgid "Pane {paneId}"
 msgstr "เพน {paneId}"
 
 #: src/components/settings-servers.tsx
-msgid "Panes on server cards"
-msgstr "พาเนลบนการ์ดเซิร์ฟเวอร์"
+msgid "Panes on computer cards"
+msgstr "พาเนลบนการ์ดคอมพิวเตอร์"
 
 #: src/components/agent-session-tree-sheet.tsx
 msgid "Parent: {parentTitle}"
@@ -4333,8 +4359,8 @@ msgid "Prompt"
 msgstr "พรอมต์"
 
 #: src/components/settings-security.tsx
-msgid "Protect paired servers and terminal sessions."
-msgstr "ปกป้องเซิร์ฟเวอร์ที่จับคู่และเซสชันเทอร์มินัล"
+msgid "Protect paired computers and terminal sessions."
+msgstr "ปกป้องคอมพิวเตอร์ที่จับคู่และเซสชันเทอร์มินัล"
 
 #: src/components/ssh-host-form.tsx
 msgid "Public key copied"
@@ -4694,14 +4720,14 @@ msgstr "กลับไปที่งาน"
 
 #: src/app/servers/[serverId].tsx
 #: src/components/server-terminal-workspace.tsx
-msgid "Return to the server list and pair again."
-msgstr "กลับไปยังรายการเซิร์ฟเวอร์แล้วจับคู่อีกครั้ง"
+msgid "Return to the computer list and pair again."
+msgstr "กลับไปยังรายการคอมพิวเตอร์แล้วจับคู่อีกครั้ง"
 
 #: src/components/collaboration-notice.tsx
 #: src/hooks/use-agent-command-delivery.ts
 #: src/hooks/use-collaboration-output.ts
-msgid "Return to this server to continue."
-msgstr "กลับไปยังเซิร์ฟเวอร์นี้เพื่อดำเนินการต่อ"
+msgid "Return to this computer to continue."
+msgstr "กลับไปยังคอมพิวเตอร์นี้เพื่อดำเนินการต่อ"
 
 #: src/lib/demo-gateway.ts
 msgid "Review"
@@ -5047,38 +5073,6 @@ msgstr "กำลังส่งไปยัง"
 msgid "Sends your next goal here. Long press to open it."
 msgstr "ส่งเป้าหมายถัดไปมาที่นี่ กดค้างเพื่อเปิด"
 
-#: src/app/agent-guide.tsx
-#: src/app/artifacts.tsx
-#: src/app/panels.tsx
-#: src/components/app-drawer.tsx
-#: src/components/server-terminal-workspace.tsx
-msgid "Server"
-msgstr "เซิร์ฟเวอร์"
-
-#: src/app/explore.tsx
-#: src/components/settings-servers.tsx
-msgid "Server name"
-msgstr "ชื่อเซิร์ฟเวอร์"
-
-#: src/app/servers/[serverId].tsx
-#: src/components/server-terminal-workspace.tsx
-msgid "Server not found"
-msgstr "ไม่พบเซิร์ฟเวอร์"
-
-#: src/components/server-terminal-workspace.tsx
-msgid "Server offline"
-msgstr "เซิร์ฟเวอร์ออฟไลน์"
-
-#: src/components/server-terminal-workspace.tsx
-msgid "Server unavailable."
-msgstr "เซิร์ฟเวอร์ไม่พร้อมใช้งาน"
-
-#: src/app/settings-servers.tsx
-#: src/app/settings.tsx
-#: src/components/app-drawer-content.tsx
-msgid "Servers"
-msgstr "เซิร์ฟเวอร์"
-
 #: src/components/agent-sessions-sheet.tsx
 msgid "Session name"
 msgstr "ชื่อเซสชัน"
@@ -5254,6 +5248,10 @@ msgstr "แสดง diff นี้เพิ่มเติม"
 msgid "Show the app background behind terminal text"
 msgstr "แสดงพื้นหลังแอปหลังข้อความเทอร์มินัล"
 
+#: src/components/app-drawer.tsx
+msgid "Show the computer list"
+msgstr "แสดงรายการคอมพิวเตอร์"
+
 #: src/components/editor-controls.tsx
 msgid "Show the editor keyboard"
 msgstr "แสดงแป้นพิมพ์ตัวแก้ไข"
@@ -5261,10 +5259,6 @@ msgstr "แสดงแป้นพิมพ์ตัวแก้ไข"
 #: src/components/agent-tool-card.tsx
 msgid "Show the rest of this output"
 msgstr "แสดงผลลัพธ์ส่วนที่เหลือ"
-
-#: src/components/app-drawer.tsx
-msgid "Show the server list"
-msgstr "แสดงรายการเซิร์ฟเวอร์"
 
 #: src/components/theme-appearance-settings.tsx
 msgid "Show theme effects only while Home is visible. Turn off to reduce battery use."
@@ -5457,12 +5451,12 @@ msgid "Start task"
 msgstr "เริ่มงาน"
 
 #: src/i18n/labels.ts
-msgid "Start the agent on the gateway host, then check again."
-msgstr "เริ่มเอเจนต์บนโฮสต์เกตเวย์ แล้วตรวจสอบอีกครั้ง"
+msgid "Start the agent on the computer, then check again."
+msgstr "เริ่มเอเจนต์บนคอมพิวเตอร์ แล้วตรวจสอบอีกครั้ง"
 
 #: src/i18n/labels.ts
-msgid "Start the OpenCode service on the gateway host, then check again."
-msgstr "เริ่มบริการ OpenCode บนโฮสต์ของเกตเวย์ แล้วตรวจสอบอีกครั้ง"
+msgid "Start the OpenCode service on the computer, then check again."
+msgstr "เริ่มบริการ OpenCode บนคอมพิวเตอร์ แล้วตรวจสอบอีกครั้ง"
 
 #: src/components/agent-workbench.tsx
 msgid "Started with a clean context."
@@ -5811,8 +5805,8 @@ msgid "That simulator cannot be started from here. Start it on the machine and i
 msgstr "เริ่มเครื่องจำลองนั้นจากที่นี่ไม่ได้ เริ่มบนเครื่องแล้วจะปรากฏในรายการ"
 
 #: src/components/settings-servers.tsx
-msgid "The address is where this paired server is reached. Changing it does not unpair the device."
-msgstr "ที่อยู่นี้ใช้เข้าถึงเซิร์ฟเวอร์ที่จับคู่ การเปลี่ยนที่อยู่จะไม่ยกเลิกการจับคู่อุปกรณ์"
+msgid "The address is where this paired computer is reached. Changing it does not unpair the device."
+msgstr "ที่อยู่นี้ใช้เข้าถึงคอมพิวเตอร์ที่จับคู่ การเปลี่ยนที่อยู่จะไม่ยกเลิกการจับคู่อุปกรณ์"
 
 #: src/app/explore.tsx
 msgid "The address the Gateway prints when it starts."
@@ -5846,6 +5840,22 @@ msgstr "กล้องไม่เริ่มทำงาน"
 msgid "The camera reported an error."
 msgstr "กล้องรายงานข้อผิดพลาด"
 
+#: src/components/changes-sheet.tsx
+msgid "The computer could not be reached."
+msgstr "ติดต่อคอมพิวเตอร์ไม่ได้"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "The computer did not return it."
+msgstr "คอมพิวเตอร์ไม่ได้ส่งกลับมา"
+
+#: src/app/commands.tsx
+msgid "The computer did not say which terminal it made."
+msgstr "คอมพิวเตอร์ไม่ได้ระบุว่าได้สร้างเทอร์มินัลใด"
+
+#: src/components/settings-servers.tsx
+msgid "The computer was kept on this device. Make sure its Gateway is running, then try again."
+msgstr "ยังเก็บคอมพิวเตอร์ไว้บนอุปกรณ์นี้ ตรวจว่า Gateway ทำงานอยู่แล้วลองอีกครั้ง"
+
 #: src/components/ssh-terminal-workspace.tsx
 msgid "The connection dropped."
 msgstr "การเชื่อมต่อหลุด"
@@ -5865,10 +5875,6 @@ msgstr "เปิดปลายทางนี้ไม่ได้"
 #: src/components/settings-font-sheet.tsx
 msgid "The font file is missing. Add it again."
 msgstr "ไม่พบไฟล์ฟอนต์ กรุณาเพิ่มอีกครั้ง"
-
-#: src/components/changes-sheet.tsx
-msgid "The gateway could not be reached."
-msgstr "ไม่สามารถเชื่อมต่อเกตเวย์"
 
 #: src/components/agent-worktree-sheet.tsx
 msgid "The host made a worktree but did not say where."
@@ -5904,28 +5910,16 @@ msgid "The real terminal"
 msgstr "เทอร์มินัลจริง"
 
 #: src/components/app-error-boundary.tsx
-msgid "The screen hit an error. Try again — your servers stay paired."
-msgstr "หน้าจอเกิดข้อผิดพลาด ลองอีกครั้ง เซิร์ฟเวอร์ของคุณยังจับคู่อยู่"
+msgid "The screen hit an error. Try again — your computers stay paired."
+msgstr "หน้าจอเกิดข้อผิดพลาด ลองอีกครั้ง คอมพิวเตอร์ของคุณยังจับคู่อยู่"
 
 #: src/components/ssh-host-form.tsx
 msgid "The server asks its own questions when you connect, a password or a one-time code, and nothing is stored on this device."
 msgstr "เซิร์ฟเวอร์จะถามเมื่อคุณเชื่อมต่อ เช่น รหัสผ่านหรือรหัสใช้ครั้งเดียว และจะไม่เก็บข้อมูลไว้บนอุปกรณ์นี้"
 
-#: src/components/server-terminal-workspace.tsx
-msgid "The server did not return it."
-msgstr "เซิร์ฟเวอร์ไม่ได้ส่งกลับมา"
-
-#: src/app/commands.tsx
-msgid "The server did not say which terminal it made."
-msgstr "เซิร์ฟเวอร์ไม่ได้ระบุว่าได้สร้างเทอร์มินัลใด"
-
 #: src/components/ssh-host-key-dialog.tsx
 msgid "The server is asking for more before it lets you in."
 msgstr "เซิร์ฟเวอร์ต้องการข้อมูลเพิ่มเติมก่อนให้คุณเข้าใช้งาน"
-
-#: src/components/settings-servers.tsx
-msgid "The server was kept on this device. Make sure its Gateway is running, then try again."
-msgstr "ยังเก็บเซิร์ฟเวอร์ไว้บนอุปกรณ์นี้ ตรวจว่า Gateway ทำงานอยู่แล้วลองอีกครั้ง"
 
 #: src/components/ssh-terminal-workspace.tsx
 msgid "The shell exited."
@@ -6034,13 +6028,80 @@ msgstr "เอเจนต์นี้ไม่ได้เสนอตัวเ
 msgid "This cannot be undone."
 msgstr "การดำเนินการนี้ย้อนกลับไม่ได้"
 
+#: src/hooks/use-agent-command-delivery.ts
+msgid "This computer cannot run that command yet."
+msgstr "คอมพิวเตอร์นี้ยังเรียกใช้คำสั่งนั้นไม่ได้"
+
+#: src/lib/network-error.ts
+msgid "This computer cannot use this device's stored key. Pair it again to reconnect."
+msgstr "คอมพิวเตอร์นี้ใช้คีย์ที่เก็บไว้ของอุปกรณ์ไม่ได้ จับคู่อีกครั้งเพื่อเชื่อมต่อใหม่"
+
+#: src/lib/network-error.ts
+msgid "This computer could not read the request. Check this device's date and time."
+msgstr "คอมพิวเตอร์นี้อ่านคำขอไม่ได้ ตรวจสอบวันที่และเวลาของอุปกรณ์นี้"
+
+#: src/components/new-task-sheet.tsx
+msgid "This computer did not name any agents it can start."
+msgstr "คอมพิวเตอร์นี้ไม่ได้ระบุเอเจนต์ที่เริ่มได้"
+
+#: src/components/agent-guide-sheet.tsx
+msgid "This computer does not advertise {agentName} sessions."
+msgstr "คอมพิวเตอร์เครื่องนี้ไม่มีเซสชัน {agentName} ให้ใช้"
+
+#: src/components/agent-workbench.tsx
+msgid "This computer does not expand ~. Type the full path, starting with /."
+msgstr "คอมพิวเตอร์เครื่องนี้ไม่ขยาย ~ โปรดพิมพ์พาธแบบเต็มที่ขึ้นต้นด้วย /"
+
+#: src/components/agent-workbench.tsx
+msgid "This computer does not know {agentName}. Refresh the agent list and try again."
+msgstr "คอมพิวเตอร์เครื่องนี้ไม่รู้จัก {agentName} รีเฟรชรายการเอเจนต์แล้วลองอีกครั้ง"
+
+#: src/components/session-artifacts.tsx
+msgid "This computer does not serve files yet. Update the Muqun gateway plugin to browse what a session writes."
+msgstr "คอมพิวเตอร์เครื่องนี้ยังไม่ให้บริการไฟล์ อัปเดตปลั๊กอิน Muqun Gateway เพื่อเรียกดูสิ่งที่เซสชันเขียนไว้"
+
+#: src/lib/network-error.ts
+msgid "This computer had a problem answering."
+msgstr "คอมพิวเตอร์นี้มีปัญหาในการตอบกลับ"
+
+#: src/lib/network-error.ts
+msgid "This computer has already handled that request."
+msgstr "คอมพิวเตอร์นี้จัดการคำขอนั้นไปแล้ว"
+
+#: src/app/new-task.tsx
+msgid "This computer has no session to start an agent in."
+msgstr "คอมพิวเตอร์นี้ไม่มีเซสชันสำหรับเริ่มเอเจนต์"
+
+#: src/components/settings-servers.tsx
+msgid "This computer has not listed any paired devices."
+msgstr "คอมพิวเตอร์เครื่องนี้ไม่ได้แสดงรายการอุปกรณ์ที่จับคู่ไว้"
+
+#: src/app/agent-guide.tsx
+#: src/app/new-task.tsx
+#: src/app/simfarm.tsx
+#: src/app/web-service.tsx
+msgid "This computer is no longer paired."
+msgstr "คอมพิวเตอร์นี้ไม่ได้จับคู่อีกต่อไป"
+
+#: src/components/agent-guide-sheet.tsx
+msgid "This computer is not answering. Check the computer connection, then try again."
+msgstr "คอมพิวเตอร์เครื่องนี้ไม่ตอบสนอง ตรวจสอบการเชื่อมต่อกับคอมพิวเตอร์ แล้วลองอีกครั้ง"
+
+#: src/lib/network-error.ts
+msgid "This computer no longer recognises this device. Pair it again to reconnect."
+msgstr "คอมพิวเตอร์นี้ไม่รู้จักอุปกรณ์นี้แล้ว จับคู่อีกครั้งเพื่อเชื่อมต่อใหม่"
+
+#: src/lib/network-error.ts
+msgid "This computer refused the request."
+msgstr "คอมพิวเตอร์นี้ปฏิเสธคำขอ"
+
 #: src/lib/attachments.ts
 msgid "This device has no camera available."
 msgstr "อุปกรณ์นี้ไม่มีกล้องที่พร้อมใช้งาน"
 
 #: src/components/asset-viewer.tsx
-msgid "This file is {size}. Muqun opens text files up to {ceiling}; larger ones stay on the server."
-msgstr "ไฟล์นี้มีขนาด {size} Muqun เปิดไฟล์ข้อความได้ถึง {ceiling} ไฟล์ที่ใหญ่กว่านั้นจะอยู่บนเซิร์ฟเวอร์"
+msgid "This file is {size}. Muqun opens text files up to {ceiling}; larger ones stay on the computer."
+msgstr "ไฟล์นี้มีขนาด {size} Muqun เปิดไฟล์ข้อความได้ถึง {ceiling} ไฟล์ที่ใหญ่กว่านั้นจะอยู่บนคอมพิวเตอร์"
 
 #: src/components/asset-viewer.tsx
 #: src/components/settings-font-sheet.tsx
@@ -6063,33 +6124,9 @@ msgstr "ไฟล์นี้ใหญ่เกินไป"
 msgid "This font could not be read."
 msgstr "อ่านฟอนต์นี้ไม่ได้"
 
-#: src/components/agent-guide-sheet.tsx
-msgid "This gateway does not advertise {agentName} sessions."
-msgstr "เกตเวย์นี้ไม่ได้ให้บริการเซสชัน {agentName}"
-
 #: src/lib/network-error.ts
 msgid "This Gateway does not answer to that address."
 msgstr "Gateway นี้ไม่ตอบกลับที่ที่อยู่นั้น"
-
-#: src/components/agent-workbench.tsx
-msgid "This gateway does not expand ~. Type the full path, starting with /."
-msgstr "เกตเวย์นี้ไม่ขยาย ~ พิมพ์พาธเต็มที่ขึ้นต้นด้วย /"
-
-#: src/components/agent-workbench.tsx
-msgid "This gateway does not know {agentName}. Refresh the agent list and try again."
-msgstr "เกตเวย์นี้ไม่รู้จัก {agentName} รีเฟรชรายการเอเจนต์แล้วลองอีกครั้ง"
-
-#: src/components/session-artifacts.tsx
-msgid "This gateway does not serve files yet. Update the Muqun gateway plugin to browse what a session writes."
-msgstr "Gateway นี้ยังไม่ให้บริการไฟล์ อัปเดตปลั๊กอิน Muqun Gateway เพื่อดูไฟล์ที่เซสชันเขียน"
-
-#: src/components/settings-servers.tsx
-msgid "This gateway has not listed any paired devices."
-msgstr "Gateway นี้ยังไม่แสดงรายการอุปกรณ์ที่จับคู่"
-
-#: src/components/agent-guide-sheet.tsx
-msgid "This gateway is not answering. Check the server connection, then try again."
-msgstr "เกตเวย์นี้ไม่ตอบสนอง ตรวจสอบการเชื่อมต่อเซิร์ฟเวอร์แล้วลองอีกครั้ง"
 
 #: src/components/session-map.tsx
 msgid "This group has no terminals."
@@ -6139,49 +6176,6 @@ msgstr "คำถามนี้ต้องใช้แอปเวอร์ช
 #: src/components/agent-context-sheet.tsx
 msgid "this rule"
 msgstr "กฎนี้"
-
-#: src/hooks/use-agent-command-delivery.ts
-msgid "This server cannot run that command yet."
-msgstr "เซิร์ฟเวอร์นี้ยังเรียกใช้คำสั่งนั้นไม่ได้"
-
-#: src/lib/network-error.ts
-msgid "This server cannot use this device's stored key. Pair it again to reconnect."
-msgstr "เซิร์ฟเวอร์นี้ใช้คีย์ที่เก็บไว้ของอุปกรณ์ไม่ได้ จับคู่อีกครั้งเพื่อเชื่อมต่อใหม่"
-
-#: src/lib/network-error.ts
-msgid "This server could not read the request. Check this device's date and time."
-msgstr "เซิร์ฟเวอร์นี้อ่านคำขอไม่ได้ ตรวจสอบวันที่และเวลาของอุปกรณ์นี้"
-
-#: src/components/new-task-sheet.tsx
-msgid "This server did not name any agents it can start."
-msgstr "เซิร์ฟเวอร์นี้ไม่ได้ระบุเอเจนต์ที่เริ่มได้"
-
-#: src/lib/network-error.ts
-msgid "This server had a problem answering."
-msgstr "เซิร์ฟเวอร์นี้มีปัญหาในการตอบกลับ"
-
-#: src/lib/network-error.ts
-msgid "This server has already handled that request."
-msgstr "เซิร์ฟเวอร์นี้จัดการคำขอนั้นไปแล้ว"
-
-#: src/app/new-task.tsx
-msgid "This server has no session to start an agent in."
-msgstr "เซิร์ฟเวอร์นี้ไม่มีเซสชันสำหรับเริ่มเอเจนต์"
-
-#: src/app/agent-guide.tsx
-#: src/app/new-task.tsx
-#: src/app/simfarm.tsx
-#: src/app/web-service.tsx
-msgid "This server is no longer paired."
-msgstr "เซิร์ฟเวอร์นี้ไม่ได้จับคู่อีกต่อไป"
-
-#: src/lib/network-error.ts
-msgid "This server no longer recognises this device. Pair it again to reconnect."
-msgstr "เซิร์ฟเวอร์นี้ไม่รู้จักอุปกรณ์นี้แล้ว จับคู่อีกครั้งเพื่อเชื่อมต่อใหม่"
-
-#: src/lib/network-error.ts
-msgid "This server refused the request."
-msgstr "เซิร์ฟเวอร์นี้ปฏิเสธคำขอ"
 
 #: src/components/agent-context-sheet.tsx
 msgid "This session"
@@ -6257,8 +6251,8 @@ msgid "Today"
 msgstr "วันนี้"
 
 #: src/components/settings-mcp-tokens.tsx
-msgid "Tokens coding agents use to reach this gateway from this computer."
-msgstr "โทเค็นที่เอเจนต์เขียนโค้ดใช้เข้าถึงเกตเวย์นี้จากคอมพิวเตอร์เครื่องนี้"
+msgid "Tokens coding agents use to reach this computer."
+msgstr "โทเคนที่เอเจนต์เขียนโค้ดใช้เชื่อมต่อกับคอมพิวเตอร์เครื่องนี้"
 
 #: src/components/agent-context-sheet.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
@@ -6332,8 +6326,8 @@ msgstr "ลองอีกครั้ง"
 #: src/components/settings-mcp-tokens.tsx
 #: src/components/settings-server-capabilities.tsx
 #: src/components/settings-servers.tsx
-msgid "Try again once the gateway responds."
-msgstr "ลองอีกครั้งเมื่อ Gateway ตอบกลับ"
+msgid "Try again once the computer responds."
+msgstr "ลองอีกครั้งเมื่อคอมพิวเตอร์ตอบสนอง"
 
 #: src/components/theme-browse-sheet.tsx
 msgid "Try searching for another name or tag."
@@ -6455,8 +6449,8 @@ msgid "Unpair {label}"
 msgstr "เลิกจับคู่ {label}"
 
 #: src/components/settings-servers.tsx
-msgid "Unpair this server"
-msgstr "เลิกจับคู่เซิร์ฟเวอร์นี้"
+msgid "Unpair this computer"
+msgstr "เลิกจับคู่คอมพิวเตอร์นี้"
 
 #: src/components/settings-servers.tsx
 msgid "Unpairing {label}"
@@ -6497,12 +6491,12 @@ msgid "Update"
 msgstr "อัปเดต"
 
 #: src/components/agent-assignment-bar.tsx
-msgid "Update Herdr on the server to 0.9.0 or newer, then restart the session, to assign a task to another assistant"
-msgstr "อัปเดต Herdr บนเซิร์ฟเวอร์เป็น 0.9.0 ขึ้นไป แล้วเริ่มเซสชันใหม่เพื่อมอบหมายงานให้ผู้ช่วยอื่น"
+msgid "Update Herdr on the computer to 0.9.0 or newer, then restart the session, to assign a task to another assistant"
+msgstr "อัปเดต Herdr บนคอมพิวเตอร์เป็น 0.9.0 ขึ้นไป แล้วเริ่มเซสชันใหม่เพื่อมอบหมายงานให้ผู้ช่วยอื่น"
 
 #: src/components/agent-assignment-bar.tsx
-msgid "Update Muqun Gateway on the server, then restart it, to assign a task to another assistant"
-msgstr "อัปเดต Muqun Gateway บนเซิร์ฟเวอร์แล้วเริ่มใหม่ เพื่อมอบหมายงานให้ผู้ช่วยอื่น"
+msgid "Update Muqun Gateway on the computer, then restart it, to assign a task to another assistant"
+msgstr "อัปเดต Muqun Gateway บนคอมพิวเตอร์แล้วเริ่มใหม่ เพื่อมอบหมายงานให้ผู้ช่วยอื่น"
 
 #: src/components/agent-guide-sheet.tsx
 #: src/components/new-task-action.tsx
@@ -6584,8 +6578,8 @@ msgid "Use theme defaults"
 msgstr "ใช้ค่าเริ่มต้นของธีม"
 
 #: src/components/settings-servers.tsx
-msgid "Use this server"
-msgstr "ใช้เซิร์ฟเวอร์นี้"
+msgid "Use this computer"
+msgstr "ใช้คอมพิวเตอร์นี้"
 
 #: src/components/settings-appearance.tsx
 msgid "Use your own font for the app and the terminal."
@@ -6772,5 +6766,5 @@ msgid "Your message"
 msgstr "ข้อความของคุณ"
 
 #: src/components/app-drawer-content.tsx
-msgid "Your paired gateways"
-msgstr "Gateway ที่คุณจับคู่ไว้"
+msgid "Your paired computers"
+msgstr "คอมพิวเตอร์ที่คุณจับคู่ไว้"

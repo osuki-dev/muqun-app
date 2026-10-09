@@ -440,7 +440,7 @@ export type AgentGuideCopy = {
  */
 export const agentGuideCopy: Record<string, AgentGuideCopy> = {
   opencode: {
-    start: msg`Start the OpenCode service on the gateway host, then check again.`,
+    start: msg`Start the OpenCode service on the computer, then check again.`,
     command: 'opencode service start',
     installUrl: OPENCODE_INSTALL_URL,
   },
@@ -453,7 +453,7 @@ export const agentGuideCopy: Record<string, AgentGuideCopy> = {
   // (`needs-setup`) gets the pairing sentence and `t3 pair`. Never both at once: pasted as two lines, `t3 pair` would wait
   // behind the server.
   t3: {
-    start: msg`Open T3 Code on the gateway host (or run t3 service install), then check again.`,
+    start: msg`Open T3 Code on the computer (or run t3 service install), then check again.`,
     setupStart: msg`Run t3 pair on the host, set the printed token as t3.pairing_token in the gateway config, and restart the gateway within 5 minutes.`,
     command: 't3 service install',
     setupCommand: 't3 pair',
@@ -462,7 +462,7 @@ export const agentGuideCopy: Record<string, AgentGuideCopy> = {
 
 /** The guide for a kind this build has never heard of. */
 export const agentGuideFallback: AgentGuideCopy = {
-  start: msg`Start the agent on the gateway host, then check again.`,
+  start: msg`Start the agent on the computer, then check again.`,
 };
 
 export function agentGuideFor(kind: string | undefined): AgentGuideCopy {

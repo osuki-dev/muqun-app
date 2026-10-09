@@ -73,7 +73,7 @@ is visible "id=\"home-pad-toolbar-actions\""
 is hidden "id=\"server-agent-pane-1\""
 is visible "id=\"home-pad-launch-pane\""
 is visible "id=\"home-pad-lower-band\""
-is visible "text=\"Pair your first server\""
+is visible "text=\"Pair your first computer\""
 wait "role=button label=\"Settings\"" 10000
 press "role=button label=\"Settings\""
 wait text "SERVERS" 10000

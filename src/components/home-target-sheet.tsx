@@ -126,7 +126,7 @@ export function HomeTargetSheet() {
   return (
     <SheetScene
       testID="home-target-sheet"
-      title={t`Choose a gateway`}
+      title={t`Choose a computer`}
       caption={selected?.label}
       contentSized={contentSized}>
       {contentSized ? (

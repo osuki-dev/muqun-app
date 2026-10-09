@@ -117,10 +117,10 @@ export function SettingsServers() {
     } catch (error) {
       showToast({
         variant: 'danger',
-        title: t`Could not unpair server`,
+        title: t`Could not unpair computer`,
         message: describeGatewayFailure(
           error,
-          t`The server was kept on this device. Make sure its Gateway is running, then try again.`
+          t`The computer was kept on this device. Make sure its Gateway is running, then try again.`
         ).message,
       });
     }
@@ -133,7 +133,7 @@ export function SettingsServers() {
       ) : loading ? (
         <View style={styles.note}>
           <Text variant="caption" color={theme.colors.textMuted}>
-            <Trans>Loading servers</Trans>
+            <Trans>Loading computers</Trans>
           </Text>
         </View>
       ) : showDemo ? (
@@ -153,7 +153,7 @@ export function SettingsServers() {
       ) : records.length === 0 ? (
         <View style={styles.note}>
           <Text variant="bodySmall">
-            <Trans>No servers paired yet</Trans>
+            <Trans>No computers paired yet</Trans>
           </Text>
           <Text variant="caption" color={theme.colors.textMuted}>
             <Trans>Pair one below.</Trans>
@@ -197,10 +197,10 @@ export function SettingsServers() {
           the page a reader goes to for "add another". Unconditional, so there
           is one place that never moves. */}
       <SettingsChoiceRow
-        label={t`Pair a server`}
+        label={t`Pair a computer`}
         value=""
         detail={t`Scan the Gateway’s QR code, or enter its address.`}
-        accessibilityLabel={t`Pair a server`}
+        accessibilityLabel={t`Pair a computer`}
         testID="settings-pair-row"
         onPress={() => router.push('/explore')}
       />
@@ -224,7 +224,7 @@ export function SettingsServers() {
           same concept, so filtering to "agents" was hiding windows that were
           just as reachable as the ones running one. */}
       <SettingsBlock
-        label={t`Panes on server cards`}
+        label={t`Panes on computer cards`}
         caption={
           <Text variant="caption" color={theme.colors.textSubtle}>
             {serverCardPanes === 'all'
@@ -442,14 +442,14 @@ function ServerRow({
                 ]}>
                 <Check size={16} color={theme.colors.primary} strokeWidth={2.2} />
                 <Text variant="caption" color={theme.colors.primary}>
-                  <Trans>Use this server</Trans>
+                  <Trans>Use this computer</Trans>
                 </Text>
               </PressableScale>
               {/* Said rather than hidden: the device list is missing for a
                   reason, and a row that silently offers one server more than
                   another is a bug the reader has to guess at. */}
               <Text variant="caption" color={theme.colors.textMuted}>
-                <Trans>Its paired devices are listed once it is the server in use.</Trans>
+                <Trans>Its paired devices are listed once it is the computer in use.</Trans>
               </Text>
             </>
           )}
@@ -530,7 +530,7 @@ function ServerRowEditor({
         ]}>
         <Pencil size={15} color={theme.colors.text} strokeWidth={2} />
         <Text variant="caption" color={theme.colors.text}>
-          <Trans>Edit this server</Trans>
+          <Trans>Edit this computer</Trans>
         </Text>
       </PressableScale>
       <UnpairAction label={server.label} onUnpair={onUnpair} />
@@ -628,7 +628,7 @@ function ServerEditForm({ server, onDone }: { server: GatewayRecord; onDone: () 
   return (
     <View style={styles.editForm}>
       <Input
-        label={t`Server name`}
+        label={t`Computer name`}
         value={label}
         onChangeText={(value) => {
           setLabel(value);
@@ -659,7 +659,7 @@ function ServerEditForm({ server, onDone }: { server: GatewayRecord; onDone: () 
       />
       <Text variant="caption" color={theme.colors.textMuted}>
         <Trans>
-          The address is where this paired server is reached. Changing it does not unpair the
+          The address is where this paired computer is reached. Changing it does not unpair the
           device.
         </Trans>
       </Text>
@@ -795,7 +795,7 @@ function UnpairAction({ label, onUnpair }: { label: string; onUnpair: () => Prom
       ]}>
       <Trash2 size={15} color={theme.colors.danger} strokeWidth={2} />
       <Text variant="caption" color={theme.colors.danger}>
-        <Trans>Unpair this server</Trans>
+        <Trans>Unpair this computer</Trans>
       </Text>
     </PressableScale>
   );
@@ -872,7 +872,8 @@ function PairedDevices({ server }: { server: GatewayRecord }) {
           showToast({
             variant: 'danger',
             title: t`Could not revoke device`,
-            message: describeGatewayFailure(error, t`Try again once the gateway responds.`).message,
+            message: describeGatewayFailure(error, t`Try again once the computer responds.`)
+              .message,
           });
         }
       },
@@ -893,7 +894,7 @@ function PairedDevices({ server }: { server: GatewayRecord }) {
   if (devices.length === 0) {
     return (
       <Text variant="caption" color={theme.colors.textMuted}>
-        <Trans>This gateway has not listed any paired devices.</Trans>
+        <Trans>This computer has not listed any paired devices.</Trans>
       </Text>
     );
   }

@@ -23,7 +23,7 @@ const DAY_MS = 24 * HOUR_MS;
 type Load = { status: 'loading' } | { status: 'error' } | { status: 'ready'; tokens: McpToken[] };
 
 /**
- * The tokens coding agents use to reach this gateway, with the revoke that
+ * The tokens coding agents use to reach this computer, with the revoke that
  * cuts one off. Absent entirely unless the gateway's MCP server is running.
  */
 export function McpTokens({
@@ -92,7 +92,7 @@ function McpTokensSection() {
         )}
       </SettingsSection>
       <Text variant="caption" color={theme.colors.textSubtle}>
-        {t`Tokens coding agents use to reach this gateway from this computer.`}
+        {t`Tokens coding agents use to reach this computer.`}
       </Text>
     </View>
   );
@@ -154,7 +154,8 @@ function TokenRows({ tokens, onRevoked }: { tokens: McpToken[]; onRevoked: (id: 
           showToast({
             variant: 'danger',
             title: t`Could not revoke token`,
-            message: describeGatewayFailure(error, t`Try again once the gateway responds.`).message,
+            message: describeGatewayFailure(error, t`Try again once the computer responds.`)
+              .message,
           });
         }
       },

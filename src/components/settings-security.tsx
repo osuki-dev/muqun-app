@@ -113,7 +113,7 @@ export function SettingsSecurity({ title }: { title: string }) {
           appLockEnabled
             ? t`Required on launch and after 30 seconds in the background.`
             : authAvailability?.available && authAvailability.enrolled
-              ? t`Protect paired servers and terminal sessions.`
+              ? t`Protect paired computers and terminal sessions.`
               : authAvailability
                 ? t`Set up ${authAvailability.label} in system settings first.`
                 : t`Checking system authentication…`
