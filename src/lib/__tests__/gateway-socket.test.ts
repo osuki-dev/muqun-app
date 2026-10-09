@@ -4,7 +4,10 @@ import type { AgentDomainEvent } from '../agent-protocol';
 import {
   GatewaySocket,
   gatewaySocketPath,
+  MAX_RECONNECT_DELAY_MS,
+  socketFailureIsUnauthorized,
   socketReconnectDelay,
+  type SocketAuthorization,
   type GatewaySocketListener,
   type GatewaySocketTransport,
   type GatewaySocketUpgrade,
@@ -93,7 +96,13 @@ interface Harness {
   latest(): FakeTransport;
 }
 
-function harness(options: { sealed?: boolean; prepare?: () => GatewaySocketUpgrade | null } = {}) {
+function harness(
+  options: {
+    sealed?: boolean;
+    prepare?: () => GatewaySocketUpgrade | null;
+    checkAuthorization?: () => Promise<SocketAuthorization>;
+  } = {}
+) {
   const transports: FakeTransport[] = [];
   const clock = new Clock();
   const appState = new FakeAppState();
@@ -116,6 +125,9 @@ function harness(options: { sealed?: boolean; prepare?: () => GatewaySocketUpgra
     crypto: socketTestCrypto,
     appState,
     schedule: clock.schedule,
+    // The top of each jitter window, so the schedule below reads in whole numbers.
+    random: () => 1,
+    checkAuthorization: options.checkAuthorization,
   });
   const result: Harness = {
     socket,
@@ -290,7 +302,7 @@ describe('sealed connection', () => {
     expect(r.events).toHaveLength(0);
     expect(h.transports[0]?.closed).toBe(true);
     expect(h.socket.state).toBe('backoff');
-    h.clock.advance(socketReconnectDelay(0));
+    h.clock.advance(socketReconnectDelay(0, () => 1));
     expect(h.transports).toHaveLength(2);
   });
 
@@ -308,7 +320,7 @@ describe('sealed connection', () => {
     const h = harness({ sealed: true });
     h.socket.watch('ses_1', recorder().listener);
     h.latest().drop();
-    h.clock.advance(socketReconnectDelay(0));
+    h.clock.advance(socketReconnectDelay(0, () => 1));
     const gateway = new GatewayFrameSealer(material, 'conn-2', 'nonce-1');
     h.latest().deliver(gateway.seal(hello('conn-2')));
     expect(h.socket.connected).toBe(true);
@@ -345,10 +357,27 @@ describe('reconnecting', () => {
     expect(h.transports).toHaveLength(4);
   });
 
-  test('the delay is capped at five seconds', () => {
-    expect([0, 1, 2, 3, 4, 5, 9].map(socketReconnectDelay)).toEqual([
-      400, 800, 1600, 3200, 5000, 5000, 5000,
-    ]);
+  test('the delay doubles to a thirty-second ceiling', () => {
+    const top = () => 1;
+    expect(
+      [0, 1, 2, 3, 4, 5, 6, 7, 20].map((attempt) => socketReconnectDelay(attempt, top))
+    ).toEqual([400, 800, 1600, 3200, 6400, 12_800, 25_600, 30_000, 30_000]);
+  });
+
+  test('jitter keeps every delay between half and all of its window', () => {
+    for (let attempt = 0; attempt < 12; attempt += 1) {
+      const ceiling = Math.min(400 * 2 ** attempt, MAX_RECONNECT_DELAY_MS);
+      expect(socketReconnectDelay(attempt, () => 0)).toBe(ceiling / 2);
+      expect(socketReconnectDelay(attempt, () => 1)).toBe(ceiling);
+      for (let sample = 0; sample < 50; sample += 1) {
+        const delay = socketReconnectDelay(attempt);
+        expect(delay).toBeGreaterThanOrEqual(ceiling / 2);
+        expect(delay).toBeLessThanOrEqual(ceiling);
+      }
+    }
+    // A random source out of range cannot push the delay outside the window.
+    expect(socketReconnectDelay(0, () => 7)).toBe(400);
+    expect(socketReconnectDelay(0, () => -1)).toBe(200);
   });
 
   test('an attempt that never says hello times out as a failure', () => {
@@ -497,5 +526,101 @@ describe('the upgrade path', () => {
 
   test('a protocol this build does not speak means no socket at all', () => {
     expect(gatewaySocketPath({ websocket: { path: '/api/ws', protocol: 2 } })).toBeNull();
+  });
+});
+
+describe('unauthorized', () => {
+  test('classifies a refused upgrade apart from a network failure', () => {
+    expect(
+      socketFailureIsUnauthorized({
+        message: "Expected HTTP 101 response but was '401 Unauthorized'",
+      })
+    ).toBe(true);
+    expect(socketFailureIsUnauthorized({ message: 'Invalid HTTP status 403' })).toBe(true);
+    expect(socketFailureIsUnauthorized({ message: 'forbidden' })).toBe(true);
+    expect(socketFailureIsUnauthorized({ closeCode: 4401 })).toBe(true);
+    expect(socketFailureIsUnauthorized({ closeCode: 4403, message: '' })).toBe(true);
+    expect(socketFailureIsUnauthorized({ closeCode: 1006, message: '' })).toBe(false);
+    expect(socketFailureIsUnauthorized({ message: 'Connection reset by peer' })).toBe(false);
+    expect(
+      socketFailureIsUnauthorized({
+        message: "Expected HTTP 101 response but was '502 Bad Gateway'",
+      })
+    ).toBe(false);
+    // A port or a byte count with the same digits inside it is not a status.
+    expect(socketFailureIsUnauthorized({ message: 'connect to 10.0.0.4:14013 timed out' })).toBe(
+      false
+    );
+    expect(socketFailureIsUnauthorized({})).toBe(false);
+  });
+
+  test('a refused upgrade stops retrying and tells the listener', () => {
+    const h = harness();
+    const r = recorder();
+    h.socket.watch('ses_1', r.listener);
+    h.latest().onerror?.("Expected HTTP 101 response but was '401 Unauthorized'");
+    expect(h.socket.state).toBe('unauthorized');
+    expect(r.log).toEqual(['unavailable']);
+    h.clock.advance(120_000);
+    expect(h.transports).toHaveLength(1);
+    // Coming back to the foreground does not re-pair the device.
+    h.appState.set(false);
+    h.appState.set(true);
+    expect(h.transports).toHaveLength(1);
+    // A user action does try again.
+    h.socket.reconnect();
+    expect(h.transports).toHaveLength(2);
+  });
+
+  test('opaque failures ask the gateway, and a refusal stops the backoff', async () => {
+    let asked = 0;
+    let answer: SocketAuthorization = 'unknown';
+    const h = harness({
+      checkAuthorization: async () => {
+        asked += 1;
+        return answer;
+      },
+    });
+    h.socket.watch('ses_1', recorder().listener);
+    h.latest().drop();
+    expect(asked).toBe(0);
+    h.clock.advance(400);
+    h.latest().drop();
+    expect(asked).toBe(1);
+    await Promise.resolve();
+    await Promise.resolve();
+    // Not a refusal: the backoff carries on.
+    expect(h.socket.state).toBe('backoff');
+
+    answer = 'unauthorized';
+    h.clock.advance(800);
+    h.latest().drop();
+    expect(asked).toBe(2);
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(h.socket.state).toBe('unauthorized');
+    h.clock.advance(120_000);
+    expect(h.transports).toHaveLength(3);
+  });
+
+  test('a socket that reached hello meanwhile ignores a late refusal', async () => {
+    let settle: (answer: SocketAuthorization) => void = () => {};
+    const h = harness({
+      checkAuthorization: () =>
+        new Promise<SocketAuthorization>((resolve) => {
+          settle = resolve;
+        }),
+    });
+    h.socket.watch('ses_1', recorder().listener);
+    h.latest().drop();
+    h.clock.advance(400);
+    h.latest().drop();
+    h.clock.advance(800);
+    h.latest().deliver(hello());
+    expect(h.socket.state).toBe('open');
+    settle('unauthorized');
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(h.socket.state).toBe('open');
   });
 });

@@ -20,6 +20,29 @@
  */
 export type ServerReachability = 'live' | 'offline' | 'unknown';
 
+/**
+ * What a computer's row says, which is one step richer than what the rest of
+ * the app decides with.
+ *
+ * - `reconnecting` -- the selected computer's live channel dropped and a
+ *   reconnect is under way. Logically `unknown`; saying so is the difference
+ *   between "nothing is happening" and "the app is on it".
+ * - `unauthorized` -- the gateway answered and refused this device's pairing.
+ *   Logically `offline` (nothing can be sent there), but the remedy is pairing
+ *   again, not waiting, so it is never shown as a network problem.
+ */
+export type ConnectionStatus = ServerReachability | 'reconnecting' | 'unauthorized';
+
+/** The terminal event stream: up, or down with a retry scheduled. Absent when not wanted. */
+export type StreamChannelPhase = 'open' | 'retrying';
+
+/** The live channels held to one computer, as `stores/server-channels` reports them. */
+export type ServerChannels = {
+  /** The agent event socket (`GatewaySocketState`). */
+  socket?: string;
+  stream?: StreamChannelPhase;
+};
+
 /** The connection state for the one gateway currently owned by a workspace. */
 export type ActiveServerConnection = {
   serverId: string;
@@ -64,6 +87,12 @@ export type ReachabilityProbe = {
    * types; `stores/server-reachability` is where the shape is established.
    */
   health?: unknown;
+  /**
+   * The gateway answered 401/403: it no longer accepts this device's pairing.
+   * Kept until a later probe says otherwise -- a revoked pairing does not
+   * expire back into a working one.
+   */
+  unauthorized?: boolean;
   /**
    * A newer probe of this server is in flight. A stale answer keeps speaking
    * until it lands rather than dropping to `unknown` for the length of the
@@ -180,17 +209,81 @@ export function resolveServerReachability(
   serverId: string,
   probe: ReachabilityProbe | undefined,
   activeConnection?: ActiveServerConnection,
-  nowMs: number = Date.now()
+  nowMs: number = Date.now(),
+  channels?: ServerChannels
 ): ServerReachability {
-  const probedReachability = reachabilityFromProbe(probe, nowMs);
-  if (activeConnection?.serverId === serverId) {
-    if (activeConnection.phase === 'connected') return 'live';
-    if (activeConnection.phase === 'offline' && probedReachability === 'unknown') {
-      return 'offline';
-    }
-  }
-  return probedReachability;
+  return reachabilityOfStatus(
+    resolveConnectionStatus({ serverId, probe, activeConnection, channels, nowMs })
+  );
 }
+
+/**
+ * The status for one computer, from every piece of evidence the app holds.
+ *
+ * In order of strength:
+ *
+ * 1. A live channel -- the agent socket past its handshake, the terminal
+ *    stream up, or the workspace's own connection -- is `live`. The gateway is
+ *    talking to us right now; no probe can know better.
+ * 2. A fresh probe that answered is `live`.
+ * 3. A refusal of the pairing, from the socket or the probe, is
+ *    `unauthorized`.
+ * 4. A fresh probe that failed, or the workspace's channel giving up, is
+ *    `offline`.
+ * 5. For the selected computer only, a channel that is mid-reconnect is
+ *    `reconnecting`: the app is trying, and saying "Not connected" beside a
+ *    session it is about to resume would be the wrong word.
+ * 6. Otherwise `unknown` -- nobody asked recently, which is not "down".
+ */
+export function resolveConnectionStatus(input: {
+  serverId: string;
+  probe: ReachabilityProbe | undefined;
+  activeConnection?: ActiveServerConnection;
+  channels?: ServerChannels;
+  /** The computer the app is pointed at; only it is ever `reconnecting`. */
+  selected?: boolean;
+  nowMs?: number;
+}): ConnectionStatus {
+  const { serverId, probe, channels, selected = false, nowMs = Date.now() } = input;
+  const active =
+    input.activeConnection?.serverId === serverId ? input.activeConnection.phase : undefined;
+  if (channels?.socket === 'open' || channels?.stream === 'open' || active === 'connected') {
+    return 'live';
+  }
+  const probed = reachabilityFromProbe(probe, nowMs);
+  if (probed === 'live') return 'live';
+  if (channels?.socket === 'unauthorized' || probe?.unauthorized) return 'unauthorized';
+  if (probed === 'offline' || active === 'offline') return 'offline';
+  if (
+    selected &&
+    (channels?.socket === 'connecting' ||
+      channels?.socket === 'backoff' ||
+      channels?.stream === 'retrying' ||
+      active === 'reconnecting')
+  ) {
+    return 'reconnecting';
+  }
+  return 'unknown';
+}
+
+/** A gateway refusing this device's pairing, rather than failing to answer. */
+export function statusRefusesPairing(status: number | null | undefined): boolean {
+  return status === 401 || status === 403;
+}
+
+/** What the rest of the app decides with: a row's richer word, folded back. */
+export function reachabilityOfStatus(status: ConnectionStatus): ServerReachability {
+  if (status === 'reconnecting') return 'unknown';
+  if (status === 'unauthorized') return 'offline';
+  return status;
+}
+
+/**
+ * How often Home re-reads freshness while it is on screen. Without a tick a
+ * probe's 45 s window ran out only when something else re-rendered the list,
+ * and a selected computer was never asked again until the next focus.
+ */
+export const REACHABILITY_TICK_MS = 15 * 1000;
 
 /**
  * What the probe has to say to the workspace prewarm.

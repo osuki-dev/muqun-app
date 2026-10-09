@@ -54,6 +54,7 @@ import { useUserFontsReady } from '@/hooks/use-user-fonts';
 import { useThemeLibrary } from '@/stores/theme-library';
 import { AppI18nProvider } from '@/i18n/provider';
 import { useGatewayPushRegistration, useNotificationObserver } from '@/lib/notifications';
+import { startNetworkReactions } from '@/lib/gateway-socket-runtime';
 import { useSshTunnelsStore } from '@/stores/ssh-tunnels';
 import { useThemeFileOpen } from '@/hooks/use-theme-file-open';
 
@@ -175,6 +176,10 @@ export default function RootLayout() {
   useEffect(() => {
     void cleanupPreviousMediaCache();
   }, []);
+
+  // A network change reopens the gateway sockets and re-asks the selected
+  // computer, instead of leaving them on a route that has gone.
+  useEffect(() => startNetworkReactions(), []);
 
   // The system bar overlays the app under edge-to-edge (targetSdk 36) and its
   // strip swallows every touch in it -- on a three-button device that strip sat

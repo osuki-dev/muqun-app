@@ -10,15 +10,16 @@ import { Text } from '@/components/text';
 import { ThemeIcon } from '@/components/theme-icon';
 import { useHomeScenePlate } from '@/hooks/use-home-scene-plate';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
-import { reachabilityDescription } from '@/i18n/labels';
+import { connectionStatusDescription } from '@/i18n/labels';
 import type { GatewayRecord } from '@/lib/gateway-storage';
 import { serverIdsNeedingAddress } from '@/lib/server-address';
-import { resolveServerReachability, type ActiveServerConnection } from '@/lib/server-reachability';
+import { resolveConnectionStatus, type ActiveServerConnection } from '@/lib/server-reachability';
 import type { SshHostRecord } from '@/lib/ssh-hosts';
 import { activeTaskCount } from '@/lib/server-tasks-state';
 import { hasTaskLedger } from '@/lib/task-ledger';
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';
 import { useServerCapabilities } from '@/stores/server-capabilities';
+import { useServerChannels } from '@/stores/server-channels';
 import { useServerReachability } from '@/stores/server-reachability';
 import { useServerTasksStore } from '@/stores/server-tasks';
 
@@ -165,8 +166,20 @@ function GatewayConnectionRow({
   const theme = useThemeTokens();
   const background = useSurfaceBackground();
   const probe = useServerReachability((state) => state.probes[server.serverId]);
-  const reachability = resolveServerReachability(server.serverId, probe, activeConnection, nowMs);
-  const status = _(reachabilityDescription[reachability]);
+  // The live channels count as much as the probe: a computer streaming a
+  // session right now is online whatever a 45-second-old probe says.
+  const socket = useServerChannels((state) => state.sockets[server.serverId]);
+  const stream = useServerChannels((state) => state.streams[server.serverId]);
+  const selected = useGatewayConnectionStore((state) => state.record?.serverId === server.serverId);
+  const connection = resolveConnectionStatus({
+    serverId: server.serverId,
+    probe,
+    activeConnection,
+    channels: { socket, stream },
+    selected,
+    nowMs,
+  });
+  const status = _(connectionStatusDescription[connection]);
   return (
     <PressableScale
       testID={`home-connection-gateway-${server.serverId}`}

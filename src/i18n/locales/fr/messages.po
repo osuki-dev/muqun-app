@@ -4152,6 +4152,14 @@ msgstr "Code d’appairage"
 msgid "Pairing code expired. Scan again for a new code."
 msgstr "Le code d’appairage a expiré. Scannez à nouveau pour obtenir un nouveau code"
 
+#: src/i18n/labels.ts
+msgid "PAIRING EXPIRED"
+msgstr "APPAIRAGE EXPIRÉ"
+
+#: src/i18n/labels.ts
+msgid "Pairing expired — pair again"
+msgstr "Appairage expiré — appairez à nouveau"
+
 #: src/app/explore.tsx
 msgid "Pairing failed."
 msgstr "Échec de l’appairage"
@@ -4522,6 +4530,14 @@ msgstr "Reconnecter à {0}"
 #: src/components/server-terminal-workspace.tsx
 msgid "Reconnecting · {0}"
 msgstr "Reconnexion · {0}"
+
+#: src/i18n/labels.ts
+msgid "Reconnecting…"
+msgstr "Reconnexion…"
+
+#: src/i18n/labels.ts
+msgid "RECONNECTING…"
+msgstr "RECONNEXION…"
 
 #: src/components/voice-input-button.tsx
 msgid "Record again"

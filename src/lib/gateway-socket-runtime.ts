@@ -10,10 +10,13 @@ import QuickCrypto from 'react-native-quick-crypto';
 import { activeLocaleHeaders } from '@/i18n/active-locale';
 
 import { mirroredDiscoveryFor } from '@/stores/agents';
+import { useGatewayConnectionStore } from '@/stores/gateway-connection';
 import { noteGatewayGeneration } from '@/stores/gateway-connection-generation';
+import { useServerChannels } from '@/stores/server-channels';
+import { useServerReachability } from '@/stores/server-reachability';
 
 import type { SocketFrameCrypto } from './agent-socket-codec';
-import { isDemoActive } from './demo-gateway';
+import { isDemoActive, isDemoRecord } from './demo-gateway';
 import {
   configuredGatewayServerId,
   encryptedEventStreamRequest,
@@ -26,8 +29,10 @@ import {
   gatewaySocketPath,
   type GatewaySocketTransport,
   type GatewaySocketUpgrade,
+  type SocketAuthorization,
 } from './gateway-socket';
 import { streamRecordCrypto } from './gateway-transport';
+import { onNetworkChange } from './network-events';
 
 const TAG_BYTES = 16;
 
@@ -166,18 +171,62 @@ const appState = {
 
 const sockets = new Map<string, GatewaySocket>();
 
+/** The selected record, when it is one this device may probe directly. */
+function probeableSelectedRecord(serverId?: string) {
+  const record = useGatewayConnectionStore.getState().record;
+  if (!record || isDemoRecord(record) || record.sshTunnel) return null;
+  if (serverId !== undefined && record.serverId !== serverId) return null;
+  return record;
+}
+
+/**
+ * Whether the gateway still accepts this device, asked through the same
+ * `/health` probe the Home dot uses -- so the answer lights the row too, and
+ * the store's guards (no probing a tunnelled record's stored address, one
+ * flight per server) apply to it.
+ */
+async function checkAuthorization(serverId: string): Promise<SocketAuthorization> {
+  const record = probeableSelectedRecord(serverId);
+  if (!record) return 'unknown';
+  await useServerReachability.getState().refresh(record, { force: true });
+  const probe = useServerReachability.getState().probes[serverId];
+  if (probe?.ok) return 'authorized';
+  return probe?.unauthorized ? 'unauthorized' : 'unknown';
+}
+
 /** The one event socket for a paired server, created on first use. */
 export function gatewaySocketFor(serverId: string): GatewaySocket {
   let socket = sockets.get(serverId);
   if (!socket) {
-    socket = new GatewaySocket({
+    const created = new GatewaySocket({
       prepare: () => prepareUpgrade(serverId),
       open: openTransport,
       crypto: socketFrameCrypto,
       appState,
       onHello: (hello) => noteGatewayGeneration(serverId, hello),
+      checkAuthorization: () => checkAuthorization(serverId),
     });
-    sockets.set(serverId, socket);
+    // The Home dot reads the socket as evidence the computer is answering.
+    created.onStateChange((state) => useServerChannels.getState().setSocket(serverId, state));
+    sockets.set(serverId, created);
+    socket = created;
   }
   return socket;
+}
+
+/**
+ * React to the device changing networks: reopen every gateway socket on the
+ * new route and ask the selected computer again whether it is there. The
+ * terminal stream listens for itself (`use-pane-events`). Started once at the
+ * app root; the returned function stops it.
+ */
+export function startNetworkReactions(): () => void {
+  return onNetworkChange(() => {
+    for (const socket of sockets.values()) {
+      // A refused pairing is not cured by a new network.
+      if (socket.state !== 'unauthorized') socket.reconnect();
+    }
+    const record = probeableSelectedRecord();
+    if (record) void useServerReachability.getState().refresh(record, { force: true });
+  });
 }

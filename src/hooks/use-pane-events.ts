@@ -8,6 +8,8 @@ import { ENCRYPTED_SSE_EVENT, EncryptedEventStreamDecryptor } from '@/lib/sse-re
 import { streamRecordCrypto } from '@/lib/gateway-transport';
 import { encryptedEventStreamRequest, gatewayUsesEncryptedTransport } from '@/lib/gateway-client';
 import { rethrow } from '@/lib/compiler-safe-control-flow';
+import { onNetworkChange } from '@/lib/network-events';
+import { STREAM_WATCHDOG_TICK_MS, streamIsStalled } from '@/lib/stream-watchdog';
 
 /**
  * A live event feed for one session, replacing the output poll.
@@ -32,6 +34,12 @@ import { rethrow } from '@/lib/compiler-safe-control-flow';
  * A dropped connection is normal on a phone: the OS suspends the socket in the
  * background. The caller must do a full read on every (re)connect, since any
  * event during the gap is lost -- the stream has no replay.
+ *
+ * A *silent* connection is the harder case: half-open after a network change,
+ * it errors never and delivers nothing. The gateway sends a keep-alive every
+ * 15 s, so a stream that hears nothing at all for `STREAM_IDLE_LIMIT_MS` is
+ * aborted and reopened through the same retry path; a network change does the
+ * same at once, with the retry delay reset.
  */
 const OUTPUT_EVENTS = ['pane.updated'];
 
@@ -152,6 +160,10 @@ export function usePaneEvents(
     let controller: AbortController | null = null;
     let retryTimer: ReturnType<typeof setTimeout> | undefined;
     let retryAttempt = 0;
+    /** When the current connection last delivered anything, keep-alives included. */
+    let lastHeardAt = 0;
+    /** Set while a connection is open; the watchdog and a network change act on it. */
+    let restart: (() => void) | null = null;
 
     const handleHerdrEvent = (data: string) => {
       let payload: HerdrEventPayload;
@@ -200,7 +212,11 @@ export function usePaneEvents(
     };
 
     const connect = async (): Promise<void> => {
-      controller = new AbortController();
+      retryTimer = undefined;
+      const attempt = new AbortController();
+      controller = attempt;
+      /** Torn down on purpose to reopen at once, not a failure to back off from. */
+      let restarting = false;
       const decoder = new TextDecoder();
       const parser = new ServerSentEventParser();
       // Sealed fresh for every attempt: the gateway replay-caches the request
@@ -251,11 +267,20 @@ export function usePaneEvents(
         if (!reader) rethrow(new Error('Event stream has no readable body'));
 
         retryAttempt = 0;
+        lastHeardAt = Date.now();
+        restart = () => {
+          restart = null;
+          restarting = true;
+          attempt.abort();
+          // An abort does not reliably wake a read parked on a dead socket.
+          void reader.cancel().catch(() => {});
+        };
         handlersRef.current.onConnected();
 
         while (!cancelled) {
           const { done, value } = await reader.read();
           if (done) break;
+          lastHeardAt = Date.now();
           if (!value) continue;
 
           const text = decoder.decode(value, { stream: true });
@@ -275,25 +300,53 @@ export function usePaneEvents(
           }
         }
       } catch (error) {
-        if (cancelled || (error instanceof Error && error.name === 'AbortError')) return;
+        const aborted = error instanceof Error && error.name === 'AbortError';
+        if (cancelled || (aborted && !restarting)) return;
         // A record that failed to open leaves a healthy socket behind it, and
         // the retry below opens a second one. One connection at a time: the
         // poisoned stream is torn down before its replacement is scheduled.
-        controller?.abort();
+        attempt.abort();
       }
+      restart = null;
 
       if (cancelled) return;
       handlersRef.current.onDisconnected?.();
+      if (restarting) {
+        // Stalled or rerouted: reopen now, and let the reopen's full read
+        // (`onConnected`) bump the pane rather than waiting for the poll.
+        void connect();
+        return;
+      }
       const delay = Math.min(1000 * 2 ** retryAttempt, MAX_RECONNECT_DELAY_MS);
       retryAttempt += 1;
       retryTimer = setTimeout(() => void connect(), delay);
     };
+
+    const watchdog = setInterval(() => {
+      if (restart && streamIsStalled(lastHeardAt, Date.now())) restart();
+    }, STREAM_WATCHDOG_TICK_MS);
+
+    const releaseNetwork = onNetworkChange(() => {
+      retryAttempt = 0;
+      if (restart) {
+        // The open stream rides the old route; drop it and come straight back.
+        restart();
+        return;
+      }
+      if (retryTimer === undefined) return;
+      clearTimeout(retryTimer);
+      retryTimer = undefined;
+      void connect();
+    });
 
     void connect();
 
     return () => {
       cancelled = true;
       clearTimeout(retryTimer);
+      clearInterval(watchdog);
+      releaseNetwork();
+      restart = null;
       controller?.abort();
     };
   }, [enabled, gatewayUrl, restartKey, sessionId, streamPaneId, token]);

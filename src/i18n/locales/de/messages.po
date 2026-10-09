@@ -4152,6 +4152,14 @@ msgstr "Kopplungscode"
 msgid "Pairing code expired. Scan again for a new code."
 msgstr "Der Kopplungscode ist abgelaufen. Scanne erneut für einen neuen Code"
 
+#: src/i18n/labels.ts
+msgid "PAIRING EXPIRED"
+msgstr "KOPPLUNG ABGELAUFEN"
+
+#: src/i18n/labels.ts
+msgid "Pairing expired — pair again"
+msgstr "Kopplung abgelaufen — erneut koppeln"
+
 #: src/app/explore.tsx
 msgid "Pairing failed."
 msgstr "Kopplung fehlgeschlagen"
@@ -4522,6 +4530,14 @@ msgstr "Neu mit {0} verbinden"
 #: src/components/server-terminal-workspace.tsx
 msgid "Reconnecting · {0}"
 msgstr "Neuer Verbindungsversuch · {0}"
+
+#: src/i18n/labels.ts
+msgid "Reconnecting…"
+msgstr "Verbinde neu…"
+
+#: src/i18n/labels.ts
+msgid "RECONNECTING…"
+msgstr "VERBINDE NEU…"
 
 #: src/components/voice-input-button.tsx
 msgid "Record again"

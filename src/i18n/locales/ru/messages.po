@@ -4152,6 +4152,14 @@ msgstr "Код привязки"
 msgid "Pairing code expired. Scan again for a new code."
 msgstr "Код привязки истёк. Отсканируйте снова, чтобы получить новый"
 
+#: src/i18n/labels.ts
+msgid "PAIRING EXPIRED"
+msgstr "ПРИВЯЗКА ИСТЕКЛА"
+
+#: src/i18n/labels.ts
+msgid "Pairing expired — pair again"
+msgstr "Привязка истекла — привяжите снова"
+
 #: src/app/explore.tsx
 msgid "Pairing failed."
 msgstr "Привязка не удалась"
@@ -4522,6 +4530,14 @@ msgstr "Переподключиться к {0}"
 #: src/components/server-terminal-workspace.tsx
 msgid "Reconnecting · {0}"
 msgstr "Переподключение · {0}"
+
+#: src/i18n/labels.ts
+msgid "Reconnecting…"
+msgstr "Переподключение…"
+
+#: src/i18n/labels.ts
+msgid "RECONNECTING…"
+msgstr "ПЕРЕПОДКЛЮЧЕНИЕ…"
 
 #: src/components/voice-input-button.tsx
 msgid "Record again"

@@ -24,7 +24,7 @@ import type { AgentClientCommandId } from '@/lib/agent-commands';
 import type { GitFileStatus } from '@/lib/git-diff';
 import type { NamedApprovalDecision } from '@/lib/pane-approval';
 import type { PaneViewMode } from '@/lib/pane-view-mode';
-import type { ServerReachability } from '@/lib/server-reachability';
+import type { ConnectionStatus, ServerReachability } from '@/lib/server-reachability';
 import type { LaunchAgentCaption } from '@/lib/home-launch-model';
 import type { AgentSessionStatusWord } from '@/lib/home-continue';
 import type { TaskKind, TaskState } from '@/lib/task-ledger';
@@ -48,6 +48,23 @@ export const reachabilityDescription: Record<ServerReachability, MessageDescript
   live: msg`Online`,
   offline: msg`Offline, not answering`,
   unknown: msg`Not connected`,
+};
+
+/**
+ * A computer row's status, which can also say the app is reconnecting to the
+ * selected computer, or that the computer refused this device's pairing --
+ * neither of which is a network outage, so neither borrows its words.
+ */
+export const connectionStatusLabel: Record<ConnectionStatus, MessageDescriptor> = {
+  ...reachabilityLabel,
+  reconnecting: msg`RECONNECTING…`,
+  unauthorized: msg`PAIRING EXPIRED`,
+};
+
+export const connectionStatusDescription: Record<ConnectionStatus, MessageDescriptor> = {
+  ...reachabilityDescription,
+  reconnecting: msg`Reconnecting…`,
+  unauthorized: msg`Pairing expired — pair again`,
 };
 
 export const paneViewModeLabel: Record<PaneViewMode, MessageDescriptor> = {

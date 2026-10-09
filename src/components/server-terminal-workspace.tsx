@@ -322,6 +322,7 @@ import {
   paneVocabulary,
   vocabularyForSession,
 } from '@/lib/key-vocabulary';
+import { useServerChannels } from '@/stores/server-channels';
 import { useServerReachability } from '@/stores/server-reachability';
 import { useServerSession } from '@/stores/server-session';
 import { useSshHostsStore } from '@/stores/ssh-hosts';
@@ -3838,6 +3839,21 @@ export function ServerTerminalWorkspace({
     const timer = setTimeout(() => setStreamPaneId(selection.paneId), PANE_STREAM_SETTLE_MS);
     return () => clearTimeout(timer);
   }, [selection.paneId, streamPaneId]);
+
+  // Whether the stream below is wanted, and so whether its state is evidence
+  // the Home dot may read (`stores/server-channels`).
+  const streamWanted =
+    selectedServer &&
+    Boolean(tunnel.baseUrl && record?.token && data.sessionId) &&
+    appActive &&
+    watching &&
+    connection.phase === 'connected';
+  const setStreamChannel = useServerChannels((state) => state.setStream);
+  useEffect(() => {
+    if (!streamWanted) return;
+    setStreamChannel(serverId, streamUp ? 'open' : 'retrying');
+    return () => setStreamChannel(serverId, null);
+  }, [serverId, setStreamChannel, streamUp, streamWanted]);
 
   // The live event stream. `pane_updated` for the selected pane reads its
   // output; structural events refresh the navigator. A (re)connect forces a
