@@ -10,6 +10,7 @@ import {
   needsReachabilityProbe,
   prewarmGate,
   REACHABILITY_TIMEOUT_MS,
+  statusRefusesPairing,
   type ReachabilityProbe,
 } from '@/lib/server-reachability';
 
@@ -119,29 +120,51 @@ export const useServerReachability = create<ServerReachabilityState>((set, get) 
     }
     const flight = (async () => {
       let health: HealthResponse | null = null;
-      const ok = await probeGatewayReachable(endpoint, REACHABILITY_TIMEOUT_MS, (body) => {
-        const answer = body as HealthResponse & Parameters<typeof assertSupportedHerdr>[0];
-        noteGatewayGeneration(serverId, answer);
-        if (answer?.capabilities) {
-          void useServerCapabilities.getState().record(serverId, answer.capabilities);
-        }
-        // Kept for the warm only once it passes the same gate `loadHealth`
-        // applies. A gateway whose terminal backend is down is reachable -- the
-        // dot stays green and that is correct -- but its health must not become
-        // a licence for the prewarm to go on and ask for workspaces. Leaving
-        // `health` null there sends the warm back through `loadHealth`, which
-        // raises the real reason and is caught where it always was.
-        try {
-          assertSupportedHerdr(answer);
-          health = answer;
-        } catch {
-          health = null;
-        }
-      });
+      // Held in a box: TypeScript does not see a closure assign a `let`.
+      const heard: { status: number | null } = { status: null };
+      const onStatus = (status: number) => {
+        heard.status = status;
+      };
+      const ok = await probeGatewayReachable(
+        endpoint,
+        REACHABILITY_TIMEOUT_MS,
+        (body) => {
+          const answer = body as HealthResponse & Parameters<typeof assertSupportedHerdr>[0];
+          noteGatewayGeneration(serverId, answer);
+          if (answer?.capabilities) {
+            void useServerCapabilities.getState().record(serverId, answer.capabilities);
+          }
+          // Kept for the warm only once it passes the same gate `loadHealth`
+          // applies. A gateway whose terminal backend is down is reachable -- the
+          // dot stays green and that is correct -- but its health must not become
+          // a licence for the prewarm to go on and ask for workspaces. Leaving
+          // `health` null there sends the warm back through `loadHealth`, which
+          // raises the real reason and is caught where it always was.
+          try {
+            assertSupportedHerdr(answer);
+            health = answer;
+          } catch {
+            health = null;
+          }
+        },
+        onStatus
+      );
+      // A timeout or a reset says nothing about the pairing; only an answer
+      // does, so an earlier refusal stands until the gateway says otherwise.
+      const unauthorized =
+        heard.status === null
+          ? (previous?.unauthorized ?? false)
+          : statusRefusesPairing(heard.status);
       set((state) => ({
         probes: {
           ...state.probes,
-          [serverId]: { serverId, ok, checkedAtMs: Date.now(), health: ok ? health : null },
+          [serverId]: {
+            serverId,
+            ok,
+            checkedAtMs: Date.now(),
+            health: ok ? health : null,
+            ...(unauthorized ? { unauthorized } : {}),
+          },
         },
       }));
     })();

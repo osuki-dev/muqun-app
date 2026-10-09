@@ -28,7 +28,7 @@ import { StatusDot } from '@/components/status-dot';
 import { useGatewayRecord } from '@/hooks/use-gateway-record';
 import { useMonoFontFamily } from '@/hooks/use-user-fonts';
 import { GatewayStorageError } from '@/components/gateway-storage-error';
-import { reachabilityDescription, reachabilityLabel } from '@/i18n/labels';
+import { connectionStatusDescription, connectionStatusLabel } from '@/i18n/labels';
 import { DEMO_SERVER_ID, demoCapabilities, demoRecord, isDemoActive } from '@/lib/demo-gateway';
 import { feedback } from '@/lib/feedback';
 import { loadPairedDevices, revokePairedDevice, type PairedDevice } from '@/lib/gateway-client';
@@ -38,9 +38,10 @@ import { acceptsCancel, acceptsConfirm, unpairView } from '@/lib/unpair-action';
 import { useRenderTally } from '@/lib/render-tally';
 import { describeGatewayFailure } from '@/lib/network-error';
 import { normalizeGatewayUrl } from '@/lib/pairing';
-import { reachabilityFromProbe, type ServerReachability } from '@/lib/server-reachability';
+import { resolveConnectionStatus, type ConnectionStatus } from '@/lib/server-reachability';
 import { useAppSettings, type ServerCardPanes } from '@/stores/app-settings';
 import { useServerAgents } from '@/stores/server-agents';
+import { useServerChannels } from '@/stores/server-channels';
 import { useServerReachability } from '@/stores/server-reachability';
 import type { ServerAgentsSnapshot } from '@/lib/server-agents';
 import { settleAfter } from '@/lib/compiler-safe-control-flow';
@@ -62,6 +63,8 @@ export function SettingsServers() {
   const { record, records, loading, hydrationError, retryHydration, selectRecord, removeRecord } =
     useGatewayRecord();
   const probes = useServerReachability((state) => state.probes);
+  const channelSockets = useServerChannels((state) => state.sockets);
+  const channelStreams = useServerChannels((state) => state.streams);
   const refreshReachability = useServerReachability((state) => state.refresh);
   const serverCardPanes = useAppSettings((state) => state.serverCardPanes);
   const update = useAppSettings((state) => state.update);
@@ -171,7 +174,15 @@ export function SettingsServers() {
                   current={current}
                   reachability={
                     current
-                      ? reachabilityFromProbe(probes[server.serverId])
+                      ? resolveConnectionStatus({
+                          serverId: server.serverId,
+                          probe: probes[server.serverId],
+                          channels: {
+                            socket: channelSockets[server.serverId],
+                            stream: channelStreams[server.serverId],
+                          },
+                          selected: true,
+                        })
                       : // A record the app is not attached to has not been
                         // asked, and "never asked" is not "offline". The home
                         // screen draws the same distinction with a hollow dot.
@@ -274,7 +285,7 @@ function ServerRow({
   current: boolean;
   /** The demo workspace: no paired devices, edit or unpair, only the capability sections. */
   demo?: boolean;
-  reachability: ServerReachability;
+  reachability: ConnectionStatus;
   /**
    * What `/servers/[serverId]` last mirrored for this record, or `undefined`
    * for `current` -- the live probe already says everything worth saying
@@ -376,15 +387,15 @@ function ServerRow({
             {server.url}
           </Text>
           <View
-            accessibilityLabel={_(reachabilityDescription[reachability])}
+            accessibilityLabel={_(connectionStatusDescription[reachability])}
             style={styles.statusLine}>
             <StatusDot
               color={statusColor}
-              filled={reachability !== 'unknown'}
+              filled={reachability !== 'unknown' && reachability !== 'reconnecting'}
               pulse={reachability === 'live'}
             />
             <Text variant="caption" color={statusColor} style={styles.statusText}>
-              {_(reachabilityLabel[reachability])}
+              {_(connectionStatusLabel[reachability])}
             </Text>
           </View>
           {/* Only for a record the list just called `unknown` about -- `current`

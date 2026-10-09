@@ -4152,6 +4152,14 @@ msgstr "ペアリングコード"
 msgid "Pairing code expired. Scan again for a new code."
 msgstr "ペアリングコードの有効期限が切れました。もう一度スキャンして新しいコードを取得してください"
 
+#: src/i18n/labels.ts
+msgid "PAIRING EXPIRED"
+msgstr "ペアリング期限切れ"
+
+#: src/i18n/labels.ts
+msgid "Pairing expired — pair again"
+msgstr "ペアリングの有効期限が切れました — もう一度ペアリングしてください"
+
 #: src/app/explore.tsx
 msgid "Pairing failed."
 msgstr "ペアリングに失敗しました"
@@ -4522,6 +4530,14 @@ msgstr "{0} に再接続"
 #: src/components/server-terminal-workspace.tsx
 msgid "Reconnecting · {0}"
 msgstr "再接続中 · {0}"
+
+#: src/i18n/labels.ts
+msgid "Reconnecting…"
+msgstr "再接続中…"
+
+#: src/i18n/labels.ts
+msgid "RECONNECTING…"
+msgstr "再接続中…"
 
 #: src/components/voice-input-button.tsx
 msgid "Record again"

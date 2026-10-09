@@ -2496,7 +2496,9 @@ export async function claimPairing(
 export async function probeGatewayReachable(
   endpoint: GatewayEndpoint,
   timeoutMs: number,
-  onHealth?: (health: unknown) => void
+  onHealth?: (health: unknown) => void,
+  /** The HTTP status the gateway answered with, when it answered at all. */
+  onStatus?: (status: number) => void
 ): Promise<boolean> {
   const base = endpoint.url.replace(/\/$/, '');
   if (!base) return false;
@@ -2519,6 +2521,7 @@ export async function probeGatewayReachable(
             },
             signal: controller.signal,
           });
+    onStatus?.(response.status);
     if (response.ok && onHealth) {
       try {
         onHealth(await response.json());
@@ -2528,7 +2531,10 @@ export async function probeGatewayReachable(
       }
     }
     return response.ok;
-  } catch {
+  } catch (error) {
+    // A sealed request refused before it authenticated comes back in the
+    // clear and is thrown with its status; that status is the answer.
+    if (error instanceof GatewayTransportRefusalError) onStatus?.(error.status);
     return false;
   } finally {
     clearTimeout(timeout);

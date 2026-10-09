@@ -267,6 +267,14 @@ const HISTORY_PAGE_SIZE = 40;
 const SESSION_LIST_LIMIT = 50;
 
 /**
+ * How long a session that fell back to SSE waits before trying the event
+ * socket again. The fallback used to last until the session was left, so one
+ * bad minute on the network pinned a long session to a connection per
+ * session for the rest of its life.
+ */
+const SOCKET_RETRY_AFTER_FALLBACK_MS = 30_000;
+
+/**
  * How long the screen's own notice stays before it fades out by itself.
  *
  * Long enough to be read on the way past, short enough that it is gone before
@@ -2354,7 +2362,8 @@ export const AgentWorkbench = memo(function AgentWorkbench({
        * session sat there looking current while the engine moved on.
        */
       const scheduleReconnect = () => {
-        if (!mounted) return;
+        // Back on the socket: the stream it closed is not to be reopened.
+        if (!mounted || onSocket) return;
         streamBatch.flush();
         // Quiet reconnect. Mobile streams drop often; keep the gap short so
         // a dropped connection costs at most a couple of seconds, not a poll.
@@ -2388,27 +2397,54 @@ export const AgentWorkbench = memo(function AgentWorkbench({
      * The socket owns its own reconnects and re-subscribes after each one; its
      * `subscribed` is this session's connect, and the catch-up runs there.
      * Two failed opens in a row, or a socket that cannot be used at all, put
-     * this session back on SSE until it is left -- never permanently.
+     * this session on SSE -- and not for good: every
+     * `SOCKET_RETRY_AFTER_FALLBACK_MS` the socket is tried again beside the
+     * stream, and the first `subscribed` moves the session back onto it and
+     * closes the stream. A refused pairing (`unauthorized`) is not retried.
      */
     let releaseSocket: (() => void) | null = null;
+    let socketRetryTimer: ReturnType<typeof setTimeout> | null = null;
     let onSocket = wsEvents;
+    const scheduleSocketRetry = () => {
+      if (socketRetryTimer) clearTimeout(socketRetryTimer);
+      socketRetryTimer = null;
+      if (!mounted || gatewaySocketFor(serverId).state === 'unauthorized') return;
+      socketRetryTimer = setTimeout(() => {
+        socketRetryTimer = null;
+        if (mounted && !onSocket && !releaseSocket) watchSocket();
+      }, SOCKET_RETRY_AFTER_FALLBACK_MS);
+    };
     const fallBackToSse = () => {
-      if (!mounted || !onSocket) return;
+      if (!mounted) return;
+      const leaving = onSocket;
       onSocket = false;
       // Can fire inside `watch()` itself, before its release is in hand.
       queueMicrotask(() => {
         releaseSocket?.();
         releaseSocket = null;
         if (!mounted) return;
-        streamBatch.flush();
-        connectSse();
+        if (leaving) {
+          streamBatch.flush();
+          connectSse();
+        }
+        // Already on SSE, this was a retry of the socket that failed again.
+        scheduleSocketRetry();
       });
     };
-    if (wsEvents) {
+    const watchSocket = () => {
       const asid = activeAsid;
       releaseSocket = gatewaySocketFor(serverId).watch(asid, {
         onSubscribed: () => {
-          if (!mounted || !onSocket) return;
+          if (!mounted) return;
+          if (!onSocket) {
+            // Recovered: the socket carries this session again.
+            onSocket = true;
+            attempts = 0;
+            if (reconnectTimer) clearTimeout(reconnectTimer);
+            reconnectTimer = null;
+            closeStream();
+            closeStream = () => {};
+          }
           streamBatch.flush();
           catchUpRef.current();
         },
@@ -2423,6 +2459,9 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         },
         onUnavailable: fallBackToSse,
       });
+    };
+    if (wsEvents) {
+      watchSocket();
     } else {
       connectSse();
     }
@@ -2430,6 +2469,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     return () => {
       mounted = false;
       streamBatch.cancel();
+      if (socketRetryTimer) clearTimeout(socketRetryTimer);
       releaseSocket?.();
       closeStream();
       if (reconnectTimer) clearTimeout(reconnectTimer);

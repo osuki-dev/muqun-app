@@ -4152,6 +4152,14 @@ msgstr "페어링 코드"
 msgid "Pairing code expired. Scan again for a new code."
 msgstr "페어링 코드가 만료되었습니다. 다시 스캔해 새 코드를 받으세요"
 
+#: src/i18n/labels.ts
+msgid "PAIRING EXPIRED"
+msgstr "페어링 만료됨"
+
+#: src/i18n/labels.ts
+msgid "Pairing expired — pair again"
+msgstr "페어링이 만료되었습니다 — 다시 페어링하세요"
+
 #: src/app/explore.tsx
 msgid "Pairing failed."
 msgstr "페어링에 실패했습니다"
@@ -4522,6 +4530,14 @@ msgstr "{0}에 다시 연결"
 #: src/components/server-terminal-workspace.tsx
 msgid "Reconnecting · {0}"
 msgstr "다시 연결 중 · {0}"
+
+#: src/i18n/labels.ts
+msgid "Reconnecting…"
+msgstr "다시 연결 중…"
+
+#: src/i18n/labels.ts
+msgid "RECONNECTING…"
+msgstr "다시 연결 중…"
 
 #: src/components/voice-input-button.tsx
 msgid "Record again"

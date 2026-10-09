@@ -4152,6 +4152,14 @@ msgstr "配对码"
 msgid "Pairing code expired. Scan again for a new code."
 msgstr "配对码已过期。请重新扫描获取新的代码"
 
+#: src/i18n/labels.ts
+msgid "PAIRING EXPIRED"
+msgstr "配对已失效"
+
+#: src/i18n/labels.ts
+msgid "Pairing expired — pair again"
+msgstr "配对已失效 — 请重新配对"
+
 #: src/app/explore.tsx
 msgid "Pairing failed."
 msgstr "配对失败"
@@ -4522,6 +4530,14 @@ msgstr "重新连接到 {0}"
 #: src/components/server-terminal-workspace.tsx
 msgid "Reconnecting · {0}"
 msgstr "重新连接中 · {0}"
+
+#: src/i18n/labels.ts
+msgid "Reconnecting…"
+msgstr "重新连接中…"
+
+#: src/i18n/labels.ts
+msgid "RECONNECTING…"
+msgstr "重新连接中…"
 
 #: src/components/voice-input-button.tsx
 msgid "Record again"

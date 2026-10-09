@@ -4152,6 +4152,14 @@ msgstr "รหัสจับคู่"
 msgid "Pairing code expired. Scan again for a new code."
 msgstr "รหัสจับคู่หมดอายุ สแกนอีกครั้งเพื่อรับรหัสใหม่"
 
+#: src/i18n/labels.ts
+msgid "PAIRING EXPIRED"
+msgstr "การจับคู่หมดอายุ"
+
+#: src/i18n/labels.ts
+msgid "Pairing expired — pair again"
+msgstr "การจับคู่หมดอายุ — จับคู่อีกครั้ง"
+
 #: src/app/explore.tsx
 msgid "Pairing failed."
 msgstr "จับคู่ไม่สำเร็จ"
@@ -4522,6 +4530,14 @@ msgstr "เชื่อมต่อกับ {0} ใหม่"
 #: src/components/server-terminal-workspace.tsx
 msgid "Reconnecting · {0}"
 msgstr "กำลังเชื่อมต่อใหม่ · {0}"
+
+#: src/i18n/labels.ts
+msgid "Reconnecting…"
+msgstr "กำลังเชื่อมต่อใหม่…"
+
+#: src/i18n/labels.ts
+msgid "RECONNECTING…"
+msgstr "กำลังเชื่อมต่อใหม่…"
 
 #: src/components/voice-input-button.tsx
 msgid "Record again"

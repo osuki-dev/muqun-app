@@ -4152,6 +4152,14 @@ msgstr "Código de vinculación"
 msgid "Pairing code expired. Scan again for a new code."
 msgstr "El código de vinculación caducó. Escanea de nuevo para obtener otro código"
 
+#: src/i18n/labels.ts
+msgid "PAIRING EXPIRED"
+msgstr "VINCULACIÓN CADUCADA"
+
+#: src/i18n/labels.ts
+msgid "Pairing expired — pair again"
+msgstr "La vinculación caducó — vuelve a vincular"
+
 #: src/app/explore.tsx
 msgid "Pairing failed."
 msgstr "No se pudo vincular"
@@ -4522,6 +4530,14 @@ msgstr "Reconectar con {0}"
 #: src/components/server-terminal-workspace.tsx
 msgid "Reconnecting · {0}"
 msgstr "Reconectando · {0}"
+
+#: src/i18n/labels.ts
+msgid "Reconnecting…"
+msgstr "Reconectando…"
+
+#: src/i18n/labels.ts
+msgid "RECONNECTING…"
+msgstr "RECONECTANDO…"
 
 #: src/components/voice-input-button.tsx
 msgid "Record again"

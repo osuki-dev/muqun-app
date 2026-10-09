@@ -101,6 +101,7 @@ import {
 import { serverIdsNeedingAddress } from '@/lib/server-address';
 import type { ServerAgent, ServerAgentsSnapshot } from '@/lib/server-agents';
 import {
+  REACHABILITY_TICK_MS,
   resolveServerReachability,
   serversToProbe,
   type ActiveServerConnection,
@@ -115,6 +116,7 @@ import { GatewayStorageError } from '@/components/gateway-storage-error';
 import { useServerAgents } from '@/stores/server-agents';
 import { useHomeRecentsStore } from '@/stores/home-recents';
 import { useHomeAttention } from '@/stores/home-attention';
+import { useServerChannels } from '@/stores/server-channels';
 import { serverPrewarmGate, useServerReachability } from '@/stores/server-reachability';
 import { useServerSession } from '@/stores/server-session';
 import { warmConfiguredWorkspace } from '@/lib/workspace-snapshot';
@@ -327,10 +329,14 @@ export function HomeOverview({
   const refreshReachability = useServerReachability((state) => state.refresh);
   const keepReachability = useServerReachability((state) => state.keepOnly);
 
-  // Read once so every Home projection resolves probe freshness against the
-  // same instant. A standalone Home has no active connection override.
-  // oxlint-disable-next-line react/purity -- deliberate: freshness is relative to render.
-  const nowMs = Date.now();
+  // One instant every Home projection resolves probe freshness against,
+  // advanced by the focus tick below rather than read during render: a render
+  // nothing else caused never came, so a probe's window used to run out
+  // unnoticed. A standalone Home has no active connection override.
+  const [nowMs, setNowMs] = useState(() => Date.now());
+  // The live channels (agent socket, terminal stream) are evidence too.
+  const channelSockets = useServerChannels((state) => state.sockets);
+  const channelStreams = useServerChannels((state) => state.streams);
 
   // Which servers have been opened on this device, and when. Already stored for
   // the "while you were away" digest; the probe order is its second reader, and
@@ -351,11 +357,15 @@ export function HomeOverview({
             server.serverId,
             probes[server.serverId],
             activeConnection,
-            nowMs
+            nowMs,
+            {
+              socket: channelSockets[server.serverId],
+              stream: channelStreams[server.serverId],
+            }
           ),
         ])
       ),
-    [activeConnection, nowMs, probes, records]
+    [activeConnection, channelSockets, channelStreams, nowMs, probes, records]
   );
 
   useEffect(() => {
@@ -449,6 +459,26 @@ export function HomeOverview({
         current = false;
       };
     }, [appActive, loading, hydrationError, probeTargets, refreshReachabilityMany])
+  );
+
+  // While Home is on screen: re-read freshness every tick, and ask the
+  // selected computer again. The store's own limit (one probe per server per
+  // `REACHABILITY_RECHECK_MS`) still holds, so the tick costs at most one
+  // `/health` every 30 s, and only for the computer the composer sends to.
+  useFocusEffect(
+    useCallback(() => {
+      if (!appActive) return;
+      setNowMs(Date.now());
+      const timer = setInterval(() => {
+        setNowMs(Date.now());
+        const selected = useGatewayConnectionStore.getState().record;
+        if (!selected || isDemoRecord(selected) || selected.sshTunnel) return;
+        void refreshReachability(selected, {
+          shouldContinue: () => AppState.currentState === 'active',
+        });
+      }, REACHABILITY_TICK_MS);
+      return () => clearInterval(timer);
+    }, [appActive, refreshReachability])
   );
 
   useFocusEffect(
@@ -1462,7 +1492,8 @@ export function HomeOverview({
                 server.serverId,
                 probes[server.serverId],
                 activeConnection,
-                nowMs
+                nowMs,
+                { socket: channelSockets[server.serverId], stream: channelStreams[server.serverId] }
               )}
               agents={agentsByServer[server.serverId]}
               onOpen={() => openServer(server.serverId)}

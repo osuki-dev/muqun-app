@@ -102,6 +102,9 @@ export function useServerTasks(serverId: string | null): ServerTasks {
       onTaskUpdated: (task) => upsert(serverId, task),
       // After every (re)connect: whatever changed while it was down.
       onSubscribed: () => void refresh(),
+      // The gateway dropped frames for this socket; a task may have changed
+      // in them, and the frame that said so is gone.
+      onResync: () => void refresh(),
     });
   }, [socket, serverId, upsert, refresh]);
 

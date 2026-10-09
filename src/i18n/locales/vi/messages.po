@@ -4152,6 +4152,14 @@ msgstr "Mã ghép nối"
 msgid "Pairing code expired. Scan again for a new code."
 msgstr "Mã ghép nối đã hết hạn. Hãy quét lại để lấy mã mới"
 
+#: src/i18n/labels.ts
+msgid "PAIRING EXPIRED"
+msgstr "GHÉP NỐI ĐÃ HẾT HẠN"
+
+#: src/i18n/labels.ts
+msgid "Pairing expired — pair again"
+msgstr "Ghép nối đã hết hạn — hãy ghép nối lại"
+
 #: src/app/explore.tsx
 msgid "Pairing failed."
 msgstr "Ghép nối thất bại"
@@ -4522,6 +4530,14 @@ msgstr "Kết nối lại đến {0}"
 #: src/components/server-terminal-workspace.tsx
 msgid "Reconnecting · {0}"
 msgstr "Đang kết nối lại · {0}"
+
+#: src/i18n/labels.ts
+msgid "Reconnecting…"
+msgstr "Đang kết nối lại…"
+
+#: src/i18n/labels.ts
+msgid "RECONNECTING…"
+msgstr "ĐANG KẾT NỐI LẠI…"
 
 #: src/components/voice-input-button.tsx
 msgid "Record again"
