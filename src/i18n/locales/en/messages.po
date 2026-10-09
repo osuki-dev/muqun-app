@@ -142,19 +142,25 @@ msgstr "{0} tokens the model last read"
 msgid "{0}, not found on this server's PATH"
 msgstr "{0}, not found on this server's PATH"
 
+#. placeholder {0}: age.value
 #. placeholder {0}: parts.value
+#: src/components/server-tasks-sheet.tsx
 #: src/hooks/use-relative-time.ts
 #: src/lib/agent-widget-layout.tsx
 msgid "{0}d ago"
 msgstr "{0}d ago"
 
+#. placeholder {0}: age.value
 #. placeholder {0}: parts.value
+#: src/components/server-tasks-sheet.tsx
 #: src/hooks/use-relative-time.ts
 #: src/lib/agent-widget-layout.tsx
 msgid "{0}h ago"
 msgstr "{0}h ago"
 
+#. placeholder {0}: age.value
 #. placeholder {0}: parts.value
+#: src/components/server-tasks-sheet.tsx
 #: src/hooks/use-relative-time.ts
 #: src/lib/agent-widget-layout.tsx
 msgid "{0}m ago"
@@ -236,6 +242,11 @@ msgstr "{commandName} · sending to"
 #: src/components/agent-tool-card.tsx
 msgid "{count, plural, one {# result} other {# results}}"
 msgstr "{count, plural, one {# result} other {# results}}"
+
+#: src/components/home-connections.tsx
+#: src/components/settings-servers.tsx
+msgid "{count} in progress"
+msgstr "{count} in progress"
 
 #: src/components/home-attention.tsx
 msgid "{count} requests last observed"
@@ -455,6 +466,12 @@ msgstr "After recording"
 msgid "Agent"
 msgstr "Agent"
 
+#. placeholder {0}: task.binding.agentId
+#. placeholder {1}: task.binding.asid
+#: src/components/server-tasks-sheet.tsx
+msgid "Agent {0}, session {1}"
+msgstr "Agent {0}, session {1}"
+
 #: src/app/commands.tsx
 #: src/components/agent-command-delivery-picker.tsx
 #: src/components/collaboration-notice.tsx
@@ -516,6 +533,10 @@ msgstr "All projects"
 #: src/components/agent-composer.tsx
 msgid "All sessions"
 msgstr "All sessions"
+
+#: src/components/server-tasks-sheet.tsx
+msgid "All tasks"
+msgstr "All tasks"
 
 #: src/i18n/labels.ts
 msgid "Allow"
@@ -932,6 +953,10 @@ msgstr "Cancel editing {0}"
 msgid "Cancel queued message"
 msgstr "Cancel queued message"
 
+#: src/components/server-tasks-sheet.tsx
+msgid "Cancel task"
+msgstr "Cancel task"
+
 #: src/components/agent-composer.tsx
 msgid "Cancel this queued message"
 msgstr "Cancel this queued message"
@@ -940,6 +965,15 @@ msgstr "Cancel this queued message"
 #: src/components/tool-call-detail-sheet.tsx
 msgid "Cancelled"
 msgstr "Cancelled"
+
+#: src/i18n/labels.ts
+msgctxt "task state"
+msgid "Cancelled"
+msgstr "Cancelled"
+
+#: src/components/server-tasks-sheet.tsx
+msgid "Cancelling…"
+msgstr "Cancelling…"
 
 #: src/i18n/labels.ts
 msgctxt "git file status"
@@ -1195,6 +1229,11 @@ msgstr "Colour mode"
 msgid "Command"
 msgstr "Command"
 
+#: src/i18n/labels.ts
+msgctxt "task kind"
+msgid "Command"
+msgstr "Command"
+
 #: src/components/simfarm-preview.tsx
 msgid "Command copied"
 msgstr "Command copied"
@@ -1248,6 +1287,10 @@ msgstr "Completed"
 #: src/app/settings-voice.tsx
 msgid "Configure your speech service, then hold Send to record. Tap the animation to stop and transcribe."
 msgstr "Configure your speech service, then hold Send to record. Tap the animation to stop and transcribe"
+
+#: src/components/server-tasks-sheet.tsx
+msgid "Confirm cancel"
+msgstr "Confirm cancel"
 
 #: src/components/settings-storage.tsx
 msgid "Confirm clear cache"
@@ -1568,6 +1611,10 @@ msgstr "Copying…"
 msgid "Could not add a file"
 msgstr "Could not add a file"
 
+#: src/components/server-tasks-sheet.tsx
+msgid "Could not cancel the task"
+msgstr "Could not cancel the task"
+
 #: src/components/agent-workbench.tsx
 msgid "Could not change delivery"
 msgstr "Could not change delivery"
@@ -1644,6 +1691,10 @@ msgstr "Could not load models"
 #: src/lib/terminal-history-pull.ts
 msgid "Could not load older history from this terminal"
 msgstr "Could not load older history from this terminal"
+
+#: src/components/server-tasks-sheet.tsx
+msgid "Could not load tasks"
+msgstr "Could not load tasks"
 
 #: src/components/agent-subagent-detail-sheet.tsx
 #: src/components/agent-workbench.tsx
@@ -1956,6 +2007,11 @@ msgstr "DEFAULT"
 msgid "Defaults to theme.json at the repository root"
 msgstr "Defaults to theme.json at the repository root"
 
+#: src/i18n/labels.ts
+msgctxt "task kind"
+msgid "Delegation"
+msgstr "Delegation"
+
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/changes-sheet.tsx
 #: src/components/row-action-menu.tsx
@@ -2103,6 +2159,11 @@ msgstr "Dismiss what's new"
 #: src/components/open-web-service-sheet.tsx
 #: src/components/voice-input-button.tsx
 #: src/i18n/labels.ts
+msgid "Done"
+msgstr "Done"
+
+#: src/i18n/labels.ts
+msgctxt "task state"
 msgid "Done"
 msgstr "Done"
 
@@ -2270,6 +2331,15 @@ msgstr "Every changed file in one folder tree with line totals. Open a patch, or
 msgid "Every screen in the app."
 msgstr "Every screen in the app"
 
+#: src/components/server-tasks-sheet.tsx
+msgid "exit {code}"
+msgstr "exit {code}"
+
+#. placeholder {0}: task.exitCode
+#: src/components/server-tasks-sheet.tsx
+msgid "Exit code {0}"
+msgstr "Exit code {0}"
+
 #. placeholder {0}: block.tool
 #: src/components/pane-chat-blocks.tsx
 msgid "Expand {0}"
@@ -2314,6 +2384,11 @@ msgid "Export theme"
 msgstr "Export theme"
 
 #: src/components/tool-call-detail-sheet.tsx
+msgid "Failed"
+msgstr "Failed"
+
+#: src/i18n/labels.ts
+msgctxt "task state"
 msgid "Failed"
 msgstr "Failed"
 
@@ -2381,6 +2456,10 @@ msgstr "Find a file by name"
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Fingerprint"
 msgstr "Fingerprint"
+
+#: src/components/server-tasks-sheet.tsx
+msgid "Finished"
+msgstr "Finished"
 
 #: src/components/new-task-sheet.tsx
 msgid "First prompt"
@@ -2607,6 +2686,10 @@ msgstr "Hide the server list"
 msgid "Hide the simulator"
 msgstr "Hide the simulator"
 
+#: src/components/server-tasks-sheet.tsx
+msgid "History"
+msgstr "History"
+
 #: src/components/pad-server-rail.tsx
 #: src/components/simfarm-stage.tsx
 msgid "Home"
@@ -2658,6 +2741,11 @@ msgstr "How to use Muqun"
 msgid "Idle"
 msgstr "Idle"
 
+#: src/i18n/labels.ts
+msgctxt "task state"
+msgid "Idle, not confirmed"
+msgstr "Idle, not confirmed"
+
 #: src/components/gateway-storage-error.tsx
 msgid "If this continues, restart the app or check the app installation"
 msgstr "If this continues, restart the app or check the app installation"
@@ -2706,6 +2794,10 @@ msgstr "Import file"
 #: src/components/custom-theme-library.tsx
 msgid "Import link"
 msgstr "Import link"
+
+#: src/components/server-tasks-sheet.tsx
+msgid "In progress"
+msgstr "In progress"
 
 #: src/components/dev-home-ambient-controls.tsx
 msgid "Increase {label}"
@@ -2838,6 +2930,7 @@ msgid "Jump to latest output"
 msgstr "Jump to latest output"
 
 #: src/components/agent-sessions-sheet.tsx
+#: src/components/server-tasks-sheet.tsx
 #: src/hooks/use-relative-time.ts
 #: src/lib/agent-widget-layout.tsx
 msgid "just now"
@@ -2863,6 +2956,10 @@ msgstr "Keep everything and drop the staged rollback"
 msgctxt "agent slash command"
 msgid "Keep everything and drop the staged rollback"
 msgstr "Keep everything and drop the staged rollback"
+
+#: src/components/server-tasks-sheet.tsx
+msgid "Keep it running"
+msgstr "Keep it running"
 
 #: src/components/settings-storage.tsx
 msgid "Keep saved themes"
@@ -3256,6 +3353,15 @@ msgstr "Needs setup"
 msgid "Needs update"
 msgstr "Needs update"
 
+#: src/components/server-tasks-sheet.tsx
+msgid "Needs you"
+msgstr "Needs you"
+
+#: src/i18n/labels.ts
+msgctxt "task state"
+msgid "Needs you"
+msgstr "Needs you"
+
 #: src/components/collaboration-notice.tsx
 msgid "Needs your attention"
 msgstr "Needs your attention"
@@ -3488,6 +3594,10 @@ msgstr "No still frames"
 #: src/components/agent-tasks-sheet.tsx
 msgid "No tasks in this session yet."
 msgstr "No tasks in this session yet"
+
+#: src/components/server-tasks-sheet.tsx
+msgid "No tasks yet"
+msgstr "No tasks yet"
 
 #: src/hooks/use-home-commands.ts
 msgid "No terminal session is available on this server."
@@ -3930,6 +4040,12 @@ msgstr "Pairing failed"
 msgid "Palette (up to 4)"
 msgstr "Palette (up to 4)"
 
+#. placeholder {0}: task.binding.paneId
+#. placeholder {1}: task.binding.sessionId
+#: src/components/server-tasks-sheet.tsx
+msgid "Pane {0} in session {1}"
+msgstr "Pane {0} in session {1}"
+
 #: src/components/settings-servers.tsx
 msgid "Panes on server cards"
 msgstr "Panes on server cards"
@@ -4143,6 +4259,11 @@ msgstr "Queue message for agent"
 msgid "Queued"
 msgstr "Queued"
 
+#: src/i18n/labels.ts
+msgctxt "task state"
+msgid "Queued"
+msgstr "Queued"
+
 #: src/components/attachment-strip.tsx
 msgid "queued to upload"
 msgstr "queued to upload"
@@ -4284,6 +4405,7 @@ msgstr "Recording failed"
 
 #: src/components/agent-background-tray.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
+#: src/components/server-tasks-sheet.tsx
 #: src/components/session-map.tsx
 msgid "Refresh"
 msgstr "Refresh"
@@ -5226,6 +5348,11 @@ msgstr "Start the OpenCode service on the gateway host, then check again"
 msgid "Started with a clean context."
 msgstr "Started with a clean context"
 
+#: src/i18n/labels.ts
+msgctxt "task state"
+msgid "Starting"
+msgstr "Starting"
+
 #: src/components/simfarm-stage.tsx
 msgid "Starting {name}"
 msgstr "Starting {name}"
@@ -5450,6 +5577,8 @@ msgstr "Task for a new {0}"
 #: src/components/agent-composer.tsx
 #: src/components/agent-tasks-sheet.tsx
 #: src/components/agent-todo-block.tsx
+#: src/components/server-tasks-sheet.tsx
+#: src/components/settings-servers.tsx
 msgid "Tasks"
 msgstr "Tasks"
 
@@ -6257,6 +6386,10 @@ msgstr "Update the Gateway to preview audio output"
 msgid "Update the Gateway to preview video output."
 msgstr "Update the Gateway to preview video output"
 
+#: src/components/server-tasks-sheet.tsx
+msgid "Updates when you reopen"
+msgstr "Updates when you reopen"
+
 #: src/components/update-status-banner.tsx
 msgid "Updating Muqun…"
 msgstr "Updating Muqun…"
@@ -6397,6 +6530,11 @@ msgstr "While you were away"
 
 #: src/components/collaboration-notice.tsx
 #: src/i18n/labels.ts
+msgid "Working"
+msgstr "Working"
+
+#: src/i18n/labels.ts
+msgctxt "task state"
 msgid "Working"
 msgstr "Working"
 

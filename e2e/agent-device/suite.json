@@ -94,6 +94,12 @@
       "platforms": ["ios", "android"]
     },
     {
+      "name": "server-tasks",
+      "program": "flows/server-tasks",
+      "tags": ["full", "agents"],
+      "platforms": ["ios", "android"]
+    },
+    {
       "name": "agent-tool-detail",
       "program": "flows/agent-tool-detail",
       "tags": ["full", "agents"],
@@ -8728,6 +8734,73 @@
         },
         "mode": "hidden",
         "run": "flows/agent-session-tree.ad#closed"
+      }
+    ],
+    "flows/server-tasks": [
+      { "include": "subflows/open-demo" },
+      { "run": "flows/server-tasks.ad#open" },
+      {
+        "target": { "id": "server-tasks" },
+        "mode": "visible",
+        "timeout": 10000,
+        "run": "flows/server-tasks.ad#visible"
+      },
+      {
+        "target": { "id": "server-tasks-row-demo-task-working" },
+        "mode": "visible",
+        "timeout": 10000,
+        "run": "flows/server-tasks.ad#row-working"
+      },
+      {
+        "target": { "id": "server-tasks-row-demo-task-waiting" },
+        "mode": "visible",
+        "run": "flows/server-tasks.ad#row-waiting"
+      },
+      {
+        "target": { "id": "server-tasks-row-demo-task-working" },
+        "mode": "press",
+        "run": "flows/server-tasks.ad#open-detail"
+      },
+      {
+        "target": { "id": "server-tasks-detail" },
+        "mode": "visible",
+        "timeout": 10000,
+        "run": "flows/server-tasks.ad#detail-visible"
+      },
+      {
+        "target": { "id": "server-tasks-cancel" },
+        "mode": "press",
+        "timeout": 10000,
+        "run": "flows/server-tasks.ad#cancel-arm"
+      },
+      {
+        "target": { "id": "server-tasks-cancel" },
+        "mode": "press",
+        "timeout": 10000,
+        "run": "flows/server-tasks.ad#cancel-confirm"
+      },
+      {
+        "target": { "id": "server-tasks-detail-state-cancelled" },
+        "mode": "visible",
+        "timeout": 10000,
+        "run": "flows/server-tasks.ad#detail-cancelled"
+      },
+      {
+        "target": { "id": "server-tasks-back" },
+        "mode": "press",
+        "run": "flows/server-tasks.ad#back-to-list"
+      },
+      {
+        "target": { "id": "server-tasks-glyph-demo-task-working-cancelled" },
+        "mode": "visible",
+        "timeout": 10000,
+        "run": "flows/server-tasks.ad#row-cancelled"
+      },
+      { "run": "flows/server-tasks.ad#close" },
+      {
+        "target": { "id": "server-tasks" },
+        "mode": "hidden",
+        "run": "flows/server-tasks.ad#closed"
       }
     ],
     "flows/agent-tool-detail": [

@@ -6,7 +6,7 @@ import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { Spinner, useThemeTokens, useToast } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { Check, ChevronDown, Pencil, Trash2 } from 'lucide-react-native';
+import { Check, ChevronDown, ChevronRight, ListTodo, Pencil, Trash2 } from 'lucide-react-native';
 import { Fragment, useCallback, useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
@@ -17,6 +17,7 @@ import {
   SettingsBlock,
   SettingsChoiceRow,
   SettingsCard,
+  SettingsNavRow,
   SettingsSeparator,
 } from '@/components/settings-chrome';
 import { SettingsSegmented } from '@/components/settings-segmented';
@@ -41,6 +42,10 @@ import { useServerAgents } from '@/stores/server-agents';
 import { useServerReachability } from '@/stores/server-reachability';
 import type { ServerAgentsSnapshot } from '@/lib/server-agents';
 import { settleAfter } from '@/lib/compiler-safe-control-flow';
+import { activeTaskCount } from '@/lib/server-tasks-state';
+import { hasTaskLedger } from '@/lib/task-ledger';
+import { useServerCapabilities } from '@/stores/server-capabilities';
+import { useServerTasksStore } from '@/stores/server-tasks';
 
 /** Server management is mounted only when its settings sheet opens. */
 export function SettingsServers() {
@@ -388,7 +393,10 @@ function ServerRow({
           layout={listLayout()}
           style={styles.actions}>
           {current ? (
-            <PairedDevices server={server} />
+            <>
+              <ServerTasksNavRow serverId={server.serverId} />
+              <PairedDevices server={server} />
+            </>
           ) : (
             <>
               <PressableScale
@@ -418,6 +426,28 @@ function ServerRow({
         </Animated.View>
       ) : null}
     </Animated.View>
+  );
+}
+
+/**
+ * The way into the server's task ledger, only on a gateway that keeps one: an
+ * older gateway shows nothing here rather than an entry that would 404.
+ */
+function ServerTasksNavRow({ serverId }: { serverId: string }) {
+  const { t } = useLingui();
+  const router = useRouter();
+  const ledger = useServerCapabilities((state) => hasTaskLedger(state.byServer[serverId]));
+  const count = useServerTasksStore((state) => activeTaskCount(state.index[serverId]?.tasks ?? []));
+  if (!ledger) return null;
+  return (
+    <SettingsNavRow
+      testID="settings-server-tasks"
+      icon={ListTodo}
+      label={t`Tasks`}
+      detail={count > 0 ? t`${count} in progress` : undefined}
+      trailing={ChevronRight}
+      onPress={() => router.push('/server-tasks')}
+    />
   );
 }
 

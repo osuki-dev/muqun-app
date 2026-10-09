@@ -142,19 +142,25 @@ msgstr "{0} tokens que el modelo leyó la última vez"
 msgid "{0}, not found on this server's PATH"
 msgstr "{0}, no se encontró en el PATH de este servidor"
 
+#. placeholder {0}: age.value
 #. placeholder {0}: parts.value
+#: src/components/server-tasks-sheet.tsx
 #: src/hooks/use-relative-time.ts
 #: src/lib/agent-widget-layout.tsx
 msgid "{0}d ago"
 msgstr "hace {0} d"
 
+#. placeholder {0}: age.value
 #. placeholder {0}: parts.value
+#: src/components/server-tasks-sheet.tsx
 #: src/hooks/use-relative-time.ts
 #: src/lib/agent-widget-layout.tsx
 msgid "{0}h ago"
 msgstr "hace {0} h"
 
+#. placeholder {0}: age.value
 #. placeholder {0}: parts.value
+#: src/components/server-tasks-sheet.tsx
 #: src/hooks/use-relative-time.ts
 #: src/lib/agent-widget-layout.tsx
 msgid "{0}m ago"
@@ -236,6 +242,11 @@ msgstr "{commandName} · enviando a"
 #: src/components/agent-tool-card.tsx
 msgid "{count, plural, one {# result} other {# results}}"
 msgstr "{count, plural, one {# resultado} other {# resultados}}"
+
+#: src/components/home-connections.tsx
+#: src/components/settings-servers.tsx
+msgid "{count} in progress"
+msgstr "{count} en curso"
 
 #: src/components/home-attention.tsx
 msgid "{count} requests last observed"
@@ -455,6 +466,12 @@ msgstr "Tras grabar"
 msgid "Agent"
 msgstr "Agente"
 
+#. placeholder {0}: task.binding.agentId
+#. placeholder {1}: task.binding.asid
+#: src/components/server-tasks-sheet.tsx
+msgid "Agent {0}, session {1}"
+msgstr "Agente {0}, sesión {1}"
+
 #: src/app/commands.tsx
 #: src/components/agent-command-delivery-picker.tsx
 #: src/components/collaboration-notice.tsx
@@ -516,6 +533,10 @@ msgstr "Todos los proyectos"
 #: src/components/agent-composer.tsx
 msgid "All sessions"
 msgstr "Todas las sesiones"
+
+#: src/components/server-tasks-sheet.tsx
+msgid "All tasks"
+msgstr "Todas las tareas"
 
 #: src/i18n/labels.ts
 msgid "Allow"
@@ -932,6 +953,10 @@ msgstr "Cancelar edición de {0}"
 msgid "Cancel queued message"
 msgstr "Cancelar mensaje en cola"
 
+#: src/components/server-tasks-sheet.tsx
+msgid "Cancel task"
+msgstr "Cancelar tarea"
+
 #: src/components/agent-composer.tsx
 msgid "Cancel this queued message"
 msgstr "Cancelar este mensaje en cola"
@@ -940,6 +965,15 @@ msgstr "Cancelar este mensaje en cola"
 #: src/components/tool-call-detail-sheet.tsx
 msgid "Cancelled"
 msgstr "Cancelado"
+
+#: src/i18n/labels.ts
+msgctxt "task state"
+msgid "Cancelled"
+msgstr "Cancelada"
+
+#: src/components/server-tasks-sheet.tsx
+msgid "Cancelling…"
+msgstr "Cancelando…"
 
 #: src/i18n/labels.ts
 msgctxt "git file status"
@@ -1195,6 +1229,11 @@ msgstr "Modo de color"
 msgid "Command"
 msgstr "Comando"
 
+#: src/i18n/labels.ts
+msgctxt "task kind"
+msgid "Command"
+msgstr "Comando"
+
 #: src/components/simfarm-preview.tsx
 msgid "Command copied"
 msgstr "Comando copiado"
@@ -1248,6 +1287,10 @@ msgstr "Completado"
 #: src/app/settings-voice.tsx
 msgid "Configure your speech service, then hold Send to record. Tap the animation to stop and transcribe."
 msgstr "Configura tu servicio de voz y mantén pulsado Enviar para grabar. Toca la animación para detener y transcribir"
+
+#: src/components/server-tasks-sheet.tsx
+msgid "Confirm cancel"
+msgstr "Confirmar cancelación"
 
 #: src/components/settings-storage.tsx
 msgid "Confirm clear cache"
@@ -1568,6 +1611,10 @@ msgstr "Copiando…"
 msgid "Could not add a file"
 msgstr "No se pudo agregar el archivo"
 
+#: src/components/server-tasks-sheet.tsx
+msgid "Could not cancel the task"
+msgstr "No se pudo cancelar la tarea"
+
 #: src/components/agent-workbench.tsx
 msgid "Could not change delivery"
 msgstr "No se pudo cambiar la entrega"
@@ -1644,6 +1691,10 @@ msgstr "No se pudieron cargar los modelos"
 #: src/lib/terminal-history-pull.ts
 msgid "Could not load older history from this terminal"
 msgstr "No se pudo cargar el historial anterior de esta terminal"
+
+#: src/components/server-tasks-sheet.tsx
+msgid "Could not load tasks"
+msgstr "No se pudieron cargar las tareas"
 
 #: src/components/agent-subagent-detail-sheet.tsx
 #: src/components/agent-workbench.tsx
@@ -1956,6 +2007,11 @@ msgstr "PREDETERMINADO"
 msgid "Defaults to theme.json at the repository root"
 msgstr "Por defecto, theme.json en la raíz del repositorio"
 
+#: src/i18n/labels.ts
+msgctxt "task kind"
+msgid "Delegation"
+msgstr "Delegación"
+
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/changes-sheet.tsx
 #: src/components/row-action-menu.tsx
@@ -2105,6 +2161,11 @@ msgstr "Descartar las novedades"
 #: src/i18n/labels.ts
 msgid "Done"
 msgstr "Hecho"
+
+#: src/i18n/labels.ts
+msgctxt "task state"
+msgid "Done"
+msgstr "Hecha"
 
 #: src/app/commands.tsx
 msgid "Done editing shortcuts"
@@ -2270,6 +2331,15 @@ msgstr "Cada archivo cambiado en un árbol de carpetas con el total de líneas. 
 msgid "Every screen in the app."
 msgstr "Todas las pantallas de la app"
 
+#: src/components/server-tasks-sheet.tsx
+msgid "exit {code}"
+msgstr "salida {code}"
+
+#. placeholder {0}: task.exitCode
+#: src/components/server-tasks-sheet.tsx
+msgid "Exit code {0}"
+msgstr "Código de salida {0}"
+
 #. placeholder {0}: block.tool
 #: src/components/pane-chat-blocks.tsx
 msgid "Expand {0}"
@@ -2314,6 +2384,11 @@ msgid "Export theme"
 msgstr "Exportar tema"
 
 #: src/components/tool-call-detail-sheet.tsx
+msgid "Failed"
+msgstr "Falló"
+
+#: src/i18n/labels.ts
+msgctxt "task state"
 msgid "Failed"
 msgstr "Falló"
 
@@ -2381,6 +2456,10 @@ msgstr "Buscar un archivo por nombre"
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Fingerprint"
 msgstr "Huella"
+
+#: src/components/server-tasks-sheet.tsx
+msgid "Finished"
+msgstr "Terminadas"
 
 #: src/components/new-task-sheet.tsx
 msgid "First prompt"
@@ -2607,6 +2686,10 @@ msgstr "Ocultar la lista de servidores"
 msgid "Hide the simulator"
 msgstr "Ocultar el simulador"
 
+#: src/components/server-tasks-sheet.tsx
+msgid "History"
+msgstr "Historial"
+
 #: src/components/pad-server-rail.tsx
 #: src/components/simfarm-stage.tsx
 msgid "Home"
@@ -2658,6 +2741,11 @@ msgstr "Cómo usar Muqun"
 msgid "Idle"
 msgstr "Inactivo"
 
+#: src/i18n/labels.ts
+msgctxt "task state"
+msgid "Idle, not confirmed"
+msgstr "Inactiva, sin confirmar"
+
 #: src/components/gateway-storage-error.tsx
 msgid "If this continues, restart the app or check the app installation"
 msgstr "Si el problema persiste, reinicia la app o comprueba su instalación"
@@ -2706,6 +2794,10 @@ msgstr "Importar archivo"
 #: src/components/custom-theme-library.tsx
 msgid "Import link"
 msgstr "Importar enlace"
+
+#: src/components/server-tasks-sheet.tsx
+msgid "In progress"
+msgstr "En curso"
 
 #: src/components/dev-home-ambient-controls.tsx
 msgid "Increase {label}"
@@ -2838,6 +2930,7 @@ msgid "Jump to latest output"
 msgstr "Ir a la última salida"
 
 #: src/components/agent-sessions-sheet.tsx
+#: src/components/server-tasks-sheet.tsx
 #: src/hooks/use-relative-time.ts
 #: src/lib/agent-widget-layout.tsx
 msgid "just now"
@@ -2863,6 +2956,10 @@ msgstr "Conservar todo y descartar la reversión preparada"
 msgctxt "agent slash command"
 msgid "Keep everything and drop the staged rollback"
 msgstr "Conservar todo y descartar la reversión preparada"
+
+#: src/components/server-tasks-sheet.tsx
+msgid "Keep it running"
+msgstr "Dejarla en marcha"
 
 #: src/components/settings-storage.tsx
 msgid "Keep saved themes"
@@ -3256,6 +3353,15 @@ msgstr "Requiere configuración"
 msgid "Needs update"
 msgstr "Requiere actualización"
 
+#: src/components/server-tasks-sheet.tsx
+msgid "Needs you"
+msgstr "Te necesita"
+
+#: src/i18n/labels.ts
+msgctxt "task state"
+msgid "Needs you"
+msgstr "Te necesita"
+
 #: src/components/collaboration-notice.tsx
 msgid "Needs your attention"
 msgstr "Necesita tu atención"
@@ -3488,6 +3594,10 @@ msgstr "Sin imágenes fijas"
 #: src/components/agent-tasks-sheet.tsx
 msgid "No tasks in this session yet."
 msgstr "Todavía no hay tareas en esta sesión"
+
+#: src/components/server-tasks-sheet.tsx
+msgid "No tasks yet"
+msgstr "Aún no hay tareas"
 
 #: src/hooks/use-home-commands.ts
 msgid "No terminal session is available on this server."
@@ -3930,6 +4040,12 @@ msgstr "No se pudo vincular"
 msgid "Palette (up to 4)"
 msgstr "Paleta (hasta 4)"
 
+#. placeholder {0}: task.binding.paneId
+#. placeholder {1}: task.binding.sessionId
+#: src/components/server-tasks-sheet.tsx
+msgid "Pane {0} in session {1}"
+msgstr "Panel {0} en la sesión {1}"
+
 #: src/components/settings-servers.tsx
 msgid "Panes on server cards"
 msgstr "Paneles en las tarjetas de servidor"
@@ -4143,6 +4259,11 @@ msgstr "Poner mensaje en cola para el agente"
 msgid "Queued"
 msgstr "En cola"
 
+#: src/i18n/labels.ts
+msgctxt "task state"
+msgid "Queued"
+msgstr "En cola"
+
 #: src/components/attachment-strip.tsx
 msgid "queued to upload"
 msgstr "en cola para subir"
@@ -4284,6 +4405,7 @@ msgstr "Error al grabar"
 
 #: src/components/agent-background-tray.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
+#: src/components/server-tasks-sheet.tsx
 #: src/components/session-map.tsx
 msgid "Refresh"
 msgstr "Actualizar"
@@ -5226,6 +5348,11 @@ msgstr "Inicia el servicio de OpenCode en el host del gateway y vuelve a comprob
 msgid "Started with a clean context."
 msgstr "Iniciada con el contexto limpio"
 
+#: src/i18n/labels.ts
+msgctxt "task state"
+msgid "Starting"
+msgstr "Iniciando"
+
 #: src/components/simfarm-stage.tsx
 msgid "Starting {name}"
 msgstr "Iniciando {name}"
@@ -5450,6 +5577,8 @@ msgstr "Tarea para un nuevo {0}"
 #: src/components/agent-composer.tsx
 #: src/components/agent-tasks-sheet.tsx
 #: src/components/agent-todo-block.tsx
+#: src/components/server-tasks-sheet.tsx
+#: src/components/settings-servers.tsx
 msgid "Tasks"
 msgstr "Tareas"
 
@@ -6257,6 +6386,10 @@ msgstr "Actualiza el Gateway para reproducir la salida de audio"
 msgid "Update the Gateway to preview video output."
 msgstr "Actualiza el Gateway para previsualizar vídeos"
 
+#: src/components/server-tasks-sheet.tsx
+msgid "Updates when you reopen"
+msgstr "Se actualiza al volver a abrir"
+
 #: src/components/update-status-banner.tsx
 msgid "Updating Muqun…"
 msgstr "Actualizando Muqun…"
@@ -6397,6 +6530,11 @@ msgstr "Mientras no estabas"
 
 #: src/components/collaboration-notice.tsx
 #: src/i18n/labels.ts
+msgid "Working"
+msgstr "Trabajando"
+
+#: src/i18n/labels.ts
+msgctxt "task state"
 msgid "Working"
 msgstr "Trabajando"
 

@@ -142,19 +142,25 @@ msgstr "{0} token mà mô hình đã đọc lần gần nhất"
 msgid "{0}, not found on this server's PATH"
 msgstr "{0}, không có trong PATH của máy chủ này"
 
+#. placeholder {0}: age.value
 #. placeholder {0}: parts.value
+#: src/components/server-tasks-sheet.tsx
 #: src/hooks/use-relative-time.ts
 #: src/lib/agent-widget-layout.tsx
 msgid "{0}d ago"
 msgstr "{0} ngày trước"
 
+#. placeholder {0}: age.value
 #. placeholder {0}: parts.value
+#: src/components/server-tasks-sheet.tsx
 #: src/hooks/use-relative-time.ts
 #: src/lib/agent-widget-layout.tsx
 msgid "{0}h ago"
 msgstr "{0} giờ trước"
 
+#. placeholder {0}: age.value
 #. placeholder {0}: parts.value
+#: src/components/server-tasks-sheet.tsx
 #: src/hooks/use-relative-time.ts
 #: src/lib/agent-widget-layout.tsx
 msgid "{0}m ago"
@@ -236,6 +242,11 @@ msgstr "{commandName} · đang gửi đến"
 #: src/components/agent-tool-card.tsx
 msgid "{count, plural, one {# result} other {# results}}"
 msgstr "{count, plural, other {# kết quả}}"
+
+#: src/components/home-connections.tsx
+#: src/components/settings-servers.tsx
+msgid "{count} in progress"
+msgstr "{count} đang chạy"
 
 #: src/components/home-attention.tsx
 msgid "{count} requests last observed"
@@ -455,6 +466,12 @@ msgstr "Sau khi ghi âm"
 msgid "Agent"
 msgstr "Tác nhân"
 
+#. placeholder {0}: task.binding.agentId
+#. placeholder {1}: task.binding.asid
+#: src/components/server-tasks-sheet.tsx
+msgid "Agent {0}, session {1}"
+msgstr "Tác tử {0}, phiên {1}"
+
 #: src/app/commands.tsx
 #: src/components/agent-command-delivery-picker.tsx
 #: src/components/collaboration-notice.tsx
@@ -516,6 +533,10 @@ msgstr "Mọi dự án"
 #: src/components/agent-composer.tsx
 msgid "All sessions"
 msgstr "Tất cả các phiên"
+
+#: src/components/server-tasks-sheet.tsx
+msgid "All tasks"
+msgstr "Tất cả tác vụ"
 
 #: src/i18n/labels.ts
 msgid "Allow"
@@ -932,6 +953,10 @@ msgstr "Hủy chỉnh sửa {0}"
 msgid "Cancel queued message"
 msgstr "Hủy tin nhắn đang chờ"
 
+#: src/components/server-tasks-sheet.tsx
+msgid "Cancel task"
+msgstr "Hủy tác vụ"
+
 #: src/components/agent-composer.tsx
 msgid "Cancel this queued message"
 msgstr "Huỷ tin nhắn đang chờ này"
@@ -940,6 +965,15 @@ msgstr "Huỷ tin nhắn đang chờ này"
 #: src/components/tool-call-detail-sheet.tsx
 msgid "Cancelled"
 msgstr "Đã hủy"
+
+#: src/i18n/labels.ts
+msgctxt "task state"
+msgid "Cancelled"
+msgstr "Đã hủy"
+
+#: src/components/server-tasks-sheet.tsx
+msgid "Cancelling…"
+msgstr "Đang hủy…"
 
 #: src/i18n/labels.ts
 msgctxt "git file status"
@@ -1195,6 +1229,11 @@ msgstr "Chế độ màu"
 msgid "Command"
 msgstr "Lệnh"
 
+#: src/i18n/labels.ts
+msgctxt "task kind"
+msgid "Command"
+msgstr "Lệnh"
+
 #: src/components/simfarm-preview.tsx
 msgid "Command copied"
 msgstr "Đã sao chép lệnh"
@@ -1248,6 +1287,10 @@ msgstr "Đã hoàn tất"
 #: src/app/settings-voice.tsx
 msgid "Configure your speech service, then hold Send to record. Tap the animation to stop and transcribe."
 msgstr "Cấu hình dịch vụ giọng nói, rồi nhấn giữ Gửi để ghi âm. Chạm vào hiệu ứng để dừng và chuyển thành văn bản"
+
+#: src/components/server-tasks-sheet.tsx
+msgid "Confirm cancel"
+msgstr "Xác nhận hủy"
 
 #: src/components/settings-storage.tsx
 msgid "Confirm clear cache"
@@ -1568,6 +1611,10 @@ msgstr "Đang sao chép…"
 msgid "Could not add a file"
 msgstr "Không thể thêm tệp"
 
+#: src/components/server-tasks-sheet.tsx
+msgid "Could not cancel the task"
+msgstr "Không thể hủy tác vụ"
+
 #: src/components/agent-workbench.tsx
 msgid "Could not change delivery"
 msgstr "Không thể đổi cách gửi"
@@ -1644,6 +1691,10 @@ msgstr "Không thể tải mô hình"
 #: src/lib/terminal-history-pull.ts
 msgid "Could not load older history from this terminal"
 msgstr "Không thể tải lịch sử cũ hơn của terminal này"
+
+#: src/components/server-tasks-sheet.tsx
+msgid "Could not load tasks"
+msgstr "Không thể tải tác vụ"
 
 #: src/components/agent-subagent-detail-sheet.tsx
 #: src/components/agent-workbench.tsx
@@ -1956,6 +2007,11 @@ msgstr "MẶC ĐỊNH"
 msgid "Defaults to theme.json at the repository root"
 msgstr "Mặc định là theme.json ở thư mục gốc của kho mã"
 
+#: src/i18n/labels.ts
+msgctxt "task kind"
+msgid "Delegation"
+msgstr "Ủy thác"
+
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/changes-sheet.tsx
 #: src/components/row-action-menu.tsx
@@ -2103,6 +2159,11 @@ msgstr "Bỏ qua có gì mới"
 #: src/components/open-web-service-sheet.tsx
 #: src/components/voice-input-button.tsx
 #: src/i18n/labels.ts
+msgid "Done"
+msgstr "Xong"
+
+#: src/i18n/labels.ts
+msgctxt "task state"
 msgid "Done"
 msgstr "Xong"
 
@@ -2270,6 +2331,15 @@ msgstr "Mọi tệp đã thay đổi trong một cây thư mục kèm tổng s�
 msgid "Every screen in the app."
 msgstr "Mọi màn hình trong ứng dụng"
 
+#: src/components/server-tasks-sheet.tsx
+msgid "exit {code}"
+msgstr "thoát {code}"
+
+#. placeholder {0}: task.exitCode
+#: src/components/server-tasks-sheet.tsx
+msgid "Exit code {0}"
+msgstr "Mã thoát {0}"
+
 #. placeholder {0}: block.tool
 #: src/components/pane-chat-blocks.tsx
 msgid "Expand {0}"
@@ -2314,6 +2384,11 @@ msgid "Export theme"
 msgstr "Xuất giao diện"
 
 #: src/components/tool-call-detail-sheet.tsx
+msgid "Failed"
+msgstr "Thất bại"
+
+#: src/i18n/labels.ts
+msgctxt "task state"
 msgid "Failed"
 msgstr "Thất bại"
 
@@ -2381,6 +2456,10 @@ msgstr "Tìm tệp theo tên"
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Fingerprint"
 msgstr "Dấu vân tay"
+
+#: src/components/server-tasks-sheet.tsx
+msgid "Finished"
+msgstr "Đã kết thúc"
 
 #: src/components/new-task-sheet.tsx
 msgid "First prompt"
@@ -2607,6 +2686,10 @@ msgstr "Ẩn danh sách máy chủ"
 msgid "Hide the simulator"
 msgstr "Ẩn trình giả lập"
 
+#: src/components/server-tasks-sheet.tsx
+msgid "History"
+msgstr "Lịch sử"
+
 #: src/components/pad-server-rail.tsx
 #: src/components/simfarm-stage.tsx
 msgid "Home"
@@ -2658,6 +2741,11 @@ msgstr "Cách dùng Muqun"
 msgid "Idle"
 msgstr "Rảnh"
 
+#: src/i18n/labels.ts
+msgctxt "task state"
+msgid "Idle, not confirmed"
+msgstr "Nhàn rỗi, chưa xác nhận"
+
 #: src/components/gateway-storage-error.tsx
 msgid "If this continues, restart the app or check the app installation"
 msgstr "Nếu sự cố vẫn tiếp diễn, hãy khởi động lại ứng dụng hoặc kiểm tra bản cài đặt"
@@ -2706,6 +2794,10 @@ msgstr "Nhập tệp"
 #: src/components/custom-theme-library.tsx
 msgid "Import link"
 msgstr "Nhập từ liên kết"
+
+#: src/components/server-tasks-sheet.tsx
+msgid "In progress"
+msgstr "Đang chạy"
 
 #: src/components/dev-home-ambient-controls.tsx
 msgid "Increase {label}"
@@ -2838,6 +2930,7 @@ msgid "Jump to latest output"
 msgstr "Nhảy đến đầu ra mới nhất"
 
 #: src/components/agent-sessions-sheet.tsx
+#: src/components/server-tasks-sheet.tsx
 #: src/hooks/use-relative-time.ts
 #: src/lib/agent-widget-layout.tsx
 msgid "just now"
@@ -2863,6 +2956,10 @@ msgstr "Giữ mọi thứ và bỏ thao tác hoàn tác đã chuẩn bị"
 msgctxt "agent slash command"
 msgid "Keep everything and drop the staged rollback"
 msgstr "Giữ mọi thứ và bỏ thao tác hoàn tác đã chuẩn bị"
+
+#: src/components/server-tasks-sheet.tsx
+msgid "Keep it running"
+msgstr "Tiếp tục chạy"
 
 #: src/components/settings-storage.tsx
 msgid "Keep saved themes"
@@ -3256,6 +3353,15 @@ msgstr "Cần thiết lập"
 msgid "Needs update"
 msgstr "Cần cập nhật"
 
+#: src/components/server-tasks-sheet.tsx
+msgid "Needs you"
+msgstr "Cần bạn"
+
+#: src/i18n/labels.ts
+msgctxt "task state"
+msgid "Needs you"
+msgstr "Cần bạn"
+
 #: src/components/collaboration-notice.tsx
 msgid "Needs your attention"
 msgstr "Cần bạn xử lý"
@@ -3488,6 +3594,10 @@ msgstr "Không có khung hình tĩnh"
 #: src/components/agent-tasks-sheet.tsx
 msgid "No tasks in this session yet."
 msgstr "Chưa có tác vụ nào trong phiên này"
+
+#: src/components/server-tasks-sheet.tsx
+msgid "No tasks yet"
+msgstr "Chưa có tác vụ nào"
 
 #: src/hooks/use-home-commands.ts
 msgid "No terminal session is available on this server."
@@ -3930,6 +4040,12 @@ msgstr "Ghép nối thất bại"
 msgid "Palette (up to 4)"
 msgstr "Bảng màu (tối đa 4)"
 
+#. placeholder {0}: task.binding.paneId
+#. placeholder {1}: task.binding.sessionId
+#: src/components/server-tasks-sheet.tsx
+msgid "Pane {0} in session {1}"
+msgstr "Ô {0} trong phiên {1}"
+
 #: src/components/settings-servers.tsx
 msgid "Panes on server cards"
 msgstr "Ngăn trên thẻ máy chủ"
@@ -4143,6 +4259,11 @@ msgstr "Xếp hàng tin nhắn cho tác nhân"
 msgid "Queued"
 msgstr "Đang chờ"
 
+#: src/i18n/labels.ts
+msgctxt "task state"
+msgid "Queued"
+msgstr "Đang chờ"
+
 #: src/components/attachment-strip.tsx
 msgid "queued to upload"
 msgstr "đang chờ tải lên"
@@ -4284,6 +4405,7 @@ msgstr "Ghi âm thất bại"
 
 #: src/components/agent-background-tray.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
+#: src/components/server-tasks-sheet.tsx
 #: src/components/session-map.tsx
 msgid "Refresh"
 msgstr "Làm mới"
@@ -5226,6 +5348,11 @@ msgstr "Khởi động dịch vụ OpenCode trên máy chủ gateway, sau đó k
 msgid "Started with a clean context."
 msgstr "Đã bắt đầu với ngữ cảnh trống"
 
+#: src/i18n/labels.ts
+msgctxt "task state"
+msgid "Starting"
+msgstr "Đang khởi động"
+
 #: src/components/simfarm-stage.tsx
 msgid "Starting {name}"
 msgstr "Đang khởi động {name}"
@@ -5450,6 +5577,8 @@ msgstr "Tác vụ cho một {0} mới"
 #: src/components/agent-composer.tsx
 #: src/components/agent-tasks-sheet.tsx
 #: src/components/agent-todo-block.tsx
+#: src/components/server-tasks-sheet.tsx
+#: src/components/settings-servers.tsx
 msgid "Tasks"
 msgstr "Nhiệm vụ"
 
@@ -6257,6 +6386,10 @@ msgstr "Cập nhật Gateway để nghe đầu ra âm thanh"
 msgid "Update the Gateway to preview video output."
 msgstr "Cập nhật Gateway để xem trước video"
 
+#: src/components/server-tasks-sheet.tsx
+msgid "Updates when you reopen"
+msgstr "Cập nhật khi bạn mở lại"
+
 #: src/components/update-status-banner.tsx
 msgid "Updating Muqun…"
 msgstr "Đang cập nhật Muqun…"
@@ -6399,6 +6532,11 @@ msgstr "Khi bạn vắng mặt"
 #: src/i18n/labels.ts
 msgid "Working"
 msgstr "Đang làm việc"
+
+#: src/i18n/labels.ts
+msgctxt "task state"
+msgid "Working"
+msgstr "Đang làm"
 
 #: src/components/composer-popup.tsx
 #: src/components/session-map.tsx

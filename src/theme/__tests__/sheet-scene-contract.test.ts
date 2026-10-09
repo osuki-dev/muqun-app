@@ -53,6 +53,7 @@ const SHEET_FRAMES = [
   'src/components/agent-worktree-sheet.tsx',
   'src/components/agent-context-sheet.tsx',
   'src/components/agent-tasks-sheet.tsx',
+  'src/components/server-tasks-sheet.tsx',
   'src/components/agent-background-tray.tsx',
   'src/components/agent-guide-sheet.tsx',
   'src/components/tool-call-detail-sheet.tsx',

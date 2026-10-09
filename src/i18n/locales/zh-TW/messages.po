@@ -142,19 +142,25 @@ msgstr "模型上次讀取了 {0} 個 token"
 msgid "{0}, not found on this server's PATH"
 msgstr "{0}，在這台伺服器的 PATH 中找不到"
 
+#. placeholder {0}: age.value
 #. placeholder {0}: parts.value
+#: src/components/server-tasks-sheet.tsx
 #: src/hooks/use-relative-time.ts
 #: src/lib/agent-widget-layout.tsx
 msgid "{0}d ago"
 msgstr "{0} 天前"
 
+#. placeholder {0}: age.value
 #. placeholder {0}: parts.value
+#: src/components/server-tasks-sheet.tsx
 #: src/hooks/use-relative-time.ts
 #: src/lib/agent-widget-layout.tsx
 msgid "{0}h ago"
 msgstr "{0} 小時前"
 
+#. placeholder {0}: age.value
 #. placeholder {0}: parts.value
+#: src/components/server-tasks-sheet.tsx
 #: src/hooks/use-relative-time.ts
 #: src/lib/agent-widget-layout.tsx
 msgid "{0}m ago"
@@ -236,6 +242,11 @@ msgstr "{commandName}·傳送給"
 #: src/components/agent-tool-card.tsx
 msgid "{count, plural, one {# result} other {# results}}"
 msgstr "{count, plural, other {# 個結果}}"
+
+#: src/components/home-connections.tsx
+#: src/components/settings-servers.tsx
+msgid "{count} in progress"
+msgstr "{count} 個進行中"
 
 #: src/components/home-attention.tsx
 msgid "{count} requests last observed"
@@ -455,6 +466,12 @@ msgstr "錄完轉錄"
 msgid "Agent"
 msgstr "Agent"
 
+#. placeholder {0}: task.binding.agentId
+#. placeholder {1}: task.binding.asid
+#: src/components/server-tasks-sheet.tsx
+msgid "Agent {0}, session {1}"
+msgstr "代理 {0}，工作階段 {1}"
+
 #: src/app/commands.tsx
 #: src/components/agent-command-delivery-picker.tsx
 #: src/components/collaboration-notice.tsx
@@ -516,6 +533,10 @@ msgstr "全部專案"
 #: src/components/agent-composer.tsx
 msgid "All sessions"
 msgstr "全部工作階段"
+
+#: src/components/server-tasks-sheet.tsx
+msgid "All tasks"
+msgstr "所有任務"
 
 #: src/i18n/labels.ts
 msgid "Allow"
@@ -932,6 +953,10 @@ msgstr "取消編輯 {0}"
 msgid "Cancel queued message"
 msgstr "取消排隊訊息"
 
+#: src/components/server-tasks-sheet.tsx
+msgid "Cancel task"
+msgstr "取消任務"
+
 #: src/components/agent-composer.tsx
 msgid "Cancel this queued message"
 msgstr "取消這則排隊的訊息"
@@ -940,6 +965,15 @@ msgstr "取消這則排隊的訊息"
 #: src/components/tool-call-detail-sheet.tsx
 msgid "Cancelled"
 msgstr "已取消"
+
+#: src/i18n/labels.ts
+msgctxt "task state"
+msgid "Cancelled"
+msgstr "已取消"
+
+#: src/components/server-tasks-sheet.tsx
+msgid "Cancelling…"
+msgstr "正在取消…"
 
 #: src/i18n/labels.ts
 msgctxt "git file status"
@@ -1195,6 +1229,11 @@ msgstr "色彩模式"
 msgid "Command"
 msgstr "指令"
 
+#: src/i18n/labels.ts
+msgctxt "task kind"
+msgid "Command"
+msgstr "指令"
+
 #: src/components/simfarm-preview.tsx
 msgid "Command copied"
 msgstr "已複製指令"
@@ -1248,6 +1287,10 @@ msgstr "已完成"
 #: src/app/settings-voice.tsx
 msgid "Configure your speech service, then hold Send to record. Tap the animation to stop and transcribe."
 msgstr "設定語音服務後，長按傳送開始錄音。點擊動畫停止並轉寫"
+
+#: src/components/server-tasks-sheet.tsx
+msgid "Confirm cancel"
+msgstr "確認取消"
 
 #: src/components/settings-storage.tsx
 msgid "Confirm clear cache"
@@ -1568,6 +1611,10 @@ msgstr "複製中…"
 msgid "Could not add a file"
 msgstr "無法加入檔案"
 
+#: src/components/server-tasks-sheet.tsx
+msgid "Could not cancel the task"
+msgstr "無法取消任務"
+
 #: src/components/agent-workbench.tsx
 msgid "Could not change delivery"
 msgstr "無法變更傳送方式"
@@ -1644,6 +1691,10 @@ msgstr "無法載入模型"
 #: src/lib/terminal-history-pull.ts
 msgid "Could not load older history from this terminal"
 msgstr "無法載入此終端機更早的歷史"
+
+#: src/components/server-tasks-sheet.tsx
+msgid "Could not load tasks"
+msgstr "無法載入任務"
 
 #: src/components/agent-subagent-detail-sheet.tsx
 #: src/components/agent-workbench.tsx
@@ -1956,6 +2007,11 @@ msgstr "預設"
 msgid "Defaults to theme.json at the repository root"
 msgstr "預設為儲存庫根目錄下的 theme.json"
 
+#: src/i18n/labels.ts
+msgctxt "task kind"
+msgid "Delegation"
+msgstr "委派"
+
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/changes-sheet.tsx
 #: src/components/row-action-menu.tsx
@@ -2105,6 +2161,11 @@ msgstr "關閉新功能卡片"
 #: src/i18n/labels.ts
 msgid "Done"
 msgstr "完成"
+
+#: src/i18n/labels.ts
+msgctxt "task state"
+msgid "Done"
+msgstr "已完成"
 
 #: src/app/commands.tsx
 msgid "Done editing shortcuts"
@@ -2270,6 +2331,15 @@ msgstr "所有變更的檔案匯成一棵目錄樹，附帶增刪行數。打開
 msgid "Every screen in the app."
 msgstr "App 的每一個畫面"
 
+#: src/components/server-tasks-sheet.tsx
+msgid "exit {code}"
+msgstr "結束碼 {code}"
+
+#. placeholder {0}: task.exitCode
+#: src/components/server-tasks-sheet.tsx
+msgid "Exit code {0}"
+msgstr "結束碼 {0}"
+
 #. placeholder {0}: block.tool
 #: src/components/pane-chat-blocks.tsx
 msgid "Expand {0}"
@@ -2314,6 +2384,11 @@ msgid "Export theme"
 msgstr "匯出主題"
 
 #: src/components/tool-call-detail-sheet.tsx
+msgid "Failed"
+msgstr "失敗"
+
+#: src/i18n/labels.ts
+msgctxt "task state"
 msgid "Failed"
 msgstr "失敗"
 
@@ -2381,6 +2456,10 @@ msgstr "依名稱尋找檔案"
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Fingerprint"
 msgstr "指紋"
+
+#: src/components/server-tasks-sheet.tsx
+msgid "Finished"
+msgstr "已結束"
 
 #: src/components/new-task-sheet.tsx
 msgid "First prompt"
@@ -2607,6 +2686,10 @@ msgstr "隱藏伺服器清單"
 msgid "Hide the simulator"
 msgstr "隱藏模擬器"
 
+#: src/components/server-tasks-sheet.tsx
+msgid "History"
+msgstr "紀錄"
+
 #: src/components/pad-server-rail.tsx
 #: src/components/simfarm-stage.tsx
 msgid "Home"
@@ -2658,6 +2741,11 @@ msgstr "如何使用 Muqun"
 msgid "Idle"
 msgstr "閒置"
 
+#: src/i18n/labels.ts
+msgctxt "task state"
+msgid "Idle, not confirmed"
+msgstr "閒置，未確認"
+
 #: src/components/gateway-storage-error.tsx
 msgid "If this continues, restart the app or check the app installation"
 msgstr "如果問題仍然存在，請重新啟動 App 或檢查 App 安裝"
@@ -2706,6 +2794,10 @@ msgstr "匯入檔案"
 #: src/components/custom-theme-library.tsx
 msgid "Import link"
 msgstr "從連結匯入"
+
+#: src/components/server-tasks-sheet.tsx
+msgid "In progress"
+msgstr "進行中"
 
 #: src/components/dev-home-ambient-controls.tsx
 msgid "Increase {label}"
@@ -2838,6 +2930,7 @@ msgid "Jump to latest output"
 msgstr "跳到最新輸出"
 
 #: src/components/agent-sessions-sheet.tsx
+#: src/components/server-tasks-sheet.tsx
 #: src/hooks/use-relative-time.ts
 #: src/lib/agent-widget-layout.tsx
 msgid "just now"
@@ -2863,6 +2956,10 @@ msgstr "保留全部內容，放棄已準備的回溯"
 msgctxt "agent slash command"
 msgid "Keep everything and drop the staged rollback"
 msgstr "保留全部內容，放棄已準備的回溯"
+
+#: src/components/server-tasks-sheet.tsx
+msgid "Keep it running"
+msgstr "保持執行"
 
 #: src/components/settings-storage.tsx
 msgid "Keep saved themes"
@@ -3256,6 +3353,15 @@ msgstr "需要設定"
 msgid "Needs update"
 msgstr "需要更新"
 
+#: src/components/server-tasks-sheet.tsx
+msgid "Needs you"
+msgstr "需要你處理"
+
+#: src/i18n/labels.ts
+msgctxt "task state"
+msgid "Needs you"
+msgstr "需要你處理"
+
 #: src/components/collaboration-notice.tsx
 msgid "Needs your attention"
 msgstr "需要你處理"
@@ -3488,6 +3594,10 @@ msgstr "不支援靜態畫面"
 #: src/components/agent-tasks-sheet.tsx
 msgid "No tasks in this session yet."
 msgstr "此工作階段還沒有任務"
+
+#: src/components/server-tasks-sheet.tsx
+msgid "No tasks yet"
+msgstr "尚無任務"
 
 #: src/hooks/use-home-commands.ts
 msgid "No terminal session is available on this server."
@@ -3930,6 +4040,12 @@ msgstr "配對失敗"
 msgid "Palette (up to 4)"
 msgstr "配色（最多 4 色）"
 
+#. placeholder {0}: task.binding.paneId
+#. placeholder {1}: task.binding.sessionId
+#: src/components/server-tasks-sheet.tsx
+msgid "Pane {0} in session {1}"
+msgstr "工作階段 {1} 中的窗格 {0}"
+
 #: src/components/settings-servers.tsx
 msgid "Panes on server cards"
 msgstr "伺服器卡片上的面板"
@@ -4143,6 +4259,11 @@ msgstr "為代理加入排隊訊息"
 msgid "Queued"
 msgstr "排隊中"
 
+#: src/i18n/labels.ts
+msgctxt "task state"
+msgid "Queued"
+msgstr "排隊中"
+
 #: src/components/attachment-strip.tsx
 msgid "queued to upload"
 msgstr "排隊等待上傳"
@@ -4284,6 +4405,7 @@ msgstr "錄音失敗"
 
 #: src/components/agent-background-tray.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
+#: src/components/server-tasks-sheet.tsx
 #: src/components/session-map.tsx
 msgid "Refresh"
 msgstr "重新整理"
@@ -5226,6 +5348,11 @@ msgstr "請在閘道主機上啟動 OpenCode 服務，然後再檢查一次"
 msgid "Started with a clean context."
 msgstr "已以全新的上下文開始"
 
+#: src/i18n/labels.ts
+msgctxt "task state"
+msgid "Starting"
+msgstr "啟動中"
+
 #: src/components/simfarm-stage.tsx
 msgid "Starting {name}"
 msgstr "正在啟動 {name}"
@@ -5450,6 +5577,8 @@ msgstr "給新的 {0} 的任務"
 #: src/components/agent-composer.tsx
 #: src/components/agent-tasks-sheet.tsx
 #: src/components/agent-todo-block.tsx
+#: src/components/server-tasks-sheet.tsx
+#: src/components/settings-servers.tsx
 msgid "Tasks"
 msgstr "任務"
 
@@ -6257,6 +6386,10 @@ msgstr "更新 Gateway 後即可預覽音訊輸出"
 msgid "Update the Gateway to preview video output."
 msgstr "更新 Gateway 後即可預覽影片輸出"
 
+#: src/components/server-tasks-sheet.tsx
+msgid "Updates when you reopen"
+msgstr "重新開啟時更新"
+
 #: src/components/update-status-banner.tsx
 msgid "Updating Muqun…"
 msgstr "正在更新牧群…"
@@ -6399,6 +6532,11 @@ msgstr "離開期間"
 #: src/i18n/labels.ts
 msgid "Working"
 msgstr "工作中"
+
+#: src/i18n/labels.ts
+msgctxt "task state"
+msgid "Working"
+msgstr "執行中"
 
 #: src/components/composer-popup.tsx
 #: src/components/session-map.tsx

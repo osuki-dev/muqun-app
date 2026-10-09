@@ -89,6 +89,7 @@ export const sheetRoutePresentations: Readonly<Record<string, SheetPresentation>
   'agent-context': 'sheet',
   'agent-vcs-diff': 'sheet',
   'agent-tasks': 'sheet',
+  'server-tasks': 'sheet',
   'agent-shells': 'sheet',
   'agent-guide': 'sheet',
 };
@@ -164,6 +165,7 @@ export const sheetRouteKinds: Readonly<Record<string, SheetKind>> = {
   'voice-input': 'picker',
   'settings-voice': 'picker',
   'agent-tasks': 'picker',
+  'server-tasks': 'picker',
   'agent-shells': 'picker',
   'agent-guide': 'picker',
 };
@@ -267,6 +269,9 @@ export const sheetRouteDetents: Readonly<Record<string, SheetDetents>> = {
   // A short list with its own scroll root, so it takes a bounded viewport rather
   // than circular fit-to-content sizing.
   'agent-tasks': [0.65, 0.9],
+  // The selected server's task ledger: grouped rows and one task's detail in
+  // place of them, so it reaches nearly the full height for a long summary.
+  'server-tasks': [0.65, 0.95],
   // What is still running after the agent moved on: a short list with one
   // expandable output box, so it takes a bounded viewport for the same reason.
   'agent-shells': [0.65, 0.9],
@@ -341,6 +346,7 @@ export const sheetRouteContent: Readonly<Record<string, SheetContent>> = {
   // What is still running after the agent moved on.
   'agent-shells': 'list',
   'agent-tasks': 'list',
+  'server-tasks': 'list',
   // Pairing is not a list, but it is as tall as one: a camera the size of the
   // sheet's width, two other ways in, and the install command under them. At
   // its first detent the last of those was below the fold with nothing to
