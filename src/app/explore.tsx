@@ -354,7 +354,7 @@ export default function PairModal() {
             setStep('confirm');
           },
           (error) => {
-            const failure = describeGatewayFailure(error, t`Could not reach the gateway.`);
+            const failure = describeGatewayFailure(error, t`Could not reach the computer.`);
             // Whether the gateway turned this down, or was never reached at all.
             // Only the first is the code's fault, and only the first may arm the
             // aperture's "that code was refused".
@@ -378,7 +378,7 @@ export default function PairModal() {
                 ? nextOffer.sshTunnel
                   ? t`Nothing answered on port ${nextOffer.sshTunnel.remotePort} through the SSH host. Check the gateway's port on that machine.`
                   : nextOffer.serverId
-                    ? t`Could not reach the gateway. Make sure it is running, then refresh the QR and scan again.`
+                    ? t`Could not reach the computer. Make sure it is running, then refresh the QR and scan again.`
                     : t`Could not reach that address. Check it and make sure the Gateway is running.`
                 : failure.message
             );
@@ -613,7 +613,7 @@ export default function PairModal() {
    * way every sheet in this app does.
    */
   const title =
-    step === 'scan' ? t`Pair server` : step === 'confirm' ? t`Confirm pairing` : t`Connected`;
+    step === 'scan' ? t`Pair computer` : step === 'confirm' ? t`Confirm pairing` : t`Connected`;
   const caption =
     step === 'scan'
       ? sshOpen
@@ -629,7 +629,7 @@ export default function PairModal() {
                 : t`Scan the Gateway QR.`
       : step === 'confirm'
         ? t`Name it, then enter the code shown by the Gateway.`
-        : t`Opening the server.`;
+        : t`Opening the computer.`;
 
   return (
     /*
@@ -1054,9 +1054,9 @@ export default function PairModal() {
                     {offer?.url}
                   </Text>
                 </View>
-                <SheetSceneField label={t`Server name`}>
+                <SheetSceneField label={t`Computer name`}>
                   <FontedTextInput
-                    accessibilityLabel={t`Server name`}
+                    accessibilityLabel={t`Computer name`}
                     value={serverName}
                     onChangeText={(value) => setServerName(value.slice(0, 48))}
                     autoCapitalize="words"
@@ -1103,7 +1103,7 @@ export default function PairModal() {
                   />
                 </SheetSceneField>
                 <SheetSceneAction
-                  label={busy ? t`Pairing` : t`Pair server`}
+                  label={busy ? t`Pairing` : t`Pair computer`}
                   busy={busy}
                   disabled={codeExpired}
                   onPress={handleClaim}

@@ -139,8 +139,8 @@ msgstr "{0} token mà mô hình đã đọc lần gần nhất"
 
 #. placeholder {0}: profile.kind
 #: src/components/new-task-sheet.tsx
-msgid "{0}, not found on this server's PATH"
-msgstr "{0}, không có trong PATH của máy chủ này"
+msgid "{0}, not found on this computer's PATH"
+msgstr "{0}, không có trong PATH của máy tính này"
 
 #. placeholder {0}: age.value
 #. placeholder {0}: parts.value
@@ -421,8 +421,8 @@ msgid "Actual size"
 msgstr "Kích thước thực"
 
 #: src/components/home-connections.tsx
-msgid "Add a gateway or an SSH host to start working."
-msgstr "Thêm Gateway hoặc host SSH để bắt đầu làm việc"
+msgid "Add a computer or an SSH host to start working."
+msgstr "Thêm một máy tính hoặc máy chủ SSH để bắt đầu làm việc"
 
 #: src/components/ssh-host-list.tsx
 msgid "Add a host"
@@ -690,13 +690,13 @@ msgstr "Đặt câu hỏi, xem tệp hoặc chạy lệnh trong dự án của b
 msgid "Ask you a question"
 msgstr "Hỏi bạn một câu hỏi"
 
+#: src/components/new-task-sheet.tsx
+msgid "Asking the computer what it can run…"
+msgstr "Đang hỏi máy tính xem nó có thể chạy gì…"
+
 #: src/app/explore.tsx
 msgid "Asking the Gateway about that code."
 msgstr "Đang hỏi Gateway về mã đó"
-
-#: src/components/new-task-sheet.tsx
-msgid "Asking the server what it can run…"
-msgstr "Đang hỏi máy chủ xem nó có thể chạy gì…"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Assign this to an assistant"
@@ -808,13 +808,13 @@ msgstr "Quay lại"
 msgid "Back one word"
 msgstr "Lùi một từ"
 
+#: src/components/app-drawer.tsx
+msgid "Back to computers"
+msgstr "Về danh sách máy tính"
+
 #: src/components/server-terminal-workspace.tsx
 msgid "Back to Home"
 msgstr "Về Trang chủ"
-
-#: src/components/app-drawer.tsx
-msgid "Back to servers"
-msgstr "Về danh sách máy chủ"
 
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Back to SSH hosts"
@@ -1019,8 +1019,8 @@ msgid "Check device authentication settings and try again."
 msgstr "Hãy kiểm tra cài đặt xác thực của thiết bị và thử lại"
 
 #: src/hooks/use-lazygit.ts
-msgid "Check that lazygit is installed on the Gateway host and this pane is in a Git repository."
-msgstr "Kiểm tra lazygit đã được cài trên máy chủ Gateway và ngăn này nằm trong kho Git"
+msgid "Check that lazygit is installed on this computer and this pane is in a Git repository."
+msgstr "Hãy kiểm tra lazygit đã được cài trên máy tính này và pane này nằm trong một kho Git"
 
 #: src/hooks/use-agent-command-delivery.ts
 msgid "Check the assistant before sending again; it may have received the request."
@@ -1045,8 +1045,8 @@ msgstr "Đang kiểm tra…"
 
 #: src/components/home-launch-actions.tsx
 #: src/components/home-target-sheet.tsx
-msgid "Choose a gateway"
-msgstr "Chọn Gateway"
+msgid "Choose a computer"
+msgstr "Chọn một máy tính"
 
 #: src/components/agent-mode-sheet.tsx
 msgid "Choose a mode"
@@ -1301,6 +1301,35 @@ msgstr "So với {base}"
 msgid "Completed"
 msgstr "Đã hoàn tất"
 
+#: src/app/agent-guide.tsx
+#: src/app/artifacts.tsx
+#: src/app/panels.tsx
+#: src/components/app-drawer.tsx
+#: src/components/server-terminal-workspace.tsx
+msgid "Computer"
+msgstr "Máy tính"
+
+#: src/app/explore.tsx
+#: src/components/settings-servers.tsx
+msgid "Computer name"
+msgstr "Tên máy tính"
+
+#: src/app/servers/[serverId].tsx
+#: src/components/server-terminal-workspace.tsx
+msgid "Computer not found"
+msgstr "Không tìm thấy máy tính"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Computer offline"
+msgstr "Máy tính ngoại tuyến"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "Computer unavailable."
+msgstr "Máy tính không khả dụng"
+
+#: src/app/settings-servers.tsx
+#: src/app/settings.tsx
+#: src/components/app-drawer-content.tsx
 #: src/components/home-composer.tsx
 #: src/components/home-editorial-layout.tsx
 msgid "Computers"
@@ -1703,8 +1732,8 @@ msgid "Could not keep it"
 msgstr "Không thể giữ lại"
 
 #: src/components/new-task-sheet.tsx
-msgid "Could not list this server's agents."
-msgstr "Không thể liệt kê các tác tử của máy chủ này"
+msgid "Could not list this computer's agents."
+msgstr "Không thể liệt kê các tác tử của máy tính này"
 
 #: src/components/settings-server-capabilities.tsx
 msgid "Could not load capabilities"
@@ -1805,24 +1834,24 @@ msgid "Could not reach that address. Check it and make sure the Gateway is runni
 msgstr "Không thể kết nối đến địa chỉ đó. Hãy kiểm tra lại và đảm bảo Gateway đang chạy"
 
 #: src/app/explore.tsx
-msgid "Could not reach the gateway."
-msgstr "Không thể kết nối đến gateway"
+msgid "Could not reach the computer."
+msgstr "Không thể kết nối đến máy tính"
 
 #: src/app/explore.tsx
-msgid "Could not reach the gateway. Make sure it is running, then refresh the QR and scan again."
-msgstr "Không thể kết nối đến gateway. Hãy đảm bảo nó đang chạy, rồi làm mới mã QR và quét lại"
+msgid "Could not reach the computer. Make sure it is running, then refresh the QR and scan again."
+msgstr "Không thể kết nối đến máy tính. Hãy chắc chắn máy đang chạy, rồi làm mới mã QR và quét lại"
 
 #: src/components/theme-browse-sheet.tsx
 msgid "Could not reach the theme catalogue"
 msgstr "Không thể kết nối tới danh mục giao diện"
 
 #: src/app/new-task.tsx
-msgid "Could not reach this server."
-msgstr "Không thể kết nối đến máy chủ này"
+msgid "Could not reach this computer."
+msgstr "Không thể kết nối đến máy tính này"
 
 #: src/components/gateway-storage-error.tsx
-msgid "Could not read saved servers. Your saved data has not been changed. Unlock this device and retry."
-msgstr "Không thể đọc các máy chủ đã lưu. Dữ liệu đã lưu không bị thay đổi. Hãy mở khóa thiết bị rồi thử lại"
+msgid "Could not read saved computers. Your saved data has not been changed. Unlock this device and retry."
+msgstr "Không thể đọc các máy tính đã lưu. Dữ liệu đã lưu không bị thay đổi. Hãy mở khóa thiết bị rồi thử lại"
 
 #: src/components/changes-sheet.tsx
 msgid "Could not read the changes."
@@ -1968,8 +1997,8 @@ msgid "Could not undo"
 msgstr "Không thể hoàn tác"
 
 #: src/components/settings-servers.tsx
-msgid "Could not unpair server"
-msgstr "Không thể hủy ghép nối máy chủ"
+msgid "Could not unpair computer"
+msgstr "Không thể hủy ghép nối máy tính"
 
 #: src/components/session-map.tsx
 msgid "Could not update the session."
@@ -2282,8 +2311,8 @@ msgid "Edit SSH host"
 msgstr "Sửa host SSH"
 
 #: src/components/settings-servers.tsx
-msgid "Edit this server"
-msgstr "Sửa máy chủ này"
+msgid "Edit this computer"
+msgstr "Sửa máy tính này"
 
 #: src/components/settings-appearance.tsx
 #: src/components/settings-home-layout-sheet.tsx
@@ -2460,8 +2489,8 @@ msgid "Failed to switch project"
 msgstr "Không chuyển được dự án"
 
 #: src/components/settings-home-layout-sheet.tsx
-msgid "Familiar server cards and quick actions."
-msgstr "Các thẻ máy chủ quen thuộc và thao tác nhanh"
+msgid "Familiar computer cards and quick actions."
+msgstr "Các thẻ máy tính quen thuộc và thao tác nhanh"
 
 #: src/components/agent-composer.tsx
 msgid "Fast agent specialized for exploring codebases."
@@ -2682,8 +2711,8 @@ msgid "Go to the top of the file"
 msgstr "Về đầu tệp"
 
 #: src/app/+not-found.tsx
-msgid "Go to your servers"
-msgstr "Đến các máy chủ của bạn"
+msgid "Go to your computers"
+msgstr "Đến các máy tính của bạn"
 
 #: src/components/agent-message-block.tsx
 msgid "Goal continuation"
@@ -2736,8 +2765,8 @@ msgid "Hide output"
 msgstr "Ẩn đầu ra"
 
 #: src/components/app-drawer.tsx
-msgid "Hide the server list"
-msgstr "Ẩn danh sách máy chủ"
+msgid "Hide the computer list"
+msgstr "Ẩn danh sách máy tính"
 
 #: src/app/commands.tsx
 #: src/components/server-terminal-workspace.tsx
@@ -2984,8 +3013,8 @@ msgid "Its details could not be written to secure storage."
 msgstr "Không thể ghi thông tin của nó vào bộ nhớ an toàn"
 
 #: src/components/settings-servers.tsx
-msgid "Its paired devices are listed once it is the server in use."
-msgstr "Các thiết bị đã ghép nối của nó sẽ được liệt kê khi nó là máy chủ đang dùng"
+msgid "Its paired devices are listed once it is the computer in use."
+msgstr "Các thiết bị đã ghép nối của nó sẽ được liệt kê khi nó là máy tính đang dùng"
 
 #: src/components/skia-terminal.tsx
 msgid "Jump to latest output"
@@ -3167,16 +3196,16 @@ msgstr "Đang tải"
 msgid "Loading commands"
 msgstr "Đang tải lệnh"
 
-#: src/components/settings-servers.tsx
-msgid "Loading paired devices…"
-msgstr "Đang tải các thiết bị đã ghép nối…"
-
 #: src/app/servers/[serverId].tsx
 #: src/components/home-launch-actions.tsx
 #: src/components/home-overview.tsx
 #: src/components/settings-servers.tsx
-msgid "Loading servers"
-msgstr "Đang tải máy chủ"
+msgid "Loading computers"
+msgstr "Đang tải máy tính"
+
+#: src/components/settings-servers.tsx
+msgid "Loading paired devices…"
+msgstr "Đang tải các thiết bị đã ghép nối…"
 
 #: src/components/app-lock-gate.tsx
 msgid "Loading settings"
@@ -3558,6 +3587,14 @@ msgstr "Chưa có commit nào"
 msgid "No computer online"
 msgstr "Không có máy tính nào trực tuyến"
 
+#: src/app/new-task.tsx
+msgid "No computer to start a task on."
+msgstr "Không có máy tính để bắt đầu tác vụ"
+
+#: src/components/settings-servers.tsx
+msgid "No computers paired yet"
+msgstr "Chưa ghép nối máy tính nào"
+
 #: src/components/session-artifacts.tsx
 msgid "No files match."
 msgstr "Không có tệp nào khớp"
@@ -3617,8 +3654,8 @@ msgid "No personal themes yet. Import one, or browse the published themes."
 msgstr "Chưa có giao diện riêng nào. Hãy nhập một giao diện hoặc duyệt các giao diện đã công bố"
 
 #: src/components/asset-viewer.tsx
-msgid "No preview for this kind of file. It stays on the server."
-msgstr "Không có bản xem trước cho loại tệp này. Nó vẫn ở trên máy chủ"
+msgid "No preview for this kind of file. It stays on the computer."
+msgstr "Không có bản xem trước cho loại tệp này. Nó vẫn ở trên máy tính"
 
 #: src/components/simfarm-preview.tsx
 msgid "No preview on this connection"
@@ -3632,14 +3669,6 @@ msgstr "Chưa có dự án nào ở đây. Nhập đường dẫn ở trên đ�
 #: src/components/agent-workspace-sheet.tsx
 msgid "No projects match “{0}”."
 msgstr "Không có dự án nào khớp “{0}”"
-
-#: src/app/new-task.tsx
-msgid "No server to start a task on."
-msgstr "Không có máy chủ để bắt đầu tác vụ"
-
-#: src/components/settings-servers.tsx
-msgid "No servers paired yet"
-msgstr "Chưa ghép nối máy chủ nào"
 
 #: src/components/agent-sessions-sheet.tsx
 msgid "No sessions in this project yet. Start one from the + button."
@@ -3682,8 +3711,8 @@ msgid "No tasks yet"
 msgstr "Chưa có tác vụ nào"
 
 #: src/hooks/use-home-commands.ts
-msgid "No terminal session is available on this server."
-msgstr "Máy chủ này không có phiên terminal khả dụng"
+msgid "No terminal session is available on this computer."
+msgstr "Máy tính này không có phiên terminal khả dụng"
 
 #: src/components/change-tree-rows.tsx
 #: src/components/diff-rows.tsx
@@ -3973,8 +4002,8 @@ msgid "Open SSH host {0}"
 msgstr "Mở host SSH {0}"
 
 #: src/i18n/labels.ts
-msgid "Open T3 Code on the gateway host (or run t3 service install), then check again."
-msgstr "Mở T3 Code trên máy chủ gateway (hoặc chạy t3 service install), sau đó kiểm tra lại"
+msgid "Open T3 Code on the computer (or run t3 service install), then check again."
+msgstr "Hãy mở T3 Code trên máy tính (hoặc chạy t3 service install) rồi kiểm tra lại"
 
 #: src/components/collaboration-notice.tsx
 #: src/hooks/use-lazygit.ts
@@ -4028,8 +4057,8 @@ msgid "Opening that file"
 msgstr "Đang mở tệp đó"
 
 #: src/app/explore.tsx
-msgid "Opening the server."
-msgstr "Đang mở máy chủ"
+msgid "Opening the computer."
+msgstr "Đang mở máy tính"
 
 #: src/app/explore.tsx
 msgid "Opening tunnel"
@@ -4070,36 +4099,33 @@ msgstr "Đầu ra"
 msgid "Output copied to clipboard"
 msgstr "Đã sao chép đầu ra vào bảng nhớ tạm"
 
-#: src/components/home-launch-actions.tsx
-msgid "Pair a gateway"
-msgstr "Ghép nối Gateway"
-
 #: src/components/app-drawer-content.tsx
+#: src/components/home-launch-actions.tsx
 #: src/components/home-overview.tsx
 #: src/components/pad-server-rail.tsx
 #: src/components/settings-servers.tsx
-msgid "Pair a server"
-msgstr "Ghép nối máy chủ"
+msgid "Pair a computer"
+msgstr "Ghép nối máy tính"
 
 #: src/components/server-terminal-workspace.tsx
 msgid "Pair again"
 msgstr "Ghép nối lại"
 
+#: src/app/explore.tsx
+msgid "Pair computer"
+msgstr "Ghép nối máy tính"
+
 #: src/components/settings-servers.tsx
 msgid "Pair one below."
 msgstr "Ghép nối ở bên dưới"
 
-#: src/app/explore.tsx
-msgid "Pair server"
-msgstr "Ghép nối máy chủ"
-
 #: src/components/server-terminal-workspace.tsx
-msgid "Pair this server again"
-msgstr "Ghép nối lại máy chủ này"
+msgid "Pair this computer again"
+msgstr "Ghép nối lại máy tính này"
 
 #: src/lib/network-error.ts
-msgid "Pair this server again."
-msgstr "Hãy ghép nối lại máy chủ này"
+msgid "Pair this computer again."
+msgstr "Hãy ghép nối lại máy tính này"
 
 #. placeholder {0}: host.label
 #: src/app/explore.tsx
@@ -4111,8 +4137,8 @@ msgid "Pair through an SSH host"
 msgstr "Ghép nối qua host SSH"
 
 #: src/components/home-overview.tsx
-msgid "Pair your first server"
-msgstr "Ghép nối máy chủ đầu tiên của bạn"
+msgid "Pair your first computer"
+msgstr "Ghép nối máy tính đầu tiên của bạn"
 
 #: src/app/explore.tsx
 msgid "Pairing"
@@ -4145,8 +4171,8 @@ msgid "Pane {paneId}"
 msgstr "Pane {paneId}"
 
 #: src/components/settings-servers.tsx
-msgid "Panes on server cards"
-msgstr "Ngăn trên thẻ máy chủ"
+msgid "Panes on computer cards"
+msgstr "Ngăn trên thẻ máy tính"
 
 #: src/components/agent-session-tree-sheet.tsx
 msgid "Parent: {parentTitle}"
@@ -4333,8 +4359,8 @@ msgid "Prompt"
 msgstr "Prompt"
 
 #: src/components/settings-security.tsx
-msgid "Protect paired servers and terminal sessions."
-msgstr "Bảo vệ các máy chủ đã ghép nối và phiên terminal"
+msgid "Protect paired computers and terminal sessions."
+msgstr "Bảo vệ các máy tính đã ghép nối và phiên terminal"
 
 #: src/components/ssh-host-form.tsx
 msgid "Public key copied"
@@ -4694,14 +4720,14 @@ msgstr "Quay lại tác vụ"
 
 #: src/app/servers/[serverId].tsx
 #: src/components/server-terminal-workspace.tsx
-msgid "Return to the server list and pair again."
-msgstr "Quay lại danh sách máy chủ và ghép nối lại"
+msgid "Return to the computer list and pair again."
+msgstr "Quay lại danh sách máy tính và ghép nối lại"
 
 #: src/components/collaboration-notice.tsx
 #: src/hooks/use-agent-command-delivery.ts
 #: src/hooks/use-collaboration-output.ts
-msgid "Return to this server to continue."
-msgstr "Quay lại máy chủ này để tiếp tục"
+msgid "Return to this computer to continue."
+msgstr "Quay lại máy tính này để tiếp tục"
 
 #: src/lib/demo-gateway.ts
 msgid "Review"
@@ -5047,38 +5073,6 @@ msgstr "Đang gửi đến"
 msgid "Sends your next goal here. Long press to open it."
 msgstr "Gửi mục tiêu tiếp theo tới đây. Nhấn giữ để mở"
 
-#: src/app/agent-guide.tsx
-#: src/app/artifacts.tsx
-#: src/app/panels.tsx
-#: src/components/app-drawer.tsx
-#: src/components/server-terminal-workspace.tsx
-msgid "Server"
-msgstr "Máy chủ"
-
-#: src/app/explore.tsx
-#: src/components/settings-servers.tsx
-msgid "Server name"
-msgstr "Tên máy chủ"
-
-#: src/app/servers/[serverId].tsx
-#: src/components/server-terminal-workspace.tsx
-msgid "Server not found"
-msgstr "Không tìm thấy máy chủ"
-
-#: src/components/server-terminal-workspace.tsx
-msgid "Server offline"
-msgstr "Máy chủ ngoại tuyến"
-
-#: src/components/server-terminal-workspace.tsx
-msgid "Server unavailable."
-msgstr "Máy chủ không khả dụng"
-
-#: src/app/settings-servers.tsx
-#: src/app/settings.tsx
-#: src/components/app-drawer-content.tsx
-msgid "Servers"
-msgstr "Máy chủ"
-
 #: src/components/agent-sessions-sheet.tsx
 msgid "Session name"
 msgstr "Tên phiên"
@@ -5254,6 +5248,10 @@ msgstr "Hiện thêm diff này"
 msgid "Show the app background behind terminal text"
 msgstr "Hiển thị nền ứng dụng phía sau văn bản terminal"
 
+#: src/components/app-drawer.tsx
+msgid "Show the computer list"
+msgstr "Hiện danh sách máy tính"
+
 #: src/components/editor-controls.tsx
 msgid "Show the editor keyboard"
 msgstr "Hiện bàn phím soạn thảo"
@@ -5261,10 +5259,6 @@ msgstr "Hiện bàn phím soạn thảo"
 #: src/components/agent-tool-card.tsx
 msgid "Show the rest of this output"
 msgstr "Hiện phần còn lại của kết quả"
-
-#: src/components/app-drawer.tsx
-msgid "Show the server list"
-msgstr "Hiện danh sách máy chủ"
 
 #: src/components/theme-appearance-settings.tsx
 msgid "Show theme effects only while Home is visible. Turn off to reduce battery use."
@@ -5457,12 +5451,12 @@ msgid "Start task"
 msgstr "Bắt đầu tác vụ"
 
 #: src/i18n/labels.ts
-msgid "Start the agent on the gateway host, then check again."
-msgstr "Hãy khởi động tác tử trên máy chủ gateway rồi kiểm tra lại"
+msgid "Start the agent on the computer, then check again."
+msgstr "Hãy khởi động tác tử trên máy tính rồi kiểm tra lại"
 
 #: src/i18n/labels.ts
-msgid "Start the OpenCode service on the gateway host, then check again."
-msgstr "Khởi động dịch vụ OpenCode trên máy chủ gateway, sau đó kiểm tra lại"
+msgid "Start the OpenCode service on the computer, then check again."
+msgstr "Hãy khởi động dịch vụ OpenCode trên máy tính rồi kiểm tra lại"
 
 #: src/components/agent-workbench.tsx
 msgid "Started with a clean context."
@@ -5811,8 +5805,8 @@ msgid "That simulator cannot be started from here. Start it on the machine and i
 msgstr "Không thể khởi động trình giả lập đó từ đây. Hãy khởi động nó trên máy và nó sẽ xuất hiện trong danh sách"
 
 #: src/components/settings-servers.tsx
-msgid "The address is where this paired server is reached. Changing it does not unpair the device."
-msgstr "Địa chỉ là nơi kết nối đến máy chủ đã ghép nối này. Đổi địa chỉ không hủy ghép nối thiết bị"
+msgid "The address is where this paired computer is reached. Changing it does not unpair the device."
+msgstr "Địa chỉ là nơi kết nối đến máy tính đã ghép nối này. Đổi địa chỉ không hủy ghép nối thiết bị"
 
 #: src/app/explore.tsx
 msgid "The address the Gateway prints when it starts."
@@ -5846,6 +5840,22 @@ msgstr "Camera không khởi động"
 msgid "The camera reported an error."
 msgstr "Camera báo lỗi"
 
+#: src/components/changes-sheet.tsx
+msgid "The computer could not be reached."
+msgstr "Không thể kết nối đến máy tính"
+
+#: src/components/server-terminal-workspace.tsx
+msgid "The computer did not return it."
+msgstr "Máy tính không trả về nó"
+
+#: src/app/commands.tsx
+msgid "The computer did not say which terminal it made."
+msgstr "Máy tính không cho biết nó đã tạo terminal nào"
+
+#: src/components/settings-servers.tsx
+msgid "The computer was kept on this device. Make sure its Gateway is running, then try again."
+msgstr "Máy tính vẫn được giữ trên thiết bị này. Hãy đảm bảo Gateway của nó đang chạy, rồi thử lại"
+
 #: src/components/ssh-terminal-workspace.tsx
 msgid "The connection dropped."
 msgstr "Kết nối đã rớt"
@@ -5865,10 +5875,6 @@ msgstr "Không thể mở đích đến này"
 #: src/components/settings-font-sheet.tsx
 msgid "The font file is missing. Add it again."
 msgstr "Không tìm thấy tệp phông chữ. Hãy thêm lại"
-
-#: src/components/changes-sheet.tsx
-msgid "The gateway could not be reached."
-msgstr "Không thể kết nối tới gateway"
 
 #: src/components/agent-worktree-sheet.tsx
 msgid "The host made a worktree but did not say where."
@@ -5904,28 +5910,16 @@ msgid "The real terminal"
 msgstr "Terminal thật sự"
 
 #: src/components/app-error-boundary.tsx
-msgid "The screen hit an error. Try again — your servers stay paired."
-msgstr "Màn hình gặp lỗi. Hãy thử lại — các máy chủ của bạn vẫn được ghép nối"
+msgid "The screen hit an error. Try again — your computers stay paired."
+msgstr "Màn hình gặp lỗi. Hãy thử lại — các máy tính của bạn vẫn được ghép nối"
 
 #: src/components/ssh-host-form.tsx
 msgid "The server asks its own questions when you connect, a password or a one-time code, and nothing is stored on this device."
 msgstr "Máy chủ tự đặt câu hỏi khi bạn kết nối, một mật khẩu hoặc mã dùng một lần, và không có gì được lưu trên thiết bị này"
 
-#: src/components/server-terminal-workspace.tsx
-msgid "The server did not return it."
-msgstr "Máy chủ không trả về nó"
-
-#: src/app/commands.tsx
-msgid "The server did not say which terminal it made."
-msgstr "Máy chủ không cho biết nó đã tạo terminal nào"
-
 #: src/components/ssh-host-key-dialog.tsx
 msgid "The server is asking for more before it lets you in."
 msgstr "Máy chủ yêu cầu thêm trước khi cho bạn vào"
-
-#: src/components/settings-servers.tsx
-msgid "The server was kept on this device. Make sure its Gateway is running, then try again."
-msgstr "Máy chủ vẫn được giữ trên thiết bị này. Hãy đảm bảo Gateway của nó đang chạy, rồi thử lại"
 
 #: src/components/ssh-terminal-workspace.tsx
 msgid "The shell exited."
@@ -6034,13 +6028,80 @@ msgstr "Tác tử này không đưa ra câu trả lời đó"
 msgid "This cannot be undone."
 msgstr "Không thể hoàn tác thao tác này"
 
+#: src/hooks/use-agent-command-delivery.ts
+msgid "This computer cannot run that command yet."
+msgstr "Máy tính này chưa chạy được lệnh đó"
+
+#: src/lib/network-error.ts
+msgid "This computer cannot use this device's stored key. Pair it again to reconnect."
+msgstr "Máy tính này không thể dùng khóa đã lưu của thiết bị này. Hãy ghép nối lại để kết nối lại"
+
+#: src/lib/network-error.ts
+msgid "This computer could not read the request. Check this device's date and time."
+msgstr "Máy tính này không đọc được yêu cầu. Hãy kiểm tra ngày giờ của thiết bị này"
+
+#: src/components/new-task-sheet.tsx
+msgid "This computer did not name any agents it can start."
+msgstr "Máy tính này không nêu tên tác tử nào nó có thể khởi động"
+
+#: src/components/agent-guide-sheet.tsx
+msgid "This computer does not advertise {agentName} sessions."
+msgstr "Máy tính này không cung cấp phiên {agentName}"
+
+#: src/components/agent-workbench.tsx
+msgid "This computer does not expand ~. Type the full path, starting with /."
+msgstr "Máy tính này không mở rộng ký hiệu ~. Hãy nhập đường dẫn đầy đủ, bắt đầu bằng /"
+
+#: src/components/agent-workbench.tsx
+msgid "This computer does not know {agentName}. Refresh the agent list and try again."
+msgstr "Máy tính này không biết {agentName}. Hãy làm mới danh sách tác tử rồi thử lại"
+
+#: src/components/session-artifacts.tsx
+msgid "This computer does not serve files yet. Update the Muqun gateway plugin to browse what a session writes."
+msgstr "Máy tính này chưa phục vụ tệp. Hãy cập nhật plugin Muqun Gateway để duyệt những gì một phiên ghi ra"
+
+#: src/lib/network-error.ts
+msgid "This computer had a problem answering."
+msgstr "Máy tính này gặp sự cố khi trả lời"
+
+#: src/lib/network-error.ts
+msgid "This computer has already handled that request."
+msgstr "Máy tính này đã xử lý yêu cầu đó rồi"
+
+#: src/app/new-task.tsx
+msgid "This computer has no session to start an agent in."
+msgstr "Máy tính này không có phiên nào để khởi động tác tử"
+
+#: src/components/settings-servers.tsx
+msgid "This computer has not listed any paired devices."
+msgstr "Máy tính này chưa liệt kê thiết bị nào đã ghép nối"
+
+#: src/app/agent-guide.tsx
+#: src/app/new-task.tsx
+#: src/app/simfarm.tsx
+#: src/app/web-service.tsx
+msgid "This computer is no longer paired."
+msgstr "Máy tính này không còn được ghép nối"
+
+#: src/components/agent-guide-sheet.tsx
+msgid "This computer is not answering. Check the computer connection, then try again."
+msgstr "Máy tính này không phản hồi. Hãy kiểm tra kết nối tới máy tính rồi thử lại"
+
+#: src/lib/network-error.ts
+msgid "This computer no longer recognises this device. Pair it again to reconnect."
+msgstr "Máy tính này không còn nhận ra thiết bị này. Hãy ghép nối lại để kết nối lại"
+
+#: src/lib/network-error.ts
+msgid "This computer refused the request."
+msgstr "Máy tính này đã từ chối yêu cầu"
+
 #: src/lib/attachments.ts
 msgid "This device has no camera available."
 msgstr "Thiết bị này không có camera khả dụng"
 
 #: src/components/asset-viewer.tsx
-msgid "This file is {size}. Muqun opens text files up to {ceiling}; larger ones stay on the server."
-msgstr "Tệp này nặng {size}. Muqun mở được tệp văn bản đến {ceiling}; tệp lớn hơn vẫn ở trên máy chủ"
+msgid "This file is {size}. Muqun opens text files up to {ceiling}; larger ones stay on the computer."
+msgstr "Tệp này nặng {size}. Muqun mở được tệp văn bản đến {ceiling}; tệp lớn hơn vẫn ở trên máy tính"
 
 #: src/components/asset-viewer.tsx
 #: src/components/settings-font-sheet.tsx
@@ -6063,33 +6124,9 @@ msgstr "Tệp này quá lớn"
 msgid "This font could not be read."
 msgstr "Không đọc được phông này"
 
-#: src/components/agent-guide-sheet.tsx
-msgid "This gateway does not advertise {agentName} sessions."
-msgstr "Gateway này không cung cấp phiên {agentName}"
-
 #: src/lib/network-error.ts
 msgid "This Gateway does not answer to that address."
 msgstr "Gateway này không trả lời ở địa chỉ đó"
-
-#: src/components/agent-workbench.tsx
-msgid "This gateway does not expand ~. Type the full path, starting with /."
-msgstr "Gateway này không mở rộng ~. Hãy nhập đường dẫn đầy đủ, bắt đầu bằng /"
-
-#: src/components/agent-workbench.tsx
-msgid "This gateway does not know {agentName}. Refresh the agent list and try again."
-msgstr "Gateway này không biết {agentName}. Hãy làm mới danh sách tác tử rồi thử lại"
-
-#: src/components/session-artifacts.tsx
-msgid "This gateway does not serve files yet. Update the Muqun gateway plugin to browse what a session writes."
-msgstr "Gateway này chưa phục vụ tệp. Hãy cập nhật plugin gateway của Muqun để duyệt những gì phiên ghi ra"
-
-#: src/components/settings-servers.tsx
-msgid "This gateway has not listed any paired devices."
-msgstr "Gateway này chưa liệt kê thiết bị đã ghép nối nào"
-
-#: src/components/agent-guide-sheet.tsx
-msgid "This gateway is not answering. Check the server connection, then try again."
-msgstr "Gateway này không phản hồi. Hãy kiểm tra kết nối máy chủ rồi thử lại"
 
 #: src/components/session-map.tsx
 msgid "This group has no terminals."
@@ -6139,49 +6176,6 @@ msgstr "Câu hỏi này cần phiên bản ứng dụng mới hơn để trả l
 #: src/components/agent-context-sheet.tsx
 msgid "this rule"
 msgstr "quy tắc này"
-
-#: src/hooks/use-agent-command-delivery.ts
-msgid "This server cannot run that command yet."
-msgstr "Máy chủ này chưa chạy được lệnh đó"
-
-#: src/lib/network-error.ts
-msgid "This server cannot use this device's stored key. Pair it again to reconnect."
-msgstr "Máy chủ này không thể dùng khóa đã lưu của thiết bị này. Hãy ghép nối lại để kết nối lại"
-
-#: src/lib/network-error.ts
-msgid "This server could not read the request. Check this device's date and time."
-msgstr "Máy chủ này không đọc được yêu cầu. Hãy kiểm tra ngày giờ của thiết bị này"
-
-#: src/components/new-task-sheet.tsx
-msgid "This server did not name any agents it can start."
-msgstr "Máy chủ này không nêu tên tác tử nào nó có thể khởi động"
-
-#: src/lib/network-error.ts
-msgid "This server had a problem answering."
-msgstr "Máy chủ này gặp sự cố khi trả lời"
-
-#: src/lib/network-error.ts
-msgid "This server has already handled that request."
-msgstr "Máy chủ này đã xử lý yêu cầu đó rồi"
-
-#: src/app/new-task.tsx
-msgid "This server has no session to start an agent in."
-msgstr "Máy chủ này không có phiên nào để khởi động tác tử"
-
-#: src/app/agent-guide.tsx
-#: src/app/new-task.tsx
-#: src/app/simfarm.tsx
-#: src/app/web-service.tsx
-msgid "This server is no longer paired."
-msgstr "Máy chủ này không còn được ghép nối"
-
-#: src/lib/network-error.ts
-msgid "This server no longer recognises this device. Pair it again to reconnect."
-msgstr "Máy chủ này không còn nhận ra thiết bị này. Hãy ghép nối lại để kết nối lại"
-
-#: src/lib/network-error.ts
-msgid "This server refused the request."
-msgstr "Máy chủ này đã từ chối yêu cầu"
 
 #: src/components/agent-context-sheet.tsx
 msgid "This session"
@@ -6257,8 +6251,8 @@ msgid "Today"
 msgstr "Hôm nay"
 
 #: src/components/settings-mcp-tokens.tsx
-msgid "Tokens coding agents use to reach this gateway from this computer."
-msgstr "Token mà các agent lập trình dùng để truy cập gateway này từ máy tính này"
+msgid "Tokens coding agents use to reach this computer."
+msgstr "Token mà các tác tử lập trình dùng để kết nối tới máy tính này"
 
 #: src/components/agent-context-sheet.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
@@ -6332,8 +6326,8 @@ msgstr "Thử lại"
 #: src/components/settings-mcp-tokens.tsx
 #: src/components/settings-server-capabilities.tsx
 #: src/components/settings-servers.tsx
-msgid "Try again once the gateway responds."
-msgstr "Hãy thử lại khi gateway phản hồi"
+msgid "Try again once the computer responds."
+msgstr "Hãy thử lại khi máy tính phản hồi"
 
 #: src/components/theme-browse-sheet.tsx
 msgid "Try searching for another name or tag."
@@ -6455,8 +6449,8 @@ msgid "Unpair {label}"
 msgstr "Hủy ghép nối {label}"
 
 #: src/components/settings-servers.tsx
-msgid "Unpair this server"
-msgstr "Hủy ghép nối máy chủ này"
+msgid "Unpair this computer"
+msgstr "Hủy ghép nối máy tính này"
 
 #: src/components/settings-servers.tsx
 msgid "Unpairing {label}"
@@ -6497,12 +6491,12 @@ msgid "Update"
 msgstr "Cập nhật"
 
 #: src/components/agent-assignment-bar.tsx
-msgid "Update Herdr on the server to 0.9.0 or newer, then restart the session, to assign a task to another assistant"
-msgstr "Cập nhật Herdr trên máy chủ lên 0.9.0 trở lên rồi khởi động lại phiên để giao việc cho một trợ lý khác"
+msgid "Update Herdr on the computer to 0.9.0 or newer, then restart the session, to assign a task to another assistant"
+msgstr "Cập nhật Herdr trên máy tính lên 0.9.0 trở lên rồi khởi động lại phiên để giao việc cho một trợ lý khác"
 
 #: src/components/agent-assignment-bar.tsx
-msgid "Update Muqun Gateway on the server, then restart it, to assign a task to another assistant"
-msgstr "Cập nhật Muqun Gateway trên máy chủ rồi khởi động lại để giao việc cho một trợ lý khác"
+msgid "Update Muqun Gateway on the computer, then restart it, to assign a task to another assistant"
+msgstr "Cập nhật Muqun Gateway trên máy tính rồi khởi động lại để giao việc cho một trợ lý khác"
 
 #: src/components/agent-guide-sheet.tsx
 #: src/components/new-task-action.tsx
@@ -6584,8 +6578,8 @@ msgid "Use theme defaults"
 msgstr "Dùng thiết lập mặc định của giao diện"
 
 #: src/components/settings-servers.tsx
-msgid "Use this server"
-msgstr "Dùng máy chủ này"
+msgid "Use this computer"
+msgstr "Dùng máy tính này"
 
 #: src/components/settings-appearance.tsx
 msgid "Use your own font for the app and the terminal."
@@ -6772,5 +6766,5 @@ msgid "Your message"
 msgstr "Tin nhắn của bạn"
 
 #: src/components/app-drawer-content.tsx
-msgid "Your paired gateways"
-msgstr "Các gateway đã ghép nối của bạn"
+msgid "Your paired computers"
+msgstr "Các máy tính đã ghép nối của bạn"

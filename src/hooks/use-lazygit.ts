@@ -72,7 +72,7 @@ export function useLazygit({
           () =>
             Alert.alert(
               t`Could not start a terminal.`,
-              t`Check that lazygit is installed on the Gateway host and this pane is in a Git repository.`
+              t`Check that lazygit is installed on this computer and this pane is in a Git repository.`
             )
         ),
       () => {

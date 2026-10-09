@@ -114,7 +114,7 @@ export function HomeConnections({
       <View style={hasConnections ? undefined : emptyPlate}>
         {hasConnections ? null : (
           <Text variant="bodySmall" color={theme.colors.textMuted}>
-            {t`Add a gateway or an SSH host to start working.`}
+            {t`Add a computer or an SSH host to start working.`}
           </Text>
         )}
         <PressableScale

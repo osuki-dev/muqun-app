@@ -300,7 +300,7 @@ export function PadServerRail({
               paddingTop: profile.rail.actionsPaddingTop,
             },
           ]}>
-          <RailGlyphAction label={t`Pair a server`} icon={ScanLine} onPress={onPairServer} />
+          <RailGlyphAction label={t`Pair a computer`} icon={ScanLine} onPress={onPairServer} />
           {onOpenSsh ? (
             <RailGlyphAction label={t`SSH`} icon={SquareTerminal} onPress={onOpenSsh} />
           ) : null}
@@ -317,7 +317,7 @@ export function PadServerRail({
             },
           ]}>
           <RailAction
-            label={t`Pair a server`}
+            label={t`Pair a computer`}
             detail={t`Scan a gateway QR`}
             icon={ScanLine}
             onPress={onPairServer}

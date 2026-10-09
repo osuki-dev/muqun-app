@@ -183,7 +183,7 @@ export default function AppDrawer({
             pointerEvents="auto">
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel={t`Hide the server list`}
+              accessibilityLabel={t`Hide the computer list`}
               onPress={() => setRailPeeked(false)}
               style={StyleSheet.absoluteFill}
             />
@@ -229,7 +229,7 @@ export default function AppDrawer({
             <SafeAreaView edges={['top']} pointerEvents="box-none">
               <PressableScale
                 accessibilityRole="button"
-                accessibilityLabel={t`Show the server list`}
+                accessibilityLabel={t`Show the computer list`}
                 onPress={() => setRailPeeked(true)}
                 style={[
                   styles.railHandle,
@@ -248,7 +248,7 @@ export default function AppDrawer({
           <DetailHeader fadeColor={detailFadeColor}>
             {!permanent && !showsPadRail ? (
               <NavHeaderBackButton
-                accessibilityLabel={t`Back to servers`}
+                accessibilityLabel={t`Back to computers`}
                 onPress={
                   onDetailBack ?? (() => (router.canGoBack() ? router.back() : router.replace('/')))
                 }
@@ -258,7 +258,7 @@ export default function AppDrawer({
             ) : null}
             {detailTitleSlot ?? (
               <NavHeaderTitlePill
-                title={detailTitle ?? record?.label ?? t`Server`}
+                title={detailTitle ?? record?.label ?? t`Computer`}
                 style={styles.detailHeaderTitleMeasure}
               />
             )}

@@ -25,7 +25,7 @@ screenshot "shots/lazygit-keyboard.png"
 # section close
 back --system
 wait "id=workspace-title-switcher label=\"Claude Code\"" 15000
-is visible "label=\"Back to servers\""
+is visible "label=\"Back to computers\""
 is visible "id=workspace-title-switcher label=\"Claude Code\""
 screenshot "shots/lazygit-returned.png"
 
@@ -33,8 +33,8 @@ screenshot "shots/lazygit-returned.png"
 # section close-header
 press "label=\"Hide keyboard\""
 wait "label=\"Show the editor keyboard\"" 15000
-press "label=\"Back to servers\""
+press "label=\"Back to computers\""
 wait "id=workspace-title-switcher label=\"Claude Code\"" 15000
-is visible "label=\"Back to servers\""
+is visible "label=\"Back to computers\""
 is visible "id=workspace-title-switcher label=\"Claude Code\""
 screenshot "shots/lazygit-header-returned.png"

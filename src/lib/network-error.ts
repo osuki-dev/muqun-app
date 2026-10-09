@@ -68,13 +68,13 @@ function describeTransportRefusal(refusal: TransportRefusal): GatewayFailure {
     case 'not-paired':
       return {
         kind: 'auth',
-        message: t`This server no longer recognises this device. Pair it again to reconnect.`,
+        message: t`This computer no longer recognises this device. Pair it again to reconnect.`,
         ...shared,
       };
     case 'stored-key-unusable':
       return {
         kind: 'auth',
-        message: t`This server cannot use this device's stored key. Pair it again to reconnect.`,
+        message: t`This computer cannot use this device's stored key. Pair it again to reconnect.`,
         ...shared,
       };
     case 'unknown-host':
@@ -86,17 +86,17 @@ function describeTransportRefusal(refusal: TransportRefusal): GatewayFailure {
     case 'unreadable-request':
       return {
         kind: 'request',
-        message: t`This server could not read the request. Check this device's date and time.`,
+        message: t`This computer could not read the request. Check this device's date and time.`,
         ...shared,
       };
     case 'already-handled':
       return {
         kind: 'request',
-        message: t`This server has already handled that request.`,
+        message: t`This computer has already handled that request.`,
         ...shared,
       };
     case 'server-fault':
-      return { kind: 'server', message: t`This server had a problem answering.`, ...shared };
+      return { kind: 'server', message: t`This computer had a problem answering.`, ...shared };
     case 'refused':
       // Everything this build cannot name: a code from a newer gateway, a
       // captive portal's HTML, an empty body. Still better than the sentence
@@ -104,7 +104,7 @@ function describeTransportRefusal(refusal: TransportRefusal): GatewayFailure {
       // who could do nothing whatsoever with that.
       return {
         kind: refusal.status >= 500 ? 'server' : 'request',
-        message: t`This server refused the request.`,
+        message: t`This computer refused the request.`,
         ...shared,
       };
   }
@@ -160,7 +160,7 @@ export function describeGatewayFailure(
     // as well -- so this carries the flag that puts the action on screen.
     return {
       kind: 'auth',
-      message: t`Pair this server again.`,
+      message: t`Pair this computer again.`,
       retryable: false,
       needsPairing: true,
     };

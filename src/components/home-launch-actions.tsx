@@ -217,12 +217,12 @@ export function HomeLaunchTarget({
         style={styles.targetName}
         pointerEvents="none">
         {loading
-          ? t`Loading servers`
+          ? t`Loading computers`
           : chosen
             ? chosen.label
             : servers.length
-              ? t`Choose a gateway`
-              : t`Pair a gateway`}
+              ? t`Choose a computer`
+              : t`Pair a computer`}
       </Text>
       {hasMultiple ? (
         <Animated.View style={pickerChevronStyle} pointerEvents="none">

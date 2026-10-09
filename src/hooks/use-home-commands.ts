@@ -249,7 +249,7 @@ export function useHomeCommands(options: HomeCommandOptions = {}): HomeCommands 
           showToast({
             variant: 'danger',
             title: t`Could not open destination`,
-            message: t`No terminal session is available on this server.`,
+            message: t`No terminal session is available on this computer.`,
           });
         }
       } else if (result.status === 'failed') {

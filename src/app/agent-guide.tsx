@@ -102,7 +102,7 @@ export default function AgentGuideScreen() {
     return (
       <View style={[styles.notice, { backgroundColor: surfaceBackground(theme.colors.surface) }]}>
         <Text selectable variant="bodySmall" color={theme.colors.danger}>
-          {t`This server is no longer paired.`}
+          {t`This computer is no longer paired.`}
         </Text>
       </View>
     );
@@ -110,7 +110,7 @@ export default function AgentGuideScreen() {
 
   return (
     <AgentGuideSheet
-      serverLabel={params.label || t`Server`}
+      serverLabel={params.label || t`Computer`}
       agentName={agentName}
       agentKind={agentKind}
       onClose={() => router.back()}

@@ -1,3 +1,4 @@
+# DISABLED pending a real-gateway e2e harness (demo mode never renders the composer); see suite.json.
 # Home's composer, offline demo: `@` assigns the demo workspace, Send runs the
 # new-agent command with the goal. The demo record has no reachable agent host,
 # so the command stops at the agent setup sheet and the goal stays in the

@@ -120,7 +120,7 @@ export default function SettingsScreen() {
                 { route: '/settings-terminal', icon: Terminal, label: t`Terminal` },
                 { route: '/settings-voice', icon: Mic, label: t`Voice to text` },
                 { route: '/settings-alerts', icon: Bell, label: t`Alerts` },
-                { route: '/settings-servers', icon: Server, label: t`Servers` },
+                { route: '/settings-servers', icon: Server, label: t`Computers` },
                 { route: '/settings-storage', icon: HardDrive, label: t`Storage` },
                 { route: '/settings-about', icon: Info, label: t`About` },
               ] as const

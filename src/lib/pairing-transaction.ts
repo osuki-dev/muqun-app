@@ -76,7 +76,7 @@ export async function beginPairingTransaction(
         response.transport_encryption === 'disabled' ? false : Boolean(offer.transportKey),
     },
     requestId,
-    serverLabel: response.server_label || 'Server',
+    serverLabel: response.server_label || 'Computer',
     expiresAt: response.expires_in_ms ? Date.now() + response.expires_in_ms : undefined,
   };
 }

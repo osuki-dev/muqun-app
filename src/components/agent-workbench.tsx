@@ -637,7 +637,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       offline: `${offlineFallback}\n${startAdvice}`,
       refused: (message) => t`${agentName} refused the request: ${message}`,
       unsupported: t`${agentName} does not support that action.`,
-      unknownAgent: t`This gateway does not know ${agentName}. Refresh the agent list and try again.`,
+      unknownAgent: t`This computer does not know ${agentName}. Refresh the agent list and try again.`,
     }),
     [agentName, offlineFallback, startAdvice, t]
   );
@@ -3351,7 +3351,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
               // sentence for that does not say what to type instead.
               message:
                 typedHome && agentRequestErrorDetail(err).code === 'invalid_directory'
-                  ? t`This gateway does not expand ~. Type the full path, starting with /.`
+                  ? t`This computer does not expand ~. Type the full path, starting with /.`
                   : agentErrorRef.current(err, t`Failed to switch project`),
             });
           }

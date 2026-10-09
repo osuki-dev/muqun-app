@@ -610,7 +610,7 @@ export const ChangesSheet = memo(function ChangesSheet({
   );
   const cancelDiscard = useCallback(() => setDiscardTarget(null), []);
   const discardFailed = (name: string) => t`Could not discard ${name}`;
-  const gatewayUnreachable = t`The gateway could not be reached.`;
+  const gatewayUnreachable = t`The computer could not be reached.`;
   const discardFallback = t`Nothing was changed.`;
   const confirmDiscard = () => {
     const target = discardTarget;

@@ -71,7 +71,7 @@ function ErrorRecovery({ onRetry }: { onRetry: () => void }) {
           <Trans>Something went wrong</Trans>
         </Text>
         <Text variant="bodySmall" style={[styles.detail, { color: colors.textMuted }]}>
-          <Trans>The screen hit an error. Try again — your servers stay paired.</Trans>
+          <Trans>The screen hit an error. Try again — your computers stay paired.</Trans>
         </Text>
         <Pressable
           accessibilityRole="button"

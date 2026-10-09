@@ -11,7 +11,7 @@ export default function SettingsServersScreen() {
   const insets = useSafeAreaInsets();
 
   return (
-    <SheetScene testID="settings-servers-sheet" title={t`Servers`}>
+    <SheetScene testID="settings-servers-sheet" title={t`Computers`}>
       <ScrollView
         contentInsetAdjustmentBehavior="never"
         showsVerticalScrollIndicator={false}

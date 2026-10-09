@@ -60,8 +60,9 @@
     {
       "name": "home-composer",
       "program": "flows/home-composer",
-      "tags": ["full", "agents"],
-      "platforms": ["ios", "android"]
+      "tags": [],
+      "platforms": ["ios", "android"],
+      "disabled": "flows/home-composer.ad is disabled pending a real-gateway e2e harness: the demo setup does not take effect, so the device lands on the classic Home with no paired computer and the composer is not rendered."
     },
     {
       "name": "agent-changes-worktree",
@@ -914,7 +915,7 @@
       },
       {
         "target": {
-          "text": "Back to servers"
+          "text": "Back to computers"
         },
         "mode": "press",
         "optional": true,
@@ -1613,7 +1614,7 @@
       },
       {
         "target": {
-          "text": "This file is 8\\.0 MB\\. Muqun opens text files up to 5\\.0 MB; larger ones stay on the server"
+          "text": "This file is 8\\.0 MB\\. Muqun opens text files up to 5\\.0 MB; larger ones stay on the computer"
         },
         "mode": "visible",
         "run": "flows/large-file-preview.ad#visible"
@@ -2025,7 +2026,7 @@
       },
       {
         "target": {
-          "text": "No preview for this kind of file. It stays on the server"
+          "text": "No preview for this kind of file. It stays on the computer"
         },
         "mode": "visible",
         "run": "flows/artifacts.ad#s57"
@@ -2493,7 +2494,7 @@
       },
       {
         "target": {
-          "text": "Back to servers"
+          "text": "Back to computers"
         },
         "mode": "press",
         "optional": true,
@@ -2756,7 +2757,7 @@
       },
       {
         "target": {
-          "text": "Back to servers"
+          "text": "Back to computers"
         },
         "mode": "press",
         "optional": true,
@@ -3348,7 +3349,7 @@
       },
       {
         "target": {
-          "text": "Back to servers"
+          "text": "Back to computers"
         },
         "mode": "press",
         "run": "flows/i18n-shots.ad#s25"
@@ -4027,7 +4028,7 @@
       },
       {
         "target": {
-          "text": "gemini, not found on this server's PATH"
+          "text": "gemini, not found on this computer's PATH"
         },
         "mode": "visible",
         "run": "flows/new-task.ad#s24"
@@ -4237,7 +4238,7 @@
       {
         "when": {
           "target": {
-            "text": "Servers"
+            "text": "Computers"
           },
           "absent": false
         },
@@ -4251,7 +4252,7 @@
           },
           {
             "target": {
-              "text": "Pair a server"
+              "text": "Pair a computer"
             },
             "mode": "visible",
             "run": "flows/pad-workspace.ad#s8"
@@ -4325,7 +4326,7 @@
       {
         "when": {
           "target": {
-            "text": "Servers"
+            "text": "Computers"
           },
           "absent": false
         },
@@ -4570,7 +4571,7 @@
       },
       {
         "target": {
-          "text": "No servers paired yet"
+          "text": "No computers paired yet"
         },
         "mode": "visible",
         "run": "flows/settings.ad#s3"
@@ -4584,7 +4585,7 @@
       },
       {
         "target": {
-          "text": "Panes on server cards"
+          "text": "Panes on computer cards"
         },
         "mode": "visible",
         "run": "flows/settings.ad#s5"
@@ -7160,7 +7161,7 @@
       },
       {
         "target": {
-          "text": "Back to servers"
+          "text": "Back to computers"
         },
         "mode": "press",
         "optional": true,
@@ -8166,7 +8167,7 @@
       },
       {
         "target": {
-          "text": "Back to servers"
+          "text": "Back to computers"
         },
         "mode": "press",
         "run": "subflows/capture-theme.ad#s20"
@@ -8576,7 +8577,7 @@
       },
       {
         "target": {
-          "text": "Back to servers"
+          "text": "Back to computers"
         },
         "mode": "press",
         "optional": true,
@@ -8672,7 +8673,7 @@
     "subflows/restore-key-row": [
       {
         "target": {
-          "text": "Back to servers"
+          "text": "Back to computers"
         },
         "mode": "press",
         "optional": true,
@@ -9259,7 +9260,7 @@
       },
       {
         "target": {
-          "text": "Panes on server cards"
+          "text": "Panes on computer cards"
         },
         "mode": "visible",
         "timeout": 15000,

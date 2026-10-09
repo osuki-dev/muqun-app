@@ -1024,7 +1024,7 @@ export function HomeOverview({
                     <HeaderButton
                       editorial
                       bare={customTheme?.manifest.homePresentation?.toolbarBackground === false}
-                      label={t`Pair a server`}
+                      label={t`Pair a computer`}
                       onPress={() => void commands.pairGateway()}>
                       <ThemeIcon
                         name="chrome.scan"
@@ -1373,7 +1373,7 @@ export function HomeOverview({
         ) : null}
 
         {/* The pack's own illustration, between the header and the machines.
-            Absent while the "Pair your first server" card is up: that card
+            Absent while the "Pair your first computer" card is up: that card
             already carries `emptyState.illustration`, and two pictures stacked
             on an otherwise empty screen is a gallery rather than an invitation.
             It is also independent of the logo pill above -- a reader can keep
@@ -1396,7 +1396,7 @@ export function HomeOverview({
           <Animated.View
             exiting={fadeOut('short')}
             style={[styles.serverList, { gap: metrics.cardGap }]}
-            accessibilityLabel={t`Loading servers`}>
+            accessibilityLabel={t`Loading computers`}>
             {/* The same surface, padding and identity block as a real card, so
                 the skeleton previews the shape that is actually coming. */}
             {[0, 1].map((index) => (
@@ -1426,7 +1426,7 @@ export function HomeOverview({
             below the middle of the space it has rather than either floating in
             the centre or being stranded under the header. They are flex, so a
             list long enough to fill the screen squeezes them to nothing and the
-            layout goes back to being an ordinary column. There is no `Servers`
+            layout goes back to being an ordinary column. There is no `Computers`
             eyebrow above them and no `Add server` beside it: the list is the
             only thing on the screen, so labelling it says nothing, and pairing
             -- which happens once per machine, ever -- belongs in the drawer,
@@ -1868,7 +1868,7 @@ function EmptyState({
         )}
         <View style={[styles.emptyCopy, isPad && styles.padEmptyCopy]}>
           <Text variant="subheading">
-            <Trans>Pair your first server</Trans>
+            <Trans>Pair your first computer</Trans>
           </Text>
           <Text variant="bodySmall" color={theme.colors.textMuted} style={styles.emptyDetail}>
             <Trans>
@@ -1880,14 +1880,14 @@ function EmptyState({
         <Button
           variant="primary"
           leftIcon="ScanLine"
-          accessibilityLabel={t`Pair a server`}
+          accessibilityLabel={t`Pair a computer`}
           testID="home-pair-server"
           onPress={onPair}
           style={isPad ? styles.padEmptyAction : styles.emptyAction}>
           {/* `t` rather than `<Trans>`: the design system's Button types its
               children as a string, so the translation has to arrive already
               rendered rather than as an element. */}
-          {t`Pair a server`}
+          {t`Pair a computer`}
         </Button>
         <PressableScale
           accessibilityRole="button"

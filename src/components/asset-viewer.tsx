@@ -656,7 +656,7 @@ function AssetBody({
         <View style={styles.centerState}>
           <Text variant="bodySmall" color={theme.colors.textMuted} style={styles.centerText}>
             {/* react-doctor-disable-next-line react-hooks-js/todo -- Lingui expands this macro before React Compiler runs. */}
-            {t`This file is ${size}. Muqun opens text files up to ${ceiling}; larger ones stay on the server.`}
+            {t`This file is ${size}. Muqun opens text files up to ${ceiling}; larger ones stay on the computer.`}
           </Text>
           <Text variant="caption" color={theme.colors.textMuted} selectable>
             {asset.path}
@@ -860,7 +860,7 @@ function AssetDetails({ asset }: { asset: SessionAsset }) {
   return (
     <ScrollView style={styles.scroll} contentContainerStyle={styles.detailsContent}>
       <Text variant="bodySmall" color={theme.colors.textMuted}>
-        <Trans>No preview for this kind of file. It stays on the server.</Trans>
+        <Trans>No preview for this kind of file. It stays on the computer.</Trans>
       </Text>
       <View>
         {rows.map((row, index) => (

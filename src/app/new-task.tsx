@@ -74,7 +74,7 @@ export default function NewTaskScreen() {
       return recoverWith(
         async () => {
           if (needsSelect && !(await selectRecord(serverId))) {
-            if (!cancelled) setError(t`This server is no longer paired.`);
+            if (!cancelled) setError(t`This computer is no longer paired.`);
             return;
           }
           if (cancelled || needsSelect || tunnel.phase !== 'open' || sessionId) return;
@@ -85,14 +85,14 @@ export default function NewTaskScreen() {
           const first = sessions.sessions?.[0]?.id;
           if (cancelled) return;
           if (!first) {
-            setError(t`This server has no session to start an agent in.`);
+            setError(t`This computer has no session to start an agent in.`);
             return;
           }
           setSessionId(first);
         },
         (failure) => {
           if (!cancelled) {
-            setError(describeGatewayFailure(failure, t`Could not reach this server.`).message);
+            setError(describeGatewayFailure(failure, t`Could not reach this computer.`).message);
           }
         }
       );
@@ -134,8 +134,8 @@ export default function NewTaskScreen() {
           style={{ textAlign: 'center' }}>
           {error ??
             (tunnelFailed
-              ? tunnel.reason || t`Could not reach this server.`
-              : t`No server to start a task on.`)}
+              ? tunnel.reason || t`Could not reach this computer.`
+              : t`No computer to start a task on.`)}
         </Text>
         {serverId ? (
           <Button

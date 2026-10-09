@@ -2017,7 +2017,7 @@ export async function launchPaneLazygit(
     started?: unknown;
   };
   if (typeof data?.target?.pane_id !== 'string' || !data.target.pane_id)
-    throw new Error('The server did not say which terminal it made.');
+    throw new Error('The computer did not say which terminal it made.');
   return { paneId: data.target.pane_id, started: data.started === true };
 }
 

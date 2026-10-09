@@ -64,7 +64,7 @@ function CapabilitiesSection() {
           <SettingsInfoRow
             icon={TriangleAlert}
             label={t`Could not load capabilities`}
-            detail={t`Try again once the gateway responds.`}
+            detail={t`Try again once the computer responds.`}
             testID="server-capabilities-error"
           />
         ) : (

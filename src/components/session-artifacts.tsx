@@ -686,7 +686,7 @@ const EmptyState = memo(function EmptyState({
       <Text variant="bodySmall" color={theme.colors.textMuted} style={styles.centerText}>
         {row.unavailable ? (
           <Trans>
-            This gateway does not serve files yet. Update the Muqun gateway plugin to browse what a
+            This computer does not serve files yet. Update the Muqun gateway plugin to browse what a
             session writes.
           </Trans>
         ) : (

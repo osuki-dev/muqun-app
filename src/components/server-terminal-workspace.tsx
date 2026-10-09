@@ -1790,7 +1790,7 @@ export function ServerTerminalWorkspace({
               if (!isCurrentRequest()) return null;
               return {
                 ok: false,
-                failure: describeGatewayFailure(failure, t`Server unavailable.`),
+                failure: describeGatewayFailure(failure, t`Computer unavailable.`),
               };
             }
           );
@@ -3147,7 +3147,7 @@ export function ServerTerminalWorkspace({
       .catch((failure: unknown) => {
         if (cancelled()) return;
         clearPanelPick();
-        setError(describeGatewayFailure(failure, t`Server unavailable.`).message);
+        setError(describeGatewayFailure(failure, t`Computer unavailable.`).message);
       });
     return () => {
       disposed = true;
@@ -4588,7 +4588,7 @@ export function ServerTerminalWorkspace({
           showToast({
             variant: 'danger',
             title: t`Could not open the file`,
-            message: describeGatewayFailure(failure, t`The server did not return it.`).message,
+            message: describeGatewayFailure(failure, t`The computer did not return it.`).message,
           });
         })
         .finally(() => {
@@ -4714,7 +4714,7 @@ export function ServerTerminalWorkspace({
         serverId,
         sessionId: data.sessionId,
         paneId: selection.paneId,
-        label: routeRecord?.label ?? record?.label ?? t`Server`,
+        label: routeRecord?.label ?? record?.label ?? t`Computer`,
         embedded: providedServerId === undefined ? '0' : '1',
         sessions: encodeSessionChoices(sessions),
       },
@@ -4739,10 +4739,10 @@ export function ServerTerminalWorkspace({
       <AppDrawer>
         <View style={styles.centerState}>
           <Text variant="heading">
-            <Trans>Server not found</Trans>
+            <Trans>Computer not found</Trans>
           </Text>
           <Text variant="bodySmall" color={theme.colors.textMuted}>
-            <Trans>Return to the server list and pair again.</Trans>
+            <Trans>Return to the computer list and pair again.</Trans>
           </Text>
         </View>
       </AppDrawer>
@@ -4755,10 +4755,10 @@ export function ServerTerminalWorkspace({
   // naming it twice spent the width the pane name needs.
   const detailTitle = selectedPane
     ? panelTitle(selectedPane, selectedAgent)
-    : (routeRecord?.label ?? record?.label ?? t`Server`);
+    : (routeRecord?.label ?? record?.label ?? t`Computer`);
   const shellTitle = padDetailIsPane
     ? detailTitle
-    : (padAgentTitle ?? routeRecord?.label ?? record?.label ?? t`Server`);
+    : (padAgentTitle ?? routeRecord?.label ?? record?.label ?? t`Computer`);
 
   // The pane's two entries: what goes into the session, and what came out of
   // it. Written once because they are the same two buttons whether they sit in
@@ -5136,7 +5136,7 @@ export function ServerTerminalWorkspace({
       <ArtifactsButton
         sessionId={data.sessionId}
         tabId={selection.tabId}
-        label={routeRecord?.label ?? record?.label ?? t`Server`}
+        label={routeRecord?.label ?? record?.label ?? t`Computer`}
         disabled={!targetReady || !selectedPane}
         background={fill}
         compact={isPadLayout}
@@ -6514,11 +6514,11 @@ function ConnectionNotice({
         ? t`Connecting`
         : status.phase === 'reconnecting'
           ? t`Reconnecting · ${status.attempt}`
-          : t`Server offline`;
+          : t`Computer offline`;
 
   // One shape for every phase, and the colour only on the dot. The state is
   // carried by the words -- a status that is legible by hue alone is not
-  // legible -- so what changes between "Connecting" and "Server offline" is the
+  // legible -- so what changes between "Connecting" and "Computer offline" is the
   // sentence and a 7pt light, not the object the sentence arrives in.
   const light = connected
     ? theme.colors.success
@@ -6565,7 +6565,7 @@ function ConnectionNotice({
             device has a record on it again. */}
         {!connected && status.needsPairing ? (
           <PressableScale
-            accessibilityLabel={t`Pair this server again`}
+            accessibilityLabel={t`Pair this computer again`}
             onPress={onPairAgain}
             style={terminalNoticeStyles.action}
             hitSlop={8}>
@@ -6799,7 +6799,7 @@ const styles = StyleSheet.create({
     // size is its content's size, so without `minWidth: 0` the wrapper keeps
     // its full intrinsic width, the sentence never wraps to the second line it
     // is allowed, and the pill's `overflow: hidden` takes the end of it off
-    // mid-word with no ellipsis to admit it -- which is how "Server offline ·
+    // mid-word with no ellipsis to admit it -- which is how "Computer offline ·
     // Waiting for the network" reached a phone as "Waiting for the".
     minWidth: 0,
   },

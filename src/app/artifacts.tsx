@@ -27,7 +27,7 @@ export default function ArtifactsScreen() {
     <SessionArtifacts
       sessionId={params.sessionId || 'default'}
       tabId={params.tabId || ''}
-      label={params.label || t`Server`}
+      label={params.label || t`Computer`}
     />
   );
 }
