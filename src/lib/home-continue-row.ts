@@ -87,7 +87,9 @@ export function terminalRowTitle(input: {
   const prompt = SHELL_PROMPT.test(raw);
   const stripped = raw.replace(SHELL_PROMPT, '').trim();
   if (input.hasAgent) {
-    if (stripped && !prompt && !isCommandPathTitle(stripped)) return stripped;
+    if (stripped && !prompt && !isPathLike(stripped) && !isCommandPathTitle(stripped)) {
+      return stripped;
+    }
     const name = input.agentName?.trim();
     if (name) return name;
   }

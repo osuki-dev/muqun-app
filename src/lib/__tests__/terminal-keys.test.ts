@@ -297,7 +297,15 @@ describe('terminalShortcutTestId', () => {
     expect(terminalShortcutTestId('enter')).toBe('terminal-shortcut-enter');
     expect(terminalShortcutTestId('shift+tab')).toBe('terminal-shortcut-shift-tab');
     expect(terminalShortcutTestId('ctrl+j')).toBe('terminal-shortcut-ctrl-j');
-    expect(terminalShortcutTestId('nvim:w')).toBe('terminal-shortcut-nvim-w');
-    expect(terminalShortcutTestId('::')).toBe('terminal-shortcut-key');
+    expect(terminalShortcutTestId('nvim:w')).toBe('terminal-shortcut-nvim-colon-w');
+  });
+
+  test('punctuation keys get ids of their own', () => {
+    expect(terminalShortcutTestId('ctrl+-')).toBe('terminal-shortcut-ctrl-minus');
+    expect(terminalShortcutTestId('ctrl+=')).toBe('terminal-shortcut-ctrl-equal');
+    expect(terminalShortcutTestId('ctrl++')).toBe('terminal-shortcut-ctrl-plus');
+    expect(terminalShortcutTestId('::')).toBe('terminal-shortcut-colon-colon');
+    expect(terminalShortcutTestId('é')).toBe('terminal-shortcut-ue9');
+    expect(terminalShortcutTestId('')).toBe('terminal-shortcut-key');
   });
 });

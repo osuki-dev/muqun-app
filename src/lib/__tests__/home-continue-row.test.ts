@@ -92,6 +92,17 @@ describe('terminalRowTitle', () => {
     expect(
       terminalRowTitle({ paneTitle: '/usr/local/bin/claude', hasAgent: true, agentName: 'Claude' })
     ).toBe('Claude');
+    // A bare home or a path with spaces is a path too, not a title.
+    expect(
+      terminalRowTitle({ paneTitle: '~', cwd: '/home/me', hasAgent: true, agentName: 'Codex' })
+    ).toBe('Codex');
+    expect(
+      terminalRowTitle({
+        paneTitle: '~/My Projects/app',
+        cwd: '/home/me/My Projects/app',
+        hasAgent: true,
+      })
+    ).toBe('app');
     // No name to give it: the folder, as before, never the path.
     expect(
       terminalRowTitle({

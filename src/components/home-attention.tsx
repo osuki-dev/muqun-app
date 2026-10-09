@@ -4,6 +4,7 @@ import { useThemeTokens } from '@osuki-dev/ui';
 import { ChevronRight, CircleAlert } from 'lucide-react-native';
 import { StyleSheet, View } from 'react-native';
 
+import { useTaskIndexFor } from '@/components/home-in-progress';
 import { PressableScale } from '@/components/pressable-scale';
 import { TaskStatusGlyph } from '@/components/task-status-glyph';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
@@ -24,7 +25,6 @@ import type { HomeAttentionSnapshot } from '@/lib/home-attention';
 import { homeWaitingTasks, type HomeTaskRow } from '@/lib/home-in-progress';
 import { useAgents } from '@/stores/agents';
 import { useHomeAttention } from '@/stores/home-attention';
-import { useServerTasksStore } from '@/stores/server-tasks';
 
 const OBSERVATION_DATE_FORMAT: Intl.DateTimeFormatOptions = {
   month: 'short',
@@ -34,8 +34,9 @@ const OBSERVATION_DATE_FORMAT: Intl.DateTimeFormatOptions = {
 };
 
 /**
- * An open-only summary. Permission decisions remain in the source workbench;
- * a ledger task waiting on the reader opens in the Tasks sheet.
+ * An open-only summary. Permission decisions remain in the source workbench.
+ * A ledger task waiting on the reader is listed unless its session's own
+ * request already is; `onOpenTask` decides where it opens.
  */
 export function HomeAttention({
   servers,
@@ -47,16 +48,22 @@ export function HomeAttention({
   /** The computers whose task ledger Home holds fresh. */
   taskServerIds?: readonly string[];
   onOpen: (target: HomeTarget) => void;
-  onOpenTask?: (taskId: string) => void;
+  onOpenTask?: (row: HomeTaskRow) => void;
 }) {
   const observations = useHomeAttention((state) => state.byTarget);
-  const taskIndex = useServerTasksStore((state) => state.index);
+  const taskIndex = useTaskIndexFor(taskServerIds);
   const pending = Object.entries(observations).filter(
     ([, snapshot]) =>
       snapshot.requestIds.length > 0 &&
       servers.some((server) => server.serverId === snapshot.target.serverId)
   );
-  const waiting = onOpenTask ? homeWaitingTasks(taskIndex, taskServerIds) : [];
+  const waiting = onOpenTask
+    ? homeWaitingTasks(
+        taskIndex,
+        taskServerIds,
+        pending.map(([, snapshot]) => snapshot.target)
+      )
+    : [];
   if (pending.length === 0 && waiting.length === 0) {
     return null;
   }
@@ -71,7 +78,7 @@ export function HomeAttention({
               key={`${row.serverId}:${row.task.taskId}`}
               row={row}
               servers={servers}
-              onOpen={() => onOpenTask(row.task.taskId)}
+              onOpen={() => onOpenTask(row)}
             />
           ))
         : null}

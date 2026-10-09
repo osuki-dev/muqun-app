@@ -48,12 +48,32 @@ export function homeInProgressTasks(
   return { rows: all.slice(0, Math.max(0, limit)), total: all.length };
 }
 
-/** Tasks waiting on the reader, newest first: they belong with Needs you. */
+/** An agent session Needs you already lists for its own pending request. */
+export type PendingSessionTarget = { serverId: string; asid: string };
+
+/**
+ * Tasks waiting on the reader, newest first: they belong with Needs you.
+ *
+ * The gateway moves a delegation to `waiting` exactly when its bound session
+ * raises a permission or form request, and Needs you lists that request
+ * already, as a row that opens the session where it can be answered. A task
+ * bound to such a session is that same request again, so it is left out.
+ */
 export function homeWaitingTasks(
   index: ServerTasksIndex,
-  serverIds: readonly string[]
+  serverIds: readonly string[],
+  pending: readonly PendingSessionTarget[] = []
 ): HomeTaskRow[] {
-  return rowsWhere(index, serverIds, (task) => task.state === 'waiting');
+  const listed = new Set(pending.map((target) => `${target.serverId}\n${target.asid}`));
+  const rows: HomeTaskRow[] = [];
+  for (const row of rowsWhere(index, serverIds, (task) => task.state === 'waiting')) {
+    const { binding } = row.task;
+    if (binding.kind === 'agent_session' && listed.has(`${row.serverId}\n${binding.asid}`)) {
+      continue;
+    }
+    rows.push(row);
+  }
+  return rows;
 }
 
 /**

@@ -1005,9 +1005,21 @@ export function HomeOverview({
                     onOpen={(target) => {
                       void commands.resumeTarget(target);
                     }}
-                    onOpenTask={(taskId) =>
-                      router.push({ pathname: '/server-tasks', params: { taskId } })
-                    }
+                    onOpenTask={({ serverId, task }) => {
+                      // A session's request is answered in the session; the
+                      // Tasks sheet can only show it.
+                      if (task.binding.kind === 'agent_session') {
+                        void commands.openAgent(
+                          serverId,
+                          task.binding.asid,
+                          undefined,
+                          undefined,
+                          task.binding.agentId
+                        );
+                        return;
+                      }
+                      router.push({ pathname: '/server-tasks', params: { taskId: task.taskId } });
+                    }}
                   />
                 ) : undefined
               }

@@ -2,6 +2,7 @@ import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { ComposerAttachmentButton } from '@/components/composer-attachment-button';
 import { TerminalNotice, terminalNoticeStyles } from '@/components/terminal-notice';
 import { NoticeDeck } from '@/components/notice-deck';
+import { revealableSubtreeImportance } from '@/lib/hidden-subtree';
 import { ComposerSendGuard } from '@/lib/composer-send-guard';
 import { Spinner, useThemeMode, useThemeTokens, useToast } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
@@ -5345,7 +5346,7 @@ export function ServerTerminalWorkspace({
         <View
           pointerEvents={paneHidden ? 'none' : 'auto'}
           accessibilityElementsHidden={paneHidden}
-          importantForAccessibility={paneHidden ? 'no-hide-descendants' : 'auto'}
+          importantForAccessibility={revealableSubtreeImportance(paneHidden)}
           style={[StyleSheet.absoluteFill, { opacity: paneHidden ? 0 : 1 }]}>
           <View style={styles.workspaceSplit}>
             {/* No background and no wallpaper of its own. `AppDrawer` wraps this
@@ -6067,7 +6068,7 @@ export function ServerTerminalWorkspace({
           <View
             pointerEvents={overviewVisible ? 'none' : 'auto'}
             accessibilityElementsHidden={overviewVisible}
-            importantForAccessibility={overviewVisible ? 'no-hide-descendants' : 'auto'}
+            importantForAccessibility={revealableSubtreeImportance(overviewVisible)}
             style={[StyleSheet.absoluteFill, { opacity: overviewVisible ? 0 : 1 }]}>
             <PadAgentDetail
               detail={padDetail}
