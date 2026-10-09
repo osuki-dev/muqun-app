@@ -21,12 +21,19 @@ import { Text } from '@/components/text';
 import { ChevronRight, type LucideIcon } from 'lucide-react-native';
 import { Children, Fragment, isValidElement, type ReactNode } from 'react';
 import { StyleSheet, type TextStyle, View } from 'react-native';
+import Animated, {
+  useAnimatedStyle,
+  useReducedMotion,
+  useSharedValue,
+  withTiming,
+} from 'react-native-reanimated';
 
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { PressableScale } from '@/components/pressable-scale';
 import { Toggle } from '@/components/toggle';
 import { ThemedSurface } from '@/components/themed-surface';
 import { useSheetGroundPlate } from '@/components/sheet-ground';
+import { listLayout, PRESS, timing } from '@/lib/motion';
 import { useRenderTally } from '@/lib/render-tally';
 
 /**
@@ -240,8 +247,20 @@ export function SettingsSection({ title, children }: { title: string; children: 
 export function SettingsCard({
   children,
   flush = false,
+  reflow = false,
 }: {
   children: ReactNode;
+  /**
+   * Rows and hairlines slide to their new places when one row changes height,
+   * instead of jumping there.
+   *
+   * For a card with a row that opens in place (the computers list): the row
+   * animates its own height with `listLayout`, and without this everything
+   * below it -- the next hairline, the next row -- would teleport while the
+   * opened row was still growing. Off by default, because a card whose rows
+   * never move has no reason to carry a layout animation per row.
+   */
+  reflow?: boolean;
   /**
    * No surface of its own: the rows sit straight on the ground with their
    * hairlines and nothing else.
@@ -255,32 +274,28 @@ export function SettingsCard({
 }) {
   const profile = useAppearanceProfile();
   const theme = useThemeTokens();
-  const rows = Children.toArray(children);
-  if (flush) {
-    return (
-      <View style={styles.sectionBodyFlush}>
-        {rows.map((row, position) => (
-          <Fragment
-            key={isValidElement(row) && row.key != null ? row.key : `settings-row-${position}`}>
-            {position > 0 ? <SettingsSeparator /> : null}
-            {row}
-          </Fragment>
-        ))}
-      </View>
+  const rows = Children.toArray(children).map((row, position) => {
+    const key = isValidElement(row) && row.key != null ? row.key : `settings-row-${position}`;
+    const separator = position > 0 ? <SettingsSeparator /> : null;
+    return reflow ? (
+      <Animated.View key={key} layout={listLayout()}>
+        {separator}
+        {row}
+      </Animated.View>
+    ) : (
+      <Fragment key={key}>
+        {separator}
+        {row}
+      </Fragment>
     );
-  }
+  });
+  if (flush) return <View style={styles.sectionBodyFlush}>{rows}</View>;
   return (
     <ThemedSurface
       slot="cards.decoration"
       baseColor={theme.colors.surface}
       style={[styles.sectionBody, { borderRadius: profile.chrome.surface }]}>
-      {rows.map((row, position) => (
-        <Fragment
-          key={isValidElement(row) && row.key != null ? row.key : `settings-row-${position}`}>
-          {position > 0 ? <SettingsSeparator /> : null}
-          {row}
-        </Fragment>
-      ))}
+      {rows}
     </ThemedSurface>
   );
 }
@@ -404,6 +419,21 @@ export function SettingsNavRow({
   const theme = useThemeTokens();
   const surfaceBackground = useSurfaceBackground();
   useRenderTally('SettingsNavRow');
+  // The chevron leans the way the row goes while it is held, the same few
+  // points the launch tiles' arrow travels. Only a chevron: a row whose glyph
+  // says "leaves Muqun" is not going rightwards, and nudging that glyph would
+  // say it was. Off entirely under reduce motion, rather than a jump.
+  const reduceMotion = useReducedMotion();
+  const leans = Trailing === ChevronRight && !disabled && !reduceMotion;
+  const nudge = useSharedValue(0);
+  const trailingStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: nudge.get() }],
+  }));
+  const lean = (pressed: boolean) => {
+    nudge.set(
+      withTiming(pressed && leans ? CHEVRON_NUDGE : 0, timing(pressed ? PRESS.in : PRESS.out))
+    );
+  };
   return (
     <PressableScale
       accessibilityRole={accessibilityRole}
@@ -412,6 +442,8 @@ export function SettingsNavRow({
       disabled={disabled}
       testID={testID}
       onPress={onPress}
+      onPressIn={() => lean(true)}
+      onPressOut={() => lean(false)}
       style={[styles.row, { paddingVertical: profile.settingsRowPaddingVertical }]}>
       {Icon ? (
         <View
@@ -437,10 +469,15 @@ export function SettingsNavRow({
           </Text>
         ) : null}
       </View>
-      <Trailing size={18} color={theme.colors.textMuted} strokeWidth={2} />
+      <Animated.View style={trailingStyle}>
+        <Trailing size={18} color={theme.colors.textMuted} strokeWidth={2} />
+      </Animated.View>
     </PressableScale>
   );
 }
+
+/** How far a nav row's chevron leans toward where the row goes, in points. */
+const CHEVRON_NUDGE = 3;
 
 /**
  * A row that names a choice made somewhere else, and opens the sheet where it
