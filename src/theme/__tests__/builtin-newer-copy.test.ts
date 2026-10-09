@@ -107,4 +107,6 @@ test('versions order by their three numbers, then release over pre-release', () 
   expect(compareThemeVersions('1.0.6', '1.0.6')).toBe(0);
   expect(compareThemeVersions('1.0.6', '1.0.6-beta.1')).toBeGreaterThan(0);
   expect(compareThemeVersions('1.0.6-alpha', '1.0.6-beta')).toBeLessThan(0);
+  expect(compareThemeVersions('1.0.6-beta.10', '1.0.6-beta.2')).toBeGreaterThan(0);
+  expect(compareThemeVersions('1.0.6-rc-2', '1.0.6-rc-1')).toBeGreaterThan(0);
 });

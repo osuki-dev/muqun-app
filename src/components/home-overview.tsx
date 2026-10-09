@@ -87,6 +87,7 @@ import {
 } from '@/components/home-recent-sessions';
 import { homeContinueSearchEnabled } from '@/lib/home-continue-search';
 import { demoContinueSearchEntries } from '@/lib/demo-recents';
+import { useScreenVisible } from '@/hooks/use-screen-visible';
 import { claimHomeFirstEntry } from '@/lib/home-first-entry';
 import { padHomeColumns, padLaunchLayoutEnabled } from '@/lib/home-pad-geometry';
 import { resetSortHold, sortHoldScroll, sortHoldTouches } from '@/stores/home-sort-hold';
@@ -328,12 +329,15 @@ export function HomeOverview({
   const hasPairedServer = records.some((server) => server.serverId !== DEMO_SERVER_ID);
   const appActive = useAppActive();
   const isFocused = useIsFocused();
-  // The other computers' task sockets live only while Home is on screen; the
-  // selected one's ledger stays current as it always has (the dock, Needs you
-  // and the Continue status read it).
+  // The other computers' task sockets live only while Home is on screen --
+  // which it still is under a sheet (a dock picker, the Tasks list), so those
+  // do not tear the sockets down and read every list again on the way back.
+  // The selected one's ledger stays current as it always has (the dock, Needs
+  // you and the Continue status read it).
+  const homeInView = useScreenVisible(isPad);
   const liveTaskServerIds = useMemo(
-    () => (isFocused ? taskServerIds : taskServerIds.filter((id) => id === record?.serverId)),
-    [isFocused, taskServerIds, record?.serverId]
+    () => (homeInView ? taskServerIds : taskServerIds.filter((id) => id === record?.serverId)),
+    [homeInView, taskServerIds, record?.serverId]
   );
   const scrollY = useSharedValue(0);
   // Save only at gesture boundaries, never once per frame on the JS thread.

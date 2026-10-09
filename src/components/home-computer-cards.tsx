@@ -27,6 +27,7 @@ import {
 import { PAD_CARD_GAP, padCardColumns } from '@/lib/home-pad-geometry';
 import { fadeOut, listLayout, pulseOnce, riseIn } from '@/lib/motion';
 import {
+  reachabilityOfStatus,
   resolveConnectionStatus,
   type ActiveServerConnection,
   type ConnectionStatus,
@@ -85,10 +86,9 @@ function useCardInputs(activeConnection: ActiveServerConnection | undefined, now
       selected: serverId === selectedId,
       nowMs,
     });
-  const reachability = (serverId: string): ServerReachability => {
-    const status = statusOf(serverId);
-    return status === 'live' ? 'live' : status === 'offline' ? 'offline' : 'unknown';
-  };
+  // A refused pairing counts as offline: its stale rows get no card.
+  const reachability = (serverId: string): ServerReachability =>
+    reachabilityOfStatus(statusOf(serverId));
   return {
     statusOf,
     reachability,

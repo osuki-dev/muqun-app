@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { boundTaskState, homeWaitingTasks, taskStateTone } from '../home-in-progress';
+import { boundTask, homeWaitingTasks } from '../home-in-progress';
 import type { ServerTasksIndex } from '../server-tasks-state';
 import type { TaskBinding, TaskState, TaskView } from '../task-ledger';
 
@@ -46,21 +46,21 @@ describe('homeWaitingTasks', () => {
   });
 });
 
-describe('boundTaskState', () => {
+describe('boundTask', () => {
   const bound = (asid: string): TaskBinding => ({ kind: 'agent_session', agentId: 'oc', asid });
 
   test('an open task bound to the session speaks for it', () => {
     const tasks = [task('t', 'working', 2, bound('ses_1'))];
-    expect(boundTaskState(tasks, 'ses_1')).toBe('working');
-    expect(boundTaskState([task('t', 'waiting', 2, bound('ses_1'))], 'ses_1')).toBe('waiting');
+    expect(boundTask(tasks, 'ses_1')?.state).toBe('working');
+    expect(boundTask([task('t', 'waiting', 2, bound('ses_1'))], 'ses_1')?.state).toBe('waiting');
   });
 
   test('a finished, unbound or other-session task does not', () => {
-    expect(boundTaskState([task('t', 'done', 2, bound('ses_1'))], 'ses_1')).toBeUndefined();
-    expect(boundTaskState([task('t', 'working', 2)], 'ses_1')).toBeUndefined();
-    expect(boundTaskState([task('t', 'working', 2, bound('ses_2'))], 'ses_1')).toBeUndefined();
+    expect(boundTask([task('t', 'done', 2, bound('ses_1'))], 'ses_1')).toBeUndefined();
+    expect(boundTask([task('t', 'working', 2)], 'ses_1')).toBeUndefined();
+    expect(boundTask([task('t', 'working', 2, bound('ses_2'))], 'ses_1')).toBeUndefined();
     expect(
-      boundTaskState(
+      boundTask(
         [
           task('t', 'working', 2, {
             kind: 'pane',
@@ -71,22 +71,12 @@ describe('boundTaskState', () => {
         'ses_1'
       )
     ).toBeUndefined();
-    expect(boundTaskState(undefined, 'ses_1')).toBeUndefined();
-    expect(boundTaskState([task('t', 'working', 2, bound('ses_1'))], undefined)).toBeUndefined();
+    expect(boundTask(undefined, 'ses_1')).toBeUndefined();
+    expect(boundTask([task('t', 'working', 2, bound('ses_1'))], undefined)).toBeUndefined();
   });
 
   test('the newest open task wins', () => {
     const tasks = [task('old', 'queued', 1, bound('s')), task('new', 'waiting', 5, bound('s'))];
-    expect(boundTaskState(tasks, 's')).toBe('waiting');
-  });
-});
-
-describe('taskStateTone', () => {
-  test('running is info, waiting warns, the rest are quiet', () => {
-    expect(taskStateTone('working')).toBe('info');
-    expect(taskStateTone('dispatching')).toBe('info');
-    expect(taskStateTone('waiting')).toBe('warning');
-    expect(taskStateTone('queued')).toBe('textSubtle');
-    expect(taskStateTone('idle_unconfirmed')).toBe('textSubtle');
+    expect(boundTask(tasks, 's')?.state).toBe('waiting');
   });
 });

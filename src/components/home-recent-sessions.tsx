@@ -45,10 +45,10 @@ import {
   type HomeContinueEntry,
 } from '@/lib/home-continue';
 import { agentSessionStatusWord, agentStatusWord, taskStateWord } from '@/i18n/labels';
-import { boundTaskState, taskStateTone } from '@/lib/home-in-progress';
+import { boundTask } from '@/lib/home-in-progress';
 import { useServerTasksStore } from '@/stores/server-tasks';
 import { agentBrandName, agentStatusTone, isLaunchCommandTitle } from '@/lib/herdr-entity';
-import { paneLedgerTask, taskTitle } from '@/lib/home-computer-cards';
+import { paneLedgerTask, taskRowVisual, taskTitle } from '@/lib/home-computer-cards';
 import type { ActiveServerConnection, ServerReachability } from '@/lib/server-reachability';
 import { useServerAgents } from '@/stores/server-agents';
 import { useAppSettings } from '@/stores/app-settings';
@@ -433,11 +433,12 @@ function RecentSessionRow({
   const observation = entry.observation;
   // A session a ledger task is running in says what the task says: the
   // session's own status lags it (it read "Idle" under a working delegation).
-  const taskState = useServerTasksStore((state) =>
+  const task = useServerTasksStore((state) =>
     target?.kind === 'agent-session'
-      ? boundTaskState(state.index[target.serverId]?.tasks, target.asid)
+      ? boundTask(state.index[target.serverId]?.tasks, target.asid)
       : undefined
   );
+  const taskState = task?.state;
   const status = taskState ?? observation?.status;
   const sessionStatus =
     !taskState && observation?.kind === 'agent-session' && observation.status
@@ -450,8 +451,9 @@ function RecentSessionRow({
         ? _(agentSessionStatusWord[sessionStatus.word])
         : _(agentStatusWord[status] ?? agentStatusWord.unknown)
       : undefined;
-  const statusTone = taskState
-    ? taskStateTone(taskState)
+  // The task's tone is the one its card and Needs you row wear.
+  const statusTone = task
+    ? taskRowVisual(task, { canComplete: false, acknowledged: false }).tone
     : sessionStatus
       ? sessionStatus.tone
       : agentStatusTone(observation?.status);

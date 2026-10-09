@@ -83,6 +83,8 @@ export interface TaskView {
    * Cancel), before the gateway answered. Local only; never on the wire.
    */
   settledAtMs?: number;
+  /** This device's clock when the view reached it (frame or answer). Local only. */
+  receivedAtMs?: number;
 }
 
 function parseState(value: unknown): TaskState | null {
@@ -302,13 +304,14 @@ export async function fetchTaskList(opts?: {
 
 /**
  * Open a ledger task on the selected computer: the gateway creates the agent
- * session, sends the goal and records the task in one step.
+ * session, sends the goal and records the task in one step. `null` when the
+ * answer does not say which task it opened; the caller words that.
  */
-export async function createLedgerTask(request: LedgerTaskRequest): Promise<CreatedLedgerTask> {
+export async function createLedgerTask(
+  request: LedgerTaskRequest
+): Promise<CreatedLedgerTask | null> {
   const { postLedgerTask } = await import('./gateway-client');
-  const created = parseCreatedLedgerTask(await postLedgerTask(ledgerTaskBody(request)));
-  if (!created) throw new Error('The computer did not say which task it opened.');
-  return created;
+  return parseCreatedLedgerTask(await postLedgerTask(ledgerTaskBody(request)));
 }
 
 async function endpointRequest(

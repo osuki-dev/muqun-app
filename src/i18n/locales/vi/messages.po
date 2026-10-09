@@ -2832,6 +2832,10 @@ msgstr "Tác tử Trang chủ: {agentName}"
 msgid "Home effects · development only"
 msgstr "Hiệu ứng trang chủ · chỉ dành cho phát triển"
 
+#: src/components/home-composer-dock.tsx
+msgid "Home folder"
+msgstr "Thư mục nhà"
+
 #: src/components/settings-appearance.tsx
 #: src/components/settings-home-layout-sheet.tsx
 msgid "Home layout"

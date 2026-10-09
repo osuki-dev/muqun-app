@@ -248,14 +248,14 @@ describe('sameComputer', () => {
 
 describe('the folder segment', () => {
   // what the picker answered -> what is stored -> what the bar says
-  test.each<[string, string | undefined, string]>([
+  test.each<[string, string | undefined, string | undefined]>([
     ['/Users/me/Work/app', '/Users/me/Work/app', 'app'],
     ['~/Work/app/', '~/Work/app', 'app'],
-    ['~', undefined, '~'],
-    ['  ', undefined, '~'],
+    ['~', undefined, undefined],
+    ['  ', undefined, undefined],
     ['/', '/', '/'],
   ])('%p', (picked, stored, label) => {
     expect(homeFolderPick(picked)).toBe(stored);
-    expect(homeFolderLabel(stored)).toBe(label);
+    expect(stored === undefined ? undefined : homeFolderLabel(stored)).toBe(label);
   });
 });

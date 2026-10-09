@@ -2832,6 +2832,10 @@ msgstr "홈 에이전트: {agentName}"
 msgid "Home effects · development only"
 msgstr "홈 효과 · 개발 전용"
 
+#: src/components/home-composer-dock.tsx
+msgid "Home folder"
+msgstr "홈 폴더"
+
 #: src/components/settings-appearance.tsx
 #: src/components/settings-home-layout-sheet.tsx
 msgid "Home layout"

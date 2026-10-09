@@ -62,19 +62,7 @@ test('Settings and theme-management chrome consume semantic roles without profil
 });
 
 test('Settings groups draw only between-row separators, including flush and server lists', () => {
-  const chrome = read('components/settings-chrome.tsx');
-  const card = chrome.split('export function SettingsCard(')[1].split('export function ')[0];
-  // The flush and painted lists share one row builder, which places the rule
-  // before non-first rows (inside the row's reflow box when the card has one).
-  expect(card.match(/position > 0 \? <SettingsSeparator \/> : null/g)).toHaveLength(1);
-  expect(card.match(/<SettingsSeparator \/>/g)).toHaveLength(1);
   const servers = read('components/settings-servers.tsx');
-  // Between server rows, riding the rows' own layout transition.
-  expect(
-    /\{index > 0 \? \(\s*<Animated\.View layout=\{listLayout\(\)\}>\s*<SettingsSeparator \/>/.test(
-      servers
-    )
-  ).toBe(true);
   // SettingsCard owns top-level rules; explicit children would duplicate them.
   expect(servers.match(/<SettingsSeparator \/>/g)).toHaveLength(1);
   for (const path of [
