@@ -1,3 +1,5 @@
+import { InlineVideoFile } from '@/components/video-asset-preview';
+import { InlineAudioFile } from '@/components/audio-asset-preview';
 import { memo, useCallback, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useThemeTokens } from '@osuki-dev/ui';
@@ -96,6 +98,7 @@ import { AGENT_TYPE } from '@/constants/agent-type';
  */
 
 export interface AgentToolCardProps {
+  audioSessionId?: string;
   part: ToolPart;
   markdownStyle: MarkdownStyle;
   /** The live status of the session a subagent started, if it is being watched. */
@@ -267,10 +270,12 @@ function isImageFile(file: { mime?: string }): boolean {
 /** The files a tool returned: images inline, everything else as a chip. */
 const ToolFiles = memo(function ToolFiles({
   files,
+  audioSessionId,
   onPreviewImage,
   onOpenFile,
 }: {
   files: readonly { uri: string; mime?: string; name?: string }[];
+  audioSessionId?: string;
   onPreviewImage?: (uri: string) => void;
   onOpenFile?: (file: { uri: string; mime?: string; name?: string }) => void;
 }) {
@@ -282,6 +287,24 @@ const ToolFiles = memo(function ToolFiles({
   return (
     <View style={styles.fileRow}>
       {files.map((file) => {
+        if (audioSessionId && file.mime?.startsWith('video/')) {
+          return (
+            <InlineVideoFile
+              key={`${audioSessionId}:${file.uri}`}
+              file={file}
+              asid={audioSessionId}
+            />
+          );
+        }
+        if (audioSessionId && file.mime?.startsWith('audio/')) {
+          return (
+            <InlineAudioFile
+              key={`${audioSessionId}:${file.uri}`}
+              file={file}
+              asid={audioSessionId}
+            />
+          );
+        }
         if (isImageFile(file)) {
           return (
             <PressableScale
@@ -348,6 +371,7 @@ const PatchBody = memo(function PatchBody({
 // ---------------------------------------------------------------------------
 
 export const AgentToolCard = memo(function AgentToolCard({
+  audioSessionId,
   part,
   childStatus,
   onOpenChildSession,
@@ -807,7 +831,12 @@ export const AgentToolCard = memo(function AgentToolCard({
         ) : kind === 'edit' || kind === 'patch' ? (
           body
         ) : files.length > 0 ? (
-          <ToolFiles files={files} onPreviewImage={onPreviewImage} onOpenFile={onOpenFile} />
+          <ToolFiles
+            files={files}
+            audioSessionId={audioSessionId}
+            onPreviewImage={onPreviewImage}
+            onOpenFile={onOpenFile}
+          />
         ) : null
       }>
       {kind === 'edit' || kind === 'patch' ? null : body}

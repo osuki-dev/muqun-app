@@ -3811,6 +3811,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   const canRunInBackground = agentFeatures.backgroundShells;
   const toolActions = useMemo<AgentToolActions>(
     () => ({
+      audioSessionId: activeAsid ?? undefined,
       onOpenChildSession: openSubagentDetail,
       ...(canRunInBackground ? { onRunInBackground: handleRunInBackground } : {}),
       onPreviewImage: setPreviewImageUri,
@@ -3821,6 +3822,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       childStatuses,
     }),
     [
+      activeAsid,
       canRunInBackground,
       handleRunInBackground,
       handleOpenToolFile,
@@ -5054,7 +5056,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
         <Animated.View
           entering={fadeIn('micro')}
           exiting={fadeOut('micro')}
-          style={[styles.agentPickerWrap, { bottom: latestBottom + 42 }]}
+          style={[styles.agentPickerWrap, { top: topInset + 4 }]}
           pointerEvents="box-none">
           <AgentActionMenu testID="agent-new-session-picker" items={agentPickerItems} />
         </Animated.View>

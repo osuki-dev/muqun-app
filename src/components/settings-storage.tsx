@@ -1,14 +1,11 @@
+import { CACHE_PROCESS_STARTED_AT } from '@/lib/cache-cleanup';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 /**
  * How much room Muqun's cache is taking, and the two buttons that give some of
  * it back.
  *
- * Three rows that only state facts, and two that do something. The three are
- * split the way a reader's question is: pictures, copies the app made to hand a
- * file to something else, and everything else -- which on both platforms is
- * mostly the HTTP engine's own store, held open by the engine and not Muqun's
- * to delete. Saying so in the row is cheaper than fielding "why is there still
- * 40 MB after I cleared it".
+ * Only reclaimable categories are shown: images and temporary copies. Engine
+ * caches and persistent user data are not presented as a cleaning action.
  *
  * The clear is an allow-list, decided in `lib/cache-storage.ts` and not here.
  * Nothing on this screen may reach outside `Paths.cache`: the paired gateways,
@@ -39,9 +36,10 @@ import { Text } from '@/components/text';
 import { Image } from 'expo-image';
 import { Directory, Paths } from 'expo-file-system';
 import { useFocusEffect } from 'expo-router';
-import { ChevronRight, FileClock, HardDrive, Images, Palette, Trash2 } from 'lucide-react-native';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { ChevronRight, FileClock, Images, Palette, Trash2 } from 'lucide-react-native';
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
+import Animated from 'react-native-reanimated';
 
 import { PressableScale } from '@/components/pressable-scale';
 import {
@@ -60,6 +58,7 @@ import {
   planCacheDeletions,
 } from '@/lib/cache-storage';
 import { feedback } from '@/lib/feedback';
+import { fadeIn, listLayout } from '@/lib/motion';
 import { useRenderTally } from '@/lib/render-tally';
 import { planUnusedThemes, type ThemeAssetFile } from '@/lib/theme-storage';
 import { useThemeLibrary } from '@/stores/theme-library';
@@ -149,11 +148,12 @@ async function deletePlannedCacheEntries(): Promise<boolean> {
   let failed = false;
   try {
     const { root, entries } = await readCacheRoot();
-    for (const entry of planCacheDeletions(entries, root)) {
+    const items = new Map(Paths.cache.list().map((item) => [item.uri, item]));
+    for (const entry of planCacheDeletions(entries, root, CACHE_PROCESS_STARTED_AT)) {
       await whenIdle(100);
       try {
-        const directory = new Directory(entry.uri);
-        if (directory.exists) directory.delete();
+        const item = items.get(entry.uri);
+        if (item?.exists) item.delete();
       } catch {
         failed = true;
       }
@@ -162,6 +162,26 @@ async function deletePlannedCacheEntries(): Promise<boolean> {
     failed = true;
   }
   return failed;
+}
+
+// Only the action slot moves; the capacity rows and sheet ground stay mounted.
+const actionFade = fadeIn('short').withInitialValues({ opacity: 0.65 });
+const actionLayout = listLayout('short');
+
+function StorageActionTransition({
+  mode,
+  children,
+}: {
+  mode: 'confirm' | 'idle';
+  children: ReactNode;
+}) {
+  return (
+    <Animated.View layout={actionLayout} collapsable={false}>
+      <Animated.View key={mode} entering={actionFade}>
+        {children}
+      </Animated.View>
+    </Animated.View>
+  );
 }
 
 export function SettingsStorage() {
@@ -262,7 +282,7 @@ export function SettingsStorage() {
     setIncomplete(false);
     let failed = false;
 
-    // Both of these answer `false` rather than throwing when they decline --
+    // The image cache API answers `false` rather than throwing when it declines --
     // on Android they need a current activity and return `false` without one --
     // so the result is checked as well as the throw. A silent `false` is
     // exactly the case that would otherwise report a cleared cache and leave
@@ -272,25 +292,20 @@ export function SettingsStorage() {
     } catch {
       failed = true;
     }
-    try {
-      if (!(await Image.clearMemoryCache())) failed = true;
-    } catch {
-      failed = true;
-    }
+    // Clearing storage reclaims disk bytes. Keep decoded images used by the
+    // visible theme and icons; the image library manages their memory lifetime.
 
     if (await deletePlannedCacheEntries()) failed = true;
 
+    // Keep the last measured capacities and the busy control until the fresh
+    // totals arrive, rather than flashing every row through "Calculating…".
+    await measureAll();
     if (mounted.current) {
-      setTotals(null);
       setIncomplete(failed);
       setArmed(null);
       setClearing(false);
     }
     await feedback(failed ? 'warning' : 'success');
-    // Both, because one of the directories this just deleted is a theme import
-    // that was interrupted, and the theme row is the only other thing on this
-    // screen that knows anything about themes.
-    await measureAll();
   }
 
   /**
@@ -338,23 +353,17 @@ export function SettingsStorage() {
       }
     }
 
+    await measureThemes();
     if (mounted.current) {
-      setThemeFiles(null);
       setArmed(null);
       setRemoving(false);
     }
     await feedback(failed ? 'warning' : 'success');
-    // Only the theme walk. Removing a theme cannot change a cache bucket, and
-    // the cache walk is the expensive one on this screen.
-    await measureThemes();
   }
 
   const calculating = t`Calculating…`;
   const images = totals ? formatCacheSize(totals.images) : calculating;
   const temporary = totals ? formatCacheSize(totals.temporary) : calculating;
-  const other = totals
-    ? t`${formatCacheSize(totals.other)} · Managed by the system. Clear cache leaves it alone.`
-    : calculating;
   const clearable = totals ? formatCacheSize(clearableCacheBytes(totals)) : calculating;
   const clearDetail = incomplete ? t`Some files could not be removed · ${clearable}` : clearable;
   // The count comes from the library and the bytes from the walk, so this is
@@ -380,145 +389,143 @@ export function SettingsStorage() {
         detail={temporary}
         testID="settings-storage-temporary-row"
       />
-      <SettingsInfoRow
-        icon={HardDrive}
-        label={t`Other`}
-        detail={other}
-        testID="settings-storage-other-row"
-      />
-      {armed === 'cache' ? (
-        // Two taps, never one, and the confirm stays inside the card the way
-        // the unpair control does. A system alert here would be the one modal
-        // on a screen whose every other decision is made in place.
-        <View style={[styles.armedRow, { paddingVertical: profile.settingsRowPaddingVertical }]}>
-          <PressableScale
-            accessibilityRole="button"
-            accessibilityLabel={clearing ? t`Clearing cache` : t`Confirm clear cache`}
-            accessibilityState={{ disabled: clearing, busy: clearing }}
-            disabled={clearing}
-            feedback="selection"
-            testID="settings-clear-cache-confirm"
-            onPress={() => void clear()}
-            style={[
-              styles.action,
-              { borderRadius: profile.chrome.control },
-              styles.armedButton,
-              { backgroundColor: surfaceBackground(theme.colors.danger) },
-              clearing && styles.pendingAction,
-            ]}>
-            {clearing ? (
-              <Spinner size="sm" color={theme.colors.onPrimary} />
-            ) : (
-              <Trash2 size={15} color={theme.colors.onPrimary} strokeWidth={2.2} />
-            )}
-            {/* The weight is the kit's prop, not a `fontWeight: '700'` in the
+      <StorageActionTransition mode={armed === 'cache' ? 'confirm' : 'idle'}>
+        {armed === 'cache' ? (
+          // Two taps, never one, and the confirm stays inside the card the way
+          // the unpair control does. A system alert here would be the one modal
+          // on a screen whose every other decision is made in place.
+          <View style={[styles.armedRow, { paddingVertical: profile.settingsRowPaddingVertical }]}>
+            <PressableScale
+              accessibilityRole="button"
+              accessibilityLabel={clearing ? t`Clearing cache` : t`Confirm clear cache`}
+              accessibilityState={{ disabled: clearing, busy: clearing }}
+              disabled={clearing}
+              feedback="selection"
+              testID="settings-clear-cache-confirm"
+              onPress={() => void clear()}
+              style={[
+                styles.action,
+                { borderRadius: profile.chrome.control },
+                styles.armedButton,
+                { backgroundColor: surfaceBackground(theme.colors.danger) },
+                clearing && styles.pendingAction,
+              ]}>
+              {clearing ? (
+                <Spinner size="sm" color={theme.colors.onPrimary} />
+              ) : (
+                <Trash2 size={15} color={theme.colors.onPrimary} strokeWidth={2.2} />
+              )}
+              {/* The weight is the kit's prop, not a `fontWeight: '700'` in the
                 stylesheet. `expo-font` registers a reader's interface face under
                 Typeface.NORMAL only, so Android rounds 700 and over up to BOLD,
                 misses, and falls back to a system lookup that does not know the
                 family -- leaving the armed label as the one word on the sheet in
                 the platform's own bold. The kit caps the prop at semibold. */}
-            <Text variant="caption" weight="semibold" color={theme.colors.onPrimary}>
-              {clearing ? <Trans>Clearing…</Trans> : <Trans>Clear</Trans>}
-            </Text>
-          </PressableScale>
-          <PressableScale
-            accessibilityRole="button"
-            accessibilityLabel={t`Keep cached files`}
-            accessibilityState={{ disabled: clearing }}
-            disabled={clearing}
-            testID="settings-clear-cache-cancel"
-            onPress={() => {
-              if (!clearing) setArmed(null);
-            }}
-            style={[
-              styles.action,
-              { borderRadius: profile.chrome.control },
-              styles.armedButton,
-              { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
-              clearing && styles.pendingAction,
-            ]}>
-            <Text variant="caption" color={theme.colors.textMuted}>
-              <Trans>Cancel</Trans>
-            </Text>
-          </PressableScale>
-        </View>
-      ) : (
-        <SettingsNavRow
-          icon={Trash2}
-          trailing={ChevronRight}
-          label={t`Clear cache`}
-          detail={clearDetail}
-          disabled={!totals}
-          testID="settings-clear-cache-row"
-          onPress={() => setArmed('cache')}
-        />
-      )}
-      {armed === 'themes' ? (
-        // The same pair, in the same place, for the same reason. An action that
-        // takes somebody's import away gets the second tap the cache gets.
-        <View style={[styles.armedRow, { paddingVertical: profile.settingsRowPaddingVertical }]}>
-          <PressableScale
-            accessibilityRole="button"
-            accessibilityLabel={
-              removing ? t`Removing unused themes` : t`Confirm remove unused themes`
-            }
-            accessibilityState={{ disabled: removing, busy: removing }}
-            disabled={removing}
-            feedback="selection"
-            testID="settings-remove-themes-confirm"
-            onPress={() => void removeUnusedThemes()}
-            style={[
-              styles.action,
-              { borderRadius: profile.chrome.control },
-              styles.armedButton,
-              { backgroundColor: surfaceBackground(theme.colors.danger) },
-              removing && styles.pendingAction,
-            ]}>
-            {removing ? (
-              <Spinner size="sm" color={theme.colors.onPrimary} />
-            ) : (
-              <Trash2 size={15} color={theme.colors.onPrimary} strokeWidth={2.2} />
-            )}
-            {/* Semibold through the prop, for the Android reason spelled out at
+              <Text variant="caption" weight="semibold" color={theme.colors.onPrimary}>
+                {clearing ? <Trans>Clearing…</Trans> : <Trans>Clear</Trans>}
+              </Text>
+            </PressableScale>
+            <PressableScale
+              accessibilityRole="button"
+              accessibilityLabel={t`Keep cached files`}
+              accessibilityState={{ disabled: clearing }}
+              disabled={clearing}
+              testID="settings-clear-cache-cancel"
+              onPress={() => {
+                if (!clearing) setArmed(null);
+              }}
+              style={[
+                styles.action,
+                { borderRadius: profile.chrome.control },
+                styles.armedButton,
+                { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
+                clearing && styles.pendingAction,
+              ]}>
+              <Text variant="caption" color={theme.colors.textMuted}>
+                <Trans>Cancel</Trans>
+              </Text>
+            </PressableScale>
+          </View>
+        ) : (
+          <SettingsNavRow
+            icon={Trash2}
+            trailing={ChevronRight}
+            label={t`Clear cache`}
+            detail={clearDetail}
+            disabled={!totals}
+            testID="settings-clear-cache-row"
+            onPress={() => setArmed('cache')}
+          />
+        )}
+      </StorageActionTransition>
+      <StorageActionTransition mode={armed === 'themes' ? 'confirm' : 'idle'}>
+        {armed === 'themes' ? (
+          // The same pair, in the same place, for the same reason. An action that
+          // takes somebody's import away gets the second tap the cache gets.
+          <View style={[styles.armedRow, { paddingVertical: profile.settingsRowPaddingVertical }]}>
+            <PressableScale
+              accessibilityRole="button"
+              accessibilityLabel={
+                removing ? t`Removing unused themes` : t`Confirm remove unused themes`
+              }
+              accessibilityState={{ disabled: removing, busy: removing }}
+              disabled={removing}
+              feedback="selection"
+              testID="settings-remove-themes-confirm"
+              onPress={() => void removeUnusedThemes()}
+              style={[
+                styles.action,
+                { borderRadius: profile.chrome.control },
+                styles.armedButton,
+                { backgroundColor: surfaceBackground(theme.colors.danger) },
+                removing && styles.pendingAction,
+              ]}>
+              {removing ? (
+                <Spinner size="sm" color={theme.colors.onPrimary} />
+              ) : (
+                <Trash2 size={15} color={theme.colors.onPrimary} strokeWidth={2.2} />
+              )}
+              {/* Semibold through the prop, for the Android reason spelled out at
                 the Clear button above. */}
-            <Text variant="caption" weight="semibold" color={theme.colors.onPrimary}>
-              {removing ? <Trans>Removing…</Trans> : <Trans>Remove</Trans>}
-            </Text>
-          </PressableScale>
-          <PressableScale
-            accessibilityRole="button"
-            accessibilityLabel={t`Keep saved themes`}
-            accessibilityState={{ disabled: removing }}
-            disabled={removing}
-            testID="settings-remove-themes-cancel"
-            onPress={() => {
-              if (!removing) setArmed(null);
-            }}
-            style={[
-              styles.action,
-              { borderRadius: profile.chrome.control },
-              styles.armedButton,
-              { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
-              removing && styles.pendingAction,
-            ]}>
-            <Text variant="caption" color={theme.colors.textMuted}>
-              <Trans>Cancel</Trans>
-            </Text>
-          </PressableScale>
-        </View>
-      ) : (
-        // `Palette` is the glyph the theme drop already wears, so the two
-        // places in the app that talk about themes carry the same mark.
-        <SettingsNavRow
-          icon={Palette}
-          trailing={ChevronRight}
-          label={t`Remove unused themes`}
-          detail={themesDetail}
-          disabled={!unused || unused.count === 0}
-          testID="settings-remove-themes-row"
-          onPress={() => setArmed('themes')}
-        />
-      )}
+              <Text variant="caption" weight="semibold" color={theme.colors.onPrimary}>
+                {removing ? <Trans>Removing…</Trans> : <Trans>Remove</Trans>}
+              </Text>
+            </PressableScale>
+            <PressableScale
+              accessibilityRole="button"
+              accessibilityLabel={t`Keep saved themes`}
+              accessibilityState={{ disabled: removing }}
+              disabled={removing}
+              testID="settings-remove-themes-cancel"
+              onPress={() => {
+                if (!removing) setArmed(null);
+              }}
+              style={[
+                styles.action,
+                { borderRadius: profile.chrome.control },
+                styles.armedButton,
+                { backgroundColor: surfaceBackground(theme.colors.surfaceRaised) },
+                removing && styles.pendingAction,
+              ]}>
+              <Text variant="caption" color={theme.colors.textMuted}>
+                <Trans>Cancel</Trans>
+              </Text>
+            </PressableScale>
+          </View>
+        ) : (
+          // `Palette` is the glyph the theme drop already wears, so the two
+          // places in the app that talk about themes carry the same mark.
+          <SettingsNavRow
+            icon={Palette}
+            trailing={ChevronRight}
+            label={t`Remove unused themes`}
+            detail={themesDetail}
+            disabled={!unused || unused.count === 0}
+            testID="settings-remove-themes-row"
+            onPress={() => setArmed('themes')}
+          />
+        )}
+      </StorageActionTransition>
     </SettingsCard>
   );
 }

@@ -41,6 +41,11 @@ import Animated, {
 import { PressableScale } from '@/components/pressable-scale';
 import { AgentActionMenu, type AgentActionMenuItem } from '@/components/agent-action-menu';
 import { BoundedMarkdown } from '@/components/bounded-markdown';
+import { TranscriptBlockImage } from '@/components/transcript-block-image';
+import { InlineVideoFile } from '@/components/video-asset-preview';
+import { InlineFileLink } from '@/components/inline-file-link';
+import { InlineAudioFile } from '@/components/audio-asset-preview';
+import { splitAudioMarkdown } from '@/lib/audio-markdown';
 import { splitDiagramMarkdown } from '@/lib/diagram-markdown';
 import { EngineFailureText } from '@/components/engine-failure-text';
 import { AgentReasoningBlock } from '@/components/agent-reasoning-block';
@@ -65,6 +70,7 @@ import {
   escapeMarkdownText,
   messageImageResolver,
   rewriteMessageImages,
+  splitBlockImages,
   type MessageImageAsset,
 } from '@/lib/message-images';
 import { useMessageImages } from '@/hooks/use-message-images';
@@ -340,6 +346,7 @@ function humaniseTag(tag: string): string {
  * workbench behind it draws the same cards, minus the buttons.
  */
 export interface AgentToolActions {
+  audioSessionId?: string;
   onOpenChildSession?: (asid: string) => void;
   onRunInBackground?: (toolCallId: string) => void;
   onOpenBackgroundTray?: (shellId?: string) => void;
@@ -630,12 +637,14 @@ const MessageTextPart = memo(function MessageTextPart({
   text: written,
   markdownStyle,
   imageAssets,
+  audioSessionId,
   onPreviewImage,
 }: {
   text: string;
   markdownStyle: MarkdownStyle;
   /** The gateway's resolution of the images this text embeds by host path. */
   imageAssets?: readonly MessageImageAsset[];
+  audioSessionId?: string;
   onPreviewImage?: (uri: string) => void;
 }) {
   const { t } = useLingui();
@@ -657,17 +666,88 @@ const MessageTextPart = memo(function MessageTextPart({
     [text]
   );
 
-  const renderMarkdown = (key: string, markdown: string) => (
-    <BoundedMarkdown
-      key={key}
-      markdown={markdown}
-      markdownStyle={markdownStyle}
-      containerStyle={styles.markdownContainer}
-      latexMath
-      {...(images.headers ? { imageRequestHeaders: images.headers } : {})}
-      {...(onPreviewImage ? { onImagePress: onPreviewImage } : {})}
-    />
-  );
+  const renderMarkdown = (key: string, markdown: string) => {
+    const parts = audioSessionId ? splitAudioMarkdown(markdown) : [];
+    const cover =
+      parts.filter((part) => part.kind === 'video').length === 1
+        ? splitBlockImages(markdown).find(
+            (block) => block.kind === 'image' && /cover|poster|封面/i.test(block.alt)
+          )
+        : undefined;
+    const coverUri =
+      cover?.kind === 'image' && !images.pending.has(cover.uri) ? cover.uri : undefined;
+    const coverMetadata = imageAssets?.find((asset) => images.uris.get(asset.src) === coverUri);
+    const renderText = (partKey: string, content: string) => {
+      const blocks = splitBlockImages(content);
+      return blocks.map((block) => {
+        if (block.kind === 'image') {
+          if (block.uri === coverUri) return null;
+          const metadata = imageAssets?.find((asset) => images.uris.get(asset.src) === block.uri);
+          return (
+            <TranscriptBlockImage
+              key={`${partKey}:${block.start}:${block.uri}`}
+              uri={block.uri}
+              alt={block.alt}
+              headers={metadata ? images.headers : undefined}
+              pending={images.pending.has(block.uri)}
+              width={metadata?.width}
+              height={metadata?.height}
+              onPress={onPreviewImage}
+            />
+          );
+        }
+        if (!block.text.trim()) return null;
+        return (
+          <BoundedMarkdown
+            key={`${partKey}:${block.start}`}
+            markdown={block.text}
+            markdownStyle={markdownStyle}
+            containerStyle={styles.markdownContainer}
+            latexMath
+            {...(images.headers ? { imageRequestHeaders: images.headers } : {})}
+            {...(onPreviewImage ? { onImagePress: onPreviewImage } : {})}
+          />
+        );
+      });
+    };
+    if (!audioSessionId || !parts.some((part) => part.kind !== 'markdown'))
+      return renderText(key, markdown);
+    return (
+      <View key={key} style={styles.markdownSegments}>
+        {parts.map((part) =>
+          part.kind === 'video' ? (
+            <InlineVideoFile
+              key={part.start}
+              asid={audioSessionId}
+              file={{ uri: part.uri, name: part.name }}
+              poster={
+                coverUri
+                  ? {
+                      uri: coverUri,
+                      ...(coverMetadata && images.headers ? { headers: images.headers } : {}),
+                    }
+                  : undefined
+              }
+            />
+          ) : part.kind === 'file' ? (
+            <InlineFileLink
+              key={part.start}
+              asid={audioSessionId}
+              file={{ uri: part.uri, name: part.name }}
+            />
+          ) : part.kind === 'audio' ? (
+            <InlineAudioFile
+              key={part.start}
+              asid={audioSessionId}
+              file={{ uri: part.uri, name: part.name }}
+            />
+          ) : (
+            renderText(`${key}:${part.start}`, part.text)
+          )
+        )}
+      </View>
+    );
+  };
 
   if (segments.length === 1 && segments[0].kind === 'md') {
     return renderMarkdown('body', text);
@@ -780,6 +860,7 @@ function renderTimelinePart(
           key={item.id}
           text={part.text}
           markdownStyle={options.markdownStyle}
+          audioSessionId={options.actions.audioSessionId}
           {...(item.image_assets ? { imageAssets: item.image_assets } : {})}
           {...(options.actions.onPreviewImage
             ? { onPreviewImage: options.actions.onPreviewImage }
@@ -841,6 +922,7 @@ const ToolPartCard = memo(function ToolPartCard({
   return (
     <>
       <AgentToolCard
+        audioSessionId={actions.audioSessionId}
         part={part}
         markdownStyle={markdownStyle}
         {...(childStatus ? { childStatus } : {})}
@@ -1276,18 +1358,24 @@ export const AgentAssistantMessage = memo(function AgentAssistantMessage({
   const rows: ReactNode[] = [];
   let run: ReactNode[] = [];
   let runKey = '';
-  let runHasDiagram = false;
+  let runNeedsFullWidth = false;
+  let runHasOnlyAudio = true;
   const flush = () => {
     if (run.length === 0) return;
     rows.push(
       <View
         key={`run:${runKey}`}
-        style={[styles.messageBlock, runHasDiagram && styles.diagramMessage, plate]}>
+        style={
+          runHasOnlyAudio
+            ? styles.standaloneRow
+            : [styles.messageBlock, runNeedsFullWidth && styles.fullWidthMessage, plate]
+        }>
         {run}
       </View>
     );
     run = [];
-    runHasDiagram = false;
+    runNeedsFullWidth = false;
+    runHasOnlyAudio = true;
   };
   displayEntries.forEach((displayEntry) => {
     if (displayEntry.kind === 'tool-group') {
@@ -1333,9 +1421,22 @@ export const AgentAssistantMessage = memo(function AgentAssistantMessage({
     }
     if (run.length === 0) runKey = entry.item.id;
     if (entry.item.part.type === 'text')
-      runHasDiagram =
-        runHasDiagram ||
-        splitDiagramMarkdown(entry.item.part.text).some((part) => part.source !== undefined);
+      runNeedsFullWidth =
+        runNeedsFullWidth ||
+        splitDiagramMarkdown(entry.item.part.text).some((part) => part.source !== undefined) ||
+        splitBlockImages(entry.item.part.text).some((part) => part.kind === 'image') ||
+        (Boolean(actions.audioSessionId) &&
+          splitAudioMarkdown(entry.item.part.text).some((part) => part.kind !== 'markdown'));
+    const audioParts =
+      entry.item.part.type === 'text' && actions.audioSessionId
+        ? splitAudioMarkdown(entry.item.part.text)
+        : [];
+    runHasOnlyAudio =
+      runHasOnlyAudio &&
+      audioParts.some((part) => part.kind === 'audio') &&
+      audioParts.every((part) =>
+        part.kind === 'markdown' ? !part.text.trim() : part.kind === 'audio'
+      );
     run.push(<Fragment key={entry.item.id}>{drawn}</Fragment>);
   });
   flush();
@@ -1387,7 +1488,8 @@ const styles = StyleSheet.create({
   userBlock: {
     borderLeftWidth: 2,
   },
-  diagramMessage: { alignSelf: 'stretch', width: '100%' },
+  // Percentage-width media cannot measure inside a plate that hugs its contents.
+  fullWidthMessage: { alignSelf: 'stretch', width: '100%' },
   // A thought row spans the message: the pill hugs itself inside it, and the
   // expanded plate takes the full width. A row that hugged its content was
   // only as wide as the pill on iOS, where the markdown under `flex: 1`

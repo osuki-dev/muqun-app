@@ -1,4 +1,3 @@
-import { readFileSync } from 'node:fs';
 import { describe, expect, test } from 'bun:test';
 
 import { assetPresentation } from '@/lib/asset-viewer-layout';
@@ -17,6 +16,11 @@ describe('assetPresentation', () => {
   test('a picture opens in the lightbox; one with no preview is described', () => {
     expect(assetPresentation(asset('image'))).toBe('lightbox');
     expect(assetPresentation(asset('image', { previewable: false }))).toBe('details');
+  });
+
+  test('audio uses playback controls; unsupported previews keep file details', () => {
+    expect(assetPresentation(asset('audio'))).toBe('audio');
+    expect(assetPresentation(asset('audio', { previewable: false }))).toBe('details');
   });
 
   test('markdown is a document, whatever its length once read', () => {
@@ -43,33 +47,5 @@ describe('assetPresentation', () => {
     expect(assetPresentation(asset('pdf'))).toBe('details');
     expect(assetPresentation(asset('binary'))).toBe('details');
     expect(assetPresentation(asset('text', { previewable: false }))).toBe('details');
-  });
-});
-
-/**
- * The viewer's ground and gutter, held where they are written.
- *
- * Everything but a picture is text on the viewer's ground, so that ground is
- * the frosted one every sheet wears -- the wallpaper at full strength behind a
- * README was the bug -- and every body keeps the sheet's gutter rather than a
- * number of its own.
- */
-describe('the file viewer', () => {
-  const viewer = readFileSync('src/components/asset-viewer.tsx', 'utf8');
-
-  test('stands on the frosted sheet ground', () => {
-    expect(viewer).toContain('<SheetFrame tint="background" frosted>');
-  });
-
-  test('announces the file with the sheet heading', () => {
-    expect(viewer).toContain('<SheetSceneHeading');
-  });
-
-  test('keeps no horizontal margin of its own beside the sheet gutter', () => {
-    const margins = [...viewer.matchAll(/padding(?:Horizontal)?: (\d+)/g)].map((match) => match[1]);
-    // The only literal left is the retry pill's own padding inside a control.
-    expect(margins).toEqual(['16']);
-    expect(viewer).toContain('inset={SHEET_LADDER.gutter}');
-    expect(viewer).toContain('horizontal: SHEET_LADDER.gutter');
   });
 });

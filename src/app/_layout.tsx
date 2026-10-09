@@ -1,3 +1,4 @@
+import { cleanupPreviousMediaCache } from '@/lib/cache-cleanup';
 import { AppDiagramProvider } from '@/components/app-diagram-provider';
 import { RouteScene } from '@/components/route-scene';
 import {
@@ -170,6 +171,10 @@ export default function RootLayout() {
    * at either way, and it holds for longer than the registration takes.
    */
   const fontsReady = useUserFontsReady();
+
+  useEffect(() => {
+    void cleanupPreviousMediaCache();
+  }, []);
 
   // The system bar overlays the app under edge-to-edge (targetSdk 36) and its
   // strip swallows every touch in it -- on a three-button device that strip sat
@@ -549,6 +554,14 @@ function RootContent() {
                   options={sheetRouteOptions('agent-workspace')}
                 />
                 <Stack.Screen name="agent-worktree" options={sheetRouteOptions('agent-worktree')} />
+                <Stack.Screen name="settings-voice" options={sheetRouteOptions('settings-voice')} />
+                <Stack.Screen
+                  name="voice-input"
+                  options={{
+                    ...sheetRouteOptions('voice-input'),
+                    sheetElevation: 0,
+                  }}
+                />
                 <Stack.Screen name="agent-context" options={sheetRouteOptions('agent-context')} />
                 <Stack.Screen name="agent-vcs-diff" options={sheetRouteOptions('agent-vcs-diff')} />
                 <Stack.Screen name="agent-tasks" options={sheetRouteOptions('agent-tasks')} />

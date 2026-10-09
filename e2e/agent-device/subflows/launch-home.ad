@@ -3,6 +3,7 @@
 
 # section s1
 open "dev.osuki.muqun" --relaunch
+open "muqun:///"
 
 # section s2
 is visible "${TARGET}"
@@ -36,4 +37,7 @@ press "${TARGET}"
 press "${TARGET}"
 
 # section s12
+is visible "${TARGET}"
+
+# section startup-ready
 is visible "${TARGET}"

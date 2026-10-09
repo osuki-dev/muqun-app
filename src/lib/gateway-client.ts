@@ -1,3 +1,4 @@
+import { AudioPlaybackError } from '@/lib/audio-playback-session';
 import { File, Paths } from 'expo-file-system';
 import { fetch as nitroFetch, Response as NitroResponse } from 'react-native-nitro-fetch';
 import QuickCrypto from 'react-native-quick-crypto';
@@ -130,6 +131,7 @@ import {
   demoGitStatus,
   demoSendAgentText,
   demoAssetContentUri,
+  demoAudioBytes,
   demoAssetText,
   demoHealth,
   demoPanes,
@@ -143,6 +145,7 @@ import {
   demoSessions,
   demoSpawnedAgent,
   demoShortcuts,
+  demoLaunchLazygit,
   demoTabs,
   demoWorkspaces,
   isDemoActive,
@@ -1463,16 +1466,101 @@ export async function readAssetText(
  * server that under-declares cannot spend more of the phone's memory than the
  * importer would ever accept.
  */
+export async function resolveAgentAudioAsset(
+  asid: string,
+  uri: string,
+  signal: AbortSignal
+): Promise<SessionAsset> {
+  if (isDemoActive()) {
+    const asset = demoSessionAssets().find((entry) => entry.id === 'as-demo-audio');
+    if (!asset || !uri.endsWith('sample-tone.wav')) throw new Error('Audio output unavailable.');
+    return asset;
+  }
+  const health = await gatewayFetch(gatewayUrl('/health'), {
+    headers: gatewayAuthHeaders(),
+    signal,
+  });
+  if (!health.ok) throw new Error(`HTTP ${health.status}`);
+  const capabilities = (await health.json()).capabilities;
+  if (!Array.isArray(capabilities) || !capabilities.includes('agent_audio_assets')) {
+    throw new AudioPlaybackError('unsupported');
+  }
+  const response = await gatewayFetch(
+    gatewayUrl(
+      `/api/agent-sessions/${encodeURIComponent(asid)}/audio-asset?uri=${encodeURIComponent(uri)}`
+    ),
+    { headers: gatewayAuthHeaders(), signal }
+  );
+  if (!response.ok) throw new Error(`HTTP ${response.status}`);
+  const envelope = await response.json();
+  const asset = sessionAssetsFromResponse({ data: { assets: [envelope?.data?.asset] } })[0];
+  if (!asset || asset.kind !== 'audio' || !asset.previewable)
+    throw new Error('Audio output unavailable.');
+  return asset;
+}
+
+export async function resolveAgentFileAsset(
+  asid: string,
+  uri: string,
+  signal: AbortSignal
+): Promise<SessionAsset> {
+  if (isDemoActive()) {
+    const asset = demoSessionAssets().find((entry) => uri.endsWith(entry.name));
+    if (!asset) throw new Error('File output unavailable.');
+    return asset;
+  }
+  const health = await gatewayFetch(gatewayUrl('/health'), {
+    headers: gatewayAuthHeaders(),
+    signal,
+  });
+  if (!health.ok) throw new Error(`HTTP ${health.status}`);
+  const capabilities = (await health.json()).capabilities;
+  if (!Array.isArray(capabilities) || !capabilities.includes('agent_file_assets')) {
+    throw new AudioPlaybackError('unsupported');
+  }
+  const response = await gatewayFetch(
+    gatewayUrl(
+      `/api/agent-sessions/${encodeURIComponent(asid)}/file-asset?uri=${encodeURIComponent(uri)}`
+    ),
+    { headers: gatewayAuthHeaders(), signal }
+  );
+  if (!response.ok) throw new Error(`HTTP ${response.status}`);
+  const envelope = await response.json();
+  const asset = sessionAssetsFromResponse({ data: { assets: [envelope?.data?.asset] } })[0];
+  if (!asset) throw new Error('File output unavailable.');
+  return asset;
+}
+
 export async function readAssetBytes(
   asset: SessionAsset,
   options: {
     signal?: AbortSignal;
+    download?: boolean;
     maxBytes: number;
     onProgress?: (received: number, total: number | null) => void;
   }
 ): Promise<Uint8Array> {
   if (asset.size > options.maxBytes) throw new Error('HTTP 413: This file is too large to open.');
-  const url = assetContentUrl(asset.id);
+  if (options.signal?.aborted) throw new Error('Operation cancelled.');
+  const demoBytes = isDemoActive() ? demoAudioBytes(asset.id) : null;
+  if (demoBytes) {
+    if (demoBytes.length > options.maxBytes) throw new Error('HTTP 413: This file is too large.');
+    options.onProgress?.(demoBytes.length, demoBytes.length);
+    return demoBytes;
+  }
+  if (options.download) {
+    const health = await gatewayFetch(gatewayUrl('/health'), {
+      headers: gatewayAuthHeaders(),
+      signal: options.signal,
+    });
+    if (!health.ok) throw new Error(`HTTP ${health.status}`);
+    const capabilities = (await health.json()).capabilities;
+    if (!Array.isArray(capabilities) || !capabilities.includes('asset_download'))
+      throw new AudioPlaybackError('unsupported');
+  }
+  const url = options.download
+    ? assetContentUrl(asset.id).replace(/\/content$/, '/download')
+    : assetContentUrl(asset.id);
   const init = { headers: gatewayAuthHeaders(), signal: options.signal };
   const response =
     currentTransport === GATEWAY_TRANSPORT
@@ -1891,6 +1979,46 @@ function paneEnvelopeData(json: unknown): unknown {
     return (json as { data: unknown }).data;
   }
   return json;
+}
+
+/** Optional `pane_lazygit`: observe before offering the host's Git TUI. */
+export async function paneLazygitAvailable(sessionId: string, paneId: string): Promise<boolean> {
+  if (isDemoActive()) return Boolean(paneId);
+  const response = await gatewayFetch(
+    gatewayUrl(
+      `/api/sessions/${encodeURIComponent(sessionId)}/panes/${encodeURIComponent(paneId)}/lazygit`
+    ),
+    { headers: gatewayAuthHeaders() }
+  );
+  if (!response.ok) return false;
+  const data = paneEnvelopeData(await response.json());
+  return Boolean(
+    data && typeof data === 'object' && 'available' in data && data.available === true
+  );
+}
+
+export async function launchPaneLazygit(
+  sessionId: string,
+  paneId: string
+): Promise<{
+  paneId: string;
+  started: boolean;
+}> {
+  if (isDemoActive()) return { paneId: demoLaunchLazygit(), started: true };
+  const response = await gatewayFetch(
+    gatewayUrl(
+      `/api/sessions/${encodeURIComponent(sessionId)}/panes/${encodeURIComponent(paneId)}/lazygit`
+    ),
+    { method: 'POST', headers: gatewayAuthHeaders() }
+  );
+  if (!response.ok) throw new Error('Could not start lazygit on the Gateway host.');
+  const data = paneEnvelopeData(await response.json()) as {
+    target?: { pane_id?: unknown };
+    started?: unknown;
+  };
+  if (typeof data?.target?.pane_id !== 'string' || !data.target.pane_id)
+    throw new Error('The server did not say which terminal it made.');
+  return { paneId: data.target.pane_id, started: data.started === true };
 }
 
 /**

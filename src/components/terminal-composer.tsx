@@ -1,6 +1,10 @@
+import { useVoiceInputTrigger } from '@/components/voice-input-button';
+import { useLingui } from '@lingui/react/macro';
+import { useLatestReader } from '@/hooks/use-render-refs';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { Spinner, useThemeTokens } from '@osuki-dev/ui';
-import { Send } from 'lucide-react-native';
+import { Mic, Send } from 'lucide-react-native';
+import { Canvas, Group, Path, Skia } from 'react-native-skia';
 import { useEffect, useState, type ComponentProps, type ReactNode, type Ref } from 'react';
 import {
   StyleSheet,
@@ -10,7 +14,14 @@ import {
   type TextInputProps,
   type TextStyle,
 } from 'react-native';
-import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
+import Animated, {
+  Easing,
+  useAnimatedStyle,
+  useReducedMotion,
+  useSharedValue,
+  withDelay,
+  withTiming,
+} from 'react-native-reanimated';
 
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { PressableScale } from '@/components/pressable-scale';
@@ -41,6 +52,8 @@ import { FontedTextInput } from '@/components/fonted-text-input';
  */
 
 type AnimatedViewProps = ComponentProps<typeof Animated.View>;
+const VOICE_HOLD_MS = 500;
+const voiceHoldRing = Skia.PathBuilder.Make().addCircle(20, 20, 17).detach();
 
 export interface TerminalComposerSend {
   accessibilityLabel: string;
@@ -52,6 +65,7 @@ export interface TerminalComposerSend {
 }
 
 export interface TerminalComposerProps {
+  voiceContext?: string;
   /** A control in front of the field: the gateway's paperclip. */
   leading?: ReactNode;
   inputRef?: Ref<TextInput>;
@@ -64,6 +78,7 @@ export interface TerminalComposerProps {
 }
 
 export function TerminalComposer({
+  voiceContext,
   leading,
   inputRef,
   inputProps,
@@ -72,6 +87,17 @@ export function TerminalComposer({
   exiting,
   layout,
 }: TerminalComposerProps) {
+  const readInput = useLatestReader(inputProps);
+  const { t } = useLingui();
+  const openVoice = useVoiceInputTrigger({
+    context: voiceContext,
+    disabled: send.sending || inputProps.editable === false,
+    onText: (transcript) => {
+      const current = readInput();
+      const value = current.value ?? '';
+      current.onChangeText?.(value + (value && !/\s$/.test(value) ? ' ' : '') + transcript);
+    },
+  });
   const profile = useAppearanceProfile();
   const surfaceBackground = useSurfaceBackground();
   const theme = useThemeTokens();
@@ -121,6 +147,8 @@ export function TerminalComposer({
         sending={send.sending}
         disabled={send.disabled}
         onPress={send.onPress}
+        onLongPress={openVoice}
+        longPressLabel={t`Voice to text`}
         armedFill={theme.colors.primary}
         restText={theme.colors.textMuted}
         activeText={theme.colors.onPrimary}
@@ -193,6 +221,8 @@ export function ComposerSendButton({
   sending,
   disabled,
   onPress,
+  onLongPress,
+  longPressLabel,
   armedFill,
   restText,
   activeText,
@@ -203,6 +233,8 @@ export function ComposerSendButton({
   sending: boolean;
   disabled: boolean;
   onPress: () => void;
+  onLongPress?: () => void;
+  longPressLabel?: string;
   armedFill: string;
   restText: string;
   activeText: string;
@@ -211,6 +243,11 @@ export function ComposerSendButton({
   const surfaceBackground = useSurfaceBackground();
   const armedValue = useSharedValue(armed ? 1 : 0);
   const sendingValue = useSharedValue(sending ? 1 : 0);
+  const voiceHold = useSharedValue(0);
+  const reduced = useReducedMotion();
+  useEffect(() => {
+    if (!onLongPress) voiceHold.set(0);
+  }, [onLongPress, voiceHold]);
   useEffect(() => {
     armedValue.value = withTiming(armed ? 1 : 0, timing('button'));
   }, [armed, armedValue]);
@@ -222,19 +259,46 @@ export function ComposerSendButton({
     opacity: Math.max(armedValue.value, sendingValue.value),
   }));
   const restGlyphStyle = useAnimatedStyle(() => ({
-    opacity: (1 - armedValue.value) * (1 - sendingValue.value),
+    opacity: (1 - armedValue.value) * (1 - sendingValue.value) * (1 - voiceHold.get()),
   }));
   const armedGlyphStyle = useAnimatedStyle(() => ({
-    opacity: armedValue.value * (1 - sendingValue.value),
+    opacity: armedValue.value * (1 - sendingValue.value) * (1 - voiceHold.get()),
   }));
   const spinnerStyle = useAnimatedStyle(() => ({ opacity: sendingValue.value }));
+  const micStyle = useAnimatedStyle(() => ({
+    opacity: voiceHold.get(),
+    transform: [{ scale: 0.85 + voiceHold.get() * 0.15 }],
+  }));
 
   return (
     <PressableScale
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
-      disabled={disabled}
-      onPress={onPress}
+      testID="composer-send"
+      accessibilityActions={
+        onLongPress ? [{ name: 'longpress', label: longPressLabel }] : undefined
+      }
+      onAccessibilityAction={(event) => {
+        if (event.nativeEvent.actionName === 'longpress') onLongPress?.();
+      }}
+      disabled={disabled && !onLongPress}
+      onPress={disabled ? undefined : onPress}
+      onLongPress={onLongPress}
+      delayLongPress={VOICE_HOLD_MS}
+      onPressIn={() => {
+        if (!onLongPress) return;
+        voiceHold.set(
+          reduced
+            ? 1
+            : withDelay(
+                100,
+                withTiming(1, { duration: VOICE_HOLD_MS - 100, easing: Easing.linear })
+              )
+        );
+      }}
+      onPressOut={() => {
+        voiceHold.set(reduced ? 0 : withTiming(0, timing('micro')));
+      }}
       style={[composerStyles.button, { borderRadius: profile.chrome.roundControl }]}>
       <Animated.View
         pointerEvents="none"
@@ -257,6 +321,27 @@ export function ComposerSendButton({
       <Animated.View style={[StyleSheet.absoluteFill, composerStyles.buttonGlyph, armedGlyphStyle]}>
         <ThemeIcon name="chrome.send" fallback={Send} size={18} color={activeText} />
       </Animated.View>
+      {onLongPress && (
+        <>
+          <Animated.View
+            pointerEvents="none"
+            style={[StyleSheet.absoluteFill, composerStyles.buttonGlyph, micStyle]}>
+            <Mic size={18} color={armed ? activeText : armedFill} />
+          </Animated.View>
+          <Canvas pointerEvents="none" style={StyleSheet.absoluteFill}>
+            <Group origin={{ x: 20, y: 20 }} transform={[{ rotate: -Math.PI / 2 }]}>
+              <Path
+                path={voiceHoldRing}
+                color={armed ? activeText : armedFill}
+                style="stroke"
+                strokeWidth={1.5}
+                strokeCap="round"
+                end={voiceHold}
+              />
+            </Group>
+          </Canvas>
+        </>
+      )}
       <Animated.View style={[StyleSheet.absoluteFill, composerStyles.buttonGlyph, spinnerStyle]}>
         <Spinner size="sm" color={activeText} />
       </Animated.View>

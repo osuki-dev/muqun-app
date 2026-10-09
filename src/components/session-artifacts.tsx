@@ -10,6 +10,8 @@ import {
   FileImage,
   FileText,
   FileType,
+  Film,
+  Headphones,
   RefreshCw,
 } from 'lucide-react-native';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -25,6 +27,8 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AssetViewer } from '@/components/asset-viewer';
+import { useFileActions } from '@/hooks/use-file-actions';
+import { saveSessionAsset } from '@/lib/save-file';
 import { appChrome } from '@/constants/appearance';
 import { SettingsSegmented } from '@/components/settings-segmented';
 import {
@@ -79,7 +83,7 @@ import { carryBox, carryForward } from '@/lib/carry-forward';
  * re-renders the rows that actually changed rather than all of them.
  */
 
-type KindFilter = 'all' | 'image' | 'document' | 'code';
+type KindFilter = 'all' | 'image' | 'audio' | 'document' | 'code';
 
 /**
  * A row of the sheet: a day heading, a file, or the one row that stands in for
@@ -169,6 +173,7 @@ const MIN_EMPTY_HEIGHT = 160;
 const FILTER_KINDS: Record<KindFilter, readonly AssetKind[]> = {
   all: [],
   image: ['image'],
+  audio: ['audio'],
   document: ['markdown', 'pdf'],
   code: ['text'],
 };
@@ -221,7 +226,7 @@ export function SessionArtifacts({
   // `useLingui()` destructuring it came from; a `t` that arrives as a function
   // argument is a different binding, so the macro leaves the tagged template
   // alone and the runtime calls Lingui's `_` with a raw strings array, which
-  // has no id and answers with an empty string. That is what emptied these four
+  // has no id and answers with an empty string. That is what emptied these
   // chips in a release build -- silently, because nothing throws.
   //
   // Rebuilt on every render rather than frozen in a module constant: a constant
@@ -238,6 +243,7 @@ export function SessionArtifacts({
   const filters: { value: KindFilter; label: string }[] = [
     { value: 'all', label: t`All` },
     { value: 'image', label: t`Images` },
+    { value: 'audio', label: t`Audio` },
     { value: 'document', label: t`Files` },
     { value: 'code', label: t`Code` },
   ];
@@ -772,6 +778,11 @@ const AssetRow = memo(function AssetRow({
   separated: boolean;
 }) {
   const { t } = useLingui();
+  const fileActions = useFileActions(
+    asset.name,
+    () => saveSessionAsset(asset),
+    asset.kind === 'image'
+  );
   useRenderTally('ArtifactRow');
   const relativeTime = useRelativeTime();
   const theme = useThemeTokens();
@@ -781,42 +792,48 @@ const AssetRow = memo(function AssetRow({
     .join(' \u00b7 ');
 
   return (
-    <SheetSceneRow
-      title={asset.name}
-      caption={detail}
-      accessibilityLabel={t`Open ${asset.name}`}
-      onPress={() => onOpen(asset)}
-      style={
-        separated
-          ? { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.border }
-          : undefined
-      }
-      leading={
-        /* A picture of the file beats a glyph that says "this is a picture". */
-        <View
-          style={[
-            styles.assetIcon,
-            // Opacity audit: decorative -- the matte behind a thumbnail image.
-            thumbnail ? { backgroundColor: theme.colors.background } : null,
-          ]}>
-          {thumbnail ? (
-            <Image
-              source={{ uri: thumbnail.uri, headers: thumbnail.headers }}
-              cachePolicy="memory-disk"
-              recyclingKey={thumbnail.cacheKey}
-              contentFit="cover"
-              style={styles.thumbnail}
-            />
-          ) : (
-            <AssetKindIcon kind={asset.kind} color={theme.colors.textMuted} />
-          )}
-        </View>
-      }
-    />
+    <View>
+      <SheetSceneRow
+        title={asset.name}
+        caption={detail}
+        accessibilityLabel={t`Open ${asset.name}`}
+        onPress={() => onOpen(asset)}
+        onLongPress={fileActions.show}
+        style={
+          separated
+            ? { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.colors.border }
+            : undefined
+        }
+        leading={
+          /* A picture of the file beats a glyph that says "this is a picture". */
+          <View
+            style={[
+              styles.assetIcon,
+              // Opacity audit: decorative -- the matte behind a thumbnail image.
+              thumbnail ? { backgroundColor: theme.colors.background } : null,
+            ]}>
+            {thumbnail ? (
+              <Image
+                source={{ uri: thumbnail.uri, headers: thumbnail.headers }}
+                cachePolicy="memory-disk"
+                recyclingKey={thumbnail.cacheKey}
+                contentFit="cover"
+                style={styles.thumbnail}
+              />
+            ) : (
+              <AssetKindIcon kind={asset.kind} color={theme.colors.textMuted} />
+            )}
+          </View>
+        }
+      />
+      {fileActions.menu}
+    </View>
   );
 });
 
 function AssetKindIcon({ kind, color }: { kind: AssetKind; color: string }) {
+  if (kind === 'audio') return <Headphones size={18} color={color} />;
+  if (kind === 'video') return <Film size={18} color={color} />;
   if (kind === 'image') return <FileImage size={18} color={color} />;
   if (kind === 'markdown') return <FileText size={18} color={color} />;
   if (kind === 'text') return <FileCode size={18} color={color} />;

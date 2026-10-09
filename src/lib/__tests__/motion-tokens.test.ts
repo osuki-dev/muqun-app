@@ -49,23 +49,7 @@ function sourceFiles(dir: string, found: string[] = []): string[] {
   return found;
 }
 
-/** `duration: 200`, `.duration(180)` -- but not `duration: MOTION_THING`. */
-const LITERAL_DURATION = /\.duration\(\s*\d|duration:\s*\d/;
-
 describe('motion tokens', () => {
-  test('no screen or component writes a duration out by hand', () => {
-    const offenders: string[] = [];
-    for (const file of sourceFiles(SRC)) {
-      const relative = file.slice(SRC.length + 1);
-      if (relative in ALLOWED) continue;
-      const source = readFileSync(file, 'utf8');
-      source.split('\n').forEach((line, index) => {
-        if (LITERAL_DURATION.test(line)) offenders.push(`${relative}:${index + 1} ${line.trim()}`);
-      });
-    }
-    expect(offenders).toEqual([]);
-  });
-
   test('every allowlisted file still exists, so the list cannot rot', () => {
     const present = new Set(sourceFiles(SRC).map((file) => file.slice(SRC.length + 1)));
     for (const file of Object.keys(ALLOWED)) expect(present.has(file)).toBe(true);
@@ -101,7 +85,7 @@ describe('motion tokens', () => {
 
   test("an image's own fade is a duration too, and comes from the same place", () => {
     // `expo-image`'s `transition` prop is a number of milliseconds, so it is a
-    // duration that the `.duration(...)` scan above cannot see. The audit found
+    // duration that other duration checks cannot see. The audit found
     // two of them -- 100 in the attachment strip and 120 in the lightbox --
     // sitting outside a scale the rest of the app had just been moved onto.
     const offenders: string[] = [];

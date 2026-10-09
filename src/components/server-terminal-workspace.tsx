@@ -39,6 +39,7 @@ import {
 } from 'react';
 import {
   AppState,
+  BackHandler,
   Keyboard,
   type LayoutChangeEvent,
   Pressable,
@@ -328,6 +329,7 @@ import { homeWorkspaceHandoffStore } from '@/lib/home-workspace-handoff';
 import {
   type TerminalKey,
   isFullScreenTuiPane,
+  isLazygitPane,
   keyCap,
   parseNvimMode,
   keyboardCombinationKeys,
@@ -996,6 +998,7 @@ export function ServerTerminalWorkspace({
     awaitUploads,
   } = useAttachmentUploads(record, attachmentDestination);
   const panelPick = usePanelPickerStore((state) => state.pick);
+  const panelReturn = usePanelPickerStore((state) => state.returnTarget);
   const clearPanelPick = usePanelPickerStore((state) => state.clearPick);
   /**
    * Which of this gateway's sessions the reader is in, and how they said so.
@@ -2356,6 +2359,11 @@ export function ServerTerminalWorkspace({
     pane, exactly as before, so a reader who opened the panel keeps it open for
     as long as they are on this pane.
   */
+  const lazygitPane = isLazygitPane(
+    shortcuts?.profile,
+    field(selectedPane, 'terminal_title_stripped'),
+    field(selectedPane, 'foreground_command')
+  );
   const autoKeyboardPaneRef = useRef<string | null>(null);
   useEffect(() => {
     const paneId = selection.paneId;
@@ -2566,7 +2574,7 @@ export function ServerTerminalWorkspace({
     // authoritative for both the dock and the virtual keyboard.
     const base =
       shortcuts?.keyActions === undefined
-        ? fullScreenPane
+        ? fullScreenPane && !lazygitPane
           ? withEditorActions(withCommonTerminalCombinations(resolved))
           : withCommonTerminalCombinations(resolved)
         : resolved;
@@ -2576,7 +2584,7 @@ export function ServerTerminalWorkspace({
       scope ? loadUsage()[scope] : undefined,
       (item) => item.key
     );
-  }, [deliverableKey, fullScreenPane, nvimMode, serverId, shortcuts]);
+  }, [deliverableKey, fullScreenPane, lazygitPane, nvimMode, serverId, shortcuts]);
   const keyScope = shortcuts ? usageScope(serverId, shortcuts.profile, 'keys') : null;
   // Typing "/" in an agent pane offers what that agent actually accepts.
   //
@@ -4033,6 +4041,31 @@ export function ServerTerminalWorkspace({
     [announceSwitch, data]
   );
 
+  const canReturnToPane = Boolean(
+    padDetailIsPane &&
+    !overviewVisible &&
+    panelReturn &&
+    panelReturn.serverId === serverId &&
+    panelReturn.sessionId === data.sessionId &&
+    panelReturn.paneId === selection.paneId &&
+    selectionForPane(data, panelReturn.previousPaneId).paneId === panelReturn.previousPaneId
+  );
+  const returnToPreviousPane = useCallback(() => {
+    if (!canReturnToPane || !panelReturn) return false;
+    usePanelPickerStore.getState().choosePanel({
+      serverId,
+      paneId: panelReturn.previousPaneId,
+    });
+    setKeyboardMode(false);
+    return true;
+  }, [canReturnToPane, panelReturn, serverId]);
+
+  useEffect(() => {
+    if (!isFocused || overviewVisible || !padDetailIsPane || !canReturnToPane) return;
+    const subscription = BackHandler.addEventListener('hardwareBackPress', returnToPreviousPane);
+    return () => subscription.remove();
+  }, [canReturnToPane, isFocused, overviewVisible, padDetailIsPane, returnToPreviousPane]);
+
   /**
    * Leaving the demo is leaving the screen (card #672).
    *
@@ -4476,6 +4509,7 @@ export function ServerTerminalWorkspace({
         // The health answer this screen is already holding. A gateway that
         // cannot spawn gets a sheet with neither New task nor Stop in it.
         canSpawn: gatewaySupportsAgentSpawn(data.health?.capabilities) ? '1' : '',
+        canLazygit: data.health?.capabilities?.includes('pane_lazygit') ? '1' : '',
         // Whether opening a plain URL on this machine is honest. The demo is
         // excluded before the transport is even consulted: its record points
         // at an address that does not exist, so every port on it is a page
@@ -4905,6 +4939,7 @@ export function ServerTerminalWorkspace({
 
   const composerField = (
     <TerminalComposer
+      voiceContext={`${serverId}:${data.sessionId}:${selection.paneId}`}
       entering={fadeInDown('short')}
       exiting={fadeOutDown('short')}
       layout={dockRowLayout}
@@ -5106,6 +5141,7 @@ export function ServerTerminalWorkspace({
           all unless the gateway has the routes and this pane's directory is a
           checkout, so the row is unchanged on an older server. */}
       <GitDiffButton
+        serverId={serverId}
         sessionId={data.sessionId}
         paneId={selection.paneId}
         cwd={field(selectedPane, 'cwd')}
@@ -5221,7 +5257,7 @@ export function ServerTerminalWorkspace({
       }
       // The header stays mounted under Home; the overlay covers it.
       detailTitle={shellTitle}
-      onDetailBack={demoMode ? leaveDetail : undefined}
+      onDetailBack={canReturnToPane ? returnToPreviousPane : demoMode ? leaveDetail : undefined}
       detailFadeColor={padDetailIsPane ? terminalBackground : theme.colors.background}
       detailTitleSlot={
         !padDetailIsPane ? undefined : (

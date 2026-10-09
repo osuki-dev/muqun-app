@@ -3,6 +3,7 @@ import { useFocusEffect } from 'expo-router';
 import { DeliveryOwnership } from '@/lib/bound-delivery';
 import type { GatewayRecord } from '@/lib/gateway-storage';
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';
+import { useVoiceInput } from '@/stores/voice-input';
 
 import {
   isBusy,
@@ -221,7 +222,15 @@ export function useAttachmentUploads(
     commit([]);
   }, [commit, ownership]);
 
-  useFocusEffect(useCallback(() => () => clearAttachments(), [clearAttachments]));
+  useFocusEffect(
+    useCallback(
+      () => () => {
+        // Dictation temporarily covers the same composer; it is not a new destination.
+        if (!useVoiceInput.getState().request) clearAttachments();
+      },
+      [clearAttachments]
+    )
+  );
   useEffect(
     () =>
       useGatewayConnectionStore.subscribe((next, previous) => {

@@ -17,6 +17,7 @@ import {
   Terminal,
   ChevronRight,
   Server,
+  Mic,
   Settings2,
 } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
@@ -47,10 +48,10 @@ const SETTINGS_CONTENT_MAX_WIDTH = 760;
  * The header is laid over the scroll rather than stacked above it, which is how
  * the server page carries its own pills: content passes under the glass instead
  * of stopping at a band. `NAV_HEADER_TOP_GAP` + the header's controls + its own
- * 8 of bottom padding, plus a `gap` so the first section label clears the glass
- * rather than starting under it.
+ * 8 of bottom padding, plus a section gap so the entry list has breathing room
+ * below the navigation on both phones and tablets.
  */
-const HEADER_INSET = NAV_HEADER_TOP_GAP + NAV_HEADER_CONTROL_SIZE + 8 + LADDER.gap;
+const HEADER_INSET = NAV_HEADER_TOP_GAP + NAV_HEADER_CONTROL_SIZE + 8 + LADDER.section;
 
 /** Settings gathers everyday preferences and app management into one entry list. */
 export default function SettingsScreen() {
@@ -117,6 +118,7 @@ export default function SettingsScreen() {
               [
                 { route: '/settings-appearance', icon: Palette, label: t`Appearance` },
                 { route: '/settings-terminal', icon: Terminal, label: t`Terminal` },
+                { route: '/settings-voice', icon: Mic, label: t`Voice to text` },
                 { route: '/settings-alerts', icon: Bell, label: t`Alerts` },
                 { route: '/settings-servers', icon: Server, label: t`Servers` },
                 { route: '/settings-storage', icon: HardDrive, label: t`Storage` },

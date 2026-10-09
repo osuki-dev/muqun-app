@@ -136,6 +136,40 @@ export function rewriteMessageImages(
   return changed ? out.join('') : markdown;
 }
 
+export type BlockImagePart =
+  | { kind: 'markdown'; text: string; start: number }
+  | { kind: 'image'; uri: string; alt: string; start: number };
+
+/** Keep block images outside native text measurement; inline images remain text. */
+export function splitBlockImages(markdown: string): BlockImagePart[] {
+  const parts: BlockImagePart[] = [];
+  let fence: { marker: string; count: number } | null = null;
+  let offset = 0;
+  let cursor = 0;
+  for (const line of markdown.split(/(?<=\n)/)) {
+    const body = line.replace(/\r?\n$/, '');
+    const marker = fenceMarker(body);
+    if (marker) {
+      if (!fence) fence = { marker: marker.marker, count: marker.count };
+      else if (fence.marker === marker.marker && marker.count >= fence.count && !marker.rest.trim())
+        fence = null;
+    } else if (!fence && !/^(?: {4}|\t)/.test(body)) {
+      const occurrences = findImages(body);
+      const image = occurrences.length === 1 ? occurrences[0] : undefined;
+      if (image && !body.slice(0, image.start).trim() && !body.slice(image.end).trim()) {
+        if (offset > cursor)
+          parts.push({ kind: 'markdown', text: markdown.slice(cursor, offset), start: cursor });
+        parts.push({ kind: 'image', uri: image.src, alt: image.alt, start: offset });
+        cursor = offset + line.length;
+      }
+    }
+    offset += line.length;
+  }
+  if (cursor < markdown.length || !parts.length)
+    parts.push({ kind: 'markdown', text: markdown.slice(cursor), start: cursor });
+  return parts;
+}
+
 /**
  * The resolver a transcript part uses: a source the gateway resolved and the
  * app has a URI for is swapped; one still on its way is left as written (an

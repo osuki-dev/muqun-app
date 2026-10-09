@@ -1,0 +1,263 @@
+import { useLingui } from '@lingui/react/macro';
+import { useThemeTokens } from '@osuki-dev/ui';
+import { useNavigation } from 'expo-router';
+import { useEffect, useState } from 'react';
+import { Keyboard, ScrollView, StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Text } from '@/components/text';
+import { SettingsToggleRow } from '@/components/settings-chrome';
+import { SettingsSegmented } from '@/components/settings-segmented';
+import { FontedTextInput } from '@/components/fonted-text-input';
+import { PressableScale } from '@/components/pressable-scale';
+import { SheetScene, SheetSceneFooter, SheetSceneRow } from '@/components/sheet-scene';
+import { voiceRecorderAvailable } from '@/lib/voice-recorder-capability';
+import { APP_LOCALES, LOCALE_LABELS, type AppLocale } from '@/i18n/locale';
+import { useInterfaceFontFamily } from '@/hooks/use-user-fonts';
+import {
+  loadVoiceSettings,
+  normalizeVoiceConfig,
+  saveVoiceSettings,
+  useVoiceSettings,
+  type VoiceMode,
+} from '@/stores/voice-settings';
+
+export default function SettingsVoiceScreen() {
+  const { t } = useLingui();
+  const ready = useVoiceSettings((state) => state.ready);
+  useEffect(() => {
+    void loadVoiceSettings();
+  }, []);
+  return (
+    <SheetScene title={t`Voice to text`} testID="settings-voice-sheet">
+      {ready ? <VoiceSettingsForm /> : <Text>{t`Loading…`}</Text>}
+    </SheetScene>
+  );
+}
+
+function VoiceSettingsForm() {
+  const { t } = useLingui();
+  const navigation = useNavigation();
+  const theme = useThemeTokens();
+  const fontFamily = useInterfaceFontFamily() ?? undefined;
+  const insets = useSafeAreaInsets();
+  const config = useVoiceSettings((state) => state.config);
+  const loadError = useVoiceSettings((state) => state.loadError);
+  const [url, setUrl] = useState(config?.url ?? '');
+  const [apiKey, setApiKey] = useState(config?.apiKey ?? '');
+  const [model, setModel] = useState(config?.model ?? '');
+  const [language, setLanguage] = useState<AppLocale | 'auto' | null>(config?.language ?? null);
+  const [autoInsert, setAutoInsert] = useState(config?.autoInsert ?? true);
+  const [mode, setMode] = useState<VoiceMode>(config?.mode ?? 'file');
+  const [choosingLanguage, setChoosingLanguage] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState('');
+  const field = [
+    styles.field,
+    { color: theme.colors.text, backgroundColor: theme.colors.surface, fontFamily },
+  ];
+  async function save(clear = false) {
+    const next = clear
+      ? null
+      : normalizeVoiceConfig(url, apiKey, model, language, autoInsert, mode);
+    if (!clear && !next) {
+      setMessage(
+        mode === 'realtime'
+          ? t`Enter a valid WSS realtime URL. API key and model are optional.`
+          : t`Enter a valid HTTPS API URL. API key and model are optional.`
+      );
+      return;
+    }
+    setBusy(true);
+    setChoosingLanguage(false);
+    setMessage('');
+    try {
+      await saveVoiceSettings(next);
+    } catch {
+      setMessage(t`Could not save voice settings. Please try again.`);
+      setBusy(false);
+      return;
+    }
+    setUrl(next?.url ?? '');
+    setApiKey(next?.apiKey ?? '');
+    setModel(next?.model ?? '');
+    setLanguage(next?.language ?? null);
+    setAutoInsert(next?.autoInsert ?? true);
+    setMode(next?.mode ?? 'file');
+    setBusy(false);
+    if (clear) {
+      setMessage(t`Voice to text disabled`);
+    } else if (navigation.isFocused() && navigation.canGoBack()) {
+      Keyboard.dismiss();
+      navigation.goBack();
+    }
+  }
+  return (
+    <ScrollView
+      keyboardShouldPersistTaps="handled"
+      keyboardDismissMode="on-drag"
+      showsVerticalScrollIndicator={false}>
+      <View style={styles.form}>
+        {!voiceRecorderAvailable() && (
+          <Text
+            color={
+              theme.colors.textMuted
+            }>{t`Install an app build with voice recording support to use the microphone.`}</Text>
+        )}
+        <SettingsToggleRow
+          label={t`Insert text automatically`}
+          detail={t`Insert recognized text into the draft without sending. Turn off to review first.`}
+          value={autoInsert}
+          disabled={busy}
+          onValueChange={setAutoInsert}
+        />
+        <SheetSceneRow
+          title={t`Recognition language`}
+          caption={
+            language === 'auto'
+              ? t`Auto-detect`
+              : language
+                ? LOCALE_LABELS[language]
+                : t`Follow App language`
+          }
+          onPress={() => {
+            if (!busy) setChoosingLanguage(!choosingLanguage);
+          }}
+        />
+        {choosingLanguage && (
+          <View>
+            <SheetSceneRow
+              title={t`Follow App language`}
+              selected={language === null}
+              onPress={() => {
+                setLanguage(null);
+                setChoosingLanguage(false);
+              }}
+            />
+            <SheetSceneRow
+              title={t`Auto-detect`}
+              selected={language === 'auto'}
+              onPress={() => {
+                setLanguage('auto');
+                setChoosingLanguage(false);
+              }}
+            />
+            {APP_LOCALES.map((locale) => (
+              <SheetSceneRow
+                key={locale}
+                title={LOCALE_LABELS[locale]}
+                selected={language === locale}
+                onPress={() => {
+                  setLanguage(locale);
+                  setChoosingLanguage(false);
+                }}
+              />
+            ))}
+          </View>
+        )}
+        <Text
+          color={
+            theme.colors.textMuted
+          }>{t`Configure your speech service, then hold Send to record. Tap the animation to stop and transcribe.`}</Text>
+        <Text>{t`Transcription mode`}</Text>
+        <SettingsSegmented
+          testID="voice-service-mode"
+          value={mode}
+          options={[
+            { value: 'file', label: t`After recording` },
+            { value: 'realtime', label: t`Realtime` },
+          ]}
+          onChange={(value) => {
+            if (!busy && (value === 'file' || value === 'realtime')) {
+              setMode(value);
+              setMessage('');
+            }
+          }}
+        />
+        {mode === 'realtime' && (
+          <Text color={theme.colors.textMuted}>
+            {t`Requires an OpenAI Realtime-compatible WebSocket endpoint and a live transcription model. Text appears as you speak; tap to stop and finish. Other streaming protocols are not supported.`}
+          </Text>
+        )}
+        <Text>{t`API URL`}</Text>
+        <FontedTextInput
+          testID="voice-service-url"
+          accessibilityLabel={t`API URL`}
+          value={url}
+          onChangeText={setUrl}
+          editable={!busy}
+          autoCapitalize="none"
+          autoCorrect={false}
+          keyboardType="url"
+          placeholder={
+            mode === 'realtime'
+              ? 'wss://api.openai.com/v1/realtime?intent=transcription'
+              : 'https://openrouter.ai/api/v1/audio/transcriptions'
+          }
+          style={field}
+        />
+        <Text>{t`API key (optional)`}</Text>
+        <FontedTextInput
+          testID="voice-service-key"
+          accessibilityLabel={t`API key`}
+          value={apiKey}
+          onChangeText={setApiKey}
+          editable={!busy}
+          autoCapitalize="none"
+          autoCorrect={false}
+          secureTextEntry
+          autoComplete="off"
+          style={field}
+        />
+        <Text>{t`Model (optional)`}</Text>
+        <FontedTextInput
+          testID="voice-service-model"
+          accessibilityLabel={t`Model`}
+          value={model}
+          onChangeText={setModel}
+          editable={!busy}
+          autoCapitalize="none"
+          autoCorrect={false}
+          placeholder={mode === 'realtime' ? 'gpt-live-transcribe' : 'gpt-4o-mini-transcribe'}
+          style={field}
+        />
+        <Text
+          color={
+            theme.colors.textMuted
+          }>{t`Enter the full transcription endpoint. Muqun uses this URL as entered with an OpenAI-compatible request. Your API key is stored securely on this device.`}</Text>
+        <View style={styles.actions}>
+          <PressableScale
+            accessibilityRole="button"
+            disabled={busy}
+            testID="voice-settings-save"
+            accessibilityLabel={t`Save`}
+            onPress={() => void save()}
+            style={[styles.button, { backgroundColor: theme.colors.primary }]}>
+            <Text color={theme.colors.onPrimary}>{t`Save`}</Text>
+          </PressableScale>
+          <PressableScale
+            accessibilityRole="button"
+            disabled={busy || (!config && !loadError)}
+            testID="voice-settings-clear"
+            accessibilityLabel={t`Clear configuration`}
+            onPress={() => void save(true)}
+            style={styles.button}>
+            <Text color={theme.colors.text}>{t`Clear configuration`}</Text>
+          </PressableScale>
+        </View>
+        {message || loadError ? (
+          <Text accessibilityLiveRegion="polite" color={theme.colors.textMuted}>
+            {message || t`Could not read voice settings. Save your configuration again.`}
+          </Text>
+        ) : null}
+      </View>
+      <SheetSceneFooter bottomInset={insets.bottom} />
+    </ScrollView>
+  );
+}
+
+const styles = StyleSheet.create({
+  form: { padding: 20, gap: 12, width: '100%', maxWidth: 640, alignSelf: 'center' },
+  field: { borderRadius: 12, padding: 14, fontSize: 16, minHeight: 48 },
+  actions: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
+  button: { paddingHorizontal: 18, paddingVertical: 12, borderRadius: 16, minHeight: 44 },
+});

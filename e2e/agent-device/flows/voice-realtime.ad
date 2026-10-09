@@ -1,0 +1,26 @@
+# Realtime is explicitly configured and never falls back to file upload.
+# No account, real speech service, or paired Gateway is used by this flow.
+
+# section configure
+wait "id=\"settings-voice-sheet\"" 10000
+scroll down --until "id=\"settings-selection:off:voice-service-mode-realtime\""
+press "id=\"settings-selection:off:voice-service-mode-realtime\""
+scroll down --until "id=\"voice-service-url\""
+fill "id=\"voice-service-url\"" "wss://example.invalid/custom/realtime"
+keyboard enter
+scroll down --until "id=\"voice-settings-save\""
+press "id=\"voice-settings-save\""
+wait "id=\"settings-voice-row\"" 5000
+back --system
+
+# section disconnected
+wait "id=\"terminal-composer-input\"" 10000
+fill "id=\"terminal-composer-input\"" "Keep this realtime draft"
+longpress "id=\"composer-send\"" 700
+wait "id=\"voice-visual-error\"" 20000
+wait "label=\"Realtime transcription disconnected. Check your connection and speech service, then try again\"" 5000
+is visible "id=\"voice-recording-stop\" label=\"Try again\""
+screenshot "shots/voice-realtime-disconnected.png"
+press "id=\"voice-recording-cancel\""
+wait "id=\"terminal-composer-input\" value=\"Keep this realtime draft\"" 10000
+is hidden "id=\"voice-recording-stop\""
