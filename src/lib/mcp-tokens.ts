@@ -73,16 +73,12 @@ export function parseTokenList(value: unknown): McpToken[] | null {
  */
 export async function fetchMcpTokens(): Promise<McpToken[] | null> {
   const { readJson } = await import('./agent-session');
-  const { demoMcpTokens, isDemoActive } = await import('./demo-gateway');
-  if (isDemoActive()) return parseTokenList({ tokens: demoMcpTokens() });
   return readJson<McpToken[] | null>('/api/mcp/tokens', parseTokenList, null);
 }
 
 /** True when the gateway revoked it; false when it no longer knows the token. */
 export async function revokeMcpToken(id: string): Promise<boolean> {
   const { writeJson } = await import('./agent-session');
-  const { demoRevokeMcpToken, isDemoActive } = await import('./demo-gateway');
-  if (isDemoActive()) return demoRevokeMcpToken(id);
   try {
     await writeJson(
       `/api/mcp/tokens/${encodeURIComponent(id)}`,

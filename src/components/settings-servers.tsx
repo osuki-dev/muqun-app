@@ -29,7 +29,7 @@ import { useGatewayRecord } from '@/hooks/use-gateway-record';
 import { useMonoFontFamily } from '@/hooks/use-user-fonts';
 import { GatewayStorageError } from '@/components/gateway-storage-error';
 import { connectionStatusDescription, connectionStatusLabel } from '@/i18n/labels';
-import { DEMO_SERVER_ID, demoCapabilities, demoRecord, isDemoActive } from '@/lib/demo-gateway';
+import { DEMO_SERVER_ID } from '@/lib/demo-gateway';
 import { feedback } from '@/lib/feedback';
 import { loadPairedDevices, revokePairedDevice, type PairedDevice } from '@/lib/gateway-client';
 import type { GatewayRecord } from '@/lib/gateway-storage';
@@ -103,9 +103,6 @@ export function SettingsServers() {
     }, [record, refreshReachability])
   );
 
-  // Demo is exclusive: it stands in only when there are no real records.
-  const showDemo = records.length === 0 && isDemoActive();
-
   async function use(server: GatewayRecord) {
     if (server.serverId === record?.serverId) return;
     await selectRecord(server.serverId);
@@ -138,20 +135,6 @@ export function SettingsServers() {
           <Text variant="caption" color={theme.colors.textMuted}>
             <Trans>Loading computers</Trans>
           </Text>
-        </View>
-      ) : showDemo ? (
-        <View>
-          <ServerRow
-            server={demoRecord}
-            current
-            demo
-            reachability="live"
-            lastConnected={undefined}
-            open={openId === DEMO_SERVER_ID}
-            onToggle={() => setOpenId((id) => (id === DEMO_SERVER_ID ? null : DEMO_SERVER_ID))}
-            onUse={() => {}}
-            onUnpair={async () => {}}
-          />
         </View>
       ) : records.length === 0 ? (
         <View style={styles.note}>
@@ -272,7 +255,6 @@ export function SettingsServers() {
 function ServerRow({
   server,
   current,
-  demo = false,
   reachability,
   lastConnected,
   open,
@@ -283,8 +265,6 @@ function ServerRow({
   server: GatewayRecord;
   /** The server the app is attached to, which is the one with a device list. */
   current: boolean;
-  /** The demo workspace: no paired devices, edit or unpair, only the capability sections. */
-  demo?: boolean;
   reachability: ConnectionStatus;
   /**
    * What `/servers/[serverId]` last mirrored for this record, or `undefined`
@@ -433,13 +413,7 @@ function ServerRow({
           exiting={fadeOut('micro')}
           layout={listLayout()}
           style={styles.actions}>
-          {demo ? (
-            <>
-              <ServerTasksNavRow serverId={server.serverId} capabilities={demoCapabilities()} />
-              <ServerCapabilities serverId={server.serverId} capabilities={demoCapabilities()} />
-              <McpTokens serverId={server.serverId} capabilities={demoCapabilities()} />
-            </>
-          ) : current ? (
+          {current ? (
             <>
               <ServerTasksNavRow serverId={server.serverId} />
               <PairedDevices server={server} />
@@ -471,7 +445,7 @@ function ServerRow({
               </Text>
             </>
           )}
-          {demo ? null : <ServerRowEditor server={server} onUnpair={onUnpair} />}
+          <ServerRowEditor server={server} onUnpair={onUnpair} />
         </Animated.View>
       ) : null}
     </Animated.View>
@@ -482,18 +456,10 @@ function ServerRow({
  * The way into the server's task ledger, only on a gateway that keeps one: an
  * older gateway shows nothing here rather than an entry that would 404.
  */
-function ServerTasksNavRow({
-  serverId,
-  capabilities,
-}: {
-  serverId: string;
-  /** Gates on this list instead of the store, for the demo server. */
-  capabilities?: readonly string[];
-}) {
+function ServerTasksNavRow({ serverId }: { serverId: string }) {
   const { t } = useLingui();
   const router = useRouter();
-  const stored = useServerCapabilities((state) => state.byServer[serverId]);
-  const ledger = hasTaskLedger(capabilities ?? stored);
+  const ledger = useServerCapabilities((state) => hasTaskLedger(state.byServer[serverId]));
   const count = useServerTasksStore((state) => activeTaskCount(state.index[serverId]?.tasks ?? []));
   if (!ledger) return null;
   return (
