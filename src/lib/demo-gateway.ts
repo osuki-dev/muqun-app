@@ -4,8 +4,7 @@ import { msg } from '@lingui/core/macro';
 import { Image } from 'react-native';
 import { createThemeStarter } from '@/theme/starter';
 
-import { AGENT_SPAWN_CAPABILITY } from '@/lib/agent-spawn';
-import { GIT_DIFF_CAPABILITY, PANE_CONTEXT_CAPABILITY } from '@/lib/git-diff';
+import { DEMO_CAPABILITIES } from '@/lib/demo-capabilities';
 import { DEMO_REFUSED_LOG_BYTES, demoBundleText, demoChangelogText } from '@/lib/demo-large-files';
 import { normalizeGatewayEntities, type GatewayEntity } from '@/lib/gateway-entities';
 import type { SessionAsset } from '@/lib/gateway-client';
@@ -1247,6 +1246,11 @@ export function demoAssetContentUri(assetId: string): string {
 
 export const demoSessionId = SESSION_ID;
 
+/** The demo gateway's capability list, for surfaces that gate on it without the store. */
+export function demoCapabilities(): readonly string[] {
+  return DEMO_CAPABILITIES;
+}
+
 export function demoHealth() {
   return {
     ok: true,
@@ -1262,19 +1266,7 @@ export function demoHealth() {
     // the two diff capabilities because `demoPaneContext`, `demoGitStatus` and
     // `demoGitDiff` answer all three routes -- including the paging one, which
     // is the whole reason the large fixture exists.
-    capabilities: [
-      'agent_events',
-      AGENT_SPAWN_CAPABILITY,
-      'agent_collaboration',
-      PANE_CONTEXT_CAPABILITY,
-      GIT_DIFF_CAPABILITY,
-      'pane_lazygit',
-      'agent_audio_assets',
-      // The P1 companion surfaces: the fixtures at the end of this file answer them.
-      'task_ledger',
-      'fleet',
-      'mcp_server',
-    ],
+    capabilities: DEMO_CAPABILITIES,
     // The per-session capability list a current gateway answers with. The demo
     // session is a Herdr 0.9.0, so it carries collaboration; a demo that only
     // set the gateway-wide array would exercise the fallback path rather than

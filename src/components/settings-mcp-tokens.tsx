@@ -26,9 +26,16 @@ type Load = { status: 'loading' } | { status: 'error' } | { status: 'ready'; tok
  * The tokens coding agents use to reach this gateway, with the revoke that
  * cuts one off. Absent entirely unless the gateway's MCP server is running.
  */
-export function McpTokens({ serverId }: { serverId: string }) {
-  const mcp = useServerCapabilities((state) => hasMcpServer(state.byServer[serverId]));
-  if (!mcp) return null;
+export function McpTokens({
+  serverId,
+  capabilities,
+}: {
+  serverId: string;
+  /** Gates on this list instead of the store, for the demo server. */
+  capabilities?: readonly string[];
+}) {
+  const stored = useServerCapabilities((state) => state.byServer[serverId]);
+  if (!hasMcpServer(capabilities ?? stored)) return null;
   return <McpTokensSection />;
 }
 
