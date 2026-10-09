@@ -4,6 +4,7 @@ import { useThemeTokens } from '@osuki-dev/ui';
 import { ChevronRight } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
+import { useShallow } from 'zustand/react/shallow';
 
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { PressableScale } from '@/components/pressable-scale';
@@ -21,6 +22,7 @@ import {
   META_SEPARATOR,
 } from '@/lib/home-continue-row';
 import { homeInProgressTasks, type HomeTaskRow } from '@/lib/home-in-progress';
+import type { ServerTasksIndex } from '@/lib/server-tasks-state';
 import { hasTaskLedger } from '@/lib/task-ledger';
 import { useServerCapabilities } from '@/stores/server-capabilities';
 import { useServerTasksStore } from '@/stores/server-tasks';
@@ -37,6 +39,22 @@ export function HomeServerTasksSync({ serverId }: { serverId: string | null }) {
   );
   useServerTasks(ledger ? serverId : null);
   return null;
+}
+
+/**
+ * The task ledger of just these computers, so a frame for another computer
+ * does not re-render the rows that read it.
+ */
+export function useTaskIndexFor(serverIds: readonly string[]): ServerTasksIndex {
+  const entries = useServerTasksStore(
+    useShallow((state) => serverIds.map((serverId) => state.index[serverId]))
+  );
+  const index: ServerTasksIndex = {};
+  serverIds.forEach((serverId, position) => {
+    const entry = entries[position];
+    if (entry) index[serverId] = entry;
+  });
+  return index;
 }
 
 /** How many tasks are in progress on these computers; Home omits the group at zero. */
@@ -63,7 +81,7 @@ export function HomeInProgress({
   const theme = useThemeTokens();
   const profile = useAppearanceProfile();
   const background = useSurfaceBackground();
-  const index = useServerTasksStore((state) => state.index);
+  const index = useTaskIndexFor(serverIds);
   const { rows, total } = homeInProgressTasks(index, serverIds);
   // Ages are relative to now; a tick keeps "just now" from going stale.
   const [nowMs, setNowMs] = useState(() => Date.now());

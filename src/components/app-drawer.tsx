@@ -23,6 +23,7 @@ import { DetailHeader } from '@/components/detail-header';
 import { appChrome } from '@/constants/appearance';
 import { isDrawerPermanent } from '@/constants/navigation';
 import { useGatewayRecord } from '@/hooks/use-gateway-record';
+import { revealableSubtreeImportance } from '@/lib/hidden-subtree';
 import { fadeIn, fadeInLeft, fadeOut, fadeOutLeft, listLayout } from '@/lib/motion';
 import { responsiveWorkspaceLayout } from '@/lib/responsive-layout';
 
@@ -155,7 +156,7 @@ export default function AppDrawer({
         <Animated.View
           testID="pad-server-rail-container"
           accessibilityElementsHidden={overlayVisible}
-          importantForAccessibility={overlayVisible ? 'no-hide-descendants' : 'auto'}
+          importantForAccessibility={revealableSubtreeImportance(overlayVisible)}
           entering={fadeInLeft()}
           exiting={fadeOutLeft()}
           style={[
@@ -211,7 +212,7 @@ export default function AppDrawer({
         style={styles.main}
         layout={listLayout()}
         accessibilityElementsHidden={overlayVisible}
-        importantForAccessibility={overlayVisible ? 'no-hide-descendants' : 'auto'}>
+        importantForAccessibility={revealableSubtreeImportance(overlayVisible)}>
         {children}
 
         {/*

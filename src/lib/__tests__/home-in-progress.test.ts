@@ -82,6 +82,24 @@ describe('homeWaitingTasks', () => {
     });
     expect(homeWaitingTasks(tasks, ['a']).map((row) => row.task.taskId)).toEqual(['w2', 'w1']);
   });
+
+  test('a task whose session Needs you already lists is not listed twice', () => {
+    const bound = (asid: string): TaskBinding => ({ kind: 'agent_session', agentId: 'oc', asid });
+    const tasks = index({
+      a: [
+        task('dup', 'waiting', 3, bound('ses_1')),
+        task('other', 'waiting', 2, bound('ses_2')),
+        task('cmd', 'waiting', 1),
+      ],
+      b: [task('elsewhere', 'waiting', 4, bound('ses_1'))],
+    });
+    const pending = [{ serverId: 'a', asid: 'ses_1' }];
+    expect(homeWaitingTasks(tasks, ['a', 'b'], pending).map((row) => row.task.taskId)).toEqual([
+      'elsewhere',
+      'other',
+      'cmd',
+    ]);
+  });
 });
 
 describe('boundTaskState', () => {
