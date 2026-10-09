@@ -1,0 +1,51 @@
+# Home's composer, offline demo: `@` assigns the demo workspace, Send runs the
+# new-agent command with the goal. The demo record has no reachable agent host,
+# so the command stops at the agent setup sheet and the goal stays in the
+# composer. Delivery to a real agent needs a paired gateway (see AGENTS.md).
+
+# section choose-editorial
+open "muqun:///settings-home-layout"
+wait stable 400 5000
+
+# section picker-ready
+is visible "${TARGET}"
+
+# section select-editorial
+press "${TARGET}"
+
+# section picker-closed
+is hidden "${TARGET}"
+
+# section home
+open "muqun:///"
+wait stable 400 5000
+
+# section assert-visible
+is visible "${TARGET}"
+
+# section assert-hidden
+is hidden "${TARGET}"
+
+# section mention
+fill id="home-composer-input" "@"
+wait stable 300 5000
+
+# section press
+press "${TARGET}"
+wait stable 300 5000
+
+# section goal
+fill id="home-composer-input" "Say hello to the fleet"
+wait stable 300 5000
+
+# section close-guide
+back --system
+wait stable 400 5000
+
+# section cleanup
+open "muqun:///"
+wait stable 400 5000
+
+# section restore-layout
+open "muqun:///settings-home-layout"
+wait stable 400 5000

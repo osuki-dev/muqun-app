@@ -83,6 +83,7 @@ import {
   HomeLaunchTarget,
   useHomeLaunchController,
 } from '@/components/home-launch-actions';
+import { HomeComposer } from '@/components/home-composer';
 import { SshHostRow } from '@/components/ssh-host-row';
 import { StatusDot } from '@/components/status-dot';
 import { NAV_HEADER_TOP_GAP } from '@/constants/nav-header';
@@ -735,6 +736,16 @@ export function HomeOverview({
     );
     const padLaunch =
       isPad && padLaunchLayoutEnabled(padGeometry.contentWidth, fontScale, editorialViewportHeight);
+    // Hidden with nothing paired: the pair card is that page's one action.
+    const composer =
+      hydrationError || loading || launchController.servers.length === 0 ? null : (
+        <HomeComposer
+          controller={launchController}
+          reachabilityByServer={padReachabilityByServer}
+          currentServerId={record?.serverId}
+          onNewAgent={commands.newAgent}
+        />
+      );
     const editorialContent = (
       <View
         testID="home-editorial"
@@ -857,6 +868,7 @@ export function HomeOverview({
                   />
                 )
               }
+              padComposer={padLaunch ? composer : undefined}
               launches={
                 hydrationError || loading ? undefined : launchController.servers.length === 0 ? (
                   <EmptyState
@@ -881,6 +893,7 @@ export function HomeOverview({
                         />
                       </>
                     ) : null}
+                    {padLaunch ? null : composer}
                     <HomeLaunchActions
                       controller={launchController}
                       grid={isPad}

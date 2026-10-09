@@ -3,6 +3,7 @@ import type { TerminalBackendState } from '@/lib/terminal-backend-state';
 import type { AgentReadiness } from '@/lib/home-agent-readiness';
 import { homeWorkspaceHandoffStore } from '@/lib/home-workspace-handoff';
 import { DEMO_SSH_HOST_ID } from '@/lib/demo-ssh-transcript';
+import { offerInitialPrompt, withdrawInitialPrompt } from '@/lib/initial-prompt';
 
 export type { HomeTarget } from '@/lib/home-recents';
 
@@ -49,13 +50,25 @@ export type HomeAgentEntry = {
   asid?: string;
   /** The agentId to open or create on; the server's own choice when absent. */
   agentId?: string;
+  /**
+   * The goal a new session starts with (Home's composer). Only meaningful with
+   * a `new` intent; the workbench sends it once, see `initial-prompt.ts`.
+   */
+  prompt?: string;
 };
 
 export type HomeCommand =
   | { type: 'resume-server'; target: HomeServerEntry }
   | { type: 'resume-target'; target: HomeTarget }
   | { type: 'open-agent'; target: HomeAgentEntry }
-  | { type: 'new-agent'; serverId: string; directory?: string; agentId?: string }
+  | {
+      type: 'new-agent';
+      serverId: string;
+      directory?: string;
+      agentId?: string;
+      /** The new session's first prompt, typed into Home's composer. */
+      prompt?: string;
+    }
   | { type: 'new-terminal'; serverId: string; workspaceId?: string }
   | { type: 'open-ssh'; hostId?: string }
   | { type: 'pair-gateway' }
@@ -415,6 +428,10 @@ export function createHomeCommandController(ports: HomeCommandPorts) {
             return { status: 'duplicate', operationId: claimedBy };
           }
           newAgentIntentClaims.set(intentKey, operation.id);
+          // Offered before the route exists, so the workbench that mounts for
+          // it can claim the prompt exactly once.
+          const prompt = command.prompt?.trim() || undefined;
+          if (prompt) offerInitialPrompt(command.serverId, prompt);
           try {
             ports.navigate({
               type: 'agent',
@@ -423,11 +440,13 @@ export function createHomeCommandController(ports: HomeCommandPorts) {
                 serverId: command.serverId,
                 ...(command.directory ? { directory: command.directory } : {}),
                 ...(command.agentId ? { agentId: command.agentId } : {}),
+                ...(prompt ? { prompt } : {}),
               },
               intent: 'new',
             });
           } catch (error) {
             newAgentIntentClaims.delete(intentKey);
+            if (prompt) withdrawInitialPrompt(command.serverId, prompt);
             throw error;
           }
           finish(operation);
@@ -495,7 +514,13 @@ function commandKey(command: HomeCommand): string {
     case 'open-agent':
       return key(['open-agent', command.target]);
     case 'new-agent':
-      return key(['new-agent', command.serverId, command.directory ?? '', command.agentId ?? '']);
+      return key([
+        'new-agent',
+        command.serverId,
+        command.directory ?? '',
+        command.agentId ?? '',
+        command.prompt ?? '',
+      ]);
     case 'new-terminal':
       return key(['new-terminal', command.serverId, command.workspaceId ?? '']);
     case 'open-ssh':

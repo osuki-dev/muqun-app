@@ -78,7 +78,13 @@ export type HomeCommands = {
     sessionId?: string,
     agentId?: string
   ) => Promise<HomeCommandResult>;
-  newAgent: (serverId: string, directory?: string, agentId?: string) => Promise<HomeCommandResult>;
+  newAgent: (
+    serverId: string,
+    directory?: string,
+    agentId?: string,
+    /** The new session's first prompt; see `initial-prompt.ts`. */
+    prompt?: string
+  ) => Promise<HomeCommandResult>;
   newTerminal: (serverId: string, workspaceId?: string) => Promise<HomeCommandResult>;
   openSsh: (hostId?: string) => Promise<HomeCommandResult>;
   pairGateway: () => Promise<HomeCommandResult>;
@@ -312,12 +318,13 @@ export function useHomeCommands(options: HomeCommandOptions = {}): HomeCommands 
     [dispatch]
   );
   const newAgent = useCallback(
-    (serverId: string, directory?: string, agentId?: string) =>
+    (serverId: string, directory?: string, agentId?: string, prompt?: string) =>
       dispatch({
         type: 'new-agent',
         serverId,
         ...(directory ? { directory } : {}),
         ...(agentId ? { agentId } : {}),
+        ...(prompt ? { prompt } : {}),
       }),
     [dispatch]
   );

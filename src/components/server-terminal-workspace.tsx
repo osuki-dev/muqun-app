@@ -839,6 +839,7 @@ export function ServerTerminalWorkspace({
     directory?: string;
     agentId?: string;
     intent?: string;
+    prompt?: string;
   }>();
   // A template literal rather than the bare `??` chain: the value is the same
   // string, and it is what tells React Compiler this is a primitive -- without
@@ -909,6 +910,7 @@ export function ServerTerminalWorkspace({
     directory: routeParams.directory,
     agentId: routeParams.agentId,
     intent: routeParams.intent,
+    prompt: routeParams.prompt,
     overview: routeParams.overview,
   });
   const padDispatch = padShell.dispatch;

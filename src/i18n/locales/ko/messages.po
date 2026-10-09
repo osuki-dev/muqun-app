@@ -706,6 +706,10 @@ msgstr "이 서버에서 실행할 수 있는 항목을 확인하는 중…"
 msgid "Assign this to an assistant"
 msgstr "어시스턴트에게 맡기기"
 
+#: src/components/home-composer.tsx
+msgid "Assigned to {computerLabel}, {agentName}"
+msgstr "할당 대상: {computerLabel}, {agentName}"
+
 #: src/components/agent-assignment-bar.tsx
 msgid "Assigning a task is unavailable"
 msgstr "작업을 맡길 수 없습니다"
@@ -1077,6 +1081,10 @@ msgstr "어시스턴트 선택"
 msgid "Choose an SSH host."
 msgstr "SSH 호스트를 선택하세요"
 
+#: src/components/home-composer.tsx
+msgid "Choose another computer"
+msgstr "다른 컴퓨터 선택"
+
 #: src/components/server-terminal-workspace.tsx
 msgid "Choose another terminal"
 msgstr "다른 터미널 선택"
@@ -1296,6 +1304,10 @@ msgstr "{base}와(과) 비교"
 #: src/components/tool-call-detail-sheet.tsx
 msgid "Completed"
 msgstr "완료됨"
+
+#: src/components/home-composer.tsx
+msgid "Computers"
+msgstr "컴퓨터"
 
 #: src/app/settings-voice.tsx
 msgid "Configure your speech service, then hold Send to record. Tap the animation to stop and transcribe."
@@ -3546,6 +3558,10 @@ msgstr "아직 커밋 없음"
 msgid "No commits yet"
 msgstr "아직 커밋 없음"
 
+#: src/components/home-composer.tsx
+msgid "No computer online"
+msgstr "온라인 컴퓨터 없음"
+
 #: src/components/session-artifacts.tsx
 msgid "No files match."
 msgstr "일치하는 파일이 없습니다"
@@ -5013,6 +5029,10 @@ msgstr "텍스트 보내기"
 msgid "Send this task to {assignmentLabel}"
 msgstr "이 작업을 {assignmentLabel}(으)로 보내기"
 
+#: src/components/home-composer.tsx
+msgid "Send to {computerLabel}"
+msgstr "{computerLabel}(으)로 보내기"
+
 #: src/components/server-terminal-workspace.tsx
 msgid "Send to agent"
 msgstr "에이전트에게 보내기"
@@ -5695,6 +5715,10 @@ msgstr "작업 ({0}/{1})"
 #: src/components/agent-composer.tsx
 msgid "Tasks progress"
 msgstr "작업 진행률"
+
+#: src/components/home-composer.tsx
+msgid "Tell a computer what to do"
+msgstr "컴퓨터에게 할 일을 알려 주세요"
 
 #: src/components/settings-storage.tsx
 msgid "Temporary files"

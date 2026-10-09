@@ -706,6 +706,10 @@ msgstr "On demande au serveur ce qu’il peut lancer…"
 msgid "Assign this to an assistant"
 msgstr "Confier ceci à un assistant"
 
+#: src/components/home-composer.tsx
+msgid "Assigned to {computerLabel}, {agentName}"
+msgstr "Attribué à {computerLabel}, {agentName}"
+
 #: src/components/agent-assignment-bar.tsx
 msgid "Assigning a task is unavailable"
 msgstr "Attribuer une tâche est indisponible"
@@ -1077,6 +1081,10 @@ msgstr "Choisir un assistant"
 msgid "Choose an SSH host."
 msgstr "Choisissez un hôte SSH"
 
+#: src/components/home-composer.tsx
+msgid "Choose another computer"
+msgstr "Choisir un autre ordinateur"
+
 #: src/components/server-terminal-workspace.tsx
 msgid "Choose another terminal"
 msgstr "Choisir un autre terminal"
@@ -1296,6 +1304,10 @@ msgstr "Comparé à {base}"
 #: src/components/tool-call-detail-sheet.tsx
 msgid "Completed"
 msgstr "Terminé"
+
+#: src/components/home-composer.tsx
+msgid "Computers"
+msgstr "Ordinateurs"
 
 #: src/app/settings-voice.tsx
 msgid "Configure your speech service, then hold Send to record. Tap the animation to stop and transcribe."
@@ -3546,6 +3558,10 @@ msgstr "aucun commit pour l’instant"
 msgid "No commits yet"
 msgstr "Aucun commit pour l’instant"
 
+#: src/components/home-composer.tsx
+msgid "No computer online"
+msgstr "Aucun ordinateur en ligne"
+
 #: src/components/session-artifacts.tsx
 msgid "No files match."
 msgstr "Aucun fichier ne correspond"
@@ -5013,6 +5029,10 @@ msgstr "Envoyer le texte"
 msgid "Send this task to {assignmentLabel}"
 msgstr "Envoyer cette tâche à {assignmentLabel}"
 
+#: src/components/home-composer.tsx
+msgid "Send to {computerLabel}"
+msgstr "Envoyer à {computerLabel}"
+
 #: src/components/server-terminal-workspace.tsx
 msgid "Send to agent"
 msgstr "Envoyer à l’agent"
@@ -5695,6 +5715,10 @@ msgstr "Tâches ({0}/{1})"
 #: src/components/agent-composer.tsx
 msgid "Tasks progress"
 msgstr "Progression des tâches"
+
+#: src/components/home-composer.tsx
+msgid "Tell a computer what to do"
+msgstr "Dites à un ordinateur quoi faire"
 
 #: src/components/settings-storage.tsx
 msgid "Temporary files"
