@@ -4,11 +4,11 @@ import {
   failureKey,
   linkLines,
   LINK_RETRY_MS,
-  pairingCodeBody,
   parseFleetPeers,
   planFleetLinks,
   planRenames,
   planTombstoneUnlinks,
+  settledTombstones,
   type FleetComputer,
   type FleetPeers,
 } from '../fleet-peers';
@@ -63,19 +63,6 @@ describe('parseFleetPeers', () => {
       ],
     });
     expect(parseFleetPeers({ accept_delegations: true })).toBeNull();
-  });
-});
-
-describe('pairingCodeBody', () => {
-  test.each([
-    [
-      'names the computer that will claim the code, by its server id too',
-      ' coding ',
-      'srv-coding',
-      { device_name: 'coding', kind: 'gateway', server_id: 'srv-coding' },
-    ],
-  ] as const)('%s', (_name, deviceName, serverId, expected) => {
-    expect(pairingCodeBody(deviceName, serverId)).toEqual(expected);
   });
 });
 
@@ -263,5 +250,21 @@ describe('planTombstoneUnlinks: an unpaired computer is taken off every computer
     ],
   ] as const)('%s', (_name, computers, tombstones, expected) => {
     expect(planTombstoneUnlinks(computers, tombstones)).toEqual([...expected]);
+  });
+});
+
+describe('settledTombstones: an unpaired computer is let go only when every computer has', () => {
+  const answered = [computer('coding', peers(true)), computer('mini', peers(true))];
+  test.each([
+    ['all clear lets every one go', answered, [], ['gone', 'old']],
+    ['a failed cleanup keeps that one', answered, ['old'], ['gone']],
+    [
+      'a silent computer keeps them all',
+      [computer('coding', peers(true)), computer('mini', null)],
+      [],
+      [],
+    ],
+  ] as const)('%s', (_name, computers, failed, released) => {
+    expect(settledTombstones(computers, ['gone', 'old'], new Set(failed))).toEqual([...released]);
   });
 });

@@ -20,11 +20,22 @@ function index(byServer: Record<string, TaskView[]>): ServerTasksIndex {
 }
 
 describe('homeWaitingTasks', () => {
-  test('waiting tasks only, newest first', () => {
+  test('waiting tasks only, newest first; a mirror by its own state', () => {
+    const mirror: TaskBinding = { kind: 'peer', peerId: 'peer-1', remoteTaskId: 'r' };
     const tasks = index({
-      a: [task('w1', 'waiting', 1), task('run', 'working', 9), task('w2', 'waiting', 4)],
+      a: [
+        task('w1', 'waiting', 1),
+        task('run', 'working', 9),
+        task('w2', 'waiting', 4),
+        task('m-run', 'working', 8, mirror),
+        task('m-wait', 'waiting', 3, mirror),
+      ],
     });
-    expect(homeWaitingTasks(tasks, ['a']).map((row) => row.task.taskId)).toEqual(['w2', 'w1']);
+    expect(homeWaitingTasks(tasks, ['a']).map((row) => row.task.taskId)).toEqual([
+      'w2',
+      'm-wait',
+      'w1',
+    ]);
   });
 
   test('a task whose session Needs you already lists is not listed twice', () => {

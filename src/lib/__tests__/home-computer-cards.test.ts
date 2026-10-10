@@ -496,6 +496,15 @@ describe('taskRowVisual: the rules the state table carries', () => {
       { line: { kind: 'unreachable', lastSeenMs: 40 }, actions: ['open', 'cancel', 'markDone'] },
     ],
     [
+      'a dispatching mirror whose computer never answered takes Mark done',
+      task('t', 'dispatching', 1, {
+        binding: { kind: 'peer', peerId: 'srv-mini', remoteTaskId: '' },
+        peerReachable: false,
+      }),
+      { ...plain, canComplete: true },
+      { line: { kind: 'unreachable' }, actions: ['open', 'cancel', 'markDone'] },
+    ],
+    [
       "a reachable mirror shows its computer's own progress",
       task('t', 'working', 1, {
         binding: { kind: 'peer', peerId: 'srv-mini', remoteTaskId: 'r' },
@@ -532,10 +541,10 @@ describe('openTaskWork on a mirror', () => {
       [['agent', 'peer-1', 'ses_9']],
     ],
     [
-      'does nothing when this phone cannot see that task',
+      'opens that computer when its task there cannot be read',
       async (): Promise<TaskView | null> => null,
       'srv-mini',
-      [],
+      [['server', 'srv-mini']],
     ],
     ['does nothing without a resolver', undefined, 'srv-mini', []],
   ] as const)('%s', async (_name, resolveTask, mapped, expected) => {

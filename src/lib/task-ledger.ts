@@ -60,6 +60,7 @@ export type TaskBinding =
        */
       kind: 'peer';
       peerId: string;
+      /** Empty while the computer over there has not said which task it opened. */
       remoteTaskId: string;
       peerServerId?: string;
       /** What the mirroring gateway calls that computer: a fallback name (§10.13). */
@@ -104,7 +105,7 @@ export interface TaskView {
    */
   title?: string;
   /** Who opened it: the device for `origin: device`, the computer for `origin: peer`. */
-  requestedBy?: { id: string; name: string; kind?: RequesterKind };
+  requestedBy?: { id: string; name: string; kind?: RequesterKind; serverId?: string };
   /** A mirror only: whether its computer answered lately (§10.12). */
   peerReachable?: boolean;
   /** A mirror only: when its computer last answered. */
@@ -150,14 +151,13 @@ function parseBinding(value: unknown): TaskBinding {
     }
   } else if (rec.kind === 'peer') {
     const peerId = asString(rec.peer_id);
-    const remoteTaskId = asString(rec.remote_task_id);
     const peerServerId = asString(rec.peer_server_id);
     const peerName = asString(rec.peer_name)?.trim();
-    if (peerId && remoteTaskId) {
+    if (peerId) {
       return {
         kind: 'peer',
         peerId,
-        remoteTaskId,
+        remoteTaskId: asString(rec.remote_task_id) ?? '',
         ...(peerServerId ? { peerServerId } : {}),
         ...(peerName ? { peerName } : {}),
       };
@@ -189,10 +189,12 @@ function parseRequester(value: unknown): TaskView['requestedBy'] {
   const id = asString(rec?.id);
   if (!rec || !id) return undefined;
   const kind = rec.kind;
+  const serverId = asString(rec.server_id);
   return {
     id,
     name: asString(rec.name) ?? '',
     ...(kind === 'device' || kind === 'gateway' || kind === 'assistant' ? { kind } : {}),
+    ...(serverId ? { serverId } : {}),
   };
 }
 

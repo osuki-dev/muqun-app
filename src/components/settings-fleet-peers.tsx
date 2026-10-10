@@ -83,8 +83,10 @@ function FleetPeersBody({ server }: { server: GatewayRecord }) {
   });
 
   const linkedNames = linked.join(', ');
-  // This computer did not answer: that is the one thing to say about it.
+  // This computer did not answer, or answered that it no longer knows this
+  // phone: that is the one thing to say about it.
   const unanswered = status !== undefined && status !== 'ok';
+  const refused = status === 401 || status === 403;
   const quietNames = unanswered ? server.label : cannotReach.join(', ');
   if (unanswered) {
     return (
@@ -92,11 +94,13 @@ function FleetPeersBody({ server }: { server: GatewayRecord }) {
         <SettingsSection title={t`Other computers`}>
           <View style={styles.lines}>
             <Text
-              testID="fleet-peers-unreachable"
+              testID={refused ? 'fleet-peers-refused' : 'fleet-peers-unreachable'}
               variant="caption"
               color={theme.colors.warning}
               style={styles.alone}>
-              {t`Cannot reach ${quietNames}`}
+              {refused
+                ? t`This computer no longer recognises this device. Pair it again to reconnect.`
+                : t`Cannot reach ${quietNames}`}
             </Text>
           </View>
         </SettingsSection>
