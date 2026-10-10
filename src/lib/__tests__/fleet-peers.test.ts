@@ -14,6 +14,7 @@ import {
   type UnpairRecord,
   pairingsAnswer,
   ownedBy,
+  recordedNames,
   parseFleetPeers,
   unpairProgressAfter,
   unpairSeenDown,
@@ -452,27 +453,52 @@ describe('an unpair follow-up runs only what is left, and stops fighting', () =>
   });
 });
 
-describe("an older gateway's rows and logins carry no server id: matched by a unique name", () => {
+describe("an older gateway's rows and logins carry no server id: only this device's own names match", () => {
   const login = (deviceId: string, serverId: string | null, name: string) => ({
     deviceId,
     serverId,
     name,
   });
+  // On this computer the device recorded the link to srv-beta as "beta" when
+  // it made it; its own label for srv-beta is "Beta Mac".
   test.each([
-    ['its own server id decides', [login('d1', 'srv-beta', 'other')], ['d1'], false],
+    ['its own server id decides', 'beta', [login('d1', 'srv-beta', 'other')], ['d1'], false],
     [
-      'no server id: the one login with a name it goes by',
+      'no server id: the one login with the recorded name',
+      'beta',
       [login('d1', null, 'Beta '), login('d2', null, 'gamma')],
       ['d1'],
       false,
     ],
     // A label that differs is not "nothing to revoke": it stays pending.
-    ['no server id and no name it goes by', [login('d2', null, 'gamma')], [], true],
+    ['no server id and no recorded name there', 'beta', [login('d2', null, 'gamma')], [], true],
+    // The computer answers with a name of its choosing: not what was recorded.
+    [
+      'a remote label that differs from the recorded name is ignored',
+      'beta',
+      [login('d3', null, 'beta-renamed')],
+      [],
+      true,
+    ],
     // Two logins share the name: neither is revoked.
-    ['a namesake', [login('d1', null, 'beta'), login('d2', null, 'beta')], [], true],
-    ['no logins without an id: nothing to do', [login('d2', 'srv-gamma', 'beta')], [], false],
-  ] as const)('%s', (_name, logins, revoked, undecided) => {
-    const owned = ownedBy([...logins], 'srv-beta', ['beta']);
+    ['a namesake', 'beta', [login('d1', null, 'beta'), login('d2', null, 'beta')], [], true],
+    // "beta" was recorded for this link on another computer, not on this one.
+    [
+      'a name learned on another computer is not used here',
+      undefined,
+      [login('d1', null, 'beta')],
+      [],
+      true,
+    ],
+    [
+      'no logins without an id: nothing to do',
+      'beta',
+      [login('d2', 'srv-gamma', 'beta')],
+      [],
+      false,
+    ],
+  ] as const)('%s', (_name, recorded, logins, revoked, undecided) => {
+    const owned = ownedBy([...logins], 'srv-beta', recordedNames(recorded, 'Beta Mac'));
     expect([owned.matched.map((entry) => entry.deviceId), owned.undecided]).toEqual([
       [...revoked],
       undecided,
