@@ -46,13 +46,14 @@ export function TextSegment({
 /**
  * Touch room for a segment, which is shorter than a finger. The two rows sit
  * 4 pt apart (`spacing.xs`), so they meet halfway, 2 pt each, and never
- * overlap; the first row reaches up into the bar's top padding. The second
+ * overlap; the first row reaches up as far as the bar's top padding
+ * (`spacing.sm`, 6 in the compact density) and no further. The second
  * row's room reaches down over the gap and the field's top edge, where the
  * field (drawn later) still wins any touch inside its own box -- so what that
  * row really gets is its own line plus the gap, not 44 dp.
  */
 export const SEGMENT_HIT_SLOP: Readonly<Record<'first' | 'next', Insets>> = {
-  first: { top: 12, bottom: 2, left: 4, right: 4 },
+  first: { top: 6, bottom: 2, left: 4, right: 4 },
   next: { top: 2, bottom: 25, left: 4, right: 4 },
 };
 

@@ -130,7 +130,10 @@ export function TerminalComposer({
   const { fontScale } = useWindowDimensions();
   const [wrapped, setWrapped] = useState(false);
   const hasText = Boolean(inputProps.value ?? inputProps.defaultValue);
-  const expanded = hasText && wrapped;
+  // A field set taller than one line is laid out expanded from the start --
+  // the text full width, the controls in the row beneath -- so a draft that
+  // wraps changes nothing.
+  const expanded = (minLines ?? 1) > 1 || (hasText && wrapped);
   useEffect(() => {
     if (!hasText) setWrapped(false);
   }, [hasText]);

@@ -56,6 +56,13 @@ function CancelledGlyph(props: TaskGlyphProps) {
   return <CutDisc {...props} cut={CANCELLED_CUT} />;
 }
 
+/**
+ * How much heavier than the chrome stroke the two rings draw. A lone ring at
+ * 16 pt beside the solid discs read light at the chrome's 2.2; 0.4 more gives
+ * it the discs' weight. (The discs are filled, so they take no stroke.)
+ */
+const RING_WEIGHT = 0.4;
+
 /** The width of a mark cut out of a disc, in grid units. */
 const CUT = 2.4;
 
@@ -114,7 +121,7 @@ function StartingGlyph({ size, color, strokeWidth = 2.2 }: TaskGlyphProps) {
         r={8.6}
         fill="none"
         stroke={color}
-        strokeWidth={strokeWidth + 0.4}
+        strokeWidth={strokeWidth + RING_WEIGHT}
         strokeLinecap="round"
         strokeDasharray="0.1 4.4"
       />
@@ -129,7 +136,7 @@ function WorkingGlyph({ size, color, strokeWidth = 2.2 }: TaskGlyphProps) {
         d="M12 3.4a8.6 8.6 0 1 1-8.6 8.6"
         fill="none"
         stroke={color}
-        strokeWidth={strokeWidth + 0.4}
+        strokeWidth={strokeWidth + RING_WEIGHT}
         strokeLinecap="round"
       />
     </Svg>

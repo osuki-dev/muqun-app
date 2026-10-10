@@ -196,7 +196,7 @@ export const THEME_ICONS = [
   'chrome.scan',
   'chrome.settings',
   'home.arrow',
-  // A task's state on Home's rows (`TASK_GLYPHS` is the built-in set).
+  // A task's state on Home's rows (`TaskStateGlyph` draws the built-in set).
   'task.sent',
   'task.starting',
   'task.working',

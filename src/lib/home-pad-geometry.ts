@@ -1,7 +1,7 @@
 /**
- * Whether Pad Home gets the two-column page (the cover, the tiles and Recent
- * on the left; Needs you, the computer cards and the dock on the right). Narrower content or large type falls
- * back to the vertical editorial page.
+ * Whether Pad Home gets the two-column page: the cover, the tiles and Recent
+ * on the left; Needs you, the computer cards and the dock on the right.
+ * Narrower content or large type falls back to the vertical editorial page.
  */
 export function padLaunchLayoutEnabled(
   contentWidth: number,
@@ -36,6 +36,12 @@ export function padHomeColumns(innerWidth: number): { cover: number; work: numbe
  * How many columns the computer cards take in the work column: one card is
  * one wide card with the larger budget; two to four sit two abreast when each
  * still has a card's width, else they stack.
+ *
+ * Since the columns swapped, the work column is 45 % of at most
+ * `EDITORIAL_PAD_MAX_WIDTH` -- about 620 dp, short of the 652 two cards need
+ * -- so today it always stacks. The rule is kept, not deleted, because the
+ * card grid it drives is the one the work column takes back if the page
+ * widens.
  */
 export function padCardColumns(workWidth: number, cards: number): 1 | 2 {
   return cards >= 2 && workWidth >= PAD_CARD_MIN_WIDTH * 2 + PAD_CARD_GAP ? 2 : 1;
