@@ -2,7 +2,7 @@ import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens } from '@osuki-dev/ui';
 import { ChevronRight, X } from 'lucide-react-native';
-import { Fragment, useCallback, useRef, useState, type ReactNode } from 'react';
+import { Fragment, useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import {
   AppState,
   StyleSheet,
@@ -19,14 +19,27 @@ import { PressableScale } from '@/components/pressable-scale';
 import { Text } from '@/components/text';
 import { ThemeIcon } from '@/components/theme-icon';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
+import { useLatestReader } from '@/hooks/use-render-refs';
 import {
   HOME_CONTINUE_REFRESH_MS,
   refreshHomeContinue,
   refreshHomeGateways,
 } from '@/lib/home-continue-refresh';
+import {
+  endHomeRefresh,
+  homeRefreshAttempt,
+  homeRefreshDue,
+  onHomeRefreshRetry,
+  retryHomeRefresh,
+  startHomeRefresh,
+} from '@/lib/home-refresh-schedule';
+import { onNetworkChange } from '@/lib/network-events';
+import { snapshotServesAgents } from '@/lib/session-snapshot';
+import { useServerCapabilities } from '@/stores/server-capabilities';
+import { useServerChannels } from '@/stores/server-channels';
 import { useAppActive } from '@/hooks/use-app-active';
 import { loadRecordSessions, readGatewayRecordJson } from '@/lib/gateway-client';
-import { resolveSessionId, sessionChoices } from '@/lib/session-switcher';
+import { resolveSessionId, sessionChoices, type SessionChoice } from '@/lib/session-switcher';
 import { useServerSession } from '@/stores/server-session';
 import { isDemoRecord } from '@/lib/demo-gateway';
 import type { GatewayRecord } from '@/lib/gateway-storage';
@@ -72,6 +85,29 @@ import {
   terminalRowPath,
   terminalRowTitle,
 } from '@/lib/home-continue-row';
+
+/**
+ * The Herdr sessions each computer offered, so a Continue pass does not read
+ * `/api/sessions` again every time. Refreshed every few minutes, and dropped
+ * when a pass against that computer fails.
+ */
+const SESSION_CHOICES_TTL_MS = 5 * 60_000;
+const sessionChoicesByServer = new Map<string, { choices: SessionChoice[]; atMs: number }>();
+
+async function homeSessionChoices(record: GatewayRecord): Promise<SessionChoice[]> {
+  const nowMs = Date.now();
+  const cached = sessionChoicesByServer.get(record.serverId);
+  if (cached && nowMs - cached.atMs < SESSION_CHOICES_TTL_MS) return cached.choices;
+  const inventory = await loadRecordSessions(record);
+  const connected = sessionChoices(inventory.sessions);
+  const choices = connected.length ? connected : sessionChoices(inventory.sessions, true);
+  sessionChoicesByServer.set(record.serverId, { choices, atMs: nowMs });
+  return choices;
+}
+
+function forgetHomeSessionChoices(serverId: string): void {
+  sessionChoicesByServer.delete(serverId);
+}
 
 export function HomeContinueSearch({
   query,
@@ -137,48 +173,84 @@ export function useHomeRecentEntries({
   );
   const appActive = useAppActive();
   const refreshFlight = useRef<Promise<void>>(Promise.resolve());
+  // Coming back to the foreground asks the computers that were not answering.
+  useEffect(() => {
+    if (appActive) retryHomeRefresh();
+  }, [appActive]);
+  // Read at each tick, not reacted to: a probe landing must not restart the loop.
+  const readReachability = useLatestReader(reachabilityByServer);
   useFocusEffect(
     useCallback(() => {
       if (!appActive || !hydrated) return;
       let current = true;
       let pending = false;
+      let again = false;
       const isCurrent = () => current && AppState.currentState === 'active';
-      const refresh = async () => {
-        if (!isCurrent() || pending) return;
+      const refreshOne = async (record: GatewayRecord): Promise<boolean | undefined> => {
+        const choices = await homeSessionChoices(record);
+        if (!isCurrent()) return undefined;
+        const sessionId = resolveSessionId(
+          choices,
+          useServerSession.getState().byServer[record.serverId]
+        );
+        const recent = useHomeRecentsStore.getState();
+        const results = await refreshHomeContinue({
+          serverId: record.serverId,
+          sessionId,
+          entries: recent.entries,
+          read: (path) => readGatewayRecordJson(record, path),
+          isCurrent,
+          recordPanes: useServerAgents.getState().record,
+          observe: recent.observeSession,
+          updateTitle: recent.updateTitle,
+          repairAgent: recent.repairAgent,
+          // The chosen gateway's own sessions, including ones this
+          // device never opened; every other gateway keeps its recents.
+          recordAgentSessions:
+            record.serverId === targetId ? useHomeAgentSessions.getState().record : undefined,
+          servesSnapshot: snapshotServesAgents({
+            capabilities: useServerCapabilities.getState().byServer[record.serverId],
+          }),
+        });
+        return results.some((result) => result.status === 'fulfilled');
+      };
+      const refresh = async (): Promise<void> => {
+        if (!isCurrent()) return;
+        if (pending) {
+          again = true;
+          return;
+        }
         pending = true;
         // Drain older reads before starting another batch after a focus/target change.
         const flight = refreshFlight.current.then(async () => {
           if (!isCurrent()) return;
+          const nowMs = Date.now();
+          const sockets = useServerChannels.getState().sockets;
+          // Only the computers that are due: an answering one on its cadence,
+          // a failing one on its backoff, one known to be down not at all.
+          const due = servers.filter(
+            (server) =>
+              !isDemoRecord(server) &&
+              readReachability()[server.serverId] !== 'offline' &&
+              homeRefreshDue(
+                homeRefreshAttempt(server.serverId),
+                nowMs,
+                sockets[server.serverId] === 'open'
+              )
+          );
           await refreshHomeGateways({
-            records: servers.filter((server) => !isDemoRecord(server)),
+            records: due,
             selectedServerId: targetId,
             isCurrent,
-            refresh: async (targetRecord) => {
-              const inventory = await loadRecordSessions(targetRecord);
-              if (!isCurrent()) return;
-              const choices = sessionChoices(inventory.sessions);
-              const sessionId = resolveSessionId(
-                choices.length ? choices : sessionChoices(inventory.sessions, true),
-                useServerSession.getState().byServer[targetRecord.serverId]
+            refresh: async (record) => {
+              startHomeRefresh(record.serverId, nowMs);
+              const ok = await refreshOne(record).then(
+                (answered) => answered,
+                () => false
               );
-              const recent = useHomeRecentsStore.getState();
-              await refreshHomeContinue({
-                serverId: targetRecord.serverId,
-                sessionId,
-                entries: recent.entries,
-                read: (path) => readGatewayRecordJson(targetRecord, path),
-                isCurrent,
-                recordPanes: useServerAgents.getState().record,
-                observe: recent.observeSession,
-                updateTitle: recent.updateTitle,
-                repairAgent: recent.repairAgent,
-                // The chosen gateway's own sessions, including ones this
-                // device never opened; every other gateway keeps its recents.
-                recordAgentSessions:
-                  targetRecord.serverId === targetId
-                    ? useHomeAgentSessions.getState().record
-                    : undefined,
-              });
+              if (ok === undefined) return;
+              if (!ok) forgetHomeSessionChoices(record.serverId);
+              endHomeRefresh(record.serverId, ok);
             },
           });
         });
@@ -190,19 +262,28 @@ export function useHomeRecentEntries({
           () => {
             pending = false;
             if (isCurrent()) setObservationNowMs(Date.now());
+            if (again) {
+              again = false;
+              void refresh();
+            }
           }
         );
       };
-      setObservationNowMs(Date.now());
       void refresh();
       const timer = setInterval(() => {
         void refresh();
       }, HOME_CONTINUE_REFRESH_MS);
+      const stopRetry = onHomeRefreshRetry(() => {
+        void refresh();
+      });
+      const stopNetwork = onNetworkChange(() => retryHomeRefresh());
       return () => {
         current = false;
         clearInterval(timer);
+        stopRetry();
+        stopNetwork();
       };
-    }, [servers, targetId, hydrated, appActive])
+    }, [servers, targetId, hydrated, appActive, readReachability])
   );
   const available = homeContinueEntries({
     serverIds: servers.map((server) => server.serverId),

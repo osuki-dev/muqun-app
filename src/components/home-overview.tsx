@@ -138,6 +138,7 @@ import { type HomeCommandOptions, useHomeCommands } from '@/hooks/use-home-comma
 import type { HomeServerEntry } from '@/lib/home-commands';
 import { GatewayStorageError } from '@/components/gateway-storage-error';
 import { useServerAgents } from '@/stores/server-agents';
+import { retryHomeRefresh } from '@/lib/home-refresh-schedule';
 import { useHomeRecentsStore } from '@/stores/home-recents';
 import { useHomeAgentChoice } from '@/stores/home-agent-choice';
 import { useHomeAttention } from '@/stores/home-attention';
@@ -554,6 +555,9 @@ export function HomeOverview({
         setNowMs(Date.now());
         const selected = useGatewayConnectionStore.getState().record;
         if (!selected || isDemoRecord(selected) || selected.sshTunnel) return;
+        // An open task socket already says the computer is answering; a
+        // `/health` on top of it would only repeat that.
+        if (useServerChannels.getState().sockets[selected.serverId] === 'open') return;
         void refreshReachability(selected, {
           shouldContinue: () => AppState.currentState === 'active',
         });
@@ -788,6 +792,7 @@ export function HomeOverview({
   const recentShown = filterHomeRecent(recentEntries, recentFilter);
 
   function openServer(serverId: string, paneId?: string) {
+    retryHomeRefresh(serverId);
     void commands.openServer(serverId, paneId);
   }
 
@@ -889,6 +894,7 @@ export function HomeOverview({
     ) : null;
     // A computer row sets the dock's target; the bar flashes to say so.
     const targetComposer = (serverId: string) => {
+      retryHomeRefresh(serverId);
       launchController.choose(serverId);
       void Haptics.selectionAsync();
       setComposerPulse((pulse) => pulse + 1);

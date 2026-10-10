@@ -46,12 +46,11 @@ import type { ServerReachability } from '@/lib/server-reachability';
 import { useHomeTargetPicker } from '@/stores/home-target-picker';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { settleAfter } from '@/lib/compiler-safe-control-flow';
+import { HOME_CONTINUE_REFRESH_MS, homeRefreshDue } from '@/lib/home-refresh-schedule';
+import { useServerChannels } from '@/stores/server-channels';
 
 /** Agent chips and utility rows in the wide Pad cover's launch dock share one height. */
 const DOCK_ROW_HEIGHT = 56;
-
-/** Discovery is refreshed on the same cadence Continue uses. */
-const HOME_AGENTS_REFRESH_MS = 30_000;
 
 /** Target choice is local to Home; a selection alone never switches a live connection. */
 export function useHomeLaunchController({
@@ -310,10 +309,16 @@ export function HomeLaunchActions({
   const appActive = useAppActive();
   useEffect(() => {
     if (!chosen || chosenOffline || !focused || !appActive || isDemoRecord(chosen)) return;
+    let askedAtMs = Date.now();
     void refreshAgentServerDiscovery(chosen);
     const timer = setInterval(() => {
+      // Continue's cadence: half as often while the task socket is open.
+      const nowMs = Date.now();
+      const live = useServerChannels.getState().sockets[chosen.serverId] === 'open';
+      if (!homeRefreshDue({ atMs: askedAtMs, failures: 0 }, nowMs, live)) return;
+      askedAtMs = nowMs;
       void refreshAgentServerDiscovery(chosen);
-    }, HOME_AGENTS_REFRESH_MS);
+    }, HOME_CONTINUE_REFRESH_MS);
     return () => clearInterval(timer);
   }, [appActive, chosen, chosenOffline, focused]);
 
