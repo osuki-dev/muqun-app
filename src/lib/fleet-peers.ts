@@ -267,15 +267,26 @@ export async function linkPeer(
 }
 
 /** Forget a peer; one this computer does not know is already forgotten. */
+/**
+ * What a removal answered means for revoking a computer this device unpaired:
+ * `done` only when it is confirmed gone -- the delete succeeded, or the
+ * computer says there is no such peer or login (404). Anything else -- a
+ * refusal of this device's own token (401/403), a server error, no answer --
+ * is `retry`: the computer may still hold the link, so it is asked again.
+ */
+export function removalOutcome(status: number | 'network'): 'done' | 'retry' {
+  if (status === 'network') return 'retry';
+  return (status >= 200 && status < 300) || status === 404 ? 'done' : 'retry';
+}
+
+async function removal(endpoint: FleetEndpoint, path: string, timeoutMs?: number): Promise<void> {
+  const response = await endpointRequest(endpoint, path, 'DELETE', undefined, timeoutMs);
+  if (removalOutcome(response.status) === 'done') return;
+  await expectOk(response, `DELETE ${path}`);
+}
+
 export async function unlinkPeer(endpoint: FleetEndpoint, peerId: string): Promise<void> {
-  const response = await endpointRequest(
-    endpoint,
-    `/api/peers/${encodeURIComponent(peerId)}`,
-    'DELETE',
-    undefined,
-    LINK_TIMEOUT_MS
-  );
-  if (response.status !== 404) await expectOk(response, 'Unlink peer');
+  await removal(endpoint, `/api/peers/${encodeURIComponent(peerId)}`, LINK_TIMEOUT_MS);
 }
 
 /**
@@ -387,12 +398,7 @@ export function pairingsAnswer(
 
 /** Revoke one paired device; one already gone is revoked. */
 export async function revokePairing(endpoint: FleetEndpoint, deviceId: string): Promise<void> {
-  const response = await endpointRequest(
-    endpoint,
-    `/api/pairings/${encodeURIComponent(deviceId)}`,
-    'DELETE'
-  );
-  if (response.status !== 404) await expectOk(response, 'Revoke pairing');
+  await removal(endpoint, `/api/pairings/${encodeURIComponent(deviceId)}`);
 }
 
 /** What one computer said, as the reconciler saw it this run. */

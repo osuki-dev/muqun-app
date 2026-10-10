@@ -7,6 +7,7 @@ import {
   LINK_RETRY_MS,
   planFleetLinks,
   planPeerMoves,
+  removalOutcome,
   keptUnpairs,
   UNPAIR_FOLLOW_UP_MS,
   unpairLines,
@@ -402,5 +403,17 @@ describe('an unpairing this device could not finish (A5 D6)', () => {
     const entries = [entry({ pending: ['coding'], stillListedBy: ['nas'] })];
     expect(unpairLines('coding', entries)).toEqual({ stillLinked: ['mini'], stillListedBy: [] });
     expect(unpairLines('nas', entries)).toEqual({ stillLinked: [], stillListedBy: ['mini'] });
+  });
+});
+
+describe('removalOutcome: an unpaired computer is let go only on a confirmed removal', () => {
+  test.each([
+    ['delete answered 200: done', 200, 'done'],
+    ['nothing there to delete (404): done', 404, 'done'],
+    ['server error (500): still pending', 500, 'retry'],
+    ["this device's token refused (403): still pending", 403, 'retry'],
+    ['no answer: still pending', 'network', 'retry'],
+  ] as const)('%s', (_name, status, outcome) => {
+    expect(removalOutcome(status)).toBe(outcome);
   });
 });
