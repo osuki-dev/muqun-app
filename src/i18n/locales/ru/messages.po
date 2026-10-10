@@ -350,6 +350,10 @@ msgstr "{total, plural, one {# подзадача} few {# подзадачи} ma
 msgid "{total, plural, one {# sub-task} other {# sub-tasks}} ({waiting, plural, one {# waiting} other {# waiting}})"
 msgstr "{total, plural, one {# подзадача} few {# подзадачи} many {# подзадач} other {# подзадачи}} ({waiting, plural, one {# ждёт} few {# ждут} many {# ждут} other {# ждут}})"
 
+#: src/components/task-row.tsx
+msgid "→ {name}"
+msgstr "→ {name}"
+
 #. placeholder {0}: card.nowTotal - card.now.length
 #: src/components/home-computer-cards.tsx
 msgid "+{0} more"
@@ -641,6 +645,10 @@ msgstr "и ещё {rest}"
 #: src/components/settings-server-capabilities.tsx
 msgid "Android builds"
 msgstr "Сборки Android"
+
+#: src/components/task-row.tsx
+msgid "another computer"
+msgstr "другой компьютер"
 
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Answer"
@@ -2670,6 +2678,10 @@ msgstr "Освободить контекст, кратко изложив ра�
 msgid "Frequent"
 msgstr "Частые"
 
+#: src/components/task-row.tsx
+msgid "from {requester}"
+msgstr "от {requester}"
+
 #: src/app/explore.tsx
 msgid "Front camera. Hold the QR up to the screen"
 msgstr "Фронтальная камера. Поднесите QR-код к экрану"
@@ -3973,6 +3985,10 @@ msgstr "Открыть {0}"
 #: src/components/new-task-action.tsx
 msgid "Open {agentName} Agent on {label}"
 msgstr "Открыть агента {agentName} на {label}"
+
+#: src/components/task-row.tsx
+msgid "Open {mirrorName} on this phone first"
+msgstr "Сначала откройте {mirrorName} на этом телефоне"
 
 #: src/components/new-task-action.tsx
 msgid "Open {name} Agent on {label}"
@@ -6576,6 +6592,14 @@ msgstr "Отвязываем {label}"
 #: src/components/settings-servers.tsx
 msgid "Unpairing…"
 msgstr "Отвязываем…"
+
+#: src/components/task-row.tsx
+msgid "Unreachable"
+msgstr "Недоступен"
+
+#: src/components/task-row.tsx
+msgid "Unreachable · last seen {ago}"
+msgstr "Недоступен · в последний раз {ago}"
 
 #: src/components/diff-rows.tsx
 msgid "Unstaged"

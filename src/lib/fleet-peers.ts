@@ -189,6 +189,23 @@ export async function setAcceptDelegations(
   return asRecord(await response.json())?.accept_delegations !== false;
 }
 
+/**
+ * The server id of the computer a mirror runs on: the one the mirror names,
+ * else the one a linked computer lists under that link id, else the link id.
+ * Link ids are minted per link, so any computer's list will do.
+ */
+export function peerServerIdOf(
+  byServer: Readonly<Record<string, FleetPeers>>,
+  binding: { peerId: string; peerServerId?: string }
+): string {
+  if (binding.peerServerId) return binding.peerServerId;
+  for (const answer of Object.values(byServer)) {
+    const peer = answer.peers.find((entry) => entry.peerId === binding.peerId);
+    if (peer) return peer.serverId;
+  }
+  return binding.peerId;
+}
+
 /** What one computer said, as the reconciler saw it this run. */
 export type FleetComputer = {
   serverId: string;

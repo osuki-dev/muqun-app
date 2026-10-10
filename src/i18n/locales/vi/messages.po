@@ -350,6 +350,10 @@ msgstr "{total, plural, other {# nhiệm vụ con}}"
 msgid "{total, plural, one {# sub-task} other {# sub-tasks}} ({waiting, plural, one {# waiting} other {# waiting}})"
 msgstr "{total, plural, other {# nhiệm vụ con}} ({waiting, plural, other {# đang chờ}})"
 
+#: src/components/task-row.tsx
+msgid "→ {name}"
+msgstr "→ {name}"
+
 #. placeholder {0}: card.nowTotal - card.now.length
 #: src/components/home-computer-cards.tsx
 msgid "+{0} more"
@@ -641,6 +645,10 @@ msgstr "và {rest} nữa"
 #: src/components/settings-server-capabilities.tsx
 msgid "Android builds"
 msgstr "Bản dựng Android"
+
+#: src/components/task-row.tsx
+msgid "another computer"
+msgstr "một máy tính khác"
 
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Answer"
@@ -2670,6 +2678,10 @@ msgstr "Giải phóng ngữ cảnh bằng cách tóm tắt cuộc trò chuyện 
 msgid "Frequent"
 msgstr "Thường dùng"
 
+#: src/components/task-row.tsx
+msgid "from {requester}"
+msgstr "từ {requester}"
+
 #: src/app/explore.tsx
 msgid "Front camera. Hold the QR up to the screen"
 msgstr "Camera trước. Giơ mã QR lên trước màn hình"
@@ -3973,6 +3985,10 @@ msgstr "Mở {0}"
 #: src/components/new-task-action.tsx
 msgid "Open {agentName} Agent on {label}"
 msgstr "Mở tác tử {agentName} trên {label}"
+
+#: src/components/task-row.tsx
+msgid "Open {mirrorName} on this phone first"
+msgstr "Hãy mở {mirrorName} trên điện thoại này trước"
 
 #: src/components/new-task-action.tsx
 msgid "Open {name} Agent on {label}"
@@ -6576,6 +6592,14 @@ msgstr "Đang hủy ghép nối {label}"
 #: src/components/settings-servers.tsx
 msgid "Unpairing…"
 msgstr "Đang hủy ghép nối…"
+
+#: src/components/task-row.tsx
+msgid "Unreachable"
+msgstr "Không kết nối được"
+
+#: src/components/task-row.tsx
+msgid "Unreachable · last seen {ago}"
+msgstr "Không kết nối được · thấy lần cuối {ago}"
 
 #: src/components/diff-rows.tsx
 msgid "Unstaged"

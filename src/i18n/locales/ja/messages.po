@@ -350,6 +350,10 @@ msgstr "{total, plural, other {サブタスク # 件}}"
 msgid "{total, plural, one {# sub-task} other {# sub-tasks}} ({waiting, plural, one {# waiting} other {# waiting}})"
 msgstr "{total, plural, other {サブタスク # 件}}（{waiting, plural, other {# 件が対応待ち}}）"
 
+#: src/components/task-row.tsx
+msgid "→ {name}"
+msgstr "→ {name}"
+
 #. placeholder {0}: card.nowTotal - card.now.length
 #: src/components/home-computer-cards.tsx
 msgid "+{0} more"
@@ -641,6 +645,10 @@ msgstr "ほか {rest} 件"
 #: src/components/settings-server-capabilities.tsx
 msgid "Android builds"
 msgstr "Android ビルド"
+
+#: src/components/task-row.tsx
+msgid "another computer"
+msgstr "別のコンピュータ"
 
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Answer"
@@ -2670,6 +2678,10 @@ msgstr "これまでの会話を要約してコンテキストを空けます"
 msgid "Frequent"
 msgstr "よく使う"
 
+#: src/components/task-row.tsx
+msgid "from {requester}"
+msgstr "{requester} から"
+
 #: src/app/explore.tsx
 msgid "Front camera. Hold the QR up to the screen"
 msgstr "フロントカメラです。QR コードを画面に向けてください"
@@ -3973,6 +3985,10 @@ msgstr "{0} を開く"
 #: src/components/new-task-action.tsx
 msgid "Open {agentName} Agent on {label}"
 msgstr "{label} で {agentName} エージェントを開く"
+
+#: src/components/task-row.tsx
+msgid "Open {mirrorName} on this phone first"
+msgstr "先にこの端末で {mirrorName} を開いてください"
 
 #: src/components/new-task-action.tsx
 msgid "Open {name} Agent on {label}"
@@ -6576,6 +6592,14 @@ msgstr "{label} のペアリングを解除しています"
 #: src/components/settings-servers.tsx
 msgid "Unpairing…"
 msgstr "解除しています…"
+
+#: src/components/task-row.tsx
+msgid "Unreachable"
+msgstr "接続できません"
+
+#: src/components/task-row.tsx
+msgid "Unreachable · last seen {ago}"
+msgstr "接続できません · 最終確認 {ago}"
 
 #: src/components/diff-rows.tsx
 msgid "Unstaged"

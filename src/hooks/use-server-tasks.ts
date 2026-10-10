@@ -12,12 +12,15 @@ import {
   cancelTask,
   completeTask,
   fetchTaskDefaultCwd,
+  fetchTaskView,
   fetchTaskList,
   TASK_DEFAULTS_CAPABILITY,
   TASK_WS_SUBSCRIPTION_CAPABILITY,
   type TaskEndpoint,
   type TaskView,
 } from '@/lib/task-ledger';
+import { peerServerIdOf } from '@/lib/fleet-peers';
+import { useFleetPeers } from '@/stores/fleet-peers';
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';
 import { useServerCapabilities } from '@/stores/server-capabilities';
 import { useInAppNotifications } from '@/stores/in-app-notifications';
@@ -48,6 +51,25 @@ export function taskRouteFor(
     .records.find((entry) => entry.serverId === serverId);
   if (!record || record.sshTunnel || isDemoRecord(record)) return null;
   return { kind: 'endpoint', endpoint: recordEndpoint(record) };
+}
+
+/**
+ * A task on `serverId` as this phone can see it: from its ledger here, else
+ * read; null when that computer is not paired here or does not know the task.
+ */
+export async function resolveTask(serverId: string, taskId: string): Promise<TaskView | null> {
+  const known = useServerTasksStore
+    .getState()
+    .index[serverId]?.tasks.find((task) => task.taskId === taskId);
+  if (known) return known;
+  const route = taskRouteFor(serverId);
+  if (!route) return null;
+  return fetchTaskView(taskId, route.kind === 'endpoint' ? route.endpoint : undefined);
+}
+
+/** The server id of the computer a mirror runs on, as this phone knows it. */
+export function peerServerId(binding: { peerId: string; peerServerId?: string }): string {
+  return peerServerIdOf(useFleetPeers.getState().byServer, binding);
 }
 
 /** A paired computer's own address and credentials, for a direct request. */

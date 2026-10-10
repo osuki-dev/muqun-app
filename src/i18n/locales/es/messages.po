@@ -350,6 +350,10 @@ msgstr "{total, plural, one {# subtarea} other {# subtareas}}"
 msgid "{total, plural, one {# sub-task} other {# sub-tasks}} ({waiting, plural, one {# waiting} other {# waiting}})"
 msgstr "{total, plural, one {# subtarea} other {# subtareas}} ({waiting, plural, one {# en espera} other {# en espera}})"
 
+#: src/components/task-row.tsx
+msgid "→ {name}"
+msgstr "→ {name}"
+
 #. placeholder {0}: card.nowTotal - card.now.length
 #: src/components/home-computer-cards.tsx
 msgid "+{0} more"
@@ -641,6 +645,10 @@ msgstr "y {rest} más"
 #: src/components/settings-server-capabilities.tsx
 msgid "Android builds"
 msgstr "Compilaciones de Android"
+
+#: src/components/task-row.tsx
+msgid "another computer"
+msgstr "otro ordenador"
 
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Answer"
@@ -2670,6 +2678,10 @@ msgstr "Libera contexto resumiendo la conversación hasta ahora"
 msgid "Frequent"
 msgstr "Frecuentes"
 
+#: src/components/task-row.tsx
+msgid "from {requester}"
+msgstr "de {requester}"
+
 #: src/app/explore.tsx
 msgid "Front camera. Hold the QR up to the screen"
 msgstr "Cámara frontal. Acerca el código QR a la pantalla"
@@ -3973,6 +3985,10 @@ msgstr "Abrir {0}"
 #: src/components/new-task-action.tsx
 msgid "Open {agentName} Agent on {label}"
 msgstr "Abrir el agente {agentName} en {label}"
+
+#: src/components/task-row.tsx
+msgid "Open {mirrorName} on this phone first"
+msgstr "Abre primero {mirrorName} en este teléfono"
 
 #: src/components/new-task-action.tsx
 msgid "Open {name} Agent on {label}"
@@ -6576,6 +6592,14 @@ msgstr "Desvinculando {label}"
 #: src/components/settings-servers.tsx
 msgid "Unpairing…"
 msgstr "Desvinculando…"
+
+#: src/components/task-row.tsx
+msgid "Unreachable"
+msgstr "Sin conexión"
+
+#: src/components/task-row.tsx
+msgid "Unreachable · last seen {ago}"
+msgstr "Sin conexión · visto por última vez {ago}"
 
 #: src/components/diff-rows.tsx
 msgid "Unstaged"

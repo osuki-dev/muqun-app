@@ -8,6 +8,7 @@ import { useGatewayRecord } from '@/hooks/use-gateway-record';
 import { useLatestRef, useLazyRef } from '@/hooks/use-render-refs';
 import { loadRecordSessions } from '@/lib/gateway-client';
 import type { GatewayRecord } from '@/lib/gateway-storage';
+import type { TaskView } from '@/lib/task-ledger';
 import { checkAgentServer } from '@/lib/home-agent-readiness';
 import { loadWorkspaceSnapshot } from '@/lib/workspace-snapshot';
 import {
@@ -27,6 +28,7 @@ import { encodeSessionChoices, resolveSessionId, sessionChoices } from '@/lib/se
 import { terminalBackendRows, terminalBackendState } from '@/lib/terminal-backend-state';
 import { terminalBackendCopy } from '@/lib/terminal-backend-copy';
 import { refreshAgentsDiscovery } from '@/hooks/use-agent-features';
+import { peerServerId, resolveTask } from '@/hooks/use-server-tasks';
 import { useAgents } from '@/stores/agents';
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';
 import { isDemoRecord } from '@/lib/demo-gateway';
@@ -83,6 +85,10 @@ export type HomeCommands = {
   openSsh: (hostId?: string) => Promise<HomeCommandResult>;
   pairGateway: () => Promise<HomeCommandResult>;
   manageConnections: () => Promise<HomeCommandResult>;
+  /** A task on another computer as this phone can see it (a mirror's row opens there). */
+  resolveTask: (serverId: string, taskId: string) => Promise<TaskView | null>;
+  /** The computer a mirror runs on, by this phone's server id for it. */
+  peerServerId: (binding: { peerId: string; peerServerId?: string }) => string;
 };
 
 /** Long enough to read the reason and copy the command; Retry stays on it. */
@@ -344,6 +350,8 @@ export function useHomeCommands(options: HomeCommandOptions = {}): HomeCommands 
     openSsh,
     pairGateway,
     manageConnections,
+    resolveTask,
+    peerServerId,
   };
 }
 
