@@ -12,7 +12,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
-import { AgentComposer } from '@/components/agent-composer';
+import { AgentComposer, type DraftInjector } from '@/components/agent-composer';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import type { HomeLaunchController } from '@/components/home-launch-actions';
 import { PressableScale } from '@/components/pressable-scale';
@@ -21,6 +21,8 @@ import { ThemeIcon } from '@/components/theme-icon';
 import { useAgentFeatures, useAgentsDiscoveryRefresh } from '@/hooks/use-agent-features';
 import { useGatewayRecord } from '@/hooks/use-gateway-record';
 import { useStableHandler } from '@/hooks/use-render-refs';
+import { META_SEPARATOR } from '@/lib/home-continue-row';
+import { goalTitle } from '@/lib/home-computer-cards';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { reachabilityDescription } from '@/i18n/labels';
 import type { AgentClientCommandId } from '@/lib/agent-commands';
@@ -63,6 +65,7 @@ import { describeGatewayFailure } from '@/lib/network-error';
 import {
   createLedgerTask,
   hasTaskLedgerCreate,
+  TASK_DEFAULTS_CAPABILITY,
   TASK_LEDGER_PANE_CAPABILITY,
 } from '@/lib/task-ledger';
 import { useHomeAgentChoice } from '@/stores/home-agent-choice';
@@ -188,9 +191,13 @@ export function HomeComposerDock({
   const computerLabel = targetServer?.label ?? '';
   // Nothing picked sends no folder and the gateway uses its default, which it
   // reports (`defaults`); only a gateway that cannot say leaves "Last folder".
-  const defaultCwd = useServerTasksStore((state) =>
+  const reportsDefaults = useServerCapabilities((state) =>
+    targetId ? state.byServer[targetId]?.includes(TASK_DEFAULTS_CAPABILITY) === true : false
+  );
+  const reportedCwd = useServerTasksStore((state) =>
     targetId ? state.defaultCwd[targetId] : undefined
   );
+  const defaultCwd = reportsDefaults ? reportedCwd : undefined;
   const folderLabel = homeFolderName(folder ?? defaultCwd, {
     last: t`Last folder`,
     home: t`Home folder`,
@@ -309,7 +316,7 @@ export function HomeComposerDock({
   /** Two taps in one frame are one send: React state cannot lock that. */
   const inFlightRef = useRef(false);
   /** The composer's own draft, for a command that failed after it was cleared. */
-  const injectDraftRef = useRef<((text: string) => void) | null>(null);
+  const injectDraftRef = useRef<DraftInjector | null>(null);
 
   /** The computer Send goes to, selected; or `null` with the reason shown. */
   async function sendTarget(): Promise<string | null> {
@@ -629,12 +636,15 @@ export function HomeComposerDock({
   /**
    * A goal sent as a ledger task: the composer empties at once and the card's
    * Sent row is the feedback (design §2). A send that fails puts the text
-   * back, with the reason under the bar.
+   * back, with the reason under the bar -- unless the reader has started the
+   * next goal meanwhile: that stays, and the bar says which goal was not sent.
    */
   function dispatchTask(text: string, open: () => Promise<boolean>): Promise<boolean> {
     if (inFlightRef.current) return Promise.resolve(false);
     void open().then((accepted) => {
-      if (!accepted) injectDraftRef.current?.(text);
+      if (accepted || injectDraftRef.current?.(text, { ifEmpty: true })) return;
+      const notSent = [t`Could not send`, goalTitle(text)].join(META_SEPARATOR);
+      setError((reason) => (reason ? `${notSent}${META_SEPARATOR}${reason}` : notSent));
     });
     return Promise.resolve(true);
   }

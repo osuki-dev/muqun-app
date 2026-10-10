@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import { boundTask, homeWaitingTasks } from '../home-in-progress';
+import { boundTask, homeWaitingTasks, needsYouAcrossComputers } from '../home-in-progress';
 import type { ServerTasksIndex } from '../server-tasks-state';
 import type { TaskBinding, TaskState, TaskView } from '../task-ledger';
 
@@ -43,6 +43,26 @@ describe('homeWaitingTasks', () => {
       'other',
       'cmd',
     ]);
+  });
+});
+
+describe('needsYouAcrossComputers', () => {
+  // waiting tasks by computer -> what the top section lists
+  test.each<[string, Record<string, string[]>, string[]]>([
+    ['one computer: its card lists them', { a: ['w1', 'w2'] }, []],
+    ['two computers: the section lists all', { a: ['w1'], b: ['w2'] }, ['w2', 'w1']],
+    ['none', {}, []],
+  ])('%s', (_name, byServer, listed) => {
+    const tasks = index(
+      Object.fromEntries(
+        Object.entries(byServer).map(([serverId, ids]) => [
+          serverId,
+          ids.map((id) => task(id, 'waiting', Number(id.slice(1)))),
+        ])
+      )
+    );
+    const rows = homeWaitingTasks(tasks, Object.keys(byServer));
+    expect(needsYouAcrossComputers(rows).map((row) => row.task.taskId)).toEqual(listed);
   });
 });
 

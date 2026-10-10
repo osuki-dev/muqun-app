@@ -3,6 +3,7 @@ import { create } from 'zustand';
 
 import type { AgentProfile } from '@/lib/agent-spawn';
 import { parseHomeAgentChoices } from '@/lib/home-agent-choice';
+import { keepKeys } from '@/lib/server-tasks-state';
 import type { ModelRef } from '@/lib/agent-session';
 import type { RememberedAgentChoice } from '@/lib/agent-session-defaults';
 import {
@@ -74,6 +75,8 @@ type HomeAgentChoiceState = {
   /** Set (or, with a blank answer, clear) a computer's folder from a picker answer. */
   chooseFolder: (serverId: string, directory: string) => void;
   recordTerminal: (serverId: string, profiles: AgentProfile[]) => void;
+  /** Forgets the folder and model picks of every computer not in `serverIds` (unpaired). */
+  keepOnly: (serverIds: readonly string[]) => void;
 };
 
 function load<T>(key: string, parse: (value: string | undefined) => Record<string, T>) {
@@ -121,6 +124,17 @@ export const useHomeAgentChoice = create<HomeAgentChoiceState>((set, get) => ({
     const modelChoice = { ...get().modelChoice, [homeModelChoiceKey(serverId, agentId)]: { mode } };
     set({ modelChoice });
     save(MODELS_KEY, modelChoice);
+  },
+  keepOnly(serverIds) {
+    const kept = new Set(serverIds);
+    const { folderByServer, modelChoice } = get();
+    const folders = keepKeys(folderByServer, (serverId) => kept.has(serverId));
+    const models = keepKeys(modelChoice, (key) => kept.has(key.split('\u0000')[0]!));
+    if (folders !== folderByServer) save(FOLDERS_KEY, folders);
+    if (models !== modelChoice) save(MODELS_KEY, models);
+    if (folders !== folderByServer || models !== modelChoice) {
+      set({ folderByServer: folders, modelChoice: models });
+    }
   },
   recordTerminal(serverId, profiles) {
     set((state) => ({ terminalByServer: { ...state.terminalByServer, [serverId]: profiles } }));

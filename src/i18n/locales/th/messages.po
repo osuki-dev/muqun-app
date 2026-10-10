@@ -1976,6 +1976,7 @@ msgstr "บันทึกการตั้งค่านี้ไม่ได
 msgid "Could not save voice settings. Please try again."
 msgstr "ไม่สามารถบันทึกการตั้งค่าเสียงได้ โปรดลองอีกครั้ง"
 
+#: src/components/home-composer-dock.tsx
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Could not send"
 msgstr "ส่งไม่ได้"

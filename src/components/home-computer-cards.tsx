@@ -129,8 +129,9 @@ export function useHasComputerCards({
  * The cards: what each computer with work is doing now, what it just
  * finished, and whether it needs the reader. Sorted needs-you → working →
  * paused → idle. The header makes the computer the dock's target; a task row
- * opens the session or pane it runs in. A card fades and rises in when its computer starts having work and
- * fades out when it stops; the others move with the shared layout transition.
+ * opens the session or pane it runs in. A card fades and rises in when its
+ * computer starts having work and fades out when it stops; the others move
+ * with the shared layout transition.
  * Entering animations are skipped when the list itself mounts (a return from
  * a sub-screen), so only real arrivals move. A re-sort waits while a finger is
  * on the page and for a moment after a scroll (`useHomeSortHold`).

@@ -48,7 +48,12 @@ import { agentSessionStatusWord, agentStatusWord, taskStateWord } from '@/i18n/l
 import { boundTask } from '@/lib/home-in-progress';
 import { useServerTasksStore } from '@/stores/server-tasks';
 import { agentBrandName, agentStatusTone, isLaunchCommandTitle } from '@/lib/herdr-entity';
-import { paneLedgerTask, taskRowVisual, taskRowTitle } from '@/lib/home-computer-cards';
+import {
+  paneLedgerTask,
+  sessionLedgerTask,
+  taskRowTitle,
+  taskRowVisual,
+} from '@/lib/home-computer-cards';
 import type { ActiveServerConnection, ServerReachability } from '@/lib/server-reachability';
 import { useServerAgents } from '@/stores/server-agents';
 import { useAppSettings } from '@/stores/app-settings';
@@ -419,25 +424,34 @@ function RecentSessionRow({
     );
     return task ? taskRowTitle(task) : undefined;
   });
-  const title = paneGoal
-    ? paneGoal
-    : terminal
-      ? terminalRowTitle({
-          paneTitle: entry.title,
-          cwd,
-          hasAgent: Boolean(entry.agentLabel),
-          agentName: paneAgentName,
-        }) || kind
-      : entry.title || kind;
-  const path = terminal ? terminalRowPath(title, cwd) : cwd ? homePathLabel(cwd) : undefined;
-  const observation = entry.observation;
-  // A session a ledger task is running in says what the task says: the
-  // session's own status lags it (it read "Idle" under a working delegation).
+  // A session a ledger task runs in says what the task says: its one-line
+  // title, as on the card (the newest task, finished too), and the open
+  // task's state -- the session's own status lags it (it read "Idle" under a
+  // working delegation).
   const task = useServerTasksStore((state) =>
     target?.kind === 'agent-session'
       ? boundTask(state.index[target.serverId]?.tasks, target.asid)
       : undefined
   );
+  const taskTitle = useServerTasksStore((state) => {
+    if (target?.kind !== 'agent-session') return undefined;
+    const named = sessionLedgerTask(state.index[target.serverId]?.tasks, target.asid);
+    return named ? taskRowTitle(named) : undefined;
+  });
+  const title = paneGoal
+    ? paneGoal
+    : taskTitle
+      ? taskTitle
+      : terminal
+        ? terminalRowTitle({
+            paneTitle: entry.title,
+            cwd,
+            hasAgent: Boolean(entry.agentLabel),
+            agentName: paneAgentName,
+          }) || kind
+        : entry.title || kind;
+  const path = terminal ? terminalRowPath(title, cwd) : cwd ? homePathLabel(cwd) : undefined;
+  const observation = entry.observation;
   const taskState = task?.state;
   const status = taskState ?? observation?.status;
   const sessionStatus =
@@ -516,7 +530,7 @@ function RecentSessionRow({
             <Text
               variant="bodySmall"
               weight="semibold"
-              numberOfLines={terminal ? 1 : 2}
+              numberOfLines={terminal || taskTitle ? 1 : 2}
               style={styles.title}>
               {title}
             </Text>

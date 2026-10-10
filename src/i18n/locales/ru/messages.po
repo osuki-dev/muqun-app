@@ -1976,6 +1976,7 @@ msgstr "Не удалось сохранить настройку. Повтор�
 msgid "Could not save voice settings. Please try again."
 msgstr "Не удалось сохранить настройки голосового ввода. Повторите попытку"
 
+#: src/components/home-composer-dock.tsx
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Could not send"
 msgstr "Не удалось отправить"

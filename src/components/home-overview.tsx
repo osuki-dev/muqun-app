@@ -135,7 +135,9 @@ import type { HomeServerEntry } from '@/lib/home-commands';
 import { GatewayStorageError } from '@/components/gateway-storage-error';
 import { useServerAgents } from '@/stores/server-agents';
 import { useHomeRecentsStore } from '@/stores/home-recents';
+import { useHomeAgentChoice } from '@/stores/home-agent-choice';
 import { useHomeAttention } from '@/stores/home-attention';
+import { useServerTasksStore } from '@/stores/server-tasks';
 import { dismissTaskNotices } from '@/stores/in-app-notifications';
 import { useServerChannels } from '@/stores/server-channels';
 import { serverPrewarmGate, useServerReachability } from '@/stores/server-reachability';
@@ -480,6 +482,10 @@ export function HomeOverview({
       hostIds: sshHosts.map((host) => host.id),
     });
     useHomeAttention.getState().keepOnly(serverIds);
+    // What this device kept per computer goes with the pairing: its ledger
+    // and reported folder, and the dock's folder and model picks.
+    useServerTasksStore.getState().keepOnly(serverIds);
+    useHomeAgentChoice.getState().keepOnly(serverIds);
   }, [hydrationError, loading, serverIds, sshHosts, sshLoading]);
 
   // An address is a disambiguator, so it is on screen exactly when it is
@@ -1114,7 +1120,6 @@ export function HomeOverview({
                     // A request is answered where the task runs: its session
                     // or its pane, on its own computer.
                     onOpenTask={({ serverId, task }) => {
-                      dismissTaskNotices(task);
                       dismissTaskNotices(task);
                       openTaskWork(commands, serverId, task);
                     }}

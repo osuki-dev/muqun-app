@@ -470,6 +470,28 @@ export function paneLedgerTask(
   return found;
 }
 
+/**
+ * The newest ledger task, open or finished, run in agent session `asid`: a
+ * Recent row for that session is named by it, as the card names it.
+ */
+export function sessionLedgerTask(
+  tasks: readonly TaskView[] | undefined,
+  asid: string | undefined
+): TaskView | undefined {
+  if (!tasks || !asid) return undefined;
+  let found: TaskView | undefined;
+  for (const task of tasks) {
+    if (
+      task.binding.kind === 'agent_session' &&
+      task.binding.asid === asid &&
+      (!found || task.updatedMs > found.updatedMs)
+    ) {
+      found = task;
+    }
+  }
+  return found;
+}
+
 /** The two ways into a computer's work, as Home's commands open them. */
 export type TaskOpeners = {
   openAgent: (
