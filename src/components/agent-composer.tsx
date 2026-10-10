@@ -68,6 +68,14 @@ import {
   type FileMentionHit,
   type FileMentionTrigger,
 } from '@/lib/file-mentions';
+import {
+  deleteMentionAtomically,
+  mentionRanges,
+  orderMentionComputers,
+  type MentionComputer,
+  type MentionToken,
+} from '@/lib/composer-mentions';
+import { MentionSpans } from '@/components/mention-spans';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { useAppActive } from '@/hooks/use-app-active';
 import { useInterfaceFontFamily } from '@/hooks/use-user-fonts';
@@ -329,6 +337,11 @@ export interface AgentComposerProps {
   /** The session above the one on screen, for the way back out of a subagent. */
   parentSession?: AgentSessionInfo;
   availableAgents?: ModeInfo[];
+  /**
+   * The computers `@` offers above the files, in the order they are given
+   * (`orderMentionComputers` ranks them). Absent or empty: no Computers group.
+   */
+  mentionComputers?: readonly MentionComputer[];
   skills?: SkillInfo[];
   sessionId?: string;
   activeAsid?: string;
@@ -506,6 +519,7 @@ export const AgentComposer = memo(function AgentComposer({
   rootSubtaskActivity,
   parentSession,
   availableAgents: availableAgentsProp,
+  mentionComputers,
   skills = [],
   sessionId,
   activeAsid,
@@ -799,21 +813,76 @@ export const AgentComposer = memo(function AgentComposer({
     };
   }, [mentionQuery, sessionId, activeAsid]);
 
+  // Which words of the draft are mentions: every computer this composer
+  // offers (typed by hand or picked) and the file paths picked in this draft.
+  const [fileTokens, setFileTokens] = useState<readonly string[]>([]);
+  useEffect(() => {
+    if (!text) setFileTokens((current) => (current.length ? [] : current));
+  }, [text]);
+  const mentionTokens = useMemo<MentionToken[]>(
+    () => [
+      ...(mentionComputers ?? []).map((computer) => ({
+        text: `@${computer.name}`,
+        kind: 'computer' as const,
+      })),
+      ...fileTokens.map((path) => ({ text: path, kind: 'file' as const })),
+    ],
+    [mentionComputers, fileTokens]
+  );
+  const ranges = useMemo(() => mentionRanges(text, mentionTokens), [text, mentionTokens]);
+  // The caret after a pick or an atomic delete, held for exactly the render
+  // that shows it (the `useComposerPopup` rule: a permanently controlled
+  // selection fights the user on Android).
+  const [heldCaret, setHeldCaret] = useState<{ draft: string; caret: number } | null>(null);
+  const changeText = (next: string) => {
+    const whole = deleteMentionAtomically(text, next, ranges);
+    if (whole) {
+      setText(whole.text);
+      setCaret(whole.caret);
+      setHeldCaret({ draft: whole.text, caret: whole.caret });
+      return;
+    }
+    setText(next);
+  };
+  const selection =
+    heldCaret && heldCaret.draft === text
+      ? { start: heldCaret.caret, end: heldCaret.caret }
+      : slashPopup.inputProps.selection;
+  const spans = ranges.length > 0 ? <MentionSpans text={text} ranges={ranges} /> : undefined;
+
+  const offeredComputers = useMemo(
+    () =>
+      mentionTrigger && mentionComputers?.length
+        ? orderMentionComputers(mentionComputers, mentionTrigger.query)
+        : [],
+    [mentionComputers, mentionTrigger]
+  );
+
   const chooseMention = useCallback(
     (hit: FileMentionHit) => {
       if (!mentionTrigger) return;
       const next = insertFileMention(text, mentionTrigger, hit.path);
       setText(next.text);
       setCaret(next.caret);
+      setHeldCaret({ draft: next.text, caret: next.caret });
+      setFileTokens((current) => (current.includes(hit.path) ? current : [...current, hit.path]));
       setMentionHits([]);
     },
     [text, mentionTrigger]
   );
+  const chooseComputer = (computer: MentionComputer) => {
+    if (!mentionTrigger || !computer.reachable) return;
+    const next = insertFileMention(text, mentionTrigger, `@${computer.name}`);
+    setText(next.text);
+    setCaret(next.caret);
+    setHeldCaret({ draft: next.text, caret: next.caret });
+  };
 
   const handleSelectionChange = useCallback(
     (event: NativeSyntheticEvent<TextInputSelectionChangeEventData>) => {
       const next = event.nativeEvent.selection.start;
       setCaret(next);
+      setHeldCaret(null);
       slashPopup.inputProps.onSelectionChange(event);
     },
     [slashPopup.inputProps]
@@ -1265,10 +1334,12 @@ export const AgentComposer = memo(function AgentComposer({
       ) : null}
 
       {/* File mention (@) floating list */}
-      {mentionTrigger && mentionHits.length > 0 ? (
+      {mentionTrigger && (offeredComputers.length > 0 || mentionHits.length > 0) ? (
         <View style={styles.composerFloatingContent}>
           <FileMentionPanel
             hits={mentionHits}
+            computers={offeredComputers}
+            onSelectComputer={chooseComputer}
             query={mentionTrigger.query}
             onSelect={chooseMention}
             scope="project"
@@ -1793,6 +1864,7 @@ export const AgentComposer = memo(function AgentComposer({
             {/* TerminalComposer reused for agent prompt */}
             <View onLayout={(event) => setInputRowHeight(event.nativeEvent.layout.height)}>
               <TerminalComposer
+                spans={spans}
                 compact={compact}
                 minLines={fieldLines}
                 voiceContext={`${sessionId}:${activeAsid ?? 'new'}`}
@@ -1812,7 +1884,7 @@ export const AgentComposer = memo(function AgentComposer({
                 }
                 inputProps={{
                   value: text,
-                  onChangeText: setText,
+                  onChangeText: changeText,
                   placeholder: disabled
                     ? agentName
                       ? t`${agentName} is offline`
@@ -1821,7 +1893,7 @@ export const AgentComposer = memo(function AgentComposer({
                   ...(compact ? { shortPlaceholder: t`Send a message…` } : {}),
                   editable: !sending && !disabled,
                   testID: inputTestID,
-                  selection: slashPopup.inputProps.selection,
+                  selection,
                   onSelectionChange: handleSelectionChange,
                   onKeyPress: slashPopup.inputProps.onKeyPress,
                   onSubmitEditing: handleSend,

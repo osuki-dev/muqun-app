@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 
 import {
+  isMentionsRefusal,
   isTerminalTaskState,
   ledgerTaskBody,
   parseCreatedLedgerTask,
@@ -127,6 +128,11 @@ describe('POST /api/tasks', () => {
     });
     // A variant means nothing without the model it belongs to.
     expect(ledgerTaskBody({ goal: 'g', variant: 'high' })).toEqual({ goal: 'g' });
+    expect(ledgerTaskBody({ goal: 'g', mentions: ['mini'] })).toEqual({
+      goal: 'g',
+      mentions: ['mini'],
+    });
+    expect(ledgerTaskBody({ goal: 'g', mentions: [] })).toEqual({ goal: 'g' });
   });
 
   test('the answer is the task plus the session it opened', () => {
@@ -154,5 +160,15 @@ describe('POST /api/tasks', () => {
   test('a root query is encoded', () => {
     expect(taskListPath({ limit: 100, root: 't 1' })).toBe('/api/tasks?limit=100&root=t%201');
     expect(taskListPath()).toBe('/api/tasks');
+  });
+});
+
+describe('isMentionsRefusal: when a task is resent without its mentions', () => {
+  test.each([
+    ['a 400 naming the mentions', 'Open task: 400 {"error":{"code":"invalid_mentions"}}', true],
+    ['a 400 about something else', 'Open task: 400 {"error":{"code":"invalid_goal"}}', false],
+    ['a server error that mentions them', 'Open task: 500 mentions failed', false],
+  ] as const)('%s', (_name, message, expected) => {
+    expect(isMentionsRefusal(new Error(message))).toBe(expected);
   });
 });

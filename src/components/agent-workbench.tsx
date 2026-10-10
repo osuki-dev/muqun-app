@@ -2,6 +2,8 @@ import { PAD_LAYOUT_MIN_WIDTH } from '@/lib/responsive-layout';
 import { useRootRouteName } from '@/hooks/use-root-route-name';
 import { useStore } from 'zustand';
 import { createAgentTranscriptStore } from '@/stores/agent-transcript';
+import { useFleetPeers } from '@/stores/fleet-peers';
+import type { MentionComputer } from '@/lib/composer-mentions';
 import { useToolCallDetailStore } from '@/stores/tool-call-detail';
 import { AgentTranscriptList } from '@/components/agent-transcript-list';
 import { useLatestRef } from '@/hooks/use-render-refs';
@@ -665,6 +667,18 @@ export const AgentWorkbench = memo(function AgentWorkbench({
     if (initialAgentId) selectAgent(initialAgentId);
   }, [initialAgentId, selectAgent]);
   const [transcriptStore] = useState(createAgentTranscriptStore);
+  // `@` offers this computer's linked peers: the computers it can hand part of
+  // the work to. The prompt goes to the session as typed; the session's own
+  // instructions already name them.
+  const linkedPeers = useFleetPeers((state) => state.byServer[serverId]?.peers);
+  const pairedRecords = useGatewayConnectionStore((state) => state.records);
+  const mentionComputers: MentionComputer[] =
+    linkedPeers?.map((peer) => ({
+      serverId: peer.serverId,
+      name: pairedRecords.find((record) => record.serverId === peer.serverId)?.label || peer.name,
+      reachable: peer.reachable,
+      current: false,
+    })) ?? [];
   const setTimeline = transcriptStore.getState().setTimeline;
   const timelineEmpty = useStore(transcriptStore, (state) => state.timeline.length === 0);
   const toolIds = useStore(transcriptStore, (state) => state.toolIds);
@@ -5132,6 +5146,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
 
       {/* Floating Glass Composer at Bottom */}
       <AgentComposer
+        mentionComputers={mentionComputers}
         disabled={isOffline}
         agentName={agentName}
         running={isRunning}

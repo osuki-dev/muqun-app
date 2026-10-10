@@ -540,7 +540,7 @@ msgstr "代理"
 
 #: src/components/settings-fleet-peers.tsx
 msgid "Agents on your other computers can hand part of a task to this one."
-msgstr "你其他电脑上的代理可以把任务的一部分交给这台电脑。"
+msgstr "你其他电脑上的代理可以把任务的一部分交给这台电脑"
 
 #: src/components/app-drawer-content.tsx
 msgid "AI coding assistant"
@@ -1377,6 +1377,7 @@ msgstr "电脑不可用"
 #: src/app/settings-servers.tsx
 #: src/app/settings.tsx
 #: src/components/app-drawer-content.tsx
+#: src/components/file-mention-panel.tsx
 #: src/components/home-editorial-layout.tsx
 #: src/components/home-overview.tsx
 msgid "Computers"
@@ -2082,6 +2083,7 @@ msgid "Creating session…"
 msgstr "正在创建会话…"
 
 #: src/components/custom-theme-library.tsx
+#: src/components/file-mention-panel.tsx
 msgid "Current"
 msgstr "当前"
 
@@ -2546,10 +2548,6 @@ msgstr "专用于探索代码库的高速智能体"
 #: src/i18n/labels.ts
 msgid "Fetch a web page"
 msgstr "获取网页"
-
-#: src/components/file-mention-panel.tsx
-msgid "File mentions"
-msgstr "文件提及"
 
 #: src/lib/attachments.ts
 msgid "File too large (25MB max)"
@@ -3325,7 +3323,7 @@ msgstr "打造你的专属风格"
 
 #: src/components/settings-fleet-peers.tsx
 msgid "Make sure the computer is reachable, then try again."
-msgstr "请确认这台电脑可以连接，然后重试。"
+msgstr "请确认这台电脑可以连接，然后重试"
 
 #: src/components/home-overview.tsx
 msgid "Manage"
@@ -3359,10 +3357,15 @@ msgstr "吉祥物"
 msgid "MCP tokens"
 msgstr "MCP 令牌"
 
+#. placeholder {0}: computer.name
 #. placeholder {0}: hit.path
 #: src/components/file-mention-panel.tsx
 msgid "Mention {0}"
 msgstr "提及 {0}"
+
+#: src/components/file-mention-panel.tsx
+msgid "Mentions"
+msgstr "提及"
 
 #: src/components/agent-message-block.tsx
 msgid "Message copied to clipboard"
@@ -6576,6 +6579,10 @@ msgstr "正在取消 {label} 的配对"
 #: src/components/settings-servers.tsx
 msgid "Unpairing…"
 msgstr "正在取消配对…"
+
+#: src/components/file-mention-panel.tsx
+msgid "Unreachable"
+msgstr "无法连接"
 
 #: src/components/diff-rows.tsx
 msgid "Unstaged"
