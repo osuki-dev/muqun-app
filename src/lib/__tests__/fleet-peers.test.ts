@@ -460,7 +460,7 @@ describe("an older gateway's rows and logins carry no server id: only this devic
     name,
   });
   // On this computer the device recorded the link to srv-beta as "beta" when
-  // it made it; its own label for srv-beta is "Beta Mac".
+  // it made it; its own label for srv-beta ("Beta Mac") is never a match.
   test.each([
     ['its own server id decides', 'beta', [login('d1', 'srv-beta', 'other')], ['d1'], false],
     [
@@ -480,6 +480,8 @@ describe("an older gateway's rows and logins carry no server id: only this devic
       [],
       true,
     ],
+    // This device's own label is not a recorded name: never a match.
+    ["a login named with this device's label", 'beta', [login('d4', null, 'Beta Mac')], [], true],
     // Two logins share the name: neither is revoked.
     ['a namesake', 'beta', [login('d1', null, 'beta'), login('d2', null, 'beta')], [], true],
     // "beta" was recorded for this link on another computer, not on this one.
@@ -498,7 +500,7 @@ describe("an older gateway's rows and logins carry no server id: only this devic
       false,
     ],
   ] as const)('%s', (_name, recorded, logins, revoked, undecided) => {
-    const owned = ownedBy([...logins], 'srv-beta', recordedNames(recorded, 'Beta Mac'));
+    const owned = ownedBy([...logins], 'srv-beta', recordedNames(recorded));
     expect([owned.matched.map((entry) => entry.deviceId), owned.undecided]).toEqual([
       [...revoked],
       undecided,

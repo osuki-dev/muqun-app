@@ -374,7 +374,6 @@ const NO_PASS: UnlinkPass = { done: [], needsNewerGateway: false };
 async function unlinkOn(
   record: GatewayRecord,
   goneId: string,
-  goneLabel: string,
   recorded: LinkNames | undefined,
   steps: readonly UnpairStep[]
 ): Promise<UnlinkPass> {
@@ -389,7 +388,7 @@ async function unlinkOn(
           ...(answer.peers.unidentified ?? []).map((row) => ({ ...row, serverId: null })),
         ],
         goneId,
-        recordedNames(recorded?.row, goneLabel)
+        recordedNames(recorded?.row)
       );
       let ok = !undecided;
       if (undecided) pass.needsNewerGateway = true;
@@ -417,11 +416,7 @@ async function unlinkOn(
     );
     // No answer is a step not done, never "no logins".
     if (logins !== null) {
-      const { matched, undecided } = ownedBy(
-        logins,
-        goneId,
-        recordedNames(recorded?.login, goneLabel)
-      );
+      const { matched, undecided } = ownedBy(logins, goneId, recordedNames(recorded?.login));
       let ok = !undecided;
       if (undecided) pass.needsNewerGateway = true;
       for (const login of matched) {
@@ -478,7 +473,7 @@ export async function unlinkBeforeUnpair(leaving: GatewayRecord): Promise<void> 
       if (names) linkNames[record.serverId] = names;
       continue;
     }
-    const pass = await unlinkOn(record, leaving.serverId, leaving.label, names, UNPAIR_STEPS).catch(
+    const pass = await unlinkOn(record, leaving.serverId, names, UNPAIR_STEPS).catch(
       (): UnlinkPass => NO_PASS
     );
     const after = unpairProgressAfter(
@@ -536,7 +531,7 @@ export async function unlinkBeforeUnpair(leaving: GatewayRecord): Promise<void> 
           const { matched, undecided } = ownedBy(
             logins,
             record.serverId,
-            recordedNames(recorded[leaving.serverId]?.[record.serverId]?.login, record.label)
+            recordedNames(recorded[leaving.serverId]?.[record.serverId]?.login)
           );
           // Cannot be told apart: it may still be logged in there.
           if (undecided && linkedWith.has(record.serverId)) stillListedBy.push(record.serverId);
@@ -598,7 +593,6 @@ async function followUpUnpairs(computers: readonly FleetComputer[]): Promise<voi
       const pass = await unlinkOn(
         record,
         entry.serverId,
-        entry.label,
         entry.linkNames?.[computerId],
         steps
       ).catch((): UnlinkPass => NO_PASS);
