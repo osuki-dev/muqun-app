@@ -1,9 +1,9 @@
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens, useToast } from '@osuki-dev/ui';
-import { useRouter } from 'expo-router';
+import { useIsFocused, useRouter } from 'expo-router';
 import { ArrowRight } from 'lucide-react-native';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useEffectEvent, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, {
   useAnimatedStyle,
@@ -235,11 +235,18 @@ export function HomeComposerDock({
   };
 
   // One connection at a time: the computer Send goes to is the one selected,
-  // so its catalog, uploads and file list are what the dock shows.
-  useEffect(() => {
+  // so its catalog, uploads and file list are what the dock shows. Selected
+  // when the target changes or Home comes back into focus -- not whenever
+  // the selection moves: opening a task on another computer selects that one
+  // for its screen, and the dock must not pull it back mid-open (A5 D3).
+  const focused = useIsFocused();
+  const selectTarget = useEffectEvent(() => {
     if (!ready || !targetId || record?.serverId === targetId) return;
     if (!selectRecordNow(targetId)) void selectRecord(targetId);
-  }, [ready, targetId, record?.serverId, selectRecord, selectRecordNow]);
+  });
+  useEffect(() => {
+    if (focused) selectTarget();
+  }, [ready, targetId, focused]);
   useAgentsDiscoveryRefresh(targetId, ready && selected);
 
   const discovery = useAgents((state) => (targetId ? state.index.servers[targetId] : undefined));
