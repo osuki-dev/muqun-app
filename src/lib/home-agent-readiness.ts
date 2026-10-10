@@ -1,4 +1,5 @@
 import type { MessageDescriptor } from '@lingui/core';
+import { normalizeCapabilities } from './server-capabilities';
 import type { GatewayEndpoint } from '@/lib/gateway-client';
 import type { AgentCatalog, AgentProject } from '@/lib/agent-session';
 import type { AgentStatusInfo, GatewayDiscovery } from '@/lib/agent-protocol';
@@ -133,7 +134,7 @@ export async function checkAgentReadiness(
   } catch {
     return { status: 'offline', capabilities: [], agentId: fallbackAgentId, cause: 'health' };
   }
-  const capabilities = normalizeReadinessCapabilities(health.capabilities);
+  const capabilities = normalizeCapabilities(health.capabilities);
   if (!health.ok) {
     return { status: 'offline', capabilities, agentId: fallbackAgentId, cause: 'health' };
   }
@@ -340,19 +341,4 @@ export async function refreshAgentServerDiscovery(
   } catch {
     // Home renders from the last mirror; a refresh that failed is not news.
   }
-}
-
-function normalizeReadinessCapabilities(value: unknown): string[] {
-  if (!Array.isArray(value)) return [];
-  const names: string[] = [];
-  const seen = new Set<string>();
-  for (const entry of value) {
-    if (typeof entry !== 'string') continue;
-    const name = entry.trim().slice(0, 48);
-    if (!name || seen.has(name)) continue;
-    seen.add(name);
-    names.push(name);
-    if (names.length >= 48) break;
-  }
-  return names;
 }

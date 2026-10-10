@@ -49,6 +49,16 @@ describe('OpenCode readiness', () => {
     expect(projectCalls).toBe(0);
   });
 
+  test('keeps every capability a gateway lists, not the first 48', async () => {
+    // Its list is written into the capability store, which other screens
+    // read: a cut list once dropped `fleet_peers` (the 57th) from it.
+    const listed = [...Array.from({ length: 56 }, (_, i) => `cap_${i}`), 'fleet_peers'];
+    const result = await checkAgentReadiness(
+      ports({ probeHealth: async () => ({ ok: true, capabilities: listed }) })
+    );
+    expect(result.capabilities).toEqual(listed);
+  });
+
   test('distinguishes a healthy gateway without the advertised capability', async () => {
     const result = await checkAgentReadiness(
       ports({ probeHealth: async () => ({ ok: true, capabilities: ['agent_spawn'] }) })
