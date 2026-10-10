@@ -292,6 +292,12 @@ export const useGatewayConnectionStore = create<GatewayConnectionState>((set, ge
       if (removedCurrent) configureGateway(nextRecord);
       set({ records, record: nextRecord, loading: false });
     });
+    // Gone from this phone, so gone from the reader's other computers too,
+    // through their own credentials. Best effort and not awaited. Imported
+    // here because the reconciler reads this store.
+    void import('@/hooks/use-fleet-link')
+      .then(({ unlinkEverywhere }) => unlinkEverywhere(serverId))
+      .catch(() => undefined);
   },
 
   async disconnect() {

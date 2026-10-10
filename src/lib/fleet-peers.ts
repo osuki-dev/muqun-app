@@ -1,0 +1,285 @@
+import { asFiniteNumber, asRecord, asString } from './agent-protocol';
+import { normalizeCapabilities } from './server-capabilities';
+import type { TaskEndpoint } from './task-ledger';
+
+/**
+ * The reader's computers linked to each other (`GET/POST /api/peers`,
+ * `POST /api/pair/pending`, `PUT /api/fleet/settings`). A gateway without it is
+ * never asked and shows nothing new.
+ */
+export const FLEET_PEERS_CAPABILITY = 'fleet_peers';
+
+export function hasFleetPeers(capabilities: readonly string[] | undefined): boolean {
+  return capabilities?.includes(FLEET_PEERS_CAPABILITY) ?? false;
+}
+
+/**
+ * One computer another one is linked with. `peerId` is the linking gateway's
+ * own id for the link (what `PATCH`/`DELETE /api/peers/{id}` take); `serverId`
+ * is the peer's own server id, which is this phone's `GatewayRecord.serverId`
+ * for it.
+ */
+export interface PeerView {
+  peerId: string;
+  serverId: string;
+  name: string;
+  url: string;
+  reachable: boolean;
+  lastSeenMs?: number;
+}
+
+export interface FleetPeers {
+  acceptDelegations: boolean;
+  peers: PeerView[];
+}
+
+function parsePeer(value: unknown): PeerView | null {
+  const rec = asRecord(value);
+  const peerId = asString(rec?.peer_id);
+  const serverId = asString(rec?.server_id);
+  if (!rec || !peerId || !serverId) return null;
+  const lastSeenMs = asFiniteNumber(rec.last_seen_ms);
+  return {
+    peerId,
+    serverId,
+    name: asString(rec.name) ?? '',
+    url: asString(rec.url) ?? '',
+    reachable: rec.reachable === true,
+    ...(lastSeenMs !== undefined ? { lastSeenMs } : {}),
+  };
+}
+
+/** `GET /api/peers`; a body without a `peers` array is no answer. */
+export function parseFleetPeers(value: unknown): FleetPeers | null {
+  const rec = asRecord(value);
+  if (!rec || !Array.isArray(rec.peers)) return null;
+  return {
+    acceptDelegations: rec.accept_delegations !== false,
+    peers: rec.peers.map(parsePeer).filter((peer): peer is PeerView => peer !== null),
+  };
+}
+
+export type FleetEndpoint = TaskEndpoint;
+
+/** Linking runs Argon2 on both computers and a round trip between them. */
+const LINK_TIMEOUT_MS = 30_000;
+
+async function endpointRequest(
+  endpoint: FleetEndpoint,
+  path: string,
+  method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE',
+  body?: unknown,
+  timeoutMs?: number
+): Promise<Response> {
+  const { gatewayEndpointFetch } = await import('./gateway-client');
+  const base = endpoint.url.replace(/\/$/, '');
+  return gatewayEndpointFetch(
+    endpoint as Parameters<typeof gatewayEndpointFetch>[0],
+    `${base}${path}`,
+    {
+      method,
+      headers: {
+        Authorization: `Bearer ${endpoint.token}`,
+        ...(body === undefined ? {} : { 'Content-Type': 'application/json' }),
+      },
+      ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+    },
+    timeoutMs
+  );
+}
+
+async function expectOk(response: Response, what: string): Promise<Response> {
+  if (!response.ok) throw new Error(`${what}: ${response.status} ${await response.text()}`);
+  return response;
+}
+
+/** What `GET /api/peers` says, or `null` when the computer did not answer. */
+export async function fetchFleetPeers(endpoint: FleetEndpoint): Promise<FleetPeers | null> {
+  try {
+    const response = await endpointRequest(endpoint, '/api/peers', 'GET');
+    return response.ok ? parseFleetPeers(await response.json()) : null;
+  } catch {
+    return null;
+  }
+}
+
+/** A pairing code on this computer for another one (`kind: gateway`). */
+export async function mintPairingCode(
+  endpoint: FleetEndpoint,
+  deviceName: string
+): Promise<{ requestId: string; code: string }> {
+  const response = await expectOk(
+    await endpointRequest(endpoint, '/api/pair/pending', 'POST', {
+      device_name: deviceName,
+      kind: 'gateway',
+    }),
+    'Mint pairing code'
+  );
+  const rec = asRecord(await response.json());
+  const requestId = asString(rec?.request_id);
+  const code = asString(rec?.code);
+  if (!requestId || !code) throw new Error('Mint pairing code: no code in the answer');
+  return { requestId, code };
+}
+
+/** Ask this computer to pair itself with the one at `url` through its code. */
+export async function linkPeer(
+  endpoint: FleetEndpoint,
+  link: { url: string; name: string; requestId: string; code: string }
+): Promise<void> {
+  await expectOk(
+    await endpointRequest(
+      endpoint,
+      '/api/peers',
+      'POST',
+      { url: link.url, name: link.name, request_id: link.requestId, code: link.code },
+      LINK_TIMEOUT_MS
+    ),
+    'Link peer'
+  );
+}
+
+/** Forget a peer; one this computer does not know is already forgotten. */
+export async function unlinkPeer(endpoint: FleetEndpoint, peerId: string): Promise<void> {
+  const response = await endpointRequest(
+    endpoint,
+    `/api/peers/${encodeURIComponent(peerId)}`,
+    'DELETE',
+    undefined,
+    LINK_TIMEOUT_MS
+  );
+  if (response.status !== 404) await expectOk(response, 'Unlink peer');
+}
+
+export async function renamePeer(
+  endpoint: FleetEndpoint,
+  peerId: string,
+  name: string
+): Promise<void> {
+  await expectOk(
+    await endpointRequest(endpoint, `/api/peers/${encodeURIComponent(peerId)}`, 'PATCH', {
+      name,
+    }),
+    'Rename peer'
+  );
+}
+
+/** The public capability list, or `null` when the computer did not answer. */
+export async function fetchCapabilities(endpoint: FleetEndpoint): Promise<string[] | null> {
+  try {
+    const response = await endpointRequest(endpoint, '/api/capabilities', 'GET');
+    if (!response.ok) return null;
+    return normalizeCapabilities(asRecord(await response.json())?.capabilities);
+  } catch {
+    return null;
+  }
+}
+
+/** Write the switch; what the computer now says it is. */
+export async function setAcceptDelegations(
+  endpoint: FleetEndpoint,
+  accept: boolean
+): Promise<boolean> {
+  const response = await expectOk(
+    await endpointRequest(endpoint, '/api/fleet/settings', 'PUT', {
+      accept_delegations: accept,
+    }),
+    'Fleet settings'
+  );
+  return asRecord(await response.json())?.accept_delegations !== false;
+}
+
+/** What one computer said, as the reconciler saw it this run. */
+export type FleetComputer = {
+  serverId: string;
+  label: string;
+  url: string;
+  peers: FleetPeers | null;
+};
+
+/** How long a link that failed is left alone before it is tried again. */
+export const LINK_RETRY_MS = 10 * 60_000;
+
+export function failureKey(from: string, to: string): string {
+  return `${from}\n${to}`;
+}
+
+function lists(computer: FleetComputer, serverId: string): boolean {
+  return computer.peers?.peers.some((peer) => peer.serverId === serverId) ?? false;
+}
+
+function failedRecently(
+  failures: Readonly<Record<string, number>>,
+  from: string,
+  to: string,
+  nowMs: number
+): boolean {
+  const failedAt = failures[failureKey(from, to)];
+  return failedAt !== undefined && nowMs - failedAt < LINK_RETRY_MS;
+}
+
+/**
+ * Every ordered pair (A, B) of computers that both answered, where B takes
+ * work and A does not list B yet, unless linking A to B failed within the
+ * retry window. A peer A lists but cannot reach stays as it is: it is linked,
+ * just quiet, and a new pairing would not make it answer.
+ */
+export function planFleetLinks(
+  computers: readonly FleetComputer[],
+  failures: Readonly<Record<string, number>>,
+  nowMs: number
+): { from: string; to: string }[] {
+  const steps: { from: string; to: string }[] = [];
+  for (const from of computers) {
+    if (!from.peers) continue;
+    for (const to of computers) {
+      if (to.serverId === from.serverId || !to.peers?.acceptDelegations) continue;
+      if (lists(from, to.serverId)) continue;
+      if (failedRecently(failures, from.serverId, to.serverId, nowMs)) continue;
+      steps.push({ from: from.serverId, to: to.serverId });
+    }
+  }
+  return steps;
+}
+
+/**
+ * The one line Settings shows for `serverId`: the computers it is linked with
+ * and answering, and those it is linked with but cannot reach or failed to
+ * link this round. Named by this phone's label, else the gateway's name.
+ */
+export function linkLines(
+  serverId: string,
+  computers: readonly FleetComputer[],
+  failures: Readonly<Record<string, number>>,
+  nowMs: number
+): { linked: string[]; cannotReach: string[] } {
+  const self = computers.find((entry) => entry.serverId === serverId);
+  const labelOf = (peer: PeerView) =>
+    computers.find((entry) => entry.serverId === peer.serverId)?.label || peer.name;
+  const linked: string[] = [];
+  const cannotReach: string[] = [];
+  for (const peer of self?.peers?.peers ?? []) {
+    (peer.reachable ? linked : cannotReach).push(labelOf(peer));
+  }
+  for (const other of computers) {
+    if (other.serverId === serverId || (self && lists(self, other.serverId))) continue;
+    if (failedRecently(failures, serverId, other.serverId, nowMs)) cannotReach.push(other.label);
+  }
+  return { linked, cannotReach };
+}
+
+/** Every peer entry whose name differs from this phone's label for that computer (§10.16). */
+export function planRenames(
+  computers: readonly FleetComputer[]
+): { from: string; peerId: string; name: string }[] {
+  const renames: { from: string; peerId: string; name: string }[] = [];
+  for (const from of computers) {
+    for (const peer of from.peers?.peers ?? []) {
+      const label = computers.find((entry) => entry.serverId === peer.serverId)?.label.trim();
+      if (label && label !== peer.name) {
+        renames.push({ from: from.serverId, peerId: peer.peerId, name: label });
+      }
+    }
+  }
+  return renames;
+}

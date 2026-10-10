@@ -4,6 +4,7 @@ import { useLingui } from '@lingui/react/macro';
 
 import { isDemoActive, isDemoRecord } from '@/lib/demo-gateway';
 import { configuredGatewayServerId } from '@/lib/gateway-client';
+import type { GatewayRecord } from '@/lib/gateway-storage';
 import { WS_EVENTS_CAPABILITY, type GatewaySocketState } from '@/lib/gateway-socket';
 import { gatewaySocketFor } from '@/lib/gateway-socket-runtime';
 import { applyListAnswer, isTaskChannelLive, sessionsLeftWaiting } from '@/lib/server-tasks-state';
@@ -46,15 +47,17 @@ export function taskRouteFor(
     .getState()
     .records.find((entry) => entry.serverId === serverId);
   if (!record || record.sshTunnel || isDemoRecord(record)) return null;
+  return { kind: 'endpoint', endpoint: recordEndpoint(record) };
+}
+
+/** A paired computer's own address and credentials, for a direct request. */
+export function recordEndpoint(record: GatewayRecord): TaskEndpoint {
   return {
-    kind: 'endpoint',
-    endpoint: {
-      url: record.url,
-      token: record.token,
-      ...(record.deviceId ? { deviceId: record.deviceId } : {}),
-      ...(record.transportKey ? { transportKey: record.transportKey } : {}),
-      ...(record.transport ? { transport: record.transport } : {}),
-    },
+    url: record.url,
+    token: record.token,
+    ...(record.deviceId ? { deviceId: record.deviceId } : {}),
+    ...(record.transportKey ? { transportKey: record.transportKey } : {}),
+    ...(record.transport ? { transport: record.transport } : {}),
   };
 }
 const noSubscription = () => () => {};
