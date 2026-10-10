@@ -4,17 +4,22 @@ import { recordEndpoint } from '@/hooks/use-server-tasks';
 import { recoverWith } from '@/lib/compiler-safe-control-flow';
 import { isDemoRecord } from '@/lib/demo-gateway';
 import {
+  failureKey,
   fetchCapabilities,
   fetchFleetPeers,
+  FLEET_PEERS_CAPABILITY,
   hasFleetPeers,
+  LINK_RETRY_MS,
   linkPeer,
   mintPairingCode,
   planFleetLinks,
   planRenames,
+  planTombstoneUnlinks,
   renamePeer,
   unlinkPeer,
   type FleetComputer,
 } from '@/lib/fleet-peers';
+import type { GatewayRecord } from '@/lib/gateway-storage';
 import { useFleetPeers } from '@/stores/fleet-peers';
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';
 import { useServerCapabilities } from '@/stores/server-capabilities';
@@ -22,20 +27,24 @@ import { useServerReachability } from '@/stores/server-reachability';
 
 /** The background schedule; a trigger the reader caused runs at once. */
 export const FLEET_LINK_EVERY_MS = 10 * 60_000;
+/** How often the schedule looks; the run itself waits out `FLEET_LINK_EVERY_MS`. */
+const SCHEDULE_TICK_MS = 60_000;
 
-type Reason = 'paired' | 'online' | 'settings' | 'schedule';
+type Reason = 'paired' | 'online' | 'settings' | 'unpaired' | 'schedule';
 
 /**
  * One run at a time. A trigger during a run joins it, and one the reader
- * caused (a computer paired mid-run) also asks for one more pass after it.
+ * caused (a computer paired or unpaired mid-run) also asks for one more pass
+ * after it.
  */
 let running: Promise<void> | null = null;
 let again = false;
 
 /**
  * Link every computer paired to this phone with every other one that takes
- * work (spec §4.1): ask B for a pairing code, hand it to A. Quiet: a failure
- * is remembered for the Settings line and tried again after `LINK_RETRY_MS`.
+ * work (spec §4.1): ask B for a pairing code, hand it to A. Also take every
+ * computer the phone unpaired off the others. Quiet: a failure is remembered
+ * for the Settings line and tried again after `LINK_RETRY_MS`.
  */
 export function reconcileFleet(opts: { reason: Reason }): Promise<void> {
   if (running) {
@@ -54,10 +63,15 @@ export function reconcileFleet(opts: { reason: Reason }): Promise<void> {
   return running;
 }
 
-function linkable() {
+function linkable(): GatewayRecord[] {
   return useGatewayConnectionStore
     .getState()
     .records.filter((record) => !record.sshTunnel && !isDemoRecord(record));
+}
+
+/** The record for `serverId` if the phone still holds it right now. */
+function stillPaired(serverId: string): GatewayRecord | undefined {
+  return linkable().find((record) => record.serverId === serverId);
 }
 
 async function runOnce(reason: Reason): Promise<void> {
@@ -68,12 +82,19 @@ async function runOnce(reason: Reason): Promise<void> {
   if (reason === 'schedule' && nowMs - fleet.lastRunMs < FLEET_LINK_EVERY_MS) return;
   fleet.ran(nowMs);
   await useServerCapabilities.getState().hydrate();
-  // A computer never opened on this phone has no capabilities mirrored yet:
-  // ask its public list once, so it is linked all the same (§10.18).
   const paired = linkable();
+  // Paired again: no longer a computer to take off the others.
+  useFleetPeers.getState().unbury(paired.map((record) => record.serverId));
+  // A computer never opened on this phone, or upgraded since it last was,
+  // has no `fleet_peers` mirrored: ask its public list once per run (§10.18).
   await Promise.all(
     paired
-      .filter((record) => !useServerCapabilities.getState().byServer[record.serverId])
+      .filter(
+        (record) =>
+          !useServerCapabilities
+            .getState()
+            .byServer[record.serverId]?.includes(FLEET_PEERS_CAPABILITY)
+      )
       .map(async (record) => {
         const listed = await fetchCapabilities(recordEndpoint(record));
         if (listed) await useServerCapabilities.getState().record(record.serverId, listed);
@@ -83,68 +104,123 @@ async function runOnce(reason: Reason): Promise<void> {
   const records = paired.filter((record) => hasFleetPeers(capabilities[record.serverId]));
   const computers: FleetComputer[] = await Promise.all(
     records.map(async (record) => {
-      const answer = await fetchFleetPeers(recordEndpoint(record));
-      if (answer) useFleetPeers.getState().setPeers(record.serverId, answer);
-      return { serverId: record.serverId, label: record.label, url: record.url, peers: answer };
+      const result = await fetchFleetPeers(recordEndpoint(record));
+      useFleetPeers.getState().record(record.serverId, result);
+      return {
+        serverId: record.serverId,
+        label: record.label.trim(),
+        url: record.url,
+        peers: result.ok ? result.peers : null,
+      };
     })
   );
   useFleetPeers.getState().keepOnly(records.map((record) => record.serverId));
+
+  await buryUnpaired(computers);
+
   // One pending code per computer at a time: link the pairs one after another.
+  // A code minted on B and not claimed holds B for its TTL, so after one step
+  // into B fails, the run leaves B alone.
+  const busy = new Set<string>();
   for (const step of planFleetLinks(computers, useFleetPeers.getState().failures, nowMs)) {
-    const from = records.find((record) => record.serverId === step.from);
-    const to = records.find((record) => record.serverId === step.to);
+    if (busy.has(step.to)) continue;
+    // Checked now, not at the start: the reader may have unpaired either one
+    // while this run was busy, and a computer gone from the phone is never linked.
+    const from = stillPaired(step.from);
+    const to = stillPaired(step.to);
     if (!from || !to) continue;
     const linked = await recoverWith(
       async () => {
-        const { requestId, code } = await mintPairingCode(recordEndpoint(to), from.label);
-        await linkPeer(recordEndpoint(from), { url: to.url, name: to.label, requestId, code });
+        const { requestId, code } = await mintPairingCode(recordEndpoint(to), {
+          name: from.label,
+          serverId: from.serverId,
+        });
+        await linkPeer(recordEndpoint(from), {
+          url: to.url,
+          name: to.label.trim(),
+          requestId,
+          code,
+        });
         return true;
       },
       () => false
     );
     if (linked) {
       useFleetPeers.getState().succeed(step.from, step.to);
-      const answer = await fetchFleetPeers(recordEndpoint(from));
-      if (answer) useFleetPeers.getState().setPeers(step.from, answer);
+      useFleetPeers.getState().record(step.from, await fetchFleetPeers(recordEndpoint(from)));
     } else {
+      busy.add(step.to);
       useFleetPeers.getState().fail(step.from, step.to, Date.now());
     }
   }
-  // Names follow the phone's labels (§10.16); a refusal (409: another peer
-  // holds that name) is left for the next run, quietly.
+  // Names follow the phone's labels (§10.16). A refusal (409: another peer
+  // holds that name) waits out the retry window like a failed link.
   for (const rename of planRenames(computers)) {
-    const from = records.find((record) => record.serverId === rename.from);
+    const failedAt = useFleetPeers.getState().failures[failureKey(rename.from, rename.peerId)];
+    if (failedAt !== undefined && nowMs - failedAt < LINK_RETRY_MS) continue;
+    const from = stillPaired(rename.from);
     if (!from) continue;
-    await renamePeer(recordEndpoint(from), rename.peerId, rename.name).catch(() => undefined);
+    const renamed = await renamePeer(recordEndpoint(from), rename.peerId, rename.name).then(
+      () => true,
+      () => false
+    );
+    if (renamed) useFleetPeers.getState().succeed(rename.from, rename.peerId);
+    else useFleetPeers.getState().fail(rename.from, rename.peerId, Date.now());
   }
 }
 
 /**
- * The phone is forgetting `serverId`: every other computer forgets it too.
- * Best effort, through the other computers' own credentials.
+ * Take every unpaired computer off every computer that answered. A tombstone
+ * goes once every linkable computer has answered and holds no row of it; a
+ * computer that did not answer keeps it for the next run.
  */
-export async function unlinkEverywhere(serverId: string): Promise<void> {
-  const capabilities = useServerCapabilities.getState().byServer;
-  const others = linkable().filter(
-    (record) => record.serverId !== serverId && hasFleetPeers(capabilities[record.serverId])
-  );
-  await Promise.all(
-    others.map(async (record) => {
-      const endpoint = recordEndpoint(record);
-      const answer = await fetchFleetPeers(endpoint);
-      const gone = answer?.peers.filter((peer) => peer.serverId === serverId) ?? [];
-      for (const peer of gone) await unlinkPeer(endpoint, peer.peerId).catch(() => undefined);
-      if (answer && gone.length > 0) {
-        useFleetPeers.getState().setPeers(record.serverId, {
-          ...answer,
-          peers: answer.peers.filter((peer) => peer.serverId !== serverId),
-        });
-      }
-    })
-  );
+async function buryUnpaired(computers: readonly FleetComputer[]): Promise<void> {
+  const tombstones = useFleetPeers.getState().tombstones;
+  if (tombstones.length === 0) return;
+  const left = new Set<string>();
+  const removed = new Set<string>();
+  for (const step of planTombstoneUnlinks(computers, tombstones)) {
+    const from = stillPaired(step.from);
+    const done =
+      from !== undefined &&
+      (await unlinkPeer(recordEndpoint(from), step.peerId).then(
+        () => true,
+        () => false
+      ));
+    if (done) removed.add(failureKey(step.from, step.peerId));
+    else left.add(step.serverId);
+  }
+  for (const computer of computers) {
+    const answer = computer.peers;
+    // Silent: it may still hold any of them.
+    if (!answer) {
+      for (const id of tombstones) left.add(id);
+      continue;
+    }
+    useFleetPeers.getState().setPeers(computer.serverId, {
+      ...answer,
+      peers: answer.peers.filter(
+        (peer) => !removed.has(failureKey(computer.serverId, peer.peerId))
+      ),
+    });
+  }
+  useFleetPeers.getState().unbury(tombstones.filter((id) => !left.has(id)));
 }
 
-/** The reconciler's triggers: a computer paired, a computer came online, every 10 minutes. */
+/**
+ * The phone is forgetting `serverId`: every other computer forgets it too,
+ * through their own credentials. Remembered until every one of them has, so
+ * a computer asleep right now is cleaned on a later run.
+ */
+export async function unlinkEverywhere(serverId: string): Promise<void> {
+  useFleetPeers.getState().bury(serverId);
+  await reconcileFleet({ reason: 'unpaired' });
+}
+
+/**
+ * The reconciler's triggers: a computer paired, a computer came online, one
+ * started advertising `fleet_peers`, and the schedule.
+ */
 export function useFleetLink(): void {
   const serverIds = useGatewayConnectionStore((state) =>
     state.records.map((record) => record.serverId).join('\n')
@@ -153,6 +229,13 @@ export function useFleetLink(): void {
     Object.values(state.probes)
       .filter((probe) => probe.ok)
       .map((probe) => probe.serverId)
+      .sort()
+      .join('\n')
+  );
+  const fleetIds = useServerCapabilities((state) =>
+    Object.entries(state.byServer)
+      .filter(([, names]) => hasFleetPeers(names))
+      .map(([serverId]) => serverId)
       .sort()
       .join('\n')
   );
@@ -168,7 +251,10 @@ export function useFleetLink(): void {
     if (liveIds) run('online');
   }, [liveIds]);
   useEffect(() => {
-    const timer = setInterval(() => run('schedule'), FLEET_LINK_EVERY_MS);
+    if (fleetIds) run('online');
+  }, [fleetIds]);
+  useEffect(() => {
+    const timer = setInterval(() => run('schedule'), SCHEDULE_TICK_MS);
     return () => clearInterval(timer);
   }, []);
 }
