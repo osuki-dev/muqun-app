@@ -164,7 +164,8 @@ export function classifyAgentRequestError(err: unknown): AgentRequestError {
     return said.trim() ? { kind: 'refused', message: bound(said) } : { kind: 'offline' };
   }
   if (!status && transportFailure(err, raw)) return { kind: 'offline' };
-  return { kind: 'other', message: oneLine(raw) };
+  // The gateway's own sentence where it sent one, not the JSON it came in.
+  return { kind: 'other', message: oneLine(message ?? raw) };
 }
 
 /** Whether a failed read should put the screen into its offline state. */

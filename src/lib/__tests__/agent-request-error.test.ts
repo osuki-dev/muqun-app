@@ -65,6 +65,11 @@ describe('classifyAgentRequestError', () => {
       new Error('Something odd happened\n  at com.example.Thing.run(Thing.java:12)\n  at x.y(z)')
     );
     expect(reading).toEqual({ kind: 'other', message: 'Something odd happened' });
+    expect(
+      classifyAgentRequestError(
+        refusal(400, 'invalid_request', 'attachment is not a file uploaded to this gateway')
+      )
+    ).toEqual({ kind: 'other', message: 'attachment is not a file uploaded to this gateway' });
   });
 
   test('the refusal is bounded and flattened', () => {
