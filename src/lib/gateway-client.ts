@@ -3288,6 +3288,8 @@ export interface PairedDevice {
   last_seen_unix_ms: number;
   /** True for the device making the request, which must not revoke itself by accident. */
   current: boolean;
+  /** `gateway` for another of the owner's computers (a linked peer's login). */
+  kind?: string;
 }
 
 export async function loadPairedDevices(): Promise<PairedDevice[]> {
