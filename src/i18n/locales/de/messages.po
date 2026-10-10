@@ -826,6 +826,10 @@ msgstr "Anhang"
 msgid "Attachment could not be sent"
 msgstr "Anhang konnte nicht gesendet werden"
 
+#: src/components/task-row.tsx
+msgid "Attachment could not be sent. Tap to retry."
+msgstr "Anhang konnte nicht gesendet werden. Zum Wiederholen tippen."
+
 #: src/components/session-artifacts.tsx
 msgid "Audio"
 msgstr "Audio"
@@ -5898,6 +5902,10 @@ msgstr "Zum Ansehen und Anpassen tippen"
 #: src/components/agent-workbench.tsx
 msgid "Tap to refresh this session."
 msgstr "Tippen, um diese Sitzung neu zu laden"
+
+#: src/components/task-row.tsx
+msgid "tap to retry"
+msgstr "zum Wiederholen tippen"
 
 #: src/components/session-map.tsx
 msgid "Tap to retry"

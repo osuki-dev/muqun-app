@@ -826,6 +826,10 @@ msgstr "添付ファイル"
 msgid "Attachment could not be sent"
 msgstr "添付ファイルを送信できませんでした"
 
+#: src/components/task-row.tsx
+msgid "Attachment could not be sent. Tap to retry."
+msgstr "添付ファイルを送信できませんでした。タップして再試行してください。"
+
 #: src/components/session-artifacts.tsx
 msgid "Audio"
 msgstr "音声"
@@ -5898,6 +5902,10 @@ msgstr "タップしてプレビューと調整"
 #: src/components/agent-workbench.tsx
 msgid "Tap to refresh this session."
 msgstr "タップしてこのセッションを更新します"
+
+#: src/components/task-row.tsx
+msgid "tap to retry"
+msgstr "タップして再試行"
 
 #: src/components/session-map.tsx
 msgid "Tap to retry"

@@ -305,6 +305,17 @@ describe('buildComputerCards', () => {
       pending,
     });
     expect(arrived[0]!.pending).toEqual([]);
+    // A send that failed keeps its row, but the computer is not busy with it.
+    const failed = buildComputerCards({
+      servers: [{ serverId: 'a' }],
+      index: {},
+      reachability: () => 'live',
+      dismissed: new Set(),
+      nowMs: NOW,
+      pending: [{ ...pending[0]!, attachmentFailed: true as const }],
+    });
+    expect(failed[0]!.pending).toHaveLength(1);
+    expect(failed[0]!.activity).not.toBe('working');
   });
 });
 

@@ -826,6 +826,10 @@ msgstr "Tệp đính kèm"
 msgid "Attachment could not be sent"
 msgstr "Không thể gửi tệp đính kèm"
 
+#: src/components/task-row.tsx
+msgid "Attachment could not be sent. Tap to retry."
+msgstr "Không gửi được tệp đính kèm. Chạm để thử lại."
+
 #: src/components/session-artifacts.tsx
 msgid "Audio"
 msgstr "Âm thanh"
@@ -5898,6 +5902,10 @@ msgstr "Chạm để xem trước và điều chỉnh"
 #: src/components/agent-workbench.tsx
 msgid "Tap to refresh this session."
 msgstr "Chạm để làm mới phiên này"
+
+#: src/components/task-row.tsx
+msgid "tap to retry"
+msgstr "chạm để thử lại"
 
 #: src/components/session-map.tsx
 msgid "Tap to retry"

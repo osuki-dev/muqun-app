@@ -82,7 +82,10 @@ export type PendingDispatch = {
   serverId: string;
   goal: string;
   atMs: number;
-  /** Its attachments could not be sent: the row says so until it expires. */
+  /**
+   * Its attachments could not be sent: the row says so until a retry replaces
+   * it or it expires, and it is not work the computer is doing.
+   */
   attachmentFailed?: true;
 };
 
@@ -417,7 +420,8 @@ export function buildComputerCards(input: {
     // The same predicates Now uses, so work known only from the gateway's
     // child counts moves the card as well as listing it.
     const waiting = tasks.some((task) => task.state === 'waiting') || tree.some(treeRowIsWaiting);
-    const working = tree.some(treeRowIsActive) || pending.length > 0;
+    const working =
+      tree.some(treeRowIsActive) || pending.some((item) => item.attachmentFailed !== true);
     const activity: CardActivity =
       input.reachability(server.serverId) === 'offline'
         ? 'offline'

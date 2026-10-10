@@ -10,7 +10,7 @@ import {
   XCircle,
 } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, {
   cancelAnimation,
   useAnimatedStyle,
@@ -757,16 +757,18 @@ export function SentTaskRow({
 }: {
   goal: string;
   computer: string;
-  /** Its attachments could not be sent (the text is back in the dock). */
+  /** Its attachments could not be sent (the draft is still in the dock). */
   attachmentFailed?: boolean;
 }) {
   const { t } = useLingui();
   const theme = useThemeTokens();
   const rowLine = useTaskRowLine(undefined);
+  const retry = useHomeTaskCards((state) => state.retryFailedSend);
   const visual = taskRowVisual({ state: 'sent' }, { canComplete: false, acknowledged: true });
   const line = attachmentFailed
-    ? lineView(t`Attachment could not be sent`, theme.colors.danger, '')
+    ? lineView(t`Attachment could not be sent`, theme.colors.danger, t`tap to retry`)
     : rowLine(null, visual, computer);
+  const retryable = attachmentFailed && retry !== null;
   return (
     <Animated.View
       testID="home-card-pending"
@@ -775,21 +777,29 @@ export function SentTaskRow({
       exiting={fadeOut('micro')}
       layout={listLayout()}
       style={styles.row}>
-      <View style={styles.titleLine}>
-        <View style={styles.icon}>
-          <TaskStateIcon visual={visual} />
+      <Pressable
+        disabled={!retryable}
+        onPress={() => retry?.()}
+        accessibilityRole={retryable ? 'button' : undefined}
+        accessibilityLabel={retryable ? t`Attachment could not be sent. Tap to retry.` : undefined}
+        style={styles.sentBody}>
+        <View style={styles.titleLine}>
+          <View style={styles.icon}>
+            <TaskStateIcon visual={visual} />
+          </View>
+          <RowMarkdown text={goalTitle(goal)} ink={theme.colors.text} kind="title" />
         </View>
-        <RowMarkdown text={goalTitle(goal)} ink={theme.colors.text} kind="title" />
-      </View>
-      <View style={styles.line}>
-        <TaskRowLineText line={line} />
-      </View>
+        <View style={styles.line}>
+          <TaskRowLineText line={line} />
+        </View>
+      </Pressable>
     </Animated.View>
   );
 }
 
 const styles = StyleSheet.create({
   row: { paddingVertical: 4, gap: 2 },
+  sentBody: { gap: 2 },
   titleLine: { minHeight: 28, flexDirection: 'row', alignItems: 'center', gap: 8 },
   icon: { width: 16, alignItems: 'center' },
   grow: { flex: 1, minWidth: 0 },

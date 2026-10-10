@@ -439,6 +439,14 @@ export function HomeComposerDock({
   const inFlightRef = useRef(false);
   /** The composer's own draft, for a command that failed after it was cleared. */
   const injectDraftRef = useRef<DraftInjector | null>(null);
+  // A failed attachment send keeps its draft in the field; a tap on the row it
+  // left sends that draft again.
+  const submitDraftRef = useRef<(() => void) | null>(null);
+  useEffect(() => {
+    const { setRetryFailedSend } = useHomeTaskCards.getState();
+    setRetryFailedSend(() => submitDraftRef.current?.());
+    return () => setRetryFailedSend(null);
+  }, []);
 
   /**
    * Never a session without a model on an agent that takes one, whatever
@@ -566,10 +574,6 @@ export function HomeComposerDock({
           },
           async (failure) => {
             console.warn('Home could not start a session:', failure);
-            if (sent?.attachments && pendingId && !creating) {
-              useHomeTaskCards.getState().attachmentFailed(pendingId);
-              keepRow = true;
-            }
             if (creating) {
               const record = useGatewayConnectionStore
                 .getState()
@@ -583,6 +587,12 @@ export function HomeComposerDock({
                 router.push({ pathname: '/agent-guide', params: guide });
                 return false;
               }
+            }
+            // The row stays and says so; the draft, attachments included, is
+            // still in the field, and a tap on the row sends it again.
+            if (sent?.attachments && pendingId) {
+              useHomeTaskCards.getState().attachmentFailed(pendingId);
+              keepRow = true;
             }
             setError(describeFailure(failure));
             return false;
@@ -834,7 +844,7 @@ export function HomeComposerDock({
     if (ledgerCreate && !attachments?.length && !startedRef.current) {
       return dispatchTask(text, () => openLedgerTask(text));
     }
-    return dispatchTask(text, () =>
+    const send = () =>
       startSession(
         (asid) =>
           sendAgentPrompt(HOME_AGENT_SESSION_ID, asid, {
@@ -842,8 +852,12 @@ export function HomeComposerDock({
             ...(attachments ? { attachments } : {}),
           }),
         { goal: text, attachments: (attachments?.length ?? 0) > 0 }
-      )
-    );
+      );
+    // Attachments cannot be put back once the field lets them go, so a send
+    // with files is answered for real: a failure leaves text and files where
+    // they are.
+    if (attachments?.length) return send();
+    return dispatchTask(text, send);
   }
   // The composer empties the field as it hands a command over, so a command
   // that did not run puts its line back.
@@ -1060,6 +1074,7 @@ export function HomeComposerDock({
       onInvokeSkill={invokeSkill}
       onClientCommand={clientCommand}
       injectDraftRef={injectDraftRef}
+      submitDraftRef={submitDraftRef}
     />
   );
 }
