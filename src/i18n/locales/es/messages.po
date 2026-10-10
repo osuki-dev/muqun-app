@@ -6131,6 +6131,10 @@ msgstr "El servicio de voz devolvió una transcripción no válida"
 msgid "The SSH tunnel carries the Gateway's port and no other, so the simulator and the browser cannot be reached from here. Connect over the local network or Tailscale."
 msgstr "El túnel SSH lleva el puerto de la Gateway y ningún otro, así que desde aquí no se alcanzan el simulador ni el navegador. Conéctate por la red local o Tailscale"
 
+#: src/components/guide-command.tsx
+msgid "The terminal opened, but the command could not be typed."
+msgstr "El terminal se abrió, pero no se pudo escribir el comando"
+
 #: src/components/session-map.tsx
 msgid "The terminal request may have succeeded. Refresh the list and check it before trying again."
 msgstr "La solicitud del terminal puede haberse completado. Actualiza la lista y revísala antes de intentarlo de nuevo"

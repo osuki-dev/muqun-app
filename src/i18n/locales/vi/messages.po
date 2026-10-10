@@ -6131,6 +6131,10 @@ msgstr "Dịch vụ giọng nói trả về bản phiên âm không hợp lệ"
 msgid "The SSH tunnel carries the Gateway's port and no other, so the simulator and the browser cannot be reached from here. Connect over the local network or Tailscale."
 msgstr "Đường hầm SSH chỉ mang cổng của Gateway và không cổng nào khác, nên không thể kết nối đến trình giả lập và trình duyệt từ đây. Hãy kết nối qua mạng cục bộ hoặc Tailscale"
 
+#: src/components/guide-command.tsx
+msgid "The terminal opened, but the command could not be typed."
+msgstr "Terminal đã mở nhưng không thể nhập lệnh"
+
 #: src/components/session-map.tsx
 msgid "The terminal request may have succeeded. Refresh the list and check it before trying again."
 msgstr "Yêu cầu tạo terminal có thể đã thành công. Hãy làm mới và kiểm tra danh sách trước khi thử lại"

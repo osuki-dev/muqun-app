@@ -6131,6 +6131,10 @@ msgstr "Der Sprachdienst hat ein ungültiges Transkript zurückgegeben"
 msgid "The SSH tunnel carries the Gateway's port and no other, so the simulator and the browser cannot be reached from here. Connect over the local network or Tailscale."
 msgstr "Der SSH-Tunnel trägt den Port des Gateways und keinen anderen, der Simulator und der Browser sind von hier also nicht erreichbar. Verbinde dich über das lokale Netz oder Tailscale"
 
+#: src/components/guide-command.tsx
+msgid "The terminal opened, but the command could not be typed."
+msgstr "Das Terminal wurde geöffnet, aber der Befehl konnte nicht eingegeben werden"
+
 #: src/components/session-map.tsx
 msgid "The terminal request may have succeeded. Refresh the list and check it before trying again."
 msgstr "Die Terminal-Anfrage war möglicherweise erfolgreich. Aktualisiere die Liste und prüfe sie, bevor du es erneut versuchst"
