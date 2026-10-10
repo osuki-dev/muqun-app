@@ -385,12 +385,7 @@ function ComputerCardView({
         <View style={styles.block}>
           {urgentNow.map(nowRow)}
           {card.pending.map((item) => (
-            <SentTaskRow
-              key={item.id}
-              goal={item.goal}
-              computer={server.label}
-              attachmentFailed={item.attachmentFailed === true}
-            />
+            <SentTaskRow key={item.id} item={item} computer={server.label} />
           ))}
           {restNow.map(nowRow)}
           {card.nowTotal > card.now.length ? (

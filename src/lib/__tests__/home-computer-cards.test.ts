@@ -312,10 +312,28 @@ describe('buildComputerCards', () => {
       reachability: () => 'live',
       dismissed: new Set(),
       nowMs: NOW,
-      pending: [{ ...pending[0]!, attachmentFailed: true as const }],
+      pending: [{ ...pending[0]!, failed: true as const }],
     });
     expect(failed[0]!.pending).toHaveLength(1);
     expect(failed[0]!.activity).not.toBe('working');
+    // A goal sent straight to its session stands for it until that session's
+    // task appears, whatever goal text the task carries.
+    const bound = { ...pending[0]!, asid: 'as-1' };
+    const sessionTask = task('y', 'working', 2, {
+      goal: 'renamed by the agent',
+      binding: { kind: 'agent_session', agentId: 'a', asid: 'as-1' },
+    });
+    const boundCards = (tasks: TaskView[]) =>
+      buildComputerCards({
+        servers: [{ serverId: 'a' }],
+        index: tasks.length ? index({ a: tasks }) : {},
+        reachability: () => 'live',
+        dismissed: new Set(),
+        nowMs: NOW,
+        pending: [bound],
+      })[0]!;
+    expect(boundCards([]).activity).toBe('working');
+    expect(boundCards([sessionTask]).pending).toEqual([]);
   });
 });
 

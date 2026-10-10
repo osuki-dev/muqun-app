@@ -70,7 +70,13 @@ export function useAttachmentUploads(
    * Omitting it leaves entries unbound, and an unbound entry is refused by that
    * check rather than treated as bindable anywhere.
    */
-  destination?: () => AttachmentDestination | undefined
+  destination?: () => AttachmentDestination | undefined,
+  /**
+   * Leaving the screen clears the staged files, except while this says to
+   * hold them: Home's dock keeps them while a failed send still holds them,
+   * and over the setup guide it opened itself.
+   */
+  holdAcrossBlur?: () => boolean
 ): AttachmentUploads {
   const [attachments, setAttachments] = useState<PendingAttachment[]>([]);
   const attachmentsRef = useRef<PendingAttachment[]>([]);
@@ -226,9 +232,10 @@ export function useAttachmentUploads(
     useCallback(
       () => () => {
         // Dictation temporarily covers the same composer; it is not a new destination.
-        if (!useVoiceInput.getState().request) clearAttachments();
+        if (useVoiceInput.getState().request || holdAcrossBlur?.()) return;
+        clearAttachments();
       },
-      [clearAttachments]
+      [clearAttachments, holdAcrossBlur]
     )
   );
   useEffect(

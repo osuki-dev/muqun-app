@@ -822,14 +822,6 @@ msgstr "Anexar um ficheiro"
 msgid "Attachment"
 msgstr "Anexo"
 
-#: src/components/task-row.tsx
-msgid "Attachment could not be sent"
-msgstr "Não foi possível enviar o anexo"
-
-#: src/components/task-row.tsx
-msgid "Attachment could not be sent. Tap to retry."
-msgstr "Não foi possível enviar o anexo. Toque para tentar novamente."
-
 #: src/components/session-artifacts.tsx
 msgid "Audio"
 msgstr "Áudio"
@@ -2057,6 +2049,7 @@ msgstr "Não foi possível salvar as configurações de voz. Tente novamente"
 
 #: src/components/home-composer-dock.tsx
 #: src/components/ssh-terminal-workspace.tsx
+#: src/components/task-row.tsx
 msgid "Could not send"
 msgstr "Não foi possível enviar"
 
@@ -2075,6 +2068,10 @@ msgstr "Não foi possível enviar a tecla"
 #: src/app/commands.tsx
 msgid "Could not send shortcut."
 msgstr "Não foi possível enviar o atalho"
+
+#: src/components/task-row.tsx
+msgid "Could not send. Tap to retry"
+msgstr "Não foi possível enviar. Toque para tentar novamente"
 
 #: src/components/agent-workbench.tsx
 msgid "Could not stage the rollback"

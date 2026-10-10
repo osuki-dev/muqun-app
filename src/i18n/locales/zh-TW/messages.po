@@ -822,14 +822,6 @@ msgstr "附加檔案"
 msgid "Attachment"
 msgstr "附件"
 
-#: src/components/task-row.tsx
-msgid "Attachment could not be sent"
-msgstr "附件未能傳送"
-
-#: src/components/task-row.tsx
-msgid "Attachment could not be sent. Tap to retry."
-msgstr "附件未能傳送。輕點重試。"
-
 #: src/components/session-artifacts.tsx
 msgid "Audio"
 msgstr "音訊"
@@ -2057,6 +2049,7 @@ msgstr "無法儲存語音設定，請重試"
 
 #: src/components/home-composer-dock.tsx
 #: src/components/ssh-terminal-workspace.tsx
+#: src/components/task-row.tsx
 msgid "Could not send"
 msgstr "無法傳送"
 
@@ -2075,6 +2068,10 @@ msgstr "無法送出按鍵"
 #: src/app/commands.tsx
 msgid "Could not send shortcut."
 msgstr "無法傳送快捷指令"
+
+#: src/components/task-row.tsx
+msgid "Could not send. Tap to retry"
+msgstr "未能傳送。輕點重試"
 
 #: src/components/agent-workbench.tsx
 msgid "Could not stage the rollback"

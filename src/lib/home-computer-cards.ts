@@ -8,6 +8,7 @@
  * status (an idle agent is not a finished task).
  */
 
+import type { HomeSessionParams } from '@/lib/home-composer';
 import type { ServerReachability } from './server-reachability';
 import { stripTaskMarkers, taskMarkerPayload } from './task-plumbing';
 import { FINISHED_TASKS_SHOWN, type ServerTasksIndex } from './server-tasks-state';
@@ -76,6 +77,18 @@ export type CardTaskRow = {
   children: TaskView[];
 };
 
+/**
+ * Exactly what a failed send carried, so a retry sends that and nothing else:
+ * the text, the files already uploaded, and the agent, mode, model and folder
+ * it was going to -- whatever the dock holds by then. In memory only.
+ */
+export type PendingResend = {
+  text: string;
+  attachments: string[];
+  params: HomeSessionParams;
+  folder?: string;
+};
+
 /** A goal the dock sent that the computer has not reported back yet. */
 export type PendingDispatch = {
   id: string;
@@ -83,10 +96,18 @@ export type PendingDispatch = {
   goal: string;
   atMs: number;
   /**
-   * Its attachments could not be sent: the row says so until a retry replaces
-   * it or it expires, and it is not work the computer is doing.
+   * The send failed: the row says so, with `reason`, until a retry replaces it
+   * or it expires, and it is not work the computer is doing.
    */
-  attachmentFailed?: true;
+  failed?: true;
+  reason?: string;
+  /** What a tap on the failed row sends again. */
+  resend?: PendingResend;
+  /**
+   * The session it went to, where it went to one directly (a goal with
+   * files): the row stands for that session until its task appears.
+   */
+  asid?: string;
 };
 
 export type CardActivity = 'needs-you' | 'working' | 'paused' | 'idle' | 'offline';
@@ -333,9 +354,12 @@ function settlesPending(tasks: readonly TaskView[], item: PendingDispatch): bool
   const goal = item.goal.trim();
   return tasks.some(
     (task) =>
-      task.goal.trim() === goal &&
-      task.updatedMs >= item.atMs - PENDING_CLOCK_SKEW_MS &&
-      (task.origin === undefined || task.origin === 'device')
+      (item.asid !== undefined &&
+        task.binding.kind === 'agent_session' &&
+        task.binding.asid === item.asid) ||
+      (task.goal.trim() === goal &&
+        task.updatedMs >= item.atMs - PENDING_CLOCK_SKEW_MS &&
+        (task.origin === undefined || task.origin === 'device'))
   );
 }
 
@@ -420,8 +444,7 @@ export function buildComputerCards(input: {
     // The same predicates Now uses, so work known only from the gateway's
     // child counts moves the card as well as listing it.
     const waiting = tasks.some((task) => task.state === 'waiting') || tree.some(treeRowIsWaiting);
-    const working =
-      tree.some(treeRowIsActive) || pending.some((item) => item.attachmentFailed !== true);
+    const working = tree.some(treeRowIsActive) || pending.some((item) => item.failed !== true);
     const activity: CardActivity =
       input.reachability(server.serverId) === 'offline'
         ? 'offline'

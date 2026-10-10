@@ -822,14 +822,6 @@ msgstr "แนบไฟล์"
 msgid "Attachment"
 msgstr "ไฟล์แนบ"
 
-#: src/components/task-row.tsx
-msgid "Attachment could not be sent"
-msgstr "ส่งไฟล์แนบไม่ได้"
-
-#: src/components/task-row.tsx
-msgid "Attachment could not be sent. Tap to retry."
-msgstr "ส่งไฟล์แนบไม่สำเร็จ แตะเพื่อลองอีกครั้ง"
-
 #: src/components/session-artifacts.tsx
 msgid "Audio"
 msgstr "เสียง"
@@ -2057,6 +2049,7 @@ msgstr "ไม่สามารถบันทึกการตั้งค่
 
 #: src/components/home-composer-dock.tsx
 #: src/components/ssh-terminal-workspace.tsx
+#: src/components/task-row.tsx
 msgid "Could not send"
 msgstr "ส่งไม่ได้"
 
@@ -2075,6 +2068,10 @@ msgstr "ส่งปุ่มไม่ได้"
 #: src/app/commands.tsx
 msgid "Could not send shortcut."
 msgstr "ส่งปุ่มลัดไม่ได้"
+
+#: src/components/task-row.tsx
+msgid "Could not send. Tap to retry"
+msgstr "ส่งไม่สำเร็จ แตะเพื่อลองอีกครั้ง"
 
 #: src/components/agent-workbench.tsx
 msgid "Could not stage the rollback"

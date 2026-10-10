@@ -822,14 +822,6 @@ msgstr "파일 첨부"
 msgid "Attachment"
 msgstr "첨부 파일"
 
-#: src/components/task-row.tsx
-msgid "Attachment could not be sent"
-msgstr "첨부 파일을 보낼 수 없습니다"
-
-#: src/components/task-row.tsx
-msgid "Attachment could not be sent. Tap to retry."
-msgstr "첨부 파일을 보내지 못했습니다. 탭하여 다시 시도하세요."
-
 #: src/components/session-artifacts.tsx
 msgid "Audio"
 msgstr "오디오"
@@ -2057,6 +2049,7 @@ msgstr "음성 설정을 저장할 수 없습니다. 다시 시도하세요"
 
 #: src/components/home-composer-dock.tsx
 #: src/components/ssh-terminal-workspace.tsx
+#: src/components/task-row.tsx
 msgid "Could not send"
 msgstr "보낼 수 없습니다"
 
@@ -2075,6 +2068,10 @@ msgstr "키를 보내지 못했습니다"
 #: src/app/commands.tsx
 msgid "Could not send shortcut."
 msgstr "단축 명령을 보내지 못했습니다"
+
+#: src/components/task-row.tsx
+msgid "Could not send. Tap to retry"
+msgstr "보내지 못했습니다. 탭하여 다시 시도"
 
 #: src/components/agent-workbench.tsx
 msgid "Could not stage the rollback"
