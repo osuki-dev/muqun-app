@@ -7,6 +7,7 @@ import {
   parseFleetPeers,
   planFleetLinks,
   planRenames,
+  pairingsAnswer,
   planTombstoneUnlinks,
   settledTombstones,
   type FleetComputer,
@@ -266,5 +267,24 @@ describe('settledTombstones: an unpaired computer is let go only when every comp
     ],
   ] as const)('%s', (_name, computers, failed, released) => {
     expect(settledTombstones(computers, ['gone', 'old'], new Set(failed))).toEqual([...released]);
+  });
+});
+
+describe('pairingsAnswer: a 404 means nothing to revoke only when the gateway says so', () => {
+  const login = { deviceId: 'd1', serverId: 'gone' };
+  test.each([
+    ['a list is the list', [login], null, [login]],
+    ['a 404 from a gateway without the list: nothing to revoke', 'no-route', ['fleet_peers'], []],
+    [
+      'a 404 where the gateway has the list (a proxy): retried',
+      'no-route',
+      ['device_revocation'],
+      null,
+    ],
+    ['a 404 with no capabilities this run: retried', 'no-route', null, null],
+  ] as const)('%s', (_name, listed, capabilities, expected) => {
+    expect(pairingsAnswer(typeof listed === 'string' ? listed : [...listed], capabilities)).toEqual(
+      expected === null ? null : [...expected]
+    );
   });
 });

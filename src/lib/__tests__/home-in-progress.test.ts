@@ -43,6 +43,27 @@ describe('homeWaitingTasks', () => {
       ['r'],
     ],
     [
+      'the real task there is not waiting yet: the mirror is listed',
+      { coding: [task('m', 'waiting', 3, mirror)], mini: [task('r', 'working', 2)] },
+      ['coding', 'mini'],
+      ['m'],
+    ],
+    [
+      "the running computer's ledger is stale: the mirror is listed",
+      { coding: [task('m', 'waiting', 3, mirror)], mini: [task('r', 'waiting', 2)] },
+      ['coding'],
+      ['m'],
+    ],
+    [
+      'the task there is not known yet: the mirror is listed',
+      {
+        coding: [task('m', 'waiting', 3, { ...mirror, remoteTaskId: '' })],
+        mini: [task('r', 'waiting', 2)],
+      },
+      ['coding', 'mini'],
+      ['m', 'r'],
+    ],
+    [
       'the running computer is not paired here: the mirror is listed',
       { coding: [task('m', 'waiting', 3, mirror)] },
       ['coding'],

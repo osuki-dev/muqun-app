@@ -274,17 +274,19 @@ export function settledTombstones(
 /** A paired device that is another computer, with the server id it gave (newer gateways). */
 export type PairedGateway = { deviceId: string; serverId: string };
 
+/** A gateway that lists and revokes its paired devices (`GET`/`DELETE /api/pairings`). */
+export const DEVICE_REVOCATION_CAPABILITY = 'device_revocation';
+
 /**
- * `GET /api/pairings`: the other computers' logins here (empty where the
- * gateway has no such list); `null` when it did not answer, to try again.
+ * `GET /api/pairings`: the other computers' logins here; `'no-route'` for a
+ * 404, which `pairingsAnswer` judges; `null` when it did not answer.
  */
 export async function fetchPairedGateways(
   endpoint: FleetEndpoint
-): Promise<PairedGateway[] | null> {
+): Promise<PairedGateway[] | 'no-route' | null> {
   try {
     const response = await endpointRequest(endpoint, '/api/pairings', 'GET');
-    // No such list here: nothing to revoke. Anything else is tried again.
-    if (response.status === 404) return [];
+    if (response.status === 404) return 'no-route';
     if (!response.ok) return null;
     const devices = asRecord(await response.json())?.devices;
     if (!Array.isArray(devices)) return null;
@@ -297,6 +299,20 @@ export async function fetchPairedGateways(
   } catch {
     return null;
   }
+}
+
+/**
+ * What a pairings read means for the cleanup: the logins, or nothing to
+ * revoke when the 404 came from a gateway that says (in this run's
+ * `/api/capabilities`) it has no such list. A 404 from anything else -- a
+ * proxy in front of a gateway that has the list -- is no answer: retried.
+ */
+export function pairingsAnswer(
+  listed: PairedGateway[] | 'no-route' | null,
+  capabilities: readonly string[] | null
+): PairedGateway[] | null {
+  if (listed !== 'no-route') return listed;
+  return capabilities !== null && !capabilities.includes(DEVICE_REVOCATION_CAPABILITY) ? [] : null;
 }
 
 /** Revoke one paired device; one already gone is revoked. */

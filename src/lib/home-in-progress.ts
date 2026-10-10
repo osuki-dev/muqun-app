@@ -52,13 +52,18 @@ export function homeWaitingTasks(
       continue;
     }
     // A question is listed once: a mirror of work on another computer whose
-    // real task this phone also holds fresh is that task's question again.
-    // The mirror stays only when that computer's own ledger is not here.
+    // real task this phone also holds fresh, and waiting, is that task's
+    // question again. The mirror stays when that computer's own ledger is not
+    // here, or the real task there has not reached `waiting` (or has left it).
+    // With the mirror hidden, only the running computer has the question, so
+    // the top section (two or more computers) stays closed and its card lists it.
     if (binding.kind === 'peer' && binding.remoteTaskId) {
       const there = peerServerOf(binding);
       const held =
         fresh.has(there) &&
-        index[there]?.tasks.some((task) => task.taskId === binding.remoteTaskId) === true;
+        index[there]?.tasks.some(
+          (task) => task.taskId === binding.remoteTaskId && task.state === 'waiting'
+        ) === true;
       if (held) continue;
     }
     rows.push(row);
