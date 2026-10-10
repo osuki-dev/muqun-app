@@ -674,8 +674,9 @@ export const AgentWorkbench = memo(function AgentWorkbench({
       serverId: peer.serverId,
       // The name this computer knows the peer by: the one delegation takes.
       name: peer.name,
-      reachable: peer.reachable,
+      reachable: peer.reachable && !peer.unauthorized,
       current: false,
+      ...(peer.unauthorized ? { revoked: true } : {}),
     })) ?? [];
   const setTimeline = transcriptStore.getState().setTimeline;
   const timelineEmpty = useStore(transcriptStore, (state) => state.timeline.length === 0);

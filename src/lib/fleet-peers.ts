@@ -26,6 +26,12 @@ export interface PeerView {
   url: string;
   reachable: boolean;
   lastSeenMs?: number;
+  /**
+   * The peer no longer takes this computer's token (it revoked the link). The
+   * row is kept until a new link replaces it; an older gateway forgets the
+   * peer instead, which reads the same to the reconciler: not linked.
+   */
+  unauthorized?: true;
 }
 
 export interface FleetPeers {
@@ -46,6 +52,7 @@ function parsePeer(value: unknown): PeerView | null {
     url: asString(rec.url) ?? '',
     reachable: rec.reachable === true,
     ...(lastSeenMs !== undefined ? { lastSeenMs } : {}),
+    ...(rec.unauthorized === true ? { unauthorized: true as const } : {}),
   };
 }
 
@@ -403,8 +410,15 @@ export function failureKey(from: string, to: string): string {
   return `${from}\n${to}`;
 }
 
+/**
+ * Whether `computer` holds a working link to `serverId`, matched by server id,
+ * never by name (each device labels computers its own way). A link the other
+ * side revoked does not count: the next pass links the pair again.
+ */
 function lists(computer: FleetComputer, serverId: string): boolean {
-  return computer.peers?.peers.some((peer) => peer.serverId === serverId) ?? false;
+  return (
+    computer.peers?.peers.some((peer) => peer.serverId === serverId && !peer.unauthorized) ?? false
+  );
 }
 
 function failedRecently(
@@ -479,6 +493,8 @@ export function linkLines(
 ): {
   linked: string[];
   noWork: string[];
+  /** Linked, but the other side revoked the link: being linked again. */
+  revoked: string[];
   cannotReach: string[];
   sameName: { name: string; with: string; from: string; stale: boolean }[];
 } {
@@ -487,9 +503,14 @@ export function linkLines(
     computers.find((entry) => entry.serverId === peer.serverId)?.label || peer.name;
   const linked: string[] = [];
   const noWork: string[] = [];
+  const revoked: string[] = [];
   const cannotReach: string[] = [];
   const sameName: { name: string; with: string; from: string; stale: boolean }[] = [];
   for (const peer of self?.peers?.peers ?? []) {
+    if (peer.unauthorized) {
+      revoked.push(labelOf(peer));
+      continue;
+    }
     if (!peer.reachable) {
       cannotReach.push(labelOf(peer));
       continue;
@@ -500,6 +521,7 @@ export function linkLines(
   }
   for (const other of computers) {
     if (other.serverId === serverId || (self && lists(self, other.serverId))) continue;
+    if (revoked.includes(other.label)) continue;
     const conflict = conflicts[failureKey(serverId, other.serverId)];
     if (conflict) {
       // The computers' own labels: the clash is between those, not this
@@ -514,7 +536,7 @@ export function linkLines(
       cannotReach.push(other.label);
     }
   }
-  return { linked, noWork, cannotReach, sameName };
+  return { linked, noWork, revoked, cannotReach, sameName };
 }
 
 /** An address as a link compares it: scheme and host in lower case, no trailing slash. */
@@ -545,7 +567,7 @@ export function planPeerMoves(
   const moves: { from: string; peerId: string; url: string }[] = [];
   for (const from of computers) {
     for (const peer of from.peers?.peers ?? []) {
-      if (peer.reachable) continue;
+      if (peer.reachable || peer.unauthorized) continue;
       const moved = computers.find((entry) => entry.serverId === peer.serverId);
       if (!moved?.peers) continue;
       const url = moved.url;
@@ -555,4 +577,56 @@ export function planPeerMoves(
     }
   }
   return moves;
+}
+
+/**
+ * What one unpairing on this device left unfinished (A5 D6). This device
+ * finishing its own unpair, never a set difference: only the computers named
+ * here, each once.
+ */
+export type UnpairRecord = {
+  /** The computer this device unpaired. */
+  serverId: string;
+  /** What this device called it. */
+  label: string;
+  atMs: number;
+  /** Other computers that were down or refused when its rows and login were taken off them. */
+  pending: string[];
+  /** Other computers it still lists: its own rows could not be removed before its token went. */
+  stillListedBy: string[];
+};
+
+/** How long an unfinished unpairing is followed up. */
+export const UNPAIR_FOLLOW_UP_MS = 30 * 24 * 60 * 60_000;
+
+/**
+ * The unpairings still worth following up: none finished (nothing pending and
+ * nothing to tell), none older than a month, and none about a computer this
+ * device paired again (its links are the reconciler's business once more).
+ */
+export function keptUnpairs(
+  entries: readonly UnpairRecord[],
+  pairedIds: readonly string[],
+  nowMs: number
+): UnpairRecord[] {
+  const paired = new Set(pairedIds);
+  return entries.filter(
+    (entry) =>
+      !paired.has(entry.serverId) &&
+      nowMs - entry.atMs < UNPAIR_FOLLOW_UP_MS &&
+      (entry.pending.length > 0 || entry.stillListedBy.length > 0)
+  );
+}
+
+/** What Settings says on `serverId`'s section about this device's unfinished unpairings. */
+export function unpairLines(
+  serverId: string,
+  entries: readonly UnpairRecord[]
+): { stillLinked: string[]; stillListedBy: string[] } {
+  return {
+    stillLinked: entries.filter((entry) => entry.pending.includes(serverId)).map((e) => e.label),
+    stillListedBy: entries
+      .filter((entry) => entry.stillListedBy.includes(serverId))
+      .map((e) => e.label),
+  };
 }

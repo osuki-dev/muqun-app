@@ -26,6 +26,7 @@ import {
 } from '@/lib/fleet-peers';
 import type { GatewayRecord } from '@/lib/gateway-storage';
 import { useFleetPeers } from '@/stores/fleet-peers';
+import { useFleetUnpairs } from '@/stores/fleet-unpairs';
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';
 import { useServerCapabilities } from '@/stores/server-capabilities';
 import { useServerReachability } from '@/stores/server-reachability';
@@ -183,6 +184,7 @@ async function runOnce(reason: Reason): Promise<void> {
     return label;
   };
 
+  await followUpUnpairs(computers);
   await settleConflicts(computers, labelOf);
 
   // One pending code per computer at a time: link the pairs one after another.
@@ -334,48 +336,134 @@ async function stillColliding(
 }
 
 /**
- * This device just unpaired `serverId`: take it off the reader's other
- * computers, through their own credentials -- its peer rows there, and its
- * login there (newer gateways). Done once, now, as the consequence of this
- * unpairing; never chased on a later run, so another device that keeps the
- * computer paired (and links it again) is never fought.
+ * Take `goneId` off one computer through its own credentials: its peer rows
+ * there (the gateway also asks it to revoke this computer's token), and its
+ * gateway login there (newer gateways). `false` when the computer did not
+ * answer or a step failed, for the follow-up.
  */
-export async function unlinkEverywhere(serverId: string): Promise<void> {
+async function unlinkOn(record: GatewayRecord, goneId: string): Promise<boolean> {
+  const endpoint = recordEndpoint(record);
+  const answer = await fetchFleetPeers(endpoint);
+  if (!answer.ok) return false;
+  let ok = true;
+  const removed = new Set<string>();
+  for (const peer of answer.peers.peers.filter((entry) => entry.serverId === goneId)) {
+    const done = await unlinkPeer(endpoint, peer.peerId).then(
+      () => true,
+      () => false
+    );
+    if (done) removed.add(peer.peerId);
+    else ok = false;
+  }
+  useFleetPeers.getState().setPeers(record.serverId, {
+    ...answer.peers,
+    peers: answer.peers.peers.filter((peer) => !removed.has(peer.peerId)),
+  });
+  const listed = await fetchPairedGateways(endpoint);
+  const logins = pairingsAnswer(
+    listed,
+    listed === 'no-route' ? await fetchCapabilities(endpoint) : null
+  );
+  if (logins === null) return false;
+  for (const login of logins.filter((entry) => entry.serverId === goneId)) {
+    const revoked = await revokePairing(endpoint, login.deviceId).then(
+      () => true,
+      () => false
+    );
+    if (!revoked) ok = false;
+  }
+  return ok;
+}
+
+/**
+ * This device is about to unpair `leaving` (A5 D6), and still holds its
+ * token: unlink it on both sides, in order --
+ *
+ * 1. on every other computer this device holds, its rows and login there;
+ * 2. on `leaving` itself, its rows for those computers (so it stops listing
+ *    them), with its own token, before that token is dropped.
+ *
+ * What could not be done is kept (`useFleetUnpairs`): a computer that was
+ * down or refused is cleaned once when it next answers; one `leaving` still
+ * lists is said on that computer's Settings line, since this device can no
+ * longer reach `leaving` once it is unpaired. This is this device finishing
+ * its own unpair, never a set-difference unlink, so another device that keeps
+ * the computer paired is never fought.
+ */
+export async function unlinkBeforeUnpair(leaving: GatewayRecord): Promise<void> {
   // After any run in flight, so it cannot link the computer back meanwhile.
   await running?.catch(() => undefined);
   const capabilities = useServerCapabilities.getState().byServer;
-  const records = linkable().filter(
-    (record) => hasFleetPeers(capabilities[record.serverId]) && !knownDown(record.serverId)
+  const others = linkable().filter(
+    (record) => record.serverId !== leaving.serverId && hasFleetPeers(capabilities[record.serverId])
   );
-  await Promise.all(
-    records.map(async (record) => {
-      const endpoint = recordEndpoint(record);
-      const answer = await fetchFleetPeers(endpoint);
-      if (!answer.ok) return;
-      const rows = answer.peers.peers.filter((peer) => peer.serverId === serverId);
-      const removed = new Set<string>();
-      for (const peer of rows) {
+  const pending: string[] = [];
+  for (const record of others) {
+    const done = !knownDown(record.serverId) && (await unlinkOn(record, leaving.serverId));
+    if (!done) pending.push(record.serverId);
+  }
+  const otherIds = new Set(others.map((record) => record.serverId));
+  let stillListedBy: string[] = [];
+  if (hasFleetPeers(capabilities[leaving.serverId])) {
+    const endpoint = recordEndpoint(leaving);
+    const answer = knownDown(leaving.serverId) ? null : await fetchFleetPeers(endpoint);
+    if (answer?.ok) {
+      for (const peer of answer.peers.peers.filter((entry) => otherIds.has(entry.serverId))) {
         const done = await unlinkPeer(endpoint, peer.peerId).then(
           () => true,
           () => false
         );
-        if (done) removed.add(peer.peerId);
+        if (!done) stillListedBy.push(peer.serverId);
       }
-      useFleetPeers.getState().setPeers(record.serverId, {
-        ...answer.peers,
-        peers: answer.peers.peers.filter((peer) => !removed.has(peer.peerId)),
-      });
-      const listed = await fetchPairedGateways(endpoint);
-      const logins = pairingsAnswer(
-        listed,
-        listed === 'no-route' ? await fetchCapabilities(endpoint) : null
-      );
-      for (const login of (logins ?? []).filter((entry) => entry.serverId === serverId)) {
-        await revokePairing(endpoint, login.deviceId).catch(() => undefined);
-      }
-    })
+    } else {
+      // Not answering: what it listed when it last did is what it may still list.
+      stillListedBy =
+        useFleetPeers
+          .getState()
+          .byServer[leaving.serverId]?.peers.filter((peer) => otherIds.has(peer.serverId))
+          .map((peer) => peer.serverId) ?? [];
+    }
+  }
+  if (pending.length > 0 || stillListedBy.length > 0) {
+    useFleetUnpairs.getState().put({
+      serverId: leaving.serverId,
+      label: leaving.label.trim(),
+      atMs: Date.now(),
+      pending,
+      stillListedBy: [...new Set(stillListedBy)],
+    });
+  }
+}
+
+/**
+ * The follow-up of this device's unfinished unpairings: each computer that was
+ * down then and answered this pass is cleaned now, once, and dropped from the
+ * record whatever came of it but silence.
+ */
+async function followUpUnpairs(computers: readonly FleetComputer[]): Promise<void> {
+  const unpairs = useFleetUnpairs.getState();
+  unpairs.prune(
+    linkable().map((record) => record.serverId),
+    Date.now()
   );
-  useFleetPeers.getState().keepOnly(linkable().map((record) => record.serverId));
+  for (const entry of useFleetUnpairs.getState().entries) {
+    for (const computerId of entry.pending) {
+      if (!computers.some((computer) => computer.serverId === computerId && computer.peers)) {
+        continue;
+      }
+      const record = stillPaired(computerId);
+      if (!record) {
+        useFleetUnpairs.getState().settle(entry.serverId, computerId);
+        continue;
+      }
+      await unlinkOn(record, entry.serverId);
+      useFleetUnpairs.getState().settle(entry.serverId, computerId);
+    }
+  }
+  useFleetUnpairs.getState().prune(
+    linkable().map((record) => record.serverId),
+    Date.now()
+  );
 }
 
 /**

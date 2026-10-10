@@ -105,6 +105,11 @@ msgstr "{0, plural, other {คำถาม}}"
 
 #. placeholder {0}: device.name
 #: src/components/settings-servers.tsx
+msgid "{0} (gateway)"
+msgstr "{0} (เกตเวย์)"
+
+#. placeholder {0}: device.name
+#: src/components/settings-servers.tsx
 msgid "{0} (this device)"
 msgstr "{0} (อุปกรณ์นี้)"
 
@@ -286,6 +291,10 @@ msgstr "เสร็จ {done} จาก {0}"
 #: src/components/settings-fleet-peers.tsx
 msgid "{from} still lists an older {name}. Remove that entry on {from}."
 msgstr "{from} ยังมีรายการ {name} อันเก่าอยู่ ลบรายการนั้นบน {from}"
+
+#: src/components/settings-fleet-peers.tsx
+msgid "{gone} still lists {thisLabel}; remove it on {gone}'s Manage screen"
+msgstr "{gone} ยังมี {thisLabel} อยู่ ลบออกที่หน้าจัดการของ {gone}"
 
 #: src/components/home-launch-actions.tsx
 msgid "{hidden} more"
@@ -3279,6 +3288,14 @@ msgstr "ระดับ {depth}"
 msgid "Light"
 msgstr "สว่าง"
 
+#: src/components/file-mention-panel.tsx
+msgid "Link revoked · re-linking…"
+msgstr "ลิงก์ถูกเพิกถอน · กำลังลิงก์ใหม่…"
+
+#: src/components/settings-fleet-peers.tsx
+msgid "Link to {name} was revoked · re-linking…"
+msgstr "ลิงก์ไปยัง {name} ถูกเพิกถอน · กำลังลิงก์ใหม่…"
+
 #: src/components/settings-fleet-peers.tsx
 msgid "Linked with: {linkedNames}"
 msgstr "เชื่อมกับ: {linkedNames}"
@@ -5701,6 +5718,10 @@ msgstr "แทรกแซงเอเจนต์ที่กำลังทำ
 #: src/components/tool-call-code-rows.tsx
 msgid "Still arriving"
 msgstr "กำลังรับข้อมูล"
+
+#: src/components/settings-fleet-peers.tsx
+msgid "Still linked to {gone}; will unlink when it is reachable"
+msgstr "ยังลิงก์กับ {gone} อยู่ จะยกเลิกเมื่อเข้าถึงได้"
 
 #: src/components/pane-chat-blocks.tsx
 msgid "Still running…"

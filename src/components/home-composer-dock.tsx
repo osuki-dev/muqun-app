@@ -208,7 +208,8 @@ export function HomeComposerDock({
             serverId: peer.serverId,
             name: peer.name,
             current: false,
-            reachable: peer.reachable,
+            reachable: peer.reachable && !peer.unauthorized,
+            ...(peer.unauthorized ? { revoked: true } : {}),
           })),
         ]
       : [];

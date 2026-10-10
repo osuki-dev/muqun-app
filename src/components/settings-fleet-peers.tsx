@@ -9,7 +9,14 @@ import { Text } from '@/components/text';
 import { reconcileFleet } from '@/hooks/use-fleet-link';
 import { useStableHandler } from '@/hooks/use-render-refs';
 import { recordEndpoint } from '@/hooks/use-server-tasks';
-import { fetchFleetPeers, hasFleetPeers, linkLines, setAcceptDelegations } from '@/lib/fleet-peers';
+import {
+  fetchFleetPeers,
+  hasFleetPeers,
+  linkLines,
+  setAcceptDelegations,
+  unpairLines,
+} from '@/lib/fleet-peers';
+import { useFleetUnpairs } from '@/stores/fleet-unpairs';
 import type { GatewayRecord } from '@/lib/gateway-storage';
 import { useFleetPeers } from '@/stores/fleet-peers';
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';
@@ -36,6 +43,7 @@ function FleetPeersBody({ server }: { server: GatewayRecord }) {
   // which is when the reconciler last looked; pure, unlike a clock read.
   const lastRunMs = useFleetPeers((state) => state.lastRunMs);
   const conflicts = useFleetPeers((state) => state.conflicts);
+  const unpairs = useFleetUnpairs((state) => state.entries);
   const setPeers = useFleetPeers((state) => state.setPeers);
   const records = useGatewayConnectionStore((state) => state.records);
   const answer = byServer[server.serverId];
@@ -64,7 +72,9 @@ function FleetPeersBody({ server }: { server: GatewayRecord }) {
     url: record.url,
     peers: byServer[record.serverId] ?? null,
   }));
-  const { linked, noWork, cannotReach, sameName } = linkLines(
+  const { stillLinked, stillListedBy } = unpairLines(server.serverId, unpairs);
+  const thisLabel = server.label;
+  const { linked, noWork, revoked, cannotReach, sameName } = linkLines(
     server.serverId,
     computers,
     failures,
@@ -130,13 +140,45 @@ function FleetPeersBody({ server }: { server: GatewayRecord }) {
             disabled={!answer}
             onValueChange={toggle}
           />
-          {linked.length > 0 || cannotReach.length > 0 || sameName.length > 0 ? (
+          {linked.length > 0 ||
+          stillLinked.length > 0 ||
+          stillListedBy.length > 0 ||
+          revoked.length > 0 ||
+          cannotReach.length > 0 ||
+          sameName.length > 0 ? (
             <View style={styles.lines}>
               {linked.length > 0 ? (
                 <Text testID="fleet-peers-linked" variant="caption" color={theme.colors.textMuted}>
                   {t`Linked with: ${linkedNames}`}
                 </Text>
               ) : null}
+              {stillLinked.map((gone) => (
+                <Text
+                  key={`still-linked-${gone}`}
+                  testID="fleet-peers-still-linked"
+                  variant="caption"
+                  color={theme.colors.warning}>
+                  {t`Still linked to ${gone}; will unlink when it is reachable`}
+                </Text>
+              ))}
+              {stillListedBy.map((gone) => (
+                <Text
+                  key={`still-listed-${gone}`}
+                  testID="fleet-peers-still-listed"
+                  variant="caption"
+                  color={theme.colors.warning}>
+                  {t`${gone} still lists ${thisLabel}; remove it on ${gone}'s Manage screen`}
+                </Text>
+              ))}
+              {revoked.map((name) => (
+                <Text
+                  key={`revoked-${name}`}
+                  testID="fleet-peers-revoked"
+                  variant="caption"
+                  color={theme.colors.warning}>
+                  {t`Link to ${name} was revoked · re-linking…`}
+                </Text>
+              ))}
               {noWork.map((name) => (
                 <Text
                   key={`no-work-${name}`}

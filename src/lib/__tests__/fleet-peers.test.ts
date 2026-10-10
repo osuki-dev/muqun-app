@@ -7,6 +7,10 @@ import {
   LINK_RETRY_MS,
   planFleetLinks,
   planPeerMoves,
+  keptUnpairs,
+  UNPAIR_FOLLOW_UP_MS,
+  unpairLines,
+  type UnpairRecord,
   pairingsAnswer,
   type FleetComputer,
   type NameConflict,
@@ -119,6 +123,42 @@ describe('planFleetLinks: every ordered pair that should be linked and is not', 
     expect(planFleetLinks(computers, failures, NOW)).toEqual([...expected]);
   });
 
+  // A4 D5: matched by server id, never by label (each device names computers
+  // its own way); a link the other side revoked is linked again; and nothing
+  // here ever unlinks or renames.
+  test.each([
+    [
+      'revoked on mini: the next pass links coding to mini again',
+      [
+        computer('coding', {
+          acceptDelegations: true,
+          peers: [
+            {
+              peerId: 'p',
+              serverId: 'mini',
+              name: 'mini',
+              url: 'http://mini',
+              reachable: false,
+              unauthorized: true,
+            },
+          ],
+        }),
+        computer('mini', peers(true, [['coding', true]])),
+      ],
+      [{ from: 'coding', to: 'mini' }],
+    ],
+    [
+      "two devices' labels differ: a link under the other device's name still counts",
+      [
+        { ...computer('coding', peers(true, [['mini', true]])), label: 'osk' },
+        { ...computer('mini', peers(true, [['coding', true]])), label: 'mac mini' },
+      ],
+      [],
+    ],
+  ] as const)('%s', (_name, computers, expected) => {
+    expect(planFleetLinks(computers, {}, NOW)).toEqual([...expected]);
+  });
+
   test('a pair whose names collide is not tried again', () => {
     const conflicts = {
       [failureKey('coding', 'mini')]: { name: 'mini', against: 'peer', with: 'mini' } as const,
@@ -175,10 +215,33 @@ describe('linkLines: the one line Settings shows per computer', () => {
       {},
       { linked: ['nas'], noWork: [], cannotReach: [], sameName: [] },
     ],
+    [
+      'a link the other side revoked: re-linking, not "cannot reach"',
+      'coding',
+      [
+        computer('coding', {
+          acceptDelegations: true,
+          peers: [
+            {
+              peerId: 'p',
+              serverId: 'mini',
+              name: 'mini',
+              url: 'http://mini',
+              reachable: false,
+              unauthorized: true,
+            },
+          ],
+        }),
+        computer('mini', peers(true)),
+      ],
+      { [failureKey('coding', 'mini')]: NOW },
+      { linked: [], noWork: [], revoked: ['mini'], cannotReach: [], sameName: [] },
+    ],
   ] as const)('%s', (_name, serverId, computers, failures, expected) => {
     expect(linkLines(serverId, computers, failures, NOW)).toEqual({
       linked: [...expected.linked],
       noWork: [...expected.noWork],
+      revoked: 'revoked' in expected ? [...expected.revoked] : [],
       cannotReach: [...expected.cannotReach],
       sameName: [...expected.sameName],
     });
@@ -203,7 +266,7 @@ describe('linkLines: the one line Settings shows per computer', () => {
       linkLines('coding', computers, { [failureKey('coding', 'mini')]: NOW }, NOW, {
         [failureKey('coding', 'mini')]: conflict,
       })
-    ).toEqual({ linked: [], noWork: [], cannotReach: [], sameName: [line] });
+    ).toEqual({ linked: [], noWork: [], revoked: [], cannotReach: [], sameName: [line] });
   });
 });
 
@@ -314,5 +377,30 @@ describe('pairingsAnswer: a 404 means nothing to revoke only when the gateway sa
     expect(pairingsAnswer(typeof listed === 'string' ? listed : [...listed], capabilities)).toEqual(
       expected === null ? null : [...expected]
     );
+  });
+});
+
+describe('an unpairing this device could not finish (A5 D6)', () => {
+  const entry = (over: Partial<UnpairRecord> = {}): UnpairRecord => ({
+    serverId: 'mini',
+    label: 'mini',
+    atMs: NOW,
+    pending: ['coding'],
+    stillListedBy: [],
+    ...over,
+  });
+  test.each([
+    ['followed up while something is left', entry(), [], NOW + 1, true],
+    ['dropped once nothing is pending or to tell', entry({ pending: [] }), [], NOW + 1, false],
+    ['dropped when this device pairs that computer again', entry(), ['mini'], NOW + 1, false],
+    ['dropped after a month', entry(), [], NOW + UNPAIR_FOLLOW_UP_MS, false],
+  ] as const)('%s', (_name, record, paired, nowMs, kept) => {
+    expect(keptUnpairs([record], paired, nowMs).length === 1).toBe(kept);
+  });
+
+  test("each computer's Settings line says what is left on it", () => {
+    const entries = [entry({ pending: ['coding'], stillListedBy: ['nas'] })];
+    expect(unpairLines('coding', entries)).toEqual({ stillLinked: ['mini'], stillListedBy: [] });
+    expect(unpairLines('nas', entries)).toEqual({ stillLinked: [], stillListedBy: ['mini'] });
   });
 });

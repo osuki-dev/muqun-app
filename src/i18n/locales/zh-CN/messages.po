@@ -105,6 +105,11 @@ msgstr "{0, plural, other {问题}}"
 
 #. placeholder {0}: device.name
 #: src/components/settings-servers.tsx
+msgid "{0} (gateway)"
+msgstr "{0}（网关）"
+
+#. placeholder {0}: device.name
+#: src/components/settings-servers.tsx
 msgid "{0} (this device)"
 msgstr "{0}（本设备）"
 
@@ -286,6 +291,10 @@ msgstr "已完成 {done}/{0}"
 #: src/components/settings-fleet-peers.tsx
 msgid "{from} still lists an older {name}. Remove that entry on {from}."
 msgstr "{from} 上仍有一条旧的 {name} 记录，请在 {from} 上删除这条记录"
+
+#: src/components/settings-fleet-peers.tsx
+msgid "{gone} still lists {thisLabel}; remove it on {gone}'s Manage screen"
+msgstr "{gone} 仍列出 {thisLabel}，请在 {gone} 的管理界面中移除"
 
 #: src/components/home-launch-actions.tsx
 msgid "{hidden} more"
@@ -3279,6 +3288,14 @@ msgstr "第 {depth} 层"
 msgid "Light"
 msgstr "浅色"
 
+#: src/components/file-mention-panel.tsx
+msgid "Link revoked · re-linking…"
+msgstr "关联已被撤销 · 正在重新关联…"
+
+#: src/components/settings-fleet-peers.tsx
+msgid "Link to {name} was revoked · re-linking…"
+msgstr "与 {name} 的关联已被撤销 · 正在重新关联…"
+
 #: src/components/settings-fleet-peers.tsx
 msgid "Linked with: {linkedNames}"
 msgstr "已连接：{linkedNames}"
@@ -5701,6 +5718,10 @@ msgstr "对运行中的智能体进行插话指导"
 #: src/components/tool-call-code-rows.tsx
 msgid "Still arriving"
 msgstr "仍在接收"
+
+#: src/components/settings-fleet-peers.tsx
+msgid "Still linked to {gone}; will unlink when it is reachable"
+msgstr "仍与 {gone} 关联，可连接时将解除"
 
 #: src/components/pane-chat-blocks.tsx
 msgid "Still running…"

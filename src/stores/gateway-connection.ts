@@ -1,5 +1,7 @@
 import { create } from 'zustand';
 
+import { useServerCapabilities } from '@/stores/server-capabilities';
+
 import { configureGateway, revokeOwnGatewayPairing, setGatewayLabel } from '@/lib/gateway-client';
 import { demoRecord, DEMO_SERVER_ID } from '@/lib/demo-gateway';
 import { seedDemoAgentRecent } from '@/lib/demo-recents';
@@ -78,6 +80,8 @@ function enqueue<T>(task: () => Promise<T>): Promise<T> {
  * enough that "nothing happened" is never what unpairing looks like.
  */
 const REVOKE_BUDGET_MS = 4_000;
+/** How long unpairing waits for the unlink on the other computers before it goes on (it finishes in the background). */
+const UNLINK_BUDGET_MS = 10_000;
 
 export const useGatewayConnectionStore = create<GatewayConnectionState>((set, get) => ({
   record: null,
@@ -239,6 +243,23 @@ export const useGatewayConnectionStore = create<GatewayConnectionState>((set, ge
     const recordToRemove = get().records.find((item) => item.serverId === serverId);
     if (!recordToRemove) return;
 
+    // Unlink it from the reader's other computers, both ways, while this device
+    // still holds its token (A5 D6). Best effort and bounded: what it could not
+    // finish is followed up by the reconciler. Imported here because the
+    // reconciler reads this store.
+    // Only where there is a fleet at all.
+    const capabilities = useServerCapabilities.getState().byServer;
+    const fleet = get().records.some((item) =>
+      capabilities[item.serverId]?.includes('fleet_peers')
+    );
+    if (fleet)
+      await Promise.race([
+        import('@/hooks/use-fleet-link')
+          .then(({ unlinkBeforeUnpair }) => unlinkBeforeUnpair(recordToRemove))
+          .catch(() => undefined),
+        new Promise((resolve) => setTimeout(resolve, UNLINK_BUDGET_MS)),
+      ]);
+
     // Keep both sides consistent when the gateway can answer: forget the
     // local credential only after it has removed the matching device token
     // and its push registration. But a record whose gateway no longer exists
@@ -292,12 +313,6 @@ export const useGatewayConnectionStore = create<GatewayConnectionState>((set, ge
       if (removedCurrent) configureGateway(nextRecord);
       set({ records, record: nextRecord, loading: false });
     });
-    // Gone from this phone, so gone from the reader's other computers too,
-    // through their own credentials. Best effort and not awaited. Imported
-    // here because the reconciler reads this store.
-    void import('@/hooks/use-fleet-link')
-      .then(({ unlinkEverywhere }) => unlinkEverywhere(serverId))
-      .catch(() => undefined);
   },
 
   async disconnect() {

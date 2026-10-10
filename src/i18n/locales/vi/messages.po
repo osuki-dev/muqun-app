@@ -105,6 +105,11 @@ msgstr "{0, plural, other {Câu hỏi}}"
 
 #. placeholder {0}: device.name
 #: src/components/settings-servers.tsx
+msgid "{0} (gateway)"
+msgstr "{0} (gateway)"
+
+#. placeholder {0}: device.name
+#: src/components/settings-servers.tsx
 msgid "{0} (this device)"
 msgstr "{0} (thiết bị này)"
 
@@ -286,6 +291,10 @@ msgstr "Xong {done} trên {0}"
 #: src/components/settings-fleet-peers.tsx
 msgid "{from} still lists an older {name}. Remove that entry on {from}."
 msgstr "{from} vẫn còn một mục {name} cũ. Hãy xóa mục đó trên {from}"
+
+#: src/components/settings-fleet-peers.tsx
+msgid "{gone} still lists {thisLabel}; remove it on {gone}'s Manage screen"
+msgstr "{gone} vẫn còn {thisLabel}; hãy xóa trên màn hình Quản lý của {gone}"
 
 #: src/components/home-launch-actions.tsx
 msgid "{hidden} more"
@@ -3279,6 +3288,14 @@ msgstr "Cấp {depth}"
 msgid "Light"
 msgstr "Sáng"
 
+#: src/components/file-mention-panel.tsx
+msgid "Link revoked · re-linking…"
+msgstr "Liên kết bị thu hồi · đang liên kết lại…"
+
+#: src/components/settings-fleet-peers.tsx
+msgid "Link to {name} was revoked · re-linking…"
+msgstr "Liên kết tới {name} đã bị thu hồi · đang liên kết lại…"
+
 #: src/components/settings-fleet-peers.tsx
 msgid "Linked with: {linkedNames}"
 msgstr "Đã liên kết với: {linkedNames}"
@@ -5701,6 +5718,10 @@ msgstr "Can thiệp vào tác nhân đang chạy theo thời gian thực"
 #: src/components/tool-call-code-rows.tsx
 msgid "Still arriving"
 msgstr "Đang nhận"
+
+#: src/components/settings-fleet-peers.tsx
+msgid "Still linked to {gone}; will unlink when it is reachable"
+msgstr "Vẫn liên kết với {gone}; sẽ hủy liên kết khi kết nối được"
 
 #: src/components/pane-chat-blocks.tsx
 msgid "Still running…"
