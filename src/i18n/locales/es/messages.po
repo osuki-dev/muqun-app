@@ -258,6 +258,14 @@ msgstr "{behind} por detrás"
 msgid "{commandName} · sending to"
 msgstr "{commandName} · enviando a"
 
+#: src/components/task-row.tsx
+msgid "{computer} never confirmed this task"
+msgstr "{computer} nunca confirmó esta tarea"
+
+#: src/components/task-row.tsx
+msgid "{computer} no longer has this task"
+msgstr "{computer} ya no tiene esta tarea"
+
 #: src/components/agent-tool-card.tsx
 msgid "{count, plural, one {# result} other {# results}}"
 msgstr "{count, plural, one {# resultado} other {# resultados}}"
@@ -1791,6 +1799,10 @@ msgstr "No se pudo descargar. Revisa el enlace y tu conexión"
 msgid "Could not enable App Lock"
 msgstr "No se pudo activar el Bloqueo de la app"
 
+#: src/components/task-row.tsx
+msgid "Could not follow this task on {computer}"
+msgstr "No se pudo seguir esta tarea en {computer}"
+
 #: src/components/ssh-host-form.tsx
 msgid "Could not generate a key"
 msgstr "No se pudo generar una clave"
@@ -1904,6 +1916,10 @@ msgstr "No se pudo reproducir este archivo de audio"
 #: src/components/video-asset-preview.tsx
 msgid "Could not play this video file."
 msgstr "No se pudo reproducir este archivo de vídeo"
+
+#: src/components/task-row.tsx
+msgid "Could not reach {computer}"
+msgstr "No se pudo contactar con {computer}"
 
 #: src/app/explore.tsx
 msgid "Could not reach that address. Check it and make sure the Gateway is running."
@@ -3713,6 +3729,10 @@ msgstr "¿Aún no tienes un Gateway?"
 #: src/components/tool-call-code-rows.tsx
 msgid "No input"
 msgstr "Sin entrada"
+
+#: src/components/task-row.tsx
+msgid "No longer linked with {computer}"
+msgstr "Ya no está vinculado con {computer}"
 
 #: src/app/commands.tsx
 msgid "No matching commands. Try another word."

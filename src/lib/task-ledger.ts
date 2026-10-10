@@ -110,6 +110,13 @@ export interface TaskView {
   peerReachable?: boolean;
   /** A mirror only: when its computer last answered. */
   peerLastSeenMs?: number;
+  /**
+   * A mirror only: why it failed (`peer_unlinked`, `peer_lost_task`,
+   * `peer_not_confirmed`) or why it is quiet (`peer_unreachable`), for the
+   * app to word. Absent when the other computer refused the create: the
+   * summary then says why, in plain words.
+   */
+  reason?: string;
   children?: TaskChildren;
   /**
    * This device's clock when the reader settled the task here (Mark done,
@@ -233,6 +240,7 @@ export function parseTaskView(value: unknown): TaskView | null {
     ...(children ? { children } : {}),
     ...(typeof rec.peer_reachable === 'boolean' ? { peerReachable: rec.peer_reachable } : {}),
     ...(peerLastSeenMs !== undefined ? { peerLastSeenMs } : {}),
+    ...(typeof rec.reason === 'string' && rec.reason ? { reason: rec.reason } : {}),
   };
 }
 
