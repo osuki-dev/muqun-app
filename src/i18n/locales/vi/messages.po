@@ -1366,6 +1366,7 @@ msgstr "Máy tính không khả dụng"
 #: src/app/settings.tsx
 #: src/components/app-drawer-content.tsx
 #: src/components/home-editorial-layout.tsx
+#: src/components/home-overview.tsx
 msgid "Computers"
 msgstr "Máy tính"
 
@@ -4538,6 +4539,7 @@ msgstr "Nhận thông báo khi tác tử chờ và các cập nhật của gatew
 
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/home-editorial-layout.tsx
+#: src/components/home-overview.tsx
 msgid "Recent"
 msgstr "Gần đây"
 

@@ -1366,6 +1366,7 @@ msgstr "컴퓨터를 사용할 수 없습니다"
 #: src/app/settings.tsx
 #: src/components/app-drawer-content.tsx
 #: src/components/home-editorial-layout.tsx
+#: src/components/home-overview.tsx
 msgid "Computers"
 msgstr "컴퓨터"
 
@@ -4538,6 +4539,7 @@ msgstr "에이전트의 응답 대기 알림과 Gateway 소식을 받습니다"
 
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/home-editorial-layout.tsx
+#: src/components/home-overview.tsx
 msgid "Recent"
 msgstr "최근"
 

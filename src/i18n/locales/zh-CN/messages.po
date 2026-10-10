@@ -1366,6 +1366,7 @@ msgstr "电脑不可用"
 #: src/app/settings.tsx
 #: src/components/app-drawer-content.tsx
 #: src/components/home-editorial-layout.tsx
+#: src/components/home-overview.tsx
 msgid "Computers"
 msgstr "电脑"
 
@@ -4538,6 +4539,7 @@ msgstr "接收代理的等待回应事件和 Gateway 更新"
 
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/home-editorial-layout.tsx
+#: src/components/home-overview.tsx
 msgid "Recent"
 msgstr "最近"
 

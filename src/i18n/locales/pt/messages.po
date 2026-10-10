@@ -1366,6 +1366,7 @@ msgstr "Computador indisponível"
 #: src/app/settings.tsx
 #: src/components/app-drawer-content.tsx
 #: src/components/home-editorial-layout.tsx
+#: src/components/home-overview.tsx
 msgid "Computers"
 msgstr "Computadores"
 
@@ -4538,6 +4539,7 @@ msgstr "Recebe os bloqueios de agentes e as atualizações do Gateway"
 
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/home-editorial-layout.tsx
+#: src/components/home-overview.tsx
 msgid "Recent"
 msgstr "Recentes"
 

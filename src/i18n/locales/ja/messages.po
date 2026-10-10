@@ -1366,6 +1366,7 @@ msgstr "コンピュータを利用できません"
 #: src/app/settings.tsx
 #: src/components/app-drawer-content.tsx
 #: src/components/home-editorial-layout.tsx
+#: src/components/home-overview.tsx
 msgid "Computers"
 msgstr "コンピュータ"
 
@@ -4538,6 +4539,7 @@ msgstr "エージェントが応答待ちになった通知と Gateway の更新
 
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/home-editorial-layout.tsx
+#: src/components/home-overview.tsx
 msgid "Recent"
 msgstr "最近"
 

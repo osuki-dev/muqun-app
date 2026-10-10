@@ -1366,6 +1366,7 @@ msgstr "Ordinateur indisponible"
 #: src/app/settings.tsx
 #: src/components/app-drawer-content.tsx
 #: src/components/home-editorial-layout.tsx
+#: src/components/home-overview.tsx
 msgid "Computers"
 msgstr "Ordinateurs"
 
@@ -4538,6 +4539,7 @@ msgstr "Recevez les blocages d’agents et les mises à jour du Gateway"
 
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/home-editorial-layout.tsx
+#: src/components/home-overview.tsx
 msgid "Recent"
 msgstr "Récentes"
 

@@ -1366,6 +1366,7 @@ msgstr "Computer nicht erreichbar"
 #: src/app/settings.tsx
 #: src/components/app-drawer-content.tsx
 #: src/components/home-editorial-layout.tsx
+#: src/components/home-overview.tsx
 msgid "Computers"
 msgstr "Computer"
 
@@ -4538,6 +4539,7 @@ msgstr "Empfange Meldungen, wenn ein Agent blockiert, und Gateway-Updates"
 
 #: src/components/agent-sessions-sheet.tsx
 #: src/components/home-editorial-layout.tsx
+#: src/components/home-overview.tsx
 msgid "Recent"
 msgstr "Zuletzt"
 

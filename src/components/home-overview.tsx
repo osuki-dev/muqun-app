@@ -394,7 +394,9 @@ export function HomeOverview({
   const rememberScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
     savedScrollY.current = event.nativeEvent.contentOffset.y;
   };
-  const restoreScroll = () => {
+  // Also the page's content-size change, which the dock's hide-on-scroll reads.
+  const restoreScroll = (_width: number, contentHeight: number) => {
+    pageDockHide.settle({ contentHeight });
     if (restoredScroll.current === overviewScroll.current) return;
     overviewScroll.current?.scrollTo({ y: savedScrollY.current, animated: false });
     restoredScroll.current = overviewScroll.current;
@@ -874,43 +876,93 @@ export function HomeOverview({
   // optional chain in a conditional's test.
   const editorialArtworkTopCurrent =
     editorialArtworkTop?.source === editorialArtworkResolution?.source;
-  if (homeLayout !== 'classic' || isPad) {
-    // Same width and predicate the layout resolves for itself: the Pad cover
-    // spread lists eight Continue rows in its work column; other layouts keep theirs.
-    const editorialViewportHeight = windowHeight - insets.top - insets.bottom - 24;
-    const padGeometry = getEditorialLayoutGeometry(
-      Math.min(editorialWidth || width, isPad ? EDITORIAL_PAD_MAX_WIDTH : EDITORIAL_MAX_WIDTH)
-    );
-    const padLaunch =
-      isPad && padLaunchLayoutEnabled(padGeometry.contentWidth, fontScale, editorialViewportHeight);
-    // The Pad work column's width, which decides whether cards sit two abreast.
-    const cardGridWidth = padLaunch ? padHomeColumns(padGeometry.innerWidth).work : undefined;
-    // Hidden with nothing paired: the pair card is that page's one action.
-    const showDock = !hydrationError && !loading && launchController.servers.length > 0;
-    // The session screen's own dock, at the foot of the page -- or, on the
-    // wide Pad cover, at the foot of the work column.
-    const dock = showDock ? (
-      <HomeComposerDock
-        controller={launchController}
-        reachabilityByServer={padReachabilityByServer}
-        targetPulse={composerPulse}
-        bottomInset={padLaunch ? 0 : insets.bottom}
-        topInset={insets.top}
-        // On the phone it floats in the page's gutter, edge to edge with the
-        // cards and padded like them.
-        floating={isPad ? undefined : { margin: padGeometry.gutter, inset: HOME_CARD_INSET }}
-        onDockHeight={setDockHeight}
-        autoHide={padLaunch ? padDockHide.dock : pageDockHide.dock}
-        onOpenAgent={commands.openAgent}
+  // Every layout gets the same dispatch surface -- the dock, Needs you and the
+  // computer cards -- built once here; a layout only decides where they go.
+  // Classic keeps its own look on the phone; a Pad always takes the editorial
+  // spread, and so does any layout added later.
+  const classicLayout = homeLayout === 'classic' && !isPad;
+  // Same width and predicate the layout resolves for itself: the Pad cover
+  // spread lists eight Continue rows in its work column; other layouts keep theirs.
+  const editorialViewportHeight = windowHeight - insets.top - insets.bottom - 24;
+  const padGeometry = getEditorialLayoutGeometry(
+    Math.min(editorialWidth || width, isPad ? EDITORIAL_PAD_MAX_WIDTH : EDITORIAL_MAX_WIDTH)
+  );
+  const padLaunch =
+    isPad && padLaunchLayoutEnabled(padGeometry.contentWidth, fontScale, editorialViewportHeight);
+  // The Pad work column's width, which decides whether cards sit two abreast.
+  const cardGridWidth = padLaunch ? padHomeColumns(padGeometry.innerWidth).work : undefined;
+  // Hidden with nothing paired: the pair card is that page's one action.
+  const showDock = !hydrationError && !loading && launchController.servers.length > 0;
+  // The session screen's own dock, at the foot of the page -- or, on the
+  // wide Pad cover, at the foot of the work column.
+  const dock = showDock ? (
+    <HomeComposerDock
+      controller={launchController}
+      reachabilityByServer={padReachabilityByServer}
+      targetPulse={composerPulse}
+      bottomInset={padLaunch ? 0 : insets.bottom}
+      topInset={insets.top}
+      // On the phone, a bar edge to edge at the foot whose rows and field
+      // start where the cards' rows do: the page gutter plus the card inset.
+      edgeBar={
+        isPad
+          ? undefined
+          : {
+              inset: (classicLayout ? metrics.contentGutter : padGeometry.gutter) + HOME_CARD_INSET,
+            }
+      }
+      onDockHeight={setDockHeight}
+      autoHide={padLaunch ? padDockHide.dock : pageDockHide.dock}
+      onOpenAgent={commands.openAgent}
+    />
+  ) : null;
+  // A computer row sets the dock's target; the bar flashes to say so.
+  const targetComposer = (serverId: string) => {
+    retryHomeRefresh(serverId);
+    launchController.choose(serverId);
+    void Haptics.selectionAsync();
+    setComposerPulse((pulse) => pulse + 1);
+  };
+  const attentionSection =
+    !loading && !hydrationError ? (
+      <HomeAttention
+        servers={records}
+        taskServerIds={taskServerIds}
+        onOpen={(target) => {
+          void commands.resumeTarget(target);
+        }}
+        // A request is answered where the task runs: its session
+        // or its pane, on its own computer.
+        onOpenTask={({ serverId, task }) => {
+          dismissTaskNotices(task);
+          openTaskWork(commands, serverId, task);
+        }}
       />
-    ) : null;
-    // A computer row sets the dock's target; the bar flashes to say so.
-    const targetComposer = (serverId: string) => {
-      retryHomeRefresh(serverId);
-      launchController.choose(serverId);
-      void Haptics.selectionAsync();
-      setComposerPulse((pulse) => pulse + 1);
-    };
+    ) : undefined;
+  const progressSection =
+    !loading && !hydrationError && hasComputerCards ? (
+      <HomeComputerCards
+        servers={cardServers}
+        activeConnection={activeConnection}
+        skipEntering={cardsSkipEntering}
+        gridWidth={cardGridWidth}
+        onSelectServer={targetComposer}
+        onOpenTask={({ serverId, task, tree }) => {
+          // A row opens the session or pane the task runs in; only
+          // the sub-task count opens the list of the work under it.
+          if (tree) {
+            router.push({
+              pathname: '/server-tasks',
+              params: { serverId, root: task.parentTaskId ?? task.taskId },
+            });
+            return;
+          }
+          dismissTaskNotices(task);
+          openTaskWork(commands, serverId, task);
+        }}
+      />
+    ) : undefined;
+  if (!classicLayout) {
     const editorialContent = (
       <View
         testID="home-editorial"
@@ -940,10 +992,7 @@ export function HomeOverview({
           // keyboard: a field in the page is kept clear of it, not just of the
           // keyboard.
           bottomOffset={dock && !padLaunch ? dockHeight : undefined}
-          onContentSizeChange={(_, contentHeight) => {
-            restoreScroll();
-            pageDockHide.settle({ contentHeight });
-          }}
+          onContentSizeChange={restoreScroll}
           onLayout={(event) =>
             pageDockHide.settle({ viewportHeight: event.nativeEvent.layout.height })
           }
@@ -1155,47 +1204,8 @@ export function HomeOverview({
               }
               recentHeading={recentHeading}
               hasAttention={!loading && !hydrationError && hasAttention}
-              attention={
-                !loading && !hydrationError ? (
-                  <HomeAttention
-                    servers={records}
-                    taskServerIds={taskServerIds}
-                    onOpen={(target) => {
-                      void commands.resumeTarget(target);
-                    }}
-                    // A request is answered where the task runs: its session
-                    // or its pane, on its own computer.
-                    onOpenTask={({ serverId, task }) => {
-                      dismissTaskNotices(task);
-                      openTaskWork(commands, serverId, task);
-                    }}
-                  />
-                ) : undefined
-              }
-              progress={
-                !loading && !hydrationError && hasComputerCards ? (
-                  <HomeComputerCards
-                    servers={cardServers}
-                    activeConnection={activeConnection}
-                    skipEntering={cardsSkipEntering}
-                    gridWidth={cardGridWidth}
-                    onSelectServer={targetComposer}
-                    onOpenTask={({ serverId, task, tree }) => {
-                      // A row opens the session or pane the task runs in; only
-                      // the sub-task count opens the list of the work under it.
-                      if (tree) {
-                        router.push({
-                          pathname: '/server-tasks',
-                          params: { serverId, root: task.parentTaskId ?? task.taskId },
-                        });
-                        return;
-                      }
-                      dismissTaskNotices(task);
-                      openTaskWork(commands, serverId, task);
-                    }}
-                  />
-                ) : undefined
-              }
+              attention={attentionSection}
+              progress={progressSection}
               connections={
                 // The cards are the computers now; this keeps the SSH hosts
                 // and the way to manage connections.
@@ -1457,9 +1467,18 @@ export function HomeOverview({
       <KeyboardAwareScrollView
         ref={overviewScroll}
         onContentSizeChange={restoreScroll}
-        onScrollEndDrag={rememberScroll}
+        onLayout={(event) =>
+          pageDockHide.settle({ viewportHeight: event.nativeEvent.layout.height })
+        }
+        onScrollBeginDrag={pageDockHide.beginDrag}
+        onScrollEndDrag={(event) => {
+          rememberScroll(event);
+          pageDockHide.endDrag();
+        }}
         onMomentumScrollEnd={rememberScroll}
-        bottomOffset={24}
+        // The dock floats over the page's foot: a field in the page is kept
+        // clear of it, not just of the keyboard.
+        bottomOffset={dock ? dockHeight : 24}
         extraKeyboardSpace={12}
         contentInsetAdjustmentBehavior="never"
         scrollIndicatorInsets={{ top: barHeight }}
@@ -1471,6 +1490,8 @@ export function HomeOverview({
             maxWidth: metrics.contentMaxWidth,
           },
           { paddingTop: barHeight + styles.content.paddingTop },
+          // The same room under the last card as the editorial page leaves.
+          dock && { paddingBottom: dockHeight + 24 },
         ]}
         keyboardDismissMode={process.env.EXPO_OS === 'ios' ? 'interactive' : 'on-drag'}
         keyboardShouldPersistTaps="handled"
@@ -1634,6 +1655,32 @@ export function HomeOverview({
           </Animated.View>
         ) : null}
 
+        {/* The dispatch surface every layout has (see `classicLayout`): Needs
+            you, then the computers with work, then this layout's own server
+            cards as its Recent. */}
+        {hasAttention && attentionSection ? (
+          <View style={[styles.classicSection, { marginBottom: metrics.cardGap }]}>
+            {attentionSection}
+          </View>
+        ) : null}
+        {progressSection ? (
+          <View style={[styles.classicSection, { marginBottom: metrics.cardGap }]}>
+            <SectionLabel
+              title={<Trans>Computers</Trans>}
+              color={theme.colors.textMuted}
+              style={styles.classicLabel}
+            />
+            {progressSection}
+          </View>
+        ) : null}
+        {progressSection && records.length > 0 ? (
+          <SectionLabel
+            title={<Trans>Recent</Trans>}
+            color={theme.colors.textMuted}
+            style={[styles.classicLabel, styles.classicRecentLabel]}
+          />
+        ) : null}
+
         {/* Two spacers with different weights, so a short list settles a little
             below the middle of the space it has rather than either floating in
             the centre or being stranded under the header. They are flex, so a
@@ -1736,6 +1783,7 @@ export function HomeOverview({
 
         {!loading ? <View style={[styles.spacerBelow, isPad && styles.padSpacer]} /> : null}
       </KeyboardAwareScrollView>
+      {dock}
       {devAmbientControls}
     </View>
   );
@@ -1852,7 +1900,6 @@ function ServerCard({
   // Freshness is relative to now: a card sitting untouched keeps telling the
   // truth about a snapshot ageing under it, a minute at a time.
   const nowMs = useMinuteNow();
-  const statusColor = reachability === 'live' ? theme.colors.success : theme.colors.textSubtle;
 
   return (
     // The header and asynchronously refreshed pane rows share one native
@@ -1936,21 +1983,28 @@ function ServerCard({
                   the same grey on purpose, and the words and the hollow ring are
                   what tell them apart. It is still the only dot on the screen
                   that pulses. */}
-              <View
-                accessibilityLabel={_(reachabilityDescription[reachability])}
-                style={styles.statusLine}>
-                <StatusDot
-                  color={statusColor}
-                  filled={reachability !== 'unknown'}
-                  pulse={reachability === 'live'}
-                  size={STATUS_DOT_SIZE}
-                />
-                <Text variant="caption" color={statusColor} style={styles.statusLabel}>
-                  {_(reachabilityLabel[reachability])}
-                </Text>
-                {/* No count: the rows below are the count, and saying it here as
-                    well would be the same fact twice on one card. */}
-              </View>
+              {/* Said only when something is wrong (§3a): a reachable machine
+                  is just its name. */}
+              {reachability === 'live' ? null : (
+                <View
+                  accessibilityLabel={_(reachabilityDescription[reachability])}
+                  style={styles.statusLine}>
+                  <StatusDot
+                    color={theme.colors.textSubtle}
+                    filled={reachability !== 'unknown'}
+                    pulse={false}
+                    size={STATUS_DOT_SIZE}
+                  />
+                  <Text
+                    variant="caption"
+                    color={theme.colors.textSubtle}
+                    style={styles.statusLabel}>
+                    {_(reachabilityLabel[reachability])}
+                  </Text>
+                  {/* No count: the rows below are the count, and saying it here as
+                      well would be the same fact twice on one card. */}
+                </View>
+              )}
 
               {/* Only when a second machine answers to the same name. On every
                   other install this line was a constant the reader had already
@@ -2312,6 +2366,10 @@ const styles = StyleSheet.create({
   },
   // The horizontal inset and the measure come from `homeServerListLayout` at
   // the call site; what is left here is the same in both modes.
+  // Needs you and the computer cards in the classic column.
+  classicSection: { gap: 8 },
+  classicLabel: { alignSelf: 'flex-start' },
+  classicRecentLabel: { marginBottom: 8 },
   content: {
     flexGrow: 1,
     paddingTop: 10,
