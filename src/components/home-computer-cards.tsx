@@ -30,9 +30,8 @@ import { useDeadlineNow } from '@/hooks/use-deadline-now';
 import { useMinuteNow } from '@/hooks/use-minute-now';
 import { PAD_CARD_GAP, padCardColumns } from '@/lib/home-pad-geometry';
 import { fadeOut, listLayout, riseIn } from '@/lib/motion';
+import { useConnectionStatuses, useHomeReachability } from '@/hooks/use-home-reachability';
 import {
-  reachabilityOfStatus,
-  resolveConnectionStatus,
   type ActiveServerConnection,
   type ConnectionStatus,
   type ServerReachability,
@@ -41,7 +40,6 @@ import type { TaskView } from '@/lib/task-ledger';
 import { useAgents } from '@/stores/agents';
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';
 import { PENDING_DISPATCH_TTL_MS, useHomeTaskCards } from '@/stores/home-task-cards';
-import { useServerChannels } from '@/stores/server-channels';
 import { useServerReachability } from '@/stores/server-reachability';
 import { useHomeSortHold } from '@/stores/home-sort-hold';
 import { useServerTasksStore } from '@/stores/server-tasks';
@@ -71,31 +69,13 @@ function ServerTaskSync({ serverId }: { serverId: string }) {
 export type CardTaskTarget = { serverId: string; task: TaskView; tree?: boolean };
 
 /**
- * What every card decision reads besides the ledger: each computer's
- * connection, the reader's acknowledgements, and the goals still on their way.
+ * What every card decision reads besides the ledger and the connections: the
+ * reader's acknowledgements, and the goals still on their way.
  */
-function useCardInputs(activeConnection: ActiveServerConnection | undefined, nowMs: number) {
-  const probes = useServerReachability((state) => state.probes);
-  const sockets = useServerChannels((state) => state.sockets);
-  const streams = useServerChannels((state) => state.streams);
-  const selectedId = useGatewayConnectionStore((state) => state.record?.serverId);
+function useCardInputs(nowMs: number) {
   const dismissedList = useHomeTaskCards((state) => state.dismissed);
   const pendingAll = useHomeTaskCards((state) => state.pending);
-  const statusOf = (serverId: string): ConnectionStatus =>
-    resolveConnectionStatus({
-      serverId,
-      probe: probes[serverId],
-      activeConnection,
-      channels: { socket: sockets[serverId], stream: streams[serverId] },
-      selected: serverId === selectedId,
-      nowMs,
-    });
-  // A refused pairing counts as offline: its stale rows get no card.
-  const reachability = (serverId: string): ServerReachability =>
-    reachabilityOfStatus(statusOf(serverId));
   return {
-    statusOf,
-    reachability,
     dismissed: new Set(dismissedList),
     // A Sent row no task ever answered stops claiming the computer is busy.
     pending: pendingAll.filter((item) => nowMs - item.atMs < PENDING_DISPATCH_TTL_MS),
@@ -215,17 +195,21 @@ export function ComputerCardsPresence({
  */
 export function HomeComputerCards({
   servers,
+  followedIds,
   activeConnection,
-  nowMs: freshnessNowMs,
   skipEntering,
   gridWidth,
   onSelectServer,
   onOpenTask,
 }: {
   servers: readonly GatewayRecord[];
+  /**
+   * The computers whose ledgers are kept live (`taskSubscriptionServerIds`).
+   * Any other card says it is not being followed instead of showing its last
+   * rows as if they were current.
+   */
+  followedIds: readonly string[];
   activeConnection?: ActiveServerConnection;
-  /** A freshness instant the caller already holds; Home leaves it out. */
-  nowMs?: number;
   /**
    * The cards were already there when Home mounted: they are not arrivals.
    * Home owns this because the section itself only mounts with its first card.
@@ -241,10 +225,13 @@ export function HomeComputerCards({
     useShallow((state) => serverIds.map((serverId) => state.index[serverId]))
   );
   // Ages, the Sent row's lifetime and the finished window move with the
-  // minute; probe freshness with Home's own clock, whichever is newer.
+  // minute, and with the probes' own freshness clock.
   const probeNowMs = useServerReachability((state) => state.freshnessNowMs);
-  const nowMs = useMinuteNow(Math.max(freshnessNowMs ?? 0, probeNowMs));
-  const inputs = useCardInputs(activeConnection, nowMs);
+  const nowMs = useMinuteNow(probeNowMs);
+  const inputs = useCardInputs(nowMs);
+  // The same fold Home's presence check uses, so a card and the section agree;
+  // it moves only when a computer goes live, offline or unknown.
+  const reachability = useHomeReachability(serverIds, activeConnection);
   const index: Record<string, NonNullable<(typeof entries)[number]>> = {};
   serverIds.forEach((serverId, position) => {
     const entry = entries[position];
@@ -253,7 +240,7 @@ export function HomeComputerCards({
   const sorted = buildComputerCards({
     servers,
     index,
-    reachability: inputs.reachability,
+    reachability: (serverId) => reachability[serverId],
     dismissed: inputs.dismissed,
     pending: inputs.pending,
     nowMs,
@@ -267,7 +254,6 @@ export function HomeComputerCards({
   );
   const cards = heldCardOrder(shownIds, sorted);
   const grid = gridWidth !== undefined && padCardColumns(gridWidth, cards.length) === 2;
-  const statusOf = inputs.statusOf;
   const tickMs = nowMs;
   return (
     <LayoutAnimationConfig skipEntering={skipEntering}>
@@ -286,7 +272,8 @@ export function HomeComputerCards({
                 <ComputerCardView
                   card={card}
                   server={server}
-                  status={statusOf(card.serverId)}
+                  followed={followedIds.includes(card.serverId)}
+                  activeConnection={activeConnection}
                   nowMs={tickMs}
                   onSelect={() => onSelectServer(card.serverId)}
                   onOpenTask={(task, tree) =>
@@ -305,19 +292,27 @@ export function HomeComputerCards({
 function ComputerCardView({
   card,
   server,
-  status,
+  followed,
+  activeConnection,
   nowMs,
   onSelect,
   onOpenTask,
 }: {
   card: ComputerCard;
   server: GatewayRecord;
-  status: ConnectionStatus;
+  followed: boolean;
+  activeConnection?: ActiveServerConnection;
   nowMs: number;
   onSelect: () => void;
   onOpenTask: (task: TaskView, tree?: boolean) => void;
 }) {
   const { t } = useLingui();
+  // This card's own status: a probe or a retry against another computer
+  // re-renders only the card whose status moved.
+  const selectedId = useGatewayConnectionStore((state) => state.record?.serverId);
+  const status: ConnectionStatus =
+    useConnectionStatuses([server.serverId], selectedId, activeConnection)[server.serverId] ??
+    'unknown';
   const { _ } = useLinguiRuntime();
   const theme = useThemeTokens();
   const profile = useAppearanceProfile();
@@ -375,7 +370,7 @@ function ComputerCardView({
           </Text>
           {statusColor ? (
             <View style={styles.statusLine}>
-              {/* No ripple: up to four cards rippling forever keeps Home's UI thread busy. */}
+              {/* No ripple: every card rippling forever keeps Home's UI thread busy. */}
               <StatusDot color={statusColor} filled pulse={false} />
               <Text variant="caption" color={statusColor} numberOfLines={1}>
                 {_(connectionStatusLabel[status])}
@@ -385,29 +380,37 @@ function ComputerCardView({
         </View>
       </PressableScale>
 
-      <View style={styles.block}>
-        {urgentNow.map(nowRow)}
-        {card.pending.map((item) => (
-          <SentTaskRow key={item.id} goal={item.goal} computer={server.label} />
-        ))}
-        {restNow.map(nowRow)}
-        {card.nowTotal > card.now.length ? (
-          <Text key="more" variant="caption" color={theme.colors.textMuted}>
-            {t`+${card.nowTotal - card.now.length} more`}
+      {followed ? (
+        <View style={styles.block}>
+          {urgentNow.map(nowRow)}
+          {card.pending.map((item) => (
+            <SentTaskRow key={item.id} goal={item.goal} computer={server.label} />
+          ))}
+          {restNow.map(nowRow)}
+          {card.nowTotal > card.now.length ? (
+            <Text key="more" variant="caption" color={theme.colors.textMuted}>
+              {t`+${card.nowTotal - card.now.length} more`}
+            </Text>
+          ) : null}
+          {card.finished.map((task) => (
+            <TaskRow
+              key={task.taskId}
+              task={task}
+              serverId={server.serverId}
+              discovery={discovery}
+              nowMs={nowMs}
+              onOpen={(finished) => onOpenTask(finished)}
+              onOpenTree={(finished) => onOpenTask(finished, true)}
+            />
+          ))}
+        </View>
+      ) : (
+        <View style={styles.block}>
+          <Text variant="caption" color={theme.colors.textMuted}>
+            {t`Not updating from here. Open this computer to see its tasks.`}
           </Text>
-        ) : null}
-        {card.finished.map((task) => (
-          <TaskRow
-            key={task.taskId}
-            task={task}
-            serverId={server.serverId}
-            discovery={discovery}
-            nowMs={nowMs}
-            onOpen={(finished) => onOpenTask(finished)}
-            onOpenTree={(finished) => onOpenTask(finished, true)}
-          />
-        ))}
-      </View>
+        </View>
+      )}
     </View>
   );
 }

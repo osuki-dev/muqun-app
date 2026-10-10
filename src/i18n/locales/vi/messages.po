@@ -3885,6 +3885,10 @@ msgstr "Chưa đặt"
 msgid "Not signed in on the host"
 msgstr "Chưa đăng nhập trên máy chủ"
 
+#: src/components/home-computer-cards.tsx
+msgid "Not updating from here. Open this computer to see its tasks."
+msgstr "Không cập nhật từ đây. Mở máy tính này để xem các tác vụ của nó"
+
 #: src/components/ssh-host-form.tsx
 msgid "Not valid."
 msgstr "Không hợp lệ"

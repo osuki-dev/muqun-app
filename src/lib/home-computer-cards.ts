@@ -19,32 +19,27 @@ import { isTerminalTaskState, type TaskState, type TaskView } from './task-ledge
  */
 export const HOME_CARD_INSET = 12;
 
-/** Computers that get a task socket while Home or the Tasks sheet is up. */
-export const MAX_TASK_SUBSCRIPTIONS = 4;
-
 /**
- * Which computers' ledgers to keep live: the selected one first, then the
- * others in the reader's own order, only those that keep a ledger and can be
- * reached directly (a tunnelled record has no address that means anything
- * from here unless it is the selected one, whose tunnel the workspace holds),
- * at most {@link MAX_TASK_SUBSCRIPTIONS}.
+ * Which computers' ledgers to keep live: every one that keeps a ledger and can
+ * be reached directly, the selected one first, then the others in the reader's
+ * own order. A tunnelled record has no address that means anything from here
+ * unless it is the selected one, whose tunnel the workspace holds; its card
+ * says it is not being followed rather than freezing on old rows. A computer
+ * that does not answer costs only its socket's own reconnect backoff.
  */
 export function taskSubscriptionServerIds(input: {
   servers: readonly { serverId: string; sshTunnel?: unknown }[];
   selectedId?: string;
   hasLedger: (serverId: string) => boolean;
   isDemo?: (serverId: string) => boolean;
-  max?: number;
 }): string[] {
   const { servers, selectedId, hasLedger, isDemo = () => false } = input;
-  const max = Math.max(0, input.max ?? MAX_TASK_SUBSCRIPTIONS);
   const ordered = [
     ...servers.filter((server) => server.serverId === selectedId),
     ...servers.filter((server) => server.serverId !== selectedId),
   ];
   const ids: string[] = [];
   for (const server of ordered) {
-    if (ids.length >= max) break;
     if (ids.includes(server.serverId) || isDemo(server.serverId)) continue;
     if (!hasLedger(server.serverId)) continue;
     if (server.sshTunnel && server.serverId !== selectedId) continue;

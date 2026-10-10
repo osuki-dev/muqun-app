@@ -3885,6 +3885,10 @@ msgstr "未设置"
 msgid "Not signed in on the host"
 msgstr "未在主机上登录"
 
+#: src/components/home-computer-cards.tsx
+msgid "Not updating from here. Open this computer to see its tasks."
+msgstr "此处不再更新。打开这台电脑查看它的任务"
+
 #: src/components/ssh-host-form.tsx
 msgid "Not valid."
 msgstr "无效"
