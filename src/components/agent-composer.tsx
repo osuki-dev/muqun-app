@@ -52,7 +52,7 @@ import { AgentModeMenu } from '@/components/agent-mode-menu';
 import { AttachmentStrip } from '@/components/attachment-strip';
 import { ImagePreviewModal, type PreviewImage } from '@/components/image-preview-modal';
 import { GlassChrome } from '@/components/glass-chrome';
-import { SEGMENT_HIT_SLOP, TextSegment, useSegmentRowLead } from '@/components/text-segment';
+import { TextSegment, useSegmentHitSlop, useSegmentRowLead } from '@/components/text-segment';
 import type { DockAutoHide } from '@/hooks/use-dock-auto-hide';
 import { EdgeFade } from '@/components/edge-fade';
 import { FileMentionPanel } from '@/components/file-mention-panel';
@@ -602,6 +602,12 @@ export const AgentComposer = memo(function AgentComposer({
    * otherwise -- a reader's own agent under `.opencode/agent` often has no
    * other name, and an id is still the truth about it.
    */
+  // The mode as the chips name it: the catalog's display name when it has
+  // one, else the bare id with its first letter raised (`standard` →
+  // `Standard`; ids are ASCII, so no locale is involved).
+  const modeLabel = (id: string) =>
+    availableAgentsProp?.find((agent) => agent.id === id)?.name ||
+    id.charAt(0).toUpperCase() + id.slice(1);
   const nameOfAgent = useCallback(
     (id: string) => availableAgentsProp?.find((agent) => agent.id === id)?.name || id,
     [availableAgentsProp]
@@ -1072,6 +1078,7 @@ export const AgentComposer = memo(function AgentComposer({
     autoHide?.setPinned(focused || keyboardOpen || sending);
   }, [autoHide, focused, keyboardOpen, sending]);
   const segmentRowLead = useSegmentRowLead();
+  const segmentHitSlop = useSegmentHitSlop();
   const toggleMode = () => {
     setAttachmentMenuOpen(false);
     if (onOpenModeSheet) {
@@ -1413,7 +1420,7 @@ export const AgentComposer = memo(function AgentComposer({
                 {segmentMode ? (
                   <TextSegment
                     testID="agent-composer-mode-btn"
-                    hitSlop={SEGMENT_HIT_SLOP.next}
+                    hitSlop={segmentHitSlop.next}
                     onPress={toggleMode}
                     accessibilityRole="button"
                     accessibilityLabel={t`Select agent mode`}>
@@ -1421,7 +1428,7 @@ export const AgentComposer = memo(function AgentComposer({
                       variant="caption"
                       numberOfLines={1}
                       color={modeMenuOpen ? theme.colors.primary : theme.colors.textSubtle}>
-                      {nameOfAgent(selectedAgent ?? 'build')}
+                      {modeLabel(selectedAgent ?? 'build')}
                     </Text>
                     <ChevronDown size={QUIET_CHEVRON} color={theme.colors.textSubtle} />
                   </TextSegment>
@@ -1429,7 +1436,7 @@ export const AgentComposer = memo(function AgentComposer({
                 {segmentModel ? (
                   <TextSegment
                     testID="agent-composer-model-btn"
-                    hitSlop={SEGMENT_HIT_SLOP.next}
+                    hitSlop={segmentHitSlop.next}
                     onPress={onOpenModelSheet}
                     accessibilityRole="button"
                     accessibilityLabel={t`Select model: ${modelDisplayName}`}>
@@ -1485,7 +1492,7 @@ export const AgentComposer = memo(function AgentComposer({
                         variant="caption"
                         color={theme.colors.text}
                         style={styles.actionBtnLabel}>
-                        {nameOfAgent(selectedAgent ?? 'build')}
+                        {modeLabel(selectedAgent ?? 'build')}
                       </Text>
                       <ChevronDown size={12} color={theme.colors.textMuted} />
                     </PressableScale>

@@ -16,7 +16,7 @@ import { AgentComposer, type DraftInjector } from '@/components/agent-composer';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import type { HomeLaunchController } from '@/components/home-launch-actions';
 import type { DockAutoHide } from '@/hooks/use-dock-auto-hide';
-import { SEGMENT_HIT_SLOP, TextSegment, useSegmentRowLead } from '@/components/text-segment';
+import { TextSegment, useSegmentHitSlop, useSegmentRowLead } from '@/components/text-segment';
 import { Text } from '@/components/text';
 import { ThemeIcon } from '@/components/theme-icon';
 import { useAgentFeatures, useAgentsDiscoveryRefresh } from '@/hooks/use-agent-features';
@@ -147,6 +147,7 @@ export function HomeComposerDock({
   const theme = useThemeTokens();
   const profile = useAppearanceProfile();
   const segmentRowLead = useSegmentRowLead();
+  const segmentHitSlop = useSegmentHitSlop();
   const background = useSurfaceBackground();
   const router = useRouter();
   const { showToast } = useToast();
@@ -773,7 +774,7 @@ export function HomeComposerDock({
                 : t`No computer online`
             }
             accessibilityHint={t`Choose another computer`}
-            hitSlop={SEGMENT_HIT_SLOP.first}
+            hitSlop={segmentHitSlop.first}
             onPress={openTargetPicker}
             style={{ borderRadius: profile.chrome.navigationPill }}>
             <Animated.View
@@ -823,7 +824,7 @@ export function HomeComposerDock({
             accessibilityRole="button"
             accessibilityLabel={t`Home agent: ${agentName}`}
             accessibilityHint={t`Choose the agent Home starts on this computer`}
-            hitSlop={SEGMENT_HIT_SLOP.first}
+            hitSlop={segmentHitSlop.first}
             onPress={() =>
               router.push({ pathname: '/home-agent', params: { serverId: targetServer.serverId } })
             }
@@ -855,7 +856,7 @@ export function HomeComposerDock({
             accessibilityRole="button"
             accessibilityLabel={t`Folder: ${folderLabel}`}
             accessibilityHint={t`Choose the folder this computer starts work in`}
-            hitSlop={SEGMENT_HIT_SLOP.first}
+            hitSlop={segmentHitSlop.first}
             // The picker lists the selected computer's folders, so it opens only
             // once the bar's computer is the one selected.
             disabled={!ready || !selected}
