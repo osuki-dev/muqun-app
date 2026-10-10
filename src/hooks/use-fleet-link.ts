@@ -214,16 +214,22 @@ async function runOnce(reason: Reason): Promise<void> {
       useFleetPeers.getState().fail(step.from, step.to, Date.now());
       continue;
     }
-    const peerName =
-      outcome === 'self'
-        ? fromName
-        : (computers
+    const holder =
+      outcome === 'peer'
+        ? computers
             .find((entry) => entry.serverId === step.from)
-            ?.peers?.peers.find((peer) => sameName(peer.name, toName))?.name ?? toName);
+            ?.peers?.peers.find((peer) => sameName(peer.name, toName))
+        : undefined;
     useFleetPeers.getState().conflict(step.from, step.to, {
       name: toName,
       against: outcome,
-      with: peerName,
+      with: outcome === 'self' ? fromName : (holder?.name ?? toName),
+      fromName,
+      // Held under a server id this device does not know: an older entry for
+      // the same machine, from before a reinstall.
+      ...(holder && !linkable().some((record) => record.serverId === holder.serverId)
+        ? { stale: true }
+        : {}),
     });
   }
 

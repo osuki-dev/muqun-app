@@ -283,6 +283,10 @@ msgstr "Lần quan sát gần nhất: {count} yêu cầu"
 msgid "{done} of {0} done"
 msgstr "Xong {done} trên {0}"
 
+#: src/components/settings-fleet-peers.tsx
+msgid "{from} still lists an older {name}. Remove that entry on {from}."
+msgstr "{from} vẫn còn một mục {name} cũ. Hãy xóa mục đó trên {from}"
+
 #: src/components/home-launch-actions.tsx
 msgid "{hidden} more"
 msgstr "thêm {hidden}"

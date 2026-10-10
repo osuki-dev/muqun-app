@@ -423,7 +423,19 @@ function failedRecently(
  * a peer A already has (`'peer'`, `with` naming it). Not retried until one of
  * the names changes.
  */
-export type NameConflict = { name: string; against: 'self' | 'peer'; with: string };
+export type NameConflict = {
+  name: string;
+  against: 'self' | 'peer';
+  with: string;
+  /** A's own label, for the Settings line. */
+  fromName?: string;
+  /**
+   * The peer A holds under that name is no computer this device knows: an
+   * older entry for the same machine (a reinstall gave it a new server id).
+   * The remedy is removing that entry on A, not renaming anything.
+   */
+  stale?: boolean;
+};
 
 /**
  * Every ordered pair (A, B) of computers that both answered, where B takes
@@ -468,7 +480,7 @@ export function linkLines(
   linked: string[];
   noWork: string[];
   cannotReach: string[];
-  sameName: { name: string; with: string }[];
+  sameName: { name: string; with: string; from: string; stale: boolean }[];
 } {
   const self = computers.find((entry) => entry.serverId === serverId);
   const labelOf = (peer: PeerView) =>
@@ -476,7 +488,7 @@ export function linkLines(
   const linked: string[] = [];
   const noWork: string[] = [];
   const cannotReach: string[] = [];
-  const sameName: { name: string; with: string }[] = [];
+  const sameName: { name: string; with: string; from: string; stale: boolean }[] = [];
   for (const peer of self?.peers?.peers ?? []) {
     if (!peer.reachable) {
       cannotReach.push(labelOf(peer));
@@ -490,9 +502,13 @@ export function linkLines(
     if (other.serverId === serverId || (self && lists(self, other.serverId))) continue;
     const conflict = conflicts[failureKey(serverId, other.serverId)];
     if (conflict) {
+      // The computers' own labels: the clash is between those, not this
+      // device's names for them.
       sameName.push({
-        name: other.label,
-        with: conflict.against === 'self' ? (self?.label ?? conflict.with) : conflict.with,
+        name: conflict.name,
+        with: conflict.with,
+        from: conflict.fromName ?? self?.label ?? '',
+        stale: conflict.stale === true,
       });
     } else if (failedRecently(failures, serverId, other.serverId, nowMs)) {
       cannotReach.push(other.label);
@@ -501,12 +517,25 @@ export function linkLines(
   return { linked, noWork, cannotReach, sameName };
 }
 
+/** An address as a link compares it: scheme and host in lower case, no trailing slash. */
+function sameUrl(a: string, b: string): boolean {
+  const normal = (url: string) =>
+    url
+      .trim()
+      .replace(/\/+$/, '')
+      .replace(/^([a-z][a-z0-9+.-]*:\/\/[^/?#]*)/i, (head) => head.toLowerCase());
+  return normal(a) === normal(b);
+}
+
 /**
  * Every peer a computer lists but cannot reach whose address on this phone is
  * another (it moved: a new lease, a new tailnet address): that computer is
- * told the new one. A peer that answers is never touched, so a link that
- * works over another route stays as it is; a loopback address is never handed
- * on; and a move that failed waits out the retry window.
+ * told the new one -- only when the moved computer answered this device this
+ * pass, so the gateway's proof of the new address has something to reach. A
+ * peer that answers is never touched, so a link that works over another route
+ * stays as it is; a loopback address is never handed on; addresses are
+ * compared normalized (a trailing slash is no move); and a move that failed
+ * waits out the retry window.
  */
 export function planPeerMoves(
   computers: readonly FleetComputer[],
@@ -517,8 +546,10 @@ export function planPeerMoves(
   for (const from of computers) {
     for (const peer of from.peers?.peers ?? []) {
       if (peer.reachable) continue;
-      const url = computers.find((entry) => entry.serverId === peer.serverId)?.url;
-      if (!url || url === peer.url || isLoopbackUrl(url)) continue;
+      const moved = computers.find((entry) => entry.serverId === peer.serverId);
+      if (!moved?.peers) continue;
+      const url = moved.url;
+      if (!url || sameUrl(url, peer.url) || isLoopbackUrl(url)) continue;
       if (failedRecently(failures, from.serverId, peer.peerId, nowMs)) continue;
       moves.push({ from: from.serverId, peerId: peer.peerId, url });
     }

@@ -9,6 +9,7 @@ import {
   planPeerMoves,
   pairingsAnswer,
   type FleetComputer,
+  type NameConflict,
   type FleetPeers,
 } from '../fleet-peers';
 
@@ -183,22 +184,26 @@ describe('linkLines: the one line Settings shows per computer', () => {
     });
   });
 
-  test('a name collision is its own line, not "cannot reach"', () => {
-    const computers = [
-      { ...computer('coding', peers(true)), label: 'studio' },
-      computer('mini', peers(true)),
-    ];
-    const conflicts = {
-      [failureKey('coding', 'mini')]: { name: 'studio', against: 'self', with: 'studio' } as const,
-    };
+  // A name collision is its own line, not "cannot reach", and names the
+  // computers by their own labels (this device calls them coding and mini).
+  test.each<[string, NameConflict, { name: string; with: string; from: string; stale: boolean }]>([
+    [
+      'two computers with one name',
+      { name: 'Mac', against: 'self', with: 'Mac', fromName: 'Mac' },
+      { name: 'Mac', with: 'Mac', from: 'Mac', stale: false },
+    ],
+    [
+      'an older entry for the same machine (a reinstall)',
+      { name: 'mini', against: 'peer', with: 'mini', fromName: 'studio', stale: true },
+      { name: 'mini', with: 'mini', from: 'studio', stale: true },
+    ],
+  ])('%s', (_name, conflict, line) => {
+    const computers = [computer('coding', peers(true)), computer('mini', peers(true))];
     expect(
-      linkLines('coding', computers, { [failureKey('coding', 'mini')]: NOW }, NOW, conflicts)
-    ).toEqual({
-      linked: [],
-      noWork: [],
-      cannotReach: [],
-      sameName: [{ name: 'mini', with: 'studio' }],
-    });
+      linkLines('coding', computers, { [failureKey('coding', 'mini')]: NOW }, NOW, {
+        [failureKey('coding', 'mini')]: conflict,
+      })
+    ).toEqual({ linked: [], noWork: [], cannotReach: [], sameName: [line] });
   });
 });
 
@@ -210,6 +215,32 @@ describe("planPeerMoves: a quiet peer whose address moved is told this device's 
       [computer('coding', peers(true, [['mini', false]])), moved],
       {},
       [{ from: 'coding', peerId: 'peer-mini', url: 'http://mini-new:23847' }],
+    ],
+    [
+      'the moved computer did not answer this pass: nothing to prove the address against',
+      [computer('coding', peers(true, [['mini', false]])), { ...moved, peers: null }],
+      {},
+      [],
+    ],
+    [
+      'a trailing slash or upper-case host is no move',
+      [
+        computer('coding', {
+          acceptDelegations: true,
+          peers: [
+            {
+              peerId: 'p',
+              serverId: 'mini',
+              name: 'mini',
+              url: 'HTTP://Mini-New:23847/',
+              reachable: false,
+            },
+          ],
+        }),
+        moved,
+      ],
+      {},
+      [],
     ],
     [
       'answering over another route: left alone',
