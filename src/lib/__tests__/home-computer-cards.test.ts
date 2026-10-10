@@ -422,6 +422,30 @@ describe('groupTaskTree', () => {
   });
 });
 
+describe('taskRowVisual: two rules no other row pins', () => {
+  const states: TaskState[] = [
+    'queued',
+    'dispatching',
+    'working',
+    'waiting',
+    'idle_unconfirmed',
+    'done',
+    'failed',
+    'cancelled',
+  ];
+  const visualOf = (state: TaskState) =>
+    taskRowVisual(task('t', state, 1), { canComplete: false, acknowledged: false });
+
+  test('only working spins', () => {
+    expect(states.filter((state) => visualOf(state).spins)).toEqual(['working']);
+  });
+
+  test('an idle agent is never shown as done (idle is not done)', () => {
+    const idle = visualOf('idle_unconfirmed');
+    expect([idle.icon, idle.tone]).toEqual(['paused', 'textMuted']);
+  });
+});
+
 describe('taskRowVisual: the rules the state table carries', () => {
   const pane = { kind: 'pane', sessionId: 's', paneId: 'p1', agentId: 'codex' } as const;
   const open = (state: TaskState, extra: Partial<TaskView> = {}) =>
@@ -500,13 +524,22 @@ describe('taskRowVisual: the rules the state table carries', () => {
       { line: { kind: 'mirrorFailed', reason: 'peer_unlinked' } },
     ],
     [
-      'a refused create has no reason: its summary is the prose',
+      "a refused create (no reason, no task over there) gets the general line, not the gateway's text",
       task('t', 'failed', 1, {
         binding: { kind: 'peer', peerId: 'srv-mini', remoteTaskId: '' },
         summary: 'mini does not take work from other computers',
       }),
       plain,
-      { line: { kind: 'error', text: 'mini does not take work from other computers' } },
+      { line: { kind: 'mirrorFailed', reason: '' } },
+    ],
+    [
+      "a mirror whose task over there failed shows that task's own summary",
+      task('t', 'failed', 1, {
+        binding: { kind: 'peer', peerId: 'srv-mini', remoteTaskId: 'r' },
+        summary: 'tests failed: 3',
+      }),
+      plain,
+      { line: { kind: 'error', text: 'tests failed: 3' } },
     ],
     [
       "a reachable mirror shows its computer's own progress",
