@@ -3,7 +3,7 @@ import { useThemeTokens } from '@osuki-dev/ui';
 import { useEffect, useState, type ReactNode } from 'react';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import {
-  ScrollView,
+  type ScrollViewProps,
   StyleSheet,
   Platform,
   useWindowDimensions,
@@ -93,6 +93,8 @@ export type HomeEditorialLayoutProps = {
     onScrollEndDrag?: () => void;
     onMomentumScrollBegin?: () => void;
     onMomentumScrollEnd?: () => void;
+    /** An animated scroll handler (the dock's hide-on-scroll). */
+    onScroll?: ScrollViewProps['onScroll'];
   };
   /**
    * Home's first mount: the sections rise in on the entry stagger. False on
@@ -475,8 +477,9 @@ export function HomeEditorialLayout({
         ) : null}
         <View style={styles.padColumns}>
           <View testID="home-pad-work-column" style={{ width: columns.work }}>
-            <ScrollView
+            <Animated.ScrollView
               testID="home-pad-launch-pane"
+              scrollEventThrottle={16}
               showsVerticalScrollIndicator={false}
               keyboardShouldPersistTaps="handled"
               style={styles.padScroll}
@@ -595,7 +598,7 @@ export function HomeEditorialLayout({
                   ) : null}
                 </Animated.View>
               ) : null}
-            </ScrollView>
+            </Animated.ScrollView>
             {/* In flow under the work, sized to the measured dock: the column
                 ends where the dock begins, so no row can sit under it. */}
             {hasSlot(padComposer) ? (

@@ -5101,6 +5101,10 @@ msgid "Send a message, type / for commands, @ for files…"
 msgstr "Gửi tin nhắn, gõ / để xem lệnh, @ để chọn tệp…"
 
 #: src/components/agent-composer.tsx
+msgid "Send a message…"
+msgstr "Gửi tin nhắn…"
+
+#: src/components/agent-composer.tsx
 msgid "Send message"
 msgstr "Gửi tin nhắn"
 
