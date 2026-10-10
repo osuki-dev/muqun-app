@@ -89,6 +89,26 @@ export type PendingResend = {
   folder?: string;
 };
 
+/** A sent goal no task ever answered stops claiming the computer is busy after this. */
+export const PENDING_DISPATCH_TTL_MS = 2 * 60_000;
+
+/**
+ * Whether a Sent row is still shown. A plain one goes when it outlives
+ * PENDING_DISPATCH_TTL_MS. A failed one holds a draft and stays until it is
+ * sent again or dismissed. One that went to its session stays too, saying no
+ * reply came yet, until that session's task appears or it is dismissed.
+ */
+export function pendingShown(item: PendingDispatch, nowMs: number): boolean {
+  return (
+    item.failed === true || item.asid !== undefined || nowMs - item.atMs < PENDING_DISPATCH_TTL_MS
+  );
+}
+
+/** Whether a Sent row is work the computer is doing: sent, not failed, and recent. */
+export function pendingWorking(item: PendingDispatch, nowMs: number): boolean {
+  return item.failed !== true && nowMs - item.atMs < PENDING_DISPATCH_TTL_MS;
+}
+
 /** A goal the dock sent that the computer has not reported back yet. */
 export type PendingDispatch = {
   id: string;
@@ -444,7 +464,8 @@ export function buildComputerCards(input: {
     // The same predicates Now uses, so work known only from the gateway's
     // child counts moves the card as well as listing it.
     const waiting = tasks.some((task) => task.state === 'waiting') || tree.some(treeRowIsWaiting);
-    const working = tree.some(treeRowIsActive) || pending.some((item) => item.failed !== true);
+    const working =
+      tree.some(treeRowIsActive) || pending.some((item) => pendingWorking(item, input.nowMs));
     const activity: CardActivity =
       input.reachability(server.serverId) === 'offline'
         ? 'offline'

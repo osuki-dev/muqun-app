@@ -7,6 +7,10 @@ import {
   dismissedKey,
   groupTaskTree,
   PENDING_CLOCK_SKEW_MS,
+  PENDING_DISPATCH_TTL_MS,
+  pendingShown,
+  pendingWorking,
+  type PendingDispatch,
   taskResultLine,
   taskRollup,
   taskSubscriptionServerIds,
@@ -432,6 +436,24 @@ describe('work that outlives its root', () => {
 });
 
 describe('the Sent row', () => {
+  test('a plain one goes after two minutes; a failed or session-bound one stays until acted on', () => {
+    const at = 1_000;
+    const later = at + PENDING_DISPATCH_TTL_MS;
+    const sent = { id: 's', serverId: 'a', goal: 'g', atMs: at };
+    const cases: [PendingDispatch, number, shown: boolean, working: boolean][] = [
+      [sent, at + 1, true, true],
+      [sent, later, false, false],
+      // A failed send holds its draft: shown, never work.
+      [{ ...sent, failed: true }, later, true, false],
+      // Sent to its session and no task yet: shown ("no reply yet"), no longer work.
+      [{ ...sent, asid: 'as-1' }, at + 1, true, true],
+      [{ ...sent, asid: 'as-1' }, later, true, false],
+    ];
+    expect(
+      cases.map(([item, now]) => [pendingShown(item, now), pendingWorking(item, now)])
+    ).toEqual(cases.map(([, , shown, working]) => [shown, working]));
+  });
+
   const pending = [{ id: 'p', serverId: 'a', goal: 'goal x', atMs: 100 }];
   const cardFor = (tasks: TaskView[]) =>
     buildComputerCards({

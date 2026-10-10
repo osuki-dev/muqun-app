@@ -2308,6 +2308,7 @@ msgstr "连接已断开"
 
 #: src/components/agent-workbench.tsx
 #: src/components/in-app-notification-host.tsx
+#: src/components/task-row.tsx
 msgid "Dismiss"
 msgstr "关闭"
 
@@ -5271,6 +5272,10 @@ msgstr "下一个目标将发送到这里"
 #: src/components/home-connections.tsx
 msgid "Sends your next goal here. Long press to open it."
 msgstr "下一个目标将发送到这里。长按可打开"
+
+#: src/components/task-row.tsx
+msgid "Sent · no reply yet"
+msgstr "已发送 · 暂无回复"
 
 #: src/components/task-row.tsx
 msgid "Sent · waiting for {computer}"

@@ -7,6 +7,7 @@ import {
   CircleCheck,
   ExternalLink,
   SquareTerminal,
+  X,
   XCircle,
 } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
@@ -38,6 +39,7 @@ import {
   taskRollup,
   taskRowVisual,
   taskRowTitle,
+  pendingWorking,
   type PendingDispatch,
   type TaskRowVisual,
 } from '@/lib/home-computer-cards';
@@ -760,23 +762,36 @@ function SubTaskRow({
 }
 
 /** A goal the dock sent, before the computer has said it has it. */
-export function SentTaskRow({ item, computer }: { item: PendingDispatch; computer: string }) {
+export function SentTaskRow({
+  item,
+  computer,
+  nowMs,
+}: {
+  item: PendingDispatch;
+  computer: string;
+  nowMs: number;
+}) {
   const { t } = useLingui();
   const theme = useThemeTokens();
   const rowLine = useTaskRowLine(undefined);
   const actions = useHomeTaskCards((state) => state.rowActions);
   const visual = taskRowVisual({ state: 'sent' }, { canComplete: false, acknowledged: true });
   // A failed send says so and why; a tap sends exactly that again. One that
-  // went to its session opens it.
+  // went to its session opens it, and says so when no reply came in time.
   const failed = item.failed === true && item.resend !== undefined;
+  const noReply = !failed && item.asid !== undefined && !pendingWorking(item, nowMs);
   const line = failed
     ? lineView(
         t`Could not send`,
         theme.colors.danger,
         [item.reason, t`tap to retry`].filter(Boolean).join(META_SEPARATOR)
       )
-    : rowLine(null, visual, computer);
+    : noReply
+      ? lineView('', theme.colors.textMuted, t`Sent · no reply yet`)
+      : rowLine(null, visual, computer);
   const press = !actions ? null : failed ? actions.retry : item.asid ? actions.open : null;
+  // Rows that stay until acted on can be let go; the field keeps its own draft.
+  const dismissible = failed || noReply;
   return (
     <Animated.View
       testID="home-card-pending"
@@ -784,13 +799,13 @@ export function SentTaskRow({ item, computer }: { item: PendingDispatch; compute
       entering={fadeIn('micro')}
       exiting={fadeOut('micro')}
       layout={listLayout()}
-      style={styles.row}>
+      style={[styles.row, styles.sentRow]}>
       <Pressable
         disabled={!press}
         onPress={() => press?.(item)}
         accessibilityRole={press ? 'button' : undefined}
         accessibilityLabel={failed ? t`Could not send. Tap to retry` : undefined}
-        style={styles.sentBody}>
+        style={[styles.sentBody, styles.grow]}>
         <View style={styles.titleLine}>
           <View style={styles.icon}>
             <TaskStateIcon visual={visual} />
@@ -801,6 +816,17 @@ export function SentTaskRow({ item, computer }: { item: PendingDispatch; compute
           <TaskRowLineText line={line} />
         </View>
       </Pressable>
+      {dismissible ? (
+        <Pressable
+          testID="home-card-pending-dismiss"
+          accessibilityRole="button"
+          accessibilityLabel={t`Dismiss`}
+          hitSlop={12}
+          onPress={() => useHomeTaskCards.getState().settle(item.id)}
+          style={styles.dismiss}>
+          <X size={16} color={theme.colors.textMuted} />
+        </Pressable>
+      ) : null}
     </Animated.View>
   );
 }
@@ -808,6 +834,8 @@ export function SentTaskRow({ item, computer }: { item: PendingDispatch; compute
 const styles = StyleSheet.create({
   row: { paddingVertical: 4, gap: 2 },
   sentBody: { gap: 2 },
+  sentRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 4 },
+  dismiss: { minHeight: 28, justifyContent: 'center', paddingHorizontal: 4 },
   titleLine: { minHeight: 28, flexDirection: 'row', alignItems: 'center', gap: 8 },
   icon: { width: 16, alignItems: 'center' },
   grow: { flex: 1, minWidth: 0 },
