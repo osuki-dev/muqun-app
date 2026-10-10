@@ -3204,6 +3204,10 @@ msgstr "最終接続: たった今"
 msgid "Last folder"
 msgstr "前回のフォルダー"
 
+#: src/components/task-row.tsx
+msgid "last seen {ago}"
+msgstr "最終確認 {ago}"
+
 #: src/components/settings-servers.tsx
 msgid "Last seen {days}d ago"
 msgstr "最終確認: {days}日前"
@@ -6649,10 +6653,6 @@ msgstr "解除しています…"
 #: src/components/task-row.tsx
 msgid "Unreachable"
 msgstr "接続できません"
-
-#: src/components/task-row.tsx
-msgid "Unreachable · last seen {ago}"
-msgstr "接続できません · 最終確認 {ago}"
 
 #: src/components/diff-rows.tsx
 msgid "Unstaged"

@@ -40,7 +40,15 @@ import {
   taskRowTitle,
   type TaskRowVisual,
 } from '@/lib/home-computer-cards';
-import { fadeIn, fadeOut, listLayout, pulseOnce, travelTiming, zoomIn } from '@/lib/motion';
+import {
+  fadeIn,
+  fadeOut,
+  listLayout,
+  PULSE_ONCE_MS,
+  pulseOnce,
+  travelTiming,
+  zoomIn,
+} from '@/lib/motion';
 import { isDemoRecord } from '@/lib/demo-gateway';
 import { peerServerIdOf } from '@/lib/fleet-peers';
 import { META_SEPARATOR } from '@/lib/home-continue-row';
@@ -197,6 +205,23 @@ function useMirrorFailureLine() {
 }
 
 /**
+ * A row's second line: the state word in the state's tone, then the detail
+ * after the separator, always muted (§10). `text` is the two joined, for
+ * labels and a title that has nothing better.
+ */
+export type TaskRowLineView = {
+  word: string;
+  /** The state word's tone. */
+  color: string;
+  detail: string;
+  text: string;
+};
+
+function lineView(word: string, color: string, detail: string): TaskRowLineView {
+  return { word, color, detail, text: [word, detail].filter(Boolean).join(META_SEPARATOR) };
+}
+
+/**
  * A row's second line in words and a theme tone, from the one table: what the
  * computer is doing with the goal now. `computer` names it for a goal just
  * sent. Shared by Home's cards, the Tasks list and Needs you.
@@ -214,58 +239,88 @@ export function useTaskRowLine(discovery: MirroredServerDiscovery | undefined) {
     visual: TaskRowVisual,
     computer = '',
     nowMs?: number
-  ): { text: string; color: string } => {
+  ): TaskRowLineView => {
     const muted = theme.colors.textMuted;
+    const tone = theme.colors[visual.tone];
     const line = visual.line;
     // A mirror names its computer beside its title; its line says the state.
     const agent = task && task.binding.kind !== 'peer' ? whereName(task) : '';
     const stateWord = task ? _(taskStateWord[task.state]) : '';
     switch (line.kind) {
       case 'sent':
-        return { text: t`Sent · waiting for ${computer}`, color: muted };
+        return lineView('', muted, t`Sent · waiting for ${computer}`);
       case 'starting':
-        return { text: agent ? t`Starting ${agent}…` : stateWord, color: muted };
+        return lineView('', muted, agent ? t`Starting ${agent}…` : stateWord);
       case 'progress':
-        return { text: line.text, color: muted };
+        return lineView('', muted, line.text);
       case 'agent':
-        return { text: agent || stateWord, color: muted };
+        return lineView('', muted, agent || stateWord);
       case 'waiting':
-        return {
-          text: [_(taskStateWord.waiting), line.text].filter(Boolean).join(' · '),
-          color: theme.colors.warning,
-        };
+        return lineView(_(taskStateWord.waiting), tone, line.text ?? '');
       case 'paused':
-        return {
-          text: [_(taskStateWord.idle_unconfirmed), line.text].filter(Boolean).join(' · '),
-          color: muted,
-        };
+        return lineView(_(taskStateWord.idle_unconfirmed), tone, line.text ?? '');
       case 'result':
-        return { text: line.text, color: muted };
+      case 'error':
+        return lineView(stateWord, tone, line.text);
       case 'exit': {
         const code = line.code;
-        return {
-          text: t`exit ${code}`,
-          color: visual.tone === 'danger' ? theme.colors.danger : muted,
-        };
+        return lineView(stateWord, tone, t`exit ${code}`);
       }
-      case 'error':
-        return { text: line.text, color: theme.colors.danger };
       case 'state':
-        return { text: stateWord, color: visual.tone === 'danger' ? theme.colors.danger : muted };
+        return lineView(stateWord, tone, '');
       case 'unreachable': {
         const ago =
           line.lastSeenMs !== undefined && nowMs !== undefined ? age(line.lastSeenMs, nowMs) : '';
-        return {
-          text: ago ? t`Unreachable · last seen ${ago}` : t`Unreachable`,
-          color: theme.colors.warning,
-        };
+        return lineView(t`Unreachable`, theme.colors.warning, ago ? t`last seen ${ago}` : '');
       }
       case 'mirrorFailed': {
         const there = task?.binding.kind === 'peer' ? peerName(task.binding) : '';
-        return { text: mirrorFailureLine(line.reason, there), color: theme.colors.danger };
+        return lineView(stateWord, tone, mirrorFailureLine(line.reason, there));
       }
     }
   };
+}
+
+/**
+ * The one-shot wash over a row that has just come to need the reader: it
+ * fades in and out once, then unmounts. Nothing marks the row afterwards; the
+ * glyph and the state word carry the state (§10).
+ */
+export function ArrivalPulse() {
+  const theme = useThemeTokens();
+  const [done, setDone] = useState(false);
+  useEffect(() => {
+    const timer = setTimeout(() => setDone(true), PULSE_ONCE_MS);
+    return () => clearTimeout(timer);
+  }, []);
+  if (done) return null;
+  return (
+    <Animated.View pointerEvents="none" entering={pulseOnce()} style={styles.pulse}>
+      <View style={[styles.pulseTint, { backgroundColor: theme.colors.warning }]} />
+    </Animated.View>
+  );
+}
+
+/** A row's second line drawn: the state word in its tone, the detail muted. */
+export function TaskRowLineText({ line, testID }: { line: TaskRowLineView; testID?: string }) {
+  const theme = useThemeTokens();
+  return (
+    <>
+      {line.word ? (
+        <Text variant="caption" color={line.color} numberOfLines={1} style={styles.word}>
+          {line.detail ? line.word + META_SEPARATOR : line.word}
+        </Text>
+      ) : null}
+      {line.detail ? (
+        <RowMarkdown
+          {...(testID ? { testID } : {})}
+          text={line.detail}
+          ink={theme.colors.textMuted}
+          kind="line"
+        />
+      ) : null}
+    </>
+  );
 }
 
 /**
@@ -386,8 +441,8 @@ function useTaskRowModel({
   const mirror = task.binding.kind === 'peer' ? task.binding : null;
   const mirrorName = mirror ? peerName(mirror) : '';
   const unpaired = mirror !== null && !pairedHere(mirror);
-  const line = unpaired
-    ? { text: t`Open ${mirrorName} on this phone first`, color: theme.colors.textMuted }
+  const line: TaskRowLineView = unpaired
+    ? lineView('', theme.colors.textMuted, t`Open ${mirrorName} on this phone first`)
     : rowLine(task, visual, '', nowMs);
   const requester = requesterName(task.requestedBy);
   const fromText = requester ? t`from ${requester}` : '';
@@ -519,14 +574,7 @@ export function TaskRow({
       exiting={fadeOut('micro')}
       layout={listLayout()}
       style={nested ? styles.nested : undefined}>
-      {visual.edge ? (
-        // Arriving at needs-you pulses the edge once (skipped on a remount).
-        <Animated.View
-          pointerEvents="none"
-          entering={pulseOnce()}
-          style={[styles.edge, { backgroundColor: theme.colors[visual.edge] }]}
-        />
-      ) : null}
+      {visual.needsYou ? <ArrivalPulse /> : null}
       <PressableScale
         testID={`task-row-${task.taskId}`}
         accessibilityRole="button"
@@ -573,12 +621,7 @@ export function TaskRow({
               {fromText + META_SEPARATOR}
             </Text>
           ) : null}
-          <RowMarkdown
-            testID={`task-row-line-${task.taskId}`}
-            text={line.text}
-            ink={line.color}
-            kind="line"
-          />
+          <TaskRowLineText testID={`task-row-line-${task.taskId}`} line={line} />
           {rollupText ? (
             <Text variant="caption" numberOfLines={1}>
               {onOpenTree ? (
@@ -670,7 +713,7 @@ function SubTaskRow({
           </Text>
         ) : null}
         <RowMarkdown text={title} ink={theme.colors.textMuted} kind="line" />
-        <RowMarkdown text={line.text} ink={line.color} kind="line" />
+        <TaskRowLineText line={line} />
         {trailingAge ? (
           <Text variant="caption" color={theme.colors.textSubtle}>
             {trailingAge}
@@ -709,7 +752,7 @@ export function SentTaskRow({ goal, computer }: { goal: string; computer: string
         <RowMarkdown text={goalTitle(goal)} ink={theme.colors.text} kind="title" />
       </View>
       <View style={styles.line}>
-        <RowMarkdown text={line.text} ink={line.color} kind="line" />
+        <TaskRowLineText line={line} />
       </View>
     </Animated.View>
   );
@@ -722,7 +765,10 @@ const styles = StyleSheet.create({
   grow: { flex: 1, minWidth: 0 },
   line: { paddingLeft: 24, flexDirection: 'row', alignItems: 'center' },
   nested: { paddingLeft: 24 },
-  edge: { position: 'absolute', left: 0, top: 0, bottom: 0, width: 3 },
+  word: { flexShrink: 0, maxWidth: '60%' },
+  // The arrival pulse: a wash over the whole row that fades back to nothing.
+  pulse: { ...StyleSheet.absoluteFill, opacity: 0 },
+  pulseTint: { ...StyleSheet.absoluteFill, opacity: 0.16 },
   // A computer's name is short and says the most; it gives way last.
   peerName: { flexShrink: 0, maxWidth: '40%' },
   child: {

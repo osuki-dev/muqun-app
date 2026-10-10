@@ -3204,6 +3204,10 @@ msgstr "刚刚连接过"
 msgid "Last folder"
 msgstr "上次的文件夹"
 
+#: src/components/task-row.tsx
+msgid "last seen {ago}"
+msgstr "上次在线 {ago}"
+
 #: src/components/settings-servers.tsx
 msgid "Last seen {days}d ago"
 msgstr "上次在线于 {days} 天前"
@@ -6649,10 +6653,6 @@ msgstr "正在取消配对…"
 #: src/components/task-row.tsx
 msgid "Unreachable"
 msgstr "无法连接"
-
-#: src/components/task-row.tsx
-msgid "Unreachable · last seen {ago}"
-msgstr "无法连接 · 上次在线 {ago}"
 
 #: src/components/diff-rows.tsx
 msgid "Unstaged"

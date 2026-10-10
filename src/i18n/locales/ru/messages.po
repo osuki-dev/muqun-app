@@ -3204,6 +3204,10 @@ msgstr "Последнее подключение только что"
 msgid "Last folder"
 msgstr "Последняя папка"
 
+#: src/components/task-row.tsx
+msgid "last seen {ago}"
+msgstr "в последний раз {ago}"
+
 #: src/components/settings-servers.tsx
 msgid "Last seen {days}d ago"
 msgstr "Последний раз в сети {days} д. назад"
@@ -6649,10 +6653,6 @@ msgstr "Отвязываем…"
 #: src/components/task-row.tsx
 msgid "Unreachable"
 msgstr "Недоступен"
-
-#: src/components/task-row.tsx
-msgid "Unreachable · last seen {ago}"
-msgstr "Недоступен · в последний раз {ago}"
 
 #: src/components/diff-rows.tsx
 msgid "Unstaged"

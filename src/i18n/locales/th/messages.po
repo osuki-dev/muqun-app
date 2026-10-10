@@ -3204,6 +3204,10 @@ msgstr "เชื่อมต่อล่าสุดเมื่อสักค
 msgid "Last folder"
 msgstr "โฟลเดอร์ล่าสุด"
 
+#: src/components/task-row.tsx
+msgid "last seen {ago}"
+msgstr "พบล่าสุด {ago}"
+
 #: src/components/settings-servers.tsx
 msgid "Last seen {days}d ago"
 msgstr "พบล่าสุด {days} วันที่แล้ว"
@@ -6649,10 +6653,6 @@ msgstr "กำลังเลิกจับคู่…"
 #: src/components/task-row.tsx
 msgid "Unreachable"
 msgstr "เข้าถึงไม่ได้"
-
-#: src/components/task-row.tsx
-msgid "Unreachable · last seen {ago}"
-msgstr "เข้าถึงไม่ได้ · พบล่าสุด {ago}"
 
 #: src/components/diff-rows.tsx
 msgid "Unstaged"

@@ -3204,6 +3204,10 @@ msgstr "Last connected just now"
 msgid "Last folder"
 msgstr "Last folder"
 
+#: src/components/task-row.tsx
+msgid "last seen {ago}"
+msgstr "last seen {ago}"
+
 #: src/components/settings-servers.tsx
 msgid "Last seen {days}d ago"
 msgstr "Last seen {days}d ago"
@@ -6649,10 +6653,6 @@ msgstr "Unpairing…"
 #: src/components/task-row.tsx
 msgid "Unreachable"
 msgstr "Unreachable"
-
-#: src/components/task-row.tsx
-msgid "Unreachable · last seen {ago}"
-msgstr "Unreachable · last seen {ago}"
 
 #: src/components/diff-rows.tsx
 msgid "Unstaged"
