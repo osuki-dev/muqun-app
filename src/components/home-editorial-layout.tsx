@@ -88,6 +88,11 @@ export type HomeEditorialLayoutProps = {
    * dock over the page itself.
    */
   padComposer?: ReactNode;
+  /**
+   * The Pad cover's work column when there is no work to show at all (nothing
+   * paired): the pairing call to action, so the column is never blank.
+   */
+  padWorkEmpty?: ReactNode;
   /** The dock's measured height, which the left column's foot clears. */
   padComposerHeight?: number;
   /**
@@ -251,6 +256,7 @@ export function HomeEditorialLayout({
   headerLeading,
   launches,
   padComposer,
+  padWorkEmpty,
   padComposerHeight = 0,
   coverPaneKeyboardAware = true,
   workScrollEvents,
@@ -608,6 +614,11 @@ export function HomeEditorialLayout({
               style={styles.padScroll}
               contentContainerStyle={styles.padWorkContent}
               {...workScrollEvents}>
+              {hasSlot(padWorkEmpty) ? (
+                <Animated.View entering={rise(1)} style={styles.padSection}>
+                  {padWorkEmpty}
+                </Animated.View>
+              ) : null}
               {hasSlot(attention) ? (
                 // Mounted while empty (its arrival pulse); spaced only with a row.
                 <Animated.View
