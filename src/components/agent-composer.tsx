@@ -1418,7 +1418,7 @@ export const AgentComposer = memo(function AgentComposer({
                       variant="caption"
                       numberOfLines={1}
                       color={modeMenuOpen ? theme.colors.primary : theme.colors.textSubtle}>
-                      {nameOfAgent(selectedAgent ?? 'build')}
+                      {sentenceCase(nameOfAgent(selectedAgent ?? 'build'))}
                     </Text>
                     <ChevronDown size={QUIET_CHEVRON} color={theme.colors.textSubtle} />
                   </TextSegment>
@@ -1945,6 +1945,15 @@ const ATTACHMENT_MENU_GAP = 8;
 
 /** How much of the strip stays visible to the left of the chip brought into view. */
 const SESSION_CHIP_REVEAL_MARGIN = 24;
+
+/**
+ * A mode id the catalog left lower-case (`standard`) as its label reads
+ * (`Standard`). Only the first letter changes; a name the catalog spelled is
+ * shown as spelled.
+ */
+function sentenceCase(name: string): string {
+  return name.charAt(0).toLocaleUpperCase() + name.slice(1);
+}
 
 /** A chevron at the caption line's size: about its cap height, as 12 is to body text. */
 const QUIET_CHEVRON = AGENT_TYPE.meta.size - 2;
