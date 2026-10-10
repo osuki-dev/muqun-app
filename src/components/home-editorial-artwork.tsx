@@ -141,7 +141,8 @@ function HomeEditorialArtworkImage({
       accessible={false}
       importantForAccessibility="no-hide-descendants"
       entering={fadeIn('medium')}
-      layout={listLayout('medium')}
+      // A filled painting's size is its parent's, which snaps (see the Pad cover).
+      layout={fill ? undefined : listLayout('medium')}
       onLayout={onLayout}
       style={[styles.root, fill ? styles.fill : { height }]}>
       {image && imageRect && box ? (

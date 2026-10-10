@@ -3150,6 +3150,7 @@ msgstr "Conectado hace {minutes} min"
 msgid "Last connected just now"
 msgstr "Conectado justo ahora"
 
+#: src/app/agent-workspace.tsx
 #: src/components/home-composer-dock.tsx
 msgid "Last folder"
 msgstr "Última carpeta"

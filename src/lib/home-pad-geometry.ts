@@ -71,17 +71,23 @@ export const PAD_COVER_TITLE_LINE_HEIGHT = 1.08;
  * How far a descender (the q in "Muqun") hangs below that line box. The line
  * height is tight on purpose, so the wordmark's cover keeps this clear.
  */
-const PAD_WORDMARK_DESCENDER = 0.22;
+export const PAD_WORDMARK_DESCENDER = 0.22;
 
 /** The cover painting's own proportion: as tall as 0.9 of its width (`HomeEditorialArtwork`). */
 const COVER_ARTWORK_RATIO = 0.9;
 
+/** The cover block's share of the viewport with only the tiles under it. */
+export const PAD_COVER_SHARE = 0.45;
+
+/** Its share once Needs you or a computer card is under it. */
+export const PAD_COVER_COMPACT_SHARE = 0.22;
+
 /**
  * The Pad cover block at the top of the work column: the pack's title and
  * painting, or the app's wordmark. With only the tiles under it, it takes
- * 45% of the viewport (40-45% of the screen); once Needs you or a computer
- * card is there it shrinks to 22% (about 21% of the screen), so the tiles and the first card's header
- * and Now row show above the dock without scrolling.
+ * `PAD_COVER_SHARE` of the viewport; once Needs you or a computer card is
+ * there it shrinks to `PAD_COVER_COMPACT_SHARE`, so the tiles and the first
+ * card's header and first row show above the dock without scrolling.
  *
  * - `titleSize`: the cover title as wide as the column allows (the 38% cap
  *   and measured fit the cover has always used), and never taller than its
@@ -108,8 +114,8 @@ export function padCover({
   /** Needs you or a computer card is in the column: the block gives them the room. */
   compact: boolean;
 }): { height: number; titleSize: number; artwork: { width: number; height: number } } {
-  const fullHeight = Math.round(viewportHeight * 0.45);
-  const height = compact ? Math.round(viewportHeight * 0.22) : fullHeight;
+  const fullHeight = Math.round(viewportHeight * PAD_COVER_SHARE);
+  const height = compact ? Math.round(viewportHeight * PAD_COVER_COMPACT_SHARE) : fullHeight;
   const byWidth =
     measuredTitleWidth > 0
       ? Math.min(coverWidth * 0.38, ((coverWidth - 4) * 100) / measuredTitleWidth)

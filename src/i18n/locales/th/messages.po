@@ -3150,6 +3150,7 @@ msgstr "เชื่อมต่อล่าสุด {minutes} นาทีท�
 msgid "Last connected just now"
 msgstr "เชื่อมต่อล่าสุดเมื่อสักครู่"
 
+#: src/app/agent-workspace.tsx
 #: src/components/home-composer-dock.tsx
 msgid "Last folder"
 msgstr "โฟลเดอร์ล่าสุด"

@@ -36,6 +36,47 @@ const OBSERVATION_DATE_FORMAT: Intl.DateTimeFormatOptions = {
 };
 
 /**
+ * What Needs you lists: the open requests on these computers, and the ledger
+ * tasks waiting on the reader that no listed request already covers.
+ */
+function useAttentionRows(
+  servers: readonly GatewayRecord[],
+  taskServerIds: readonly string[],
+  withTasks: boolean
+) {
+  const observations = useHomeAttention((state) => state.byTarget);
+  const taskIndex = useTaskIndexFor(taskServerIds);
+  const pending = Object.entries(observations).filter(
+    ([, snapshot]) =>
+      snapshot.requestIds.length > 0 &&
+      servers.some((server) => server.serverId === snapshot.target.serverId)
+  );
+  const waiting = withTasks
+    ? homeWaitingTasks(
+        taskIndex,
+        taskServerIds,
+        pending.map(([, snapshot]) => snapshot.target)
+      )
+    : [];
+  return { pending, waiting };
+}
+
+/**
+ * Whether Needs you has a row: `HomeAttention` stays mounted while it is
+ * empty, so the layout asks this rather than whether the slot is filled.
+ */
+export function useHasHomeAttention({
+  servers,
+  taskServerIds = [],
+}: {
+  servers: readonly GatewayRecord[];
+  taskServerIds?: readonly string[];
+}): boolean {
+  const { pending, waiting } = useAttentionRows(servers, taskServerIds, true);
+  return pending.length > 0 || waiting.length > 0;
+}
+
+/**
  * An open-only summary. Permission decisions remain in the source workbench.
  * A ledger task waiting on the reader is listed unless its session's own
  * request already is; `onOpenTask` decides where it opens.
@@ -52,20 +93,7 @@ export function HomeAttention({
   onOpen: (target: HomeTarget) => void;
   onOpenTask?: (row: HomeTaskRow) => void;
 }) {
-  const observations = useHomeAttention((state) => state.byTarget);
-  const taskIndex = useTaskIndexFor(taskServerIds);
-  const pending = Object.entries(observations).filter(
-    ([, snapshot]) =>
-      snapshot.requestIds.length > 0 &&
-      servers.some((server) => server.serverId === snapshot.target.serverId)
-  );
-  const waiting = onOpenTask
-    ? homeWaitingTasks(
-        taskIndex,
-        taskServerIds,
-        pending.map(([, snapshot]) => snapshot.target)
-      )
-    : [];
+  const { pending, waiting } = useAttentionRows(servers, taskServerIds, Boolean(onOpenTask));
   // The config stays mounted while the list is empty, so the first row to
   // arrive is an arrival (it enters and pulses), not part of a fresh mount.
   return (

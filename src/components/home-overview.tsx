@@ -70,7 +70,7 @@ import {
 } from '@/components/home-editorial-layout';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { HomeConnections } from '@/components/home-connections';
-import { HomeAttention } from '@/components/home-attention';
+import { HomeAttention, useHasHomeAttention } from '@/components/home-attention';
 import {
   HomeComputerCards,
   HomeTaskSync,
@@ -397,6 +397,9 @@ export function HomeOverview({
     activeConnection,
     nowMs,
   });
+  // Needs you stays mounted while empty; the Pad cover asks whether it has a row.
+  const hasAttention = useHasHomeAttention({ servers: records, taskServerIds });
+  const coverHeader = customTheme?.manifest.homePresentation?.header === 'cover';
   // Cards on screen when Home mounts are not arrivals; once the section has
   // emptied, the next card to come is one and enters (and pulses) as such.
   const [cardsSkipEntering, setCardsSkipEntering] = useState(hasComputerCards);
@@ -938,7 +941,7 @@ export function HomeOverview({
               contentWidth={editorialWidth || width}
               viewportHeight={editorialViewportHeight}
               scrollY={scrollY}
-              cover={customTheme?.manifest.homePresentation?.header === 'cover'}
+              cover={coverHeader}
               coverTitle={showsEditorialBrand ? (identity.name ?? undefined) : undefined}
               pad={isPad}
               typographicCover={themeLibraryHydrated && !customTheme}
@@ -970,9 +973,9 @@ export function HomeOverview({
               artwork={
                 hasEditorialArtwork && editorialArtworkResolution ? (
                   <HomeEditorialArtwork
-                    cover={customTheme?.manifest.homePresentation?.header === 'cover'}
+                    cover={coverHeader}
                     // The Pad cover block sizes the painting; elsewhere it keeps its own proportion.
-                    fill={padLaunch && customTheme?.manifest.homePresentation?.header === 'cover'}
+                    fill={padLaunch && coverHeader}
                     resolution={editorialArtworkResolution}
                     onVisibleTopChange={reportEditorialArtworkTop}
                     onAvailabilityChange={(available) => {
@@ -1098,6 +1101,7 @@ export function HomeOverview({
                 ) : undefined
               }
               recentHeading={recentHeading}
+              hasAttention={!loading && !hydrationError && hasAttention}
               attention={
                 !loading && !hydrationError ? (
                   <HomeAttention
