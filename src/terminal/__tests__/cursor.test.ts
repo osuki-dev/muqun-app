@@ -61,28 +61,16 @@ describe('relative cursor movement', () => {
 });
 
 describe('cursor boundary clamping', () => {
-  test('CUU at the top row stays at the top', () => {
-    const term = emulator(10, 5);
-    term.write(`${CSI}10A`);
-    expect(cursorOf(term.frame()).row).toBe(0);
-  });
-
-  test('CUB at column 0 stays at column 0', () => {
-    const term = emulator(10, 5);
-    term.write(`${CSI}10D`);
-    expect(cursorOf(term.frame()).column).toBe(0);
-  });
-
-  test('CUD at the bottom row stays at the bottom', () => {
-    const term = emulator(10, 5);
-    term.write(`${CSI}5;1H${CSI}10B`);
-    expect(cursorOf(term.frame()).row).toBe(4);
-  });
-
-  test('CUF at the right margin stays at the last column', () => {
-    const term = emulator(10, 5);
-    term.write(`${CSI}20C`);
-    expect(cursorOf(term.frame()).column).toBe(9);
+  test('CUU, CUB, CUD and CUF stop at the edge they run into', () => {
+    const at = (sequence: string) => {
+      const term = emulator(10, 5);
+      term.write(sequence);
+      return cursorOf(term.frame());
+    };
+    expect(at(`${CSI}10A`).row).toBe(0);
+    expect(at(`${CSI}10D`).column).toBe(0);
+    expect(at(`${CSI}5;1H${CSI}10B`).row).toBe(4);
+    expect(at(`${CSI}20C`).column).toBe(9);
   });
 });
 
