@@ -639,6 +639,7 @@ function screenOverCapturedHistory(
   if (above <= 0) return frame;
   const kept = terminalLines(currentOutput).slice(0, above);
   const window = [...kept, ...terminalLines(frame)].join('\n');
+  capturedAbove.delete(currentOutput);
   rememberCapturedAbove(window, above);
   return window;
 }
@@ -686,6 +687,7 @@ function foldCapturedPage(currentOutput: string, page: string, maximumLines: num
     const merged = collapseRepeat([...added, ...held]);
     const window = trimTerminalWindow(merged.join('\n'), maximumLines);
     const frameRows = held.length - (capturedAbove.get(currentOutput) ?? 0);
+    capturedAbove.delete(currentOutput);
     rememberCapturedAbove(window, terminalLines(window).length - frameRows);
     return window;
   } catch {
@@ -1416,7 +1418,9 @@ export function hasEarlierAfterPage(
   /** A captured-history page's own `has_more`: the answer, when there is one. */
   capturedHasMore?: boolean
 ): boolean {
-  if (capturedHasMore !== undefined) return capturedHasMore;
+  // A captured page answers for itself, but never past the window's cap:
+  // whatever lands above a full window is trimmed off as it lands.
+  if (capturedHasMore !== undefined) return capturedHasMore && requestedLines < maximumLines;
   const range = paneReadRange(read);
   if (range) return range.start > 0;
 

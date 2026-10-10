@@ -175,8 +175,8 @@ async function pullCapturedPage(
   }
   if (!answer.ok) {
     const status = answer.status;
-    const refused =
-      status === 400 || status === 404 || status === 409 || status === 410 || status === 413;
+    // A 410 here came from a read that started over already: failed, as on the cursor path.
+    const refused = status === 400 || status === 404 || status === 409 || status === 413;
     return {
       kind: refused ? 'refused' : 'failed',
       failure: capturedFailure(answer),

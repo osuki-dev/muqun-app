@@ -484,6 +484,8 @@ const initialData: ServerData = {
 };
 
 const MAX_RECONNECT_DELAY_MS = 8_000;
+/** How often a pane with nothing captured yet asks again while its output grows. */
+const CAPTURED_REPROBE_MS = 30_000;
 /** At most one size check of the open pane per this long, however fast `layout_updated` comes. */
 const LAYOUT_CHECK_MS = 2_000;
 
@@ -1355,10 +1357,16 @@ export function ServerTerminalWorkspace({
   // Per pane and per connection; never persisted.
   const capturedCursorRef = useRef<CapturedCursor | null>(null);
   const capturedOffRef = useRef(false);
-  // Whether the captured history is still on offer: the pull is offered on its
+  // Whether the captured history has rows above the window to give: asked
+  // once when the pane opens (`capturedProbe` bumps ask again), and again
+  // while output grows on a pane that had none yet. The pull is offered on its
   // account even where the window's own metrics say nothing is above it (an
-  // alternate-screen pane's always do).
-  const [capturedOpen, setCapturedOpen] = useState(true);
+  // alternate-screen pane's always do), and never when it has nothing.
+  const [capturedOpen, setCapturedOpen] = useState(false);
+  const [capturedProbe, setCapturedProbe] = useState(0);
+  const capturedProbedAtRef = useRef(0);
+  // The last probe found the capture empty: worth asking again as output grows.
+  const capturedEmptyRef = useRef(false);
   const earlierPartsRowsRef = useRef(0);
   const loadingEarlierPartsRef = useRef(false);
   const appliedNotificationTargetRef = useRef<string | null>(null);
@@ -1601,7 +1609,8 @@ export function ServerTerminalWorkspace({
     rangeUnsupportedRef.current = false;
     capturedCursorRef.current = null;
     capturedOffRef.current = false;
-    setCapturedOpen(true);
+    setCapturedOpen(false);
+    setCapturedProbe((probe) => probe + 1);
     loadingEarlierOutputRef.current = false;
     appliedNotificationTargetRef.current = null;
     setLoadingEarlierOutput(false);
@@ -1675,7 +1684,8 @@ export function ServerTerminalWorkspace({
     rangeUnsupportedRef.current = false;
     capturedCursorRef.current = null;
     capturedOffRef.current = false;
-    setCapturedOpen(true);
+    setCapturedOpen(false);
+    setCapturedProbe((probe) => probe + 1);
     loadingEarlierOutputRef.current = false;
     setLoadingEarlierOutput(false);
     setHistoryNotice(null);
@@ -2389,6 +2399,35 @@ export function ServerTerminalWorkspace({
     void recordServerCapabilities(record.serverId, data.health.capabilities);
   }, [data.health, record, recordServerCapabilities, selectedServer]);
 
+  // Does the open pane have captured rows above the window? One row is asked
+  // for: `not_captured` (a shell with its own scrollback) turns the captured
+  // source off for the pane; no rows yet leaves it to be asked again.
+  useEffect(() => {
+    const paneId = selection.paneId;
+    const sessionId = data.sessionId;
+    if (!ready || !servesCapturedHistory || !paneId || !sessionId || capturedOffRef.current) return;
+    let current = true;
+    capturedProbedAtRef.current = Date.now();
+    void readPaneHistory(sessionId, paneId, null, 1).then((answer) => {
+      if (!current || activePaneRef.current !== paneId) return;
+      if (answer.ok && answer.page.availability === 'not_captured') capturedOffRef.current = true;
+      const rows = answer.ok ? answer.page.rows.length : 0;
+      capturedEmptyRef.current = answer.ok && answer.page.availability === 'captured' && rows === 0;
+      // A window already at its cap has no room for more above it.
+      setCapturedOpen(rows > 0 && outputLineLimitRef.current < MAX_PANE_OUTPUT_LINES);
+    });
+    return () => {
+      current = false;
+    };
+  }, [capturedProbe, data.sessionId, ready, selection.paneId, servesCapturedHistory]);
+  // A pane with nothing captured yet gains rows as its output scrolls: ask
+  // again, at most every CAPTURED_REPROBE_MS, while output keeps coming.
+  useEffect(() => {
+    if (capturedOpen || !capturedEmptyRef.current || !servesCapturedHistory) return;
+    if (Date.now() - capturedProbedAtRef.current < CAPTURED_REPROBE_MS) return;
+    setCapturedProbe((probe) => probe + 1);
+  }, [output, capturedOpen, servesCapturedHistory]);
+
   // Whether this pane is an editor, which is what "is this a full-screen
   // program" means until `alternate_on` is plumbed through -- see
   // `isFullScreenTuiPane`'s own doc for the two questions this conflates and
@@ -3038,7 +3077,8 @@ export function ServerTerminalWorkspace({
     rangeUnsupportedRef.current = restored?.rangeUnsupported ?? false;
     capturedCursorRef.current = null;
     capturedOffRef.current = false;
-    setCapturedOpen(true);
+    setCapturedOpen(false);
+    setCapturedProbe((probe) => probe + 1);
     loadingEarlierOutputRef.current = false;
     setLoadingEarlierOutput(false);
     setHistoryNotice(null);
@@ -3535,7 +3575,9 @@ export function ServerTerminalWorkspace({
               setCapturedOpen(false);
             } else if (captured?.kind === 'page') {
               capturedCursorRef.current = captured.cursor;
-              if (!captured.hasMore) setCapturedOpen(false);
+              // The last page, or a window at its cap: a page more would be
+              // trimmed away as it landed, so the pull is not offered again.
+              if (!captured.hasMore || nextLimit >= MAX_PANE_OUTPUT_LINES) setCapturedOpen(false);
             } else if (servesCapturedHistory && !capturedOffRef.current) {
               // The captured read refused or failed: not offered on its account
               // until a reconnect or another pane.
@@ -3658,7 +3700,8 @@ export function ServerTerminalWorkspace({
     // starts over, and the cursor means nothing there.
     capturedCursorRef.current = null;
     capturedOffRef.current = false;
-    setCapturedOpen(true);
+    setCapturedOpen(false);
+    setCapturedProbe((probe) => probe + 1);
     historyPullBlockedRef.current = historyPullBlockedAfter('reconnected');
     setHistoryPullBlocked(historyPullBlockedRef.current);
   }, [connection.phase]);

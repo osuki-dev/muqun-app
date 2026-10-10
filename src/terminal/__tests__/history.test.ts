@@ -376,6 +376,8 @@ describe('a screen-owning pane replaces rather than accumulates (card #795, defe
   test("a captured page's has_more is the answer to whether there is more", () => {
     expect(hasEarlierAfterPage('a\nb', 240, 2000, null, 0, null, true)).toBe(true);
     expect(hasEarlierAfterPage('a\nb', 240, 2000, null, 0, null, false)).toBe(false);
+    // A window at its cap: more would be trimmed off as it landed.
+    expect(hasEarlierAfterPage('a\nb', 2000, 2000, null, 0, null, true)).toBe(false);
   });
 
   test('a pane that does not own the screen is completely unaffected (default false)', () => {
