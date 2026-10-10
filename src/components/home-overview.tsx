@@ -980,6 +980,8 @@ export function HomeOverview({
         // or its pane, on its own computer.
         onOpenTask={({ serverId, task }) => {
           dismissTaskNotices(task);
+          // Opening work on another computer keeps the dock where it is.
+          launchController.pinTarget();
           openTaskWork(commands, serverId, task);
         }}
       />
@@ -1004,6 +1006,8 @@ export function HomeOverview({
             return;
           }
           dismissTaskNotices(task);
+          // Opening work on another computer keeps the dock where it is.
+          launchController.pinTarget();
           openTaskWork(commands, serverId, task);
         }}
       />

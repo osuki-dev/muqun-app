@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'bun:test';
 
 import {
+  awaitSessionListed,
   consumeNewAgentIntent,
   createHomeCommandController,
   isHomeSshTargetAvailable,
@@ -770,5 +771,22 @@ describe('new terminal with no backend running', () => {
     expect(result.status).toBe('unavailable');
     if (result.status === 'unavailable') expect(result.backendDown).toEqual(backendDown);
     expect(adapter.navigations).toEqual([]);
+  });
+});
+
+describe('awaitSessionListed: a session opened before its computer lists it', () => {
+  const noSleep = () => Promise.resolve();
+  test.each([
+    ['listed on the third read: opened then', [[], [], ['a']], 'ready'],
+    ['never listed while the computer answers: gone', [[], [], [], [], []], 'gone'],
+    ['no read answered: opened anyway', [null, null, null, null, null], 'unknown'],
+  ] as const)('%s', async (_name, answers, expected) => {
+    let reads = 0;
+    const outcome = await awaitSessionListed(
+      () => Promise.resolve(answers[Math.min(reads++, answers.length - 1)] ?? null),
+      'a',
+      { timeoutMs: 2_000, intervalMs: 500, sleep: noSleep }
+    );
+    expect(outcome).toBe(expected);
   });
 });

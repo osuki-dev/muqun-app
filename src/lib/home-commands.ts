@@ -145,6 +145,12 @@ export type HomeCommandPorts = {
   selectedServerId?: () => string | null | undefined;
   /** The source Home route remains focused while its owner tree is replaced. */
   sourceRouteActive?: () => boolean;
+  /**
+   * Whether an agent session about to be opened is known to its computer:
+   * `false` only when the computer answered without it (gone). A session
+   * the list has not caught up with yet is waited for (`awaitSessionListed`).
+   */
+  agentSessionKnown?: (target: HomeAgentEntry) => Promise<boolean>;
   /** Read the existing server/session API needed by the panels picker. */
   loadTerminalSelection: (serverId: string) => Promise<HomeTerminalSelection | null>;
   /** Validate persisted terminal and SSH targets before routing to them. */
@@ -167,6 +173,32 @@ export type HomeCommandPorts = {
     isCurrent: () => boolean
   ) => HomeResumeServerResult | Promise<HomeResumeServerResult>;
 };
+
+/**
+ * Wait, within `timeoutMs`, until `read` lists `asid`: `ready` once it does;
+ * `gone` when the computer kept answering without it to the end; `unknown`
+ * when no read answered (the caller opens anyway and lets the screen say).
+ */
+export async function awaitSessionListed(
+  read: () => Promise<readonly string[] | null>,
+  asid: string,
+  options: { timeoutMs?: number; intervalMs?: number; sleep?: (ms: number) => Promise<void> } = {}
+): Promise<'ready' | 'gone' | 'unknown'> {
+  const timeoutMs = options.timeoutMs ?? 5_000;
+  const intervalMs = options.intervalMs ?? 500;
+  const sleep =
+    options.sleep ?? ((ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms)));
+  let answered = false;
+  for (let waited = 0; ; waited += intervalMs) {
+    const listed = await read().catch(() => null);
+    if (listed) {
+      if (listed.includes(asid)) return 'ready';
+      answered = true;
+    }
+    if (waited + intervalMs > timeoutMs) return answered ? 'gone' : 'unknown';
+    await sleep(intervalMs);
+  }
+}
 
 export type HomeCommandResult =
   | { status: 'dispatched'; operationId: number }
@@ -393,6 +425,16 @@ export function createHomeCommandController(ports: HomeCommandPorts) {
           if (selection) return selection;
           const ownership = selectedServerStillOwns(operation, command.target.serverId);
           if (ownership) return ownership;
+          // Opened before the computer's session list has it (a task tapped the
+          // moment it appeared), the screen would show an empty, untitled
+          // session: wait for it, briefly; say so when it is gone.
+          if (command.target.asid && ports.agentSessionKnown) {
+            const known = await ports.agentSessionKnown(command.target);
+            if (!current(operation)) return superseded(operation);
+            if (!known) return missing(operation, command.target.asid);
+            const settled = selectedServerStillOwns(operation, command.target.serverId);
+            if (settled) return settled;
+          }
           ports.navigate({ type: 'agent', target: command.target, intent: 'existing' });
           finish(operation);
           return { status: 'dispatched', operationId: operation.id };

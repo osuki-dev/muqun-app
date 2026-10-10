@@ -1,4 +1,5 @@
 import { HOME_TOOLBAR_PAIR_WIDTH, HOME_TOOLBAR_ICON_INSET } from '@/constants/home-toolbar';
+import { homeDockTargetId } from '@/lib/home-composer';
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens } from '@osuki-dev/ui';
@@ -81,10 +82,12 @@ export function useHomeLaunchController({
     pickerRequestId !== null && pickerCompletedRequestId === pickerRequestId
       ? pickerCompletedServerId
       : null;
-  const chosen =
-    servers.find((server) => server.serverId === (returnedServerId ?? chosenId)) ??
-    servers.find((server) => server.serverId === selectedServerId) ??
-    (servers.length === 1 ? servers[0] : undefined);
+  const chosenTargetId = homeDockTargetId({
+    serverIds: servers.map((server) => server.serverId),
+    pickedId: returnedServerId ?? chosenId,
+    ...(selectedServerId ? { selectedId: selectedServerId } : {}),
+  });
+  const chosen = servers.find((server) => server.serverId === chosenTargetId);
   const chosenReachability = chosen
     ? (reachabilityByServer[chosen.serverId] ?? 'unknown')
     : undefined;
@@ -138,9 +141,17 @@ export function useHomeLaunchController({
   function choose(serverId: string) {
     if (servers.some((server) => server.serverId === serverId)) setChosenId(serverId);
   }
+  /**
+   * Keep the dock on the computer it names now, before something else (opening
+   * a task on another computer) moves the app's selection.
+   */
+  function pinTarget() {
+    if (chosen) setChosenId(chosen.serverId);
+  }
 
   return {
     choose,
+    pinTarget,
     chosen,
     chosenOffline,
     launchOnChosen,
