@@ -23,7 +23,7 @@ import { recentCatalogModels } from '@/lib/recent-agent-models';
 import { appChrome } from '@/constants/appearance';
 import { withAlpha } from '@/lib/color';
 import { fadeIn, listLayout, riseIn, STAGGER } from '@/lib/motion';
-import { groupModelsByProvider, hasFreeModel } from '@/lib/agent-model-groups';
+import { groupModelsByProvider, hasFreeModel, providerTitle } from '@/lib/agent-model-groups';
 import { SECTION_PAGE_SIZE, nearListEnd, pageSections } from '@/lib/paged-sections';
 import { findAgentModelPosition } from '@/lib/agent-model-position';
 import {
@@ -64,33 +64,6 @@ export interface AgentModelSheetProps {
   selectedModel?: ModelRef;
   onSelectModel: (model: ModelRef) => void;
   onClose: () => void;
-}
-
-/**
- * The provider's own spelling of its name.
- *
- * The group heading is the only thing telling two identically-named models
- * apart -- `opencode` and `opencode-go` both publish a "Union Alpha Free" --
- * so a hyphenated id has to survive as words rather than collapse to one.
- */
-function providerName(provider: string): string {
-  const known: Record<string, string> = {
-    anthropic: 'Anthropic',
-    openai: 'OpenAI',
-    google: 'Google Cloud',
-    deepseek: 'DeepSeek',
-    ollama: 'Ollama',
-    openrouter: 'OpenRouter',
-    opencode: 'OpenCode',
-    'opencode-go': 'OpenCode Go',
-  };
-  const lower = provider.toLowerCase();
-  if (known[lower]) return known[lower];
-  return lower
-    .split(/[-_]/)
-    .filter(Boolean)
-    .map((word) => known[word] ?? word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
 }
 
 /**
@@ -266,7 +239,7 @@ export const AgentModelSheet = memo(function AgentModelSheet({
       : [];
     // Titled by the catalog's provider names; a provider the host has not
     // signed in is still a group, greyed, so the reader learns why it is empty.
-    for (const group of groupModelsByProvider(filteredModels, providers, providerName, {
+    for (const group of groupModelsByProvider(filteredModels, providers, {
       includeEmptyUnavailable: !searching,
     })) {
       result.push({
@@ -611,7 +584,7 @@ export const AgentModelSheet = memo(function AgentModelSheet({
                           title={model.name || model.id}
                           caption={
                             section.recent
-                              ? [providerName(model.provider_id), modelCaption(model)]
+                              ? [providerTitle(providers, model.provider_id), modelCaption(model)]
                                   .filter(Boolean)
                                   .join(' · ')
                               : modelCaption(model)
