@@ -30,14 +30,13 @@ const history = Array.from(
 );
 
 describe('snapshot line cache equivalence', () => {
-  test.each(STREAM_CORPUS.map(([name, input]) => [name, input] as const))(
-    '%s parses the same with a cache',
-    (_name: string, input: string) => {
+  test('every corpus stream parses the same with a cache', () => {
+    for (const [, input] of STREAM_CORPUS) {
       expectSequence([input, input]);
       expectSequence([input], { columns: 60 });
       expectSequence([input], { columns: 60, rows: 30 });
     }
-  );
+  });
 
   test('a spinner line changing under unchanged history', () => {
     expectSequence(
