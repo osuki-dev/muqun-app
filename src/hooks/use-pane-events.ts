@@ -63,6 +63,8 @@ type PaneEventHandlers = {
   onPaneOutput: (paneId: string, revision: number, text: string) => void;
   /** The set of workspaces, tabs, panes or agents changed. */
   onStructureChanged: () => void;
+  /** tmux's layout fingerprint moved: maybe a resize, maybe only title churn. */
+  onLayoutChanged?: () => void;
   /** Connected or reconnected. Everything since the last event is unknown. */
   onConnected: () => void;
   /**
@@ -169,9 +171,10 @@ export function usePaneEvents(
         }
         return;
       }
-      // A structural change, a pane resized (`layout_updated`) included: the
-      // pane list, and with it each pane's columns, is read again.
+      // A structural change: the pane list is read again.
       if (role === 'structure') handlersRef.current.onStructureChanged();
+      // The layout fingerprint: the caller checks the open pane's size first.
+      if (role === 'layout') handlersRef.current.onLayoutChanged?.();
     };
 
     // Approvals are the gateway's own events, not forwarded Herdr lines, so

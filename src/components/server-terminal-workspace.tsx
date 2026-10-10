@@ -140,6 +140,7 @@ import { GatewayStorageError } from '@/components/gateway-storage-error';
 import { useGatewayTunnel } from '@/hooks/use-gateway-tunnel';
 import { usePaneApproval } from '@/hooks/use-pane-approval';
 import { usePaneEvents } from '@/hooks/use-pane-events';
+import { paneGeometryChanged } from '@/lib/pane-event-names';
 import {
   useLatestRef,
   useLazyRef,
@@ -177,6 +178,7 @@ import {
   gatewaySupportsAgentEvents,
   gatewaySupportsAgentSpawn,
   gatewaySupportsApprovals,
+  getPane,
   readPaneOutput,
   readPaneRange,
   readPaneHistory,
@@ -482,6 +484,8 @@ const initialData: ServerData = {
 };
 
 const MAX_RECONNECT_DELAY_MS = 8_000;
+/** At most one size check of the open pane per this long, however fast `layout_updated` comes. */
+const LAYOUT_CHECK_MS = 2_000;
 
 /**
  * How long a selection has to stand still before its neighbours are warmed.
@@ -1904,6 +1908,44 @@ export function ServerTerminalWorkspace({
       refreshDataRef.current = () => {};
     };
   }, [refreshData]);
+
+  // tmux's `layout_updated` moves with every title or command change on the
+  // host, every 500 ms next to a working agent, so it never re-reads the
+  // workspace by itself: at most once every LAYOUT_CHECK_MS the open pane alone
+  // is read, and the workspace follows only when that pane's grid changed.
+  const layoutCheckRef = useRef<() => void>(() => {});
+  useEffect(() => {
+    let handle: ReturnType<typeof setTimeout> | undefined;
+    let lastCheckAt = 0;
+    const sessionId = data.sessionId;
+    layoutCheckRef.current = () => {
+      if (handle || !sessionId) return;
+      const wait = Math.max(250, lastCheckAt + LAYOUT_CHECK_MS - Date.now());
+      handle = setTimeout(() => {
+        handle = undefined;
+        lastCheckAt = Date.now();
+        const paneId = activePaneRef.current;
+        const held = paneId ? panesRef.current.find((pane) => pane.id === paneId) : undefined;
+        if (!paneId || !held) return;
+        getPane(sessionId, paneId).then(
+          (fresh) => {
+            if (activePaneRef.current !== paneId) return;
+            const geometry = (pane: HerdrEntity) => ({
+              width: numberField(pane, 'width'),
+              height: numberField(pane, 'height'),
+            });
+            if (paneGeometryChanged(geometry(held), geometry(fresh))) refreshDataRef.current();
+          },
+          // The 12 s poll still reads the workspace; a failed check is not news.
+          () => {}
+        );
+      }, wait);
+    };
+    return () => {
+      if (handle) clearTimeout(handle);
+      layoutCheckRef.current = () => {};
+    };
+  }, [data.sessionId]);
 
   useEffect(() => {
     const subscription = AppState.addEventListener('change', (state) => {
@@ -3998,6 +4040,7 @@ export function ServerTerminalWorkspace({
           applyPaneOutputRef.current(paneId, text, revision, 'frame');
         },
         onStructureChanged: () => refreshDataRef.current(),
+        onLayoutChanged: () => layoutCheckRef.current(),
         onDisconnected: () => setStreamUp(false),
         onConnected: () => {
           setStreamUp(true);
