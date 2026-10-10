@@ -112,7 +112,7 @@
     "react-native-reanimated": "4.7.1",
     "react-native-safe-area-context": "~5.10.1",
     "react-native-screens": "4.28.0",
-    "react-native-skia": "3.0.8",
+    "react-native-skia": "3.3.0",
     "react-native-svg": "15.15.5",
     "react-native-video": "7.0.0-beta.12",
     "react-native-vision-camera": "^5.2.3",
@@ -179,8 +179,8 @@
   },
   "patchedDependencies": {
     "react-native-enriched-markdown@1.1.1": "patches/react-native-enriched-markdown@1.1.1.patch",
-    "react-native-skia@3.0.8": "patches/react-native-skia@3.0.8.patch",
-    "react-native-nitro-sound@0.2.20": "patches/react-native-nitro-sound@0.2.20.patch"
+    "react-native-nitro-sound@0.2.20": "patches/react-native-nitro-sound@0.2.20.patch",
+    "react-native-skia@3.3.0": "patches/react-native-skia@3.3.0.patch"
   },
   "trustedDependencies": [
     "react-native-skia",
