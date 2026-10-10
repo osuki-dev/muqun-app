@@ -3150,6 +3150,10 @@ msgstr "Conectado há {minutes} min"
 msgid "Last connected just now"
 msgstr "Conectado agora mesmo"
 
+#: src/components/home-composer-dock.tsx
+msgid "Last folder"
+msgstr "Última pasta"
+
 #: src/components/settings-servers.tsx
 msgid "Last seen {days}d ago"
 msgstr "Visto há {days} d"

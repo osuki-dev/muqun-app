@@ -49,11 +49,13 @@ type HomeAgentChoiceState = {
   terminalByServer: Record<string, AgentProfile[]>;
   /**
    * The folder Home's goals start in, per computer: the one last picked on
-   * the dock's bar. Absent means the agent's own default (`~`).
+   * the dock's bar, `~` for the home directory picked on purpose. Absent
+   * means nothing picked: no folder is sent, and the gateway uses the
+   * device's last one.
    */
   folderByServer: Record<string, string>;
   choose: (serverId: string, key: string) => void;
-  /** Set (or, with `~`, clear) a computer's folder from a picker answer. */
+  /** Set (or, with a blank answer, clear) a computer's folder from a picker answer. */
   chooseFolder: (serverId: string, directory: string) => void;
   recordTerminal: (serverId: string, profiles: AgentProfile[]) => void;
 };
