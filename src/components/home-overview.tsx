@@ -87,7 +87,11 @@ import {
 } from '@/components/home-computer-cards';
 import { HomeRecentChips } from '@/components/home-recent-chips';
 import { filterHomeRecent, homeRecentFilterIds } from '@/lib/home-continue';
-import { openTaskWork, taskSubscriptionServerIds } from '@/lib/home-computer-cards';
+import {
+  HOME_CARD_INSET,
+  openTaskWork,
+  taskSubscriptionServerIds,
+} from '@/lib/home-computer-cards';
 import { hasTaskLedger } from '@/lib/task-ledger';
 import {
   HomeContinueSearch,
@@ -98,7 +102,11 @@ import { homeContinueSearchEnabled } from '@/lib/home-continue-search';
 import { demoContinueSearchEntries } from '@/lib/demo-recents';
 import { useScreenVisible } from '@/hooks/use-screen-visible';
 import { claimHomeFirstEntry } from '@/lib/home-first-entry';
-import { padHomeColumns, padLaunchLayoutEnabled } from '@/lib/home-pad-geometry';
+import {
+  PAD_DOCK_FIELD_LINES,
+  padHomeColumns,
+  padLaunchLayoutEnabled,
+} from '@/lib/home-pad-geometry';
 import { useDockAutoHide } from '@/hooks/use-dock-auto-hide';
 import { resetSortHold, sortHoldScroll, sortHoldTouches } from '@/stores/home-sort-hold';
 import {
@@ -363,26 +371,13 @@ export function HomeOverview({
   const [composerPulse, setComposerPulse] = useState(0);
   // The phone dock floats over the page; the page's foot clears it.
   const [dockHeight, setDockHeight] = useState(0);
-  // The dock slides out of the way while the list scrolls down: the page's
-  // scroll on the phone, the work column's on the Pad cover.
+  // On the phone the dock slides out of the way while the page scrolls down.
+  // The Pad cover's dock stays fixed at the foot of its column.
   const pageDockHide = useDockAutoHide(dockHeight);
-  const padDockHide = useDockAutoHide(dockHeight);
-  const padWorkScroll = useAnimatedScrollHandler({
-    onScroll(event) {
-      padDockHide.scroll(event);
-    },
-    onBeginDrag() {
-      padDockHide.beginDrag();
-    },
-    onEndDrag() {
-      padDockHide.endDrag();
-    },
-  });
   // Back on Home, the dock is there: a scroll that hid it belonged to the
   // visit that ended.
   const resetDocks = useEffectEvent(() => {
     pageDockHide.reset();
-    padDockHide.reset();
   });
   useEffect(() => {
     if (isFocused) resetDocks();
@@ -900,15 +895,18 @@ export function HomeOverview({
       topInset={insets.top}
       // On the phone, a bar edge to edge at the foot whose field runs from
       // gutter to gutter, the cards' own edges.
+      // On the Pad cover, the same bar as wide as the work column, its rows
+      // padded like the cards' rows, and a field with room for a paragraph.
       edgeBar={
-        isPad
-          ? undefined
-          : {
-              inset: classicLayout ? metrics.contentGutter : padGeometry.gutter,
-            }
+        padLaunch
+          ? { inset: HOME_CARD_INSET }
+          : isPad
+            ? undefined
+            : { inset: classicLayout ? metrics.contentGutter : padGeometry.gutter }
       }
+      fieldLines={padLaunch ? PAD_DOCK_FIELD_LINES : undefined}
       onDockHeight={setDockHeight}
-      autoHide={padLaunch ? padDockHide.dock : pageDockHide.dock}
+      autoHide={padLaunch ? undefined : pageDockHide.dock}
       onOpenAgent={commands.openAgent}
     />
   ) : null;
@@ -1117,13 +1115,7 @@ export function HomeOverview({
               }
               padComposer={padLaunch ? dock : undefined}
               padComposerHeight={dockHeight}
-              workScrollEvents={{
-                ...sortHoldScroll,
-                onScroll: padWorkScroll,
-                onContentSizeChange: (_, contentHeight) => padDockHide.settle({ contentHeight }),
-                onLayout: (event) =>
-                  padDockHide.settle({ viewportHeight: event.nativeEvent.layout.height }),
-              }}
+              workScrollEvents={sortHoldScroll}
               entering={entering}
               launches={
                 hydrationError || loading ? undefined : launchController.servers.length === 0 ? (

@@ -393,11 +393,12 @@ export function HomeEditorialLayout({
   });
 
   if (padLaunchLayout) {
-    // Two columns (design §8 Pad). The left one is the cover block -- the
-    // pack's title and painting, or the app's wordmark, at a fixed share of
-    // the page with nothing over it -- then the work (tiles, needs-you,
-    // Computers) in the same scroll, and the dock at its foot. The right one
-    // is Recent alone, scrolling on its own. The page itself does not scroll.
+    // Two columns (design §8 Pad, revised). The left one is the cover block --
+    // the pack's title and painting, or the app's wordmark, at a fixed share
+    // of the page with nothing over it -- then the tiles and Recent, in one
+    // scroll. The right one is the work: Needs you and the computer cards in a
+    // scroll of their own, and the dock fixed at its foot. The page itself
+    // does not scroll.
     const columns = padHomeColumns(geometry.innerWidth);
     const coverKind = padCoverKind({
       cover,
@@ -408,14 +409,13 @@ export function HomeEditorialLayout({
     const wordmark = coverKind === 'wordmark';
     const coverBlock = padCover({
       viewportHeight: viewportHeight ?? 0,
-      coverWidth: columns.work,
+      coverWidth: columns.cover,
       measuredTitleWidth:
         titleMeasurement && titleMeasurement.title === titleKey ? titleMeasurement.width : 0,
       wordmark,
-      compact: hasAttention || hasProgress,
     });
-    // The block shrinks when work arrives and grows back when it goes; what
-    // follows it moves with it. Instant under reduce-motion (`listLayout`).
+    // What follows a section that grows or goes moves with it. Instant under
+    // reduce-motion (`listLayout`).
     const coverLayout = listLayout('medium');
     const bandArrival = bandSettled
       ? undefined
@@ -478,15 +478,15 @@ export function HomeEditorialLayout({
           </View>
         ) : null}
         <View style={styles.padColumns}>
-          <View testID="home-pad-work-column" style={{ width: columns.work }}>
-            <Animated.ScrollView
+          <View testID="home-pad-cover-column" style={{ width: columns.cover }}>
+            {/* Keyboard-aware on its own: the page's view only lifts fields
+                whose nearest scroll view it is, and Recent's search is here. */}
+            <KeyboardAwareScrollView
               testID="home-pad-launch-pane"
-              scrollEventThrottle={16}
               showsVerticalScrollIndicator={false}
               keyboardShouldPersistTaps="handled"
               style={styles.padScroll}
-              contentContainerStyle={styles.padWorkContent}
-              {...workScrollEvents}>
+              contentContainerStyle={styles.padWorkContent}>
               {wordmark ? (
                 <Animated.View
                   testID="home-pad-cover"
@@ -559,6 +559,36 @@ export function HomeEditorialLayout({
                   {launches}
                 </Animated.View>
               ) : null}
+              {hasRecent ? (
+                <Animated.View
+                  testID="home-pad-continue"
+                  entering={rise(1)}
+                  style={styles.padSection}>
+                  {recentHeading ? (
+                    <View style={styles.padWorkTitle}>{recentHeading}</View>
+                  ) : (
+                    <Text
+                      variant="heading"
+                      accessibilityRole="header"
+                      color={theme.colors.text}
+                      style={[styles.padWorkTitle, scenePlate]}>
+                      {t`Recent`}
+                    </Text>
+                  )}
+                  {recent}
+                </Animated.View>
+              ) : null}
+            </KeyboardAwareScrollView>
+          </View>
+          <View testID="home-pad-work-column" style={styles.padWorkColumn}>
+            <Animated.ScrollView
+              testID="home-pad-work-pane"
+              scrollEventThrottle={16}
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+              style={styles.padScroll}
+              contentContainerStyle={styles.padRecentContent}
+              {...workScrollEvents}>
               {hasSlot(attention) ? (
                 // Mounted while empty (its arrival pulse); spaced only with a row.
                 <Animated.View
@@ -607,33 +637,6 @@ export function HomeEditorialLayout({
               <View testID="home-pad-composer" style={{ height: padComposerHeight }}>
                 {padComposer}
               </View>
-            ) : null}
-          </View>
-          <View testID="home-pad-recent-column" style={styles.padRecentColumn}>
-            {/* Keyboard-aware on its own: the page's view only lifts fields
-                whose nearest scroll view it is, and Recent's search is here. */}
-            {hasRecent ? (
-              <KeyboardAwareScrollView
-                testID="home-pad-recent-pane"
-                showsVerticalScrollIndicator={false}
-                keyboardShouldPersistTaps="handled"
-                style={styles.padScroll}
-                contentContainerStyle={styles.padRecentContent}>
-                <Animated.View testID="home-pad-continue" entering={rise(3)}>
-                  {recentHeading ? (
-                    <View style={styles.padWorkTitle}>{recentHeading}</View>
-                  ) : (
-                    <Text
-                      variant="heading"
-                      accessibilityRole="header"
-                      color={theme.colors.text}
-                      style={[styles.padWorkTitle, scenePlate]}>
-                      {t`Recent`}
-                    </Text>
-                  )}
-                  {recent}
-                </Animated.View>
-              </KeyboardAwareScrollView>
             ) : null}
           </View>
         </View>
@@ -1047,7 +1050,7 @@ const styles = StyleSheet.create({
   // Anchored right, so the title's start stays clear at the block's left.
   padCoverArtwork: { position: 'absolute', right: 0, bottom: 0, zIndex: 1 },
   padColumns: { flex: 1, minHeight: 0, flexDirection: 'row', gap: PAD_COLUMN_GAP },
-  padRecentColumn: { flex: 1, minWidth: 0 },
+  padWorkColumn: { flex: 1, minWidth: 0 },
   padScroll: { flex: 1 },
   padWorkContent: { paddingBottom: 24 },
   padSection: { marginTop: 16 },
