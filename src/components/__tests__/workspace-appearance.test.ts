@@ -217,7 +217,7 @@ describe('route-owned chrome follows the appearance profile', () => {
     expect(styleBlock(connections, 'row')).not.toContain('border');
     const attention = read('home-attention');
     expect(styleBlock(attention, 'row')).toContain('borderWidth: StyleSheet.hairlineWidth');
-    expect(styleBlock(attention, 'row')).toContain('borderLeftWidth: 4');
+    expect(styleBlock(attention, 'row')).not.toContain('borderLeftWidth');
     // These lists use spacing rather than bottom borders. Attention cards retain
     // their perimeter, and the scanner's bottom strokes are not list dividers.
     for (const name of ['row', 'group']) {

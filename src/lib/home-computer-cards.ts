@@ -611,11 +611,10 @@ export type TaskRowVisual = {
   /** The right-hand time: how long open work has run, or how long ago it ended. */
   clock: 'elapsed' | 'ago' | 'none';
   /**
-   * A row that needs the reader carries the warning edge (§3), pulsed once on
-   * arrival. `warning`, not §3's `warningSubtle`: the theme schema has no such
-   * token, and adding one is a theme-package change.
+   * The row needs the reader: it pulses once on arrival and is marked by its
+   * glyph and state word only, never a persistent bar (home-dispatch-ux §10).
    */
-  edge?: 'warning';
+  needsYou?: true;
   actions: TaskRowAction[];
 };
 
@@ -711,7 +710,7 @@ function taskStateVisual(
         spins: false,
         line: said ? { kind: 'waiting', text: said } : { kind: 'waiting' },
         clock: 'elapsed',
-        edge: 'warning',
+        needsYou: true,
         actions: confirmable,
       };
     case 'idle_unconfirmed':

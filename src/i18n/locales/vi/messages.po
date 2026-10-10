@@ -3204,6 +3204,10 @@ msgstr "Kết nối lần cuối vừa xong"
 msgid "Last folder"
 msgstr "Thư mục lần cuối"
 
+#: src/components/task-row.tsx
+msgid "last seen {ago}"
+msgstr "thấy lần cuối {ago}"
+
 #: src/components/settings-servers.tsx
 msgid "Last seen {days}d ago"
 msgstr "Thấy lần cuối {days} ngày trước"
@@ -6649,10 +6653,6 @@ msgstr "Đang hủy ghép nối…"
 #: src/components/task-row.tsx
 msgid "Unreachable"
 msgstr "Không kết nối được"
-
-#: src/components/task-row.tsx
-msgid "Unreachable · last seen {ago}"
-msgstr "Không kết nối được · thấy lần cuối {ago}"
 
 #: src/components/diff-rows.tsx
 msgid "Unstaged"

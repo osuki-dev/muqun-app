@@ -514,21 +514,24 @@ export const entryRise = (index: number, count: number, after = 0) =>
     ENTRY_BUDGET_MS - DURATION.short
   );
 
+/** How long {@link pulseOnce} runs; the overlay it drives unmounts after it. */
+export const PULSE_ONCE_MS = DURATION.short * 3;
+
 /**
- * One gentle pulse when something arrives that needs the reader: the view
- * fades in, dips once and settles at full strength, `short` each way, then
- * stays still. An entering animation rather than an effect, so inside a
- * `LayoutAnimationConfig skipEntering` it plays for an arrival and not for a
- * screen that merely mounted again. Instant under reduce-motion.
+ * One gentle pulse when something arrives that needs the reader: an overlay
+ * fades in and back out to nothing, and its owner then unmounts it, so
+ * nothing stays behind (home-dispatch-ux §10). An entering animation rather
+ * than an effect, so inside a `LayoutAnimationConfig skipEntering` it does not
+ * play for a screen that merely mounted again (the overlay's resting opacity
+ * is 0). Skipped under reduce-motion.
  */
 export const pulseOnce = () =>
   new Keyframe({
     0: { opacity: 0 },
-    40: { opacity: 1, easing: EASE_OUT },
-    70: { opacity: 0.4, easing: EASE_OUT },
-    100: { opacity: 1, easing: EASE_OUT },
+    35: { opacity: 1, easing: EASE_OUT },
+    100: { opacity: 0, easing: EASE_OUT },
   })
-    .duration(DURATION.short * 2)
+    .duration(PULSE_ONCE_MS)
     .reduceMotion(ReduceMotion.System);
 
 /**

@@ -3204,6 +3204,10 @@ msgstr "마지막 연결: 방금"
 msgid "Last folder"
 msgstr "마지막 폴더"
 
+#: src/components/task-row.tsx
+msgid "last seen {ago}"
+msgstr "마지막 확인 {ago}"
+
 #: src/components/settings-servers.tsx
 msgid "Last seen {days}d ago"
 msgstr "마지막 확인: {days}일 전"
@@ -6649,10 +6653,6 @@ msgstr "해제하는 중…"
 #: src/components/task-row.tsx
 msgid "Unreachable"
 msgstr "연결할 수 없음"
-
-#: src/components/task-row.tsx
-msgid "Unreachable · last seen {ago}"
-msgstr "연결할 수 없음 · 마지막 확인 {ago}"
 
 #: src/components/diff-rows.tsx
 msgid "Unstaged"

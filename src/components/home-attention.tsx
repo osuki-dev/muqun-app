@@ -3,17 +3,22 @@ import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { useThemeTokens } from '@osuki-dev/ui';
 import { ChevronRight, CircleAlert } from 'lucide-react-native';
 import { StyleSheet, View } from 'react-native';
-import Animated, { LayoutAnimationConfig } from 'react-native-reanimated';
+import { LayoutAnimationConfig } from 'react-native-reanimated';
 
 import { useTaskIndexFor } from '@/components/use-task-index';
 import { PressableScale } from '@/components/pressable-scale';
-import { RowMarkdown, TaskStateIcon, useTaskRowLine } from '@/components/task-row';
+import {
+  ArrivalPulse,
+  RowMarkdown,
+  TaskRowLineText,
+  TaskStateIcon,
+  useTaskRowLine,
+} from '@/components/task-row';
 import { useMinuteNow } from '@/hooks/use-minute-now';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { Text } from '@/components/text';
 import { ThemeIcon } from '@/components/theme-icon';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
-import { pulseOnce } from '@/lib/motion';
 import { taskRowVisual, taskRowTitle } from '@/lib/home-computer-cards';
 import type { GatewayRecord } from '@/lib/gateway-storage';
 import {
@@ -205,12 +210,8 @@ function WaitingTaskRow({
           borderRadius: profile.chrome.noticeCard,
         },
       ]}>
-      {/* A row arriving here pulses its edge once (skipped on a remount). */}
-      <Animated.View
-        pointerEvents="none"
-        entering={pulseOnce()}
-        style={[styles.edge, { backgroundColor: theme.colors.warning }]}
-      />
+      {/* A row arriving here pulses once (skipped on a remount), and leaves no mark. */}
+      <ArrivalPulse />
       <TaskStateIcon visual={visual} size={20} />
       <View style={styles.copy}>
         {/* A row, as on the card: the title's `flex: 1` is a width, not a height. */}
@@ -220,11 +221,11 @@ function WaitingTaskRow({
         <View style={styles.metaLine}>
           {/* The computer's label is the reader's own text, never markdown. */}
           {computer ? (
-            <Text variant="caption" color={line.color} numberOfLines={1}>
+            <Text variant="caption" color={theme.colors.textMuted} numberOfLines={1}>
               {`${computer}${META_SEPARATOR}`}
             </Text>
           ) : null}
-          <RowMarkdown text={line.text} ink={line.color} kind="line" />
+          <TaskRowLineText line={line} />
         </View>
       </View>
       <ThemeIcon name="home.arrow" fallback={ChevronRight} size={16} color={theme.colors.primary} />
@@ -268,7 +269,6 @@ function AttentionRow({
         {
           backgroundColor: background(theme.colors.surface),
           borderColor: theme.colors.borderStrong,
-          borderLeftColor: theme.colors.warning,
           borderRadius: profile.chrome.noticeCard,
         },
       ]}>
@@ -301,11 +301,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: StyleSheet.hairlineWidth,
-    borderLeftWidth: 4,
+    // The arrival pulse stays inside the rounded row.
+    overflow: 'hidden',
   },
   copy: { flex: 1, minWidth: 0, gap: 4 },
   titleLine: { flexDirection: 'row', minWidth: 0 },
   metaLine: { flexDirection: 'row', alignItems: 'center', minWidth: 0 },
-  // Over the row's own left border, which a waiting row leaves to this edge.
-  edge: { position: 'absolute', left: -4, top: 0, bottom: 0, width: 4 },
 });

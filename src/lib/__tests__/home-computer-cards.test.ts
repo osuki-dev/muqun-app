@@ -435,12 +435,13 @@ describe('taskRowVisual: the rules the state table carries', () => {
       { line: { kind: 'agent' }, clock: 'elapsed', actions: ['open', 'cancel'] },
     ],
     [
-      'needs you: the warning edge, and Mark done where the gateway takes it',
+      'needs you: the warning tone and an arrival pulse, no edge, and Mark done where the gateway takes it',
       open('waiting', { summary: 'Allow edit?' }),
       { ...plain, canComplete: true },
       {
         line: { kind: 'waiting', text: 'Allow edit?' },
-        edge: 'warning',
+        tone: 'warning',
+        needsYou: true,
         actions: ['open', 'cancel', 'markDone'],
       },
     ],
