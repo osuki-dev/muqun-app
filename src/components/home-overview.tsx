@@ -934,17 +934,18 @@ export function HomeOverview({
       // gutter to gutter, the cards' own edges.
       // On the Pad cover, the same bar as wide as the work column, its rows
       // padded like the cards' rows, and a field with room for a paragraph.
+      // A Pad too narrow for the cover (portrait, large text) keeps the
+      // phone's full-width bar.
       edgeBar={
         padLaunch
           ? { inset: HOME_CARD_INSET }
-          : isPad
-            ? undefined
-            : { inset: classicLayout ? metrics.contentGutter : padGeometry.gutter }
+          : { inset: classicLayout ? metrics.contentGutter : padGeometry.gutter }
       }
       fieldLines={padLaunch ? PAD_DOCK_FIELD_LINES : undefined}
       onDockHeight={setDockHeight}
       onFieldFocus={isPad ? setDockFocused : undefined}
-      autoHide={padLaunch ? undefined : pageDockHide.dock}
+      // The device class decides, not the layout: a Pad never hides its dock.
+      autoHide={isPad ? undefined : pageDockHide.dock}
       onOpenAgent={commands.openAgent}
     />
   ) : null;
