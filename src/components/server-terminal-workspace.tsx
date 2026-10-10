@@ -207,6 +207,7 @@ import { composerBackdropBottom } from '@/lib/composer-popup';
 import { withAlpha } from '@/lib/color';
 import { slashCommandTrigger, type PaneSlashCommand } from '@/lib/pane-composer';
 import { asAgentWidgetStatus, syncAgentWidget } from '@/lib/agent-widget';
+import { paneGoneError } from '@/lib/agent-request-error';
 import { describeGatewayFailure, type GatewayFailure } from '@/lib/network-error';
 import {
   backendPagesHistory,
@@ -1356,6 +1357,13 @@ export function ServerTerminalWorkspace({
   // The gateway's captured history for this pane (`pullEarlierPage`): where the
   // next page starts, and whether the pane turned out not to be captured.
   // Per pane and per connection; never persisted.
+  // Panes the gateway said are gone (`404 backend_target_not_found`, or a
+  // `pane.closed` event), by the snapshot generation they were marked at: never
+  // read again -- the streaming poll stopped asking about a pane closed on the
+  // host, every 10 s, for as long as the screen stayed open -- unless a pane
+  // list taken after the mark shows the id again.
+  const gonePanesRef = useRef(new Map<string, number>());
+  const [goneVersion, setGoneVersion] = useState(0);
   const capturedCursorRef = useRef<CapturedCursor | null>(null);
   const capturedOffRef = useRef(false);
   // Whether the captured history has rows above the window to give: asked
@@ -1643,6 +1651,7 @@ export function ServerTerminalWorkspace({
     lastReadRef.current = null;
     rangeUnsupportedRef.current = false;
     restartCaptured();
+    gonePanesRef.current.clear();
     loadingEarlierOutputRef.current = false;
     appliedNotificationTargetRef.current = null;
     setLoadingEarlierOutput(false);
@@ -1947,6 +1956,32 @@ export function ServerTerminalWorkspace({
       refreshDataRef.current = () => {};
     };
   }, [refreshData]);
+
+  // A pane the gateway says is gone: stop asking about it, read the workspace
+  // again so the selection moves to a pane that exists, and say so where the
+  // reader was looking.
+  const markPaneGoneRef = useRef<(paneId: string) => void>(() => {});
+  useEffect(() => {
+    markPaneGoneRef.current = (paneId) => {
+      if (gonePanesRef.current.has(paneId)) return;
+      gonePanesRef.current.set(paneId, snapshotGenerationRef.current);
+      setGoneVersion((version) => version + 1);
+      if (activePaneRef.current === paneId) {
+        setError(t`This terminal is no longer available. Choose another terminal.`);
+      }
+      refreshDataRef.current();
+    };
+  }, [t]);
+  // A pane list taken after the mark that shows the id again (a backend that
+  // reused it): it is a pane again.
+  useEffect(() => {
+    for (const [paneId, markedAt] of gonePanesRef.current) {
+      if (snapshotGeneration > markedAt && data.panes.some((pane) => pane.id === paneId)) {
+        gonePanesRef.current.delete(paneId);
+        setGoneVersion((version) => version + 1);
+      }
+    }
+  }, [data.panes, snapshotGeneration]);
 
   // tmux's `layout_updated` is its only activity event: it carries every
   // window and pane created, closed or moved, and also moves with every title
@@ -3462,6 +3497,7 @@ export function ServerTerminalWorkspace({
       !watching ||
       connection.phase !== 'connected' ||
       !selection.paneId ||
+      gonePanesRef.current.has(selection.paneId) ||
       loadingEarlierOutputRef.current
     )
       return;
@@ -3496,6 +3532,10 @@ export function ServerTerminalWorkspace({
         );
       },
       (failure) => {
+        if (paneGoneError(failure)) {
+          markPaneGoneRef.current(requestPaneId);
+          return;
+        }
         if (isCurrentRequest()) {
           const description = describeGatewayFailure(failure, t`Could not read the terminal.`);
           if (!description.retryable) setError(description.message);
@@ -3822,6 +3862,8 @@ export function ServerTerminalWorkspace({
 
   useEffect(() => {
     if (!appActive || !watching || connection.phase !== 'connected' || !selection.paneId) return;
+    // A pane the gateway said is gone is not asked about again, on any cadence.
+    if (gonePanesRef.current.has(selection.paneId)) return;
     // First read on selecting the pane; after that the event stream drives it.
     // The interval is a safety net for a missed event or a cursor-only
     // change that does not bump the revision -- not the primary path.
@@ -3841,7 +3883,15 @@ export function ServerTerminalWorkspace({
       streamUp ? OUTPUT_POLL_STREAMING_MS : OUTPUT_POLL_FALLBACK_MS
     );
     return () => clearInterval(timer);
-  }, [appActive, connection.phase, refreshOutput, selection.paneId, streamUp, watching]);
+  }, [
+    appActive,
+    connection.phase,
+    goneVersion,
+    refreshOutput,
+    selection.paneId,
+    streamUp,
+    watching,
+  ]);
 
   /**
    * Warm the two panes a swipe can reach, so the switch onto them is a paint
@@ -4138,6 +4188,7 @@ export function ServerTerminalWorkspace({
           applyPaneOutputRef.current(paneId, text, revision, 'frame');
         },
         onStructureChanged: () => refreshDataRef.current(),
+        onPaneClosed: (paneId) => markPaneGoneRef.current(paneId),
         onLayoutChanged: () => layoutCheckRef.current(),
         onDisconnected: () => setStreamUp(false),
         onConnected: () => {

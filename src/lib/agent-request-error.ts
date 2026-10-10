@@ -168,6 +168,16 @@ export function classifyAgentRequestError(err: unknown): AgentRequestError {
   return { kind: 'other', message: oneLine(message ?? raw) };
 }
 
+/**
+ * Whether a pane read failed because the pane no longer exists: the gateway's
+ * `404 backend_target_not_found` (the backend has no such pane) or
+ * `404 unknown_pane`. An answer about the pane, never worth asking again.
+ */
+export function paneGoneError(err: unknown): boolean {
+  const { status, code } = readAgentRequestError(err);
+  return status === 404 && (code === 'backend_target_not_found' || code === 'unknown_pane');
+}
+
 /** Whether a failed read should put the screen into its offline state. */
 export function isAgentOfflineError(err: unknown): boolean {
   return classifyAgentRequestError(err).kind === 'offline';

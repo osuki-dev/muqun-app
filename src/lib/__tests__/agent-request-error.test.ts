@@ -6,12 +6,26 @@ import {
   classifyAgentRequestError,
   classifyAgentSessionGone,
   isAgentOfflineError,
+  paneGoneError,
 } from '../agent-request-error';
 
 const refusal = (status: number, code: string, message: string) =>
   new Error(
     `Failed to create agent session: ${status} ${JSON.stringify({ error: { code, message } })}`
   );
+
+test('a pane read the gateway answers "no such pane" is gone; nothing else is', () => {
+  const answered = (status: number, code: string) =>
+    new Error(`HTTP ${status}: ${JSON.stringify({ error: { code, message: 'x' } })}`);
+  const cases: [Error, boolean][] = [
+    [answered(404, 'backend_target_not_found'), true],
+    [answered(404, 'unknown_pane'), true],
+    [answered(404, 'workspace_missing'), false],
+    [answered(500, 'backend_target_not_found'), false],
+    [new Error('Network request failed'), false],
+  ];
+  expect(cases.map(([err]) => paneGoneError(err))).toEqual(cases.map(([, gone]) => gone));
+});
 
 describe('classifyAgentRequestError', () => {
   test("a 502 agent_error is the agent refusing, in the gateway's own words", () => {

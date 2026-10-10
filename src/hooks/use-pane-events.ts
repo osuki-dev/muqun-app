@@ -63,6 +63,8 @@ type PaneEventHandlers = {
   onPaneOutput: (paneId: string, revision: number, text: string) => void;
   /** The set of workspaces, tabs, panes or agents changed. */
   onStructureChanged: () => void;
+  /** `pane.closed` named the pane that went: it is never read again. */
+  onPaneClosed?: (paneId: string) => void;
   /** tmux's layout fingerprint moved: maybe a resize, maybe only title churn. */
   onLayoutChanged?: () => void;
   /** Connected or reconnected. Everything since the last event is unknown. */
@@ -172,7 +174,13 @@ export function usePaneEvents(
         return;
       }
       // A structural change: the pane list is read again.
-      if (role === 'structure') handlersRef.current.onStructureChanged();
+      if (role === 'structure') {
+        const closed = payload.data?.pane?.pane_id;
+        if (closed && name.replace(/\./g, '_') === 'pane_closed') {
+          handlersRef.current.onPaneClosed?.(closed);
+        }
+        handlersRef.current.onStructureChanged();
+      }
       // The layout fingerprint: the caller checks the open pane's size first.
       if (role === 'layout') handlersRef.current.onLayoutChanged?.();
     };
