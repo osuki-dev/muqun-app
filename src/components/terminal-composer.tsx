@@ -5,6 +5,7 @@ import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { Spinner, useThemeTokens } from '@osuki-dev/ui';
 import { Mic, Send } from 'lucide-react-native';
 import { Canvas, Group, Path, Skia } from 'react-native-skia';
+import { scheduleOnRN } from 'react-native-worklets';
 import { useEffect, useState, type ComponentProps, type ReactNode, type Ref } from 'react';
 import {
   StyleSheet,
@@ -256,8 +257,17 @@ export function ComposerSendButton({
   useEffect(() => {
     armedValue.value = withTiming(armed ? 1 : 0, timing('button'));
   }, [armed, armedValue]);
+  // The spinner exists only while a send is in flight and while it fades out.
+  // An indeterminate spinner left mounted at opacity 0 still animates on the
+  // render thread every vsync, which was most of what an idle Home cost.
+  const [spinnerMounted, setSpinnerMounted] = useState(sending);
+  if (sending && !spinnerMounted) setSpinnerMounted(true);
   useEffect(() => {
-    sendingValue.value = withTiming(sending ? 1 : 0, timing('button'));
+    sendingValue.set(
+      withTiming(sending ? 1 : 0, timing('button'), (finished) => {
+        if (finished && !sending) scheduleOnRN(setSpinnerMounted, false);
+      })
+    );
   }, [sending, sendingValue]);
 
   const fillStyle = useAnimatedStyle(() => ({
@@ -347,9 +357,11 @@ export function ComposerSendButton({
           </Canvas>
         </>
       )}
-      <Animated.View style={[StyleSheet.absoluteFill, composerStyles.buttonGlyph, spinnerStyle]}>
-        <Spinner size="sm" color={activeText} />
-      </Animated.View>
+      {spinnerMounted && (
+        <Animated.View style={[StyleSheet.absoluteFill, composerStyles.buttonGlyph, spinnerStyle]}>
+          <Spinner size="sm" color={activeText} />
+        </Animated.View>
+      )}
     </PressableScale>
   );
 }
