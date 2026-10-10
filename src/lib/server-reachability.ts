@@ -277,6 +277,17 @@ export function statusRefusesPairing(status: number | null | undefined): boolean
 }
 
 /**
+ * Whether a probe says the computer is down. One that answered and refused
+ * the token it was asked with (401/403) is not: it is there, and that token
+ * may be one a re-pair has replaced since.
+ */
+export function probeSaysDown(
+  probe: Pick<ReachabilityProbe, 'ok' | 'unauthorized'> | undefined
+): boolean {
+  return probe?.ok === false && probe.unauthorized !== true;
+}
+
+/**
  * What one forced probe says about this device's pairing, for the socket's
  * authorization check. Only an answer the probe just produced counts: a
  * probe that timed out keeps an earlier 401 in `unauthorized`, and that must

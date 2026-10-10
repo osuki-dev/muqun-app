@@ -30,6 +30,7 @@ import { useFleetUnpairs } from '@/stores/fleet-unpairs';
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';
 import { useServerCapabilities } from '@/stores/server-capabilities';
 import { useServerReachability } from '@/stores/server-reachability';
+import { probeSaysDown } from '@/lib/server-reachability';
 
 /** The background schedule; a trigger the reader caused runs at once. */
 export const FLEET_LINK_EVERY_MS = 10 * 60_000;
@@ -102,9 +103,14 @@ function stillPaired(serverId: string): GatewayRecord | undefined {
   return linkable().find((record) => record.serverId === serverId);
 }
 
-/** Home's probe says this computer is down: nothing to ask it this run. */
+/**
+ * Home's probe says this computer is down: nothing to ask it this run. A
+ * computer that answered and refused our token (401/403) is not down: it is
+ * there, and the token may be one replaced since -- a computer paired again --
+ * so the run asks it, and the answer it gets is the one that counts.
+ */
 function knownDown(serverId: string): boolean {
-  return useServerReachability.getState().probes[serverId]?.ok === false;
+  return probeSaysDown(useServerReachability.getState().probes[serverId]);
 }
 
 /** The apiVersion the last `/health` of this computer gave, when Home read one. */
