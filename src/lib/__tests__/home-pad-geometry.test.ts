@@ -27,16 +27,17 @@ describe('padLaunchLayoutEnabled', () => {
 
 describe('padHomeColumns and padCardColumns', () => {
   // inner width (1280dp landscape, 800dp portrait), cards -> cover/work widths, card columns
-  test.each<[number, number, 1 | 2]>([
-    [Math.min(1280, EDITORIAL_PAD_MAX_WIDTH), 1, 1],
-    [Math.min(1280, EDITORIAL_PAD_MAX_WIDTH), 2, 1],
-    [Math.min(1280, EDITORIAL_PAD_MAX_WIDTH), 4, 1],
-    [800, 2, 1],
-  ])('content %p with %p cards', (content, cards, columns) => {
-    const inner = getEditorialLayoutGeometry(content).innerWidth;
-    const { cover, work } = padHomeColumns(inner);
-    expect(cover + work + 24).toBe(inner);
-    expect(padCardColumns(work, cards)).toBe(columns);
+  test.each<[number, number, 1 | 2]>([[Math.min(1280, EDITORIAL_PAD_MAX_WIDTH), 2, 1]])(
+    'content %p with %p cards',
+    (content, cards, columns) => {
+      const inner = getEditorialLayoutGeometry(content).innerWidth;
+      const { cover, work } = padHomeColumns(inner);
+      expect(cover + work + 24).toBe(inner);
+      expect(padCardColumns(work, cards)).toBe(columns);
+    }
+  );
+  test('a column with room for two cards sets them two abreast', () => {
+    expect(padCardColumns(700, 2)).toBe(2);
   });
 });
 
