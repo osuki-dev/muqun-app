@@ -671,11 +671,11 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   // the work to. The prompt goes to the session as typed; the session's own
   // instructions already name them.
   const linkedPeers = useFleetPeers((state) => state.byServer[serverId]?.peers);
-  const pairedRecords = useGatewayConnectionStore((state) => state.records);
   const mentionComputers: MentionComputer[] =
     linkedPeers?.map((peer) => ({
       serverId: peer.serverId,
-      name: pairedRecords.find((record) => record.serverId === peer.serverId)?.label || peer.name,
+      // The name this computer knows the peer by: the one delegation takes.
+      name: peer.name,
       reachable: peer.reachable,
       current: false,
     })) ?? [];
