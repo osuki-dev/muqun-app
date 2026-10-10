@@ -236,7 +236,6 @@ const AgentNoticeRow = memo(function AgentNoticeRow({ part }: { part: AgentPart 
         // "Skill · report" reads as a label on a thing; what the row is
         // announcing is that the agent has just picked the skill up.
         return { Icon: Sparkles, text: t`Skill loaded · ${part.name ?? part.skill}` };
-      case 'synthetic':
       case 'system': {
         const text = part.text ?? part.description ?? '';
         if (!text) return null;
@@ -850,7 +849,6 @@ function renderTimelinePart(
     case 'agent_switched':
     case 'location_switched':
     case 'skill':
-    case 'synthetic':
     case 'system':
     case 'unsupported':
       return <AgentNoticeRow key={item.id} part={part} />;
@@ -1457,7 +1455,6 @@ const STANDALONE_PART_TYPES: ReadonlySet<string> = new Set([
   'agent_switched',
   'location_switched',
   'skill',
-  'synthetic',
   'system',
   'unsupported',
   'status',
