@@ -1,7 +1,9 @@
 import { describe, expect, test } from 'bun:test';
 import { EDITORIAL_PAD_MAX_WIDTH, getEditorialLayoutGeometry } from '@/lib/home-editorial-layout';
 import {
+  PAD_COVER_TITLE_LINE_HEIGHT,
   padCardColumns,
+  padCover,
   padCoverKind,
   padHomeColumns,
   padLaunchLayoutEnabled,
@@ -55,5 +57,33 @@ describe('padCoverKind', () => {
   test('no wordmark without a title, or over artwork', () => {
     expect(padCoverKind({ ...base, typographic: true, hasTitle: false })).toBe('identity');
     expect(padCoverKind({ ...base, typographic: true, hasArtwork: true })).toBe('identity');
+  });
+});
+
+describe('padCover', () => {
+  // screen height (dp), viewport left after the status bar and page inset, title width at 100pt
+  test.each<[string, number, number, number]>([
+    ['landscape, pack title', 800, 752, 420],
+    ['landscape, before the title is measured', 800, 752, 0],
+    ['portrait, long pack title', 1280, 1208, 900],
+  ])('%s', (_name, screen, viewport, measuredTitleWidth) => {
+    const inner = getEditorialLayoutGeometry(screen === 800 ? 1280 : 800).innerWidth;
+    const coverWidth = padHomeColumns(inner).work;
+    const block = padCover({
+      viewportHeight: viewport,
+      coverWidth,
+      measuredTitleWidth,
+      wordmark: false,
+    });
+    // A fixed 40-45% of the screen, whatever the title.
+    expect(block.height / screen).toBeGreaterThanOrEqual(0.4);
+    expect(block.height / screen).toBeLessThanOrEqual(0.45);
+    // The painting stays inside the block, clear of the title's start.
+    expect(block.artwork.height).toBeLessThanOrEqual(block.height);
+    expect(block.artwork.width).toBeLessThanOrEqual(coverWidth * 0.85 + 1);
+    // The title fits the column and leaves the painting most of the block.
+    if (measuredTitleWidth > 0)
+      expect((block.titleSize * measuredTitleWidth) / 100).toBeLessThanOrEqual(coverWidth);
+    expect(block.titleSize * PAD_COVER_TITLE_LINE_HEIGHT).toBeLessThanOrEqual(block.height * 0.4);
   });
 });

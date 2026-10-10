@@ -39,6 +39,8 @@ import {
 import { entryRise } from '@/lib/motion';
 import {
   PAD_COLUMN_GAP,
+  PAD_COVER_TITLE_LINE_HEIGHT,
+  padCover,
   padCoverKind,
   padHomeColumns,
   padLaunchLayoutEnabled,
@@ -78,12 +80,12 @@ export type HomeEditorialLayoutProps = {
   /** Start-new-work actions, already wired by the parent. */
   launches?: ReactNode;
   /**
-   * Home's dock on the two-column Pad page, across the foot of both columns:
-   * the lists stop `padComposerHeight` above it. Every other layout draws the
+   * Home's dock on the two-column Pad page, at the foot of the left column:
+   * the work stops `padComposerHeight` above it. Every other layout draws the
    * dock over the page itself.
    */
   padComposer?: ReactNode;
-  /** The dock's measured height, which the columns' foot clears. */
+  /** The dock's measured height, which the left column's foot clears. */
   padComposerHeight?: number;
   /** Scroll events of the Pad work column, where the computer cards scroll. */
   workScrollEvents?: {
@@ -113,13 +115,13 @@ export type HomeEditorialLayoutProps = {
   /** Secondary scan or pair controls, already wired by the parent. */
   controls?: ReactNode;
   /**
-   * No theme pack: the Pad band sets `coverTitle` as the app's wordmark.
+   * No theme pack: the Pad cover block sets `coverTitle` as the app's wordmark.
    * Ignored wherever a pack's artwork is showing.
    */
   typographicCover?: boolean;
-  /** The brand mark, at the Pad band's leading edge before the wordmark. */
+  /** The brand mark, in the Pad toolbar over the wordmark cover. */
   coverMark?: ReactNode;
-  /** A quiet texture painted behind the Pad page when it wears the wordmark. */
+  /** A quiet texture painted behind the Pad wordmark cover. */
   coverBackdrop?: ReactNode;
   style?: StyleProp<ViewStyle>;
 };
@@ -129,9 +131,6 @@ export type HomeEditorialLayoutProps = {
  * you, Computers, Recent, Connections. Absent ones keep their beat.
  */
 const HOME_SECTION_COUNT = 5;
-
-/** The Pad band's wordmark: the toolbar's height, not the cover's. */
-const PAD_BAND_TITLE_SIZE = 40;
 
 type EditorialSectionProps = {
   title: ReactNode;
@@ -374,11 +373,11 @@ export function HomeEditorialLayout({
   });
 
   if (padLaunchLayout) {
-    // Two columns under a compact band (design §8 Pad): the work -- tiles,
-    // needs-you, Computers -- on the left, Recent on the right, each scrolling
-    // on its own, and the dock across the foot. A pack's painting is the
-    // page's backdrop behind the band and the work column, at the slot's own
-    // opacity; the page itself does not scroll.
+    // Two columns (design §8 Pad). The left one is the cover block -- the
+    // pack's title and painting, or the app's wordmark, at a fixed share of
+    // the page with nothing over it -- then the work (tiles, needs-you,
+    // Computers) in the same scroll, and the dock at its foot. The right one
+    // is Recent alone, scrolling on its own. The page itself does not scroll.
     const columns = padHomeColumns(geometry.innerWidth);
     const coverKind = padCoverKind({
       cover,
@@ -386,9 +385,51 @@ export function HomeEditorialLayout({
       typographic: typographicCover,
       hasTitle: Boolean(coverTitle),
     });
-    const bandTitle = coverKind === 'identity' ? undefined : coverTitle;
+    const wordmark = coverKind === 'wordmark';
+    const coverBlock = padCover({
+      viewportHeight: viewportHeight ?? 0,
+      coverWidth: columns.work,
+      measuredTitleWidth:
+        titleMeasurement && titleMeasurement.title === titleKey ? titleMeasurement.width : 0,
+      wordmark,
+    });
+    const titleFontSize = coverBlock.titleSize;
+    const titleStyle = {
+      fontSize: titleFontSize,
+      lineHeight: titleFontSize * PAD_COVER_TITLE_LINE_HEIGHT,
+      fontFamily: chromeFontFamily,
+      fontWeight: titleWeight,
+      letterSpacing: -titleFontSize * 0.05,
+    } as const;
     const hasRecent = hasSlot(recent);
     const hasConnections = hasSlot(connections);
+    const titleMeasure = coverTitle ? (
+      <View
+        pointerEvents="none"
+        accessibilityElementsHidden
+        importantForAccessibility="no-hide-descendants"
+        style={{ position: 'absolute', width: 10000, opacity: 0 }}>
+        <Text
+          allowFontScaling={false}
+          onTextLayout={(event) => {
+            const measured = event.nativeEvent.lines[0]?.width ?? 0;
+            if (measured > 0)
+              setTitleMeasurement((current) =>
+                current?.title === titleKey && Math.abs(current.width - measured) < 0.1
+                  ? current
+                  : { title: titleKey, width: measured }
+              );
+          }}
+          style={{
+            fontSize: 100,
+            fontFamily: chromeFontFamily,
+            fontWeight: titleWeight,
+            letterSpacing: -5,
+          }}>
+          {coverTitle}
+        </Text>
+      </View>
+    ) : null;
     return (
       <View
         testID="home-editorial-layout"
@@ -399,44 +440,17 @@ export function HomeEditorialLayout({
           { maxWidth, height: viewportHeight, paddingHorizontal: geometry.gutter },
           style,
         ]}>
-        {coverKind === 'wordmark' && hasSlot(coverBackdrop) ? (
-          <View pointerEvents="none" style={StyleSheet.absoluteFill}>
-            {coverBackdrop}
+        {hasHeaderRow ? (
+          <View testID="home-pad-toolbar" style={styles.padToolbar}>
+            <View style={styles.mastheadLeadGroup}>
+              {wordmark && hasSlot(coverMark) ? (
+                <View testID="home-pad-cover-mark">{coverMark}</View>
+              ) : null}
+              {hasHeaderLeading ? <View style={styles.headerLeading}>{headerLeading}</View> : null}
+            </View>
+            {hasHeaderAction ? <View style={styles.headerAction}>{headerAction}</View> : null}
           </View>
         ) : null}
-        {hasArtwork ? (
-          <View
-            testID="home-pad-backdrop"
-            pointerEvents="none"
-            style={[styles.padBackdrop, { width: geometry.gutter + columns.work }]}>
-            {artwork}
-          </View>
-        ) : null}
-        <View testID="home-pad-toolbar" style={styles.padToolbar}>
-          <View style={styles.mastheadLeadGroup}>
-            {coverKind === 'wordmark' && hasSlot(coverMark) ? (
-              <View testID="home-pad-cover-mark">{coverMark}</View>
-            ) : null}
-            {bandTitle ? (
-              <Text
-                testID="home-pad-wordmark"
-                accessibilityRole="header"
-                color={theme.colors.text}
-                numberOfLines={1}
-                allowFontScaling={false}
-                style={[
-                  styles.padBandTitle,
-                  { fontFamily: chromeFontFamily, fontWeight: titleWeight },
-                ]}>
-                {bandTitle}
-              </Text>
-            ) : hasIdentity ? (
-              <View style={styles.compactIdentity}>{identity}</View>
-            ) : null}
-            {hasHeaderLeading ? <View style={styles.headerLeading}>{headerLeading}</View> : null}
-          </View>
-          {hasHeaderAction ? <View style={styles.headerAction}>{headerAction}</View> : null}
-        </View>
         <View style={styles.padColumns}>
           <View testID="home-pad-work-column" style={{ width: columns.work }}>
             <ScrollView
@@ -446,6 +460,62 @@ export function HomeEditorialLayout({
               style={styles.padScroll}
               contentContainerStyle={styles.padWorkContent}
               {...workScrollEvents}>
+              {wordmark ? (
+                <View testID="home-pad-cover" style={{ height: coverBlock.height }}>
+                  {hasSlot(coverBackdrop) ? (
+                    <View pointerEvents="none" style={StyleSheet.absoluteFill}>
+                      {coverBackdrop}
+                    </View>
+                  ) : null}
+                  {titleMeasure}
+                  <Text
+                    testID="home-pad-wordmark"
+                    accessibilityRole="header"
+                    color={theme.colors.text}
+                    numberOfLines={1}
+                    allowFontScaling={false}
+                    style={titleStyle}>
+                    {coverTitle}
+                  </Text>
+                </View>
+              ) : coverKind === 'artwork' ? (
+                <View
+                  testID="home-pad-cover"
+                  style={[styles.coverScene, { height: coverBlock.height }]}>
+                  {titleMeasure}
+                  {coverTitle ? (
+                    <Animated.View onLayout={titleStage.onLayout} style={titleStage.style}>
+                      <Text
+                        accessibilityRole="header"
+                        color={theme.colors.text}
+                        adjustsFontSizeToFit
+                        numberOfLines={1}
+                        allowFontScaling={false}
+                        style={titleStyle}>
+                        {coverTitle}
+                      </Text>
+                    </Animated.View>
+                  ) : null}
+                  {/* The figure stands on the block's foot at the right and
+                      rises over the title, as the phone cover's drawing
+                      overlaps its title; nothing is drawn over it. */}
+                  <Animated.View
+                    onLayout={artworkStage.onLayout}
+                    pointerEvents="none"
+                    style={[styles.padCoverArtwork, coverBlock.artwork, artworkStage.style]}>
+                    {artwork}
+                  </Animated.View>
+                </View>
+              ) : (
+                <View testID="home-pad-cover">
+                  {hasIdentity ? <View style={styles.identity}>{identity}</View> : null}
+                  {hasArtwork ? (
+                    <Animated.View pointerEvents="none" style={animatedArtworkStyle}>
+                      {artwork}
+                    </Animated.View>
+                  ) : null}
+                </View>
+              )}
               {hasSlot(launches) ? (
                 <Animated.View testID="home-pad-launch-dock" entering={rise(0)}>
                   {launches}
@@ -483,6 +553,13 @@ export function HomeEditorialLayout({
                 </View>
               ) : null}
             </ScrollView>
+            {/* In flow under the work, sized to the measured dock: the column
+                ends where the dock begins, so no row can sit under it. */}
+            {hasSlot(padComposer) ? (
+              <View testID="home-pad-composer" style={{ height: padComposerHeight }}>
+                {padComposer}
+              </View>
+            ) : null}
           </View>
           <View testID="home-pad-recent-column" style={styles.padRecentColumn}>
             {/* Keyboard-aware on its own: the page's view only lifts fields
@@ -492,9 +569,8 @@ export function HomeEditorialLayout({
                 testID="home-pad-recent-pane"
                 showsVerticalScrollIndicator={false}
                 keyboardShouldPersistTaps="handled"
-                bottomOffset={hasSlot(padComposer) ? padComposerHeight : undefined}
                 style={styles.padScroll}
-                contentContainerStyle={styles.padWorkContent}>
+                contentContainerStyle={styles.padRecentContent}>
                 <Animated.View testID="home-pad-continue" entering={rise(3)}>
                   {recentHeading ? (
                     <View style={styles.padWorkTitle}>{recentHeading}</View>
@@ -513,13 +589,6 @@ export function HomeEditorialLayout({
             ) : null}
           </View>
         </View>
-        {/* In flow under both columns, sized to the measured dock: the lists
-            end where the dock begins, so no row can sit under it. */}
-        {hasSlot(padComposer) ? (
-          <View testID="home-pad-composer" style={{ height: padComposerHeight }}>
-            {padComposer}
-          </View>
-        ) : null}
       </View>
     );
   }
@@ -920,26 +989,20 @@ function hasSlot(value: ReactNode): boolean {
 
 const styles = StyleSheet.create({
   padRoot: { paddingBottom: 0 },
-  // The band: wordmark and toolbar over the backdrop's top.
   padToolbar: {
-    minHeight: 56,
+    minHeight: 44,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 24,
-    marginBottom: 8,
+    marginBottom: 16,
   },
-  // The cover title at band size, with the cover's own leading and tracking.
-  padBandTitle: {
-    fontSize: PAD_BAND_TITLE_SIZE,
-    lineHeight: PAD_BAND_TITLE_SIZE * 1.1,
-    letterSpacing: -PAD_BAND_TITLE_SIZE * 0.05,
-    flexShrink: 1,
-  },
-  padBackdrop: { position: 'absolute', left: 0, top: 0 },
+  // Anchored right, so the title's start stays clear at the block's left.
+  padCoverArtwork: { position: 'absolute', right: 0, bottom: 0, zIndex: 1 },
   padColumns: { flex: 1, minHeight: 0, flexDirection: 'row', gap: PAD_COLUMN_GAP },
   padRecentColumn: { flex: 1, minWidth: 0 },
   padScroll: { flex: 1 },
-  padWorkContent: { paddingTop: 16, paddingBottom: 24, gap: 24 },
+  padWorkContent: { paddingBottom: 24, gap: 24 },
+  padRecentContent: { paddingBottom: 24 },
   padWorkSections: { gap: 32 },
   // The phone editorial section's heading, without its rule: title, 12, card.
   padWorkTitle: { marginBottom: 12 },

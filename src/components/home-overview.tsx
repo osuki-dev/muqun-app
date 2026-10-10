@@ -971,6 +971,8 @@ export function HomeOverview({
                 hasEditorialArtwork && editorialArtworkResolution ? (
                   <HomeEditorialArtwork
                     cover={customTheme?.manifest.homePresentation?.header === 'cover'}
+                    // The Pad cover block sizes the painting; elsewhere it keeps its own proportion.
+                    fill={padLaunch && customTheme?.manifest.homePresentation?.header === 'cover'}
                     resolution={editorialArtworkResolution}
                     onVisibleTopChange={reportEditorialArtworkTop}
                     onAvailabilityChange={(available) => {

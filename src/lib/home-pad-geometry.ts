@@ -1,7 +1,7 @@
 /**
- * Whether Pad Home gets the two-column page (work left, Recent right, the dock
- * across the foot). Narrower content or large type falls back to the vertical
- * editorial page.
+ * Whether Pad Home gets the two-column page (the cover, the work and the dock
+ * on the left, Recent on the right). Narrower content or large type falls
+ * back to the vertical editorial page.
  */
 export function padLaunchLayoutEnabled(
   contentWidth: number,
@@ -19,8 +19,8 @@ export const PAD_CARD_GAP = 12;
 const PAD_CARD_MIN_WIDTH = 320;
 
 /**
- * The two Pad columns: the work (tiles, Needs you, Computers) takes about 58%
- * of the page, Recent the rest.
+ * The two Pad columns: the cover, the work (tiles, Needs you, Computers) and
+ * the dock take about 58% of the page, Recent the rest.
  */
 export function padHomeColumns(innerWidth: number): { work: number; recent: number } {
   const room = Math.max(0, innerWidth - PAD_COLUMN_GAP);
@@ -38,12 +38,11 @@ export function padCardColumns(workWidth: number, cards: number): 1 | 2 {
 }
 
 /**
- * What the Pad band carries beside the toolbar.
+ * What the Pad cover block carries at the top of the work column.
  *
- * - `artwork`: a pack's cover painting; the band sets its title small and the
- *   painting is the page's backdrop (AKIBA and friends).
- * - `wordmark`: no pack, so no painting: the app's mark and name, small, over
- *   the app's own quiet texture.
+ * - `artwork`: a pack's cover painting with its title (AKIBA and friends).
+ * - `wordmark`: no pack, so no painting: the app's name set as large as the
+ *   block allows, over the app's own quiet texture.
  * - `identity`: anything else keeps the small identity block it had.
  */
 export type PadCoverKind = 'artwork' | 'wordmark' | 'identity';
@@ -63,4 +62,58 @@ export function padCoverKind({
   if (cover && hasArtwork) return 'artwork';
   if (typographic && !hasArtwork && hasTitle) return 'wordmark';
   return 'identity';
+}
+
+/** Line height of a cover title, as a multiple of its font size. */
+export const PAD_COVER_TITLE_LINE_HEIGHT = 1.08;
+
+/**
+ * How far a descender (the q in "Muqun") hangs below that line box. The line
+ * height is tight on purpose, so the wordmark's cover keeps this clear.
+ */
+const PAD_WORDMARK_DESCENDER = 0.22;
+
+/** The cover painting's own proportion: as tall as 0.9 of its width (`HomeEditorialArtwork`). */
+const COVER_ARTWORK_RATIO = 0.9;
+
+/**
+ * The Pad cover block at the top of the work column: the pack's title and
+ * painting, or the app's wordmark, in a fixed share of the page (about 45%
+ * of the viewport, so 40-45% of the screen). The work scrolls under it.
+ *
+ * - `titleSize`: the cover title as wide as the column allows (the 38% cap
+ *   and measured fit the cover has always used), and never taller than its
+ *   share of the block: 40% of it over a painting, the whole block (with the
+ *   descender) for the wordmark.
+ * - `artwork`: the painting at its own proportion, standing on the block's
+ *   foot at the right, as wide as 85% of the column at most, so the title's
+ *   start stays clear at its left.
+ *
+ * `measuredTitleWidth` is the title's width at 100pt, 0 until measured.
+ */
+export function padCover({
+  viewportHeight,
+  coverWidth,
+  measuredTitleWidth,
+  wordmark,
+}: {
+  viewportHeight: number;
+  coverWidth: number;
+  measuredTitleWidth: number;
+  wordmark: boolean;
+}): { height: number; titleSize: number; artwork: { width: number; height: number } } {
+  const height = Math.round(viewportHeight * 0.45);
+  const byWidth =
+    measuredTitleWidth > 0
+      ? Math.min(coverWidth * 0.38, ((coverWidth - 4) * 100) / measuredTitleWidth)
+      : coverWidth * 0.25;
+  const byHeight = wordmark
+    ? height / (PAD_COVER_TITLE_LINE_HEIGHT + PAD_WORDMARK_DESCENDER)
+    : (height * 0.4) / PAD_COVER_TITLE_LINE_HEIGHT;
+  const artworkHeight = Math.round(Math.min(height, coverWidth * 0.85 * COVER_ARTWORK_RATIO));
+  return {
+    height,
+    titleSize: Math.max(0, Math.min(byWidth, byHeight)),
+    artwork: { width: Math.round(artworkHeight / COVER_ARTWORK_RATIO), height: artworkHeight },
+  };
 }
