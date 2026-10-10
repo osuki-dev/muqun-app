@@ -311,6 +311,14 @@ msgstr "{messages, plural, other {메시지 #개}}"
 msgid "{modifierKeys} combinations need the program in this terminal to enable extended keys"
 msgstr "{modifierKeys} 조합을 쓰려면 이 터미널의 프로그램이 확장 키를 켜야 합니다"
 
+#: src/components/settings-fleet-peers.tsx
+msgid "{name} does not take work from other computers."
+msgstr "{name}은(는) 다른 컴퓨터의 작업을 받지 않습니다"
+
+#: src/components/settings-fleet-peers.tsx
+msgid "{name} has the same name as {other}; rename one of them."
+msgstr "{name}의 이름이 {other}와(과) 같습니다. 둘 중 하나의 이름을 바꾸세요"
+
 #: src/components/new-task-action.tsx
 msgid "{name} needs setup. Tap for setup instructions"
 msgstr "{name} 설정이 필요합니다. 탭하여 설정 방법 보기"

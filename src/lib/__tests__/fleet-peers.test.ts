@@ -2,14 +2,12 @@ import { describe, expect, test } from 'bun:test';
 
 import {
   failureKey,
+  isLoopbackUrl,
   linkLines,
   LINK_RETRY_MS,
-  parseFleetPeers,
   planFleetLinks,
-  planRenames,
+  planPeerMoves,
   pairingsAnswer,
-  planTombstoneUnlinks,
-  settledTombstones,
   type FleetComputer,
   type FleetPeers,
 } from '../fleet-peers';
@@ -33,39 +31,6 @@ function peers(accept: boolean, linked: [string, boolean][] = []): FleetPeers {
 function computer(serverId: string, answer: FleetPeers | null): FleetComputer {
   return { serverId, label: serverId, url: `http://${serverId}:23847`, peers: answer };
 }
-
-describe('parseFleetPeers', () => {
-  test('reads the gateway answer, and a body without a peers array is no answer', () => {
-    expect(
-      parseFleetPeers({
-        accept_delegations: false,
-        peers: [
-          {
-            peer_id: 'peer-1',
-            server_id: 'srv-mini',
-            name: 'mini',
-            url: 'http://127.0.0.1:23847',
-            reachable: true,
-            last_seen_ms: 5,
-          },
-        ],
-      })
-    ).toEqual({
-      acceptDelegations: false,
-      peers: [
-        {
-          peerId: 'peer-1',
-          serverId: 'srv-mini',
-          name: 'mini',
-          url: 'http://127.0.0.1:23847',
-          reachable: true,
-          lastSeenMs: 5,
-        },
-      ],
-    });
-    expect(parseFleetPeers({ accept_delegations: true })).toBeNull();
-  });
-});
 
 describe('planFleetLinks: every ordered pair that should be linked and is not', () => {
   test.each([
@@ -120,7 +85,6 @@ describe('planFleetLinks: every ordered pair that should be linked and is not', 
         { from: 'mini', to: 'coding' },
       ],
     ],
-    ['one computer has nothing to link', [computer('coding', peers(true))], {}, []],
     [
       'a peer with the same name but another server id does not count as linked',
       [
@@ -141,36 +105,31 @@ describe('planFleetLinks: every ordered pair that should be linked and is not', 
       {},
       [{ from: 'coding', to: 'mini' }],
     ],
+    [
+      'a computer at a loopback address is never handed on',
+      [
+        computer('coding', peers(true)),
+        { ...computer('mini', peers(true)), url: 'http://10.0.2.2:23847' },
+      ],
+      {},
+      [{ from: 'mini', to: 'coding' }],
+    ],
   ] as const)('%s', (_name, computers, failures, expected) => {
     expect(planFleetLinks(computers, failures, NOW)).toEqual([...expected]);
   });
-});
 
-describe("planRenames: the phone's label for a computer wins on every other computer", () => {
-  const renamed = { ...computer('mini', peers(true, [['coding', true]])), label: 'mac mini' };
-  test.each([
-    [
-      'a peer named before the phone renamed it',
-      [computer('coding', peers(true, [['mini', true]])), renamed],
-      [{ from: 'coding', peerId: 'peer-mini', name: 'mac mini' }],
-    ],
-    [
-      'names already in step',
-      [computer('coding', peers(true, [['mini', true]])), computer('mini', peers(true))],
-      [],
-    ],
-    [
-      'a peer this phone does not have is left as named',
-      [computer('coding', peers(true, [['nas', true]]))],
-      [],
-    ],
-    [
-      'a computer that did not answer has nothing to rename',
-      [computer('coding', null), renamed],
-      [],
-    ],
-  ] as const)('%s', (_name, computers, expected) => {
-    expect(planRenames(computers)).toEqual([...expected]);
+  test('a pair whose names collide is not tried again', () => {
+    const conflicts = {
+      [failureKey('coding', 'mini')]: { name: 'mini', against: 'peer', with: 'mini' } as const,
+    };
+    expect(
+      planFleetLinks(
+        [computer('coding', peers(true)), computer('mini', peers(true))],
+        {},
+        NOW,
+        conflicts
+      )
+    ).toEqual([{ from: 'mini', to: 'coding' }]);
   });
 });
 
@@ -185,95 +144,133 @@ describe('linkLines: the one line Settings shows per computer', () => {
       'coding',
       both,
       {},
-      { linked: ['mac mini'], cannotReach: [] },
+      { linked: ['mac mini'], noWork: [], cannotReach: [], sameName: [] },
     ],
-    ['linked but the peer is quiet', 'mini', both, {}, { linked: [], cannotReach: ['coding'] }],
+    [
+      'linked but the peer is quiet',
+      'mini',
+      both,
+      {},
+      { linked: [], noWork: [], cannotReach: ['coding'], sameName: [] },
+    ],
+    [
+      'a linked computer that takes no work says so',
+      'coding',
+      [computer('coding', peers(true, [['mini', true]])), computer('mini', peers(false))],
+      {},
+      { linked: ['mini'], noWork: ['mini'], cannotReach: [], sameName: [] },
+    ],
     [
       'a link that failed this run',
       'coding',
       [computer('coding', peers(true)), computer('mini', peers(true))],
       { [failureKey('coding', 'mini')]: NOW },
-      { linked: [], cannotReach: ['mini'] },
+      { linked: [], noWork: [], cannotReach: ['mini'], sameName: [] },
     ],
     [
       'a peer this phone does not have keeps its gateway name',
       'coding',
       [computer('coding', peers(true, [['nas', true]]))],
       {},
-      { linked: ['nas'], cannotReach: [] },
-    ],
-    [
-      'nothing to say',
-      'coding',
-      [computer('coding', peers(true))],
-      {},
-      { linked: [], cannotReach: [] },
+      { linked: ['nas'], noWork: [], cannotReach: [], sameName: [] },
     ],
   ] as const)('%s', (_name, serverId, computers, failures, expected) => {
     expect(linkLines(serverId, computers, failures, NOW)).toEqual({
       linked: [...expected.linked],
+      noWork: [...expected.noWork],
       cannotReach: [...expected.cannotReach],
+      sameName: [...expected.sameName],
+    });
+  });
+
+  test('a name collision is its own line, not "cannot reach"', () => {
+    const computers = [
+      { ...computer('coding', peers(true)), label: 'studio' },
+      computer('mini', peers(true)),
+    ];
+    const conflicts = {
+      [failureKey('coding', 'mini')]: { name: 'studio', against: 'self', with: 'studio' } as const,
+    };
+    expect(
+      linkLines('coding', computers, { [failureKey('coding', 'mini')]: NOW }, NOW, conflicts)
+    ).toEqual({
+      linked: [],
+      noWork: [],
+      cannotReach: [],
+      sameName: [{ name: 'mini', with: 'studio' }],
     });
   });
 });
 
-describe('planTombstoneUnlinks: an unpaired computer is taken off every computer that answered', () => {
+describe("planPeerMoves: a quiet peer whose address moved is told this device's address", () => {
+  const moved = { ...computer('mini', peers(true)), url: 'http://mini-new:23847' };
   test.each([
     [
-      'each row of it is deleted where it is held',
-      [
-        computer(
-          'coding',
-          peers(true, [
-            ['gone', true],
-            ['mini', true],
-          ])
-        ),
-        computer('mini', peers(true, [['gone', false]])),
-      ],
-      ['gone'],
-      [
-        { from: 'coding', peerId: 'peer-gone', serverId: 'gone' },
-        { from: 'mini', peerId: 'peer-gone', serverId: 'gone' },
-      ],
+      'unreachable at an old address: moved',
+      [computer('coding', peers(true, [['mini', false]])), moved],
+      {},
+      [{ from: 'coding', peerId: 'peer-mini', url: 'http://mini-new:23847' }],
     ],
     [
-      'a computer that did not answer is left for the next run',
-      [computer('coding', null)],
-      ['gone'],
+      'answering over another route: left alone',
+      [computer('coding', peers(true, [['mini', true]])), moved],
+      {},
       [],
     ],
     [
-      'nothing unpaired, nothing to delete',
-      [computer('coding', peers(true, [['mini', true]]))],
-      [],
+      'the same address: nothing to say',
+      [
+        computer('coding', {
+          acceptDelegations: true,
+          peers: [
+            {
+              peerId: 'p',
+              serverId: 'mini',
+              name: 'mini',
+              url: 'http://mini-new:23847',
+              reachable: false,
+            },
+          ],
+        }),
+        moved,
+      ],
+      {},
       [],
     ],
-  ] as const)('%s', (_name, computers, tombstones, expected) => {
-    expect(planTombstoneUnlinks(computers, tombstones)).toEqual([...expected]);
+    [
+      'a move that failed waits out the retry window',
+      [computer('coding', peers(true, [['mini', false]])), moved],
+      { [failureKey('coding', 'peer-mini')]: NOW },
+      [],
+    ],
+    [
+      'a loopback address is never handed on',
+      [
+        computer('coding', peers(true, [['mini', false]])),
+        { ...moved, url: 'http://127.0.0.1:23847' },
+      ],
+      {},
+      [],
+    ],
+  ] as const)('%s', (_name, computers, failures, expected) => {
+    expect(planPeerMoves(computers, failures, NOW)).toEqual([...expected]);
   });
-});
 
-describe('settledTombstones: an unpaired computer is let go only when every computer has', () => {
-  const answered = [computer('coding', peers(true)), computer('mini', peers(true))];
-  test.each([
-    ['all clear lets every one go', answered, [], ['gone', 'old']],
-    ['a failed cleanup keeps that one', answered, ['old'], ['gone']],
-    [
-      'a silent computer keeps them all',
-      [computer('coding', peers(true)), computer('mini', null)],
-      [],
-      [],
-    ],
-  ] as const)('%s', (_name, computers, failed, released) => {
-    expect(settledTombstones(computers, ['gone', 'old'], new Set(failed))).toEqual([...released]);
+  test('loopback hosts', () => {
+    expect(
+      [
+        'http://localhost:1',
+        'http://127.0.0.1',
+        'http://[::1]:2',
+        'http://10.0.2.2:3',
+        'http://10.0.0.9',
+      ].map(isLoopbackUrl)
+    ).toEqual([true, true, true, true, false]);
   });
 });
 
 describe('pairingsAnswer: a 404 means nothing to revoke only when the gateway says so', () => {
-  const login = { deviceId: 'd1', serverId: 'gone' };
   test.each([
-    ['a list is the list', [login], null, [login]],
     ['a 404 from a gateway without the list: nothing to revoke', 'no-route', ['fleet_peers'], []],
     [
       'a 404 where the gateway has the list (a proxy): retried',

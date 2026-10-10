@@ -311,6 +311,14 @@ msgstr "{messages, plural, one {# mensaje} other {# mensajes}}"
 msgid "{modifierKeys} combinations need the program in this terminal to enable extended keys"
 msgstr "Las combinaciones con {modifierKeys} requieren que el programa de esta terminal active las teclas extendidas"
 
+#: src/components/settings-fleet-peers.tsx
+msgid "{name} does not take work from other computers."
+msgstr "{name} no acepta trabajo de otros ordenadores"
+
+#: src/components/settings-fleet-peers.tsx
+msgid "{name} has the same name as {other}; rename one of them."
+msgstr "{name} tiene el mismo nombre que {other}; cambia el nombre de uno de ellos"
+
 #: src/components/new-task-action.tsx
 msgid "{name} needs setup. Tap for setup instructions"
 msgstr "{name} necesita configuración. Toca para ver las instrucciones de configuración"
