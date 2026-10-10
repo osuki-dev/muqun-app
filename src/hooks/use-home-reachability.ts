@@ -2,8 +2,10 @@ import { useMemo } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 
 import {
+  resolveConnectionStatus,
   resolveServerReachability,
   type ActiveServerConnection,
+  type ConnectionStatus,
   type ServerChannels,
   type ServerReachability,
 } from '@/lib/server-reachability';
@@ -58,6 +60,46 @@ export function useHomeReachability(
           channelsOf(channels[index])
         )
       )
+    )
+  );
+  return useMemo(
+    () => Object.fromEntries(serverIds.map((serverId, index) => [serverId, statuses[index]])),
+    [serverIds, statuses]
+  );
+}
+
+/**
+ * Each computer's connection status (`live`, `unauthorized`, `offline`,
+ * `reconnecting` for the selected one, or `unknown`), for a screen that lists
+ * them all -- Settings › Computers -- and must re-render only when one of
+ * them changes, a probe going stale included (`freshnessNowMs` steps then).
+ */
+export function useConnectionStatuses(
+  serverIds: readonly string[],
+  selectedId: string | undefined
+): Readonly<Record<string, ConnectionStatus>> {
+  const channels = useServerChannels(
+    useShallow((state) =>
+      serverIds.map(
+        (serverId) => `${state.sockets[serverId] ?? ''}|${state.streams[serverId] ?? ''}`
+      )
+    )
+  );
+  const statuses = useServerReachability(
+    useShallow((state) =>
+      serverIds.map((serverId, index) => {
+        const [socket, stream] = (channels[index] ?? '|').split('|');
+        return resolveConnectionStatus({
+          serverId,
+          probe: state.probes[serverId],
+          channels: {
+            ...(socket ? { socket: socket as ServerChannels['socket'] } : {}),
+            ...(stream ? { stream: stream as ServerChannels['stream'] } : {}),
+          },
+          selected: serverId === selectedId,
+          nowMs: state.freshnessNowMs,
+        });
+      })
     )
   );
   return useMemo(

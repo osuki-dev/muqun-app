@@ -7,7 +7,7 @@ import { Spinner, useThemeTokens, useToast } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { Bot, Check, ChevronDown, ChevronRight, Pencil, Trash2 } from 'lucide-react-native';
-import { Fragment, useCallback, useEffect, useState } from 'react';
+import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
@@ -40,15 +40,12 @@ import { acceptsCancel, acceptsConfirm, unpairView } from '@/lib/unpair-action';
 import { useRenderTally } from '@/lib/render-tally';
 import { describeGatewayFailure } from '@/lib/network-error';
 import { normalizeGatewayUrl } from '@/lib/pairing';
-import {
-  resolveConnectionStatus,
-  serversToProbe,
-  type ConnectionStatus,
-} from '@/lib/server-reachability';
+import { serversToProbe, type ConnectionStatus } from '@/lib/server-reachability';
 import { useAppSettings, type ServerCardPanes } from '@/stores/app-settings';
 import { useServerAgents } from '@/stores/server-agents';
 import { retryHomeRefresh } from '@/lib/home-refresh-schedule';
-import { useServerChannels } from '@/stores/server-channels';
+import { useConnectionStatuses } from '@/hooks/use-home-reachability';
+import { useServerLastViewed } from '@/stores/server-last-viewed';
 import { useServerReachability } from '@/stores/server-reachability';
 import type { ServerAgentsSnapshot } from '@/lib/server-agents';
 import { settleAfter } from '@/lib/compiler-safe-control-flow';
@@ -69,9 +66,12 @@ export function SettingsServers({ initialOpenId }: { initialOpenId?: string } = 
   const { showToast } = useToast();
   const { record, records, loading, hydrationError, retryHydration, selectRecord, removeRecord } =
     useGatewayRecord();
-  const probes = useServerReachability((state) => state.probes);
-  const channelSockets = useServerChannels((state) => state.sockets);
-  const channelStreams = useServerChannels((state) => state.streams);
+  // Every row's status, re-rendering this page only when one changes (a
+  // probe landing or going stale), not on every probe write.
+  const recordIds = useMemo(() => records.map((server) => server.serverId), [records]);
+  const statuses = useConnectionStatuses(recordIds, record?.serverId);
+  // Settings asks the same computers Home asks, in Home's order.
+  const lastViewedByServer = useServerLastViewed((state) => state.byServer);
   const refreshReachabilityMany = useServerReachability((state) => state.refreshMany);
   const serverCardPanes = useAppSettings((state) => state.serverCardPanes);
   const update = useAppSettings((state) => state.update);
@@ -108,10 +108,12 @@ export function SettingsServers({ initialOpenId }: { initialOpenId?: string } = 
       const eligible = records.filter(
         (server) => server.serverId !== DEMO_SERVER_ID && !server.sshTunnel
       );
-      void refreshReachabilityMany(serversToProbe(eligible, {}, record?.serverId)).finally(() => {
+      void refreshReachabilityMany(
+        serversToProbe(eligible, lastViewedByServer, record?.serverId)
+      ).finally(() => {
         void reconcileFleet({ reason: 'settings' });
       });
-    }, [record?.serverId, records, refreshReachabilityMany])
+    }, [record?.serverId, records, lastViewedByServer, refreshReachabilityMany])
   );
 
   async function use(server: GatewayRecord) {
@@ -176,15 +178,7 @@ export function SettingsServers({ initialOpenId }: { initialOpenId?: string } = 
                   // channels and the fresh probe this screen just asked for.
                   // One nobody asked recently is `unknown` -- "never asked" is
                   // not "offline" -- but one that answered is online.
-                  reachability={resolveConnectionStatus({
-                    serverId: server.serverId,
-                    probe: probes[server.serverId],
-                    channels: {
-                      socket: channelSockets[server.serverId],
-                      stream: channelStreams[server.serverId],
-                    },
-                    selected: current,
-                  })}
+                  reachability={statuses[server.serverId] ?? 'unknown'}
                   lastConnected={current ? undefined : agentsByServer[server.serverId]}
                   open={openId === server.serverId}
                   onToggle={() =>
