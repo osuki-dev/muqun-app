@@ -1,6 +1,7 @@
 import type { StateCreator } from 'zustand/vanilla';
 
 import type { GatewaySocketState } from './gateway-socket';
+import { keepKeys } from './keep-keys';
 import { isTerminalTaskState, type TaskView } from './task-ledger';
 
 /**
@@ -153,16 +154,6 @@ export type ServerTasksState = {
   replace: (serverId: string, tasks: readonly TaskView[], requestedAtMs: number) => void;
   upsert: (serverId: string, task: TaskView) => void;
 };
-
-/** `record` without the keys `keep` refuses; the same object when nothing goes. */
-export function keepKeys<T>(
-  record: Record<string, T>,
-  keep: (key: string) => boolean
-): Record<string, T> {
-  const keys = Object.keys(record);
-  if (keys.every(keep)) return record;
-  return Object.fromEntries(keys.filter(keep).map((key) => [key, record[key]!]));
-}
 
 export function createServerTasksState(
   now: () => number = Date.now

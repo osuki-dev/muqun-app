@@ -27,10 +27,12 @@ import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { reachabilityDescription } from '@/i18n/labels';
 import type { AgentClientCommandId } from '@/lib/agent-commands';
 import { classifyAgentRequestError } from '@/lib/agent-request-error';
+import { unsupportedModelRefs } from '@/lib/agent-session-defaults';
 import {
   createAgentSession,
   formatModelName,
   getAgentCatalog,
+  listAgentSessions,
   invokeAgentSkill,
   normalizeAgentId,
   sendAgentCommand,
@@ -99,6 +101,9 @@ const NO_SKILLS: AgentCatalog['skills'] = [];
  * session as an existing one. A failure keeps the draft and the staged files
  * in the dock and says why under the bar; nothing is retried by itself.
  */
+/** How many of the target's recent sessions are read for models it refused. */
+const REFUSAL_SESSIONS_READ = 30;
+
 export function HomeComposerDock({
   controller,
   reachabilityByServer,
@@ -221,6 +226,12 @@ export function HomeComposerDock({
   const [catalogRead, setCatalogRead] = useState<{ key: string; catalog: AgentCatalog } | null>(
     null
   );
+  // The models this computer already refused (a session whose turn failed
+  // as "not supported"), read from its recent sessions alongside the catalog:
+  // the model the pill names and Send sends is never one of them.
+  const [refusedRead, setRefusedRead] = useState<{ key: string; refused: Set<string> } | null>(
+    null
+  );
   useEffect(() => {
     if (!ready || !selected || terminalAgent) return;
     let current = true;
@@ -231,11 +242,23 @@ export function HomeComposerDock({
       .catch((failure: unknown) => {
         console.warn('Failed to load the agent catalog for Home:', failure);
       });
+    listAgentSessions(HOME_AGENT_SESSION_ID, {
+      roots: true,
+      limit: REFUSAL_SESSIONS_READ,
+      ...(agentId ? { agentId } : {}),
+    })
+      .then((sessions) => {
+        if (current) setRefusedRead({ key: catalogKey, refused: unsupportedModelRefs(sessions) });
+      })
+      .catch((failure: unknown) => {
+        console.warn('Failed to read recent sessions for Home:', failure);
+      });
     return () => {
       current = false;
     };
   }, [ready, selected, agentId, catalogKey, terminalAgent]);
   const catalog = catalogRead?.key === catalogKey ? catalogRead.catalog : undefined;
+  const refused = refusedRead?.key === catalogKey ? refusedRead.refused : undefined;
   const models = catalog?.models ?? [];
   const modes = catalog?.modes ?? [];
 
@@ -248,6 +271,7 @@ export function HomeComposerDock({
   const chooseMode = useHomeAgentChoice((state) => state.chooseMode);
   const { params: sessionParams, shown } = homeSessionParams({
     picked: picked ?? {},
+    ...(refused ? { refused } : {}),
     catalogDefaults: catalog?.defaults ?? {},
     models,
     modes,

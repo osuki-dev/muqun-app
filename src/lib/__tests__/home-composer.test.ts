@@ -13,6 +13,8 @@ import {
   type HomeStartedSession,
   homeFolderLabel,
   homeFolderName,
+  homeModelChoiceKey,
+  keepHomeModelChoices,
   homeFolderPick,
 } from '../home-composer';
 
@@ -244,6 +246,23 @@ describe('sameComputer', () => {
     expect(sameComputer({ ...owner, transportKey: 'k2' }, owner)).toBe(false);
     expect(sameComputer({ ...owner, url: 'https://moved.invalid' }, owner)).toBe(false);
     expect(sameComputer(null, owner)).toBe(false);
+  });
+});
+
+describe('keepHomeModelChoices', () => {
+  const choices = {
+    [homeModelChoiceKey('a', 'opencode')]: { mode: 'build' },
+    [homeModelChoiceKey('a', undefined)]: { mode: 'plan' },
+    [homeModelChoiceKey('ab', 'opencode')]: { mode: 'build' },
+  };
+  // paired computers -> picks kept (by computer); a prefix of another id is not it
+  test.each<[string[], string[]]>([
+    [['a'], ['a', 'a']],
+    [['ab'], ['ab']],
+    [[], []],
+  ])('%p', (paired, kept) => {
+    const left = keepHomeModelChoices(choices, paired);
+    expect(Object.keys(left).map((key) => key.split('\u0000')[0])).toEqual(kept);
   });
 });
 

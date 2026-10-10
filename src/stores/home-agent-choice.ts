@@ -3,12 +3,13 @@ import { create } from 'zustand';
 
 import type { AgentProfile } from '@/lib/agent-spawn';
 import { parseHomeAgentChoices } from '@/lib/home-agent-choice';
-import { keepKeys } from '@/lib/server-tasks-state';
+import { keepKeys } from '@/lib/keep-keys';
 import type { ModelRef } from '@/lib/agent-session';
 import type { RememberedAgentChoice } from '@/lib/agent-session-defaults';
 import {
   homeFolderPick,
   homeModelChoiceKey,
+  keepHomeModelChoices,
   parseHomeFolders,
   parseHomeModelChoices,
 } from '@/lib/home-composer';
@@ -129,7 +130,7 @@ export const useHomeAgentChoice = create<HomeAgentChoiceState>((set, get) => ({
     const kept = new Set(serverIds);
     const { folderByServer, modelChoice } = get();
     const folders = keepKeys(folderByServer, (serverId) => kept.has(serverId));
-    const models = keepKeys(modelChoice, (key) => kept.has(key.split('\u0000')[0]!));
+    const models = keepHomeModelChoices(modelChoice, serverIds);
     if (folders !== folderByServer) save(FOLDERS_KEY, folders);
     if (models !== modelChoice) save(MODELS_KEY, models);
     if (folders !== folderByServer || models !== modelChoice) {
