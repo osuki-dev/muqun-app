@@ -313,14 +313,6 @@ export const useGatewayConnectionStore = create<GatewayConnectionState>((set, ge
       if (removedCurrent) configureGateway(nextRecord);
       set({ records, record: nextRecord, loading: false });
     });
-    // What was last heard from it goes too: a probe made with the token just
-    // revoked would otherwise say "refused" about the same computer paired
-    // again, and keep the reconciler from linking it until a restart.
-    void import('@/stores/server-reachability')
-      .then(({ useServerReachability }) =>
-        useServerReachability.getState().keepOnly(get().records.map((item) => item.serverId))
-      )
-      .catch(() => undefined);
   },
 
   async disconnect() {
