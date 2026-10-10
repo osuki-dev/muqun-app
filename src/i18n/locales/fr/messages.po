@@ -826,6 +826,10 @@ msgstr "Pièce jointe"
 msgid "Attachment could not be sent"
 msgstr "La pièce jointe n’a pas pu être envoyée"
 
+#: src/components/task-row.tsx
+msgid "Attachment could not be sent. Tap to retry."
+msgstr "La pièce jointe n’a pas pu être envoyée. Touchez pour réessayer."
+
 #: src/components/session-artifacts.tsx
 msgid "Audio"
 msgstr "Audio"
@@ -5898,6 +5902,10 @@ msgstr "Appuyez pour prévisualiser et ajuster"
 #: src/components/agent-workbench.tsx
 msgid "Tap to refresh this session."
 msgstr "Touchez pour actualiser cette session"
+
+#: src/components/task-row.tsx
+msgid "tap to retry"
+msgstr "touchez pour réessayer"
 
 #: src/components/session-map.tsx
 msgid "Tap to retry"

@@ -826,6 +826,10 @@ msgstr "첨부 파일"
 msgid "Attachment could not be sent"
 msgstr "첨부 파일을 보낼 수 없습니다"
 
+#: src/components/task-row.tsx
+msgid "Attachment could not be sent. Tap to retry."
+msgstr "첨부 파일을 보내지 못했습니다. 탭하여 다시 시도하세요."
+
 #: src/components/session-artifacts.tsx
 msgid "Audio"
 msgstr "오디오"
@@ -5898,6 +5902,10 @@ msgstr "미리보기 및 조정하려면 탭하세요"
 #: src/components/agent-workbench.tsx
 msgid "Tap to refresh this session."
 msgstr "탭하여 이 세션을 새로 고칩니다"
+
+#: src/components/task-row.tsx
+msgid "tap to retry"
+msgstr "탭하여 다시 시도"
 
 #: src/components/session-map.tsx
 msgid "Tap to retry"

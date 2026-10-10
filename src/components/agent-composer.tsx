@@ -463,6 +463,8 @@ export interface AgentComposerProps {
    * since); answers whether it did.
    */
   injectDraftRef?: React.MutableRefObject<DraftInjector | null>;
+  /** Sends what the field holds, attachments included, as the Send button does. */
+  submitDraftRef?: React.MutableRefObject<(() => void) | null>;
   /**
    * The dock's height, whenever it changes.
    *
@@ -573,6 +575,7 @@ export const AgentComposer = memo(function AgentComposer({
   onSetInboxDelivery,
   onPressTokens,
   injectDraftRef,
+  submitDraftRef,
   onDockHeight,
   accessory,
   bar,
@@ -1042,6 +1045,14 @@ export const AgentComposer = memo(function AgentComposer({
     onInvokeSkill,
     onClientCommand,
   ]);
+
+  useEffect(() => {
+    if (!submitDraftRef) return;
+    submitDraftRef.current = () => void handleSend();
+    return () => {
+      submitDraftRef.current = null;
+    };
+  }, [submitDraftRef, handleSend]);
 
   /**
    * What can be done to one queued prompt.

@@ -58,11 +58,21 @@ type HomeTaskCardsState = {
   settle: (id: string) => void;
   /** The goal's attachments could not be sent: the row stays and says so. */
   attachmentFailed: (id: string) => void;
+  /**
+   * What a tap on a failed row does: the dock sends the draft it kept
+   * (text and attachments) again. `null` while no dock is mounted.
+   */
+  retryFailedSend: (() => void) | null;
+  setRetryFailedSend: (retry: (() => void) | null) => void;
 };
 
 export const useHomeTaskCards = create<HomeTaskCardsState>((set, get) => ({
   dismissed: loadDismissed(),
   pending: [],
+  retryFailedSend: null,
+  setRetryFailedSend(retry) {
+    set({ retryFailedSend: retry });
+  },
   acknowledge(serverId, taskId) {
     const key = dismissedKey(serverId, taskId);
     if (get().dismissed.includes(key)) return;
@@ -79,7 +89,12 @@ export const useHomeTaskCards = create<HomeTaskCardsState>((set, get) => ({
     const now = Date.now();
     set((state) => ({
       pending: [
-        ...state.pending.filter((item) => now - item.atMs < PENDING_DISPATCH_TTL_MS),
+        // A retry replaces the row its failure left, rather than standing beside it.
+        ...state.pending.filter(
+          (item) =>
+            now - item.atMs < PENDING_DISPATCH_TTL_MS &&
+            !(item.attachmentFailed && item.serverId === serverId && item.goal === goal)
+        ),
         { id, serverId, goal, atMs: now },
       ],
     }));

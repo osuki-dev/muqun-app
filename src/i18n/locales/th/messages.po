@@ -826,6 +826,10 @@ msgstr "ไฟล์แนบ"
 msgid "Attachment could not be sent"
 msgstr "ส่งไฟล์แนบไม่ได้"
 
+#: src/components/task-row.tsx
+msgid "Attachment could not be sent. Tap to retry."
+msgstr "ส่งไฟล์แนบไม่สำเร็จ แตะเพื่อลองอีกครั้ง"
+
 #: src/components/session-artifacts.tsx
 msgid "Audio"
 msgstr "เสียง"
@@ -5898,6 +5902,10 @@ msgstr "แตะเพื่อดูตัวอย่างและปรั
 #: src/components/agent-workbench.tsx
 msgid "Tap to refresh this session."
 msgstr "แตะเพื่อรีเฟรชเซสชันนี้"
+
+#: src/components/task-row.tsx
+msgid "tap to retry"
+msgstr "แตะเพื่อลองอีกครั้ง"
 
 #: src/components/session-map.tsx
 msgid "Tap to retry"

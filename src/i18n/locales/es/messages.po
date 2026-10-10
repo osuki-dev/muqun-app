@@ -826,6 +826,10 @@ msgstr "Archivo adjunto"
 msgid "Attachment could not be sent"
 msgstr "No se pudo enviar el adjunto"
 
+#: src/components/task-row.tsx
+msgid "Attachment could not be sent. Tap to retry."
+msgstr "No se pudo enviar el adjunto. Toca para reintentar."
+
 #: src/components/session-artifacts.tsx
 msgid "Audio"
 msgstr "Audio"
@@ -5898,6 +5902,10 @@ msgstr "Toca para ver y ajustar"
 #: src/components/agent-workbench.tsx
 msgid "Tap to refresh this session."
 msgstr "Toca para actualizar esta sesión"
+
+#: src/components/task-row.tsx
+msgid "tap to retry"
+msgstr "toca para reintentar"
 
 #: src/components/session-map.tsx
 msgid "Tap to retry"

@@ -826,6 +826,10 @@ msgstr "附件"
 msgid "Attachment could not be sent"
 msgstr "附件未能发送"
 
+#: src/components/task-row.tsx
+msgid "Attachment could not be sent. Tap to retry."
+msgstr "附件未能发送。轻点重试。"
+
 #: src/components/session-artifacts.tsx
 msgid "Audio"
 msgstr "音频"
@@ -5898,6 +5902,10 @@ msgstr "点击预览并调整"
 #: src/components/agent-workbench.tsx
 msgid "Tap to refresh this session."
 msgstr "点按以刷新这个会话"
+
+#: src/components/task-row.tsx
+msgid "tap to retry"
+msgstr "轻点重试"
 
 #: src/components/session-map.tsx
 msgid "Tap to retry"
