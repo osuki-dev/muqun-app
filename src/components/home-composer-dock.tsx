@@ -307,6 +307,8 @@ export function HomeComposerDock({
   );
   // A failed read, by the key it was for: the pill stops saying it is loading.
   const [catalogFailedKey, setCatalogFailedKey] = useState<string | null>(null);
+  // Bumped by a Send held on a failed read, so pressing it again reads again.
+  const [catalogAttempt, setCatalogAttempt] = useState(0);
   // The models this computer already refused (a session whose turn failed
   // as "not supported"), read from its recent sessions alongside the catalog:
   // the model the pill names and Send sends is never one of them.
@@ -338,7 +340,7 @@ export function HomeComposerDock({
     return () => {
       current = false;
     };
-  }, [ready, selected, agentId, catalogKey, terminalAgent]);
+  }, [ready, selected, agentId, catalogKey, terminalAgent, catalogAttempt]);
   const catalog = catalogRead?.key === catalogKey ? catalogRead.catalog : undefined;
   const refused = refusedRead?.key === catalogKey ? refusedRead.refused : undefined;
   const models = catalog?.models ?? [];
@@ -438,6 +440,32 @@ export function HomeComposerDock({
   /** The composer's own draft, for a command that failed after it was cleared. */
   const injectDraftRef = useRef<DraftInjector | null>(null);
 
+  /**
+   * Never a session without a model on an agent that takes one, whatever
+   * creates it -- a goal, a command or a skill: it waits for the catalog, and
+   * says why under the bar when the catalog could not be read. `true`: held.
+   */
+  function heldByModelGate(): boolean {
+    const gate = homeSendModelGate({
+      choosesModel: features.modelSelection,
+      model: sessionParams.model,
+      catalogRead: catalog !== undefined,
+      catalogFailed,
+    });
+    if (gate === 'send') return false;
+    if (gate === 'failed') {
+      // Read the catalog again now, so the next press can send.
+      setCatalogFailedKey(null);
+      setCatalogAttempt((attempt) => attempt + 1);
+    }
+    setError(
+      gate === 'wait'
+        ? t`Waiting for this computer's model list. Send again in a moment.`
+        : t`Could not read this computer's model list, so nothing was sent. Pick a model or try again.`
+    );
+    return true;
+  }
+
   /** The computer Send goes to, selected; or `null` with the reason shown. */
   async function sendTarget(): Promise<string | null> {
     if (target.kind === 'offline') {
@@ -499,6 +527,8 @@ export function HomeComposerDock({
                 await switchAgentModel(HOME_AGENT_SESSION_ID, asid, plan.switchModel);
               started = { ...plan.started, params };
             } else {
+              // A command or a skill creates the session too: the same gate as Send.
+              if (heldByModelGate()) return false;
               creating = true;
               const created = await createAgentSession(HOME_AGENT_SESSION_ID, {
                 ...params,
@@ -797,22 +827,7 @@ export function HomeComposerDock({
         );
       return dispatchTask(text, start);
     }
-    // Never a goal without a model on an agent that takes one: Send waits for
-    // the catalog, and says why when it could not be read.
-    const gate = homeSendModelGate({
-      choosesModel: features.modelSelection,
-      model: sessionParams.model,
-      catalogRead: catalog !== undefined,
-      catalogFailed,
-    });
-    if (gate !== 'send') {
-      setError(
-        gate === 'wait'
-          ? t`Waiting for this computer's model list. Send again in a moment.`
-          : t`Could not read this computer's model list, so nothing was sent. Pick a model or try again.`
-      );
-      return Promise.resolve(false);
-    }
+    if (heldByModelGate()) return Promise.resolve(false);
     // Attachments ride on a prompt to a session; the ledger route takes text
     // only, so a send with files keeps the session path. So does a retry onto
     // the session a failed send left. Either way Home stays put.
