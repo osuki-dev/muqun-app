@@ -49,7 +49,16 @@ function subscribe(listener: () => void): () => void {
   };
 }
 
-const read = () => nowMs;
+/**
+ * While nothing is subscribed the clock is not ticking, so the first reader
+ * after a quiet spell would paint with a stale minute (the catch-up `tick` in
+ * `subscribe` lands only after paint). Advance it here instead; within a
+ * minute two reads still agree, as `useSyncExternalStore` requires.
+ */
+const read = () => {
+  if (timer === null && Date.now() - nowMs >= MINUTE_MS) nowMs = Date.now();
+  return nowMs;
+};
 
 /**
  * The time, to the minute, for a label that says how long ago something was.

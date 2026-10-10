@@ -2,6 +2,7 @@ import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens } from '@osuki-dev/ui';
 import { Server } from 'lucide-react-native';
+import { useLayoutEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { LayoutAnimationConfig } from 'react-native-reanimated';
 import { useShallow } from 'zustand/react/shallow';
@@ -133,21 +134,48 @@ function nextCardExpiry(afterMs: number): number | undefined {
   return next;
 }
 
-/**
- * Whether any computer has a card. Home asks only this: the store selector
- * returns a boolean, so a task frame re-renders Home only when the section
- * appears or goes, and the cards re-render inside their own tree. Time is a
- * deadline clock, not a tick: the answer is re-asked at the moment a Sent row
- * or a finished task could expire, and never otherwise.
- */
-export function useHasComputerCards({
+/** Whether any computer has a card at `nowMs`, from the stores as they are now. */
+export function hasComputerCardsAt({
   servers,
   reachabilityByServer,
+  nowMs,
+}: {
+  servers: readonly GatewayRecord[];
+  reachabilityByServer: Readonly<Record<string, ServerReachability | undefined>>;
+  nowMs: number;
+}): boolean {
+  const cards = useHomeTaskCards.getState();
+  return (
+    buildComputerCards({
+      servers,
+      index: useServerTasksStore.getState().index,
+      reachability: (serverId) => reachabilityByServer[serverId],
+      dismissed: new Set(cards.dismissed),
+      pending: cards.pending.filter((item) => nowMs - item.atMs < PENDING_DISPATCH_TTL_MS),
+      nowMs,
+    }).length > 0
+  );
+}
+
+/**
+ * Tells Home whether any computer has a card, and draws nothing.
+ *
+ * Home needs only the boolean (the section is there or not); the clock it
+ * turns on lives here. Time is a deadline clock, not a tick: the answer is
+ * re-asked at the moment a Sent row or a finished task could expire, and a
+ * task frame or a deadline re-renders this, not Home -- Home hears about it
+ * only when the answer flips.
+ */
+export function ComputerCardsPresence({
+  servers,
+  reachabilityByServer,
+  onChange,
 }: {
   servers: readonly GatewayRecord[];
   /** Home's folded reachability; a refused pairing counts as offline. */
   reachabilityByServer: Readonly<Record<string, ServerReachability | undefined>>;
-}): boolean {
+  onChange: (hasCards: boolean) => void;
+}) {
   const nowMs = useDeadlineNow(subscribeCardDeadlines, nextCardExpiry);
   const dismissedList = useHomeTaskCards((state) => state.dismissed);
   const pending = useHomeTaskCards(
@@ -156,7 +184,7 @@ export function useHasComputerCards({
     )
   );
   const dismissed = new Set(dismissedList);
-  return useServerTasksStore(
+  const hasCards = useServerTasksStore(
     (state) =>
       buildComputerCards({
         servers,
@@ -167,6 +195,11 @@ export function useHasComputerCards({
         nowMs,
       }).length > 0
   );
+  // Before paint, so a section that appears or goes does it in the same frame.
+  useLayoutEffect(() => {
+    onChange(hasCards);
+  }, [hasCards, onChange]);
+  return null;
 }
 
 /**
@@ -191,8 +224,8 @@ export function HomeComputerCards({
 }: {
   servers: readonly GatewayRecord[];
   activeConnection?: ActiveServerConnection;
-  /** Home's probe-freshness clock; ages run on the minute clock from here down. */
-  nowMs: number;
+  /** A freshness instant the caller already holds; Home leaves it out. */
+  nowMs?: number;
   /**
    * The cards were already there when Home mounted: they are not arrivals.
    * Home owns this because the section itself only mounts with its first card.
@@ -209,7 +242,8 @@ export function HomeComputerCards({
   );
   // Ages, the Sent row's lifetime and the finished window move with the
   // minute; probe freshness with Home's own clock, whichever is newer.
-  const nowMs = useMinuteNow(freshnessNowMs);
+  const probeNowMs = useServerReachability((state) => state.freshnessNowMs);
+  const nowMs = useMinuteNow(Math.max(freshnessNowMs ?? 0, probeNowMs));
   const inputs = useCardInputs(activeConnection, nowMs);
   const index: Record<string, NonNullable<(typeof entries)[number]>> = {};
   serverIds.forEach((serverId, position) => {

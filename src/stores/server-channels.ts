@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 
 import type { GatewaySocketState } from '@/lib/gateway-socket';
+import { retryHomeRefresh } from '@/lib/home-refresh-schedule';
 import type { StreamChannelPhase } from '@/lib/server-reachability';
 
 /**
@@ -29,6 +30,8 @@ export const useServerChannels = create<ServerChannelsState>((set, get) => ({
   setSocket(serverId, state) {
     if (get().sockets[serverId] === state) return;
     set((current) => ({ sockets: { ...current.sockets, [serverId]: state } }));
+    // The computer answered: whatever Continue's backoff held against it is over.
+    if (state === 'open') retryHomeRefresh(serverId);
   },
   setStream(serverId, phase) {
     const held = get().streams[serverId];

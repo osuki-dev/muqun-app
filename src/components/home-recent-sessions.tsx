@@ -216,6 +216,9 @@ export function useHomeRecentEntries({
             capabilities: useServerCapabilities.getState().byServer[record.serverId],
           }),
         });
+        // The panes read failing while the list answered is the session the
+        // cached choice names having gone: ask `/api/sessions` again next pass.
+        if (results[0]?.status === 'rejected') forgetHomeSessionChoices(record.serverId);
         return results.some((result) => result.status === 'fulfilled');
       };
       const refresh = async (): Promise<void> => {
@@ -231,17 +234,16 @@ export function useHomeRecentEntries({
           const nowMs = Date.now();
           const sockets = useServerChannels.getState().sockets;
           // Only the computers that are due: an answering one on its cadence,
-          // a failing one on its backoff, one known to be down not at all.
-          const due = servers.filter(
-            (server) =>
-              !isDemoRecord(server) &&
-              readReachability()[server.serverId] !== 'offline' &&
-              homeRefreshDue(
-                homeRefreshAttempt(server.serverId),
-                nowMs,
-                sockets[server.serverId] === 'open'
-              )
-          );
+          // a failing one on its backoff -- unless it is answering again --
+          // and one known to be down not at all.
+          const reachability = readReachability();
+          const due = servers.filter((server) => {
+            if (isDemoRecord(server) || reachability[server.serverId] === 'offline') return false;
+            const attempt = homeRefreshAttempt(server.serverId);
+            if (attempt && attempt.failures > 0 && reachability[server.serverId] === 'live')
+              return true;
+            return homeRefreshDue(attempt, nowMs, sockets[server.serverId] === 'open');
+          });
           await refreshHomeGateways({
             records: due,
             selectedServerId: targetId,

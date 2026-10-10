@@ -74,7 +74,8 @@ import { HomeAttention, useHasHomeAttention } from '@/components/home-attention'
 import {
   HomeComputerCards,
   HomeTaskSync,
-  useHasComputerCards,
+  ComputerCardsPresence,
+  hasComputerCardsAt,
 } from '@/components/home-computer-cards';
 import { HomeRecentChips } from '@/components/home-recent-chips';
 import { filterHomeRecent, homeRecentFilterIds } from '@/lib/home-continue';
@@ -378,14 +379,10 @@ export function HomeOverview({
 
   // Whether each computer is answering, from its probe and its live channels
   // (agent socket, terminal stream). Home re-renders only when one of those
-  // answers moves; `nowMs` is the instant probe freshness was last resolved
-  // against, and it advances exactly when some probe goes stale -- not on a
-  // tick. A standalone Home has no active connection override.
+  // answers moves -- not when a probe lands or expires with the same answer,
+  // and not on a tick. A standalone Home has no active connection override.
   const recordIds = useMemo(() => records.map((server) => server.serverId), [records]);
-  const { reachabilityByServer: padReachabilityByServer, nowMs } = useHomeReachability(
-    recordIds,
-    activeConnection
-  );
+  const padReachabilityByServer = useHomeReachability(recordIds, activeConnection);
 
   // Which servers have been opened on this device, and when. Already stored for
   // the "while you were away" digest; the probe order is its second reader, and
@@ -399,10 +396,14 @@ export function HomeOverview({
   }, [hydrateLastViewed, hydrateServerCapabilities]);
   // Only computers with work get a card; with none the section is left out.
   // A boolean, so task frames do not re-render all of Home.
-  const hasComputerCards = useHasComputerCards({
-    servers: cardServers,
-    reachabilityByServer: padReachabilityByServer,
-  });
+  // `ComputerCardsPresence` below keeps this current; Home holds only the answer.
+  const [hasComputerCards, setHasComputerCards] = useState(() =>
+    hasComputerCardsAt({
+      servers: cardServers,
+      reachabilityByServer: padReachabilityByServer,
+      nowMs: Date.now(),
+    })
+  );
   // Needs you stays mounted while empty; the Pad cover asks whether it has a row.
   const hasAttention = useHasHomeAttention({ servers: records, taskServerIds });
   const coverHeader = customTheme?.manifest.homePresentation?.header === 'cover';
@@ -889,6 +890,11 @@ export function HomeOverview({
         />
         {devAmbientLayer}
         <HomeTaskSync serverIds={liveTaskServerIds} />
+        <ComputerCardsPresence
+          servers={cardServers}
+          reachabilityByServer={padReachabilityByServer}
+          onChange={setHasComputerCards}
+        />
         <KeyboardAwareScrollView
           ref={overviewScroll}
           keyboardShouldPersistTaps="handled"
@@ -1120,7 +1126,6 @@ export function HomeOverview({
                   <HomeComputerCards
                     servers={cardServers}
                     activeConnection={activeConnection}
-                    nowMs={nowMs}
                     skipEntering={cardsSkipEntering}
                     gridWidth={cardGridWidth}
                     onSelectServer={targetComposer}
@@ -1159,7 +1164,6 @@ export function HomeOverview({
                       void commands.manageConnections();
                     }}
                     activeConnection={activeConnection}
-                    nowMs={nowMs}
                     linkStyle={padLaunch ? PAD_WORK_LINK : undefined}
                   />
                 ) : undefined
@@ -1266,6 +1270,11 @@ export function HomeOverview({
       />
       {devAmbientLayer}
       <HomeTaskSync serverIds={liveTaskServerIds} />
+      <ComputerCardsPresence
+        servers={cardServers}
+        reachabilityByServer={padReachabilityByServer}
+        onChange={setHasComputerCards}
+      />
       {/* The bar and the brand block below it are one header in two states, not
           two rows. At rest the bar's left half is deliberately empty -- no
           hamburger, no title, no rule, no blur -- because the brand block ten

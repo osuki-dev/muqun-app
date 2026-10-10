@@ -106,19 +106,38 @@ export async function refreshHomeContinue({
               limit: String(Math.max(AGENT_SESSION_LIST_LIMIT, agentSessionLimit)),
               order: 'desc',
             });
-            const response = await read(`/api/agent-sessions?${query}`);
+            const list = listedSessions(await read(`/api/agent-sessions?${query}`));
             if (!isCurrent()) return;
-            const data =
-              response && typeof response === 'object' && 'data' in response
-                ? response.data
-                : response;
-            const list = parseAgentSessionList(data);
             const observedAtMs = Date.now();
             if (recordAgentSessions) {
               const sessions = gatewayAgentSessions(list, agentSessionLimit);
               recordAgentSessions({ serverId, sessionId, observedAtMs, sessions });
             }
             const byAsid = new Map(list.map((info) => [info.asid, info]));
+            // A remembered session the merged list did not carry -- older than
+            // its newest page, or behind an adapter that scopes an unscoped
+            // list to one folder -- is read in its own folder, as it used to
+            // be: one read per folder that has such a session, never more than
+            // the per-folder reads this replaced.
+            const unlisted = new Map<string, { sessionId: string; directory: string }>();
+            for (const { target } of remembered) {
+              if (target.kind === 'agent-session' && !byAsid.has(target.asid))
+                unlisted.set(JSON.stringify([target.sessionId, target.directory]), target);
+            }
+            await Promise.all(
+              [...unlisted.values()].map(async (folder) => {
+                const scoped = new URLSearchParams({
+                  roots: 'true',
+                  directory: folder.directory,
+                  limit: String(AGENT_SESSION_LIST_LIMIT),
+                  order: 'desc',
+                });
+                const found = await read(
+                  `/api/sessions/${encodeURIComponent(folder.sessionId)}/agent-sessions?${scoped}`
+                ).then(listedSessions, () => []);
+                for (const info of found) if (!byAsid.has(info.asid)) byAsid.set(info.asid, info);
+              })
+            );
             for (const { target } of remembered) {
               if (!isCurrent()) return;
               if (target.kind !== 'agent-session') continue;
@@ -132,6 +151,12 @@ export async function refreshHomeContinue({
         ]
       : []),
   ]);
+}
+
+function listedSessions(response: unknown) {
+  return parseAgentSessionList(
+    response && typeof response === 'object' && 'data' in response ? response.data : response
+  );
 }
 
 /** Refresh independent gateways with bounded concurrency; one failure keeps other rows fresh. */
