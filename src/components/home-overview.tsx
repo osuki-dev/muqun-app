@@ -371,6 +371,8 @@ export function HomeOverview({
   const [composerPulse, setComposerPulse] = useState(0);
   // The phone dock floats over the page; the page's foot clears it.
   const [dockHeight, setDockHeight] = useState(0);
+  // Classic: the pack artwork's measured slot, which the work block overlaps.
+  const [classicArtworkHeight, setClassicArtworkHeight] = useState(0);
   // On the phone the dock slides out of the way while the page scrolls down.
   // The Pad cover's dock stays fixed at the foot of its column.
   const pageDockHide = useDockAutoHide(dockHeight);
@@ -1310,6 +1312,14 @@ export function HomeOverview({
     );
   }
 
+  const classicArtwork =
+    !loading && !hydrationError && records.length > 0 && artworkResolution
+      ? artworkResolution
+      : undefined;
+  // The work block rises over the artwork slot's bottom third; with no
+  // artwork it keeps the list's own spacing.
+  const artworkOverlap =
+    classicArtwork && classicArtworkHeight > 0 ? Math.round(classicArtworkHeight / 3) : 0;
   const classicContent = (
     <View style={[styles.page, { backgroundColor: background(theme.colors.background) }]}>
       <ThemeArtwork
@@ -1601,8 +1611,14 @@ export function HomeOverview({
             the mark and drop the picture, or the other way round -- because the
             two answer different questions: what the app is called, and what the
             theme looks like. */}
-        {!loading && !hydrationError && records.length > 0 && artworkResolution ? (
-          <HomeArtwork resolution={artworkResolution} scrollY={scrollY} />
+        {classicArtwork ? (
+          <View
+            onLayout={(event) => {
+              const height = event.nativeEvent.layout.height;
+              setClassicArtworkHeight((current) => (current === height ? current : height));
+            }}>
+            <HomeArtwork resolution={classicArtwork} scrollY={scrollY} />
+          </View>
         ) : null}
 
         {hydrationError ? <GatewayStorageError busy={loading} onRetry={retryHydration} /> : null}
@@ -1652,7 +1668,7 @@ export function HomeOverview({
             only thing on the screen, so labelling it says nothing, and pairing
             -- which happens once per machine, ever -- belongs in the drawer,
             not in the corner furthest from a thumb. */}
-        {!loading ? (
+        {!loading && !artworkOverlap ? (
           <View
             style={[
               styles.spacerAbove,
@@ -1667,108 +1683,117 @@ export function HomeOverview({
           />
         ) : null}
 
-        {/* The dispatch surface every layout has (see `classicLayout`): Needs
-            you, then the computers with work, then this layout's own server
-            cards as its Recent. Below the spacer, so each label sits on what
-            it labels. */}
-        {hasAttention && attentionSection ? (
-          <View style={[{ marginBottom: metrics.cardGap, gap: theme.spacing.sm }]}>
-            {attentionSection}
-          </View>
-        ) : null}
-        {progressSection ? (
-          <View style={[{ marginBottom: metrics.cardGap, gap: theme.spacing.sm }]}>
-            <SectionLabel
-              title={<Trans>Computers</Trans>}
-              color={theme.colors.textMuted}
-              style={styles.classicLabel}
-            />
-            {progressSection}
-          </View>
-        ) : null}
-        {progressSection && records.length > 0 ? (
-          <SectionLabel
-            title={<Trans>Recent</Trans>}
-            color={theme.colors.textMuted}
-            style={[styles.classicLabel, { marginBottom: theme.spacing.sm }]}
-          />
-        ) : null}
-
-        {!loading && !hydrationError && records.length === 0 ? (
-          <EmptyState isPad={isPad} onPair={() => void commands.pairGateway()} onDemo={openDemo} />
-        ) : null}
-
-        <View style={[styles.serverList, { gap: metrics.cardGap }]}>
-          {records.map((server) => (
-            <ServerCard
-              key={server.serverId}
-              server={server}
-              metrics={metrics}
-              selected={server.serverId === record?.serverId}
-              showAddress={addressNeeded.has(server.serverId)}
-              reachability={padReachabilityByServer[server.serverId] ?? 'unknown'}
-              onOpen={() => openServer(server.serverId)}
-              onOpenAgent={(agent) => openServer(server.serverId, agent.paneId)}
-            />
-          ))}
-        </View>
-
-        {/* The saved SSH hosts, under the gateways and apart from them: a
-            gateway hands the app a workspace, an SSH host is a machine with
-            sshd, and the two are added and trusted in different ways -- see
-            `SshHostList` for why they are not one list. Absent entirely until
-            there is a host to show, so a reader who has never added one is not
-            told about the feature by an empty heading; the header's SSH
-            button is the door to that. The eyebrow is the one place this
-            screen labels a group, because here there are two. */}
-        {sshRows.length > 0 ? (
-          <Animated.View
-            entering={riseIn(records.length * STAGGER.card)}
-            layout={listLayout()}
-            style={[styles.sshSection, records.length > 0 && { marginTop: metrics.cardGap }]}
-            testID="home-ssh-hosts">
-            <View style={styles.sshHeading}>
-              {/* The same pill the settings page draws over TERMINAL. This
-                  screen's whole point is the wallpaper behind it, so the one
-                  heading it has is the one that most needs the plate. The row
-                  keeps its `Manage` opposite; only the label hugs. */}
+        {/* The work block. Under a pack's artwork it starts over the slot's
+            bottom third, so the figure's lower edge fades under the first
+            card instead of leaving a band of nothing above the heading. */}
+        <View style={artworkOverlap ? { marginTop: -artworkOverlap } : undefined}>
+          {/* The dispatch surface every layout has (see `classicLayout`): Needs
+              you, then the computers with work, then this layout's own server
+              cards as its Recent. Below the spacer, so each label sits on what
+              it labels. */}
+          {hasAttention && attentionSection ? (
+            <View style={[{ marginBottom: metrics.cardGap, gap: theme.spacing.sm }]}>
+              {attentionSection}
+            </View>
+          ) : null}
+          {progressSection ? (
+            <View style={[{ marginBottom: metrics.cardGap, gap: theme.spacing.sm }]}>
               <SectionLabel
-                title={<Trans>SSH hosts</Trans>}
+                title={<Trans>Computers</Trans>}
                 color={theme.colors.textMuted}
-                style={styles.sshHeadingLabel}
+                style={styles.classicLabel}
               />
-              {/* The way to the list this section is a view of: adding,
-                  editing and forgetting a host happen there, not here. */}
-              <PressableScale
-                accessibilityRole="button"
-                accessibilityLabel={t`Manage SSH hosts`}
-                hitSlop={8}
-                onPress={() => void commands.openSsh()}
-                style={styles.sshManage}>
-                <Text variant="caption" color={theme.colors.textMuted}>
-                  <Trans>Manage</Trans>
-                </Text>
-                <ThemeIcon
-                  name="home.arrow"
-                  fallback={ChevronRight}
-                  size={14}
+              {progressSection}
+            </View>
+          ) : null}
+          {progressSection && records.length > 0 ? (
+            <SectionLabel
+              title={<Trans>Recent</Trans>}
+              color={theme.colors.textMuted}
+              style={[styles.classicLabel, { marginBottom: theme.spacing.sm }]}
+            />
+          ) : null}
+
+          {!loading && !hydrationError && records.length === 0 ? (
+            <EmptyState
+              isPad={isPad}
+              onPair={() => void commands.pairGateway()}
+              onDemo={openDemo}
+            />
+          ) : null}
+
+          <View style={[styles.serverList, { gap: metrics.cardGap }]}>
+            {records.map((server) => (
+              <ServerCard
+                key={server.serverId}
+                server={server}
+                metrics={metrics}
+                selected={server.serverId === record?.serverId}
+                showAddress={addressNeeded.has(server.serverId)}
+                reachability={padReachabilityByServer[server.serverId] ?? 'unknown'}
+                onOpen={() => openServer(server.serverId)}
+                onOpenAgent={(agent) => openServer(server.serverId, agent.paneId)}
+              />
+            ))}
+          </View>
+
+          {/* The saved SSH hosts, under the gateways and apart from them: a
+              gateway hands the app a workspace, an SSH host is a machine with
+              sshd, and the two are added and trusted in different ways -- see
+              `SshHostList` for why they are not one list. Absent entirely until
+              there is a host to show, so a reader who has never added one is not
+              told about the feature by an empty heading; the header's SSH
+              button is the door to that. The eyebrow is the one place this
+              screen labels a group, because here there are two. */}
+          {sshRows.length > 0 ? (
+            <Animated.View
+              entering={riseIn(records.length * STAGGER.card)}
+              layout={listLayout()}
+              style={[styles.sshSection, records.length > 0 && { marginTop: metrics.cardGap }]}
+              testID="home-ssh-hosts">
+              <View style={styles.sshHeading}>
+                {/* The same pill the settings page draws over TERMINAL. This
+                    screen's whole point is the wallpaper behind it, so the one
+                    heading it has is the one that most needs the plate. The row
+                    keeps its `Manage` opposite; only the label hugs. */}
+                <SectionLabel
+                  title={<Trans>SSH hosts</Trans>}
                   color={theme.colors.textMuted}
-                  strokeWidth={2}
+                  style={styles.sshHeadingLabel}
                 />
-              </PressableScale>
-            </View>
-            <View style={styles.sshList}>
-              {sshRows.map((host) => (
-                <SshHostRow
-                  key={host.id}
-                  record={host}
-                  showAddress={false}
-                  onOpen={() => openSshHost(host)}
-                />
-              ))}
-            </View>
-          </Animated.View>
-        ) : null}
+                {/* The way to the list this section is a view of: adding,
+                    editing and forgetting a host happen there, not here. */}
+                <PressableScale
+                  accessibilityRole="button"
+                  accessibilityLabel={t`Manage SSH hosts`}
+                  hitSlop={8}
+                  onPress={() => void commands.openSsh()}
+                  style={styles.sshManage}>
+                  <Text variant="caption" color={theme.colors.textMuted}>
+                    <Trans>Manage</Trans>
+                  </Text>
+                  <ThemeIcon
+                    name="home.arrow"
+                    fallback={ChevronRight}
+                    size={14}
+                    color={theme.colors.textMuted}
+                    strokeWidth={2}
+                  />
+                </PressableScale>
+              </View>
+              <View style={styles.sshList}>
+                {sshRows.map((host) => (
+                  <SshHostRow
+                    key={host.id}
+                    record={host}
+                    showAddress={false}
+                    onOpen={() => openSshHost(host)}
+                  />
+                ))}
+              </View>
+            </Animated.View>
+          ) : null}
+        </View>
 
         {!loading ? <View style={[styles.spacerBelow, isPad && styles.padSpacer]} /> : null}
       </KeyboardAwareScrollView>
