@@ -255,9 +255,7 @@ export function HomeComposerDock({
           (!selectedModel.provider_id || model.provider_id === selectedModel.provider_id)
       )
     : undefined;
-  const modelName = selectedModel
-    ? formatModelName(selectedModel, '', modelInfo?.name)
-    : t`Default`;
+  const modelName = formatModelName(selectedModel, '', modelInfo?.name);
   const canPickMode = features.modes && modes.length > 0;
 
   const selectModel = useStableHandler((model: ModelRef) => {

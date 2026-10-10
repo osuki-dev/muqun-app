@@ -111,7 +111,7 @@ describe('homeSessionParams', () => {
       shown: { model: haiku, mode: 'plan' },
     },
     {
-      name: 'nothing picked sends nothing and names the agent default, not the first model',
+      name: 'nothing picked sends nothing and names the host default',
       picked: {},
       defaults: { model: haiku, mode: 'build' },
       discovered: false,
@@ -119,12 +119,12 @@ describe('homeSessionParams', () => {
       shown: { model: haiku, mode: 'build' },
     },
     {
-      name: 'a pick the catalog dropped is not sent',
+      name: 'a pick the catalog dropped is not sent; with no default the first listed model runs',
       picked: { model: gone },
       defaults: {},
       discovered: false,
       params: {},
-      shown: {},
+      shown: { model: sonnet },
     },
   ])('$name', ({ picked, defaults, discovered, params, shown }) => {
     expect(

@@ -2100,7 +2100,6 @@ msgstr "降低{label}"
 msgid "default"
 msgstr "默认"
 
-#: src/components/home-composer-dock.tsx
 #: src/components/settings-terminal.tsx
 #: src/components/settings-theme-sheet.tsx
 msgid "Default"

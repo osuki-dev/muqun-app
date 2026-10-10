@@ -23,7 +23,7 @@ import {
   type ComputerCard,
 } from '@/lib/home-computer-cards';
 import { PAD_CARD_GAP, padCardColumns } from '@/lib/home-pad-geometry';
-import { fadeOut, listLayout, pulseOnce, riseIn } from '@/lib/motion';
+import { fadeOut, listLayout, riseIn } from '@/lib/motion';
 import {
   reachabilityOfStatus,
   resolveConnectionStatus,
@@ -279,15 +279,6 @@ function ComputerCardView({
           borderRadius: profile.chrome.surface,
         },
       ]}>
-      {card.activity === 'needs-you' ? (
-        // The needs-you edge pulses once when the card starts needing the
-        // reader (`pulseOnce`), then stays still; instant under reduce-motion.
-        <Animated.View
-          pointerEvents="none"
-          entering={pulseOnce()}
-          style={[styles.needsYou, { backgroundColor: theme.colors.warning }]}
-        />
-      ) : null}
       <PressableScale
         testID={`home-card-header-${server.serverId}`}
         accessibilityRole="button"
@@ -366,7 +357,6 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   headerCopy: { flexShrink: 1, minWidth: 0, gap: 2 },
-  needsYou: { position: 'absolute', left: 0, top: 0, bottom: 0, width: 4 },
   statusLine: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   block: { gap: 2, paddingBottom: 8 },
   fill: { flexGrow: 1 },
