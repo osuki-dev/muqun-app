@@ -53,21 +53,23 @@ export function mentionRanges(text: string, tokens: readonly MentionToken[]): Me
 }
 
 /**
- * When `next` is `prev` with the last character of a mention removed (a
- * backspace at its end), the draft without the whole token and the caret
- * where it began; otherwise null.
+ * When `next` is `prev` with one character removed by a backspace with the
+ * caret (collapsed, at `caret` in `prev`) exactly at a mention's end, the
+ * draft without the whole token and the caret where it began; otherwise
+ * null. The caret decides, not the diff: in a run of repeated letters
+ * (`@moo`) the diff cannot tell which one went.
  */
 export function deleteMentionAtomically(
   prev: string,
   next: string,
-  ranges: readonly MentionRange[]
+  ranges: readonly MentionRange[],
+  caret: number
 ): { text: string; caret: number } | null {
-  if (next.length !== prev.length - 1) return null;
-  let index = 0;
-  while (index < next.length && prev[index] === next[index]) index += 1;
-  if (prev.slice(index + 1) !== next.slice(index)) return null;
-  const range = ranges.find((candidate) => candidate.end - 1 === index);
+  if (!ranges.length || next.length !== prev.length - 1) return null;
+  const range = ranges.find((candidate) => candidate.end === caret);
   if (!range) return null;
+  // The edit has to be exactly that character going.
+  if (prev.slice(0, caret - 1) + prev.slice(caret) !== next) return null;
   return { text: prev.slice(0, range.start) + prev.slice(range.end), caret: range.start };
 }
 

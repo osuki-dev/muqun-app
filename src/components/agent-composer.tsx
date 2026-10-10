@@ -833,9 +833,16 @@ export const AgentComposer = memo(function AgentComposer({
   // The caret after a pick or an atomic delete, held for exactly the render
   // that shows it (the `useComposerPopup` rule: a permanently controlled
   // selection fights the user on Android).
-  const [heldCaret, setHeldCaret] = useState<{ draft: string; caret: number } | null>(null);
+  const [heldCaret, setHeldCaretState] = useState<{ draft: string; caret: number } | null>(null);
+  // The same caret, readable from the native selection callback, which can
+  // run before the render that set it (Android reports the old caret first).
+  const heldCaretRef = useRef<{ draft: string; caret: number } | null>(null);
+  const setHeldCaret = (next: { draft: string; caret: number } | null) => {
+    heldCaretRef.current = next;
+    setHeldCaretState(next);
+  };
   const changeText = (next: string) => {
-    const whole = deleteMentionAtomically(text, next, ranges);
+    const whole = deleteMentionAtomically(text, next, ranges, effectiveCaret);
     if (whole) {
       setText(whole.text);
       setCaret(whole.caret);
@@ -844,11 +851,32 @@ export const AgentComposer = memo(function AgentComposer({
     }
     setText(next);
   };
+  // Android can apply the new text after the `selection` prop of the same
+  // render and leave its own caret; place it once more after the commit.
+  useEffect(() => {
+    if (!heldCaret || heldCaret.draft !== text) return;
+    const place = () => inputRef.current?.setSelection(heldCaret.caret, heldCaret.caret);
+    place();
+    // Once more after the native text update has landed (a frame later),
+    // then let go: the reader's own caret moves are theirs again.
+    const timer = setTimeout(() => {
+      place();
+      heldCaretRef.current = null;
+    }, CARET_SETTLE_MS);
+    return () => clearTimeout(timer);
+  }, [heldCaret, text]);
   const selection =
     heldCaret && heldCaret.draft === text
       ? { start: heldCaret.caret, end: heldCaret.caret }
       : slashPopup.inputProps.selection;
-  const spans = ranges.length > 0 ? <MentionSpans text={text} ranges={ranges} /> : undefined;
+  // Span mode starts as soon as a mention can appear (an `@` or a token in the
+  // draft), so the field switches from `value` to spans on a keystroke rather
+  // than in the same commit as a pick -- Android drops the first colouring
+  // otherwise.
+  const spans =
+    ranges.length > 0 || (mentionTokens.length > 0 && text.includes('@')) ? (
+      <MentionSpans text={text} ranges={ranges} />
+    ) : undefined;
 
   const offeredComputers = useMemo(
     () =>
@@ -881,6 +909,14 @@ export const AgentComposer = memo(function AgentComposer({
   const handleSelectionChange = useCallback(
     (event: NativeSyntheticEvent<TextInputSelectionChangeEventData>) => {
       const next = event.nativeEvent.selection.start;
+      // A held caret stays until the field reports it: Android applies the
+      // new text after the selection of the same commit and moves its own
+      // caret, which would otherwise be taken as where the reader put it.
+      const held = heldCaretRef.current;
+      if (held && next !== held.caret) {
+        inputRef.current?.setSelection(held.caret, held.caret);
+        return;
+      }
       setCaret(next);
       setHeldCaret(null);
       slashPopup.inputProps.onSelectionChange(event);
@@ -2028,6 +2064,9 @@ const ATTACHMENT_MENU_GAP = 8;
 
 /** How much of the strip stays visible to the left of the chip brought into view. */
 const SESSION_CHIP_REVEAL_MARGIN = 24;
+
+/** How long after a programmatic edit the native field has applied it. */
+const CARET_SETTLE_MS = 50;
 
 /** A chevron at the caption line's size: about its cap height, as 12 is to body text. */
 const QUIET_CHEVRON = AGENT_TYPE.meta.size - 2;

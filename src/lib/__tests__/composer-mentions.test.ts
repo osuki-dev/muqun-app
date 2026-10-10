@@ -53,22 +53,29 @@ describe('mentionRanges: which spans of the draft are drawn as mentions', () => 
 });
 
 describe('deleteMentionAtomically: a backspace at the end of a mention takes the whole token', () => {
+  const moo: MentionToken = { text: '@moo', kind: 'computer' };
+  // name, before, after, the caret before the edit, tokens, result
   test.each([
-    ['at the end of a computer', '@mini ', '@min ', [mini], { text: ' ', caret: 0 }],
-    ['after other words', 'ask @mini', 'ask @min', [mini], { text: 'ask ', caret: 4 }],
+    ['at the end of a computer', '@mini ', '@min ', 5, [mini], { text: ' ', caret: 0 }],
+    ['after other words', 'ask @mini', 'ask @min', 9, [mini], { text: 'ask ', caret: 4 }],
+    ['mid-sentence', 'ask @mini now', 'ask @min now', 9, [mini], { text: 'ask  now', caret: 4 }],
     [
       'at the end of a file path',
       'src/a.ts done',
       'src/a.t done',
+      8,
       [file],
       { text: ' done', caret: 0 },
     ],
-    ['the space after a mention is an ordinary character', '@mini ', '@mini', [mini], null],
-    ['a deletion inside a mention is ordinary editing', '@mini x', '@mni x', [mini], null],
-    ['typing is not a deletion', '@mini', '@mini!', [mini], null],
-    ['a replaced selection is not a backspace', '@mini x', 'y', [mini], null],
-  ] as const)('%s', (_name, prev, next, tokens, expected) => {
-    expect(deleteMentionAtomically(prev, next, mentionRanges(prev, tokens))).toEqual(expected);
+    ['the space after a mention is an ordinary character', '@mini ', '@mini', 6, [mini], null],
+    ['a deletion inside a mention is ordinary editing', '@mini x', '@mni x', 3, [mini], null],
+    ['a backspace inside a repeated letter is ordinary editing', '@moo x', '@mo x', 3, [moo], null],
+    ['typing is not a deletion', '@mini', '@mini!', 5, [mini], null],
+    ['a replaced selection is not a backspace', '@mini x', 'y', 7, [mini], null],
+  ] as const)('%s', (_name, prev, next, caret, tokens, expected) => {
+    expect(deleteMentionAtomically(prev, next, mentionRanges(prev, tokens), caret)).toEqual(
+      expected
+    );
   });
 });
 

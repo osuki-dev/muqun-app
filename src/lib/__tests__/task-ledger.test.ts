@@ -165,9 +165,17 @@ describe('POST /api/tasks', () => {
 
 describe('isMentionsRefusal: when a task is resent without its mentions', () => {
   test.each([
-    ['a 400 naming the mentions', 'Open task: 400 {"error":{"code":"invalid_mentions"}}', true],
-    ['a 400 about something else', 'Open task: 400 {"error":{"code":"invalid_goal"}}', false],
-    ['a server error that mentions them', 'Open task: 500 mentions failed', false],
+    [
+      'a 400 refusing the mentions',
+      'Open task: 400 {"error":{"code":"invalid_mentions","message":"…"}}',
+      true,
+    ],
+    [
+      'another 400 whose words mention them',
+      'Open task: 400 {"error":{"code":"invalid_request","message":"mentions must be…"}}',
+      false,
+    ],
+    ['a server error', 'Open task: 500 {"error":{"code":"invalid_mentions"}}', false],
   ] as const)('%s', (_name, message, expected) => {
     expect(isMentionsRefusal(new Error(message))).toBe(expected);
   });

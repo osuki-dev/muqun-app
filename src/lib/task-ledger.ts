@@ -364,12 +364,20 @@ export async function createLedgerTask(
 }
 
 /**
- * Whether `POST /api/tasks` refused the request for its `mentions` (a 400
- * whose answer names them) rather than for the goal.
+ * Whether `POST /api/tasks` refused the request for its `mentions`: a 400
+ * whose error code is `invalid_mentions`. The code, never the message, which
+ * the gateway words in the request's language.
  */
 export function isMentionsRefusal(error: unknown): boolean {
   const message = error instanceof Error ? error.message : '';
-  return /^Open task: 400\b/.test(message) && /mention/i.test(message);
+  const prefix = 'Open task: 400 ';
+  if (!message.startsWith(prefix)) return false;
+  try {
+    const body = asRecord(JSON.parse(message.slice(prefix.length)));
+    return asString(asRecord(body?.error)?.code) === 'invalid_mentions';
+  } catch {
+    return false;
+  }
 }
 
 async function endpointRequest(
