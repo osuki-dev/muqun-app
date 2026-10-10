@@ -2,8 +2,8 @@ import { useMemo } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 
 import {
+  reachabilityOfStatus,
   resolveConnectionStatus,
-  resolveServerReachability,
   type ActiveServerConnection,
   type ConnectionStatus,
   type ServerChannels,
@@ -13,52 +13,70 @@ import { useServerChannels } from '@/stores/server-channels';
 import { useServerReachability } from '@/stores/server-reachability';
 
 /**
- * The part of a computer's live channels the folded reachability turns on --
- * open, refusing, or neither -- so a socket cycling through `connecting` and
- * `backoff` against a machine that is down changes nothing here.
+ * The part of a computer's live channels its status can turn on: open,
+ * refusing, or -- for the selected computer only, the one that can be
+ * `reconnecting` -- retrying. Anything else is nothing, so a socket cycling
+ * through `connecting` and `backoff` against another machine changes nothing
+ * here.
  */
 function channelEvidence(
   sockets: Readonly<Record<string, string | undefined>>,
   streams: Readonly<Record<string, string | undefined>>,
-  serverId: string
+  serverId: string,
+  selected: boolean
 ): string {
   if (sockets[serverId] === 'open' || streams[serverId] === 'open') return 'open';
-  return sockets[serverId] === 'unauthorized' ? 'unauthorized' : '';
+  if (sockets[serverId] === 'unauthorized') return 'unauthorized';
+  if (
+    selected &&
+    (sockets[serverId] === 'connecting' ||
+      sockets[serverId] === 'backoff' ||
+      streams[serverId] === 'retrying')
+  )
+    return 'retrying';
+  return '';
 }
 
 function channelsOf(evidence: string | undefined): ServerChannels {
-  return evidence === 'open' || evidence === 'unauthorized' ? { socket: evidence } : {};
+  if (evidence === 'open' || evidence === 'unauthorized') return { socket: evidence };
+  return evidence === 'retrying' ? { socket: 'connecting' } : {};
 }
 
 /**
- * Whether each computer is answering, for a screen that must re-render only
- * when one of those answers changes.
+ * Each computer's connection status, for every screen that shows one -- Home,
+ * Settings › Computers, a guide deciding whether it can run its command -- and
+ * that must re-render only when one of those statuses changes.
  *
- * A probe landing, a probe being marked as re-checking, a socket retrying, a
- * probe going stale without its answer changing: none of them re-render the
- * caller unless a computer's `live`/`offline`/`unknown` moves. Freshness is
- * resolved against the store's `freshnessNowMs`, which steps exactly when a
- * probe expires, inside the selector -- the caller holds no clock.
+ * A probe landing, a probe being marked as re-checking, a socket retrying
+ * against a machine that is not selected, a probe going stale without its
+ * answer changing: none of them re-render the caller unless a status moves.
+ * Freshness is resolved against the store's `freshnessNowMs`, which steps
+ * exactly when a probe expires, inside the selector -- the caller holds no
+ * clock. `selectedId` is the computer that may read `reconnecting`.
  */
-export function useHomeReachability(
+export function useConnectionStatuses(
   serverIds: readonly string[],
-  activeConnection: ActiveServerConnection | undefined
-): Readonly<Record<string, ServerReachability>> {
+  selectedId: string | undefined,
+  activeConnection?: ActiveServerConnection
+): Readonly<Record<string, ConnectionStatus>> {
   const channels = useServerChannels(
     useShallow((state) =>
-      serverIds.map((serverId) => channelEvidence(state.sockets, state.streams, serverId))
+      serverIds.map((serverId) =>
+        channelEvidence(state.sockets, state.streams, serverId, serverId === selectedId)
+      )
     )
   );
   const statuses = useServerReachability(
     useShallow((state) =>
       serverIds.map((serverId, index) =>
-        resolveServerReachability(
+        resolveConnectionStatus({
           serverId,
-          state.probes[serverId],
+          probe: state.probes[serverId],
           activeConnection,
-          state.freshnessNowMs,
-          channelsOf(channels[index])
-        )
+          channels: channelsOf(channels[index]),
+          selected: serverId === selectedId,
+          nowMs: state.freshnessNowMs,
+        })
       )
     )
   );
@@ -68,42 +86,20 @@ export function useHomeReachability(
   );
 }
 
-/**
- * Each computer's connection status (`live`, `unauthorized`, `offline`,
- * `reconnecting` for the selected one, or `unknown`), for a screen that lists
- * them all -- Settings › Computers -- and must re-render only when one of
- * them changes, a probe going stale included (`freshnessNowMs` steps then).
- */
-export function useConnectionStatuses(
+/** Whether each computer is answering: the same statuses, folded to `live`/`offline`/`unknown`. */
+export function useHomeReachability(
   serverIds: readonly string[],
-  selectedId: string | undefined
-): Readonly<Record<string, ConnectionStatus>> {
-  const channels = useServerChannels(
-    useShallow((state) =>
-      serverIds.map(
-        (serverId) => `${state.sockets[serverId] ?? ''}|${state.streams[serverId] ?? ''}`
-      )
-    )
-  );
-  const statuses = useServerReachability(
-    useShallow((state) =>
-      serverIds.map((serverId, index) => {
-        const [socket, stream] = (channels[index] ?? '|').split('|');
-        return resolveConnectionStatus({
-          serverId,
-          probe: state.probes[serverId],
-          channels: {
-            ...(socket ? { socket: socket as ServerChannels['socket'] } : {}),
-            ...(stream ? { stream: stream as ServerChannels['stream'] } : {}),
-          },
-          selected: serverId === selectedId,
-          nowMs: state.freshnessNowMs,
-        });
-      })
-    )
-  );
+  activeConnection: ActiveServerConnection | undefined
+): Readonly<Record<string, ServerReachability>> {
+  const statuses = useConnectionStatuses(serverIds, undefined, activeConnection);
   return useMemo(
-    () => Object.fromEntries(serverIds.map((serverId, index) => [serverId, statuses[index]])),
+    () =>
+      Object.fromEntries(
+        serverIds.map((serverId) => [
+          serverId,
+          reachabilityOfStatus(statuses[serverId] ?? 'unknown'),
+        ])
+      ),
     [serverIds, statuses]
   );
 }

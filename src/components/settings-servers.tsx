@@ -70,8 +70,6 @@ export function SettingsServers({ initialOpenId }: { initialOpenId?: string } = 
   // probe landing or going stale), not on every probe write.
   const recordIds = useMemo(() => records.map((server) => server.serverId), [records]);
   const statuses = useConnectionStatuses(recordIds, record?.serverId);
-  // Settings asks the same computers Home asks, in Home's order.
-  const lastViewedByServer = useServerLastViewed((state) => state.byServer);
   const refreshReachabilityMany = useServerReachability((state) => state.refreshMany);
   const serverCardPanes = useAppSettings((state) => state.serverCardPanes);
   const update = useAppSettings((state) => state.update);
@@ -109,11 +107,13 @@ export function SettingsServers({ initialOpenId }: { initialOpenId?: string } = 
         (server) => server.serverId !== DEMO_SERVER_ID && !server.sshTunnel
       );
       void refreshReachabilityMany(
-        serversToProbe(eligible, lastViewedByServer, record?.serverId)
+        // The same computers Home asks, in Home's order; read once per focus,
+        // so a last-viewed write does not run the probe and reconcile again.
+        serversToProbe(eligible, useServerLastViewed.getState().byServer, record?.serverId)
       ).finally(() => {
         void reconcileFleet({ reason: 'settings' });
       });
-    }, [record?.serverId, records, lastViewedByServer, refreshReachabilityMany])
+    }, [record?.serverId, records, refreshReachabilityMany])
   );
 
   async function use(server: GatewayRecord) {
