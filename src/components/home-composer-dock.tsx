@@ -41,6 +41,7 @@ import {
   switchAgentModel,
   type AgentCatalog,
   type ModelRef,
+  selectableModes,
 } from '@/lib/agent-session';
 import { recoverWith, settleAfter } from '@/lib/compiler-safe-control-flow';
 import { checkAgentServer } from '@/lib/home-agent-readiness';
@@ -260,7 +261,9 @@ export function HomeComposerDock({
   const catalog = catalogRead?.key === catalogKey ? catalogRead.catalog : undefined;
   const refused = refusedRead?.key === catalogKey ? refusedRead.refused : undefined;
   const models = catalog?.models ?? [];
-  const modes = catalog?.modes ?? [];
+  // The same list the session's picker offers: hidden routines (title,
+  // summary, compaction) and subagents are not modes a reader sends a goal to.
+  const modes = selectableModes(catalog?.modes ?? []);
 
   // What the reader last picked in the dock for this computer and agent,
   // kept across launches; nothing picked runs the agent's own default.
