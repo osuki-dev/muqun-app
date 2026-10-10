@@ -112,6 +112,8 @@ export const appChrome = {
     connectionPill: '0 6px 16px rgba(0, 0, 0, 0.12)',
     composerDock: '0 -8px 28px rgba(0, 0, 0, 0.18)',
     controlTray: '0 4px 14px rgba(0, 0, 0, 0.16)',
+    /** The terminal's floating Copy / Select all / Cancel bar. */
+    selectionBar: '0 6px 18px rgba(0, 0, 0, 0.22)',
     floatingPill: '0 8px 22px rgba(0, 0, 0, 0.26)',
     notice: '0 8px 28px rgba(0, 0, 0, 0.22)',
     popover: '0 10px 30px rgba(0, 0, 0, 0.24)',
