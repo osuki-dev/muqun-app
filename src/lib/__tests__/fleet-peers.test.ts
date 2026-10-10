@@ -49,83 +49,83 @@ describe('planFleetLinks: every ordered pair that should be linked and is not', 
   test.each([
     [
       'two fresh computers link both ways',
-      [computer('coding', peers(true)), computer('mini', peers(true))],
+      [computer('atlas', peers(true)), computer('cedar', peers(true))],
       {},
       [
-        { from: 'coding', to: 'mini' },
-        { from: 'mini', to: 'coding' },
+        { from: 'atlas', to: 'cedar' },
+        { from: 'cedar', to: 'atlas' },
       ],
     ],
     [
       'a computer that refuses work is never linked to',
-      [computer('coding', peers(true)), computer('mini', peers(false))],
+      [computer('atlas', peers(true)), computer('cedar', peers(false))],
       {},
-      [{ from: 'mini', to: 'coding' }],
+      [{ from: 'cedar', to: 'atlas' }],
     ],
     [
       'a side already linked is left alone',
-      [computer('coding', peers(true, [['mini', true]])), computer('mini', peers(true))],
+      [computer('atlas', peers(true, [['cedar', true]])), computer('cedar', peers(true))],
       {},
-      [{ from: 'mini', to: 'coding' }],
+      [{ from: 'cedar', to: 'atlas' }],
     ],
     [
       'a linked but unreachable peer is not re-linked',
       [
-        computer('coding', peers(true, [['mini', false]])),
-        computer('mini', peers(true, [['coding', true]])),
+        computer('atlas', peers(true, [['cedar', false]])),
+        computer('cedar', peers(true, [['atlas', true]])),
       ],
       {},
       [],
     ],
     [
       'a computer that did not answer is skipped both ways',
-      [computer('coding', peers(true)), computer('mini', null)],
+      [computer('atlas', peers(true)), computer('cedar', null)],
       {},
       [],
     ],
     [
       'a pair that failed within the retry window waits',
-      [computer('coding', peers(true)), computer('mini', peers(true))],
-      { [failureKey('coding', 'mini')]: NOW - LINK_RETRY_MS + 1 },
-      [{ from: 'mini', to: 'coding' }],
+      [computer('atlas', peers(true)), computer('cedar', peers(true))],
+      { [failureKey('atlas', 'cedar')]: NOW - LINK_RETRY_MS + 1 },
+      [{ from: 'cedar', to: 'atlas' }],
     ],
     [
       'a pair that failed before the retry window is tried again',
-      [computer('coding', peers(true)), computer('mini', peers(true))],
-      { [failureKey('coding', 'mini')]: NOW - LINK_RETRY_MS },
+      [computer('atlas', peers(true)), computer('cedar', peers(true))],
+      { [failureKey('atlas', 'cedar')]: NOW - LINK_RETRY_MS },
       [
-        { from: 'coding', to: 'mini' },
-        { from: 'mini', to: 'coding' },
+        { from: 'atlas', to: 'cedar' },
+        { from: 'cedar', to: 'atlas' },
       ],
     ],
     [
       'a peer with the same name but another server id does not count as linked',
       [
-        computer('coding', {
+        computer('atlas', {
           acceptDelegations: true,
           peers: [
             {
               peerId: 'peer-old',
               serverId: 'srv-old',
-              name: 'mini',
+              name: 'cedar',
               url: 'http://x',
               reachable: false,
             },
           ],
         }),
-        computer('mini', peers(true, [['coding', true]])),
+        computer('cedar', peers(true, [['atlas', true]])),
       ],
       {},
-      [{ from: 'coding', to: 'mini' }],
+      [{ from: 'atlas', to: 'cedar' }],
     ],
     [
       'a computer at a loopback address is never handed on',
       [
-        computer('coding', peers(true)),
-        { ...computer('mini', peers(true)), url: 'http://10.0.2.2:23847' },
+        computer('atlas', peers(true)),
+        { ...computer('cedar', peers(true)), url: 'http://10.0.2.2:23847' },
       ],
       {},
-      [{ from: 'mini', to: 'coding' }],
+      [{ from: 'cedar', to: 'atlas' }],
     ],
   ] as const)('%s', (_name, computers, failures, expected) => {
     expect(planFleetLinks(computers, failures, NOW)).toEqual([...expected]);
@@ -136,30 +136,30 @@ describe('planFleetLinks: every ordered pair that should be linked and is not', 
   // here ever unlinks or renames.
   test.each([
     [
-      'revoked on mini: the next pass links coding to mini again',
+      'revoked on cedar: the next pass links atlas to cedar again',
       [
-        computer('coding', {
+        computer('atlas', {
           acceptDelegations: true,
           peers: [
             {
               peerId: 'p',
-              serverId: 'mini',
-              name: 'mini',
-              url: 'http://mini',
+              serverId: 'cedar',
+              name: 'cedar',
+              url: 'http://cedar',
               reachable: false,
               unauthorized: true,
             },
           ],
         }),
-        computer('mini', peers(true, [['coding', true]])),
+        computer('cedar', peers(true, [['atlas', true]])),
       ],
-      [{ from: 'coding', to: 'mini' }],
+      [{ from: 'atlas', to: 'cedar' }],
     ],
     [
       "two devices' labels differ: a link under the other device's name still counts",
       [
-        { ...computer('coding', peers(true, [['mini', true]])), label: 'osk' },
-        { ...computer('mini', peers(true, [['coding', true]])), label: 'mac mini' },
+        { ...computer('atlas', peers(true, [['cedar', true]])), label: 'harbor' },
+        { ...computer('cedar', peers(true, [['atlas', true]])), label: 'mac cedar' },
       ],
       [],
     ],
@@ -169,81 +169,81 @@ describe('planFleetLinks: every ordered pair that should be linked and is not', 
 
   test('a pair whose names collide is not tried again', () => {
     const conflicts = {
-      [failureKey('coding', 'mini')]: { name: 'mini', against: 'peer', with: 'mini' } as const,
+      [failureKey('atlas', 'cedar')]: { name: 'cedar', against: 'peer', with: 'cedar' } as const,
     };
     expect(
       planFleetLinks(
-        [computer('coding', peers(true)), computer('mini', peers(true))],
+        [computer('atlas', peers(true)), computer('cedar', peers(true))],
         {},
         NOW,
         conflicts
       )
-    ).toEqual([{ from: 'mini', to: 'coding' }]);
+    ).toEqual([{ from: 'cedar', to: 'atlas' }]);
   });
 });
 
 describe('linkLines: the one line Settings shows per computer', () => {
   const both = [
-    computer('coding', peers(true, [['mini', true]])),
-    { ...computer('mini', peers(true, [['coding', false]])), label: 'mac mini' },
+    computer('atlas', peers(true, [['cedar', true]])),
+    { ...computer('cedar', peers(true, [['atlas', false]])), label: 'mac cedar' },
   ];
   test.each([
     [
       'linked and answering, named by the phone',
-      'coding',
+      'atlas',
       both,
       {},
-      { linked: ['mac mini'], noWork: [], cannotReach: [], sameName: [] },
+      { linked: ['mac cedar'], noWork: [], cannotReach: [], sameName: [] },
     ],
     [
       'linked but the peer is quiet',
-      'mini',
+      'cedar',
       both,
       {},
-      { linked: [], noWork: [], cannotReach: ['coding'], sameName: [] },
+      { linked: [], noWork: [], cannotReach: ['atlas'], sameName: [] },
     ],
     [
       'a linked computer that takes no work says so',
-      'coding',
-      [computer('coding', peers(true, [['mini', true]])), computer('mini', peers(false))],
+      'atlas',
+      [computer('atlas', peers(true, [['cedar', true]])), computer('cedar', peers(false))],
       {},
-      { linked: ['mini'], noWork: ['mini'], cannotReach: [], sameName: [] },
+      { linked: ['cedar'], noWork: ['cedar'], cannotReach: [], sameName: [] },
     ],
     [
       'a link that failed this run',
-      'coding',
-      [computer('coding', peers(true)), computer('mini', peers(true))],
-      { [failureKey('coding', 'mini')]: NOW },
-      { linked: [], noWork: [], cannotReach: ['mini'], sameName: [] },
+      'atlas',
+      [computer('atlas', peers(true)), computer('cedar', peers(true))],
+      { [failureKey('atlas', 'cedar')]: NOW },
+      { linked: [], noWork: [], cannotReach: ['cedar'], sameName: [] },
     ],
     [
       'a peer this phone does not have keeps its gateway name',
-      'coding',
-      [computer('coding', peers(true, [['nas', true]]))],
+      'atlas',
+      [computer('atlas', peers(true, [['nas', true]]))],
       {},
       { linked: ['nas'], noWork: [], cannotReach: [], sameName: [] },
     ],
     [
       'a link the other side revoked: re-linking, not "cannot reach"',
-      'coding',
+      'atlas',
       [
-        computer('coding', {
+        computer('atlas', {
           acceptDelegations: true,
           peers: [
             {
               peerId: 'p',
-              serverId: 'mini',
-              name: 'mini',
-              url: 'http://mini',
+              serverId: 'cedar',
+              name: 'cedar',
+              url: 'http://cedar',
               reachable: false,
               unauthorized: true,
             },
           ],
         }),
-        computer('mini', peers(true)),
+        computer('cedar', peers(true)),
       ],
-      { [failureKey('coding', 'mini')]: NOW },
-      { linked: [], noWork: [], revoked: ['mini'], cannotReach: [], sameName: [] },
+      { [failureKey('atlas', 'cedar')]: NOW },
+      { linked: [], noWork: [], revoked: ['cedar'], cannotReach: [], sameName: [] },
     ],
   ] as const)('%s', (_name, serverId, computers, failures, expected) => {
     expect(linkLines(serverId, computers, failures, NOW)).toEqual({
@@ -256,7 +256,7 @@ describe('linkLines: the one line Settings shows per computer', () => {
   });
 
   // A name collision is its own line, not "cannot reach", and names the
-  // computers by their own labels (this device calls them coding and mini).
+  // computers by their own labels (this device calls them atlas and cedar).
   test.each<[string, NameConflict, { name: string; with: string; from: string; stale: boolean }]>([
     [
       'two computers with one name',
@@ -265,45 +265,45 @@ describe('linkLines: the one line Settings shows per computer', () => {
     ],
     [
       'an older entry for the same machine (a reinstall)',
-      { name: 'mini', against: 'peer', with: 'mini', fromName: 'studio', stale: true },
-      { name: 'mini', with: 'mini', from: 'studio', stale: true },
+      { name: 'cedar', against: 'peer', with: 'cedar', fromName: 'studio', stale: true },
+      { name: 'cedar', with: 'cedar', from: 'studio', stale: true },
     ],
   ])('%s', (_name, conflict, line) => {
-    const computers = [computer('coding', peers(true)), computer('mini', peers(true))];
+    const computers = [computer('atlas', peers(true)), computer('cedar', peers(true))];
     expect(
-      linkLines('coding', computers, { [failureKey('coding', 'mini')]: NOW }, NOW, {
-        [failureKey('coding', 'mini')]: conflict,
+      linkLines('atlas', computers, { [failureKey('atlas', 'cedar')]: NOW }, NOW, {
+        [failureKey('atlas', 'cedar')]: conflict,
       })
     ).toEqual({ linked: [], noWork: [], revoked: [], cannotReach: [], sameName: [line] });
   });
 });
 
 describe("planPeerMoves: a quiet peer whose address moved is told this device's address", () => {
-  const moved = { ...computer('mini', peers(true)), url: 'http://mini-new:23847' };
+  const moved = { ...computer('cedar', peers(true)), url: 'http://cedar-new:23847' };
   test.each([
     [
       'unreachable at an old address: moved',
-      [computer('coding', peers(true, [['mini', false]])), moved],
+      [computer('atlas', peers(true, [['cedar', false]])), moved],
       {},
-      [{ from: 'coding', peerId: 'peer-mini', url: 'http://mini-new:23847' }],
+      [{ from: 'atlas', peerId: 'peer-cedar', url: 'http://cedar-new:23847' }],
     ],
     [
       'the moved computer did not answer this pass: nothing to prove the address against',
-      [computer('coding', peers(true, [['mini', false]])), { ...moved, peers: null }],
+      [computer('atlas', peers(true, [['cedar', false]])), { ...moved, peers: null }],
       {},
       [],
     ],
     [
       'a trailing slash or upper-case host is no move',
       [
-        computer('coding', {
+        computer('atlas', {
           acceptDelegations: true,
           peers: [
             {
               peerId: 'p',
-              serverId: 'mini',
-              name: 'mini',
-              url: 'HTTP://Mini-New:23847/',
+              serverId: 'cedar',
+              name: 'cedar',
+              url: 'HTTP://Cedar-New:23847/',
               reachable: false,
             },
           ],
@@ -315,21 +315,21 @@ describe("planPeerMoves: a quiet peer whose address moved is told this device's 
     ],
     [
       'answering over another route: left alone',
-      [computer('coding', peers(true, [['mini', true]])), moved],
+      [computer('atlas', peers(true, [['cedar', true]])), moved],
       {},
       [],
     ],
     [
       'the same address: nothing to say',
       [
-        computer('coding', {
+        computer('atlas', {
           acceptDelegations: true,
           peers: [
             {
               peerId: 'p',
-              serverId: 'mini',
-              name: 'mini',
-              url: 'http://mini-new:23847',
+              serverId: 'cedar',
+              name: 'cedar',
+              url: 'http://cedar-new:23847',
               reachable: false,
             },
           ],
@@ -341,14 +341,14 @@ describe("planPeerMoves: a quiet peer whose address moved is told this device's 
     ],
     [
       'a move that failed waits out the retry window',
-      [computer('coding', peers(true, [['mini', false]])), moved],
-      { [failureKey('coding', 'peer-mini')]: NOW },
+      [computer('atlas', peers(true, [['cedar', false]])), moved],
+      { [failureKey('atlas', 'peer-cedar')]: NOW },
       [],
     ],
     [
       'a loopback address is never handed on',
       [
-        computer('coding', peers(true, [['mini', false]])),
+        computer('atlas', peers(true, [['cedar', false]])),
         { ...moved, url: 'http://127.0.0.1:23847' },
       ],
       {},
@@ -390,26 +390,26 @@ describe('pairingsAnswer: a 404 means nothing to revoke only when the gateway sa
 
 describe('an unpairing this device could not finish (A5 D6)', () => {
   const entry = (over: Partial<UnpairRecord> = {}): UnpairRecord => ({
-    serverId: 'mini',
-    label: 'mini',
+    serverId: 'cedar',
+    label: 'cedar',
     atMs: NOW,
-    pending: ['coding'],
+    pending: ['atlas'],
     stillListedBy: [],
     ...over,
   });
   test.each([
     ['followed up while something is left', entry(), [], NOW + 1, true],
     ['dropped once nothing is pending or to tell', entry({ pending: [] }), [], NOW + 1, false],
-    ['dropped when this device pairs that computer again', entry(), ['mini'], NOW + 1, false],
+    ['dropped when this device pairs that computer again', entry(), ['cedar'], NOW + 1, false],
     ['dropped after a month', entry(), [], NOW + UNPAIR_FOLLOW_UP_MS, false],
   ] as const)('%s', (_name, record, paired, nowMs, kept) => {
     expect(keptUnpairs([record], paired, nowMs).length === 1).toBe(kept);
   });
 
   test("each computer's Settings line says what is left on it", () => {
-    const entries = [entry({ pending: ['coding'], stillListedBy: ['nas'] })];
-    expect(unpairLines('coding', entries)).toEqual({ stillLinked: ['mini'], stillListedBy: [] });
-    expect(unpairLines('nas', entries)).toEqual({ stillLinked: [], stillListedBy: ['mini'] });
+    const entries = [entry({ pending: ['atlas'], stillListedBy: ['nas'] })];
+    expect(unpairLines('atlas', entries)).toEqual({ stillLinked: ['cedar'], stillListedBy: [] });
+    expect(unpairLines('nas', entries)).toEqual({ stillLinked: [], stillListedBy: ['cedar'] });
   });
 });
 

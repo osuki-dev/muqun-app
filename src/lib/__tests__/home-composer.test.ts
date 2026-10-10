@@ -167,15 +167,17 @@ describe('homeSessionParams', () => {
 describe('homeDockTargetId', () => {
   test.each([
     [
-      'opening work on mini moves the selection; the pinned dock stays on osk',
-      'osk',
-      'mini',
-      'osk',
+      'opening work on cedar moves the selection; the pinned dock stays on harbor',
+      'harbor',
+      'cedar',
+      'harbor',
     ],
-    ['nothing picked: the selected computer', null, 'mini', 'mini'],
-    ['a picked computer since unpaired falls back to the selected one', 'gone', 'osk', 'osk'],
+    ['nothing picked: the selected computer', null, 'cedar', 'cedar'],
+    ['a picked computer since unpaired falls back to the selected one', 'gone', 'harbor', 'harbor'],
   ] as const)('%s', (_name, pickedId, selectedId, expected) => {
-    expect(homeDockTargetId({ serverIds: ['osk', 'mini'], pickedId, selectedId })).toBe(expected);
+    expect(homeDockTargetId({ serverIds: ['harbor', 'cedar'], pickedId, selectedId })).toBe(
+      expected
+    );
   });
 });
 
