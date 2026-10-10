@@ -6,12 +6,13 @@ import { isDemoActive, isDemoRecord } from '@/lib/demo-gateway';
 import { configuredGatewayServerId } from '@/lib/gateway-client';
 import { WS_EVENTS_CAPABILITY, type GatewaySocketState } from '@/lib/gateway-socket';
 import { gatewaySocketFor } from '@/lib/gateway-socket-runtime';
-import { applyListAnswer, isTaskChannelLive } from '@/lib/server-tasks-state';
+import { applyListAnswer, isTaskChannelLive, sessionsLeftWaiting } from '@/lib/server-tasks-state';
 import {
   cancelTask,
   completeTask,
   fetchTaskDefaultCwd,
   fetchTaskList,
+  TASK_DEFAULTS_CAPABILITY,
   TASK_WS_SUBSCRIPTION_CAPABILITY,
   type TaskEndpoint,
   type TaskView,
@@ -24,17 +25,16 @@ import { useServerTasksStore } from '@/stores/server-tasks';
 const NO_TASKS: TaskView[] = [];
 
 /**
- * A session's question notice ("Agent blocked") stands while its task waits
- * on the reader; once the task moved on (answered, working again, finished)
- * the notice is stale and goes.
+ * Apply a ledger update for `serverId`, then retire the question notices
+ * ("Agent blocked") of sessions whose task left `waiting` in it: answered,
+ * working again, or finished.
  */
-function settleQuestionNotices(tasks: readonly TaskView[]): void {
+function settlingQuestions(serverId: string, update: () => void): void {
+  const tasksOf = () => useServerTasksStore.getState().index[serverId]?.tasks ?? NO_TASKS;
+  const before = tasksOf();
+  update();
   const notices = useInAppNotifications.getState();
-  for (const task of tasks) {
-    if (task.binding.kind === 'agent_session' && task.state !== 'waiting') {
-      notices.dismissQuestions(task.binding.asid);
-    }
-  }
+  for (const asid of sessionsLeftWaiting(before, tasksOf())) notices.dismissQuestions(asid);
 }
 
 /** How a computer's ledger is reached from here, if at all. */
@@ -91,6 +91,10 @@ export function useServerTasks(serverId: string | null): ServerTasks {
   const tasksOnly = useServerCapabilities((state) =>
     serverId ? state.byServer[serverId]?.includes(TASK_WS_SUBSCRIPTION_CAPABILITY) === true : false
   );
+  // Where its next task runs, on a gateway that says so.
+  const reportsDefaults = useServerCapabilities((state) =>
+    serverId ? state.byServer[serverId]?.includes(TASK_DEFAULTS_CAPABILITY) === true : false
+  );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   /** A slower answer for an earlier request must not overwrite a newer one. */
@@ -112,19 +116,19 @@ export function useServerTasks(serverId: string | null): ServerTasks {
     const query = { limit: 100, ...(endpoint ? { endpoint } : {}) };
     // The default folder too: only a task-only socket hears `defaults`
     // frames, and the selected computer's socket may carry its sessions as
-    // well. A gateway that cannot say leaves what was last said.
-    void fetchTaskDefaultCwd(endpoint).then((cwd) => {
-      if (cwd && request === requestRef.current) setDefaultCwd(serverId, cwd);
-    });
+    // well. A failed read leaves what was last said.
+    if (reportsDefaults) {
+      void fetchTaskDefaultCwd(endpoint).then((cwd) => {
+        if (cwd && request === requestRef.current) setDefaultCwd(serverId, cwd);
+      });
+    }
     try {
       const list = await fetchTaskList(query);
       if (request !== requestRef.current) return;
       // A failed read keeps the list already held and says so.
       applyListAnswer(list, {
-        replace: (tasks) => {
-          replace(serverId, tasks, requestedAtMs);
-          settleQuestionNotices(tasks);
-        },
+        replace: (tasks) =>
+          settlingQuestions(serverId, () => replace(serverId, tasks, requestedAtMs)),
         ok: () => setError(null),
         fail: () => setError('unavailable'),
       });
@@ -133,7 +137,7 @@ export function useServerTasks(serverId: string | null): ServerTasks {
       setError(failure instanceof Error ? failure.message : String(failure));
     }
     if (request === requestRef.current) setLoading(false);
-  }, [serverId, replace, setDefaultCwd]);
+  }, [serverId, replace, setDefaultCwd, reportsDefaults]);
 
   useEffect(() => {
     void refresh();
@@ -158,10 +162,7 @@ export function useServerTasks(serverId: string | null): ServerTasks {
     if (!socket || !serverId) return;
     return socket.watchTasks(
       {
-        onTaskUpdated: (task) => {
-          upsert(serverId, task);
-          settleQuestionNotices([task]);
-        },
+        onTaskUpdated: (task) => settlingQuestions(serverId, () => upsert(serverId, task)),
         // After every (re)connect: whatever changed while it was down.
         onSubscribed: () => void refresh(),
         // The gateway dropped frames for this socket; a task may have changed

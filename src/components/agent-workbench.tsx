@@ -224,7 +224,7 @@ import { TRANSCRIPT_ESTIMATED_ITEM_SIZE } from '@/lib/transcript-sizing';
 
 import { AgentPermissionCard } from './agent-permission-card';
 import { AgentFormCard } from './agent-form-card';
-import { AgentComposer } from './agent-composer';
+import { AgentComposer, type DraftInjector } from './agent-composer';
 import { runningShellCount } from '@/components/agent-background-tray';
 import { ThinkingIndicator } from './agent-thinking-indicator';
 import { AGENT_TYPE } from '@/constants/agent-type';
@@ -451,7 +451,7 @@ export const AgentWorkbench = memo(function AgentWorkbench({
   const markdownStyle = usePaneChatMarkdownStyle();
   const listRef = useRef<LegendListRef>(null);
   const [scrollToSentRow, setScrollToSentRow] = useState<string>();
-  const injectDraftRef = useRef<((text: string) => void) | null>(null);
+  const injectDraftRef = useRef<DraftInjector | null>(null);
 
   /**
    * The screen's own notice, under the header rather than over it.

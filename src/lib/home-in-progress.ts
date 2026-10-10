@@ -54,6 +54,17 @@ export function homeWaitingTasks(
 }
 
 /**
+ * The waiting tasks the top Needs you section lists (design §3a item 4): only
+ * when they span two or more computers. With one, that computer's card
+ * already lists them first, in the needs-you tone, and a second copy above
+ * it says nothing new.
+ */
+export function needsYouAcrossComputers(rows: readonly HomeTaskRow[]): HomeTaskRow[] {
+  const computers = new Set(rows.map((row) => row.serverId));
+  return computers.size >= 2 ? [...rows] : [];
+}
+
+/**
  * The open ledger task an agent session is running, if any: a Continue row
  * reads its status (word and tone, from the one state table) from it rather
  * than from a session status that lags it. The newest such task wins.

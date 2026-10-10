@@ -111,26 +111,36 @@ describe('homeSessionParams', () => {
       shown: { model: haiku, mode: 'plan' },
     },
     {
-      name: 'nothing picked sends nothing and names the host default',
+      name: 'nothing picked sends the shown host default',
       picked: {},
       defaults: { model: haiku, mode: 'build' },
       discovered: false,
-      params: {},
+      params: { model: haiku },
       shown: { model: haiku, mode: 'build' },
     },
     {
-      name: 'a pick the catalog dropped is not sent; with no default the first listed model runs',
+      name: 'a default this server refused gives way to the first usable model',
+      picked: {},
+      defaults: { model: haiku },
+      refused: new Set(['anthropic\u0000haiku']),
+      discovered: false,
+      params: { model: sonnet },
+      shown: { model: sonnet },
+    },
+    {
+      name: 'a pick the catalog dropped falls back the same way',
       picked: { model: gone },
       defaults: {},
       discovered: false,
-      params: {},
+      params: { model: sonnet },
       shown: { model: sonnet },
     },
-  ])('$name', ({ picked, defaults, discovered, params, shown }) => {
+  ])('$name', ({ picked, defaults, refused, discovered, params, shown }) => {
     expect(
       homeSessionParams({
         picked,
         catalogDefaults: defaults,
+        ...(refused ? { refused } : {}),
         models,
         modes,
         agentId: 'opencode',
@@ -250,15 +260,11 @@ describe('the folder segment', () => {
     expect(stored === undefined ? undefined : homeFolderLabel(stored)).toBe(label);
   });
 
-  // picked, gateway default -> what the segment says
-  test.each<[string | undefined, string | undefined, string]>([
-    ['/srv/app', '/srv/other', 'app'],
-    [undefined, '/srv/other', 'other'],
-    [undefined, '~', 'Home folder'],
-    [undefined, undefined, 'Last folder'],
-  ])('%p over %p', (picked, reported, shown) => {
-    expect(homeFolderName(picked ?? reported, { last: 'Last folder', home: 'Home folder' })).toBe(
-      shown
-    );
+  // A folder the segment names in words rather than by basename.
+  test.each<[string | undefined, string]>([
+    ['~', 'Home folder'],
+    [undefined, 'Last folder'],
+  ])('%p', (folder, shown) => {
+    expect(homeFolderName(folder, { last: 'Last folder', home: 'Home folder' })).toBe(shown);
   });
 });

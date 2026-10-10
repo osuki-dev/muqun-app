@@ -25,7 +25,11 @@ import { agentDisplayName } from '@/lib/home-launch-model';
 import { homeTargetAgentId, type HomeTarget } from '@/lib/home-recents';
 import type { HomeAttentionSnapshot } from '@/lib/home-attention';
 import type { ServerTasksIndex } from '@/lib/server-tasks-state';
-import { homeWaitingTasks, type HomeTaskRow } from '@/lib/home-in-progress';
+import {
+  homeWaitingTasks,
+  needsYouAcrossComputers,
+  type HomeTaskRow,
+} from '@/lib/home-in-progress';
 import { useAgents } from '@/stores/agents';
 import { useHomeAttention } from '@/stores/home-attention';
 import { useServerTasksStore } from '@/stores/server-tasks';
@@ -53,7 +57,8 @@ function pendingObservations(
 
 /**
  * What Needs you lists: the open requests on these computers, and the ledger
- * tasks waiting on the reader that no listed request already covers.
+ * tasks waiting on the reader that no listed request already covers, when
+ * those span more than one computer (`needsYouAcrossComputers`).
  */
 function attentionRows(
   observations: Observations,
@@ -62,10 +67,12 @@ function attentionRows(
   taskServerIds: readonly string[]
 ) {
   const pending = pendingObservations(observations, servers);
-  const waiting = homeWaitingTasks(
-    index,
-    taskServerIds,
-    pending.map(([, snapshot]) => snapshot.target)
+  const waiting = needsYouAcrossComputers(
+    homeWaitingTasks(
+      index,
+      taskServerIds,
+      pending.map(([, snapshot]) => snapshot.target)
+    )
   );
   return { pending, waiting };
 }
@@ -88,7 +95,7 @@ export function useHasHomeAttention({
     (state) => pendingObservations(state.byTarget, servers).length > 0
   );
   const hasWaiting = useServerTasksStore(
-    (state) => attentionRows({}, state.index, servers, taskServerIds).waiting.length > 0
+    (state) => needsYouAcrossComputers(homeWaitingTasks(state.index, taskServerIds, [])).length > 0
   );
   return hasRequest || hasWaiting;
 }

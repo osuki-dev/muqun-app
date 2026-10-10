@@ -75,6 +75,33 @@ export function replaceTasks(
   };
 }
 
+/**
+ * The agent sessions whose task the ledger held as `waiting` and now holds
+ * in another state: their question notices are stale. Read from the stored
+ * ledger before and after an update, so a frame the store ignored as older
+ * moves nothing, and a task not yet seen waiting (its question push came
+ * first) keeps its notice.
+ */
+export function sessionsLeftWaiting(
+  before: readonly TaskView[],
+  after: readonly TaskView[]
+): string[] {
+  const waiting = new Set(
+    before.filter((task) => task.state === 'waiting').map((task) => task.taskId)
+  );
+  const asids: string[] = [];
+  for (const task of after) {
+    if (
+      task.state !== 'waiting' &&
+      waiting.has(task.taskId) &&
+      task.binding.kind === 'agent_session'
+    ) {
+      asids.push(task.binding.asid);
+    }
+  }
+  return asids;
+}
+
 /** Tasks that have not finished, waiting ones included. */
 export function activeTaskCount(tasks: readonly TaskView[]): number {
   let count = 0;
@@ -120,10 +147,22 @@ export type ServerTasksState = {
   defaultCwd: Record<string, string>;
   /** `null`: the gateway says it cannot name it now. */
   setDefaultCwd: (serverId: string, cwd: string | null) => void;
+  /** Forgets every computer not in `serverIds` (unpaired). */
+  keepOnly: (serverIds: readonly string[]) => void;
   /** A list answer to a request sent at `requestedAtMs` (see `replaceTasks`). */
   replace: (serverId: string, tasks: readonly TaskView[], requestedAtMs: number) => void;
   upsert: (serverId: string, task: TaskView) => void;
 };
+
+/** `record` without the keys `keep` refuses; the same object when nothing goes. */
+export function keepKeys<T>(
+  record: Record<string, T>,
+  keep: (key: string) => boolean
+): Record<string, T> {
+  const keys = Object.keys(record);
+  if (keys.every(keep)) return record;
+  return Object.fromEntries(keys.filter(keep).map((key) => [key, record[key]!]));
+}
 
 export function createServerTasksState(
   now: () => number = Date.now
@@ -136,6 +175,15 @@ export function createServerTasksState(
         if ((state.defaultCwd[serverId] ?? null) === cwd) return state;
         const { [serverId]: _previous, ...others } = state.defaultCwd;
         return { defaultCwd: cwd ? { ...others, [serverId]: cwd } : others };
+      }),
+    keepOnly: (serverIds) =>
+      set((state) => {
+        const kept = new Set(serverIds);
+        const index = keepKeys(state.index, (serverId) => kept.has(serverId));
+        const defaultCwd = keepKeys(state.defaultCwd, (serverId) => kept.has(serverId));
+        return index === state.index && defaultCwd === state.defaultCwd
+          ? state
+          : { index, defaultCwd };
       }),
     replace: (serverId, tasks, requestedAtMs) =>
       set((state) => ({

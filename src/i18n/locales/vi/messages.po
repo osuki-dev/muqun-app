@@ -1976,6 +1976,7 @@ msgstr "Không thể lưu cài đặt này. Hãy thử lại"
 msgid "Could not save voice settings. Please try again."
 msgstr "Không thể lưu cài đặt giọng nói. Vui lòng thử lại"
 
+#: src/components/home-composer-dock.tsx
 #: src/components/ssh-terminal-workspace.tsx
 msgid "Could not send"
 msgstr "Không thể gửi"

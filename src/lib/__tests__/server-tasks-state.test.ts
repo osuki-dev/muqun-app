@@ -7,6 +7,7 @@ import {
   createServerTasksState,
   isTaskChannelLive,
   replaceTasks,
+  sessionsLeftWaiting,
   taskAgeParts,
   upsertTask,
   type ServerTasksIndex,
@@ -105,6 +106,23 @@ describe('replaceTasks', () => {
     const before: ServerTasksIndex = { s1: { tasks: held, fetchedAt: null } };
     const index = replaceTasks(before, 's1', list, 200, 100);
     expect(index.s1?.tasks.map((t) => [t.taskId, t.state])).toEqual(kept);
+  });
+});
+
+describe('sessionsLeftWaiting', () => {
+  const at = (state: TaskState): TaskView => ({
+    ...task('t1', state, 1),
+    binding: { kind: 'agent_session', agentId: 'opencode', asid: 'ses_1' },
+  });
+  // stored before -> stored after -> sessions whose question is stale
+  test.each<[string, TaskState | null, TaskState, string[]]>([
+    ['answered: waiting -> working', 'waiting', 'working', ['ses_1']],
+    ['finished: waiting -> done', 'waiting', 'done', ['ses_1']],
+    ['still waiting', 'waiting', 'waiting', []],
+    ['never seen waiting (the push came first)', 'working', 'working', []],
+    ['new to the ledger', null, 'working', []],
+  ])('%s', (_name, before, after, stale) => {
+    expect(sessionsLeftWaiting(before ? [at(before)] : [], [at(after)])).toEqual(stale);
   });
 });
 

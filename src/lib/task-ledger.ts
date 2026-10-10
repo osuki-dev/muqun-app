@@ -21,6 +21,12 @@ export const TASK_WS_SUBSCRIPTION_CAPABILITY = 'task_ws_subscription';
 /** `POST /api/tasks/{id}/complete`: the device confirms a paused task is done. */
 export const TASK_LEDGER_COMPLETE_CAPABILITY = 'task_ledger_complete';
 
+/**
+ * The gateway reports where a task this device opens without a folder runs:
+ * the `defaults` frame and `GET /api/tasks/defaults` (Gateway Task 20).
+ */
+export const TASK_DEFAULTS_CAPABILITY = 'task_defaults';
+
 export const TASK_STATES = [
   'queued',
   'dispatching',

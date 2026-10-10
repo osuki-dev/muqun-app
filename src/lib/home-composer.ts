@@ -12,6 +12,8 @@ import type { CatalogDefaults, ModeInfo, ModelInfo, ModelRef } from '@/lib/agent
 import {
   catalogModeId,
   catalogModelRef,
+  firstUsableModel,
+  usableCatalogDefaultModel,
   type RememberedAgentChoice,
 } from '@/lib/agent-session-defaults';
 import type { GatewayRecord } from '@/lib/gateway-storage';
@@ -96,9 +98,8 @@ export function homeHiddenClientCommands(
  * Only the reader's own pick in the dock is sent, remembered per computer
  * and agent (`homeModelChoiceKey`): a pick the catalog no longer offers is
  * dropped, and a picked mode that names its own model brings it. Before any
- * pick nothing is sent, and the pills name what the agent will then run: the
- * mode's model, the host's default, or the first enabled model in the list,
- * which is OpenCode's own fallback when it has no default.
+ * pick the pills name a model chosen by the refused-aware fallback, and that
+ * model is what is sent: the pill and the request never disagree.
  * The agent is named only on a gateway that has said which agents it drives;
  * an older gateway has one and no `agent_id` to read.
  */
@@ -109,6 +110,8 @@ export function homeSessionParams(input: {
   modes: readonly ModeInfo[];
   agentId?: string;
   agentsDiscovered: boolean;
+  /** Models this server already refused (`unsupportedModelRefs`), when its sessions are known. */
+  refused?: ReadonlySet<string>;
 }): {
   params: { mode?: string; model?: ModelRef; agentId?: string };
   shown: { mode?: string; model?: ModelRef };
@@ -118,20 +121,23 @@ export function homeSessionParams(input: {
   const modeModel = modes.find((entry) => entry.id === mode)?.model;
   const model = catalogModelRef(picked.model, models) ?? catalogModelRef(modeModel, models);
   const shownMode = mode ?? catalogModeId(catalogDefaults.mode, modes);
-  // What the agent will actually run when nothing is sent: the shown mode's
-  // own model, else the host's default, else -- OpenCode with no default
-  // configured -- the first enabled model in its list.
+  // With nothing picked the model is still sent, and it is the one the pill
+  // names: the shown mode's own model, else the host's default unless this
+  // server refused it, else the first usable model in the catalog. Omitting
+  // it would let OpenCode fall back to list order, which a host can refuse
+  // on every turn (`resolveNewSessionDefaults`). The mode stays pick-only:
+  // OpenCode's agent fallback is its primary agent, a real default.
+  const refused = input.refused ?? new Set<string>();
   const shownModeModel = modes.find((entry) => entry.id === shownMode)?.model;
-  const firstListed = models.find((entry) => entry.enabled !== false);
   const shownModel =
     model ??
     catalogModelRef(shownModeModel, models) ??
-    catalogModelRef(catalogDefaults.model, models) ??
-    (firstListed ? { provider_id: firstListed.provider_id, model_id: firstListed.id } : undefined);
+    catalogModelRef(usableCatalogDefaultModel(catalogDefaults.model, refused), models) ??
+    firstUsableModel(models, refused);
   return {
     params: {
       ...(mode ? { mode } : {}),
-      ...(model ? { model } : {}),
+      ...(shownModel ? { model: shownModel } : {}),
       ...(input.agentsDiscovered && input.agentId ? { agentId: input.agentId } : {}),
     },
     shown: {

@@ -56,6 +56,7 @@ import { EdgeFade } from '@/components/edge-fade';
 import { FileMentionPanel } from '@/components/file-mention-panel';
 import { ComposerPopup } from '@/components/composer-popup';
 import { useComposerPopup } from '@/hooks/use-composer-popup';
+import { useLatestReader } from '@/hooks/use-render-refs';
 import { composerChipIds } from '@/lib/agent-composer-chips';
 import { slashCommandTrigger, type PaneSlashCommand } from '@/lib/pane-composer';
 import {
@@ -312,6 +313,9 @@ const SessionChip = memo(function SessionChip({
   );
 });
 
+/** See `AgentComposerProps.injectDraftRef`. */
+export type DraftInjector = (text: string, options?: { ifEmpty?: boolean }) => boolean;
+
 export interface AgentComposerProps {
   running: boolean;
   /** Row 1 contains roots only. Descendants belong in the tree sheet. */
@@ -438,7 +442,12 @@ export interface AgentComposerProps {
    */
   onSetInboxDelivery?: (inboxId: string, delivery: 'steer' | 'queue') => void;
   onPressTokens?: () => void;
-  injectDraftRef?: React.MutableRefObject<((text: string) => void) | null>;
+  /**
+   * Puts a line into the field. With `ifEmpty`, only when the field is empty
+   * (a refused send coming back must not replace what the reader has typed
+   * since); answers whether it did.
+   */
+  injectDraftRef?: React.MutableRefObject<DraftInjector | null>;
   /**
    * The dock's height, whenever it changes.
    *
@@ -793,14 +802,17 @@ export const AgentComposer = memo(function AgentComposer({
     [attachmentUploads, showToast, t]
   );
 
+  const readText = useLatestReader(text);
   useEffect(() => {
     if (injectDraftRef) {
-      injectDraftRef.current = (draftText: string) => {
+      injectDraftRef.current = (draftText, options) => {
+        if (options?.ifEmpty && readText().trim()) return false;
         setText(draftText);
         setTimeout(() => inputRef.current?.focus(), 50);
+        return true;
       };
     }
-  }, [injectDraftRef]);
+  }, [injectDraftRef, readText]);
 
   const handleSend = useCallback(async () => {
     const trimmed = text.trim();

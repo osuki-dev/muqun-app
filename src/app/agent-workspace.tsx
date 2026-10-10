@@ -5,6 +5,8 @@ import { AgentWorkspaceSheet } from '@/components/agent-workspace-sheet';
 import { useAgentSheetBridge } from '@/stores/agent-sheet-bridge';
 import { homeFolderName } from '@/lib/home-composer';
 import { useHomeAgentChoice } from '@/stores/home-agent-choice';
+import { TASK_DEFAULTS_CAPABILITY } from '@/lib/task-ledger';
+import { useServerCapabilities } from '@/stores/server-capabilities';
 import { useServerTasksStore } from '@/stores/server-tasks';
 
 /**
@@ -40,9 +42,13 @@ export default function AgentWorkspaceScreen() {
     homeServerId ? state.folderByServer[homeServerId] : undefined
   );
   const chooseFolder = useHomeAgentChoice((state) => state.chooseFolder);
-  const defaultCwd = useServerTasksStore((state) =>
+  const reportsDefaults = useServerCapabilities((state) =>
+    homeServerId ? state.byServer[homeServerId]?.includes(TASK_DEFAULTS_CAPABILITY) === true : false
+  );
+  const reportedCwd = useServerTasksStore((state) =>
     homeServerId ? state.defaultCwd[homeServerId] : undefined
   );
+  const defaultCwd = reportsDefaults ? reportedCwd : undefined;
   const defaultLabel = homeFolderName(defaultCwd, { last: t`Last folder`, home: t`Home folder` });
 
   if (homeServerId) {
