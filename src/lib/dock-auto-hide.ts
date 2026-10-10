@@ -17,9 +17,13 @@
  *   shows. A list too short to scroll is always at an edge, so it never hides.
  * - **Pinned:** a focused field, an open keyboard or a send in flight keeps
  *   the dock shown.
- * - **Momentum:** after the finger lifts, the release animation decides the
- *   dock's fate. A downward fling does not drag it any further, and an upward
- *   one still shows it.
+ * - **Only the finger moves it out:** `travel` counts only while a drag is
+ *   active and starts from 0 with each drag. Momentum after the finger lifts,
+ *   a scroll restored on return, or content growing under the list never
+ *   hides the dock; an upward step or an edge from any of them still shows it.
+ * - **No scroll needed to come back:** when the content or the viewport
+ *   changes so the list can no longer scroll, or its end comes into view,
+ *   `dockAtEdge` says so without a scroll event (`settle` in the hook).
  */
 
 /** Points of continuous downward scroll before the dock starts to move. */
@@ -48,16 +52,22 @@ export type DockScrollStep =
   | { kind: 'follow'; travel: number; offset: number }
   | { kind: 'hold'; travel: number };
 
+/** Whether the list is at its top or bottom, or too short to scroll at all. */
+export function dockAtEdge(y: number, viewportHeight: number, contentHeight: number): boolean {
+  'worklet';
+  return y <= EDGE || y + viewportHeight >= contentHeight - EDGE;
+}
+
 export function dockScrollStep(
   event: DockScrollEvent,
   state: { travel: number; offset: number; distance: number }
 ): DockScrollStep {
   'worklet';
-  const atEdge = event.y <= EDGE || event.y + event.viewportHeight >= event.contentHeight - EDGE;
+  const atEdge = dockAtEdge(event.y, event.viewportHeight, event.contentHeight);
   if (event.pinned || atEdge || event.delta <= -UPWARD_NOISE) return { kind: 'show', travel: 0 };
-  if (event.delta <= 0) return { kind: 'hold', travel: state.travel };
+  if (!event.dragging || event.delta <= 0) return { kind: 'hold', travel: state.travel };
   const travel = state.travel + event.delta;
-  if (!event.dragging || travel <= HIDE_THRESHOLD) return { kind: 'hold', travel };
+  if (travel <= HIDE_THRESHOLD) return { kind: 'hold', travel };
   const offset = Math.min(state.distance, Math.max(state.offset, travel - HIDE_THRESHOLD));
   return { kind: 'follow', travel, offset };
 }

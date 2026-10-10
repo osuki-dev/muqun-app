@@ -7,6 +7,8 @@ import {
   type ViewStyle,
 } from 'react-native';
 
+import { useThemeTokens } from '@osuki-dev/ui';
+
 import { appChrome } from '@/constants/appearance';
 import { feedback, type FeedbackKind } from '@/lib/feedback';
 
@@ -27,6 +29,8 @@ export function TextSegment({
   feedback?: FeedbackKind | false;
   style?: StyleProp<ViewStyle>;
 }) {
+  const { spacing } = useThemeTokens();
+  const gaps = { gap: spacing.xs, paddingHorizontal: spacing.xs };
   return (
     <Pressable
       {...props}
@@ -34,7 +38,7 @@ export function TextSegment({
         if (!props.disabled && feedbackKind) void feedback(feedbackKind);
         onPressIn?.(event);
       }}
-      style={({ pressed }) => [styles.segment, style, pressed && styles.pressed]}
+      style={({ pressed }) => [styles.segment, gaps, style, pressed && styles.pressed]}
     />
   );
 }
@@ -56,8 +60,6 @@ const styles = StyleSheet.create({
     flexShrink: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 4,
   },
   pressed: { opacity: appChrome.opacity.pressed },
 });

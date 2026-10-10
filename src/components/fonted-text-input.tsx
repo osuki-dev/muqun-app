@@ -119,6 +119,9 @@ export function splitFieldStyle(style: TextInputProps['style']): {
   };
 }
 
+/** Whether a placeholder wrapped when last measured, by its text. */
+const lastWrap = new Map<string, boolean>();
+
 /** A field's props, with the placeholder's one-line stand-in. */
 export type FontedTextInputProps = TextInputProps & {
   /**
@@ -157,7 +160,11 @@ export const FontedTextInput = forwardRef<TextInput, FontedTextInputProps>(funct
   // Whether the full placeholder wraps, measured by an invisible copy of it
   // laid out exactly as the visible one is. The copy always holds the full
   // text, so switching to the short one cannot switch it back.
-  const [placeholderWraps, setPlaceholderWraps] = useState(false);
+  // Seeded from the last measure of the same text, so a field that remounts
+  // (Home after a sub-screen) does not show the long text for a frame first.
+  const [placeholderWraps, setPlaceholderWraps] = useState(
+    () => (fullPlaceholder && lastWrap.get(fullPlaceholder)) ?? false
+  );
   const probing = Boolean(shortPlaceholder && fullPlaceholder && empty);
   const placeholder = probing && placeholderWraps ? shortPlaceholder : fullPlaceholder;
   const parts = splitFieldStyle(style);
@@ -222,7 +229,11 @@ export const FontedTextInput = forwardRef<TextInput, FontedTextInputProps>(funct
             visible
             color="transparent"
             style={placeholderStyle}
-            onTextLayout={(event) => setPlaceholderWraps(event.nativeEvent.lines.length > 1)}
+            onTextLayout={(event) => {
+              const wraps = event.nativeEvent.lines.length > 1;
+              if (fullPlaceholder) lastWrap.set(fullPlaceholder, wraps);
+              setPlaceholderWraps(wraps);
+            }}
           />
         </View>
       ) : null}
