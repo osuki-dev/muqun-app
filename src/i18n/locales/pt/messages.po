@@ -5101,6 +5101,10 @@ msgid "Send a message, type / for commands, @ for files…"
 msgstr "Enviar mensagem, / para comandos, @ para arquivos…"
 
 #: src/components/agent-composer.tsx
+msgid "Send a message…"
+msgstr "Enviar mensagem…"
+
+#: src/components/agent-composer.tsx
 msgid "Send message"
 msgstr "Enviar mensagem"
 

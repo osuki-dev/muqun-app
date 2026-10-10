@@ -95,6 +95,7 @@ import { demoContinueSearchEntries } from '@/lib/demo-recents';
 import { useScreenVisible } from '@/hooks/use-screen-visible';
 import { claimHomeFirstEntry } from '@/lib/home-first-entry';
 import { padHomeColumns, padLaunchLayoutEnabled } from '@/lib/home-pad-geometry';
+import { useDockAutoHide } from '@/hooks/use-dock-auto-hide';
 import { resetSortHold, sortHoldScroll, sortHoldTouches } from '@/stores/home-sort-hold';
 import {
   HomeLaunchActions,
@@ -358,6 +359,15 @@ export function HomeOverview({
   const [composerPulse, setComposerPulse] = useState(0);
   // The phone dock floats over the page; the page's foot clears it.
   const [dockHeight, setDockHeight] = useState(0);
+  // The dock slides out of the way while the list scrolls down: the page's
+  // scroll on the phone, the work column's on the Pad cover.
+  const pageDockHide = useDockAutoHide(dockHeight);
+  const padDockHide = useDockAutoHide(dockHeight);
+  const padWorkScroll = useAnimatedScrollHandler({
+    onScroll(event) {
+      padDockHide.scroll(event);
+    },
+  });
   const rememberScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
     savedScrollY.current = event.nativeEvent.contentOffset.y;
   };
@@ -664,6 +674,7 @@ export function HomeOverview({
   const barHeightValue = useSharedValue(insets.top + HEADER_ROW_HEIGHT);
   const onScroll = useAnimatedScrollHandler({
     onScroll(event) {
+      pageDockHide.scroll(event);
       const y = event.contentOffset.y;
       const delta = y - lastScrollY.value;
       lastScrollY.set(y);
@@ -866,6 +877,7 @@ export function HomeOverview({
         // cards and padded like them.
         floating={isPad ? undefined : { margin: padGeometry.gutter, inset: HOME_CARD_INSET }}
         onDockHeight={setDockHeight}
+        autoHide={padLaunch ? padDockHide.dock : pageDockHide.dock}
         onOpenAgent={commands.openAgent}
       />
     ) : null;
@@ -906,10 +918,14 @@ export function HomeOverview({
           // keyboard.
           bottomOffset={dock && !padLaunch ? dockHeight : undefined}
           onContentSizeChange={restoreScroll}
-          onScrollBeginDrag={sortHoldScroll.onScrollBeginDrag}
+          onScrollBeginDrag={() => {
+            sortHoldScroll.onScrollBeginDrag();
+            pageDockHide.beginDrag();
+          }}
           onScrollEndDrag={(event) => {
             rememberScroll(event);
             sortHoldScroll.onScrollEndDrag();
+            pageDockHide.endDrag();
           }}
           onMomentumScrollBegin={sortHoldScroll.onMomentumScrollBegin}
           onMomentumScrollEnd={(event) => {
@@ -1027,7 +1043,18 @@ export function HomeOverview({
               }
               padComposer={padLaunch ? dock : undefined}
               padComposerHeight={dockHeight}
-              workScrollEvents={sortHoldScroll}
+              workScrollEvents={{
+                ...sortHoldScroll,
+                onScrollBeginDrag: () => {
+                  sortHoldScroll.onScrollBeginDrag();
+                  padDockHide.beginDrag();
+                },
+                onScrollEndDrag: () => {
+                  sortHoldScroll.onScrollEndDrag();
+                  padDockHide.endDrag();
+                },
+                onScroll: padWorkScroll,
+              }}
               entering={entering}
               launches={
                 hydrationError || loading ? undefined : launchController.servers.length === 0 ? (

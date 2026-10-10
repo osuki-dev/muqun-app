@@ -15,7 +15,8 @@ import Animated, {
 import { AgentComposer, type DraftInjector } from '@/components/agent-composer';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import type { HomeLaunchController } from '@/components/home-launch-actions';
-import { PressableScale } from '@/components/pressable-scale';
+import type { DockAutoHide } from '@/hooks/use-dock-auto-hide';
+import { SEGMENT_HIT_SLOP, TextSegment } from '@/components/text-segment';
 import { Text } from '@/components/text';
 import { ThemeIcon } from '@/components/theme-icon';
 import { useAgentFeatures, useAgentsDiscoveryRefresh } from '@/hooks/use-agent-features';
@@ -112,6 +113,7 @@ export function HomeComposerDock({
   bottomInset = 0,
   topInset = 0,
   floating,
+  autoHide,
   onDockHeight,
   onOpenAgent,
 }: {
@@ -126,6 +128,8 @@ export function HomeComposerDock({
   topInset?: number;
   /** See `AgentComposer`'s `floating`. */
   floating?: { margin: number; inset: number };
+  /** See `AgentComposer`'s `autoHide`. */
+  autoHide?: DockAutoHide;
   onDockHeight?: (height: number) => void;
   onOpenAgent: (
     serverId: string,
@@ -741,7 +745,7 @@ export function HomeComposerDock({
   const showComputer = servers.length > 1 || !ready || !agentName;
 
   const bar = (
-    <View style={styles.accessory}>
+    <View style={[styles.accessory, { paddingBottom: theme.spacing.xs, rowGap: theme.spacing.xs }]}>
       {error ? (
         <Text
           testID="home-composer-error"
@@ -754,7 +758,7 @@ export function HomeComposerDock({
       ) : null}
       <View style={styles.segments}>
         {showComputer ? (
-          <PressableScale
+          <TextSegment
             testID="home-composer-target"
             accessibilityRole="button"
             accessibilityLabel={
@@ -765,9 +769,9 @@ export function HomeComposerDock({
                 : t`No computer online`
             }
             accessibilityHint={t`Choose another computer`}
-            hitSlop={{ top: 6, bottom: 6 }}
+            hitSlop={SEGMENT_HIT_SLOP.first}
             onPress={openTargetPicker}
-            style={[styles.bar, { borderRadius: profile.chrome.navigationPill }]}>
+            style={{ borderRadius: profile.chrome.navigationPill }}>
             <Animated.View
               pointerEvents="none"
               style={[
@@ -807,23 +811,19 @@ export function HomeComposerDock({
                 {t`No computer online`}
               </Text>
             )}
-          </PressableScale>
+          </TextSegment>
         ) : null}
         {targetServer && agentName ? (
-          <PressableScale
+          <TextSegment
             testID="home-composer-agent"
             accessibilityRole="button"
             accessibilityLabel={t`Home agent: ${agentName}`}
             accessibilityHint={t`Choose the agent Home starts on this computer`}
-            hitSlop={{ top: 6, bottom: 6 }}
+            hitSlop={SEGMENT_HIT_SLOP.first}
             onPress={() =>
               router.push({ pathname: '/home-agent', params: { serverId: targetServer.serverId } })
             }
-            style={[
-              styles.bar,
-              styles.agentSegment,
-              { borderRadius: profile.chrome.navigationPill },
-            ]}>
+            style={[styles.agentSegment, { borderRadius: profile.chrome.navigationPill }]}>
             {showComputer ? null : (
               <ThemeIcon
                 name="home.arrow"
@@ -841,15 +841,15 @@ export function HomeComposerDock({
               style={styles.barLabel}>
               {showComputer ? `· ${agentName}` : agentName}
             </Text>
-          </PressableScale>
+          </TextSegment>
         ) : null}
         {targetServer ? (
-          <PressableScale
+          <TextSegment
             testID="home-composer-folder"
             accessibilityRole="button"
             accessibilityLabel={t`Folder: ${folderLabel}`}
             accessibilityHint={t`Choose the folder this computer starts work in`}
-            hitSlop={{ top: 6, bottom: 6 }}
+            hitSlop={SEGMENT_HIT_SLOP.first}
             // The picker lists the selected computer's folders, so it opens only
             // once the bar's computer is the one selected.
             disabled={!ready || !selected}
@@ -864,11 +864,7 @@ export function HomeComposerDock({
                 },
               })
             }
-            style={[
-              styles.bar,
-              styles.folderSegment,
-              { borderRadius: profile.chrome.navigationPill },
-            ]}>
+            style={[styles.folderSegment, { borderRadius: profile.chrome.navigationPill }]}>
             <Text
               variant="bodySmall"
               numberOfLines={1}
@@ -879,7 +875,7 @@ export function HomeComposerDock({
               style={styles.barLabel}>
               {`· ${folderLabel}`}
             </Text>
-          </PressableScale>
+          </TextSegment>
         ) : null}
       </View>
     </View>
@@ -911,6 +907,8 @@ export function HomeComposerDock({
       bottomInset={bottomInset}
       topInset={topInset}
       floating={floating}
+      compact
+      autoHide={autoHide}
       onDockHeight={onDockHeight}
       onSend={sendPrompt}
       onAbort={async () => {}}
@@ -928,9 +926,7 @@ export function HomeComposerDock({
 const styles = StyleSheet.create({
   // The dock's first row: its glass and gutter are the composer's own.
   accessory: {
-    paddingBottom: 6,
     columnGap: 0,
-    rowGap: 6,
     flexDirection: 'row',
     flexWrap: 'wrap',
     alignItems: 'center',
@@ -941,18 +937,6 @@ const styles = StyleSheet.create({
   agentSegment: { flexShrink: 1 },
   // Capped, so a long name gives way before the computer and agent do.
   folderSegment: { maxWidth: '50%' },
-  bar: {
-    minHeight: 32,
-    minWidth: 0,
-    flexShrink: 1,
-    maxWidth: '100%',
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 4,
-    borderCurve: 'continuous',
-    overflow: 'hidden',
-  },
   barLabel: { minWidth: 0, flexShrink: 1 },
   error: { paddingHorizontal: 4, width: '100%' },
 });

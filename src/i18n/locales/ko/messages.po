@@ -5101,6 +5101,10 @@ msgid "Send a message, type / for commands, @ for files…"
 msgstr "메시지 보내기, / 명령어, @ 파일…"
 
 #: src/components/agent-composer.tsx
+msgid "Send a message…"
+msgstr "메시지 보내기…"
+
+#: src/components/agent-composer.tsx
 msgid "Send message"
 msgstr "메시지 보내기"
 

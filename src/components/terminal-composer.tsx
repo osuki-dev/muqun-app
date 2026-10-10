@@ -7,14 +7,7 @@ import { Mic, Send } from 'lucide-react-native';
 import { Canvas, Group, Path, Skia } from 'react-native-skia';
 import { scheduleOnRN } from 'react-native-worklets';
 import { useEffect, useState, type ComponentProps, type ReactNode, type Ref } from 'react';
-import {
-  StyleSheet,
-  TextInput,
-  View,
-  useWindowDimensions,
-  type TextInputProps,
-  type TextStyle,
-} from 'react-native';
+import { StyleSheet, TextInput, View, useWindowDimensions, type TextStyle } from 'react-native';
 import Animated, {
   Easing,
   useAnimatedStyle,
@@ -32,7 +25,7 @@ import { ThemeIcon } from '@/components/theme-icon';
 import { appChrome } from '@/constants/appearance';
 import { withAlpha } from '@/lib/color';
 import { timing } from '@/lib/motion';
-import { FontedTextInput } from '@/components/fonted-text-input';
+import { FontedTextInput, type FontedTextInputProps } from '@/components/fonted-text-input';
 
 /**
  * The line field at the bottom of a terminal: the app's only raw `TextInput`,
@@ -73,7 +66,7 @@ export interface TerminalComposerProps {
   leading?: ReactNode;
   inputRef?: Ref<TextInput>;
   /** The field's own props: value, placeholder, editability, test id. */
-  inputProps: TextInputProps;
+  inputProps: FontedTextInputProps;
   send: TerminalComposerSend;
   entering?: AnimatedViewProps['entering'];
   exiting?: AnimatedViewProps['exiting'];
