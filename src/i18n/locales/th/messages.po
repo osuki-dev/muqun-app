@@ -350,6 +350,10 @@ msgstr "{total, plural, other {งานย่อย # งาน}}"
 msgid "{total, plural, one {# sub-task} other {# sub-tasks}} ({waiting, plural, one {# waiting} other {# waiting}})"
 msgstr "{total, plural, other {งานย่อย # งาน}} ({waiting, plural, other {รอ # งาน}})"
 
+#: src/components/task-row.tsx
+msgid "→ {name}"
+msgstr "→ {name}"
+
 #. placeholder {0}: card.nowTotal - card.now.length
 #: src/components/home-computer-cards.tsx
 msgid "+{0} more"
@@ -641,6 +645,10 @@ msgstr "และอีก {rest}"
 #: src/components/settings-server-capabilities.tsx
 msgid "Android builds"
 msgstr "บิลด์ Android"
+
+#: src/components/task-row.tsx
+msgid "another computer"
+msgstr "คอมพิวเตอร์เครื่องอื่น"
 
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Answer"
@@ -2668,6 +2676,10 @@ msgstr "เพิ่มพื้นที่บริบทโดยสรุป
 msgid "Frequent"
 msgstr "ใช้บ่อย"
 
+#: src/components/task-row.tsx
+msgid "from {requester}"
+msgstr "จาก {requester}"
+
 #: src/app/explore.tsx
 msgid "Front camera. Hold the QR up to the screen"
 msgstr "กล้องหน้า ถือ QR หันเข้าหาหน้าจอ"
@@ -3976,6 +3988,10 @@ msgstr "เปิด {0}"
 #: src/components/new-task-action.tsx
 msgid "Open {agentName} Agent on {label}"
 msgstr "เปิดเอเจนต์ {agentName} บน {label}"
+
+#: src/components/task-row.tsx
+msgid "Open {mirrorName} on this phone first"
+msgstr "เปิด {mirrorName} บนโทรศัพท์นี้ก่อน"
 
 #: src/components/new-task-action.tsx
 msgid "Open {name} Agent on {label}"
@@ -6207,6 +6223,7 @@ msgstr "คอมพิวเตอร์นี้ไม่ได้จับค
 msgid "This computer is not answering. Check the computer connection, then try again."
 msgstr "คอมพิวเตอร์เครื่องนี้ไม่ตอบสนอง ตรวจสอบการเชื่อมต่อกับคอมพิวเตอร์ แล้วลองอีกครั้ง"
 
+#: src/components/settings-fleet-peers.tsx
 #: src/lib/network-error.ts
 msgid "This computer no longer recognises this device. Pair it again to reconnect."
 msgstr "คอมพิวเตอร์นี้ไม่รู้จักอุปกรณ์นี้แล้ว จับคู่อีกครั้งเพื่อเชื่อมต่อใหม่"
@@ -6581,8 +6598,13 @@ msgid "Unpairing…"
 msgstr "กำลังเลิกจับคู่…"
 
 #: src/components/file-mention-panel.tsx
+#: src/components/task-row.tsx
 msgid "Unreachable"
-msgstr "เชื่อมต่อไม่ได้"
+msgstr "เข้าถึงไม่ได้"
+
+#: src/components/task-row.tsx
+msgid "Unreachable · last seen {ago}"
+msgstr "เข้าถึงไม่ได้ · พบล่าสุด {ago}"
 
 #: src/components/diff-rows.tsx
 msgid "Unstaged"

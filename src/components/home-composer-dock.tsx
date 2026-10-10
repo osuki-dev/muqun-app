@@ -214,8 +214,11 @@ export function HomeComposerDock({
   const mentionsIn = async (goal: string, serverId: string): Promise<string[]> => {
     if (!fleetCapable || !/@\S/.test(goal)) return [];
     const target = servers.find((server) => server.serverId === serverId);
-    const answer = target ? await fetchFleetPeers(recordEndpoint(target)) : null;
-    return answer ? taskMentions(goal, mentionComputers, answer.peers) : [];
+    if (!target || target.sshTunnel) return [];
+    const answer = await fetchFleetPeers(recordEndpoint(target));
+    // What the target said about its links is news for the fleet store too.
+    useFleetPeers.getState().record(serverId, answer);
+    return answer.ok ? taskMentions(goal, mentionComputers, answer.peers.peers) : [];
   };
 
   // One connection at a time: the computer Send goes to is the one selected,

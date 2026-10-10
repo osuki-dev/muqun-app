@@ -27,6 +27,55 @@ describe('homeWaitingTasks', () => {
     expect(homeWaitingTasks(tasks, ['a']).map((row) => row.task.taskId)).toEqual(['w2', 'w1']);
   });
 
+  // A question is listed once: the real task when its computer's ledger is
+  // here, else the mirror that stands for it.
+  const mirror: TaskBinding = {
+    kind: 'peer',
+    peerId: 'peer-1',
+    peerServerId: 'mini',
+    remoteTaskId: 'r',
+  };
+  test.each([
+    [
+      'both tasks present: one row, the real one',
+      { coding: [task('m', 'waiting', 3, mirror)], mini: [task('r', 'waiting', 2)] },
+      ['coding', 'mini'],
+      ['r'],
+    ],
+    [
+      'the real task there is not waiting yet: the mirror is listed',
+      { coding: [task('m', 'waiting', 3, mirror)], mini: [task('r', 'working', 2)] },
+      ['coding', 'mini'],
+      ['m'],
+    ],
+    [
+      "the running computer's ledger is stale: the mirror is listed",
+      { coding: [task('m', 'waiting', 3, mirror)], mini: [task('r', 'waiting', 2)] },
+      ['coding'],
+      ['m'],
+    ],
+    [
+      'the task there is not known yet: the mirror is listed',
+      {
+        coding: [task('m', 'waiting', 3, { ...mirror, remoteTaskId: '' })],
+        mini: [task('r', 'waiting', 2)],
+      },
+      ['coding', 'mini'],
+      ['m', 'r'],
+    ],
+    [
+      'the running computer is not paired here: the mirror is listed',
+      { coding: [task('m', 'waiting', 3, mirror)] },
+      ['coding'],
+      ['m'],
+    ],
+  ] as const)('%s', (_name, byServer, fresh, listed) => {
+    const tasks = index(
+      Object.fromEntries(Object.entries(byServer).map(([id, list]) => [id, [...list]]))
+    );
+    expect(homeWaitingTasks(tasks, fresh).map((row) => row.task.taskId)).toEqual([...listed]);
+  });
+
   test('a task whose session Needs you already lists is not listed twice', () => {
     const bound = (asid: string): TaskBinding => ({ kind: 'agent_session', agentId: 'oc', asid });
     const tasks = index({

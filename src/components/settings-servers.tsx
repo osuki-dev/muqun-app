@@ -99,9 +99,12 @@ export function SettingsServers({ initialOpenId }: { initialOpenId?: string } = 
   // `stores/server-reachability.ts`.
   useFocusEffect(
     useCallback(() => {
-      // Opening Settings › Computers is a reconciler trigger (spec §4.1).
-      void reconcileFleet({ reason: 'settings' });
-      if (!record || record.serverId === DEMO_SERVER_ID || record.sshTunnel) return;
+      // Opening Settings › Computers is a reconciler trigger (spec §4.1),
+      // run on the capabilities the reachability probe just refreshed.
+      if (!record || record.serverId === DEMO_SERVER_ID || record.sshTunnel) {
+        void reconcileFleet({ reason: 'settings' });
+        return;
+      }
       void refreshReachability({
         serverId: record.serverId,
         url: record.url,
@@ -109,6 +112,8 @@ export function SettingsServers({ initialOpenId }: { initialOpenId?: string } = 
         deviceId: record.deviceId,
         transportKey: record.transportKey,
         transport: record.transport,
+      }).finally(() => {
+        void reconcileFleet({ reason: 'settings' });
       });
     }, [record, refreshReachability])
   );

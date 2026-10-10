@@ -1,7 +1,14 @@
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens, useToast } from '@osuki-dev/ui';
-import { Check, CircleCheck, ExternalLink, SquareTerminal, XCircle } from 'lucide-react-native';
+import {
+  ArrowRight,
+  Check,
+  CircleCheck,
+  ExternalLink,
+  SquareTerminal,
+  XCircle,
+} from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, {
@@ -34,8 +41,13 @@ import {
   type TaskRowVisual,
 } from '@/lib/home-computer-cards';
 import { fadeIn, fadeOut, listLayout, pulseOnce, travelTiming, zoomIn } from '@/lib/motion';
+import { isDemoRecord } from '@/lib/demo-gateway';
+import { peerServerIdOf } from '@/lib/fleet-peers';
+import { META_SEPARATOR } from '@/lib/home-continue-row';
 import { describeGatewayFailure } from '@/lib/network-error';
 import { canMarkTaskDone, type TaskView } from '@/lib/task-ledger';
+import { useFleetPeers } from '@/stores/fleet-peers';
+import { useGatewayConnectionStore } from '@/stores/gateway-connection';
 import { dismissTaskNotices } from '@/stores/in-app-notifications';
 import { useHomeTaskCards } from '@/stores/home-task-cards';
 import { useServerCapabilities } from '@/stores/server-capabilities';
@@ -87,11 +99,51 @@ export function TaskStateIcon({ visual, size = 16 }: { visual: TaskRowVisual; si
   );
 }
 
-/** The name a task runs under: the session's agent, the terminal agent, or `Terminal`. */
+/**
+ * The server id of the computer a mirror runs on, as this phone knows it:
+ * the mirror's own word, else what a linked computer lists for that link.
+ */
+function usePeerServerId() {
+  const byServer = useFleetPeers((state) => state.byServer);
+  return (binding: { peerId: string; peerServerId?: string }): string =>
+    peerServerIdOf(byServer, binding);
+}
+
+/** What the reader calls a mirror's computer: its label on this phone, else the name the mirror carries (§10.13). */
+export function usePeerName() {
+  const { t } = useLingui();
+  const records = useGatewayConnectionStore((state) => state.records);
+  const serverOf = usePeerServerId();
+  return (binding: { peerId: string; peerServerId?: string; peerName?: string }): string => {
+    const serverId = serverOf(binding);
+    return (
+      records.find((record) => record.serverId === serverId)?.label ||
+      binding.peerName ||
+      t`another computer`
+    );
+  };
+}
+
+/** Whether a mirror's computer is paired on this phone, so its row can open there. */
+export function useIsPairedHere() {
+  const records = useGatewayConnectionStore((state) => state.records);
+  const serverOf = usePeerServerId();
+  return (binding: { peerId: string; peerServerId?: string }): boolean => {
+    const serverId = serverOf(binding);
+    return records.some((record) => record.serverId === serverId && !isDemoRecord(record));
+  };
+}
+
+/** The name a task runs under: the session's agent, the terminal agent, `Terminal`, or `→ <computer>`. */
 export function useTaskWhereName(discovery: MirroredServerDiscovery | undefined) {
   const { t } = useLingui();
+  const peerName = usePeerName();
   return (task: TaskView): string => {
     const binding = task.binding;
+    if (binding.kind === 'peer') {
+      const name = peerName(binding);
+      return t`→ ${name}`;
+    }
     if (binding.kind === 'agent_session') {
       return (
         findAgent(discovery?.agents?.agents, binding.agentId)?.name ??
@@ -119,6 +171,9 @@ function WhereMark({
     const kind = findAgent(discovery?.agents?.agents, binding.agentId)?.kind ?? binding.agentId;
     return <AgentMark kind={kind} size={12} color={theme.colors.primary} />;
   }
+  if (binding.kind === 'peer') {
+    return <ArrowRight size={12} color={theme.colors.primary} strokeWidth={2.2} />;
+  }
   return <SquareTerminal size={12} color={theme.colors.textMuted} strokeWidth={2} />;
 }
 
@@ -132,14 +187,17 @@ export function useTaskRowLine(discovery: MirroredServerDiscovery | undefined) {
   const { _ } = useLinguiRuntime();
   const theme = useThemeTokens();
   const whereName = useTaskWhereName(discovery);
+  const age = useTaskAge();
   return (
     task: TaskView | null,
     visual: TaskRowVisual,
-    computer = ''
+    computer = '',
+    nowMs?: number
   ): { text: string; color: string } => {
     const muted = theme.colors.textMuted;
     const line = visual.line;
-    const agent = task ? whereName(task) : '';
+    // A mirror names its computer beside its title; its line says the state.
+    const agent = task && task.binding.kind !== 'peer' ? whereName(task) : '';
     const stateWord = task ? _(taskStateWord[task.state]) : '';
     switch (line.kind) {
       case 'sent':
@@ -173,6 +231,14 @@ export function useTaskRowLine(discovery: MirroredServerDiscovery | undefined) {
         return { text: line.text, color: theme.colors.danger };
       case 'state':
         return { text: stateWord, color: visual.tone === 'danger' ? theme.colors.danger : muted };
+      case 'unreachable': {
+        const ago =
+          line.lastSeenMs !== undefined && nowMs !== undefined ? age(line.lastSeenMs, nowMs) : '';
+        return {
+          text: ago ? t`Unreachable · last seen ${ago}` : t`Unreachable`,
+          color: theme.colors.warning,
+        };
+      }
     }
   };
 }
@@ -236,11 +302,163 @@ export function useRollupText() {
 }
 
 /**
+ * Who opened a task from another computer, by this phone's name for that
+ * computer when the gateway says which one, else the name it carries.
+ */
+function useRequesterName() {
+  const records = useGatewayConnectionStore((state) => state.records);
+  return (requestedBy: TaskView['requestedBy']): string => {
+    if (requestedBy?.kind !== 'gateway') return '';
+    const serverId = requestedBy.serverId;
+    return (
+      (serverId ? records.find((record) => record.serverId === serverId)?.label : undefined) ||
+      requestedBy.name
+    );
+  };
+}
+
+/**
+ * What one task row shows and does, shared by the full row and the child row
+ * under its parent: the state visual, the line (or, for a mirror whose
+ * computer this phone is not paired with, why it does not open), the clock,
+ * the open guard and the long-press menu of the state's actions.
+ */
+function useTaskRowModel({
+  task,
+  serverId,
+  discovery,
+  nowMs,
+  onOpen,
+}: {
+  task: TaskView;
+  serverId: string;
+  discovery: MirroredServerDiscovery | undefined;
+  nowMs: number;
+  onOpen: (task: TaskView) => void;
+}) {
+  const { t } = useLingui();
+  const theme = useThemeTokens();
+  const { showToast } = useToast();
+  const age = useTaskAge();
+  const elapsed = useTaskElapsed();
+  const rowLine = useTaskRowLine(discovery);
+  const capabilities = useServerCapabilities((state) => state.byServer[serverId]);
+  const acknowledged = useHomeTaskCards((cards) =>
+    cards.dismissed.includes(dismissedKey(serverId, task.taskId))
+  );
+  const acknowledge = useHomeTaskCards((cards) => cards.acknowledge);
+  const act = useTaskAction(serverId);
+  const peerName = usePeerName();
+  const pairedHere = useIsPairedHere();
+  const requesterName = useRequesterName();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const visual = taskRowVisual(task, {
+    canComplete: canMarkTaskDone(task, capabilities),
+    acknowledged,
+  });
+  // A mirror of work on another computer is named, and opened there -- or,
+  // when this phone is not paired there, says so and does not open.
+  const mirror = task.binding.kind === 'peer' ? task.binding : null;
+  const mirrorName = mirror ? peerName(mirror) : '';
+  const unpaired = mirror !== null && !pairedHere(mirror);
+  const line = unpaired
+    ? { text: t`Open ${mirrorName} on this phone first`, color: theme.colors.textMuted }
+    : rowLine(task, visual, '', nowMs);
+  const requester = requesterName(task.requestedBy);
+  const fromText = requester ? t`from ${requester}` : '';
+  const open = () => {
+    if (!unpaired) onOpen(task);
+  };
+  // Open work says how long it has run (`14m`), finished work how long ago.
+  const trailingAge =
+    visual.clock === 'elapsed'
+      ? elapsed(task.updatedMs, nowMs)
+      : visual.clock === 'ago'
+        ? age(task.updatedMs, nowMs)
+        : '';
+  // The reader is told what failed in words, never the gateway's raw answer.
+  const fail = (title: string) => (failure: unknown) =>
+    showToast({
+      variant: 'danger',
+      title,
+      message: describeGatewayFailure(failure, title).message,
+    });
+  const run = (action: () => void) => () => {
+    setMenuOpen(false);
+    action();
+  };
+  const menuItems: AgentActionMenuItem[] = visual.actions
+    // Nothing to open from here for a computer this phone is not paired with.
+    .filter((action) => !(unpaired && action === 'open'))
+    .map((action): AgentActionMenuItem => {
+      switch (action) {
+        case 'open':
+          return { id: 'open', label: t`Open`, Icon: ExternalLink, onPress: run(open) };
+        case 'cancel':
+          return {
+            id: 'cancel',
+            label: t`Cancel task`,
+            Icon: XCircle,
+            tone: 'danger',
+            confirm: { label: t`Confirm cancel` },
+            testID: `task-row-cancel-${task.taskId}`,
+            onPress: run(() => {
+              void act(task, 'cancel').catch(fail(t`Could not cancel the task`));
+            }),
+          };
+        case 'markDone':
+          return {
+            id: 'mark-done',
+            label: t`Mark done`,
+            Icon: CircleCheck,
+            testID: `task-row-mark-done-${task.taskId}`,
+            onPress: run(() => {
+              void act(task, 'complete').catch(fail(t`Could not mark the task done`));
+            }),
+          };
+        case 'acknowledge':
+          return {
+            id: 'acknowledge',
+            label: t`Acknowledge`,
+            Icon: Check,
+            testID: `task-row-acknowledge-${task.taskId}`,
+            onPress: run(() => {
+              acknowledge(serverId, task.taskId);
+              dismissTaskNotices(task);
+            }),
+          };
+      }
+    });
+  const toggleMenu = () => setMenuOpen((shown) => !shown);
+  const menuProps = {
+    accessibilityActions:
+      menuItems.length > 0 ? [{ name: 'longpress', label: t`Actions` }] : undefined,
+    onAccessibilityAction: (event: { nativeEvent: { actionName: string } }) => {
+      if (event.nativeEvent.actionName === 'longpress') toggleMenu();
+    },
+    onLongPress: menuItems.length > 0 ? toggleMenu : undefined,
+  };
+  return {
+    visual,
+    line,
+    mirror,
+    mirrorName,
+    fromText,
+    open,
+    trailingAge,
+    menuItems,
+    menuShown: menuOpen && menuItems.length > 0,
+    menuProps,
+  };
+}
+
+/**
  * One task: its state icon, the goal as typed, its age, and the line saying
  * what became of it, all from `taskRowVisual`. Tapping opens the session or
- * pane it runs in; a long press lists what the reader can do with it (Open,
- * Cancel, Mark done, Acknowledge); the sub-task count opens the work under
- * it. The same row on Home's cards and in the Tasks list.
+ * pane it runs in -- for a mirror, on the computer that runs it; a long press
+ * lists what the reader can do with it (Open, Cancel, Mark done,
+ * Acknowledge); the sub-task count opens the work under it. The same row on
+ * Home's cards and in the Tasks list.
  */
 export function TaskRow({
   task,
@@ -263,84 +481,13 @@ export function TaskRow({
   /** The Tasks list on this task's tree; absent where that list is already shown. */
   onOpenTree?: (task: TaskView) => void;
 }) {
-  const { t } = useLingui();
   const theme = useThemeTokens();
-  const { showToast } = useToast();
-  const age = useTaskAge();
-  const elapsed = useTaskElapsed();
-  const rowLine = useTaskRowLine(discovery);
   const whereName = useTaskWhereName(discovery);
   const rollupText = useRollupText()(task);
-  const capabilities = useServerCapabilities((state) => state.byServer[serverId]);
-  const acknowledged = useHomeTaskCards((cards) =>
-    cards.dismissed.includes(dismissedKey(serverId, task.taskId))
-  );
-  const acknowledge = useHomeTaskCards((cards) => cards.acknowledge);
-  const act = useTaskAction(serverId);
-  const [menuOpen, setMenuOpen] = useState(false);
-  const visual = taskRowVisual(task, {
-    canComplete: canMarkTaskDone(task, capabilities),
-    acknowledged,
-  });
-  const line = rowLine(task, visual);
-  const title = taskRowTitle(task) || whereName(task) || line.text;
-  // Open work says how long it has run (`14m`), finished work how long ago.
-  const trailingAge =
-    visual.clock === 'elapsed'
-      ? elapsed(task.updatedMs, nowMs)
-      : visual.clock === 'ago'
-        ? age(task.updatedMs, nowMs)
-        : '';
-  // The reader is told what failed in words, never the gateway's raw answer.
-  const fail = (title: string) => (failure: unknown) =>
-    showToast({
-      variant: 'danger',
-      title,
-      message: describeGatewayFailure(failure, title).message,
-    });
-  const run = (action: () => void) => () => {
-    setMenuOpen(false);
-    action();
-  };
-  const menuItems: AgentActionMenuItem[] = visual.actions.map((action): AgentActionMenuItem => {
-    switch (action) {
-      case 'open':
-        return { id: 'open', label: t`Open`, Icon: ExternalLink, onPress: run(() => onOpen(task)) };
-      case 'cancel':
-        return {
-          id: 'cancel',
-          label: t`Cancel task`,
-          Icon: XCircle,
-          tone: 'danger',
-          confirm: { label: t`Confirm cancel` },
-          testID: `task-row-cancel-${task.taskId}`,
-          onPress: run(() => {
-            void act(task, 'cancel').catch(fail(t`Could not cancel the task`));
-          }),
-        };
-      case 'markDone':
-        return {
-          id: 'mark-done',
-          label: t`Mark done`,
-          Icon: CircleCheck,
-          testID: `task-row-mark-done-${task.taskId}`,
-          onPress: run(() => {
-            void act(task, 'complete').catch(fail(t`Could not mark the task done`));
-          }),
-        };
-      case 'acknowledge':
-        return {
-          id: 'acknowledge',
-          label: t`Acknowledge`,
-          Icon: Check,
-          testID: `task-row-acknowledge-${task.taskId}`,
-          onPress: run(() => {
-            acknowledge(serverId, task.taskId);
-            dismissTaskNotices(task);
-          }),
-        };
-    }
-  });
+  const row = useTaskRowModel({ task, serverId, discovery, nowMs, onOpen });
+  const { visual, line, mirror, fromText, trailingAge } = row;
+  const ownTitle = taskRowTitle(task);
+  const title = ownTitle || whereName(task) || line.text;
   return (
     <Animated.View
       entering={fadeIn('micro')}
@@ -358,21 +505,33 @@ export function TaskRow({
       <PressableScale
         testID={`task-row-${task.taskId}`}
         accessibilityRole="button"
-        accessibilityLabel={[title, line.text, trailingAge, rollupText].filter(Boolean).join(', ')}
-        accessibilityActions={
-          menuItems.length > 0 ? [{ name: 'longpress', label: t`Actions` }] : undefined
-        }
-        onAccessibilityAction={(event) => {
-          if (event.nativeEvent.actionName === 'longpress') setMenuOpen((open) => !open);
-        }}
-        onPress={() => onOpen(task)}
-        onLongPress={menuItems.length > 0 ? () => setMenuOpen((open) => !open) : undefined}
+        accessibilityLabel={[
+          title,
+          mirror && ownTitle ? whereName(task) : '',
+          fromText,
+          line.text,
+          trailingAge,
+          rollupText,
+        ]
+          .filter(Boolean)
+          .join(', ')}
+        {...row.menuProps}
+        onPress={row.open}
         style={styles.row}>
         <View style={styles.titleLine}>
           <View style={styles.icon}>
             <TaskStateIcon visual={visual} />
           </View>
           <RowMarkdown text={title} ink={theme.colors.text} kind="title" />
+          {mirror && ownTitle ? (
+            <Text
+              testID={`task-row-peer-${task.taskId}`}
+              variant="caption"
+              color={theme.colors.textMuted}
+              numberOfLines={1}>
+              {whereName(task)}
+            </Text>
+          ) : null}
           {trailingAge ? (
             <Text variant="caption" color={theme.colors.textSubtle}>
               {trailingAge}
@@ -380,6 +539,15 @@ export function TaskRow({
           ) : null}
         </View>
         <Animated.View key={visual.line.kind} entering={fadeIn('micro')} style={styles.line}>
+          {fromText ? (
+            <Text
+              testID={`task-row-from-${task.taskId}`}
+              variant="caption"
+              color={theme.colors.textSubtle}
+              numberOfLines={1}>
+              {fromText + META_SEPARATOR}
+            </Text>
+          ) : null}
           <RowMarkdown
             testID={`task-row-line-${task.taskId}`}
             text={line.text}
@@ -395,30 +563,31 @@ export function TaskRow({
                   color={theme.colors.primary}
                   accessibilityRole="link"
                   onPress={() => onOpenTree(task)}>
-                  {` · ${rollupText}`}
+                  {META_SEPARATOR + rollupText}
                 </Text>
               ) : (
                 <Text variant="caption" color={theme.colors.textMuted}>
-                  {` · ${rollupText}`}
+                  {META_SEPARATOR + rollupText}
                 </Text>
               )}
             </Text>
           ) : null}
         </Animated.View>
       </PressableScale>
-      {menuOpen && menuItems.length > 0 ? (
+      {row.menuShown ? (
         <AgentActionMenu
           testID={`task-row-menu-${task.taskId}`}
           surface="ground"
-          items={menuItems}
+          items={row.menuItems}
         />
       ) : null}
       {(subTasks ?? []).map((child) => (
         <SubTaskRow
           key={child.taskId}
           task={child}
+          serverId={serverId}
           discovery={discovery}
-          whereName={whereName(child)}
+          nowMs={nowMs}
           onOpen={onOpen}
         />
       ))}
@@ -426,34 +595,71 @@ export function TaskRow({
   );
 }
 
-/** A sub-task under its root: where it runs (its agent's mark and name), its goal, its line. */
+/**
+ * A sub-task under its root, on one line: its state, where it runs (its
+ * agent's mark and name, or the arrow and the computer for work handed to
+ * another one), its goal, its line and its clock. It opens and long-presses
+ * like a full row, so a mirror's Cancel and Mark done are on the parent's
+ * card too.
+ */
 function SubTaskRow({
   task,
+  serverId,
   discovery,
-  whereName,
+  nowMs,
   onOpen,
 }: {
   task: TaskView;
+  serverId: string;
   discovery: MirroredServerDiscovery | undefined;
-  whereName: string;
+  nowMs: number;
   onOpen: (task: TaskView) => void;
 }) {
   const theme = useThemeTokens();
-  const rowLine = useTaskRowLine(discovery);
-  const visual = taskRowVisual(task, { canComplete: false, acknowledged: true });
-  const line = rowLine(task, visual);
+  const whereName = useTaskWhereName(discovery);
+  const row = useTaskRowModel({ task, serverId, discovery, nowMs, onOpen });
+  const { visual, line, mirror, mirrorName, trailingAge } = row;
+  const title = taskRowTitle(task);
   return (
-    <PressableScale
-      testID={`task-row-${task.taskId}`}
-      accessibilityRole="button"
-      accessibilityLabel={`${whereName}, ${taskRowTitle(task)}, ${line.text}`}
-      onPress={() => onOpen(task)}
-      style={styles.child}>
-      <TaskStateIcon visual={visual} size={12} />
-      <WhereMark task={task} discovery={discovery} />
-      <RowMarkdown text={taskRowTitle(task)} ink={theme.colors.textMuted} kind="line" />
-      <RowMarkdown text={line.text} ink={line.color} kind="line" />
-    </PressableScale>
+    <View>
+      <PressableScale
+        testID={`task-row-${task.taskId}`}
+        accessibilityRole="button"
+        accessibilityLabel={[whereName(task), title, line.text, trailingAge]
+          .filter(Boolean)
+          .join(', ')}
+        {...row.menuProps}
+        onPress={row.open}
+        style={styles.child}>
+        <TaskStateIcon visual={visual} size={12} />
+        <WhereMark task={task} discovery={discovery} />
+        {mirror ? (
+          <Text
+            testID={`task-row-peer-${task.taskId}`}
+            variant="caption"
+            weight="semibold"
+            color={theme.colors.textMuted}
+            numberOfLines={1}
+            style={styles.peerName}>
+            {mirrorName}
+          </Text>
+        ) : null}
+        <RowMarkdown text={title} ink={theme.colors.textMuted} kind="line" />
+        <RowMarkdown text={line.text} ink={line.color} kind="line" />
+        {trailingAge ? (
+          <Text variant="caption" color={theme.colors.textSubtle}>
+            {trailingAge}
+          </Text>
+        ) : null}
+      </PressableScale>
+      {row.menuShown ? (
+        <AgentActionMenu
+          testID={`task-row-menu-${task.taskId}`}
+          surface="ground"
+          items={row.menuItems}
+        />
+      ) : null}
+    </View>
   );
 }
 
@@ -492,6 +698,8 @@ const styles = StyleSheet.create({
   line: { paddingLeft: 24, flexDirection: 'row', alignItems: 'center' },
   nested: { paddingLeft: 24 },
   edge: { position: 'absolute', left: 0, top: 0, bottom: 0, width: 3 },
+  // A computer's name is short and says the most; it gives way last.
+  peerName: { flexShrink: 0, maxWidth: '40%' },
   child: {
     minHeight: 28,
     paddingLeft: 24,
