@@ -176,8 +176,8 @@ export function HomeComposerDock({
     terminalCatalog !== undefined
   );
   const terminalAgent = agent?.kind === 'terminal' ? agent : null;
-  // Where the goal runs on this computer: the folder last picked here, or the
-  // agent's own default. Sent as `cwd` (ledger, spawn) or `directory` (session).
+  // Where the goal runs on this computer: the folder last picked here, if
+  // any. Sent as `cwd` (ledger, spawn) or `directory` (session).
   const folder = useHomeAgentChoice((state) =>
     targetId ? state.folderByServer[targetId] : undefined
   );
@@ -186,8 +186,13 @@ export function HomeComposerDock({
     agentsDiscovered && agent?.kind === 'session' ? normalizeAgentId(agent.agentId) : undefined;
   const features = useAgentFeatures(targetId, agentId);
   const computerLabel = targetServer?.label ?? '';
-  // The agent's own default is named in words; `~` alone reads as a glyph.
-  const folderLabel = folder ? homeFolderLabel(folder) : t`Home folder`;
+  // Nothing picked sends no folder and the gateway uses the device's last
+  // one; the home directory is named in words, as `~` alone reads as a glyph.
+  const folderLabel = !folder
+    ? t`Last folder`
+    : folder === '~'
+      ? t`Home folder`
+      : homeFolderLabel(folder);
   const agentName = agent?.name ?? '';
   const agentLabel = agentName || computerLabel;
   // A gateway that opens ledger tasks gets the goal as one: Home's cards then
@@ -689,6 +694,11 @@ export function HomeComposerDock({
 
   if (servers.length === 0) return null;
 
+  // With one computer paired there is nothing to choose between: the bar
+  // reads `agent · folder`. The computer stays named while it is offline or
+  // has no agent to name, so the bar never goes quiet about where Send goes.
+  const showComputer = servers.length > 1 || !ready || !agentName;
+
   const bar = (
     <View style={styles.accessory}>
       {error ? (
@@ -702,60 +712,62 @@ export function HomeComposerDock({
         </Text>
       ) : null}
       <View style={styles.segments}>
-        <PressableScale
-          testID="home-composer-target"
-          accessibilityRole="button"
-          accessibilityLabel={
-            targetServer
-              ? agentName
-                ? t`Assigned to ${computerLabel}, ${agentName}`
-                : t`Send to ${computerLabel}`
-              : t`No computer online`
-          }
-          accessibilityHint={t`Choose another computer`}
-          hitSlop={{ top: 6, bottom: 6 }}
-          onPress={openTargetPicker}
-          style={[styles.bar, { borderRadius: profile.chrome.navigationPill }]}>
-          <Animated.View
-            pointerEvents="none"
-            style={[
-              StyleSheet.absoluteFill,
-              {
-                borderRadius: profile.chrome.navigationPill,
-                backgroundColor: background(theme.colors.primarySubtle),
-              },
-              flashStyle,
-            ]}
-          />
-          {targetServer ? (
-            <>
-              <ThemeIcon
-                name="home.arrow"
-                direction="right"
-                fallback={ArrowRight}
-                size={14}
-                color={ready ? theme.colors.primary : theme.colors.textMuted}
-              />
-              <Text
-                variant="bodySmall"
-                weight="semibold"
-                numberOfLines={1}
-                color={ready ? theme.colors.text : theme.colors.textMuted}
-                style={styles.barLabel}>
-                {computerLabel}
-              </Text>
-              {target.kind === 'offline' ? (
-                <Text variant="caption" color={theme.colors.textMuted} numberOfLines={1}>
-                  {_(reachabilityDescription.offline)}
+        {showComputer ? (
+          <PressableScale
+            testID="home-composer-target"
+            accessibilityRole="button"
+            accessibilityLabel={
+              targetServer
+                ? agentName
+                  ? t`Assigned to ${computerLabel}, ${agentName}`
+                  : t`Send to ${computerLabel}`
+                : t`No computer online`
+            }
+            accessibilityHint={t`Choose another computer`}
+            hitSlop={{ top: 6, bottom: 6 }}
+            onPress={openTargetPicker}
+            style={[styles.bar, { borderRadius: profile.chrome.navigationPill }]}>
+            <Animated.View
+              pointerEvents="none"
+              style={[
+                StyleSheet.absoluteFill,
+                {
+                  borderRadius: profile.chrome.navigationPill,
+                  backgroundColor: background(theme.colors.primarySubtle),
+                },
+                flashStyle,
+              ]}
+            />
+            {targetServer ? (
+              <>
+                <ThemeIcon
+                  name="home.arrow"
+                  direction="right"
+                  fallback={ArrowRight}
+                  size={14}
+                  color={ready ? theme.colors.primary : theme.colors.textMuted}
+                />
+                <Text
+                  variant="bodySmall"
+                  weight="semibold"
+                  numberOfLines={1}
+                  color={ready ? theme.colors.text : theme.colors.textMuted}
+                  style={styles.barLabel}>
+                  {computerLabel}
                 </Text>
-              ) : null}
-            </>
-          ) : (
-            <Text variant="bodySmall" color={theme.colors.textMuted} numberOfLines={1}>
-              {t`No computer online`}
-            </Text>
-          )}
-        </PressableScale>
+                {target.kind === 'offline' ? (
+                  <Text variant="caption" color={theme.colors.textMuted} numberOfLines={1}>
+                    {_(reachabilityDescription.offline)}
+                  </Text>
+                ) : null}
+              </>
+            ) : (
+              <Text variant="bodySmall" color={theme.colors.textMuted} numberOfLines={1}>
+                {t`No computer online`}
+              </Text>
+            )}
+          </PressableScale>
+        ) : null}
         {targetServer && agentName ? (
           <PressableScale
             testID="home-composer-agent"
@@ -771,13 +783,22 @@ export function HomeComposerDock({
               styles.agentSegment,
               { borderRadius: profile.chrome.navigationPill },
             ]}>
+            {showComputer ? null : (
+              <ThemeIcon
+                name="home.arrow"
+                direction="right"
+                fallback={ArrowRight}
+                size={14}
+                color={theme.colors.primary}
+              />
+            )}
             <Text
               variant="bodySmall"
               weight="semibold"
               numberOfLines={1}
               color={ready ? theme.colors.primary : theme.colors.textMuted}
               style={styles.barLabel}>
-              {`· ${agentName}`}
+              {showComputer ? `· ${agentName}` : agentName}
             </Text>
           </PressableScale>
         ) : null}

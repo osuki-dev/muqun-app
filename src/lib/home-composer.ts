@@ -214,13 +214,14 @@ export function sameComputer(
 }
 
 /**
- * The folder a pick sets for a computer: the path as typed or chosen, or
- * `undefined` for the agent's own default -- what `~` (alone) stands for, so
- * picking `~` goes back to it rather than handing the host a literal tilde.
+ * The folder a pick sets for a computer: the path as typed or chosen, `~`
+ * for the home directory picked on purpose, or `undefined` for nothing
+ * picked, which sends no folder (the gateway uses the device's last one).
  */
 export function homeFolderPick(directory: string): string | undefined {
   const path = directory.trim();
-  if (!path || /^~\/*$/.test(path)) return undefined;
+  if (!path) return undefined;
+  if (/^~\/*$/.test(path)) return '~';
   return path.length > 1 ? path.replace(/\/+$/, '') : path;
 }
 

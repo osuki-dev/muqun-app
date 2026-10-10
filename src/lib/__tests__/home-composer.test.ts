@@ -251,7 +251,7 @@ describe('the folder segment', () => {
   test.each<[string, string | undefined, string | undefined]>([
     ['/Users/me/Work/app', '/Users/me/Work/app', 'app'],
     ['~/Work/app/', '~/Work/app', 'app'],
-    ['~', undefined, undefined],
+    ['~/', '~', '~'],
     ['  ', undefined, undefined],
     ['/', '/', '/'],
   ])('%p', (picked, stored, label) => {
