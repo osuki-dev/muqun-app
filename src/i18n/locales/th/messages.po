@@ -258,6 +258,14 @@ msgstr "ตามหลัง {behind}"
 msgid "{commandName} · sending to"
 msgstr "{commandName} · กำลังส่งไปยัง"
 
+#: src/components/task-row.tsx
+msgid "{computer} never confirmed this task"
+msgstr "{computer} ไม่เคยยืนยันงานนี้"
+
+#: src/components/task-row.tsx
+msgid "{computer} no longer has this task"
+msgstr "{computer} ไม่มีงานนี้แล้ว"
+
 #: src/components/agent-tool-card.tsx
 msgid "{count, plural, one {# result} other {# results}}"
 msgstr "{count, plural, other {# รายการ}}"
@@ -1791,6 +1799,10 @@ msgstr "ดาวน์โหลดไม่สำเร็จ ตรวจส�
 msgid "Could not enable App Lock"
 msgstr "เปิดใช้การล็อกแอปไม่ได้"
 
+#: src/components/task-row.tsx
+msgid "Could not follow this task on {computer}"
+msgstr "ติดตามงานนี้บน {computer} ไม่ได้"
+
 #: src/components/ssh-host-form.tsx
 msgid "Could not generate a key"
 msgstr "สร้างคีย์ไม่ได้"
@@ -1904,6 +1916,10 @@ msgstr "ไม่สามารถเล่นไฟล์เสียงนี
 #: src/components/video-asset-preview.tsx
 msgid "Could not play this video file."
 msgstr "ไม่สามารถเล่นไฟล์วิดีโอนี้ได้"
+
+#: src/components/task-row.tsx
+msgid "Could not reach {computer}"
+msgstr "ติดต่อ {computer} ไม่ได้"
 
 #: src/app/explore.tsx
 msgid "Could not reach that address. Check it and make sure the Gateway is running."
@@ -3713,6 +3729,10 @@ msgstr "ยังไม่มี Gateway ใช่ไหม?"
 #: src/components/tool-call-code-rows.tsx
 msgid "No input"
 msgstr "ไม่มีอินพุต"
+
+#: src/components/task-row.tsx
+msgid "No longer linked with {computer}"
+msgstr "ไม่ได้เชื่อมโยงกับ {computer} แล้ว"
 
 #: src/app/commands.tsx
 msgid "No matching commands. Try another word."

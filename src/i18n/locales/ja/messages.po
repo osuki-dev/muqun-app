@@ -258,6 +258,14 @@ msgstr "{behind} 件遅れ"
 msgid "{commandName} · sending to"
 msgstr "{commandName} · 送信先"
 
+#: src/components/task-row.tsx
+msgid "{computer} never confirmed this task"
+msgstr "{computer} はこのタスクを確認しませんでした"
+
+#: src/components/task-row.tsx
+msgid "{computer} no longer has this task"
+msgstr "{computer} にこのタスクはもうありません"
+
 #: src/components/agent-tool-card.tsx
 msgid "{count, plural, one {# result} other {# results}}"
 msgstr "{count, plural, other {# 件の結果}}"
@@ -1791,6 +1799,10 @@ msgstr "ダウンロードできませんでした。リンクと接続を確認
 msgid "Could not enable App Lock"
 msgstr "アプリロックを有効にできませんでした"
 
+#: src/components/task-row.tsx
+msgid "Could not follow this task on {computer}"
+msgstr "{computer} でこのタスクを追跡できませんでした"
+
 #: src/components/ssh-host-form.tsx
 msgid "Could not generate a key"
 msgstr "鍵を生成できませんでした"
@@ -1904,6 +1916,10 @@ msgstr "この音声ファイルを再生できませんでした"
 #: src/components/video-asset-preview.tsx
 msgid "Could not play this video file."
 msgstr "この動画ファイルを再生できません"
+
+#: src/components/task-row.tsx
+msgid "Could not reach {computer}"
+msgstr "{computer} に接続できませんでした"
 
 #: src/app/explore.tsx
 msgid "Could not reach that address. Check it and make sure the Gateway is running."
@@ -3713,6 +3729,10 @@ msgstr "Gateway がまだありませんか？"
 #: src/components/tool-call-code-rows.tsx
 msgid "No input"
 msgstr "入力なし"
+
+#: src/components/task-row.tsx
+msgid "No longer linked with {computer}"
+msgstr "{computer} とのリンクは解除されました"
 
 #: src/app/commands.tsx
 msgid "No matching commands. Try another word."

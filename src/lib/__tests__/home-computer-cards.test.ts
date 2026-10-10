@@ -489,6 +489,25 @@ describe('taskRowVisual: the rules the state table carries', () => {
       { line: { kind: 'unreachable' }, actions: ['open', 'cancel', 'markDone'] },
     ],
     [
+      'a failed mirror is worded from its reason, never its summary',
+      task('t', 'failed', 1, {
+        binding: { kind: 'peer', peerId: 'srv-mini', remoteTaskId: 'r' },
+        summary: 'peer_unlinked: mini was unlinked',
+        reason: 'peer_unlinked',
+      }),
+      plain,
+      { line: { kind: 'mirrorFailed', reason: 'peer_unlinked' } },
+    ],
+    [
+      'a refused create has no reason: its summary is the prose',
+      task('t', 'failed', 1, {
+        binding: { kind: 'peer', peerId: 'srv-mini', remoteTaskId: '' },
+        summary: 'mini does not take work from other computers',
+      }),
+      plain,
+      { line: { kind: 'error', text: 'mini does not take work from other computers' } },
+    ],
+    [
       "a reachable mirror shows its computer's own progress",
       task('t', 'working', 1, {
         binding: { kind: 'peer', peerId: 'srv-mini', remoteTaskId: 'r' },

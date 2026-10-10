@@ -258,6 +258,14 @@ msgstr "{behind}개 뒤처짐"
 msgid "{commandName} · sending to"
 msgstr "{commandName} · 보내는 대상"
 
+#: src/components/task-row.tsx
+msgid "{computer} never confirmed this task"
+msgstr "{computer}에서 이 작업을 확인하지 않았습니다"
+
+#: src/components/task-row.tsx
+msgid "{computer} no longer has this task"
+msgstr "{computer}에 이 작업이 더 이상 없습니다"
+
 #: src/components/agent-tool-card.tsx
 msgid "{count, plural, one {# result} other {# results}}"
 msgstr "{count, plural, other {결과 #개}}"
@@ -1791,6 +1799,10 @@ msgstr "다운로드하지 못했습니다. 링크와 연결을 확인하세요"
 msgid "Could not enable App Lock"
 msgstr "앱 잠금을 켜지 못했습니다"
 
+#: src/components/task-row.tsx
+msgid "Could not follow this task on {computer}"
+msgstr "{computer}에서 이 작업을 추적할 수 없습니다"
+
 #: src/components/ssh-host-form.tsx
 msgid "Could not generate a key"
 msgstr "키를 생성할 수 없습니다"
@@ -1904,6 +1916,10 @@ msgstr "이 오디오 파일을 재생할 수 없습니다"
 #: src/components/video-asset-preview.tsx
 msgid "Could not play this video file."
 msgstr "이 동영상 파일을 재생할 수 없습니다"
+
+#: src/components/task-row.tsx
+msgid "Could not reach {computer}"
+msgstr "{computer}에 연결할 수 없습니다"
 
 #: src/app/explore.tsx
 msgid "Could not reach that address. Check it and make sure the Gateway is running."
@@ -3713,6 +3729,10 @@ msgstr "아직 Gateway가 없나요?"
 #: src/components/tool-call-code-rows.tsx
 msgid "No input"
 msgstr "입력 없음"
+
+#: src/components/task-row.tsx
+msgid "No longer linked with {computer}"
+msgstr "더 이상 {computer}와(과) 연결되어 있지 않습니다"
 
 #: src/app/commands.tsx
 msgid "No matching commands. Try another word."

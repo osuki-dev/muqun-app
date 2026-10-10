@@ -581,7 +581,9 @@ export type TaskRowLine =
   | { kind: 'error'; text: string }
   | { kind: 'state' }
   /** An open mirror whose computer has gone quiet (§10.12). */
-  | { kind: 'unreachable'; lastSeenMs?: number };
+  | { kind: 'unreachable'; lastSeenMs?: number }
+  /** A failed mirror, worded from the gateway's `reason` code, never its text. */
+  | { kind: 'mirrorFailed'; reason: string };
 
 /**
  * The glyph a row's state is drawn with: `TaskStateGlyph` in
@@ -628,12 +630,16 @@ export function taskRowVisual(
   opts: { canComplete: boolean; acknowledged: boolean }
 ): TaskRowVisual {
   const visual = taskStateVisual(task, opts);
+  if (task.state === 'sent' || task.binding.kind !== 'peer') return visual;
+  // A failed mirror with a reason says it in the app's words; without one
+  // (the other computer refused) its summary is already plain prose.
+  if (task.state === 'failed' && task.reason) {
+    return { ...visual, line: { kind: 'mirrorFailed', reason: task.reason } };
+  }
   // An open mirror whose computer is quiet says so in place of its line; the
   // state's icon, tone, clock and actions stand.
   if (
-    task.state === 'sent' ||
-    task.binding.kind !== 'peer' ||
-    task.peerReachable !== false ||
+    (task.peerReachable !== false && task.reason !== 'peer_unreachable') ||
     isTerminalTaskState(task.state)
   ) {
     return visual;

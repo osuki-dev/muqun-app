@@ -258,6 +258,14 @@ msgstr "落后 {behind}"
 msgid "{commandName} · sending to"
 msgstr "{commandName}·发送给"
 
+#: src/components/task-row.tsx
+msgid "{computer} never confirmed this task"
+msgstr "{computer} 始终未确认此任务"
+
+#: src/components/task-row.tsx
+msgid "{computer} no longer has this task"
+msgstr "{computer} 上已没有此任务"
+
 #: src/components/agent-tool-card.tsx
 msgid "{count, plural, one {# result} other {# results}}"
 msgstr "{count, plural, other {# 个结果}}"
@@ -1791,6 +1799,10 @@ msgstr "无法下载。请检查链接和网络连接"
 msgid "Could not enable App Lock"
 msgstr "无法启用应用锁"
 
+#: src/components/task-row.tsx
+msgid "Could not follow this task on {computer}"
+msgstr "无法在 {computer} 上跟进此任务"
+
 #: src/components/ssh-host-form.tsx
 msgid "Could not generate a key"
 msgstr "无法生成密钥"
@@ -1904,6 +1916,10 @@ msgstr "无法播放此音频文件"
 #: src/components/video-asset-preview.tsx
 msgid "Could not play this video file."
 msgstr "无法播放此视频文件"
+
+#: src/components/task-row.tsx
+msgid "Could not reach {computer}"
+msgstr "无法连接 {computer}"
 
 #: src/app/explore.tsx
 msgid "Could not reach that address. Check it and make sure the Gateway is running."
@@ -3713,6 +3729,10 @@ msgstr "还没有 Gateway？"
 #: src/components/tool-call-code-rows.tsx
 msgid "No input"
 msgstr "无输入"
+
+#: src/components/task-row.tsx
+msgid "No longer linked with {computer}"
+msgstr "已不再与 {computer} 关联"
 
 #: src/app/commands.tsx
 msgid "No matching commands. Try another word."

@@ -177,6 +177,25 @@ function WhereMark({
   return <SquareTerminal size={12} color={theme.colors.textMuted} strokeWidth={2} />;
 }
 
+/** A failed mirror's reason code in the reader's words; an unknown code is the general line. */
+function useMirrorFailureLine() {
+  const { t } = useLingui();
+  return (reason: string, computer: string): string => {
+    switch (reason) {
+      case 'peer_unlinked':
+        return t`No longer linked with ${computer}`;
+      case 'peer_lost_task':
+        return t`${computer} no longer has this task`;
+      case 'peer_not_confirmed':
+        return t`${computer} never confirmed this task`;
+      case 'peer_unreachable':
+        return t`Could not reach ${computer}`;
+      default:
+        return t`Could not follow this task on ${computer}`;
+    }
+  };
+}
+
 /**
  * A row's second line in words and a theme tone, from the one table: what the
  * computer is doing with the goal now. `computer` names it for a goal just
@@ -188,6 +207,8 @@ export function useTaskRowLine(discovery: MirroredServerDiscovery | undefined) {
   const theme = useThemeTokens();
   const whereName = useTaskWhereName(discovery);
   const age = useTaskAge();
+  const peerName = usePeerName();
+  const mirrorFailureLine = useMirrorFailureLine();
   return (
     task: TaskView | null,
     visual: TaskRowVisual,
@@ -238,6 +259,10 @@ export function useTaskRowLine(discovery: MirroredServerDiscovery | undefined) {
           text: ago ? t`Unreachable · last seen ${ago}` : t`Unreachable`,
           color: theme.colors.warning,
         };
+      }
+      case 'mirrorFailed': {
+        const there = task?.binding.kind === 'peer' ? peerName(task.binding) : '';
+        return { text: mirrorFailureLine(line.reason, there), color: theme.colors.danger };
       }
     }
   };
