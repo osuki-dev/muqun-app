@@ -6131,6 +6131,10 @@ msgstr "บริการเสียงส่งข้อความถอด
 msgid "The SSH tunnel carries the Gateway's port and no other, so the simulator and the browser cannot be reached from here. Connect over the local network or Tailscale."
 msgstr "อุโมงค์ SSH ส่งผ่านเฉพาะพอร์ตของ Gateway จึงเข้าถึงเครื่องจำลองและเบราว์เซอร์จากที่นี่ไม่ได้ โปรดเชื่อมต่อผ่านเครือข่ายภายในหรือ Tailscale"
 
+#: src/components/guide-command.tsx
+msgid "The terminal opened, but the command could not be typed."
+msgstr "เปิดเทอร์มินัลแล้ว แต่พิมพ์คำสั่งไม่ได้"
+
 #: src/components/session-map.tsx
 msgid "The terminal request may have succeeded. Refresh the list and check it before trying again."
 msgstr "คำขอสร้างเทอร์มินัลอาจสำเร็จแล้ว โปรดรีเฟรชและตรวจสอบรายการก่อนลองอีกครั้ง"

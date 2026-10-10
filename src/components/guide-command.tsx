@@ -30,6 +30,7 @@ import {
 import { useConnectionStatuses } from '@/hooks/use-home-reachability';
 import { describeGatewayFailure } from '@/lib/network-error';
 import { resolveSessionId, sessionChoices } from '@/lib/session-switcher';
+import { useActiveConnection } from '@/stores/active-connection';
 import { useAgents } from '@/stores/agents';
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';
 import { usePanelPickerStore } from '@/stores/panel-picker';
@@ -70,7 +71,10 @@ export function useGuideCommandRuns(serverId: string | undefined, terminalDown =
     serverId ? state.records.some((record) => record.serverId === serverId) : false
   );
   const ids = useMemo(() => (serverId ? [serverId] : []), [serverId]);
-  const status = useConnectionStatuses(ids, selectedId)[serverId ?? ''] ?? 'unknown';
+  // On the Pad the workspace holds the connection, as it does for Home.
+  const activeConnection = useActiveConnection((state) => state.connection);
+  const status =
+    useConnectionStatuses(ids, selectedId, activeConnection)[serverId ?? ''] ?? 'unknown';
   const terminalPlane = useAgents((state) =>
     serverId ? state.index.servers[serverId]?.terminal : undefined
   );
@@ -180,6 +184,11 @@ export function GuideCommand({
     // Errors the reader reads are worded here, never a thrown sentence.
     const unavailable = t`Could not open a terminal on this computer.`;
     const noSession = t`No terminal session is available on this computer.`;
+    const notTyped = t`The terminal opened, but the command could not be typed.`;
+    const fail = (message: string) => {
+      void feedback('warning');
+      if (mounted.current) setError(message);
+    };
     void settleAfter(
       () =>
         recoverWith(
@@ -188,13 +197,13 @@ export function GuideCommand({
             // session (the one last used there, else the first), a new pane.
             if (useGatewayConnectionStore.getState().record?.serverId !== serverId) {
               if (!(await selectRecord(serverId))) {
-                if (mounted.current) setError(unavailable);
+                fail(unavailable);
                 return;
               }
             }
             const choices = sessionChoices((await loadRecordSessions(computer)).sessions);
             if (choices.length === 0) {
-              if (mounted.current) setError(noSession);
+              fail(noSession);
               return;
             }
             const sessionId = resolveSessionId(
@@ -203,7 +212,7 @@ export function GuideCommand({
             );
             const created = await createWorkspace(sessionId, { focus: false });
             if (!created.paneId) {
-              if (mounted.current) setError(unavailable);
+              fail(unavailable);
               return;
             }
             // The pane exists: whatever happens while typing, the reader is
@@ -223,17 +232,13 @@ export function GuideCommand({
                 }
                 void feedback('success');
               },
-              () => {
-                void feedback('warning');
-                if (mounted.current) setError(unavailable);
-              }
+              // What failed is the typing, not the terminal: say so, with
+              // the gateway's own reason.
+              (failure) => fail(describeGatewayFailure(failure, notTyped).message)
             );
             openPane(sessionId, created.paneId);
           },
-          (failure) => {
-            void feedback('warning');
-            if (mounted.current) setError(describeGatewayFailure(failure, unavailable).message);
-          }
+          (failure) => fail(describeGatewayFailure(failure, unavailable).message)
         ),
       () => {
         if (mounted.current) setRunning(false);

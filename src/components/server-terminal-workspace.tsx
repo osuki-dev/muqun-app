@@ -16,6 +16,7 @@ import {
   useRouter,
 } from 'expo-router';
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';
+import { useActiveConnection } from '@/stores/active-connection';
 import { noteGatewayGeneration, onGatewayRestart } from '@/stores/gateway-connection-generation';
 import { useScreenVisible } from '@/hooks/use-screen-visible';
 import { DeliveryOwnership, DeliverySelection } from '@/lib/bound-delivery';
@@ -4252,6 +4253,13 @@ export function ServerTerminalWorkspace({
   // The gateway's phase for the status lights: a backend that is down is not
   // a gateway that is down. See `gatewayConnectionPhase`.
   const gatewayPhase = gatewayConnectionPhase(connection.phase, connection.backendUnavailable);
+  // Published for the guides this workspace presents (their Run decision).
+  useEffect(() => {
+    useActiveConnection
+      .getState()
+      .set(selectedServer && serverId ? { serverId, phase: gatewayPhase } : undefined);
+  }, [selectedServer, serverId, gatewayPhase]);
+  useEffect(() => () => useActiveConnection.getState().set(undefined), []);
 
   const railReachabilityByServer = useMemo<Record<string, ServerReachability>>(
     () =>

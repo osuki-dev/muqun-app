@@ -6131,6 +6131,10 @@ msgstr "Le service vocal a renvoyé une transcription non valide"
 msgid "The SSH tunnel carries the Gateway's port and no other, so the simulator and the browser cannot be reached from here. Connect over the local network or Tailscale."
 msgstr "Le tunnel SSH transporte le port de la Gateway et aucun autre : depuis ici, le simulateur et le navigateur sont hors d’atteinte. Connectez-vous par le réseau local ou Tailscale"
 
+#: src/components/guide-command.tsx
+msgid "The terminal opened, but the command could not be typed."
+msgstr "Le terminal s’est ouvert, mais la commande n’a pas pu être saisie"
+
 #: src/components/session-map.tsx
 msgid "The terminal request may have succeeded. Refresh the list and check it before trying again."
 msgstr "La demande de terminal a peut-être abouti. Actualisez la liste et vérifiez-la avant de réessayer"

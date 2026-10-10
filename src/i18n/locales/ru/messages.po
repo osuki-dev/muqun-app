@@ -6131,6 +6131,10 @@ msgstr "Сервис распознавания вернул неверную р
 msgid "The SSH tunnel carries the Gateway's port and no other, so the simulator and the browser cannot be reached from here. Connect over the local network or Tailscale."
 msgstr "SSH-туннель переносит только порт Gateway и никакой другой, поэтому симулятор и браузер отсюда недоступны. Подключитесь через локальную сеть или Tailscale"
 
+#: src/components/guide-command.tsx
+msgid "The terminal opened, but the command could not be typed."
+msgstr "Терминал открылся, но команду не удалось ввести"
+
 #: src/components/session-map.tsx
 msgid "The terminal request may have succeeded. Refresh the list and check it before trying again."
 msgstr "Запрос на создание терминала мог выполниться. Обновите и проверьте список перед повторной попыткой"
