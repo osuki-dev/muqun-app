@@ -415,6 +415,20 @@ export async function unlinkBeforeUnpair(leaving: GatewayRecord): Promise<void> 
         );
         if (!done) stillListedBy.push(peer.serverId);
       }
+      // And the other computers' logins into it (a link it no longer lists
+      // can still have left one), with its own token while it lasts.
+      const listed = await fetchPairedGateways(endpoint);
+      const logins = pairingsAnswer(
+        listed,
+        listed === 'no-route' ? await fetchCapabilities(endpoint) : null
+      );
+      for (const login of (logins ?? []).filter((entry) => otherIds.has(entry.serverId))) {
+        const revoked = await revokePairing(endpoint, login.deviceId).then(
+          () => true,
+          () => false
+        );
+        if (!revoked) stillListedBy.push(login.serverId);
+      }
     } else {
       // Not answering: what it listed when it last did is what it may still list.
       stillListedBy =
