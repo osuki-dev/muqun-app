@@ -136,6 +136,7 @@ import { GatewayStorageError } from '@/components/gateway-storage-error';
 import { useServerAgents } from '@/stores/server-agents';
 import { useHomeRecentsStore } from '@/stores/home-recents';
 import { useHomeAttention } from '@/stores/home-attention';
+import { dismissTaskNotices } from '@/stores/in-app-notifications';
 import { useServerChannels } from '@/stores/server-channels';
 import { serverPrewarmGate, useServerReachability } from '@/stores/server-reachability';
 import { useServerSession } from '@/stores/server-session';
@@ -1112,7 +1113,11 @@ export function HomeOverview({
                     }}
                     // A request is answered where the task runs: its session
                     // or its pane, on its own computer.
-                    onOpenTask={({ serverId, task }) => openTaskWork(commands, serverId, task)}
+                    onOpenTask={({ serverId, task }) => {
+                      dismissTaskNotices(task);
+                      dismissTaskNotices(task);
+                      openTaskWork(commands, serverId, task);
+                    }}
                   />
                 ) : undefined
               }
@@ -1135,11 +1140,9 @@ export function HomeOverview({
                         });
                         return;
                       }
+                      dismissTaskNotices(task);
                       openTaskWork(commands, serverId, task);
                     }}
-                    onOpenTasks={(serverId) =>
-                      router.push({ pathname: '/server-tasks', params: { serverId } })
-                    }
                   />
                 ) : undefined
               }

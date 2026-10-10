@@ -573,10 +573,6 @@ msgstr "全部專案"
 msgid "All sessions"
 msgstr "全部工作階段"
 
-#: src/components/home-computer-cards.tsx
-msgid "All tasks"
-msgstr "所有任務"
-
 #: src/i18n/labels.ts
 msgid "Allow"
 msgstr "允許"
@@ -2104,6 +2100,7 @@ msgstr "降低{label}"
 msgid "default"
 msgstr "預設"
 
+#: src/components/home-composer-dock.tsx
 #: src/components/settings-terminal.tsx
 #: src/components/settings-theme-sheet.tsx
 msgid "Default"
@@ -2832,6 +2829,7 @@ msgstr "主畫面代理程式：{agentName}"
 msgid "Home effects · development only"
 msgstr "首頁效果 · 僅開發模式"
 
+#: src/app/agent-workspace.tsx
 #: src/components/home-composer-dock.tsx
 msgid "Home folder"
 msgstr "主資料夾"
@@ -3064,10 +3062,6 @@ msgstr "等它成為使用中的電腦後，就會列出它已配對的裝置"
 #: src/components/skia-terminal.tsx
 msgid "Jump to latest output"
 msgstr "跳到最新輸出"
-
-#: src/components/home-computer-cards.tsx
-msgid "Just finished"
-msgstr "剛完成"
 
 #: src/components/agent-sessions-sheet.tsx
 #: src/hooks/use-relative-time.ts
@@ -3890,10 +3884,6 @@ msgstr "沒有做任何變更"
 #: src/components/agent-context-sheet.tsx
 msgid "Nothing yet — an “Always allow” reply lands here, for this project."
 msgstr "還沒有內容——選擇「一律允許」後，規則會出現在這裡，屬於本專案"
-
-#: src/components/home-computer-cards.tsx
-msgid "Now"
-msgstr "正在進行"
 
 #: src/components/toggle.tsx
 msgid "Off"

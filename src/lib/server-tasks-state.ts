@@ -112,6 +112,14 @@ export function isTaskChannelLive(input: {
 
 export type ServerTasksState = {
   index: ServerTasksIndex;
+  /**
+   * Where each computer runs a task this device opens without a folder, as
+   * its gateway last said (`~` for home). Absent while it has not said, or
+   * cannot (a gateway before Task 20).
+   */
+  defaultCwd: Record<string, string>;
+  /** `null`: the gateway says it cannot name it now. */
+  setDefaultCwd: (serverId: string, cwd: string | null) => void;
   /** A list answer to a request sent at `requestedAtMs` (see `replaceTasks`). */
   replace: (serverId: string, tasks: readonly TaskView[], requestedAtMs: number) => void;
   upsert: (serverId: string, task: TaskView) => void;
@@ -122,6 +130,13 @@ export function createServerTasksState(
 ): StateCreator<ServerTasksState> {
   return (set) => ({
     index: {},
+    defaultCwd: {},
+    setDefaultCwd: (serverId, cwd) =>
+      set((state) => {
+        if ((state.defaultCwd[serverId] ?? null) === cwd) return state;
+        const { [serverId]: _previous, ...others } = state.defaultCwd;
+        return { defaultCwd: cwd ? { ...others, [serverId]: cwd } : others };
+      }),
     replace: (serverId, tasks, requestedAtMs) =>
       set((state) => ({
         index: replaceTasks(state.index, serverId, tasks, now(), requestedAtMs),

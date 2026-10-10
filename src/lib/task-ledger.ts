@@ -75,6 +75,12 @@ export interface TaskView {
   origin?: TaskOrigin;
   /** The title the requester gave. */
   label?: string;
+  /**
+   * One line naming the task, derived by the gateway: the label, else the
+   * agent session's own name, else the goal's first sentence. Absent before
+   * Gateway Task 20.
+   */
+  title?: string;
   /** The device that opened it, for `origin: device`. */
   requestedBy?: { id: string; name: string };
   children?: TaskChildren;
@@ -156,6 +162,7 @@ export function parseTaskView(value: unknown): TaskView | null {
   const parentTaskId = asString(rec.parent_task_id);
   const origin = parseOrigin(rec.origin);
   const label = asString(rec.label)?.trim();
+  const title = asString(rec.title)?.trim();
   const requestedBy = parseRequester(rec.requested_by);
   const children = parseChildren(rec.children);
   return {
@@ -171,6 +178,7 @@ export function parseTaskView(value: unknown): TaskView | null {
     ...(parentTaskId ? { parentTaskId } : {}),
     ...(origin ? { origin } : {}),
     ...(label ? { label } : {}),
+    ...(title ? { title } : {}),
     ...(requestedBy ? { requestedBy } : {}),
     ...(children ? { children } : {}),
   };
@@ -300,6 +308,27 @@ export async function fetchTaskList(opts?: {
   }
   const { readJson } = await import('./agent-session');
   return readJson<TaskView[] | null>(path, parseTaskList, null);
+}
+
+/**
+ * `GET /api/tasks/defaults`: the folder a task this device opens without a
+ * `cwd` runs in, for a gateway whose task socket is not available. `null`
+ * when the gateway cannot say -- an older one has no such route -- or the
+ * read failed.
+ */
+export async function fetchTaskDefaultCwd(endpoint?: TaskEndpoint): Promise<string | null> {
+  const parse = (value: unknown) => asString(asRecord(value)?.default_cwd) || null;
+  const path = '/api/tasks/defaults';
+  if (endpoint) {
+    try {
+      const response = await endpointRequest(endpoint, path, 'GET');
+      return response.ok ? parse(await response.json()) : null;
+    } catch {
+      return null;
+    }
+  }
+  const { readJson } = await import('./agent-session');
+  return readJson<string | null>(path, parse, null);
 }
 
 /**

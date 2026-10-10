@@ -13,6 +13,7 @@ import {
   noticeAutoDismissDelay,
   type InAppNotice,
   type NoticeQueue,
+  attributePush,
 } from '../in-app-notifications';
 
 const notice = (id: string): InAppNotice => ({
@@ -256,6 +257,27 @@ describe('push content conversion', () => {
     ]) {
       expect(noticeFromPush('external', { title: 'Event', data: { url } })?.route).toBeNull();
     }
+  });
+});
+
+describe('push attribution', () => {
+  const paired = [
+    { serverId: 'a', label: 'Alpha' },
+    { serverId: 'b', label: 'Beta' },
+  ];
+  const owner = (asid: string) => (asid === 'ses_b' ? 'b' : undefined);
+  test.each([
+    ['a paired computer about its own session', 'a', 'ses_a', 'Agent blocked · Alpha', 'a'],
+    ['a session the other computer ledger bound', 'a', 'ses_b', 'Agent blocked · Beta', 'b'],
+    ['a computer no longer paired', 'gone', 'ses_b', null, null],
+  ])('%s', (_name, serverId, asid, title, routed) => {
+    const answer = attributePush(
+      { title: 'Agent blocked · Alpha', data: { server_id: serverId, asid } },
+      paired,
+      owner
+    );
+    expect(answer?.title ?? null).toBe(title);
+    expect(answer?.data?.server_id ?? null).toBe(routed);
   });
 });
 

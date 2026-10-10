@@ -184,6 +184,14 @@ describe('frames', () => {
       t: 'resync',
       asid: 'ses_1',
     });
+    expect(parseAgentSocketFrame('{"t":"defaults","default_cwd":"~"}')).toEqual({
+      t: 'defaults',
+      defaultCwd: '~',
+    });
+    expect(parseAgentSocketFrame('{"t":"defaults","default_cwd":null}')).toEqual({
+      t: 'defaults',
+      defaultCwd: null,
+    });
     expect(parseAgentSocketFrame('{"t":"pong"}')).toEqual({ t: 'pong' });
     expect(parseAgentSocketFrame('{"t":"error","code":"superseded"}')).toEqual({
       t: 'error',

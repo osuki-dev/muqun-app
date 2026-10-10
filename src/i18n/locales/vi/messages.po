@@ -573,10 +573,6 @@ msgstr "Mọi dự án"
 msgid "All sessions"
 msgstr "Tất cả các phiên"
 
-#: src/components/home-computer-cards.tsx
-msgid "All tasks"
-msgstr "Tất cả tác vụ"
-
 #: src/i18n/labels.ts
 msgid "Allow"
 msgstr "Cho phép"
@@ -2104,6 +2100,7 @@ msgstr "Giảm {label}"
 msgid "default"
 msgstr "mặc định"
 
+#: src/components/home-composer-dock.tsx
 #: src/components/settings-terminal.tsx
 #: src/components/settings-theme-sheet.tsx
 msgid "Default"
@@ -2832,6 +2829,7 @@ msgstr "Tác tử Trang chủ: {agentName}"
 msgid "Home effects · development only"
 msgstr "Hiệu ứng trang chủ · chỉ dành cho phát triển"
 
+#: src/app/agent-workspace.tsx
 #: src/components/home-composer-dock.tsx
 msgid "Home folder"
 msgstr "Thư mục nhà"
@@ -3064,10 +3062,6 @@ msgstr "Các thiết bị đã ghép nối của nó sẽ được liệt kê kh
 #: src/components/skia-terminal.tsx
 msgid "Jump to latest output"
 msgstr "Nhảy đến đầu ra mới nhất"
-
-#: src/components/home-computer-cards.tsx
-msgid "Just finished"
-msgstr "Vừa xong"
 
 #: src/components/agent-sessions-sheet.tsx
 #: src/hooks/use-relative-time.ts
@@ -3890,10 +3884,6 @@ msgstr "Không có gì thay đổi"
 #: src/components/agent-context-sheet.tsx
 msgid "Nothing yet — an “Always allow” reply lands here, for this project."
 msgstr "Chưa có gì — câu trả lời “Luôn cho phép” sẽ nằm ở đây, cho dự án này"
-
-#: src/components/home-computer-cards.tsx
-msgid "Now"
-msgstr "Hiện tại"
 
 #: src/components/toggle.tsx
 msgid "Off"

@@ -1,8 +1,7 @@
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens } from '@osuki-dev/ui';
-import { ChevronRight, Server } from 'lucide-react-native';
-import { Fragment } from 'react';
+import { Server } from 'lucide-react-native';
 import { StyleSheet, View } from 'react-native';
 import Animated, { LayoutAnimationConfig } from 'react-native-reanimated';
 import { useShallow } from 'zustand/react/shallow';
@@ -12,7 +11,6 @@ import { PressableScale } from '@/components/pressable-scale';
 import { StatusDot } from '@/components/status-dot';
 import { SentTaskRow, TaskRow } from '@/components/task-row';
 import { Text } from '@/components/text';
-import { ThemeIcon } from '@/components/theme-icon';
 import { useFrozenValue } from '@/hooks/use-frozen-value';
 import { useServerTasks } from '@/hooks/use-server-tasks';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
@@ -131,8 +129,7 @@ export function useHasComputerCards({
  * The cards: what each computer with work is doing now, what it just
  * finished, and whether it needs the reader. Sorted needs-you → working →
  * paused → idle. The header makes the computer the dock's target; a task row
- * opens the session or pane it runs in; the footer opens the computer's task
- * list. A card fades and rises in when its computer starts having work and
+ * opens the session or pane it runs in. A card fades and rises in when its computer starts having work and
  * fades out when it stops; the others move with the shared layout transition.
  * Entering animations are skipped when the list itself mounts (a return from
  * a sub-screen), so only real arrivals move. A re-sort waits while a finger is
@@ -146,7 +143,6 @@ export function HomeComputerCards({
   gridWidth,
   onSelectServer,
   onOpenTask,
-  onOpenTasks,
 }: {
   servers: readonly GatewayRecord[];
   activeConnection?: ActiveServerConnection;
@@ -161,8 +157,6 @@ export function HomeComputerCards({
   gridWidth?: number;
   onSelectServer: (serverId: string) => void;
   onOpenTask: (target: CardTaskTarget) => void;
-  /** The computer's whole task list. */
-  onOpenTasks: (serverId: string) => void;
 }) {
   const serverIds = servers.map((server) => server.serverId);
   const entries = useServerTasksStore(
@@ -216,7 +210,6 @@ export function HomeComputerCards({
                   onOpenTask={(task, tree) =>
                     onOpenTask({ serverId: card.serverId, task, ...(tree ? { tree } : {}) })
                   }
-                  onOpenTasks={() => onOpenTasks(card.serverId)}
                 />
               </Animated.View>
             );
@@ -234,7 +227,6 @@ function ComputerCardView({
   nowMs,
   onSelect,
   onOpenTask,
-  onOpenTasks,
 }: {
   card: ComputerCard;
   server: GatewayRecord;
@@ -242,7 +234,6 @@ function ComputerCardView({
   nowMs: number;
   onSelect: () => void;
   onOpenTask: (task: TaskView, tree?: boolean) => void;
-  onOpenTasks: () => void;
 }) {
   const { t } = useLingui();
   const { _ } = useLinguiRuntime();
@@ -250,16 +241,18 @@ function ComputerCardView({
   const profile = useAppearanceProfile();
   const background = useSurfaceBackground();
   const discovery = useAgents((state) => state.index.servers[server.serverId]);
+  // A card says its computer's connection only when something is wrong with
+  // it; a reachable computer is just its name (§3a).
   const statusColor =
-    status === 'live'
-      ? theme.colors.success
-      : status === 'unauthorized'
-        ? theme.colors.warning
-        : theme.colors.textSubtle;
-  const footer = t`All tasks`;
+    status === 'unauthorized'
+      ? theme.colors.warning
+      : status === 'offline'
+        ? theme.colors.textSubtle
+        : null;
   // Sent goals sit among the open work by the same urgency (after working,
-  // before paused). Now and Just finished share one parent, so a row that
-  // finishes is the same element moving down, not a new one.
+  // before paused), and finished rows under all of it, with no group headers:
+  // each row's icon and time say which it is. Open and finished rows share
+  // one parent, so a row that finishes is the same element moving down.
   const urgentNow = card.now.filter((row) => taskRowRank(row.task.state) < 2);
   const restNow = card.now.filter((row) => taskRowRank(row.task.state) >= 2);
   const nowRow = (row: ComputerCard['now'][number]) => (
@@ -274,7 +267,6 @@ function ComputerCardView({
       onOpenTree={(task) => onOpenTask(task, true)}
     />
   );
-  const hasNow = card.now.length > 0 || card.pending.length > 0;
   return (
     <View
       testID={`home-card-${server.serverId}`}
@@ -308,28 +300,19 @@ function ComputerCardView({
           <Text variant="bodySmall" weight="semibold" numberOfLines={1}>
             {server.label}
           </Text>
-          <View style={styles.statusLine}>
-            <StatusDot
-              color={statusColor}
-              filled={status !== 'unknown' && status !== 'reconnecting'}
-              // No ripple: up to four cards rippling forever keeps Home's UI
-              // thread from ever going idle (uiautomator could not dump it)
-              // and costs battery on the screen people leave open.
-              pulse={false}
-            />
-            <Text variant="caption" color={statusColor} numberOfLines={1}>
-              {_(connectionStatusLabel[status])}
-            </Text>
-          </View>
+          {statusColor ? (
+            <View style={styles.statusLine}>
+              {/* No ripple: up to four cards rippling forever keeps Home's UI thread busy. */}
+              <StatusDot color={statusColor} filled pulse={false} />
+              <Text variant="caption" color={statusColor} numberOfLines={1}>
+                {_(connectionStatusLabel[status])}
+              </Text>
+            </View>
+          ) : null}
         </View>
       </PressableScale>
 
       <View style={styles.block}>
-        {hasNow ? (
-          <Text key="now" variant="caption" weight="semibold" color={theme.colors.textSubtle}>
-            {t`Now`}
-          </Text>
-        ) : null}
         {urgentNow.map(nowRow)}
         {card.pending.map((item) => (
           <SentTaskRow key={item.id} goal={item.goal} computer={server.label} />
@@ -339,13 +322,6 @@ function ComputerCardView({
           <Text key="more" variant="caption" color={theme.colors.textMuted}>
             {t`+${card.nowTotal - card.now.length} more`}
           </Text>
-        ) : null}
-        {card.finished.length > 0 ? (
-          <Fragment key="finished">
-            <Text variant="caption" weight="semibold" color={theme.colors.textSubtle}>
-              {t`Just finished`}
-            </Text>
-          </Fragment>
         ) : null}
         {card.finished.map((task) => (
           <TaskRow
@@ -359,27 +335,6 @@ function ComputerCardView({
           />
         ))}
       </View>
-
-      <PressableScale
-        testID={`home-card-footer-${server.serverId}`}
-        accessibilityRole="button"
-        accessibilityLabel={`${server.label}, ${footer}`}
-        onPress={onOpenTasks}
-        style={[styles.footer, { borderTopColor: theme.colors.border }]}>
-        <Text
-          variant="caption"
-          color={theme.colors.textMuted}
-          numberOfLines={1}
-          style={styles.grow}>
-          {footer}
-        </Text>
-        <ThemeIcon
-          name="home.arrow"
-          fallback={ChevronRight}
-          size={14}
-          color={theme.colors.primary}
-        />
-      </PressableScale>
     </View>
   );
 }
@@ -414,13 +369,5 @@ const styles = StyleSheet.create({
   needsYou: { position: 'absolute', left: 0, top: 0, bottom: 0, width: 4 },
   statusLine: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   block: { gap: 2, paddingBottom: 8 },
-  grow: { flex: 1, minWidth: 0 },
   fill: { flexGrow: 1 },
-  footer: {
-    minHeight: 40,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    borderTopWidth: StyleSheet.hairlineWidth,
-  },
 });

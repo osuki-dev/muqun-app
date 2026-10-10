@@ -10,6 +10,7 @@ import { applyListAnswer, isTaskChannelLive } from '@/lib/server-tasks-state';
 import {
   cancelTask,
   completeTask,
+  fetchTaskDefaultCwd,
   fetchTaskList,
   TASK_WS_SUBSCRIPTION_CAPABILITY,
   type TaskEndpoint,
@@ -17,9 +18,24 @@ import {
 } from '@/lib/task-ledger';
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';
 import { useServerCapabilities } from '@/stores/server-capabilities';
+import { useInAppNotifications } from '@/stores/in-app-notifications';
 import { useServerTasksStore } from '@/stores/server-tasks';
 
 const NO_TASKS: TaskView[] = [];
+
+/**
+ * A session's question notice ("Agent blocked") stands while its task waits
+ * on the reader; once the task moved on (answered, working again, finished)
+ * the notice is stale and goes.
+ */
+function settleQuestionNotices(tasks: readonly TaskView[]): void {
+  const notices = useInAppNotifications.getState();
+  for (const task of tasks) {
+    if (task.binding.kind === 'agent_session' && task.state !== 'waiting') {
+      notices.dismissQuestions(task.binding.asid);
+    }
+  }
+}
 
 /** How a computer's ledger is reached from here, if at all. */
 export function taskRouteFor(
@@ -67,6 +83,7 @@ export function useServerTasks(serverId: string | null): ServerTasks {
   );
   const replace = useServerTasksStore((state) => state.replace);
   const upsert = useServerTasksStore((state) => state.upsert);
+  const setDefaultCwd = useServerTasksStore((state) => state.setDefaultCwd);
   const wsEvents = useServerCapabilities((state) =>
     serverId ? state.byServer[serverId]?.includes(WS_EVENTS_CAPABILITY) === true : false
   );
@@ -91,16 +108,23 @@ export function useServerTasks(serverId: string | null): ServerTasks {
     const request = ++requestRef.current;
     const requestedAtMs = Date.now();
     setLoading(true);
-    const query = {
-      limit: 100,
-      ...(route.kind === 'endpoint' ? { endpoint: route.endpoint } : {}),
-    };
+    const endpoint = route.kind === 'endpoint' ? route.endpoint : undefined;
+    const query = { limit: 100, ...(endpoint ? { endpoint } : {}) };
+    // The default folder too: only a task-only socket hears `defaults`
+    // frames, and the selected computer's socket may carry its sessions as
+    // well. A gateway that cannot say leaves what was last said.
+    void fetchTaskDefaultCwd(endpoint).then((cwd) => {
+      if (cwd && request === requestRef.current) setDefaultCwd(serverId, cwd);
+    });
     try {
       const list = await fetchTaskList(query);
       if (request !== requestRef.current) return;
       // A failed read keeps the list already held and says so.
       applyListAnswer(list, {
-        replace: (tasks) => replace(serverId, tasks, requestedAtMs),
+        replace: (tasks) => {
+          replace(serverId, tasks, requestedAtMs);
+          settleQuestionNotices(tasks);
+        },
         ok: () => setError(null),
         fail: () => setError('unavailable'),
       });
@@ -109,7 +133,7 @@ export function useServerTasks(serverId: string | null): ServerTasks {
       setError(failure instanceof Error ? failure.message : String(failure));
     }
     if (request === requestRef.current) setLoading(false);
-  }, [serverId, replace]);
+  }, [serverId, replace, setDefaultCwd]);
 
   useEffect(() => {
     void refresh();
@@ -134,16 +158,20 @@ export function useServerTasks(serverId: string | null): ServerTasks {
     if (!socket || !serverId) return;
     return socket.watchTasks(
       {
-        onTaskUpdated: (task) => upsert(serverId, task),
+        onTaskUpdated: (task) => {
+          upsert(serverId, task);
+          settleQuestionNotices([task]);
+        },
         // After every (re)connect: whatever changed while it was down.
         onSubscribed: () => void refresh(),
         // The gateway dropped frames for this socket; a task may have changed
         // in them, and the frame that said so is gone.
         onResync: () => void refresh(),
+        onDefaults: (cwd) => setDefaultCwd(serverId, cwd),
       },
       { tasksOnly }
     );
-  }, [socket, serverId, upsert, refresh, tasksOnly]);
+  }, [socket, serverId, upsert, refresh, tasksOnly, setDefaultCwd]);
 
   const subscribe = useCallback(
     (onChange: () => void) => {

@@ -5,6 +5,7 @@ import { ServerTasksSheet } from '@/components/server-tasks-sheet';
 import { useHomeCommands } from '@/hooks/use-home-commands';
 import { taskRouteFor, useServerTasks } from '@/hooks/use-server-tasks';
 import { openTaskWork } from '@/lib/home-computer-cards';
+import { dismissTaskNotices } from '@/stores/in-app-notifications';
 import { fetchTaskList } from '@/lib/task-ledger';
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';
 import { useServerTasksStore } from '@/stores/server-tasks';
@@ -59,6 +60,7 @@ export default function ServerTasksScreen() {
         // Every row opens something (its session, its pane, or its
         // computer), so the sheet always makes way for it.
         router.back();
+        dismissTaskNotices(task);
         openTaskWork(commands, serverId, task);
       }}
     />

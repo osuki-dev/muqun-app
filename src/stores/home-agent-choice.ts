@@ -3,7 +3,14 @@ import { create } from 'zustand';
 
 import type { AgentProfile } from '@/lib/agent-spawn';
 import { parseHomeAgentChoices } from '@/lib/home-agent-choice';
-import { homeFolderPick, parseHomeFolders } from '@/lib/home-composer';
+import type { ModelRef } from '@/lib/agent-session';
+import type { RememberedAgentChoice } from '@/lib/agent-session-defaults';
+import {
+  homeFolderPick,
+  homeModelChoiceKey,
+  parseHomeFolders,
+  parseHomeModelChoices,
+} from '@/lib/home-composer';
 
 type KeyValueStore = {
   getString: (key: string) => string | undefined;
@@ -13,6 +20,7 @@ type KeyValueStore = {
 const STORE_ID = 'muqun.home';
 const CHOICES_KEY = 'muqun.home.agent-choice.v1';
 const FOLDERS_KEY = 'muqun.home.folder.v1';
+const MODELS_KEY = 'muqun.home.model.v1';
 
 /**
  * MMKV, read synchronously so the dock's first frame already names the
@@ -54,13 +62,21 @@ type HomeAgentChoiceState = {
    * device's last one.
    */
   folderByServer: Record<string, string>;
+  /**
+   * The mode and model last picked on the dock, per computer and agent
+   * (`homeModelChoiceKey`). Absent: nothing picked, the agent's own default.
+   */
+  modelChoice: Record<string, RememberedAgentChoice>;
   choose: (serverId: string, key: string) => void;
+  chooseModel: (serverId: string, agentId: string | undefined, model: ModelRef) => void;
+  /** A mode that names its own model brings it: the model pick is dropped. */
+  chooseMode: (serverId: string, agentId: string | undefined, mode: string) => void;
   /** Set (or, with a blank answer, clear) a computer's folder from a picker answer. */
   chooseFolder: (serverId: string, directory: string) => void;
   recordTerminal: (serverId: string, profiles: AgentProfile[]) => void;
 };
 
-function load(key: string, parse: (value: string | undefined) => Record<string, string>) {
+function load<T>(key: string, parse: (value: string | undefined) => Record<string, T>) {
   try {
     return parse(store().getString(key));
   } catch {
@@ -68,7 +84,7 @@ function load(key: string, parse: (value: string | undefined) => Record<string, 
   }
 }
 
-function save(key: string, value: Record<string, string>) {
+function save(key: string, value: Record<string, unknown>) {
   try {
     store().set(key, JSON.stringify(value));
   } catch {
@@ -81,6 +97,7 @@ export const useHomeAgentChoice = create<HomeAgentChoiceState>((set, get) => ({
   byServer: load(CHOICES_KEY, parseHomeAgentChoices),
   terminalByServer: {},
   folderByServer: load(FOLDERS_KEY, parseHomeFolders),
+  modelChoice: load(MODELS_KEY, parseHomeModelChoices),
   choose(serverId, key) {
     const byServer = { ...get().byServer, [serverId]: key };
     set({ byServer });
@@ -92,6 +109,18 @@ export const useHomeAgentChoice = create<HomeAgentChoiceState>((set, get) => ({
     const folderByServer = folder ? { ...others, [serverId]: folder } : others;
     set({ folderByServer });
     save(FOLDERS_KEY, folderByServer);
+  },
+  chooseModel(serverId, agentId, model) {
+    const key = homeModelChoiceKey(serverId, agentId);
+    const current = get().modelChoice;
+    const modelChoice = { ...current, [key]: { ...current[key], model } };
+    set({ modelChoice });
+    save(MODELS_KEY, modelChoice);
+  },
+  chooseMode(serverId, agentId, mode) {
+    const modelChoice = { ...get().modelChoice, [homeModelChoiceKey(serverId, agentId)]: { mode } };
+    set({ modelChoice });
+    save(MODELS_KEY, modelChoice);
   },
   recordTerminal(serverId, profiles) {
     set((state) => ({ terminalByServer: { ...state.terminalByServer, [serverId]: profiles } }));

@@ -143,6 +143,18 @@ export function dismissSessionQuestions(queue: NoticeQueue, asid: string): Notic
 }
 
 /**
+ * Every notice about one agent session, questions or not: the reader opened
+ * or acknowledged its task from Home, so nothing about it is news any more.
+ */
+export function dismissSessionNotices(queue: NoticeQueue, asid: string): NoticeQueue {
+  const gone = (item: InAppNotice) =>
+    item.question?.asid === asid ||
+    (typeof item.route === 'object' && item.route?.params.asid === asid);
+  if (!queue.items.some(gone)) return queue;
+  return { ...queue, items: queue.items.filter((item) => !gone(item)) };
+}
+
+/**
  * Whether a push is the gateway asking for an approval.
  *
  * Read for the opposite reason `pane-approval.ts` reads the same payload: not
@@ -201,6 +213,39 @@ export function noticeFromPush(
     // A question waits for its answer the way an approval does.
     kind: question || pushIsApproval(content.data) ? 'approval' : 'general',
     ...(question ? { question } : {}),
+  };
+}
+
+/**
+ * Which paired computer a push is about, or `null` for one this device must
+ * not show at all.
+ *
+ * Several gateways can front one agent service and so see one another's
+ * sessions; each pushes as itself. A push from a computer that is no longer
+ * paired (a registration it kept, a session seen only through it) is dropped.
+ * A push about a session a paired computer's task ledger has bound is named
+ * after that computer -- the one the work was sent to -- with the title's
+ * provenance (`Agent done · desk`) and the route moved to it.
+ */
+export function attributePush(
+  content: { title?: unknown; data?: Record<string, unknown> },
+  paired: readonly { serverId: string; label: string }[],
+  ledgerOwner: (asid: string) => string | undefined
+): { title?: unknown; data?: Record<string, unknown> } | null {
+  const data = content.data;
+  const serverId = typeof data?.server_id === 'string' ? data.server_id : data?.serverId;
+  if (typeof serverId !== 'string' || !serverId) return content;
+  if (!paired.some((record) => record.serverId === serverId)) return null;
+  const asid = typeof data?.asid === 'string' ? data.asid : '';
+  const owner = asid ? ledgerOwner(asid) : undefined;
+  const record = owner && owner !== serverId && paired.find((item) => item.serverId === owner);
+  if (!record) return content;
+  const { lead } = noticeTitleParts(typeof content.title === 'string' ? content.title : '');
+  const { serverId: _serverId, ...rest } = data ?? {};
+  return {
+    ...content,
+    title: lead ? `${lead}${TITLE_SEPARATOR}${record.label}` : content.title,
+    data: { ...rest, server_id: record.serverId },
   };
 }
 

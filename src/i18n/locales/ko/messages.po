@@ -573,10 +573,6 @@ msgstr "모든 프로젝트"
 msgid "All sessions"
 msgstr "모든 세션"
 
-#: src/components/home-computer-cards.tsx
-msgid "All tasks"
-msgstr "모든 작업"
-
 #: src/i18n/labels.ts
 msgid "Allow"
 msgstr "허용"
@@ -2104,6 +2100,7 @@ msgstr "{label} 낮추기"
 msgid "default"
 msgstr "기본값"
 
+#: src/components/home-composer-dock.tsx
 #: src/components/settings-terminal.tsx
 #: src/components/settings-theme-sheet.tsx
 msgid "Default"
@@ -2832,6 +2829,7 @@ msgstr "홈 에이전트: {agentName}"
 msgid "Home effects · development only"
 msgstr "홈 효과 · 개발 전용"
 
+#: src/app/agent-workspace.tsx
 #: src/components/home-composer-dock.tsx
 msgid "Home folder"
 msgstr "홈 폴더"
@@ -3064,10 +3062,6 @@ msgstr "사용 중인 컴퓨터가 되면 페어링된 기기가 목록에 표�
 #: src/components/skia-terminal.tsx
 msgid "Jump to latest output"
 msgstr "최신 출력으로 이동"
-
-#: src/components/home-computer-cards.tsx
-msgid "Just finished"
-msgstr "방금 완료"
 
 #: src/components/agent-sessions-sheet.tsx
 #: src/hooks/use-relative-time.ts
@@ -3890,10 +3884,6 @@ msgstr "아무것도 변경되지 않았습니다"
 #: src/components/agent-context-sheet.tsx
 msgid "Nothing yet — an “Always allow” reply lands here, for this project."
 msgstr "아직 없습니다 — “항상 허용” 응답이 이 프로젝트의 규칙으로 여기에 쌓입니다"
-
-#: src/components/home-computer-cards.tsx
-msgid "Now"
-msgstr "지금"
 
 #: src/components/toggle.tsx
 msgid "Off"

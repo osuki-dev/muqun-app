@@ -220,6 +220,13 @@ export type AgentSocketServerFrame =
    * channel alone falling behind: refresh the task list, not every timeline.
    */
   | { t: 'resync'; asid: string; tasks?: true }
+  /**
+   * Under `subscribe_tasks`: the folder a task this device opens without a
+   * `cwd` runs in (`~` for the home directory), `null` when the gateway
+   * cannot say. Sent after `subscribed`, after a task resync, and when a task
+   * the device opened changes it (Gateway Task 20).
+   */
+  | { t: 'defaults'; defaultCwd: string | null }
   | { t: 'pong' }
   | { t: 'error'; code: string };
 
@@ -295,6 +302,8 @@ export function parseAgentSocketFrame(plaintext: string): AgentSocketServerFrame
         ? { t: 'resync', asid, tasks: true }
         : { t: 'resync', asid };
     }
+    case 'defaults':
+      return { t: 'defaults', defaultCwd: str(rec.default_cwd) || null };
     case 'pong':
       return { t: 'pong' };
     case 'error': {
