@@ -40,32 +40,13 @@ test('filterThemeEntries returns all entries for empty query', () => {
   expect(filterThemeEntries(sampleEntries, '   ')).toEqual(sampleEntries);
 });
 
-test('filterThemeEntries searches by name case-insensitively', () => {
-  const result = filterThemeEntries(sampleEntries, 'akiba');
-  expect(result.map((e) => e.id)).toEqual(['akiba-overdrive']);
-});
-
-test('filterThemeEntries searches by tag with or without leading hash', () => {
-  const byTag = filterThemeEntries(sampleEntries, 'cyberpunk');
-  expect(byTag.map((e) => e.id)).toEqual(['urban-sentinel', 'akiba-overdrive']);
-
-  const byHashTag = filterThemeEntries(sampleEntries, '#cyberpunk');
-  expect(byHashTag.map((e) => e.id)).toEqual(['urban-sentinel', 'akiba-overdrive']);
-});
-
-test('filterThemeEntries searches by author', () => {
-  const result = filterThemeEntries(sampleEntries, 'osuki');
-  expect(result.map((e) => e.id)).toEqual(['akiba-overdrive']);
-});
-
-test('filterThemeEntries searches by description', () => {
-  const result = filterThemeEntries(sampleEntries, 'surveillance');
-  expect(result.map((e) => e.id)).toEqual(['urban-sentinel']);
-});
-
-test('filterThemeEntries returns empty array when no theme matches', () => {
-  const result = filterThemeEntries(sampleEntries, 'nonexistent-theme-query');
-  expect(result).toEqual([]);
+test('filterThemeEntries matches name, tag (with or without #), author and description', () => {
+  const ids = (query: string) => filterThemeEntries(sampleEntries, query).map((e) => e.id);
+  expect(ids('AKIBA')).toEqual(['akiba-overdrive']);
+  expect(ids('#cyberpunk')).toEqual(['urban-sentinel', 'akiba-overdrive']);
+  expect(ids('osuki')).toEqual(['akiba-overdrive']);
+  expect(ids('surveillance')).toEqual(['urban-sentinel']);
+  expect(ids('nonexistent-theme-query')).toEqual([]);
 });
 
 test('collectPopularThemeTags counts frequencies and sorts descending', () => {

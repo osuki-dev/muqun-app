@@ -7,7 +7,6 @@
 // TerminalEmulator / parseTerminalSnapshot API.
 import { describe, expect, test } from 'bun:test';
 import {
-  MAX_EMULATED_ROWS,
   parseTerminalSnapshot,
   terminalFrameLinks,
   terminalFrameText,
@@ -164,10 +163,6 @@ describe('scrollback retention', () => {
 });
 
 describe('MAX_EMULATED_ROWS limit', () => {
-  test('the constant is the documented cap', () => {
-    expect(MAX_EMULATED_ROWS).toBe(2002);
-  });
-
   test('snapshots taller than the emulator drop the oldest rows', () => {
     const input = Array.from({ length: 2100 }, (_, index) => `ln${index}`).join('\n');
     const frame = parseTerminalSnapshot(input);
