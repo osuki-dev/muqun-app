@@ -65,13 +65,16 @@ test('one computer costs at most two reads: its panes and agents, and one sessio
   const cases: {
     name: string;
     entries: HomeRecentEntry[];
+    /** What the merged list carries. */
+    listed?: string[];
     selected: boolean;
     servesSnapshot: boolean;
     snapshotMissing?: boolean;
     paths: string[];
   }[] = [
     {
-      name: 'remembered sessions in two folders',
+      name: 'remembered sessions in two folders, both in the merged list',
+      listed: ['agent-1', 'agent-2'],
       entries: [
         entries[0],
         {
@@ -84,6 +87,21 @@ test('one computer costs at most two reads: its panes and agents, and one sessio
       selected: false,
       servesSnapshot: false,
       paths: ['/api/sessions/dev/panes', '/api/sessions/dev/agents', list],
+    },
+    {
+      name: 'one of them older than the merged list: its folder is read',
+      entries: [
+        entries[0],
+        { key: 'old', target: { ...target, directory: '/else', asid: 'old' }, title: '', atMs: 1 },
+      ],
+      listed: ['agent-1'],
+      selected: false,
+      servesSnapshot: true,
+      paths: [
+        '/api/sessions/dev/snapshot',
+        list,
+        '/api/sessions/dev/agent-sessions?roots=true&directory=%2Felse&limit=50&order=desc',
+      ],
     },
     {
       name: 'nothing remembered, not selected',
@@ -115,7 +133,7 @@ test('one computer costs at most two reads: its panes and agents, and one sessio
       read: async (path) => {
         paths.push(path);
         if (testCase.snapshotMissing && path.endsWith('/snapshot')) throw new Error('HTTP 404');
-        return { data: [] };
+        return { data: (testCase.listed ?? []).map((asid) => ({ asid, status: 'idle' })) };
       },
       isCurrent: () => true,
       recordPanes: async () => {},

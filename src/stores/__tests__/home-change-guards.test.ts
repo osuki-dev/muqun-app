@@ -38,6 +38,14 @@ const discovery = parseGatewayDiscovery({
     },
   },
 });
+const offline = parseGatewayDiscovery({
+  planes: {
+    agents: {
+      supported: true,
+      agents: [{ id: 'opencode', name: 'OpenCode', kind: 'opencode', status: 'offline' }],
+    },
+  },
+});
 const panes = (checkedAtMs: number, status: 'idle' | 'working') => ({
   serverId: 'desk',
   sessionId: 'dev',
@@ -123,7 +131,7 @@ test('an answer that changes nothing but its time leaves what Home subscribes to
         const before = useAgents.getState().index;
         useAgents.getState().record('desk', discovery, 20);
         const same = useAgents.getState().index === before;
-        useAgents.getState().select('desk', 'deepseek');
+        useAgents.getState().record('desk', offline, 30);
         return { same, changed: useAgents.getState().index !== before };
       },
     },

@@ -86,6 +86,9 @@ export function TaskStateIcon({ visual, size = 16 }: { visual: TaskRowVisual; si
     turn.set(0);
     if (!spins) return;
     turn.set(withRepeat(withTiming(1, travelTiming()), -1));
+    // Unmounting does not stop an endless `withRepeat`; a row that leaves
+    // while spinning must not leave its loop running on the UI thread.
+    return () => cancelAnimation(turn);
   }, [spins, turn]);
   const spinStyle = useAnimatedStyle(() => ({ transform: [{ rotate: `${turn.get() * 360}deg` }] }));
   const Icon = ICONS[visual.icon];

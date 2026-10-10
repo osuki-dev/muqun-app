@@ -166,6 +166,8 @@ function GatewayConnectionRow({
   const theme = useThemeTokens();
   const background = useSurfaceBackground();
   const probe = useServerReachability((state) => state.probes[server.serverId]);
+  // Steps when a probe goes stale, so the row stops saying Online on time.
+  const freshnessNowMs = useServerReachability((state) => state.freshnessNowMs);
   // The live channels count as much as the probe: a computer streaming a
   // session right now is online whatever a 45-second-old probe says.
   const socket = useServerChannels((state) => state.sockets[server.serverId]);
@@ -177,7 +179,7 @@ function GatewayConnectionRow({
     activeConnection,
     channels: { socket, stream },
     selected,
-    nowMs,
+    nowMs: Math.max(nowMs ?? 0, freshnessNowMs),
   });
   const status = _(connectionStatusDescription[connection]);
   return (
