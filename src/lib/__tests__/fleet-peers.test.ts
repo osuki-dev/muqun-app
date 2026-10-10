@@ -4,9 +4,11 @@ import {
   failureKey,
   linkLines,
   LINK_RETRY_MS,
+  pairingCodeBody,
   parseFleetPeers,
   planFleetLinks,
   planRenames,
+  planTombstoneUnlinks,
   type FleetComputer,
   type FleetPeers,
 } from '../fleet-peers';
@@ -64,6 +66,19 @@ describe('parseFleetPeers', () => {
   });
 });
 
+describe('pairingCodeBody', () => {
+  test.each([
+    [
+      'names the computer that will claim the code, by its server id too',
+      ' coding ',
+      'srv-coding',
+      { device_name: 'coding', kind: 'gateway', server_id: 'srv-coding' },
+    ],
+  ] as const)('%s', (_name, deviceName, serverId, expected) => {
+    expect(pairingCodeBody(deviceName, serverId)).toEqual(expected);
+  });
+});
+
 describe('planFleetLinks: every ordered pair that should be linked and is not', () => {
   test.each([
     [
@@ -118,6 +133,26 @@ describe('planFleetLinks: every ordered pair that should be linked and is not', 
       ],
     ],
     ['one computer has nothing to link', [computer('coding', peers(true))], {}, []],
+    [
+      'a peer with the same name but another server id does not count as linked',
+      [
+        computer('coding', {
+          acceptDelegations: true,
+          peers: [
+            {
+              peerId: 'peer-old',
+              serverId: 'srv-old',
+              name: 'mini',
+              url: 'http://x',
+              reachable: false,
+            },
+          ],
+        }),
+        computer('mini', peers(true, [['coding', true]])),
+      ],
+      {},
+      [{ from: 'coding', to: 'mini' }],
+    ],
   ] as const)('%s', (_name, computers, failures, expected) => {
     expect(planFleetLinks(computers, failures, NOW)).toEqual([...expected]);
   });
@@ -191,5 +226,42 @@ describe('linkLines: the one line Settings shows per computer', () => {
       linked: [...expected.linked],
       cannotReach: [...expected.cannotReach],
     });
+  });
+});
+
+describe('planTombstoneUnlinks: an unpaired computer is taken off every computer that answered', () => {
+  test.each([
+    [
+      'each row of it is deleted where it is held',
+      [
+        computer(
+          'coding',
+          peers(true, [
+            ['gone', true],
+            ['mini', true],
+          ])
+        ),
+        computer('mini', peers(true, [['gone', false]])),
+      ],
+      ['gone'],
+      [
+        { from: 'coding', peerId: 'peer-gone', serverId: 'gone' },
+        { from: 'mini', peerId: 'peer-gone', serverId: 'gone' },
+      ],
+    ],
+    [
+      'a computer that did not answer is left for the next run',
+      [computer('coding', null)],
+      ['gone'],
+      [],
+    ],
+    [
+      'nothing unpaired, nothing to delete',
+      [computer('coding', peers(true, [['mini', true]]))],
+      [],
+      [],
+    ],
+  ] as const)('%s', (_name, computers, tombstones, expected) => {
+    expect(planTombstoneUnlinks(computers, tombstones)).toEqual([...expected]);
   });
 });

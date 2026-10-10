@@ -1,5 +1,7 @@
 import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens, useToast } from '@osuki-dev/ui';
+import { useFocusEffect } from 'expo-router';
+import { useCallback } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { LADDER, SettingsSection, SettingsToggleRow } from '@/components/settings-chrome';
@@ -7,7 +9,7 @@ import { Text } from '@/components/text';
 import { reconcileFleet } from '@/hooks/use-fleet-link';
 import { useStableHandler } from '@/hooks/use-render-refs';
 import { recordEndpoint } from '@/hooks/use-server-tasks';
-import { hasFleetPeers, linkLines, setAcceptDelegations } from '@/lib/fleet-peers';
+import { fetchFleetPeers, hasFleetPeers, linkLines, setAcceptDelegations } from '@/lib/fleet-peers';
 import type { GatewayRecord } from '@/lib/gateway-storage';
 import { useFleetPeers } from '@/stores/fleet-peers';
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';
@@ -36,6 +38,20 @@ function FleetPeersBody({ server }: { server: GatewayRecord }) {
   const setPeers = useFleetPeers((state) => state.setPeers);
   const records = useGatewayConnectionStore((state) => state.records);
   const answer = byServer[server.serverId];
+  const status = useFleetPeers((state) => state.statusByServer[server.serverId]);
+  // This computer's own answer, read whenever the section is shown, so the
+  // switch never waits on a background run.
+  useFocusEffect(
+    useCallback(() => {
+      let live = true;
+      void fetchFleetPeers(recordEndpoint(server)).then((result) => {
+        if (live) useFleetPeers.getState().record(server.serverId, result);
+      });
+      return () => {
+        live = false;
+      };
+    }, [server])
+  );
   const computers = records.map((record) => ({
     serverId: record.serverId,
     label: record.label,
@@ -67,7 +83,26 @@ function FleetPeersBody({ server }: { server: GatewayRecord }) {
   });
 
   const linkedNames = linked.join(', ');
-  const quietNames = cannotReach.join(', ');
+  // This computer did not answer: that is the one thing to say about it.
+  const unanswered = status !== undefined && status !== 'ok';
+  const quietNames = unanswered ? server.label : cannotReach.join(', ');
+  if (unanswered) {
+    return (
+      <View testID="fleet-peers">
+        <SettingsSection title={t`Other computers`}>
+          <View style={styles.lines}>
+            <Text
+              testID="fleet-peers-unreachable"
+              variant="caption"
+              color={theme.colors.warning}
+              style={styles.alone}>
+              {t`Cannot reach ${quietNames}`}
+            </Text>
+          </View>
+        </SettingsSection>
+      </View>
+    );
+  }
   return (
     <View testID="fleet-peers">
       <SettingsSection title={t`Other computers`}>
@@ -109,4 +144,6 @@ const styles = StyleSheet.create({
     paddingBottom: LADDER.snug,
     gap: LADDER.tight,
   },
+  // The caption as the card's only row: the row's own inset above it too.
+  alone: { paddingTop: LADDER.snug },
 });
