@@ -465,12 +465,12 @@ export interface AgentComposerProps {
    */
   accessory?: React.ReactNode;
   /**
-   * Float the dock as a block instead of a sheet on the screen's edge: the
-   * page gutter around it (above the safe area at the foot), the card's
-   * corners all round, and no inner gutter of its own, so its edges line up
-   * with the cards above. The phone's Home is the one caller.
+   * Float the dock as a block instead of a sheet on the screen's edge:
+   * `margin` around it (above the safe area at the foot), the card's corners
+   * all round, and `inset` inside, so its edges and its lines both match the
+   * cards above. The phone's Home is the one caller.
    */
-  floatingGutter?: number;
+  floating?: { margin: number; inset: number };
   /**
    * The field's and Send's test ids. Home hosts this same dock beside a Pad
    * workspace whose own composers keep the defaults, so it names its own.
@@ -540,7 +540,7 @@ export const AgentComposer = memo(function AgentComposer({
   injectDraftRef,
   onDockHeight,
   accessory,
-  floatingGutter,
+  floating,
   inputTestID = 'agent-composer-input',
   sendTestID,
 }: AgentComposerProps) {
@@ -1039,12 +1039,11 @@ export const AgentComposer = memo(function AgentComposer({
     POPUP_MIN_HEIGHT,
     windowHeight - keyboardHeight - dockHeight - topInset - POPUP_HEADER_GAP
   );
-  const floating = floatingGutter !== undefined;
   /** What sits under the field inside the glass. */
-  const innerBottomPadding = floating ? 0 : Math.max(10, bottomInset + 6);
+  const innerBottomPadding = floating ? 10 : Math.max(10, bottomInset + 6);
   /** From the dock's foot to the field's, which the anchored menu has to clear too. */
   const dockBottomPadding = floating
-    ? bottomInset + floatingGutter + innerBottomPadding
+    ? bottomInset + floating.margin + innerBottomPadding
     : innerBottomPadding;
 
   return (
@@ -1273,15 +1272,15 @@ export const AgentComposer = memo(function AgentComposer({
           style={[
             styles.composerDock,
             floating && {
-              marginHorizontal: floatingGutter,
-              marginBottom: bottomInset + floatingGutter,
+              marginHorizontal: floating.margin,
+              marginBottom: bottomInset + floating.margin,
             },
           ]}>
           <View
             style={[
               styles.composerInner,
-              floating && styles.composerInnerFloating,
               { paddingBottom: innerBottomPadding },
+              floating && { paddingHorizontal: floating.inset },
             ]}>
             {accessory}
             {/* Row 1: roots only. Tapping the current root opens its tree. */}
@@ -1866,7 +1865,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingTop: 8,
   },
-  composerInnerFloating: { paddingHorizontal: 0 },
   backdrop: {
     position: 'absolute',
     left: 0,

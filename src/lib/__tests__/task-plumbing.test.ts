@@ -60,6 +60,11 @@ describe('withoutTaskPlumbing', () => {
 
   test.each<[string, TimelineItem, string | null]>([
     ['a synthetic part is not drawn', row('user', { type: 'synthetic', text: REQUEST }), null],
+    [
+      'a skill invocation keeps its notice',
+      row('system', { type: 'synthetic', text: 'review', description: 'skill-invocation' }),
+      'skill-invocation',
+    ],
     ['a request-only user part is not drawn', row('user', { type: 'text', text: REQUEST }), null],
     [
       'a marker-only reply part is not drawn',
@@ -78,7 +83,10 @@ describe('withoutTaskPlumbing', () => {
     ],
   ])('%s', (_, item, expected) => {
     const shown = withoutTaskPlumbing(item);
-    expect(shown?.part.type === 'text' ? shown.part.text : shown).toBe(expected);
+    const part = shown?.part;
+    expect(
+      part?.type === 'synthetic' ? part.description : part?.type === 'text' ? part.text : null
+    ).toBe(expected);
   });
 
   test('an untouched row is the same object', () => {

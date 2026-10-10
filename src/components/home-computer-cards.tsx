@@ -21,6 +21,7 @@ import {
   heldCardOrder,
   taskRowRank,
   type ComputerCard,
+  HOME_CARD_INSET,
 } from '@/lib/home-computer-cards';
 import { PAD_CARD_GAP, padCardColumns } from '@/lib/home-pad-geometry';
 import { fadeOut, listLayout, riseIn } from '@/lib/motion';
@@ -347,7 +348,7 @@ const styles = StyleSheet.create({
     minWidth: 0,
     overflow: 'hidden',
     borderWidth: StyleSheet.hairlineWidth,
-    paddingHorizontal: 12,
+    paddingHorizontal: HOME_CARD_INSET,
     paddingTop: 4,
   },
   header: {
