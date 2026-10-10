@@ -7,6 +7,7 @@ import {
   padCover,
   padCoverKind,
   padHomeColumns,
+  nextRestingInset,
   padLaunchLayoutEnabled,
 } from '@/lib/home-pad-geometry';
 
@@ -88,5 +89,35 @@ describe('padCover', () => {
       ).toBeLessThanOrEqual(block.height);
     else
       expect(block.titleSize * PAD_COVER_TITLE_LINE_HEIGHT).toBeLessThanOrEqual(block.height * 0.4);
+  });
+});
+
+describe('nextRestingInset: the Pad page is sized from a no-keyboard inset only', () => {
+  const resting = { inset: 0, width: 1280, height: 800 };
+  // name, the inset now, window size, soft keyboard up, a field focused -> inset kept
+  test.each<[string, number, [number, number], boolean, boolean, number]>([
+    ['a keyboard showing never records its inset', 32, [1280, 800], true, true, 0],
+    [
+      'a focused field (the dock, Recent search, a sheet) does not either',
+      32,
+      [1280, 800],
+      false,
+      true,
+      0,
+    ],
+    [
+      'rotated with a field still focused, no keyboard: the new inset',
+      48,
+      [800, 1280],
+      false,
+      true,
+      48,
+    ],
+    ['rotated while the keyboard shows: wait for it to hide', 48, [800, 1280], true, false, 0],
+    ['nothing focused, no keyboard: the inset as measured', 24, [1280, 800], false, false, 24],
+  ])('%s', (_name, inset, [width, height], keyboardVisible, fieldFocused, expected) => {
+    expect(
+      nextRestingInset(resting, { inset, width, height, keyboardVisible, fieldFocused }).inset
+    ).toBe(expected);
   });
 });

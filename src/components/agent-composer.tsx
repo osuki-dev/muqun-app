@@ -1186,6 +1186,8 @@ export const AgentComposer = memo(function AgentComposer({
   useEffect(() => {
     reportFocus(focused);
   }, [focused]);
+  // A dock that goes while focused has lost its focus too.
+  useEffect(() => () => reportFocus(false), []);
   useEffect(() => {
     autoHide?.setPinned(focused || keyboardOpen || sending);
   }, [autoHide, focused, keyboardOpen, sending]);

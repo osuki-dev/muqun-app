@@ -42,6 +42,7 @@ import {
   useWindowDimensions,
   RefreshControl,
   StyleSheet,
+  TextInput,
   View,
   type LayoutChangeEvent,
   type NativeScrollEvent,
@@ -103,9 +104,11 @@ import { demoContinueSearchEntries } from '@/lib/demo-recents';
 import { useScreenVisible } from '@/hooks/use-screen-visible';
 import { claimHomeFirstEntry } from '@/lib/home-first-entry';
 import {
+  nextRestingInset,
   PAD_DOCK_FIELD_LINES,
   padHomeColumns,
   padLaunchLayoutEnabled,
+  type RestingInset,
 } from '@/lib/home-pad-geometry';
 import { useDockAutoHide } from '@/hooks/use-dock-auto-hide';
 import { resetSortHold, sortHoldScroll, sortHoldTouches } from '@/stores/home-sort-hold';
@@ -241,7 +244,7 @@ export function HomeOverview({
     identity.logo?.mode === 'custom' ? customAssets?.[identity.logo.asset] : undefined;
   const logoSource = customLogo && customLogo !== failedLogo ? { uri: customLogo } : brandMark;
   const isPad = layoutMode === 'pad';
-  const { height: windowHeight, fontScale } = useWindowDimensions();
+  const { width: windowWidth, height: windowHeight, fontScale } = useWindowDimensions();
   const showsEditorialBrand = identity.showBrand;
   // Renaming and unpairing live in Settings, not here: the owner asked for one
   // place that manages servers, and the tablet branch's long-press row menu was
@@ -691,14 +694,29 @@ export function HomeOverview({
   const travel = useSharedValue(0);
   const fold = useSharedValue(0);
   const insets = useSafeAreaInsets();
-  // The bottom inset with no keyboard up, which the Pad page is sized from.
-  const keyboardVisible = useKeyboardState((state) => state.isVisible);
-  const [restingBottomInset, setRestingBottomInset] = useState(insets.bottom);
-  // Not while a field has focus either: the inset can change before the
-  // keyboard says it is visible.
+  // The bottom inset with no keyboard up, which the Pad page is sized from
+  // (`nextRestingInset`). Pad only: the phone reads `insets.bottom` and must
+  // not re-render on a keyboard showing.
+  const keyboardVisible = useKeyboardState((state) => isPad && state.isVisible);
+  const [restingInset, setRestingInset] = useState<RestingInset>(() => ({
+    inset: insets.bottom,
+    width: windowWidth,
+    height: windowHeight,
+  }));
   useEffect(() => {
-    if (!keyboardVisible && !dockFocused) setRestingBottomInset(insets.bottom);
-  }, [keyboardVisible, dockFocused, insets.bottom]);
+    if (!isPad) return;
+    setRestingInset((previous) =>
+      nextRestingInset(previous, {
+        inset: insets.bottom,
+        width: windowWidth,
+        height: windowHeight,
+        keyboardVisible,
+        // Any field, not just the dock's: Recent's search and a sheet's field
+        // raise the inset before the keyboard reports itself too.
+        fieldFocused: TextInput.State.currentlyFocusedInput() != null,
+      })
+    );
+  }, [isPad, keyboardVisible, insets.bottom, windowWidth, windowHeight]);
   const [barHeight, setBarHeight] = useState(insets.top + HEADER_ROW_HEIGHT);
   const barHeightValue = useSharedValue(insets.top + HEADER_ROW_HEIGHT);
   const onScroll = useAnimatedScrollHandler({
@@ -892,7 +910,7 @@ export function HomeOverview({
   // On the Pad the page's height does not follow the keyboard: the bottom
   // inset grows while an on-screen keyboard is up, and a page sized from it
   // would shrink the cover and move every column. Only the dock reacts.
-  const pageBottomInset = isPad ? restingBottomInset : insets.bottom;
+  const pageBottomInset = isPad ? restingInset.inset : insets.bottom;
   const editorialViewportHeight = windowHeight - insets.top - pageBottomInset - 24;
   const padGeometry = getEditorialLayoutGeometry(
     Math.min(editorialWidth || width, isPad ? EDITORIAL_PAD_MAX_WIDTH : EDITORIAL_MAX_WIDTH)
@@ -925,7 +943,7 @@ export function HomeOverview({
       }
       fieldLines={padLaunch ? PAD_DOCK_FIELD_LINES : undefined}
       onDockHeight={setDockHeight}
-      onFieldFocus={setDockFocused}
+      onFieldFocus={padLaunch ? setDockFocused : undefined}
       autoHide={padLaunch ? undefined : pageDockHide.dock}
       onOpenAgent={commands.openAgent}
     />
