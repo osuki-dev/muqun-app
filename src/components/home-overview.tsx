@@ -47,7 +47,7 @@ import {
   type NativeScrollEvent,
   type NativeSyntheticEvent,
 } from 'react-native';
-import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
+import { KeyboardAwareScrollView, useKeyboardState } from 'react-native-keyboard-controller';
 import Animated, {
   Extrapolation,
   interpolate,
@@ -372,6 +372,8 @@ export function HomeOverview({
   const [composerPulse, setComposerPulse] = useState(0);
   // The phone dock floats over the page; the page's foot clears it.
   const [dockHeight, setDockHeight] = useState(0);
+  // The Pad cover's left column holds still while the dock's field has focus.
+  const [dockFocused, setDockFocused] = useState(false);
   // Classic: the pack artwork's measured slot, which the work block overlaps.
   const [classicArtworkHeight, setClassicArtworkHeight] = useState(0);
   // On the phone the dock slides out of the way while the page scrolls down.
@@ -689,6 +691,14 @@ export function HomeOverview({
   const travel = useSharedValue(0);
   const fold = useSharedValue(0);
   const insets = useSafeAreaInsets();
+  // The bottom inset with no keyboard up, which the Pad page is sized from.
+  const keyboardVisible = useKeyboardState((state) => state.isVisible);
+  const [restingBottomInset, setRestingBottomInset] = useState(insets.bottom);
+  // Not while a field has focus either: the inset can change before the
+  // keyboard says it is visible.
+  useEffect(() => {
+    if (!keyboardVisible && !dockFocused) setRestingBottomInset(insets.bottom);
+  }, [keyboardVisible, dockFocused, insets.bottom]);
   const [barHeight, setBarHeight] = useState(insets.top + HEADER_ROW_HEIGHT);
   const barHeightValue = useSharedValue(insets.top + HEADER_ROW_HEIGHT);
   const onScroll = useAnimatedScrollHandler({
@@ -879,7 +889,11 @@ export function HomeOverview({
   const classicLayout = homeLayout === 'classic' && !isPad;
   // Same width and predicate the layout resolves for itself: the Pad cover
   // spread lists eight Continue rows in its work column; other layouts keep theirs.
-  const editorialViewportHeight = windowHeight - insets.top - insets.bottom - 24;
+  // On the Pad the page's height does not follow the keyboard: the bottom
+  // inset grows while an on-screen keyboard is up, and a page sized from it
+  // would shrink the cover and move every column. Only the dock reacts.
+  const pageBottomInset = isPad ? restingBottomInset : insets.bottom;
+  const editorialViewportHeight = windowHeight - insets.top - pageBottomInset - 24;
   const padGeometry = getEditorialLayoutGeometry(
     Math.min(editorialWidth || width, isPad ? EDITORIAL_PAD_MAX_WIDTH : EDITORIAL_MAX_WIDTH)
   );
@@ -911,6 +925,7 @@ export function HomeOverview({
       }
       fieldLines={padLaunch ? PAD_DOCK_FIELD_LINES : undefined}
       onDockHeight={setDockHeight}
+      onFieldFocus={setDockFocused}
       autoHide={padLaunch ? undefined : pageDockHide.dock}
       onOpenAgent={commands.openAgent}
     />
@@ -1120,6 +1135,7 @@ export function HomeOverview({
               }
               padComposer={padLaunch ? dock : undefined}
               padComposerHeight={dockHeight}
+              coverPaneKeyboardAware={!dockFocused}
               workScrollEvents={sortHoldScroll}
               entering={entering}
               launches={

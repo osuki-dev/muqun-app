@@ -1,5 +1,5 @@
 import { ComposerAttachmentButton } from '@/components/composer-attachment-button';
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useEffectEvent, useMemo, useRef, useState } from 'react';
 import {
   NativeSyntheticEvent,
   Pressable,
@@ -503,6 +503,8 @@ export interface AgentComposerProps {
    * up or a send is in flight.
    */
   autoHide?: DockAutoHide;
+  /** Told when the field gains or loses focus (the Pad cover keeps its left column still). */
+  onFieldFocus?: (focused: boolean) => void;
   /**
    * The field's and Send's test ids. Home hosts this same dock beside a Pad
    * workspace whose own composers keep the defaults, so it names its own.
@@ -577,6 +579,7 @@ export const AgentComposer = memo(function AgentComposer({
   compact = false,
   fieldLines,
   autoHide,
+  onFieldFocus,
   inputTestID = 'agent-composer-input',
   sendTestID,
 }: AgentComposerProps) {
@@ -1179,6 +1182,10 @@ export const AgentComposer = memo(function AgentComposer({
   );
   const [focused, setFocused] = useState(false);
   const keyboardOpen = keyboardHeight > 0;
+  const reportFocus = useEffectEvent((next: boolean) => onFieldFocus?.(next));
+  useEffect(() => {
+    reportFocus(focused);
+  }, [focused]);
   useEffect(() => {
     autoHide?.setPinned(focused || keyboardOpen || sending);
   }, [autoHide, focused, keyboardOpen, sending]);

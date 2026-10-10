@@ -119,6 +119,7 @@ export function HomeComposerDock({
   edgeBar,
   fieldLines,
   autoHide,
+  onFieldFocus,
   onDockHeight,
   onOpenAgent,
 }: {
@@ -137,6 +138,8 @@ export function HomeComposerDock({
   fieldLines?: number;
   /** See `AgentComposer`'s `autoHide`. */
   autoHide?: DockAutoHide;
+  /** See `AgentComposer`'s `onFieldFocus`. */
+  onFieldFocus?: (focused: boolean) => void;
   onDockHeight?: (height: number) => void;
   onOpenAgent: (
     serverId: string,
@@ -968,6 +971,7 @@ export function HomeComposerDock({
       fieldLines={fieldLines}
       compact
       autoHide={autoHide}
+      onFieldFocus={onFieldFocus}
       onDockHeight={onDockHeight}
       onSend={sendPrompt}
       onAbort={async () => {}}

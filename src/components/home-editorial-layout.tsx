@@ -1,7 +1,10 @@
 import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens } from '@osuki-dev/ui';
 import { useEffect, useState, type ReactNode } from 'react';
-import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
+import {
+  KeyboardAwareScrollView,
+  useReanimatedKeyboardAnimation,
+} from 'react-native-keyboard-controller';
 import {
   type ScrollViewProps,
   StyleSheet,
@@ -87,6 +90,12 @@ export type HomeEditorialLayoutProps = {
   padComposer?: ReactNode;
   /** The dock's measured height, which the left column's foot clears. */
   padComposerHeight?: number;
+  /**
+   * Whether the left column's scroll may lift a focused field above the
+   * keyboard. Off while the dock's own field has focus: on the Pad only the
+   * dock reacts to the keyboard, and nothing in the left column moves.
+   */
+  coverPaneKeyboardAware?: boolean;
   /** Scroll events of the Pad work column, where the computer cards scroll. */
   workScrollEvents?: {
     onScrollBeginDrag?: () => void;
@@ -243,6 +252,7 @@ export function HomeEditorialLayout({
   launches,
   padComposer,
   padComposerHeight = 0,
+  coverPaneKeyboardAware = true,
   workScrollEvents,
   entering = false,
   recent,
@@ -292,6 +302,14 @@ export function HomeEditorialLayout({
     hasAside,
     pad
   );
+  // The dock's slot at the foot of the Pad work column grows by the keyboard
+  // as it rises (the dock rides it up), so the cards above end at the dock's
+  // new top and nothing else on the page moves; a floating or hardware
+  // keyboard (no inset) changes nothing.
+  const { height: keyboardOffset } = useReanimatedKeyboardAnimation();
+  const padComposerStyle = useAnimatedStyle(() => ({
+    height: padComposerHeight + Math.max(0, -keyboardOffset.get()),
+  }));
   const padLaunchLayout =
     pad && padLaunchLayoutEnabled(geometry.contentWidth, fontScale, viewportHeight);
   const scrollPosition = scrollY;
@@ -483,6 +501,7 @@ export function HomeEditorialLayout({
                 whose nearest scroll view it is, and Recent's search is here. */}
             <KeyboardAwareScrollView
               testID="home-pad-launch-pane"
+              enabled={coverPaneKeyboardAware}
               showsVerticalScrollIndicator={false}
               keyboardShouldPersistTaps="handled"
               style={styles.padScroll}
@@ -634,9 +653,9 @@ export function HomeEditorialLayout({
             {/* In flow under the work, sized to the measured dock: the column
                 ends where the dock begins, so no row can sit under it. */}
             {hasSlot(padComposer) ? (
-              <View testID="home-pad-composer" style={{ height: padComposerHeight }}>
+              <Animated.View testID="home-pad-composer" style={padComposerStyle}>
                 {padComposer}
-              </View>
+              </Animated.View>
             ) : null}
           </View>
         </View>
