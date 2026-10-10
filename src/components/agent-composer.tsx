@@ -465,6 +465,13 @@ export interface AgentComposerProps {
    */
   accessory?: React.ReactNode;
   /**
+   * Float the dock as a block instead of a sheet on the screen's edge: the
+   * page gutter around it (above the safe area at the foot), the card's
+   * corners all round, and no inner gutter of its own, so its edges line up
+   * with the cards above. The phone's Home is the one caller.
+   */
+  floatingGutter?: number;
+  /**
    * The field's and Send's test ids. Home hosts this same dock beside a Pad
    * workspace whose own composers keep the defaults, so it names its own.
    */
@@ -533,6 +540,7 @@ export const AgentComposer = memo(function AgentComposer({
   injectDraftRef,
   onDockHeight,
   accessory,
+  floatingGutter,
   inputTestID = 'agent-composer-input',
   sendTestID,
 }: AgentComposerProps) {
@@ -1031,12 +1039,19 @@ export const AgentComposer = memo(function AgentComposer({
     POPUP_MIN_HEIGHT,
     windowHeight - keyboardHeight - dockHeight - topInset - POPUP_HEADER_GAP
   );
-  /** The dock's own bottom padding, which the anchored menu has to clear too. */
-  const dockBottomPadding = Math.max(10, bottomInset + 6);
+  const floating = floatingGutter !== undefined;
+  /** What sits under the field inside the glass. */
+  const innerBottomPadding = floating ? 0 : Math.max(10, bottomInset + 6);
+  /** From the dock's foot to the field's, which the anchored menu has to clear too. */
+  const dockBottomPadding = floating
+    ? bottomInset + floatingGutter + innerBottomPadding
+    : innerBottomPadding;
 
   return (
     <Animated.View style={[styles.dockOuter, composerKeyboardStyle]}>
-      <EdgeFade edge="bottom" color={theme.colors.background} style={styles.composerFade} />
+      {floating ? null : (
+        <EdgeFade edge="bottom" color={theme.colors.background} style={styles.composerFade} />
+      )}
 
       {/*
         Dismiss backdrop for popups.
@@ -1252,8 +1267,22 @@ export const AgentComposer = memo(function AgentComposer({
           setDockHeight(height);
           onDockHeight?.(height);
         }}>
-        <GlassChrome surface="composer" shape="sheet" style={styles.composerDock}>
-          <View style={[styles.composerInner, { paddingBottom: dockBottomPadding }]}>
+        <GlassChrome
+          surface="composer"
+          shape={floating ? 'card' : 'sheet'}
+          style={[
+            styles.composerDock,
+            floating && {
+              marginHorizontal: floatingGutter,
+              marginBottom: bottomInset + floatingGutter,
+            },
+          ]}>
+          <View
+            style={[
+              styles.composerInner,
+              floating && styles.composerInnerFloating,
+              { paddingBottom: innerBottomPadding },
+            ]}>
             {accessory}
             {/* Row 1: roots only. Tapping the current root opens its tree. */}
             {sessionStrip.length > 0 ? (
@@ -1837,6 +1866,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingTop: 8,
   },
+  composerInnerFloating: { paddingHorizontal: 0 },
   backdrop: {
     position: 'absolute',
     left: 0,
