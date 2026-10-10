@@ -432,6 +432,8 @@ function useTaskRowModel({
   const pairedHere = useIsPairedHere();
   const requesterName = useRequesterName();
   const [menuOpen, setMenuOpen] = useState(false);
+  // What the last action from the menu could not do, said in the menu.
+  const [menuError, setMenuError] = useState<string | null>(null);
   const visual = taskRowVisual(task, {
     canComplete: canMarkTaskDone(task, capabilities),
     acknowledged,
@@ -465,6 +467,7 @@ function useTaskRowModel({
     });
   const run = (action: () => void) => () => {
     setMenuOpen(false);
+    setMenuError(null);
     action();
   };
   const menuItems: AgentActionMenuItem[] = visual.actions
@@ -480,11 +483,20 @@ function useTaskRowModel({
             label: t`Cancel task`,
             Icon: XCircle,
             tone: 'danger',
-            confirm: { label: t`Confirm cancel` },
+            // Armed until confirmed or dismissed: a confirm after a pause
+            // still cancels, and one that fails says so in the menu.
+            confirm: { label: t`Confirm cancel`, persist: true },
             testID: `task-row-cancel-${task.taskId}`,
-            onPress: run(() => {
-              void act(task, 'cancel').catch(fail(t`Could not cancel the task`));
-            }),
+            onPress: () => {
+              setMenuError(null);
+              void act(task, 'cancel').then(
+                () => setMenuOpen(false),
+                (failure: unknown) =>
+                  setMenuError(
+                    describeGatewayFailure(failure, t`Could not cancel the task`).message
+                  )
+              );
+            },
           };
         case 'markDone':
           return {
@@ -509,7 +521,10 @@ function useTaskRowModel({
           };
       }
     });
-  const toggleMenu = () => setMenuOpen((shown) => !shown);
+  const toggleMenu = () => {
+    setMenuError(null);
+    setMenuOpen((shown) => !shown);
+  };
   const menuProps = {
     accessibilityActions:
       menuItems.length > 0 ? [{ name: 'longpress', label: t`Actions` }] : undefined,
@@ -528,6 +543,7 @@ function useTaskRowModel({
     trailingAge,
     menuItems,
     menuShown: menuOpen && menuItems.length > 0,
+    menuError,
     menuProps,
   };
 }
@@ -647,6 +663,7 @@ export function TaskRow({
           testID={`task-row-menu-${task.taskId}`}
           surface="ground"
           items={row.menuItems}
+          error={row.menuError}
         />
       ) : null}
       {(subTasks ?? []).map((child) => (
@@ -725,6 +742,7 @@ function SubTaskRow({
           testID={`task-row-menu-${task.taskId}`}
           surface="ground"
           items={row.menuItems}
+          error={row.menuError}
         />
       ) : null}
     </View>
