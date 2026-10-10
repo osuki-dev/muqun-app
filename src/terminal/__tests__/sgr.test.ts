@@ -104,21 +104,16 @@ describe('SGR colours', () => {
 });
 
 describe('SGR attributes', () => {
-  test.each([
-    ['bold', `${CSI}1mX`, 'bold'],
-    ['dim', `${CSI}2mX`, 'dim'],
-    ['italic', `${CSI}3mX`, 'italic'],
-    ['underline', `${CSI}4mX`, 'underline'],
-    ['inverse', `${CSI}7mX`, 'inverse'],
-    ['hidden', `${CSI}8mX`, 'hidden'],
-    ['strikethrough', `${CSI}9mX`, 'strikethrough'],
-  ] as const)('%s attribute is set', (_name, sequence, key) => {
-    expect(styleOfFirstGlyph(sequence)?.[key]).toBe(true);
-  });
-
-  test('multiple attributes accumulate in one SGR', () => {
-    const style = styleOfFirstGlyph(`${CSI}1;3;4mX`);
-    expect(style).toMatchObject({ bold: true, italic: true, underline: true });
+  test('each attribute code sets its attribute, and they accumulate in one SGR', () => {
+    expect(styleOfFirstGlyph(`${CSI}1;2;3;4;7;8;9mX`)).toMatchObject({
+      bold: true,
+      dim: true,
+      italic: true,
+      underline: true,
+      inverse: true,
+      hidden: true,
+      strikethrough: true,
+    });
   });
 });
 
@@ -146,14 +141,13 @@ describe('SGR resets', () => {
     expect(styleAt(term.frame(), 0, 1)).toMatchObject({ bold: false, dim: false, italic: true });
   });
 
-  test.each([
-    ['23 clears italic', `${CSI}3mA${CSI}23mB`, 'italic'],
-    ['24 clears underline', `${CSI}4mA${CSI}24mB`, 'underline'],
-    ['27 clears inverse', `${CSI}7mA${CSI}27mB`, 'inverse'],
-  ] as const)('SGR %s', (_name, sequence, key) => {
+  test('SGR 23, 24 and 27 each clear only their own attribute', () => {
     const term = emulator(20, 2);
-    term.write(sequence);
-    expect(styleAt(term.frame(), 0, 1)?.[key]).toBe(false);
+    term.write(`${CSI}3;4;7mA${CSI}23mB${CSI}24mC${CSI}27mD`);
+    const frame = term.frame();
+    expect(styleAt(frame, 0, 1)).toMatchObject({ italic: false, underline: true, inverse: true });
+    expect(styleAt(frame, 0, 2)).toMatchObject({ underline: false, inverse: true });
+    expect(styleAt(frame, 0, 3)?.inverse).toBe(false);
   });
 
   test('SGR 39 restores the default foreground', () => {

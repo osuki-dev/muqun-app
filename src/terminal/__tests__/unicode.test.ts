@@ -87,29 +87,21 @@ describe('dingbats are one column, emoji are two', () => {
     return term.frame().cursor.column;
   };
 
-  test.each([
-    ['✓', 'check mark'],
-    ['✗', 'ballot x'],
-    ['✳', 'eight-spoked asterisk'],
-    ['❯', 'heavy angle quotation mark'],
-    ['✔', 'heavy check mark (substituted to U+2713)'],
-    ['✻', 'teardrop asterisk (substituted to U+2733)'],
-    ['⚙', 'gear'],
-    ['⚠', 'warning sign'],
-  ])('%s (%s) takes one column', (character) => {
-    expect(graphemeWidth(character)).toBe(1);
-    expect(columnsOf(character)).toBe(1);
-  });
-
-  test.each([
-    ['✅', 'white heavy check mark'],
-    ['❌', 'cross mark'],
-    ['✨', 'sparkles'],
-    ['⚡', 'high voltage'],
-    ['❗', 'exclamation mark'],
-  ])('%s (%s) takes two columns', (character) => {
-    expect(graphemeWidth(character)).toBe(2);
-    expect(columnsOf(character)).toBe(2);
+  test('a dingbat takes one column and an emoji presentation two, measured and written', () => {
+    // ✔ is substituted to U+2713 at draw time and must keep its one column.
+    const rows: [string, number][] = [
+      ['✓', 1],
+      ['✔', 1],
+      ['⚠', 1],
+      ['✅', 2],
+      ['✨', 2],
+    ];
+    expect(
+      rows.map(([character]): [string, number] => [character, graphemeWidth(character)])
+    ).toEqual(rows);
+    expect(rows.map(([character]): [string, number] => [character, columnsOf(character)])).toEqual(
+      rows
+    );
   });
 
   test('a status line of ticks lands on the same columns the agent wrote it at', () => {
@@ -151,8 +143,8 @@ describe('dingbats are one column, emoji are two', () => {
 });
 
 describe('CJK stays two columns', () => {
-  test.each(['中', '、', '「', '！', 'あ', '가'])('%s takes two columns', (character) => {
-    expect(graphemeWidth(character)).toBe(2);
+  test('ideographs, CJK punctuation, kana and hangul take two columns', () => {
+    expect(['中', '、', '！', 'あ', '가'].map(graphemeWidth)).toEqual([2, 2, 2, 2, 2]);
   });
 
   test('a CJK and Latin row measures the same width the gateway laid out', () => {

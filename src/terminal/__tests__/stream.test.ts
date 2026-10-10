@@ -39,22 +39,32 @@ function chunked(input: string, boundaries: number[]): TerminalFrame {
   return term.frame();
 }
 
-describe('chunk-boundary invariance', () => {
-  test.each(STREAM_CORPUS)('%s: every single cut', (_name, input) => {
+describe('the corpus', () => {
+  // Every single cut, one code unit at a time, and three-way cuts through
+  // every escape sequence, all leave the frame one write leaves. And
+  // `parseTerminalSnapshot` is the frame it always was: recorded from the
+  // terminal-core before `write` learned to hold a tail
+  // (fixtures/snapshot-goldens.json) on the flat path, the forced-slow path,
+  // with a supplied width, and through a bare emulator.
+  test.each(STREAM_CORPUS)('%s: any cut leaves the recorded frame', (name, input) => {
+    const recorded = goldens as Record<string, string>;
+    expect(frameDigest(parseTerminalSnapshot(input))).toBe(recorded[`snapshot:${name}`]);
+    expect(frameDigest(parseTerminalSnapshot(input, undefined, 60))).toBe(
+      recorded[`snapshot@60:${name}`]
+    );
+    setTerminalFullEmulation(true);
+    try {
+      expect(frameDigest(parseTerminalSnapshot(input))).toBe(recorded[`snapshot-full:${name}`]);
+    } finally {
+      setTerminalFullEmulation(false);
+    }
     const reference = singleShot(input);
+    expect(frameDigest(reference)).toBe(recorded[`emulator:${name}`]);
     for (let cut = 0; cut <= input.length; cut += 1) {
       expect(chunked(input, [cut])).toEqual(reference);
     }
-  });
-
-  test.each(STREAM_CORPUS)('%s: one code unit at a time', (_name, input) => {
-    const reference = singleShot(input);
-    const cuts = Array.from({ length: input.length }, (_, index) => index + 1);
-    expect(chunked(input, cuts)).toEqual(reference);
-  });
-
-  test.each(STREAM_CORPUS)('%s: three-way cuts through every sequence', (_name, input) => {
-    const reference = singleShot(input);
+    const everyUnit = Array.from({ length: input.length }, (_, index) => index + 1);
+    expect(chunked(input, everyUnit)).toEqual(reference);
     for (let first = 0; first < input.length; first += 1) {
       if (input.charCodeAt(first) !== 0x1b) continue;
       for (let second = first; second <= Math.min(input.length, first + 12); second += 1) {
@@ -63,6 +73,12 @@ describe('chunk-boundary invariance', () => {
     }
   });
 
+  test('the goldens cover the whole corpus', () => {
+    expect(Object.keys(goldens)).toHaveLength(STREAM_CORPUS.length * 4);
+  });
+});
+
+describe('chunk boundaries', () => {
   test('a sequence split across writes is not visible in between', () => {
     const term = emulator(20, 2);
     term.write(`a${CSI}3`);
@@ -127,31 +143,6 @@ describe('chunk-boundary invariance', () => {
     term.reset();
     term.write('1mX');
     expect(textOf(term)).toBe('1mX');
-  });
-});
-
-describe('parseTerminalSnapshot is unchanged', () => {
-  // Recorded from the terminal-core before `write` learned to hold a tail
-  // (scripts/__gen-goldens, see fixtures/snapshot-goldens.json). Every corpus
-  // entry, on the flat path, the forced-slow path, with a supplied width, and
-  // through a bare emulator.
-  test.each(STREAM_CORPUS)('%s', (name, input) => {
-    const recorded = goldens as Record<string, string>;
-    expect(frameDigest(parseTerminalSnapshot(input))).toBe(recorded[`snapshot:${name}`]);
-    expect(frameDigest(parseTerminalSnapshot(input, undefined, 60))).toBe(
-      recorded[`snapshot@60:${name}`]
-    );
-    setTerminalFullEmulation(true);
-    try {
-      expect(frameDigest(parseTerminalSnapshot(input))).toBe(recorded[`snapshot-full:${name}`]);
-    } finally {
-      setTerminalFullEmulation(false);
-    }
-    expect(frameDigest(singleShot(input))).toBe(recorded[`emulator:${name}`]);
-  });
-
-  test('the goldens cover the whole corpus', () => {
-    expect(Object.keys(goldens)).toHaveLength(STREAM_CORPUS.length * 4);
   });
 });
 
