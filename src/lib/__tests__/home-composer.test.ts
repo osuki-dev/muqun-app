@@ -137,14 +137,24 @@ describe('homeSessionParams', () => {
       params: { model: sonnet },
       shown: { model: sonnet },
     },
-  ])('$name', ({ picked, defaults, refused, discovered, params, shown }) => {
+    {
+      name: 'before the catalog answers, or when it fails, the pick is sent as stored',
+      picked: { model: gone, mode: 'review' },
+      defaults: {},
+      unread: true,
+      discovered: true,
+      params: { model: gone, mode: 'review', agentId: 'opencode' },
+      shown: { model: gone, mode: 'review' },
+    },
+  ])('$name', ({ picked, defaults, refused, unread, discovered, params, shown }) => {
     expect(
       homeSessionParams({
         picked,
         catalogDefaults: defaults,
         ...(refused ? { refused } : {}),
-        models,
-        modes,
+        ...(unread ? { catalogRead: false } : {}),
+        models: unread ? [] : models,
+        modes: unread ? [] : modes,
         agentId: 'opencode',
         agentsDiscovered: discovered,
       })

@@ -3304,6 +3304,7 @@ msgid "Loading themes…"
 msgstr "Cargando temas…"
 
 #: src/app/settings-voice.tsx
+#: src/components/home-composer-dock.tsx
 #: src/components/transcript-block-image.tsx
 msgid "Loading…"
 msgstr "Cargando…"
@@ -3403,8 +3404,10 @@ msgid "Mode · {0} → {1}"
 msgstr "Modo · {0} → {1}"
 
 #: src/app/settings-voice.tsx
+#: src/components/agent-composer.tsx
 #: src/components/agent-context-sheet.tsx
 #: src/components/agent-subagent-detail-sheet.tsx
+#: src/components/home-composer-dock.tsx
 msgid "Model"
 msgstr "Modelo"
 

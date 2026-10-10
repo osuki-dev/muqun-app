@@ -288,6 +288,8 @@ export function HomeComposerDock({
   const [catalogRead, setCatalogRead] = useState<{ key: string; catalog: AgentCatalog } | null>(
     null
   );
+  // A failed read, by the key it was for: the pill stops saying it is loading.
+  const [catalogFailedKey, setCatalogFailedKey] = useState<string | null>(null);
   // The models this computer already refused (a session whose turn failed
   // as "not supported"), read from its recent sessions alongside the catalog:
   // the model the pill names and Send sends is never one of them.
@@ -303,6 +305,7 @@ export function HomeComposerDock({
       })
       .catch((failure: unknown) => {
         console.warn('Failed to load the agent catalog for Home:', failure);
+        if (current) setCatalogFailedKey(catalogKey);
       });
     listAgentSessions(HOME_AGENT_SESSION_ID, {
       roots: true,
@@ -341,6 +344,7 @@ export function HomeComposerDock({
     modes,
     ...(agentId ? { agentId } : {}),
     agentsDiscovered,
+    catalogRead: catalog !== undefined,
   });
   const selectedModel = shown.model;
   const modelInfo = selectedModel
@@ -350,7 +354,13 @@ export function HomeComposerDock({
           (!selectedModel.provider_id || model.provider_id === selectedModel.provider_id)
       )
     : undefined;
-  const modelName = formatModelName(selectedModel, '', modelInfo?.name);
+  // Nothing to name yet: say the catalog is on its way, or, once it failed,
+  // the plain word, translated -- never the formatter's English fallback.
+  const modelName = selectedModel
+    ? formatModelName(selectedModel, '', modelInfo?.name)
+    : catalog || catalogFailedKey === catalogKey
+      ? t`Model`
+      : t`Loading…`;
   const canPickMode = features.modes && modes.length > 0;
 
   const selectModel = useStableHandler((model: ModelRef) => {
@@ -369,9 +379,11 @@ export function HomeComposerDock({
     });
   }
   // A mode that names its own model brings it, as it does on a session: the
-  // model pick is dropped and the ladder starts from the mode again.
+  // model pick is dropped and the ladder starts from the mode again. A mode
+  // that names none keeps the model the reader picked.
   function selectMode(mode: string) {
-    if (targetId) chooseMode(targetId, agentId, mode);
+    const bringsModel = modes.find((entry) => entry.id === mode)?.model !== undefined;
+    if (targetId) chooseMode(targetId, agentId, mode, bringsModel);
   }
 
   /** The workbench's own sentences for a failed request, in this agent's name. */
