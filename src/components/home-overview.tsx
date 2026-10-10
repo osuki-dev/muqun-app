@@ -252,9 +252,12 @@ export function HomeOverview({
   // kept; its row menu is not.
   const { record, records, loading, hydrationError, retryHydration, selectRecord, enterDemo } =
     useGatewayRecord();
-  // The ledgers Home keeps live: up to four computers, the selected one first,
-  // each over its own task-only socket while Home is mounted (see
-  // `taskSubscriptionServerIds`). Needs you and the cards read them all.
+  const recordIds = useMemo(() => records.map((server) => server.serverId), [records]);
+  const padReachabilityByServer = useHomeReachability(recordIds, activeConnection);
+  // The ledgers Home keeps live: every computer that keeps one and answers,
+  // the selected one first, each over its own task-only socket while Home is
+  // mounted (see `taskSubscriptionServerIds`). One Home's check says is down
+  // is left alone until it answers. Needs you and the cards read them all.
   const capabilitiesByServer = useServerCapabilities((state) => state.byServer);
   const taskServerIds = useMemo(
     () =>
@@ -263,8 +266,9 @@ export function HomeOverview({
         selectedId: record?.serverId,
         hasLedger: (serverId) => hasTaskLedger(capabilitiesByServer[serverId]),
         isDemo: (serverId) => serverId === DEMO_SERVER_ID,
+        isOffline: (serverId) => padReachabilityByServer[serverId] === 'offline',
       }),
-    [records, record?.serverId, capabilitiesByServer]
+    [records, record?.serverId, capabilitiesByServer, padReachabilityByServer]
   );
   // One card per paired computer; the demo has no ledger and no card.
   const cardServers = useMemo(
@@ -415,8 +419,6 @@ export function HomeOverview({
   // (agent socket, terminal stream). Home re-renders only when one of those
   // answers moves -- not when a probe lands or expires with the same answer,
   // and not on a tick. A standalone Home has no active connection override.
-  const recordIds = useMemo(() => records.map((server) => server.serverId), [records]);
-  const padReachabilityByServer = useHomeReachability(recordIds, activeConnection);
 
   // Which servers have been opened on this device, and when. Already stored for
   // the "while you were away" digest; the probe order is its second reader, and

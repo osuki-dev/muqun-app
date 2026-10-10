@@ -241,6 +241,7 @@ export function HomeComputerCards({
     servers,
     index,
     reachability: (serverId) => reachability[serverId],
+    followed: new Set(followedIds),
     dismissed: inputs.dismissed,
     pending: inputs.pending,
     nowMs,

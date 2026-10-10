@@ -81,6 +81,13 @@ describe('taskSubscriptionServerIds', () => {
     ]);
   });
 
+  test("one Home's check says is down is not followed, unless it is the selected one", () => {
+    const isOffline = (id: string) => id === 'b' || id === 'e';
+    expect(
+      taskSubscriptionServerIds({ servers, selectedId: 'e', hasLedger: () => true, isOffline })
+    ).toEqual(['e', 'a', 'd', 'f']);
+  });
+
   test('the demo is never subscribed', () => {
     expect(
       taskSubscriptionServerIds({
@@ -228,6 +235,24 @@ describe('buildComputerCards', () => {
       ['idle', 'idle'],
     ]);
     expect(cards[0]!.now[0]!.children.map((child) => child.taskId)).toEqual(['c']);
+  });
+
+  test('a card whose ledger is not followed sorts as idle, not by its old rows', () => {
+    const cards = buildComputerCards({
+      servers,
+      index: index({
+        busy: [task('w', 'working', 2)],
+        asks: [task('c', 'waiting', 4)],
+      }),
+      reachability: () => 'live',
+      dismissed: new Set(),
+      nowMs: NOW,
+      followed: new Set(['busy']),
+    });
+    expect(cards.map((card) => [card.serverId, card.activity])).toEqual([
+      ['busy', 'working'],
+      ['asks', 'idle'],
+    ]);
   });
 
   test('now holds open roots by urgency (working, starting, paused), capped; finished leaves out acknowledged tasks', () => {
