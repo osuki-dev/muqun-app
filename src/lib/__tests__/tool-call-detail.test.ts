@@ -194,25 +194,25 @@ describe('output', () => {
   });
 
   test('the file the engine saved the whole output to is found inside the workspace', () => {
-    const workspace = { workspace: '/Users/otaku/Work/app' };
+    const workspace = { workspace: '/Users/dev/Work/app' };
     expect(
       toolCallDetail(
-        tool({ metadata: { truncated: true, outputPath: '/Users/otaku/Work/app/.out/tool_1' } }),
+        tool({ metadata: { truncated: true, outputPath: '/Users/dev/Work/app/.out/tool_1' } }),
         workspace
       ).fullOutputPath
-    ).toBe('/Users/otaku/Work/app/.out/tool_1');
+    ).toBe('/Users/dev/Work/app/.out/tool_1');
     expect(
       toolCallDetail(
         tool({
           output:
-            '...\nThe tool call succeeded but the output was truncated. Full output saved to: /Users/otaku/Work/app/tool_2\n',
+            '...\nThe tool call succeeded but the output was truncated. Full output saved to: /Users/dev/Work/app/tool_2\n',
         }),
         workspace
       ).fullOutputPath
-    ).toBe('/Users/otaku/Work/app/tool_2');
+    ).toBe('/Users/dev/Work/app/tool_2');
     // No workspace known: nothing is offered.
     expect(
-      toolCallDetail(tool({ metadata: { outputPath: '/Users/otaku/Work/app/tool_1' } }))
+      toolCallDetail(tool({ metadata: { outputPath: '/Users/dev/Work/app/tool_1' } }))
         .fullOutputPath
     ).toBeUndefined();
   });
@@ -227,7 +227,7 @@ describe('output', () => {
 });
 
 describe('workspaceOutputPath', () => {
-  const root = '/Users/otaku/Work/app';
+  const root = '/Users/dev/Work/app';
 
   test('inside the workspace, normalised', () => {
     expect(workspaceOutputPath(`${root}/build/out.log`, root)).toBe(`${root}/build/out.log`);
@@ -258,14 +258,14 @@ describe('workspaceOutputPath', () => {
     expect(workspaceOutputPath(`${root}-evil/out.log`, root)).toBeUndefined();
     expect(workspaceOutputPath(root, root)).toBeUndefined();
     expect(
-      workspaceOutputPath('/Users/otaku/.local/share/opencode/tool-output/tool_1', root)
+      workspaceOutputPath('/Users/dev/.local/share/opencode/tool-output/tool_1', root)
     ).toBeUndefined();
   });
 
   test('the gateway uploads folder is not an output location', () => {
     expect(
       workspaceOutputPath(
-        '/Users/otaku/Library/Application Support/muqun-gateway/uploads/a.txt',
+        '/Users/dev/Library/Application Support/muqun-gateway/uploads/a.txt',
         root
       )
     ).toBeUndefined();
