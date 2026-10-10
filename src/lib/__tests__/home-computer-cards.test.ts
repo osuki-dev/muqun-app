@@ -532,7 +532,7 @@ describe('taskRowVisual: the rules the state table carries', () => {
     [
       'a working mirror whose computer went quiet says so, and still takes Mark done',
       task('t', 'working', 1, {
-        binding: { kind: 'peer', peerId: 'srv-mini', remoteTaskId: 'r' },
+        binding: { kind: 'peer', peerId: 'srv-cedar', remoteTaskId: 'r' },
         progress: 'running tests',
         peerReachable: false,
         peerLastSeenMs: 40,
@@ -543,7 +543,7 @@ describe('taskRowVisual: the rules the state table carries', () => {
     [
       'a dispatching mirror whose computer never answered takes Mark done',
       task('t', 'dispatching', 1, {
-        binding: { kind: 'peer', peerId: 'srv-mini', remoteTaskId: '' },
+        binding: { kind: 'peer', peerId: 'srv-cedar', remoteTaskId: '' },
         peerReachable: false,
       }),
       { ...plain, canComplete: true },
@@ -552,8 +552,8 @@ describe('taskRowVisual: the rules the state table carries', () => {
     [
       'a failed mirror is worded from its reason, never its summary',
       task('t', 'failed', 1, {
-        binding: { kind: 'peer', peerId: 'srv-mini', remoteTaskId: 'r' },
-        summary: 'peer_unlinked: mini was unlinked',
+        binding: { kind: 'peer', peerId: 'srv-cedar', remoteTaskId: 'r' },
+        summary: 'peer_unlinked: cedar was unlinked',
         reason: 'peer_unlinked',
       }),
       plain,
@@ -562,8 +562,8 @@ describe('taskRowVisual: the rules the state table carries', () => {
     [
       "a refused create (no reason, no task over there) gets the general line, not the gateway's text",
       task('t', 'failed', 1, {
-        binding: { kind: 'peer', peerId: 'srv-mini', remoteTaskId: '' },
-        summary: 'mini does not take work from other computers',
+        binding: { kind: 'peer', peerId: 'srv-cedar', remoteTaskId: '' },
+        summary: 'cedar does not take work from other computers',
       }),
       plain,
       { line: { kind: 'mirrorFailed', reason: '' } },
@@ -571,7 +571,7 @@ describe('taskRowVisual: the rules the state table carries', () => {
     [
       "a mirror whose task over there failed shows that task's own summary",
       task('t', 'failed', 1, {
-        binding: { kind: 'peer', peerId: 'srv-mini', remoteTaskId: 'r' },
+        binding: { kind: 'peer', peerId: 'srv-cedar', remoteTaskId: 'r' },
         summary: 'tests failed: 3',
       }),
       plain,
@@ -580,7 +580,7 @@ describe('taskRowVisual: the rules the state table carries', () => {
     [
       "a reachable mirror shows its computer's own progress",
       task('t', 'working', 1, {
-        binding: { kind: 'peer', peerId: 'srv-mini', remoteTaskId: 'r' },
+        binding: { kind: 'peer', peerId: 'srv-cedar', remoteTaskId: 'r' },
         progress: 'running tests',
         peerReachable: true,
       }),
@@ -604,8 +604,8 @@ describe('openTaskWork on a mirror', () => {
     [
       'opens the session on the computer that runs it',
       known,
-      'srv-mini',
-      [['agent', 'srv-mini', 'ses_9']],
+      'srv-cedar',
+      [['agent', 'srv-cedar', 'ses_9']],
     ],
     [
       'without a mapping, the link id is taken as the computer',
@@ -616,10 +616,10 @@ describe('openTaskWork on a mirror', () => {
     [
       'opens that computer when its task there cannot be read',
       async (): Promise<TaskView | null> => null,
-      'srv-mini',
-      [['server', 'srv-mini']],
+      'srv-cedar',
+      [['server', 'srv-cedar']],
     ],
-    ['does nothing without a resolver', undefined, 'srv-mini', []],
+    ['does nothing without a resolver', undefined, 'srv-cedar', []],
   ] as const)('%s', async (_name, resolveTask, mapped, expected) => {
     const opened: string[][] = [];
     const asked: string[] = [];
@@ -637,7 +637,7 @@ describe('openTaskWork on a mirror', () => {
           : {}),
         ...(mapped ? { peerServerId: () => mapped } : {}),
       },
-      'srv-coding',
+      'srv-atlas',
       mirror
     );
     await Promise.resolve();

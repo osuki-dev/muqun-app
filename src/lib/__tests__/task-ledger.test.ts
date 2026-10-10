@@ -22,10 +22,10 @@ describe('work on another computer', () => {
         origin: 'agent',
         peer_reachable: false,
         peer_last_seen_ms: 7,
-        binding: { kind: 'peer', peer_id: 'srv-mini', remote_task_id: 't_r', peer_name: 'mini' },
+        binding: { kind: 'peer', peer_id: 'srv-cedar', remote_task_id: 't_r', peer_name: 'cedar' },
       })
     ).toMatchObject({
-      binding: { kind: 'peer', peerId: 'srv-mini', remoteTaskId: 't_r', peerName: 'mini' },
+      binding: { kind: 'peer', peerId: 'srv-cedar', remoteTaskId: 't_r', peerName: 'cedar' },
       peerReachable: false,
       peerLastSeenMs: 7,
     });
@@ -33,11 +33,11 @@ describe('work on another computer', () => {
       ...base,
       state: 'working',
       origin: 'peer',
-      requested_by: { kind: 'gateway', id: 'd9', name: 'coding' },
+      requested_by: { kind: 'gateway', id: 'd9', name: 'atlas' },
     });
     expect([there?.origin, there?.requestedBy]).toEqual([
       'peer',
-      { id: 'd9', name: 'coding', kind: 'gateway' },
+      { id: 'd9', name: 'atlas', kind: 'gateway' },
     ]);
     // A mirror whose task over there is not known yet (the create got no
     // answer) is still a mirror.
@@ -45,9 +45,9 @@ describe('work on another computer', () => {
       parseTaskView({
         ...base,
         state: 'dispatching',
-        binding: { kind: 'peer', peer_id: 'srv-mini' },
+        binding: { kind: 'peer', peer_id: 'srv-cedar' },
       })?.binding
-    ).toEqual({ kind: 'peer', peerId: 'srv-mini', remoteTaskId: '' });
+    ).toEqual({ kind: 'peer', peerId: 'srv-cedar', remoteTaskId: '' });
   });
 
   const complete = ['task_ledger_complete'];
@@ -189,9 +189,9 @@ describe('POST /api/tasks', () => {
     });
     // A variant means nothing without the model it belongs to.
     expect(ledgerTaskBody({ goal: 'g', variant: 'high' })).toEqual({ goal: 'g' });
-    expect(ledgerTaskBody({ goal: 'g', mentions: ['mini'] })).toEqual({
+    expect(ledgerTaskBody({ goal: 'g', mentions: ['cedar'] })).toEqual({
       goal: 'g',
-      mentions: ['mini'],
+      mentions: ['cedar'],
     });
     expect(ledgerTaskBody({ goal: 'g', mentions: [] })).toEqual({ goal: 'g' });
   });

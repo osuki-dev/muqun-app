@@ -32,41 +32,41 @@ describe('homeWaitingTasks', () => {
   const mirror: TaskBinding = {
     kind: 'peer',
     peerId: 'peer-1',
-    peerServerId: 'mini',
+    peerServerId: 'cedar',
     remoteTaskId: 'r',
   };
   test.each([
     [
       'both tasks present: one row, the real one',
-      { coding: [task('m', 'waiting', 3, mirror)], mini: [task('r', 'waiting', 2)] },
-      ['coding', 'mini'],
+      { atlas: [task('m', 'waiting', 3, mirror)], cedar: [task('r', 'waiting', 2)] },
+      ['atlas', 'cedar'],
       ['r'],
     ],
     [
       'the real task there is not waiting yet: the mirror is listed',
-      { coding: [task('m', 'waiting', 3, mirror)], mini: [task('r', 'working', 2)] },
-      ['coding', 'mini'],
+      { atlas: [task('m', 'waiting', 3, mirror)], cedar: [task('r', 'working', 2)] },
+      ['atlas', 'cedar'],
       ['m'],
     ],
     [
       "the running computer's ledger is stale: the mirror is listed",
-      { coding: [task('m', 'waiting', 3, mirror)], mini: [task('r', 'waiting', 2)] },
-      ['coding'],
+      { atlas: [task('m', 'waiting', 3, mirror)], cedar: [task('r', 'waiting', 2)] },
+      ['atlas'],
       ['m'],
     ],
     [
       'the task there is not known yet: the mirror is listed',
       {
-        coding: [task('m', 'waiting', 3, { ...mirror, remoteTaskId: '' })],
-        mini: [task('r', 'waiting', 2)],
+        atlas: [task('m', 'waiting', 3, { ...mirror, remoteTaskId: '' })],
+        cedar: [task('r', 'waiting', 2)],
       },
-      ['coding', 'mini'],
+      ['atlas', 'cedar'],
       ['m', 'r'],
     ],
     [
       'the running computer is not paired here: the mirror is listed',
-      { coding: [task('m', 'waiting', 3, mirror)] },
-      ['coding'],
+      { atlas: [task('m', 'waiting', 3, mirror)] },
+      ['atlas'],
       ['m'],
     ],
   ] as const)('%s', (_name, byServer, fresh, listed) => {
