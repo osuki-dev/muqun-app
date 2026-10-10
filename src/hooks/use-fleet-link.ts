@@ -437,8 +437,10 @@ export async function unlinkBeforeUnpair(leaving: GatewayRecord): Promise<void> 
 
 /**
  * The follow-up of this device's unfinished unpairings: each computer that was
- * down then and answered this pass is cleaned now, once, and dropped from the
- * record whatever came of it but silence.
+ * down then and answered this pass is asked again, and dropped from the record
+ * only on a confirmed outcome (`unlinkOn` true: every removal answered done,
+ * `removalOutcome`). An error, a refusal, a timeout keeps it pending for the
+ * next pass; the only other way out is the 30-day prune.
  */
 async function followUpUnpairs(computers: readonly FleetComputer[]): Promise<void> {
   const unpairs = useFleetUnpairs.getState();
@@ -452,12 +454,9 @@ async function followUpUnpairs(computers: readonly FleetComputer[]): Promise<voi
         continue;
       }
       const record = stillPaired(computerId);
-      if (!record) {
-        useFleetUnpairs.getState().settle(entry.serverId, computerId);
-        continue;
-      }
-      await unlinkOn(record, entry.serverId);
-      useFleetUnpairs.getState().settle(entry.serverId, computerId);
+      if (!record) continue;
+      const confirmed = await unlinkOn(record, entry.serverId).catch(() => false);
+      if (confirmed) useFleetUnpairs.getState().settle(entry.serverId, computerId);
     }
   }
   useFleetUnpairs.getState().prune(
