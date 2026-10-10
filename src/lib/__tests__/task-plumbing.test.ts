@@ -32,18 +32,33 @@ describe('stripTaskInstruction', () => {
 });
 
 describe('stripTaskMarkers', () => {
-  test.each([
-    ['no marker', 'All green.', 'All green.'],
-    ['trailing done line', 'All green.\n\nMUQUN_TASK_DONE: the build is green', 'All green.'],
-    ['bulleted blocked line', 'Stopped.\n⏺ MUQUN_TASK_BLOCKED: notes.md is missing', 'Stopped.'],
-    ['marker only', '  - MUQUN_TASK_DONE: done', ''],
+  test.each<[string, string, boolean, string]>([
+    ['no marker', 'All green.', false, 'All green.'],
+    [
+      'trailing done line',
+      'All green.\n\nMUQUN_TASK_DONE: the build is green',
+      false,
+      'All green.',
+    ],
+    [
+      'bulleted blocked line',
+      'Stopped.\n⏺ MUQUN_TASK_BLOCKED: notes.md is missing',
+      false,
+      'Stopped.',
+    ],
+    ['backticked line', 'Done.\n`MUQUN_TASK_DONE: built`', false, 'Done.'],
+    ['marker only', '  - MUQUN_TASK_DONE: done', false, ''],
     [
       'mid-line mention stays',
       'It prints `MUQUN_TASK_DONE:` at the end',
+      false,
       'It prints `MUQUN_TASK_DONE:` at the end',
     ],
-  ])('%s', (_, text, expected) => {
-    expect(stripTaskMarkers(text)).toBe(expected);
+    ['partial last line is held while streaming', 'Done.\nMUQUN_TASK_D', true, 'Done.'],
+    ['and released at the turn end', 'Done.\nMUQUN_TASK_D', false, 'Done.\nMUQUN_TASK_D'],
+    ['a terminated line is not held', 'Done.\nMUQUN\n', true, 'Done.\nMUQUN\n'],
+  ])('%s', (_, text, streaming, expected) => {
+    expect(stripTaskMarkers(text, streaming)).toBe(expected);
   });
 });
 

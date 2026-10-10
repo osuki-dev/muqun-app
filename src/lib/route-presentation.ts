@@ -222,11 +222,12 @@ export const sheetRouteDetents: Readonly<Record<string, SheetDetents>> = {
   // whole screen.
   'settings-theme': 'expandable',
   'settings-theme-browse': 'expandable',
-  // Settings groups are as tall as their rows: three alert switches are a
-  // short sheet, not a tall one with a band of ground under them. A group
-  // longer than the expandable window stops there and scrolls
-  // (`SheetScene`'s `fitsContent`).
-  'settings-servers': 'fitToContents',
+  // A machine's row opens into an edit form: room above the keyboard.
+  'settings-servers': 'expandable',
+  // Settings groups without text fields are as tall as their rows: three
+  // alert switches are a short sheet, not a tall one with a band of ground
+  // under them. A group longer than the expandable window stops there and
+  // scrolls (`SheetScene`'s `fitsContent`).
   'settings-terminal': 'fitToContents',
   'settings-appearance': 'fitToContents',
   'settings-alerts': 'fitToContents',
@@ -270,7 +271,8 @@ export const sheetRouteDetents: Readonly<Record<string, SheetDetents>> = {
   'agent-worktree': 'expandable',
   'agent-context': 'expandable',
   'voice-input': 'fitToContents',
-  'settings-voice': 'fitToContents',
+  // Three fields: room above the keyboard, like the font sheet.
+  'settings-voice': 'expandable',
   'agent-vcs-diff': 'expandable',
   // A short list with its own scroll root, so it takes a bounded viewport rather
   // than circular fit-to-content sizing.
@@ -325,6 +327,8 @@ export type SheetContent = 'list' | 'short';
  * taller or shorter than it wants, never a row nobody can reach.
  */
 export const sheetRouteContent: Readonly<Record<string, SheetContent>> = {
+  'settings-servers': 'list',
+  'settings-voice': 'list',
   // The quick actions: tiles, then a grouped list that grows with the machine.
   commands: 'list',
   // Machines, backends, workspaces and panels in one column -- "what is
@@ -382,13 +386,11 @@ export const sheetRouteContent: Readonly<Record<string, SheetContent>> = {
   'settings-home-layout': 'short',
   'web-service': 'short',
   // The settings groups are content-sized, capped by `SheetScene`'s `fitsContent`.
-  'settings-servers': 'short',
   'settings-terminal': 'short',
   'settings-appearance': 'short',
   'settings-alerts': 'short',
   'settings-storage': 'short',
   'settings-about': 'short',
-  'settings-voice': 'short',
 };
 
 /**

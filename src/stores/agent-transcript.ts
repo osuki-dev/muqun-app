@@ -9,33 +9,43 @@ import { withoutTaskPlumbing } from '@/lib/task-plumbing';
 export function createAgentTranscriptStore() {
   return createStore<AgentTranscriptState>((set, get) => {
     const markdownRows = new WeakMap<TimelineItem, TimelineItem[]>();
-    const renderItems = (canonical: TimelineItem): TimelineItem[] => {
-      const cached = markdownRows.get(canonical);
-      if (cached) return cached;
-      // The gateway's task plumbing (a synthetic part, its completion request,
-      // the agent's marker line) is never drawn. See `task-plumbing.ts`.
-      const item = withoutTaskPlumbing(canonical);
-      if (!item || item.role !== 'assistant' || item.part.type !== 'text') {
-        const rows = item ? [item] : [];
-        markdownRows.set(canonical, rows);
-        return rows;
-      }
+    /** The rows one drawn item becomes: each diagram virtualized on its own. */
+    const splitRows = (item: TimelineItem): TimelineItem[] => {
+      if (item.role !== 'assistant' || item.part.type !== 'text') return [item];
       const parts = splitDiagramMarkdown(item.part.text);
       // Virtualize each diagram in the existing list, never nest another list
       // inside a message. Keep the canonical timeline intact for sync/copy.
-      const rows =
-        parts.length > 1 && parts.some((part) => part.source !== undefined)
-          ? parts
-              .filter((part) => part.markdown.trim().length > 0)
-              .map((part) => ({
-                ...item,
-                row_key:
-                  part.start === 0
-                    ? (item.row_key ?? item.id)
-                    : `${item.row_key ?? item.id}:markdown:${part.start}`,
-                part: { type: 'text' as const, text: part.markdown },
-              }))
-          : [item];
+      return parts.length > 1 && parts.some((part) => part.source !== undefined)
+        ? parts
+            .filter((part) => part.markdown.trim().length > 0)
+            .map((part) => ({
+              ...item,
+              row_key:
+                part.start === 0
+                  ? (item.row_key ?? item.id)
+                  : `${item.row_key ?? item.id}:markdown:${part.start}`,
+              part: { type: 'text' as const, text: part.markdown },
+            }))
+        : [item];
+    };
+    /**
+     * The gateway's task plumbing (a synthetic part, its completion request,
+     * the agent's marker line) is never drawn. See `task-plumbing.ts`.
+     *
+     * `streaming`: the part still arriving. While its last line could still
+     * become a marker it is drawn without that line, uncached; otherwise it
+     * is the same cached rows it settles to.
+     */
+    const renderItems = (canonical: TimelineItem, streaming: boolean): TimelineItem[] => {
+      if (streaming) {
+        const held = withoutTaskPlumbing(canonical, true);
+        if (shownText(held) !== shownText(withoutTaskPlumbing(canonical)))
+          return held ? splitRows(held) : [];
+      }
+      const cached = markdownRows.get(canonical);
+      if (cached) return cached;
+      const item = withoutTaskPlumbing(canonical);
+      const rows = item ? splitRows(item) : [];
       markdownRows.set(canonical, rows);
       return rows;
     };
@@ -59,7 +69,8 @@ export function createAgentTranscriptStore() {
         const visibleStart = anchor >= 0 ? Math.min(anchor, fallbackStart) : fallbackStart;
         visible = reconciled.slice(visibleStart);
       }
-      visible = visible.flatMap(renderItems);
+      const streaming = config.status === 'busy' ? visible.at(-1) : undefined;
+      visible = visible.flatMap((item) => renderItems(item, item === streaming));
       const nextRows: Record<string, TimelineRenderGroup> = {};
       const keys: string[] = [];
       let preceding: TimelineItem | undefined;
@@ -173,3 +184,7 @@ export interface AgentTranscriptState {
   configure: (config: TranscriptConfig) => void;
 }
 export type AgentTranscriptStore = ReturnType<typeof createAgentTranscriptStore>;
+
+function shownText(item: TimelineItem | null): string | null {
+  return item?.part.type === 'text' ? item.part.text : null;
+}
