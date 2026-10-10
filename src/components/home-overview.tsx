@@ -943,7 +943,7 @@ export function HomeOverview({
       }
       fieldLines={padLaunch ? PAD_DOCK_FIELD_LINES : undefined}
       onDockHeight={setDockHeight}
-      onFieldFocus={padLaunch ? setDockFocused : undefined}
+      onFieldFocus={isPad ? setDockFocused : undefined}
       autoHide={padLaunch ? undefined : pageDockHide.dock}
       onOpenAgent={commands.openAgent}
     />
