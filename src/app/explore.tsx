@@ -311,11 +311,12 @@ export default function PairModal() {
 
   useEffect(() => {
     if (!pairedServer) return;
+    // Back to where the reader paired from (Settings › Computers, Home), which
+    // lists the new computer and probes it on focus -- never into a terminal
+    // on it, which the reader did not ask for (A4).
     const timeout = setTimeout(() => {
-      router.replace({
-        pathname: '/servers/[serverId]',
-        params: { serverId: pairedServer.serverId },
-      } as Href);
+      if (router.canGoBack()) router.back();
+      else router.replace('/');
     }, 850);
     return () => clearTimeout(timeout);
   }, [pairedServer, router]);
