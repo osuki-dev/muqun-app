@@ -159,8 +159,8 @@ describe('going into a folder', () => {
 
 describe('a typed ~ path is not the workspace', () => {
   test("the gateway's canonical folder replaces the typed spelling", () => {
-    expect(settledWorkspaceDirectory('~/Work/muqun/themes', '/Users/otaku/Work/muqun/themes')).toBe(
-      '/Users/otaku/Work/muqun/themes'
+    expect(settledWorkspaceDirectory('~/Work/muqun/themes', '/Users/dev/Work/muqun/themes')).toBe(
+      '/Users/dev/Work/muqun/themes'
     );
     expect(settledWorkspaceDirectory('/abs', undefined)).toBe('/abs');
     expect(settledWorkspaceDirectory('/abs', '')).toBe('/abs');
