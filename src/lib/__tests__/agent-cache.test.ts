@@ -12,7 +12,6 @@ const {
   clearAgentCache,
   dedupeInFlight,
   getCachedAgentCatalogSync,
-  getCachedAgentProjectsSync,
   getCachedEntry,
   setCachedEntry,
   touchCacheEntryTimestamp,
@@ -69,16 +68,6 @@ describe('agent cache storage and memory fallback', () => {
     const entry = getCachedEntry(key);
     expect(entry?.etag).toBe('"etag-123"');
     expect(typeof entry?.timestamp).toBe('number');
-  });
-
-  test('stores and retrieves projects synchronously', () => {
-    const key = 'projects:test:global';
-    expect(getCachedAgentProjectsSync(key)).toBeNull();
-
-    const mockProjects = [{ id: 'proj-1', name: 'App', canonical: '/home/user/app' }];
-
-    setCachedEntry(key, mockProjects);
-    expect(getCachedAgentProjectsSync(key)).toEqual(mockProjects);
   });
 
   test('touchCacheEntryTimestamp updates timestamp', async () => {

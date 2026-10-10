@@ -198,24 +198,26 @@ describe('the agent surface draws engine prose through one markdown pipeline', (
     ).toBeGreaterThan(0);
   });
 
-  for (const file of FILES) {
-    test(`${file}: every plain <Text> of engine text is one that should be`, () => {
+  test('every plain <Text> of engine text is one that should be, and no allowance is stale', () => {
+    const unexplained: string[] = [];
+    const stale: string[] = [];
+    for (const file of FILES) {
       const source = readFileSync(join(COMPONENTS, file), 'utf8');
       const allowed = ALLOWED[file] ?? {};
-      const unexplained = engineTextIn(source).filter((expression) => !(expression in allowed));
-      // A new one means either the text belongs in `BoundedMarkdown` with a
-      // style from `markdown-style.ts`, or it is a label, a path or a payload
-      // and belongs in `ALLOWED` above with the sentence that says which.
-      expect(unexplained).toEqual([]);
-    });
-
-    test(`${file}: nothing is allow-listed that is no longer there`, () => {
-      const source = readFileSync(join(COMPONENTS, file), 'utf8');
-      const drawn = new Set(engineTextIn(source));
-      const stale = Object.keys(ALLOWED[file] ?? {}).filter((expression) => !drawn.has(expression));
-      expect(stale).toEqual([]);
-    });
-  }
+      const drawn = engineTextIn(source);
+      for (const expression of drawn) {
+        if (!(expression in allowed)) unexplained.push(`${file}: ${expression}`);
+      }
+      for (const expression of Object.keys(allowed)) {
+        if (!drawn.includes(expression)) stale.push(`${file}: ${expression}`);
+      }
+    }
+    // A new one means either the text belongs in `BoundedMarkdown` with a
+    // style from `markdown-style.ts`, or it is a label, a path or a payload and
+    // belongs in `ALLOWED` above with the sentence that says which.
+    expect(unexplained).toEqual([]);
+    expect(stale).toEqual([]);
+  });
 
   test('every allow-listed file is one the scan actually reads', () => {
     expect(Object.keys(ALLOWED).filter((file) => !FILES.includes(file))).toEqual([]);
