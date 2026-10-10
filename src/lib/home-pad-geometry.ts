@@ -78,16 +78,19 @@ const COVER_ARTWORK_RATIO = 0.9;
 
 /**
  * The Pad cover block at the top of the work column: the pack's title and
- * painting, or the app's wordmark, in a fixed share of the page (about 45%
- * of the viewport, so 40-45% of the screen). The work scrolls under it.
+ * painting, or the app's wordmark. With only the tiles under it, it takes
+ * 45% of the viewport (40-45% of the screen); once Needs you or a computer
+ * card is there it shrinks to 22% (about 21% of the screen), so the tiles and the first card's header
+ * and Now row show above the dock without scrolling.
  *
  * - `titleSize`: the cover title as wide as the column allows (the 38% cap
  *   and measured fit the cover has always used), and never taller than its
  *   share of the block: 40% of it over a painting, the whole block (with the
  *   descender) for the wordmark.
- * - `artwork`: the painting at its own proportion, standing on the block's
- *   foot at the right, as wide as 85% of the column at most, so the title's
- *   start stays clear at its left.
+ * - `artwork`: the painting at its own proportion in the full block,
+ *   standing on the block's foot at the right, as wide as 85% of the column
+ *   at most, so the title's start stays clear at its left. The compact block
+ *   keeps that width and is only shorter.
  *
  * `measuredTitleWidth` is the title's width at 100pt, 0 until measured.
  */
@@ -96,13 +99,17 @@ export function padCover({
   coverWidth,
   measuredTitleWidth,
   wordmark,
+  compact,
 }: {
   viewportHeight: number;
   coverWidth: number;
   measuredTitleWidth: number;
   wordmark: boolean;
+  /** Needs you or a computer card is in the column: the block gives them the room. */
+  compact: boolean;
 }): { height: number; titleSize: number; artwork: { width: number; height: number } } {
-  const height = Math.round(viewportHeight * 0.45);
+  const fullHeight = Math.round(viewportHeight * 0.45);
+  const height = compact ? Math.round(viewportHeight * 0.22) : fullHeight;
   const byWidth =
     measuredTitleWidth > 0
       ? Math.min(coverWidth * 0.38, ((coverWidth - 4) * 100) / measuredTitleWidth)
@@ -110,10 +117,15 @@ export function padCover({
   const byHeight = wordmark
     ? height / (PAD_COVER_TITLE_LINE_HEIGHT + PAD_WORDMARK_DESCENDER)
     : (height * 0.4) / PAD_COVER_TITLE_LINE_HEIGHT;
-  const artworkHeight = Math.round(Math.min(height, coverWidth * 0.85 * COVER_ARTWORK_RATIO));
+  // The painting keeps the width it has in the full block; a shorter block
+  // crops it to its focal point (the slot's fit) rather than shrinking it.
+  const fullArtwork = Math.min(fullHeight, coverWidth * 0.85 * COVER_ARTWORK_RATIO);
   return {
     height,
     titleSize: Math.max(0, Math.min(byWidth, byHeight)),
-    artwork: { width: Math.round(artworkHeight / COVER_ARTWORK_RATIO), height: artworkHeight },
+    artwork: {
+      width: Math.round(fullArtwork / COVER_ARTWORK_RATIO),
+      height: Math.round(Math.min(height, fullArtwork)),
+    },
   };
 }
