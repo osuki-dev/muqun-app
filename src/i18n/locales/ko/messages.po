@@ -2308,6 +2308,7 @@ msgstr "연결이 끊겼습니다"
 
 #: src/components/agent-workbench.tsx
 #: src/components/in-app-notification-host.tsx
+#: src/components/task-row.tsx
 msgid "Dismiss"
 msgstr "닫기"
 
@@ -5271,6 +5272,10 @@ msgstr "다음 목표를 여기로 보냅니다"
 #: src/components/home-connections.tsx
 msgid "Sends your next goal here. Long press to open it."
 msgstr "다음 목표를 여기로 보냅니다. 길게 눌러 엽니다"
+
+#: src/components/task-row.tsx
+msgid "Sent · no reply yet"
+msgstr "보냄 · 아직 응답 없음"
 
 #: src/components/task-row.tsx
 msgid "Sent · waiting for {computer}"

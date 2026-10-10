@@ -20,6 +20,7 @@ import type { GatewayRecord } from '@/lib/gateway-storage';
 import {
   buildComputerCards,
   heldCardOrder,
+  pendingShown,
   taskRowRank,
   type ComputerCard,
   HOME_CARD_INSET,
@@ -77,8 +78,8 @@ function useCardInputs(nowMs: number) {
   const pendingAll = useHomeTaskCards((state) => state.pending);
   return {
     dismissed: new Set(dismissedList),
-    // A Sent row no task ever answered stops claiming the computer is busy.
-    pending: pendingAll.filter((item) => nowMs - item.atMs < PENDING_DISPATCH_TTL_MS),
+    // A Sent row no task ever answered goes, unless it holds a draft or a session.
+    pending: pendingAll.filter((item) => pendingShown(item, nowMs)),
   };
 }
 
@@ -131,7 +132,7 @@ export function hasComputerCardsAt({
       index: useServerTasksStore.getState().index,
       reachability: (serverId) => reachabilityByServer[serverId],
       dismissed: new Set(cards.dismissed),
-      pending: cards.pending.filter((item) => nowMs - item.atMs < PENDING_DISPATCH_TTL_MS),
+      pending: cards.pending.filter((item) => pendingShown(item, nowMs)),
       nowMs,
     }).length > 0
   );
@@ -159,9 +160,7 @@ export function ComputerCardsPresence({
   const nowMs = useDeadlineNow(subscribeCardDeadlines, nextCardExpiry);
   const dismissedList = useHomeTaskCards((state) => state.dismissed);
   const pending = useHomeTaskCards(
-    useShallow((state) =>
-      state.pending.filter((item) => nowMs - item.atMs < PENDING_DISPATCH_TTL_MS)
-    )
+    useShallow((state) => state.pending.filter((item) => pendingShown(item, nowMs)))
   );
   const dismissed = new Set(dismissedList);
   const hasCards = useServerTasksStore(
@@ -385,7 +384,7 @@ function ComputerCardView({
         <View style={styles.block}>
           {urgentNow.map(nowRow)}
           {card.pending.map((item) => (
-            <SentTaskRow key={item.id} item={item} computer={server.label} />
+            <SentTaskRow key={item.id} item={item} computer={server.label} nowMs={nowMs} />
           ))}
           {restNow.map(nowRow)}
           {card.nowTotal > card.now.length ? (

@@ -2308,6 +2308,7 @@ msgstr "Déconnecté"
 
 #: src/components/agent-workbench.tsx
 #: src/components/in-app-notification-host.tsx
+#: src/components/task-row.tsx
 msgid "Dismiss"
 msgstr "Fermer"
 
@@ -5271,6 +5272,10 @@ msgstr "Envoie ici votre prochain objectif"
 #: src/components/home-connections.tsx
 msgid "Sends your next goal here. Long press to open it."
 msgstr "Envoie ici votre prochain objectif. Appui long pour l’ouvrir"
+
+#: src/components/task-row.tsx
+msgid "Sent · no reply yet"
+msgstr "Envoyé · pas encore de réponse"
 
 #: src/components/task-row.tsx
 msgid "Sent · waiting for {computer}"

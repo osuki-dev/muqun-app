@@ -1,7 +1,12 @@
 import { createMMKV } from 'react-native-mmkv';
 import { create } from 'zustand';
 
-import { dismissedKey, type PendingDispatch, type PendingResend } from '@/lib/home-computer-cards';
+import {
+  dismissedKey,
+  pendingShown,
+  type PendingDispatch,
+  type PendingResend,
+} from '@/lib/home-computer-cards';
 
 type KeyValueStore = {
   getString: (key: string) => string | undefined;
@@ -12,8 +17,7 @@ const STORE_ID = 'muqun.home';
 const DISMISSED_KEY = 'muqun.home.acknowledged-tasks.v1';
 /** Enough for months of finished work; the oldest acknowledgement goes first. */
 const MAX_DISMISSED = 500;
-/** A sent goal no task ever answered stops claiming the computer is busy. */
-export const PENDING_DISPATCH_TTL_MS = 2 * 60_000;
+export { PENDING_DISPATCH_TTL_MS } from '@/lib/home-computer-cards';
 
 function openStore(): KeyValueStore {
   try {
@@ -117,7 +121,7 @@ export const useHomeTaskCards = create<HomeTaskCardsState>((set, get) => ({
         // A retry replaces the row its failure left, rather than standing beside it.
         ...state.pending.filter(
           (item) =>
-            now - item.atMs < PENDING_DISPATCH_TTL_MS &&
+            pendingShown(item, now) &&
             !(item.failed && item.serverId === serverId && item.goal === goal)
         ),
         { id, serverId, goal, atMs: now },

@@ -2308,6 +2308,7 @@ msgstr "Đã ngắt kết nối"
 
 #: src/components/agent-workbench.tsx
 #: src/components/in-app-notification-host.tsx
+#: src/components/task-row.tsx
 msgid "Dismiss"
 msgstr "Bỏ qua"
 
@@ -5271,6 +5272,10 @@ msgstr "Gửi mục tiêu tiếp theo tới đây"
 #: src/components/home-connections.tsx
 msgid "Sends your next goal here. Long press to open it."
 msgstr "Gửi mục tiêu tiếp theo tới đây. Nhấn giữ để mở"
+
+#: src/components/task-row.tsx
+msgid "Sent · no reply yet"
+msgstr "Đã gửi · chưa có phản hồi"
 
 #: src/components/task-row.tsx
 msgid "Sent · waiting for {computer}"
