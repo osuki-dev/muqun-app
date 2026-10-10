@@ -62,9 +62,6 @@ const ALLOWED: Readonly<Record<string, Readonly<Record<string, string>>>> = {
   'agent-model-sheet.tsx': {
     'section.title': 'a provider name labels the navigation button, never engine-authored prose',
   },
-  'agent-guide-sheet.tsx': {
-    command: 'the shell command the reader copies to start the agent, monospace and never prose',
-  },
   'agent-composer.tsx': {
     'contextPill.label': "the composer's own pill wording, not the engine's",
   },

@@ -1304,10 +1304,6 @@ msgstr "Farbmodus"
 msgid "Command"
 msgstr "Befehl"
 
-#: src/components/simfarm-preview.tsx
-msgid "Command copied"
-msgstr "Befehl kopiert"
-
 #: src/i18n/labels.ts
 msgid "Command mode"
 msgstr "Befehlsmodus"
@@ -1648,10 +1644,10 @@ msgstr "Steuerung"
 msgid "Conversational help and open-ended project questions."
 msgstr "Hilfe im Gespräch und offene Fragen zum Projekt"
 
-#: src/components/agent-guide-sheet.tsx
 #: src/components/agent-message-block.tsx
 #: src/components/asset-viewer.tsx
 #: src/components/bounded-markdown.tsx
+#: src/components/guide-command.tsx
 #: src/components/tool-call-detail-sheet.tsx
 msgid "Copied"
 msgstr "Kopiert"
@@ -1666,7 +1662,6 @@ msgid "Copied to clipboard"
 msgstr "In die Zwischenablage kopiert"
 
 #: src/app/explore.tsx
-#: src/components/simfarm-preview.tsx
 msgid "Copies it, ready to paste into a terminal"
 msgstr "Kopiert ihn, bereit zum Einfügen in ein Terminal"
 
@@ -1696,7 +1691,7 @@ msgstr "Pfad kopieren"
 msgid "Copy public key"
 msgstr "Öffentlichen Schlüssel kopieren"
 
-#: src/components/agent-guide-sheet.tsx
+#: src/components/guide-command.tsx
 msgid "Copy the command"
 msgstr "Befehl kopieren"
 
@@ -1839,6 +1834,10 @@ msgstr "Aufgabe konnte nicht als erledigt markiert werden"
 #: src/components/agent-workbench.tsx
 msgid "Could not move this session"
 msgstr "Sitzung konnte nicht verschoben werden"
+
+#: src/components/guide-command.tsx
+msgid "Could not open a terminal on this computer."
+msgstr "Auf diesem Computer konnte kein Terminal geöffnet werden."
 
 #: src/hooks/use-home-commands.ts
 msgid "Could not open destination"
@@ -4934,6 +4933,10 @@ msgstr "Im Hintergrund ausführen"
 #: src/components/agent-guide-sheet.tsx
 msgid "Run it under systemd or tmux to keep it up after you log out."
 msgstr "Starte es unter systemd oder tmux, damit es nach dem Abmelden weiterläuft"
+
+#: src/components/guide-command.tsx
+msgid "Run on {computerLabel}"
+msgstr "Auf {computerLabel} ausführen"
 
 #: src/i18n/labels.ts
 msgid "Run relevant tests"

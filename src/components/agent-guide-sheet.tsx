@@ -1,12 +1,12 @@
-import { memo, useState, useRef, useEffect, useCallback } from 'react';
+import { memo, useState, useCallback } from 'react';
 import { View, StyleSheet, ActivityIndicator, Linking } from 'react-native';
 import { useThemeTokens } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
 import { useLingui } from '@lingui/react/macro';
-import { Check, Copy, ExternalLink, RefreshCw, Terminal } from 'lucide-react-native';
-import * as Clipboard from 'expo-clipboard';
+import { ExternalLink, RefreshCw, Terminal } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { GuideCommand, useGuideCommandRuns } from '@/components/guide-command';
 import { PressableScale } from '@/components/pressable-scale';
 import { SheetScene, SHEET_LADDER } from '@/components/sheet-scene';
 import { appChrome } from '@/constants/appearance';
@@ -23,6 +23,8 @@ import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { settleAfter } from '@/lib/compiler-safe-control-flow';
 
 export interface AgentGuideSheetProps {
+  /** The computer the guide is about: its command runs there. */
+  serverId: string;
   serverLabel: string;
   /** What the gateway calls the agent, or the id with its first letter raised. */
   agentName: string;
@@ -34,8 +36,6 @@ export interface AgentGuideSheetProps {
   onOpenAgent?: () => void;
 }
 
-const COPIED_HOLD_MS = 2000;
-
 /**
  * What to do when an agent is not answering, as a native form sheet route.
  *
@@ -44,6 +44,7 @@ const COPIED_HOLD_MS = 2000;
  * around the command -- the monospace line on the ground is the object.
  */
 export const AgentGuideSheet = memo(function AgentGuideSheet({
+  serverId,
   serverLabel,
   agentName,
   agentKind,
@@ -61,25 +62,8 @@ export const AgentGuideSheet = memo(function AgentGuideSheet({
   const theme = useThemeTokens();
   const insets = useSafeAreaInsets();
 
-  const [copied, setCopied] = useState(false);
   const [checking, setChecking] = useState(false);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
-  const copyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    return () => {
-      if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
-    };
-  }, []);
-
-  const handleCopy = useCallback(async () => {
-    if (command) await Clipboard.setStringAsync(command);
-    void feedback('success');
-    setCopied(true);
-    if (copyTimerRef.current) clearTimeout(copyTimerRef.current);
-    copyTimerRef.current = setTimeout(() => setCopied(false), COPIED_HOLD_MS);
-  }, [command]);
-
   const handleCheckAgain = useCallback(async () => {
     setChecking(true);
     setStatusMessage(null);
@@ -111,6 +95,8 @@ export const AgentGuideSheet = memo(function AgentGuideSheet({
   }, [onCheckAgain, onClose, onOpenAgent, t]);
 
   const showServiceCommand = showsAgentSetupCommand(readiness) && Boolean(command);
+  const runs = useGuideCommandRuns(serverId) && showServiceCommand;
+  const checkInk = runs ? theme.colors.primary : theme.colors.onPrimary;
   const blurbKind = agentGuideBlurb(readiness);
   const blurb =
     blurbKind === 'ready'
@@ -162,31 +148,9 @@ export const AgentGuideSheet = memo(function AgentGuideSheet({
           </PressableScale>
         ) : null}
 
-        {showServiceCommand ? (
+        {showServiceCommand && command ? (
           <>
-            <PressableScale
-              testID="agent-guide-copy-cmd"
-              accessibilityRole="button"
-              accessibilityLabel={copied ? t`Copied` : t`Copy the command`}
-              onPress={handleCopy}
-              style={[styles.command, { borderColor: theme.colors.border }]}>
-              <Text variant="caption" color={theme.colors.primary} weight="bold">
-                $
-              </Text>
-              <Text
-                selectable
-                variant="bodySmall"
-                weight="semibold"
-                color={theme.colors.text}
-                style={styles.commandText}>
-                {command}
-              </Text>
-              {copied ? (
-                <Check size={14} color={theme.colors.success} strokeWidth={2.5} />
-              ) : (
-                <Copy size={14} color={theme.colors.textSubtle} strokeWidth={2} />
-              )}
-            </PressableScale>
+            <GuideCommand serverId={serverId} command={command} testID="agent-guide-cmd" />
 
             <View style={styles.tip}>
               <Terminal size={13} color={theme.colors.textSubtle} />
@@ -209,13 +173,19 @@ export const AgentGuideSheet = memo(function AgentGuideSheet({
           accessibilityLabel={t`Check again`}
           disabled={checking}
           onPress={handleCheckAgain}
-          style={[styles.action, { backgroundColor: theme.colors.primary }]}>
+          // Beside "Run on <computer>", which leads, it is the second action.
+          style={[
+            styles.action,
+            runs
+              ? { borderColor: theme.colors.border, borderWidth: StyleSheet.hairlineWidth }
+              : { backgroundColor: theme.colors.primary },
+          ]}>
           {checking ? (
-            <ActivityIndicator size="small" color={theme.colors.onPrimary} />
+            <ActivityIndicator size="small" color={checkInk} />
           ) : (
-            <RefreshCw size={15} color={theme.colors.onPrimary} strokeWidth={2.2} />
+            <RefreshCw size={15} color={checkInk} strokeWidth={2.2} />
           )}
-          <Text variant="bodySmall" weight="bold" color={theme.colors.onPrimary}>
+          <Text variant="bodySmall" weight="bold" color={checkInk}>
             {t`Check again`}
           </Text>
         </PressableScale>

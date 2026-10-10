@@ -119,6 +119,7 @@ export default function AgentGuideScreen() {
 
   return (
     <AgentGuideSheet
+      serverId={serverId}
       serverLabel={params.label || t`Computer`}
       agentName={agentName}
       agentKind={agentKind}
