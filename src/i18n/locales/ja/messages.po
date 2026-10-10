@@ -1958,6 +1958,10 @@ msgstr "変更点を読み込めませんでした"
 msgid "Could not read the terminal."
 msgstr "ターミナルを読み取れませんでした"
 
+#: src/components/home-composer-dock.tsx
+msgid "Could not read this computer's model list, so nothing was sent. Pick a model or try again."
+msgstr "このコンピューターのモデル一覧を読み込めなかったため、何も送信していません。モデルを選ぶか、もう一度お試しください"
+
 #: src/components/changes-sheet.tsx
 msgid "Could not read this file."
 msgstr "このファイルを読み込めませんでした"
@@ -6830,6 +6834,10 @@ msgstr "出力を待っています…"
 #: src/lib/network-error.ts
 msgid "Waiting for the network."
 msgstr "ネットワークを待っています"
+
+#: src/components/home-composer-dock.tsx
+msgid "Waiting for this computer's model list. Send again in a moment."
+msgstr "このコンピューターのモデル一覧を待っています。少ししてからもう一度送信してください"
 
 #: src/components/agent-composer.tsx
 #: src/components/server-terminal-workspace.tsx

@@ -1958,6 +1958,10 @@ msgstr "Không đọc được các thay đổi"
 msgid "Could not read the terminal."
 msgstr "Không thể đọc terminal"
 
+#: src/components/home-composer-dock.tsx
+msgid "Could not read this computer's model list, so nothing was sent. Pick a model or try again."
+msgstr "Không đọc được danh sách mô hình của máy tính này nên chưa gửi gì. Hãy chọn một mô hình hoặc thử lại"
+
 #: src/components/changes-sheet.tsx
 msgid "Could not read this file."
 msgstr "Không đọc được tệp này"
@@ -6830,6 +6834,10 @@ msgstr "Đang chờ đầu ra…"
 #: src/lib/network-error.ts
 msgid "Waiting for the network."
 msgstr "Đang chờ mạng"
+
+#: src/components/home-composer-dock.tsx
+msgid "Waiting for this computer's model list. Send again in a moment."
+msgstr "Đang chờ danh sách mô hình của máy tính này. Gửi lại sau giây lát"
 
 #: src/components/agent-composer.tsx
 #: src/components/server-terminal-workspace.tsx

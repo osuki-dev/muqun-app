@@ -5,6 +5,7 @@ import type { GatewayRecord } from '../gateway-storage';
 import {
   homeGuideParams,
   homeHiddenClientCommands,
+  homeSendModelGate,
   homeSessionParams,
   homeSessionReuse,
   ledgerModelId,
@@ -159,6 +160,26 @@ describe('homeSessionParams', () => {
         agentsDiscovered: discovered,
       })
     ).toEqual({ params, shown });
+  });
+});
+
+describe('homeSendModelGate: never a goal without a model', () => {
+  const sonnet = { provider_id: 'anthropic', model_id: 'sonnet' };
+  test.each([
+    ['a remembered pick before the catalog answers', true, sonnet, false, false, 'send'],
+    ['nothing remembered while the catalog is being read', true, undefined, false, false, 'wait'],
+    ['nothing remembered and the read failed', true, undefined, false, true, 'failed'],
+    ['the catalog was read (it may offer none)', true, undefined, true, false, 'send'],
+    ['an agent without a model choice', false, undefined, false, false, 'send'],
+  ] as const)('%s', (_name, choosesModel, model, catalogRead, catalogFailed, expected) => {
+    expect(
+      homeSendModelGate({
+        choosesModel,
+        model: model ? { ...model } : undefined,
+        catalogRead,
+        catalogFailed,
+      })
+    ).toBe(expected);
   });
 });
 

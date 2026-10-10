@@ -162,6 +162,25 @@ export function homeSessionParams(input: {
   };
 }
 
+/**
+ * Whether a goal may go out with the model the dock has: never with none, on
+ * an agent that takes one (an empty model lets the host run its own default,
+ * which on these machines is OpenRouter). A remembered pick or a read catalog
+ * is enough; otherwise Send waits for the catalog, and says so when its read
+ * failed rather than sending unpinned.
+ */
+export function homeSendModelGate(input: {
+  /** The agent takes a model choice (`modelSelection`). */
+  choosesModel: boolean;
+  /** The model the send would carry (`homeSessionParams(...).params.model`). */
+  model: ModelRef | undefined;
+  catalogRead: boolean;
+  catalogFailed: boolean;
+}): 'send' | 'wait' | 'failed' {
+  if (!input.choosesModel || input.model || input.catalogRead) return 'send';
+  return input.catalogFailed ? 'failed' : 'wait';
+}
+
 /** Where a dock pick of mode and model is remembered: one computer's one agent. */
 export function homeModelChoiceKey(serverId: string, agentId: string | undefined): string {
   return `${serverId}\u0000${agentId ?? ''}`;
