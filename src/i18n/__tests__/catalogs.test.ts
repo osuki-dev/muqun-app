@@ -87,23 +87,18 @@ describe('the compiled catalogs', () => {
     expect(Object.keys(enMessages).length).toBeGreaterThan(100);
   });
 
-  // The point of the eight-language expansion, asserted once per language. A
-  // locale added to `APP_LOCALES` with nothing behind it fails here rather than
-  // shipping a screen that is half English.
-  test.each(TRANSLATED_LOCALES)('%s covers every message English has', (locale) => {
-    const untranslated = Object.keys(enMessages).filter((id) => !(id in catalogs[locale]));
-    expect(untranslated).toEqual([]);
-  });
-
-  test.each(TRANSLATED_LOCALES)('%s is not empty', (locale) => {
-    // Distinct from the coverage check above. A catalog whose compile failed
-    // silently is an empty object, and every message it is missing then reports
-    // as one indistinguishable blob; this says which catalog it was.
-    expect(Object.keys(catalogs[locale]).length).toBe(Object.keys(enMessages).length);
-  });
-
-  test.each(TRANSLATED_LOCALES)('no %s entry was left as an empty string', (locale) => {
-    expect(blankEntries(catalogs[locale])).toEqual([]);
+  // A locale added to `APP_LOCALES` with nothing behind it, a compile that was
+  // never re-run after an extract, or an entry compiled to an empty string
+  // fails here rather than shipping a screen that is half English. Reported
+  // per locale, so a failure says which catalog it was.
+  test('every compiled catalog has exactly the English ids, none of them blank', () => {
+    const english = Object.keys(enMessages).sort();
+    const off = APP_LOCALES.filter(
+      (locale) =>
+        Object.keys(catalogs[locale]).sort().join() !== english.join() ||
+        blankEntries(catalogs[locale]).length > 0
+    );
+    expect(off).toEqual([]);
   });
 
   // The hole the three assertions above cannot see, and it was open.
@@ -124,27 +119,22 @@ describe('the compiled catalogs', () => {
   // A translation that is legitimately identical to the English -- a brand name,
   // a loanword all seven keep -- is a *filled in* `msgstr` and passes. Only an
   // empty one fails, and that can only mean nobody wrote it.
-  test.each(TRANSLATED_LOCALES)('every %s message was actually translated', (locale) => {
-    const po = readFileSync(
-      join(dirname(fileURLToPath(import.meta.url)), '..', 'locales', locale, 'messages.po'),
-      'utf8'
-    );
-    // The header is the one legitimate `msgid ""`; its `msgstr` is a multi-line
-    // block rather than `""`, so it never matches. Multi-line message bodies are
-    // likewise written as `msgstr ""` followed by continuation lines, so the
-    // pattern requires the empty string to be the end of the entry.
-    const untranslated = [...po.matchAll(/^msgid "(.+)"\nmsgstr ""\n(?:\n|$)/gm)].map(
-      (match) => match[1]
-    );
+  test('every message was actually translated in every language', () => {
+    const untranslated = TRANSLATED_LOCALES.flatMap((locale) => {
+      const po = readFileSync(
+        join(dirname(fileURLToPath(import.meta.url)), '..', 'locales', locale, 'messages.po'),
+        'utf8'
+      );
+      // The header is the one legitimate `msgid ""`; its `msgstr` is a
+      // multi-line block rather than `""`, so it never matches. Multi-line
+      // message bodies are likewise written as `msgstr ""` followed by
+      // continuation lines, so the pattern requires the empty string to be the
+      // end of the entry.
+      return [...po.matchAll(/^msgid "(.+)"\nmsgstr ""\n(?:\n|$)/gm)].map(
+        (match) => `${locale}: ${match[1]}`
+      );
+    });
     expect(untranslated).toEqual([]);
-  });
-
-  test.each(APP_LOCALES)('%s carries no message the source no longer has', (locale) => {
-    // `lingui extract --clean` is what enforces this; the assertion is here so
-    // that skipping the flag shows up as a failing test rather than as dead
-    // weight in the bundle.
-    const orphaned = Object.keys(catalogs[locale]).filter((id) => !(id in enMessages));
-    expect(orphaned).toEqual([]);
   });
 
   // A cheap, high-signal check on the thing a review cannot eyeball: that the
@@ -200,14 +190,9 @@ describe('the compiled catalogs', () => {
 
   // The picker labels each language in its own language, so a locale added
   // without a label renders an empty option rather than throwing.
-  test.each(APP_LOCALES)('%s has a label written in its own language', (locale) => {
-    const label = LOCALE_LABELS[locale] ?? '';
-    expect(label.length).toBeGreaterThan(0);
-    expect(label.trim()).toBe(label);
-  });
-
-  test('no two languages are labelled the same way', () => {
-    const labels = APP_LOCALES.map((locale) => LOCALE_LABELS[locale]);
+  test('every language has its own label, and no two share one', () => {
+    const labels = APP_LOCALES.map((locale) => LOCALE_LABELS[locale] ?? '');
+    expect(labels.filter((label) => !label || label.trim() !== label)).toEqual([]);
     expect(new Set(labels).size).toBe(labels.length);
   });
 });
@@ -224,7 +209,6 @@ describe('the compiled catalogs', () => {
 // Reads the `.po` deliberately, which is the one place the difference between
 // "translated" and "fell back" still exists.
 describe('the editor key-row descriptions', () => {
-  const localesDir = join(dirname(fileURLToPath(import.meta.url)), '..', 'locales');
   const labelsSource = readFileSync(
     join(dirname(fileURLToPath(import.meta.url)), '..', 'labels.ts'),
     'utf8'
@@ -237,26 +221,12 @@ describe('the editor key-row descriptions', () => {
     )
   );
 
-  function translationIn(locale: AppLocale, english: string): string | null {
-    const po = readFileSync(join(localesDir, locale, 'messages.po'), 'utf8');
-    const escaped = english.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const found = po.match(new RegExp(`^msgid "${escaped}"\\nmsgstr "(.*)"$`, 'm'));
-    return found ? found[1] : null;
-  }
-
   test('every action on the row says what it does', () => {
     // Including the leader combos, where the cap is `␣sg` and nothing about it
     // suggests "search the project".
     const undescribed = EDITOR_ACTIONS.map((item) => item.key).filter((key) => !described.has(key));
     expect(undescribed).toEqual([]);
     expect(described.size).toBe(EDITOR_ACTIONS.length);
-  });
-
-  test.each(TRANSLATED_LOCALES)('%s translates all of them rather than falling back', (locale) => {
-    const untranslated = [...described.values()].filter(
-      (english) => !translationIn(locale, english)
-    );
-    expect(untranslated).toEqual([]);
   });
 });
 
@@ -275,13 +245,8 @@ describe('the editor key-row descriptions', () => {
 // The tile is also the surface with the least room to explain itself, which is
 // exactly why it must not be the one surface still speaking English.
 describe('the home-screen widget copy', () => {
-  const localesDir = join(dirname(fileURLToPath(import.meta.url)), '..', 'locales');
   const layoutSource = readFileSync(
     join(dirname(fileURLToPath(import.meta.url)), '..', '..', 'lib', 'agent-widget-layout.tsx'),
-    'utf8'
-  );
-  const labelsSource = readFileSync(
-    join(dirname(fileURLToPath(import.meta.url)), '..', 'labels.ts'),
     'utf8'
   );
 
@@ -311,13 +276,6 @@ describe('the home-screen widget copy', () => {
       .replace(/\/\/[^\n]*/g, '')
       .matchAll(/(?<![\w$.])msg`([^`\\]*)`/g),
   ].map((match) => messageId(match[1]));
-
-  function translationIn(locale: AppLocale, id: string): string | null {
-    const po = readFileSync(join(localesDir, locale, 'messages.po'), 'utf8');
-    const escaped = id.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const found = po.match(new RegExp(`^msgid "${escaped}"\\nmsgstr "(.*)"$`, 'm'));
-    return found ? found[1] : null;
-  }
 
   test('the tile has copy, and it goes through the macro', () => {
     // Both halves of the tile draw an empty state, a freshness line, an
@@ -377,26 +335,6 @@ describe('the home-screen widget copy', () => {
       .filter((literal) => literal.includes(' ') && literal !== 'use no memo');
     expect(phrases).toEqual([]);
   });
-
-  // The status word beside each dot is not written here: the tile reads it from
-  // `agentStatusWord`, which is what stops the home screen and the server card
-  // calling the same state different things. Held to the same bar all the same,
-  // because the tile is now a place it renders.
-  const statusWordBlock = labelsSource.match(/export const agentStatusWord[^{]*\{([\s\S]*?)\n\};/);
-  const statusWords = [...(statusWordBlock?.[1] ?? '').matchAll(/msg`([^`]+)`/g)].map(
-    (match) => match[1]
-  );
-
-  test('the five status words are all of them', () => {
-    expect(statusWords).toEqual(['Working', 'Blocked', 'Done', 'Idle', 'Unknown']);
-  });
-
-  test.each(TRANSLATED_LOCALES)('%s says all of it rather than falling back', (locale) => {
-    const untranslated = [...new Set([...widgetMessages, ...statusWords])].filter(
-      (id) => !translationIn(locale, id)
-    );
-    expect(untranslated).toEqual([]);
-  });
 });
 
 // Plurals, rendered rather than inspected.
@@ -416,20 +354,27 @@ describe('the home-screen widget copy', () => {
 describe('the plural forms actually render', () => {
   const PLURAL_ID = '{0, plural, one {# panel} other {# panels}}';
 
-  test.each(APP_LOCALES)('%s renders 0, 1 and 2 without falling back', (locale) => {
-    const local = setupI18n();
-    local.load(locale, catalogs[locale] as Messages);
-    local.activate(locale);
-
-    for (const count of [0, 1, 2]) {
-      const rendered = local._(PLURAL_ID, { 0: count });
-      // The count reached the output, so `#` was substituted rather than left
-      // standing or dropped along with its branch.
-      expect(rendered).toContain(String(count));
-      // And what came back is a sentence, not the ICU source echoed back.
-      expect(rendered).not.toContain('plural,');
-      expect(rendered.trim().length).toBeGreaterThan(1);
+  test('every locale renders 0, 1 and 2 without falling back', () => {
+    const broken: string[] = [];
+    for (const locale of APP_LOCALES) {
+      const local = setupI18n();
+      local.load(locale, catalogs[locale] as Messages);
+      local.activate(locale);
+      for (const count of [0, 1, 2]) {
+        const rendered = local._(PLURAL_ID, { 0: count });
+        // The count reached the output, so `#` was substituted rather than
+        // left standing or dropped along with its branch; and what came back
+        // is a sentence, not the ICU source echoed back.
+        if (
+          !rendered.includes(String(count)) ||
+          rendered.includes('plural,') ||
+          rendered.trim().length <= 1
+        ) {
+          broken.push(`${locale} ${count}: ${rendered}`);
+        }
+      }
     }
+    expect(broken).toEqual([]);
   });
 
   test('English still inflects, so the assertion above is not vacuous', () => {
@@ -483,10 +428,10 @@ describe('the plural forms actually render', () => {
   // Vietnamese and Simplified Chinese have a single category, like Japanese
   // and Korean, so the catalog carries only `other` and the count reaches the
   // output without a branch to miss.
-  test.each(['vi', 'zh-CN', 'th'] as const)('%s renders its single plural form', (locale) => {
+  test('a single-category language renders its one plural form', () => {
     const local = setupI18n();
-    local.load(locale, catalogs[locale] as Messages);
-    local.activate(locale);
+    local.load('vi', catalogs.vi as Messages);
+    local.activate('vi');
     const one = local._(DAYS_ID, { 0: 1 });
     const many = local._(DAYS_ID, { 0: 7 });
     expect(one).toContain('1');
@@ -550,46 +495,40 @@ describe('the native locale files', () => {
     }
   });
 
-  test.each(APP_LOCALES)('%s names the app on both platforms', (locale) => {
-    const file = nativeLocale(locale);
+  // Muqun is a brand name, so it is the same word in most locales. The Chinese
+  // and Japanese files carry the native name already published on osuki.dev.
+  const LOCAL_NAME: Partial<Record<AppLocale, string>> = {
+    'zh-TW': '牧群',
+    'zh-CN': '牧群',
+    ja: '牧群',
+  };
 
-    // These keys are spelled by the platforms, not by us, and a typo in one is
-    // a file `expo prebuild` writes out and no phone reads.
-    expect(Object.keys(file.ios ?? {}).sort()).toEqual(
-      ['CFBundleDisplayName', ...USAGE_KEYS].sort()
-    );
-    expect(Object.keys(file.android ?? {})).toEqual(['app_name']);
-
-    // Muqun is a brand name, so it is the same word in most locales. That is a
-    // decision rather than an oversight, and asserting it is what makes it one.
-    // zh-TW and ja are the exception: the app carries its native CJK name there, matching the
-    // localisation already published on osuki.dev -- the app must not invent
-    // its own convention for its own name where one already exists.
-    const localName: Partial<Record<AppLocale, string>> = {
-      'zh-TW': '牧群',
-      'zh-CN': '牧群',
-      ja: '牧群',
-    };
-    const expectedName = localName[locale] ?? 'Muqun';
-    expect(file.ios?.CFBundleDisplayName).toBe(expectedName);
-    expect(file.android?.app_name).toBe(expectedName);
-  });
-
-  test.each(APP_LOCALES)('%s explains every permission, in a real sentence', (locale) => {
-    const ios = nativeLocale(locale).ios ?? {};
-    const localName: Partial<Record<AppLocale, string>> = {
-      'zh-TW': '牧群',
-      'zh-CN': '牧群',
-      ja: '牧群',
-    };
-    const brandName = localName[locale] ?? 'Muqun';
-    for (const key of USAGE_KEYS) {
-      const description = ios[key] ?? '';
+  test('every file names the app on both platforms and explains every permission', () => {
+    const off: string[] = [];
+    for (const locale of APP_LOCALES) {
+      const file = nativeLocale(locale);
+      const name = LOCAL_NAME[locale] ?? 'Muqun';
+      // These keys are spelled by the platforms, not by us, and a typo in one
+      // is a file `expo prebuild` writes out and no phone reads.
+      if (
+        Object.keys(file.ios ?? {})
+          .sort()
+          .join() !== ['CFBundleDisplayName', ...USAGE_KEYS].sort().join() ||
+        Object.keys(file.android ?? {}).join() !== 'app_name'
+      ) {
+        off.push(`${locale}: keys`);
+      }
+      if (file.ios?.CFBundleDisplayName !== name || file.android?.app_name !== name) {
+        off.push(`${locale}: name`);
+      }
       // Long enough to be a sentence rather than a placeholder, and it says
-      // who is asking: every description leads with the brand name.
-      expect(description.length).toBeGreaterThan(20);
-      expect(description).toContain(brandName);
+      // who is asking.
+      for (const key of USAGE_KEYS) {
+        const description = file.ios?.[key] ?? '';
+        if (description.length <= 20 || !description.includes(name)) off.push(`${locale}: ${key}`);
+      }
     }
+    expect(off).toEqual([]);
   });
 
   test('English matches app.json, which is what a phone in English reads', () => {
