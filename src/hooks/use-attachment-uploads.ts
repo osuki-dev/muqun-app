@@ -72,11 +72,13 @@ export function useAttachmentUploads(
    */
   destination?: () => AttachmentDestination | undefined,
   /**
-   * Leaving the screen clears the staged files, except while this says to
-   * hold them: Home's dock keeps them while a failed send still holds them,
-   * and over the setup guide it opened itself.
+   * Leaving the screen (`blur`) or a change of the selected computer
+   * (`switch`) clears the staged files, except while this says to hold them:
+   * Home's dock keeps them while a failed send still holds them, over the
+   * setup guide it opened itself, and across the switch a failed row's retry
+   * makes to its own computer and back.
    */
-  holdAcrossBlur?: () => boolean
+  holdStaged?: (reason: 'blur' | 'switch') => boolean
 ): AttachmentUploads {
   const [attachments, setAttachments] = useState<PendingAttachment[]>([]);
   const attachmentsRef = useRef<PendingAttachment[]>([]);
@@ -232,18 +234,18 @@ export function useAttachmentUploads(
     useCallback(
       () => () => {
         // Dictation temporarily covers the same composer; it is not a new destination.
-        if (useVoiceInput.getState().request || holdAcrossBlur?.()) return;
+        if (useVoiceInput.getState().request || holdStaged?.('blur')) return;
         clearAttachments();
       },
-      [clearAttachments, holdAcrossBlur]
+      [clearAttachments, holdStaged]
     )
   );
   useEffect(
     () =>
       useGatewayConnectionStore.subscribe((next, previous) => {
-        if (next.record !== previous.record) clearAttachments();
+        if (next.record !== previous.record && !holdStaged?.('switch')) clearAttachments();
       }),
-    [clearAttachments]
+    [clearAttachments, holdStaged]
   );
 
   const awaitUploads = useCallback(
