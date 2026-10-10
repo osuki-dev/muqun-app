@@ -434,6 +434,10 @@ msgstr "Ein Terminal wurde erstellt. Öffne es, um den Start zu prüfen. Ein ern
 msgid "About"
 msgstr "Über"
 
+#: src/components/settings-fleet-peers.tsx
+msgid "Accept work from other computers"
+msgstr "Aufgaben von anderen Computern annehmen"
+
 #: src/components/task-row.tsx
 msgid "Acknowledge"
 msgstr "Zur Kenntnis nehmen"
@@ -533,6 +537,10 @@ msgstr "Standardansicht für Agent-Panels"
 #: src/components/settings-servers.tsx
 msgid "Agents"
 msgstr "Agenten"
+
+#: src/components/settings-fleet-peers.tsx
+msgid "Agents on your other computers can hand part of a task to this one."
+msgstr "Agenten auf deinen anderen Computern können einen Teil einer Aufgabe an diesen abgeben."
 
 #: src/components/app-drawer-content.tsx
 msgid "AI coding assistant"
@@ -1013,6 +1021,10 @@ msgstr "Abgebrochen"
 msgctxt "task state"
 msgid "Cancelled"
 msgstr "Abgebrochen"
+
+#: src/components/settings-fleet-peers.tsx
+msgid "Cannot reach {quietNames}"
+msgstr "Nicht erreichbar: {quietNames}"
 
 #: src/components/settings-server-capabilities.tsx
 msgid "Capabilities"
@@ -1708,6 +1720,10 @@ msgstr "Aufgabe konnte nicht abgebrochen werden"
 #: src/components/agent-workbench.tsx
 msgid "Could not change delivery"
 msgstr "Zustellung konnte nicht geändert werden"
+
+#: src/components/settings-fleet-peers.tsx
+msgid "Could not change this setting"
+msgstr "Diese Einstellung konnte nicht geändert werden"
 
 #: src/components/agent-workbench.tsx
 msgid "Could not compact"
@@ -3209,6 +3225,10 @@ msgstr "Ebene {depth}"
 msgid "Light"
 msgstr "Hell"
 
+#: src/components/settings-fleet-peers.tsx
+msgid "Linked with: {linkedNames}"
+msgstr "Verbunden mit: {linkedNames}"
+
 #: src/app/commands.tsx
 msgid "List branches"
 msgstr "Branches auflisten"
@@ -3302,6 +3322,10 @@ msgstr "Rechner"
 #: src/components/launch-intro.tsx
 msgid "Make it yours"
 msgstr "Mach es zu deinem"
+
+#: src/components/settings-fleet-peers.tsx
+msgid "Make sure the computer is reachable, then try again."
+msgstr "Stelle sicher, dass der Computer erreichbar ist, und versuche es erneut."
 
 #: src/components/home-overview.tsx
 msgid "Manage"
@@ -4139,6 +4163,10 @@ msgstr "Öffnet das Terminal dieses Agenten"
 #: src/components/settings-servers.tsx
 msgid "Options for {0}"
 msgstr "Optionen für {0}"
+
+#: src/components/settings-fleet-peers.tsx
+msgid "Other computers"
+msgstr "Andere Computer"
 
 #: src/components/agent-context-sheet.tsx
 #: src/components/tool-call-code-rows.tsx

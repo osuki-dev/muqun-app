@@ -2174,11 +2174,12 @@ export interface GatewayEndpoint {
 export function gatewayEndpointFetch(
   endpoint: GatewayEndpoint,
   input: string,
-  init: RequestInit = {}
+  init: RequestInit = {},
+  timeoutMs = REQUEST_TIMEOUT_MS
 ) {
   return endpoint.transport === GATEWAY_TRANSPORT && endpoint.deviceId && endpoint.transportKey
-    ? encryptedGatewayFetch(input, init, REQUEST_TIMEOUT_MS, endpoint)
-    : gatewayFetch(input, init);
+    ? encryptedGatewayFetch(input, init, timeoutMs, endpoint)
+    : gatewayFetchWithin(timeoutMs, input, init);
 }
 
 function approvalPath(sessionId: string, paneId: string): string {

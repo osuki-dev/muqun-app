@@ -434,6 +434,10 @@ msgstr "Se creó un terminal. Ábrelo para comprobar el inicio; volver a iniciar
 msgid "About"
 msgstr "Acerca de"
 
+#: src/components/settings-fleet-peers.tsx
+msgid "Accept work from other computers"
+msgstr "Aceptar trabajo de otros ordenadores"
+
 #: src/components/task-row.tsx
 msgid "Acknowledge"
 msgstr "Marcar como visto"
@@ -533,6 +537,10 @@ msgstr "Los paneles de agente se abren en"
 #: src/components/settings-servers.tsx
 msgid "Agents"
 msgstr "Agentes"
+
+#: src/components/settings-fleet-peers.tsx
+msgid "Agents on your other computers can hand part of a task to this one."
+msgstr "Los agentes de tus otros ordenadores pueden pasar parte de una tarea a este."
 
 #: src/components/app-drawer-content.tsx
 msgid "AI coding assistant"
@@ -1013,6 +1021,10 @@ msgstr "Cancelado"
 msgctxt "task state"
 msgid "Cancelled"
 msgstr "Cancelada"
+
+#: src/components/settings-fleet-peers.tsx
+msgid "Cannot reach {quietNames}"
+msgstr "No se puede conectar con {quietNames}"
 
 #: src/components/settings-server-capabilities.tsx
 msgid "Capabilities"
@@ -1708,6 +1720,10 @@ msgstr "No se pudo cancelar la tarea"
 #: src/components/agent-workbench.tsx
 msgid "Could not change delivery"
 msgstr "No se pudo cambiar la entrega"
+
+#: src/components/settings-fleet-peers.tsx
+msgid "Could not change this setting"
+msgstr "No se pudo cambiar este ajuste"
 
 #: src/components/agent-workbench.tsx
 msgid "Could not compact"
@@ -3209,6 +3225,10 @@ msgstr "Nivel {depth}"
 msgid "Light"
 msgstr "Claro"
 
+#: src/components/settings-fleet-peers.tsx
+msgid "Linked with: {linkedNames}"
+msgstr "Enlazado con: {linkedNames}"
+
 #: src/app/commands.tsx
 msgid "List branches"
 msgstr "Listar ramas"
@@ -3302,6 +3322,10 @@ msgstr "Equipos"
 #: src/components/launch-intro.tsx
 msgid "Make it yours"
 msgstr "Hazla tuya"
+
+#: src/components/settings-fleet-peers.tsx
+msgid "Make sure the computer is reachable, then try again."
+msgstr "Asegúrate de que el ordenador esté accesible e inténtalo de nuevo."
 
 #: src/components/home-overview.tsx
 msgid "Manage"
@@ -4139,6 +4163,10 @@ msgstr "Abre el terminal de este agente"
 #: src/components/settings-servers.tsx
 msgid "Options for {0}"
 msgstr "Opciones de {0}"
+
+#: src/components/settings-fleet-peers.tsx
+msgid "Other computers"
+msgstr "Otros ordenadores"
 
 #: src/components/agent-context-sheet.tsx
 #: src/components/tool-call-code-rows.tsx

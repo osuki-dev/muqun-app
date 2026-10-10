@@ -434,6 +434,10 @@ msgstr "已建立終端機。請開啟查看啟動情況；再次啟動可能產
 msgid "About"
 msgstr "關於"
 
+#: src/components/settings-fleet-peers.tsx
+msgid "Accept work from other computers"
+msgstr "接受其他電腦的任務"
+
 #: src/components/task-row.tsx
 msgid "Acknowledge"
 msgstr "標記為已查看"
@@ -533,6 +537,10 @@ msgstr "代理程式面板的預設檢視"
 #: src/components/settings-servers.tsx
 msgid "Agents"
 msgstr "代理程式"
+
+#: src/components/settings-fleet-peers.tsx
+msgid "Agents on your other computers can hand part of a task to this one."
+msgstr "你其他電腦上的代理程式可以把任務的一部分交給這台電腦。"
 
 #: src/components/app-drawer-content.tsx
 msgid "AI coding assistant"
@@ -1013,6 +1021,10 @@ msgstr "已取消"
 msgctxt "task state"
 msgid "Cancelled"
 msgstr "已取消"
+
+#: src/components/settings-fleet-peers.tsx
+msgid "Cannot reach {quietNames}"
+msgstr "無法連線到 {quietNames}"
 
 #: src/components/settings-server-capabilities.tsx
 msgid "Capabilities"
@@ -1708,6 +1720,10 @@ msgstr "無法取消任務"
 #: src/components/agent-workbench.tsx
 msgid "Could not change delivery"
 msgstr "無法變更傳送方式"
+
+#: src/components/settings-fleet-peers.tsx
+msgid "Could not change this setting"
+msgstr "無法變更此設定"
 
 #: src/components/agent-workbench.tsx
 msgid "Could not compact"
@@ -3209,6 +3225,10 @@ msgstr "第 {depth} 層"
 msgid "Light"
 msgstr "淺色"
 
+#: src/components/settings-fleet-peers.tsx
+msgid "Linked with: {linkedNames}"
+msgstr "已連結：{linkedNames}"
+
 #: src/app/commands.tsx
 msgid "List branches"
 msgstr "列出分支"
@@ -3302,6 +3322,10 @@ msgstr "機器"
 #: src/components/launch-intro.tsx
 msgid "Make it yours"
 msgstr "打造你的專屬風格"
+
+#: src/components/settings-fleet-peers.tsx
+msgid "Make sure the computer is reachable, then try again."
+msgstr "請確認這台電腦可以連線，然後再試一次。"
 
 #: src/components/home-overview.tsx
 msgid "Manage"
@@ -4139,6 +4163,10 @@ msgstr "開啟這個代理程式的終端機"
 #: src/components/settings-servers.tsx
 msgid "Options for {0}"
 msgstr "{0} 的選項"
+
+#: src/components/settings-fleet-peers.tsx
+msgid "Other computers"
+msgstr "其他電腦"
 
 #: src/components/agent-context-sheet.tsx
 #: src/components/tool-call-code-rows.tsx
