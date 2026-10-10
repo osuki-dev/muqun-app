@@ -13,6 +13,13 @@ import {
   unpairLines,
   type UnpairRecord,
   pairingsAnswer,
+  fleetNameMatches,
+  parseFleetPeers,
+  unpairProgressAfter,
+  unpairSeenDown,
+  unpairStepsDue,
+  UNPAIR_STEP_ATTEMPTS,
+  type UnpairProgress,
   type FleetComputer,
   type NameConflict,
   type FleetPeers,
@@ -403,6 +410,45 @@ describe('an unpairing this device could not finish (A5 D6)', () => {
     const entries = [entry({ pending: ['coding'], stillListedBy: ['nas'] })];
     expect(unpairLines('coding', entries)).toEqual({ stillLinked: ['mini'], stillListedBy: [] });
     expect(unpairLines('nas', entries)).toEqual({ stillLinked: [], stillListedBy: ['mini'] });
+  });
+});
+
+describe('an unpair follow-up runs only what is left, and stops fighting', () => {
+  test('confirmed steps never run again; a step failing in a row waits for the computer to change', () => {
+    const PAIRED = 7;
+    // The first pass took the rows off; the login revoke failed.
+    let progress: UnpairProgress | undefined = unpairProgressAfter(undefined, ['rows'], PAIRED);
+    expect(unpairStepsDue(progress, PAIRED)).toEqual(['logins']);
+    for (let pass = 1; pass < UNPAIR_STEP_ATTEMPTS; pass += 1) {
+      progress = unpairProgressAfter(progress, [], PAIRED);
+    }
+    // Parked: nothing on this pairing, until it is paired again or seen down.
+    expect(unpairStepsDue(progress, PAIRED)).toEqual([]);
+    expect(unpairStepsDue(progress, PAIRED + 1)).toEqual(['logins']);
+    expect(unpairStepsDue(unpairSeenDown(progress), PAIRED)).toEqual(['logins']);
+    // Resumed and failing once more starts its count over rather than parking at once.
+    expect(unpairProgressAfter(progress, [], PAIRED + 1).parkedOn).toBeUndefined();
+  });
+});
+
+describe("an older gateway's rows and logins carry no server id: matched by name", () => {
+  test.each([
+    ['its own server id decides', { serverId: 'srv-beta', name: 'other' }, true],
+    [
+      'another server id is not it, whatever the name',
+      { serverId: 'srv-gamma', name: 'beta' },
+      false,
+    ],
+    ['no server id: the name it goes by', { serverId: null, name: 'Beta ' }, true],
+    ['no server id and another name', { serverId: null, name: 'gamma' }, false],
+  ] as const)('%s', (_name, entry, matches) => {
+    expect(fleetNameMatches(entry, 'srv-beta', ['beta'])).toBe(matches);
+  });
+
+  test('a peer row without one is kept aside for the unpair, not shown as a peer', () => {
+    const answer = parseFleetPeers({ peers: [{ peer_id: 'p1', name: 'beta' }] });
+    expect(answer?.peers).toEqual([]);
+    expect(answer?.unidentified).toEqual([{ peerId: 'p1', name: 'beta' }]);
   });
 });
 

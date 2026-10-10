@@ -1,7 +1,7 @@
 import { createMMKV } from 'react-native-mmkv';
 import { create } from 'zustand';
 
-import { keptUnpairs, type UnpairRecord } from '@/lib/fleet-peers';
+import { keptUnpairs, type UnpairProgress, type UnpairRecord } from '@/lib/fleet-peers';
 
 /**
  * What this device's own unpairings left unfinished (A5 D6): computers that
@@ -32,19 +32,40 @@ function openStore(): KeyValueStore {
 
 const storage = openStore();
 
+function withoutKey<T>(record: Record<string, T>, key: string): Record<string, T> {
+  return Object.fromEntries(Object.entries(record).filter(([name]) => name !== key));
+}
+
 function load(): UnpairRecord[] {
   try {
     const value: unknown = JSON.parse(storage.getString(KEY) ?? '[]');
     if (!Array.isArray(value)) return [];
-    return value.filter(
-      (entry): entry is UnpairRecord =>
-        typeof entry === 'object' &&
-        entry !== null &&
-        typeof (entry as UnpairRecord).serverId === 'string' &&
-        typeof (entry as UnpairRecord).atMs === 'number' &&
-        Array.isArray((entry as UnpairRecord).pending) &&
-        Array.isArray((entry as UnpairRecord).stillListedBy)
-    );
+    return value
+      .filter(
+        (entry): entry is UnpairRecord =>
+          typeof entry === 'object' &&
+          entry !== null &&
+          typeof (entry as UnpairRecord).serverId === 'string' &&
+          typeof (entry as UnpairRecord).atMs === 'number' &&
+          Array.isArray((entry as UnpairRecord).pending) &&
+          Array.isArray((entry as UnpairRecord).stillListedBy)
+      )
+      .map((entry) => {
+        // A progress map this build cannot read restarts its steps, it does not crash them.
+        const progress = Object.fromEntries(
+          Object.entries(
+            typeof entry.progress === 'object' && entry.progress ? entry.progress : {}
+          ).filter(
+            ([, item]) =>
+              typeof item === 'object' &&
+              item !== null &&
+              Array.isArray(item.done) &&
+              typeof item.failures === 'number'
+          )
+        );
+        const { progress: _held, ...rest } = entry;
+        return Object.keys(progress).length ? { ...rest, progress } : rest;
+      });
   } catch {
     return [];
   }
@@ -62,8 +83,10 @@ type FleetUnpairsState = {
   entries: UnpairRecord[];
   /** Replace the record for its computer (one unpairing just finished its first round). */
   put: (entry: UnpairRecord) => void;
-  /** `serverId`'s cleanup on `computerId` ran (whatever its outcome but unreachable). */
+  /** `serverId`'s cleanup on `computerId` is confirmed done: it is no longer pending. */
   settle: (serverId: string, computerId: string) => void;
+  /** How the cleanup on `computerId` stands, while it is still pending. */
+  setProgress: (serverId: string, computerId: string, progress: UnpairProgress | undefined) => void;
   /** Drop what is done, old, or about a computer this device paired again. */
   prune: (pairedIds: readonly string[], nowMs: number) => void;
 };
@@ -78,9 +101,22 @@ export const useFleetUnpairs = create<FleetUnpairsState>((set, get) => ({
   settle: (serverId, computerId) => {
     const entries = get().entries.map((item) =>
       item.serverId === serverId
-        ? { ...item, pending: item.pending.filter((id) => id !== computerId) }
+        ? {
+            ...item,
+            pending: item.pending.filter((id) => id !== computerId),
+            ...(item.progress ? { progress: withoutKey(item.progress, computerId) } : {}),
+          }
         : item
     );
+    save(entries);
+    set({ entries });
+  },
+  setProgress: (serverId, computerId, progress) => {
+    const entries = get().entries.map((item) => {
+      if (item.serverId !== serverId) return item;
+      const rest = withoutKey(item.progress ?? {}, computerId);
+      return { ...item, progress: progress ? { ...rest, [computerId]: progress } : rest };
+    });
     save(entries);
     set({ entries });
   },
