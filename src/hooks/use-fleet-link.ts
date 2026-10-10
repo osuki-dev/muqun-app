@@ -187,7 +187,7 @@ async function buryUnpaired(
   records: readonly GatewayRecord[],
   computers: readonly FleetComputer[]
 ): Promise<void> {
-  const tombstones = useFleetPeers.getState().tombstones;
+  const tombstones = useFleetPeers.getState().tombstones.map((entry) => entry.serverId);
   if (tombstones.length === 0) return;
   const failed = new Set<string>();
   const removed = new Set<string>();

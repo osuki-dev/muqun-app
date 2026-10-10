@@ -39,14 +39,27 @@ export type PendingSessionTarget = { serverId: string; asid: string };
 export function homeWaitingTasks(
   index: ServerTasksIndex,
   serverIds: readonly string[],
-  pending: readonly PendingSessionTarget[] = []
+  pending: readonly PendingSessionTarget[] = [],
+  peerServerOf: (binding: { peerId: string; peerServerId?: string }) => string = (binding) =>
+    binding.peerServerId ?? binding.peerId
 ): HomeTaskRow[] {
   const listed = new Set(pending.map((target) => `${target.serverId}\n${target.asid}`));
+  const fresh = new Set(serverIds);
   const rows: HomeTaskRow[] = [];
   for (const row of rowsWhere(index, serverIds, (task) => task.state === 'waiting')) {
     const { binding } = row.task;
     if (binding.kind === 'agent_session' && listed.has(`${row.serverId}\n${binding.asid}`)) {
       continue;
+    }
+    // A question is listed once: a mirror of work on another computer whose
+    // real task this phone also holds fresh is that task's question again.
+    // The mirror stays only when that computer's own ledger is not here.
+    if (binding.kind === 'peer' && binding.remoteTaskId) {
+      const there = peerServerOf(binding);
+      const held =
+        fresh.has(there) &&
+        index[there]?.tasks.some((task) => task.taskId === binding.remoteTaskId) === true;
+      if (held) continue;
     }
     rows.push(row);
   }

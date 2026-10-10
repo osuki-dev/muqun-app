@@ -20,22 +20,39 @@ function index(byServer: Record<string, TaskView[]>): ServerTasksIndex {
 }
 
 describe('homeWaitingTasks', () => {
-  test('waiting tasks only, newest first; a mirror by its own state', () => {
-    const mirror: TaskBinding = { kind: 'peer', peerId: 'peer-1', remoteTaskId: 'r' };
+  test('waiting tasks only, newest first', () => {
     const tasks = index({
-      a: [
-        task('w1', 'waiting', 1),
-        task('run', 'working', 9),
-        task('w2', 'waiting', 4),
-        task('m-run', 'working', 8, mirror),
-        task('m-wait', 'waiting', 3, mirror),
-      ],
+      a: [task('w1', 'waiting', 1), task('run', 'working', 9), task('w2', 'waiting', 4)],
     });
-    expect(homeWaitingTasks(tasks, ['a']).map((row) => row.task.taskId)).toEqual([
-      'w2',
-      'm-wait',
-      'w1',
-    ]);
+    expect(homeWaitingTasks(tasks, ['a']).map((row) => row.task.taskId)).toEqual(['w2', 'w1']);
+  });
+
+  // A question is listed once: the real task when its computer's ledger is
+  // here, else the mirror that stands for it.
+  const mirror: TaskBinding = {
+    kind: 'peer',
+    peerId: 'peer-1',
+    peerServerId: 'mini',
+    remoteTaskId: 'r',
+  };
+  test.each([
+    [
+      'both tasks present: one row, the real one',
+      { coding: [task('m', 'waiting', 3, mirror)], mini: [task('r', 'waiting', 2)] },
+      ['coding', 'mini'],
+      ['r'],
+    ],
+    [
+      'the running computer is not paired here: the mirror is listed',
+      { coding: [task('m', 'waiting', 3, mirror)] },
+      ['coding'],
+      ['m'],
+    ],
+  ] as const)('%s', (_name, byServer, fresh, listed) => {
+    const tasks = index(
+      Object.fromEntries(Object.entries(byServer).map(([id, list]) => [id, [...list]]))
+    );
+    expect(homeWaitingTasks(tasks, fresh).map((row) => row.task.taskId)).toEqual([...listed]);
   });
 
   test('a task whose session Needs you already lists is not listed twice', () => {
