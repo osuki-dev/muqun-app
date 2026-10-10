@@ -775,11 +775,26 @@ export function SentTaskRow({
   const theme = useThemeTokens();
   const rowLine = useTaskRowLine(undefined);
   const actions = useHomeTaskCards((state) => state.rowActions);
-  const visual = taskRowVisual({ state: 'sent' }, { canComplete: false, acknowledged: true });
   // A failed send says so and why; a tap sends exactly that again. One that
-  // went to its session opens it, and says so when no reply came in time.
+  // went to its session opens it: once the agent replied it reads like a task
+  // in its session's state, and it says so when no reply came in time.
   const failed = item.failed === true && item.resend !== undefined;
-  const noReply = !failed && item.asid !== undefined && !pendingWorking(item, nowMs);
+  const replied: TaskView | null =
+    !failed && item.asid && item.reply
+      ? {
+          taskId: item.id,
+          state: item.reply.state,
+          kind: 'delegation',
+          goal: item.goal,
+          binding: { kind: 'agent_session', agentId: '', asid: item.asid },
+          updatedMs: item.reply.atMs,
+        }
+      : null;
+  const visual = taskRowVisual(replied ?? { state: 'sent' }, {
+    canComplete: false,
+    acknowledged: true,
+  });
+  const noReply = !failed && !replied && item.asid !== undefined && !pendingWorking(item, nowMs);
   const line = failed
     ? lineView(
         t`Could not send`,
@@ -788,10 +803,10 @@ export function SentTaskRow({
       )
     : noReply
       ? lineView('', theme.colors.textMuted, t`Sent · no reply yet`)
-      : rowLine(null, visual, computer);
+      : rowLine(replied, visual, computer, nowMs);
   const press = !actions ? null : failed ? actions.retry : item.asid ? actions.open : null;
   // Rows that stay until acted on can be let go; the field keeps its own draft.
-  const dismissible = failed || noReply;
+  const dismissible = failed || noReply || (replied !== null && replied.state !== 'working');
   return (
     <Animated.View
       testID="home-card-pending"
