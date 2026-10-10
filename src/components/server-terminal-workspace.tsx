@@ -217,6 +217,7 @@ import {
   historyPullBlockedAfter,
   historyPullNotice,
   pullEarlierPage,
+  capturedProbeDue,
   PANE_CAPTURED_HISTORY_CAPABILITY,
   type CapturedCursor,
   type HistoryPullNotice,
@@ -1365,8 +1366,42 @@ export function ServerTerminalWorkspace({
   const [capturedOpen, setCapturedOpen] = useState(false);
   const [capturedProbe, setCapturedProbe] = useState(0);
   const capturedProbedAtRef = useRef(0);
+  // The pane's captured history gave its last page (or the window reached its
+  // cap): nothing more is offered, and it is not asked again.
+  const capturedExhaustedRef = useRef(false);
+  // The probe already asked for this pane at this `capturedProbe`: a focus
+  // return or an overview toggle does not ask again.
+  const capturedProbedKeyRef = useRef('');
+  // What each pane's captured history came to on this connection -- its
+  // cursor, whether it is off, exhausted, on offer -- so going back to a pane
+  // picks up where it was rather than offering pages its window already holds.
+  const capturedPanesRef = useRef(
+    new Map<
+      string,
+      { cursor: CapturedCursor | null; off: boolean; exhausted: boolean; open: boolean }
+    >()
+  );
   // The last probe found the capture empty: worth asking again as output grows.
   const capturedEmptyRef = useRef(false);
+  const offerCaptured = (paneId: string | null | undefined, open: boolean) => {
+    setCapturedOpen(open);
+    if (!paneId) return;
+    capturedPanesRef.current.set(paneId, {
+      cursor: capturedCursorRef.current,
+      off: capturedOffRef.current,
+      exhausted: capturedExhaustedRef.current,
+      open,
+    });
+  };
+  /** Forget every pane's captured state and ask the open pane again. */
+  const restartCaptured = () => {
+    capturedPanesRef.current.clear();
+    capturedCursorRef.current = null;
+    capturedOffRef.current = false;
+    capturedExhaustedRef.current = false;
+    setCapturedOpen(false);
+    setCapturedProbe((probe) => probe + 1);
+  };
   const earlierPartsRowsRef = useRef(0);
   const loadingEarlierPartsRef = useRef(false);
   const appliedNotificationTargetRef = useRef<string | null>(null);
@@ -1607,10 +1642,7 @@ export function ServerTerminalWorkspace({
     earlierOutputRowsRef.current = 0;
     lastReadRef.current = null;
     rangeUnsupportedRef.current = false;
-    capturedCursorRef.current = null;
-    capturedOffRef.current = false;
-    setCapturedOpen(false);
-    setCapturedProbe((probe) => probe + 1);
+    restartCaptured();
     loadingEarlierOutputRef.current = false;
     appliedNotificationTargetRef.current = null;
     setLoadingEarlierOutput(false);
@@ -1682,10 +1714,7 @@ export function ServerTerminalWorkspace({
     earlierOutputRowsRef.current = 0;
     lastReadRef.current = null;
     rangeUnsupportedRef.current = false;
-    capturedCursorRef.current = null;
-    capturedOffRef.current = false;
-    setCapturedOpen(false);
-    setCapturedProbe((probe) => probe + 1);
+    restartCaptured();
     loadingEarlierOutputRef.current = false;
     setLoadingEarlierOutput(false);
     setHistoryNotice(null);
@@ -2409,16 +2438,34 @@ export function ServerTerminalWorkspace({
   useEffect(() => {
     const paneId = selection.paneId;
     const sessionId = data.sessionId;
-    if (!ready || !servesCapturedHistory || !paneId || !sessionId || capturedOffRef.current) return;
+    if (!ready || !servesCapturedHistory || !paneId || !sessionId) return;
+    // Once per pane and per ask: a pull already under way, or a history
+    // already given in full, knows more than this would.
+    const key = `${paneId}\u0000${capturedProbe}`;
+    if (
+      !capturedProbeDue({
+        off: capturedOffRef.current,
+        exhausted: capturedExhaustedRef.current,
+        cursor: capturedCursorRef.current,
+        askedAlready: capturedProbedKeyRef.current === key,
+      })
+    ) {
+      return;
+    }
+    capturedProbedKeyRef.current = key;
     let current = true;
     capturedProbedAtRef.current = Date.now();
     void readPaneHistory(sessionId, paneId, null, 1).then((answer) => {
       if (!current || activePaneRef.current !== paneId) return;
+      // A pull landed meanwhile: its answer stands.
+      if (capturedExhaustedRef.current || capturedCursorRef.current) return;
       if (answer.ok && answer.page.availability === 'not_captured') capturedOffRef.current = true;
       const rows = answer.ok ? answer.page.rows.length : 0;
-      capturedEmptyRef.current = answer.ok && answer.page.availability === 'captured' && rows === 0;
+      // Empty, or no answer: worth asking again as output grows.
+      capturedEmptyRef.current =
+        !answer.ok || (answer.page.availability === 'captured' && rows === 0);
       // A window already at its cap has no room for more above it.
-      setCapturedOpen(rows > 0 && outputLineLimitRef.current < MAX_PANE_OUTPUT_LINES);
+      offerCaptured(paneId, rows > 0 && outputLineLimitRef.current < MAX_PANE_OUTPUT_LINES);
     });
     return () => {
       current = false;
@@ -3079,10 +3126,14 @@ export function ServerTerminalWorkspace({
     earlierOutputRowsRef.current = restored?.earlierRows ?? 0;
     lastReadRef.current = restored?.lastRead ?? null;
     rangeUnsupportedRef.current = restored?.rangeUnsupported ?? false;
-    capturedCursorRef.current = null;
-    capturedOffRef.current = false;
-    setCapturedOpen(false);
-    setCapturedProbe((probe) => probe + 1);
+    // The pane's captured history as it was left, with the window restored
+    // beside it; a pane not seen yet on this connection is asked.
+    const captured = paneId ? capturedPanesRef.current.get(paneId) : undefined;
+    capturedCursorRef.current = captured?.cursor ?? null;
+    capturedOffRef.current = captured?.off ?? false;
+    capturedExhaustedRef.current = captured?.exhausted ?? false;
+    setCapturedOpen(captured?.open ?? false);
+    if (!captured) setCapturedProbe((probe) => probe + 1);
     loadingEarlierOutputRef.current = false;
     setLoadingEarlierOutput(false);
     setHistoryNotice(null);
@@ -3576,16 +3627,19 @@ export function ServerTerminalWorkspace({
             const captured = outcome.captured;
             if (captured?.kind === 'notCaptured') {
               capturedOffRef.current = true;
-              setCapturedOpen(false);
+              offerCaptured(requestPaneId, false);
             } else if (captured?.kind === 'page') {
               capturedCursorRef.current = captured.cursor;
               // The last page, or a window at its cap: a page more would be
               // trimmed away as it landed, so the pull is not offered again.
-              if (!captured.hasMore || nextLimit >= MAX_PANE_OUTPUT_LINES) setCapturedOpen(false);
+              if (!captured.hasMore || nextLimit >= MAX_PANE_OUTPUT_LINES) {
+                capturedExhaustedRef.current = true;
+              }
+              offerCaptured(requestPaneId, !capturedExhaustedRef.current);
             } else if (servesCapturedHistory && !capturedOffRef.current) {
               // The captured read refused or failed: not offered on its account
-              // until a reconnect or another pane.
-              setCapturedOpen(false);
+              // until a reconnect.
+              offerCaptured(requestPaneId, false);
             }
             const blocked = historyPullBlockedAfter(outcome.kind);
             historyPullBlockedRef.current = blocked;
@@ -3702,10 +3756,7 @@ export function ServerTerminalWorkspace({
     if (connection.phase !== 'connected' || previous === 'connected') return;
     // The gateway on the far side may have restarted: its captured history
     // starts over, and the cursor means nothing there.
-    capturedCursorRef.current = null;
-    capturedOffRef.current = false;
-    setCapturedOpen(false);
-    setCapturedProbe((probe) => probe + 1);
+    restartCaptured();
     historyPullBlockedRef.current = historyPullBlockedAfter('reconnected');
     setHistoryPullBlocked(historyPullBlockedRef.current);
   }, [connection.phase]);
