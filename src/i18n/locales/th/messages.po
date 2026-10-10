@@ -3885,6 +3885,10 @@ msgstr "ยังไม่ได้ตั้ง"
 msgid "Not signed in on the host"
 msgstr "ยังไม่ได้ลงชื่อเข้าใช้บนโฮสต์"
 
+#: src/components/home-computer-cards.tsx
+msgid "Not updating from here. Open this computer to see its tasks."
+msgstr "ไม่อัปเดตจากที่นี่ เปิดคอมพิวเตอร์เครื่องนี้เพื่อดูงานของมัน"
+
 #: src/components/ssh-host-form.tsx
 msgid "Not valid."
 msgstr "ไม่ถูกต้อง"

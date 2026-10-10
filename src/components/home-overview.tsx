@@ -975,6 +975,7 @@ export function HomeOverview({
     !loading && !hydrationError && hasComputerCards ? (
       <HomeComputerCards
         servers={cardServers}
+        followedIds={taskServerIds}
         activeConnection={activeConnection}
         skipEntering={cardsSkipEntering}
         gridWidth={cardGridWidth}

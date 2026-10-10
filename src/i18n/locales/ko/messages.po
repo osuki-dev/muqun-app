@@ -3885,6 +3885,10 @@ msgstr "설정 안 됨"
 msgid "Not signed in on the host"
 msgstr "호스트에 로그인되어 있지 않음"
 
+#: src/components/home-computer-cards.tsx
+msgid "Not updating from here. Open this computer to see its tasks."
+msgstr "여기서는 업데이트되지 않습니다. 이 컴퓨터를 열어 작업을 확인하세요"
+
 #: src/components/ssh-host-form.tsx
 msgid "Not valid."
 msgstr "올바르지 않습니다"

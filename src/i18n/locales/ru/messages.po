@@ -3885,6 +3885,10 @@ msgstr "Не задано"
 msgid "Not signed in on the host"
 msgstr "Вход на хосте не выполнен"
 
+#: src/components/home-computer-cards.tsx
+msgid "Not updating from here. Open this computer to see its tasks."
+msgstr "Отсюда не обновляется. Откройте этот компьютер, чтобы увидеть его задачи"
+
 #: src/components/ssh-host-form.tsx
 msgid "Not valid."
 msgstr "Недействительно"

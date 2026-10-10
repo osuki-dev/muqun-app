@@ -43,6 +43,43 @@ function channelsOf(evidence: string | undefined): ServerChannels {
 }
 
 /**
+ * Each computer's status, folded by `fold`, as an array in `serverIds` order
+ * that changes identity only when a folded value does.
+ */
+function useFoldedStatuses<T>(
+  serverIds: readonly string[],
+  selectedId: string | undefined,
+  activeConnection: ActiveServerConnection | undefined,
+  fold: (status: ConnectionStatus) => T
+): T[] {
+  const channels = useServerChannels(
+    useShallow((state) =>
+      serverIds.map((serverId) =>
+        channelEvidence(state.sockets, state.streams, serverId, serverId === selectedId)
+      )
+    )
+  );
+  return useServerReachability(
+    useShallow((state) =>
+      serverIds.map((serverId, index) =>
+        fold(
+          resolveConnectionStatus({
+            serverId,
+            probe: state.probes[serverId],
+            activeConnection,
+            channels: channelsOf(channels[index]),
+            selected: serverId === selectedId,
+            nowMs: state.freshnessNowMs,
+          })
+        )
+      )
+    )
+  );
+}
+
+const asIs = (status: ConnectionStatus) => status;
+
+/**
  * Each computer's connection status, for every screen that shows one -- Home,
  * Settings › Computers, a guide deciding whether it can run its command -- and
  * that must re-render only when one of those statuses changes.
@@ -59,47 +96,30 @@ export function useConnectionStatuses(
   selectedId: string | undefined,
   activeConnection?: ActiveServerConnection
 ): Readonly<Record<string, ConnectionStatus>> {
-  const channels = useServerChannels(
-    useShallow((state) =>
-      serverIds.map((serverId) =>
-        channelEvidence(state.sockets, state.streams, serverId, serverId === selectedId)
-      )
-    )
-  );
-  const statuses = useServerReachability(
-    useShallow((state) =>
-      serverIds.map((serverId, index) =>
-        resolveConnectionStatus({
-          serverId,
-          probe: state.probes[serverId],
-          activeConnection,
-          channels: channelsOf(channels[index]),
-          selected: serverId === selectedId,
-          nowMs: state.freshnessNowMs,
-        })
-      )
-    )
-  );
+  const statuses = useFoldedStatuses(serverIds, selectedId, activeConnection, asIs);
   return useMemo(
     () => Object.fromEntries(serverIds.map((serverId, index) => [serverId, statuses[index]])),
     [serverIds, statuses]
   );
 }
 
-/** Whether each computer is answering: the same statuses, folded to `live`/`offline`/`unknown`. */
+/**
+ * Whether each computer is answering: the same statuses, folded to
+ * `live`/`offline`/`unknown` inside the selector, so a status that moves
+ * without changing the fold (unknown to reconnecting, say) re-renders nothing.
+ */
 export function useHomeReachability(
   serverIds: readonly string[],
   activeConnection: ActiveServerConnection | undefined
 ): Readonly<Record<string, ServerReachability>> {
-  const statuses = useConnectionStatuses(serverIds, undefined, activeConnection);
+  const reachability = useFoldedStatuses(
+    serverIds,
+    undefined,
+    activeConnection,
+    reachabilityOfStatus
+  );
   return useMemo(
-    () =>
-      Object.fromEntries(
-        serverIds.map((serverId) => [
-          serverId,
-          reachabilityOfStatus(statuses[serverId] ?? 'unknown'),
-        ])
-      ),
-    [serverIds, statuses]
+    () => Object.fromEntries(serverIds.map((serverId, index) => [serverId, reachability[index]])),
+    [serverIds, reachability]
   );
 }

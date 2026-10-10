@@ -3885,6 +3885,10 @@ msgstr "Not set"
 msgid "Not signed in on the host"
 msgstr "Not signed in on the host"
 
+#: src/components/home-computer-cards.tsx
+msgid "Not updating from here. Open this computer to see its tasks."
+msgstr "Not updating from here. Open this computer to see its tasks"
+
 #: src/components/ssh-host-form.tsx
 msgid "Not valid."
 msgstr "Not valid"

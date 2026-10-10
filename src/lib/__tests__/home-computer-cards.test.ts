@@ -6,7 +6,6 @@ import {
   cardLimits,
   dismissedKey,
   groupTaskTree,
-  MAX_TASK_SUBSCRIPTIONS,
   PENDING_CLOCK_SKEW_MS,
   taskResultLine,
   taskRollup,
@@ -57,14 +56,14 @@ describe('taskSubscriptionServerIds', () => {
     { serverId: 'f' },
   ];
 
-  test('the selected computer first, then the rest in order, at most four', () => {
+  test('every reachable ledger is followed, the selected computer first', () => {
     expect(taskSubscriptionServerIds({ servers, selectedId: 'e', hasLedger: () => true })).toEqual([
       'e',
       'a',
       'b',
       'd',
+      'f',
     ]);
-    expect(MAX_TASK_SUBSCRIPTIONS).toBe(4);
   });
 
   test('only computers with a ledger; a tunnelled one only when it is selected', () => {
@@ -74,9 +73,14 @@ describe('taskSubscriptionServerIds', () => {
       'e',
       'f',
     ]);
-    expect(
-      taskSubscriptionServerIds({ servers, selectedId: 'c', hasLedger: () => true, max: 2 })
-    ).toEqual(['c', 'a']);
+    expect(taskSubscriptionServerIds({ servers, selectedId: 'c', hasLedger: () => true })).toEqual([
+      'c',
+      'a',
+      'b',
+      'd',
+      'e',
+      'f',
+    ]);
   });
 
   test('the demo is never subscribed', () => {
