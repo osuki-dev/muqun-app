@@ -809,6 +809,10 @@ msgstr "แนบไฟล์"
 msgid "Attachment"
 msgstr "ไฟล์แนบ"
 
+#: src/components/task-row.tsx
+msgid "Attachment could not be sent"
+msgstr "ส่งไฟล์แนบไม่ได้"
+
 #: src/components/session-artifacts.tsx
 msgid "Audio"
 msgstr "เสียง"

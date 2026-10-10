@@ -1,7 +1,7 @@
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens, useToast } from '@osuki-dev/ui';
-import { useRouter, type Href } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { ArrowRight } from 'lucide-react-native';
 import { useEffect, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -444,18 +444,27 @@ export function HomeComposerDock({
   }
 
   /**
-   * Create the session (or reuse the one a failed send left), act on it, open
-   * it. A create that fails on an agent that is not ready opens its setup
-   * guide, as a launch tile does; every other failure is said under the bar.
+   * Create the session (or reuse the one a failed send left), act on it, and,
+   * for a command or a skill, open it. A goal (`sent`) never navigates: the
+   * card holds a Sent row while it goes out, and keeps it saying the
+   * attachments could not be sent when they could not. A create that fails on
+   * an agent that is not ready opens its setup guide, as a launch tile does;
+   * every other failure is said under the bar.
    */
-  async function startSession(act: (asid: string) => Promise<void>): Promise<boolean> {
+  async function startSession(
+    act: (asid: string) => Promise<void>,
+    sent?: { goal: string; attachments: boolean }
+  ): Promise<boolean> {
     if (inFlightRef.current) return false;
     inFlightRef.current = true;
+    let pendingId: string | null = null;
+    let keepRow = false;
     return settleAfter(
       async () => {
         setError(null);
         const serverId = await sendTarget();
         if (!serverId) return false;
+        if (sent) pendingId = useHomeTaskCards.getState().dispatched(serverId, sent.goal);
         const params = sessionParams;
         // A retry reuses the session only where it would have made it.
         const key = `${serverId}\u0000${params.agentId ?? ''}\u0000${folder ?? ''}`;
@@ -502,6 +511,8 @@ export function HomeComposerDock({
             startedRef.current = null;
             // Its first snapshot may predate the prompt: no welcome card for it.
             markPromptedSession(serverId, started.asid);
+            // A goal stays on Home: the session is in Recent, the row was the feedback.
+            if (sent) return true;
             void onOpenAgent(
               serverId,
               started.asid,
@@ -513,6 +524,10 @@ export function HomeComposerDock({
           },
           async (failure) => {
             console.warn('Home could not start a session:', failure);
+            if (sent?.attachments && pendingId && !creating) {
+              useHomeTaskCards.getState().attachmentFailed(pendingId);
+              keepRow = true;
+            }
             if (creating) {
               const record = useGatewayConnectionStore
                 .getState()
@@ -533,6 +548,7 @@ export function HomeComposerDock({
         );
       },
       () => {
+        if (pendingId && !keepRow) useHomeTaskCards.getState().settle(pendingId);
         inFlightRef.current = false;
       }
     );
@@ -635,8 +651,9 @@ export function HomeComposerDock({
    * A terminal agent (Codex, Claude Code) chosen as Home agent: started in a
    * pane with the goal as its first prompt, with the gateway's own launch
    * arguments. On a gateway with `task_ledger_pane` through `POST /api/tasks`,
-   * so the card follows it as a task and Home stays put; otherwise Quick
-   * actions' New task path (spawn), which opens the pane.
+   * so the card follows it as a task; otherwise Quick actions' New task path
+   * (spawn), behind a Sent row. Home stays put either way: the pane is in
+   * Recent.
    */
   async function startTerminalAgent(
     kind: string,
@@ -685,8 +702,8 @@ export function HomeComposerDock({
               setError(t`Computer unavailable.`);
               return false;
             }
+            pendingId = useHomeTaskCards.getState().dispatched(serverId, text);
             if (viaLedger) {
-              pendingId = useHomeTaskCards.getState().dispatched(serverId, text);
               const mentions = await mentionsIn(text, serverId);
               const created = await createLedgerTask({
                 goal: text,
@@ -720,16 +737,10 @@ export function HomeComposerDock({
               setError(t`This computer has no session to start an agent in.`);
               return false;
             }
-            const spawned = await spawnAgent(
+            await spawnAgent(
               sessionId,
               agentSpawnRequest({ agent: kind, prompt: text, ...(cwd ? { cwd } : {}) })
             );
-            // The agent is running on `serverId` now, whatever the selection
-            // did since: open its pane there rather than call it unavailable.
-            router.navigate({
-              pathname: '/servers/[serverId]',
-              params: { serverId, paneId: spawned.paneId },
-            } as Href);
             return true;
           },
           (failure) => {
@@ -772,19 +783,23 @@ export function HomeComposerDock({
           ledgerPane,
           folder
         );
-      return ledgerPane ? dispatchTask(text, start) : start();
+      return dispatchTask(text, start);
     }
     // Attachments ride on a prompt to a session; the ledger route takes text
     // only, so a send with files keeps the session path. So does a retry onto
-    // the session a failed send left.
+    // the session a failed send left. Either way Home stays put.
     if (ledgerCreate && !attachments?.length && !startedRef.current) {
       return dispatchTask(text, () => openLedgerTask(text));
     }
-    return startSession((asid) =>
-      sendAgentPrompt(HOME_AGENT_SESSION_ID, asid, {
-        text,
-        ...(attachments ? { attachments } : {}),
-      })
+    return dispatchTask(text, () =>
+      startSession(
+        (asid) =>
+          sendAgentPrompt(HOME_AGENT_SESSION_ID, asid, {
+            text,
+            ...(attachments ? { attachments } : {}),
+          }),
+        { goal: text, attachments: (attachments?.length ?? 0) > 0 }
+      )
     );
   }
   // The composer empties the field as it hands a command over, so a command

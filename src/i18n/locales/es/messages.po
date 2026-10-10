@@ -809,6 +809,10 @@ msgstr "Adjuntar un archivo"
 msgid "Attachment"
 msgstr "Archivo adjunto"
 
+#: src/components/task-row.tsx
+msgid "Attachment could not be sent"
+msgstr "No se pudo enviar el adjunto"
+
 #: src/components/session-artifacts.tsx
 msgid "Audio"
 msgstr "Audio"

@@ -70,7 +70,14 @@ export type CardTaskRow = {
 };
 
 /** A goal the dock sent that the computer has not reported back yet. */
-export type PendingDispatch = { id: string; serverId: string; goal: string; atMs: number };
+export type PendingDispatch = {
+  id: string;
+  serverId: string;
+  goal: string;
+  atMs: number;
+  /** Its attachments could not be sent: the row says so until it expires. */
+  attachmentFailed?: true;
+};
 
 export type CardActivity = 'needs-you' | 'working' | 'paused' | 'idle' | 'offline';
 

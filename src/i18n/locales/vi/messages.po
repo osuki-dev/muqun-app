@@ -809,6 +809,10 @@ msgstr "Đính kèm tệp"
 msgid "Attachment"
 msgstr "Tệp đính kèm"
 
+#: src/components/task-row.tsx
+msgid "Attachment could not be sent"
+msgstr "Không thể gửi tệp đính kèm"
+
 #: src/components/session-artifacts.tsx
 msgid "Audio"
 msgstr "Âm thanh"
