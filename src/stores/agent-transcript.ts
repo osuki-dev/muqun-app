@@ -1,21 +1,25 @@
 import { createStore } from 'zustand/vanilla';
 import type { AgentRunStatus, TimelineItem } from '@/lib/agent-protocol';
-import {
-  reconcileInjectedContext,
-  reconcileShellParts,
-  type TimelineRenderGroup,
-} from '@/lib/agent-timeline-groups';
+import { reconcileShellParts, type TimelineRenderGroup } from '@/lib/agent-timeline-groups';
 import { classifyTool } from '@/lib/agent-tool-output';
 import { splitDiagramMarkdown } from '@/lib/diagram-markdown';
+import { withoutTaskPlumbing } from '@/lib/task-plumbing';
 
 /** One canonical timeline per mounted workbench; rows are derived, never mirrored back. */
 export function createAgentTranscriptStore() {
   return createStore<AgentTranscriptState>((set, get) => {
     const markdownRows = new WeakMap<TimelineItem, TimelineItem[]>();
-    const renderItems = (item: TimelineItem): TimelineItem[] => {
-      if (item.role !== 'assistant' || item.part.type !== 'text') return [item];
-      const cached = markdownRows.get(item);
+    const renderItems = (canonical: TimelineItem): TimelineItem[] => {
+      const cached = markdownRows.get(canonical);
       if (cached) return cached;
+      // The gateway's task plumbing (a synthetic part, its completion request,
+      // the agent's marker line) is never drawn. See `task-plumbing.ts`.
+      const item = withoutTaskPlumbing(canonical);
+      if (!item || item.role !== 'assistant' || item.part.type !== 'text') {
+        const rows = item ? [item] : [];
+        markdownRows.set(canonical, rows);
+        return rows;
+      }
       const parts = splitDiagramMarkdown(item.part.text);
       // Virtualize each diagram in the existing list, never nest another list
       // inside a message. Keep the canonical timeline intact for sync/copy.
@@ -32,12 +36,12 @@ export function createAgentTranscriptStore() {
                 part: { type: 'text' as const, text: part.markdown },
               }))
           : [item];
-      markdownRows.set(item, rows);
+      markdownRows.set(canonical, rows);
       return rows;
     };
     const rebuild = (timeline: TimelineItem[], config = get().config) => {
       const previous = get();
-      const reconciled = reconcileInjectedContext(reconcileShellParts(timeline));
+      const reconciled = reconcileShellParts(timeline);
       // windowStart indexes the canonical timeline, not the deduplicated list.
       // Shell copies can occupy the entire newest page; keep a real page visible
       // instead of slicing beyond the end after those copies are removed.
