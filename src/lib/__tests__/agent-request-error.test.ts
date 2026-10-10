@@ -72,6 +72,13 @@ describe('classifyAgentRequestError', () => {
     expect(
       isAgentOfflineError(Object.assign(new Error('connect failed'), { code: 'ECONNREFUSED' }))
     ).toBe(true);
+    // A file or a permission is not the network: it says its own thing.
+    expect(isAgentOfflineError(Object.assign(new Error('open failed'), { code: 'ENOENT' }))).toBe(
+      false
+    );
+    expect(
+      isAgentOfflineError(new Error('java.io.FileNotFoundException: /data/x (No such file)'))
+    ).toBe(false);
   });
 
   test('a message it cannot read is one short line, never a stack trace', () => {
@@ -79,6 +86,11 @@ describe('classifyAgentRequestError', () => {
       new Error('Something odd happened\n  at com.example.Thing.run(Thing.java:12)\n  at x.y(z)')
     );
     expect(reading).toEqual({ kind: 'other', message: 'Something odd happened' });
+    // A sentence that says "at foo(" itself is not a stack frame.
+    expect(classifyAgentRequestError(new Error('Stopped at parse(line 3) in config'))).toEqual({
+      kind: 'other',
+      message: 'Stopped at parse(line 3) in config',
+    });
     expect(
       classifyAgentRequestError(
         refusal(400, 'invalid_request', 'attachment is not a file uploaded to this gateway')
