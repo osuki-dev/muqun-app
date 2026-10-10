@@ -268,13 +268,16 @@ export function HomeEditorialLayout({
   // The Pad work column's headings take the same plate as the phone's sections.
   const scenePlate = useHomeScenePlate();
   const [measuredWidth, setMeasuredWidth] = useState(0);
-  // Whether the Pad lower band was already showing: one that arrives later
-  // (the first card) waits for the cover to finish shrinking, or it would
-  // land over the tiles still moving up. Reset when the band goes.
-  const [bandSettled, setBandSettled] = useState(hasProgress);
+  // Whether the Pad lower band (cards or connections) was already showing
+  // when Home mounted: one that arrives later (the first card) waits for the
+  // cover to finish shrinking, or it would land over the tiles still moving
+  // up. Reset when the band goes, so its next arrival is one too.
+  const hasConnections = hasSlot(connections);
+  const hasBand = hasProgress || hasConnections;
+  const [bandSettled, setBandSettled] = useState(hasBand);
   useEffect(() => {
-    if (!hasProgress) setBandSettled(false);
-  }, [hasProgress]);
+    if (!hasBand) setBandSettled(false);
+  }, [hasBand]);
   const [titleMeasurement, setTitleMeasurement] = useState<{ title: string; width: number } | null>(
     null
   );
@@ -422,7 +425,6 @@ export function HomeEditorialLayout({
       letterSpacing: -titleFontSize * 0.05,
     } as const;
     const hasRecent = hasSlot(recent);
-    const hasConnections = hasSlot(connections);
     const titleMeasure = coverTitle ? (
       <View
         pointerEvents="none"
@@ -561,7 +563,7 @@ export function HomeEditorialLayout({
                   {attention}
                 </Animated.View>
               ) : null}
-              {hasProgress || hasConnections ? (
+              {hasBand ? (
                 <Animated.View
                   testID="home-pad-lower-band"
                   entering={bandArrival}

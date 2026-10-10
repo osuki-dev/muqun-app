@@ -48,7 +48,7 @@ import { agentSessionStatusWord, agentStatusWord, taskStateWord } from '@/i18n/l
 import { boundTask } from '@/lib/home-in-progress';
 import { useServerTasksStore } from '@/stores/server-tasks';
 import { agentBrandName, agentStatusTone, isLaunchCommandTitle } from '@/lib/herdr-entity';
-import { paneLedgerTask, taskRowVisual, taskTitle } from '@/lib/home-computer-cards';
+import { paneLedgerTask, taskRowVisual, taskRowTitle } from '@/lib/home-computer-cards';
 import type { ActiveServerConnection, ServerReachability } from '@/lib/server-reachability';
 import { useServerAgents } from '@/stores/server-agents';
 import { useAppSettings } from '@/stores/app-settings';
@@ -417,7 +417,7 @@ function RecentSessionRow({
       state.index[entry.destination.serverId]?.tasks,
       entry.destination.paneId
     );
-    return task ? taskTitle(task) : undefined;
+    return task ? taskRowTitle(task) : undefined;
   });
   const title = paneGoal
     ? paneGoal

@@ -12,7 +12,7 @@ import {
   taskRollup,
   taskSubscriptionServerIds,
   taskRowVisual,
-  taskTitle,
+  taskRowTitle,
   heldCardOrder,
 } from '../home-computer-cards';
 import type { ServerTasksIndex } from '../server-tasks-state';
@@ -159,9 +159,26 @@ describe('roll-up, result and title', () => {
     expect(taskResultLine(task('t', 'cancelled', 1))).toBeNull();
   });
 
-  test('the label wins over the goal; the goal is cut to its first line', () => {
-    expect(taskTitle(task('t', 'done', 1, { label: 'fix test' }))).toBe('fix test');
-    expect(taskTitle(task('t', 'done', 1, { goal: 'line one\nline two' }))).toBe('line one');
+  // label, gateway title, goal -> the one line a row is named by
+  test.each<[string | undefined, string | undefined, string, string]>([
+    ['fix test', 'Fix the test', 'Fix it.', 'fix test'],
+    [undefined, 'Fix the test', 'Fix it.', 'Fix the test'],
+    [undefined, undefined, 'line one\nline two', 'line one'],
+    [undefined, undefined, 'Fix v1.2 of the parser. Then run it.', 'Fix v1.2 of the parser'],
+    [undefined, undefined, 'Why? Because.', 'Why?'],
+    [undefined, undefined, '修好登录页。然后跑测试', '修好登录页'],
+    [
+      undefined,
+      undefined,
+      'Read the configuration file under the project root and summarise every option',
+      'Read the configuration file under the project root and…',
+    ],
+  ])('%p / %p / %p', (label, title, goal, shown) => {
+    expect(
+      taskRowTitle(
+        task('t', 'done', 1, { goal, ...(label ? { label } : {}), ...(title ? { title } : {}) })
+      )
+    ).toBe(shown);
   });
 });
 

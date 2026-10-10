@@ -573,10 +573,6 @@ msgstr "ทุกโปรเจกต์"
 msgid "All sessions"
 msgstr "เซสชันทั้งหมด"
 
-#: src/components/home-computer-cards.tsx
-msgid "All tasks"
-msgstr "งานทั้งหมด"
-
 #: src/i18n/labels.ts
 msgid "Allow"
 msgstr "อนุญาต"
@@ -2104,6 +2100,7 @@ msgstr "ลด {label}"
 msgid "default"
 msgstr "ค่าเริ่มต้น"
 
+#: src/components/home-composer-dock.tsx
 #: src/components/settings-terminal.tsx
 #: src/components/settings-theme-sheet.tsx
 msgid "Default"
@@ -2832,6 +2829,7 @@ msgstr "เอเจนต์ของหน้าแรก: {agentName}"
 msgid "Home effects · development only"
 msgstr "เอฟเฟกต์หน้าหลัก · สำหรับการพัฒนาเท่านั้น"
 
+#: src/app/agent-workspace.tsx
 #: src/components/home-composer-dock.tsx
 msgid "Home folder"
 msgstr "โฟลเดอร์หลัก"
@@ -3064,10 +3062,6 @@ msgstr "อุปกรณ์ที่จับคู่จะแสดงเม
 #: src/components/skia-terminal.tsx
 msgid "Jump to latest output"
 msgstr "ข้ามไปยังเอาต์พุตล่าสุด"
-
-#: src/components/home-computer-cards.tsx
-msgid "Just finished"
-msgstr "เพิ่งเสร็จ"
 
 #: src/components/agent-sessions-sheet.tsx
 #: src/hooks/use-relative-time.ts
@@ -3890,10 +3884,6 @@ msgstr "ไม่มีการเปลี่ยนแปลงใด"
 #: src/components/agent-context-sheet.tsx
 msgid "Nothing yet — an “Always allow” reply lands here, for this project."
 msgstr "ยังไม่มี — คำตอบ “อนุญาตเสมอ” จะมาอยู่ที่นี่ สำหรับโปรเจกต์นี้"
-
-#: src/components/home-computer-cards.tsx
-msgid "Now"
-msgstr "ตอนนี้"
 
 #: src/components/toggle.tsx
 msgid "Off"

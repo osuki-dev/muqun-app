@@ -3,6 +3,7 @@ import { create } from 'zustand';
 import { configureGateway, revokeOwnGatewayPairing, setGatewayLabel } from '@/lib/gateway-client';
 import { demoRecord, DEMO_SERVER_ID } from '@/lib/demo-gateway';
 import { seedDemoAgentRecent } from '@/lib/demo-recents';
+import { forgetRegisteredPushToken } from '@/lib/push-token-registry';
 import { forgetWarmWorkspace } from '@/lib/server-warm-cache';
 import { describeGatewayFailure } from '@/lib/network-error';
 import { GatewayTunnelUnavailableError } from '@/lib/ssh-tunnel';
@@ -283,6 +284,8 @@ export const useGatewayConnectionStore = create<GatewayConnectionState>((set, ge
       // A workspace snapshot outlives nothing it describes: the pairing this
       // one came from is gone, so the snapshot must not paint a screen again.
       forgetWarmWorkspace(serverId);
+      // Paired again later, it has to be told the push token again.
+      forgetRegisteredPushToken(serverId);
       // Only tear down the live connection if we removed the server it points
       // at; deleting some other card must not knock the user out of a session.
       const nextRecord = removedCurrent ? await loadGateway() : get().record;

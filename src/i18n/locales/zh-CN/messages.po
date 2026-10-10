@@ -573,10 +573,6 @@ msgstr "全部项目"
 msgid "All sessions"
 msgstr "全部会话"
 
-#: src/components/home-computer-cards.tsx
-msgid "All tasks"
-msgstr "所有任务"
-
 #: src/i18n/labels.ts
 msgid "Allow"
 msgstr "允许"
@@ -2104,6 +2100,7 @@ msgstr "降低{label}"
 msgid "default"
 msgstr "默认"
 
+#: src/components/home-composer-dock.tsx
 #: src/components/settings-terminal.tsx
 #: src/components/settings-theme-sheet.tsx
 msgid "Default"
@@ -2832,6 +2829,7 @@ msgstr "主页智能体：{agentName}"
 msgid "Home effects · development only"
 msgstr "首页效果 · 仅开发模式"
 
+#: src/app/agent-workspace.tsx
 #: src/components/home-composer-dock.tsx
 msgid "Home folder"
 msgstr "主文件夹"
@@ -3064,10 +3062,6 @@ msgstr "等它成为正在使用的电脑后，就会列出它已配对的设备
 #: src/components/skia-terminal.tsx
 msgid "Jump to latest output"
 msgstr "跳到最新输出"
-
-#: src/components/home-computer-cards.tsx
-msgid "Just finished"
-msgstr "刚完成"
 
 #: src/components/agent-sessions-sheet.tsx
 #: src/hooks/use-relative-time.ts
@@ -3890,10 +3884,6 @@ msgstr "没有做任何更改"
 #: src/components/agent-context-sheet.tsx
 msgid "Nothing yet — an “Always allow” reply lands here, for this project."
 msgstr "还没有内容——选择“始终允许”后，规则会出现在这里，属于本项目"
-
-#: src/components/home-computer-cards.tsx
-msgid "Now"
-msgstr "正在进行"
 
 #: src/components/toggle.tsx
 msgid "Off"

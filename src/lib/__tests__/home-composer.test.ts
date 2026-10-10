@@ -12,6 +12,7 @@ import {
   resolveHomeComposerTarget,
   type HomeStartedSession,
   homeFolderLabel,
+  homeFolderName,
   homeFolderPick,
 } from '../home-composer';
 
@@ -92,60 +93,50 @@ describe('homeSessionParams', () => {
     { id: 'plan', name: 'plan', model: haiku },
   ] as ModeInfo[];
 
-  test('the dock pick wins, and the agent is named only on a discovering gateway', () => {
-    const base = {
+  test.each([
+    {
+      name: 'the pick is sent, the agent only on a discovering gateway',
       picked: { model: sonnet, mode: 'build' },
-      remembered: { server: { model: haiku, mode: 'plan' } },
-      catalogDefaults: {},
-      models,
-      modes,
-      agentId: 'opencode',
-    };
-    expect(homeSessionParams({ ...base, agentsDiscovered: true })).toEqual({
-      model: sonnet,
-      mode: 'build',
-      agentId: 'opencode',
-    });
-    expect(homeSessionParams({ ...base, agentsDiscovered: false })).toEqual({
-      model: sonnet,
-      mode: 'build',
-    });
-  });
-
-  test('a picked mode brings its own model; a model the catalog dropped is not sent', () => {
+      defaults: { model: haiku },
+      discovered: true,
+      params: { model: sonnet, mode: 'build', agentId: 'opencode' },
+      shown: { model: sonnet, mode: 'build' },
+    },
+    {
+      name: 'a picked mode brings its own model',
+      picked: { mode: 'plan' },
+      defaults: { model: sonnet },
+      discovered: false,
+      params: { model: haiku, mode: 'plan' },
+      shown: { model: haiku, mode: 'plan' },
+    },
+    {
+      name: 'nothing picked sends nothing and names the agent default, not the first model',
+      picked: {},
+      defaults: { model: haiku, mode: 'build' },
+      discovered: false,
+      params: {},
+      shown: { model: haiku, mode: 'build' },
+    },
+    {
+      name: 'a pick the catalog dropped is not sent',
+      picked: { model: gone },
+      defaults: {},
+      discovered: false,
+      params: {},
+      shown: {},
+    },
+  ])('$name', ({ picked, defaults, discovered, params, shown }) => {
     expect(
       homeSessionParams({
-        picked: { mode: 'plan' },
-        remembered: { server: { model: gone } },
-        catalogDefaults: { model: sonnet },
+        picked,
+        catalogDefaults: defaults,
         models,
         modes,
-        agentsDiscovered: false,
+        agentId: 'opencode',
+        agentsDiscovered: discovered,
       })
-    ).toEqual({ model: haiku, mode: 'plan' });
-    expect(
-      homeSessionParams({
-        picked: {},
-        remembered: { server: { model: gone } },
-        catalogDefaults: { model: sonnet },
-        models,
-        modes: [],
-        agentsDiscovered: false,
-      })
-    ).toEqual({ model: sonnet });
-  });
-
-  test('before the catalog answers nothing is guessed', () => {
-    expect(
-      homeSessionParams({
-        picked: {},
-        remembered: { server: { model: sonnet, mode: 'build' } },
-        catalogDefaults: {},
-        models: [],
-        modes: [],
-        agentsDiscovered: false,
-      })
-    ).toEqual({});
+    ).toEqual({ params, shown });
   });
 });
 
@@ -257,5 +248,17 @@ describe('the folder segment', () => {
   ])('%p', (picked, stored, label) => {
     expect(homeFolderPick(picked)).toBe(stored);
     expect(stored === undefined ? undefined : homeFolderLabel(stored)).toBe(label);
+  });
+
+  // picked, gateway default -> what the segment says
+  test.each<[string | undefined, string | undefined, string]>([
+    ['/srv/app', '/srv/other', 'app'],
+    [undefined, '/srv/other', 'other'],
+    [undefined, '~', 'Home folder'],
+    [undefined, undefined, 'Last folder'],
+  ])('%p over %p', (picked, reported, shown) => {
+    expect(homeFolderName(picked ?? reported, { last: 'Last folder', home: 'Home folder' })).toBe(
+      shown
+    );
   });
 });

@@ -170,9 +170,59 @@ export function taskResultLine(
   return null;
 }
 
-/** The title a task row shows: the requester's label, else the goal. */
-export function taskTitle(task: TaskView): string {
-  return task.label || task.goal.split('\n')[0]?.trim() || '';
+/** How long a title derived from the goal may run, as the gateway clips it. */
+const TITLE_CHARS = 60;
+
+/** Whitespace collapsed to single spaces; past `max` characters, cut with `…`. */
+function oneLine(text: string, max: number): string {
+  const line = text.split(/\s+/).filter(Boolean).join(' ');
+  const chars = [...line];
+  if (chars.length <= max) return line;
+  return `${chars
+    .slice(0, max - 1)
+    .join('')
+    .trimEnd()}…`;
+}
+
+/**
+ * The goal's first sentence -- up to the first `.` or `?`/`!` followed by a
+ * space, a `。`/`？`/`！`, or a line end -- cut at a word to
+ * {@link TITLE_CHARS}: the gateway's own derivation (`pane_agent::title`),
+ * for a gateway that does not send `title`.
+ */
+export function goalTitle(goal: string): string {
+  const text = goal.trim();
+  let end = text.length;
+  for (let at = 0; at < text.length; at += 1) {
+    const c = text[at];
+    const spaced = at + 1 >= text.length || /\s/.test(text[at + 1]!);
+    if (c === '\n' || c === '。' || (c === '.' && spaced)) {
+      end = at;
+      break;
+    }
+    if (c === '？' || c === '！' || ((c === '?' || c === '!') && spaced)) {
+      end = at + 1;
+      break;
+    }
+  }
+  const sentence = oneLine(text.slice(0, end), Infinity);
+  const line = oneLine(sentence, TITLE_CHARS);
+  if (!line.endsWith('…')) return line;
+  // Cut mid-word unless a space came next: back to the last whole word.
+  const cut = line.slice(0, -1);
+  const space = cut.lastIndexOf(' ');
+  return sentence.slice(cut.length).startsWith(' ') || space <= 0
+    ? line
+    : `${cut.slice(0, space)}…`;
+}
+
+/**
+ * The one line that names a task on Home and in Recent: the requester's
+ * label, else the gateway's title (the agent session's own name once it has
+ * one), else the goal's first sentence, clipped. Never the goal paragraph.
+ */
+export function taskRowTitle(task: TaskView): string {
+  return task.label || task.title || goalTitle(task.goal);
 }
 
 /**
@@ -273,7 +323,7 @@ function collapseCancelled(tasks: readonly TaskView[]): TaskView[] {
   const seen = new Set<string>();
   return tasks.filter((task) => {
     if (task.state !== 'cancelled') return true;
-    const title = taskTitle(task);
+    const title = taskRowTitle(task);
     if (!title) return true;
     if (seen.has(title)) return false;
     seen.add(title);

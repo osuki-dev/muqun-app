@@ -10,9 +10,9 @@ import type { AgentClientCommandId } from '@/lib/agent-commands';
 import type { AgentFeatures } from '@/lib/agent-protocol';
 import type { CatalogDefaults, ModeInfo, ModelInfo, ModelRef } from '@/lib/agent-session';
 import {
-  resolveNewSessionDefaults,
+  catalogModeId,
+  catalogModelRef,
   type RememberedAgentChoice,
-  type RememberedAgentDefaults,
 } from '@/lib/agent-session-defaults';
 import type { GatewayRecord } from '@/lib/gateway-storage';
 import type { AgentReadiness } from '@/lib/home-agent-readiness';
@@ -90,37 +90,85 @@ export function homeHiddenClientCommands(
 }
 
 /**
- * What `POST /api/agent-sessions` carries for a goal sent from Home, which is
- * also what the dock's mode and model pills show before it is sent.
+ * What a goal sent from Home is created with, and what the dock's mode and
+ * model pills name.
  *
- * The workbench's own ladder (`resolveNewSessionDefaults`): the reader's pick
- * in the dock, then what this server remembers, then the catalog's defaults.
+ * Only the reader's own pick in the dock is sent, remembered per computer
+ * and agent (`homeModelChoiceKey`): a pick the catalog no longer offers is
+ * dropped, and a picked mode that names its own model brings it. Before any
+ * pick nothing is sent, so the agent runs on its own default, and the pills
+ * name that default (the catalog's `defaults`), not a guess from the list.
  * The agent is named only on a gateway that has said which agents it drives;
  * an older gateway has one and no `agent_id` to read.
  */
 export function homeSessionParams(input: {
   picked: RememberedAgentChoice;
-  remembered: RememberedAgentDefaults;
   catalogDefaults: CatalogDefaults;
   models: readonly ModelInfo[];
   modes: readonly ModeInfo[];
   agentId?: string;
   agentsDiscovered: boolean;
-}): { mode?: string; model?: ModelRef; agentId?: string } {
-  const resolved = resolveNewSessionDefaults({
-    picked: input.picked,
-    ...input.remembered,
-    catalogDefaults: input.catalogDefaults,
-    models: input.models,
-    modes: input.modes,
-  });
+}): {
+  params: { mode?: string; model?: ModelRef; agentId?: string };
+  shown: { mode?: string; model?: ModelRef };
+} {
+  const { picked, catalogDefaults, models, modes } = input;
+  const mode = catalogModeId(picked.mode, modes);
+  const modeModel = modes.find((entry) => entry.id === mode)?.model;
+  const model = catalogModelRef(picked.model, models) ?? catalogModelRef(modeModel, models);
+  const shownMode = mode ?? catalogModeId(catalogDefaults.mode, modes);
+  const shownModel = model ?? catalogModelRef(catalogDefaults.model, models);
   return {
-    ...resolved,
-    ...(input.agentsDiscovered && input.agentId ? { agentId: input.agentId } : {}),
+    params: {
+      ...(mode ? { mode } : {}),
+      ...(model ? { model } : {}),
+      ...(input.agentsDiscovered && input.agentId ? { agentId: input.agentId } : {}),
+    },
+    shown: {
+      ...(shownMode ? { mode: shownMode } : {}),
+      ...(shownModel ? { model: shownModel } : {}),
+    },
   };
 }
 
-export type HomeSessionParams = ReturnType<typeof homeSessionParams>;
+/** Where a dock pick of mode and model is remembered: one computer's one agent. */
+export function homeModelChoiceKey(serverId: string, agentId: string | undefined): string {
+  return `${serverId}\u0000${agentId ?? ''}`;
+}
+
+/** The persisted `{ [homeModelChoiceKey]: { model?, mode? } }`, dropping anything malformed. */
+export function parseHomeModelChoices(
+  value: string | null | undefined
+): Record<string, RememberedAgentChoice> {
+  if (!value) return {};
+  try {
+    const parsed = JSON.parse(value) as unknown;
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return {};
+    const out: Record<string, RememberedAgentChoice> = {};
+    for (const [key, entry] of Object.entries(parsed as Record<string, unknown>)) {
+      if (!entry || typeof entry !== 'object') continue;
+      const { model, mode } = entry as { model?: Partial<ModelRef>; mode?: unknown };
+      const ref =
+        model && typeof model.provider_id === 'string' && typeof model.model_id === 'string'
+          ? {
+              provider_id: model.provider_id,
+              model_id: model.model_id,
+              ...(typeof model.variant === 'string' ? { variant: model.variant } : {}),
+            }
+          : undefined;
+      const choice = {
+        ...(ref ? { model: ref } : {}),
+        ...(typeof mode === 'string' && mode ? { mode } : {}),
+      };
+      if (choice.model || choice.mode) out[key] = choice;
+    }
+    return out;
+  } catch {
+    return {};
+  }
+}
+
+export type HomeSessionParams = ReturnType<typeof homeSessionParams>['params'];
 
 /** A session Home made for a send whose act (prompt, command, skill) did not land. */
 export interface HomeStartedSession {
@@ -233,6 +281,20 @@ export function homeFolderLabel(folder: string): string {
   const trimmed = folder.replace(/\/+$/, '');
   if (!trimmed) return '/';
   return trimmed.slice(trimmed.lastIndexOf('/') + 1) || trimmed;
+}
+
+/**
+ * What the folder segment and the picker's first row say: the folder picked,
+ * else the one the gateway reports it will use, by basename; the home
+ * directory in words, as `~` alone reads as a glyph. `last` is only for a
+ * gateway that cannot say where it will run.
+ */
+export function homeFolderName(
+  folder: string | undefined,
+  words: { last: string; home: string }
+): string {
+  if (!folder) return words.last;
+  return folder === '~' ? words.home : homeFolderLabel(folder);
 }
 
 /** The persisted `{ [serverId]: folder }`, dropping anything that is not one. */

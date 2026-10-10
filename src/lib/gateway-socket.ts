@@ -85,6 +85,8 @@ export interface GatewaySocketListener {
   onTaskUpdated?: (task: TaskView, seq: number) => void;
   /** The gateway dropped events for this session; refetch it. */
   onResync?: () => void;
+  /** Where this device's next task runs by default (`defaults` frame). Task listeners only. */
+  onDefaults?: (defaultCwd: string | null) => void;
   /** Consecutive connection attempts that ended before `hello`. */
   onOpenFailed?: (consecutive: number) => void;
   /** The socket cannot be used; fall back. */
@@ -589,6 +591,9 @@ export class GatewaySocket {
         if (!frame.tasks) this.notify(this.targets(frame.asid), (l) => l.onResync?.());
         // Events were dropped; a task may have changed in them.
         if (!frame.asid) for (const l of [...this.taskListeners.keys()]) l.onResync?.();
+        return;
+      case 'defaults':
+        for (const l of [...this.taskListeners.keys()]) l.onDefaults?.(frame.defaultCwd);
         return;
       case 'error':
         if (frame.code === 'superseded') {

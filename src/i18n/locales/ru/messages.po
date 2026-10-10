@@ -573,10 +573,6 @@ msgstr "Все проекты"
 msgid "All sessions"
 msgstr "Все сессии"
 
-#: src/components/home-computer-cards.tsx
-msgid "All tasks"
-msgstr "Все задачи"
-
 #: src/i18n/labels.ts
 msgid "Allow"
 msgstr "Разрешить"
@@ -2104,6 +2100,7 @@ msgstr "Уменьшить {label}"
 msgid "default"
 msgstr "по умолчанию"
 
+#: src/components/home-composer-dock.tsx
 #: src/components/settings-terminal.tsx
 #: src/components/settings-theme-sheet.tsx
 msgid "Default"
@@ -2832,6 +2829,7 @@ msgstr "Агент Главной: {agentName}"
 msgid "Home effects · development only"
 msgstr "Эффекты главного экрана · для разработки"
 
+#: src/app/agent-workspace.tsx
 #: src/components/home-composer-dock.tsx
 msgid "Home folder"
 msgstr "Домашняя папка"
@@ -3064,10 +3062,6 @@ msgstr "Его привязанные устройства появятся, к�
 #: src/components/skia-terminal.tsx
 msgid "Jump to latest output"
 msgstr "К последнему выводу"
-
-#: src/components/home-computer-cards.tsx
-msgid "Just finished"
-msgstr "Только что завершено"
 
 #: src/components/agent-sessions-sheet.tsx
 #: src/hooks/use-relative-time.ts
@@ -3890,10 +3884,6 @@ msgstr "Ничего не изменено"
 #: src/components/agent-context-sheet.tsx
 msgid "Nothing yet — an “Always allow” reply lands here, for this project."
 msgstr "Пока пусто — ответ «Разрешать всегда» появится здесь, для этого проекта"
-
-#: src/components/home-computer-cards.tsx
-msgid "Now"
-msgstr "Сейчас"
 
 #: src/components/toggle.tsx
 msgid "Off"

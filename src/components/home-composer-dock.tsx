@@ -24,7 +24,6 @@ import { useStableHandler } from '@/hooks/use-render-refs';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { reachabilityDescription } from '@/i18n/labels';
 import type { AgentClientCommandId } from '@/lib/agent-commands';
-import { loadRememberedAgentDefaults } from '@/lib/agent-model-memory';
 import { classifyAgentRequestError } from '@/lib/agent-request-error';
 import {
   createAgentSession,
@@ -43,11 +42,12 @@ import { recoverWith, settleAfter } from '@/lib/compiler-safe-control-flow';
 import { checkAgentServer } from '@/lib/home-agent-readiness';
 import {
   HOME_AGENT_SESSION_ID,
-  homeFolderLabel,
+  homeFolderName,
   homeGuideParams,
   ledgerModelId,
   sameComputer,
   homeHiddenClientCommands,
+  homeModelChoiceKey,
   homeSessionParams,
   homeSessionReuse,
   resolveHomeComposerTarget,
@@ -186,13 +186,15 @@ export function HomeComposerDock({
     agentsDiscovered && agent?.kind === 'session' ? normalizeAgentId(agent.agentId) : undefined;
   const features = useAgentFeatures(targetId, agentId);
   const computerLabel = targetServer?.label ?? '';
-  // Nothing picked sends no folder and the gateway uses the device's last
-  // one; the home directory is named in words, as `~` alone reads as a glyph.
-  const folderLabel = !folder
-    ? t`Last folder`
-    : folder === '~'
-      ? t`Home folder`
-      : homeFolderLabel(folder);
+  // Nothing picked sends no folder and the gateway uses its default, which it
+  // reports (`defaults`); only a gateway that cannot say leaves "Last folder".
+  const defaultCwd = useServerTasksStore((state) =>
+    targetId ? state.defaultCwd[targetId] : undefined
+  );
+  const folderLabel = homeFolderName(folder ?? defaultCwd, {
+    last: t`Last folder`,
+    home: t`Home folder`,
+  });
   const agentName = agent?.name ?? '';
   const agentLabel = agentName || computerLabel;
   // A gateway that opens ledger tasks gets the goal as one: Home's cards then
@@ -230,25 +232,22 @@ export function HomeComposerDock({
   const models = catalog?.models ?? [];
   const modes = catalog?.modes ?? [];
 
-  // What the reader picked in the dock, for this computer and agent only.
-  const [picked, setPicked] = useState<{ key: string; mode?: string; model?: ModelRef }>({
-    key: '',
-  });
-  const picks = picked.key === catalogKey ? picked : { key: catalogKey };
-  const sessionParams = homeSessionParams({
-    picked: {
-      ...(picks.mode ? { mode: picks.mode } : {}),
-      ...(picks.model ? { model: picks.model } : {}),
-    },
-    // Keyed as the workbench keys it, so both read the same memory.
-    remembered: loadRememberedAgentDefaults(HOME_AGENT_SESSION_ID, undefined, agentId),
+  // What the reader last picked in the dock for this computer and agent,
+  // kept across launches; nothing picked runs the agent's own default.
+  const picked = useHomeAgentChoice((state) =>
+    targetId ? state.modelChoice[homeModelChoiceKey(targetId, agentId)] : undefined
+  );
+  const chooseModel = useHomeAgentChoice((state) => state.chooseModel);
+  const chooseMode = useHomeAgentChoice((state) => state.chooseMode);
+  const { params: sessionParams, shown } = homeSessionParams({
+    picked: picked ?? {},
     catalogDefaults: catalog?.defaults ?? {},
     models,
     modes,
     ...(agentId ? { agentId } : {}),
     agentsDiscovered,
   });
-  const selectedModel = sessionParams.model;
+  const selectedModel = shown.model;
   const modelInfo = selectedModel
     ? models.find(
         (model) =>
@@ -256,15 +255,13 @@ export function HomeComposerDock({
           (!selectedModel.provider_id || model.provider_id === selectedModel.provider_id)
       )
     : undefined;
-  const modelName = formatModelName(selectedModel, '', modelInfo?.name);
+  const modelName = selectedModel
+    ? formatModelName(selectedModel, '', modelInfo?.name)
+    : t`Default`;
   const canPickMode = features.modes && modes.length > 0;
 
   const selectModel = useStableHandler((model: ModelRef) => {
-    setPicked((current) => ({
-      ...(current.key === catalogKey ? current : {}),
-      key: catalogKey,
-      model,
-    }));
+    if (targetId) chooseModel(targetId, agentId, model);
   });
   useEffect(() => () => useHomeComposerSheet.getState().release(selectModel), [selectModel]);
   function openModelSheet() {
@@ -281,7 +278,7 @@ export function HomeComposerDock({
   // A mode that names its own model brings it, as it does on a session: the
   // model pick is dropped and the ladder starts from the mode again.
   function selectMode(mode: string) {
-    setPicked({ key: catalogKey, mode });
+    if (targetId) chooseMode(targetId, agentId, mode);
   }
 
   /** The workbench's own sentences for a failed request, in this agent's name. */
@@ -432,6 +429,7 @@ export function HomeComposerDock({
    * `POST /api/tasks`: the gateway creates the session, sends the goal and
    * records the ledger task in one step, so the target's card shows the work
    * from the first frame. The card holds a "Sent" row until the answer lands.
+   * Home stays put: the row is the feedback, and tapping it opens the session.
    */
   async function openLedgerTask(text: string): Promise<boolean> {
     if (inFlightRef.current) return false;
@@ -490,13 +488,6 @@ export function HomeComposerDock({
                 (failure: unknown) => console.warn('Home could not set the model variant:', failure)
               );
             }
-            void onOpenAgent(
-              serverId,
-              asid,
-              undefined,
-              HOME_AGENT_SESSION_ID,
-              task.binding.kind === 'agent_session' ? task.binding.agentId : params.agentId
-            );
             return true;
           },
           async (failure) => {
@@ -528,9 +519,9 @@ export function HomeComposerDock({
   /**
    * A terminal agent (Codex, Claude Code) chosen as Home agent: started in a
    * pane with the goal as its first prompt, with the gateway's own launch
-   * arguments, and that pane opened. On a gateway with `task_ledger_pane`
-   * through `POST /api/tasks`, so the card follows it as a task; otherwise
-   * Quick actions' New task path (spawn).
+   * arguments. On a gateway with `task_ledger_pane` through `POST /api/tasks`,
+   * so the card follows it as a task and Home stays put; otherwise Quick
+   * actions' New task path (spawn), which opens the pane.
    */
   async function startTerminalAgent(
     kind: string,
@@ -598,10 +589,6 @@ export function HomeComposerDock({
                 setError(task.summary ?? t`Could not start the task.`);
                 return false;
               }
-              router.navigate({
-                pathname: '/servers/[serverId]',
-                params: { serverId, paneId },
-              } as Href);
               return true;
             }
             // One Herdr session per gateway today, and the first is the one
@@ -641,21 +628,37 @@ export function HomeComposerDock({
     );
   }
 
-  function sendPrompt(text: string, attachments?: string[]) {
-    if (terminalAgent)
-      return startTerminalAgent(
-        terminalAgent.agentKind,
-        terminalAgent.name,
-        terminalAgent.confirmed,
-        text,
-        ledgerPane,
-        folder
-      );
+  /**
+   * A goal sent as a ledger task: the composer empties at once and the card's
+   * Sent row is the feedback (design §2). A send that fails puts the text
+   * back, with the reason under the bar.
+   */
+  function dispatchTask(text: string, open: () => Promise<boolean>): Promise<boolean> {
+    if (inFlightRef.current) return Promise.resolve(false);
+    void open().then((accepted) => {
+      if (!accepted) injectDraftRef.current?.(text);
+    });
+    return Promise.resolve(true);
+  }
+
+  function sendPrompt(text: string, attachments?: string[]): Promise<boolean> {
+    if (terminalAgent) {
+      const start = () =>
+        startTerminalAgent(
+          terminalAgent.agentKind,
+          terminalAgent.name,
+          terminalAgent.confirmed,
+          text,
+          ledgerPane,
+          folder
+        );
+      return ledgerPane ? dispatchTask(text, start) : start();
+    }
     // Attachments ride on a prompt to a session; the ledger route takes text
     // only, so a send with files keeps the session path. So does a retry onto
     // the session a failed send left.
     if (ledgerCreate && !attachments?.length && !startedRef.current) {
-      return openLedgerTask(text);
+      return dispatchTask(text, () => openLedgerTask(text));
     }
     return startSession((asid) =>
       sendAgentPrompt(HOME_AGENT_SESSION_ID, asid, {
@@ -859,7 +862,7 @@ export function HomeComposerDock({
         features.slashCommands && !terminalAgent ? (catalog?.commands ?? NO_COMMANDS) : NO_COMMANDS
       }
       hiddenClientCommands={homeHiddenClientCommands(features)}
-      selectedAgent={sessionParams.mode}
+      selectedAgent={shown.mode}
       selectedModel={selectedModel}
       modelName={modelName}
       canPickMode={canPickMode && !terminalAgent}

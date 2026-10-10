@@ -573,10 +573,6 @@ msgstr "すべてのプロジェクト"
 msgid "All sessions"
 msgstr "すべてのセッション"
 
-#: src/components/home-computer-cards.tsx
-msgid "All tasks"
-msgstr "すべてのタスク"
-
 #: src/i18n/labels.ts
 msgid "Allow"
 msgstr "許可"
@@ -2104,6 +2100,7 @@ msgstr "{label}を下げる"
 msgid "default"
 msgstr "既定"
 
+#: src/components/home-composer-dock.tsx
 #: src/components/settings-terminal.tsx
 #: src/components/settings-theme-sheet.tsx
 msgid "Default"
@@ -2832,6 +2829,7 @@ msgstr "ホームのエージェント: {agentName}"
 msgid "Home effects · development only"
 msgstr "ホームのエフェクト · 開発用"
 
+#: src/app/agent-workspace.tsx
 #: src/components/home-composer-dock.tsx
 msgid "Home folder"
 msgstr "ホームフォルダー"
@@ -3064,10 +3062,6 @@ msgstr "使用中のコンピュータになると、ペアリング済みのデ
 #: src/components/skia-terminal.tsx
 msgid "Jump to latest output"
 msgstr "最新の出力へ移動"
-
-#: src/components/home-computer-cards.tsx
-msgid "Just finished"
-msgstr "完了したばかり"
 
 #: src/components/agent-sessions-sheet.tsx
 #: src/hooks/use-relative-time.ts
@@ -3890,10 +3884,6 @@ msgstr "何も変更されていません"
 #: src/components/agent-context-sheet.tsx
 msgid "Nothing yet — an “Always allow” reply lands here, for this project."
 msgstr "まだありません。「常に許可」の回答は、このプロジェクトのものとしてここに入ります"
-
-#: src/components/home-computer-cards.tsx
-msgid "Now"
-msgstr "実行中"
 
 #: src/components/toggle.tsx
 msgid "Off"

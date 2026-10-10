@@ -13,7 +13,7 @@ import { Text } from '@/components/text';
 import { ThemeIcon } from '@/components/theme-icon';
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { pulseOnce } from '@/lib/motion';
-import { taskRowVisual, taskTitle } from '@/lib/home-computer-cards';
+import { taskRowVisual, taskRowTitle } from '@/lib/home-computer-cards';
 import type { GatewayRecord } from '@/lib/gateway-storage';
 import {
   homeContinueComputerLabel,
@@ -24,9 +24,11 @@ import {
 import { agentDisplayName } from '@/lib/home-launch-model';
 import { homeTargetAgentId, type HomeTarget } from '@/lib/home-recents';
 import type { HomeAttentionSnapshot } from '@/lib/home-attention';
+import type { ServerTasksIndex } from '@/lib/server-tasks-state';
 import { homeWaitingTasks, type HomeTaskRow } from '@/lib/home-in-progress';
 import { useAgents } from '@/stores/agents';
 import { useHomeAttention } from '@/stores/home-attention';
+import { useServerTasksStore } from '@/stores/server-tasks';
 
 const OBSERVATION_DATE_FORMAT: Intl.DateTimeFormatOptions = {
   month: 'short',
@@ -35,35 +37,45 @@ const OBSERVATION_DATE_FORMAT: Intl.DateTimeFormatOptions = {
   minute: '2-digit',
 };
 
-/**
- * What Needs you lists: the open requests on these computers, and the ledger
- * tasks waiting on the reader that no listed request already covers.
- */
-function useAttentionRows(
-  servers: readonly GatewayRecord[],
-  taskServerIds: readonly string[],
-  withTasks: boolean
-) {
-  const observations = useHomeAttention((state) => state.byTarget);
-  const taskIndex = useTaskIndexFor(taskServerIds);
-  const pending = Object.entries(observations).filter(
+type Observations = Record<string, HomeAttentionSnapshot>;
+
+/** The open requests on these computers, by observation key. */
+function pendingObservations(
+  observations: Observations,
+  servers: readonly GatewayRecord[]
+): [string, HomeAttentionSnapshot][] {
+  return Object.entries(observations).filter(
     ([, snapshot]) =>
       snapshot.requestIds.length > 0 &&
       servers.some((server) => server.serverId === snapshot.target.serverId)
   );
-  const waiting = withTasks
-    ? homeWaitingTasks(
-        taskIndex,
-        taskServerIds,
-        pending.map(([, snapshot]) => snapshot.target)
-      )
-    : [];
+}
+
+/**
+ * What Needs you lists: the open requests on these computers, and the ledger
+ * tasks waiting on the reader that no listed request already covers.
+ */
+function attentionRows(
+  observations: Observations,
+  index: ServerTasksIndex,
+  servers: readonly GatewayRecord[],
+  taskServerIds: readonly string[]
+) {
+  const pending = pendingObservations(observations, servers);
+  const waiting = homeWaitingTasks(
+    index,
+    taskServerIds,
+    pending.map(([, snapshot]) => snapshot.target)
+  );
   return { pending, waiting };
 }
 
 /**
  * Whether Needs you has a row: `HomeAttention` stays mounted while it is
  * empty, so the layout asks this rather than whether the slot is filled.
+ * Each selector returns a boolean, so a task frame or an observation
+ * re-renders Home only when the answer changes. With no open request no
+ * task is covered by one, so the two halves answer separately.
  */
 export function useHasHomeAttention({
   servers,
@@ -72,8 +84,13 @@ export function useHasHomeAttention({
   servers: readonly GatewayRecord[];
   taskServerIds?: readonly string[];
 }): boolean {
-  const { pending, waiting } = useAttentionRows(servers, taskServerIds, true);
-  return pending.length > 0 || waiting.length > 0;
+  const hasRequest = useHomeAttention(
+    (state) => pendingObservations(state.byTarget, servers).length > 0
+  );
+  const hasWaiting = useServerTasksStore(
+    (state) => attentionRows({}, state.index, servers, taskServerIds).waiting.length > 0
+  );
+  return hasRequest || hasWaiting;
 }
 
 /**
@@ -91,9 +108,11 @@ export function HomeAttention({
   /** The computers whose task ledger Home holds fresh. */
   taskServerIds?: readonly string[];
   onOpen: (target: HomeTarget) => void;
-  onOpenTask?: (row: HomeTaskRow) => void;
+  onOpenTask: (row: HomeTaskRow) => void;
 }) {
-  const { pending, waiting } = useAttentionRows(servers, taskServerIds, Boolean(onOpenTask));
+  const observations = useHomeAttention((state) => state.byTarget);
+  const taskIndex = useTaskIndexFor(taskServerIds);
+  const { pending, waiting } = attentionRows(observations, taskIndex, servers, taskServerIds);
   // The config stays mounted while the list is empty, so the first row to
   // arrive is an arrival (it enters and pulses), not part of a fresh mount.
   return (
@@ -104,16 +123,14 @@ export function HomeAttention({
           {pending.map(([key, snapshot]) => (
             <AttentionRow key={key} snapshot={snapshot} servers={servers} onOpen={onOpen} />
           ))}
-          {onOpenTask
-            ? waiting.map((row) => (
-                <WaitingTaskRow
-                  key={`${row.serverId}:${row.task.taskId}`}
-                  row={row}
-                  servers={servers}
-                  onOpen={() => onOpenTask(row)}
-                />
-              ))
-            : null}
+          {waiting.map((row) => (
+            <WaitingTaskRow
+              key={`${row.serverId}:${row.task.taskId}`}
+              row={row}
+              servers={servers}
+              onOpen={() => onOpenTask(row)}
+            />
+          ))}
         </View>
       )}
     </LayoutAnimationConfig>
@@ -139,7 +156,7 @@ function WaitingTaskRow({
   // with the computer named, since this list spans every computer.
   const visual = taskRowVisual(task, { canComplete: false, acknowledged: true });
   const line = useTaskRowLine(discovery)(task, visual);
-  const title = taskTitle(task) || line.text;
+  const title = taskRowTitle(task) || line.text;
   const computer = homeContinueComputerLabel(servers, row.serverId);
   const meta = [computer, line.text].filter(Boolean).join(META_SEPARATOR);
   return (
@@ -164,7 +181,10 @@ function WaitingTaskRow({
       />
       <TaskStateIcon visual={visual} size={20} />
       <View style={styles.copy}>
-        <RowMarkdown text={title} ink={theme.colors.text} kind="title" />
+        {/* A row, as on the card: the title's `flex: 1` is a width, not a height. */}
+        <View style={styles.titleLine}>
+          <RowMarkdown text={title} ink={theme.colors.text} kind="title" />
+        </View>
         <View style={styles.metaLine}>
           {/* The computer's label is the reader's own text, never markdown. */}
           {computer ? (
@@ -252,6 +272,7 @@ const styles = StyleSheet.create({
     borderLeftWidth: 4,
   },
   copy: { flex: 1, minWidth: 0, gap: 4 },
+  titleLine: { flexDirection: 'row', minWidth: 0 },
   metaLine: { flexDirection: 'row', alignItems: 'center', minWidth: 0 },
   // Over the row's own left border, which a waiting row leaves to this edge.
   edge: { position: 'absolute', left: -4, top: 0, bottom: 0, width: 4 },

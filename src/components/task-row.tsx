@@ -41,15 +41,17 @@ import { findAgent, type MirroredServerDiscovery } from '@/lib/agent-discovery';
 import { agentBrandName } from '@/lib/herdr-entity';
 import {
   dismissedKey,
+  goalTitle,
   taskRollup,
   taskRowVisual,
-  taskTitle,
+  taskRowTitle,
   type TaskRowIcon,
   type TaskRowVisual,
 } from '@/lib/home-computer-cards';
 import { fadeIn, fadeOut, listLayout, pulseOnce, travelTiming, zoomIn } from '@/lib/motion';
 import { describeGatewayFailure } from '@/lib/network-error';
 import { canMarkTaskDone, type TaskView } from '@/lib/task-ledger';
+import { dismissTaskNotices } from '@/stores/in-app-notifications';
 import { useHomeTaskCards } from '@/stores/home-task-cards';
 import { useServerCapabilities } from '@/stores/server-capabilities';
 import { plural } from '@lingui/core/macro';
@@ -216,7 +218,7 @@ export function RowMarkdown({
         variant={kind === 'title' ? 'bodySmall' : 'caption'}
         weight={kind === 'title' ? 'semibold' : undefined}
         color={ink}
-        numberOfLines={kind === 'title' ? 2 : 1}
+        numberOfLines={1}
         style={styles.grow}>
         {text}
       </Text>
@@ -226,7 +228,7 @@ export function RowMarkdown({
     <BoundedMarkdown
       markdown={text}
       markdownStyle={markdownStyle}
-      clampLines={kind === 'title' ? 2 : 1}
+      clampLines={1}
       containerStyle={styles.grow}
       {...(testID ? { testID } : {})}
     />
@@ -297,7 +299,7 @@ export function TaskRow({
     acknowledged,
   });
   const line = rowLine(task, visual);
-  const title = taskTitle(task) || whereName(task) || line.text;
+  const title = taskRowTitle(task) || whereName(task) || line.text;
   // Open work says how long it has run (`14m`), finished work how long ago.
   const trailingAge =
     visual.clock === 'elapsed'
@@ -348,7 +350,10 @@ export function TaskRow({
           label: t`Acknowledge`,
           Icon: Check,
           testID: `task-row-acknowledge-${task.taskId}`,
-          onPress: run(() => acknowledge(serverId, task.taskId)),
+          onPress: run(() => {
+            acknowledge(serverId, task.taskId);
+            dismissTaskNotices(task);
+          }),
         };
     }
   });
@@ -465,12 +470,12 @@ function SubTaskRow({
     <PressableScale
       testID={`task-row-${task.taskId}`}
       accessibilityRole="button"
-      accessibilityLabel={`${whereName}, ${taskTitle(task)}, ${line.text}`}
+      accessibilityLabel={`${whereName}, ${taskRowTitle(task)}, ${line.text}`}
       onPress={() => onOpen(task)}
       style={styles.child}>
       <TaskStateIcon visual={visual} size={12} />
       <WhereMark task={task} discovery={discovery} />
-      <RowMarkdown text={taskTitle(task)} ink={theme.colors.textMuted} kind="line" />
+      <RowMarkdown text={taskRowTitle(task)} ink={theme.colors.textMuted} kind="line" />
       <RowMarkdown text={line.text} ink={line.color} kind="line" />
     </PressableScale>
   );
@@ -494,7 +499,7 @@ export function SentTaskRow({ goal, computer }: { goal: string; computer: string
         <View style={styles.icon}>
           <TaskStateIcon visual={visual} />
         </View>
-        <RowMarkdown text={goal.split('\n')[0] ?? ''} ink={theme.colors.text} kind="title" />
+        <RowMarkdown text={goalTitle(goal)} ink={theme.colors.text} kind="title" />
       </View>
       <View style={styles.line}>
         <RowMarkdown text={line.text} ink={line.color} kind="line" />

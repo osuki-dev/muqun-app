@@ -573,10 +573,6 @@ msgstr "Todos os projetos"
 msgid "All sessions"
 msgstr "Todas as sessões"
 
-#: src/components/home-computer-cards.tsx
-msgid "All tasks"
-msgstr "Todas as tarefas"
-
 #: src/i18n/labels.ts
 msgid "Allow"
 msgstr "Permitir"
@@ -2104,6 +2100,7 @@ msgstr "Diminuir {label}"
 msgid "default"
 msgstr "padrão"
 
+#: src/components/home-composer-dock.tsx
 #: src/components/settings-terminal.tsx
 #: src/components/settings-theme-sheet.tsx
 msgid "Default"
@@ -2832,6 +2829,7 @@ msgstr "Agente do Início: {agentName}"
 msgid "Home effects · development only"
 msgstr "Efeitos da página inicial · apenas desenvolvimento"
 
+#: src/app/agent-workspace.tsx
 #: src/components/home-composer-dock.tsx
 msgid "Home folder"
 msgstr "Pasta pessoal"
@@ -3064,10 +3062,6 @@ msgstr "Os seus dispositivos emparelhados aparecem quando este for o computador 
 #: src/components/skia-terminal.tsx
 msgid "Jump to latest output"
 msgstr "Ir para a saída mais recente"
-
-#: src/components/home-computer-cards.tsx
-msgid "Just finished"
-msgstr "Acabado de concluir"
 
 #: src/components/agent-sessions-sheet.tsx
 #: src/hooks/use-relative-time.ts
@@ -3890,10 +3884,6 @@ msgstr "Nada foi alterado"
 #: src/components/agent-context-sheet.tsx
 msgid "Nothing yet — an “Always allow” reply lands here, for this project."
 msgstr "Nada ainda — uma resposta “Permitir sempre” aparece aqui, para este projeto"
-
-#: src/components/home-computer-cards.tsx
-msgid "Now"
-msgstr "Agora"
 
 #: src/components/toggle.tsx
 msgid "Off"
