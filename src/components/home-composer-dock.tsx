@@ -746,11 +746,7 @@ export function HomeComposerDock({
   const showComputer = servers.length > 1 || !ready || !agentName;
 
   const bar = (
-    <View
-      style={[
-        styles.accessory,
-        { paddingBottom: theme.spacing['2xs'], rowGap: theme.spacing['2xs'] },
-      ]}>
+    <View style={[styles.accessory, { paddingBottom: theme.spacing.xs, rowGap: theme.spacing.xs }]}>
       {error ? (
         <Text
           testID="home-composer-error"

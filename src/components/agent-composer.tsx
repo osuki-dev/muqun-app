@@ -471,8 +471,9 @@ export interface AgentComposerProps {
    * safe area inside it, the cards' corner (`chrome.surface`) on its top
    * corners only, and its one edge on top -- the hairline `border` and the
    * dock's upward shadow (`appChrome.shadow.composerDock`), the edge the
-   * session dock casts too. `inset` pads its content so its lines start where
-   * the cards' rows do.
+   * session dock casts too. `inset` is the page gutter: the field runs from
+   * gutter to gutter, like the cards, and the text rows start at its left
+   * edge.
    */
   bar?: { inset: number };
   /**
@@ -1083,7 +1084,7 @@ export const AgentComposer = memo(function AgentComposer({
   // Home's bar is as tight as the profile's rhythm allows: its foot is the safe
   // area alone (the smallest step where there is none, or over the keyboard).
   const innerBottomPadding = bar
-    ? Math.max(theme.spacing.xs, keyboardHeight > 0 ? 0 : bottomInset)
+    ? Math.max(theme.spacing.sm, keyboardHeight > 0 ? 0 : bottomInset)
     : Math.max(10, bottomInset + 6);
   /** From the dock's foot to the field's, which the anchored menu has to clear too. */
   const dockBottomPadding = innerBottomPadding;
@@ -1339,7 +1340,8 @@ export const AgentComposer = memo(function AgentComposer({
             style={[
               styles.composerInner,
               { paddingBottom: innerBottomPadding },
-              compact && { paddingTop: theme.spacing.xs },
+              // Above row 1, the same step as under the field.
+              compact && { paddingTop: theme.spacing.sm },
               bar && { paddingHorizontal: bar.inset },
             ]}>
             {accessory}
@@ -1402,7 +1404,9 @@ export const AgentComposer = memo(function AgentComposer({
             {compact ? (
               // The quiet line: caption type in the subtle tone, under row 1's
               // body-size primary line, then the compact gap to the field.
-              <View style={[styles.segmentRow, segmentRowLead, { marginBottom: theme.spacing.xs }]}>
+              // One step more to the field than between the two text rows:
+              // the field is a different thing.
+              <View style={[styles.segmentRow, segmentRowLead, { marginBottom: theme.spacing.sm }]}>
                 {segmentMode ? (
                   <TextSegment
                     testID="agent-composer-mode-btn"

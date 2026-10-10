@@ -87,11 +87,7 @@ import {
 } from '@/components/home-computer-cards';
 import { HomeRecentChips } from '@/components/home-recent-chips';
 import { filterHomeRecent, homeRecentFilterIds } from '@/lib/home-continue';
-import {
-  HOME_CARD_INSET,
-  openTaskWork,
-  taskSubscriptionServerIds,
-} from '@/lib/home-computer-cards';
+import { openTaskWork, taskSubscriptionServerIds } from '@/lib/home-computer-cards';
 import { hasTaskLedger } from '@/lib/task-ledger';
 import {
   HomeContinueSearch,
@@ -902,13 +898,13 @@ export function HomeOverview({
       targetPulse={composerPulse}
       bottomInset={padLaunch ? 0 : insets.bottom}
       topInset={insets.top}
-      // On the phone, a bar edge to edge at the foot whose rows and field
-      // start where the cards' rows do: the page gutter plus the card inset.
+      // On the phone, a bar edge to edge at the foot whose field runs from
+      // gutter to gutter, the cards' own edges.
       edgeBar={
         isPad
           ? undefined
           : {
-              inset: (classicLayout ? metrics.contentGutter : padGeometry.gutter) + HOME_CARD_INSET,
+              inset: classicLayout ? metrics.contentGutter : padGeometry.gutter,
             }
       }
       onDockHeight={setDockHeight}
