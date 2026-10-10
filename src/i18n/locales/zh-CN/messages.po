@@ -3150,6 +3150,7 @@ msgstr "上次连接于 {minutes} 分钟前"
 msgid "Last connected just now"
 msgstr "刚刚连接过"
 
+#: src/app/agent-workspace.tsx
 #: src/components/home-composer-dock.tsx
 msgid "Last folder"
 msgstr "上次的文件夹"

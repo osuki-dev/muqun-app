@@ -36,7 +36,7 @@ import {
   EDITORIAL_PAD_MAX_WIDTH,
   getEditorialLayoutGeometry,
 } from '@/lib/home-editorial-layout';
-import { entryRise, listLayout } from '@/lib/motion';
+import { entryRise, listLayout, resolveDuration, riseIn } from '@/lib/motion';
 import {
   PAD_COLUMN_GAP,
   PAD_COVER_TITLE_LINE_HEIGHT,
@@ -105,6 +105,11 @@ export type HomeEditorialLayoutProps = {
   recentHeading?: ReactNode;
   /** Genuine pending approvals or requests, already wired by the parent. */
   attention?: ReactNode;
+  /**
+   * Whether `attention` has a row. Its slot stays filled while it is empty (it
+   * keeps its arrival pulse), so the Pad cover and spacing ask this instead.
+   */
+  hasAttention?: boolean;
   /**
    * The computer cards, already wired by the parent; the layout gives them
    * their "Computers" heading, between needs-you and Recent.
@@ -239,6 +244,7 @@ export function HomeEditorialLayout({
   recent,
   recentHeading,
   attention,
+  hasAttention = false,
   progress,
   connections,
   controls,
@@ -262,6 +268,13 @@ export function HomeEditorialLayout({
   // The Pad work column's headings take the same plate as the phone's sections.
   const scenePlate = useHomeScenePlate();
   const [measuredWidth, setMeasuredWidth] = useState(0);
+  // Whether the Pad lower band was already showing: one that arrives later
+  // (the first card) waits for the cover to finish shrinking, or it would
+  // land over the tiles still moving up. Reset when the band goes.
+  const [bandSettled, setBandSettled] = useState(hasProgress);
+  useEffect(() => {
+    if (!hasProgress) setBandSettled(false);
+  }, [hasProgress]);
   const [titleMeasurement, setTitleMeasurement] = useState<{ title: string; width: number } | null>(
     null
   );
@@ -392,11 +405,14 @@ export function HomeEditorialLayout({
       measuredTitleWidth:
         titleMeasurement && titleMeasurement.title === titleKey ? titleMeasurement.width : 0,
       wordmark,
-      compact: hasSlot(attention) || hasProgress,
+      compact: hasAttention || hasProgress,
     });
     // The block shrinks when work arrives and grows back when it goes; what
     // follows it moves with it. Instant under reduce-motion (`listLayout`).
     const coverLayout = listLayout('medium');
+    const bandArrival = bandSettled
+      ? undefined
+      : riseIn(resolveDuration('medium'), resolveDuration('medium'));
     const titleFontSize = coverBlock.titleSize;
     const titleStyle = {
       fontSize: titleFontSize,
@@ -506,11 +522,13 @@ export function HomeEditorialLayout({
                   ) : null}
                   {/* The figure stands on the block's foot at the right and
                       rises over the title, as the phone cover's drawing
-                      overlaps its title; nothing is drawn over it. */}
+                      overlaps its title; nothing is drawn over it. Its frame
+                      takes the new size at once, with the painting's new
+                      crop: an animated frame would show the old crop
+                      overflowing it until the canvas re-measures. */}
                   <Animated.View
                     onLayout={artworkStage.onLayout}
                     pointerEvents="none"
-                    layout={coverLayout}
                     style={[styles.padCoverArtwork, coverBlock.artwork, artworkStage.style]}>
                     {artwork}
                   </Animated.View>
@@ -529,20 +547,26 @@ export function HomeEditorialLayout({
                 <Animated.View
                   testID="home-pad-launch-dock"
                   entering={rise(0)}
-                  layout={coverLayout}>
+                  layout={coverLayout}
+                  style={styles.padSection}>
                   {launches}
                 </Animated.View>
               ) : null}
               {hasSlot(attention) ? (
-                <Animated.View entering={rise(1)} layout={coverLayout}>
+                // Mounted while empty (its arrival pulse); spaced only with a row.
+                <Animated.View
+                  entering={rise(1)}
+                  layout={coverLayout}
+                  style={hasAttention ? styles.padSection : undefined}>
                   {attention}
                 </Animated.View>
               ) : null}
               {hasProgress || hasConnections ? (
                 <Animated.View
                   testID="home-pad-lower-band"
+                  entering={bandArrival}
                   layout={coverLayout}
-                  style={styles.padWorkSections}>
+                  style={[styles.padSection, styles.padWorkSections]}>
                   {hasProgress ? (
                     <Animated.View testID="home-pad-in-progress" entering={rise(2)}>
                       <Text
@@ -1018,7 +1042,8 @@ const styles = StyleSheet.create({
   padColumns: { flex: 1, minHeight: 0, flexDirection: 'row', gap: PAD_COLUMN_GAP },
   padRecentColumn: { flex: 1, minWidth: 0 },
   padScroll: { flex: 1 },
-  padWorkContent: { paddingBottom: 24, gap: 16 },
+  padWorkContent: { paddingBottom: 24 },
+  padSection: { marginTop: 16 },
   padRecentContent: { paddingBottom: 24 },
   padWorkSections: { gap: 32 },
   // The phone editorial section's heading, without its rule: title, 12, card.

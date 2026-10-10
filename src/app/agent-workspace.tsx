@@ -1,3 +1,4 @@
+import { useLingui } from '@lingui/react/macro';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 
 import { AgentWorkspaceSheet } from '@/components/agent-workspace-sheet';
@@ -14,9 +15,11 @@ import { useHomeAgentChoice } from '@/stores/home-agent-choice';
  * `owner=home` is Home's dock choosing the folder its goals start in on
  * `serverId` (the computer the dock has selected, so the shared client lists
  * that computer's folders). The pick is that computer's folder; the
- * workbench's bridge is never touched.
+ * workbench's bridge is never touched. Its first row, "Last folder", clears
+ * the pick, so the gateway applies the device's last folder again.
  */
 export default function AgentWorkspaceScreen() {
+  const { t } = useLingui();
   const router = useRouter();
   const params = useLocalSearchParams<{
     sessionId?: string;
@@ -40,6 +43,7 @@ export default function AgentWorkspaceScreen() {
       <AgentWorkspaceSheet
         sessionId={params.sessionId || undefined}
         activeDirectory={homeFolder}
+        defaultRow={{ label: t`Last folder` }}
         agentId={params.agentId || undefined}
         onSelectWorkspace={(directory) => chooseFolder(homeServerId, directory)}
         onClose={() => router.back()}
