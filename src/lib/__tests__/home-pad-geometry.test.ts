@@ -61,12 +61,14 @@ describe('padCoverKind', () => {
 });
 
 describe('padCover', () => {
-  // screen height (dp), viewport left after the status bar and page inset, title width at 100pt
-  test.each<[string, number, number, number]>([
-    ['landscape, pack title', 800, 752, 420],
-    ['landscape, before the title is measured', 800, 752, 0],
-    ['portrait, long pack title', 1280, 1208, 900],
-  ])('%s', (_name, screen, viewport, measuredTitleWidth) => {
+  // screen height (dp), viewport left after the status bar and page inset,
+  // title width at 100pt, work in the column -> the block's share of the screen
+  test.each<[string, number, number, number, boolean, [number, number]]>([
+    ['landscape, tiles only', 800, 752, 420, false, [0.4, 0.45]],
+    ['landscape, before the title is measured', 800, 752, 0, false, [0.4, 0.45]],
+    ['landscape, cards under it', 800, 752, 420, true, [0.2, 0.22]],
+    ['portrait, long pack title', 1280, 1208, 900, false, [0.4, 0.45]],
+  ])('%s', (_name, screen, viewport, measuredTitleWidth, compact, [low, high]) => {
     const inner = getEditorialLayoutGeometry(screen === 800 ? 1280 : 800).innerWidth;
     const coverWidth = padHomeColumns(inner).work;
     const block = padCover({
@@ -74,10 +76,20 @@ describe('padCover', () => {
       coverWidth,
       measuredTitleWidth,
       wordmark: false,
+      compact,
     });
-    // A fixed 40-45% of the screen, whatever the title.
-    expect(block.height / screen).toBeGreaterThanOrEqual(0.4);
-    expect(block.height / screen).toBeLessThanOrEqual(0.45);
+    // A fixed share of the screen, whatever the title.
+    expect(block.height / screen).toBeGreaterThanOrEqual(low);
+    expect(block.height / screen).toBeLessThanOrEqual(high);
+    // Work under it crops the painting; it never shrinks it.
+    const full = padCover({
+      viewportHeight: viewport,
+      coverWidth,
+      measuredTitleWidth,
+      wordmark: false,
+      compact: false,
+    });
+    expect(block.artwork.width).toBe(full.artwork.width);
     // The painting stays inside the block, clear of the title's start.
     expect(block.artwork.height).toBeLessThanOrEqual(block.height);
     expect(block.artwork.width).toBeLessThanOrEqual(coverWidth * 0.85 + 1);

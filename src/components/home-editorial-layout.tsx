@@ -36,7 +36,7 @@ import {
   EDITORIAL_PAD_MAX_WIDTH,
   getEditorialLayoutGeometry,
 } from '@/lib/home-editorial-layout';
-import { entryRise } from '@/lib/motion';
+import { entryRise, listLayout } from '@/lib/motion';
 import {
   PAD_COLUMN_GAP,
   PAD_COVER_TITLE_LINE_HEIGHT,
@@ -392,7 +392,11 @@ export function HomeEditorialLayout({
       measuredTitleWidth:
         titleMeasurement && titleMeasurement.title === titleKey ? titleMeasurement.width : 0,
       wordmark,
+      compact: hasSlot(attention) || hasProgress,
     });
+    // The block shrinks when work arrives and grows back when it goes; what
+    // follows it moves with it. Instant under reduce-motion (`listLayout`).
+    const coverLayout = listLayout('medium');
     const titleFontSize = coverBlock.titleSize;
     const titleStyle = {
       fontSize: titleFontSize,
@@ -461,7 +465,10 @@ export function HomeEditorialLayout({
               contentContainerStyle={styles.padWorkContent}
               {...workScrollEvents}>
               {wordmark ? (
-                <View testID="home-pad-cover" style={{ height: coverBlock.height }}>
+                <Animated.View
+                  testID="home-pad-cover"
+                  layout={coverLayout}
+                  style={{ height: coverBlock.height }}>
                   {hasSlot(coverBackdrop) ? (
                     <View pointerEvents="none" style={StyleSheet.absoluteFill}>
                       {coverBackdrop}
@@ -477,10 +484,11 @@ export function HomeEditorialLayout({
                     style={titleStyle}>
                     {coverTitle}
                   </Text>
-                </View>
+                </Animated.View>
               ) : coverKind === 'artwork' ? (
-                <View
+                <Animated.View
                   testID="home-pad-cover"
+                  layout={coverLayout}
                   style={[styles.coverScene, { height: coverBlock.height }]}>
                   {titleMeasure}
                   {coverTitle ? (
@@ -502,10 +510,11 @@ export function HomeEditorialLayout({
                   <Animated.View
                     onLayout={artworkStage.onLayout}
                     pointerEvents="none"
+                    layout={coverLayout}
                     style={[styles.padCoverArtwork, coverBlock.artwork, artworkStage.style]}>
                     {artwork}
                   </Animated.View>
-                </View>
+                </Animated.View>
               ) : (
                 <View testID="home-pad-cover">
                   {hasIdentity ? <View style={styles.identity}>{identity}</View> : null}
@@ -517,15 +526,23 @@ export function HomeEditorialLayout({
                 </View>
               )}
               {hasSlot(launches) ? (
-                <Animated.View testID="home-pad-launch-dock" entering={rise(0)}>
+                <Animated.View
+                  testID="home-pad-launch-dock"
+                  entering={rise(0)}
+                  layout={coverLayout}>
                   {launches}
                 </Animated.View>
               ) : null}
               {hasSlot(attention) ? (
-                <Animated.View entering={rise(1)}>{attention}</Animated.View>
+                <Animated.View entering={rise(1)} layout={coverLayout}>
+                  {attention}
+                </Animated.View>
               ) : null}
               {hasProgress || hasConnections ? (
-                <View testID="home-pad-lower-band" style={styles.padWorkSections}>
+                <Animated.View
+                  testID="home-pad-lower-band"
+                  layout={coverLayout}
+                  style={styles.padWorkSections}>
                   {hasProgress ? (
                     <Animated.View testID="home-pad-in-progress" entering={rise(2)}>
                       <Text
@@ -550,7 +567,7 @@ export function HomeEditorialLayout({
                       {connections}
                     </Animated.View>
                   ) : null}
-                </View>
+                </Animated.View>
               ) : null}
             </ScrollView>
             {/* In flow under the work, sized to the measured dock: the column
@@ -1001,7 +1018,7 @@ const styles = StyleSheet.create({
   padColumns: { flex: 1, minHeight: 0, flexDirection: 'row', gap: PAD_COLUMN_GAP },
   padRecentColumn: { flex: 1, minWidth: 0 },
   padScroll: { flex: 1 },
-  padWorkContent: { paddingBottom: 24, gap: 24 },
+  padWorkContent: { paddingBottom: 24, gap: 16 },
   padRecentContent: { paddingBottom: 24 },
   padWorkSections: { gap: 32 },
   // The phone editorial section's heading, without its rule: title, 12, card.
