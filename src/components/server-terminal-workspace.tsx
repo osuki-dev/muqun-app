@@ -179,6 +179,7 @@ import {
   gatewaySupportsApprovals,
   readPaneOutput,
   readPaneRange,
+  readPaneHistory,
   readPaneTail,
   resolveAssetById,
   resolveAssetByPath,
@@ -214,6 +215,8 @@ import {
   historyPullBlockedAfter,
   historyPullNotice,
   pullEarlierPage,
+  PANE_CAPTURED_HISTORY_CAPABILITY,
+  type CapturedCursor,
   type HistoryPullNotice,
 } from '@/lib/terminal-history-pull';
 import { DEMO_SERVER_ID, demoRecord, isDemoRecord } from '@/lib/demo-gateway';
@@ -1342,10 +1345,16 @@ export function ServerTerminalWorkspace({
   // honour it rather than on every pull, and `loadEarlierOutput` falls back to
   // widening the tail -- exactly what every pane did before this feature
   // existed -- for the rest of the session.
-  // TEMPORARY measurement scaffold, not for merge: forces the widening-tail
-  // paging path that herdr panes always take (herdr ignores start/end), which
-  // the tmux backend would otherwise avoid by serving a real range page.
   const rangeUnsupportedRef = useRef(false);
+  // The gateway's captured history for this pane (`pullEarlierPage`): where the
+  // next page starts, and whether the pane turned out not to be captured.
+  // Per pane and per connection; never persisted.
+  const capturedCursorRef = useRef<CapturedCursor | null>(null);
+  const capturedOffRef = useRef(false);
+  // Whether the captured history is still on offer: the pull is offered on its
+  // account even where the window's own metrics say nothing is above it (an
+  // alternate-screen pane's always do).
+  const [capturedOpen, setCapturedOpen] = useState(true);
   const earlierPartsRowsRef = useRef(0);
   const loadingEarlierPartsRef = useRef(false);
   const appliedNotificationTargetRef = useRef<string | null>(null);
@@ -1586,6 +1595,9 @@ export function ServerTerminalWorkspace({
     earlierOutputRowsRef.current = 0;
     lastReadRef.current = null;
     rangeUnsupportedRef.current = false;
+    capturedCursorRef.current = null;
+    capturedOffRef.current = false;
+    setCapturedOpen(true);
     loadingEarlierOutputRef.current = false;
     appliedNotificationTargetRef.current = null;
     setLoadingEarlierOutput(false);
@@ -1657,6 +1669,9 @@ export function ServerTerminalWorkspace({
     earlierOutputRowsRef.current = 0;
     lastReadRef.current = null;
     rangeUnsupportedRef.current = false;
+    capturedCursorRef.current = null;
+    capturedOffRef.current = false;
+    setCapturedOpen(true);
     loadingEarlierOutputRef.current = false;
     setLoadingEarlierOutput(false);
     setHistoryNotice(null);
@@ -2323,6 +2338,10 @@ export function ServerTerminalWorkspace({
   // than drawing one, and a reader who turned the agent rows off did not ask to
   // lose a menu item.
   const recordServerCapabilities = useServerCapabilities((state) => state.record);
+  // Whether this gateway serves captured pane history (`pullEarlierPage`).
+  const servesCapturedHistory = useServerCapabilities(
+    (state) => state.byServer[serverId]?.includes(PANE_CAPTURED_HISTORY_CAPABILITY) === true
+  );
   useEffect(() => {
     if (!selectedServer || !record || isDemoRecord(record) || !data.health) return;
     void recordServerCapabilities(record.serverId, data.health.capabilities);
@@ -2975,6 +2994,9 @@ export function ServerTerminalWorkspace({
     earlierOutputRowsRef.current = restored?.earlierRows ?? 0;
     lastReadRef.current = restored?.lastRead ?? null;
     rangeUnsupportedRef.current = restored?.rangeUnsupported ?? false;
+    capturedCursorRef.current = null;
+    capturedOffRef.current = false;
+    setCapturedOpen(true);
     loadingEarlierOutputRef.current = false;
     setLoadingEarlierOutput(false);
     setHistoryNotice(null);
@@ -3424,6 +3446,23 @@ export function ServerTerminalWorkspace({
             // -F`), and the one retry a transient failure gets are all decided in
             // `pullEarlierPage`, where they can be tested without a screen.
             const outcome = await pullEarlierPage({
+              // The gateway's captured history first, where it serves it and
+              // this pane has not turned out uncaptured; a shell pane answers
+              // `not_captured` and the range/tail reads below serve it as before.
+              ...(servesCapturedHistory && !capturedOffRef.current
+                ? {
+                    captured: {
+                      cursor: capturedCursorRef.current,
+                      read: (before: string | null) =>
+                        readPaneHistory(
+                          data.sessionId,
+                          requestPaneId,
+                          before,
+                          PANE_OUTPUT_PAGE_LINES
+                        ),
+                    },
+                  }
+                : {}),
               page,
               readRange: (start, end) =>
                 readPaneRange(
@@ -3448,6 +3487,18 @@ export function ServerTerminalWorkspace({
             // Remembered so the range is asked at most once, on this pull or any
             // later one: every page after it goes straight to the tail.
             if (outcome.rangeUnsupported) rangeUnsupportedRef.current = true;
+            const captured = outcome.captured;
+            if (captured?.kind === 'notCaptured') {
+              capturedOffRef.current = true;
+              setCapturedOpen(false);
+            } else if (captured?.kind === 'page') {
+              capturedCursorRef.current = captured.cursor;
+              if (!captured.hasMore) setCapturedOpen(false);
+            } else if (servesCapturedHistory && !capturedOffRef.current) {
+              // The captured read refused or failed: not offered on its account
+              // until a reconnect or another pane.
+              setCapturedOpen(false);
+            }
             const blocked = historyPullBlockedAfter(outcome.kind);
             historyPullBlockedRef.current = blocked;
             setHistoryPullBlocked(blocked);
@@ -3461,8 +3512,10 @@ export function ServerTerminalWorkspace({
             setHistoryNotice(null);
             const { origin } = outcome;
             const { output: value, read } = outcome.fetched;
+            const capturedPage = captured?.kind === 'page' ? captured : null;
             outputLineLimitRef.current = nextLimit;
-            lastReadRef.current = read;
+            // A captured page carries no served range; the last one stays the fallback.
+            if (!capturedPage) lastReadRef.current = read;
             // Through the same door as everything else. A page is the one source
             // allowed to claim depth, and it only gets it when the read demonstrably
             // reaches past the window's own head. Where Herdr plateaus below what its
@@ -3488,10 +3541,14 @@ export function ServerTerminalWorkspace({
             });
             const scroll = panesRef.current.find((pane) => pane.id === requestPaneId)?.raw.scroll;
             const reachedRows = earlierOutputRowsRef.current;
-            earlierOutputRowsRef.current = terminalOutputLineCount(value);
-            // A tail read no deeper than the last one: nothing more is coming,
-            // so say so once rather than leave a pull that does nothing.
-            if (tailPageFoundNothing(outcome, earlierOutputRowsRef.current, reachedRows)) {
+            if (!capturedPage) earlierOutputRowsRef.current = terminalOutputLineCount(value);
+            // A tail read no deeper than the last one, or the last captured
+            // page: nothing more is coming, so say so once rather than leave a
+            // pull that does nothing.
+            if (
+              tailPageFoundNothing(outcome, earlierOutputRowsRef.current, reachedRows) ||
+              (capturedPage && !capturedPage.hasMore)
+            ) {
               setHistoryNotice(historyExhaustedNotice());
             }
             setCanLoadEarlierOutput(
@@ -3501,7 +3558,8 @@ export function ServerTerminalWorkspace({
                 MAX_PANE_OUTPUT_LINES,
                 scroll,
                 reachedRows,
-                read
+                read,
+                capturedPage?.hasMore
               )
             );
             setHistoryRevision((revision) => revision + 1);
@@ -3535,6 +3593,7 @@ export function ServerTerminalWorkspace({
     ready,
     selection.paneId,
     serverId,
+    servesCapturedHistory,
     terminalPlane,
   ]);
 
@@ -3553,6 +3612,11 @@ export function ServerTerminalWorkspace({
     const previous = pullPhaseRef.current;
     pullPhaseRef.current = connection.phase;
     if (connection.phase !== 'connected' || previous === 'connected') return;
+    // The gateway on the far side may have restarted: its captured history
+    // starts over, and the cursor means nothing there.
+    capturedCursorRef.current = null;
+    capturedOffRef.current = false;
+    setCapturedOpen(true);
     historyPullBlockedRef.current = historyPullBlockedAfter('reconnected');
     setHistoryPullBlocked(historyPullBlockedRef.current);
   }, [connection.phase]);
@@ -5631,13 +5695,15 @@ export function ServerTerminalWorkspace({
                           // `false` here, but a screen-owning pane must never be
                           // able to arm this gesture on the strength of a metric
                           // alone).
-                          canLoadEarlier={
-                            !fullScreenPane &&
-                            canOfferHistoryPull({
-                              canLoadEarlier: canLoadEarlierOutput,
-                              blocked: historyPullBlocked,
-                            })
-                          }
+                          // Captured history is the exception: the gateway kept what
+                          // an alternate-screen pane drew, so the pull is offered on
+                          // its account while it has more to give.
+                          canLoadEarlier={canOfferHistoryPull({
+                            canLoadEarlier:
+                              (servesCapturedHistory && capturedOpen) ||
+                              (!fullScreenPane && canLoadEarlierOutput),
+                            blocked: historyPullBlocked,
+                          })}
                           historyRevision={historyRevision}
                           loadingEarlier={loadingEarlierOutput}
                           onLoadEarlier={loadEarlierOutput}

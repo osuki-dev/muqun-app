@@ -8,22 +8,64 @@ export interface EarlierPullRead {
   read: unknown;
 }
 
+/** The capability a gateway advertises when it serves captured pane history. */
+export const PANE_CAPTURED_HISTORY_CAPABILITY = 'pane_captured_history';
+
+/** One page of `GET /api/sessions/{s}/panes/{p}/history`, as the pull needs it. */
+export interface CapturedHistoryPage {
+  /** ANSI rows, oldest to newest; never the live screen. */
+  rows: string[];
+  hasMore: boolean;
+  nextBefore: string | null;
+  captureEpoch: unknown;
+  availability: 'captured' | 'not_captured';
+}
+
+/** A captured-history read: the page, or the status the gateway answered with (`null`: no answer). */
+export type CapturedHistoryRead =
+  | { ok: true; page: CapturedHistoryPage }
+  | { ok: false; status: number | null; error: unknown };
+
+/**
+ * Where the next captured page starts: the cursor the last page handed over,
+ * and the capture it came from. Per pane, in memory only.
+ */
+export type CapturedCursor = { before: string; epoch: unknown };
+
+/** What a pull learned about the pane's captured history, for the caller to keep. */
+export type CapturedOutcome =
+  /** A page landed; `cursor` is where the next one starts (null: from the top again). */
+  | { kind: 'page'; cursor: CapturedCursor | null; hasMore: boolean }
+  /** This pane is not captured (a shell with native scrollback): not asked again. */
+  | { kind: 'notCaptured' };
+
 export type EarlierPullOutcome =
-  /** A page landed. `origin` says whether it is the range page asked for or a widening tail. */
+  /** A page landed. `origin` says which read it came from. */
   | {
       kind: 'page';
       fetched: EarlierPullRead;
-      origin: 'rangePage' | 'page';
+      origin: 'rangePage' | 'page' | 'capturedPage';
       rangeUnsupported: boolean;
+      captured?: CapturedOutcome;
     }
   /** It failed after its one retry. Worth a notice with Retry: the next pull may work. */
-  | { kind: 'failed'; failure: GatewayFailure; rangeUnsupported: boolean }
+  | {
+      kind: 'failed';
+      failure: GatewayFailure;
+      rangeUnsupported: boolean;
+      captured?: CapturedOutcome;
+    }
   /**
    * The gateway answered, and the answer is no: this pane will not page for
-   * this backend. The pull is withdrawn rather than offered again to fail the
-   * same way.
+   * this backend, or it has given all it has. The pull is withdrawn rather
+   * than offered again to fail the same way.
    */
-  | { kind: 'refused'; failure: GatewayFailure; rangeUnsupported: boolean };
+  | {
+      kind: 'refused';
+      failure: GatewayFailure;
+      rangeUnsupported: boolean;
+      captured?: CapturedOutcome;
+    };
 
 /** No answer reached the app -- the one kind of failure the same request can cure by being sent again. */
 function noAnswer(failure: GatewayFailure): boolean {
@@ -42,6 +84,10 @@ async function attempt(
 
 /**
  * One pull for earlier terminal output, from request to verdict.
+ *
+ * Captured history goes first where the gateway serves it (see
+ * `pullCapturedPage`); what follows is the range/tail path every other pane
+ * takes, unchanged.
  *
  * The range read goes first when there is a page to ask for. A gateway that
  * *answers* it with an error has refused range addressing for this backend --
@@ -62,11 +108,115 @@ export async function pullEarlierPage({
   readRange,
   readTail,
   servedStart,
+  captured,
 }: {
   page: { start: number; end: number } | null;
   readRange: (start: number, end: number) => Promise<EarlierPullRead>;
   readTail: () => Promise<EarlierPullRead>;
   /** Where the served read starts (`paneReadRange(read)?.start`), or null when it says nothing. */
+  servedStart: (read: unknown) => number | null;
+  /**
+   * The gateway's captured history, asked first when the gateway serves it and
+   * this pane has not been found uncaptured ({@link pullCapturedPage}).
+   */
+  captured?: {
+    read: (before: string | null) => Promise<CapturedHistoryRead>;
+    cursor: CapturedCursor | null;
+  };
+}): Promise<EarlierPullOutcome> {
+  let notCaptured: CapturedOutcome | undefined;
+  if (captured) {
+    const outcome = await pullCapturedPage(captured.read, captured.cursor);
+    if (outcome.kind !== 'notCaptured') return outcome;
+    notCaptured = { kind: 'notCaptured' };
+  }
+  const outcome = await pullServedPage({ page, readRange, readTail, servedStart });
+  return notCaptured ? { ...outcome, captured: notCaptured } : outcome;
+}
+
+/** A failure for a status the gateway answered with, worded as the app words them. */
+function capturedFailure(read: Extract<CapturedHistoryRead, { ok: false }>): GatewayFailure {
+  return describeGatewayFailure(read.error);
+}
+
+/**
+ * The captured-history half of a pull.
+ *
+ * - The first pull asks with no cursor, later ones with the cursor the last
+ *   page handed over; a page from another capture (`capture_epoch` moved, the
+ *   gateway restarted) starts over without one.
+ * - A page with rows is the page (`'capturedPage'`). A pane the gateway does
+ *   not capture (`not_captured`), or a first page that is empty and has no
+ *   more, is `notCaptured`: the caller remembers it and the pull goes on to the
+ *   range/tail reads, which serve that pane already.
+ * - An empty page after pages, or `has_more: false` with nothing: the history
+ *   is exhausted (`refused`, the existing notice).
+ * - `410` (the cursor is gone) starts over once without the cursor -- rows
+ *   already held are dropped by the fold; a second `410` running is `failed`.
+ * - `400`/`409`/`413`/`404`: `refused`. `503` and no answer: `failed`.
+ */
+async function pullCapturedPage(
+  read: (before: string | null) => Promise<CapturedHistoryRead>,
+  cursor: CapturedCursor | null
+): Promise<EarlierPullOutcome | { kind: 'notCaptured' }> {
+  let answer = await read(cursor?.before ?? null);
+  let first = cursor === null;
+  if (!answer.ok && answer.status === 410) {
+    first = true;
+    answer = await read(null);
+    if (!answer.ok && answer.status === 410) {
+      return { kind: 'failed', failure: capturedFailure(answer), rangeUnsupported: false };
+    }
+  }
+  if (answer.ok && !first && cursor && answer.page.captureEpoch !== cursor.epoch) {
+    // Another capture: the cursor means nothing in it. Start over.
+    first = true;
+    answer = await read(null);
+  }
+  if (!answer.ok) {
+    const status = answer.status;
+    const refused =
+      status === 400 || status === 404 || status === 409 || status === 410 || status === 413;
+    return {
+      kind: refused ? 'refused' : 'failed',
+      failure: capturedFailure(answer),
+      rangeUnsupported: false,
+    };
+  }
+  const { page } = answer;
+  if (page.availability === 'not_captured' || (first && page.rows.length === 0 && !page.hasMore)) {
+    return { kind: 'notCaptured' };
+  }
+  if (page.rows.length === 0) {
+    return {
+      kind: 'refused',
+      failure: describeGatewayFailure(new Error('HTTP 404: no more captured history')),
+      rangeUnsupported: false,
+    };
+  }
+  return {
+    kind: 'page',
+    fetched: { output: page.rows.join('\n'), read: null },
+    origin: 'capturedPage',
+    rangeUnsupported: false,
+    captured: {
+      kind: 'page',
+      cursor: page.nextBefore ? { before: page.nextBefore, epoch: page.captureEpoch } : null,
+      hasMore: page.hasMore && page.nextBefore !== null,
+    },
+  };
+}
+
+/** The range and widening-tail reads: what every pane did before captured history. */
+async function pullServedPage({
+  page,
+  readRange,
+  readTail,
+  servedStart,
+}: {
+  page: { start: number; end: number } | null;
+  readRange: (start: number, end: number) => Promise<EarlierPullRead>;
+  readTail: () => Promise<EarlierPullRead>;
   servedStart: (read: unknown) => number | null;
 }): Promise<EarlierPullOutcome> {
   let rangeUnsupported = false;
