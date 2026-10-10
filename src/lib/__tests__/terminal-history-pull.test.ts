@@ -337,3 +337,129 @@ describe('a tail page that found nothing', () => {
     expect(tailPageFoundNothing({ ...tailPage, origin: 'rangePage' }, 80, 240)).toBe(false);
   });
 });
+
+describe('captured history goes first where the gateway serves it', () => {
+  const capturedPage = (
+    rows: string[],
+    hasMore: boolean,
+    nextBefore: string | null,
+    epoch = 1
+  ) => ({
+    ok: true as const,
+    page: {
+      rows,
+      hasMore,
+      nextBefore,
+      captureEpoch: epoch,
+      availability: 'captured' as const,
+    },
+  });
+  const notCapturedPage = {
+    ok: true as const,
+    page: {
+      rows: [],
+      hasMore: false,
+      nextBefore: null,
+      captureEpoch: 1,
+      availability: 'not_captured' as const,
+    },
+  };
+  const status = (code: number) => ({
+    ok: false as const,
+    status: code,
+    error: new Error(`HTTP ${code}: {"error":{"code":"x","message":"x"}}`),
+  });
+  type Answer =
+    | ReturnType<typeof capturedPage>
+    | typeof notCapturedPage
+    | ReturnType<typeof status>;
+
+  test.each<
+    [
+      string,
+      { before: string; epoch: number } | null,
+      Answer[],
+      (string | null)[],
+      { kind: string; origin?: string; captured?: unknown },
+      number,
+    ]
+  >([
+    [
+      'the first pull asks without a cursor and lands a captured page',
+      null,
+      [capturedPage(['a', 'b'], true, 'c1')],
+      [null],
+      {
+        kind: 'page',
+        origin: 'capturedPage',
+        captured: { kind: 'page', cursor: { before: 'c1', epoch: 1 }, hasMore: true },
+      },
+      0,
+    ],
+    [
+      'a later pull asks from the cursor',
+      { before: 'c1', epoch: 1 },
+      [capturedPage(['older'], false, null)],
+      ['c1'],
+      {
+        kind: 'page',
+        origin: 'capturedPage',
+        captured: { kind: 'page', cursor: null, hasMore: false },
+      },
+      0,
+    ],
+    [
+      'a pane the gateway does not capture falls through to the tail',
+      null,
+      [notCapturedPage],
+      [null],
+      { kind: 'page', origin: 'page', captured: { kind: 'notCaptured' } },
+      1,
+    ],
+    [
+      'a lost cursor (410) starts over once without it',
+      { before: 'c9', epoch: 1 },
+      [status(410), capturedPage(['a', 'b'], true, 'c1')],
+      ['c9', null],
+      { kind: 'page', origin: 'capturedPage' },
+      0,
+    ],
+    [
+      '410 twice running fails',
+      { before: 'c9', epoch: 1 },
+      [status(410), status(410)],
+      ['c9', null],
+      { kind: 'failed' },
+      0,
+    ],
+    [
+      'a cursor mismatch (409) is refused',
+      { before: 'c1', epoch: 1 },
+      [status(409)],
+      ['c1'],
+      { kind: 'refused' },
+      0,
+    ],
+  ])('%s', async (_name, cursor, answers, asked, expected, tailCalls) => {
+    const requested: (string | null)[] = [];
+    const tail = scripted([tailRead]);
+    const outcome = await pullEarlierPage({
+      page: null,
+      readRange: scripted([]).read,
+      readTail: tail.read,
+      servedStart,
+      captured: {
+        cursor,
+        read: async (before) => {
+          requested.push(before);
+          const answer = answers[requested.length - 1];
+          if (!answer) throw new Error('unexpected call');
+          return answer;
+        },
+      },
+    });
+    expect(outcome).toMatchObject(expected);
+    expect(requested).toEqual(asked);
+    expect(tail.calls.count).toBe(tailCalls);
+  });
+});

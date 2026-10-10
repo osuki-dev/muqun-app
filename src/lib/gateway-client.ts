@@ -42,6 +42,7 @@ import {
   setToken,
 } from '@/api';
 import { activeLocaleHeaders } from '@/i18n/active-locale';
+import type { CapturedHistoryPage, CapturedHistoryRead } from './terminal-history-pull';
 import {
   answerHasNoBody,
   headerRecord,
@@ -3162,6 +3163,72 @@ export async function readPaneRange(
   );
   noteGatewayGeneration(serverId, value);
   return { output: extractPaneOutput(value), read: extractPaneReadEnvelope(value) };
+}
+
+/** `data` of a `/history` answer, as the pull needs it; `null` when it is not one. */
+export function parseCapturedHistoryPage(value: unknown): CapturedHistoryPage | null {
+  if (!value || typeof value !== 'object') return null;
+  const data = value as Record<string, unknown>;
+  if (!Array.isArray(data.rows)) return null;
+  return {
+    rows: data.rows.filter((row): row is string => typeof row === 'string'),
+    hasMore: data.has_more === true,
+    nextBefore: typeof data.next_before === 'string' && data.next_before ? data.next_before : null,
+    captureEpoch: data.capture_epoch ?? null,
+    availability: data.availability === 'not_captured' ? 'not_captured' : 'captured',
+  };
+}
+
+/**
+ * A page of the pane's captured history (`GET .../panes/{p}/history`):
+ * output the gateway kept as it served it, oldest first, for the panes it
+ * keeps (alternate-screen ones, and those without native scrollback). Never
+ * throws: a refusal comes back with its status, for the pull to decide on.
+ */
+export async function readPaneHistory(
+  sessionId: string,
+  paneId: string,
+  before: string | null,
+  limit = 200
+): Promise<CapturedHistoryRead> {
+  if (isDemoActive()) {
+    return {
+      ok: true,
+      page: {
+        rows: [],
+        hasMore: false,
+        nextBefore: null,
+        captureEpoch: null,
+        availability: 'not_captured',
+      },
+    };
+  }
+  const query = new URLSearchParams({
+    format: 'ansi',
+    limit: String(Math.max(1, Math.min(500, limit))),
+  });
+  if (before) query.set('before', before);
+  const path = `/api/sessions/${encodeURIComponent(sessionId)}/panes/${encodeURIComponent(paneId)}/history?${query.toString()}`;
+  try {
+    const res = await gatewayFetch(gatewayUrl(path), {
+      method: 'GET',
+      headers: gatewayAuthHeaders(),
+    });
+    if (!res.ok) {
+      const body = await res.text().catch(() => '');
+      return { ok: false, status: res.status, error: new Error(`HTTP ${res.status}: ${body}`) };
+    }
+    const json = (await res.json()) as unknown;
+    const data =
+      json && typeof json === 'object' && 'data' in json ? (json as { data: unknown }).data : json;
+    const page = parseCapturedHistoryPage(data);
+    if (!page) {
+      return { ok: false, status: 502, error: new Error('HTTP 502: unreadable history page') };
+    }
+    return { ok: true, page };
+  } catch (error) {
+    return { ok: false, status: null, error };
+  }
 }
 
 /**
