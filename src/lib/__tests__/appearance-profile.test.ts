@@ -117,7 +117,7 @@ test('profile wiring keeps route and workspace identities and the shared Home ac
   expect(scene.match(/<Animated.View/g)?.length).toBe(1);
   expect(scene).not.toContain('key=');
   const home = read('components/home-overview.tsx');
-  expect(home).toContain('onMomentumScrollEnd={rememberScroll}');
+  expect(home).toContain('rememberScroll(event);');
   expect(home).toContain('onContentSizeChange={restoreScroll}');
   expect(home).toContain('<HomeEditorialLayout');
   expect(read('app/index.tsx')).toContain('key={nextWorkspaceOwner}');

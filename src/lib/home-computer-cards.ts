@@ -9,7 +9,7 @@
  */
 
 import type { ServerReachability } from './server-reachability';
-import { stripTaskMarkers } from './task-plumbing';
+import { stripTaskMarkers, taskMarkerPayload } from './task-plumbing';
 import { FINISHED_TASKS_SHOWN, type ServerTasksIndex } from './server-tasks-state';
 import { isTerminalTaskState, type TaskState, type TaskView } from './task-ledger';
 
@@ -162,7 +162,10 @@ export function taskRollup(task: TaskView): { total: number; waiting: number } |
 export function taskResultLine(
   task: TaskView
 ): { kind: 'summary'; text: string } | { kind: 'exit'; code: number } | null {
-  // An older gateway leaves the agent's marker in the text it records.
+  // An older gateway leaves the agent's marker in the text it records: the
+  // words after it are the summary; without any, the text around it.
+  const marked = task.summary ? taskMarkerPayload(task.summary) : null;
+  if (marked) return { kind: 'summary', text: marked };
   const summary = task.summary && stripTaskMarkers(task.summary).trim();
   if (summary) {
     const lines = summary.split('\n').filter((line) => line.trim());

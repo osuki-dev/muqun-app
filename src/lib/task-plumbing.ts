@@ -77,6 +77,29 @@ export function stripTaskMarkers(text: string, streaming = false): string {
   return changed ? kept.join('\n').trimEnd() : text;
 }
 
+/**
+ * What the last line holding only a marker says after it (`MUQUN_TASK_DONE:
+ * built and tested` -> `built and tested`), or null without one. An older gateway
+ * leaves the marker in the summary it records, and the words after it are
+ * the summary the agent meant.
+ */
+export function taskMarkerPayload(text: string): string | null {
+  let payload: string | null = null;
+  for (const line of text.split('\n')) {
+    for (const marker of MARKERS) {
+      const at = line.indexOf(marker);
+      // A marker run into a sentence keeps that sentence (`stripTaskMarkers`).
+      if (at < 0 || line.slice(0, at).replace(LINE_LEAD, '')) continue;
+      const words = line
+        .slice(at + marker.length)
+        .replace(/[`'"”’]+\s*$/u, '')
+        .trim();
+      if (words) payload = words;
+    }
+  }
+  return payload;
+}
+
 /** A goal without the completion request an older gateway appended to it. */
 export function stripTaskInstruction(text: string): string {
   const at = text.lastIndexOf(INSTRUCTION_HEAD);

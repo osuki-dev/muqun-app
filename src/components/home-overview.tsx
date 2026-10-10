@@ -1369,7 +1369,10 @@ export function HomeOverview({
   const artworkOverlap =
     classicArtwork && classicArtworkHeight > 0 ? Math.round(classicArtworkHeight / 3) : 0;
   const classicContent = (
-    <View style={[styles.page, { backgroundColor: background(theme.colors.background) }]}>
+    <View
+      // Any finger on the page holds the cards' order (design §9).
+      {...sortHoldTouches}
+      style={[styles.page, { backgroundColor: background(theme.colors.background) }]}>
       <ThemeArtwork
         slot="home.wallpaper"
         fallbackSlot="shell.wallpaper"
@@ -1516,12 +1519,20 @@ export function HomeOverview({
         onLayout={(event) =>
           pageDockHide.settle({ viewportHeight: event.nativeEvent.layout.height })
         }
-        onScrollBeginDrag={pageDockHide.beginDrag}
+        onScrollBeginDrag={() => {
+          sortHoldScroll.onScrollBeginDrag();
+          pageDockHide.beginDrag();
+        }}
         onScrollEndDrag={(event) => {
           rememberScroll(event);
+          sortHoldScroll.onScrollEndDrag();
           pageDockHide.endDrag();
         }}
-        onMomentumScrollEnd={rememberScroll}
+        onMomentumScrollBegin={sortHoldScroll.onMomentumScrollBegin}
+        onMomentumScrollEnd={(event) => {
+          rememberScroll(event);
+          sortHoldScroll.onMomentumScrollEnd();
+        }}
         // The dock floats over the page's foot: a field in the page is kept
         // clear of it, not just of the keyboard.
         bottomOffset={dock ? dockHeight : 24}
@@ -1744,8 +1755,13 @@ export function HomeOverview({
               you, then the computers with work, then this layout's own server
               cards as its Recent. Below the spacer, so each label sits on what
               it labels. */}
-          {hasAttention && attentionSection ? (
-            <View style={[{ marginBottom: metrics.cardGap, gap: theme.spacing.sm }]}>
+          {/* Mounted while empty, as on the editorial page, so its first row
+              arrives with its pulse; spaced only with a row. */}
+          {attentionSection ? (
+            <View
+              style={
+                hasAttention ? { marginBottom: metrics.cardGap, gap: theme.spacing.sm } : undefined
+              }>
               {attentionSection}
             </View>
           ) : null}
