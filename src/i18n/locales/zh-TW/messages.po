@@ -283,6 +283,10 @@ msgstr "最近觀察到 {count} 個請求"
 msgid "{done} of {0} done"
 msgstr "已完成 {done}/{0}"
 
+#: src/components/settings-fleet-peers.tsx
+msgid "{from} still lists an older {name}. Remove that entry on {from}."
+msgstr "{from} 上仍有一筆舊的 {name} 紀錄，請在 {from} 上刪除這筆紀錄"
+
 #: src/components/home-launch-actions.tsx
 msgid "{hidden} more"
 msgstr "另外 {hidden} 個"

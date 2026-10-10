@@ -283,6 +283,10 @@ msgstr "Dernière observation : {count} requêtes"
 msgid "{done} of {0} done"
 msgstr "{done} sur {0} terminées"
 
+#: src/components/settings-fleet-peers.tsx
+msgid "{from} still lists an older {name}. Remove that entry on {from}."
+msgstr "{from} répertorie encore une ancienne entrée {name}. Supprimez cette entrée sur {from}"
+
 #: src/components/home-launch-actions.tsx
 msgid "{hidden} more"
 msgstr "{hidden} de plus"

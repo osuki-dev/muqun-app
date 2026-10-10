@@ -283,6 +283,10 @@ msgstr "พบคำขอ {count} รายการในการตรวจ
 msgid "{done} of {0} done"
 msgstr "เสร็จ {done} จาก {0}"
 
+#: src/components/settings-fleet-peers.tsx
+msgid "{from} still lists an older {name}. Remove that entry on {from}."
+msgstr "{from} ยังมีรายการ {name} อันเก่าอยู่ ลบรายการนั้นบน {from}"
+
 #: src/components/home-launch-actions.tsx
 msgid "{hidden} more"
 msgstr "อีก {hidden}"

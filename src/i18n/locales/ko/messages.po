@@ -283,6 +283,10 @@ msgstr "최근 확인된 요청 {count}개"
 msgid "{done} of {0} done"
 msgstr "{0}개 중 {done}개 완료"
 
+#: src/components/settings-fleet-peers.tsx
+msgid "{from} still lists an older {name}. Remove that entry on {from}."
+msgstr "{from}에 이전 {name} 항목이 아직 남아 있습니다. {from}에서 그 항목을 삭제하세요"
+
 #: src/components/home-launch-actions.tsx
 msgid "{hidden} more"
 msgstr "{hidden}개 더 보기"

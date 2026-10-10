@@ -147,14 +147,16 @@ function FleetPeersBody({ server }: { server: GatewayRecord }) {
                 </Text>
               ))}
               {sameName.map((pair) => {
-                const { name, with: other } = pair;
+                const { name, with: other, from } = pair;
                 return (
                   <Text
                     key={`same-name-${name}`}
                     testID="fleet-peers-same-name"
                     variant="caption"
                     color={theme.colors.warning}>
-                    {t`${name} has the same name as ${other}; rename one of them.`}
+                    {pair.stale
+                      ? t`${from} still lists an older ${name}. Remove that entry on ${from}.`
+                      : t`${name} has the same name as ${other}; rename one of them.`}
                   </Text>
                 );
               })}
