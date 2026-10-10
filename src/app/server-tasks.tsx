@@ -6,6 +6,7 @@ import { useHomeCommands } from '@/hooks/use-home-commands';
 import { taskRouteFor, useServerTasks } from '@/hooks/use-server-tasks';
 import { openTaskWork } from '@/lib/home-computer-cards';
 import { dismissTaskNotices } from '@/stores/in-app-notifications';
+import { showOpeningWhile, taskOpeningKey } from '@/stores/home-task-cards';
 import { fetchTaskList } from '@/lib/task-ledger';
 import { useGatewayConnectionStore } from '@/stores/gateway-connection';
 import { useServerTasksStore } from '@/stores/server-tasks';
@@ -61,7 +62,10 @@ export default function ServerTasksScreen() {
         // computer), so the sheet always makes way for it.
         router.back();
         dismissTaskNotices(task);
-        openTaskWork(commands, serverId, task);
+        showOpeningWhile(
+          taskOpeningKey(serverId, task.taskId),
+          openTaskWork(commands, serverId, task)
+        );
       }}
     />
   );

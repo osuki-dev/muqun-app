@@ -168,6 +168,7 @@ import { serverPrewarmGate, useServerReachability } from '@/stores/server-reacha
 import { useServerSession } from '@/stores/server-session';
 import { warmConfiguredWorkspace } from '@/lib/workspace-snapshot';
 import { useServerCapabilities } from '@/stores/server-capabilities';
+import { showOpeningWhile, taskOpeningKey } from '@/stores/home-task-cards';
 import { useServerLastViewed } from '@/stores/server-last-viewed';
 import { useSshHostsStore } from '@/stores/ssh-hosts';
 import { useThemeLibrary } from '@/stores/theme-library';
@@ -982,7 +983,10 @@ export function HomeOverview({
           dismissTaskNotices(task);
           // Opening work on another computer keeps the dock where it is.
           launchController.pinTarget();
-          openTaskWork(commands, serverId, task);
+          showOpeningWhile(
+            taskOpeningKey(serverId, task.taskId),
+            openTaskWork(commands, serverId, task)
+          );
         }}
       />
     ) : undefined;
@@ -1008,7 +1012,10 @@ export function HomeOverview({
           dismissTaskNotices(task);
           // Opening work on another computer keeps the dock where it is.
           launchController.pinTarget();
-          openTaskWork(commands, serverId, task);
+          showOpeningWhile(
+            taskOpeningKey(serverId, task.taskId),
+            openTaskWork(commands, serverId, task)
+          );
         }}
       />
     ) : undefined;

@@ -558,31 +558,39 @@ export type TaskOpeners = {
  * Open what a task runs in, on its own computer -- for a mirror, on the
  * computer that runs it. A mirror whose task there cannot be read (not
  * known yet, or that computer is quiet) opens that computer, which says
- * itself whether it can be reached; a tap never does nothing.
+ * itself whether it can be reached; a tap never does nothing. Settles when
+ * the open has (the row shows a loading state until then); never rejects.
  */
-export function openTaskWork(commands: TaskOpeners, serverId: string, task: TaskView): void {
+export async function openTaskWork(
+  commands: TaskOpeners,
+  serverId: string,
+  task: TaskView
+): Promise<void> {
   const destination = taskRowDestination(task);
+  const settled = (open: unknown) =>
+    Promise.resolve(open).then(
+      () => undefined,
+      () => undefined
+    );
   if (destination.kind === 'peer') {
     const resolve = commands.resolveTask;
     if (!resolve || task.binding.kind !== 'peer') return;
     const there = commands.peerServerId?.(task.binding) ?? destination.serverId;
-    if (!destination.remoteTaskId) {
-      void commands.openServer(there);
-      return;
-    }
-    void resolve(there, destination.remoteTaskId).then((remote) => {
-      if (!remote) void commands.openServer(there);
-      else if (remote.binding.kind !== 'peer') openTaskWork(commands, there, remote);
-    });
+    if (!destination.remoteTaskId) return settled(commands.openServer(there));
+    const remote = await resolve(there, destination.remoteTaskId).catch(() => null);
+    if (!remote) return settled(commands.openServer(there));
+    if (remote.binding.kind !== 'peer') return openTaskWork(commands, there, remote);
     return;
   }
   if (destination.kind === 'session') {
-    void commands.openAgent(serverId, destination.asid, undefined, undefined, destination.agentId);
-  } else if (destination.kind === 'pane') {
-    void commands.openServer(serverId, destination.paneId, destination.sessionId);
-  } else {
-    void commands.openServer(serverId);
+    return settled(
+      commands.openAgent(serverId, destination.asid, undefined, undefined, destination.agentId)
+    );
   }
+  if (destination.kind === 'pane') {
+    return settled(commands.openServer(serverId, destination.paneId, destination.sessionId));
+  }
+  return settled(commands.openServer(serverId));
 }
 
 /** A row's state: the ledger's, or `sent` for a goal the computer has not reported yet. */

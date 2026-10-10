@@ -398,6 +398,33 @@ export async function createAgentSession(
   return info;
 }
 
+/**
+ * Whether `asid` is on its computer: `true` it is, `false` the computer
+ * answered 404 (no such session), `null` any other answer or none within
+ * `timeoutMs`. Judged by the status, never by an error's wording.
+ */
+export async function agentSessionListed(
+  sessionId: string | undefined,
+  asid: string,
+  timeoutMs: number
+): Promise<boolean | null> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await gatewayFetch(gatewayUrl(sessionRoute(asid, '', sessionId, true)), {
+      method: 'GET',
+      headers: gatewayAuthHeaders(),
+      signal: controller.signal,
+    });
+    if (res.ok) return true;
+    return res.status === 404 ? false : null;
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 export async function getAgentSessionSnapshot(
   sessionId: string | undefined,
   asid: string

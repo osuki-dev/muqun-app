@@ -2,7 +2,7 @@ import { useLingui } from '@lingui/react/macro';
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { useThemeTokens } from '@osuki-dev/ui';
 import { ChevronRight, CircleAlert } from 'lucide-react-native';
-import { StyleSheet, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { LayoutAnimationConfig } from 'react-native-reanimated';
 
 import { useTaskIndexFor } from '@/components/use-task-index';
@@ -40,6 +40,7 @@ import { peerServerIdOf } from '@/lib/fleet-peers';
 import { useAgents } from '@/stores/agents';
 import { useFleetPeers } from '@/stores/fleet-peers';
 import { useHomeAttention } from '@/stores/home-attention';
+import { taskOpeningKey, useHomeTaskCards } from '@/stores/home-task-cards';
 import { useServerTasksStore } from '@/stores/server-tasks';
 
 const OBSERVATION_DATE_FORMAT: Intl.DateTimeFormatOptions = {
@@ -196,11 +197,15 @@ function WaitingTaskRow({
   const title = taskRowTitle(task) || line.text;
   const computer = homeContinueComputerLabel(servers, row.serverId);
   const meta = [computer, line.text].filter(Boolean).join(META_SEPARATOR);
+  const opening = useHomeTaskCards(
+    (cards) => cards.opening === taskOpeningKey(row.serverId, task.taskId)
+  );
   return (
     <PressableScale
       testID={`home-attention-task-${task.taskId}`}
       accessibilityRole="button"
       accessibilityLabel={`${title}, ${meta}`}
+      accessibilityState={{ busy: opening }}
       onPress={onOpen}
       style={[
         styles.row,
@@ -212,7 +217,11 @@ function WaitingTaskRow({
       ]}>
       {/* A row arriving here pulses once (skipped on a remount), and leaves no mark. */}
       <ArrivalPulse />
-      <TaskStateIcon visual={visual} size={20} />
+      {opening ? (
+        <ActivityIndicator size="small" color={theme.colors.textMuted} />
+      ) : (
+        <TaskStateIcon visual={visual} size={20} />
+      )}
       <View style={styles.copy}>
         {/* A row, as on the card: the title's `flex: 1` is a width, not a height. */}
         <View style={styles.titleLine}>
