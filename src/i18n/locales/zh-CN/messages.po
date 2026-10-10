@@ -540,7 +540,7 @@ msgstr "代理"
 
 #: src/components/settings-fleet-peers.tsx
 msgid "Agents on your other computers can hand part of a task to this one."
-msgstr "你其他电脑上的代理可以把任务的一部分交给这台电脑。"
+msgstr "你其他电脑上的代理可以把任务的一部分交给这台电脑"
 
 #: src/components/app-drawer-content.tsx
 msgid "AI coding assistant"
@@ -3325,7 +3325,7 @@ msgstr "打造你的专属风格"
 
 #: src/components/settings-fleet-peers.tsx
 msgid "Make sure the computer is reachable, then try again."
-msgstr "请确认这台电脑可以连接，然后重试。"
+msgstr "请确认这台电脑可以连接，然后重试"
 
 #: src/components/home-overview.tsx
 msgid "Manage"

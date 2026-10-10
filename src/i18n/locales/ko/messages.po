@@ -540,7 +540,7 @@ msgstr "에이전트"
 
 #: src/components/settings-fleet-peers.tsx
 msgid "Agents on your other computers can hand part of a task to this one."
-msgstr "다른 컴퓨터의 에이전트가 작업 일부를 이 컴퓨터에 맡길 수 있습니다."
+msgstr "다른 컴퓨터의 에이전트가 작업 일부를 이 컴퓨터에 맡길 수 있습니다"
 
 #: src/components/app-drawer-content.tsx
 msgid "AI coding assistant"
@@ -3325,7 +3325,7 @@ msgstr "나만의 스타일로"
 
 #: src/components/settings-fleet-peers.tsx
 msgid "Make sure the computer is reachable, then try again."
-msgstr "컴퓨터에 연결할 수 있는지 확인한 후 다시 시도하세요."
+msgstr "컴퓨터에 연결할 수 있는지 확인한 후 다시 시도하세요"
 
 #: src/components/home-overview.tsx
 msgid "Manage"

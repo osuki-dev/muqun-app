@@ -540,7 +540,7 @@ msgstr "エージェント"
 
 #: src/components/settings-fleet-peers.tsx
 msgid "Agents on your other computers can hand part of a task to this one."
-msgstr "ほかのコンピュータのエージェントが、タスクの一部をこのコンピュータに任せられます。"
+msgstr "ほかのコンピュータのエージェントが、タスクの一部をこのコンピュータに任せられます"
 
 #: src/components/app-drawer-content.tsx
 msgid "AI coding assistant"
@@ -3325,7 +3325,7 @@ msgstr "自分好みに"
 
 #: src/components/settings-fleet-peers.tsx
 msgid "Make sure the computer is reachable, then try again."
-msgstr "コンピュータに接続できることを確認してから、もう一度お試しください。"
+msgstr "コンピュータに接続できることを確認してから、もう一度お試しください"
 
 #: src/components/home-overview.tsx
 msgid "Manage"
