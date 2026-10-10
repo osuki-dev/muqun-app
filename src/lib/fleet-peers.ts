@@ -83,19 +83,6 @@ export function sameFleetName(a: string, b: string): boolean {
   return a.trim().toLocaleLowerCase() === b.trim().toLocaleLowerCase();
 }
 
-/**
- * Whether a row or login is `serverId`'s: by its server id where it carries
- * one, else (an older gateway's) by the names that computer goes by.
- */
-export function fleetNameMatches(
-  entry: { serverId?: string | null; name: string },
-  serverId: string,
-  names: readonly string[]
-): boolean {
-  if (entry.serverId) return entry.serverId === serverId;
-  return entry.name.trim() !== '' && names.some((name) => sameFleetName(name, entry.name));
-}
-
 export type FleetEndpoint = TaskEndpoint;
 
 /** Linking runs Argon2 on both computers and a round trip between them. */
@@ -431,6 +418,34 @@ export function pairingsAnswer(
   return capabilities !== null && !capabilities.includes(DEVICE_REVOCATION_CAPABILITY) ? [] : null;
 }
 
+/**
+ * The rows or logins on one computer that are `serverId`'s, and whether that
+ * can be told at all. An entry's own server id decides. Where the list gives
+ * none (gateways before `server_id` was listed), an entry is taken by name
+ * only when exactly one entry there carries a name `serverId` goes by and no
+ * other entry shares it; anything else is `undecided` -- the step stays
+ * pending and Settings says the computer needs a newer gateway -- so a label
+ * that differs never reads as done and a namesake is never removed.
+ */
+export function ownedBy<T extends { serverId?: string | null; name: string }>(
+  entries: readonly T[],
+  serverId: string,
+  names: readonly string[]
+): { matched: T[]; undecided: boolean } {
+  const byId = entries.filter((entry) => entry.serverId === serverId);
+  if (byId.length > 0) return { matched: byId, undecided: false };
+  const unidentified = entries.filter((entry) => !entry.serverId);
+  if (unidentified.length === 0) return { matched: [], undecided: false };
+  const named = unidentified.filter(
+    (entry) => entry.name.trim() !== '' && names.some((name) => sameFleetName(name, entry.name))
+  );
+  const only = named.length === 1 ? named[0]! : null;
+  if (only && entries.filter((entry) => sameFleetName(entry.name, only.name)).length === 1) {
+    return { matched: [only], undecided: false };
+  }
+  return { matched: [], undecided: true };
+}
+
 /** Revoke one paired device; one already gone is revoked. */
 export async function revokePairing(endpoint: FleetEndpoint, deviceId: string): Promise<void> {
   await removal(endpoint, `/api/pairings/${encodeURIComponent(deviceId)}`);
@@ -637,6 +652,8 @@ export type UnpairRecord = {
   stillListedBy: string[];
   /** Per pending computer: which steps are confirmed there, and how the rest went. */
   progress?: Record<string, UnpairProgress>;
+  /** Every name it was seen going by (its label, its own, peer rows'), for logins without an id. */
+  names?: string[];
 };
 
 /** The two things an unpair takes off another computer: its peer rows, and its login. */
@@ -648,8 +665,13 @@ export const UNPAIR_STEP_ATTEMPTS = 5;
 export type UnpairProgress = {
   /** Confirmed steps: never run again. */
   done: UnpairStep[];
-  /** Passes in a row that left a step undone. */
+  /** Passes in a row that confirmed nothing new. */
   failures: number;
+  /**
+   * Its logins there carry no server id and none can be told apart by name
+   * ({@link loginsOf}): Settings says the computer needs a newer gateway.
+   */
+  needsNewerGateway?: true;
   /**
    * Set after {@link UNPAIR_STEP_ATTEMPTS} failures: the `pairedAt` of the
    * record it kept failing with. Nothing more is tried until that computer is
@@ -672,17 +694,22 @@ export function unpairStepsDue(
 export function unpairProgressAfter(
   progress: UnpairProgress | undefined,
   passDone: readonly UnpairStep[],
-  pairedAt: number
+  pairedAt: number,
+  needsNewerGateway = false
 ): UnpairProgress {
   const done = UNPAIR_STEPS.filter(
     (step) => progress?.done.includes(step) || passDone.includes(step)
   );
   if (done.length === UNPAIR_STEPS.length) return { done, failures: 0 };
-  // A parked computer that runs again changed state: its count starts over.
+  const flag = needsNewerGateway ? { needsNewerGateway: true as const } : {};
+  // A pass that confirmed a step is progress; a parked computer that runs
+  // again changed state. Either way the count starts over.
+  const grew = done.length > (progress?.done.length ?? 0);
+  if (grew) return { done, failures: 0, ...flag };
   const failures = (progress?.parkedOn !== undefined ? 0 : (progress?.failures ?? 0)) + 1;
   return failures >= UNPAIR_STEP_ATTEMPTS
-    ? { done, failures, parkedOn: pairedAt }
-    : { done, failures };
+    ? { done, failures, parkedOn: pairedAt, ...flag }
+    : { done, failures, ...flag };
 }
 
 /** The computer did not answer: when it does again, a parked step is tried again. */
@@ -721,11 +748,14 @@ export function keptUnpairs(
 export function unpairLines(
   serverId: string,
   entries: readonly UnpairRecord[]
-): { stillLinked: string[]; stillListedBy: string[] } {
+): { stillLinked: string[]; stillListedBy: string[]; needsNewerGateway: boolean } {
+  const pendingHere = entries.filter((entry) => entry.pending.includes(serverId));
+  const undecided = (entry: UnpairRecord) => entry.progress?.[serverId]?.needsNewerGateway === true;
   return {
-    stillLinked: entries.filter((entry) => entry.pending.includes(serverId)).map((e) => e.label),
+    stillLinked: pendingHere.filter((entry) => !undecided(entry)).map((e) => e.label),
     stillListedBy: entries
       .filter((entry) => entry.stillListedBy.includes(serverId))
       .map((e) => e.label),
+    needsNewerGateway: pendingHere.some(undecided),
   };
 }

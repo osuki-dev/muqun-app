@@ -6675,6 +6675,10 @@ msgstr "Desvincular"
 msgid "Unpair {label}"
 msgstr "Desvincular {label}"
 
+#: src/components/settings-fleet-peers.tsx
+msgid "Unpair needs a newer gateway on {thisLabel}"
+msgstr "Para desemparejar, {thisLabel} necesita un gateway más reciente"
+
 #: src/components/settings-servers.tsx
 msgid "Unpair this computer"
 msgstr "Desvincular este ordenador"

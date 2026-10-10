@@ -6675,6 +6675,10 @@ msgstr "Unpair"
 msgid "Unpair {label}"
 msgstr "Unpair {label}"
 
+#: src/components/settings-fleet-peers.tsx
+msgid "Unpair needs a newer gateway on {thisLabel}"
+msgstr "Unpair needs a newer gateway on {thisLabel}"
+
 #: src/components/settings-servers.tsx
 msgid "Unpair this computer"
 msgstr "Unpair this computer"

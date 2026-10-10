@@ -6675,6 +6675,10 @@ msgstr "Kopplung aufheben"
 msgid "Unpair {label}"
 msgstr "{label} entkoppeln"
 
+#: src/components/settings-fleet-peers.tsx
+msgid "Unpair needs a newer gateway on {thisLabel}"
+msgstr "Zum Entkoppeln braucht {thisLabel} ein neueres Gateway"
+
 #: src/components/settings-servers.tsx
 msgid "Unpair this computer"
 msgstr "Diesen Computer entkoppeln"

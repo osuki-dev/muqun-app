@@ -6675,6 +6675,10 @@ msgstr "取消配对"
 msgid "Unpair {label}"
 msgstr "取消 {label} 的配对"
 
+#: src/components/settings-fleet-peers.tsx
+msgid "Unpair needs a newer gateway on {thisLabel}"
+msgstr "{thisLabel} 需要更新网关才能完成取消配对"
+
 #: src/components/settings-servers.tsx
 msgid "Unpair this computer"
 msgstr "取消这台电脑的配对"

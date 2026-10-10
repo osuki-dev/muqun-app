@@ -6675,6 +6675,10 @@ msgstr "Hủy ghép nối"
 msgid "Unpair {label}"
 msgstr "Hủy ghép nối {label}"
 
+#: src/components/settings-fleet-peers.tsx
+msgid "Unpair needs a newer gateway on {thisLabel}"
+msgstr "Cần gateway mới hơn trên {thisLabel} để hủy ghép nối"
+
 #: src/components/settings-servers.tsx
 msgid "Unpair this computer"
 msgstr "Hủy ghép nối máy tính này"

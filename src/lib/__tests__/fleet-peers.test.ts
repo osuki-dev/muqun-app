@@ -13,7 +13,7 @@ import {
   unpairLines,
   type UnpairRecord,
   pairingsAnswer,
-  fleetNameMatches,
+  ownedBy,
   parseFleetPeers,
   unpairProgressAfter,
   unpairSeenDown,
@@ -407,9 +407,28 @@ describe('an unpairing this device could not finish (A5 D6)', () => {
   });
 
   test("each computer's Settings line says what is left on it", () => {
-    const entries = [entry({ pending: ['atlas'], stillListedBy: ['nas'] })];
-    expect(unpairLines('atlas', entries)).toEqual({ stillLinked: ['cedar'], stillListedBy: [] });
-    expect(unpairLines('nas', entries)).toEqual({ stillLinked: [], stillListedBy: ['cedar'] });
+    const entries = [entry({ pending: ['atlas', 'harbor'], stillListedBy: ['nas'] })];
+    const undecided = {
+      ...entries[0]!,
+      progress: {
+        harbor: { done: ['rows' as const], failures: 1, needsNewerGateway: true as const },
+      },
+    };
+    expect(unpairLines('atlas', entries)).toEqual({
+      stillLinked: ['cedar'],
+      stillListedBy: [],
+      needsNewerGateway: false,
+    });
+    expect(unpairLines('nas', entries)).toEqual({
+      stillLinked: [],
+      stillListedBy: ['cedar'],
+      needsNewerGateway: false,
+    });
+    expect(unpairLines('harbor', [undecided])).toEqual({
+      stillLinked: [],
+      stillListedBy: [],
+      needsNewerGateway: true,
+    });
   });
 });
 
@@ -419,7 +438,9 @@ describe('an unpair follow-up runs only what is left, and stops fighting', () =>
     // The first pass took the rows off; the login revoke failed.
     let progress: UnpairProgress | undefined = unpairProgressAfter(undefined, ['rows'], PAIRED);
     expect(unpairStepsDue(progress, PAIRED)).toEqual(['logins']);
-    for (let pass = 1; pass < UNPAIR_STEP_ATTEMPTS; pass += 1) {
+    // A pass that confirmed a step is progress: the count starts from there.
+    expect(progress.failures).toBe(0);
+    for (let pass = 0; pass < UNPAIR_STEP_ATTEMPTS; pass += 1) {
       progress = unpairProgressAfter(progress, [], PAIRED);
     }
     // Parked: nothing on this pairing, until it is paired again or seen down.
@@ -431,18 +452,31 @@ describe('an unpair follow-up runs only what is left, and stops fighting', () =>
   });
 });
 
-describe("an older gateway's rows and logins carry no server id: matched by name", () => {
+describe("an older gateway's rows and logins carry no server id: matched by a unique name", () => {
+  const login = (deviceId: string, serverId: string | null, name: string) => ({
+    deviceId,
+    serverId,
+    name,
+  });
   test.each([
-    ['its own server id decides', { serverId: 'srv-beta', name: 'other' }, true],
+    ['its own server id decides', [login('d1', 'srv-beta', 'other')], ['d1'], false],
     [
-      'another server id is not it, whatever the name',
-      { serverId: 'srv-gamma', name: 'beta' },
+      'no server id: the one login with a name it goes by',
+      [login('d1', null, 'Beta '), login('d2', null, 'gamma')],
+      ['d1'],
       false,
     ],
-    ['no server id: the name it goes by', { serverId: null, name: 'Beta ' }, true],
-    ['no server id and another name', { serverId: null, name: 'gamma' }, false],
-  ] as const)('%s', (_name, entry, matches) => {
-    expect(fleetNameMatches(entry, 'srv-beta', ['beta'])).toBe(matches);
+    // A label that differs is not "nothing to revoke": it stays pending.
+    ['no server id and no name it goes by', [login('d2', null, 'gamma')], [], true],
+    // Two logins share the name: neither is revoked.
+    ['a namesake', [login('d1', null, 'beta'), login('d2', null, 'beta')], [], true],
+    ['no logins without an id: nothing to do', [login('d2', 'srv-gamma', 'beta')], [], false],
+  ] as const)('%s', (_name, logins, revoked, undecided) => {
+    const owned = ownedBy([...logins], 'srv-beta', ['beta']);
+    expect([owned.matched.map((entry) => entry.deviceId), owned.undecided]).toEqual([
+      [...revoked],
+      undecided,
+    ]);
   });
 
   test('a peer row without one is kept aside for the unpair, not shown as a peer', () => {
