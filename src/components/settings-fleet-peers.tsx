@@ -35,22 +35,28 @@ function FleetPeersBody({ server }: { server: GatewayRecord }) {
   // A failure counts while it is within the retry window of the latest run,
   // which is when the reconciler last looked; pure, unlike a clock read.
   const lastRunMs = useFleetPeers((state) => state.lastRunMs);
+  const conflicts = useFleetPeers((state) => state.conflicts);
   const setPeers = useFleetPeers((state) => state.setPeers);
   const records = useGatewayConnectionStore((state) => state.records);
   const answer = byServer[server.serverId];
   const status = useFleetPeers((state) => state.statusByServer[server.serverId]);
-  // This computer's own answer, read whenever the section is shown, so the
-  // switch never waits on a background run.
+  // This computer's own answer when none is held yet, so the switch never
+  // waits on a background run; otherwise the run Settings starts reads it.
+  const serverId = server.serverId;
   useFocusEffect(
     useCallback(() => {
+      const own = useGatewayConnectionStore
+        .getState()
+        .records.find((entry) => entry.serverId === serverId);
+      if (!own || useFleetPeers.getState().byServer[serverId]) return;
       let live = true;
-      void fetchFleetPeers(recordEndpoint(server)).then((result) => {
-        if (live) useFleetPeers.getState().record(server.serverId, result);
+      void fetchFleetPeers(recordEndpoint(own)).then((result) => {
+        if (live) useFleetPeers.getState().record(serverId, result);
       });
       return () => {
         live = false;
       };
-    }, [server])
+    }, [serverId])
   );
   const computers = records.map((record) => ({
     serverId: record.serverId,
@@ -58,7 +64,13 @@ function FleetPeersBody({ server }: { server: GatewayRecord }) {
     url: record.url,
     peers: byServer[record.serverId] ?? null,
   }));
-  const { linked, cannotReach } = linkLines(server.serverId, computers, failures, lastRunMs);
+  const { linked, noWork, cannotReach, sameName } = linkLines(
+    server.serverId,
+    computers,
+    failures,
+    lastRunMs,
+    conflicts
+  );
 
   const toggle = useStableHandler((accept: boolean) => {
     if (!answer) return;
@@ -118,13 +130,34 @@ function FleetPeersBody({ server }: { server: GatewayRecord }) {
             disabled={!answer}
             onValueChange={toggle}
           />
-          {linked.length > 0 || cannotReach.length > 0 ? (
+          {linked.length > 0 || cannotReach.length > 0 || sameName.length > 0 ? (
             <View style={styles.lines}>
               {linked.length > 0 ? (
                 <Text testID="fleet-peers-linked" variant="caption" color={theme.colors.textMuted}>
                   {t`Linked with: ${linkedNames}`}
                 </Text>
               ) : null}
+              {noWork.map((name) => (
+                <Text
+                  key={`no-work-${name}`}
+                  testID="fleet-peers-no-work"
+                  variant="caption"
+                  color={theme.colors.textMuted}>
+                  {t`${name} does not take work from other computers.`}
+                </Text>
+              ))}
+              {sameName.map((pair) => {
+                const { name, with: other } = pair;
+                return (
+                  <Text
+                    key={`same-name-${name}`}
+                    testID="fleet-peers-same-name"
+                    variant="caption"
+                    color={theme.colors.warning}>
+                    {t`${name} has the same name as ${other}; rename one of them.`}
+                  </Text>
+                );
+              })}
               {cannotReach.length > 0 ? (
                 <Text
                   testID="fleet-peers-unreachable"
