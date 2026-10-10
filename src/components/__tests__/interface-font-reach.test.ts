@@ -65,6 +65,10 @@ const MONO_SURFACES = new Set([
   // coloured run is a nested native span, because the app's `Text` is a
   // stateful component and a screenful of tokens is thousands of them.
   'src/components/tool-call-code-rows.tsx',
+  // The composer's draft with its mentions tinted: nested spans inside the
+  // field's own TextInput, which inherit the field's font; the app's `Text`
+  // would impose a variant's metrics on part of the line being typed.
+  'src/components/mention-spans.tsx',
 ]);
 
 test('no reader-facing copy is drawn with React Native’s Text', () => {

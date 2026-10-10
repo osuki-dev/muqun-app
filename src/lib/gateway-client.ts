@@ -2847,7 +2847,7 @@ export async function spawnBoundAgent(
  * session and sends the goal before it answers, so this gets the spawn's
  * budget rather than the ordinary read's.
  */
-export async function postLedgerTask(body: Record<string, string>): Promise<unknown> {
+export async function postLedgerTask(body: Record<string, string | string[]>): Promise<unknown> {
   const response = await gatewayFetchWithin(60_000, gatewayUrl('/api/tasks'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', ...gatewayAuthHeaders() },

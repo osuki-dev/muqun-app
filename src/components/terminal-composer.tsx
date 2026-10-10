@@ -75,6 +75,8 @@ export interface TerminalComposerProps {
   compact?: boolean;
   /** How many lines the field is tall while empty; it grows from there to its max. */
   minLines?: number;
+  /** The draft as nested spans, passed to the field (`FontedTextInput` `spans`). */
+  spans?: ReactNode;
 }
 
 export function TerminalComposer({
@@ -88,6 +90,7 @@ export function TerminalComposer({
   layout,
   compact = false,
   minLines,
+  spans,
 }: TerminalComposerProps) {
   const readInput = useLatestReader(inputProps);
   const { t } = useLingui();
@@ -182,6 +185,7 @@ export function TerminalComposer({
         placeholderTextColor={placeholderText}
         selectionColor={theme.colors.primary}
         {...inputProps}
+        spans={spans}
         textBreakStrategy={inputProps.textBreakStrategy ?? 'simple'}
         onContentSizeChange={(event) => {
           // Keep the expanded layout until the draft clears. Collapsing as soon

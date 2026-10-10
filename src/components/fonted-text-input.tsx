@@ -1,4 +1,4 @@
-import { forwardRef, useCallback, useState } from 'react';
+import { forwardRef, useCallback, useState, type ReactNode } from 'react';
 import {
   StyleSheet,
   TextInput,
@@ -129,6 +129,12 @@ export type FontedTextInputProps = TextInputProps & {
    * so an empty field stays one line high.
    */
   shortPlaceholder?: string;
+  /**
+   * The draft drawn as nested spans (mentions tinted), the same string as
+   * `value`: rendered as the input's children in its place. `value` still
+   * decides whether the field is empty.
+   */
+  spans?: ReactNode;
 };
 
 export const FontedTextInput = forwardRef<TextInput, FontedTextInputProps>(function FontedTextInput(
@@ -136,6 +142,7 @@ export const FontedTextInput = forwardRef<TextInput, FontedTextInputProps>(funct
     style,
     placeholder: fullPlaceholder,
     shortPlaceholder,
+    spans,
     placeholderTextColor,
     value,
     defaultValue,
@@ -197,15 +204,16 @@ export const FontedTextInput = forwardRef<TextInput, FontedTextInputProps>(funct
         ref={ref}
         {...rest}
         multiline={multiline}
-        value={value}
+        {...(spans === undefined ? { value } : {})}
         defaultValue={defaultValue}
         onChangeText={handleChangeText}
         onFocus={onFocus}
         onBlur={onBlur}
         placeholder={placeholder}
         placeholderTextColor="transparent"
-        style={parts.input}
-      />
+        style={parts.input}>
+        {spans}
+      </TextInput>
       {/* A single line is centred in its box by the platform; a multiline field
           starts at the top. The overlay does the same. */}
       <View

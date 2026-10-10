@@ -75,6 +75,11 @@ import {
 import { useHomeAgentChoice } from '@/stores/home-agent-choice';
 import { useHomeTaskCards } from '@/stores/home-task-cards';
 import { useServerCapabilities } from '@/stores/server-capabilities';
+import { useFleetPeers } from '@/stores/fleet-peers';
+import { fetchFleetPeers, hasFleetPeers } from '@/lib/fleet-peers';
+import { recordEndpoint } from '@/hooks/use-server-tasks';
+import { taskMentions, type MentionComputer } from '@/lib/composer-mentions';
+import { isDemoRecord } from '@/lib/demo-gateway';
 import { useServerTasksStore } from '@/stores/server-tasks';
 import type { ServerReachability } from '@/lib/server-reachability';
 import { useAgents } from '@/stores/agents';
@@ -174,6 +179,37 @@ export function HomeComposerDock({
   const targetId = targetServer?.serverId;
   const ready = target.kind === 'ready';
   const selected = Boolean(targetId) && record?.serverId === targetId;
+
+  // `@` offers the other paired computers -- the target first, the ones that
+  // answer next -- when the target can hand work to them (`fleet_peers`).
+  const fleetCapable = useServerCapabilities((state) =>
+    targetId ? hasFleetPeers(state.byServer[targetId]) : false
+  );
+  const fleetAnswered = useFleetPeers((state) => state.byServer);
+  const mentionComputers: MentionComputer[] = fleetCapable
+    ? servers
+        .filter((server) => !isDemoRecord(server))
+        .map((server) => ({
+          serverId: server.serverId,
+          name: server.label,
+          current: server.serverId === targetId,
+          reachable:
+            server.serverId === targetId ||
+            reachabilityByServer[server.serverId] === 'live' ||
+            Boolean(fleetAnswered[server.serverId]),
+        }))
+    : [];
+  /**
+   * The task's `mentions`: the computers the draft names, checked against the
+   * target's own linked peers read just now (`taskMentions`). Nothing when the
+   * draft names none, the target cannot link, or it did not answer.
+   */
+  const mentionsIn = async (goal: string, serverId: string): Promise<string[]> => {
+    if (!fleetCapable || !/@\S/.test(goal)) return [];
+    const target = servers.find((server) => server.serverId === serverId);
+    const answer = target ? await fetchFleetPeers(recordEndpoint(target)) : null;
+    return answer ? taskMentions(goal, mentionComputers, answer.peers) : [];
+  };
 
   // One connection at a time: the computer Send goes to is the one selected,
   // so its catalog, uploads and file list are what the dock shows.
@@ -493,8 +529,10 @@ export function HomeComposerDock({
               return false;
             }
             pendingId = useHomeTaskCards.getState().dispatched(serverId, text);
+            const mentions = await mentionsIn(text, serverId);
             const created = await createLedgerTask({
               goal: text,
+              ...(mentions.length ? { mentions } : {}),
               ...(params.agentId ? { agentId: params.agentId } : {}),
               ...(folder ? { cwd: folder } : {}),
               ...(params.mode ? { mode: params.mode } : {}),
@@ -616,8 +654,10 @@ export function HomeComposerDock({
             }
             if (viaLedger) {
               pendingId = useHomeTaskCards.getState().dispatched(serverId, text);
+              const mentions = await mentionsIn(text, serverId);
               const created = await createLedgerTask({
                 goal: text,
+                ...(mentions.length ? { mentions } : {}),
                 agentId: kind,
                 ...(cwd ? { cwd } : {}),
               });
@@ -891,6 +931,7 @@ export function HomeComposerDock({
   return (
     <AgentComposer
       accessory={bar}
+      mentionComputers={mentionComputers}
       inputTestID="home-composer-input"
       sendTestID="home-composer-send"
       running={false}

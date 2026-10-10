@@ -228,9 +228,14 @@ export interface LedgerTaskRequest {
   /** The model variant (reasoning effort), applied at session creation. */
   variant?: string;
   label?: string;
+  /**
+   * The other computers the goal names (`@mini`), for the gateway to offer
+   * its agent; sent only to a computer that advertises `fleet_peers`.
+   */
+  mentions?: string[];
 }
 
-export function ledgerTaskBody(request: LedgerTaskRequest): Record<string, string> {
+export function ledgerTaskBody(request: LedgerTaskRequest): Record<string, string | string[]> {
   return {
     goal: request.goal,
     ...(request.agentId ? { agent_id: request.agentId } : {}),
@@ -239,6 +244,7 @@ export function ledgerTaskBody(request: LedgerTaskRequest): Record<string, strin
     ...(request.model ? { model: request.model } : {}),
     ...(request.model && request.variant ? { variant: request.variant } : {}),
     ...(request.label?.trim() ? { label: request.label.trim() } : {}),
+    ...(request.mentions?.length ? { mentions: request.mentions } : {}),
   };
 }
 
@@ -346,7 +352,24 @@ export async function createLedgerTask(
   request: LedgerTaskRequest
 ): Promise<CreatedLedgerTask | null> {
   const { postLedgerTask } = await import('./gateway-client');
-  return parseCreatedLedgerTask(await postLedgerTask(ledgerTaskBody(request)));
+  try {
+    return parseCreatedLedgerTask(await postLedgerTask(ledgerTaskBody(request)));
+  } catch (error) {
+    // The goal outranks the names in it: a computer that refuses the
+    // mentions still gets the task, once, without them.
+    if (!request.mentions?.length || !isMentionsRefusal(error)) throw error;
+    const { mentions: _dropped, ...withoutMentions } = request;
+    return parseCreatedLedgerTask(await postLedgerTask(ledgerTaskBody(withoutMentions)));
+  }
+}
+
+/**
+ * Whether `POST /api/tasks` refused the request for its `mentions` (a 400
+ * whose answer names them) rather than for the goal.
+ */
+export function isMentionsRefusal(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : '';
+  return /^Open task: 400\b/.test(message) && /mention/i.test(message);
 }
 
 async function endpointRequest(
