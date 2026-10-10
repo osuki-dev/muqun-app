@@ -363,6 +363,9 @@ export function ComposerSendButton({
   );
 }
 
+/** The field box at one line: its input's own one-line height, and Send's. */
+const ONE_LINE_FIELD = 40;
+
 /** Shared with the gateway's paperclip, which sits in the same row at the same size. */
 export const composerStyles = StyleSheet.create({
   composer: {
@@ -389,7 +392,7 @@ export const composerStyles = StyleSheet.create({
     lineHeight: 19,
     textAlignVertical: 'top',
   },
-  compactComposer: { minHeight: 40, paddingVertical: 0 },
+  compactComposer: { minHeight: ONE_LINE_FIELD, paddingVertical: 0 },
   inputWithoutLeading: {
     paddingLeft: 12,
   },

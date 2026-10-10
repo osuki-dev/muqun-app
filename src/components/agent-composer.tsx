@@ -52,7 +52,7 @@ import { AgentModeMenu } from '@/components/agent-mode-menu';
 import { AttachmentStrip } from '@/components/attachment-strip';
 import { ImagePreviewModal, type PreviewImage } from '@/components/image-preview-modal';
 import { GlassChrome } from '@/components/glass-chrome';
-import { SEGMENT_HIT_SLOP, TextSegment } from '@/components/text-segment';
+import { SEGMENT_HIT_SLOP, TextSegment, useSegmentRowLead } from '@/components/text-segment';
 import type { DockAutoHide } from '@/hooks/use-dock-auto-hide';
 import { EdgeFade } from '@/components/edge-fade';
 import { FileMentionPanel } from '@/components/file-mention-panel';
@@ -470,9 +470,9 @@ export interface AgentComposerProps {
    * The phone Home's bar: edge to edge at the foot of the screen, with the
    * safe area inside it, the cards' corner (`chrome.surface`) on its top
    * corners only, and its one edge on top -- the hairline `border` and the
-   * profile's upward `elevation.dock` shadow (hairline alone on a profile
-   * without one). `inset` pads its content so its lines start where the
-   * cards' rows do.
+   * dock's upward shadow (`appChrome.shadow.composerDock`), the edge the
+   * session dock casts too. `inset` pads its content so its lines start where
+   * the cards' rows do.
    */
   bar?: { inset: number };
   /**
@@ -1067,6 +1067,7 @@ export const AgentComposer = memo(function AgentComposer({
   useEffect(() => {
     autoHide?.setPinned(focused || keyboardOpen || sending);
   }, [autoHide, focused, keyboardOpen, sending]);
+  const segmentRowLead = useSegmentRowLead();
   const toggleMode = () => {
     setAttachmentMenuOpen(false);
     if (onOpenModeSheet) {
@@ -1306,7 +1307,17 @@ export const AgentComposer = memo(function AgentComposer({
           const { height } = event.nativeEvent.layout;
           setDockHeight(height);
           onDockHeight?.(height);
-        }}>
+        }}
+        // The bar's upward shadow sits on this wrapper, not on the material:
+        // the material clips to its shape (`overflow: hidden`), and Android
+        // clips an outset shadow with it.
+        style={
+          bar && {
+            borderTopLeftRadius: profile.chrome.surface,
+            borderTopRightRadius: profile.chrome.surface,
+            boxShadow: appChrome.shadow.composerDock,
+          }
+        }>
         <GlassChrome
           surface="composer"
           shape={bar ? 'none' : 'sheet'}
@@ -1317,7 +1328,11 @@ export const AgentComposer = memo(function AgentComposer({
               borderTopRightRadius: profile.chrome.surface,
               borderTopWidth: StyleSheet.hairlineWidth,
               borderTopColor: theme.colors.border,
-              boxShadow: profile.elevation.dock,
+              // The material draws a hairline on every side on a translucent
+              // pack; the bar's only edge is its top.
+              borderLeftColor: 'transparent',
+              borderRightColor: 'transparent',
+              borderBottomColor: 'transparent',
             },
           ]}>
           <View
@@ -1387,7 +1402,7 @@ export const AgentComposer = memo(function AgentComposer({
             {compact ? (
               // The quiet line: caption type in the subtle tone, under row 1's
               // body-size primary line, then the compact gap to the field.
-              <View style={[styles.segmentRow, { marginBottom: theme.spacing.xs }]}>
+              <View style={[styles.segmentRow, segmentRowLead, { marginBottom: theme.spacing.xs }]}>
                 {segmentMode ? (
                   <TextSegment
                     testID="agent-composer-mode-btn"

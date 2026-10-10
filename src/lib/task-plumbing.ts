@@ -28,6 +28,21 @@ const INSTRUCTION_ENDS = [
 /** What may lead a marker: bullets, backticks, whitespace -- any run the gateway strips. */
 const LINE_LEAD = /^[^\p{L}\p{N}]*/u;
 const MARKERS = [TASK_DONE_MARKER, TASK_BLOCKED_MARKER];
+/** Space, quotes or code ticks just before a marker, cut along with it. */
+const MARKER_OPENER = /[\s`'"“‘]+$/u;
+
+/**
+ * Where a still-arriving line's tail could be the start of a marker
+ * (`…help?MUQUN_TASK_D`), or -1. The longest such tail is held back.
+ */
+function partialTail(line: string): number {
+  const longest = Math.max(...MARKERS.map((marker) => marker.length));
+  for (let at = Math.max(0, line.length - longest); at < line.length; at += 1) {
+    const tail = line.slice(at);
+    if (MARKERS.some((marker) => marker.startsWith(tail))) return at;
+  }
+  return -1;
+}
 
 /**
  * Text without its task markers; the same string when it had none.
@@ -48,18 +63,15 @@ export function stripTaskMarkers(text: string, streaming = false): string {
   const kept: string[] = [];
   lines.forEach((line, at) => {
     const cuts = MARKERS.map((marker) => line.indexOf(marker)).filter((index) => index >= 0);
-    const body = line.replace(LINE_LEAD, '');
-    const partial =
-      streaming &&
-      at === last &&
-      body.length > 0 &&
-      MARKERS.some((marker) => marker.startsWith(body));
-    if (cuts.length === 0 && !partial) {
+    const cut =
+      cuts.length > 0 ? Math.min(...cuts) : streaming && at === last ? partialTail(line) : -1;
+    if (cut < 0) {
       kept.push(line);
       return;
     }
     changed = true;
-    const before = cuts.length > 0 ? line.slice(0, Math.min(...cuts)).trimEnd() : '';
+    // The quote or code tick that opened the marker goes with it.
+    const before = line.slice(0, cut).replace(MARKER_OPENER, '');
     if (before.replace(LINE_LEAD, '')) kept.push(before);
   });
   return changed ? kept.join('\n').trimEnd() : text;
