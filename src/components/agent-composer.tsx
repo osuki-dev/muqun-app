@@ -1057,7 +1057,9 @@ export const AgentComposer = memo(function AgentComposer({
   );
   // The compact dock's second line holds the two choices that define a new
   // turn and nothing else; Home has no running turn, queue or diff to show.
-  const segmentChoices = new Set([...chipIds].filter((id) => id === 'mode' || id === 'model'));
+  const [segmentMode, segmentModel] = (['mode', 'model'] as const).map(
+    (id) => compact && chipIds.has(id)
+  );
   const [focused, setFocused] = useState(false);
   const keyboardOpen = keyboardHeight > 0;
   useEffect(() => {
@@ -1377,7 +1379,7 @@ export const AgentComposer = memo(function AgentComposer({
           */}
             {compact ? (
               <View style={[styles.segmentRow, { marginBottom: theme.spacing.xs }]}>
-                {segmentChoices.has('mode') ? (
+                {segmentMode ? (
                   <TextSegment
                     testID="agent-composer-mode-btn"
                     hitSlop={SEGMENT_HIT_SLOP.next}
@@ -1393,7 +1395,7 @@ export const AgentComposer = memo(function AgentComposer({
                     <ChevronDown size={12} color={theme.colors.textMuted} />
                   </TextSegment>
                 ) : null}
-                {segmentChoices.has('model') ? (
+                {segmentModel ? (
                   <TextSegment
                     testID="agent-composer-model-btn"
                     hitSlop={SEGMENT_HIT_SLOP.next}
@@ -1401,7 +1403,7 @@ export const AgentComposer = memo(function AgentComposer({
                     accessibilityRole="button"
                     accessibilityLabel={t`Select model: ${modelDisplayName}`}>
                     <Text variant="bodySmall" numberOfLines={1} color={theme.colors.text}>
-                      {segmentChoices.has('mode') ? `· ${modelDisplayName}` : modelDisplayName}
+                      {segmentMode ? `· ${modelDisplayName}` : modelDisplayName}
                     </Text>
                     <ChevronDown size={12} color={theme.colors.textMuted} />
                   </TextSegment>

@@ -26,6 +26,7 @@ describe('dockScrollStep', () => {
     ['past the threshold it follows the finger', {}, { travel: HIDE_THRESHOLD + 20 }, 'follow', 30],
     ['and stops at its own height', { delta: 500 }, { travel: 100 }, 'follow', 120],
     ['a fling after release does not drag it', { dragging: false }, { travel: 100 }, 'hold', null],
+    ['and does not count towards the next drag', { dragging: false }, { travel: 0 }, 'hold', 0],
     ['any upward step shows it', { delta: -2 }, { travel: 100, offset: 120 }, 'show', null],
     ['a resting finger’s jitter does not', { delta: -0.4 }, { travel: 100 }, 'hold', null],
     ['the top of the list shows it', { y: 2 }, { travel: 100, offset: 120 }, 'show', null],
@@ -34,6 +35,7 @@ describe('dockScrollStep', () => {
   ])('%s', (_, event, from, kind, offset) => {
     const step = dockScrollStep({ ...mid, ...event }, { ...state, ...from });
     expect(step.kind).toBe(kind);
-    if (offset !== null) expect(step.kind === 'follow' && step.offset).toBe(offset);
+    if (offset === null) return;
+    expect(step.kind === 'follow' ? step.offset : step.travel).toBe(offset);
   });
 });

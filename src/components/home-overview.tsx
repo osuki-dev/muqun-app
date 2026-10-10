@@ -28,7 +28,15 @@ import {
   Settings,
   SquareTerminal,
 } from 'lucide-react-native';
-import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useEffectEvent,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import {
   AppState,
   useWindowDimensions,
@@ -367,7 +375,22 @@ export function HomeOverview({
     onScroll(event) {
       padDockHide.scroll(event);
     },
+    onBeginDrag() {
+      padDockHide.beginDrag();
+    },
+    onEndDrag() {
+      padDockHide.endDrag();
+    },
   });
+  // Back on Home, the dock is there: a scroll that hid it belonged to the
+  // visit that ended.
+  const resetDocks = useEffectEvent(() => {
+    pageDockHide.reset();
+    padDockHide.reset();
+  });
+  useEffect(() => {
+    if (isFocused) resetDocks();
+  }, [isFocused]);
   const rememberScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
     savedScrollY.current = event.nativeEvent.contentOffset.y;
   };
@@ -917,7 +940,13 @@ export function HomeOverview({
           // keyboard: a field in the page is kept clear of it, not just of the
           // keyboard.
           bottomOffset={dock && !padLaunch ? dockHeight : undefined}
-          onContentSizeChange={restoreScroll}
+          onContentSizeChange={(_, contentHeight) => {
+            restoreScroll();
+            pageDockHide.settle({ contentHeight });
+          }}
+          onLayout={(event) =>
+            pageDockHide.settle({ viewportHeight: event.nativeEvent.layout.height })
+          }
           onScrollBeginDrag={() => {
             sortHoldScroll.onScrollBeginDrag();
             pageDockHide.beginDrag();
@@ -1045,15 +1074,10 @@ export function HomeOverview({
               padComposerHeight={dockHeight}
               workScrollEvents={{
                 ...sortHoldScroll,
-                onScrollBeginDrag: () => {
-                  sortHoldScroll.onScrollBeginDrag();
-                  padDockHide.beginDrag();
-                },
-                onScrollEndDrag: () => {
-                  sortHoldScroll.onScrollEndDrag();
-                  padDockHide.endDrag();
-                },
                 onScroll: padWorkScroll,
+                onContentSizeChange: (_, contentHeight) => padDockHide.settle({ contentHeight }),
+                onLayout: (event) =>
+                  padDockHide.settle({ viewportHeight: event.nativeEvent.layout.height }),
               }}
               entering={entering}
               launches={

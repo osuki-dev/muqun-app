@@ -93,8 +93,10 @@ export type HomeEditorialLayoutProps = {
     onScrollEndDrag?: () => void;
     onMomentumScrollBegin?: () => void;
     onMomentumScrollEnd?: () => void;
-    /** An animated scroll handler (the dock's hide-on-scroll). */
+    /** An animated scroll handler and the sizes the dock's hide-on-scroll reads. */
     onScroll?: ScrollViewProps['onScroll'];
+    onContentSizeChange?: ScrollViewProps['onContentSizeChange'];
+    onLayout?: ScrollViewProps['onLayout'];
   };
   /**
    * Home's first mount: the sections rise in on the entry stagger. False on
