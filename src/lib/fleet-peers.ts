@@ -670,11 +670,13 @@ export type LinkNames = { row?: string; login?: string };
 
 /**
  * The names a row or login of `gone` on one computer may be matched by when
- * it carries no server id: the name this device recorded for that link there,
- * with the label it holds for `gone`. Nothing recorded: nothing to match by.
+ * it carries no server id: the one name this device recorded for that link
+ * there, and nothing else -- not even this device's own label for `gone`,
+ * which a namesake whose twin already left could still carry. Nothing
+ * recorded: nothing to match by.
  */
-export function recordedNames(recorded: string | undefined, label: string): string[] {
-  return recorded ? [recorded, label] : [];
+export function recordedNames(recorded: string | undefined): string[] {
+  return recorded ? [recorded] : [];
 }
 
 /** The two things an unpair takes off another computer: its peer rows, and its login. */
