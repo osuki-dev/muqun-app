@@ -46,6 +46,11 @@ describe('classifyAgentRequestError', () => {
   test('a request that got no answer is offline', () => {
     expect(isAgentOfflineError(new TypeError('Network request failed'))).toBe(true);
     expect(isAgentOfflineError(new Error('Timed out waiting for the server.'))).toBe(true);
+    expect(
+      isAgentOfflineError(
+        new Error('java.lang.RuntimeException: Cronet failed: net::ERR_ADDRESS_UNREACHABLE')
+      )
+    ).toBe(true);
   });
 
   test('the refusal is bounded and flattened', () => {
