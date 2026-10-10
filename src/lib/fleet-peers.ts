@@ -37,6 +37,12 @@ export interface PeerView {
 export interface FleetPeers {
   acceptDelegations: boolean;
   peers: PeerView[];
+  /**
+   * Rows with no `server_id` (linked before gateways sent one): not peers
+   * the app can name or plan with, but rows an unpair must still take off,
+   * matched by name ({@link fleetNameMatches}).
+   */
+  unidentified?: { peerId: string; name: string }[];
 }
 
 function parsePeer(value: unknown): PeerView | null {
@@ -60,10 +66,34 @@ function parsePeer(value: unknown): PeerView | null {
 export function parseFleetPeers(value: unknown): FleetPeers | null {
   const rec = asRecord(value);
   if (!rec || !Array.isArray(rec.peers)) return null;
+  const unidentified = rec.peers.flatMap((entry) => {
+    const row = asRecord(entry);
+    const peerId = asString(row?.peer_id);
+    return peerId && !asString(row?.server_id) ? [{ peerId, name: asString(row?.name) ?? '' }] : [];
+  });
   return {
     acceptDelegations: rec.accept_delegations !== false,
     peers: rec.peers.map(parsePeer).filter((peer): peer is PeerView => peer !== null),
+    ...(unidentified.length ? { unidentified } : {}),
   };
+}
+
+/** Two computer names that are the same name, as people type them. */
+export function sameFleetName(a: string, b: string): boolean {
+  return a.trim().toLocaleLowerCase() === b.trim().toLocaleLowerCase();
+}
+
+/**
+ * Whether a row or login is `serverId`'s: by its server id where it carries
+ * one, else (an older gateway's) by the names that computer goes by.
+ */
+export function fleetNameMatches(
+  entry: { serverId?: string | null; name: string },
+  serverId: string,
+  names: readonly string[]
+): boolean {
+  if (entry.serverId) return entry.serverId === serverId;
+  return entry.name.trim() !== '' && names.some((name) => sameFleetName(name, entry.name));
 }
 
 export type FleetEndpoint = TaskEndpoint;
@@ -352,8 +382,11 @@ export function peerServerIdOf(
   return binding.peerId;
 }
 
-/** A paired device that is another computer, with the server id it gave (newer gateways). */
-export type PairedGateway = { deviceId: string; serverId: string };
+/**
+ * A paired device that is another computer: the server id it gave (newer
+ * gateways; `null` where the list does not say) and the name it paired as.
+ */
+export type PairedGateway = { deviceId: string; serverId: string | null; name: string };
 
 /** A gateway that lists and revokes its paired devices (`GET`/`DELETE /api/pairings`). */
 export const DEVICE_REVOCATION_CAPABILITY = 'device_revocation';
@@ -374,8 +407,10 @@ export async function fetchPairedGateways(
     return devices.flatMap((entry): PairedGateway[] => {
       const rec = asRecord(entry);
       const deviceId = asString(rec?.id);
-      const serverId = asString(rec?.server_id);
-      return rec?.kind === 'gateway' && deviceId && serverId ? [{ deviceId, serverId }] : [];
+      if (rec?.kind !== 'gateway' || !deviceId) return [];
+      return [
+        { deviceId, serverId: asString(rec.server_id) ?? null, name: asString(rec.name) ?? '' },
+      ];
     });
   } catch {
     return null;
@@ -600,7 +635,65 @@ export type UnpairRecord = {
   pending: string[];
   /** Other computers it still lists: its own rows could not be removed before its token went. */
   stillListedBy: string[];
+  /** Per pending computer: which steps are confirmed there, and how the rest went. */
+  progress?: Record<string, UnpairProgress>;
 };
+
+/** The two things an unpair takes off another computer: its peer rows, and its login. */
+export type UnpairStep = 'rows' | 'logins';
+export const UNPAIR_STEPS: readonly UnpairStep[] = ['rows', 'logins'];
+/** Passes in a row a step may fail before it waits for the computer to change. */
+export const UNPAIR_STEP_ATTEMPTS = 5;
+
+export type UnpairProgress = {
+  /** Confirmed steps: never run again. */
+  done: UnpairStep[];
+  /** Passes in a row that left a step undone. */
+  failures: number;
+  /**
+   * Set after {@link UNPAIR_STEP_ATTEMPTS} failures: the `pairedAt` of the
+   * record it kept failing with. Nothing more is tried until that computer is
+   * paired again or is seen down (`unpairSeenDown`), so this device does not
+   * delete, pass after pass, what another device keeps re-creating.
+   */
+  parkedOn?: number;
+};
+
+/** What a follow-up runs on one computer now; nothing while parked on this pairing. */
+export function unpairStepsDue(
+  progress: UnpairProgress | undefined,
+  pairedAt: number
+): UnpairStep[] {
+  if (progress?.parkedOn !== undefined && progress.parkedOn === pairedAt) return [];
+  return UNPAIR_STEPS.filter((step) => !progress?.done.includes(step));
+}
+
+/** The progress after one pass on a computer confirmed `passDone`. */
+export function unpairProgressAfter(
+  progress: UnpairProgress | undefined,
+  passDone: readonly UnpairStep[],
+  pairedAt: number
+): UnpairProgress {
+  const done = UNPAIR_STEPS.filter(
+    (step) => progress?.done.includes(step) || passDone.includes(step)
+  );
+  if (done.length === UNPAIR_STEPS.length) return { done, failures: 0 };
+  // A parked computer that runs again changed state: its count starts over.
+  const failures = (progress?.parkedOn !== undefined ? 0 : (progress?.failures ?? 0)) + 1;
+  return failures >= UNPAIR_STEP_ATTEMPTS
+    ? { done, failures, parkedOn: pairedAt }
+    : { done, failures };
+}
+
+/** The computer did not answer: when it does again, a parked step is tried again. */
+export function unpairSeenDown(progress: UnpairProgress | undefined): UnpairProgress | undefined {
+  if (progress?.parkedOn === undefined) return progress;
+  return { done: progress.done, failures: 0 };
+}
+
+export function unpairComplete(progress: UnpairProgress | undefined): boolean {
+  return UNPAIR_STEPS.every((step) => progress?.done.includes(step));
+}
 
 /** How long an unfinished unpairing is followed up. */
 export const UNPAIR_FOLLOW_UP_MS = 30 * 24 * 60 * 60_000;

@@ -11,6 +11,7 @@ import {
   fetchPairedGateways,
   fetchSelfLabel,
   FLEET_PEERS_CAPABILITY,
+  fleetNameMatches,
   hasFleetPeers,
   linkPeer,
   mintPairingCode,
@@ -20,9 +21,17 @@ import {
   planFleetLinks,
   planPeerMoves,
   revokePairing,
+  sameFleetName,
+  UNPAIR_STEPS,
   unlinkPeer,
+  unpairComplete,
+  unpairProgressAfter,
+  unpairSeenDown,
+  unpairStepsDue,
   type FleetComputer,
   type NameConflict,
+  type UnpairProgress,
+  type UnpairStep,
 } from '@/lib/fleet-peers';
 import type { GatewayRecord } from '@/lib/gateway-storage';
 import { useFleetPeers } from '@/stores/fleet-peers';
@@ -259,9 +268,7 @@ async function runOnce(reason: Reason): Promise<void> {
   }
 }
 
-function sameName(a: string, b: string): boolean {
-  return a.trim().toLocaleLowerCase() === b.trim().toLocaleLowerCase();
-}
+const sameName = sameFleetName;
 
 /**
  * Mint a code on `to`, hand it to `from`. A code `from` did not claim is
@@ -342,43 +349,69 @@ async function stillColliding(
 }
 
 /**
- * Take `goneId` off one computer through its own credentials: its peer rows
- * there (the gateway also asks it to revoke this computer's token), and its
- * gateway login there (newer gateways). `false` when the computer did not
- * answer or a step failed, for the follow-up.
+ * Take `goneId` off one computer through its own credentials, running only
+ * `steps`: its peer rows there (the gateway also asks it to revoke this
+ * computer's token), and its gateway login there. Rows and logins are matched
+ * by server id, or, from an older gateway that does not send one, by the
+ * names `goneId` goes by. Answers the steps confirmed done; a step that did
+ * not answer or failed is not among them.
  */
-async function unlinkOn(record: GatewayRecord, goneId: string): Promise<boolean> {
+async function unlinkOn(
+  record: GatewayRecord,
+  goneId: string,
+  goneNames: readonly string[],
+  steps: readonly UnpairStep[]
+): Promise<UnpairStep[]> {
   const endpoint = recordEndpoint(record);
-  const answer = await fetchFleetPeers(endpoint);
-  if (!answer.ok) return false;
-  let ok = true;
-  const removed = new Set<string>();
-  for (const peer of answer.peers.peers.filter((entry) => entry.serverId === goneId)) {
-    const done = await unlinkPeer(endpoint, peer.peerId).then(
-      () => true,
-      () => false
-    );
-    if (done) removed.add(peer.peerId);
-    else ok = false;
+  const confirmed: UnpairStep[] = [];
+  const names = [...goneNames];
+  if (steps.includes('rows')) {
+    const answer = await fetchFleetPeers(endpoint);
+    if (answer.ok) {
+      const rows = [
+        ...answer.peers.peers.filter((peer) => peer.serverId === goneId),
+        ...(answer.peers.unidentified ?? []).filter((peer) =>
+          fleetNameMatches(peer, goneId, goneNames)
+        ),
+      ];
+      names.push(...rows.map((row) => row.name));
+      let ok = true;
+      const removed = new Set<string>();
+      for (const row of rows) {
+        const done = await unlinkPeer(endpoint, row.peerId).then(
+          () => true,
+          () => false
+        );
+        if (done) removed.add(row.peerId);
+        else ok = false;
+      }
+      useFleetPeers.getState().setPeers(record.serverId, {
+        ...answer.peers,
+        peers: answer.peers.peers.filter((peer) => !removed.has(peer.peerId)),
+      });
+      if (ok) confirmed.push('rows');
+    }
   }
-  useFleetPeers.getState().setPeers(record.serverId, {
-    ...answer.peers,
-    peers: answer.peers.peers.filter((peer) => !removed.has(peer.peerId)),
-  });
-  const listed = await fetchPairedGateways(endpoint);
-  const logins = pairingsAnswer(
-    listed,
-    listed === 'no-route' ? await fetchCapabilities(endpoint) : null
-  );
-  if (logins === null) return false;
-  for (const login of logins.filter((entry) => entry.serverId === goneId)) {
-    const revoked = await revokePairing(endpoint, login.deviceId).then(
-      () => true,
-      () => false
+  if (steps.includes('logins')) {
+    const listed = await fetchPairedGateways(endpoint);
+    const logins = pairingsAnswer(
+      listed,
+      listed === 'no-route' ? await fetchCapabilities(endpoint) : null
     );
-    if (!revoked) ok = false;
+    // No answer is a step not done, never "no logins".
+    if (logins !== null) {
+      let ok = true;
+      for (const login of logins.filter((entry) => fleetNameMatches(entry, goneId, names))) {
+        const revoked = await revokePairing(endpoint, login.deviceId).then(
+          () => true,
+          () => false
+        );
+        if (!revoked) ok = false;
+      }
+      if (ok) confirmed.push('logins');
+    }
   }
-  return ok;
+  return confirmed;
 }
 
 /**
@@ -387,32 +420,64 @@ async function unlinkOn(record: GatewayRecord, goneId: string): Promise<boolean>
  *
  * 1. on every other computer this device holds, its rows and login there;
  * 2. on `leaving` itself, its rows for those computers (so it stops listing
- *    them), with its own token, before that token is dropped.
+ *    them) and their logins there, with its own token, before that token is
+ *    dropped.
  *
  * What could not be done is kept (`useFleetUnpairs`): a computer that was
- * down or refused is cleaned once when it next answers; one `leaving` still
- * lists is said on that computer's Settings line, since this device can no
- * longer reach `leaving` once it is unpaired. This is this device finishing
- * its own unpair, never a set-difference unlink, so another device that keeps
- * the computer paired is never fought.
+ * down or refused is cleaned when it next answers, only the steps still
+ * undone; one `leaving` still lists, or may still hold a login of, is said on
+ * that computer's Settings line, since this device can no longer reach
+ * `leaving` once it is unpaired. This is this device finishing its own unpair,
+ * never a set-difference unlink, so another device that keeps the computer
+ * paired is never fought.
  */
 export async function unlinkBeforeUnpair(leaving: GatewayRecord): Promise<void> {
   // After any run in flight, so it cannot link the computer back meanwhile.
   await running?.catch(() => undefined);
+  // Read before deciding who is pending: an unhydrated store would say nobody is.
+  await useServerCapabilities.getState().hydrate();
   const capabilities = useServerCapabilities.getState().byServer;
   const others = linkable().filter(
     (record) => record.serverId !== leaving.serverId && hasFleetPeers(capabilities[record.serverId])
   );
+  const leavingNames = [leaving.label];
   const pending: string[] = [];
+  const progress: Record<string, UnpairProgress> = {};
   for (const record of others) {
-    const done = !knownDown(record.serverId) && (await unlinkOn(record, leaving.serverId));
-    if (!done) pending.push(record.serverId);
+    if (knownDown(record.serverId)) {
+      pending.push(record.serverId);
+      continue;
+    }
+    const done = await unlinkOn(record, leaving.serverId, leavingNames, UNPAIR_STEPS).catch(
+      (): UnpairStep[] => []
+    );
+    const after = unpairProgressAfter(undefined, done, record.pairedAt);
+    if (unpairComplete(after)) continue;
+    pending.push(record.serverId);
+    progress[record.serverId] = after;
   }
   const otherIds = new Set(others.map((record) => record.serverId));
   let stillListedBy: string[] = [];
   if (hasFleetPeers(capabilities[leaving.serverId])) {
     const endpoint = recordEndpoint(leaving);
     const answer = knownDown(leaving.serverId) ? null : await fetchFleetPeers(endpoint);
+    // The others it was linked with, as far as anyone here knows: its rows,
+    // and theirs naming it.
+    const linkedWith = new Set([
+      ...(answer?.ok
+        ? answer.peers.peers
+        : (useFleetPeers.getState().byServer[leaving.serverId]?.peers ?? [])
+      )
+        .filter((peer) => otherIds.has(peer.serverId))
+        .map((peer) => peer.serverId),
+      ...others
+        .filter((record) =>
+          useFleetPeers
+            .getState()
+            .byServer[record.serverId]?.peers.some((peer) => peer.serverId === leaving.serverId)
+        )
+        .map((record) => record.serverId),
+    ]);
     if (answer?.ok) {
       for (const peer of answer.peers.peers.filter((entry) => otherIds.has(entry.serverId))) {
         const done = await unlinkPeer(endpoint, peer.peerId).then(
@@ -428,20 +493,31 @@ export async function unlinkBeforeUnpair(leaving: GatewayRecord): Promise<void> 
         listed,
         listed === 'no-route' ? await fetchCapabilities(endpoint) : null
       );
-      for (const login of (logins ?? []).filter((entry) => otherIds.has(entry.serverId))) {
-        const revoked = await revokePairing(endpoint, login.deviceId).then(
-          () => true,
-          () => false
-        );
-        if (!revoked) stillListedBy.push(login.serverId);
+      if (logins === null) {
+        // Not read: whoever it was linked with may still be logged in there.
+        stillListedBy.push(...linkedWith);
+      } else {
+        for (const record of others) {
+          const names = [
+            record.label,
+            ...answer.peers.peers
+              .filter((peer) => peer.serverId === record.serverId)
+              .map((peer) => peer.name),
+          ];
+          for (const login of logins.filter((entry) =>
+            fleetNameMatches(entry, record.serverId, names)
+          )) {
+            const revoked = await revokePairing(endpoint, login.deviceId).then(
+              () => true,
+              () => false
+            );
+            if (!revoked) stillListedBy.push(record.serverId);
+          }
+        }
       }
     } else {
       // Not answering: what it listed when it last did is what it may still list.
-      stillListedBy =
-        useFleetPeers
-          .getState()
-          .byServer[leaving.serverId]?.peers.filter((peer) => otherIds.has(peer.serverId))
-          .map((peer) => peer.serverId) ?? [];
+      stillListedBy = [...linkedWith];
     }
   }
   if (pending.length > 0 || stillListedBy.length > 0) {
@@ -451,16 +527,18 @@ export async function unlinkBeforeUnpair(leaving: GatewayRecord): Promise<void> 
       atMs: Date.now(),
       pending,
       stillListedBy: [...new Set(stillListedBy)],
+      ...(Object.keys(progress).length ? { progress } : {}),
     });
   }
 }
 
 /**
- * The follow-up of this device's unfinished unpairings: each computer that was
- * down then and answered this pass is asked again, and dropped from the record
- * only on a confirmed outcome (`unlinkOn` true: every removal answered done,
- * `removalOutcome`). An error, a refusal, a timeout keeps it pending for the
- * next pass; the only other way out is the 30-day prune.
+ * The follow-up of this device's unfinished unpairings: each pending computer
+ * that answered this pass runs only the steps still undone there, and is
+ * dropped from the record only once every step is confirmed
+ * (`removalOutcome`). A step that keeps failing stops being tried after
+ * UNPAIR_STEP_ATTEMPTS passes, until that computer is seen down or is paired
+ * again; the other way out is the 30-day prune.
  */
 async function followUpUnpairs(computers: readonly FleetComputer[]): Promise<void> {
   const unpairs = useFleetUnpairs.getState();
@@ -470,13 +548,24 @@ async function followUpUnpairs(computers: readonly FleetComputer[]): Promise<voi
   );
   for (const entry of useFleetUnpairs.getState().entries) {
     for (const computerId of entry.pending) {
+      const progress = entry.progress?.[computerId];
       if (!computers.some((computer) => computer.serverId === computerId && computer.peers)) {
+        const unparked = unpairSeenDown(progress);
+        if (unparked !== progress) {
+          useFleetUnpairs.getState().setProgress(entry.serverId, computerId, unparked);
+        }
         continue;
       }
       const record = stillPaired(computerId);
       if (!record) continue;
-      const confirmed = await unlinkOn(record, entry.serverId).catch(() => false);
-      if (confirmed) useFleetUnpairs.getState().settle(entry.serverId, computerId);
+      const steps = unpairStepsDue(progress, record.pairedAt);
+      if (steps.length === 0) continue;
+      const done = await unlinkOn(record, entry.serverId, [entry.label], steps).catch(
+        (): UnpairStep[] => []
+      );
+      const after = unpairProgressAfter(progress, done, record.pairedAt);
+      if (unpairComplete(after)) useFleetUnpairs.getState().settle(entry.serverId, computerId);
+      else useFleetUnpairs.getState().setProgress(entry.serverId, computerId, after);
     }
   }
   useFleetUnpairs.getState().prune(
