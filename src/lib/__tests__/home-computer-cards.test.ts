@@ -173,6 +173,12 @@ describe('roll-up, result and title', () => {
       'Read the configuration file under the project root and summarise every option',
       'Read the configuration file under the project root and…',
     ],
+    [
+      undefined,
+      undefined,
+      'In /srv/work/checkouts/project-alpha/packages/mobile-app/agent-worktrees/feature run: bun test',
+      'In /srv/work/checkouts/project-alpha/packages/mobile-app/ag…',
+    ],
   ])('%p / %p / %p', (label, title, goal, shown) => {
     expect(
       taskRowTitle(

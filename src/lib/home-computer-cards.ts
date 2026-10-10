@@ -173,6 +173,9 @@ export function taskResultLine(
 /** How long a title derived from the goal may run, as the gateway clips it. */
 const TITLE_CHARS = 60;
 
+/** A word-boundary cut that would leave less than this cuts hard at {@link TITLE_CHARS} instead. */
+const MIN_WORD_CUT_CHARS = 30;
+
 /** Whitespace collapsed to single spaces; past `max` characters, cut with `…`. */
 function oneLine(text: string, max: number): string {
   const line = text.split(/\s+/).filter(Boolean).join(' ');
@@ -208,12 +211,15 @@ export function goalTitle(goal: string): string {
   const sentence = oneLine(text.slice(0, end), Infinity);
   const line = oneLine(sentence, TITLE_CHARS);
   if (!line.endsWith('…')) return line;
-  // Cut mid-word unless a space came next: back to the last whole word.
+  // Cut mid-word unless a space came next: back to the last whole word, when
+  // that still leaves a title -- a long path as the second word would leave
+  // "In…" -- else the hard cut stands.
   const cut = line.slice(0, -1);
   const space = cut.lastIndexOf(' ');
-  return sentence.slice(cut.length).startsWith(' ') || space <= 0
+  const words = cut.slice(0, Math.max(0, space));
+  return sentence.slice(cut.length).startsWith(' ') || [...words].length < MIN_WORD_CUT_CHARS
     ? line
-    : `${cut.slice(0, space)}…`;
+    : `${words}…`;
 }
 
 /**
