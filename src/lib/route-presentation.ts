@@ -229,7 +229,9 @@ export const sheetRouteDetents: Readonly<Record<string, SheetDetents>> = {
   // under them. A group longer than the expandable window stops there and
   // scrolls (`SheetScene`'s `fitsContent`).
   'settings-terminal': 'fitToContents',
-  'settings-appearance': 'fitToContents',
+  // Its rows are taller than the fitted cap: the tall sheet Computers uses,
+  // so it opens with every row showing instead of scrolling.
+  'settings-appearance': 'expandable',
   'settings-alerts': 'fitToContents',
   'settings-storage': 'fitToContents',
   'settings-about': 'fitToContents',
@@ -327,6 +329,7 @@ export type SheetContent = 'list' | 'short';
  * taller or shorter than it wants, never a row nobody can reach.
  */
 export const sheetRouteContent: Readonly<Record<string, SheetContent>> = {
+  'settings-appearance': 'list',
   'settings-servers': 'list',
   'settings-voice': 'list',
   // The quick actions: tiles, then a grouped list that grows with the machine.
@@ -387,7 +390,6 @@ export const sheetRouteContent: Readonly<Record<string, SheetContent>> = {
   'web-service': 'short',
   // The settings groups are content-sized, capped by `SheetScene`'s `fitsContent`.
   'settings-terminal': 'short',
-  'settings-appearance': 'short',
   'settings-alerts': 'short',
   'settings-storage': 'short',
   'settings-about': 'short',

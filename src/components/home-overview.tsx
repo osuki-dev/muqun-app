@@ -1686,7 +1686,12 @@ export function HomeOverview({
         {/* The work block. Under a pack's artwork it starts over the slot's
             bottom third, so the figure's lower edge fades under the first
             card instead of leaving a band of nothing above the heading. */}
-        <View style={artworkOverlap ? { marginTop: -artworkOverlap } : undefined}>
+        {/* The overlap is measured, so it lands a frame after the artwork:
+            the shared layout transition carries the block up rather than
+            letting it jump (instant under reduce-motion). */}
+        <Animated.View
+          layout={listLayout()}
+          style={artworkOverlap ? { marginTop: -artworkOverlap } : undefined}>
           {/* The dispatch surface every layout has (see `classicLayout`): Needs
               you, then the computers with work, then this layout's own server
               cards as its Recent. Below the spacer, so each label sits on what
@@ -1793,7 +1798,7 @@ export function HomeOverview({
               </View>
             </Animated.View>
           ) : null}
-        </View>
+        </Animated.View>
 
         {!loading ? <View style={[styles.spacerBelow, isPad && styles.padSpacer]} /> : null}
       </KeyboardAwareScrollView>

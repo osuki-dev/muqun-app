@@ -551,7 +551,7 @@ export type TaskRowLine =
   | { kind: 'error'; text: string }
   | { kind: 'state' };
 
-/** The glyph a row's state is drawn with (`TASK_GLYPHS`, icon slots `task.<state>`). */
+/** The glyph a row's state is drawn with (`TaskStateGlyph` in `icons/task-state-glyphs.tsx`; icon slots `task.<state>`). */
 export type TaskRowIcon =
   | 'sent'
   | 'starting'

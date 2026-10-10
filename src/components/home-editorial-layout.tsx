@@ -486,7 +486,7 @@ export function HomeEditorialLayout({
               showsVerticalScrollIndicator={false}
               keyboardShouldPersistTaps="handled"
               style={styles.padScroll}
-              contentContainerStyle={styles.padWorkContent}>
+              contentContainerStyle={styles.padCoverContent}>
               {wordmark ? (
                 <Animated.View
                   testID="home-pad-cover"
@@ -562,7 +562,7 @@ export function HomeEditorialLayout({
               {hasRecent ? (
                 <Animated.View
                   testID="home-pad-continue"
-                  entering={rise(1)}
+                  entering={rise(3)}
                   style={styles.padSection}>
                   {recentHeading ? (
                     <View style={styles.padWorkTitle}>{recentHeading}</View>
@@ -587,7 +587,7 @@ export function HomeEditorialLayout({
               showsVerticalScrollIndicator={false}
               keyboardShouldPersistTaps="handled"
               style={styles.padScroll}
-              contentContainerStyle={styles.padRecentContent}
+              contentContainerStyle={styles.padWorkContent}
               {...workScrollEvents}>
               {hasSlot(attention) ? (
                 // Mounted while empty (its arrival pulse); spaced only with a row.
@@ -1052,9 +1052,9 @@ const styles = StyleSheet.create({
   padColumns: { flex: 1, minHeight: 0, flexDirection: 'row', gap: PAD_COLUMN_GAP },
   padWorkColumn: { flex: 1, minWidth: 0 },
   padScroll: { flex: 1 },
-  padWorkContent: { paddingBottom: 24 },
+  padCoverContent: { paddingBottom: 24 },
   padSection: { marginTop: 16 },
-  padRecentContent: { paddingBottom: 24 },
+  padWorkContent: { paddingBottom: 24 },
   padWorkSections: { gap: 32 },
   // The phone editorial section's heading, without its rule: title, 12, card.
   padWorkTitle: { marginBottom: 12 },
