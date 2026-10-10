@@ -246,6 +246,7 @@ import {
   paneWindowWorthFiling,
   recallPaneWindow,
   rememberPaneWindow,
+  forgetPaneWindow,
   retainPanes,
   warmPaneWindow,
   type PaneCache,
@@ -486,6 +487,15 @@ const initialData: ServerData = {
 };
 
 const MAX_RECONNECT_DELAY_MS = 8_000;
+/** One pane's captured-history state, filed with its window (`PaneWindow.captured`). */
+type CapturedPaneState = {
+  generation: number;
+  cursor: CapturedCursor | null;
+  off: boolean;
+  exhausted: boolean;
+  open: boolean;
+};
+
 /** How often a pane with nothing captured yet asks again while its output grows. */
 const CAPTURED_REPROBE_MS = 30_000;
 /** At most one pane-list read per this long, however fast `layout_updated` comes. */
@@ -745,6 +755,7 @@ function usePaneWindowHandoff(
     earlierOutputRowsRef,
     rangeUnsupportedRef,
     lastReadRef,
+    capturedHereRef,
     setOutput,
     setCanLoadEarlierOutput,
     setPaneRevision,
@@ -761,6 +772,7 @@ function usePaneWindowHandoff(
     earlierOutputRowsRef: { readonly current: number };
     rangeUnsupportedRef: { readonly current: boolean };
     lastReadRef: { readonly current: unknown };
+    capturedHereRef: { readonly current: unknown };
     setOutput: (value: string) => void;
     setCanLoadEarlierOutput: (value: boolean) => void;
     setPaneRevision: (value: number) => void;
@@ -804,6 +816,7 @@ function usePaneWindowHandoff(
             earlierRows: earlierOutputRowsRef.current,
             rangeUnsupported: rangeUnsupportedRef.current,
             lastRead: lastReadRef.current,
+            captured: capturedHereRef.current,
           }
         : null;
     const remembered = held ? rememberPaneWindow(cache, leaving, held) : cache;
@@ -1380,30 +1393,30 @@ export function ServerTerminalWorkspace({
   // The probe already asked for this pane at this `capturedProbe`: a focus
   // return or an overview toggle does not ask again.
   const capturedProbedKeyRef = useRef('');
-  // What each pane's captured history came to on this connection -- its
-  // cursor, whether it is off, exhausted, on offer -- so going back to a pane
-  // picks up where it was rather than offering pages its window already holds.
-  const capturedPanesRef = useRef(
-    new Map<
-      string,
-      { cursor: CapturedCursor | null; off: boolean; exhausted: boolean; open: boolean }
-    >()
-  );
+  // What the open pane's captured history came to -- its cursor, whether it
+  // is off, exhausted, on offer -- filed with the pane's window when the pane
+  // is left and restored only with that window, so going back to a pane picks
+  // up where it was, and a cursor never comes back without the rows it was
+  // read against. `generation` drops what was filed before a reconnect.
+  const capturedHereRef = useRef<CapturedPaneState | null>(null);
+  const capturedGenerationRef = useRef(0);
   // The last probe found the capture empty: worth asking again as output grows.
   const capturedEmptyRef = useRef(false);
   const offerCaptured = (paneId: string | null | undefined, open: boolean) => {
     setCapturedOpen(open);
-    if (!paneId) return;
-    capturedPanesRef.current.set(paneId, {
+    if (!paneId || activePaneRef.current !== paneId) return;
+    capturedHereRef.current = {
+      generation: capturedGenerationRef.current,
       cursor: capturedCursorRef.current,
       off: capturedOffRef.current,
       exhausted: capturedExhaustedRef.current,
       open,
-    });
+    };
   };
   /** Forget every pane's captured state and ask the open pane again. */
   const restartCaptured = () => {
-    capturedPanesRef.current.clear();
+    capturedGenerationRef.current += 1;
+    capturedHereRef.current = null;
     capturedCursorRef.current = null;
     capturedOffRef.current = false;
     capturedExhaustedRef.current = false;
@@ -1965,6 +1978,9 @@ export function ServerTerminalWorkspace({
     markPaneGoneRef.current = (paneId) => {
       if (gonePanesRef.current.has(paneId)) return;
       gonePanesRef.current.set(paneId, snapshotGenerationRef.current);
+      // Its window, and the captured history filed with it, go with it.
+      paneCacheRef.current = forgetPaneWindow(paneCacheRef.current, paneId);
+      if (activePaneRef.current === paneId) restartCaptured();
       setGoneVersion((version) => version + 1);
       if (activePaneRef.current === paneId) {
         setError(t`This terminal is no longer available. Choose another terminal.`);
@@ -3126,6 +3142,7 @@ export function ServerTerminalWorkspace({
     earlierOutputRowsRef,
     rangeUnsupportedRef,
     lastReadRef,
+    capturedHereRef,
     setOutput,
     setCanLoadEarlierOutput,
     setPaneRevision,
@@ -3161,9 +3178,14 @@ export function ServerTerminalWorkspace({
     earlierOutputRowsRef.current = restored?.earlierRows ?? 0;
     lastReadRef.current = restored?.lastRead ?? null;
     rangeUnsupportedRef.current = restored?.rangeUnsupported ?? false;
-    // The pane's captured history as it was left, with the window restored
-    // beside it; a pane not seen yet on this connection is asked.
-    const captured = paneId ? capturedPanesRef.current.get(paneId) : undefined;
+    // The pane's captured history as it was left, only with the window it was
+    // filed with, and only from this connection; otherwise it is asked again.
+    const filed = restored?.output
+      ? (restored.captured as CapturedPaneState | undefined)
+      : undefined;
+    const captured =
+      filed && filed.generation === capturedGenerationRef.current ? filed : undefined;
+    capturedHereRef.current = captured ?? null;
     capturedCursorRef.current = captured?.cursor ?? null;
     capturedOffRef.current = captured?.off ?? false;
     capturedExhaustedRef.current = captured?.exhausted ?? false;
