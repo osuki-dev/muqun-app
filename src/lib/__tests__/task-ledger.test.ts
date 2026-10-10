@@ -1,13 +1,69 @@
 import { describe, expect, test } from 'bun:test';
 
 import {
+  canMarkTaskDone,
   isTerminalTaskState,
   ledgerTaskBody,
   parseCreatedLedgerTask,
   parseTaskList,
   parseTaskView,
   taskListPath,
+  type TaskState,
 } from '../task-ledger';
+
+describe('work on another computer', () => {
+  const base = { task_id: 't', kind: 'delegation', goal: 'g', updated_ms: 1 };
+  test('a mirror reads as bound to the computer that runs it, and the task there names who asked', () => {
+    expect(
+      parseTaskView({
+        ...base,
+        state: 'working',
+        origin: 'agent',
+        peer_reachable: false,
+        peer_last_seen_ms: 7,
+        binding: { kind: 'peer', peer_id: 'srv-mini', remote_task_id: 't_r', peer_name: 'mini' },
+      })
+    ).toMatchObject({
+      binding: { kind: 'peer', peerId: 'srv-mini', remoteTaskId: 't_r', peerName: 'mini' },
+      peerReachable: false,
+      peerLastSeenMs: 7,
+    });
+    const there = parseTaskView({
+      ...base,
+      state: 'working',
+      origin: 'peer',
+      requested_by: { kind: 'gateway', id: 'd9', name: 'coding' },
+    });
+    expect([there?.origin, there?.requestedBy]).toEqual([
+      'peer',
+      { id: 'd9', name: 'coding', kind: 'gateway' },
+    ]);
+    expect(
+      parseTaskView({ ...base, state: 'working', binding: { kind: 'peer', peer_id: 'srv-mini' } })
+        ?.binding
+    ).toEqual({ kind: 'none' });
+  });
+
+  const complete = ['task_ledger_complete'];
+  const mirror = (state: TaskState) =>
+    parseTaskView({
+      ...base,
+      state,
+      origin: 'agent',
+      binding: { kind: 'peer', peer_id: 'p', remote_task_id: 'r' },
+    })!;
+  const own = (state: TaskState) => parseTaskView({ ...base, state, origin: 'device' })!;
+  test.each([
+    ['a working mirror (its computer may have gone quiet)', mirror('working'), complete, true],
+    ['a waiting mirror', mirror('waiting'), complete, true],
+    ['a finished mirror', mirror('done'), complete, false],
+    ['a mirror on a gateway without the confirmation', mirror('working'), [], false],
+    ['an own working task still needs to pause first', own('working'), complete, false],
+    ['an own paused task', own('idle_unconfirmed'), complete, true],
+  ] as const)('Mark done: %s', (_name, task, capabilities, expected) => {
+    expect(canMarkTaskDone(task, capabilities)).toBe(expected);
+  });
+});
 
 describe('parseTaskView', () => {
   test('reads a pane-bound command with snake_case keys', () => {

@@ -350,6 +350,10 @@ msgstr "{total, plural, other {# 個子任務}}"
 msgid "{total, plural, one {# sub-task} other {# sub-tasks}} ({waiting, plural, one {# waiting} other {# waiting}})"
 msgstr "{total, plural, other {# 個子任務}}（{waiting, plural, other {# 個等待中}}）"
 
+#: src/components/task-row.tsx
+msgid "→ {name}"
+msgstr "→ {name}"
+
 #. placeholder {0}: card.nowTotal - card.now.length
 #: src/components/home-computer-cards.tsx
 msgid "+{0} more"
@@ -641,6 +645,10 @@ msgstr "還有 {rest} 個"
 #: src/components/settings-server-capabilities.tsx
 msgid "Android builds"
 msgstr "Android 建置"
+
+#: src/components/task-row.tsx
+msgid "another computer"
+msgstr "另一台電腦"
 
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Answer"
@@ -2670,6 +2678,10 @@ msgstr "摘要目前為止的對話，空出脈絡空間"
 msgid "Frequent"
 msgstr "常用"
 
+#: src/components/task-row.tsx
+msgid "from {requester}"
+msgstr "來自 {requester}"
+
 #: src/app/explore.tsx
 msgid "Front camera. Hold the QR up to the screen"
 msgstr "前鏡頭。將 QR code 朝向螢幕"
@@ -3973,6 +3985,10 @@ msgstr "開啟 {0}"
 #: src/components/new-task-action.tsx
 msgid "Open {agentName} Agent on {label}"
 msgstr "在 {label} 上開啟 {agentName} 代理程式"
+
+#: src/components/task-row.tsx
+msgid "Open {mirrorName} on this phone first"
+msgstr "請先在這支手機上開啟 {mirrorName}"
 
 #: src/components/new-task-action.tsx
 msgid "Open {name} Agent on {label}"
@@ -6576,6 +6592,14 @@ msgstr "正在解除配對 {label}"
 #: src/components/settings-servers.tsx
 msgid "Unpairing…"
 msgstr "正在解除配對…"
+
+#: src/components/task-row.tsx
+msgid "Unreachable"
+msgstr "無法連線"
+
+#: src/components/task-row.tsx
+msgid "Unreachable · last seen {ago}"
+msgstr "無法連線 · 上次連線 {ago}"
 
 #: src/components/diff-rows.tsx
 msgid "Unstaged"

@@ -443,13 +443,15 @@ export function buildComputerCards(input: {
  * What a task row opens: the thing the task runs in. A session-bound task
  * opens its agent session, a pane-bound one its pane -- a failed one too, so
  * the reader sees why (a pane that is gone leaves the computer's screen with
- * the error on the row). A task not bound yet opens its computer.
+ * the error on the row). A mirror opens the task on the computer that runs
+ * it. A task not bound yet opens its computer.
  */
 export function taskRowDestination(
   task: TaskView
 ):
   | { kind: 'session'; asid: string; agentId: string }
   | { kind: 'pane'; paneId: string; sessionId: string }
+  | { kind: 'peer'; serverId: string; remoteTaskId: string }
   | { kind: 'computer' } {
   const binding = task.binding;
   if (binding.kind === 'agent_session') {
@@ -457,6 +459,13 @@ export function taskRowDestination(
   }
   if (binding.kind === 'pane') {
     return { kind: 'pane', paneId: binding.paneId, sessionId: binding.sessionId };
+  }
+  if (binding.kind === 'peer') {
+    return {
+      kind: 'peer',
+      serverId: binding.peerServerId ?? binding.peerId,
+      remoteTaskId: binding.remoteTaskId,
+    };
   }
   return { kind: 'computer' };
 }
@@ -516,11 +525,27 @@ export type TaskOpeners = {
     agentId?: string
   ) => unknown;
   openServer: (serverId: string, paneId?: string, sessionId?: string) => unknown;
+  /** A task on `serverId` as this phone can see it; null when that computer is not paired here. */
+  resolveTask?: (serverId: string, taskId: string) => Promise<TaskView | null>;
+  /** The server id of the computer a mirror runs on, as this phone knows it. */
+  peerServerId?: (binding: { peerId: string; peerServerId?: string }) => string;
 };
 
-/** Open what a task runs in, on its own computer. */
+/**
+ * Open what a task runs in, on its own computer -- for a mirror, on the
+ * computer that runs it, and nothing at all when this phone cannot see it.
+ */
 export function openTaskWork(commands: TaskOpeners, serverId: string, task: TaskView): void {
   const destination = taskRowDestination(task);
+  if (destination.kind === 'peer') {
+    const resolve = commands.resolveTask;
+    if (!resolve || task.binding.kind !== 'peer') return;
+    const there = commands.peerServerId?.(task.binding) ?? destination.serverId;
+    void resolve(there, destination.remoteTaskId).then((remote) => {
+      if (remote && remote.binding.kind !== 'peer') openTaskWork(commands, there, remote);
+    });
+    return;
+  }
   if (destination.kind === 'session') {
     void commands.openAgent(serverId, destination.asid, undefined, undefined, destination.agentId);
   } else if (destination.kind === 'pane') {
@@ -549,7 +574,9 @@ export type TaskRowLine =
   | { kind: 'result'; text: string }
   | { kind: 'exit'; code: number }
   | { kind: 'error'; text: string }
-  | { kind: 'state' };
+  | { kind: 'state' }
+  /** An open mirror whose computer has gone quiet (§10.12). */
+  | { kind: 'unreachable'; lastSeenMs?: number };
 
 /** The glyph a row's state is drawn with (`TaskStateGlyph` in `icons/task-state-glyphs.tsx`; icon slots `task.<state>`). */
 export type TaskRowIcon =
@@ -589,6 +616,28 @@ export type TaskRowVisual = {
  * already took it off Home.
  */
 export function taskRowVisual(
+  task: TaskView | { state: 'sent' },
+  opts: { canComplete: boolean; acknowledged: boolean }
+): TaskRowVisual {
+  const visual = taskStateVisual(task, opts);
+  // An open mirror whose computer is quiet says so in place of its line; the
+  // state's icon, tone, clock and actions stand.
+  if (
+    task.state === 'sent' ||
+    task.binding.kind !== 'peer' ||
+    task.peerReachable !== false ||
+    isTerminalTaskState(task.state)
+  ) {
+    return visual;
+  }
+  const lastSeenMs = task.peerLastSeenMs;
+  return {
+    ...visual,
+    line: { kind: 'unreachable', ...(lastSeenMs !== undefined ? { lastSeenMs } : {}) },
+  };
+}
+
+function taskStateVisual(
   task: TaskView | { state: 'sent' },
   opts: { canComplete: boolean; acknowledged: boolean }
 ): TaskRowVisual {
@@ -636,7 +685,8 @@ export function taskRowVisual(
             ? { kind: 'progress', text: progress }
             : { kind: 'agent' },
         clock: 'elapsed',
-        actions: live,
+        // Only a mirror is confirmable while working (`canMarkTaskDone`).
+        actions: confirmable,
       };
     case 'waiting':
       return {

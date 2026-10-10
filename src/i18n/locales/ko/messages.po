@@ -350,6 +350,10 @@ msgstr "{total, plural, other {하위 작업 #개}}"
 msgid "{total, plural, one {# sub-task} other {# sub-tasks}} ({waiting, plural, one {# waiting} other {# waiting}})"
 msgstr "{total, plural, other {하위 작업 #개}} ({waiting, plural, other {#개 대기 중}})"
 
+#: src/components/task-row.tsx
+msgid "→ {name}"
+msgstr "→ {name}"
+
 #. placeholder {0}: card.nowTotal - card.now.length
 #: src/components/home-computer-cards.tsx
 msgid "+{0} more"
@@ -641,6 +645,10 @@ msgstr "외 {rest}개"
 #: src/components/settings-server-capabilities.tsx
 msgid "Android builds"
 msgstr "Android 빌드"
+
+#: src/components/task-row.tsx
+msgid "another computer"
+msgstr "다른 컴퓨터"
 
 #: src/components/ssh-host-key-dialog.tsx
 msgid "Answer"
@@ -2670,6 +2678,10 @@ msgstr "지금까지의 대화를 요약해 컨텍스트를 확보합니다"
 msgid "Frequent"
 msgstr "자주 사용"
 
+#: src/components/task-row.tsx
+msgid "from {requester}"
+msgstr "{requester}에서"
+
 #: src/app/explore.tsx
 msgid "Front camera. Hold the QR up to the screen"
 msgstr "전면 카메라입니다. QR 코드를 화면 쪽으로 들어 주세요"
@@ -3973,6 +3985,10 @@ msgstr "{0} 열기"
 #: src/components/new-task-action.tsx
 msgid "Open {agentName} Agent on {label}"
 msgstr "{label}에서 {agentName} 에이전트 열기"
+
+#: src/components/task-row.tsx
+msgid "Open {mirrorName} on this phone first"
+msgstr "먼저 이 휴대폰에서 {mirrorName}을(를) 여세요"
 
 #: src/components/new-task-action.tsx
 msgid "Open {name} Agent on {label}"
@@ -6576,6 +6592,14 @@ msgstr "{label} 페어링 해제 중"
 #: src/components/settings-servers.tsx
 msgid "Unpairing…"
 msgstr "해제하는 중…"
+
+#: src/components/task-row.tsx
+msgid "Unreachable"
+msgstr "연결할 수 없음"
+
+#: src/components/task-row.tsx
+msgid "Unreachable · last seen {ago}"
+msgstr "연결할 수 없음 · 마지막 확인 {ago}"
 
 #: src/components/diff-rows.tsx
 msgid "Unstaged"
