@@ -7050,7 +7050,6 @@ const styles = StyleSheet.create({
   keyRowToggle: {
     width: 40,
     height: KEY_ROW_HEIGHT,
-    borderRadius: 12,
     borderCurve: 'continuous',
     alignItems: 'center',
     justifyContent: 'center',
@@ -7058,7 +7057,6 @@ const styles = StyleSheet.create({
   padKeyRowEntry: {
     width: 34,
     height: 34,
-    borderRadius: 10,
   },
   terminalKeyGrid: {
     flex: 1,
@@ -7112,12 +7110,10 @@ const styles = StyleSheet.create({
     flexShrink: 0,
     overflow: 'hidden',
     paddingHorizontal: 12,
-    borderRadius: 11,
     borderCurve: 'continuous',
   },
   // The chip's rounded fill, drawn under its content so it can fade on its own.
   paneChipFill: {
-    borderRadius: 11,
     borderCurve: 'continuous',
   },
   // Sized to the glyph so the selected copy laid over the resting one lands on
@@ -7142,13 +7138,11 @@ const styles = StyleSheet.create({
     height: KEY_ROW_HEIGHT,
     minWidth: 40,
     paddingHorizontal: 12,
-    borderRadius: 12,
     borderCurve: 'continuous',
     alignItems: 'center',
     justifyContent: 'center',
   },
   terminalKeyFill: {
-    borderRadius: 12,
     borderCurve: 'continuous',
   },
   terminalKeyGlyph: {

@@ -27,6 +27,8 @@ import { Trans, useLingui } from '@lingui/react/macro';
 import { ChevronUp } from 'lucide-react-native';
 
 import { LogoLoader } from '@/components/logo-loader';
+import { useAppearanceProfile } from '@/components/appearance-profile-provider';
+import { appChrome } from '@/constants/appearance';
 import { Asset } from 'expo-asset';
 import * as Clipboard from 'expo-clipboard';
 import * as Linking from 'expo-linking';
@@ -559,6 +561,9 @@ export function SkiaTerminal({
 }) {
   const fontSize = terminalFontSize(textSize);
   const theme = useThemeTokens();
+  // The floating chrome's corners follow the profile, so the editorial one
+  // goes square with the rest of the app.
+  const profile = useAppearanceProfile();
   const appActive = useAppActive();
   // Whether anything patterned sits behind this canvas. `shell.background` is
   // the only slot that reaches behind a terminal; Home's own wallpaper never
@@ -3341,6 +3346,7 @@ export function SkiaTerminal({
           style={[
             styles.historyIndicator,
             {
+              borderRadius: profile.chrome.roundControl,
               top: historyIndicatorTopInset,
               backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
               borderColor: theme.colors.border,
@@ -3369,6 +3375,7 @@ export function SkiaTerminal({
           style={[
             styles.selectionBar,
             {
+              borderRadius: profile.chrome.noticeBanner,
               bottom: 14 + bottomInset,
               backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
               borderColor: theme.colors.border,
@@ -3420,6 +3427,7 @@ export function SkiaTerminal({
             style={[
               styles.latestButton,
               {
+                borderRadius: profile.chrome.roundControl,
                 backgroundColor: surfaceBackground(theme.colors.surfaceRaised),
                 borderColor: theme.colors.border,
               },
@@ -4145,11 +4153,10 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderWidth: StyleSheet.hairlineWidth,
-    borderRadius: 14,
     borderCurve: 'continuous',
     alignItems: 'center',
     justifyContent: 'center',
-    boxShadow: '0 4px 14px rgba(0, 0, 0, 0.16)',
+    boxShadow: appChrome.shadow.controlTray,
   },
   selectionBar: {
     position: 'absolute',
@@ -4159,11 +4166,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 24,
     borderCurve: 'continuous',
     borderWidth: StyleSheet.hairlineWidth,
     paddingHorizontal: 4,
-    boxShadow: '0 6px 18px rgba(0, 0, 0, 0.22)',
+    boxShadow: appChrome.shadow.selectionBar,
   },
   selectionAction: {
     flexShrink: 1,
@@ -4182,12 +4188,11 @@ const styles = StyleSheet.create({
   latestButton: {
     minHeight: 38,
     paddingHorizontal: 14,
-    borderRadius: 19,
     borderCurve: 'continuous',
     borderWidth: StyleSheet.hairlineWidth,
     alignItems: 'center',
     justifyContent: 'center',
-    boxShadow: '0 4px 14px rgba(0, 0, 0, 0.16)',
+    boxShadow: appChrome.shadow.controlTray,
   },
   /**
    * See `emptyText` for why the family is not stated here.
