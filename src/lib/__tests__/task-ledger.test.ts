@@ -38,10 +38,15 @@ describe('work on another computer', () => {
       'peer',
       { id: 'd9', name: 'coding', kind: 'gateway' },
     ]);
+    // A mirror whose task over there is not known yet (the create got no
+    // answer) is still a mirror.
     expect(
-      parseTaskView({ ...base, state: 'working', binding: { kind: 'peer', peer_id: 'srv-mini' } })
-        ?.binding
-    ).toEqual({ kind: 'none' });
+      parseTaskView({
+        ...base,
+        state: 'dispatching',
+        binding: { kind: 'peer', peer_id: 'srv-mini' },
+      })?.binding
+    ).toEqual({ kind: 'peer', peerId: 'srv-mini', remoteTaskId: '' });
   });
 
   const complete = ['task_ledger_complete'];

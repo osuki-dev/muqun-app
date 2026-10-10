@@ -7,6 +7,7 @@ import {
   failureKey,
   fetchCapabilities,
   fetchFleetPeers,
+  fetchPairedGateways,
   FLEET_PEERS_CAPABILITY,
   hasFleetPeers,
   LINK_RETRY_MS,
@@ -16,6 +17,8 @@ import {
   planRenames,
   planTombstoneUnlinks,
   renamePeer,
+  revokePairing,
+  settledTombstones,
   unlinkPeer,
   type FleetComputer,
 } from '@/lib/fleet-peers';
@@ -30,7 +33,12 @@ export const FLEET_LINK_EVERY_MS = 10 * 60_000;
 /** How often the schedule looks; the run itself waits out `FLEET_LINK_EVERY_MS`. */
 const SCHEDULE_TICK_MS = 60_000;
 
-type Reason = 'paired' | 'online' | 'settings' | 'unpaired' | 'schedule';
+/**
+ * `capabilities`: the set of computers advertising `fleet_peers` changed. A
+ * run writes that set itself when it reads a computer's list, so while one
+ * runs this trigger only joins it.
+ */
+type Reason = 'paired' | 'online' | 'capabilities' | 'settings' | 'unpaired' | 'schedule';
 
 /**
  * One run at a time. A trigger during a run joins it, and one the reader
@@ -48,7 +56,7 @@ let again = false;
  */
 export function reconcileFleet(opts: { reason: Reason }): Promise<void> {
   if (running) {
-    if (opts.reason !== 'schedule') again = true;
+    if (opts.reason !== 'schedule' && opts.reason !== 'capabilities') again = true;
     return running;
   }
   running = (async () => {
@@ -116,7 +124,7 @@ async function runOnce(reason: Reason): Promise<void> {
   );
   useFleetPeers.getState().keepOnly(records.map((record) => record.serverId));
 
-  await buryUnpaired(computers);
+  await buryUnpaired(records, computers);
 
   // One pending code per computer at a time: link the pairs one after another.
   // A code minted on B and not claimed holds B for its TTL, so after one step
@@ -170,14 +178,18 @@ async function runOnce(reason: Reason): Promise<void> {
 }
 
 /**
- * Take every unpaired computer off every computer that answered. A tombstone
- * goes once every linkable computer has answered and holds no row of it; a
- * computer that did not answer keeps it for the next run.
+ * Take every unpaired computer off every computer that answered: its peer
+ * rows there, and its login there (a gateway device that names its server
+ * id; newer gateways). A tombstone goes once every linkable computer has
+ * answered and none failed to let it go (`settledTombstones`).
  */
-async function buryUnpaired(computers: readonly FleetComputer[]): Promise<void> {
+async function buryUnpaired(
+  records: readonly GatewayRecord[],
+  computers: readonly FleetComputer[]
+): Promise<void> {
   const tombstones = useFleetPeers.getState().tombstones;
   if (tombstones.length === 0) return;
-  const left = new Set<string>();
+  const failed = new Set<string>();
   const removed = new Set<string>();
   for (const step of planTombstoneUnlinks(computers, tombstones)) {
     const from = stillPaired(step.from);
@@ -188,15 +200,28 @@ async function buryUnpaired(computers: readonly FleetComputer[]): Promise<void> 
         () => false
       ));
     if (done) removed.add(failureKey(step.from, step.peerId));
-    else left.add(step.serverId);
+    else failed.add(step.serverId);
+  }
+  const gone = new Set(tombstones);
+  for (const record of records) {
+    if (!stillPaired(record.serverId)) continue;
+    const endpoint = recordEndpoint(record);
+    const logins = await fetchPairedGateways(endpoint);
+    if (logins === null) {
+      for (const id of tombstones) failed.add(id);
+      continue;
+    }
+    for (const login of logins.filter((entry) => gone.has(entry.serverId))) {
+      const revoked = await revokePairing(endpoint, login.deviceId).then(
+        () => true,
+        () => false
+      );
+      if (!revoked) failed.add(login.serverId);
+    }
   }
   for (const computer of computers) {
     const answer = computer.peers;
-    // Silent: it may still hold any of them.
-    if (!answer) {
-      for (const id of tombstones) left.add(id);
-      continue;
-    }
+    if (!answer) continue;
     useFleetPeers.getState().setPeers(computer.serverId, {
       ...answer,
       peers: answer.peers.filter(
@@ -204,7 +229,7 @@ async function buryUnpaired(computers: readonly FleetComputer[]): Promise<void> 
       ),
     });
   }
-  useFleetPeers.getState().unbury(tombstones.filter((id) => !left.has(id)));
+  useFleetPeers.getState().unbury(settledTombstones(computers, tombstones, failed));
 }
 
 /**
@@ -251,7 +276,7 @@ export function useFleetLink(): void {
     if (liveIds) run('online');
   }, [liveIds]);
   useEffect(() => {
-    if (fleetIds) run('online');
+    if (fleetIds) run('capabilities');
   }, [fleetIds]);
   useEffect(() => {
     const timer = setInterval(() => run('schedule'), SCHEDULE_TICK_MS);

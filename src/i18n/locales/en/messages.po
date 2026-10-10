@@ -6220,6 +6220,7 @@ msgstr "This computer is no longer paired"
 msgid "This computer is not answering. Check the computer connection, then try again."
 msgstr "This computer is not answering. Check the computer connection, then try again"
 
+#: src/components/settings-fleet-peers.tsx
 #: src/lib/network-error.ts
 msgid "This computer no longer recognises this device. Pair it again to reconnect."
 msgstr "This computer no longer recognises this device. Pair it again to reconnect"

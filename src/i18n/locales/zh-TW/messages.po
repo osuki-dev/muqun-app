@@ -6220,6 +6220,7 @@ msgstr "這台電腦已經解除配對"
 msgid "This computer is not answering. Check the computer connection, then try again."
 msgstr "這台電腦沒有回應。請檢查與電腦的連線，然後重試"
 
+#: src/components/settings-fleet-peers.tsx
 #: src/lib/network-error.ts
 msgid "This computer no longer recognises this device. Pair it again to reconnect."
 msgstr "這台電腦已經不認得這台裝置了。請重新配對以恢復連線"

@@ -6220,6 +6220,7 @@ msgstr "คอมพิวเตอร์นี้ไม่ได้จับค
 msgid "This computer is not answering. Check the computer connection, then try again."
 msgstr "คอมพิวเตอร์เครื่องนี้ไม่ตอบสนอง ตรวจสอบการเชื่อมต่อกับคอมพิวเตอร์ แล้วลองอีกครั้ง"
 
+#: src/components/settings-fleet-peers.tsx
 #: src/lib/network-error.ts
 msgid "This computer no longer recognises this device. Pair it again to reconnect."
 msgstr "คอมพิวเตอร์นี้ไม่รู้จักอุปกรณ์นี้แล้ว จับคู่อีกครั้งเพื่อเชื่อมต่อใหม่"

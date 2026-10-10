@@ -533,7 +533,9 @@ export type TaskOpeners = {
 
 /**
  * Open what a task runs in, on its own computer -- for a mirror, on the
- * computer that runs it, and nothing at all when this phone cannot see it.
+ * computer that runs it. A mirror whose task there cannot be read (not
+ * known yet, or that computer is quiet) opens that computer, which says
+ * itself whether it can be reached; a tap never does nothing.
  */
 export function openTaskWork(commands: TaskOpeners, serverId: string, task: TaskView): void {
   const destination = taskRowDestination(task);
@@ -541,8 +543,13 @@ export function openTaskWork(commands: TaskOpeners, serverId: string, task: Task
     const resolve = commands.resolveTask;
     if (!resolve || task.binding.kind !== 'peer') return;
     const there = commands.peerServerId?.(task.binding) ?? destination.serverId;
+    if (!destination.remoteTaskId) {
+      void commands.openServer(there);
+      return;
+    }
     void resolve(there, destination.remoteTaskId).then((remote) => {
-      if (remote && remote.binding.kind !== 'peer') openTaskWork(commands, there, remote);
+      if (!remote) void commands.openServer(there);
+      else if (remote.binding.kind !== 'peer') openTaskWork(commands, there, remote);
     });
     return;
   }
@@ -671,7 +678,9 @@ function taskStateVisual(
         spins: false,
         line: { kind: 'starting' },
         clock: 'elapsed',
-        actions: live,
+        // Only a mirror is confirmable here: one whose create got no answer
+        // stays dispatching, and the reader is the one who can settle it.
+        actions: confirmable,
       };
     case 'working':
       return {

@@ -8,6 +8,7 @@ import Animated, { LayoutAnimationConfig } from 'react-native-reanimated';
 import { useTaskIndexFor } from '@/components/use-task-index';
 import { PressableScale } from '@/components/pressable-scale';
 import { RowMarkdown, TaskStateIcon, useTaskRowLine } from '@/components/task-row';
+import { useMinuteNow } from '@/hooks/use-minute-now';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { Text } from '@/components/text';
 import { ThemeIcon } from '@/components/theme-icon';
@@ -162,7 +163,9 @@ function WaitingTaskRow({
   // The same icon and line as the row on its computer's card (`taskRowVisual`),
   // with the computer named, since this list spans every computer.
   const visual = taskRowVisual(task, { canComplete: false, acknowledged: true });
-  const line = useTaskRowLine(discovery)(task, visual);
+  // The shared minute clock: a quiet mirror's line says when it was last seen.
+  const nowMs = useMinuteNow();
+  const line = useTaskRowLine(discovery)(task, visual, '', nowMs);
   const title = taskRowTitle(task) || line.text;
   const computer = homeContinueComputerLabel(servers, row.serverId);
   const meta = [computer, line.text].filter(Boolean).join(META_SEPARATOR);

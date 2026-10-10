@@ -242,6 +242,68 @@ export function peerServerIdOf(
   return binding.peerId;
 }
 
+/** A computer the phone unpaired, until every other computer has let it go. */
+export type Tombstone = { serverId: string; buriedAtMs: number };
+
+/** How long an unpaired computer is chased on the others, and how many are. */
+export const TOMBSTONE_MAX_AGE_MS = 30 * 24 * 60 * 60_000;
+export const MAX_TOMBSTONES = 32;
+
+/** The tombstones still worth chasing: none older than a month, the newest 32. */
+export function keptTombstones(entries: readonly Tombstone[], nowMs: number): Tombstone[] {
+  return entries
+    .filter((entry) => nowMs - entry.buriedAtMs < TOMBSTONE_MAX_AGE_MS)
+    .sort((a, b) => b.buriedAtMs - a.buriedAtMs)
+    .slice(0, MAX_TOMBSTONES);
+}
+
+/**
+ * The tombstones a run may let go: none unless every linkable computer
+ * answered (a silent one may still hold any), and of those, every one whose
+ * cleanup did not fail somewhere this run.
+ */
+export function settledTombstones(
+  computers: readonly FleetComputer[],
+  tombstones: readonly string[],
+  failed: ReadonlySet<string>
+): string[] {
+  if (computers.some((computer) => !computer.peers)) return [];
+  return tombstones.filter((serverId) => !failed.has(serverId));
+}
+
+/** A paired device that is another computer, with the server id it gave (newer gateways). */
+export type PairedGateway = { deviceId: string; serverId: string };
+
+/** `GET /api/pairings`: the other computers' logins here; `null` when it did not answer. */
+export async function fetchPairedGateways(
+  endpoint: FleetEndpoint
+): Promise<PairedGateway[] | null> {
+  try {
+    const response = await endpointRequest(endpoint, '/api/pairings', 'GET');
+    if (!response.ok) return null;
+    const devices = asRecord(await response.json())?.devices;
+    if (!Array.isArray(devices)) return null;
+    return devices.flatMap((entry): PairedGateway[] => {
+      const rec = asRecord(entry);
+      const deviceId = asString(rec?.id);
+      const serverId = asString(rec?.server_id);
+      return rec?.kind === 'gateway' && deviceId && serverId ? [{ deviceId, serverId }] : [];
+    });
+  } catch {
+    return null;
+  }
+}
+
+/** Revoke one paired device; one already gone is revoked. */
+export async function revokePairing(endpoint: FleetEndpoint, deviceId: string): Promise<void> {
+  const response = await endpointRequest(
+    endpoint,
+    `/api/pairings/${encodeURIComponent(deviceId)}`,
+    'DELETE'
+  );
+  if (response.status !== 404) await expectOk(response, 'Revoke pairing');
+}
+
 /**
  * Every peer row, on a computer that answered, of a computer the phone has
  * unpaired: each one is deleted there (§5.3, "disappears everywhere").

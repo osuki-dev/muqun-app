@@ -1,7 +1,14 @@
 import { createMMKV } from 'react-native-mmkv';
 import { create } from 'zustand';
 
-import { failureKey, refusesPhone, type FleetPeers, type FleetPeersFetch } from '@/lib/fleet-peers';
+import {
+  failureKey,
+  keptTombstones,
+  refusesPhone,
+  type Tombstone,
+  type FleetPeers,
+  type FleetPeersFetch,
+} from '@/lib/fleet-peers';
 
 type KeyValueStore = {
   getString: (key: string) => string | undefined;
@@ -27,22 +34,39 @@ function openStore(): KeyValueStore {
 
 const storage = openStore();
 
-function loadTombstones(): string[] {
+/** Entries as stored; a bare id (the first format) counts as unpaired now. */
+function loadTombstones(): Tombstone[] {
   try {
     const value: unknown = JSON.parse(storage.getString(TOMBSTONES_KEY) ?? '[]');
-    return Array.isArray(value) ? value.filter((id): id is string => typeof id === 'string') : [];
+    if (!Array.isArray(value)) return [];
+    const nowMs = Date.now();
+    const entries = value.flatMap((entry: unknown): Tombstone[] => {
+      if (typeof entry === 'string') return [{ serverId: entry, buriedAtMs: nowMs }];
+      const rec = entry as Partial<Tombstone> | null;
+      return typeof rec?.serverId === 'string' && typeof rec.buriedAtMs === 'number'
+        ? [{ serverId: rec.serverId, buriedAtMs: rec.buriedAtMs }]
+        : [];
+    });
+    return keptTombstones(entries, nowMs);
   } catch {
     return [];
   }
 }
 
-function saveTombstones(ids: readonly string[]): void {
+function saveTombstones(entries: readonly Tombstone[]): void {
   try {
-    storage.set(TOMBSTONES_KEY, JSON.stringify(ids));
+    storage.set(TOMBSTONES_KEY, JSON.stringify(entries));
   } catch {
     // Memory still drives this launch; the next run retries the cleanup anyway.
   }
 }
+
+function withTombstones(entries: Tombstone[]) {
+  saveTombstones(entries);
+  return { buried: entries, tombstones: entries.map((entry) => entry.serverId) };
+}
+
+const initialBuried = loadTombstones();
 
 /** How the last `GET /api/peers` to a computer went, without the answer itself. */
 export type FleetFetchStatus = 'ok' | 'network' | 'parse' | number;
@@ -66,6 +90,8 @@ type FleetPeersState = {
   lastRunMs: number;
   /** Server ids unpaired from this phone, not yet gone from every other computer. */
   tombstones: string[];
+  /** The same, with when each was unpaired (what is stored). */
+  buried: Tombstone[];
   setPeers: (serverId: string, peers: FleetPeers) => void;
   /** Record a read: its answer when there was one; a refusal of this phone forgets the last one. */
   record: (serverId: string, result: FleetPeersFetch) => void;
@@ -83,7 +109,8 @@ export const useFleetPeers = create<FleetPeersState>((set, get) => ({
   statusByServer: {},
   failures: {},
   lastRunMs: 0,
-  tombstones: loadTombstones(),
+  buried: initialBuried,
+  tombstones: initialBuried.map((entry) => entry.serverId),
   setPeers: (serverId, peers) =>
     set((state) => ({ byServer: { ...state.byServer, [serverId]: peers } })),
   record: (serverId, result) => {
@@ -127,15 +154,13 @@ export const useFleetPeers = create<FleetPeersState>((set, get) => ({
     }),
   bury: (serverId) => {
     if (get().tombstones.includes(serverId)) return;
-    const tombstones = [...get().tombstones, serverId];
-    saveTombstones(tombstones);
-    set({ tombstones });
+    const nowMs = Date.now();
+    set(withTombstones(keptTombstones([...get().buried, { serverId, buriedAtMs: nowMs }], nowMs)));
   },
   unbury: (serverIds) => {
     const drop = new Set(serverIds);
-    const tombstones = get().tombstones.filter((id) => !drop.has(id));
-    if (tombstones.length === get().tombstones.length) return;
-    saveTombstones(tombstones);
-    set({ tombstones });
+    const buried = get().buried.filter((entry) => !drop.has(entry.serverId));
+    if (buried.length === get().buried.length) return;
+    set(withTombstones(buried));
   },
 }));
