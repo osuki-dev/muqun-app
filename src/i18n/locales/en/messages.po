@@ -1958,6 +1958,10 @@ msgstr "Could not read the changes"
 msgid "Could not read the terminal."
 msgstr "Could not read the terminal"
 
+#: src/components/home-composer-dock.tsx
+msgid "Could not read this computer's model list, so nothing was sent. Pick a model or try again."
+msgstr "Could not read this computer's model list, so nothing was sent. Pick a model or try again"
+
 #: src/components/changes-sheet.tsx
 msgid "Could not read this file."
 msgstr "Could not read this file"
@@ -6830,6 +6834,10 @@ msgstr "Waiting for output…"
 #: src/lib/network-error.ts
 msgid "Waiting for the network."
 msgstr "Waiting for the network"
+
+#: src/components/home-composer-dock.tsx
+msgid "Waiting for this computer's model list. Send again in a moment."
+msgstr "Waiting for this computer's model list. Send again in a moment"
 
 #: src/components/agent-composer.tsx
 #: src/components/server-terminal-workspace.tsx

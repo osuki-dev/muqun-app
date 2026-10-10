@@ -1958,6 +1958,10 @@ msgstr "변경 사항을 읽을 수 없습니다"
 msgid "Could not read the terminal."
 msgstr "터미널을 읽지 못했습니다"
 
+#: src/components/home-composer-dock.tsx
+msgid "Could not read this computer's model list, so nothing was sent. Pick a model or try again."
+msgstr "이 컴퓨터의 모델 목록을 읽지 못해 아무것도 보내지 않았습니다. 모델을 고르거나 다시 시도하세요"
+
 #: src/components/changes-sheet.tsx
 msgid "Could not read this file."
 msgstr "이 파일을 읽을 수 없습니다"
@@ -6830,6 +6834,10 @@ msgstr "출력을 기다리는 중…"
 #: src/lib/network-error.ts
 msgid "Waiting for the network."
 msgstr "네트워크를 기다리는 중입니다"
+
+#: src/components/home-composer-dock.tsx
+msgid "Waiting for this computer's model list. Send again in a moment."
+msgstr "이 컴퓨터의 모델 목록을 기다리는 중입니다. 잠시 후 다시 보내세요"
 
 #: src/components/agent-composer.tsx
 #: src/components/server-terminal-workspace.tsx

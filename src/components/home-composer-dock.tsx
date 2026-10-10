@@ -54,6 +54,7 @@ import {
   sameComputer,
   homeHiddenClientCommands,
   homeModelChoiceKey,
+  homeSendModelGate,
   homeSessionParams,
   homeSessionReuse,
   resolveHomeComposerTarget,
@@ -362,13 +363,16 @@ export function HomeComposerDock({
           (!selectedModel.provider_id || model.provider_id === selectedModel.provider_id)
       )
     : undefined;
-  // Nothing to name yet: say the catalog is on its way, or, once it failed,
-  // the plain word, translated -- never the formatter's English fallback.
+  // Nothing to name yet: "Loading…" only while a read is actually under way
+  // (the target answering and selected), else the plain word, translated --
+  // never the formatter's English fallback.
+  const catalogFailed = catalogFailedKey === catalogKey;
+  const catalogLoading = ready && selected && !terminalAgent && !catalog && !catalogFailed;
   const modelName = selectedModel
     ? formatModelName(selectedModel, '', modelInfo?.name)
-    : catalog || catalogFailedKey === catalogKey
-      ? t`Model`
-      : t`Loading…`;
+    : catalogLoading
+      ? t`Loading…`
+      : t`Model`;
   const canPickMode = features.modes && modes.length > 0;
 
   const selectModel = useStableHandler((model: ModelRef) => {
@@ -784,6 +788,22 @@ export function HomeComposerDock({
           folder
         );
       return dispatchTask(text, start);
+    }
+    // Never a goal without a model on an agent that takes one: Send waits for
+    // the catalog, and says why when it could not be read.
+    const gate = homeSendModelGate({
+      choosesModel: features.modelSelection,
+      model: sessionParams.model,
+      catalogRead: catalog !== undefined,
+      catalogFailed,
+    });
+    if (gate !== 'send') {
+      setError(
+        gate === 'wait'
+          ? t`Waiting for this computer's model list. Send again in a moment.`
+          : t`Could not read this computer's model list, so nothing was sent. Pick a model or try again.`
+      );
+      return Promise.resolve(false);
     }
     // Attachments ride on a prompt to a session; the ledger route takes text
     // only, so a send with files keeps the session path. So does a retry onto

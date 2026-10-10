@@ -1958,6 +1958,10 @@ msgstr "อ่านการเปลี่ยนแปลงไม่ได้
 msgid "Could not read the terminal."
 msgstr "อ่านเทอร์มินัลไม่ได้"
 
+#: src/components/home-composer-dock.tsx
+msgid "Could not read this computer's model list, so nothing was sent. Pick a model or try again."
+msgstr "อ่านรายการโมเดลของคอมพิวเตอร์เครื่องนี้ไม่ได้ จึงยังไม่ได้ส่งอะไร เลือกโมเดลหรือลองอีกครั้ง"
+
 #: src/components/changes-sheet.tsx
 msgid "Could not read this file."
 msgstr "อ่านไฟล์นี้ไม่ได้"
@@ -6830,6 +6834,10 @@ msgstr "กำลังรอเอาต์พุต…"
 #: src/lib/network-error.ts
 msgid "Waiting for the network."
 msgstr "กำลังรอเครือข่าย"
+
+#: src/components/home-composer-dock.tsx
+msgid "Waiting for this computer's model list. Send again in a moment."
+msgstr "กำลังรอรายการโมเดลของคอมพิวเตอร์เครื่องนี้ ส่งอีกครั้งในอีกสักครู่"
 
 #: src/components/agent-composer.tsx
 #: src/components/server-terminal-workspace.tsx
