@@ -39,7 +39,17 @@ const UNREACHABLE_AGENT = [
 ];
 
 /** A request that got no answer at all: the transport's words, lowercased. */
-const NO_RESPONSE = ['network request failed', 'network error', 'timed out', 'timeout', 'abort'];
+// Android's Cronet stack fails a request it could not send with its own words
+// (`Cronet failed: ... net::ERR_ADDRESS_UNREACHABLE`), not a fetch TypeError.
+const NO_RESPONSE = [
+  'network request failed',
+  'network error',
+  'timed out',
+  'timeout',
+  'abort',
+  'cronet failed',
+  'net::err_',
+];
 
 /**
  * `<what>: <status> <body>` (agent-session), `HTTP <status>: <body>`
