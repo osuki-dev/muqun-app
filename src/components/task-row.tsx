@@ -28,13 +28,11 @@ import Animated, {
 
 import { AgentActionMenu, type AgentActionMenuItem } from '@/components/agent-action-menu';
 import { AgentMark } from '@/components/agent-mark';
-import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import { BoundedMarkdown } from '@/components/bounded-markdown';
 import { PressableScale } from '@/components/pressable-scale';
 import { Text } from '@/components/text';
 import { useTaskAction } from '@/hooks/use-server-tasks';
 import { useRowMarkdownStyle } from '@/hooks/use-markdown-style';
-import { useSurfaceBackground } from '@/hooks/use-surface-background';
 import { useTaskAge, useTaskElapsed } from '@/hooks/use-task-age';
 import { taskStateWord } from '@/i18n/labels';
 import { findAgent, type MirroredServerDiscovery } from '@/lib/agent-discovery';
@@ -282,8 +280,6 @@ export function TaskRow({
 }) {
   const { t } = useLingui();
   const theme = useThemeTokens();
-  const profile = useAppearanceProfile();
-  const background = useSurfaceBackground();
   const { showToast } = useToast();
   const age = useTaskAge();
   const elapsed = useTaskElapsed();
@@ -365,15 +361,7 @@ export function TaskRow({
       entering={fadeIn('micro')}
       exiting={fadeOut('micro')}
       layout={listLayout()}
-      style={[
-        nested ? styles.nested : undefined,
-        visual.plate
-          ? {
-              backgroundColor: background(theme.colors[visual.plate]),
-              borderRadius: profile.chrome.control,
-            }
-          : undefined,
-      ]}>
+      style={nested ? styles.nested : undefined}>
       {visual.edge ? (
         // Arriving at needs-you pulses the edge once (skipped on a remount).
         <Animated.View

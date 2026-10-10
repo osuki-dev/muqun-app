@@ -112,7 +112,7 @@ export function HomeComposerDock({
   targetPulse = 0,
   bottomInset = 0,
   topInset = 0,
-  floating,
+  edgeBar,
   autoHide,
   onDockHeight,
   onOpenAgent,
@@ -126,8 +126,8 @@ export function HomeComposerDock({
   targetPulse?: number;
   bottomInset?: number;
   topInset?: number;
-  /** See `AgentComposer`'s `floating`. */
-  floating?: { margin: number; inset: number };
+  /** See `AgentComposer`'s `bar`. */
+  edgeBar?: { inset: number };
   /** See `AgentComposer`'s `autoHide`. */
   autoHide?: DockAutoHide;
   onDockHeight?: (height: number) => void;
@@ -745,7 +745,11 @@ export function HomeComposerDock({
   const showComputer = servers.length > 1 || !ready || !agentName;
 
   const bar = (
-    <View style={[styles.accessory, { paddingBottom: theme.spacing.xs, rowGap: theme.spacing.xs }]}>
+    <View
+      style={[
+        styles.accessory,
+        { paddingBottom: theme.spacing['2xs'], rowGap: theme.spacing['2xs'] },
+      ]}>
       {error ? (
         <Text
           testID="home-composer-error"
@@ -906,7 +910,7 @@ export function HomeComposerDock({
       }
       bottomInset={bottomInset}
       topInset={topInset}
-      floating={floating}
+      bar={edgeBar}
       compact
       autoHide={autoHide}
       onDockHeight={onDockHeight}

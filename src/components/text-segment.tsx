@@ -51,7 +51,10 @@ export function TextSegment({
  */
 export const SEGMENT_HIT_SLOP: Readonly<Record<'first' | 'next', Insets>> = {
   first: { top: 12, bottom: 2, left: 4, right: 4 },
-  next: { top: 2, bottom: 4, left: 4, right: 4 },
+  // The quiet line's caption is short: its room reaches 44 dp down over the
+  // gap and the field's top, where the field (drawn later) still wins a touch
+  // inside its own box.
+  next: { top: 2, bottom: 25, left: 4, right: 4 },
 };
 
 const styles = StyleSheet.create({

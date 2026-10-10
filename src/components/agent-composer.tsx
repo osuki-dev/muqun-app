@@ -467,12 +467,14 @@ export interface AgentComposerProps {
    */
   accessory?: React.ReactNode;
   /**
-   * Float the dock as a block instead of a sheet on the screen's edge:
-   * `margin` around it (above the safe area at the foot), the cards' corner
-   * (`chrome.surface`) all round, and `inset` inside, so its edges and its lines both match the
-   * cards above. The phone's Home is the one caller.
+   * The phone Home's bar: edge to edge at the foot of the screen, with the
+   * safe area inside it, the cards' corner (`chrome.surface`) on its top
+   * corners only, and its one edge on top -- the hairline `border` and the
+   * profile's upward `elevation.dock` shadow (hairline alone on a profile
+   * without one). `inset` pads its content so its lines start where the
+   * cards' rows do.
    */
-  floating?: { margin: number; inset: number };
+  bar?: { inset: number };
   /**
    * Home's dock: the mode and model as a second line of text segments rather
    * than pills, the compact spacing between the rows, and a field one line
@@ -554,7 +556,7 @@ export const AgentComposer = memo(function AgentComposer({
   injectDraftRef,
   onDockHeight,
   accessory,
-  floating,
+  bar,
   compact = false,
   autoHide,
   inputTestID = 'agent-composer-input',
@@ -1076,17 +1078,18 @@ export const AgentComposer = memo(function AgentComposer({
     }
   };
   /** What sits under the field inside the glass. */
-  const innerBottomPadding = floating ? 10 : Math.max(10, bottomInset + 6);
-  /** Under a floating block: the gutter, over the safe area unless the keyboard covers it. */
-  const floatingBottomMargin = floating
-    ? (keyboardHeight > 0 ? 0 : bottomInset) + floating.margin
-    : 0;
+  // The bar carries the safe area inside it, except over the keyboard.
+  // Home's bar is as tight as the profile's rhythm allows: its foot is the safe
+  // area alone (the smallest step where there is none, or over the keyboard).
+  const innerBottomPadding = bar
+    ? Math.max(theme.spacing.xs, keyboardHeight > 0 ? 0 : bottomInset)
+    : Math.max(10, bottomInset + 6);
   /** From the dock's foot to the field's, which the anchored menu has to clear too. */
-  const dockBottomPadding = floatingBottomMargin + innerBottomPadding;
+  const dockBottomPadding = innerBottomPadding;
 
   return (
     <Animated.View style={[styles.dockOuter, composerKeyboardStyle]}>
-      {floating ? null : (
+      {bar ? null : (
         <EdgeFade edge="bottom" color={theme.colors.background} style={styles.composerFade} />
       )}
 
@@ -1306,19 +1309,23 @@ export const AgentComposer = memo(function AgentComposer({
         }}>
         <GlassChrome
           surface="composer"
-          shape={floating ? 'surface' : 'sheet'}
+          shape={bar ? 'none' : 'sheet'}
           style={[
             styles.composerDock,
-            floating && {
-              marginHorizontal: floating.margin,
-              marginBottom: floatingBottomMargin,
+            bar && {
+              borderTopLeftRadius: profile.chrome.surface,
+              borderTopRightRadius: profile.chrome.surface,
+              borderTopWidth: StyleSheet.hairlineWidth,
+              borderTopColor: theme.colors.border,
+              boxShadow: profile.elevation.dock,
             },
           ]}>
           <View
             style={[
               styles.composerInner,
               { paddingBottom: innerBottomPadding },
-              floating && { paddingHorizontal: floating.inset },
+              compact && { paddingTop: theme.spacing.xs },
+              bar && { paddingHorizontal: bar.inset },
             ]}>
             {accessory}
             {/* Row 1: roots only. Tapping the current root opens its tree. */}
@@ -1378,6 +1385,8 @@ export const AgentComposer = memo(function AgentComposer({
             the last chip whole under it.
           */}
             {compact ? (
+              // The quiet line: caption type in the subtle tone, under row 1's
+              // body-size primary line, then the compact gap to the field.
               <View style={[styles.segmentRow, { marginBottom: theme.spacing.xs }]}>
                 {segmentMode ? (
                   <TextSegment
@@ -1387,12 +1396,12 @@ export const AgentComposer = memo(function AgentComposer({
                     accessibilityRole="button"
                     accessibilityLabel={t`Select agent mode`}>
                     <Text
-                      variant="bodySmall"
+                      variant="caption"
                       numberOfLines={1}
-                      color={modeMenuOpen ? theme.colors.primary : theme.colors.text}>
+                      color={modeMenuOpen ? theme.colors.primary : theme.colors.textSubtle}>
                       {nameOfAgent(selectedAgent ?? 'build')}
                     </Text>
-                    <ChevronDown size={12} color={theme.colors.textMuted} />
+                    <ChevronDown size={QUIET_CHEVRON} color={theme.colors.textSubtle} />
                   </TextSegment>
                 ) : null}
                 {segmentModel ? (
@@ -1402,10 +1411,10 @@ export const AgentComposer = memo(function AgentComposer({
                     onPress={onOpenModelSheet}
                     accessibilityRole="button"
                     accessibilityLabel={t`Select model: ${modelDisplayName}`}>
-                    <Text variant="bodySmall" numberOfLines={1} color={theme.colors.text}>
+                    <Text variant="caption" numberOfLines={1} color={theme.colors.textSubtle}>
                       {segmentMode ? `· ${modelDisplayName}` : modelDisplayName}
                     </Text>
-                    <ChevronDown size={12} color={theme.colors.textMuted} />
+                    <ChevronDown size={QUIET_CHEVRON} color={theme.colors.textSubtle} />
                   </TextSegment>
                 ) : null}
               </View>
@@ -1755,6 +1764,7 @@ export const AgentComposer = memo(function AgentComposer({
             {/* TerminalComposer reused for agent prompt */}
             <View onLayout={(event) => setInputRowHeight(event.nativeEvent.layout.height)}>
               <TerminalComposer
+                compact={compact}
                 voiceContext={`${sessionId}:${activeAsid ?? 'new'}`}
                 inputRef={inputRef}
                 leading={
@@ -1916,6 +1926,9 @@ const ATTACHMENT_MENU_GAP = 8;
 
 /** How much of the strip stays visible to the left of the chip brought into view. */
 const SESSION_CHIP_REVEAL_MARGIN = 24;
+
+/** A chevron at the caption line's size: about its cap height, as 12 is to body text. */
+const QUIET_CHEVRON = AGENT_TYPE.meta.size - 2;
 
 const EMPTY_STRIP: readonly SessionNode[] = Object.freeze([]);
 const EMPTY_COMMANDS: readonly CommandInfo[] = Object.freeze([]);

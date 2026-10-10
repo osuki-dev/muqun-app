@@ -71,6 +71,8 @@ export interface TerminalComposerProps {
   entering?: AnimatedViewProps['entering'];
   exiting?: AnimatedViewProps['exiting'];
   layout?: AnimatedViewProps['layout'];
+  /** Home's bar: the field box at its one-line height, no padding around it. */
+  compact?: boolean;
 }
 
 export function TerminalComposer({
@@ -82,6 +84,7 @@ export function TerminalComposer({
   entering,
   exiting,
   layout,
+  compact = false,
 }: TerminalComposerProps) {
   const readInput = useLatestReader(inputProps);
   const { t } = useLingui();
@@ -160,6 +163,7 @@ export function TerminalComposer({
       layout={layout}
       style={[
         composerStyles.composer,
+        compact && composerStyles.compactComposer,
         expanded && composerStyles.expandedComposer,
         { borderRadius: profile.chrome.composerField },
         { backgroundColor: surfaceBackground(chromeGlassQuiet) },
@@ -385,6 +389,7 @@ export const composerStyles = StyleSheet.create({
     lineHeight: 19,
     textAlignVertical: 'top',
   },
+  compactComposer: { minHeight: 40, paddingVertical: 0 },
   inputWithoutLeading: {
     paddingLeft: 12,
   },

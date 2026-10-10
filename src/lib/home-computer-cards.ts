@@ -9,6 +9,7 @@
  */
 
 import type { ServerReachability } from './server-reachability';
+import { stripTaskMarkers } from './task-plumbing';
 import { FINISHED_TASKS_SHOWN, type ServerTasksIndex } from './server-tasks-state';
 import { isTerminalTaskState, type TaskState, type TaskView } from './task-ledger';
 
@@ -166,7 +167,8 @@ export function taskRollup(task: TaskView): { total: number; waiting: number } |
 export function taskResultLine(
   task: TaskView
 ): { kind: 'summary'; text: string } | { kind: 'exit'; code: number } | null {
-  const summary = task.summary?.trim();
+  // An older gateway leaves the agent's marker in the text it records.
+  const summary = task.summary && stripTaskMarkers(task.summary).trim();
   if (summary) {
     const lines = summary.split('\n').filter((line) => line.trim());
     const last = lines[lines.length - 1]?.trim();
@@ -562,8 +564,6 @@ export type TaskRowVisual = {
   line: TaskRowLine;
   /** The right-hand time: how long open work has run, or how long ago it ended. */
   clock: 'elapsed' | 'ago' | 'none';
-  /** Paused rows sit on the raised plate (§3: textMuted on surfaceRaised). */
-  plate?: 'surfaceRaised';
   /**
    * A row that needs the reader carries the warning edge (§3), pulsed once on
    * arrival. `warning`, not §3's `warningSubtle`: the theme schema has no such
@@ -594,6 +594,7 @@ export function taskRowVisual(
     };
   }
   const result = taskResultLine(task);
+  const progress = task.progress && stripTaskMarkers(task.progress);
   const said = result?.kind === 'summary' ? result.text : undefined;
   const ended: TaskRowLine = said
     ? { kind: 'result', text: said }
@@ -622,8 +623,8 @@ export function taskRowVisual(
         // A progress line that says nothing (a TUI rule the gateway read off the
         // screen) is no progress: the agent and elapsed time say more.
         line:
-          task.progress && /[\p{L}\p{N}]/u.test(task.progress)
-            ? { kind: 'progress', text: task.progress }
+          progress && /[\p{L}\p{N}]/u.test(progress)
+            ? { kind: 'progress', text: progress }
             : { kind: 'agent' },
         clock: 'elapsed',
         actions: live,
@@ -645,7 +646,6 @@ export function taskRowVisual(
         spins: false,
         line: said ? { kind: 'paused', text: said } : { kind: 'paused' },
         clock: 'elapsed',
-        plate: 'surfaceRaised',
         actions: confirmable,
       };
     case 'done':

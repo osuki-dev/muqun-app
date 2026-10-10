@@ -12,6 +12,10 @@ export function createAgentTranscriptStore() {
     /** The rows one drawn item becomes: each diagram virtualized on its own. */
     const splitRows = (item: TimelineItem): TimelineItem[] => {
       if (item.role !== 'assistant' || item.part.type !== 'text') return [item];
+      // A reply part with nothing in it draws nothing, and as a row of its own
+      // it split one stretch of thinking into a Thought block per part.
+      if (!item.part.text.trim() && !item.attachments?.length && !item.image_assets?.length)
+        return [];
       const parts = splitDiagramMarkdown(item.part.text);
       // Virtualize each diagram in the existing list, never nest another list
       // inside a message. Keep the canonical timeline intact for sync/copy.

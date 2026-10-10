@@ -434,10 +434,10 @@ describe('taskRowVisual: the rules the state table carries', () => {
       },
     ],
     [
-      'paused: the hint is the last line, on the raised plate',
-      open('idle_unconfirmed', { summary: 'tests pass\nwhat next?' }),
+      'paused: the hint is the last line, without a marker run into it, and no fill',
+      open('idle_unconfirmed', { summary: 'tests pass\nHello. How can I help?MUQUN_TASK_DONE: x' }),
       plain,
-      { line: { kind: 'paused', text: 'what next?' }, plate: 'surfaceRaised' },
+      { line: { kind: 'paused', text: 'Hello. How can I help?' } },
     ],
     [
       'an acknowledged task loses Acknowledge',

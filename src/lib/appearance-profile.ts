@@ -50,6 +50,12 @@ export type AppearanceProfile = Readonly<{
     showsTagline: boolean;
   }>;
   settingsRowPaddingVertical: number;
+  /**
+   * Shadows a profile casts, as `boxShadow` tokens. `dock`: the upward edge of
+   * Home's bottom bar. Absent on a flat profile, where the hairline alone is
+   * the edge.
+   */
+  elevation: Readonly<{ dock?: string }>;
   navigation: Readonly<Pick<NativeStackNavigationOptions, 'animation'>>;
   motion: Readonly<{
     pageMs: number;
@@ -101,6 +107,7 @@ const classic: AppearanceProfile = {
     showsTagline: true,
   },
   settingsRowPaddingVertical: 12,
+  elevation: { dock: appChrome.shadow.composerDock },
   navigation: { animation: 'fade' },
   motion: { pageMs: 240, modalMs: 260, revealMs: 240, revealDistance: 8, pressedScale: 0.985 },
   rowPaddingVertical: 8,
@@ -149,6 +156,7 @@ const editorial: AppearanceProfile = {
     showsTagline: false,
   },
   settingsRowPaddingVertical: 10,
+  elevation: { dock: appChrome.shadow.composerDock },
   // Native presentation owns route motion, duration and back gestures.
   navigation: { animation: 'default' },
   motion: { pageMs: 200, modalMs: 220, revealMs: 200, revealDistance: 4, pressedScale: 0.99 },
@@ -168,6 +176,7 @@ for (const profile of Object.values(appearanceProfiles)) {
   Object.freeze(profile.rail);
   Object.freeze(profile.navigation);
   Object.freeze(profile.motion);
+  Object.freeze(profile.elevation);
   Object.freeze(profile);
 }
 Object.freeze(appearanceProfiles);

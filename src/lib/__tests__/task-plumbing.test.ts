@@ -49,10 +49,10 @@ describe('stripTaskMarkers', () => {
     ['backticked line', 'Done.\n`MUQUN_TASK_DONE: built`', false, 'Done.'],
     ['marker only', '  - MUQUN_TASK_DONE: done', false, ''],
     [
-      'mid-line mention stays',
-      'It prints `MUQUN_TASK_DONE:` at the end',
+      'a marker run into the last sentence cuts from the marker',
+      'Hello. How can I help?MUQUN_TASK_DONE: x',
       false,
-      'It prints `MUQUN_TASK_DONE:` at the end',
+      'Hello. How can I help?',
     ],
     ['partial last line is held while streaming', 'Done.\nMUQUN_TASK_D', true, 'Done.'],
     ['and released at the turn end', 'Done.\nMUQUN_TASK_D', false, 'Done.\nMUQUN_TASK_D'],

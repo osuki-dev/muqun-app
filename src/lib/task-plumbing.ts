@@ -30,7 +30,11 @@ const LINE_LEAD = /^[^\p{L}\p{N}]*/u;
 const MARKERS = [TASK_DONE_MARKER, TASK_BLOCKED_MARKER];
 
 /**
- * Assistant text without its marker lines; the same string when it had none.
+ * Text without its task markers; the same string when it had none.
+ *
+ * A marker cuts its line from the marker to the line's end and keeps the words
+ * before it, for an agent that runs its last sentence into the marker
+ * (`…help?MUQUN_TASK_DONE: …`). A line that held only the marker goes.
  *
  * `streaming`: the text is still arriving, so its last, unterminated line is
  * held back too while it could still become a marker (`MUQUN_TASK_D`), rather
@@ -40,15 +44,25 @@ export function stripTaskMarkers(text: string, streaming = false): string {
   if (!streaming && !text.includes('MUQUN_TASK_')) return text;
   const lines = text.split('\n');
   const last = lines.length - 1;
-  const kept = lines.filter((line, at) => {
+  let changed = false;
+  const kept: string[] = [];
+  lines.forEach((line, at) => {
+    const cuts = MARKERS.map((marker) => line.indexOf(marker)).filter((index) => index >= 0);
     const body = line.replace(LINE_LEAD, '');
-    return !MARKERS.some(
-      (marker) =>
-        body.startsWith(marker) ||
-        (streaming && at === last && body.length > 0 && marker.startsWith(body))
-    );
+    const partial =
+      streaming &&
+      at === last &&
+      body.length > 0 &&
+      MARKERS.some((marker) => marker.startsWith(body));
+    if (cuts.length === 0 && !partial) {
+      kept.push(line);
+      return;
+    }
+    changed = true;
+    const before = cuts.length > 0 ? line.slice(0, Math.min(...cuts)).trimEnd() : '';
+    if (before.replace(LINE_LEAD, '')) kept.push(before);
   });
-  return kept.length === lines.length ? text : kept.join('\n').trimEnd();
+  return changed ? kept.join('\n').trimEnd() : text;
 }
 
 /** A goal without the completion request an older gateway appended to it. */
