@@ -90,7 +90,7 @@ import {
   terminalOpenScale,
   terminalOpenView,
   terminalPanMinX,
-  terminalScaleOnScreenLeave,
+  terminalScaleOnPinchEnd,
   type TerminalPaneScales,
   type TerminalPinchPhase,
   type TerminalTextSize,
@@ -1431,63 +1431,26 @@ export function SkiaTerminal({
   const openViewRef = useLatestRef(openView);
   const paneOpenKeyRef = useLatestRef(paneOpenKey);
 
-  // Leaving the service screen remembers the pinch this pane is showing, keyed
-  // on its id (see `terminalScaleOnScreenLeave`), rather than resetting it.
-  // Deliberately not keyed on the pane: the carousel keeps this canvas mounted
-  // across a pane switch, and going out to Settings or the panels sheet leaves
-  // the screen mounted underneath, so `screenFocused` still reaches `false` on
-  // a render for those. Running while the pane is off screen still matters:
-  // the write happens where the reader cannot see it land.
+  // Leaving the service screen resets the pan and writes nothing down. Only the
+  // end of a pinch remembers a scale (`rememberPinch` below): a leave, a pane
+  // switch or an unmount used to store whatever scale the canvas held -- a fit,
+  // or one carried over from the previous pane -- sometimes under another
+  // pane's id (home-dispatch-ux §10).
   useEffect(() => {
     if (screenFocused) return;
     if (viewport.width <= 0) return;
-    savePaneScales(
-      terminalScaleOnScreenLeave(terminalId, scale.get(), loadPaneScales(), paneRestingScale)
-    );
     translateX.set(0);
-  }, [paneRestingScale, scale, screenFocused, terminalId, translateX, viewport.width]);
+  }, [screenFocused, translateX, viewport.width]);
 
-  // The other half of the write above, for the one path that never renders
-  // `screenFocused: false` at all.
-  //
-  // Going back to the server list does not push a screen over this one, it
-  // pops this screen's own route -- confirmed live: the route
-  // disappears from the stack in the same commit that starts the pop, so this
-  // component unmounts with whatever `screenFocused` it last rendered, which
-  // is still `true`. `useIsFocused` never has a render in between to say
-  // otherwise. The comment above used to claim the server list left the
-  // screen mounted the way Settings does; measured live, it does not, and
-  // this effect is the fix rather than the comment.
-  //
-  // A ref pair, not `terminalId`/`viewport.width` in the deps, because this
-  // has to run *once*, on the unmount that actually happens -- putting either
-  // in the deps would make the effect restart (and its cleanup fire) on every
-  // ordinary prop change, which is not a pane leaving the screen. Both refs
-  // are read only from this cleanup, never from render.
-  const unmountTerminalIdRef = useLatestRef(terminalId);
-  const unmountViewportWidthRef = useLatestRef(viewport.width);
-  // The size this pane would have opened at anyway, so the write below can tell
-  // a scale the reader chose from one the fit handed them (see
-  // `terminalScaleOnScreenLeave`). Same mailbox pattern as the two above, and
-  // read from the same one place.
-  const unmountRestingScaleRef = useLatestRef(paneRestingScale);
-  useEffect(() => {
-    return () => {
-      // oxlint-disable-next-line react/exhaustive-deps -- deliberate: `useLatestRef` (see its own doc comment) exists exactly so a callback outside render can read the current value; this is that read, at the one moment -- unmount -- render can no longer reach.
-      if (unmountViewportWidthRef.current <= 0) return;
-      savePaneScales(
-        terminalScaleOnScreenLeave(
-          // oxlint-disable-next-line react/exhaustive-deps -- deliberate: same as above.
-          unmountTerminalIdRef.current,
-          scale.get(),
-          loadPaneScales(),
-          // oxlint-disable-next-line react/exhaustive-deps -- deliberate: same as above.
-          unmountRestingScaleRef.current
-        )
-      );
-    };
-    // oxlint-disable-next-line react/exhaustive-deps -- deliberate: unmount only, see comment above. `scale` and the two refs are stable identities, so listing them would not change when this runs.
-  }, []);
+  // The end of a pinch the reader made: this pane, at the width it has now,
+  // keeps that scale (`terminalScaleOnPinchEnd`), until it is pinched again or
+  // tmux reports another width.
+  const rememberPinch = useStableHandler((pinched: number) => {
+    if (viewport.width <= 0) return;
+    savePaneScales(
+      terminalScaleOnPinchEnd(terminalId, pinched, loadPaneScales(), paneRestingScale, fitColumns)
+    );
+  });
 
   // Output arriving in a wider column must not undo a pinch or scroll the
   // reader was in the middle of; only the pan bounds move.
@@ -2695,6 +2658,8 @@ export function SkiaTerminal({
           );
         })
         .onFinalize(() => {
+          // Only a pinch that really zoomed is the reader's choice of size.
+          if (pinchPhase.get() === 'active') scheduleOnRN(rememberPinch, scale.get());
           gesturing.set(false);
           pinchPhase.set('idle');
         }),
@@ -2712,6 +2677,7 @@ export function SkiaTerminal({
       gesturing,
       historyHeight,
       pinchPhase,
+      rememberPinch,
       scale,
       textWidth,
       touchModeBits,

@@ -33,7 +33,7 @@ import {
   terminalPanMinX,
   terminalPhoneGrid,
   terminalScaleOnPaneOpen,
-  terminalScaleOnScreenLeave,
+  terminalScaleOnPinchEnd,
   terminalZoomIndicatorPercent,
   terminalZoomLabel,
   terminalZoomPercent,
@@ -123,16 +123,20 @@ function terminal(
     resplit(next: number | undefined) {
       paneColumns = next;
     },
+    /** A whole pinch: its updates, then its end, which is the one write. */
     pinch(gestureScale: number) {
       scale = pinchedTerminalScale(scale, gestureScale);
-    },
-    leaveScreen() {
-      store.current = terminalScaleOnScreenLeave(
+      store.current = terminalScaleOnPinchEnd(
         paneId,
         scale,
         store.current,
-        terminalFitToWidthScale(fit, paneColumns)
+        terminalFitToWidthScale(fit, paneColumns),
+        paneColumns
       );
+    },
+    /** Leaving the screen writes nothing (home-dispatch-ux §10). */
+    leaveScreen() {
+      // The canvas only resets its pan here; the table is left as it is.
     },
     /** Output whose longest line has changed since the pane opened. */
     outputWidth(next: number) {
@@ -225,22 +229,69 @@ describe('a pinch is remembered per pane', () => {
     expect(pane.fontSize).toBe(TERMINAL_TEXT_SIZE_POINTS.compact);
   });
 
-  test('switching panes without ever leaving the screen writes nothing down', () => {
-    // Only `leaveScreen` persists. A carousel swipe from one pane to another,
-    // with the service screen staying in front the whole time, changes which
-    // pane's id `openPane` is called with but never calls `leaveScreen` for
-    // the one being left -- so the first pane's pinch was never written, and
-    // the second pane, which has its own id, was never going to see it anyway.
+  // home-dispatch-ux §10: only the end of a pinch writes, under this pane's id
+  // and its column count; a leave writes nothing; another width drops it.
+  // name, the walk, the table after it, pane p's width and its scale when opened again
+  test.each<
+    [string, (store: { current: TerminalPaneScales }) => void, TerminalPaneScales, number, number]
+  >([
+    [
+      'a pinch is written at its end, under the pane and its width',
+      (store) => {
+        const p = terminal('default', contentWidth, { paneId: 'p', store, paneColumns: 120 });
+        p.openPane();
+        p.pinch(1.4);
+      },
+      { 'p@120': 1.4 },
+      120,
+      1.4,
+    ],
+    [
+      'a leave writes nothing, whatever scale the canvas holds',
+      (store) => {
+        const p = terminal('default', contentWidth, { paneId: 'p', store, paneColumns: 120 });
+        p.openPane();
+        p.leaveScreen();
+      },
+      {},
+      120,
+      1,
+    ],
+    [
+      'another width drops the pinch: the pane opens at its fit',
+      (store) => {
+        const p = terminal('default', contentWidth, { paneId: 'p', store, paneColumns: 120 });
+        p.openPane();
+        p.pinch(1.4);
+        p.resplit(130);
+      },
+      { 'p@120': 1.4 },
+      130,
+      1,
+    ],
+    [
+      "a pinch on another pane never lands under this pane's id",
+      (store) => {
+        const q = terminal('default', contentWidth, { paneId: 'q', store, paneColumns: 120 });
+        q.openPane();
+        q.pinch(1.4);
+      },
+      { 'q@120': 1.4 },
+      120,
+      1,
+    ],
+  ])('%s', (_name, walk, table, columns, reopenedP) => {
     const store = disk();
-    const a = terminal('default', contentWidth, { paneId: 'a', store });
-    a.openPane();
-    a.pinch(1.4);
-    expect(a.percent).toBe(140);
-
-    const b = terminal('default', contentWidth, { paneId: 'b', store });
-    b.openPane();
-    expect(b.scale).toBe(1);
-    expect(store.current).toEqual({});
+    walk(store);
+    expect(store.current).toEqual(table);
+    expect(
+      terminalOpenScale({
+        paneId: 'p',
+        remembered: store.current,
+        fit: UNMEASURED,
+        paneColumns: columns,
+      })
+    ).toBe(reopenedP);
   });
 
   test('pinching back to the setting size forgets the pane rather than storing 1', () => {
@@ -302,13 +353,13 @@ describe('a pinch is remembered per pane', () => {
   test('the table is bounded: the longest-untouched pane is dropped first', () => {
     let table: TerminalPaneScales = {};
     for (let i = 0; i < TERMINAL_MAX_REMEMBERED_PANE_SCALES; i++) {
-      table = terminalScaleOnScreenLeave(`pane-${i}`, 1.4, table);
+      table = terminalScaleOnPinchEnd(`pane-${i}`, 1.4, table);
     }
     expect(Object.keys(table)).toHaveLength(TERMINAL_MAX_REMEMBERED_PANE_SCALES);
     expect(table['pane-0']).toBe(1.4);
 
     // One more pane pinched pushes the table over the bound.
-    table = terminalScaleOnScreenLeave('pane-new', 1.4, table);
+    table = terminalScaleOnPinchEnd('pane-new', 1.4, table);
     expect(Object.keys(table)).toHaveLength(TERMINAL_MAX_REMEMBERED_PANE_SCALES);
     // The oldest untouched entry -- the very first one written -- is the one
     // that goes, not an arbitrary one.
@@ -508,7 +559,7 @@ describe('a pane narrower than the phone is drawn to fill it', () => {
     const chosen = first.scale;
     expect(chosen).not.toBeCloseTo(first.restingScale);
     first.leaveScreen();
-    expect(store.current.pane).toBeCloseTo(chosen, 2);
+    expect(Object.values(store.current)[0]).toBeCloseTo(chosen, 2);
 
     // Killed and relaunched: the pane opens at what the reader chose, not at
     // the fit.
@@ -545,27 +596,6 @@ describe('a pane narrower than the phone is drawn to fill it', () => {
     expect(pane.scale).toBe(1);
   });
 
-  test('a manual pinch survives a re-split; the fit it replaced does not', () => {
-    const store = disk();
-    const pane = terminal('default', contentWidth, {
-      store,
-      fit: PHONE,
-      paneColumns: NARROW,
-    });
-    pane.openPane();
-    pane.pinch(1.2);
-    const chosen = pane.scale;
-    pane.leaveScreen();
-
-    // Same pane, re-split to a different width. The remembered number was a
-    // statement about how big this pane's text should be, not about how wide
-    // the pane was, so it still holds.
-    pane.resplit(42);
-    pane.openPane();
-    expect(pane.scale).toBeCloseTo(chosen, 2);
-    expect(pane.scale).not.toBeCloseTo(fill(42));
-  });
-
   test('pinching back to the fit hands the pane back to the fit', () => {
     // The one ambiguous case, resolved as a fit: the two are the same number,
     // so the reader sees exactly what they asked for now, and a later re-split
@@ -579,7 +609,7 @@ describe('a pane narrower than the phone is drawn to fill it', () => {
     pane.openPane();
     pane.pinch(1.3);
     pane.leaveScreen();
-    expect(store.current.pane).toBeDefined();
+    expect(Object.values(store.current)[0]).toBeDefined();
 
     const back = terminal('default', contentWidth, {
       store,
@@ -607,7 +637,7 @@ describe('a pane narrower than the phone is drawn to fill it', () => {
     expect(wide.scale).toBe(1);
     wide.pinch(0.8);
     wide.leaveScreen();
-    expect(store.current.pane).toBeCloseTo(0.8, 2);
+    expect(Object.values(store.current)[0]).toBeCloseTo(0.8, 2);
 
     const again = terminal('default', contentWidth, {
       store,
@@ -921,7 +951,7 @@ describe('the placement counts the cells the opening scale actually shows', () =
   const PHONE = { phoneColumns: 52, phoneRows: 48 };
 
   test('a remembered pinch moves the placement, not just the glyphs', () => {
-    const remembered = { pane: 1.44 };
+    const remembered = { 'pane@359': 1.44 };
     const scale = terminalOpenScale({
       paneId: 'pane',
       remembered,
