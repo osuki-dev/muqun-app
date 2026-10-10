@@ -4127,8 +4127,8 @@
         "steps": [
           { "run": "flows/pad-workspace.ad#home-navigation" },
           {
-            "point": [0.3, 0.8],
-            "delta": [0, -0.6],
+            "point": [0.78, 0.6],
+            "delta": [0, -0.4],
             "run": "flows/pad-workspace.ad#home-navigation-work-column"
           },
           {

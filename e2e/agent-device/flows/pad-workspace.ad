@@ -82,8 +82,8 @@ back --system
 wait "id=\"home-pad-launch-pane\"" 10000
 
 # section home-navigation-work-column
-# Wide Pad Home scrolls per column; the work column (left) holds the launch
-# tiles, Needs you, then Computers/Connections. Pan inside it, two passes.
+# Wide Pad Home scrolls per column; the work column (right) holds Needs you,
+# then Computers/Connections, over the fixed dock. Pan inside it, two passes.
 gesture pan "${X}" "${Y}" "${DX}" "${DY}" 500
 gesture pan "${X}" "${Y}" "${DX}" "${DY}" 500
 wait stable 400 5000

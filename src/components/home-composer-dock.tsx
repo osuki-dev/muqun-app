@@ -113,6 +113,7 @@ export function HomeComposerDock({
   bottomInset = 0,
   topInset = 0,
   edgeBar,
+  fieldLines,
   autoHide,
   onDockHeight,
   onOpenAgent,
@@ -128,6 +129,8 @@ export function HomeComposerDock({
   topInset?: number;
   /** See `AgentComposer`'s `bar`. */
   edgeBar?: { inset: number };
+  /** See `AgentComposer`'s `fieldLines`. */
+  fieldLines?: number;
   /** See `AgentComposer`'s `autoHide`. */
   autoHide?: DockAutoHide;
   onDockHeight?: (height: number) => void;
@@ -910,6 +913,7 @@ export function HomeComposerDock({
       bottomInset={bottomInset}
       topInset={topInset}
       bar={edgeBar}
+      fieldLines={fieldLines}
       compact
       autoHide={autoHide}
       onDockHeight={onDockHeight}

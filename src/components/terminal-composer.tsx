@@ -73,6 +73,8 @@ export interface TerminalComposerProps {
   layout?: AnimatedViewProps['layout'];
   /** Home's bar: the field box at its one-line height, no padding around it. */
   compact?: boolean;
+  /** How many lines the field is tall while empty; it grows from there to its max. */
+  minLines?: number;
 }
 
 export function TerminalComposer({
@@ -85,6 +87,7 @@ export function TerminalComposer({
   exiting,
   layout,
   compact = false,
+  minLines,
 }: TerminalComposerProps) {
   const readInput = useLatestReader(inputProps);
   const { t } = useLingui();
@@ -194,6 +197,7 @@ export function TerminalComposer({
           !leading && composerStyles.inputWithoutLeading,
           fieldFont,
           inputProps.style,
+          minLines !== undefined && { minHeight: minLines * lineHeight + verticalPadding },
           expanded && composerStyles.expandedInput,
         ]}
       />

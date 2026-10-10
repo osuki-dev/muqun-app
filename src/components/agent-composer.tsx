@@ -482,6 +482,8 @@ export interface AgentComposerProps {
    * high while empty (`TerminalComposer`'s `shortPlaceholder`).
    */
   compact?: boolean;
+  /** The field's height while empty, in lines (one by default); it still grows to its max. */
+  fieldLines?: number;
   /**
    * Slide down out of view as Home's list scrolls down (`useDockAutoHide`).
    * The dock pins itself shown while its field is focused, the keyboard is
@@ -559,6 +561,7 @@ export const AgentComposer = memo(function AgentComposer({
   accessory,
   bar,
   compact = false,
+  fieldLines,
   autoHide,
   inputTestID = 'agent-composer-input',
   sendTestID,
@@ -1784,6 +1787,7 @@ export const AgentComposer = memo(function AgentComposer({
             <View onLayout={(event) => setInputRowHeight(event.nativeEvent.layout.height)}>
               <TerminalComposer
                 compact={compact}
+                minLines={fieldLines}
                 voiceContext={`${sessionId}:${activeAsid ?? 'new'}`}
                 inputRef={inputRef}
                 leading={
