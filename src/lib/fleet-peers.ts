@@ -652,9 +652,30 @@ export type UnpairRecord = {
   stillListedBy: string[];
   /** Per pending computer: which steps are confirmed there, and how the rest went. */
   progress?: Record<string, UnpairProgress>;
-  /** Every name it was seen going by (its label, its own, peer rows'), for logins without an id. */
-  names?: string[];
+  /**
+   * Per pending computer, the names this device itself gave that link when
+   * it made it: what an older gateway's rows and logins without a server id
+   * are matched by. Never a name learned from an answer.
+   */
+  linkNames?: Record<string, LinkNames>;
 };
+
+/**
+ * The names this device gave one link when it made it, as seen from one of
+ * its two computers: the peer row it created there (`row`, the other's name
+ * as `POST /api/peers` was given it) and the login it minted there for the
+ * other (`login`, the name `POST /api/pair/pending` was given).
+ */
+export type LinkNames = { row?: string; login?: string };
+
+/**
+ * The names a row or login of `gone` on one computer may be matched by when
+ * it carries no server id: the name this device recorded for that link there,
+ * with the label it holds for `gone`. Nothing recorded: nothing to match by.
+ */
+export function recordedNames(recorded: string | undefined, label: string): string[] {
+  return recorded ? [recorded, label] : [];
+}
 
 /** The two things an unpair takes off another computer: its peer rows, and its login. */
 export type UnpairStep = 'rows' | 'logins';
