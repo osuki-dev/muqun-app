@@ -55,6 +55,18 @@ describe('stripTaskMarkers', () => {
       'Hello. How can I help?',
     ],
     ['partial last line is held while streaming', 'Done.\nMUQUN_TASK_D', true, 'Done.'],
+    [
+      'so is a marker starting mid-line',
+      'Hello. How can I help?MUQUN_TASK_D',
+      true,
+      'Hello. How can I help?',
+    ],
+    [
+      'the tick that opened a quoted marker goes too',
+      'It prints `MUQUN_TASK_DONE: x`',
+      false,
+      'It prints',
+    ],
     ['and released at the turn end', 'Done.\nMUQUN_TASK_D', false, 'Done.\nMUQUN_TASK_D'],
     ['a terminated line is not held', 'Done.\nMUQUN\n', true, 'Done.\nMUQUN\n'],
   ])('%s', (_, text, streaming, expected) => {

@@ -44,18 +44,27 @@ export function TextSegment({
 }
 
 /**
- * Touch room for a segment, which is shorter than a finger. The segments sit
- * in two rows a few points apart, so each row reaches outwards into the air
- * above or below it, and the two rows meet halfway between them rather than
- * overlap.
+ * Touch room for a segment, which is shorter than a finger. The two rows sit
+ * 2 pt apart (`spacing['2xs']`), so they meet halfway, 1 pt each, and never
+ * overlap; the first row reaches up into the bar's top padding. The second
+ * row's room reaches down over the gap and the field's top edge, where the
+ * field (drawn later) still wins any touch inside its own box -- so what that
+ * row really gets is its own line plus the gap, not 44 dp.
  */
 export const SEGMENT_HIT_SLOP: Readonly<Record<'first' | 'next', Insets>> = {
-  first: { top: 12, bottom: 2, left: 4, right: 4 },
-  // The quiet line's caption is short: its room reaches 44 dp down over the
-  // gap and the field's top, where the field (drawn later) still wins a touch
-  // inside its own box.
-  next: { top: 2, bottom: 25, left: 4, right: 4 },
+  first: { top: 12, bottom: 1, left: 4, right: 4 },
+  next: { top: 1, bottom: 25, left: 4, right: 4 },
 };
+
+/**
+ * A row of segments starts one segment-padding to the left, so the first
+ * segment's text, not its padding, lines up with the field and the cards'
+ * rows below and above it.
+ */
+export function useSegmentRowLead() {
+  const { spacing } = useThemeTokens();
+  return { marginLeft: -spacing.xs };
+}
 
 const styles = StyleSheet.create({
   segment: {

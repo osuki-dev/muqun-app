@@ -1490,8 +1490,8 @@ export function HomeOverview({
             maxWidth: metrics.contentMaxWidth,
           },
           { paddingTop: barHeight + styles.content.paddingTop },
-          // The same room under the last card as the editorial page leaves.
-          dock && { paddingBottom: dockHeight + 24 },
+          // Room under the last card above the bar.
+          dock && { paddingBottom: dockHeight + theme.spacing.lg },
         ]}
         keyboardDismissMode={process.env.EXPO_OS === 'ios' ? 'interactive' : 'on-drag'}
         keyboardShouldPersistTaps="handled"
@@ -1655,32 +1655,6 @@ export function HomeOverview({
           </Animated.View>
         ) : null}
 
-        {/* The dispatch surface every layout has (see `classicLayout`): Needs
-            you, then the computers with work, then this layout's own server
-            cards as its Recent. */}
-        {hasAttention && attentionSection ? (
-          <View style={[styles.classicSection, { marginBottom: metrics.cardGap }]}>
-            {attentionSection}
-          </View>
-        ) : null}
-        {progressSection ? (
-          <View style={[styles.classicSection, { marginBottom: metrics.cardGap }]}>
-            <SectionLabel
-              title={<Trans>Computers</Trans>}
-              color={theme.colors.textMuted}
-              style={styles.classicLabel}
-            />
-            {progressSection}
-          </View>
-        ) : null}
-        {progressSection && records.length > 0 ? (
-          <SectionLabel
-            title={<Trans>Recent</Trans>}
-            color={theme.colors.textMuted}
-            style={[styles.classicLabel, styles.classicRecentLabel]}
-          />
-        ) : null}
-
         {/* Two spacers with different weights, so a short list settles a little
             below the middle of the space it has rather than either floating in
             the centre or being stranded under the header. They are flex, so a
@@ -1702,6 +1676,33 @@ export function HomeOverview({
               // marooned at mid-screen reads as a page still loading.
               identity.showBrand && metrics.brand.weight === 'hero' && styles.spacerAboveEmpty,
             ]}
+          />
+        ) : null}
+
+        {/* The dispatch surface every layout has (see `classicLayout`): Needs
+            you, then the computers with work, then this layout's own server
+            cards as its Recent. Below the spacer, so each label sits on what
+            it labels. */}
+        {hasAttention && attentionSection ? (
+          <View style={[{ marginBottom: metrics.cardGap, gap: theme.spacing.sm }]}>
+            {attentionSection}
+          </View>
+        ) : null}
+        {progressSection ? (
+          <View style={[{ marginBottom: metrics.cardGap, gap: theme.spacing.sm }]}>
+            <SectionLabel
+              title={<Trans>Computers</Trans>}
+              color={theme.colors.textMuted}
+              style={styles.classicLabel}
+            />
+            {progressSection}
+          </View>
+        ) : null}
+        {progressSection && records.length > 0 ? (
+          <SectionLabel
+            title={<Trans>Recent</Trans>}
+            color={theme.colors.textMuted}
+            style={[styles.classicLabel, { marginBottom: theme.spacing.sm }]}
           />
         ) : null}
 
@@ -1981,10 +1982,9 @@ function ServerCard({
 
                   The dot never speaks alone: `OFFLINE` and `NOT CONNECTED` are
                   the same grey on purpose, and the words and the hollow ring are
-                  what tell them apart. It is still the only dot on the screen
-                  that pulses. */}
-              {/* Said only when something is wrong (§3a): a reachable machine
-                  is just its name. */}
+                  what tell them apart. It is said only when something is wrong
+                  (§3a): a reachable machine is just its name, and nothing on
+                  the card pulses. */}
               {reachability === 'live' ? null : (
                 <View
                   accessibilityLabel={_(reachabilityDescription[reachability])}
@@ -2366,10 +2366,8 @@ const styles = StyleSheet.create({
   },
   // The horizontal inset and the measure come from `homeServerListLayout` at
   // the call site; what is left here is the same in both modes.
-  // Needs you and the computer cards in the classic column.
-  classicSection: { gap: 8 },
+  // The labels hug their text in the classic column.
   classicLabel: { alignSelf: 'flex-start' },
-  classicRecentLabel: { marginBottom: 8 },
   content: {
     flexGrow: 1,
     paddingTop: 10,

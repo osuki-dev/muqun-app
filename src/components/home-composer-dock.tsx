@@ -16,7 +16,7 @@ import { AgentComposer, type DraftInjector } from '@/components/agent-composer';
 import { useAppearanceProfile } from '@/components/appearance-profile-provider';
 import type { HomeLaunchController } from '@/components/home-launch-actions';
 import type { DockAutoHide } from '@/hooks/use-dock-auto-hide';
-import { SEGMENT_HIT_SLOP, TextSegment } from '@/components/text-segment';
+import { SEGMENT_HIT_SLOP, TextSegment, useSegmentRowLead } from '@/components/text-segment';
 import { Text } from '@/components/text';
 import { ThemeIcon } from '@/components/theme-icon';
 import { useAgentFeatures, useAgentsDiscoveryRefresh } from '@/hooks/use-agent-features';
@@ -143,6 +143,7 @@ export function HomeComposerDock({
   const { _ } = useLinguiRuntime();
   const theme = useThemeTokens();
   const profile = useAppearanceProfile();
+  const segmentRowLead = useSegmentRowLead();
   const background = useSurfaceBackground();
   const router = useRouter();
   const { showToast } = useToast();
@@ -760,7 +761,7 @@ export function HomeComposerDock({
           {error}
         </Text>
       ) : null}
-      <View style={styles.segments}>
+      <View style={[styles.segments, segmentRowLead]}>
         {showComputer ? (
           <TextSegment
             testID="home-composer-target"
