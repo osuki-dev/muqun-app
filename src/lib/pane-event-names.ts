@@ -11,12 +11,13 @@
  *  - approvals -- an agent started or stopped waiting on a permission menu.
  *  - structural events -- a workspace, tab or pane appeared, vanished, was
  *    renamed or moved, or an agent attached.
- *  - `layout.updated` -- tmux's topology fingerprint moved. It moves on a
- *    resize, but also on every title or command change of any pane on the
- *    host (a working agent's spinner title flips it every 500 ms), so it is
- *    not a structural event: it only asks whether the open pane's own size
- *    changed ({@link paneGeometryChanged}), and the workspace is read again
- *    only when it did.
+ *  - `layout.updated` -- tmux's topology fingerprint moved. It is tmux's only
+ *    activity event, so it carries every window and pane created, closed or
+ *    moved -- but it also moves on every title or command change of any pane
+ *    on the host (a working agent's spinner title flips it every 500 ms). So
+ *    it is answered with one pane-list read, at most every 2 s, and the
+ *    workspace is read again only when that list shows a change that matters
+ *    ({@link layoutNeedsRefresh}).
  *
  * The gateway accepts both spellings (`pane.updated`, `pane_updated`) and
  * sends the underscore one; `paneEventRole` reads either.
@@ -73,17 +74,36 @@ export function paneEventRole(name: string): 'output' | 'structure' | 'layout' |
   return STRUCTURE_NAMES.has(normalized) ? 'structure' : null;
 }
 
-/** A pane's grid as the gateway reports it; 0 where it did not say. */
-export type PaneGeometry = { width: number; height: number };
+/** One pane as a layout check compares it; 0 where the gateway did not give a size. */
+export type PaneLayout = {
+  id: string;
+  tab: string;
+  workspace: string;
+  width: number;
+  height: number;
+};
 
 /**
- * Whether a fresh read of the open pane says its grid changed. Title,
- * command and path churn never count; a read that reports no size (0) says
- * nothing either way.
+ * Whether a pane-list read after `layout.updated` is news for the workspace:
+ * a pane appeared, closed or moved to another tab or workspace, or the open
+ * pane's grid changed size. Title, command and path churn never count, and a
+ * size the read does not report (0) says nothing either way.
  */
-export function paneGeometryChanged(held: PaneGeometry, fresh: PaneGeometry): boolean {
+export function layoutNeedsRefresh(
+  held: readonly PaneLayout[],
+  fresh: readonly PaneLayout[],
+  openPaneId: string | null
+): boolean {
+  const place = (pane: PaneLayout) => `${pane.id}\u0000${pane.tab}\u0000${pane.workspace}`;
+  const heldPlaces = new Set(held.map(place));
+  if (held.length !== fresh.length || fresh.some((pane) => !heldPlaces.has(place(pane)))) {
+    return true;
+  }
+  const before = held.find((pane) => pane.id === openPaneId);
+  const after = fresh.find((pane) => pane.id === openPaneId);
+  if (!before || !after) return false;
   return (
-    (fresh.width > 0 && fresh.width !== held.width) ||
-    (fresh.height > 0 && fresh.height !== held.height)
+    (after.width > 0 && after.width !== before.width) ||
+    (after.height > 0 && after.height !== before.height)
   );
 }

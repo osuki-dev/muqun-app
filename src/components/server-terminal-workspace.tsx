@@ -140,7 +140,7 @@ import { GatewayStorageError } from '@/components/gateway-storage-error';
 import { useGatewayTunnel } from '@/hooks/use-gateway-tunnel';
 import { usePaneApproval } from '@/hooks/use-pane-approval';
 import { usePaneEvents } from '@/hooks/use-pane-events';
-import { paneGeometryChanged } from '@/lib/pane-event-names';
+import { layoutNeedsRefresh, type PaneLayout } from '@/lib/pane-event-names';
 import {
   useLatestRef,
   useLazyRef,
@@ -178,7 +178,7 @@ import {
   gatewaySupportsAgentEvents,
   gatewaySupportsAgentSpawn,
   gatewaySupportsApprovals,
-  getPane,
+  loadPanes,
   readPaneOutput,
   readPaneRange,
   readPaneHistory,
@@ -486,7 +486,7 @@ const initialData: ServerData = {
 const MAX_RECONNECT_DELAY_MS = 8_000;
 /** How often a pane with nothing captured yet asks again while its output grows. */
 const CAPTURED_REPROBE_MS = 30_000;
-/** At most one size check of the open pane per this long, however fast `layout_updated` comes. */
+/** At most one pane-list read per this long, however fast `layout_updated` comes. */
 const LAYOUT_CHECK_MS = 2_000;
 
 /**
@@ -1919,32 +1919,36 @@ export function ServerTerminalWorkspace({
     };
   }, [refreshData]);
 
-  // tmux's `layout_updated` moves with every title or command change on the
-  // host, every 500 ms next to a working agent, so it never re-reads the
-  // workspace by itself: at most once every LAYOUT_CHECK_MS the open pane alone
-  // is read, and the workspace follows only when that pane's grid changed.
+  // tmux's `layout_updated` is its only activity event: it carries every
+  // window and pane created, closed or moved, and also moves with every title
+  // or command change on the host, every 500 ms next to a working agent. So it
+  // is answered with one pane-list read -- at once after a quiet spell, at most
+  // every LAYOUT_CHECK_MS while it keeps coming -- and the workspace is read
+  // again only when that list shows structure or an open-pane resize.
   const layoutCheckRef = useRef<() => void>(() => {});
   useEffect(() => {
     let handle: ReturnType<typeof setTimeout> | undefined;
     let lastCheckAt = 0;
     const sessionId = data.sessionId;
+    const layoutOf = (pane: HerdrEntity): PaneLayout => ({
+      id: pane.id,
+      tab: field(pane, 'tab_id'),
+      workspace: field(pane, 'workspace_id'),
+      width: numberField(pane, 'width'),
+      height: numberField(pane, 'height'),
+    });
     layoutCheckRef.current = () => {
       if (handle || !sessionId) return;
-      const wait = Math.max(250, lastCheckAt + LAYOUT_CHECK_MS - Date.now());
+      const wait = Math.max(0, lastCheckAt + LAYOUT_CHECK_MS - Date.now());
       handle = setTimeout(() => {
         handle = undefined;
         lastCheckAt = Date.now();
-        const paneId = activePaneRef.current;
-        const held = paneId ? panesRef.current.find((pane) => pane.id === paneId) : undefined;
-        if (!paneId || !held) return;
-        getPane(sessionId, paneId).then(
+        const held = panesRef.current.map(layoutOf);
+        loadPanes(sessionId).then(
           (fresh) => {
-            if (activePaneRef.current !== paneId) return;
-            const geometry = (pane: HerdrEntity) => ({
-              width: numberField(pane, 'width'),
-              height: numberField(pane, 'height'),
-            });
-            if (paneGeometryChanged(geometry(held), geometry(fresh))) refreshDataRef.current();
+            if (layoutNeedsRefresh(held, fresh.map(layoutOf), activePaneRef.current)) {
+              refreshDataRef.current();
+            }
           },
           // The 12 s poll still reads the workspace; a failed check is not news.
           () => {}
