@@ -16,6 +16,7 @@ const { describeGatewayFailure } = await import('../network-error');
 const { parseTerminalDiscovery } = await import('../agent-protocol');
 const {
   backendPagesHistory,
+  capturedProbeDue,
   canOfferHistoryPull,
   historyExhaustedNotice,
   historyPullUsesRange,
@@ -462,4 +463,18 @@ describe('captured history goes first where the gateway serves it', () => {
     expect(requested).toEqual(asked);
     expect(tail.calls.count).toBe(tailCalls);
   });
+});
+
+test('the captured history is asked once, and never after a pull knows more', () => {
+  const pane = { off: false, exhausted: false, cursor: null, askedAlready: false };
+  const cases: [Parameters<typeof capturedProbeDue>[0], boolean][] = [
+    [pane, true],
+    // A focus return or an overview toggle asks nothing new.
+    [{ ...pane, askedAlready: true }, false],
+    // The last page was given: going back to the pane does not offer it again.
+    [{ ...pane, exhausted: true }, false],
+    [{ ...pane, cursor: { before: 'c', epoch: 'e' } }, false],
+    [{ ...pane, off: true }, false],
+  ];
+  expect(cases.map(([state]) => capturedProbeDue(state))).toEqual(cases.map(([, due]) => due));
 });

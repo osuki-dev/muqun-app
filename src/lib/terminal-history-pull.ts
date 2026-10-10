@@ -8,6 +8,20 @@ export interface EarlierPullRead {
   read: unknown;
 }
 
+/**
+ * Whether to ask a pane's captured history whether it has rows: once per ask,
+ * and never once a pull knows more -- a cursor in hand, or the last page
+ * given -- or the pane turned out not to be captured.
+ */
+export function capturedProbeDue(pane: {
+  off: boolean;
+  exhausted: boolean;
+  cursor: CapturedCursor | null;
+  askedAlready: boolean;
+}): boolean {
+  return !pane.off && !pane.exhausted && pane.cursor === null && !pane.askedAlready;
+}
+
 /** The capability a gateway advertises when it serves captured pane history. */
 export const PANE_CAPTURED_HISTORY_CAPABILITY = 'pane_captured_history';
 
