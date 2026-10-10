@@ -78,7 +78,7 @@ import { useServerCapabilities } from '@/stores/server-capabilities';
 import { useFleetPeers } from '@/stores/fleet-peers';
 import { fetchFleetPeers, hasFleetPeers } from '@/lib/fleet-peers';
 import { recordEndpoint } from '@/hooks/use-server-tasks';
-import { taskMentions, type MentionComputer } from '@/lib/composer-mentions';
+import { mentionedComputers, taskMentions, type MentionComputer } from '@/lib/composer-mentions';
 import { useServerTasksStore } from '@/stores/server-tasks';
 import type { ServerReachability } from '@/lib/server-reachability';
 import { useAgents } from '@/stores/agents';
@@ -109,6 +109,8 @@ const NO_SKILLS: AgentCatalog['skills'] = [];
  */
 /** How many of the target's recent sessions are read for models it refused. */
 const REFUSAL_SESSIONS_READ = 30;
+/** How long Send waits on the target's links before sending without mentions. */
+const MENTIONS_READ_TIMEOUT_MS = 2_000;
 
 export function HomeComposerDock({
   controller,
@@ -215,10 +217,16 @@ export function HomeComposerDock({
    * draft names none, the target cannot link, or it did not answer.
    */
   const mentionsIn = async (goal: string, serverId: string): Promise<string[]> => {
-    if (!fleetCapable || !/@\S/.test(goal)) return [];
+    // Only a draft that names a computer (`@src/…` is a file) asks, and
+    // briefly: Send does not wait long on a slow computer for this.
+    const named = mentionedComputers(
+      goal,
+      mentionComputers.map((computer) => computer.name)
+    );
+    if (!fleetCapable || named.length === 0) return [];
     const target = servers.find((server) => server.serverId === serverId);
     if (!target || target.sshTunnel) return [];
-    const answer = await fetchFleetPeers(recordEndpoint(target));
+    const answer = await fetchFleetPeers(recordEndpoint(target), MENTIONS_READ_TIMEOUT_MS);
     // What the target said about its links is news for the fleet store too.
     useFleetPeers.getState().record(serverId, answer);
     return answer.ok ? taskMentions(goal, mentionComputers, answer.peers.peers) : [];

@@ -150,10 +150,13 @@ export function refusesPhone(result: FleetPeersFetch): boolean {
   return !result.ok && result.reason === 'http' && (result.status === 401 || result.status === 403);
 }
 
-export async function fetchFleetPeers(endpoint: FleetEndpoint): Promise<FleetPeersFetch> {
+export async function fetchFleetPeers(
+  endpoint: FleetEndpoint,
+  timeoutMs?: number
+): Promise<FleetPeersFetch> {
   let response: Response;
   try {
-    response = await endpointRequest(endpoint, '/api/peers', 'GET');
+    response = await endpointRequest(endpoint, '/api/peers', 'GET', undefined, timeoutMs);
   } catch (error) {
     // The encrypted transport turns a plaintext refusal into an error that
     // still carries the status.
