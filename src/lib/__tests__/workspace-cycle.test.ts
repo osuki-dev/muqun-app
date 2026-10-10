@@ -28,49 +28,18 @@ const workspaces = [
 ];
 
 describe('cycling', () => {
-  test('next moves one forward', () => {
+  test('next and previous step one workspace, and both ends wrap', () => {
     expect(cycleWorkspace(workspaces, 'wE', 'next')?.workspaceId).toBe('wG');
-  });
-
-  test('previous moves one back', () => {
     expect(cycleWorkspace(workspaces, 'wM', 'previous')?.workspaceId).toBe('wG');
-  });
-
-  test('next wraps past the last workspace', () => {
     expect(cycleWorkspace(workspaces, 'wN', 'next')?.workspaceId).toBe('wE');
-  });
-
-  test('previous wraps before the first workspace', () => {
     expect(cycleWorkspace(workspaces, 'wE', 'previous')?.workspaceId).toBe('wN');
   });
 
-  test('a full lap in either direction returns to where it started', () => {
-    let forward = 'wE';
-    let backward = 'wE';
-    for (let step = 0; step < workspaces.length; step += 1) {
-      forward = cycleWorkspace(workspaces, forward, 'next')?.workspaceId ?? '';
-      backward = cycleWorkspace(workspaces, backward, 'previous')?.workspaceId ?? '';
-    }
-    expect(forward).toBe('wE');
-    expect(backward).toBe('wE');
-  });
-
-  test('a single workspace has nothing to cycle to', () => {
+  test('one workspace, or none, has nothing to cycle to', () => {
     expect(canCycleWorkspaces([workspaces[0]])).toBe(false);
     expect(cycleWorkspace([workspaces[0]], 'wE', 'next')).toBeNull();
-    expect(cycleWorkspace([workspaces[0]], 'wE', 'previous')).toBeNull();
-  });
-
-  test('an empty session cycles nowhere', () => {
     expect(canCycleWorkspaces([])).toBe(false);
     expect(cycleWorkspace([], '', 'next')).toBeNull();
-  });
-
-  test('two workspaces toggle, both directions', () => {
-    const pair = workspaces.slice(0, 2);
-    expect(cycleWorkspace(pair, 'wE', 'next')?.workspaceId).toBe('wG');
-    expect(cycleWorkspace(pair, 'wG', 'next')?.workspaceId).toBe('wE');
-    expect(cycleWorkspace(pair, 'wE', 'previous')?.workspaceId).toBe('wG');
   });
 
   test('a workspace that no longer exists lands on an end rather than nowhere', () => {

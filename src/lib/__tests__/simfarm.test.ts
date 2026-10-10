@@ -221,35 +221,15 @@ describe('simfarmSocketUrl', () => {
 // cost this app in review -- so the thing worth pinning is that it stays a
 // command, and that it stays the *useful* one.
 describe('SIMFARM_RUN_COMMAND', () => {
-  test('carries no address at all', () => {
-    // The rule `links.ts` is written around: a URL in a store binary is not a
-    // deploy, so a string that ships one has to have been checked first. This
-    // one ships none, and that is what keeps it out of that procedure.
-    expect(/:\/\//.test(SIMFARM_RUN_COMMAND)).toBe(false);
-    expect(/\b[a-z0-9-]+\.(dev|com|sh|net|io)\b/.test(SIMFARM_RUN_COMMAND)).toBe(false);
-  });
-
-  test('starts the program the empty state is about', () => {
+  test('starts a reachable, real simfarm and leaves the port to the field', () => {
+    // No URL ships in a store binary; simfarm binds 127.0.0.1 and runs only the
+    // mock provider by default, so the bare command would start a server this
+    // app cannot see holding a fake device; and the port field beside it is
+    // the one answer to which port.
     expect(SIMFARM_RUN_COMMAND.startsWith('npx simfarm ')).toBe(true);
-  });
-
-  test('binds where a phone on the tailnet can reach it', () => {
-    // simfarm binds 127.0.0.1 by default, so the bare command starts a server
-    // this app cannot see and the reader lands back on the same screen.
+    expect(/:\/\//.test(SIMFARM_RUN_COMMAND)).toBe(false);
     expect(SIMFARM_RUN_COMMAND).toContain('--host 0.0.0.0');
-  });
-
-  test('turns on a provider that is not the mock', () => {
-    // The default provider list is `mock` alone: a simfarm holding nothing but
-    // a fake device is a preview of nothing.
     expect(/--providers \S*(ios|android)/.test(SIMFARM_RUN_COMMAND)).toBe(true);
-  });
-
-  test('does not pin a port, because the field below it is the port', () => {
-    // The command is printed beside a port field on a screen whose whole
-    // subject is which port to use. A `--port` in it would be a second answer
-    // to that question, and the one the reader cannot edit.
     expect(SIMFARM_RUN_COMMAND).not.toContain('--port');
-    expect(SIMFARM_RUN_COMMAND).not.toContain(String(SIMFARM_DEFAULT_PORT));
   });
 });

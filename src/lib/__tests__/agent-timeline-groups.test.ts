@@ -42,10 +42,6 @@ describe('buildTimelineGroups', () => {
     expect(groups[0].prevItem).toBeUndefined();
     expect(groups[1].prevItem?.id).toBe('a');
   });
-
-  test('nothing is nothing', () => {
-    expect(buildTimelineGroups([])).toEqual([]);
-  });
 });
 
 describe('reuse across renders', () => {

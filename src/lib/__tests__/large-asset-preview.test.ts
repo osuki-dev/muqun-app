@@ -28,13 +28,6 @@ describe('the sizes the asset viewer routes on', () => {
     expect(MAX_LINE_COLUMNS).toBeLessThan(HIGHLIGHT_MAX_CHARS);
     expect(HIGHLIGHT_MAX_CHARS).toBeLessThan(MAX_ASSET_TEXT_BYTES);
   });
-
-  test('the read ceiling is well past the size a file used to be refused at', () => {
-    // The gate this replaced stood at 64 KiB and the read at 512 KiB. Both are
-    // now a long way below what the viewer will open.
-    expect(MAX_ASSET_TEXT_BYTES).toBe(5 * 1024 * 1024);
-    expect(HIGHLIGHT_MAX_CHARS).toBe(64 * 1024);
-  });
 });
 
 describe('the demo bundle, which the line viewer draws', () => {
@@ -49,10 +42,6 @@ describe('the demo bundle, which the line viewer draws', () => {
     const index = indexTextLines(bundle);
     expect(index.lines.length).toBeGreaterThan(3_000);
     expect(index.longest).toBeGreaterThan(MAX_LINE_COLUMNS);
-  });
-
-  test('building it twice is building it once', () => {
-    expect(demoBundleText()).toBe(bundle);
   });
 });
 

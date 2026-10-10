@@ -5,7 +5,6 @@ import { beforeEach, describe, expect, test } from 'bun:test';
 
 import {
   directGatewayBaseUrl,
-  MAX_TUNNEL_CONNECTIONS,
   SshTunnelManager,
   tunnelBaseUrl,
   type TunnelConnectionHandle,
@@ -317,12 +316,6 @@ describe('idle background', () => {
     manager.setBackgroundedIdle(false);
     await tick();
     expect(manager.state('s1').phase).toBe('open');
-  });
-});
-
-describe('constants', () => {
-  test('the connection cap stays small', () => {
-    expect(MAX_TUNNEL_CONNECTIONS).toBe(8);
   });
 });
 

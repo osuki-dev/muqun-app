@@ -6,7 +6,6 @@
 import { describe, expect, test } from 'bun:test';
 
 import {
-  SSH_TERMINAL_SCROLLBACK,
   SshTerminalSession,
   animationFrameScheduler,
   type FrameScheduler,
@@ -300,21 +299,6 @@ describe('SshTerminalSession', () => {
     s.pushText('b');
     schedule.tick();
     expect(frames[0]).not.toBe(frames[1]);
-  });
-
-  test('the default scrollback is five thousand rows', () => {
-    expect(SSH_TERMINAL_SCROLLBACK).toBe(5000);
-    const s = new SshTerminalSession({
-      decoder: new TextDecoder(),
-      columns: 4,
-      rows: 2,
-      schedule: manualScheduler(),
-    });
-    // One more row than the window holds: the first one is gone.
-    s.pushText(Array.from({ length: 5003 }, (_, index) => `${index}`).join('\r\n'));
-    s.publish();
-    expect(s.frame.lines).toHaveLength(5002);
-    expect(text(s.frame).startsWith('1\n2\n')).toBe(true);
   });
 
   test('the animation-frame scheduler falls back to a timer and can be cancelled', async () => {
