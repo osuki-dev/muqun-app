@@ -923,6 +923,16 @@ export function HomeOverview({
   const showDock = !hydrationError && !loading && launchController.servers.length > 0;
   // The session screen's own dock, at the foot of the page -- or, on the
   // wide Pad cover, at the foot of the work column.
+  // Nothing paired: the pairing call to action.
+  const emptyState =
+    !hydrationError && !loading && launchController.servers.length === 0 ? (
+      <EmptyState
+        compact
+        isPad={isPad}
+        onPair={() => void commands.pairGateway()}
+        onDemo={openDemo}
+      />
+    ) : undefined;
   const dock = showDock ? (
     <HomeComposerDock
       controller={launchController}
@@ -1154,18 +1164,17 @@ export function HomeOverview({
                 )
               }
               padComposer={padLaunch ? dock : undefined}
+              padWorkEmpty={padLaunch ? emptyState : undefined}
               padComposerHeight={dockHeight}
               coverPaneKeyboardAware={!dockFocused}
               workScrollEvents={sortHoldScroll}
               entering={entering}
               launches={
                 hydrationError || loading ? undefined : launchController.servers.length === 0 ? (
-                  <EmptyState
-                    compact
-                    isPad={isPad}
-                    onPair={() => void commands.pairGateway()}
-                    onDemo={openDemo}
-                  />
+                  // On the Pad cover it heads the work column instead.
+                  padLaunch ? undefined : (
+                    emptyState
+                  )
                 ) : (
                   <View style={{ gap: padLaunch ? 12 : 16 }}>
                     {padLaunch ? null : isPad ? (
