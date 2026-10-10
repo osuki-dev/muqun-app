@@ -10,6 +10,14 @@ import { encryptedEventStreamRequest, gatewayUsesEncryptedTransport } from '@/li
 import { rethrow } from '@/lib/compiler-safe-control-flow';
 import { onNetworkChange } from '@/lib/network-events';
 import { STREAM_WATCHDOG_TICK_MS, streamIsStalled } from '@/lib/stream-watchdog';
+import {
+  APPROVAL_EVENTS,
+  paneEventRole,
+  SUBSCRIBED_EVENTS,
+  type ApprovalEventName,
+} from '@/lib/pane-event-names';
+
+export type { ApprovalEventName };
 
 /**
  * A live event feed for one session, replacing the output poll.
@@ -22,7 +30,9 @@ import { STREAM_WATCHDOG_TICK_MS, streamIsStalled } from '@/lib/stream-watchdog'
  *    which is how we read output only when it actually changed instead of every
  *    1.2 s regardless.
  *  - structural events -- a workspace, tab or pane appeared, vanished, was
- *    renamed, or an agent attached. These change the navigator, not the output.
+ *    renamed, an agent attached, or a pane was resized (`layout_updated`).
+ *    These change the navigator and the panes' sizes, not the output. The
+ *    names and their roles live in `lib/pane-event-names`.
  *
  * An encrypted-transport record gets the same stream over the same route; the
  * connection is opened by a sealed request envelope and every event arrives as
@@ -41,35 +51,6 @@ import { STREAM_WATCHDOG_TICK_MS, streamIsStalled } from '@/lib/stream-watchdog'
  * aborted and reopened through the same retry path; a network change does the
  * same at once, with the retry delay reset.
  */
-const OUTPUT_EVENTS = ['pane.updated'];
-
-/**
- * An agent blocking on a permission menu is the one thing a client cannot
- * discover by watching output go by, so the gateway publishes it as its own
- * event rather than as pane churn. A gateway that has never heard of these
- * names simply never matches them, which is what makes asking for them safe.
- */
-const APPROVAL_EVENTS = ['approval.pending', 'approval.resolved'] as const;
-
-export type ApprovalEventName = (typeof APPROVAL_EVENTS)[number];
-
-const STRUCTURE_EVENTS = [
-  'pane.created',
-  'pane.closed',
-  'pane.moved',
-  'pane.exited',
-  'pane.agent_detected',
-  'pane.agent_status_changed',
-  'tab.created',
-  'tab.closed',
-  'tab.renamed',
-  'tab.moved',
-  'workspace.created',
-  'workspace.closed',
-  'workspace.renamed',
-  'workspace.focused',
-];
-
 type PaneEventHandlers = {
   /** A pane printed. `revision` lets the caller ignore a repeat of what it has. */
   onPaneRevision: (paneId: string, revision: number) => void;
@@ -141,7 +122,7 @@ export function usePaneEvents(
       return () => {};
     }
 
-    const types = [...OUTPUT_EVENTS, ...STRUCTURE_EVENTS, ...APPROVAL_EVENTS].join(',');
+    const types = SUBSCRIBED_EVENTS.join(',');
     const base = gatewayUrl.replace(/\/$/, '');
     const params = new URLSearchParams({ types });
     // Ask the gateway to inline this pane's output into its update events. A
@@ -154,7 +135,6 @@ export function usePaneEvents(
     }
     const url = `${base}/api/sessions/${encodeURIComponent(sessionId)}/events?${params.toString()}`;
 
-    const outputNames = new Set(OUTPUT_EVENTS.map((name) => name.replace('.', '_')));
     const approvalNames = new Set<string>(APPROVAL_EVENTS);
     let cancelled = false;
     let controller: AbortController | null = null;
@@ -174,7 +154,8 @@ export function usePaneEvents(
       }
       const name = payload.event;
       if (!name) return;
-      if (outputNames.has(name)) {
+      const role = paneEventRole(name);
+      if (role === 'output') {
         const pane = payload.data?.pane;
         if (pane?.pane_id) {
           const revision = pane.revision ?? 0;
@@ -188,8 +169,9 @@ export function usePaneEvents(
         }
         return;
       }
-      // Anything else we subscribed to is structural.
-      handlersRef.current.onStructureChanged();
+      // A structural change, a pane resized (`layout_updated`) included: the
+      // pane list, and with it each pane's columns, is read again.
+      if (role === 'structure') handlersRef.current.onStructureChanged();
     };
 
     // Approvals are the gateway's own events, not forwarded Herdr lines, so
