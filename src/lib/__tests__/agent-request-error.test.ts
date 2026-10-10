@@ -46,11 +46,25 @@ describe('classifyAgentRequestError', () => {
   test('a request that got no answer is offline', () => {
     expect(isAgentOfflineError(new TypeError('Network request failed'))).toBe(true);
     expect(isAgentOfflineError(new Error('Timed out waiting for the server.'))).toBe(true);
+    // Android: a native exception relayed as text, or a transport code on the error.
     expect(
       isAgentOfflineError(
         new Error('java.lang.RuntimeException: Cronet failed: net::ERR_ADDRESS_UNREACHABLE')
       )
     ).toBe(true);
+    expect(
+      isAgentOfflineError(new Error('javax.net.ssl.SSLHandshakeException: Chain validation failed'))
+    ).toBe(true);
+    expect(
+      isAgentOfflineError(Object.assign(new Error('connect failed'), { code: 'ECONNREFUSED' }))
+    ).toBe(true);
+  });
+
+  test('a message it cannot read is one short line, never a stack trace', () => {
+    const reading = classifyAgentRequestError(
+      new Error('Something odd happened\n  at com.example.Thing.run(Thing.java:12)\n  at x.y(z)')
+    );
+    expect(reading).toEqual({ kind: 'other', message: 'Something odd happened' });
   });
 
   test('the refusal is bounded and flattened', () => {
