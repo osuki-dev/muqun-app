@@ -637,10 +637,12 @@ export function taskRowVisual(
 ): TaskRowVisual {
   const visual = taskStateVisual(task, opts);
   if (task.state === 'sent' || task.binding.kind !== 'peer') return visual;
-  // A failed mirror with a reason says it in the app's words; without one
-  // (the other computer refused) its summary is already plain prose.
-  if (task.state === 'failed' && task.reason) {
-    return { ...visual, line: { kind: 'mirrorFailed', reason: task.reason } };
+  // A failed mirror says why in the app's words: from its reason, or, for a
+  // create the other computer refused (no reason, and no task over there to
+  // have written the summary), the general line -- the summary is then the
+  // gateway's own English sentence, not agent output.
+  if (task.state === 'failed' && (task.reason || !task.binding.remoteTaskId)) {
+    return { ...visual, line: { kind: 'mirrorFailed', reason: task.reason ?? '' } };
   }
   // An open mirror whose computer is quiet says so in place of its line; the
   // state's icon, tone, clock and actions stand.
