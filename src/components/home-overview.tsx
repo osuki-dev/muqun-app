@@ -147,6 +147,7 @@ import {
 import { sshHomeRows } from '@/lib/ssh-home';
 import type { SshHostRecord } from '@/lib/ssh-hosts';
 import { useGatewayRecord } from '@/hooks/use-gateway-record';
+import { useFleetLink } from '@/hooks/use-fleet-link';
 import { type HomeCommandOptions, useHomeCommands } from '@/hooks/use-home-commands';
 import type { HomeServerEntry } from '@/lib/home-commands';
 import { GatewayStorageError } from '@/components/gateway-storage-error';
@@ -757,6 +758,8 @@ export function HomeOverview({
     opacity: interpolate(scrollY.value, [0, 82], [1, 0], Extrapolation.CLAMP),
   }));
 
+  // Links the reader's computers to each other in the background (spec §4.1).
+  useFleetLink();
   const commands = useHomeCommands({
     resumeServer: embedded ? undefined : resumeServerTarget,
     embedded,

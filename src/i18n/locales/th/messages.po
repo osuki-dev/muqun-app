@@ -434,6 +434,10 @@ msgstr "สร้างเทอร์มินัลแล้ว เปิด�
 msgid "About"
 msgstr "เกี่ยวกับ"
 
+#: src/components/settings-fleet-peers.tsx
+msgid "Accept work from other computers"
+msgstr "รับงานจากคอมพิวเตอร์เครื่องอื่น"
+
 #: src/components/task-row.tsx
 msgid "Acknowledge"
 msgstr "ทำเครื่องหมายว่ารับทราบ"
@@ -533,6 +537,10 @@ msgstr "เปิดพาเนลเอเจนต์ใน"
 #: src/components/settings-servers.tsx
 msgid "Agents"
 msgstr "เอเจนต์"
+
+#: src/components/settings-fleet-peers.tsx
+msgid "Agents on your other computers can hand part of a task to this one."
+msgstr "เอเจนต์บนคอมพิวเตอร์เครื่องอื่นของคุณสามารถส่งงานบางส่วนมาให้เครื่องนี้ได้"
 
 #: src/components/app-drawer-content.tsx
 msgid "AI coding assistant"
@@ -1013,6 +1021,10 @@ msgstr "ยกเลิกแล้ว"
 msgctxt "task state"
 msgid "Cancelled"
 msgstr "ยกเลิกแล้ว"
+
+#: src/components/settings-fleet-peers.tsx
+msgid "Cannot reach {quietNames}"
+msgstr "เข้าถึง {quietNames} ไม่ได้"
 
 #: src/components/settings-server-capabilities.tsx
 msgid "Capabilities"
@@ -1708,6 +1720,10 @@ msgstr "ยกเลิกงานไม่ได้"
 #: src/components/agent-workbench.tsx
 msgid "Could not change delivery"
 msgstr "เปลี่ยนวิธีส่งไม่ได้"
+
+#: src/components/settings-fleet-peers.tsx
+msgid "Could not change this setting"
+msgstr "เปลี่ยนการตั้งค่านี้ไม่ได้"
 
 #: src/components/agent-workbench.tsx
 msgid "Could not compact"
@@ -3209,6 +3225,10 @@ msgstr "ระดับ {depth}"
 msgid "Light"
 msgstr "สว่าง"
 
+#: src/components/settings-fleet-peers.tsx
+msgid "Linked with: {linkedNames}"
+msgstr "เชื่อมกับ: {linkedNames}"
+
 #: src/app/commands.tsx
 msgid "List branches"
 msgstr "แสดงสาขา"
@@ -3302,6 +3322,10 @@ msgstr "เครื่อง"
 #: src/components/launch-intro.tsx
 msgid "Make it yours"
 msgstr "ทำให้เป็นของคุณ"
+
+#: src/components/settings-fleet-peers.tsx
+msgid "Make sure the computer is reachable, then try again."
+msgstr "ตรวจสอบว่าเข้าถึงคอมพิวเตอร์ได้ แล้วลองอีกครั้ง"
 
 #: src/components/home-overview.tsx
 msgid "Manage"
@@ -4139,6 +4163,10 @@ msgstr "เปิดเทอร์มินัลของเอเจนต์
 #: src/components/settings-servers.tsx
 msgid "Options for {0}"
 msgstr "ตัวเลือกสำหรับ {0}"
+
+#: src/components/settings-fleet-peers.tsx
+msgid "Other computers"
+msgstr "คอมพิวเตอร์เครื่องอื่น"
 
 #: src/components/agent-context-sheet.tsx
 #: src/components/tool-call-code-rows.tsx

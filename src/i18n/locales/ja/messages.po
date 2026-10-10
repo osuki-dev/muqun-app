@@ -434,6 +434,10 @@ msgstr "ターミナルを作成しました。開いて起動状態を確認し
 msgid "About"
 msgstr "アプリについて"
 
+#: src/components/settings-fleet-peers.tsx
+msgid "Accept work from other computers"
+msgstr "ほかのコンピュータからの作業を受け付ける"
+
 #: src/components/task-row.tsx
 msgid "Acknowledge"
 msgstr "確認済みにする"
@@ -533,6 +537,10 @@ msgstr "エージェントのパネルの初期表示"
 #: src/components/settings-servers.tsx
 msgid "Agents"
 msgstr "エージェント"
+
+#: src/components/settings-fleet-peers.tsx
+msgid "Agents on your other computers can hand part of a task to this one."
+msgstr "ほかのコンピュータのエージェントが、タスクの一部をこのコンピュータに任せられます。"
 
 #: src/components/app-drawer-content.tsx
 msgid "AI coding assistant"
@@ -1013,6 +1021,10 @@ msgstr "キャンセルしました"
 msgctxt "task state"
 msgid "Cancelled"
 msgstr "キャンセル済み"
+
+#: src/components/settings-fleet-peers.tsx
+msgid "Cannot reach {quietNames}"
+msgstr "{quietNames} に接続できません"
 
 #: src/components/settings-server-capabilities.tsx
 msgid "Capabilities"
@@ -1708,6 +1720,10 @@ msgstr "タスクをキャンセルできませんでした"
 #: src/components/agent-workbench.tsx
 msgid "Could not change delivery"
 msgstr "配信方法を変更できませんでした"
+
+#: src/components/settings-fleet-peers.tsx
+msgid "Could not change this setting"
+msgstr "この設定を変更できませんでした"
 
 #: src/components/agent-workbench.tsx
 msgid "Could not compact"
@@ -3209,6 +3225,10 @@ msgstr "階層 {depth}"
 msgid "Light"
 msgstr "ライト"
 
+#: src/components/settings-fleet-peers.tsx
+msgid "Linked with: {linkedNames}"
+msgstr "連携先: {linkedNames}"
+
 #: src/app/commands.tsx
 msgid "List branches"
 msgstr "ブランチ一覧"
@@ -3302,6 +3322,10 @@ msgstr "マシン"
 #: src/components/launch-intro.tsx
 msgid "Make it yours"
 msgstr "自分好みに"
+
+#: src/components/settings-fleet-peers.tsx
+msgid "Make sure the computer is reachable, then try again."
+msgstr "コンピュータに接続できることを確認してから、もう一度お試しください。"
 
 #: src/components/home-overview.tsx
 msgid "Manage"
@@ -4139,6 +4163,10 @@ msgstr "このエージェントのターミナルを開きます"
 #: src/components/settings-servers.tsx
 msgid "Options for {0}"
 msgstr "{0} のオプション"
+
+#: src/components/settings-fleet-peers.tsx
+msgid "Other computers"
+msgstr "ほかのコンピュータ"
 
 #: src/components/agent-context-sheet.tsx
 #: src/components/tool-call-code-rows.tsx

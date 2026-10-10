@@ -434,6 +434,10 @@ msgstr "Терминал создан. Откройте его, чтобы пр�
 msgid "About"
 msgstr "О приложении"
 
+#: src/components/settings-fleet-peers.tsx
+msgid "Accept work from other computers"
+msgstr "Принимать работу от других компьютеров"
+
 #: src/components/task-row.tsx
 msgid "Acknowledge"
 msgstr "Отметить как просмотренное"
@@ -533,6 +537,10 @@ msgstr "Панели агентов открываются в"
 #: src/components/settings-servers.tsx
 msgid "Agents"
 msgstr "Агенты"
+
+#: src/components/settings-fleet-peers.tsx
+msgid "Agents on your other computers can hand part of a task to this one."
+msgstr "Агенты на других ваших компьютерах смогут передавать этому часть задачи."
 
 #: src/components/app-drawer-content.tsx
 msgid "AI coding assistant"
@@ -1013,6 +1021,10 @@ msgstr "Отменено"
 msgctxt "task state"
 msgid "Cancelled"
 msgstr "Отменена"
+
+#: src/components/settings-fleet-peers.tsx
+msgid "Cannot reach {quietNames}"
+msgstr "Нет связи: {quietNames}"
 
 #: src/components/settings-server-capabilities.tsx
 msgid "Capabilities"
@@ -1708,6 +1720,10 @@ msgstr "Не удалось отменить задачу"
 #: src/components/agent-workbench.tsx
 msgid "Could not change delivery"
 msgstr "Не удалось изменить доставку"
+
+#: src/components/settings-fleet-peers.tsx
+msgid "Could not change this setting"
+msgstr "Не удалось изменить этот параметр"
 
 #: src/components/agent-workbench.tsx
 msgid "Could not compact"
@@ -3209,6 +3225,10 @@ msgstr "Уровень {depth}"
 msgid "Light"
 msgstr "Светлая"
 
+#: src/components/settings-fleet-peers.tsx
+msgid "Linked with: {linkedNames}"
+msgstr "Связан с: {linkedNames}"
+
 #: src/app/commands.tsx
 msgid "List branches"
 msgstr "Список веток"
@@ -3302,6 +3322,10 @@ msgstr "Компьютеры"
 #: src/components/launch-intro.tsx
 msgid "Make it yours"
 msgstr "Сделайте его своим"
+
+#: src/components/settings-fleet-peers.tsx
+msgid "Make sure the computer is reachable, then try again."
+msgstr "Убедитесь, что компьютер доступен, и повторите попытку."
 
 #: src/components/home-overview.tsx
 msgid "Manage"
@@ -4139,6 +4163,10 @@ msgstr "Открывает терминал этого агента"
 #: src/components/settings-servers.tsx
 msgid "Options for {0}"
 msgstr "Параметры {0}"
+
+#: src/components/settings-fleet-peers.tsx
+msgid "Other computers"
+msgstr "Другие компьютеры"
 
 #: src/components/agent-context-sheet.tsx
 #: src/components/tool-call-code-rows.tsx

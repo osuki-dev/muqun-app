@@ -434,6 +434,10 @@ msgstr "A terminal was created. Open it to inspect startup; launching again coul
 msgid "About"
 msgstr "About"
 
+#: src/components/settings-fleet-peers.tsx
+msgid "Accept work from other computers"
+msgstr "Accept work from other computers"
+
 #: src/components/task-row.tsx
 msgid "Acknowledge"
 msgstr "Acknowledge"
@@ -533,6 +537,10 @@ msgstr "Agent panes open in"
 #: src/components/settings-servers.tsx
 msgid "Agents"
 msgstr "Agents"
+
+#: src/components/settings-fleet-peers.tsx
+msgid "Agents on your other computers can hand part of a task to this one."
+msgstr "Agents on your other computers can hand part of a task to this one"
 
 #: src/components/app-drawer-content.tsx
 msgid "AI coding assistant"
@@ -1013,6 +1021,10 @@ msgstr "Cancelled"
 msgctxt "task state"
 msgid "Cancelled"
 msgstr "Cancelled"
+
+#: src/components/settings-fleet-peers.tsx
+msgid "Cannot reach {quietNames}"
+msgstr "Cannot reach {quietNames}"
 
 #: src/components/settings-server-capabilities.tsx
 msgid "Capabilities"
@@ -1708,6 +1720,10 @@ msgstr "Could not cancel the task"
 #: src/components/agent-workbench.tsx
 msgid "Could not change delivery"
 msgstr "Could not change delivery"
+
+#: src/components/settings-fleet-peers.tsx
+msgid "Could not change this setting"
+msgstr "Could not change this setting"
 
 #: src/components/agent-workbench.tsx
 msgid "Could not compact"
@@ -3209,6 +3225,10 @@ msgstr "Level {depth}"
 msgid "Light"
 msgstr "Light"
 
+#: src/components/settings-fleet-peers.tsx
+msgid "Linked with: {linkedNames}"
+msgstr "Linked with: {linkedNames}"
+
 #: src/app/commands.tsx
 msgid "List branches"
 msgstr "List branches"
@@ -3302,6 +3322,10 @@ msgstr "Machines"
 #: src/components/launch-intro.tsx
 msgid "Make it yours"
 msgstr "Make it yours"
+
+#: src/components/settings-fleet-peers.tsx
+msgid "Make sure the computer is reachable, then try again."
+msgstr "Make sure the computer is reachable, then try again"
 
 #: src/components/home-overview.tsx
 msgid "Manage"
@@ -4139,6 +4163,10 @@ msgstr "Opens this agent's terminal"
 #: src/components/settings-servers.tsx
 msgid "Options for {0}"
 msgstr "Options for {0}"
+
+#: src/components/settings-fleet-peers.tsx
+msgid "Other computers"
+msgstr "Other computers"
 
 #: src/components/agent-context-sheet.tsx
 #: src/components/tool-call-code-rows.tsx
