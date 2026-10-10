@@ -4,7 +4,7 @@ import { ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { SettingsServers } from '@/components/settings-servers';
-import { SheetScene, SheetSceneFooter, sheetSceneStyles } from '@/components/sheet-scene';
+import { SheetScene, SheetSceneFooter } from '@/components/sheet-scene';
 
 /** Server management uses the same native sheet as the other settings panels. */
 export default function SettingsServersScreen() {
@@ -14,16 +14,14 @@ export default function SettingsServersScreen() {
   const { serverId } = useLocalSearchParams<{ serverId?: string }>();
 
   return (
-    <SheetScene fitsContent testID="settings-servers-sheet" title={t`Computers`}>
+    <SheetScene testID="settings-servers-sheet" title={t`Computers`}>
       <ScrollView
-        nestedScrollEnabled
-        style={sheetSceneStyles.fitScroller}
         contentInsetAdjustmentBehavior="never"
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag">
         <SettingsServers initialOpenId={typeof serverId === 'string' ? serverId : undefined} />
-        <SheetSceneFooter bottomInset={insets.bottom} contentSized />
+        <SheetSceneFooter bottomInset={insets.bottom} />
       </ScrollView>
     </SheetScene>
   );

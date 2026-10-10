@@ -466,8 +466,8 @@ export interface AgentComposerProps {
   accessory?: React.ReactNode;
   /**
    * Float the dock as a block instead of a sheet on the screen's edge:
-   * `margin` around it (above the safe area at the foot), the card's corners
-   * all round, and `inset` inside, so its edges and its lines both match the
+   * `margin` around it (above the safe area at the foot), the cards' corner
+   * (`chrome.surface`) all round, and `inset` inside, so its edges and its lines both match the
    * cards above. The phone's Home is the one caller.
    */
   floating?: { margin: number; inset: number };
@@ -1041,10 +1041,12 @@ export const AgentComposer = memo(function AgentComposer({
   );
   /** What sits under the field inside the glass. */
   const innerBottomPadding = floating ? 10 : Math.max(10, bottomInset + 6);
+  /** Under a floating block: the gutter, over the safe area unless the keyboard covers it. */
+  const floatingBottomMargin = floating
+    ? (keyboardHeight > 0 ? 0 : bottomInset) + floating.margin
+    : 0;
   /** From the dock's foot to the field's, which the anchored menu has to clear too. */
-  const dockBottomPadding = floating
-    ? bottomInset + floating.margin + innerBottomPadding
-    : innerBottomPadding;
+  const dockBottomPadding = floatingBottomMargin + innerBottomPadding;
 
   return (
     <Animated.View style={[styles.dockOuter, composerKeyboardStyle]}>
@@ -1268,12 +1270,12 @@ export const AgentComposer = memo(function AgentComposer({
         }}>
         <GlassChrome
           surface="composer"
-          shape={floating ? 'card' : 'sheet'}
+          shape={floating ? 'surface' : 'sheet'}
           style={[
             styles.composerDock,
             floating && {
               marginHorizontal: floating.margin,
-              marginBottom: bottomInset + floating.margin,
+              marginBottom: floatingBottomMargin,
             },
           ]}>
           <View

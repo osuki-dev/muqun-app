@@ -23,6 +23,7 @@
 
 import { parseKeyboardVocabulary, type KeyboardVocabulary } from './key-vocabulary';
 import { parseMessageImageAssets, type MessageImageAsset } from './message-images';
+import { stripTaskInstruction } from './task-plumbing';
 
 // ---------------------------------------------------------------------------
 // Primitives
@@ -1381,7 +1382,12 @@ export function parseInboxItems(value: unknown): InboxItem[] {
 }
 
 /** The one line an inbox item shows: the prompt text it is carrying. */
+/** A queued prompt's text, without the completion request an older gateway appends. */
 export function inboxItemText(item: InboxItem): string {
+  return stripTaskInstruction(inboxPayloadText(item));
+}
+
+function inboxPayloadText(item: InboxItem): string {
   const payload = asRecord(item.payload);
   if (!payload) return asString(item.payload) ?? '';
   const direct = pickString(payload, ['text', 'prompt', 'message', 'content']);

@@ -25,14 +25,29 @@ const INSTRUCTION_ENDS = [
   `${TASK_BLOCKED_MARKER} <one-line reason>`,
 ];
 
-/** A marker line, after any whitespace or bullet the agent draws before it. */
-const MARKER_LINE = /^[\s\-*•●⏺>]*(?:MUQUN_TASK_DONE|MUQUN_TASK_BLOCKED):/;
+/** What may lead a marker: bullets, backticks, whitespace -- any run the gateway strips. */
+const LINE_LEAD = /^[^\p{L}\p{N}]*/u;
+const MARKERS = [TASK_DONE_MARKER, TASK_BLOCKED_MARKER];
 
-/** Assistant text without its marker lines; the same string when it had none. */
-export function stripTaskMarkers(text: string): string {
-  if (!text.includes(TASK_DONE_MARKER) && !text.includes(TASK_BLOCKED_MARKER)) return text;
+/**
+ * Assistant text without its marker lines; the same string when it had none.
+ *
+ * `streaming`: the text is still arriving, so its last, unterminated line is
+ * held back too while it could still become a marker (`MUQUN_TASK_D`), rather
+ * than flashing until the colon lands. A newline or the turn's end releases it.
+ */
+export function stripTaskMarkers(text: string, streaming = false): string {
+  if (!streaming && !text.includes('MUQUN_TASK_')) return text;
   const lines = text.split('\n');
-  const kept = lines.filter((line) => !MARKER_LINE.test(line));
+  const last = lines.length - 1;
+  const kept = lines.filter((line, at) => {
+    const body = line.replace(LINE_LEAD, '');
+    return !MARKERS.some(
+      (marker) =>
+        body.startsWith(marker) ||
+        (streaming && at === last && body.length > 0 && marker.startsWith(body))
+    );
+  });
   return kept.length === lines.length ? text : kept.join('\n').trimEnd();
 }
 
@@ -52,13 +67,15 @@ const SHOWN_SYNTHETIC = 'skill-invocation';
  * The row as the transcript draws it: a `synthetic` part is not drawn (but
  * for a skill invocation, which keeps its notice row), a text
  * part loses the plumbing its side carries, and one left with nothing to show
- * is not drawn either. Returns the same item when nothing changed.
+ * is not drawn either. `streaming`: see `stripTaskMarkers`. Returns the same
+ * item when nothing changed.
  */
-export function withoutTaskPlumbing(item: TimelineItem): TimelineItem | null {
+export function withoutTaskPlumbing(item: TimelineItem, streaming = false): TimelineItem | null {
   const { part } = item;
   if (part.type === 'synthetic') return part.description === SHOWN_SYNTHETIC ? item : null;
   if (part.type !== 'text' || item.role === 'system') return item;
-  const text = item.role === 'user' ? stripTaskInstruction(part.text) : stripTaskMarkers(part.text);
+  const text =
+    item.role === 'user' ? stripTaskInstruction(part.text) : stripTaskMarkers(part.text, streaming);
   if (text === part.text) return item;
   if (!text.trim() && !item.attachments?.length && !item.image_assets?.length) return null;
   return { ...item, part: { ...part, text } };
