@@ -274,12 +274,17 @@ export function settledTombstones(
 /** A paired device that is another computer, with the server id it gave (newer gateways). */
 export type PairedGateway = { deviceId: string; serverId: string };
 
-/** `GET /api/pairings`: the other computers' logins here; `null` when it did not answer. */
+/**
+ * `GET /api/pairings`: the other computers' logins here (empty where the
+ * gateway has no such list); `null` when it did not answer, to try again.
+ */
 export async function fetchPairedGateways(
   endpoint: FleetEndpoint
 ): Promise<PairedGateway[] | null> {
   try {
     const response = await endpointRequest(endpoint, '/api/pairings', 'GET');
+    // No such list here: nothing to revoke. Anything else is tried again.
+    if (response.status === 404) return [];
     if (!response.ok) return null;
     const devices = asRecord(await response.json())?.devices;
     if (!Array.isArray(devices)) return null;

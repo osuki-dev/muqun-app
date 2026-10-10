@@ -31,7 +31,9 @@ import {
   needsYouAcrossComputers,
   type HomeTaskRow,
 } from '@/lib/home-in-progress';
+import { peerServerIdOf } from '@/lib/fleet-peers';
 import { useAgents } from '@/stores/agents';
+import { useFleetPeers } from '@/stores/fleet-peers';
 import { useHomeAttention } from '@/stores/home-attention';
 import { useServerTasksStore } from '@/stores/server-tasks';
 
@@ -61,18 +63,28 @@ function pendingObservations(
  * tasks waiting on the reader that no listed request already covers, when
  * those span more than one computer (`needsYouAcrossComputers`).
  */
+type PeerServerOf = (binding: { peerId: string; peerServerId?: string }) => string;
+
+/** Which computer a mirror runs on, by this phone's server id for it. */
+function usePeerServerOf(): PeerServerOf {
+  const byServer = useFleetPeers((state) => state.byServer);
+  return (binding) => peerServerIdOf(byServer, binding);
+}
+
 function attentionRows(
   observations: Observations,
   index: ServerTasksIndex,
   servers: readonly GatewayRecord[],
-  taskServerIds: readonly string[]
+  taskServerIds: readonly string[],
+  peerServerOf: PeerServerOf
 ) {
   const pending = pendingObservations(observations, servers);
   const waiting = needsYouAcrossComputers(
     homeWaitingTasks(
       index,
       taskServerIds,
-      pending.map(([, snapshot]) => snapshot.target)
+      pending.map(([, snapshot]) => snapshot.target),
+      peerServerOf
     )
   );
   return { pending, waiting };
@@ -95,8 +107,11 @@ export function useHasHomeAttention({
   const hasRequest = useHomeAttention(
     (state) => pendingObservations(state.byTarget, servers).length > 0
   );
+  const peerServerOf = usePeerServerOf();
   const hasWaiting = useServerTasksStore(
-    (state) => needsYouAcrossComputers(homeWaitingTasks(state.index, taskServerIds, [])).length > 0
+    (state) =>
+      needsYouAcrossComputers(homeWaitingTasks(state.index, taskServerIds, [], peerServerOf))
+        .length > 0
   );
   return hasRequest || hasWaiting;
 }
@@ -120,7 +135,14 @@ export function HomeAttention({
 }) {
   const observations = useHomeAttention((state) => state.byTarget);
   const taskIndex = useTaskIndexFor(taskServerIds);
-  const { pending, waiting } = attentionRows(observations, taskIndex, servers, taskServerIds);
+  const peerServerOf = usePeerServerOf();
+  const { pending, waiting } = attentionRows(
+    observations,
+    taskIndex,
+    servers,
+    taskServerIds,
+    peerServerOf
+  );
   // The config stays mounted while the list is empty, so the first row to
   // arrive is an arrival (it enters and pulses), not part of a fresh mount.
   return (

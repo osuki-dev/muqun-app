@@ -63,7 +63,7 @@ function saveTombstones(entries: readonly Tombstone[]): void {
 
 function withTombstones(entries: Tombstone[]) {
   saveTombstones(entries);
-  return { buried: entries, tombstones: entries.map((entry) => entry.serverId) };
+  return { tombstones: entries };
 }
 
 const initialBuried = loadTombstones();
@@ -88,10 +88,8 @@ type FleetPeersState = {
   /** `failureKey(from, to)` → when linking (or renaming, `to` a peer id) last failed. */
   failures: Record<string, number>;
   lastRunMs: number;
-  /** Server ids unpaired from this phone, not yet gone from every other computer. */
-  tombstones: string[];
-  /** The same, with when each was unpaired (what is stored). */
-  buried: Tombstone[];
+  /** Computers unpaired from this phone, and when, not yet gone from every other computer. */
+  tombstones: Tombstone[];
   setPeers: (serverId: string, peers: FleetPeers) => void;
   /** Record a read: its answer when there was one; a refusal of this phone forgets the last one. */
   record: (serverId: string, result: FleetPeersFetch) => void;
@@ -109,8 +107,7 @@ export const useFleetPeers = create<FleetPeersState>((set, get) => ({
   statusByServer: {},
   failures: {},
   lastRunMs: 0,
-  buried: initialBuried,
-  tombstones: initialBuried.map((entry) => entry.serverId),
+  tombstones: initialBuried,
   setPeers: (serverId, peers) =>
     set((state) => ({ byServer: { ...state.byServer, [serverId]: peers } })),
   record: (serverId, result) => {
@@ -153,14 +150,16 @@ export const useFleetPeers = create<FleetPeersState>((set, get) => ({
       };
     }),
   bury: (serverId) => {
-    if (get().tombstones.includes(serverId)) return;
+    if (get().tombstones.some((entry) => entry.serverId === serverId)) return;
     const nowMs = Date.now();
-    set(withTombstones(keptTombstones([...get().buried, { serverId, buriedAtMs: nowMs }], nowMs)));
+    set(
+      withTombstones(keptTombstones([...get().tombstones, { serverId, buriedAtMs: nowMs }], nowMs))
+    );
   },
   unbury: (serverIds) => {
     const drop = new Set(serverIds);
-    const buried = get().buried.filter((entry) => !drop.has(entry.serverId));
-    if (buried.length === get().buried.length) return;
-    set(withTombstones(buried));
+    const kept = get().tombstones.filter((entry) => !drop.has(entry.serverId));
+    if (kept.length === get().tombstones.length) return;
+    set(withTombstones(kept));
   },
 }));
