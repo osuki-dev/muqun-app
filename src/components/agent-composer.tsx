@@ -1155,7 +1155,7 @@ export const AgentComposer = memo(function AgentComposer({
 
   const { height: keyboardOffset } = useReanimatedKeyboardAnimation();
   const composerKeyboardStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: keyboardOffset.value + (autoHide?.offset.get() ?? 0) }],
+    transform: [{ translateY: keyboardOffset.get() + (autoHide?.offset.get() ?? 0) }],
   }));
 
   /**

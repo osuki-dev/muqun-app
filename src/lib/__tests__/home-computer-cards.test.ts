@@ -157,6 +157,12 @@ describe('roll-up, result and title', () => {
       kind: 'summary',
       text: 'all green',
     });
+    // An older gateway's summary keeps the marker: its words are the summary.
+    expect(
+      taskResultLine(
+        task('t', 'waiting', 1, { summary: 'Checked.\n`MUQUN_TASK_BLOCKED: need the API key`' })
+      )
+    ).toEqual({ kind: 'summary', text: 'need the API key' });
     expect(taskResultLine(task('t', 'failed', 1, { exitCode: 2 }))).toEqual({
       kind: 'exit',
       code: 2,
