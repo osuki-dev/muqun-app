@@ -133,3 +133,25 @@ export function padCover({
     },
   };
 }
+
+/** The Pad page's bottom inset, with the window size it was measured at. */
+export type RestingInset = { inset: number; width: number; height: number };
+
+/**
+ * The bottom inset the Pad page is sized from: only ever one measured with no
+ * keyboard up. While a soft keyboard shows, or a field has focus (the inset can
+ * rise before the keyboard reports itself visible), the last such measure
+ * stands -- unless the window itself changed size with no keyboard up
+ * (rotation, split view), when the new measure is the resting one even while a
+ * field keeps focus.
+ */
+export function nextRestingInset(
+  previous: RestingInset,
+  now: RestingInset & { keyboardVisible: boolean; fieldFocused: boolean }
+): RestingInset {
+  if (now.keyboardVisible) return previous;
+  const resized = now.width !== previous.width || now.height !== previous.height;
+  if (now.fieldFocused && !resized) return previous;
+  if (!resized && now.inset === previous.inset) return previous;
+  return { inset: now.inset, width: now.width, height: now.height };
+}
