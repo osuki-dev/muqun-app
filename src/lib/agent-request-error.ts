@@ -39,17 +39,43 @@ const UNREACHABLE_AGENT = [
 ];
 
 /** A request that got no answer at all: the transport's words, lowercased. */
-// Android's Cronet stack fails a request it could not send with its own words
-// (`Cronet failed: ... net::ERR_ADDRESS_UNREACHABLE`), not a fetch TypeError.
-const NO_RESPONSE = [
-  'network request failed',
-  'network error',
-  'timed out',
-  'timeout',
-  'abort',
-  'cronet failed',
-  'net::err_',
-];
+const NO_RESPONSE = ['network request failed', 'network error', 'timed out', 'timeout', 'abort'];
+
+/**
+ * A native exception relayed as a message: its first line is a Java class
+ * name (`java.lang.RuntimeException: Cronet failed: ...`,
+ * `javax.net.ssl.SSLHandshakeException: ...`). Thrown on the way out, so no
+ * computer answered.
+ */
+const NATIVE_EXCEPTION = /^(?:[a-z][\w$]*\.)+[A-Z][\w$]*(?:Exception|Error)\b/;
+
+/** A transport error code on the thrown object itself (`ECONNREFUSED`, `ERR_NETWORK`). */
+const TRANSPORT_CODE = /^(?:E[A-Z]{3,}|ERR_[A-Z_]+)$/;
+
+/** Whether a request that got no HTTP status failed in the transport, by the error's shape. */
+function transportFailure(err: unknown, raw: string): boolean {
+  const shape = (typeof err === 'object' && err !== null ? err : {}) as {
+    name?: unknown;
+    code?: unknown;
+  };
+  if (shape.name === 'NetworkError' || shape.name === 'AbortError') return true;
+  if (typeof shape.code === 'string' && TRANSPORT_CODE.test(shape.code)) return true;
+  if (NATIVE_EXCEPTION.test(raw.trimStart())) return true;
+  const lower = raw.toLowerCase();
+  return NO_RESPONSE.some((needle) => lower.includes(needle));
+}
+
+/**
+ * A message the classifier could not read, made fit for one line under a
+ * bar: its first line only -- never a stack trace -- bounded. The whole text
+ * goes to the debug log.
+ */
+function oneLine(raw: string): string {
+  const first = raw.split(/\r?\n|\s+at\s+[\w$.]+\(/)[0] ?? '';
+  const line = bound(first);
+  if (line !== raw.trim()) console.debug('Agent request failed:', raw);
+  return line;
+}
 
 /**
  * `<what>: <status> <body>` (agent-session), `HTTP <status>: <body>`
@@ -137,11 +163,8 @@ export function classifyAgentRequestError(err: unknown): AgentRequestError {
     const said = message ?? (match ? raw.slice(match[0].length) : raw);
     return said.trim() ? { kind: 'refused', message: bound(said) } : { kind: 'offline' };
   }
-  if (!status) {
-    const lower = raw.toLowerCase();
-    if (NO_RESPONSE.some((needle) => lower.includes(needle))) return { kind: 'offline' };
-  }
-  return { kind: 'other', message: raw };
+  if (!status && transportFailure(err, raw)) return { kind: 'offline' };
+  return { kind: 'other', message: oneLine(raw) };
 }
 
 /** Whether a failed read should put the screen into its offline state. */
