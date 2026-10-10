@@ -196,6 +196,15 @@ export const THEME_ICONS = [
   'chrome.scan',
   'chrome.settings',
   'home.arrow',
+  // A task's state on Home's rows (`TASK_GLYPHS` is the built-in set).
+  'task.sent',
+  'task.starting',
+  'task.working',
+  'task.waiting',
+  'task.paused',
+  'task.done',
+  'task.failed',
+  'task.cancelled',
 ] as const;
 export type ThemeIconName = (typeof THEME_ICONS)[number];
 

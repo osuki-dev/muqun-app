@@ -1,20 +1,7 @@
 import { useLingui as useLinguiRuntime } from '@lingui/react';
 import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens, useToast } from '@osuki-dev/ui';
-import {
-  Ban,
-  Check,
-  CircleCheck,
-  CircleHelp,
-  CirclePause,
-  CircleX,
-  ExternalLink,
-  Loader,
-  Send,
-  SquareTerminal,
-  XCircle,
-  type LucideIcon,
-} from 'lucide-react-native';
+import { Check, CircleCheck, ExternalLink, SquareTerminal, XCircle } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, {
@@ -28,6 +15,7 @@ import Animated, {
 
 import { AgentActionMenu, type AgentActionMenuItem } from '@/components/agent-action-menu';
 import { AgentMark } from '@/components/agent-mark';
+import { TaskStateGlyph } from '@/components/icons/task-state-glyphs';
 import { BoundedMarkdown } from '@/components/bounded-markdown';
 import { PressableScale } from '@/components/pressable-scale';
 import { Text } from '@/components/text';
@@ -43,7 +31,6 @@ import {
   taskRollup,
   taskRowVisual,
   taskRowTitle,
-  type TaskRowIcon,
   type TaskRowVisual,
 } from '@/lib/home-computer-cards';
 import { fadeIn, fadeOut, listLayout, pulseOnce, travelTiming, zoomIn } from '@/lib/motion';
@@ -56,16 +43,6 @@ import { plural } from '@lingui/core/macro';
 
 /** Inline markup worth the markdown renderer: code, emphasis, links, escapes, html. */
 const MARKDOWN_SYNTAX = /[`*_[\\<]/;
-
-const ICONS: Record<TaskRowIcon, LucideIcon> = {
-  send: Send,
-  loader: Loader,
-  help: CircleHelp,
-  pause: CirclePause,
-  check: CircleCheck,
-  x: CircleX,
-  ban: Ban,
-};
 
 /**
  * A row's state icon from the one table (`taskRowVisual`). Only the working
@@ -89,14 +66,22 @@ export function TaskStateIcon({ visual, size = 16 }: { visual: TaskRowVisual; si
     return () => cancelAnimation(turn);
   }, [spins, turn]);
   const spinStyle = useAnimatedStyle(() => ({ transform: [{ rotate: `${turn.get() * 360}deg` }] }));
-  const Icon = ICONS[visual.icon];
   // The rotation lives on an inner view that exists only while spinning, so a
   // check or cross never arrives at the spinner's last angle.
-  const glyph = <Icon size={size} color={theme.colors[visual.tone]} strokeWidth={2.2} />;
+  const glyph = (
+    <TaskStateGlyph
+      state={visual.icon}
+      size={size}
+      color={theme.colors[visual.tone]}
+      strokeWidth={2.2}
+    />
+  );
   return (
     <Animated.View
       key={visual.icon}
-      entering={visual.icon === 'check' || visual.icon === 'x' ? zoomIn('short') : fadeIn('micro')}>
+      entering={
+        visual.icon === 'done' || visual.icon === 'failed' ? zoomIn('short') : fadeIn('micro')
+      }>
       {visual.spins ? <Animated.View style={spinStyle}>{glyph}</Animated.View> : glyph}
     </Animated.View>
   );
