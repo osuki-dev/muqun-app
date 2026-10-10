@@ -834,13 +834,15 @@ export function HomeComposerDock({
                 color={theme.colors.primary}
               />
             )}
+            {/* The accent alone marks the agent; the computer is the line's
+                one weighted word, and the separators stay muted. */}
             <Text
               variant="bodySmall"
-              weight="semibold"
               numberOfLines={1}
               color={ready ? theme.colors.primary : theme.colors.textMuted}
               style={styles.barLabel}>
-              {showComputer ? `· ${agentName}` : agentName}
+              {showComputer ? <Text color={theme.colors.textMuted}>{'· '}</Text> : null}
+              {agentName}
             </Text>
           </TextSegment>
         ) : null}
