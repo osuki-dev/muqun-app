@@ -41,7 +41,6 @@ const base = {
   recents: [] as HomeRecentEntry[],
   reachabilityByServer: { desk: 'live' as const },
   paneMode: 'all' as const,
-  nowMs: 1_000,
 };
 
 function info(asid: string, updated_ms: number, extra: Partial<AgentSessionInfo> = {}) {

@@ -1,4 +1,5 @@
 import { useSurfaceBackground } from '@/hooks/use-surface-background';
+import { useMinuteNow } from '@/hooks/use-minute-now';
 import { useLingui } from '@lingui/react/macro';
 import { useThemeTokens } from '@osuki-dev/ui';
 import { Text } from '@/components/text';
@@ -85,8 +86,11 @@ export function SshHostRow({
    * demo host inside the list, where the address should still show.
    */
   showAddress?: boolean;
-  /** Read at the caller's render, so a screen of rows ages against one clock. */
-  nowMs: number;
+  /**
+   * Read at the caller's render, so a screen of rows ages against one clock.
+   * Absent on the home screen, where the row ages on the shared minute clock.
+   */
+  nowMs?: number;
   testID?: string;
 }) {
   const { t } = useLingui();
@@ -96,7 +100,8 @@ export function SshHostRow({
   const address = sshHomeSubtitle(record);
   const trusted = Boolean(record.trustedHostKey);
 
-  const lastConnected = useSshHostAgeLabel(sshHomeAge(record, nowMs));
+  const minuteNowMs = useMinuteNow(nowMs);
+  const lastConnected = useSshHostAgeLabel(sshHomeAge(record, minuteNowMs));
 
   // The hint carries what the glyphs say, so a screen reader hears the
   // address, the age and the trust in one breath after the name. It keeps the

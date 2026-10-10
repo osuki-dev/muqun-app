@@ -1,5 +1,10 @@
 import { expect, test } from 'bun:test';
-import { homeContinueEntries, supersededTerminalRecent } from '../home-continue';
+import {
+  homeContinueEntries,
+  homeContinueObservationNow,
+  supersededTerminalRecent,
+  type HomeContinueEntry,
+} from '../home-continue';
 import { homeServerModel } from '../home-server-model';
 import type { HomeRecentEntry } from '../home-recents';
 import { MAX_SERVER_AGENTS, type ServerAgentsIndex } from '../server-agents';
@@ -27,8 +32,13 @@ const input = {
   recents: [],
   reachabilityByServer: { a: 'unknown' as const },
   paneMode: 'all' as const,
-  nowMs: 100,
 };
+
+/** What the first row's meta line says about its observation at `nowMs`. */
+function shownAt(rows: HomeContinueEntry[], nowMs: number, confirmedAtMs = 0) {
+  const observation = rows[0]?.observation;
+  return observation && homeContinueObservationNow(observation, confirmedAtMs, nowMs);
+}
 
 test('first Home visit shows the same pane inventory as Classic without recent history', () => {
   const rows = homeContinueEntries(input);
@@ -47,7 +57,7 @@ test('first Home visit shows the same pane inventory as Classic without recent h
     paneId: 'p1',
     cwd: undefined,
   });
-  expect(rows[0].observation).toEqual({
+  expect(shownAt(rows, 100)).toEqual({
     kind: 'gateway-agent',
     status: 'idle',
     age: { unit: 'now', value: 0 },
@@ -100,13 +110,8 @@ test('OpenCode recents show only current Gateway observations and keep honest ag
     },
     sessionObservation: { status: 'busy', observedAtMs: 10_000 },
   };
-  const current = homeContinueEntries({
-    ...input,
-    snapshots: {},
-    recents: [recent],
-    nowMs: 70_000,
-  })[0]?.observation;
-  expect(current).toEqual({
+  const rows = homeContinueEntries({ ...input, snapshots: {}, recents: [recent] });
+  expect(shownAt(rows, 70_000)).toEqual({
     kind: 'agent-session',
     status: 'busy',
     age: { unit: 'now', value: 0 },
@@ -119,22 +124,18 @@ test('OpenCode recents show only current Gateway observations and keep honest ag
       snapshots: {},
       recents: [recent],
       reachabilityByServer: { a: 'offline' },
-      nowMs: 70_000,
     })
   ).toEqual([]);
 
-  const stale = homeContinueEntries({
-    ...input,
-    snapshots: {},
-    recents: [recent],
-    nowMs: 400_001,
-  })[0]?.observation;
+  const stale = shownAt(rows, 400_001);
   expect(stale).toMatchObject({
     kind: 'agent-session',
     age: { unit: 'minute', value: 6 },
     stale: true,
   });
   expect(stale?.status).toBeUndefined();
+  // A pass that found the same status again keeps it current without a rebuild.
+  expect(shownAt(rows, 400_001, 390_000)).toMatchObject({ status: 'busy', stale: false });
 });
 
 test('history changes ranking without duplicating panes or replacing authoritative names', () => {
@@ -186,11 +187,9 @@ test('Continue hides every gateway-owned entry while its gateway is offline', ()
     },
   };
 
-  expect(homeContinueEntries(blocked)[0]?.observation?.status).toBe('blocked');
+  expect(shownAt(homeContinueEntries(blocked), 100)?.status).toBe('blocked');
   expect(homeContinueEntries({ ...blocked, reachabilityByServer: { a: 'offline' } })).toEqual([]);
-  expect(
-    homeContinueEntries({ ...blocked, nowMs: 1_000_000 })[0]?.observation?.status
-  ).toBeUndefined();
+  expect(shownAt(homeContinueEntries(blocked), 1_000_000)?.status).toBeUndefined();
 });
 
 test('offline filtering is gateway-scoped, retains unknown and SSH entries, and recovers', () => {
@@ -300,7 +299,6 @@ function gatewayAgent(asid: string, updatedMs: number) {
 const rankingInput = {
   ...input,
   snapshots: { a: { ...snapshots.a, sessionId: 'routing', checkedAtMs: T } },
-  nowMs: T + 1_000,
   gatewaySessions: {
     serverId: 'a',
     sessionId: 'routing',

@@ -22,7 +22,11 @@ import {
   taskRowRank,
   type ComputerCard,
   HOME_CARD_INSET,
+  RECENT_FINISHED_MS,
 } from '@/lib/home-computer-cards';
+import { isTerminalTaskState } from '@/lib/task-ledger';
+import { useDeadlineNow } from '@/hooks/use-deadline-now';
+import { useMinuteNow } from '@/hooks/use-minute-now';
 import { PAD_CARD_GAP, padCardColumns } from '@/lib/home-pad-geometry';
 import { fadeOut, listLayout, riseIn } from '@/lib/motion';
 import {
@@ -97,30 +101,69 @@ function useCardInputs(activeConnection: ActiveServerConnection | undefined, now
   };
 }
 
+const subscribeCardDeadlines = (onChange: () => void) => {
+  const tasks = useServerTasksStore.subscribe(onChange);
+  const cards = useHomeTaskCards.subscribe(onChange);
+  return () => {
+    tasks();
+    cards();
+  };
+};
+
+/**
+ * The first instant after `afterMs` at which time alone could take a card
+ * away: a Sent row outliving `PENDING_DISPATCH_TTL_MS`, or a finished task
+ * leaving the `RECENT_FINISHED_MS` window.
+ */
+function nextCardExpiry(afterMs: number): number | undefined {
+  let next: number | undefined;
+  const consider = (atMs: number) => {
+    if (atMs > afterMs && (next === undefined || atMs < next)) next = atMs;
+  };
+  for (const item of useHomeTaskCards.getState().pending)
+    consider(item.atMs + PENDING_DISPATCH_TTL_MS);
+  for (const entry of Object.values(useServerTasksStore.getState().index)) {
+    for (const task of entry?.tasks ?? []) {
+      if (!isTerminalTaskState(task.state)) continue;
+      consider(
+        Math.max(task.updatedMs, task.settledAtMs ?? task.updatedMs) + RECENT_FINISHED_MS + 1
+      );
+    }
+  }
+  return next;
+}
+
 /**
  * Whether any computer has a card. Home asks only this: the store selector
  * returns a boolean, so a task frame re-renders Home only when the section
- * appears or goes, and the cards re-render inside their own tree.
+ * appears or goes, and the cards re-render inside their own tree. Time is a
+ * deadline clock, not a tick: the answer is re-asked at the moment a Sent row
+ * or a finished task could expire, and never otherwise.
  */
 export function useHasComputerCards({
   servers,
-  activeConnection,
-  nowMs,
+  reachabilityByServer,
 }: {
   servers: readonly GatewayRecord[];
-  activeConnection?: ActiveServerConnection;
-  /** Home's focus tick. */
-  nowMs: number;
+  /** Home's folded reachability; a refused pairing counts as offline. */
+  reachabilityByServer: Readonly<Record<string, ServerReachability | undefined>>;
 }): boolean {
-  const inputs = useCardInputs(activeConnection, nowMs);
+  const nowMs = useDeadlineNow(subscribeCardDeadlines, nextCardExpiry);
+  const dismissedList = useHomeTaskCards((state) => state.dismissed);
+  const pending = useHomeTaskCards(
+    useShallow((state) =>
+      state.pending.filter((item) => nowMs - item.atMs < PENDING_DISPATCH_TTL_MS)
+    )
+  );
+  const dismissed = new Set(dismissedList);
   return useServerTasksStore(
     (state) =>
       buildComputerCards({
         servers,
         index: state.index,
-        reachability: inputs.reachability,
-        dismissed: inputs.dismissed,
-        pending: inputs.pending,
+        reachability: (serverId) => reachabilityByServer[serverId],
+        dismissed,
+        pending,
         nowMs,
       }).length > 0
   );
@@ -140,7 +183,7 @@ export function useHasComputerCards({
 export function HomeComputerCards({
   servers,
   activeConnection,
-  nowMs,
+  nowMs: freshnessNowMs,
   skipEntering,
   gridWidth,
   onSelectServer,
@@ -148,7 +191,7 @@ export function HomeComputerCards({
 }: {
   servers: readonly GatewayRecord[];
   activeConnection?: ActiveServerConnection;
-  /** Home's focus tick: ages, the Sent row's lifetime and probe freshness. */
+  /** Home's probe-freshness clock; ages run on the minute clock from here down. */
   nowMs: number;
   /**
    * The cards were already there when Home mounted: they are not arrivals.
@@ -164,6 +207,9 @@ export function HomeComputerCards({
   const entries = useServerTasksStore(
     useShallow((state) => serverIds.map((serverId) => state.index[serverId]))
   );
+  // Ages, the Sent row's lifetime and the finished window move with the
+  // minute; probe freshness with Home's own clock, whichever is newer.
+  const nowMs = useMinuteNow(freshnessNowMs);
   const inputs = useCardInputs(activeConnection, nowMs);
   const index: Record<string, NonNullable<(typeof entries)[number]>> = {};
   serverIds.forEach((serverId, position) => {
