@@ -2100,7 +2100,6 @@ msgstr "{label} verringern"
 msgid "default"
 msgstr "Standard"
 
-#: src/components/home-composer-dock.tsx
 #: src/components/settings-terminal.tsx
 #: src/components/settings-theme-sheet.tsx
 msgid "Default"

@@ -96,8 +96,9 @@ export function homeHiddenClientCommands(
  * Only the reader's own pick in the dock is sent, remembered per computer
  * and agent (`homeModelChoiceKey`): a pick the catalog no longer offers is
  * dropped, and a picked mode that names its own model brings it. Before any
- * pick nothing is sent, so the agent runs on its own default, and the pills
- * name that default (the catalog's `defaults`), not a guess from the list.
+ * pick nothing is sent, and the pills name what the agent will then run: the
+ * mode's model, the host's default, or the first enabled model in the list,
+ * which is OpenCode's own fallback when it has no default.
  * The agent is named only on a gateway that has said which agents it drives;
  * an older gateway has one and no `agent_id` to read.
  */
@@ -117,7 +118,16 @@ export function homeSessionParams(input: {
   const modeModel = modes.find((entry) => entry.id === mode)?.model;
   const model = catalogModelRef(picked.model, models) ?? catalogModelRef(modeModel, models);
   const shownMode = mode ?? catalogModeId(catalogDefaults.mode, modes);
-  const shownModel = model ?? catalogModelRef(catalogDefaults.model, models);
+  // What the agent will actually run when nothing is sent: the shown mode's
+  // own model, else the host's default, else -- OpenCode with no default
+  // configured -- the first enabled model in its list.
+  const shownModeModel = modes.find((entry) => entry.id === shownMode)?.model;
+  const firstListed = models.find((entry) => entry.enabled !== false);
+  const shownModel =
+    model ??
+    catalogModelRef(shownModeModel, models) ??
+    catalogModelRef(catalogDefaults.model, models) ??
+    (firstListed ? { provider_id: firstListed.provider_id, model_id: firstListed.id } : undefined);
   return {
     params: {
       ...(mode ? { mode } : {}),
