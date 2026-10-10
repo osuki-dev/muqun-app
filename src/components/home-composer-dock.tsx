@@ -494,8 +494,8 @@ export function HomeComposerDock({
   /**
    * Create the session (or reuse the one a failed send left), act on it, and,
    * for a command or a skill, open it. A goal (`sent`) never navigates: the
-   * card holds a Sent row while it goes out, and keeps it saying the
-   * attachments could not be sent when they could not. A create that fails on
+   * card holds a Sent row while it goes out, bound to the session once it
+   * went, or saying it could not be sent, with what to send again. A create that fails on
    * an agent that is not ready opens its setup guide, as a launch tile does;
    * every other failure is said under the bar.
    */
@@ -912,13 +912,26 @@ export function HomeComposerDock({
   const retryRow = useStableHandler((item: PendingDispatch) => {
     const resend = item.resend;
     if (!resend) return;
-    void sendWithFiles(resend.text, resend.attachments, {
-      serverId: item.serverId,
-      params: resend.params,
-      ...(resend.folder ? { folder: resend.folder } : {}),
-    }).then((sent) => {
-      if (sent) clearDraftRef.current?.(resend.text);
-    });
+    // The retry goes to its own computer and the selection comes back after
+    // it; the files staged in the field for the computer the bar names stay.
+    const before = useGatewayConnectionStore.getState().record?.serverId;
+    retrySwitchBegins();
+    void settleAfter(
+      async () => {
+        const sent = await sendWithFiles(resend.text, resend.attachments, {
+          serverId: item.serverId,
+          params: resend.params,
+          ...(resend.folder ? { folder: resend.folder } : {}),
+        });
+        if (sent) clearDraftRef.current?.(resend.text);
+        if (before && before !== item.serverId) {
+          if (!selectRecordNow(before)) await selectRecord(before);
+        }
+      },
+      () => {
+        retrySwitchEnds();
+      }
+    );
   });
   const openRow = useStableHandler((item: PendingDispatch) => {
     if (item.asid) void onOpenAgent(item.serverId, item.asid, undefined, HOME_AGENT_SESSION_ID);
@@ -1120,16 +1133,28 @@ export function HomeComposerDock({
       onClientCommand={clientCommand}
       injectDraftRef={injectDraftRef}
       clearDraftRef={clearDraftRef}
-      holdAttachmentsAcrossBlur={failedRowHoldsFiles}
+      holdStagedAttachments={holdStagedFiles}
     />
   );
 }
 
+/** Failed rows' retries under way: their switch of the selection holds the staged files. */
+let retrySwitches = 0;
+function retrySwitchBegins(): void {
+  retrySwitches += 1;
+}
+function retrySwitchEnds(): void {
+  retrySwitches -= 1;
+}
+
 /**
- * Files a failed send still holds stay staged when Home loses focus -- to the
- * setup guide the dock opened, or anywhere else -- until they are sent.
+ * What the dock's staged files are held across: leaving Home while a failed
+ * send still holds files -- to the setup guide the dock opened, or anywhere
+ * else -- and the switch a failed row's retry makes to its own computer and
+ * back.
  */
-function failedRowHoldsFiles(): boolean {
+function holdStagedFiles(reason: 'blur' | 'switch'): boolean {
+  if (reason === 'switch') return retrySwitches > 0;
   return useHomeTaskCards
     .getState()
     .pending.some((item) => item.failed === true && (item.resend?.attachments.length ?? 0) > 0);

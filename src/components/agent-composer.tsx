@@ -468,8 +468,8 @@ export interface AgentComposerProps {
    * send from elsewhere (Home's failed row) just delivered.
    */
   clearDraftRef?: React.MutableRefObject<((text: string) => void) | null>;
-  /** See `useAttachmentUploads`' `holdAcrossBlur`. */
-  holdAttachmentsAcrossBlur?: () => boolean;
+  /** See `useAttachmentUploads`' `holdStaged`. */
+  holdStagedAttachments?: (reason: 'blur' | 'switch') => boolean;
   /**
    * The dock's height, whenever it changes.
    *
@@ -581,7 +581,7 @@ export const AgentComposer = memo(function AgentComposer({
   onPressTokens,
   injectDraftRef,
   clearDraftRef,
-  holdAttachmentsAcrossBlur,
+  holdStagedAttachments,
   onDockHeight,
   accessory,
   bar,
@@ -673,7 +673,7 @@ export const AgentComposer = memo(function AgentComposer({
   const chromeGlass = withAlpha(theme.colors.text, appChrome.opacity.chromeControl);
 
   const record = useGatewayConnectionStore((state) => state.record);
-  const attachmentUploads = useAttachmentUploads(record, undefined, holdAttachmentsAcrossBlur);
+  const attachmentUploads = useAttachmentUploads(record, undefined, holdStagedAttachments);
 
   // Staged image preview, the same viewer the terminal dock uses: only images
   // can open full screen, so the tapped chip's position is resolved within
