@@ -40,7 +40,11 @@ import { acceptsCancel, acceptsConfirm, unpairView } from '@/lib/unpair-action';
 import { useRenderTally } from '@/lib/render-tally';
 import { describeGatewayFailure } from '@/lib/network-error';
 import { normalizeGatewayUrl } from '@/lib/pairing';
-import { resolveConnectionStatus, type ConnectionStatus } from '@/lib/server-reachability';
+import {
+  resolveConnectionStatus,
+  serversToProbe,
+  type ConnectionStatus,
+} from '@/lib/server-reachability';
 import { useAppSettings, type ServerCardPanes } from '@/stores/app-settings';
 import { useServerAgents } from '@/stores/server-agents';
 import { retryHomeRefresh } from '@/lib/home-refresh-schedule';
@@ -68,7 +72,7 @@ export function SettingsServers({ initialOpenId }: { initialOpenId?: string } = 
   const probes = useServerReachability((state) => state.probes);
   const channelSockets = useServerChannels((state) => state.sockets);
   const channelStreams = useServerChannels((state) => state.streams);
-  const refreshReachability = useServerReachability((state) => state.refresh);
+  const refreshReachabilityMany = useServerReachability((state) => state.refreshMany);
   const serverCardPanes = useAppSettings((state) => state.serverCardPanes);
   const update = useAppSettings((state) => state.update);
   // The one piece of history a record the app is not attached to still has:
@@ -93,29 +97,21 @@ export function SettingsServers({ initialOpenId }: { initialOpenId?: string } = 
     if (openId) retryHomeRefresh(openId);
   }, [openId]);
 
-  // The same question the home screen asks, asked the same way: only of the
-  // server the app is already configured for, because every other record's
-  // token would have to go on the wire to answer it. See
-  // `stores/server-reachability.ts`.
+  // The same question the home screen asks, of the same computers it asks
+  // (the configured one first, at most four): a list that says "Not
+  // connected" beside a computer Home heard a minute ago is only a stale
+  // answer, and this screen is where the reader looks for the real one.
   useFocusEffect(
     useCallback(() => {
       // Opening Settings › Computers is a reconciler trigger (spec §4.1),
       // run on the capabilities the reachability probe just refreshed.
-      if (!record || record.serverId === DEMO_SERVER_ID || record.sshTunnel) {
-        void reconcileFleet({ reason: 'settings' });
-        return;
-      }
-      void refreshReachability({
-        serverId: record.serverId,
-        url: record.url,
-        token: record.token,
-        deviceId: record.deviceId,
-        transportKey: record.transportKey,
-        transport: record.transport,
-      }).finally(() => {
+      const eligible = records.filter(
+        (server) => server.serverId !== DEMO_SERVER_ID && !server.sshTunnel
+      );
+      void refreshReachabilityMany(serversToProbe(eligible, {}, record?.serverId)).finally(() => {
         void reconcileFleet({ reason: 'settings' });
       });
-    }, [record, refreshReachability])
+    }, [record?.serverId, records, refreshReachabilityMany])
   );
 
   async function use(server: GatewayRecord) {
@@ -176,22 +172,19 @@ export function SettingsServers({ initialOpenId }: { initialOpenId?: string } = 
                 <ServerRow
                   server={server}
                   current={current}
-                  reachability={
-                    current
-                      ? resolveConnectionStatus({
-                          serverId: server.serverId,
-                          probe: probes[server.serverId],
-                          channels: {
-                            socket: channelSockets[server.serverId],
-                            stream: channelStreams[server.serverId],
-                          },
-                          selected: true,
-                        })
-                      : // A record the app is not attached to has not been
-                        // asked, and "never asked" is not "offline". The home
-                        // screen draws the same distinction with a hollow dot.
-                        'unknown'
-                  }
+                  // Every computer from the same evidence Home uses: its own
+                  // channels and the fresh probe this screen just asked for.
+                  // One nobody asked recently is `unknown` -- "never asked" is
+                  // not "offline" -- but one that answered is online.
+                  reachability={resolveConnectionStatus({
+                    serverId: server.serverId,
+                    probe: probes[server.serverId],
+                    channels: {
+                      socket: channelSockets[server.serverId],
+                      stream: channelStreams[server.serverId],
+                    },
+                    selected: current,
+                  })}
                   lastConnected={current ? undefined : agentsByServer[server.serverId]}
                   open={openId === server.serverId}
                   onToggle={() =>
