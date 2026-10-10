@@ -732,11 +732,23 @@ function SubTaskRow({
 }
 
 /** A goal the dock sent, before the computer has said it has it. */
-export function SentTaskRow({ goal, computer }: { goal: string; computer: string }) {
+export function SentTaskRow({
+  goal,
+  computer,
+  attachmentFailed = false,
+}: {
+  goal: string;
+  computer: string;
+  /** Its attachments could not be sent (the text is back in the dock). */
+  attachmentFailed?: boolean;
+}) {
+  const { t } = useLingui();
   const theme = useThemeTokens();
   const rowLine = useTaskRowLine(undefined);
   const visual = taskRowVisual({ state: 'sent' }, { canComplete: false, acknowledged: true });
-  const line = rowLine(null, visual, computer);
+  const line = attachmentFailed
+    ? lineView(t`Attachment could not be sent`, theme.colors.danger, '')
+    : rowLine(null, visual, computer);
   return (
     <Animated.View
       testID="home-card-pending"

@@ -809,6 +809,10 @@ msgstr "Joindre un fichier"
 msgid "Attachment"
 msgstr "Pièce jointe"
 
+#: src/components/task-row.tsx
+msgid "Attachment could not be sent"
+msgstr "La pièce jointe n’a pas pu être envoyée"
+
 #: src/components/session-artifacts.tsx
 msgid "Audio"
 msgstr "Audio"

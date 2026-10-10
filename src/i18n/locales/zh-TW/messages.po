@@ -809,6 +809,10 @@ msgstr "附加檔案"
 msgid "Attachment"
 msgstr "附件"
 
+#: src/components/task-row.tsx
+msgid "Attachment could not be sent"
+msgstr "附件未能傳送"
+
 #: src/components/session-artifacts.tsx
 msgid "Audio"
 msgstr "音訊"

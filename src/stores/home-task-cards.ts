@@ -56,6 +56,8 @@ type HomeTaskCardsState = {
   dispatched: (serverId: string, goal: string) => string;
   /** The send failed, or the task came back with the answer. */
   settle: (id: string) => void;
+  /** The goal's attachments could not be sent: the row stays and says so. */
+  attachmentFailed: (id: string) => void;
 };
 
 export const useHomeTaskCards = create<HomeTaskCardsState>((set, get) => ({
@@ -85,5 +87,12 @@ export const useHomeTaskCards = create<HomeTaskCardsState>((set, get) => ({
   },
   settle(id) {
     set((state) => ({ pending: state.pending.filter((item) => item.id !== id) }));
+  },
+  attachmentFailed(id) {
+    set((state) => ({
+      pending: state.pending.map((item) =>
+        item.id === id ? { ...item, attachmentFailed: true as const } : item
+      ),
+    }));
   },
 }));

@@ -809,6 +809,10 @@ msgstr "파일 첨부"
 msgid "Attachment"
 msgstr "첨부 파일"
 
+#: src/components/task-row.tsx
+msgid "Attachment could not be sent"
+msgstr "첨부 파일을 보낼 수 없습니다"
+
 #: src/components/session-artifacts.tsx
 msgid "Audio"
 msgstr "오디오"
